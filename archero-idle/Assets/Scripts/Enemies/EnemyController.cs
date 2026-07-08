@@ -48,7 +48,7 @@ namespace ArcheroIdle.Enemies
         {
             if (player == null)
             {
-                rb.velocity = Vector2.zero;
+                rb.linearVelocity = Vector2.zero;
                 return;
             }
 
@@ -57,12 +57,12 @@ namespace ArcheroIdle.Enemies
             if (distance > attackRange)
             {
                 Vector2 direction = (player.position - transform.position).normalized;
-                rb.velocity = direction * moveSpeed;
+                rb.linearVelocity = direction * moveSpeed;
                 transform.right = direction;
             }
             else
             {
-                rb.velocity = Vector2.zero;
+                rb.linearVelocity = Vector2.zero;
             }
         }
 

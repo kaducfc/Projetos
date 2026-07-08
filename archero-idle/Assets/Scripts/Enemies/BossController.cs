@@ -83,7 +83,7 @@ namespace ArcheroIdle.Enemies
         {
             if (player == null || isSlamming)
             {
-                rb.velocity = Vector2.zero;
+                rb.linearVelocity = Vector2.zero;
                 return;
             }
 
@@ -91,19 +91,19 @@ namespace ArcheroIdle.Enemies
             if (distance > contactRange)
             {
                 Vector2 direction = (player.position - transform.position).normalized;
-                rb.velocity = direction * moveSpeed;
+                rb.linearVelocity = direction * moveSpeed;
                 transform.right = direction;
             }
             else
             {
-                rb.velocity = Vector2.zero;
+                rb.linearVelocity = Vector2.zero;
             }
         }
 
         private IEnumerator SlamAttack()
         {
             isSlamming = true;
-            rb.velocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero;
 
             GameObject telegraph = null;
             if (slamTelegraphPrefab != null)

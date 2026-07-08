@@ -7,13 +7,12 @@ de compilação que apareça na primeira importação.
 
 ## 1. Criar o projeto
 
-1. Abra o Unity Hub, crie um projeto novo com o template **2D (Core)**.
-   Recomendado: Unity 2022 LTS (os scripts usam `Rigidbody2D.velocity`, que
-   no Unity 6 foi renomeado para `linearVelocity` — no Unity 6 ele ainda
-   compila, só aparece um aviso de "obsolete"; se preferir eliminar o aviso,
-   troque `rb.velocity` por `rb.linearVelocity` nos 3 lugares onde aparece:
-   `Projectile.cs`, `PlayerController.cs`, `EnemyController.cs`,
-   `BossController.cs`).
+1. Abra o Unity Hub, crie um projeto novo com o template **2D (Core)**,
+   versão **Unity 6 LTS** (ex: 6000.0.x LTS). Os scripts já usam
+   `Rigidbody2D.linearVelocity` (API atual do Unity 6). Se em vez disso você
+   usar Unity 2021/2022, essa propriedade não existe nessas versões — troque
+   `linearVelocity` por `velocity` nos mesmos 4 arquivos: `Projectile.cs`,
+   `PlayerController.cs`, `EnemyController.cs`, `BossController.cs`.
 2. Copie a pasta `Assets/Scripts` deste repositório para dentro do
    `Assets/` do projeto Unity recém-criado.
 3. Deixe o Unity importar e compilar. Se aparecer algum erro no Console,

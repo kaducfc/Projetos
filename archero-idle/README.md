@@ -12,7 +12,7 @@ progressão offline nem gacha ainda — isso é intencional, ver roadmap abaixo.
 
 ## Stack
 
-- Unity (C#), projeto 2D top-down.
+- Unity 6 LTS (C#), projeto 2D top-down.
 - Sem dependências de pacotes além do que já vem no template 2D padrão do
   Unity (uGUI para a interface, Physics2D para colisões).
 

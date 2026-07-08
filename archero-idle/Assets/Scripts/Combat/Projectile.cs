@@ -30,10 +30,7 @@ namespace ArcheroIdle.Combat
                 transform.right = direction;
             }
 
-            // NOTE: Rigidbody2D.velocity is deprecated in Unity 6 (use linearVelocity there);
-            // kept as `velocity` here for compatibility with 2021/2022 LTS. Still works with
-            // a warning on Unity 6 — see SETUP.md if you want to switch it.
-            rb.velocity = direction * speed;
+            rb.linearVelocity = direction * speed;
 
             Destroy(gameObject, lifetime);
         }

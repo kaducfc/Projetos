@@ -20,9 +20,7 @@ namespace ArcheroIdle.Player
         {
             Vector2 input = joystick != null ? joystick.Direction : Vector2.zero;
 
-            // NOTE: Rigidbody2D.velocity is deprecated in Unity 6 (use linearVelocity there);
-            // kept as `velocity` here for compatibility with 2021/2022 LTS.
-            rb.velocity = input * stats.MoveSpeed;
+            rb.linearVelocity = input * stats.MoveSpeed;
 
             if (input.sqrMagnitude > 0.01f)
             {
