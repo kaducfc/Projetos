@@ -26,14 +26,20 @@ Assets/Scripts/
   Enemies/    EnemyController (melee/ranged), BossController (ataque em área telegrafado)
   Rooms/      EnemySpawner (ondas + escala de dificuldade), RoomManager (progressão de salas)
   Upgrades/   UpgradeData (ScriptableObject), UpgradeManager
-  UI/         UpgradeSelectionUI, UpgradeCardUI, HealthBarUI
+  UI/         UpgradeSelectionUI, UpgradeCardUI, HealthBarUI, GameOverUI
+Assets/Editor/
+  ArcheroIdleProjectBuilder.cs  Gerador: monta layers, sprites placeholder,
+                                 prefabs, upgrades e a cena jogável com um
+                                 clique de menu (ArcheroIdle > Build Demo Project)
 ```
 
 ## Como abrir
 
 Os scripts foram escritos fora do Editor do Unity (ambiente sem GUI), então
-**nunca foram compilados**. Veja `SETUP.md` para o passo a passo de como criar
-o projeto Unity, importar esses scripts e montar a cena/prefabs no Editor.
+**nunca foram compilados**. Veja `SETUP.md` para o passo a passo: criar o
+projeto no Unity 6, copiar `Assets/Scripts` e `Assets/Editor`, e rodar o
+gerador — ele monta a cena e os prefabs sozinho, sem trabalho manual no
+Inspector.
 
 ## Loop de jogo (Fase 1)
 
