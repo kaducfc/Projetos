@@ -1,0 +1,110 @@
+# Idle Hunter
+
+Jogo idle/clicker inspirado em **Clicker Heroes** (da Playsaurus), com um
+sistema de equipamentos e crafting inspirado em **Monster Hunter**: você
+derrota monstros para conseguir materiais e usa esses materiais para
+fabricar o equipamento daquele monstro específico.
+
+HTML + CSS + JavaScript puro (sem build step, sem dependências externas).
+
+## Como rodar
+
+Os arquivos JS usam ES modules (`import`/`export`), que os navegadores só
+carregam via `http://`, não abrindo o `index.html` direto (`file://`) por
+causa de restrição de CORS. Então é preciso um servidor local simples:
+
+```bash
+cd idle-hunter
+python3 -m http.server 8000
+# ou: npx serve .
+```
+
+Depois abra `http://localhost:8000` no navegador.
+
+## Loop de jogo
+
+1. **Combate**: clique no monstro para causar dano de clique instantâneo;
+   seu DPS (dano por segundo) também bate automaticamente, mesmo sem
+   clicar — essa é a parte "idle". Ao derrotar um monstro você ganha ouro
+   e (com chance) materiais de craft, e avança para o próximo estágio.
+2. **Estágios**: cada família de monstro ocupa um bloco de 20 estágios; o
+   último estágio do bloco é o chefe daquela família, com HP/recompensas
+   maiores e chance bem mais alta de dropar o material raro. Dá pra
+   navegar (◀ ▶) para qualquer estágio já alcançado e farmar ali — é
+   assim que você junta material de um monstro específico para craftar o
+   set dele.
+3. **Equipamentos**: 6 slots — Elmo, Armadura, Calça, Luvas, Botas
+   (defesa) e Arma (ataque: lança, adaga, arco, martelo, machado ou
+   espada, dependendo da família). Cada peça é craftada na Forja com
+   ouro + materiais daquele monstro, e equipada automaticamente ao
+   craftar (dá pra trocar depois na aba Equipamento).
+4. **Upgrades**: comprados com ouro, aumentam dano/DPS/ouro/chance de
+   material. Resetam a cada renascimento.
+5. **Prestígio (Renascer)**: ao alcançar o estágio 20+, você pode
+   renascer: ganha Runas (baseado no estágio máximo alcançado) e reseta
+   ouro/estágio/upgrades comuns. Runas compram upgrades **permanentes**
+   (Poder Ancestral, Fortuna Eterna, Faro Apurado, Início Avançado).
+
+## Decisão de design: o que sobrevive ao renascimento
+
+Diferente de heróis em Clicker Heroes (que resetam), aqui **equipamentos
+craftados e materiais permanecem depois de renascer**. A ideia é que o
+craft é uma coleção permanente — faria o esforço de farmar/craftar parecer
+descartável se resetasse a cada prestígio. O que reseta é só o progresso
+"macio": ouro, estágio atual e upgrades comprados com ouro. Quem carrega o
+poder entre runs são os upgrades de Runas (permanentes) — esse é o mesmo
+papel que os "Ancients" cumprem no Clicker Heroes original.
+
+Se você preferir o comportamento clássico (equipamento também reseta), a
+mudança é pequena: em `js/systems/prestige.js`, função `doRebirth`, é só
+também limpar `state.inventory`, `state.equipped` e `state.materials`.
+
+## Estrutura
+
+```
+index.html            Layout da página (elementos fixos; conteúdo dinâmico via JS)
+css/style.css          Tema visual (dark fantasy)
+js/
+  main.js               Bootstrap: game loop, wiring de eventos, save/load
+  state.js              Estado do jogo + persistência (localStorage)
+  format.js              Formatação de números grandes (1.2K, 3.4M, ...)
+  data/
+    monsters.js           As 6 famílias de monstro, estágios, materiais
+    items.js               Geração dos 36 itens equipáveis (6 famílias × 6 slots)
+    upgrades.js             Upgrades comuns (ouro) e de prestígio (Runas)
+  systems/
+    stats.js                Agrega equipamento + upgrades → dano/DPS/bônus finais
+    combat.js                HP/recompensa de monstro por estágio, drops, kill/spawn
+    equipment.js              Equipar/desequipar, listar inventário por slot
+    crafting.js                Checagem de custo e craft
+    upgrades.js                 Compra de upgrades comuns e de prestígio
+    prestige.js                  Cálculo de Runas e lógica de renascimento
+    offline.js                    Progresso estimado enquanto a aba estava fechada
+  ui/
+    render.js                     Toda a renderização (HTML gerado via template strings)
+```
+
+Sem framework: `main.js` escuta eventos DOM, chama as funções dos
+`systems/*` (que só mexem no objeto `state`, sem tocar no DOM) e depois
+chama `render.js` para atualizar a tela. Fácil de seguir o fluxo:
+evento → muda estado → re-renderiza.
+
+## Balanceamento
+
+Os números (HP, ouro, custo de upgrade, stats de item) são um ponto de
+partida razoável, testado manualmente, mas não extensivamente calibrado
+para uma curva de progressão "perfeita" de longo prazo — normal em um
+primeiro MVP. Os pontos mais fáceis de ajustar:
+
+- `js/systems/combat.js`: `HP_GROWTH`, `GOLD_GROWTH`, chances de drop.
+- `js/data/items.js`: `tierBase()` e os multiplicadores por slot.
+- `js/data/upgrades.js`: `baseCost`/`costGrowth` de cada upgrade.
+- `js/systems/prestige.js`: fórmula de `runasGain`.
+
+## Testado
+
+Rodei o jogo de ponta a ponta num navegador headless (clique, DPS
+automático, avanço de estágio, craft, equipar, troca de estágio para
+farm, renascimento, progresso offline ao reabrir, e layout em viewport
+mobile) — sem erros no console. Vale um play manual seu para validar a
+sensação de progressão/dificuldade, que é subjetiva.

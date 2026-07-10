@@ -1,0 +1,76 @@
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Idle Hunter</title>
+<link rel="stylesheet" href="css/style.css" />
+
+<div id="app">
+  <header id="top-bar">
+    <div class="resource">
+      <span class="resource-icon">💰</span>
+      <span id="gold-value">0</span>
+    </div>
+    <div class="resource">
+      <span class="resource-icon">🔮</span>
+      <span id="runas-value">0</span>
+      <span class="resource-label">Runas</span>
+    </div>
+    <div class="resource">
+      <span class="resource-icon">🚩</span>
+      <span id="stage-value">1</span>
+    </div>
+  </header>
+
+  <main>
+    <section id="combat-panel">
+      <div id="stage-controls">
+        <button id="stage-prev" title="Estágio anterior">◀</button>
+        <span id="stage-label">Estágio 1</span>
+        <button id="stage-next" title="Próximo estágio">▶</button>
+        <button id="stage-max" title="Ir para o estágio mais avançado">Máx ⏩</button>
+      </div>
+
+      <div id="monster-area">
+        <div id="damage-popups"></div>
+        <div id="monster-name"></div>
+        <button id="monster-sprite" title="Clique para atacar">🐗</button>
+        <div id="hp-bar-outer">
+          <div id="hp-bar-fill"></div>
+          <span id="hp-bar-text">0 / 0</span>
+        </div>
+      </div>
+
+      <div id="dps-readout">
+        <span>Dano de clique: <strong id="click-damage-value">0</strong></span>
+        <span>DPS: <strong id="dps-value">0</strong></span>
+      </div>
+    </section>
+
+    <nav id="tab-nav">
+      <button class="tab-btn active" data-tab="equipment">🎽 Equipamento</button>
+      <button class="tab-btn" data-tab="forge">🔨 Forja</button>
+      <button class="tab-btn" data-tab="upgrades">📈 Upgrades</button>
+      <button class="tab-btn" data-tab="prestige">🔮 Prestígio</button>
+      <button class="tab-btn" data-tab="materials">🎒 Materiais</button>
+    </nav>
+
+    <section id="tab-panels">
+      <div id="tab-equipment" class="tab-panel active"></div>
+      <div id="tab-forge" class="tab-panel"></div>
+      <div id="tab-upgrades" class="tab-panel"></div>
+      <div id="tab-prestige" class="tab-panel"></div>
+      <div id="tab-materials" class="tab-panel"></div>
+    </section>
+  </main>
+
+  <div id="modal-overlay" class="hidden">
+    <div id="modal-box">
+      <h2 id="modal-title"></h2>
+      <div id="modal-body"></div>
+      <button id="modal-close">Fechar</button>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
