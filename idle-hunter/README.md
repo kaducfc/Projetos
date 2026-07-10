@@ -50,10 +50,12 @@ Depois abra `http://localhost:8000` no navegador.
 5. **Aprimoramento (+1 a +5 e Rank Master)**: cada peça craftada pode ser
    aprimorada individualmente na aba Equipamento. +1 a +5 gastam o
    material **comum** daquele monstro (fica mais caro a cada nível — "pouco
-   a pouco"); depois de +5, dá pra evoluir pra **Rank Master** consumindo 1
-   **Gema** daquele monstro. Todo monstro (comum ou chefe) da família tem
-   **0,5% de chance** de dropar a Gema dele a cada morte. Rank Master deixa
-   o item um pouco mais forte que a versão +0 do próximo monstro na cadeia
+   a pouco"); depois de +5, dá pra evoluir pra **Rank Master** consumindo
+   **mais material comum** (continuando a mesma progressão, como um "+6")
+   **e 1 Gema** daquele monstro. Todo monstro (comum ou chefe) da família
+   tem **0,5% de chance** de dropar a Gema dele a cada morte. Rank Master
+   deixa o item um pouco mais forte que a versão +0 do próximo monstro na
+   cadeia
    — ver a conta em "Como o aprimoramento é calculado" abaixo.
 6. **Upgrades**: comprados com ouro, aumentam dano/DPS/ouro/chance de
    material. Resetam a cada renascimento.

@@ -99,9 +99,12 @@ function buildItem(family, tier, slot) {
   // Cost (in the family's common material) to go from level-1 to level,
   // for level = 1..ENHANCE_MAX_LEVEL. Scales off the same commonCost used
   // to craft the item in the first place, growing steeper each level.
-  const enhanceCost = Array.from({ length: ENHANCE_MAX_LEVEL }, (_, i) =>
-    Math.max(1, Math.round(commonCost * (0.5 + i * 0.5)))
-  );
+  const enhanceCostStep = (i) => Math.max(1, Math.round(commonCost * (0.5 + i * 0.5)));
+  const enhanceCost = Array.from({ length: ENHANCE_MAX_LEVEL }, (_, i) => enhanceCostStep(i));
+
+  // Rank Master continues that same progression one step further (as if it
+  // were "+6" worth of common material) on top of the Gem requirement.
+  const masterMaterialCost = enhanceCostStep(ENHANCE_MAX_LEVEL);
 
   return {
     id,
@@ -116,6 +119,7 @@ function buildItem(family, tier, slot) {
     rareMaterialId: family.materials.rare.id,
     gemMaterialId: family.materials.gem.id,
     enhanceCost,
+    masterMaterialCost,
     materialCost: {
       [family.materials.common.id]: commonCost,
       [family.materials.rare.id]: rareCost,

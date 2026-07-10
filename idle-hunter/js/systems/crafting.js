@@ -78,7 +78,10 @@ export function canUpgradeToMaster(state, uid) {
   const entry = getEntry(state, uid);
   if (!entry || entry.isMaster || entry.enhanceLevel < ENHANCE_MAX_LEVEL) return false;
   const item = getItem(entry.itemId);
-  return (state.materials[item.gemMaterialId] || 0) >= 1;
+  return (
+    (state.materials[item.gemMaterialId] || 0) >= 1 &&
+    (state.materials[item.commonMaterialId] || 0) >= item.masterMaterialCost
+  );
 }
 
 export function upgradeToMaster(state, uid) {
@@ -86,6 +89,7 @@ export function upgradeToMaster(state, uid) {
   const entry = getEntry(state, uid);
   const item = getItem(entry.itemId);
   state.materials[item.gemMaterialId] -= 1;
+  state.materials[item.commonMaterialId] -= item.masterMaterialCost;
   entry.isMaster = true;
   return true;
 }

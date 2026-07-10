@@ -143,7 +143,11 @@ function enhancePanelHtml(state, uid, entry, item) {
 
   const gemInfo = family.materials.gem;
   const haveGem = state.materials[gemInfo.id] || 0;
+  const matInfo = family.materials.common;
+  const haveMat = state.materials[item.commonMaterialId] || 0;
+  const matMet = haveMat >= item.masterMaterialCost;
   return `<div class="enhance-panel">
+    <div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${matMet ? 'met' : 'missing'}">${formatNumber(haveMat)}/${formatNumber(item.masterMaterialCost)}</span></div>
     <div class="recipe-cost"><span>${gemInfo.emoji} ${gemInfo.name}</span><span class="${haveGem >= 1 ? 'met' : 'missing'}">${formatNumber(haveGem)}/1</span></div>
     <button class="master-btn" data-master-upgrade="${uid}" ${canUpgradeToMaster(state, uid) ? '' : 'disabled'}>Evoluir para Rank Master</button>
   </div>`;
