@@ -13,6 +13,7 @@ import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
   renderForgeTab, renderUpgradesTab, renderPrestigeTab, renderMaterialsTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showModal, hideModal,
+  showItemDetailModal,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -211,33 +212,53 @@ function setupStageControls() {
 }
 
 // ---------------------------------------------------------------
-// Equipment tab
+// Item detail modal (opened from equipment slots and inventory tiles)
 // ---------------------------------------------------------------
 
-// The <select> elements are recreated on every renderEquipmentTab() call, but
-// this listener is delegated on the tab container (which is never recreated),
-// so it only ever needs to be attached once — see init().
-function wireEquipmentEvents() {
-  const container = document.getElementById('tab-equipment');
+// #modal-overlay itself is never recreated (only #modal-body's innerHTML
+// changes, via showModal()), so this delegated listener only needs wiring
+// once — see init(). Covers equip/unequip plus the same enhance/Rank-Master
+// buttons the modal content shares with the old inline panel.
+function wireModalEvents() {
+  const overlay = document.getElementById('modal-overlay');
 
-  container.addEventListener('equip-change', (e) => {
-    const { slotId, uid } = e.detail;
-    if (uid == null) unequipSlot(state, slotId);
-    else equipItem(state, uid);
-    fullRefresh();
-  });
-
-  container.addEventListener('item-enhance', (e) => {
-    if (enhanceItem(state, e.detail.uid)) {
-      showToast('⬆️ Item aprimorado!');
+  overlay.addEventListener('click', (e) => {
+    const equipBtn = e.target.closest('[data-modal-equip]');
+    if (equipBtn) {
+      equipItem(state, Number(equipBtn.dataset.modalEquip));
+      hideModal();
       fullRefresh();
+      return;
     }
-  });
 
-  container.addEventListener('item-master-upgrade', (e) => {
-    if (upgradeToMaster(state, e.detail.uid)) {
-      showToast('✨ Item evoluiu para Rank Master!');
+    const unequipBtn = e.target.closest('[data-modal-unequip]');
+    if (unequipBtn) {
+      unequipSlot(state, unequipBtn.dataset.modalUnequip);
+      hideModal();
       fullRefresh();
+      return;
+    }
+
+    const enhanceBtn = e.target.closest('[data-enhance]');
+    if (enhanceBtn) {
+      const uid = Number(enhanceBtn.dataset.enhance);
+      if (enhanceItem(state, uid)) {
+        showToast('⬆️ Item aprimorado!');
+        fullRefresh();
+        showItemDetailModal(state, uid); // keep the popup open, with fresh numbers
+      }
+      return;
+    }
+
+    const masterBtn = e.target.closest('[data-master-upgrade]');
+    if (masterBtn) {
+      const uid = Number(masterBtn.dataset.masterUpgrade);
+      if (upgradeToMaster(state, uid)) {
+        showToast('✨ Item evoluiu para Rank Master!');
+        fullRefresh();
+        showItemDetailModal(state, uid);
+      }
+      return;
     }
   });
 }
@@ -340,7 +361,7 @@ function showOfflineProgressIfAny() {
 function init() {
   setupTabs();
   setupStageControls();
-  wireEquipmentEvents(); // one-time delegated listener, see wireEquipmentEvents()
+  wireModalEvents(); // one-time delegated listener, see wireModalEvents()
   resetPlayerHp();
   fullRefresh();
   armBossTimer();

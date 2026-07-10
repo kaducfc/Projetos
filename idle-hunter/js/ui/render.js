@@ -1,9 +1,9 @@
 import { MONSTER_FAMILIES, isBossStage } from '../data/monsters.js';
-import { SLOTS, getItemsForFamily, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
+import { getSlot, getItemsForFamily, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
 import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
-import { getEquippedEntry, getInventoryForSlot } from '../systems/equipment.js';
+import { getEquippedEntry } from '../systems/equipment.js';
 import { canCraft, canEnhance, canUpgradeToMaster } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost, getPrestigeUpgradeLevel, getPrestigeUpgradeCost } from '../systems/upgrades.js';
 import { canRebirth, runasGain, REBIRTH_MIN_STAGE } from '../systems/prestige.js';
@@ -99,68 +99,115 @@ export function renderBossTimer(remainingMs) {
   el.textContent = `⏱ ${seconds}s para derrotar o chefe!`;
 }
 
+// Left/right split of the 6 slots around the character avatar (see the
+// reference layout: weapon + upper-body gear on one side, the rest on the
+// other). Purely cosmetic grouping — any slot can go in either side.
+const LEFT_SLOT_IDS = ['helmet', 'armor', 'weapon'];
+const RIGHT_SLOT_IDS = ['pants', 'gloves', 'boots'];
+
 export function renderEquipmentTab(state) {
   const container = document.getElementById('tab-equipment');
-  container.innerHTML = `<div class="slot-grid">${SLOTS.map((slot) => slotCardHtml(state, slot)).join('')}</div>`;
+  const leftSlots = LEFT_SLOT_IDS.map(getSlot);
+  const rightSlots = RIGHT_SLOT_IDS.map(getSlot);
 
-  container.querySelectorAll('select[data-slot]').forEach((select) => {
-    select.addEventListener('change', (e) => {
-      const uid = e.target.value ? Number(e.target.value) : null;
-      container.dispatchEvent(new CustomEvent('equip-change', { detail: { slotId: e.target.dataset.slot, uid }, bubbles: true }));
-    });
+  const inventoryHtml = state.inventory.length
+    ? state.inventory.map((entry) => inventoryTileHtml(state, entry)).join('')
+    : `<p class="empty-slot">Nada craftado ainda. Vá até a aba Forja.</p>`;
+
+  container.innerHTML = `
+    <div class="equip-screen">
+      <div class="equip-ring">
+        <div class="equip-side">${leftSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
+        <div class="equip-character"><div class="equip-character-avatar">🧙</div></div>
+        <div class="equip-side">${rightSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
+      </div>
+      <div class="equip-inventory-header">Inventário</div>
+      <div class="equip-inventory-grid">${inventoryHtml}</div>
+    </div>
+  `;
+
+  container.querySelectorAll('[data-equip-slot]').forEach((btn) => {
+    btn.addEventListener('click', () => showEquipSlotModal(state, btn.dataset.equipSlot));
   });
-
-  container.querySelectorAll('[data-enhance]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      container.dispatchEvent(new CustomEvent('item-enhance', { detail: { uid: Number(btn.dataset.enhance) }, bubbles: true }));
-    });
-  });
-
-  container.querySelectorAll('[data-master-upgrade]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      container.dispatchEvent(new CustomEvent('item-master-upgrade', { detail: { uid: Number(btn.dataset.masterUpgrade) }, bubbles: true }));
-    });
+  container.querySelectorAll('[data-equip-item]').forEach((btn) => {
+    btn.addEventListener('click', () => showItemDetailModal(state, Number(btn.dataset.equipItem)));
   });
 }
 
-function slotCardHtml(state, slot) {
+function slotIconHtml(state, slot) {
   const equipped = getEquippedEntry(state, slot.id);
-  const options = getInventoryForSlot(state, slot.id);
+  const icon = equipped ? equipped.item.emoji : slot.emoji;
+  const badge = equipped
+    ? `<span class="mini-badge ${equipped.entry.isMaster ? 'master' : ''}">${getEnhanceLabel(equipped.entry.enhanceLevel, equipped.entry.isMaster)}</span>`
+    : '';
+  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}" data-equip-slot="${slot.id}" title="${slot.name}">
+    <span class="icon">${icon}</span>
+    ${badge}
+  </button>`;
+}
 
-  let itemHtml;
-  if (equipped) {
-    const { uid, entry, item } = equipped;
-    const enhancedStats = getEnhancedStats(item, entry.enhanceLevel, entry.isMaster);
-    const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
-    const resistanceLine = slot.kind === 'defense'
-      ? `<div class="element-resistance">${elementBadgeHtml(item.element)} +${Math.round(ELEMENT_RESISTANCE_PER_PIECE * 100)}% resistência</div>`
-      : `<div class="element-resistance">${elementBadgeHtml(item.element)} elemento de ataque</div>`;
-    itemHtml = `
-      <div class="slot-item">
-        <span class="icon">${item.emoji}</span>
-        <span class="name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></span>
+function inventoryTileHtml(state, entry) {
+  const item = getItem(entry.itemId);
+  const isEquipped = state.equipped[item.slotId] === entry.uid;
+  const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
+  return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}">
+    <span class="icon">${item.emoji}</span>
+    <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
+  </button>`;
+}
+
+/// Opens the detail popup for whatever is (or isn't) equipped in a slot.
+export function showEquipSlotModal(state, slotId) {
+  const slot = getSlot(slotId);
+  const uid = state.equipped[slotId];
+  if (uid) {
+    showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid));
+  } else {
+    showModal(`${slot.emoji} ${slot.name}`, `
+      <div class="item-detail">
+        <div class="item-detail-icon">${slot.emoji}</div>
+        <p style="color:var(--text-dim); font-size:12.5px;">Nenhum item equipado neste slot ainda. Crafte um na aba Forja.</p>
       </div>
-      <div class="slot-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
+    `);
+  }
+}
+
+/// Opens the detail popup for a specific inventory item (equipped or not).
+export function showItemDetailModal(state, uid) {
+  const entry = state.inventory.find((i) => i.uid === uid);
+  if (!entry) return;
+  const item = getItem(entry.itemId);
+  const slot = getSlot(item.slotId);
+  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid));
+}
+
+function itemDetailHtml(state, uid) {
+  const entry = state.inventory.find((i) => i.uid === uid);
+  const item = getItem(entry.itemId);
+  const slot = getSlot(item.slotId);
+  const enhancedStats = getEnhancedStats(item, entry.enhanceLevel, entry.isMaster);
+  const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
+  const isEquipped = state.equipped[item.slotId] === uid;
+
+  const resistanceLine = slot.kind === 'defense'
+    ? `<div class="element-resistance">${elementBadgeHtml(item.element)} +${Math.round(ELEMENT_RESISTANCE_PER_PIECE * 100)}% resistência</div>`
+    : `<div class="element-resistance">${elementBadgeHtml(item.element)} elemento de ataque</div>`;
+
+  const actionBtn = isEquipped
+    ? `<button class="modal-action-btn" data-modal-unequip="${item.slotId}">Desequipar</button>`
+    : `<button class="modal-action-btn" data-modal-equip="${uid}">Equipar</button>`;
+
+  return `
+    <div class="item-detail">
+      <div class="item-detail-icon">${item.emoji}</div>
+      <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
+      <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
       <div class="card-slot-badge" title="Sistema de cartas ainda não implementado">🃏 Slot de Carta: vazio</div>
       ${enhancePanelHtml(state, uid, entry, item)}
-    `;
-  } else {
-    itemHtml = `<div class="empty-slot">Nenhum item equipado</div>`;
-  }
-
-  const selectHtml = options.length
-    ? `<select data-slot="${slot.id}">
-        <option value="">— Nenhum —</option>
-        ${options.map((o) => `<option value="${o.uid}" ${state.equipped[slot.id] === o.uid ? 'selected' : ''}>${o.item.name} (${getEnhanceLabel(o.entry.enhanceLevel, o.entry.isMaster)})</option>`).join('')}
-      </select>`
-    : `<div class="empty-slot">Nada craftado ainda</div>`;
-
-  return `<div class="slot-card">
-    <div class="slot-title">${slot.emoji} ${slot.name}</div>
-    ${itemHtml}
-    ${selectHtml}
-  </div>`;
+      ${actionBtn}
+    </div>
+  `;
 }
 
 function enhancePanelHtml(state, uid, entry, item) {

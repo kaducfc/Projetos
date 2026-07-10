@@ -49,11 +49,15 @@ Depois abra `http://localhost:8000` no navegador.
    (defesa) e Arma (ataque: lança, adaga, arco, martelo, machado ou
    espada, dependendo da família). Cada peça é craftada na Forja com
    ouro + materiais daquele monstro, e equipada automaticamente ao
-   craftar (dá pra trocar depois na aba Equipamento). Cada peça craftada
-   já reserva um **slot de carta** (estilo Ragnarok Online) — visível na
-   aba Equipamento como "vazio". O sistema de cartas em si (monstros
-   dropando cartas, efeitos, encaixe) ainda não existe; é só a estrutura
-   de dados/UI preparada para não precisar migrar saves depois.
+   craftar. A aba Equipamento mostra o personagem no centro com os 6
+   slots ao redor (só o ícone do item, ou apagado se vazio) e o
+   inventário completo embaixo (também só ícones) — clique em qualquer
+   ícone, equipado ou não, pra abrir um popup com nome, stats,
+   aprimoramento e o botão de Equipar/Desequipar. Cada peça craftada já
+   reserva um **slot de carta** (estilo Ragnarok Online) — visível nesse
+   popup como "vazio". O sistema de cartas em si (monstros dropando
+   cartas, efeitos, encaixe) ainda não existe; é só a estrutura de
+   dados/UI preparada para não precisar migrar saves depois.
    Além do stat principal de cada peça, as 5 peças de defesa também dão
    **Vida** (Elmo, Calça, Botas) ou **Armadura** (Peitoral, Luvas) — é
    assim que o equipamento te deixa sobreviver a estágios mais altos, não
@@ -163,6 +167,21 @@ relação com o ±25% de vantagem/desvantagem, é uma redução separada que
 soma com a fórmula de Armadura (multiplicativamente, então nenhuma das
 duas isoladamente derruba o dano a zero).
 
+## Decisão de design: a aba Equipamento é só ícones + um popup
+
+Todo detalhe de item (stats, elemento, aprimoramento, botão de
+Equipar/Desequipar) mora num único popup compartilhado — o mesmo
+`#modal-overlay` já usado para o aviso de progresso offline (`showModal`/
+`hideModal` em `render.js`). Clicar em qualquer ícone (slot no personagem
+ou item no inventário) chama `showEquipSlotModal`/`showItemDetailModal`,
+que só leem `state` e desenham o popup; a mutação de verdade (equipar,
+desequipar, aprimorar, evoluir pra Rank Master) acontece via um único
+listener delegado em `#modal-overlay`, wireado uma vez em `main.js`
+(`wireModalEvents`) — igual ao padrão já usado pros outros listeners
+delegados do jogo. Aprimorar/evoluir mantém o popup aberto e só atualiza
+o conteúdo dele, pra dar pra clicar "Aprimorar" várias vezes seguidas sem
+reabrir nada.
+
 ## Próximo passo natural: cartas (Ragnarok-style)
 
 A estrutura já está pronta (`inventory[i].cardId`, função `socketCard()`
@@ -189,7 +208,7 @@ js/
   systems/
     stats.js                Agrega equipamento + upgrades → dano/DPS/bônus/resistência elemental finais
     combat.js                HP/recompensa/dano do monstro por estágio, drops, kill/spawn
-    equipment.js              Equipar/desequipar, listar inventário por slot
+    equipment.js              Equipar/desequipar, resolver o que está em cada slot
     crafting.js                Checagem de custo, craft e aprimoramento (+1..+5, Rank Master)
     upgrades.js                 Compra de upgrades comuns e de prestígio
     prestige.js                  Cálculo de Runas e lógica de renascimento
@@ -234,3 +253,11 @@ atualização da aba Equipamento corrigido e confirmado, e layout em
 viewport mobile) — sem erros no console. Vale um play manual seu para
 validar a sensação de progressão/dificuldade (inclusive a nova curva de
 risco de morte), que é subjetiva.
+
+Também testei a nova UI da aba Equipamento especificamente: abrir o popup
+a partir de um slot no personagem e a partir de um ícone do inventário,
+aprimorar 5 vezes seguidas com o popup ficando aberto e atualizando os
+números a cada clique, o painel de Rank Master aparecendo com as duas
+exigências (material + Gema) corretas, desequipar (slot volta a ficar
+apagado) e reequipar a partir do inventário — tudo bateu com o estado
+esperado e sem erros no console.

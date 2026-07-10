@@ -27,9 +27,3 @@ export function equipItem(state, uid) {
 export function unequipSlot(state, slotId) {
   state.equipped[slotId] = null;
 }
-
-export function getInventoryForSlot(state, slotId) {
-  return state.inventory
-    .filter((entry) => getItem(entry.itemId)?.slotId === slotId)
-    .map((entry) => ({ uid: entry.uid, entry, item: getItem(entry.itemId) }));
-}
