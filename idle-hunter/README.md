@@ -45,7 +45,7 @@ Depois abra `http://localhost:8000` no navegador.
    tempo acabar, você recua um estágio (o recorde de estágio máximo não
    é perdido, só sua posição atual). Chefes que você já derrotou antes
    não têm mais prazo — pode farmar neles à vontade.
-4. **Equipamentos**: 6 slots — Elmo, Armadura, Calça, Luvas, Botas
+4. **Equipamentos**: 6 slots — Elmo, Peitoral, Calça, Luvas, Botas
    (defesa) e Arma (ataque: lança, adaga, arco, martelo, machado ou
    espada, dependendo da família). Cada peça é craftada na Forja com
    ouro + materiais daquele monstro, e equipada automaticamente ao
@@ -55,7 +55,7 @@ Depois abra `http://localhost:8000` no navegador.
    dropando cartas, efeitos, encaixe) ainda não existe; é só a estrutura
    de dados/UI preparada para não precisar migrar saves depois.
    Além do stat principal de cada peça, as 5 peças de defesa também dão
-   **Vida** (Elmo, Calça, Botas) ou **Armadura** (Armadura, Luvas) — é
+   **Vida** (Elmo, Calça, Botas) ou **Armadura** (Peitoral, Luvas) — é
    assim que o equipamento te deixa sobreviver a estágios mais altos, não
    só bater mais forte.
 5. **Aprimoramento (+1 a +5 e Rank Master)**: cada peça craftada pode ser
@@ -68,9 +68,18 @@ Depois abra `http://localhost:8000` no navegador.
    deixa o item um pouco mais forte que a versão +0 do próximo monstro na
    cadeia
    — ver a conta em "Como o aprimoramento é calculado" abaixo.
-6. **Upgrades**: comprados com ouro, aumentam dano/DPS/ouro/chance de
+6. **Elementos**: todo monstro tem um elemento (Neutro, Fogo, Planta,
+   Elétrico ou Água) — veja o badge colorido ao lado do nome dele. Sua
+   arma herda o elemento do monstro de quem foi craftada e causa **+25%**
+   de dano se tiver vantagem contra o monstro atual, **-25%** se tiver
+   desvantagem, ou nada se qualquer um dos dois for Neutro. Cada peça de
+   **defesa** dá **+5% de resistência** ao elemento do monstro de quem
+   ela veio (então usar peças do mesmo monstro empilha resistência contra
+   aquele elemento especificamente). Detalhes e a tabela de vantagens em
+   "Como os elementos funcionam" abaixo.
+7. **Upgrades**: comprados com ouro, aumentam dano/DPS/ouro/chance de
    material. Resetam a cada renascimento.
-7. **Prestígio (Renascer)**: ao alcançar o estágio 20+, você pode
+8. **Prestígio (Renascer)**: ao alcançar o estágio 20+, você pode
    renascer: ganha Runas (baseado no estágio máximo alcançado) e reseta
    ouro/estágio/upgrades comuns. Runas compram upgrades **permanentes**
    (Poder Ancestral, Fortuna Eterna, Faro Apurado, Início Avançado).
@@ -129,6 +138,31 @@ sobem 9% compostos por nível (`ENHANCE_PER_LEVEL_MULT`) até chegar a
 sentindo como a evolução rara que ele é. Isso vale pra qualquer stat que o
 item tenha (dano, DPS, %, etc.) — todos escalam pelo mesmo multiplicador.
 
+## Como os elementos funcionam
+
+Ciclo simples de 4 elementos, cada um batendo no próximo e perdendo pro
+anterior (`js/data/elements.js`):
+
+```
+Fogo → Planta → Elétrico → Água → Fogo
+```
+
+Ou seja: Fogo tem vantagem contra Planta e perde para Água; Planta vence
+Elétrico e perde para Fogo; Elétrico vence Água e perde para Planta; Água
+vence Fogo e perde para Elétrico. Combinações "não-vizinhas" no ciclo
+(ex: Fogo vs Elétrico) são neutras — sem bônus nem penalidade. Neutro
+nunca tem vantagem nem desvantagem, dos dois lados.
+
+Cada família de monstro tem um elemento fixo (ex: Dragão = Fogo, Wyvern
+de Gelo = Água, Aranha = Planta, Lobo = Elétrico; Javali e Golem são
+Neutro). O elemento da sua **arma** é sempre o da família de quem ela foi
+craftada — é o único item que "ataca", então só ele entra na conta de
+±25%. Já a **resistência** (+5% por peça) olha o elemento de cada peça de
+**defesa** individualmente contra o elemento do monstro atual — não tem
+relação com o ±25% de vantagem/desvantagem, é uma redução separada que
+soma com a fórmula de Armadura (multiplicativamente, então nenhuma das
+duas isoladamente derruba o dano a zero).
+
 ## Próximo passo natural: cartas (Ragnarok-style)
 
 A estrutura já está pronta (`inventory[i].cardId`, função `socketCard()`
@@ -148,11 +182,12 @@ js/
   state.js              Estado do jogo + persistência (localStorage)
   format.js              Formatação de números grandes (1.2K, 3.4M, ...)
   data/
-    monsters.js           As 6 famílias de monstro, estágios, materiais
+    monsters.js           As 6 famílias de monstro, estágios, materiais, elemento
     items.js               Geração dos 36 itens equipáveis (6 famílias × 6 slots)
+    elements.js             Ciclo de elementos e cálculo de vantagem/desvantagem
     upgrades.js             Upgrades comuns (ouro) e de prestígio (Runas)
   systems/
-    stats.js                Agrega equipamento + upgrades → dano/DPS/bônus finais
+    stats.js                Agrega equipamento + upgrades → dano/DPS/bônus/resistência elemental finais
     combat.js                HP/recompensa/dano do monstro por estágio, drops, kill/spawn
     equipment.js              Equipar/desequipar, listar inventário por slot
     crafting.js                Checagem de custo, craft e aprimoramento (+1..+5, Rank Master)
@@ -185,13 +220,17 @@ primeiro MVP. Os pontos mais fáceis de ajustar:
 - `js/systems/combat.js`: `GEM_DROP_CHANCE` (chance de Gema, 0,5% por padrão).
 - `js/systems/stats.js`: `BASE_MAX_HP`, `BASE_ARMOR` (vida/armadura antes de qualquer equipamento).
 - `js/systems/combat.js`: `PLAYER_DPS_TAKEN_GROWTH`/`_BASE`, `BOSS_DPS_TAKEN_MULT`, `ARMOR_CONSTANT`.
+- `js/data/elements.js`: `ELEMENT_DAMAGE_BONUS` (±25%), `ELEMENT_RESISTANCE_PER_PIECE` (5%).
 
 ## Testado
 
 Rodei o jogo de ponta a ponta num navegador headless (clique, DPS
 automático, avanço de estágio, craft, equipar, troca de estágio para
 farm, renascimento, progresso offline ao reabrir, morte/recuo de estágio,
-vida/armadura vindas de equipamento, e layout em viewport mobile) — sem
-erros no console. Vale um play manual seu para validar a sensação de
-progressão/dificuldade (inclusive a nova curva de risco de morte), que é
-subjetiva.
+vida/armadura vindas de equipamento, os três casos de matchup elemental —
+vantagem/desvantagem/neutro — testados isoladamente, resistência
+elemental por peça validada com teste unitário direto, o bug de
+atualização da aba Equipamento corrigido e confirmado, e layout em
+viewport mobile) — sem erros no console. Vale um play manual seu para
+validar a sensação de progressão/dificuldade (inclusive a nova curva de
+risco de morte), que é subjetiva.

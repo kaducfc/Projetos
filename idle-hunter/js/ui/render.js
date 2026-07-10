@@ -1,11 +1,17 @@
 import { MONSTER_FAMILIES, isBossStage } from '../data/monsters.js';
 import { SLOTS, getItemsForFamily, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
 import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
+import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry, getInventoryForSlot } from '../systems/equipment.js';
 import { canCraft, canEnhance, canUpgradeToMaster } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost, getPrestigeUpgradeLevel, getPrestigeUpgradeCost } from '../systems/upgrades.js';
 import { canRebirth, runasGain, REBIRTH_MIN_STAGE } from '../systems/prestige.js';
+
+function elementBadgeHtml(elementId) {
+  const el = getElement(elementId);
+  return `<span class="element-badge element-${el.id}">${el.emoji} ${el.name}</span>`;
+}
 
 const STAT_LABELS = {
   clickFlat: (v) => `+${formatNumber(v)} Dano de Clique`,
@@ -30,10 +36,28 @@ export function renderTopBar(state) {
   document.getElementById('stage-value').textContent = state.maxStage;
 }
 
-export function renderCombatStats(stats) {
+export function renderCombatStats(stats, monster) {
   document.getElementById('click-damage-value').textContent = formatNumber(stats.clickDamage);
   document.getElementById('dps-value').textContent = formatNumber(stats.dps);
   document.getElementById('armor-value').textContent = formatNumber(stats.armor);
+
+  const weaponEl = document.getElementById('weapon-element-value');
+  weaponEl.innerHTML = elementBadgeHtml(stats.weaponElement);
+
+  const modEl = document.getElementById('element-matchup');
+  if (monster) {
+    const mod = elementDamageModifier(stats.weaponElement, monster.element);
+    if (mod > 0) {
+      modEl.textContent = `⚔️ Vantagem elemental (+${Math.round(mod * 100)}%)`;
+      modEl.className = 'advantage';
+    } else if (mod < 0) {
+      modEl.textContent = `⚠️ Desvantagem elemental (${Math.round(mod * 100)}%)`;
+      modEl.className = 'disadvantage';
+    } else {
+      modEl.textContent = '';
+      modEl.className = '';
+    }
+  }
 }
 
 export function renderPlayerHp(current, max) {
@@ -49,7 +73,7 @@ export function renderMonster(state, monster) {
   const boss = isBossStage(state.stage);
   document.getElementById('monster-sprite').textContent = monster.emoji;
   document.getElementById('monster-name').innerHTML =
-    `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''}`;
+    `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
   document.getElementById('stage-label').textContent = `Estágio ${state.stage}`;
 
   const hp = Math.max(0, state.monsterHp ?? monster.maxHp);
@@ -108,12 +132,16 @@ function slotCardHtml(state, slot) {
     const { uid, entry, item } = equipped;
     const enhancedStats = getEnhancedStats(item, entry.enhanceLevel, entry.isMaster);
     const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
+    const resistanceLine = slot.kind === 'defense'
+      ? `<div class="element-resistance">${elementBadgeHtml(item.element)} +${Math.round(ELEMENT_RESISTANCE_PER_PIECE * 100)}% resistência</div>`
+      : `<div class="element-resistance">${elementBadgeHtml(item.element)} elemento de ataque</div>`;
     itemHtml = `
       <div class="slot-item">
         <span class="icon">${item.emoji}</span>
         <span class="name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></span>
       </div>
       <div class="slot-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
+      ${resistanceLine}
       <div class="card-slot-badge" title="Sistema de cartas ainda não implementado">🃏 Slot de Carta: vazio</div>
       ${enhancePanelHtml(state, uid, entry, item)}
     `;
@@ -197,6 +225,7 @@ function recipeCardHtml(state, item) {
 
   return `<div class="recipe-card ${equipped ? 'equipped' : ''}">
     <div class="recipe-header"><span class="icon">${item.emoji}</span><span class="name">${item.name}</span></div>
+    <div class="element-resistance">${elementBadgeHtml(item.element)}</div>
     <div class="recipe-stats">${formatStatsLines(item.stats).join('<br>')}</div>
     <div class="recipe-cost"><span>💰 Ouro</span><span class="${goldMet ? 'met' : 'missing'}">${formatNumber(state.gold)}/${formatNumber(item.goldCost)}</span></div>
     ${costLines}
@@ -276,7 +305,7 @@ export function renderMaterialsTab(state) {
 
 export function renderAll(state, monster, stats) {
   renderTopBar(state);
-  renderCombatStats(stats);
+  renderCombatStats(stats, monster);
   renderMonster(state, monster);
   renderEquipmentTab(state);
   renderForgeTab(state);

@@ -5,7 +5,7 @@ import { MONSTER_FAMILIES } from './monsters.js';
 export const SLOTS = [
   { id: 'weapon', name: 'Arma', emoji: '⚔️', kind: 'attack' },
   { id: 'helmet', name: 'Elmo', emoji: '🪖', kind: 'defense' },
-  { id: 'armor', name: 'Armadura', emoji: '🛡️', kind: 'defense' },
+  { id: 'armor', name: 'Peitoral', emoji: '🛡️', kind: 'defense' },
   { id: 'pants', name: 'Calça', emoji: '👖', kind: 'defense' },
   { id: 'gloves', name: 'Luvas', emoji: '🧤', kind: 'defense' },
   { id: 'boots', name: 'Botas', emoji: '👢', kind: 'defense' },
@@ -72,7 +72,7 @@ function buildItem(family, tier, slot) {
     case 'armor':
       stats.clickPercent = Math.round((5 + tier * 3) * 10) / 10;
       stats.armorFlat = Math.round(base * 1.2);
-      name = `Armadura de ${family.name}`;
+      name = `Peitoral de ${family.name}`;
       emoji = '🛡️';
       break;
     case 'pants':
@@ -118,6 +118,7 @@ function buildItem(family, tier, slot) {
     tier,
     name,
     emoji,
+    element: family.element,
     stats,
     goldCost,
     commonMaterialId: family.materials.common.id,

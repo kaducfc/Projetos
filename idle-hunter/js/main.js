@@ -1,7 +1,8 @@
 import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
-import { computePlayerStats } from './systems/stats.js';
+import { computePlayerStats, getElementalResistance } from './systems/stats.js';
 import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, armorReduction } from './systems/combat.js';
 import { isBossStage } from './data/monsters.js';
+import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
 import { craftItem, enhanceItem, upgradeToMaster } from './systems/crafting.js';
 import { buyUpgrade, buyPrestigeUpgrade } from './systems/upgrades.js';
@@ -89,7 +90,7 @@ function refreshCombatOnly() {
   const monster = getCurrentMonster(state.stage);
   const stats = computePlayerStats(state);
   currentHp = Math.min(currentHp, stats.maxHp);
-  renderCombatStats(stats);
+  renderCombatStats(stats, monster);
   renderMonster(state, monster);
   renderPlayerHp(currentHp, stats.maxHp);
   return { monster, stats };
@@ -103,6 +104,7 @@ function handleKillEvent(event) {
   renderTopBar(state);
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
+  renderEquipmentTab(state);
   renderForgeTab(state);
   renderMaterialsTab(state);
   renderUpgradesTab(state);
@@ -112,20 +114,31 @@ function handleKillEvent(event) {
   armBossTimer(); // stage may have just advanced onto (or off of) a boss
 }
 
+// Combined reduction from armor (diminishing returns) and elemental
+// resistance (flat 5% per matching defense piece), layered multiplicatively
+// so neither can push the other's contribution to/past 100%.
+function totalIncomingReduction(stats, monsterElement) {
+  const armorRed = armorReduction(stats.armor);
+  const elemRes = getElementalResistance(state, monsterElement);
+  return 1 - (1 - armorRed) * (1 - elemRes);
+}
+
 function onClickMonster() {
   if (bossDeadline != null && Date.now() >= bossDeadline) {
     retreat('timeout');
     return;
   }
   const stats = computePlayerStats(state);
-  const event = applyDamage(state, stats.clickDamage, stats);
-  spawnDamagePopup(stats.clickDamage);
+  const monster = getCurrentMonster(state.stage);
+  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, monster.element));
+  const event = applyDamage(state, dealt, stats);
+  spawnDamagePopup(dealt);
   pulseMonster();
   if (event) {
     refreshCombatOnly();
     handleKillEvent(event);
   } else {
-    renderMonster(state, getCurrentMonster(state.stage));
+    renderMonster(state, monster);
     renderBossTimer(bossDeadline != null ? bossDeadline - Date.now() : null);
     renderPlayerHp(currentHp, stats.maxHp);
   }
@@ -139,9 +152,11 @@ function tick() {
 
   const stats = computePlayerStats(state);
   currentHp = Math.min(currentHp, stats.maxHp);
+  const monster = getCurrentMonster(state.stage);
 
   if (stats.dps > 0) {
-    const event = applyDamage(state, stats.dps * (TICK_MS / 1000), stats);
+    const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, monster.element));
+    const event = applyDamage(state, dealt * (TICK_MS / 1000), stats);
     if (event) {
       refreshCombatOnly();
       handleKillEvent(event);
@@ -149,8 +164,8 @@ function tick() {
     }
   }
 
-  const monster = getCurrentMonster(state.stage);
-  const incoming = monster.dps * (1 - armorReduction(stats.armor)) * (TICK_MS / 1000);
+  const reduction = totalIncomingReduction(stats, monster.element);
+  const incoming = monster.dps * (1 - reduction) * (TICK_MS / 1000);
   currentHp -= incoming;
 
   if (currentHp <= 0) {
