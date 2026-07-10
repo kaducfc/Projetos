@@ -1,9 +1,11 @@
-// Monster families: each spans a block of stages. The last stage of each
-// block is that family's boss. Beyond the last family, stages keep scaling
-// forever and reuse the last family (bosses keep appearing every STAGE_BLOCK
-// stages) so progression never hard-caps.
+// Monster families: each spans a block of stages (FAMILY_BLOCK wide). Beyond
+// the last family, stages keep scaling forever and reuse the last family so
+// progression never hard-caps. Independently, every BOSS_INTERVAL-th stage
+// is a boss fight (so a family can have more than one boss checkpoint across
+// its block, reusing the same boss identity at increasing difficulty).
 
-export const STAGE_BLOCK = 20;
+export const FAMILY_BLOCK = 20;
+export const BOSS_INTERVAL = 10;
 
 export const MONSTER_FAMILIES = [
   {
@@ -100,7 +102,7 @@ export function getFamilyForStage(stage) {
 }
 
 export function isBossStage(stage) {
-  return stage % STAGE_BLOCK === 0;
+  return stage % BOSS_INTERVAL === 0;
 }
 
 export function getMonsterInfo(stage) {

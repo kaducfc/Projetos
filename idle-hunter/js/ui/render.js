@@ -50,6 +50,19 @@ export function renderMonster(state, monster) {
   document.getElementById('stage-max').disabled = state.stage >= state.maxStage;
 }
 
+/// remainingMs === null hides the timer (not fighting an unconquered boss).
+export function renderBossTimer(remainingMs) {
+  const el = document.getElementById('boss-timer');
+  if (remainingMs == null) {
+    el.classList.add('hidden');
+    return;
+  }
+  const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
+  el.classList.remove('hidden');
+  el.classList.toggle('urgent', seconds <= 10);
+  el.textContent = `⏱ ${seconds}s para derrotar o chefe!`;
+}
+
 export function renderEquipmentTab(state) {
   const container = document.getElementById('tab-equipment');
   container.innerHTML = `<div class="slot-grid">${SLOTS.map((slot) => slotCardHtml(state, slot)).join('')}</div>`;
@@ -68,7 +81,8 @@ function slotCardHtml(state, slot) {
 
   const itemHtml = equipped
     ? `<div class="slot-item"><span class="icon">${equipped.emoji}</span><span class="name">${equipped.name}</span></div>
-       <div class="slot-stats">${formatStatsLines(equipped.stats).join('<br>')}</div>`
+       <div class="slot-stats">${formatStatsLines(equipped.stats).join('<br>')}</div>
+       <div class="card-slot-badge" title="Sistema de cartas ainda não implementado">🃏 Slot de Carta: vazio</div>`
     : `<div class="empty-slot">Nenhum item equipado</div>`;
 
   const selectHtml = options.length

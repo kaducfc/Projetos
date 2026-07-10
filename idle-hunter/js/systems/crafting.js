@@ -26,7 +26,16 @@ export function craftItem(state, itemId) {
   }
 
   const uid = state.nextUid++;
-  state.inventory.push({ uid, itemId });
+  // cardId: reserved slot for a future Ragnarok-style card socket system —
+  // every crafted piece (attack or defense) has exactly one, unused for now.
+  state.inventory.push({ uid, itemId, cardId: null });
   state.equipped[item.slotId] = uid;
   return uid;
+}
+
+export function socketCard(state, uid, cardId) {
+  const entry = state.inventory.find((i) => i.uid === uid);
+  if (!entry) return false;
+  entry.cardId = cardId;
+  return true;
 }

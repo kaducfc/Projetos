@@ -27,20 +27,29 @@ Depois abra `http://localhost:8000` no navegador.
    seu DPS (dano por segundo) também bate automaticamente, mesmo sem
    clicar — essa é a parte "idle". Ao derrotar um monstro você ganha ouro
    e (com chance) materiais de craft, e avança para o próximo estágio.
-2. **Estágios**: cada família de monstro ocupa um bloco de 20 estágios; o
-   último estágio do bloco é o chefe daquela família, com HP/recompensas
-   maiores e chance bem mais alta de dropar o material raro. Dá pra
-   navegar (◀ ▶) para qualquer estágio já alcançado e farmar ali — é
-   assim que você junta material de um monstro específico para craftar o
-   set dele.
-3. **Equipamentos**: 6 slots — Elmo, Armadura, Calça, Luvas, Botas
+2. **Estágios**: cada família de monstro ocupa um bloco de 20 estágios (com
+   materiais e arma próprios), mas **todo estágio múltiplo de 10 é um
+   chefe** — igual ao Clicker Heroes — reaproveitando o chefe da família
+   com HP/recompensas maiores. Dá pra navegar (◀ ▶) para qualquer estágio
+   já alcançado e farmar ali — é assim que você junta material de um
+   monstro específico para craftar o set dele.
+3. **Chefes têm prazo**: ao alcançar um chefe pela primeira vez (estágio
+   ainda não superado), você tem **30 segundos** para derrotá-lo. Se o
+   tempo acabar, você recua um estágio (o recorde de estágio máximo não
+   é perdido, só sua posição atual). Chefes que você já derrotou antes
+   não têm mais prazo — pode farmar neles à vontade.
+4. **Equipamentos**: 6 slots — Elmo, Armadura, Calça, Luvas, Botas
    (defesa) e Arma (ataque: lança, adaga, arco, martelo, machado ou
    espada, dependendo da família). Cada peça é craftada na Forja com
    ouro + materiais daquele monstro, e equipada automaticamente ao
-   craftar (dá pra trocar depois na aba Equipamento).
-4. **Upgrades**: comprados com ouro, aumentam dano/DPS/ouro/chance de
+   craftar (dá pra trocar depois na aba Equipamento). Cada peça craftada
+   já reserva um **slot de carta** (estilo Ragnarok Online) — visível na
+   aba Equipamento como "vazio". O sistema de cartas em si (monstros
+   dropando cartas, efeitos, encaixe) ainda não existe; é só a estrutura
+   de dados/UI preparada para não precisar migrar saves depois.
+5. **Upgrades**: comprados com ouro, aumentam dano/DPS/ouro/chance de
    material. Resetam a cada renascimento.
-5. **Prestígio (Renascer)**: ao alcançar o estágio 20+, você pode
+6. **Prestígio (Renascer)**: ao alcançar o estágio 20+, você pode
    renascer: ganha Runas (baseado no estágio máximo alcançado) e reseta
    ouro/estágio/upgrades comuns. Runas compram upgrades **permanentes**
    (Poder Ancestral, Fortuna Eterna, Faro Apurado, Início Avançado).
@@ -58,6 +67,25 @@ papel que os "Ancients" cumprem no Clicker Heroes original.
 Se você preferir o comportamento clássico (equipamento também reseta), a
 mudança é pequena: em `js/systems/prestige.js`, função `doRebirth`, é só
 também limpar `state.inventory`, `state.equipped` e `state.materials`.
+
+## Decisão de design: o prazo do chefe não é salvo
+
+O contador de 30s (`bossDeadline` em `js/main.js`) é deliberadamente **não
+persistido** no save — só existe em memória enquanto a aba está aberta.
+Assim, fechar/recarregar a página sempre te dá uma tentativa limpa contra
+o chefe, em vez de arriscar zerar o tempo enquanto você não estava
+olhando. O prazo também só existe enquanto o chefe é a fronteira do seu
+progresso (`state.stage === state.maxStage`); revisitar um chefe já
+derrotado pra farmar material nunca tem pressa.
+
+## Próximo passo natural: cartas (Ragnarok-style)
+
+A estrutura já está pronta (`inventory[i].cardId`, função `socketCard()`
+em `js/systems/crafting.js`, badge "Slot de Carta" na aba Equipamento) —
+falta: um `data/cards.js` com as cartas por monstro, elas dropando junto
+dos materiais em `systems/combat.js` (`rollDrops`), os efeitos delas
+entrando em `systems/stats.js` (`computePlayerStats`), e a UI de
+encaixar/trocar carta em `render.js`/`main.js`.
 
 ## Estrutura
 
@@ -100,6 +128,8 @@ primeiro MVP. Os pontos mais fáceis de ajustar:
 - `js/data/items.js`: `tierBase()` e os multiplicadores por slot.
 - `js/data/upgrades.js`: `baseCost`/`costGrowth` de cada upgrade.
 - `js/systems/prestige.js`: fórmula de `runasGain`.
+- `js/data/monsters.js`: `BOSS_INTERVAL` (frequência de chefes).
+- `js/main.js`: `BOSS_TIME_LIMIT_MS` (prazo do chefe).
 
 ## Testado
 

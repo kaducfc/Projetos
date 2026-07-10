@@ -1,6 +1,7 @@
 import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
 import { computePlayerStats } from './systems/stats.js';
 import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned } from './systems/combat.js';
+import { isBossStage } from './data/monsters.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
 import { craftItem } from './systems/crafting.js';
 import { buyUpgrade, buyPrestigeUpgrade } from './systems/upgrades.js';
@@ -9,15 +10,46 @@ import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.
 import { formatNumber } from './format.js';
 import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
-  renderForgeTab, renderUpgradesTab, renderPrestigeTab, renderMaterialsTab,
+  renderForgeTab, renderUpgradesTab, renderPrestigeTab, renderMaterialsTab, renderBossTimer,
   spawnDamagePopup, pulseMonster, showToast, showModal, hideModal,
 } from './ui/render.js';
 
 const TICK_MS = 100;
 const SAVE_INTERVAL_MS = 10000;
+const BOSS_TIME_LIMIT_MS = 30000;
 
 let state = loadState() || createDefaultState();
 ensureMonsterSpawned(state);
+
+// Not persisted on purpose — a short combat timer shouldn't survive a reload
+// or an offline gap, so every fresh session gives a clean 30s attempt.
+let bossDeadline = null;
+
+// A boss only has a timer while it's still blocking progress (the frontier
+// stage). Revisiting an already-beaten boss to farm materials is timer-free.
+function isActiveBossFight() {
+  return isBossStage(state.stage) && state.stage === state.maxStage;
+}
+
+function armBossTimer() {
+  const shouldArm = isActiveBossFight();
+  const wasArmed = bossDeadline != null;
+  bossDeadline = shouldArm ? Date.now() + BOSS_TIME_LIMIT_MS : null;
+  if (shouldArm && !wasArmed) {
+    showToast('⚔️ Chefe! 30 segundos para derrotá-lo, ou você recua um estágio.');
+  }
+  renderBossTimer(bossDeadline != null ? bossDeadline - Date.now() : null);
+}
+
+function retreatFromBoss() {
+  const failedStage = state.stage;
+  state.stage = Math.max(1, state.stage - 1);
+  state.monsterHp = null;
+  ensureMonsterSpawned(state);
+  showToast(`⏳ Tempo esgotado! Você recuou do estágio ${failedStage} para o ${state.stage}.`);
+  refreshCombatOnly();
+  armBossTimer();
+}
 
 function refreshAll() {
   const monster = getCurrentMonster(state.stage);
@@ -55,9 +87,14 @@ function handleKillEvent(event) {
   renderUpgradesTab(state);
   renderPrestigeTab(state);
   wireAllPanelButtons();
+  armBossTimer(); // stage may have just advanced onto (or off of) a boss
 }
 
 function onClickMonster() {
+  if (bossDeadline != null && Date.now() >= bossDeadline) {
+    retreatFromBoss();
+    return;
+  }
   const stats = computePlayerStats(state);
   const event = applyDamage(state, stats.clickDamage, stats);
   spawnDamagePopup(stats.clickDamage);
@@ -67,10 +104,15 @@ function onClickMonster() {
     handleKillEvent(event);
   } else {
     renderMonster(state, getCurrentMonster(state.stage));
+    renderBossTimer(bossDeadline != null ? bossDeadline - Date.now() : null);
   }
 }
 
 function tick() {
+  if (bossDeadline != null && Date.now() >= bossDeadline) {
+    retreatFromBoss();
+    return;
+  }
   const stats = computePlayerStats(state);
   if (stats.dps > 0) {
     const event = applyDamage(state, stats.dps * (TICK_MS / 1000), stats);
@@ -81,6 +123,7 @@ function tick() {
     }
   }
   renderMonster(state, getCurrentMonster(state.stage));
+  renderBossTimer(bossDeadline != null ? bossDeadline - Date.now() : null);
 }
 
 // ---------------------------------------------------------------
@@ -104,13 +147,13 @@ function setupTabs() {
 
 function setupStageControls() {
   document.getElementById('stage-prev').addEventListener('click', () => {
-    if (setViewedStage(state, state.stage - 1)) refreshCombatOnly();
+    if (setViewedStage(state, state.stage - 1)) { refreshCombatOnly(); armBossTimer(); }
   });
   document.getElementById('stage-next').addEventListener('click', () => {
-    if (setViewedStage(state, state.stage + 1)) refreshCombatOnly();
+    if (setViewedStage(state, state.stage + 1)) { refreshCombatOnly(); armBossTimer(); }
   });
   document.getElementById('stage-max').addEventListener('click', () => {
-    if (setViewedStage(state, state.maxStage)) refreshCombatOnly();
+    if (setViewedStage(state, state.maxStage)) { refreshCombatOnly(); armBossTimer(); }
   });
   document.getElementById('monster-sprite').addEventListener('click', onClickMonster);
 }
@@ -231,6 +274,7 @@ function init() {
   setupStageControls();
   wireEquipmentEvents(); // one-time delegated listener, see wireEquipmentEvents()
   fullRefresh();
+  armBossTimer();
 
   document.getElementById('modal-close').addEventListener('click', hideModal);
 
@@ -246,6 +290,8 @@ function init() {
     refresh: fullRefresh,
     save: () => saveState(state),
     hardReset: () => { hardResetState(); location.reload(); },
+    getBossDeadline: () => bossDeadline,
+    forceBossTimeout: () => { if (bossDeadline != null) bossDeadline = Date.now() - 1; },
   };
 }
 
