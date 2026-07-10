@@ -47,9 +47,17 @@ Depois abra `http://localhost:8000` no navegador.
    aba Equipamento como "vazio". O sistema de cartas em si (monstros
    dropando cartas, efeitos, encaixe) ainda não existe; é só a estrutura
    de dados/UI preparada para não precisar migrar saves depois.
-5. **Upgrades**: comprados com ouro, aumentam dano/DPS/ouro/chance de
+5. **Aprimoramento (+1 a +5 e Rank Master)**: cada peça craftada pode ser
+   aprimorada individualmente na aba Equipamento. +1 a +5 gastam o
+   material **comum** daquele monstro (fica mais caro a cada nível — "pouco
+   a pouco"); depois de +5, dá pra evoluir pra **Rank Master** consumindo 1
+   **Gema** daquele monstro. Todo monstro (comum ou chefe) da família tem
+   **0,5% de chance** de dropar a Gema dele a cada morte. Rank Master deixa
+   o item um pouco mais forte que a versão +0 do próximo monstro na cadeia
+   — ver a conta em "Como o aprimoramento é calculado" abaixo.
+6. **Upgrades**: comprados com ouro, aumentam dano/DPS/ouro/chance de
    material. Resetam a cada renascimento.
-6. **Prestígio (Renascer)**: ao alcançar o estágio 20+, você pode
+7. **Prestígio (Renascer)**: ao alcançar o estágio 20+, você pode
    renascer: ganha Runas (baseado no estágio máximo alcançado) e reseta
    ouro/estágio/upgrades comuns. Runas compram upgrades **permanentes**
    (Poder Ancestral, Fortuna Eterna, Faro Apurado, Início Avançado).
@@ -78,6 +86,18 @@ olhando. O prazo também só existe enquanto o chefe é a fronteira do seu
 progresso (`state.stage === state.maxStage`); revisitar um chefe já
 derrotado pra farmar material nunca tem pressa.
 
+## Como o aprimoramento é calculado
+
+Cada família de monstro é ~2,15× mais forte que a anterior (`TIER_GROWTH`
+em `js/data/items.js` — é a mesma constante usada para gerar os itens
+base). O Rank Master de um item mira um alvo fixo: `TIER_GROWTH ×
+MASTER_MARGIN` (2,15 × 1,03 ≈ 2,21×) o valor do item em +0 — ou seja,
+sempre ~3% acima do +0 do próximo monstro, não importa a família. +1 a +5
+sobem 9% compostos por nível (`ENHANCE_PER_LEVEL_MULT`) até chegar a
+~1,54× em +5; o salto de +5 pra Rank Master é o resto da conta (~44%),
+sentindo como a evolução rara que ele é. Isso vale pra qualquer stat que o
+item tenha (dano, DPS, %, etc.) — todos escalam pelo mesmo multiplicador.
+
 ## Próximo passo natural: cartas (Ragnarok-style)
 
 A estrutura já está pronta (`inventory[i].cardId`, função `socketCard()`
@@ -104,7 +124,7 @@ js/
     stats.js                Agrega equipamento + upgrades → dano/DPS/bônus finais
     combat.js                HP/recompensa de monstro por estágio, drops, kill/spawn
     equipment.js              Equipar/desequipar, listar inventário por slot
-    crafting.js                Checagem de custo e craft
+    crafting.js                Checagem de custo, craft e aprimoramento (+1..+5, Rank Master)
     upgrades.js                 Compra de upgrades comuns e de prestígio
     prestige.js                  Cálculo de Runas e lógica de renascimento
     offline.js                    Progresso estimado enquanto a aba estava fechada
@@ -130,6 +150,8 @@ primeiro MVP. Os pontos mais fáceis de ajustar:
 - `js/systems/prestige.js`: fórmula de `runasGain`.
 - `js/data/monsters.js`: `BOSS_INTERVAL` (frequência de chefes).
 - `js/main.js`: `BOSS_TIME_LIMIT_MS` (prazo do chefe).
+- `js/data/items.js`: `ENHANCE_PER_LEVEL_MULT`, `MASTER_MARGIN` (curva de aprimoramento).
+- `js/systems/combat.js`: `GEM_DROP_CHANCE` (chance de Gema, 0,5% por padrão).
 
 ## Testado
 

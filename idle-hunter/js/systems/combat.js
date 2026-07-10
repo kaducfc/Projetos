@@ -12,6 +12,10 @@ const COMMON_DROP_CHANCE = 0.35;
 const RARE_DROP_CHANCE = 0.06;
 const BOSS_RARE_DROP_CHANCE = 0.9;
 
+// Same flat chance for every monster of a family, regular or boss — the Gem
+// is the rare "jackpot" material needed for the Rank Master upgrade.
+const GEM_DROP_CHANCE = 0.005;
+
 export function monsterMaxHp(stage) {
   const base = HP_BASE * Math.pow(HP_GROWTH, stage - 1);
   return Math.max(1, Math.round(isBossStage(stage) ? base * BOSS_HP_MULT : base));
@@ -40,6 +44,11 @@ export function rollDrops(stage, dropMult) {
   const rareChance = Math.min(0.98, (boss ? BOSS_RARE_DROP_CHANCE : RARE_DROP_CHANCE) * dropMult);
   if (Math.random() < rareChance) {
     drops.push({ id: family.materials.rare.id, name: family.materials.rare.name, emoji: family.materials.rare.emoji, qty: 1 });
+  }
+
+  const gemChance = Math.min(0.5, GEM_DROP_CHANCE * dropMult);
+  if (Math.random() < gemChance) {
+    drops.push({ id: family.materials.gem.id, name: family.materials.gem.name, emoji: family.materials.gem.emoji, qty: 1 });
   }
 
   return drops;

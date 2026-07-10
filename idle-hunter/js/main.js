@@ -3,7 +3,7 @@ import { computePlayerStats } from './systems/stats.js';
 import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned } from './systems/combat.js';
 import { isBossStage } from './data/monsters.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
-import { craftItem } from './systems/crafting.js';
+import { craftItem, enhanceItem, upgradeToMaster } from './systems/crafting.js';
 import { buyUpgrade, buyPrestigeUpgrade } from './systems/upgrades.js';
 import { doRebirth } from './systems/prestige.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
@@ -166,11 +166,27 @@ function setupStageControls() {
 // this listener is delegated on the tab container (which is never recreated),
 // so it only ever needs to be attached once — see init().
 function wireEquipmentEvents() {
-  document.getElementById('tab-equipment').addEventListener('equip-change', (e) => {
+  const container = document.getElementById('tab-equipment');
+
+  container.addEventListener('equip-change', (e) => {
     const { slotId, uid } = e.detail;
     if (uid == null) unequipSlot(state, slotId);
     else equipItem(state, uid);
     fullRefresh();
+  });
+
+  container.addEventListener('item-enhance', (e) => {
+    if (enhanceItem(state, e.detail.uid)) {
+      showToast('⬆️ Item aprimorado!');
+      fullRefresh();
+    }
+  });
+
+  container.addEventListener('item-master-upgrade', (e) => {
+    if (upgradeToMaster(state, e.detail.uid)) {
+      showToast('✨ Item evoluiu para Rank Master!');
+      fullRefresh();
+    }
   });
 }
 

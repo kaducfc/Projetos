@@ -1,9 +1,9 @@
 import { MONSTER_FAMILIES, isBossStage } from '../data/monsters.js';
-import { SLOTS, getItemsForFamily } from '../data/items.js';
+import { SLOTS, getItemsForFamily, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
 import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
 import { formatNumber, formatPercent } from '../format.js';
-import { getEquippedItem, getInventoryForSlot } from '../systems/equipment.js';
-import { canCraft } from '../systems/crafting.js';
+import { getEquippedEntry, getInventoryForSlot } from '../systems/equipment.js';
+import { canCraft, canEnhance, canUpgradeToMaster } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost, getPrestigeUpgradeLevel, getPrestigeUpgradeCost } from '../systems/upgrades.js';
 import { canRebirth, runasGain, REBIRTH_MIN_STAGE } from '../systems/prestige.js';
 
@@ -73,22 +73,46 @@ export function renderEquipmentTab(state) {
       container.dispatchEvent(new CustomEvent('equip-change', { detail: { slotId: e.target.dataset.slot, uid }, bubbles: true }));
     });
   });
+
+  container.querySelectorAll('[data-enhance]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      container.dispatchEvent(new CustomEvent('item-enhance', { detail: { uid: Number(btn.dataset.enhance) }, bubbles: true }));
+    });
+  });
+
+  container.querySelectorAll('[data-master-upgrade]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      container.dispatchEvent(new CustomEvent('item-master-upgrade', { detail: { uid: Number(btn.dataset.masterUpgrade) }, bubbles: true }));
+    });
+  });
 }
 
 function slotCardHtml(state, slot) {
-  const equipped = getEquippedItem(state, slot.id);
+  const equipped = getEquippedEntry(state, slot.id);
   const options = getInventoryForSlot(state, slot.id);
 
-  const itemHtml = equipped
-    ? `<div class="slot-item"><span class="icon">${equipped.emoji}</span><span class="name">${equipped.name}</span></div>
-       <div class="slot-stats">${formatStatsLines(equipped.stats).join('<br>')}</div>
-       <div class="card-slot-badge" title="Sistema de cartas ainda não implementado">🃏 Slot de Carta: vazio</div>`
-    : `<div class="empty-slot">Nenhum item equipado</div>`;
+  let itemHtml;
+  if (equipped) {
+    const { uid, entry, item } = equipped;
+    const enhancedStats = getEnhancedStats(item, entry.enhanceLevel, entry.isMaster);
+    const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
+    itemHtml = `
+      <div class="slot-item">
+        <span class="icon">${item.emoji}</span>
+        <span class="name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></span>
+      </div>
+      <div class="slot-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
+      <div class="card-slot-badge" title="Sistema de cartas ainda não implementado">🃏 Slot de Carta: vazio</div>
+      ${enhancePanelHtml(state, uid, entry, item)}
+    `;
+  } else {
+    itemHtml = `<div class="empty-slot">Nenhum item equipado</div>`;
+  }
 
   const selectHtml = options.length
     ? `<select data-slot="${slot.id}">
         <option value="">— Nenhum —</option>
-        ${options.map((o) => `<option value="${o.uid}" ${state.equipped[slot.id] === o.uid ? 'selected' : ''}>${o.item.name}</option>`).join('')}
+        ${options.map((o) => `<option value="${o.uid}" ${state.equipped[slot.id] === o.uid ? 'selected' : ''}>${o.item.name} (${getEnhanceLabel(o.entry.enhanceLevel, o.entry.isMaster)})</option>`).join('')}
       </select>`
     : `<div class="empty-slot">Nada craftado ainda</div>`;
 
@@ -96,6 +120,32 @@ function slotCardHtml(state, slot) {
     <div class="slot-title">${slot.emoji} ${slot.name}</div>
     ${itemHtml}
     ${selectHtml}
+  </div>`;
+}
+
+function enhancePanelHtml(state, uid, entry, item) {
+  const family = MONSTER_FAMILIES.find((f) => f.id === item.familyId);
+
+  if (entry.isMaster) {
+    return `<div class="enhance-maxed">✨ Rank Master alcançado</div>`;
+  }
+
+  if (entry.enhanceLevel < ENHANCE_MAX_LEVEL) {
+    const cost = item.enhanceCost[entry.enhanceLevel];
+    const have = state.materials[item.commonMaterialId] || 0;
+    const matInfo = family.materials.common;
+    const met = have >= cost;
+    return `<div class="enhance-panel">
+      <div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(cost)}</span></div>
+      <button data-enhance="${uid}" ${canEnhance(state, uid) ? '' : 'disabled'}>Aprimorar para +${entry.enhanceLevel + 1}</button>
+    </div>`;
+  }
+
+  const gemInfo = family.materials.gem;
+  const haveGem = state.materials[gemInfo.id] || 0;
+  return `<div class="enhance-panel">
+    <div class="recipe-cost"><span>${gemInfo.emoji} ${gemInfo.name}</span><span class="${haveGem >= 1 ? 'met' : 'missing'}">${formatNumber(haveGem)}/1</span></div>
+    <button class="master-btn" data-master-upgrade="${uid}" ${canUpgradeToMaster(state, uid) ? '' : 'disabled'}>Evoluir para Rank Master</button>
   </div>`;
 }
 
@@ -193,7 +243,7 @@ function prestigeCardHtml(state, upgrade) {
 
 export function renderMaterialsTab(state) {
   const container = document.getElementById('tab-materials');
-  const allMaterials = MONSTER_FAMILIES.flatMap((f) => [f.materials.common, f.materials.rare]);
+  const allMaterials = MONSTER_FAMILIES.flatMap((f) => [f.materials.common, f.materials.rare, f.materials.gem]);
 
   if (allMaterials.every((m) => (state.materials[m.id] || 0) === 0)) {
     container.innerHTML = `<p style="color:var(--text-dim); font-size:13px;">Nenhum material coletado ainda. Derrote monstros para conseguir materiais de craft.</p>`;

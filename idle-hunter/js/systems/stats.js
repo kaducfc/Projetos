@@ -1,4 +1,4 @@
-import { getItem } from '../data/items.js';
+import { getItem, getEnhancedStats } from '../data/items.js';
 import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
 
 const BASE_CLICK_DAMAGE = 5;
@@ -21,13 +21,14 @@ export function computePlayerStats(state) {
     if (!invEntry) continue;
     const item = getItem(invEntry.itemId);
     if (!item) continue;
+    const stats = getEnhancedStats(item, invEntry.enhanceLevel || 0, !!invEntry.isMaster);
 
-    clickFlat += item.stats.clickFlat || 0;
-    dpsFlat += item.stats.dpsFlat || 0;
-    clickPercent += item.stats.clickPercent || 0;
-    dpsPercent += item.stats.dpsPercent || 0;
-    goldPercent += item.stats.goldPercent || 0;
-    dropPercent += item.stats.dropPercent || 0;
+    clickFlat += stats.clickFlat || 0;
+    dpsFlat += stats.dpsFlat || 0;
+    clickPercent += stats.clickPercent || 0;
+    dpsPercent += stats.dpsPercent || 0;
+    goldPercent += stats.goldPercent || 0;
+    dropPercent += stats.dropPercent || 0;
   }
 
   for (const upgrade of UPGRADES) {

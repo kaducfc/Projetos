@@ -20,6 +20,7 @@ export const MONSTER_FAMILIES = [
     materials: {
       common: { id: 'boar_tusk', name: 'Presa de Javali', emoji: '🦷' },
       rare: { id: 'boar_alpha_hide', name: 'Couro do Javali Alfa', emoji: '🟫' },
+      gem: { id: 'boar_gem', name: 'Gema do Javali Selvagem', emoji: '💎' },
     },
   },
   {
@@ -34,6 +35,7 @@ export const MONSTER_FAMILIES = [
     materials: {
       common: { id: 'wolf_fang', name: 'Presa de Lobo', emoji: '🦴' },
       rare: { id: 'wolf_ancestral_pelt', name: 'Pelagem Ancestral', emoji: '🌑' },
+      gem: { id: 'wolf_gem', name: 'Gema do Lobo das Sombras', emoji: '💎' },
     },
   },
   {
@@ -48,6 +50,7 @@ export const MONSTER_FAMILIES = [
     materials: {
       common: { id: 'spider_silk', name: 'Teia Venenosa', emoji: '🕸️' },
       rare: { id: 'spider_queen_venom', name: 'Veneno da Rainha', emoji: '🧪' },
+      gem: { id: 'spider_gem', name: 'Gema da Aranha Venenosa', emoji: '💎' },
     },
   },
   {
@@ -62,6 +65,7 @@ export const MONSTER_FAMILIES = [
     materials: {
       common: { id: 'golem_shard', name: 'Fragmento de Pedra', emoji: '🪨' },
       rare: { id: 'golem_core', name: 'Núcleo do Golem Ancião', emoji: '💠' },
+      gem: { id: 'golem_gem', name: 'Gema do Golem de Pedra', emoji: '💎' },
     },
   },
   {
@@ -76,6 +80,7 @@ export const MONSTER_FAMILIES = [
     materials: {
       common: { id: 'wyvern_scale', name: 'Escama Congelante', emoji: '❄️' },
       rare: { id: 'wyvern_king_fang', name: 'Presa do Wyvern Rei', emoji: '🧊' },
+      gem: { id: 'wyvern_gem', name: 'Gema do Wyvern de Gelo', emoji: '💎' },
     },
   },
   {
@@ -90,6 +95,7 @@ export const MONSTER_FAMILIES = [
     materials: {
       common: { id: 'dragon_scale', name: 'Escama Draconiana', emoji: '🔴' },
       rare: { id: 'dragon_heart', name: 'Coração do Dragão Primordial', emoji: '❤️‍🔥' },
+      gem: { id: 'dragon_gem', name: 'Gema do Dragão Ancião', emoji: '💎' },
     },
   },
 ];

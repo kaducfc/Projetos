@@ -4,11 +4,15 @@ export function getInventoryEntry(state, uid) {
   return state.inventory.find((i) => i.uid === uid) || null;
 }
 
-export function getEquippedItem(state, slotId) {
+/// Returns { uid, entry, item } for whatever is equipped in slotId, or null.
+export function getEquippedEntry(state, slotId) {
   const uid = state.equipped[slotId];
   if (!uid) return null;
   const entry = getInventoryEntry(state, uid);
-  return entry ? getItem(entry.itemId) : null;
+  if (!entry) return null;
+  const item = getItem(entry.itemId);
+  if (!item) return null;
+  return { uid, entry, item };
 }
 
 export function equipItem(state, uid) {
@@ -27,5 +31,5 @@ export function unequipSlot(state, slotId) {
 export function getInventoryForSlot(state, slotId) {
   return state.inventory
     .filter((entry) => getItem(entry.itemId)?.slotId === slotId)
-    .map((entry) => ({ uid: entry.uid, item: getItem(entry.itemId) }));
+    .map((entry) => ({ uid: entry.uid, entry, item: getItem(entry.itemId) }));
 }
