@@ -27,6 +27,13 @@ Depois abra `http://localhost:8000` no navegador.
    seu DPS (dano por segundo) também bate automaticamente, mesmo sem
    clicar — essa é a parte "idle". Ao derrotar um monstro você ganha ouro
    e (com chance) materiais de craft, e avança para o próximo estágio.
+   Só que agora **o monstro também bate em você** continuamente (dano por
+   segundo próprio, escalando com o estágio), reduzido pela sua
+   **Armadura**. Se sua **Vida** chegar a zero, você morre e recua um
+   estágio — exatamente como o timeout de chefe (recorde de estágio
+   máximo preservado). Sua vida enche 100% sempre que um monstro novo
+   aparece (novo estágio ou novo spawn), então cada combate é um teste
+   de "aguento esse aqui?", não desgaste acumulado enquanto você tá AFK.
 2. **Estágios**: cada família de monstro ocupa um bloco de 20 estágios (com
    materiais e arma próprios), mas **todo estágio múltiplo de 10 é um
    chefe** — igual ao Clicker Heroes — reaproveitando o chefe da família
@@ -47,6 +54,10 @@ Depois abra `http://localhost:8000` no navegador.
    aba Equipamento como "vazio". O sistema de cartas em si (monstros
    dropando cartas, efeitos, encaixe) ainda não existe; é só a estrutura
    de dados/UI preparada para não precisar migrar saves depois.
+   Além do stat principal de cada peça, as 5 peças de defesa também dão
+   **Vida** (Elmo, Calça, Botas) ou **Armadura** (Armadura, Luvas) — é
+   assim que o equipamento te deixa sobreviver a estágios mais altos, não
+   só bater mais forte.
 5. **Aprimoramento (+1 a +5 e Rank Master)**: cada peça craftada pode ser
    aprimorada individualmente na aba Equipamento. +1 a +5 gastam o
    material **comum** daquele monstro (fica mais caro a cada nível — "pouco
@@ -88,6 +99,24 @@ olhando. O prazo também só existe enquanto o chefe é a fronteira do seu
 progresso (`state.stage === state.maxStage`); revisitar um chefe já
 derrotado pra farmar material nunca tem pressa.
 
+## Decisão de design: vida cheia a cada monstro, dano recebido não é salvo
+
+Igual ao `bossDeadline`, a vida atual (`currentHp` em `js/main.js`) **não
+é persistida** e é restaurada por completo sempre que um monstro novo
+aparece — seja porque você matou o anterior, seja porque navegou pra
+outro estágio, seja porque acabou de abrir o jogo. A alternativa (vida
+indo se acumulando/desgastando entre vários monstros, inclusive offline)
+faria pouco sentido num idle: monstros triviais que você já superou iam
+eventualmente te matar só por ficar ausente. Assim, morrer significa
+especificamente "esse monstro/chefe é forte demais pro meu equipamento
+atual" — o gatilho certo pra você ir farmar/craftar, não punição por
+estar de boa numa fase fácil.
+
+A fórmula de redução de dano pela Armadura tem retorno decrescente
+(`armadura / (armadura + 100)`, em `armorReduction()` de
+`js/systems/combat.js`) — nunca chega a 100%, então armadura sempre vale
+a pena empilhar, mas nunca te deixa invencível.
+
 ## Como o aprimoramento é calculado
 
 Cada família de monstro é ~2,15× mais forte que a anterior (`TIER_GROWTH`
@@ -124,7 +153,7 @@ js/
     upgrades.js             Upgrades comuns (ouro) e de prestígio (Runas)
   systems/
     stats.js                Agrega equipamento + upgrades → dano/DPS/bônus finais
-    combat.js                HP/recompensa de monstro por estágio, drops, kill/spawn
+    combat.js                HP/recompensa/dano do monstro por estágio, drops, kill/spawn
     equipment.js              Equipar/desequipar, listar inventário por slot
     crafting.js                Checagem de custo, craft e aprimoramento (+1..+5, Rank Master)
     upgrades.js                 Compra de upgrades comuns e de prestígio
@@ -154,11 +183,15 @@ primeiro MVP. Os pontos mais fáceis de ajustar:
 - `js/main.js`: `BOSS_TIME_LIMIT_MS` (prazo do chefe).
 - `js/data/items.js`: `ENHANCE_PER_LEVEL_MULT`, `MASTER_MARGIN` (curva de aprimoramento).
 - `js/systems/combat.js`: `GEM_DROP_CHANCE` (chance de Gema, 0,5% por padrão).
+- `js/systems/stats.js`: `BASE_MAX_HP`, `BASE_ARMOR` (vida/armadura antes de qualquer equipamento).
+- `js/systems/combat.js`: `PLAYER_DPS_TAKEN_GROWTH`/`_BASE`, `BOSS_DPS_TAKEN_MULT`, `ARMOR_CONSTANT`.
 
 ## Testado
 
 Rodei o jogo de ponta a ponta num navegador headless (clique, DPS
 automático, avanço de estágio, craft, equipar, troca de estágio para
-farm, renascimento, progresso offline ao reabrir, e layout em viewport
-mobile) — sem erros no console. Vale um play manual seu para validar a
-sensação de progressão/dificuldade, que é subjetiva.
+farm, renascimento, progresso offline ao reabrir, morte/recuo de estágio,
+vida/armadura vindas de equipamento, e layout em viewport mobile) — sem
+erros no console. Vale um play manual seu para validar a sensação de
+progressão/dificuldade (inclusive a nova curva de risco de morte), que é
+subjetiva.

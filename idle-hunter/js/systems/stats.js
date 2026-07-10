@@ -3,6 +3,8 @@ import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
 
 const BASE_CLICK_DAMAGE = 5;
 const BASE_DPS = 0;
+const BASE_MAX_HP = 100;
+const BASE_ARMOR = 0;
 
 /// Aggregates equipment + regular upgrades + prestige upgrades into the
 /// final combat stats used every frame. Recomputed on demand (cheap enough
@@ -14,6 +16,8 @@ export function computePlayerStats(state) {
   let dpsPercent = 0;
   let goldPercent = 0;
   let dropPercent = 0;
+  let hpFlat = BASE_MAX_HP;
+  let armorFlat = BASE_ARMOR;
 
   for (const uid of Object.values(state.equipped)) {
     if (!uid) continue;
@@ -29,6 +33,8 @@ export function computePlayerStats(state) {
     dpsPercent += stats.dpsPercent || 0;
     goldPercent += stats.goldPercent || 0;
     dropPercent += stats.dropPercent || 0;
+    hpFlat += stats.hpFlat || 0;
+    armorFlat += stats.armorFlat || 0;
   }
 
   for (const upgrade of UPGRADES) {
@@ -57,6 +63,8 @@ export function computePlayerStats(state) {
     else if (stat === 'dpsPercent') dpsPercent += total;
     else if (stat === 'goldPercent') goldPercent += total;
     else if (stat === 'dropPercent') dropPercent += total;
+    else if (stat === 'hpFlat') hpFlat += total;
+    else if (stat === 'armorFlat') armorFlat += total;
   }
 
   const damageMult = 1 + allDamagePercent / 100;
@@ -65,5 +73,5 @@ export function computePlayerStats(state) {
   const goldMult = 1 + goldPercent / 100;
   const dropMult = 1 + dropPercent / 100;
 
-  return { clickDamage, dps, goldMult, dropMult, startStageBonus };
+  return { clickDamage, dps, goldMult, dropMult, startStageBonus, maxHp: hpFlat, armor: armorFlat };
 }

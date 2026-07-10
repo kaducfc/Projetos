@@ -8,6 +8,17 @@ const GOLD_GROWTH = 1.115;
 const GOLD_BASE = 4;
 const BOSS_GOLD_MULT = 6;
 
+// Damage per second the monster deals back to the player, scaling more
+// gently than its own HP so gear (HP/armor) can realistically keep up.
+const PLAYER_DPS_TAKEN_GROWTH = 1.13;
+const PLAYER_DPS_TAKEN_BASE = 2;
+const BOSS_DPS_TAKEN_MULT = 3;
+
+// Diminishing-returns armor formula: reduction = armor / (armor + K).
+// Never reaches 100%, so armor is always worth stacking but never trivializes
+// combat outright.
+const ARMOR_CONSTANT = 100;
+
 const COMMON_DROP_CHANCE = 0.35;
 const RARE_DROP_CHANCE = 0.06;
 const BOSS_RARE_DROP_CHANCE = 0.9;
@@ -26,9 +37,18 @@ export function monsterGoldReward(stage) {
   return Math.max(1, Math.round(isBossStage(stage) ? base * BOSS_GOLD_MULT : base));
 }
 
+export function monsterDamagePerSecond(stage) {
+  const base = PLAYER_DPS_TAKEN_BASE * Math.pow(PLAYER_DPS_TAKEN_GROWTH, stage - 1);
+  return Math.max(0.1, isBossStage(stage) ? base * BOSS_DPS_TAKEN_MULT : base);
+}
+
+export function armorReduction(armor) {
+  return armor / (armor + ARMOR_CONSTANT);
+}
+
 export function getCurrentMonster(stage) {
   const info = getMonsterInfo(stage);
-  return { ...info, maxHp: monsterMaxHp(stage) };
+  return { ...info, maxHp: monsterMaxHp(stage), dps: monsterDamagePerSecond(stage) };
 }
 
 export function rollDrops(stage, dropMult) {

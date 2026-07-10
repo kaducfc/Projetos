@@ -1,6 +1,6 @@
 import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
 import { computePlayerStats } from './systems/stats.js';
-import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned } from './systems/combat.js';
+import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, armorReduction } from './systems/combat.js';
 import { isBossStage } from './data/monsters.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
 import { craftItem, enhanceItem, upgradeToMaster } from './systems/crafting.js';
@@ -11,7 +11,7 @@ import { formatNumber } from './format.js';
 import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
   renderForgeTab, renderUpgradesTab, renderPrestigeTab, renderMaterialsTab, renderBossTimer,
-  spawnDamagePopup, pulseMonster, showToast, showModal, hideModal,
+  renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showModal, hideModal,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -24,6 +24,16 @@ ensureMonsterSpawned(state);
 // Not persisted on purpose — a short combat timer shouldn't survive a reload
 // or an offline gap, so every fresh session gives a clean 30s attempt.
 let bossDeadline = null;
+
+// Also not persisted: HP fully refills whenever a new monster/stage is
+// entered (see resetPlayerHp()), so it's a fresh "can I survive this one
+// fight" check each time rather than cumulative chip damage across many
+// trivial monsters while idling — and closing the tab never costs you HP.
+let currentHp = null;
+
+function resetPlayerHp() {
+  currentHp = computePlayerStats(state).maxHp;
+}
 
 // A boss only has a timer while it's still blocking progress (the frontier
 // stage). Revisiting an already-beaten boss to farm materials is timer-free.
@@ -41,12 +51,19 @@ function armBossTimer() {
   renderBossTimer(bossDeadline != null ? bossDeadline - Date.now() : null);
 }
 
-function retreatFromBoss() {
+/// Shared "you failed this stage" consequence for both the boss timer
+/// running out and the player's HP hitting 0: step back one stage (never
+/// below 1) without losing the maxStage record, and get a clean restart.
+function retreat(reason) {
   const failedStage = state.stage;
   state.stage = Math.max(1, state.stage - 1);
   state.monsterHp = null;
   ensureMonsterSpawned(state);
-  showToast(`⏳ Tempo esgotado! Você recuou do estágio ${failedStage} para o ${state.stage}.`);
+  resetPlayerHp();
+  const message = reason === 'death'
+    ? `💀 Seu personagem morreu! Recuou do estágio ${failedStage} para o ${state.stage}.`
+    : `⏳ Tempo esgotado! Você recuou do estágio ${failedStage} para o ${state.stage}.`;
+  showToast(message);
   refreshCombatOnly();
   armBossTimer();
 }
@@ -54,7 +71,9 @@ function retreatFromBoss() {
 function refreshAll() {
   const monster = getCurrentMonster(state.stage);
   const stats = computePlayerStats(state);
+  currentHp = Math.min(currentHp, stats.maxHp);
   renderAll(state, monster, stats);
+  renderPlayerHp(currentHp, stats.maxHp);
   return { monster, stats };
 }
 
@@ -69,8 +88,10 @@ function fullRefresh() {
 function refreshCombatOnly() {
   const monster = getCurrentMonster(state.stage);
   const stats = computePlayerStats(state);
+  currentHp = Math.min(currentHp, stats.maxHp);
   renderCombatStats(stats);
   renderMonster(state, monster);
+  renderPlayerHp(currentHp, stats.maxHp);
   return { monster, stats };
 }
 
@@ -87,12 +108,13 @@ function handleKillEvent(event) {
   renderUpgradesTab(state);
   renderPrestigeTab(state);
   wireAllPanelButtons();
+  resetPlayerHp(); // a fresh monster just spawned — full heal for the new fight
   armBossTimer(); // stage may have just advanced onto (or off of) a boss
 }
 
 function onClickMonster() {
   if (bossDeadline != null && Date.now() >= bossDeadline) {
-    retreatFromBoss();
+    retreat('timeout');
     return;
   }
   const stats = computePlayerStats(state);
@@ -105,15 +127,19 @@ function onClickMonster() {
   } else {
     renderMonster(state, getCurrentMonster(state.stage));
     renderBossTimer(bossDeadline != null ? bossDeadline - Date.now() : null);
+    renderPlayerHp(currentHp, stats.maxHp);
   }
 }
 
 function tick() {
   if (bossDeadline != null && Date.now() >= bossDeadline) {
-    retreatFromBoss();
+    retreat('timeout');
     return;
   }
+
   const stats = computePlayerStats(state);
+  currentHp = Math.min(currentHp, stats.maxHp);
+
   if (stats.dps > 0) {
     const event = applyDamage(state, stats.dps * (TICK_MS / 1000), stats);
     if (event) {
@@ -122,8 +148,19 @@ function tick() {
       return;
     }
   }
-  renderMonster(state, getCurrentMonster(state.stage));
+
+  const monster = getCurrentMonster(state.stage);
+  const incoming = monster.dps * (1 - armorReduction(stats.armor)) * (TICK_MS / 1000);
+  currentHp -= incoming;
+
+  if (currentHp <= 0) {
+    retreat('death');
+    return;
+  }
+
+  renderMonster(state, monster);
   renderBossTimer(bossDeadline != null ? bossDeadline - Date.now() : null);
+  renderPlayerHp(currentHp, stats.maxHp);
 }
 
 // ---------------------------------------------------------------
@@ -147,13 +184,13 @@ function setupTabs() {
 
 function setupStageControls() {
   document.getElementById('stage-prev').addEventListener('click', () => {
-    if (setViewedStage(state, state.stage - 1)) { refreshCombatOnly(); armBossTimer(); }
+    if (setViewedStage(state, state.stage - 1)) { resetPlayerHp(); refreshCombatOnly(); armBossTimer(); }
   });
   document.getElementById('stage-next').addEventListener('click', () => {
-    if (setViewedStage(state, state.stage + 1)) { refreshCombatOnly(); armBossTimer(); }
+    if (setViewedStage(state, state.stage + 1)) { resetPlayerHp(); refreshCombatOnly(); armBossTimer(); }
   });
   document.getElementById('stage-max').addEventListener('click', () => {
-    if (setViewedStage(state, state.maxStage)) { refreshCombatOnly(); armBossTimer(); }
+    if (setViewedStage(state, state.maxStage)) { resetPlayerHp(); refreshCombatOnly(); armBossTimer(); }
   });
   document.getElementById('monster-sprite').addEventListener('click', onClickMonster);
 }
@@ -289,6 +326,7 @@ function init() {
   setupTabs();
   setupStageControls();
   wireEquipmentEvents(); // one-time delegated listener, see wireEquipmentEvents()
+  resetPlayerHp();
   fullRefresh();
   armBossTimer();
 
@@ -308,6 +346,8 @@ function init() {
     hardReset: () => { hardResetState(); location.reload(); },
     getBossDeadline: () => bossDeadline,
     forceBossTimeout: () => { if (bossDeadline != null) bossDeadline = Date.now() - 1; },
+    getCurrentHp: () => currentHp,
+    setCurrentHp: (v) => { currentHp = v; renderPlayerHp(currentHp, computePlayerStats(state).maxHp); },
   };
 }
 

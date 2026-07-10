@@ -14,6 +14,8 @@ const STAT_LABELS = {
   dpsPercent: (v) => `+${formatPercent(v)} DPS`,
   goldPercent: (v) => `+${formatPercent(v)} Ouro`,
   dropPercent: (v) => `+${formatPercent(v)} Chance de Material`,
+  hpFlat: (v) => `+${formatNumber(v)} Vida`,
+  armorFlat: (v) => `+${formatNumber(v)} Armadura`,
 };
 
 function formatStatsLines(stats) {
@@ -31,6 +33,16 @@ export function renderTopBar(state) {
 export function renderCombatStats(stats) {
   document.getElementById('click-damage-value').textContent = formatNumber(stats.clickDamage);
   document.getElementById('dps-value').textContent = formatNumber(stats.dps);
+  document.getElementById('armor-value').textContent = formatNumber(stats.armor);
+}
+
+export function renderPlayerHp(current, max) {
+  const hp = Math.max(0, current);
+  const pct = max > 0 ? Math.max(0, Math.min(100, (hp / max) * 100)) : 0;
+  const fill = document.getElementById('player-hp-bar-fill');
+  fill.style.width = `${pct}%`;
+  fill.classList.toggle('low', pct <= 25);
+  document.getElementById('player-hp-bar-text').textContent = `${formatNumber(hp)} / ${formatNumber(max)}`;
 }
 
 export function renderMonster(state, monster) {

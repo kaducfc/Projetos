@@ -60,6 +60,26 @@ export const UPGRADES = [
     stat: 'dropPercent',
     valuePerLevel: 1,
   },
+  {
+    id: 'vitality',
+    name: 'Vitalidade',
+    emoji: '❤️',
+    description: 'Aumenta sua vida máxima.',
+    baseCost: 15,
+    costGrowth: 1.16,
+    stat: 'hpFlat',
+    valuePerLevel: 20,
+  },
+  {
+    id: 'fortification',
+    name: 'Fortificação',
+    emoji: '🛡️',
+    description: 'Aumenta sua armadura (reduz o dano recebido dos monstros).',
+    baseCost: 20,
+    costGrowth: 1.18,
+    stat: 'armorFlat',
+    valuePerLevel: 5,
+  },
 ];
 
 export function upgradeCost(upgrade, level) {

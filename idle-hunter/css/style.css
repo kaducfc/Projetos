@@ -245,6 +245,52 @@ button:disabled {
   color: var(--text);
 }
 
+#player-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 0 4px;
+}
+
+#player-hp-label {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+#player-hp-bar-outer {
+  position: relative;
+  flex: 1;
+  height: 18px;
+  background: #0d0d14;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+#player-hp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3fd47a, var(--green));
+  width: 100%;
+  transition: width 0.15s ease-out;
+}
+
+#player-hp-bar-fill.low {
+  background: linear-gradient(90deg, #ff6b6b, var(--hp-red));
+}
+
+#player-hp-bar-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px #000;
+}
+
 /* ---------------- Tabs ---------------- */
 
 #tab-nav {

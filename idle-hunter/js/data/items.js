@@ -65,26 +65,31 @@ function buildItem(family, tier, slot) {
       break;
     case 'helmet':
       stats.dpsPercent = Math.round((5 + tier * 3) * 10) / 10;
+      stats.hpFlat = Math.round(base * 5);
       name = `Elmo de ${family.name}`;
       emoji = '🪖';
       break;
     case 'armor':
       stats.clickPercent = Math.round((5 + tier * 3) * 10) / 10;
+      stats.armorFlat = Math.round(base * 1.2);
       name = `Armadura de ${family.name}`;
       emoji = '🛡️';
       break;
     case 'pants':
       stats.goldPercent = Math.round((8 + tier * 4) * 10) / 10;
+      stats.hpFlat = Math.round(base * 4);
       name = `Calça de ${family.name}`;
       emoji = '👖';
       break;
     case 'gloves':
       stats.clickFlat = Math.round(base * 1.2);
+      stats.armorFlat = Math.round(base * 1.2);
       name = `Luvas de ${family.name}`;
       emoji = '🧤';
       break;
     case 'boots':
       stats.dropPercent = Math.round((5 + tier * 2) * 10) / 10;
+      stats.hpFlat = Math.round(base * 4);
       name = `Botas de ${family.name}`;
       emoji = '👢';
       break;
