@@ -17,6 +17,17 @@ export const MONSTER_FAMILIES = [
     bossName: 'Chispim Alfa',
     emoji: '🐹',
     bossEmoji: '🐹',
+    // Real reference art (see idle-hunter/assets/chispim/) — the only family
+    // with actual sprites so far. Every other family falls back to emoji.
+    image: 'assets/chispim/monster.png',
+    images: {
+      weapon: 'assets/chispim/dualblade.png',
+      helmet: 'assets/chispim/helm.png',
+      armor: 'assets/chispim/armor.png',
+      pants: 'assets/chispim/pants.png',
+      gloves: 'assets/chispim/luvas.png',
+      boots: 'assets/chispim/botas.png',
+    },
     element: 'eletrico',
     startStage: 1,
     endStage: 20,
@@ -127,6 +138,7 @@ export function getMonsterInfo(stage) {
     familyId: family.id,
     name: boss ? family.bossName : family.name,
     emoji: boss ? family.bossEmoji : family.emoji,
+    image: family.image || null,
     element: family.element,
     isBoss: boss,
   };

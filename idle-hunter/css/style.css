@@ -148,6 +148,18 @@ button:disabled {
   background: transparent;
 }
 
+/* Real art (see idle-hunter/assets/) sizes itself off whatever font-size
+   the surrounding emoji-icon element already has, so no per-context rule
+   is needed beyond this one. */
+.icon img,
+.item-detail-icon img,
+#monster-sprite img {
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
 #monster-sprite.hit {
   animation: monster-hit 0.12s ease-out;
 }

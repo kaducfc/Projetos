@@ -8,6 +8,13 @@ import { canCraft, canEnhance, canUpgradeToMaster } from '../systems/crafting.js
 import { getUpgradeLevel, getUpgradeCost, getPrestigeUpgradeLevel, getPrestigeUpgradeCost } from '../systems/upgrades.js';
 import { canRebirth, runasGain, REBIRTH_MIN_STAGE } from '../systems/prestige.js';
 
+/// Real art if the family has it, emoji fallback otherwise. Sizing is left
+/// to the caller: images are set to `width/height: 1em` in CSS so they scale
+/// with whatever font-size the surrounding `.icon`-ish element already has.
+function iconMarkup(image, emoji, alt) {
+  return image ? `<img src="${image}" alt="${alt || ''}">` : emoji;
+}
+
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
   return `<span class="element-badge element-${el.id}">${el.emoji} ${el.name}</span>`;
@@ -159,7 +166,7 @@ export function renderPlayerHp(current, max) {
 
 export function renderMonster(state, monster) {
   const boss = isBossStage(state.stage);
-  document.getElementById('monster-sprite').textContent = monster.emoji;
+  document.getElementById('monster-sprite').innerHTML = iconMarkup(monster.image, monster.emoji, monster.name);
   document.getElementById('monster-name').innerHTML =
     `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
   document.getElementById('stage-label').textContent = `Estágio ${state.stage}`;
@@ -224,7 +231,9 @@ export function renderEquipmentTab(state) {
 
 function slotIconHtml(state, slot) {
   const equipped = getEquippedEntry(state, slot.id);
-  const icon = equipped ? equipped.item.emoji : slot.emoji;
+  const icon = equipped
+    ? iconMarkup(equipped.item.image, equipped.item.emoji, equipped.item.name)
+    : slot.emoji;
   const badge = equipped
     ? `<span class="mini-badge ${equipped.entry.isMaster ? 'master' : ''}">${getEnhanceLabel(equipped.entry.enhanceLevel, equipped.entry.isMaster)}</span>`
     : '';
@@ -239,7 +248,7 @@ function inventoryTileHtml(state, entry) {
   const isEquipped = state.equipped[item.slotId] === entry.uid;
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
   return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}">
-    <span class="icon">${item.emoji}</span>
+    <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
   </button>`;
 }
@@ -287,7 +296,7 @@ function itemDetailHtml(state, uid) {
 
   return `
     <div class="item-detail">
-      <div class="item-detail-icon">${item.emoji}</div>
+      <div class="item-detail-icon">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
@@ -338,7 +347,7 @@ function familyGroupHtml(state, family) {
   const unlocked = state.maxStage >= family.startStage;
 
   return `<div class="family-group">
-    <h3>${family.emoji} ${family.name} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">(Estágios ${family.startStage}–${family.endStage})</span></h3>
+    <h3><span class="icon">${iconMarkup(family.image, family.emoji, family.name)}</span> ${family.name} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">(Estágios ${family.startStage}–${family.endStage})</span></h3>
     ${unlocked ? `<div class="recipe-grid">${items.map((item) => recipeCardHtml(state, item)).join('')}</div>`
       : `<p style="color:var(--text-dim); font-size:12px;">Alcance o estágio ${family.startStage} para desbloquear.</p>`}
   </div>`;
@@ -359,7 +368,7 @@ function recipeCardHtml(state, item) {
   const goldMet = state.gold >= item.goldCost;
 
   return `<div class="recipe-card ${equipped ? 'equipped' : ''}">
-    <div class="recipe-header"><span class="icon">${item.emoji}</span><span class="name">${item.name}</span></div>
+    <div class="recipe-header"><span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span><span class="name">${item.name}</span></div>
     <div class="element-resistance">${elementBadgeHtml(item.element)}</div>
     <div class="recipe-stats">${formatStatsLines(item.stats).join('<br>')}</div>
     <div class="recipe-cost"><span>💰 Ouro</span><span class="${goldMet ? 'met' : 'missing'}">${formatNumber(state.gold)}/${formatNumber(item.goldCost)}</span></div>

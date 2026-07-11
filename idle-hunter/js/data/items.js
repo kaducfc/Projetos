@@ -118,6 +118,7 @@ function buildItem(family, tier, slot) {
     tier,
     name,
     emoji,
+    image: family.images ? family.images[slot.id] || null : null,
     element: family.element,
     stats,
     goldCost,

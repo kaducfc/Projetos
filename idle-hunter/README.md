@@ -183,6 +183,33 @@ família continuam `boar`/`boar_*` de propósito — eles são chaves de save
 (inventário e contagem de materiais), então renomeá-los quebraria saves
 existentes. Só os nomes/emoji/elemento exibidos mudaram.
 
+## Arte real do Chispim (`assets/chispim/`)
+
+O Chispim é a primeira (e por enquanto única) família com arte de
+referência de verdade em vez de emoji. `assets/chispim/reference-sheet.jpeg`
+é o sheet original enviado pelo usuário (monstro + 5 peças de defesa + 4
+armas); um script Python com Pillow detectou os limites de cada sprite
+por densidade de pixel não-branco (col/row bounds), recortou com um
+padding pequeno e converteu o fundo branco em transparência, gerando os
+7 PNGs usados no jogo (`monster.png`, `helm.png`, `armor.png`, `pants.png`,
+`luvas.png`, `botas.png`, `dualblade.png` — as 3 armas não usadas pelo
+Chispim, espada grande/arco/lança, ficaram só no sheet de referência).
+
+No código, `MONSTER_FAMILIES[0]` (o `boar`) ganhou os campos opcionais
+`image` (ícone do monstro) e `images` (um por slot); `buildItem()` em
+`items.js` copia o caminho certo de `family.images[slot.id]` para
+`item.image` quando existe. `render.js` tem um helper único,
+`iconMarkup(image, emoji, alt)`, que troca emoji por `<img>` sempre que
+`image` estiver presente — usado no sprite do monstro, nos cards da
+Forja, nos ícones da aba Equipamento (anel de slots + grade de
+inventário) e no popup de detalhe do item. O CSS não precisou de regra
+por contexto: toda imagem tem `width/height: 1em`, então ela herda o
+`font-size` que cada `.icon` já tinha para o emoji.
+
+Qualquer família sem `images` continua caindo no emoji normalmente —
+adicionar arte pra outro monstro é só repetir o mesmo padrão (`image` +
+`images` no objeto da família em `monsters.js`).
+
 ## Decisão de design: a aba Equipamento é só ícones + um popup
 
 Todo detalhe de item (stats, elemento, aprimoramento, botão de
@@ -212,6 +239,7 @@ encaixar/trocar carta em `render.js`/`main.js`.
 ```
 index.html            Layout da página (elementos fixos; conteúdo dinâmico via JS)
 css/style.css          Tema visual (dark fantasy)
+assets/chispim/        Arte real do Chispim (PNGs recortados) + sheet de referência original
 js/
   main.js               Bootstrap: game loop, wiring de eventos, save/load
   state.js              Estado do jogo + persistência (localStorage)
@@ -277,3 +305,11 @@ números a cada clique, o painel de Rank Master aparecendo com as duas
 exigências (material + Gema) corretas, desequipar (slot volta a ficar
 apagado) e reequipar a partir do inventário — tudo bateu com o estado
 esperado e sem erros no console.
+
+Testei também a arte real do Chispim: craftei e equipei as 6 peças e
+conferi via screenshot que o sprite do monstro, os 6 cards da Forja, os
+6 ícones do anel de Equipamento, os tiles do inventário e o popup de
+detalhe do item mostram a imagem certa (não o emoji antigo) — sem 404 e
+sem erro no console. Famílias sem arte (Lobo, Aranha, Golem, Wyvern,
+Dragão) continuam mostrando emoji normalmente, confirmando que o
+fallback funciona.
