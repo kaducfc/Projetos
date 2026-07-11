@@ -12,8 +12,7 @@ import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
 import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForFamily } from '../data/shop.js';
-import { canBuyCashItem, canBuyEventItem, canWatchAd, adWatchCooldownRemaining } from '../systems/shop.js';
-import { computePlayerStats } from '../systems/stats.js';
+import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
 
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
 /// to the caller: images are set to `width/height: 1em` in CSS so they scale
@@ -256,16 +255,45 @@ export function renderBossTimer(remainingMs) {
 const LEFT_SLOT_IDS = ['helmet', 'armor', 'weapon'];
 const RIGHT_SLOT_IDS = ['pants', 'gloves', 'boots'];
 
-export function renderEquipmentTab(state) {
+// The Equipment tab now also houses Forja and Materiais as sub-tabs (they
+// used to be top-level tabs) — one less thing competing for space in the
+// tab-nav, and thematically all three are "stuff about your gear" anyway.
+// `activeSubTab` is owned by main.js (transient UI state, not part of the
+// save), same pattern as Shop's Cash/Event split. All interactive elements
+// here (subtab buttons, equip slots/inventory tiles, craft buttons) are
+// handled by ONE delegated listener on #tab-equipment wired once in
+// main.js's init() — see wireEquipmentTabEvents() — since this tab
+// re-renders very often (every kill) and per-render re-wiring is exactly
+// the bug class that bit this project twice before.
+const EQUIP_SUBTABS = [
+  { id: 'equip', label: '🎽 Equipar' },
+  { id: 'forge', label: '🔨 Forjar' },
+  { id: 'materials', label: '🎒 Materiais' },
+];
+
+export function renderEquipmentTab(state, activeSubTab = 'equip') {
   const container = document.getElementById('tab-equipment');
+  const subnav = `<div class="inner-subnav">${EQUIP_SUBTABS.map((t) => `
+    <button class="inner-subtab-btn ${activeSubTab === t.id ? 'active' : ''}" data-equip-subtab="${t.id}">${t.label}</button>
+  `).join('')}</div>`;
+
+  let body;
+  if (activeSubTab === 'forge') body = forgeContentHtml(state);
+  else if (activeSubTab === 'materials') body = materialsContentHtml(state);
+  else body = equipRingContentHtml(state);
+
+  container.innerHTML = subnav + body;
+}
+
+function equipRingContentHtml(state) {
   const leftSlots = LEFT_SLOT_IDS.map(getSlot);
   const rightSlots = RIGHT_SLOT_IDS.map(getSlot);
 
   const inventoryHtml = state.inventory.length
     ? state.inventory.map((entry) => inventoryTileHtml(state, entry)).join('')
-    : `<p class="empty-slot">Nada craftado ainda. Vá até a aba Forja.</p>`;
+    : `<p class="empty-slot">Nada craftado ainda. Vá até a aba Forjar.</p>`;
 
-  container.innerHTML = `
+  return `
     <div class="equip-screen">
       <div class="equip-ring">
         <div class="equip-side">${leftSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
@@ -276,13 +304,6 @@ export function renderEquipmentTab(state) {
       <div class="equip-inventory-grid">${inventoryHtml}</div>
     </div>
   `;
-
-  container.querySelectorAll('[data-equip-slot]').forEach((btn) => {
-    btn.addEventListener('click', () => showEquipSlotModal(state, btn.dataset.equipSlot));
-  });
-  container.querySelectorAll('[data-equip-item]').forEach((btn) => {
-    btn.addEventListener('click', () => showItemDetailModal(state, Number(btn.dataset.equipItem)));
-  });
 }
 
 function slotIconHtml(state, slot) {
@@ -319,7 +340,7 @@ export function showEquipSlotModal(state, slotId) {
     showModal(`${slot.emoji} ${slot.name}`, `
       <div class="item-detail">
         <div class="item-detail-icon">${slot.emoji}</div>
-        <p style="color:var(--text-dim); font-size:12.5px;">Nenhum item equipado neste slot ainda. Crafte um na aba Forja.</p>
+        <p style="color:var(--text-dim); font-size:12.5px;">Nenhum item equipado neste slot ainda. Crafte um na aba Forjar.</p>
       </div>
     `);
   }
@@ -393,9 +414,8 @@ function enhancePanelHtml(state, uid, entry, item) {
   </div>`;
 }
 
-export function renderForgeTab(state) {
-  const container = document.getElementById('tab-forge');
-  container.innerHTML = MONSTER_FAMILIES.map((family) => familyGroupHtml(state, family)).join('');
+function forgeContentHtml(state) {
+  return MONSTER_FAMILIES.map((family) => familyGroupHtml(state, family)).join('');
 }
 
 function familyGroupHtml(state, family) {
@@ -486,16 +506,14 @@ function prestigeCardHtml(state, upgrade) {
   </div>`;
 }
 
-export function renderMaterialsTab(state) {
-  const container = document.getElementById('tab-materials');
+function materialsContentHtml(state) {
   const allMaterials = MONSTER_FAMILIES.flatMap((f) => [f.materials.common, f.materials.rare, f.materials.gem]);
 
   if (allMaterials.every((m) => (state.materials[m.id] || 0) === 0)) {
-    container.innerHTML = `<p style="color:var(--text-dim); font-size:13px;">Nenhum material coletado ainda. Derrote monstros para conseguir materiais de craft.</p>`;
-    return;
+    return `<p style="color:var(--text-dim); font-size:13px;">Nenhum material coletado ainda. Derrote monstros para conseguir materiais de craft.</p>`;
   }
 
-  container.innerHTML = `<div class="material-grid">${allMaterials.map((m) => `
+  return `<div class="material-grid">${allMaterials.map((m) => `
     <div class="material-card">
       <div class="icon">${m.emoji}</div>
       <div class="name">${m.name}</div>
@@ -541,8 +559,7 @@ export function renderEventsTab(state, engagementRemainingMs) {
     return;
   }
 
-  const stats = computePlayerStats(state);
-  const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(stats.clickDamage);
+  const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(win.family);
   const hp = state.eventBossHp ?? maxHp;
   const pct = maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 0;
   const timerHtml = engagementRemainingMs != null
@@ -569,23 +586,13 @@ export function pulseEventBoss() {
 }
 
 // ---------------------------------------------------------------
-// Shop tab: Cash sub-tab (achievements, ad-watch, gold/Runas packs, and a
-// disabled real-money package stub) and Event-currency sub-tab (per-family
-// Gem/material bundles). `activeSubTab` is owned by main.js.
+// Achievements tab: the "earn Cash" side (achievement claims + the
+// simulated ad-watch reward), split out from the Shop, which is purely
+// "spend Cash / spend Event Currency" now.
 // ---------------------------------------------------------------
 
-export function renderShopTab(state, activeSubTab) {
-  const container = document.getElementById('tab-shop');
-  container.innerHTML = `
-    <div class="shop-subnav">
-      <button class="shop-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">💎 Cash</button>
-      <button class="shop-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">🎫 Moeda de Evento</button>
-    </div>
-    ${activeSubTab === 'event' ? eventShopHtml(state) : cashShopHtml(state)}
-  `;
-}
-
-function cashShopHtml(state) {
+export function renderAchievementsTab(state) {
+  const container = document.getElementById('tab-achievements');
   const cooldownMs = adWatchCooldownRemaining(state);
   const adReady = cooldownMs <= 0;
 
@@ -605,6 +612,33 @@ function cashShopHtml(state) {
     </div>`;
   }).join('');
 
+  container.innerHTML = `
+    <div class="shop-balance">💎 Você tem <strong>${formatNumber(state.cash)}</strong> Cash</div>
+    <button id="watch-ad-btn" class="watch-ad-btn" ${adReady ? '' : 'disabled'}>
+      ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' 💎)' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
+    </button>
+    <div class="achievement-list">${achievementsHtml}</div>
+  `;
+}
+
+// ---------------------------------------------------------------
+// Shop tab: Cash sub-tab (spend on gold/Runas packs, plus a disabled
+// real-money package stub) and Event-currency sub-tab (per-family
+// Gem/material bundles). `activeSubTab` is owned by main.js.
+// ---------------------------------------------------------------
+
+export function renderShopTab(state, activeSubTab) {
+  const container = document.getElementById('tab-shop');
+  container.innerHTML = `
+    <div class="inner-subnav">
+      <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">💎 Cash</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">🎫 Moeda de Evento</button>
+    </div>
+    ${activeSubTab === 'event' ? eventShopHtml(state) : cashShopHtml(state)}
+  `;
+}
+
+function cashShopHtml(state) {
   const packagesHtml = CASH_REAL_MONEY_PACKAGES.map((p) => `
     <div class="cash-package-card disabled" title="Requer integração de pagamento — ainda não disponível">
       <div class="icon">💎</div>
@@ -625,12 +659,7 @@ function cashShopHtml(state) {
 
   return `
     <div class="shop-balance">💎 Você tem <strong>${formatNumber(state.cash)}</strong> Cash</div>
-
-    <h4 class="shop-section-title">Ganhar Cash</h4>
-    <button id="watch-ad-btn" class="watch-ad-btn" ${adReady ? '' : 'disabled'}>
-      ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' 💎)' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
-    </button>
-    <div class="achievement-list">${achievementsHtml}</div>
+    <p class="shop-note">Ganhe Cash na aba 🏆 Conquistas.</p>
 
     <h4 class="shop-section-title">Comprar com Cash</h4>
     <div class="shop-item-grid">${shopItemsHtml}</div>
@@ -666,15 +695,16 @@ function eventShopHtml(state) {
   `;
 }
 
+// Equipment (which now also covers Forja/Materiais as sub-tabs) is
+// deliberately not here, same reasoning as Events/Shop/Achievements: it
+// needs main.js-owned transient UI state (which sub-tab is active) that
+// render.js has no business knowing about. See fullRefresh() in main.js.
 export function renderAll(state, monster, stats) {
   renderTopBar(state);
   renderCombatStats(stats, monster);
   renderMonster(state, monster);
-  renderEquipmentTab(state);
-  renderForgeTab(state);
   renderUpgradesTab(state);
   renderPrestigeTab(state);
-  renderMaterialsTab(state);
 }
 
 export function spawnDamagePopup(amount) {

@@ -16,9 +16,9 @@ import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
 import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
-  renderForgeTab, renderUpgradesTab, renderPrestigeTab, renderMaterialsTab, renderBossTimer,
+  renderUpgradesTab, renderPrestigeTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showModal, hideModal,
-  showItemDetailModal, renderEventsTab, renderShopTab, pulseEventBoss,
+  showItemDetailModal, showEquipSlotModal, renderEventsTab, renderAchievementsTab, renderShopTab, pulseEventBoss,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -49,7 +49,9 @@ function resetPlayerHp() {
 let eventDeadline = null;
 let eventDeadlineCycle = null;
 
-// Which Shop sub-tab is showing — pure UI state, not part of the save.
+// Which sub-tab is showing in Equipamento (Equipar/Forjar/Materiais) and
+// Loja (Cash/Moeda de Evento) — pure UI state, not part of the save.
+let activeEquipSubTab = 'equip';
 let activeShopSubTab = 'cash';
 
 function currentEventEngagementMs() {
@@ -102,13 +104,16 @@ function refreshAll() {
 
 // renderAll() replaces every tab's innerHTML, which destroys any listeners
 // attached to their buttons — always re-wire right after, via this helper,
-// instead of calling refreshAll() directly. Events/Shop aren't part of
-// renderAll() (they need main.js-owned transient UI state — the attempt
-// clock, the active sub-tab — that render.js has no business knowing
-// about) but use event delegation, so no re-wiring is needed for them.
+// instead of calling refreshAll() directly. Equipment/Events/Shop/
+// Achievements aren't part of renderAll() (they need main.js-owned
+// transient UI state — the attempt clock, which sub-tab is active — that
+// render.js has no business knowing about) but use event delegation, so no
+// re-wiring is needed for them.
 function fullRefresh() {
   refreshAll();
+  renderEquipmentTab(state, activeEquipSubTab);
   renderEventsTab(state, currentEventEngagementMs());
+  renderAchievementsTab(state);
   renderShopTab(state, activeShopSubTab);
   wireAllPanelButtons();
 }
@@ -131,9 +136,8 @@ function handleKillEvent(event) {
   renderTopBar(state);
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
-  renderEquipmentTab(state);
-  renderForgeTab(state);
-  renderMaterialsTab(state);
+  // One call covers Equipar/Forjar/Materiais, whichever sub-tab is showing.
+  renderEquipmentTab(state, activeEquipSubTab);
   renderUpgradesTab(state);
   renderPrestigeTab(state);
   wireAllPanelButtons();
@@ -290,6 +294,47 @@ function wireModalEvents() {
 }
 
 // ---------------------------------------------------------------
+// Equipment tab — also covers the Forjar and Materiais sub-tabs (folded in
+// so they're not separate top-level tabs anymore). One delegated listener
+// on the stable #tab-equipment container, wired once in init(): this tab
+// re-renders very often (every kill), so per-render re-wiring is exactly
+// the duplicate-listener bug class that bit this project twice before.
+// ---------------------------------------------------------------
+
+function wireEquipmentTabEvents() {
+  document.getElementById('tab-equipment').addEventListener('click', (e) => {
+    const subtabBtn = e.target.closest('[data-equip-subtab]');
+    if (subtabBtn) {
+      activeEquipSubTab = subtabBtn.dataset.equipSubtab;
+      renderEquipmentTab(state, activeEquipSubTab);
+      return;
+    }
+
+    const slotBtn = e.target.closest('[data-equip-slot]');
+    if (slotBtn) {
+      showEquipSlotModal(state, slotBtn.dataset.equipSlot);
+      return;
+    }
+
+    const itemBtn = e.target.closest('[data-equip-item]');
+    if (itemBtn) {
+      showItemDetailModal(state, Number(itemBtn.dataset.equipItem));
+      return;
+    }
+
+    const craftBtn = e.target.closest('[data-craft]');
+    if (craftBtn) {
+      const uid = craftItem(state, craftBtn.dataset.craft);
+      if (uid != null) {
+        showToast('🔨 Item craftado e equipado!');
+        fullRefresh();
+      }
+      return;
+    }
+  });
+}
+
+// ---------------------------------------------------------------
 // Events tab — click-only "boss rush": no passive DPS applies here (see
 // data/events.js), so damage happens exclusively in onClickEventBoss().
 // #tab-events is never recreated by innerHTML wholesale during a fight
@@ -317,7 +362,7 @@ function onClickEventBoss() {
   }
 
   const stats = computePlayerStats(state);
-  ensureEventBossSpawned(state, stats.clickDamage);
+  ensureEventBossSpawned(state, win.family);
   const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, win.family.element));
   const killed = applyEventDamage(state, dealt);
 
@@ -327,11 +372,8 @@ function onClickEventBoss() {
     const lootStr = Object.values(gained).map((g) => ` +${g.qty} ${g.emoji}`).join('');
     showToast(`🎉 Chefe de evento derrotado! +${formatNumber(currency)} 🎫${lootStr}`);
     renderTopBar(state);
-    renderMaterialsTab(state);
-    renderForgeTab(state);
-    renderEquipmentTab(state);
+    renderEquipmentTab(state, activeEquipSubTab);
     renderShopTab(state, activeShopSubTab);
-    wireAllPanelButtons(); // Forge cards were just rebuilt
   } else {
     pulseEventBoss();
   }
@@ -342,6 +384,33 @@ function onClickEventBoss() {
 function wireEventTabEvents() {
   document.getElementById('tab-events').addEventListener('click', (e) => {
     if (e.target.closest('#event-boss-sprite')) onClickEventBoss();
+  });
+}
+
+// ---------------------------------------------------------------
+// Achievements tab — the "earn Cash" side, separate from the Shop (which is
+// purely "spend Cash / spend Event Currency" now). Same delegation pattern.
+// ---------------------------------------------------------------
+
+function wireAchievementsTabEvents() {
+  document.getElementById('tab-achievements').addEventListener('click', (e) => {
+    const claimBtn = e.target.closest('[data-claim-achievement]');
+    if (claimBtn) {
+      if (claimAchievement(state, claimBtn.dataset.claimAchievement)) {
+        showToast('🏆 Conquista resgatada!');
+        renderAchievementsTab(state);
+      }
+      return;
+    }
+
+    const adBtn = e.target.closest('#watch-ad-btn');
+    if (adBtn) {
+      if (watchAd(state)) {
+        showToast(`🎬 +${formatNumber(AD_WATCH_CASH_REWARD)} 💎 Cash!`);
+        renderAchievementsTab(state);
+      }
+      return;
+    }
   });
 }
 
@@ -357,24 +426,6 @@ function wireShopTabEvents() {
     if (subtabBtn) {
       activeShopSubTab = subtabBtn.dataset.shopSubtab;
       renderShopTab(state, activeShopSubTab);
-      return;
-    }
-
-    const claimBtn = e.target.closest('[data-claim-achievement]');
-    if (claimBtn) {
-      if (claimAchievement(state, claimBtn.dataset.claimAchievement)) {
-        showToast('🏆 Conquista resgatada!');
-        renderShopTab(state, activeShopSubTab);
-      }
-      return;
-    }
-
-    const adBtn = e.target.closest('#watch-ad-btn');
-    if (adBtn) {
-      if (watchAd(state)) {
-        showToast(`🎬 +${formatNumber(AD_WATCH_CASH_REWARD)} 💎 Cash!`);
-        renderShopTab(state, activeShopSubTab);
-      }
       return;
     }
 
@@ -398,29 +449,10 @@ function wireShopTabEvents() {
       if (buyEventItem(state, item)) {
         showToast('🛒 Compra realizada!');
         renderShopTab(state, activeShopSubTab);
-        renderMaterialsTab(state);
-        renderForgeTab(state);
-        wireAllPanelButtons(); // Forge cards were just rebuilt
+        renderEquipmentTab(state, activeEquipSubTab); // Materiais just changed
       }
       return;
     }
-  });
-}
-
-// ---------------------------------------------------------------
-// Forge tab
-// ---------------------------------------------------------------
-
-function wireForgeButtons() {
-  document.querySelectorAll('[data-craft]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const itemId = btn.dataset.craft;
-      const uid = craftItem(state, itemId);
-      if (uid != null) {
-        showToast('🔨 Item craftado e equipado!');
-        fullRefresh();
-      }
-    });
   });
 }
 
@@ -467,11 +499,10 @@ function wirePrestigeButtons() {
 }
 
 // Re-wires the buttons that get recreated (via innerHTML) whenever their tab
-// re-renders. Equipment, Events and Shop use event delegation instead,
-// wired once in init() (see wireModalEvents(), wireEventTabEvents(),
-// wireShopTabEvents()).
+// re-renders. Equipment, Events, Achievements and Shop use event delegation
+// instead, wired once in init() (see wireModalEvents(), wireEquipmentTabEvents(),
+// wireEventTabEvents(), wireAchievementsTabEvents(), wireShopTabEvents()).
 function wireAllPanelButtons() {
-  wireForgeButtons();
   wireUpgradeButtons();
   wirePrestigeButtons();
 }
@@ -508,7 +539,9 @@ function init() {
   setupTabs();
   setupStageControls();
   wireModalEvents(); // one-time delegated listener, see wireModalEvents()
+  wireEquipmentTabEvents();
   wireEventTabEvents();
+  wireAchievementsTabEvents();
   wireShopTabEvents();
   resetPlayerHp();
   fullRefresh();
@@ -519,12 +552,13 @@ function init() {
   showOfflineProgressIfAny();
 
   setInterval(tick, TICK_MS);
-  // Events/Shop have their own slow clocks (window countdown, ad cooldown,
-  // achievement eligibility) that nothing else drives a re-render for —
-  // a plain 1s refresh is cheap and keeps both tabs live without hooking
-  // into every place stage/kills/materials could change.
+  // Events/Achievements/Shop have their own slow clocks (window countdown,
+  // ad cooldown, achievement eligibility) that nothing else drives a
+  // re-render for — a plain 1s refresh is cheap and keeps them live without
+  // hooking into every place stage/kills/materials could change.
   setInterval(() => {
     renderEventsTab(state, currentEventEngagementMs());
+    renderAchievementsTab(state);
     renderShopTab(state, activeShopSubTab);
   }, 1000);
   setInterval(() => saveState(state), SAVE_INTERVAL_MS);

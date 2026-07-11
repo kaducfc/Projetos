@@ -10,15 +10,15 @@ export const EVENT_ACTIVE_MS = 5 * 60 * 1000;
 
 // Once a player lands their first hit, they have this long to finish the
 // fight (see systems/events.js) — a distinct, shorter "boss rush" clock
-// from the window's overall availability above.
-export const EVENT_TIME_LIMIT_MS = 60 * 1000;
+// from the window's overall availability above. Fixed at 50s regardless
+// of which family is up or how far the player has progressed.
+export const EVENT_TIME_LIMIT_MS = 50 * 1000;
 
-// The event boss's HP target is expressed as a multiple of the player's
-// current click damage (not a stage-scaled HP curve) — killing it always
-// takes roughly the same number of clicks regardless of gear level, since
-// only clicks count (no passive DPS). The reward scales with progress
-// instead, in systems/events.js.
-export const EVENT_CLICK_TARGET = 60;
+// The event boss's HP is anchored to that family's own boss (the fight at
+// family.endStage, always a boss stage — see systems/events.js), scaled up
+// by this multiplier. So it's always exactly 30% tougher than "the real
+// version" of that boss, regardless of the player's current gear/stage.
+export const EVENT_DIFFICULTY_MULT = 1.3;
 
 export const EVENT_CURRENCY_BASE = 10;
 export const EVENT_CURRENCY_PER_STAGE = 0.5;

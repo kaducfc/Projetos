@@ -990,15 +990,17 @@ button:disabled {
   color: var(--text-dim);
 }
 
-/* ---------------- Shop ---------------- */
+/* ---------------- Sub-tab switcher (Equipamento's Equipar/Forjar/
+   Materiais, Loja's Cash/Moeda de Evento) — shared layout, contextual
+   accent color per tab below. ---------------- */
 
-.shop-subnav {
+.inner-subnav {
   display: flex;
   gap: 8px;
   margin-bottom: 14px;
 }
 
-.shop-subtab-btn {
+.inner-subtab-btn {
   flex: 1;
   padding: 9px;
   font-size: 12.5px;
@@ -1008,11 +1010,19 @@ button:disabled {
   color: var(--text-dim);
 }
 
-.shop-subtab-btn.active {
+#tab-shop .inner-subtab-btn.active {
   color: var(--text);
   border-color: var(--cash);
   background: rgba(79, 209, 224, 0.1);
 }
+
+#tab-equipment .inner-subtab-btn.active {
+  color: var(--text);
+  border-color: var(--gold);
+  background: rgba(244, 197, 66, 0.1);
+}
+
+/* ---------------- Shop ---------------- */
 
 .shop-balance {
   text-align: center;

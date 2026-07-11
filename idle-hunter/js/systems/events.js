@@ -1,19 +1,24 @@
-import { EVENT_CLICK_TARGET, EVENT_CURRENCY_BASE, EVENT_CURRENCY_PER_STAGE } from '../data/events.js';
+import { EVENT_CURRENCY_BASE, EVENT_CURRENCY_PER_STAGE, EVENT_DIFFICULTY_MULT } from '../data/events.js';
+import { monsterMaxHp } from './combat.js';
 
 export function isEventClaimed(state, cycleIndex) {
   return state.eventClaimedCycle === cycleIndex;
 }
 
-export function computeEventBossMaxHp(clickDamage) {
-  return Math.max(10, Math.round(clickDamage * EVENT_CLICK_TARGET));
+/// family.endStage is always a boss stage (block sizes are multiples of the
+/// boss interval — see data/monsters.js), so this is "that family's own
+/// boss fight" HP, scaled up by EVENT_DIFFICULTY_MULT. Fixed per family,
+/// independent of the player's own stats/gear.
+export function computeEventBossMaxHp(family) {
+  return Math.max(10, Math.round(monsterMaxHp(family.endStage) * EVENT_DIFFICULTY_MULT));
 }
 
 /// Lazily spawns the event boss the first time it's hit in a cycle. Both HP
-/// and maxHp are persisted (not recomputed from live stats) so the target
-/// stays fixed for the whole fight even if the player's gear changes mid-way.
-export function ensureEventBossSpawned(state, clickDamage) {
+/// and maxHp are persisted (not recomputed live) so the target stays fixed
+/// for the whole fight even if the player's gear changes mid-way.
+export function ensureEventBossSpawned(state, family) {
   if (state.eventBossHp == null) {
-    state.eventBossMaxHp = computeEventBossMaxHp(clickDamage);
+    state.eventBossMaxHp = computeEventBossMaxHp(family);
     state.eventBossHp = state.eventBossMaxHp;
   }
 }

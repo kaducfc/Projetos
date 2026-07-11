@@ -47,13 +47,17 @@ Depois abra `http://localhost:8000` no navegador.
    não têm mais prazo — pode farmar neles à vontade.
 4. **Equipamentos**: 6 slots — Elmo, Peitoral, Calça, Luvas, Botas
    (defesa) e Arma (ataque: lança, adaga, arco, martelo, machado ou
-   espada, dependendo da família). Cada peça é craftada na Forja com
-   ouro + materiais daquele monstro, e equipada automaticamente ao
-   craftar. A aba Equipamento mostra o personagem no centro com os 6
-   slots ao redor (só o ícone do item, ou apagado se vazio) e o
-   inventário completo embaixo (também só ícones) — clique em qualquer
-   ícone, equipado ou não, pra abrir um popup com nome, stats,
-   aprimoramento e o botão de Equipar/Desequipar. Cada peça craftada já
+   espada, dependendo da família). A aba **Equipamento** tem 3 sub-abas:
+   **Equipar** (o personagem no centro com os 6 slots ao redor — só o
+   ícone do item, ou apagado se vazio — e o inventário completo embaixo,
+   também só ícones), **Forjar** (craft de cada peça com ouro + materiais
+   daquele monstro, equipada automaticamente ao craftar) e **Materiais**
+   (quanto você tem de cada material). As três eram abas separadas antes;
+   viraram sub-abas porque são todas sobre a mesma coisa — seu
+   equipamento — e assim sobra espaço na navegação principal. Clique em
+   qualquer ícone na sub-aba Equipar, equipado ou não, pra abrir um popup
+   com nome, stats, aprimoramento e o botão de Equipar/Desequipar. Cada
+   peça craftada já
    reserva um **slot de carta** (estilo Ragnarok Online) — visível nesse
    popup como "vazio". O sistema de cartas em si (monstros dropando
    cartas, efeitos, encaixe) ainda não existe; é só a estrutura de
@@ -91,26 +95,28 @@ Depois abra `http://localhost:8000` no navegador.
    parede, não precisa estar com o jogo aberto), uma família de monstro
    diferente vira "chefe de evento" por 5 minutos. Diferente do combate
    normal, esse chefe **só toma dano de clique** — sem DPS passivo — e uma
-   vez que você acerta o primeiro golpe, tem **60 segundos** pra terminar
-   (se o tempo acabar, dá pra tentar de novo, contanto que a janela de 5
-   minutos ainda esteja aberta). O HP dele é um múltiplo fixo do seu dano
-   de clique atual (não escala com estágio), então matá-lo sempre exige
-   mais ou menos o mesmo número de cliques, não importa seu nível de
-   equipamento — quem escala com o estágio é a **recompensa**: ao derrotar,
-   você sempre ganha **1 a 6 materiais** (a "chance de drop aumentada" é
-   expressa como bônus garantido, não como mais uma rolagem de dado) e
-   uma quantidade de **🎫 Moeda de Evento**. Só dá pra derrotar (e
-   resgatar a recompensa) uma vez por janela.
-10. **💎 Cash e 🛒 Loja**: Cash é a moeda premium do jogo — hoje dá pra
-    ganhar por **conquistas** (aba Loja → Cash, uma lista de marcos como
-    "alcance o estágio 25" ou "evolua um item pra Rank Master") ou
-    assistindo um **anúncio simulado** (sem SDK de anúncio real
-    integrado ainda, o botão só concede a recompensa direto, com um
-    cooldown de 5 minutos). A compra com dinheiro real aparece na loja
-    como uma seção desabilitada ("em breve") — estrutura pronta pra uma
-    futura integração de pagamento, mas nada funcional ainda. Cash compra
-    pacotes de ouro/Runas na própria aba. A 🎫 Moeda de Evento (ganha só
-    derrotando o chefe de evento) tem sua própria aba na Loja, com Gemas
+   vez que você acerta o primeiro golpe, tem **50 segundos fixos** pra
+   terminar, sempre, não importa a família (se o tempo acabar, dá pra
+   tentar de novo, contanto que a janela de 5 minutos ainda esteja
+   aberta). O HP dele é o HP do **chefe de verdade** daquela família
+   (o mesmo chefe que aparece no estágio final do bloco dela, no combate
+   normal), só que **30% mais forte** — então cada família tem uma
+   dificuldade de evento fixa e previsível, na mesma proporção da
+   dificuldade que ela já tem no jogo normal. Quem escala com o estágio é
+   a **recompensa**: ao derrotar, você sempre ganha **1 a 6 materiais** (a
+   "chance de drop aumentada" é expressa como bônus garantido, não como
+   mais uma rolagem de dado) e uma quantidade de **🎫 Moeda de Evento**. Só
+   dá pra derrotar (e resgatar a recompensa) uma vez por janela.
+10. **🏆 Conquistas, 💎 Cash e 🛒 Loja**: Cash é a moeda premium do jogo,
+    com sua própria aba **Conquistas** — uma lista de marcos ("alcance o
+    estágio 25", "evolua um item pra Rank Master") que pagam Cash ao
+    serem cumpridos, mais um botão de **anúncio simulado** (sem SDK de
+    anúncio real integrado ainda, só concede a recompensa direto, com
+    cooldown de 5 minutos). A aba **Loja** é só pra *gastar*: sub-aba Cash
+    (pacotes de ouro/Runas, mais uma seção de compra com dinheiro real
+    desabilitada — "em breve", estrutura pronta pra uma futura integração
+    de pagamento mas nada funcional ainda) e sub-aba 🎫 Moeda de Evento
+    (ganha só derrotando o chefe de evento), com Gemas
     e pacotes de material de qualquer família já desbloqueada.
 
 ## Decisão de design: o que sobrevive ao renascimento
@@ -261,6 +267,16 @@ delegados do jogo. Aprimorar/evoluir mantém o popup aberto e só atualiza
 o conteúdo dele, pra dar pra clicar "Aprimorar" várias vezes seguidas sem
 reabrir nada.
 
+Desde que Forjar/Materiais viraram sub-abas de Equipamento, a aba inteira
+passou a usar esse mesmo padrão de listener único delegado
+(`wireEquipmentTabEvents()` em `main.js`, wireado uma vez no `init()`) —
+antes, os cliques nos slots/itens eram religados a cada `renderEquipmentTab()`
+(seguro só porque o container inteiro era recriado antes). Como essa aba
+agora recria seu conteúdo com muito mais frequência (qualquer clique na
+Forja, troca de sub-aba, etc.) e é justamente onde o projeto já tropeçou
+duas vezes com listener duplicado, delegar no container estável em vez de
+religar a cada render eliminou a categoria de bug de uma vez.
+
 ## Decisão de design: o chefe de evento é 100% baseado em relógio de parede
 
 `getEventWindow()` (`js/data/events.js`) não guarda "quando o próximo
@@ -279,11 +295,23 @@ bate nele — só o combate do estágio atual continua recebendo DPS
 normalmente). A ideia é que evento seja uma atividade ativa e curta
 ("chefe correria"), não mais uma coisa pra deixar rodando sozinha; por
 isso também não causa dano de volta no jogador (sem risco de vida) e o
-alvo de HP é um múltiplo fixo do dano de clique atual
-(`EVENT_CLICK_TARGET` cliques, sempre), em vez de escalar com o estágio
-como o resto dos monstros — assim a dificuldade em "número de cliques"
-fica previsível independente do quão forte seu personagem está, e quem
-escala com progresso é a recompensa, não o desafio.
+prazo por tentativa (`EVENT_TIME_LIMIT_MS`, `js/data/events.js`) é
+**fixo em 50 segundos**, sempre, não importa a família ou o estágio do
+jogador.
+
+O HP do chefe de evento (`computeEventBossMaxHp()` em
+`js/systems/events.js`) reaproveita a mesma fórmula do combate normal —
+`monsterMaxHp(family.endStage)`, que é exatamente o HP do chefe de
+verdade daquela família (`endStage` é sempre um estágio de chefe, já que
+o tamanho do bloco de estágios é múltiplo do intervalo de chefes) — só
+multiplicado por `EVENT_DIFFICULTY_MULT` (1.3, ou seja **30% mais
+difícil** que o chefe original). Isso é bem diferente de escalar pelo
+dano de clique do próprio jogador: a dificuldade de cada família de
+evento é fixa e sempre proporcional à dificuldade que ela já tem no jogo
+normal, então famílias no fim da progressão (Dragão Ancião, por exemplo)
+são chefes de evento muito mais duros que as do início — não existe
+autoequilíbrio pelo poder do jogador, é uma dificuldade "de verdade"
+amarrada ao estágio daquela família.
 
 ## Próximo passo natural: cartas (Ragnarok-style)
 
@@ -350,7 +378,7 @@ primeiro MVP. Os pontos mais fáceis de ajustar:
 - `js/systems/stats.js`: `BASE_MAX_HP`, `BASE_ARMOR` (vida/armadura antes de qualquer equipamento).
 - `js/systems/combat.js`: `PLAYER_DPS_TAKEN_GROWTH`/`_BASE`, `BOSS_DPS_TAKEN_MULT`, `ARMOR_CONSTANT`.
 - `js/data/elements.js`: `ELEMENT_DAMAGE_BONUS` (±25%), `ELEMENT_RESISTANCE_PER_PIECE` (5%).
-- `js/data/events.js`: `EVENT_CYCLE_MS`/`EVENT_ACTIVE_MS` (frequência/duração da janela), `EVENT_TIME_LIMIT_MS` (prazo por tentativa), `EVENT_CLICK_TARGET` (dificuldade em nº de cliques), `EVENT_CURRENCY_BASE`/`_PER_STAGE` (recompensa).
+- `js/data/events.js`: `EVENT_CYCLE_MS`/`EVENT_ACTIVE_MS` (frequência/duração da janela), `EVENT_TIME_LIMIT_MS` (prazo fixo por tentativa, 50s), `EVENT_DIFFICULTY_MULT` (quanto mais forte que o chefe original, 1.3 = 30%), `EVENT_CURRENCY_BASE`/`_PER_STAGE` (recompensa).
 - `js/data/shop.js`: preços em `CASH_SHOP_ITEMS`/`eventShopItemsForFamily()`, `AD_WATCH_COOLDOWN_MS`/`_CASH_REWARD`.
 - `js/data/achievements.js`: `cashReward` de cada conquista.
 
@@ -373,16 +401,30 @@ dentro de uma janela ativa sem esperar até 15 minutos de verdade —
 confirmei a rotação de família (índice de ciclo → família diferente a
 cada 15 min), o combate só-por-clique matando o chefe e concedendo 1–6
 materiais + Moeda de Evento, o bloqueio de re-farm no mesmo ciclo
-("Evento concluído!"), o timeout de 60s abortando a tentativa (e
-permitindo tentar de novo dentro da mesma janela), e — um bug real que
-esse teste pegou — a prévia "Próximo evento" mostrando a família errada
-(a que acabou de ser derrotada, em vez da próxima no rodízio), corrigido
-antes de terminar. Testei também o cooldown do botão de anúncio (Cash
+("Evento concluído!"), o timeout abortando a tentativa (e permitindo
+tentar de novo dentro da mesma janela), e — um bug real que esse teste
+pegou — a prévia "Próximo evento" mostrando a família errada (a que
+acabou de ser derrotada, em vez da próxima no rodízio), corrigido antes
+de terminar. Testei também o cooldown do botão de anúncio (Cash
 concedido, botão desabilita e mostra contagem regressiva), resgate de
 conquista, compra com Cash (ouro/Runas) e com Moeda de Evento (Gema/
 material), e migração de um save antigo (sem nenhum desses campos) sem
 erro no console. Os pacotes de "Cash com dinheiro real" são só uma
 prévia visual desabilitada — não há integração de pagamento real.
+
+Depois, na reorganização (Forjar/Materiais viraram sub-abas de
+Equipamento, Conquistas virou aba própria separada da Loja, prazo do
+chefe de evento fixo em 50s, dificuldade dele = 30% acima do chefe de
+verdade da família), retestei o fluxo inteiro: craft e equipar via o
+novo listener delegado único da aba Equipamento (inclusive trocando de
+sub-aba no meio), as 3 sub-abas renderizando o conteúdo certo, Conquistas
+e Loja aparecendo como abas separadas (Loja sem mais o botão de anúncio
+nem a lista de conquistas), e confirmei numericamente — computando a
+mesma fórmula em Node e comparando com o HP real gerado no browser — que
+o HP do chefe de evento bate exatamente com `monsterMaxHp(family.endStage)
+× 1.3` para a família ativa no momento do teste, e que o prazo por
+tentativa é sempre 50s cravados, não importa a família. Sem erros no
+console em nenhum desses passos.
 
 Também testei a nova UI da aba Equipamento especificamente: abrir o popup
 a partir de um slot no personagem e a partir de um ícone do inventário,
