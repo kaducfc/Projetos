@@ -28,29 +28,40 @@ const ELEMENT_COLORS = {
   agua: '#5cc2ff',
 };
 
-function gearColor(state, slotId) {
+/// Everything the doll needs to know about one equipped slot: the element
+/// color (used for the tinted-shape fallback) and, when the family has real
+/// art, the image to overlay instead of that shape.
+function gearVisual(state, slotId) {
   const eq = getEquippedEntry(state, slotId);
   if (!eq) return null;
-  return ELEMENT_COLORS[eq.item.element] || ELEMENT_COLORS.neutro;
+  return {
+    color: ELEMENT_COLORS[eq.item.element] || ELEMENT_COLORS.neutro,
+    image: eq.item.image || null,
+    name: eq.item.name,
+  };
 }
 
-/// Layered SVG paper doll: a generic cartoon guy in swim trunks, with each
-/// equipped piece drawn on top as its own layer, tinted by the item's
-/// element color. Pure presentation — reads equipped state, renders nothing
-/// interactive (clicks go to the slot icons around it).
-function characterSvg(state) {
+/// Layered paper doll: a generic cartoon guy in swim trunks (SVG), with each
+/// equipped piece drawn on top. Slots backed by real art (see
+/// assets/chispim/) get their actual sprite overlaid via <img>; slots
+/// without art fall back to a flat shape tinted by the item's element
+/// color, same as before. Pure presentation — reads equipped state, renders
+/// nothing interactive (clicks go to the slot icons around it).
+function characterSvg(visuals) {
   const skin = '#f2c19b';
   const skinShade = '#e0a87e';
   const hair = '#4a3626';
   const trunk = '#e2445c';
   const blade = '#cfd6e4';
 
-  const helmet = gearColor(state, 'helmet');
-  const chest = gearColor(state, 'armor');
-  const pants = gearColor(state, 'pants');
-  const gloves = gearColor(state, 'gloves');
-  const boots = gearColor(state, 'boots');
-  const weapon = gearColor(state, 'weapon');
+  // Only render the tinted-shape fallback when there's no real image for
+  // that slot — otherwise the <img> overlay (see gearOverlaysHtml) covers it.
+  const helmet = visuals.helmet && !visuals.helmet.image ? visuals.helmet.color : null;
+  const chest = visuals.armor && !visuals.armor.image ? visuals.armor.color : null;
+  const pants = visuals.pants && !visuals.pants.image ? visuals.pants.color : null;
+  const gloves = visuals.gloves && !visuals.gloves.image ? visuals.gloves.color : null;
+  const boots = visuals.boots && !visuals.boots.image ? visuals.boots.color : null;
+  const weapon = visuals.weapon && !visuals.weapon.image ? visuals.weapon.color : null;
 
   return `<svg viewBox="0 0 120 200" width="110" height="184" role="img" aria-label="Seu personagem">
     <g stroke="#14141c" stroke-width="2" stroke-linejoin="round">
@@ -106,6 +117,44 @@ function characterSvg(state) {
         <rect x="78" y="100" width="13" height="7" rx="3" fill="${gloves}" />` : ''}
     </g>
   </svg>`;
+}
+
+// Anchor point (center, as % of the 110×184 doll box) + width (as % of box
+// width) for each slot's real-art overlay. z-index controls draw order —
+// roughly back-to-front the way a person gets dressed, with the weapon
+// last so it reads as held in front of the hands.
+const GEAR_OVERLAY_ANCHORS = {
+  weapon: { left: 50, top: 57, width: 96, z: 6 },
+  pants: { left: 50, top: 68, width: 38, z: 2 },
+  boots: { left: 50, top: 90, width: 36, z: 3 },
+  armor: { left: 50, top: 46, width: 50, z: 4 },
+  helmet: { left: 50, top: 17, width: 46, z: 5 },
+  gloves: { left: 50, top: 55, width: 48, z: 7 },
+};
+
+function gearOverlaysHtml(visuals) {
+  return Object.entries(visuals)
+    .filter(([, v]) => v && v.image)
+    .map(([slotId, v]) => {
+      const a = GEAR_OVERLAY_ANCHORS[slotId];
+      return `<img class="gear-overlay" src="${v.image}" alt="${v.name}"
+        style="left:${a.left}%; top:${a.top}%; width:${a.width}%; z-index:${a.z};">`;
+    })
+    .join('');
+}
+
+/// Combines the base SVG doll with real-art overlays into the final markup
+/// for `.equip-character`.
+function characterVisual(state) {
+  const visuals = {
+    helmet: gearVisual(state, 'helmet'),
+    armor: gearVisual(state, 'armor'),
+    pants: gearVisual(state, 'pants'),
+    gloves: gearVisual(state, 'gloves'),
+    boots: gearVisual(state, 'boots'),
+    weapon: gearVisual(state, 'weapon'),
+  };
+  return `<div class="character-visual">${characterSvg(visuals)}${gearOverlaysHtml(visuals)}</div>`;
 }
 
 const STAT_LABELS = {
@@ -213,7 +262,7 @@ export function renderEquipmentTab(state) {
     <div class="equip-screen">
       <div class="equip-ring">
         <div class="equip-side">${leftSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
-        <div class="equip-character">${characterSvg(state)}</div>
+        <div class="equip-character">${characterVisual(state)}</div>
         <div class="equip-side">${rightSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
       </div>
       <div class="equip-inventory-header">Inventário</div>

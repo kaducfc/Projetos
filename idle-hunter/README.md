@@ -168,15 +168,24 @@ duas isoladamente derruba o dano a zero).
 
 ## O boneco da aba Equipamento (paper doll)
 
-O personagem no centro da aba Equipamento é um SVG em camadas gerado em
-código (`characterSvg()` em `js/ui/render.js`): o corpo base é um boneco
-cartoon só de sunga, e cada slot equipado adiciona a camada visual
-correspondente por cima (elmo, peitoral com ombreiras, calça, luvas,
-botas e as duas lâminas da arma nas mãos). Cada camada é pintada com a
-cor do **elemento** do item equipado (amarelo = Elétrico, vermelho =
-Fogo, etc. — mapa `ELEMENT_COLORS`), então dá pra ver de relance a
-composição elemental do seu set. Sem nenhuma imagem externa — tudo
-desenhado em SVG inline, no mesmo espírito emoji/CSS do resto do jogo.
+O personagem no centro da aba Equipamento é uma pilha de duas camadas
+(`characterVisual()` em `js/ui/render.js`): por baixo, um SVG do corpo
+base (boneco cartoon só de sunga, `characterSvg()`); por cima, um `<div>`
+com `position: relative` que recebe um `<img class="gear-overlay">`
+absolutamente posicionado para cada slot equipado que tenha arte real
+(hoje só o Chispim — veja a seção seguinte). Cada imagem é ancorada por
+um ponto central (`GEAR_OVERLAY_ANCHORS`: `left`/`top` em % da caixa do
+boneco, mais `width` e `z-index`) calibrado visualmente pra cair sobre a
+cabeça/torso/pernas/mãos certos, na ordem de "vestir" (pernas → botas →
+peitoral → elmo → luvas → arma por cima de tudo, pra parecer empunhada).
+
+Para slots equipados **sem** arte real (qualquer família além do
+Chispim), o boneco cai de volta no comportamento antigo: uma forma lisa
+dentro do próprio SVG, pintada com a cor do **elemento** do item
+(amarelo = Elétrico, vermelho = Fogo, etc. — mapa `ELEMENT_COLORS`). As
+duas coisas convivem no mesmo boneco: dá pra ter, por exemplo, elmo com
+arte real do Chispim e calça de outra família aparecendo como bloco
+colorido, ao mesmo tempo, sem conflito.
 
 Nota sobre o rebrand do primeiro monstro (Chispim): os ids internos da
 família continuam `boar`/`boar_*` de propósito — eles são chaves de save
@@ -204,7 +213,9 @@ No código, `MONSTER_FAMILIES[0]` (o `boar`) ganhou os campos opcionais
 Forja, nos ícones da aba Equipamento (anel de slots + grade de
 inventário) e no popup de detalhe do item. O CSS não precisou de regra
 por contexto: toda imagem tem `width/height: 1em`, então ela herda o
-`font-size` que cada `.icon` já tinha para o emoji.
+`font-size` que cada `.icon` já tinha para o emoji. O boneco (seção
+anterior) usa o mesmo `item.image`, mas em vez do truque de `1em` ele
+posiciona a imagem em cima do corpo via `GEAR_OVERLAY_ANCHORS`.
 
 Qualquer família sem `images` continua caindo no emoji normalmente —
 adicionar arte pra outro monstro é só repetir o mesmo padrão (`image` +
@@ -313,3 +324,14 @@ detalhe do item mostram a imagem certa (não o emoji antigo) — sem 404 e
 sem erro no console. Famílias sem arte (Lobo, Aranha, Golem, Wyvern,
 Dragão) continuam mostrando emoji normalmente, confirmando que o
 fallback funciona.
+
+Testei o boneco com arte real equipando peça por peça (pernas → botas →
+peitoral → elmo → luvas → arma) e conferindo screenshot a cada uma, pra
+calibrar os pontos de ancoragem (`GEAR_OVERLAY_ANCHORS`) até cada peça
+cair no lugar certo do corpo — inclusive um caso em que as botas
+pareciam sumir mas na verdade estavam lá, só pequenas e coladas na
+barra da calça (confirmado lendo `getBoundingClientRect()` da imagem
+antes de mexer em qualquer posição). Testei também o caso misto: elmo +
+peitoral do Chispim (arte real) junto com uma calça de outra família
+(bloco colorido) equipados ao mesmo tempo — as duas camadas convivem
+sem conflito, sem erro no console.
