@@ -251,6 +251,26 @@ function setupStageControls() {
 // Item detail modal (opened from equipment slots and inventory tiles)
 // ---------------------------------------------------------------
 
+// A rapid second click right after a mutating action (double-tap "just to
+// be sure", a mis-timed second tap, etc.) is a real hazard here: actions
+// like socket/unsocket replace the clicked button with a *different*
+// control (the card picker) at roughly the same screen position, so an
+// immediate follow-up click can land on that new control and trigger an
+// unintended second mutation (e.g. clicking "Remover" then immediately
+// clicking again lands on the picker that appeared in its place, silently
+// re-socketing the card you just removed). This short lock — armed right
+// before any mutating action fires and released a beat later — makes the
+// whole click-then-mutate-then-rerender sequence atomic from the user's
+// perspective, without needing to redesign the layout to avoid every
+// possible position collision.
+let modalActionLocked = false;
+function runModalAction(fn) {
+  if (modalActionLocked) return;
+  modalActionLocked = true;
+  fn();
+  setTimeout(() => { modalActionLocked = false; }, 300);
+}
+
 // #modal-overlay itself is never recreated (only #modal-body's innerHTML
 // changes, via showModal()), so this delegated listener only needs wiring
 // once — see init(). Covers equip/unequip plus the same enhance/Rank-Master
@@ -261,61 +281,73 @@ function wireModalEvents() {
   overlay.addEventListener('click', (e) => {
     const equipBtn = e.target.closest('[data-modal-equip]');
     if (equipBtn) {
-      equipItem(state, Number(equipBtn.dataset.modalEquip));
-      hideModal();
-      fullRefresh();
+      runModalAction(() => {
+        equipItem(state, Number(equipBtn.dataset.modalEquip));
+        hideModal();
+        fullRefresh();
+      });
       return;
     }
 
     const unequipBtn = e.target.closest('[data-modal-unequip]');
     if (unequipBtn) {
-      unequipSlot(state, unequipBtn.dataset.modalUnequip);
-      hideModal();
-      fullRefresh();
+      runModalAction(() => {
+        unequipSlot(state, unequipBtn.dataset.modalUnequip);
+        hideModal();
+        fullRefresh();
+      });
       return;
     }
 
     const enhanceBtn = e.target.closest('[data-enhance]');
     if (enhanceBtn) {
-      const uid = Number(enhanceBtn.dataset.enhance);
-      if (enhanceItem(state, uid)) {
-        showToast('⬆️ Item aprimorado!');
-        fullRefresh();
-        showItemDetailModal(state, uid); // keep the popup open, with fresh numbers
-      }
+      runModalAction(() => {
+        const uid = Number(enhanceBtn.dataset.enhance);
+        if (enhanceItem(state, uid)) {
+          showToast('⬆️ Item aprimorado!');
+          fullRefresh();
+          showItemDetailModal(state, uid); // keep the popup open, with fresh numbers
+        }
+      });
       return;
     }
 
     const masterBtn = e.target.closest('[data-master-upgrade]');
     if (masterBtn) {
-      const uid = Number(masterBtn.dataset.masterUpgrade);
-      if (upgradeToMaster(state, uid)) {
-        showToast('✨ Item evoluiu para Rank Master!');
-        fullRefresh();
-        showItemDetailModal(state, uid);
-      }
+      runModalAction(() => {
+        const uid = Number(masterBtn.dataset.masterUpgrade);
+        if (upgradeToMaster(state, uid)) {
+          showToast('✨ Item evoluiu para Rank Master!');
+          fullRefresh();
+          showItemDetailModal(state, uid);
+        }
+      });
       return;
     }
 
     const socketBtn = e.target.closest('[data-socket-uid]');
     if (socketBtn) {
-      const uid = Number(socketBtn.dataset.socketUid);
-      if (socketCard(state, uid, socketBtn.dataset.socketCardId)) {
-        showToast('🃏 Carta encaixada!');
-        fullRefresh();
-        showItemDetailModal(state, uid);
-      }
+      runModalAction(() => {
+        const uid = Number(socketBtn.dataset.socketUid);
+        if (socketCard(state, uid, socketBtn.dataset.socketCardId)) {
+          showToast('🃏 Carta encaixada!');
+          fullRefresh();
+          showItemDetailModal(state, uid);
+        }
+      });
       return;
     }
 
     const unsocketBtn = e.target.closest('[data-unsocket-uid]');
     if (unsocketBtn) {
-      const uid = Number(unsocketBtn.dataset.unsocketUid);
-      if (unsocketCard(state, uid)) {
-        showToast('🃏 Carta removida.');
-        fullRefresh();
-        showItemDetailModal(state, uid);
-      }
+      runModalAction(() => {
+        const uid = Number(unsocketBtn.dataset.unsocketUid);
+        if (unsocketCard(state, uid)) {
+          showToast('🃏 Carta removida.');
+          fullRefresh();
+          showItemDetailModal(state, uid);
+        }
+      });
       return;
     }
   });

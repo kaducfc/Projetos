@@ -375,6 +375,37 @@ razão que a resistência elemental de equipamento também fica de fora
 dali: o bônus depende de qual monstro você está enfrentando, não é um
 número fixo do seu personagem.
 
+### Bug corrigido: clique duplo no Slot de Carta re-encaixava a carta que você acabou de remover
+
+O bug relatado ("não consigo remover a carta... e às vezes uma carta nova
+aparece, duplicando"): clicar em "Remover" troca aquele exato botão pelo
+seletor "Encaixar carta" **na mesma posição de tela** (o popup não muda
+de tamanho o bastante pra empurrar o conteúdo pra longe). Um segundo
+clique logo em seguida no mesmo lugar — bem comum: toque duplo por
+"garantia", ou um clique que chega um instante depois do primeiro por
+qualquer motivo — não acerta mais o botão "Remover" (que já não existe
+mais ali), e sim a primeira opção do seletor que apareceu no lugar dele,
+**re-encaixando** a carta que acabou de sair. Do ponto de vista de quem
+está jogando: a carta "não sai" (porque ela volta ao slot ali mesmo,
+imediatamente) e o total de cópias na coleção parece oscilar sem motivo aparente
+(consumida nesse segundo clique) — dava exatamente a sensação de bug
+descrita.
+
+Reproduzi isso de propósito (clique nas coordenadas exatas de tela do
+botão "Remover", esperar, clicar de novo nas *mesmas* coordenadas — que
+por essa hora já são outro botão) antes de corrigir, pra confirmar a
+causa. A correção: `runModalAction()` em `main.js` — um lock curto (300ms)
+em volta de toda ação que muta o `state` a partir do popup (equipar,
+desequipar, aprimorar, evoluir pra Rank Master, encaixar/remover carta).
+Um clique dentro da janela de lock é simplesmente ignorado; isso resolve
+o problema geral (qualquer ação do popup que troca o conteúdo no lugar
+onde você acabou de clicar), não só o caso específico da carta, sem
+precisar redesenhar o layout pra garantir que botões nunca troquem de
+posição. Testado que o fluxo legítimo de clicar "Aprimorar" várias vezes
+seguidas (documentado acima) continua funcionando normalmente num ritmo
+realista (~350ms entre cliques) — só cliques quase instantâneos um atrás
+do outro são bloqueados.
+
 ## Estrutura
 
 ```
@@ -548,3 +579,19 @@ de clique contra o Chispim (elétrico) antes e depois de encaixar a carta
 de Chispim (elétrico) no elmo equipado: a razão exata entre os dois foi
 1.0300 — confirmando os +3% do bônus da carta aplicados de verdade no
 cálculo de dano, não só cosmético na UI.
+
+Depois de um relato de bug (remover carta não funcionava direito, às
+vezes "duplicando" uma carta), reproduzi clicando nas coordenadas exatas
+de tela do botão "Remover" e depois nas mesmas coordenadas de novo —
+confirmando a causa (a re-renderização coloca o seletor "Encaixar carta"
+no lugar exato de onde "Remover" estava, então um clique rápido demais
+em seguida acerta o seletor em vez do botão que sumiu) antes de escrever
+qualquer correção. Depois do fix (`runModalAction()`, um lock de 300ms
+em torno de toda ação mutante do popup), reproduzi o mesmo teste e
+confirmei que a carta fica removida de verdade (`cardId: null`, cópia
+devolvida) mesmo com um clique de acompanhamento quase instantâneo (50ms
+depois). Testei também que isso não atrapalha o uso legítimo: cliquei
+"Aprimorar" 5 vezes seguidas com ~350ms entre cliques (ritmo rápido mas
+realista) e as 5 aplicaram normalmente. Rodei a suíte completa de novo
+(todas as abas, todas as sub-abas de Equipamento, craft, combate) depois
+da correção — sem erros no console.
