@@ -157,15 +157,31 @@ vence Fogo e perde para Elétrico. Combinações "não-vizinhas" no ciclo
 (ex: Fogo vs Elétrico) são neutras — sem bônus nem penalidade. Neutro
 nunca tem vantagem nem desvantagem, dos dois lados.
 
-Cada família de monstro tem um elemento fixo (ex: Dragão = Fogo, Wyvern
-de Gelo = Água, Aranha = Planta, Lobo = Elétrico; Javali e Golem são
-Neutro). O elemento da sua **arma** é sempre o da família de quem ela foi
+Cada família de monstro tem um elemento fixo (Chispim e Lobo = Elétrico,
+Aranha = Planta, Wyvern de Gelo = Água, Dragão = Fogo; Golem é Neutro). O elemento da sua **arma** é sempre o da família de quem ela foi
 craftada — é o único item que "ataca", então só ele entra na conta de
 ±25%. Já a **resistência** (+5% por peça) olha o elemento de cada peça de
 **defesa** individualmente contra o elemento do monstro atual — não tem
 relação com o ±25% de vantagem/desvantagem, é uma redução separada que
 soma com a fórmula de Armadura (multiplicativamente, então nenhuma das
 duas isoladamente derruba o dano a zero).
+
+## O boneco da aba Equipamento (paper doll)
+
+O personagem no centro da aba Equipamento é um SVG em camadas gerado em
+código (`characterSvg()` em `js/ui/render.js`): o corpo base é um boneco
+cartoon só de sunga, e cada slot equipado adiciona a camada visual
+correspondente por cima (elmo, peitoral com ombreiras, calça, luvas,
+botas e as duas lâminas da arma nas mãos). Cada camada é pintada com a
+cor do **elemento** do item equipado (amarelo = Elétrico, vermelho =
+Fogo, etc. — mapa `ELEMENT_COLORS`), então dá pra ver de relance a
+composição elemental do seu set. Sem nenhuma imagem externa — tudo
+desenhado em SVG inline, no mesmo espírito emoji/CSS do resto do jogo.
+
+Nota sobre o rebrand do primeiro monstro (Chispim): os ids internos da
+família continuam `boar`/`boar_*` de propósito — eles são chaves de save
+(inventário e contagem de materiais), então renomeá-los quebraria saves
+existentes. Só os nomes/emoji/elemento exibidos mudaram.
 
 ## Decisão de design: a aba Equipamento é só ícones + um popup
 

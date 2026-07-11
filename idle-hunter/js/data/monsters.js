@@ -9,19 +9,22 @@ export const BOSS_INTERVAL = 10;
 
 export const MONSTER_FAMILIES = [
   {
+    // Internal ids stay 'boar'/'boar_*' on purpose: they're save-file keys
+    // (inventory itemIds, material counts), so renaming them would orphan
+    // existing saves. Only display data changed in the Chispim rebrand.
     id: 'boar',
-    name: 'Javali Selvagem',
-    bossName: 'Javali Alfa',
-    emoji: '🐗',
-    bossEmoji: '🐗',
-    element: 'neutro',
+    name: 'Chispim',
+    bossName: 'Chispim Alfa',
+    emoji: '🐹',
+    bossEmoji: '🐹',
+    element: 'eletrico',
     startStage: 1,
     endStage: 20,
-    weapon: { name: 'Lança de Presas', emoji: '🔱' },
+    weapon: { name: 'Dual Blade de Chispim', emoji: '⚔️' },
     materials: {
-      common: { id: 'boar_tusk', name: 'Presa de Javali', emoji: '🦷' },
-      rare: { id: 'boar_alpha_hide', name: 'Couro do Javali Alfa', emoji: '🟫' },
-      gem: { id: 'boar_gem', name: 'Gema do Javali Selvagem', emoji: '💎' },
+      common: { id: 'boar_tusk', name: 'Pelo de Chispim', emoji: '⚡' },
+      rare: { id: 'boar_alpha_hide', name: 'Cristal de Chispim', emoji: '🔷' },
+      gem: { id: 'boar_gem', name: 'Gema do Chispim', emoji: '💎' },
     },
   },
   {

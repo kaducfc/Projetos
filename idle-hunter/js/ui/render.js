@@ -13,6 +13,94 @@ function elementBadgeHtml(elementId) {
   return `<span class="element-badge element-${el.id}">${el.emoji} ${el.name}</span>`;
 }
 
+const ELEMENT_COLORS = {
+  neutro: '#9a9ab0',
+  fogo: '#ff6a3d',
+  planta: '#4caf7d',
+  eletrico: '#f4e04d',
+  agua: '#5cc2ff',
+};
+
+function gearColor(state, slotId) {
+  const eq = getEquippedEntry(state, slotId);
+  if (!eq) return null;
+  return ELEMENT_COLORS[eq.item.element] || ELEMENT_COLORS.neutro;
+}
+
+/// Layered SVG paper doll: a generic cartoon guy in swim trunks, with each
+/// equipped piece drawn on top as its own layer, tinted by the item's
+/// element color. Pure presentation — reads equipped state, renders nothing
+/// interactive (clicks go to the slot icons around it).
+function characterSvg(state) {
+  const skin = '#f2c19b';
+  const skinShade = '#e0a87e';
+  const hair = '#4a3626';
+  const trunk = '#e2445c';
+  const blade = '#cfd6e4';
+
+  const helmet = gearColor(state, 'helmet');
+  const chest = gearColor(state, 'armor');
+  const pants = gearColor(state, 'pants');
+  const gloves = gearColor(state, 'gloves');
+  const boots = gearColor(state, 'boots');
+  const weapon = gearColor(state, 'weapon');
+
+  return `<svg viewBox="0 0 120 200" width="110" height="184" role="img" aria-label="Seu personagem">
+    <g stroke="#14141c" stroke-width="2" stroke-linejoin="round">
+      <!-- arms (behind torso) -->
+      <rect x="30" y="66" width="11" height="42" rx="5.5" fill="${skin}" />
+      <rect x="79" y="66" width="11" height="42" rx="5.5" fill="${skin}" />
+      <!-- legs + feet -->
+      <rect x="47" y="110" width="11" height="62" rx="5" fill="${skin}" />
+      <rect x="62" y="110" width="11" height="62" rx="5" fill="${skin}" />
+      <ellipse cx="51" cy="175" rx="9" ry="5" fill="${skinShade}" />
+      <ellipse cx="69" cy="175" rx="9" ry="5" fill="${skinShade}" />
+      <!-- torso -->
+      <rect x="42" y="60" width="36" height="54" rx="11" fill="${skin}" />
+      <!-- sunga (always on) -->
+      <path d="M42 97 h36 v9 q-8 9 -18 9 q-10 0 -18 -9 z" fill="${trunk}" />
+      <line x1="42" y1="99" x2="78" y2="99" stroke="#a32b42" />
+      ${pants ? `
+        <rect x="45" y="100" width="14" height="64" rx="6" fill="${pants}" />
+        <rect x="61" y="100" width="14" height="64" rx="6" fill="${pants}" />
+        <rect x="42" y="97" width="36" height="9" rx="3" fill="${pants}" />` : ''}
+      ${boots ? `
+        <rect x="44" y="154" width="14" height="18" rx="4" fill="${boots}" />
+        <rect x="62" y="154" width="14" height="18" rx="4" fill="${boots}" />
+        <ellipse cx="51" cy="175" rx="10" ry="5.5" fill="${boots}" />
+        <ellipse cx="69" cy="175" rx="10" ry="5.5" fill="${boots}" />` : ''}
+      ${chest ? `
+        <rect x="40" y="58" width="40" height="48" rx="10" fill="${chest}" />
+        <circle cx="40" cy="66" r="8" fill="${chest}" />
+        <circle cx="80" cy="66" r="8" fill="${chest}" />
+        <line x1="60" y1="64" x2="60" y2="100" stroke="#14141c" stroke-opacity="0.35" />` : ''}
+      <!-- head -->
+      <circle cx="60" cy="38" r="21" fill="${skin}" />
+      <path d="M39 36 a21 21 0 0 1 42 0 z" fill="${hair}" />
+      ${helmet ? `
+        <path d="M37 38 a23 23 0 0 1 46 0 z" fill="${helmet}" />
+        <rect x="35" y="36" width="50" height="7" rx="3.5" fill="${helmet}" />` : ''}
+      <!-- face (drawn after helmet so it never gets covered) -->
+      <circle cx="53" cy="42" r="2.4" fill="#222" stroke="none" />
+      <circle cx="67" cy="42" r="2.4" fill="#222" stroke="none" />
+      <path d="M53 50 q7 6 14 0" stroke="#222" fill="none" stroke-width="2" stroke-linecap="round" />
+      ${weapon ? `
+        <polygon points="84,104 91,56 97,61 90,106" fill="${blade}" />
+        <circle cx="87" cy="103" r="3.6" fill="${weapon}" />
+        <polygon points="36,104 29,56 23,61 30,106" fill="${blade}" />
+        <circle cx="33" cy="103" r="3.6" fill="${weapon}" />` : ''}
+      <!-- hands (over blade hilts so the grip reads as "holding") -->
+      <circle cx="35.5" cy="111" r="6" fill="${skin}" />
+      <circle cx="84.5" cy="111" r="6" fill="${skin}" />
+      ${gloves ? `
+        <circle cx="35.5" cy="111" r="7.5" fill="${gloves}" />
+        <rect x="29" y="100" width="13" height="7" rx="3" fill="${gloves}" />
+        <circle cx="84.5" cy="111" r="7.5" fill="${gloves}" />
+        <rect x="78" y="100" width="13" height="7" rx="3" fill="${gloves}" />` : ''}
+    </g>
+  </svg>`;
+}
+
 const STAT_LABELS = {
   clickFlat: (v) => `+${formatNumber(v)} Dano de Clique`,
   dpsFlat: (v) => `+${formatNumber(v)} DPS`,
@@ -118,7 +206,7 @@ export function renderEquipmentTab(state) {
     <div class="equip-screen">
       <div class="equip-ring">
         <div class="equip-side">${leftSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
-        <div class="equip-character"><div class="equip-character-avatar">🧙</div></div>
+        <div class="equip-character">${characterSvg(state)}</div>
         <div class="equip-side">${rightSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
       </div>
       <div class="equip-inventory-header">Inventário</div>
