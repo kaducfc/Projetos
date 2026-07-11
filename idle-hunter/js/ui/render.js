@@ -13,6 +13,7 @@ import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
 import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForFamily } from '../data/shop.js';
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
+import { CARDS } from '../data/cards.js';
 
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
 /// to the caller: images are set to `width/height: 1em` in CSS so they scale
@@ -183,6 +184,8 @@ function formatStatsLines(stats) {
 export function renderTopBar(state) {
   document.getElementById('gold-value').textContent = formatNumber(state.gold);
   document.getElementById('runas-value').textContent = formatNumber(state.runas);
+  document.getElementById('cash-value').textContent = formatNumber(state.cash);
+  document.getElementById('event-currency-value').textContent = formatNumber(state.eventCurrency);
   document.getElementById('stage-value').textContent = state.maxStage;
 }
 
@@ -269,6 +272,7 @@ const EQUIP_SUBTABS = [
   { id: 'equip', label: '🎽 Equipar' },
   { id: 'forge', label: '🔨 Forjar' },
   { id: 'materials', label: '🎒 Materiais' },
+  { id: 'cards', label: '🃏 Cartas' },
 ];
 
 export function renderEquipmentTab(state, activeSubTab = 'equip') {
@@ -280,6 +284,7 @@ export function renderEquipmentTab(state, activeSubTab = 'equip') {
   let body;
   if (activeSubTab === 'forge') body = forgeContentHtml(state);
   else if (activeSubTab === 'materials') body = materialsContentHtml(state);
+  else if (activeSubTab === 'cards') body = cardsContentHtml(state);
   else body = equipRingContentHtml(state);
 
   container.innerHTML = subnav + body;
@@ -453,6 +458,25 @@ function recipeCardHtml(state, item) {
   </div>`;
 }
 
+// Upgrade bonuses are always `level * valuePerLevel` — shared by both the
+// gold-bought and Runas-bought lists, just formatted per stat type (percent
+// stats get a %, startStage gets "estágios", everything else is flat).
+function formatUpgradeBonus(stat, value) {
+  if (stat === 'startStage') return `+${formatNumber(value)} estágio${Math.round(value) === 1 ? '' : 's'}`;
+  if (stat.endsWith('Percent')) return `+${formatPercent(value)}`;
+  return `+${formatNumber(value)}`;
+}
+
+function upgradeProgressHtml(upgrade, level) {
+  const current = formatUpgradeBonus(upgrade.stat, level * upgrade.valuePerLevel);
+  const next = formatUpgradeBonus(upgrade.stat, (level + 1) * upgrade.valuePerLevel);
+  return `<div class="upgrade-progress">
+    <span>Atual: <strong>${level > 0 ? current : '—'}</strong></span>
+    <span class="arrow">→</span>
+    <span>Próximo: <strong>${next}</strong></span>
+  </div>`;
+}
+
 export function renderUpgradesTab(state) {
   const container = document.getElementById('tab-upgrades');
   container.innerHTML = `<div class="upgrade-list">${UPGRADES.map((u) => upgradeCardHtml(state, u)).join('')}</div>`;
@@ -469,6 +493,7 @@ function upgradeCardHtml(state, upgrade) {
       <div class="name">${upgrade.name}</div>
       <div class="desc">${upgrade.description}</div>
       <div class="level">Nível ${level}</div>
+      ${upgradeProgressHtml(upgrade, level)}
     </div>
     <button data-upgrade="${upgrade.id}" ${affordable ? '' : 'disabled'}>💰 ${formatNumber(cost)}</button>
   </div>`;
@@ -501,6 +526,7 @@ function prestigeCardHtml(state, upgrade) {
       <div class="name">${upgrade.name}</div>
       <div class="desc">${upgrade.description}</div>
       <div class="level">Nível ${level}</div>
+      ${upgradeProgressHtml(upgrade, level)}
     </div>
     <button data-prestige-upgrade="${upgrade.id}" ${affordable ? '' : 'disabled'}>🔮 ${formatNumber(cost)}</button>
   </div>`;
@@ -518,6 +544,25 @@ function materialsContentHtml(state) {
       <div class="icon">${m.emoji}</div>
       <div class="name">${m.name}</div>
       <div class="qty">${formatNumber(state.materials[m.id] || 0)}</div>
+    </div>`).join('')}</div>`;
+}
+
+// Cards drop rarely from any monster of their family (see systems/combat.js)
+// and just sit in this inventory for now — there's no socketing UI yet
+// (see data/cards.js), so this is purely a "what have I collected" view.
+function cardsContentHtml(state) {
+  const owned = CARDS.filter((c) => (state.cards[c.id] || 0) > 0);
+
+  if (!owned.length) {
+    return `<p style="color:var(--text-dim); font-size:13px;">Nenhuma carta coletada ainda. Monstros têm uma pequena chance de dropar a carta deles ao morrer.</p>`;
+  }
+
+  return `<div class="material-grid">${owned.map((c) => `
+    <div class="material-card card-item">
+      <div class="icon">${c.emoji}</div>
+      <div class="name">${c.name}</div>
+      <div class="card-desc">${c.description}</div>
+      <div class="qty">${formatNumber(state.cards[c.id] || 0)}</div>
     </div>`).join('')}</div>`;
 }
 

@@ -398,6 +398,7 @@ function wireAchievementsTabEvents() {
     if (claimBtn) {
       if (claimAchievement(state, claimBtn.dataset.claimAchievement)) {
         showToast('🏆 Conquista resgatada!');
+        renderTopBar(state);
         renderAchievementsTab(state);
       }
       return;
@@ -407,6 +408,7 @@ function wireAchievementsTabEvents() {
     if (adBtn) {
       if (watchAd(state)) {
         showToast(`🎬 +${formatNumber(AD_WATCH_CASH_REWARD)} 💎 Cash!`);
+        renderTopBar(state);
         renderAchievementsTab(state);
       }
       return;
@@ -448,6 +450,7 @@ function wireShopTabEvents() {
       };
       if (buyEventItem(state, item)) {
         showToast('🛒 Compra realizada!');
+        renderTopBar(state);
         renderShopTab(state, activeShopSubTab);
         renderEquipmentTab(state, activeEquipSubTab); // Materiais just changed
       }

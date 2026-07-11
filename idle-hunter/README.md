@@ -59,9 +59,11 @@ Depois abra `http://localhost:8000` no navegador.
    com nome, stats, aprimoramento e o botão de Equipar/Desequipar. Cada
    peça craftada já
    reserva um **slot de carta** (estilo Ragnarok Online) — visível nesse
-   popup como "vazio". O sistema de cartas em si (monstros dropando
-   cartas, efeitos, encaixe) ainda não existe; é só a estrutura de
-   dados/UI preparada para não precisar migrar saves depois.
+   popup como "vazio". Monstros já têm uma pequena chance (2%) de dropar a
+   própria carta ao morrer, coletável na sub-aba **Cartas** (dentro de
+   Equipamento) — mas o encaixe em si (usar uma carta pra preencher o slot
+   de um item e ativar o bônus dela) ainda não existe, só a coleta. Ver
+   "O sistema de Cartas" mais abaixo.
    Além do stat principal de cada peça, as 5 peças de defesa também dão
    **Vida** (Elmo, Calça, Botas) ou **Armadura** (Peitoral, Luvas) — é
    assim que o equipamento te deixa sobreviver a estágios mais altos, não
@@ -86,11 +88,16 @@ Depois abra `http://localhost:8000` no navegador.
    aquele elemento especificamente). Detalhes e a tabela de vantagens em
    "Como os elementos funcionam" abaixo.
 7. **Upgrades**: comprados com ouro, aumentam dano/DPS/ouro/chance de
-   material. Resetam a cada renascimento.
+   material. Cada card mostra nível atual, o bônus que você **já tem**
+   nesse nível (`Atual: +8`, por exemplo) e o bônus que o **próximo**
+   nível dará (`Próximo: +12`) lado a lado, então dá pra ver de cara o
+   quanto vale a próxima compra sem fazer conta de cabeça. Resetam a cada
+   renascimento.
 8. **Prestígio (Renascer)**: ao alcançar o estágio 20+, você pode
    renascer: ganha Runas (baseado no estágio máximo alcançado) e reseta
    ouro/estágio/upgrades comuns. Runas compram upgrades **permanentes**
-   (Poder Ancestral, Fortuna Eterna, Faro Apurado, Início Avançado).
+   (Poder Ancestral, Fortuna Eterna, Faro Apurado, Início Avançado) — os
+   cards deles mostram o mesmo Atual/Próximo dos upgrades comuns.
 9. **Chefe de evento (aba 🎪 Eventos)**: a cada 15 minutos (relógio de
    parede, não precisa estar com o jogo aberto), uma família de monstro
    diferente vira "chefe de evento" por 5 minutos. Diferente do combate
@@ -117,7 +124,13 @@ Depois abra `http://localhost:8000` no navegador.
     desabilitada — "em breve", estrutura pronta pra uma futura integração
     de pagamento mas nada funcional ainda) e sub-aba 🎫 Moeda de Evento
     (ganha só derrotando o chefe de evento), com Gemas
-    e pacotes de material de qualquer família já desbloqueada.
+    e pacotes de material de qualquer família já desbloqueada. Ambas as
+    moedas (💎 Cash e 🎫 Moeda de Evento) aparecem também na barra
+    superior, ao lado de Ouro e Runas, então dá pra acompanhar as quatro
+    moedas sem entrar em nenhuma aba.
+11. **🃏 Cartas**: sub-aba dentro de Equipamento, um inventário só das
+    cartas de monstro que você já coletou (ver "O sistema de Cartas"
+    abaixo).
 
 ## Decisão de design: o que sobrevive ao renascimento
 
@@ -313,14 +326,33 @@ são chefes de evento muito mais duros que as do início — não existe
 autoequilíbrio pelo poder do jogador, é uma dificuldade "de verdade"
 amarrada ao estágio daquela família.
 
-## Próximo passo natural: cartas (Ragnarok-style)
+## O sistema de Cartas (metade construída, de propósito)
 
-A estrutura já está pronta (`inventory[i].cardId`, função `socketCard()`
-em `js/systems/crafting.js`, badge "Slot de Carta" na aba Equipamento) —
-falta: um `data/cards.js` com as cartas por monstro, elas dropando junto
-dos materiais em `systems/combat.js` (`rollDrops`), os efeitos delas
-entrando em `systems/stats.js` (`computePlayerStats`), e a UI de
-encaixar/trocar carta em `render.js`/`main.js`.
+Cada família de monstro tem uma carta (`js/data/cards.js`, `CARDS` — um
+por família, gerado a partir de `MONSTER_FAMILIES`), com 2% de chance de
+dropar de qualquer monstro daquela família, comum ou chefe
+(`CARD_DROP_CHANCE` em `js/systems/combat.js`). É uma rolagem separada
+das de material/Gema — mesma mecânica, `drops.push()` com uma flag
+`isCard: true` a mais, que `applyDamage()` usa pra decidir se o drop vai
+para `state.materials` ou para o novo `state.cards` (as duas coleções
+usam o mesmo formato `id -> contagem`, então uma carta é "empilhável"
+como um material, não um item único com uid como equipamento). O mesmo
+desvio por `isCard` foi replicado em `systems/offline.js`, senão uma
+carta ganha enquanto a aba estava fechada acabaria parando em
+`state.materials` por engano.
+
+O que existe: a coleta (drop + `state.cards` + a sub-aba **Cartas** em
+Equipamento mostrando ícone, nome, descrição de sabor e quantidade). O
+que **não** existe ainda: encaixar uma carta no slot de um item
+equipado. A estrutura pra isso já estava pronta antes mesmo de existir
+uma carta pra usar (`inventory[i].cardId`, função `socketCard()` em
+`js/systems/crafting.js`, badge "Slot de Carta" no popup de detalhe do
+item) — falta só a UI de "escolher uma carta da sua coleção e encaixar
+num item" e os efeitos dela entrando de fato em
+`systems/stats.js` (`computePlayerStats`). A descrição de cada carta
+(`+3% de dano contra o elemento X`) já é o texto que o bônus teria
+quando isso for implementado — por enquanto é só sabor, não afeta o
+combate.
 
 ## Estrutura
 
@@ -340,6 +372,7 @@ js/
     events.js                Janela do chefe de evento (rotação por relógio de parede)
     achievements.js           Lista de conquistas e sua recompensa em Cash
     shop.js                    Itens compráveis com Cash e com Moeda de Evento
+    cards.js                    Uma carta por família de monstro (coleta; encaixe ainda não existe)
   systems/
     stats.js                Agrega equipamento + upgrades → dano/DPS/bônus/resistência elemental finais
     combat.js                HP/recompensa/dano do monstro por estágio, drops, kill/spawn
@@ -381,6 +414,7 @@ primeiro MVP. Os pontos mais fáceis de ajustar:
 - `js/data/events.js`: `EVENT_CYCLE_MS`/`EVENT_ACTIVE_MS` (frequência/duração da janela), `EVENT_TIME_LIMIT_MS` (prazo fixo por tentativa, 50s), `EVENT_DIFFICULTY_MULT` (quanto mais forte que o chefe original, 1.3 = 30%), `EVENT_CURRENCY_BASE`/`_PER_STAGE` (recompensa).
 - `js/data/shop.js`: preços em `CASH_SHOP_ITEMS`/`eventShopItemsForFamily()`, `AD_WATCH_COOLDOWN_MS`/`_CASH_REWARD`.
 - `js/data/achievements.js`: `cashReward` de cada conquista.
+- `js/systems/combat.js`: `CARD_DROP_CHANCE` (chance de carta, 2% por padrão).
 
 ## Testado
 
@@ -425,6 +459,28 @@ o HP do chefe de evento bate exatamente com `monsterMaxHp(family.endStage)
 × 1.3` para a família ativa no momento do teste, e que o prazo por
 tentativa é sempre 50s cravados, não importa a família. Sem erros no
 console em nenhum desses passos.
+
+Depois, mais uma rodada pros três últimos pedidos: no card de cada
+upgrade (comum e de Runas), comprei alguns níveis e conferi que
+"Atual"/"Próximo" atualizam junto com o nível (nível 2 de Treino de
+Força mostrou "Atual: +8 → Próximo: +12", batendo com
+`nível × valuePerLevel`). Na barra superior, confirmei visualmente que
+💎 Cash e 🎫 Moeda de Evento aparecem ao lado de Ouro/Runas/Estágio sem
+quebrar o layout em 480px, e testei que ficam atualizados após comprar
+na Loja, resgatar conquista, assistir anúncio e derrotar o chefe de
+evento (esses três últimos pontos de mutação de Cash/Moeda de Evento não
+estavam chamando `renderTopBar()` antes — corrigido). Pra Cartas, forcei
+`Math.random` pra sempre acertar as chances de drop e confirmei, via uma
+morte real (não só mexendo em `state` direto), que a carta cai em
+`state.cards` e **não** em `state.materials`; testei o mesmo desvio em
+`systems/offline.js` (progresso offline também não devia misturar carta
+com material); e verifiquei visualmente a sub-aba Cartas vazia (mensagem
+de "nenhuma carta ainda") e com cartas (ícone, nome, descrição,
+quantidade). Save antigo sem o campo `cards` migra pra `{}` sem erro —
+confirmado semeando o `localStorage` antes da página carregar, não
+depois (um reload comum dispara `beforeunload`, que re-salva o estado em
+memória por cima do que acabei de injetar — achei isso da forma difícil
+numa tentativa de teste que "falhou" por esse motivo, não por bug real).
 
 Também testei a nova UI da aba Equipamento especificamente: abrir o popup
 a partir de um slot no personagem e a partir de um ícone do inventário,

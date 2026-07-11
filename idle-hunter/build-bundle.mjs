@@ -20,6 +20,7 @@ const MODULE_ORDER = [
   'js/data/events.js',
   'js/data/achievements.js',
   'js/data/shop.js',
+  'js/data/cards.js',
   'js/format.js',
   'js/state.js',
   'js/systems/stats.js',

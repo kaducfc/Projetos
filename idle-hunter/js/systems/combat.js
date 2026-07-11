@@ -1,4 +1,5 @@
 import { getFamilyForStage, isBossStage, getMonsterInfo } from '../data/monsters.js';
+import { getCardForFamily } from '../data/cards.js';
 
 const HP_GROWTH = 1.145;
 const HP_BASE = 20;
@@ -26,6 +27,10 @@ const BOSS_RARE_DROP_CHANCE = 0.9;
 // Same flat chance for every monster of a family, regular or boss — the Gem
 // is the rare "jackpot" material needed for the Rank Master upgrade.
 const GEM_DROP_CHANCE = 0.005;
+
+// Cards (see data/cards.js) drop separately from materials — same flat
+// chance for common monsters and bosses alike.
+const CARD_DROP_CHANCE = 0.02;
 
 export function monsterMaxHp(stage) {
   const base = HP_BASE * Math.pow(HP_GROWTH, stage - 1);
@@ -71,6 +76,12 @@ export function rollDrops(stage, dropMult) {
     drops.push({ id: family.materials.gem.id, name: family.materials.gem.name, emoji: family.materials.gem.emoji, qty: 1 });
   }
 
+  const cardChance = Math.min(0.5, CARD_DROP_CHANCE * dropMult);
+  if (Math.random() < cardChance) {
+    const card = getCardForFamily(family.id);
+    drops.push({ id: card.id, name: card.name, emoji: card.emoji, qty: 1, isCard: true });
+  }
+
   return drops;
 }
 
@@ -96,7 +107,8 @@ export function applyDamage(state, amount, stats) {
 
   state.gold += goldGained;
   for (const drop of drops) {
-    state.materials[drop.id] = (state.materials[drop.id] || 0) + drop.qty;
+    const bucket = drop.isCard ? state.cards : state.materials;
+    bucket[drop.id] = (bucket[drop.id] || 0) + drop.qty;
   }
   state.totalKills += 1;
 

@@ -29,23 +29,31 @@ export function computeOfflineProgress(state) {
   const goldGained = Math.round(goldPerKill * kills);
 
   const materialsGained = {};
+  const cardsGained = {};
   for (let i = 0; i < simulatedKills; i++) {
     const drops = rollDrops(state.stage, stats.dropMult);
     for (const drop of drops) {
-      materialsGained[drop.id] = (materialsGained[drop.id] || 0) + drop.qty;
+      const bucket = drop.isCard ? cardsGained : materialsGained;
+      bucket[drop.id] = (bucket[drop.id] || 0) + drop.qty;
     }
   }
   for (const id of Object.keys(materialsGained)) {
     materialsGained[id] = Math.round(materialsGained[id] * scale);
   }
+  for (const id of Object.keys(cardsGained)) {
+    cardsGained[id] = Math.round(cardsGained[id] * scale);
+  }
 
-  return { elapsedSeconds, kills, goldGained, materialsGained };
+  return { elapsedSeconds, kills, goldGained, materialsGained, cardsGained };
 }
 
 export function applyOfflineProgress(state, progress) {
   state.gold += progress.goldGained;
   for (const [id, qty] of Object.entries(progress.materialsGained)) {
     state.materials[id] = (state.materials[id] || 0) + qty;
+  }
+  for (const [id, qty] of Object.entries(progress.cardsGained)) {
+    state.cards[id] = (state.cards[id] || 0) + qty;
   }
   state.totalKills += progress.kills;
 }

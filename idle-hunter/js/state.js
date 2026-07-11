@@ -8,6 +8,7 @@ export function createDefaultState() {
     maxStage: 1,
     monsterHp: null, // current monster's remaining HP; null = needs (re)spawn
     materials: {}, // materialId -> count
+    cards: {}, // cardId -> count (see data/cards.js)
     inventory: [], // { uid, itemId }
     nextUid: 1,
     equipped: { weapon: null, helmet: null, armor: null, pants: null, gloves: null, boots: null }, // uid or null
