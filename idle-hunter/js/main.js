@@ -14,6 +14,7 @@ import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVic
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
+import { GAME_BUILD } from './version.js';
 import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
   renderUpgradesTab, renderPrestigeTab, renderBossTimer,
@@ -267,8 +268,16 @@ let modalActionLocked = false;
 function runModalAction(fn) {
   if (modalActionLocked) return;
   modalActionLocked = true;
-  fn();
-  setTimeout(() => { modalActionLocked = false; }, 300);
+  // finally, or a throw inside fn() leaves the lock stuck forever and every
+  // modal button silently dead until reload — the worst possible failure
+  // mode for a guard that exists to *improve* click reliability. With the
+  // release always scheduled, an exception still surfaces in the console
+  // but the UI heals itself 300ms later.
+  try {
+    fn();
+  } finally {
+    setTimeout(() => { modalActionLocked = false; }, 300);
+  }
 }
 
 // #modal-overlay itself is never recreated (only #modal-body's innerHTML
@@ -299,14 +308,22 @@ function wireModalEvents() {
       return;
     }
 
+    // In the four keep-the-popup-open actions below, the modal re-render
+    // comes BEFORE fullRefresh() on purpose: the popup is the feedback the
+    // user is actually looking at, and rendering it first isolates it from
+    // any failure in the much larger whole-UI refresh (if some other tab's
+    // render ever throws, the popup has already updated correctly instead
+    // of being left showing pre-mutation state). fullRefresh() never
+    // touches #modal-body, so the order swap changes nothing else.
+
     const enhanceBtn = e.target.closest('[data-enhance]');
     if (enhanceBtn) {
       runModalAction(() => {
         const uid = Number(enhanceBtn.dataset.enhance);
         if (enhanceItem(state, uid)) {
+          showItemDetailModal(state, uid); // keep the popup open, with fresh numbers
           showToast('⬆️ Item aprimorado!');
           fullRefresh();
-          showItemDetailModal(state, uid); // keep the popup open, with fresh numbers
         }
       });
       return;
@@ -317,9 +334,9 @@ function wireModalEvents() {
       runModalAction(() => {
         const uid = Number(masterBtn.dataset.masterUpgrade);
         if (upgradeToMaster(state, uid)) {
+          showItemDetailModal(state, uid);
           showToast('✨ Item evoluiu para Rank Master!');
           fullRefresh();
-          showItemDetailModal(state, uid);
         }
       });
       return;
@@ -330,9 +347,9 @@ function wireModalEvents() {
       runModalAction(() => {
         const uid = Number(socketBtn.dataset.socketUid);
         if (socketCard(state, uid, socketBtn.dataset.socketCardId)) {
+          showItemDetailModal(state, uid);
           showToast('🃏 Carta encaixada!');
           fullRefresh();
-          showItemDetailModal(state, uid);
         }
       });
       return;
@@ -343,9 +360,9 @@ function wireModalEvents() {
       runModalAction(() => {
         const uid = Number(unsocketBtn.dataset.unsocketUid);
         if (unsocketCard(state, uid)) {
+          showItemDetailModal(state, uid);
           showToast('🃏 Carta removida.');
           fullRefresh();
-          showItemDetailModal(state, uid);
         }
       });
       return;
@@ -637,6 +654,7 @@ function showOfflineProgressIfAny() {
 // ---------------------------------------------------------------
 
 function init() {
+  document.getElementById('build-tag').textContent = GAME_BUILD;
   setupTabs();
   setupStageControls();
   wireModalEvents(); // one-time delegated listener, see wireModalEvents()

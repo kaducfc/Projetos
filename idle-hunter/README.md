@@ -427,6 +427,40 @@ mesmo teste (10 toasts cobrindo o botão) depois do fix: `elementFromPoint()`
 agora resolve pro `<button>` de verdade através da pilha de toasts, e o
 clique funciona normalmente.
 
+### Blindagem extra do popup (e a etiqueta de build no topo)
+
+O relato de "remover não funciona" persistiu mesmo depois dos dois
+reparos acima — e uma bateria de reprodução em condições realistas
+(save antigo com itens de versões anteriores sem os campos
+`cardId`/`enhanceLevel`, toque de celular em vez de mouse, combate ativo
+com DPS matando monstros e empilhando toasts durante a interação, tanto
+no código-fonte quanto no bundle publicado) passou inteira. Isso deixa
+duas explicações prováveis: (a) o navegador do jogador está servindo um
+**bundle antigo em cache** (o Artifact mantém a mesma URL entre
+publicações, então "o bug continua" pode significar "a correção nunca
+chegou"), ou (b) algo lança exceção só no ambiente dele. Três mudanças
+atacam os dois lados:
+
+1. **`runModalAction` agora usa `try/finally`**: antes, se qualquer coisa
+   dentro de uma ação do popup lançasse exceção, o lock de 300ms ficava
+   travado **pra sempre** — todo botão do popup silenciosamente morto até
+   recarregar a página, que é exatamente a assinatura de "remover nunca
+   funciona". Verificado com um teste de sabotagem (forçar `showToast` a
+   lançar uma vez): antes do fix, o popup inteiro morria; depois, o lock
+   se solta sozinho 300ms depois e o clique seguinte funciona.
+2. **A re-renderização do popup vem primeiro** na sequência de cada ação
+   (mutação → re-render do popup → toast → `fullRefresh()`): o popup é o
+   feedback que o jogador está olhando, então ele atualiza mesmo que
+   qualquer outra parte do refresh geral falhe. Isso também elimina o
+   cenário "carta voltou pra coleção mas o slot ainda mostra ela" — a
+   causa exata da sensação de 'duplicou e não removeu'.
+3. **Etiqueta de build visível** (`js/version.js`, `GAME_BUILD`, exibida
+   no canto direito da barra superior): agora dá pra confirmar de relance
+   qual build está rodando. Se um bug "continua" mas a etiqueta na tela
+   não é a do build mais novo, é cache do navegador — recarregue com
+   force-refresh — e não regressão de código. Lembrar de **bumpar o valor
+   a cada publicação**.
+
 ## Estrutura
 
 ```
@@ -437,6 +471,7 @@ js/
   main.js               Bootstrap: game loop, wiring de eventos, save/load
   state.js              Estado do jogo + persistência (localStorage)
   format.js              Formatação de números grandes (1.2K, 3.4M, ...)
+  version.js             Etiqueta de build exibida na barra superior (bumpar a cada publicação)
   data/
     monsters.js           As 6 famílias de monstro, estágios, materiais, elemento
     items.js               Geração dos 36 itens equipáveis (6 famílias × 6 slots)
@@ -634,3 +669,21 @@ rápidos em "Aprimorar" (ambos do fix anterior) pra confirmar que os dois
 reparos continuam coexistindo sem conflito, e a suíte completa (todas as
 abas/sub-abas, craft, muitos kills seguidos gerando bastante toast) mais
 uma vez sem erro no console.
+
+Na terceira rodada do mesmo relato, montei uma reprodução de alta
+fidelidade: save antigo semeado antes da página carregar (itens no
+formato da primeira versão, sem `cardId`/`enhanceLevel`/`isMaster`),
+contexto de toque (tap de celular em vez de clique de mouse), e DPS
+alto o bastante pra kills e toasts dispararem continuamente durante a
+interação com o popup — rodada tanto contra o código-fonte quanto
+contra o bundle publicado. Tudo passou, o que direcionou a suspeita
+pra cache do navegador servindo bundle antigo. Ainda assim, apliquei a
+blindagem descrita em "Blindagem extra do popup": o teste de sabotagem
+(forçar `showToast` a lançar exceção uma vez no meio de um encaixe)
+confirmou o bug latente do lock — antes do `try/finally`, o clique de
+remover seguinte era silenciosamente ignorado pra sempre; depois, o
+lock se solta sozinho e o remover seguinte funciona (`cardId: null`,
+cópia devolvida). Re-rodei todos os testes das rodadas anteriores
+(ciclos de encaixe/remoção, clique duplo nas mesmas coordenadas, pilha
+de toasts sobre o botão, 5 aprimoramentos seguidos) e a suíte completa
+de regressão — tudo verde, sem erros no console.

@@ -13,6 +13,7 @@ import path from 'node:path';
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 
 const MODULE_ORDER = [
+  'js/version.js',
   'js/data/monsters.js',
   'js/data/elements.js',
   'js/data/items.js',
