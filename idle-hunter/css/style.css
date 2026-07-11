@@ -1385,6 +1385,16 @@ button:disabled {
   width: 90%;
   max-width: 420px;
   align-items: center;
+  /* Toasts are purely informational and sit above everything (including
+     the modal, z-index 50) so they're never hidden — but that same
+     stacking means a pile of them (kills fire one per drop, and combat
+     never pauses) can visually cover buttons underneath, like the
+     modal's "Remover"/enhance/equip controls. Without this, a click aimed
+     at one of those buttons silently lands on a toast div instead and
+     does nothing — this is disabled on the whole stack, not just
+     .toast, so it also covers the brief window where a toast is
+     animating in/out. */
+  pointer-events: none;
 }
 
 .toast {

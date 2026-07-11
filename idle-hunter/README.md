@@ -375,36 +375,57 @@ razão que a resistência elemental de equipamento também fica de fora
 dali: o bônus depende de qual monstro você está enfrentando, não é um
 número fixo do seu personagem.
 
-### Bug corrigido: clique duplo no Slot de Carta re-encaixava a carta que você acabou de remover
+### Bug corrigido: toasts empilhados bloqueavam cliques no popup (causa raiz de "não consigo remover a carta")
 
-O bug relatado ("não consigo remover a carta... e às vezes uma carta nova
-aparece, duplicando"): clicar em "Remover" troca aquele exato botão pelo
-seletor "Encaixar carta" **na mesma posição de tela** (o popup não muda
-de tamanho o bastante pra empurrar o conteúdo pra longe). Um segundo
-clique logo em seguida no mesmo lugar — bem comum: toque duplo por
-"garantia", ou um clique que chega um instante depois do primeiro por
-qualquer motivo — não acerta mais o botão "Remover" (que já não existe
-mais ali), e sim a primeira opção do seletor que apareceu no lugar dele,
-**re-encaixando** a carta que acabou de sair. Do ponto de vista de quem
-está jogando: a carta "não sai" (porque ela volta ao slot ali mesmo,
-imediatamente) e o total de cópias na coleção parece oscilar sem motivo aparente
-(consumida nesse segundo clique) — dava exatamente a sensação de bug
-descrita.
+Um primeiro reparo (mantido, ver abaixo) tratou uma causa real mas
+secundária: clicar em "Remover" troca aquele botão pelo seletor
+"Encaixar carta" na mesma posição de tela, então um segundo clique
+rápido demais no mesmo lugar acaba **re-encaixando** a carta em vez de
+deixá-la removida. Corrigido com `runModalAction()` em `main.js` — um
+lock de 300ms em volta de toda ação que muta o `state` a partir do
+popup (equipar, desequipar, aprimorar, evoluir pra Rank Master,
+encaixar/remover carta); um clique dentro da janela de lock é
+simplesmente ignorado. Confirmado que isso não atrapalha o uso legítimo
+(5 cliques em "Aprimorar" a ~350ms de intervalo continuam todos
+funcionando).
 
-Reproduzi isso de propósito (clique nas coordenadas exatas de tela do
-botão "Remover", esperar, clicar de novo nas *mesmas* coordenadas — que
-por essa hora já são outro botão) antes de corrigir, pra confirmar a
-causa. A correção: `runModalAction()` em `main.js` — um lock curto (300ms)
-em volta de toda ação que muta o `state` a partir do popup (equipar,
-desequipar, aprimorar, evoluir pra Rank Master, encaixar/remover carta).
-Um clique dentro da janela de lock é simplesmente ignorado; isso resolve
-o problema geral (qualquer ação do popup que troca o conteúdo no lugar
-onde você acabou de clicar), não só o caso específico da carta, sem
-precisar redesenhar o layout pra garantir que botões nunca troquem de
-posição. Testado que o fluxo legítimo de clicar "Aprimorar" várias vezes
-seguidas (documentado acima) continua funcionando normalmente num ritmo
-realista (~350ms entre cliques) — só cliques quase instantâneos um atrás
-do outro são bloqueados.
+Só que o relato de bug continuou depois desse reparo — sinal de que a
+causa principal era outra. Reexaminando com mais cuidado (inclusive
+injetando os mesmos elementos `.toast` que `showToast()` cria, pra
+inspecionar `document.elementFromPoint()` no exato pixel do botão
+"Remover"): `#toast-container` tem `z-index: 60`, **mais alto** que o
+`#modal-overlay` (`z-index: 50`), e nenhum dos dois tinha
+`pointer-events: none`. Toasts de kill disparam a cada monstro
+derrotado — com DPS/dano de clique decentes, combate ativo consegue
+empilhar bastante toast por segundo (o container cresce pra cima, já
+que é ancorado por `bottom`, e cada toast leva ~3s pra sumir). Com uma
+pilha de ~10 toasts (realista durante combate rápido com o popup
+aberto), o texto deles não é curto (`💀 Derrotado! +5 💰 +2 🦴 +1 🔷`
+por exemplo), e a pilha inteira acabava cobrindo fisicamente os botões
+do popup — incluindo "Remover". Como toasts capturavam clique (sem
+`pointer-events: none`) e ficavam **acima** do popup na pilha de
+z-index, um clique mirado em "Remover" na verdade acertava o `<div
+class="toast">` por cima — o clique nunca chegava no listener
+delegado do modal, `state` ficava intocado, e a carta continuava
+equipada exatamente como estava. Reproduzi isso de propósito: populei o
+container com 10 toasts de texto realista, confirmei via
+`elementFromPoint()` que o ponto do botão resolvia pro `<div
+class="toast">` em vez do `<button>`, e que clicar ali de fato não
+mudava nada no `state` — batendo com "o slot não fica vazio" relatado.
+(A "duplicação" ocasional provavelmente vinha da combinação dos dois
+bugs: um clique engolido por um toast não muda nada, mas se a pilha de
+toasts encolher a tempo do próximo clique acertar o layout já trocado
+pro seletor "Encaixar carta" — o mesmo problema do primeiro reparo — aí
+sim uma carta extra é consumida sem a pessoa perceber a sequência
+completa.)
+
+Correção: `pointer-events: none` no `#toast-container` inteiro (não só
+`.toast`, pra cobrir também o instante de entrada/saída da animação).
+Toasts são só informativos — ninguém devia "clicar" neles mesmo — então
+não tem por que capturarem clique nunca, com ou sem pilha. Reproduzi o
+mesmo teste (10 toasts cobrindo o botão) depois do fix: `elementFromPoint()`
+agora resolve pro `<button>` de verdade através da pilha de toasts, e o
+clique funciona normalmente.
 
 ## Estrutura
 
@@ -595,3 +616,21 @@ depois). Testei também que isso não atrapalha o uso legítimo: cliquei
 realista) e as 5 aplicaram normalmente. Rodei a suíte completa de novo
 (todas as abas, todas as sub-abas de Equipamento, craft, combate) depois
 da correção — sem erros no console.
+
+Como o relato de bug continuou mesmo depois desse fix, investiguei mais
+fundo e achei a causa raiz de verdade (pilha de toasts com z-index maior
+que o popup, capturando clique — ver "Bug corrigido: toasts empilhados"
+acima). Reproduzi de forma isolada: injetei 10 elementos `.toast` com o
+texto realista que `handleKillEvent` de fato gera, depois usei
+`document.elementFromPoint()` no centro exato do botão "Remover" pra
+confirmar que o ponto resolvia pro `<div class="toast">` em vez do
+`<button>` — e que um clique ali, de fato, não mudava nada no `state`
+(bateu exatamente com "o slot não fica vazio"). Depois de adicionar
+`pointer-events: none` no `#toast-container`, repeti o mesmo teste
+(mesma pilha de 10 toasts, mesmo ponto): `elementFromPoint()` passou a
+resolver pro botão de verdade, e o clique voltou a funcionar. Rodei de
+novo o teste de clique duplo nas mesmas coordenadas e o de 5 cliques
+rápidos em "Aprimorar" (ambos do fix anterior) pra confirmar que os dois
+reparos continuam coexistindo sem conflito, e a suíte completa (todas as
+abas/sub-abas, craft, muitos kills seguidos gerando bastante toast) mais
+uma vez sem erro no console.
