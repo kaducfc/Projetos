@@ -20,6 +20,7 @@ export function doRebirth(state) {
 
   const gained = runasGain(state.maxStage);
   state.runas += gained;
+  state.rebirthCount = (state.rebirthCount || 0) + 1;
 
   const stats = computePlayerStats(state);
   const startStage = 1 + Math.round(stats.startStageBonus);

@@ -7,6 +7,13 @@ import { getEquippedEntry } from '../systems/equipment.js';
 import { canCraft, canEnhance, canUpgradeToMaster } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost, getPrestigeUpgradeLevel, getPrestigeUpgradeCost } from '../systems/upgrades.js';
 import { canRebirth, runasGain, REBIRTH_MIN_STAGE } from '../systems/prestige.js';
+import { getEventWindow } from '../data/events.js';
+import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
+import { ACHIEVEMENTS } from '../data/achievements.js';
+import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
+import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForFamily } from '../data/shop.js';
+import { canBuyCashItem, canBuyEventItem, canWatchAd, adWatchCooldownRemaining } from '../systems/shop.js';
+import { computePlayerStats } from '../systems/stats.js';
 
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
 /// to the caller: images are set to `width/height: 1em` in CSS so they scale
@@ -494,6 +501,169 @@ export function renderMaterialsTab(state) {
       <div class="name">${m.name}</div>
       <div class="qty">${formatNumber(state.materials[m.id] || 0)}</div>
     </div>`).join('')}</div>`;
+}
+
+function formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+// ---------------------------------------------------------------
+// Events tab: a rotating event boss, fought by clicking only (see
+// systems/events.js and main.js's onClickEventBoss for why there's no
+// passive-DPS tick here). `engagementRemainingMs` is owned by main.js (a
+// transient, un-persisted "time left in this attempt" clock, same idea as
+// the regular boss timer) — null means no attempt is in progress yet.
+// ---------------------------------------------------------------
+
+export function renderEventsTab(state, engagementRemainingMs) {
+  const container = document.getElementById('tab-events');
+  const win = getEventWindow();
+  const claimed = isEventClaimed(state, win.cycleIndex);
+
+  if (!win.active || claimed) {
+    // The *next* window's family isn't win.family (that's whoever is/was up
+    // this cycle) — it's whichever family the next cycle index lands on.
+    const nextFamily = MONSTER_FAMILIES[(win.cycleIndex + 1) % MONSTER_FAMILIES.length];
+    const heading = claimed ? 'Evento concluído!' : 'Nenhum evento ativo agora';
+    const sub = claimed
+      ? 'Você já derrotou o chefe de evento deste ciclo.'
+      : 'Volte quando o próximo ciclo começar.';
+    container.innerHTML = `
+      <div class="event-panel">
+        <div class="event-icon dim">🎪</div>
+        <h3>${heading}</h3>
+        <p class="event-sub">${sub}</p>
+        <p class="event-next">Próximo: ${iconMarkup(nextFamily.image, nextFamily.emoji, nextFamily.name)} <strong>${nextFamily.name}</strong> em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
+      </div>`;
+    return;
+  }
+
+  const stats = computePlayerStats(state);
+  const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(stats.clickDamage);
+  const hp = state.eventBossHp ?? maxHp;
+  const pct = maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 0;
+  const timerHtml = engagementRemainingMs != null
+    ? `<div class="event-countdown ${engagementRemainingMs <= 10000 ? 'urgent' : ''}">⏱ ${Math.ceil(engagementRemainingMs / 1000)}s para derrotar!</div>`
+    : `<div class="event-countdown hint">Clique para começar a atacar</div>`;
+
+  container.innerHTML = `
+    <div class="event-panel">
+      <div class="event-active-badge">🎪 Evento ativo — janela fecha em ${formatDuration(win.remainingActiveMs)}</div>
+      <h3>${win.family.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(win.family.element)}</h3>
+      <button id="event-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(win.family.image, win.family.bossEmoji || win.family.emoji, win.family.name)}</button>
+      <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(maxHp)}</span></div>
+      ${timerHtml}
+      <p class="event-reward-info">🎁 Recompensa ao derrotar: 1–6 materiais + 🎫 Moeda de Evento</p>
+    </div>`;
+}
+
+export function pulseEventBoss() {
+  const sprite = document.getElementById('event-boss-sprite');
+  if (!sprite) return;
+  sprite.classList.remove('hit');
+  void sprite.offsetWidth; // restart animation
+  sprite.classList.add('hit');
+}
+
+// ---------------------------------------------------------------
+// Shop tab: Cash sub-tab (achievements, ad-watch, gold/Runas packs, and a
+// disabled real-money package stub) and Event-currency sub-tab (per-family
+// Gem/material bundles). `activeSubTab` is owned by main.js.
+// ---------------------------------------------------------------
+
+export function renderShopTab(state, activeSubTab) {
+  const container = document.getElementById('tab-shop');
+  container.innerHTML = `
+    <div class="shop-subnav">
+      <button class="shop-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">💎 Cash</button>
+      <button class="shop-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">🎫 Moeda de Evento</button>
+    </div>
+    ${activeSubTab === 'event' ? eventShopHtml(state) : cashShopHtml(state)}
+  `;
+}
+
+function cashShopHtml(state) {
+  const cooldownMs = adWatchCooldownRemaining(state);
+  const adReady = cooldownMs <= 0;
+
+  const achievementsHtml = ACHIEVEMENTS.map((a) => {
+    const claimed = isAchievementClaimed(state, a.id);
+    const ready = isAchievementReady(state, a);
+    const statusBtn = claimed
+      ? `<button disabled>Resgatado</button>`
+      : `<button data-claim-achievement="${a.id}" ${ready ? '' : 'disabled'}>💎 +${a.cashReward}</button>`;
+    return `<div class="achievement-card ${claimed ? 'claimed' : ''}">
+      <span class="icon">${a.emoji}</span>
+      <div class="info">
+        <div class="name">${a.name}</div>
+        <div class="desc">${a.description}</div>
+      </div>
+      ${statusBtn}
+    </div>`;
+  }).join('');
+
+  const packagesHtml = CASH_REAL_MONEY_PACKAGES.map((p) => `
+    <div class="cash-package-card disabled" title="Requer integração de pagamento — ainda não disponível">
+      <div class="icon">💎</div>
+      <div class="name">${p.cashAmount} Cash</div>
+      <div class="price">${p.priceLabel}</div>
+      <button disabled>Em breve</button>
+    </div>`).join('');
+
+  const shopItemsHtml = CASH_SHOP_ITEMS.map((item) => `
+    <div class="shop-item-card">
+      <span class="icon">${item.emoji}</span>
+      <div class="info">
+        <div class="name">${item.name}</div>
+        <div class="desc">${item.description}</div>
+      </div>
+      <button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>💎 ${item.cost}</button>
+    </div>`).join('');
+
+  return `
+    <div class="shop-balance">💎 Você tem <strong>${formatNumber(state.cash)}</strong> Cash</div>
+
+    <h4 class="shop-section-title">Ganhar Cash</h4>
+    <button id="watch-ad-btn" class="watch-ad-btn" ${adReady ? '' : 'disabled'}>
+      ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' 💎)' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
+    </button>
+    <div class="achievement-list">${achievementsHtml}</div>
+
+    <h4 class="shop-section-title">Comprar com Cash</h4>
+    <div class="shop-item-grid">${shopItemsHtml}</div>
+
+    <h4 class="shop-section-title">Comprar Cash (dinheiro real)</h4>
+    <p class="shop-note">Ainda não disponível nesta versão — em breve.</p>
+    <div class="cash-package-grid">${packagesHtml}</div>
+  `;
+}
+
+function eventShopHtml(state) {
+  const familiesHtml = MONSTER_FAMILIES.map((family, tier) => {
+    const unlocked = state.maxStage >= family.startStage;
+    if (!unlocked) return '';
+    const items = eventShopItemsForFamily(family, tier);
+    return `<div class="family-group">
+      <h3><span class="icon">${iconMarkup(family.image, family.emoji, family.name)}</span> ${family.name}</h3>
+      <div class="shop-item-grid">${items.map((item) => `
+        <div class="shop-item-card event-variant">
+          <span class="icon">${item.emoji}</span>
+          <div class="info">
+            <div class="name">${item.name}</div>
+          </div>
+          <button data-buy-event-mat="${item.matId}" data-buy-event-amount="${item.amount}" data-buy-event-cost="${item.cost}" ${canBuyEventItem(state, item) ? '' : 'disabled'}>🎫 ${item.cost}</button>
+        </div>`).join('')}</div>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="shop-balance event-variant">🎫 Você tem <strong>${formatNumber(state.eventCurrency)}</strong> Moeda de Evento</div>
+    <p class="shop-note">Ganhe Moeda de Evento derrotando o chefe de evento na aba 🎪 Eventos.</p>
+    ${familiesHtml || '<p class="shop-note">Nenhuma família desbloqueada ainda.</p>'}
+  `;
 }
 
 export function renderAll(state, monster, stats) {

@@ -14,7 +14,24 @@ export function createDefaultState() {
     upgrades: {}, // upgradeId -> level
     prestigeUpgrades: {}, // upgradeId -> level
     totalKills: 0,
+    rebirthCount: 0,
     lastSaveTime: Date.now(),
+
+    // Premium currency: earned via achievements or the (simulated) ad-watch
+    // reward for now; a real-money purchase flow is a future integration.
+    cash: 0,
+    lastAdWatchTime: null,
+    achievementsClaimed: {}, // achievementId -> true
+
+    // Event boss: a specific monster family rotates in as an "event boss"
+    // for a limited window (see data/events.js), fought by clicking only.
+    // eventBossHp/eventBossMaxHp persist so an in-progress fight survives a
+    // reload; eventClaimedCycle blocks re-farming the same window.
+    eventCurrency: 0,
+    eventBossHp: null,
+    eventBossMaxHp: null,
+    eventClaimedCycle: null,
+    eventWins: 0,
   };
 }
 

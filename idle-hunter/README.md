@@ -87,6 +87,31 @@ Depois abra `http://localhost:8000` no navegador.
    renascer: ganha Runas (baseado no estágio máximo alcançado) e reseta
    ouro/estágio/upgrades comuns. Runas compram upgrades **permanentes**
    (Poder Ancestral, Fortuna Eterna, Faro Apurado, Início Avançado).
+9. **Chefe de evento (aba 🎪 Eventos)**: a cada 15 minutos (relógio de
+   parede, não precisa estar com o jogo aberto), uma família de monstro
+   diferente vira "chefe de evento" por 5 minutos. Diferente do combate
+   normal, esse chefe **só toma dano de clique** — sem DPS passivo — e uma
+   vez que você acerta o primeiro golpe, tem **60 segundos** pra terminar
+   (se o tempo acabar, dá pra tentar de novo, contanto que a janela de 5
+   minutos ainda esteja aberta). O HP dele é um múltiplo fixo do seu dano
+   de clique atual (não escala com estágio), então matá-lo sempre exige
+   mais ou menos o mesmo número de cliques, não importa seu nível de
+   equipamento — quem escala com o estágio é a **recompensa**: ao derrotar,
+   você sempre ganha **1 a 6 materiais** (a "chance de drop aumentada" é
+   expressa como bônus garantido, não como mais uma rolagem de dado) e
+   uma quantidade de **🎫 Moeda de Evento**. Só dá pra derrotar (e
+   resgatar a recompensa) uma vez por janela.
+10. **💎 Cash e 🛒 Loja**: Cash é a moeda premium do jogo — hoje dá pra
+    ganhar por **conquistas** (aba Loja → Cash, uma lista de marcos como
+    "alcance o estágio 25" ou "evolua um item pra Rank Master") ou
+    assistindo um **anúncio simulado** (sem SDK de anúncio real
+    integrado ainda, o botão só concede a recompensa direto, com um
+    cooldown de 5 minutos). A compra com dinheiro real aparece na loja
+    como uma seção desabilitada ("em breve") — estrutura pronta pra uma
+    futura integração de pagamento, mas nada funcional ainda. Cash compra
+    pacotes de ouro/Runas na própria aba. A 🎫 Moeda de Evento (ganha só
+    derrotando o chefe de evento) tem sua própria aba na Loja, com Gemas
+    e pacotes de material de qualquer família já desbloqueada.
 
 ## Decisão de design: o que sobrevive ao renascimento
 
@@ -236,6 +261,30 @@ delegados do jogo. Aprimorar/evoluir mantém o popup aberto e só atualiza
 o conteúdo dele, pra dar pra clicar "Aprimorar" várias vezes seguidas sem
 reabrir nada.
 
+## Decisão de design: o chefe de evento é 100% baseado em relógio de parede
+
+`getEventWindow()` (`js/data/events.js`) não guarda "quando o próximo
+evento começa" em nenhum lugar do save — ele deriva tudo de `Date.now()`:
+`cycleIndex = floor(now / EVENT_CYCLE_MS)` decide qual família está na
+vez (`cycleIndex % número de famílias`) e se essa janela ainda está
+dentro dos primeiros `EVENT_ACTIVE_MS`. Isso significa que offline não
+precisa de nenhuma lógica de "recuperar o que perdi": o relógio andou
+igual pra todo mundo, então reabrir o jogo em qualquer momento já cai no
+estado certo automaticamente, sem cálculo de catch-up nem risco de
+dessincronizar com um valor salvo antigo.
+
+O combate em si também é deliberadamente diferente do resto do jogo: o
+chefe de evento **só toma dano de clique** (nenhum tick de DPS passivo
+bate nele — só o combate do estágio atual continua recebendo DPS
+normalmente). A ideia é que evento seja uma atividade ativa e curta
+("chefe correria"), não mais uma coisa pra deixar rodando sozinha; por
+isso também não causa dano de volta no jogador (sem risco de vida) e o
+alvo de HP é um múltiplo fixo do dano de clique atual
+(`EVENT_CLICK_TARGET` cliques, sempre), em vez de escalar com o estágio
+como o resto dos monstros — assim a dificuldade em "número de cliques"
+fica previsível independente do quão forte seu personagem está, e quem
+escala com progresso é a recompensa, não o desafio.
+
 ## Próximo passo natural: cartas (Ragnarok-style)
 
 A estrutura já está pronta (`inventory[i].cardId`, função `socketCard()`
@@ -260,6 +309,9 @@ js/
     items.js               Geração dos 36 itens equipáveis (6 famílias × 6 slots)
     elements.js             Ciclo de elementos e cálculo de vantagem/desvantagem
     upgrades.js             Upgrades comuns (ouro) e de prestígio (Runas)
+    events.js                Janela do chefe de evento (rotação por relógio de parede)
+    achievements.js           Lista de conquistas e sua recompensa em Cash
+    shop.js                    Itens compráveis com Cash e com Moeda de Evento
   systems/
     stats.js                Agrega equipamento + upgrades → dano/DPS/bônus/resistência elemental finais
     combat.js                HP/recompensa/dano do monstro por estágio, drops, kill/spawn
@@ -268,6 +320,9 @@ js/
     upgrades.js                 Compra de upgrades comuns e de prestígio
     prestige.js                  Cálculo de Runas e lógica de renascimento
     offline.js                    Progresso estimado enquanto a aba estava fechada
+    events.js                     Dano/HP/recompensa do chefe de evento
+    achievements.js                Checagem e resgate de conquistas
+    shop.js                        Compra com Cash / Moeda de Evento, cooldown do anúncio
   ui/
     render.js                     Toda a renderização (HTML gerado via template strings)
 ```
@@ -295,6 +350,9 @@ primeiro MVP. Os pontos mais fáceis de ajustar:
 - `js/systems/stats.js`: `BASE_MAX_HP`, `BASE_ARMOR` (vida/armadura antes de qualquer equipamento).
 - `js/systems/combat.js`: `PLAYER_DPS_TAKEN_GROWTH`/`_BASE`, `BOSS_DPS_TAKEN_MULT`, `ARMOR_CONSTANT`.
 - `js/data/elements.js`: `ELEMENT_DAMAGE_BONUS` (±25%), `ELEMENT_RESISTANCE_PER_PIECE` (5%).
+- `js/data/events.js`: `EVENT_CYCLE_MS`/`EVENT_ACTIVE_MS` (frequência/duração da janela), `EVENT_TIME_LIMIT_MS` (prazo por tentativa), `EVENT_CLICK_TARGET` (dificuldade em nº de cliques), `EVENT_CURRENCY_BASE`/`_PER_STAGE` (recompensa).
+- `js/data/shop.js`: preços em `CASH_SHOP_ITEMS`/`eventShopItemsForFamily()`, `AD_WATCH_COOLDOWN_MS`/`_CASH_REWARD`.
+- `js/data/achievements.js`: `cashReward` de cada conquista.
 
 ## Testado
 
@@ -308,6 +366,23 @@ atualização da aba Equipamento corrigido e confirmado, e layout em
 viewport mobile) — sem erros no console. Vale um play manual seu para
 validar a sensação de progressão/dificuldade (inclusive a nova curva de
 risco de morte), que é subjetiva.
+
+Testei Cash/Eventos/Loja também: para o chefe de evento eu precisei
+sobrescrever `Date.now()` no browser (via `page.addInitScript`) pra cair
+dentro de uma janela ativa sem esperar até 15 minutos de verdade —
+confirmei a rotação de família (índice de ciclo → família diferente a
+cada 15 min), o combate só-por-clique matando o chefe e concedendo 1–6
+materiais + Moeda de Evento, o bloqueio de re-farm no mesmo ciclo
+("Evento concluído!"), o timeout de 60s abortando a tentativa (e
+permitindo tentar de novo dentro da mesma janela), e — um bug real que
+esse teste pegou — a prévia "Próximo evento" mostrando a família errada
+(a que acabou de ser derrotada, em vez da próxima no rodízio), corrigido
+antes de terminar. Testei também o cooldown do botão de anúncio (Cash
+concedido, botão desabilita e mostra contagem regressiva), resgate de
+conquista, compra com Cash (ouro/Runas) e com Moeda de Evento (Gema/
+material), e migração de um save antigo (sem nenhum desses campos) sem
+erro no console. Os pacotes de "Cash com dinheiro real" são só uma
+prévia visual desabilitada — não há integração de pagamento real.
 
 Também testei a nova UI da aba Equipamento especificamente: abrir o popup
 a partir de um slot no personagem e a partir de um ícone do inventário,

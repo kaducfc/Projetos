@@ -9,11 +9,16 @@ import { buyUpgrade, buyPrestigeUpgrade } from './systems/upgrades.js';
 import { doRebirth } from './systems/prestige.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
 import { formatNumber } from './format.js';
+import { getEventWindow, EVENT_TIME_LIMIT_MS } from './data/events.js';
+import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVictory, resetEventEncounter } from './systems/events.js';
+import { claimAchievement } from './systems/achievements.js';
+import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
+import { AD_WATCH_CASH_REWARD } from './data/shop.js';
 import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
   renderForgeTab, renderUpgradesTab, renderPrestigeTab, renderMaterialsTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showModal, hideModal,
-  showItemDetailModal,
+  showItemDetailModal, renderEventsTab, renderShopTab, pulseEventBoss,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -35,6 +40,22 @@ let currentHp = null;
 
 function resetPlayerHp() {
   currentHp = computePlayerStats(state).maxHp;
+}
+
+// Event boss "attempt" clock — also transient, also cycle-scoped: a stale
+// deadline from a previous cycle (e.g. the player left the tab open across
+// a window change) must not carry over, hence the cycle check everywhere
+// it's read (see currentEventEngagementMs()).
+let eventDeadline = null;
+let eventDeadlineCycle = null;
+
+// Which Shop sub-tab is showing — pure UI state, not part of the save.
+let activeShopSubTab = 'cash';
+
+function currentEventEngagementMs() {
+  const win = getEventWindow();
+  if (eventDeadline == null || eventDeadlineCycle !== win.cycleIndex) return null;
+  return Math.max(0, eventDeadline - Date.now());
 }
 
 // A boss only has a timer while it's still blocking progress (the frontier
@@ -81,9 +102,14 @@ function refreshAll() {
 
 // renderAll() replaces every tab's innerHTML, which destroys any listeners
 // attached to their buttons — always re-wire right after, via this helper,
-// instead of calling refreshAll() directly.
+// instead of calling refreshAll() directly. Events/Shop aren't part of
+// renderAll() (they need main.js-owned transient UI state — the attempt
+// clock, the active sub-tab — that render.js has no business knowing
+// about) but use event delegation, so no re-wiring is needed for them.
 function fullRefresh() {
   refreshAll();
+  renderEventsTab(state, currentEventEngagementMs());
+  renderShopTab(state, activeShopSubTab);
   wireAllPanelButtons();
 }
 
@@ -264,6 +290,124 @@ function wireModalEvents() {
 }
 
 // ---------------------------------------------------------------
+// Events tab — click-only "boss rush": no passive DPS applies here (see
+// data/events.js), so damage happens exclusively in onClickEventBoss().
+// #tab-events is never recreated by innerHTML wholesale during a fight
+// (renderEventsTab only ever replaces its own contents, same container),
+// so the delegated listener from wireEventTabEvents() (see init()) is
+// wired once and keeps working across every re-render.
+// ---------------------------------------------------------------
+
+function onClickEventBoss() {
+  const win = getEventWindow();
+  if (!win.active || isEventClaimed(state, win.cycleIndex)) return;
+
+  if (eventDeadline == null || eventDeadlineCycle !== win.cycleIndex) {
+    eventDeadline = Date.now() + EVENT_TIME_LIMIT_MS;
+    eventDeadlineCycle = win.cycleIndex;
+    resetEventEncounter(state);
+  }
+
+  if (Date.now() >= eventDeadline) {
+    resetEventEncounter(state);
+    eventDeadline = null;
+    showToast('⏳ Tempo esgotado! O chefe de evento escapou — tente de novo.');
+    renderEventsTab(state, null);
+    return;
+  }
+
+  const stats = computePlayerStats(state);
+  ensureEventBossSpawned(state, stats.clickDamage);
+  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, win.family.element));
+  const killed = applyEventDamage(state, dealt);
+
+  if (killed) {
+    const { gained, currency } = claimEventVictory(state, win.cycleIndex, win.family);
+    eventDeadline = null;
+    const lootStr = Object.values(gained).map((g) => ` +${g.qty} ${g.emoji}`).join('');
+    showToast(`🎉 Chefe de evento derrotado! +${formatNumber(currency)} 🎫${lootStr}`);
+    renderTopBar(state);
+    renderMaterialsTab(state);
+    renderForgeTab(state);
+    renderEquipmentTab(state);
+    renderShopTab(state, activeShopSubTab);
+    wireAllPanelButtons(); // Forge cards were just rebuilt
+  } else {
+    pulseEventBoss();
+  }
+
+  renderEventsTab(state, currentEventEngagementMs());
+}
+
+function wireEventTabEvents() {
+  document.getElementById('tab-events').addEventListener('click', (e) => {
+    if (e.target.closest('#event-boss-sprite')) onClickEventBoss();
+  });
+}
+
+// ---------------------------------------------------------------
+// Shop tab — same delegation pattern as the modal (see wireModalEvents()
+// above): #tab-shop itself is never recreated, only its innerHTML, so this
+// is wired once in init() and survives every renderShopTab() call.
+// ---------------------------------------------------------------
+
+function wireShopTabEvents() {
+  document.getElementById('tab-shop').addEventListener('click', (e) => {
+    const subtabBtn = e.target.closest('[data-shop-subtab]');
+    if (subtabBtn) {
+      activeShopSubTab = subtabBtn.dataset.shopSubtab;
+      renderShopTab(state, activeShopSubTab);
+      return;
+    }
+
+    const claimBtn = e.target.closest('[data-claim-achievement]');
+    if (claimBtn) {
+      if (claimAchievement(state, claimBtn.dataset.claimAchievement)) {
+        showToast('🏆 Conquista resgatada!');
+        renderShopTab(state, activeShopSubTab);
+      }
+      return;
+    }
+
+    const adBtn = e.target.closest('#watch-ad-btn');
+    if (adBtn) {
+      if (watchAd(state)) {
+        showToast(`🎬 +${formatNumber(AD_WATCH_CASH_REWARD)} 💎 Cash!`);
+        renderShopTab(state, activeShopSubTab);
+      }
+      return;
+    }
+
+    const buyCashBtn = e.target.closest('[data-buy-cash]');
+    if (buyCashBtn) {
+      if (buyCashItem(state, buyCashBtn.dataset.buyCash)) {
+        showToast('🛒 Compra realizada!');
+        renderTopBar(state);
+        renderShopTab(state, activeShopSubTab);
+      }
+      return;
+    }
+
+    const buyEventBtn = e.target.closest('[data-buy-event-mat]');
+    if (buyEventBtn) {
+      const item = {
+        matId: buyEventBtn.dataset.buyEventMat,
+        amount: Number(buyEventBtn.dataset.buyEventAmount),
+        cost: Number(buyEventBtn.dataset.buyEventCost),
+      };
+      if (buyEventItem(state, item)) {
+        showToast('🛒 Compra realizada!');
+        renderShopTab(state, activeShopSubTab);
+        renderMaterialsTab(state);
+        renderForgeTab(state);
+        wireAllPanelButtons(); // Forge cards were just rebuilt
+      }
+      return;
+    }
+  });
+}
+
+// ---------------------------------------------------------------
 // Forge tab
 // ---------------------------------------------------------------
 
@@ -323,7 +467,9 @@ function wirePrestigeButtons() {
 }
 
 // Re-wires the buttons that get recreated (via innerHTML) whenever their tab
-// re-renders. Equipment uses event delegation instead, wired once in init().
+// re-renders. Equipment, Events and Shop use event delegation instead,
+// wired once in init() (see wireModalEvents(), wireEventTabEvents(),
+// wireShopTabEvents()).
 function wireAllPanelButtons() {
   wireForgeButtons();
   wireUpgradeButtons();
@@ -362,6 +508,8 @@ function init() {
   setupTabs();
   setupStageControls();
   wireModalEvents(); // one-time delegated listener, see wireModalEvents()
+  wireEventTabEvents();
+  wireShopTabEvents();
   resetPlayerHp();
   fullRefresh();
   armBossTimer();
@@ -371,6 +519,14 @@ function init() {
   showOfflineProgressIfAny();
 
   setInterval(tick, TICK_MS);
+  // Events/Shop have their own slow clocks (window countdown, ad cooldown,
+  // achievement eligibility) that nothing else drives a re-render for —
+  // a plain 1s refresh is cheap and keeps both tabs live without hooking
+  // into every place stage/kills/materials could change.
+  setInterval(() => {
+    renderEventsTab(state, currentEventEngagementMs());
+    renderShopTab(state, activeShopSubTab);
+  }, 1000);
   setInterval(() => saveState(state), SAVE_INTERVAL_MS);
   window.addEventListener('beforeunload', () => saveState(state));
 
@@ -384,6 +540,8 @@ function init() {
     forceBossTimeout: () => { if (bossDeadline != null) bossDeadline = Date.now() - 1; },
     getCurrentHp: () => currentHp,
     setCurrentHp: (v) => { currentHp = v; renderPlayerHp(currentHp, computePlayerStats(state).maxHp); },
+    getEventDeadline: () => eventDeadline,
+    forceEventTimeout: () => { if (eventDeadline != null) eventDeadline = Date.now() - 1; },
   };
 }
 
