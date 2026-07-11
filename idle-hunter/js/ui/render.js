@@ -13,7 +13,7 @@ import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
 import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForFamily } from '../data/shop.js';
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
-import { CARDS } from '../data/cards.js';
+import { CARDS, getCard } from '../data/cards.js';
 
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
 /// to the caller: images are set to `width/height: 1em` in CSS so they scale
@@ -382,11 +382,44 @@ function itemDetailHtml(state, uid) {
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
-      <div class="card-slot-badge" title="Sistema de cartas ainda não implementado">🃏 Slot de Carta: vazio</div>
+      ${cardSlotHtml(state, uid, entry)}
       ${enhancePanelHtml(state, uid, entry, item)}
       ${actionBtn}
     </div>
   `;
+}
+
+/// The "Slot de Carta" block: shows the socketed card (with a remove
+/// button) if there is one, otherwise a picker listing every owned card
+/// (each socket consumes one copy from state.cards — see socketCard() in
+/// systems/crafting.js). Cards themselves have no slotId restriction: any
+/// card can go in any item's single slot.
+function cardSlotHtml(state, uid, entry) {
+  if (entry.cardId) {
+    const card = getCard(entry.cardId);
+    return `<div class="card-slot-badge filled">
+      <span class="icon">${card.emoji}</span>
+      <div class="card-slot-info">
+        <div class="card-slot-name">${card.name}</div>
+        <div class="card-slot-desc">${card.description}</div>
+      </div>
+      <button class="card-slot-remove" data-unsocket-uid="${uid}">Remover</button>
+    </div>`;
+  }
+
+  const owned = CARDS.filter((c) => (state.cards[c.id] || 0) > 0);
+  if (!owned.length) {
+    return `<div class="card-slot-badge" title="Você ainda não tem nenhuma carta">🃏 Slot de Carta: vazio (nenhuma carta disponível)</div>`;
+  }
+
+  return `<div class="card-slot-picker">
+    <div class="card-slot-label">🃏 Encaixar carta:</div>
+    <div class="card-slot-options">${owned.map((c) => `
+      <button class="card-slot-option" data-socket-uid="${uid}" data-socket-card-id="${c.id}" title="${c.description}">
+        ${c.emoji} ${c.name} <span class="qty">×${state.cards[c.id]}</span>
+      </button>
+    `).join('')}</div>
+  </div>`;
 }
 
 function enhancePanelHtml(state, uid, entry, item) {

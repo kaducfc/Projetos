@@ -35,15 +35,35 @@ export function craftItem(state, itemId) {
   return uid;
 }
 
+function getEntry(state, uid) {
+  return state.inventory.find((i) => i.uid === uid) || null;
+}
+
+/// A card is consumed from state.cards (a stackable count, like a material)
+/// the moment it's socketed — the item's single card slot must be empty
+/// first (unsocketCard() below frees it back up).
+export function canSocketCard(state, uid, cardId) {
+  const entry = getEntry(state, uid);
+  if (!entry || entry.cardId) return false;
+  return (state.cards[cardId] || 0) >= 1;
+}
+
 export function socketCard(state, uid, cardId) {
-  const entry = state.inventory.find((i) => i.uid === uid);
-  if (!entry) return false;
+  if (!canSocketCard(state, uid, cardId)) return false;
+  const entry = getEntry(state, uid);
+  state.cards[cardId] -= 1;
   entry.cardId = cardId;
   return true;
 }
 
-function getEntry(state, uid) {
-  return state.inventory.find((i) => i.uid === uid) || null;
+/// Frees the slot and returns the card to state.cards — swapping cards is
+/// meant to be cheap/reversible, not a one-way commitment.
+export function unsocketCard(state, uid) {
+  const entry = getEntry(state, uid);
+  if (!entry || !entry.cardId) return false;
+  state.cards[entry.cardId] = (state.cards[entry.cardId] || 0) + 1;
+  entry.cardId = null;
+  return true;
 }
 
 /// Cost (in the item's common material) to enhance this instance one level,

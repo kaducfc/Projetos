@@ -1,10 +1,10 @@
 import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
-import { computePlayerStats, getElementalResistance } from './systems/stats.js';
+import { computePlayerStats, getElementalResistance, getCardDamageBonus } from './systems/stats.js';
 import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, armorReduction } from './systems/combat.js';
 import { isBossStage } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
-import { craftItem, enhanceItem, upgradeToMaster } from './systems/crafting.js';
+import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard } from './systems/crafting.js';
 import { buyUpgrade, buyPrestigeUpgrade } from './systems/upgrades.js';
 import { doRebirth } from './systems/prestige.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
@@ -161,7 +161,7 @@ function onClickMonster() {
   }
   const stats = computePlayerStats(state);
   const monster = getCurrentMonster(state.stage);
-  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, monster.element));
+  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
   const event = applyDamage(state, dealt, stats);
   spawnDamagePopup(dealt);
   pulseMonster();
@@ -185,8 +185,14 @@ function tick() {
   currentHp = Math.min(currentHp, stats.maxHp);
   const monster = getCurrentMonster(state.stage);
 
+  // Runs unconditionally, before the normal-stage combat below — that
+  // block can `return` early on a kill, and at high DPS a stage-1 monster
+  // dies almost every single tick, which would otherwise starve the event
+  // boss of its DPS ticks entirely.
+  tickEventBoss(stats);
+
   if (stats.dps > 0) {
-    const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, monster.element));
+    const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
     const event = applyDamage(state, dealt * (TICK_MS / 1000), stats);
     if (event) {
       refreshCombatOnly();
@@ -290,6 +296,28 @@ function wireModalEvents() {
       }
       return;
     }
+
+    const socketBtn = e.target.closest('[data-socket-uid]');
+    if (socketBtn) {
+      const uid = Number(socketBtn.dataset.socketUid);
+      if (socketCard(state, uid, socketBtn.dataset.socketCardId)) {
+        showToast('🃏 Carta encaixada!');
+        fullRefresh();
+        showItemDetailModal(state, uid);
+      }
+      return;
+    }
+
+    const unsocketBtn = e.target.closest('[data-unsocket-uid]');
+    if (unsocketBtn) {
+      const uid = Number(unsocketBtn.dataset.unsocketUid);
+      if (unsocketCard(state, uid)) {
+        showToast('🃏 Carta removida.');
+        fullRefresh();
+        showItemDetailModal(state, uid);
+      }
+      return;
+    }
   });
 }
 
@@ -335,13 +363,28 @@ function wireEquipmentTabEvents() {
 }
 
 // ---------------------------------------------------------------
-// Events tab — click-only "boss rush": no passive DPS applies here (see
-// data/events.js), so damage happens exclusively in onClickEventBoss().
+// Events tab — a "boss rush": once the first click lands and the attempt
+// clock starts, both clicks (here) AND passive DPS (tickEventBoss(), called
+// from the main tick() loop below) chip away at it, same as normal combat.
+// The only differences from a normal monster: no damage comes back to the
+// player, and the attempt clock is a hard 50s regardless of DPS/clicks.
 // #tab-events is never recreated by innerHTML wholesale during a fight
 // (renderEventsTab only ever replaces its own contents, same container),
 // so the delegated listener from wireEventTabEvents() (see init()) is
 // wired once and keeps working across every re-render.
 // ---------------------------------------------------------------
+
+/// Shared by the click and DPS-tick paths — whichever one lands the
+/// killing blow reports the same way.
+function handleEventBossVictory(win) {
+  const { gained, currency } = claimEventVictory(state, win.cycleIndex, win.family);
+  eventDeadline = null;
+  const lootStr = Object.values(gained).map((g) => ` +${g.qty} ${g.emoji}`).join('');
+  showToast(`🎉 Chefe de evento derrotado! +${formatNumber(currency)} 🎫${lootStr}`);
+  renderTopBar(state);
+  renderEquipmentTab(state, activeEquipSubTab);
+  renderShopTab(state, activeShopSubTab);
+}
 
 function onClickEventBoss() {
   const win = getEventWindow();
@@ -363,21 +406,44 @@ function onClickEventBoss() {
 
   const stats = computePlayerStats(state);
   ensureEventBossSpawned(state, win.family);
-  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, win.family.element));
+  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, win.family.element) + getCardDamageBonus(state, win.family.element));
   const killed = applyEventDamage(state, dealt);
 
   if (killed) {
-    const { gained, currency } = claimEventVictory(state, win.cycleIndex, win.family);
-    eventDeadline = null;
-    const lootStr = Object.values(gained).map((g) => ` +${g.qty} ${g.emoji}`).join('');
-    showToast(`🎉 Chefe de evento derrotado! +${formatNumber(currency)} 🎫${lootStr}`);
-    renderTopBar(state);
-    renderEquipmentTab(state, activeEquipSubTab);
-    renderShopTab(state, activeShopSubTab);
+    handleEventBossVictory(win);
   } else {
     pulseEventBoss();
   }
 
+  renderEventsTab(state, currentEventEngagementMs());
+}
+
+/// Called every game tick (see tick() below) — applies passive DPS to the
+/// event boss while an attempt is in progress, and proactively cleans up a
+/// timed-out attempt even if the player never clicks again (mirroring how
+/// the main boss timer is handled in tick()/retreat()).
+function tickEventBoss(stats) {
+  if (eventDeadline == null) return;
+  const win = getEventWindow();
+  if (eventDeadlineCycle !== win.cycleIndex) {
+    eventDeadline = null; // stale — the window rotated past this attempt
+    return;
+  }
+
+  if (Date.now() >= eventDeadline) {
+    resetEventEncounter(state);
+    eventDeadline = null;
+    showToast('⏳ Tempo esgotado! O chefe de evento escapou — tente de novo.');
+    renderEventsTab(state, null);
+    return;
+  }
+
+  if (!win.active || isEventClaimed(state, win.cycleIndex)) return;
+  if (stats.dps <= 0 || state.eventBossHp == null) return; // not engaged yet — only a click starts it
+
+  const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, win.family.element) + getCardDamageBonus(state, win.family.element));
+  const killed = applyEventDamage(state, dealt * (TICK_MS / 1000));
+  if (killed) handleEventBossVictory(win);
   renderEventsTab(state, currentEventEngagementMs());
 }
 

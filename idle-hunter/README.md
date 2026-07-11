@@ -58,12 +58,11 @@ Depois abra `http://localhost:8000` no navegador.
    qualquer ícone na sub-aba Equipar, equipado ou não, pra abrir um popup
    com nome, stats, aprimoramento e o botão de Equipar/Desequipar. Cada
    peça craftada já
-   reserva um **slot de carta** (estilo Ragnarok Online) — visível nesse
-   popup como "vazio". Monstros já têm uma pequena chance (2%) de dropar a
-   própria carta ao morrer, coletável na sub-aba **Cartas** (dentro de
-   Equipamento) — mas o encaixe em si (usar uma carta pra preencher o slot
-   de um item e ativar o bônus dela) ainda não existe, só a coleta. Ver
-   "O sistema de Cartas" mais abaixo.
+   reserva um **slot de carta** (estilo Ragnarok Online) — monstros têm
+   uma pequena chance (2%) de dropar a própria carta ao morrer, coletável
+   na sub-aba **Cartas** (dentro de Equipamento) e encaixável direto
+   nesse mesmo popup, dando um bônus de dano real contra o elemento da
+   carta. Ver "O sistema de Cartas" mais abaixo.
    Além do stat principal de cada peça, as 5 peças de defesa também dão
    **Vida** (Elmo, Calça, Botas) ou **Armadura** (Peitoral, Luvas) — é
    assim que o equipamento te deixa sobreviver a estágios mais altos, não
@@ -100,12 +99,14 @@ Depois abra `http://localhost:8000` no navegador.
    cards deles mostram o mesmo Atual/Próximo dos upgrades comuns.
 9. **Chefe de evento (aba 🎪 Eventos)**: a cada 15 minutos (relógio de
    parede, não precisa estar com o jogo aberto), uma família de monstro
-   diferente vira "chefe de evento" por 5 minutos. Diferente do combate
-   normal, esse chefe **só toma dano de clique** — sem DPS passivo — e uma
-   vez que você acerta o primeiro golpe, tem **50 segundos fixos** pra
-   terminar, sempre, não importa a família (se o tempo acabar, dá pra
-   tentar de novo, contanto que a janela de 5 minutos ainda esteja
-   aberta). O HP dele é o HP do **chefe de verdade** daquela família
+   diferente vira "chefe de evento" por 5 minutos. O primeiro clique nele
+   arma um cronômetro de **50 segundos fixos** pra terminar, sempre, não
+   importa a família (se o tempo acabar, dá pra tentar de novo, contanto
+   que a janela de 5 minutos ainda esteja aberta) — e a partir desse
+   primeiro clique, tanto cliques adicionais quanto o **DPS passivo**
+   continuam batendo nele a cada tick do jogo, exatamente como no combate
+   normal (só não causa dano de volta em você). O HP dele é o HP do
+   **chefe de verdade** daquela família
    (o mesmo chefe que aparece no estágio final do bloco dela, no combate
    normal), só que **30% mais forte** — então cada família tem uma
    dificuldade de evento fixa e previsível, na mesma proporção da
@@ -302,15 +303,25 @@ igual pra todo mundo, então reabrir o jogo em qualquer momento já cai no
 estado certo automaticamente, sem cálculo de catch-up nem risco de
 dessincronizar com um valor salvo antigo.
 
-O combate em si também é deliberadamente diferente do resto do jogo: o
-chefe de evento **só toma dano de clique** (nenhum tick de DPS passivo
-bate nele — só o combate do estágio atual continua recebendo DPS
-normalmente). A ideia é que evento seja uma atividade ativa e curta
-("chefe correria"), não mais uma coisa pra deixar rodando sozinha; por
-isso também não causa dano de volta no jogador (sem risco de vida) e o
-prazo por tentativa (`EVENT_TIME_LIMIT_MS`, `js/data/events.js`) é
-**fixo em 50 segundos**, sempre, não importa a família ou o estágio do
-jogador.
+O combate em si tem duas diferenças deliberadas do resto do jogo. A
+primeira: ele **não causa dano de volta no jogador** (sem risco de
+vida) — é uma atividade de bônus, não mais uma ameaça a sobreviver. A
+segunda: o prazo por tentativa (`EVENT_TIME_LIMIT_MS`, `js/data/events.js`)
+é **fixo em 50 segundos**, sempre, não importa a família ou o estágio do
+jogador — só começa a contar no primeiro clique (`onClickEventBoss()` em
+`main.js`), e é aí que a luta "engata": a partir desse momento, tanto
+clique quanto DPS passivo continuam batendo nele — DPS via
+`tickEventBoss()`, chamada em todo tick do jogo (`tick()` em `main.js`),
+não só quando a aba Eventos está aberta. Isso já foi diferente
+(chefe de evento só tomava dano de clique) até um pedido explícito de
+usar DPS também; a mudança revelou um bug real de ordem de execução:
+`tickEventBoss()` tinha que rodar **antes** do bloco de combate do
+estágio normal em `tick()`, porque esse bloco dá um `return` antecipado
+sempre que o DPS mata o monstro da vez — e com DPS alto, isso acontece
+em praticamente todo tick, faminando o chefe de evento de qualquer dano
+de DPS. Um teste isolado (medir a queda de HP do chefe de evento ao
+longo de 1.5s reais sem clicar de novo) pegou esse bug antes de ele ir
+pro commit.
 
 O HP do chefe de evento (`computeEventBossMaxHp()` em
 `js/systems/events.js`) reaproveita a mesma fórmula do combate normal —
@@ -326,7 +337,7 @@ são chefes de evento muito mais duros que as do início — não existe
 autoequilíbrio pelo poder do jogador, é uma dificuldade "de verdade"
 amarrada ao estágio daquela família.
 
-## O sistema de Cartas (metade construída, de propósito)
+## O sistema de Cartas
 
 Cada família de monstro tem uma carta (`js/data/cards.js`, `CARDS` — um
 por família, gerado a partir de `MONSTER_FAMILIES`), com 2% de chance de
@@ -341,18 +352,28 @@ desvio por `isCard` foi replicado em `systems/offline.js`, senão uma
 carta ganha enquanto a aba estava fechada acabaria parando em
 `state.materials` por engano.
 
-O que existe: a coleta (drop + `state.cards` + a sub-aba **Cartas** em
-Equipamento mostrando ícone, nome, descrição de sabor e quantidade). O
-que **não** existe ainda: encaixar uma carta no slot de um item
-equipado. A estrutura pra isso já estava pronta antes mesmo de existir
-uma carta pra usar (`inventory[i].cardId`, função `socketCard()` em
-`js/systems/crafting.js`, badge "Slot de Carta" no popup de detalhe do
-item) — falta só a UI de "escolher uma carta da sua coleção e encaixar
-num item" e os efeitos dela entrando de fato em
-`systems/stats.js` (`computePlayerStats`). A descrição de cada carta
-(`+3% de dano contra o elemento X`) já é o texto que o bônus teria
-quando isso for implementado — por enquanto é só sabor, não afeta o
-combate.
+**Coleta**: sub-aba **Cartas** em Equipamento, mostrando ícone, nome,
+descrição e quantidade de cada carta já dropada.
+
+**Encaixe**: no popup de detalhe de qualquer item (equipado ou não), o
+badge "Slot de Carta" virou um seletor de verdade — se o item não tem
+carta, lista toda carta que você possui (com a quantidade); clicar numa
+consome 1 cópia de `state.cards` e preenche `entry.cardId`
+(`socketCard()`/`canSocketCard()` em `js/systems/crafting.js`). Se o
+item já tem uma carta, o badge mostra ela com um botão "Remover" que
+devolve a cópia pra `state.cards` (`unsocketCard()`) — trocar de carta é
+barato e reversível de propósito, não uma decisão definitiva.
+
+**Efeito**: cada carta dá **+3%** de dano contra monstros do elemento
+dela (`CARD_DAMAGE_BONUS` em `js/systems/stats.js`) — Neutro nunca entra
+nessa conta, mesma regra do sistema elemental principal. O bônus é
+somado direto no cálculo de dano por golpe (`getCardDamageBonus()`,
+chamada ao lado de `elementDamageModifier()` nos quatro lugares onde
+dano é calculado em `main.js`: clique e DPS no combate normal, clique e
+DPS no chefe de evento), e não em `computePlayerStats()`, pela mesma
+razão que a resistência elemental de equipamento também fica de fora
+dali: o bônus depende de qual monstro você está enfrentando, não é um
+número fixo do seu personagem.
 
 ## Estrutura
 
@@ -415,6 +436,7 @@ primeiro MVP. Os pontos mais fáceis de ajustar:
 - `js/data/shop.js`: preços em `CASH_SHOP_ITEMS`/`eventShopItemsForFamily()`, `AD_WATCH_COOLDOWN_MS`/`_CASH_REWARD`.
 - `js/data/achievements.js`: `cashReward` de cada conquista.
 - `js/systems/combat.js`: `CARD_DROP_CHANCE` (chance de carta, 2% por padrão).
+- `js/systems/stats.js`: `CARD_DAMAGE_BONUS` (bônus de dano por carta encaixada, 3% por padrão).
 
 ## Testado
 
@@ -508,3 +530,21 @@ antes de mexer em qualquer posição). Testei também o caso misto: elmo +
 peitoral do Chispim (arte real) junto com uma calça de outra família
 (bloco colorido) equipados ao mesmo tempo — as duas camadas convivem
 sem conflito, sem erro no console.
+
+Testei o DPS no chefe de evento medindo a queda de HP dele ao longo de
+1.5s reais **sem clicar de novo** depois do clique inicial — bateu
+exatamente com `dps × 1.5s` (achei e corrigi o bug de ordem de execução
+descrito em "Decisão de design: o chefe de evento é 100% baseado em
+relógio de parede" através desse mesmo teste, antes dele bater certo).
+Testei também que combate normal (avanço de estágio, ouro, kills) e
+DPS no chefe de evento continuam funcionando ao mesmo tempo, sem um
+atrapalhar o outro.
+
+Testei o encaixe de carta: craftei um item, dei uma carta da mesma
+família via `state.cards`, abri o popup de detalhe e encaixei pela UI —
+confirmei que `entry.cardId` foi setado e a contagem em `state.cards`
+caiu em 1; removi de volta e confirmei que a contagem voltou. Medi dano
+de clique contra o Chispim (elétrico) antes e depois de encaixar a carta
+de Chispim (elétrico) no elmo equipado: a razão exata entre os dois foi
+1.0300 — confirmando os +3% do bônus da carta aplicados de verdade no
+cálculo de dano, não só cosmético na UI.

@@ -1,6 +1,7 @@
 import { getItem, getEnhancedStats } from '../data/items.js';
 import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
 import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
+import { getCard } from '../data/cards.js';
 
 const BASE_CLICK_DAMAGE = 5;
 const BASE_DPS = 0;
@@ -101,4 +102,24 @@ export function getElementalResistance(state, element) {
     if (item && item.element === element) count += 1;
   }
   return count * ELEMENT_RESISTANCE_PER_PIECE;
+}
+
+export const CARD_DAMAGE_BONUS = 0.03;
+
+/// Sum of socketed-card bonuses against a specific element — +3% per
+/// equipped item (any slot, not just defense) whose card matches that
+/// element. Same "Neutro never has advantage" rule as elementDamageModifier,
+/// and computed separately from computePlayerStats() for the same reason as
+/// getElementalResistance() above: it depends on the current target.
+export function getCardDamageBonus(state, element) {
+  if (element === 'neutro') return 0;
+  let bonus = 0;
+  for (const uid of Object.values(state.equipped)) {
+    if (!uid) continue;
+    const invEntry = state.inventory.find((i) => i.uid === uid);
+    if (!invEntry || !invEntry.cardId) continue;
+    const card = getCard(invEntry.cardId);
+    if (card && card.element === element) bonus += CARD_DAMAGE_BONUS;
+  }
+  return bonus;
 }
