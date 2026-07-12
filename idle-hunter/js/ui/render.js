@@ -4,7 +4,7 @@ import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
-import { canCraft, canEnhance, canUpgradeToMaster } from '../systems/crafting.js';
+import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, cardSlotUnlockCost, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost, getPrestigeUpgradeLevel, getPrestigeUpgradeCost } from '../systems/upgrades.js';
 import { canRebirth, runasGain, REBIRTH_MIN_STAGE } from '../systems/prestige.js';
 import { getEventWindow } from '../data/events.js';
@@ -340,7 +340,7 @@ export function showEquipSlotModal(state, slotId) {
   const slot = getSlot(slotId);
   const uid = state.equipped[slotId];
   if (uid) {
-    showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid));
+    showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, false));
   } else {
     showModal(`${slot.emoji} ${slot.name}`, `
       <div class="item-detail">
@@ -352,15 +352,17 @@ export function showEquipSlotModal(state, slotId) {
 }
 
 /// Opens the detail popup for a specific inventory item (equipped or not).
-export function showItemDetailModal(state, uid) {
+/// pickerOpen controls whether the card-picker sub-panel starts expanded
+/// (only true right after the player clicks "Equipar Carta" — see main.js).
+export function showItemDetailModal(state, uid, pickerOpen = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   if (!entry) return;
   const item = getItem(entry.itemId);
   const slot = getSlot(item.slotId);
-  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid));
+  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, pickerOpen));
 }
 
-function itemDetailHtml(state, uid) {
+function itemDetailHtml(state, uid, pickerOpen) {
   const entry = state.inventory.find((i) => i.uid === uid);
   const item = getItem(entry.itemId);
   const slot = getSlot(item.slotId);
@@ -382,19 +384,33 @@ function itemDetailHtml(state, uid) {
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
-      ${cardSlotHtml(state, uid, entry)}
+      ${cardSlotHtml(state, uid, entry, pickerOpen)}
       ${enhancePanelHtml(state, uid, entry, item)}
       ${actionBtn}
     </div>
   `;
 }
 
-/// The "Slot de Carta" block: shows the socketed card (with a remove
-/// button) if there is one, otherwise a picker listing every owned card
-/// (each socket consumes one copy from state.cards — see socketCard() in
-/// systems/crafting.js). Cards themselves have no slotId restriction: any
-/// card can go in any item's single slot.
-function cardSlotHtml(state, uid, entry) {
+// A card is consumed from state.cards (a stackable count, like a material)
+// the moment it's socketed. Cards themselves have no slotId restriction: any
+// card can go in any item's slot. The slot itself has three states:
+//   1. locked — the item was just crafted, must be unlocked first (RNG + gold)
+//   2. unlocked, empty — either closed (a button to open the picker) or with
+//      the picker expanded (pickerOpen), listing every owned card
+//   3. unlocked, filled — the socketed card, with a Remover button
+function cardSlotHtml(state, uid, entry, pickerOpen) {
+  const unlocked = entry.cardSlotUnlocked || !!entry.cardId;
+
+  if (!unlocked) {
+    const cost = cardSlotUnlockCost(state);
+    const canAttempt = canAttemptCardSlotUnlock(state, uid);
+    return `<div class="card-slot-locked">
+      <div class="card-slot-label">🔒 Slot de Carta bloqueado</div>
+      <div class="card-slot-unlock-info">${Math.round(CARD_SLOT_UNLOCK_CHANCE * 100)}% de chance de sucesso · custo: ${formatNumber(cost)} 🪙</div>
+      <button class="card-slot-unlock-btn" data-unlock-card-slot="${uid}" ${canAttempt ? '' : 'disabled'}>Tentar Desbloquear</button>
+    </div>`;
+  }
+
   if (entry.cardId) {
     const card = getCard(entry.cardId);
     return `<div class="card-slot-badge filled">
@@ -407,13 +423,23 @@ function cardSlotHtml(state, uid, entry) {
     </div>`;
   }
 
+  if (!pickerOpen) {
+    return `<div class="card-slot-badge">
+      <span class="icon">🃏</span>
+      <div class="card-slot-info"><div class="card-slot-name">Slot de Carta: vazio</div></div>
+      <button class="card-slot-equip-btn" data-open-card-picker="${uid}">Equipar Carta</button>
+    </div>`;
+  }
+
   const owned = CARDS.filter((c) => (state.cards[c.id] || 0) > 0);
   if (!owned.length) {
-    return `<div class="card-slot-badge" title="Você ainda não tem nenhuma carta">🃏 Slot de Carta: vazio (nenhuma carta disponível)</div>`;
+    return `<div class="card-slot-picker">
+      <div class="card-slot-label">🃏 Você ainda não tem nenhuma carta. Derrote monstros para conseguir uma.</div>
+    </div>`;
   }
 
   return `<div class="card-slot-picker">
-    <div class="card-slot-label">🃏 Encaixar carta:</div>
+    <div class="card-slot-label">🃏 Escolha uma carta:</div>
     <div class="card-slot-options">${owned.map((c) => `
       <button class="card-slot-option" data-socket-uid="${uid}" data-socket-card-id="${c.id}" title="${c.description}">
         ${c.emoji} ${c.name} <span class="qty">×${state.cards[c.id]}</span>

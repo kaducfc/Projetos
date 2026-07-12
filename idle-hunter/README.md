@@ -355,14 +355,36 @@ carta ganha enquanto a aba estava fechada acabaria parando em
 **Coleta**: sub-aba **Cartas** em Equipamento, mostrando ícone, nome,
 descrição e quantidade de cada carta já dropada.
 
-**Encaixe**: no popup de detalhe de qualquer item (equipado ou não), o
-badge "Slot de Carta" virou um seletor de verdade — se o item não tem
-carta, lista toda carta que você possui (com a quantidade); clicar numa
-consome 1 cópia de `state.cards` e preenche `entry.cardId`
-(`socketCard()`/`canSocketCard()` em `js/systems/crafting.js`). Se o
-item já tem uma carta, o badge mostra ela com um botão "Remover" que
-devolve a cópia pra `state.cards` (`unsocketCard()`) — trocar de carta é
-barato e reversível de propósito, não uma decisão definitiva.
+**Slot de carta (reconstruído do zero)**: todo item craftado nasce com o
+slot de carta **bloqueado** (`entry.cardSlotUnlocked: false`), não vazio.
+Destravar é uma tentativa arriscada e paga, não uma formalidade:
+
+1. No popup de detalhe, um item com slot bloqueado mostra "🔒 Slot de
+   Carta bloqueado" e um botão **"Tentar Desbloquear"** com a chance e o
+   custo atuais visíveis antes de clicar.
+2. Cada tentativa (`attemptCardSlotUnlock()` em `js/systems/crafting.js`)
+   tem **80%** de chance de sucesso (`CARD_SLOT_UNLOCK_CHANCE`) e custa
+   **10% do ouro atual do jogador** (`CARD_SLOT_UNLOCK_GOLD_PERCENT`,
+   `cardSlotUnlockCost()`) — o ouro é **sempre consumido**, sucesso ou
+   fracasso. Como o custo é recalculado sobre o ouro *restante* a cada
+   chamada, tentativas repetidas ficam (levemente) mais baratas em termos
+   absolutos, mas nunca de graça.
+3. Sucesso vira `entry.cardSlotUnlocked = true` e o slot passa a mostrar
+   "Slot de Carta: vazio" com um botão **"Equipar Carta"**, que abre um
+   seletor com toda carta que você possui (mesma UI de antes). Clicar
+   numa consome 1 cópia de `state.cards` e preenche `entry.cardId`
+   (`socketCard()`/`canSocketCard()`).
+4. Uma vez desbloqueado, o slot **fica desbloqueado pra sempre** —
+   `unsocketCard()` (botão "Remover") só esvazia `entry.cardId` e devolve
+   a cópia pra `state.cards`, sem re-bloquear o slot. Trocar de carta
+   continua barato e reversível; só a primeira liberação do slot é a
+   etapa arriscada.
+
+Saves de antes desse sistema (item já com `cardId` setado mas sem o campo
+`cardSlotUnlocked`) são tratados como já desbloqueados — ninguém perde
+uma carta já encaixada por causa da migração — mas um item antigo sem
+carta nenhuma nasce bloqueado como qualquer item novo (`isSlotUnlocked()`
+em `crafting.js`: `cardSlotUnlocked || !!cardId`).
 
 **Efeito**: cada carta dá **+3%** de dano contra monstros do elemento
 dela (`CARD_DAMAGE_BONUS` em `js/systems/stats.js`) — Neutro nunca entra
@@ -461,6 +483,25 @@ atacam os dois lados:
    force-refresh — e não regressão de código. Lembrar de **bumpar o valor
    a cada publicação**.
 
+### O mecanismo de encaixe foi reconstruído do zero (relato persistiu mesmo após os 3 reparos acima)
+
+Mesmo depois dos reparos documentados acima (lock com `try/finally`,
+`pointer-events: none` nos toasts, popup atualizado antes do refresh
+geral) — todos reais, verificados e mantidos —, o relato de "remover não
+funciona / carta duplica" continuou chegando. Sem conseguir reproduzir
+mais nenhuma falha nova em testes de alta fidelidade (save antigo, toque
+de celular, DPS ativo empilhando toast, código-fonte e bundle), a decisão
+foi não seguir caçando uma causa possivelmente ligada só ao ambiente do
+jogador (cache de navegador é o principal suspeito) e em vez disso
+**redesenhar a mecânica** por pedido direto: em vez de "encaixar/remover"
+ser a única interação com o slot, o slot em si agora nasce bloqueado e
+precisa de uma etapa de desbloqueio paga e arriscada antes que qualquer
+encaixe seja possível — ver "O sistema de Cartas" acima para a mecânica
+nova completa. Os três reparos de clique (lock de 300ms, toasts sem
+`pointer-events`, popup atualizado primeiro) continuam em vigor e valem
+igualmente para os novos botões "Tentar Desbloquear" e "Equipar Carta",
+que passam pelo mesmo `runModalAction()`.
+
 ## Estrutura
 
 ```
@@ -480,12 +521,12 @@ js/
     events.js                Janela do chefe de evento (rotação por relógio de parede)
     achievements.js           Lista de conquistas e sua recompensa em Cash
     shop.js                    Itens compráveis com Cash e com Moeda de Evento
-    cards.js                    Uma carta por família de monstro (coleta; encaixe ainda não existe)
+    cards.js                    Uma carta por família de monstro (coleta + descrição do bônus)
   systems/
     stats.js                Agrega equipamento + upgrades → dano/DPS/bônus/resistência elemental finais
     combat.js                HP/recompensa/dano do monstro por estágio, drops, kill/spawn
     equipment.js              Equipar/desequipar, resolver o que está em cada slot
-    crafting.js                Checagem de custo, craft e aprimoramento (+1..+5, Rank Master)
+    crafting.js                Checagem de custo, craft, aprimoramento (+1..+5, Rank Master) e o slot de carta (desbloqueio + encaixe/remoção)
     upgrades.js                 Compra de upgrades comuns e de prestígio
     prestige.js                  Cálculo de Runas e lógica de renascimento
     offline.js                    Progresso estimado enquanto a aba estava fechada
@@ -524,6 +565,7 @@ primeiro MVP. Os pontos mais fáceis de ajustar:
 - `js/data/achievements.js`: `cashReward` de cada conquista.
 - `js/systems/combat.js`: `CARD_DROP_CHANCE` (chance de carta, 2% por padrão).
 - `js/systems/stats.js`: `CARD_DAMAGE_BONUS` (bônus de dano por carta encaixada, 3% por padrão).
+- `js/systems/crafting.js`: `CARD_SLOT_UNLOCK_CHANCE` (chance de destravar o slot, 80% por padrão), `CARD_SLOT_UNLOCK_GOLD_PERCENT` (custo por tentativa, 10% do ouro atual, sempre consumido).
 
 ## Testado
 
@@ -687,3 +729,37 @@ cópia devolvida). Re-rodei todos os testes das rodadas anteriores
 (ciclos de encaixe/remoção, clique duplo nas mesmas coordenadas, pilha
 de toasts sobre o botão, 5 aprimoramentos seguidos) e a suíte completa
 de regressão — tudo verde, sem erros no console.
+
+Depois da reconstrução do slot de carta (bloqueado por padrão, com etapa
+de desbloqueio paga), testei cada estado da UI isoladamente via save
+injetado (`page.addInitScript`, não `page.reload()` — um reload dispara
+`beforeunload`, que resalva o `state` em memória por cima do save que
+acabei de injetar, mascarando o teste como se tivesse "falhado"; já caí
+nessa pegadinha antes e caí de novo escrevendo o teste desta rodada,
+então documentando aqui de novo): item recém-craftado mostra o painel
+"🔒 Slot de Carta bloqueado" com o botão "Tentar Desbloquear" (nunca o
+seletor de carta diretamente). Forçando `Math.random` a sempre acertar,
+confirmei que o sucesso vira `cardSlotUnlocked: true`, o painel troca
+para "Equipar Carta", e o ouro cai exatamente no valor mostrado antes do
+clique (10% do ouro no momento). Forçando `Math.random` a sempre errar,
+confirmei que o ouro é descontado **mesmo na falha** (`attemptCardSlotUnlock`
+retorna `{success: false, cost}`) e o item continua bloqueado. Com ouro
+zerado, `canAttemptCardSlotUnlock` bloqueia a tentativa e o botão
+aparece desabilitado. Cliquei "Equipar Carta" (abre o seletor), escolhi
+uma carta e confirmei `entry.cardId` setado e a cópia consumida de
+`state.cards`; cliquei "Remover" e confirmei que a carta volta pra
+coleção e o slot volta para "vazio" **sem re-bloquear**
+(`cardSlotUnlocked` continua `true`) — esse era o ponto central do
+pedido, então testei especificamente que o painel bloqueado nunca
+reaparece depois da primeira liberação. Testei as duas formas de save
+antigo: item com `cardId` já setado mas sem o campo `cardSlotUnlocked`
+mostra a carta direto (tratado como já desbloqueado, ninguém perde a
+carta que já tinha); item sem carta e sem o campo nasce bloqueado como
+qualquer item novo. (Uma nota de metodologia: numa das rodadas eu mockei
+`Math.random` globalmente por várias centenas de ms com o loop de
+combate real rodando por trás — isso troca a chance de drop de carta de
+~2% para ~100% a cada golpe, e as contagens de `state.cards` "erradas"
+que vi no primeiro teste eram ruído de drops de verdade, não bug de
+socket/unsocket; confirmei isolando cada chamada com `state.monsterHp`
+travado bem alto pra não haver kill nenhum durante a janela do mock.)
+Todos os fluxos passaram sem erro no console.
