@@ -35,7 +35,7 @@ export function computeOfflineProgress(state) {
     // Offline doesn't track a persisted monster identity per kill (unlike
     // live combat's state.weakMonsterId) — each simulated kill just rolls
     // its own; rollDrops ignores this on boss stages anyway.
-    const drops = rollDrops(state.stage, stats.dropMult, pickRandomWeakMonster().id);
+    const drops = rollDrops(state.stage, stats.dropMult, pickRandomWeakMonster(state.stage).id);
     for (const drop of drops) {
       const bucket = drop.isCard ? cardsGained : materialsGained;
       bucket[drop.id] = (bucket[drop.id] || 0) + drop.qty;

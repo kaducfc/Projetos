@@ -1,8 +1,15 @@
 // Monster families: each spans a block of stages (FAMILY_BLOCK wide). Beyond
 // the last family, stages keep scaling forever and reuse the last family so
-// progression never hard-caps. Independently, every BOSS_INTERVAL-th stage
-// is a boss fight (so a family can have more than one boss checkpoint across
-// its block, reusing the same boss identity at increasing difficulty).
+// progression never hard-caps.
+//
+// NOTE: as of the BOSSES/WEAK_MONSTER_GROUPS roster below, families are no
+// longer what actually spawns in combat (see getMonsterInfo at the bottom) —
+// they're kept alive purely because equipment crafting (data/items.js),
+// the event-boss rotation (data/events.js) and the Forge/Materials tabs
+// still key off them, and none of that has a replacement defined yet. A
+// player can no longer farm boar_tusk/wolf_fang/etc. from live combat, so
+// crafting recipes tied to these materials are effectively frozen until
+// the new roster gets its own equipment mapping.
 
 export const FAMILY_BLOCK = 20;
 export const BOSS_INTERVAL = 10;
@@ -120,72 +127,264 @@ export const MONSTER_FAMILIES = [
   },
 ];
 
-// Filler monsters for non-boss stages (see isBossStage below): instead of
-// showing the current family's own regular form, every non-boss kill now
-// spawns a random pick from this shared pool. Placeholder roster of 5 for
-// now — more will be added and this will get properly organized later, so
-// keep this list easy to extend rather than tied to the family/tier system.
-// Each drops exactly one material (no common/rare/gem split like families
-// have), meant to feed into some equipment recipes once that's wired up.
-// No element yet (kept 'neutro' in getMonsterInfo below) and no card yet —
-// cards are per-family only for now (see data/cards.js).
-export const WEAK_MONSTERS = [
-  { id: 'bee', name: 'Abelha', emoji: '🐝', material: { id: 'bee_wax', name: 'Cera de Abelha', emoji: '🍯' } },
-  { id: 'wildboar', name: 'Javali', emoji: '🐗', material: { id: 'wildboar_tusk', name: 'Presa de Javali', emoji: '🦷' } },
-  { id: 'slime', name: 'Gosma', emoji: '🟢', material: { id: 'slime_goo', name: 'Gosma Viscosa', emoji: '🧫' } },
-  { id: 'boulder', name: 'Pedregulho', emoji: '🪨', material: { id: 'boulder_pebble', name: 'Pedregulho Rachado', emoji: '🪨' } },
-  { id: 'sheep', name: 'Ovelha', emoji: '🐑', material: { id: 'sheep_wool', name: 'Lã de Ovelha', emoji: '🧶' } },
+// ---------------------------------------------------------------------
+// Live roster (what actually spawns in combat): 10 unique bosses, one per
+// decade stage (10, 20, ... 100), plus 25 weak "filler" monsters grouped
+// into 5 bands, spawned randomly on every non-boss stage in between.
+// "Raio" in the design doc maps to the existing 'eletrico' element id —
+// same element, no new id introduced, keeps the elemental cycle logic
+// (data/elements.js) untouched.
+// ---------------------------------------------------------------------
+
+export const BOSSES = [
+  {
+    stage: 10,
+    id: 'chispim',
+    name: 'Chispim',
+    element: 'eletrico',
+    emoji: '🐹',
+    image: 'assets/chispim/monster.png',
+    materials: {
+      primary1: { id: 'chispim_heart', name: 'Coração de Chispim', emoji: '❤️' },
+      primary2: { id: 'chispim_whisker', name: 'Bigode Condutor', emoji: '⚡' },
+    },
+    crystal: { id: 'chispim_crystal', name: 'Cristal de Chispim', emoji: '💎' },
+  },
+  {
+    stage: 20,
+    id: 'solkaiser',
+    name: 'Solkaiser',
+    element: 'fogo',
+    emoji: '🦅',
+    materials: {
+      primary1: { id: 'solkaiser_feather', name: 'Pena de Solkaiser', emoji: '🪶' },
+      primary2: { id: 'solkaiser_core', name: 'Núcleo Solar', emoji: '☀️' },
+    },
+    crystal: { id: 'solkaiser_crystal', name: 'Cristal de Solkaiser', emoji: '💎' },
+  },
+  {
+    stage: 30,
+    id: 'tartarok',
+    name: 'Tartarok',
+    element: 'agua',
+    emoji: '🐢',
+    materials: {
+      primary1: { id: 'tartarok_shell', name: 'Casco de Tartarok', emoji: '🐚' },
+      primary2: { id: 'tartarok_pearl', name: 'Pérola Primordial', emoji: '⚪' },
+    },
+    crystal: { id: 'tartarok_crystal', name: 'Cristal de Tartarok', emoji: '💎' },
+  },
+  {
+    stage: 40,
+    id: 'colhedor_carmesim',
+    name: 'Colhedor Carmesim',
+    element: 'planta',
+    emoji: '🌺',
+    materials: {
+      primary1: { id: 'colhedor_carmesim_scythe', name: 'Foice Carmesim', emoji: '🔪' },
+      primary2: { id: 'colhedor_carmesim_root', name: 'Raiz Sanguínea', emoji: '🩸' },
+    },
+    crystal: { id: 'colhedor_carmesim_crystal', name: 'Cristal do Colhedor Carmesim', emoji: '💎' },
+  },
+  {
+    stage: 50,
+    id: 'grommuk',
+    name: 'Grommuk',
+    element: 'neutro',
+    emoji: '👹',
+    materials: {
+      primary1: { id: 'grommuk_fang', name: 'Presa de Grommuk', emoji: '🦷' },
+      primary2: { id: 'grommuk_medallion', name: 'Medalhão Tribal', emoji: '🥉' },
+    },
+    crystal: { id: 'grommuk_crystal', name: 'Cristal de Grommuk', emoji: '💎' },
+  },
+  {
+    stage: 60,
+    id: 'vulkarion',
+    name: 'Vulkarion',
+    element: 'fogo',
+    emoji: '🐂',
+    materials: {
+      primary1: { id: 'vulkarion_horn', name: 'Chifre de Vulkarion', emoji: '🐮' },
+      primary2: { id: 'vulkarion_heart', name: 'Coração Vulcânico', emoji: '🌋' },
+    },
+    crystal: { id: 'vulkarion_crystal', name: 'Cristal de Vulkarion', emoji: '💎' },
+  },
+  {
+    stage: 70,
+    id: 'leviargon',
+    name: 'Leviargon',
+    element: 'agua',
+    emoji: '🐋',
+    materials: {
+      primary1: { id: 'leviargon_fin', name: 'Barbatana de Leviargon', emoji: '🦈' },
+      primary2: { id: 'leviargon_eye', name: 'Olho Abissal', emoji: '👁️' },
+    },
+    crystal: { id: 'leviargon_crystal', name: 'Cristal de Leviargon', emoji: '💎' },
+  },
+  {
+    stage: 80,
+    id: 'tempestron',
+    name: 'Tempestron',
+    element: 'eletrico',
+    emoji: '⛈️',
+    materials: {
+      primary1: { id: 'tempestron_heart', name: 'Coração Tempestuoso', emoji: '💜' },
+      primary2: { id: 'tempestron_orb', name: 'Orbe Trovejante', emoji: '🔮' },
+    },
+    crystal: { id: 'tempestron_crystal', name: 'Cristal de Tempestron', emoji: '💎' },
+  },
+  {
+    stage: 90,
+    id: 'gaiatron',
+    name: 'Gaiatron',
+    element: 'planta',
+    emoji: '🌳',
+    materials: {
+      primary1: { id: 'gaiatron_branch', name: 'Galho Primordial', emoji: '🌿' },
+      primary2: { id: 'gaiatron_seed', name: 'Semente Ancestral', emoji: '🌰' },
+    },
+    crystal: { id: 'gaiatron_crystal', name: 'Cristal de Gaiatron', emoji: '💎' },
+  },
+  {
+    stage: 100,
+    id: 'bahamorth',
+    name: 'Bahamorth',
+    element: 'neutro',
+    emoji: '🐲',
+    materials: {
+      primary1: { id: 'bahamorth_scale', name: 'Escama de Bahamorth', emoji: '🩶' },
+      primary2: { id: 'bahamorth_soul', name: 'Alma Dracônica', emoji: '👻' },
+    },
+    crystal: { id: 'bahamorth_crystal', name: 'Cristal de Bahamorth', emoji: '💎' },
+  },
 ];
 
-export function pickRandomWeakMonster() {
-  return WEAK_MONSTERS[Math.floor(Math.random() * WEAK_MONSTERS.length)];
-}
-
-export function getWeakMonster(id) {
-  return WEAK_MONSTERS.find((m) => m.id === id) || WEAK_MONSTERS[0];
-}
-
-export function getFamilyForStage(stage) {
-  for (const family of MONSTER_FAMILIES) {
-    if (stage <= family.endStage) return family;
-  }
-  return MONSTER_FAMILIES[MONSTER_FAMILIES.length - 1];
-}
+/// Weak "filler" monsters: 5 bands of 5 (one per element), spawned randomly
+/// on whatever non-boss stage falls in that band. Boundaries deliberately
+/// match the design doc as given (not a clean formula — the last band
+/// happens to be wider, spanning two boss checkpoints), so this is data,
+/// not derived from BOSS_INTERVAL.
+export const WEAK_MONSTER_GROUPS = [
+  {
+    startStage: 1,
+    endStage: 19,
+    monsters: [
+      { id: 'braslimo', name: 'Braslimo', element: 'fogo', emoji: '🔥', material: { id: 'braslimo_gel', name: 'Gel Incandescente', emoji: '🟠' } },
+      { id: 'cristalino', name: 'Cristalino', element: 'agua', emoji: '🔷', material: { id: 'cristalino_shard', name: 'Fragmento de Cristal', emoji: '💠' } },
+      { id: 'espinhoco', name: 'Espinhoco', element: 'neutro', emoji: '🦔', material: { id: 'espinhoco_thorn', name: 'Espinho Afiado', emoji: '🌵' } },
+      { id: 'tronk', name: 'Tronk', element: 'planta', emoji: '🌳', material: { id: 'tronk_wood', name: 'Madeira Viva', emoji: '🪵' } },
+      { id: 'aracneon', name: 'Aracneon', element: 'eletrico', emoji: '🕷️', material: { id: 'aracneon_silk', name: 'Seda Elétrica', emoji: '⚡' } },
+    ],
+  },
+  {
+    startStage: 21,
+    endStage: 39,
+    monsters: [
+      { id: 'volpix', name: 'Volpix', element: 'fogo', emoji: '🦊', material: { id: 'volpix_fur', name: 'Pelo Flamejante', emoji: '🔥' } },
+      { id: 'cascafria', name: 'Cascafria', element: 'agua', emoji: '🐢', material: { id: 'cascafria_shell', name: 'Casco Congelado', emoji: '❄️' } },
+      { id: 'grunco', name: 'Grunco', element: 'neutro', emoji: '🐗', material: { id: 'grunco_hide', name: 'Couro Grosso', emoji: '🟤' } },
+      { id: 'cogumeloide', name: 'Cogumeloide', element: 'planta', emoji: '🍄', material: { id: 'cogumeloide_fiber', name: 'Fibra Fúngica', emoji: '🍄' } },
+      { id: 'faisca', name: 'Faísca', element: 'eletrico', emoji: '🐿️', material: { id: 'faisca_core', name: 'Núcleo Elétrico', emoji: '🔋' } },
+    ],
+  },
+  {
+    startStage: 41,
+    endStage: 59,
+    monsters: [
+      { id: 'lamel', name: 'Lamel', element: 'fogo', emoji: '🦎', material: { id: 'lamel_scale', name: 'Escama Flamejante', emoji: '🔥' } },
+      { id: 'marrelho', name: 'Marrelho', element: 'agua', emoji: '🦀', material: { id: 'marrelho_claw', name: 'Garra Marinha', emoji: '🦀' } },
+      { id: 'casquelo', name: 'Casquelo', element: 'neutro', emoji: '🐌', material: { id: 'casquelo_shell', name: 'Casco Rochoso', emoji: '🪨' } },
+      { id: 'folhante', name: 'Folhante', element: 'planta', emoji: '🌿', material: { id: 'folhante_leaf', name: 'Folha Carnívora', emoji: '🌿' } },
+      { id: 'dentelha', name: 'Dentelha', element: 'eletrico', emoji: '🐟', material: { id: 'dentelha_fang', name: 'Presa Elétrica', emoji: '⚡' } },
+    ],
+  },
+  {
+    startStage: 61,
+    endStage: 79,
+    monsters: [
+      { id: 'pimpira', name: 'Pimpira', element: 'fogo', emoji: '🦋', material: { id: 'pimpira_wing', name: 'Asa Flamejante', emoji: '🔥' } },
+      { id: 'bolhumo', name: 'Bolhumo', element: 'agua', emoji: '🫧', material: { id: 'bolhumo_essence', name: 'Essência Aquática', emoji: '💧' } },
+      { id: 'escamito', name: 'Escamito', element: 'neutro', emoji: '🦎', material: { id: 'escamito_scale', name: 'Escama Metálica', emoji: '⚙️' } },
+      { id: 'muskar', name: 'Muskar', element: 'planta', emoji: '🦫', material: { id: 'muskar_fur', name: 'Pelo Musgoso', emoji: '🌿' } },
+      { id: 'voltouro', name: 'Voltouro', element: 'eletrico', emoji: '🦏', material: { id: 'voltouro_horn', name: 'Chifre Condutor', emoji: '⚡' } },
+    ],
+  },
+  {
+    startStage: 81,
+    endStage: 100,
+    monsters: [
+      { id: 'carvao', name: 'Carvão', element: 'fogo', emoji: '⚫', material: { id: 'carvao_vivo', name: 'Carvão Vivo', emoji: '🔥' } },
+      { id: 'serpilha', name: 'Serpilha', element: 'agua', emoji: '🐍', material: { id: 'serpilha_skin', name: 'Pele Escamosa', emoji: '💧' } },
+      { id: 'cascudon', name: 'Cascudon', element: 'neutro', emoji: '🐢', material: { id: 'cascudon_shell', name: 'Carapaça Grossa', emoji: '🛡️' } },
+      { id: 'esporim', name: 'Esporim', element: 'planta', emoji: '🍄', material: { id: 'esporim_spore', name: 'Esporo Venenoso', emoji: '☠️' } },
+      { id: 'ventrix', name: 'Ventrix', element: 'eletrico', emoji: '🦅', material: { id: 'ventrix_feather', name: 'Pena Celeste', emoji: '🪽' } },
+    ],
+  },
+];
 
 export function isBossStage(stage) {
   return stage % BOSS_INTERVAL === 0;
 }
 
+/// Exact match by stage; beyond the last defined boss (100), keeps
+/// reusing that last boss so progression never hard-caps, same pattern
+/// the old family system used.
+export function getBossForStage(stage) {
+  return BOSSES.find((b) => b.stage === stage) || BOSSES[BOSSES.length - 1];
+}
+
+export function getWeakMonsterGroupForStage(stage) {
+  for (const group of WEAK_MONSTER_GROUPS) {
+    if (stage >= group.startStage && stage <= group.endStage) return group;
+  }
+  return WEAK_MONSTER_GROUPS[WEAK_MONSTER_GROUPS.length - 1];
+}
+
+export function pickRandomWeakMonster(stage) {
+  const group = getWeakMonsterGroupForStage(stage);
+  return group.monsters[Math.floor(Math.random() * group.monsters.length)];
+}
+
+/// ids are unique across every band, so a flat lookup by id alone is safe
+/// (no need to know which band/stage it came from).
+export function getWeakMonster(id) {
+  for (const group of WEAK_MONSTER_GROUPS) {
+    const found = group.monsters.find((m) => m.id === id);
+    if (found) return found;
+  }
+  return WEAK_MONSTER_GROUPS[0].monsters[0];
+}
+
 /// weakMonsterId is the currently-spawned weak monster's id (persisted on
 /// state, see combat.js ensureMonsterSpawned) — only meaningful on non-boss
-/// stages. Boss stages always show the stage's family boss, exactly as
-/// before; a weakMonsterId is ignored there.
+/// stages; boss stages always show that decade's unique boss and ignore it.
 export function getMonsterInfo(stage, weakMonsterId) {
   const boss = isBossStage(stage);
 
-  if (!boss && weakMonsterId) {
-    const weak = getWeakMonster(weakMonsterId);
+  if (boss) {
+    const b = getBossForStage(stage);
     return {
-      familyId: null,
-      weakMonsterId: weak.id,
-      name: weak.name,
-      emoji: weak.emoji,
-      image: null,
-      element: 'neutro',
-      isBoss: false,
-      isWeak: true,
+      bossId: b.id,
+      weakMonsterId: null,
+      name: b.name,
+      emoji: b.emoji,
+      image: b.image || null,
+      element: b.element,
+      isBoss: true,
+      isWeak: false,
     };
   }
 
-  const family = getFamilyForStage(stage);
+  const weak = weakMonsterId ? getWeakMonster(weakMonsterId) : pickRandomWeakMonster(stage);
   return {
-    familyId: family.id,
-    weakMonsterId: null,
-    name: boss ? family.bossName : family.name,
-    emoji: boss ? family.bossEmoji : family.emoji,
-    image: family.image || null,
-    element: family.element,
-    isBoss: boss,
-    isWeak: false,
+    bossId: null,
+    weakMonsterId: weak.id,
+    name: weak.name,
+    emoji: weak.emoji,
+    image: null,
+    element: weak.element,
+    isBoss: false,
+    isWeak: true,
   };
 }

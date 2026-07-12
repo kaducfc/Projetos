@@ -34,17 +34,15 @@ Depois abra `http://localhost:8000` no navegador.
    máximo preservado). Sua vida enche 100% sempre que um monstro novo
    aparece (novo estágio ou novo spawn), então cada combate é um teste
    de "aguento esse aqui?", não desgaste acumulado enquanto você tá AFK.
-2. **Estágios**: cada família de monstro ocupa um bloco de 20 estágios (com
-   materiais e arma próprios), mas **todo estágio múltiplo de 10 é um
-   chefe** — igual ao Clicker Heroes — reaproveitando o chefe da família
-   com HP/recompensas maiores. Dá pra navegar (◀ ▶) para qualquer estágio
-   já alcançado e farmar ali — é assim que você junta material de um
-   monstro específico para craftar o set dele. Todo estágio que **não** é
-   múltiplo de 10 mostra, em vez do monstro normal da família, um
-   **monstro fraco aleatório** sorteado de um grupo compartilhado (ver
-   "Monstros fracos" mais abaixo) — o chefe continua sendo sempre o da
-   família daquele bloco de estágios, só o preenchimento entre chefes
-   mudou.
+2. **Estágios**: **todo estágio múltiplo de 10 é um chefe** — igual ao
+   Clicker Heroes — só que agora cada um dos 10 chefes (estágio 10 a 100)
+   é uma entidade própria e única (Chispim, Solkaiser, Tartarok...
+   Bahamorth), não mais "o chefe da família reaproveitado". Todo estágio
+   que **não** é múltiplo de 10 mostra um **monstro fraco aleatório**,
+   sorteado de um grupo de 5 (um por elemento) específico daquela faixa
+   de estágios (ver "O roster definitivo" mais abaixo). Dá pra navegar
+   (◀ ▶) para qualquer estágio já alcançado e farmar ali — é assim que
+   você junta o material de um chefe ou monstro fraco específico.
 3. **Chefes têm prazo**: ao alcançar um chefe pela primeira vez (estágio
    ainda não superado), você tem **30 segundos** para derrotá-lo. Se o
    tempo acabar, você recua um estágio (o recorde de estágio máximo não
@@ -64,7 +62,8 @@ Depois abra `http://localhost:8000` no navegador.
    com nome, stats, aprimoramento e o botão de Equipar/Desequipar. Cada
    peça craftada já
    reserva um **slot de carta** (estilo Ragnarok Online) — monstros têm
-   uma pequena chance (2%) de dropar a própria carta ao morrer, coletável
+   uma chance bem pequena (0,01%, fixa) de dropar a própria carta ao
+   morrer, coletável
    na sub-aba **Cartas** (dentro de Equipamento) e encaixável direto
    nesse mesmo popup, dando um bônus de dano real contra o elemento da
    carta. Ver "O sistema de Cartas" mais abaixo.
@@ -342,61 +341,95 @@ são chefes de evento muito mais duros que as do início — não existe
 autoequilíbrio pelo poder do jogador, é uma dificuldade "de verdade"
 amarrada ao estágio daquela família.
 
-## Monstros fracos (preenchimento entre chefes)
+## O roster definitivo: 10 chefes + 25 monstros fracos
 
-Estágios que não são múltiplo de 10 não mostram mais o monstro "normal"
-da família daquele bloco — mostram um **monstro fraco aleatório**,
-sorteado de um grupo compartilhado por todo o jogo (`WEAK_MONSTERS` em
-`js/data/monsters.js`), independente de qual família/bloco de estágio
-você está. É uma lista provisória de 5 por enquanto (Abelha, Javali,
-Gosma, Pedregulho, Ovelha) — o pedido foi deixar fácil de estender,
-porque a lista vai crescer e ficar "definitiva" depois. Cada monstro
-fraco tem exatamente **1 material próprio** (não o trio comum/raro/Gema
-que as famílias têm), pensado para ser usado como ingrediente extra em
-algumas receitas de equipamento — ainda não conectei isso às receitas
-porque a lista de monstros fracos (e qual material vai em qual peça)
-ainda não está definitiva; os materiais já dropam e aparecem na sub-aba
-Materiais, prontos para quando as receitas forem definidas. Nenhum deles
-tem carta própria ainda (isso é proposital — cartas continuam só por
-família por enquanto, ver "O sistema de Cartas" abaixo) nem elemento
-(mostram "Neutro").
+Substitui a lista placeholder de 5 monstros fracos por um roster completo
+e definitivo (por enquanto — pode crescer, mas a estrutura já é a real):
+**10 chefes únicos** (`BOSSES` em `js/data/monsters.js`), um por estágio
+múltiplo de 10 (10 a 100), cada um com nome, elemento e drops próprios —
+não é mais "o chefe da família reaproveitado", cada chefe é uma entidade
+única. E **25 monstros fracos** (`WEAK_MONSTER_GROUPS`, 5 grupos de 5,
+um por elemento) que preenchem os estágios não-chefe, cada grupo válido
+numa faixa de estágios (1–19, 21–39, 41–59, 61–79, 81–100 — faixas dadas
+assim mesmo, não uma fórmula; a última é mais larga que as outras de
+propósito, é a faixa "até o último chefe definido"). Além do estágio 100
+(ainda sem conteúdo definido), tanto o chefe quanto o grupo de monstros
+fracos ficam travados no último definido (Bahamorth / grupo 81–100),
+mesmo padrão que a família antiga usava pra nunca travar o progresso.
 
-Qual monstro fraco aparece é sorteado (`pickRandomWeakMonster()`) toda
-vez que um monstro novo nasce no estágio (`ensureMonsterSpawned()` em
-`js/systems/combat.js`) — e fica **fixo** (persistido em
+**Cada monstro fraco** dropa exatamente **1 material próprio**. **Cada
+chefe** dropa **2 materiais próprios** ("Drop Principal 1/2", cada um
+rolado independentemente) **+** um **Cristal** exclusivo daquele chefe
+(ex.: Cristal de Chispim) **+** chance de carta — nenhum dos dois
+(Cristal e carta) é afetado por bônus de Drop, ver "Taxas de drop fixas"
+logo abaixo. Todo mundo (chefe e monstro fraco) tem sua própria carta
+(`js/data/cards.js`) — o efeito de cada carta ainda não foi definido
+(pedido explícito: isso vem depois), então por enquanto toda carta
+aplica o mesmo bônus genérico de +3% de dano elemental que o sistema já
+tinha (ver "O sistema de Cartas" abaixo) — é um placeholder, não a
+intenção final.
+
+Qual monstro fraco aparece é sorteado (`pickRandomWeakMonster(stage)`)
+toda vez que um monstro novo nasce no estágio (`ensureMonsterSpawned()`
+em `js/systems/combat.js`) — e fica **fixo** (persistido em
 `state.weakMonsterId`) enquanto aquele HP específico não morre, senão o
 sprite trocaria de bicho no meio da luta a cada re-render. Ao matar (ou
-trocar de estágio), sorteia de novo. Chefes (estágio múltiplo de 10)
-ignoram esse sorteio completamente — `weakMonsterId` fica `null` e o
-chefe da família aparece exatamente como antes, com a tabela de drop
-cheia (comum/raro/Gema/carta).
+trocar de estágio), sorteia de novo, dentro do grupo daquela faixa.
+Chefes (estágio múltiplo de 10) ignoram esse sorteio completamente —
+`weakMonsterId` fica `null` e o chefe daquele estágio aparece com sua
+própria tabela de drop (2 materiais + Cristal + carta).
 
-**Efeito colateral no farm de material de família**: como estágios não-
-chefe agora dropam só o material do monstro fraco (não mais o
-comum/raro da família), o comum/raro de cada família passou a vir *só*
-dos chefes (1 a cada 10 estágios) em vez de virtualmente todo kill.
-Isso deixa craftar equipamento bem mais lento do que antes — é uma
-consequência direta do pedido, não uma escolha de balanceamento minha;
-sinalizando aqui porque ninguém pediu esse nerf explicitamente, só a
-troca de identidade dos estágios não-chefe. Se não for a intenção,
-ajustar a chance/quantidade de drop nos chefes (`BOSS_RARE_DROP_CHANCE`,
-o `qty: boss ? 3 : 1` do material comum) é o ponto certo pra compensar.
+### Taxas de drop fixas (Cristal e carta não sobem com bônus de Drop)
+
+`CRYSTAL_DROP_CHANCE` (0,1%, só chefe) e `MONSTER_CARD_DROP_CHANCE`
+(0,01%, chefe e monstro fraco) em `js/systems/combat.js` são deixados de
+fora do `dropMult` de propósito — `dropMult * chance` nunca é aplicado a
+essas duas, só aos materiais "normais" (o material único do monstro
+fraco, e cada um dos 2 materiais do chefe). Testei isso diretamente: 50
+mil rolagens com `dropMult=1` e `dropMult=10` deram taxa de material
+~3.5x maior (0.35 → 0.95, capado) mas taxa de Cristal e de carta
+praticamente idênticas nos dois casos (~0.1%/~0.01% em ambos) — nenhum
+upgrade de Drop ou item consegue tornar Cristal/carta mais fáceis.
+
+### Decisão de escopo: equipamentos continuam presos ao sistema antigo
+
+Este pedido definiu só o roster de monstros/drops, não como esses
+materiais viram equipamento — então **não toquei em `data/items.js` nem
+`systems/crafting.js`**. `MONSTER_FAMILIES` (as 6 famílias antigas:
+Chispim, Lobo das Sombras, Aranha Venenosa, Golem de Pedra, Wyvern de
+Gelo, Dragão Ancião) continua existindo só pra alimentar craft/Forja, o
+rodízio do chefe de evento (`data/events.js`) e a lista de materiais —
+mas **nenhuma delas spawna mais em combate normal**, foram totalmente
+substituídas pelos 10 chefes + 25 monstros fracos. Isso significa que os
+materiais antigos (Pelo de Chispim, Presa de Lobo, etc.) não dão mais
+pra farmar — craft de equipamento ficou congelado no que já foi
+craftado até agora, até você definir como o roster novo vira
+equipamento. Os 44 materiais novos (25 dos monstros fracos + 20 dos
+chefes + 10 Cristais) já dropam, já aparecem na sub-aba Materiais,
+prontos pra quando as receitas forem redefinidas.
+
+Também tratei o caso de save antigo com uma carta já encaixada num item
+(`entry.cardId` apontando pra uma carta que não existe mais, tipo
+`boar_card`): sem tratamento isso travaria o slot pra sempre (não dá
+pra reencaixar com o slot "ocupado" por uma referência morta) — agora
+`loadState()` limpa esse `cardId` órfão automaticamente ao carregar o
+save (uma vez só, sem custo pro jogador). Testei semeando um save assim
+e confirmando que o slot volta a ficar utilizável.
 
 ## O sistema de Cartas
 
-Cada família de monstro tem uma carta (`js/data/cards.js`, `CARDS` — um
-por família, gerado a partir de `MONSTER_FAMILIES`), com 0,01% de chance
-de dropar de qualquer monstro daquela família, comum ou chefe
-(`CARD_DROP_CHANCE` em `js/systems/combat.js` — bem mais raro do que os
-2% originais; era fácil demais). É uma rolagem separada
-das de material/Gema — mesma mecânica, `drops.push()` com uma flag
-`isCard: true` a mais, que `applyDamage()` usa pra decidir se o drop vai
-para `state.materials` ou para o novo `state.cards` (as duas coleções
-usam o mesmo formato `id -> contagem`, então uma carta é "empilhável"
-como um material, não um item único com uid como equipamento). O mesmo
-desvio por `isCard` foi replicado em `systems/offline.js`, senão uma
-carta ganha enquanto a aba estava fechada acabaria parando em
-`state.materials` por engano.
+Cada monstro do roster (chefe ou fraco) tem uma carta (`js/data/cards.js`,
+`CARDS` — 35 no total, uma por chefe + uma por monstro fraco), com 0,01%
+de chance de dropar de qualquer um deles (`MONSTER_CARD_DROP_CHANCE` em
+`js/systems/combat.js` — taxa fixa, não sobe com bônus de Drop, ver
+acima). É uma rolagem separada das de material/Cristal — mesma mecânica,
+`drops.push()` com uma flag `isCard: true` a mais, que `applyDamage()`
+usa pra decidir se o drop vai para `state.materials` ou para o novo
+`state.cards` (as duas coleções usam o mesmo formato `id -> contagem`,
+então uma carta é "empilhável" como um material, não um item único com
+uid como equipamento). O mesmo desvio por `isCard` foi replicado em
+`systems/offline.js`, senão uma carta ganha enquanto a aba estava
+fechada acabaria parando em `state.materials` por engano.
 
 **Coleta**: sub-aba **Cartas** em Equipamento, mostrando ícone, nome,
 descrição e quantidade de cada carta já dropada.
@@ -560,14 +593,14 @@ js/
   format.js              Formatação de números grandes (1.2K, 3.4M, ...)
   version.js             Etiqueta de build exibida na barra superior (bumpar a cada publicação)
   data/
-    monsters.js           As 6 famílias de monstro, estágios, materiais, elemento; WEAK_MONSTERS (filler de estágio não-chefe)
+    monsters.js           BOSSES (10, um por estágio múltiplo de 10) e WEAK_MONSTER_GROUPS (25 monstros fracos, 5 grupos) — o roster que de fato spawna. MONSTER_FAMILIES continua só pra craft/evento (ver "Decisão de escopo" no README)
     items.js               Geração dos 36 itens equipáveis (6 famílias × 6 slots)
     elements.js             Ciclo de elementos e cálculo de vantagem/desvantagem
     upgrades.js             Upgrades comuns (ouro) e de prestígio (Runas)
     events.js                Janela do chefe de evento (rotação por relógio de parede)
     achievements.js           Lista de conquistas e sua recompensa em Cash
     shop.js                    Itens compráveis com Cash e com Moeda de Evento
-    cards.js                    Uma carta por família de monstro (coleta + descrição do bônus)
+    cards.js                    Uma carta por chefe/monstro fraco (35 no total) — coleta + bônus elemental genérico (efeitos próprios ainda não definidos)
   systems/
     stats.js                Agrega equipamento + upgrades → dano/DPS/bônus/resistência elemental finais
     combat.js                HP/recompensa/dano do monstro por estágio, drops, kill/spawn
@@ -599,20 +632,19 @@ primeiro MVP. Os pontos mais fáceis de ajustar:
 - `js/data/items.js`: `tierBase()` e os multiplicadores por slot.
 - `js/data/upgrades.js`: `baseCost`/`costGrowth` de cada upgrade.
 - `js/systems/prestige.js`: fórmula de `runasGain`.
-- `js/data/monsters.js`: `BOSS_INTERVAL` (frequência de chefes).
+- `js/data/monsters.js`: `BOSS_INTERVAL` (frequência de chefes), `BOSSES`/`WEAK_MONSTER_GROUPS` (o roster em si — nomes, elementos, materiais).
 - `js/main.js`: `BOSS_TIME_LIMIT_MS` (prazo do chefe).
 - `js/data/items.js`: `ENHANCE_PER_LEVEL_MULT`, `MASTER_MARGIN` (curva de aprimoramento).
-- `js/systems/combat.js`: `GEM_DROP_CHANCE` (chance de Gema, 0,5% por padrão).
+- `js/systems/combat.js`: `CRYSTAL_DROP_CHANCE` (chance de Cristal do chefe, 0,1% fixo — não sobe com bônus de Drop).
 - `js/systems/stats.js`: `BASE_MAX_HP`, `BASE_ARMOR` (vida/armadura antes de qualquer equipamento).
 - `js/systems/combat.js`: `PLAYER_DPS_TAKEN_GROWTH`/`_BASE`, `BOSS_DPS_TAKEN_MULT`, `ARMOR_CONSTANT`.
 - `js/data/elements.js`: `ELEMENT_DAMAGE_BONUS` (±25%), `ELEMENT_RESISTANCE_PER_PIECE` (5%).
 - `js/data/events.js`: `EVENT_CYCLE_MS`/`EVENT_ACTIVE_MS` (frequência/duração da janela), `EVENT_TIME_LIMIT_MS` (prazo fixo por tentativa, 50s), `EVENT_DIFFICULTY_MULT` (quanto mais forte que o chefe original, 1.3 = 30%), `EVENT_CURRENCY_BASE`/`_PER_STAGE` (recompensa).
 - `js/data/shop.js`: preços em `CASH_SHOP_ITEMS`/`eventShopItemsForFamily()`, `AD_WATCH_COOLDOWN_MS`/`_CASH_REWARD`.
 - `js/data/achievements.js`: `cashReward` de cada conquista.
-- `js/systems/combat.js`: `CARD_DROP_CHANCE` (chance de carta, 0,01% por padrão — era 2%, achado fácil demais).
+- `js/systems/combat.js`: `MONSTER_CARD_DROP_CHANCE` (chance de carta, 0,01% fixo — não sobe com bônus de Drop; era `CARD_DROP_CHANCE` 2% originalmente, achado fácil demais).
 - `js/systems/stats.js`: `CARD_DAMAGE_BONUS` (bônus de dano por carta encaixada, 3% por padrão).
 - `js/systems/crafting.js`: `CARD_SLOT_UNLOCK_CHANCE` (chance de destravar o slot, 80% por padrão), `CARD_SLOT_UNLOCK_GOLD_PERCENT` (custo por tentativa, 10% do ouro atual, sempre consumido).
-- `js/data/monsters.js`: `WEAK_MONSTERS` (lista de monstros fracos que preenchem estágios não-chefe — provisória, 5 por enquanto).
 
 ## Testado
 
@@ -828,3 +860,54 @@ cartas — consistente com a chance bem menor que antes (a chance antiga,
 publicado (não só o código-fonte) e bateu igual: monstro fraco no
 estágio 1, materiais certos acumulando, chefe intacto no estágio máximo
 alcançado. Sem erro no console em nenhum passo.
+
+Depois do roster definitivo (10 chefes + 25 monstros fracos, substituindo
+a lista placeholder de 5), retestei tudo de novo do zero. Confirmei os
+10 `BOSSES` (estágios 10-100 exatos) e os 5 `WEAK_MONSTER_GROUPS` (25
+monstros no total) na estrutura de dados; as 35 cartas (10 chefe + 25
+fraco) geradas corretamente. Naveguei estágio por estágio (10 a 100,
+depois 110 e 150 pra checar o fallback além do último definido) usando
+`getMonsterInfo()` direto — bateu com a lista exata que foi passada
+(Chispim, Solkaiser, Tartarok, Colhedor Carmesim, Grommuk, Vulkarion,
+Leviargon, Tempestron, Gaiatron, Bahamorth, e Bahamorth se repetindo
+depois do 100). Simulei 3.000 kills espalhados pelos 100 estágios e
+conferi que os 44 materiais esperados (25 dos monstros fracos + 20 dos
+chefes + parte dos 10 Cristais, que não apareceram todos por serem só
+0,1% de chance numa amostra pequena — confirmado separadamente, ver
+abaixo) apareceram, e que a sub-aba Materiais mostra tanto os materiais
+de chefe quanto o Cristal quanto o material do monstro fraco (forcei
+`state.materials` direto pra confirmar o Cristal renderiza certo com
+quantidade, já que a amostra de kills não tinha garantia de dropar um).
+A sub-aba Cartas também renderiza a carta de chefe forçada em
+`state.cards`, com o texto de efeito placeholder.
+
+O ponto mais importante — "bônus de Drop não pode afetar Cristal nem
+carta" — validei numericamente: 50 mil rolagens de `rollDrops()` com
+`dropMult=1` e depois com `dropMult=10` (um bônus de Drop enorme, de
+propósito). O material "normal" (do monstro fraco, ou cada um dos 2 do
+chefe) saltou de ~35% pra ~95% de chance (capado), exatamente o esperado
+com um multiplicador de 10x — mas a taxa de Cristal (~0,1%) e de carta
+(~0,01%) ficaram praticamente idênticas nos dois casos (variação normal
+de amostragem, não um salto de 10x) — confirma que essas duas taxas
+realmente ignoram `dropMult`.
+
+Testei a migração de save antigo com carta órfã: semeei um save (via
+`page.addInitScript`, não `page.reload()` — mesma pegadinha do
+`beforeunload` de sempre) com um item tendo `cardId: 'boar_card'` (carta
+que não existe mais no roster novo) e `cardSlotUnlocked: true`; depois
+de carregar, `entry.cardId` virou `null` automaticamente e
+`cardSlotUnlocked` continuou `true` — abri o popup do item e confirmou
+mostrar o estado "vazio, desbloqueado" (com o botão "Equipar Carta"),
+não travado nem quebrado.
+
+Rodei os mesmos testes de identidade de chefe (todos os 10 estágios)
+contra o bundle publicado, com um cuidado extra: ler `state.stage` +
+nome do monstro **na mesma chamada síncrona** de `page.evaluate()`, sem
+`waitForTimeout()` no meio — o loop de jogo tem seu próprio tick a cada
+100ms, e forçar `state.stage` pra um estágio de chefe tardio (dano alto)
+sem também dar vida/armadura correspondente pode matar o personagem e
+disparar `retreat()` antes da checagem seguinte rodar, misturando o
+resultado (foi exatamente isso que aconteceu na primeira tentativa desse
+teste — não era bug, era corrida entre meu teste e o `tick()`). Com essa
+correção, todos os 10 chefes bateram certo no bundle também. Sem erro no
+console em nenhum passo.

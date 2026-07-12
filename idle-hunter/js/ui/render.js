@@ -1,4 +1,4 @@
-import { MONSTER_FAMILIES, isBossStage, WEAK_MONSTERS } from '../data/monsters.js';
+import { MONSTER_FAMILIES, isBossStage, BOSSES, WEAK_MONSTER_GROUPS } from '../data/monsters.js';
 import { getSlot, getItemsForFamily, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
 import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
@@ -411,7 +411,10 @@ function cardSlotHtml(state, uid, entry, pickerOpen) {
     </div>`;
   }
 
-  if (entry.cardId) {
+  // getCard() can miss for an old save's cardId (the roster that generates
+  // CARDS was replaced — see data/cards.js) — fall through to the normal
+  // empty-slot display below rather than crash on a stale reference.
+  if (entry.cardId && getCard(entry.cardId)) {
     const card = getCard(entry.cardId);
     return `<div class="card-slot-badge filled">
       <span class="icon">${card.emoji}</span>
@@ -593,7 +596,8 @@ function prestigeCardHtml(state, upgrade) {
 
 function materialsContentHtml(state) {
   const allMaterials = MONSTER_FAMILIES.flatMap((f) => [f.materials.common, f.materials.rare, f.materials.gem])
-    .concat(WEAK_MONSTERS.map((w) => w.material));
+    .concat(BOSSES.flatMap((b) => [b.materials.primary1, b.materials.primary2, b.crystal]))
+    .concat(WEAK_MONSTER_GROUPS.flatMap((g) => g.monsters).map((m) => m.material));
 
   if (allMaterials.every((m) => (state.materials[m.id] || 0) === 0)) {
     return `<p style="color:var(--text-dim); font-size:13px;">Nenhum material coletado ainda. Derrote monstros para conseguir materiais de craft.</p>`;
