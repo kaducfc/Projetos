@@ -1,5 +1,6 @@
 import { computePlayerStats } from './stats.js';
 import { monsterMaxHp, monsterGoldReward, rollDrops } from './combat.js';
+import { pickRandomWeakMonster } from '../data/monsters.js';
 
 const MAX_OFFLINE_SECONDS = 4 * 60 * 60; // cap idle gains at 4 hours
 const SIMULATION_CAP = 2000; // roll drops for at most this many kills, then scale up
@@ -31,7 +32,10 @@ export function computeOfflineProgress(state) {
   const materialsGained = {};
   const cardsGained = {};
   for (let i = 0; i < simulatedKills; i++) {
-    const drops = rollDrops(state.stage, stats.dropMult);
+    // Offline doesn't track a persisted monster identity per kill (unlike
+    // live combat's state.weakMonsterId) — each simulated kill just rolls
+    // its own; rollDrops ignores this on boss stages anyway.
+    const drops = rollDrops(state.stage, stats.dropMult, pickRandomWeakMonster().id);
     for (const drop of drops) {
       const bucket = drop.isCard ? cardsGained : materialsGained;
       bucket[drop.id] = (bucket[drop.id] || 0) + drop.qty;

@@ -95,7 +95,7 @@ function retreat(reason) {
 }
 
 function refreshAll() {
-  const monster = getCurrentMonster(state.stage);
+  const monster = getCurrentMonster(state.stage, state.weakMonsterId);
   const stats = computePlayerStats(state);
   currentHp = Math.min(currentHp, stats.maxHp);
   renderAll(state, monster, stats);
@@ -120,7 +120,7 @@ function fullRefresh() {
 }
 
 function refreshCombatOnly() {
-  const monster = getCurrentMonster(state.stage);
+  const monster = getCurrentMonster(state.stage, state.weakMonsterId);
   const stats = computePlayerStats(state);
   currentHp = Math.min(currentHp, stats.maxHp);
   renderCombatStats(stats, monster);
@@ -161,7 +161,7 @@ function onClickMonster() {
     return;
   }
   const stats = computePlayerStats(state);
-  const monster = getCurrentMonster(state.stage);
+  const monster = getCurrentMonster(state.stage, state.weakMonsterId);
   const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
   const event = applyDamage(state, dealt, stats);
   spawnDamagePopup(dealt);
@@ -184,7 +184,7 @@ function tick() {
 
   const stats = computePlayerStats(state);
   currentHp = Math.min(currentHp, stats.maxHp);
-  const monster = getCurrentMonster(state.stage);
+  const monster = getCurrentMonster(state.stage, state.weakMonsterId);
 
   // Runs unconditionally, before the normal-stage combat below — that
   // block can `return` early on a kill, and at high DPS a stage-1 monster

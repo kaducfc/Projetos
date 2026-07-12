@@ -120,6 +120,31 @@ export const MONSTER_FAMILIES = [
   },
 ];
 
+// Filler monsters for non-boss stages (see isBossStage below): instead of
+// showing the current family's own regular form, every non-boss kill now
+// spawns a random pick from this shared pool. Placeholder roster of 5 for
+// now — more will be added and this will get properly organized later, so
+// keep this list easy to extend rather than tied to the family/tier system.
+// Each drops exactly one material (no common/rare/gem split like families
+// have), meant to feed into some equipment recipes once that's wired up.
+// No element yet (kept 'neutro' in getMonsterInfo below) and no card yet —
+// cards are per-family only for now (see data/cards.js).
+export const WEAK_MONSTERS = [
+  { id: 'bee', name: 'Abelha', emoji: '🐝', material: { id: 'bee_wax', name: 'Cera de Abelha', emoji: '🍯' } },
+  { id: 'wildboar', name: 'Javali', emoji: '🐗', material: { id: 'wildboar_tusk', name: 'Presa de Javali', emoji: '🦷' } },
+  { id: 'slime', name: 'Gosma', emoji: '🟢', material: { id: 'slime_goo', name: 'Gosma Viscosa', emoji: '🧫' } },
+  { id: 'boulder', name: 'Pedregulho', emoji: '🪨', material: { id: 'boulder_pebble', name: 'Pedregulho Rachado', emoji: '🪨' } },
+  { id: 'sheep', name: 'Ovelha', emoji: '🐑', material: { id: 'sheep_wool', name: 'Lã de Ovelha', emoji: '🧶' } },
+];
+
+export function pickRandomWeakMonster() {
+  return WEAK_MONSTERS[Math.floor(Math.random() * WEAK_MONSTERS.length)];
+}
+
+export function getWeakMonster(id) {
+  return WEAK_MONSTERS.find((m) => m.id === id) || WEAK_MONSTERS[0];
+}
+
 export function getFamilyForStage(stage) {
   for (const family of MONSTER_FAMILIES) {
     if (stage <= family.endStage) return family;
@@ -131,15 +156,36 @@ export function isBossStage(stage) {
   return stage % BOSS_INTERVAL === 0;
 }
 
-export function getMonsterInfo(stage) {
-  const family = getFamilyForStage(stage);
+/// weakMonsterId is the currently-spawned weak monster's id (persisted on
+/// state, see combat.js ensureMonsterSpawned) — only meaningful on non-boss
+/// stages. Boss stages always show the stage's family boss, exactly as
+/// before; a weakMonsterId is ignored there.
+export function getMonsterInfo(stage, weakMonsterId) {
   const boss = isBossStage(stage);
+
+  if (!boss && weakMonsterId) {
+    const weak = getWeakMonster(weakMonsterId);
+    return {
+      familyId: null,
+      weakMonsterId: weak.id,
+      name: weak.name,
+      emoji: weak.emoji,
+      image: null,
+      element: 'neutro',
+      isBoss: false,
+      isWeak: true,
+    };
+  }
+
+  const family = getFamilyForStage(stage);
   return {
     familyId: family.id,
+    weakMonsterId: null,
     name: boss ? family.bossName : family.name,
     emoji: boss ? family.bossEmoji : family.emoji,
     image: family.image || null,
     element: family.element,
     isBoss: boss,
+    isWeak: false,
   };
 }

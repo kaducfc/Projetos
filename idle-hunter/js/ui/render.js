@@ -1,4 +1,4 @@
-import { MONSTER_FAMILIES, isBossStage } from '../data/monsters.js';
+import { MONSTER_FAMILIES, isBossStage, WEAK_MONSTERS } from '../data/monsters.js';
 import { getSlot, getItemsForFamily, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
 import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
@@ -592,7 +592,8 @@ function prestigeCardHtml(state, upgrade) {
 }
 
 function materialsContentHtml(state) {
-  const allMaterials = MONSTER_FAMILIES.flatMap((f) => [f.materials.common, f.materials.rare, f.materials.gem]);
+  const allMaterials = MONSTER_FAMILIES.flatMap((f) => [f.materials.common, f.materials.rare, f.materials.gem])
+    .concat(WEAK_MONSTERS.map((w) => w.material));
 
   if (allMaterials.every((m) => (state.materials[m.id] || 0) === 0)) {
     return `<p style="color:var(--text-dim); font-size:13px;">Nenhum material coletado ainda. Derrote monstros para conseguir materiais de craft.</p>`;

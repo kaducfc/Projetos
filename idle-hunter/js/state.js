@@ -7,6 +7,7 @@ export function createDefaultState() {
     stage: 1,
     maxStage: 1,
     monsterHp: null, // current monster's remaining HP; null = needs (re)spawn
+    weakMonsterId: null, // which WEAK_MONSTERS entry is spawned (non-boss stages only)
     materials: {}, // materialId -> count
     cards: {}, // cardId -> count (see data/cards.js)
     inventory: [], // { uid, itemId }

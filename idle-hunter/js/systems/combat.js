@@ -1,4 +1,4 @@
-import { getFamilyForStage, isBossStage, getMonsterInfo } from '../data/monsters.js';
+import { getFamilyForStage, isBossStage, getMonsterInfo, pickRandomWeakMonster, getWeakMonster } from '../data/monsters.js';
 import { getCardForFamily } from '../data/cards.js';
 
 const HP_GROWTH = 1.145;
@@ -29,8 +29,9 @@ const BOSS_RARE_DROP_CHANCE = 0.9;
 const GEM_DROP_CHANCE = 0.005;
 
 // Cards (see data/cards.js) drop separately from materials — same flat
-// chance for common monsters and bosses alike.
-const CARD_DROP_CHANCE = 0.02;
+// chance for common monsters and bosses alike. Deliberately tiny: a card
+// is meant to be a rare, exciting find, not a routine drop.
+const CARD_DROP_CHANCE = 0.0001;
 
 export function monsterMaxHp(stage) {
   const base = HP_BASE * Math.pow(HP_GROWTH, stage - 1);
@@ -51,14 +52,29 @@ export function armorReduction(armor) {
   return armor / (armor + ARMOR_CONSTANT);
 }
 
-export function getCurrentMonster(stage) {
-  const info = getMonsterInfo(stage);
+export function getCurrentMonster(stage, weakMonsterId) {
+  const info = getMonsterInfo(stage, weakMonsterId);
   return { ...info, maxHp: monsterMaxHp(stage), dps: monsterDamagePerSecond(stage) };
 }
 
-export function rollDrops(stage, dropMult) {
-  const family = getFamilyForStage(stage);
+/// weakMonsterId: the currently-spawned weak monster (see
+/// ensureMonsterSpawned below) — on a non-boss stage this replaces the
+/// whole family drop table (common/rare/gem/card) with just that monster's
+/// one material. Boss stages ignore it and always use the full family
+/// table, exactly as before.
+export function rollDrops(stage, dropMult, weakMonsterId) {
   const boss = isBossStage(stage);
+
+  if (!boss && weakMonsterId) {
+    const weak = getWeakMonster(weakMonsterId);
+    const commonChance = Math.min(0.95, COMMON_DROP_CHANCE * dropMult);
+    if (Math.random() < commonChance) {
+      return [{ id: weak.material.id, name: weak.material.name, emoji: weak.material.emoji, qty: 1 }];
+    }
+    return [];
+  }
+
+  const family = getFamilyForStage(stage);
   const drops = [];
 
   const commonChance = Math.min(0.95, COMMON_DROP_CHANCE * dropMult);
@@ -85,9 +101,15 @@ export function rollDrops(stage, dropMult) {
   return drops;
 }
 
+/// Also rolls which weak monster is showing (persisted on state, since a
+/// weak monster's identity has to stay fixed for the life of that HP pool
+/// — re-rolling on every render would make the sprite flicker between
+/// monsters mid-fight). null on boss stages, where the family boss is
+/// always shown instead.
 export function ensureMonsterSpawned(state) {
   if (state.monsterHp == null) {
     state.monsterHp = monsterMaxHp(state.stage);
+    state.weakMonsterId = isBossStage(state.stage) ? null : pickRandomWeakMonster().id;
   }
 }
 
@@ -102,7 +124,7 @@ export function applyDamage(state, amount, stats) {
 
   const stage = state.stage;
   const goldGained = Math.round(monsterGoldReward(stage) * stats.goldMult);
-  const drops = rollDrops(stage, stats.dropMult);
+  const drops = rollDrops(stage, stats.dropMult, state.weakMonsterId);
   const wasBoss = isBossStage(stage);
 
   state.gold += goldGained;
