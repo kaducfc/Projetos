@@ -98,14 +98,10 @@ Depois abra `http://localhost:8000` no navegador.
    material. Cada card mostra nível atual, o bônus que você **já tem**
    nesse nível (`Atual: +8`, por exemplo) e o bônus que o **próximo**
    nível dará (`Próximo: +12`) lado a lado, então dá pra ver de cara o
-   quanto vale a próxima compra sem fazer conta de cabeça. Resetam a cada
-   renascimento.
-8. **Prestígio (Renascer)**: ao alcançar o estágio 20+, você pode
-   renascer: ganha Runas (baseado no estágio máximo alcançado) e reseta
-   ouro/estágio/upgrades comuns. Runas compram upgrades **permanentes**
-   (Poder Ancestral, Fortuna Eterna, Faro Apurado, Início Avançado) — os
-   cards deles mostram o mesmo Atual/Próximo dos upgrades comuns.
-9. **Chefe de evento (aba 🎪 Eventos)**: a cada 15 minutos (relógio de
+   quanto vale a próxima compra sem fazer conta de cabeça. Progresso é
+   **linear** — não existe reset de nenhum tipo, o que você compra fica
+   comprado para sempre.
+8. **Chefe de evento (aba 🎪 Eventos)**: a cada 15 minutos (relógio de
    parede, não precisa estar com o jogo aberto), uma família de monstro
    diferente vira "chefe de evento" por 5 minutos. O primeiro clique nele
    arma um cronômetro de **50 segundos fixos** pra terminar, sempre, não
@@ -114,46 +110,44 @@ Depois abra `http://localhost:8000` no navegador.
    primeiro clique, tanto cliques adicionais quanto o **DPS passivo**
    continuam batendo nele a cada tick do jogo, exatamente como no combate
    normal (só não causa dano de volta em você). O HP dele é o HP do
-   **chefe de verdade** daquela família
-   (o mesmo chefe que aparece no estágio final do bloco dela, no combate
-   normal), só que **30% mais forte** — então cada família tem uma
+   **chefe de verdade** daquele estágio (o mesmo chefe que aparece no
+   combate normal), só que **30% mais forte** — então cada chefe tem uma
    dificuldade de evento fixa e previsível, na mesma proporção da
-   dificuldade que ela já tem no jogo normal. Quem escala com o estágio é
+   dificuldade que ele já tem no jogo normal. Quem escala com o estágio é
    a **recompensa**: ao derrotar, você sempre ganha **1 a 6 materiais** (a
    "chance de drop aumentada" é expressa como bônus garantido, não como
    mais uma rolagem de dado) e uma quantidade de **🎫 Moeda de Evento**. Só
    dá pra derrotar (e resgatar a recompensa) uma vez por janela.
-10. **🏆 Conquistas, 💎 Cash e 🛒 Loja**: Cash é a moeda premium do jogo,
+9. **🏆 Conquistas, 💎 Cash e 🛒 Loja**: Cash é a moeda premium do jogo,
     com sua própria aba **Conquistas** — uma lista de marcos ("alcance o
     estágio 25", "evolua um item pra Rank Master") que pagam Cash ao
     serem cumpridos, mais um botão de **anúncio simulado** (sem SDK de
     anúncio real integrado ainda, só concede a recompensa direto, com
     cooldown de 5 minutos). A aba **Loja** é só pra *gastar*: sub-aba Cash
-    (pacotes de ouro/Runas, mais uma seção de compra com dinheiro real
+    (pacotes de ouro, mais uma seção de compra com dinheiro real
     desabilitada — "em breve", estrutura pronta pra uma futura integração
     de pagamento mas nada funcional ainda) e sub-aba 🎫 Moeda de Evento
-    (ganha só derrotando o chefe de evento), com Gemas
-    e pacotes de material de qualquer família já desbloqueada. Ambas as
-    moedas (💎 Cash e 🎫 Moeda de Evento) aparecem também na barra
-    superior, ao lado de Ouro e Runas, então dá pra acompanhar as quatro
-    moedas sem entrar em nenhuma aba.
-11. **🃏 Cartas**: sub-aba dentro de Equipamento, um inventário só das
+    (ganha só derrotando o chefe de evento), com o Cristal e os materiais
+    de qualquer chefe já desbloqueado. Ambas as moedas (💎 Cash e 🎫
+    Moeda de Evento) aparecem também na barra superior, ao lado de Ouro,
+    então dá pra acompanhar as três moedas sem entrar em nenhuma aba.
+10. **🃏 Cartas**: sub-aba dentro de Equipamento, um inventário só das
     cartas de monstro que você já coletou (ver "O sistema de Cartas"
     abaixo).
 
-## Decisão de design: o que sobrevive ao renascimento
+## Decisão de design: progresso é linear, sem prestígio
 
-Diferente de heróis em Clicker Heroes (que resetam), aqui **equipamentos
-craftados e materiais permanecem depois de renascer**. A ideia é que o
-craft é uma coleção permanente — faria o esforço de farmar/craftar parecer
-descartável se resetasse a cada prestígio. O que reseta é só o progresso
-"macio": ouro, estágio atual e upgrades comprados com ouro. Quem carrega o
-poder entre runs são os upgrades de Runas (permanentes) — esse é o mesmo
-papel que os "Ancients" cumprem no Clicker Heroes original.
-
-Se você preferir o comportamento clássico (equipamento também reseta), a
-mudança é pequena: em `js/systems/prestige.js`, função `doRebirth`, é só
-também limpar `state.inventory`, `state.equipped` e `state.materials`.
+Diferente de Clicker Heroes (cujo "Ancients"/prestígio é o motor central
+do jogo), Idle Hunter **não tem nenhum mecanismo de reset**. Existiu um
+sistema de Prestígio/Renascer (Runas, upgrades permanentes, resetar
+ouro/estágio/upgrades comuns) numa versão anterior — foi removido por
+pedido direto: nada de progresso circular, só uma linha reta pra frente.
+Ouro, estágio e upgrades acumulam para sempre; não existe mais
+`js/systems/prestige.js`, aba Prestígio, moeda Runas, ou qualquer upgrade
+comprado com ela. Saves antigos que ainda tenham `runas`/
+`prestigeUpgrades`/`rebirthCount` gravados carregam normalmente — esses
+campos ficam ali, inertes, ignorados por todo o código atual (nenhuma UI
+os lê nem os escreve mais).
 
 ## Decisão de design: o prazo do chefe não é salvo
 
@@ -646,7 +640,7 @@ js/
     monsters.js           BOSSES (10, um por estágio múltiplo de 10) e WEAK_MONSTER_GROUPS (25 monstros fracos, 5 grupos) — o roster que de fato spawna. MONSTER_FAMILIES continua só pra craft/evento (ver "Decisão de escopo" no README)
     items.js               Geração dos 60 itens equipáveis (10 chefes × 6 slots) + LEGACY_ITEMS (os 36 antigos, só para saves velhos — não mais craftáveis)
     elements.js             Ciclo de elementos e cálculo de vantagem/desvantagem
-    upgrades.js             Upgrades comuns (ouro) e de prestígio (Runas)
+    upgrades.js             Upgrades comprados com ouro (permanentes, progresso é linear)
     events.js                Janela do chefe de evento (rotação por relógio de parede)
     achievements.js           Lista de conquistas e sua recompensa em Cash
     shop.js                    Itens compráveis com Cash e com Moeda de Evento
@@ -656,8 +650,7 @@ js/
     combat.js                HP/recompensa/dano do monstro por estágio, drops, kill/spawn
     equipment.js              Equipar/desequipar, resolver o que está em cada slot
     crafting.js                Checagem de custo (+ liberação por estágio), craft, aprimoramento (+1..+5, Rank Master via Cristal) e o slot de carta (desbloqueio via Cristal + encaixe/remoção)
-    upgrades.js                 Compra de upgrades comuns e de prestígio
-    prestige.js                  Cálculo de Runas e lógica de renascimento
+    upgrades.js                 Compra de upgrades
     offline.js                    Progresso estimado enquanto a aba estava fechada
     events.js                     Dano/HP/recompensa do chefe de evento (rotaciona pelos 10 BOSSES agora)
     achievements.js                Checagem e resgate de conquistas
@@ -681,7 +674,6 @@ primeiro MVP. Os pontos mais fáceis de ajustar:
 - `js/systems/combat.js`: `HP_GROWTH`, `GOLD_GROWTH`, chances de drop.
 - `js/data/items.js`: `tierBase()` e os multiplicadores por slot.
 - `js/data/upgrades.js`: `baseCost`/`costGrowth` de cada upgrade.
-- `js/systems/prestige.js`: fórmula de `runasGain`.
 - `js/data/monsters.js`: `BOSS_INTERVAL` (frequência de chefes), `BOSSES`/`WEAK_MONSTER_GROUPS` (o roster em si — nomes, elementos, materiais).
 - `js/main.js`: `BOSS_TIME_LIMIT_MS` (prazo do chefe).
 - `js/data/items.js`: `ENHANCE_PER_LEVEL_MULT`, `MASTER_MARGIN` (curva de aprimoramento).
@@ -1005,3 +997,21 @@ Testei o rodízio do chefe de evento: 12 ciclos consecutivos (mais que os
 drops — nunca um material de outro chefe ou da lista antiga de
 famílias. Rodei os mesmos testes de receita/craft/estágio contra o
 bundle publicado e bateu igual, sem erro no console em nenhum passo.
+
+Depois de remover Prestígio/Runas por completo, testei que: a barra
+superior não mostra mais Runas, a aba Prestígio não existe mais
+(nem o botão na navegação nem `#tab-prestige` no DOM), restam
+exatamente 5 abas (Equipamento, Upgrades, Eventos, Conquistas, Loja),
+o objeto `state` de um jogo novo não tem mais as chaves `runas`/
+`prestigeUpgrades`/`rebirthCount`, a conquista "Renascido" não aparece
+mais na lista, e a Loja não vende mais Runas. Também semeei um save no
+formato antigo (com `runas: 42`, `prestigeUpgrades`, `rebirthCount: 1`,
+inclusive a conquista `first_rebirth` já resgatada) via
+`page.addInitScript` e cliquei em todas as abas — carrega normalmente,
+ouro/estágio/upgrades preservados, zero erro no console; os campos
+órfãos simplesmente ficam ali sem serem lidos por nada. Também
+renomeei as variáveis CSS `--runas`/`--runas-dark` para `--purple`/
+`--purple-dark` (elas nunca foram exclusivas da moeda Runas — sempre
+foram o acento roxo genérico usado no badge de Rank Master e na UI de
+cartas) e conferi visualmente que o badge "Rank Master" e o botão
+"Equipar Carta" continuam roxos normalmente depois da renomeação.

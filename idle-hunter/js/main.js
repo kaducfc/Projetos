@@ -5,8 +5,7 @@ import { isBossStage } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
 import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock } from './systems/crafting.js';
-import { buyUpgrade, buyPrestigeUpgrade } from './systems/upgrades.js';
-import { doRebirth } from './systems/prestige.js';
+import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
 import { formatNumber } from './format.js';
 import { getEventWindow, EVENT_TIME_LIMIT_MS } from './data/events.js';
@@ -17,7 +16,7 @@ import { AD_WATCH_CASH_REWARD } from './data/shop.js';
 import { GAME_BUILD } from './version.js';
 import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
-  renderUpgradesTab, renderPrestigeTab, renderBossTimer,
+  renderUpgradesTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, renderEventsTab, renderAchievementsTab, renderShopTab, pulseEventBoss,
 } from './ui/render.js';
@@ -140,7 +139,6 @@ function handleKillEvent(event) {
   // One call covers Equipar/Forjar/Materiais, whichever sub-tab is showing.
   renderEquipmentTab(state, activeEquipSubTab);
   renderUpgradesTab(state);
-  renderPrestigeTab(state);
   wireAllPanelButtons();
   resetPlayerHp(); // a fresh monster just spawned — full heal for the new fight
   armBossTimer(); // stage may have just advanced onto (or off of) a boss
@@ -618,39 +616,12 @@ function wireUpgradeButtons() {
   });
 }
 
-// ---------------------------------------------------------------
-// Prestige tab
-// ---------------------------------------------------------------
-
-function wirePrestigeButtons() {
-  const rebirthBtn = document.getElementById('rebirth-btn');
-  if (rebirthBtn) {
-    rebirthBtn.addEventListener('click', () => {
-      const gained = doRebirth(state);
-      if (gained > 0) {
-        showToast(`🔮 Você renasceu e ganhou ${formatNumber(gained)} Runas!`);
-        fullRefresh();
-      }
-    });
-  }
-  document.querySelectorAll('[data-prestige-upgrade]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (buyPrestigeUpgrade(state, btn.dataset.prestigeUpgrade)) {
-        renderTopBar(state);
-        renderPrestigeTab(state);
-        wirePrestigeButtons();
-      }
-    });
-  });
-}
-
 // Re-wires the buttons that get recreated (via innerHTML) whenever their tab
 // re-renders. Equipment, Events, Achievements and Shop use event delegation
 // instead, wired once in init() (see wireModalEvents(), wireEquipmentTabEvents(),
 // wireEventTabEvents(), wireAchievementsTabEvents(), wireShopTabEvents()).
 function wireAllPanelButtons() {
   wireUpgradeButtons();
-  wirePrestigeButtons();
 }
 
 // ---------------------------------------------------------------

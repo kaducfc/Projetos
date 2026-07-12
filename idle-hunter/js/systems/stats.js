@@ -1,5 +1,5 @@
 import { getItem, getEnhancedStats } from '../data/items.js';
-import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
+import { UPGRADES } from '../data/upgrades.js';
 import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard } from '../data/cards.js';
 
@@ -9,9 +9,9 @@ const BASE_MAX_HP = 100;
 const BASE_ARMOR = 0;
 const DEFAULT_WEAPON_ELEMENT = 'neutro';
 
-/// Aggregates equipment + regular upgrades + prestige upgrades into the
-/// final combat stats used every frame. Recomputed on demand (cheap enough
-/// to call whenever gear/upgrades change, no need to cache).
+/// Aggregates equipment + upgrades into the final combat stats used every
+/// frame. Recomputed on demand (cheap enough to call whenever gear/upgrades
+/// change, no need to cache).
 export function computePlayerStats(state) {
   let clickFlat = BASE_CLICK_DAMAGE;
   let dpsFlat = BASE_DPS;
@@ -50,18 +50,6 @@ export function computePlayerStats(state) {
     addStat(upgrade.stat, total);
   }
 
-  let allDamagePercent = 0;
-  let startStageBonus = 0;
-
-  for (const upgrade of PRESTIGE_UPGRADES) {
-    const level = state.prestigeUpgrades[upgrade.id] || 0;
-    if (level <= 0) continue;
-    const total = level * upgrade.valuePerLevel;
-    if (upgrade.stat === 'allDamagePercent') allDamagePercent += total;
-    else if (upgrade.stat === 'startStage') startStageBonus += total;
-    else addStat(upgrade.stat, total);
-  }
-
   function addStat(stat, total) {
     if (stat === 'clickFlat') clickFlat += total;
     else if (stat === 'dpsFlat') dpsFlat += total;
@@ -73,14 +61,13 @@ export function computePlayerStats(state) {
     else if (stat === 'armorFlat') armorFlat += total;
   }
 
-  const damageMult = 1 + allDamagePercent / 100;
-  const clickDamage = clickFlat * (1 + clickPercent / 100) * damageMult;
-  const dps = dpsFlat * (1 + dpsPercent / 100) * damageMult;
+  const clickDamage = clickFlat * (1 + clickPercent / 100);
+  const dps = dpsFlat * (1 + dpsPercent / 100);
   const goldMult = 1 + goldPercent / 100;
   const dropMult = 1 + dropPercent / 100;
 
   return {
-    clickDamage, dps, goldMult, dropMult, startStageBonus,
+    clickDamage, dps, goldMult, dropMult,
     maxHp: hpFlat, armor: armorFlat, weaponElement,
   };
 }

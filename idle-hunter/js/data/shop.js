@@ -1,10 +1,8 @@
-// Cash sink: instant gold/Runas packs. Prices are a first pass, not
-// carefully balanced against the achievement/ad income rate yet.
+// Cash sink: instant gold packs. Prices are a first pass, not carefully
+// balanced against the achievement/ad income rate yet.
 export const CASH_SHOP_ITEMS = [
   { id: 'cash_gold_s', name: 'Saco de Ouro', emoji: '💰', cost: 10, kind: 'gold', amount: 5000, description: '+5.000 de ouro na hora.' },
   { id: 'cash_gold_l', name: 'Baú de Ouro', emoji: '🪙', cost: 40, kind: 'gold', amount: 30000, description: '+30.000 de ouro na hora.' },
-  { id: 'cash_runas_s', name: 'Punhado de Runas', emoji: '🔮', cost: 25, kind: 'runas', amount: 5, description: '+5 Runas na hora.' },
-  { id: 'cash_runas_l', name: 'Bolsa de Runas', emoji: '💠', cost: 90, kind: 'runas', amount: 20, description: '+20 Runas na hora.' },
 ];
 
 // Free Cash source #1 (besides achievements): a simulated ad view on a

@@ -1,12 +1,11 @@
 import { MONSTER_FAMILIES, isBossStage, BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo } from '../data/monsters.js';
 import { getSlot, getItemsForBoss, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
-import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
+import { UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
 import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
-import { getUpgradeLevel, getUpgradeCost, getPrestigeUpgradeLevel, getPrestigeUpgradeCost } from '../systems/upgrades.js';
-import { canRebirth, runasGain, REBIRTH_MIN_STAGE } from '../systems/prestige.js';
+import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
 import { getEventWindow } from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
@@ -183,7 +182,6 @@ function formatStatsLines(stats) {
 
 export function renderTopBar(state) {
   document.getElementById('gold-value').textContent = formatNumber(state.gold);
-  document.getElementById('runas-value').textContent = formatNumber(state.runas);
   document.getElementById('cash-value').textContent = formatNumber(state.cash);
   document.getElementById('event-currency-value').textContent = formatNumber(state.eventCurrency);
   document.getElementById('stage-value').textContent = state.maxStage;
@@ -519,11 +517,9 @@ function recipeCardHtml(state, item) {
   </div>`;
 }
 
-// Upgrade bonuses are always `level * valuePerLevel` — shared by both the
-// gold-bought and Runas-bought lists, just formatted per stat type (percent
-// stats get a %, startStage gets "estágios", everything else is flat).
+// Upgrade bonuses are always `level * valuePerLevel` — just formatted per
+// stat type (percent stats get a %, everything else is flat).
 function formatUpgradeBonus(stat, value) {
-  if (stat === 'startStage') return `+${formatNumber(value)} estágio${Math.round(value) === 1 ? '' : 's'}`;
   if (stat.endsWith('Percent')) return `+${formatPercent(value)}`;
   return `+${formatNumber(value)}`;
 }
@@ -557,39 +553,6 @@ function upgradeCardHtml(state, upgrade) {
       ${upgradeProgressHtml(upgrade, level)}
     </div>
     <button data-upgrade="${upgrade.id}" ${affordable ? '' : 'disabled'}>💰 ${formatNumber(cost)}</button>
-  </div>`;
-}
-
-export function renderPrestigeTab(state) {
-  const container = document.getElementById('tab-prestige');
-  const gain = runasGain(state.maxStage);
-  const eligible = canRebirth(state);
-
-  container.innerHTML = `
-    <div id="prestige-summary">
-      <p>Renascer reseta seu ouro, upgrades comuns e estágio — mas seus <strong>equipamentos, materiais e upgrades de prestígio permanecem</strong>.</p>
-      <p>É preciso alcançar o estágio ${REBIRTH_MIN_STAGE} para renascer pela primeira vez.</p>
-      <p>Renascendo agora você ganha: <strong style="color:var(--runas)">🔮 ${formatNumber(gain)} Runas</strong></p>
-      <button id="rebirth-btn" ${eligible ? '' : 'disabled'}>Renascer</button>
-    </div>
-    <div class="prestige-list">${PRESTIGE_UPGRADES.map((u) => prestigeCardHtml(state, u)).join('')}</div>
-  `;
-}
-
-function prestigeCardHtml(state, upgrade) {
-  const level = getPrestigeUpgradeLevel(state, upgrade.id);
-  const cost = getPrestigeUpgradeCost(state, upgrade.id);
-  const affordable = state.runas >= cost;
-
-  return `<div class="prestige-card">
-    <span class="icon">${upgrade.emoji}</span>
-    <div class="info">
-      <div class="name">${upgrade.name}</div>
-      <div class="desc">${upgrade.description}</div>
-      <div class="level">Nível ${level}</div>
-      ${upgradeProgressHtml(upgrade, level)}
-    </div>
-    <button data-prestige-upgrade="${upgrade.id}" ${affordable ? '' : 'disabled'}>🔮 ${formatNumber(cost)}</button>
   </div>`;
 }
 
@@ -730,9 +693,9 @@ export function renderAchievementsTab(state) {
 }
 
 // ---------------------------------------------------------------
-// Shop tab: Cash sub-tab (spend on gold/Runas packs, plus a disabled
-// real-money package stub) and Event-currency sub-tab (per-family
-// Gem/material bundles). `activeSubTab` is owned by main.js.
+// Shop tab: Cash sub-tab (spend on gold packs, plus a disabled real-money
+// package stub) and Event-currency sub-tab (per-boss Crystal/material
+// bundles). `activeSubTab` is owned by main.js.
 // ---------------------------------------------------------------
 
 export function renderShopTab(state, activeSubTab) {
@@ -812,7 +775,6 @@ export function renderAll(state, monster, stats) {
   renderCombatStats(stats, monster);
   renderMonster(state, monster);
   renderUpgradesTab(state);
-  renderPrestigeTab(state);
 }
 
 export function spawnDamagePopup(amount) {

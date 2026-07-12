@@ -21,8 +21,8 @@
      actually paint the 3D "candy button" gradients) */
   --gold: #f5a800;
   --gold-dark: #c98600;
-  --runas: #9b5de5;
-  --runas-dark: #6e35b8;
+  --purple: #9b5de5;
+  --purple-dark: #6e35b8;
   --hp-red: #e2445c;
   --red-dark: #b52f3f;
   --green: #2fa84f;
@@ -35,7 +35,7 @@
 
   --grad-gold: linear-gradient(180deg, #ffe17a 0%, var(--gold) 55%, var(--gold-dark) 100%);
   --grad-green: linear-gradient(180deg, #8fe3a0 0%, var(--green) 55%, var(--green-dark) 100%);
-  --grad-purple: linear-gradient(180deg, #d9b8ff 0%, var(--runas) 55%, var(--runas-dark) 100%);
+  --grad-purple: linear-gradient(180deg, #d9b8ff 0%, var(--purple) 55%, var(--purple-dark) 100%);
   --grad-cash: linear-gradient(180deg, #8fe9f5 0%, var(--cash) 55%, var(--cash-dark) 100%);
   --grad-event: linear-gradient(180deg, #ffc38a 0%, var(--event-currency) 55%, var(--event-dark) 100%);
   --grad-red: linear-gradient(180deg, #ff9aa0 0%, var(--hp-red) 55%, var(--red-dark) 100%);
@@ -111,8 +111,8 @@ button:disabled {
    text-pop so labels stay legible against a saturated gradient fill. */
 .modal-action-btn, .card-slot-unlock-btn, .card-slot-equip-btn,
 .enhance-panel button, .recipe-card button, .upgrade-card button,
-.prestige-card button, .watch-ad-btn, .achievement-card button,
-.shop-item-card button, #rebirth-btn, .event-active-badge,
+.watch-ad-btn, .achievement-card button,
+.shop-item-card button, .event-active-badge,
 #boss-timer, #monster-name .boss-tag, .mini-badge {
   text-shadow: 0 1px 2px rgba(0, 0, 0, .25);
 }
@@ -669,7 +669,7 @@ button:disabled {
 
 .mini-badge.master {
   background: var(--grad-purple);
-  box-shadow: 0 2px 0 var(--runas-dark);
+  box-shadow: 0 2px 0 var(--purple-dark);
 }
 
 .equip-inventory-header {
@@ -766,7 +766,7 @@ button:disabled {
 }
 
 .card-slot-badge.filled {
-  border: 2px solid var(--runas);
+  border: 2px solid var(--purple);
   background: linear-gradient(180deg, #f3e9ff, #e6d3ff);
   cursor: default;
 }
@@ -806,7 +806,7 @@ button:disabled {
 .card-slot-equip-btn {
   background: var(--grad-purple);
   color: #fff;
-  box-shadow: 0 2px 0 var(--runas-dark);
+  box-shadow: 0 2px 0 var(--purple-dark);
 }
 
 .card-slot-locked {
@@ -880,7 +880,7 @@ button:disabled {
 }
 
 .card-slot-option:hover {
-  border-color: var(--runas);
+  border-color: var(--purple);
   background: #f3e9ff;
 }
 
@@ -904,7 +904,7 @@ button:disabled {
 
 .enhance-badge.master {
   background: var(--grad-purple);
-  box-shadow: 0 2px 0 var(--runas-dark);
+  box-shadow: 0 2px 0 var(--purple-dark);
 }
 
 .enhance-panel {
@@ -932,7 +932,7 @@ button:disabled {
 .enhance-panel button.master-btn {
   background: var(--grad-purple);
   color: #fff;
-  box-shadow: 0 3px 0 var(--runas-dark);
+  box-shadow: 0 3px 0 var(--purple-dark);
 }
 
 .enhance-panel button.master-btn:disabled {
@@ -945,7 +945,7 @@ button:disabled {
   margin-top: 6px;
   font-size: 11.5px;
   font-weight: 800;
-  color: var(--runas-dark);
+  color: var(--purple-dark);
   text-align: center;
 }
 
@@ -1049,13 +1049,13 @@ button:disabled {
 
 /* ---------------- Upgrades ---------------- */
 
-.upgrade-list, .prestige-list {
+.upgrade-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.upgrade-card, .prestige-card {
+.upgrade-card {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1066,25 +1066,25 @@ button:disabled {
   box-shadow: var(--shadow-card);
 }
 
-.upgrade-card .icon, .prestige-card .icon {
+.upgrade-card .icon {
   font-size: 26px;
 }
 
-.upgrade-card .info, .prestige-card .info {
+.upgrade-card .info {
   flex: 1;
 }
 
-.upgrade-card .info .name, .prestige-card .info .name {
+.upgrade-card .info .name {
   font-weight: 700;
   font-size: 13px;
 }
 
-.upgrade-card .info .desc, .prestige-card .info .desc {
+.upgrade-card .info .desc {
   font-size: 11.5px;
   color: var(--text-dim);
 }
 
-.upgrade-card .level, .prestige-card .level {
+.upgrade-card .level {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-dim);
@@ -1110,7 +1110,7 @@ button:disabled {
   opacity: 0.6;
 }
 
-.upgrade-card button, .prestige-card button {
+.upgrade-card button {
   padding: 9px 13px;
   font-size: 12px;
   font-weight: 700;
@@ -1121,46 +1121,10 @@ button:disabled {
   border-radius: 12px;
 }
 
-.prestige-card button {
-  background: var(--grad-purple);
-  color: #fff;
-  box-shadow: 0 3px 0 var(--runas-dark);
-}
-
-.upgrade-card button:disabled, .prestige-card button:disabled {
+.upgrade-card button:disabled {
   background: var(--grad-neutral);
   color: var(--text-dim);
   box-shadow: none;
-}
-
-/* ---------------- Prestige panel ---------------- */
-
-#prestige-summary {
-  background: var(--grad-neutral);
-  border: 2px solid var(--border);
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 16px;
-  text-align: center;
-  box-shadow: var(--shadow-card);
-}
-
-#prestige-summary p {
-  margin: 4px 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-dim);
-}
-
-#rebirth-btn {
-  margin-top: 8px;
-  padding: 13px 22px;
-  font-size: 14px;
-  font-weight: 800;
-  background: var(--grad-purple);
-  color: #fff;
-  box-shadow: 0 4px 0 var(--runas-dark), 0 6px 12px rgba(74, 47, 20, .2);
-  border-radius: 14px;
 }
 
 /* ---------------- Materials ---------------- */
@@ -1197,7 +1161,7 @@ button:disabled {
 }
 
 .material-card.card-item {
-  border-color: var(--runas);
+  border-color: var(--purple);
   background: linear-gradient(180deg, #f3e9ff, #e6d3ff);
 }
 

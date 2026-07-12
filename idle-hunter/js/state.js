@@ -5,7 +5,6 @@ const SAVE_KEY = 'idleHunterSave.v1';
 export function createDefaultState() {
   return {
     gold: 0,
-    runas: 0,
     stage: 1,
     maxStage: 1,
     monsterHp: null, // current monster's remaining HP; null = needs (re)spawn
@@ -16,9 +15,7 @@ export function createDefaultState() {
     nextUid: 1,
     equipped: { weapon: null, helmet: null, armor: null, pants: null, gloves: null, boots: null }, // uid or null
     upgrades: {}, // upgradeId -> level
-    prestigeUpgrades: {}, // upgradeId -> level
     totalKills: 0,
-    rebirthCount: 0,
     lastSaveTime: Date.now(),
 
     // Premium currency: earned via achievements or the (simulated) ad-watch
