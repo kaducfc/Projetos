@@ -4,7 +4,7 @@ import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, a
 import { isBossStage } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
-import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard } from './systems/crafting.js';
+import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock } from './systems/crafting.js';
 import { buyUpgrade, buyPrestigeUpgrade } from './systems/upgrades.js';
 import { doRebirth } from './systems/prestige.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
@@ -338,6 +338,34 @@ function wireModalEvents() {
           showToast('✨ Item evoluiu para Rank Master!');
           fullRefresh();
         }
+      });
+      return;
+    }
+
+    const unlockBtn = e.target.closest('[data-unlock-card-slot]');
+    if (unlockBtn) {
+      runModalAction(() => {
+        const uid = Number(unlockBtn.dataset.unlockCardSlot);
+        const result = attemptCardSlotUnlock(state, uid);
+        if (result) {
+          showItemDetailModal(state, uid);
+          showToast(result.success
+            ? `🔓 Slot de carta desbloqueado! (-${formatNumber(result.cost)} 🪙)`
+            : `❌ Tentativa falhou... (-${formatNumber(result.cost)} 🪙)`);
+          fullRefresh();
+        }
+      });
+      return;
+    }
+
+    // Only opens the picker (no state mutation), but still goes through the
+    // lock so a stray double-tap can't immediately land on a card option
+    // that appears at the same spot once the picker renders.
+    const openPickerBtn = e.target.closest('[data-open-card-picker]');
+    if (openPickerBtn) {
+      runModalAction(() => {
+        const uid = Number(openPickerBtn.dataset.openCardPicker);
+        showItemDetailModal(state, uid, true);
       });
       return;
     }

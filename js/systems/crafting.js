@@ -26,11 +26,11 @@ export function craftItem(state, itemId) {
   }
 
   const uid = state.nextUid++;
-  // cardId: reserved slot for a future Ragnarok-style card socket system —
-  // every crafted piece (attack or defense) has exactly one, unused for now.
-  // enhanceLevel/isMaster: this specific instance's upgrade progress, see
-  // enhanceItem()/upgradeToMaster() below.
-  state.inventory.push({ uid, itemId, cardId: null, enhanceLevel: 0, isMaster: false });
+  // cardSlotUnlocked: every crafted piece starts with its card slot LOCKED —
+  // see attemptCardSlotUnlock() below. cardId: which card (if any) is
+  // socketed once the slot is unlocked. enhanceLevel/isMaster: this specific
+  // instance's upgrade progress, see enhanceItem()/upgradeToMaster() below.
+  state.inventory.push({ uid, itemId, cardId: null, cardSlotUnlocked: false, enhanceLevel: 0, isMaster: false });
   state.equipped[item.slotId] = uid;
   return uid;
 }
@@ -39,12 +39,47 @@ function getEntry(state, uid) {
   return state.inventory.find((i) => i.uid === uid) || null;
 }
 
+// Any inventory entry saved before this system existed has cardSlotUnlocked
+// === undefined. Treat it as unlocked if it already had a card socketed
+// (the old one-step flow), locked otherwise — nobody loses a socketed card
+// on load, but nobody gets a free unlock either.
+function isSlotUnlocked(entry) {
+  return !!(entry.cardSlotUnlocked || entry.cardId);
+}
+
+export const CARD_SLOT_UNLOCK_CHANCE = 0.8;
+export const CARD_SLOT_UNLOCK_GOLD_PERCENT = 0.1;
+
+export function cardSlotUnlockCost(state) {
+  return Math.max(1, Math.round(state.gold * CARD_SLOT_UNLOCK_GOLD_PERCENT));
+}
+
+export function canAttemptCardSlotUnlock(state, uid) {
+  const entry = getEntry(state, uid);
+  if (!entry || isSlotUnlocked(entry)) return false;
+  return state.gold >= cardSlotUnlockCost(state);
+}
+
+/// Gold is spent on every attempt, win or lose — each retry costs 10% of
+/// whatever gold remains at that moment, so failing repeatedly gets
+/// (gently) cheaper in absolute terms. Returns {success, cost}, or null if
+/// the attempt couldn't be made at all (already unlocked / can't afford it).
+export function attemptCardSlotUnlock(state, uid) {
+  if (!canAttemptCardSlotUnlock(state, uid)) return null;
+  const entry = getEntry(state, uid);
+  const cost = cardSlotUnlockCost(state);
+  state.gold -= cost;
+  const success = Math.random() < CARD_SLOT_UNLOCK_CHANCE;
+  if (success) entry.cardSlotUnlocked = true;
+  return { success, cost };
+}
+
 /// A card is consumed from state.cards (a stackable count, like a material)
-/// the moment it's socketed — the item's single card slot must be empty
-/// first (unsocketCard() below frees it back up).
+/// the moment it's socketed — the item's slot must be unlocked and empty
+/// first (unsocketCard() below frees it back up, but keeps it unlocked).
 export function canSocketCard(state, uid, cardId) {
   const entry = getEntry(state, uid);
-  if (!entry || entry.cardId) return false;
+  if (!entry || !isSlotUnlocked(entry) || entry.cardId) return false;
   return (state.cards[cardId] || 0) >= 1;
 }
 
@@ -56,8 +91,9 @@ export function socketCard(state, uid, cardId) {
   return true;
 }
 
-/// Frees the slot and returns the card to state.cards — swapping cards is
-/// meant to be cheap/reversible, not a one-way commitment.
+/// Frees the slot (but leaves it unlocked) and returns the card to
+/// state.cards — swapping cards is meant to be cheap/reversible, not a
+/// one-way commitment. Only the initial unlock is the gated, risky step.
 export function unsocketCard(state, uid) {
   const entry = getEntry(state, uid);
   if (!entry || !entry.cardId) return false;
