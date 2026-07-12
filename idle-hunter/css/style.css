@@ -280,35 +280,6 @@ button:disabled {
   100% { transform: scale(1); }
 }
 
-/* Idle "alive" motion: a slow, subtle scale/bob loop on the sprite's own
-   <img> so it never looks frozen between idle frame swaps (see
-   js/ui/monsterAnim.js). Paused during the hit pulse and the death fade so
-   it doesn't fight either animation. */
-#monster-sprite img {
-  animation: monster-breathe 2.6s ease-in-out infinite;
-}
-
-#monster-sprite.hit img,
-#monster-sprite.dying img {
-  animation: none;
-}
-
-@keyframes monster-breathe {
-  0%, 100% { transform: scale(1) translateY(0); }
-  50% { transform: scale(1.02) translateY(-2px); }
-}
-
-/* Death sequence: js/ui/monsterAnim.js swaps death1 -> death2 over this
-   same 0.52s window, this just fades the whole thing out under it. */
-#monster-sprite.dying img {
-  animation: monster-death-fade 0.52s ease-in forwards;
-}
-
-@keyframes monster-death-fade {
-  0%, 60% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
 #hp-bar-outer {
   position: relative;
   height: 26px;

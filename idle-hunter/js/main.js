@@ -20,7 +20,6 @@ import {
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, renderEventsTab, renderAchievementsTab, renderShopTab, pulseEventBoss,
 } from './ui/render.js';
-import { triggerHitFlash, triggerDeathAnimation } from './ui/monsterAnim.js';
 
 const TICK_MS = 100;
 const SAVE_INTERVAL_MS = 10000;
@@ -129,17 +128,6 @@ function refreshCombatOnly() {
   return { monster, stats };
 }
 
-/// Plays the dying monster's death frames (if it has any — see
-/// js/ui/monsterAnim.js) before advancing the view to whatever spawned
-/// next. Game state (gold/drops/stage) is already fully applied by
-/// applyDamage() before this runs, so the delay is purely visual.
-function handleMonsterKill(dyingMonster, event) {
-  triggerDeathAnimation(dyingMonster, () => {
-    refreshCombatOnly();
-    handleKillEvent(event);
-  });
-}
-
 function handleKillEvent(event) {
   if (!event) return;
   showToast(`💀 Derrotado! +${formatNumber(event.goldGained)} 💰${
@@ -176,9 +164,9 @@ function onClickMonster() {
   const event = applyDamage(state, dealt, stats);
   spawnDamagePopup(dealt);
   pulseMonster();
-  triggerHitFlash(monster);
   if (event) {
-    handleMonsterKill(monster, event);
+    refreshCombatOnly();
+    handleKillEvent(event);
   } else {
     renderMonster(state, monster);
     renderBossTimer(bossDeadline != null ? bossDeadline - Date.now() : null);
@@ -206,7 +194,8 @@ function tick() {
     const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
     const event = applyDamage(state, dealt * (TICK_MS / 1000), stats);
     if (event) {
-      handleMonsterKill(monster, event);
+      refreshCombatOnly();
+      handleKillEvent(event);
       return;
     }
   }

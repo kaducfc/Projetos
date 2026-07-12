@@ -144,15 +144,6 @@ export const BOSSES = [
     element: 'eletrico',
     emoji: '🐹',
     image: 'assets/chispim/monster.png',
-    // Sprite-swap animation frames — see js/ui/monsterAnim.js. Only Chispim
-    // has these so far; every other monster/boss falls back to the static
-    // `image` above with no animation.
-    anim: {
-      idle2: 'assets/chispim/anim/idle_2.png',
-      hit: 'assets/chispim/anim/hit_1.png',
-      death1: 'assets/chispim/anim/death_1.png',
-      death2: 'assets/chispim/anim/death_2.png',
-    },
     materials: {
       primary1: { id: 'chispim_heart', name: 'Coração de Chispim', emoji: '❤️' },
       primary2: { id: 'chispim_whisker', name: 'Bigode Condutor', emoji: '⚡' },
@@ -405,7 +396,6 @@ export function getMonsterInfo(stage, weakMonsterId) {
       name: b.name,
       emoji: b.emoji,
       image: b.image || null,
-      anim: b.anim || null,
       element: b.element,
       isBoss: true,
       isWeak: false,
@@ -419,7 +409,6 @@ export function getMonsterInfo(stage, weakMonsterId) {
     name: weak.name,
     emoji: weak.emoji,
     image: null,
-    anim: null,
     element: weak.element,
     isBoss: false,
     isWeak: true,

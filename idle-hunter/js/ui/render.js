@@ -13,7 +13,6 @@ import { isAchievementClaimed, isAchievementReady } from '../systems/achievement
 import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
 import { CARDS, getCard } from '../data/cards.js';
-import { renderMonsterSprite } from './monsterAnim.js';
 
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
 /// to the caller: images are set to `width/height: 1em` in CSS so they scale
@@ -223,7 +222,7 @@ export function renderPlayerHp(current, max) {
 
 export function renderMonster(state, monster) {
   const boss = isBossStage(state.stage);
-  renderMonsterSprite(monster);
+  document.getElementById('monster-sprite').innerHTML = iconMarkup(monster.image, monster.emoji, monster.name);
   document.getElementById('monster-name').innerHTML =
     `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
   document.getElementById('stage-label').textContent = `Estágio ${state.stage}`;

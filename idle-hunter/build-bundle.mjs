@@ -33,7 +33,6 @@ const MODULE_ORDER = [
   'js/systems/events.js',
   'js/systems/achievements.js',
   'js/systems/shop.js',
-  'js/ui/monsterAnim.js',
   'js/ui/render.js',
   'js/main.js',
 ];
