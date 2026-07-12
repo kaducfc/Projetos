@@ -4,4 +4,4 @@
 // and a browser can silently serve a stale cached copy long after a fix
 // shipped. "The bug still happens" plus an old tag on screen = cache, not
 // code.
-export const GAME_BUILD = '2026-07-12e';
+export const GAME_BUILD = '2026-07-12g';
