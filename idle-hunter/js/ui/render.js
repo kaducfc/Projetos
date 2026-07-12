@@ -1,17 +1,17 @@
-import { MONSTER_FAMILIES, isBossStage, BOSSES, WEAK_MONSTER_GROUPS } from '../data/monsters.js';
-import { getSlot, getItemsForFamily, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
+import { MONSTER_FAMILIES, isBossStage, BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo } from '../data/monsters.js';
+import { getSlot, getItemsForBoss, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
 import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
-import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, cardSlotUnlockCost, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
+import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost, getPrestigeUpgradeLevel, getPrestigeUpgradeCost } from '../systems/upgrades.js';
 import { canRebirth, runasGain, REBIRTH_MIN_STAGE } from '../systems/prestige.js';
 import { getEventWindow } from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
-import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForFamily } from '../data/shop.js';
+import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
 import { CARDS, getCard } from '../data/cards.js';
 
@@ -384,7 +384,7 @@ function itemDetailHtml(state, uid, pickerOpen) {
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
-      ${cardSlotHtml(state, uid, entry, pickerOpen)}
+      ${cardSlotHtml(state, uid, entry, pickerOpen, item)}
       ${enhancePanelHtml(state, uid, entry, item)}
       ${actionBtn}
     </div>
@@ -394,19 +394,21 @@ function itemDetailHtml(state, uid, pickerOpen) {
 // A card is consumed from state.cards (a stackable count, like a material)
 // the moment it's socketed. Cards themselves have no slotId restriction: any
 // card can go in any item's slot. The slot itself has three states:
-//   1. locked — the item was just crafted, must be unlocked first (RNG + gold)
+//   1. locked — the item was just crafted, must be unlocked first (RNG,
+//      paid in that item's own boss Crystal — see attemptCardSlotUnlock())
 //   2. unlocked, empty — either closed (a button to open the picker) or with
 //      the picker expanded (pickerOpen), listing every owned card
 //   3. unlocked, filled — the socketed card, with a Remover button
-function cardSlotHtml(state, uid, entry, pickerOpen) {
+function cardSlotHtml(state, uid, entry, pickerOpen, item) {
   const unlocked = entry.cardSlotUnlocked || !!entry.cardId;
 
   if (!unlocked) {
-    const cost = cardSlotUnlockCost(state);
+    const crystalInfo = findMaterialInfo(item.crystalMaterialId);
+    const haveCrystal = state.materials[item.crystalMaterialId] || 0;
     const canAttempt = canAttemptCardSlotUnlock(state, uid);
     return `<div class="card-slot-locked">
       <div class="card-slot-label">🔒 Slot de Carta bloqueado</div>
-      <div class="card-slot-unlock-info">${Math.round(CARD_SLOT_UNLOCK_CHANCE * 100)}% de chance de sucesso · custo: ${formatNumber(cost)} 🪙</div>
+      <div class="card-slot-unlock-info">${Math.round(CARD_SLOT_UNLOCK_CHANCE * 100)}% de chance de sucesso · custo: 1 ${crystalInfo.emoji} ${crystalInfo.name} (você tem ${formatNumber(haveCrystal)})</div>
       <button class="card-slot-unlock-btn" data-unlock-card-slot="${uid}" ${canAttempt ? '' : 'disabled'}>Tentar Desbloquear</button>
     </div>`;
   }
@@ -452,8 +454,6 @@ function cardSlotHtml(state, uid, entry, pickerOpen) {
 }
 
 function enhancePanelHtml(state, uid, entry, item) {
-  const family = MONSTER_FAMILIES.find((f) => f.id === item.familyId);
-
   if (entry.isMaster) {
     return `<div class="enhance-maxed">✨ Rank Master alcançado</div>`;
   }
@@ -461,7 +461,7 @@ function enhancePanelHtml(state, uid, entry, item) {
   if (entry.enhanceLevel < ENHANCE_MAX_LEVEL) {
     const cost = item.enhanceCost[entry.enhanceLevel];
     const have = state.materials[item.commonMaterialId] || 0;
-    const matInfo = family.materials.common;
+    const matInfo = findMaterialInfo(item.commonMaterialId);
     const met = have >= cost;
     return `<div class="enhance-panel">
       <div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(cost)}</span></div>
@@ -469,30 +469,30 @@ function enhancePanelHtml(state, uid, entry, item) {
     </div>`;
   }
 
-  const gemInfo = family.materials.gem;
-  const haveGem = state.materials[gemInfo.id] || 0;
-  const matInfo = family.materials.common;
+  const crystalInfo = findMaterialInfo(item.crystalMaterialId);
+  const haveCrystal = state.materials[item.crystalMaterialId] || 0;
+  const matInfo = findMaterialInfo(item.commonMaterialId);
   const haveMat = state.materials[item.commonMaterialId] || 0;
   const matMet = haveMat >= item.masterMaterialCost;
   return `<div class="enhance-panel">
     <div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${matMet ? 'met' : 'missing'}">${formatNumber(haveMat)}/${formatNumber(item.masterMaterialCost)}</span></div>
-    <div class="recipe-cost"><span>${gemInfo.emoji} ${gemInfo.name}</span><span class="${haveGem >= 1 ? 'met' : 'missing'}">${formatNumber(haveGem)}/1</span></div>
+    <div class="recipe-cost"><span>${crystalInfo.emoji} ${crystalInfo.name}</span><span class="${haveCrystal >= 1 ? 'met' : 'missing'}">${formatNumber(haveCrystal)}/1</span></div>
     <button class="master-btn" data-master-upgrade="${uid}" ${canUpgradeToMaster(state, uid) ? '' : 'disabled'}>Evoluir para Rank Master</button>
   </div>`;
 }
 
 function forgeContentHtml(state) {
-  return MONSTER_FAMILIES.map((family) => familyGroupHtml(state, family)).join('');
+  return BOSSES.map((boss) => bossGroupHtml(state, boss)).join('');
 }
 
-function familyGroupHtml(state, family) {
-  const items = getItemsForFamily(family.id);
-  const unlocked = state.maxStage >= family.startStage;
+function bossGroupHtml(state, boss) {
+  const items = getItemsForBoss(boss.id);
+  const unlocked = state.maxStage >= boss.stage;
 
   return `<div class="family-group">
-    <h3><span class="icon">${iconMarkup(family.image, family.emoji, family.name)}</span> ${family.name} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">(Estágios ${family.startStage}–${family.endStage})</span></h3>
+    <h3><span class="icon">${iconMarkup(boss.image, boss.emoji, boss.name)}</span> ${boss.name} ${elementBadgeHtml(boss.element)} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">(Chefe do Estágio ${boss.stage})</span></h3>
     ${unlocked ? `<div class="recipe-grid">${items.map((item) => recipeCardHtml(state, item)).join('')}</div>`
-      : `<p style="color:var(--text-dim); font-size:12px;">Alcance o estágio ${family.startStage} para desbloquear.</p>`}
+      : `<p style="color:var(--text-dim); font-size:12px;">🔒 Alcance o estágio ${boss.stage} para desbloquear.</p>`}
   </div>`;
 }
 
@@ -501,8 +501,7 @@ function recipeCardHtml(state, item) {
   const equipped = state.equipped[item.slotId] && state.inventory.find((i) => i.uid === state.equipped[item.slotId])?.itemId === item.id;
 
   const costLines = Object.entries(item.materialCost).map(([matId, qty]) => {
-    const family = MONSTER_FAMILIES.find((f) => f.materials.common.id === matId || f.materials.rare.id === matId);
-    const matInfo = family.materials.common.id === matId ? family.materials.common : family.materials.rare;
+    const matInfo = findMaterialInfo(matId);
     const have = state.materials[matId] || 0;
     const met = have >= qty;
     return `<div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(qty)}</span></div>`;
@@ -651,9 +650,9 @@ export function renderEventsTab(state, engagementRemainingMs) {
   const claimed = isEventClaimed(state, win.cycleIndex);
 
   if (!win.active || claimed) {
-    // The *next* window's family isn't win.family (that's whoever is/was up
-    // this cycle) — it's whichever family the next cycle index lands on.
-    const nextFamily = MONSTER_FAMILIES[(win.cycleIndex + 1) % MONSTER_FAMILIES.length];
+    // The *next* window's boss isn't win.boss (that's whoever is/was up
+    // this cycle) — it's whichever boss the next cycle index lands on.
+    const nextBoss = BOSSES[(win.cycleIndex + 1) % BOSSES.length];
     const heading = claimed ? 'Evento concluído!' : 'Nenhum evento ativo agora';
     const sub = claimed
       ? 'Você já derrotou o chefe de evento deste ciclo.'
@@ -663,12 +662,12 @@ export function renderEventsTab(state, engagementRemainingMs) {
         <div class="event-icon dim">🎪</div>
         <h3>${heading}</h3>
         <p class="event-sub">${sub}</p>
-        <p class="event-next">Próximo: ${iconMarkup(nextFamily.image, nextFamily.emoji, nextFamily.name)} <strong>${nextFamily.name}</strong> em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
+        <p class="event-next">Próximo: ${iconMarkup(nextBoss.image, nextBoss.emoji, nextBoss.name)} <strong>${nextBoss.name}</strong> em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
       </div>`;
     return;
   }
 
-  const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(win.family);
+  const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(win.boss);
   const hp = state.eventBossHp ?? maxHp;
   const pct = maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 0;
   const timerHtml = engagementRemainingMs != null
@@ -678,8 +677,8 @@ export function renderEventsTab(state, engagementRemainingMs) {
   container.innerHTML = `
     <div class="event-panel">
       <div class="event-active-badge">🎪 Evento ativo — janela fecha em ${formatDuration(win.remainingActiveMs)}</div>
-      <h3>${win.family.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(win.family.element)}</h3>
-      <button id="event-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(win.family.image, win.family.bossEmoji || win.family.emoji, win.family.name)}</button>
+      <h3>${win.boss.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(win.boss.element)}</h3>
+      <button id="event-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(win.boss.image, win.boss.emoji, win.boss.name)}</button>
       <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(maxHp)}</span></div>
       ${timerHtml}
       <p class="event-reward-info">🎁 Recompensa ao derrotar: 1–6 materiais + 🎫 Moeda de Evento</p>
@@ -780,12 +779,12 @@ function cashShopHtml(state) {
 }
 
 function eventShopHtml(state) {
-  const familiesHtml = MONSTER_FAMILIES.map((family, tier) => {
-    const unlocked = state.maxStage >= family.startStage;
+  const bossesHtml = BOSSES.map((boss, tier) => {
+    const unlocked = state.maxStage >= boss.stage;
     if (!unlocked) return '';
-    const items = eventShopItemsForFamily(family, tier);
+    const items = eventShopItemsForBoss(boss, tier);
     return `<div class="family-group">
-      <h3><span class="icon">${iconMarkup(family.image, family.emoji, family.name)}</span> ${family.name}</h3>
+      <h3><span class="icon">${iconMarkup(boss.image, boss.emoji, boss.name)}</span> ${boss.name}</h3>
       <div class="shop-item-grid">${items.map((item) => `
         <div class="shop-item-card event-variant">
           <span class="icon">${item.emoji}</span>
@@ -800,7 +799,7 @@ function eventShopHtml(state) {
   return `
     <div class="shop-balance event-variant">🎫 Você tem <strong>${formatNumber(state.eventCurrency)}</strong> Moeda de Evento</div>
     <p class="shop-note">Ganhe Moeda de Evento derrotando o chefe de evento na aba 🎪 Eventos.</p>
-    ${familiesHtml || '<p class="shop-note">Nenhuma família desbloqueada ainda.</p>'}
+    ${bossesHtml || '<p class="shop-note">Nenhum chefe desbloqueado ainda.</p>'}
   `;
 }
 

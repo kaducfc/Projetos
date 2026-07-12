@@ -49,38 +49,42 @@ Depois abra `http://localhost:8000` no navegador.
    é perdido, só sua posição atual). Chefes que você já derrotou antes
    não têm mais prazo — pode farmar neles à vontade.
 4. **Equipamentos**: 6 slots — Elmo, Peitoral, Calça, Luvas, Botas
-   (defesa) e Arma (ataque: lança, adaga, arco, martelo, machado ou
-   espada, dependendo da família). A aba **Equipamento** tem 3 sub-abas:
-   **Equipar** (o personagem no centro com os 6 slots ao redor — só o
-   ícone do item, ou apagado se vazio — e o inventário completo embaixo,
-   também só ícones), **Forjar** (craft de cada peça com ouro + materiais
-   daquele monstro, equipada automaticamente ao craftar) e **Materiais**
-   (quanto você tem de cada material). As três eram abas separadas antes;
-   viraram sub-abas porque são todas sobre a mesma coisa — seu
-   equipamento — e assim sobra espaço na navegação principal. Clique em
-   qualquer ícone na sub-aba Equipar, equipado ou não, pra abrir um popup
-   com nome, stats, aprimoramento e o botão de Equipar/Desequipar. Cada
-   peça craftada já
-   reserva um **slot de carta** (estilo Ragnarok Online) — monstros têm
-   uma chance bem pequena (0,01%, fixa) de dropar a própria carta ao
-   morrer, coletável
-   na sub-aba **Cartas** (dentro de Equipamento) e encaixável direto
-   nesse mesmo popup, dando um bônus de dano real contra o elemento da
-   carta. Ver "O sistema de Cartas" mais abaixo.
+   (defesa) e Arma (ataque), um set de 6 peças por chefe (10 sets no
+   total). A aba **Equipamento** tem 3 sub-abas: **Equipar** (o
+   personagem no centro com os 6 slots ao redor — só o ícone do item, ou
+   apagado se vazio — e o inventário completo embaixo, também só ícones),
+   **Forjar** (craft de cada peça com ouro + 4 materiais em média — os 2
+   do chefe daquele set mais os do monstro fraco Neutro e do monstro
+   fraco do mesmo elemento do chefe, ver "Craft e Forja" mais abaixo —
+   equipada automaticamente ao craftar, e só liberada depois de alcançar
+   o estágio daquele chefe) e **Materiais** (quanto você tem de cada
+   material). As três eram abas separadas antes; viraram sub-abas porque
+   são todas sobre a mesma coisa — seu equipamento — e assim sobra espaço
+   na navegação principal. Clique em qualquer ícone na sub-aba Equipar,
+   equipado ou não, pra abrir um popup com nome, stats, aprimoramento e o
+   botão de Equipar/Desequipar. Cada peça craftada já reserva um **slot
+   de carta** (estilo Ragnarok Online), mas ele nasce **bloqueado** —
+   monstros têm uma chance bem pequena (0,01%, fixa) de dropar a própria
+   carta ao morrer, coletável na sub-aba **Cartas** (dentro de
+   Equipamento) e encaixável direto nesse mesmo popup, dando um bônus de
+   dano real contra o elemento da carta, uma vez que o slot esteja
+   destravado. Ver "O sistema de Cartas" mais abaixo.
    Além do stat principal de cada peça, as 5 peças de defesa também dão
    **Vida** (Elmo, Calça, Botas) ou **Armadura** (Peitoral, Luvas) — é
    assim que o equipamento te deixa sobreviver a estágios mais altos, não
    só bater mais forte.
 5. **Aprimoramento (+1 a +5 e Rank Master)**: cada peça craftada pode ser
    aprimorada individualmente na aba Equipamento. +1 a +5 gastam o
-   material **comum** daquele monstro (fica mais caro a cada nível — "pouco
-   a pouco"); depois de +5, dá pra evoluir pra **Rank Master** consumindo
-   **mais material comum** (continuando a mesma progressão, como um "+6")
-   **e 1 Gema** daquele monstro. Todo monstro (comum ou chefe) da família
-   tem **0,5% de chance** de dropar a Gema dele a cada morte. Rank Master
-   deixa o item um pouco mais forte que a versão +0 do próximo monstro na
-   cadeia
-   — ver a conta em "Como o aprimoramento é calculado" abaixo.
+   material do monstro fraco **Neutro** daquela receita (fica mais caro a
+   cada nível — "pouco a pouco"); depois de +5, dá pra evoluir pra **Rank
+   Master** consumindo **mais desse mesmo material** (continuando a mesma
+   progressão, como um "+6") **e 1 Cristal do chefe** daquele set. Só o
+   chefe (não os monstros fracos) tem **0,1% de chance fixa** de dropar o
+   Cristal dele a cada morte — e esse mesmo Cristal também é o custo para
+   destravar o slot de carta (ver "O sistema de Cartas"), então ele é
+   disputado entre duas coisas. Rank Master deixa o item um pouco mais
+   forte que a versão +0 do próximo chefe na cadeia — ver a conta em
+   "Como o aprimoramento é calculado" abaixo.
 6. **Elementos**: todo monstro tem um elemento (Neutro, Fogo, Planta,
    Elétrico ou Água) — veja o badge colorido ao lado do nome dele. Sua
    arma herda o elemento do monstro de quem foi craftada e causa **+25%**
@@ -391,23 +395,6 @@ mil rolagens com `dropMult=1` e `dropMult=10` deram taxa de material
 praticamente idênticas nos dois casos (~0.1%/~0.01% em ambos) — nenhum
 upgrade de Drop ou item consegue tornar Cristal/carta mais fáceis.
 
-### Decisão de escopo: equipamentos continuam presos ao sistema antigo
-
-Este pedido definiu só o roster de monstros/drops, não como esses
-materiais viram equipamento — então **não toquei em `data/items.js` nem
-`systems/crafting.js`**. `MONSTER_FAMILIES` (as 6 famílias antigas:
-Chispim, Lobo das Sombras, Aranha Venenosa, Golem de Pedra, Wyvern de
-Gelo, Dragão Ancião) continua existindo só pra alimentar craft/Forja, o
-rodízio do chefe de evento (`data/events.js`) e a lista de materiais —
-mas **nenhuma delas spawna mais em combate normal**, foram totalmente
-substituídas pelos 10 chefes + 25 monstros fracos. Isso significa que os
-materiais antigos (Pelo de Chispim, Presa de Lobo, etc.) não dão mais
-pra farmar — craft de equipamento ficou congelado no que já foi
-craftado até agora, até você definir como o roster novo vira
-equipamento. Os 44 materiais novos (25 dos monstros fracos + 20 dos
-chefes + 10 Cristais) já dropam, já aparecem na sub-aba Materiais,
-prontos pra quando as receitas forem redefinidas.
-
 Também tratei o caso de save antigo com uma carta já encaixada num item
 (`entry.cardId` apontando pra uma carta que não existe mais, tipo
 `boar_card`): sem tratamento isso travaria o slot pra sempre (não dá
@@ -415,6 +402,70 @@ pra reencaixar com o slot "ocupado" por uma referência morta) — agora
 `loadState()` limpa esse `cardId` órfão automaticamente ao carregar o
 save (uma vez só, sem custo pro jogador). Testei semeando um save assim
 e confirmando que o slot volta a ficar utilizável.
+
+## Craft e Forja: refeitos do zero em torno dos 10 chefes
+
+`data/items.js` foi reconstruído inteiro: as receitas agora são geradas a
+partir de `BOSSES` (uma peça de 6 slots por chefe, 60 itens no total),
+não mais de `MONSTER_FAMILIES`. Cada receita pede **em média 4
+materiais** (+ ouro): os **2 materiais do próprio chefe** (Drop Principal
+1/2) **+ 2 materiais de monstro fraco** — sempre o **monstro Neutro** e o
+monstro **do mesmo elemento do chefe**, ambos vindos do grupo de
+monstros fracos que antecede aquele chefe
+(`getWeakMonsterGroupForStage(boss.stage - 1)`). Exemplo real (Chispim,
+estágio 10, Elétrico): `chispim_heart` + `chispim_whisker` (os 2 do
+chefe) + `espinhoco_thorn` (Espinhoco, o monstro Neutro do grupo 1–19) +
+`aracneon_silk` (Aracneon, o monstro Elétrico do mesmo grupo) — 4
+materiais distintos, exatamente como pedido. Para os 2 chefes cujo
+próprio elemento é Neutro (Grommuk, Bahamorth), "o monstro do mesmo
+elemento" e "o monstro Neutro" são o mesmo monstro — a receita colapsa
+naturalmente para **3 materiais distintos** (confirmado: o peso do
+material Neutro simplesmente dobra, em vez de duas entradas separadas).
+Os materiais do chefe usam uma quantidade menor (esse chefe só é uma
+fase em cada 10 estágios); os dos monstros fracos usam uma quantidade
+maior (droppáveis em 9 estágios a cada 10) — mesma proporção
+comum/raro que a Forja antiga já usava, só que agora com 4 fontes em
+vez de 2.
+
+**Aprimoramento (+1 a +5)** continua consumindo um material "de grão
+fino" — agora é o material do monstro fraco Neutro da receita (o mais
+farmável dos 4). **Rank Master** não usa mais Gema — agora exige **1
+Cristal do chefe daquele equipamento** (ex.: Cristal de Chispim para
+qualquer peça do set do Chispim), reaproveitando o mesmo campo que a
+Gema ocupava antes (`crystalMaterialId`, renomeado de `gemMaterialId`
+para refletir o que ele guarda agora).
+
+**Estágio de liberação**: cada receita carrega `unlockStage` = o estágio
+do chefe dela. A aba Forjar só mostra a grade de receitas de um chefe
+se `state.maxStage >= unlockStage`; senão mostra "🔒 Alcance o estágio X
+para desbloquear" — a mesma mecânica de antes, só que agora o gate é por
+chefe individual (10 grupos) em vez de por família (6 grupos, 20
+estágios cada). `canCraft()` também checa isso no lado do sistema (não
+só na UI), então mesmo um clique "impossível" num botão que não devia
+existir não craftaria nada.
+
+**Equipamento antigo não sumiu**: os 36 itens da geração anterior (6
+famílias × 6 slots) continuam existindo em `LEGACY_ITEMS` — só não são
+mais oferecidos na Forja (`unlockStage: null`, o que também bloqueia
+`canCraft()` incondicionalmente para eles). Isso existe só para saves
+antigos: um jogador que já tinha craftado/equipado uma peça da Chispim
+(família antiga) continua com ela funcionando normalmente (`getItem()`
+procura em `ITEMS` — o roster novo — e cai para `LEGACY_ITEMS` se não
+achar), só não dá pra craftar uma nova.
+
+### O slot de carta agora custa Cristal, não ouro
+
+Redefinido por pedido direto: a tentativa de destravar o slot de carta
+(`attemptCardSlotUnlock()` em `systems/crafting.js`) não gasta mais 10%
+do ouro atual — agora custa **1 Cristal do chefe daquele equipamento**
+(o mesmo `crystalMaterialId` usado no Rank Master). A chance continua
+**80%** de sucesso (`CARD_SLOT_UNLOCK_CHANCE`, inalterada) — **20%** de
+falha, e o Cristal é consumido **de qualquer forma**, sucesso ou
+fracasso, podendo tentar de novo (com outro Cristal) até dar certo —
+mesmo espírito do sistema antigo, só trocando qual recurso é gasto.
+Isso deixa o Cristal disputado entre duas coisas (Rank Master e
+destravar carta), então cada um que você conseguir (0,1% de chance por
+chefe morto) é uma escolha real de pra onde ele vai.
 
 ## O sistema de Cartas
 
@@ -443,11 +494,10 @@ Destravar é uma tentativa arriscada e paga, não uma formalidade:
    custo atuais visíveis antes de clicar.
 2. Cada tentativa (`attemptCardSlotUnlock()` em `js/systems/crafting.js`)
    tem **80%** de chance de sucesso (`CARD_SLOT_UNLOCK_CHANCE`) e custa
-   **10% do ouro atual do jogador** (`CARD_SLOT_UNLOCK_GOLD_PERCENT`,
-   `cardSlotUnlockCost()`) — o ouro é **sempre consumido**, sucesso ou
-   fracasso. Como o custo é recalculado sobre o ouro *restante* a cada
-   chamada, tentativas repetidas ficam (levemente) mais baratas em termos
-   absolutos, mas nunca de graça.
+   **1 Cristal do chefe daquele equipamento** (`item.crystalMaterialId`
+   — ver "O slot de carta agora custa Cristal, não ouro" acima; era 10%
+   do ouro atual, trocado por pedido direto) — o Cristal é **sempre
+   consumido**, sucesso ou fracasso.
 3. Sucesso vira `entry.cardSlotUnlocked = true` e o slot passa a mostrar
    "Slot de Carta: vazio" com um botão **"Equipar Carta"**, que abre um
    seletor com toda carta que você possui (mesma UI de antes). Clicar
@@ -594,7 +644,7 @@ js/
   version.js             Etiqueta de build exibida na barra superior (bumpar a cada publicação)
   data/
     monsters.js           BOSSES (10, um por estágio múltiplo de 10) e WEAK_MONSTER_GROUPS (25 monstros fracos, 5 grupos) — o roster que de fato spawna. MONSTER_FAMILIES continua só pra craft/evento (ver "Decisão de escopo" no README)
-    items.js               Geração dos 36 itens equipáveis (6 famílias × 6 slots)
+    items.js               Geração dos 60 itens equipáveis (10 chefes × 6 slots) + LEGACY_ITEMS (os 36 antigos, só para saves velhos — não mais craftáveis)
     elements.js             Ciclo de elementos e cálculo de vantagem/desvantagem
     upgrades.js             Upgrades comuns (ouro) e de prestígio (Runas)
     events.js                Janela do chefe de evento (rotação por relógio de parede)
@@ -605,11 +655,11 @@ js/
     stats.js                Agrega equipamento + upgrades → dano/DPS/bônus/resistência elemental finais
     combat.js                HP/recompensa/dano do monstro por estágio, drops, kill/spawn
     equipment.js              Equipar/desequipar, resolver o que está em cada slot
-    crafting.js                Checagem de custo, craft, aprimoramento (+1..+5, Rank Master) e o slot de carta (desbloqueio + encaixe/remoção)
+    crafting.js                Checagem de custo (+ liberação por estágio), craft, aprimoramento (+1..+5, Rank Master via Cristal) e o slot de carta (desbloqueio via Cristal + encaixe/remoção)
     upgrades.js                 Compra de upgrades comuns e de prestígio
     prestige.js                  Cálculo de Runas e lógica de renascimento
     offline.js                    Progresso estimado enquanto a aba estava fechada
-    events.js                     Dano/HP/recompensa do chefe de evento
+    events.js                     Dano/HP/recompensa do chefe de evento (rotaciona pelos 10 BOSSES agora)
     achievements.js                Checagem e resgate de conquistas
     shop.js                        Compra com Cash / Moeda de Evento, cooldown do anúncio
   ui/
@@ -640,11 +690,12 @@ primeiro MVP. Os pontos mais fáceis de ajustar:
 - `js/systems/combat.js`: `PLAYER_DPS_TAKEN_GROWTH`/`_BASE`, `BOSS_DPS_TAKEN_MULT`, `ARMOR_CONSTANT`.
 - `js/data/elements.js`: `ELEMENT_DAMAGE_BONUS` (±25%), `ELEMENT_RESISTANCE_PER_PIECE` (5%).
 - `js/data/events.js`: `EVENT_CYCLE_MS`/`EVENT_ACTIVE_MS` (frequência/duração da janela), `EVENT_TIME_LIMIT_MS` (prazo fixo por tentativa, 50s), `EVENT_DIFFICULTY_MULT` (quanto mais forte que o chefe original, 1.3 = 30%), `EVENT_CURRENCY_BASE`/`_PER_STAGE` (recompensa).
-- `js/data/shop.js`: preços em `CASH_SHOP_ITEMS`/`eventShopItemsForFamily()`, `AD_WATCH_COOLDOWN_MS`/`_CASH_REWARD`.
+- `js/data/shop.js`: preços em `CASH_SHOP_ITEMS`/`eventShopItemsForBoss()`, `AD_WATCH_COOLDOWN_MS`/`_CASH_REWARD`.
+- `js/data/items.js`: `bossQty`/`weakQty` dentro de `buildBossItem()` (quantidade de cada um dos 4 materiais na receita, por slot/tier).
 - `js/data/achievements.js`: `cashReward` de cada conquista.
 - `js/systems/combat.js`: `MONSTER_CARD_DROP_CHANCE` (chance de carta, 0,01% fixo — não sobe com bônus de Drop; era `CARD_DROP_CHANCE` 2% originalmente, achado fácil demais).
 - `js/systems/stats.js`: `CARD_DAMAGE_BONUS` (bônus de dano por carta encaixada, 3% por padrão).
-- `js/systems/crafting.js`: `CARD_SLOT_UNLOCK_CHANCE` (chance de destravar o slot, 80% por padrão), `CARD_SLOT_UNLOCK_GOLD_PERCENT` (custo por tentativa, 10% do ouro atual, sempre consumido).
+- `js/systems/crafting.js`: `CARD_SLOT_UNLOCK_CHANCE` (chance de destravar o slot, 80% por padrão) — custo é fixo em 1 Cristal do chefe do equipamento, não é mais um número ajustável.
 
 ## Testado
 
@@ -911,3 +962,46 @@ resultado (foi exatamente isso que aconteceu na primeira tentativa desse
 teste — não era bug, era corrida entre meu teste e o `tick()`). Com essa
 correção, todos os 10 chefes bateram certo no bundle também. Sem erro no
 console em nenhum passo.
+
+Depois de reconstruir Craft/Forja e o chefe de evento em torno dos 10
+chefes, testei a receita de cada boss diretamente: `chispim_weapon`
+(Chispim, Elétrico) tem exatamente 4 materiais na receita
+(`chispim_heart`, `chispim_whisker`, `espinhoco_thorn`, `aracneon_silk`)
+batendo com o exemplo dado (2 do chefe + o Neutro do grupo 1–19 + o
+Elétrico do mesmo grupo); `grommuk_weapon` (Grommuk, Neutro) colapsa
+para 3 materiais distintos, com o material Neutro pesando o dobro — 
+confirmando que "monstro Neutro" e "monstro do elemento do chefe" viram
+o mesmo material quando o próprio chefe é Neutro. Craftei o item pela
+UI de verdade (clique em "Craftar" na Forja) e confirmei os 4 materiais
+sendo descontados corretamente e o item indo pro inventário equipado.
+
+Testei o novo custo do slot de carta: o popup mostra "custo: 1 [emoji]
+Cristal de Chispim (você tem N)" em vez de ouro; uma chamada isolada de
+`attemptCardSlotUnlock()` (sem o loop de combate rodando por trás, pra
+não misturar ganho de ouro orgânico com o teste) confirmou que o ouro
+fica **absolutamente intocado** e exatamente 1 Cristal é consumido,
+sucesso ou fracasso. (Numa tentativa anterior, testando via UI depois de
+crafar e equipar uma arma de verdade, o ouro mudou um pouco durante a
+janela do teste — não era o slot de carta mexendo em ouro, era a arma
+recém-equipada dando DPS real e o personagem matando o monstro fraco da
+tela em segundo plano, ganhando ouro organicamente; a chamada isolada
+confirmou que o sistema de carta em si não toca em ouro.) Também testei
+Aprimoramento (+1 a +5, consumindo `espinhoco_thorn` — o material Neutro
+da receita) e Rank Master (consumindo exatamente 1 `chispim_crystal`),
+ambos em sequência, chegando em Rank Master de verdade.
+
+Testei a liberação por estágio: com `maxStage = 55`, a Forja mostra as
+receitas de Chispim(10) a Grommuk(50) normalmente, e Vulkarion(60) em
+diante aparecem com "🔒 Alcance o estágio X para desbloquear" — 
+inclusive Bahamorth(100). Testei que um item da geração antiga
+(`boar_weapon`, agora em `LEGACY_ITEMS`) continua resolvendo via
+`getItem()` (não quebra saves antigos) mas tem `unlockStage: null`,
+bloqueando `canCraft()` incondicionalmente — não aparece mais na Forja.
+
+Testei o rodízio do chefe de evento: 12 ciclos consecutivos (mais que os
+10 chefes) passaram pelos 10 IDs esperados sem repetir fora de ordem, e
+`claimEventVictory()` chamado direto com o boss do estágio 10 só gerou
+`chispim_heart`/`chispim_whisker`/`chispim_crystal` como possíveis
+drops — nunca um material de outro chefe ou da lista antiga de
+famílias. Rodei os mesmos testes de receita/craft/estágio contra o
+bundle publicado e bateu igual, sem erro no console em nenhum passo.

@@ -15,7 +15,7 @@ export function buyCashItem(state, id) {
 }
 
 /// { matId, amount, cost } — deliberately not a full data/shop.js item
-/// lookup, since event-shop entries are generated per-family and the
+/// lookup, since event-shop entries are generated per-boss and the
 /// caller (render.js) already has the exact one the player clicked.
 export function canBuyEventItem(state, item) {
   return state.eventCurrency >= item.cost;

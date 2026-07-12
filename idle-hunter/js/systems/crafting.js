@@ -3,6 +3,9 @@ import { getItem, ENHANCE_MAX_LEVEL } from '../data/items.js';
 export function canCraft(state, itemId) {
   const item = getItem(itemId);
   if (!item) return false;
+  // unlockStage is null for legacy (pre-boss-roster) items, which are no
+  // longer offered for crafting at all — see data/items.js.
+  if (item.unlockStage == null || state.maxStage < item.unlockStage) return false;
   if (state.gold < item.goldCost) return false;
   for (const [matId, qty] of Object.entries(item.materialCost)) {
     if ((state.materials[matId] || 0) < qty) return false;
@@ -48,30 +51,32 @@ function isSlotUnlocked(entry) {
 }
 
 export const CARD_SLOT_UNLOCK_CHANCE = 0.8;
-export const CARD_SLOT_UNLOCK_GOLD_PERCENT = 0.1;
 
-export function cardSlotUnlockCost(state) {
-  return Math.max(1, Math.round(state.gold * CARD_SLOT_UNLOCK_GOLD_PERCENT));
-}
-
+/// The Crystal required is always that specific item's own boss Crystal —
+/// a legacy (pre-boss-roster) item's crystalMaterialId still points at its
+/// old family Gem, so this keeps working for gear crafted before the
+/// rebuild too, it's just a different (now unfarmable) material for those.
 export function canAttemptCardSlotUnlock(state, uid) {
   const entry = getEntry(state, uid);
   if (!entry || isSlotUnlocked(entry)) return false;
-  return state.gold >= cardSlotUnlockCost(state);
+  const item = getItem(entry.itemId);
+  return (state.materials[item.crystalMaterialId] || 0) >= 1;
 }
 
-/// Gold is spent on every attempt, win or lose — each retry costs 10% of
-/// whatever gold remains at that moment, so failing repeatedly gets
-/// (gently) cheaper in absolute terms. Returns {success, cost}, or null if
-/// the attempt couldn't be made at all (already unlocked / can't afford it).
+/// The Crystal is consumed on every attempt, win or lose — same "always
+/// pay the entry fee" spirit the old gold-cost version had, just with a
+/// much scarcer resource (Crystal drops at a fixed 0.1%, see
+/// CRYSTAL_DROP_CHANCE in systems/combat.js) instead of a gold percentage.
+/// Returns {success}, or null if the attempt couldn't be made at all
+/// (already unlocked / no Crystal in stock).
 export function attemptCardSlotUnlock(state, uid) {
   if (!canAttemptCardSlotUnlock(state, uid)) return null;
   const entry = getEntry(state, uid);
-  const cost = cardSlotUnlockCost(state);
-  state.gold -= cost;
+  const item = getItem(entry.itemId);
+  state.materials[item.crystalMaterialId] -= 1;
   const success = Math.random() < CARD_SLOT_UNLOCK_CHANCE;
   if (success) entry.cardSlotUnlocked = true;
-  return { success, cost };
+  return { success };
 }
 
 /// A card is consumed from state.cards (a stackable count, like a material)
@@ -135,7 +140,7 @@ export function canUpgradeToMaster(state, uid) {
   if (!entry || entry.isMaster || entry.enhanceLevel < ENHANCE_MAX_LEVEL) return false;
   const item = getItem(entry.itemId);
   return (
-    (state.materials[item.gemMaterialId] || 0) >= 1 &&
+    (state.materials[item.crystalMaterialId] || 0) >= 1 &&
     (state.materials[item.commonMaterialId] || 0) >= item.masterMaterialCost
   );
 }
@@ -144,7 +149,7 @@ export function upgradeToMaster(state, uid) {
   if (!canUpgradeToMaster(state, uid)) return false;
   const entry = getEntry(state, uid);
   const item = getItem(entry.itemId);
-  state.materials[item.gemMaterialId] -= 1;
+  state.materials[item.crystalMaterialId] -= 1;
   state.materials[item.commonMaterialId] -= item.masterMaterialCost;
   entry.isMaster = true;
   return true;

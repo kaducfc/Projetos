@@ -350,8 +350,8 @@ function wireModalEvents() {
         if (result) {
           showItemDetailModal(state, uid);
           showToast(result.success
-            ? `🔓 Slot de carta desbloqueado! (-${formatNumber(result.cost)} 🪙)`
-            : `❌ Tentativa falhou... (-${formatNumber(result.cost)} 🪙)`);
+            ? '🔓 Slot de carta desbloqueado! (-1 🔷 Cristal)'
+            : '❌ Tentativa falhou... (-1 🔷 Cristal)');
           fullRefresh();
         }
       });
@@ -454,7 +454,7 @@ function wireEquipmentTabEvents() {
 /// Shared by the click and DPS-tick paths — whichever one lands the
 /// killing blow reports the same way.
 function handleEventBossVictory(win) {
-  const { gained, currency } = claimEventVictory(state, win.cycleIndex, win.family);
+  const { gained, currency } = claimEventVictory(state, win.cycleIndex, win.boss);
   eventDeadline = null;
   const lootStr = Object.values(gained).map((g) => ` +${g.qty} ${g.emoji}`).join('');
   showToast(`🎉 Chefe de evento derrotado! +${formatNumber(currency)} 🎫${lootStr}`);
@@ -482,8 +482,8 @@ function onClickEventBoss() {
   }
 
   const stats = computePlayerStats(state);
-  ensureEventBossSpawned(state, win.family);
-  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, win.family.element) + getCardDamageBonus(state, win.family.element));
+  ensureEventBossSpawned(state, win.boss);
+  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, win.boss.element) + getCardDamageBonus(state, win.boss.element));
   const killed = applyEventDamage(state, dealt);
 
   if (killed) {
@@ -518,7 +518,7 @@ function tickEventBoss(stats) {
   if (!win.active || isEventClaimed(state, win.cycleIndex)) return;
   if (stats.dps <= 0 || state.eventBossHp == null) return; // not engaged yet — only a click starts it
 
-  const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, win.family.element) + getCardDamageBonus(state, win.family.element));
+  const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, win.boss.element) + getCardDamageBonus(state, win.boss.element));
   const killed = applyEventDamage(state, dealt * (TICK_MS / 1000));
   if (killed) handleEventBossVictory(win);
   renderEventsTab(state, currentEventEngagementMs());

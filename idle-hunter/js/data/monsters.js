@@ -334,6 +334,32 @@ export function getBossForStage(stage) {
   return BOSSES.find((b) => b.stage === stage) || BOSSES[BOSSES.length - 1];
 }
 
+/// Looks up a material's display info ({id, name, emoji}) by id across
+/// every source that can produce one — boss "drop principal"/Crystal, weak
+/// monster material, or (for saves/inventory predating the boss-roster
+/// rebuild) the old MONSTER_FAMILIES common/rare/gem. Used wherever a UI
+/// needs to show a material it only knows the id of (e.g. a crafting
+/// recipe's cost line), instead of each caller re-deriving which roster it
+/// came from.
+export function findMaterialInfo(materialId) {
+  for (const boss of BOSSES) {
+    if (boss.materials.primary1.id === materialId) return boss.materials.primary1;
+    if (boss.materials.primary2.id === materialId) return boss.materials.primary2;
+    if (boss.crystal.id === materialId) return boss.crystal;
+  }
+  for (const group of WEAK_MONSTER_GROUPS) {
+    for (const monster of group.monsters) {
+      if (monster.material.id === materialId) return monster.material;
+    }
+  }
+  for (const family of MONSTER_FAMILIES) {
+    if (family.materials.common.id === materialId) return family.materials.common;
+    if (family.materials.rare.id === materialId) return family.materials.rare;
+    if (family.materials.gem.id === materialId) return family.materials.gem;
+  }
+  return null;
+}
+
 export function getWeakMonsterGroupForStage(stage) {
   for (const group of WEAK_MONSTER_GROUPS) {
     if (stage >= group.startStage && stage <= group.endStage) return group;
