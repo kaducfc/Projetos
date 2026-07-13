@@ -18,9 +18,9 @@ export const CARD_DAMAGE_BONUS = 0.03;
 // (see systems/cards.js).
 export const CARD_DISCOVERY_CASH_REWARD = 5;
 
-// Real card art exists so far for these 9 bosses only (see
-// assets/cards/*.png) — any boss missing here just falls back to the 🃏
-// emoji, same as every weak-monster card for now.
+// Real card art now exists for all 10 bosses (see assets/cards/*.png) —
+// any boss missing here would fall back to the 🃏 emoji, same as every
+// weak-monster card for now.
 const CARD_IMAGES = {
   chispim: 'assets/cards/chispim.png',
   solkaiser: 'assets/cards/solkaiser.png',
@@ -28,6 +28,7 @@ const CARD_IMAGES = {
   colhedor_carmesim: 'assets/cards/colhedor_carmesim.png',
   grommuk: 'assets/cards/grommuk.png',
   vulkarion: 'assets/cards/vulkarion.png',
+  leviargon: 'assets/cards/leviargon.png',
   tempestron: 'assets/cards/tempestron.png',
   gaiatron: 'assets/cards/gaiatron.png',
   bahamorth: 'assets/cards/bahamorth.png',
