@@ -222,9 +222,10 @@ export const BOSSES = [
     name: 'Leviargon',
     element: 'agua',
     emoji: '🐋',
+    image: 'assets/leviargon/monster.png',
     materials: {
-      primary1: { id: 'leviargon_fin', name: 'Barbatana de Leviargon', emoji: '🦈' },
-      primary2: { id: 'leviargon_eye', name: 'Olho Abissal', emoji: '👁️' },
+      primary1: { id: 'leviargon_fin', name: 'Barbatana de Leviargon', emoji: '🦈', image: 'assets/leviargon/barbatana.png' },
+      primary2: { id: 'leviargon_eye', name: 'Olho Abissal', emoji: '👁️', image: 'assets/leviargon/olho.png' },
     },
     crystal: { id: 'leviargon_crystal', name: 'Cristal de Leviargon', emoji: '💎' },
   },
