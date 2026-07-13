@@ -27,142 +27,6 @@ function elementBadgeHtml(elementId) {
   return `<span class="element-badge element-${el.id}">${el.emoji} ${el.name}</span>`;
 }
 
-const ELEMENT_COLORS = {
-  neutro: '#9a9ab0',
-  fogo: '#ff6a3d',
-  planta: '#4caf7d',
-  eletrico: '#f4e04d',
-  agua: '#5cc2ff',
-};
-
-/// Everything the doll needs to know about one equipped slot: the element
-/// color (used for the tinted-shape fallback) and, when the family has real
-/// art, the image to overlay instead of that shape.
-function gearVisual(state, slotId) {
-  const eq = getEquippedEntry(state, slotId);
-  if (!eq) return null;
-  return {
-    color: ELEMENT_COLORS[eq.item.element] || ELEMENT_COLORS.neutro,
-    image: eq.item.image || null,
-    name: eq.item.name,
-  };
-}
-
-/// Layered paper doll: a generic cartoon guy in swim trunks (SVG), with each
-/// equipped piece drawn on top. Slots backed by real art (see
-/// assets/chispim/) get their actual sprite overlaid via <img>; slots
-/// without art fall back to a flat shape tinted by the item's element
-/// color, same as before. Pure presentation — reads equipped state, renders
-/// nothing interactive (clicks go to the slot icons around it).
-function characterSvg(visuals) {
-  const skin = '#f2c19b';
-  const skinShade = '#e0a87e';
-  const hair = '#4a3626';
-  const trunk = '#e2445c';
-  const blade = '#cfd6e4';
-
-  // Only render the tinted-shape fallback when there's no real image for
-  // that slot — otherwise the <img> overlay (see gearOverlaysHtml) covers it.
-  const helmet = visuals.helmet && !visuals.helmet.image ? visuals.helmet.color : null;
-  const chest = visuals.armor && !visuals.armor.image ? visuals.armor.color : null;
-  const pants = visuals.pants && !visuals.pants.image ? visuals.pants.color : null;
-  const gloves = visuals.gloves && !visuals.gloves.image ? visuals.gloves.color : null;
-  const boots = visuals.boots && !visuals.boots.image ? visuals.boots.color : null;
-  const weapon = visuals.weapon && !visuals.weapon.image ? visuals.weapon.color : null;
-
-  return `<svg viewBox="0 0 120 200" width="110" height="184" role="img" aria-label="Seu personagem">
-    <g stroke="#14141c" stroke-width="2" stroke-linejoin="round">
-      <!-- arms (behind torso) -->
-      <rect x="30" y="66" width="11" height="42" rx="5.5" fill="${skin}" />
-      <rect x="79" y="66" width="11" height="42" rx="5.5" fill="${skin}" />
-      <!-- legs + feet -->
-      <rect x="47" y="110" width="11" height="62" rx="5" fill="${skin}" />
-      <rect x="62" y="110" width="11" height="62" rx="5" fill="${skin}" />
-      <ellipse cx="51" cy="175" rx="9" ry="5" fill="${skinShade}" />
-      <ellipse cx="69" cy="175" rx="9" ry="5" fill="${skinShade}" />
-      <!-- torso -->
-      <rect x="42" y="60" width="36" height="54" rx="11" fill="${skin}" />
-      <!-- sunga (always on) -->
-      <path d="M42 97 h36 v9 q-8 9 -18 9 q-10 0 -18 -9 z" fill="${trunk}" />
-      <line x1="42" y1="99" x2="78" y2="99" stroke="#a32b42" />
-      ${pants ? `
-        <rect x="45" y="100" width="14" height="64" rx="6" fill="${pants}" />
-        <rect x="61" y="100" width="14" height="64" rx="6" fill="${pants}" />
-        <rect x="42" y="97" width="36" height="9" rx="3" fill="${pants}" />` : ''}
-      ${boots ? `
-        <rect x="44" y="154" width="14" height="18" rx="4" fill="${boots}" />
-        <rect x="62" y="154" width="14" height="18" rx="4" fill="${boots}" />
-        <ellipse cx="51" cy="175" rx="10" ry="5.5" fill="${boots}" />
-        <ellipse cx="69" cy="175" rx="10" ry="5.5" fill="${boots}" />` : ''}
-      ${chest ? `
-        <rect x="40" y="58" width="40" height="48" rx="10" fill="${chest}" />
-        <circle cx="40" cy="66" r="8" fill="${chest}" />
-        <circle cx="80" cy="66" r="8" fill="${chest}" />
-        <line x1="60" y1="64" x2="60" y2="100" stroke="#14141c" stroke-opacity="0.35" />` : ''}
-      <!-- head -->
-      <circle cx="60" cy="38" r="21" fill="${skin}" />
-      <path d="M39 36 a21 21 0 0 1 42 0 z" fill="${hair}" />
-      ${helmet ? `
-        <path d="M37 38 a23 23 0 0 1 46 0 z" fill="${helmet}" />
-        <rect x="35" y="36" width="50" height="7" rx="3.5" fill="${helmet}" />` : ''}
-      <!-- face (drawn after helmet so it never gets covered) -->
-      <circle cx="53" cy="42" r="2.4" fill="#222" stroke="none" />
-      <circle cx="67" cy="42" r="2.4" fill="#222" stroke="none" />
-      <path d="M53 50 q7 6 14 0" stroke="#222" fill="none" stroke-width="2" stroke-linecap="round" />
-      ${weapon ? `
-        <polygon points="84,104 91,56 97,61 90,106" fill="${blade}" />
-        <circle cx="87" cy="103" r="3.6" fill="${weapon}" />
-        <polygon points="36,104 29,56 23,61 30,106" fill="${blade}" />
-        <circle cx="33" cy="103" r="3.6" fill="${weapon}" />` : ''}
-      <!-- hands (over blade hilts so the grip reads as "holding") -->
-      <circle cx="35.5" cy="111" r="6" fill="${skin}" />
-      <circle cx="84.5" cy="111" r="6" fill="${skin}" />
-      ${gloves ? `
-        <circle cx="35.5" cy="111" r="7.5" fill="${gloves}" />
-        <rect x="29" y="100" width="13" height="7" rx="3" fill="${gloves}" />
-        <circle cx="84.5" cy="111" r="7.5" fill="${gloves}" />
-        <rect x="78" y="100" width="13" height="7" rx="3" fill="${gloves}" />` : ''}
-    </g>
-  </svg>`;
-}
-
-// Anchor point (center, as % of the 110×184 doll box) + width (as % of box
-// width) for each slot's real-art overlay. z-index controls draw order —
-// roughly back-to-front the way a person gets dressed, with the weapon
-// last so it reads as held in front of the hands.
-const GEAR_OVERLAY_ANCHORS = {
-  weapon: { left: 50, top: 57, width: 96, z: 6 },
-  pants: { left: 50, top: 68, width: 38, z: 2 },
-  boots: { left: 50, top: 90, width: 36, z: 3 },
-  armor: { left: 50, top: 46, width: 50, z: 4 },
-  helmet: { left: 50, top: 17, width: 46, z: 5 },
-  gloves: { left: 50, top: 55, width: 48, z: 7 },
-};
-
-function gearOverlaysHtml(visuals) {
-  return Object.entries(visuals)
-    .filter(([, v]) => v && v.image)
-    .map(([slotId, v]) => {
-      const a = GEAR_OVERLAY_ANCHORS[slotId];
-      return `<img class="gear-overlay" src="${v.image}" alt="${v.name}"
-        style="left:${a.left}%; top:${a.top}%; width:${a.width}%; z-index:${a.z};">`;
-    })
-    .join('');
-}
-
-/// Combines the base SVG doll with real-art overlays into the final markup
-/// for `.equip-character`.
-function characterVisual(state) {
-  const visuals = {
-    helmet: gearVisual(state, 'helmet'),
-    armor: gearVisual(state, 'armor'),
-    pants: gearVisual(state, 'pants'),
-    gloves: gearVisual(state, 'gloves'),
-    boots: gearVisual(state, 'boots'),
-    weapon: gearVisual(state, 'weapon'),
-  };
-  return `<div class="character-visual">${characterSvg(visuals)}${gearOverlaysHtml(visuals)}</div>`;
-}
 
 const STAT_LABELS = {
   clickFlat: (v) => `+${formatNumber(v)} Dano de Clique`,
@@ -251,11 +115,9 @@ export function renderBossTimer(remainingMs) {
   el.textContent = `⏱ ${seconds}s para derrotar o chefe!`;
 }
 
-// Left/right split of the 6 slots around the character avatar (see the
-// reference layout: weapon + upper-body gear on one side, the rest on the
-// other). Purely cosmetic grouping — any slot can go in either side.
-const LEFT_SLOT_IDS = ['helmet', 'armor', 'weapon'];
-const RIGHT_SLOT_IDS = ['pants', 'gloves', 'boots'];
+// All 6 equip slots, shown as a single grid of square tiles (no paper-doll
+// avatar) — order is purely cosmetic.
+const ALL_SLOT_IDS = ['helmet', 'armor', 'weapon', 'pants', 'gloves', 'boots'];
 
 // The Equipment tab now also houses Forja and Materiais as sub-tabs (they
 // used to be top-level tabs) — one less thing competing for space in the
@@ -288,8 +150,7 @@ export function renderEquipmentTab(state, activeSubTab = 'equip', expandedForgeB
 }
 
 function equipRingContentHtml(state) {
-  const leftSlots = LEFT_SLOT_IDS.map(getSlot);
-  const rightSlots = RIGHT_SLOT_IDS.map(getSlot);
+  const slots = ALL_SLOT_IDS.map(getSlot);
 
   const inventoryHtml = state.inventory.length
     ? state.inventory.map((entry) => inventoryTileHtml(state, entry)).join('')
@@ -297,11 +158,7 @@ function equipRingContentHtml(state) {
 
   return `
     <div class="equip-screen">
-      <div class="equip-ring">
-        <div class="equip-side">${leftSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
-        <div class="equip-character">${characterVisual(state)}</div>
-        <div class="equip-side">${rightSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
-      </div>
+      <div class="equip-slot-grid">${slots.map((s) => slotIconHtml(state, s)).join('')}</div>
       <div class="equip-inventory-header">Inventário</div>
       <div class="equip-inventory-grid">${inventoryHtml}</div>
     </div>
