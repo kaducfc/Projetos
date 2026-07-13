@@ -4,7 +4,8 @@ import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, a
 import { isBossStage, findMaterialInfo } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
-import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock } from './systems/crafting.js';
+import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock, destroyItem } from './systems/crafting.js';
+import { getItem } from './data/items.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
 import { formatNumber } from './format.js';
@@ -17,7 +18,7 @@ import { GAME_BUILD } from './version.js';
 import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
   renderUpgradesTab, renderBossTimer,
-  renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showModal, hideModal,
+  renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, renderEventsTab, renderAchievementsTab, renderShopTab, pulseEventBoss,
 } from './ui/render.js';
 
@@ -148,9 +149,7 @@ function refreshCombatOnly() {
 
 function handleKillEvent(event) {
   if (!event) return;
-  showToast(`💀 Derrotado! +${formatNumber(event.goldGained)} 💰${
-    event.drops.map((d) => ` +${d.qty} ${d.emoji}`).join('')
-  }`);
+  showLootPopup(event.goldGained, event.drops);
   renderTopBar(state);
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
@@ -406,6 +405,27 @@ function wireModalEvents() {
         if (unsocketCard(state, uid)) {
           showItemDetailModal(state, uid);
           showToast('🃏 Carta removida.');
+          fullRefresh();
+        }
+      });
+      return;
+    }
+
+    const destroyBtn = e.target.closest('[data-destroy-uid]');
+    if (destroyBtn) {
+      runModalAction(() => {
+        const uid = Number(destroyBtn.dataset.destroyUid);
+        const entry = state.inventory.find((i) => i.uid === uid);
+        if (!entry) return;
+        const itemName = getItem(entry.itemId).name;
+        if (!window.confirm(`Destruir ${itemName}? Você recupera 80% dos materiais gastos no craft e aprimoramento.`)) return;
+        const refund = destroyItem(state, uid);
+        if (refund) {
+          hideModal();
+          const refundStr = Object.entries(refund)
+            .map(([matId, qty]) => `+${qty} ${findMaterialInfo(matId)?.emoji ?? ''}`)
+            .join(' ');
+          showToast(`🗑️ ${itemName} destruído! ${refundStr}`);
           fullRefresh();
         }
       });

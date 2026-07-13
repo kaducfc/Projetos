@@ -384,7 +384,10 @@ function itemDetailHtml(state, uid, pickerOpen) {
       ${resistanceLine}
       ${cardSlotHtml(state, uid, entry, pickerOpen, item)}
       ${enhancePanelHtml(state, uid, entry, item)}
-      ${actionBtn}
+      <div class="modal-action-row">
+        ${actionBtn}
+        <button class="modal-action-btn destroy-btn" data-destroy-uid="${uid}">Destruir (-80% material)</button>
+      </div>
     </div>
   `;
 }
@@ -903,6 +906,17 @@ export function pulseMonster() {
   sprite.classList.remove('hit');
   void sprite.offsetWidth; // restart animation
   sprite.classList.add('hit');
+}
+
+export function showLootPopup(goldGained, drops) {
+  const container = document.getElementById('loot-popup');
+  const parts = [`+${formatNumber(goldGained)} 💰`, ...drops.map((d) => `+${d.qty} ${d.emoji}`)];
+  const el = document.createElement('div');
+  el.className = 'loot-popup-entry';
+  el.textContent = parts.join(' ');
+  container.appendChild(el);
+  while (container.childNodes.length > 3) container.removeChild(container.firstChild);
+  setTimeout(() => el.remove(), 2500);
 }
 
 export function showToast(message) {

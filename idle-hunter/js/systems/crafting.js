@@ -154,3 +154,47 @@ export function upgradeToMaster(state, uid) {
   entry.isMaster = true;
   return true;
 }
+
+/// Every material this instance has consumed so far: the initial craft
+/// cost, plus one enhanceCost[i] per level already bought, plus the Rank
+/// Master cost if it went through that upgrade. Doesn't include goldCost —
+/// destroying refunds materials only, not gold.
+function materialsSpentOn(item, entry) {
+  const spent = { ...item.materialCost };
+  for (let i = 0; i < entry.enhanceLevel; i++) {
+    spent[item.commonMaterialId] = (spent[item.commonMaterialId] || 0) + item.enhanceCost[i];
+  }
+  if (entry.isMaster) {
+    spent[item.commonMaterialId] = (spent[item.commonMaterialId] || 0) + item.masterMaterialCost;
+    spent[item.crystalMaterialId] = (spent[item.crystalMaterialId] || 0) + 1;
+  }
+  return spent;
+}
+
+export const DESTROY_REFUND_RATE = 0.8;
+
+/// Destroys an inventory instance, refunding DESTROY_REFUND_RATE (80%) of
+/// every material it consumed across crafting and every enhance/master
+/// upgrade since (rounded down per material). A socketed card, if any, is
+/// unsocketed back into state.cards first — see unsocketCard() above.
+/// Unequips the slot if this was the equipped piece. Returns the refunded
+/// {materialId: qty} map, or null if uid doesn't exist.
+export function destroyItem(state, uid) {
+  const entry = getEntry(state, uid);
+  if (!entry) return null;
+  const item = getItem(entry.itemId);
+
+  if (entry.cardId) unsocketCard(state, uid);
+
+  const refund = {};
+  for (const [matId, qty] of Object.entries(materialsSpentOn(item, entry))) {
+    const amount = Math.floor(qty * DESTROY_REFUND_RATE);
+    if (amount <= 0) continue;
+    state.materials[matId] = (state.materials[matId] || 0) + amount;
+    refund[matId] = amount;
+  }
+
+  if (state.equipped[item.slotId] === uid) state.equipped[item.slotId] = null;
+  state.inventory = state.inventory.filter((i) => i.uid !== uid);
+  return refund;
+}
