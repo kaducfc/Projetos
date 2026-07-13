@@ -282,7 +282,7 @@ export const WEAK_MONSTER_GROUPS = [
     endStage: 19,
     monsters: [
       { id: 'braslimo', name: 'Braslimo', element: 'fogo', emoji: '🔥', image: 'assets/braslimo/monster.png', material: { id: 'braslimo_gel', name: 'Gel Incandescente', emoji: '🟠', image: 'assets/braslimo/gel.png' } },
-      { id: 'cristalino', name: 'Cristalino', element: 'agua', emoji: '🔷', material: { id: 'cristalino_shard', name: 'Fragmento de Cristal', emoji: '💠' } },
+      { id: 'cristalino', name: 'Cristalino', element: 'agua', emoji: '🔷', image: 'assets/cristalino/monster.png', material: { id: 'cristalino_shard', name: 'Fragmento de Cristal', emoji: '💠', image: 'assets/cristalino/shard.png' } },
       { id: 'espinhoco', name: 'Espinhoco', element: 'neutro', emoji: '🦔', material: { id: 'espinhoco_thorn', name: 'Espinho Afiado', emoji: '🌵' } },
       { id: 'tronk', name: 'Tronk', element: 'planta', emoji: '🌳', material: { id: 'tronk_wood', name: 'Madeira Viva', emoji: '🪵' } },
       { id: 'aracneon', name: 'Aracneon', element: 'eletrico', emoji: '🕷️', material: { id: 'aracneon_silk', name: 'Seda Elétrica', emoji: '⚡' } },
