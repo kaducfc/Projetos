@@ -182,9 +182,12 @@ export const BOSSES = [
     name: 'Colhedor Carmesim',
     element: 'planta',
     emoji: '🌺',
+    image: 'assets/colhedor_carmesim/monster.png',
     materials: {
-      primary1: { id: 'colhedor_carmesim_scythe', name: 'Foice Carmesim', emoji: '🔪' },
-      primary2: { id: 'colhedor_carmesim_root', name: 'Raiz Sanguínea', emoji: '🩸' },
+      // id kept as colhedor_carmesim_scythe (save-file key) even though the
+      // item was re-arted/renamed from "Foice Carmesim" to "Rosa Escarlate".
+      primary1: { id: 'colhedor_carmesim_scythe', name: 'Rosa Escarlate', emoji: '🌹', image: 'assets/colhedor_carmesim/rosa.png' },
+      primary2: { id: 'colhedor_carmesim_root', name: 'Raiz Sanguínea', emoji: '🩸', image: 'assets/colhedor_carmesim/raiz.png' },
     },
     crystal: { id: 'colhedor_carmesim_crystal', name: 'Cristal do Colhedor Carmesim', emoji: '💎' },
   },

@@ -59,7 +59,7 @@ const BOSS_WEAPONS = {
   chispim: { name: 'Dual Blade de Chispim', emoji: '⚔️' },
   solkaiser: { name: 'Arco Flamejante de Solkaiser', emoji: '🏹' },
   tartarok: { name: 'Espada e Escudo de Tartarok', emoji: '🗡️' },
-  colhedor_carmesim: { name: 'Foice do Colhedor', emoji: '🔪' },
+  colhedor_carmesim: { name: 'Foice Carmesim', emoji: '🔪' },
   grommuk: { name: 'Malho Tribal', emoji: '🔨' },
   vulkarion: { name: 'Machado Vulcânico', emoji: '🪓' },
   leviargon: { name: 'Lança Abissal', emoji: '🔱' },
@@ -68,9 +68,9 @@ const BOSS_WEAPONS = {
   bahamorth: { name: 'Espada Dracônica', emoji: '⚔️' },
 };
 
-// Chispim, Solkaiser and Tartarok have real reference art so far (see
-// idle-hunter/assets/) — reused here under each boss id. Every other boss
-// falls back to emoji, same as before.
+// Chispim, Solkaiser, Tartarok and Colhedor Carmesim have real reference
+// art so far (see idle-hunter/assets/) — reused here under each boss id.
+// Every other boss falls back to emoji, same as before.
 const BOSS_EQUIP_IMAGES = {
   chispim: {
     weapon: 'assets/chispim/dualblade.png',
@@ -95,6 +95,14 @@ const BOSS_EQUIP_IMAGES = {
     pants: 'assets/tartarok/pants.png',
     gloves: 'assets/tartarok/luvas.png',
     boots: 'assets/tartarok/botas.png',
+  },
+  colhedor_carmesim: {
+    weapon: 'assets/colhedor_carmesim/foice.png',
+    helmet: 'assets/colhedor_carmesim/helm.png',
+    armor: 'assets/colhedor_carmesim/armor.png',
+    pants: 'assets/colhedor_carmesim/pants.png',
+    gloves: 'assets/colhedor_carmesim/luvas.png',
+    boots: 'assets/colhedor_carmesim/botas.png',
   },
 };
 
