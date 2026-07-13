@@ -6,8 +6,8 @@ import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
 import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
-import { getEventWindow, TRADE_COST, TRADE_YIELD, getTradeUnlockCost } from '../data/events.js';
-import { isEventClaimed, computeEventBossMaxHp, isTradeGroupUnlocked } from '../systems/events.js';
+import { getEventWindow, TRADE_COST, TRADE_YIELD, getTradeUnlockCost, getTradeCycleInfo } from '../data/events.js';
+import { isEventClaimed, computeEventBossMaxHp, isTradeGroupUnlocked, computeTradeReceiveQty } from '../systems/events.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
 import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
@@ -641,14 +641,16 @@ function formatDuration(ms) {
 // by main.js (a transient, un-persisted "time left in this attempt" clock,
 // same idea as the regular boss timer) — null means no attempt in progress.
 //
-// "Mercador" lets the player permanently unlock any WEAK_MONSTER_GROUPS
-// band (with Moeda de Evento, pricier for higher stages) and then trade
-// weak-monster materials 2-for-1 within it, forever. Every band is listed
-// up front, collapsed by default (`expandedTradeGroups`, keyed by
-// group.startStage — main.js-owned transient UI state, same pattern as the
-// Forjar boss list). `tradeFromMaterialId` is the material picked as the
-// trade-in, also main.js-owned transient UI state — null means nothing
-// selected yet.
+// "Mercador" is a recurring event (new one every TRADE_CYCLE_MS, see
+// getTradeCycleInfo) that re-locks every WEAK_MONSTER_GROUPS band each
+// time. The player spends Moeda de Evento to unlock whichever band(s) they
+// want for the current event, then trades within it until the next one
+// starts. Every band is listed up front, collapsed by default
+// (`expandedTradeGroups`, keyed by group.startStage — main.js-owned
+// transient UI state, same pattern as the Forjar boss list).
+// `tradeFromMaterialId` is the material picked as the trade-in and
+// `tradeQty` how much of it to spend this trade (both main.js-owned
+// transient UI state) — tradeFromMaterialId null means nothing selected.
 // ---------------------------------------------------------------
 
 function eventListItemHtml(id, icon, name, statusLine, expanded, bodyHtml) {
@@ -708,7 +710,7 @@ function cacaAprimoradaStatusLine(state) {
   return `Próximo em ${formatDuration(win.msUntilNextWindow)}`;
 }
 
-function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId) {
+function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId, tradeQty) {
   const have = state.materials[mat.id] || 0;
   const isFrom = tradeFromMaterialId === mat.id;
   const canBeFrom = have >= TRADE_COST;
@@ -723,23 +725,32 @@ function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId) {
   }
 
   if (isFrom) {
+    const max = Math.max(TRADE_COST, Math.floor(have / TRADE_COST) * TRADE_COST);
+    const received = computeTradeReceiveQty(tradeQty);
     return `<div class="material-card trade-card selected">
       <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
       <div class="name">${mat.name}</div>
       <div class="qty">${formatNumber(have)}</div>
+      <div class="trade-qty-control">
+        <button class="trade-qty-btn" data-trade-qty-dec ${tradeQty <= TRADE_COST ? 'disabled' : ''}>−</button>
+        <input type="number" class="trade-qty-input" data-trade-qty-input value="${tradeQty}" min="${TRADE_COST}" max="${max}" step="${TRADE_COST}">
+        <button class="trade-qty-btn" data-trade-qty-inc ${tradeQty >= max ? 'disabled' : ''}>＋</button>
+      </div>
+      <div class="trade-qty-preview">recebe <strong>${received}</strong></div>
       <button class="forge-toggle-btn" data-trade-cancel>Cancelar</button>
     </div>`;
   }
 
+  const received = computeTradeReceiveQty(tradeQty);
   return `<div class="material-card trade-card">
     <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
     <div class="name">${mat.name}</div>
     <div class="qty">${formatNumber(have)}</div>
-    <button class="forge-toggle-btn" data-trade-target="${mat.id}">Receber (2→1)</button>
+    <button class="forge-toggle-btn" data-trade-target="${mat.id}" ${received > 0 ? '' : 'disabled'}>Receber ${received}</button>
   </div>`;
 }
 
-function tradeGroupHtml(state, group, expanded, tradeFromMaterialId) {
+function tradeGroupHtml(state, group, expanded, tradeFromMaterialId, tradeQty) {
   const unlocked = isTradeGroupUnlocked(state, group);
   const header = `<h3><span class="icon">🧺</span> Estágio ${group.startStage}–${group.endStage}</h3>`;
 
@@ -749,10 +760,9 @@ function tradeGroupHtml(state, group, expanded, tradeFromMaterialId) {
     return `<div class="family-group">
       <div class="family-group-header">
         ${header}
-        <span style="color:var(--text-dim); font-size:11px;">🔒 Bloqueado</span>
+        <span style="color:var(--text-dim); font-size:11px;">🔒</span>
       </div>
-      <p class="event-sub">Desbloqueie esta categoria para trocar os materiais dela entre si (${TRADE_COST}→${TRADE_YIELD}).</p>
-      <button class="forge-toggle-btn" data-unlock-trade-group="${group.startStage}" ${affordable ? '' : 'disabled'}>🎫 Desbloquear por ${formatNumber(cost)}</button>
+      <button class="forge-toggle-btn" data-unlock-trade-group="${group.startStage}" ${affordable ? '' : 'disabled'}>🎫 Desbloquear (${formatNumber(cost)})</button>
     </div>`;
   }
 
@@ -761,28 +771,31 @@ function tradeGroupHtml(state, group, expanded, tradeFromMaterialId) {
       ${header}
       <button class="forge-toggle-btn" data-toggle-trade-group="${group.startStage}">${expanded ? '▲ Recolher' : '▼ Expandir'}</button>
     </div>
-    ${expanded ? `<div class="material-grid">${group.monsters.map((m) => tradeMaterialCardHtml(state, group, m.material, tradeFromMaterialId)).join('')}</div>` : ''}
+    ${expanded ? `<div class="material-grid">${group.monsters.map((m) => tradeMaterialCardHtml(state, group, m.material, tradeFromMaterialId, tradeQty)).join('')}</div>` : ''}
   </div>`;
 }
 
-function mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups) {
+function mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty) {
+  const { msUntilNextCycle } = getTradeCycleInfo();
   return `
     <div class="event-panel">
-      <p class="event-sub">Desbloqueie categorias de estágio com 🎫 Moeda de Evento (quanto maior o estágio, maior o custo) e troque ${TRADE_COST} de um material por ${TRADE_YIELD} de outro da mesma categoria, para sempre.</p>
-      ${WEAK_MONSTER_GROUPS.map((g) => tradeGroupHtml(state, g, expandedTradeGroups.has(g.startStage), tradeFromMaterialId)).join('')}
+      <div class="event-active-badge">🧺 Novo evento em ${formatDuration(msUntilNextCycle)}</div>
+      <p class="event-sub">Desbloqueie uma categoria e troque materiais (${TRADE_COST}→${TRADE_YIELD}) até o evento acabar.</p>
+      ${WEAK_MONSTER_GROUPS.map((g) => tradeGroupHtml(state, g, expandedTradeGroups.has(g.startStage), tradeFromMaterialId, tradeQty)).join('')}
     </div>`;
 }
 
 function mercadorStatusLine(state) {
+  const { msUntilNextCycle } = getTradeCycleInfo();
   const unlockedCount = WEAK_MONSTER_GROUPS.filter((g) => isTradeGroupUnlocked(state, g)).length;
-  return `${unlockedCount}/${WEAK_MONSTER_GROUPS.length} categorias desbloqueadas`;
+  return `${unlockedCount}/${WEAK_MONSTER_GROUPS.length} aberto · novo evento em ${formatDuration(msUntilNextCycle)}`;
 }
 
-export function renderEventsTab(state, engagementRemainingMs, expandedEvents = new Set(), tradeFromMaterialId = null, expandedTradeGroups = new Set()) {
+export function renderEventsTab(state, engagementRemainingMs, expandedEvents = new Set(), tradeFromMaterialId = null, expandedTradeGroups = new Set(), tradeQty = TRADE_COST) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `<div class="event-list">
     ${eventListItemHtml('caca', '🎪', 'Caça Aprimorada', cacaAprimoradaStatusLine(state), expandedEvents.has('caca'), cacaAprimoradaContentHtml(state, engagementRemainingMs))}
-    ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(state), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups))}
+    ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(state), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty))}
   </div>`;
 }
 

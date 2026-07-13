@@ -34,10 +34,12 @@ export function createDefaultState() {
     eventClaimedCycle: null,
     eventWins: 0,
 
-    // Mercador: which WEAK_MONSTER_GROUPS bands (identified by startStage)
-    // the player has permanently unlocked with Moeda de Evento — see
-    // data/events.js (getTradeUnlockCost) and systems/events.js.
-    unlockedTradeGroups: [],
+    // Mercador: startStage -> the trade-cycle index (see getTradeCycleInfo
+    // in data/events.js) it was unlocked for. A band counts as unlocked
+    // only while its stored cycle index still matches the current one —
+    // once the event rotates to a new cycle, every band re-locks on its
+    // own without needing any explicit reset here.
+    tradeUnlocks: {},
   };
 }
 

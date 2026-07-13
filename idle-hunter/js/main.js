@@ -9,8 +9,8 @@ import { getItem } from './data/items.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
 import { formatNumber } from './format.js';
-import { getEventWindow, EVENT_TIME_LIMIT_MS } from './data/events.js';
-import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVictory, resetEventEncounter, canTrade, performTrade, unlockTradeGroup } from './systems/events.js';
+import { getEventWindow, EVENT_TIME_LIMIT_MS, TRADE_COST } from './data/events.js';
+import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVictory, resetEventEncounter, canTrade, performTrade, unlockTradeGroup, computeTradeReceiveQty } from './systems/events.js';
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
@@ -61,10 +61,12 @@ let expandedForgeBosses = new Set();
 
 // Same idea for the Eventos list — each entry is an event id ('caca' or
 // 'mercador'). Which material the player picked as the trade-in for the
-// Mercador event, and which of its (now always-listed) stage bands are
-// expanded, live here too, since it's all just as transient/UI-only.
+// Mercador event, how much of it they want to spend this trade, and which
+// of its (now always-listed) stage bands are expanded, live here too,
+// since it's all just as transient/UI-only.
 let expandedEvents = new Set();
 let tradeFromMaterialId = null;
+let tradeQty = TRADE_COST;
 let expandedTradeGroups = new Set();
 
 function renderEquipTab() {
@@ -72,7 +74,7 @@ function renderEquipTab() {
 }
 
 function renderEventsTabNow() {
-  renderEventsTab(state, currentEventEngagementMs(), expandedEvents, tradeFromMaterialId, expandedTradeGroups);
+  renderEventsTab(state, currentEventEngagementMs(), expandedEvents, tradeFromMaterialId, expandedTradeGroups, tradeQty);
 }
 
 function currentEventEngagementMs() {
@@ -592,8 +594,20 @@ function tickEventBoss(stats) {
   renderEventsTabNow();
 }
 
+// Clamps to [TRADE_COST, however much of the currently-selected trade-in
+// material the player actually has, rounded down to a whole TRADE_COST
+// batch] — shared by the +/- steppers and the free-typed number input.
+function clampTradeQty(qty) {
+  const have = state.materials[tradeFromMaterialId] || 0;
+  const max = Math.max(TRADE_COST, Math.floor(have / TRADE_COST) * TRADE_COST);
+  if (!Number.isFinite(qty) || qty < TRADE_COST) return TRADE_COST;
+  return Math.min(max, qty);
+}
+
 function wireEventTabEvents() {
-  document.getElementById('tab-events').addEventListener('click', (e) => {
+  const container = document.getElementById('tab-events');
+
+  container.addEventListener('click', (e) => {
     if (e.target.closest('#event-boss-sprite')) {
       onClickEventBoss();
       return;
@@ -614,6 +628,7 @@ function wireEventTabEvents() {
       if (expandedTradeGroups.has(startStage)) expandedTradeGroups.delete(startStage);
       else expandedTradeGroups.add(startStage);
       tradeFromMaterialId = null; // avoid a stale selection from a now-hidden group
+      tradeQty = TRADE_COST;
       renderEventsTabNow();
       return;
     }
@@ -624,7 +639,7 @@ function wireEventTabEvents() {
       const group = WEAK_MONSTER_GROUPS.find((g) => g.startStage === startStage);
       if (group && unlockTradeGroup(state, group)) {
         expandedTradeGroups.add(startStage);
-        showToast(`🧺 Categoria Estágio ${group.startStage}–${group.endStage} desbloqueada!`);
+        showToast(`🧺 Estágio ${group.startStage}–${group.endStage} desbloqueado!`);
         renderEventsTabNow();
       }
       return;
@@ -633,12 +648,26 @@ function wireEventTabEvents() {
     const selectBtn = e.target.closest('[data-trade-select]');
     if (selectBtn) {
       tradeFromMaterialId = selectBtn.dataset.tradeSelect;
+      tradeQty = TRADE_COST;
       renderEventsTabNow();
       return;
     }
 
     if (e.target.closest('[data-trade-cancel]')) {
       tradeFromMaterialId = null;
+      tradeQty = TRADE_COST;
+      renderEventsTabNow();
+      return;
+    }
+
+    if (e.target.closest('[data-trade-qty-inc]')) {
+      tradeQty = clampTradeQty(tradeQty + TRADE_COST);
+      renderEventsTabNow();
+      return;
+    }
+
+    if (e.target.closest('[data-trade-qty-dec]')) {
+      tradeQty = clampTradeQty(tradeQty - TRADE_COST);
       renderEventsTabNow();
       return;
     }
@@ -649,15 +678,28 @@ function wireEventTabEvents() {
       const group = WEAK_MONSTER_GROUPS.find((g) => g.monsters.some((m) => m.material.id === tradeFromMaterialId));
       const fromInfo = findMaterialInfo(tradeFromMaterialId);
       const toInfo = findMaterialInfo(toMaterialId);
-      const ok = group && performTrade(state, group, tradeFromMaterialId, toMaterialId);
+      const usedQty = tradeQty;
+      const receivedQty = computeTradeReceiveQty(usedQty);
+      const ok = group && performTrade(state, group, tradeFromMaterialId, toMaterialId, usedQty);
       tradeFromMaterialId = null;
+      tradeQty = TRADE_COST;
       if (ok) {
-        showToast(`🧺 Trocado! -2 ${fromInfo?.emoji ?? ''} ${fromInfo?.name ?? ''} · +1 ${toInfo?.emoji ?? ''} ${toInfo?.name ?? ''}`);
+        showToast(`🧺 Trocado! -${usedQty} ${fromInfo?.emoji ?? ''} ${fromInfo?.name ?? ''} · +${receivedQty} ${toInfo?.emoji ?? ''} ${toInfo?.name ?? ''}`);
       }
       renderEventsTabNow();
       renderEquipTab(); // Materiais may be showing, and just changed
       return;
     }
+  });
+
+  // Separate from the click handler above: typing a value fires input/change
+  // events, not click, so the free-typed quantity box needs its own listener.
+  container.addEventListener('change', (e) => {
+    const qtyInput = e.target.closest('[data-trade-qty-input]');
+    if (!qtyInput || tradeFromMaterialId == null) return;
+    const snapped = Math.round(Number(qtyInput.value) / TRADE_COST) * TRADE_COST;
+    tradeQty = clampTradeQty(snapped);
+    renderEventsTabNow();
   });
 }
 
