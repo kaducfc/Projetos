@@ -58,7 +58,7 @@ export function getEnhanceLabel(level, isMaster) {
 const BOSS_WEAPONS = {
   chispim: { name: 'Dual Blade de Chispim', emoji: '⚔️' },
   solkaiser: { name: 'Arco Flamejante de Solkaiser', emoji: '🏹' },
-  tartarok: { name: 'Tridente das Marés', emoji: '🔱' },
+  tartarok: { name: 'Espada e Escudo de Tartarok', emoji: '🗡️' },
   colhedor_carmesim: { name: 'Foice do Colhedor', emoji: '🔪' },
   grommuk: { name: 'Malho Tribal', emoji: '🔨' },
   vulkarion: { name: 'Machado Vulcânico', emoji: '🪓' },
@@ -68,9 +68,9 @@ const BOSS_WEAPONS = {
   bahamorth: { name: 'Espada Dracônica', emoji: '⚔️' },
 };
 
-// Chispim and Solkaiser have real reference art so far (see idle-hunter/
-// assets/) — reused here under each boss id. Every other boss falls back
-// to emoji, same as before.
+// Chispim, Solkaiser and Tartarok have real reference art so far (see
+// idle-hunter/assets/) — reused here under each boss id. Every other boss
+// falls back to emoji, same as before.
 const BOSS_EQUIP_IMAGES = {
   chispim: {
     weapon: 'assets/chispim/dualblade.png',
@@ -87,6 +87,14 @@ const BOSS_EQUIP_IMAGES = {
     pants: 'assets/solkaiser/pants.png',
     gloves: 'assets/solkaiser/luvas.png',
     boots: 'assets/solkaiser/botas.png',
+  },
+  tartarok: {
+    weapon: 'assets/tartarok/espada.png',
+    helmet: 'assets/tartarok/helm.png',
+    armor: 'assets/tartarok/armor.png',
+    pants: 'assets/tartarok/pants.png',
+    gloves: 'assets/tartarok/luvas.png',
+    boots: 'assets/tartarok/botas.png',
   },
 };
 

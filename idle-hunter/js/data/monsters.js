@@ -169,9 +169,10 @@ export const BOSSES = [
     name: 'Tartarok',
     element: 'agua',
     emoji: '🐢',
+    image: 'assets/tartarok/monster.png',
     materials: {
-      primary1: { id: 'tartarok_shell', name: 'Casco de Tartarok', emoji: '🐚' },
-      primary2: { id: 'tartarok_pearl', name: 'Pérola Primordial', emoji: '⚪' },
+      primary1: { id: 'tartarok_shell', name: 'Casco de Tartarok', emoji: '🐚', image: 'assets/tartarok/casco.png' },
+      primary2: { id: 'tartarok_pearl', name: 'Pérola Primordial', emoji: '⚪', image: 'assets/tartarok/perola.png' },
     },
     crystal: { id: 'tartarok_crystal', name: 'Cristal de Tartarok', emoji: '💎' },
   },
