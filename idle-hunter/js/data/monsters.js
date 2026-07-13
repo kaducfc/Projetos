@@ -197,9 +197,10 @@ export const BOSSES = [
     name: 'Grommuk',
     element: 'neutro',
     emoji: '👹',
+    image: 'assets/grommuk/monster.png',
     materials: {
-      primary1: { id: 'grommuk_fang', name: 'Presa de Grommuk', emoji: '🦷' },
-      primary2: { id: 'grommuk_medallion', name: 'Medalhão Tribal', emoji: '🥉' },
+      primary1: { id: 'grommuk_fang', name: 'Presa de Grommuk', emoji: '🦷', image: 'assets/grommuk/presa.png' },
+      primary2: { id: 'grommuk_medallion', name: 'Medalhão Tribal', emoji: '🥉', image: 'assets/grommuk/medalhao.png' },
     },
     crystal: { id: 'grommuk_crystal', name: 'Cristal de Grommuk', emoji: '💎' },
   },
