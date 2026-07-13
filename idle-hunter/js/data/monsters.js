@@ -145,8 +145,8 @@ export const BOSSES = [
     emoji: '🐹',
     image: 'assets/chispim/monster.png',
     materials: {
-      primary1: { id: 'chispim_heart', name: 'Coração de Chispim', emoji: '❤️' },
-      primary2: { id: 'chispim_whisker', name: 'Bigode Condutor', emoji: '⚡' },
+      primary1: { id: 'chispim_heart', name: 'Núcleo de Faísca', emoji: '❤️', image: 'assets/chispim/nucleo_faisca.png' },
+      primary2: { id: 'chispim_whisker', name: 'Cauda Condutora', emoji: '⚡', image: 'assets/chispim/cauda_condutora.png' },
     },
     crystal: { id: 'chispim_crystal', name: 'Cristal de Chispim', emoji: '💎' },
   },
