@@ -61,16 +61,15 @@ const BOSS_WEAPONS = {
   tartarok: { name: 'Espada e Escudo de Tartarok', emoji: '🗡️' },
   colhedor_carmesim: { name: 'Foice Carmesim', emoji: '🔪' },
   grommuk: { name: 'Macétula Tribal', emoji: '🪓' },
-  vulkarion: { name: 'Machado Vulcânico', emoji: '🪓' },
-  leviargon: { name: 'Lança Abissal', emoji: '🔱' },
-  tempestron: { name: 'Cetro da Tempestade', emoji: '⚡' },
-  gaiatron: { name: 'Cajado Ancestral', emoji: '🌿' },
-  bahamorth: { name: 'Espada Dracônica', emoji: '⚔️' },
+  vulkarion: { name: 'Espada Grande', emoji: '🗡️' },
+  leviargon: { name: 'Chicote Gigante', emoji: '🔱' },
+  tempestron: { name: 'Martelo Tempestuoso', emoji: '🔨' },
+  gaiatron: { name: 'Machado de 2 Gumes', emoji: '🪓' },
+  bahamorth: { name: 'Mace Dracônica', emoji: '🔨' },
 };
 
-// Chispim, Solkaiser, Tartarok, Colhedor Carmesim and Grommuk have real
-// reference art so far (see idle-hunter/assets/) — reused here under each
-// boss id. Every other boss falls back to emoji, same as before.
+// Every boss in the current 10-boss roster now has real reference art (see
+// idle-hunter/assets/) — reused here under each boss id.
 const BOSS_EQUIP_IMAGES = {
   chispim: {
     weapon: 'assets/chispim/dualblade.png',
@@ -111,6 +110,46 @@ const BOSS_EQUIP_IMAGES = {
     pants: 'assets/grommuk/pants.png',
     gloves: 'assets/grommuk/luvas.png',
     boots: 'assets/grommuk/botas.png',
+  },
+  vulkarion: {
+    weapon: 'assets/vulkarion/espada.png',
+    helmet: 'assets/vulkarion/helm.png',
+    armor: 'assets/vulkarion/armor.png',
+    pants: 'assets/vulkarion/pants.png',
+    gloves: 'assets/vulkarion/luvas.png',
+    boots: 'assets/vulkarion/botas.png',
+  },
+  leviargon: {
+    weapon: 'assets/leviargon/chicote.png',
+    helmet: 'assets/leviargon/helm.png',
+    armor: 'assets/leviargon/armor.png',
+    pants: 'assets/leviargon/pants.png',
+    gloves: 'assets/leviargon/luvas.png',
+    boots: 'assets/leviargon/botas.png',
+  },
+  tempestron: {
+    weapon: 'assets/tempestron/martelo.png',
+    helmet: 'assets/tempestron/helm.png',
+    armor: 'assets/tempestron/armor.png',
+    pants: 'assets/tempestron/pants.png',
+    gloves: 'assets/tempestron/luvas.png',
+    boots: 'assets/tempestron/botas.png',
+  },
+  gaiatron: {
+    weapon: 'assets/gaiatron/machado.png',
+    helmet: 'assets/gaiatron/helm.png',
+    armor: 'assets/gaiatron/armor.png',
+    pants: 'assets/gaiatron/pants.png',
+    gloves: 'assets/gaiatron/luvas.png',
+    boots: 'assets/gaiatron/botas.png',
+  },
+  bahamorth: {
+    weapon: 'assets/bahamorth/mace.png',
+    helmet: 'assets/bahamorth/helm.png',
+    armor: 'assets/bahamorth/armor.png',
+    pants: 'assets/bahamorth/pants.png',
+    gloves: 'assets/bahamorth/luvas.png',
+    boots: 'assets/bahamorth/botas.png',
   },
 };
 
