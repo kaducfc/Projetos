@@ -4,7 +4,7 @@ import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, a
 import { isBossStage, findMaterialInfo } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
-import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock } from './systems/crafting.js';
+import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock, destroyItem } from './systems/crafting.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
 import { formatNumber } from './format.js';
@@ -17,7 +17,7 @@ import { GAME_BUILD } from './version.js';
 import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
   renderUpgradesTab, renderBossTimer,
-  renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showModal, hideModal,
+  renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showKillLog, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, renderEventsTab, renderAchievementsTab, renderShopTab, pulseEventBoss,
 } from './ui/render.js';
 
@@ -148,7 +148,7 @@ function refreshCombatOnly() {
 
 function handleKillEvent(event) {
   if (!event) return;
-  showToast(`💀 Derrotado! +${formatNumber(event.goldGained)} 💰${
+  showKillLog(`💀 +${formatNumber(event.goldGained)} 💰${
     event.drops.map((d) => ` +${d.qty} ${d.emoji}`).join('')
   }`);
   renderTopBar(state);
@@ -406,6 +406,27 @@ function wireModalEvents() {
         if (unsocketCard(state, uid)) {
           showItemDetailModal(state, uid);
           showToast('🃏 Carta removida.');
+          fullRefresh();
+        }
+      });
+      return;
+    }
+
+    // Unlike the actions above, this one closes the popup (hideModal())
+    // instead of re-rendering it open — there's nothing left to show once
+    // the item is gone.
+    const destroyBtn = e.target.closest('[data-destroy-uid]');
+    if (destroyBtn) {
+      runModalAction(() => {
+        const uid = Number(destroyBtn.dataset.destroyUid);
+        if (!confirm('Destruir este item permanentemente? Você recupera 80% do material gasto nele.')) return;
+        const refund = destroyItem(state, uid);
+        if (refund) {
+          const refundStr = Object.entries(refund)
+            .map(([matId, qty]) => ` +${formatNumber(qty)} ${findMaterialInfo(matId)?.emoji ?? ''}`)
+            .join('');
+          showToast(`🗑️ Item destruído!${refundStr}`);
+          hideModal();
           fullRefresh();
         }
       });

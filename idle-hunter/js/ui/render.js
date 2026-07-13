@@ -4,7 +4,7 @@ import { UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
-import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
+import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE, getDestroyRefund, DESTROY_REFUND_RATE } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
 import { getEventWindow, getTradeWindow, TRADE_COST, TRADE_YIELD } from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
@@ -385,8 +385,30 @@ function itemDetailHtml(state, uid, pickerOpen) {
       ${cardSlotHtml(state, uid, entry, pickerOpen, item)}
       ${enhancePanelHtml(state, uid, entry, item)}
       ${actionBtn}
+      ${destroyPanelHtml(state, uid)}
     </div>
   `;
+}
+
+// Refund preview + button for permanently scrapping this instance — see
+// destroyItem() in systems/crafting.js for what "80% of everything ever
+// spent on it" actually sums (craft recipe + every +level it reached + Rank
+// Master if any). A socketed card isn't part of the refund line: it's
+// returned to state.cards untouched by destroyItem() itself, not "recovered
+// material", so it's not listed here.
+function destroyPanelHtml(state, uid) {
+  const refund = getDestroyRefund(state, uid) || {};
+  const lines = Object.entries(refund).map(([matId, qty]) => {
+    const info = findMaterialInfo(matId);
+    return `<span>${info.emoji} ${info.name} +${formatNumber(qty)}</span>`;
+  });
+  const refundHtml = lines.length
+    ? `<div class="destroy-refund">${lines.join('')}</div>`
+    : `<div class="destroy-refund muted">Nada a recuperar</div>`;
+  return `<div class="destroy-panel">
+    <button class="destroy-btn" data-destroy-uid="${uid}">🗑️ Destruir (recupera ${Math.round(DESTROY_REFUND_RATE * 100)}% do material)</button>
+    ${refundHtml}
+  </div>`;
 }
 
 // A card is consumed from state.cards (a stackable count, like a material)
@@ -912,6 +934,25 @@ export function showToast(message) {
   el.textContent = message;
   container.appendChild(el);
   setTimeout(() => el.remove(), 3000);
+}
+
+// Kills fire far more often than any other event (once per monster, combat
+// never pauses), so their "defeated + drops" message gets its own small,
+// capped feed inside the monster box instead of the shared full-width
+// #toast-container — otherwise a fast-combat burst piles up toasts that
+// cover the sprite/buttons underneath.
+const KILL_LOG_MAX = 3;
+
+export function showKillLog(message) {
+  const container = document.getElementById('kill-log');
+  const el = document.createElement('div');
+  el.className = 'kill-log-entry';
+  el.textContent = message;
+  container.appendChild(el);
+  while (container.children.length > KILL_LOG_MAX) {
+    container.firstChild.remove();
+  }
+  setTimeout(() => el.remove(), 2000);
 }
 
 export function showModal(title, bodyHtml) {

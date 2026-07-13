@@ -326,6 +326,48 @@ button:disabled {
   overflow: visible;
 }
 
+/* Kill/drop feed: small and tucked into the monster box's top-right corner
+   (inside the HP-bar rectangle area) instead of a full-width toast, so a
+   burst of kills during fast combat never covers the sprite or the buttons
+   below it. Capped to KILL_LOG_MAX entries in render.js. */
+#kill-log {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  max-width: 62%;
+  pointer-events: none;
+}
+
+.kill-log-entry {
+  background: rgba(255, 250, 240, .92);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text);
+  box-shadow: 0 2px 5px rgba(74, 47, 20, .25);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  animation: kill-log-in 0.15s ease-out, kill-log-out 0.25s ease-in 1.75s forwards;
+}
+
+@keyframes kill-log-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes kill-log-out {
+  to { opacity: 0; transform: translateX(8px); }
+}
+
 #boss-timer {
   margin-top: 12px;
   padding: 7px 14px;
@@ -947,6 +989,39 @@ button:disabled {
   font-weight: 800;
   color: var(--purple-dark);
   text-align: center;
+}
+
+.destroy-panel {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 2px dashed var(--border);
+}
+
+.destroy-btn {
+  width: 100%;
+  padding: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--grad-red);
+  color: #fff;
+  box-shadow: 0 3px 0 var(--red-dark);
+  border-radius: 12px;
+}
+
+.destroy-refund {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--green-dark);
+}
+
+.destroy-refund.muted {
+  color: var(--text-dim);
+  font-weight: 600;
 }
 
 /* ---------------- Forge ---------------- */

@@ -154,3 +154,60 @@ export function upgradeToMaster(state, uid) {
   entry.isMaster = true;
   return true;
 }
+
+/// Fraction of everything ever spent on a piece (its craft recipe, every
+/// +level enhancement it actually reached, and its Rank Master upgrade if
+/// any) that destroyItem() below hands back — gold is never refunded, only
+/// materials, so destroying is a materials-recycling tool, not a gold one.
+export const DESTROY_REFUND_RATE = 0.8;
+
+/// Sums craft + enhancement + master-upgrade material costs for this
+/// specific instance (its own enhanceLevel/isMaster, not the item's max)
+/// and applies DESTROY_REFUND_RATE, floored per material. Returns null if
+/// the uid doesn't exist; an empty object is a valid result (e.g. a
+/// same-tier weak-monster material costing under 2 total).
+export function getDestroyRefund(state, uid) {
+  const entry = getEntry(state, uid);
+  if (!entry) return null;
+  const item = getItem(entry.itemId);
+  const totalCost = {};
+  const add = (matId, qty) => {
+    if (!qty) return;
+    totalCost[matId] = (totalCost[matId] || 0) + qty;
+  };
+  for (const [matId, qty] of Object.entries(item.materialCost)) add(matId, qty);
+  for (let i = 0; i < entry.enhanceLevel; i++) add(item.commonMaterialId, item.enhanceCost[i]);
+  if (entry.isMaster) {
+    add(item.commonMaterialId, item.masterMaterialCost);
+    add(item.crystalMaterialId, 1);
+  }
+  const refund = {};
+  for (const [matId, qty] of Object.entries(totalCost)) {
+    const refunded = Math.floor(qty * DESTROY_REFUND_RATE);
+    if (refunded > 0) refund[matId] = refunded;
+  }
+  return refund;
+}
+
+/// Destroys a crafted piece for good: unequips it if worn, returns a
+/// socketed card (if any) to state.cards untouched (the card itself isn't
+/// destroyed, only its host), refunds DESTROY_REFUND_RATE of its total
+/// material spend, and removes it from the inventory. Returns the refund
+/// dict on success, or null if the uid doesn't exist.
+export function destroyItem(state, uid) {
+  const entry = getEntry(state, uid);
+  if (!entry) return null;
+  const refund = getDestroyRefund(state, uid);
+
+  if (entry.cardId) {
+    state.cards[entry.cardId] = (state.cards[entry.cardId] || 0) + 1;
+  }
+  for (const [matId, qty] of Object.entries(refund)) {
+    state.materials[matId] = (state.materials[matId] || 0) + qty;
+  }
+  for (const slotId of Object.keys(state.equipped)) {
+    if (state.equipped[slotId] === uid) state.equipped[slotId] = null;
+  }
+  state.inventory = state.inventory.filter((i) => i.uid !== uid);
+  return refund;
+}
