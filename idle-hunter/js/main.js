@@ -22,7 +22,7 @@ import {
   renderUpgradesTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, renderEventsTab, renderAchievementsTab, renderShopTab, pulseEventBoss,
-  renderCardsTab, showCardDetailModal,
+  renderCardsTab, showCardDetailModal, iconMarkup,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -860,14 +860,16 @@ function showOfflineProgressIfAny() {
 
   const materialLines = Object.entries(progress.materialsGained).map(([id, qty]) => {
     const info = findMaterialInfo(id);
-    return `+${formatNumber(qty)} ${info?.emoji ?? ''} ${info?.name ?? id}`;
+    const icon = iconMarkup(info?.image, info?.emoji ?? '', info?.name ?? id);
+    return `+${formatNumber(qty)} <span class="icon">${icon}</span> ${info?.name ?? id}`;
   });
   const cardLines = Object.entries(progress.cardsGained).map(([id, qty]) => {
     const card = getCard(id);
-    return `+${formatNumber(qty)} ${card?.emoji ?? '🃏'} ${card?.name ?? id}`;
+    const icon = iconMarkup(card?.image, card?.emoji ?? '🃏', card?.name ?? id);
+    return `+${formatNumber(qty)} <span class="icon">${icon}</span> ${card?.name ?? id}`;
   });
   const itemsHtml = [...materialLines, ...cardLines].length
-    ? `<p>${[...materialLines, ...cardLines].join('<br>')}</p>`
+    ? `<p class="offline-item-lines">${[...materialLines, ...cardLines].join('<br>')}</p>`
     : '';
 
   showModal('Bem-vindo de volta!', `

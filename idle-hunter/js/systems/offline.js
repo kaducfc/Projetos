@@ -1,6 +1,6 @@
 import { computePlayerStats } from './stats.js';
 import { monsterMaxHp, monsterGoldReward, rollDrops } from './combat.js';
-import { pickRandomWeakMonster } from '../data/monsters.js';
+import { pickRandomWeakMonster, isBossStage, BOSS_INTERVAL } from '../data/monsters.js';
 import { recordCardDiscovered } from './cards.js';
 
 export const MAX_OFFLINE_SECONDS = 8 * 60 * 60; // cap idle gains at 8 hours
@@ -13,18 +13,48 @@ const SIMULATION_CAP = 2000; // roll drops for at most this many kills, then sca
 // of the reference stage itself): maxStage 41 -> reference 40 -> band 30-40.
 const RECENT_BAND_SPAN = 10;
 const RECENT_BAND_SHARE = 0.8; // 80% of kills land in the recent band
+const BOSS_STAGE_SHARE = 0.5; // half of kills are rolled against a boss stage
+
+function randomBossStageIn(lo, hi) {
+  const firstBoss = Math.ceil(lo / BOSS_INTERVAL) * BOSS_INTERVAL;
+  if (firstBoss > hi) return null;
+  const count = Math.floor((hi - firstBoss) / BOSS_INTERVAL) + 1;
+  return firstBoss + BOSS_INTERVAL * Math.floor(Math.random() * count);
+}
+
+function randomWeakStageIn(lo, hi) {
+  const total = hi - lo + 1;
+  const bossCount = Math.floor(hi / BOSS_INTERVAL) - Math.floor((lo - 1) / BOSS_INTERVAL);
+  const weakCount = total - bossCount;
+  if (weakCount <= 0) return randomBossStageIn(lo, hi) ?? lo; // range is all boss stages — nothing else to pick
+  let idx = Math.floor(Math.random() * weakCount);
+  for (let s = lo; s <= hi; s++) {
+    if (isBossStage(s)) continue;
+    if (idx === 0) return s;
+    idx--;
+  }
+  return lo; // unreachable
+}
 
 /// Offline kills aren't all rolled against the player's current stage —
 /// they're spread across the player's whole climb so far, weighted toward
 /// recent progress: 80% land in the last ~10 stages below (and including)
 /// the reference stage, the other 20% spread uniformly across every stage
-/// from 1 up to the reference stage.
+/// from 1 up to the reference stage. Independently of that, half of all
+/// kills are rolled against a boss stage and half against a weak-monster
+/// stage within whichever range got picked (falling back to whichever kind
+/// the range actually has, for narrow low-stage ranges with no boss in them).
 function pickOfflineStage(referenceStage) {
   const bandStart = Math.max(1, referenceStage - RECENT_BAND_SPAN);
-  if (Math.random() < RECENT_BAND_SHARE) {
-    return bandStart + Math.floor(Math.random() * (referenceStage - bandStart + 1));
+  const [lo, hi] = Math.random() < RECENT_BAND_SHARE
+    ? [bandStart, referenceStage]
+    : [1, referenceStage];
+
+  if (Math.random() < BOSS_STAGE_SHARE) {
+    const boss = randomBossStageIn(lo, hi);
+    if (boss != null) return boss;
   }
-  return 1 + Math.floor(Math.random() * referenceStage);
+  return randomWeakStageIn(lo, hi);
 }
 
 /// Approximates progress made while the tab was closed, capped at

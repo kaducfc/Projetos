@@ -18,7 +18,7 @@ import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../sy
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
 /// to the caller: images are set to `width/height: 1em` in CSS so they scale
 /// with whatever font-size the surrounding `.icon`-ish element already has.
-function iconMarkup(image, emoji, alt) {
+export function iconMarkup(image, emoji, alt) {
   return image ? `<img src="${image}" alt="${alt || ''}">` : emoji;
 }
 
