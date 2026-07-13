@@ -28,8 +28,8 @@ const COMMON_DROP_CHANCE = 0.35;
 // Boss-only Crystal and any monster/boss card are both *fixed* rates —
 // explicitly never scaled by dropMult. Drop bonuses only affect the
 // "regular" materials above; the rare stuff always stays this rare.
-export const CRYSTAL_DROP_CHANCE = 0.001; // 0.1%
-export const MONSTER_CARD_DROP_CHANCE = 0.0001; // 0.01%
+export const CRYSTAL_DROP_CHANCE = 0.002; // 0.2%
+export const MONSTER_CARD_DROP_CHANCE = 0.02; // 2%
 
 export function monsterMaxHp(stage) {
   const base = HP_BASE * Math.pow(HP_GROWTH, stage - 1);

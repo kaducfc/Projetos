@@ -423,7 +423,7 @@ function cardSlotHtml(state, uid, entry, pickerOpen, item) {
   if (entry.cardId && getCard(entry.cardId)) {
     const card = getCard(entry.cardId);
     return `<div class="card-slot-badge filled">
-      <span class="icon">${card.emoji}</span>
+      <span class="icon">${iconMarkup(card.image, card.emoji, card.name)}</span>
       <div class="card-slot-info">
         <div class="card-slot-name">${card.name}</div>
         <div class="card-slot-desc">${card.description}</div>
@@ -451,7 +451,7 @@ function cardSlotHtml(state, uid, entry, pickerOpen, item) {
     <div class="card-slot-label">🃏 Escolha uma carta:</div>
     <div class="card-slot-options">${owned.map((c) => `
       <button class="card-slot-option" data-socket-uid="${uid}" data-socket-card-id="${c.id}" title="${c.description}">
-        ${c.emoji} ${c.name} <span class="qty">×${state.cards[c.id]}</span>
+        <span class="icon">${iconMarkup(c.image, c.emoji, c.name)}</span> ${c.name} <span class="qty">×${state.cards[c.id]}</span>
       </button>
     `).join('')}</div>
   </div>`;
@@ -615,7 +615,7 @@ function cardsContentHtml(state) {
 
   return `<div class="material-grid">${owned.map((c) => `
     <div class="material-card card-item">
-      <div class="icon">${c.emoji}</div>
+      <div class="icon">${iconMarkup(c.image, c.emoji, c.name)}</div>
       <div class="name">${c.name}</div>
       <div class="card-desc">${c.description}</div>
       <div class="qty">${formatNumber(state.cards[c.id] || 0)}</div>
