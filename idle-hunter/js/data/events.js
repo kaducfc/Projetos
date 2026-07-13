@@ -1,4 +1,4 @@
-import { BOSSES } from './monsters.js';
+import { BOSSES, WEAK_MONSTER_GROUPS } from './monsters.js';
 
 // A boss rotates in as the "event boss" every EVENT_CYCLE_MS, and is only
 // challengeable during the first EVENT_ACTIVE_MS of that cycle (then it's
@@ -35,5 +35,27 @@ export function getEventWindow(now = Date.now()) {
     active,
     remainingActiveMs: active ? EVENT_ACTIVE_MS - elapsed : 0,
     msUntilNextWindow: cycleStart + EVENT_CYCLE_MS - now,
+  };
+}
+
+// ---------------------------------------------------------------------
+// "Mercador" — every TRADE_CYCLE_MS, rotates which WEAK_MONSTER_GROUPS band
+// (see data/monsters.js — 5 elemental materials per band) is tradeable.
+// Always-on (no separate active/cooldown split like the boss event above):
+// the only thing that changes over time is *which* band is up, derived
+// purely from wall-clock time same as everything else here.
+// ---------------------------------------------------------------------
+export const TRADE_CYCLE_MS = 30 * 60 * 1000;
+export const TRADE_COST = 2;
+export const TRADE_YIELD = 1;
+
+export function getTradeWindow(now = Date.now()) {
+  const cycleIndex = Math.floor(now / TRADE_CYCLE_MS);
+  const cycleStart = cycleIndex * TRADE_CYCLE_MS;
+  const group = WEAK_MONSTER_GROUPS[cycleIndex % WEAK_MONSTER_GROUPS.length];
+  return {
+    cycleIndex,
+    group,
+    msUntilNextRotation: cycleStart + TRADE_CYCLE_MS - now,
   };
 }

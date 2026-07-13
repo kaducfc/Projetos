@@ -1,15 +1,15 @@
 import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
 import { computePlayerStats, getElementalResistance, getCardDamageBonus } from './systems/stats.js';
 import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, armorReduction } from './systems/combat.js';
-import { isBossStage } from './data/monsters.js';
+import { isBossStage, findMaterialInfo } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
 import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock } from './systems/crafting.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
 import { formatNumber } from './format.js';
-import { getEventWindow, EVENT_TIME_LIMIT_MS } from './data/events.js';
-import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVictory, resetEventEncounter } from './systems/events.js';
+import { getEventWindow, EVENT_TIME_LIMIT_MS, getTradeWindow } from './data/events.js';
+import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVictory, resetEventEncounter, canTrade, performTrade } from './systems/events.js';
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
@@ -53,6 +53,24 @@ let eventDeadlineCycle = null;
 // Loja (Cash/Moeda de Evento) — pure UI state, not part of the save.
 let activeEquipSubTab = 'equip';
 let activeShopSubTab = 'cash';
+
+// Forja groups start collapsed (one boss's worth of recipe cards is a lot of
+// screen) — a bossId in this set means the player explicitly expanded it.
+let expandedForgeBosses = new Set();
+
+// Same idea for the Eventos list — each entry is an event id ('caca' or
+// 'mercador'). Which material the player picked as the trade-in for the
+// Mercador event lives here too, since it's just as transient/UI-only.
+let expandedEvents = new Set();
+let tradeFromMaterialId = null;
+
+function renderEquipTab() {
+  renderEquipmentTab(state, activeEquipSubTab, expandedForgeBosses);
+}
+
+function renderEventsTabNow() {
+  renderEventsTab(state, currentEventEngagementMs(), expandedEvents, tradeFromMaterialId);
+}
 
 function currentEventEngagementMs() {
   const win = getEventWindow();
@@ -111,8 +129,8 @@ function refreshAll() {
 // re-wiring is needed for them.
 function fullRefresh() {
   refreshAll();
-  renderEquipmentTab(state, activeEquipSubTab);
-  renderEventsTab(state, currentEventEngagementMs());
+  renderEquipTab();
+  renderEventsTabNow();
   renderAchievementsTab(state);
   renderShopTab(state, activeShopSubTab);
   wireAllPanelButtons();
@@ -137,7 +155,7 @@ function handleKillEvent(event) {
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
   // One call covers Equipar/Forjar/Materiais, whichever sub-tab is showing.
-  renderEquipmentTab(state, activeEquipSubTab);
+  renderEquipTab();
   renderUpgradesTab(state);
   wireAllPanelButtons();
   resetPlayerHp(); // a fresh monster just spawned — full heal for the new fight
@@ -409,7 +427,16 @@ function wireEquipmentTabEvents() {
     const subtabBtn = e.target.closest('[data-equip-subtab]');
     if (subtabBtn) {
       activeEquipSubTab = subtabBtn.dataset.equipSubtab;
-      renderEquipmentTab(state, activeEquipSubTab);
+      renderEquipTab();
+      return;
+    }
+
+    const forgeToggleBtn = e.target.closest('[data-toggle-forge]');
+    if (forgeToggleBtn) {
+      const bossId = forgeToggleBtn.dataset.toggleForge;
+      if (expandedForgeBosses.has(bossId)) expandedForgeBosses.delete(bossId);
+      else expandedForgeBosses.add(bossId);
+      renderEquipTab();
       return;
     }
 
@@ -457,7 +484,7 @@ function handleEventBossVictory(win) {
   const lootStr = Object.values(gained).map((g) => ` +${g.qty} ${g.emoji}`).join('');
   showToast(`🎉 Chefe de evento derrotado! +${formatNumber(currency)} 🎫${lootStr}`);
   renderTopBar(state);
-  renderEquipmentTab(state, activeEquipSubTab);
+  renderEquipTab();
   renderShopTab(state, activeShopSubTab);
 }
 
@@ -475,7 +502,7 @@ function onClickEventBoss() {
     resetEventEncounter(state);
     eventDeadline = null;
     showToast('⏳ Tempo esgotado! O chefe de evento escapou — tente de novo.');
-    renderEventsTab(state, null);
+    renderEventsTabNow();
     return;
   }
 
@@ -490,7 +517,7 @@ function onClickEventBoss() {
     pulseEventBoss();
   }
 
-  renderEventsTab(state, currentEventEngagementMs());
+  renderEventsTabNow();
 }
 
 /// Called every game tick (see tick() below) — applies passive DPS to the
@@ -509,7 +536,7 @@ function tickEventBoss(stats) {
     resetEventEncounter(state);
     eventDeadline = null;
     showToast('⏳ Tempo esgotado! O chefe de evento escapou — tente de novo.');
-    renderEventsTab(state, null);
+    renderEventsTabNow();
     return;
   }
 
@@ -519,12 +546,53 @@ function tickEventBoss(stats) {
   const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, win.boss.element) + getCardDamageBonus(state, win.boss.element));
   const killed = applyEventDamage(state, dealt * (TICK_MS / 1000));
   if (killed) handleEventBossVictory(win);
-  renderEventsTab(state, currentEventEngagementMs());
+  renderEventsTabNow();
 }
 
 function wireEventTabEvents() {
   document.getElementById('tab-events').addEventListener('click', (e) => {
-    if (e.target.closest('#event-boss-sprite')) onClickEventBoss();
+    if (e.target.closest('#event-boss-sprite')) {
+      onClickEventBoss();
+      return;
+    }
+
+    const toggleBtn = e.target.closest('[data-toggle-event]');
+    if (toggleBtn) {
+      const id = toggleBtn.dataset.toggleEvent;
+      if (expandedEvents.has(id)) expandedEvents.delete(id);
+      else expandedEvents.add(id);
+      renderEventsTabNow();
+      return;
+    }
+
+    const selectBtn = e.target.closest('[data-trade-select]');
+    if (selectBtn) {
+      tradeFromMaterialId = selectBtn.dataset.tradeSelect;
+      renderEventsTabNow();
+      return;
+    }
+
+    if (e.target.closest('[data-trade-cancel]')) {
+      tradeFromMaterialId = null;
+      renderEventsTabNow();
+      return;
+    }
+
+    const targetBtn = e.target.closest('[data-trade-target]');
+    if (targetBtn && tradeFromMaterialId != null) {
+      const toMaterialId = targetBtn.dataset.tradeTarget;
+      const { group } = getTradeWindow();
+      const fromInfo = findMaterialInfo(tradeFromMaterialId);
+      const toInfo = findMaterialInfo(toMaterialId);
+      const ok = performTrade(state, group, tradeFromMaterialId, toMaterialId);
+      tradeFromMaterialId = null;
+      if (ok) {
+        showToast(`🧺 Trocado! -2 ${fromInfo?.emoji ?? ''} ${fromInfo?.name ?? ''} · +1 ${toInfo?.emoji ?? ''} ${toInfo?.name ?? ''}`);
+      }
+      renderEventsTabNow();
+      renderEquipTab(); // Materiais may be showing, and just changed
+      return;
+    }
   });
 }
 
@@ -593,7 +661,7 @@ function wireShopTabEvents() {
         showToast('🛒 Compra realizada!');
         renderTopBar(state);
         renderShopTab(state, activeShopSubTab);
-        renderEquipmentTab(state, activeEquipSubTab); // Materiais just changed
+        renderEquipTab(); // Materiais just changed
       }
       return;
     }
@@ -675,7 +743,7 @@ function init() {
   // re-render for — a plain 1s refresh is cheap and keeps them live without
   // hooking into every place stage/kills/materials could change.
   setInterval(() => {
-    renderEventsTab(state, currentEventEngagementMs());
+    renderEventsTabNow();
     renderAchievementsTab(state);
     renderShopTab(state, activeShopSubTab);
   }, 1000);

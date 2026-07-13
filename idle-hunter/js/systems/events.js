@@ -1,4 +1,4 @@
-import { EVENT_CURRENCY_BASE, EVENT_CURRENCY_PER_STAGE, EVENT_DIFFICULTY_MULT } from '../data/events.js';
+import { EVENT_CURRENCY_BASE, EVENT_CURRENCY_PER_STAGE, EVENT_DIFFICULTY_MULT, TRADE_COST, TRADE_YIELD } from '../data/events.js';
 import { monsterMaxHp } from './combat.js';
 
 export function isEventClaimed(state, cycleIndex) {
@@ -66,4 +66,27 @@ export function claimEventVictory(state, cycleIndex, boss) {
   resetEventEncounter(state);
 
   return { gained, currency };
+}
+
+// ---------------------------------------------------------------------
+// "Mercador" — trade TRADE_COST of one weak-monster material for
+// TRADE_YIELD of another, both from whichever band getTradeWindow() has
+// active. Only lets the player trade within that band (not, say, a stage
+// 1-19 material for a stage 81-100 one) and only materials they actually
+// have enough of.
+// ---------------------------------------------------------------------
+
+export function canTrade(state, group, fromMaterialId, toMaterialId) {
+  if (fromMaterialId === toMaterialId) return false;
+  const inGroup = (id) => group.monsters.some((m) => m.material.id === id);
+  if (!inGroup(fromMaterialId) || !inGroup(toMaterialId)) return false;
+  return (state.materials[fromMaterialId] || 0) >= TRADE_COST;
+}
+
+/// Returns true if the trade went through.
+export function performTrade(state, group, fromMaterialId, toMaterialId) {
+  if (!canTrade(state, group, fromMaterialId, toMaterialId)) return false;
+  state.materials[fromMaterialId] -= TRADE_COST;
+  state.materials[toMaterialId] = (state.materials[toMaterialId] || 0) + TRADE_YIELD;
+  return true;
 }

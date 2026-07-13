@@ -1,4 +1,4 @@
-import { MONSTER_FAMILIES, isBossStage, BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo } from '../data/monsters.js';
+import { isBossStage, BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo } from '../data/monsters.js';
 import { getSlot, getItemsForBoss, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
 import { UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
@@ -6,7 +6,7 @@ import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
 import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
-import { getEventWindow } from '../data/events.js';
+import { getEventWindow, getTradeWindow, TRADE_COST, TRADE_YIELD } from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
@@ -273,14 +273,14 @@ const EQUIP_SUBTABS = [
   { id: 'cards', label: '🃏 Cartas' },
 ];
 
-export function renderEquipmentTab(state, activeSubTab = 'equip') {
+export function renderEquipmentTab(state, activeSubTab = 'equip', expandedForgeBosses = new Set()) {
   const container = document.getElementById('tab-equipment');
   const subnav = `<div class="inner-subnav">${EQUIP_SUBTABS.map((t) => `
     <button class="inner-subtab-btn ${activeSubTab === t.id ? 'active' : ''}" data-equip-subtab="${t.id}">${t.label}</button>
   `).join('')}</div>`;
 
   let body;
-  if (activeSubTab === 'forge') body = forgeContentHtml(state);
+  if (activeSubTab === 'forge') body = forgeContentHtml(state, expandedForgeBosses);
   else if (activeSubTab === 'materials') body = materialsContentHtml(state);
   else if (activeSubTab === 'cards') body = cardsContentHtml(state);
   else body = equipRingContentHtml(state);
@@ -479,18 +479,36 @@ function enhancePanelHtml(state, uid, entry, item) {
   </div>`;
 }
 
-function forgeContentHtml(state) {
-  return BOSSES.map((boss) => bossGroupHtml(state, boss)).join('');
+// Spoiler control: show every unlocked boss, plus exactly one preview of
+// whatever comes next (so there's always something to look forward to)
+// — everything further out stays a complete surprise instead of listing
+// every future boss's name/element/art up front.
+function forgeContentHtml(state, expandedForgeBosses) {
+  const nextLockedIndex = BOSSES.findIndex((b) => b.stage > state.maxStage);
+  const visibleBosses = nextLockedIndex === -1 ? BOSSES : BOSSES.slice(0, nextLockedIndex + 1);
+  return visibleBosses.map((boss) => bossGroupHtml(state, boss, expandedForgeBosses)).join('');
 }
 
-function bossGroupHtml(state, boss) {
-  const items = getItemsForBoss(boss.id);
+function bossGroupHtml(state, boss, expandedForgeBosses) {
   const unlocked = state.maxStage >= boss.stage;
+  const header = `<h3><span class="icon">${iconMarkup(boss.image, boss.emoji, boss.name)}</span> ${boss.name} ${elementBadgeHtml(boss.element)} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">(Chefe do Estágio ${boss.stage})</span></h3>`;
+
+  if (!unlocked) {
+    return `<div class="family-group">
+      ${header}
+      <p style="color:var(--text-dim); font-size:12px;">🔒 Alcance o estágio ${boss.stage} para desbloquear.</p>
+    </div>`;
+  }
+
+  const items = getItemsForBoss(boss.id);
+  const expanded = expandedForgeBosses.has(boss.id);
 
   return `<div class="family-group">
-    <h3><span class="icon">${iconMarkup(boss.image, boss.emoji, boss.name)}</span> ${boss.name} ${elementBadgeHtml(boss.element)} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">(Chefe do Estágio ${boss.stage})</span></h3>
-    ${unlocked ? `<div class="recipe-grid">${items.map((item) => recipeCardHtml(state, item)).join('')}</div>`
-      : `<p style="color:var(--text-dim); font-size:12px;">🔒 Alcance o estágio ${boss.stage} para desbloquear.</p>`}
+    <div class="family-group-header">
+      ${header}
+      <button class="forge-toggle-btn" data-toggle-forge="${boss.id}">${expanded ? '▲ Recolher' : '▼ Expandir'}</button>
+    </div>
+    ${expanded ? `<div class="recipe-grid">${items.map((item) => recipeCardHtml(state, item)).join('')}</div>` : ''}
   </div>`;
 }
 
@@ -556,16 +574,22 @@ function upgradeCardHtml(state, upgrade) {
   </div>`;
 }
 
+// MONSTER_FAMILIES materials (lobo, javali etc.) are intentionally excluded
+// here — leftovers from the pre-boss-roster v1 that nothing can drop
+// anymore (see the comment atop MONSTER_FAMILIES in data/monsters.js).
+// The live roster (BOSSES + WEAK_MONSTER_GROUPS) is also filtered to
+// owned-only, so a material never spoils a boss/monster the player hasn't
+// reached yet.
 function materialsContentHtml(state) {
-  const allMaterials = MONSTER_FAMILIES.flatMap((f) => [f.materials.common, f.materials.rare, f.materials.gem])
-    .concat(BOSSES.flatMap((b) => [b.materials.primary1, b.materials.primary2, b.crystal]))
-    .concat(WEAK_MONSTER_GROUPS.flatMap((g) => g.monsters).map((m) => m.material));
+  const ownedMaterials = BOSSES.flatMap((b) => [b.materials.primary1, b.materials.primary2, b.crystal])
+    .concat(WEAK_MONSTER_GROUPS.flatMap((g) => g.monsters).map((m) => m.material))
+    .filter((m) => (state.materials[m.id] || 0) > 0);
 
-  if (allMaterials.every((m) => (state.materials[m.id] || 0) === 0)) {
+  if (!ownedMaterials.length) {
     return `<p style="color:var(--text-dim); font-size:13px;">Nenhum material coletado ainda. Derrote monstros para conseguir materiais de craft.</p>`;
   }
 
-  return `<div class="material-grid">${allMaterials.map((m) => `
+  return `<div class="material-grid">${ownedMaterials.map((m) => `
     <div class="material-card">
       <div class="icon">${iconMarkup(m.image, m.emoji, m.name)}</div>
       <div class="name">${m.name}</div>
@@ -600,15 +624,34 @@ function formatDuration(ms) {
 }
 
 // ---------------------------------------------------------------
-// Events tab: a rotating event boss, fought by clicking only (see
-// systems/events.js and main.js's onClickEventBoss for why there's no
-// passive-DPS tick here). `engagementRemainingMs` is owned by main.js (a
-// transient, un-persisted "time left in this attempt" clock, same idea as
-// the regular boss timer) — null means no attempt is in progress yet.
+// Events tab: a list of independent, individually-collapsible events (same
+// collapse/expand treatment as the Forja boss groups). Each one owns its
+// own rotation clock (see data/events.js) — there is no shared "the event
+// tab" state anymore, just two unrelated event cards.
+//
+// "Caça Aprimorada" is the original rotating event boss, fought by
+// clicking only (see systems/events.js and main.js's onClickEventBoss for
+// why there's no passive-DPS tick here). `engagementRemainingMs` is owned
+// by main.js (a transient, un-persisted "time left in this attempt" clock,
+// same idea as the regular boss timer) — null means no attempt in progress.
+//
+// "Mercador" lets the player trade weak-monster materials 2-for-1 within
+// whichever WEAK_MONSTER_GROUPS band is currently up (see getTradeWindow).
+// `tradeFromMaterialId` is the material picked as the trade-in, also
+// main.js-owned transient UI state — null means nothing selected yet.
 // ---------------------------------------------------------------
 
-export function renderEventsTab(state, engagementRemainingMs) {
-  const container = document.getElementById('tab-events');
+function eventListItemHtml(id, icon, name, statusLine, expanded, bodyHtml) {
+  return `<div class="event-list-item">
+    <div class="family-group-header event-list-header" data-toggle-event="${id}">
+      <h3><span class="icon">${icon}</span> ${name} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">${statusLine}</span></h3>
+      <button class="forge-toggle-btn" data-toggle-event="${id}">${expanded ? '▲ Recolher' : '▼ Expandir'}</button>
+    </div>
+    ${expanded ? `<div class="event-list-body">${bodyHtml}</div>` : ''}
+  </div>`;
+}
+
+function cacaAprimoradaContentHtml(state, engagementRemainingMs) {
   const win = getEventWindow();
   const claimed = isEventClaimed(state, win.cycleIndex);
 
@@ -620,14 +663,13 @@ export function renderEventsTab(state, engagementRemainingMs) {
     const sub = claimed
       ? 'Você já derrotou o chefe de evento deste ciclo.'
       : 'Volte quando o próximo ciclo começar.';
-    container.innerHTML = `
+    return `
       <div class="event-panel">
         <div class="event-icon dim">🎪</div>
         <h3>${heading}</h3>
         <p class="event-sub">${sub}</p>
         <p class="event-next">Próximo: ${iconMarkup(nextBoss.image, nextBoss.emoji, nextBoss.name)} <strong>${nextBoss.name}</strong> em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
       </div>`;
-    return;
   }
 
   const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(win.boss);
@@ -637,7 +679,7 @@ export function renderEventsTab(state, engagementRemainingMs) {
     ? `<div class="event-countdown ${engagementRemainingMs <= 10000 ? 'urgent' : ''}">⏱ ${Math.ceil(engagementRemainingMs / 1000)}s para derrotar!</div>`
     : `<div class="event-countdown hint">Clique para começar a atacar</div>`;
 
-  container.innerHTML = `
+  return `
     <div class="event-panel">
       <div class="event-active-badge">🎪 Evento ativo — janela fecha em ${formatDuration(win.remainingActiveMs)}</div>
       <h3>${win.boss.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(win.boss.element)}</h3>
@@ -646,6 +688,75 @@ export function renderEventsTab(state, engagementRemainingMs) {
       ${timerHtml}
       <p class="event-reward-info">🎁 Recompensa ao derrotar: 1–6 materiais + 🎫 Moeda de Evento</p>
     </div>`;
+}
+
+function cacaAprimoradaStatusLine(state) {
+  const win = getEventWindow();
+  const claimed = isEventClaimed(state, win.cycleIndex);
+  if (win.active && !claimed) return '🎪 Ativo agora!';
+  if (claimed) return `✅ Concluído · próximo em ${formatDuration(win.msUntilNextWindow)}`;
+  return `Próximo em ${formatDuration(win.msUntilNextWindow)}`;
+}
+
+function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId) {
+  const have = state.materials[mat.id] || 0;
+  const isFrom = tradeFromMaterialId === mat.id;
+  const canBeFrom = have >= TRADE_COST;
+
+  if (tradeFromMaterialId == null) {
+    return `<div class="material-card trade-card">
+      <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
+      <div class="name">${mat.name}</div>
+      <div class="qty">${formatNumber(have)}</div>
+      <button class="forge-toggle-btn" data-trade-select="${mat.id}" ${canBeFrom ? '' : 'disabled'}>Trocar</button>
+    </div>`;
+  }
+
+  if (isFrom) {
+    return `<div class="material-card trade-card selected">
+      <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
+      <div class="name">${mat.name}</div>
+      <div class="qty">${formatNumber(have)}</div>
+      <button class="forge-toggle-btn" data-trade-cancel>Cancelar</button>
+    </div>`;
+  }
+
+  return `<div class="material-card trade-card">
+    <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
+    <div class="name">${mat.name}</div>
+    <div class="qty">${formatNumber(have)}</div>
+    <button class="forge-toggle-btn" data-trade-target="${mat.id}">Receber (2→1)</button>
+  </div>`;
+}
+
+function mercadorContentHtml(state, tradeFromMaterialId) {
+  const trade = getTradeWindow();
+  const { group } = trade;
+  const fromMat = tradeFromMaterialId != null ? group.monsters.find((m) => m.material.id === tradeFromMaterialId)?.material : null;
+
+  const hint = tradeFromMaterialId == null
+    ? `<p class="event-sub">Escolha um material para trocar (${TRADE_COST} dele → ${TRADE_YIELD} de outro da mesma categoria).</p>`
+    : `<p class="event-sub">Trocando <strong>${TRADE_COST} ${fromMat?.name ?? ''}</strong> — escolha o material que vai receber.</p>`;
+
+  return `
+    <div class="event-panel">
+      <div class="event-active-badge">🧺 Categoria ativa: Estágio ${group.startStage}–${group.endStage} · rotaciona em ${formatDuration(trade.msUntilNextRotation)}</div>
+      ${hint}
+      <div class="material-grid">${group.monsters.map((m) => tradeMaterialCardHtml(state, group, m.material, tradeFromMaterialId)).join('')}</div>
+    </div>`;
+}
+
+function mercadorStatusLine() {
+  const trade = getTradeWindow();
+  return `Estágio ${trade.group.startStage}–${trade.group.endStage} · rotaciona em ${formatDuration(trade.msUntilNextRotation)}`;
+}
+
+export function renderEventsTab(state, engagementRemainingMs, expandedEvents = new Set(), tradeFromMaterialId = null) {
+  const container = document.getElementById('tab-events');
+  container.innerHTML = `<div class="event-list">
+    ${eventListItemHtml('caca', '🎪', 'Caça Aprimorada', cacaAprimoradaStatusLine(state), expandedEvents.has('caca'), cacaAprimoradaContentHtml(state, engagementRemainingMs))}
+    ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId))}
+  </div>`;
 }
 
 export function pulseEventBoss() {
