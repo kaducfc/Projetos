@@ -148,7 +148,7 @@ export const BOSSES = [
       primary1: { id: 'chispim_heart', name: 'Núcleo de Faísca', emoji: '❤️', image: 'assets/chispim/nucleo_faisca.png' },
       primary2: { id: 'chispim_whisker', name: 'Cauda Condutora', emoji: '⚡', image: 'assets/chispim/cauda_condutora.png' },
     },
-    crystal: { id: 'chispim_crystal', name: 'Cristal de Chispim', emoji: '💎' },
+    crystal: { id: 'chispim_crystal', name: 'Cristal de Chispim', emoji: '💎', image: 'assets/crystals/chispim.png' },
   },
   {
     stage: 20,
@@ -161,7 +161,7 @@ export const BOSSES = [
       primary1: { id: 'solkaiser_feather', name: 'Pena de Solkaiser', emoji: '🪶', image: 'assets/solkaiser/pena.png' },
       primary2: { id: 'solkaiser_core', name: 'Núcleo Solar', emoji: '☀️', image: 'assets/solkaiser/nucleo.png' },
     },
-    crystal: { id: 'solkaiser_crystal', name: 'Cristal de Solkaiser', emoji: '💎' },
+    crystal: { id: 'solkaiser_crystal', name: 'Cristal de Solkaiser', emoji: '💎', image: 'assets/crystals/solkaiser.png' },
   },
   {
     stage: 30,
@@ -174,7 +174,7 @@ export const BOSSES = [
       primary1: { id: 'tartarok_shell', name: 'Casco de Tartarok', emoji: '🐚', image: 'assets/tartarok/casco.png' },
       primary2: { id: 'tartarok_pearl', name: 'Pérola Primordial', emoji: '⚪', image: 'assets/tartarok/perola.png' },
     },
-    crystal: { id: 'tartarok_crystal', name: 'Cristal de Tartarok', emoji: '💎' },
+    crystal: { id: 'tartarok_crystal', name: 'Cristal de Tartarok', emoji: '💎', image: 'assets/crystals/tartarok.png' },
   },
   {
     stage: 40,
@@ -189,7 +189,7 @@ export const BOSSES = [
       primary1: { id: 'colhedor_carmesim_scythe', name: 'Rosa Escarlate', emoji: '🌹', image: 'assets/colhedor_carmesim/rosa.png' },
       primary2: { id: 'colhedor_carmesim_root', name: 'Raiz Sanguínea', emoji: '🩸', image: 'assets/colhedor_carmesim/raiz.png' },
     },
-    crystal: { id: 'colhedor_carmesim_crystal', name: 'Cristal do Colhedor Carmesim', emoji: '💎' },
+    crystal: { id: 'colhedor_carmesim_crystal', name: 'Cristal do Colhedor Carmesim', emoji: '💎', image: 'assets/crystals/colhedor_carmesim.png' },
   },
   {
     stage: 50,
@@ -202,7 +202,7 @@ export const BOSSES = [
       primary1: { id: 'grommuk_fang', name: 'Presa de Grommuk', emoji: '🦷', image: 'assets/grommuk/presa.png' },
       primary2: { id: 'grommuk_medallion', name: 'Medalhão Tribal', emoji: '🥉', image: 'assets/grommuk/medalhao.png' },
     },
-    crystal: { id: 'grommuk_crystal', name: 'Cristal de Grommuk', emoji: '💎' },
+    crystal: { id: 'grommuk_crystal', name: 'Cristal de Grommuk', emoji: '💎', image: 'assets/crystals/grommuk.png' },
   },
   {
     stage: 60,
@@ -215,7 +215,7 @@ export const BOSSES = [
       primary1: { id: 'vulkarion_horn', name: 'Chifre de Vulkarion', emoji: '🐮', image: 'assets/vulkarion/chifre.png' },
       primary2: { id: 'vulkarion_heart', name: 'Coração Vulcânico', emoji: '🌋', image: 'assets/vulkarion/coracao.png' },
     },
-    crystal: { id: 'vulkarion_crystal', name: 'Cristal de Vulkarion', emoji: '💎' },
+    crystal: { id: 'vulkarion_crystal', name: 'Cristal de Vulkarion', emoji: '💎', image: 'assets/crystals/vulkarion.png' },
   },
   {
     stage: 70,
@@ -228,7 +228,7 @@ export const BOSSES = [
       primary1: { id: 'leviargon_fin', name: 'Barbatana de Leviargon', emoji: '🦈', image: 'assets/leviargon/barbatana.png' },
       primary2: { id: 'leviargon_eye', name: 'Olho Abissal', emoji: '👁️', image: 'assets/leviargon/olho.png' },
     },
-    crystal: { id: 'leviargon_crystal', name: 'Cristal de Leviargon', emoji: '💎' },
+    crystal: { id: 'leviargon_crystal', name: 'Cristal de Leviargon', emoji: '💎', image: 'assets/crystals/leviargon.png' },
   },
   {
     stage: 80,
@@ -241,7 +241,7 @@ export const BOSSES = [
       primary1: { id: 'tempestron_heart', name: 'Coração Tempestuoso', emoji: '💜', image: 'assets/tempestron/coracao.png' },
       primary2: { id: 'tempestron_orb', name: 'Orbe Trovejante', emoji: '🔮', image: 'assets/tempestron/orbe.png' },
     },
-    crystal: { id: 'tempestron_crystal', name: 'Cristal de Tempestron', emoji: '💎' },
+    crystal: { id: 'tempestron_crystal', name: 'Cristal de Tempestron', emoji: '💎', image: 'assets/crystals/tempestron.png' },
   },
   {
     stage: 90,
@@ -254,7 +254,7 @@ export const BOSSES = [
       primary1: { id: 'gaiatron_branch', name: 'Galho Primordial', emoji: '🌿', image: 'assets/gaiatron/galho.png' },
       primary2: { id: 'gaiatron_seed', name: 'Semente Ancestral', emoji: '🌰', image: 'assets/gaiatron/semente.png' },
     },
-    crystal: { id: 'gaiatron_crystal', name: 'Cristal de Gaiatron', emoji: '💎' },
+    crystal: { id: 'gaiatron_crystal', name: 'Cristal de Gaiatron', emoji: '💎', image: 'assets/crystals/gaiatron.png' },
   },
   {
     stage: 100,
@@ -267,7 +267,7 @@ export const BOSSES = [
       primary1: { id: 'bahamorth_scale', name: 'Escama de Bahamorth', emoji: '🩶', image: 'assets/bahamorth/escama.png' },
       primary2: { id: 'bahamorth_soul', name: 'Alma Dracônica', emoji: '👻', image: 'assets/bahamorth/alma.png' },
     },
-    crystal: { id: 'bahamorth_crystal', name: 'Cristal de Bahamorth', emoji: '💎' },
+    crystal: { id: 'bahamorth_crystal', name: 'Cristal de Bahamorth', emoji: '💎', image: 'assets/crystals/bahamorth.png' },
   },
 ];
 
