@@ -314,11 +314,11 @@ export const WEAK_MONSTER_GROUPS = [
     startStage: 61,
     endStage: 79,
     monsters: [
-      { id: 'pimpira', name: 'Pimpira', element: 'fogo', emoji: '🦋', material: { id: 'pimpira_wing', name: 'Asa Flamejante', emoji: '🔥' } },
-      { id: 'bolhumo', name: 'Bolhumo', element: 'agua', emoji: '🫧', material: { id: 'bolhumo_essence', name: 'Essência Aquática', emoji: '💧' } },
-      { id: 'escamito', name: 'Escamito', element: 'neutro', emoji: '🦎', material: { id: 'escamito_scale', name: 'Escama Metálica', emoji: '⚙️' } },
-      { id: 'muskar', name: 'Muskar', element: 'planta', emoji: '🦫', material: { id: 'muskar_fur', name: 'Pelo Musgoso', emoji: '🌿' } },
-      { id: 'voltouro', name: 'Voltouro', element: 'eletrico', emoji: '🦏', material: { id: 'voltouro_horn', name: 'Chifre Condutor', emoji: '⚡' } },
+      { id: 'pimpira', name: 'Pimpira', element: 'fogo', emoji: '🦋', image: 'assets/pimpira/monster.png', material: { id: 'pimpira_wing', name: 'Asa Flamejante', emoji: '🔥', image: 'assets/pimpira/wing.png' } },
+      { id: 'bolhumo', name: 'Bolhumo', element: 'agua', emoji: '🫧', image: 'assets/bolhumo/monster.png', material: { id: 'bolhumo_essence', name: 'Essência Aquática', emoji: '💧', image: 'assets/bolhumo/essence.png' } },
+      { id: 'escamito', name: 'Escamito', element: 'neutro', emoji: '🦎', image: 'assets/escamito/monster.png', material: { id: 'escamito_scale', name: 'Escama Metálica', emoji: '⚙️', image: 'assets/escamito/scale.png' } },
+      { id: 'muskar', name: 'Muskar', element: 'planta', emoji: '🦫', image: 'assets/muskar/monster.png', material: { id: 'muskar_fur', name: 'Pelo Musgoso', emoji: '🌿', image: 'assets/muskar/fur.png' } },
+      { id: 'voltouro', name: 'Voltouro', element: 'eletrico', emoji: '🦏', image: 'assets/voltouro/monster.png', material: { id: 'voltouro_horn', name: 'Chifre Condutor', emoji: '⚡', image: 'assets/voltouro/horn.png' } },
     ],
   },
   {
