@@ -30,7 +30,7 @@ const COMMON_DROP_CHANCE = 0.35;
 // explicitly never scaled by dropMult. Drop bonuses only affect the
 // "regular" materials above; the rare stuff always stays this rare.
 export const CRYSTAL_DROP_CHANCE = 0.002; // 0.2%
-export const MONSTER_CARD_DROP_CHANCE = 0.02; // 2%
+export const MONSTER_CARD_DROP_CHANCE = 0.0003; // 0.03% (~1 per 3,333 kills)
 
 export function monsterMaxHp(stage) {
   const base = HP_BASE * Math.pow(HP_GROWTH, stage - 1);

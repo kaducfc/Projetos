@@ -4,7 +4,7 @@ import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, a
 import { isBossStage, findMaterialInfo, WEAK_MONSTER_GROUPS } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
-import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock, destroyItem } from './systems/crafting.js';
+import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES } from './systems/crafting.js';
 import { getItem } from './data/items.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
@@ -315,8 +315,15 @@ function wireModalEvents() {
     const equipBtn = e.target.closest('[data-modal-equip]');
     if (equipBtn) {
       runModalAction(() => {
-        equipItem(state, Number(equipBtn.dataset.modalEquip));
+        const uid = Number(equipBtn.dataset.modalEquip);
+        const entry = state.inventory.find((i) => i.uid === uid);
+        const cardId = entry?.cardId;
+        const cardWillBeStripped = cardId && countEquippedCardCopies(state, cardId, uid) >= MAX_EQUIPPED_CARD_COPIES;
+        equipItem(state, uid);
         hideModal();
+        if (cardWillBeStripped) {
+          showToast(`🃏 Já havia ${MAX_EQUIPPED_CARD_COPIES} cartas dessa equipadas — a carta voltou pro inventário.`);
+        }
         fullRefresh();
       });
       return;
@@ -398,7 +405,13 @@ function wireModalEvents() {
     if (socketBtn) {
       runModalAction(() => {
         const uid = Number(socketBtn.dataset.socketUid);
-        if (socketCard(state, uid, socketBtn.dataset.socketCardId)) {
+        const cardId = socketBtn.dataset.socketCardId;
+        const isEquipped = Object.values(state.equipped).includes(uid);
+        if (isEquipped && countEquippedCardCopies(state, cardId, uid) >= MAX_EQUIPPED_CARD_COPIES) {
+          showToast(`❌ Você só pode ter ${MAX_EQUIPPED_CARD_COPIES} cartas iguais equipadas ao mesmo tempo.`);
+          return;
+        }
+        if (socketCard(state, uid, cardId)) {
           showItemDetailModal(state, uid);
           showToast('🃏 Carta encaixada!');
           fullRefresh();

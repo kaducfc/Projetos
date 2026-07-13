@@ -79,13 +79,36 @@ export function attemptCardSlotUnlock(state, uid) {
   return { success };
 }
 
+/// At most this many equipped items (across all 6 slots) may carry the same
+/// card at once — copies sitting on unequipped inventory items don't count.
+/// Enforced two ways: canSocketCard() below refuses to socket a 3rd
+/// equipped copy directly, while equipItem() (systems/equipment.js) instead
+/// lets the *item* get equipped but auto-unsockets its card back to
+/// state.cards if doing so would push an already-at-cap card over the line.
+export const MAX_EQUIPPED_CARD_COPIES = 2;
+
+export function countEquippedCardCopies(state, cardId, excludeUid = null) {
+  let count = 0;
+  for (const uid of Object.values(state.equipped)) {
+    if (!uid || uid === excludeUid) continue;
+    const entry = getEntry(state, uid);
+    if (entry && entry.cardId === cardId) count += 1;
+  }
+  return count;
+}
+
 /// A card is consumed from state.cards (a stackable count, like a material)
 /// the moment it's socketed — the item's slot must be unlocked and empty
 /// first (unsocketCard() below frees it back up, but keeps it unlocked).
+/// If the item is currently equipped, also blocks a 3rd equipped copy of
+/// the same card (see MAX_EQUIPPED_CARD_COPIES above).
 export function canSocketCard(state, uid, cardId) {
   const entry = getEntry(state, uid);
   if (!entry || !isSlotUnlocked(entry) || entry.cardId) return false;
-  return (state.cards[cardId] || 0) >= 1;
+  if ((state.cards[cardId] || 0) < 1) return false;
+  const isEquipped = Object.values(state.equipped).includes(uid);
+  if (isEquipped && countEquippedCardCopies(state, cardId, uid) >= MAX_EQUIPPED_CARD_COPIES) return false;
+  return true;
 }
 
 export function socketCard(state, uid, cardId) {
