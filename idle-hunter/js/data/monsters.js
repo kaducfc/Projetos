@@ -325,11 +325,11 @@ export const WEAK_MONSTER_GROUPS = [
     startStage: 81,
     endStage: 100,
     monsters: [
-      { id: 'carvao', name: 'Carvão', element: 'fogo', emoji: '⚫', material: { id: 'carvao_vivo', name: 'Carvão Vivo', emoji: '🔥' } },
-      { id: 'serpilha', name: 'Serpilha', element: 'agua', emoji: '🐍', material: { id: 'serpilha_skin', name: 'Pele Escamosa', emoji: '💧' } },
-      { id: 'cascudon', name: 'Cascudon', element: 'neutro', emoji: '🐢', material: { id: 'cascudon_shell', name: 'Carapaça Grossa', emoji: '🛡️' } },
-      { id: 'esporim', name: 'Esporim', element: 'planta', emoji: '🍄', material: { id: 'esporim_spore', name: 'Esporo Venenoso', emoji: '☠️' } },
-      { id: 'ventrix', name: 'Ventrix', element: 'eletrico', emoji: '🦅', material: { id: 'ventrix_feather', name: 'Pena Celeste', emoji: '🪽' } },
+      { id: 'carvao', name: 'Carvão', element: 'fogo', emoji: '⚫', image: 'assets/carvao/monster.png', material: { id: 'carvao_vivo', name: 'Carvão Vivo', emoji: '🔥', image: 'assets/carvao/coal.png' } },
+      { id: 'serpilha', name: 'Serpilha', element: 'agua', emoji: '🐍', image: 'assets/serpilha/monster.png', material: { id: 'serpilha_skin', name: 'Pele Escamosa', emoji: '💧', image: 'assets/serpilha/skin.png' } },
+      { id: 'cascudon', name: 'Cascudon', element: 'neutro', emoji: '🐢', image: 'assets/cascudon/monster.png', material: { id: 'cascudon_shell', name: 'Carapaça Grossa', emoji: '🛡️', image: 'assets/cascudon/shell.png' } },
+      { id: 'esporim', name: 'Esporim', element: 'planta', emoji: '🍄', image: 'assets/esporim/monster.png', material: { id: 'esporim_spore', name: 'Esporo Venenoso', emoji: '☠️', image: 'assets/esporim/spore.png' } },
+      { id: 'ventrix', name: 'Ventrix', element: 'eletrico', emoji: '🦅', image: 'assets/ventrix/monster.png', material: { id: 'ventrix_feather', name: 'Pena Celeste', emoji: '🪽', image: 'assets/ventrix/feather.png' } },
     ],
   },
 ];
