@@ -262,9 +262,10 @@ export const BOSSES = [
     name: 'Bahamorth',
     element: 'neutro',
     emoji: '🐲',
+    image: 'assets/bahamorth/monster.png',
     materials: {
-      primary1: { id: 'bahamorth_scale', name: 'Escama de Bahamorth', emoji: '🩶' },
-      primary2: { id: 'bahamorth_soul', name: 'Alma Dracônica', emoji: '👻' },
+      primary1: { id: 'bahamorth_scale', name: 'Escama de Bahamorth', emoji: '🩶', image: 'assets/bahamorth/escama.png' },
+      primary2: { id: 'bahamorth_soul', name: 'Alma Dracônica', emoji: '👻', image: 'assets/bahamorth/alma.png' },
     },
     crystal: { id: 'bahamorth_crystal', name: 'Cristal de Bahamorth', emoji: '💎' },
   },

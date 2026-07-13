@@ -65,13 +65,11 @@ const BOSS_WEAPONS = {
   leviargon: { name: 'Chicote Gigante', emoji: '🔱' },
   tempestron: { name: 'Martelo Tempestuoso', emoji: '🔨' },
   gaiatron: { name: 'Machado de 2 Gumes', emoji: '🪓' },
-  bahamorth: { name: 'Espada Dracônica', emoji: '⚔️' },
+  bahamorth: { name: 'Mace Dracônica', emoji: '🔨' },
 };
 
-// Chispim, Solkaiser, Tartarok, Colhedor Carmesim, Grommuk, Vulkarion,
-// Leviargon, Tempestron and Gaiatron have real reference art so far (see
-// idle-hunter/assets/) — reused here under each boss id. Every other boss
-// falls back to emoji, same as before.
+// Every boss in the current 10-boss roster now has real reference art (see
+// idle-hunter/assets/) — reused here under each boss id.
 const BOSS_EQUIP_IMAGES = {
   chispim: {
     weapon: 'assets/chispim/dualblade.png',
@@ -144,6 +142,14 @@ const BOSS_EQUIP_IMAGES = {
     pants: 'assets/gaiatron/pants.png',
     gloves: 'assets/gaiatron/luvas.png',
     boots: 'assets/gaiatron/botas.png',
+  },
+  bahamorth: {
+    weapon: 'assets/bahamorth/mace.png',
+    helmet: 'assets/bahamorth/helm.png',
+    armor: 'assets/bahamorth/armor.png',
+    pants: 'assets/bahamorth/pants.png',
+    gloves: 'assets/bahamorth/luvas.png',
+    boots: 'assets/bahamorth/botas.png',
   },
 };
 
