@@ -14,12 +14,15 @@ import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVic
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
+import { claimCardReward } from './systems/cards.js';
+import { CARD_DISCOVERY_CASH_REWARD } from './data/cards.js';
 import { GAME_BUILD } from './version.js';
 import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
   renderUpgradesTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, renderEventsTab, renderAchievementsTab, renderShopTab, pulseEventBoss,
+  renderCardsTab, showCardDetailModal,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -135,6 +138,7 @@ function refreshAll() {
 function fullRefresh() {
   refreshAll();
   renderEquipTab();
+  renderCardsTab(state);
   renderEventsTabNow();
   renderAchievementsTab(state);
   renderShopTab(state, activeShopSubTab);
@@ -160,6 +164,7 @@ function handleKillEvent(event) {
   // One call covers Equipar/Forjar/Materiais, whichever sub-tab is showing.
   renderEquipTab();
   renderUpgradesTab(state);
+  renderCardsTab(state); // a card drop just changed discovered/claimable state
   wireAllPanelButtons();
   resetPlayerHp(); // a fresh monster just spawned — full heal for the new fight
   armBossTimer(); // stage may have just advanced onto (or off of) a boss
@@ -456,6 +461,20 @@ function wireModalEvents() {
       });
       return;
     }
+
+    const claimCardBtn = e.target.closest('[data-claim-card]');
+    if (claimCardBtn) {
+      runModalAction(() => {
+        const cardId = claimCardBtn.dataset.claimCard;
+        if (claimCardReward(state, cardId)) {
+          showCardDetailModal(state, cardId); // keep the popup open, with fresh state
+          showToast(`🎁 +${formatNumber(CARD_DISCOVERY_CASH_REWARD)} 💎 Cash!`);
+          renderTopBar(state);
+          renderCardsTab(state);
+        }
+      });
+      return;
+    }
   });
 }
 
@@ -704,6 +723,20 @@ function wireEventTabEvents() {
 }
 
 // ---------------------------------------------------------------
+// Cartas tab — clicking any card tile (owned or not) opens its detail
+// popup in the shared #modal-overlay; claiming the first-discovery Cash
+// reward happens from inside that popup, so it's handled in
+// wireModalEvents() below (data-claim-card), not here.
+// ---------------------------------------------------------------
+
+function wireCardsTabEvents() {
+  document.getElementById('tab-cards').addEventListener('click', (e) => {
+    const tile = e.target.closest('[data-view-card]');
+    if (tile) showCardDetailModal(state, tile.dataset.viewCard);
+  });
+}
+
+// ---------------------------------------------------------------
 // Achievements tab — the "earn Cash" side, separate from the Shop (which is
 // purely "spend Cash / spend Event Currency" now). Same delegation pattern.
 // ---------------------------------------------------------------
@@ -833,6 +866,7 @@ function init() {
   setupStageControls();
   wireModalEvents(); // one-time delegated listener, see wireModalEvents()
   wireEquipmentTabEvents();
+  wireCardsTabEvents();
   wireEventTabEvents();
   wireAchievementsTabEvents();
   wireShopTabEvents();

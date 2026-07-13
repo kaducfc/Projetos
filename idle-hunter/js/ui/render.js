@@ -12,7 +12,8 @@ import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
 import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
-import { CARDS, getCard } from '../data/cards.js';
+import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
+import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
 
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
 /// to the caller: images are set to `width/height: 1em` in CSS so they scale
@@ -270,7 +271,6 @@ const EQUIP_SUBTABS = [
   { id: 'equip', label: '🎽 Equipar' },
   { id: 'forge', label: '🔨 Forjar' },
   { id: 'materials', label: '🎒 Materiais' },
-  { id: 'cards', label: '🃏 Cartas' },
 ];
 
 export function renderEquipmentTab(state, activeSubTab = 'equip', expandedForgeBosses = new Set()) {
@@ -282,7 +282,6 @@ export function renderEquipmentTab(state, activeSubTab = 'equip', expandedForgeB
   let body;
   if (activeSubTab === 'forge') body = forgeContentHtml(state, expandedForgeBosses);
   else if (activeSubTab === 'materials') body = materialsContentHtml(state);
-  else if (activeSubTab === 'cards') body = cardsContentHtml(state);
   else body = equipRingContentHtml(state);
 
   container.innerHTML = subnav + body;
@@ -603,23 +602,74 @@ function materialsContentHtml(state) {
     </div>`).join('')}</div>`;
 }
 
-// Cards drop rarely from any monster of their family (see systems/combat.js)
-// and just sit in this inventory for now — there's no socketing UI yet
-// (see data/cards.js), so this is purely a "what have I collected" view.
-function cardsContentHtml(state) {
-  const owned = CARDS.filter((c) => (state.cards[c.id] || 0) > 0);
+// ---------------------------------------------------------------
+// Cartas tab: every card in the game (see data/cards.js), split into Boss
+// and Common sections, always visible — undiscovered ones render dimmed
+// (`.card-tile.undiscovered`) rather than being hidden, so the collection's
+// full size is visible as a goal. Clicking any tile opens a bigger detail
+// popup (showCardDetailModal, shares the #modal-overlay with the item
+// detail popup) with the full-size art, description, and — the first time
+// a card is ever obtained — a claimable one-time Cash reward (see
+// systems/cards.js), same "claim once" idea as an achievement.
+// ---------------------------------------------------------------
 
-  if (!owned.length) {
-    return `<p style="color:var(--text-dim); font-size:13px;">Nenhuma carta coletada ainda. Monstros têm uma pequena chance de dropar a carta deles ao morrer.</p>`;
+function cardTileHtml(state, card) {
+  const discovered = isCardDiscovered(state, card.id);
+  const claimable = canClaimCardReward(state, card.id);
+  return `<button class="card-tile ${discovered ? 'discovered' : 'undiscovered'}" data-view-card="${card.id}">
+    ${claimable ? '<span class="card-tile-badge">🎁</span>' : ''}
+    <div class="icon">${iconMarkup(card.image, card.emoji, card.name)}</div>
+    <div class="name">${card.name}</div>
+  </button>`;
+}
+
+export function renderCardsTab(state) {
+  const container = document.getElementById('tab-cards');
+  const bossCards = CARDS.filter((c) => c.isBossCard);
+  const commonCards = CARDS.filter((c) => !c.isBossCard);
+
+  container.innerHTML = `
+    <h3 class="cards-section-title">👑 Cartas de Boss</h3>
+    <div class="card-grid">${bossCards.map((c) => cardTileHtml(state, c)).join('')}</div>
+    <h3 class="cards-section-title">🃏 Carta Comum</h3>
+    <div class="card-grid">${commonCards.map((c) => cardTileHtml(state, c)).join('')}</div>
+  `;
+}
+
+function cardDetailHtml(state, card) {
+  const discovered = isCardDiscovered(state, card.id);
+  const claimable = canClaimCardReward(state, card.id);
+  const claimed = isCardRewardClaimed(state, card.id);
+  const owned = state.cards[card.id] || 0;
+
+  let actionHtml;
+  if (claimable) {
+    actionHtml = `<button class="modal-action-btn" data-claim-card="${card.id}">🎁 Resgatar +${CARD_DISCOVERY_CASH_REWARD} 💎 Cash</button>`;
+  } else if (claimed) {
+    actionHtml = `<div class="card-detail-status">🎁 Recompensa já resgatada</div>`;
+  } else if (!discovered) {
+    actionHtml = `<div class="card-detail-status">🔒 Ainda não obtida — derrote o monstro dela para ter uma chance de conseguir.</div>`;
+  } else {
+    actionHtml = '';
   }
 
-  return `<div class="material-grid">${owned.map((c) => `
-    <div class="material-card card-item">
-      <div class="icon">${iconMarkup(c.image, c.emoji, c.name)}</div>
-      <div class="name">${c.name}</div>
-      <div class="card-desc">${c.description}</div>
-      <div class="qty">${formatNumber(state.cards[c.id] || 0)}</div>
-    </div>`).join('')}</div>`;
+  return `
+    <div class="card-detail ${discovered ? '' : 'undiscovered'}">
+      <div class="card-detail-image">${iconMarkup(card.image, card.emoji, card.name)}</div>
+      <div class="card-detail-info">
+        <div class="card-detail-name">${card.name}</div>
+        <div class="card-detail-desc">${card.description}</div>
+        ${discovered ? `<div class="card-detail-owned">Você tem: ${formatNumber(owned)}</div>` : ''}
+        ${actionHtml}
+      </div>
+    </div>
+  `;
+}
+
+export function showCardDetailModal(state, cardId) {
+  const card = getCard(cardId);
+  if (!card) return;
+  showModal(`${card.isBossCard ? '👑' : '🃏'} ${card.name}`, cardDetailHtml(state, card));
 }
 
 function formatDuration(ms) {

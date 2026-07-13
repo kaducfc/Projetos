@@ -11,6 +11,12 @@ export function createDefaultState() {
     weakMonsterId: null, // which WEAK_MONSTER_GROUPS entry is spawned (non-boss stages only)
     materials: {}, // materialId -> count
     cards: {}, // cardId -> count (see data/cards.js)
+    // Cartas tab collection tracking (see systems/cards.js): cardsDiscovered
+    // marks a card as "ever obtained" forever, even after its count in
+    // `cards` above drops back to 0 (e.g. once socketed into gear).
+    // cardsRewardClaimed blocks re-claiming that card's one-time Cash bonus.
+    cardsDiscovered: {}, // cardId -> true
+    cardsRewardClaimed: {}, // cardId -> true
     inventory: [], // { uid, itemId }
     nextUid: 1,
     equipped: { weapon: null, helmet: null, armor: null, pants: null, gloves: null, boots: null }, // uid or null

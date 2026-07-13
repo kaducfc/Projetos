@@ -13,6 +13,11 @@ import { getElement } from './elements.js';
 // (see getCardDamageBonus() in systems/stats.js).
 export const CARD_DAMAGE_BONUS = 0.03;
 
+// One-time Cash bonus for finding any given card for the first time ever —
+// claimed from the Cartas tab, same "claim once" shape as an achievement
+// (see systems/cards.js).
+export const CARD_DISCOVERY_CASH_REWARD = 5;
+
 // Real card art exists so far for these 9 bosses only (see
 // assets/cards/*.png) — any boss missing here just falls back to the 🃏
 // emoji, same as every weak-monster card for now.

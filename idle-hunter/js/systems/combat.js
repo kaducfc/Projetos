@@ -1,5 +1,6 @@
 import { isBossStage, getMonsterInfo, getBossForStage, pickRandomWeakMonster, getWeakMonster } from '../data/monsters.js';
 import { getCardForMonster } from '../data/cards.js';
+import { recordCardDiscovered } from './cards.js';
 
 const HP_GROWTH = 1.145;
 const HP_BASE = 20;
@@ -126,6 +127,7 @@ export function applyDamage(state, amount, stats) {
   for (const drop of drops) {
     const bucket = drop.isCard ? state.cards : state.materials;
     bucket[drop.id] = (bucket[drop.id] || 0) + drop.qty;
+    if (drop.isCard) recordCardDiscovered(state, drop.id);
   }
   state.totalKills += 1;
 

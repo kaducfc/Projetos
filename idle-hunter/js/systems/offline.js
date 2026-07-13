@@ -1,6 +1,7 @@
 import { computePlayerStats } from './stats.js';
 import { monsterMaxHp, monsterGoldReward, rollDrops } from './combat.js';
 import { pickRandomWeakMonster } from '../data/monsters.js';
+import { recordCardDiscovered } from './cards.js';
 
 const MAX_OFFLINE_SECONDS = 4 * 60 * 60; // cap idle gains at 4 hours
 const SIMULATION_CAP = 2000; // roll drops for at most this many kills, then scale up
@@ -58,6 +59,7 @@ export function applyOfflineProgress(state, progress) {
   }
   for (const [id, qty] of Object.entries(progress.cardsGained)) {
     state.cards[id] = (state.cards[id] || 0) + qty;
+    recordCardDiscovered(state, id);
   }
   state.totalKills += progress.kills;
 }
