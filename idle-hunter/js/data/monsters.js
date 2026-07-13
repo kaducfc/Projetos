@@ -292,11 +292,11 @@ export const WEAK_MONSTER_GROUPS = [
     startStage: 21,
     endStage: 39,
     monsters: [
-      { id: 'volpix', name: 'Volpix', element: 'fogo', emoji: '🦊', material: { id: 'volpix_fur', name: 'Pelo Flamejante', emoji: '🔥' } },
-      { id: 'cascafria', name: 'Cascafria', element: 'agua', emoji: '🐢', material: { id: 'cascafria_shell', name: 'Casco Congelado', emoji: '❄️' } },
-      { id: 'grunco', name: 'Grunco', element: 'neutro', emoji: '🐗', material: { id: 'grunco_hide', name: 'Couro Grosso', emoji: '🟤' } },
-      { id: 'cogumeloide', name: 'Cogumeloide', element: 'planta', emoji: '🍄', material: { id: 'cogumeloide_fiber', name: 'Fibra Fúngica', emoji: '🍄' } },
-      { id: 'faisca', name: 'Faísca', element: 'eletrico', emoji: '🐿️', material: { id: 'faisca_core', name: 'Núcleo Elétrico', emoji: '🔋' } },
+      { id: 'volpix', name: 'Volpix', element: 'fogo', emoji: '🦊', image: 'assets/volpix/monster.png', material: { id: 'volpix_fur', name: 'Pelo Flamejante', emoji: '🔥', image: 'assets/volpix/fur.png' } },
+      { id: 'cascafria', name: 'Cascafria', element: 'agua', emoji: '🐢', image: 'assets/cascafria/monster.png', material: { id: 'cascafria_shell', name: 'Casco Congelado', emoji: '❄️', image: 'assets/cascafria/shell.png' } },
+      { id: 'grunco', name: 'Grunco', element: 'neutro', emoji: '🐗', image: 'assets/grunco/monster.png', material: { id: 'grunco_hide', name: 'Couro Grosso', emoji: '🟤', image: 'assets/grunco/hide.png' } },
+      { id: 'cogumeloide', name: 'Cogumeloide', element: 'planta', emoji: '🍄', image: 'assets/cogumeloide/monster.png', material: { id: 'cogumeloide_fiber', name: 'Fibra Fúngica', emoji: '🍄', image: 'assets/cogumeloide/fiber.png' } },
+      { id: 'faisca', name: 'Faísca', element: 'eletrico', emoji: '🐿️', image: 'assets/faisca/monster.png', material: { id: 'faisca_core', name: 'Núcleo Elétrico', emoji: '🔋', image: 'assets/faisca/core.png' } },
     ],
   },
   {
