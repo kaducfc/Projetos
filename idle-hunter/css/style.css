@@ -605,13 +605,24 @@ button:disabled {
   gap: 16px;
 }
 
+/* Cross layout, armor (peitoral) at the center: helmet above, weapon to
+   its left, gloves to its right, pants below, boots below that. Placement
+   is keyed off data-equip-slot so it doesn't depend on render order. */
 .equip-slot-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
   gap: 12px;
-  max-width: 320px;
+  max-width: 280px;
   margin: 0 auto;
 }
+
+.equip-slot-icon[data-equip-slot="helmet"] { grid-column: 2; grid-row: 1; }
+.equip-slot-icon[data-equip-slot="weapon"] { grid-column: 1; grid-row: 2; }
+.equip-slot-icon[data-equip-slot="armor"] { grid-column: 2; grid-row: 2; }
+.equip-slot-icon[data-equip-slot="gloves"] { grid-column: 3; grid-row: 2; }
+.equip-slot-icon[data-equip-slot="pants"] { grid-column: 2; grid-row: 3; }
+.equip-slot-icon[data-equip-slot="boots"] { grid-column: 2; grid-row: 4; }
 
 .equip-slot-icon {
   position: relative;
