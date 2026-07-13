@@ -303,11 +303,11 @@ export const WEAK_MONSTER_GROUPS = [
     startStage: 41,
     endStage: 59,
     monsters: [
-      { id: 'lamel', name: 'Lamel', element: 'fogo', emoji: '🦎', material: { id: 'lamel_scale', name: 'Escama Flamejante', emoji: '🔥' } },
-      { id: 'marrelho', name: 'Marrelho', element: 'agua', emoji: '🦀', material: { id: 'marrelho_claw', name: 'Garra Marinha', emoji: '🦀' } },
-      { id: 'casquelo', name: 'Casquelo', element: 'neutro', emoji: '🐌', material: { id: 'casquelo_shell', name: 'Casco Rochoso', emoji: '🪨' } },
-      { id: 'folhante', name: 'Folhante', element: 'planta', emoji: '🌿', material: { id: 'folhante_leaf', name: 'Folha Carnívora', emoji: '🌿' } },
-      { id: 'dentelha', name: 'Dentelha', element: 'eletrico', emoji: '🐟', material: { id: 'dentelha_fang', name: 'Presa Elétrica', emoji: '⚡' } },
+      { id: 'lamel', name: 'Lamel', element: 'fogo', emoji: '🦎', image: 'assets/lamel/monster.png', material: { id: 'lamel_scale', name: 'Escama Flamejante', emoji: '🔥', image: 'assets/lamel/scale.png' } },
+      { id: 'marrelho', name: 'Marrelho', element: 'agua', emoji: '🦀', image: 'assets/marrelho/monster.png', material: { id: 'marrelho_claw', name: 'Garra Marinha', emoji: '🦀', image: 'assets/marrelho/claw.png' } },
+      { id: 'casquelo', name: 'Casquelo', element: 'neutro', emoji: '🐌', image: 'assets/casquelo/monster.png', material: { id: 'casquelo_shell', name: 'Casco Rochoso', emoji: '🪨', image: 'assets/casquelo/shell.png' } },
+      { id: 'folhante', name: 'Folhante', element: 'planta', emoji: '🌿', image: 'assets/folhante/monster.png', material: { id: 'folhante_leaf', name: 'Folha Carnívora', emoji: '🌿', image: 'assets/folhante/leaf.png' } },
+      { id: 'dentelha', name: 'Dentelha', element: 'eletrico', emoji: '🐟', image: 'assets/dentelha/monster.png', material: { id: 'dentelha_fang', name: 'Presa Elétrica', emoji: '⚡', image: 'assets/dentelha/fang.png' } },
     ],
   },
   {
