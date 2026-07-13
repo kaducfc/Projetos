@@ -9,6 +9,7 @@ const BOSS_HP_MULT = 9;
 const GOLD_GROWTH = 1.115;
 const GOLD_BASE = 4;
 const BOSS_GOLD_MULT = 6;
+const GOLD_DROP_BONUS = 1.15; // +15% gold per kill across the board
 
 // Damage per second the monster deals back to the player, scaling more
 // gently than its own HP so gear (HP/armor) can realistically keep up.
@@ -39,7 +40,8 @@ export function monsterMaxHp(stage) {
 
 export function monsterGoldReward(stage) {
   const base = GOLD_BASE * Math.pow(GOLD_GROWTH, stage - 1);
-  return Math.max(1, Math.round(isBossStage(stage) ? base * BOSS_GOLD_MULT : base));
+  const withBossMult = isBossStage(stage) ? base * BOSS_GOLD_MULT : base;
+  return Math.max(1, Math.round(withBossMult * GOLD_DROP_BONUS));
 }
 
 export function monsterDamagePerSecond(stage) {

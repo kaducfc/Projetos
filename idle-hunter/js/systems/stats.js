@@ -1,5 +1,5 @@
 import { getItem, getEnhancedStats } from '../data/items.js';
-import { UPGRADES } from '../data/upgrades.js';
+import { UPGRADES, getUpgradeValuePerLevel } from '../data/upgrades.js';
 import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard, CARD_DAMAGE_BONUS } from '../data/cards.js';
 
@@ -52,7 +52,7 @@ export function computePlayerStats(state) {
   for (const upgrade of UPGRADES) {
     const level = state.upgrades[upgrade.id] || 0;
     if (level <= 0) continue;
-    const total = level * upgrade.valuePerLevel;
+    const total = level * getUpgradeValuePerLevel(upgrade);
     addStat(upgrade.stat, total);
   }
 

@@ -1,6 +1,6 @@
 import { isBossStage, BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo } from '../data/monsters.js';
 import { getSlot, getItemsForBoss, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
-import { UPGRADES } from '../data/upgrades.js';
+import { UPGRADES, getUpgradeValuePerLevel } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
@@ -405,8 +405,9 @@ function formatUpgradeBonus(stat, value) {
 }
 
 function upgradeProgressHtml(upgrade, level) {
-  const current = formatUpgradeBonus(upgrade.stat, level * upgrade.valuePerLevel);
-  const next = formatUpgradeBonus(upgrade.stat, (level + 1) * upgrade.valuePerLevel);
+  const valuePerLevel = getUpgradeValuePerLevel(upgrade);
+  const current = formatUpgradeBonus(upgrade.stat, level * valuePerLevel);
+  const next = formatUpgradeBonus(upgrade.stat, (level + 1) * valuePerLevel);
   return `<div class="upgrade-progress">
     <span>Atual: <strong>${level > 0 ? current : '—'}</strong></span>
     <span class="arrow">→</span>
