@@ -236,9 +236,10 @@ export const BOSSES = [
     name: 'Tempestron',
     element: 'eletrico',
     emoji: '⛈️',
+    image: 'assets/tempestron/monster.png',
     materials: {
-      primary1: { id: 'tempestron_heart', name: 'Coração Tempestuoso', emoji: '💜' },
-      primary2: { id: 'tempestron_orb', name: 'Orbe Trovejante', emoji: '🔮' },
+      primary1: { id: 'tempestron_heart', name: 'Coração Tempestuoso', emoji: '💜', image: 'assets/tempestron/coracao.png' },
+      primary2: { id: 'tempestron_orb', name: 'Orbe Trovejante', emoji: '🔮', image: 'assets/tempestron/orbe.png' },
     },
     crystal: { id: 'tempestron_crystal', name: 'Cristal de Tempestron', emoji: '💎' },
   },
