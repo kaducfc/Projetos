@@ -1,6 +1,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Idle Hunter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" />
 <link rel="stylesheet" href="css/style.css" />
 
 <div id="app">
@@ -8,11 +11,6 @@
     <div class="resource">
       <span class="resource-icon">💰</span>
       <span id="gold-value">0</span>
-    </div>
-    <div class="resource">
-      <span class="resource-icon">🔮</span>
-      <span id="runas-value">0</span>
-      <span class="resource-label">Runas</span>
     </div>
     <div class="resource">
       <span class="resource-icon">💎</span>
@@ -71,7 +69,6 @@
     <nav id="tab-nav">
       <button class="tab-btn active" data-tab="equipment">🎽 Equipamento</button>
       <button class="tab-btn" data-tab="upgrades">📈 Upgrades</button>
-      <button class="tab-btn" data-tab="prestige">🔮 Prestígio</button>
       <button class="tab-btn" data-tab="events">🎪 Eventos</button>
       <button class="tab-btn" data-tab="achievements">🏆 Conquistas</button>
       <button class="tab-btn" data-tab="shop">🛒 Loja</button>
@@ -80,7 +77,6 @@
     <section id="tab-panels">
       <div id="tab-equipment" class="tab-panel active"></div>
       <div id="tab-upgrades" class="tab-panel"></div>
-      <div id="tab-prestige" class="tab-panel"></div>
       <div id="tab-events" class="tab-panel"></div>
       <div id="tab-achievements" class="tab-panel"></div>
       <div id="tab-shop" class="tab-panel"></div>

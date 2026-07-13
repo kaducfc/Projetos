@@ -1,10 +1,8 @@
-// Cash sink: instant gold/Runas packs. Prices are a first pass, not
-// carefully balanced against the achievement/ad income rate yet.
+// Cash sink: instant gold packs. Prices are a first pass, not carefully
+// balanced against the achievement/ad income rate yet.
 export const CASH_SHOP_ITEMS = [
   { id: 'cash_gold_s', name: 'Saco de Ouro', emoji: '💰', cost: 10, kind: 'gold', amount: 5000, description: '+5.000 de ouro na hora.' },
   { id: 'cash_gold_l', name: 'Baú de Ouro', emoji: '🪙', cost: 40, kind: 'gold', amount: 30000, description: '+30.000 de ouro na hora.' },
-  { id: 'cash_runas_s', name: 'Punhado de Runas', emoji: '🔮', cost: 25, kind: 'runas', amount: 5, description: '+5 Runas na hora.' },
-  { id: 'cash_runas_l', name: 'Bolsa de Runas', emoji: '💠', cost: 90, kind: 'runas', amount: 20, description: '+20 Runas na hora.' },
 ];
 
 // Free Cash source #1 (besides achievements): a simulated ad view on a
@@ -22,23 +20,23 @@ export const CASH_REAL_MONEY_PACKAGES = [
   { id: 'pack_l', cashAmount: 1200, priceLabel: 'R$ 79,90' },
 ];
 
-// Event-currency sink, generated per family so every unlocked monster has
-// a Gem (bypasses its 0.5% drop chance) and bulk material bundles for sale.
-// `tier` is the family's index in MONSTER_FAMILIES (0-based), same knob
-// items.js uses to scale crafting costs.
-export function eventShopItemsForFamily(family, tier) {
+// Event-currency sink, generated per boss so every unlocked one has a
+// Crystal (bypasses its 0.1% drop chance) and bulk bundles of its two
+// "drop principal" materials for sale. `tier` is the boss's index in
+// BOSSES (0-based), same knob items.js uses to scale crafting costs.
+export function eventShopItemsForBoss(boss, tier) {
   return [
     {
-      id: `${family.id}_gem_buy`, name: family.materials.gem.name, emoji: family.materials.gem.emoji,
-      matId: family.materials.gem.id, amount: 1, cost: Math.round(30 + tier * 15),
+      id: `${boss.id}_crystal_buy`, name: boss.crystal.name, emoji: boss.crystal.emoji,
+      matId: boss.crystal.id, amount: 1, cost: Math.round(30 + tier * 15),
     },
     {
-      id: `${family.id}_common_bundle`, name: `${family.materials.common.name} (x25)`, emoji: family.materials.common.emoji,
-      matId: family.materials.common.id, amount: 25, cost: Math.round(8 + tier * 3),
+      id: `${boss.id}_primary1_bundle`, name: `${boss.materials.primary1.name} (x25)`, emoji: boss.materials.primary1.emoji,
+      matId: boss.materials.primary1.id, amount: 25, cost: Math.round(8 + tier * 3),
     },
     {
-      id: `${family.id}_rare_bundle`, name: `${family.materials.rare.name} (x8)`, emoji: family.materials.rare.emoji,
-      matId: family.materials.rare.id, amount: 8, cost: Math.round(14 + tier * 5),
+      id: `${boss.id}_primary2_bundle`, name: `${boss.materials.primary2.name} (x25)`, emoji: boss.materials.primary2.emoji,
+      matId: boss.materials.primary2.id, amount: 25, cost: Math.round(8 + tier * 3),
     },
   ];
 }

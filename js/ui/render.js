@@ -1,17 +1,16 @@
-import { MONSTER_FAMILIES, isBossStage } from '../data/monsters.js';
-import { getSlot, getItemsForFamily, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
-import { UPGRADES, PRESTIGE_UPGRADES } from '../data/upgrades.js';
+import { isBossStage, BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo } from '../data/monsters.js';
+import { getSlot, getItemsForBoss, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
+import { UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
-import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, cardSlotUnlockCost, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
-import { getUpgradeLevel, getUpgradeCost, getPrestigeUpgradeLevel, getPrestigeUpgradeCost } from '../systems/upgrades.js';
-import { canRebirth, runasGain, REBIRTH_MIN_STAGE } from '../systems/prestige.js';
-import { getEventWindow } from '../data/events.js';
+import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
+import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
+import { getEventWindow, getTradeWindow, TRADE_COST, TRADE_YIELD } from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
-import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForFamily } from '../data/shop.js';
+import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
 import { CARDS, getCard } from '../data/cards.js';
 
@@ -183,7 +182,6 @@ function formatStatsLines(stats) {
 
 export function renderTopBar(state) {
   document.getElementById('gold-value').textContent = formatNumber(state.gold);
-  document.getElementById('runas-value').textContent = formatNumber(state.runas);
   document.getElementById('cash-value').textContent = formatNumber(state.cash);
   document.getElementById('event-currency-value').textContent = formatNumber(state.eventCurrency);
   document.getElementById('stage-value').textContent = state.maxStage;
@@ -275,14 +273,14 @@ const EQUIP_SUBTABS = [
   { id: 'cards', label: '🃏 Cartas' },
 ];
 
-export function renderEquipmentTab(state, activeSubTab = 'equip') {
+export function renderEquipmentTab(state, activeSubTab = 'equip', expandedForgeBosses = new Set()) {
   const container = document.getElementById('tab-equipment');
   const subnav = `<div class="inner-subnav">${EQUIP_SUBTABS.map((t) => `
     <button class="inner-subtab-btn ${activeSubTab === t.id ? 'active' : ''}" data-equip-subtab="${t.id}">${t.label}</button>
   `).join('')}</div>`;
 
   let body;
-  if (activeSubTab === 'forge') body = forgeContentHtml(state);
+  if (activeSubTab === 'forge') body = forgeContentHtml(state, expandedForgeBosses);
   else if (activeSubTab === 'materials') body = materialsContentHtml(state);
   else if (activeSubTab === 'cards') body = cardsContentHtml(state);
   else body = equipRingContentHtml(state);
@@ -384,7 +382,7 @@ function itemDetailHtml(state, uid, pickerOpen) {
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
-      ${cardSlotHtml(state, uid, entry, pickerOpen)}
+      ${cardSlotHtml(state, uid, entry, pickerOpen, item)}
       ${enhancePanelHtml(state, uid, entry, item)}
       ${actionBtn}
     </div>
@@ -394,24 +392,29 @@ function itemDetailHtml(state, uid, pickerOpen) {
 // A card is consumed from state.cards (a stackable count, like a material)
 // the moment it's socketed. Cards themselves have no slotId restriction: any
 // card can go in any item's slot. The slot itself has three states:
-//   1. locked — the item was just crafted, must be unlocked first (RNG + gold)
+//   1. locked — the item was just crafted, must be unlocked first (RNG,
+//      paid in that item's own boss Crystal — see attemptCardSlotUnlock())
 //   2. unlocked, empty — either closed (a button to open the picker) or with
 //      the picker expanded (pickerOpen), listing every owned card
 //   3. unlocked, filled — the socketed card, with a Remover button
-function cardSlotHtml(state, uid, entry, pickerOpen) {
+function cardSlotHtml(state, uid, entry, pickerOpen, item) {
   const unlocked = entry.cardSlotUnlocked || !!entry.cardId;
 
   if (!unlocked) {
-    const cost = cardSlotUnlockCost(state);
+    const crystalInfo = findMaterialInfo(item.crystalMaterialId);
+    const haveCrystal = state.materials[item.crystalMaterialId] || 0;
     const canAttempt = canAttemptCardSlotUnlock(state, uid);
     return `<div class="card-slot-locked">
       <div class="card-slot-label">🔒 Slot de Carta bloqueado</div>
-      <div class="card-slot-unlock-info">${Math.round(CARD_SLOT_UNLOCK_CHANCE * 100)}% de chance de sucesso · custo: ${formatNumber(cost)} 🪙</div>
+      <div class="card-slot-unlock-info">${Math.round(CARD_SLOT_UNLOCK_CHANCE * 100)}% de chance de sucesso · custo: 1 ${crystalInfo.emoji} ${crystalInfo.name} (você tem ${formatNumber(haveCrystal)})</div>
       <button class="card-slot-unlock-btn" data-unlock-card-slot="${uid}" ${canAttempt ? '' : 'disabled'}>Tentar Desbloquear</button>
     </div>`;
   }
 
-  if (entry.cardId) {
+  // getCard() can miss for an old save's cardId (the roster that generates
+  // CARDS was replaced — see data/cards.js) — fall through to the normal
+  // empty-slot display below rather than crash on a stale reference.
+  if (entry.cardId && getCard(entry.cardId)) {
     const card = getCard(entry.cardId);
     return `<div class="card-slot-badge filled">
       <span class="icon">${card.emoji}</span>
@@ -449,8 +452,6 @@ function cardSlotHtml(state, uid, entry, pickerOpen) {
 }
 
 function enhancePanelHtml(state, uid, entry, item) {
-  const family = MONSTER_FAMILIES.find((f) => f.id === item.familyId);
-
   if (entry.isMaster) {
     return `<div class="enhance-maxed">✨ Rank Master alcançado</div>`;
   }
@@ -458,7 +459,7 @@ function enhancePanelHtml(state, uid, entry, item) {
   if (entry.enhanceLevel < ENHANCE_MAX_LEVEL) {
     const cost = item.enhanceCost[entry.enhanceLevel];
     const have = state.materials[item.commonMaterialId] || 0;
-    const matInfo = family.materials.common;
+    const matInfo = findMaterialInfo(item.commonMaterialId);
     const met = have >= cost;
     return `<div class="enhance-panel">
       <div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(cost)}</span></div>
@@ -466,30 +467,48 @@ function enhancePanelHtml(state, uid, entry, item) {
     </div>`;
   }
 
-  const gemInfo = family.materials.gem;
-  const haveGem = state.materials[gemInfo.id] || 0;
-  const matInfo = family.materials.common;
+  const crystalInfo = findMaterialInfo(item.crystalMaterialId);
+  const haveCrystal = state.materials[item.crystalMaterialId] || 0;
+  const matInfo = findMaterialInfo(item.commonMaterialId);
   const haveMat = state.materials[item.commonMaterialId] || 0;
   const matMet = haveMat >= item.masterMaterialCost;
   return `<div class="enhance-panel">
     <div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${matMet ? 'met' : 'missing'}">${formatNumber(haveMat)}/${formatNumber(item.masterMaterialCost)}</span></div>
-    <div class="recipe-cost"><span>${gemInfo.emoji} ${gemInfo.name}</span><span class="${haveGem >= 1 ? 'met' : 'missing'}">${formatNumber(haveGem)}/1</span></div>
+    <div class="recipe-cost"><span>${crystalInfo.emoji} ${crystalInfo.name}</span><span class="${haveCrystal >= 1 ? 'met' : 'missing'}">${formatNumber(haveCrystal)}/1</span></div>
     <button class="master-btn" data-master-upgrade="${uid}" ${canUpgradeToMaster(state, uid) ? '' : 'disabled'}>Evoluir para Rank Master</button>
   </div>`;
 }
 
-function forgeContentHtml(state) {
-  return MONSTER_FAMILIES.map((family) => familyGroupHtml(state, family)).join('');
+// Spoiler control: show every unlocked boss, plus exactly one preview of
+// whatever comes next (so there's always something to look forward to)
+// — everything further out stays a complete surprise instead of listing
+// every future boss's name/element/art up front.
+function forgeContentHtml(state, expandedForgeBosses) {
+  const nextLockedIndex = BOSSES.findIndex((b) => b.stage > state.maxStage);
+  const visibleBosses = nextLockedIndex === -1 ? BOSSES : BOSSES.slice(0, nextLockedIndex + 1);
+  return visibleBosses.map((boss) => bossGroupHtml(state, boss, expandedForgeBosses)).join('');
 }
 
-function familyGroupHtml(state, family) {
-  const items = getItemsForFamily(family.id);
-  const unlocked = state.maxStage >= family.startStage;
+function bossGroupHtml(state, boss, expandedForgeBosses) {
+  const unlocked = state.maxStage >= boss.stage;
+  const header = `<h3><span class="icon">${iconMarkup(boss.image, boss.emoji, boss.name)}</span> ${boss.name} ${elementBadgeHtml(boss.element)} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">(Chefe do Estágio ${boss.stage})</span></h3>`;
+
+  if (!unlocked) {
+    return `<div class="family-group">
+      ${header}
+      <p style="color:var(--text-dim); font-size:12px;">🔒 Alcance o estágio ${boss.stage} para desbloquear.</p>
+    </div>`;
+  }
+
+  const items = getItemsForBoss(boss.id);
+  const expanded = expandedForgeBosses.has(boss.id);
 
   return `<div class="family-group">
-    <h3><span class="icon">${iconMarkup(family.image, family.emoji, family.name)}</span> ${family.name} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">(Estágios ${family.startStage}–${family.endStage})</span></h3>
-    ${unlocked ? `<div class="recipe-grid">${items.map((item) => recipeCardHtml(state, item)).join('')}</div>`
-      : `<p style="color:var(--text-dim); font-size:12px;">Alcance o estágio ${family.startStage} para desbloquear.</p>`}
+    <div class="family-group-header">
+      ${header}
+      <button class="forge-toggle-btn" data-toggle-forge="${boss.id}">${expanded ? '▲ Recolher' : '▼ Expandir'}</button>
+    </div>
+    ${expanded ? `<div class="recipe-grid">${items.map((item) => recipeCardHtml(state, item)).join('')}</div>` : ''}
   </div>`;
 }
 
@@ -498,11 +517,10 @@ function recipeCardHtml(state, item) {
   const equipped = state.equipped[item.slotId] && state.inventory.find((i) => i.uid === state.equipped[item.slotId])?.itemId === item.id;
 
   const costLines = Object.entries(item.materialCost).map(([matId, qty]) => {
-    const family = MONSTER_FAMILIES.find((f) => f.materials.common.id === matId || f.materials.rare.id === matId);
-    const matInfo = family.materials.common.id === matId ? family.materials.common : family.materials.rare;
+    const matInfo = findMaterialInfo(matId);
     const have = state.materials[matId] || 0;
     const met = have >= qty;
-    return `<div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(qty)}</span></div>`;
+    return `<div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(qty)}</span></div>`;
   }).join('');
 
   const goldMet = state.gold >= item.goldCost;
@@ -517,11 +535,9 @@ function recipeCardHtml(state, item) {
   </div>`;
 }
 
-// Upgrade bonuses are always `level * valuePerLevel` — shared by both the
-// gold-bought and Runas-bought lists, just formatted per stat type (percent
-// stats get a %, startStage gets "estágios", everything else is flat).
+// Upgrade bonuses are always `level * valuePerLevel` — just formatted per
+// stat type (percent stats get a %, everything else is flat).
 function formatUpgradeBonus(stat, value) {
-  if (stat === 'startStage') return `+${formatNumber(value)} estágio${Math.round(value) === 1 ? '' : 's'}`;
   if (stat.endsWith('Percent')) return `+${formatPercent(value)}`;
   return `+${formatNumber(value)}`;
 }
@@ -558,49 +574,24 @@ function upgradeCardHtml(state, upgrade) {
   </div>`;
 }
 
-export function renderPrestigeTab(state) {
-  const container = document.getElementById('tab-prestige');
-  const gain = runasGain(state.maxStage);
-  const eligible = canRebirth(state);
-
-  container.innerHTML = `
-    <div id="prestige-summary">
-      <p>Renascer reseta seu ouro, upgrades comuns e estágio — mas seus <strong>equipamentos, materiais e upgrades de prestígio permanecem</strong>.</p>
-      <p>É preciso alcançar o estágio ${REBIRTH_MIN_STAGE} para renascer pela primeira vez.</p>
-      <p>Renascendo agora você ganha: <strong style="color:var(--runas)">🔮 ${formatNumber(gain)} Runas</strong></p>
-      <button id="rebirth-btn" ${eligible ? '' : 'disabled'}>Renascer</button>
-    </div>
-    <div class="prestige-list">${PRESTIGE_UPGRADES.map((u) => prestigeCardHtml(state, u)).join('')}</div>
-  `;
-}
-
-function prestigeCardHtml(state, upgrade) {
-  const level = getPrestigeUpgradeLevel(state, upgrade.id);
-  const cost = getPrestigeUpgradeCost(state, upgrade.id);
-  const affordable = state.runas >= cost;
-
-  return `<div class="prestige-card">
-    <span class="icon">${upgrade.emoji}</span>
-    <div class="info">
-      <div class="name">${upgrade.name}</div>
-      <div class="desc">${upgrade.description}</div>
-      <div class="level">Nível ${level}</div>
-      ${upgradeProgressHtml(upgrade, level)}
-    </div>
-    <button data-prestige-upgrade="${upgrade.id}" ${affordable ? '' : 'disabled'}>🔮 ${formatNumber(cost)}</button>
-  </div>`;
-}
-
+// MONSTER_FAMILIES materials (lobo, javali etc.) are intentionally excluded
+// here — leftovers from the pre-boss-roster v1 that nothing can drop
+// anymore (see the comment atop MONSTER_FAMILIES in data/monsters.js).
+// The live roster (BOSSES + WEAK_MONSTER_GROUPS) is also filtered to
+// owned-only, so a material never spoils a boss/monster the player hasn't
+// reached yet.
 function materialsContentHtml(state) {
-  const allMaterials = MONSTER_FAMILIES.flatMap((f) => [f.materials.common, f.materials.rare, f.materials.gem]);
+  const ownedMaterials = BOSSES.flatMap((b) => [b.materials.primary1, b.materials.primary2, b.crystal])
+    .concat(WEAK_MONSTER_GROUPS.flatMap((g) => g.monsters).map((m) => m.material))
+    .filter((m) => (state.materials[m.id] || 0) > 0);
 
-  if (allMaterials.every((m) => (state.materials[m.id] || 0) === 0)) {
+  if (!ownedMaterials.length) {
     return `<p style="color:var(--text-dim); font-size:13px;">Nenhum material coletado ainda. Derrote monstros para conseguir materiais de craft.</p>`;
   }
 
-  return `<div class="material-grid">${allMaterials.map((m) => `
+  return `<div class="material-grid">${ownedMaterials.map((m) => `
     <div class="material-card">
-      <div class="icon">${m.emoji}</div>
+      <div class="icon">${iconMarkup(m.image, m.emoji, m.name)}</div>
       <div class="name">${m.name}</div>
       <div class="qty">${formatNumber(state.materials[m.id] || 0)}</div>
     </div>`).join('')}</div>`;
@@ -633,52 +624,139 @@ function formatDuration(ms) {
 }
 
 // ---------------------------------------------------------------
-// Events tab: a rotating event boss, fought by clicking only (see
-// systems/events.js and main.js's onClickEventBoss for why there's no
-// passive-DPS tick here). `engagementRemainingMs` is owned by main.js (a
-// transient, un-persisted "time left in this attempt" clock, same idea as
-// the regular boss timer) — null means no attempt is in progress yet.
+// Events tab: a list of independent, individually-collapsible events (same
+// collapse/expand treatment as the Forja boss groups). Each one owns its
+// own rotation clock (see data/events.js) — there is no shared "the event
+// tab" state anymore, just two unrelated event cards.
+//
+// "Caça Aprimorada" is the original rotating event boss, fought by
+// clicking only (see systems/events.js and main.js's onClickEventBoss for
+// why there's no passive-DPS tick here). `engagementRemainingMs` is owned
+// by main.js (a transient, un-persisted "time left in this attempt" clock,
+// same idea as the regular boss timer) — null means no attempt in progress.
+//
+// "Mercador" lets the player trade weak-monster materials 2-for-1 within
+// whichever WEAK_MONSTER_GROUPS band is currently up (see getTradeWindow).
+// `tradeFromMaterialId` is the material picked as the trade-in, also
+// main.js-owned transient UI state — null means nothing selected yet.
 // ---------------------------------------------------------------
 
-export function renderEventsTab(state, engagementRemainingMs) {
-  const container = document.getElementById('tab-events');
+function eventListItemHtml(id, icon, name, statusLine, expanded, bodyHtml) {
+  return `<div class="event-list-item">
+    <div class="family-group-header event-list-header" data-toggle-event="${id}">
+      <h3><span class="icon">${icon}</span> ${name} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">${statusLine}</span></h3>
+      <button class="forge-toggle-btn" data-toggle-event="${id}">${expanded ? '▲ Recolher' : '▼ Expandir'}</button>
+    </div>
+    ${expanded ? `<div class="event-list-body">${bodyHtml}</div>` : ''}
+  </div>`;
+}
+
+function cacaAprimoradaContentHtml(state, engagementRemainingMs) {
   const win = getEventWindow();
   const claimed = isEventClaimed(state, win.cycleIndex);
 
   if (!win.active || claimed) {
-    // The *next* window's family isn't win.family (that's whoever is/was up
-    // this cycle) — it's whichever family the next cycle index lands on.
-    const nextFamily = MONSTER_FAMILIES[(win.cycleIndex + 1) % MONSTER_FAMILIES.length];
+    // The *next* window's boss isn't win.boss (that's whoever is/was up
+    // this cycle) — it's whichever boss the next cycle index lands on.
+    const nextBoss = BOSSES[(win.cycleIndex + 1) % BOSSES.length];
     const heading = claimed ? 'Evento concluído!' : 'Nenhum evento ativo agora';
     const sub = claimed
       ? 'Você já derrotou o chefe de evento deste ciclo.'
       : 'Volte quando o próximo ciclo começar.';
-    container.innerHTML = `
+    return `
       <div class="event-panel">
         <div class="event-icon dim">🎪</div>
         <h3>${heading}</h3>
         <p class="event-sub">${sub}</p>
-        <p class="event-next">Próximo: ${iconMarkup(nextFamily.image, nextFamily.emoji, nextFamily.name)} <strong>${nextFamily.name}</strong> em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
+        <p class="event-next">Próximo: ${iconMarkup(nextBoss.image, nextBoss.emoji, nextBoss.name)} <strong>${nextBoss.name}</strong> em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
       </div>`;
-    return;
   }
 
-  const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(win.family);
+  const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(win.boss);
   const hp = state.eventBossHp ?? maxHp;
   const pct = maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 0;
   const timerHtml = engagementRemainingMs != null
     ? `<div class="event-countdown ${engagementRemainingMs <= 10000 ? 'urgent' : ''}">⏱ ${Math.ceil(engagementRemainingMs / 1000)}s para derrotar!</div>`
     : `<div class="event-countdown hint">Clique para começar a atacar</div>`;
 
-  container.innerHTML = `
+  return `
     <div class="event-panel">
       <div class="event-active-badge">🎪 Evento ativo — janela fecha em ${formatDuration(win.remainingActiveMs)}</div>
-      <h3>${win.family.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(win.family.element)}</h3>
-      <button id="event-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(win.family.image, win.family.bossEmoji || win.family.emoji, win.family.name)}</button>
+      <h3>${win.boss.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(win.boss.element)}</h3>
+      <button id="event-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(win.boss.image, win.boss.emoji, win.boss.name)}</button>
       <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(maxHp)}</span></div>
       ${timerHtml}
       <p class="event-reward-info">🎁 Recompensa ao derrotar: 1–6 materiais + 🎫 Moeda de Evento</p>
     </div>`;
+}
+
+function cacaAprimoradaStatusLine(state) {
+  const win = getEventWindow();
+  const claimed = isEventClaimed(state, win.cycleIndex);
+  if (win.active && !claimed) return '🎪 Ativo agora!';
+  if (claimed) return `✅ Concluído · próximo em ${formatDuration(win.msUntilNextWindow)}`;
+  return `Próximo em ${formatDuration(win.msUntilNextWindow)}`;
+}
+
+function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId) {
+  const have = state.materials[mat.id] || 0;
+  const isFrom = tradeFromMaterialId === mat.id;
+  const canBeFrom = have >= TRADE_COST;
+
+  if (tradeFromMaterialId == null) {
+    return `<div class="material-card trade-card">
+      <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
+      <div class="name">${mat.name}</div>
+      <div class="qty">${formatNumber(have)}</div>
+      <button class="forge-toggle-btn" data-trade-select="${mat.id}" ${canBeFrom ? '' : 'disabled'}>Trocar</button>
+    </div>`;
+  }
+
+  if (isFrom) {
+    return `<div class="material-card trade-card selected">
+      <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
+      <div class="name">${mat.name}</div>
+      <div class="qty">${formatNumber(have)}</div>
+      <button class="forge-toggle-btn" data-trade-cancel>Cancelar</button>
+    </div>`;
+  }
+
+  return `<div class="material-card trade-card">
+    <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
+    <div class="name">${mat.name}</div>
+    <div class="qty">${formatNumber(have)}</div>
+    <button class="forge-toggle-btn" data-trade-target="${mat.id}">Receber (2→1)</button>
+  </div>`;
+}
+
+function mercadorContentHtml(state, tradeFromMaterialId) {
+  const trade = getTradeWindow();
+  const { group } = trade;
+  const fromMat = tradeFromMaterialId != null ? group.monsters.find((m) => m.material.id === tradeFromMaterialId)?.material : null;
+
+  const hint = tradeFromMaterialId == null
+    ? `<p class="event-sub">Escolha um material para trocar (${TRADE_COST} dele → ${TRADE_YIELD} de outro da mesma categoria).</p>`
+    : `<p class="event-sub">Trocando <strong>${TRADE_COST} ${fromMat?.name ?? ''}</strong> — escolha o material que vai receber.</p>`;
+
+  return `
+    <div class="event-panel">
+      <div class="event-active-badge">🧺 Categoria ativa: Estágio ${group.startStage}–${group.endStage} · rotaciona em ${formatDuration(trade.msUntilNextRotation)}</div>
+      ${hint}
+      <div class="material-grid">${group.monsters.map((m) => tradeMaterialCardHtml(state, group, m.material, tradeFromMaterialId)).join('')}</div>
+    </div>`;
+}
+
+function mercadorStatusLine() {
+  const trade = getTradeWindow();
+  return `Estágio ${trade.group.startStage}–${trade.group.endStage} · rotaciona em ${formatDuration(trade.msUntilNextRotation)}`;
+}
+
+export function renderEventsTab(state, engagementRemainingMs, expandedEvents = new Set(), tradeFromMaterialId = null) {
+  const container = document.getElementById('tab-events');
+  container.innerHTML = `<div class="event-list">
+    ${eventListItemHtml('caca', '🎪', 'Caça Aprimorada', cacaAprimoradaStatusLine(state), expandedEvents.has('caca'), cacaAprimoradaContentHtml(state, engagementRemainingMs))}
+    ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId))}
+  </div>`;
 }
 
 export function pulseEventBoss() {
@@ -726,9 +804,9 @@ export function renderAchievementsTab(state) {
 }
 
 // ---------------------------------------------------------------
-// Shop tab: Cash sub-tab (spend on gold/Runas packs, plus a disabled
-// real-money package stub) and Event-currency sub-tab (per-family
-// Gem/material bundles). `activeSubTab` is owned by main.js.
+// Shop tab: Cash sub-tab (spend on gold packs, plus a disabled real-money
+// package stub) and Event-currency sub-tab (per-boss Crystal/material
+// bundles). `activeSubTab` is owned by main.js.
 // ---------------------------------------------------------------
 
 export function renderShopTab(state, activeSubTab) {
@@ -775,12 +853,12 @@ function cashShopHtml(state) {
 }
 
 function eventShopHtml(state) {
-  const familiesHtml = MONSTER_FAMILIES.map((family, tier) => {
-    const unlocked = state.maxStage >= family.startStage;
+  const bossesHtml = BOSSES.map((boss, tier) => {
+    const unlocked = state.maxStage >= boss.stage;
     if (!unlocked) return '';
-    const items = eventShopItemsForFamily(family, tier);
+    const items = eventShopItemsForBoss(boss, tier);
     return `<div class="family-group">
-      <h3><span class="icon">${iconMarkup(family.image, family.emoji, family.name)}</span> ${family.name}</h3>
+      <h3><span class="icon">${iconMarkup(boss.image, boss.emoji, boss.name)}</span> ${boss.name}</h3>
       <div class="shop-item-grid">${items.map((item) => `
         <div class="shop-item-card event-variant">
           <span class="icon">${item.emoji}</span>
@@ -795,7 +873,7 @@ function eventShopHtml(state) {
   return `
     <div class="shop-balance event-variant">🎫 Você tem <strong>${formatNumber(state.eventCurrency)}</strong> Moeda de Evento</div>
     <p class="shop-note">Ganhe Moeda de Evento derrotando o chefe de evento na aba 🎪 Eventos.</p>
-    ${familiesHtml || '<p class="shop-note">Nenhuma família desbloqueada ainda.</p>'}
+    ${bossesHtml || '<p class="shop-note">Nenhum chefe desbloqueado ainda.</p>'}
   `;
 }
 
@@ -808,7 +886,6 @@ export function renderAll(state, monster, stats) {
   renderCombatStats(stats, monster);
   renderMonster(state, monster);
   renderUpgradesTab(state);
-  renderPrestigeTab(state);
 }
 
 export function spawnDamagePopup(amount) {

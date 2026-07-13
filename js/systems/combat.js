@@ -1,5 +1,5 @@
-import { getFamilyForStage, isBossStage, getMonsterInfo } from '../data/monsters.js';
-import { getCardForFamily } from '../data/cards.js';
+import { isBossStage, getMonsterInfo, getBossForStage, pickRandomWeakMonster, getWeakMonster } from '../data/monsters.js';
+import { getCardForMonster } from '../data/cards.js';
 
 const HP_GROWTH = 1.145;
 const HP_BASE = 20;
@@ -20,17 +20,16 @@ const BOSS_DPS_TAKEN_MULT = 3;
 // combat outright.
 const ARMOR_CONSTANT = 100;
 
+// Base chance for a "regular" material drop — the weak monster's one
+// material, or each of a boss's two "drop principal" materials. Scaled by
+// dropMult (Drop upgrades/gear), same as before.
 const COMMON_DROP_CHANCE = 0.35;
-const RARE_DROP_CHANCE = 0.06;
-const BOSS_RARE_DROP_CHANCE = 0.9;
 
-// Same flat chance for every monster of a family, regular or boss — the Gem
-// is the rare "jackpot" material needed for the Rank Master upgrade.
-const GEM_DROP_CHANCE = 0.005;
-
-// Cards (see data/cards.js) drop separately from materials — same flat
-// chance for common monsters and bosses alike.
-const CARD_DROP_CHANCE = 0.02;
+// Boss-only Crystal and any monster/boss card are both *fixed* rates —
+// explicitly never scaled by dropMult. Drop bonuses only affect the
+// "regular" materials above; the rare stuff always stays this rare.
+export const CRYSTAL_DROP_CHANCE = 0.001; // 0.1%
+export const MONSTER_CARD_DROP_CHANCE = 0.0001; // 0.01%
 
 export function monsterMaxHp(stage) {
   const base = HP_BASE * Math.pow(HP_GROWTH, stage - 1);
@@ -51,43 +50,61 @@ export function armorReduction(armor) {
   return armor / (armor + ARMOR_CONSTANT);
 }
 
-export function getCurrentMonster(stage) {
-  const info = getMonsterInfo(stage);
+export function getCurrentMonster(stage, weakMonsterId) {
+  const info = getMonsterInfo(stage, weakMonsterId);
   return { ...info, maxHp: monsterMaxHp(stage), dps: monsterDamagePerSecond(stage) };
 }
 
-export function rollDrops(stage, dropMult) {
-  const family = getFamilyForStage(stage);
+/// weakMonsterId: the currently-spawned weak monster (see
+/// ensureMonsterSpawned below) — only consulted on non-boss stages.
+///
+/// Boss: rolls each of the two "drop principal" materials independently
+/// (dropMult-scaled), plus the boss's own Crystal and its card, both at a
+/// fixed rate dropMult never touches.
+/// Weak monster: rolls its one material (dropMult-scaled) plus its own
+/// card, also at that same fixed rate.
+export function rollDrops(stage, dropMult, weakMonsterId) {
   const boss = isBossStage(stage);
   const drops = [];
+  const chance = Math.min(0.95, COMMON_DROP_CHANCE * dropMult);
 
-  const commonChance = Math.min(0.95, COMMON_DROP_CHANCE * dropMult);
-  if (Math.random() < commonChance) {
-    drops.push({ id: family.materials.common.id, name: family.materials.common.name, emoji: family.materials.common.emoji, qty: boss ? 3 : 1 });
+  if (boss) {
+    const b = getBossForStage(stage);
+    for (const mat of [b.materials.primary1, b.materials.primary2]) {
+      if (Math.random() < chance) {
+        drops.push({ id: mat.id, name: mat.name, emoji: mat.emoji, qty: 1 });
+      }
+    }
+    if (Math.random() < CRYSTAL_DROP_CHANCE) {
+      drops.push({ id: b.crystal.id, name: b.crystal.name, emoji: b.crystal.emoji, qty: 1 });
+    }
+    if (Math.random() < MONSTER_CARD_DROP_CHANCE) {
+      const card = getCardForMonster(b.id);
+      drops.push({ id: card.id, name: card.name, emoji: card.emoji, qty: 1, isCard: true });
+    }
+    return drops;
   }
 
-  const rareChance = Math.min(0.98, (boss ? BOSS_RARE_DROP_CHANCE : RARE_DROP_CHANCE) * dropMult);
-  if (Math.random() < rareChance) {
-    drops.push({ id: family.materials.rare.id, name: family.materials.rare.name, emoji: family.materials.rare.emoji, qty: 1 });
+  const weak = getWeakMonster(weakMonsterId);
+  if (Math.random() < chance) {
+    drops.push({ id: weak.material.id, name: weak.material.name, emoji: weak.material.emoji, qty: 1 });
   }
-
-  const gemChance = Math.min(0.5, GEM_DROP_CHANCE * dropMult);
-  if (Math.random() < gemChance) {
-    drops.push({ id: family.materials.gem.id, name: family.materials.gem.name, emoji: family.materials.gem.emoji, qty: 1 });
-  }
-
-  const cardChance = Math.min(0.5, CARD_DROP_CHANCE * dropMult);
-  if (Math.random() < cardChance) {
-    const card = getCardForFamily(family.id);
+  if (Math.random() < MONSTER_CARD_DROP_CHANCE) {
+    const card = getCardForMonster(weak.id);
     drops.push({ id: card.id, name: card.name, emoji: card.emoji, qty: 1, isCard: true });
   }
-
   return drops;
 }
 
+/// Also rolls which weak monster is showing (persisted on state, since a
+/// weak monster's identity has to stay fixed for the life of that HP pool
+/// — re-rolling on every render would make the sprite flicker between
+/// monsters mid-fight). null on boss stages, where that decade's boss is
+/// always shown instead.
 export function ensureMonsterSpawned(state) {
   if (state.monsterHp == null) {
     state.monsterHp = monsterMaxHp(state.stage);
+    state.weakMonsterId = isBossStage(state.stage) ? null : pickRandomWeakMonster(state.stage).id;
   }
 }
 
@@ -102,7 +119,7 @@ export function applyDamage(state, amount, stats) {
 
   const stage = state.stage;
   const goldGained = Math.round(monsterGoldReward(stage) * stats.goldMult);
-  const drops = rollDrops(stage, stats.dropMult);
+  const drops = rollDrops(stage, stats.dropMult, state.weakMonsterId);
   const wasBoss = isBossStage(stage);
 
   state.gold += goldGained;

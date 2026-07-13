@@ -1,4 +1,4 @@
-// Regular upgrades: bought with gold, reset on rebirth.
+// Upgrades: bought with gold, permanent (progress is linear — no resets).
 export const UPGRADES = [
   {
     id: 'training',
@@ -83,53 +83,5 @@ export const UPGRADES = [
 ];
 
 export function upgradeCost(upgrade, level) {
-  return Math.round(upgrade.baseCost * Math.pow(upgrade.costGrowth, level));
-}
-
-// Prestige upgrades: bought with Runas, persist across rebirths forever.
-export const PRESTIGE_UPGRADES = [
-  {
-    id: 'ancestral_power',
-    name: 'Poder Ancestral',
-    emoji: '🌟',
-    description: '+2% de dano total (clique + DPS) por nível.',
-    baseCost: 1,
-    costGrowth: 1.35,
-    stat: 'allDamagePercent',
-    valuePerLevel: 2,
-  },
-  {
-    id: 'eternal_fortune',
-    name: 'Fortuna Eterna',
-    emoji: '💰',
-    description: '+3% de ouro obtido por nível.',
-    baseCost: 1,
-    costGrowth: 1.3,
-    stat: 'goldPercent',
-    valuePerLevel: 3,
-  },
-  {
-    id: 'keen_scent',
-    name: 'Faro Apurado',
-    emoji: '🐾',
-    description: '+2% de chance de material por nível.',
-    baseCost: 1,
-    costGrowth: 1.3,
-    stat: 'dropPercent',
-    valuePerLevel: 2,
-  },
-  {
-    id: 'head_start',
-    name: 'Início Avançado',
-    emoji: '🚀',
-    description: 'Começa cada renascimento 2 estágios mais à frente.',
-    baseCost: 2,
-    costGrowth: 1.4,
-    stat: 'startStage',
-    valuePerLevel: 2,
-  },
-];
-
-export function prestigeUpgradeCost(upgrade, level) {
   return Math.round(upgrade.baseCost * Math.pow(upgrade.costGrowth, level));
 }

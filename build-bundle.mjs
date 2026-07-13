@@ -29,7 +29,6 @@ const MODULE_ORDER = [
   'js/systems/equipment.js',
   'js/systems/crafting.js',
   'js/systems/upgrades.js',
-  'js/systems/prestige.js',
   'js/systems/offline.js',
   'js/systems/events.js',
   'js/systems/achievements.js',

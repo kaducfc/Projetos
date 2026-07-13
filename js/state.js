@@ -1,21 +1,21 @@
+import { getCard } from './data/cards.js';
+
 const SAVE_KEY = 'idleHunterSave.v1';
 
 export function createDefaultState() {
   return {
     gold: 0,
-    runas: 0,
     stage: 1,
     maxStage: 1,
     monsterHp: null, // current monster's remaining HP; null = needs (re)spawn
+    weakMonsterId: null, // which WEAK_MONSTER_GROUPS entry is spawned (non-boss stages only)
     materials: {}, // materialId -> count
     cards: {}, // cardId -> count (see data/cards.js)
     inventory: [], // { uid, itemId }
     nextUid: 1,
     equipped: { weapon: null, helmet: null, armor: null, pants: null, gloves: null, boots: null }, // uid or null
     upgrades: {}, // upgradeId -> level
-    prestigeUpgrades: {}, // upgradeId -> level
     totalKills: 0,
-    rebirthCount: 0,
     lastSaveTime: Date.now(),
 
     // Premium currency: earned via achievements or the (simulated) ad-watch
@@ -51,7 +51,17 @@ export function loadState() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     // Merge onto defaults so new fields introduced later don't crash old saves.
-    return Object.assign(createDefaultState(), parsed);
+    const state = Object.assign(createDefaultState(), parsed);
+    // A monster/boss roster replacement (see data/cards.js) can leave an old
+    // save's socketed cardId pointing at a card that no longer exists.
+    // Rendering already falls back gracefully for this (see cardSlotHtml in
+    // ui/render.js), but leaving cardId set would permanently block
+    // re-socketing (canSocketCard requires an empty slot) — clear it here
+    // instead, once, so the slot is usable again.
+    for (const entry of state.inventory) {
+      if (entry.cardId && !getCard(entry.cardId)) entry.cardId = null;
+    }
+    return state;
   } catch (err) {
     console.warn('Falha ao carregar o save, começando um jogo novo:', err);
     return null;
