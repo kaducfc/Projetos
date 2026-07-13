@@ -15,7 +15,7 @@ import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
 import { claimCardReward } from './systems/cards.js';
-import { CARD_DISCOVERY_CASH_REWARD } from './data/cards.js';
+import { CARD_DISCOVERY_CASH_REWARD, getCard } from './data/cards.js';
 import { GAME_BUILD } from './version.js';
 import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
@@ -857,15 +857,25 @@ function showOfflineProgressIfAny() {
   const hours = Math.floor(progress.elapsedSeconds / 3600);
   const minutes = Math.floor((progress.elapsedSeconds % 3600) / 60);
   const timeStr = hours > 0 ? `${hours}h ${minutes}min` : `${minutes}min`;
-  const materialsStr = Object.entries(progress.materialsGained)
-    .map(([id, qty]) => `+${formatNumber(qty)} de material`).length
-    ? ' e alguns materiais' : '';
+
+  const materialLines = Object.entries(progress.materialsGained).map(([id, qty]) => {
+    const info = findMaterialInfo(id);
+    return `+${formatNumber(qty)} ${info?.emoji ?? ''} ${info?.name ?? id}`;
+  });
+  const cardLines = Object.entries(progress.cardsGained).map(([id, qty]) => {
+    const card = getCard(id);
+    return `+${formatNumber(qty)} ${card?.emoji ?? '🃏'} ${card?.name ?? id}`;
+  });
+  const itemsHtml = [...materialLines, ...cardLines].length
+    ? `<p>${[...materialLines, ...cardLines].join('<br>')}</p>`
+    : '';
 
   showModal('Bem-vindo de volta!', `
-    <p>Você ficou fora por <strong>${timeStr}</strong>.</p>
-    <p>Seu personagem continuou lutando no estágio ${state.stage} e conseguiu:</p>
+    <p>Você ficou fora por <strong>${timeStr}</strong> (máximo 8h de recompensa offline).</p>
+    <p>Seu personagem continuou lutando sozinho, a 60% de eficiência, e conseguiu:</p>
     <p>💀 ${formatNumber(progress.kills)} monstros derrotados<br>
-       💰 +${formatNumber(progress.goldGained)} ouro${materialsStr}</p>
+       💰 +${formatNumber(progress.goldGained)} ouro</p>
+    ${itemsHtml}
   `);
 }
 
