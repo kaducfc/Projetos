@@ -210,9 +210,10 @@ export const BOSSES = [
     name: 'Vulkarion',
     element: 'fogo',
     emoji: '🐂',
+    image: 'assets/vulkarion/monster.png',
     materials: {
-      primary1: { id: 'vulkarion_horn', name: 'Chifre de Vulkarion', emoji: '🐮' },
-      primary2: { id: 'vulkarion_heart', name: 'Coração Vulcânico', emoji: '🌋' },
+      primary1: { id: 'vulkarion_horn', name: 'Chifre de Vulkarion', emoji: '🐮', image: 'assets/vulkarion/chifre.png' },
+      primary2: { id: 'vulkarion_heart', name: 'Coração Vulcânico', emoji: '🌋', image: 'assets/vulkarion/coracao.png' },
     },
     crystal: { id: 'vulkarion_crystal', name: 'Cristal de Vulkarion', emoji: '💎' },
   },
