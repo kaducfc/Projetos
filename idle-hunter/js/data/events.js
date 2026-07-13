@@ -64,3 +64,42 @@ export function getTradeCycleInfo(now = Date.now()) {
   const cycleStart = cycleIndex * TRADE_CYCLE_MS;
   return { cycleIndex, msUntilNextCycle: cycleStart + TRADE_CYCLE_MS - now };
 }
+
+// ---------------------------------------------------------------------
+// "Torre Infinita" — every TOWER_CYCLE_MS a fresh window opens, staying
+// open (i.e. clickable "Entrar") for TOWER_ACTIVE_MS. Missing that window
+// means waiting for the next one (see canEnterTower in systems/tower.js,
+// which also blocks a second entry once the player has already used this
+// cycle's window). Once entered, the run itself is a separate, shorter
+// clock (TOWER_RUN_DURATION_MS) that starts ticking from the moment of
+// entry, independent of how much of the entry window is left.
+// ---------------------------------------------------------------------
+export const TOWER_CYCLE_MS = 2 * 60 * 60 * 1000;
+export const TOWER_ACTIVE_MS = 15 * 60 * 1000;
+export const TOWER_RUN_DURATION_MS = 5 * 60 * 1000;
+
+// Level 20/40/.../200 is a boss, matching real stage 10/20/.../100 (i.e.
+// every 2 tower levels = 1 real stage) — see towerPowerStage() in
+// systems/tower.js for the full level->stage mapping, including how it
+// sidesteps the boss-detection hazards that a naive stage lookup would hit.
+export const TOWER_MAX_LEVEL = 200;
+
+// Reward is a flat amount plus a per-level scale of how far the player got,
+// with a completion bonus for actually clearing the level 200 boss instead
+// of just reaching it.
+export const TOWER_CURRENCY_BASE = 5;
+export const TOWER_CURRENCY_PER_LEVEL = 0.8;
+export const TOWER_CLEAR_BONUS = 100;
+
+export function getTowerWindow(now = Date.now()) {
+  const cycleIndex = Math.floor(now / TOWER_CYCLE_MS);
+  const cycleStart = cycleIndex * TOWER_CYCLE_MS;
+  const elapsed = now - cycleStart;
+  const active = elapsed < TOWER_ACTIVE_MS;
+  return {
+    cycleIndex,
+    active,
+    remainingActiveMs: active ? TOWER_ACTIVE_MS - elapsed : 0,
+    msUntilNextWindow: cycleStart + TOWER_CYCLE_MS - now,
+  };
+}

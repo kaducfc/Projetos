@@ -33,20 +33,26 @@ const COMMON_DROP_CHANCE = 0.35;
 export const CRYSTAL_DROP_CHANCE = 0.002; // 0.2%
 export const MONSTER_CARD_DROP_CHANCE = 0.0003; // 0.03% (~1 per 3,333 kills)
 
-export function monsterMaxHp(stage) {
+// isBoss defaults to a plain stage% lookup, but callers whose own notion of
+// "boss" doesn't line up 1:1 with real stage numbers (e.g. the Torre
+// Infinita, see systems/tower.js) can pass it explicitly instead — passing
+// isBossStage(someDerivedStageNumber) here would silently miscount a
+// "weak" fight as a boss fight whenever that derived number happened to
+// land on a multiple of BOSS_INTERVAL.
+export function monsterMaxHp(stage, isBoss = isBossStage(stage)) {
   const base = HP_BASE * Math.pow(HP_GROWTH, stage - 1);
-  return Math.max(1, Math.round(isBossStage(stage) ? base * BOSS_HP_MULT : base));
+  return Math.max(1, Math.round(isBoss ? base * BOSS_HP_MULT : base));
 }
 
-export function monsterGoldReward(stage) {
+export function monsterGoldReward(stage, isBoss = isBossStage(stage)) {
   const base = GOLD_BASE * Math.pow(GOLD_GROWTH, stage - 1);
-  const withBossMult = isBossStage(stage) ? base * BOSS_GOLD_MULT : base;
+  const withBossMult = isBoss ? base * BOSS_GOLD_MULT : base;
   return Math.max(1, Math.round(withBossMult * GOLD_DROP_BONUS));
 }
 
-export function monsterDamagePerSecond(stage) {
+export function monsterDamagePerSecond(stage, isBoss = isBossStage(stage)) {
   const base = PLAYER_DPS_TAKEN_BASE * Math.pow(PLAYER_DPS_TAKEN_GROWTH, stage - 1);
-  return Math.max(0.1, isBossStage(stage) ? base * BOSS_DPS_TAKEN_MULT : base);
+  return Math.max(0.1, isBoss ? base * BOSS_DPS_TAKEN_MULT : base);
 }
 
 export function armorReduction(armor) {

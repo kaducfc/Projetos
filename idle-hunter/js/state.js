@@ -46,6 +46,22 @@ export function createDefaultState() {
     // once the event rotates to a new cycle, every band re-locks on its
     // own without needing any explicit reset here.
     tradeUnlocks: {},
+
+    // Torre Infinita (see data/events.js + systems/tower.js): a single
+    // continuous run through 200 levels, entered once per TOWER_ACTIVE_MS
+    // window. towerEnteredCycle blocks a second entry within that same
+    // window (even across a reload); towerRunActive/towerLevel/
+    // towerMonsterHp/towerWeakMonsterId are the persisted run state so an
+    // in-progress climb survives a reload the same way normal combat does.
+    // The run's own 5-minute clock is intentionally NOT persisted (see
+    // main.js) — same "a reload gives a fresh attempt clock" trade-off
+    // already made for the boss timer and the Caça Aprimorada attempt.
+    towerRunActive: false,
+    towerLevel: 1,
+    towerMonsterHp: null,
+    towerWeakMonsterId: null,
+    towerEnteredCycle: null,
+    towerBestLevel: 0,
   };
 }
 

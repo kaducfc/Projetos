@@ -9,8 +9,9 @@ import { getItem } from './data/items.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
 import { formatNumber } from './format.js';
-import { getEventWindow, EVENT_TIME_LIMIT_MS, TRADE_COST } from './data/events.js';
+import { getEventWindow, EVENT_TIME_LIMIT_MS, TRADE_COST, getTowerWindow, TOWER_RUN_DURATION_MS } from './data/events.js';
 import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVictory, resetEventEncounter, canTrade, performTrade, unlockTradeGroup, computeTradeReceiveQty } from './systems/events.js';
+import { canEnterTower, startTowerRun, ensureTowerMonsterSpawned, getTowerMonster, applyTowerDamage, endTowerRun } from './systems/tower.js';
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
@@ -22,7 +23,7 @@ import {
   renderUpgradesTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, renderEventsTab, renderAchievementsTab, renderShopTab, pulseEventBoss,
-  renderCardsTab, showCardDetailModal, iconMarkup,
+  renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -53,6 +54,17 @@ function resetPlayerHp() {
 let eventDeadline = null;
 let eventDeadlineCycle = null;
 
+// Torre Infinita run clock + the player's HP pool while inside it — both
+// transient, same "a reload gives a fresh attempt" trade-off already made
+// for the boss timer and the Caça Aprimorada attempt above. Re-armed from
+// state.towerRunActive on init() if a run was mid-flight at save time.
+let towerDeadline = null;
+let towerHp = null;
+
+function currentTowerRunRemainingMs() {
+  return towerDeadline == null ? null : Math.max(0, towerDeadline - Date.now());
+}
+
 // Which sub-tab is showing in Equipamento (Equipar/Forjar/Materiais) and
 // Loja (Cash/Moeda de Evento) — pure UI state, not part of the save.
 let activeEquipSubTab = 'equip';
@@ -77,7 +89,9 @@ function renderEquipTab() {
 }
 
 function renderEventsTabNow() {
-  renderEventsTab(state, currentEventEngagementMs(), expandedEvents, tradeFromMaterialId, expandedTradeGroups, tradeQty);
+  const towerMaxHp = state.towerRunActive ? computePlayerStats(state).maxHp : null;
+  if (towerHp != null && towerMaxHp != null) towerHp = Math.min(towerHp, towerMaxHp);
+  renderEventsTab(state, currentEventEngagementMs(), expandedEvents, tradeFromMaterialId, expandedTradeGroups, tradeQty, currentTowerRunRemainingMs(), towerHp, towerMaxHp);
 }
 
 function currentEventEngagementMs() {
@@ -215,6 +229,7 @@ function tick() {
   // dies almost every single tick, which would otherwise starve the event
   // boss of its DPS ticks entirely.
   tickEventBoss(stats);
+  tickTower();
 
   if (stats.dps > 0) {
     const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
@@ -626,6 +641,100 @@ function tickEventBoss(stats) {
   renderEventsTabNow();
 }
 
+// ---------------------------------------------------------------
+// Torre Infinita — a continuous climb through 200 levels, entered from a
+// recurring window (see data/events.js) and fought the same way as normal
+// combat (click + passive DPS out, monster DPS in), but against its own
+// separate HP pool (towerHp) so it never touches the player's main-stage
+// fight. Ends on death, on the run's own 5-minute clock running out, or on
+// clearing the level 200 boss — see endTowerRun() in systems/tower.js for
+// the reward calculation.
+// ---------------------------------------------------------------
+
+function enterTower() {
+  if (!startTowerRun(state)) return;
+  towerDeadline = Date.now() + TOWER_RUN_DURATION_MS;
+  towerHp = computePlayerStats(state).maxHp;
+  showToast('🗼 Você entrou na Torre Infinita! Suba o quanto conseguir em 5 minutos.');
+  renderEventsTabNow();
+  renderTopBar(state);
+}
+
+function finishTowerRun(cleared200) {
+  const { level, currency } = endTowerRun(state, cleared200);
+  towerDeadline = null;
+  towerHp = null;
+  const msg = cleared200
+    ? `👑 Torre conquistada! Você derrotou o chefe do nível 200 e ganhou +${formatNumber(currency)} 🎫`
+    : `🗼 Torre encerrada no nível ${level}. +${formatNumber(currency)} 🎫`;
+  showToast(msg);
+  renderEventsTabNow();
+  renderTopBar(state);
+}
+
+function onClickTowerMonster() {
+  if (!state.towerRunActive) return;
+  if (Date.now() >= towerDeadline) {
+    finishTowerRun(false);
+    return;
+  }
+
+  const stats = computePlayerStats(state);
+  ensureTowerMonsterSpawned(state);
+  const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
+  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
+  const event = applyTowerDamage(state, dealt);
+  pulseTowerMonster();
+
+  if (event) {
+    if (event.cleared200) {
+      finishTowerRun(true);
+    } else {
+      renderEventsTabNow();
+    }
+    return;
+  }
+  renderEventsTabNow();
+}
+
+/// Called every game tick — applies passive DPS out and monster DPS back
+/// into towerHp while a run is active, and closes out the run if its clock
+/// runs out or the player's tower HP hits 0.
+function tickTower() {
+  if (!state.towerRunActive) return;
+
+  if (Date.now() >= towerDeadline) {
+    finishTowerRun(false);
+    return;
+  }
+
+  const stats = computePlayerStats(state);
+  towerHp = Math.min(towerHp, stats.maxHp);
+  ensureTowerMonsterSpawned(state);
+  const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
+
+  if (stats.dps > 0) {
+    const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
+    const event = applyTowerDamage(state, dealt * (TICK_MS / 1000));
+    if (event) {
+      if (event.cleared200) finishTowerRun(true);
+      else renderEventsTabNow();
+      return;
+    }
+  }
+
+  const reduction = totalIncomingReduction(stats, monster.element);
+  const incoming = monster.dps * (1 - reduction) * (TICK_MS / 1000);
+  towerHp -= incoming;
+
+  if (towerHp <= 0) {
+    finishTowerRun(false);
+    return;
+  }
+
+  renderEventsTabNow();
+}
+
 // Clamps to [TRADE_COST, however much of the currently-selected trade-in
 // material the player actually has, rounded down to a whole TRADE_COST
 // batch] — shared by the +/- steppers and the free-typed number input.
@@ -642,6 +751,16 @@ function wireEventTabEvents() {
   container.addEventListener('click', (e) => {
     if (e.target.closest('#event-boss-sprite')) {
       onClickEventBoss();
+      return;
+    }
+
+    if (e.target.closest('#tower-monster-sprite')) {
+      onClickTowerMonster();
+      return;
+    }
+
+    if (e.target.closest('[data-tower-enter]')) {
+      enterTower();
       return;
     }
 
@@ -896,6 +1015,11 @@ function init() {
   wireAchievementsTabEvents();
   wireShopTabEvents();
   resetPlayerHp();
+  if (state.towerRunActive) {
+    towerDeadline = Date.now() + TOWER_RUN_DURATION_MS;
+    towerHp = computePlayerStats(state).maxHp;
+    ensureTowerMonsterSpawned(state);
+  }
   fullRefresh();
   armBossTimer();
 
@@ -928,6 +1052,10 @@ function init() {
     setCurrentHp: (v) => { currentHp = v; renderPlayerHp(currentHp, computePlayerStats(state).maxHp); },
     getEventDeadline: () => eventDeadline,
     forceEventTimeout: () => { if (eventDeadline != null) eventDeadline = Date.now() - 1; },
+    getTowerDeadline: () => towerDeadline,
+    getTowerHp: () => towerHp,
+    setTowerHp: (v) => { towerHp = v; renderEventsTabNow(); },
+    forceTowerTimeout: () => { if (towerDeadline != null) towerDeadline = Date.now() - 1; },
   };
 }
 

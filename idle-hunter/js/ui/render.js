@@ -6,8 +6,9 @@ import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
 import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
-import { getEventWindow, TRADE_COST, TRADE_YIELD, getTradeUnlockCost, getTradeCycleInfo } from '../data/events.js';
+import { getEventWindow, TRADE_COST, TRADE_YIELD, getTradeUnlockCost, getTradeCycleInfo, getTowerWindow, TOWER_MAX_LEVEL } from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp, isTradeGroupUnlocked, computeTradeReceiveQty } from '../systems/events.js';
+import { getTowerMonster } from '../systems/tower.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
 import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
@@ -698,16 +699,89 @@ function mercadorStatusLine(state) {
   return `${unlockedCount}/${WEAK_MONSTER_GROUPS.length} aberto · novo evento em ${formatDuration(msUntilNextCycle)}`;
 }
 
-export function renderEventsTab(state, engagementRemainingMs, expandedEvents = new Set(), tradeFromMaterialId = null, expandedTradeGroups = new Set(), tradeQty = TRADE_COST) {
+// ---------------------------------------------------------------
+// Torre Infinita — see data/events.js (window/run timing constants) and
+// systems/tower.js (level->monster resolution, run lifecycle). Unlike the
+// other two events this one has three distinct states to render: window
+// closed, window open but not yet entered, and an active run.
+// ---------------------------------------------------------------
+
+function towerContentHtml(state, runRemainingMs, towerHp, towerMaxHp) {
+  if (state.towerRunActive) {
+    const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
+    const hp = towerHp ?? monster.maxHp;
+    const maxHp = towerMaxHp ?? monster.maxHp;
+    const pct = maxHp > 0 ? Math.max(0, Math.min(100, (state.towerMonsterHp / maxHp) * 100)) : 0;
+    const hpPlayerPct = maxHp > 0 && towerMaxHp > 0 ? Math.max(0, Math.min(100, (hp / towerMaxHp) * 100)) : 0;
+    return `
+      <div class="event-panel">
+        <div class="event-active-badge">🗼 Nível ${state.towerLevel}/${TOWER_MAX_LEVEL} — ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
+        <h3>${monster.name} ${monster.isBoss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}</h3>
+        <button id="tower-monster-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(monster.image, monster.emoji, monster.name)}</button>
+        <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.towerMonsterHp)} / ${formatNumber(maxHp)}</span></div>
+        <p class="event-sub">Sua vida na torre</p>
+        <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${hpPlayerPct}%; background:var(--danger, #e05656);"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(towerMaxHp)}</span></div>
+        <p class="event-reward-info">🎁 Recompensa ao final: 🎫 Moeda de Evento, conforme o nível alcançado.</p>
+      </div>`;
+  }
+
+  const win = getTowerWindow();
+  if (!win.active) {
+    return `
+      <div class="event-panel">
+        <div class="event-icon dim">🗼</div>
+        <h3>Nenhuma torre disponível agora</h3>
+        <p class="event-sub">Volte quando a próxima janela abrir.</p>
+        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
+      </div>`;
+  }
+
+  if (state.towerEnteredCycle === win.cycleIndex) {
+    return `
+      <div class="event-panel">
+        <div class="event-icon dim">🗼</div>
+        <h3>Você já usou esta janela</h3>
+        <p class="event-sub">Melhor nível alcançado: ${state.towerBestLevel}/${TOWER_MAX_LEVEL}.</p>
+        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
+      </div>`;
+  }
+
+  return `
+    <div class="event-panel">
+      <div class="event-active-badge">🗼 Janela aberta — fecha em ${formatDuration(win.remainingActiveMs)}</div>
+      <h3>Torre Infinita</h3>
+      <p class="event-sub">Suba o máximo possível em 5 minutos contínuos. A torre acaba se você morrer, o tempo zerar, ou você derrotar o chefe do nível 200.</p>
+      <p class="event-sub">Melhor nível alcançado: ${state.towerBestLevel}/${TOWER_MAX_LEVEL}.</p>
+      <button class="forge-toggle-btn" data-tower-enter>Entrar</button>
+    </div>`;
+}
+
+function towerStatusLine(state) {
+  if (state.towerRunActive) return `🗼 Em andamento · nível ${state.towerLevel}`;
+  const win = getTowerWindow();
+  if (win.active && state.towerEnteredCycle !== win.cycleIndex) return '🗼 Janela aberta!';
+  return `Próxima janela em ${formatDuration(win.msUntilNextWindow)}`;
+}
+
+export function renderEventsTab(state, engagementRemainingMs, expandedEvents = new Set(), tradeFromMaterialId = null, expandedTradeGroups = new Set(), tradeQty = TRADE_COST, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `<div class="event-list">
     ${eventListItemHtml('caca', '🎪', 'Caça Aprimorada', cacaAprimoradaStatusLine(state), expandedEvents.has('caca'), cacaAprimoradaContentHtml(state, engagementRemainingMs))}
     ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(state), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty))}
+    ${eventListItemHtml('torre', '🗼', 'Torre Infinita', towerStatusLine(state), expandedEvents.has('torre'), towerContentHtml(state, towerRunRemainingMs, towerHp, towerMaxHp))}
   </div>`;
 }
 
 export function pulseEventBoss() {
   const sprite = document.getElementById('event-boss-sprite');
+  if (!sprite) return;
+  sprite.classList.remove('hit');
+  void sprite.offsetWidth; // restart animation
+  sprite.classList.add('hit');
+}
+
+export function pulseTowerMonster() {
+  const sprite = document.getElementById('tower-monster-sprite');
   if (!sprite) return;
   sprite.classList.remove('hit');
   void sprite.offsetWidth; // restart animation
