@@ -25,6 +25,7 @@ const MODULE_ORDER = [
   'js/format.js',
   'js/state.js',
   'js/systems/stats.js',
+  'js/systems/cards.js',
   'js/systems/combat.js',
   'js/systems/equipment.js',
   'js/systems/crafting.js',
