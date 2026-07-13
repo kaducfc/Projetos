@@ -57,7 +57,7 @@ export function getEnhanceLabel(level, isMaster) {
 
 const BOSS_WEAPONS = {
   chispim: { name: 'Dual Blade de Chispim', emoji: '⚔️' },
-  solkaiser: { name: 'Lança Solar', emoji: '🔱' },
+  solkaiser: { name: 'Arco Flamejante de Solkaiser', emoji: '🏹' },
   tartarok: { name: 'Tridente das Marés', emoji: '🔱' },
   colhedor_carmesim: { name: 'Foice do Colhedor', emoji: '🔪' },
   grommuk: { name: 'Malho Tribal', emoji: '🔨' },
@@ -68,9 +68,9 @@ const BOSS_WEAPONS = {
   bahamorth: { name: 'Espada Dracônica', emoji: '⚔️' },
 };
 
-// Only Chispim has real reference art so far (see idle-hunter/assets/
-// chispim/) — reused here under the new boss id. Every other boss falls
-// back to emoji, same as before.
+// Chispim and Solkaiser have real reference art so far (see idle-hunter/
+// assets/) — reused here under each boss id. Every other boss falls back
+// to emoji, same as before.
 const BOSS_EQUIP_IMAGES = {
   chispim: {
     weapon: 'assets/chispim/dualblade.png',
@@ -79,6 +79,14 @@ const BOSS_EQUIP_IMAGES = {
     pants: 'assets/chispim/pants.png',
     gloves: 'assets/chispim/luvas.png',
     boots: 'assets/chispim/botas.png',
+  },
+  solkaiser: {
+    weapon: 'assets/solkaiser/arco.png',
+    helmet: 'assets/solkaiser/helm.png',
+    armor: 'assets/solkaiser/armor.png',
+    pants: 'assets/solkaiser/pants.png',
+    gloves: 'assets/solkaiser/luvas.png',
+    boots: 'assets/solkaiser/botas.png',
   },
 };
 

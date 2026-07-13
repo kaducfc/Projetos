@@ -156,9 +156,10 @@ export const BOSSES = [
     name: 'Solkaiser',
     element: 'fogo',
     emoji: '🦅',
+    image: 'assets/solkaiser/monster.png',
     materials: {
-      primary1: { id: 'solkaiser_feather', name: 'Pena de Solkaiser', emoji: '🪶' },
-      primary2: { id: 'solkaiser_core', name: 'Núcleo Solar', emoji: '☀️' },
+      primary1: { id: 'solkaiser_feather', name: 'Pena de Solkaiser', emoji: '🪶', image: 'assets/solkaiser/pena.png' },
+      primary2: { id: 'solkaiser_core', name: 'Núcleo Solar', emoji: '☀️', image: 'assets/solkaiser/nucleo.png' },
     },
     crystal: { id: 'solkaiser_crystal', name: 'Cristal de Solkaiser', emoji: '💎' },
   },

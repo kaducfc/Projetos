@@ -502,7 +502,7 @@ function recipeCardHtml(state, item) {
     const matInfo = findMaterialInfo(matId);
     const have = state.materials[matId] || 0;
     const met = have >= qty;
-    return `<div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(qty)}</span></div>`;
+    return `<div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(qty)}</span></div>`;
   }).join('');
 
   const goldMet = state.gold >= item.goldCost;
@@ -567,7 +567,7 @@ function materialsContentHtml(state) {
 
   return `<div class="material-grid">${allMaterials.map((m) => `
     <div class="material-card">
-      <div class="icon">${m.emoji}</div>
+      <div class="icon">${iconMarkup(m.image, m.emoji, m.name)}</div>
       <div class="name">${m.name}</div>
       <div class="qty">${formatNumber(state.materials[m.id] || 0)}</div>
     </div>`).join('')}</div>`;
