@@ -27,15 +27,15 @@ export const CASH_REAL_MONEY_PACKAGES = [
 export function eventShopItemsForBoss(boss, tier) {
   return [
     {
-      id: `${boss.id}_crystal_buy`, name: boss.crystal.name, emoji: boss.crystal.emoji,
+      id: `${boss.id}_crystal_buy`, name: boss.crystal.name, emoji: boss.crystal.emoji, image: boss.crystal.image || null,
       matId: boss.crystal.id, amount: 1, cost: Math.round(30 + tier * 15),
     },
     {
-      id: `${boss.id}_primary1_bundle`, name: `${boss.materials.primary1.name} (x25)`, emoji: boss.materials.primary1.emoji,
+      id: `${boss.id}_primary1_bundle`, name: `${boss.materials.primary1.name} (x25)`, emoji: boss.materials.primary1.emoji, image: boss.materials.primary1.image || null,
       matId: boss.materials.primary1.id, amount: 25, cost: Math.round(8 + tier * 3),
     },
     {
-      id: `${boss.id}_primary2_bundle`, name: `${boss.materials.primary2.name} (x25)`, emoji: boss.materials.primary2.emoji,
+      id: `${boss.id}_primary2_bundle`, name: `${boss.materials.primary2.name} (x25)`, emoji: boss.materials.primary2.emoji, image: boss.materials.primary2.image || null,
       matId: boss.materials.primary2.id, amount: 25, cost: Math.round(8 + tier * 3),
     },
   ];

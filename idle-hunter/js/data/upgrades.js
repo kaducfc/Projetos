@@ -82,20 +82,9 @@ export const UPGRADES = [
   },
 ];
 
-// Global rebalance knobs: every upgrade's per-level benefit is 10% stronger
-// than its raw `valuePerLevel` (always rounded UP, so the boost never gets
-// lost to rounding), and every upgrade's gold cost is 10% cheaper than the
-// raw exponential curve (always rounded DOWN). Both round to a whole number
-// exactly once, so nothing ever displays as a fractional/"quebrado" value —
-// getUpgradeValuePerLevel() and upgradeCost() are the only places that
-// should read valuePerLevel/baseCost+costGrowth; everything else (stats
-// calc, UI) goes through these.
-export const UPGRADE_VALUE_SCALE = 1.10;
+// Every upgrade's gold cost is 10% cheaper than the raw exponential curve,
+// always rounded DOWN so it reads as a clean whole number.
 export const UPGRADE_COST_SCALE = 0.90;
-
-export function getUpgradeValuePerLevel(upgrade) {
-  return Math.ceil(upgrade.valuePerLevel * UPGRADE_VALUE_SCALE);
-}
 
 export function upgradeCost(upgrade, level) {
   const rawCost = upgrade.baseCost * Math.pow(upgrade.costGrowth, level);
