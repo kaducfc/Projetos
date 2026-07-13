@@ -411,14 +411,35 @@ function wireModalEvents() {
       return;
     }
 
+    // Destroying is a two-step confirm rendered inline in the modal (not a
+    // native window.confirm dialog: those are blocked/silently swallowed
+    // inside a sandboxed iframe, e.g. when this game runs as a Claude
+    // Artifact, which made the button look completely dead).
     const destroyBtn = e.target.closest('[data-destroy-uid]');
     if (destroyBtn) {
       runModalAction(() => {
         const uid = Number(destroyBtn.dataset.destroyUid);
+        showItemDetailModal(state, uid, false, true);
+      });
+      return;
+    }
+
+    const cancelDestroyBtn = e.target.closest('[data-cancel-destroy-uid]');
+    if (cancelDestroyBtn) {
+      runModalAction(() => {
+        const uid = Number(cancelDestroyBtn.dataset.cancelDestroyUid);
+        showItemDetailModal(state, uid, false, false);
+      });
+      return;
+    }
+
+    const confirmDestroyBtn = e.target.closest('[data-confirm-destroy-uid]');
+    if (confirmDestroyBtn) {
+      runModalAction(() => {
+        const uid = Number(confirmDestroyBtn.dataset.confirmDestroyUid);
         const entry = state.inventory.find((i) => i.uid === uid);
         if (!entry) return;
         const itemName = getItem(entry.itemId).name;
-        if (!window.confirm(`Destruir ${itemName}? Você recupera 80% dos materiais gastos no craft e aprimoramento.`)) return;
         const refund = destroyItem(state, uid);
         if (refund) {
           hideModal();

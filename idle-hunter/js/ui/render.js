@@ -352,15 +352,15 @@ export function showEquipSlotModal(state, slotId) {
 /// Opens the detail popup for a specific inventory item (equipped or not).
 /// pickerOpen controls whether the card-picker sub-panel starts expanded
 /// (only true right after the player clicks "Equipar Carta" — see main.js).
-export function showItemDetailModal(state, uid, pickerOpen = false) {
+export function showItemDetailModal(state, uid, pickerOpen = false, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   if (!entry) return;
   const item = getItem(entry.itemId);
   const slot = getSlot(item.slotId);
-  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, pickerOpen));
+  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, pickerOpen, confirmDestroy));
 }
 
-function itemDetailHtml(state, uid, pickerOpen) {
+function itemDetailHtml(state, uid, pickerOpen, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   const item = getItem(entry.itemId);
   const slot = getSlot(item.slotId);
@@ -386,7 +386,10 @@ function itemDetailHtml(state, uid, pickerOpen) {
       ${enhancePanelHtml(state, uid, entry, item)}
       <div class="modal-action-row">
         ${actionBtn}
-        <button class="modal-action-btn destroy-btn" data-destroy-uid="${uid}">Destruir (-80% material)</button>
+        ${confirmDestroy
+          ? `<button class="modal-action-btn destroy-btn" data-confirm-destroy-uid="${uid}">Confirmar destruição</button>
+             <button class="modal-action-btn" data-cancel-destroy-uid="${uid}">Cancelar</button>`
+          : `<button class="modal-action-btn destroy-btn" data-destroy-uid="${uid}">Destruir (-80% material)</button>`}
       </div>
     </div>
   `;
