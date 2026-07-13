@@ -33,6 +33,11 @@ export function createDefaultState() {
     eventBossMaxHp: null,
     eventClaimedCycle: null,
     eventWins: 0,
+
+    // Mercador: which WEAK_MONSTER_GROUPS bands (identified by startStage)
+    // the player has permanently unlocked with Moeda de Evento — see
+    // data/events.js (getTradeUnlockCost) and systems/events.js.
+    unlockedTradeGroups: [],
   };
 }
 

@@ -1,7 +1,7 @@
 import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
 import { computePlayerStats, getElementalResistance, getCardDamageBonus } from './systems/stats.js';
 import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, armorReduction } from './systems/combat.js';
-import { isBossStage, findMaterialInfo } from './data/monsters.js';
+import { isBossStage, findMaterialInfo, WEAK_MONSTER_GROUPS } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
 import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock, destroyItem } from './systems/crafting.js';
@@ -9,8 +9,8 @@ import { getItem } from './data/items.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
 import { formatNumber } from './format.js';
-import { getEventWindow, EVENT_TIME_LIMIT_MS, getTradeWindow } from './data/events.js';
-import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVictory, resetEventEncounter, canTrade, performTrade } from './systems/events.js';
+import { getEventWindow, EVENT_TIME_LIMIT_MS } from './data/events.js';
+import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVictory, resetEventEncounter, canTrade, performTrade, unlockTradeGroup } from './systems/events.js';
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
@@ -61,16 +61,18 @@ let expandedForgeBosses = new Set();
 
 // Same idea for the Eventos list — each entry is an event id ('caca' or
 // 'mercador'). Which material the player picked as the trade-in for the
-// Mercador event lives here too, since it's just as transient/UI-only.
+// Mercador event, and which of its (now always-listed) stage bands are
+// expanded, live here too, since it's all just as transient/UI-only.
 let expandedEvents = new Set();
 let tradeFromMaterialId = null;
+let expandedTradeGroups = new Set();
 
 function renderEquipTab() {
   renderEquipmentTab(state, activeEquipSubTab, expandedForgeBosses);
 }
 
 function renderEventsTabNow() {
-  renderEventsTab(state, currentEventEngagementMs(), expandedEvents, tradeFromMaterialId);
+  renderEventsTab(state, currentEventEngagementMs(), expandedEvents, tradeFromMaterialId, expandedTradeGroups);
 }
 
 function currentEventEngagementMs() {
@@ -606,6 +608,28 @@ function wireEventTabEvents() {
       return;
     }
 
+    const toggleTradeGroupBtn = e.target.closest('[data-toggle-trade-group]');
+    if (toggleTradeGroupBtn) {
+      const startStage = Number(toggleTradeGroupBtn.dataset.toggleTradeGroup);
+      if (expandedTradeGroups.has(startStage)) expandedTradeGroups.delete(startStage);
+      else expandedTradeGroups.add(startStage);
+      tradeFromMaterialId = null; // avoid a stale selection from a now-hidden group
+      renderEventsTabNow();
+      return;
+    }
+
+    const unlockTradeBtn = e.target.closest('[data-unlock-trade-group]');
+    if (unlockTradeBtn) {
+      const startStage = Number(unlockTradeBtn.dataset.unlockTradeGroup);
+      const group = WEAK_MONSTER_GROUPS.find((g) => g.startStage === startStage);
+      if (group && unlockTradeGroup(state, group)) {
+        expandedTradeGroups.add(startStage);
+        showToast(`🧺 Categoria Estágio ${group.startStage}–${group.endStage} desbloqueada!`);
+        renderEventsTabNow();
+      }
+      return;
+    }
+
     const selectBtn = e.target.closest('[data-trade-select]');
     if (selectBtn) {
       tradeFromMaterialId = selectBtn.dataset.tradeSelect;
@@ -622,10 +646,10 @@ function wireEventTabEvents() {
     const targetBtn = e.target.closest('[data-trade-target]');
     if (targetBtn && tradeFromMaterialId != null) {
       const toMaterialId = targetBtn.dataset.tradeTarget;
-      const { group } = getTradeWindow();
+      const group = WEAK_MONSTER_GROUPS.find((g) => g.monsters.some((m) => m.material.id === tradeFromMaterialId));
       const fromInfo = findMaterialInfo(tradeFromMaterialId);
       const toInfo = findMaterialInfo(toMaterialId);
-      const ok = performTrade(state, group, tradeFromMaterialId, toMaterialId);
+      const ok = group && performTrade(state, group, tradeFromMaterialId, toMaterialId);
       tradeFromMaterialId = null;
       if (ok) {
         showToast(`🧺 Trocado! -2 ${fromInfo?.emoji ?? ''} ${fromInfo?.name ?? ''} · +1 ${toInfo?.emoji ?? ''} ${toInfo?.name ?? ''}`);

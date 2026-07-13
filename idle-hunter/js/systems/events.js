@@ -1,4 +1,4 @@
-import { EVENT_CURRENCY_BASE, EVENT_CURRENCY_PER_STAGE, EVENT_DIFFICULTY_MULT, TRADE_COST, TRADE_YIELD } from '../data/events.js';
+import { EVENT_CURRENCY_BASE, EVENT_CURRENCY_PER_STAGE, EVENT_DIFFICULTY_MULT, TRADE_COST, TRADE_YIELD, getTradeUnlockCost } from '../data/events.js';
 import { monsterMaxHp } from './combat.js';
 
 export function isEventClaimed(state, cycleIndex) {
@@ -69,14 +69,34 @@ export function claimEventVictory(state, cycleIndex, boss) {
 }
 
 // ---------------------------------------------------------------------
-// "Mercador" — trade TRADE_COST of one weak-monster material for
-// TRADE_YIELD of another, both from whichever band getTradeWindow() has
-// active. Only lets the player trade within that band (not, say, a stage
-// 1-19 material for a stage 81-100 one) and only materials they actually
-// have enough of.
+// "Mercador" — every WEAK_MONSTER_GROUPS band is visible up front but
+// starts locked; the player permanently unlocks a band by spending Moeda
+// de Evento (see getTradeUnlockCost — pricier for higher-stage bands), then
+// can trade TRADE_COST of one weak-monster material for TRADE_YIELD of
+// another within that band (not, say, a stage 1-19 material for a stage
+// 81-100 one) as many times as they like, forever.
 // ---------------------------------------------------------------------
 
+export function isTradeGroupUnlocked(state, group) {
+  return (state.unlockedTradeGroups || []).includes(group.startStage);
+}
+
+export function canUnlockTradeGroup(state, group) {
+  if (isTradeGroupUnlocked(state, group)) return false;
+  return state.eventCurrency >= getTradeUnlockCost(group);
+}
+
+/// Returns true if the unlock went through.
+export function unlockTradeGroup(state, group) {
+  if (!canUnlockTradeGroup(state, group)) return false;
+  state.eventCurrency -= getTradeUnlockCost(group);
+  state.unlockedTradeGroups = state.unlockedTradeGroups || [];
+  state.unlockedTradeGroups.push(group.startStage);
+  return true;
+}
+
 export function canTrade(state, group, fromMaterialId, toMaterialId) {
+  if (!isTradeGroupUnlocked(state, group)) return false;
   if (fromMaterialId === toMaterialId) return false;
   const inGroup = (id) => group.monsters.some((m) => m.material.id === id);
   if (!inGroup(fromMaterialId) || !inGroup(toMaterialId)) return false;
