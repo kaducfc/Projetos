@@ -249,9 +249,10 @@ export const BOSSES = [
     name: 'Gaiatron',
     element: 'planta',
     emoji: '🌳',
+    image: 'assets/gaiatron/monster.png',
     materials: {
-      primary1: { id: 'gaiatron_branch', name: 'Galho Primordial', emoji: '🌿' },
-      primary2: { id: 'gaiatron_seed', name: 'Semente Ancestral', emoji: '🌰' },
+      primary1: { id: 'gaiatron_branch', name: 'Galho Primordial', emoji: '🌿', image: 'assets/gaiatron/galho.png' },
+      primary2: { id: 'gaiatron_seed', name: 'Semente Ancestral', emoji: '🌰', image: 'assets/gaiatron/semente.png' },
     },
     crystal: { id: 'gaiatron_crystal', name: 'Cristal de Gaiatron', emoji: '💎' },
   },
