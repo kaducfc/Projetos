@@ -4,6 +4,7 @@ import { UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
+import { computePlayerStats } from '../systems/stats.js';
 import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
 import { getEventWindow, TRADE_COST, TRADE_YIELD, getTradeUnlockCost, getTradeCycleInfo, getTowerWindow, TOWER_MAX_LEVEL } from '../data/events.js';
@@ -57,6 +58,8 @@ export function renderCombatStats(stats, monster) {
   document.getElementById('click-damage-value').textContent = formatNumber(stats.clickDamage);
   document.getElementById('dps-value').textContent = formatNumber(stats.dps);
   document.getElementById('armor-value').textContent = formatNumber(stats.armor);
+  document.getElementById('crit-chance-value').textContent = formatPercent(stats.critChance);
+  document.getElementById('crit-damage-value').textContent = formatPercent(stats.critDamage);
 
   const weaponEl = document.getElementById('weapon-element-value');
   weaponEl.innerHTML = elementBadgeHtml(stats.weaponElement);
@@ -150,6 +153,18 @@ export function renderEquipmentTab(state, activeSubTab = 'equip', expandedForgeB
   container.innerHTML = subnav + body;
 }
 
+function setBonusBannerHtml(state) {
+  const { activeSetBonus } = computePlayerStats(state);
+  if (!activeSetBonus) return '';
+  const boss = BOSSES.find((b) => b.id === activeSetBonus.bossId);
+  const label = activeSetBonus.setLevel > ENHANCE_MAX_LEVEL ? 'Rank Master' : `nível +${activeSetBonus.setLevel}`;
+  return `<div class="set-bonus-banner">
+    ✨ Set completo de ${boss ? boss.name : activeSetBonus.bossId} ativo (${label}): +${formatNumber(activeSetBonus.hpFlat)} Vida ·
+    +${formatNumber(activeSetBonus.armorFlat)} Armadura · +${formatPercent(activeSetBonus.critChancePercent)} Crítico ·
+    +${formatPercent(activeSetBonus.critDamagePercent)} Dano Crítico
+  </div>`;
+}
+
 function equipRingContentHtml(state) {
   const slots = ALL_SLOT_IDS.map(getSlot);
 
@@ -159,6 +174,7 @@ function equipRingContentHtml(state) {
 
   return `
     <div class="equip-screen">
+      ${setBonusBannerHtml(state)}
       <div class="equip-slot-grid">${slots.map((s) => slotIconHtml(state, s)).join('')}</div>
       <div class="equip-inventory-header">Inventário</div>
       <div class="equip-inventory-grid">${inventoryHtml}</div>
@@ -909,11 +925,11 @@ export function renderAll(state, monster, stats) {
   renderUpgradesTab(state);
 }
 
-export function spawnDamagePopup(amount) {
+export function spawnDamagePopup(amount, isCrit = false) {
   const container = document.getElementById('damage-popups');
   const el = document.createElement('div');
-  el.className = 'damage-popup';
-  el.textContent = `-${formatNumber(amount)}`;
+  el.className = isCrit ? 'damage-popup crit' : 'damage-popup';
+  el.textContent = isCrit ? `-${formatNumber(amount)} CRÍTICO!` : `-${formatNumber(amount)}`;
   el.style.left = `${45 + Math.random() * 10}%`;
   container.appendChild(el);
   setTimeout(() => el.remove(), 750);

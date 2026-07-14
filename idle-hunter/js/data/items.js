@@ -354,6 +354,35 @@ MONSTER_FAMILIES.forEach((family, tier) => {
   });
 });
 
+// ---------------------------------------------------------------------
+// Set bonus: equipping all 6 slots (weapon + 5 defense pieces) from the
+// same boss grants a small extra bump on top of each piece's own stats —
+// a little HP, a little armor, and a little crit chance/damage. It scales
+// with "the set's level": the LOWEST effective enhancement level among the
+// 6 equipped pieces (0-5 for +1..+5, 6 for Rank Master), so upgrading every
+// piece together is what pays off, not just one.
+// ---------------------------------------------------------------------
+export const SET_BONUS_HP_MULT = 3;
+export const SET_BONUS_ARMOR_MULT = 0.8;
+export const SET_BONUS_CRIT_CHANCE_BASE = 2;
+export const SET_BONUS_CRIT_CHANCE_PER_LEVEL = 0.5;
+export const SET_BONUS_CRIT_DAMAGE_BASE = 5;
+export const SET_BONUS_CRIT_DAMAGE_PER_LEVEL = 2;
+export const SET_BONUS_LEVEL_SCALE = 0.15;
+
+export function computeSetBonus(bossId, setLevel) {
+  const tier = BOSSES.findIndex((b) => b.id === bossId);
+  if (tier < 0) return null;
+  const base = tierBase(tier);
+  const growth = 1 + setLevel * SET_BONUS_LEVEL_SCALE;
+  return {
+    hpFlat: Math.round(base * SET_BONUS_HP_MULT * growth),
+    armorFlat: Math.round(base * SET_BONUS_ARMOR_MULT * growth),
+    critChancePercent: Math.round((SET_BONUS_CRIT_CHANCE_BASE + setLevel * SET_BONUS_CRIT_CHANCE_PER_LEVEL) * 10) / 10,
+    critDamagePercent: Math.round((SET_BONUS_CRIT_DAMAGE_BASE + setLevel * SET_BONUS_CRIT_DAMAGE_PER_LEVEL) * 10) / 10,
+  };
+}
+
 export function getItem(itemId) {
   return ITEMS.find((i) => i.id === itemId) || LEGACY_ITEMS.find((i) => i.id === itemId);
 }

@@ -55,6 +55,16 @@ export function monsterDamagePerSecond(stage, isBoss = isBossStage(stage)) {
   return Math.max(0.1, isBoss ? base * BOSS_DPS_TAKEN_MULT : base);
 }
 
+/// Rolled independently for every single hit — a click, or each DPS tick —
+/// so a fast-DPS build gets many small independent chances at a crit
+/// rather than one roll "for the whole second". Multiplier is 1 on a
+/// whiff, or 1 + critDamage% on a crit; caller just multiplies the base
+/// damage by it.
+export function rollCrit(stats) {
+  const isCrit = Math.random() * 100 < (stats.critChance || 0);
+  return { isCrit, multiplier: isCrit ? 1 + (stats.critDamage || 0) / 100 : 1 };
+}
+
 export function armorReduction(armor) {
   return armor / (armor + ARMOR_CONSTANT);
 }
