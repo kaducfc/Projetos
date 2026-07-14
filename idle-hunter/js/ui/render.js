@@ -337,22 +337,23 @@ function enhancePanelHtml(state, uid, entry, item) {
 
   if (entry.enhanceLevel < ENHANCE_MAX_LEVEL) {
     const cost = item.enhanceCost[entry.enhanceLevel];
-    const have = state.materials[item.commonMaterialId] || 0;
-    const matInfo = findMaterialInfo(item.commonMaterialId);
-    const met = have >= cost;
+    const have = state.materials[cost.matId] || 0;
+    const matInfo = findMaterialInfo(cost.matId);
+    const met = have >= cost.qty;
     return `<div class="enhance-panel">
-      <div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(cost)}</span></div>
+      <div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(cost.qty)}</span></div>
       <button data-enhance="${uid}" ${canEnhance(state, uid) ? '' : 'disabled'}>Aprimorar para +${entry.enhanceLevel + 1}</button>
     </div>`;
   }
 
   const crystalInfo = findMaterialInfo(item.crystalMaterialId);
   const haveCrystal = state.materials[item.crystalMaterialId] || 0;
-  const matInfo = findMaterialInfo(item.commonMaterialId);
-  const haveMat = state.materials[item.commonMaterialId] || 0;
-  const matMet = haveMat >= item.masterMaterialCost;
+  const masterCost = item.masterMaterialCost;
+  const matInfo = findMaterialInfo(masterCost.matId);
+  const haveMat = state.materials[masterCost.matId] || 0;
+  const matMet = haveMat >= masterCost.qty;
   return `<div class="enhance-panel">
-    <div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${matMet ? 'met' : 'missing'}">${formatNumber(haveMat)}/${formatNumber(item.masterMaterialCost)}</span></div>
+    <div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${matMet ? 'met' : 'missing'}">${formatNumber(haveMat)}/${formatNumber(masterCost.qty)}</span></div>
     <div class="recipe-cost"><span><span class="icon">${iconMarkup(crystalInfo.image, crystalInfo.emoji, crystalInfo.name)}</span> ${crystalInfo.name}</span><span class="${haveCrystal >= 1 ? 'met' : 'missing'}">${formatNumber(haveCrystal)}/1</span></div>
     <button class="master-btn" data-master-upgrade="${uid}" ${canUpgradeToMaster(state, uid) ? '' : 'disabled'}>Evoluir para Rank Master</button>
   </div>`;
