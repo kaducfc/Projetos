@@ -30,8 +30,9 @@ const COMMON_DROP_CHANCE = 0.35;
 // Boss-only Crystal and any monster/boss card are both *fixed* rates —
 // explicitly never scaled by dropMult. Drop bonuses only affect the
 // "regular" materials above; the rare stuff always stays this rare.
-export const CRYSTAL_DROP_CHANCE = 0.002; // 0.2%
-export const MONSTER_CARD_DROP_CHANCE = 0.0003; // 0.03% (~1 per 3,333 kills)
+export const CRYSTAL_DROP_CHANCE = 0.01; // 1%
+export const BOSS_CARD_DROP_CHANCE = 0.0007; // 0.07% (~1 per 1,429 boss kills)
+export const WEAK_CARD_DROP_CHANCE = 0.0003; // 0.03% (~1 per 3,333 kills)
 
 // isBoss defaults to a plain stage% lookup, but callers whose own notion of
 // "boss" doesn't line up 1:1 with real stage numbers (e.g. the Torre
@@ -117,7 +118,7 @@ export function rollDrops(stage, dropMult, weakMonsterId) {
     if (Math.random() < CRYSTAL_DROP_CHANCE) {
       drops.push({ id: b.crystal.id, name: b.crystal.name, emoji: b.crystal.emoji, qty: 1 });
     }
-    if (Math.random() < MONSTER_CARD_DROP_CHANCE) {
+    if (Math.random() < BOSS_CARD_DROP_CHANCE) {
       const card = getCardForMonster(b.id);
       drops.push({ id: card.id, name: card.name, emoji: card.emoji, qty: 1, isCard: true });
     }
@@ -128,7 +129,7 @@ export function rollDrops(stage, dropMult, weakMonsterId) {
   if (Math.random() < chance) {
     drops.push({ id: weak.material.id, name: weak.material.name, emoji: weak.material.emoji, qty: 1 });
   }
-  if (Math.random() < MONSTER_CARD_DROP_CHANCE) {
+  if (Math.random() < WEAK_CARD_DROP_CHANCE) {
     const card = getCardForMonster(weak.id);
     drops.push({ id: card.id, name: card.name, emoji: card.emoji, qty: 1, isCard: true });
   }

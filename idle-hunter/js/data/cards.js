@@ -3,9 +3,9 @@ import { getElement } from './elements.js';
 
 // One collectible card per monster in the live roster (bosses + weak
 // monsters — see monsters.js) — a rare drop from that specific monster
-// (MONSTER_CARD_DROP_CHANCE in systems/combat.js — one fixed rate for both
-// bosses and weak monsters, that drop-bonus upgrades never touch). Socketing
-// one into an equipped item's card slot (see socketCard()/unsocketCard() in
+// (BOSS_CARD_DROP_CHANCE / WEAK_CARD_DROP_CHANCE in systems/combat.js —
+// fixed rates that drop-bonus upgrades never touch). Socketing one into an
+// equipped item's card slot (see socketCard()/unsocketCard() in
 // systems/crafting.js) consumes it from state.cards.
 //
 // Every card (boss or weak monster) grants the same generic elemental-damage
