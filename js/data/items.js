@@ -153,14 +153,17 @@ const BOSS_EQUIP_IMAGES = {
   },
 };
 
-/// A boss set needs 4 materials on average: the boss's own 2 ("drop
-/// principal" 1/2) plus 2 from weak monsters — the Neutro one and the one
-/// matching the boss's own element — both from the weak-monster band that
-/// leads up to that boss (see getWeakMonsterGroupForStage(boss.stage - 1)).
-/// A Neutro boss (Grommuk, Bahamorth) collapses to 3 distinct materials:
-/// its "element match" IS the Neutro weak monster, so the two entries land
-/// on the same material id and just sum into one bigger requirement.
-function buildBossItem(boss, tier, slot, neutralWeak, elementalWeak) {
+/// Every piece needs 4 materials: the boss's own 2 ("drop principal" 1/2)
+/// plus 2 from that boss's weak-monster band (see
+/// getWeakMonsterGroupForStage(boss.stage - 1), 5 weak monsters per band —
+/// one per element). Which 2 of the 5 depends on slotIndex (the piece's
+/// position in SLOTS), cycling one further along the band for every slot —
+/// weapon uses band[0]+band[1], helmet uses band[1]+band[2], and so on
+/// wrapping around — so across a full 6-piece set every weak monster in the
+/// band gets used by at least one piece, instead of always the same two
+/// (previously always Neutro + the boss's own element) leaving the other
+/// three permanently unfarmed for that boss's gear.
+function buildBossItem(boss, tier, slot, slotIndex, weakGroup) {
   const base = tierBase(tier);
   const id = `${boss.id}_${slot.id}`;
   const stats = {};
@@ -217,19 +220,30 @@ function buildBossItem(boss, tier, slot, neutralWeak, elementalWeak) {
   const bossQty = slot.id === 'weapon' ? 3 + tier : 1 + Math.floor(tier / 2);
   const weakQty = Math.round((slot.id === 'weapon' ? 20 : slot.id === 'armor' ? 14 : 10) * (1 + tier * 0.4));
 
+  const bandSize = weakGroup.monsters.length;
+  const weakAt = (offset) => weakGroup.monsters[(slotIndex + offset) % bandSize];
+  const weakA = weakAt(0);
+  const weakB = weakAt(1);
+
   const materialCost = {};
   materialCost[boss.materials.primary1.id] = (materialCost[boss.materials.primary1.id] || 0) + bossQty;
   materialCost[boss.materials.primary2.id] = (materialCost[boss.materials.primary2.id] || 0) + bossQty;
-  materialCost[neutralWeak.material.id] = (materialCost[neutralWeak.material.id] || 0) + weakQty;
-  materialCost[elementalWeak.material.id] = (materialCost[elementalWeak.material.id] || 0) + weakQty;
+  materialCost[weakA.material.id] = (materialCost[weakA.material.id] || 0) + weakQty;
+  materialCost[weakB.material.id] = (materialCost[weakB.material.id] || 0) + weakQty;
 
-  // Enhancement (+1..+5) grinds the Neutro weak material — the one
-  // guaranteed-plentiful material in the recipe, same role the old
-  // family's "common" material played. Rank Master needs the boss's
-  // Crystal (see crystalMaterialId) instead of more of this.
+  // Enhancement (+1..+5, then Rank Master) keeps cycling through the same
+  // band, one further along per level — so upgrading one piece all the way
+  // to Rank Master also spreads across several weak monsters instead of
+  // grinding a single material 6 times over.
   const enhanceCostStep = (i) => Math.max(1, Math.round(weakQty * (0.5 + i * 0.5)));
-  const enhanceCost = Array.from({ length: ENHANCE_MAX_LEVEL }, (_, i) => enhanceCostStep(i));
-  const masterMaterialCost = enhanceCostStep(ENHANCE_MAX_LEVEL);
+  const enhanceCost = Array.from({ length: ENHANCE_MAX_LEVEL }, (_, i) => ({
+    matId: weakAt(2 + i).material.id,
+    qty: enhanceCostStep(i),
+  }));
+  const masterMaterialCost = {
+    matId: weakAt(2 + ENHANCE_MAX_LEVEL).material.id,
+    qty: enhanceCostStep(ENHANCE_MAX_LEVEL),
+  };
 
   return {
     id,
@@ -243,7 +257,6 @@ function buildBossItem(boss, tier, slot, neutralWeak, elementalWeak) {
     element: boss.element,
     stats,
     goldCost,
-    commonMaterialId: neutralWeak.material.id,
     crystalMaterialId: boss.crystal.id,
     enhanceCost,
     masterMaterialCost,
@@ -254,10 +267,8 @@ function buildBossItem(boss, tier, slot, neutralWeak, elementalWeak) {
 export const ITEMS = [];
 BOSSES.forEach((boss, tier) => {
   const weakGroup = getWeakMonsterGroupForStage(boss.stage - 1);
-  const neutralWeak = weakGroup.monsters.find((m) => m.element === 'neutro');
-  const elementalWeak = weakGroup.monsters.find((m) => m.element === boss.element) || neutralWeak;
-  SLOTS.forEach((slot) => {
-    ITEMS.push(buildBossItem(boss, tier, slot, neutralWeak, elementalWeak));
+  SLOTS.forEach((slot, slotIndex) => {
+    ITEMS.push(buildBossItem(boss, tier, slot, slotIndex, weakGroup));
   });
 });
 
@@ -320,8 +331,14 @@ function buildLegacyItem(family, tier, slot) {
   const commonCost = Math.round((slot.id === 'weapon' ? 20 : slot.id === 'armor' ? 14 : 10) * (1 + tier * 0.4));
   const rareCost = slot.id === 'weapon' ? 3 + tier : 1 + Math.floor(tier / 2);
   const enhanceCostStep = (i) => Math.max(1, Math.round(commonCost * (0.5 + i * 0.5)));
-  const enhanceCost = Array.from({ length: ENHANCE_MAX_LEVEL }, (_, i) => enhanceCostStep(i));
-  const masterMaterialCost = enhanceCostStep(ENHANCE_MAX_LEVEL);
+  // Kept as a single material across the whole ladder (unlike the current
+  // boss roster's diversified version above) — this is frozen legacy data,
+  // only ever read back for a save that already has one of these crafted.
+  const enhanceCost = Array.from({ length: ENHANCE_MAX_LEVEL }, (_, i) => ({
+    matId: family.materials.common.id,
+    qty: enhanceCostStep(i),
+  }));
+  const masterMaterialCost = { matId: family.materials.common.id, qty: enhanceCostStep(ENHANCE_MAX_LEVEL) };
 
   return {
     id,
@@ -336,7 +353,6 @@ function buildLegacyItem(family, tier, slot) {
     element: family.element,
     stats,
     goldCost,
-    commonMaterialId: family.materials.common.id,
     crystalMaterialId: family.materials.gem.id,
     enhanceCost,
     masterMaterialCost,

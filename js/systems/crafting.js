@@ -130,9 +130,10 @@ export function unsocketCard(state, uid) {
   return true;
 }
 
-/// Cost (in the item's common material) to enhance this instance one level,
-/// or null if it's not eligible for a normal +level enhancement right now
-/// (already at max level, or already Rank Master).
+/// Cost ({matId, qty}) to enhance this instance one level, or null if it's
+/// not eligible for a normal +level enhancement right now (already at max
+/// level, or already Rank Master). Which material varies by level (and by
+/// slot) — see buildBossItem() in data/items.js.
 export function getEnhanceCost(state, uid) {
   const entry = getEntry(state, uid);
   if (!entry || entry.isMaster || entry.enhanceLevel >= ENHANCE_MAX_LEVEL) return null;
@@ -143,17 +144,14 @@ export function getEnhanceCost(state, uid) {
 export function canEnhance(state, uid) {
   const cost = getEnhanceCost(state, uid);
   if (cost == null) return false;
-  const entry = getEntry(state, uid);
-  const item = getItem(entry.itemId);
-  return (state.materials[item.commonMaterialId] || 0) >= cost;
+  return (state.materials[cost.matId] || 0) >= cost.qty;
 }
 
 export function enhanceItem(state, uid) {
+  const cost = getEnhanceCost(state, uid);
   if (!canEnhance(state, uid)) return false;
   const entry = getEntry(state, uid);
-  const item = getItem(entry.itemId);
-  const cost = item.enhanceCost[entry.enhanceLevel];
-  state.materials[item.commonMaterialId] -= cost;
+  state.materials[cost.matId] -= cost.qty;
   entry.enhanceLevel += 1;
   return true;
 }
@@ -162,9 +160,10 @@ export function canUpgradeToMaster(state, uid) {
   const entry = getEntry(state, uid);
   if (!entry || entry.isMaster || entry.enhanceLevel < ENHANCE_MAX_LEVEL) return false;
   const item = getItem(entry.itemId);
+  const m = item.masterMaterialCost;
   return (
     (state.materials[item.crystalMaterialId] || 0) >= 1 &&
-    (state.materials[item.commonMaterialId] || 0) >= item.masterMaterialCost
+    (state.materials[m.matId] || 0) >= m.qty
   );
 }
 
@@ -172,8 +171,9 @@ export function upgradeToMaster(state, uid) {
   if (!canUpgradeToMaster(state, uid)) return false;
   const entry = getEntry(state, uid);
   const item = getItem(entry.itemId);
+  const m = item.masterMaterialCost;
   state.materials[item.crystalMaterialId] -= 1;
-  state.materials[item.commonMaterialId] -= item.masterMaterialCost;
+  state.materials[m.matId] -= m.qty;
   entry.isMaster = true;
   return true;
 }
@@ -185,10 +185,12 @@ export function upgradeToMaster(state, uid) {
 function materialsSpentOn(item, entry) {
   const spent = { ...item.materialCost };
   for (let i = 0; i < entry.enhanceLevel; i++) {
-    spent[item.commonMaterialId] = (spent[item.commonMaterialId] || 0) + item.enhanceCost[i];
+    const step = item.enhanceCost[i];
+    spent[step.matId] = (spent[step.matId] || 0) + step.qty;
   }
   if (entry.isMaster) {
-    spent[item.commonMaterialId] = (spent[item.commonMaterialId] || 0) + item.masterMaterialCost;
+    const m = item.masterMaterialCost;
+    spent[m.matId] = (spent[m.matId] || 0) + m.qty;
     spent[item.crystalMaterialId] = (spent[item.crystalMaterialId] || 0) + 1;
   }
   return spent;
