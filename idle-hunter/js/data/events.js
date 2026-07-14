@@ -1,18 +1,14 @@
-import { BOSSES } from './monsters.js';
-
-// A boss rotates in as the "event boss" every EVENT_CYCLE_MS, and is only
-// challengeable during the first EVENT_ACTIVE_MS of that cycle (then it's
-// on cooldown until the next cycle). Both the boss and the timing are
-// derived purely from wall-clock time — no schedule needs to be saved, so
-// offline time and reloads just fall wherever they fall on the clock.
-export const EVENT_CYCLE_MS = 15 * 60 * 1000;
+// A fresh window opens every EVENT_CYCLE_MS, staying open (i.e. clickable
+// "Entrar") for EVENT_ACTIVE_MS — miss it and it's gone until the next
+// cycle (see canEnterEvent in systems/events.js, which also blocks a
+// second entry once the player has already used this cycle's window).
+// Once entered, the fight itself has no separate clock: it just runs
+// (clicks + passive DPS, see main.js) until the boss falls, since the
+// event boss never damages the player back. Timing is derived purely from
+// wall-clock time — no schedule needs to be saved, so offline time and
+// reloads just fall wherever they land on the clock.
+export const EVENT_CYCLE_MS = 45 * 60 * 1000;
 export const EVENT_ACTIVE_MS = 5 * 60 * 1000;
-
-// Once a player lands their first hit, they have this long to finish the
-// fight (see systems/events.js) — a distinct, shorter "boss rush" clock
-// from the window's overall availability above. Fixed at 50s regardless
-// of which boss is up or how far the player has progressed.
-export const EVENT_TIME_LIMIT_MS = 50 * 1000;
 
 // The event boss's HP is anchored to that boss's own real-combat fight (its
 // stage, see systems/events.js), scaled up by this multiplier. So it's
@@ -23,15 +19,23 @@ export const EVENT_DIFFICULTY_MULT = 1.3;
 export const EVENT_CURRENCY_BASE = 10;
 export const EVENT_CURRENCY_PER_STAGE = 0.5;
 
+// Reward roll on a kill: EVENT_DROP_ROLLS independent picks, each landing
+// on primary1/primary2/crystal at these weights (they sum to 1 — every
+// roll always gives something, never a whiff). Separately, a 5% chance for
+// the boss's own card, on top of (not counted among) those 10 rolls.
+export const EVENT_DROP_ROLLS = 10;
+export const EVENT_DROP_PRIMARY1_CHANCE = 0.47;
+export const EVENT_DROP_PRIMARY2_CHANCE = 0.47;
+export const EVENT_DROP_CRYSTAL_CHANCE = 0.06;
+export const EVENT_CARD_DROP_CHANCE = 0.05;
+
 export function getEventWindow(now = Date.now()) {
   const cycleIndex = Math.floor(now / EVENT_CYCLE_MS);
   const cycleStart = cycleIndex * EVENT_CYCLE_MS;
   const elapsed = now - cycleStart;
   const active = elapsed < EVENT_ACTIVE_MS;
-  const boss = BOSSES[cycleIndex % BOSSES.length];
   return {
     cycleIndex,
-    boss,
     active,
     remainingActiveMs: active ? EVENT_ACTIVE_MS - elapsed : 0,
     msUntilNextWindow: cycleStart + EVENT_CYCLE_MS - now,
