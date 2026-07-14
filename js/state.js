@@ -35,13 +35,20 @@ export function createDefaultState() {
     lastAdWatchTime: null,
     achievementsClaimed: {}, // achievementId -> true
 
-    // Event boss: a specific monster family rotates in as an "event boss"
-    // for a limited window (see data/events.js), fought by clicking only.
-    // eventBossHp/eventBossMaxHp persist so an in-progress fight survives a
-    // reload; eventClaimedCycle blocks re-farming the same window.
+    // Caça Aprimorada: a random boss (among those the player has already
+    // reached, see pickEligibleEventBoss in systems/events.js) is rolled
+    // the moment the player clicks "Entrar" during the window (see
+    // data/events.js) — eventEnteredCycle blocks a second entry that same
+    // window (even across a reload). eventBossId records which boss this
+    // run's fight is against; eventBossHp/eventBossMaxHp persist so an
+    // in-progress fight survives a reload (it has no timer of its own —
+    // only clicking "Entrar" is time-gated); eventClaimedCycle blocks
+    // re-entering after a win, same window.
     eventCurrency: 0,
+    eventBossId: null,
     eventBossHp: null,
     eventBossMaxHp: null,
+    eventEnteredCycle: null,
     eventClaimedCycle: null,
     eventWins: 0,
 

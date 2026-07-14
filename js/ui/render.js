@@ -560,11 +560,10 @@ function formatDuration(ms) {
 // own rotation clock (see data/events.js) — there is no shared "the event
 // tab" state anymore, just two unrelated event cards.
 //
-// "Caça Aprimorada" is the original rotating event boss, fought by
-// clicking only (see systems/events.js and main.js's onClickEventBoss for
-// why there's no passive-DPS tick here). `engagementRemainingMs` is owned
-// by main.js (a transient, un-persisted "time left in this attempt" clock,
-// same idea as the regular boss timer) — null means no attempt in progress.
+// "Caça Aprimorada": a random-eligible-boss "Entrar" event, entered once
+// per EVENT_ACTIVE_MS window (see data/events.js + systems/events.js) —
+// once entered the fight has no clock of its own, so there's no transient
+// "time left" state to thread through here (unlike the Torre Infinita).
 //
 // "Mercador" is a recurring event (new one every TRADE_CYCLE_MS, see
 // getTradeCycleInfo) that re-locks every WEAK_MONSTER_GROUPS band each
@@ -588,51 +587,88 @@ function eventListItemHtml(id, icon, name, statusLine, expanded, bodyHtml) {
   </div>`;
 }
 
-function cacaAprimoradaContentHtml(state, engagementRemainingMs) {
-  const win = getEventWindow();
-  const claimed = isEventClaimed(state, win.cycleIndex);
-
-  if (!win.active || claimed) {
-    // The *next* window's boss isn't win.boss (that's whoever is/was up
-    // this cycle) — it's whichever boss the next cycle index lands on.
-    const nextBoss = BOSSES[(win.cycleIndex + 1) % BOSSES.length];
-    const heading = claimed ? 'Evento concluído!' : 'Nenhum evento ativo agora';
-    const sub = claimed
-      ? 'Você já derrotou o chefe de evento deste ciclo.'
-      : 'Volte quando o próximo ciclo começar.';
+// Caça Aprimorada has 4 distinct states to render — see systems/events.js
+// for the lifecycle (canEnterEvent/startEvent), same shape as the Torre
+// Infinita's window/entered/active-run/claimed states:
+//   1. a fight is already in progress (eventBossHp != null) — shows no
+//      matter whether the entry window itself is still open, since the
+//      fight has no clock of its own once entered;
+//   2. this cycle's window was already claimed (won) — done until next;
+//   3. the window isn't open right now — countdown to the next one;
+//   4. the window IS open and not yet entered — the "Entrar" button (or,
+//      if the player hasn't beaten a first boss yet, a note that they need
+//      to reach stage 10 before this event does anything for them).
+function cacaAprimoradaContentHtml(state) {
+  if (state.eventBossHp != null) {
+    const boss = BOSSES.find((b) => b.id === state.eventBossId);
+    if (!boss) return `<div class="event-panel"><p class="event-sub">Chefe do evento não encontrado — tente recarregar.</p></div>`;
+    const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(boss);
+    const hp = state.eventBossHp ?? maxHp;
+    const pct = maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 0;
     return `
       <div class="event-panel">
-        <div class="event-icon dim">🎪</div>
-        <h3>${heading}</h3>
-        <p class="event-sub">${sub}</p>
-        <p class="event-next">Próximo: ${iconMarkup(nextBoss.image, nextBoss.emoji, nextBoss.name)} <strong>${nextBoss.name}</strong> em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
+        <div class="event-active-badge">🎪 Em combate!</div>
+        <h3>${boss.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(boss.element)}</h3>
+        <button id="event-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(boss.image, boss.emoji, boss.name)}</button>
+        <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(maxHp)}</span></div>
+        <p class="event-reward-info">🎁 10 itens ao derrotar (materiais/Cristal) + chance de Carta + 🎫 Moeda de Evento</p>
       </div>`;
   }
 
-  const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(win.boss);
-  const hp = state.eventBossHp ?? maxHp;
-  const pct = maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 0;
-  const timerHtml = engagementRemainingMs != null
-    ? `<div class="event-countdown ${engagementRemainingMs <= 10000 ? 'urgent' : ''}">⏱ ${Math.ceil(engagementRemainingMs / 1000)}s para derrotar!</div>`
-    : `<div class="event-countdown hint">Clique para começar a atacar</div>`;
+  const win = getEventWindow();
+  if (isEventClaimed(state, win.cycleIndex)) {
+    return `
+      <div class="event-panel">
+        <div class="event-icon dim">🎪</div>
+        <h3>Evento concluído!</h3>
+        <p class="event-sub">Você já derrotou o chefe de evento deste ciclo.</p>
+        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
+      </div>`;
+  }
+
+  if (!win.active) {
+    return `
+      <div class="event-panel">
+        <div class="event-icon dim">🎪</div>
+        <h3>Nenhum evento ativo agora</h3>
+        <p class="event-sub">Volte quando a próxima janela abrir.</p>
+        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
+      </div>`;
+  }
+
+  if (state.eventEnteredCycle === win.cycleIndex) {
+    return `
+      <div class="event-panel">
+        <div class="event-icon dim">🎪</div>
+        <h3>Você já usou esta janela</h3>
+        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
+      </div>`;
+  }
+
+  if (!BOSSES.some((b) => b.stage <= state.maxStage)) {
+    return `
+      <div class="event-panel">
+        <div class="event-active-badge">🎪 Janela aberta — fecha em ${formatDuration(win.remainingActiveMs)}</div>
+        <h3>Caça Aprimorada</h3>
+        <p class="event-sub">Alcance o estágio 10 (derrote seu primeiro chefe) para poder participar.</p>
+      </div>`;
+  }
 
   return `
     <div class="event-panel">
-      <div class="event-active-badge">🎪 Evento ativo — janela fecha em ${formatDuration(win.remainingActiveMs)}</div>
-      <h3>${win.boss.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(win.boss.element)}</h3>
-      <button id="event-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(win.boss.image, win.boss.emoji, win.boss.name)}</button>
-      <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(maxHp)}</span></div>
-      ${timerHtml}
-      <p class="event-reward-info">🎁 Recompensa ao derrotar: 1–6 materiais + 🎫 Moeda de Evento</p>
+      <div class="event-active-badge">🎪 Janela aberta — fecha em ${formatDuration(win.remainingActiveMs)}</div>
+      <h3>Caça Aprimorada</h3>
+      <p class="event-sub">Um chefe aleatório, dentre os que você já alcançou, aparece assim que você entra — e a luta já começa valendo.</p>
+      <button class="forge-toggle-btn" data-event-enter>Entrar</button>
     </div>`;
 }
 
 function cacaAprimoradaStatusLine(state) {
+  if (state.eventBossHp != null) return '🎪 Em combate!';
   const win = getEventWindow();
-  const claimed = isEventClaimed(state, win.cycleIndex);
-  if (win.active && !claimed) return '🎪 Ativo agora!';
-  if (claimed) return `✅ Concluído · próximo em ${formatDuration(win.msUntilNextWindow)}`;
-  return `Próximo em ${formatDuration(win.msUntilNextWindow)}`;
+  if (isEventClaimed(state, win.cycleIndex)) return `✅ Concluído · próxima janela em ${formatDuration(win.msUntilNextWindow)}`;
+  if (win.active && state.eventEnteredCycle !== win.cycleIndex) return '🎪 Janela aberta!';
+  return `Próxima janela em ${formatDuration(win.msUntilNextWindow)}`;
 }
 
 function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId, tradeQty) {
@@ -780,10 +816,10 @@ function towerStatusLine(state) {
   return `Próxima janela em ${formatDuration(win.msUntilNextWindow)}`;
 }
 
-export function renderEventsTab(state, engagementRemainingMs, expandedEvents = new Set(), tradeFromMaterialId = null, expandedTradeGroups = new Set(), tradeQty = TRADE_COST, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null) {
+export function renderEventsTab(state, expandedEvents = new Set(), tradeFromMaterialId = null, expandedTradeGroups = new Set(), tradeQty = TRADE_COST, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `<div class="event-list">
-    ${eventListItemHtml('caca', '🎪', 'Caça Aprimorada', cacaAprimoradaStatusLine(state), expandedEvents.has('caca'), cacaAprimoradaContentHtml(state, engagementRemainingMs))}
+    ${eventListItemHtml('caca', '🎪', 'Caça Aprimorada', cacaAprimoradaStatusLine(state), expandedEvents.has('caca'), cacaAprimoradaContentHtml(state))}
     ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(state), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty))}
     ${eventListItemHtml('torre', '🗼', 'Torre Infinita', towerStatusLine(state), expandedEvents.has('torre'), towerContentHtml(state, towerRunRemainingMs, towerHp, towerMaxHp))}
   </div>`;

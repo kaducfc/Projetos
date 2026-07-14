@@ -1,7 +1,7 @@
 import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
 import { computePlayerStats, getElementalResistance, getCardDamageBonus } from './systems/stats.js';
 import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, armorReduction, rollCrit, resolveClickHit } from './systems/combat.js';
-import { isBossStage, findMaterialInfo, WEAK_MONSTER_GROUPS } from './data/monsters.js';
+import { isBossStage, findMaterialInfo, WEAK_MONSTER_GROUPS, BOSSES } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
 import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES } from './systems/crafting.js';
@@ -9,8 +9,8 @@ import { getItem } from './data/items.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
 import { formatNumber } from './format.js';
-import { getEventWindow, EVENT_TIME_LIMIT_MS, TRADE_COST, getTowerWindow, TOWER_RUN_DURATION_MS } from './data/events.js';
-import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVictory, resetEventEncounter, canTrade, performTrade, unlockTradeGroup, computeTradeReceiveQty } from './systems/events.js';
+import { TRADE_COST, getTowerWindow, TOWER_RUN_DURATION_MS } from './data/events.js';
+import { applyEventDamage, claimEventVictory, canTrade, performTrade, unlockTradeGroup, computeTradeReceiveQty, startEvent } from './systems/events.js';
 import { canEnterTower, startTowerRun, ensureTowerMonsterSpawned, getTowerMonster, applyTowerDamage, endTowerRun } from './systems/tower.js';
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
@@ -46,13 +46,6 @@ let currentHp = null;
 function resetPlayerHp() {
   currentHp = computePlayerStats(state).maxHp;
 }
-
-// Event boss "attempt" clock — also transient, also cycle-scoped: a stale
-// deadline from a previous cycle (e.g. the player left the tab open across
-// a window change) must not carry over, hence the cycle check everywhere
-// it's read (see currentEventEngagementMs()).
-let eventDeadline = null;
-let eventDeadlineCycle = null;
 
 // Torre Infinita run clock + the player's HP pool while inside it — both
 // transient, same "a reload gives a fresh attempt" trade-off already made
@@ -91,13 +84,7 @@ function renderEquipTab() {
 function renderEventsTabNow() {
   const towerMaxHp = state.towerRunActive ? computePlayerStats(state).maxHp : null;
   if (towerHp != null && towerMaxHp != null) towerHp = Math.min(towerHp, towerMaxHp);
-  renderEventsTab(state, currentEventEngagementMs(), expandedEvents, tradeFromMaterialId, expandedTradeGroups, tradeQty, currentTowerRunRemainingMs(), towerHp, towerMaxHp);
-}
-
-function currentEventEngagementMs() {
-  const win = getEventWindow();
-  if (eventDeadline == null || eventDeadlineCycle !== win.cycleIndex) return null;
-  return Math.max(0, eventDeadline - Date.now());
+  renderEventsTab(state, expandedEvents, tradeFromMaterialId, expandedTradeGroups, tradeQty, currentTowerRunRemainingMs(), towerHp, towerMaxHp);
 }
 
 // A boss only has a timer while it's still blocking progress (the frontier
@@ -569,54 +556,65 @@ function wireEquipmentTabEvents() {
 }
 
 // ---------------------------------------------------------------
-// Events tab — a "boss rush": once the first click lands and the attempt
-// clock starts, both clicks (here) AND passive DPS (tickEventBoss(), called
-// from the main tick() loop below) chip away at it, same as normal combat.
-// The only differences from a normal monster: no damage comes back to the
-// player, and the attempt clock is a hard 50s regardless of DPS/clicks.
-// #tab-events is never recreated by innerHTML wholesale during a fight
-// (renderEventsTab only ever replaces its own contents, same container),
-// so the delegated listener from wireEventTabEvents() (see init()) is
-// wired once and keeps working across every re-render.
+// Events tab — Caça Aprimorada: click "Entrar" during the window (see
+// data/events.js) to roll a random eligible boss and start fighting it
+// immediately — both clicks (here) and passive DPS (tickEventBoss(),
+// called from the main tick() loop below) chip away at it, same as normal
+// combat. The only difference from a normal monster: no damage comes back
+// to the player, and there's no clock on the fight itself once entered —
+// only entry (once per window) is time-gated. #tab-events is never
+// recreated by innerHTML wholesale during a fight (renderEventsTab only
+// ever replaces its own contents, same container), so the delegated
+// listener from wireEventTabEvents() (see init()) is wired once and keeps
+// working across every re-render.
 // ---------------------------------------------------------------
+
+function enterEvent() {
+  const boss = startEvent(state);
+  if (!boss) return;
+  showToast(`🎪 Você entrou na Caça Aprimorada! Enfrentando ${boss.name}.`);
+  renderEventsTabNow();
+  renderTopBar(state);
+}
 
 /// Shared by the click and DPS-tick paths — whichever one lands the
 /// killing blow reports the same way.
-function handleEventBossVictory(win) {
-  const { gained, currency } = claimEventVictory(state, win.cycleIndex, win.boss);
-  eventDeadline = null;
-  const lootStr = Object.values(gained).map((g) => ` +${g.qty} ${g.emoji}`).join('');
-  showToast(`🎉 Chefe de evento derrotado! +${formatNumber(currency)} 🎫${lootStr}`);
+function handleEventBossVictory(boss) {
+  const { gained, currency, cardDropped } = claimEventVictory(state, state.eventEnteredCycle, boss);
+  showEventRewardModal(boss, gained, currency, cardDropped);
   renderTopBar(state);
   renderEquipTab();
+  renderCardsTab(state);
   renderShopTab(state, activeShopSubTab);
+  renderEventsTabNow();
+}
+
+function showEventRewardModal(boss, gained, currency, cardDropped) {
+  const lootLines = Object.values(gained)
+    .map((g) => `<div class="offline-item-lines">+${g.qty} <span class="icon">${iconMarkup(g.image, g.emoji, g.name)}</span> ${g.name}</div>`)
+    .join('');
+  const cardBanner = cardDropped
+    ? `<div class="mega-drop-banner">🌟 MEGA DROP! 🌟<br><span class="icon">${iconMarkup(cardDropped.image, cardDropped.emoji, cardDropped.name)}</span> +1 ${cardDropped.name}</div>`
+    : '';
+  showModal(`🎉 ${boss.name} derrotado!`, `
+    ${cardBanner}
+    <p><strong>Recompensas:</strong></p>
+    ${lootLines}
+    <p class="offline-item-lines">+${formatNumber(currency)} 🎫 Moeda de Evento</p>
+  `);
 }
 
 function onClickEventBoss() {
-  const win = getEventWindow();
-  if (!win.active || isEventClaimed(state, win.cycleIndex)) return;
-
-  if (eventDeadline == null || eventDeadlineCycle !== win.cycleIndex) {
-    eventDeadline = Date.now() + EVENT_TIME_LIMIT_MS;
-    eventDeadlineCycle = win.cycleIndex;
-    resetEventEncounter(state);
-  }
-
-  if (Date.now() >= eventDeadline) {
-    resetEventEncounter(state);
-    eventDeadline = null;
-    showToast('⏳ Tempo esgotado! O chefe de evento escapou — tente de novo.');
-    renderEventsTabNow();
-    return;
-  }
+  if (state.eventBossHp == null) return; // no fight in progress — must Entrar first
+  const boss = BOSSES.find((b) => b.id === state.eventBossId);
+  if (!boss) return;
 
   const stats = computePlayerStats(state, currentHp);
-  ensureEventBossSpawned(state, win.boss);
-  const hit = resolveClickHit(state, stats, 1 + elementDamageModifier(stats.weaponElement, win.boss.element) + getCardDamageBonus(state, win.boss.element));
+  const hit = resolveClickHit(state, stats, 1 + elementDamageModifier(stats.weaponElement, boss.element) + getCardDamageBonus(state, boss.element));
   const killed = applyEventDamage(state, hit.dealt);
 
   if (killed) {
-    handleEventBossVictory(win);
+    handleEventBossVictory(boss);
   } else {
     pulseEventBoss();
   }
@@ -625,32 +623,16 @@ function onClickEventBoss() {
 }
 
 /// Called every game tick (see tick() below) — applies passive DPS to the
-/// event boss while an attempt is in progress, and proactively cleans up a
-/// timed-out attempt even if the player never clicks again (mirroring how
-/// the main boss timer is handled in tick()/retreat()).
+/// event boss while a fight is in progress.
 function tickEventBoss(stats) {
-  if (eventDeadline == null) return;
-  const win = getEventWindow();
-  if (eventDeadlineCycle !== win.cycleIndex) {
-    eventDeadline = null; // stale — the window rotated past this attempt
-    return;
-  }
-
-  if (Date.now() >= eventDeadline) {
-    resetEventEncounter(state);
-    eventDeadline = null;
-    showToast('⏳ Tempo esgotado! O chefe de evento escapou — tente de novo.');
-    renderEventsTabNow();
-    return;
-  }
-
-  if (!win.active || isEventClaimed(state, win.cycleIndex)) return;
-  if (stats.dps <= 0 || state.eventBossHp == null) return; // not engaged yet — only a click starts it
+  if (state.eventBossHp == null) return;
+  const boss = BOSSES.find((b) => b.id === state.eventBossId);
+  if (!boss || stats.dps <= 0) return;
 
   const crit = rollCrit(stats);
-  const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, win.boss.element) + getCardDamageBonus(state, win.boss.element)) * crit.multiplier;
+  const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, boss.element) + getCardDamageBonus(state, boss.element)) * crit.multiplier;
   const killed = applyEventDamage(state, dealt * (TICK_MS / 1000));
-  if (killed) handleEventBossVictory(win);
+  if (killed) handleEventBossVictory(boss);
   renderEventsTabNow();
 }
 
@@ -782,6 +764,11 @@ function wireEventTabEvents() {
   container.addEventListener('click', (e) => {
     if (e.target.closest('[data-tower-enter]')) {
       enterTower();
+      return;
+    }
+
+    if (e.target.closest('[data-event-enter]')) {
+      enterEvent();
       return;
     }
 
@@ -1071,8 +1058,6 @@ function init() {
     forceBossTimeout: () => { if (bossDeadline != null) bossDeadline = Date.now() - 1; },
     getCurrentHp: () => currentHp,
     setCurrentHp: (v) => { currentHp = v; renderPlayerHp(currentHp, computePlayerStats(state).maxHp); },
-    getEventDeadline: () => eventDeadline,
-    forceEventTimeout: () => { if (eventDeadline != null) eventDeadline = Date.now() - 1; },
     getTowerDeadline: () => towerDeadline,
     getTowerHp: () => towerHp,
     setTowerHp: (v) => { towerHp = v; renderEventsTabNow(); },

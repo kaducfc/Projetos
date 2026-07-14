@@ -764,6 +764,27 @@ button:disabled {
   margin-bottom: 8px;
 }
 
+.mega-drop-banner {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff8dc;
+  background: linear-gradient(135deg, #ff6bd6, #ffb347, #ff6bd6);
+  background-size: 200% 200%;
+  border: 2px solid #fff;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .4);
+  box-shadow: 0 4px 12px rgba(255, 107, 214, .5);
+  animation: mega-drop-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes mega-drop-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
 .modal-action-btn {
   width: 100%;
   margin-top: 10px;
