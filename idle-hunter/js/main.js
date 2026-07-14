@@ -286,7 +286,17 @@ function setupStageControls() {
   document.getElementById('stage-max').addEventListener('click', () => {
     if (setViewedStage(state, state.maxStage)) { resetPlayerHp(); refreshCombatOnly(); armBossTimer(); }
   });
-  document.getElementById('monster-sprite').addEventListener('click', onClickMonster);
+  // pointerdown, not click: click only fires if pointerup lands on the same
+  // element the browser considers "the target" at that instant, and this
+  // button's own contents (the monster's <img>) get replaced by
+  // renderMonster() on every single tick (100ms) — a fast clicker can
+  // easily have a re-render land in the few ms between their mousedown and
+  // mouseup, which silently drops that click. Firing on pointerdown instead
+  // means every physical press counts, independent of any render race.
+  document.getElementById('monster-sprite').addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    onClickMonster();
+  });
 }
 
 // ---------------------------------------------------------------
@@ -754,17 +764,24 @@ function clampTradeQty(qty) {
 function wireEventTabEvents() {
   const container = document.getElementById('tab-events');
 
-  container.addEventListener('click', (e) => {
+  // pointerdown, not click, for the same reason as the main monster sprite
+  // (see setupStageControls): renderEventsTabNow() replaces #tab-events'
+  // entire innerHTML on every tick/second-refresh, and a fast clicker can
+  // easily straddle one of those re-renders between mousedown and mouseup —
+  // click would silently miss, pointerdown never does.
+  container.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
     if (e.target.closest('#event-boss-sprite')) {
       onClickEventBoss();
       return;
     }
-
     if (e.target.closest('#tower-monster-sprite')) {
       onClickTowerMonster();
       return;
     }
+  });
 
+  container.addEventListener('click', (e) => {
     if (e.target.closest('[data-tower-enter]')) {
       enterTower();
       return;

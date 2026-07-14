@@ -930,7 +930,12 @@ export function spawnDamagePopup(amount, isCrit = false) {
   const el = document.createElement('div');
   el.className = isCrit ? 'damage-popup crit' : 'damage-popup';
   el.textContent = isCrit ? `-${formatNumber(amount)} CRÍTICO!` : `-${formatNumber(amount)}`;
-  el.style.left = `${45 + Math.random() * 10}%`;
+  // Wide, randomized spread on both axes — a fast clicker spawns several of
+  // these within the same 750ms window, and a narrow fixed spot made them
+  // pile up unreadably on top of each other (looking like clicks got
+  // dropped even though every one of them landed).
+  el.style.left = `${30 + Math.random() * 40}%`;
+  el.style.top = `${30 + Math.random() * 20}%`;
   container.appendChild(el);
   setTimeout(() => el.remove(), 750);
 }
