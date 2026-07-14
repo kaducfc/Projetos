@@ -44,6 +44,7 @@
           <div id="hp-bar-fill"></div>
           <span id="hp-bar-text">0 / 0</span>
         </div>
+        <div id="loot-popup"></div>
         <div id="boss-timer" class="hidden"></div>
       </div>
 
@@ -59,6 +60,8 @@
         <span>Dano de clique: <strong id="click-damage-value">0</strong></span>
         <span>DPS: <strong id="dps-value">0</strong></span>
         <span>Armadura: <strong id="armor-value">0</strong></span>
+        <span>Chance de Crítico: <strong id="crit-chance-value">0</strong></span>
+        <span>Dano Crítico: <strong id="crit-damage-value">0</strong></span>
       </div>
       <div id="element-readout">
         <span>Elemento da arma: <strong id="weapon-element-value"></strong></span>
@@ -68,6 +71,7 @@
 
     <nav id="tab-nav">
       <button class="tab-btn active" data-tab="equipment">🎽 Equipamento</button>
+      <button class="tab-btn" data-tab="cards">🃏 Cartas</button>
       <button class="tab-btn" data-tab="upgrades">📈 Upgrades</button>
       <button class="tab-btn" data-tab="events">🎪 Eventos</button>
       <button class="tab-btn" data-tab="achievements">🏆 Conquistas</button>
@@ -76,6 +80,7 @@
 
     <section id="tab-panels">
       <div id="tab-equipment" class="tab-panel active"></div>
+      <div id="tab-cards" class="tab-panel"></div>
       <div id="tab-upgrades" class="tab-panel"></div>
       <div id="tab-events" class="tab-panel"></div>
       <div id="tab-achievements" class="tab-panel"></div>

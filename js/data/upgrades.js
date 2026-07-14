@@ -82,6 +82,11 @@ export const UPGRADES = [
   },
 ];
 
+// Every upgrade's gold cost is 10% cheaper than the raw exponential curve,
+// always rounded DOWN so it reads as a clean whole number.
+export const UPGRADE_COST_SCALE = 0.90;
+
 export function upgradeCost(upgrade, level) {
-  return Math.round(upgrade.baseCost * Math.pow(upgrade.costGrowth, level));
+  const rawCost = upgrade.baseCost * Math.pow(upgrade.costGrowth, level);
+  return Math.max(1, Math.floor(rawCost * UPGRADE_COST_SCALE));
 }

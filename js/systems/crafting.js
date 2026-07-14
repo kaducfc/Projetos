@@ -79,13 +79,36 @@ export function attemptCardSlotUnlock(state, uid) {
   return { success };
 }
 
+/// At most this many equipped items (across all 6 slots) may carry the same
+/// card at once — copies sitting on unequipped inventory items don't count.
+/// Enforced two ways: canSocketCard() below refuses to socket a 3rd
+/// equipped copy directly, while equipItem() (systems/equipment.js) instead
+/// lets the *item* get equipped but auto-unsockets its card back to
+/// state.cards if doing so would push an already-at-cap card over the line.
+export const MAX_EQUIPPED_CARD_COPIES = 2;
+
+export function countEquippedCardCopies(state, cardId, excludeUid = null) {
+  let count = 0;
+  for (const uid of Object.values(state.equipped)) {
+    if (!uid || uid === excludeUid) continue;
+    const entry = getEntry(state, uid);
+    if (entry && entry.cardId === cardId) count += 1;
+  }
+  return count;
+}
+
 /// A card is consumed from state.cards (a stackable count, like a material)
 /// the moment it's socketed — the item's slot must be unlocked and empty
 /// first (unsocketCard() below frees it back up, but keeps it unlocked).
+/// If the item is currently equipped, also blocks a 3rd equipped copy of
+/// the same card (see MAX_EQUIPPED_CARD_COPIES above).
 export function canSocketCard(state, uid, cardId) {
   const entry = getEntry(state, uid);
   if (!entry || !isSlotUnlocked(entry) || entry.cardId) return false;
-  return (state.cards[cardId] || 0) >= 1;
+  if ((state.cards[cardId] || 0) < 1) return false;
+  const isEquipped = Object.values(state.equipped).includes(uid);
+  if (isEquipped && countEquippedCardCopies(state, cardId, uid) >= MAX_EQUIPPED_CARD_COPIES) return false;
+  return true;
 }
 
 export function socketCard(state, uid, cardId) {
@@ -153,4 +176,48 @@ export function upgradeToMaster(state, uid) {
   state.materials[item.commonMaterialId] -= item.masterMaterialCost;
   entry.isMaster = true;
   return true;
+}
+
+/// Every material this instance has consumed so far: the initial craft
+/// cost, plus one enhanceCost[i] per level already bought, plus the Rank
+/// Master cost if it went through that upgrade. Doesn't include goldCost —
+/// destroying refunds materials only, not gold.
+function materialsSpentOn(item, entry) {
+  const spent = { ...item.materialCost };
+  for (let i = 0; i < entry.enhanceLevel; i++) {
+    spent[item.commonMaterialId] = (spent[item.commonMaterialId] || 0) + item.enhanceCost[i];
+  }
+  if (entry.isMaster) {
+    spent[item.commonMaterialId] = (spent[item.commonMaterialId] || 0) + item.masterMaterialCost;
+    spent[item.crystalMaterialId] = (spent[item.crystalMaterialId] || 0) + 1;
+  }
+  return spent;
+}
+
+export const DESTROY_REFUND_RATE = 0.8;
+
+/// Destroys an inventory instance, refunding DESTROY_REFUND_RATE (80%) of
+/// every material it consumed across crafting and every enhance/master
+/// upgrade since (rounded down per material). A socketed card, if any, is
+/// unsocketed back into state.cards first — see unsocketCard() above.
+/// Unequips the slot if this was the equipped piece. Returns the refunded
+/// {materialId: qty} map, or null if uid doesn't exist.
+export function destroyItem(state, uid) {
+  const entry = getEntry(state, uid);
+  if (!entry) return null;
+  const item = getItem(entry.itemId);
+
+  if (entry.cardId) unsocketCard(state, uid);
+
+  const refund = {};
+  for (const [matId, qty] of Object.entries(materialsSpentOn(item, entry))) {
+    const amount = Math.floor(qty * DESTROY_REFUND_RATE);
+    if (amount <= 0) continue;
+    state.materials[matId] = (state.materials[matId] || 0) + amount;
+    refund[matId] = amount;
+  }
+
+  if (state.equipped[item.slotId] === uid) state.equipped[item.slotId] = null;
+  state.inventory = state.inventory.filter((i) => i.uid !== uid);
+  return refund;
 }

@@ -1,4 +1,4 @@
-import { EVENT_CURRENCY_BASE, EVENT_CURRENCY_PER_STAGE, EVENT_DIFFICULTY_MULT, TRADE_COST, TRADE_YIELD } from '../data/events.js';
+import { EVENT_CURRENCY_BASE, EVENT_CURRENCY_PER_STAGE, EVENT_DIFFICULTY_MULT, TRADE_COST, TRADE_YIELD, getTradeUnlockCost, getTradeCycleInfo } from '../data/events.js';
 import { monsterMaxHp } from './combat.js';
 
 export function isEventClaimed(state, cycleIndex) {
@@ -69,24 +69,65 @@ export function claimEventVictory(state, cycleIndex, boss) {
 }
 
 // ---------------------------------------------------------------------
-// "Mercador" — trade TRADE_COST of one weak-monster material for
-// TRADE_YIELD of another, both from whichever band getTradeWindow() has
-// active. Only lets the player trade within that band (not, say, a stage
-// 1-19 material for a stage 81-100 one) and only materials they actually
-// have enough of.
+// "Mercador" — a new event starts every TRADE_CYCLE_MS (data/events.js),
+// re-locking every WEAK_MONSTER_GROUPS band. The player spends Moeda de
+// Evento to unlock whichever band(s) they want for the current event (see
+// getTradeUnlockCost — pricier for higher-stage bands, but cheap overall
+// since it only lasts until the next cycle), then can trade any quantity
+// of one weak-monster material for TRADE_YIELD-per-TRADE_COST of another
+// within that band (not, say, a stage 1-19 material for a stage 81-100
+// one), as many times as they like until the event ends.
 // ---------------------------------------------------------------------
 
-export function canTrade(state, group, fromMaterialId, toMaterialId) {
+export function isTradeGroupUnlocked(state, group, now = Date.now()) {
+  const { cycleIndex } = getTradeCycleInfo(now);
+  return (state.tradeUnlocks || {})[group.startStage] === cycleIndex;
+}
+
+export function canUnlockTradeGroup(state, group) {
+  if (isTradeGroupUnlocked(state, group)) return false;
+  return state.eventCurrency >= getTradeUnlockCost(group);
+}
+
+/// Returns true if the unlock went through.
+export function unlockTradeGroup(state, group) {
+  if (!canUnlockTradeGroup(state, group)) return false;
+  state.eventCurrency -= getTradeUnlockCost(group);
+  state.tradeUnlocks = state.tradeUnlocks || {};
+  state.tradeUnlocks[group.startStage] = getTradeCycleInfo().cycleIndex;
+  return true;
+}
+
+/// How much of fromMaterialId a trade actually spends for a requested qty
+/// (rounds down to the nearest whole TRADE_COST batch, so an odd/uneven
+/// qty never wastes part of the material — see performTrade).
+export function computeTradeUsedQty(qty) {
+  return Math.floor(qty / TRADE_COST) * TRADE_COST;
+}
+
+/// How much of toMaterialId a trade yields for a requested qty of
+/// fromMaterialId — e.g. with the default 2-for-1 ratio, asking for 10
+/// yields 5, so the UI can show the player exactly what they'll get.
+export function computeTradeReceiveQty(qty) {
+  return Math.floor(qty / TRADE_COST) * TRADE_YIELD;
+}
+
+export function canTrade(state, group, fromMaterialId, toMaterialId, qty) {
+  if (!isTradeGroupUnlocked(state, group)) return false;
   if (fromMaterialId === toMaterialId) return false;
   const inGroup = (id) => group.monsters.some((m) => m.material.id === id);
   if (!inGroup(fromMaterialId) || !inGroup(toMaterialId)) return false;
-  return (state.materials[fromMaterialId] || 0) >= TRADE_COST;
+  const used = computeTradeUsedQty(qty);
+  if (used < TRADE_COST) return false;
+  return (state.materials[fromMaterialId] || 0) >= used;
 }
 
 /// Returns true if the trade went through.
-export function performTrade(state, group, fromMaterialId, toMaterialId) {
-  if (!canTrade(state, group, fromMaterialId, toMaterialId)) return false;
-  state.materials[fromMaterialId] -= TRADE_COST;
-  state.materials[toMaterialId] = (state.materials[toMaterialId] || 0) + TRADE_YIELD;
+export function performTrade(state, group, fromMaterialId, toMaterialId, qty) {
+  if (!canTrade(state, group, fromMaterialId, toMaterialId, qty)) return false;
+  const used = computeTradeUsedQty(qty);
+  const received = computeTradeReceiveQty(qty);
+  state.materials[fromMaterialId] -= used;
+  state.materials[toMaterialId] = (state.materials[toMaterialId] || 0) + received;
   return true;
 }

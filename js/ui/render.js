@@ -4,20 +4,23 @@ import { UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
+import { computePlayerStats } from '../systems/stats.js';
 import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
-import { getEventWindow, getTradeWindow, TRADE_COST, TRADE_YIELD } from '../data/events.js';
-import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
+import { getEventWindow, TRADE_COST, TRADE_YIELD, getTradeUnlockCost, getTradeCycleInfo, getTowerWindow, TOWER_MAX_LEVEL } from '../data/events.js';
+import { isEventClaimed, computeEventBossMaxHp, isTradeGroupUnlocked, computeTradeReceiveQty } from '../systems/events.js';
+import { getTowerMonster } from '../systems/tower.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
 import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
-import { CARDS, getCard } from '../data/cards.js';
+import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
+import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
 
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
 /// to the caller: images are set to `width/height: 1em` in CSS so they scale
 /// with whatever font-size the surrounding `.icon`-ish element already has.
-function iconMarkup(image, emoji, alt) {
+export function iconMarkup(image, emoji, alt) {
   return image ? `<img src="${image}" alt="${alt || ''}">` : emoji;
 }
 
@@ -26,142 +29,6 @@ function elementBadgeHtml(elementId) {
   return `<span class="element-badge element-${el.id}">${el.emoji} ${el.name}</span>`;
 }
 
-const ELEMENT_COLORS = {
-  neutro: '#9a9ab0',
-  fogo: '#ff6a3d',
-  planta: '#4caf7d',
-  eletrico: '#f4e04d',
-  agua: '#5cc2ff',
-};
-
-/// Everything the doll needs to know about one equipped slot: the element
-/// color (used for the tinted-shape fallback) and, when the family has real
-/// art, the image to overlay instead of that shape.
-function gearVisual(state, slotId) {
-  const eq = getEquippedEntry(state, slotId);
-  if (!eq) return null;
-  return {
-    color: ELEMENT_COLORS[eq.item.element] || ELEMENT_COLORS.neutro,
-    image: eq.item.image || null,
-    name: eq.item.name,
-  };
-}
-
-/// Layered paper doll: a generic cartoon guy in swim trunks (SVG), with each
-/// equipped piece drawn on top. Slots backed by real art (see
-/// assets/chispim/) get their actual sprite overlaid via <img>; slots
-/// without art fall back to a flat shape tinted by the item's element
-/// color, same as before. Pure presentation — reads equipped state, renders
-/// nothing interactive (clicks go to the slot icons around it).
-function characterSvg(visuals) {
-  const skin = '#f2c19b';
-  const skinShade = '#e0a87e';
-  const hair = '#4a3626';
-  const trunk = '#e2445c';
-  const blade = '#cfd6e4';
-
-  // Only render the tinted-shape fallback when there's no real image for
-  // that slot — otherwise the <img> overlay (see gearOverlaysHtml) covers it.
-  const helmet = visuals.helmet && !visuals.helmet.image ? visuals.helmet.color : null;
-  const chest = visuals.armor && !visuals.armor.image ? visuals.armor.color : null;
-  const pants = visuals.pants && !visuals.pants.image ? visuals.pants.color : null;
-  const gloves = visuals.gloves && !visuals.gloves.image ? visuals.gloves.color : null;
-  const boots = visuals.boots && !visuals.boots.image ? visuals.boots.color : null;
-  const weapon = visuals.weapon && !visuals.weapon.image ? visuals.weapon.color : null;
-
-  return `<svg viewBox="0 0 120 200" width="110" height="184" role="img" aria-label="Seu personagem">
-    <g stroke="#14141c" stroke-width="2" stroke-linejoin="round">
-      <!-- arms (behind torso) -->
-      <rect x="30" y="66" width="11" height="42" rx="5.5" fill="${skin}" />
-      <rect x="79" y="66" width="11" height="42" rx="5.5" fill="${skin}" />
-      <!-- legs + feet -->
-      <rect x="47" y="110" width="11" height="62" rx="5" fill="${skin}" />
-      <rect x="62" y="110" width="11" height="62" rx="5" fill="${skin}" />
-      <ellipse cx="51" cy="175" rx="9" ry="5" fill="${skinShade}" />
-      <ellipse cx="69" cy="175" rx="9" ry="5" fill="${skinShade}" />
-      <!-- torso -->
-      <rect x="42" y="60" width="36" height="54" rx="11" fill="${skin}" />
-      <!-- sunga (always on) -->
-      <path d="M42 97 h36 v9 q-8 9 -18 9 q-10 0 -18 -9 z" fill="${trunk}" />
-      <line x1="42" y1="99" x2="78" y2="99" stroke="#a32b42" />
-      ${pants ? `
-        <rect x="45" y="100" width="14" height="64" rx="6" fill="${pants}" />
-        <rect x="61" y="100" width="14" height="64" rx="6" fill="${pants}" />
-        <rect x="42" y="97" width="36" height="9" rx="3" fill="${pants}" />` : ''}
-      ${boots ? `
-        <rect x="44" y="154" width="14" height="18" rx="4" fill="${boots}" />
-        <rect x="62" y="154" width="14" height="18" rx="4" fill="${boots}" />
-        <ellipse cx="51" cy="175" rx="10" ry="5.5" fill="${boots}" />
-        <ellipse cx="69" cy="175" rx="10" ry="5.5" fill="${boots}" />` : ''}
-      ${chest ? `
-        <rect x="40" y="58" width="40" height="48" rx="10" fill="${chest}" />
-        <circle cx="40" cy="66" r="8" fill="${chest}" />
-        <circle cx="80" cy="66" r="8" fill="${chest}" />
-        <line x1="60" y1="64" x2="60" y2="100" stroke="#14141c" stroke-opacity="0.35" />` : ''}
-      <!-- head -->
-      <circle cx="60" cy="38" r="21" fill="${skin}" />
-      <path d="M39 36 a21 21 0 0 1 42 0 z" fill="${hair}" />
-      ${helmet ? `
-        <path d="M37 38 a23 23 0 0 1 46 0 z" fill="${helmet}" />
-        <rect x="35" y="36" width="50" height="7" rx="3.5" fill="${helmet}" />` : ''}
-      <!-- face (drawn after helmet so it never gets covered) -->
-      <circle cx="53" cy="42" r="2.4" fill="#222" stroke="none" />
-      <circle cx="67" cy="42" r="2.4" fill="#222" stroke="none" />
-      <path d="M53 50 q7 6 14 0" stroke="#222" fill="none" stroke-width="2" stroke-linecap="round" />
-      ${weapon ? `
-        <polygon points="84,104 91,56 97,61 90,106" fill="${blade}" />
-        <circle cx="87" cy="103" r="3.6" fill="${weapon}" />
-        <polygon points="36,104 29,56 23,61 30,106" fill="${blade}" />
-        <circle cx="33" cy="103" r="3.6" fill="${weapon}" />` : ''}
-      <!-- hands (over blade hilts so the grip reads as "holding") -->
-      <circle cx="35.5" cy="111" r="6" fill="${skin}" />
-      <circle cx="84.5" cy="111" r="6" fill="${skin}" />
-      ${gloves ? `
-        <circle cx="35.5" cy="111" r="7.5" fill="${gloves}" />
-        <rect x="29" y="100" width="13" height="7" rx="3" fill="${gloves}" />
-        <circle cx="84.5" cy="111" r="7.5" fill="${gloves}" />
-        <rect x="78" y="100" width="13" height="7" rx="3" fill="${gloves}" />` : ''}
-    </g>
-  </svg>`;
-}
-
-// Anchor point (center, as % of the 110×184 doll box) + width (as % of box
-// width) for each slot's real-art overlay. z-index controls draw order —
-// roughly back-to-front the way a person gets dressed, with the weapon
-// last so it reads as held in front of the hands.
-const GEAR_OVERLAY_ANCHORS = {
-  weapon: { left: 50, top: 57, width: 96, z: 6 },
-  pants: { left: 50, top: 68, width: 38, z: 2 },
-  boots: { left: 50, top: 90, width: 36, z: 3 },
-  armor: { left: 50, top: 46, width: 50, z: 4 },
-  helmet: { left: 50, top: 17, width: 46, z: 5 },
-  gloves: { left: 50, top: 55, width: 48, z: 7 },
-};
-
-function gearOverlaysHtml(visuals) {
-  return Object.entries(visuals)
-    .filter(([, v]) => v && v.image)
-    .map(([slotId, v]) => {
-      const a = GEAR_OVERLAY_ANCHORS[slotId];
-      return `<img class="gear-overlay" src="${v.image}" alt="${v.name}"
-        style="left:${a.left}%; top:${a.top}%; width:${a.width}%; z-index:${a.z};">`;
-    })
-    .join('');
-}
-
-/// Combines the base SVG doll with real-art overlays into the final markup
-/// for `.equip-character`.
-function characterVisual(state) {
-  const visuals = {
-    helmet: gearVisual(state, 'helmet'),
-    armor: gearVisual(state, 'armor'),
-    pants: gearVisual(state, 'pants'),
-    gloves: gearVisual(state, 'gloves'),
-    boots: gearVisual(state, 'boots'),
-    weapon: gearVisual(state, 'weapon'),
-  };
-  return `<div class="character-visual">${characterSvg(visuals)}${gearOverlaysHtml(visuals)}</div>`;
-}
 
 const STAT_LABELS = {
   clickFlat: (v) => `+${formatNumber(v)} Dano de Clique`,
@@ -191,6 +58,8 @@ export function renderCombatStats(stats, monster) {
   document.getElementById('click-damage-value').textContent = formatNumber(stats.clickDamage);
   document.getElementById('dps-value').textContent = formatNumber(stats.dps);
   document.getElementById('armor-value').textContent = formatNumber(stats.armor);
+  document.getElementById('crit-chance-value').textContent = formatPercent(stats.critChance);
+  document.getElementById('crit-damage-value').textContent = formatPercent(stats.critDamage);
 
   const weaponEl = document.getElementById('weapon-element-value');
   weaponEl.innerHTML = elementBadgeHtml(stats.weaponElement);
@@ -250,11 +119,9 @@ export function renderBossTimer(remainingMs) {
   el.textContent = `⏱ ${seconds}s para derrotar o chefe!`;
 }
 
-// Left/right split of the 6 slots around the character avatar (see the
-// reference layout: weapon + upper-body gear on one side, the rest on the
-// other). Purely cosmetic grouping — any slot can go in either side.
-const LEFT_SLOT_IDS = ['helmet', 'armor', 'weapon'];
-const RIGHT_SLOT_IDS = ['pants', 'gloves', 'boots'];
+// All 6 equip slots, shown as a single grid of square tiles (no paper-doll
+// avatar) — order is purely cosmetic.
+const ALL_SLOT_IDS = ['helmet', 'armor', 'weapon', 'pants', 'gloves', 'boots'];
 
 // The Equipment tab now also houses Forja and Materiais as sub-tabs (they
 // used to be top-level tabs) — one less thing competing for space in the
@@ -270,7 +137,6 @@ const EQUIP_SUBTABS = [
   { id: 'equip', label: '🎽 Equipar' },
   { id: 'forge', label: '🔨 Forjar' },
   { id: 'materials', label: '🎒 Materiais' },
-  { id: 'cards', label: '🃏 Cartas' },
 ];
 
 export function renderEquipmentTab(state, activeSubTab = 'equip', expandedForgeBosses = new Set()) {
@@ -282,15 +148,25 @@ export function renderEquipmentTab(state, activeSubTab = 'equip', expandedForgeB
   let body;
   if (activeSubTab === 'forge') body = forgeContentHtml(state, expandedForgeBosses);
   else if (activeSubTab === 'materials') body = materialsContentHtml(state);
-  else if (activeSubTab === 'cards') body = cardsContentHtml(state);
   else body = equipRingContentHtml(state);
 
   container.innerHTML = subnav + body;
 }
 
+function setBonusBannerHtml(state) {
+  const { activeSetBonus } = computePlayerStats(state);
+  if (!activeSetBonus) return '';
+  const boss = BOSSES.find((b) => b.id === activeSetBonus.bossId);
+  const label = activeSetBonus.setLevel > ENHANCE_MAX_LEVEL ? 'Rank Master' : `nível +${activeSetBonus.setLevel}`;
+  return `<div class="set-bonus-banner">
+    ✨ Set completo de ${boss ? boss.name : activeSetBonus.bossId} ativo (${label}): +${formatNumber(activeSetBonus.hpFlat)} Vida ·
+    +${formatNumber(activeSetBonus.armorFlat)} Armadura · +${formatPercent(activeSetBonus.critChancePercent)} Crítico ·
+    +${formatPercent(activeSetBonus.critDamagePercent)} Dano Crítico
+  </div>`;
+}
+
 function equipRingContentHtml(state) {
-  const leftSlots = LEFT_SLOT_IDS.map(getSlot);
-  const rightSlots = RIGHT_SLOT_IDS.map(getSlot);
+  const slots = ALL_SLOT_IDS.map(getSlot);
 
   const inventoryHtml = state.inventory.length
     ? state.inventory.map((entry) => inventoryTileHtml(state, entry)).join('')
@@ -298,11 +174,8 @@ function equipRingContentHtml(state) {
 
   return `
     <div class="equip-screen">
-      <div class="equip-ring">
-        <div class="equip-side">${leftSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
-        <div class="equip-character">${characterVisual(state)}</div>
-        <div class="equip-side">${rightSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
-      </div>
+      ${setBonusBannerHtml(state)}
+      <div class="equip-slot-grid">${slots.map((s) => slotIconHtml(state, s)).join('')}</div>
       <div class="equip-inventory-header">Inventário</div>
       <div class="equip-inventory-grid">${inventoryHtml}</div>
     </div>
@@ -352,15 +225,15 @@ export function showEquipSlotModal(state, slotId) {
 /// Opens the detail popup for a specific inventory item (equipped or not).
 /// pickerOpen controls whether the card-picker sub-panel starts expanded
 /// (only true right after the player clicks "Equipar Carta" — see main.js).
-export function showItemDetailModal(state, uid, pickerOpen = false) {
+export function showItemDetailModal(state, uid, pickerOpen = false, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   if (!entry) return;
   const item = getItem(entry.itemId);
   const slot = getSlot(item.slotId);
-  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, pickerOpen));
+  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, pickerOpen, confirmDestroy));
 }
 
-function itemDetailHtml(state, uid, pickerOpen) {
+function itemDetailHtml(state, uid, pickerOpen, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   const item = getItem(entry.itemId);
   const slot = getSlot(item.slotId);
@@ -384,7 +257,13 @@ function itemDetailHtml(state, uid, pickerOpen) {
       ${resistanceLine}
       ${cardSlotHtml(state, uid, entry, pickerOpen, item)}
       ${enhancePanelHtml(state, uid, entry, item)}
-      ${actionBtn}
+      <div class="modal-action-row">
+        ${actionBtn}
+        ${confirmDestroy
+          ? `<button class="modal-action-btn destroy-btn" data-confirm-destroy-uid="${uid}">Confirmar destruição</button>
+             <button class="modal-action-btn" data-cancel-destroy-uid="${uid}">Cancelar</button>`
+          : `<button class="modal-action-btn destroy-btn" data-destroy-uid="${uid}">Destruir (-80% material)</button>`}
+      </div>
     </div>
   `;
 }
@@ -406,7 +285,7 @@ function cardSlotHtml(state, uid, entry, pickerOpen, item) {
     const canAttempt = canAttemptCardSlotUnlock(state, uid);
     return `<div class="card-slot-locked">
       <div class="card-slot-label">🔒 Slot de Carta bloqueado</div>
-      <div class="card-slot-unlock-info">${Math.round(CARD_SLOT_UNLOCK_CHANCE * 100)}% de chance de sucesso · custo: 1 ${crystalInfo.emoji} ${crystalInfo.name} (você tem ${formatNumber(haveCrystal)})</div>
+      <div class="card-slot-unlock-info">${Math.round(CARD_SLOT_UNLOCK_CHANCE * 100)}% de chance de sucesso · custo: 1 <span class="icon">${iconMarkup(crystalInfo.image, crystalInfo.emoji, crystalInfo.name)}</span> ${crystalInfo.name} (você tem ${formatNumber(haveCrystal)})</div>
       <button class="card-slot-unlock-btn" data-unlock-card-slot="${uid}" ${canAttempt ? '' : 'disabled'}>Tentar Desbloquear</button>
     </div>`;
   }
@@ -417,7 +296,7 @@ function cardSlotHtml(state, uid, entry, pickerOpen, item) {
   if (entry.cardId && getCard(entry.cardId)) {
     const card = getCard(entry.cardId);
     return `<div class="card-slot-badge filled">
-      <span class="icon">${card.emoji}</span>
+      <span class="icon">${iconMarkup(card.image, card.emoji, card.name)}</span>
       <div class="card-slot-info">
         <div class="card-slot-name">${card.name}</div>
         <div class="card-slot-desc">${card.description}</div>
@@ -445,7 +324,7 @@ function cardSlotHtml(state, uid, entry, pickerOpen, item) {
     <div class="card-slot-label">🃏 Escolha uma carta:</div>
     <div class="card-slot-options">${owned.map((c) => `
       <button class="card-slot-option" data-socket-uid="${uid}" data-socket-card-id="${c.id}" title="${c.description}">
-        ${c.emoji} ${c.name} <span class="qty">×${state.cards[c.id]}</span>
+        <span class="icon">${iconMarkup(c.image, c.emoji, c.name)}</span> ${c.name} <span class="qty">×${state.cards[c.id]}</span>
       </button>
     `).join('')}</div>
   </div>`;
@@ -462,7 +341,7 @@ function enhancePanelHtml(state, uid, entry, item) {
     const matInfo = findMaterialInfo(item.commonMaterialId);
     const met = have >= cost;
     return `<div class="enhance-panel">
-      <div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(cost)}</span></div>
+      <div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(cost)}</span></div>
       <button data-enhance="${uid}" ${canEnhance(state, uid) ? '' : 'disabled'}>Aprimorar para +${entry.enhanceLevel + 1}</button>
     </div>`;
   }
@@ -473,8 +352,8 @@ function enhancePanelHtml(state, uid, entry, item) {
   const haveMat = state.materials[item.commonMaterialId] || 0;
   const matMet = haveMat >= item.masterMaterialCost;
   return `<div class="enhance-panel">
-    <div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${matMet ? 'met' : 'missing'}">${formatNumber(haveMat)}/${formatNumber(item.masterMaterialCost)}</span></div>
-    <div class="recipe-cost"><span>${crystalInfo.emoji} ${crystalInfo.name}</span><span class="${haveCrystal >= 1 ? 'met' : 'missing'}">${formatNumber(haveCrystal)}/1</span></div>
+    <div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${matMet ? 'met' : 'missing'}">${formatNumber(haveMat)}/${formatNumber(item.masterMaterialCost)}</span></div>
+    <div class="recipe-cost"><span><span class="icon">${iconMarkup(crystalInfo.image, crystalInfo.emoji, crystalInfo.name)}</span> ${crystalInfo.name}</span><span class="${haveCrystal >= 1 ? 'met' : 'missing'}">${formatNumber(haveCrystal)}/1</span></div>
     <button class="master-btn" data-master-upgrade="${uid}" ${canUpgradeToMaster(state, uid) ? '' : 'disabled'}>Evoluir para Rank Master</button>
   </div>`;
 }
@@ -597,23 +476,74 @@ function materialsContentHtml(state) {
     </div>`).join('')}</div>`;
 }
 
-// Cards drop rarely from any monster of their family (see systems/combat.js)
-// and just sit in this inventory for now — there's no socketing UI yet
-// (see data/cards.js), so this is purely a "what have I collected" view.
-function cardsContentHtml(state) {
-  const owned = CARDS.filter((c) => (state.cards[c.id] || 0) > 0);
+// ---------------------------------------------------------------
+// Cartas tab: every card in the game (see data/cards.js), split into Boss
+// and Common sections, always visible — undiscovered ones render dimmed
+// (`.card-tile.undiscovered`) rather than being hidden, so the collection's
+// full size is visible as a goal. Clicking any tile opens a bigger detail
+// popup (showCardDetailModal, shares the #modal-overlay with the item
+// detail popup) with the full-size art, description, and — the first time
+// a card is ever obtained — a claimable one-time Cash reward (see
+// systems/cards.js), same "claim once" idea as an achievement.
+// ---------------------------------------------------------------
 
-  if (!owned.length) {
-    return `<p style="color:var(--text-dim); font-size:13px;">Nenhuma carta coletada ainda. Monstros têm uma pequena chance de dropar a carta deles ao morrer.</p>`;
+function cardTileHtml(state, card) {
+  const discovered = isCardDiscovered(state, card.id);
+  const claimable = canClaimCardReward(state, card.id);
+  return `<button class="card-tile ${discovered ? 'discovered' : 'undiscovered'}" data-view-card="${card.id}">
+    ${claimable ? '<span class="card-tile-badge">🎁</span>' : ''}
+    <div class="icon">${iconMarkup(card.image, card.emoji, card.name)}</div>
+    <div class="name">${card.name}</div>
+  </button>`;
+}
+
+export function renderCardsTab(state) {
+  const container = document.getElementById('tab-cards');
+  const bossCards = CARDS.filter((c) => c.isBossCard);
+  const commonCards = CARDS.filter((c) => !c.isBossCard);
+
+  container.innerHTML = `
+    <h3 class="cards-section-title">👑 Cartas de Boss</h3>
+    <div class="card-grid">${bossCards.map((c) => cardTileHtml(state, c)).join('')}</div>
+    <h3 class="cards-section-title">🃏 Carta Comum</h3>
+    <div class="card-grid">${commonCards.map((c) => cardTileHtml(state, c)).join('')}</div>
+  `;
+}
+
+function cardDetailHtml(state, card) {
+  const discovered = isCardDiscovered(state, card.id);
+  const claimable = canClaimCardReward(state, card.id);
+  const claimed = isCardRewardClaimed(state, card.id);
+  const owned = state.cards[card.id] || 0;
+
+  let actionHtml;
+  if (claimable) {
+    actionHtml = `<button class="modal-action-btn" data-claim-card="${card.id}">🎁 Resgatar +${CARD_DISCOVERY_CASH_REWARD} 💎 Cash</button>`;
+  } else if (claimed) {
+    actionHtml = `<div class="card-detail-status">🎁 Recompensa já resgatada</div>`;
+  } else if (!discovered) {
+    actionHtml = `<div class="card-detail-status">🔒 Ainda não obtida — derrote o monstro dela para ter uma chance de conseguir.</div>`;
+  } else {
+    actionHtml = '';
   }
 
-  return `<div class="material-grid">${owned.map((c) => `
-    <div class="material-card card-item">
-      <div class="icon">${c.emoji}</div>
-      <div class="name">${c.name}</div>
-      <div class="card-desc">${c.description}</div>
-      <div class="qty">${formatNumber(state.cards[c.id] || 0)}</div>
-    </div>`).join('')}</div>`;
+  return `
+    <div class="card-detail ${discovered ? '' : 'undiscovered'}">
+      <div class="card-detail-image">${iconMarkup(card.image, card.emoji, card.name)}</div>
+      <div class="card-detail-info">
+        <div class="card-detail-name">${card.name}</div>
+        <div class="card-detail-desc">${card.description}</div>
+        ${discovered ? `<div class="card-detail-owned">Você tem: ${formatNumber(owned)}</div>` : ''}
+        ${actionHtml}
+      </div>
+    </div>
+  `;
+}
+
+export function showCardDetailModal(state, cardId) {
+  const card = getCard(cardId);
+  if (!card) return;
+  showModal(`${card.isBossCard ? '👑' : '🃏'} ${card.name}`, cardDetailHtml(state, card));
 }
 
 function formatDuration(ms) {
@@ -635,10 +565,16 @@ function formatDuration(ms) {
 // by main.js (a transient, un-persisted "time left in this attempt" clock,
 // same idea as the regular boss timer) — null means no attempt in progress.
 //
-// "Mercador" lets the player trade weak-monster materials 2-for-1 within
-// whichever WEAK_MONSTER_GROUPS band is currently up (see getTradeWindow).
-// `tradeFromMaterialId` is the material picked as the trade-in, also
-// main.js-owned transient UI state — null means nothing selected yet.
+// "Mercador" is a recurring event (new one every TRADE_CYCLE_MS, see
+// getTradeCycleInfo) that re-locks every WEAK_MONSTER_GROUPS band each
+// time. The player spends Moeda de Evento to unlock whichever band(s) they
+// want for the current event, then trades within it until the next one
+// starts. Every band is listed up front, collapsed by default
+// (`expandedTradeGroups`, keyed by group.startStage — main.js-owned
+// transient UI state, same pattern as the Forjar boss list).
+// `tradeFromMaterialId` is the material picked as the trade-in and
+// `tradeQty` how much of it to spend this trade (both main.js-owned
+// transient UI state) — tradeFromMaterialId null means nothing selected.
 // ---------------------------------------------------------------
 
 function eventListItemHtml(id, icon, name, statusLine, expanded, bodyHtml) {
@@ -698,7 +634,7 @@ function cacaAprimoradaStatusLine(state) {
   return `Próximo em ${formatDuration(win.msUntilNextWindow)}`;
 }
 
-function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId) {
+function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId, tradeQty) {
   const have = state.materials[mat.id] || 0;
   const isFrom = tradeFromMaterialId === mat.id;
   const canBeFrom = have >= TRADE_COST;
@@ -713,54 +649,155 @@ function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId) {
   }
 
   if (isFrom) {
+    const max = Math.max(TRADE_COST, Math.floor(have / TRADE_COST) * TRADE_COST);
+    const received = computeTradeReceiveQty(tradeQty);
     return `<div class="material-card trade-card selected">
       <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
       <div class="name">${mat.name}</div>
       <div class="qty">${formatNumber(have)}</div>
+      <div class="trade-qty-control">
+        <button class="trade-qty-btn" data-trade-qty-dec ${tradeQty <= TRADE_COST ? 'disabled' : ''}>−</button>
+        <input type="number" class="trade-qty-input" data-trade-qty-input value="${tradeQty}" min="${TRADE_COST}" max="${max}" step="${TRADE_COST}">
+        <button class="trade-qty-btn" data-trade-qty-inc ${tradeQty >= max ? 'disabled' : ''}>＋</button>
+      </div>
+      <div class="trade-qty-preview">recebe <strong>${received}</strong></div>
       <button class="forge-toggle-btn" data-trade-cancel>Cancelar</button>
     </div>`;
   }
 
+  const received = computeTradeReceiveQty(tradeQty);
   return `<div class="material-card trade-card">
     <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
     <div class="name">${mat.name}</div>
     <div class="qty">${formatNumber(have)}</div>
-    <button class="forge-toggle-btn" data-trade-target="${mat.id}">Receber (2→1)</button>
+    <button class="forge-toggle-btn" data-trade-target="${mat.id}" ${received > 0 ? '' : 'disabled'}>Receber ${received}</button>
   </div>`;
 }
 
-function mercadorContentHtml(state, tradeFromMaterialId) {
-  const trade = getTradeWindow();
-  const { group } = trade;
-  const fromMat = tradeFromMaterialId != null ? group.monsters.find((m) => m.material.id === tradeFromMaterialId)?.material : null;
+function tradeGroupHtml(state, group, expanded, tradeFromMaterialId, tradeQty) {
+  const unlocked = isTradeGroupUnlocked(state, group);
+  const header = `<h3><span class="icon">🧺</span> Estágio ${group.startStage}–${group.endStage}</h3>`;
 
-  const hint = tradeFromMaterialId == null
-    ? `<p class="event-sub">Escolha um material para trocar (${TRADE_COST} dele → ${TRADE_YIELD} de outro da mesma categoria).</p>`
-    : `<p class="event-sub">Trocando <strong>${TRADE_COST} ${fromMat?.name ?? ''}</strong> — escolha o material que vai receber.</p>`;
+  if (!unlocked) {
+    const cost = getTradeUnlockCost(group);
+    const affordable = state.eventCurrency >= cost;
+    return `<div class="family-group">
+      <div class="family-group-header">
+        ${header}
+        <span style="color:var(--text-dim); font-size:11px;">🔒</span>
+      </div>
+      <button class="forge-toggle-btn" data-unlock-trade-group="${group.startStage}" ${affordable ? '' : 'disabled'}>🎫 Desbloquear (${formatNumber(cost)})</button>
+    </div>`;
+  }
 
+  return `<div class="family-group">
+    <div class="family-group-header">
+      ${header}
+      <button class="forge-toggle-btn" data-toggle-trade-group="${group.startStage}">${expanded ? '▲ Recolher' : '▼ Expandir'}</button>
+    </div>
+    ${expanded ? `<div class="material-grid">${group.monsters.map((m) => tradeMaterialCardHtml(state, group, m.material, tradeFromMaterialId, tradeQty)).join('')}</div>` : ''}
+  </div>`;
+}
+
+function mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty) {
+  const { msUntilNextCycle } = getTradeCycleInfo();
   return `
     <div class="event-panel">
-      <div class="event-active-badge">🧺 Categoria ativa: Estágio ${group.startStage}–${group.endStage} · rotaciona em ${formatDuration(trade.msUntilNextRotation)}</div>
-      ${hint}
-      <div class="material-grid">${group.monsters.map((m) => tradeMaterialCardHtml(state, group, m.material, tradeFromMaterialId)).join('')}</div>
+      <div class="event-active-badge">🧺 Novo evento em ${formatDuration(msUntilNextCycle)}</div>
+      <p class="event-sub">Desbloqueie uma categoria e troque materiais (${TRADE_COST}→${TRADE_YIELD}) até o evento acabar.</p>
+      ${WEAK_MONSTER_GROUPS.map((g) => tradeGroupHtml(state, g, expandedTradeGroups.has(g.startStage), tradeFromMaterialId, tradeQty)).join('')}
     </div>`;
 }
 
-function mercadorStatusLine() {
-  const trade = getTradeWindow();
-  return `Estágio ${trade.group.startStage}–${trade.group.endStage} · rotaciona em ${formatDuration(trade.msUntilNextRotation)}`;
+function mercadorStatusLine(state) {
+  const { msUntilNextCycle } = getTradeCycleInfo();
+  const unlockedCount = WEAK_MONSTER_GROUPS.filter((g) => isTradeGroupUnlocked(state, g)).length;
+  return `${unlockedCount}/${WEAK_MONSTER_GROUPS.length} aberto · novo evento em ${formatDuration(msUntilNextCycle)}`;
 }
 
-export function renderEventsTab(state, engagementRemainingMs, expandedEvents = new Set(), tradeFromMaterialId = null) {
+// ---------------------------------------------------------------
+// Torre Infinita — see data/events.js (window/run timing constants) and
+// systems/tower.js (level->monster resolution, run lifecycle). Unlike the
+// other two events this one has three distinct states to render: window
+// closed, window open but not yet entered, and an active run.
+// ---------------------------------------------------------------
+
+function towerContentHtml(state, runRemainingMs, towerHp, towerMaxHp) {
+  if (state.towerRunActive) {
+    const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
+    const hp = towerHp ?? monster.maxHp;
+    const maxHp = towerMaxHp ?? monster.maxHp;
+    const pct = maxHp > 0 ? Math.max(0, Math.min(100, (state.towerMonsterHp / maxHp) * 100)) : 0;
+    const hpPlayerPct = maxHp > 0 && towerMaxHp > 0 ? Math.max(0, Math.min(100, (hp / towerMaxHp) * 100)) : 0;
+    return `
+      <div class="event-panel">
+        <div class="event-active-badge">🗼 Nível ${state.towerLevel}/${TOWER_MAX_LEVEL} — ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
+        <h3>${monster.name} ${monster.isBoss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}</h3>
+        <button id="tower-monster-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(monster.image, monster.emoji, monster.name)}</button>
+        <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.towerMonsterHp)} / ${formatNumber(maxHp)}</span></div>
+        <p class="event-sub">Sua vida na torre</p>
+        <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${hpPlayerPct}%; background:var(--danger, #e05656);"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(towerMaxHp)}</span></div>
+        <p class="event-reward-info">🎁 Recompensa ao final: 🎫 Moeda de Evento, conforme o nível alcançado.</p>
+      </div>`;
+  }
+
+  const win = getTowerWindow();
+  if (!win.active) {
+    return `
+      <div class="event-panel">
+        <div class="event-icon dim">🗼</div>
+        <h3>Nenhuma torre disponível agora</h3>
+        <p class="event-sub">Volte quando a próxima janela abrir.</p>
+        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
+      </div>`;
+  }
+
+  if (state.towerEnteredCycle === win.cycleIndex) {
+    return `
+      <div class="event-panel">
+        <div class="event-icon dim">🗼</div>
+        <h3>Você já usou esta janela</h3>
+        <p class="event-sub">Melhor nível alcançado: ${state.towerBestLevel}/${TOWER_MAX_LEVEL}.</p>
+        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
+      </div>`;
+  }
+
+  return `
+    <div class="event-panel">
+      <div class="event-active-badge">🗼 Janela aberta — fecha em ${formatDuration(win.remainingActiveMs)}</div>
+      <h3>Torre Infinita</h3>
+      <p class="event-sub">Suba o máximo possível em 5 minutos contínuos. A torre acaba se você morrer, o tempo zerar, ou você derrotar o chefe do nível 200.</p>
+      <p class="event-sub">Melhor nível alcançado: ${state.towerBestLevel}/${TOWER_MAX_LEVEL}.</p>
+      <button class="forge-toggle-btn" data-tower-enter>Entrar</button>
+    </div>`;
+}
+
+function towerStatusLine(state) {
+  if (state.towerRunActive) return `🗼 Em andamento · nível ${state.towerLevel}`;
+  const win = getTowerWindow();
+  if (win.active && state.towerEnteredCycle !== win.cycleIndex) return '🗼 Janela aberta!';
+  return `Próxima janela em ${formatDuration(win.msUntilNextWindow)}`;
+}
+
+export function renderEventsTab(state, engagementRemainingMs, expandedEvents = new Set(), tradeFromMaterialId = null, expandedTradeGroups = new Set(), tradeQty = TRADE_COST, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `<div class="event-list">
     ${eventListItemHtml('caca', '🎪', 'Caça Aprimorada', cacaAprimoradaStatusLine(state), expandedEvents.has('caca'), cacaAprimoradaContentHtml(state, engagementRemainingMs))}
-    ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId))}
+    ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(state), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty))}
+    ${eventListItemHtml('torre', '🗼', 'Torre Infinita', towerStatusLine(state), expandedEvents.has('torre'), towerContentHtml(state, towerRunRemainingMs, towerHp, towerMaxHp))}
   </div>`;
 }
 
 export function pulseEventBoss() {
   const sprite = document.getElementById('event-boss-sprite');
+  if (!sprite) return;
+  sprite.classList.remove('hit');
+  void sprite.offsetWidth; // restart animation
+  sprite.classList.add('hit');
+}
+
+export function pulseTowerMonster() {
+  const sprite = document.getElementById('tower-monster-sprite');
   if (!sprite) return;
   sprite.classList.remove('hit');
   void sprite.offsetWidth; // restart animation
@@ -861,7 +898,7 @@ function eventShopHtml(state) {
       <h3><span class="icon">${iconMarkup(boss.image, boss.emoji, boss.name)}</span> ${boss.name}</h3>
       <div class="shop-item-grid">${items.map((item) => `
         <div class="shop-item-card event-variant">
-          <span class="icon">${item.emoji}</span>
+          <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
           <div class="info">
             <div class="name">${item.name}</div>
           </div>
@@ -888,12 +925,17 @@ export function renderAll(state, monster, stats) {
   renderUpgradesTab(state);
 }
 
-export function spawnDamagePopup(amount) {
+export function spawnDamagePopup(amount, isCrit = false, isBurst = false) {
   const container = document.getElementById('damage-popups');
   const el = document.createElement('div');
-  el.className = 'damage-popup';
-  el.textContent = `-${formatNumber(amount)}`;
-  el.style.left = `${45 + Math.random() * 10}%`;
+  el.className = isBurst ? 'damage-popup burst' : isCrit ? 'damage-popup crit' : 'damage-popup';
+  el.textContent = isBurst ? `-${formatNumber(amount)} CLIQUE DEVASTADOR!` : isCrit ? `-${formatNumber(amount)} CRÍTICO!` : `-${formatNumber(amount)}`;
+  // Wide, randomized spread on both axes — a fast clicker spawns several of
+  // these within the same 750ms window, and a narrow fixed spot made them
+  // pile up unreadably on top of each other (looking like clicks got
+  // dropped even though every one of them landed).
+  el.style.left = `${30 + Math.random() * 40}%`;
+  el.style.top = `${30 + Math.random() * 20}%`;
   container.appendChild(el);
   setTimeout(() => el.remove(), 750);
 }
@@ -903,6 +945,17 @@ export function pulseMonster() {
   sprite.classList.remove('hit');
   void sprite.offsetWidth; // restart animation
   sprite.classList.add('hit');
+}
+
+export function showLootPopup(goldGained, drops) {
+  const container = document.getElementById('loot-popup');
+  const parts = [`+${formatNumber(goldGained)} 💰`, ...drops.map((d) => `+${d.qty} ${d.emoji}`)];
+  const el = document.createElement('div');
+  el.className = 'loot-popup-entry';
+  el.textContent = parts.join(' ');
+  container.appendChild(el);
+  while (container.childNodes.length > 3) container.removeChild(container.firstChild);
+  setTimeout(() => el.remove(), 2500);
 }
 
 export function showToast(message) {

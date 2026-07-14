@@ -1,24 +1,29 @@
 import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
 import { computePlayerStats, getElementalResistance, getCardDamageBonus } from './systems/stats.js';
-import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, armorReduction } from './systems/combat.js';
-import { isBossStage, findMaterialInfo } from './data/monsters.js';
+import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, armorReduction, rollCrit, resolveClickHit } from './systems/combat.js';
+import { isBossStage, findMaterialInfo, WEAK_MONSTER_GROUPS } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
-import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock } from './systems/crafting.js';
+import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES } from './systems/crafting.js';
+import { getItem } from './data/items.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
 import { formatNumber } from './format.js';
-import { getEventWindow, EVENT_TIME_LIMIT_MS, getTradeWindow } from './data/events.js';
-import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVictory, resetEventEncounter, canTrade, performTrade } from './systems/events.js';
+import { getEventWindow, EVENT_TIME_LIMIT_MS, TRADE_COST, getTowerWindow, TOWER_RUN_DURATION_MS } from './data/events.js';
+import { isEventClaimed, ensureEventBossSpawned, applyEventDamage, claimEventVictory, resetEventEncounter, canTrade, performTrade, unlockTradeGroup, computeTradeReceiveQty } from './systems/events.js';
+import { canEnterTower, startTowerRun, ensureTowerMonsterSpawned, getTowerMonster, applyTowerDamage, endTowerRun } from './systems/tower.js';
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
+import { claimCardReward } from './systems/cards.js';
+import { CARD_DISCOVERY_CASH_REWARD, getCard } from './data/cards.js';
 import { GAME_BUILD } from './version.js';
 import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
   renderUpgradesTab, renderBossTimer,
-  renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showModal, hideModal,
+  renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, renderEventsTab, renderAchievementsTab, renderShopTab, pulseEventBoss,
+  renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -49,6 +54,17 @@ function resetPlayerHp() {
 let eventDeadline = null;
 let eventDeadlineCycle = null;
 
+// Torre Infinita run clock + the player's HP pool while inside it — both
+// transient, same "a reload gives a fresh attempt" trade-off already made
+// for the boss timer and the Caça Aprimorada attempt above. Re-armed from
+// state.towerRunActive on init() if a run was mid-flight at save time.
+let towerDeadline = null;
+let towerHp = null;
+
+function currentTowerRunRemainingMs() {
+  return towerDeadline == null ? null : Math.max(0, towerDeadline - Date.now());
+}
+
 // Which sub-tab is showing in Equipamento (Equipar/Forjar/Materiais) and
 // Loja (Cash/Moeda de Evento) — pure UI state, not part of the save.
 let activeEquipSubTab = 'equip';
@@ -60,16 +76,22 @@ let expandedForgeBosses = new Set();
 
 // Same idea for the Eventos list — each entry is an event id ('caca' or
 // 'mercador'). Which material the player picked as the trade-in for the
-// Mercador event lives here too, since it's just as transient/UI-only.
+// Mercador event, how much of it they want to spend this trade, and which
+// of its (now always-listed) stage bands are expanded, live here too,
+// since it's all just as transient/UI-only.
 let expandedEvents = new Set();
 let tradeFromMaterialId = null;
+let tradeQty = TRADE_COST;
+let expandedTradeGroups = new Set();
 
 function renderEquipTab() {
   renderEquipmentTab(state, activeEquipSubTab, expandedForgeBosses);
 }
 
 function renderEventsTabNow() {
-  renderEventsTab(state, currentEventEngagementMs(), expandedEvents, tradeFromMaterialId);
+  const towerMaxHp = state.towerRunActive ? computePlayerStats(state).maxHp : null;
+  if (towerHp != null && towerMaxHp != null) towerHp = Math.min(towerHp, towerMaxHp);
+  renderEventsTab(state, currentEventEngagementMs(), expandedEvents, tradeFromMaterialId, expandedTradeGroups, tradeQty, currentTowerRunRemainingMs(), towerHp, towerMaxHp);
 }
 
 function currentEventEngagementMs() {
@@ -113,7 +135,7 @@ function retreat(reason) {
 
 function refreshAll() {
   const monster = getCurrentMonster(state.stage, state.weakMonsterId);
-  const stats = computePlayerStats(state);
+  const stats = computePlayerStats(state, currentHp);
   currentHp = Math.min(currentHp, stats.maxHp);
   renderAll(state, monster, stats);
   renderPlayerHp(currentHp, stats.maxHp);
@@ -130,6 +152,7 @@ function refreshAll() {
 function fullRefresh() {
   refreshAll();
   renderEquipTab();
+  renderCardsTab(state);
   renderEventsTabNow();
   renderAchievementsTab(state);
   renderShopTab(state, activeShopSubTab);
@@ -138,7 +161,7 @@ function fullRefresh() {
 
 function refreshCombatOnly() {
   const monster = getCurrentMonster(state.stage, state.weakMonsterId);
-  const stats = computePlayerStats(state);
+  const stats = computePlayerStats(state, currentHp);
   currentHp = Math.min(currentHp, stats.maxHp);
   renderCombatStats(stats, monster);
   renderMonster(state, monster);
@@ -148,15 +171,15 @@ function refreshCombatOnly() {
 
 function handleKillEvent(event) {
   if (!event) return;
-  showToast(`💀 Derrotado! +${formatNumber(event.goldGained)} 💰${
-    event.drops.map((d) => ` +${d.qty} ${d.emoji}`).join('')
-  }`);
+  showLootPopup(event.goldGained, event.drops);
+  if (event.reprocced) showToast('🔁 Gaiatron: o chefe caiu de novo instantaneamente! Recompensas dobradas.');
   renderTopBar(state);
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
   // One call covers Equipar/Forjar/Materiais, whichever sub-tab is showing.
   renderEquipTab();
   renderUpgradesTab(state);
+  renderCardsTab(state); // a card drop just changed discovered/claimable state
   wireAllPanelButtons();
   resetPlayerHp(); // a fresh monster just spawned — full heal for the new fight
   armBossTimer(); // stage may have just advanced onto (or off of) a boss
@@ -176,11 +199,11 @@ function onClickMonster() {
     retreat('timeout');
     return;
   }
-  const stats = computePlayerStats(state);
+  const stats = computePlayerStats(state, currentHp);
   const monster = getCurrentMonster(state.stage, state.weakMonsterId);
-  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
-  const event = applyDamage(state, dealt, stats);
-  spawnDamagePopup(dealt);
+  const hit = resolveClickHit(state, stats, 1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
+  const event = applyDamage(state, hit.dealt, stats);
+  spawnDamagePopup(hit.dealt, hit.isCrit, hit.isBurst);
   pulseMonster();
   if (event) {
     refreshCombatOnly();
@@ -198,7 +221,7 @@ function tick() {
     return;
   }
 
-  const stats = computePlayerStats(state);
+  const stats = computePlayerStats(state, currentHp);
   currentHp = Math.min(currentHp, stats.maxHp);
   const monster = getCurrentMonster(state.stage, state.weakMonsterId);
 
@@ -207,9 +230,11 @@ function tick() {
   // dies almost every single tick, which would otherwise starve the event
   // boss of its DPS ticks entirely.
   tickEventBoss(stats);
+  tickTower();
 
   if (stats.dps > 0) {
-    const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
+    const crit = rollCrit(stats);
+    const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element)) * crit.multiplier;
     const event = applyDamage(state, dealt * (TICK_MS / 1000), stats);
     if (event) {
       refreshCombatOnly();
@@ -261,7 +286,17 @@ function setupStageControls() {
   document.getElementById('stage-max').addEventListener('click', () => {
     if (setViewedStage(state, state.maxStage)) { resetPlayerHp(); refreshCombatOnly(); armBossTimer(); }
   });
-  document.getElementById('monster-sprite').addEventListener('click', onClickMonster);
+  // pointerdown, not click: click only fires if pointerup lands on the same
+  // element the browser considers "the target" at that instant, and this
+  // button's own contents (the monster's <img>) get replaced by
+  // renderMonster() on every single tick (100ms) — a fast clicker can
+  // easily have a re-render land in the few ms between their mousedown and
+  // mouseup, which silently drops that click. Firing on pointerdown instead
+  // means every physical press counts, independent of any render race.
+  document.getElementById('monster-sprite').addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    onClickMonster();
+  });
 }
 
 // ---------------------------------------------------------------
@@ -307,8 +342,15 @@ function wireModalEvents() {
     const equipBtn = e.target.closest('[data-modal-equip]');
     if (equipBtn) {
       runModalAction(() => {
-        equipItem(state, Number(equipBtn.dataset.modalEquip));
+        const uid = Number(equipBtn.dataset.modalEquip);
+        const entry = state.inventory.find((i) => i.uid === uid);
+        const cardId = entry?.cardId;
+        const cardWillBeStripped = cardId && countEquippedCardCopies(state, cardId, uid) >= MAX_EQUIPPED_CARD_COPIES;
+        equipItem(state, uid);
         hideModal();
+        if (cardWillBeStripped) {
+          showToast(`🃏 Já havia ${MAX_EQUIPPED_CARD_COPIES} cartas dessa equipadas — a carta voltou pro inventário.`);
+        }
         fullRefresh();
       });
       return;
@@ -390,7 +432,13 @@ function wireModalEvents() {
     if (socketBtn) {
       runModalAction(() => {
         const uid = Number(socketBtn.dataset.socketUid);
-        if (socketCard(state, uid, socketBtn.dataset.socketCardId)) {
+        const cardId = socketBtn.dataset.socketCardId;
+        const isEquipped = Object.values(state.equipped).includes(uid);
+        if (isEquipped && countEquippedCardCopies(state, cardId, uid) >= MAX_EQUIPPED_CARD_COPIES) {
+          showToast(`❌ Você só pode ter ${MAX_EQUIPPED_CARD_COPIES} cartas iguais equipadas ao mesmo tempo.`);
+          return;
+        }
+        if (socketCard(state, uid, cardId)) {
           showItemDetailModal(state, uid);
           showToast('🃏 Carta encaixada!');
           fullRefresh();
@@ -407,6 +455,62 @@ function wireModalEvents() {
           showItemDetailModal(state, uid);
           showToast('🃏 Carta removida.');
           fullRefresh();
+        }
+      });
+      return;
+    }
+
+    // Destroying is a two-step confirm rendered inline in the modal (not a
+    // native window.confirm dialog: those are blocked/silently swallowed
+    // inside a sandboxed iframe, e.g. when this game runs as a Claude
+    // Artifact, which made the button look completely dead).
+    const destroyBtn = e.target.closest('[data-destroy-uid]');
+    if (destroyBtn) {
+      runModalAction(() => {
+        const uid = Number(destroyBtn.dataset.destroyUid);
+        showItemDetailModal(state, uid, false, true);
+      });
+      return;
+    }
+
+    const cancelDestroyBtn = e.target.closest('[data-cancel-destroy-uid]');
+    if (cancelDestroyBtn) {
+      runModalAction(() => {
+        const uid = Number(cancelDestroyBtn.dataset.cancelDestroyUid);
+        showItemDetailModal(state, uid, false, false);
+      });
+      return;
+    }
+
+    const confirmDestroyBtn = e.target.closest('[data-confirm-destroy-uid]');
+    if (confirmDestroyBtn) {
+      runModalAction(() => {
+        const uid = Number(confirmDestroyBtn.dataset.confirmDestroyUid);
+        const entry = state.inventory.find((i) => i.uid === uid);
+        if (!entry) return;
+        const itemName = getItem(entry.itemId).name;
+        const refund = destroyItem(state, uid);
+        if (refund) {
+          hideModal();
+          const refundStr = Object.entries(refund)
+            .map(([matId, qty]) => `+${qty} ${findMaterialInfo(matId)?.emoji ?? ''}`)
+            .join(' ');
+          showToast(`🗑️ ${itemName} destruído! ${refundStr}`);
+          fullRefresh();
+        }
+      });
+      return;
+    }
+
+    const claimCardBtn = e.target.closest('[data-claim-card]');
+    if (claimCardBtn) {
+      runModalAction(() => {
+        const cardId = claimCardBtn.dataset.claimCard;
+        if (claimCardReward(state, cardId)) {
+          showCardDetailModal(state, cardId); // keep the popup open, with fresh state
+          showToast(`🎁 +${formatNumber(CARD_DISCOVERY_CASH_REWARD)} 💎 Cash!`);
+          renderTopBar(state);
+          renderCardsTab(state);
         }
       });
       return;
@@ -506,10 +610,10 @@ function onClickEventBoss() {
     return;
   }
 
-  const stats = computePlayerStats(state);
+  const stats = computePlayerStats(state, currentHp);
   ensureEventBossSpawned(state, win.boss);
-  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, win.boss.element) + getCardDamageBonus(state, win.boss.element));
-  const killed = applyEventDamage(state, dealt);
+  const hit = resolveClickHit(state, stats, 1 + elementDamageModifier(stats.weaponElement, win.boss.element) + getCardDamageBonus(state, win.boss.element));
+  const killed = applyEventDamage(state, hit.dealt);
 
   if (killed) {
     handleEventBossVictory(win);
@@ -543,16 +647,141 @@ function tickEventBoss(stats) {
   if (!win.active || isEventClaimed(state, win.cycleIndex)) return;
   if (stats.dps <= 0 || state.eventBossHp == null) return; // not engaged yet — only a click starts it
 
-  const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, win.boss.element) + getCardDamageBonus(state, win.boss.element));
+  const crit = rollCrit(stats);
+  const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, win.boss.element) + getCardDamageBonus(state, win.boss.element)) * crit.multiplier;
   const killed = applyEventDamage(state, dealt * (TICK_MS / 1000));
   if (killed) handleEventBossVictory(win);
   renderEventsTabNow();
 }
 
+// ---------------------------------------------------------------
+// Torre Infinita — a continuous climb through 200 levels, entered from a
+// recurring window (see data/events.js) and fought the same way as normal
+// combat (click + passive DPS out, monster DPS in), but against its own
+// separate HP pool (towerHp) so it never touches the player's main-stage
+// fight. Ends on death, on the run's own 5-minute clock running out, or on
+// clearing the level 200 boss — see endTowerRun() in systems/tower.js for
+// the reward calculation.
+// ---------------------------------------------------------------
+
+function enterTower() {
+  if (!startTowerRun(state)) return;
+  towerDeadline = Date.now() + TOWER_RUN_DURATION_MS;
+  towerHp = computePlayerStats(state).maxHp;
+  showToast('🗼 Você entrou na Torre Infinita! Suba o quanto conseguir em 5 minutos.');
+  renderEventsTabNow();
+  renderTopBar(state);
+}
+
+function finishTowerRun(cleared200) {
+  const { level, currency } = endTowerRun(state, cleared200);
+  towerDeadline = null;
+  towerHp = null;
+  const msg = cleared200
+    ? `👑 Torre conquistada! Você derrotou o chefe do nível 200 e ganhou +${formatNumber(currency)} 🎫`
+    : `🗼 Torre encerrada no nível ${level}. +${formatNumber(currency)} 🎫`;
+  showToast(msg);
+  renderEventsTabNow();
+  renderTopBar(state);
+}
+
+function onClickTowerMonster() {
+  if (!state.towerRunActive) return;
+  if (Date.now() >= towerDeadline) {
+    finishTowerRun(false);
+    return;
+  }
+
+  const stats = computePlayerStats(state, towerHp);
+  ensureTowerMonsterSpawned(state);
+  const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
+  const hit = resolveClickHit(state, stats, 1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
+  const event = applyTowerDamage(state, hit.dealt);
+  pulseTowerMonster();
+
+  if (event) {
+    if (event.cleared200) {
+      finishTowerRun(true);
+    } else {
+      renderEventsTabNow();
+    }
+    return;
+  }
+  renderEventsTabNow();
+}
+
+/// Called every game tick — applies passive DPS out and monster DPS back
+/// into towerHp while a run is active, and closes out the run if its clock
+/// runs out or the player's tower HP hits 0.
+function tickTower() {
+  if (!state.towerRunActive) return;
+
+  if (Date.now() >= towerDeadline) {
+    finishTowerRun(false);
+    return;
+  }
+
+  const stats = computePlayerStats(state, towerHp);
+  towerHp = Math.min(towerHp, stats.maxHp);
+  ensureTowerMonsterSpawned(state);
+  const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
+
+  if (stats.dps > 0) {
+    const crit = rollCrit(stats);
+    const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element)) * crit.multiplier;
+    const event = applyTowerDamage(state, dealt * (TICK_MS / 1000));
+    if (event) {
+      if (event.cleared200) finishTowerRun(true);
+      else renderEventsTabNow();
+      return;
+    }
+  }
+
+  const reduction = totalIncomingReduction(stats, monster.element);
+  const incoming = monster.dps * (1 - reduction) * (TICK_MS / 1000);
+  towerHp -= incoming;
+
+  if (towerHp <= 0) {
+    finishTowerRun(false);
+    return;
+  }
+
+  renderEventsTabNow();
+}
+
+// Clamps to [TRADE_COST, however much of the currently-selected trade-in
+// material the player actually has, rounded down to a whole TRADE_COST
+// batch] — shared by the +/- steppers and the free-typed number input.
+function clampTradeQty(qty) {
+  const have = state.materials[tradeFromMaterialId] || 0;
+  const max = Math.max(TRADE_COST, Math.floor(have / TRADE_COST) * TRADE_COST);
+  if (!Number.isFinite(qty) || qty < TRADE_COST) return TRADE_COST;
+  return Math.min(max, qty);
+}
+
 function wireEventTabEvents() {
-  document.getElementById('tab-events').addEventListener('click', (e) => {
+  const container = document.getElementById('tab-events');
+
+  // pointerdown, not click, for the same reason as the main monster sprite
+  // (see setupStageControls): renderEventsTabNow() replaces #tab-events'
+  // entire innerHTML on every tick/second-refresh, and a fast clicker can
+  // easily straddle one of those re-renders between mousedown and mouseup —
+  // click would silently miss, pointerdown never does.
+  container.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
     if (e.target.closest('#event-boss-sprite')) {
       onClickEventBoss();
+      return;
+    }
+    if (e.target.closest('#tower-monster-sprite')) {
+      onClickTowerMonster();
+      return;
+    }
+  });
+
+  container.addEventListener('click', (e) => {
+    if (e.target.closest('[data-tower-enter]')) {
+      enterTower();
       return;
     }
 
@@ -565,15 +794,52 @@ function wireEventTabEvents() {
       return;
     }
 
+    const toggleTradeGroupBtn = e.target.closest('[data-toggle-trade-group]');
+    if (toggleTradeGroupBtn) {
+      const startStage = Number(toggleTradeGroupBtn.dataset.toggleTradeGroup);
+      if (expandedTradeGroups.has(startStage)) expandedTradeGroups.delete(startStage);
+      else expandedTradeGroups.add(startStage);
+      tradeFromMaterialId = null; // avoid a stale selection from a now-hidden group
+      tradeQty = TRADE_COST;
+      renderEventsTabNow();
+      return;
+    }
+
+    const unlockTradeBtn = e.target.closest('[data-unlock-trade-group]');
+    if (unlockTradeBtn) {
+      const startStage = Number(unlockTradeBtn.dataset.unlockTradeGroup);
+      const group = WEAK_MONSTER_GROUPS.find((g) => g.startStage === startStage);
+      if (group && unlockTradeGroup(state, group)) {
+        expandedTradeGroups.add(startStage);
+        showToast(`🧺 Estágio ${group.startStage}–${group.endStage} desbloqueado!`);
+        renderEventsTabNow();
+      }
+      return;
+    }
+
     const selectBtn = e.target.closest('[data-trade-select]');
     if (selectBtn) {
       tradeFromMaterialId = selectBtn.dataset.tradeSelect;
+      tradeQty = TRADE_COST;
       renderEventsTabNow();
       return;
     }
 
     if (e.target.closest('[data-trade-cancel]')) {
       tradeFromMaterialId = null;
+      tradeQty = TRADE_COST;
+      renderEventsTabNow();
+      return;
+    }
+
+    if (e.target.closest('[data-trade-qty-inc]')) {
+      tradeQty = clampTradeQty(tradeQty + TRADE_COST);
+      renderEventsTabNow();
+      return;
+    }
+
+    if (e.target.closest('[data-trade-qty-dec]')) {
+      tradeQty = clampTradeQty(tradeQty - TRADE_COST);
       renderEventsTabNow();
       return;
     }
@@ -581,18 +847,45 @@ function wireEventTabEvents() {
     const targetBtn = e.target.closest('[data-trade-target]');
     if (targetBtn && tradeFromMaterialId != null) {
       const toMaterialId = targetBtn.dataset.tradeTarget;
-      const { group } = getTradeWindow();
+      const group = WEAK_MONSTER_GROUPS.find((g) => g.monsters.some((m) => m.material.id === tradeFromMaterialId));
       const fromInfo = findMaterialInfo(tradeFromMaterialId);
       const toInfo = findMaterialInfo(toMaterialId);
-      const ok = performTrade(state, group, tradeFromMaterialId, toMaterialId);
+      const usedQty = tradeQty;
+      const receivedQty = computeTradeReceiveQty(usedQty);
+      const ok = group && performTrade(state, group, tradeFromMaterialId, toMaterialId, usedQty);
       tradeFromMaterialId = null;
+      tradeQty = TRADE_COST;
       if (ok) {
-        showToast(`🧺 Trocado! -2 ${fromInfo?.emoji ?? ''} ${fromInfo?.name ?? ''} · +1 ${toInfo?.emoji ?? ''} ${toInfo?.name ?? ''}`);
+        showToast(`🧺 Trocado! -${usedQty} ${fromInfo?.emoji ?? ''} ${fromInfo?.name ?? ''} · +${receivedQty} ${toInfo?.emoji ?? ''} ${toInfo?.name ?? ''}`);
       }
       renderEventsTabNow();
       renderEquipTab(); // Materiais may be showing, and just changed
       return;
     }
+  });
+
+  // Separate from the click handler above: typing a value fires input/change
+  // events, not click, so the free-typed quantity box needs its own listener.
+  container.addEventListener('change', (e) => {
+    const qtyInput = e.target.closest('[data-trade-qty-input]');
+    if (!qtyInput || tradeFromMaterialId == null) return;
+    const snapped = Math.round(Number(qtyInput.value) / TRADE_COST) * TRADE_COST;
+    tradeQty = clampTradeQty(snapped);
+    renderEventsTabNow();
+  });
+}
+
+// ---------------------------------------------------------------
+// Cartas tab — clicking any card tile (owned or not) opens its detail
+// popup in the shared #modal-overlay; claiming the first-discovery Cash
+// reward happens from inside that popup, so it's handled in
+// wireModalEvents() below (data-claim-card), not here.
+// ---------------------------------------------------------------
+
+function wireCardsTabEvents() {
+  document.getElementById('tab-cards').addEventListener('click', (e) => {
+    const tile = e.target.closest('[data-view-card]');
+    if (tile) showCardDetailModal(state, tile.dataset.viewCard);
   });
 }
 
@@ -704,15 +997,27 @@ function showOfflineProgressIfAny() {
   const hours = Math.floor(progress.elapsedSeconds / 3600);
   const minutes = Math.floor((progress.elapsedSeconds % 3600) / 60);
   const timeStr = hours > 0 ? `${hours}h ${minutes}min` : `${minutes}min`;
-  const materialsStr = Object.entries(progress.materialsGained)
-    .map(([id, qty]) => `+${formatNumber(qty)} de material`).length
-    ? ' e alguns materiais' : '';
+
+  const materialLines = Object.entries(progress.materialsGained).map(([id, qty]) => {
+    const info = findMaterialInfo(id);
+    const icon = iconMarkup(info?.image, info?.emoji ?? '', info?.name ?? id);
+    return `+${formatNumber(qty)} <span class="icon">${icon}</span> ${info?.name ?? id}`;
+  });
+  const cardLines = Object.entries(progress.cardsGained).map(([id, qty]) => {
+    const card = getCard(id);
+    const icon = iconMarkup(card?.image, card?.emoji ?? '🃏', card?.name ?? id);
+    return `+${formatNumber(qty)} <span class="icon">${icon}</span> ${card?.name ?? id}`;
+  });
+  const itemsHtml = [...materialLines, ...cardLines].length
+    ? `<p class="offline-item-lines">${[...materialLines, ...cardLines].join('<br>')}</p>`
+    : '';
 
   showModal('Bem-vindo de volta!', `
-    <p>Você ficou fora por <strong>${timeStr}</strong>.</p>
-    <p>Seu personagem continuou lutando no estágio ${state.stage} e conseguiu:</p>
+    <p>Você ficou fora por <strong>${timeStr}</strong> (máximo 8h de recompensa offline).</p>
+    <p>Seu personagem continuou lutando sozinho, a 60% de eficiência, e conseguiu:</p>
     <p>💀 ${formatNumber(progress.kills)} monstros derrotados<br>
-       💰 +${formatNumber(progress.goldGained)} ouro${materialsStr}</p>
+       💰 +${formatNumber(progress.goldGained)} ouro</p>
+    ${itemsHtml}
   `);
 }
 
@@ -726,10 +1031,16 @@ function init() {
   setupStageControls();
   wireModalEvents(); // one-time delegated listener, see wireModalEvents()
   wireEquipmentTabEvents();
+  wireCardsTabEvents();
   wireEventTabEvents();
   wireAchievementsTabEvents();
   wireShopTabEvents();
   resetPlayerHp();
+  if (state.towerRunActive) {
+    towerDeadline = Date.now() + TOWER_RUN_DURATION_MS;
+    towerHp = computePlayerStats(state).maxHp;
+    ensureTowerMonsterSpawned(state);
+  }
   fullRefresh();
   armBossTimer();
 
@@ -762,6 +1073,10 @@ function init() {
     setCurrentHp: (v) => { currentHp = v; renderPlayerHp(currentHp, computePlayerStats(state).maxHp); },
     getEventDeadline: () => eventDeadline,
     forceEventTimeout: () => { if (eventDeadline != null) eventDeadline = Date.now() - 1; },
+    getTowerDeadline: () => towerDeadline,
+    getTowerHp: () => towerHp,
+    setTowerHp: (v) => { towerHp = v; renderEventsTabNow(); },
+    forceTowerTimeout: () => { if (towerDeadline != null) towerDeadline = Date.now() - 1; },
   };
 }
 

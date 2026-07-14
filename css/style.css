@@ -326,6 +326,40 @@ button:disabled {
   overflow: visible;
 }
 
+#loot-popup {
+  position: absolute;
+  right: 12px;
+  bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.loot-popup-entry {
+  background: rgba(74, 47, 20, .72);
+  color: #fff8dc;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .2);
+  animation: loot-popup-in 0.15s ease-out, loot-popup-out 0.3s ease-in 2.2s forwards;
+}
+
+@keyframes loot-popup-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loot-popup-out {
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
 #boss-timer {
   margin-top: 12px;
   padding: 7px 14px;
@@ -366,6 +400,32 @@ button:disabled {
 @keyframes float-up {
   0% { opacity: 1; transform: translate(-50%, 0) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -50px) scale(1.15); }
+}
+
+.damage-popup.crit {
+  font-size: 25px;
+  color: #ffd23f;
+  text-shadow: -1px -1px 0 #9c1c0e, 1px -1px 0 #9c1c0e, -1px 1px 0 #9c1c0e, 1px 1px 0 #9c1c0e, 0 4px 8px rgba(0, 0, 0, .35);
+  animation: float-up-crit 0.75s ease-out forwards;
+}
+
+@keyframes float-up-crit {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(1.1); }
+  30% { transform: translate(-50%, -12px) scale(1.35); }
+  100% { opacity: 0; transform: translate(-50%, -55px) scale(1.2); }
+}
+
+.damage-popup.burst {
+  font-size: 30px;
+  color: #ff6bd6;
+  text-shadow: -1px -1px 0 #4a0e42, 1px -1px 0 #4a0e42, -1px 1px 0 #4a0e42, 1px 1px 0 #4a0e42, 0 4px 10px rgba(0, 0, 0, .4);
+  animation: float-up-burst 0.9s ease-out forwards;
+}
+
+@keyframes float-up-burst {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(1.2); }
+  25% { transform: translate(-50%, -16px) scale(1.55); }
+  100% { opacity: 0; transform: translate(-50%, -60px) scale(1.3); }
 }
 
 #dps-readout {
@@ -571,63 +631,30 @@ button:disabled {
   gap: 16px;
 }
 
-.equip-ring {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
+/* Cross layout, armor (peitoral) at the center: helmet above, weapon to
+   its left, gloves to its right, pants below, boots below that. Placement
+   is keyed off data-equip-slot so it doesn't depend on render order. */
+.equip-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 12px;
+  max-width: 280px;
+  margin: 0 auto;
 }
 
-.equip-side {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.equip-character {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 130px;
-  height: 196px;
-  border-radius: 20px;
-  background: radial-gradient(ellipse at center, rgba(255, 205, 92, .28), rgba(255, 255, 255, .12) 60%, transparent 75%);
-  border: 3px solid var(--border);
-  box-shadow: inset 0 2px 8px rgba(255, 255, 255, .4), var(--shadow-card);
-}
-
-.equip-character svg {
-  display: block;
-}
-
-.character-visual {
-  position: relative;
-  width: 110px;
-  height: 184px;
-}
-
-.character-visual svg {
-  position: absolute;
-  inset: 0;
-}
-
-/* Real-art gear overlays on the paper doll: anchored by center-point
-   (left/top set inline per slot in GEAR_OVERLAY_ANCHORS), sized as a
-   percentage of the doll box so they scale together with it. */
-.gear-overlay {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  height: auto;
-  object-fit: contain;
-  pointer-events: none;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
-}
+.equip-slot-icon[data-equip-slot="helmet"] { grid-column: 2; grid-row: 1; }
+.equip-slot-icon[data-equip-slot="weapon"] { grid-column: 1; grid-row: 2; }
+.equip-slot-icon[data-equip-slot="armor"] { grid-column: 2; grid-row: 2; }
+.equip-slot-icon[data-equip-slot="gloves"] { grid-column: 3; grid-row: 2; }
+.equip-slot-icon[data-equip-slot="pants"] { grid-column: 2; grid-row: 3; }
+.equip-slot-icon[data-equip-slot="boots"] { grid-column: 2; grid-row: 4; }
 
 .equip-slot-icon {
   position: relative;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: 18px;
   background: var(--grad-neutral);
   border: 3px solid var(--border);
   box-shadow: var(--shadow-card);
@@ -638,7 +665,7 @@ button:disabled {
 }
 
 .equip-slot-icon .icon {
-  font-size: 30px;
+  font-size: 34px;
   filter: drop-shadow(0 2px 2px rgba(74, 47, 20, .25));
 }
 
@@ -747,6 +774,25 @@ button:disabled {
   color: #4a2e00;
   box-shadow: 0 3px 0 var(--gold-dark), 0 5px 10px rgba(74, 47, 20, .2);
   border-radius: 14px;
+}
+
+.modal-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modal-action-row .modal-action-btn {
+  width: auto;
+  flex: 1;
+  min-width: 110px;
+}
+
+.modal-action-btn.destroy-btn {
+  background: var(--grad-red);
+  color: #fff;
+  box-shadow: 0 3px 0 var(--red-dark), 0 5px 10px rgba(74, 47, 20, .2);
+  font-size: 11.5px;
 }
 
 .card-slot-badge {
@@ -1222,6 +1268,47 @@ button:disabled {
   font-size: 10.5px;
 }
 
+.trade-qty-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.trade-qty-btn {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  border-radius: 8px;
+}
+
+.trade-qty-input {
+  width: 52px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 2px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  -moz-appearance: textfield;
+}
+
+.trade-qty-preview {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.trade-qty-preview strong {
+  color: var(--text);
+}
+
 .event-panel {
   background: var(--grad-neutral);
   border: 2px solid var(--border);
@@ -1272,6 +1359,19 @@ button:disabled {
   padding: 5px 12px;
   margin-bottom: 10px;
   box-shadow: 0 2px 0 var(--event-dark);
+}
+
+.set-bonus-banner {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #4a2f16;
+  background: linear-gradient(180deg, #ffe9a8, #ffd873);
+  border: 1px solid #e0b84a;
+  border-radius: 10px;
+  padding: 7px 11px;
+  margin-bottom: 10px;
+  text-align: center;
+  line-height: 1.5;
 }
 
 .event-panel h3 {
@@ -1508,6 +1608,120 @@ button:disabled {
   background: var(--grad-neutral);
   color: var(--text-dim);
   box-shadow: none;
+}
+
+/* ---------------- Cartas tab ---------------- */
+
+.cards-section-title {
+  font-size: 14px;
+  font-weight: 800;
+  margin: 4px 0 10px;
+}
+
+.cards-section-title:not(:first-child) {
+  margin-top: 20px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+}
+
+.card-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--purple);
+  border-radius: 14px;
+  padding: 10px 6px;
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.card-tile .icon {
+  font-size: 34px;
+}
+
+.card-tile .name {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.card-tile.undiscovered {
+  border-color: var(--border);
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+
+.card-tile-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 16px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35));
+}
+
+.card-detail {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  text-align: left;
+}
+
+.card-detail-image {
+  flex: 0 0 auto;
+  width: 96px;
+  font-size: 96px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 4px rgba(74, 47, 20, .25));
+}
+
+.card-detail-image img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.card-detail.undiscovered .card-detail-image {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+}
+
+.card-detail-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-detail-name {
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.card-detail-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.card-detail-owned {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--green-dark);
+  margin-bottom: 8px;
+}
+
+.card-detail-status {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  font-weight: 600;
 }
 
 .shop-item-grid {

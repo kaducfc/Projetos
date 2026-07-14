@@ -1,4 +1,4 @@
-import { BOSSES, WEAK_MONSTER_GROUPS } from './monsters.js';
+import { BOSSES } from './monsters.js';
 
 // A boss rotates in as the "event boss" every EVENT_CYCLE_MS, and is only
 // challengeable during the first EVENT_ACTIVE_MS of that cycle (then it's
@@ -39,23 +39,67 @@ export function getEventWindow(now = Date.now()) {
 }
 
 // ---------------------------------------------------------------------
-// "Mercador" — every TRADE_CYCLE_MS, rotates which WEAK_MONSTER_GROUPS band
-// (see data/monsters.js — 5 elemental materials per band) is tradeable.
-// Always-on (no separate active/cooldown split like the boss event above):
-// the only thing that changes over time is *which* band is up, derived
-// purely from wall-clock time same as everything else here.
+// "Mercador" — every WEAK_MONSTER_GROUPS band (see data/monsters.js — 5
+// elemental materials per band) is always visible, but starts locked. A new
+// event starts every TRADE_CYCLE_MS (like the boss event above, always-on,
+// derived purely from wall-clock time) and re-locks every band — the
+// player spends Moeda de Evento to unlock whichever band(s) they want for
+// *this* event, same as before. Cost is intentionally low (see
+// TRADE_UNLOCK_BASE_COST) since it only buys access until the next cycle,
+// not forever; it still climbs with the band's stage.
 // ---------------------------------------------------------------------
-export const TRADE_CYCLE_MS = 30 * 60 * 1000;
 export const TRADE_COST = 2;
 export const TRADE_YIELD = 1;
 
-export function getTradeWindow(now = Date.now()) {
+export const TRADE_CYCLE_MS = 30 * 60 * 1000;
+export const TRADE_UNLOCK_BASE_COST = 5;
+export const TRADE_UNLOCK_COST_PER_STAGE = 0.4;
+
+export function getTradeUnlockCost(group) {
+  return Math.round(TRADE_UNLOCK_BASE_COST + group.startStage * TRADE_UNLOCK_COST_PER_STAGE);
+}
+
+export function getTradeCycleInfo(now = Date.now()) {
   const cycleIndex = Math.floor(now / TRADE_CYCLE_MS);
   const cycleStart = cycleIndex * TRADE_CYCLE_MS;
-  const group = WEAK_MONSTER_GROUPS[cycleIndex % WEAK_MONSTER_GROUPS.length];
+  return { cycleIndex, msUntilNextCycle: cycleStart + TRADE_CYCLE_MS - now };
+}
+
+// ---------------------------------------------------------------------
+// "Torre Infinita" — every TOWER_CYCLE_MS a fresh window opens, staying
+// open (i.e. clickable "Entrar") for TOWER_ACTIVE_MS. Missing that window
+// means waiting for the next one (see canEnterTower in systems/tower.js,
+// which also blocks a second entry once the player has already used this
+// cycle's window). Once entered, the run itself is a separate, shorter
+// clock (TOWER_RUN_DURATION_MS) that starts ticking from the moment of
+// entry, independent of how much of the entry window is left.
+// ---------------------------------------------------------------------
+export const TOWER_CYCLE_MS = 2 * 60 * 60 * 1000;
+export const TOWER_ACTIVE_MS = 15 * 60 * 1000;
+export const TOWER_RUN_DURATION_MS = 5 * 60 * 1000;
+
+// Level 20/40/.../200 is a boss, matching real stage 10/20/.../100 (i.e.
+// every 2 tower levels = 1 real stage) — see towerPowerStage() in
+// systems/tower.js for the full level->stage mapping, including how it
+// sidesteps the boss-detection hazards that a naive stage lookup would hit.
+export const TOWER_MAX_LEVEL = 200;
+
+// Reward is a flat amount plus a per-level scale of how far the player got,
+// with a completion bonus for actually clearing the level 200 boss instead
+// of just reaching it.
+export const TOWER_CURRENCY_BASE = 5;
+export const TOWER_CURRENCY_PER_LEVEL = 0.8;
+export const TOWER_CLEAR_BONUS = 100;
+
+export function getTowerWindow(now = Date.now()) {
+  const cycleIndex = Math.floor(now / TOWER_CYCLE_MS);
+  const cycleStart = cycleIndex * TOWER_CYCLE_MS;
+  const elapsed = now - cycleStart;
+  const active = elapsed < TOWER_ACTIVE_MS;
   return {
     cycleIndex,
-    group,
-    msUntilNextRotation: cycleStart + TRADE_CYCLE_MS - now,
+    active,
+    remainingActiveMs: active ? TOWER_ACTIVE_MS - elapsed : 0,
+    msUntilNextWindow: cycleStart + TOWER_CYCLE_MS - now,
   };
 }
