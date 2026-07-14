@@ -415,6 +415,19 @@ button:disabled {
   100% { opacity: 0; transform: translate(-50%, -55px) scale(1.2); }
 }
 
+.damage-popup.burst {
+  font-size: 30px;
+  color: #ff6bd6;
+  text-shadow: -1px -1px 0 #4a0e42, 1px -1px 0 #4a0e42, -1px 1px 0 #4a0e42, 1px 1px 0 #4a0e42, 0 4px 10px rgba(0, 0, 0, .4);
+  animation: float-up-burst 0.9s ease-out forwards;
+}
+
+@keyframes float-up-burst {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(1.2); }
+  25% { transform: translate(-50%, -16px) scale(1.55); }
+  100% { opacity: 0; transform: translate(-50%, -60px) scale(1.3); }
+}
+
 #dps-readout {
   display: flex;
   justify-content: space-around;

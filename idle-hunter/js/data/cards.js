@@ -34,54 +34,99 @@ const CARD_IMAGES = {
   bahamorth: 'assets/cards/bahamorth.png',
 };
 
-// PLACEHOLDER bonuses, one per boss, just so each boss card actually feels
-// different while the real roster of effects gets designed one by one —
-// stat/value pairs picked arbitrarily (not runtime RNG, so they're stable
-// across sessions), same stat keys computePlayerStats() already knows about
-// (see systems/stats.js). Expect these to be replaced wholesale.
-const CARD_BONUSES = {
-  chispim: { stat: 'dpsPercent', value: 2 },
-  solkaiser: { stat: 'clickPercent', value: 2 },
-  tartarok: { stat: 'hpFlat', value: 50 },
-  colhedor_carmesim: { stat: 'dropPercent', value: 2 },
-  grommuk: { stat: 'armorFlat', value: 10 },
-  vulkarion: { stat: 'clickFlat', value: 5 },
-  leviargon: { stat: 'goldPercent', value: 3 },
-  tempestron: { stat: 'dpsFlat', value: 5 },
-  gaiatron: { stat: 'hpFlat', value: 50 },
-  bahamorth: { stat: 'clickPercent', value: 3 },
+// One boss card's full effect = a list of simple, always-on stat bonuses
+// (`bonuses` — same generic stat keys computePlayerStats() already knows,
+// see systems/stats.js) plus at most one `special` — a named, hand-coded
+// mechanic (conditional bonus, proc, click-counter burst) that stats.js/
+// combat.js/main.js implement individually by special.id, since none of
+// these fit the generic stat-sum model. `text` is the exact effect
+// description shown in the Cartas tab (kept as authored, not
+// auto-generated, since the mechanics are too varied for one template).
+// Socketing more than one copy of the same card (up to
+// MAX_EQUIPPED_CARD_COPIES, see systems/crafting.js) stacks `bonuses`
+// additively (ordinary addStat loop) and scales `special`'s magnitude by
+// however many copies are equipped — see systems/stats.js.
+const CARD_EFFECTS = {
+  chispim: {
+    text: '+8% DPS. Todo ouro coletado possui 20% de chance de ser dobrado.',
+    bonuses: [{ stat: 'dpsPercent', value: 8 }],
+    special: { id: 'gold_double_chance', chance: 20 },
+  },
+  solkaiser: {
+    text: 'A cada 50 cliques, o próximo clique causa 600% do dano de clique e sempre é crítico.',
+    bonuses: [],
+    special: { id: 'click_counter_burst', everyN: 50, damageMult: 6 },
+  },
+  tartarok: {
+    text: 'Aumenta 20% da vida, 20% da armadura, +20% ouro.',
+    bonuses: [
+      { stat: 'hpPercent', value: 20 },
+      { stat: 'armorPercent', value: 20 },
+      { stat: 'goldPercent', value: 20 },
+    ],
+  },
+  colhedor_carmesim: {
+    text: 'Enquanto estiver com HP acima de 80%: +45% DPS.',
+    bonuses: [],
+    special: { id: 'hp_threshold_dps', threshold: 80, dpsPercent: 45 },
+  },
+  grommuk: {
+    text: 'Enquanto todos os equipamentos forem do mesmo elemento: +30% DPS e Dano de Clique.',
+    bonuses: [],
+    special: { id: 'same_element_set', dpsPercent: 30, clickPercent: 30 },
+  },
+  vulkarion: {
+    text: 'Quanto menor sua vida, maior seu DPS. Bônus máximo: +60%.',
+    bonuses: [],
+    special: { id: 'low_hp_dps_scale', maxBonusPercent: 60 },
+  },
+  leviargon: {
+    text: 'Chance de crítico +15%, dano crítico +50%.',
+    bonuses: [
+      { stat: 'critChancePercent', value: 15 },
+      { stat: 'critDamagePercent', value: 50 },
+    ],
+  },
+  tempestron: {
+    text: '+35% Ouro, +35% Materiais, +15% DPS.',
+    bonuses: [
+      { stat: 'goldPercent', value: 35 },
+      { stat: 'dropPercent', value: 35 },
+      { stat: 'dpsPercent', value: 15 },
+    ],
+  },
+  gaiatron: {
+    text: 'Dano de Clique +10%. Ao derrotar um Boss: 10% de chance de derrotá-lo novamente instantaneamente, recebendo todas as recompensas outra vez.',
+    bonuses: [{ stat: 'clickPercent', value: 10 }],
+    special: { id: 'boss_kill_reproc', chance: 10 },
+  },
+  bahamorth: {
+    text: 'Todos os atributos aumentam em 15% (DPS, Clique, Ouro, Drop, Crítico, Vida, Armadura).',
+    bonuses: [
+      { stat: 'dpsPercent', value: 15 },
+      { stat: 'clickPercent', value: 15 },
+      { stat: 'goldPercent', value: 15 },
+      { stat: 'dropPercent', value: 15 },
+      { stat: 'critChancePercent', value: 15 },
+      { stat: 'critDamagePercent', value: 15 },
+      { stat: 'hpPercent', value: 15 },
+      { stat: 'armorPercent', value: 15 },
+    ],
+  },
 };
 
-function formatBonus(bonus) {
-  if (!bonus) return '';
-  const { stat, value } = bonus;
-  switch (stat) {
-    case 'clickFlat': return `+${value} de Dano de Clique`;
-    case 'dpsFlat': return `+${value} de DPS`;
-    case 'clickPercent': return `+${value}% de Dano de Clique`;
-    case 'dpsPercent': return `+${value}% de DPS`;
-    case 'goldPercent': return `+${value}% de Ouro`;
-    case 'dropPercent': return `+${value}% de Chance de Drop`;
-    case 'hpFlat': return `+${value} de Vida Máxima`;
-    case 'armorFlat': return `+${value} de Armadura`;
-    default: return '';
-  }
-}
-
-function cardDescription(name, elementId, bonus) {
+function cardDescription(name, elementId, effect) {
   const element = getElement(elementId);
   const elementLine = element.id === 'neutro'
     ? ''
     : ` +${Math.round(CARD_DAMAGE_BONUS * 100)}% de dano contra inimigos do elemento ${element.name}.`;
-  const bonusLine = bonus
-    ? ` ${formatBonus(bonus)} (provisório, será rebalanceado).`
-    : ' Efeito adicional ainda não definido.';
-  return `Poder selado de ${name}.${elementLine}${bonusLine}`;
+  const effectLine = effect ? ` ${effect.text}` : ' Efeito adicional ainda não definido.';
+  return `Poder selado de ${name}.${elementLine}${effectLine}`;
 }
 
 export const CARDS = [
   ...BOSSES.map((boss) => {
-    const bonus = CARD_BONUSES[boss.id] || null;
+    const effect = CARD_EFFECTS[boss.id] || null;
     return {
       id: `${boss.id}_card`,
       monsterId: boss.id,
@@ -90,8 +135,9 @@ export const CARDS = [
       emoji: '🃏',
       image: CARD_IMAGES[boss.id] || null,
       element: boss.element,
-      bonus,
-      description: cardDescription(boss.name, boss.element, bonus),
+      bonuses: effect ? effect.bonuses : [],
+      special: effect ? effect.special || null : null,
+      description: cardDescription(boss.name, boss.element, effect),
     };
   }),
   ...WEAK_MONSTER_GROUPS.flatMap((group) => group.monsters).map((monster) => ({
@@ -102,7 +148,8 @@ export const CARDS = [
     emoji: '🃏',
     image: null,
     element: monster.element,
-    bonus: null,
+    bonuses: [],
+    special: null,
     description: cardDescription(monster.name, monster.element, null),
   })),
 ];

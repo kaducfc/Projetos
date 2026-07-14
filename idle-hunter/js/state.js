@@ -24,6 +24,11 @@ export function createDefaultState() {
     totalKills: 0,
     lastSaveTime: Date.now(),
 
+    // Solkaiser card's "every 50 clicks" burst counter — see
+    // resolveClickHit() in systems/combat.js. Persisted so the countdown
+    // survives a reload instead of quietly resetting.
+    solkaiserClickCounter: 0,
+
     // Premium currency: earned via achievements or the (simulated) ad-watch
     // reward for now; a real-money purchase flow is a future integration.
     cash: 0,

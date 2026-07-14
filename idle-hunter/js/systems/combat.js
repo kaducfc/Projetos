@@ -65,6 +65,26 @@ export function rollCrit(stats) {
   return { isCrit, multiplier: isCrit ? 1 + (stats.critDamage || 0) / 100 : 1 };
 }
 
+/// Shared by every deliberate click (main monster, event boss, Torre
+/// Infinita) — not DPS ticks, since the Solkaiser card's burst is
+/// specifically "o próximo CLIQUE". elementalMultiplier is the caller's
+/// precomputed `1 + elementDamageModifier(...) + getCardDamageBonus(...)`.
+/// state.solkaiserClickCounter is persisted (state.js) so the countdown
+/// survives a reload; only advances/resets when the card is actually
+/// socketed (stats.clickBurstEveryN is null otherwise, see stats.js).
+export function resolveClickHit(state, stats, elementalMultiplier) {
+  if (stats.clickBurstEveryN) {
+    state.solkaiserClickCounter = (state.solkaiserClickCounter || 0) + 1;
+    if (state.solkaiserClickCounter > stats.clickBurstEveryN) {
+      state.solkaiserClickCounter = 0;
+      const dealt = stats.clickDamage * elementalMultiplier * stats.clickBurstDamageMult;
+      return { dealt, isCrit: true, isBurst: true };
+    }
+  }
+  const crit = rollCrit(stats);
+  return { dealt: stats.clickDamage * elementalMultiplier * crit.multiplier, isCrit: crit.isCrit, isBurst: false };
+}
+
 export function armorReduction(armor) {
   return armor / (armor + ARMOR_CONSTANT);
 }
@@ -137,9 +157,31 @@ export function applyDamage(state, amount, stats) {
   if (state.monsterHp > 0) return null;
 
   const stage = state.stage;
-  const goldGained = Math.round(monsterGoldReward(stage) * stats.goldMult);
-  const drops = rollDrops(stage, stats.dropMult, state.weakMonsterId);
   const wasBoss = isBossStage(stage);
+
+  // Rolls one kill's worth of gold (Chispim card: independent chance to
+  // double it) + drops — factored out so the Gaiatron reproc below can
+  // reuse it for "all the same rewards, a second time" without duplicating
+  // the roll logic.
+  const rollReward = () => {
+    let gold = Math.round(monsterGoldReward(stage) * stats.goldMult);
+    if (Math.random() * 100 < (stats.goldDoubleChance || 0)) gold *= 2;
+    return { gold, drops: rollDrops(stage, stats.dropMult, state.weakMonsterId) };
+  };
+
+  let goldGained = 0;
+  let drops = [];
+  let reprocced = false;
+  const first = rollReward();
+  goldGained += first.gold;
+  drops = drops.concat(first.drops);
+
+  if (wasBoss && Math.random() * 100 < (stats.bossReprocChance || 0)) {
+    reprocced = true;
+    const second = rollReward();
+    goldGained += second.gold;
+    drops = drops.concat(second.drops);
+  }
 
   state.gold += goldGained;
   for (const drop of drops) {
@@ -157,7 +199,7 @@ export function applyDamage(state, amount, stats) {
   state.monsterHp = null;
   ensureMonsterSpawned(state);
 
-  return { stage, goldGained, drops, wasBoss, advanced, newStage: state.stage };
+  return { stage, goldGained, drops, wasBoss, advanced, newStage: state.stage, reprocced };
 }
 
 export function setViewedStage(state, stage) {

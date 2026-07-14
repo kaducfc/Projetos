@@ -1,6 +1,6 @@
 import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
 import { computePlayerStats, getElementalResistance, getCardDamageBonus } from './systems/stats.js';
-import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, armorReduction, rollCrit } from './systems/combat.js';
+import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, armorReduction, rollCrit, resolveClickHit } from './systems/combat.js';
 import { isBossStage, findMaterialInfo, WEAK_MONSTER_GROUPS } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
@@ -135,7 +135,7 @@ function retreat(reason) {
 
 function refreshAll() {
   const monster = getCurrentMonster(state.stage, state.weakMonsterId);
-  const stats = computePlayerStats(state);
+  const stats = computePlayerStats(state, currentHp);
   currentHp = Math.min(currentHp, stats.maxHp);
   renderAll(state, monster, stats);
   renderPlayerHp(currentHp, stats.maxHp);
@@ -161,7 +161,7 @@ function fullRefresh() {
 
 function refreshCombatOnly() {
   const monster = getCurrentMonster(state.stage, state.weakMonsterId);
-  const stats = computePlayerStats(state);
+  const stats = computePlayerStats(state, currentHp);
   currentHp = Math.min(currentHp, stats.maxHp);
   renderCombatStats(stats, monster);
   renderMonster(state, monster);
@@ -172,6 +172,7 @@ function refreshCombatOnly() {
 function handleKillEvent(event) {
   if (!event) return;
   showLootPopup(event.goldGained, event.drops);
+  if (event.reprocced) showToast('🔁 Gaiatron: o chefe caiu de novo instantaneamente! Recompensas dobradas.');
   renderTopBar(state);
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
@@ -198,12 +199,11 @@ function onClickMonster() {
     retreat('timeout');
     return;
   }
-  const stats = computePlayerStats(state);
+  const stats = computePlayerStats(state, currentHp);
   const monster = getCurrentMonster(state.stage, state.weakMonsterId);
-  const crit = rollCrit(stats);
-  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element)) * crit.multiplier;
-  const event = applyDamage(state, dealt, stats);
-  spawnDamagePopup(dealt, crit.isCrit);
+  const hit = resolveClickHit(state, stats, 1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
+  const event = applyDamage(state, hit.dealt, stats);
+  spawnDamagePopup(hit.dealt, hit.isCrit, hit.isBurst);
   pulseMonster();
   if (event) {
     refreshCombatOnly();
@@ -221,7 +221,7 @@ function tick() {
     return;
   }
 
-  const stats = computePlayerStats(state);
+  const stats = computePlayerStats(state, currentHp);
   currentHp = Math.min(currentHp, stats.maxHp);
   const monster = getCurrentMonster(state.stage, state.weakMonsterId);
 
@@ -610,11 +610,10 @@ function onClickEventBoss() {
     return;
   }
 
-  const stats = computePlayerStats(state);
+  const stats = computePlayerStats(state, currentHp);
   ensureEventBossSpawned(state, win.boss);
-  const crit = rollCrit(stats);
-  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, win.boss.element) + getCardDamageBonus(state, win.boss.element)) * crit.multiplier;
-  const killed = applyEventDamage(state, dealt);
+  const hit = resolveClickHit(state, stats, 1 + elementDamageModifier(stats.weaponElement, win.boss.element) + getCardDamageBonus(state, win.boss.element));
+  const killed = applyEventDamage(state, hit.dealt);
 
   if (killed) {
     handleEventBossVictory(win);
@@ -693,12 +692,11 @@ function onClickTowerMonster() {
     return;
   }
 
-  const stats = computePlayerStats(state);
+  const stats = computePlayerStats(state, towerHp);
   ensureTowerMonsterSpawned(state);
   const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
-  const crit = rollCrit(stats);
-  const dealt = stats.clickDamage * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element)) * crit.multiplier;
-  const event = applyTowerDamage(state, dealt);
+  const hit = resolveClickHit(state, stats, 1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
+  const event = applyTowerDamage(state, hit.dealt);
   pulseTowerMonster();
 
   if (event) {
@@ -723,7 +721,7 @@ function tickTower() {
     return;
   }
 
-  const stats = computePlayerStats(state);
+  const stats = computePlayerStats(state, towerHp);
   towerHp = Math.min(towerHp, stats.maxHp);
   ensureTowerMonsterSpawned(state);
   const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);

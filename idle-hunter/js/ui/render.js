@@ -925,11 +925,11 @@ export function renderAll(state, monster, stats) {
   renderUpgradesTab(state);
 }
 
-export function spawnDamagePopup(amount, isCrit = false) {
+export function spawnDamagePopup(amount, isCrit = false, isBurst = false) {
   const container = document.getElementById('damage-popups');
   const el = document.createElement('div');
-  el.className = isCrit ? 'damage-popup crit' : 'damage-popup';
-  el.textContent = isCrit ? `-${formatNumber(amount)} CRÍTICO!` : `-${formatNumber(amount)}`;
+  el.className = isBurst ? 'damage-popup burst' : isCrit ? 'damage-popup crit' : 'damage-popup';
+  el.textContent = isBurst ? `-${formatNumber(amount)} CLIQUE DEVASTADOR!` : isCrit ? `-${formatNumber(amount)} CRÍTICO!` : `-${formatNumber(amount)}`;
   // Wide, randomized spread on both axes — a fast clicker spawns several of
   // these within the same 750ms window, and a narrow fixed spot made them
   // pile up unreadably on top of each other (looking like clicks got
