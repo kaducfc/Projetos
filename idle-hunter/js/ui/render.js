@@ -1,7 +1,7 @@
 import { isBossStage, BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo } from '../data/monsters.js';
 import { getSlot, getItemsForBoss, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
 import { UPGRADES } from '../data/upgrades.js';
-import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
+import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE, ELEMENTS } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
@@ -39,6 +39,15 @@ function itemRarityLetter(tier) {
 function rarityBadgeHtml(tier) {
   const letter = itemRarityLetter(tier);
   return `<span class="rarity-badge rarity-${letter.toLowerCase()}">${letter}</span>`;
+}
+
+/// Inline style (not a class) so it wins over the more-specific `.filled`/
+/// `.equipped` border-color rules without fighting CSS specificity —
+/// colors the card's own border to match its rarity badge, same as the
+/// reference mockups (purple for A, gold for S, etc).
+function rarityBorderStyle(tier) {
+  const letter = itemRarityLetter(tier).toLowerCase();
+  return `style="border-color: var(--rarity-${letter})"`;
 }
 
 function elementBadgeHtml(elementId) {
@@ -147,34 +156,39 @@ export function renderBossTimer(remainingMs) {
 // avatar) — order is purely cosmetic.
 const ALL_SLOT_IDS = ['helmet', 'armor', 'weapon', 'pants', 'gloves', 'boots'];
 
-// The Equipment tab now also houses Forja and Materiais as sub-tabs (they
-// used to be top-level tabs) — one less thing competing for space in the
-// tab-nav, and thematically all three are "stuff about your gear" anyway.
-// `activeSubTab` is owned by main.js (transient UI state, not part of the
-// save), same pattern as Shop's Cash/Event split. All interactive elements
-// here (subtab buttons, equip slots/inventory tiles, craft buttons) are
-// handled by ONE delegated listener on #tab-equipment wired once in
-// main.js's init() — see wireEquipmentTabEvents() — since this tab
-// re-renders very often (every kill) and per-render re-wiring is exactly
-// the bug class that bit this project twice before.
-const EQUIP_SUBTABS = [
-  { id: 'equip', label: '🎽 Equipar' },
-  { id: 'forge', label: '🔨 Forjar' },
+// Inventário (paper-doll + owned items) and Forja (craft recipes +
+// Materiais) are separate bottom-nav tabs — previously sub-tabs of one
+// combined "Equipamento" tab, split apart per the mockups' bottom-nav
+// layout (Inventário, Forja, Caçada, Aprimoramento, Cartas, Loja).
+// Interactive elements in each are handled by their own delegated listener
+// wired once in main.js's init() (wireInventoryTabEvents()/
+// wireForgeTabEvents()), since these tabs re-render often (every kill) and
+// per-render re-wiring is exactly the bug class that bit this project
+// twice before.
+export function renderInventoryTab(state, filterElement = null) {
+  const container = document.getElementById('tab-inventory');
+  container.innerHTML = `<div class="section-banner">Inventário</div>` + equipRingContentHtml(state, filterElement);
+}
+
+function elementFilterRowHtml(filterElement) {
+  const chips = [{ id: null, emoji: '📦', name: 'Todos' }, ...ELEMENTS];
+  return `<div class="element-filter-row">${chips.map((el) => `
+    <button class="element-filter-btn ${filterElement === el.id ? 'active' : ''} ${el.id ? `element-${el.id}` : ''}" data-filter-element="${el.id ?? ''}" title="${el.name}">${el.emoji}</button>
+  `).join('')}</div>`;
+}
+
+const FORGE_SUBTABS = [
+  { id: 'recipes', label: '🔨 Receitas' },
   { id: 'materials', label: '🎒 Materiais' },
 ];
 
-export function renderEquipmentTab(state, activeSubTab = 'equip', expandedForgeBosses = new Set()) {
-  const container = document.getElementById('tab-equipment');
-  const banner = `<div class="section-banner">Equipamentos</div>`;
-  const subnav = `<div class="inner-subnav">${EQUIP_SUBTABS.map((t) => `
-    <button class="inner-subtab-btn ${activeSubTab === t.id ? 'active' : ''}" data-equip-subtab="${t.id}">${t.label}</button>
+export function renderForgeTab(state, activeForgeSubTab = 'recipes', expandedForgeBosses = new Set()) {
+  const container = document.getElementById('tab-forge');
+  const banner = `<div class="section-banner">Forja</div>`;
+  const subnav = `<div class="inner-subnav">${FORGE_SUBTABS.map((t) => `
+    <button class="inner-subtab-btn ${activeForgeSubTab === t.id ? 'active' : ''}" data-forge-subtab="${t.id}">${t.label}</button>
   `).join('')}</div>`;
-
-  let body;
-  if (activeSubTab === 'forge') body = forgeContentHtml(state, expandedForgeBosses);
-  else if (activeSubTab === 'materials') body = materialsContentHtml(state);
-  else body = equipRingContentHtml(state);
-
+  const body = activeForgeSubTab === 'materials' ? materialsContentHtml(state) : forgeContentHtml(state, expandedForgeBosses);
   container.innerHTML = banner + subnav + body;
 }
 
@@ -213,10 +227,15 @@ function equipStatsBoxHtml(state) {
   `;
 }
 
-function equipRingContentHtml(state) {
-  const inventoryHtml = state.inventory.length
-    ? state.inventory.map((entry) => inventoryTileHtml(state, entry)).join('')
-    : `<p class="empty-slot">Nada craftado ainda. Vá até a aba Forjar.</p>`;
+function equipRingContentHtml(state, filterElement = null) {
+  const filtered = filterElement
+    ? state.inventory.filter((entry) => getItem(entry.itemId)?.element === filterElement)
+    : state.inventory;
+  const inventoryHtml = filtered.length
+    ? filtered.map((entry) => inventoryTileHtml(state, entry)).join('')
+    : state.inventory.length
+      ? `<p class="empty-slot">Nenhum item desse elemento.</p>`
+      : `<p class="empty-slot">Nada craftado ainda. Vá até a aba Forjar.</p>`;
 
   return `
     <div class="equip-screen">
@@ -228,6 +247,7 @@ function equipRingContentHtml(state) {
       </div>
       ${equipStatsBoxHtml(state)}
       <div class="equip-inventory-header">Inventário</div>
+      ${elementFilterRowHtml(filterElement)}
       <div class="equip-inventory-grid">${inventoryHtml}</div>
     </div>
   `;
@@ -242,7 +262,8 @@ function slotIconHtml(state, slot) {
     ? `<span class="mini-badge ${equipped.entry.isMaster ? 'master' : ''}">${getEnhanceLabel(equipped.entry.enhanceLevel, equipped.entry.isMaster)}</span>`
     : '';
   const rarity = equipped ? rarityBadgeHtml(equipped.item.tier) : '';
-  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}" data-equip-slot="${slot.id}" title="${slot.name}">
+  const borderStyle = equipped ? rarityBorderStyle(equipped.item.tier) : '';
+  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}" data-equip-slot="${slot.id}" title="${slot.name}" ${borderStyle}>
     ${rarity}
     <span class="icon">${icon}</span>
     ${badge}
@@ -253,7 +274,7 @@ function inventoryTileHtml(state, entry) {
   const item = getItem(entry.itemId);
   const isEquipped = state.equipped[item.slotId] === entry.uid;
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
-  return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}">
+  return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}" ${rarityBorderStyle(item.tier)}>
     ${rarityBadgeHtml(item.tier)}
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
@@ -459,7 +480,7 @@ function recipeCardHtml(state, item) {
 
   const goldMet = state.gold >= item.goldCost;
 
-  return `<div class="recipe-card ${equipped ? 'equipped' : ''}">
+  return `<div class="recipe-card ${equipped ? 'equipped' : ''}" ${rarityBorderStyle(item.tier)}>
     ${rarityBadgeHtml(item.tier)}
     <div class="recipe-header"><span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span><span class="name">${item.name}</span></div>
     <div class="element-resistance">${elementBadgeHtml(item.element)}</div>
@@ -975,13 +996,14 @@ export function pulseTowerMonster() {
 }
 
 // ---------------------------------------------------------------
-// Achievements tab: the "earn Cash" side (achievement claims + the
-// simulated ad-watch reward), split out from the Shop, which is purely
-// "spend Cash / spend Event Currency" now.
+// Achievements content — "earn Cash" side (achievement claims + the
+// simulated ad-watch reward). Folded into the Shop tab as a 3rd sub-tab
+// (see renderShopTab below) for now — the bottom nav only has room for
+// Inventário/Forja/Caçada/Aprimoramento/Cartas/Loja, so Conquistas rides
+// along inside Loja until it earns its own slot.
 // ---------------------------------------------------------------
 
-export function renderAchievementsTab(state) {
-  const container = document.getElementById('tab-achievements');
+function achievementsContentHtml(state) {
   const cooldownMs = adWatchCooldownRemaining(state);
   const adReady = cooldownMs <= 0;
 
@@ -1001,8 +1023,7 @@ export function renderAchievementsTab(state) {
     </div>`;
   }).join('');
 
-  container.innerHTML = `
-    <div class="section-banner">Conquistas</div>
+  return `
     <div class="shop-balance">💎 Você tem <strong>${formatNumber(state.cash)}</strong> Cash</div>
     <button id="watch-ad-btn" class="watch-ad-btn" ${adReady ? '' : 'disabled'}>
       ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' 💎)' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
@@ -1013,19 +1034,26 @@ export function renderAchievementsTab(state) {
 
 // ---------------------------------------------------------------
 // Shop tab: Cash sub-tab (spend on gold packs, plus a disabled real-money
-// package stub) and Event-currency sub-tab (per-boss Crystal/material
-// bundles). `activeSubTab` is owned by main.js.
+// package stub), Event-currency sub-tab (per-boss Crystal/material
+// bundles), and Conquistas (see achievementsContentHtml above).
+// `activeSubTab` is owned by main.js.
 // ---------------------------------------------------------------
 
 export function renderShopTab(state, activeSubTab) {
   const container = document.getElementById('tab-shop');
+  let body;
+  if (activeSubTab === 'event') body = eventShopHtml(state);
+  else if (activeSubTab === 'achievements') body = achievementsContentHtml(state);
+  else body = cashShopHtml(state);
+
   container.innerHTML = `
     <div class="section-banner">Loja</div>
     <div class="inner-subnav">
       <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">💎 Cash</button>
-      <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">🎫 Moeda de Evento</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">🎫 Evento</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'achievements' ? 'active' : ''}" data-shop-subtab="achievements">🏆 Conquistas</button>
     </div>
-    ${activeSubTab === 'event' ? eventShopHtml(state) : cashShopHtml(state)}
+    ${body}
   `;
 }
 
