@@ -725,10 +725,12 @@ function invasaoChefesCanEnter(state) {
 // The 3 empty "RECOMPENSAS" squares baked into the banner art are just a
 // preview row (purely illustrative — real rewards are rolled/granted on
 // victory, same as before), overlaid with 3 real icons positioned over
-// the art's squares.
-function rewardPreviewIconsHtml(icons) {
+// the art's squares. `variant` picks the vertical position matching that
+// banner's own square row (measured separately per source mockup — Torre's
+// squares sit noticeably higher than Invasão's, see CSS).
+function rewardPreviewIconsHtml(icons, variant) {
   return icons
-    .map((src, i) => `<img class="invasion-reward-icon invasion-reward-${i + 1}" src="${src}" alt="">`)
+    .map((src, i) => `<img class="invasion-reward-icon reward-${variant} invasion-reward-${i + 1}" src="${src}" alt="">`)
     .join('');
 }
 
@@ -739,7 +741,7 @@ function invasaoChefesBannerHtml(state) {
     'assets/crystals/leviargon.png',
     'assets/cards/leviargon.png',
     'assets/ui/currency-event.png',
-  ]);
+  ], 'invasion');
   return `<div class="event-card event-card-invasion">
     <div class="invasion-banner" style="background-image: url('assets/ui/invasao-banner.png')">
       ${rewardIcons}
@@ -799,7 +801,7 @@ function torreProvacoesBannerHtml(state) {
     'assets/grunco/hide.png',
     'assets/ui/currency-gold.png',
     'assets/ui/currency-event.png',
-  ]);
+  ], 'torre');
   return `<div class="event-card event-card-invasion">
     <div class="invasion-banner" style="background-image: url('assets/ui/torre-banner.png')">
       ${rewardIcons}

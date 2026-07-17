@@ -1664,21 +1664,32 @@ button:disabled {
 }
 
 /* Preview icons dropped into the banner art's 3 empty "RECOMPENSAS"
-   squares — positions measured against the source mockup (Evento2.png/
-   Evento3.png, both 1945x809), same for both banners since they share the
-   same template. */
+   squares — horizontal positions measured against the source mockups
+   (Evento2.png/Evento3.png, both 1945x809) are close enough to share, but
+   the vertical position differs: Torre's squares sit noticeably higher
+   than Invasão's, hence the separate .reward-invasion/.reward-torre top
+   offsets. */
 .invasion-reward-icon {
   position: absolute;
-  top: 70.2%;
   width: 9%;
   height: auto;
   transform: translate(-50%, -50%);
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .4));
 }
 
+.reward-invasion { top: 70.2%; }
+.reward-torre { top: 65%; }
+
 .invasion-reward-1 { left: 19.3%; }
-.invasion-reward-2 { left: 32.5%; }
-.invasion-reward-3 { left: 45.6%; }
+.invasion-reward-2 { left: 32.3%; }
+.invasion-reward-3 { left: 45.7%; }
+
+/* Cristal/Carta de Leviargon specifically, 20% smaller than the standard
+   reward-icon size (the Moeda de Evento slot stays at the normal size). */
+.reward-invasion.invasion-reward-1,
+.reward-invasion.invasion-reward-2 {
+  width: 7.2%;
+}
 
 .event-panel {
   background: var(--grad-neutral);
