@@ -7,7 +7,7 @@
 // event boss never damages the player back. Timing is derived purely from
 // wall-clock time — no schedule needs to be saved, so offline time and
 // reloads just fall wherever they land on the clock.
-export const EVENT_CYCLE_MS = 45 * 60 * 1000;
+export const EVENT_CYCLE_MS = 6 * 60 * 1000;
 export const EVENT_ACTIVE_MS = 5 * 60 * 1000;
 
 // The event boss's HP is anchored to that boss's own real-combat fight (its
@@ -78,8 +78,8 @@ export function getTradeCycleInfo(now = Date.now()) {
 // clock (TOWER_RUN_DURATION_MS) that starts ticking from the moment of
 // entry, independent of how much of the entry window is left.
 // ---------------------------------------------------------------------
-export const TOWER_CYCLE_MS = 2 * 60 * 60 * 1000;
-export const TOWER_ACTIVE_MS = 15 * 60 * 1000;
+export const TOWER_CYCLE_MS = 6 * 60 * 1000;
+export const TOWER_ACTIVE_MS = 5 * 60 * 1000;
 export const TOWER_RUN_DURATION_MS = 5 * 60 * 1000;
 
 // Level 20/40/.../200 is a boss, matching real stage 10/20/.../100 (i.e.
