@@ -204,29 +204,43 @@ function setBonusBannerHtml(state) {
   </div>`;
 }
 
-// Paper-doll: a square card with the character art as its background (see
-// PLAYER_PORTRAIT_IMAGE — null until the real illustration is added to
-// assets/, plain emoji placeholder meanwhile) and the 6 equip slots
-// overlaid on top of it in 2 columns of 3 — weapon/helmet/armor on the
-// left, gloves/pants/boots on the right (closest match to the reference
-// art's weapon/helmet/armor-vs-necklace/ring/boots split, given our
-// actual 6 slots have no jewelry slot). Sits side by side with the stats
-// card; the inventory grid spans the full width below both.
+// Paper-doll: a square card with the character art as its background and
+// the 6 equip slots overlaid on top of it in 2 columns of 3 —
+// weapon/helmet/armor on the left, gloves/pants/boots on the right
+// (closest match to the reference art's weapon/helmet/armor-vs-necklace/
+// ring/boots split, given our actual 6 slots have no jewelry slot). Sits
+// side by side with the stats card; the inventory grid spans the full
+// width below both.
 const PAPERDOLL_LEFT = ['weapon', 'helmet', 'armor'];
 const PAPERDOLL_RIGHT = ['gloves', 'pants', 'boots'];
-const PLAYER_PORTRAIT_IMAGE = null;
+const PLAYER_PORTRAIT_IMAGE = 'assets/ui/hero-portrait.png';
+
+// Row centers as % of the stats-frame.png height, measured against its
+// baked-in divider lines (banner "ESTATÍSTICAS" + 6 rows on a parchment
+// scroll) so each stat sits right above its line in the artwork.
+const STATS_ROW_POSITIONS = [18.2, 30.8, 42.9, 55.0, 67.1, 79.2];
 
 function equipStatsBoxHtml(state) {
   const stats = computePlayerStats(state);
+  const rows = [
+    ['⚔️ Dano de Clique', formatNumber(stats.clickDamage)],
+    ['💥 DPS', formatNumber(stats.dps)],
+    ['🛡️ Armadura', formatNumber(stats.armor)],
+    ['🎯 Taxa de Crítico', formatPercent(stats.critChance)],
+    ['💢 Dano Crítico', formatPercent(stats.critDamage)],
+    ['❤️ Vida Máxima', formatNumber(stats.maxHp)],
+  ];
+  const rowsHtml = rows
+    .map(
+      ([label, value], i) => `
+        <div class="stats-frame-row" style="top: ${STATS_ROW_POSITIONS[i]}%">
+          <span>${label}</span><strong>${value}</strong>
+        </div>`
+    )
+    .join('');
   return `
-    <div class="equip-stats-box">
-      <div class="equip-stats-title">📊 Estatísticas</div>
-      <div class="battle-info-row"><span>⚔️ Dano de Clique</span><strong>${formatNumber(stats.clickDamage)}</strong></div>
-      <div class="battle-info-row"><span>💥 DPS</span><strong>${formatNumber(stats.dps)}</strong></div>
-      <div class="battle-info-row"><span>🛡️ Armadura</span><strong>${formatNumber(stats.armor)}</strong></div>
-      <div class="battle-info-row"><span>🎯 Taxa de Crítico</span><strong>${formatPercent(stats.critChance)}</strong></div>
-      <div class="battle-info-row"><span>💢 Dano Crítico</span><strong>${formatPercent(stats.critDamage)}</strong></div>
-      <div class="battle-info-row"><span>❤️ Vida Máxima</span><strong>${formatNumber(stats.maxHp)}</strong></div>
+    <div class="equip-stats-box" style="background-image: url('assets/ui/stats-frame.png')">
+      ${rowsHtml}
     </div>
   `;
 }
