@@ -24,6 +24,7 @@ import {
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, renderEventsTab, renderShopTab, pulseEventBoss,
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster,
+  GOLD_ICON, EVENT_ICON, ESMERALDA_ICON,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -499,7 +500,7 @@ function wireModalEvents() {
         const cardId = claimCardBtn.dataset.claimCard;
         if (claimCardReward(state, cardId)) {
           showCardDetailModal(state, cardId); // keep the popup open, with fresh state
-          showToast(`🎁 +${formatNumber(CARD_DISCOVERY_CASH_REWARD)} 💎 Cash!`);
+          showToast(`🎁 +${formatNumber(CARD_DISCOVERY_CASH_REWARD)} ${ESMERALDA_ICON} Esmeralda!`);
           renderTopBar(state);
           renderCardsTab(state);
         }
@@ -615,7 +616,7 @@ function showEventRewardModal(boss, gained, currency, cardDropped) {
     ${cardBanner}
     <p><strong>Recompensas:</strong></p>
     ${lootLines}
-    <p class="offline-item-lines">+${formatNumber(currency)} 🎫 Moeda de Evento</p>
+    <p class="offline-item-lines">+${formatNumber(currency)} ${EVENT_ICON} Moeda de Evento</p>
   `);
 }
 
@@ -675,8 +676,8 @@ function finishTowerRun(cleared200) {
   towerDeadline = null;
   towerHp = null;
   const msg = cleared200
-    ? `👑 Torre conquistada! Você derrotou o chefe do nível 200 e ganhou +${formatNumber(currency)} 🎫`
-    : `🗼 Torre encerrada no nível ${level}. +${formatNumber(currency)} 🎫`;
+    ? `👑 Torre conquistada! Você derrotou o chefe do nível 200 e ganhou +${formatNumber(currency)} ${EVENT_ICON}`
+    : `🗼 Torre encerrada no nível ${level}. +${formatNumber(currency)} ${EVENT_ICON}`;
   showToast(msg);
   renderEventsTabNow();
   renderTopBar(state);
@@ -855,7 +856,7 @@ function wireShopTabEvents() {
     const adBtn = e.target.closest('#watch-ad-btn');
     if (adBtn) {
       if (watchAd(state)) {
-        showToast(`🎬 +${formatNumber(AD_WATCH_CASH_REWARD)} 💎 Cash!`);
+        showToast(`🎬 +${formatNumber(AD_WATCH_CASH_REWARD)} ${ESMERALDA_ICON} Esmeralda!`);
         renderTopBar(state);
         renderShopTab(state, activeShopSubTab);
       }
@@ -920,7 +921,7 @@ function showOfflineProgressIfAny() {
     <p>Você ficou fora por <strong>${timeStr}</strong> (máximo 8h de recompensa offline).</p>
     <p>Seu personagem continuou lutando sozinho, a ${Math.round(OFFLINE_EFFICIENCY * 100)}% de eficiência, e conseguiu:</p>
     <p>💀 ${formatNumber(progress.kills)} monstros derrotados<br>
-       💰 +${formatNumber(progress.goldGained)} ouro</p>
+       ${GOLD_ICON} +${formatNumber(progress.goldGained)} ouro</p>
     ${itemsHtml}
   `);
 }

@@ -24,31 +24,14 @@ export function iconMarkup(image, emoji, alt) {
   return image ? `<img src="${image}" alt="${alt || ''}">` : emoji;
 }
 
-/// Purely cosmetic rarity letter derived from an item's boss tier (0-9) —
-/// there's no separate "rarity" field in the data model, gear power is
-/// already fully determined by tier + enhancement level. This just gives
-/// the UI the S/A/B/C badge language the mockups use.
-function itemRarityLetter(tier) {
-  if (tier >= 9) return 'SS';
-  if (tier >= 8) return 'S';
-  if (tier >= 6) return 'A';
-  if (tier >= 3) return 'B';
-  return 'C';
-}
-
-function rarityBadgeHtml(tier) {
-  const letter = itemRarityLetter(tier);
-  return `<span class="rarity-badge rarity-${letter.toLowerCase()}">${letter}</span>`;
-}
-
-/// Inline style (not a class) so it wins over the more-specific `.filled`/
-/// `.equipped` border-color rules without fighting CSS specificity —
-/// colors the card's own border to match its rarity badge, same as the
-/// reference mockups (purple for A, gold for S, etc).
-function rarityBorderStyle(tier) {
-  const letter = itemRarityLetter(tier).toLowerCase();
-  return `style="border-color: var(--rarity-${letter})"`;
-}
+// Real currency icons (see assets/ui/currency-*.png) used in place of the
+// 💰/🎫/💎 emoji anywhere a currency amount shows up — top bar, shop,
+// toasts, recipe/upgrade costs, achievement/ad rewards, etc. "Cash" is
+// user-facing "Esmeralda" now (see ESMERALDA_ICON), though the underlying
+// state field/variable names stay `cash` internally.
+export const GOLD_ICON = `<img class="currency-icon" src="assets/ui/currency-gold.png" alt="Ouro">`;
+export const EVENT_ICON = `<img class="currency-icon" src="assets/ui/currency-event.png" alt="Moeda de Evento">`;
+export const ESMERALDA_ICON = `<img class="currency-icon" src="assets/ui/currency-esmeralda.png" alt="Esmeralda">`;
 
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
@@ -284,10 +267,7 @@ function slotIconHtml(state, slot) {
   const badge = equipped
     ? `<span class="mini-badge ${equipped.entry.isMaster ? 'master' : ''}">${getEnhanceLabel(equipped.entry.enhanceLevel, equipped.entry.isMaster)}</span>`
     : '';
-  const rarity = equipped ? rarityBadgeHtml(equipped.item.tier) : '';
-  const borderStyle = equipped ? rarityBorderStyle(equipped.item.tier) : '';
-  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}" data-equip-slot="${slot.id}" title="${slot.name}" ${borderStyle}>
-    ${rarity}
+  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}" data-equip-slot="${slot.id}" title="${slot.name}">
     <span class="icon">${icon}</span>
     ${badge}
   </button>`;
@@ -297,8 +277,7 @@ function inventoryTileHtml(state, entry) {
   const item = getItem(entry.itemId);
   const isEquipped = state.equipped[item.slotId] === entry.uid;
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
-  return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}" ${rarityBorderStyle(item.tier)}>
-    ${rarityBadgeHtml(item.tier)}
+  return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}">
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
   </button>`;
@@ -503,12 +482,11 @@ function recipeCardHtml(state, item) {
 
   const goldMet = state.gold >= item.goldCost;
 
-  return `<div class="recipe-card ${equipped ? 'equipped' : ''}" ${rarityBorderStyle(item.tier)}>
-    ${rarityBadgeHtml(item.tier)}
+  return `<div class="recipe-card ${equipped ? 'equipped' : ''}">
     <div class="recipe-header"><span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span><span class="name">${item.name}</span></div>
     <div class="element-resistance">${elementBadgeHtml(item.element)}</div>
     <div class="recipe-stats">${formatStatsLines(item.stats).join('<br>')}</div>
-    <div class="recipe-cost"><span>💰 Ouro</span><span class="${goldMet ? 'met' : 'missing'}">${formatNumber(state.gold)}/${formatNumber(item.goldCost)}</span></div>
+    <div class="recipe-cost"><span>${GOLD_ICON} Ouro</span><span class="${goldMet ? 'met' : 'missing'}">${formatNumber(state.gold)}/${formatNumber(item.goldCost)}</span></div>
     ${costLines}
     <button data-craft="${item.id}" ${craftable ? '' : 'disabled'}>${equipped ? 'Craftado (equipado)' : 'Craftar'}</button>
   </div>`;
@@ -552,7 +530,7 @@ function upgradeCardHtml(state, upgrade) {
       <div class="level">Nível ${level}</div>
       ${upgradeProgressHtml(upgrade, level)}
     </div>
-    <button data-upgrade="${upgrade.id}" ${affordable ? '' : 'disabled'}>💰 ${formatNumber(cost)}</button>
+    <button data-upgrade="${upgrade.id}" ${affordable ? '' : 'disabled'}>${GOLD_ICON} ${formatNumber(cost)}</button>
   </div>`;
 }
 
@@ -590,34 +568,13 @@ function materialsContentHtml(state) {
 // systems/cards.js), same "claim once" idea as an achievement.
 // ---------------------------------------------------------------
 
-// Purely cosmetic rarity letter (no gameplay meaning beyond flavor,
-// same spirit as itemRarityLetter above) — boss cards climb S -> SS -> SSS
-// with the boss's own tier (0-9); every weak-monster card is C.
-function cardRarityLetter(card) {
-  if (!card.isBossCard) return 'C';
-  const tier = BOSSES.findIndex((b) => b.id === card.monsterId);
-  if (tier >= 9) return 'SSS';
-  if (tier >= 7) return 'SS';
-  return 'S';
-}
-
-const STARS_BY_RARITY = { C: 2, B: 3, S: 3, SS: 4, SSS: 5 };
-
-function starsHtml(rarity) {
-  const filled = STARS_BY_RARITY[rarity] || 2;
-  return `<span class="card-tile-stars">${'★'.repeat(filled)}${'☆'.repeat(5 - filled)}</span>`;
-}
-
 function cardTileHtml(state, card) {
   const discovered = isCardDiscovered(state, card.id);
   const claimable = canClaimCardReward(state, card.id);
-  const rarity = cardRarityLetter(card);
   return `<button class="card-tile ${discovered ? 'discovered' : 'undiscovered'}" data-view-card="${card.id}">
     ${claimable ? '<span class="card-tile-badge">🎁</span>' : ''}
-    <span class="rarity-badge rarity-${rarity.toLowerCase()}">${rarity}</span>
     <div class="icon">${iconMarkup(card.image, card.emoji, card.name)}</div>
     <div class="name">${card.name}</div>
-    ${starsHtml(rarity)}
   </button>`;
 }
 
@@ -627,7 +584,7 @@ function cardTileHtml(state, card) {
 // attemptCardSlotUnlock) — the two panels the mockup calls "Bônus das
 // Cartas Ativas" and "Slot de Cartas".
 const CARD_BONUS_LABELS = {
-  dpsPercent: '💥 DPS', clickPercent: '⚔️ Dano de Clique', goldPercent: '💰 Ouro Obtido',
+  dpsPercent: '💥 DPS', clickPercent: '⚔️ Dano de Clique', goldPercent: `${GOLD_ICON} Ouro Obtido`,
   dropPercent: '🎒 Chance de Drop', critChancePercent: '🎯 Chance Crítica', critDamagePercent: '💢 Dano Crítico',
   hpPercent: '❤️ Vida Máxima', armorPercent: '🛡️ Armadura', hpFlat: '❤️ Vida Máxima', armorFlat: '🛡️ Armadura',
   clickFlat: '⚔️ Dano de Clique', dpsFlat: '💥 DPS',
@@ -690,7 +647,7 @@ function cardDetailHtml(state, card) {
 
   let actionHtml;
   if (claimable) {
-    actionHtml = `<button class="modal-action-btn" data-claim-card="${card.id}">🎁 Resgatar +${CARD_DISCOVERY_CASH_REWARD} 💎 Cash</button>`;
+    actionHtml = `<button class="modal-action-btn" data-claim-card="${card.id}">🎁 Resgatar +${CARD_DISCOVERY_CASH_REWARD} ${ESMERALDA_ICON} Esmeralda</button>`;
   } else if (claimed) {
     actionHtml = `<div class="card-detail-status">🎁 Recompensa já resgatada</div>`;
   } else if (!discovered) {
@@ -793,7 +750,7 @@ function invasaoChefesFightPanelHtml(state) {
           <h3>${boss.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(boss.element)}</h3>
           <button id="event-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(boss.image, boss.emoji, boss.name)}</button>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(maxHp)}</span></div>
-          <p class="event-reward-info">🎁 10 itens ao derrotar (materiais/Cristal) + chance de Carta + 🎫 Moeda de Evento</p>
+          <p class="event-reward-info">🎁 10 itens ao derrotar (materiais/Cristal) + chance de Carta + ${EVENT_ICON} Moeda de Evento</p>
         </div>
       </div>
     </div>`;
@@ -849,7 +806,7 @@ function torreProvacoesFightPanelHtml(state, runRemainingMs, towerHp, towerMaxHp
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.towerMonsterHp)} / ${formatNumber(maxHp)}</span></div>
           <p class="event-sub">Sua vida na torre</p>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${hpPlayerPct}%; background:var(--danger, #e05656);"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(towerMaxHp)}</span></div>
-          <p class="event-reward-info">🎁 Recompensa ao final: 🎫 Moeda de Evento, conforme o nível alcançado.</p>
+          <p class="event-reward-info">🎁 Recompensa ao final: ${EVENT_ICON} Moeda de Evento, conforme o nível alcançado.</p>
         </div>
       </div>
     </div>`;
@@ -900,7 +857,7 @@ function achievementsContentHtml(state) {
     const ready = isAchievementReady(state, a);
     const statusBtn = claimed
       ? `<button disabled>Resgatado</button>`
-      : `<button data-claim-achievement="${a.id}" ${ready ? '' : 'disabled'}>💎 +${a.cashReward}</button>`;
+      : `<button data-claim-achievement="${a.id}" ${ready ? '' : 'disabled'}>${ESMERALDA_ICON} +${a.cashReward}</button>`;
     return `<div class="achievement-card ${claimed ? 'claimed' : ''}">
       <span class="icon">${a.emoji}</span>
       <div class="info">
@@ -912,9 +869,9 @@ function achievementsContentHtml(state) {
   }).join('');
 
   return `
-    <div class="shop-balance">💎 Você tem <strong>${formatNumber(state.cash)}</strong> Cash</div>
+    <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>
     <button id="watch-ad-btn" class="watch-ad-btn" ${adReady ? '' : 'disabled'}>
-      ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' 💎)' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
+      ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' ' + ESMERALDA_ICON + ')' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
     </button>
     <div class="achievement-list">${achievementsHtml}</div>
   `;
@@ -937,8 +894,8 @@ export function renderShopTab(state, activeSubTab) {
   container.innerHTML = `
     <div class="section-banner">Loja</div>
     <div class="inner-subnav">
-      <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">💎 Cash</button>
-      <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">🎫 Evento</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">${ESMERALDA_ICON} Esmeralda</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">${EVENT_ICON} Evento</button>
       <button class="inner-subtab-btn ${activeSubTab === 'achievements' ? 'active' : ''}" data-shop-subtab="achievements">🏆 Conquistas</button>
     </div>
     ${body}
@@ -948,8 +905,8 @@ export function renderShopTab(state, activeSubTab) {
 function cashShopHtml(state) {
   const packagesHtml = CASH_REAL_MONEY_PACKAGES.map((p) => `
     <div class="cash-package-card disabled" title="Requer integração de pagamento — ainda não disponível">
-      <div class="icon">💎</div>
-      <div class="name">${p.cashAmount} Cash</div>
+      <div class="icon">${ESMERALDA_ICON}</div>
+      <div class="name">${p.cashAmount} Esmeralda</div>
       <div class="price">${p.priceLabel}</div>
       <button disabled>Em breve</button>
     </div>`).join('');
@@ -961,17 +918,17 @@ function cashShopHtml(state) {
         <div class="name">${item.name}</div>
         <div class="desc">${item.description}</div>
       </div>
-      <button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>💎 ${item.cost}</button>
+      <button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>
     </div>`).join('');
 
   return `
-    <div class="shop-balance">💎 Você tem <strong>${formatNumber(state.cash)}</strong> Cash</div>
-    <p class="shop-note">Ganhe Cash na aba 🏆 Conquistas.</p>
+    <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>
+    <p class="shop-note">Ganhe Esmeralda na aba 🏆 Conquistas.</p>
 
-    <h4 class="shop-section-title">Comprar com Cash</h4>
+    <h4 class="shop-section-title">Comprar com Esmeralda</h4>
     <div class="shop-item-grid">${shopItemsHtml}</div>
 
-    <h4 class="shop-section-title">Comprar Cash (dinheiro real)</h4>
+    <h4 class="shop-section-title">Comprar Esmeralda (dinheiro real)</h4>
     <p class="shop-note">Ainda não disponível nesta versão — em breve.</p>
     <div class="cash-package-grid">${packagesHtml}</div>
   `;
@@ -990,13 +947,13 @@ function eventShopHtml(state) {
           <div class="info">
             <div class="name">${item.name}</div>
           </div>
-          <button data-buy-event-mat="${item.matId}" data-buy-event-amount="${item.amount}" data-buy-event-cost="${item.cost}" ${canBuyEventItem(state, item) ? '' : 'disabled'}>🎫 ${item.cost}</button>
+          <button data-buy-event-mat="${item.matId}" data-buy-event-amount="${item.amount}" data-buy-event-cost="${item.cost}" ${canBuyEventItem(state, item) ? '' : 'disabled'}>${EVENT_ICON} ${item.cost}</button>
         </div>`).join('')}</div>
     </div>`;
   }).join('');
 
   return `
-    <div class="shop-balance event-variant">🎫 Você tem <strong>${formatNumber(state.eventCurrency)}</strong> Moeda de Evento</div>
+    <div class="shop-balance event-variant">${EVENT_ICON} Você tem <strong>${formatNumber(state.eventCurrency)}</strong> Moeda de Evento</div>
     <p class="shop-note">Ganhe Moeda de Evento derrotando o chefe de evento na aba 🎪 Eventos.</p>
     ${bossesHtml || '<p class="shop-note">Nenhum chefe desbloqueado ainda.</p>'}
   `;
@@ -1037,10 +994,10 @@ export function pulseMonster() {
 
 export function showLootPopup(goldGained, drops) {
   const container = document.getElementById('loot-popup');
-  const parts = [`+${formatNumber(goldGained)} 💰`, ...drops.map((d) => `+${d.qty} ${d.emoji}`)];
+  const parts = [`+${formatNumber(goldGained)} ${GOLD_ICON}`, ...drops.map((d) => `+${d.qty} ${d.emoji}`)];
   const el = document.createElement('div');
   el.className = 'loot-popup-entry';
-  el.textContent = parts.join(' ');
+  el.innerHTML = parts.join(' ');
   container.appendChild(el);
   while (container.childNodes.length > 3) container.removeChild(container.firstChild);
   setTimeout(() => el.remove(), 2500);
@@ -1050,7 +1007,7 @@ export function showToast(message) {
   const container = document.getElementById('toast-container');
   const el = document.createElement('div');
   el.className = 'toast';
-  el.textContent = message;
+  el.innerHTML = message;
   container.appendChild(el);
   setTimeout(() => el.remove(), 3000);
 }

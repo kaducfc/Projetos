@@ -56,19 +56,6 @@
   --navy-deepest: #0b1f3d;
   --navy-border: #0a2a52;
 
-  --rarity-c: #5a8f6b;
-  --rarity-c-dark: #3d6b4c;
-  --rarity-b: #3f8fd1;
-  --rarity-b-dark: #2a6699;
-  --rarity-a: #9b5de5;
-  --rarity-a-dark: #6e35b8;
-  --rarity-s: #f0a500;
-  --rarity-s-dark: #c07d00;
-  --rarity-ss: #ff7a3d;
-  --rarity-ss-dark: #d1560f;
-  --rarity-sss: #ff4fa3;
-  --rarity-sss-dark: #c22778;
-
   --shadow-banner: 0 4px 0 var(--navy-border), 0 8px 18px rgba(8, 20, 40, .35);
 }
 
@@ -232,13 +219,25 @@ button:disabled {
    (gold coin = orange, gem = blue, event ticket = dark navy, stage flag =
    red) instead of one uniform translucent pill for all four. */
 .resource-gold { background: linear-gradient(180deg, #ffc94d, #f0a000); border-color: #ffe29a; }
-.resource-cash { background: linear-gradient(180deg, #5cc2f5, #1f8fd6); border-color: #aee4ff; }
+.resource-cash { background: linear-gradient(180deg, #3dd68c, #189b5c); border-color: #a3f0cb; }
 .resource-event { background: linear-gradient(180deg, #4a5f7a, #263a52); border-color: #7f96b0; }
 .resource-stage { background: linear-gradient(180deg, #ff6b6b, #d13f3f); border-color: #ffb0b0; }
 
 .resource-icon {
-  font-size: 18px;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35));
+}
+
+/* Small inline currency icon used in place of the gold/event/esmeralda
+   emoji anywhere it shows up mid-text (buttons, labels, toasts) — see
+   GOLD_ICON/EVENT_ICON/ESMERALDA_ICON in ui/render.js. */
+.currency-icon {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  vertical-align: -3px;
 }
 
 .resource-label {
@@ -940,29 +939,6 @@ button:disabled {
   color: #3a2c14;
   white-space: nowrap;
 }
-
-.rarity-badge {
-  position: absolute;
-  top: -6px;
-  left: -6px;
-  font-size: 9.5px;
-  font-weight: 900;
-  color: #fff;
-  min-width: 18px;
-  text-align: center;
-  padding: 2px 4px;
-  border-radius: 6px;
-  line-height: 1.2;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, .25);
-  z-index: 1;
-}
-
-.rarity-badge.rarity-c { background: var(--rarity-c); box-shadow: 0 2px 0 var(--rarity-c-dark); }
-.rarity-badge.rarity-b { background: var(--rarity-b); box-shadow: 0 2px 0 var(--rarity-b-dark); }
-.rarity-badge.rarity-a { background: var(--rarity-a); box-shadow: 0 2px 0 var(--rarity-a-dark); }
-.rarity-badge.rarity-s { background: var(--rarity-s); box-shadow: 0 2px 0 var(--rarity-s-dark); }
-.rarity-badge.rarity-ss { background: var(--rarity-ss); box-shadow: 0 2px 0 var(--rarity-ss-dark); }
-.rarity-badge.rarity-sss { background: var(--rarity-sss); box-shadow: 0 2px 0 var(--rarity-sss-dark); }
 
 .equip-slot-icon {
   position: relative;
@@ -2018,16 +1994,6 @@ button:disabled {
   padding: 10px 12px;
   box-shadow: var(--shadow-card);
   margin-bottom: 10px;
-}
-
-.card-tile-stars {
-  font-size: 10px;
-  color: var(--rarity-s);
-  letter-spacing: 1px;
-}
-
-.card-tile.undiscovered .card-tile-stars {
-  color: var(--text-dim);
 }
 
 .card-grid {
