@@ -844,60 +844,62 @@ button:disabled {
   gap: 16px;
 }
 
-/* Paper-doll: 3 slots to either side of a center character silhouette
-   (weapon/helmet/armor on the left, gloves/pants/boots on the right) —
-   closest match to the mockup's layout given our actual 6 gear slots. */
-.paperdoll {
+/* Top row: the paper-doll card (character + 6 equip slots overlaid, 2
+   columns of 3) side by side with the stats card — both roughly square,
+   same shape as the reference layout, with the inventory grid spanning
+   full width below (see .equip-inventory-grid). */
+.equip-top-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
   gap: 10px;
-  background:
-    radial-gradient(ellipse 140px 55px at 22% 10%, rgba(255, 255, 255, .5), transparent 70%),
+}
+
+.paperdoll-card {
+  position: relative;
+  flex: 1 1 50%;
+  aspect-ratio: 1;
+  background-size: cover;
+  background-position: center;
+  background-color: #cfe8f7;
+  background-image:
+    radial-gradient(ellipse 90px 40px at 25% 10%, rgba(255, 255, 255, .5), transparent 70%),
     linear-gradient(180deg, #bfe6fb 0%, #e3f4ff 45%, #eaf7e2 78%, #d9ecc7 100%);
   border: 3px solid var(--border-strong);
   border-radius: 20px;
-  padding: 16px 10px;
   box-shadow: var(--shadow-panel);
+  overflow: hidden;
 }
 
-.paperdoll-col {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  flex: 0 0 auto;
-  width: 64px;
-}
-
-.paperdoll-character {
-  flex: 1;
-  position: relative;
+/* Plain emoji placeholder until the real character illustration is added
+   (see PLAYER_PORTRAIT_IMAGE in ui/render.js) — once that's set, this
+   element isn't rendered at all and the image shows via background-image
+   on .paperdoll-card instead. */
+.paperdoll-placeholder {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 72px;
+  font-size: 30cqw;
+  font-size: min(30vw, 90px);
   filter: drop-shadow(0 6px 6px rgba(74, 47, 20, .3));
 }
 
-/* Small stone-pedestal hint under the character (art TBD — see the plain
-   emoji placeholder above), same idea as the reference mockup's circular
-   platform. */
-.paperdoll-character::after {
-  content: "";
+.paperdoll-overlay-col {
   position: absolute;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 68px;
-  height: 18px;
-  background: linear-gradient(180deg, #b9b9c2, #8b8b96);
-  border: 2px solid #6f6f7a;
-  border-radius: 50%;
-  box-shadow: 0 3px 0 #5a5a63;
-  z-index: -1;
+  top: 8px;
+  bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 27%;
 }
 
+.paperdoll-overlay-left { left: 8px; }
+.paperdoll-overlay-right { right: 8px; }
+
 .equip-stats-box {
+  flex: 1 1 50%;
   background: var(--grad-neutral);
   border: 2px solid var(--border);
   border-radius: 16px;

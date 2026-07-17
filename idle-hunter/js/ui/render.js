@@ -204,13 +204,17 @@ function setBonusBannerHtml(state) {
   </div>`;
 }
 
-// Paper-doll layout: 3 slots on each side of a center character silhouette
-// (art TBD — see the plain emoji placeholder below) — weapon/helmet/armor
-// on the left, gloves/pants/boots on the right, closest match to the
-// mockup's necklace/ring/boots-vs-weapon/helmet/armor split given our
-// actual 6 slots (no jewelry slots in this game).
+// Paper-doll: a square card with the character art as its background (see
+// PLAYER_PORTRAIT_IMAGE — null until the real illustration is added to
+// assets/, plain emoji placeholder meanwhile) and the 6 equip slots
+// overlaid on top of it in 2 columns of 3 — weapon/helmet/armor on the
+// left, gloves/pants/boots on the right (closest match to the reference
+// art's weapon/helmet/armor-vs-necklace/ring/boots split, given our
+// actual 6 slots have no jewelry slot). Sits side by side with the stats
+// card; the inventory grid spans the full width below both.
 const PAPERDOLL_LEFT = ['weapon', 'helmet', 'armor'];
 const PAPERDOLL_RIGHT = ['gloves', 'pants', 'boots'];
+const PLAYER_PORTRAIT_IMAGE = null;
 
 function equipStatsBoxHtml(state) {
   const stats = computePlayerStats(state);
@@ -237,15 +241,19 @@ function equipRingContentHtml(state, filterElement = null) {
       ? `<p class="empty-slot">Nenhum item desse elemento.</p>`
       : `<p class="empty-slot">Nada craftado ainda. Vá até a aba Forjar.</p>`;
 
+  const portraitStyle = PLAYER_PORTRAIT_IMAGE ? `style="background-image: url('${PLAYER_PORTRAIT_IMAGE}')"` : '';
+
   return `
     <div class="equip-screen">
       ${setBonusBannerHtml(state)}
-      <div class="paperdoll">
-        <div class="paperdoll-col">${PAPERDOLL_LEFT.map((id) => slotIconHtml(state, getSlot(id))).join('')}</div>
-        <div class="paperdoll-character">🧑‍🚀</div>
-        <div class="paperdoll-col">${PAPERDOLL_RIGHT.map((id) => slotIconHtml(state, getSlot(id))).join('')}</div>
+      <div class="equip-top-row">
+        <div class="paperdoll-card" ${portraitStyle}>
+          ${PLAYER_PORTRAIT_IMAGE ? '' : '<div class="paperdoll-placeholder">🧑‍🚀</div>'}
+          <div class="paperdoll-overlay-col paperdoll-overlay-left">${PAPERDOLL_LEFT.map((id) => slotIconHtml(state, getSlot(id))).join('')}</div>
+          <div class="paperdoll-overlay-col paperdoll-overlay-right">${PAPERDOLL_RIGHT.map((id) => slotIconHtml(state, getSlot(id))).join('')}</div>
+        </div>
+        ${equipStatsBoxHtml(state)}
       </div>
-      ${equipStatsBoxHtml(state)}
       <div class="equip-inventory-header">Inventário</div>
       ${elementFilterRowHtml(filterElement)}
       <div class="equip-inventory-grid">${inventoryHtml}</div>
