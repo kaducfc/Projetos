@@ -1680,6 +1680,43 @@ button:disabled {
   padding: 14px;
 }
 
+/* Invasão de Chefes: real mockup art (invasao-banner.png) as the card
+   header instead of the CSS gradient + emoji used by the other events —
+   see invasaoChefesHeaderHtml in ui/render.js. Only the countdown value is
+   overlaid live, positioned over the art's baked-in "TERMINA EM:" box. */
+.event-card-invasion {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.invasion-banner {
+  position: relative;
+  aspect-ratio: 900 / 396;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.invasion-countdown-value {
+  position: absolute;
+  left: 84.5%;
+  top: 39%;
+  transform: translate(-50%, -50%);
+  width: 27%;
+  text-align: center;
+  font-size: clamp(9px, 3.2vw, 14px);
+  font-weight: 800;
+  color: #f3ddb8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
+}
+
+.invasion-toggle {
+  position: absolute;
+  right: 2%;
+  top: 4%;
+}
+
 .trade-card.selected {
   border-color: var(--gold-dark);
   box-shadow: 0 0 0 3px rgba(230, 168, 27, .25), var(--shadow-card);

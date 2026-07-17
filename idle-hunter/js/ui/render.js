@@ -824,7 +824,7 @@ function cacaAprimoradaContentHtml(state) {
     return `
       <div class="event-panel">
         <div class="event-active-badge">🎪 Janela aberta — fecha em ${formatDuration(win.remainingActiveMs)}</div>
-        <h3>Caça Aprimorada</h3>
+        <h3>Invasão de Chefes</h3>
         <p class="event-sub">Alcance o estágio 10 (derrote seu primeiro chefe) para poder participar.</p>
       </div>`;
   }
@@ -832,7 +832,7 @@ function cacaAprimoradaContentHtml(state) {
   return `
     <div class="event-panel">
       <div class="event-active-badge">🎪 Janela aberta — fecha em ${formatDuration(win.remainingActiveMs)}</div>
-      <h3>Caça Aprimorada</h3>
+      <h3>Invasão de Chefes</h3>
       <p class="event-sub">Um chefe aleatório, dentre os que você já alcançou, aparece assim que você entra — e a luta já começa valendo.</p>
       <button class="forge-toggle-btn" data-event-enter>Entrar</button>
     </div>`;
@@ -844,6 +844,34 @@ function cacaAprimoradaStatusLine(state) {
   if (isEventClaimed(state, win.cycleIndex)) return `✅ Concluído · próxima janela em ${formatDuration(win.msUntilNextWindow)}`;
   if (win.active && state.eventEnteredCycle !== win.cycleIndex) return '🎪 Janela aberta!';
   return `Próxima janela em ${formatDuration(win.msUntilNextWindow)}`;
+}
+
+// Countdown shown inside the "TERMINA EM:" box baked into invasao-banner.png
+// (see invasaoChefesHeaderHtml) — time left in the open window if it's open
+// right now, otherwise time until the next window opens.
+function cacaAprimoradaCountdownText(state) {
+  if (state.eventBossHp != null) return 'Em combate';
+  const win = getEventWindow();
+  if (win.active && state.eventEnteredCycle !== win.cycleIndex && !isEventClaimed(state, win.cycleIndex)) {
+    return formatDuration(win.remainingActiveMs);
+  }
+  return formatDuration(win.msUntilNextWindow);
+}
+
+// Test pass: the user supplied a full mockup (invasao-banner.png) for this
+// event's card — title/subtitle/rewards frame/countdown box/Entrar button
+// all baked into the art. Only the countdown value is overlaid live; the
+// baked "ENTRAR" button is decorative for now (not wired), and the real
+// interactive Entrar button + fight state still live in the expandable
+// body below (cacaAprimoradaContentHtml), toggled via the chevron.
+function invasaoChefesHeaderHtml(id, expanded, countdownText, bodyHtml) {
+  return `<div class="event-card event-card-invasion">
+    <div class="invasion-banner" data-toggle-event="${id}" style="background-image: url('assets/ui/invasao-banner.png')">
+      <span class="invasion-countdown-value">${countdownText}</span>
+      <button class="event-card-toggle invasion-toggle" data-toggle-event="${id}">${expanded ? '▲' : '▼'}</button>
+    </div>
+    ${expanded ? `<div class="event-card-body">${bodyHtml}</div>` : ''}
+  </div>`;
 }
 
 function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId, tradeQty) {
@@ -996,7 +1024,7 @@ export function renderEventsTab(state, expandedEvents = new Set(), tradeFromMate
   container.innerHTML = `
     <div class="section-banner">Eventos</div>
     <div class="event-list">
-    ${eventListItemHtml('caca', '🎪', 'Caça Aprimorada', cacaAprimoradaStatusLine(state), expandedEvents.has('caca'), cacaAprimoradaContentHtml(state), 'red')}
+    ${invasaoChefesHeaderHtml('caca', expandedEvents.has('caca'), cacaAprimoradaCountdownText(state), cacaAprimoradaContentHtml(state))}
     ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(state), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty), 'gold')}
     ${eventListItemHtml('torre', '🗼', 'Torre Infinita', towerStatusLine(state), expandedEvents.has('torre'), towerContentHtml(state, towerRunRemainingMs, towerHp, towerMaxHp), 'purple')}
   </div>`;
