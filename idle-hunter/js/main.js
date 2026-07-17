@@ -597,7 +597,7 @@ function wireForgeTabEvents() {
 function enterEvent() {
   const boss = startEvent(state);
   if (!boss) return;
-  showToast(`🎪 Você entrou na Caça Aprimorada! Enfrentando ${boss.name}.`);
+  showToast(`🎪 Você entrou na Invasão de Chefes! Enfrentando ${boss.name}.`);
   renderEventsTabNow();
   renderTopBar(state);
 }

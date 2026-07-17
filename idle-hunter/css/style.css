@@ -1680,10 +1680,13 @@ button:disabled {
   padding: 14px;
 }
 
-/* Invasão de Chefes: real mockup art (invasao-banner.png) as the card
-   header instead of the CSS gradient + emoji used by the other events —
-   see invasaoChefesHeaderHtml in ui/render.js. Only the countdown value is
-   overlaid live, positioned over the art's baked-in "TERMINA EM:" box. */
+/* Invasão de Chefes: real mockup art (invasao-banner.png) as a fixed,
+   non-expandable card — title/subtitle/rewards frame all baked in — see
+   invasaoChefesBannerHtml in ui/render.js. Only the status text (open/
+   closed countdown) and, when open, the "Entrar" button are overlaid live
+   in the art's empty right-hand box. The fight itself, once entered,
+   renders in a separate panel below (invasaoChefesFightPanelHtml), not
+   nested inside this card. */
 .event-card-invasion {
   border: none;
   box-shadow: none;
@@ -1692,29 +1695,40 @@ button:disabled {
 
 .invasion-banner {
   position: relative;
-  aspect-ratio: 900 / 396;
+  aspect-ratio: 900 / 374;
   background-size: 100% 100%;
   background-repeat: no-repeat;
-  cursor: pointer;
 }
 
-.invasion-countdown-value {
+.invasion-status-box {
   position: absolute;
-  left: 84.5%;
-  top: 39%;
+  left: 80%;
+  top: 30%;
   transform: translate(-50%, -50%);
   width: 27%;
   text-align: center;
-  font-size: clamp(9px, 3.2vw, 14px);
+}
+
+.invasion-status-text {
+  font-size: clamp(9px, 3vw, 13px);
   font-weight: 800;
   color: #f3ddb8;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
 }
 
-.invasion-toggle {
+.invasion-enter-btn {
   position: absolute;
-  right: 2%;
-  top: 4%;
+  left: 80%;
+  top: 52%;
+  transform: translateX(-50%);
+  width: 25%;
+  padding: 8px 4px;
+  font-size: clamp(10px, 3vw, 13px);
+  border-radius: 10px;
+  background: var(--grad-gold);
+  border: 2px solid var(--gold-dark);
+  color: #4a2f00;
+  box-shadow: 0 3px 0 var(--gold-dark);
 }
 
 .trade-card.selected {
