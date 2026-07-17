@@ -1,6 +1,12 @@
-import { isBossStage, getBossForStage, pickRandomWeakMonster, getWeakMonster } from '../data/monsters.js';
-import { monsterMaxHp, monsterDamagePerSecond } from './combat.js';
+import { isBossStage, getBossForStage, pickRandomWeakMonster, getWeakMonster, getWeakMonsterGroupForStage } from '../data/monsters.js';
+import { monsterMaxHp, monsterDamagePerSecond, monsterGoldReward } from './combat.js';
 import { getTowerWindow, TOWER_MAX_LEVEL, TOWER_CURRENCY_BASE, TOWER_CURRENCY_PER_LEVEL, TOWER_CLEAR_BONUS } from '../data/events.js';
+
+// End-of-run rewards (see endTowerRun) also include a batch of weak-monster
+// materials — this many rolls, each landing on a random material from the
+// weak-monster band matching how far the run reached (same band used to
+// spawn the run's own weak monsters, via resolveWeakPowerStage below).
+const TOWER_MATERIAL_DROPS = 20;
 
 /// Level 20*k -> real boss stage 10*k (Chispim@20, Solkaiser@40, ...,
 /// Bahamorth@200); every other level -> the real stage "in between" two
@@ -116,17 +122,52 @@ export function computeTowerReward(level, cleared200) {
   return cleared200 ? base + TOWER_CLEAR_BONUS : base;
 }
 
-/// Ends the run (death, timeout, or a level-200 clear), grants the reward
-/// and resets the persisted run state so the next "Entrar" starts clean.
-/// Returns the reward summary for the toast/UI.
+/// Gold reward: as if the player had just killed TOWER_MATERIAL_DROPS weak
+/// monsters at the reached level's power stage — same scaling curve as
+/// real combat (monsterGoldReward), just a lump sum instead of per-kill.
+function computeTowerGoldReward(level) {
+  const stage = resolveWeakPowerStage(towerPowerStage(level));
+  return Math.round(monsterGoldReward(stage, false) * TOWER_MATERIAL_DROPS);
+}
+
+/// TOWER_MATERIAL_DROPS independent rolls, each landing on a random
+/// material from the weak-monster band matching the reached level — same
+/// band the run itself was drawing weak monsters from.
+function rollTowerMaterials(level) {
+  const stage = resolveWeakPowerStage(towerPowerStage(level));
+  const group = getWeakMonsterGroupForStage(stage);
+  const drops = [];
+  for (let i = 0; i < TOWER_MATERIAL_DROPS; i++) {
+    const monster = group.monsters[Math.floor(Math.random() * group.monsters.length)];
+    drops.push(monster.material);
+  }
+  return drops;
+}
+
+/// Ends the run (death, timeout, or a level-200 clear), grants the rewards
+/// (event currency, gold, and a batch of weak-monster materials — all
+/// scaled to how far the run reached) and resets the persisted run state
+/// so the next "Entrar" starts clean. Returns the reward summary for the
+/// modal/UI.
 export function endTowerRun(state, cleared200 = false) {
   const level = state.towerLevel;
   state.towerBestLevel = Math.max(state.towerBestLevel, level);
   const currency = computeTowerReward(level, cleared200);
+  const goldGained = computeTowerGoldReward(level);
+  const materialDrops = rollTowerMaterials(level);
+
+  const gained = {};
+  for (const mat of materialDrops) {
+    state.materials[mat.id] = (state.materials[mat.id] || 0) + 1;
+    if (!gained[mat.id]) gained[mat.id] = { qty: 0, emoji: mat.emoji, name: mat.name, image: mat.image || null };
+    gained[mat.id].qty += 1;
+  }
+
   state.eventCurrency += currency;
+  state.gold += goldGained;
   state.towerRunActive = false;
   state.towerLevel = 1;
   state.towerMonsterHp = null;
   state.towerWeakMonsterId = null;
-  return { level, cleared200, currency };
+  return { level, cleared200, currency, goldGained, gained };
 }

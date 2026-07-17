@@ -672,15 +672,26 @@ function enterTower() {
 }
 
 function finishTowerRun(cleared200) {
-  const { level, currency } = endTowerRun(state, cleared200);
+  const { level, currency, goldGained, gained } = endTowerRun(state, cleared200);
   towerDeadline = null;
   towerHp = null;
-  const msg = cleared200
-    ? `👑 Torre conquistada! Você derrotou o chefe do nível 200 e ganhou +${formatNumber(currency)} ${EVENT_ICON}`
-    : `🗼 Torre encerrada no nível ${level}. +${formatNumber(currency)} ${EVENT_ICON}`;
-  showToast(msg);
+  showTowerRewardModal(level, cleared200, currency, goldGained, gained);
   renderEventsTabNow();
   renderTopBar(state);
+  renderInventoryAndForge(); // Materiais may be showing, and just changed
+}
+
+function showTowerRewardModal(level, cleared200, currency, goldGained, gained) {
+  const lootLines = Object.values(gained)
+    .map((g) => `<div class="offline-item-lines">+${g.qty} <span class="icon">${iconMarkup(g.image, g.emoji, g.name)}</span> ${g.name}</div>`)
+    .join('');
+  const title = cleared200 ? '👑 Torre conquistada!' : `🗼 Torre encerrada no nível ${level}`;
+  showModal(title, `
+    <p><strong>Recompensas:</strong></p>
+    <p class="offline-item-lines">+${formatNumber(goldGained)} ${GOLD_ICON} Ouro</p>
+    ${lootLines}
+    <p class="offline-item-lines">+${formatNumber(currency)} ${EVENT_ICON} Moeda de Evento</p>
+  `);
 }
 
 function onClickTowerMonster() {

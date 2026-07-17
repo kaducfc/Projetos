@@ -1663,6 +1663,23 @@ button:disabled {
   box-shadow: 0 3px 0 var(--gold-dark);
 }
 
+/* Preview icons dropped into the banner art's 3 empty "RECOMPENSAS"
+   squares — positions measured against the source mockup (Evento2.png/
+   Evento3.png, both 1945x809), same for both banners since they share the
+   same template. */
+.invasion-reward-icon {
+  position: absolute;
+  top: 70.2%;
+  width: 9%;
+  height: auto;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .4));
+}
+
+.invasion-reward-1 { left: 19.3%; }
+.invasion-reward-2 { left: 32.5%; }
+.invasion-reward-3 { left: 45.6%; }
+
 .event-panel {
   background: var(--grad-neutral);
   border: 2px solid var(--border);

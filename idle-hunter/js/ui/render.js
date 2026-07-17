@@ -722,11 +722,27 @@ function invasaoChefesCanEnter(state) {
   return BOSSES.some((b) => b.stage <= state.maxStage);
 }
 
+// The 3 empty "RECOMPENSAS" squares baked into the banner art are just a
+// preview row (purely illustrative — real rewards are rolled/granted on
+// victory, same as before), overlaid with 3 real icons positioned over
+// the art's squares.
+function rewardPreviewIconsHtml(icons) {
+  return icons
+    .map((src, i) => `<img class="invasion-reward-icon invasion-reward-${i + 1}" src="${src}" alt="">`)
+    .join('');
+}
+
 function invasaoChefesBannerHtml(state) {
   const { label, value } = invasaoChefesStatusParts(state);
   const canEnter = invasaoChefesCanEnter(state);
+  const rewardIcons = rewardPreviewIconsHtml([
+    'assets/crystals/leviargon.png',
+    'assets/cards/leviargon.png',
+    'assets/ui/currency-event.png',
+  ]);
   return `<div class="event-card event-card-invasion">
     <div class="invasion-banner" style="background-image: url('assets/ui/invasao-banner.png')">
+      ${rewardIcons}
       <div class="invasion-status-box">
         <div class="invasion-status-label">${label}</div>
         <div class="invasion-status-value">${value}</div>
@@ -779,8 +795,14 @@ function torreProvacoesCanEnter(state) {
 function torreProvacoesBannerHtml(state) {
   const { label, value } = torreProvacoesStatusParts(state);
   const canEnter = torreProvacoesCanEnter(state);
+  const rewardIcons = rewardPreviewIconsHtml([
+    'assets/grunco/hide.png',
+    'assets/ui/currency-gold.png',
+    'assets/ui/currency-event.png',
+  ]);
   return `<div class="event-card event-card-invasion">
     <div class="invasion-banner" style="background-image: url('assets/ui/torre-banner.png')">
+      ${rewardIcons}
       <div class="invasion-status-box">
         <div class="invasion-status-label">${label}</div>
         <div class="invasion-status-value">${value}</div>
