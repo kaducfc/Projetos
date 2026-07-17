@@ -154,7 +154,7 @@ button {
   font-family: inherit;
   cursor: pointer;
   border: none;
-  border-radius: 14px;
+  border-radius: 10px;
   color: var(--text);
   background: var(--grad-neutral);
   box-shadow: var(--shadow-btn);
@@ -287,7 +287,7 @@ button:disabled {
   background: var(--grad-gold);
   color: #4a2e00;
   box-shadow: 0 3px 0 var(--gold-dark);
-  border-radius: 999px;
+  border-radius: 10px;
 }
 
 /* Small scenic backdrop behind the monster — sky fading into a hint of
@@ -871,11 +871,30 @@ button:disabled {
 
 .paperdoll-character {
   flex: 1;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 72px;
   filter: drop-shadow(0 6px 6px rgba(74, 47, 20, .3));
+}
+
+/* Small stone-pedestal hint under the character (art TBD — see the plain
+   emoji placeholder above), same idea as the reference mockup's circular
+   platform. */
+.paperdoll-character::after {
+  content: "";
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 68px;
+  height: 18px;
+  background: linear-gradient(180deg, #b9b9c2, #8b8b96);
+  border: 2px solid #6f6f7a;
+  border-radius: 50%;
+  box-shadow: 0 3px 0 #5a5a63;
+  z-index: -1;
 }
 
 .equip-stats-box {
@@ -920,8 +939,8 @@ button:disabled {
   position: relative;
   aspect-ratio: 1;
   width: 100%;
-  border-radius: 18px;
-  background: var(--grad-neutral);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #332c50, #1c1830);
   border: 3px solid var(--border);
   box-shadow: var(--shadow-card);
   display: flex;
@@ -932,13 +951,11 @@ button:disabled {
 
 .equip-slot-icon .icon {
   font-size: 34px;
-  filter: drop-shadow(0 2px 2px rgba(74, 47, 20, .25));
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
 }
 
 .equip-slot-icon.filled {
-  border-color: var(--gold);
-  background: linear-gradient(180deg, #fff3d6, #ffe49a);
-  box-shadow: 0 0 0 3px rgba(245, 168, 0, .25), var(--shadow-card);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .12), var(--shadow-card);
 }
 
 .equip-slot-icon.empty .icon {
@@ -1007,8 +1024,8 @@ button:disabled {
 .inventory-tile {
   position: relative;
   aspect-ratio: 1;
-  border-radius: 14px;
-  background: var(--grad-neutral);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #332c50, #1c1830);
   border: 3px solid var(--border);
   box-shadow: var(--shadow-card);
   display: flex;
@@ -1019,12 +1036,11 @@ button:disabled {
 
 .inventory-tile .icon {
   font-size: 24px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
 }
 
 .inventory-tile.equipped {
-  border-color: var(--green);
-  background: linear-gradient(180deg, #e3f7e6, #c7f0cf);
-  box-shadow: 0 0 0 3px rgba(47, 168, 79, .2), var(--shadow-card);
+  box-shadow: 0 0 0 2px var(--green), var(--shadow-card);
 }
 
 /* Item detail popup (shown via the shared #modal-overlay) */
@@ -1337,7 +1353,7 @@ button:disabled {
   font-size: 11px;
   font-weight: 700;
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 10px;
   background: var(--grad-neutral);
   border: 2px solid var(--border);
   color: var(--text-dim);
