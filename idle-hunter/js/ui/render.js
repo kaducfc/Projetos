@@ -769,12 +769,12 @@ function eventListItemHtml(id, icon, name, statusLine, expanded, bodyHtml, theme
 // the fight itself renders in a separate panel below the banner
 // (invasaoChefesFightPanelHtml) — not nested inside/expanding from the
 // banner card, per the user's "outra janela" request.
-function invasaoChefesStatusText(state) {
+function invasaoChefesStatusParts(state) {
   const win = getEventWindow();
   if (win.active && state.eventEnteredCycle !== win.cycleIndex && !isEventClaimed(state, win.cycleIndex)) {
-    return `Fecha em: ${formatDuration(win.remainingActiveMs)}`;
+    return { label: 'Fecha em:', value: formatDuration(win.remainingActiveMs) };
   }
-  return `Abre em: ${formatDuration(win.msUntilNextWindow)}`;
+  return { label: 'Abre em:', value: formatDuration(win.msUntilNextWindow) };
 }
 
 // Whether the "Entrar" button should show below the status box: window
@@ -791,11 +791,14 @@ function invasaoChefesCanEnter(state) {
 }
 
 function invasaoChefesBannerHtml(state) {
-  const statusText = invasaoChefesStatusText(state);
+  const { label, value } = invasaoChefesStatusParts(state);
   const canEnter = invasaoChefesCanEnter(state);
   return `<div class="event-card event-card-invasion">
     <div class="invasion-banner" style="background-image: url('assets/ui/invasao-banner.png')">
-      <div class="invasion-status-box"><span class="invasion-status-text">${statusText}</span></div>
+      <div class="invasion-status-box">
+        <div class="invasion-status-label">${label}</div>
+        <div class="invasion-status-value">${value}</div>
+      </div>
       ${canEnter ? `<button class="invasion-enter-btn" data-event-enter>Entrar</button>` : ''}
     </div>
   </div>`;
