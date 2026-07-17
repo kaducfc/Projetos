@@ -7,8 +7,8 @@ import { getEquippedEntry } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
 import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
-import { getEventWindow, TRADE_COST, TRADE_YIELD, getTradeUnlockCost, getTradeCycleInfo, getTowerWindow, TOWER_MAX_LEVEL } from '../data/events.js';
-import { isEventClaimed, computeEventBossMaxHp, isTradeGroupUnlocked, computeTradeReceiveQty } from '../systems/events.js';
+import { getEventWindow, getTowerWindow, TOWER_MAX_LEVEL } from '../data/events.js';
+import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
 import { getTowerMonster } from '../systems/tower.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
@@ -726,41 +726,16 @@ function formatDuration(ms) {
 }
 
 // ---------------------------------------------------------------
-// Events tab: a list of independent, individually-collapsible events (same
-// collapse/expand treatment as the Forja boss groups). Each one owns its
-// own rotation clock (see data/events.js) — there is no shared "the event
-// tab" state anymore, just two unrelated event cards.
+// Events tab: fixed (non-collapsible) banner cards, each owning its own
+// rotation clock (see data/events.js). "Mercador" was removed entirely.
 //
-// "Caça Aprimorada": a random-eligible-boss "Entrar" event, entered once
-// per EVENT_ACTIVE_MS window (see data/events.js + systems/events.js) —
-// once entered the fight has no clock of its own, so there's no transient
-// "time left" state to thread through here (unlike the Torre Infinita).
-//
-// "Mercador" is a recurring event (new one every TRADE_CYCLE_MS, see
-// getTradeCycleInfo) that re-locks every WEAK_MONSTER_GROUPS band each
-// time. The player spends Moeda de Evento to unlock whichever band(s) they
-// want for the current event, then trades within it until the next one
-// starts. Every band is listed up front, collapsed by default
-// (`expandedTradeGroups`, keyed by group.startStage — main.js-owned
-// transient UI state, same pattern as the Forjar boss list).
-// `tradeFromMaterialId` is the material picked as the trade-in and
-// `tradeQty` how much of it to spend this trade (both main.js-owned
-// transient UI state) — tradeFromMaterialId null means nothing selected.
+// "Invasão de Chefes" and "Torre das Provações" share the same format —
+// real mockup art as a fixed banner (title/subtitle/rewards frame baked
+// in), an "Abre em:"/"Fecha em:" status overlaid on the art's empty box,
+// and an "Entrar" button that appears there when the window is open. Once
+// entered, the fight/run itself renders in a separate panel below the
+// banner, not nested inside/expanding from it.
 // ---------------------------------------------------------------
-
-function eventListItemHtml(id, icon, name, statusLine, expanded, bodyHtml, theme) {
-  return `<div class="event-card event-card-${theme}">
-    <div class="event-card-header" data-toggle-event="${id}">
-      <span class="event-card-icon">${icon}</span>
-      <div class="event-card-heading">
-        <div class="event-card-name">${name}</div>
-        <div class="event-card-status">${statusLine}</div>
-      </div>
-      <button class="event-card-toggle" data-toggle-event="${id}">${expanded ? '▲' : '▼'}</button>
-    </div>
-    ${expanded ? `<div class="event-card-body">${bodyHtml}</div>` : ''}
-  </div>`;
-}
 
 // Invasão de Chefes ("Caça Aprimorada" under the hood, see systems/events.js
 // for the canEnterEvent/startEvent lifecycle): a fixed, non-expandable
@@ -824,160 +799,71 @@ function invasaoChefesFightPanelHtml(state) {
     </div>`;
 }
 
-function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId, tradeQty) {
-  const have = state.materials[mat.id] || 0;
-  const isFrom = tradeFromMaterialId === mat.id;
-  const canBeFrom = have >= TRADE_COST;
-
-  if (tradeFromMaterialId == null) {
-    return `<div class="material-card trade-card">
-      <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
-      <div class="name">${mat.name}</div>
-      <div class="qty">${formatNumber(have)}</div>
-      <button class="forge-toggle-btn" data-trade-select="${mat.id}" ${canBeFrom ? '' : 'disabled'}>Trocar</button>
-    </div>`;
+// Torre das Provações ("Torre Infinita" under the hood, see data/events.js
+// for the window timing and systems/tower.js for level->monster resolution
+// + run lifecycle) — same fixed-banner format as Invasão de Chefes (see
+// torre-banner.png), just its own art/theme. The active-run view (once
+// entered) renders separately, below the banner.
+function torreProvacoesStatusParts(state) {
+  const win = getTowerWindow();
+  if (win.active && state.towerEnteredCycle !== win.cycleIndex && !state.towerRunActive) {
+    return { label: 'Fecha em:', value: formatDuration(win.remainingActiveMs) };
   }
-
-  if (isFrom) {
-    const max = Math.max(TRADE_COST, Math.floor(have / TRADE_COST) * TRADE_COST);
-    const received = computeTradeReceiveQty(tradeQty);
-    return `<div class="material-card trade-card selected">
-      <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
-      <div class="name">${mat.name}</div>
-      <div class="qty">${formatNumber(have)}</div>
-      <div class="trade-qty-control">
-        <button class="trade-qty-btn" data-trade-qty-dec ${tradeQty <= TRADE_COST ? 'disabled' : ''}>−</button>
-        <input type="number" class="trade-qty-input" data-trade-qty-input value="${tradeQty}" min="${TRADE_COST}" max="${max}" step="${TRADE_COST}">
-        <button class="trade-qty-btn" data-trade-qty-inc ${tradeQty >= max ? 'disabled' : ''}>＋</button>
-      </div>
-      <div class="trade-qty-preview">recebe <strong>${received}</strong></div>
-      <button class="forge-toggle-btn" data-trade-cancel>Cancelar</button>
-    </div>`;
-  }
-
-  const received = computeTradeReceiveQty(tradeQty);
-  return `<div class="material-card trade-card">
-    <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
-    <div class="name">${mat.name}</div>
-    <div class="qty">${formatNumber(have)}</div>
-    <button class="forge-toggle-btn" data-trade-target="${mat.id}" ${received > 0 ? '' : 'disabled'}>Receber ${received}</button>
-  </div>`;
+  return { label: 'Abre em:', value: formatDuration(win.msUntilNextWindow) };
 }
 
-function tradeGroupHtml(state, group, expanded, tradeFromMaterialId, tradeQty) {
-  const unlocked = isTradeGroupUnlocked(state, group);
-  const header = `<h3><span class="icon">🧺</span> Estágio ${group.startStage}–${group.endStage}</h3>`;
+function torreProvacoesCanEnter(state) {
+  if (state.towerRunActive) return false;
+  const win = getTowerWindow();
+  if (!win.active) return false;
+  return state.towerEnteredCycle !== win.cycleIndex;
+}
 
-  if (!unlocked) {
-    const cost = getTradeUnlockCost(group);
-    const affordable = state.eventCurrency >= cost;
-    return `<div class="family-group">
-      <div class="family-group-header">
-        ${header}
-        <span style="color:var(--text-dim); font-size:11px;">🔒</span>
+function torreProvacoesBannerHtml(state) {
+  const { label, value } = torreProvacoesStatusParts(state);
+  const canEnter = torreProvacoesCanEnter(state);
+  return `<div class="event-card event-card-invasion">
+    <div class="invasion-banner" style="background-image: url('assets/ui/torre-banner.png')">
+      <div class="invasion-status-box">
+        <div class="invasion-status-label">${label}</div>
+        <div class="invasion-status-value">${value}</div>
       </div>
-      <button class="forge-toggle-btn" data-unlock-trade-group="${group.startStage}" ${affordable ? '' : 'disabled'}>🎫 Desbloquear (${formatNumber(cost)})</button>
-    </div>`;
-  }
-
-  return `<div class="family-group">
-    <div class="family-group-header">
-      ${header}
-      <button class="forge-toggle-btn" data-toggle-trade-group="${group.startStage}">${expanded ? '▲ Recolher' : '▼ Expandir'}</button>
+      ${canEnter ? `<button class="invasion-enter-btn" data-tower-enter>Entrar</button>` : ''}
     </div>
-    ${expanded ? `<div class="material-grid">${group.monsters.map((m) => tradeMaterialCardHtml(state, group, m.material, tradeFromMaterialId, tradeQty)).join('')}</div>` : ''}
   </div>`;
 }
 
-function mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty) {
-  const { msUntilNextCycle } = getTradeCycleInfo();
+function torreProvacoesFightPanelHtml(state, runRemainingMs, towerHp, towerMaxHp) {
+  const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
+  const hp = towerHp ?? monster.maxHp;
+  const maxHp = towerMaxHp ?? monster.maxHp;
+  const pct = maxHp > 0 ? Math.max(0, Math.min(100, (state.towerMonsterHp / maxHp) * 100)) : 0;
+  const hpPlayerPct = maxHp > 0 && towerMaxHp > 0 ? Math.max(0, Math.min(100, (hp / towerMaxHp) * 100)) : 0;
   return `
-    <div class="event-panel">
-      <div class="event-active-badge">🧺 Novo evento em ${formatDuration(msUntilNextCycle)}</div>
-      <p class="event-sub">Desbloqueie uma categoria e troque materiais (${TRADE_COST}→${TRADE_YIELD}) até o evento acabar.</p>
-      ${WEAK_MONSTER_GROUPS.map((g) => tradeGroupHtml(state, g, expandedTradeGroups.has(g.startStage), tradeFromMaterialId, tradeQty)).join('')}
+    <div class="event-card">
+      <div class="event-card-body">
+        <div class="event-panel">
+          <div class="event-active-badge">🗼 Nível ${state.towerLevel}/${TOWER_MAX_LEVEL} — ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
+          <h3>${monster.name} ${monster.isBoss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}</h3>
+          <button id="tower-monster-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(monster.image, monster.emoji, monster.name)}</button>
+          <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.towerMonsterHp)} / ${formatNumber(maxHp)}</span></div>
+          <p class="event-sub">Sua vida na torre</p>
+          <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${hpPlayerPct}%; background:var(--danger, #e05656);"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(towerMaxHp)}</span></div>
+          <p class="event-reward-info">🎁 Recompensa ao final: 🎫 Moeda de Evento, conforme o nível alcançado.</p>
+        </div>
+      </div>
     </div>`;
 }
 
-function mercadorStatusLine(state) {
-  const { msUntilNextCycle } = getTradeCycleInfo();
-  const unlockedCount = WEAK_MONSTER_GROUPS.filter((g) => isTradeGroupUnlocked(state, g)).length;
-  return `${unlockedCount}/${WEAK_MONSTER_GROUPS.length} aberto · novo evento em ${formatDuration(msUntilNextCycle)}`;
-}
-
-// ---------------------------------------------------------------
-// Torre Infinita — see data/events.js (window/run timing constants) and
-// systems/tower.js (level->monster resolution, run lifecycle). Unlike the
-// other two events this one has three distinct states to render: window
-// closed, window open but not yet entered, and an active run.
-// ---------------------------------------------------------------
-
-function towerContentHtml(state, runRemainingMs, towerHp, towerMaxHp) {
-  if (state.towerRunActive) {
-    const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
-    const hp = towerHp ?? monster.maxHp;
-    const maxHp = towerMaxHp ?? monster.maxHp;
-    const pct = maxHp > 0 ? Math.max(0, Math.min(100, (state.towerMonsterHp / maxHp) * 100)) : 0;
-    const hpPlayerPct = maxHp > 0 && towerMaxHp > 0 ? Math.max(0, Math.min(100, (hp / towerMaxHp) * 100)) : 0;
-    return `
-      <div class="event-panel">
-        <div class="event-active-badge">🗼 Nível ${state.towerLevel}/${TOWER_MAX_LEVEL} — ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
-        <h3>${monster.name} ${monster.isBoss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}</h3>
-        <button id="tower-monster-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(monster.image, monster.emoji, monster.name)}</button>
-        <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.towerMonsterHp)} / ${formatNumber(maxHp)}</span></div>
-        <p class="event-sub">Sua vida na torre</p>
-        <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${hpPlayerPct}%; background:var(--danger, #e05656);"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(towerMaxHp)}</span></div>
-        <p class="event-reward-info">🎁 Recompensa ao final: 🎫 Moeda de Evento, conforme o nível alcançado.</p>
-      </div>`;
-  }
-
-  const win = getTowerWindow();
-  if (!win.active) {
-    return `
-      <div class="event-panel">
-        <div class="event-icon dim">🗼</div>
-        <h3>Nenhuma torre disponível agora</h3>
-        <p class="event-sub">Volte quando a próxima janela abrir.</p>
-        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
-      </div>`;
-  }
-
-  if (state.towerEnteredCycle === win.cycleIndex) {
-    return `
-      <div class="event-panel">
-        <div class="event-icon dim">🗼</div>
-        <h3>Você já usou esta janela</h3>
-        <p class="event-sub">Melhor nível alcançado: ${state.towerBestLevel}/${TOWER_MAX_LEVEL}.</p>
-        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
-      </div>`;
-  }
-
-  return `
-    <div class="event-panel">
-      <div class="event-active-badge">🗼 Janela aberta — fecha em ${formatDuration(win.remainingActiveMs)}</div>
-      <h3>Torre Infinita</h3>
-      <p class="event-sub">Suba o máximo possível em 5 minutos contínuos. A torre acaba se você morrer, o tempo zerar, ou você derrotar o chefe do nível 200.</p>
-      <p class="event-sub">Melhor nível alcançado: ${state.towerBestLevel}/${TOWER_MAX_LEVEL}.</p>
-      <button class="forge-toggle-btn" data-tower-enter>Entrar</button>
-    </div>`;
-}
-
-function towerStatusLine(state) {
-  if (state.towerRunActive) return `🗼 Em andamento · nível ${state.towerLevel}`;
-  const win = getTowerWindow();
-  if (win.active && state.towerEnteredCycle !== win.cycleIndex) return '🗼 Janela aberta!';
-  return `Próxima janela em ${formatDuration(win.msUntilNextWindow)}`;
-}
-
-export function renderEventsTab(state, expandedEvents = new Set(), tradeFromMaterialId = null, expandedTradeGroups = new Set(), tradeQty = TRADE_COST, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null) {
+export function renderEventsTab(state, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `
     <div class="section-banner">Eventos</div>
     <div class="event-list">
     ${invasaoChefesBannerHtml(state)}
     ${state.eventBossHp != null ? invasaoChefesFightPanelHtml(state) : ''}
-    ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(state), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty), 'gold')}
-    ${eventListItemHtml('torre', '🗼', 'Torre Infinita', towerStatusLine(state), expandedEvents.has('torre'), towerContentHtml(state, towerRunRemainingMs, towerHp, towerMaxHp), 'purple')}
+    ${torreProvacoesBannerHtml(state)}
+    ${state.towerRunActive ? torreProvacoesFightPanelHtml(state, towerRunRemainingMs, towerHp, towerMaxHp) : ''}
   </div>`;
 }
 

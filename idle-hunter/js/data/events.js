@@ -43,33 +43,6 @@ export function getEventWindow(now = Date.now()) {
 }
 
 // ---------------------------------------------------------------------
-// "Mercador" — every WEAK_MONSTER_GROUPS band (see data/monsters.js — 5
-// elemental materials per band) is always visible, but starts locked. A new
-// event starts every TRADE_CYCLE_MS (like the boss event above, always-on,
-// derived purely from wall-clock time) and re-locks every band — the
-// player spends Moeda de Evento to unlock whichever band(s) they want for
-// *this* event, same as before. Cost is intentionally low (see
-// TRADE_UNLOCK_BASE_COST) since it only buys access until the next cycle,
-// not forever; it still climbs with the band's stage.
-// ---------------------------------------------------------------------
-export const TRADE_COST = 2;
-export const TRADE_YIELD = 1;
-
-export const TRADE_CYCLE_MS = 30 * 60 * 1000;
-export const TRADE_UNLOCK_BASE_COST = 5;
-export const TRADE_UNLOCK_COST_PER_STAGE = 0.4;
-
-export function getTradeUnlockCost(group) {
-  return Math.round(TRADE_UNLOCK_BASE_COST + group.startStage * TRADE_UNLOCK_COST_PER_STAGE);
-}
-
-export function getTradeCycleInfo(now = Date.now()) {
-  const cycleIndex = Math.floor(now / TRADE_CYCLE_MS);
-  const cycleStart = cycleIndex * TRADE_CYCLE_MS;
-  return { cycleIndex, msUntilNextCycle: cycleStart + TRADE_CYCLE_MS - now };
-}
-
-// ---------------------------------------------------------------------
 // "Torre Infinita" — every TOWER_CYCLE_MS a fresh window opens, staying
 // open (i.e. clickable "Entrar") for TOWER_ACTIVE_MS. Missing that window
 // means waiting for the next one (see canEnterTower in systems/tower.js,

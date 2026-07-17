@@ -52,13 +52,6 @@ export function createDefaultState() {
     eventClaimedCycle: null,
     eventWins: 0,
 
-    // Mercador: startStage -> the trade-cycle index (see getTradeCycleInfo
-    // in data/events.js) it was unlocked for. A band counts as unlocked
-    // only while its stored cycle index still matches the current one —
-    // once the event rotates to a new cycle, every band re-locks on its
-    // own without needing any explicit reset here.
-    tradeUnlocks: {},
-
     // Torre Infinita (see data/events.js + systems/tower.js): a single
     // continuous run through 200 levels, entered once per TOWER_ACTIVE_MS
     // window. towerEnteredCycle blocks a second entry within that same
