@@ -167,7 +167,8 @@ const ALL_SLOT_IDS = ['helmet', 'armor', 'weapon', 'pants', 'gloves', 'boots'];
 // twice before.
 export function renderInventoryTab(state, filterElement = null) {
   const container = document.getElementById('tab-inventory');
-  container.innerHTML = `<div class="section-banner">Inventário</div>` + equipRingContentHtml(state, filterElement);
+  const banner = `<img class="equip-banner-img" src="assets/ui/equip-banner.png" alt="Equipamentos">`;
+  container.innerHTML = banner + equipRingContentHtml(state, filterElement);
 }
 
 function elementFilterRowHtml(filterElement) {
