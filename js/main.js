@@ -7,7 +7,7 @@ import { equipItem, unequipSlot } from './systems/equipment.js';
 import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES } from './systems/crafting.js';
 import { getItem } from './data/items.js';
 import { buyUpgrade } from './systems/upgrades.js';
-import { computeOfflineProgress, applyOfflineProgress } from './systems/offline.js';
+import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
 import { TRADE_COST, getTowerWindow, TOWER_RUN_DURATION_MS } from './data/events.js';
 import { applyEventDamage, claimEventVictory, canTrade, performTrade, unlockTradeGroup, computeTradeReceiveQty, startEvent } from './systems/events.js';
@@ -1001,7 +1001,7 @@ function showOfflineProgressIfAny() {
 
   showModal('Bem-vindo de volta!', `
     <p>Você ficou fora por <strong>${timeStr}</strong> (máximo 8h de recompensa offline).</p>
-    <p>Seu personagem continuou lutando sozinho, a 60% de eficiência, e conseguiu:</p>
+    <p>Seu personagem continuou lutando sozinho, a ${Math.round(OFFLINE_EFFICIENCY * 100)}% de eficiência, e conseguiu:</p>
     <p>💀 ${formatNumber(progress.kills)} monstros derrotados<br>
        💰 +${formatNumber(progress.goldGained)} ouro</p>
     ${itemsHtml}
