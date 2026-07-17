@@ -4,16 +4,15 @@ import { pickRandomWeakMonster, isBossStage, BOSS_INTERVAL } from '../data/monst
 import { recordCardDiscovered } from './cards.js';
 
 export const MAX_OFFLINE_SECONDS = 8 * 60 * 60; // cap idle gains at 8 hours
-export const OFFLINE_EFFICIENCY = 0.6; // offline kills/drops run at 60% of online output
+export const OFFLINE_EFFICIENCY = 0.7; // offline kills/drops run at 70% of online output
 const SIMULATION_CAP = 2000; // roll drops for at most this many kills, then scale up
 
 // How far back (below the reference stage) the "recent" band reaches — see
-// pickOfflineStage() below. Named for the design doc's wording ("últimos 10
-// estágios"), even though the resulting band is 11 stages wide (inclusive
-// of the reference stage itself): maxStage 41 -> reference 40 -> band 30-40.
-const RECENT_BAND_SPAN = 10;
+// pickOfflineStage() below. The resulting band is inclusive of the
+// reference stage itself: maxStage 41 -> reference 40 -> band 20-40.
+const RECENT_BAND_SPAN = 20;
 const RECENT_BAND_SHARE = 0.8; // 80% of kills land in the recent band
-const BOSS_STAGE_SHARE = 0.5; // half of kills are rolled against a boss stage
+const BOSS_STAGE_SHARE = 0.3; // 30% of kills are rolled against a boss stage, 70% weak
 
 function randomBossStageIn(lo, hi) {
   const firstBoss = Math.ceil(lo / BOSS_INTERVAL) * BOSS_INTERVAL;
@@ -38,12 +37,12 @@ function randomWeakStageIn(lo, hi) {
 
 /// Offline kills aren't all rolled against the player's current stage —
 /// they're spread across the player's whole climb so far, weighted toward
-/// recent progress: 80% land in the last ~10 stages below (and including)
+/// recent progress: 80% land in the last ~20 stages below (and including)
 /// the reference stage, the other 20% spread uniformly across every stage
-/// from 1 up to the reference stage. Independently of that, half of all
-/// kills are rolled against a boss stage and half against a weak-monster
-/// stage within whichever range got picked (falling back to whichever kind
-/// the range actually has, for narrow low-stage ranges with no boss in them).
+/// from 1 up to the reference stage. Independently of that, 30% of kills
+/// are rolled against a boss stage and 70% against a weak-monster stage
+/// within whichever range got picked (falling back to whichever kind the
+/// range actually has, for narrow low-stage ranges with no boss in them).
 function pickOfflineStage(referenceStage) {
   const bandStart = Math.max(1, referenceStage - RECENT_BAND_SPAN);
   const [lo, hi] = Math.random() < RECENT_BAND_SHARE
