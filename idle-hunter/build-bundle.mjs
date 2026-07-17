@@ -55,19 +55,24 @@ let jsBundle = MODULE_ORDER.map((rel) => {
   return `\n// ---- ${rel} ----\n` + stripModuleSyntax(src, rel);
 }).join('\n');
 
-// Inline every asset path literal ('assets/...') referenced in the JS as a
+const css = readFileSync(path.join(ROOT, 'css/style.css'), 'utf8');
+let html = readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+
+// Inline every asset path literal ('assets/...') referenced in the JS or in
+// the static HTML (e.g. the bottom-nav <img src="assets/ui/nav/...">) as a
 // base64 data URI, so the published artifact has no external file deps.
-const assetRefs = new Set([...jsBundle.matchAll(/['"](assets\/[^'"]+\.(?:png|jpe?g|webp))['"]/g)].map((m) => m[1]));
+const assetRefs = new Set([
+  ...jsBundle.matchAll(/['"](assets\/[^'"]+\.(?:png|jpe?g|webp))['"]/g),
+  ...html.matchAll(/['"](assets\/[^'"]+\.(?:png|jpe?g|webp))['"]/g),
+].map((m) => m[1]));
 const MIME = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp' };
 for (const rel of assetRefs) {
   const ext = rel.split('.').pop().toLowerCase();
   const data = readFileSync(path.join(ROOT, rel));
   const dataUri = `data:${MIME[ext]};base64,${data.toString('base64')}`;
   jsBundle = jsBundle.split(`'${rel}'`).join(`'${dataUri}'`).split(`"${rel}"`).join(`"${dataUri}"`);
+  html = html.split(`'${rel}'`).join(`'${dataUri}'`).split(`"${rel}"`).join(`"${dataUri}"`);
 }
-
-const css = readFileSync(path.join(ROOT, 'css/style.css'), 'utf8');
-let html = readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 
 html = html.replace(/<link rel="stylesheet" href="css\/style\.css" \/>/, `<style>\n${css}\n</style>`);
 html = html.replace(/<script type="module" src="js\/main\.js"><\/script>/, `<script type="module">\n${jsBundle}\n</script>`);
