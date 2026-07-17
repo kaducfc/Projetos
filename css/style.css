@@ -44,6 +44,39 @@
   --shadow-btn: 0 3px 0 rgba(120, 76, 24, .4), 0 5px 10px rgba(74, 47, 20, .18);
   --shadow-card: 0 3px 0 rgba(184, 140, 80, .3), 0 4px 10px rgba(74, 47, 20, .14);
   --shadow-panel: 0 10px 24px rgba(38, 65, 90, .28);
+
+  /* ---- Reformulação visual (mockups mobile) ---- */
+  /* Deep-navy "banner/chrome" theme: top bar, section title ribbons,
+     bottom nav, and event/card frames all key off this, layered on top of
+     the existing parchment panels (which stay as the readable content
+     surface — the mockups use the same cream/tan for their inner panels). */
+  --navy-top: #2f7fd6;
+  --navy: #1f5fa8;
+  --navy-deep: #123361;
+  --navy-deepest: #0b1f3d;
+  --navy-border: #0a2a52;
+
+  --rarity-c: #5a8f6b;
+  --rarity-c-dark: #3d6b4c;
+  --rarity-b: #3f8fd1;
+  --rarity-b-dark: #2a6699;
+  --rarity-a: #9b5de5;
+  --rarity-a-dark: #6e35b8;
+  --rarity-s: #f0a500;
+  --rarity-s-dark: #c07d00;
+  --rarity-ss: #ff7a3d;
+  --rarity-ss-dark: #d1560f;
+  --rarity-sss: #ff4fa3;
+  --rarity-sss-dark: #c22778;
+
+  --shadow-banner: 0 4px 0 var(--navy-border), 0 8px 18px rgba(8, 20, 40, .35);
+}
+
+/* Mobile app viewport: a real phone is ~360-430px wide in CSS px — this is
+   the shape the game will actually ship in on the Play Store, so design
+   and test at this width rather than the old desktop-preview-ish 720px. */
+:root {
+  --app-max-width: 430px;
 }
 
 * {
@@ -72,18 +105,56 @@ html, body {
 }
 
 #app {
-  max-width: 720px;
+  max-width: var(--app-max-width);
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  /* Bottom nav is fixed (see #bottom-nav) — this keeps its own height
+     reserved so the last bit of scrolling content is never hidden under it. */
+  padding-bottom: 78px;
+  position: relative;
+}
+
+/* ---------------- Section banner ----------------
+   The dark-navy "ribbon" title used everywhere the mockups put a bold
+   centered heading with a notched/pointed silhouette: zone name + stage
+   number, "Informações de Batalha", "Equipamentos", "Cartas", "Eventos".
+   The notches are cut with clip-path rather than an image, so it scales
+   cleanly at any width without needing art. */
+.section-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 14px;
+  padding: 10px 34px;
+  min-height: 40px;
+  background: linear-gradient(180deg, var(--navy-top) 0%, var(--navy) 55%, var(--navy-deep) 100%);
+  border: 2px solid var(--gold);
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  text-align: center;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .4);
+  box-shadow: var(--shadow-banner);
+  clip-path: polygon(3% 0%, 97% 0%, 100% 50%, 97% 100%, 3% 100%, 0% 50%);
+}
+
+.section-banner .section-banner-sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffe8a3;
+  margin-top: 2px;
 }
 
 button {
   font-family: inherit;
   cursor: pointer;
   border: none;
-  border-radius: 14px;
+  border-radius: 10px;
   color: var(--text);
   background: var(--grad-neutral);
   box-shadow: var(--shadow-btn);
@@ -123,14 +194,14 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
-  padding: 12px 16px;
-  background: linear-gradient(180deg, #4fb0e8 0%, #2f86c9 100%);
-  border-bottom: 4px solid #1e5f97;
-  box-shadow: 0 4px 14px rgba(20, 50, 80, .3), inset 0 2px 0 rgba(255, 255, 255, .35);
+  gap: 8px 10px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, var(--navy-top) 0%, var(--navy) 100%);
+  border-bottom: 4px solid var(--navy-border);
+  box-shadow: 0 4px 14px rgba(8, 20, 40, .35), inset 0 2px 0 rgba(255, 255, 255, .3);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
 }
 
 .resource {
@@ -140,12 +211,20 @@ button:disabled {
   font-weight: 800;
   font-size: 14px;
   color: #fff;
-  background: rgba(15, 45, 75, .28);
-  border: 2px solid rgba(255, 255, 255, .35);
-  border-radius: 999px;
-  padding: 4px 12px 4px 6px;
+  border: 2px solid rgba(255, 255, 255, .5);
+  border-radius: 12px;
+  padding: 5px 12px 5px 8px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .18);
 }
+
+/* Each resource gets its own solid color, matching the reference mockup
+   (gold coin = orange, gem = blue, event ticket = dark navy, stage flag =
+   red) instead of one uniform translucent pill for all four. */
+.resource-gold { background: linear-gradient(180deg, #ffc94d, #f0a000); border-color: #ffe29a; }
+.resource-cash { background: linear-gradient(180deg, #5cc2f5, #1f8fd6); border-color: #aee4ff; }
+.resource-event { background: linear-gradient(180deg, #4a5f7a, #263a52); border-color: #7f96b0; }
+.resource-stage { background: linear-gradient(180deg, #ff6b6b, #d13f3f); border-color: #ffb0b0; }
 
 .resource-icon {
   font-size: 18px;
@@ -170,43 +249,66 @@ button:disabled {
 
 /* ---------------- Combat panel ---------------- */
 
-#combat-panel {
-  padding: 16px 16px 8px;
+#tab-hunt {
+  padding: 12px 12px 8px;
   text-align: center;
 }
 
-#stage-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 12px;
+#zone-banner {
+  gap: 10px;
+  padding: 8px 44px;
 }
 
-#stage-controls button {
-  padding: 7px 12px;
+.banner-nav-btn {
+  background: rgba(255, 255, 255, .12);
+  border: 2px solid rgba(255, 255, 255, .4);
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   font-size: 13px;
+  border-radius: 8px;
+  box-shadow: none;
+  flex: 0 0 auto;
 }
 
 #stage-label {
-  min-width: 120px;
+  min-width: 90px;
   font-weight: 800;
-  background: var(--bg-card);
-  border: 2px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 12px;
-  box-shadow: var(--shadow-card);
+  font-size: 14px;
   display: inline-block;
 }
 
+.stage-max-btn {
+  display: block;
+  margin: 0 auto 12px;
+  padding: 6px 16px;
+  font-size: 11.5px;
+  background: var(--grad-gold);
+  color: #4a2e00;
+  box-shadow: 0 3px 0 var(--gold-dark);
+  border-radius: 10px;
+}
+
+/* Small scenic backdrop behind the monster — sky fading into a hint of
+   ground — echoing the reference mockup's landscape art without needing
+   any actual background image (art TBD, see the comment on
+   .paperdoll-character below). */
 #monster-area {
   position: relative;
-  background: linear-gradient(180deg, #fffaf0 0%, #ffedc0 100%);
+  background:
+    radial-gradient(ellipse 160px 60px at 25% 12%, rgba(255, 255, 255, .55), transparent 70%),
+    radial-gradient(ellipse 130px 50px at 78% 8%, rgba(255, 255, 255, .45), transparent 70%),
+    linear-gradient(180deg, #bfe6fb 0%, #e3f4ff 45%, #eaf7e2 78%, #d9ecc7 100%);
   border: 4px solid var(--border);
   border-radius: 26px;
-  padding: 22px 14px 18px;
+  padding: 18px 14px 18px;
   box-shadow: 0 6px 0 var(--border-strong), var(--shadow-panel), inset 0 2px 0 rgba(255, 255, 255, .6);
   overflow: hidden;
+}
+
+#monster-nameplate {
+  margin-bottom: 12px;
 }
 
 #monster-name {
@@ -280,6 +382,31 @@ button:disabled {
   100% { transform: scale(1); }
 }
 
+#attack-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(180deg, var(--navy-top) 0%, var(--navy) 55%, var(--navy-deep) 100%);
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--navy-border), 0 6px 14px rgba(8, 20, 40, .3);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+#attack-damage-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffe8a3;
+}
+
 #hp-bar-outer {
   position: relative;
   height: 26px;
@@ -287,7 +414,7 @@ button:disabled {
   border: 3px solid var(--border);
   border-radius: 999px;
   overflow: hidden;
-  margin-top: 10px;
+  margin-top: 6px;
   box-shadow: inset 0 3px 6px rgba(74, 47, 20, .22);
 }
 
@@ -428,29 +555,62 @@ button:disabled {
   100% { opacity: 0; transform: translate(-50%, -60px) scale(1.3); }
 }
 
-#dps-readout {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 12px;
-  font-size: 13px;
+/* ---- Informações de Batalha: two-column stat comparison ---- */
+
+.section-banner-sm {
+  font-size: 12.5px;
+  padding: 7px 30px;
+  min-height: 30px;
+  margin-bottom: 10px;
+}
+
+#battle-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 4px;
+}
+
+.battle-info-col-title {
+  font-size: 10.5px;
+  font-weight: 800;
   color: var(--text-dim);
-  font-weight: 600;
+  margin-bottom: 6px;
+  white-space: nowrap;
 }
 
-#dps-readout strong {
-  color: var(--text);
-}
-
-#element-readout {
+.battle-info-row {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 10.5px;
   color: var(--text-dim);
   font-weight: 600;
-  flex-wrap: wrap;
+  padding: 3px 0;
+  border-bottom: 1px dashed rgba(168, 103, 44, .25);
+}
+
+.battle-info-row:last-child {
+  border-bottom: none;
+}
+
+.battle-info-row strong {
+  color: var(--text);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+#element-matchup {
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin: 6px 0;
 }
 
 #element-matchup.advantage {
@@ -521,15 +681,41 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 12px;
-  padding: 0 4px;
+  margin: 10px 0 14px;
+  padding: 8px 10px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+#player-portrait {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  border-radius: 50%;
+  background: var(--grad-gold);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .2);
+}
+
+#player-status-info {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
 }
 
 #player-hp-label {
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: var(--text-dim);
-  font-weight: 700;
+  font-weight: 800;
   white-space: nowrap;
+  display: block;
+  margin-bottom: 3px;
 }
 
 #player-hp-bar-outer {
@@ -575,44 +761,71 @@ button:disabled {
   z-index: 1;
 }
 
-/* ---------------- Tabs ---------------- */
+/* ---------------- Bottom nav ----------------
+   Fixed to the viewport bottom (not the document), same idea as a native
+   Android bottom tab bar — icon on top, label underneath, active tab lit
+   up gold. #app reserves --bottom-nav-height of padding (see #app above)
+   so the last scrolled content never sits under it. */
 
 #tab-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--app-max-width);
   display: flex;
-  overflow-x: auto;
-  gap: 6px;
-  padding: 14px 16px 0;
+  background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+  border-top: 3px solid var(--gold);
+  box-shadow: 0 -6px 18px rgba(8, 20, 40, .4);
+  padding: 6px 2px;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
 }
 
 .tab-btn {
-  padding: 10px 14px 9px;
-  font-size: 13px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 2px;
+  font-size: 9.5px;
   font-weight: 700;
   white-space: nowrap;
-  background: var(--grad-neutral);
-  border: 3px solid var(--border);
-  border-bottom: none;
-  border-radius: 14px 14px 0 0;
-  color: var(--text-dim);
-  box-shadow: inset 0 -2px 0 rgba(255, 255, 255, .4);
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, .65);
+  box-shadow: none;
+}
+
+.tab-btn .tab-btn-icon {
+  font-size: 20px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .3));
+}
+
+.tab-btn:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
 }
 
 .tab-btn.active {
-  background: linear-gradient(180deg, #fff8e6, #fff1c8);
-  color: var(--gold-dark);
-  border-color: var(--border-strong);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, .5);
-  transform: translateY(1px);
+  background: rgba(255, 255, 255, .1);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 2px rgba(240, 165, 0, .5);
+}
+
+.tab-btn.active .tab-btn-icon {
+  filter: drop-shadow(0 0 5px rgba(240, 165, 0, .7));
 }
 
 #tab-panels {
   flex: 1;
-  padding: 18px 16px 32px;
+  padding: 16px 12px 24px;
   background: linear-gradient(180deg, #fff8e6, #fff1c8);
-  border: 4px solid var(--border-strong);
-  border-top: none;
-  border-radius: 0 0 24px 24px;
-  box-shadow: var(--shadow-panel);
 }
 
 .tab-panel {
@@ -631,31 +844,124 @@ button:disabled {
   gap: 16px;
 }
 
-/* Cross layout, armor (peitoral) at the center: helmet above, weapon to
-   its left, gloves to its right, pants below, boots below that. Placement
-   is keyed off data-equip-slot so it doesn't depend on render order. */
-.equip-slot-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(4, 1fr);
-  gap: 12px;
-  max-width: 280px;
-  margin: 0 auto;
+/* Top row: the paper-doll card (character + 6 equip slots overlaid, 2
+   columns of 3) side by side with the stats card — both roughly square,
+   same shape as the reference layout, with the inventory grid spanning
+   full width below (see .equip-inventory-grid). */
+.equip-top-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
 }
 
-.equip-slot-icon[data-equip-slot="helmet"] { grid-column: 2; grid-row: 1; }
-.equip-slot-icon[data-equip-slot="weapon"] { grid-column: 1; grid-row: 2; }
-.equip-slot-icon[data-equip-slot="armor"] { grid-column: 2; grid-row: 2; }
-.equip-slot-icon[data-equip-slot="gloves"] { grid-column: 3; grid-row: 2; }
-.equip-slot-icon[data-equip-slot="pants"] { grid-column: 2; grid-row: 3; }
-.equip-slot-icon[data-equip-slot="boots"] { grid-column: 2; grid-row: 4; }
+.paperdoll-card {
+  position: relative;
+  flex: 1 1 50%;
+  aspect-ratio: 1122 / 1402;
+  background-size: cover;
+  background-position: center;
+  background-color: #cfe8f7;
+  background-image:
+    radial-gradient(ellipse 90px 40px at 25% 10%, rgba(255, 255, 255, .5), transparent 70%),
+    linear-gradient(180deg, #bfe6fb 0%, #e3f4ff 45%, #eaf7e2 78%, #d9ecc7 100%);
+  border: 3px solid var(--border-strong);
+  border-radius: 20px;
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+}
+
+/* Plain emoji placeholder until the real character illustration is added
+   (see PLAYER_PORTRAIT_IMAGE in ui/render.js) — once that's set, this
+   element isn't rendered at all and the image shows via background-image
+   on .paperdoll-card instead. */
+.paperdoll-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30cqw;
+  font-size: min(30vw, 90px);
+  filter: drop-shadow(0 6px 6px rgba(74, 47, 20, .3));
+}
+
+.paperdoll-overlay-col {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 27%;
+}
+
+.paperdoll-overlay-left { left: 8px; }
+.paperdoll-overlay-right { right: 8px; }
+
+.equip-stats-box {
+  position: relative;
+  flex: 1 1 50%;
+  aspect-ratio: 1122 / 1402;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Rows are absolutely positioned to sit right above the parchment's baked-in
+   divider lines (see STATS_ROW_POSITIONS in ui/render.js) instead of
+   flowing normally, since the frame art already supplies the title,
+   border and lines. */
+.stats-frame-row {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  transform: translateY(-100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #5a4423;
+  line-height: 1.15;
+}
+
+.stats-frame-row strong {
+  font-size: 11px;
+  color: #3a2c14;
+  white-space: nowrap;
+}
+
+.rarity-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  font-size: 9.5px;
+  font-weight: 900;
+  color: #fff;
+  min-width: 18px;
+  text-align: center;
+  padding: 2px 4px;
+  border-radius: 6px;
+  line-height: 1.2;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .25);
+  z-index: 1;
+}
+
+.rarity-badge.rarity-c { background: var(--rarity-c); box-shadow: 0 2px 0 var(--rarity-c-dark); }
+.rarity-badge.rarity-b { background: var(--rarity-b); box-shadow: 0 2px 0 var(--rarity-b-dark); }
+.rarity-badge.rarity-a { background: var(--rarity-a); box-shadow: 0 2px 0 var(--rarity-a-dark); }
+.rarity-badge.rarity-s { background: var(--rarity-s); box-shadow: 0 2px 0 var(--rarity-s-dark); }
+.rarity-badge.rarity-ss { background: var(--rarity-ss); box-shadow: 0 2px 0 var(--rarity-ss-dark); }
+.rarity-badge.rarity-sss { background: var(--rarity-sss); box-shadow: 0 2px 0 var(--rarity-sss-dark); }
 
 .equip-slot-icon {
   position: relative;
   aspect-ratio: 1;
   width: 100%;
-  border-radius: 18px;
-  background: var(--grad-neutral);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #332c50, #1c1830);
   border: 3px solid var(--border);
   box-shadow: var(--shadow-card);
   display: flex;
@@ -666,13 +972,11 @@ button:disabled {
 
 .equip-slot-icon .icon {
   font-size: 34px;
-  filter: drop-shadow(0 2px 2px rgba(74, 47, 20, .25));
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
 }
 
 .equip-slot-icon.filled {
-  border-color: var(--gold);
-  background: linear-gradient(180deg, #fff3d6, #ffe49a);
-  box-shadow: 0 0 0 3px rgba(245, 168, 0, .25), var(--shadow-card);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .12), var(--shadow-card);
 }
 
 .equip-slot-icon.empty .icon {
@@ -715,11 +1019,34 @@ button:disabled {
   gap: 8px;
 }
 
+.element-filter-row {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+
+.element-filter-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font-size: 16px;
+  border-radius: 10px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+
+.element-filter-btn.active {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(31, 95, 168, .3), var(--shadow-card);
+  transform: translateY(1px);
+}
+
 .inventory-tile {
   position: relative;
   aspect-ratio: 1;
-  border-radius: 14px;
-  background: var(--grad-neutral);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #332c50, #1c1830);
   border: 3px solid var(--border);
   box-shadow: var(--shadow-card);
   display: flex;
@@ -730,12 +1057,11 @@ button:disabled {
 
 .inventory-tile .icon {
   font-size: 24px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
 }
 
 .inventory-tile.equipped {
-  border-color: var(--green);
-  background: linear-gradient(180deg, #e3f7e6, #c7f0cf);
-  box-shadow: 0 0 0 3px rgba(47, 168, 79, .2), var(--shadow-card);
+  box-shadow: 0 0 0 2px var(--green), var(--shadow-card);
 }
 
 /* Item detail popup (shown via the shared #modal-overlay) */
@@ -1048,7 +1374,7 @@ button:disabled {
   font-size: 11px;
   font-weight: 700;
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 10px;
   background: var(--grad-neutral);
   border: 2px solid var(--border);
   color: var(--text-dim);
@@ -1062,6 +1388,7 @@ button:disabled {
 }
 
 .recipe-card {
+  position: relative;
   background: var(--grad-neutral);
   border: 2px solid var(--border);
   border-radius: 14px;
@@ -1265,16 +1592,81 @@ button:disabled {
 
 /* ---------------- Events ---------------- */
 
-.event-list-item {
-  margin-bottom: 14px;
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.event-list-header {
+/* Each event gets its own themed gradient banner (per event id, see the
+   theme classes below) — same idea as the mockup's Invasão do
+   Dragão/Bosque Ancestral/etc. cards, just mapped to this game's real 3
+   events instead of fictional ones. */
+.event-card {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 2px solid var(--navy-border);
+  box-shadow: var(--shadow-panel);
+}
+
+.event-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
   cursor: pointer;
+  color: #fff;
 }
 
-.event-list-body {
-  margin-top: 10px;
+.event-card-red .event-card-header { background: linear-gradient(135deg, #d1432f, #7a1f16); }
+.event-card-gold .event-card-header { background: linear-gradient(135deg, #d19a2f, #7a5716); }
+.event-card-purple .event-card-header { background: linear-gradient(135deg, #7a3fd1, #3a1a6e); }
+
+.event-card-icon {
+  font-size: 30px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35));
+}
+
+.event-card-heading {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.event-card-name {
+  font-weight: 800;
+  font-size: 14px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+.event-card-status {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, .85);
+}
+
+.event-card-toggle {
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, .18);
+  border: 1px solid rgba(255, 255, 255, .35);
+  color: #fff;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font-size: 11px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.event-card-body {
+  background: linear-gradient(180deg, #fff8e6, #fff1c8);
+  padding: 14px;
+}
+
+.trade-card.selected {
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 0 3px rgba(230, 168, 27, .25), var(--shadow-card);
 }
 
 .trade-card.selected {
@@ -1634,6 +2026,11 @@ button:disabled {
 /* ---------------- Cartas tab ---------------- */
 
 .cards-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
   font-size: 14px;
   font-weight: 800;
   margin: 4px 0 10px;
@@ -1641,6 +2038,31 @@ button:disabled {
 
 .cards-section-title:not(:first-child) {
   margin-top: 20px;
+}
+
+.cards-collected {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.cards-summary-box {
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 10px;
+}
+
+.card-tile-stars {
+  font-size: 10px;
+  color: var(--rarity-s);
+  letter-spacing: 1px;
+}
+
+.card-tile.undiscovered .card-tile-stars {
+  color: var(--text-dim);
 }
 
 .card-grid {

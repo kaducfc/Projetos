@@ -19,10 +19,10 @@ import { claimCardReward } from './systems/cards.js';
 import { CARD_DISCOVERY_CASH_REWARD, getCard } from './data/cards.js';
 import { GAME_BUILD } from './version.js';
 import {
-  renderAll, renderTopBar, renderCombatStats, renderMonster, renderEquipmentTab,
+  renderAll, renderTopBar, renderCombatStats, renderMonster, renderInventoryTab, renderForgeTab,
   renderUpgradesTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
-  showItemDetailModal, showEquipSlotModal, renderEventsTab, renderAchievementsTab, renderShopTab, pulseEventBoss,
+  showItemDetailModal, showEquipSlotModal, renderEventsTab, renderShopTab, pulseEventBoss,
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster,
 } from './ui/render.js';
 
@@ -58,10 +58,12 @@ function currentTowerRunRemainingMs() {
   return towerDeadline == null ? null : Math.max(0, towerDeadline - Date.now());
 }
 
-// Which sub-tab is showing in Equipamento (Equipar/Forjar/Materiais) and
-// Loja (Cash/Moeda de Evento) — pure UI state, not part of the save.
-let activeEquipSubTab = 'equip';
+// Which sub-tab is showing in Forja (Receitas/Materiais) and Loja
+// (Cash/Evento/Conquistas), plus which element the Inventário grid is
+// filtered to (null = Todos) — pure UI state, not part of the save.
+let activeForgeSubTab = 'recipes';
 let activeShopSubTab = 'cash';
+let inventoryFilterElement = null;
 
 // Forja groups start collapsed (one boss's worth of recipe cards is a lot of
 // screen) — a bossId in this set means the player explicitly expanded it.
@@ -77,8 +79,14 @@ let tradeFromMaterialId = null;
 let tradeQty = TRADE_COST;
 let expandedTradeGroups = new Set();
 
-function renderEquipTab() {
-  renderEquipmentTab(state, activeEquipSubTab, expandedForgeBosses);
+// Inventário and Forja are separate bottom-nav tabs but share underlying
+// data (equipping something changes what Forja shows as "already
+// craftado"), so most mutations refresh both regardless of which is
+// actually visible right now — cheap enough, and simpler than tracking
+// which tab is active just to skip a redundant render.
+function renderInventoryAndForge() {
+  renderInventoryTab(state, inventoryFilterElement);
+  renderForgeTab(state, activeForgeSubTab, expandedForgeBosses);
 }
 
 function renderEventsTabNow() {
@@ -138,10 +146,9 @@ function refreshAll() {
 // re-wiring is needed for them.
 function fullRefresh() {
   refreshAll();
-  renderEquipTab();
+  renderInventoryAndForge();
   renderCardsTab(state);
   renderEventsTabNow();
-  renderAchievementsTab(state);
   renderShopTab(state, activeShopSubTab);
   wireAllPanelButtons();
 }
@@ -164,7 +171,7 @@ function handleKillEvent(event) {
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
   // One call covers Equipar/Forjar/Materiais, whichever sub-tab is showing.
-  renderEquipTab();
+  renderInventoryAndForge();
   renderUpgradesTab(state);
   renderCardsTab(state); // a card drop just changed discovered/claimable state
   wireAllPanelButtons();
@@ -281,6 +288,13 @@ function setupStageControls() {
   // mouseup, which silently drops that click. Firing on pointerdown instead
   // means every physical press counts, independent of any render race.
   document.getElementById('monster-sprite').addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    onClickMonster();
+  });
+  // Same attack, just a second (bigger, thumb-friendly) tap target — real
+  // mobile layouts want a dedicated CTA button below the fold, not just the
+  // sprite itself.
+  document.getElementById('attack-button').addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
     onClickMonster();
   });
@@ -513,24 +527,8 @@ function wireModalEvents() {
 // the duplicate-listener bug class that bit this project twice before.
 // ---------------------------------------------------------------
 
-function wireEquipmentTabEvents() {
-  document.getElementById('tab-equipment').addEventListener('click', (e) => {
-    const subtabBtn = e.target.closest('[data-equip-subtab]');
-    if (subtabBtn) {
-      activeEquipSubTab = subtabBtn.dataset.equipSubtab;
-      renderEquipTab();
-      return;
-    }
-
-    const forgeToggleBtn = e.target.closest('[data-toggle-forge]');
-    if (forgeToggleBtn) {
-      const bossId = forgeToggleBtn.dataset.toggleForge;
-      if (expandedForgeBosses.has(bossId)) expandedForgeBosses.delete(bossId);
-      else expandedForgeBosses.add(bossId);
-      renderEquipTab();
-      return;
-    }
-
+function wireInventoryTabEvents() {
+  document.getElementById('tab-inventory').addEventListener('click', (e) => {
     const slotBtn = e.target.closest('[data-equip-slot]');
     if (slotBtn) {
       showEquipSlotModal(state, slotBtn.dataset.equipSlot);
@@ -540,6 +538,33 @@ function wireEquipmentTabEvents() {
     const itemBtn = e.target.closest('[data-equip-item]');
     if (itemBtn) {
       showItemDetailModal(state, Number(itemBtn.dataset.equipItem));
+      return;
+    }
+
+    const filterBtn = e.target.closest('[data-filter-element]');
+    if (filterBtn) {
+      inventoryFilterElement = filterBtn.dataset.filterElement || null;
+      renderInventoryTab(state, inventoryFilterElement);
+      return;
+    }
+  });
+}
+
+function wireForgeTabEvents() {
+  document.getElementById('tab-forge').addEventListener('click', (e) => {
+    const subtabBtn = e.target.closest('[data-forge-subtab]');
+    if (subtabBtn) {
+      activeForgeSubTab = subtabBtn.dataset.forgeSubtab;
+      renderInventoryAndForge();
+      return;
+    }
+
+    const forgeToggleBtn = e.target.closest('[data-toggle-forge]');
+    if (forgeToggleBtn) {
+      const bossId = forgeToggleBtn.dataset.toggleForge;
+      if (expandedForgeBosses.has(bossId)) expandedForgeBosses.delete(bossId);
+      else expandedForgeBosses.add(bossId);
+      renderInventoryAndForge();
       return;
     }
 
@@ -583,7 +608,7 @@ function handleEventBossVictory(boss) {
   const { gained, currency, cardDropped } = claimEventVictory(state, state.eventEnteredCycle, boss);
   showEventRewardModal(boss, gained, currency, cardDropped);
   renderTopBar(state);
-  renderEquipTab();
+  renderInventoryAndForge();
   renderCardsTab(state);
   renderShopTab(state, activeShopSubTab);
   renderEventsTabNow();
@@ -846,7 +871,7 @@ function wireEventTabEvents() {
         showToast(`🧺 Trocado! -${usedQty} ${fromInfo?.emoji ?? ''} ${fromInfo?.name ?? ''} · +${receivedQty} ${toInfo?.emoji ?? ''} ${toInfo?.name ?? ''}`);
       }
       renderEventsTabNow();
-      renderEquipTab(); // Materiais may be showing, and just changed
+      renderInventoryAndForge(); // Materiais may be showing, and just changed
       return;
     }
   });
@@ -881,34 +906,13 @@ function wireCardsTabEvents() {
 // purely "spend Cash / spend Event Currency" now). Same delegation pattern.
 // ---------------------------------------------------------------
 
-function wireAchievementsTabEvents() {
-  document.getElementById('tab-achievements').addEventListener('click', (e) => {
-    const claimBtn = e.target.closest('[data-claim-achievement]');
-    if (claimBtn) {
-      if (claimAchievement(state, claimBtn.dataset.claimAchievement)) {
-        showToast('🏆 Conquista resgatada!');
-        renderTopBar(state);
-        renderAchievementsTab(state);
-      }
-      return;
-    }
-
-    const adBtn = e.target.closest('#watch-ad-btn');
-    if (adBtn) {
-      if (watchAd(state)) {
-        showToast(`🎬 +${formatNumber(AD_WATCH_CASH_REWARD)} 💎 Cash!`);
-        renderTopBar(state);
-        renderAchievementsTab(state);
-      }
-      return;
-    }
-  });
-}
-
 // ---------------------------------------------------------------
 // Shop tab — same delegation pattern as the modal (see wireModalEvents()
 // above): #tab-shop itself is never recreated, only its innerHTML, so this
-// is wired once in init() and survives every renderShopTab() call.
+// is wired once in init() and survives every renderShopTab() call. Also
+// covers the Conquistas sub-tab's claim/ad-watch buttons — Conquistas is
+// folded into Shop for now (see renderShopTab in ui/render.js) rather than
+// getting its own bottom-nav slot.
 // ---------------------------------------------------------------
 
 function wireShopTabEvents() {
@@ -941,7 +945,27 @@ function wireShopTabEvents() {
         showToast('🛒 Compra realizada!');
         renderTopBar(state);
         renderShopTab(state, activeShopSubTab);
-        renderEquipTab(); // Materiais just changed
+        renderInventoryAndForge(); // Materiais just changed
+      }
+      return;
+    }
+
+    const claimBtn = e.target.closest('[data-claim-achievement]');
+    if (claimBtn) {
+      if (claimAchievement(state, claimBtn.dataset.claimAchievement)) {
+        showToast('🏆 Conquista resgatada!');
+        renderTopBar(state);
+        renderShopTab(state, activeShopSubTab);
+      }
+      return;
+    }
+
+    const adBtn = e.target.closest('#watch-ad-btn');
+    if (adBtn) {
+      if (watchAd(state)) {
+        showToast(`🎬 +${formatNumber(AD_WATCH_CASH_REWARD)} 💎 Cash!`);
+        renderTopBar(state);
+        renderShopTab(state, activeShopSubTab);
       }
       return;
     }
@@ -965,9 +989,10 @@ function wireUpgradeButtons() {
 }
 
 // Re-wires the buttons that get recreated (via innerHTML) whenever their tab
-// re-renders. Equipment, Events, Achievements and Shop use event delegation
-// instead, wired once in init() (see wireModalEvents(), wireEquipmentTabEvents(),
-// wireEventTabEvents(), wireAchievementsTabEvents(), wireShopTabEvents()).
+// re-renders. Inventário/Forja/Events/Shop (incl. Conquistas) use event
+// delegation instead, wired once in init() (see wireModalEvents(),
+// wireInventoryTabEvents(), wireForgeTabEvents(), wireEventTabEvents(),
+// wireShopTabEvents()).
 function wireAllPanelButtons() {
   wireUpgradeButtons();
 }
@@ -1017,10 +1042,10 @@ function init() {
   setupTabs();
   setupStageControls();
   wireModalEvents(); // one-time delegated listener, see wireModalEvents()
-  wireEquipmentTabEvents();
+  wireInventoryTabEvents();
+  wireForgeTabEvents();
   wireCardsTabEvents();
   wireEventTabEvents();
-  wireAchievementsTabEvents();
   wireShopTabEvents();
   resetPlayerHp();
   if (state.towerRunActive) {
@@ -1042,7 +1067,6 @@ function init() {
   // hooking into every place stage/kills/materials could change.
   setInterval(() => {
     renderEventsTabNow();
-    renderAchievementsTab(state);
     renderShopTab(state, activeShopSubTab);
   }, 1000);
   setInterval(() => saveState(state), SAVE_INTERVAL_MS);
