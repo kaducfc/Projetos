@@ -63,7 +63,7 @@ for (const rel of assetRefs) {
   const ext = rel.split('.').pop().toLowerCase();
   const data = readFileSync(path.join(ROOT, rel));
   const dataUri = `data:${MIME[ext]};base64,${data.toString('base64')}`;
-  jsBundle = jsBundle.split(`'${rel}'`).join(`'${dataUri}'`);
+  jsBundle = jsBundle.split(`'${rel}'`).join(`'${dataUri}'`).split(`"${rel}"`).join(`"${dataUri}"`);
 }
 
 const css = readFileSync(path.join(ROOT, 'css/style.css'), 'utf8');

@@ -260,7 +260,6 @@ function equipRingContentHtml(state, filterElement = null) {
 
   return `
     <div class="equip-screen">
-      ${setBonusBannerHtml(state)}
       <div class="equip-top-row">
         <div class="paperdoll-card" ${portraitStyle}>
           ${PLAYER_PORTRAIT_IMAGE ? '' : '<div class="paperdoll-placeholder">🧑‍🚀</div>'}
@@ -269,6 +268,7 @@ function equipRingContentHtml(state, filterElement = null) {
         </div>
         ${equipStatsBoxHtml(state)}
       </div>
+      ${setBonusBannerHtml(state)}
       <div class="equip-inventory-header">Inventário</div>
       ${elementFilterRowHtml(filterElement)}
       <div class="equip-inventory-grid">${inventoryHtml}</div>
