@@ -29,54 +29,64 @@
 
   <main>
     <section id="combat-panel">
-      <div id="stage-controls">
-        <button id="stage-prev" title="Estágio anterior">◀</button>
+      <div class="section-banner" id="zone-banner">
+        <button id="stage-prev" class="banner-nav-btn" title="Estágio anterior">◀</button>
         <span id="stage-label">Estágio 1</span>
-        <button id="stage-next" title="Próximo estágio">▶</button>
-        <button id="stage-max" title="Ir para o estágio mais avançado">Máx ⏩</button>
+        <button id="stage-next" class="banner-nav-btn" title="Próximo estágio">▶</button>
       </div>
+      <button id="stage-max" title="Ir para o estágio mais avançado" class="stage-max-btn">🏁 Ir para o máximo</button>
 
       <div id="monster-area">
         <div id="damage-popups"></div>
-        <div id="monster-name"></div>
-        <button id="monster-sprite" title="Clique para atacar">🐗</button>
-        <div id="hp-bar-outer">
-          <div id="hp-bar-fill"></div>
-          <span id="hp-bar-text">0 / 0</span>
+        <div id="monster-nameplate">
+          <div id="monster-name"></div>
+          <div id="hp-bar-outer">
+            <div id="hp-bar-fill"></div>
+            <span id="hp-bar-text">0 / 0</span>
+          </div>
         </div>
+        <button id="monster-sprite" title="Clique para atacar">🐗</button>
         <div id="loot-popup"></div>
         <div id="boss-timer" class="hidden"></div>
       </div>
 
       <div id="player-status">
-        <span id="player-hp-label">🧑 Vida</span>
-        <div id="player-hp-bar-outer">
-          <div id="player-hp-bar-fill"></div>
-          <span id="player-hp-bar-text">0 / 0</span>
+        <span id="player-portrait">🧑</span>
+        <div id="player-status-info">
+          <span id="player-hp-label">Caçador</span>
+          <div id="player-hp-bar-outer">
+            <div id="player-hp-bar-fill"></div>
+            <span id="player-hp-bar-text">0 / 0</span>
+          </div>
         </div>
       </div>
 
-      <div id="dps-readout">
-        <span>Dano de clique: <strong id="click-damage-value">0</strong></span>
-        <span>DPS: <strong id="dps-value">0</strong></span>
-        <span>Armadura: <strong id="armor-value">0</strong></span>
-        <span>Chance de Crítico: <strong id="crit-chance-value">0</strong></span>
-        <span>Dano Crítico: <strong id="crit-damage-value">0</strong></span>
-      </div>
-      <div id="element-readout">
-        <span>Elemento da arma: <strong id="weapon-element-value"></strong></span>
-        <span id="element-matchup"></span>
-      </div>
-    </section>
+      <div class="section-banner section-banner-sm">Informações de Batalha</div>
 
-    <nav id="tab-nav">
-      <button class="tab-btn active" data-tab="equipment">🎽 Equipamento</button>
-      <button class="tab-btn" data-tab="cards">🃏 Cartas</button>
-      <button class="tab-btn" data-tab="upgrades">📈 Upgrades</button>
-      <button class="tab-btn" data-tab="events">🎪 Eventos</button>
-      <button class="tab-btn" data-tab="achievements">🏆 Conquistas</button>
-      <button class="tab-btn" data-tab="shop">🛒 Loja</button>
-    </nav>
+      <div id="battle-info">
+        <div class="battle-info-col">
+          <div class="battle-info-col-title">🟢 Seus Atributos</div>
+          <div class="battle-info-row"><span>⚔️ Dano do Clique</span><strong id="click-damage-value">0</strong></div>
+          <div class="battle-info-row"><span>💥 DPS</span><strong id="dps-value">0</strong></div>
+          <div class="battle-info-row"><span>🛡️ Armadura</span><strong id="armor-value">0</strong></div>
+          <div class="battle-info-row"><span>🎯 Taxa de Crítico</span><strong id="crit-chance-value">0</strong></div>
+          <div class="battle-info-row"><span>💢 Dano Crítico</span><strong id="crit-damage-value">0</strong></div>
+          <div class="battle-info-row"><span>✨ Elemento</span><strong id="weapon-element-value"></strong></div>
+        </div>
+        <div class="battle-info-col">
+          <div class="battle-info-col-title">💀 Informações do Inimigo</div>
+          <div class="battle-info-row"><span>❤️ Vida Atual</span><strong id="enemy-hp-value">0</strong></div>
+          <div class="battle-info-row"><span>⚔️ Dano de Ataque</span><strong id="enemy-dps-value">0</strong></div>
+          <div class="battle-info-row"><span>✨ Elemento</span><strong id="enemy-element-value"></strong></div>
+        </div>
+      </div>
+      <div id="element-matchup"></div>
+
+      <button id="attack-button" title="Clique para atacar">
+        ⚔️ Clique para Atacar!
+        <span id="attack-damage-value"></span>
+      </button>
+    </section>
 
     <section id="tab-panels">
       <div id="tab-equipment" class="tab-panel active"></div>
@@ -87,6 +97,15 @@
       <div id="tab-shop" class="tab-panel"></div>
     </section>
   </main>
+
+  <nav id="tab-nav">
+    <button class="tab-btn active" data-tab="equipment"><span class="tab-btn-icon">🎽</span>Equipamentos</button>
+    <button class="tab-btn" data-tab="cards"><span class="tab-btn-icon">🃏</span>Cartas</button>
+    <button class="tab-btn" data-tab="upgrades"><span class="tab-btn-icon">📈</span>Aprimoramentos</button>
+    <button class="tab-btn" data-tab="events"><span class="tab-btn-icon">🎪</span>Eventos</button>
+    <button class="tab-btn" data-tab="achievements"><span class="tab-btn-icon">🏆</span>Conquistas</button>
+    <button class="tab-btn" data-tab="shop"><span class="tab-btn-icon">🛒</span>Loja</button>
+  </nav>
 
   <div id="modal-overlay" class="hidden">
     <div id="modal-box">

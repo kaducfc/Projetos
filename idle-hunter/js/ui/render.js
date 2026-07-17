@@ -24,6 +24,23 @@ export function iconMarkup(image, emoji, alt) {
   return image ? `<img src="${image}" alt="${alt || ''}">` : emoji;
 }
 
+/// Purely cosmetic rarity letter derived from an item's boss tier (0-9) —
+/// there's no separate "rarity" field in the data model, gear power is
+/// already fully determined by tier + enhancement level. This just gives
+/// the UI the S/A/B/C badge language the mockups use.
+function itemRarityLetter(tier) {
+  if (tier >= 9) return 'SS';
+  if (tier >= 8) return 'S';
+  if (tier >= 6) return 'A';
+  if (tier >= 3) return 'B';
+  return 'C';
+}
+
+function rarityBadgeHtml(tier) {
+  const letter = itemRarityLetter(tier);
+  return `<span class="rarity-badge rarity-${letter.toLowerCase()}">${letter}</span>`;
+}
+
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
   return `<span class="element-badge element-${el.id}">${el.emoji} ${el.name}</span>`;
@@ -60,9 +77,15 @@ export function renderCombatStats(stats, monster) {
   document.getElementById('armor-value').textContent = formatNumber(stats.armor);
   document.getElementById('crit-chance-value').textContent = formatPercent(stats.critChance);
   document.getElementById('crit-damage-value').textContent = formatPercent(stats.critDamage);
+  document.getElementById('attack-damage-value').textContent = `Dano: ${formatNumber(stats.clickDamage)}`;
 
   const weaponEl = document.getElementById('weapon-element-value');
   weaponEl.innerHTML = elementBadgeHtml(stats.weaponElement);
+
+  if (monster) {
+    document.getElementById('enemy-dps-value').textContent = formatNumber(monster.dps);
+    document.getElementById('enemy-element-value').innerHTML = elementBadgeHtml(monster.element);
+  }
 
   const modEl = document.getElementById('element-matchup');
   if (monster) {
@@ -100,6 +123,7 @@ export function renderMonster(state, monster) {
   const pct = Math.max(0, Math.min(100, (hp / monster.maxHp) * 100));
   document.getElementById('hp-bar-fill').style.width = `${pct}%`;
   document.getElementById('hp-bar-text').textContent = `${formatNumber(hp)} / ${formatNumber(monster.maxHp)}`;
+  document.getElementById('enemy-hp-value').textContent = `${formatNumber(hp)} / ${formatNumber(monster.maxHp)}`;
 
   document.getElementById('stage-prev').disabled = state.stage <= 1;
   document.getElementById('stage-next').disabled = state.stage >= state.maxStage;
@@ -141,6 +165,7 @@ const EQUIP_SUBTABS = [
 
 export function renderEquipmentTab(state, activeSubTab = 'equip', expandedForgeBosses = new Set()) {
   const container = document.getElementById('tab-equipment');
+  const banner = `<div class="section-banner">Equipamentos</div>`;
   const subnav = `<div class="inner-subnav">${EQUIP_SUBTABS.map((t) => `
     <button class="inner-subtab-btn ${activeSubTab === t.id ? 'active' : ''}" data-equip-subtab="${t.id}">${t.label}</button>
   `).join('')}</div>`;
@@ -150,7 +175,7 @@ export function renderEquipmentTab(state, activeSubTab = 'equip', expandedForgeB
   else if (activeSubTab === 'materials') body = materialsContentHtml(state);
   else body = equipRingContentHtml(state);
 
-  container.innerHTML = subnav + body;
+  container.innerHTML = banner + subnav + body;
 }
 
 function setBonusBannerHtml(state) {
@@ -165,9 +190,30 @@ function setBonusBannerHtml(state) {
   </div>`;
 }
 
-function equipRingContentHtml(state) {
-  const slots = ALL_SLOT_IDS.map(getSlot);
+// Paper-doll layout: 3 slots on each side of a center character silhouette
+// (art TBD — see the plain emoji placeholder below) — weapon/helmet/armor
+// on the left, gloves/pants/boots on the right, closest match to the
+// mockup's necklace/ring/boots-vs-weapon/helmet/armor split given our
+// actual 6 slots (no jewelry slots in this game).
+const PAPERDOLL_LEFT = ['weapon', 'helmet', 'armor'];
+const PAPERDOLL_RIGHT = ['gloves', 'pants', 'boots'];
 
+function equipStatsBoxHtml(state) {
+  const stats = computePlayerStats(state);
+  return `
+    <div class="equip-stats-box">
+      <div class="equip-stats-title">📊 Estatísticas</div>
+      <div class="battle-info-row"><span>⚔️ Dano de Clique</span><strong>${formatNumber(stats.clickDamage)}</strong></div>
+      <div class="battle-info-row"><span>💥 DPS</span><strong>${formatNumber(stats.dps)}</strong></div>
+      <div class="battle-info-row"><span>🛡️ Armadura</span><strong>${formatNumber(stats.armor)}</strong></div>
+      <div class="battle-info-row"><span>🎯 Taxa de Crítico</span><strong>${formatPercent(stats.critChance)}</strong></div>
+      <div class="battle-info-row"><span>💢 Dano Crítico</span><strong>${formatPercent(stats.critDamage)}</strong></div>
+      <div class="battle-info-row"><span>❤️ Vida Máxima</span><strong>${formatNumber(stats.maxHp)}</strong></div>
+    </div>
+  `;
+}
+
+function equipRingContentHtml(state) {
   const inventoryHtml = state.inventory.length
     ? state.inventory.map((entry) => inventoryTileHtml(state, entry)).join('')
     : `<p class="empty-slot">Nada craftado ainda. Vá até a aba Forjar.</p>`;
@@ -175,7 +221,12 @@ function equipRingContentHtml(state) {
   return `
     <div class="equip-screen">
       ${setBonusBannerHtml(state)}
-      <div class="equip-slot-grid">${slots.map((s) => slotIconHtml(state, s)).join('')}</div>
+      <div class="paperdoll">
+        <div class="paperdoll-col">${PAPERDOLL_LEFT.map((id) => slotIconHtml(state, getSlot(id))).join('')}</div>
+        <div class="paperdoll-character">🧑‍🚀</div>
+        <div class="paperdoll-col">${PAPERDOLL_RIGHT.map((id) => slotIconHtml(state, getSlot(id))).join('')}</div>
+      </div>
+      ${equipStatsBoxHtml(state)}
       <div class="equip-inventory-header">Inventário</div>
       <div class="equip-inventory-grid">${inventoryHtml}</div>
     </div>
@@ -190,7 +241,9 @@ function slotIconHtml(state, slot) {
   const badge = equipped
     ? `<span class="mini-badge ${equipped.entry.isMaster ? 'master' : ''}">${getEnhanceLabel(equipped.entry.enhanceLevel, equipped.entry.isMaster)}</span>`
     : '';
+  const rarity = equipped ? rarityBadgeHtml(equipped.item.tier) : '';
   return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}" data-equip-slot="${slot.id}" title="${slot.name}">
+    ${rarity}
     <span class="icon">${icon}</span>
     ${badge}
   </button>`;
@@ -201,6 +254,7 @@ function inventoryTileHtml(state, entry) {
   const isEquipped = state.equipped[item.slotId] === entry.uid;
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
   return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}">
+    ${rarityBadgeHtml(item.tier)}
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
   </button>`;
@@ -406,6 +460,7 @@ function recipeCardHtml(state, item) {
   const goldMet = state.gold >= item.goldCost;
 
   return `<div class="recipe-card ${equipped ? 'equipped' : ''}">
+    ${rarityBadgeHtml(item.tier)}
     <div class="recipe-header"><span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span><span class="name">${item.name}</span></div>
     <div class="element-resistance">${elementBadgeHtml(item.element)}</div>
     <div class="recipe-stats">${formatStatsLines(item.stats).join('<br>')}</div>
@@ -434,7 +489,10 @@ function upgradeProgressHtml(upgrade, level) {
 
 export function renderUpgradesTab(state) {
   const container = document.getElementById('tab-upgrades');
-  container.innerHTML = `<div class="upgrade-list">${UPGRADES.map((u) => upgradeCardHtml(state, u)).join('')}</div>`;
+  container.innerHTML = `
+    <div class="section-banner">Aprimoramentos</div>
+    <div class="upgrade-list">${UPGRADES.map((u) => upgradeCardHtml(state, u)).join('')}</div>
+  `;
 }
 
 function upgradeCardHtml(state, upgrade) {
@@ -488,25 +546,94 @@ function materialsContentHtml(state) {
 // systems/cards.js), same "claim once" idea as an achievement.
 // ---------------------------------------------------------------
 
+// Purely cosmetic rarity letter (no gameplay meaning beyond flavor,
+// same spirit as itemRarityLetter above) — boss cards climb S -> SS -> SSS
+// with the boss's own tier (0-9); every weak-monster card is C.
+function cardRarityLetter(card) {
+  if (!card.isBossCard) return 'C';
+  const tier = BOSSES.findIndex((b) => b.id === card.monsterId);
+  if (tier >= 9) return 'SSS';
+  if (tier >= 7) return 'SS';
+  return 'S';
+}
+
+const STARS_BY_RARITY = { C: 2, B: 3, S: 3, SS: 4, SSS: 5 };
+
+function starsHtml(rarity) {
+  const filled = STARS_BY_RARITY[rarity] || 2;
+  return `<span class="card-tile-stars">${'★'.repeat(filled)}${'☆'.repeat(5 - filled)}</span>`;
+}
+
 function cardTileHtml(state, card) {
   const discovered = isCardDiscovered(state, card.id);
   const claimable = canClaimCardReward(state, card.id);
+  const rarity = cardRarityLetter(card);
   return `<button class="card-tile ${discovered ? 'discovered' : 'undiscovered'}" data-view-card="${card.id}">
     ${claimable ? '<span class="card-tile-badge">🎁</span>' : ''}
+    <span class="rarity-badge rarity-${rarity.toLowerCase()}">${rarity}</span>
     <div class="icon">${iconMarkup(card.image, card.emoji, card.name)}</div>
     <div class="name">${card.name}</div>
+    ${starsHtml(rarity)}
   </button>`;
+}
+
+// Real data, not mockup flavor: sums every socketed card's `bonuses` (see
+// data/cards.js) across all 6 equip slots, and counts how many of those
+// slots have their card slot unlocked at all (see systems/crafting.js's
+// attemptCardSlotUnlock) — the two panels the mockup calls "Bônus das
+// Cartas Ativas" and "Slot de Cartas".
+const CARD_BONUS_LABELS = {
+  dpsPercent: '💥 DPS', clickPercent: '⚔️ Dano de Clique', goldPercent: '💰 Ouro Obtido',
+  dropPercent: '🎒 Chance de Drop', critChancePercent: '🎯 Chance Crítica', critDamagePercent: '💢 Dano Crítico',
+  hpPercent: '❤️ Vida Máxima', armorPercent: '🛡️ Armadura', hpFlat: '❤️ Vida Máxima', armorFlat: '🛡️ Armadura',
+  clickFlat: '⚔️ Dano de Clique', dpsFlat: '💥 DPS',
+};
+
+function cardsSummaryHtml(state) {
+  const totals = {};
+  let unlockedSlots = 0;
+  for (const uid of Object.values(state.equipped)) {
+    if (!uid) continue;
+    const entry = state.inventory.find((i) => i.uid === uid);
+    if (!entry) continue;
+    if (entry.cardSlotUnlocked || entry.cardId) unlockedSlots += 1;
+    if (!entry.cardId) continue;
+    const card = getCard(entry.cardId);
+    if (!card) continue;
+    for (const b of card.bonuses || []) totals[b.stat] = (totals[b.stat] || 0) + b.value;
+  }
+
+  const rows = Object.entries(totals).filter(([, v]) => v).map(([stat, v]) => {
+    const label = CARD_BONUS_LABELS[stat] || stat;
+    const value = stat.endsWith('Percent') ? `+${formatPercent(v)}` : `+${formatNumber(v)}`;
+    return `<div class="battle-info-row"><span>${label}</span><strong>${value}</strong></div>`;
+  }).join('');
+
+  return `
+    <div class="cards-summary-box">
+      <div class="equip-stats-title">✨ Bônus das Cartas Ativas</div>
+      ${rows || '<p style="font-size:11px;color:var(--text-dim); margin:0;">Nenhuma carta equipada ainda.</p>'}
+    </div>
+    <div class="cards-summary-box">
+      <div class="equip-stats-title">🎴 Slots de Carta</div>
+      <div class="battle-info-row"><span>Desbloqueados</span><strong>${unlockedSlots}/6</strong></div>
+    </div>
+  `;
 }
 
 export function renderCardsTab(state) {
   const container = document.getElementById('tab-cards');
   const bossCards = CARDS.filter((c) => c.isBossCard);
   const commonCards = CARDS.filter((c) => !c.isBossCard);
+  const bossOwned = bossCards.filter((c) => isCardDiscovered(state, c.id)).length;
+  const commonOwned = commonCards.filter((c) => isCardDiscovered(state, c.id)).length;
 
   container.innerHTML = `
-    <h3 class="cards-section-title">👑 Cartas de Boss</h3>
+    <div class="section-banner">Cartas</div>
+    ${cardsSummaryHtml(state)}
+    <h3 class="cards-section-title">👑 Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span></h3>
     <div class="card-grid">${bossCards.map((c) => cardTileHtml(state, c)).join('')}</div>
-    <h3 class="cards-section-title">🃏 Carta Comum</h3>
+    <h3 class="cards-section-title">🃏 Cartas de Monstros <span class="cards-collected">Colecionadas: ${commonOwned}/${commonCards.length}</span></h3>
     <div class="card-grid">${commonCards.map((c) => cardTileHtml(state, c)).join('')}</div>
   `;
 }
@@ -577,13 +704,17 @@ function formatDuration(ms) {
 // transient UI state) — tradeFromMaterialId null means nothing selected.
 // ---------------------------------------------------------------
 
-function eventListItemHtml(id, icon, name, statusLine, expanded, bodyHtml) {
-  return `<div class="event-list-item">
-    <div class="family-group-header event-list-header" data-toggle-event="${id}">
-      <h3><span class="icon">${icon}</span> ${name} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">${statusLine}</span></h3>
-      <button class="forge-toggle-btn" data-toggle-event="${id}">${expanded ? '▲ Recolher' : '▼ Expandir'}</button>
+function eventListItemHtml(id, icon, name, statusLine, expanded, bodyHtml, theme) {
+  return `<div class="event-card event-card-${theme}">
+    <div class="event-card-header" data-toggle-event="${id}">
+      <span class="event-card-icon">${icon}</span>
+      <div class="event-card-heading">
+        <div class="event-card-name">${name}</div>
+        <div class="event-card-status">${statusLine}</div>
+      </div>
+      <button class="event-card-toggle" data-toggle-event="${id}">${expanded ? '▲' : '▼'}</button>
     </div>
-    ${expanded ? `<div class="event-list-body">${bodyHtml}</div>` : ''}
+    ${expanded ? `<div class="event-card-body">${bodyHtml}</div>` : ''}
   </div>`;
 }
 
@@ -818,10 +949,12 @@ function towerStatusLine(state) {
 
 export function renderEventsTab(state, expandedEvents = new Set(), tradeFromMaterialId = null, expandedTradeGroups = new Set(), tradeQty = TRADE_COST, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null) {
   const container = document.getElementById('tab-events');
-  container.innerHTML = `<div class="event-list">
-    ${eventListItemHtml('caca', '🎪', 'Caça Aprimorada', cacaAprimoradaStatusLine(state), expandedEvents.has('caca'), cacaAprimoradaContentHtml(state))}
-    ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(state), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty))}
-    ${eventListItemHtml('torre', '🗼', 'Torre Infinita', towerStatusLine(state), expandedEvents.has('torre'), towerContentHtml(state, towerRunRemainingMs, towerHp, towerMaxHp))}
+  container.innerHTML = `
+    <div class="section-banner">Eventos</div>
+    <div class="event-list">
+    ${eventListItemHtml('caca', '🎪', 'Caça Aprimorada', cacaAprimoradaStatusLine(state), expandedEvents.has('caca'), cacaAprimoradaContentHtml(state), 'red')}
+    ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(state), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty), 'gold')}
+    ${eventListItemHtml('torre', '🗼', 'Torre Infinita', towerStatusLine(state), expandedEvents.has('torre'), towerContentHtml(state, towerRunRemainingMs, towerHp, towerMaxHp), 'purple')}
   </div>`;
 }
 
@@ -869,6 +1002,7 @@ export function renderAchievementsTab(state) {
   }).join('');
 
   container.innerHTML = `
+    <div class="section-banner">Conquistas</div>
     <div class="shop-balance">💎 Você tem <strong>${formatNumber(state.cash)}</strong> Cash</div>
     <button id="watch-ad-btn" class="watch-ad-btn" ${adReady ? '' : 'disabled'}>
       ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' 💎)' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
@@ -886,6 +1020,7 @@ export function renderAchievementsTab(state) {
 export function renderShopTab(state, activeSubTab) {
   const container = document.getElementById('tab-shop');
   container.innerHTML = `
+    <div class="section-banner">Loja</div>
     <div class="inner-subnav">
       <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">💎 Cash</button>
       <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">🎫 Moeda de Evento</button>

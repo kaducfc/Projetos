@@ -284,6 +284,13 @@ function setupStageControls() {
     if (e.button !== 0) return;
     onClickMonster();
   });
+  // Same attack, just a second (bigger, thumb-friendly) tap target — real
+  // mobile layouts want a dedicated CTA button below the fold, not just the
+  // sprite itself.
+  document.getElementById('attack-button').addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    onClickMonster();
+  });
 }
 
 // ---------------------------------------------------------------
