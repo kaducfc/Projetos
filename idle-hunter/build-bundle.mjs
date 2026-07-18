@@ -28,6 +28,7 @@ const MODULE_ORDER = [
   'js/systems/cards.js',
   'js/systems/combat.js',
   'js/systems/tower.js',
+  'js/systems/goldmine.js',
   'js/systems/equipment.js',
   'js/systems/crafting.js',
   'js/systems/upgrades.js',
