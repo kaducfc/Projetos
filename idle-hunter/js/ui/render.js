@@ -150,7 +150,7 @@ const ALL_SLOT_IDS = ['helmet', 'armor', 'weapon', 'pants', 'gloves', 'boots'];
 // twice before.
 export function renderInventoryTab(state, filterElement = null) {
   const container = document.getElementById('tab-inventory');
-  const banner = `<img class="equip-banner-img" src="assets/ui/equip-banner.png" alt="Equipamentos">`;
+  const banner = `<img class="section-banner-img" src="assets/ui/titles/equipamentos.png" alt="Equipamentos">`;
   container.innerHTML = banner + equipRingContentHtml(state, filterElement);
 }
 
@@ -168,7 +168,7 @@ const FORGE_SUBTABS = [
 
 export function renderForgeTab(state, activeForgeSubTab = 'recipes', expandedForgeBosses = new Set()) {
   const container = document.getElementById('tab-forge');
-  const banner = `<div class="section-banner">Forja</div>`;
+  const banner = `<img class="section-banner-img" src="assets/ui/titles/forja.png" alt="Forja">`;
   const subnav = `<div class="inner-subnav">${FORGE_SUBTABS.map((t) => `
     <button class="inner-subtab-btn ${activeForgeSubTab === t.id ? 'active' : ''}" data-forge-subtab="${t.id}">${t.label}</button>
   `).join('')}</div>`;
@@ -512,7 +512,7 @@ function upgradeProgressHtml(upgrade, level) {
 export function renderUpgradesTab(state) {
   const container = document.getElementById('tab-upgrades');
   container.innerHTML = `
-    <div class="section-banner">Aprimoramentos</div>
+    <img class="section-banner-img" src="assets/ui/titles/aprimoramentos.png" alt="Aprimoramentos">
     <div class="upgrade-list">${UPGRADES.map((u) => upgradeCardHtml(state, u)).join('')}</div>
   `;
 }
@@ -630,7 +630,7 @@ export function renderCardsTab(state) {
   const commonOwned = commonCards.filter((c) => isCardDiscovered(state, c.id)).length;
 
   container.innerHTML = `
-    <div class="section-banner">Cartas</div>
+    <img class="section-banner-img" src="assets/ui/titles/cartas.png" alt="Cartas">
     ${cardsSummaryHtml(state)}
     <h3 class="cards-section-title">👑 Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span></h3>
     <div class="card-grid">${bossCards.map((c) => cardTileHtml(state, c)).join('')}</div>
@@ -839,7 +839,7 @@ function torreProvacoesFightPanelHtml(state, runRemainingMs, towerHp, towerMaxHp
 export function renderEventsTab(state, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `
-    <div class="section-banner">Eventos</div>
+    <img class="section-banner-img" src="assets/ui/titles/eventos.png" alt="Eventos">
     <div class="event-list">
     ${invasaoChefesBannerHtml(state)}
     ${state.eventBossHp != null ? invasaoChefesFightPanelHtml(state) : ''}
@@ -916,7 +916,7 @@ export function renderShopTab(state, activeSubTab) {
   else body = cashShopHtml(state);
 
   container.innerHTML = `
-    <div class="section-banner">Loja</div>
+    <img class="section-banner-img" src="assets/ui/titles/loja.png" alt="Loja">
     <div class="inner-subnav">
       <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">${ESMERALDA_ICON} Esmeralda</button>
       <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">${EVENT_ICON} Evento</button>
