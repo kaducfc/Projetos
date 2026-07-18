@@ -141,10 +141,18 @@ export function rollDrops(stage, dropMult, weakMonsterId) {
 /// — re-rolling on every render would make the sprite flicker between
 /// monsters mid-fight). null on boss stages, where that decade's boss is
 /// always shown instead.
+// How many background scenes exist for weak-monster stages (see
+// assets/ui/scenes/scene1..N.png and ui/render.js) — boss scenes aren't in
+// yet, so boss stages keep sceneIndex null (falls back to the plain CSS
+// gradient backdrop) until those are added.
+export const WEAK_MONSTER_SCENE_COUNT = 3;
+
 export function ensureMonsterSpawned(state) {
   if (state.monsterHp == null) {
     state.monsterHp = monsterMaxHp(state.stage);
-    state.weakMonsterId = isBossStage(state.stage) ? null : pickRandomWeakMonster(state.stage).id;
+    const boss = isBossStage(state.stage);
+    state.weakMonsterId = boss ? null : pickRandomWeakMonster(state.stage).id;
+    state.sceneIndex = boss ? null : Math.floor(Math.random() * WEAK_MONSTER_SCENE_COUNT);
   }
 }
 

@@ -35,7 +35,7 @@ export const ESMERALDA_ICON = `<img class="currency-icon" src="assets/ui/currenc
 
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
-  return `<span class="element-badge element-${el.id}">${el.emoji} ${el.name}</span>`;
+  return `<span class="element-badge element-${el.id}"><img class="element-badge-icon" src="${el.image}" alt="">${el.name}</span>`;
 }
 
 
@@ -104,8 +104,31 @@ export function renderPlayerHp(current, max) {
   document.getElementById('player-hp-bar-text').textContent = `${formatNumber(hp)} / ${formatNumber(max)}`;
 }
 
+// Listed as plain static string literals (not built via template-literal
+// interpolation) on purpose — build-bundle.mjs's asset inliner only
+// recognizes literal 'assets/...' paths in the source text, and a dynamic
+// `scene${n}.png` path would either be missed or (worse) wrongly matched
+// as one literal spanning the whole `${...}` expression.
+const SCENE_IMAGES = [
+  'assets/ui/scenes/scene1.png',
+  'assets/ui/scenes/scene2.png',
+  'assets/ui/scenes/scene3.png',
+];
+
 export function renderMonster(state, monster) {
   const boss = isBossStage(state.stage);
+
+  // Weak-monster stages (1-99) show one of the 3 real scene backgrounds,
+  // picked once per spawn (see ensureMonsterSpawned in systems/combat.js —
+  // never re-picked here, or the backdrop would flicker every render).
+  // Boss stages have no scene art yet, so they fall back to the plain CSS
+  // gradient backdrop (see #monster-area in style.css) by clearing the
+  // inline background-image.
+  const monsterArea = document.getElementById('monster-area');
+  monsterArea.style.backgroundImage = state.sceneIndex != null
+    ? `url('${SCENE_IMAGES[state.sceneIndex]}')`
+    : '';
+
   document.getElementById('monster-sprite').innerHTML = iconMarkup(monster.image, monster.emoji, monster.name);
   document.getElementById('monster-name').innerHTML =
     `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
@@ -114,7 +137,6 @@ export function renderMonster(state, monster) {
   const hp = Math.max(0, state.monsterHp ?? monster.maxHp);
   const pct = Math.max(0, Math.min(100, (hp / monster.maxHp) * 100));
   document.getElementById('hp-bar-fill').style.width = `${pct}%`;
-  document.getElementById('hp-bar-text').textContent = `${formatNumber(hp)} / ${formatNumber(monster.maxHp)}`;
   document.getElementById('enemy-hp-value').textContent = `${formatNumber(hp)} / ${formatNumber(monster.maxHp)}`;
 
   document.getElementById('stage-prev').disabled = state.stage <= 1;
@@ -155,9 +177,9 @@ export function renderInventoryTab(state, filterElement = null) {
 }
 
 function elementFilterRowHtml(filterElement) {
-  const chips = [{ id: null, emoji: '📦', name: 'Todos' }, ...ELEMENTS];
+  const chips = [{ id: null, emoji: '📦', image: null, name: 'Todos' }, ...ELEMENTS];
   return `<div class="element-filter-row">${chips.map((el) => `
-    <button class="element-filter-btn ${filterElement === el.id ? 'active' : ''} ${el.id ? `element-${el.id}` : ''}" data-filter-element="${el.id ?? ''}" title="${el.name}">${el.emoji}</button>
+    <button class="element-filter-btn ${filterElement === el.id ? 'active' : ''} ${el.id ? `element-${el.id}` : ''}" data-filter-element="${el.id ?? ''}" title="${el.name}">${el.image ? `<img class="element-filter-icon" src="${el.image}" alt="">` : el.emoji}</button>
   `).join('')}</div>`;
 }
 
