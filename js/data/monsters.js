@@ -186,6 +186,15 @@ export const BOSSES = [
     element: 'fogo',
     emoji: '🦅',
     image: 'assets/solkaiser/monster.png',
+    // Idle-loop animation — same standard as Chispim's (see that entry's
+    // comment above): 150ms/frame, plain src swap, all 4 frames cropped to
+    // the same union bounding box.
+    animFrames: [
+      'assets/solkaiser/anim/frame1.png',
+      'assets/solkaiser/anim/frame2.png',
+      'assets/solkaiser/anim/frame3.png',
+      'assets/solkaiser/anim/frame4.png',
+    ],
     materials: {
       primary1: { id: 'solkaiser_feather', name: 'Pena de Solkaiser', emoji: '🪶', image: 'assets/solkaiser/pena.png' },
       primary2: { id: 'solkaiser_core', name: 'Núcleo Solar', emoji: '☀️', image: 'assets/solkaiser/nucleo.png' },
