@@ -35,7 +35,7 @@ export const ESMERALDA_ICON = `<img class="currency-icon" src="assets/ui/currenc
 
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
-  return `<span class="element-badge element-${el.id}">${el.emoji} ${el.name}</span>`;
+  return `<span class="element-badge element-${el.id}"><img class="element-badge-icon" src="${el.image}" alt="">${el.name}</span>`;
 }
 
 
@@ -177,9 +177,9 @@ export function renderInventoryTab(state, filterElement = null) {
 }
 
 function elementFilterRowHtml(filterElement) {
-  const chips = [{ id: null, emoji: '📦', name: 'Todos' }, ...ELEMENTS];
+  const chips = [{ id: null, emoji: '📦', image: null, name: 'Todos' }, ...ELEMENTS];
   return `<div class="element-filter-row">${chips.map((el) => `
-    <button class="element-filter-btn ${filterElement === el.id ? 'active' : ''} ${el.id ? `element-${el.id}` : ''}" data-filter-element="${el.id ?? ''}" title="${el.name}">${el.emoji}</button>
+    <button class="element-filter-btn ${filterElement === el.id ? 'active' : ''} ${el.id ? `element-${el.id}` : ''}" data-filter-element="${el.id ?? ''}" title="${el.name}">${el.image ? `<img class="element-filter-icon" src="${el.image}" alt="">` : el.emoji}</button>
   `).join('')}</div>`;
 }
 
