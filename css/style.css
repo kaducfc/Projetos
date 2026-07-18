@@ -1494,18 +1494,22 @@ button:disabled {
 .upgrade-card .info .name {
   font-weight: 700;
   font-size: 13px;
+  line-height: 1.15;
+  color: #fff;
 }
 
 .upgrade-card .info .desc {
   font-size: 11.5px;
-  color: var(--text-dim);
+  line-height: 1.2;
+  color: #d3d9e8;
 }
 
 .upgrade-card .level {
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-dim);
-  margin-top: 2px;
+  line-height: 1.15;
+  color: #b7c0d6;
+  margin-top: 1px;
 }
 
 .upgrade-progress {
@@ -1514,12 +1518,13 @@ button:disabled {
   gap: 5px;
   flex-wrap: wrap;
   font-size: 11px;
-  color: var(--text-dim);
-  margin-top: 3px;
+  line-height: 1.15;
+  color: #b7c0d6;
+  margin-top: 1px;
 }
 
 .upgrade-progress strong {
-  color: var(--text);
+  color: #fff;
   font-weight: 800;
 }
 
@@ -1533,12 +1538,15 @@ button:disabled {
   font-weight: 700;
   background: url('../assets/ui/upgrade-button-frame.png') center / 100% 100% no-repeat;
   color: #000;
-  /* Thin white outline for contrast against the blue button art, same
-     technique as #monster-name in style.css. */
+  /* Very thin white outline for contrast against the blue button art — just
+     a hairline, not a bold cartoon outline like #monster-name's. A 0.5px
+     4-direction (no diagonals) offset reads as a subtle edge highlight
+     instead of a thick stroke. */
   text-shadow:
-    -1px -1px 0 #fff, 0 -1px 0 #fff, 1px -1px 0 #fff,
-    -1px 0 0 #fff, 1px 0 0 #fff,
-    -1px 1px 0 #fff, 0 1px 0 #fff, 1px 1px 0 #fff;
+    0 -0.5px 0 rgba(255, 255, 255, .85),
+    0 0.5px 0 rgba(255, 255, 255, .85),
+    -0.5px 0 0 rgba(255, 255, 255, .85),
+    0.5px 0 0 rgba(255, 255, 255, .85);
   white-space: nowrap;
   box-shadow: none;
   border-radius: 0;
