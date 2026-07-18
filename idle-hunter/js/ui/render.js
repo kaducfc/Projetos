@@ -104,6 +104,17 @@ export function renderPlayerHp(current, max) {
   document.getElementById('player-hp-bar-text').textContent = `${formatNumber(hp)} / ${formatNumber(max)}`;
 }
 
+// Listed as plain static string literals (not built via template-literal
+// interpolation) on purpose — build-bundle.mjs's asset inliner only
+// recognizes literal 'assets/...' paths in the source text, and a dynamic
+// `scene${n}.png` path would either be missed or (worse) wrongly matched
+// as one literal spanning the whole `${...}` expression.
+const SCENE_IMAGES = [
+  'assets/ui/scenes/scene1.png',
+  'assets/ui/scenes/scene2.png',
+  'assets/ui/scenes/scene3.png',
+];
+
 export function renderMonster(state, monster) {
   const boss = isBossStage(state.stage);
 
@@ -115,7 +126,7 @@ export function renderMonster(state, monster) {
   // inline background-image.
   const monsterArea = document.getElementById('monster-area');
   monsterArea.style.backgroundImage = state.sceneIndex != null
-    ? `url('assets/ui/scenes/scene${state.sceneIndex + 1}.png')`
+    ? `url('${SCENE_IMAGES[state.sceneIndex]}')`
     : '';
 
   document.getElementById('monster-sprite').innerHTML = iconMarkup(monster.image, monster.emoji, monster.name);
