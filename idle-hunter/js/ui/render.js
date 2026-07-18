@@ -168,6 +168,12 @@ export function renderMonster(state, monster) {
     : state.sceneIndex != null
       ? `url('${SCENE_IMAGES[state.sceneIndex]}')`
       : '';
+  // Per-boss override of the default `center 40%` (see #monster-area in
+  // style.css) — lets a specific scene's focal point (e.g. a ground magic
+  // circle) be nudged to line up with the monster sprite sitting on top of
+  // it. Cleared back to '' (falls back to the stylesheet default) for
+  // anything without its own scenePosition.
+  monsterArea.style.backgroundPosition = bossScene ? (monster.scenePosition || '') : '';
 
   const spriteKey = monster.bossId || monster.weakMonsterId || monster.name;
   if (spriteKey !== currentMonsterSpriteKey) {
@@ -201,7 +207,7 @@ export function renderBossTimer(remainingMs) {
   const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
   el.classList.remove('hidden');
   el.classList.toggle('urgent', seconds <= 10);
-  el.textContent = `⏱ ${seconds}s para derrotar o chefe!`;
+  el.textContent = `⏱ ${seconds}s`;
 }
 
 // All 6 equip slots, shown as a single grid of square tiles (no paper-doll
