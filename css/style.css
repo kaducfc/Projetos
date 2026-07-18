@@ -405,6 +405,17 @@ button:disabled {
   vertical-align: middle;
 }
 
+/* Idle-loop animation (see monsters.js's `animFrames`, ui/render.js's
+   startMonsterIdleAnim): two stacked layers cross-fade via opacity instead
+   of hard-swapping one <img>'s src, so frame changes read as fluid motion
+   rather than a slideshow. */
+.monster-anim-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: opacity 140ms ease-in-out;
+}
+
 #monster-sprite.hit {
   animation: monster-hit 0.12s ease-out;
 }
