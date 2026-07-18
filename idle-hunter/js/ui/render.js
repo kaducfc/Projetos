@@ -137,7 +137,6 @@ export function renderMonster(state, monster) {
   const hp = Math.max(0, state.monsterHp ?? monster.maxHp);
   const pct = Math.max(0, Math.min(100, (hp / monster.maxHp) * 100));
   document.getElementById('hp-bar-fill').style.width = `${pct}%`;
-  document.getElementById('hp-bar-text').textContent = `${formatNumber(hp)} / ${formatNumber(monster.maxHp)}`;
   document.getElementById('enemy-hp-value').textContent = `${formatNumber(hp)} / ${formatNumber(monster.maxHp)}`;
 
   document.getElementById('stage-prev').disabled = state.stage <= 1;
