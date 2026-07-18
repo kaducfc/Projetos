@@ -157,6 +157,11 @@ export const BOSSES = [
       'assets/chispim/anim/frame4.png',
       'assets/chispim/anim/frame2.png',
     ],
+    // Boss-specific background for the battle scene (renderMonster() in
+    // ui/render.js uses this instead of the random SCENE_IMAGES rotation
+    // used for weak-monster stages). Optional — bosses without one fall
+    // back to the plain CSS gradient backdrop, same as before.
+    scene: 'assets/ui/scenes/boss-chispim.png',
     materials: {
       primary1: { id: 'chispim_heart', name: 'Núcleo de Faísca', emoji: '❤️', image: 'assets/chispim/nucleo_faisca.png' },
       primary2: { id: 'chispim_whisker', name: 'Cauda Condutora', emoji: '⚡', image: 'assets/chispim/cauda_condutora.png' },
@@ -421,6 +426,7 @@ export function getMonsterInfo(stage, weakMonsterId) {
       emoji: b.emoji,
       image: b.image || null,
       animFrames: b.animFrames || null,
+      scene: b.scene || null,
       element: b.element,
       isBoss: true,
       isWeak: false,
