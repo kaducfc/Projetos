@@ -122,7 +122,7 @@ const SCENE_IMAGES = [
 // So the sprite's innerHTML (and the frame-cycling interval) is only
 // (re)built when the monster identity actually changes; same-monster
 // re-renders leave the sprite element — and its animation — untouched.
-const MONSTER_IDLE_FRAME_MS = 190;
+const MONSTER_IDLE_FRAME_MS = 150;
 let currentMonsterSpriteKey = null;
 let monsterIdleAnimTimer = null;
 

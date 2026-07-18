@@ -347,6 +347,12 @@ button:disabled {
   margin-bottom: 6px;
   font-size: 16px;
   letter-spacing: 0.01em;
+  /* Thin white outline so the name stays legible over busy scene art
+     (assets/ui/scenes/*, boss-specific backgrounds) behind it. */
+  text-shadow:
+    -1px -1px 0 #fff, 0 -1px 0 #fff, 1px -1px 0 #fff,
+    -1px 0 0 #fff, 1px 0 0 #fff,
+    -1px 1px 0 #fff, 0 1px 0 #fff, 1px 1px 0 #fff;
 }
 
 #monster-name .boss-tag {
