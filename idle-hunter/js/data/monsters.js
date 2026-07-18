@@ -144,18 +144,19 @@ export const BOSSES = [
     element: 'eletrico',
     emoji: '🐹',
     image: 'assets/chispim/monster.png',
-    // Idle-loop animation frames for the battle sprite (renderMonster() in
+    // Idle-loop animation for the battle sprite (renderMonster() in
     // ui/render.js cycles through these on an interval while this boss is
     // on screen). `image` above stays as the single static fallback used
     // everywhere else (Forja cards, equipment icons, drop popups) — only
-    // the big monster-sprite element animates. Listed as literal string
-    // paths on purpose, same reasoning as SCENE_IMAGES in render.js:
-    // build-bundle.mjs's asset inliner only recognizes literal 'assets/...'
-    // paths in the source text. Drop the real frames in
-    // assets/chispim/anim/ (frame1.png, frame2.png, ...) and list them
-    // here — 2 frames is enough for a basic idle wobble, up to ~4-6 for a
-    // smoother breathing loop.
-    animFrames: null, // e.g. ['assets/chispim/anim/frame1.png', 'assets/chispim/anim/frame2.png']
+    // the big monster-sprite element animates. All 4 frames were cropped
+    // to the same bounding box and share the exact same dimensions, so the
+    // sprite doesn't jump around as it cycles.
+    animFrames: [
+      'assets/chispim/anim/frame1.png',
+      'assets/chispim/anim/frame3.png',
+      'assets/chispim/anim/frame4.png',
+      'assets/chispim/anim/frame2.png',
+    ],
     materials: {
       primary1: { id: 'chispim_heart', name: 'Núcleo de Faísca', emoji: '❤️', image: 'assets/chispim/nucleo_faisca.png' },
       primary2: { id: 'chispim_whisker', name: 'Cauda Condutora', emoji: '⚡', image: 'assets/chispim/cauda_condutora.png' },

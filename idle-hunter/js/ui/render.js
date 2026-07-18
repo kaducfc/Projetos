@@ -162,7 +162,8 @@ export function renderMonster(state, monster) {
   const spriteKey = monster.bossId || monster.weakMonsterId || monster.name;
   if (spriteKey !== currentMonsterSpriteKey) {
     currentMonsterSpriteKey = spriteKey;
-    document.getElementById('monster-sprite').innerHTML = iconMarkup(monster.image, monster.emoji, monster.name);
+    const initialImage = (monster.animFrames && monster.animFrames[0]) || monster.image;
+    document.getElementById('monster-sprite').innerHTML = iconMarkup(initialImage, monster.emoji, monster.name);
     startMonsterIdleAnim(monster.animFrames);
   }
   document.getElementById('monster-name').innerHTML =
