@@ -117,12 +117,19 @@ const SCENE_IMAGES = [
 
 // Idle-loop sprite animation (see monsters.js's `animFrames` on a boss/weak
 // entry). renderMonster() runs every game tick (100ms, see main.js's
-// tick()) — rebuilding the sprite's <img> every single call would reset any
+// tick()) — rebuilding the sprite's markup every single call would reset any
 // running animation right back to frame 0 before it ever visibly advanced.
 // So the sprite's innerHTML (and the frame-cycling interval) is only
 // (re)built when the monster identity actually changes; same-monster
 // re-renders leave the sprite element — and its animation — untouched.
-const MONSTER_IDLE_FRAME_MS = 500;
+//
+// Frames cross-fade between two stacked <img> layers (toggling opacity)
+// instead of hard-swapping a single <img>'s src — a straight src swap reads
+// as a slideshow ("uma foto trocando pra outra"), even at a fast interval,
+// because the old frame is still on screen at full opacity right up until
+// the instant it's replaced. The fade is what actually reads as fluid.
+const MONSTER_IDLE_FRAME_MS = 160;
+const MONSTER_ANIM_FADE_MS = 140;
 let currentMonsterSpriteKey = null;
 let monsterIdleAnimTimer = null;
 
@@ -136,12 +143,18 @@ function stopMonsterIdleAnim() {
 function startMonsterIdleAnim(frames) {
   stopMonsterIdleAnim();
   if (!frames || frames.length < 2) return;
-  const img = document.querySelector('#monster-sprite img');
-  if (!img) return;
-  let i = 0;
+  const layerA = document.querySelector('#monster-sprite .monster-anim-a');
+  const layerB = document.querySelector('#monster-sprite .monster-anim-b');
+  if (!layerA || !layerB) return;
+  let i = 1;
+  let showingA = true;
   monsterIdleAnimTimer = setInterval(() => {
     i = (i + 1) % frames.length;
-    img.src = frames[i];
+    const incoming = showingA ? layerB : layerA;
+    incoming.src = frames[i];
+    layerA.style.opacity = showingA ? '0' : '1';
+    layerB.style.opacity = showingA ? '1' : '0';
+    showingA = !showingA;
   }, MONSTER_IDLE_FRAME_MS);
 }
 
@@ -162,9 +175,16 @@ export function renderMonster(state, monster) {
   const spriteKey = monster.bossId || monster.weakMonsterId || monster.name;
   if (spriteKey !== currentMonsterSpriteKey) {
     currentMonsterSpriteKey = spriteKey;
-    const initialImage = (monster.animFrames && monster.animFrames[0]) || monster.image;
-    document.getElementById('monster-sprite').innerHTML = iconMarkup(initialImage, monster.emoji, monster.name);
-    startMonsterIdleAnim(monster.animFrames);
+    const sprite = document.getElementById('monster-sprite');
+    if (monster.animFrames && monster.animFrames.length >= 2) {
+      const alt = monster.name || '';
+      sprite.innerHTML = `<img class="monster-anim-layer monster-anim-a" src="${monster.animFrames[0]}" alt="${alt}" style="opacity:1">` +
+        `<img class="monster-anim-layer monster-anim-b" src="${monster.animFrames[1]}" alt="${alt}" style="opacity:0">`;
+      startMonsterIdleAnim(monster.animFrames);
+    } else {
+      sprite.innerHTML = iconMarkup(monster.image, monster.emoji, monster.name);
+      stopMonsterIdleAnim();
+    }
   }
   document.getElementById('monster-name').innerHTML =
     `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
