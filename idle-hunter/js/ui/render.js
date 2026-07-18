@@ -5,7 +5,7 @@ import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE, ELEMEN
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
-import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
+import { canCraft, canEnhance, canUpgradeToMaster, ensureCardIds, maxCardSlots } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
 import { getEventWindow, getTowerWindow, TOWER_MAX_LEVEL } from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
@@ -300,17 +300,19 @@ export function showEquipSlotModal(state, slotId) {
 }
 
 /// Opens the detail popup for a specific inventory item (equipped or not).
-/// pickerOpen controls whether the card-picker sub-panel starts expanded
-/// (only true right after the player clicks "Equipar Carta" — see main.js).
-export function showItemDetailModal(state, uid, pickerOpen = false, confirmDestroy = false) {
+/// pickerOpenSlot controls whether a card-picker sub-panel starts expanded
+/// for that specific slot index (only set right after the player clicks
+/// "Equipar Carta" on that slot — see main.js); null means every slot is
+/// closed.
+export function showItemDetailModal(state, uid, pickerOpenSlot = null, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   if (!entry) return;
   const item = getItem(entry.itemId);
   const slot = getSlot(item.slotId);
-  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, pickerOpen, confirmDestroy));
+  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
 }
 
-function itemDetailHtml(state, uid, pickerOpen, confirmDestroy = false) {
+function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   const item = getItem(entry.itemId);
   const slot = getSlot(item.slotId);
@@ -326,13 +328,17 @@ function itemDetailHtml(state, uid, pickerOpen, confirmDestroy = false) {
     ? `<button class="modal-action-btn" data-modal-unequip="${item.slotId}">Desequipar</button>`
     : `<button class="modal-action-btn" data-modal-equip="${uid}">Equipar</button>`;
 
+  const cardSlotsHtml = ensureCardIds(entry)
+    .map((cardId, slotIndex) => cardSlotHtml(state, uid, entry, pickerOpenSlot === slotIndex, slotIndex))
+    .join('');
+
   return `
     <div class="item-detail">
       <div class="item-detail-icon">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
-      ${cardSlotHtml(state, uid, entry, pickerOpen, item)}
+      ${cardSlotsHtml}
       ${enhancePanelHtml(state, uid, entry, item)}
       <div class="modal-action-row">
         ${actionBtn}
@@ -347,38 +353,28 @@ function itemDetailHtml(state, uid, pickerOpen, confirmDestroy = false) {
 
 // A card is consumed from state.cards (a stackable count, like a material)
 // the moment it's socketed. Cards themselves have no slotId restriction: any
-// card can go in any item's slot. The slot itself has three states:
-//   1. locked — the item was just crafted, must be unlocked first (RNG,
-//      paid in that item's own boss Crystal — see attemptCardSlotUnlock())
-//   2. unlocked, empty — either closed (a button to open the picker) or with
-//      the picker expanded (pickerOpen), listing every owned card
-//   3. unlocked, filled — the socketed card, with a Remover button
-function cardSlotHtml(state, uid, entry, pickerOpen, item) {
-  const unlocked = entry.cardSlotUnlocked || !!entry.cardId;
-
-  if (!unlocked) {
-    const crystalInfo = findMaterialInfo(item.crystalMaterialId);
-    const haveCrystal = state.materials[item.crystalMaterialId] || 0;
-    const canAttempt = canAttemptCardSlotUnlock(state, uid);
-    return `<div class="card-slot-locked">
-      <div class="card-slot-label">🔒 Slot de Carta bloqueado</div>
-      <div class="card-slot-unlock-info">${Math.round(CARD_SLOT_UNLOCK_CHANCE * 100)}% de chance de sucesso · custo: 1 <span class="icon">${iconMarkup(crystalInfo.image, crystalInfo.emoji, crystalInfo.name)}</span> ${crystalInfo.name} (você tem ${formatNumber(haveCrystal)})</div>
-      <button class="card-slot-unlock-btn" data-unlock-card-slot="${uid}" ${canAttempt ? '' : 'disabled'}>Tentar Desbloquear</button>
-    </div>`;
-  }
+// card can go in any item's slot. Every item comes with 1 card slot already
+// unlocked from the moment it's crafted; Rank Master grants a 2nd (see
+// maxCardSlots/ensureCardIds in systems/crafting.js) — there's no more RNG
+// unlock step. Each slot (identified by slotIndex) is either:
+//   1. empty — either closed (a button to open the picker) or with the
+//      picker expanded (pickerOpen), listing every owned card
+//   2. filled — the socketed card, with a Remover button
+function cardSlotHtml(state, uid, entry, pickerOpen, slotIndex) {
+  const cardId = entry.cardIds[slotIndex];
 
   // getCard() can miss for an old save's cardId (the roster that generates
   // CARDS was replaced — see data/cards.js) — fall through to the normal
   // empty-slot display below rather than crash on a stale reference.
-  if (entry.cardId && getCard(entry.cardId)) {
-    const card = getCard(entry.cardId);
+  if (cardId && getCard(cardId)) {
+    const card = getCard(cardId);
     return `<div class="card-slot-badge filled">
       <span class="icon">${iconMarkup(card.image, card.emoji, card.name)}</span>
       <div class="card-slot-info">
         <div class="card-slot-name">${card.name}</div>
         <div class="card-slot-desc">${card.description}</div>
       </div>
-      <button class="card-slot-remove" data-unsocket-uid="${uid}">Remover</button>
+      <button class="card-slot-remove" data-unsocket-uid="${uid}" data-unsocket-slot="${slotIndex}">Remover</button>
     </div>`;
   }
 
@@ -386,7 +382,7 @@ function cardSlotHtml(state, uid, entry, pickerOpen, item) {
     return `<div class="card-slot-badge">
       <span class="icon">🃏</span>
       <div class="card-slot-info"><div class="card-slot-name">Slot de Carta: vazio</div></div>
-      <button class="card-slot-equip-btn" data-open-card-picker="${uid}">Equipar Carta</button>
+      <button class="card-slot-equip-btn" data-open-card-picker="${uid}" data-open-card-picker-slot="${slotIndex}">Equipar Carta</button>
     </div>`;
   }
 
@@ -400,7 +396,7 @@ function cardSlotHtml(state, uid, entry, pickerOpen, item) {
   return `<div class="card-slot-picker">
     <div class="card-slot-label">🃏 Escolha uma carta:</div>
     <div class="card-slot-options">${owned.map((c) => `
-      <button class="card-slot-option" data-socket-uid="${uid}" data-socket-card-id="${c.id}" title="${c.description}">
+      <button class="card-slot-option" data-socket-uid="${uid}" data-socket-slot="${slotIndex}" data-socket-card-id="${c.id}" title="${c.description}">
         <span class="icon">${iconMarkup(c.image, c.emoji, c.name)}</span> ${c.name} <span class="qty">×${state.cards[c.id]}</span>
       </button>
     `).join('')}</div>
@@ -579,10 +575,9 @@ function cardTileHtml(state, card) {
 }
 
 // Real data, not mockup flavor: sums every socketed card's `bonuses` (see
-// data/cards.js) across all 6 equip slots, and counts how many of those
-// slots have their card slot unlocked at all (see systems/crafting.js's
-// attemptCardSlotUnlock) — the two panels the mockup calls "Bônus das
-// Cartas Ativas" and "Slot de Cartas".
+// data/cards.js) across all 6 equip slots (each slot can carry up to
+// maxCardSlots(entry) cards — see systems/crafting.js) — the panel the
+// mockup calls "Bônus das Cartas Ativas".
 const CARD_BONUS_LABELS = {
   dpsPercent: '💥 DPS', clickPercent: '⚔️ Dano de Clique', goldPercent: `${GOLD_ICON} Ouro Obtido`,
   dropPercent: '🎒 Chance de Drop', critChancePercent: '🎯 Chance Crítica', critDamagePercent: '💢 Dano Crítico',
@@ -592,16 +587,16 @@ const CARD_BONUS_LABELS = {
 
 function cardsSummaryHtml(state) {
   const totals = {};
-  let unlockedSlots = 0;
   for (const uid of Object.values(state.equipped)) {
     if (!uid) continue;
     const entry = state.inventory.find((i) => i.uid === uid);
     if (!entry) continue;
-    if (entry.cardSlotUnlocked || entry.cardId) unlockedSlots += 1;
-    if (!entry.cardId) continue;
-    const card = getCard(entry.cardId);
-    if (!card) continue;
-    for (const b of card.bonuses || []) totals[b.stat] = (totals[b.stat] || 0) + b.value;
+    for (const cardId of ensureCardIds(entry)) {
+      if (!cardId) continue;
+      const card = getCard(cardId);
+      if (!card) continue;
+      for (const b of card.bonuses || []) totals[b.stat] = (totals[b.stat] || 0) + b.value;
+    }
   }
 
   const rows = Object.entries(totals).filter(([, v]) => v).map(([stat, v]) => {
@@ -614,10 +609,6 @@ function cardsSummaryHtml(state) {
     <div class="cards-summary-box">
       <div class="equip-stats-title">✨ Bônus das Cartas Ativas</div>
       ${rows || '<p style="font-size:11px;color:var(--text-dim); margin:0;">Nenhuma carta equipada ainda.</p>'}
-    </div>
-    <div class="cards-summary-box">
-      <div class="equip-stats-title">🎴 Slots de Carta</div>
-      <div class="battle-info-row"><span>Desbloqueados</span><strong>${unlockedSlots}/6</strong></div>
     </div>
   `;
 }

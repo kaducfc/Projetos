@@ -4,7 +4,7 @@ import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, a
 import { isBossStage, findMaterialInfo, BOSSES } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
-import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES } from './systems/crafting.js';
+import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
 import { getItem } from './data/items.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
@@ -336,8 +336,9 @@ function wireModalEvents() {
       runModalAction(() => {
         const uid = Number(equipBtn.dataset.modalEquip);
         const entry = state.inventory.find((i) => i.uid === uid);
-        const cardId = entry?.cardId;
-        const cardWillBeStripped = cardId && countEquippedCardCopies(state, cardId, uid) >= MAX_EQUIPPED_CARD_COPIES;
+        const cardWillBeStripped = entry && ensureCardIds(entry).some(
+          (cardId, slotIndex) => cardId && countEquippedCardCopies(state, cardId, uid, slotIndex) >= MAX_EQUIPPED_CARD_COPIES
+        );
         equipItem(state, uid);
         hideModal();
         if (cardWillBeStripped) {
@@ -392,22 +393,6 @@ function wireModalEvents() {
       return;
     }
 
-    const unlockBtn = e.target.closest('[data-unlock-card-slot]');
-    if (unlockBtn) {
-      runModalAction(() => {
-        const uid = Number(unlockBtn.dataset.unlockCardSlot);
-        const result = attemptCardSlotUnlock(state, uid);
-        if (result) {
-          showItemDetailModal(state, uid);
-          showToast(result.success
-            ? '🔓 Slot de carta desbloqueado! (-1 🔷 Cristal)'
-            : '❌ Tentativa falhou... (-1 🔷 Cristal)');
-          fullRefresh();
-        }
-      });
-      return;
-    }
-
     // Only opens the picker (no state mutation), but still goes through the
     // lock so a stray double-tap can't immediately land on a card option
     // that appears at the same spot once the picker renders.
@@ -415,7 +400,8 @@ function wireModalEvents() {
     if (openPickerBtn) {
       runModalAction(() => {
         const uid = Number(openPickerBtn.dataset.openCardPicker);
-        showItemDetailModal(state, uid, true);
+        const slotIndex = Number(openPickerBtn.dataset.openCardPickerSlot);
+        showItemDetailModal(state, uid, slotIndex);
       });
       return;
     }
@@ -424,13 +410,14 @@ function wireModalEvents() {
     if (socketBtn) {
       runModalAction(() => {
         const uid = Number(socketBtn.dataset.socketUid);
+        const slotIndex = Number(socketBtn.dataset.socketSlot);
         const cardId = socketBtn.dataset.socketCardId;
         const isEquipped = Object.values(state.equipped).includes(uid);
-        if (isEquipped && countEquippedCardCopies(state, cardId, uid) >= MAX_EQUIPPED_CARD_COPIES) {
+        if (isEquipped && countEquippedCardCopies(state, cardId, uid, slotIndex) >= MAX_EQUIPPED_CARD_COPIES) {
           showToast(`❌ Você só pode ter ${MAX_EQUIPPED_CARD_COPIES} cartas iguais equipadas ao mesmo tempo.`);
           return;
         }
-        if (socketCard(state, uid, cardId)) {
+        if (socketCard(state, uid, slotIndex, cardId)) {
           showItemDetailModal(state, uid);
           showToast('🃏 Carta encaixada!');
           fullRefresh();
@@ -443,7 +430,8 @@ function wireModalEvents() {
     if (unsocketBtn) {
       runModalAction(() => {
         const uid = Number(unsocketBtn.dataset.unsocketUid);
-        if (unsocketCard(state, uid)) {
+        const slotIndex = Number(unsocketBtn.dataset.unsocketSlot);
+        if (unsocketCard(state, uid, slotIndex)) {
           showItemDetailModal(state, uid);
           showToast('🃏 Carta removida.');
           fullRefresh();

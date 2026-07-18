@@ -2,6 +2,7 @@ import { getItem, getEnhancedStats, SLOTS, ENHANCE_MAX_LEVEL, computeSetBonus } 
 import { UPGRADES } from '../data/upgrades.js';
 import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard, CARD_DAMAGE_BONUS } from '../data/cards.js';
+import { ensureCardIds } from './crafting.js';
 
 const BASE_CLICK_DAMAGE = 5;
 const BASE_DPS = 0;
@@ -59,8 +60,9 @@ export function computePlayerStats(state, currentHp = null) {
     const invEntry = state.inventory.find((i) => i.uid === uid);
     if (!invEntry) continue;
 
-    if (invEntry.cardId) {
-      const card = getCard(invEntry.cardId);
+    for (const cardId of ensureCardIds(invEntry)) {
+      if (!cardId) continue;
+      const card = getCard(cardId);
       if (card) {
         for (const b of card.bonuses || []) addStat(b.stat, b.value);
         if (card.special) specialCounts[card.special.id] = (specialCounts[card.special.id] || 0) + 1;
@@ -210,9 +212,12 @@ export function getCardDamageBonus(state, element) {
   for (const uid of Object.values(state.equipped)) {
     if (!uid) continue;
     const invEntry = state.inventory.find((i) => i.uid === uid);
-    if (!invEntry || !invEntry.cardId) continue;
-    const card = getCard(invEntry.cardId);
-    if (card && card.element === element) bonus += CARD_DAMAGE_BONUS;
+    if (!invEntry) continue;
+    for (const cardId of ensureCardIds(invEntry)) {
+      if (!cardId) continue;
+      const card = getCard(cardId);
+      if (card && card.element === element) bonus += CARD_DAMAGE_BONUS;
+    }
   }
   return bonus;
 }
