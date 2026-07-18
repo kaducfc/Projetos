@@ -144,6 +144,18 @@ export const BOSSES = [
     element: 'eletrico',
     emoji: '🐹',
     image: 'assets/chispim/monster.png',
+    // Idle-loop animation frames for the battle sprite (renderMonster() in
+    // ui/render.js cycles through these on an interval while this boss is
+    // on screen). `image` above stays as the single static fallback used
+    // everywhere else (Forja cards, equipment icons, drop popups) — only
+    // the big monster-sprite element animates. Listed as literal string
+    // paths on purpose, same reasoning as SCENE_IMAGES in render.js:
+    // build-bundle.mjs's asset inliner only recognizes literal 'assets/...'
+    // paths in the source text. Drop the real frames in
+    // assets/chispim/anim/ (frame1.png, frame2.png, ...) and list them
+    // here — 2 frames is enough for a basic idle wobble, up to ~4-6 for a
+    // smoother breathing loop.
+    animFrames: null, // e.g. ['assets/chispim/anim/frame1.png', 'assets/chispim/anim/frame2.png']
     materials: {
       primary1: { id: 'chispim_heart', name: 'Núcleo de Faísca', emoji: '❤️', image: 'assets/chispim/nucleo_faisca.png' },
       primary2: { id: 'chispim_whisker', name: 'Cauda Condutora', emoji: '⚡', image: 'assets/chispim/cauda_condutora.png' },
@@ -407,6 +419,7 @@ export function getMonsterInfo(stage, weakMonsterId) {
       name: b.name,
       emoji: b.emoji,
       image: b.image || null,
+      animFrames: b.animFrames || null,
       element: b.element,
       isBoss: true,
       isWeak: false,
@@ -420,6 +433,7 @@ export function getMonsterInfo(stage, weakMonsterId) {
     name: weak.name,
     emoji: weak.emoji,
     image: weak.image || null,
+    animFrames: weak.animFrames || null,
     element: weak.element,
     isBoss: false,
     isWeak: true,
