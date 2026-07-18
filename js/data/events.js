@@ -80,3 +80,33 @@ export function getTowerWindow(now = Date.now()) {
     msUntilNextWindow: cycleStart + TOWER_CYCLE_MS - now,
   };
 }
+
+// ---------------------------------------------------------------------
+// "Mina de Ouro" — same window shape as the other two (a fresh window
+// every GOLDMINE_CYCLE_MS, open for GOLDMINE_ACTIVE_MS, see
+// canEnterGoldMine in systems/goldmine.js). Once entered, the fight is a
+// single fixed Gold Boss on its own short GOLDMINE_FIGHT_DURATION_MS
+// clock — it never fights back, and the run always ends in a reward
+// (never a "loss"): killing the boss early or the clock running out both
+// grant GOLDMINE_GOLD_PER_DAMAGE gold per point of damage actually dealt
+// (capped at the boss's own HP, so overkill on the killing blow doesn't
+// inflate the reward).
+// ---------------------------------------------------------------------
+export const GOLDMINE_CYCLE_MS = 6 * 60 * 1000;
+export const GOLDMINE_ACTIVE_MS = 5 * 60 * 1000;
+export const GOLDMINE_FIGHT_DURATION_MS = 35 * 1000;
+export const GOLDMINE_BOSS_HP = 130_000_000;
+export const GOLDMINE_GOLD_PER_DAMAGE = 1;
+
+export function getGoldMineWindow(now = Date.now()) {
+  const cycleIndex = Math.floor(now / GOLDMINE_CYCLE_MS);
+  const cycleStart = cycleIndex * GOLDMINE_CYCLE_MS;
+  const elapsed = now - cycleStart;
+  const active = elapsed < GOLDMINE_ACTIVE_MS;
+  return {
+    cycleIndex,
+    active,
+    remainingActiveMs: active ? GOLDMINE_ACTIVE_MS - elapsed : 0,
+    msUntilNextWindow: cycleStart + GOLDMINE_CYCLE_MS - now,
+  };
+}

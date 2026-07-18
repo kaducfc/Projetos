@@ -68,6 +68,20 @@ export function createDefaultState() {
     towerWeakMonsterId: null,
     towerEnteredCycle: null,
     towerBestLevel: 0,
+
+    // Mina de Ouro (see data/events.js + systems/goldmine.js): a single
+    // fixed Gold Boss fought on its own short 35s clock, entered once per
+    // GOLDMINE_ACTIVE_MS window. goldMineEnteredCycle blocks a second entry
+    // within that same window; goldMineRunActive/goldMineBossHp/
+    // goldMineDamageDealt are the persisted run state so an in-progress
+    // fight survives a reload. The run's own 35s clock is intentionally
+    // NOT persisted (see main.js) — same "a reload gives a fresh attempt
+    // clock" trade-off already made for the boss timer/Torre/Caça
+    // Aprimorada attempts.
+    goldMineRunActive: false,
+    goldMineBossHp: 0,
+    goldMineDamageDealt: 0,
+    goldMineEnteredCycle: null,
   };
 }
 

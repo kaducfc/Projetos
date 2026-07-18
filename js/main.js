@@ -9,9 +9,10 @@ import { getItem } from './data/items.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
-import { getTowerWindow, TOWER_RUN_DURATION_MS } from './data/events.js';
+import { getTowerWindow, TOWER_RUN_DURATION_MS, GOLDMINE_FIGHT_DURATION_MS } from './data/events.js';
 import { applyEventDamage, claimEventVictory, startEvent } from './systems/events.js';
 import { canEnterTower, startTowerRun, ensureTowerMonsterSpawned, getTowerMonster, applyTowerDamage, endTowerRun } from './systems/tower.js';
+import { startGoldMineRun, applyGoldMineDamage, endGoldMineRun } from './systems/goldmine.js';
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
@@ -23,7 +24,7 @@ import {
   renderUpgradesTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, renderEventsTab, renderShopTab, pulseEventBoss,
-  renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster,
+  renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster, pulseGoldMineBoss,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON,
 } from './ui/render.js';
 
@@ -59,6 +60,14 @@ function currentTowerRunRemainingMs() {
   return towerDeadline == null ? null : Math.max(0, towerDeadline - Date.now());
 }
 
+// Mina de Ouro's own 35s fight clock — same "a reload gives a fresh
+// attempt" trade-off as towerDeadline above (not persisted).
+let goldMineDeadline = null;
+
+function currentGoldMineRunRemainingMs() {
+  return goldMineDeadline == null ? null : Math.max(0, goldMineDeadline - Date.now());
+}
+
 // Which sub-tab is showing in Forja (Receitas/Materiais) and Loja
 // (Cash/Evento/Conquistas), plus which element the Inventário grid is
 // filtered to (null = Todos) — pure UI state, not part of the save.
@@ -83,7 +92,7 @@ function renderInventoryAndForge() {
 function renderEventsTabNow() {
   const towerMaxHp = state.towerRunActive ? computePlayerStats(state).maxHp : null;
   if (towerHp != null && towerMaxHp != null) towerHp = Math.min(towerHp, towerMaxHp);
-  renderEventsTab(state, currentTowerRunRemainingMs(), towerHp, towerMaxHp);
+  renderEventsTab(state, currentTowerRunRemainingMs(), towerHp, towerMaxHp, currentGoldMineRunRemainingMs());
 }
 
 // A boss only has a timer while it's still blocking progress (the frontier
@@ -216,6 +225,7 @@ function tick() {
   // boss of its DPS ticks entirely.
   tickEventBoss(stats);
   tickTower();
+  tickGoldMine();
 
   if (stats.dps > 0) {
     const crit = rollCrit(stats);
@@ -746,6 +756,82 @@ function tickTower() {
   renderEventsTabNow();
 }
 
+// ---------------------------------------------------------------
+// Mina de Ouro — a single fixed Gold Boss (130M HP) fought on its own
+// short 35s clock, entered from a recurring window (see data/events.js).
+// Unlike the Torre or Caça Aprimorada, the Gold Boss never fights back
+// (no HP pool of its own to manage) and the run always ends in a reward:
+// killing it early or the clock running out both grant gold for however
+// much damage was actually dealt — see endGoldMineRun() in
+// systems/goldmine.js for the reward calculation.
+// ---------------------------------------------------------------
+
+function enterGoldMine() {
+  if (!startGoldMineRun(state)) return;
+  goldMineDeadline = Date.now() + GOLDMINE_FIGHT_DURATION_MS;
+  showToast('⛏️ Você entrou na Mina de Ouro! Cause o máximo de dano em 35 segundos.');
+  renderEventsTabNow();
+}
+
+function finishGoldMine() {
+  const { goldGained } = endGoldMineRun(state);
+  goldMineDeadline = null;
+  showGoldMineRewardModal(goldGained);
+  renderEventsTabNow();
+  renderTopBar(state);
+}
+
+function showGoldMineRewardModal(goldGained) {
+  showModal('⛏️ Mina de Ouro encerrada', `
+    <p><strong>Recompensa:</strong></p>
+    <p class="offline-item-lines">+${formatNumber(goldGained)} ${GOLD_ICON} Ouro</p>
+  `);
+}
+
+function onClickGoldMineBoss() {
+  if (!state.goldMineRunActive) return;
+  if (Date.now() >= goldMineDeadline) {
+    finishGoldMine();
+    return;
+  }
+
+  const stats = computePlayerStats(state);
+  const hit = resolveClickHit(state, stats, 1);
+  const killed = applyGoldMineDamage(state, hit.dealt);
+  pulseGoldMineBoss();
+
+  if (killed) {
+    finishGoldMine();
+    return;
+  }
+  renderEventsTabNow();
+}
+
+/// Called every game tick — applies passive DPS to the Gold Boss while a
+/// run is active, and closes out the run if its clock runs out or the
+/// boss falls.
+function tickGoldMine() {
+  if (!state.goldMineRunActive) return;
+
+  if (Date.now() >= goldMineDeadline) {
+    finishGoldMine();
+    return;
+  }
+
+  const stats = computePlayerStats(state);
+  if (stats.dps > 0) {
+    const crit = rollCrit(stats);
+    const dealt = stats.dps * crit.multiplier;
+    const killed = applyGoldMineDamage(state, dealt * (TICK_MS / 1000));
+    if (killed) {
+      finishGoldMine();
+      return;
+    }
+  }
+
+  renderEventsTabNow();
+}
+
 function wireEventTabEvents() {
   const container = document.getElementById('tab-events');
 
@@ -764,6 +850,10 @@ function wireEventTabEvents() {
       onClickTowerMonster();
       return;
     }
+    if (e.target.closest('#goldmine-boss-sprite')) {
+      onClickGoldMineBoss();
+      return;
+    }
   });
 
   container.addEventListener('click', (e) => {
@@ -774,6 +864,11 @@ function wireEventTabEvents() {
 
     if (e.target.closest('[data-event-enter]')) {
       enterEvent();
+      return;
+    }
+
+    if (e.target.closest('[data-goldmine-enter]')) {
+      enterGoldMine();
       return;
     }
   });
@@ -944,6 +1039,9 @@ function init() {
     towerDeadline = Date.now() + TOWER_RUN_DURATION_MS;
     towerHp = computePlayerStats(state).maxHp;
     ensureTowerMonsterSpawned(state);
+  }
+  if (state.goldMineRunActive) {
+    goldMineDeadline = Date.now() + GOLDMINE_FIGHT_DURATION_MS;
   }
   fullRefresh();
   armBossTimer();

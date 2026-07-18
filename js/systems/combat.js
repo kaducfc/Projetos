@@ -112,26 +112,26 @@ export function rollDrops(stage, dropMult, weakMonsterId) {
     const b = getBossForStage(stage);
     for (const mat of [b.materials.primary1, b.materials.primary2]) {
       if (Math.random() < chance) {
-        drops.push({ id: mat.id, name: mat.name, emoji: mat.emoji, qty: 1 });
+        drops.push({ id: mat.id, name: mat.name, emoji: mat.emoji, image: mat.image || null, qty: 1 });
       }
     }
     if (Math.random() < CRYSTAL_DROP_CHANCE) {
-      drops.push({ id: b.crystal.id, name: b.crystal.name, emoji: b.crystal.emoji, qty: 1 });
+      drops.push({ id: b.crystal.id, name: b.crystal.name, emoji: b.crystal.emoji, image: b.crystal.image || null, qty: 1 });
     }
     if (Math.random() < BOSS_CARD_DROP_CHANCE) {
       const card = getCardForMonster(b.id);
-      drops.push({ id: card.id, name: card.name, emoji: card.emoji, qty: 1, isCard: true });
+      drops.push({ id: card.id, name: card.name, emoji: card.emoji, image: card.image || null, qty: 1, isCard: true });
     }
     return drops;
   }
 
   const weak = getWeakMonster(weakMonsterId);
   if (Math.random() < chance) {
-    drops.push({ id: weak.material.id, name: weak.material.name, emoji: weak.material.emoji, qty: 1 });
+    drops.push({ id: weak.material.id, name: weak.material.name, emoji: weak.material.emoji, image: weak.material.image || null, qty: 1 });
   }
   if (Math.random() < WEAK_CARD_DROP_CHANCE) {
     const card = getCardForMonster(weak.id);
-    drops.push({ id: card.id, name: card.name, emoji: card.emoji, qty: 1, isCard: true });
+    drops.push({ id: card.id, name: card.name, emoji: card.emoji, image: card.image || null, qty: 1, isCard: true });
   }
   return drops;
 }
