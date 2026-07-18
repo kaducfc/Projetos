@@ -56,19 +56,6 @@
   --navy-deepest: #0b1f3d;
   --navy-border: #0a2a52;
 
-  --rarity-c: #5a8f6b;
-  --rarity-c-dark: #3d6b4c;
-  --rarity-b: #3f8fd1;
-  --rarity-b-dark: #2a6699;
-  --rarity-a: #9b5de5;
-  --rarity-a-dark: #6e35b8;
-  --rarity-s: #f0a500;
-  --rarity-s-dark: #c07d00;
-  --rarity-ss: #ff7a3d;
-  --rarity-ss-dark: #d1560f;
-  --rarity-sss: #ff4fa3;
-  --rarity-sss-dark: #c22778;
-
   --shadow-banner: 0 4px 0 var(--navy-border), 0 8px 18px rgba(8, 20, 40, .35);
 }
 
@@ -150,10 +137,10 @@ html, body {
   margin-top: 2px;
 }
 
-/* Real "EQUIPAMENTOS" ribbon asset for the Inventário tab (see
-   equip-banner.png), used in place of .section-banner there since the
-   user supplied the actual banner art. */
-.equip-banner-img {
+/* Real title-banner art (see assets/ui/titles/*.png), used in place of
+   .section-banner on every tab now that the user supplied real art for
+   each page's title instead of the CSS clip-path ribbon. */
+.section-banner-img {
   display: block;
   width: 100%;
   height: auto;
@@ -190,7 +177,7 @@ button:disabled {
 
 /* Colored "candy buttons" (gold/green/purple/cash/event) all get a subtle
    text-pop so labels stay legible against a saturated gradient fill. */
-.modal-action-btn, .card-slot-unlock-btn, .card-slot-equip-btn,
+.modal-action-btn, .card-slot-equip-btn,
 .enhance-panel button, .recipe-card button, .upgrade-card button,
 .watch-ad-btn, .achievement-card button,
 .shop-item-card button, .event-active-badge,
@@ -232,13 +219,25 @@ button:disabled {
    (gold coin = orange, gem = blue, event ticket = dark navy, stage flag =
    red) instead of one uniform translucent pill for all four. */
 .resource-gold { background: linear-gradient(180deg, #ffc94d, #f0a000); border-color: #ffe29a; }
-.resource-cash { background: linear-gradient(180deg, #5cc2f5, #1f8fd6); border-color: #aee4ff; }
+.resource-cash { background: linear-gradient(180deg, #3dd68c, #189b5c); border-color: #a3f0cb; }
 .resource-event { background: linear-gradient(180deg, #4a5f7a, #263a52); border-color: #7f96b0; }
 .resource-stage { background: linear-gradient(180deg, #ff6b6b, #d13f3f); border-color: #ffb0b0; }
 
 .resource-icon {
-  font-size: 18px;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35));
+}
+
+/* Small inline currency icon used in place of the gold/event/esmeralda
+   emoji anywhere it shows up mid-text (buttons, labels, toasts) — see
+   GOLD_ICON/EVENT_ICON/ESMERALDA_ICON in ui/render.js. */
+.currency-icon {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  vertical-align: -3px;
 }
 
 .resource-label {
@@ -266,7 +265,8 @@ button:disabled {
 
 #zone-banner {
   gap: 10px;
-  padding: 8px 44px;
+  padding: 8px 54px 8px 44px;
+  margin: 0 0 14px;
 }
 
 .banner-nav-btn {
@@ -289,15 +289,21 @@ button:disabled {
   display: inline-block;
 }
 
-.stage-max-btn {
-  display: block;
-  margin: 0 auto 12px;
-  padding: 6px 16px;
-  font-size: 11.5px;
-  background: var(--grad-gold);
-  color: #4a2e00;
-  box-shadow: 0 3px 0 var(--gold-dark);
-  border-radius: 10px;
+.stage-max-flag-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 15px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .12);
+  border: 2px solid rgba(255, 255, 255, .4);
+  color: #fff;
+  box-shadow: none;
+  flex: 0 0 auto;
 }
 
 /* Small scenic backdrop behind the monster — sky fading into a hint of
@@ -703,12 +709,8 @@ button:disabled {
   flex: 0 0 auto;
   width: 40px;
   height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
+  object-fit: cover;
   border-radius: 50%;
-  background: var(--grad-gold);
   border: 2px solid #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, .2);
 }
@@ -944,29 +946,6 @@ button:disabled {
   color: #3a2c14;
   white-space: nowrap;
 }
-
-.rarity-badge {
-  position: absolute;
-  top: -6px;
-  left: -6px;
-  font-size: 9.5px;
-  font-weight: 900;
-  color: #fff;
-  min-width: 18px;
-  text-align: center;
-  padding: 2px 4px;
-  border-radius: 6px;
-  line-height: 1.2;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, .25);
-  z-index: 1;
-}
-
-.rarity-badge.rarity-c { background: var(--rarity-c); box-shadow: 0 2px 0 var(--rarity-c-dark); }
-.rarity-badge.rarity-b { background: var(--rarity-b); box-shadow: 0 2px 0 var(--rarity-b-dark); }
-.rarity-badge.rarity-a { background: var(--rarity-a); box-shadow: 0 2px 0 var(--rarity-a-dark); }
-.rarity-badge.rarity-s { background: var(--rarity-s); box-shadow: 0 2px 0 var(--rarity-s-dark); }
-.rarity-badge.rarity-ss { background: var(--rarity-ss); box-shadow: 0 2px 0 var(--rarity-ss-dark); }
-.rarity-badge.rarity-sss { background: var(--rarity-sss); box-shadow: 0 2px 0 var(--rarity-sss-dark); }
 
 .equip-slot-icon {
   position: relative;
@@ -1216,41 +1195,6 @@ button:disabled {
   background: var(--grad-purple);
   color: #fff;
   box-shadow: 0 2px 0 var(--purple-dark);
-}
-
-.card-slot-locked {
-  width: 100%;
-  box-sizing: border-box;
-  text-align: left;
-  background: var(--bg-card);
-  border: 2px dashed var(--border);
-  border-radius: 12px;
-  padding: 9px;
-  margin-bottom: 9px;
-}
-
-.card-slot-unlock-info {
-  font-size: 10.5px;
-  color: var(--text-dim);
-  font-weight: 600;
-  margin: 4px 0 8px;
-}
-
-.card-slot-unlock-btn {
-  width: 100%;
-  padding: 8px;
-  font-size: 11.5px;
-  font-weight: 800;
-  background: var(--grad-gold);
-  color: #4a2e00;
-  box-shadow: 0 3px 0 var(--gold-dark);
-  border-radius: 10px;
-}
-
-.card-slot-unlock-btn:disabled {
-  background: var(--grad-neutral);
-  color: var(--text-dim);
-  box-shadow: none;
 }
 
 .card-slot-picker {
@@ -1625,117 +1569,102 @@ button:disabled {
   box-shadow: var(--shadow-panel);
 }
 
-.event-card-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  cursor: pointer;
-  color: #fff;
-}
-
-.event-card-red .event-card-header { background: linear-gradient(135deg, #d1432f, #7a1f16); }
-.event-card-gold .event-card-header { background: linear-gradient(135deg, #d19a2f, #7a5716); }
-.event-card-purple .event-card-header { background: linear-gradient(135deg, #7a3fd1, #3a1a6e); }
-
-.event-card-icon {
-  font-size: 30px;
-  flex: 0 0 auto;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35));
-}
-
-.event-card-heading {
-  flex: 1;
-  min-width: 0;
-  text-align: left;
-}
-
-.event-card-name {
-  font-weight: 800;
-  font-size: 14px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
-}
-
-.event-card-status {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, .85);
-}
-
-.event-card-toggle {
-  flex: 0 0 auto;
-  background: rgba(255, 255, 255, .18);
-  border: 1px solid rgba(255, 255, 255, .35);
-  color: #fff;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  font-size: 11px;
-  border-radius: 8px;
-  box-shadow: none;
-}
-
 .event-card-body {
   background: linear-gradient(180deg, #fff8e6, #fff1c8);
   padding: 14px;
 }
 
-.trade-card.selected {
-  border-color: var(--gold-dark);
-  box-shadow: 0 0 0 3px rgba(230, 168, 27, .25), var(--shadow-card);
+/* Invasão de Chefes: real mockup art (invasao-banner.png) as a fixed,
+   non-expandable card — title/subtitle/rewards frame all baked in — see
+   invasaoChefesBannerHtml in ui/render.js. Only the status text (open/
+   closed countdown) and, when open, the "Entrar" button are overlaid live
+   in the art's empty right-hand box. The fight itself, once entered,
+   renders in a separate panel below (invasaoChefesFightPanelHtml), not
+   nested inside this card. */
+.event-card-invasion {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
-.trade-card.selected {
-  border-color: var(--gold-dark);
-  box-shadow: 0 0 0 3px rgba(230, 168, 27, .25), var(--shadow-card);
+.invasion-banner {
+  position: relative;
+  aspect-ratio: 900 / 374;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
-.trade-card button {
-  width: 100%;
-  margin-top: 6px;
-  padding: 6px;
-  font-size: 10.5px;
-}
-
-.trade-qty-control {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.trade-qty-btn {
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1;
-  border-radius: 8px;
-}
-
-.trade-qty-input {
-  width: 52px;
+.invasion-status-box {
+  position: absolute;
+  left: 80%;
+  top: 30%;
+  transform: translate(-50%, -50%);
+  width: 27%;
   text-align: center;
-  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.invasion-status-label {
+  font-size: clamp(8px, 2.6vw, 11px);
   font-weight: 700;
-  padding: 4px 2px;
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--text);
-  -moz-appearance: textfield;
+  color: rgba(243, 221, 184, .85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
 }
 
-.trade-qty-preview {
-  font-size: 10.5px;
-  color: var(--text-dim);
-  margin-top: 4px;
+.invasion-status-value {
+  font-size: clamp(10px, 3.4vw, 15px);
+  font-weight: 800;
+  color: #f3ddb8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
 }
 
-.trade-qty-preview strong {
-  color: var(--text);
+.invasion-enter-btn {
+  position: absolute;
+  left: 80%;
+  top: 52%;
+  transform: translateX(-50%);
+  width: 25%;
+  padding: 8px 4px;
+  font-size: clamp(10px, 3vw, 13px);
+  border-radius: 10px;
+  background: var(--grad-gold);
+  border: 2px solid var(--gold-dark);
+  color: #4a2f00;
+  box-shadow: 0 3px 0 var(--gold-dark);
+}
+
+/* Preview icons dropped into the banner art's 3 empty "RECOMPENSAS"
+   squares — horizontal positions measured against the source mockups
+   (Evento2.png/Evento3.png, both 1945x809) are close enough to share, but
+   the vertical position differs: Torre's squares sit noticeably higher
+   than Invasão's, hence the separate .reward-invasion/.reward-torre top
+   offsets. */
+.invasion-reward-icon {
+  position: absolute;
+  width: 9%;
+  height: auto;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .4));
+}
+
+.reward-invasion { top: 70.2%; }
+.reward-torre { top: 68.4%; }
+
+.reward-invasion.invasion-reward-1 { left: 19.3%; }
+.reward-invasion.invasion-reward-2 { left: 32.3%; }
+.reward-invasion.invasion-reward-3 { left: 45.7%; }
+
+.reward-torre.invasion-reward-1 { left: 18.4%; }
+.reward-torre.invasion-reward-2 { left: 32.2%; }
+.reward-torre.invasion-reward-3 { left: 45.8%; }
+
+/* Cristal/Carta de Leviargon specifically, 20% smaller than the standard
+   reward-icon size (the Moeda de Evento slot stays at the normal size). */
+.reward-invasion.invasion-reward-1,
+.reward-invasion.invasion-reward-2 {
+  width: 7.2%;
 }
 
 .event-panel {
@@ -2069,16 +1998,6 @@ button:disabled {
   padding: 10px 12px;
   box-shadow: var(--shadow-card);
   margin-bottom: 10px;
-}
-
-.card-tile-stars {
-  font-size: 10px;
-  color: var(--rarity-s);
-  letter-spacing: 1px;
-}
-
-.card-tile.undiscovered .card-tile-stars {
-  color: var(--text-dim);
 }
 
 .card-grid {

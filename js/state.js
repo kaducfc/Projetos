@@ -52,13 +52,6 @@ export function createDefaultState() {
     eventClaimedCycle: null,
     eventWins: 0,
 
-    // Mercador: startStage -> the trade-cycle index (see getTradeCycleInfo
-    // in data/events.js) it was unlocked for. A band counts as unlocked
-    // only while its stored cycle index still matches the current one —
-    // once the event rotates to a new cycle, every band re-locks on its
-    // own without needing any explicit reset here.
-    tradeUnlocks: {},
-
     // Torre Infinita (see data/events.js + systems/tower.js): a single
     // continuous run through 200 levels, entered once per TOWER_ACTIVE_MS
     // window. towerEnteredCycle blocks a second entry within that same
@@ -93,14 +86,25 @@ export function loadState() {
     const parsed = JSON.parse(raw);
     // Merge onto defaults so new fields introduced later don't crash old saves.
     const state = Object.assign(createDefaultState(), parsed);
+    // Card slots moved from a single locked/unlocked cardId field to an
+    // always-unlocked cardIds array (1 slot normally, 2 once Rank Master —
+    // see systems/crafting.js's ensureCardIds/maxCardSlots). Migrate any
+    // pre-existing save's old single cardId into that array once here.
+    for (const entry of state.inventory) {
+      if (!entry.cardIds) {
+        entry.cardIds = [entry.cardId ?? null];
+        delete entry.cardId;
+        delete entry.cardSlotUnlocked;
+      }
+    }
     // A monster/boss roster replacement (see data/cards.js) can leave an old
-    // save's socketed cardId pointing at a card that no longer exists.
+    // save's socketed card pointing at a card that no longer exists.
     // Rendering already falls back gracefully for this (see cardSlotHtml in
-    // ui/render.js), but leaving cardId set would permanently block
-    // re-socketing (canSocketCard requires an empty slot) — clear it here
+    // ui/render.js), but leaving it set would permanently block re-socketing
+    // that slot (canSocketCard requires an empty slot) — clear it here
     // instead, once, so the slot is usable again.
     for (const entry of state.inventory) {
-      if (entry.cardId && !getCard(entry.cardId)) entry.cardId = null;
+      entry.cardIds = entry.cardIds.map((id) => (id && !getCard(id) ? null : id));
     }
     return state;
   } catch (err) {

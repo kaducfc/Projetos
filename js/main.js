@@ -1,16 +1,16 @@
 import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
 import { computePlayerStats, getElementalResistance, getCardDamageBonus } from './systems/stats.js';
 import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, armorReduction, rollCrit, resolveClickHit } from './systems/combat.js';
-import { isBossStage, findMaterialInfo, WEAK_MONSTER_GROUPS, BOSSES } from './data/monsters.js';
+import { isBossStage, findMaterialInfo, BOSSES } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
-import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, attemptCardSlotUnlock, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES } from './systems/crafting.js';
+import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
 import { getItem } from './data/items.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
-import { TRADE_COST, getTowerWindow, TOWER_RUN_DURATION_MS } from './data/events.js';
-import { applyEventDamage, claimEventVictory, canTrade, performTrade, unlockTradeGroup, computeTradeReceiveQty, startEvent } from './systems/events.js';
+import { getTowerWindow, TOWER_RUN_DURATION_MS } from './data/events.js';
+import { applyEventDamage, claimEventVictory, startEvent } from './systems/events.js';
 import { canEnterTower, startTowerRun, ensureTowerMonsterSpawned, getTowerMonster, applyTowerDamage, endTowerRun } from './systems/tower.js';
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
@@ -24,6 +24,7 @@ import {
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, renderEventsTab, renderShopTab, pulseEventBoss,
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster,
+  GOLD_ICON, EVENT_ICON, ESMERALDA_ICON,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -69,16 +70,6 @@ let inventoryFilterElement = null;
 // screen) — a bossId in this set means the player explicitly expanded it.
 let expandedForgeBosses = new Set();
 
-// Same idea for the Eventos list — each entry is an event id ('caca' or
-// 'mercador'). Which material the player picked as the trade-in for the
-// Mercador event, how much of it they want to spend this trade, and which
-// of its (now always-listed) stage bands are expanded, live here too,
-// since it's all just as transient/UI-only.
-let expandedEvents = new Set();
-let tradeFromMaterialId = null;
-let tradeQty = TRADE_COST;
-let expandedTradeGroups = new Set();
-
 // Inventário and Forja are separate bottom-nav tabs but share underlying
 // data (equipping something changes what Forja shows as "already
 // craftado"), so most mutations refresh both regardless of which is
@@ -92,7 +83,7 @@ function renderInventoryAndForge() {
 function renderEventsTabNow() {
   const towerMaxHp = state.towerRunActive ? computePlayerStats(state).maxHp : null;
   if (towerHp != null && towerMaxHp != null) towerHp = Math.min(towerHp, towerMaxHp);
-  renderEventsTab(state, expandedEvents, tradeFromMaterialId, expandedTradeGroups, tradeQty, currentTowerRunRemainingMs(), towerHp, towerMaxHp);
+  renderEventsTab(state, currentTowerRunRemainingMs(), towerHp, towerMaxHp);
 }
 
 // A boss only has a timer while it's still blocking progress (the frontier
@@ -345,8 +336,9 @@ function wireModalEvents() {
       runModalAction(() => {
         const uid = Number(equipBtn.dataset.modalEquip);
         const entry = state.inventory.find((i) => i.uid === uid);
-        const cardId = entry?.cardId;
-        const cardWillBeStripped = cardId && countEquippedCardCopies(state, cardId, uid) >= MAX_EQUIPPED_CARD_COPIES;
+        const cardWillBeStripped = entry && ensureCardIds(entry).some(
+          (cardId, slotIndex) => cardId && countEquippedCardCopies(state, cardId, uid, slotIndex) >= MAX_EQUIPPED_CARD_COPIES
+        );
         equipItem(state, uid);
         hideModal();
         if (cardWillBeStripped) {
@@ -401,22 +393,6 @@ function wireModalEvents() {
       return;
     }
 
-    const unlockBtn = e.target.closest('[data-unlock-card-slot]');
-    if (unlockBtn) {
-      runModalAction(() => {
-        const uid = Number(unlockBtn.dataset.unlockCardSlot);
-        const result = attemptCardSlotUnlock(state, uid);
-        if (result) {
-          showItemDetailModal(state, uid);
-          showToast(result.success
-            ? '🔓 Slot de carta desbloqueado! (-1 🔷 Cristal)'
-            : '❌ Tentativa falhou... (-1 🔷 Cristal)');
-          fullRefresh();
-        }
-      });
-      return;
-    }
-
     // Only opens the picker (no state mutation), but still goes through the
     // lock so a stray double-tap can't immediately land on a card option
     // that appears at the same spot once the picker renders.
@@ -424,7 +400,8 @@ function wireModalEvents() {
     if (openPickerBtn) {
       runModalAction(() => {
         const uid = Number(openPickerBtn.dataset.openCardPicker);
-        showItemDetailModal(state, uid, true);
+        const slotIndex = Number(openPickerBtn.dataset.openCardPickerSlot);
+        showItemDetailModal(state, uid, slotIndex);
       });
       return;
     }
@@ -433,13 +410,14 @@ function wireModalEvents() {
     if (socketBtn) {
       runModalAction(() => {
         const uid = Number(socketBtn.dataset.socketUid);
+        const slotIndex = Number(socketBtn.dataset.socketSlot);
         const cardId = socketBtn.dataset.socketCardId;
         const isEquipped = Object.values(state.equipped).includes(uid);
-        if (isEquipped && countEquippedCardCopies(state, cardId, uid) >= MAX_EQUIPPED_CARD_COPIES) {
+        if (isEquipped && countEquippedCardCopies(state, cardId, uid, slotIndex) >= MAX_EQUIPPED_CARD_COPIES) {
           showToast(`❌ Você só pode ter ${MAX_EQUIPPED_CARD_COPIES} cartas iguais equipadas ao mesmo tempo.`);
           return;
         }
-        if (socketCard(state, uid, cardId)) {
+        if (socketCard(state, uid, slotIndex, cardId)) {
           showItemDetailModal(state, uid);
           showToast('🃏 Carta encaixada!');
           fullRefresh();
@@ -452,7 +430,8 @@ function wireModalEvents() {
     if (unsocketBtn) {
       runModalAction(() => {
         const uid = Number(unsocketBtn.dataset.unsocketUid);
-        if (unsocketCard(state, uid)) {
+        const slotIndex = Number(unsocketBtn.dataset.unsocketSlot);
+        if (unsocketCard(state, uid, slotIndex)) {
           showItemDetailModal(state, uid);
           showToast('🃏 Carta removida.');
           fullRefresh();
@@ -509,7 +488,7 @@ function wireModalEvents() {
         const cardId = claimCardBtn.dataset.claimCard;
         if (claimCardReward(state, cardId)) {
           showCardDetailModal(state, cardId); // keep the popup open, with fresh state
-          showToast(`🎁 +${formatNumber(CARD_DISCOVERY_CASH_REWARD)} 💎 Cash!`);
+          showToast(`🎁 +${formatNumber(CARD_DISCOVERY_CASH_REWARD)} ${ESMERALDA_ICON} Esmeralda!`);
           renderTopBar(state);
           renderCardsTab(state);
         }
@@ -597,7 +576,7 @@ function wireForgeTabEvents() {
 function enterEvent() {
   const boss = startEvent(state);
   if (!boss) return;
-  showToast(`🎪 Você entrou na Caça Aprimorada! Enfrentando ${boss.name}.`);
+  showToast(`🎪 Você entrou na Invasão de Chefes! Enfrentando ${boss.name}.`);
   renderEventsTabNow();
   renderTopBar(state);
 }
@@ -625,7 +604,7 @@ function showEventRewardModal(boss, gained, currency, cardDropped) {
     ${cardBanner}
     <p><strong>Recompensas:</strong></p>
     ${lootLines}
-    <p class="offline-item-lines">+${formatNumber(currency)} 🎫 Moeda de Evento</p>
+    <p class="offline-item-lines">+${formatNumber(currency)} ${EVENT_ICON} Moeda de Evento</p>
   `);
 }
 
@@ -675,21 +654,32 @@ function enterTower() {
   if (!startTowerRun(state)) return;
   towerDeadline = Date.now() + TOWER_RUN_DURATION_MS;
   towerHp = computePlayerStats(state).maxHp;
-  showToast('🗼 Você entrou na Torre Infinita! Suba o quanto conseguir em 5 minutos.');
+  showToast('🗼 Você entrou na Torre das Provações! Suba o quanto conseguir em 5 minutos.');
   renderEventsTabNow();
   renderTopBar(state);
 }
 
 function finishTowerRun(cleared200) {
-  const { level, currency } = endTowerRun(state, cleared200);
+  const { level, currency, goldGained, gained } = endTowerRun(state, cleared200);
   towerDeadline = null;
   towerHp = null;
-  const msg = cleared200
-    ? `👑 Torre conquistada! Você derrotou o chefe do nível 200 e ganhou +${formatNumber(currency)} 🎫`
-    : `🗼 Torre encerrada no nível ${level}. +${formatNumber(currency)} 🎫`;
-  showToast(msg);
+  showTowerRewardModal(level, cleared200, currency, goldGained, gained);
   renderEventsTabNow();
   renderTopBar(state);
+  renderInventoryAndForge(); // Materiais may be showing, and just changed
+}
+
+function showTowerRewardModal(level, cleared200, currency, goldGained, gained) {
+  const lootLines = Object.values(gained)
+    .map((g) => `<div class="offline-item-lines">+${g.qty} <span class="icon">${iconMarkup(g.image, g.emoji, g.name)}</span> ${g.name}</div>`)
+    .join('');
+  const title = cleared200 ? '👑 Torre conquistada!' : `🗼 Torre encerrada no nível ${level}`;
+  showModal(title, `
+    <p><strong>Recompensas:</strong></p>
+    <p class="offline-item-lines">+${formatNumber(goldGained)} ${GOLD_ICON} Ouro</p>
+    ${lootLines}
+    <p class="offline-item-lines">+${formatNumber(currency)} ${EVENT_ICON} Moeda de Evento</p>
+  `);
 }
 
 function onClickTowerMonster() {
@@ -756,16 +746,6 @@ function tickTower() {
   renderEventsTabNow();
 }
 
-// Clamps to [TRADE_COST, however much of the currently-selected trade-in
-// material the player actually has, rounded down to a whole TRADE_COST
-// batch] — shared by the +/- steppers and the free-typed number input.
-function clampTradeQty(qty) {
-  const have = state.materials[tradeFromMaterialId] || 0;
-  const max = Math.max(TRADE_COST, Math.floor(have / TRADE_COST) * TRADE_COST);
-  if (!Number.isFinite(qty) || qty < TRADE_COST) return TRADE_COST;
-  return Math.min(max, qty);
-}
-
 function wireEventTabEvents() {
   const container = document.getElementById('tab-events');
 
@@ -796,94 +776,6 @@ function wireEventTabEvents() {
       enterEvent();
       return;
     }
-
-    const toggleBtn = e.target.closest('[data-toggle-event]');
-    if (toggleBtn) {
-      const id = toggleBtn.dataset.toggleEvent;
-      if (expandedEvents.has(id)) expandedEvents.delete(id);
-      else expandedEvents.add(id);
-      renderEventsTabNow();
-      return;
-    }
-
-    const toggleTradeGroupBtn = e.target.closest('[data-toggle-trade-group]');
-    if (toggleTradeGroupBtn) {
-      const startStage = Number(toggleTradeGroupBtn.dataset.toggleTradeGroup);
-      if (expandedTradeGroups.has(startStage)) expandedTradeGroups.delete(startStage);
-      else expandedTradeGroups.add(startStage);
-      tradeFromMaterialId = null; // avoid a stale selection from a now-hidden group
-      tradeQty = TRADE_COST;
-      renderEventsTabNow();
-      return;
-    }
-
-    const unlockTradeBtn = e.target.closest('[data-unlock-trade-group]');
-    if (unlockTradeBtn) {
-      const startStage = Number(unlockTradeBtn.dataset.unlockTradeGroup);
-      const group = WEAK_MONSTER_GROUPS.find((g) => g.startStage === startStage);
-      if (group && unlockTradeGroup(state, group)) {
-        expandedTradeGroups.add(startStage);
-        showToast(`🧺 Estágio ${group.startStage}–${group.endStage} desbloqueado!`);
-        renderEventsTabNow();
-      }
-      return;
-    }
-
-    const selectBtn = e.target.closest('[data-trade-select]');
-    if (selectBtn) {
-      tradeFromMaterialId = selectBtn.dataset.tradeSelect;
-      tradeQty = TRADE_COST;
-      renderEventsTabNow();
-      return;
-    }
-
-    if (e.target.closest('[data-trade-cancel]')) {
-      tradeFromMaterialId = null;
-      tradeQty = TRADE_COST;
-      renderEventsTabNow();
-      return;
-    }
-
-    if (e.target.closest('[data-trade-qty-inc]')) {
-      tradeQty = clampTradeQty(tradeQty + TRADE_COST);
-      renderEventsTabNow();
-      return;
-    }
-
-    if (e.target.closest('[data-trade-qty-dec]')) {
-      tradeQty = clampTradeQty(tradeQty - TRADE_COST);
-      renderEventsTabNow();
-      return;
-    }
-
-    const targetBtn = e.target.closest('[data-trade-target]');
-    if (targetBtn && tradeFromMaterialId != null) {
-      const toMaterialId = targetBtn.dataset.tradeTarget;
-      const group = WEAK_MONSTER_GROUPS.find((g) => g.monsters.some((m) => m.material.id === tradeFromMaterialId));
-      const fromInfo = findMaterialInfo(tradeFromMaterialId);
-      const toInfo = findMaterialInfo(toMaterialId);
-      const usedQty = tradeQty;
-      const receivedQty = computeTradeReceiveQty(usedQty);
-      const ok = group && performTrade(state, group, tradeFromMaterialId, toMaterialId, usedQty);
-      tradeFromMaterialId = null;
-      tradeQty = TRADE_COST;
-      if (ok) {
-        showToast(`🧺 Trocado! -${usedQty} ${fromInfo?.emoji ?? ''} ${fromInfo?.name ?? ''} · +${receivedQty} ${toInfo?.emoji ?? ''} ${toInfo?.name ?? ''}`);
-      }
-      renderEventsTabNow();
-      renderInventoryAndForge(); // Materiais may be showing, and just changed
-      return;
-    }
-  });
-
-  // Separate from the click handler above: typing a value fires input/change
-  // events, not click, so the free-typed quantity box needs its own listener.
-  container.addEventListener('change', (e) => {
-    const qtyInput = e.target.closest('[data-trade-qty-input]');
-    if (!qtyInput || tradeFromMaterialId == null) return;
-    const snapped = Math.round(Number(qtyInput.value) / TRADE_COST) * TRADE_COST;
-    tradeQty = clampTradeQty(snapped);
-    renderEventsTabNow();
   });
 }
 
@@ -963,7 +855,7 @@ function wireShopTabEvents() {
     const adBtn = e.target.closest('#watch-ad-btn');
     if (adBtn) {
       if (watchAd(state)) {
-        showToast(`🎬 +${formatNumber(AD_WATCH_CASH_REWARD)} 💎 Cash!`);
+        showToast(`🎬 +${formatNumber(AD_WATCH_CASH_REWARD)} ${ESMERALDA_ICON} Esmeralda!`);
         renderTopBar(state);
         renderShopTab(state, activeShopSubTab);
       }
@@ -1028,7 +920,7 @@ function showOfflineProgressIfAny() {
     <p>Você ficou fora por <strong>${timeStr}</strong> (máximo 8h de recompensa offline).</p>
     <p>Seu personagem continuou lutando sozinho, a ${Math.round(OFFLINE_EFFICIENCY * 100)}% de eficiência, e conseguiu:</p>
     <p>💀 ${formatNumber(progress.kills)} monstros derrotados<br>
-       💰 +${formatNumber(progress.goldGained)} ouro</p>
+       ${GOLD_ICON} +${formatNumber(progress.goldGained)} ouro</p>
     ${itemsHtml}
   `);
 }

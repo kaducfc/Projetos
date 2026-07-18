@@ -9,15 +9,15 @@
 <div id="app">
   <header id="top-bar">
     <div class="resource resource-gold">
-      <span class="resource-icon">💰</span>
+      <img class="resource-icon" src="assets/ui/currency-gold.png" alt="">
       <span id="gold-value">0</span>
     </div>
     <div class="resource resource-cash">
-      <span class="resource-icon">💎</span>
+      <img class="resource-icon" src="assets/ui/currency-esmeralda.png" alt="">
       <span id="cash-value">0</span>
     </div>
     <div class="resource resource-event">
-      <span class="resource-icon">🎫</span>
+      <img class="resource-icon" src="assets/ui/currency-event.png" alt="">
       <span id="event-currency-value">0</span>
     </div>
     <div class="resource resource-stage">
@@ -38,15 +38,16 @@
            regardless of the tab-panel's CSS display state, so navigating
            away never pauses combat. -->
       <div id="tab-hunt" class="tab-panel active">
-        <div class="section-banner" id="zone-banner">
-          <button id="stage-prev" class="banner-nav-btn" title="Estágio anterior">◀</button>
-          <span id="stage-label">Estágio 1</span>
-          <button id="stage-next" class="banner-nav-btn" title="Próximo estágio">▶</button>
-        </div>
-        <button id="stage-max" title="Ir para o estágio mais avançado" class="stage-max-btn">🏁 Ir para o máximo</button>
+        <img class="section-banner-img" src="assets/ui/titles/caca.png" alt="Caça">
 
         <div id="monster-area">
           <div id="damage-popups"></div>
+          <div class="section-banner" id="zone-banner">
+            <button id="stage-prev" class="banner-nav-btn" title="Estágio anterior">◀</button>
+            <span id="stage-label">Estágio 1</span>
+            <button id="stage-next" class="banner-nav-btn" title="Próximo estágio">▶</button>
+            <button id="stage-max" title="Ir para o estágio mais avançado" class="stage-max-flag-btn">🏁</button>
+          </div>
           <div id="monster-nameplate">
             <div id="monster-name"></div>
             <div id="hp-bar-outer">
@@ -60,7 +61,7 @@
         </div>
 
         <div id="player-status">
-          <span id="player-portrait">🧑</span>
+          <img id="player-portrait" src="assets/ui/hero-life-icon.png" alt="">
           <div id="player-status-info">
             <span id="player-hp-label">Caçador</span>
             <div id="player-hp-bar-outer">

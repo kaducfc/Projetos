@@ -46,7 +46,7 @@ export function getEnhancedStats(item, level, isMaster) {
 }
 
 export function getEnhanceLabel(level, isMaster) {
-  return isMaster ? 'Rank Master' : `+${level}`;
+  return isMaster ? 'M' : `+${level}`;
 }
 
 // ---------------------------------------------------------------------

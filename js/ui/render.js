@@ -5,10 +5,10 @@ import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE, ELEMEN
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
-import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
+import { canCraft, canEnhance, canUpgradeToMaster, ensureCardIds, maxCardSlots } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
-import { getEventWindow, TRADE_COST, TRADE_YIELD, getTradeUnlockCost, getTradeCycleInfo, getTowerWindow, TOWER_MAX_LEVEL } from '../data/events.js';
-import { isEventClaimed, computeEventBossMaxHp, isTradeGroupUnlocked, computeTradeReceiveQty } from '../systems/events.js';
+import { getEventWindow, getTowerWindow, TOWER_MAX_LEVEL } from '../data/events.js';
+import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
 import { getTowerMonster } from '../systems/tower.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
@@ -24,31 +24,14 @@ export function iconMarkup(image, emoji, alt) {
   return image ? `<img src="${image}" alt="${alt || ''}">` : emoji;
 }
 
-/// Purely cosmetic rarity letter derived from an item's boss tier (0-9) —
-/// there's no separate "rarity" field in the data model, gear power is
-/// already fully determined by tier + enhancement level. This just gives
-/// the UI the S/A/B/C badge language the mockups use.
-function itemRarityLetter(tier) {
-  if (tier >= 9) return 'SS';
-  if (tier >= 8) return 'S';
-  if (tier >= 6) return 'A';
-  if (tier >= 3) return 'B';
-  return 'C';
-}
-
-function rarityBadgeHtml(tier) {
-  const letter = itemRarityLetter(tier);
-  return `<span class="rarity-badge rarity-${letter.toLowerCase()}">${letter}</span>`;
-}
-
-/// Inline style (not a class) so it wins over the more-specific `.filled`/
-/// `.equipped` border-color rules without fighting CSS specificity —
-/// colors the card's own border to match its rarity badge, same as the
-/// reference mockups (purple for A, gold for S, etc).
-function rarityBorderStyle(tier) {
-  const letter = itemRarityLetter(tier).toLowerCase();
-  return `style="border-color: var(--rarity-${letter})"`;
-}
+// Real currency icons (see assets/ui/currency-*.png) used in place of the
+// 💰/🎫/💎 emoji anywhere a currency amount shows up — top bar, shop,
+// toasts, recipe/upgrade costs, achievement/ad rewards, etc. "Cash" is
+// user-facing "Esmeralda" now (see ESMERALDA_ICON), though the underlying
+// state field/variable names stay `cash` internally.
+export const GOLD_ICON = `<img class="currency-icon" src="assets/ui/currency-gold.png" alt="Ouro">`;
+export const EVENT_ICON = `<img class="currency-icon" src="assets/ui/currency-event.png" alt="Moeda de Evento">`;
+export const ESMERALDA_ICON = `<img class="currency-icon" src="assets/ui/currency-esmeralda.png" alt="Esmeralda">`;
 
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
@@ -167,7 +150,7 @@ const ALL_SLOT_IDS = ['helmet', 'armor', 'weapon', 'pants', 'gloves', 'boots'];
 // twice before.
 export function renderInventoryTab(state, filterElement = null) {
   const container = document.getElementById('tab-inventory');
-  const banner = `<img class="equip-banner-img" src="assets/ui/equip-banner.png" alt="Equipamentos">`;
+  const banner = `<img class="section-banner-img" src="assets/ui/titles/equipamentos.png" alt="Equipamentos">`;
   container.innerHTML = banner + equipRingContentHtml(state, filterElement);
 }
 
@@ -185,7 +168,7 @@ const FORGE_SUBTABS = [
 
 export function renderForgeTab(state, activeForgeSubTab = 'recipes', expandedForgeBosses = new Set()) {
   const container = document.getElementById('tab-forge');
-  const banner = `<div class="section-banner">Forja</div>`;
+  const banner = `<img class="section-banner-img" src="assets/ui/titles/forja.png" alt="Forja">`;
   const subnav = `<div class="inner-subnav">${FORGE_SUBTABS.map((t) => `
     <button class="inner-subtab-btn ${activeForgeSubTab === t.id ? 'active' : ''}" data-forge-subtab="${t.id}">${t.label}</button>
   `).join('')}</div>`;
@@ -284,10 +267,7 @@ function slotIconHtml(state, slot) {
   const badge = equipped
     ? `<span class="mini-badge ${equipped.entry.isMaster ? 'master' : ''}">${getEnhanceLabel(equipped.entry.enhanceLevel, equipped.entry.isMaster)}</span>`
     : '';
-  const rarity = equipped ? rarityBadgeHtml(equipped.item.tier) : '';
-  const borderStyle = equipped ? rarityBorderStyle(equipped.item.tier) : '';
-  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}" data-equip-slot="${slot.id}" title="${slot.name}" ${borderStyle}>
-    ${rarity}
+  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}" data-equip-slot="${slot.id}" title="${slot.name}">
     <span class="icon">${icon}</span>
     ${badge}
   </button>`;
@@ -297,8 +277,7 @@ function inventoryTileHtml(state, entry) {
   const item = getItem(entry.itemId);
   const isEquipped = state.equipped[item.slotId] === entry.uid;
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
-  return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}" ${rarityBorderStyle(item.tier)}>
-    ${rarityBadgeHtml(item.tier)}
+  return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}">
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
   </button>`;
@@ -321,17 +300,19 @@ export function showEquipSlotModal(state, slotId) {
 }
 
 /// Opens the detail popup for a specific inventory item (equipped or not).
-/// pickerOpen controls whether the card-picker sub-panel starts expanded
-/// (only true right after the player clicks "Equipar Carta" — see main.js).
-export function showItemDetailModal(state, uid, pickerOpen = false, confirmDestroy = false) {
+/// pickerOpenSlot controls whether a card-picker sub-panel starts expanded
+/// for that specific slot index (only set right after the player clicks
+/// "Equipar Carta" on that slot — see main.js); null means every slot is
+/// closed.
+export function showItemDetailModal(state, uid, pickerOpenSlot = null, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   if (!entry) return;
   const item = getItem(entry.itemId);
   const slot = getSlot(item.slotId);
-  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, pickerOpen, confirmDestroy));
+  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
 }
 
-function itemDetailHtml(state, uid, pickerOpen, confirmDestroy = false) {
+function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   const item = getItem(entry.itemId);
   const slot = getSlot(item.slotId);
@@ -347,13 +328,17 @@ function itemDetailHtml(state, uid, pickerOpen, confirmDestroy = false) {
     ? `<button class="modal-action-btn" data-modal-unequip="${item.slotId}">Desequipar</button>`
     : `<button class="modal-action-btn" data-modal-equip="${uid}">Equipar</button>`;
 
+  const cardSlotsHtml = ensureCardIds(entry)
+    .map((cardId, slotIndex) => cardSlotHtml(state, uid, entry, pickerOpenSlot === slotIndex, slotIndex))
+    .join('');
+
   return `
     <div class="item-detail">
       <div class="item-detail-icon">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
-      ${cardSlotHtml(state, uid, entry, pickerOpen, item)}
+      ${cardSlotsHtml}
       ${enhancePanelHtml(state, uid, entry, item)}
       <div class="modal-action-row">
         ${actionBtn}
@@ -368,38 +353,28 @@ function itemDetailHtml(state, uid, pickerOpen, confirmDestroy = false) {
 
 // A card is consumed from state.cards (a stackable count, like a material)
 // the moment it's socketed. Cards themselves have no slotId restriction: any
-// card can go in any item's slot. The slot itself has three states:
-//   1. locked — the item was just crafted, must be unlocked first (RNG,
-//      paid in that item's own boss Crystal — see attemptCardSlotUnlock())
-//   2. unlocked, empty — either closed (a button to open the picker) or with
-//      the picker expanded (pickerOpen), listing every owned card
-//   3. unlocked, filled — the socketed card, with a Remover button
-function cardSlotHtml(state, uid, entry, pickerOpen, item) {
-  const unlocked = entry.cardSlotUnlocked || !!entry.cardId;
-
-  if (!unlocked) {
-    const crystalInfo = findMaterialInfo(item.crystalMaterialId);
-    const haveCrystal = state.materials[item.crystalMaterialId] || 0;
-    const canAttempt = canAttemptCardSlotUnlock(state, uid);
-    return `<div class="card-slot-locked">
-      <div class="card-slot-label">🔒 Slot de Carta bloqueado</div>
-      <div class="card-slot-unlock-info">${Math.round(CARD_SLOT_UNLOCK_CHANCE * 100)}% de chance de sucesso · custo: 1 <span class="icon">${iconMarkup(crystalInfo.image, crystalInfo.emoji, crystalInfo.name)}</span> ${crystalInfo.name} (você tem ${formatNumber(haveCrystal)})</div>
-      <button class="card-slot-unlock-btn" data-unlock-card-slot="${uid}" ${canAttempt ? '' : 'disabled'}>Tentar Desbloquear</button>
-    </div>`;
-  }
+// card can go in any item's slot. Every item comes with 1 card slot already
+// unlocked from the moment it's crafted; Rank Master grants a 2nd (see
+// maxCardSlots/ensureCardIds in systems/crafting.js) — there's no more RNG
+// unlock step. Each slot (identified by slotIndex) is either:
+//   1. empty — either closed (a button to open the picker) or with the
+//      picker expanded (pickerOpen), listing every owned card
+//   2. filled — the socketed card, with a Remover button
+function cardSlotHtml(state, uid, entry, pickerOpen, slotIndex) {
+  const cardId = entry.cardIds[slotIndex];
 
   // getCard() can miss for an old save's cardId (the roster that generates
   // CARDS was replaced — see data/cards.js) — fall through to the normal
   // empty-slot display below rather than crash on a stale reference.
-  if (entry.cardId && getCard(entry.cardId)) {
-    const card = getCard(entry.cardId);
+  if (cardId && getCard(cardId)) {
+    const card = getCard(cardId);
     return `<div class="card-slot-badge filled">
       <span class="icon">${iconMarkup(card.image, card.emoji, card.name)}</span>
       <div class="card-slot-info">
         <div class="card-slot-name">${card.name}</div>
         <div class="card-slot-desc">${card.description}</div>
       </div>
-      <button class="card-slot-remove" data-unsocket-uid="${uid}">Remover</button>
+      <button class="card-slot-remove" data-unsocket-uid="${uid}" data-unsocket-slot="${slotIndex}">Remover</button>
     </div>`;
   }
 
@@ -407,7 +382,7 @@ function cardSlotHtml(state, uid, entry, pickerOpen, item) {
     return `<div class="card-slot-badge">
       <span class="icon">🃏</span>
       <div class="card-slot-info"><div class="card-slot-name">Slot de Carta: vazio</div></div>
-      <button class="card-slot-equip-btn" data-open-card-picker="${uid}">Equipar Carta</button>
+      <button class="card-slot-equip-btn" data-open-card-picker="${uid}" data-open-card-picker-slot="${slotIndex}">Equipar Carta</button>
     </div>`;
   }
 
@@ -421,7 +396,7 @@ function cardSlotHtml(state, uid, entry, pickerOpen, item) {
   return `<div class="card-slot-picker">
     <div class="card-slot-label">🃏 Escolha uma carta:</div>
     <div class="card-slot-options">${owned.map((c) => `
-      <button class="card-slot-option" data-socket-uid="${uid}" data-socket-card-id="${c.id}" title="${c.description}">
+      <button class="card-slot-option" data-socket-uid="${uid}" data-socket-slot="${slotIndex}" data-socket-card-id="${c.id}" title="${c.description}">
         <span class="icon">${iconMarkup(c.image, c.emoji, c.name)}</span> ${c.name} <span class="qty">×${state.cards[c.id]}</span>
       </button>
     `).join('')}</div>
@@ -503,12 +478,11 @@ function recipeCardHtml(state, item) {
 
   const goldMet = state.gold >= item.goldCost;
 
-  return `<div class="recipe-card ${equipped ? 'equipped' : ''}" ${rarityBorderStyle(item.tier)}>
-    ${rarityBadgeHtml(item.tier)}
+  return `<div class="recipe-card ${equipped ? 'equipped' : ''}">
     <div class="recipe-header"><span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span><span class="name">${item.name}</span></div>
     <div class="element-resistance">${elementBadgeHtml(item.element)}</div>
     <div class="recipe-stats">${formatStatsLines(item.stats).join('<br>')}</div>
-    <div class="recipe-cost"><span>💰 Ouro</span><span class="${goldMet ? 'met' : 'missing'}">${formatNumber(state.gold)}/${formatNumber(item.goldCost)}</span></div>
+    <div class="recipe-cost"><span>${GOLD_ICON} Ouro</span><span class="${goldMet ? 'met' : 'missing'}">${formatNumber(state.gold)}/${formatNumber(item.goldCost)}</span></div>
     ${costLines}
     <button data-craft="${item.id}" ${craftable ? '' : 'disabled'}>${equipped ? 'Craftado (equipado)' : 'Craftar'}</button>
   </div>`;
@@ -534,7 +508,7 @@ function upgradeProgressHtml(upgrade, level) {
 export function renderUpgradesTab(state) {
   const container = document.getElementById('tab-upgrades');
   container.innerHTML = `
-    <div class="section-banner">Aprimoramentos</div>
+    <img class="section-banner-img" src="assets/ui/titles/aprimoramentos.png" alt="Aprimoramentos">
     <div class="upgrade-list">${UPGRADES.map((u) => upgradeCardHtml(state, u)).join('')}</div>
   `;
 }
@@ -552,7 +526,7 @@ function upgradeCardHtml(state, upgrade) {
       <div class="level">Nível ${level}</div>
       ${upgradeProgressHtml(upgrade, level)}
     </div>
-    <button data-upgrade="${upgrade.id}" ${affordable ? '' : 'disabled'}>💰 ${formatNumber(cost)}</button>
+    <button data-upgrade="${upgrade.id}" ${affordable ? '' : 'disabled'}>${GOLD_ICON} ${formatNumber(cost)}</button>
   </div>`;
 }
 
@@ -590,44 +564,22 @@ function materialsContentHtml(state) {
 // systems/cards.js), same "claim once" idea as an achievement.
 // ---------------------------------------------------------------
 
-// Purely cosmetic rarity letter (no gameplay meaning beyond flavor,
-// same spirit as itemRarityLetter above) — boss cards climb S -> SS -> SSS
-// with the boss's own tier (0-9); every weak-monster card is C.
-function cardRarityLetter(card) {
-  if (!card.isBossCard) return 'C';
-  const tier = BOSSES.findIndex((b) => b.id === card.monsterId);
-  if (tier >= 9) return 'SSS';
-  if (tier >= 7) return 'SS';
-  return 'S';
-}
-
-const STARS_BY_RARITY = { C: 2, B: 3, S: 3, SS: 4, SSS: 5 };
-
-function starsHtml(rarity) {
-  const filled = STARS_BY_RARITY[rarity] || 2;
-  return `<span class="card-tile-stars">${'★'.repeat(filled)}${'☆'.repeat(5 - filled)}</span>`;
-}
-
 function cardTileHtml(state, card) {
   const discovered = isCardDiscovered(state, card.id);
   const claimable = canClaimCardReward(state, card.id);
-  const rarity = cardRarityLetter(card);
   return `<button class="card-tile ${discovered ? 'discovered' : 'undiscovered'}" data-view-card="${card.id}">
     ${claimable ? '<span class="card-tile-badge">🎁</span>' : ''}
-    <span class="rarity-badge rarity-${rarity.toLowerCase()}">${rarity}</span>
     <div class="icon">${iconMarkup(card.image, card.emoji, card.name)}</div>
     <div class="name">${card.name}</div>
-    ${starsHtml(rarity)}
   </button>`;
 }
 
 // Real data, not mockup flavor: sums every socketed card's `bonuses` (see
-// data/cards.js) across all 6 equip slots, and counts how many of those
-// slots have their card slot unlocked at all (see systems/crafting.js's
-// attemptCardSlotUnlock) — the two panels the mockup calls "Bônus das
-// Cartas Ativas" and "Slot de Cartas".
+// data/cards.js) across all 6 equip slots (each slot can carry up to
+// maxCardSlots(entry) cards — see systems/crafting.js) — the panel the
+// mockup calls "Bônus das Cartas Ativas".
 const CARD_BONUS_LABELS = {
-  dpsPercent: '💥 DPS', clickPercent: '⚔️ Dano de Clique', goldPercent: '💰 Ouro Obtido',
+  dpsPercent: '💥 DPS', clickPercent: '⚔️ Dano de Clique', goldPercent: `${GOLD_ICON} Ouro Obtido`,
   dropPercent: '🎒 Chance de Drop', critChancePercent: '🎯 Chance Crítica', critDamagePercent: '💢 Dano Crítico',
   hpPercent: '❤️ Vida Máxima', armorPercent: '🛡️ Armadura', hpFlat: '❤️ Vida Máxima', armorFlat: '🛡️ Armadura',
   clickFlat: '⚔️ Dano de Clique', dpsFlat: '💥 DPS',
@@ -635,16 +587,16 @@ const CARD_BONUS_LABELS = {
 
 function cardsSummaryHtml(state) {
   const totals = {};
-  let unlockedSlots = 0;
   for (const uid of Object.values(state.equipped)) {
     if (!uid) continue;
     const entry = state.inventory.find((i) => i.uid === uid);
     if (!entry) continue;
-    if (entry.cardSlotUnlocked || entry.cardId) unlockedSlots += 1;
-    if (!entry.cardId) continue;
-    const card = getCard(entry.cardId);
-    if (!card) continue;
-    for (const b of card.bonuses || []) totals[b.stat] = (totals[b.stat] || 0) + b.value;
+    for (const cardId of ensureCardIds(entry)) {
+      if (!cardId) continue;
+      const card = getCard(cardId);
+      if (!card) continue;
+      for (const b of card.bonuses || []) totals[b.stat] = (totals[b.stat] || 0) + b.value;
+    }
   }
 
   const rows = Object.entries(totals).filter(([, v]) => v).map(([stat, v]) => {
@@ -658,10 +610,6 @@ function cardsSummaryHtml(state) {
       <div class="equip-stats-title">✨ Bônus das Cartas Ativas</div>
       ${rows || '<p style="font-size:11px;color:var(--text-dim); margin:0;">Nenhuma carta equipada ainda.</p>'}
     </div>
-    <div class="cards-summary-box">
-      <div class="equip-stats-title">🎴 Slots de Carta</div>
-      <div class="battle-info-row"><span>Desbloqueados</span><strong>${unlockedSlots}/6</strong></div>
-    </div>
   `;
 }
 
@@ -673,7 +621,7 @@ export function renderCardsTab(state) {
   const commonOwned = commonCards.filter((c) => isCardDiscovered(state, c.id)).length;
 
   container.innerHTML = `
-    <div class="section-banner">Cartas</div>
+    <img class="section-banner-img" src="assets/ui/titles/cartas.png" alt="Cartas">
     ${cardsSummaryHtml(state)}
     <h3 class="cards-section-title">👑 Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span></h3>
     <div class="card-grid">${bossCards.map((c) => cardTileHtml(state, c)).join('')}</div>
@@ -690,7 +638,7 @@ function cardDetailHtml(state, card) {
 
   let actionHtml;
   if (claimable) {
-    actionHtml = `<button class="modal-action-btn" data-claim-card="${card.id}">🎁 Resgatar +${CARD_DISCOVERY_CASH_REWARD} 💎 Cash</button>`;
+    actionHtml = `<button class="modal-action-btn" data-claim-card="${card.id}">🎁 Resgatar +${CARD_DISCOVERY_CASH_REWARD} ${ESMERALDA_ICON} Esmeralda</button>`;
   } else if (claimed) {
     actionHtml = `<div class="card-detail-status">🎁 Recompensa já resgatada</div>`;
   } else if (!discovered) {
@@ -726,279 +674,168 @@ function formatDuration(ms) {
 }
 
 // ---------------------------------------------------------------
-// Events tab: a list of independent, individually-collapsible events (same
-// collapse/expand treatment as the Forja boss groups). Each one owns its
-// own rotation clock (see data/events.js) — there is no shared "the event
-// tab" state anymore, just two unrelated event cards.
+// Events tab: fixed (non-collapsible) banner cards, each owning its own
+// rotation clock (see data/events.js). "Mercador" was removed entirely.
 //
-// "Caça Aprimorada": a random-eligible-boss "Entrar" event, entered once
-// per EVENT_ACTIVE_MS window (see data/events.js + systems/events.js) —
-// once entered the fight has no clock of its own, so there's no transient
-// "time left" state to thread through here (unlike the Torre Infinita).
-//
-// "Mercador" is a recurring event (new one every TRADE_CYCLE_MS, see
-// getTradeCycleInfo) that re-locks every WEAK_MONSTER_GROUPS band each
-// time. The player spends Moeda de Evento to unlock whichever band(s) they
-// want for the current event, then trades within it until the next one
-// starts. Every band is listed up front, collapsed by default
-// (`expandedTradeGroups`, keyed by group.startStage — main.js-owned
-// transient UI state, same pattern as the Forjar boss list).
-// `tradeFromMaterialId` is the material picked as the trade-in and
-// `tradeQty` how much of it to spend this trade (both main.js-owned
-// transient UI state) — tradeFromMaterialId null means nothing selected.
+// "Invasão de Chefes" and "Torre das Provações" share the same format —
+// real mockup art as a fixed banner (title/subtitle/rewards frame baked
+// in), an "Abre em:"/"Fecha em:" status overlaid on the art's empty box,
+// and an "Entrar" button that appears there when the window is open. Once
+// entered, the fight/run itself renders in a separate panel below the
+// banner, not nested inside/expanding from it.
 // ---------------------------------------------------------------
 
-function eventListItemHtml(id, icon, name, statusLine, expanded, bodyHtml, theme) {
-  return `<div class="event-card event-card-${theme}">
-    <div class="event-card-header" data-toggle-event="${id}">
-      <span class="event-card-icon">${icon}</span>
-      <div class="event-card-heading">
-        <div class="event-card-name">${name}</div>
-        <div class="event-card-status">${statusLine}</div>
-      </div>
-      <button class="event-card-toggle" data-toggle-event="${id}">${expanded ? '▲' : '▼'}</button>
-    </div>
-    ${expanded ? `<div class="event-card-body">${bodyHtml}</div>` : ''}
-  </div>`;
-}
-
-// Caça Aprimorada has 4 distinct states to render — see systems/events.js
-// for the lifecycle (canEnterEvent/startEvent), same shape as the Torre
-// Infinita's window/entered/active-run/claimed states:
-//   1. a fight is already in progress (eventBossHp != null) — shows no
-//      matter whether the entry window itself is still open, since the
-//      fight has no clock of its own once entered;
-//   2. this cycle's window was already claimed (won) — done until next;
-//   3. the window isn't open right now — countdown to the next one;
-//   4. the window IS open and not yet entered — the "Entrar" button (or,
-//      if the player hasn't beaten a first boss yet, a note that they need
-//      to reach stage 10 before this event does anything for them).
-function cacaAprimoradaContentHtml(state) {
-  if (state.eventBossHp != null) {
-    const boss = BOSSES.find((b) => b.id === state.eventBossId);
-    if (!boss) return `<div class="event-panel"><p class="event-sub">Chefe do evento não encontrado — tente recarregar.</p></div>`;
-    const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(boss);
-    const hp = state.eventBossHp ?? maxHp;
-    const pct = maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 0;
-    return `
-      <div class="event-panel">
-        <div class="event-active-badge">🎪 Em combate!</div>
-        <h3>${boss.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(boss.element)}</h3>
-        <button id="event-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(boss.image, boss.emoji, boss.name)}</button>
-        <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(maxHp)}</span></div>
-        <p class="event-reward-info">🎁 10 itens ao derrotar (materiais/Cristal) + chance de Carta + 🎫 Moeda de Evento</p>
-      </div>`;
-  }
-
+// Invasão de Chefes ("Caça Aprimorada" under the hood, see systems/events.js
+// for the canEnterEvent/startEvent lifecycle): a fixed, non-expandable
+// banner (invasao-banner.png, see invasaoChefesBannerHtml) showing the
+// open/closed status and, when open, a real "Entrar" button. Once entered,
+// the fight itself renders in a separate panel below the banner
+// (invasaoChefesFightPanelHtml) — not nested inside/expanding from the
+// banner card, per the user's "outra janela" request.
+function invasaoChefesStatusParts(state) {
   const win = getEventWindow();
-  if (isEventClaimed(state, win.cycleIndex)) {
-    return `
-      <div class="event-panel">
-        <div class="event-icon dim">🎪</div>
-        <h3>Evento concluído!</h3>
-        <p class="event-sub">Você já derrotou o chefe de evento deste ciclo.</p>
-        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
-      </div>`;
+  if (win.active && state.eventEnteredCycle !== win.cycleIndex && !isEventClaimed(state, win.cycleIndex)) {
+    return { label: 'Fecha em:', value: formatDuration(win.remainingActiveMs) };
   }
-
-  if (!win.active) {
-    return `
-      <div class="event-panel">
-        <div class="event-icon dim">🎪</div>
-        <h3>Nenhum evento ativo agora</h3>
-        <p class="event-sub">Volte quando a próxima janela abrir.</p>
-        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
-      </div>`;
-  }
-
-  if (state.eventEnteredCycle === win.cycleIndex) {
-    return `
-      <div class="event-panel">
-        <div class="event-icon dim">🎪</div>
-        <h3>Você já usou esta janela</h3>
-        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
-      </div>`;
-  }
-
-  if (!BOSSES.some((b) => b.stage <= state.maxStage)) {
-    return `
-      <div class="event-panel">
-        <div class="event-active-badge">🎪 Janela aberta — fecha em ${formatDuration(win.remainingActiveMs)}</div>
-        <h3>Caça Aprimorada</h3>
-        <p class="event-sub">Alcance o estágio 10 (derrote seu primeiro chefe) para poder participar.</p>
-      </div>`;
-  }
-
-  return `
-    <div class="event-panel">
-      <div class="event-active-badge">🎪 Janela aberta — fecha em ${formatDuration(win.remainingActiveMs)}</div>
-      <h3>Caça Aprimorada</h3>
-      <p class="event-sub">Um chefe aleatório, dentre os que você já alcançou, aparece assim que você entra — e a luta já começa valendo.</p>
-      <button class="forge-toggle-btn" data-event-enter>Entrar</button>
-    </div>`;
+  return { label: 'Abre em:', value: formatDuration(win.msUntilNextWindow) };
 }
 
-function cacaAprimoradaStatusLine(state) {
-  if (state.eventBossHp != null) return '🎪 Em combate!';
+// Whether the "Entrar" button should show below the status box: window
+// open, not already used/claimed this cycle, not already fighting, and the
+// player has beaten at least one boss (stage 10+) so there's an eligible
+// boss to roll.
+function invasaoChefesCanEnter(state) {
+  if (state.eventBossHp != null) return false;
   const win = getEventWindow();
-  if (isEventClaimed(state, win.cycleIndex)) return `✅ Concluído · próxima janela em ${formatDuration(win.msUntilNextWindow)}`;
-  if (win.active && state.eventEnteredCycle !== win.cycleIndex) return '🎪 Janela aberta!';
-  return `Próxima janela em ${formatDuration(win.msUntilNextWindow)}`;
+  if (!win.active) return false;
+  if (isEventClaimed(state, win.cycleIndex)) return false;
+  if (state.eventEnteredCycle === win.cycleIndex) return false;
+  return BOSSES.some((b) => b.stage <= state.maxStage);
 }
 
-function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId, tradeQty) {
-  const have = state.materials[mat.id] || 0;
-  const isFrom = tradeFromMaterialId === mat.id;
-  const canBeFrom = have >= TRADE_COST;
-
-  if (tradeFromMaterialId == null) {
-    return `<div class="material-card trade-card">
-      <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
-      <div class="name">${mat.name}</div>
-      <div class="qty">${formatNumber(have)}</div>
-      <button class="forge-toggle-btn" data-trade-select="${mat.id}" ${canBeFrom ? '' : 'disabled'}>Trocar</button>
-    </div>`;
-  }
-
-  if (isFrom) {
-    const max = Math.max(TRADE_COST, Math.floor(have / TRADE_COST) * TRADE_COST);
-    const received = computeTradeReceiveQty(tradeQty);
-    return `<div class="material-card trade-card selected">
-      <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
-      <div class="name">${mat.name}</div>
-      <div class="qty">${formatNumber(have)}</div>
-      <div class="trade-qty-control">
-        <button class="trade-qty-btn" data-trade-qty-dec ${tradeQty <= TRADE_COST ? 'disabled' : ''}>−</button>
-        <input type="number" class="trade-qty-input" data-trade-qty-input value="${tradeQty}" min="${TRADE_COST}" max="${max}" step="${TRADE_COST}">
-        <button class="trade-qty-btn" data-trade-qty-inc ${tradeQty >= max ? 'disabled' : ''}>＋</button>
-      </div>
-      <div class="trade-qty-preview">recebe <strong>${received}</strong></div>
-      <button class="forge-toggle-btn" data-trade-cancel>Cancelar</button>
-    </div>`;
-  }
-
-  const received = computeTradeReceiveQty(tradeQty);
-  return `<div class="material-card trade-card">
-    <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
-    <div class="name">${mat.name}</div>
-    <div class="qty">${formatNumber(have)}</div>
-    <button class="forge-toggle-btn" data-trade-target="${mat.id}" ${received > 0 ? '' : 'disabled'}>Receber ${received}</button>
-  </div>`;
+// The 3 empty "RECOMPENSAS" squares baked into the banner art are just a
+// preview row (purely illustrative — real rewards are rolled/granted on
+// victory, same as before), overlaid with 3 real icons positioned over
+// the art's squares. `variant` picks the vertical position matching that
+// banner's own square row (measured separately per source mockup — Torre's
+// squares sit noticeably higher than Invasão's, see CSS).
+function rewardPreviewIconsHtml(icons, variant) {
+  return icons
+    .map((src, i) => `<img class="invasion-reward-icon reward-${variant} invasion-reward-${i + 1}" src="${src}" alt="">`)
+    .join('');
 }
 
-function tradeGroupHtml(state, group, expanded, tradeFromMaterialId, tradeQty) {
-  const unlocked = isTradeGroupUnlocked(state, group);
-  const header = `<h3><span class="icon">🧺</span> Estágio ${group.startStage}–${group.endStage}</h3>`;
-
-  if (!unlocked) {
-    const cost = getTradeUnlockCost(group);
-    const affordable = state.eventCurrency >= cost;
-    return `<div class="family-group">
-      <div class="family-group-header">
-        ${header}
-        <span style="color:var(--text-dim); font-size:11px;">🔒</span>
+function invasaoChefesBannerHtml(state) {
+  const { label, value } = invasaoChefesStatusParts(state);
+  const canEnter = invasaoChefesCanEnter(state);
+  const rewardIcons = rewardPreviewIconsHtml([
+    'assets/crystals/leviargon.png',
+    'assets/cards/leviargon.png',
+    'assets/ui/currency-event.png',
+  ], 'invasion');
+  return `<div class="event-card event-card-invasion">
+    <div class="invasion-banner" style="background-image: url('assets/ui/invasao-banner.png')">
+      ${rewardIcons}
+      <div class="invasion-status-box">
+        <div class="invasion-status-label">${label}</div>
+        <div class="invasion-status-value">${value}</div>
       </div>
-      <button class="forge-toggle-btn" data-unlock-trade-group="${group.startStage}" ${affordable ? '' : 'disabled'}>🎫 Desbloquear (${formatNumber(cost)})</button>
-    </div>`;
-  }
-
-  return `<div class="family-group">
-    <div class="family-group-header">
-      ${header}
-      <button class="forge-toggle-btn" data-toggle-trade-group="${group.startStage}">${expanded ? '▲ Recolher' : '▼ Expandir'}</button>
+      ${canEnter ? `<button class="invasion-enter-btn" data-event-enter>Entrar</button>` : ''}
     </div>
-    ${expanded ? `<div class="material-grid">${group.monsters.map((m) => tradeMaterialCardHtml(state, group, m.material, tradeFromMaterialId, tradeQty)).join('')}</div>` : ''}
   </div>`;
 }
 
-function mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty) {
-  const { msUntilNextCycle } = getTradeCycleInfo();
+function invasaoChefesFightPanelHtml(state) {
+  const boss = BOSSES.find((b) => b.id === state.eventBossId);
+  if (!boss) return `<div class="event-card"><div class="event-card-body"><div class="event-panel"><p class="event-sub">Chefe do evento não encontrado — tente recarregar.</p></div></div></div>`;
+  const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(boss);
+  const hp = state.eventBossHp ?? maxHp;
+  const pct = maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 0;
   return `
-    <div class="event-panel">
-      <div class="event-active-badge">🧺 Novo evento em ${formatDuration(msUntilNextCycle)}</div>
-      <p class="event-sub">Desbloqueie uma categoria e troque materiais (${TRADE_COST}→${TRADE_YIELD}) até o evento acabar.</p>
-      ${WEAK_MONSTER_GROUPS.map((g) => tradeGroupHtml(state, g, expandedTradeGroups.has(g.startStage), tradeFromMaterialId, tradeQty)).join('')}
+    <div class="event-card">
+      <div class="event-card-body">
+        <div class="event-panel">
+          <div class="event-active-badge">🎪 Em combate!</div>
+          <h3>${boss.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(boss.element)}</h3>
+          <button id="event-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(boss.image, boss.emoji, boss.name)}</button>
+          <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(maxHp)}</span></div>
+          <p class="event-reward-info">🎁 10 itens ao derrotar (materiais/Cristal) + chance de Carta + ${EVENT_ICON} Moeda de Evento</p>
+        </div>
+      </div>
     </div>`;
 }
 
-function mercadorStatusLine(state) {
-  const { msUntilNextCycle } = getTradeCycleInfo();
-  const unlockedCount = WEAK_MONSTER_GROUPS.filter((g) => isTradeGroupUnlocked(state, g)).length;
-  return `${unlockedCount}/${WEAK_MONSTER_GROUPS.length} aberto · novo evento em ${formatDuration(msUntilNextCycle)}`;
+// Torre das Provações ("Torre Infinita" under the hood, see data/events.js
+// for the window timing and systems/tower.js for level->monster resolution
+// + run lifecycle) — same fixed-banner format as Invasão de Chefes (see
+// torre-banner.png), just its own art/theme. The active-run view (once
+// entered) renders separately, below the banner.
+function torreProvacoesStatusParts(state) {
+  const win = getTowerWindow();
+  if (win.active && state.towerEnteredCycle !== win.cycleIndex && !state.towerRunActive) {
+    return { label: 'Fecha em:', value: formatDuration(win.remainingActiveMs) };
+  }
+  return { label: 'Abre em:', value: formatDuration(win.msUntilNextWindow) };
 }
 
-// ---------------------------------------------------------------
-// Torre Infinita — see data/events.js (window/run timing constants) and
-// systems/tower.js (level->monster resolution, run lifecycle). Unlike the
-// other two events this one has three distinct states to render: window
-// closed, window open but not yet entered, and an active run.
-// ---------------------------------------------------------------
-
-function towerContentHtml(state, runRemainingMs, towerHp, towerMaxHp) {
-  if (state.towerRunActive) {
-    const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
-    const hp = towerHp ?? monster.maxHp;
-    const maxHp = towerMaxHp ?? monster.maxHp;
-    const pct = maxHp > 0 ? Math.max(0, Math.min(100, (state.towerMonsterHp / maxHp) * 100)) : 0;
-    const hpPlayerPct = maxHp > 0 && towerMaxHp > 0 ? Math.max(0, Math.min(100, (hp / towerMaxHp) * 100)) : 0;
-    return `
-      <div class="event-panel">
-        <div class="event-active-badge">🗼 Nível ${state.towerLevel}/${TOWER_MAX_LEVEL} — ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
-        <h3>${monster.name} ${monster.isBoss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}</h3>
-        <button id="tower-monster-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(monster.image, monster.emoji, monster.name)}</button>
-        <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.towerMonsterHp)} / ${formatNumber(maxHp)}</span></div>
-        <p class="event-sub">Sua vida na torre</p>
-        <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${hpPlayerPct}%; background:var(--danger, #e05656);"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(towerMaxHp)}</span></div>
-        <p class="event-reward-info">🎁 Recompensa ao final: 🎫 Moeda de Evento, conforme o nível alcançado.</p>
-      </div>`;
-  }
-
+function torreProvacoesCanEnter(state) {
+  if (state.towerRunActive) return false;
   const win = getTowerWindow();
-  if (!win.active) {
-    return `
-      <div class="event-panel">
-        <div class="event-icon dim">🗼</div>
-        <h3>Nenhuma torre disponível agora</h3>
-        <p class="event-sub">Volte quando a próxima janela abrir.</p>
-        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
-      </div>`;
-  }
+  if (!win.active) return false;
+  return state.towerEnteredCycle !== win.cycleIndex;
+}
 
-  if (state.towerEnteredCycle === win.cycleIndex) {
-    return `
-      <div class="event-panel">
-        <div class="event-icon dim">🗼</div>
-        <h3>Você já usou esta janela</h3>
-        <p class="event-sub">Melhor nível alcançado: ${state.towerBestLevel}/${TOWER_MAX_LEVEL}.</p>
-        <p class="event-next">Próxima janela em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
-      </div>`;
-  }
+function torreProvacoesBannerHtml(state) {
+  const { label, value } = torreProvacoesStatusParts(state);
+  const canEnter = torreProvacoesCanEnter(state);
+  const rewardIcons = rewardPreviewIconsHtml([
+    'assets/grunco/hide.png',
+    'assets/ui/currency-gold.png',
+    'assets/ui/currency-event.png',
+  ], 'torre');
+  return `<div class="event-card event-card-invasion">
+    <div class="invasion-banner" style="background-image: url('assets/ui/torre-banner.png')">
+      ${rewardIcons}
+      <div class="invasion-status-box">
+        <div class="invasion-status-label">${label}</div>
+        <div class="invasion-status-value">${value}</div>
+      </div>
+      ${canEnter ? `<button class="invasion-enter-btn" data-tower-enter>Entrar</button>` : ''}
+    </div>
+  </div>`;
+}
 
+function torreProvacoesFightPanelHtml(state, runRemainingMs, towerHp, towerMaxHp) {
+  const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
+  const hp = towerHp ?? monster.maxHp;
+  const maxHp = towerMaxHp ?? monster.maxHp;
+  const pct = maxHp > 0 ? Math.max(0, Math.min(100, (state.towerMonsterHp / maxHp) * 100)) : 0;
+  const hpPlayerPct = maxHp > 0 && towerMaxHp > 0 ? Math.max(0, Math.min(100, (hp / towerMaxHp) * 100)) : 0;
   return `
-    <div class="event-panel">
-      <div class="event-active-badge">🗼 Janela aberta — fecha em ${formatDuration(win.remainingActiveMs)}</div>
-      <h3>Torre Infinita</h3>
-      <p class="event-sub">Suba o máximo possível em 5 minutos contínuos. A torre acaba se você morrer, o tempo zerar, ou você derrotar o chefe do nível 200.</p>
-      <p class="event-sub">Melhor nível alcançado: ${state.towerBestLevel}/${TOWER_MAX_LEVEL}.</p>
-      <button class="forge-toggle-btn" data-tower-enter>Entrar</button>
+    <div class="event-card">
+      <div class="event-card-body">
+        <div class="event-panel">
+          <div class="event-active-badge">🗼 Nível ${state.towerLevel}/${TOWER_MAX_LEVEL} — ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
+          <h3>${monster.name} ${monster.isBoss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}</h3>
+          <button id="tower-monster-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(monster.image, monster.emoji, monster.name)}</button>
+          <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.towerMonsterHp)} / ${formatNumber(maxHp)}</span></div>
+          <p class="event-sub">Sua vida na torre</p>
+          <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${hpPlayerPct}%; background:var(--danger, #e05656);"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(towerMaxHp)}</span></div>
+          <p class="event-reward-info">🎁 Recompensa ao final: ${EVENT_ICON} Moeda de Evento, conforme o nível alcançado.</p>
+        </div>
+      </div>
     </div>`;
 }
 
-function towerStatusLine(state) {
-  if (state.towerRunActive) return `🗼 Em andamento · nível ${state.towerLevel}`;
-  const win = getTowerWindow();
-  if (win.active && state.towerEnteredCycle !== win.cycleIndex) return '🗼 Janela aberta!';
-  return `Próxima janela em ${formatDuration(win.msUntilNextWindow)}`;
-}
-
-export function renderEventsTab(state, expandedEvents = new Set(), tradeFromMaterialId = null, expandedTradeGroups = new Set(), tradeQty = TRADE_COST, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null) {
+export function renderEventsTab(state, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `
-    <div class="section-banner">Eventos</div>
+    <img class="section-banner-img" src="assets/ui/titles/eventos.png" alt="Eventos">
     <div class="event-list">
-    ${eventListItemHtml('caca', '🎪', 'Caça Aprimorada', cacaAprimoradaStatusLine(state), expandedEvents.has('caca'), cacaAprimoradaContentHtml(state), 'red')}
-    ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(state), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId, expandedTradeGroups, tradeQty), 'gold')}
-    ${eventListItemHtml('torre', '🗼', 'Torre Infinita', towerStatusLine(state), expandedEvents.has('torre'), towerContentHtml(state, towerRunRemainingMs, towerHp, towerMaxHp), 'purple')}
+    ${invasaoChefesBannerHtml(state)}
+    ${state.eventBossHp != null ? invasaoChefesFightPanelHtml(state) : ''}
+    ${torreProvacoesBannerHtml(state)}
+    ${state.towerRunActive ? torreProvacoesFightPanelHtml(state, towerRunRemainingMs, towerHp, towerMaxHp) : ''}
   </div>`;
 }
 
@@ -1035,7 +872,7 @@ function achievementsContentHtml(state) {
     const ready = isAchievementReady(state, a);
     const statusBtn = claimed
       ? `<button disabled>Resgatado</button>`
-      : `<button data-claim-achievement="${a.id}" ${ready ? '' : 'disabled'}>💎 +${a.cashReward}</button>`;
+      : `<button data-claim-achievement="${a.id}" ${ready ? '' : 'disabled'}>${ESMERALDA_ICON} +${a.cashReward}</button>`;
     return `<div class="achievement-card ${claimed ? 'claimed' : ''}">
       <span class="icon">${a.emoji}</span>
       <div class="info">
@@ -1047,9 +884,9 @@ function achievementsContentHtml(state) {
   }).join('');
 
   return `
-    <div class="shop-balance">💎 Você tem <strong>${formatNumber(state.cash)}</strong> Cash</div>
+    <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>
     <button id="watch-ad-btn" class="watch-ad-btn" ${adReady ? '' : 'disabled'}>
-      ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' 💎)' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
+      ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' ' + ESMERALDA_ICON + ')' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
     </button>
     <div class="achievement-list">${achievementsHtml}</div>
   `;
@@ -1070,10 +907,10 @@ export function renderShopTab(state, activeSubTab) {
   else body = cashShopHtml(state);
 
   container.innerHTML = `
-    <div class="section-banner">Loja</div>
+    <img class="section-banner-img" src="assets/ui/titles/loja.png" alt="Loja">
     <div class="inner-subnav">
-      <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">💎 Cash</button>
-      <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">🎫 Evento</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">${ESMERALDA_ICON} Esmeralda</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">${EVENT_ICON} Evento</button>
       <button class="inner-subtab-btn ${activeSubTab === 'achievements' ? 'active' : ''}" data-shop-subtab="achievements">🏆 Conquistas</button>
     </div>
     ${body}
@@ -1083,8 +920,8 @@ export function renderShopTab(state, activeSubTab) {
 function cashShopHtml(state) {
   const packagesHtml = CASH_REAL_MONEY_PACKAGES.map((p) => `
     <div class="cash-package-card disabled" title="Requer integração de pagamento — ainda não disponível">
-      <div class="icon">💎</div>
-      <div class="name">${p.cashAmount} Cash</div>
+      <div class="icon">${ESMERALDA_ICON}</div>
+      <div class="name">${p.cashAmount} Esmeralda</div>
       <div class="price">${p.priceLabel}</div>
       <button disabled>Em breve</button>
     </div>`).join('');
@@ -1096,17 +933,17 @@ function cashShopHtml(state) {
         <div class="name">${item.name}</div>
         <div class="desc">${item.description}</div>
       </div>
-      <button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>💎 ${item.cost}</button>
+      <button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>
     </div>`).join('');
 
   return `
-    <div class="shop-balance">💎 Você tem <strong>${formatNumber(state.cash)}</strong> Cash</div>
-    <p class="shop-note">Ganhe Cash na aba 🏆 Conquistas.</p>
+    <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>
+    <p class="shop-note">Ganhe Esmeralda na aba 🏆 Conquistas.</p>
 
-    <h4 class="shop-section-title">Comprar com Cash</h4>
+    <h4 class="shop-section-title">Comprar com Esmeralda</h4>
     <div class="shop-item-grid">${shopItemsHtml}</div>
 
-    <h4 class="shop-section-title">Comprar Cash (dinheiro real)</h4>
+    <h4 class="shop-section-title">Comprar Esmeralda (dinheiro real)</h4>
     <p class="shop-note">Ainda não disponível nesta versão — em breve.</p>
     <div class="cash-package-grid">${packagesHtml}</div>
   `;
@@ -1125,13 +962,13 @@ function eventShopHtml(state) {
           <div class="info">
             <div class="name">${item.name}</div>
           </div>
-          <button data-buy-event-mat="${item.matId}" data-buy-event-amount="${item.amount}" data-buy-event-cost="${item.cost}" ${canBuyEventItem(state, item) ? '' : 'disabled'}>🎫 ${item.cost}</button>
+          <button data-buy-event-mat="${item.matId}" data-buy-event-amount="${item.amount}" data-buy-event-cost="${item.cost}" ${canBuyEventItem(state, item) ? '' : 'disabled'}>${EVENT_ICON} ${item.cost}</button>
         </div>`).join('')}</div>
     </div>`;
   }).join('');
 
   return `
-    <div class="shop-balance event-variant">🎫 Você tem <strong>${formatNumber(state.eventCurrency)}</strong> Moeda de Evento</div>
+    <div class="shop-balance event-variant">${EVENT_ICON} Você tem <strong>${formatNumber(state.eventCurrency)}</strong> Moeda de Evento</div>
     <p class="shop-note">Ganhe Moeda de Evento derrotando o chefe de evento na aba 🎪 Eventos.</p>
     ${bossesHtml || '<p class="shop-note">Nenhum chefe desbloqueado ainda.</p>'}
   `;
@@ -1172,10 +1009,10 @@ export function pulseMonster() {
 
 export function showLootPopup(goldGained, drops) {
   const container = document.getElementById('loot-popup');
-  const parts = [`+${formatNumber(goldGained)} 💰`, ...drops.map((d) => `+${d.qty} ${d.emoji}`)];
+  const parts = [`+${formatNumber(goldGained)} ${GOLD_ICON}`, ...drops.map((d) => `+${d.qty} ${d.emoji}`)];
   const el = document.createElement('div');
   el.className = 'loot-popup-entry';
-  el.textContent = parts.join(' ');
+  el.innerHTML = parts.join(' ');
   container.appendChild(el);
   while (container.childNodes.length > 3) container.removeChild(container.firstChild);
   setTimeout(() => el.remove(), 2500);
@@ -1185,7 +1022,7 @@ export function showToast(message) {
   const container = document.getElementById('toast-container');
   const el = document.createElement('div');
   el.className = 'toast';
-  el.textContent = message;
+  el.innerHTML = message;
   container.appendChild(el);
   setTimeout(() => el.remove(), 3000);
 }

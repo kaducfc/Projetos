@@ -1,5 +1,5 @@
 import { getItem } from '../data/items.js';
-import { countEquippedCardCopies, unsocketCard, MAX_EQUIPPED_CARD_COPIES } from './crafting.js';
+import { countEquippedCardCopies, unsocketCard, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './crafting.js';
 
 export function getInventoryEntry(state, uid) {
   return state.inventory.find((i) => i.uid === uid) || null;
@@ -16,19 +16,21 @@ export function getEquippedEntry(state, slotId) {
   return { uid, entry, item };
 }
 
-/// Equips the item regardless of its socketed card — but if that card is
-/// already at the equipped-copies cap on other gear (MAX_EQUIPPED_CARD_COPIES
-/// in systems/crafting.js), this card is auto-unsocketed back to
-/// state.cards first, rather than blocking the equip itself.
+/// Equips the item regardless of its socketed cards — but any socketed
+/// card already at the equipped-copies cap on other gear
+/// (MAX_EQUIPPED_CARD_COPIES in systems/crafting.js) is auto-unsocketed
+/// back to state.cards first, rather than blocking the equip itself.
 export function equipItem(state, uid) {
   const entry = getInventoryEntry(state, uid);
   if (!entry) return false;
   const item = getItem(entry.itemId);
   if (!item) return false;
 
-  if (entry.cardId && countEquippedCardCopies(state, entry.cardId, uid) >= MAX_EQUIPPED_CARD_COPIES) {
-    unsocketCard(state, uid);
-  }
+  ensureCardIds(entry).forEach((cardId, slotIndex) => {
+    if (cardId && countEquippedCardCopies(state, cardId, uid, slotIndex) >= MAX_EQUIPPED_CARD_COPIES) {
+      unsocketCard(state, uid, slotIndex);
+    }
+  });
 
   state.equipped[item.slotId] = uid;
   return true;
