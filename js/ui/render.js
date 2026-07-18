@@ -122,6 +122,13 @@ const SCENE_IMAGES = [
 // So the sprite's innerHTML (and the frame-cycling interval) is only
 // (re)built when the monster identity actually changes; same-monster
 // re-renders leave the sprite element — and its animation — untouched.
+//
+// 150ms/frame, plain src swap (no crossfade) is the established standard
+// for every monster's idle animation, set once here and shared by all of
+// them — tuned and locked in on the Chispim reference (assets/chispim/anim/,
+// 4 frames). Don't tune this per-monster; if a future set of frames feels
+// off at this speed, the frames themselves (count/similarity) are the
+// thing to revisit, not this constant.
 const MONSTER_IDLE_FRAME_MS = 150;
 let currentMonsterSpriteKey = null;
 let monsterIdleAnimTimer = null;
