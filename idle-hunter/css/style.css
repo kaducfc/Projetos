@@ -397,7 +397,8 @@ button:disabled {
    is needed beyond this one. */
 .icon img,
 .item-detail-icon img,
-#monster-sprite img {
+#monster-sprite img,
+.loot-popup-entry img {
   width: 1em;
   height: 1em;
   object-fit: contain;
@@ -498,6 +499,14 @@ button:disabled {
   white-space: nowrap;
   box-shadow: 0 2px 4px rgba(0, 0, 0, .2);
   animation: loot-popup-in 0.15s ease-out, loot-popup-out 0.3s ease-in 2.2s forwards;
+}
+
+/* Real item/material/card art reads better a bit bigger than the plain
+   1em (== this popup's own tiny 10px font-size) the shared .icon img rule
+   would otherwise give it. */
+.loot-popup-entry img {
+  width: 14px;
+  height: 14px;
 }
 
 @keyframes loot-popup-in {

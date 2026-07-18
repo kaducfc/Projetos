@@ -1031,7 +1031,7 @@ export function pulseMonster() {
 
 export function showLootPopup(goldGained, drops) {
   const container = document.getElementById('loot-popup');
-  const parts = [`+${formatNumber(goldGained)} ${GOLD_ICON}`, ...drops.map((d) => `+${d.qty} ${d.emoji}`)];
+  const parts = [`+${formatNumber(goldGained)} ${GOLD_ICON}`, ...drops.map((d) => `+${d.qty} ${iconMarkup(d.image, d.emoji, d.name)}`)];
   const el = document.createElement('div');
   el.className = 'loot-popup-entry';
   el.innerHTML = parts.join(' ');
