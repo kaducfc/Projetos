@@ -1477,11 +1477,10 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--grad-neutral);
-  border: 2px solid var(--border);
-  border-radius: 14px;
+  background: url('../assets/ui/upgrade-card-frame.png') center / 100% 100% no-repeat;
+  border: none;
+  box-shadow: none;
   padding: 11px 13px;
-  box-shadow: var(--shadow-card);
 }
 
 .upgrade-card .icon {
@@ -1532,17 +1531,21 @@ button:disabled {
   padding: 9px 13px;
   font-size: 12px;
   font-weight: 700;
-  background: var(--grad-gold);
-  color: #4a2e00;
+  background: url('../assets/ui/upgrade-button-frame.png') center / 100% 100% no-repeat;
+  color: #000;
+  /* Thin white outline for contrast against the blue button art, same
+     technique as #monster-name in style.css. */
+  text-shadow:
+    -1px -1px 0 #fff, 0 -1px 0 #fff, 1px -1px 0 #fff,
+    -1px 0 0 #fff, 1px 0 0 #fff,
+    -1px 1px 0 #fff, 0 1px 0 #fff, 1px 1px 0 #fff;
   white-space: nowrap;
-  box-shadow: 0 3px 0 var(--gold-dark);
-  border-radius: 12px;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .upgrade-card button:disabled {
-  background: var(--grad-neutral);
-  color: var(--text-dim);
-  box-shadow: none;
+  opacity: 0.55;
 }
 
 /* ---------------- Materials ---------------- */
