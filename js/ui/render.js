@@ -878,7 +878,7 @@ function goldMineBannerHtml(state) {
     'assets/ui/currency-gold.png',
     'assets/ui/currency-gold.png',
     'assets/ui/currency-gold.png',
-  ], 'invasion');
+  ], 'goldmine');
   return `<div class="event-card event-card-invasion">
     <div class="invasion-banner" style="background-image: url('assets/ui/goldmine-banner.png')">
       ${rewardIcons}
