@@ -9,6 +9,7 @@ export function createDefaultState() {
     maxStage: 1,
     monsterHp: null, // current monster's remaining HP; null = needs (re)spawn
     weakMonsterId: null, // which WEAK_MONSTER_GROUPS entry is spawned (non-boss stages only)
+    sceneIndex: null, // which background scene is behind the monster (non-boss stages only, see ensureMonsterSpawned)
     materials: {}, // materialId -> count
     cards: {}, // cardId -> count (see data/cards.js)
     // Cartas tab collection tracking (see systems/cards.js): cardsDiscovered

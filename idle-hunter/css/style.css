@@ -306,13 +306,17 @@ button:disabled {
   flex: 0 0 auto;
 }
 
-/* Small scenic backdrop behind the monster — sky fading into a hint of
-   ground — echoing the reference mockup's landscape art without needing
-   any actual background image (art TBD, see the comment on
-   .paperdoll-character below). */
+/* Scenic backdrop behind the monster: a real scene photo for weak-monster
+   stages (see renderMonster in ui/render.js, which sets background-image
+   inline — assets/ui/scenes/scene1..3.png, picked once per spawn) with
+   this CSS gradient only as the fallback for boss stages, which don't
+   have scene art yet. */
 #monster-area {
   position: relative;
-  background:
+  background-color: #bfe6fb;
+  background-size: cover;
+  background-position: center 40%;
+  background-image:
     radial-gradient(ellipse 160px 60px at 25% 12%, rgba(255, 255, 255, .55), transparent 70%),
     radial-gradient(ellipse 130px 50px at 78% 8%, rgba(255, 255, 255, .45), transparent 70%),
     linear-gradient(180deg, #bfe6fb 0%, #e3f4ff 45%, #eaf7e2 78%, #d9ecc7 100%);

@@ -106,6 +106,18 @@ export function renderPlayerHp(current, max) {
 
 export function renderMonster(state, monster) {
   const boss = isBossStage(state.stage);
+
+  // Weak-monster stages (1-99) show one of the 3 real scene backgrounds,
+  // picked once per spawn (see ensureMonsterSpawned in systems/combat.js —
+  // never re-picked here, or the backdrop would flicker every render).
+  // Boss stages have no scene art yet, so they fall back to the plain CSS
+  // gradient backdrop (see #monster-area in style.css) by clearing the
+  // inline background-image.
+  const monsterArea = document.getElementById('monster-area');
+  monsterArea.style.backgroundImage = state.sceneIndex != null
+    ? `url('assets/ui/scenes/scene${state.sceneIndex + 1}.png')`
+    : '';
+
   document.getElementById('monster-sprite').innerHTML = iconMarkup(monster.image, monster.emoji, monster.name);
   document.getElementById('monster-name').innerHTML =
     `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
