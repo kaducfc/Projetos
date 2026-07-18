@@ -983,10 +983,9 @@ button:disabled {
   position: relative;
   aspect-ratio: 1;
   width: 100%;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #332c50, #1c1830);
-  border: 3px solid var(--border);
-  box-shadow: var(--shadow-card);
+  background: url('../assets/ui/equip-slot-frame.png') center / 100% 100% no-repeat;
+  border: none;
+  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -996,10 +995,6 @@ button:disabled {
 .equip-slot-icon .icon {
   font-size: 34px;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
-}
-
-.equip-slot-icon.filled {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, .12), var(--shadow-card);
 }
 
 .equip-slot-icon.empty .icon {
@@ -1081,10 +1076,9 @@ button:disabled {
 .inventory-tile {
   position: relative;
   aspect-ratio: 1;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #332c50, #1c1830);
-  border: 3px solid var(--border);
-  box-shadow: var(--shadow-card);
+  background: url('../assets/ui/inventory-tile-frame.png') center / 100% 100% no-repeat;
+  border: none;
+  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1097,7 +1091,8 @@ button:disabled {
 }
 
 .inventory-tile.equipped {
-  box-shadow: 0 0 0 2px var(--green), var(--shadow-card);
+  box-shadow: 0 0 0 2px var(--green);
+  border-radius: 12px;
 }
 
 /* Item detail popup (shown via the shared #modal-overlay) */
