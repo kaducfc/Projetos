@@ -35,7 +35,7 @@ export const ESMERALDA_ICON = `<img class="currency-icon" src="assets/ui/currenc
 
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
-  return `<span class="element-badge element-${el.id}"><img class="element-badge-icon" src="${el.image}" alt="">${el.name}</span>`;
+  return `<img class="element-badge-icon" src="${el.image}" alt="${el.name}" title="${el.name}">`;
 }
 
 
