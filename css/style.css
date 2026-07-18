@@ -954,18 +954,22 @@ button:disabled {
   overflow: hidden;
 }
 
-/* Rows are absolutely positioned to sit right above the parchment's baked-in
-   divider lines (see STATS_ROW_POSITIONS in ui/render.js) instead of
+/* Rows are absolutely positioned to sit centered in the band between the
+   parchment's baked-in divider lines (see STATS_ROW_POSITIONS in
+   ui/render.js, already calibrated to each band's center) instead of
    flowing normally, since the frame art already supplies the title,
-   border and lines. */
+   border and lines. translateY(-50%) + align-items:center (not
+   translateY(-100%) + flex-end) is what actually centers the text in that
+   band — the old bottom-anchored version rendered every row glued to the
+   top of its line instead of centered between the two lines. */
 .stats-frame-row {
   position: absolute;
   left: 8%;
   right: 8%;
-  transform: translateY(-100%);
+  transform: translateY(-50%);
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 4px;
   font-size: 10.5px;
   font-weight: 700;
