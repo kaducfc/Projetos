@@ -365,17 +365,9 @@ button:disabled {
   position: relative;
   font-size: 92px;
   line-height: 1;
-  /* Explicit box size, not left to shrink-to-fit content: the animated
-     Chispim's two cross-fade layers (.monster-anim-layer) are absolutely
-     positioned, so — unlike a plain in-flow <img> or emoji glyph — they
-     don't contribute to this element's own content size, and the button
-     would otherwise collapse down to just its padding. */
-  width: 1em;
-  height: 1em;
   background: transparent;
   box-shadow: none;
   padding: 6px;
-  box-sizing: content-box;
   user-select: none;
   filter: drop-shadow(0 8px 6px rgba(74, 47, 20, .3));
 }
@@ -411,17 +403,6 @@ button:disabled {
   height: 1em;
   object-fit: contain;
   vertical-align: middle;
-}
-
-/* Idle-loop animation (see monsters.js's `animFrames`, ui/render.js's
-   startMonsterIdleAnim): two stacked layers cross-fade via opacity instead
-   of hard-swapping one <img>'s src, so frame changes read as fluid motion
-   rather than a slideshow. */
-.monster-anim-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transition: opacity 140ms ease-in-out;
 }
 
 #monster-sprite.hit {
