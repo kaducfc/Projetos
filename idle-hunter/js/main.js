@@ -23,7 +23,7 @@ import {
   renderAll, renderTopBar, renderCombatStats, renderMonster, renderInventoryTab, renderForgeTab,
   renderUpgradesTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
-  showItemDetailModal, showEquipSlotModal, renderEventsTab, renderShopTab, pulseEventBoss,
+  showItemDetailModal, showEquipSlotModal, showStageJumpModal, renderEventsTab, renderShopTab, pulseEventBoss,
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster, pulseGoldMineBoss,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON,
 } from './ui/render.js';
@@ -271,15 +271,33 @@ function setupTabs() {
 // Stage controls
 // ---------------------------------------------------------------
 
+function jumpToStage(stage) {
+  if (setViewedStage(state, stage)) { resetPlayerHp(); refreshCombatOnly(); armBossTimer(); }
+}
+
 function setupStageControls() {
-  document.getElementById('stage-prev').addEventListener('click', () => {
-    if (setViewedStage(state, state.stage - 1)) { resetPlayerHp(); refreshCombatOnly(); armBossTimer(); }
+  // pointerdown, not click, on all four zone-banner buttons — same
+  // reasoning as #monster-sprite below: reported as "the flag button
+  // doesn't work" (stage-max specifically), and a plain 'click' listener
+  // is the one input event a fast/rapid tap can most easily drop if
+  // anything in the event path re-renders between pointerdown and
+  // pointerup. Using pointerdown uniformly removes that whole class of
+  // flakiness instead of chasing one specific repro.
+  document.getElementById('stage-prev').addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    jumpToStage(state.stage - 1);
   });
-  document.getElementById('stage-next').addEventListener('click', () => {
-    if (setViewedStage(state, state.stage + 1)) { resetPlayerHp(); refreshCombatOnly(); armBossTimer(); }
+  document.getElementById('stage-next').addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    jumpToStage(state.stage + 1);
   });
-  document.getElementById('stage-max').addEventListener('click', () => {
-    if (setViewedStage(state, state.maxStage)) { resetPlayerHp(); refreshCombatOnly(); armBossTimer(); }
+  document.getElementById('stage-max').addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    jumpToStage(state.maxStage);
+  });
+  document.getElementById('stage-label').addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    showStageJumpModal(state);
   });
   // pointerdown, not click: click only fires if pointerup lands on the same
   // element the browser considers "the target" at that instant, and this
@@ -341,6 +359,14 @@ function wireModalEvents() {
   const overlay = document.getElementById('modal-overlay');
 
   overlay.addEventListener('click', (e) => {
+    const stageJumpBtn = e.target.closest('[data-stage-jump]');
+    if (stageJumpBtn) {
+      runModalAction(() => {
+        jumpToStage(Number(stageJumpBtn.dataset.stageJump));
+        hideModal();
+      });
+      return;
+    }
     const equipBtn = e.target.closest('[data-modal-equip]');
     if (equipBtn) {
       runModalAction(() => {

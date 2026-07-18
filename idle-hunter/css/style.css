@@ -293,11 +293,51 @@ button:disabled {
   flex: 0 0 auto;
 }
 
-#stage-label {
+#stage-label,
+.stage-label-btn {
   min-width: 90px;
   font-weight: 800;
   font-size: 14px;
   display: inline-block;
+  background: rgba(255, 255, 255, .12);
+  border: 2px solid rgba(255, 255, 255, .4);
+  color: #fff;
+  border-radius: 8px;
+  padding: 3px 10px;
+  box-shadow: none;
+  text-shadow: inherit;
+}
+
+.stage-label-btn::after {
+  content: ' ▾';
+  opacity: .8;
+}
+
+.stage-label-btn:disabled {
+  opacity: .6;
+}
+
+.stage-jump-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stage-jump-option {
+  padding: 10px 6px;
+  border-radius: 10px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: 0 2px 0 var(--border-strong);
+}
+
+.stage-jump-option.current {
+  background: var(--grad-gold);
+  border-color: var(--gold-dark);
+  box-shadow: 0 2px 0 var(--gold-dark);
 }
 
 .stage-max-flag-btn {

@@ -1,4 +1,4 @@
-import { isBossStage, BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo } from '../data/monsters.js';
+import { isBossStage, BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo, BOSS_INTERVAL } from '../data/monsters.js';
 import { getSlot, getItemsForBoss, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
 import { UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE, ELEMENTS } from '../data/elements.js';
@@ -195,6 +195,23 @@ export function renderMonster(state, monster) {
   document.getElementById('stage-prev').disabled = state.stage <= 1;
   document.getElementById('stage-next').disabled = state.stage >= state.maxStage;
   document.getElementById('stage-max').disabled = state.stage >= state.maxStage;
+  document.getElementById('stage-label').disabled = state.maxStage < BOSS_INTERVAL;
+}
+
+/// Lists only the boss-checkpoint stages (10, 20, 30, ...) the player has
+/// actually reached (<= state.maxStage) — clicking the stage label jumps
+/// straight to one, same effect as manually pressing ◀/▶ that many times.
+/// The current stage's own decade (if it's a boss stage) gets a highlighted
+/// "current" style, purely cosmetic.
+export function showStageJumpModal(state) {
+  const options = BOSSES
+    .map((b) => b.stage)
+    .filter((stage) => stage <= state.maxStage);
+  if (!options.length) return;
+  const buttons = options.map((stage) => `
+    <button class="stage-jump-option${stage === state.stage ? ' current' : ''}" data-stage-jump="${stage}">Estágio ${stage}</button>
+  `).join('');
+  showModal('🚩 Ir para o estágio', `<div class="stage-jump-options">${buttons}</div>`);
 }
 
 /// remainingMs === null hides the timer (not fighting an unconquered boss).
