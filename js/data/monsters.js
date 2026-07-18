@@ -197,6 +197,7 @@ export const BOSSES = [
     ],
     // Boss-specific background (see Chispim's `scene` comment above).
     scene: 'assets/ui/scenes/boss-solkaiser.png',
+    scenePosition: 'center 55%',
     materials: {
       primary1: { id: 'solkaiser_feather', name: 'Pena de Solkaiser', emoji: '🪶', image: 'assets/solkaiser/pena.png' },
       primary2: { id: 'solkaiser_core', name: 'Núcleo Solar', emoji: '☀️', image: 'assets/solkaiser/nucleo.png' },
