@@ -611,7 +611,7 @@ function upgradeCardHtml(state, upgrade) {
   const affordable = state.gold >= cost;
 
   return `<div class="upgrade-card">
-    <span class="icon">${upgrade.emoji}</span>
+    <span class="icon">${iconMarkup(upgrade.image, upgrade.emoji, upgrade.name)}</span>
     <div class="info">
       <div class="name">${upgrade.name}</div>
       <div class="desc">${upgrade.description}</div>
