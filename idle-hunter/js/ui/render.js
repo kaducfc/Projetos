@@ -7,7 +7,7 @@ import { getEquippedEntry } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
 import { canCraft, canEnhance, canUpgradeToMaster, ensureCardIds, maxCardSlots } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
-import { getEventWindow, getTowerWindow, TOWER_MAX_LEVEL } from '../data/events.js';
+import { getEventWindow, getTowerWindow, TOWER_MAX_LEVEL, getGoldMineWindow, GOLDMINE_BOSS_HP } from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
 import { getTowerMonster } from '../systems/tower.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
@@ -849,7 +849,66 @@ function torreProvacoesFightPanelHtml(state, runRemainingMs, towerHp, towerMaxHp
     </div>`;
 }
 
-export function renderEventsTab(state, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null) {
+// Mina de Ouro (see data/events.js for window/fight timing and
+// systems/goldmine.js for the run lifecycle) — same fixed-banner format as
+// the other two, but the fight itself is a single Gold Boss on its own
+// short 35s clock instead of a boss/level roll: the Gold Boss never fights
+// back, and the run always ends in a reward (kill or timeout both grant
+// gold for however much damage was actually dealt — see
+// computeGoldMineReward), so there's no "loss" state to render.
+function goldMineStatusParts(state) {
+  const win = getGoldMineWindow();
+  if (win.active && state.goldMineEnteredCycle !== win.cycleIndex && !state.goldMineRunActive) {
+    return { label: 'Fecha em:', value: formatDuration(win.remainingActiveMs) };
+  }
+  return { label: 'Abre em:', value: formatDuration(win.msUntilNextWindow) };
+}
+
+function goldMineCanEnter(state) {
+  if (state.goldMineRunActive) return false;
+  const win = getGoldMineWindow();
+  if (!win.active) return false;
+  return state.goldMineEnteredCycle !== win.cycleIndex;
+}
+
+function goldMineBannerHtml(state) {
+  const { label, value } = goldMineStatusParts(state);
+  const canEnter = goldMineCanEnter(state);
+  const rewardIcons = rewardPreviewIconsHtml([
+    'assets/ui/currency-gold.png',
+    'assets/ui/currency-gold.png',
+    'assets/ui/currency-gold.png',
+  ], 'invasion');
+  return `<div class="event-card event-card-invasion">
+    <div class="invasion-banner" style="background-image: url('assets/ui/goldmine-banner.png')">
+      ${rewardIcons}
+      <div class="invasion-status-box">
+        <div class="invasion-status-label">${label}</div>
+        <div class="invasion-status-value">${value}</div>
+      </div>
+      ${canEnter ? `<button class="invasion-enter-btn" data-goldmine-enter>Entrar</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function goldMineFightPanelHtml(state, runRemainingMs) {
+  const maxHp = GOLDMINE_BOSS_HP;
+  const pct = maxHp > 0 ? Math.max(0, Math.min(100, (state.goldMineBossHp / maxHp) * 100)) : 0;
+  return `
+    <div class="event-card">
+      <div class="event-card-body">
+        <div class="event-panel">
+          <div class="event-active-badge">⛏️ ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
+          <h3>Chefe de Ouro <span class="boss-tag">EVENTO</span></h3>
+          <button id="goldmine-boss-sprite" class="event-boss-sprite" title="Clique para atacar">💰</button>
+          <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.goldMineBossHp)} / ${formatNumber(maxHp)}</span></div>
+          <p class="event-reward-info">🎁 Recompensa ao final: ${GOLD_ICON} 1 Ouro por ponto de dano causado.</p>
+        </div>
+      </div>
+    </div>`;
+}
+
+export function renderEventsTab(state, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null, goldMineRunRemainingMs = null) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `
     <img class="section-banner-img" src="assets/ui/titles/eventos.png" alt="Eventos">
@@ -858,6 +917,8 @@ export function renderEventsTab(state, towerRunRemainingMs = null, towerHp = nul
     ${state.eventBossHp != null ? invasaoChefesFightPanelHtml(state) : ''}
     ${torreProvacoesBannerHtml(state)}
     ${state.towerRunActive ? torreProvacoesFightPanelHtml(state, towerRunRemainingMs, towerHp, towerMaxHp) : ''}
+    ${goldMineBannerHtml(state)}
+    ${state.goldMineRunActive ? goldMineFightPanelHtml(state, goldMineRunRemainingMs) : ''}
   </div>`;
 }
 
@@ -871,6 +932,14 @@ export function pulseEventBoss() {
 
 export function pulseTowerMonster() {
   const sprite = document.getElementById('tower-monster-sprite');
+  if (!sprite) return;
+  sprite.classList.remove('hit');
+  void sprite.offsetWidth; // restart animation
+  sprite.classList.add('hit');
+}
+
+export function pulseGoldMineBoss() {
+  const sprite = document.getElementById('goldmine-boss-sprite');
   if (!sprite) return;
   sprite.classList.remove('hit');
   void sprite.offsetWidth; // restart animation
