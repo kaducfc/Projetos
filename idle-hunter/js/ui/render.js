@@ -115,6 +115,36 @@ const SCENE_IMAGES = [
   'assets/ui/scenes/scene3.png',
 ];
 
+// Idle-loop sprite animation (see monsters.js's `animFrames` on a boss/weak
+// entry). renderMonster() runs every game tick (100ms, see main.js's
+// tick()) — rebuilding the sprite's <img> every single call would reset any
+// running animation right back to frame 0 before it ever visibly advanced.
+// So the sprite's innerHTML (and the frame-cycling interval) is only
+// (re)built when the monster identity actually changes; same-monster
+// re-renders leave the sprite element — and its animation — untouched.
+const MONSTER_IDLE_FRAME_MS = 500;
+let currentMonsterSpriteKey = null;
+let monsterIdleAnimTimer = null;
+
+function stopMonsterIdleAnim() {
+  if (monsterIdleAnimTimer) {
+    clearInterval(monsterIdleAnimTimer);
+    monsterIdleAnimTimer = null;
+  }
+}
+
+function startMonsterIdleAnim(frames) {
+  stopMonsterIdleAnim();
+  if (!frames || frames.length < 2) return;
+  const img = document.querySelector('#monster-sprite img');
+  if (!img) return;
+  let i = 0;
+  monsterIdleAnimTimer = setInterval(() => {
+    i = (i + 1) % frames.length;
+    img.src = frames[i];
+  }, MONSTER_IDLE_FRAME_MS);
+}
+
 export function renderMonster(state, monster) {
   const boss = isBossStage(state.stage);
 
@@ -129,7 +159,12 @@ export function renderMonster(state, monster) {
     ? `url('${SCENE_IMAGES[state.sceneIndex]}')`
     : '';
 
-  document.getElementById('monster-sprite').innerHTML = iconMarkup(monster.image, monster.emoji, monster.name);
+  const spriteKey = monster.bossId || monster.weakMonsterId || monster.name;
+  if (spriteKey !== currentMonsterSpriteKey) {
+    currentMonsterSpriteKey = spriteKey;
+    document.getElementById('monster-sprite').innerHTML = iconMarkup(monster.image, monster.emoji, monster.name);
+    startMonsterIdleAnim(monster.animFrames);
+  }
   document.getElementById('monster-name').innerHTML =
     `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
   document.getElementById('stage-label').textContent = `Estágio ${state.stage}`;
