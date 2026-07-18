@@ -146,11 +146,22 @@ export const BOSSES = [
     image: 'assets/chispim/monster.png',
     // Idle-loop animation for the battle sprite (renderMonster() in
     // ui/render.js cycles through these on an interval while this boss is
-    // on screen). `image` above stays as the single static fallback used
-    // everywhere else (Forja cards, equipment icons, drop popups) — only
-    // the big monster-sprite element animates. All 4 frames were cropped
-    // to the same bounding box and share the exact same dimensions, so the
-    // sprite doesn't jump around as it cycles.
+    // on screen — see MONSTER_IDLE_FRAME_MS there for the shared
+    // 150ms/frame cadence, locked in as the standard for every monster's
+    // animation, not just Chispim's). `image` above stays as the single
+    // static fallback used everywhere else (Forja cards, equipment icons,
+    // drop popups) — only the big monster-sprite element animates.
+    //
+    // Reference pattern for adding animFrames to any other monster: crop
+    // all frames to the same union bounding box (so the sprite doesn't
+    // jump around as it cycles), convert the background to transparency,
+    // and list the frame paths as literal quoted strings here (same
+    // reasoning as SCENE_IMAGES in render.js — build-bundle.mjs's asset
+    // inliner only recognizes literal quoted 'assets/...' paths in the
+    // source text, and won't find them inside a dynamic template
+    // literal). This exact 4-frame Chispim set is the calibrated
+    // reference for "how many frames" and "how similar the poses should
+    // be" — reuse its cadence/count/style rather than re-deriving it.
     animFrames: [
       'assets/chispim/anim/frame1.png',
       'assets/chispim/anim/frame3.png',

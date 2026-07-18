@@ -268,6 +268,28 @@ Qualquer família sem `images` continua caindo no emoji normalmente —
 adicionar arte pra outro monstro é só repetir o mesmo padrão (`image` +
 `images` no objeto da família em `monsters.js`).
 
+## Animação do sprite em combate (idle loop): o padrão é o do Chispim
+
+`BOSSES`/`WEAK_MONSTER_GROUPS` em `data/monsters.js` aceitam um campo
+opcional `animFrames` (array de caminhos de imagem) — quando presente,
+`renderMonster()` em `ui/render.js` cicla essas imagens (troca de `src`
+simples, sem crossfade) enquanto aquele monstro está em cena, a cada
+`MONSTER_IDLE_FRAME_MS` (150ms, constante única e compartilhada por todo
+mundo, não por monstro). O Chispim (`assets/chispim/anim/frame1-4.png`) é
+a referência calibrada: 4 frames de variações próximas (não um ciclo de
+movimento amplo), todos recortados pela **união do bounding box dos 4**
+antes do recorte final (pra nenhum frame "pular" de tamanho/posição
+durante o ciclo) e com fundo convertido em transparência. Pra animar um
+próximo monstro, é reproduzir esse mesmo processo e cadência — 150ms e a
+troca seca já foram validados como "o certo" e não devem ser reajustados
+por monstro.
+
+O nome do monstro/chefe (`#monster-name`) tem um contorno branco fino
+(`text-shadow` empilhado em `style.css`) — existe porque o nome fica em
+cima de arte de cenário real (`assets/ui/scenes/*`, cenários específicos
+de chefe como `boss-chispim.png`) e precisa de contraste garantido
+contra qualquer fundo, não só os mais escuros.
+
 ## Decisão de design: a aba Equipamento é só ícones + um popup
 
 Todo detalhe de item (stats, elemento, aprimoramento, botão de
