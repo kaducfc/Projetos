@@ -164,13 +164,16 @@ export function renderMonster(state, monster) {
   // Weak-monster stages (1-99) show one of the 3 real scene backgrounds,
   // picked once per spawn (see ensureMonsterSpawned in systems/combat.js —
   // never re-picked here, or the backdrop would flicker every render).
-  // Boss stages have no scene art yet, so they fall back to the plain CSS
-  // gradient backdrop (see #monster-area in style.css) by clearing the
-  // inline background-image.
+  // Boss stages use that boss's own `scene` when it has one (see
+  // monsters.js), otherwise fall back to the plain CSS gradient backdrop
+  // (see #monster-area in style.css) by clearing the inline background.
   const monsterArea = document.getElementById('monster-area');
-  monsterArea.style.backgroundImage = state.sceneIndex != null
-    ? `url('${SCENE_IMAGES[state.sceneIndex]}')`
-    : '';
+  const bossScene = boss ? monster.scene : null;
+  monsterArea.style.backgroundImage = bossScene
+    ? `url('${bossScene}')`
+    : state.sceneIndex != null
+      ? `url('${SCENE_IMAGES[state.sceneIndex]}')`
+      : '';
 
   const spriteKey = monster.bossId || monster.weakMonsterId || monster.name;
   if (spriteKey !== currentMonsterSpriteKey) {
