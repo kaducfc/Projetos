@@ -983,10 +983,10 @@ function goldMineFightPanelHtml(state, runRemainingMs) {
   return `
     <div class="event-card">
       <div class="event-card-body">
-        <div class="event-panel">
+        <div class="event-panel event-panel-goldmine">
           <div class="event-active-badge">⛏️ ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
           <h3>Dragão Dourado <span class="boss-tag">EVENTO</span></h3>
-          <button id="goldmine-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(GOLDMINE_BOSS_ANIM_FRAMES[frameIdx], '🐉', 'Dragão Dourado')}</button>
+          <button id="goldmine-boss-sprite" class="event-boss-sprite event-boss-sprite-goldmine" title="Clique para atacar">${iconMarkup(GOLDMINE_BOSS_ANIM_FRAMES[frameIdx], '🐉', 'Dragão Dourado')}</button>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.goldMineBossHp)} / ${formatNumber(maxHp)}</span></div>
           <p class="event-reward-info">🎁 Recompensa ao final: ${GOLD_ICON} 1 Ouro por ponto de dano causado.</p>
         </div>

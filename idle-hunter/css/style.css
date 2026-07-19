@@ -1822,6 +1822,28 @@ button:disabled {
   animation: monster-hit 0.12s ease-out;
 }
 
+/* Mina de Ouro: real cave art behind the panel (see
+   assets/ui/scenes/goldmine-boss-scene.jpg), centered on the glowing gold
+   rune the dragon stands over. The dragon itself is scaled to match the
+   other animated bosses' fixed size (92px * 2.1, see #monster-sprite's
+   spriteScale) rather than the smaller 72px event-boss-sprite default. */
+.event-panel-goldmine {
+  background-image:
+    linear-gradient(180deg, rgba(20, 12, 2, .15), rgba(20, 12, 2, .35)),
+    url('../assets/ui/scenes/goldmine-boss-scene.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+.event-boss-sprite-goldmine {
+  font-size: 193.2px;
+}
+
+.event-panel-goldmine h3 {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+}
+
 .event-hp-bar-outer {
   position: relative;
   height: 20px;
