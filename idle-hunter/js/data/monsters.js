@@ -280,6 +280,8 @@ export const BOSSES = [
     // Same size boost as the earlier animated bosses (see Chispim's
     // spriteScale comment above).
     spriteScale: 2.1,
+    // Boss-specific background (see Chispim's `scene` comment above).
+    scene: 'assets/ui/scenes/boss-grommuk.png',
     materials: {
       primary1: { id: 'grommuk_fang', name: 'Presa de Grommuk', emoji: '🦷', image: 'assets/grommuk/presa.png' },
       primary2: { id: 'grommuk_medallion', name: 'Medalhão Tribal', emoji: '🥉', image: 'assets/grommuk/medalhao.png' },
