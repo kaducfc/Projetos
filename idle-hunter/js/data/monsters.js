@@ -269,6 +269,17 @@ export const BOSSES = [
     element: 'neutro',
     emoji: '👹',
     image: 'assets/grommuk/monster.png',
+    animFrames: [
+      'assets/grommuk/anim/frame1.png',
+      'assets/grommuk/anim/frame2.png',
+      'assets/grommuk/anim/frame3.png',
+      'assets/grommuk/anim/frame4.png',
+      'assets/grommuk/anim/frame5.png',
+      'assets/grommuk/anim/frame6.png',
+    ],
+    // Same size boost as the earlier animated bosses (see Chispim's
+    // spriteScale comment above).
+    spriteScale: 2.1,
     materials: {
       primary1: { id: 'grommuk_fang', name: 'Presa de Grommuk', emoji: '🦷', image: 'assets/grommuk/presa.png' },
       primary2: { id: 'grommuk_medallion', name: 'Medalhão Tribal', emoji: '🥉', image: 'assets/grommuk/medalhao.png' },
