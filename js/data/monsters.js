@@ -241,6 +241,17 @@ export const BOSSES = [
     element: 'planta',
     emoji: '🌺',
     image: 'assets/colhedor_carmesim/monster.png',
+    // Idle-loop animation — same standard as Chispim's (see that entry's
+    // comment above): 150ms/frame, plain src swap. Only 3 frames this
+    // time (vs. the usual 4), still cropped to the same union bounding box.
+    animFrames: [
+      'assets/colhedor_carmesim/anim/frame1.png',
+      'assets/colhedor_carmesim/anim/frame2.png',
+      'assets/colhedor_carmesim/anim/frame3.png',
+    ],
+    // Same size boost as the first 3 bosses (see Chispim's spriteScale
+    // comment above) — explicitly requested to match, not the default 1x.
+    spriteScale: 2.1,
     materials: {
       // id kept as colhedor_carmesim_scythe (save-file key) even though the
       // item was re-arted/renamed from "Foice Carmesim" to "Rosa Escarlate".
