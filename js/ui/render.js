@@ -969,16 +969,24 @@ function goldMineBannerHtml(state) {
   </div>`;
 }
 
+const GOLDMINE_BOSS_ANIM_FRAMES = [
+  'assets/goldmine_boss/anim/frame1.png',
+  'assets/goldmine_boss/anim/frame2.png',
+  'assets/goldmine_boss/anim/frame3.png',
+  'assets/goldmine_boss/anim/frame4.png',
+];
+
 function goldMineFightPanelHtml(state, runRemainingMs) {
   const maxHp = GOLDMINE_BOSS_HP;
   const pct = maxHp > 0 ? Math.max(0, Math.min(100, (state.goldMineBossHp / maxHp) * 100)) : 0;
+  const frameIdx = Math.floor(Date.now() / MONSTER_IDLE_FRAME_MS) % GOLDMINE_BOSS_ANIM_FRAMES.length;
   return `
     <div class="event-card">
       <div class="event-card-body">
         <div class="event-panel">
           <div class="event-active-badge">⛏️ ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
-          <h3>Chefe de Ouro <span class="boss-tag">EVENTO</span></h3>
-          <button id="goldmine-boss-sprite" class="event-boss-sprite" title="Clique para atacar">💰</button>
+          <h3>Dragão Dourado <span class="boss-tag">EVENTO</span></h3>
+          <button id="goldmine-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(GOLDMINE_BOSS_ANIM_FRAMES[frameIdx], '🐉', 'Dragão Dourado')}</button>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.goldMineBossHp)} / ${formatNumber(maxHp)}</span></div>
           <p class="event-reward-info">🎁 Recompensa ao final: ${GOLD_ICON} 1 Ouro por ponto de dano causado.</p>
         </div>
