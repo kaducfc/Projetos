@@ -182,6 +182,14 @@ export function renderMonster(state, monster) {
     const initialImage = (monster.animFrames && monster.animFrames[0]) || monster.image;
     sprite.innerHTML = iconMarkup(initialImage, monster.emoji, monster.name);
     startMonsterIdleAnim(monster.animFrames);
+    // Per-boss size boost (see monsters.js's `spriteScale`) via font-size
+    // — not transform:scale, which would fight the .hit CSS animation
+    // (also transform-based) every time it fires and snap back to 1x for
+    // the animation's 0.12s duration. Sizing off font-size composes
+    // cleanly since #monster-sprite img is already 1em/1em.
+    sprite.style.fontSize = monster.spriteScale && monster.spriteScale !== 1
+      ? `${92 * monster.spriteScale}px`
+      : '';
   }
   document.getElementById('monster-name').innerHTML =
     `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
