@@ -219,6 +219,8 @@ export const BOSSES = [
       'assets/tartarok/anim/frame3.png',
       'assets/tartarok/anim/frame4.png',
     ],
+    // Boss-specific background (see Chispim's `scene` comment above).
+    scene: 'assets/ui/scenes/boss-tartarok.png',
     materials: {
       primary1: { id: 'tartarok_shell', name: 'Casco de Tartarok', emoji: '🐚', image: 'assets/tartarok/casco.png' },
       primary2: { id: 'tartarok_pearl', name: 'Pérola Primordial', emoji: '⚪', image: 'assets/tartarok/perola.png' },
