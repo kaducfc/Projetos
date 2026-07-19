@@ -210,6 +210,15 @@ export const BOSSES = [
     element: 'agua',
     emoji: '🐢',
     image: 'assets/tartarok/monster.png',
+    // Idle-loop animation — same standard as Chispim's (see that entry's
+    // comment above): 150ms/frame, plain src swap, all 4 frames cropped to
+    // the same union bounding box.
+    animFrames: [
+      'assets/tartarok/anim/frame1.png',
+      'assets/tartarok/anim/frame2.png',
+      'assets/tartarok/anim/frame3.png',
+      'assets/tartarok/anim/frame4.png',
+    ],
     materials: {
       primary1: { id: 'tartarok_shell', name: 'Casco de Tartarok', emoji: '🐚', image: 'assets/tartarok/casco.png' },
       primary2: { id: 'tartarok_pearl', name: 'Pérola Primordial', emoji: '⚪', image: 'assets/tartarok/perola.png' },
