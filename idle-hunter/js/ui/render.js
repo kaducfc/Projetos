@@ -359,6 +359,14 @@ function equipRingContentHtml(state, filterElement = null) {
   `;
 }
 
+// Small "N cards socketed" badge, bottom-left of an equipment icon — see
+// .card-count-badge in style.css. Mirrors .mini-badge's enhance-level
+// badge (bottom-right) but only shows once at least one card is socketed.
+function cardCountBadgeHtml(entry) {
+  const count = ensureCardIds(entry).filter(Boolean).length;
+  return count > 0 ? `<span class="card-count-badge">🃏 ${count}</span>` : '';
+}
+
 function slotIconHtml(state, slot) {
   const equipped = getEquippedEntry(state, slot.id);
   const icon = equipped
@@ -370,6 +378,7 @@ function slotIconHtml(state, slot) {
   return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}" data-equip-slot="${slot.id}" title="${slot.name}">
     <span class="icon">${icon}</span>
     ${badge}
+    ${equipped ? cardCountBadgeHtml(equipped.entry) : ''}
   </button>`;
 }
 
@@ -380,6 +389,7 @@ function inventoryTileHtml(state, entry) {
   return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}">
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
+    ${cardCountBadgeHtml(entry)}
   </button>`;
 }
 
