@@ -177,7 +177,7 @@ export const BOSSES = [
     // applies this as font-size on #monster-sprite, since the sprite's
     // width/height are 1em) — bosses read as unimpressive next to weak
     // monsters at the default size, so the 3 with real art get a boost.
-    spriteScale: 1.4,
+    spriteScale: 2.1,
     materials: {
       primary1: { id: 'chispim_heart', name: 'Núcleo de Faísca', emoji: '❤️', image: 'assets/chispim/nucleo_faisca.png' },
       primary2: { id: 'chispim_whisker', name: 'Cauda Condutora', emoji: '⚡', image: 'assets/chispim/cauda_condutora.png' },
@@ -202,7 +202,7 @@ export const BOSSES = [
     ],
     // Boss-specific background (see Chispim's `scene` comment above).
     scene: 'assets/ui/scenes/boss-solkaiser.png',
-    spriteScale: 1.4,
+    spriteScale: 2.1,
     materials: {
       primary1: { id: 'solkaiser_feather', name: 'Pena de Solkaiser', emoji: '🪶', image: 'assets/solkaiser/pena.png' },
       primary2: { id: 'solkaiser_core', name: 'Núcleo Solar', emoji: '☀️', image: 'assets/solkaiser/nucleo.png' },
@@ -227,7 +227,7 @@ export const BOSSES = [
     ],
     // Boss-specific background (see Chispim's `scene` comment above).
     scene: 'assets/ui/scenes/boss-tartarok.png',
-    spriteScale: 1.4,
+    spriteScale: 2.1,
     materials: {
       primary1: { id: 'tartarok_shell', name: 'Casco de Tartarok', emoji: '🐚', image: 'assets/tartarok/casco.png' },
       primary2: { id: 'tartarok_pearl', name: 'Pérola Primordial', emoji: '⚪', image: 'assets/tartarok/perola.png' },
