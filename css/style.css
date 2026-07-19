@@ -2098,12 +2098,12 @@ button:disabled {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  background: var(--grad-neutral);
-  border: 2px solid var(--purple);
-  border-radius: 14px;
-  padding: 10px 6px;
-  box-shadow: var(--shadow-card);
+  background: url('../assets/ui/card-tile-box.png') center / 100% 100% no-repeat;
+  border: none;
+  border-radius: 0;
+  padding: 10px 8px;
   text-align: center;
 }
 
@@ -2115,10 +2115,11 @@ button:disabled {
   font-size: 10px;
   font-weight: 700;
   line-height: 1.2;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
 }
 
 .card-tile.undiscovered {
-  border-color: var(--border);
   opacity: 0.45;
   filter: grayscale(0.6);
 }
