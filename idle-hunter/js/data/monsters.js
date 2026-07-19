@@ -252,6 +252,8 @@ export const BOSSES = [
     // Same size boost as the first 3 bosses (see Chispim's spriteScale
     // comment above) — explicitly requested to match, not the default 1x.
     spriteScale: 2.1,
+    // Boss-specific background (see Chispim's `scene` comment above).
+    scene: 'assets/ui/scenes/boss-colhedor-carmesim.png',
     materials: {
       // id kept as colhedor_carmesim_scythe (save-file key) even though the
       // item was re-arted/renamed from "Foice Carmesim" to "Rosa Escarlate".
