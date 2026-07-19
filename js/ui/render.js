@@ -840,7 +840,7 @@ function invasaoChefesBannerHtml(state) {
         <div class="invasion-status-label">${label}</div>
         <div class="invasion-status-value">${value}</div>
       </div>
-      ${canEnter ? `<button class="invasion-enter-btn" data-event-enter>Entrar</button>` : ''}
+      ${canEnter ? `<button class="invasion-enter-btn" data-event-enter aria-label="Entrar"></button>` : ''}
     </div>
   </div>`;
 }
@@ -900,7 +900,7 @@ function torreProvacoesBannerHtml(state) {
         <div class="invasion-status-label">${label}</div>
         <div class="invasion-status-value">${value}</div>
       </div>
-      ${canEnter ? `<button class="invasion-enter-btn" data-tower-enter>Entrar</button>` : ''}
+      ${canEnter ? `<button class="invasion-enter-btn" data-tower-enter aria-label="Entrar"></button>` : ''}
     </div>
   </div>`;
 }
@@ -964,7 +964,7 @@ function goldMineBannerHtml(state) {
         <div class="invasion-status-label">${label}</div>
         <div class="invasion-status-value">${value}</div>
       </div>
-      ${canEnter ? `<button class="invasion-enter-btn" data-goldmine-enter>Entrar</button>` : ''}
+      ${canEnter ? `<button class="invasion-enter-btn" data-goldmine-enter aria-label="Entrar"></button>` : ''}
     </div>
   </div>`;
 }

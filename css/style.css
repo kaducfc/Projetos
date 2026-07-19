@@ -1676,19 +1676,26 @@ button:disabled {
   text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
 }
 
+/* Real button art (assets/ui/entrar-button.png, cropped tight to its own
+   opaque bounds) instead of a CSS-drawn rectangle — the old text button's
+   box didn't line up with the art underneath at every viewport width, so
+   the tap target and the visible button drifted apart. Sizing the element
+   itself via aspect-ratio off that same cropped art means the clickable
+   box always exactly matches what's drawn, at any width. */
 .invasion-enter-btn {
   position: absolute;
   left: 80%;
   top: 52%;
-  transform: translateX(-50%);
-  width: 25%;
-  padding: 8px 4px;
-  font-size: clamp(10px, 3vw, 13px);
+  transform: translate(-50%, -50%);
+  width: 30%;
+  aspect-ratio: 500 / 190;
+  padding: 0;
+  border: none;
   border-radius: 10px;
-  background: var(--grad-gold);
-  border: 2px solid var(--gold-dark);
-  color: #4a2f00;
-  box-shadow: 0 3px 0 var(--gold-dark);
+  background: transparent;
+  background-image: url('../assets/ui/entrar-button.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
 /* Preview icons dropped into the banner art's 3 empty "RECOMPENSAS"
