@@ -321,6 +321,17 @@ export const BOSSES = [
     element: 'agua',
     emoji: '🐋',
     image: 'assets/leviargon/monster.png',
+    animFrames: [
+      'assets/leviargon/anim/frame1.png',
+      'assets/leviargon/anim/frame2.png',
+      'assets/leviargon/anim/frame3.png',
+      'assets/leviargon/anim/frame4.png',
+      'assets/leviargon/anim/frame5.png',
+      'assets/leviargon/anim/frame6.png',
+    ],
+    // Same size boost as the earlier animated bosses (see Chispim's
+    // spriteScale comment above).
+    spriteScale: 2.1,
     materials: {
       primary1: { id: 'leviargon_fin', name: 'Barbatana de Leviargon', emoji: '🦈', image: 'assets/leviargon/barbatana.png' },
       primary2: { id: 'leviargon_eye', name: 'Olho Abissal', emoji: '👁️', image: 'assets/leviargon/olho.png' },
