@@ -332,6 +332,8 @@ export const BOSSES = [
     // Same size boost as the earlier animated bosses (see Chispim's
     // spriteScale comment above).
     spriteScale: 2.1,
+    // Boss-specific background (see Chispim's `scene` comment above).
+    scene: 'assets/ui/scenes/boss-leviargon.png',
     materials: {
       primary1: { id: 'leviargon_fin', name: 'Barbatana de Leviargon', emoji: '🦈', image: 'assets/leviargon/barbatana.png' },
       primary2: { id: 'leviargon_eye', name: 'Olho Abissal', emoji: '👁️', image: 'assets/leviargon/olho.png' },
