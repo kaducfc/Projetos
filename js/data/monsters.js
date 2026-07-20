@@ -295,6 +295,17 @@ export const BOSSES = [
     element: 'fogo',
     emoji: '🐂',
     image: 'assets/vulkarion/monster.png',
+    animFrames: [
+      'assets/vulkarion/anim/frame1.png',
+      'assets/vulkarion/anim/frame2.png',
+      'assets/vulkarion/anim/frame3.png',
+      'assets/vulkarion/anim/frame4.png',
+      'assets/vulkarion/anim/frame5.png',
+      'assets/vulkarion/anim/frame6.png',
+    ],
+    // Same size boost as the earlier animated bosses (see Chispim's
+    // spriteScale comment above).
+    spriteScale: 2.1,
     materials: {
       primary1: { id: 'vulkarion_horn', name: 'Chifre de Vulkarion', emoji: '🐮', image: 'assets/vulkarion/chifre.png' },
       primary2: { id: 'vulkarion_heart', name: 'Coração Vulcânico', emoji: '🌋', image: 'assets/vulkarion/coracao.png' },
