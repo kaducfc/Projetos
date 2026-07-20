@@ -306,6 +306,8 @@ export const BOSSES = [
     // Same size boost as the earlier animated bosses (see Chispim's
     // spriteScale comment above).
     spriteScale: 2.1,
+    // Boss-specific background (see Chispim's `scene` comment above).
+    scene: 'assets/ui/scenes/boss-vulkarion.png',
     materials: {
       primary1: { id: 'vulkarion_horn', name: 'Chifre de Vulkarion', emoji: '🐮', image: 'assets/vulkarion/chifre.png' },
       primary2: { id: 'vulkarion_heart', name: 'Coração Vulcânico', emoji: '🌋', image: 'assets/vulkarion/coracao.png' },
