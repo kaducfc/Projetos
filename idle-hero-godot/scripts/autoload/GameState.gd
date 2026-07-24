@@ -129,10 +129,10 @@ func load_game() -> void:
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
-	gold = parsed.get("gold", gold)
-	gems = parsed.get("gems", gems)
-	current_stage = parsed.get("current_stage", current_stage)
+	gold = int(parsed.get("gold", gold))
+	gems = int(parsed.get("gems", gems))
+	current_stage = int(parsed.get("current_stage", current_stage))
 	var loaded_stats = parsed.get("stat_levels", null)
 	if typeof(loaded_stats) == TYPE_DICTIONARY:
 		for key in STAT_ORDER:
-			stat_levels[key] = loaded_stats.get(key, stat_levels[key])
+			stat_levels[key] = int(loaded_stats.get(key, stat_levels[key]))
