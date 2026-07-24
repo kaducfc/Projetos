@@ -4,6 +4,7 @@ extends Node2D
 ## de estágio a cada onda derrotada e estágios de chefe a cada N estágios.
 
 const EnemyScene := preload("res://scenes/Enemy.tscn")
+const FloatingNumberScene := preload("res://scenes/FloatingNumber.tscn")
 
 @onready var hero: Node2D = $Hero
 @onready var enemy_spawn: Marker2D = $EnemySpawnPoint
@@ -17,12 +18,14 @@ var _enemy_index: int = 0
 func _ready() -> void:
 	hero.reset_stats()
 	hero.died.connect(_on_hero_died)
-	hud.setup(hero)
+	hero.damaged.connect(func(amount): _spawn_floating_number(hero.global_position, amount, Color(1.0, 0.4, 0.4)))
+	hud.setup()
 	_start_stage()
 
 
 func _start_stage() -> void:
 	_enemy_index = 0
+	hud.update_stage_path(0, GameState.is_boss_stage(GameState.current_stage))
 	_spawn_next_enemy()
 
 
@@ -36,14 +39,16 @@ func _spawn_next_enemy() -> void:
 	enemy.max_hp = _enemy_hp_for_stage(stage, is_boss)
 	enemy.damage = _enemy_damage_for_stage(stage, is_boss)
 	enemy.gold_reward = _enemy_gold_for_stage(stage, is_boss)
+	enemy.gems_reward = 10 if is_boss else 0
 	enemy.is_boss = is_boss
 	enemy.position = enemy_spawn.position
 	add_child(enemy)
 	_current_enemy = enemy
 
 	enemy.died.connect(_on_enemy_died.bind(is_final_enemy))
-	enemy.hp_changed.connect(hud.on_enemy_hp_changed)
+	enemy.damaged.connect(func(amount): _spawn_floating_number(enemy.global_position, amount, Color.WHITE))
 	hud.on_enemy_spawned(enemy)
+	hud.update_stage_path(_enemy_index - 1, is_boss)
 
 	var tween := create_tween()
 	tween.tween_property(enemy, "position", engage_point.position, 1.0)
@@ -59,8 +64,11 @@ func _begin_combat(enemy: Node2D) -> void:
 	enemy.start_combat()
 
 
-func _on_enemy_died(gold_reward: int, was_final_enemy: bool) -> void:
+func _on_enemy_died(gold_reward: int, gems_reward: int, was_final_enemy: bool) -> void:
 	GameState.add_gold(gold_reward)
+	GameState.add_gems(gems_reward)
+	if gems_reward > 0:
+		hud.show_toast("Chefe derrotado! +%d gemas" % gems_reward)
 	hero.stop_combat()
 	if was_final_enemy:
 		GameState.advance_stage()
@@ -76,6 +84,13 @@ func _on_hero_died() -> void:
 	hero.start_combat()
 	if is_instance_valid(_current_enemy):
 		_current_enemy.start_combat()
+
+
+func _spawn_floating_number(global_pos: Vector2, amount: float, color: Color) -> void:
+	var floating_number := FloatingNumberScene.instantiate()
+	add_child(floating_number)
+	floating_number.global_position = global_pos + Vector2(0, -60)
+	floating_number.setup(str(int(round(amount))), color)
 
 
 func _enemy_hp_for_stage(stage: int, is_boss: bool) -> float:

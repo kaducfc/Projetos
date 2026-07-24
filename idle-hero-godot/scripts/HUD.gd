@@ -1,53 +1,159 @@
 extends Control
 
-## Interface: estágio, ouro, barras de vida do herói/inimigo e upgrade.
+## Interface: nível/ouro/gemas no topo, trilha de progresso do estágio,
+## painel de upgrade dos 4 atributos e barra de navegação inferior
+## (com telas futuras ainda bloqueadas, tipo o menu de um jogo idle mobile).
 
-@onready var stage_label: Label = $MarginContainer/VBoxContainer/TopBar/StageLabel
-@onready var gold_label: Label = $MarginContainer/VBoxContainer/TopBar/GoldLabel
-@onready var hero_hp_bar: ProgressBar = $MarginContainer/VBoxContainer/HeroHPBar
-@onready var enemy_name_label: Label = $MarginContainer/VBoxContainer/EnemyNameLabel
-@onready var enemy_hp_bar: ProgressBar = $MarginContainer/VBoxContainer/EnemyHPBar
-@onready var upgrade_button: Button = $MarginContainer/VBoxContainer/UpgradeButton
+const STAT_DISPLAY := {
+	"attack": {"name": "Ataque", "color": Color(0.9, 0.35, 0.25)},
+	"hp": {"name": "Vida", "color": Color(0.85, 0.2, 0.25)},
+	"regen": {"name": "Regeneração de Vida", "color": Color(0.25, 0.75, 0.35)},
+	"speed": {"name": "Velocidade de Ataque", "color": Color(0.9, 0.75, 0.2)},
+}
+
+@onready var level_label: Label = $MarginContainer/VBoxContainer/TopBar/PlayerBadge/LevelLabel
+@onready var gold_label: Label = $MarginContainer/VBoxContainer/TopBar/GoldRow/GoldLabel
+@onready var gems_label: Label = $MarginContainer/VBoxContainer/TopBar/GemsRow/GemsLabel
+@onready var stage_label: Label = $MarginContainer/VBoxContainer/StageBanner/StageLabel
+@onready var stage_path: HBoxContainer = $MarginContainer/VBoxContainer/StageBanner/StagePath
+@onready var enemy_name_label: Label = $MarginContainer/VBoxContainer/StageBanner/EnemyNameLabel
+@onready var toast_label: Label = $MarginContainer/VBoxContainer/BottomArea/ToastLabel
+@onready var stats_panel: VBoxContainer = $MarginContainer/VBoxContainer/BottomArea/StatsPanel
+
+var _stat_rows: Dictionary = {}
+var _stage_dots: Array = []
+var _toast_tween: Tween = null
 
 
-func setup(hero: Node2D) -> void:
-	hero.hp_changed.connect(_on_hero_hp_changed)
+func setup() -> void:
 	GameState.gold_changed.connect(_on_gold_changed)
+	GameState.gems_changed.connect(_on_gems_changed)
 	GameState.stage_changed.connect(_on_stage_changed)
-	upgrade_button.pressed.connect(_on_upgrade_pressed)
+	GameState.stat_changed.connect(_on_stat_changed)
+	GameState.milestone_reached.connect(_on_milestone_reached)
+	_build_stats_panel()
+	_build_stage_path()
 	_on_gold_changed(GameState.gold)
+	_on_gems_changed(GameState.gems)
 	_on_stage_changed(GameState.current_stage)
-	_refresh_upgrade_button()
+	_refresh_level()
+	toast_label.modulate.a = 0.0
 
 
 func on_enemy_spawned(enemy: Node2D) -> void:
 	enemy_name_label.text = "Chefe" if enemy.is_boss else "Inimigo"
 
 
-func on_enemy_hp_changed(current_hp: float, max_hp: float) -> void:
-	enemy_hp_bar.max_value = max_hp
-	enemy_hp_bar.value = current_hp
+func update_stage_path(defeated_count: int, is_boss_stage: bool) -> void:
+	for i in _stage_dots.size():
+		var dot: ColorRect = _stage_dots[i]
+		var defeated := i < defeated_count
+		var is_last := i == _stage_dots.size() - 1
+		if is_last and is_boss_stage:
+			dot.color = Color(0.3, 0.05, 0.35) if defeated else Color(0.7, 0.1, 0.8)
+		else:
+			dot.color = Color(0.9, 0.85, 0.2) if defeated else Color(1, 1, 1, 0.25)
 
 
-func _on_hero_hp_changed(current_hp: float, max_hp: float) -> void:
-	hero_hp_bar.max_value = max_hp
-	hero_hp_bar.value = current_hp
+func show_toast(text: String) -> void:
+	toast_label.text = text
+	if _toast_tween:
+		_toast_tween.kill()
+	toast_label.modulate.a = 1.0
+	_toast_tween = create_tween()
+	_toast_tween.tween_interval(1.4)
+	_toast_tween.tween_property(toast_label, "modulate:a", 0.0, 0.6)
+
+
+func _build_stage_path() -> void:
+	for i in GameState.ENEMIES_PER_STAGE:
+		var dot := ColorRect.new()
+		dot.custom_minimum_size = Vector2(18, 18)
+		dot.color = Color(1, 1, 1, 0.25)
+		stage_path.add_child(dot)
+		_stage_dots.append(dot)
+
+
+func _build_stats_panel() -> void:
+	for key in GameState.STAT_ORDER:
+		var display: Dictionary = STAT_DISPLAY[key]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+
+		var icon := ColorRect.new()
+		icon.custom_minimum_size = Vector2(28, 28)
+		icon.color = display.color
+		row.add_child(icon)
+
+		var info := VBoxContainer.new()
+		info.size_flags_horizontal = SIZE_EXPAND_FILL
+		var name_label := Label.new()
+		name_label.text = display.name
+		var value_label := Label.new()
+		value_label.add_theme_color_override("font_color", display.color)
+		info.add_child(name_label)
+		info.add_child(value_label)
+		row.add_child(info)
+
+		var upgrade_button := Button.new()
+		upgrade_button.pressed.connect(_on_upgrade_pressed.bind(key))
+		row.add_child(upgrade_button)
+
+		stats_panel.add_child(row)
+		_stat_rows[key] = {"value_label": value_label, "button": upgrade_button}
+
+	_refresh_all_stats()
+
+
+func _refresh_all_stats() -> void:
+	for key in GameState.STAT_ORDER:
+		_refresh_stat_row(key)
+
+
+func _refresh_stat_row(key: String) -> void:
+	var row: Dictionary = _stat_rows[key]
+	var level: int = GameState.stat_levels[key]
+	var value: float = GameState.stat_value(key)
+	var cost: int = GameState.stat_upgrade_cost(key)
+	row.value_label.text = "Lv.%d — %s" % [level, _format_stat_value(key, value)]
+	row.button.text = "Melhorar (%d)" % cost
+	row.button.disabled = GameState.gold < cost
+
+
+func _format_stat_value(key: String, value: float) -> String:
+	if key == "speed":
+		return "%.2f atq/s" % (1.0 + value)
+	return str(int(round(value)))
+
+
+func _refresh_level() -> void:
+	level_label.text = "Lv.%d" % GameState.player_level()
+
+
+func _on_upgrade_pressed(key: String) -> void:
+	GameState.buy_stat_upgrade(key)
+
+
+func _on_stat_changed(_key: String) -> void:
+	_refresh_all_stats()
+	_refresh_level()
 
 
 func _on_gold_changed(new_gold: int) -> void:
-	gold_label.text = "Ouro: %d" % new_gold
-	_refresh_upgrade_button()
+	gold_label.text = str(new_gold)
+	_refresh_all_stats()
+
+
+func _on_gems_changed(new_gems: int) -> void:
+	gems_label.text = str(new_gems)
 
 
 func _on_stage_changed(new_stage: int) -> void:
-	stage_label.text = "Estágio %d" % new_stage
+	var chapter := (new_stage - 1) / GameState.BOSS_STAGE_INTERVAL + 1
+	var substage := (new_stage - 1) % GameState.BOSS_STAGE_INTERVAL + 1
+	stage_label.text = "Normal %d-%d" % [chapter, substage]
 
 
-func _on_upgrade_pressed() -> void:
-	GameState.buy_damage_upgrade()
-
-
-func _refresh_upgrade_button() -> void:
-	var cost := GameState.damage_upgrade_cost()
-	upgrade_button.text = "Upgrade Dano (%d ouro)" % cost
-	upgrade_button.disabled = GameState.gold < cost
+func _on_milestone_reached(stat_key: String, level: int, gems_awarded: int) -> void:
+	var display: Dictionary = STAT_DISPLAY[stat_key]
+	show_toast("%s atinge o nível %d! +%d gemas" % [display.name, level, gems_awarded])

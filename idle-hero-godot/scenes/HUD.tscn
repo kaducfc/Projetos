@@ -14,42 +14,142 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 10
 
 [node name="TopBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
+theme_override_constants/separation = 16
 
-[node name="StageLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
+[node name="PlayerBadge" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TopBar"]
+layout_mode = 2
+
+[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar/PlayerBadge"]
+layout_mode = 2
+text = "Lv.1"
+
+[node name="TopSpacer" type="Control" parent="MarginContainer/VBoxContainer/TopBar"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Estágio 1"
 
-[node name="GoldLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
+[node name="GoldRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TopBar"]
 layout_mode = 2
-horizontal_alignment = 2
-text = "Ouro: 0"
+theme_override_constants/separation = 6
 
-[node name="HeroHPBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
+[node name="GoldIcon" type="ColorRect" parent="MarginContainer/VBoxContainer/TopBar/GoldRow"]
+custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
-show_percentage = false
+color = Color(0.95, 0.75, 0.15, 1)
 
-[node name="EnemyNameLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="GoldLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar/GoldRow"]
+layout_mode = 2
+text = "0"
+
+[node name="GemsRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TopBar"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="GemsIcon" type="ColorRect" parent="MarginContainer/VBoxContainer/TopBar/GemsRow"]
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 2
+color = Color(0.3, 0.7, 0.95, 1)
+
+[node name="GemsLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar/GemsRow"]
+layout_mode = 2
+text = "0"
+
+[node name="CompanionRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LockedSlot1" type="ColorRect" parent="MarginContainer/VBoxContainer/CompanionRow"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+color = Color(1, 1, 1, 0.12)
+
+[node name="LockedSlot2" type="ColorRect" parent="MarginContainer/VBoxContainer/CompanionRow"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+color = Color(1, 1, 1, 0.12)
+
+[node name="StageBanner" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="StageLabel" type="Label" parent="MarginContainer/VBoxContainer/StageBanner"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "Normal 1-1"
+
+[node name="StagePath" type="HBoxContainer" parent="MarginContainer/VBoxContainer/StageBanner"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 6
+
+[node name="EnemyNameLabel" type="Label" parent="MarginContainer/VBoxContainer/StageBanner"]
 layout_mode = 2
 horizontal_alignment = 1
 text = "Inimigo"
 
-[node name="EnemyHPBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
+[node name="FlexSpacer" type="Control" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-show_percentage = false
+size_flags_vertical = 3
 
-[node name="UpgradeButton" type="Button" parent="MarginContainer/VBoxContainer"]
+[node name="BottomArea" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-size_flags_vertical = 8
-text = "Upgrade Dano"
+theme_override_constants/separation = 10
+
+[node name="ToastLabel" type="Label" parent="MarginContainer/VBoxContainer/BottomArea"]
+layout_mode = 2
+horizontal_alignment = 1
+text = ""
+
+[node name="StatsPanel" type="VBoxContainer" parent="MarginContainer/VBoxContainer/BottomArea"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BottomNav" type="HBoxContainer" parent="MarginContainer/VBoxContainer/BottomArea"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="EquipButton" type="Button" parent="MarginContainer/VBoxContainer/BottomArea/BottomNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Equip."
+
+[node name="RunesButton" type="Button" parent="MarginContainer/VBoxContainer/BottomArea/BottomNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Runas"
+
+[node name="PetsButton" type="Button" parent="MarginContainer/VBoxContainer/BottomArea/BottomNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Pets"
+
+[node name="TowerButton" type="Button" parent="MarginContainer/VBoxContainer/BottomArea/BottomNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Torre"
+
+[node name="MapButton" type="Button" parent="MarginContainer/VBoxContainer/BottomArea/BottomNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Mapa"
+
+[node name="HomeButton" type="Button" parent="MarginContainer/VBoxContainer/BottomArea/BottomNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Base"
