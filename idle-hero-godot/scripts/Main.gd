@@ -9,7 +9,7 @@ const FloatingNumberScene := preload("res://scenes/FloatingNumber.tscn")
 @onready var hero: Node2D = $Hero
 @onready var enemy_spawn: Marker2D = $EnemySpawnPoint
 @onready var engage_point: Marker2D = $EngagePoint
-@onready var hud: Control = $HUDLayer/HUD
+@onready var hud: HUD = $HUDLayer/HUD
 
 var _current_enemy: Node2D = null
 var _enemy_index: int = 0

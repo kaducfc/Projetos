@@ -1,4 +1,5 @@
 extends Control
+class_name HUD
 
 ## Interface: nível/ouro/gemas e menu no topo, trilha de progresso do
 ## estágio, barra de habilidades (AUTO + slots bloqueados), abas de
