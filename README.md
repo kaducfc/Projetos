@@ -1,5 +1,16 @@
 # Projetos
 
+## Idle Hero (Godot)
+
+Jogo idle de combate para mobile (Android/Play Store), feito em **Godot
+4.3**: o herói enfrenta ondas de inimigos automaticamente numa tela
+quadriculada, ganha ouro e progride estágio a estágio, com chefes a cada 10
+estágios. Projeto novo, independente do Idle Hunter abaixo.
+
+- **Código-fonte:** [`idle-hero-godot/`](idle-hero-godot/)
+- **Documentação** (como abrir, arquitetura, passos pra publicar na Play
+  Store): [`idle-hero-godot/README.md`](idle-hero-godot/README.md)
+
 ## Idle Hunter
 
 Jogo idle/clicker mobile-first, inspirado em **Clicker Heroes** + **Monster
