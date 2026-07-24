@@ -13,6 +13,7 @@ const FloatingNumberScene := preload("res://scenes/FloatingNumber.tscn")
 
 var _current_enemy: Node2D = null
 var _enemy_index: int = 0
+var _auto_enabled: bool = true
 
 
 func _ready() -> void:
@@ -20,6 +21,7 @@ func _ready() -> void:
 	hero.died.connect(_on_hero_died)
 	hero.damaged.connect(func(amount): _spawn_floating_number(hero.global_position, amount, Color(1.0, 0.4, 0.4)))
 	hud.setup()
+	hud.auto_toggled.connect(_on_auto_toggled)
 	_start_stage()
 
 
@@ -60,8 +62,9 @@ func _begin_combat(enemy: Node2D) -> void:
 		return
 	hero.set_target(enemy)
 	enemy.set_target(hero)
-	hero.start_combat()
-	enemy.start_combat()
+	if _auto_enabled:
+		hero.start_combat()
+		enemy.start_combat()
 
 
 func _on_enemy_died(gold_reward: int, gems_reward: int, was_final_enemy: bool) -> void:
@@ -81,9 +84,22 @@ func _on_hero_died() -> void:
 	if is_instance_valid(_current_enemy):
 		_current_enemy.stop_combat()
 	hero.reset_stats()
-	hero.start_combat()
-	if is_instance_valid(_current_enemy):
-		_current_enemy.start_combat()
+	if _auto_enabled:
+		hero.start_combat()
+		if is_instance_valid(_current_enemy):
+			_current_enemy.start_combat()
+
+
+func _on_auto_toggled(enabled: bool) -> void:
+	_auto_enabled = enabled
+	if enabled:
+		hero.start_combat()
+		if is_instance_valid(_current_enemy):
+			_current_enemy.start_combat()
+	else:
+		hero.stop_combat()
+		if is_instance_valid(_current_enemy):
+			_current_enemy.stop_combat()
 
 
 func _spawn_floating_number(global_pos: Vector2, amount: float, color: Color) -> void:

@@ -1,8 +1,10 @@
 extends Control
 
-## Interface: nível/ouro/gemas no topo, trilha de progresso do estágio,
-## painel de upgrade dos 4 atributos e barra de navegação inferior
-## (com telas futuras ainda bloqueadas, tipo o menu de um jogo idle mobile).
+## Interface: nível/ouro/gemas e menu no topo, trilha de progresso do
+## estágio, barra de habilidades (AUTO + slots bloqueados), abas de
+## categoria e painel de upgrade dos 4 atributos, navegação inferior.
+
+signal auto_toggled(enabled: bool)
 
 const STAT_DISPLAY := {
 	"attack": {"name": "Ataque", "color": Color(0.9, 0.35, 0.25)},
@@ -15,13 +17,13 @@ const STAT_DISPLAY := {
 @onready var gold_label: Label = $MarginContainer/VBoxContainer/TopBar/GoldRow/GoldLabel
 @onready var gems_label: Label = $MarginContainer/VBoxContainer/TopBar/GemsRow/GemsLabel
 @onready var stage_label: Label = $MarginContainer/VBoxContainer/StageBanner/StageLabel
-@onready var stage_path: HBoxContainer = $MarginContainer/VBoxContainer/StageBanner/StagePath
+@onready var stage_path: StagePath = $MarginContainer/VBoxContainer/StageBanner/StagePath
 @onready var enemy_name_label: Label = $MarginContainer/VBoxContainer/StageBanner/EnemyNameLabel
-@onready var toast_label: Label = $MarginContainer/VBoxContainer/BottomArea/ToastLabel
-@onready var stats_panel: VBoxContainer = $MarginContainer/VBoxContainer/BottomArea/StatsPanel
+@onready var toast_label: Label = $MarginContainer/VBoxContainer/ToastLabel
+@onready var auto_button: Button = $MarginContainer/VBoxContainer/AbilityBar/AutoButton
+@onready var stats_panel: VBoxContainer = $MarginContainer/VBoxContainer/BottomSheet/BottomSheetContent/StatsPanel
 
 var _stat_rows: Dictionary = {}
-var _stage_dots: Array = []
 var _toast_tween: Tween = null
 
 
@@ -31,8 +33,9 @@ func setup() -> void:
 	GameState.stage_changed.connect(_on_stage_changed)
 	GameState.stat_changed.connect(_on_stat_changed)
 	GameState.milestone_reached.connect(_on_milestone_reached)
+	auto_button.toggled.connect(func(pressed): auto_toggled.emit(pressed))
 	_build_stats_panel()
-	_build_stage_path()
+	stage_path.configure(GameState.ENEMIES_PER_STAGE)
 	_on_gold_changed(GameState.gold)
 	_on_gems_changed(GameState.gems)
 	_on_stage_changed(GameState.current_stage)
@@ -45,14 +48,7 @@ func on_enemy_spawned(enemy: Node2D) -> void:
 
 
 func update_stage_path(defeated_count: int, is_boss_stage: bool) -> void:
-	for i in _stage_dots.size():
-		var dot: ColorRect = _stage_dots[i]
-		var defeated := i < defeated_count
-		var is_last := i == _stage_dots.size() - 1
-		if is_last and is_boss_stage:
-			dot.color = Color(0.3, 0.05, 0.35) if defeated else Color(0.7, 0.1, 0.8)
-		else:
-			dot.color = Color(0.9, 0.85, 0.2) if defeated else Color(1, 1, 1, 0.25)
+	stage_path.update_progress(defeated_count, is_boss_stage)
 
 
 func show_toast(text: String) -> void:
@@ -63,15 +59,6 @@ func show_toast(text: String) -> void:
 	_toast_tween = create_tween()
 	_toast_tween.tween_interval(1.4)
 	_toast_tween.tween_property(toast_label, "modulate:a", 0.0, 0.6)
-
-
-func _build_stage_path() -> void:
-	for i in GameState.ENEMIES_PER_STAGE:
-		var dot := ColorRect.new()
-		dot.custom_minimum_size = Vector2(18, 18)
-		dot.color = Color(1, 1, 1, 0.25)
-		stage_path.add_child(dot)
-		_stage_dots.append(dot)
 
 
 func _build_stats_panel() -> void:
@@ -152,7 +139,7 @@ func _on_stage_changed(new_stage: int) -> void:
 	@warning_ignore("integer_division")
 	var chapter := (new_stage - 1) / GameState.BOSS_STAGE_INTERVAL + 1
 	var substage := (new_stage - 1) % GameState.BOSS_STAGE_INTERVAL + 1
-	stage_label.text = "Normal %d-%d" % [chapter, substage]
+	stage_label.text = "STAGE %d-%d" % [chapter, substage]
 
 
 func _on_milestone_reached(stat_key: String, level: int, gems_awarded: int) -> void:
