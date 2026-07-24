@@ -71,10 +71,10 @@ func _build_stats_panel() -> void:
 	for key in GameState.STAT_ORDER:
 		var display: Dictionary = STAT_DISPLAY[key]
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 10)
+		row.add_theme_constant_override("separation", 12)
 
 		var icon := ColorRect.new()
-		icon.custom_minimum_size = Vector2(28, 28)
+		icon.custom_minimum_size = Vector2(34, 34)
 		icon.color = display.color
 		row.add_child(icon)
 
@@ -82,13 +82,17 @@ func _build_stats_panel() -> void:
 		info.size_flags_horizontal = SIZE_EXPAND_FILL
 		var name_label := Label.new()
 		name_label.text = display.name
+		name_label.add_theme_font_size_override("font_size", 19)
 		var value_label := Label.new()
 		value_label.add_theme_color_override("font_color", display.color)
+		value_label.add_theme_font_size_override("font_size", 19)
 		info.add_child(name_label)
 		info.add_child(value_label)
 		row.add_child(info)
 
 		var upgrade_button := Button.new()
+		upgrade_button.custom_minimum_size = Vector2(0, 42)
+		upgrade_button.add_theme_font_size_override("font_size", 19)
 		upgrade_button.pressed.connect(_on_upgrade_pressed.bind(key))
 		row.add_child(upgrade_button)
 
