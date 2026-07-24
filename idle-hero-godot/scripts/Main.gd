@@ -22,7 +22,16 @@ func _ready() -> void:
 	hero.damaged.connect(func(amount): _spawn_floating_number(hero.global_position, amount, Color(1.0, 0.4, 0.4)))
 	hud.setup()
 	hud.auto_toggled.connect(_on_auto_toggled)
+	await get_tree().process_frame
+	_center_battle_line()
 	_start_stage()
+
+
+func _center_battle_line() -> void:
+	var center_y := hud.get_battle_center_y()
+	hero.position.y = center_y
+	engage_point.position.y = center_y
+	enemy_spawn.position.y = center_y
 
 
 func _start_stage() -> void:

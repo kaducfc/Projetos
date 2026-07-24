@@ -22,6 +22,7 @@ const STAT_DISPLAY := {
 @onready var toast_label: Label = $MarginContainer/VBoxContainer/ToastLabel
 @onready var auto_button: Button = $MarginContainer/VBoxContainer/AbilityBar/AutoButton
 @onready var stats_panel: VBoxContainer = $MarginContainer/VBoxContainer/BottomSheet/BottomSheetContent/StatsPanel
+@onready var _battle_gap: Control = $MarginContainer/VBoxContainer/FlexSpacer
 
 var _stat_rows: Dictionary = {}
 var _toast_tween: Tween = null
@@ -49,6 +50,10 @@ func on_enemy_spawned(enemy: Node2D) -> void:
 
 func update_stage_path(defeated_count: int, is_boss_stage: bool) -> void:
 	stage_path.update_progress(defeated_count, is_boss_stage)
+
+
+func get_battle_center_y() -> float:
+	return _battle_gap.global_position.y + _battle_gap.size.y / 2.0
 
 
 func show_toast(text: String) -> void:
