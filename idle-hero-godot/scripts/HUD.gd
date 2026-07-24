@@ -149,6 +149,7 @@ func _on_gems_changed(new_gems: int) -> void:
 
 
 func _on_stage_changed(new_stage: int) -> void:
+	@warning_ignore("integer_division")
 	var chapter := (new_stage - 1) / GameState.BOSS_STAGE_INTERVAL + 1
 	var substage := (new_stage - 1) % GameState.BOSS_STAGE_INTERVAL + 1
 	stage_label.text = "Normal %d-%d" % [chapter, substage]

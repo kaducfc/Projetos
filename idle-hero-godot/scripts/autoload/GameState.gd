@@ -80,6 +80,7 @@ func player_level() -> int:
 	var total := 0
 	for key in STAT_ORDER:
 		total += stat_levels[key]
+	@warning_ignore("integer_division")
 	return 1 + total / STAT_ORDER.size()
 
 
