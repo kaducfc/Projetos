@@ -33,141 +33,147 @@ theme_override_constants/margin_bottom = 10
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="TopBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="BattleSection" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="TopBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer/BattleSection"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="PlayerBadge" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TopBar"]
+[node name="PlayerBadge" type="HBoxContainer" parent="MarginContainer/VBoxContainer/BattleSection/TopBar"]
 layout_mode = 2
 
-[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar/PlayerBadge"]
+[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer/BattleSection/TopBar/PlayerBadge"]
 layout_mode = 2
 text = "Lv.1"
 
-[node name="GoldRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TopBar"]
+[node name="GoldRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/BattleSection/TopBar"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="GoldIcon" type="ColorRect" parent="MarginContainer/VBoxContainer/TopBar/GoldRow"]
+[node name="GoldIcon" type="ColorRect" parent="MarginContainer/VBoxContainer/BattleSection/TopBar/GoldRow"]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 color = Color(0.95, 0.75, 0.15, 1)
 
-[node name="GoldLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar/GoldRow"]
+[node name="GoldLabel" type="Label" parent="MarginContainer/VBoxContainer/BattleSection/TopBar/GoldRow"]
 layout_mode = 2
 text = "0"
 
-[node name="GemsRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TopBar"]
+[node name="GemsRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/BattleSection/TopBar"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="GemsIcon" type="ColorRect" parent="MarginContainer/VBoxContainer/TopBar/GemsRow"]
+[node name="GemsIcon" type="ColorRect" parent="MarginContainer/VBoxContainer/BattleSection/TopBar/GemsRow"]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 color = Color(0.3, 0.7, 0.95, 1)
 
-[node name="GemsLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar/GemsRow"]
+[node name="GemsLabel" type="Label" parent="MarginContainer/VBoxContainer/BattleSection/TopBar/GemsRow"]
 layout_mode = 2
 text = "0"
 
-[node name="TopSpacer" type="Control" parent="MarginContainer/VBoxContainer/TopBar"]
+[node name="TopSpacer" type="Control" parent="MarginContainer/VBoxContainer/BattleSection/TopBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SettingsButton" type="Button" parent="MarginContainer/VBoxContainer/TopBar"]
+[node name="SettingsButton" type="Button" parent="MarginContainer/VBoxContainer/BattleSection/TopBar"]
 custom_minimum_size = Vector2(36, 36)
 layout_mode = 2
 disabled = true
 
-[node name="MenuButton" type="Button" parent="MarginContainer/VBoxContainer/TopBar"]
+[node name="MenuButton" type="Button" parent="MarginContainer/VBoxContainer/BattleSection/TopBar"]
 custom_minimum_size = Vector2(36, 36)
 layout_mode = 2
 disabled = true
 
-[node name="StageBanner" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="StageBanner" type="VBoxContainer" parent="MarginContainer/VBoxContainer/BattleSection"]
 layout_mode = 2
 theme_override_constants/separation = 4
 alignment = 1
 
-[node name="StageLabel" type="Label" parent="MarginContainer/VBoxContainer/StageBanner"]
+[node name="StageLabel" type="Label" parent="MarginContainer/VBoxContainer/BattleSection/StageBanner"]
 layout_mode = 2
 horizontal_alignment = 1
 text = "STAGE 1-1"
 
-[node name="StagePath" type="Control" parent="MarginContainer/VBoxContainer/StageBanner"]
+[node name="StagePath" type="Control" parent="MarginContainer/VBoxContainer/BattleSection/StageBanner"]
 layout_mode = 2
 size_flags_horizontal = 4
 custom_minimum_size = Vector2(220, 32)
 script = ExtResource("2")
 
-[node name="EnemyNameLabel" type="Label" parent="MarginContainer/VBoxContainer/StageBanner"]
+[node name="EnemyNameLabel" type="Label" parent="MarginContainer/VBoxContainer/BattleSection/StageBanner"]
 layout_mode = 2
 horizontal_alignment = 1
 text = "Inimigo"
 
-[node name="FlexSpacer" type="Control" parent="MarginContainer/VBoxContainer"]
+[node name="FlexSpacer" type="Control" parent="MarginContainer/VBoxContainer/BattleSection"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ToastLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="ToastLabel" type="Label" parent="MarginContainer/VBoxContainer/BattleSection"]
 layout_mode = 2
 horizontal_alignment = 1
 text = ""
 
-[node name="AbilityBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="AbilityBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer/BattleSection"]
 layout_mode = 2
 theme_override_constants/separation = 4
 alignment = 1
 
-[node name="AutoButton" type="Button" parent="MarginContainer/VBoxContainer/AbilityBar"]
+[node name="AutoButton" type="Button" parent="MarginContainer/VBoxContainer/BattleSection/AbilityBar"]
 custom_minimum_size = Vector2(46, 30)
 layout_mode = 2
 toggle_mode = true
 button_pressed = true
 text = "AUTO"
 
-[node name="Slot1" type="Button" parent="MarginContainer/VBoxContainer/AbilityBar"]
+[node name="Slot1" type="Button" parent="MarginContainer/VBoxContainer/BattleSection/AbilityBar"]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 disabled = true
 
-[node name="Slot2" type="Button" parent="MarginContainer/VBoxContainer/AbilityBar"]
+[node name="Slot2" type="Button" parent="MarginContainer/VBoxContainer/BattleSection/AbilityBar"]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 disabled = true
 
-[node name="Slot3" type="Button" parent="MarginContainer/VBoxContainer/AbilityBar"]
+[node name="Slot3" type="Button" parent="MarginContainer/VBoxContainer/BattleSection/AbilityBar"]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 disabled = true
 
-[node name="Slot4" type="Button" parent="MarginContainer/VBoxContainer/AbilityBar"]
+[node name="Slot4" type="Button" parent="MarginContainer/VBoxContainer/BattleSection/AbilityBar"]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 disabled = true
 
-[node name="Slot5" type="Button" parent="MarginContainer/VBoxContainer/AbilityBar"]
+[node name="Slot5" type="Button" parent="MarginContainer/VBoxContainer/BattleSection/AbilityBar"]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 disabled = true
 
-[node name="Slot6" type="Button" parent="MarginContainer/VBoxContainer/AbilityBar"]
+[node name="Slot6" type="Button" parent="MarginContainer/VBoxContainer/BattleSection/AbilityBar"]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 disabled = true
 
-[node name="Slot7" type="Button" parent="MarginContainer/VBoxContainer/AbilityBar"]
+[node name="Slot7" type="Button" parent="MarginContainer/VBoxContainer/BattleSection/AbilityBar"]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 disabled = true
 
-[node name="TeamButton" type="Button" parent="MarginContainer/VBoxContainer/AbilityBar"]
+[node name="TeamButton" type="Button" parent="MarginContainer/VBoxContainer/BattleSection/AbilityBar"]
 custom_minimum_size = Vector2(40, 30)
 layout_mode = 2
 disabled = true
 text = "Time"
 
 [node name="BottomSheet" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 600)
 layout_mode = 2
 theme_override_styles/panel = SubResource("1")
 
@@ -218,6 +224,7 @@ text = "Baú"
 
 [node name="StatsPanel" type="VBoxContainer" parent="MarginContainer/VBoxContainer/BottomSheet/BottomSheetContent"]
 layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/separation = 6
 
 [node name="BottomNav" type="HBoxContainer" parent="MarginContainer/VBoxContainer/BottomSheet/BottomSheetContent"]

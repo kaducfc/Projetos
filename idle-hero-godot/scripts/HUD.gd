@@ -14,16 +14,16 @@ const STAT_DISPLAY := {
 	"speed": {"name": "Velocidade de Ataque", "color": Color(0.9, 0.75, 0.2)},
 }
 
-@onready var level_label: Label = $MarginContainer/VBoxContainer/TopBar/PlayerBadge/LevelLabel
-@onready var gold_label: Label = $MarginContainer/VBoxContainer/TopBar/GoldRow/GoldLabel
-@onready var gems_label: Label = $MarginContainer/VBoxContainer/TopBar/GemsRow/GemsLabel
-@onready var stage_label: Label = $MarginContainer/VBoxContainer/StageBanner/StageLabel
-@onready var stage_path: StagePath = $MarginContainer/VBoxContainer/StageBanner/StagePath
-@onready var enemy_name_label: Label = $MarginContainer/VBoxContainer/StageBanner/EnemyNameLabel
-@onready var toast_label: Label = $MarginContainer/VBoxContainer/ToastLabel
-@onready var auto_button: Button = $MarginContainer/VBoxContainer/AbilityBar/AutoButton
+@onready var level_label: Label = $MarginContainer/VBoxContainer/BattleSection/TopBar/PlayerBadge/LevelLabel
+@onready var gold_label: Label = $MarginContainer/VBoxContainer/BattleSection/TopBar/GoldRow/GoldLabel
+@onready var gems_label: Label = $MarginContainer/VBoxContainer/BattleSection/TopBar/GemsRow/GemsLabel
+@onready var stage_label: Label = $MarginContainer/VBoxContainer/BattleSection/StageBanner/StageLabel
+@onready var stage_path: StagePath = $MarginContainer/VBoxContainer/BattleSection/StageBanner/StagePath
+@onready var enemy_name_label: Label = $MarginContainer/VBoxContainer/BattleSection/StageBanner/EnemyNameLabel
+@onready var toast_label: Label = $MarginContainer/VBoxContainer/BattleSection/ToastLabel
+@onready var auto_button: Button = $MarginContainer/VBoxContainer/BattleSection/AbilityBar/AutoButton
 @onready var stats_panel: VBoxContainer = $MarginContainer/VBoxContainer/BottomSheet/BottomSheetContent/StatsPanel
-@onready var _battle_gap: Control = $MarginContainer/VBoxContainer/FlexSpacer
+@onready var _battle_gap: Control = $MarginContainer/VBoxContainer/BattleSection/FlexSpacer
 
 var _stat_rows: Dictionary = {}
 var _toast_tween: Tween = null
