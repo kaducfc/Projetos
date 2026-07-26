@@ -70,7 +70,7 @@ export const RARITIES = [
   { id: 'incomum', name: 'Incomum', mult: 1.15, additionals: 1, weight: 24, color: '#4caf50' },
   { id: 'raro', name: 'Raro', mult: 1.35, additionals: 2, weight: 10, color: '#2196f3' },
   { id: 'epico', name: 'Épico', mult: 1.6, additionals: 3, weight: 4, color: '#9c27b0' },
-  { id: 'lendario', name: 'Lendário', mult: 2.0, additionals: 4, weight: 1.5, color: '#ff9800' },
+  { id: 'lendario', name: 'Lendário', mult: 2.0, additionals: 4, weight: 1.5, color: '#ffd700' },
   { id: 'mitico', name: 'Mítico', mult: 2.5, additionals: 5, weight: 0.5, color: '#f44336' },
 ];
 

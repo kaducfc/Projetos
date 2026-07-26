@@ -421,7 +421,11 @@ function slotIconHtml(state, slot) {
   const badge = equipped
     ? `<span class="mini-badge ${equipped.entry.isMaster ? 'master' : ''}">${getEnhanceLabel(equipped.entry.enhanceLevel, equipped.entry.isMaster)}</span>`
     : '';
-  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}" data-equip-slot="${slot.id}" title="${slot.name}">
+  const rarity = equipped ? getRarity(equipped.entry.rarityId) : null;
+  const rarityClass = rarity ? ' has-rarity' : '';
+  const rarityStyle = rarity ? ` style="--rarity-color:${rarity.color};"` : '';
+  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}${rarityClass}" data-equip-slot="${slot.id}" title="${slot.name}"${rarityStyle}>
+
     <span class="icon">${icon}</span>
     ${badge}
     ${equipped ? cardCountBadgeHtml(equipped.entry) : ''}
@@ -432,7 +436,8 @@ function inventoryTileHtml(state, entry) {
   const item = getItem(entry.itemId);
   const isEquipped = state.equipped[item.slotId] === entry.uid;
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
-  return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}">
+  const rarity = getRarity(entry.rarityId);
+  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''}" style="--rarity-color:${rarity.color};" data-equip-item="${entry.uid}" title="${item.name}">
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
     ${cardCountBadgeHtml(entry)}
@@ -491,7 +496,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
 
   return `
     <div class="item-detail">
-      <div class="item-detail-icon">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>

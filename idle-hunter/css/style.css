@@ -1043,6 +1043,7 @@ button:disabled {
   background: url('../assets/ui/equip-slot-frame.png') center / 100% 100% no-repeat;
   border: none;
   box-shadow: none;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1151,6 +1152,7 @@ button:disabled {
   background: url('../assets/ui/inventory-tile-frame.png') center / 100% 100% no-repeat;
   border: none;
   box-shadow: none;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1164,7 +1166,20 @@ button:disabled {
 
 .inventory-tile.equipped {
   box-shadow: 0 0 0 2px var(--green);
-  border-radius: 12px;
+}
+
+.equip-slot-icon.has-rarity,
+.inventory-tile.has-rarity {
+  box-shadow:
+    inset 0 0 0 999px color-mix(in srgb, var(--rarity-color) 26%, transparent),
+    0 0 0 2px var(--rarity-color);
+}
+
+.inventory-tile.has-rarity.equipped {
+  box-shadow:
+    inset 0 0 0 999px color-mix(in srgb, var(--rarity-color) 26%, transparent),
+    0 0 0 2px var(--rarity-color),
+    0 0 0 4px var(--green);
 }
 
 /* Item detail popup (shown via the shared #modal-overlay) */
