@@ -61,6 +61,27 @@ export const ATTRIBUTES = [
   { id: 'inteligencia', name: 'Inteligência', armorLabel: 'Mágica', color: '#2980b9' },
 ];
 
+// O tipo de dano do jogador é 1 dos 3, decidido pelo atributo da ARMA
+// PRIMÁRIA equipada (weapon1) — só os pontos desse tipo específico (ver
+// attributeBaseStats abaixo: danoFisicoFlat/danoPerfuracaoFlat/
+// danoMagicoFlat) viram DPS de verdade; os outros dois continuam dando
+// vida/armadura/crítico/ouro/drop normalmente, só não contam como dano.
+export const DAMAGE_TYPES = [
+  { id: 'fisico', name: 'Físico', emoji: '🗡️' },
+  { id: 'perfuracao', name: 'Perfuração', emoji: '🏹' },
+  { id: 'magico', name: 'Mágico', emoji: '🔮' },
+];
+
+const DAMAGE_TYPE_BY_ATTRIBUTE = { forca: 'fisico', destreza: 'perfuracao', inteligencia: 'magico' };
+
+export function getDamageTypeForAttribute(attributeId) {
+  return DAMAGE_TYPE_BY_ATTRIBUTE[attributeId] || 'fisico';
+}
+
+export function getDamageType(damageTypeId) {
+  return DAMAGE_TYPES.find((d) => d.id === damageTypeId) || DAMAGE_TYPES[0];
+}
+
 export function getAttribute(attributeId) {
   return ATTRIBUTES.find((a) => a.id === attributeId) || ATTRIBUTES[0];
 }
@@ -218,18 +239,21 @@ function attributeBaseStats(attributeId, tier, categoryPower) {
   switch (attributeId) {
     case 'forca':
       return {
-        hpFlat: Math.round(base * 5 * categoryPower),
-        armorFlat: Math.round(base * 1.2 * categoryPower),
+        danoFisicoFlat: Math.round(base * 2.6 * categoryPower),
+        hpFlat: Math.round(base * 3 * categoryPower),
+        armorFlat: Math.round(base * 0.8 * categoryPower),
       };
     case 'destreza':
       return {
-        dpsFlat: Math.round(base * 2.6 * categoryPower),
-        attackSpeedPercent: Math.round((5 + tier * 2) * categoryPower * 10) / 10,
+        danoPerfuracaoFlat: Math.round(base * 2.6 * categoryPower),
+        critChancePercent: Math.round((3 + tier * 1.5) * categoryPower * 10) / 10,
+        critDamagePercent: Math.round((5 + tier * 2.5) * categoryPower * 10) / 10,
       };
     case 'inteligencia':
       return {
-        critChancePercent: Math.round((3 + tier * 1.5) * categoryPower * 10) / 10,
-        critDamagePercent: Math.round((5 + tier * 2.5) * categoryPower * 10) / 10,
+        danoMagicoFlat: Math.round(base * 2.6 * categoryPower),
+        goldPercent: Math.round((8 + tier * 4) * categoryPower * 10) / 10,
+        dropPercent: Math.round((5 + tier * 2) * categoryPower * 10) / 10,
       };
     default:
       throw new Error(`Unknown attribute ${attributeId}`);
