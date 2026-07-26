@@ -1,9 +1,11 @@
 import { getZone } from '../data/monsters.js';
 import { getCardForMonster } from '../data/cards.js';
 import { DROP_CATEGORIES } from '../data/items.js';
+import { WEAK_EGG_DROP_CHANCE, BOSS_EGG_DROP_CHANCE } from '../data/pets.js';
 import { recordCardDiscovered } from './cards.js';
 import { addDroppedItem } from './crafting.js';
 import { xpForZone, grantXp, isZoneUnlocked, isBossUnlocked } from './leveling.js';
+import { getBestEquippedPet } from './pets.js';
 
 const HP_GROWTH = 1.145;
 const HP_BASE = 20;
@@ -108,6 +110,18 @@ export function resolveHit(state, stats, elementalMultiplier) {
   }
   const crit = rollCrit(stats);
   return { dealt: stats.dps * elementalMultiplier * crit.multiplier, isCrit: crit.isCrit, isBurst: false };
+}
+
+/// Resolve o dano do mascote nesse mesmo hit — o jogo escolhe sozinho, entre
+/// os até 4 pets equipados, qual causaria mais dano contra `monsterElement`
+/// agora (dano base do pet × vantagem/desvantagem elemental, ver
+/// getBestEquippedPet em systems/pets.js). Chamado ao lado de resolveHit()
+/// em cada um dos 4 contextos de combate (main.js) — retorna null se
+/// nenhum pet estiver equipado.
+export function resolvePetHit(state, monsterElement) {
+  const best = getBestEquippedPet(state, monsterElement);
+  if (!best) return null;
+  return { dealt: best.damage, species: best.species };
 }
 
 // ---------------------------------------------------------------------
@@ -273,13 +287,21 @@ export function applyDamage(state, amount, stats) {
     droppedItemUid = addDroppedItem(state, zoneIndex, category);
   }
 
+  // Ovo de mascote: chance fixa (não escalada por dropMult, igual
+  // Cristal/carta acima) — bem menor num monstro fraco que num chefe.
+  let eggGained = false;
+  if (Math.random() < (wasBoss ? BOSS_EGG_DROP_CHANCE : WEAK_EGG_DROP_CHANCE)) {
+    state.eggCount = (state.eggCount || 0) + 1;
+    eggGained = true;
+  }
+
   const xpGained = xpForZone(zoneIndex, wasBoss);
   const levelsGained = grantXp(state, xpGained);
 
   state.monsterHp = null;
   ensureMonsterSpawned(state);
 
-  return { zoneIndex, wasBoss, goldGained, drops, reprocced, xpGained, levelsGained, droppedItemUid };
+  return { zoneIndex, wasBoss, goldGained, drops, reprocced, xpGained, levelsGained, droppedItemUid, eggGained };
 }
 
 // ---------------------------------------------------------------------

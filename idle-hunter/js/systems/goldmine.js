@@ -1,4 +1,5 @@
 import { getGoldMineWindow, GOLDMINE_BOSS_HP, GOLDMINE_GOLD_PER_DAMAGE } from '../data/events.js';
+import { EVENT_EGG_DROP_CHANCE } from '../data/pets.js';
 
 export function canEnterGoldMine(state, now = Date.now()) {
   if (state.goldMineRunActive) return false;
@@ -42,5 +43,9 @@ export function endGoldMineRun(state) {
   state.goldMineRunActive = false;
   state.goldMineBossHp = 0;
   state.goldMineDamageDealt = 0;
-  return { goldGained };
+
+  const eggGained = Math.random() < EVENT_EGG_DROP_CHANCE;
+  if (eggGained) state.eggCount = (state.eggCount || 0) + 1;
+
+  return { goldGained, eggGained };
 }

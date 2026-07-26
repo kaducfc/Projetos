@@ -1,0 +1,148 @@
+import { RARITIES, getRarity } from './items.js';
+
+// Mascotes causam um dano ELEMENTAL à parte do dano do personagem (que
+// agora é sempre Neutro, ver systems/stats.js) — só os 4 elementos "de
+// verdade" existem aqui, sem Neutro (não faria sentido um mascote neutro,
+// já que a mecânica inteira gira em torno de vantagem/desvantagem contra o
+// elemento do monstro).
+export const PET_ELEMENTS = ['fogo', 'planta', 'eletrico', 'agua'];
+
+// elements.js não tem cor por elemento (só emoji/imagem) — os pets são o
+// primeiro lugar que precisa de uma cor (popup de dano, badge na UI), então
+// o mapa fica aqui em vez de mexer no arquivo compartilhado.
+const PET_ELEMENT_COLORS = {
+  fogo: '#e25822',
+  planta: '#4caf50',
+  eletrico: '#f5c518',
+  agua: '#2196f3',
+};
+
+export function getPetElementColor(elementId) {
+  return PET_ELEMENT_COLORS[elementId] || '#ffffff';
+}
+
+export const PET_TIER_COUNT = 5;
+
+// Crescimento bem achatado entre os 5 tiers do mesmo elemento (pedido
+// explícito: "pouca diferença entre os tiers") — é a raridade sorteada e o
+// nível de fusão (+1 a +10) que fazem a diferença real de poder, não qual
+// dos 5 pets do elemento você tirou.
+const PET_TIER_BASE = 10;
+const PET_TIER_GROWTH = 1.12;
+
+function petTierDamage(tier) {
+  return Math.round(PET_TIER_BASE * Math.pow(PET_TIER_GROWTH, tier - 1));
+}
+
+const PET_SPECIES_BY_ELEMENT = {
+  fogo: [
+    { name: 'Salamandra Filhote', emoji: '🦎' },
+    { name: 'Raposa das Brasas', emoji: '🦊' },
+    { name: 'Fênix Jovem', emoji: '🐦' },
+    { name: 'Dragão Ígneo', emoji: '🐉' },
+    { name: 'Fera Solar', emoji: '☀️' },
+  ],
+  planta: [
+    { name: 'Lagarta Verde', emoji: '🐛' },
+    { name: 'Caramujo Espinhoso', emoji: '🐌' },
+    { name: 'Borboleta Feérica', emoji: '🦋' },
+    { name: 'Broto Ancestral', emoji: '🌳' },
+    { name: 'Guardião da Selva', emoji: '🌲' },
+  ],
+  eletrico: [
+    { name: 'Rato Elétrico', emoji: '🐭' },
+    { name: 'Esquilo Voltaico', emoji: '🐿️' },
+    { name: 'Coelho Relâmpago', emoji: '🐰' },
+    { name: 'Lobo do Trovão', emoji: '🐺' },
+    { name: 'Fênix Elétrica', emoji: '⚡' },
+  ],
+  agua: [
+    { name: 'Girino Azul', emoji: '🐸' },
+    { name: 'Peixinho Prateado', emoji: '🐟' },
+    { name: 'Tartaruga das Marés', emoji: '🐢' },
+    { name: 'Golfinho Cristalino', emoji: '🐬' },
+    { name: 'Serpente Abissal', emoji: '🐍' },
+  ],
+};
+
+// 20 espécies no total (4 elementos × 5 tiers) — sem arte nova, cai no
+// emoji (mesmo padrão já usado pros itens de zona/atributo).
+export const PETS = [];
+PET_ELEMENTS.forEach((element) => {
+  PET_SPECIES_BY_ELEMENT[element].forEach((sp, i) => {
+    const tier = i + 1;
+    PETS.push({
+      id: `${element}_${tier}`,
+      name: sp.name,
+      emoji: sp.emoji,
+      element,
+      tier,
+      baseDamage: petTierDamage(tier),
+    });
+  });
+});
+
+export function getPetSpecies(speciesId) {
+  return PETS.find((p) => p.id === speciesId) || null;
+}
+
+// Nível de fusão: +1 (recém-chocado) até +10. Cada nível exige fundir 2
+// cópias idênticas (mesma espécie + raridade + nível) do nível anterior —
+// 2^(N-1) pets base pro nível N (512 pets base pro +10). Crescimento de
+// poder por nível moderado — o custo já é exponencial por conta própria.
+export const PET_MAX_LEVEL = 10;
+const PET_LEVEL_GROWTH = 1.22;
+
+export function petLevelMultiplier(level) {
+  return Math.pow(PET_LEVEL_GROWTH, Math.max(0, (level || 1) - 1));
+}
+
+/// Dano de uma instância específica de pet, já com raridade + nível de fusão
+/// aplicados.
+export function getPetDamage(petEntry) {
+  const species = getPetSpecies(petEntry.speciesId);
+  if (!species) return 0;
+  const rarity = getRarity(petEntry.rarityId);
+  return Math.round(species.baseDamage * rarity.mult * petLevelMultiplier(petEntry.level));
+}
+
+// ---------------------------------------------------------------------
+// Ovo: um tipo só, genérico — ao chocar, sorteia 2 candidatos
+// independentes (espécie + raridade cada, ver rollPetCandidate), e o
+// jogador escolhe um dos dois (ver systems/pets.js + o fluxo de VIP/escolha
+// grátis diária). Raridade usa o mesmo peso/cores de RARITIES
+// (data/items.js) — Comum 60% / Incomum 24% / Raro 10% / Épico 4% /
+// Lendário 1.5% / Mítico 0.5%.
+// ---------------------------------------------------------------------
+
+function pickPetRarity() {
+  const totalWeight = RARITIES.reduce((sum, r) => sum + r.weight, 0);
+  let roll = Math.random() * totalWeight;
+  for (const rarity of RARITIES) {
+    roll -= rarity.weight;
+    if (roll <= 0) return rarity;
+  }
+  return RARITIES[0];
+}
+
+export function rollPetCandidate() {
+  const species = PETS[Math.floor(Math.random() * PETS.length)];
+  const rarity = pickPetRarity();
+  return { speciesId: species.id, rarityId: rarity.id, level: 1 };
+}
+
+export const PET_INVENTORY_CAP = 70;
+
+/// Valor de venda em ouro — usado tanto pro auto-sell ao bater o limite de
+/// 70 quanto pra venda manual. Escala com raridade e nível de fusão.
+export function getPetSellValue(petEntry) {
+  const rarityIdx = RARITIES.findIndex((r) => r.id === petEntry.rarityId);
+  const base = 20 * (Math.max(0, rarityIdx) + 1);
+  return Math.round(base * petLevelMultiplier(petEntry.level));
+}
+
+// Chances de drop de ovo — baixas em kill normal (parecido com carta),
+// bem mais altas ao vencer um dos 3 eventos (Invasão/Torre/Mina de Ouro).
+export const WEAK_EGG_DROP_CHANCE = 0.0004; // 0.04%
+export const BOSS_EGG_DROP_CHANCE = 0.0012; // 0.12%
+export const EVENT_EGG_DROP_CHANCE = 0.08; // 8%, por vitória de evento

@@ -2,7 +2,7 @@ import { createDefaultState, loadState, saveState, hardResetState } from './stat
 import { computePlayerStats, getElementalResistance, getCardDamageBonus } from './systems/stats.js';
 import {
   getCurrentMonster, applyDamage, ensureMonsterSpawned, armorReduction, resolveHit,
-  advanceHitClock, setSelectedMonsters, canSelectMonster, MAX_SELECTED_MONSTERS,
+  advanceHitClock, setSelectedMonsters, canSelectMonster, MAX_SELECTED_MONSTERS, resolvePetHit,
 } from './systems/combat.js';
 import { findMaterialInfo, BOSSES } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
@@ -21,12 +21,18 @@ import { AD_WATCH_CASH_REWARD } from './data/shop.js';
 import { claimCardReward } from './systems/cards.js';
 import { CARD_DISCOVERY_CASH_REWARD, getCard } from './data/cards.js';
 import { GAME_BUILD } from './version.js';
+import { rollPetCandidate } from './data/pets.js';
+import {
+  equipPet, unequipPetSlot, sellPet, canFusePets, fusePets, getFusePartners,
+  addPetToInventory, getPetEntry, canChooseRightPet, useFreeRightPetChoice,
+} from './systems/pets.js';
 import {
   renderAll, renderTopBar, renderHunterLevel, renderCombatStats, renderMonster, renderNoMonsterSelected,
   renderInventoryTab, renderUpgradesTab, renderBossTimer,
-  renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
+  renderPlayerHp, spawnDamagePopup, spawnPetDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab, pulseEventBoss,
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster, pulseGoldMineBoss,
+  renderPetsTab, showPetDetailModal, showHatchModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON,
 } from './ui/render.js';
 
@@ -77,6 +83,10 @@ function currentGoldMineRunRemainingMs() {
 let activeShopSubTab = 'cash';
 let inventoryFilterElement = null;
 let pendingMonsterSelection = [];
+// Os 2 candidatos rolados ao chocar um ovo (ver openHatchModal) — só
+// commitados em state.pets quando o jogador escolhe um lado (data-hatch-choose
+// no modal, ver wireModalEvents).
+let pendingHatchCandidates = null;
 
 function renderEventsTabNow() {
   const towerMaxHp = state.towerRunActive ? computePlayerStats(state).maxHp : null;
@@ -142,6 +152,7 @@ function fullRefresh() {
   renderCardsTab(state);
   renderEventsTabNow();
   renderShopTab(state, activeShopSubTab);
+  renderPetsTab(state);
 }
 
 function refreshCombatOnly() {
@@ -168,6 +179,10 @@ function handleKillEvent(event) {
   }
   if (event.levelsGained > 0) {
     showToast(`⭐ Nível de caça ${state.hunterLevel}! Novas zonas/chefes podem ter sido liberados.`);
+  }
+  if (event.eggGained) {
+    showToast('🥚 Ovo de mascote encontrado!');
+    renderPetsTab(state);
   }
   renderTopBar(state);
   renderHunterLevel(state);
@@ -223,8 +238,11 @@ function tick() {
   if (clock.hit) {
     const elementalMultiplier = 1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element);
     const hit = resolveHit(state, stats, elementalMultiplier);
-    const event = applyDamage(state, hit.dealt, stats);
+    const petHit = resolvePetHit(state, monster.element);
+    const totalDealt = hit.dealt + (petHit ? petHit.dealt : 0);
+    const event = applyDamage(state, totalDealt, stats);
     spawnDamagePopup(hit.dealt, hit.isCrit, hit.isBurst);
+    if (petHit) spawnPetDamagePopup(petHit.dealt, petHit.species);
     pulseMonster();
     if (event) {
       refreshCombatOnly();
@@ -539,6 +557,91 @@ function wireModalEvents() {
       });
       return;
     }
+
+    // Mascotes — ver systems/pets.js. equipPet() já resolve sozinho qual dos
+    // 4 slots recebe o pet (primeiro vazio, ou sobrescreve o 0), então não
+    // precisa de um seletor de slot aqui.
+    const equipPetBtn = e.target.closest('[data-equip-pet-uid]');
+    if (equipPetBtn) {
+      runModalAction(() => {
+        const uid = Number(equipPetBtn.dataset.equipPetUid);
+        equipPet(state, uid);
+        showPetDetailModal(state, uid);
+        renderPetsTab(state);
+      });
+      return;
+    }
+
+    const unequipPetBtn = e.target.closest('[data-unequip-pet-uid]');
+    if (unequipPetBtn) {
+      runModalAction(() => {
+        const uid = Number(unequipPetBtn.dataset.unequipPetUid);
+        const slotIndex = state.equippedPetUids.indexOf(uid);
+        if (slotIndex !== -1) unequipPetSlot(state, slotIndex);
+        showPetDetailModal(state, uid);
+        renderPetsTab(state);
+      });
+      return;
+    }
+
+    const sellPetBtn = e.target.closest('[data-sell-pet-uid]');
+    if (sellPetBtn) {
+      runModalAction(() => {
+        const uid = Number(sellPetBtn.dataset.sellPetUid);
+        const value = sellPet(state, uid);
+        if (value != null) {
+          hideModal();
+          showToast(`💰 Mascote vendido por +${formatNumber(value)} ouro.`);
+          renderTopBar(state);
+          renderPetsTab(state);
+        }
+      });
+      return;
+    }
+
+    const openPetFuseBtn = e.target.closest('[data-open-pet-fuse]');
+    if (openPetFuseBtn) {
+      runModalAction(() => {
+        showPetDetailModal(state, Number(openPetFuseBtn.dataset.openPetFuse), true);
+      });
+      return;
+    }
+
+    const fuseWithBtn = e.target.closest('[data-fuse-with]');
+    if (fuseWithBtn) {
+      runModalAction(() => {
+        const baseUid = Number(fuseWithBtn.dataset.fuseBase);
+        const withUid = Number(fuseWithBtn.dataset.fuseWith);
+        const fused = fusePets(state, baseUid, withUid);
+        if (fused) {
+          showToast(`✨ Mascotes fundidos! Novo nível: +${fused.level}`);
+          showPetDetailModal(state, fused.uid);
+          renderPetsTab(state);
+        }
+      });
+      return;
+    }
+
+    const hatchChooseBtn = e.target.closest('[data-hatch-choose]');
+    if (hatchChooseBtn) {
+      runModalAction(() => {
+        const side = hatchChooseBtn.dataset.hatchChoose;
+        if (!pendingHatchCandidates) return;
+        if (side === 'right' && !canChooseRightPet(state)) return; // defensivo — botão já vem disabled
+        if (side === 'right' && !state.vip) useFreeRightPetChoice(state);
+        const chosen = pendingHatchCandidates[side === 'left' ? 0 : 1];
+        pendingHatchCandidates = null;
+        state.eggCount = Math.max(0, (state.eggCount || 0) - 1);
+        const { autoSold } = addPetToInventory(state, chosen);
+        hideModal();
+        showToast(autoSold
+          ? `🐣 Novo mascote! (vendeu automaticamente 1 mascote fraco por +${formatNumber(autoSold.value)} ouro pra abrir espaço)`
+          : '🐣 Novo mascote chocado!');
+        renderTopBar(state);
+        renderPetsTab(state);
+      });
+      return;
+    }
   });
 }
 
@@ -596,8 +699,9 @@ function enterEvent() {
 /// Called from tickEventBoss() (see above) — whichever tick lands the
 /// killing blow reports the same way.
 function handleEventBossVictory(boss) {
-  const { gained, currency, cardDropped } = claimEventVictory(state, state.eventEnteredCycle, boss);
+  const { gained, currency, cardDropped, eggGained } = claimEventVictory(state, state.eventEnteredCycle, boss);
   showEventRewardModal(boss, gained, currency, cardDropped);
+  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
   renderTopBar(state);
   renderInventoryTab(state, inventoryFilterElement);
   renderCardsTab(state);
@@ -637,7 +741,8 @@ function tickEventBoss(stats) {
   if (clock.hit && stats.dps > 0) {
     const elementalMultiplier = 1 + elementDamageModifier(stats.weaponElement, boss.element) + getCardDamageBonus(state, boss.element);
     const hit = resolveHit(state, stats, elementalMultiplier);
-    const killed = applyEventDamage(state, hit.dealt);
+    const petHit = resolvePetHit(state, boss.element);
+    const killed = applyEventDamage(state, hit.dealt + (petHit ? petHit.dealt : 0));
     pulseEventBoss();
     if (killed) {
       handleEventBossVictory(boss);
@@ -667,10 +772,11 @@ function enterTower() {
 }
 
 function finishTowerRun(cleared200) {
-  const { level, currency, goldGained, gained } = endTowerRun(state, cleared200);
+  const { level, currency, goldGained, gained, eggGained } = endTowerRun(state, cleared200);
   towerDeadline = null;
   towerHp = null;
   showTowerRewardModal(level, cleared200, currency, goldGained, gained);
+  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
   renderEventsTabNow();
   renderTopBar(state);
   renderInventoryTab(state, inventoryFilterElement);
@@ -713,7 +819,8 @@ function tickTower() {
   if (clock.hit && stats.dps > 0) {
     const elementalMultiplier = 1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element);
     const hit = resolveHit(state, stats, elementalMultiplier);
-    const event = applyTowerDamage(state, hit.dealt);
+    const petHit = resolvePetHit(state, monster.element);
+    const event = applyTowerDamage(state, hit.dealt + (petHit ? petHit.dealt : 0));
     pulseTowerMonster();
     if (event) {
       if (event.cleared200) finishTowerRun(true);
@@ -752,9 +859,10 @@ function enterGoldMine() {
 }
 
 function finishGoldMine() {
-  const { goldGained } = endGoldMineRun(state);
+  const { goldGained, eggGained } = endGoldMineRun(state);
   goldMineDeadline = null;
   showGoldMineRewardModal(goldGained);
+  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
   renderEventsTabNow();
   renderTopBar(state);
 }
@@ -785,7 +893,8 @@ function tickGoldMine() {
   nextGoldMineHitAt = clock.nextHitAt;
   if (clock.hit && stats.dps > 0) {
     const hit = resolveHit(state, stats, 1);
-    const killed = applyGoldMineDamage(state, hit.dealt);
+    const petHit = resolvePetHit(state, 'neutro');
+    const killed = applyGoldMineDamage(state, hit.dealt + (petHit ? petHit.dealt : 0));
     pulseGoldMineBoss();
     if (killed) {
       finishGoldMine();
@@ -828,6 +937,44 @@ function wireCardsTabEvents() {
   document.getElementById('tab-cards').addEventListener('click', (e) => {
     const tile = e.target.closest('[data-view-card]');
     if (tile) showCardDetailModal(state, tile.dataset.viewCard);
+  });
+}
+
+// ---------------------------------------------------------------
+// Mascotes — mesmo padrão de listener único delegado das outras abas.
+// Equipar/desequipar/vender/fundir e a escolha do choco em si acontecem no
+// popup compartilhado (#modal-overlay, ver wireModalEvents()).
+// ---------------------------------------------------------------
+
+function openHatchModal() {
+  if ((state.eggCount || 0) < 1) return;
+  pendingHatchCandidates = [rollPetCandidate(), rollPetCandidate()];
+  showHatchModal(state, pendingHatchCandidates);
+}
+
+function wirePetsTabEvents() {
+  document.getElementById('tab-pets').addEventListener('click', (e) => {
+    const hatchBtn = e.target.closest('[data-hatch-egg-btn]');
+    if (hatchBtn) { openHatchModal(); return; }
+
+    const slotBtn = e.target.closest('[data-pet-slot]');
+    if (slotBtn) {
+      const uid = state.equippedPetUids[Number(slotBtn.dataset.petSlot)];
+      if (uid) {
+        showPetDetailModal(state, uid);
+      } else {
+        showModal('🐾 Slot vazio', `
+          <div class="item-detail">
+            <div class="item-detail-icon">🐾</div>
+            <p style="color:var(--text-dim); font-size:12.5px;">Nenhum mascote equipado aqui ainda.</p>
+          </div>
+        `);
+      }
+      return;
+    }
+
+    const tile = e.target.closest('[data-view-pet]');
+    if (tile) showPetDetailModal(state, Number(tile.dataset.viewPet));
   });
 }
 
@@ -951,6 +1098,7 @@ function init() {
   wireCardsTabEvents();
   wireEventTabEvents();
   wireShopTabEvents();
+  wirePetsTabEvents();
   resetPlayerHp();
   if (state.towerRunActive) {
     towerDeadline = Date.now() + TOWER_RUN_DURATION_MS;
