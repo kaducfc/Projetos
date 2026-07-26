@@ -7,7 +7,7 @@ import {
 import { findMaterialInfo, BOSSES } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
-import { enhanceItem, upgradeToMaster, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
+import { enhanceItem, upgradeToMaster, ascendItem, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
 import { getItem, getRarity } from './data/items.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
@@ -418,6 +418,19 @@ function wireModalEvents() {
         if (upgradeToMaster(state, uid)) {
           showItemDetailModal(state, uid);
           showToast('✨ Item evoluiu para Rank Master!');
+          fullRefresh();
+        }
+      });
+      return;
+    }
+
+    const ascendBtn = e.target.closest('[data-ascend-uid]');
+    if (ascendBtn) {
+      runModalAction(() => {
+        const uid = Number(ascendBtn.dataset.ascendUid);
+        if (ascendItem(state, uid)) {
+          showItemDetailModal(state, uid);
+          showToast('🌟 Item ascendeu para a próxima zona!');
           fullRefresh();
         }
       });

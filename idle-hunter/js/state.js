@@ -1,12 +1,11 @@
 import { getCard } from './data/cards.js';
 import { ZONES } from './data/monsters.js';
 
-// Bumped from v1: the crafting/click/stage rewrite changes the inventory
-// entry shape (baseStats/additionalStats/rarityId instead of a shared
-// static item template) and drops state.stage/maxStage entirely, so an old
-// v1 save can't be sanely migrated — starting fresh under a new key is
-// simpler and safer than half-migrating incompatible data.
-const SAVE_KEY = 'idleHunterSave.v2';
+// Bumped from v2: the equipment rewrite goes from 6 slots to 10 (colar, 2
+// anéis, arma secundária) and adds Força/Destreza/Inteligência per item, so
+// state.equipped and every inventory entry's itemId scheme changed
+// incompatibly — same "start fresh under a new key" call as the v1→v2 bump.
+const SAVE_KEY = 'idleHunterSave.v3';
 
 export function createDefaultState() {
   return {
@@ -42,7 +41,15 @@ export function createDefaultState() {
     //   isMaster, cardIds } — ver data/items.js rollDroppedItem().
     inventory: [],
     nextUid: 1,
-    equipped: { weapon: null, helmet: null, armor: null, pants: null, gloves: null, boots: null }, // uid or null
+    // 10 slots físicos (ver data/items.js SLOTS) — uid or null. ring1/ring2
+    // são independentes mas aceitam a mesma categoria de item (ver
+    // getSlotIdsForCategory/equipItem).
+    equipped: {
+      weapon1: null, weapon2: null,
+      head: null, chest: null, legs: null, hands: null, boots: null,
+      ring1: null, ring2: null,
+      necklace: null,
+    },
     upgrades: {}, // upgradeId -> level
     totalKills: 0,
     lastSaveTime: Date.now(),

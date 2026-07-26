@@ -1,6 +1,6 @@
 import { getZone } from '../data/monsters.js';
 import { getCardForMonster } from '../data/cards.js';
-import { SLOTS } from '../data/items.js';
+import { DROP_CATEGORIES } from '../data/items.js';
 import { recordCardDiscovered } from './cards.js';
 import { addDroppedItem } from './crafting.js';
 import { xpForZone, grantXp, isZoneUnlocked, isBossUnlocked } from './leveling.js';
@@ -217,7 +217,6 @@ export function ensureMonsterSpawned(state) {
   state.monsterHp = monster.maxHp;
 }
 
-const DROPPABLE_SLOT_IDS = SLOTS.map((s) => s.id);
 
 /// Applies damage to the current monster. Returns a kill event (or null if
 /// the monster survived) describing gold/drops/xp/level-up/item-drop so the
@@ -268,8 +267,10 @@ export function applyDamage(state, amount, stats) {
 
   let droppedItemUid = null;
   if (Math.random() < Math.min(0.95, ITEM_DROP_CHANCE * stats.dropMult)) {
-    const slotId = DROPPABLE_SLOT_IDS[Math.floor(Math.random() * DROPPABLE_SLOT_IDS.length)];
-    droppedItemUid = addDroppedItem(state, zoneIndex, slotId);
+    // 9 categorias de drop (não SLOTS — ring ocupa 2 slots físicos mas é 1
+    // categoria só, ver data/items.js).
+    const category = DROP_CATEGORIES[Math.floor(Math.random() * DROP_CATEGORIES.length)];
+    droppedItemUid = addDroppedItem(state, zoneIndex, category);
   }
 
   const xpGained = xpForZone(zoneIndex, wasBoss);

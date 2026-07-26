@@ -1,4 +1,7 @@
-import { getItem, ENHANCE_MAX_LEVEL, rollDroppedItem } from '../data/items.js';
+import {
+  getItem, ENHANCE_MAX_LEVEL, rollDroppedItem, getRarity, getSlotIdsForCategory,
+  getNextItemTemplate, getAscensionCost, rollBaseStatsFromTemplate,
+} from '../data/items.js';
 
 /// Adiciona ao inventário um item recém-dropado (ver
 /// systems/combat.js rollItemDropOnKill / data/items.js rollDroppedItem) —
@@ -17,16 +20,16 @@ function getEntry(state, uid) {
   return state.inventory.find((i) => i.uid === uid) || null;
 }
 
-/// How many card slots this item has: 1 normally, 2 once it's Rank Master.
-export function maxCardSlots(entry) {
-  return entry.isMaster ? 2 : 1;
+/// Every item has exactly 1 card slot, regardless of enhance/Master/
+/// Ascensão — simplified from the old "2 slots once Master" rule.
+export function maxCardSlots(_entry) {
+  return 1;
 }
 
-/// Lazily grows entry.cardIds to match maxCardSlots (also covers saves
-/// from before this array existed, or from before the 2nd Master slot was
-/// added to an already-Master item) — always the single source of truth
-/// for "this entry's card slot array", never read/write entry.cardIds
-/// directly anywhere else.
+/// Lazily grows entry.cardIds to match maxCardSlots (also covers saves from
+/// before this array existed) — always the single source of truth for
+/// "this entry's card slot array", never read/write entry.cardIds directly
+/// anywhere else.
 export function ensureCardIds(entry) {
   if (!entry.cardIds) entry.cardIds = [];
   const slots = maxCardSlots(entry);
@@ -142,7 +145,42 @@ export function upgradeToMaster(state, uid) {
   state.materials[item.crystalMaterialId] -= 1;
   state.materials[m.matId] -= m.qty;
   entry.isMaster = true;
-  ensureCardIds(entry); // grows to the 2nd card slot Rank Master grants
+  return true;
+}
+
+/// Ascensão: uma vez em Rank Master, vira o item equivalente (mesma
+/// categoria/atributo) da ZONA SEGUINTE, voltando pra +0 — mantém rarityId e
+/// additionalStats como estão, só recalcula baseStats do zero pra magnitude
+/// da nova zona (ver getNextItemTemplate/getAscensionCost/
+/// rollBaseStatsFromTemplate em data/items.js). null se já está na última
+/// zona (nada pra onde ascender).
+export function canAscendItem(state, uid) {
+  const entry = getEntry(state, uid);
+  if (!entry || !entry.isMaster) return false;
+  const item = getItem(entry.itemId);
+  if (!getNextItemTemplate(item)) return false;
+  const cost = getAscensionCost(item);
+  if (!cost) return false;
+  return (
+    (state.materials[cost.crystalMaterialId] || 0) >= 1 &&
+    (state.materials[cost.matId] || 0) >= cost.qty
+  );
+}
+
+export function ascendItem(state, uid) {
+  if (!canAscendItem(state, uid)) return false;
+  const entry = getEntry(state, uid);
+  const item = getItem(entry.itemId);
+  const nextTemplate = getNextItemTemplate(item);
+  const cost = getAscensionCost(item);
+  state.materials[cost.crystalMaterialId] -= 1;
+  state.materials[cost.matId] -= cost.qty;
+
+  const rarity = getRarity(entry.rarityId);
+  entry.itemId = nextTemplate.id;
+  entry.baseStats = rollBaseStatsFromTemplate(nextTemplate.stats, rarity);
+  entry.enhanceLevel = 0;
+  entry.isMaster = false;
   return true;
 }
 
@@ -189,7 +227,9 @@ export function destroyItem(state, uid) {
     refund[matId] = amount;
   }
 
-  if (state.equipped[item.slotId] === uid) state.equipped[item.slotId] = null;
+  for (const slotId of getSlotIdsForCategory(item.category)) {
+    if (state.equipped[slotId] === uid) state.equipped[slotId] = null;
+  }
   state.inventory = state.inventory.filter((i) => i.uid !== uid);
   return refund;
 }

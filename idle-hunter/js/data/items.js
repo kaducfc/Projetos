@@ -1,15 +1,73 @@
 import { BOSSES, getWeakMonsterGroupForStage } from './monsters.js';
 
-// Slot definitions: which stat each equipment slot rolls, and how much
-// weight it carries relative to the others (weapon is the capstone item).
+// 10 slots físicos, 9 categorias de drop — anel ocupa 2 slots mas é uma
+// categoria só (mesmo item pode ser equipado nos dois, ver
+// getSlotIdsForCategory abaixo). "kind" só importa pra resistência elemental
+// (armor) e pro texto do popup de detalhe (attack vs. accessory).
 export const SLOTS = [
-  { id: 'weapon', name: 'Arma', emoji: '⚔️', kind: 'attack' },
-  { id: 'helmet', name: 'Elmo', emoji: '🪖', kind: 'defense' },
-  { id: 'armor', name: 'Peitoral', emoji: '🛡️', kind: 'defense' },
-  { id: 'pants', name: 'Calça', emoji: '👖', kind: 'defense' },
-  { id: 'gloves', name: 'Luvas', emoji: '🧤', kind: 'defense' },
-  { id: 'boots', name: 'Botas', emoji: '👢', kind: 'defense' },
+  { id: 'weapon1', name: 'Arma Primária', emoji: '⚔️', kind: 'attack', category: 'weapon1' },
+  { id: 'weapon2', name: 'Arma Secundária', emoji: '🗡️', kind: 'attack', category: 'weapon2' },
+  { id: 'head', name: 'Cabeça', emoji: '🪖', kind: 'armor', category: 'head' },
+  { id: 'chest', name: 'Peito', emoji: '🛡️', kind: 'armor', category: 'chest' },
+  { id: 'legs', name: 'Calça', emoji: '👖', kind: 'armor', category: 'legs' },
+  { id: 'hands', name: 'Mãos', emoji: '🧤', kind: 'armor', category: 'hands' },
+  { id: 'boots', name: 'Botas', emoji: '👢', kind: 'armor', category: 'boots' },
+  { id: 'ring1', name: 'Anel 1', emoji: '💍', kind: 'accessory', category: 'ring' },
+  { id: 'ring2', name: 'Anel 2', emoji: '💍', kind: 'accessory', category: 'ring' },
+  { id: 'necklace', name: 'Colar', emoji: '📿', kind: 'accessory', category: 'necklace' },
 ];
+
+// As 9 categorias de drop (ring conta uma vez só — "só vai dropar um anel de
+// cada atributo, podendo ser repetido" — ver combat.js, que sorteia desta
+// lista, não de SLOTS, pra não dobrar a chance de anel).
+export const DROP_CATEGORIES = ['weapon1', 'weapon2', 'head', 'chest', 'legs', 'hands', 'boots', 'ring', 'necklace'];
+
+/// Pra categorias normais, o único slot físico é a própria categoria; pra
+/// anel, os dois slots (equipItem em systems/equipment.js resolve qual deles
+/// recebe o item — ver comentário lá).
+export function getSlotIdsForCategory(category) {
+  return category === 'ring' ? ['ring1', 'ring2'] : [category];
+}
+
+export function getSlot(slotId) {
+  return SLOTS.find((s) => s.id === slotId);
+}
+
+/// Rótulo de exibição pra uma CATEGORIA (não um slot físico) — usado no
+/// popup de detalhe do item, que não sabe (nem precisa saber) se um anel
+/// está no ring1 ou ring2. Anel usa um nome genérico ("Anel") em vez de
+/// "Anel 1"/"Anel 2", já que o item em si não pertence a nenhum dos dois
+/// especificamente.
+export function getCategoryLabel(category) {
+  if (category === 'ring') {
+    const ringSlot = getSlot('ring1');
+    return { name: 'Anel', emoji: ringSlot.emoji, kind: ringSlot.kind };
+  }
+  const slot = getSlot(category);
+  return slot ? { name: slot.name, emoji: slot.emoji, kind: slot.kind } : null;
+}
+
+// ---------------------------------------------------------------------
+// Atributos: Força/Destreza/Inteligência são stats de personagem de verdade
+// agora (ver systems/stats.js) — cada um dos 9 moldes de item por zona dropa
+// em 3 variantes, uma por atributo, sorteada uniforme e independente da
+// raridade. Pra armadura (head/chest/legs/hands/boots) o atributo também
+// aparece como "categoria de peso" (pesada/leve/mágica) — é só um rótulo,
+// não um campo à parte (ver armorCategoryLabel abaixo).
+// ---------------------------------------------------------------------
+export const ATTRIBUTES = [
+  { id: 'forca', name: 'Força', armorLabel: 'Pesada', color: '#c0392b' },
+  { id: 'destreza', name: 'Destreza', armorLabel: 'Leve', color: '#27ae60' },
+  { id: 'inteligencia', name: 'Inteligência', armorLabel: 'Mágica', color: '#2980b9' },
+];
+
+export function getAttribute(attributeId) {
+  return ATTRIBUTES.find((a) => a.id === attributeId) || ATTRIBUTES[0];
+}
+
+export function armorCategoryLabel(attributeId) {
+  return getAttribute(attributeId).armorLabel;
+}
 
 // Power ratio between one zone's items and the next zone's (tier+1). Reused
 // by the enhancement system below so a fully-enhanced item lands a little
@@ -37,10 +95,10 @@ export function enhancementMultiplier(level, isMaster) {
 
 /// Applies this instance's enhance level/Master on top of its own rolled
 /// baseStats (see rollDroppedItem below), then adds its rolled
-/// additionalStats flat (additionals are rolled once at drop time and don't
-/// scale further with enhance — keeps the enhance power budget close to
-/// what it was pre-rarity). invEntry is the inventory entry itself, not the
-/// static item template — every dropped instance rolls its own baseStats/
+/// additionalStats flat (additionals are rolled once at drop time — or at
+/// Ascensão, ver ascendItem em systems/crafting.js — and don't scale further
+/// with enhance). invEntry is the inventory entry itself, not a static
+/// template — every dropped instance rolls its own baseStats/
 /// additionalStats, so two drops of the same itemId can differ.
 export function getEnhancedStats(invEntry) {
   const mult = enhancementMultiplier(invEntry.enhanceLevel || 0, !!invEntry.isMaster);
@@ -102,76 +160,89 @@ function rollAdditionalStat(tier) {
 }
 
 // ---------------------------------------------------------------------
-// Catálogo de itens: um set de 6 peças por zona (mesmo boss/tier de antes),
-// usado como TEMPLATE — o slot/nome/emoji/imagem/elemento e a base "pré-
-// raridade" de cada stat vêm daqui, mas cada drop rola sua própria instância
-// (ver rollDroppedItem), então dois drops do mesmo itemId podem ter
-// baseStats/raridade/additionalStats diferentes.
+// Catálogo de itens: 9 moldes por zona (um por categoria), cada um em 3
+// variantes de atributo — 270 combinações no total (10 zonas × 9 × 3).
+// Nomes/emoji são gerados por template (sem arte nova ainda; cai no emoji
+// via iconMarkup quando não há `image`). Cada molde é um TEMPLATE — a base
+// "pré-raridade" de cada stat vem daqui, mas cada drop rola sua própria
+// instância (ver rollDroppedItem), então dois drops do mesmo itemId podem
+// ter baseStats/raridade/additionalStats diferentes.
 // ---------------------------------------------------------------------
 
-const BOSS_WEAPONS = {
-  chispim: { name: 'Dual Blade de Chispim', emoji: '⚔️' },
-  solkaiser: { name: 'Arco Flamejante de Solkaiser', emoji: '🏹' },
-  tartarok: { name: 'Espada e Escudo de Tartarok', emoji: '🗡️' },
-  colhedor_carmesim: { name: 'Foice Carmesim', emoji: '🔪' },
-  grommuk: { name: 'Macétula Tribal', emoji: '🪓' },
-  vulkarion: { name: 'Espada Grande', emoji: '🗡️' },
-  leviargon: { name: 'Chicote Gigante', emoji: '🔱' },
-  tempestron: { name: 'Martelo Tempestuoso', emoji: '🔨' },
-  gaiatron: { name: 'Machado de 2 Gumes', emoji: '🪓' },
-  bahamorth: { name: 'Mace Dracônica', emoji: '🔨' },
+// Peso relativo de cada categoria na magnitude do atributo principal — arma
+// primária bate mais forte, acessórios são mais discretos, o resto fica no
+// meio. Fácil de re-tunar depois.
+const CATEGORY_POWER = {
+  weapon1: 1.0,
+  weapon2: 0.8,
+  head: 0.7,
+  chest: 0.9,
+  legs: 0.7,
+  hands: 0.6,
+  boots: 0.6,
+  ring: 0.4,
+  necklace: 0.4,
 };
 
-const BOSS_EQUIP_IMAGES = {
-  chispim: {
-    weapon: 'assets/chispim/dualblade.png', helmet: 'assets/chispim/helm.png', armor: 'assets/chispim/armor.png',
-    pants: 'assets/chispim/pants.png', gloves: 'assets/chispim/luvas.png', boots: 'assets/chispim/botas.png',
+// Arquétipos de arma por atributo — evita precisar de 60 nomes de arma
+// escritos à mão (10 zonas × 2 slots × 3 atributos).
+const WEAPON_ARCHETYPES = {
+  weapon1: {
+    forca: { name: 'Machado', emoji: '🪓' },
+    destreza: { name: 'Adagas', emoji: '🗡️' },
+    inteligencia: { name: 'Cajado', emoji: '🔮' },
   },
-  solkaiser: {
-    weapon: 'assets/solkaiser/arco.png', helmet: 'assets/solkaiser/helm.png', armor: 'assets/solkaiser/armor.png',
-    pants: 'assets/solkaiser/pants.png', gloves: 'assets/solkaiser/luvas.png', boots: 'assets/solkaiser/botas.png',
-  },
-  tartarok: {
-    weapon: 'assets/tartarok/espada.png', helmet: 'assets/tartarok/helm.png', armor: 'assets/tartarok/armor.png',
-    pants: 'assets/tartarok/pants.png', gloves: 'assets/tartarok/luvas.png', boots: 'assets/tartarok/botas.png',
-  },
-  colhedor_carmesim: {
-    weapon: 'assets/colhedor_carmesim/foice.png', helmet: 'assets/colhedor_carmesim/helm.png', armor: 'assets/colhedor_carmesim/armor.png',
-    pants: 'assets/colhedor_carmesim/pants.png', gloves: 'assets/colhedor_carmesim/luvas.png', boots: 'assets/colhedor_carmesim/botas.png',
-  },
-  grommuk: {
-    weapon: 'assets/grommuk/macetula.png', helmet: 'assets/grommuk/helm.png', armor: 'assets/grommuk/armor.png',
-    pants: 'assets/grommuk/pants.png', gloves: 'assets/grommuk/luvas.png', boots: 'assets/grommuk/botas.png',
-  },
-  vulkarion: {
-    weapon: 'assets/vulkarion/espada.png', helmet: 'assets/vulkarion/helm.png', armor: 'assets/vulkarion/armor.png',
-    pants: 'assets/vulkarion/pants.png', gloves: 'assets/vulkarion/luvas.png', boots: 'assets/vulkarion/botas.png',
-  },
-  leviargon: {
-    weapon: 'assets/leviargon/chicote.png', helmet: 'assets/leviargon/helm.png', armor: 'assets/leviargon/armor.png',
-    pants: 'assets/leviargon/pants.png', gloves: 'assets/leviargon/luvas.png', boots: 'assets/leviargon/botas.png',
-  },
-  tempestron: {
-    weapon: 'assets/tempestron/martelo.png', helmet: 'assets/tempestron/helm.png', armor: 'assets/tempestron/armor.png',
-    pants: 'assets/tempestron/pants.png', gloves: 'assets/tempestron/luvas.png', boots: 'assets/tempestron/botas.png',
-  },
-  gaiatron: {
-    weapon: 'assets/gaiatron/machado.png', helmet: 'assets/gaiatron/helm.png', armor: 'assets/gaiatron/armor.png',
-    pants: 'assets/gaiatron/pants.png', gloves: 'assets/gaiatron/luvas.png', boots: 'assets/gaiatron/botas.png',
-  },
-  bahamorth: {
-    weapon: 'assets/bahamorth/mace.png', helmet: 'assets/bahamorth/helm.png', armor: 'assets/bahamorth/armor.png',
-    pants: 'assets/bahamorth/pants.png', gloves: 'assets/bahamorth/luvas.png', boots: 'assets/bahamorth/botas.png',
+  weapon2: {
+    forca: { name: 'Escudo', emoji: '🛡️' },
+    destreza: { name: 'Adaga', emoji: '🗡️' },
+    inteligencia: { name: 'Grimório', emoji: '📖' },
   },
 };
+
+const CATEGORY_LABELS = {
+  head: { name: 'Cabeça', emoji: '🪖' },
+  chest: { name: 'Peito', emoji: '🛡️' },
+  legs: { name: 'Calça', emoji: '👖' },
+  hands: { name: 'Mãos', emoji: '🧤' },
+  boots: { name: 'Botas', emoji: '👢' },
+  ring: { name: 'Anel', emoji: '💍' },
+  necklace: { name: 'Colar', emoji: '📿' },
+};
+
+/// Pontos de atributo → 2 stats finais fixos por atributo (ver
+/// systems/stats.js pra como isso se converte em vida/armadura/dps/
+/// velocidade/crítico no final). tier é o zoneIndex (0-based); categoryPower
+/// escala a magnitude por categoria (arma bate mais que colar, etc).
+function attributeBaseStats(attributeId, tier, categoryPower) {
+  const base = tierBase(tier);
+  switch (attributeId) {
+    case 'forca':
+      return {
+        hpFlat: Math.round(base * 5 * categoryPower),
+        armorFlat: Math.round(base * 1.2 * categoryPower),
+      };
+    case 'destreza':
+      return {
+        dpsFlat: Math.round(base * 2.6 * categoryPower),
+        attackSpeedPercent: Math.round((5 + tier * 2) * categoryPower * 10) / 10,
+      };
+    case 'inteligencia':
+      return {
+        critChancePercent: Math.round((3 + tier * 1.5) * categoryPower * 10) / 10,
+        critDamagePercent: Math.round((5 + tier * 2.5) * categoryPower * 10) / 10,
+      };
+    default:
+      throw new Error(`Unknown attribute ${attributeId}`);
+  }
+}
 
 /// Custo de enhance (+1..+5, depois Rank Master) continua vindo de
 /// state.materials — agora dropados diretamente pelos monstros da zona (ver
 /// combat.js rollDrops), sem receita de craft por trás. Cicla pelos 5
-/// monstros fracos da zona, um mais adiante por nível, igual antes.
-function buildEnhanceCosts(boss, slotIndex, weakGroup) {
+/// monstros fracos da zona, um mais adiante por categoria, igual antes.
+function buildEnhanceCosts(categoryIndex, weakGroup) {
   const bandSize = weakGroup.monsters.length;
-  const weakAt = (offset) => weakGroup.monsters[(slotIndex + offset) % bandSize];
+  const weakAt = (offset) => weakGroup.monsters[(categoryIndex + offset) % bandSize];
   const baseQty = 10;
   const enhanceCostStep = (i) => Math.max(1, Math.round(baseQty * (0.5 + i * 0.5)));
   const enhanceCost = Array.from({ length: ENHANCE_MAX_LEVEL }, (_, i) => ({
@@ -185,64 +256,34 @@ function buildEnhanceCosts(boss, slotIndex, weakGroup) {
   return { enhanceCost, masterMaterialCost };
 }
 
-function buildBossItem(boss, tier, slot, slotIndex, weakGroup) {
-  const base = tierBase(tier);
-  const id = `${boss.id}_${slot.id}`;
-  const stats = {};
+function buildItemTemplate(boss, tier, category, attributeId, categoryIndex, weakGroup) {
+  const power = CATEGORY_POWER[category];
+  const stats = attributeBaseStats(attributeId, tier, power);
+  const attr = getAttribute(attributeId);
   let name;
   let emoji;
 
-  switch (slot.id) {
-    case 'weapon':
-      stats.dpsFlat = Math.round(base * 2.6);
-      stats.attackSpeedPercent = Math.round((5 + tier * 2) * 10) / 10;
-      name = BOSS_WEAPONS[boss.id].name;
-      emoji = BOSS_WEAPONS[boss.id].emoji;
-      break;
-    case 'helmet':
-      stats.dpsPercent = Math.round((5 + tier * 3) * 10) / 10;
-      stats.hpFlat = Math.round(base * 5);
-      name = `Elmo de ${boss.name}`;
-      emoji = '🪖';
-      break;
-    case 'armor':
-      stats.critChancePercent = Math.round((3 + tier * 1.5) * 10) / 10;
-      stats.armorFlat = Math.round(base * 1.2);
-      name = `Peitoral de ${boss.name}`;
-      emoji = '🛡️';
-      break;
-    case 'pants':
-      stats.goldPercent = Math.round((8 + tier * 4) * 10) / 10;
-      stats.hpFlat = Math.round(base * 4);
-      name = `Calça de ${boss.name}`;
-      emoji = '👖';
-      break;
-    case 'gloves':
-      stats.critDamagePercent = Math.round((5 + tier * 2.5) * 10) / 10;
-      stats.armorFlat = Math.round(base * 1.2);
-      name = `Luvas de ${boss.name}`;
-      emoji = '🧤';
-      break;
-    case 'boots':
-      stats.dropPercent = Math.round((5 + tier * 2) * 10) / 10;
-      stats.hpFlat = Math.round(base * 4);
-      name = `Botas de ${boss.name}`;
-      emoji = '👢';
-      break;
-    default:
-      throw new Error(`Unknown slot ${slot.id}`);
+  if (category === 'weapon1' || category === 'weapon2') {
+    const archetype = WEAPON_ARCHETYPES[category][attributeId];
+    name = `${archetype.name} de ${boss.name}`;
+    emoji = archetype.emoji;
+  } else {
+    const label = CATEGORY_LABELS[category];
+    name = `${label.name} da ${attr.name} de ${boss.name}`;
+    emoji = label.emoji;
   }
 
-  const { enhanceCost, masterMaterialCost } = buildEnhanceCosts(boss, slotIndex, weakGroup);
+  const { enhanceCost, masterMaterialCost } = buildEnhanceCosts(categoryIndex, weakGroup);
 
   return {
-    id,
-    slotId: slot.id,
+    id: `${boss.id}_${category}_${attributeId}`,
+    category,
+    attribute: attributeId,
     bossId: boss.id,
-    tier,
+    zoneIndex: tier,
     name,
     emoji,
-    image: BOSS_EQUIP_IMAGES[boss.id] ? BOSS_EQUIP_IMAGES[boss.id][slot.id] || null : null,
+    image: null,
     element: boss.element,
     stats,
     crystalMaterialId: boss.crystal.id,
@@ -254,39 +295,12 @@ function buildBossItem(boss, tier, slot, slotIndex, weakGroup) {
 export const ITEMS = [];
 BOSSES.forEach((boss, tier) => {
   const weakGroup = getWeakMonsterGroupForStage(boss.stage - 1);
-  SLOTS.forEach((slot, slotIndex) => {
-    ITEMS.push(buildBossItem(boss, tier, slot, slotIndex, weakGroup));
+  DROP_CATEGORIES.forEach((category, categoryIndex) => {
+    ATTRIBUTES.forEach((attr) => {
+      ITEMS.push(buildItemTemplate(boss, tier, category, attr.id, categoryIndex, weakGroup));
+    });
   });
 });
-
-// ---------------------------------------------------------------------
-// Bônus de set: equipar as 6 peças (arma + 5 defesa) da mesma zona/tier
-// concede um pequeno extra por cima de cada peça — um pouco de HP, um pouco
-// de armadura, e um pouco de chance/dano crítico. Escala com "o nível do
-// set": o MENOR nível efetivo de enhance entre as 6 peças equipadas (0-5
-// pra +1..+5, 6 pra Rank Master) — upar todas as peças juntas é o que
-// compensa, não só uma.
-// ---------------------------------------------------------------------
-export const SET_BONUS_HP_MULT = 3;
-export const SET_BONUS_ARMOR_MULT = 0.8;
-export const SET_BONUS_CRIT_CHANCE_BASE = 2;
-export const SET_BONUS_CRIT_CHANCE_PER_LEVEL = 0.5;
-export const SET_BONUS_CRIT_DAMAGE_BASE = 5;
-export const SET_BONUS_CRIT_DAMAGE_PER_LEVEL = 2;
-export const SET_BONUS_LEVEL_SCALE = 0.15;
-
-export function computeSetBonus(bossId, setLevel) {
-  const tier = BOSSES.findIndex((b) => b.id === bossId);
-  if (tier < 0) return null;
-  const base = tierBase(tier);
-  const growth = 1 + setLevel * SET_BONUS_LEVEL_SCALE;
-  return {
-    hpFlat: Math.round(base * SET_BONUS_HP_MULT * growth),
-    armorFlat: Math.round(base * SET_BONUS_ARMOR_MULT * growth),
-    critChancePercent: Math.round((SET_BONUS_CRIT_CHANCE_BASE + setLevel * SET_BONUS_CRIT_CHANCE_PER_LEVEL) * 10) / 10,
-    critDamagePercent: Math.round((SET_BONUS_CRIT_DAMAGE_BASE + setLevel * SET_BONUS_CRIT_DAMAGE_PER_LEVEL) * 10) / 10,
-  };
-}
 
 export function getItem(itemId) {
   return ITEMS.find((i) => i.id === itemId) || null;
@@ -296,28 +310,35 @@ export function getItemsForBoss(bossId) {
   return ITEMS.filter((i) => i.bossId === bossId);
 }
 
-export function getSlot(slotId) {
-  return SLOTS.find((s) => s.id === slotId);
-}
-
-/// Rola uma instância de item dropada por um monstro da zona `zoneIndex`
-/// (0-based), no slot `slotId` — chamada por combat.js quando um kill rola
-/// um drop de equipamento. Não craft, não custo: o item já nasce pronto pra
-/// entrar no inventário (ensureCardIds/enhanceLevel/isMaster iguais a um
-/// item novo). Cada chamada rola raridade + variação independente, então
-/// dois drops do mesmo slot/zona quase nunca saem idênticos.
-export function rollDroppedItem(zoneIndex, slotId) {
-  const boss = BOSSES[zoneIndex] || BOSSES[BOSSES.length - 1];
-  const item = getItem(`${boss.id}_${slotId}`);
-  if (!item) return null;
-
-  const rarity = pickRarity();
+/// Rola baseStats a partir do template de um item + uma raridade já
+/// escolhida — compartilhado por rollDroppedItem (drop normal) e ascendItem
+/// (systems/crafting.js: ascensão pra próxima zona mantém a raridade, só
+/// recalcula os números pra magnitude da nova zona).
+function rollBaseStatsFromTemplate(templateStats, rarity) {
   const variance = () => 0.9 + Math.random() * 0.2; // ±10%
   const baseStats = {};
-  for (const [key, value] of Object.entries(item.stats)) {
+  for (const [key, value] of Object.entries(templateStats)) {
     const scaled = value * rarity.mult * variance();
     baseStats[key] = key.endsWith('Percent') ? Math.round(scaled * 10) / 10 : Math.round(scaled);
   }
+  return baseStats;
+}
+
+/// Rola uma instância de item dropada por um monstro da zona `zoneIndex`
+/// (0-based), na categoria `category` (uma de DROP_CATEGORIES) — chamada por
+/// combat.js quando um kill rola um drop de equipamento. Sorteia o atributo
+/// (uniforme, 1 dos 3) e a raridade de forma independente. Não craft, não
+/// custo: o item já nasce pronto pra entrar no inventário. Cada chamada rola
+/// tudo de novo, então dois drops da mesma zona/categoria quase nunca saem
+/// idênticos.
+export function rollDroppedItem(zoneIndex, category) {
+  const boss = BOSSES[zoneIndex] || BOSSES[BOSSES.length - 1];
+  const attributeId = ATTRIBUTES[Math.floor(Math.random() * ATTRIBUTES.length)].id;
+  const item = getItem(`${boss.id}_${category}_${attributeId}`);
+  if (!item) return null;
+
+  const rarity = pickRarity();
+  const baseStats = rollBaseStatsFromTemplate(item.stats, rarity);
   const additionalStats = Array.from({ length: rarity.additionals }, () => rollAdditionalStat(zoneIndex));
 
   return {
@@ -330,3 +351,38 @@ export function rollDroppedItem(zoneIndex, slotId) {
     cardIds: [null],
   };
 }
+
+/// O molde equivalente (mesma categoria/atributo) na zona seguinte — null se
+/// já está na última zona (Zona 10, sem mais pra onde ascender). Ver
+/// ascendItem em systems/crafting.js.
+export function getNextItemTemplate(item) {
+  const nextBoss = BOSSES[item.zoneIndex + 1];
+  if (!nextBoss) return null;
+  return getItem(`${nextBoss.id}_${item.category}_${item.attribute}`);
+}
+
+/// Custo de Ascensão (Rank Master → +0 da próxima zona): 1 Cristal do chefe
+/// da PRÓXIMA zona + uma quantidade de material daquela zona — mais caro que
+/// o passo de Rank Master (mesmo padrão de fórmula, um passo além), pra criar
+/// incentivo real de já estar farmando a zona seguinte antes de ascender.
+/// Retorna null se o item já está na última zona.
+export function getAscensionCost(item) {
+  const nextZoneIndex = item.zoneIndex + 1;
+  const nextBoss = BOSSES[nextZoneIndex];
+  if (!nextBoss) return null;
+  const weakGroup = getWeakMonsterGroupForStage(nextBoss.stage - 1);
+  const categoryIndex = DROP_CATEGORIES.indexOf(item.category);
+  const bandSize = weakGroup.monsters.length;
+  const step = ENHANCE_MAX_LEVEL + 1;
+  const weakAt = weakGroup.monsters[(categoryIndex + 2 + step) % bandSize];
+  const qty = Math.max(1, Math.round(10 * (0.5 + step * 0.5) * 1.5));
+  return {
+    crystalMaterialId: nextBoss.crystal.id,
+    matId: weakAt.material.id,
+    qty,
+  };
+}
+
+/// rollBaseStatsFromTemplate exportada só pra ascendItem (systems/crafting.js)
+/// reusar a mesma rolagem ±10% ao recalcular os números da nova zona.
+export { rollBaseStatsFromTemplate };
