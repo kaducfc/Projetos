@@ -1,6 +1,7 @@
 import { isBossStage, getBossForStage, pickRandomWeakMonster, getWeakMonster, getWeakMonsterGroupForStage } from '../data/monsters.js';
 import { monsterMaxHp, monsterDamagePerSecond, monsterGoldReward } from './combat.js';
 import { getTowerWindow, TOWER_MAX_LEVEL, TOWER_CURRENCY_BASE, TOWER_CURRENCY_PER_LEVEL, TOWER_CLEAR_BONUS } from '../data/events.js';
+import { EVENT_EGG_DROP_CHANCE } from '../data/pets.js';
 
 // End-of-run rewards (see endTowerRun) also include a batch of weak-monster
 // materials — this many rolls, each landing on a random material from the
@@ -169,5 +170,9 @@ export function endTowerRun(state, cleared200 = false) {
   state.towerLevel = 1;
   state.towerMonsterHp = null;
   state.towerWeakMonsterId = null;
-  return { level, cleared200, currency, goldGained, gained };
+
+  const eggGained = Math.random() < EVENT_EGG_DROP_CHANCE;
+  if (eggGained) state.eggCount = (state.eggCount || 0) + 1;
+
+  return { level, cleared200, currency, goldGained, gained, eggGained };
 }

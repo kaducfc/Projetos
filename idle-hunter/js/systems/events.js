@@ -5,6 +5,7 @@ import {
 } from '../data/events.js';
 import { BOSSES } from '../data/monsters.js';
 import { getCardForMonster } from '../data/cards.js';
+import { EVENT_EGG_DROP_CHANCE } from '../data/pets.js';
 import { monsterMaxHp } from './combat.js';
 import { recordCardDiscovered } from './cards.js';
 import { isBossUnlocked } from './leveling.js';
@@ -121,5 +122,8 @@ export function claimEventVictory(state, cycleIndex, boss) {
   state.eventWins = (state.eventWins || 0) + 1;
   resetEventEncounter(state);
 
-  return { gained, currency, cardDropped };
+  const eggGained = Math.random() < EVENT_EGG_DROP_CHANCE;
+  if (eggGained) state.eggCount = (state.eggCount || 0) + 1;
+
+  return { gained, currency, cardDropped, eggGained };
 }

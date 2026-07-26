@@ -36,7 +36,11 @@ export function computePlayerStats(state, currentHp = null) {
   let armorPercent = 0;
   let critChancePercent = 0;
   let critDamagePercent = 0;
-  let weaponElement = DEFAULT_WEAPON_ELEMENT;
+  // O dano do próprio personagem é sempre Neutro agora — sem vantagem/
+  // desvantagem elemental no ataque normal (elementDamageModifier sempre dá
+  // 0 pra Neutro). Só o mascote equipado (ver systems/pets.js) carrega
+  // elemento de verdade e disputa vantagem/desvantagem contra o monstro.
+  const weaponElement = DEFAULT_WEAPON_ELEMENT;
 
   // Os 3 tipos de dano (ver DAMAGE_TYPES/getDamageTypeForAttribute em
   // data/items.js): cada peça equipada só contribui pro tipo que casa com
@@ -103,8 +107,6 @@ export function computePlayerStats(state, currentHp = null) {
     if (item.attribute === 'forca') forcaTotal += stats.danoFisicoFlat || 0;
     else if (item.attribute === 'destreza') destrezaTotal += stats.danoPerfuracaoFlat || 0;
     else if (item.attribute === 'inteligencia') inteligenciaTotal += stats.danoMagicoFlat || 0;
-
-    if (slotId === 'weapon1') weaponElement = item.element || DEFAULT_WEAPON_ELEMENT;
 
     equippedSlotCount += 1;
     equippedElements.add(item.element || DEFAULT_WEAPON_ELEMENT);
