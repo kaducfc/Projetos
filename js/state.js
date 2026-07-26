@@ -111,6 +111,23 @@ export function createDefaultState() {
     goldMineBossHp: 0,
     goldMineDamageDealt: 0,
     goldMineEnteredCycle: null,
+
+    // Mascotes (ver data/pets.js + systems/pets.js): { uid, speciesId,
+    // rarityId, level } — inventário próprio, não aparece na aba
+    // Equipamentos. equippedPetUids tem sempre 4 posições (slot vazio =
+    // null); a cada hit o jogo escolhe automaticamente o melhor pet
+    // equipado contra o monstro atual (ver getBestEquippedPet).
+    pets: [],
+    nextPetUid: 1,
+    equippedPetUids: [null, null, null, null],
+    eggCount: 0,
+    // Sistema VIP ainda por vir (mais funcionalidades futuras) — por
+    // enquanto só controla se o jogador pode escolher livremente entre os
+    // 2 pets ao chocar um ovo. freeRightPetChoiceCycle guarda o último
+    // ciclo diário (ver systems/pets.js currentDailyCycle) em que um
+    // jogador não-VIP já usou a escolha grátis do pet da direita.
+    vip: false,
+    freeRightPetChoiceCycle: null,
   };
 }
 

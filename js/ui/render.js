@@ -18,6 +18,8 @@ import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventS
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
 import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
 import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
+import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, PET_MAX_LEVEL, PET_INVENTORY_CAP } from '../data/pets.js';
+import { getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet } from '../systems/pets.js';
 
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
 /// to the caller: images are set to `width/height: 1em` in CSS so they scale
@@ -736,6 +738,140 @@ export function showCardDetailModal(state, cardId) {
   showModal(`${card.isBossCard ? '👑' : '🃏'} ${card.name}`, cardDetailHtml(state, card));
 }
 
+// ---------------------------------------------------------------
+// Mascotes: chocam de ovo (achado em kills/eventos), causam um dano
+// elemental à parte do personagem (que agora é sempre Neutro — ver
+// systems/stats.js), até 4 equipados de uma vez (o jogo escolhe sozinho o
+// melhor contra o monstro atual, ver getBestEquippedPet em
+// systems/pets.js), e podem ser fundidos (2 iguais -> +1 nível, até +10).
+// ---------------------------------------------------------------
+
+function petSlotIconHtml(state, uid, slotIndex) {
+  const pet = uid ? getPetEntry(state, uid) : null;
+  const species = pet ? getPetSpecies(pet.speciesId) : null;
+  const rarity = pet ? getRarity(pet.rarityId) : null;
+  const rarityClass = rarity ? ' has-rarity' : '';
+  const rarityStyle = rarity ? ` style="--rarity-color:${rarity.color};"` : '';
+  return `<button class="equip-slot-icon ${pet ? 'filled' : 'empty'}${rarityClass}" data-pet-slot="${slotIndex}" title="Mascote ${slotIndex + 1}"${rarityStyle}>
+    <span class="icon">${species ? species.emoji : '🐾'}</span>
+    ${pet ? `<span class="mini-badge">+${pet.level}</span>` : ''}
+  </button>`;
+}
+
+function petTileHtml(state, pet) {
+  const species = getPetSpecies(pet.speciesId);
+  const rarity = getRarity(pet.rarityId);
+  const isEquipped = (state.equippedPetUids || []).includes(pet.uid);
+  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''}" style="--rarity-color:${rarity.color};" data-view-pet="${pet.uid}" title="${species.name}">
+    <span class="icon">${species.emoji}</span>
+    <span class="mini-badge">+${pet.level}</span>
+  </button>`;
+}
+
+export function renderPetsTab(state) {
+  const container = document.getElementById('tab-pets');
+  const equipRow = (state.equippedPetUids || []).map((uid, i) => petSlotIconHtml(state, uid, i)).join('');
+  const petsHtml = state.pets.length
+    ? state.pets.map((p) => petTileHtml(state, p)).join('')
+    : `<p class="empty-slot">Nenhum mascote ainda. Derrote monstros ou vença eventos pra achar ovos, depois choque na aba aqui em cima.</p>`;
+
+  container.innerHTML = `
+    <div class="section-banner section-banner-sm">🐾 Mascotes</div>
+    <div class="pets-egg-row">
+      <span class="pets-egg-count">🥚 Ovos: <strong>${formatNumber(state.eggCount || 0)}</strong></span>
+      <button class="pets-hatch-btn" data-hatch-egg-btn ${(state.eggCount || 0) < 1 ? 'disabled' : ''}>Chocar Ovo</button>
+    </div>
+    <div class="equip-inventory-header">Equipados (até ${MAX_EQUIPPED_PETS})</div>
+    <div class="pets-equip-row">${equipRow}</div>
+    <div class="equip-inventory-header">Inventário (${state.pets.length}/${PET_INVENTORY_CAP})</div>
+    <div class="equip-inventory-grid">${petsHtml}</div>
+  `;
+}
+
+function fusePartnersHtml(state, uid) {
+  const partners = getFusePartners(state, uid);
+  if (!partners.length) {
+    return `<div class="card-slot-picker"><div class="card-slot-label">Nenhum outro mascote igual (mesma espécie, raridade e nível) disponível pra fundir.</div></div>`;
+  }
+  return `<div class="card-slot-picker">
+    <div class="card-slot-label">🌟 Escolha o parceiro pra fundir:</div>
+    <div class="card-slot-options">${partners.map((p) => {
+      const species = getPetSpecies(p.speciesId);
+      const rarity = getRarity(p.rarityId);
+      return `<button class="card-slot-option" data-fuse-base="${uid}" data-fuse-with="${p.uid}">${species.emoji} ${species.name} +${p.level} <span class="qty">${rarity.name}</span></button>`;
+    }).join('')}</div>
+  </div>`;
+}
+
+function petDetailHtml(state, uid, showFuseList) {
+  const pet = getPetEntry(state, uid);
+  const species = getPetSpecies(pet.speciesId);
+  const rarity = getRarity(pet.rarityId);
+  const damage = getPetDamage(pet);
+  const isEquipped = (state.equippedPetUids || []).includes(uid);
+
+  const actionBtn = isEquipped
+    ? `<button class="modal-action-btn" data-unequip-pet-uid="${uid}">Desequipar</button>`
+    : `<button class="modal-action-btn" data-equip-pet-uid="${uid}">Equipar</button>`;
+
+  const fuseSection = showFuseList
+    ? fusePartnersHtml(state, uid)
+    : pet.level < PET_MAX_LEVEL
+      ? `<button class="modal-action-btn" data-open-pet-fuse="${uid}">🌟 Fundir</button>`
+      : `<div class="enhance-maxed">✨ Nível máximo (+10)</div>`;
+
+  return `
+    <div class="item-detail">
+      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${species.emoji}</div>
+      <div class="item-detail-name">${species.name} <span class="enhance-badge">+${pet.level}</span></div>
+      <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
+      <div class="item-detail-attribute" style="color:${getPetElementColor(species.element)}; font-weight:700; font-size:11.5px;">${elementBadgeHtml(species.element)} ${getElement(species.element).name}</div>
+      <div class="item-detail-stats">+${formatNumber(damage)} Dano ${getElement(species.element).name}</div>
+      ${fuseSection}
+      <div class="modal-action-row">
+        ${actionBtn}
+        <button class="modal-action-btn destroy-btn" data-sell-pet-uid="${uid}">Vender (+${formatNumber(getPetSellValue(pet))} ouro)</button>
+      </div>
+    </div>
+  `;
+}
+
+export function showPetDetailModal(state, uid, showFuseList = false) {
+  const pet = getPetEntry(state, uid);
+  if (!pet) return;
+  const species = getPetSpecies(pet.speciesId);
+  showModal(`${species.emoji} ${species.name}`, petDetailHtml(state, uid, showFuseList));
+}
+
+function hatchCandidateHtml(candidate, side, unlocked) {
+  const species = getPetSpecies(candidate.speciesId);
+  const rarity = getRarity(candidate.rarityId);
+  return `
+    <div class="hatch-candidate ${unlocked ? '' : 'locked'}">
+      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${species.emoji}</div>
+      <div class="item-detail-name">${species.name}</div>
+      <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
+      ${unlocked
+        ? `<button class="modal-action-btn" data-hatch-choose="${side}">Escolher</button>`
+        : `<button class="modal-action-btn" disabled>🔒 VIP</button>`}
+    </div>
+  `;
+}
+
+export function showHatchModal(state, candidates) {
+  const [left, right] = candidates;
+  const canRight = canChooseRightPet(state);
+  showModal('🥚 Ovo Chocado!', `
+    <p style="font-size:12px; color:var(--text-dim); text-align:center;">Escolha 1 dos 2 mascotes — o outro se perde.</p>
+    <div class="hatch-choice-row">
+      ${hatchCandidateHtml(left, 'left', true)}
+      ${hatchCandidateHtml(right, 'right', canRight)}
+    </div>
+    ${!state.vip && canRight ? '<p class="hatch-free-note">✨ Escolha grátis do lado direito disponível hoje!</p>' : ''}
+    ${!state.vip && !canRight ? '<p class="hatch-free-note">🔒 O lado direito só com VIP (ou amanhã, na próxima escolha grátis).</p>' : ''}
+  `);
+}
+
 function formatDuration(ms) {
   const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
   const m = Math.floor(totalSeconds / 60);
@@ -1141,6 +1277,21 @@ export function spawnDamagePopup(amount, isCrit = false, isBurst = false) {
   // several of these within the same 750ms window, and a narrow fixed spot
   // made them pile up unreadably on top of each other (looking like hits got
   // dropped even though every one of them landed).
+  el.style.left = `${30 + Math.random() * 40}%`;
+  el.style.top = `${30 + Math.random() * 20}%`;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 750);
+}
+
+/// Popup separado pro dano do mascote (ver systems/combat.js resolvePetHit)
+/// — cor do elemento do pet, pra ficar visualmente distinto do dano normal
+/// do personagem (que agora é sempre Neutro).
+export function spawnPetDamagePopup(amount, species) {
+  const container = document.getElementById('damage-popups');
+  const el = document.createElement('div');
+  el.className = 'damage-popup pet-damage';
+  el.style.color = getPetElementColor(species.element);
+  el.textContent = `${species.emoji} -${formatNumber(amount)}`;
   el.style.left = `${30 + Math.random() * 40}%`;
   el.style.top = `${30 + Math.random() * 20}%`;
   container.appendChild(el);
