@@ -1,11 +1,14 @@
 import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
 import { computePlayerStats, getElementalResistance, getCardDamageBonus } from './systems/stats.js';
-import { getCurrentMonster, applyDamage, setViewedStage, ensureMonsterSpawned, armorReduction, rollCrit, resolveClickHit } from './systems/combat.js';
-import { isBossStage, findMaterialInfo, BOSSES } from './data/monsters.js';
+import {
+  getCurrentMonster, applyDamage, ensureMonsterSpawned, armorReduction, resolveHit,
+  advanceHitClock, setSelectedMonsters, canSelectMonster, MAX_SELECTED_MONSTERS,
+} from './systems/combat.js';
+import { findMaterialInfo, BOSSES } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
-import { craftItem, enhanceItem, upgradeToMaster, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
-import { getItem } from './data/items.js';
+import { enhanceItem, upgradeToMaster, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
+import { getItem, getRarity } from './data/items.js';
 import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
@@ -20,10 +23,10 @@ import { claimCardReward } from './systems/cards.js';
 import { CARD_DISCOVERY_CASH_REWARD, getCard } from './data/cards.js';
 import { GAME_BUILD } from './version.js';
 import {
-  renderAll, renderTopBar, renderCombatStats, renderMonster, renderInventoryTab, renderForgeTab,
-  renderUpgradesTab, renderBossTimer,
+  renderAll, renderTopBar, renderHunterLevel, renderCombatStats, renderMonster, renderNoMonsterSelected,
+  renderInventoryTab, renderForgeTab, renderUpgradesTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
-  showItemDetailModal, showEquipSlotModal, showStageJumpModal, renderEventsTab, renderShopTab, pulseEventBoss,
+  showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab, pulseEventBoss,
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster, pulseGoldMineBoss,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON,
 } from './ui/render.js';
@@ -68,25 +71,21 @@ function currentGoldMineRunRemainingMs() {
   return goldMineDeadline == null ? null : Math.max(0, goldMineDeadline - Date.now());
 }
 
-// Which sub-tab is showing in Forja (Receitas/Materiais) and Loja
-// (Cash/Evento/Conquistas), plus which element the Inventário grid is
-// filtered to (null = Todos) — pure UI state, not part of the save.
-let activeForgeSubTab = 'recipes';
+// Which sub-tab is showing in Loja (Cash/Evento/Conquistas), plus which
+// element the Inventário grid is filtered to (null = Todos), plus the
+// monster-selection modal's in-progress edit (only committed to
+// state.selectedMonsters on "Confirmar") — pure UI state, not part of the save.
 let activeShopSubTab = 'cash';
 let inventoryFilterElement = null;
+let pendingMonsterSelection = [];
 
-// Forja groups start collapsed (one boss's worth of recipe cards is a lot of
-// screen) — a bossId in this set means the player explicitly expanded it.
-let expandedForgeBosses = new Set();
-
-// Inventário and Forja are separate bottom-nav tabs but share underlying
-// data (equipping something changes what Forja shows as "already
-// craftado"), so most mutations refresh both regardless of which is
-// actually visible right now — cheap enough, and simpler than tracking
-// which tab is active just to skip a redundant render.
+// Inventário e Materiais (Forja) são abas separadas mas compartilham dados
+// subjacentes (equipar algo muda o que Materiais mostra como disponível
+// pra aprimorar), então a maioria das mutações atualiza as duas
+// independente de qual está visível agora.
 function renderInventoryAndForge() {
   renderInventoryTab(state, inventoryFilterElement);
-  renderForgeTab(state, activeForgeSubTab, expandedForgeBosses);
+  renderForgeTab(state);
 }
 
 function renderEventsTabNow() {
@@ -95,10 +94,11 @@ function renderEventsTabNow() {
   renderEventsTab(state, currentTowerRunRemainingMs(), towerHp, towerMaxHp, currentGoldMineRunRemainingMs());
 }
 
-// A boss only has a timer while it's still blocking progress (the frontier
-// stage). Revisiting an already-beaten boss to farm materials is timer-free.
+// Um chefe só tem cronômetro quando é o monstro ativo agora — nunca "trava
+// progresso" mais (não existe mais estágio linear), é só um desafio extra
+// contra o relógio quando o sorteio calha nele.
 function isActiveBossFight() {
-  return isBossStage(state.stage) && state.stage === state.maxStage;
+  return state.currentMonster != null && state.currentMonster.kind === 'boss';
 }
 
 function armBossTimer() {
@@ -106,33 +106,35 @@ function armBossTimer() {
   const wasArmed = bossDeadline != null;
   bossDeadline = shouldArm ? Date.now() + BOSS_TIME_LIMIT_MS : null;
   if (shouldArm && !wasArmed) {
-    showToast('⚔️ Chefe! 30 segundos para derrotá-lo, ou você recua um estágio.');
+    showToast('⚔️ Chefe! 30 segundos para derrotá-lo, ou ele foge.');
   }
   renderBossTimer(bossDeadline != null ? bossDeadline - Date.now() : null);
 }
 
-/// Shared "you failed this stage" consequence for both the boss timer
-/// running out and the player's HP hitting 0: step back one stage (never
-/// below 1) without losing the maxStage record, and get a clean restart.
+/// Shared "you failed this fight" consequence for both the boss timer
+/// running out and the player's HP hitting 0: full heal and a fresh monster
+/// sorteado do mesmo pool de selecionados (sem retroceder progresso — não
+/// existe mais estágio pra recuar).
 function retreat(reason) {
-  const failedStage = state.stage;
-  state.stage = Math.max(1, state.stage - 1);
   state.monsterHp = null;
   ensureMonsterSpawned(state);
   resetPlayerHp();
   const message = reason === 'death'
-    ? `💀 Seu personagem morreu! Recuou do estágio ${failedStage} para o ${state.stage}.`
-    : `⏳ Tempo esgotado! Você recuou do estágio ${failedStage} para o ${state.stage}.`;
+    ? '💀 Seu personagem morreu! Recuperando e tentando novamente...'
+    : '⏳ Tempo esgotado contra o chefe! Ele fugiu — tentando novamente...';
   showToast(message);
   refreshCombatOnly();
   armBossTimer();
 }
 
 function refreshAll() {
-  const monster = getCurrentMonster(state.stage, state.weakMonsterId);
+  ensureMonsterSpawned(state);
+  const monster = getCurrentMonster(state.currentMonster);
   const stats = computePlayerStats(state, currentHp);
   currentHp = Math.min(currentHp, stats.maxHp);
   renderAll(state, monster, stats);
+  renderHunterLevel(state);
+  if (!monster) renderNoMonsterSelected();
   renderPlayerHp(currentHp, stats.maxHp);
   return { monster, stats };
 }
@@ -154,11 +156,12 @@ function fullRefresh() {
 }
 
 function refreshCombatOnly() {
-  const monster = getCurrentMonster(state.stage, state.weakMonsterId);
+  ensureMonsterSpawned(state);
+  const monster = getCurrentMonster(state.currentMonster);
   const stats = computePlayerStats(state, currentHp);
   currentHp = Math.min(currentHp, stats.maxHp);
   renderCombatStats(stats, monster);
-  renderMonster(state, monster);
+  if (monster) renderMonster(state, monster); else renderNoMonsterSelected();
   renderPlayerHp(currentHp, stats.maxHp);
   return { monster, stats };
 }
@@ -167,16 +170,27 @@ function handleKillEvent(event) {
   if (!event) return;
   showLootPopup(event.goldGained, event.drops);
   if (event.reprocced) showToast('🔁 Gaiatron: o chefe caiu de novo instantaneamente! Recompensas dobradas.');
+  if (event.droppedItemUid != null) {
+    const dropped = state.inventory.find((i) => i.uid === event.droppedItemUid);
+    if (dropped) {
+      const item = getItem(dropped.itemId);
+      showToast(`🎁 Item dropado: ${item.name} (${getRarity(dropped.rarityId).name})!`);
+    }
+  }
+  if (event.levelsGained > 0) {
+    showToast(`⭐ Nível de caça ${state.hunterLevel}! Novas zonas/chefes podem ter sido liberados.`);
+  }
   renderTopBar(state);
+  renderHunterLevel(state);
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
-  // One call covers Equipar/Forjar/Materiais, whichever sub-tab is showing.
+  // One call covers Equipar/Materiais, whichever sub-tab is showing.
   renderInventoryAndForge();
   renderUpgradesTab(state);
   renderCardsTab(state); // a card drop just changed discovered/claimable state
   wireAllPanelButtons();
   resetPlayerHp(); // a fresh monster just spawned — full heal for the new fight
-  armBossTimer(); // stage may have just advanced onto (or off of) a boss
+  armBossTimer(); // the new monster may (or may not) be a boss
 }
 
 // Combined reduction from armor (diminishing returns) and elemental
@@ -188,26 +202,12 @@ function totalIncomingReduction(stats, monsterElement) {
   return 1 - (1 - armorRed) * (1 - elemRes);
 }
 
-function onClickMonster() {
-  if (bossDeadline != null && Date.now() >= bossDeadline) {
-    retreat('timeout');
-    return;
-  }
-  const stats = computePlayerStats(state, currentHp);
-  const monster = getCurrentMonster(state.stage, state.weakMonsterId);
-  const hit = resolveClickHit(state, stats, 1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
-  const event = applyDamage(state, hit.dealt, stats);
-  spawnDamagePopup(hit.dealt, hit.isCrit, hit.isBurst);
-  pulseMonster();
-  if (event) {
-    refreshCombatOnly();
-    handleKillEvent(event);
-  } else {
-    renderMonster(state, monster);
-    renderBossTimer(bossDeadline != null ? bossDeadline - Date.now() : null);
-    renderPlayerHp(currentHp, stats.maxHp);
-  }
-}
+// Relógio de hit discreto do combate principal (Caça) — cada contexto de
+// combate tem o seu (ver tickEventBoss/tickTower/tickGoldMine abaixo),
+// independente entre si. Sem clique: o personagem golpeia sozinho no ritmo
+// de attackSpeedPerSec (ver systems/stats.js), e advanceHitClock() (ver
+// systems/combat.js) decide a cada tick se já é hora do próximo golpe.
+let nextHitAt = null;
 
 function tick() {
   if (bossDeadline != null && Date.now() >= bossDeadline) {
@@ -217,20 +217,28 @@ function tick() {
 
   const stats = computePlayerStats(state, currentHp);
   currentHp = Math.min(currentHp, stats.maxHp);
-  const monster = getCurrentMonster(state.stage, state.weakMonsterId);
 
-  // Runs unconditionally, before the normal-stage combat below — that
-  // block can `return` early on a kill, and at high DPS a stage-1 monster
-  // dies almost every single tick, which would otherwise starve the event
-  // boss of its DPS ticks entirely.
+  // Runs unconditionally, before the main-hunt combat below — that block
+  // can `return` early on a kill, and a fast attack-speed build can kill
+  // the main monster almost every tick, which would otherwise starve the
+  // event boss of its own ticks entirely.
   tickEventBoss(stats);
   tickTower();
   tickGoldMine();
 
-  if (stats.dps > 0) {
-    const crit = rollCrit(stats);
-    const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element)) * crit.multiplier;
-    const event = applyDamage(state, dealt * (TICK_MS / 1000), stats);
+  ensureMonsterSpawned(state);
+  const monster = getCurrentMonster(state.currentMonster);
+  if (!monster) return; // nenhum monstro selecionado ainda
+
+  const clock = advanceHitClock(nextHitAt, stats.attackSpeedPerSec);
+  nextHitAt = clock.nextHitAt;
+
+  if (clock.hit) {
+    const elementalMultiplier = 1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element);
+    const hit = resolveHit(state, stats, elementalMultiplier);
+    const event = applyDamage(state, hit.dealt, stats);
+    spawnDamagePopup(hit.dealt, hit.isCrit, hit.isBurst);
+    pulseMonster();
     if (event) {
       refreshCombatOnly();
       handleKillEvent(event);
@@ -268,54 +276,46 @@ function setupTabs() {
 }
 
 // ---------------------------------------------------------------
-// Stage controls
+// Seleção de monstros (estilo IdleArc) — até 4, de qualquer zona liberada,
+// sorteados uniformemente a cada spawn (ver systems/combat.js). Sem clique
+// no monstro: o combate é 100% automático (ver tick() acima), o botão
+// #select-monsters-btn só abre a tela de escolha.
 // ---------------------------------------------------------------
 
-function jumpToStage(stage) {
-  if (setViewedStage(state, stage)) { resetPlayerHp(); refreshCombatOnly(); armBossTimer(); }
+function openMonsterSelectModal() {
+  pendingMonsterSelection = state.selectedMonsters.map((m) => ({ ...m }));
+  showMonsterSelectModal(state, pendingMonsterSelection);
 }
 
-function setupStageControls() {
-  // pointerdown, not click, on all four zone-banner buttons — same
-  // reasoning as #monster-sprite below: reported as "the flag button
-  // doesn't work" (stage-max specifically), and a plain 'click' listener
-  // is the one input event a fast/rapid tap can most easily drop if
-  // anything in the event path re-renders between pointerdown and
-  // pointerup. Using pointerdown uniformly removes that whole class of
-  // flakiness instead of chasing one specific repro.
-  document.getElementById('stage-prev').addEventListener('pointerdown', (e) => {
+function toggleMonsterSelection(zoneIndex, kind, monsterId) {
+  if (!canSelectMonster(state, zoneIndex, kind)) return;
+  const idx = pendingMonsterSelection.findIndex((m) => m.zoneIndex === zoneIndex && m.kind === kind && m.monsterId === monsterId);
+  if (idx >= 0) {
+    pendingMonsterSelection.splice(idx, 1);
+  } else if (pendingMonsterSelection.length < MAX_SELECTED_MONSTERS) {
+    pendingMonsterSelection.push({ zoneIndex, kind, monsterId });
+  } else {
+    showToast(`❌ Máximo de ${MAX_SELECTED_MONSTERS} monstros selecionados.`);
+    return;
+  }
+  showMonsterSelectModal(state, pendingMonsterSelection);
+}
+
+function confirmMonsterSelection() {
+  if (setSelectedMonsters(state, pendingMonsterSelection)) {
+    hideModal();
+    resetPlayerHp();
+    fullRefresh();
+    armBossTimer();
+  } else {
+    showToast('❌ Selecione ao menos 1 monstro.');
+  }
+}
+
+function setupMonsterSelection() {
+  document.getElementById('select-monsters-btn').addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
-    jumpToStage(state.stage - 1);
-  });
-  document.getElementById('stage-next').addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
-    jumpToStage(state.stage + 1);
-  });
-  document.getElementById('stage-max').addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
-    jumpToStage(state.maxStage);
-  });
-  document.getElementById('stage-label').addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
-    showStageJumpModal(state);
-  });
-  // pointerdown, not click: click only fires if pointerup lands on the same
-  // element the browser considers "the target" at that instant, and this
-  // button's own contents (the monster's <img>) get replaced by
-  // renderMonster() on every single tick (100ms) — a fast clicker can
-  // easily have a re-render land in the few ms between their mousedown and
-  // mouseup, which silently drops that click. Firing on pointerdown instead
-  // means every physical press counts, independent of any render race.
-  document.getElementById('monster-sprite').addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
-    onClickMonster();
-  });
-  // Same attack, just a second (bigger, thumb-friendly) tap target — real
-  // mobile layouts want a dedicated CTA button below the fold, not just the
-  // sprite itself.
-  document.getElementById('attack-button').addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
-    onClickMonster();
+    openMonsterSelectModal();
   });
 }
 
@@ -359,12 +359,20 @@ function wireModalEvents() {
   const overlay = document.getElementById('modal-overlay');
 
   overlay.addEventListener('click', (e) => {
-    const stageJumpBtn = e.target.closest('[data-stage-jump]');
-    if (stageJumpBtn) {
+    const monsterChip = e.target.closest('[data-select-monster-zone]');
+    if (monsterChip) {
       runModalAction(() => {
-        jumpToStage(Number(stageJumpBtn.dataset.stageJump));
-        hideModal();
+        toggleMonsterSelection(
+          Number(monsterChip.dataset.selectMonsterZone),
+          monsterChip.dataset.selectMonsterKind,
+          monsterChip.dataset.selectMonsterId,
+        );
       });
+      return;
+    }
+    const confirmSelectionBtn = e.target.closest('[data-confirm-monster-selection]');
+    if (confirmSelectionBtn) {
+      runModalAction(() => confirmMonsterSelection());
       return;
     }
     const equipBtn = e.target.closest('[data-modal-equip]');
@@ -565,48 +573,17 @@ function wireInventoryTabEvents() {
   });
 }
 
-function wireForgeTabEvents() {
-  document.getElementById('tab-forge').addEventListener('click', (e) => {
-    const subtabBtn = e.target.closest('[data-forge-subtab]');
-    if (subtabBtn) {
-      activeForgeSubTab = subtabBtn.dataset.forgeSubtab;
-      renderInventoryAndForge();
-      return;
-    }
-
-    const forgeToggleBtn = e.target.closest('[data-toggle-forge]');
-    if (forgeToggleBtn) {
-      const bossId = forgeToggleBtn.dataset.toggleForge;
-      if (expandedForgeBosses.has(bossId)) expandedForgeBosses.delete(bossId);
-      else expandedForgeBosses.add(bossId);
-      renderInventoryAndForge();
-      return;
-    }
-
-    const craftBtn = e.target.closest('[data-craft]');
-    if (craftBtn) {
-      const uid = craftItem(state, craftBtn.dataset.craft);
-      if (uid != null) {
-        showToast('🔨 Item craftado e equipado!');
-        fullRefresh();
-      }
-      return;
-    }
-  });
-}
-
 // ---------------------------------------------------------------
 // Events tab — Caça Aprimorada: click "Entrar" during the window (see
 // data/events.js) to roll a random eligible boss and start fighting it
-// immediately — both clicks (here) and passive DPS (tickEventBoss(),
-// called from the main tick() loop below) chip away at it, same as normal
-// combat. The only difference from a normal monster: no damage comes back
-// to the player, and there's no clock on the fight itself once entered —
-// only entry (once per window) is time-gated. #tab-events is never
-// recreated by innerHTML wholesale during a fight (renderEventsTab only
-// ever replaces its own contents, same container), so the delegated
-// listener from wireEventTabEvents() (see init()) is wired once and keeps
-// working across every re-render.
+// immediately — the fight itself is 100% automático (tickEventBoss(),
+// called from the main tick() loop above), no clique. The only difference
+// from a normal monster: no damage comes back to the player, and there's no
+// clock on the fight itself once entered — only entry (once per window) is
+// time-gated. #tab-events is never recreated by innerHTML wholesale during
+// a fight (renderEventsTab only ever replaces its own contents, same
+// container), so the delegated listener from wireEventTabEvents() (see
+// init()) is wired once and keeps working across every re-render.
 // ---------------------------------------------------------------
 
 function enterEvent() {
@@ -617,7 +594,7 @@ function enterEvent() {
   renderTopBar(state);
 }
 
-/// Shared by the click and DPS-tick paths — whichever one lands the
+/// Called from tickEventBoss() (see above) — whichever tick lands the
 /// killing blow reports the same way.
 function handleEventBossVictory(boss) {
   const { gained, currency, cardDropped } = claimEventVictory(state, state.eventEnteredCycle, boss);
@@ -644,44 +621,39 @@ function showEventRewardModal(boss, gained, currency, cardDropped) {
   `);
 }
 
-function onClickEventBoss() {
-  if (state.eventBossHp == null) return; // no fight in progress — must Entrar first
-  const boss = BOSSES.find((b) => b.id === state.eventBossId);
-  if (!boss) return;
+// Relógio de hit próprio do chefe de evento — sem clique, resolve um golpe
+// discreto por vez no ritmo de attackSpeedPerSec, igual ao combate
+// principal (ver tick() acima).
+let nextEventHitAt = null;
 
-  const stats = computePlayerStats(state, currentHp);
-  const hit = resolveClickHit(state, stats, 1 + elementDamageModifier(stats.weaponElement, boss.element) + getCardDamageBonus(state, boss.element));
-  const killed = applyEventDamage(state, hit.dealt);
-
-  if (killed) {
-    handleEventBossVictory(boss);
-  } else {
-    pulseEventBoss();
-  }
-
-  renderEventsTabNow();
-}
-
-/// Called every game tick (see tick() below) — applies passive DPS to the
-/// event boss while a fight is in progress.
+/// Called every game tick (see tick() above) — resolves the event boss's
+/// own discrete hits while a fight is in progress.
 function tickEventBoss(stats) {
   if (state.eventBossHp == null) return;
   const boss = BOSSES.find((b) => b.id === state.eventBossId);
-  if (!boss || stats.dps <= 0) return;
+  if (!boss) return;
 
-  const crit = rollCrit(stats);
-  const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, boss.element) + getCardDamageBonus(state, boss.element)) * crit.multiplier;
-  const killed = applyEventDamage(state, dealt * (TICK_MS / 1000));
-  if (killed) handleEventBossVictory(boss);
+  const clock = advanceHitClock(nextEventHitAt, stats.attackSpeedPerSec);
+  nextEventHitAt = clock.nextHitAt;
+  if (clock.hit && stats.dps > 0) {
+    const elementalMultiplier = 1 + elementDamageModifier(stats.weaponElement, boss.element) + getCardDamageBonus(state, boss.element);
+    const hit = resolveHit(state, stats, elementalMultiplier);
+    const killed = applyEventDamage(state, hit.dealt);
+    pulseEventBoss();
+    if (killed) {
+      handleEventBossVictory(boss);
+      return;
+    }
+  }
   renderEventsTabNow();
 }
 
 // ---------------------------------------------------------------
 // Torre Infinita — a continuous climb through 200 levels, entered from a
-// recurring window (see data/events.js) and fought the same way as normal
-// combat (click + passive DPS out, monster DPS in), but against its own
-// separate HP pool (towerHp) so it never touches the player's main-stage
-// fight. Ends on death, on the run's own 5-minute clock running out, or on
+// recurring window (see data/events.js) and fought 100% automaticamente
+// (discrete hits out, monster DPS in — see tickTower() above), but against
+// its own separate HP pool (towerHp) so it never touches the player's
+// main-hunt fight. Ends on death, on the run's own 5-minute clock running out, or on
 // clearing the level 200 boss — see endTowerRun() in systems/tower.js for
 // the reward calculation.
 // ---------------------------------------------------------------
@@ -718,34 +690,12 @@ function showTowerRewardModal(level, cleared200, currency, goldGained, gained) {
   `);
 }
 
-function onClickTowerMonster() {
-  if (!state.towerRunActive) return;
-  if (Date.now() >= towerDeadline) {
-    finishTowerRun(false);
-    return;
-  }
+// Relógio de hit próprio da Torre — mesma lógica de tickEventBoss acima.
+let nextTowerHitAt = null;
 
-  const stats = computePlayerStats(state, towerHp);
-  ensureTowerMonsterSpawned(state);
-  const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
-  const hit = resolveClickHit(state, stats, 1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element));
-  const event = applyTowerDamage(state, hit.dealt);
-  pulseTowerMonster();
-
-  if (event) {
-    if (event.cleared200) {
-      finishTowerRun(true);
-    } else {
-      renderEventsTabNow();
-    }
-    return;
-  }
-  renderEventsTabNow();
-}
-
-/// Called every game tick — applies passive DPS out and monster DPS back
-/// into towerHp while a run is active, and closes out the run if its clock
-/// runs out or the player's tower HP hits 0.
+/// Called every game tick — resolves the tower monster's discrete hits and
+/// its own DPS back into towerHp while a run is active, and closes out the
+/// run if its clock runs out or the player's tower HP hits 0.
 function tickTower() {
   if (!state.towerRunActive) return;
 
@@ -759,10 +709,13 @@ function tickTower() {
   ensureTowerMonsterSpawned(state);
   const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
 
-  if (stats.dps > 0) {
-    const crit = rollCrit(stats);
-    const dealt = stats.dps * (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element)) * crit.multiplier;
-    const event = applyTowerDamage(state, dealt * (TICK_MS / 1000));
+  const clock = advanceHitClock(nextTowerHitAt, stats.attackSpeedPerSec);
+  nextTowerHitAt = clock.nextHitAt;
+  if (clock.hit && stats.dps > 0) {
+    const elementalMultiplier = 1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element);
+    const hit = resolveHit(state, stats, elementalMultiplier);
+    const event = applyTowerDamage(state, hit.dealt);
+    pulseTowerMonster();
     if (event) {
       if (event.cleared200) finishTowerRun(true);
       else renderEventsTabNow();
@@ -814,28 +767,12 @@ function showGoldMineRewardModal(goldGained) {
   `);
 }
 
-function onClickGoldMineBoss() {
-  if (!state.goldMineRunActive) return;
-  if (Date.now() >= goldMineDeadline) {
-    finishGoldMine();
-    return;
-  }
+// Relógio de hit próprio da Mina de Ouro — mesma lógica de tickEventBoss.
+let nextGoldMineHitAt = null;
 
-  const stats = computePlayerStats(state);
-  const hit = resolveClickHit(state, stats, 1);
-  const killed = applyGoldMineDamage(state, hit.dealt);
-  pulseGoldMineBoss();
-
-  if (killed) {
-    finishGoldMine();
-    return;
-  }
-  renderEventsTabNow();
-}
-
-/// Called every game tick — applies passive DPS to the Gold Boss while a
-/// run is active, and closes out the run if its clock runs out or the
-/// boss falls.
+/// Called every game tick — resolves discrete hits against the Gold Boss
+/// while a run is active, and closes out the run if its clock runs out or
+/// the boss falls.
 function tickGoldMine() {
   if (!state.goldMineRunActive) return;
 
@@ -845,10 +782,12 @@ function tickGoldMine() {
   }
 
   const stats = computePlayerStats(state);
-  if (stats.dps > 0) {
-    const crit = rollCrit(stats);
-    const dealt = stats.dps * crit.multiplier;
-    const killed = applyGoldMineDamage(state, dealt * (TICK_MS / 1000));
+  const clock = advanceHitClock(nextGoldMineHitAt, stats.attackSpeedPerSec);
+  nextGoldMineHitAt = clock.nextHitAt;
+  if (clock.hit && stats.dps > 0) {
+    const hit = resolveHit(state, stats, 1);
+    const killed = applyGoldMineDamage(state, hit.dealt);
+    pulseGoldMineBoss();
     if (killed) {
       finishGoldMine();
       return;
@@ -860,27 +799,6 @@ function tickGoldMine() {
 
 function wireEventTabEvents() {
   const container = document.getElementById('tab-events');
-
-  // pointerdown, not click, for the same reason as the main monster sprite
-  // (see setupStageControls): renderEventsTabNow() replaces #tab-events'
-  // entire innerHTML on every tick/second-refresh, and a fast clicker can
-  // easily straddle one of those re-renders between mousedown and mouseup —
-  // click would silently miss, pointerdown never does.
-  container.addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
-    if (e.target.closest('#event-boss-sprite')) {
-      onClickEventBoss();
-      return;
-    }
-    if (e.target.closest('#tower-monster-sprite')) {
-      onClickTowerMonster();
-      return;
-    }
-    if (e.target.closest('#goldmine-boss-sprite')) {
-      onClickGoldMineBoss();
-      return;
-    }
-  });
 
   container.addEventListener('click', (e) => {
     if (e.target.closest('[data-tower-enter]')) {
@@ -1053,10 +971,9 @@ function showOfflineProgressIfAny() {
 function init() {
   document.getElementById('build-tag').textContent = GAME_BUILD;
   setupTabs();
-  setupStageControls();
+  setupMonsterSelection();
   wireModalEvents(); // one-time delegated listener, see wireModalEvents()
   wireInventoryTabEvents();
-  wireForgeTabEvents();
   wireCardsTabEvents();
   wireEventTabEvents();
   wireShopTabEvents();

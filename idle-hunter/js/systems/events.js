@@ -7,17 +7,19 @@ import { BOSSES } from '../data/monsters.js';
 import { getCardForMonster } from '../data/cards.js';
 import { monsterMaxHp } from './combat.js';
 import { recordCardDiscovered } from './cards.js';
+import { isBossUnlocked } from './leveling.js';
 
 export function isEventClaimed(state, cycleIndex) {
   return state.eventClaimedCycle === cycleIndex;
 }
 
-/// Only bosses the player has already reached in real combat (stage <=
-/// maxStage) can show up — a fresh account can't roll Bahamorth on their
-/// first-ever window. Returns null if no boss is eligible yet (maxStage
-/// hasn't reached the first boss's stage, 10).
-export function pickEligibleEventBoss(maxStage) {
-  const eligible = BOSSES.filter((b) => b.stage <= maxStage);
+/// Only bosses whose zone-boss is already unlocked (see ZONES[].bossUnlockLevel
+/// in data/monsters.js, gated by state.hunterLevel) can show up — a fresh
+/// account can't roll Bahamorth on their first-ever window. Returns null if
+/// no boss is eligible yet. BOSSES is ordered the same as ZONES, so a boss's
+/// own array index doubles as its zoneIndex.
+export function pickEligibleEventBoss(state) {
+  const eligible = BOSSES.filter((b, zoneIndex) => isBossUnlocked(state, zoneIndex));
   if (!eligible.length) return null;
   return eligible[Math.floor(Math.random() * eligible.length)];
 }
@@ -27,7 +29,7 @@ export function canEnterEvent(state, now = Date.now()) {
   if (!win.active) return false;
   if (state.eventEnteredCycle === win.cycleIndex) return false;
   if (isEventClaimed(state, win.cycleIndex)) return false;
-  return pickEligibleEventBoss(state.maxStage) != null;
+  return pickEligibleEventBoss(state) != null;
 }
 
 /// Rolls the random eligible boss, marks this cycle "entered" (blocking a
@@ -36,7 +38,7 @@ export function canEnterEvent(state, now = Date.now()) {
 export function startEvent(state, now = Date.now()) {
   if (!canEnterEvent(state, now)) return null;
   const win = getEventWindow(now);
-  const boss = pickEligibleEventBoss(state.maxStage);
+  const boss = pickEligibleEventBoss(state);
   state.eventEnteredCycle = win.cycleIndex;
   state.eventBossId = boss.id;
   state.eventBossHp = null;
@@ -45,11 +47,12 @@ export function startEvent(state, now = Date.now()) {
   return boss;
 }
 
-/// boss.stage is always a boss stage by definition, so this is "that boss's
-/// own real-combat fight" HP, scaled up by EVENT_DIFFICULTY_MULT. Fixed per
-/// boss, independent of the player's own stats/gear.
+/// boss.stage is that boss's zone's canonical stage (10, 20, ...100) — this
+/// is "that boss's own real-combat fight" HP, scaled up by
+/// EVENT_DIFFICULTY_MULT. Fixed per boss, independent of the player's own
+/// stats/gear.
 export function computeEventBossMaxHp(boss) {
-  return Math.max(10, Math.round(monsterMaxHp(boss.stage) * EVENT_DIFFICULTY_MULT));
+  return Math.max(10, Math.round(monsterMaxHp(boss.stage, true) * EVENT_DIFFICULTY_MULT));
 }
 
 /// Lazily spawns the event boss the first time it's hit in a cycle. Both HP
@@ -112,7 +115,7 @@ export function claimEventVictory(state, cycleIndex, boss) {
     cardDropped = card;
   }
 
-  const currency = Math.round(EVENT_CURRENCY_BASE + state.maxStage * EVENT_CURRENCY_PER_STAGE);
+  const currency = Math.round(EVENT_CURRENCY_BASE + (state.hunterLevel || 1) * EVENT_CURRENCY_PER_STAGE);
   state.eventCurrency += currency;
   state.eventClaimedCycle = cycleIndex;
   state.eventWins = (state.eventWins || 0) + 1;

@@ -506,6 +506,60 @@ export function getWeakMonster(id) {
 /// weakMonsterId is the currently-spawned weak monster's id (persisted on
 /// state, see combat.js ensureMonsterSpawned) — only meaningful on non-boss
 /// stages; boss stages always show that decade's unique boss and ignore it.
+// ---------------------------------------------------------------------
+// Zonas (substitui a progressão linear por estágio): 10 zonas "achatadas",
+// uma por chefe/década (BOSSES já está ordenado por stage ascendente, então
+// ZONES[i] = BOSSES[i]). Cada zona tem 5 monstros fracos + 1 chefe, sem
+// sub-estágio — o jogador escolhe até 4 monstros específicos (de qualquer
+// zona liberada) pra caçar, e o "estágio canônico" da zona (10, 20, ...100)
+// é usado por monsterMaxHp/monsterGoldReward/monsterDamagePerSecond em
+// combat.js pra escalar TODOS os 5 fracos + o chefe daquela zona (o chefe
+// ainda aplica seu próprio multiplicador BOSS_* por cima).
+//
+// NOTA: só existem 5 bandas de monstro fraco (WEAK_MONSTER_GROUPS) pra 10
+// zonas — cada banda hoje cobre 2 décadas de estágio (ex: banda 1-19 cobre
+// as zonas 1 e 2). Sem arte nova pra 5 bandas extras, cada par de zonas
+// compartilha os mesmos 5 monstros fracos (só a escala de poder difere,
+// via canonicalStage). Ver getZoneWeakMonsters abaixo.
+export const ZONE_SIZE = BOSS_INTERVAL; // 10
+export const ZONE_COUNT = BOSSES.length; // 10
+
+// Nível de caçador pra liberar o chefe da zona N (1-based): 10*N.
+// Nível pra liberar a PRÓPRIA zona N+1: 20*N. Zona 1 sempre liberada.
+// Valores de partida, fáceis de re-tunar depois (ver data/monsters.js
+// ZONES[].zoneUnlockLevel/bossUnlockLevel).
+function zoneUnlockLevelFor(zoneIndex) {
+  return zoneIndex === 0 ? 0 : 20 * zoneIndex;
+}
+function bossUnlockLevelFor(zoneIndex) {
+  return 10 * (zoneIndex + 1);
+}
+
+export const ZONES = BOSSES.map((boss, zoneIndex) => {
+  const canonicalStage = (zoneIndex + 1) * ZONE_SIZE;
+  return {
+    index: zoneIndex,
+    name: `Zona ${zoneIndex + 1}`,
+    canonicalStage,
+    weakMonsters: getWeakMonsterGroupForStage(canonicalStage - 1).monsters,
+    boss,
+    zoneUnlockLevel: zoneUnlockLevelFor(zoneIndex),
+    bossUnlockLevel: bossUnlockLevelFor(zoneIndex),
+  };
+});
+
+export function getZone(zoneIndex) {
+  return ZONES[zoneIndex] || null;
+}
+
+/// Acha a zona que contém um monstro fraco ou chefe pelo id (usado pra
+/// resolver uma entrada de state.selectedMonsters de volta pro objeto
+/// completo da zona/monstro).
+export function findZoneForMonster(kind, monsterId) {
+  if (kind === 'boss') return ZONES.find((z) => z.boss.id === monsterId) || null;
+  return ZONES.find((z) => z.weakMonsters.some((m) => m.id === monsterId)) || null;
+}
+
 export function getMonsterInfo(stage, weakMonsterId) {
   const boss = isBossStage(stage);
 
