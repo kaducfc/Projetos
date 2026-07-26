@@ -1,7 +1,7 @@
 import { BOSSES, findMaterialInfo, ZONES } from '../data/monsters.js';
 import {
   getSlot, getItem, getEnhancedStats, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
-  getNextItemTemplate, getAscensionCost, ENHANCE_MAX_LEVEL,
+  getNextItemTemplate, getAscensionCost, getDamageType, getDamageTypeForAttribute, ENHANCE_MAX_LEVEL,
 } from '../data/items.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE, ELEMENTS } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
@@ -44,6 +44,9 @@ function elementBadgeHtml(elementId) {
 const STAT_LABELS = {
   dpsFlat: (v) => `+${formatNumber(v)} DPS`,
   dpsPercent: (v) => `+${formatPercent(v)} DPS`,
+  danoFisicoFlat: (v) => `+${formatNumber(v)} Dano Físico`,
+  danoPerfuracaoFlat: (v) => `+${formatNumber(v)} Dano de Perfuração`,
+  danoMagicoFlat: (v) => `+${formatNumber(v)} Dano Mágico`,
   attackSpeedPercent: (v) => `+${formatPercent(v)} Velocidade de Ataque`,
   goldPercent: (v) => `+${formatPercent(v)} Ouro`,
   dropPercent: (v) => `+${formatPercent(v)} Chance de Material`,
@@ -82,6 +85,8 @@ export function renderHunterLevel(state) {
 
 export function renderCombatStats(stats, monster) {
   document.getElementById('attack-speed-value').textContent = `${stats.attackSpeedPerSec.toFixed(2)}/s`;
+  const damageType = getDamageType(stats.activeDamageType);
+  document.getElementById('dps-label').textContent = `${damageType.emoji} DPS (${damageType.name})`;
   document.getElementById('dps-value').textContent = formatNumber(stats.dps);
   document.getElementById('armor-value').textContent = formatNumber(stats.armor);
   document.getElementById('crit-chance-value').textContent = formatPercent(stats.critChance);
@@ -326,9 +331,10 @@ const STATS_ROW_POSITIONS = [18.2, 30.8, 42.9, 55.0, 67.1, 79.2];
 
 function equipStatsBoxHtml(state) {
   const stats = computePlayerStats(state);
+  const damageType = getDamageType(stats.activeDamageType);
   const rows = [
     ['⚡ Velocidade de Ataque', `${stats.attackSpeedPerSec.toFixed(2)}/s`],
-    ['💥 DPS', formatNumber(stats.dps)],
+    [`${damageType.emoji} DPS (${damageType.name})`, formatNumber(stats.dps)],
     ['🛡️ Armadura', formatNumber(stats.armor)],
     ['🎯 Taxa de Crítico', formatPercent(stats.critChance)],
     ['💢 Dano Crítico', formatPercent(stats.critDamage)],
@@ -493,7 +499,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
       <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
-      <div class="item-detail-attribute" style="color:${attribute.color}; font-weight:700; font-size:11.5px;">${attribute.name}</div>
+      <div class="item-detail-attribute" style="color:${attribute.color}; font-weight:700; font-size:11.5px;">${attribute.name} (${getDamageType(getDamageTypeForAttribute(item.attribute)).emoji} ${getDamageType(getDamageTypeForAttribute(item.attribute)).name})</div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
       ${cardSlotsHtml}
