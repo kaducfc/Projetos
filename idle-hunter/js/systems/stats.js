@@ -4,7 +4,10 @@ import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard, CARD_DAMAGE_BONUS } from '../data/cards.js';
 import { ensureCardIds } from './crafting.js';
 
-const BASE_DPS = 0;
+// Sem arma nenhuma equipada, o caçador ainda bate com as próprias mãos —
+// suficiente pra matar o primeiro monstro fraco da Zona 1 (~68 HP) em
+// poucos segundos, não instantaneamente.
+const BASE_DPS = 8;
 const BASE_ATTACK_SPEED_PERCENT = 0;
 const BASE_MAX_HP = 100;
 const BASE_ARMOR = 0;

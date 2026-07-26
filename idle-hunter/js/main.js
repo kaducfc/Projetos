@@ -9,7 +9,6 @@ import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
 import { enhanceItem, upgradeToMaster, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
 import { getItem, getRarity } from './data/items.js';
-import { buyUpgrade } from './systems/upgrades.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
 import { getTowerWindow, TOWER_RUN_DURATION_MS, GOLDMINE_FIGHT_DURATION_MS } from './data/events.js';
@@ -24,7 +23,7 @@ import { CARD_DISCOVERY_CASH_REWARD, getCard } from './data/cards.js';
 import { GAME_BUILD } from './version.js';
 import {
   renderAll, renderTopBar, renderHunterLevel, renderCombatStats, renderMonster, renderNoMonsterSelected,
-  renderInventoryTab, renderForgeTab, renderUpgradesTab, renderBossTimer,
+  renderInventoryTab, renderUpgradesTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab, pulseEventBoss,
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster, pulseGoldMineBoss,
@@ -78,15 +77,6 @@ function currentGoldMineRunRemainingMs() {
 let activeShopSubTab = 'cash';
 let inventoryFilterElement = null;
 let pendingMonsterSelection = [];
-
-// Inventário e Materiais (Forja) são abas separadas mas compartilham dados
-// subjacentes (equipar algo muda o que Materiais mostra como disponível
-// pra aprimorar), então a maioria das mutações atualiza as duas
-// independente de qual está visível agora.
-function renderInventoryAndForge() {
-  renderInventoryTab(state, inventoryFilterElement);
-  renderForgeTab(state);
-}
 
 function renderEventsTabNow() {
   const towerMaxHp = state.towerRunActive ? computePlayerStats(state).maxHp : null;
@@ -148,11 +138,10 @@ function refreshAll() {
 // re-wiring is needed for them.
 function fullRefresh() {
   refreshAll();
-  renderInventoryAndForge();
+  renderInventoryTab(state, inventoryFilterElement);
   renderCardsTab(state);
   renderEventsTabNow();
   renderShopTab(state, activeShopSubTab);
-  wireAllPanelButtons();
 }
 
 function refreshCombatOnly() {
@@ -184,11 +173,9 @@ function handleKillEvent(event) {
   renderHunterLevel(state);
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
-  // One call covers Equipar/Materiais, whichever sub-tab is showing.
-  renderInventoryAndForge();
+  renderInventoryTab(state, inventoryFilterElement);
   renderUpgradesTab(state);
   renderCardsTab(state); // a card drop just changed discovered/claimable state
-  wireAllPanelButtons();
   resetPlayerHp(); // a fresh monster just spawned — full heal for the new fight
   armBossTimer(); // the new monster may (or may not) be a boss
 }
@@ -543,8 +530,7 @@ function wireModalEvents() {
 }
 
 // ---------------------------------------------------------------
-// Equipment tab — also covers the Forjar and Materiais sub-tabs (folded in
-// so they're not separate top-level tabs anymore). One delegated listener
+// Equipment tab. One delegated listener
 // on the stable #tab-equipment container, wired once in init(): this tab
 // re-renders very often (every kill), so per-render re-wiring is exactly
 // the duplicate-listener bug class that bit this project twice before.
@@ -600,7 +586,7 @@ function handleEventBossVictory(boss) {
   const { gained, currency, cardDropped } = claimEventVictory(state, state.eventEnteredCycle, boss);
   showEventRewardModal(boss, gained, currency, cardDropped);
   renderTopBar(state);
-  renderInventoryAndForge();
+  renderInventoryTab(state, inventoryFilterElement);
   renderCardsTab(state);
   renderShopTab(state, activeShopSubTab);
   renderEventsTabNow();
@@ -674,7 +660,7 @@ function finishTowerRun(cleared200) {
   showTowerRewardModal(level, cleared200, currency, goldGained, gained);
   renderEventsTabNow();
   renderTopBar(state);
-  renderInventoryAndForge(); // Materiais may be showing, and just changed
+  renderInventoryTab(state, inventoryFilterElement);
 }
 
 function showTowerRewardModal(level, cleared200, currency, goldGained, gained) {
@@ -876,7 +862,7 @@ function wireShopTabEvents() {
         showToast('🛒 Compra realizada!');
         renderTopBar(state);
         renderShopTab(state, activeShopSubTab);
-        renderInventoryAndForge(); // Materiais just changed
+        renderInventoryTab(state, inventoryFilterElement);
       }
       return;
     }
@@ -901,31 +887,6 @@ function wireShopTabEvents() {
       return;
     }
   });
-}
-
-// ---------------------------------------------------------------
-// Upgrades tab
-// ---------------------------------------------------------------
-
-function wireUpgradeButtons() {
-  document.querySelectorAll('[data-upgrade]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (buyUpgrade(state, btn.dataset.upgrade)) {
-        renderTopBar(state);
-        renderUpgradesTab(state);
-        wireUpgradeButtons();
-      }
-    });
-  });
-}
-
-// Re-wires the buttons that get recreated (via innerHTML) whenever their tab
-// re-renders. Inventário/Forja/Events/Shop (incl. Conquistas) use event
-// delegation instead, wired once in init() (see wireModalEvents(),
-// wireInventoryTabEvents(), wireForgeTabEvents(), wireEventTabEvents(),
-// wireShopTabEvents()).
-function wireAllPanelButtons() {
-  wireUpgradeButtons();
 }
 
 // ---------------------------------------------------------------
