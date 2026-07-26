@@ -1,4 +1,4 @@
-import { getItem, getEnhancedStats, SLOTS } from '../data/items.js';
+import { getItem, getEnhancedStats, SLOTS, getDamageTypeForAttribute } from '../data/items.js';
 import { UPGRADES } from '../data/upgrades.js';
 import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard, CARD_DAMAGE_BONUS } from '../data/cards.js';
@@ -38,9 +38,19 @@ export function computePlayerStats(state, currentHp = null) {
   let critDamagePercent = 0;
   let weaponElement = DEFAULT_WEAPON_ELEMENT;
 
+  // Os 3 tipos de dano (ver DAMAGE_TYPES/getDamageTypeForAttribute em
+  // data/items.js): cada peça equipada só contribui pro tipo que casa com
+  // seu próprio atributo (Força→Físico, Destreza→Perfuração,
+  // Inteligência→Mágico) — mas só o tipo da ARMA PRIMÁRIA (weapon1) vira
+  // dano de verdade (ver activeDamageType abaixo); os outros dois pools
+  // continuam existindo só pra exibição/eventual troca de arma.
+  let danoFisicoFlat = 0;
+  let danoPerfuracaoFlat = 0;
+  let danoMagicoFlat = 0;
+
   // Totais de Força/Destreza/Inteligência — puramente informativos (o efeito
-  // de cada peça já entra direto em hpFlat/armorFlat/dpsFlat/
-  // attackSpeedPercent/critChancePercent/critDamagePercent acima, ver
+  // de cada peça já entra direto em hpFlat/armorFlat/danoXFlat/
+  // critChancePercent/critDamagePercent/goldPercent/dropPercent acima, ver
   // data/items.js attributeBaseStats); somados aqui só pra mostrar ao
   // jogador quanto de cada atributo o equipamento atual está dando.
   let forcaTotal = 0;
@@ -52,6 +62,10 @@ export function computePlayerStats(state, currentHp = null) {
   const specialCounts = {};
   let equippedSlotCount = 0;
   let equippedElements = new Set();
+
+  const weapon1Entry = state.equipped.weapon1 ? state.inventory.find((i) => i.uid === state.equipped.weapon1) : null;
+  const weapon1Item = weapon1Entry ? getItem(weapon1Entry.itemId) : null;
+  const activeDamageType = getDamageTypeForAttribute(weapon1Item ? weapon1Item.attribute : 'forca');
 
   for (const [slotId, uid] of Object.entries(state.equipped)) {
     if (!uid) continue;
@@ -82,16 +96,24 @@ export function computePlayerStats(state, currentHp = null) {
     armorPercent += stats.armorPercent || 0;
     critChancePercent += stats.critChancePercent || 0;
     critDamagePercent += stats.critDamagePercent || 0;
+    danoFisicoFlat += stats.danoFisicoFlat || 0;
+    danoPerfuracaoFlat += stats.danoPerfuracaoFlat || 0;
+    danoMagicoFlat += stats.danoMagicoFlat || 0;
 
-    if (item.attribute === 'forca') forcaTotal += stats.hpFlat || 0;
-    else if (item.attribute === 'destreza') destrezaTotal += stats.dpsFlat || 0;
-    else if (item.attribute === 'inteligencia') inteligenciaTotal += stats.critChancePercent || 0;
+    if (item.attribute === 'forca') forcaTotal += stats.danoFisicoFlat || 0;
+    else if (item.attribute === 'destreza') destrezaTotal += stats.danoPerfuracaoFlat || 0;
+    else if (item.attribute === 'inteligencia') inteligenciaTotal += stats.danoMagicoFlat || 0;
 
     if (slotId === 'weapon1') weaponElement = item.element || DEFAULT_WEAPON_ELEMENT;
 
     equippedSlotCount += 1;
     equippedElements.add(item.element || DEFAULT_WEAPON_ELEMENT);
   }
+
+  const activeDamagePool = activeDamageType === 'fisico' ? danoFisicoFlat
+    : activeDamageType === 'perfuracao' ? danoPerfuracaoFlat
+    : danoMagicoFlat;
+  dpsFlat += activeDamagePool;
 
   for (const upgrade of UPGRADES) {
     const level = state.upgrades[upgrade.id] || 0;
@@ -160,6 +182,8 @@ export function computePlayerStats(state, currentHp = null) {
     critChance, critDamage,
     goldDoubleChance, bossReprocChance, hitBurstEveryN, hitBurstDamageMult,
     forca: forcaTotal, destreza: destrezaTotal, inteligencia: inteligenciaTotal,
+    activeDamageType,
+    danoFisico: danoFisicoFlat, danoPerfuracao: danoPerfuracaoFlat, danoMagico: danoMagicoFlat,
   };
 }
 
