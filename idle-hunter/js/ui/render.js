@@ -1,10 +1,13 @@
 import { BOSSES, findMaterialInfo, ZONES } from '../data/monsters.js';
-import { getSlot, getItem, getEnhancedStats, getEnhanceLabel, getRarity, ENHANCE_MAX_LEVEL } from '../data/items.js';
+import {
+  getSlot, getItem, getEnhancedStats, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
+  getNextItemTemplate, getAscensionCost, ENHANCE_MAX_LEVEL,
+} from '../data/items.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE, ELEMENTS } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
-import { getEquippedEntry } from '../systems/equipment.js';
+import { getEquippedEntry, findEquippedSlotId } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
-import { canEnhance, canUpgradeToMaster, ensureCardIds } from '../systems/crafting.js';
+import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds } from '../systems/crafting.js';
 import { isZoneUnlocked, isBossUnlocked, xpToNextLevel } from '../systems/leveling.js';
 import { getEventWindow, getTowerWindow, TOWER_MAX_LEVEL, getGoldMineWindow, GOLDMINE_BOSS_HP } from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
@@ -284,11 +287,7 @@ export function renderBossTimer(remainingMs) {
   el.textContent = `⏱ ${seconds}s`;
 }
 
-// All 6 equip slots, shown as a single grid of square tiles (no paper-doll
-// avatar) — order is purely cosmetic.
-const ALL_SLOT_IDS = ['helmet', 'armor', 'weapon', 'pants', 'gloves', 'boots'];
-
-// Inventário (paper-doll + owned items) and Forja (craft recipes +
+// Inventário (paper-doll + owned items) e Forja (craft recipes +
 // Materiais) are separate bottom-nav tabs — previously sub-tabs of one
 // combined "Equipamento" tab, split apart per the mockups' bottom-nav
 // layout (Inventário, Forja, Caçada, Aprimoramento, Cartas, Loja).
@@ -313,29 +312,28 @@ function elementFilterRowHtml(filterElement) {
 function setBonusBannerHtml(state) {
   const { activeSetBonus } = computePlayerStats(state);
   if (!activeSetBonus) return '';
-  const boss = BOSSES.find((b) => b.id === activeSetBonus.bossId);
+  const boss = BOSSES[activeSetBonus.zoneIndex];
   const label = activeSetBonus.setLevel > ENHANCE_MAX_LEVEL ? 'Rank Master' : `nível +${activeSetBonus.setLevel}`;
   return `<div class="set-bonus-banner">
-    ✨ Set completo de ${boss ? boss.name : activeSetBonus.bossId} ativo (${label}): +${formatNumber(activeSetBonus.hpFlat)} Vida ·
+    ✨ Set completo de ${boss ? boss.name : `Zona ${activeSetBonus.zoneIndex + 1}`} ativo (${label}): +${formatNumber(activeSetBonus.hpFlat)} Vida ·
     +${formatNumber(activeSetBonus.armorFlat)} Armadura · +${formatPercent(activeSetBonus.critChancePercent)} Crítico ·
     +${formatPercent(activeSetBonus.critDamagePercent)} Dano Crítico
   </div>`;
 }
 
 // Paper-doll: a square card with the character art as its background and
-// the 6 equip slots overlaid on top of it in 2 columns of 3 —
-// weapon/helmet/armor on the left, gloves/pants/boots on the right
-// (closest match to the reference art's weapon/helmet/armor-vs-necklace/
-// ring/boots split, given our actual 6 slots have no jewelry slot). Sits
-// side by side with the stats card; the inventory grid spans the full
-// width below both.
-const PAPERDOLL_LEFT = ['weapon', 'helmet', 'armor'];
-const PAPERDOLL_RIGHT = ['gloves', 'pants', 'boots'];
+// the 10 equip slots overlaid on top of it in 2 columns of 5 — armas +
+// cabeça/peito no lado esquerdo, calça/mãos/botas/anéis/colar no direito.
+const PAPERDOLL_LEFT = ['weapon1', 'weapon2', 'head', 'chest', 'necklace'];
+const PAPERDOLL_RIGHT = ['legs', 'hands', 'boots', 'ring1', 'ring2'];
 const PLAYER_PORTRAIT_IMAGE = 'assets/ui/hero-portrait.png';
 
 // Row centers as % of the stats-frame.png height, measured against its
 // baked-in divider lines (banner "ESTATÍSTICAS" + 6 rows on a parchment
-// scroll) so each stat sits right above its line in the artwork.
+// scroll) so each stat sits right above its line in the artwork. Os totais
+// de Força/Destreza/Inteligência ficam FORA desse frame (ver
+// attributeTotalsHtml) — a arte do frame já tem só 6 linhas desenhadas, não
+// dá pra espremer mais 3 sem ficar torto.
 const STATS_ROW_POSITIONS = [18.2, 30.8, 42.9, 55.0, 67.1, 79.2];
 
 function equipStatsBoxHtml(state) {
@@ -363,6 +361,24 @@ function equipStatsBoxHtml(state) {
   `;
 }
 
+/// Totais de Força/Destreza/Inteligência somados do equipamento atual — ver
+/// systems/stats.js (forcaTotal/destrezaTotal/inteligenciaTotal). Cada peça
+/// já converte seu atributo direto em stats reais (vida/armadura/dps/
+/// velocidade/crítico, ver equipStatsBoxHtml acima); esses números aqui só
+/// mostram quanto de cada atributo o build atual está priorizando.
+function attributeTotalsHtml(state) {
+  const stats = computePlayerStats(state);
+  const attrs = [
+    ['forca', '💪', stats.forca],
+    ['destreza', '🏃', stats.destreza],
+    ['inteligencia', '🧠', stats.inteligencia],
+  ];
+  return `<div class="attribute-totals-row">${attrs.map(([id, emoji, value]) => {
+    const attr = getAttribute(id);
+    return `<span class="attribute-total" style="color:${attr.color};">${emoji} ${attr.name}: <strong>${formatNumber(value)}</strong></span>`;
+  }).join('')}</div>`;
+}
+
 function equipRingContentHtml(state, filterElement = null) {
   const filtered = filterElement
     ? state.inventory.filter((entry) => getItem(entry.itemId)?.element === filterElement)
@@ -385,6 +401,7 @@ function equipRingContentHtml(state, filterElement = null) {
         </div>
         ${equipStatsBoxHtml(state)}
       </div>
+      ${attributeTotalsHtml(state)}
       ${setBonusBannerHtml(state)}
       <div class="equip-inventory-header">Inventário</div>
       ${elementFilterRowHtml(filterElement)}
@@ -422,7 +439,7 @@ function slotIconHtml(state, slot) {
 
 function inventoryTileHtml(state, entry) {
   const item = getItem(entry.itemId);
-  const isEquipped = state.equipped[item.slotId] === entry.uid;
+  const isEquipped = findEquippedSlotId(state, entry.uid) != null;
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
   const rarity = getRarity(entry.rarityId);
   return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''}" style="--rarity-color:${rarity.color};" data-equip-item="${entry.uid}" title="${item.name}">
@@ -457,25 +474,27 @@ export function showItemDetailModal(state, uid, pickerOpenSlot = null, confirmDe
   const entry = state.inventory.find((i) => i.uid === uid);
   if (!entry) return;
   const item = getItem(entry.itemId);
-  const slot = getSlot(item.slotId);
-  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
+  const label = getCategoryLabel(item.category);
+  showModal(`${label.emoji} ${label.name}`, itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
 }
 
 function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   const item = getItem(entry.itemId);
-  const slot = getSlot(item.slotId);
+  const categoryLabel = getCategoryLabel(item.category);
+  const attribute = getAttribute(item.attribute);
   const enhancedStats = getEnhancedStats(entry);
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
   const rarity = getRarity(entry.rarityId);
-  const isEquipped = state.equipped[item.slotId] === uid;
+  const equippedSlotId = findEquippedSlotId(state, uid);
+  const isEquipped = equippedSlotId != null;
 
-  const resistanceLine = slot.kind === 'defense'
+  const resistanceLine = categoryLabel.kind === 'armor'
     ? `<div class="element-resistance">${elementBadgeHtml(item.element)} +${Math.round(ELEMENT_RESISTANCE_PER_PIECE * 100)}% resistência</div>`
     : `<div class="element-resistance">${elementBadgeHtml(item.element)} elemento de ataque</div>`;
 
   const actionBtn = isEquipped
-    ? `<button class="modal-action-btn" data-modal-unequip="${item.slotId}">Desequipar</button>`
+    ? `<button class="modal-action-btn" data-modal-unequip="${equippedSlotId}">Desequipar</button>`
     : `<button class="modal-action-btn" data-modal-equip="${uid}">Equipar</button>`;
 
   const cardSlotsHtml = ensureCardIds(entry)
@@ -487,6 +506,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
       <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
+      <div class="item-detail-attribute" style="color:${attribute.color}; font-weight:700; font-size:11.5px;">${attribute.name}</div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
       ${cardSlotsHtml}
@@ -556,7 +576,22 @@ function cardSlotHtml(state, uid, entry, pickerOpen, slotIndex) {
 
 function enhancePanelHtml(state, uid, entry, item) {
   if (entry.isMaster) {
-    return `<div class="enhance-maxed">✨ Rank Master alcançado</div>`;
+    const nextTemplate = getNextItemTemplate(item);
+    if (!nextTemplate) {
+      return `<div class="enhance-maxed">✨ Rank Master alcançado (Zona máxima)</div>`;
+    }
+    const cost = getAscensionCost(item);
+    const haveCrystal = state.materials[cost.crystalMaterialId] || 0;
+    const crystalInfo = findMaterialInfo(cost.crystalMaterialId);
+    const matInfo = findMaterialInfo(cost.matId);
+    const haveMat = state.materials[cost.matId] || 0;
+    const matMet = haveMat >= cost.qty;
+    return `<div class="enhance-panel">
+      <div class="enhance-maxed">✨ Rank Master alcançado</div>
+      <div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${matMet ? 'met' : 'missing'}">${formatNumber(haveMat)}/${formatNumber(cost.qty)}</span></div>
+      <div class="recipe-cost"><span><span class="icon">${iconMarkup(crystalInfo.image, crystalInfo.emoji, crystalInfo.name)}</span> ${crystalInfo.name}</span><span class="${haveCrystal >= 1 ? 'met' : 'missing'}">${formatNumber(haveCrystal)}/1</span></div>
+      <button class="master-btn" data-ascend-uid="${uid}" ${canAscendItem(state, uid) ? '' : 'disabled'}>Ascender para ${nextTemplate.name}</button>
+    </div>`;
   }
 
   if (entry.enhanceLevel < ENHANCE_MAX_LEVEL) {

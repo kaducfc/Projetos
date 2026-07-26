@@ -1,4 +1,6 @@
 import { getItem, getEnhancedStats, SLOTS, ENHANCE_MAX_LEVEL, computeSetBonus } from '../data/items.js';
+// SLOTS.length is now 10 (see data/items.js) — a full set means all 10
+// physical slots equipped from the same zone.
 import { UPGRADES } from '../data/upgrades.js';
 import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard, CARD_DAMAGE_BONUS } from '../data/cards.js';
@@ -48,9 +50,18 @@ export function computePlayerStats(state, currentHp = null) {
   let critDamagePercent = 0;
   let weaponElement = DEFAULT_WEAPON_ELEMENT;
 
-  // Tracks each equipped slot's bossId + effective level, so a full-set
+  // Totais de Força/Destreza/Inteligência — puramente informativos (o efeito
+  // de cada peça já entra direto em hpFlat/armorFlat/dpsFlat/
+  // attackSpeedPercent/critChancePercent/critDamagePercent acima, ver
+  // data/items.js attributeBaseStats); somados aqui só pra mostrar ao
+  // jogador quanto de cada atributo o equipamento atual está dando.
+  let forcaTotal = 0;
+  let destrezaTotal = 0;
+  let inteligenciaTotal = 0;
+
+  // Tracks each equipped slot's zoneIndex + effective level, so a full-set
   // bonus (see below) can be detected without a second inventory scan.
-  const equippedByBoss = {};
+  const equippedByZone = {};
   // How many equipped cards carry each special.id — most specials scale
   // their magnitude linearly with this count (see applySpecials below).
   const specialCounts = {};
@@ -87,33 +98,37 @@ export function computePlayerStats(state, currentHp = null) {
     critChancePercent += stats.critChancePercent || 0;
     critDamagePercent += stats.critDamagePercent || 0;
 
-    if (slotId === 'weapon') weaponElement = item.element || DEFAULT_WEAPON_ELEMENT;
+    if (item.attribute === 'forca') forcaTotal += stats.hpFlat || 0;
+    else if (item.attribute === 'destreza') destrezaTotal += stats.dpsFlat || 0;
+    else if (item.attribute === 'inteligencia') inteligenciaTotal += stats.critChancePercent || 0;
+
+    if (slotId === 'weapon1') weaponElement = item.element || DEFAULT_WEAPON_ELEMENT;
 
     equippedSlotCount += 1;
     equippedElements.add(item.element || DEFAULT_WEAPON_ELEMENT);
 
-    if (item.bossId) {
-      if (!equippedByBoss[item.bossId]) equippedByBoss[item.bossId] = [];
-      equippedByBoss[item.bossId].push(effectiveLevel(invEntry));
+    if (item.zoneIndex != null) {
+      if (!equippedByZone[item.zoneIndex]) equippedByZone[item.zoneIndex] = [];
+      equippedByZone[item.zoneIndex].push(effectiveLevel(invEntry));
     }
   }
 
-  // Full set: all 6 slots (SLOTS = weapon + the 5 defense pieces) equipped
-  // with items from the very same zone/boss. Its level is the lowest
-  // effective level among those 6 pieces — see computeSetBonus in
-  // data/items.js.
+  // Full set: all 10 physical slots equipped with items from the very same
+  // zone (ring1/ring2 can be the same item repeated — see equipItem in
+  // systems/equipment.js). Its level is the lowest effective level among
+  // those 10 pieces — see computeSetBonus in data/items.js.
   let activeSetBonus = null;
-  for (const [bossId, levels] of Object.entries(equippedByBoss)) {
+  for (const [zoneIndexStr, levels] of Object.entries(equippedByZone)) {
     if (levels.length !== SLOTS.length) continue;
     const setLevel = Math.min(...levels);
-    const bonus = computeSetBonus(bossId, setLevel);
+    const bonus = computeSetBonus(Number(zoneIndexStr), setLevel);
     if (!bonus) continue;
     hpFlat += bonus.hpFlat;
     armorFlat += bonus.armorFlat;
     critChancePercent += bonus.critChancePercent;
     critDamagePercent += bonus.critDamagePercent;
-    activeSetBonus = { bossId, setLevel, ...bonus };
-    break; // only one boss can occupy all 6 slots at once
+    activeSetBonus = { zoneIndex: Number(zoneIndexStr), setLevel, ...bonus };
+    break; // only one zone can occupy all 10 slots at once
   }
 
   for (const upgrade of UPGRADES) {
@@ -182,10 +197,11 @@ export function computePlayerStats(state, currentHp = null) {
     maxHp, armor, weaponElement,
     critChance, critDamage, activeSetBonus,
     goldDoubleChance, bossReprocChance, hitBurstEveryN, hitBurstDamageMult,
+    forca: forcaTotal, destreza: destrezaTotal, inteligencia: inteligenciaTotal,
   };
 }
 
-const DEFENSE_SLOTS = ['helmet', 'armor', 'pants', 'gloves', 'boots'];
+const DEFENSE_SLOTS = ['head', 'chest', 'legs', 'hands', 'boots'];
 
 /// Resistance to a specific element, from equipped defense pieces whose own
 /// monster family matches that element — 5% per matching piece. Computed
