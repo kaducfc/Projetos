@@ -1,12 +1,10 @@
-import { BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo, ZONES } from '../data/monsters.js';
+import { BOSSES, findMaterialInfo, ZONES } from '../data/monsters.js';
 import { getSlot, getItem, getEnhancedStats, getEnhanceLabel, getRarity, ENHANCE_MAX_LEVEL } from '../data/items.js';
-import { UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE, ELEMENTS } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
 import { canEnhance, canUpgradeToMaster, ensureCardIds } from '../systems/crafting.js';
-import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
 import { isZoneUnlocked, isBossUnlocked, xpToNextLevel } from '../systems/leveling.js';
 import { getEventWindow, getTowerWindow, TOWER_MAX_LEVEL, getGoldMineWindow, GOLDMINE_BOSS_HP } from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
@@ -312,16 +310,6 @@ function elementFilterRowHtml(filterElement) {
   `).join('')}</div>`;
 }
 
-// Sem craft: a antiga aba "Forja" (receitas) virou só o visualizador de
-// Materiais (equipamentos agora dropam prontos dos monstros — ver
-// data/items.js rollDroppedItem — o enhance/Master/socket de carta continua
-// no popup de detalhe do item, aberto pela aba Equipamentos).
-export function renderForgeTab(state) {
-  const container = document.getElementById('tab-forge');
-  const banner = `<img class="section-banner-img" src="assets/ui/titles/forja.png" alt="Materiais">`;
-  container.innerHTML = banner + materialsContentHtml(state);
-}
-
 function setBonusBannerHtml(state) {
   const { activeSetBonus } = computePlayerStats(state);
   if (!activeSetBonus) return '';
@@ -595,69 +583,16 @@ function enhancePanelHtml(state, uid, entry, item) {
   </div>`;
 }
 
-// Upgrade bonuses are always `level * valuePerLevel` — just formatted per
-// stat type (percent stats get a %, everything else is flat).
-function formatUpgradeBonus(stat, value) {
-  if (stat.endsWith('Percent')) return `+${formatPercent(value)}`;
-  return `+${formatNumber(value)}`;
-}
-
-function upgradeProgressHtml(upgrade, level) {
-  const current = formatUpgradeBonus(upgrade.stat, level * upgrade.valuePerLevel);
-  const next = formatUpgradeBonus(upgrade.stat, (level + 1) * upgrade.valuePerLevel);
-  return `<div class="upgrade-progress">
-    <span>Atual: <strong>${level > 0 ? current : '—'}</strong></span>
-    <span class="arrow">→</span>
-    <span>Próximo: <strong>${next}</strong></span>
-  </div>`;
-}
-
+// A aba de compra de upgrades com ouro foi retirada — vai virar um sistema
+// de habilidades passivas (ainda por definir). Placeholder até lá.
 export function renderUpgradesTab(state) {
   const container = document.getElementById('tab-upgrades');
   container.innerHTML = `
     <img class="section-banner-img" src="assets/ui/titles/aprimoramentos.png" alt="Aprimoramentos">
-    <div class="upgrade-list">${UPGRADES.map((u) => upgradeCardHtml(state, u)).join('')}</div>
+    <p style="color:var(--text-dim); font-size:13px; text-align:center; margin-top:20px;">
+      🔒 Habilidades Passivas — em construção.
+    </p>
   `;
-}
-
-function upgradeCardHtml(state, upgrade) {
-  const level = getUpgradeLevel(state, upgrade.id);
-  const cost = getUpgradeCost(state, upgrade.id);
-  const affordable = state.gold >= cost;
-
-  return `<div class="upgrade-card">
-    <span class="icon">${iconMarkup(upgrade.image, upgrade.emoji, upgrade.name)}</span>
-    <div class="info">
-      <div class="name">${upgrade.name}</div>
-      <div class="desc">${upgrade.description}</div>
-      <div class="level">Nível ${level}</div>
-      ${upgradeProgressHtml(upgrade, level)}
-    </div>
-    <button data-upgrade="${upgrade.id}" ${affordable ? '' : 'disabled'}>${GOLD_ICON} ${formatNumber(cost)}</button>
-  </div>`;
-}
-
-// MONSTER_FAMILIES materials (lobo, javali etc.) are intentionally excluded
-// here — leftovers from the pre-boss-roster v1 that nothing can drop
-// anymore (see the comment atop MONSTER_FAMILIES in data/monsters.js).
-// The live roster (BOSSES + WEAK_MONSTER_GROUPS) is also filtered to
-// owned-only, so a material never spoils a boss/monster the player hasn't
-// reached yet.
-function materialsContentHtml(state) {
-  const ownedMaterials = BOSSES.flatMap((b) => [b.materials.primary1, b.materials.primary2, b.crystal])
-    .concat(WEAK_MONSTER_GROUPS.flatMap((g) => g.monsters).map((m) => m.material))
-    .filter((m) => (state.materials[m.id] || 0) > 0);
-
-  if (!ownedMaterials.length) {
-    return `<p style="color:var(--text-dim); font-size:13px;">Nenhum material coletado ainda. Derrote monstros para conseguir materiais de aprimoramento.</p>`;
-  }
-
-  return `<div class="material-grid">${ownedMaterials.map((m) => `
-    <div class="material-card">
-      <div class="icon">${iconMarkup(m.image, m.emoji, m.name)}</div>
-      <div class="name">${m.name}</div>
-      <div class="qty">${formatNumber(state.materials[m.id] || 0)}</div>
-    </div>`).join('')}</div>`;
 }
 
 // ---------------------------------------------------------------
