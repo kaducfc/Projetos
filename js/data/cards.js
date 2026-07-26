@@ -37,7 +37,7 @@ const CARD_IMAGES = {
 // One boss card's full effect = a list of simple, always-on stat bonuses
 // (`bonuses` — same generic stat keys computePlayerStats() already knows,
 // see systems/stats.js) plus at most one `special` — a named, hand-coded
-// mechanic (conditional bonus, proc, click-counter burst) that stats.js/
+// mechanic (conditional bonus, proc, hit-counter burst) that stats.js/
 // combat.js/main.js implement individually by special.id, since none of
 // these fit the generic stat-sum model. `text` is the exact effect
 // description shown in the Cartas tab (kept as authored, not
@@ -53,9 +53,9 @@ const CARD_EFFECTS = {
     special: { id: 'gold_double_chance', chance: 20 },
   },
   solkaiser: {
-    text: 'A cada 50 cliques, o próximo clique causa 600% do dano de clique e sempre é crítico.',
+    text: 'A cada 50 golpes, o próximo golpe causa 600% do dano normal e sempre é crítico.',
     bonuses: [],
-    special: { id: 'click_counter_burst', everyN: 50, damageMult: 6 },
+    special: { id: 'hit_counter_burst', everyN: 50, damageMult: 6 },
   },
   tartarok: {
     text: 'Aumenta 20% da vida, 20% da armadura, +20% ouro.',
@@ -71,9 +71,9 @@ const CARD_EFFECTS = {
     special: { id: 'hp_threshold_dps', threshold: 80, dpsPercent: 45 },
   },
   grommuk: {
-    text: 'Enquanto todos os equipamentos forem do mesmo elemento: +30% DPS e Dano de Clique.',
+    text: 'Enquanto todos os equipamentos forem do mesmo elemento: +60% DPS.',
     bonuses: [],
-    special: { id: 'same_element_set', dpsPercent: 30, clickPercent: 30 },
+    special: { id: 'same_element_set', dpsPercent: 60 },
   },
   vulkarion: {
     text: 'Quanto menor sua vida, maior seu DPS. Bônus máximo: +60%.',
@@ -96,15 +96,15 @@ const CARD_EFFECTS = {
     ],
   },
   gaiatron: {
-    text: 'Dano de Clique +10%. Ao derrotar um Boss: 10% de chance de derrotá-lo novamente instantaneamente, recebendo todas as recompensas outra vez.',
-    bonuses: [{ stat: 'clickPercent', value: 10 }],
+    text: 'DPS +10%. Ao derrotar um Boss: 10% de chance de derrotá-lo novamente instantaneamente, recebendo todas as recompensas outra vez.',
+    bonuses: [{ stat: 'dpsPercent', value: 10 }],
     special: { id: 'boss_kill_reproc', chance: 10 },
   },
   bahamorth: {
-    text: 'Todos os atributos aumentam em 15% (DPS, Clique, Ouro, Drop, Crítico, Vida, Armadura).',
+    text: 'Todos os atributos aumentam em 15% (DPS, Velocidade de Ataque, Ouro, Drop, Crítico, Vida, Armadura).',
     bonuses: [
       { stat: 'dpsPercent', value: 15 },
-      { stat: 'clickPercent', value: 15 },
+      { stat: 'attackSpeedPercent', value: 15 },
       { stat: 'goldPercent', value: 15 },
       { stat: 'dropPercent', value: 15 },
       { stat: 'critChancePercent', value: 15 },

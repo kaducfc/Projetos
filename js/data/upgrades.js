@@ -1,17 +1,6 @@
 // Upgrades: bought with gold, permanent (progress is linear — no resets).
 export const UPGRADES = [
   {
-    id: 'training',
-    name: 'Dedo de Ferro',
-    emoji: '💪',
-    image: 'assets/ui/upgrades/dedo_de_ferro.png',
-    description: 'Aumenta o dano de clique.',
-    baseCost: 15,
-    costGrowth: 1.16,
-    stat: 'clickFlat',
-    valuePerLevel: 4,
-  },
-  {
     id: 'adrenaline',
     name: 'Fúria de Batalha',
     emoji: '💉',
@@ -27,10 +16,10 @@ export const UPGRADES = [
     name: 'Maestria do Golpe',
     emoji: '🔥',
     image: 'assets/ui/upgrades/maestria_do_golpe.png',
-    description: 'Aumenta o dano de clique em %.',
+    description: 'Aumenta a velocidade de ataque.',
     baseCost: 60,
     costGrowth: 1.22,
-    stat: 'clickPercent',
+    stat: 'attackSpeedPercent',
     valuePerLevel: 1,
   },
   {

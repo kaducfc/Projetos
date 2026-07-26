@@ -4,15 +4,15 @@ import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard, CARD_DAMAGE_BONUS } from '../data/cards.js';
 import { ensureCardIds } from './crafting.js';
 
-const BASE_CLICK_DAMAGE = 5;
 const BASE_DPS = 0;
+const BASE_ATTACK_SPEED_PERCENT = 0;
 const BASE_MAX_HP = 100;
 const BASE_ARMOR = 0;
 const DEFAULT_WEAPON_ELEMENT = 'neutro';
 
-// Every hit (click or DPS tick alike) has this baseline chance to crit for
-// this much extra damage, before the full-set bonus (see computeSetBonus in
-// data/items.js — currently the only source of a crit bonus) adds more.
+// Every hit has this baseline chance to crit for this much extra damage,
+// before the full-set bonus (see computeSetBonus in data/items.js —
+// currently the only source of a crit bonus) adds more.
 const BASE_CRIT_CHANCE = 5;
 const BASE_CRIT_DAMAGE = 50;
 
@@ -32,10 +32,9 @@ function effectiveLevel(invEntry) {
 /// activates Colhedor Carmesim's bonus and gives Vulkarion's zero, neither
 /// of which hands out an undeserved buff.
 export function computePlayerStats(state, currentHp = null) {
-  let clickFlat = BASE_CLICK_DAMAGE;
   let dpsFlat = BASE_DPS;
-  let clickPercent = 0;
   let dpsPercent = 0;
+  let attackSpeedPercent = BASE_ATTACK_SPEED_PERCENT;
   let goldPercent = 0;
   let dropPercent = 0;
   let hpFlat = BASE_MAX_HP;
@@ -71,16 +70,19 @@ export function computePlayerStats(state, currentHp = null) {
 
     const item = getItem(invEntry.itemId);
     if (!item) continue;
-    const stats = getEnhancedStats(item, invEntry.enhanceLevel || 0, !!invEntry.isMaster);
+    const stats = getEnhancedStats(invEntry);
 
-    clickFlat += stats.clickFlat || 0;
     dpsFlat += stats.dpsFlat || 0;
-    clickPercent += stats.clickPercent || 0;
     dpsPercent += stats.dpsPercent || 0;
+    attackSpeedPercent += stats.attackSpeedPercent || 0;
     goldPercent += stats.goldPercent || 0;
     dropPercent += stats.dropPercent || 0;
     hpFlat += stats.hpFlat || 0;
     armorFlat += stats.armorFlat || 0;
+    hpPercent += stats.hpPercent || 0;
+    armorPercent += stats.armorPercent || 0;
+    critChancePercent += stats.critChancePercent || 0;
+    critDamagePercent += stats.critDamagePercent || 0;
 
     if (slotId === 'weapon') weaponElement = item.element || DEFAULT_WEAPON_ELEMENT;
 
@@ -94,8 +96,9 @@ export function computePlayerStats(state, currentHp = null) {
   }
 
   // Full set: all 6 slots (SLOTS = weapon + the 5 defense pieces) equipped
-  // with items from the very same boss. Its level is the lowest effective
-  // level among those 6 pieces — see computeSetBonus in data/items.js.
+  // with items from the very same zone/boss. Its level is the lowest
+  // effective level among those 6 pieces — see computeSetBonus in
+  // data/items.js.
   let activeSetBonus = null;
   for (const [bossId, levels] of Object.entries(equippedByBoss)) {
     if (levels.length !== SLOTS.length) continue;
@@ -118,10 +121,9 @@ export function computePlayerStats(state, currentHp = null) {
   }
 
   function addStat(stat, total) {
-    if (stat === 'clickFlat') clickFlat += total;
-    else if (stat === 'dpsFlat') dpsFlat += total;
-    else if (stat === 'clickPercent') clickPercent += total;
+    if (stat === 'dpsFlat') dpsFlat += total;
     else if (stat === 'dpsPercent') dpsPercent += total;
+    else if (stat === 'attackSpeedPercent') attackSpeedPercent += total;
     else if (stat === 'goldPercent') goldPercent += total;
     else if (stat === 'dropPercent') dropPercent += total;
     else if (stat === 'hpFlat') hpFlat += total;
@@ -140,8 +142,8 @@ export function computePlayerStats(state, currentHp = null) {
 
   // Card specials that aren't a plain stat sum — each reads its own count
   // from specialCounts (0 if that card isn't socketed at all) and folds its
-  // effect into clickPercent/dpsPercent, or exposes a proc chance/multiplier
-  // on the returned stats object for combat.js/main.js to act on directly.
+  // effect into dpsPercent, or exposes a proc chance/multiplier on the
+  // returned stats object for combat.js/main.js to act on directly.
   const colhedorCount = specialCounts.hp_threshold_dps || 0;
   if (colhedorCount > 0 && hpFraction >= 0.8) {
     dpsPercent += 45 * colhedorCount;
@@ -149,8 +151,7 @@ export function computePlayerStats(state, currentHp = null) {
 
   const grommukCount = specialCounts.same_element_set || 0;
   if (grommukCount > 0 && equippedSlotCount === SLOTS.length && equippedElements.size === 1) {
-    dpsPercent += 30 * grommukCount;
-    clickPercent += 30 * grommukCount;
+    dpsPercent += 60 * grommukCount;
   }
 
   const vulkarionCount = specialCounts.low_hp_dps_scale || 0;
@@ -160,25 +161,24 @@ export function computePlayerStats(state, currentHp = null) {
 
   const goldDoubleChance = Math.min(100, 20 * (specialCounts.gold_double_chance || 0));
   const bossReprocChance = Math.min(100, 10 * (specialCounts.boss_kill_reproc || 0));
-  const solkaiserCount = specialCounts.click_counter_burst || 0;
+  const solkaiserCount = specialCounts.hit_counter_burst || 0;
   // More copies make the burst land sooner rather than hit harder — see
-  // resolveClickHit() in systems/combat.js, which is what actually reads
-  // these two.
-  const clickBurstEveryN = solkaiserCount > 0 ? Math.max(1, Math.round(50 / solkaiserCount)) : null;
-  const clickBurstDamageMult = solkaiserCount > 0 ? 6 : null;
+  // resolveHit() in systems/combat.js, which is what actually reads these.
+  const hitBurstEveryN = solkaiserCount > 0 ? Math.max(1, Math.round(50 / solkaiserCount)) : null;
+  const hitBurstDamageMult = solkaiserCount > 0 ? 6 : null;
 
-  const clickDamage = clickFlat * (1 + clickPercent / 100);
   const dps = dpsFlat * (1 + dpsPercent / 100);
+  const attackSpeedPerSec = Math.max(0.05, 1 * (1 + attackSpeedPercent / 100));
   const goldMult = 1 + goldPercent / 100;
   const dropMult = 1 + dropPercent / 100;
   const critChance = Math.max(0, Math.min(100, BASE_CRIT_CHANCE + critChancePercent));
   const critDamage = Math.max(0, BASE_CRIT_DAMAGE + critDamagePercent);
 
   return {
-    clickDamage, dps, goldMult, dropMult,
+    dps, attackSpeedPerSec, goldMult, dropMult,
     maxHp, armor, weaponElement,
     critChance, critDamage, activeSetBonus,
-    goldDoubleChance, bossReprocChance, clickBurstEveryN, clickBurstDamageMult,
+    goldDoubleChance, bossReprocChance, hitBurstEveryN, hitBurstDamageMult,
   };
 }
 
