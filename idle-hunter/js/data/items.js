@@ -302,34 +302,6 @@ BOSSES.forEach((boss, tier) => {
   });
 });
 
-// ---------------------------------------------------------------------
-// Bônus de set: equipar as 10 peças da mesma zona concede um pequeno extra
-// por cima de cada peça — um pouco de HP, um pouco de armadura, e um pouco
-// de chance/dano crítico. Escala com "o nível do set": o MENOR nível efetivo
-// de enhance entre as 10 peças equipadas (0-5 pra +1..+5, 6 pra Rank
-// Master) — upar todas as peças juntas é o que compensa, não só uma.
-// ---------------------------------------------------------------------
-export const SET_BONUS_HP_MULT = 3;
-export const SET_BONUS_ARMOR_MULT = 0.8;
-export const SET_BONUS_CRIT_CHANCE_BASE = 2;
-export const SET_BONUS_CRIT_CHANCE_PER_LEVEL = 0.5;
-export const SET_BONUS_CRIT_DAMAGE_BASE = 5;
-export const SET_BONUS_CRIT_DAMAGE_PER_LEVEL = 2;
-export const SET_BONUS_LEVEL_SCALE = 0.15;
-
-export function computeSetBonus(zoneIndex, setLevel) {
-  const boss = BOSSES[zoneIndex];
-  if (!boss) return null;
-  const base = tierBase(zoneIndex);
-  const growth = 1 + setLevel * SET_BONUS_LEVEL_SCALE;
-  return {
-    hpFlat: Math.round(base * SET_BONUS_HP_MULT * growth),
-    armorFlat: Math.round(base * SET_BONUS_ARMOR_MULT * growth),
-    critChancePercent: Math.round((SET_BONUS_CRIT_CHANCE_BASE + setLevel * SET_BONUS_CRIT_CHANCE_PER_LEVEL) * 10) / 10,
-    critDamagePercent: Math.round((SET_BONUS_CRIT_DAMAGE_BASE + setLevel * SET_BONUS_CRIT_DAMAGE_PER_LEVEL) * 10) / 10,
-  };
-}
-
 export function getItem(itemId) {
   return ITEMS.find((i) => i.id === itemId) || null;
 }

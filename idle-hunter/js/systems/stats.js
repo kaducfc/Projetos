@@ -1,6 +1,4 @@
-import { getItem, getEnhancedStats, SLOTS, ENHANCE_MAX_LEVEL, computeSetBonus } from '../data/items.js';
-// SLOTS.length is now 10 (see data/items.js) — a full set means all 10
-// physical slots equipped from the same zone.
+import { getItem, getEnhancedStats, SLOTS } from '../data/items.js';
 import { UPGRADES } from '../data/upgrades.js';
 import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard, CARD_DAMAGE_BONUS } from '../data/cards.js';
@@ -15,18 +13,8 @@ const BASE_MAX_HP = 100;
 const BASE_ARMOR = 0;
 const DEFAULT_WEAPON_ELEMENT = 'neutro';
 
-// Every hit has this baseline chance to crit for this much extra damage,
-// before the full-set bonus (see computeSetBonus in data/items.js —
-// currently the only source of a crit bonus) adds more.
 const BASE_CRIT_CHANCE = 5;
 const BASE_CRIT_DAMAGE = 50;
-
-/// Effective level for set-bonus purposes: 0-5 for +1..+5, ENHANCE_MAX_LEVEL+1
-/// (6) for Rank Master — so a Rank Master piece always outranks a merely
-/// maxed +5 one when it's the weakest link in the set.
-function effectiveLevel(invEntry) {
-  return invEntry.isMaster ? ENHANCE_MAX_LEVEL + 1 : (invEntry.enhanceLevel || 0);
-}
 
 /// currentHp: the caller's current HP in whatever fight this is for (main
 /// combat, Torre Infinita — each has its own separate pool, see main.js).
@@ -59,9 +47,6 @@ export function computePlayerStats(state, currentHp = null) {
   let destrezaTotal = 0;
   let inteligenciaTotal = 0;
 
-  // Tracks each equipped slot's zoneIndex + effective level, so a full-set
-  // bonus (see below) can be detected without a second inventory scan.
-  const equippedByZone = {};
   // How many equipped cards carry each special.id — most specials scale
   // their magnitude linearly with this count (see applySpecials below).
   const specialCounts = {};
@@ -106,29 +91,6 @@ export function computePlayerStats(state, currentHp = null) {
 
     equippedSlotCount += 1;
     equippedElements.add(item.element || DEFAULT_WEAPON_ELEMENT);
-
-    if (item.zoneIndex != null) {
-      if (!equippedByZone[item.zoneIndex]) equippedByZone[item.zoneIndex] = [];
-      equippedByZone[item.zoneIndex].push(effectiveLevel(invEntry));
-    }
-  }
-
-  // Full set: all 10 physical slots equipped with items from the very same
-  // zone (ring1/ring2 can be the same item repeated — see equipItem in
-  // systems/equipment.js). Its level is the lowest effective level among
-  // those 10 pieces — see computeSetBonus in data/items.js.
-  let activeSetBonus = null;
-  for (const [zoneIndexStr, levels] of Object.entries(equippedByZone)) {
-    if (levels.length !== SLOTS.length) continue;
-    const setLevel = Math.min(...levels);
-    const bonus = computeSetBonus(Number(zoneIndexStr), setLevel);
-    if (!bonus) continue;
-    hpFlat += bonus.hpFlat;
-    armorFlat += bonus.armorFlat;
-    critChancePercent += bonus.critChancePercent;
-    critDamagePercent += bonus.critDamagePercent;
-    activeSetBonus = { zoneIndex: Number(zoneIndexStr), setLevel, ...bonus };
-    break; // only one zone can occupy all 10 slots at once
   }
 
   for (const upgrade of UPGRADES) {
@@ -195,7 +157,7 @@ export function computePlayerStats(state, currentHp = null) {
   return {
     dps, attackSpeedPerSec, goldMult, dropMult,
     maxHp, armor, weaponElement,
-    critChance, critDamage, activeSetBonus,
+    critChance, critDamage,
     goldDoubleChance, bossReprocChance, hitBurstEveryN, hitBurstDamageMult,
     forca: forcaTotal, destreza: destrezaTotal, inteligencia: inteligenciaTotal,
   };

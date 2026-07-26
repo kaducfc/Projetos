@@ -309,18 +309,6 @@ function elementFilterRowHtml(filterElement) {
   `).join('')}</div>`;
 }
 
-function setBonusBannerHtml(state) {
-  const { activeSetBonus } = computePlayerStats(state);
-  if (!activeSetBonus) return '';
-  const boss = BOSSES[activeSetBonus.zoneIndex];
-  const label = activeSetBonus.setLevel > ENHANCE_MAX_LEVEL ? 'Rank Master' : `nível +${activeSetBonus.setLevel}`;
-  return `<div class="set-bonus-banner">
-    ✨ Set completo de ${boss ? boss.name : `Zona ${activeSetBonus.zoneIndex + 1}`} ativo (${label}): +${formatNumber(activeSetBonus.hpFlat)} Vida ·
-    +${formatNumber(activeSetBonus.armorFlat)} Armadura · +${formatPercent(activeSetBonus.critChancePercent)} Crítico ·
-    +${formatPercent(activeSetBonus.critDamagePercent)} Dano Crítico
-  </div>`;
-}
-
 // Paper-doll: a square card with the character art as its background and
 // the 10 equip slots overlaid on top of it in 2 columns of 5 — armas +
 // cabeça/peito no lado esquerdo, calça/mãos/botas/anéis/colar no direito.
@@ -402,7 +390,6 @@ function equipRingContentHtml(state, filterElement = null) {
         ${equipStatsBoxHtml(state)}
       </div>
       ${attributeTotalsHtml(state)}
-      ${setBonusBannerHtml(state)}
       <div class="equip-inventory-header">Inventário</div>
       ${elementFilterRowHtml(filterElement)}
       <div class="equip-inventory-grid">${inventoryHtml}</div>
