@@ -1,41 +1,15 @@
-import { getItem, ENHANCE_MAX_LEVEL } from '../data/items.js';
+import { getItem, ENHANCE_MAX_LEVEL, rollDroppedItem } from '../data/items.js';
 
-export function canCraft(state, itemId) {
-  const item = getItem(itemId);
-  if (!item) return false;
-  // unlockStage is null for legacy (pre-boss-roster) items, which are no
-  // longer offered for crafting at all — see data/items.js.
-  if (item.unlockStage == null || state.maxStage < item.unlockStage) return false;
-  if (state.gold < item.goldCost) return false;
-  for (const [matId, qty] of Object.entries(item.materialCost)) {
-    if ((state.materials[matId] || 0) < qty) return false;
-  }
-  return true;
-}
-
-export function hasCraftedItem(state, itemId) {
-  return state.inventory.some((i) => i.itemId === itemId);
-}
-
-/// Crafts and auto-equips the item (replacing whatever was in that slot).
-/// Returns the new inventory uid, or null if requirements weren't met.
-export function craftItem(state, itemId) {
-  if (!canCraft(state, itemId)) return null;
-  const item = getItem(itemId);
-
-  state.gold -= item.goldCost;
-  for (const [matId, qty] of Object.entries(item.materialCost)) {
-    state.materials[matId] -= qty;
-  }
-
+/// Adiciona ao inventário um item recém-dropado (ver
+/// systems/combat.js rollItemDropOnKill / data/items.js rollDroppedItem) —
+/// não craft, não custo: o item já nasce pronto, sem auto-equipar (o
+/// jogador equipa manualmente, mesmo fluxo de sempre via equipItem). Retorna
+/// o novo uid, ou null se a rolagem de drop falhar por algum motivo.
+export function addDroppedItem(state, zoneIndex, slotId) {
+  const rolled = rollDroppedItem(zoneIndex, slotId);
+  if (!rolled) return null;
   const uid = state.nextUid++;
-  // cardIds: every crafted piece starts with 1 card slot already unlocked
-  // (cardIds[0]) — no separate unlock step anymore. Reaching Rank Master
-  // grants a 2nd slot (see upgradeToMaster/ensureCardIds below).
-  // enhanceLevel/isMaster: this specific instance's upgrade progress, see
-  // enhanceItem()/upgradeToMaster() below.
-  state.inventory.push({ uid, itemId, cardIds: [null], enhanceLevel: 0, isMaster: false });
-  state.equipped[item.slotId] = uid;
+  state.inventory.push({ uid, ...rolled });
   return uid;
 }
 
@@ -172,12 +146,12 @@ export function upgradeToMaster(state, uid) {
   return true;
 }
 
-/// Every material this instance has consumed so far: the initial craft
-/// cost, plus one enhanceCost[i] per level already bought, plus the Rank
-/// Master cost if it went through that upgrade. Doesn't include goldCost —
-/// destroying refunds materials only, not gold.
+/// Every material this instance has consumed so far via enhance/Master
+/// (there's no craft cost anymore — the item itself was a free drop): one
+/// enhanceCost[i] per level already bought, plus the Rank Master cost if it
+/// went through that upgrade.
 function materialsSpentOn(item, entry) {
-  const spent = { ...item.materialCost };
+  const spent = {};
   for (let i = 0; i < entry.enhanceLevel; i++) {
     const step = item.enhanceCost[i];
     spent[step.matId] = (spent[step.matId] || 0) + step.qty;
@@ -193,8 +167,8 @@ function materialsSpentOn(item, entry) {
 export const DESTROY_REFUND_RATE = 0.8;
 
 /// Destroys an inventory instance, refunding DESTROY_REFUND_RATE (80%) of
-/// every material it consumed across crafting and every enhance/master
-/// upgrade since (rounded down per material). Any socketed cards are
+/// every material it consumed across enhance/master upgrades so far
+/// (rounded down per material). Any socketed cards are
 /// unsocketed back into state.cards first — see unsocketCard() above.
 /// Unequips the slot if this was the equipped piece. Returns the refunded
 /// {materialId: qty} map, or null if uid doesn't exist.

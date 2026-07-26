@@ -1,12 +1,13 @@
-import { isBossStage, BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo } from '../data/monsters.js';
-import { getSlot, getItemsForBoss, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
+import { BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo, ZONES } from '../data/monsters.js';
+import { getSlot, getItem, getEnhancedStats, getEnhanceLabel, getRarity, ENHANCE_MAX_LEVEL } from '../data/items.js';
 import { UPGRADES } from '../data/upgrades.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE, ELEMENTS } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
-import { canCraft, canEnhance, canUpgradeToMaster, ensureCardIds, maxCardSlots } from '../systems/crafting.js';
+import { canEnhance, canUpgradeToMaster, ensureCardIds } from '../systems/crafting.js';
 import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
+import { isZoneUnlocked, isBossUnlocked, xpToNextLevel } from '../systems/leveling.js';
 import { getEventWindow, getTowerWindow, TOWER_MAX_LEVEL, getGoldMineWindow, GOLDMINE_BOSS_HP } from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
 import { getTowerMonster } from '../systems/tower.js';
@@ -40,14 +41,17 @@ function elementBadgeHtml(elementId) {
 
 
 const STAT_LABELS = {
-  clickFlat: (v) => `+${formatNumber(v)} Dano de Clique`,
   dpsFlat: (v) => `+${formatNumber(v)} DPS`,
-  clickPercent: (v) => `+${formatPercent(v)} Dano de Clique`,
   dpsPercent: (v) => `+${formatPercent(v)} DPS`,
+  attackSpeedPercent: (v) => `+${formatPercent(v)} Velocidade de Ataque`,
   goldPercent: (v) => `+${formatPercent(v)} Ouro`,
   dropPercent: (v) => `+${formatPercent(v)} Chance de Material`,
   hpFlat: (v) => `+${formatNumber(v)} Vida`,
   armorFlat: (v) => `+${formatNumber(v)} Armadura`,
+  hpPercent: (v) => `+${formatPercent(v)} Vida`,
+  armorPercent: (v) => `+${formatPercent(v)} Armadura`,
+  critChancePercent: (v) => `+${formatPercent(v)} Chance Crítica`,
+  critDamagePercent: (v) => `+${formatPercent(v)} Dano Crítico`,
 };
 
 function formatStatsLines(stats) {
@@ -60,16 +64,27 @@ export function renderTopBar(state) {
   document.getElementById('gold-value').textContent = formatNumber(state.gold);
   document.getElementById('cash-value').textContent = formatNumber(state.cash);
   document.getElementById('event-currency-value').textContent = formatNumber(state.eventCurrency);
-  document.getElementById('stage-value').textContent = state.maxStage;
+  document.getElementById('level-value').textContent = state.hunterLevel || 1;
+}
+
+/// Nível/XP do caçador — só libera zonas/chefes por enquanto (ver
+/// systems/leveling.js), mostrado como uma barra de progresso simples.
+export function renderHunterLevel(state) {
+  const level = state.hunterLevel || 1;
+  const xp = state.hunterXp || 0;
+  const next = xpToNextLevel(level);
+  document.getElementById('hunter-level-label').textContent = `Nível de Caça ${level}`;
+  const pct = next > 0 ? Math.max(0, Math.min(100, (xp / next) * 100)) : 0;
+  document.getElementById('hunter-xp-bar-fill').style.width = `${pct}%`;
+  document.getElementById('hunter-xp-bar-text').textContent = `${formatNumber(xp)} / ${formatNumber(next)}`;
 }
 
 export function renderCombatStats(stats, monster) {
-  document.getElementById('click-damage-value').textContent = formatNumber(stats.clickDamage);
+  document.getElementById('attack-speed-value').textContent = `${stats.attackSpeedPerSec.toFixed(2)}/s`;
   document.getElementById('dps-value').textContent = formatNumber(stats.dps);
   document.getElementById('armor-value').textContent = formatNumber(stats.armor);
   document.getElementById('crit-chance-value').textContent = formatPercent(stats.critChance);
   document.getElementById('crit-damage-value').textContent = formatPercent(stats.critDamage);
-  document.getElementById('attack-damage-value').textContent = `Dano: ${formatNumber(stats.clickDamage)}`;
 
   const weaponEl = document.getElementById('weapon-element-value');
   weaponEl.innerHTML = elementBadgeHtml(stats.weaponElement);
@@ -115,33 +130,147 @@ const SCENE_IMAGES = [
   'assets/ui/scenes/scene3.png',
 ];
 
+// Idle-loop sprite animation (see monsters.js's `animFrames` on a boss/weak
+// entry). renderMonster() runs every game tick (100ms, see main.js's
+// tick()) — rebuilding the sprite's markup every single call would reset any
+// running animation right back to frame 0 before it ever visibly advanced.
+// So the sprite's innerHTML (and the frame-cycling interval) is only
+// (re)built when the monster identity actually changes; same-monster
+// re-renders leave the sprite element — and its animation — untouched.
+//
+// 150ms/frame, plain src swap (no crossfade) is the established standard
+// for every monster's idle animation, set once here and shared by all of
+// them — tuned and locked in on the Chispim reference (assets/chispim/anim/,
+// 4 frames). Don't tune this per-monster; if a future set of frames feels
+// off at this speed, the frames themselves (count/similarity) are the
+// thing to revisit, not this constant.
+const MONSTER_IDLE_FRAME_MS = 150;
+let currentMonsterSpriteKey = null;
+let monsterIdleAnimTimer = null;
+
+function stopMonsterIdleAnim() {
+  if (monsterIdleAnimTimer) {
+    clearInterval(monsterIdleAnimTimer);
+    monsterIdleAnimTimer = null;
+  }
+}
+
+function startMonsterIdleAnim(frames) {
+  stopMonsterIdleAnim();
+  if (!frames || frames.length < 2) return;
+  const img = document.querySelector('#monster-sprite img');
+  if (!img) return;
+  let i = 0;
+  monsterIdleAnimTimer = setInterval(() => {
+    i = (i + 1) % frames.length;
+    img.src = frames[i];
+  }, MONSTER_IDLE_FRAME_MS);
+}
+
 export function renderMonster(state, monster) {
-  const boss = isBossStage(state.stage);
+  if (!monster) return;
+  const boss = monster.isBoss;
 
-  // Weak-monster stages (1-99) show one of the 3 real scene backgrounds,
-  // picked once per spawn (see ensureMonsterSpawned in systems/combat.js —
-  // never re-picked here, or the backdrop would flicker every render).
-  // Boss stages have no scene art yet, so they fall back to the plain CSS
-  // gradient backdrop (see #monster-area in style.css) by clearing the
-  // inline background-image.
+  // Weak monsters show one of the 3 real scene backgrounds, picked once per
+  // spawn (see ensureMonsterSpawned in systems/combat.js — never re-picked
+  // here, or the backdrop would flicker every render). Bosses use their own
+  // `scene` when they have one (see monsters.js), otherwise fall back to
+  // the plain CSS gradient backdrop (see #monster-area in style.css) by
+  // clearing the inline background.
   const monsterArea = document.getElementById('monster-area');
-  monsterArea.style.backgroundImage = state.sceneIndex != null
-    ? `url('${SCENE_IMAGES[state.sceneIndex]}')`
-    : '';
+  const bossScene = boss ? monster.scene : null;
+  monsterArea.style.backgroundImage = bossScene
+    ? `url('${bossScene}')`
+    : monster.sceneIndex != null
+      ? `url('${SCENE_IMAGES[monster.sceneIndex]}')`
+      : '';
+  // Per-boss override of the default `center 40%` (see #monster-area in
+  // style.css) — lets a specific scene's focal point (e.g. a ground magic
+  // circle) be nudged to line up with the monster sprite sitting on top of
+  // it. Cleared back to '' (falls back to the stylesheet default) for
+  // anything without its own scenePosition.
+  monsterArea.style.backgroundPosition = bossScene ? (monster.scenePosition || '') : '';
 
-  document.getElementById('monster-sprite').innerHTML = iconMarkup(monster.image, monster.emoji, monster.name);
+  const spriteKey = monster.bossId || monster.weakMonsterId || monster.name;
+  if (spriteKey !== currentMonsterSpriteKey) {
+    currentMonsterSpriteKey = spriteKey;
+    const sprite = document.getElementById('monster-sprite');
+    const initialImage = (monster.animFrames && monster.animFrames[0]) || monster.image;
+    sprite.innerHTML = iconMarkup(initialImage, monster.emoji, monster.name);
+    startMonsterIdleAnim(monster.animFrames);
+    // Per-boss size boost (see monsters.js's `spriteScale`) via font-size
+    // — not transform:scale, which would fight the .hit CSS animation
+    // (also transform-based) every time it fires and snap back to 1x for
+    // the animation's 0.12s duration. Sizing off font-size composes
+    // cleanly since #monster-sprite img is already 1em/1em.
+    sprite.style.fontSize = monster.spriteScale && monster.spriteScale !== 1
+      ? `${92 * monster.spriteScale}px`
+      : '';
+  }
   document.getElementById('monster-name').innerHTML =
     `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
-  document.getElementById('stage-label').textContent = `Estágio ${state.stage}`;
 
   const hp = Math.max(0, state.monsterHp ?? monster.maxHp);
   const pct = Math.max(0, Math.min(100, (hp / monster.maxHp) * 100));
   document.getElementById('hp-bar-fill').style.width = `${pct}%`;
   document.getElementById('enemy-hp-value').textContent = `${formatNumber(hp)} / ${formatNumber(monster.maxHp)}`;
+}
 
-  document.getElementById('stage-prev').disabled = state.stage <= 1;
-  document.getElementById('stage-next').disabled = state.stage >= state.maxStage;
-  document.getElementById('stage-max').disabled = state.stage >= state.maxStage;
+/// Nenhum monstro selecionado ainda (ex: save novo com selectedMonsters
+/// esvaziado manualmente) — mostra um convite pra abrir a seleção em vez de
+/// uma tela de combate quebrada.
+export function renderNoMonsterSelected() {
+  document.getElementById('monster-name').textContent = '';
+  document.getElementById('hp-bar-fill').style.width = '0%';
+  document.getElementById('enemy-hp-value').textContent = '—';
+  const sprite = document.getElementById('monster-sprite');
+  currentMonsterSpriteKey = null;
+  stopMonsterIdleAnim();
+  sprite.innerHTML = '❓';
+  sprite.style.fontSize = '';
+}
+
+// ---------------------------------------------------------------
+// Seleção de monstros (estilo IdleArc): até 4, de qualquer zona liberada,
+// escolhidos pelo jogador — só esses aparecem sorteados na Caça (ver
+// systems/combat.js ensureMonsterSpawned/setSelectedMonsters). pendingSelection
+// é o estado de edição (main.js), só vira state.selectedMonsters de fato ao
+// confirmar.
+// ---------------------------------------------------------------
+function monsterChipHtml(zoneIndex, kind, monsterId, name, emoji, image, pendingSelection) {
+  const selected = pendingSelection.some((m) => m.zoneIndex === zoneIndex && m.kind === kind && m.monsterId === monsterId);
+  return `<button class="monster-select-chip ${selected ? 'selected' : ''} ${kind === 'boss' ? 'boss-chip' : ''}"
+    data-select-monster-zone="${zoneIndex}" data-select-monster-kind="${kind}" data-select-monster-id="${monsterId}">
+    <span class="icon">${iconMarkup(image, emoji, name)}</span> ${name}
+  </button>`;
+}
+
+function monsterSelectZoneHtml(state, zone, pendingSelection) {
+  if (!isZoneUnlocked(state, zone.index)) {
+    return `<div class="monster-select-zone locked">
+      <div class="monster-select-zone-title">🔒 ${zone.name} <span class="zone-req">(nível ${zone.zoneUnlockLevel})</span></div>
+    </div>`;
+  }
+  const weakChips = zone.weakMonsters.map((m) => monsterChipHtml(zone.index, 'weak', m.id, m.name, m.emoji, m.image, pendingSelection)).join('');
+  const bossChip = isBossUnlocked(state, zone.index)
+    ? monsterChipHtml(zone.index, 'boss', zone.boss.id, zone.boss.name, zone.boss.emoji, zone.boss.image, pendingSelection)
+    : `<button class="monster-select-chip locked" disabled title="Nível ${zone.bossUnlockLevel} necessário">🔒 ${zone.boss.name}</button>`;
+  return `<div class="monster-select-zone">
+    <div class="monster-select-zone-title">${zone.name}</div>
+    <div class="monster-select-chips">${weakChips}${bossChip}</div>
+  </div>`;
+}
+
+export function showMonsterSelectModal(state, pendingSelection) {
+  const zonesHtml = ZONES.map((zone) => monsterSelectZoneHtml(state, zone, pendingSelection)).join('');
+  showModal('🎯 Selecionar Monstros', `
+    <p style="font-size:12px;color:var(--text-dim);">Escolha até 4 monstros de qualquer zona liberada — um deles é sorteado aleatoriamente a cada caçada.</p>
+    <div class="monster-select-count">Selecionados: <strong>${pendingSelection.length}/4</strong></div>
+    <div class="monster-select-list">${zonesHtml}</div>
+    <div class="modal-action-row">
+      <button class="modal-action-btn" data-confirm-monster-selection>Confirmar</button>
+    </div>
+  `);
 }
 
 /// remainingMs === null hides the timer (not fighting an unconquered boss).
@@ -154,7 +283,7 @@ export function renderBossTimer(remainingMs) {
   const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
   el.classList.remove('hidden');
   el.classList.toggle('urgent', seconds <= 10);
-  el.textContent = `⏱ ${seconds}s para derrotar o chefe!`;
+  el.textContent = `⏱ ${seconds}s`;
 }
 
 // All 6 equip slots, shown as a single grid of square tiles (no paper-doll
@@ -183,19 +312,14 @@ function elementFilterRowHtml(filterElement) {
   `).join('')}</div>`;
 }
 
-const FORGE_SUBTABS = [
-  { id: 'recipes', label: '🔨 Receitas' },
-  { id: 'materials', label: '🎒 Materiais' },
-];
-
-export function renderForgeTab(state, activeForgeSubTab = 'recipes', expandedForgeBosses = new Set()) {
+// Sem craft: a antiga aba "Forja" (receitas) virou só o visualizador de
+// Materiais (equipamentos agora dropam prontos dos monstros — ver
+// data/items.js rollDroppedItem — o enhance/Master/socket de carta continua
+// no popup de detalhe do item, aberto pela aba Equipamentos).
+export function renderForgeTab(state) {
   const container = document.getElementById('tab-forge');
-  const banner = `<img class="section-banner-img" src="assets/ui/titles/forja.png" alt="Forja">`;
-  const subnav = `<div class="inner-subnav">${FORGE_SUBTABS.map((t) => `
-    <button class="inner-subtab-btn ${activeForgeSubTab === t.id ? 'active' : ''}" data-forge-subtab="${t.id}">${t.label}</button>
-  `).join('')}</div>`;
-  const body = activeForgeSubTab === 'materials' ? materialsContentHtml(state) : forgeContentHtml(state, expandedForgeBosses);
-  container.innerHTML = banner + subnav + body;
+  const banner = `<img class="section-banner-img" src="assets/ui/titles/forja.png" alt="Materiais">`;
+  container.innerHTML = banner + materialsContentHtml(state);
 }
 
 function setBonusBannerHtml(state) {
@@ -229,7 +353,7 @@ const STATS_ROW_POSITIONS = [18.2, 30.8, 42.9, 55.0, 67.1, 79.2];
 function equipStatsBoxHtml(state) {
   const stats = computePlayerStats(state);
   const rows = [
-    ['⚔️ Dano de Clique', formatNumber(stats.clickDamage)],
+    ['⚡ Velocidade de Ataque', `${stats.attackSpeedPerSec.toFixed(2)}/s`],
     ['💥 DPS', formatNumber(stats.dps)],
     ['🛡️ Armadura', formatNumber(stats.armor)],
     ['🎯 Taxa de Crítico', formatPercent(stats.critChance)],
@@ -259,7 +383,7 @@ function equipRingContentHtml(state, filterElement = null) {
     ? filtered.map((entry) => inventoryTileHtml(state, entry)).join('')
     : state.inventory.length
       ? `<p class="empty-slot">Nenhum item desse elemento.</p>`
-      : `<p class="empty-slot">Nada craftado ainda. Vá até a aba Forjar.</p>`;
+      : `<p class="empty-slot">Nenhum item ainda. Derrote monstros na Caça para conseguir equipamentos.</p>`;
 
   const portraitStyle = PLAYER_PORTRAIT_IMAGE ? `style="background-image: url('${PLAYER_PORTRAIT_IMAGE}')"` : '';
 
@@ -281,6 +405,14 @@ function equipRingContentHtml(state, filterElement = null) {
   `;
 }
 
+// Small "N cards socketed" badge, bottom-left of an equipment icon — see
+// .card-count-badge in style.css. Mirrors .mini-badge's enhance-level
+// badge (bottom-right) but only shows once at least one card is socketed.
+function cardCountBadgeHtml(entry) {
+  const count = ensureCardIds(entry).filter(Boolean).length;
+  return count > 0 ? `<span class="card-count-badge">🃏 ${count}</span>` : '';
+}
+
 function slotIconHtml(state, slot) {
   const equipped = getEquippedEntry(state, slot.id);
   const icon = equipped
@@ -289,9 +421,14 @@ function slotIconHtml(state, slot) {
   const badge = equipped
     ? `<span class="mini-badge ${equipped.entry.isMaster ? 'master' : ''}">${getEnhanceLabel(equipped.entry.enhanceLevel, equipped.entry.isMaster)}</span>`
     : '';
-  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}" data-equip-slot="${slot.id}" title="${slot.name}">
+  const rarity = equipped ? getRarity(equipped.entry.rarityId) : null;
+  const rarityClass = rarity ? ' has-rarity' : '';
+  const rarityStyle = rarity ? ` style="--rarity-color:${rarity.color};"` : '';
+  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}${rarityClass}" data-equip-slot="${slot.id}" title="${slot.name}"${rarityStyle}>
+
     <span class="icon">${icon}</span>
     ${badge}
+    ${equipped ? cardCountBadgeHtml(equipped.entry) : ''}
   </button>`;
 }
 
@@ -299,9 +436,11 @@ function inventoryTileHtml(state, entry) {
   const item = getItem(entry.itemId);
   const isEquipped = state.equipped[item.slotId] === entry.uid;
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
-  return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}">
+  const rarity = getRarity(entry.rarityId);
+  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''}" style="--rarity-color:${rarity.color};" data-equip-item="${entry.uid}" title="${item.name}">
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
+    ${cardCountBadgeHtml(entry)}
   </button>`;
 }
 
@@ -315,7 +454,7 @@ export function showEquipSlotModal(state, slotId) {
     showModal(`${slot.emoji} ${slot.name}`, `
       <div class="item-detail">
         <div class="item-detail-icon">${slot.emoji}</div>
-        <p style="color:var(--text-dim); font-size:12.5px;">Nenhum item equipado neste slot ainda. Crafte um na aba Forjar.</p>
+        <p style="color:var(--text-dim); font-size:12.5px;">Nenhum item equipado neste slot ainda. Derrote monstros para conseguir um.</p>
       </div>
     `);
   }
@@ -338,8 +477,9 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   const item = getItem(entry.itemId);
   const slot = getSlot(item.slotId);
-  const enhancedStats = getEnhancedStats(item, entry.enhanceLevel, entry.isMaster);
+  const enhancedStats = getEnhancedStats(entry);
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
+  const rarity = getRarity(entry.rarityId);
   const isEquipped = state.equipped[item.slotId] === uid;
 
   const resistanceLine = slot.kind === 'defense'
@@ -356,8 +496,9 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
 
   return `
     <div class="item-detail">
-      <div class="item-detail-icon">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
+      <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
       ${cardSlotsHtml}
@@ -454,62 +595,6 @@ function enhancePanelHtml(state, uid, entry, item) {
   </div>`;
 }
 
-// Spoiler control: show every unlocked boss, plus exactly one preview of
-// whatever comes next (so there's always something to look forward to)
-// — everything further out stays a complete surprise instead of listing
-// every future boss's name/element/art up front.
-function forgeContentHtml(state, expandedForgeBosses) {
-  const nextLockedIndex = BOSSES.findIndex((b) => b.stage > state.maxStage);
-  const visibleBosses = nextLockedIndex === -1 ? BOSSES : BOSSES.slice(0, nextLockedIndex + 1);
-  return visibleBosses.map((boss) => bossGroupHtml(state, boss, expandedForgeBosses)).join('');
-}
-
-function bossGroupHtml(state, boss, expandedForgeBosses) {
-  const unlocked = state.maxStage >= boss.stage;
-  const header = `<h3><span class="icon">${iconMarkup(boss.image, boss.emoji, boss.name)}</span> ${boss.name} ${elementBadgeHtml(boss.element)} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">(Chefe do Estágio ${boss.stage})</span></h3>`;
-
-  if (!unlocked) {
-    return `<div class="family-group">
-      ${header}
-      <p style="color:var(--text-dim); font-size:12px;">🔒 Alcance o estágio ${boss.stage} para desbloquear.</p>
-    </div>`;
-  }
-
-  const items = getItemsForBoss(boss.id);
-  const expanded = expandedForgeBosses.has(boss.id);
-
-  return `<div class="family-group">
-    <div class="family-group-header">
-      ${header}
-      <button class="forge-toggle-btn" data-toggle-forge="${boss.id}">${expanded ? '▲ Recolher' : '▼ Expandir'}</button>
-    </div>
-    ${expanded ? `<div class="recipe-grid">${items.map((item) => recipeCardHtml(state, item)).join('')}</div>` : ''}
-  </div>`;
-}
-
-function recipeCardHtml(state, item) {
-  const craftable = canCraft(state, item.id);
-  const equipped = state.equipped[item.slotId] && state.inventory.find((i) => i.uid === state.equipped[item.slotId])?.itemId === item.id;
-
-  const costLines = Object.entries(item.materialCost).map(([matId, qty]) => {
-    const matInfo = findMaterialInfo(matId);
-    const have = state.materials[matId] || 0;
-    const met = have >= qty;
-    return `<div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(qty)}</span></div>`;
-  }).join('');
-
-  const goldMet = state.gold >= item.goldCost;
-
-  return `<div class="recipe-card ${equipped ? 'equipped' : ''}">
-    <div class="recipe-header"><span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span><span class="name">${item.name}</span></div>
-    <div class="element-resistance">${elementBadgeHtml(item.element)}</div>
-    <div class="recipe-stats">${formatStatsLines(item.stats).join('<br>')}</div>
-    <div class="recipe-cost"><span>${GOLD_ICON} Ouro</span><span class="${goldMet ? 'met' : 'missing'}">${formatNumber(state.gold)}/${formatNumber(item.goldCost)}</span></div>
-    ${costLines}
-    <button data-craft="${item.id}" ${craftable ? '' : 'disabled'}>${equipped ? 'Craftado (equipado)' : 'Craftar'}</button>
-  </div>`;
-}
-
 // Upgrade bonuses are always `level * valuePerLevel` — just formatted per
 // stat type (percent stats get a %, everything else is flat).
 function formatUpgradeBonus(stat, value) {
@@ -541,7 +626,7 @@ function upgradeCardHtml(state, upgrade) {
   const affordable = state.gold >= cost;
 
   return `<div class="upgrade-card">
-    <span class="icon">${upgrade.emoji}</span>
+    <span class="icon">${iconMarkup(upgrade.image, upgrade.emoji, upgrade.name)}</span>
     <div class="info">
       <div class="name">${upgrade.name}</div>
       <div class="desc">${upgrade.description}</div>
@@ -564,7 +649,7 @@ function materialsContentHtml(state) {
     .filter((m) => (state.materials[m.id] || 0) > 0);
 
   if (!ownedMaterials.length) {
-    return `<p style="color:var(--text-dim); font-size:13px;">Nenhum material coletado ainda. Derrote monstros para conseguir materiais de craft.</p>`;
+    return `<p style="color:var(--text-dim); font-size:13px;">Nenhum material coletado ainda. Derrote monstros para conseguir materiais de aprimoramento.</p>`;
   }
 
   return `<div class="material-grid">${ownedMaterials.map((m) => `
@@ -601,10 +686,10 @@ function cardTileHtml(state, card) {
 // maxCardSlots(entry) cards — see systems/crafting.js) — the panel the
 // mockup calls "Bônus das Cartas Ativas".
 const CARD_BONUS_LABELS = {
-  dpsPercent: '💥 DPS', clickPercent: '⚔️ Dano de Clique', goldPercent: `${GOLD_ICON} Ouro Obtido`,
+  dpsPercent: '💥 DPS', attackSpeedPercent: '⚡ Velocidade de Ataque', goldPercent: `${GOLD_ICON} Ouro Obtido`,
   dropPercent: '🎒 Chance de Drop', critChancePercent: '🎯 Chance Crítica', critDamagePercent: '💢 Dano Crítico',
   hpPercent: '❤️ Vida Máxima', armorPercent: '🛡️ Armadura', hpFlat: '❤️ Vida Máxima', armorFlat: '🛡️ Armadura',
-  clickFlat: '⚔️ Dano de Clique', dpsFlat: '💥 DPS',
+  dpsFlat: '💥 DPS',
 };
 
 function cardsSummaryHtml(state) {
@@ -724,15 +809,15 @@ function invasaoChefesStatusParts(state) {
 
 // Whether the "Entrar" button should show below the status box: window
 // open, not already used/claimed this cycle, not already fighting, and the
-// player has beaten at least one boss (stage 10+) so there's an eligible
-// boss to roll.
+// player has unlocked at least one zone's boss so there's an eligible boss
+// to roll.
 function invasaoChefesCanEnter(state) {
   if (state.eventBossHp != null) return false;
   const win = getEventWindow();
   if (!win.active) return false;
   if (isEventClaimed(state, win.cycleIndex)) return false;
   if (state.eventEnteredCycle === win.cycleIndex) return false;
-  return BOSSES.some((b) => b.stage <= state.maxStage);
+  return BOSSES.some((b, zoneIndex) => isBossUnlocked(state, zoneIndex));
 }
 
 // The 3 empty "RECOMPENSAS" squares baked into the banner art are just a
@@ -762,7 +847,7 @@ function invasaoChefesBannerHtml(state) {
         <div class="invasion-status-label">${label}</div>
         <div class="invasion-status-value">${value}</div>
       </div>
-      ${canEnter ? `<button class="invasion-enter-btn" data-event-enter>Entrar</button>` : ''}
+      ${canEnter ? `<button class="invasion-enter-btn" data-event-enter aria-label="Entrar"></button>` : ''}
     </div>
   </div>`;
 }
@@ -779,7 +864,7 @@ function invasaoChefesFightPanelHtml(state) {
         <div class="event-panel">
           <div class="event-active-badge">🎪 Em combate!</div>
           <h3>${boss.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(boss.element)}</h3>
-          <button id="event-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(boss.image, boss.emoji, boss.name)}</button>
+          <button id="event-boss-sprite" class="event-boss-sprite" >${iconMarkup(boss.image, boss.emoji, boss.name)}</button>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(maxHp)}</span></div>
           <p class="event-reward-info">🎁 10 itens ao derrotar (materiais/Cristal) + chance de Carta + ${EVENT_ICON} Moeda de Evento</p>
         </div>
@@ -822,7 +907,7 @@ function torreProvacoesBannerHtml(state) {
         <div class="invasion-status-label">${label}</div>
         <div class="invasion-status-value">${value}</div>
       </div>
-      ${canEnter ? `<button class="invasion-enter-btn" data-tower-enter>Entrar</button>` : ''}
+      ${canEnter ? `<button class="invasion-enter-btn" data-tower-enter aria-label="Entrar"></button>` : ''}
     </div>
   </div>`;
 }
@@ -839,7 +924,7 @@ function torreProvacoesFightPanelHtml(state, runRemainingMs, towerHp, towerMaxHp
         <div class="event-panel">
           <div class="event-active-badge">🗼 Nível ${state.towerLevel}/${TOWER_MAX_LEVEL} — ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
           <h3>${monster.name} ${monster.isBoss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}</h3>
-          <button id="tower-monster-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(monster.image, monster.emoji, monster.name)}</button>
+          <button id="tower-monster-sprite" class="event-boss-sprite" >${iconMarkup(monster.image, monster.emoji, monster.name)}</button>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.towerMonsterHp)} / ${formatNumber(maxHp)}</span></div>
           <p class="event-sub">Sua vida na torre</p>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${hpPlayerPct}%; background:var(--danger, #e05656);"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(towerMaxHp)}</span></div>
@@ -878,7 +963,7 @@ function goldMineBannerHtml(state) {
     'assets/ui/currency-gold.png',
     'assets/ui/currency-gold.png',
     'assets/ui/currency-gold.png',
-  ], 'invasion');
+  ], 'goldmine');
   return `<div class="event-card event-card-invasion">
     <div class="invasion-banner" style="background-image: url('assets/ui/goldmine-banner.png')">
       ${rewardIcons}
@@ -886,21 +971,29 @@ function goldMineBannerHtml(state) {
         <div class="invasion-status-label">${label}</div>
         <div class="invasion-status-value">${value}</div>
       </div>
-      ${canEnter ? `<button class="invasion-enter-btn" data-goldmine-enter>Entrar</button>` : ''}
+      ${canEnter ? `<button class="invasion-enter-btn" data-goldmine-enter aria-label="Entrar"></button>` : ''}
     </div>
   </div>`;
 }
 
+const GOLDMINE_BOSS_ANIM_FRAMES = [
+  'assets/goldmine_boss/anim/frame1.png',
+  'assets/goldmine_boss/anim/frame2.png',
+  'assets/goldmine_boss/anim/frame3.png',
+  'assets/goldmine_boss/anim/frame4.png',
+];
+
 function goldMineFightPanelHtml(state, runRemainingMs) {
   const maxHp = GOLDMINE_BOSS_HP;
   const pct = maxHp > 0 ? Math.max(0, Math.min(100, (state.goldMineBossHp / maxHp) * 100)) : 0;
+  const frameIdx = Math.floor(Date.now() / MONSTER_IDLE_FRAME_MS) % GOLDMINE_BOSS_ANIM_FRAMES.length;
   return `
     <div class="event-card">
       <div class="event-card-body">
-        <div class="event-panel">
+        <div class="event-panel event-panel-goldmine">
           <div class="event-active-badge">⛏️ ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
-          <h3>Chefe de Ouro <span class="boss-tag">EVENTO</span></h3>
-          <button id="goldmine-boss-sprite" class="event-boss-sprite" title="Clique para atacar">💰</button>
+          <h3>Dragão Dourado <span class="boss-tag">EVENTO</span></h3>
+          <button id="goldmine-boss-sprite" class="event-boss-sprite event-boss-sprite-goldmine" >${iconMarkup(GOLDMINE_BOSS_ANIM_FRAMES[frameIdx], '🐉', 'Dragão Dourado')}</button>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.goldMineBossHp)} / ${formatNumber(maxHp)}</span></div>
           <p class="event-reward-info">🎁 Recompensa ao final: ${GOLD_ICON} 1 Ouro por ponto de dano causado.</p>
         </div>
@@ -1042,7 +1135,7 @@ function cashShopHtml(state) {
 
 function eventShopHtml(state) {
   const bossesHtml = BOSSES.map((boss, tier) => {
-    const unlocked = state.maxStage >= boss.stage;
+    const unlocked = isBossUnlocked(state, tier);
     if (!unlocked) return '';
     const items = eventShopItemsForBoss(boss, tier);
     return `<div class="family-group">
@@ -1080,10 +1173,10 @@ export function spawnDamagePopup(amount, isCrit = false, isBurst = false) {
   const container = document.getElementById('damage-popups');
   const el = document.createElement('div');
   el.className = isBurst ? 'damage-popup burst' : isCrit ? 'damage-popup crit' : 'damage-popup';
-  el.textContent = isBurst ? `-${formatNumber(amount)} CLIQUE DEVASTADOR!` : isCrit ? `-${formatNumber(amount)} CRÍTICO!` : `-${formatNumber(amount)}`;
-  // Wide, randomized spread on both axes — a fast clicker spawns several of
-  // these within the same 750ms window, and a narrow fixed spot made them
-  // pile up unreadably on top of each other (looking like clicks got
+  el.textContent = isBurst ? `-${formatNumber(amount)} GOLPE DEVASTADOR!` : isCrit ? `-${formatNumber(amount)} CRÍTICO!` : `-${formatNumber(amount)}`;
+  // Wide, randomized spread on both axes — a fast attack-speed build spawns
+  // several of these within the same 750ms window, and a narrow fixed spot
+  // made them pile up unreadably on top of each other (looking like hits got
   // dropped even though every one of them landed).
   el.style.left = `${30 + Math.random() * 40}%`;
   el.style.top = `${30 + Math.random() * 20}%`;

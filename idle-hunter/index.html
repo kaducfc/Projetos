@@ -21,8 +21,8 @@
       <span id="event-currency-value">0</span>
     </div>
     <div class="resource resource-stage">
-      <span class="resource-icon">🚩</span>
-      <span id="stage-value">1</span>
+      <span class="resource-icon">🏆</span>
+      <span id="level-value">1</span>
     </div>
     <span id="build-tag" title="Versão do jogo"></span>
   </header>
@@ -43,10 +43,7 @@
         <div id="monster-area">
           <div id="damage-popups"></div>
           <div id="zone-banner">
-            <button id="stage-prev" class="banner-nav-btn" title="Estágio anterior">◀</button>
-            <span id="stage-label">Estágio 1</span>
-            <button id="stage-next" class="banner-nav-btn" title="Próximo estágio">▶</button>
-            <button id="stage-max" title="Ir para o estágio mais avançado" class="stage-max-flag-btn">🏁</button>
+            <button id="select-monsters-btn" class="stage-label-btn" title="Escolher quais monstros caçar">🎯 Selecionar Monstros</button>
           </div>
           <div id="monster-nameplate">
             <div id="monster-name"></div>
@@ -54,7 +51,7 @@
               <div id="hp-bar-fill"></div>
             </div>
           </div>
-          <button id="monster-sprite" title="Clique para atacar">🐗</button>
+          <button id="monster-sprite">🐗</button>
           <div id="loot-popup"></div>
           <div id="boss-timer" class="hidden"></div>
         </div>
@@ -70,12 +67,20 @@
           </div>
         </div>
 
+        <div id="hunter-level-info">
+          <span id="hunter-level-label">Nível de Caça 1</span>
+          <div id="hunter-xp-bar-outer">
+            <div id="hunter-xp-bar-fill"></div>
+            <span id="hunter-xp-bar-text">0 / 0</span>
+          </div>
+        </div>
+
         <div class="section-banner section-banner-sm">Informações de Batalha</div>
 
         <div id="battle-info">
           <div class="battle-info-col">
             <div class="battle-info-col-title">🟢 Seus Atributos</div>
-            <div class="battle-info-row"><span>⚔️ Dano do Clique</span><strong id="click-damage-value">0</strong></div>
+            <div class="battle-info-row"><span>⚡ Velocidade de Ataque</span><strong id="attack-speed-value">0</strong></div>
             <div class="battle-info-row"><span>💥 DPS</span><strong id="dps-value">0</strong></div>
             <div class="battle-info-row"><span>🛡️ Armadura</span><strong id="armor-value">0</strong></div>
             <div class="battle-info-row"><span>🎯 Taxa de Crítico</span><strong id="crit-chance-value">0</strong></div>
@@ -90,11 +95,6 @@
           </div>
         </div>
         <div id="element-matchup"></div>
-
-        <button id="attack-button" title="Clique para atacar">
-          ⚔️ Clique para Atacar!
-          <span id="attack-damage-value"></span>
-        </button>
       </div>
 
       <div id="tab-upgrades" class="tab-panel"></div>
@@ -106,7 +106,7 @@
 
   <nav id="tab-nav">
     <button class="tab-btn" data-tab="inventory"><img class="tab-btn-icon" src="assets/ui/nav/equipamentos.png" alt="">Equipamentos</button>
-    <button class="tab-btn" data-tab="forge"><img class="tab-btn-icon" src="assets/ui/nav/forja.png" alt="">Forja</button>
+    <button class="tab-btn" data-tab="forge"><img class="tab-btn-icon" src="assets/ui/nav/forja.png" alt="">Materiais</button>
     <button class="tab-btn" data-tab="upgrades"><img class="tab-btn-icon" src="assets/ui/nav/aprimoramentos.png" alt="">Aprimoramentos</button>
     <button class="tab-btn active" data-tab="hunt"><img class="tab-btn-icon" src="assets/ui/nav/caca.png" alt="">Caça</button>
     <button class="tab-btn" data-tab="cards"><img class="tab-btn-icon" src="assets/ui/nav/cartas.png" alt="">Cartas</button>

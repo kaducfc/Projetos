@@ -144,6 +144,40 @@ export const BOSSES = [
     element: 'eletrico',
     emoji: '🐹',
     image: 'assets/chispim/monster.png',
+    // Idle-loop animation for the battle sprite (renderMonster() in
+    // ui/render.js cycles through these on an interval while this boss is
+    // on screen — see MONSTER_IDLE_FRAME_MS there for the shared
+    // 150ms/frame cadence, locked in as the standard for every monster's
+    // animation, not just Chispim's). `image` above stays as the single
+    // static fallback used everywhere else (Forja cards, equipment icons,
+    // drop popups) — only the big monster-sprite element animates.
+    //
+    // Reference pattern for adding animFrames to any other monster: crop
+    // all frames to the same union bounding box (so the sprite doesn't
+    // jump around as it cycles), convert the background to transparency,
+    // and list the frame paths as literal quoted strings here (same
+    // reasoning as SCENE_IMAGES in render.js — build-bundle.mjs's asset
+    // inliner only recognizes literal quoted 'assets/...' paths in the
+    // source text, and won't find them inside a dynamic template
+    // literal). This exact 4-frame Chispim set is the calibrated
+    // reference for "how many frames" and "how similar the poses should
+    // be" — reuse its cadence/count/style rather than re-deriving it.
+    animFrames: [
+      'assets/chispim/anim/frame1.png',
+      'assets/chispim/anim/frame3.png',
+      'assets/chispim/anim/frame4.png',
+      'assets/chispim/anim/frame2.png',
+    ],
+    // Boss-specific background for the battle scene (renderMonster() in
+    // ui/render.js uses this instead of the random SCENE_IMAGES rotation
+    // used for weak-monster stages). Optional — bosses without one fall
+    // back to the plain CSS gradient backdrop, same as before.
+    scene: 'assets/ui/scenes/boss-chispim.png',
+    // Battle-sprite scale multiplier (renderMonster() in ui/render.js
+    // applies this as font-size on #monster-sprite, since the sprite's
+    // width/height are 1em) — bosses read as unimpressive next to weak
+    // monsters at the default size, so the 3 with real art get a boost.
+    spriteScale: 2.1,
     materials: {
       primary1: { id: 'chispim_heart', name: 'Núcleo de Faísca', emoji: '❤️', image: 'assets/chispim/nucleo_faisca.png' },
       primary2: { id: 'chispim_whisker', name: 'Cauda Condutora', emoji: '⚡', image: 'assets/chispim/cauda_condutora.png' },
@@ -157,6 +191,18 @@ export const BOSSES = [
     element: 'fogo',
     emoji: '🦅',
     image: 'assets/solkaiser/monster.png',
+    // Idle-loop animation — same standard as Chispim's (see that entry's
+    // comment above): 150ms/frame, plain src swap, all 4 frames cropped to
+    // the same union bounding box.
+    animFrames: [
+      'assets/solkaiser/anim/frame1.png',
+      'assets/solkaiser/anim/frame2.png',
+      'assets/solkaiser/anim/frame3.png',
+      'assets/solkaiser/anim/frame4.png',
+    ],
+    // Boss-specific background (see Chispim's `scene` comment above).
+    scene: 'assets/ui/scenes/boss-solkaiser.png',
+    spriteScale: 2.1,
     materials: {
       primary1: { id: 'solkaiser_feather', name: 'Pena de Solkaiser', emoji: '🪶', image: 'assets/solkaiser/pena.png' },
       primary2: { id: 'solkaiser_core', name: 'Núcleo Solar', emoji: '☀️', image: 'assets/solkaiser/nucleo.png' },
@@ -170,6 +216,18 @@ export const BOSSES = [
     element: 'agua',
     emoji: '🐢',
     image: 'assets/tartarok/monster.png',
+    // Idle-loop animation — same standard as Chispim's (see that entry's
+    // comment above): 150ms/frame, plain src swap, all 4 frames cropped to
+    // the same union bounding box.
+    animFrames: [
+      'assets/tartarok/anim/frame1.png',
+      'assets/tartarok/anim/frame2.png',
+      'assets/tartarok/anim/frame3.png',
+      'assets/tartarok/anim/frame4.png',
+    ],
+    // Boss-specific background (see Chispim's `scene` comment above).
+    scene: 'assets/ui/scenes/boss-tartarok.png',
+    spriteScale: 2.1,
     materials: {
       primary1: { id: 'tartarok_shell', name: 'Casco de Tartarok', emoji: '🐚', image: 'assets/tartarok/casco.png' },
       primary2: { id: 'tartarok_pearl', name: 'Pérola Primordial', emoji: '⚪', image: 'assets/tartarok/perola.png' },
@@ -183,6 +241,19 @@ export const BOSSES = [
     element: 'planta',
     emoji: '🌺',
     image: 'assets/colhedor_carmesim/monster.png',
+    // Idle-loop animation — same standard as Chispim's (see that entry's
+    // comment above): 150ms/frame, plain src swap. Only 3 frames this
+    // time (vs. the usual 4), still cropped to the same union bounding box.
+    animFrames: [
+      'assets/colhedor_carmesim/anim/frame1.png',
+      'assets/colhedor_carmesim/anim/frame2.png',
+      'assets/colhedor_carmesim/anim/frame3.png',
+    ],
+    // Same size boost as the first 3 bosses (see Chispim's spriteScale
+    // comment above) — explicitly requested to match, not the default 1x.
+    spriteScale: 2.1,
+    // Boss-specific background (see Chispim's `scene` comment above).
+    scene: 'assets/ui/scenes/boss-colhedor-carmesim.png',
     materials: {
       // id kept as colhedor_carmesim_scythe (save-file key) even though the
       // item was re-arted/renamed from "Foice Carmesim" to "Rosa Escarlate".
@@ -198,6 +269,19 @@ export const BOSSES = [
     element: 'neutro',
     emoji: '👹',
     image: 'assets/grommuk/monster.png',
+    animFrames: [
+      'assets/grommuk/anim/frame1.png',
+      'assets/grommuk/anim/frame2.png',
+      'assets/grommuk/anim/frame3.png',
+      'assets/grommuk/anim/frame4.png',
+      'assets/grommuk/anim/frame5.png',
+      'assets/grommuk/anim/frame6.png',
+    ],
+    // Same size boost as the earlier animated bosses (see Chispim's
+    // spriteScale comment above).
+    spriteScale: 2.1,
+    // Boss-specific background (see Chispim's `scene` comment above).
+    scene: 'assets/ui/scenes/boss-grommuk.png',
     materials: {
       primary1: { id: 'grommuk_fang', name: 'Presa de Grommuk', emoji: '🦷', image: 'assets/grommuk/presa.png' },
       primary2: { id: 'grommuk_medallion', name: 'Medalhão Tribal', emoji: '🥉', image: 'assets/grommuk/medalhao.png' },
@@ -211,6 +295,19 @@ export const BOSSES = [
     element: 'fogo',
     emoji: '🐂',
     image: 'assets/vulkarion/monster.png',
+    animFrames: [
+      'assets/vulkarion/anim/frame1.png',
+      'assets/vulkarion/anim/frame2.png',
+      'assets/vulkarion/anim/frame3.png',
+      'assets/vulkarion/anim/frame4.png',
+      'assets/vulkarion/anim/frame5.png',
+      'assets/vulkarion/anim/frame6.png',
+    ],
+    // Same size boost as the earlier animated bosses (see Chispim's
+    // spriteScale comment above).
+    spriteScale: 2.1,
+    // Boss-specific background (see Chispim's `scene` comment above).
+    scene: 'assets/ui/scenes/boss-vulkarion.png',
     materials: {
       primary1: { id: 'vulkarion_horn', name: 'Chifre de Vulkarion', emoji: '🐮', image: 'assets/vulkarion/chifre.png' },
       primary2: { id: 'vulkarion_heart', name: 'Coração Vulcânico', emoji: '🌋', image: 'assets/vulkarion/coracao.png' },
@@ -224,6 +321,19 @@ export const BOSSES = [
     element: 'agua',
     emoji: '🐋',
     image: 'assets/leviargon/monster.png',
+    animFrames: [
+      'assets/leviargon/anim/frame1.png',
+      'assets/leviargon/anim/frame2.png',
+      'assets/leviargon/anim/frame3.png',
+      'assets/leviargon/anim/frame4.png',
+      'assets/leviargon/anim/frame5.png',
+      'assets/leviargon/anim/frame6.png',
+    ],
+    // Same size boost as the earlier animated bosses (see Chispim's
+    // spriteScale comment above).
+    spriteScale: 2.1,
+    // Boss-specific background (see Chispim's `scene` comment above).
+    scene: 'assets/ui/scenes/boss-leviargon.png',
     materials: {
       primary1: { id: 'leviargon_fin', name: 'Barbatana de Leviargon', emoji: '🦈', image: 'assets/leviargon/barbatana.png' },
       primary2: { id: 'leviargon_eye', name: 'Olho Abissal', emoji: '👁️', image: 'assets/leviargon/olho.png' },
@@ -396,6 +506,60 @@ export function getWeakMonster(id) {
 /// weakMonsterId is the currently-spawned weak monster's id (persisted on
 /// state, see combat.js ensureMonsterSpawned) — only meaningful on non-boss
 /// stages; boss stages always show that decade's unique boss and ignore it.
+// ---------------------------------------------------------------------
+// Zonas (substitui a progressão linear por estágio): 10 zonas "achatadas",
+// uma por chefe/década (BOSSES já está ordenado por stage ascendente, então
+// ZONES[i] = BOSSES[i]). Cada zona tem 5 monstros fracos + 1 chefe, sem
+// sub-estágio — o jogador escolhe até 4 monstros específicos (de qualquer
+// zona liberada) pra caçar, e o "estágio canônico" da zona (10, 20, ...100)
+// é usado por monsterMaxHp/monsterGoldReward/monsterDamagePerSecond em
+// combat.js pra escalar TODOS os 5 fracos + o chefe daquela zona (o chefe
+// ainda aplica seu próprio multiplicador BOSS_* por cima).
+//
+// NOTA: só existem 5 bandas de monstro fraco (WEAK_MONSTER_GROUPS) pra 10
+// zonas — cada banda hoje cobre 2 décadas de estágio (ex: banda 1-19 cobre
+// as zonas 1 e 2). Sem arte nova pra 5 bandas extras, cada par de zonas
+// compartilha os mesmos 5 monstros fracos (só a escala de poder difere,
+// via canonicalStage). Ver getZoneWeakMonsters abaixo.
+export const ZONE_SIZE = BOSS_INTERVAL; // 10
+export const ZONE_COUNT = BOSSES.length; // 10
+
+// Nível de caçador pra liberar o chefe da zona N (1-based): 10*N.
+// Nível pra liberar a PRÓPRIA zona N+1: 20*N. Zona 1 sempre liberada.
+// Valores de partida, fáceis de re-tunar depois (ver data/monsters.js
+// ZONES[].zoneUnlockLevel/bossUnlockLevel).
+function zoneUnlockLevelFor(zoneIndex) {
+  return zoneIndex === 0 ? 0 : 20 * zoneIndex;
+}
+function bossUnlockLevelFor(zoneIndex) {
+  return 10 * (zoneIndex + 1);
+}
+
+export const ZONES = BOSSES.map((boss, zoneIndex) => {
+  const canonicalStage = (zoneIndex + 1) * ZONE_SIZE;
+  return {
+    index: zoneIndex,
+    name: `Zona ${zoneIndex + 1}`,
+    canonicalStage,
+    weakMonsters: getWeakMonsterGroupForStage(canonicalStage - 1).monsters,
+    boss,
+    zoneUnlockLevel: zoneUnlockLevelFor(zoneIndex),
+    bossUnlockLevel: bossUnlockLevelFor(zoneIndex),
+  };
+});
+
+export function getZone(zoneIndex) {
+  return ZONES[zoneIndex] || null;
+}
+
+/// Acha a zona que contém um monstro fraco ou chefe pelo id (usado pra
+/// resolver uma entrada de state.selectedMonsters de volta pro objeto
+/// completo da zona/monstro).
+export function findZoneForMonster(kind, monsterId) {
+  if (kind === 'boss') return ZONES.find((z) => z.boss.id === monsterId) || null;
+  return ZONES.find((z) => z.weakMonsters.some((m) => m.id === monsterId)) || null;
+}
+
 export function getMonsterInfo(stage, weakMonsterId) {
   const boss = isBossStage(stage);
 
@@ -407,6 +571,10 @@ export function getMonsterInfo(stage, weakMonsterId) {
       name: b.name,
       emoji: b.emoji,
       image: b.image || null,
+      animFrames: b.animFrames || null,
+      scene: b.scene || null,
+      scenePosition: b.scenePosition || null,
+      spriteScale: b.spriteScale || 1,
       element: b.element,
       isBoss: true,
       isWeak: false,
@@ -420,6 +588,7 @@ export function getMonsterInfo(stage, weakMonsterId) {
     name: weak.name,
     emoji: weak.emoji,
     image: weak.image || null,
+    animFrames: weak.animFrames || null,
     element: weak.element,
     isBoss: false,
     isWeak: true,
