@@ -66,12 +66,12 @@ export function getEnhanceLabel(level, isMaster) {
 // partida — fáceis de re-tunar depois.
 // ---------------------------------------------------------------------
 export const RARITIES = [
-  { id: 'comum', name: 'Comum', mult: 1.0, additionals: 0, weight: 50, color: '#9e9e9e' },
-  { id: 'incomum', name: 'Incomum', mult: 1.15, additionals: 1, weight: 30, color: '#4caf50' },
-  { id: 'raro', name: 'Raro', mult: 1.35, additionals: 2, weight: 14, color: '#2196f3' },
-  { id: 'epico', name: 'Épico', mult: 1.6, additionals: 3, weight: 5, color: '#9c27b0' },
-  { id: 'lendario', name: 'Lendário', mult: 2.0, additionals: 4, weight: 0.9, color: '#ff9800' },
-  { id: 'mitico', name: 'Mítico', mult: 2.5, additionals: 5, weight: 0.1, color: '#f44336' },
+  { id: 'comum', name: 'Comum', mult: 1.0, additionals: 0, weight: 60, color: '#9e9e9e' },
+  { id: 'incomum', name: 'Incomum', mult: 1.15, additionals: 1, weight: 24, color: '#4caf50' },
+  { id: 'raro', name: 'Raro', mult: 1.35, additionals: 2, weight: 10, color: '#2196f3' },
+  { id: 'epico', name: 'Épico', mult: 1.6, additionals: 3, weight: 4, color: '#9c27b0' },
+  { id: 'lendario', name: 'Lendário', mult: 2.0, additionals: 4, weight: 1.5, color: '#ff9800' },
+  { id: 'mitico', name: 'Mítico', mult: 2.5, additionals: 5, weight: 0.5, color: '#f44336' },
 ];
 
 export function getRarity(rarityId) {
