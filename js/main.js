@@ -77,11 +77,11 @@ function currentGoldMineRunRemainingMs() {
 }
 
 // Which sub-tab is showing in Loja (Cash/Evento/Conquistas), plus which
-// element the Inventário grid is filtered to (null = Todos), plus the
-// monster-selection modal's in-progress edit (only committed to
+// equipment category the Inventário grid is filtered to (null = Todos),
+// plus the monster-selection modal's in-progress edit (only committed to
 // state.selectedMonsters on "Confirmar") — pure UI state, not part of the save.
 let activeShopSubTab = 'cash';
-let inventoryFilterElement = null;
+let inventoryFilterCategory = null;
 let pendingMonsterSelection = [];
 // Os 2 candidatos rolados ao chocar um ovo (ver openHatchModal) — só
 // commitados em state.pets quando o jogador escolhe um lado (data-hatch-choose
@@ -148,7 +148,7 @@ function refreshAll() {
 // re-wiring is needed for them.
 function fullRefresh() {
   refreshAll();
-  renderInventoryTab(state, inventoryFilterElement);
+  renderInventoryTab(state, inventoryFilterCategory);
   renderCardsTab(state);
   renderEventsTabNow();
   renderShopTab(state, activeShopSubTab);
@@ -188,7 +188,7 @@ function handleKillEvent(event) {
   renderHunterLevel(state);
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
-  renderInventoryTab(state, inventoryFilterElement);
+  renderInventoryTab(state, inventoryFilterCategory);
   renderUpgradesTab(state);
   renderCardsTab(state); // a card drop just changed discovered/claimable state
   resetPlayerHp(); // a fresh monster just spawned — full heal for the new fight
@@ -666,10 +666,10 @@ function wireInventoryTabEvents() {
       return;
     }
 
-    const filterBtn = e.target.closest('[data-filter-element]');
+    const filterBtn = e.target.closest('[data-filter-category]');
     if (filterBtn) {
-      inventoryFilterElement = filterBtn.dataset.filterElement || null;
-      renderInventoryTab(state, inventoryFilterElement);
+      inventoryFilterCategory = filterBtn.dataset.filterCategory || null;
+      renderInventoryTab(state, inventoryFilterCategory);
       return;
     }
   });
@@ -703,7 +703,7 @@ function handleEventBossVictory(boss) {
   showEventRewardModal(boss, gained, currency, cardDropped);
   if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
   renderTopBar(state);
-  renderInventoryTab(state, inventoryFilterElement);
+  renderInventoryTab(state, inventoryFilterCategory);
   renderCardsTab(state);
   renderShopTab(state, activeShopSubTab);
   renderEventsTabNow();
@@ -779,7 +779,7 @@ function finishTowerRun(cleared200) {
   if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
   renderEventsTabNow();
   renderTopBar(state);
-  renderInventoryTab(state, inventoryFilterElement);
+  renderInventoryTab(state, inventoryFilterCategory);
 }
 
 function showTowerRewardModal(level, cleared200, currency, goldGained, gained) {
@@ -1022,7 +1022,7 @@ function wireShopTabEvents() {
         showToast('🛒 Compra realizada!');
         renderTopBar(state);
         renderShopTab(state, activeShopSubTab);
-        renderInventoryTab(state, inventoryFilterElement);
+        renderInventoryTab(state, inventoryFilterCategory);
       }
       return;
     }
