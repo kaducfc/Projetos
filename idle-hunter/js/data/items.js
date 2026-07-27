@@ -209,14 +209,14 @@ const CATEGORY_POWER = {
 // escritos à mão (10 zonas × 2 slots × 3 atributos).
 const WEAPON_ARCHETYPES = {
   weapon1: {
-    forca: { name: 'Machado', emoji: '🪓' },
-    destreza: { name: 'Adagas', emoji: '🗡️' },
+    forca: { name: 'Espada', emoji: '⚔️' },
+    destreza: { name: 'Arco', emoji: '🏹' },
     inteligencia: { name: 'Cajado', emoji: '🔮' },
   },
   weapon2: {
     forca: { name: 'Escudo', emoji: '🛡️' },
-    destreza: { name: 'Adaga', emoji: '🗡️' },
-    inteligencia: { name: 'Grimório', emoji: '📖' },
+    destreza: { name: 'Aljava', emoji: '🎒' },
+    inteligencia: { name: 'Livro', emoji: '📖' },
   },
 };
 
