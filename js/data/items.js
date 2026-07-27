@@ -220,6 +220,22 @@ const WEAPON_ARCHETYPES = {
   },
 };
 
+// Arco/Aljava têm nome e arte fixos por zona (tier), em vez de "Arco de
+// <Boss>" como os demais arquétipos — pedido de design, não segue o padrão
+// genérico das outras armas/atributos.
+const ZONE_BOW_NAMES = [
+  { weapon1: 'Arco Novato', weapon2: 'Aljava Novato' },
+  { weapon1: 'Arco Iniciante', weapon2: 'Aljava Iniciante' },
+  { weapon1: 'Arco da Floresta', weapon2: 'Aljava da Floresta' },
+  { weapon1: 'Arco Élfico', weapon2: 'Aljava Élfica' },
+  { weapon1: 'Arco Real', weapon2: 'Aljava Real' },
+  { weapon1: 'Arco Sombrio', weapon2: 'Aljava Sombria' },
+  { weapon1: 'Arco Tempestuoso', weapon2: 'Aljava Tempestuosa' },
+  { weapon1: 'Arco do Vento', weapon2: 'Aljava do Vento' },
+  { weapon1: 'Arco Dracônico', weapon2: 'Aljava Dracônica' },
+  { weapon1: 'Arco Primordial', weapon2: 'Aljava Primordial' },
+];
+
 const CATEGORY_LABELS = {
   head: { name: 'Cabeça', emoji: '🪖' },
   chest: { name: 'Peito', emoji: '🛡️' },
@@ -286,8 +302,13 @@ function buildItemTemplate(boss, tier, category, attributeId, categoryIndex, wea
   const attr = getAttribute(attributeId);
   let name;
   let emoji;
+  let image = null;
 
-  if (category === 'weapon1' || category === 'weapon2') {
+  if ((category === 'weapon1' || category === 'weapon2') && attributeId === 'destreza') {
+    name = ZONE_BOW_NAMES[tier][category];
+    emoji = WEAPON_ARCHETYPES[category][attributeId].emoji;
+    image = `assets/${boss.id}/${category === 'weapon1' ? 'arco' : 'aljava'}.png`;
+  } else if (category === 'weapon1' || category === 'weapon2') {
     const archetype = WEAPON_ARCHETYPES[category][attributeId];
     name = `${archetype.name} de ${boss.name}`;
     emoji = archetype.emoji;
@@ -307,7 +328,7 @@ function buildItemTemplate(boss, tier, category, attributeId, categoryIndex, wea
     zoneIndex: tier,
     name,
     emoji,
-    image: null,
+    image,
     element: boss.element,
     stats,
     crystalMaterialId: boss.crystal.id,
