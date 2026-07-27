@@ -1056,18 +1056,23 @@ button:disabled {
   padding: 0;
 }
 
-/* Same reasoning as .inventory-tile .icon above: 85cqw ties glyph size to
-   the slot's own width so it fills ~85% of the frame at any size. */
+/* Same reasoning as .inventory-tile .icon above: pins .icon to a definite
+   85%x85% square via absolute inset so tall/narrow art (e.g. Aljava) can't
+   stretch the slot out of square by resolving its height against nothing. */
 .equip-slot-icon .icon {
+  position: absolute;
+  inset: 7.5%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 85cqw;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
 }
 
-/* Same reasoning as .inventory-tile .icon img above: real art should fill
-   the slot frame instead of sitting at emoji-sized 1em. */
 .equip-slot-icon .icon img {
-  width: 85%;
-  height: 85%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .equip-slot-icon.empty .icon {
@@ -1187,23 +1192,29 @@ button:disabled {
   z-index: 0;
 }
 
-/* 85cqw ties the emoji glyph size to the tile's own width (via
-   container-type: inline-size above) instead of a fixed px value, so it
-   fills the same ~85% of the frame at any grid/viewport size — same target
-   the img rule below hits for real item art. */
+/* .icon is an inline <span>, so a percentage height on its img child can't
+   resolve against it (no definite height to resolve against) — the tall
+   Aljava art was ignoring that height and stretching the grid row instead
+   of being contained. Pinning .icon itself to a definite 85%x85% square via
+   absolute inset (percentages of the tile's own definite size, always
+   reliable) and centering the img inside with object-fit: contain keeps
+   every item — square or tall/narrow art alike — inside that square, no
+   matter its native aspect ratio. */
 .inventory-tile .icon {
-  position: relative;
+  position: absolute;
+  inset: 7.5%;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 85cqw;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
 }
 
-/* Real item art (e.g. Arco/Aljava) should fill most of the tile frame, not
-   sit at the small emoji-tuned size the shared .icon img rule gives
-   everything else — overridden here at higher specificity. */
 .inventory-tile .icon img {
-  width: 85%;
-  height: 85%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .inventory-tile .mini-badge,
