@@ -1171,7 +1171,21 @@ button:disabled {
   padding: 0;
 }
 
+/* Soft glow, colored by rarity, sitting between the tile frame and the item
+   art in front of it — gives the item some contrast against the frame
+   instead of blending flat into it. */
+.inventory-tile.has-rarity::before {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--rarity-color) 85%, white) 0%, transparent 72%);
+  z-index: 0;
+}
+
 .inventory-tile .icon {
+  position: relative;
+  z-index: 1;
   font-size: 24px;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
 }
@@ -1182,6 +1196,11 @@ button:disabled {
 .inventory-tile .icon img {
   width: 72%;
   height: 72%;
+}
+
+.inventory-tile .mini-badge,
+.inventory-tile .card-count-badge {
+  z-index: 1;
 }
 
 .inventory-tile.equipped {
