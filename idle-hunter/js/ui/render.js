@@ -2,8 +2,9 @@ import { BOSSES, findMaterialInfo, ZONES } from '../data/monsters.js';
 import {
   getSlot, getItem, getEnhancedStats, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
   getNextItemTemplate, getAscensionCost, getDamageType, getDamageTypeForAttribute, ENHANCE_MAX_LEVEL,
+  DROP_CATEGORIES,
 } from '../data/items.js';
-import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE, ELEMENTS } from '../data/elements.js';
+import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry, findEquippedSlotId } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
@@ -303,16 +304,16 @@ export function renderBossTimer(remainingMs) {
 // wireForgeTabEvents()), since these tabs re-render often (every kill) and
 // per-render re-wiring is exactly the bug class that bit this project
 // twice before.
-export function renderInventoryTab(state, filterElement = null) {
+export function renderInventoryTab(state, filterCategory = null) {
   const container = document.getElementById('tab-inventory');
   const banner = `<img class="section-banner-img" src="assets/ui/titles/equipamentos.png" alt="Equipamentos">`;
-  container.innerHTML = banner + equipRingContentHtml(state, filterElement);
+  container.innerHTML = banner + equipRingContentHtml(state, filterCategory);
 }
 
-function elementFilterRowHtml(filterElement) {
-  const chips = [{ id: null, emoji: '📦', image: null, name: 'Todos' }, ...ELEMENTS];
-  return `<div class="element-filter-row">${chips.map((el) => `
-    <button class="element-filter-btn ${filterElement === el.id ? 'active' : ''} ${el.id ? `element-${el.id}` : ''}" data-filter-element="${el.id ?? ''}" title="${el.name}">${el.image ? `<img class="element-filter-icon" src="${el.image}" alt="">` : el.emoji}</button>
+function categoryFilterRowHtml(filterCategory) {
+  const chips = [{ id: null, emoji: '📦', name: 'Todos' }, ...DROP_CATEGORIES.map((category) => ({ id: category, ...getCategoryLabel(category) }))];
+  return `<div class="element-filter-row">${chips.map((c) => `
+    <button class="element-filter-btn ${filterCategory === c.id ? 'active' : ''}" data-filter-category="${c.id ?? ''}" title="${c.name}">${c.emoji}</button>
   `).join('')}</div>`;
 }
 
@@ -375,14 +376,14 @@ function attributeTotalsHtml(state) {
   }).join('')}</div>`;
 }
 
-function equipRingContentHtml(state, filterElement = null) {
-  const filtered = filterElement
-    ? state.inventory.filter((entry) => getItem(entry.itemId)?.element === filterElement)
+function equipRingContentHtml(state, filterCategory = null) {
+  const filtered = filterCategory
+    ? state.inventory.filter((entry) => getItem(entry.itemId)?.category === filterCategory)
     : state.inventory;
   const inventoryHtml = filtered.length
     ? filtered.map((entry) => inventoryTileHtml(state, entry)).join('')
     : state.inventory.length
-      ? `<p class="empty-slot">Nenhum item desse elemento.</p>`
+      ? `<p class="empty-slot">Nenhum item desse tipo.</p>`
       : `<p class="empty-slot">Nenhum item ainda. Derrote monstros na Caça para conseguir equipamentos.</p>`;
 
   const portraitStyle = PLAYER_PORTRAIT_IMAGE ? `style="background-image: url('${PLAYER_PORTRAIT_IMAGE}')"` : '';
@@ -399,7 +400,7 @@ function equipRingContentHtml(state, filterElement = null) {
       </div>
       ${attributeTotalsHtml(state)}
       <div class="equip-inventory-header">Inventário</div>
-      ${elementFilterRowHtml(filterElement)}
+      ${categoryFilterRowHtml(filterCategory)}
       <div class="equip-inventory-grid">${inventoryHtml}</div>
     </div>
   `;

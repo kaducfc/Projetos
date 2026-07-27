@@ -1060,6 +1060,13 @@ button:disabled {
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
 }
 
+/* Same reasoning as .inventory-tile .icon img above: real art should fill
+   the slot frame instead of sitting at emoji-sized 1em. */
+.equip-slot-icon .icon img {
+  width: 72%;
+  height: 72%;
+}
+
 .equip-slot-icon.empty .icon {
   opacity: 0.32;
   filter: none;
@@ -1167,6 +1174,14 @@ button:disabled {
 .inventory-tile .icon {
   font-size: 24px;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
+}
+
+/* Real item art (e.g. Arco/Aljava) should fill most of the tile frame, not
+   sit at the small emoji-tuned 1em size the shared .icon img rule gives
+   everything else — overridden here at higher specificity. */
+.inventory-tile .icon img {
+  width: 72%;
+  height: 72%;
 }
 
 .inventory-tile.equipped {
