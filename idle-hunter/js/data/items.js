@@ -223,17 +223,22 @@ const WEAPON_ARCHETYPES = {
 // Arco/Aljava têm nome e arte fixos por zona (tier), em vez de "Arco de
 // <Boss>" como os demais arquétipos — pedido de design, não segue o padrão
 // genérico das outras armas/atributos.
+// Caminhos de imagem escritos como literais (não montados via template
+// string) de propósito: o bundler de publicação do Artifact
+// (idle-hunter-compressed/build-bundle.mjs) acha e embute os assets
+// procurando por literais de caminho no código-fonte — um caminho montado
+// dinamicamente não seria encontrado e ficaria quebrado no bundle.
 const ZONE_BOW_NAMES = [
-  { weapon1: 'Arco Novato', weapon2: 'Aljava Novato' },
-  { weapon1: 'Arco Iniciante', weapon2: 'Aljava Iniciante' },
-  { weapon1: 'Arco da Floresta', weapon2: 'Aljava da Floresta' },
-  { weapon1: 'Arco Élfico', weapon2: 'Aljava Élfica' },
-  { weapon1: 'Arco Real', weapon2: 'Aljava Real' },
-  { weapon1: 'Arco Sombrio', weapon2: 'Aljava Sombria' },
-  { weapon1: 'Arco Tempestuoso', weapon2: 'Aljava Tempestuosa' },
-  { weapon1: 'Arco do Vento', weapon2: 'Aljava do Vento' },
-  { weapon1: 'Arco Dracônico', weapon2: 'Aljava Dracônica' },
-  { weapon1: 'Arco Primordial', weapon2: 'Aljava Primordial' },
+  { weapon1: 'Arco Novato', weapon2: 'Aljava Novato', image1: 'assets/chispim/arco.png', image2: 'assets/chispim/aljava.png' },
+  { weapon1: 'Arco Iniciante', weapon2: 'Aljava Iniciante', image1: 'assets/solkaiser/arco.png', image2: 'assets/solkaiser/aljava.png' },
+  { weapon1: 'Arco da Floresta', weapon2: 'Aljava da Floresta', image1: 'assets/tartarok/arco.png', image2: 'assets/tartarok/aljava.png' },
+  { weapon1: 'Arco Élfico', weapon2: 'Aljava Élfica', image1: 'assets/colhedor_carmesim/arco.png', image2: 'assets/colhedor_carmesim/aljava.png' },
+  { weapon1: 'Arco Real', weapon2: 'Aljava Real', image1: 'assets/grommuk/arco.png', image2: 'assets/grommuk/aljava.png' },
+  { weapon1: 'Arco Sombrio', weapon2: 'Aljava Sombria', image1: 'assets/vulkarion/arco.png', image2: 'assets/vulkarion/aljava.png' },
+  { weapon1: 'Arco Tempestuoso', weapon2: 'Aljava Tempestuosa', image1: 'assets/leviargon/arco.png', image2: 'assets/leviargon/aljava.png' },
+  { weapon1: 'Arco do Vento', weapon2: 'Aljava do Vento', image1: 'assets/tempestron/arco.png', image2: 'assets/tempestron/aljava.png' },
+  { weapon1: 'Arco Dracônico', weapon2: 'Aljava Dracônica', image1: 'assets/gaiatron/arco.png', image2: 'assets/gaiatron/aljava.png' },
+  { weapon1: 'Arco Primordial', weapon2: 'Aljava Primordial', image1: 'assets/bahamorth/arco.png', image2: 'assets/bahamorth/aljava.png' },
 ];
 
 const CATEGORY_LABELS = {
@@ -307,7 +312,7 @@ function buildItemTemplate(boss, tier, category, attributeId, categoryIndex, wea
   if ((category === 'weapon1' || category === 'weapon2') && attributeId === 'destreza') {
     name = ZONE_BOW_NAMES[tier][category];
     emoji = WEAPON_ARCHETYPES[category][attributeId].emoji;
-    image = `assets/${boss.id}/${category === 'weapon1' ? 'arco' : 'aljava'}.png`;
+    image = ZONE_BOW_NAMES[tier][category === 'weapon1' ? 'image1' : 'image2'];
   } else if (category === 'weapon1' || category === 'weapon2') {
     const archetype = WEAPON_ARCHETYPES[category][attributeId];
     name = `${archetype.name} de ${boss.name}`;
