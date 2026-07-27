@@ -1045,6 +1045,7 @@ button:disabled {
   position: relative;
   aspect-ratio: 1;
   width: 100%;
+  container-type: inline-size;
   background: url('../assets/ui/equip-slot-frame.png') center / 100% 100% no-repeat;
   border: none;
   box-shadow: none;
@@ -1055,16 +1056,18 @@ button:disabled {
   padding: 0;
 }
 
+/* Same reasoning as .inventory-tile .icon above: 85cqw ties glyph size to
+   the slot's own width so it fills ~85% of the frame at any size. */
 .equip-slot-icon .icon {
-  font-size: 34px;
+  font-size: 85cqw;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
 }
 
 /* Same reasoning as .inventory-tile .icon img above: real art should fill
    the slot frame instead of sitting at emoji-sized 1em. */
 .equip-slot-icon .icon img {
-  width: 72%;
-  height: 72%;
+  width: 85%;
+  height: 85%;
 }
 
 .equip-slot-icon.empty .icon {
@@ -1161,6 +1164,7 @@ button:disabled {
 .inventory-tile {
   position: relative;
   aspect-ratio: 1;
+  container-type: inline-size;
   background: url('../assets/ui/inventory-tile-frame.png') center / 100% 100% no-repeat;
   border: none;
   box-shadow: none;
@@ -1183,19 +1187,23 @@ button:disabled {
   z-index: 0;
 }
 
+/* 85cqw ties the emoji glyph size to the tile's own width (via
+   container-type: inline-size above) instead of a fixed px value, so it
+   fills the same ~85% of the frame at any grid/viewport size — same target
+   the img rule below hits for real item art. */
 .inventory-tile .icon {
   position: relative;
   z-index: 1;
-  font-size: 24px;
+  font-size: 85cqw;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
 }
 
 /* Real item art (e.g. Arco/Aljava) should fill most of the tile frame, not
-   sit at the small emoji-tuned 1em size the shared .icon img rule gives
+   sit at the small emoji-tuned size the shared .icon img rule gives
    everything else — overridden here at higher specificity. */
 .inventory-tile .icon img {
-  width: 72%;
-  height: 72%;
+  width: 85%;
+  height: 85%;
 }
 
 .inventory-tile .mini-badge,
