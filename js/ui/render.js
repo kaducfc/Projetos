@@ -320,8 +320,8 @@ function categoryFilterRowHtml(filterCategory) {
 // Paper-doll: a square card with the character art as its background and
 // the 10 equip slots overlaid on top of it in 2 columns of 5 — armas +
 // cabeça/peito no lado esquerdo, calça/mãos/botas/anéis/colar no direito.
-const PAPERDOLL_LEFT = ['weapon1', 'weapon2', 'head', 'chest', 'necklace'];
-const PAPERDOLL_RIGHT = ['legs', 'hands', 'boots', 'ring1', 'ring2'];
+const PAPERDOLL_LEFT = ['head', 'chest', 'hands', 'legs', 'boots'];
+const PAPERDOLL_RIGHT = ['weapon1', 'weapon2', 'ring1', 'necklace', 'ring2'];
 const PLAYER_PORTRAIT_IMAGE = 'assets/ui/hero-portrait.png';
 
 // Row centers as % of the stats-frame.png height, measured against its
