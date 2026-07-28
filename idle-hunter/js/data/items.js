@@ -272,6 +272,17 @@ const ITEM_SET_OVERRIDES = {
     ring: { name: 'Anel da Floresta', image: 'assets/sets/floresta/anel.png' },
     necklace: { name: 'Colar da Floresta', image: 'assets/sets/floresta/colar.png' },
   },
+  '1_destreza': {
+    weapon1: { name: 'Arco da Montanha', image: 'assets/sets/montanha/arco.png' },
+    weapon2: { name: 'Aljava da Montanha', image: 'assets/sets/montanha/aljava.png' },
+    head: { name: 'Capuz da Montanha', image: 'assets/sets/montanha/capuz.png' },
+    chest: { name: 'Armadura da Montanha', image: 'assets/sets/montanha/armadura.png' },
+    legs: { name: 'Calça da Montanha', image: 'assets/sets/montanha/calca.png' },
+    hands: { name: 'Luva da Montanha', image: 'assets/sets/montanha/luvas.png' },
+    boots: { name: 'Bota da Montanha', image: 'assets/sets/montanha/sapatos.png' },
+    ring: { name: 'Anel da Montanha', image: 'assets/sets/montanha/anel.png' },
+    necklace: { name: 'Colar da Montanha', image: 'assets/sets/montanha/colar.png' },
+  },
 };
 
 /// Pontos de atributo → 2 stats finais fixos por atributo (ver
