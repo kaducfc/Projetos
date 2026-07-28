@@ -305,6 +305,17 @@ const ITEM_SET_OVERRIDES = {
     ring: { name: 'Anel Sombrio', image: 'assets/sets/sombrio/anel.webp' },
     necklace: { name: 'Colar Sombrio', image: 'assets/sets/sombrio/colar.webp' },
   },
+  '4_destreza': {
+    weapon1: { name: 'Arco Real', image: 'assets/sets/real/arco.webp' },
+    weapon2: { name: 'Aljava Real', image: 'assets/sets/real/aljava.webp' },
+    head: { name: 'Capuz Real', image: 'assets/sets/real/capuz.webp' },
+    chest: { name: 'Armadura Real', image: 'assets/sets/real/armadura.webp' },
+    legs: { name: 'Calça Real', image: 'assets/sets/real/calca.webp' },
+    hands: { name: 'Luva Real', image: 'assets/sets/real/luvas.webp' },
+    boots: { name: 'Bota Real', image: 'assets/sets/real/sapatos.webp' },
+    ring: { name: 'Anel Real', image: 'assets/sets/real/anel.webp' },
+    necklace: { name: 'Colar Real', image: 'assets/sets/real/colar.webp' },
+  },
 };
 
 /// Pontos de atributo → 2 stats finais fixos por atributo (ver
