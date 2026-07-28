@@ -327,6 +327,17 @@ const ITEM_SET_OVERRIDES = {
     ring: { name: 'Anel Selvagem', image: 'assets/sets/selvagem/anel.webp' },
     necklace: { name: 'Colar Selvagem', image: 'assets/sets/selvagem/colar.webp' },
   },
+  '6_destreza': {
+    weapon1: { name: 'Arco da Tempestade', image: 'assets/sets/tempestade/arco.webp' },
+    weapon2: { name: 'Aljava da Tempestade', image: 'assets/sets/tempestade/aljava.webp' },
+    head: { name: 'Capuz da Tempestade', image: 'assets/sets/tempestade/capuz.webp' },
+    chest: { name: 'Armadura da Tempestade', image: 'assets/sets/tempestade/armadura.webp' },
+    legs: { name: 'Calça da Tempestade', image: 'assets/sets/tempestade/calca.webp' },
+    hands: { name: 'Luva da Tempestade', image: 'assets/sets/tempestade/luvas.webp' },
+    boots: { name: 'Bota da Tempestade', image: 'assets/sets/tempestade/sapatos.webp' },
+    ring: { name: 'Anel da Tempestade', image: 'assets/sets/tempestade/anel.webp' },
+    necklace: { name: 'Colar da Tempestade', image: 'assets/sets/tempestade/colar.webp' },
+  },
 };
 
 /// Pontos de atributo → 2 stats finais fixos por atributo (ver
