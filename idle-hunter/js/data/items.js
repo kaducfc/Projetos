@@ -382,6 +382,17 @@ const ITEM_SET_OVERRIDES = {
     ring: { name: 'Anel do Aprendiz', image: 'assets/sets/aprendiz/anel.webp' },
     necklace: { name: 'Colar do Aprendiz', image: 'assets/sets/aprendiz/colar.webp' },
   },
+  '1_inteligencia': {
+    weapon1: { name: 'Cajado Gelado', image: 'assets/sets/gelado/cajado.webp' },
+    weapon2: { name: 'Grimório Gelado', image: 'assets/sets/gelado/livro.webp' },
+    head: { name: 'Capuz Gelado', image: 'assets/sets/gelado/capuz.webp' },
+    chest: { name: 'Túnica Gelada', image: 'assets/sets/gelado/armadura.webp' },
+    legs: { name: 'Calça Gelada', image: 'assets/sets/gelado/calca.webp' },
+    hands: { name: 'Luva Gelada', image: 'assets/sets/gelado/luvas.webp' },
+    boots: { name: 'Bota Gelada', image: 'assets/sets/gelado/sapatos.webp' },
+    ring: { name: 'Anel Gelado', image: 'assets/sets/gelado/anel.webp' },
+    necklace: { name: 'Colar Gelado', image: 'assets/sets/gelado/colar.webp' },
+  },
 };
 
 /// Pontos de atributo → 2 stats finais fixos por atributo (ver
