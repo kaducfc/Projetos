@@ -360,6 +360,17 @@ const ITEM_SET_OVERRIDES = {
     ring: { name: 'Anel Ancestral', image: 'assets/sets/ancestral/anel.webp' },
     necklace: { name: 'Colar Ancestral', image: 'assets/sets/ancestral/colar.webp' },
   },
+  '9_destreza': {
+    weapon1: { name: 'Arco Primordial', image: 'assets/sets/primordial/arco.webp' },
+    weapon2: { name: 'Aljava Primordial', image: 'assets/sets/primordial/aljava.webp' },
+    head: { name: 'Capuz Primordial', image: 'assets/sets/primordial/capuz.webp' },
+    chest: { name: 'Armadura Primordial', image: 'assets/sets/primordial/armadura.webp' },
+    legs: { name: 'Calça Primordial', image: 'assets/sets/primordial/calca.webp' },
+    hands: { name: 'Luva Primordial', image: 'assets/sets/primordial/luvas.webp' },
+    boots: { name: 'Bota Primordial', image: 'assets/sets/primordial/sapatos.webp' },
+    ring: { name: 'Anel Primordial', image: 'assets/sets/primordial/anel.webp' },
+    necklace: { name: 'Colar Primordial', image: 'assets/sets/primordial/colar.webp' },
+  },
 };
 
 /// Pontos de atributo → 2 stats finais fixos por atributo (ver
