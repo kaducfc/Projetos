@@ -1056,12 +1056,23 @@ button:disabled {
   padding: 0;
 }
 
+/* Same glow as .inventory-tile.has-rarity::before, for equipped slots too. */
+.equip-slot-icon.has-rarity::before {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--rarity-color) 85%, white) 0%, transparent 72%);
+  z-index: 0;
+}
+
 /* Same reasoning as .inventory-tile .icon above: pins .icon to a definite
    85%x85% square via absolute inset so tall/narrow art (e.g. Aljava) can't
    stretch the slot out of square by resolving its height against nothing. */
 .equip-slot-icon .icon {
   position: absolute;
   inset: 7.5%;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1224,17 +1235,6 @@ button:disabled {
 
 .inventory-tile.equipped {
   box-shadow: 0 0 0 2px var(--green);
-}
-
-.equip-slot-icon.has-rarity,
-.inventory-tile.has-rarity {
-  box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--rarity-color) 26%, transparent);
-}
-
-.inventory-tile.has-rarity.equipped {
-  box-shadow:
-    inset 0 0 0 999px color-mix(in srgb, var(--rarity-color) 26%, transparent),
-    0 0 0 2px var(--green);
 }
 
 /* Item detail popup (shown via the shared #modal-overlay) */
