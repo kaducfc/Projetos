@@ -251,6 +251,29 @@ const CATEGORY_LABELS = {
   necklace: { name: 'Colar', emoji: '📿' },
 };
 
+// Reformulação por "conjunto": overrides nome+arte de TODAS as 9 categorias
+// de um (zona, atributo) só, num lugar só — em vez do nome genérico
+// "<Categoria> da <Atributo> de <Boss>" e sem imagem (só emoji) que os
+// outros moldes ainda usam. Cobre um (zoneIndex, attributeId) por vez; só
+// as zonas/atributos aqui presentes saem do esquema genérico — as demais
+// continuam como antes. Ganha prioridade sobre ZONE_BOW_NAMES/
+// WEAPON_ARCHETYPES/CATEGORY_LABELS em buildItemTemplate.
+// Caminhos de imagem em literais de propósito — mesmo motivo do
+// ZONE_BOW_NAMES acima (bundler do Artifact procura por literais).
+const ITEM_SET_OVERRIDES = {
+  '0_destreza': {
+    weapon1: { name: 'Arco da Floresta', image: 'assets/sets/floresta/arco.png' },
+    weapon2: { name: 'Aljava da Floresta', image: 'assets/sets/floresta/aljava.png' },
+    head: { name: 'Capuz da Floresta', image: 'assets/sets/floresta/capuz.png' },
+    chest: { name: 'Armadura da Floresta', image: 'assets/sets/floresta/armadura.png' },
+    legs: { name: 'Calça da Floresta', image: 'assets/sets/floresta/calca.png' },
+    hands: { name: 'Luvas da Floresta', image: 'assets/sets/floresta/luvas.png' },
+    boots: { name: 'Sapatos da Floresta', image: 'assets/sets/floresta/sapatos.png' },
+    ring: { name: 'Anel da Floresta', image: 'assets/sets/floresta/anel.png' },
+    necklace: { name: 'Colar da Floresta', image: 'assets/sets/floresta/colar.png' },
+  },
+};
+
 /// Pontos de atributo → 2 stats finais fixos por atributo (ver
 /// systems/stats.js pra como isso se converte em vida/armadura/dps/
 /// velocidade/crítico no final). tier é o zoneIndex (0-based); categoryPower
@@ -309,7 +332,14 @@ function buildItemTemplate(boss, tier, category, attributeId, categoryIndex, wea
   let emoji;
   let image = null;
 
-  if ((category === 'weapon1' || category === 'weapon2') && attributeId === 'destreza') {
+  const setOverride = ITEM_SET_OVERRIDES[`${tier}_${attributeId}`]?.[category];
+  if (setOverride) {
+    name = setOverride.name;
+    image = setOverride.image;
+    emoji = (category === 'weapon1' || category === 'weapon2')
+      ? WEAPON_ARCHETYPES[category][attributeId].emoji
+      : CATEGORY_LABELS[category].emoji;
+  } else if ((category === 'weapon1' || category === 'weapon2') && attributeId === 'destreza') {
     name = ZONE_BOW_NAMES[tier][category];
     emoji = WEAPON_ARCHETYPES[category][attributeId].emoji;
     image = ZONE_BOW_NAMES[tier][category === 'weapon1' ? 'image1' : 'image2'];
