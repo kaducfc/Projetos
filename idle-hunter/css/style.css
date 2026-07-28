@@ -1056,6 +1056,22 @@ button:disabled {
   padding: 0;
 }
 
+/* Round rarity-color glow sitting between the slot frame and the item art
+   in front of it. inset is smaller than the icon's own 7.5% box (below) so
+   the glow's ring peeks out past the art on every side. No white mixed in
+   (unlike an earlier version) — against this frame's own gold/red trim, a
+   white-lightened glow (e.g. Mítico's red gone pale pink) blended in and
+   read as no glow at all; keeping the rarity color's full saturation is
+   what actually shows up here. */
+.equip-slot-icon.has-rarity::before {
+  content: '';
+  position: absolute;
+  inset: 2%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--rarity-color) 0%, color-mix(in srgb, var(--rarity-color) 55%, transparent) 45%, transparent 75%);
+  z-index: 0;
+}
+
 /* Same reasoning as .inventory-tile .icon above: pins .icon to a definite
    85%x85% square via absolute inset so tall/narrow art (e.g. Aljava) can't
    stretch the slot out of square by resolving its height against nothing. */
@@ -1068,21 +1084,6 @@ button:disabled {
   justify-content: center;
   font-size: 85cqw;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
-}
-
-/* Rarity glow that traces the item's own silhouette (drop-shadow follows
-   alpha, not a bounding box) instead of a flat circle behind it — a plain
-   radial-gradient fades to transparent near its edge and reads as barely
-   there for a light/grey rarity like Comum; stacking two blurred
-   drop-shadows in the item's own color stays visible at any rarity. */
-.equip-slot-icon.has-rarity .icon {
-  filter:
-    drop-shadow(0 2px 3px rgba(0, 0, 0, .5))
-    drop-shadow(0 0 4px var(--rarity-color))
-    drop-shadow(0 0 4px var(--rarity-color))
-    drop-shadow(0 0 8px var(--rarity-color))
-    drop-shadow(0 0 8px var(--rarity-color))
-    drop-shadow(0 0 14px var(--rarity-color));
 }
 
 .equip-slot-icon .icon img {
@@ -1196,6 +1197,20 @@ button:disabled {
   padding: 0;
 }
 
+/* Round rarity-color glow sitting between the tile frame and the item art
+   in front of it. inset is smaller than the icon's own 7.5% box (below) so
+   the glow's ring peeks out past the art on every side instead of mostly
+   hiding behind it whenever the art fills its box tightly. No white mixed
+   in — a white-lightened glow reads as barely-there against some frames. */
+.inventory-tile.has-rarity::before {
+  content: '';
+  position: absolute;
+  inset: 2%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--rarity-color) 0%, color-mix(in srgb, var(--rarity-color) 55%, transparent) 45%, transparent 75%);
+  z-index: 0;
+}
+
 /* .icon is an inline <span>, so a percentage height on its img child can't
    resolve against it (no definite height to resolve against) — the tall
    Aljava art was ignoring that height and stretching the grid row instead
@@ -1213,21 +1228,6 @@ button:disabled {
   justify-content: center;
   font-size: 85cqw;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
-}
-
-/* Rarity glow that traces the item's own silhouette (drop-shadow follows
-   alpha, not a bounding box) instead of a flat circle behind it — a plain
-   radial-gradient fades to transparent near its edge and reads as barely
-   there for a light/grey rarity like Comum; stacking two blurred
-   drop-shadows in the item's own color stays visible at any rarity. */
-.inventory-tile.has-rarity .icon {
-  filter:
-    drop-shadow(0 2px 3px rgba(0, 0, 0, .5))
-    drop-shadow(0 0 4px var(--rarity-color))
-    drop-shadow(0 0 4px var(--rarity-color))
-    drop-shadow(0 0 8px var(--rarity-color))
-    drop-shadow(0 0 8px var(--rarity-color))
-    drop-shadow(0 0 14px var(--rarity-color));
 }
 
 .inventory-tile .icon img {
