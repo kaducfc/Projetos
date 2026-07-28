@@ -338,6 +338,17 @@ const ITEM_SET_OVERRIDES = {
     ring: { name: 'Anel da Tempestade', image: 'assets/sets/tempestade/anel.webp' },
     necklace: { name: 'Colar da Tempestade', image: 'assets/sets/tempestade/colar.webp' },
   },
+  '7_destreza': {
+    weapon1: { name: 'Arco de Cristal', image: 'assets/sets/cristal/arco.webp' },
+    weapon2: { name: 'Aljava de Cristal', image: 'assets/sets/cristal/aljava.webp' },
+    head: { name: 'Capuz de Cristal', image: 'assets/sets/cristal/capuz.webp' },
+    chest: { name: 'Armadura de Cristal', image: 'assets/sets/cristal/armadura.webp' },
+    legs: { name: 'Calça de Cristal', image: 'assets/sets/cristal/calca.webp' },
+    hands: { name: 'Luva de Cristal', image: 'assets/sets/cristal/luvas.webp' },
+    boots: { name: 'Bota de Cristal', image: 'assets/sets/cristal/sapatos.webp' },
+    ring: { name: 'Anel de Cristal', image: 'assets/sets/cristal/anel.webp' },
+    necklace: { name: 'Colar de Cristal', image: 'assets/sets/cristal/colar.webp' },
+  },
 };
 
 /// Pontos de atributo → 2 stats finais fixos por atributo (ver
