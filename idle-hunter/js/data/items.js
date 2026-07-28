@@ -316,6 +316,17 @@ const ITEM_SET_OVERRIDES = {
     ring: { name: 'Anel Real', image: 'assets/sets/real/anel.webp' },
     necklace: { name: 'Colar Real', image: 'assets/sets/real/colar.webp' },
   },
+  '5_destreza': {
+    weapon1: { name: 'Arco Selvagem', image: 'assets/sets/selvagem/arco.webp' },
+    weapon2: { name: 'Aljava Selvagem', image: 'assets/sets/selvagem/aljava.webp' },
+    head: { name: 'Capuz Selvagem', image: 'assets/sets/selvagem/capuz.webp' },
+    chest: { name: 'Armadura Selvagem', image: 'assets/sets/selvagem/armadura.webp' },
+    legs: { name: 'Calça Selvagem', image: 'assets/sets/selvagem/calca.webp' },
+    hands: { name: 'Luva Selvagem', image: 'assets/sets/selvagem/luvas.webp' },
+    boots: { name: 'Bota Selvagem', image: 'assets/sets/selvagem/sapatos.webp' },
+    ring: { name: 'Anel Selvagem', image: 'assets/sets/selvagem/anel.webp' },
+    necklace: { name: 'Colar Selvagem', image: 'assets/sets/selvagem/colar.webp' },
+  },
 };
 
 /// Pontos de atributo → 2 stats finais fixos por atributo (ver
