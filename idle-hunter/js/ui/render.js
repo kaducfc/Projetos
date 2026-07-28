@@ -499,7 +499,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
 
   return `
     <div class="item-detail">
-      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-attribute" style="color:${attribute.color}; font-weight:700; font-size:11.5px;">${attribute.name} (${getDamageType(getDamageTypeForAttribute(item.attribute)).emoji} ${getDamageType(getDamageTypeForAttribute(item.attribute)).name})</div>
@@ -1317,7 +1317,19 @@ export function showLootPopup(goldGained, drops) {
   setTimeout(() => el.remove(), 2500);
 }
 
+// Global cooldown across every toast, regardless of source: a monster that
+// one-shots the player in a fast/tough zone would otherwise retrigger
+// retreat()'s "você morreu" toast every fight (sub-second), flooding the
+// screen and burying anything else happening at the same time. One message
+// per 10s window is enough to inform without drowning play out.
+const TOAST_COOLDOWN_MS = 10000;
+let lastToastAt = -Infinity;
+
 export function showToast(message) {
+  const now = Date.now();
+  if (now - lastToastAt < TOAST_COOLDOWN_MS) return;
+  lastToastAt = now;
+
   const container = document.getElementById('toast-container');
   const el = document.createElement('div');
   el.className = 'toast';
