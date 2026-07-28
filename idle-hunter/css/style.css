@@ -1228,16 +1228,13 @@ button:disabled {
 
 .equip-slot-icon.has-rarity,
 .inventory-tile.has-rarity {
-  box-shadow:
-    inset 0 0 0 999px color-mix(in srgb, var(--rarity-color) 26%, transparent),
-    0 0 0 2px var(--rarity-color);
+  box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--rarity-color) 26%, transparent);
 }
 
 .inventory-tile.has-rarity.equipped {
   box-shadow:
     inset 0 0 0 999px color-mix(in srgb, var(--rarity-color) 26%, transparent),
-    0 0 0 2px var(--rarity-color),
-    0 0 0 4px var(--green);
+    0 0 0 2px var(--green);
 }
 
 /* Item detail popup (shown via the shared #modal-overlay) */
