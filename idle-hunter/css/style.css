@@ -1252,6 +1252,13 @@ button:disabled {
   filter: drop-shadow(0 4px 4px rgba(74, 47, 20, .25));
 }
 
+/* Double size, just for the equipment item detail popup (not the empty-slot
+   fallback or pet species icons above, which share the base class) — the
+   item itself should stand out more when its full detail card is open. */
+.item-detail-icon-lg {
+  font-size: 96px;
+}
+
 .item-detail-name {
   font-size: 15px;
   font-weight: 800;
