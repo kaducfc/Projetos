@@ -1056,11 +1056,14 @@ button:disabled {
   padding: 0;
 }
 
-/* Same glow as .inventory-tile.has-rarity::before, for equipped slots too. */
+/* Same glow as .inventory-tile.has-rarity::before, for equipped slots too.
+   inset is smaller than the icon's own 7.5% box (see .equip-slot-icon .icon
+   below) so the glow's ring peeks out past the art on every side instead of
+   mostly hiding behind it whenever the art fills its box tightly. */
 .equip-slot-icon.has-rarity::before {
   content: '';
   position: absolute;
-  inset: 12%;
+  inset: 2%;
   border-radius: 50%;
   background: radial-gradient(circle, color-mix(in srgb, var(--rarity-color) 85%, white) 0%, transparent 72%);
   z-index: 0;
@@ -1193,11 +1196,13 @@ button:disabled {
 
 /* Soft glow, colored by rarity, sitting between the tile frame and the item
    art in front of it — gives the item some contrast against the frame
-   instead of blending flat into it. */
+   instead of blending flat into it. inset is smaller than the icon's own
+   7.5% box so the glow's ring peeks out past the art on every side instead
+   of mostly hiding behind it whenever the art fills its box tightly. */
 .inventory-tile.has-rarity::before {
   content: '';
   position: absolute;
-  inset: 12%;
+  inset: 2%;
   border-radius: 50%;
   background: radial-gradient(circle, color-mix(in srgb, var(--rarity-color) 85%, white) 0%, transparent 72%);
   z-index: 0;
