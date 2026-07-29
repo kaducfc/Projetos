@@ -469,8 +469,9 @@ export function showEquipSlotModal(state, slotId) {
 export function showItemDetailModal(state, uid, pickerOpenSlot = null, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   if (!entry) return;
-  const item = getItem(entry.itemId);
-  showModal(`${item.emoji} ${item.name}`, itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
+  // Sem título — o nome do item já aparece uma vez, embaixo do ícone (ver
+  // item-detail-name em itemDetailHtml), não precisa repetir aqui em cima.
+  showModal('', itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
 }
 
 function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
@@ -1339,7 +1340,9 @@ export function showToast(message) {
 }
 
 export function showModal(title, bodyHtml) {
-  document.getElementById('modal-title').textContent = title;
+  const titleEl = document.getElementById('modal-title');
+  titleEl.textContent = title;
+  titleEl.style.display = title ? '' : 'none';
   document.getElementById('modal-body').innerHTML = bodyHtml;
   document.getElementById('modal-overlay').classList.remove('hidden');
 }
