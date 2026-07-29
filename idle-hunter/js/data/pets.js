@@ -1,4 +1,4 @@
-import { RARITIES, getRarity } from './items.js';
+import { RARITIES, getRarity, VIP_INVENTORY_BONUS } from './items.js';
 
 // Mascotes causam um dano ELEMENTAL à parte do dano do personagem (que
 // agora é sempre Neutro, ver systems/stats.js) — só os 4 elementos "de
@@ -131,7 +131,13 @@ export function rollPetCandidate() {
   return { speciesId: species.id, rarityId: rarity.id, level: 1 };
 }
 
+// Base 70, +30 (100 no total) com VIP — mesmo bônus do inventário de
+// equipamentos (ver data/items.js ITEM_INVENTORY_CAP/getItemInventoryCap).
 export const PET_INVENTORY_CAP = 70;
+
+export function getPetInventoryCap(state) {
+  return PET_INVENTORY_CAP + (state.vip ? VIP_INVENTORY_BONUS : 0);
+}
 
 /// Valor de venda em ouro — usado tanto pro auto-sell ao bater o limite de
 /// 70 quanto pra venda manual. Escala com raridade e nível de fusão.

@@ -1,19 +1,30 @@
 import {
   getItem, ENHANCE_MAX_LEVEL, rollDroppedItem, getRarity, getSlotIdsForCategory,
   getNextItemTemplate, getAscensionCost, rollBaseStatsFromTemplate,
+  getItemInventoryCap, getItemScrapMaterial,
 } from '../data/items.js';
 
 /// Adiciona ao inventário um item recém-dropado (ver
 /// systems/combat.js rollItemDropOnKill / data/items.js rollDroppedItem) —
 /// não craft, não custo: o item já nasce pronto, sem auto-equipar (o
-/// jogador equipa manualmente, mesmo fluxo de sempre via equipItem). Retorna
-/// o novo uid, ou null se a rolagem de drop falhar por algum motivo.
+/// jogador equipa manualmente, mesmo fluxo de sempre via equipItem). Se o
+/// inventário já estiver no limite (70, ou 100 com VIP, ver
+/// getItemInventoryCap), o item NOVO é descartado automaticamente em vez de
+/// entrar, e vira material (ver getItemScrapMaterial) direto pro jogador.
+/// Retorna { uid, discarded, material? }, ou null se a rolagem de drop
+/// falhar por algum motivo.
 export function addDroppedItem(state, zoneIndex, slotId) {
   const rolled = rollDroppedItem(zoneIndex, slotId);
   if (!rolled) return null;
+  if (state.inventory.length >= getItemInventoryCap(state)) {
+    const item = getItem(rolled.itemId);
+    const material = getItemScrapMaterial(item, rolled.rarityId);
+    state.materials[material.matId] = (state.materials[material.matId] || 0) + material.qty;
+    return { uid: null, discarded: true, material };
+  }
   const uid = state.nextUid++;
   state.inventory.push({ uid, ...rolled });
-  return uid;
+  return { uid, discarded: false };
 }
 
 function getEntry(state, uid) {

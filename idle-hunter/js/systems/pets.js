@@ -1,13 +1,7 @@
-import { PET_INVENTORY_CAP, PET_MAX_LEVEL, getPetSellValue, getPetDamage, getPetSpecies } from '../data/pets.js';
-import { RARITIES } from '../data/items.js';
+import { PET_MAX_LEVEL, getPetInventoryCap, getPetSellValue, getPetDamage, getPetSpecies } from '../data/pets.js';
 import { elementDamageModifier } from '../data/elements.js';
 
 export const MAX_EQUIPPED_PETS = 4;
-
-function petPowerScore(petEntry) {
-  const rarityIdx = RARITIES.findIndex((r) => r.id === petEntry.rarityId);
-  return Math.max(0, rarityIdx) * 100 + (petEntry.level || 1);
-}
 
 export function getPetEntry(state, uid) {
   return state.pets.find((p) => p.uid === uid) || null;
@@ -17,34 +11,21 @@ function isPetEquipped(state, uid) {
   return (state.equippedPetUids || []).includes(uid);
 }
 
-/// Vende automaticamente o pet mais fraco (nunca um equipado) do
-/// inventário — chamado quando adicionar um novo pet estouraria o limite de
-/// PET_INVENTORY_CAP (70). Retorna { pet, value } do que foi vendido, ou
-/// null se não havia nenhum candidato (todos os 70 equipados, impossível
-/// hoje já que só há 4 slots, mas defensivo).
-function sellWeakestUnequippedPet(state) {
-  const candidates = state.pets.filter((p) => !isPetEquipped(state, p.uid));
-  if (!candidates.length) return null;
-  candidates.sort((a, b) => petPowerScore(a) - petPowerScore(b));
-  const weakest = candidates[0];
-  const value = getPetSellValue(weakest);
-  state.gold += value;
-  state.pets = state.pets.filter((p) => p.uid !== weakest.uid);
-  return { pet: weakest, value };
-}
-
 /// Adiciona um candidato já escolhido (ver hatch flow em main.js) ao
-/// inventário de pets — vende automaticamente o mais fraco antes se isso
-/// estourar o limite de 70.
+/// inventário de pets — se o inventário já estiver no limite (70, ou 100 com
+/// VIP, ver getPetInventoryCap), o pet NOVO é descartado automaticamente em
+/// vez de entrar, e vira Fragmentos (state.petFragments) na mesma
+/// quantidade que renderia se fosse vendido (getPetSellValue).
 export function addPetToInventory(state, candidate) {
-  let autoSold = null;
-  if (state.pets.length >= PET_INVENTORY_CAP) {
-    autoSold = sellWeakestUnequippedPet(state);
+  if (state.pets.length >= getPetInventoryCap(state)) {
+    const fragments = getPetSellValue(candidate);
+    state.petFragments = (state.petFragments || 0) + fragments;
+    return { uid: null, discarded: true, fragments };
   }
   const uid = state.nextPetUid++;
   const pet = { uid, speciesId: candidate.speciesId, rarityId: candidate.rarityId, level: candidate.level || 1 };
   state.pets.push(pet);
-  return { uid, autoSold };
+  return { uid, discarded: false };
 }
 
 /// Equipa sem precisar escolher slot manualmente: primeiro slot vazio, ou
