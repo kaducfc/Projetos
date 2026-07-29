@@ -470,8 +470,7 @@ export function showItemDetailModal(state, uid, pickerOpenSlot = null, confirmDe
   const entry = state.inventory.find((i) => i.uid === uid);
   if (!entry) return;
   const item = getItem(entry.itemId);
-  const label = getCategoryLabel(item.category);
-  showModal(`${label.emoji} ${label.name}`, itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
+  showModal(`${item.emoji} ${item.name}`, itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
 }
 
 function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
