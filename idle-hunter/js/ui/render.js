@@ -418,7 +418,7 @@ function slotIconHtml(state, slot) {
   const equipped = getEquippedEntry(state, slot.id);
   const icon = equipped
     ? iconMarkup(equipped.item.image, equipped.item.emoji, equipped.item.name)
-    : slot.emoji;
+    : iconMarkup(slot.emptyIcon, slot.emoji, slot.name);
   const badge = equipped
     ? `<span class="mini-badge ${equipped.entry.isMaster ? 'master' : ''}">${getEnhanceLabel(equipped.entry.enhanceLevel, equipped.entry.isMaster)}</span>`
     : '';

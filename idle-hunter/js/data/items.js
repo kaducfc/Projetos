@@ -3,18 +3,22 @@ import { BOSSES, getWeakMonsterGroupForStage } from './monsters.js';
 // 10 slots físicos, 9 categorias de drop — anel ocupa 2 slots mas é uma
 // categoria só (mesmo item pode ser equipado nos dois, ver
 // getSlotIdsForCategory abaixo). "kind" só importa pra resistência elemental
-// (armor) e pro texto do popup de detalhe (attack vs. accessory).
+// (armor) e pro texto do popup de detalhe (attack vs. accessory). emptyIcon é
+// a logo mostrada no quadrado do slot quando ele ainda não tem nada
+// equipado (ver slotIconHtml em ui/render.js) — caminho em literal de
+// propósito, mesmo motivo do ZONE_BOW_NAMES mais abaixo (bundler do
+// Artifact procura por literais).
 export const SLOTS = [
-  { id: 'weapon1', name: 'Arma Primária', emoji: '⚔️', kind: 'attack', category: 'weapon1' },
-  { id: 'weapon2', name: 'Arma Secundária', emoji: '🗡️', kind: 'attack', category: 'weapon2' },
-  { id: 'head', name: 'Cabeça', emoji: '🪖', kind: 'armor', category: 'head' },
-  { id: 'chest', name: 'Peito', emoji: '🛡️', kind: 'armor', category: 'chest' },
-  { id: 'legs', name: 'Calça', emoji: '👖', kind: 'armor', category: 'legs' },
-  { id: 'hands', name: 'Mãos', emoji: '🧤', kind: 'armor', category: 'hands' },
-  { id: 'boots', name: 'Botas', emoji: '👢', kind: 'armor', category: 'boots' },
-  { id: 'ring1', name: 'Anel 1', emoji: '💍', kind: 'accessory', category: 'ring' },
-  { id: 'ring2', name: 'Anel 2', emoji: '💍', kind: 'accessory', category: 'ring' },
-  { id: 'necklace', name: 'Colar', emoji: '📿', kind: 'accessory', category: 'necklace' },
+  { id: 'weapon1', name: 'Arma Primária', emoji: '⚔️', kind: 'attack', category: 'weapon1', emptyIcon: 'assets/ui/slots/weapon1.webp' },
+  { id: 'weapon2', name: 'Arma Secundária', emoji: '🗡️', kind: 'attack', category: 'weapon2', emptyIcon: 'assets/ui/slots/weapon2.webp' },
+  { id: 'head', name: 'Cabeça', emoji: '🪖', kind: 'armor', category: 'head', emptyIcon: 'assets/ui/slots/head.webp' },
+  { id: 'chest', name: 'Peito', emoji: '🛡️', kind: 'armor', category: 'chest', emptyIcon: 'assets/ui/slots/chest.webp' },
+  { id: 'legs', name: 'Calça', emoji: '👖', kind: 'armor', category: 'legs', emptyIcon: 'assets/ui/slots/legs.webp' },
+  { id: 'hands', name: 'Mãos', emoji: '🧤', kind: 'armor', category: 'hands', emptyIcon: 'assets/ui/slots/hands.webp' },
+  { id: 'boots', name: 'Botas', emoji: '👢', kind: 'armor', category: 'boots', emptyIcon: 'assets/ui/slots/boots.webp' },
+  { id: 'ring1', name: 'Anel 1', emoji: '💍', kind: 'accessory', category: 'ring', emptyIcon: 'assets/ui/slots/ring.webp' },
+  { id: 'ring2', name: 'Anel 2', emoji: '💍', kind: 'accessory', category: 'ring', emptyIcon: 'assets/ui/slots/ring.webp' },
+  { id: 'necklace', name: 'Colar', emoji: '📿', kind: 'accessory', category: 'necklace', emptyIcon: 'assets/ui/slots/necklace.webp' },
 ];
 
 // As 9 categorias de drop (ring conta uma vez só — "só vai dropar um anel de
