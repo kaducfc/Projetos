@@ -841,8 +841,10 @@ function petDetailHtml(state, uid, showFuseList) {
 export function showPetDetailModal(state, uid, showFuseList = false) {
   const pet = getPetEntry(state, uid);
   if (!pet) return;
-  const species = getPetSpecies(pet.speciesId);
-  showModal(`${species.emoji} ${species.name}`, petDetailHtml(state, uid, showFuseList));
+  // Sem título — o nome do mascote já aparece uma vez, embaixo do ícone
+  // (ver item-detail-name em petDetailHtml), não precisa repetir aqui em
+  // cima (mesmo padrão do modal de item, ver showItemDetailModal).
+  showModal('', petDetailHtml(state, uid, showFuseList));
 }
 
 function hatchCandidateHtml(candidate, side, unlocked) {
