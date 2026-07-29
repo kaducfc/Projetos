@@ -157,6 +157,16 @@ export function getRarity(rarityId) {
   return RARITIES.find((r) => r.id === rarityId) || RARITIES[0];
 }
 
+// Limite de slots do inventário de equipamentos — 70 de base, +30 (100 no
+// total) com VIP. Mesmo bônus de VIP usado pelo inventário de mascotes (ver
+// data/pets.js PET_INVENTORY_CAP/getPetInventoryCap).
+export const ITEM_INVENTORY_CAP = 70;
+export const VIP_INVENTORY_BONUS = 30;
+
+export function getItemInventoryCap(state) {
+  return ITEM_INVENTORY_CAP + (state.vip ? VIP_INVENTORY_BONUS : 0);
+}
+
 function pickRarity() {
   const totalWeight = RARITIES.reduce((sum, r) => sum + r.weight, 0);
   let roll = Math.random() * totalWeight;
@@ -785,3 +795,14 @@ export function getAscensionCost(item) {
 /// rollBaseStatsFromTemplate exportada só pra ascendItem (systems/crafting.js)
 /// reusar a mesma rolagem ±10% ao recalcular os números da nova zona.
 export { rollBaseStatsFromTemplate };
+
+/// Material "de sucata" que um item dropado converte quando o inventário de
+/// equipamentos está cheio (ver addDroppedItem em systems/crafting.js) — em
+/// vez de descartar o item sem dar nada, usa o mesmo material/zona do
+/// primeiro nível de enhance do próprio item, com a quantidade escalada pela
+/// raridade sorteada (raridades melhores rendem mais material).
+export function getItemScrapMaterial(item, rarityId) {
+  const rarity = getRarity(rarityId);
+  const base = item.enhanceCost[0];
+  return { matId: base.matId, qty: Math.max(1, Math.round(base.qty * rarity.mult)) };
+}
