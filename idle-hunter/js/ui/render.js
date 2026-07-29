@@ -2,7 +2,7 @@ import { BOSSES, findMaterialInfo, ZONES } from '../data/monsters.js';
 import {
   getSlot, getItem, getEnhancedStats, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
   getNextItemTemplate, getAscensionCost, getDamageType, getDamageTypeForAttribute, ENHANCE_MAX_LEVEL,
-  DROP_CATEGORIES,
+  DROP_CATEGORIES, getItemInventoryCap,
 } from '../data/items.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
@@ -19,7 +19,7 @@ import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventS
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
 import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
 import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
-import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, PET_MAX_LEVEL, PET_INVENTORY_CAP } from '../data/pets.js';
+import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, PET_MAX_LEVEL, getPetInventoryCap } from '../data/pets.js';
 import { getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet } from '../systems/pets.js';
 
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
@@ -399,7 +399,7 @@ function equipRingContentHtml(state, filterCategory = null) {
         ${equipStatsBoxHtml(state)}
       </div>
       ${attributeTotalsHtml(state)}
-      <div class="equip-inventory-header">Inventário</div>
+      <div class="equip-inventory-header">Inventário (${state.inventory.length}/${getItemInventoryCap(state)})</div>
       ${categoryFilterRowHtml(filterCategory)}
       <div class="equip-inventory-grid">${inventoryHtml}</div>
     </div>
@@ -780,11 +780,12 @@ export function renderPetsTab(state) {
     <div class="section-banner section-banner-sm">🐾 Mascotes</div>
     <div class="pets-egg-row">
       <span class="pets-egg-count">🥚 Ovos: <strong>${formatNumber(state.eggCount || 0)}</strong></span>
+      <span class="pets-egg-count">🧩 Fragmentos: <strong>${formatNumber(state.petFragments || 0)}</strong></span>
       <button class="pets-hatch-btn" data-hatch-egg-btn ${(state.eggCount || 0) < 1 ? 'disabled' : ''}>Chocar Ovo</button>
     </div>
     <div class="equip-inventory-header">Equipados (até ${MAX_EQUIPPED_PETS})</div>
     <div class="pets-equip-row">${equipRow}</div>
-    <div class="equip-inventory-header">Inventário (${state.pets.length}/${PET_INVENTORY_CAP})</div>
+    <div class="equip-inventory-header">Inventário (${state.pets.length}/${getPetInventoryCap(state)})</div>
     <div class="equip-inventory-grid">${petsHtml}</div>
   `;
 }

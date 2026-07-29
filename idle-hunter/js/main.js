@@ -170,8 +170,12 @@ function handleKillEvent(event) {
   if (!event) return;
   showLootPopup(event.goldGained, event.drops);
   if (event.reprocced) showToast('🔁 Gaiatron: o chefe caiu de novo instantaneamente! Recompensas dobradas.');
-  if (event.droppedItemUid != null) {
-    const dropped = state.inventory.find((i) => i.uid === event.droppedItemUid);
+  if (event.itemDropResult?.discarded) {
+    const { matId, qty } = event.itemDropResult.material;
+    const matInfo = findMaterialInfo(matId);
+    showToast(`🎒 Inventário de itens cheio! Item convertido em +${qty} ${matInfo?.emoji ?? ''} ${matInfo?.name ?? ''}.`);
+  } else if (event.itemDropResult?.uid != null) {
+    const dropped = state.inventory.find((i) => i.uid === event.itemDropResult.uid);
     if (dropped) {
       const item = getItem(dropped.itemId);
       showToast(`🎁 Item dropado: ${item.name} (${getRarity(dropped.rarityId).name})!`);
@@ -632,10 +636,10 @@ function wireModalEvents() {
         const chosen = pendingHatchCandidates[side === 'left' ? 0 : 1];
         pendingHatchCandidates = null;
         state.eggCount = Math.max(0, (state.eggCount || 0) - 1);
-        const { autoSold } = addPetToInventory(state, chosen);
+        const { discarded, fragments } = addPetToInventory(state, chosen);
         hideModal();
-        showToast(autoSold
-          ? `🐣 Novo mascote! (vendeu automaticamente 1 mascote fraco por +${formatNumber(autoSold.value)} ouro pra abrir espaço)`
+        showToast(discarded
+          ? `🎒 Inventário de mascotes cheio! Mascote convertido em +${formatNumber(fragments)} 🧩 Fragmentos.`
           : '🐣 Novo mascote chocado!');
         renderTopBar(state);
         renderPetsTab(state);

@@ -279,12 +279,12 @@ export function applyDamage(state, amount, stats) {
   }
   state.totalKills += 1;
 
-  let droppedItemUid = null;
+  let itemDropResult = null;
   if (Math.random() < Math.min(0.95, ITEM_DROP_CHANCE * stats.dropMult)) {
     // 9 categorias de drop (não SLOTS — ring ocupa 2 slots físicos mas é 1
     // categoria só, ver data/items.js).
     const category = DROP_CATEGORIES[Math.floor(Math.random() * DROP_CATEGORIES.length)];
-    droppedItemUid = addDroppedItem(state, zoneIndex, category);
+    itemDropResult = addDroppedItem(state, zoneIndex, category);
   }
 
   // Ovo de mascote: chance fixa (não escalada por dropMult, igual
@@ -301,7 +301,7 @@ export function applyDamage(state, amount, stats) {
   state.monsterHp = null;
   ensureMonsterSpawned(state);
 
-  return { zoneIndex, wasBoss, goldGained, drops, reprocced, xpGained, levelsGained, droppedItemUid, eggGained };
+  return { zoneIndex, wasBoss, goldGained, drops, reprocced, xpGained, levelsGained, itemDropResult, eggGained };
 }
 
 // ---------------------------------------------------------------------

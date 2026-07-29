@@ -121,11 +121,18 @@ export function createDefaultState() {
     nextPetUid: 1,
     equippedPetUids: [null, null, null, null],
     eggCount: 0,
+    // Recurso simples (só um contador, sem uso ainda) recebido quando um
+    // pet é descartado automaticamente por o inventário estar cheio — ver
+    // addPetToInventory em systems/pets.js.
+    petFragments: 0,
     // Sistema VIP ainda por vir (mais funcionalidades futuras) — por
-    // enquanto só controla se o jogador pode escolher livremente entre os
-    // 2 pets ao chocar um ovo. freeRightPetChoiceCycle guarda o último
-    // ciclo diário (ver systems/pets.js currentDailyCycle) em que um
-    // jogador não-VIP já usou a escolha grátis do pet da direita.
+    // enquanto controla se o jogador pode escolher livremente entre os 2
+    // pets ao chocar um ovo, e dá +30 de capacidade nos inventários de
+    // equipamentos e de mascotes (70 → 100, ver data/items.js
+    // getItemInventoryCap / data/pets.js getPetInventoryCap).
+    // freeRightPetChoiceCycle guarda o último ciclo diário (ver
+    // systems/pets.js currentDailyCycle) em que um jogador não-VIP já usou
+    // a escolha grátis do pet da direita.
     vip: false,
     freeRightPetChoiceCycle: null,
   };
