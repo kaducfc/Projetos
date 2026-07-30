@@ -44,34 +44,16 @@ function elementBadgeHtml(elementId) {
 }
 
 
-const STAT_LABELS = {
-  dpsFlat: (v) => `+${formatNumber(v)} DPS`,
-  dpsPercent: (v) => `+${formatPercent(v)} DPS`,
-  danoFisicoFlat: (v) => `+${formatNumber(v)} Dano Físico`,
-  danoPerfuracaoFlat: (v) => `+${formatNumber(v)} Dano de Perfuração`,
-  danoMagicoFlat: (v) => `+${formatNumber(v)} Dano Mágico`,
-  attackSpeedPercent: (v) => `+${formatPercent(v)} Velocidade de Ataque`,
-  goldPercent: (v) => `+${formatPercent(v)} Ouro`,
-  dropPercent: (v) => `+${formatPercent(v)} Chance de Material`,
-  hpFlat: (v) => `+${formatNumber(v)} Vida`,
-  armorFlat: (v) => `+${formatNumber(v)} Armadura`,
-  hpPercent: (v) => `+${formatPercent(v)} Vida`,
-  armorPercent: (v) => `+${formatPercent(v)} Armadura`,
-  critChancePercent: (v) => `+${formatPercent(v)} Chance Crítica`,
-  critDamagePercent: (v) => `+${formatPercent(v)} Dano Crítico`,
-  // Atributo base do item em si (ver data/items.js attributeBaseStats) — a
-  // cor própria do atributo já identifica o "estilo" do item, sem precisar
-  // de uma linha separada de atributo/tipo de dano acima.
+// Atributo base do item em si (ver data/items.js attributeBaseStats) — a
+// única coisa mostrada no card do item é esse número, na cor própria do
+// atributo (identifica o "estilo" sozinho, sem precisar de uma linha
+// separada de atributo/tipo de dano nem dos afixos de raridade — esses só
+// entram na soma internamente, ver systems/stats.js).
+const ATTRIBUTE_STAT_LABEL = {
   forca: (v) => `<span style="color:${getAttribute('forca').color}; font-weight:800;">+${formatNumber(v)} Força</span>`,
   destreza: (v) => `<span style="color:${getAttribute('destreza').color}; font-weight:800;">+${formatNumber(v)} Destreza</span>`,
   inteligencia: (v) => `<span style="color:${getAttribute('inteligencia').color}; font-weight:800;">+${formatNumber(v)} Inteligência</span>`,
 };
-
-function formatStatsLines(stats) {
-  return Object.entries(stats)
-    .map(([key, value]) => (STAT_LABELS[key] ? STAT_LABELS[key](value) : null))
-    .filter(Boolean);
-}
 
 export function renderTopBar(state) {
   document.getElementById('gold-value').textContent = formatNumber(state.gold);
@@ -553,7 +535,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
       <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
-      <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
+      <div class="item-detail-stats">${ATTRIBUTE_STAT_LABEL[item.attribute](enhancedStats[item.attribute] || 0)}</div>
       ${resistanceLine}
       ${weaponRequirementNote}
       ${cardSlotsHtml}
