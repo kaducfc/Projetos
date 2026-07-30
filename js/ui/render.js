@@ -530,19 +530,21 @@ export function showItemDetailModal(state, uid, pickerOpenSlot = null, confirmDe
   showModal('', itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
 }
 
-/// Linha do atributo base do item + a linha do 2º adicional base (dano pra
-/// arma, vida pra armadura, armadura pra anel/colar — ver
-/// secondaryStatKeyForCategory em data/items.js), ambas destacadas e já
-/// escaladas pelo enhance, seguidas de uma linha por atributo bônus rolado
-/// (ver rollAdditionalStats em data/items.js) — inclusive quando o bônus é o
-/// MESMO atributo do item ('attrSelf') ou repete um valor igual ao da base:
-/// não funde com as linhas de cima, aparece separado (não escala com
-/// enhance, igual todo atributo bônus). Itens de um save antigo (rolados
-/// antes do 2º adicional existir) simplesmente não têm essa chave em
-/// baseStats — secondaryLine fica vazia, sem quebrar.
+/// Linha do atributo base do item (FIXA — só muda pelo tier/zona do item,
+/// nunca por raridade/enhance, ver rollBaseStatsFromTemplate/
+/// getEnhancedStats em data/items.js) + a linha do 2º adicional base (dano
+/// pra arma, vida pra armadura, armadura pra anel/colar — ver
+/// secondaryStatKeyForCategory em data/items.js), essa sim escalada pelo
+/// enhance, seguidas de uma linha por atributo bônus rolado (ver
+/// rollAdditionalStats em data/items.js) — inclusive quando o bônus é o
+/// MESMO atributo do item ('attrSelf') ou um dos outros dois ('attrOther'):
+/// sempre no mesmo valor fixo da base, mas numa linha separada (soma, não
+/// funde). Itens de um save antigo (rolados antes do 2º adicional existir)
+/// simplesmente não têm essa chave em baseStats — secondaryLine fica
+/// vazia, sem quebrar.
 function itemDetailStatsHtml(item, entry) {
   const mult = enhancementMultiplier(entry.enhanceLevel || 0, !!entry.isMaster);
-  const baseValue = Math.round((entry.baseStats?.[item.attribute] || 0) * mult);
+  const baseValue = entry.baseStats?.[item.attribute] || 0;
   const baseLine = ATTRIBUTE_STAT_LABEL[item.attribute](baseValue);
 
   const secondaryKey = Object.keys(entry.baseStats || {}).find((key) => key !== item.attribute);
