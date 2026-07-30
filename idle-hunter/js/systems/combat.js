@@ -315,6 +315,14 @@ export function applyDamage(state, amount, stats) {
   const xpGained = xpForZone(zoneIndex, wasBoss);
   const levelsGained = grantXp(state, xpGained);
 
+  // Guarda uma cópia do monstro que acabou de morrer (não a referência viva
+  // de state.currentMonster, que está prestes a virar null) — a UI usa isso
+  // pra continuar mostrando o sprite/nome dele (com a barra de vida
+  // zerada) durante a pausa de respawn, em vez de cair na tela de "?" (ver
+  // renderNoMonsterSelected em ui/render.js e main.js). Puramente
+  // cosmético: não participa de nenhum cálculo de combate — tick()/
+  // applyDamage continuam lendo state.currentMonster (null) normalmente.
+  state.lastMonsterRef = { ...ref };
   state.monsterHp = null;
   state.currentMonster = null;
   state.nextMonsterSpawnAt = Date.now() + MONSTER_RESPAWN_DELAY_MS;

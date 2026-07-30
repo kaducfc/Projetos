@@ -29,6 +29,11 @@ export function createDefaultState() {
     // cada respawn — ver ensureMonsterSpawned) — { zoneIndex, kind, monsterId }.
     currentMonster: null,
     monsterHp: null, // HP restante do monstro atual; null = precisa (re)spawnar
+    // Cópia do último monstro morto, só pra UI continuar mostrando ele (HP
+    // zerado) durante a pausa de respawn em vez de cair na tela de "?" — ver
+    // applyDamage em systems/combat.js. Não participa de nenhum cálculo de
+    // combate.
+    lastMonsterRef: null,
 
     materials: {}, // materialId -> count (agora só alimenta o enhance/Master, não craft)
     cards: {}, // cardId -> count (see data/cards.js)
