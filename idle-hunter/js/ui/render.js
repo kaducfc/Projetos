@@ -485,11 +485,18 @@ function inventoryTileHtml(state, entry, bulkSelect = null) {
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
   const rarity = getRarity(entry.rarityId);
   const isSelected = !!bulkSelect?.active && bulkSelect.selectedUids.has(entry.uid);
-  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''} ${isSelected ? 'bulk-selected' : ''}" style="--rarity-color:${rarity.color};" data-equip-item="${entry.uid}" title="${item.name}">
+  // No modo de seleção em massa, itens equipados ficam escurecidos e fora
+  // de seleção — destruir em massa é pra descartar sucata, não pra pegar
+  // sem querer algo que já está no personagem (destruir um equipado
+  // continua possível pelo popup de detalhe individual, que já desequipa
+  // sozinho, ver destroyItem em systems/crafting.js).
+  const bulkLocked = !!bulkSelect?.active && isEquipped;
+  const title = bulkLocked ? `${item.name} (equipado — desequipe antes de selecionar)` : item.name;
+  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''} ${isSelected ? 'bulk-selected' : ''} ${bulkLocked ? 'bulk-locked' : ''}" style="--rarity-color:${rarity.color};" data-equip-item="${entry.uid}" title="${title}" ${bulkLocked ? 'disabled' : ''}>
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
     ${cardCountBadgeHtml(entry)}
-    ${bulkSelect?.active ? `<span class="bulk-select-check">${isSelected ? '✅' : '⬜'}</span>` : ''}
+    ${bulkSelect?.active && !bulkLocked ? `<span class="bulk-select-check">${isSelected ? '✅' : '⬜'}</span>` : ''}
   </button>`;
 }
 
