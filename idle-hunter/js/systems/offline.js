@@ -1,5 +1,5 @@
 import { computePlayerStats } from './stats.js';
-import { monsterMaxHp, monsterGoldReward, rollDrops } from './combat.js';
+import { monsterMaxHp, monsterGoldReward, rollDrops, MONSTER_RESPAWN_DELAY_MS } from './combat.js';
 import { getZone } from '../data/monsters.js';
 import { xpForZone, grantXp } from './leveling.js';
 import { recordCardDiscovered } from './cards.js';
@@ -41,8 +41,11 @@ export function computeOfflineProgress(state) {
   const sample = pool[0];
   const sampleZone = getZone(sample.zoneIndex);
   const referenceHp = monsterMaxHp(sampleZone.canonicalStage, sample.kind === 'boss');
-  const totalDamage = effectiveDps * elapsedSeconds;
-  const kills = Math.floor(totalDamage / referenceHp);
+  // Cada kill também gasta a pausa de respawn (ver MONSTER_RESPAWN_DELAY_MS
+  // em systems/combat.js) — sem isso, o offline ficaria mais rápido que
+  // jogar ao vivo.
+  const timePerKillSeconds = referenceHp / effectiveDps + MONSTER_RESPAWN_DELAY_MS / 1000;
+  const kills = Math.floor(elapsedSeconds / timePerKillSeconds);
   if (kills <= 0) return null;
 
   const simulatedKills = Math.min(kills, SIMULATION_CAP);

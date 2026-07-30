@@ -156,6 +156,7 @@ function armBossTimer() {
 /// existe mais estágio pra recuar).
 function retreat(reason) {
   state.monsterHp = null;
+  state.nextMonsterSpawnAt = null;
   ensureMonsterSpawned(state);
   resetPlayerHp();
   const message = reason === 'death'
