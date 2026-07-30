@@ -193,28 +193,30 @@ export const BOSSES = [
   },
   {
     stage: 20,
+    // id/crystalMaterialId ficam 'solkaiser'/'solkaiser_crystal' de
+    // propósito — mesmo reskin display-only do Chispim→Thornak acima (ver
+    // comentário lá). Fecha a Zona 2 (Marfang/Mizan/Lyria/Hydrakon, ver
+    // WEAK_MONSTER_GROUPS acima) como o 5º e mais forte monstro.
     id: 'solkaiser',
-    name: 'Solkaiser',
-    element: 'fogo',
-    emoji: '🦅',
-    image: 'assets/solkaiser/monster.png',
-    // Idle-loop animation — same standard as Chispim's (see that entry's
-    // comment above): 150ms/frame, plain src swap, all 4 frames cropped to
-    // the same union bounding box.
-    animFrames: [
-      'assets/solkaiser/anim/frame1.png',
-      'assets/solkaiser/anim/frame2.png',
-      'assets/solkaiser/anim/frame3.png',
-      'assets/solkaiser/anim/frame4.png',
-    ],
-    // Boss-specific background (see Chispim's `scene` comment above).
-    scene: 'assets/ui/scenes/boss-solkaiser.png',
+    name: 'Marokar',
+    element: 'agua',
+    emoji: '🔱',
+    image: 'assets/marokar/monster.png',
+    // Sem animação de frames (só 1 imagem estática recebida).
+    animFrames: null,
     spriteScale: 2.1,
+    // Só 1 material de drop de verdade (Tridente de Marokar) — mesmo
+    // truque do Thornak (primary1/primary2 apontam pro mesmo id, ver
+    // comentário lá + eventShopItemsForBoss em data/shop.js).
     materials: {
-      primary1: { id: 'solkaiser_feather', name: 'Pena de Solkaiser', emoji: '🪶', image: 'assets/solkaiser/pena.png' },
-      primary2: { id: 'solkaiser_core', name: 'Núcleo Solar', emoji: '☀️', image: 'assets/solkaiser/nucleo.png' },
+      primary1: { id: 'solkaiser_feather', name: 'Tridente de Marokar', emoji: '🔱', image: 'assets/marokar/tridente.png' },
+      primary2: { id: 'solkaiser_feather', name: 'Tridente de Marokar', emoji: '🔱', image: 'assets/marokar/tridente.png' },
     },
-    crystal: { id: 'solkaiser_crystal', name: 'Cristal de Solkaiser', emoji: '💎', image: 'assets/crystals/solkaiser.png' },
+    crystal: { id: 'solkaiser_crystal', name: 'Cristal de Marokar', emoji: '💎', image: 'assets/crystals/solkaiser.png' },
+    // Rank de poder dentro da Zona 2 (ver monsterMaxHp/
+    // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4
+    // é só 1 degrau acima do Hydrakon (rank 3).
+    powerRank: 4,
   },
   {
     stage: 30,
@@ -413,15 +415,18 @@ export const WEAK_MONSTER_GROUPS = [
       { id: 'granclaw', name: 'GranClaw', element: 'planta', emoji: '🦀', image: 'assets/granclaw/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'granclaw_claw', name: 'Garra Petrificada', emoji: '🪨', image: 'assets/granclaw/garra.png' } },
     ],
   },
+  // Zona 2 (stage 10-19) — mesmo tratamento da Zona 1 acima: 4 monstros
+  // próprios, elemento Água, cada um um pouco mais forte que o anterior
+  // (powerRank). O 5º e mais forte (Marokar) é o chefe da zona (ver
+  // BOSSES[1] abaixo).
   {
     startStage: 10,
     endStage: 19,
     monsters: [
-      { id: 'braslimo', name: 'Braslimo', element: 'fogo', emoji: '🔥', image: 'assets/braslimo/monster.png', material: { id: 'braslimo_gel', name: 'Gel Incandescente', emoji: '🟠', image: 'assets/braslimo/gel.png' } },
-      { id: 'cristalino', name: 'Cristalino', element: 'agua', emoji: '🔷', image: 'assets/cristalino/monster.png', material: { id: 'cristalino_shard', name: 'Fragmento de Cristal', emoji: '💠', image: 'assets/cristalino/shard.png' } },
-      { id: 'espinhoco', name: 'Espinhoco', element: 'neutro', emoji: '🦔', image: 'assets/espinhoco/monster.png', material: { id: 'espinhoco_thorn', name: 'Espinho Afiado', emoji: '🌵', image: 'assets/espinhoco/thorn.png' } },
-      { id: 'tronk', name: 'Tronk', element: 'planta', emoji: '🌳', image: 'assets/tronk/monster.png', material: { id: 'tronk_wood', name: 'Madeira Viva', emoji: '🪵', image: 'assets/tronk/wood.png' } },
-      { id: 'aracneon', name: 'Aracneon', element: 'eletrico', emoji: '🕷️', image: 'assets/aracneon/monster.png', material: { id: 'aracneon_silk', name: 'Seda Elétrica', emoji: '⚡', image: 'assets/aracneon/silk.png' } },
+      { id: 'marfang', name: 'Marfang', element: 'agua', emoji: '🐺', image: 'assets/marfang/monster.png', powerRank: 0, spriteScale: 2.1, material: { id: 'marfang_fang', name: 'Presa de Marfang', emoji: '🦷', image: 'assets/marfang/presa.png' } },
+      { id: 'mizan', name: 'Mizan', element: 'agua', emoji: '🥷', image: 'assets/mizan/monster.png', powerRank: 1, spriteScale: 2.1, material: { id: 'mizan_kunai', name: 'Kunai Ninja', emoji: '🗡️', image: 'assets/mizan/kunai.png' } },
+      { id: 'lyria', name: 'Lyria', element: 'agua', emoji: '🧜', image: 'assets/lyria/monster.png', powerRank: 2, spriteScale: 2.1, material: { id: 'lyria_scale', name: 'Escama de Sereia', emoji: '🐟', image: 'assets/lyria/escama.png' } },
+      { id: 'hydrakon', name: 'Hydrakon', element: 'agua', emoji: '🌊', image: 'assets/hydrakon/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'hydrakon_heart', name: 'Coração Gelado', emoji: '💙', image: 'assets/hydrakon/coracao.png' } },
     ],
   },
   {
