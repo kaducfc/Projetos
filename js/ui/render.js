@@ -304,10 +304,40 @@ export function renderBossTimer(remainingMs) {
 // wireForgeTabEvents()), since these tabs re-render often (every kill) and
 // per-render re-wiring is exactly the bug class that bit this project
 // twice before.
-export function renderInventoryTab(state, filterCategory = null) {
+/// bulkSelect (opcional) é { active, selectedUids: Set<number>, confirming }
+/// — ver seleção em massa (segurar um item por 1s) em main.js
+/// wireInventoryTabEvents(). null/omitido = fora do modo de seleção,
+/// comportamento normal (clique abre o detalhe do item).
+export function renderInventoryTab(state, filterCategory = null, bulkSelect = null) {
   const container = document.getElementById('tab-inventory');
   const banner = `<img class="section-banner-img" src="assets/ui/titles/equipamentos.png" alt="Equipamentos">`;
-  container.innerHTML = banner + equipRingContentHtml(state, filterCategory);
+  container.innerHTML = banner + equipRingContentHtml(state, filterCategory, bulkSelect);
+}
+
+function bulkSelectToolbarHtml(bulkSelect) {
+  if (!bulkSelect?.active) return '';
+  const count = bulkSelect.selectedUids.size;
+  const plural = count === 1 ? 'item' : 'itens';
+  if (bulkSelect.confirming) {
+    return `
+      <div class="bulk-select-toolbar">
+        <span>Destruir ${count} ${plural} selecionado${count === 1 ? '' : 's'}? (-80% material cada)</span>
+        <div class="modal-action-row">
+          <button class="modal-action-btn destroy-btn" data-bulk-confirm-destroy>Confirmar destruição</button>
+          <button class="modal-action-btn" data-bulk-cancel-confirm>Cancelar</button>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="bulk-select-toolbar">
+      <span>${count} ${plural} selecionado${count === 1 ? '' : 's'}</span>
+      <div class="modal-action-row">
+        <button class="modal-action-btn destroy-btn" data-bulk-destroy-selected ${count < 1 ? 'disabled' : ''}>Destruir selecionados</button>
+        <button class="modal-action-btn" data-bulk-exit-select>Sair da seleção</button>
+      </div>
+    </div>
+  `;
 }
 
 function categoryFilterRowHtml(filterCategory) {
@@ -376,12 +406,12 @@ function attributeTotalsHtml(state) {
   }).join('')}</div>`;
 }
 
-function equipRingContentHtml(state, filterCategory = null) {
+function equipRingContentHtml(state, filterCategory = null, bulkSelect = null) {
   const filtered = filterCategory
     ? state.inventory.filter((entry) => getItem(entry.itemId)?.category === filterCategory)
     : state.inventory;
   const inventoryHtml = filtered.length
-    ? filtered.map((entry) => inventoryTileHtml(state, entry)).join('')
+    ? filtered.map((entry) => inventoryTileHtml(state, entry, bulkSelect)).join('')
     : state.inventory.length
       ? `<p class="empty-slot">Nenhum item desse tipo.</p>`
       : `<p class="empty-slot">Nenhum item ainda. Derrote monstros na Caça para conseguir equipamentos.</p>`;
@@ -401,6 +431,7 @@ function equipRingContentHtml(state, filterCategory = null) {
       ${attributeTotalsHtml(state)}
       <div class="equip-inventory-header">Inventário (${state.inventory.length}/${getItemInventoryCap(state)})</div>
       ${categoryFilterRowHtml(filterCategory)}
+      ${bulkSelectToolbarHtml(bulkSelect)}
       <div class="equip-inventory-grid">${inventoryHtml}</div>
     </div>
   `;
@@ -433,15 +464,17 @@ function slotIconHtml(state, slot) {
   </button>`;
 }
 
-function inventoryTileHtml(state, entry) {
+function inventoryTileHtml(state, entry, bulkSelect = null) {
   const item = getItem(entry.itemId);
   const isEquipped = findEquippedSlotId(state, entry.uid) != null;
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
   const rarity = getRarity(entry.rarityId);
-  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''}" style="--rarity-color:${rarity.color};" data-equip-item="${entry.uid}" title="${item.name}">
+  const isSelected = !!bulkSelect?.active && bulkSelect.selectedUids.has(entry.uid);
+  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''} ${isSelected ? 'bulk-selected' : ''}" style="--rarity-color:${rarity.color};" data-equip-item="${entry.uid}" title="${item.name}">
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
     ${cardCountBadgeHtml(entry)}
+    ${bulkSelect?.active ? `<span class="bulk-select-check">${isSelected ? '✅' : '⬜'}</span>` : ''}
   </button>`;
 }
 
