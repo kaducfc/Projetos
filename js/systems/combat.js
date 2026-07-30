@@ -69,6 +69,12 @@ export function rollCrit(stats) {
   return { isCrit, multiplier: isCrit ? 1 + (stats.critDamage || 0) / 100 : 1 };
 }
 
+/// Esquiva: rolada a cada tick de dano recebido (ver totalIncomingReduction
+/// em main.js) — se acertar, aquele tick inteiro de dano é evitado.
+export function rollDodge(stats) {
+  return Math.random() * 100 < (stats.dodgeChance || 0);
+}
+
 export function armorReduction(armor) {
   return armor / (armor + ARMOR_CONSTANT);
 }
@@ -118,10 +124,10 @@ export function resolveHit(state, stats, elementalMultiplier) {
 /// getBestEquippedPet em systems/pets.js). Chamado ao lado de resolveHit()
 /// em cada um dos 4 contextos de combate (main.js) — retorna null se
 /// nenhum pet estiver equipado.
-export function resolvePetHit(state, monsterElement) {
+export function resolvePetHit(state, monsterElement, stats) {
   const best = getBestEquippedPet(state, monsterElement);
   if (!best) return null;
-  return { dealt: best.damage, species: best.species };
+  return { dealt: best.damage * (stats?.petDamageMult || 1), species: best.species };
 }
 
 // ---------------------------------------------------------------------

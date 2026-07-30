@@ -52,6 +52,11 @@ export function computePlayerStats(state, currentHp = null) {
   let armorPercent = 0;
   let critChancePercent = 0;
   let critDamagePercent = 0;
+  // Atributos bônus novos (ver ADDITIONAL_STAT_POOL/rollAdditionalStat em
+  // data/items.js): cura fixa por hit, % de dano do mascote, % de esquiva.
+  let lifestealFlat = 0;
+  let petDamagePercent = 0;
+  let dodgePercent = 0;
   // O dano do próprio personagem é sempre Neutro agora — sem vantagem/
   // desvantagem elemental no ataque normal (elementDamageModifier sempre dá
   // 0 pra Neutro). Só o mascote equipado (ver systems/pets.js) carrega
@@ -118,6 +123,9 @@ export function computePlayerStats(state, currentHp = null) {
     armorPercent += stats.armorPercent || 0;
     critChancePercent += stats.critChancePercent || 0;
     critDamagePercent += stats.critDamagePercent || 0;
+    lifestealFlat += stats.lifestealFlat || 0;
+    petDamagePercent += stats.petDamagePercent || 0;
+    dodgePercent += stats.dodgePercent || 0;
 
     if (item.attribute === 'forca') forcaTotal += stats.forca || 0;
     else if (item.attribute === 'destreza') destrezaTotal += stats.destreza || 0;
@@ -206,11 +214,15 @@ export function computePlayerStats(state, currentHp = null) {
   const dropMult = 1 + dropPercent / 100;
   const critChance = Math.max(0, Math.min(100, BASE_CRIT_CHANCE + critChancePercent));
   const critDamage = Math.max(0, BASE_CRIT_DAMAGE + critDamagePercent);
+  const lifesteal = Math.max(0, lifestealFlat);
+  const petDamageMult = 1 + petDamagePercent / 100;
+  const dodgeChance = Math.max(0, Math.min(100, dodgePercent));
 
   return {
     dps, attackSpeedPerSec, goldMult, dropMult,
     maxHp, armor, weaponElement,
     critChance, critDamage,
+    lifesteal, petDamageMult, dodgeChance,
     goldDoubleChance, bossReprocChance, hitBurstEveryN, hitBurstDamageMult,
     forca: forcaTotal, destreza: destrezaTotal, inteligencia: inteligenciaTotal,
     activeDamageType,
