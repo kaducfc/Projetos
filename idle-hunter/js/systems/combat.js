@@ -181,6 +181,7 @@ export function getCurrentMonster(currentMonsterRef) {
     bossId: null, weakMonsterId: weak.id,
     name: weak.name, emoji: weak.emoji, image: weak.image || null,
     animFrames: weak.animFrames || null, element: weak.element,
+    spriteScale: weak.spriteScale || 1,
     maxHp: monsterMaxHp(canonicalStage, false, weak.powerRank),
     dps: monsterDamagePerSecond(canonicalStage, false, weak.powerRank),
     sceneIndex: sceneIndex ?? 0,
