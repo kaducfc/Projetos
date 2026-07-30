@@ -363,8 +363,10 @@ function toggleMonsterSelection(zoneIndex, kind, monsterId) {
   } else if (pendingMonsterSelection.length < MAX_SELECTED_MONSTERS) {
     pendingMonsterSelection.push({ zoneIndex, kind, monsterId });
   } else {
-    showToast(`❌ Máximo de ${MAX_SELECTED_MONSTERS} monstros selecionados.`);
-    return;
+    // Já no máximo — em vez de bloquear, troca por FIFO: tira o mais
+    // antigo (índice 0, o primeiro escolhido) e bota o novo no final.
+    pendingMonsterSelection.shift();
+    pendingMonsterSelection.push({ zoneIndex, kind, monsterId });
   }
   showMonsterSelectModal(state, pendingMonsterSelection);
 }
