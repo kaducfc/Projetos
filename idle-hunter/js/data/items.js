@@ -121,10 +121,20 @@ export function enhancementMultiplier(level, isMaster) {
 /// with enhance). invEntry is the inventory entry itself, not a static
 /// template — every dropped instance rolls its own baseStats/
 /// additionalStats, so two drops of the same itemId can differ.
+///
+/// O atributo (Força/Destreza/Inteligência) é FIXO — só muda pelo tier do
+/// item (ver ATTRIBUTE_STEP_BY_CATEGORY), nunca por enhance/Rank Master:
+/// sai daqui sem passar pelo `mult`. Só o 2º adicional base (dano/vida/
+/// armadura, ver secondaryStatKeyForCategory) escala com o enhance.
 export function getEnhancedStats(invEntry) {
+  const item = getItem(invEntry.itemId);
   const mult = enhancementMultiplier(invEntry.enhanceLevel || 0, !!invEntry.isMaster);
   const result = {};
   for (const [key, value] of Object.entries(invEntry.baseStats || {})) {
+    if (item && key === item.attribute) {
+      result[key] = value;
+      continue;
+    }
     const scaled = value * mult;
     result[key] = key.endsWith('Percent') ? Math.round(scaled * 10) / 10 : Math.round(scaled);
   }
@@ -215,11 +225,15 @@ function rollBonusMagnitude(stat, tier, rarityMult) {
 
 /// Rola um único atributo bônus ainda não usado neste item (usedKeys evita
 /// repetição — ver rollAdditionalStats abaixo). ownAttributeId/ownBaseValue
-/// são o atributo do próprio item e seu valor já rolado (pro caso
-/// 'attrSelf' — já vem escalado pela raridade, não precisa de rarityMult de
-/// novo). Tenta algumas vezes até achar um estat livre; com só 6 bônus no
-/// máximo (Mítico) contra um pool de ~17 chaves possíveis, isso
-/// praticamente nunca esgota.
+/// são o atributo do próprio item e seu valor FIXO (step×tier da categoria,
+/// ver ATTRIBUTE_STEP_BY_CATEGORY — nunca escalado por raridade). Tanto
+/// 'attrSelf' (mesmo atributo do item) quanto 'attrOther' (um dos outros
+/// dois) usam esse MESMO valor fixo — um arco de zona 3 tem 18 de Destreza
+/// base; se cair Força ou Inteligência como bônus, também vale 18, sem
+/// escalar com raridade/enhance, igual o atributo base em si. Tenta
+/// algumas vezes até achar um estat livre; com só 6 bônus no máximo
+/// (Mítico) contra um pool de ~17 chaves possíveis, isso praticamente
+/// nunca esgota.
 function rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys, rarityMult) {
   for (let attempt = 0; attempt < 30; attempt++) {
     const group = Math.random() < RARE_BONUS_CHANCE ? RARE_BONUS_STATS : COMMON_BONUS_STATS;
@@ -236,7 +250,7 @@ function rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys, rarityMu
       const key = `attr:${otherId}`;
       if (usedKeys.has(key)) continue;
       usedKeys.add(key);
-      return { stat: otherId, value: rollBonusMagnitude(otherId, tier, rarityMult) };
+      return { stat: otherId, value: ownBaseValue };
     }
     if (usedKeys.has(pick)) continue;
     usedKeys.add(pick);
@@ -815,10 +829,19 @@ export function getItemsForBoss(bossId) {
 /// escolhida — compartilhado por rollDroppedItem (drop normal) e ascendItem
 /// (systems/crafting.js: ascensão pra próxima zona mantém a raridade, só
 /// recalcula os números pra magnitude da nova zona).
-function rollBaseStatsFromTemplate(templateStats, rarity) {
+///
+/// attributeId identifica QUAL chave do template é o atributo (Força/
+/// Destreza/Inteligência) — essa sai FIXA, sem raridade nem variação (só
+/// muda pelo tier do item, ver ATTRIBUTE_STEP_BY_CATEGORY). Só o 2º
+/// adicional base (dano/vida/armadura) escala com rarity.mult + variação.
+function rollBaseStatsFromTemplate(templateStats, rarity, attributeId) {
   const variance = () => 0.9 + Math.random() * 0.2; // ±10%
   const baseStats = {};
   for (const [key, value] of Object.entries(templateStats)) {
+    if (key === attributeId) {
+      baseStats[key] = value;
+      continue;
+    }
     const scaled = value * rarity.mult * variance();
     baseStats[key] = key.endsWith('Percent') ? Math.round(scaled * 10) / 10 : Math.round(scaled);
   }
@@ -839,7 +862,7 @@ export function rollDroppedItem(zoneIndex, category) {
   if (!item) return null;
 
   const rarity = pickRarity();
-  const baseStats = rollBaseStatsFromTemplate(item.stats, rarity);
+  const baseStats = rollBaseStatsFromTemplate(item.stats, rarity, attributeId);
   const additionalStats = rollAdditionalStats(rarity.additionals, zoneIndex, attributeId, baseStats[attributeId], rarity.mult);
 
   return {
