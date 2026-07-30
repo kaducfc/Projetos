@@ -407,10 +407,10 @@ export const WEAK_MONSTER_GROUPS = [
     startStage: 1,
     endStage: 9,
     monsters: [
-      { id: 'sylkar', name: 'Sylkar', element: 'planta', emoji: '🗡️', image: 'assets/sylkar/monster.png', powerRank: 0, material: { id: 'sylkar_blade', name: 'Lâmina de Sylkar', emoji: '🍃', image: 'assets/sylkar/lamina.png' } },
-      { id: 'musgorn', name: 'Musgorn', element: 'planta', emoji: '🍄', image: 'assets/musgorn/monster.png', powerRank: 1, material: { id: 'musgorn_hat', name: 'Chapéu Musgoso', emoji: '🍄', image: 'assets/musgorn/chapeu.png' } },
-      { id: 'guardiao_druida', name: 'Guardião Druida', element: 'planta', emoji: '🌳', image: 'assets/guardiao_druida/monster.png', powerRank: 2, material: { id: 'guardiao_druida_antler', name: 'Galhada Ancestral', emoji: '🌿', image: 'assets/guardiao_druida/galhada.png' } },
-      { id: 'granclaw', name: 'GranClaw', element: 'planta', emoji: '🦀', image: 'assets/granclaw/monster.png', powerRank: 3, material: { id: 'granclaw_claw', name: 'Garra Petrificada', emoji: '🪨', image: 'assets/granclaw/garra.png' } },
+      { id: 'sylkar', name: 'Sylkar', element: 'planta', emoji: '🗡️', image: 'assets/sylkar/monster.png', powerRank: 0, spriteScale: 2.1, material: { id: 'sylkar_blade', name: 'Lâmina de Sylkar', emoji: '🍃', image: 'assets/sylkar/lamina.png' } },
+      { id: 'musgorn', name: 'Musgorn', element: 'planta', emoji: '🍄', image: 'assets/musgorn/monster.png', powerRank: 1, spriteScale: 2.1, material: { id: 'musgorn_hat', name: 'Chapéu Musgoso', emoji: '🍄', image: 'assets/musgorn/chapeu.png' } },
+      { id: 'guardiao_druida', name: 'Guardião Druida', element: 'planta', emoji: '🌳', image: 'assets/guardiao_druida/monster.png', powerRank: 2, spriteScale: 2.1, material: { id: 'guardiao_druida_antler', name: 'Galhada Ancestral', emoji: '🌿', image: 'assets/guardiao_druida/galhada.png' } },
+      { id: 'granclaw', name: 'GranClaw', element: 'planta', emoji: '🦀', image: 'assets/granclaw/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'granclaw_claw', name: 'Garra Petrificada', emoji: '🪨', image: 'assets/granclaw/garra.png' } },
     ],
   },
   {
