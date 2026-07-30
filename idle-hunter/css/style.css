@@ -1245,6 +1245,44 @@ button:disabled {
   box-shadow: 0 0 0 2px var(--green);
 }
 
+/* Segurar um item por 1s entra no modo de seleção em massa (ver
+   wireInventoryTabEvents em main.js) — touch-action/user-select evita que o
+   segurar dispare o menu de contexto/seleção de texto do navegador
+   enquanto o timer de long-press está rodando. */
+.inventory-tile {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.inventory-tile.bulk-selected {
+  box-shadow: 0 0 0 3px var(--gold);
+}
+
+.bulk-select-check {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 1;
+  font-size: 13px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6));
+}
+
+.bulk-select-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, .08);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: center;
+}
+
 /* Item detail popup (shown via the shared #modal-overlay) */
 
 .item-detail {

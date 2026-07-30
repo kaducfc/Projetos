@@ -83,10 +83,47 @@ function currentGoldMineRunRemainingMs() {
 let activeShopSubTab = 'cash';
 let inventoryFilterCategory = null;
 let pendingMonsterSelection = [];
+// Seleção em massa no Inventário (segurar um item por 1s pra entrar no modo,
+// ver wireInventoryTabEvents): selectedUids sobrevive a re-renders (a aba é
+// recriada via innerHTML a cada kill) porque vive aqui fora, não no DOM.
+// confirming é o segundo passo do "Destruir selecionados" (mesmo padrão
+// non-blocking do destroy individual — window.confirm é bloqueado num
+// iframe sandboxed, ver comentário mais abaixo).
+let bulkSelectMode = false;
+let bulkSelectedUids = new Set();
+let bulkConfirmingDestroy = false;
 // Os 2 candidatos rolados ao chocar um ovo (ver openHatchModal) — só
 // commitados em state.pets quando o jogador escolhe um lado (data-hatch-choose
 // no modal, ver wireModalEvents).
 let pendingHatchCandidates = null;
+
+function renderInventoryTabNow() {
+  renderInventoryTab(state, inventoryFilterCategory, {
+    active: bulkSelectMode,
+    selectedUids: bulkSelectedUids,
+    confirming: bulkConfirmingDestroy,
+  });
+}
+
+function enterBulkSelectMode(uid) {
+  bulkSelectMode = true;
+  bulkSelectedUids = new Set([uid]);
+  bulkConfirmingDestroy = false;
+  renderInventoryTabNow();
+}
+
+function exitBulkSelectMode() {
+  bulkSelectMode = false;
+  bulkSelectedUids = new Set();
+  bulkConfirmingDestroy = false;
+  renderInventoryTabNow();
+}
+
+function toggleBulkSelected(uid) {
+  if (bulkSelectedUids.has(uid)) bulkSelectedUids.delete(uid);
+  else bulkSelectedUids.add(uid);
+  renderInventoryTabNow();
+}
 
 function renderEventsTabNow() {
   const towerMaxHp = state.towerRunActive ? computePlayerStats(state).maxHp : null;
@@ -148,7 +185,7 @@ function refreshAll() {
 // re-wiring is needed for them.
 function fullRefresh() {
   refreshAll();
-  renderInventoryTab(state, inventoryFilterCategory);
+  renderInventoryTabNow();
   renderCardsTab(state);
   renderEventsTabNow();
   renderShopTab(state, activeShopSubTab);
@@ -192,7 +229,7 @@ function handleKillEvent(event) {
   renderHunterLevel(state);
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
-  renderInventoryTab(state, inventoryFilterCategory);
+  renderInventoryTabNow();
   renderUpgradesTab(state);
   renderCardsTab(state); // a card drop just changed discovered/claimable state
   resetPlayerHp(); // a fresh monster just spawned — full heal for the new fight
@@ -656,8 +693,112 @@ function wireModalEvents() {
 // the duplicate-listener bug class that bit this project twice before.
 // ---------------------------------------------------------------
 
+// Segurar um item do inventário por LONG_PRESS_MS entra no modo de seleção
+// em massa (ver bulkSelectMode acima) — pointerdown inicia o timer,
+// pointerup/pointercancel/pointermove (além de um limiar) o cancela. Quando
+// o timer dispara ainda com o dedo/mouse pressionado, suppressNextClick
+// evita que o "click" que vem logo depois (no pointerup) também abra o
+// modal de detalhe do item, já que a intenção era só selecionar.
+const LONG_PRESS_MS = 1000;
+const LONG_PRESS_MOVE_TOLERANCE_PX = 12;
+let longPressTimer = null;
+let longPressStartPos = null;
+let suppressNextClick = false;
+
+function clearLongPressTimer() {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+  longPressStartPos = null;
+}
+
 function wireInventoryTabEvents() {
-  document.getElementById('tab-inventory').addEventListener('click', (e) => {
+  const container = document.getElementById('tab-inventory');
+
+  container.addEventListener('pointerdown', (e) => {
+    const itemBtn = e.target.closest('[data-equip-item]');
+    if (!itemBtn) return;
+    const uid = Number(itemBtn.dataset.equipItem);
+    longPressStartPos = { x: e.clientX, y: e.clientY };
+    clearTimeout(longPressTimer);
+    longPressTimer = setTimeout(() => {
+      longPressTimer = null;
+      suppressNextClick = true;
+      if (!bulkSelectMode) enterBulkSelectMode(uid);
+      // enterBulkSelectMode() re-renders (replaces the tile's DOM node)
+      // enquanto o botão/dedo ainda está pressionado — nesse caso o
+      // navegador NÃO dispara o "click" que viria no pointerup seguinte
+      // (o elemento que recebeu o press sumiu no meio do caminho), então a
+      // flag nunca seria consumida e vazaria pro próximo toque de verdade.
+      // Um auto-reset curto cobre os dois casos: se o click ainda vier
+      // (alguns navegadores), ele é consumido normalmente pelo check acima;
+      // se não vier, a flag some sozinha e não quebra o próximo clique.
+      setTimeout(() => { suppressNextClick = false; }, 300);
+    }, LONG_PRESS_MS);
+  });
+
+  container.addEventListener('pointermove', (e) => {
+    if (!longPressTimer || !longPressStartPos) return;
+    const dx = e.clientX - longPressStartPos.x;
+    const dy = e.clientY - longPressStartPos.y;
+    if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_TOLERANCE_PX) clearLongPressTimer();
+  });
+
+  container.addEventListener('pointerup', clearLongPressTimer);
+  container.addEventListener('pointercancel', clearLongPressTimer);
+
+  container.addEventListener('click', (e) => {
+    if (suppressNextClick) {
+      suppressNextClick = false;
+      return;
+    }
+
+    const bulkDestroyBtn = e.target.closest('[data-bulk-destroy-selected]');
+    if (bulkDestroyBtn) {
+      if (bulkSelectedUids.size < 1) return;
+      bulkConfirmingDestroy = true;
+      renderInventoryTabNow();
+      return;
+    }
+
+    const bulkCancelConfirmBtn = e.target.closest('[data-bulk-cancel-confirm]');
+    if (bulkCancelConfirmBtn) {
+      bulkConfirmingDestroy = false;
+      renderInventoryTabNow();
+      return;
+    }
+
+    // Mesmo padrão non-blocking de confirmação usado no destroy individual
+    // (ver data-confirm-destroy-uid acima) — window.confirm fica bloqueado
+    // dentro do iframe sandboxed do Artifact.
+    const bulkConfirmBtn = e.target.closest('[data-bulk-confirm-destroy]');
+    if (bulkConfirmBtn) {
+      const totalRefund = {};
+      let destroyedCount = 0;
+      for (const uid of bulkSelectedUids) {
+        const refund = destroyItem(state, uid);
+        if (!refund) continue;
+        destroyedCount += 1;
+        for (const [matId, qty] of Object.entries(refund)) {
+          totalRefund[matId] = (totalRefund[matId] || 0) + qty;
+        }
+      }
+      exitBulkSelectMode();
+      const refundStr = Object.entries(totalRefund)
+        .map(([matId, qty]) => `+${qty} ${findMaterialInfo(matId)?.emoji ?? ''}`)
+        .join(' ');
+      showToast(`🗑️ ${destroyedCount} ${destroyedCount === 1 ? 'item destruído' : 'itens destruídos'}! ${refundStr}`);
+      renderTopBar(state);
+      return;
+    }
+
+    const bulkExitBtn = e.target.closest('[data-bulk-exit-select]');
+    if (bulkExitBtn) {
+      exitBulkSelectMode();
+      return;
+    }
+
     const slotBtn = e.target.closest('[data-equip-slot]');
     if (slotBtn) {
       showEquipSlotModal(state, slotBtn.dataset.equipSlot);
@@ -666,14 +807,19 @@ function wireInventoryTabEvents() {
 
     const itemBtn = e.target.closest('[data-equip-item]');
     if (itemBtn) {
-      showItemDetailModal(state, Number(itemBtn.dataset.equipItem));
+      const uid = Number(itemBtn.dataset.equipItem);
+      if (bulkSelectMode) {
+        toggleBulkSelected(uid);
+      } else {
+        showItemDetailModal(state, uid);
+      }
       return;
     }
 
     const filterBtn = e.target.closest('[data-filter-category]');
     if (filterBtn) {
       inventoryFilterCategory = filterBtn.dataset.filterCategory || null;
-      renderInventoryTab(state, inventoryFilterCategory);
+      renderInventoryTabNow();
       return;
     }
   });
@@ -707,7 +853,7 @@ function handleEventBossVictory(boss) {
   showEventRewardModal(boss, gained, currency, cardDropped);
   if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
   renderTopBar(state);
-  renderInventoryTab(state, inventoryFilterCategory);
+  renderInventoryTabNow();
   renderCardsTab(state);
   renderShopTab(state, activeShopSubTab);
   renderEventsTabNow();
@@ -783,7 +929,7 @@ function finishTowerRun(cleared200) {
   if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
   renderEventsTabNow();
   renderTopBar(state);
-  renderInventoryTab(state, inventoryFilterCategory);
+  renderInventoryTabNow();
 }
 
 function showTowerRewardModal(level, cleared200, currency, goldGained, gained) {
@@ -1026,7 +1172,7 @@ function wireShopTabEvents() {
         showToast('🛒 Compra realizada!');
         renderTopBar(state);
         renderShopTab(state, activeShopSubTab);
-        renderInventoryTab(state, inventoryFilterCategory);
+        renderInventoryTabNow();
       }
       return;
     }
