@@ -196,27 +196,16 @@ function startMonsterIdleAnim(frames) {
 
 export function renderMonster(state, monster) {
   if (!monster) return;
-  const boss = monster.isBoss;
 
-  // Weak monsters show one of the 3 real scene backgrounds, picked once per
-  // spawn (see ensureMonsterSpawned in systems/combat.js — never re-picked
-  // here, or the backdrop would flicker every render). Bosses use their own
-  // `scene` when they have one (see monsters.js), otherwise fall back to
-  // the plain CSS gradient backdrop (see #monster-area in style.css) by
-  // clearing the inline background.
+  // Todo mundo mostra um dos 3 cenários genéricos "da zona", sorteado uma
+  // vez por spawn (ver ensureMonsterSpawned em systems/combat.js — nunca
+  // resorteado aqui, ou o fundo piscaria a cada render) — fraco ou chefe,
+  // sem distinção nenhuma (nenhum chefe tem cenário próprio mais).
   const monsterArea = document.getElementById('monster-area');
-  const bossScene = boss ? monster.scene : null;
-  monsterArea.style.backgroundImage = bossScene
-    ? `url('${bossScene}')`
-    : monster.sceneIndex != null
-      ? `url('${SCENE_IMAGES[monster.sceneIndex]}')`
-      : '';
-  // Per-boss override of the default `center 40%` (see #monster-area in
-  // style.css) — lets a specific scene's focal point (e.g. a ground magic
-  // circle) be nudged to line up with the monster sprite sitting on top of
-  // it. Cleared back to '' (falls back to the stylesheet default) for
-  // anything without its own scenePosition.
-  monsterArea.style.backgroundPosition = bossScene ? (monster.scenePosition || '') : '';
+  monsterArea.style.backgroundImage = monster.sceneIndex != null
+    ? `url('${SCENE_IMAGES[monster.sceneIndex]}')`
+    : '';
+  monsterArea.style.backgroundPosition = '';
 
   const spriteKey = monster.bossId || monster.weakMonsterId || monster.name;
   if (spriteKey !== currentMonsterSpriteKey) {
@@ -235,7 +224,7 @@ export function renderMonster(state, monster) {
       : '';
   }
   document.getElementById('monster-name').innerHTML =
-    `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
+    `${monster.name}${monster.isBoss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
 
   // state.monsterHp só fica null enquanto esse `monster` é na verdade o
   // último morto, ainda exibido durante a pausa de respawn (ver

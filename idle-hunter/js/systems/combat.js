@@ -167,11 +167,15 @@ export function getCurrentMonster(currentMonsterRef) {
       zoneIndex, isBoss: true, isWeak: false,
       bossId: b.id, weakMonsterId: null,
       name: b.name, emoji: b.emoji, image: b.image || null,
-      animFrames: b.animFrames || null, scene: b.scene || null, scenePosition: b.scenePosition || null,
+      animFrames: b.animFrames || null,
       spriteScale: b.spriteScale || 1, element: b.element,
       maxHp: monsterMaxHp(canonicalStage, true, b.powerRank),
       dps: monsterDamagePerSecond(canonicalStage, true, b.powerRank),
-      sceneIndex: null,
+      // Chefe usa o mesmo cenário "da zona" sorteado pros fracos (ver
+      // ensureMonsterSpawned acima) — nenhum chefe tem mais cenário/
+      // posição próprios (scene/scenePosition), sempre o cenário genérico
+      // de SCENE_IMAGES em ui/render.js.
+      sceneIndex: sceneIndex ?? 0,
     };
   }
 
@@ -226,8 +230,10 @@ export function rollDrops(zoneIndex, isBoss, dropMult, monsterId) {
   return drops;
 }
 
-// How many background scenes exist for weak-monster stages (see
-// assets/ui/scenes/scene1..N.png and ui/render.js).
+// How many background scenes exist (see assets/ui/scenes/scene1..N.png and
+// ui/render.js) — compartilhadas por todo mundo, fraco ou chefe (ver
+// ensureMonsterSpawned abaixo): nenhum chefe tem mais cenário próprio, usa
+// o mesmo sorteio "da zona" que os fracos já usavam.
 export const WEAK_MONSTER_SCENE_COUNT = 3;
 
 /// Pausa entre a morte de um monstro (fraco ou chefe) e o próximo aparecer —
@@ -257,7 +263,7 @@ export function ensureMonsterSpawned(state) {
     zoneIndex: pick.zoneIndex,
     kind: pick.kind,
     monsterId: pick.monsterId,
-    sceneIndex: pick.kind === 'weak' ? Math.floor(Math.random() * WEAK_MONSTER_SCENE_COUNT) : null,
+    sceneIndex: Math.floor(Math.random() * WEAK_MONSTER_SCENE_COUNT),
   };
   const monster = getCurrentMonster(state.currentMonster);
   state.monsterHp = monster.maxHp;
