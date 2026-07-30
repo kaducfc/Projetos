@@ -169,14 +169,30 @@ function retreat(reason) {
   armBossTimer();
 }
 
+/// Monstro pra exibir na tela: o de verdade quando há um vivo (monster);
+/// senão o último que morreu (ver state.lastMonsterRef/applyDamage em
+/// systems/combat.js), ainda mostrado (com a barra de vida zerada, ver
+/// renderMonster) enquanto a pausa de respawn não vence — assim a Caça não
+/// cai na tela de "?" (renderNoMonsterSelected) só porque o monstro acabou
+/// de morrer. Essa tela de "?" fica reservada pro caso de não haver NENHUM
+/// monstro selecionado pra caçar.
+function getDisplayMonster(monster) {
+  if (monster) return monster;
+  if ((state.selectedMonsters || []).length > 0 && state.lastMonsterRef) {
+    return getCurrentMonster(state.lastMonsterRef);
+  }
+  return null;
+}
+
 function refreshAll() {
   ensureMonsterSpawned(state);
   const monster = getCurrentMonster(state.currentMonster);
+  const displayMonster = getDisplayMonster(monster);
   const stats = computePlayerStats(state, currentHp);
   currentHp = Math.min(currentHp, stats.maxHp);
-  renderAll(state, monster, stats);
+  renderAll(state, displayMonster, stats);
   renderHunterLevel(state);
-  if (!monster) renderNoMonsterSelected();
+  if (!displayMonster) renderNoMonsterSelected();
   renderPlayerHp(currentHp, stats.maxHp);
   return { monster, stats };
 }
@@ -200,10 +216,11 @@ function fullRefresh() {
 function refreshCombatOnly() {
   ensureMonsterSpawned(state);
   const monster = getCurrentMonster(state.currentMonster);
+  const displayMonster = getDisplayMonster(monster);
   const stats = computePlayerStats(state, currentHp);
   currentHp = Math.min(currentHp, stats.maxHp);
-  renderCombatStats(stats, monster);
-  if (monster) renderMonster(state, monster); else renderNoMonsterSelected();
+  renderCombatStats(stats, displayMonster);
+  if (displayMonster) renderMonster(state, displayMonster); else renderNoMonsterSelected();
   renderPlayerHp(currentHp, stats.maxHp);
   return { monster, stats };
 }
