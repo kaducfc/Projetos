@@ -187,7 +187,7 @@ export function ascendItem(state, uid) {
   const nextRarity = getRarity(cost.nextRarityId);
   entry.rarityId = nextRarity.id;
   entry.baseStats = rollBaseStatsFromTemplate(item.stats, nextRarity);
-  entry.additionalStats = rollAdditionalStats(nextRarity.additionals, item.zoneIndex, item.attribute, entry.baseStats[item.attribute]);
+  entry.additionalStats = rollAdditionalStats(nextRarity.additionals, item.zoneIndex, item.attribute, entry.baseStats[item.attribute], nextRarity.mult);
   entry.enhanceLevel = 0;
   entry.isMaster = false;
   return true;
