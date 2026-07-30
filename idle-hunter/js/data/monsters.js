@@ -220,28 +220,30 @@ export const BOSSES = [
   },
   {
     stage: 30,
+    // id/crystalMaterialId ficam 'tartarok'/'tartarok_crystal' de
+    // propósito — mesmo reskin display-only do Chispim→Thornak/
+    // Solkaiser→Marokar acima (ver comentário no Chispim). Fecha a Zona 3
+    // (Esqueleto Guerreiro/Assassino Sombrio/Garruk/Mimicus, ver
+    // WEAK_MONSTER_GROUPS acima) como o 5º e mais forte monstro.
     id: 'tartarok',
-    name: 'Tartarok',
-    element: 'agua',
-    emoji: '🐢',
-    image: 'assets/tartarok/monster.png',
-    // Idle-loop animation — same standard as Chispim's (see that entry's
-    // comment above): 150ms/frame, plain src swap, all 4 frames cropped to
-    // the same union bounding box.
-    animFrames: [
-      'assets/tartarok/anim/frame1.png',
-      'assets/tartarok/anim/frame2.png',
-      'assets/tartarok/anim/frame3.png',
-      'assets/tartarok/anim/frame4.png',
-    ],
-    // Boss-specific background (see Chispim's `scene` comment above).
-    scene: 'assets/ui/scenes/boss-tartarok.png',
+    name: 'Vorlith',
+    element: 'neutro',
+    emoji: '👻',
+    image: 'assets/vorlith/monster.png',
+    // Sem animação de frames (só 1 imagem estática recebida).
+    animFrames: null,
     spriteScale: 2.1,
+    // Só 1 material de drop de verdade (Manto Esvaído) — mesmo truque do
+    // Thornak/Marokar (primary1/primary2 apontam pro mesmo id).
     materials: {
-      primary1: { id: 'tartarok_shell', name: 'Casco de Tartarok', emoji: '🐚', image: 'assets/tartarok/casco.png' },
-      primary2: { id: 'tartarok_pearl', name: 'Pérola Primordial', emoji: '⚪', image: 'assets/tartarok/perola.png' },
+      primary1: { id: 'tartarok_shell', name: 'Manto Esvaído', emoji: '🖤', image: 'assets/vorlith/manto.png' },
+      primary2: { id: 'tartarok_shell', name: 'Manto Esvaído', emoji: '🖤', image: 'assets/vorlith/manto.png' },
     },
-    crystal: { id: 'tartarok_crystal', name: 'Cristal de Tartarok', emoji: '💎', image: 'assets/crystals/tartarok.png' },
+    crystal: { id: 'tartarok_crystal', name: 'Cristal de Vorlith', emoji: '💎', image: 'assets/crystals/tartarok.png' },
+    // Rank de poder dentro da Zona 3 (ver monsterMaxHp/
+    // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4
+    // é só 1 degrau acima do Mimicus (rank 3).
+    powerRank: 4,
   },
   {
     stage: 40,
@@ -429,8 +431,22 @@ export const WEAK_MONSTER_GROUPS = [
       { id: 'hydrakon', name: 'Hydrakon', element: 'agua', emoji: '🌊', image: 'assets/hydrakon/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'hydrakon_heart', name: 'Coração Gelado', emoji: '💙', image: 'assets/hydrakon/coracao.png' } },
     ],
   },
+  // Zona 3 (stage 21-29) — mesmo tratamento das Zonas 1/2: 4 monstros
+  // próprios, elemento Neutro, cada um um pouco mais forte que o anterior
+  // (powerRank). O 5º e mais forte (Vorlith) é o chefe da zona (ver
+  // BOSSES[2] abaixo).
   {
     startStage: 21,
+    endStage: 29,
+    monsters: [
+      { id: 'esqueleto_guerreiro', name: 'Esqueleto Guerreiro', element: 'neutro', emoji: '💀', image: 'assets/esqueleto_guerreiro/monster.png', powerRank: 0, spriteScale: 2.1, material: { id: 'esqueleto_guerreiro_shield', name: 'Escudo Quebrado', emoji: '🛡️', image: 'assets/esqueleto_guerreiro/escudo.png' } },
+      { id: 'assassino_sombrio', name: 'Assassino Sombrio', element: 'neutro', emoji: '🗡️', image: 'assets/assassino_sombrio/monster.png', powerRank: 1, spriteScale: 2.1, material: { id: 'assassino_sombrio_hood', name: 'Capuz da Sombra', emoji: '🥷', image: 'assets/assassino_sombrio/capuz.png' } },
+      { id: 'garruk', name: 'Garruk', element: 'neutro', emoji: '🐺', image: 'assets/garruk/monster.png', powerRank: 2, spriteScale: 2.1, material: { id: 'garruk_pelt', name: 'Pele de Lupino', emoji: '🐾', image: 'assets/garruk/pele.png' } },
+      { id: 'mimicus', name: 'Mimicus', element: 'neutro', emoji: '📦', image: 'assets/mimicus/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'mimicus_lock', name: 'Fechadura Mimética', emoji: '🔒', image: 'assets/mimicus/fechadura.png' } },
+    ],
+  },
+  {
+    startStage: 30,
     endStage: 39,
     monsters: [
       { id: 'volpix', name: 'Volpix', element: 'fogo', emoji: '🦊', image: 'assets/volpix/monster.png', material: { id: 'volpix_fur', name: 'Pelo Flamejante', emoji: '🔥', image: 'assets/volpix/fur.png' } },

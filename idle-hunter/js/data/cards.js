@@ -30,7 +30,8 @@ const CARD_IMAGES = {
   // Mesmo motivo do Thornak acima — reskin Marokar (ver data/monsters.js
   // BOSSES[1]) sem arte de carta dedicada, reusa o sprite de batalha.
   solkaiser: 'assets/marokar/monster.png',
-  tartarok: 'assets/cards/tartarok.png',
+  // Mesmo motivo acima — reskin Vorlith (ver data/monsters.js BOSSES[2]).
+  tartarok: 'assets/vorlith/monster.png',
   colhedor_carmesim: 'assets/cards/colhedor_carmesim.png',
   grommuk: 'assets/cards/grommuk.png',
   vulkarion: 'assets/cards/vulkarion.png',
