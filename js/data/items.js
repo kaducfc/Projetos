@@ -809,40 +809,40 @@ export function rollDroppedItem(zoneIndex, category) {
   };
 }
 
-/// O molde equivalente (mesma categoria/atributo) na zona seguinte — null se
-/// já está na última zona (Zona 10, sem mais pra onde ascender). Ver
-/// ascendItem em systems/crafting.js.
-export function getNextItemTemplate(item) {
-  const nextBoss = BOSSES[item.zoneIndex + 1];
-  if (!nextBoss) return null;
-  return getItem(`${nextBoss.id}_${item.category}_${item.attribute}`);
+/// Raridade seguinte à informada, ou null se já é a última (Mítico).
+export function getNextRarity(rarityId) {
+  const currentIndex = RARITIES.findIndex((r) => r.id === rarityId);
+  return RARITIES[currentIndex + 1] || null;
 }
 
-/// Custo de Ascensão (Rank Master → +0 da próxima zona): 1 Cristal do chefe
-/// da PRÓXIMA zona + uma quantidade de material daquela zona — mais caro que
-/// o passo de Rank Master (mesmo padrão de fórmula, um passo além), pra criar
-/// incentivo real de já estar farmando a zona seguinte antes de ascender.
-/// Retorna null se o item já está na última zona.
-export function getAscensionCost(item) {
-  const nextZoneIndex = item.zoneIndex + 1;
-  const nextBoss = BOSSES[nextZoneIndex];
-  if (!nextBoss) return null;
-  const weakGroup = getWeakMonsterGroupForStage(nextBoss.stage - 1);
+/// Custo de Ascensão (Rank Master → raridade seguinte, +0, MESMA zona): 1
+/// Cristal do chefe da própria zona do item + uma quantidade de material
+/// daquela zona, crescendo com o índice da raridade alvo (subir pra Mítico
+/// custa mais que subir pra Incomum). Retorna null se o item já está na
+/// última raridade (Mítico).
+export function getAscensionCost(item, currentRarityId) {
+  const currentIndex = RARITIES.findIndex((r) => r.id === currentRarityId);
+  const nextRarity = RARITIES[currentIndex + 1];
+  if (!nextRarity) return null;
+  const boss = BOSSES[item.zoneIndex];
+  const weakGroup = getWeakMonsterGroupForStage(boss.stage - 1);
   const categoryIndex = DROP_CATEGORIES.indexOf(item.category);
   const bandSize = weakGroup.monsters.length;
-  const step = ENHANCE_MAX_LEVEL + 1;
+  const step = ENHANCE_MAX_LEVEL + 1 + currentIndex;
   const weakAt = weakGroup.monsters[(categoryIndex + 2 + step) % bandSize];
   const qty = Math.max(1, Math.round(10 * (0.5 + step * 0.5) * 1.5));
   return {
-    crystalMaterialId: nextBoss.crystal.id,
+    nextRarityId: nextRarity.id,
+    crystalMaterialId: item.crystalMaterialId,
     matId: weakAt.material.id,
     qty,
   };
 }
 
-/// rollBaseStatsFromTemplate exportada só pra ascendItem (systems/crafting.js)
-/// reusar a mesma rolagem ±10% ao recalcular os números da nova zona.
-export { rollBaseStatsFromTemplate };
+/// rollBaseStatsFromTemplate/rollAdditionalStats exportadas só pra
+/// ascendItem (systems/crafting.js) reusar a mesma rolagem ao recalcular os
+/// números pra raridade nova.
+export { rollBaseStatsFromTemplate, rollAdditionalStats };
 
 /// Material "de sucata" que um item dropado converte quando o inventário de
 /// equipamentos está cheio (ver addDroppedItem em systems/crafting.js) — em
