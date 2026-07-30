@@ -1296,7 +1296,15 @@ button:disabled {
 }
 
 .inventory-tile.bulk-selected {
-  box-shadow: 0 0 0 3px var(--gold);
+  box-shadow: 0 0 0 3px var(--danger);
+}
+
+/* Equipado durante o modo de seleção em massa — escurecido e fora de
+   seleção (ver bulkLocked em ui/render.js inventoryTileHtml). */
+.inventory-tile.bulk-locked {
+  opacity: 0.45;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
 }
 
 .bulk-select-check {
