@@ -22,7 +22,11 @@ export const CARD_DISCOVERY_CASH_REWARD = 5;
 // any boss missing here would fall back to the 🃏 emoji, same as every
 // weak-monster card for now.
 const CARD_IMAGES = {
-  chispim: 'assets/cards/chispim.png',
+  // Reusa o sprite de batalha (não tem arte de carta dedicada pro reskin
+  // Thornak, ver data/monsters.js BOSSES[0]) — melhor que continuar
+  // mostrando o Chispim antigo numa carta que agora se chama "Carta de
+  // Thornak".
+  chispim: 'assets/thornak/monster.png',
   solkaiser: 'assets/cards/solkaiser.png',
   tartarok: 'assets/cards/tartarok.png',
   colhedor_carmesim: 'assets/cards/colhedor_carmesim.png',
