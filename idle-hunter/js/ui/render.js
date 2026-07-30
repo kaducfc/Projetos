@@ -44,15 +44,39 @@ function elementBadgeHtml(elementId) {
 }
 
 
-// Atributo base do item em si (ver data/items.js attributeBaseStats) — a
-// única coisa mostrada no card do item é esse número, na cor própria do
-// atributo (identifica o "estilo" sozinho, sem precisar de uma linha
-// separada de atributo/tipo de dano nem dos afixos de raridade — esses só
-// entram na soma internamente, ver systems/stats.js).
+// Atributo base do item em si (ver data/items.js attributeBaseStats) — é a
+// linha de destaque no card do item, na cor própria do atributo (identifica
+// o "estilo" sozinho, sem precisar de uma linha separada de atributo/tipo
+// de dano). Reusado também pros atributos bônus 'attrOther' (ver
+// BONUS_STAT_LABEL abaixo), que dão um dos OUTROS dois atributos.
 const ATTRIBUTE_STAT_LABEL = {
   forca: (v) => `<span style="color:${getAttribute('forca').color}; font-weight:800;">+${formatNumber(v)} Força</span>`,
   destreza: (v) => `<span style="color:${getAttribute('destreza').color}; font-weight:800;">+${formatNumber(v)} Destreza</span>`,
   inteligencia: (v) => `<span style="color:${getAttribute('inteligencia').color}; font-weight:800;">+${formatNumber(v)} Inteligência</span>`,
+};
+
+// Atributos bônus (ver rollAdditionalStats em data/items.js) — mostrados
+// abaixo do atributo base do item, um por linha. O bônus 'attrSelf' (mesmo
+// atributo do item) não tem entrada própria aqui: funde com o valor do
+// atributo base (mesma chave, ver getEnhancedStats) e some naturalmente no
+// número de cima.
+const BONUS_STAT_LABEL = {
+  ...ATTRIBUTE_STAT_LABEL,
+  dpsPercent: (v) => `+${formatPercent(v)} DPS`,
+  hpPercent: (v) => `+${formatPercent(v)} Vida`,
+  attackSpeedPercent: (v) => `+${formatPercent(v)} Velocidade de Ataque`,
+  critChancePercent: (v) => `+${formatPercent(v)} Chance Crítica`,
+  critDamagePercent: (v) => `+${formatPercent(v)} Dano Crítico`,
+  goldPercent: (v) => `+${formatPercent(v)} Ouro`,
+  dropPercent: (v) => `+${formatPercent(v)} Chance de Material`,
+  danoFisicoFlat: (v) => `+${formatNumber(v)} Dano Físico`,
+  danoMagicoFlat: (v) => `+${formatNumber(v)} Dano Mágico`,
+  danoPerfuracaoFlat: (v) => `+${formatNumber(v)} Dano de Perfuração`,
+  armorFlat: (v) => `+${formatNumber(v)} Armadura`,
+  hpFlat: (v) => `+${formatNumber(v)} Vida`,
+  petDamagePercent: (v) => `+${formatPercent(v)} Dano do Mascote`,
+  dodgePercent: (v) => `+${formatPercent(v)} Esquiva`,
+  lifestealFlat: (v) => `+${formatNumber(v)} Cura por Golpe`,
 };
 
 export function renderTopBar(state) {
@@ -500,6 +524,19 @@ export function showItemDetailModal(state, uid, pickerOpenSlot = null, confirmDe
   showModal('', itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
 }
 
+/// Linha do atributo base do item (destacada) + uma linha por atributo
+/// bônus rolado (ver rollAdditionalStats em data/items.js) — o bônus
+/// 'attrSelf' não aparece separado, já fundiu no número do atributo base
+/// (mesma chave em enhancedStats).
+function itemDetailStatsHtml(item, enhancedStats) {
+  const baseLine = ATTRIBUTE_STAT_LABEL[item.attribute](enhancedStats[item.attribute] || 0);
+  const bonusLines = Object.entries(enhancedStats)
+    .filter(([key]) => key !== item.attribute)
+    .map(([key, value]) => (BONUS_STAT_LABEL[key] ? BONUS_STAT_LABEL[key](value) : null))
+    .filter(Boolean);
+  return [baseLine, ...bonusLines].join('<br>');
+}
+
 function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   const item = getItem(entry.itemId);
@@ -535,7 +572,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
       <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
-      <div class="item-detail-stats">${ATTRIBUTE_STAT_LABEL[item.attribute](enhancedStats[item.attribute] || 0)}</div>
+      <div class="item-detail-stats">${itemDetailStatsHtml(item, enhancedStats)}</div>
       ${resistanceLine}
       ${weaponRequirementNote}
       ${cardSlotsHtml}

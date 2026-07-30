@@ -145,12 +145,12 @@ export function getEnhanceLabel(level, isMaster) {
 // partida — fáceis de re-tunar depois.
 // ---------------------------------------------------------------------
 export const RARITIES = [
-  { id: 'comum', name: 'Comum', mult: 1.0, additionals: 0, weight: 60, color: '#9e9e9e' },
-  { id: 'incomum', name: 'Incomum', mult: 1.15, additionals: 1, weight: 24, color: '#4caf50' },
-  { id: 'raro', name: 'Raro', mult: 1.35, additionals: 2, weight: 10, color: '#2196f3' },
-  { id: 'epico', name: 'Épico', mult: 1.6, additionals: 3, weight: 4, color: '#9c27b0' },
-  { id: 'lendario', name: 'Lendário', mult: 2.0, additionals: 4, weight: 1.5, color: '#ffd700' },
-  { id: 'mitico', name: 'Mítico', mult: 2.5, additionals: 5, weight: 0.5, color: '#f44336' },
+  { id: 'comum', name: 'Comum', mult: 1.0, additionals: 1, weight: 60, color: '#9e9e9e' },
+  { id: 'incomum', name: 'Incomum', mult: 1.15, additionals: 2, weight: 24, color: '#4caf50' },
+  { id: 'raro', name: 'Raro', mult: 1.35, additionals: 3, weight: 10, color: '#2196f3' },
+  { id: 'epico', name: 'Épico', mult: 1.6, additionals: 4, weight: 4, color: '#9c27b0' },
+  { id: 'lendario', name: 'Lendário', mult: 2.0, additionals: 5, weight: 1.5, color: '#ffd700' },
+  { id: 'mitico', name: 'Mítico', mult: 2.5, additionals: 6, weight: 0.5, color: '#f44336' },
 ];
 
 export function getRarity(rarityId) {
@@ -177,17 +177,75 @@ function pickRarity() {
   return RARITIES[0];
 }
 
-// Pool de bônus "adicionais" — cada raridade acima de Comum rola N destes
-// (com repetição possível), magnitude cresce um pouco por tier.
-const ADDITIONAL_STAT_POOL = [
-  'critChancePercent', 'critDamagePercent', 'hpPercent', 'armorPercent',
-  'goldPercent', 'dropPercent', 'attackSpeedPercent', 'dpsPercent',
+// ---------------------------------------------------------------------
+// Atributos bônus — todo item rola N destes, sem repetir (N = rarity.
+// additionals: Comum 1, Incomum 2, Raro 3, Épico 4, Lendário 5, Mítico 6).
+// Cada rolagem sorteia primeiro o GRUPO (10% chance de cair num bônus
+// "raro", 90% num "comum"), depois um estat dentro daquele grupo. 'attrSelf'
+// repete o PRÓPRIO atributo do item, no mesmo valor já rolado pra ele
+// (funde com a linha do atributo base, ver getEnhancedStats); 'attrOther'
+// sorteia um dos OUTROS dois atributos, com seu próprio valor.
+// ---------------------------------------------------------------------
+const RARE_BONUS_CHANCE = 0.10;
+
+const RARE_BONUS_STATS = [
+  'dpsPercent', 'hpPercent', 'attrSelf', 'attackSpeedPercent', 'critChancePercent', 'lifestealFlat',
 ];
 
-function rollAdditionalStat(tier) {
-  const stat = ADDITIONAL_STAT_POOL[Math.floor(Math.random() * ADDITIONAL_STAT_POOL.length)];
-  const value = Math.round((2 + Math.random() * 4) * (1 + tier * 0.12) * 10) / 10;
-  return { stat, value };
+const COMMON_BONUS_STATS = [
+  'goldPercent', 'dropPercent', 'attrOther', 'danoFisicoFlat', 'danoMagicoFlat',
+  'danoPerfuracaoFlat', 'armorFlat', 'hpFlat', 'critDamagePercent', 'petDamagePercent', 'dodgePercent',
+];
+
+/// Magnitude de cada tipo de bônus, por zona (tier, 0-based). Percentuais
+/// crescem suave por zona (mesma curva de antes); os planos (dano/vida/
+/// armadura) escalam linear como o atributo base; cura por golpe fica de
+/// propósito baixa e quase plana (é um efeito por hit, não por dano total).
+function rollBonusMagnitude(stat, tier) {
+  if (stat.endsWith('Percent')) return Math.round((2 + Math.random() * 4) * (1 + tier * 0.12) * 10) / 10;
+  if (stat === 'lifestealFlat') return Math.max(1, Math.round(1 + tier * 0.5));
+  return Math.round((3 + Math.random() * 3) * (tier + 1));
+}
+
+/// Rola um único atributo bônus ainda não usado neste item (usedKeys evita
+/// repetição — ver rollAdditionalStats abaixo). ownAttributeId/ownBaseValue
+/// são o atributo do próprio item e seu valor já rolado (pro caso
+/// 'attrSelf'). Tenta algumas vezes até achar um estat livre; com só 6
+/// bônus no máximo (Mítico) contra um pool de ~17 chaves possíveis, isso
+/// praticamente nunca esgota.
+function rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys) {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const group = Math.random() < RARE_BONUS_CHANCE ? RARE_BONUS_STATS : COMMON_BONUS_STATS;
+    const pick = group[Math.floor(Math.random() * group.length)];
+
+    if (pick === 'attrSelf') {
+      const key = `attr:${ownAttributeId}`;
+      if (usedKeys.has(key)) continue;
+      usedKeys.add(key);
+      return { stat: ownAttributeId, value: ownBaseValue };
+    }
+    if (pick === 'attrOther') {
+      const otherId = ATTRIBUTES.map((a) => a.id).filter((id) => id !== ownAttributeId)[Math.floor(Math.random() * 2)];
+      const key = `attr:${otherId}`;
+      if (usedKeys.has(key)) continue;
+      usedKeys.add(key);
+      return { stat: otherId, value: rollBonusMagnitude(otherId, tier) };
+    }
+    if (usedKeys.has(pick)) continue;
+    usedKeys.add(pick);
+    return { stat: pick, value: rollBonusMagnitude(pick, tier) };
+  }
+  return null;
+}
+
+function rollAdditionalStats(count, tier, ownAttributeId, ownBaseValue) {
+  const usedKeys = new Set();
+  const result = [];
+  for (let i = 0; i < count; i++) {
+    const rolled = rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys);
+    if (rolled) result.push(rolled);
+  }
+  return result;
 }
 
 // ---------------------------------------------------------------------
@@ -738,7 +796,7 @@ export function rollDroppedItem(zoneIndex, category) {
 
   const rarity = pickRarity();
   const baseStats = rollBaseStatsFromTemplate(item.stats, rarity);
-  const additionalStats = Array.from({ length: rarity.additionals }, () => rollAdditionalStat(zoneIndex));
+  const additionalStats = rollAdditionalStats(rarity.additionals, zoneIndex, attributeId, baseStats[attributeId]);
 
   return {
     itemId: item.id,
