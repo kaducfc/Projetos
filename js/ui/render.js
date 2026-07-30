@@ -237,7 +237,12 @@ export function renderMonster(state, monster) {
   document.getElementById('monster-name').innerHTML =
     `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
 
-  const hp = Math.max(0, state.monsterHp ?? monster.maxHp);
+  // state.monsterHp só fica null enquanto esse `monster` é na verdade o
+  // último morto, ainda exibido durante a pausa de respawn (ver
+  // state.lastMonsterRef/main.js) — nesse caso a barra fica zerada, nunca
+  // cheia (um monstro vivo de verdade sempre tem monsterHp numérico, ver
+  // ensureMonsterSpawned em systems/combat.js).
+  const hp = Math.max(0, state.monsterHp ?? 0);
   const pct = Math.max(0, Math.min(100, (hp / monster.maxHp) * 100));
   document.getElementById('hp-bar-fill').style.width = `${pct}%`;
   document.getElementById('enemy-hp-value').textContent = `${formatNumber(hp)} / ${formatNumber(monster.maxHp)}`;
