@@ -105,9 +105,11 @@ function renderInventoryTabNow() {
   });
 }
 
-function enterBulkSelectMode(uid) {
+// uid opcional: chamado sem argumento pelo botão "☑️ Selecionar" (entra no
+// modo com nada marcado ainda, ver data-bulk-toggle-select).
+function enterBulkSelectMode(uid = null) {
   bulkSelectMode = true;
-  bulkSelectedUids = new Set([uid]);
+  bulkSelectedUids = uid != null ? new Set([uid]) : new Set();
   bulkConfirmingDestroy = false;
   renderInventoryTabNow();
 }
@@ -693,64 +695,13 @@ function wireModalEvents() {
 // the duplicate-listener bug class that bit this project twice before.
 // ---------------------------------------------------------------
 
-// Segurar um item do inventário por LONG_PRESS_MS entra no modo de seleção
-// em massa (ver bulkSelectMode acima) — pointerdown inicia o timer,
-// pointerup/pointercancel/pointermove (além de um limiar) o cancela. Quando
-// o timer dispara ainda com o dedo/mouse pressionado, suppressNextClick
-// evita que o "click" que vem logo depois (no pointerup) também abra o
-// modal de detalhe do item, já que a intenção era só selecionar.
-const LONG_PRESS_MS = 1000;
-const LONG_PRESS_MOVE_TOLERANCE_PX = 12;
-let longPressTimer = null;
-let longPressStartPos = null;
-let suppressNextClick = false;
-
-function clearLongPressTimer() {
-  if (longPressTimer) {
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-  }
-  longPressStartPos = null;
-}
-
 function wireInventoryTabEvents() {
   const container = document.getElementById('tab-inventory');
 
-  container.addEventListener('pointerdown', (e) => {
-    const itemBtn = e.target.closest('[data-equip-item]');
-    if (!itemBtn) return;
-    const uid = Number(itemBtn.dataset.equipItem);
-    longPressStartPos = { x: e.clientX, y: e.clientY };
-    clearTimeout(longPressTimer);
-    longPressTimer = setTimeout(() => {
-      longPressTimer = null;
-      suppressNextClick = true;
-      if (!bulkSelectMode) enterBulkSelectMode(uid);
-      // enterBulkSelectMode() re-renders (replaces the tile's DOM node)
-      // enquanto o botão/dedo ainda está pressionado — nesse caso o
-      // navegador NÃO dispara o "click" que viria no pointerup seguinte
-      // (o elemento que recebeu o press sumiu no meio do caminho), então a
-      // flag nunca seria consumida e vazaria pro próximo toque de verdade.
-      // Um auto-reset curto cobre os dois casos: se o click ainda vier
-      // (alguns navegadores), ele é consumido normalmente pelo check acima;
-      // se não vier, a flag some sozinha e não quebra o próximo clique.
-      setTimeout(() => { suppressNextClick = false; }, 300);
-    }, LONG_PRESS_MS);
-  });
-
-  container.addEventListener('pointermove', (e) => {
-    if (!longPressTimer || !longPressStartPos) return;
-    const dx = e.clientX - longPressStartPos.x;
-    const dy = e.clientY - longPressStartPos.y;
-    if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_TOLERANCE_PX) clearLongPressTimer();
-  });
-
-  container.addEventListener('pointerup', clearLongPressTimer);
-  container.addEventListener('pointercancel', clearLongPressTimer);
-
   container.addEventListener('click', (e) => {
-    if (suppressNextClick) {
-      suppressNextClick = false;
+    const bulkToggleBtn = e.target.closest('[data-bulk-toggle-select]');
+    if (bulkToggleBtn) {
+      enterBulkSelectMode();
       return;
     }
 

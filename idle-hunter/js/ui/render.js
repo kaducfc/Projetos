@@ -429,7 +429,10 @@ function equipRingContentHtml(state, filterCategory = null, bulkSelect = null) {
         ${equipStatsBoxHtml(state)}
       </div>
       ${attributeTotalsHtml(state)}
-      <div class="equip-inventory-header">Inventário (${state.inventory.length}/${getItemInventoryCap(state)})</div>
+      <div class="equip-inventory-header-row">
+        <div class="equip-inventory-header">Inventário (${state.inventory.length}/${getItemInventoryCap(state)})</div>
+        ${bulkSelect?.active ? '' : '<button class="bulk-select-toggle-btn" data-bulk-toggle-select>☑️ Selecionar</button>'}
+      </div>
       ${categoryFilterRowHtml(filterCategory)}
       ${bulkSelectToolbarHtml(bulkSelect)}
       <div class="equip-inventory-grid">${inventoryHtml}</div>
