@@ -139,50 +139,57 @@ export const MONSTER_FAMILIES = [
 export const BOSSES = [
   {
     stage: 10,
+    // id/crystalMaterialId ficam 'chispim'/'chispim_crystal' de propósito —
+    // são chaves de save (materials/inventory), cartas (data/cards.js) e
+    // rotação de evento (data/events.js). Reskin de display only, mesmo
+    // padrão já usado quando a família 'boar' virou "Chispim" (ver
+    // MONSTER_FAMILIES acima): só nome/arte/elemento mudam, o resto do
+    // jogo continua funcionando sem saber que o chefe agora se chama
+    // Thornak. Fecha a nova Zona 1 (Sylkar/Musgorn/Guardião Druida/
+    // GranClaw, ver WEAK_MONSTER_GROUPS acima) como o 5º e mais forte
+    // monstro — só um pouco mais forte que o GranClaw (ver powerRank
+    // abaixo e monsterMaxHp/monsterDamagePerSecond/monsterGoldReward em
+    // systems/combat.js), não o salto grande de sempre (BOSS_HP_MULT
+    // etc.), que continua valendo pra todo o resto do jogo.
     id: 'chispim',
-    name: 'Chispim',
-    element: 'eletrico',
-    emoji: '🐹',
-    image: 'assets/chispim/monster.png',
-    // Idle-loop animation for the battle sprite (renderMonster() in
-    // ui/render.js cycles through these on an interval while this boss is
-    // on screen — see MONSTER_IDLE_FRAME_MS there for the shared
-    // 150ms/frame cadence, locked in as the standard for every monster's
-    // animation, not just Chispim's). `image` above stays as the single
-    // static fallback used everywhere else (Forja cards, equipment icons,
-    // drop popups) — only the big monster-sprite element animates.
-    //
-    // Reference pattern for adding animFrames to any other monster: crop
-    // all frames to the same union bounding box (so the sprite doesn't
-    // jump around as it cycles), convert the background to transparency,
-    // and list the frame paths as literal quoted strings here (same
-    // reasoning as SCENE_IMAGES in render.js — build-bundle.mjs's asset
-    // inliner only recognizes literal quoted 'assets/...' paths in the
-    // source text, and won't find them inside a dynamic template
-    // literal). This exact 4-frame Chispim set is the calibrated
-    // reference for "how many frames" and "how similar the poses should
-    // be" — reuse its cadence/count/style rather than re-deriving it.
-    animFrames: [
-      'assets/chispim/anim/frame1.png',
-      'assets/chispim/anim/frame3.png',
-      'assets/chispim/anim/frame4.png',
-      'assets/chispim/anim/frame2.png',
-    ],
+    name: 'Thornak',
+    element: 'planta',
+    emoji: '👹',
+    image: 'assets/thornak/monster.png',
+    // Sem animação de frames pra esse (só 1 imagem estática recebida) —
+    // renderMonster() em ui/render.js já lida bem com isso, mostra a
+    // imagem parada.
+    animFrames: null,
+    // Sem cena de fundo própria pra esse (nenhuma arte de cenário
+    // recebida) — cai no gradiente CSS padrão, igual todo boss sem scene.
+    scene: null,
     // Boss-specific background for the battle scene (renderMonster() in
     // ui/render.js uses this instead of the random SCENE_IMAGES rotation
     // used for weak-monster stages). Optional — bosses without one fall
     // back to the plain CSS gradient backdrop, same as before.
-    scene: 'assets/ui/scenes/boss-chispim.png',
     // Battle-sprite scale multiplier (renderMonster() in ui/render.js
     // applies this as font-size on #monster-sprite, since the sprite's
     // width/height are 1em) — bosses read as unimpressive next to weak
-    // monsters at the default size, so the 3 with real art get a boost.
+    // monsters at the default size, so the ones with real art get a boost.
     spriteScale: 2.1,
+    // Só 1 material de drop de verdade agora (Crânio de Thornak) — o
+    // schema compartilhado por todo boss ainda exige primary1 E primary2
+    // (ver systems/combat.js rollDrops, data/events.js, data/shop.js), só
+    // que os dois apontam pro MESMO id/material aqui (dropa até 2 por
+    // kill, já que cada um rola sua própria chance — só reforça que o
+    // chefe rende mais desse material que um fraco, sem introduzir um 2º
+    // material de verdade). shop.js já pula a 2ª linha duplicada quando os
+    // ids batem — ver eventShopItemsForBoss.
     materials: {
-      primary1: { id: 'chispim_heart', name: 'Núcleo de Faísca', emoji: '❤️', image: 'assets/chispim/nucleo_faisca.png' },
-      primary2: { id: 'chispim_whisker', name: 'Cauda Condutora', emoji: '⚡', image: 'assets/chispim/cauda_condutora.png' },
+      primary1: { id: 'chispim_heart', name: 'Crânio de Thornak', emoji: '💀', image: 'assets/thornak/cranio.png' },
+      primary2: { id: 'chispim_heart', name: 'Crânio de Thornak', emoji: '💀', image: 'assets/thornak/cranio.png' },
     },
-    crystal: { id: 'chispim_crystal', name: 'Cristal de Chispim', emoji: '💎', image: 'assets/crystals/chispim.png' },
+    crystal: { id: 'chispim_crystal', name: 'Cristal de Thornak', emoji: '💎', image: 'assets/crystals/chispim.png' },
+    // Rank de poder dentro da Zona 1 (ver WEAK_MONSTER_GROUPS acima e
+    // monsterMaxHp/monsterDamagePerSecond/monsterGoldReward em
+    // systems/combat.js) — 4 é só 1 degrau acima do GranClaw (rank 3),
+    // ~6.5% mais forte, não o multiplicador de chefe de sempre.
+    powerRank: 4,
   },
   {
     stage: 20,
@@ -381,14 +388,33 @@ export const BOSSES = [
   },
 ];
 
-/// Weak "filler" monsters: 5 bands of 5 (one per element), spawned randomly
-/// on whatever non-boss stage falls in that band. Boundaries deliberately
-/// match the design doc as given (not a clean formula — the last band
-/// happens to be wider, spanning two boss checkpoints), so this is data,
-/// not derived from BOSS_INTERVAL.
+/// Weak "filler" monsters: bands spawned randomly on whatever non-boss
+/// stage falls dentro delas. Boundaries deliberately match the design doc
+/// as given (not a clean formula — the last band happens to be wider,
+/// spanning two boss checkpoints), so this is data, not derived from
+/// BOSS_INTERVAL.
+///
+/// A banda da Zona 1 (stage 1-9) é EXCLUSIVA dela agora — só 4 monstros
+/// (não 5: o 5º "monstro" da zona é o próprio chefe, ver BOSSES[0]
+/// Thornak abaixo), todos elemento Planta (tema da arte, uma "tribo da
+/// floresta"), cada um um pouco mais forte que o anterior (ver powerRank,
+/// consumido por monsterMaxHp/monsterDamagePerSecond/monsterGoldReward em
+/// systems/combat.js — só usado quando presente, então não afeta as
+/// outras zonas/bandas). A banda seguinte (stage 10-19, Zona 2) continua
+/// com o roster de sempre, sem mudança nenhuma.
 export const WEAK_MONSTER_GROUPS = [
   {
     startStage: 1,
+    endStage: 9,
+    monsters: [
+      { id: 'sylkar', name: 'Sylkar', element: 'planta', emoji: '🗡️', image: 'assets/sylkar/monster.png', powerRank: 0, material: { id: 'sylkar_blade', name: 'Lâmina de Sylkar', emoji: '🍃', image: 'assets/sylkar/lamina.png' } },
+      { id: 'musgorn', name: 'Musgorn', element: 'planta', emoji: '🍄', image: 'assets/musgorn/monster.png', powerRank: 1, material: { id: 'musgorn_hat', name: 'Chapéu Musgoso', emoji: '🍄', image: 'assets/musgorn/chapeu.png' } },
+      { id: 'guardiao_druida', name: 'Guardião Druida', element: 'planta', emoji: '🌳', image: 'assets/guardiao_druida/monster.png', powerRank: 2, material: { id: 'guardiao_druida_antler', name: 'Galhada Ancestral', emoji: '🌿', image: 'assets/guardiao_druida/galhada.png' } },
+      { id: 'granclaw', name: 'GranClaw', element: 'planta', emoji: '🦀', image: 'assets/granclaw/monster.png', powerRank: 3, material: { id: 'granclaw_claw', name: 'Garra Petrificada', emoji: '🪨', image: 'assets/granclaw/garra.png' } },
+    ],
+  },
+  {
+    startStage: 10,
     endStage: 19,
     monsters: [
       { id: 'braslimo', name: 'Braslimo', element: 'fogo', emoji: '🔥', image: 'assets/braslimo/monster.png', material: { id: 'braslimo_gel', name: 'Gel Incandescente', emoji: '🟠', image: 'assets/braslimo/gel.png' } },

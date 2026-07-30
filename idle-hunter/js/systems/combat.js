@@ -44,20 +44,31 @@ export const WEAK_CARD_DROP_CHANCE = 0.0003; // 0.03% (~1 per 3,333 kills)
 // dropMult as the "regular" material chance above.
 export const ITEM_DROP_CHANCE = 0.04; // 4%
 
-export function monsterMaxHp(canonicalStage, isBoss) {
+// Escala de poder "por rank" dentro de uma zona (0-4: os 4 monstros fracos
+// + o chefe, ver powerRank em data/monsters.js WEAK_MONSTER_GROUPS/BOSSES)
+// — cada monstro só um pouco mais forte que o anterior, o chefe (rank 4)
+// só ~6.5% acima do rank 3, bem mais suave que o multiplicador de chefe de
+// sempre (BOSS_HP_MULT etc. abaixo). Opt-in: só usada quando o monstro tem
+// powerRank definido (por ora, só a Zona 1) — sem powerRank, cai no
+// isBoss ? BOSS_*_MULT : 1 de sempre, então nenhuma outra zona muda.
+const RANK_MULT = [1, 1.08, 1.16, 1.24, 1.32];
+
+export function monsterMaxHp(canonicalStage, isBoss, powerRank) {
   const base = HP_BASE * Math.pow(HP_GROWTH, canonicalStage - 1);
-  return Math.max(1, Math.round(isBoss ? base * BOSS_HP_MULT : base));
+  const mult = powerRank != null ? RANK_MULT[powerRank] : (isBoss ? BOSS_HP_MULT : 1);
+  return Math.max(1, Math.round(base * mult));
 }
 
-export function monsterGoldReward(canonicalStage, isBoss) {
+export function monsterGoldReward(canonicalStage, isBoss, powerRank) {
   const base = GOLD_BASE * Math.pow(GOLD_GROWTH, canonicalStage - 1);
-  const withBossMult = isBoss ? base * BOSS_GOLD_MULT : base;
-  return Math.max(1, Math.round(withBossMult * GOLD_DROP_BONUS));
+  const mult = powerRank != null ? RANK_MULT[powerRank] : (isBoss ? BOSS_GOLD_MULT : 1);
+  return Math.max(1, Math.round(base * mult * GOLD_DROP_BONUS));
 }
 
-export function monsterDamagePerSecond(canonicalStage, isBoss) {
+export function monsterDamagePerSecond(canonicalStage, isBoss, powerRank) {
   const base = PLAYER_DPS_TAKEN_BASE * Math.pow(PLAYER_DPS_TAKEN_GROWTH, canonicalStage - 1);
-  return Math.max(0.1, isBoss ? base * BOSS_DPS_TAKEN_MULT : base);
+  const mult = powerRank != null ? RANK_MULT[powerRank] : (isBoss ? BOSS_DPS_TAKEN_MULT : 1);
+  return Math.max(0.1, base * mult);
 }
 
 /// Rolled independently for every single hit — so a fast-attack-speed build
@@ -136,7 +147,10 @@ export function resolvePetHit(state, monsterElement, stats) {
 // uniformemente entre state.selectedMonsters a cada respawn (ver
 // ensureMonsterSpawned). O "estágio canônico" da zona (10, 20, ...100)
 // escala HP/Ouro/Dano de TODOS os monstros daquela zona, fraco ou chefe —
-// o chefe ainda aplica seu próprio multiplicador BOSS_* por cima.
+// o chefe normalmente aplica seu próprio multiplicador BOSS_* bem maior
+// por cima (ver monsterMaxHp etc. acima), exceto quando o monstro (fraco
+// ou chefe) tem powerRank definido (só a Zona 1 por ora, ver
+// data/monsters.js) — aí usa a escala suave RANK_MULT em vez disso.
 // ---------------------------------------------------------------------
 
 export function getCurrentMonster(currentMonsterRef) {
@@ -155,8 +169,8 @@ export function getCurrentMonster(currentMonsterRef) {
       name: b.name, emoji: b.emoji, image: b.image || null,
       animFrames: b.animFrames || null, scene: b.scene || null, scenePosition: b.scenePosition || null,
       spriteScale: b.spriteScale || 1, element: b.element,
-      maxHp: monsterMaxHp(canonicalStage, true),
-      dps: monsterDamagePerSecond(canonicalStage, true),
+      maxHp: monsterMaxHp(canonicalStage, true, b.powerRank),
+      dps: monsterDamagePerSecond(canonicalStage, true, b.powerRank),
       sceneIndex: null,
     };
   }
@@ -167,8 +181,8 @@ export function getCurrentMonster(currentMonsterRef) {
     bossId: null, weakMonsterId: weak.id,
     name: weak.name, emoji: weak.emoji, image: weak.image || null,
     animFrames: weak.animFrames || null, element: weak.element,
-    maxHp: monsterMaxHp(canonicalStage, false),
-    dps: monsterDamagePerSecond(canonicalStage, false),
+    maxHp: monsterMaxHp(canonicalStage, false, weak.powerRank),
+    dps: monsterDamagePerSecond(canonicalStage, false, weak.powerRank),
     sceneIndex: sceneIndex ?? 0,
   };
 }
@@ -263,13 +277,14 @@ export function applyDamage(state, amount, stats) {
   const zoneIndex = ref.zoneIndex;
   const zone = getZone(zoneIndex);
   const wasBoss = ref.kind === 'boss';
+  const powerRank = wasBoss ? zone.boss.powerRank : zone.weakMonsters.find((m) => m.id === ref.monsterId)?.powerRank;
 
   // Rolls one kill's worth of gold (Chispim card: independent chance to
   // double it) + drops — factored out so the Gaiatron reproc below can
   // reuse it for "all the same rewards, a second time" without duplicating
   // the roll logic.
   const rollReward = () => {
-    let gold = Math.round(monsterGoldReward(zone.canonicalStage, wasBoss) * stats.goldMult);
+    let gold = Math.round(monsterGoldReward(zone.canonicalStage, wasBoss, powerRank) * stats.goldMult);
     if (Math.random() * 100 < (stats.goldDoubleChance || 0)) gold *= 2;
     return { gold, drops: rollDrops(zoneIndex, wasBoss, stats.dropMult, ref.monsterId) };
   };

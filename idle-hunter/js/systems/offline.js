@@ -59,7 +59,8 @@ export function computeOfflineProgress(state) {
     const pick = pickOfflineMonster(state);
     const zone = getZone(pick.zoneIndex);
     const isBoss = pick.kind === 'boss';
-    goldGainedSim += monsterGoldReward(zone.canonicalStage, isBoss) * stats.goldMult;
+    const powerRank = isBoss ? zone.boss.powerRank : zone.weakMonsters.find((m) => m.id === pick.monsterId)?.powerRank;
+    goldGainedSim += monsterGoldReward(zone.canonicalStage, isBoss, powerRank) * stats.goldMult;
     xpGainedSim += xpForZone(pick.zoneIndex, isBoss);
     const drops = rollDrops(pick.zoneIndex, isBoss, stats.dropMult, pick.monsterId);
     for (const drop of drops) {
