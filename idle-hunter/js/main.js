@@ -26,8 +26,7 @@ import {
   equipPet, unequipPetSlot, sellPet, canFusePets, fusePets, getFusePartners,
   addPetToInventory, getPetEntry, canChooseRightPet, useFreeRightPetChoice,
 } from './systems/pets.js';
-import { chooseClass, buySkillLevel, buySpecial, respecClass, getActiveClass } from './systems/skills.js';
-import { CLASS_META } from './data/skills.js';
+import { buySkillLevel, buySpecial } from './systems/skills.js';
 import {
   renderAll, renderTopBar, renderHunterLevel, renderCombatStats, renderMonster, renderNoMonsterSelected,
   renderInventoryTab, renderUpgradesTab, renderBossTimer,
@@ -252,7 +251,7 @@ function handleKillEvent(event) {
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
   renderInventoryTabNow();
-  renderUpgradesTab(state, skillsRespecConfirm);
+  renderUpgradesTab(state);
   renderCardsTab(state); // a card drop just changed discovered/claimable state
   resetPlayerHp(); // a fresh monster just spawned — full heal for the new fight
   armBossTimer(); // the new monster may (or may not) be a boss
@@ -1104,56 +1103,22 @@ function wirePetsTabEvents() {
 }
 
 // ---------------------------------------------------------------
-// Árvore de habilidades passivas (ver data/skills.js + systems/skills.js) —
-// mesmo padrão de listener único delegado das outras abas. Trocar de classe
-// é um confirm de 2 passos renderizado inline (mesmo motivo do destruir
-// item: window.confirm fica bloqueado dentro de um iframe sandboxed).
+// Árvore de habilidades passivas ÚNICA (ver data/skills.js + systems/
+// skills.js — era 3 árvores por classe, agora uma só, sem seleção nenhuma)
+// — mesmo padrão de listener único delegado das outras abas.
 // ---------------------------------------------------------------
-
-let skillsRespecConfirm = false;
 
 function wireSkillsTabEvents() {
   document.getElementById('tab-upgrades').addEventListener('click', (e) => {
-    const chooseBtn = e.target.closest('[data-choose-class]');
-    if (chooseBtn) {
-      chooseClass(state, chooseBtn.dataset.chooseClass);
-      renderUpgradesTab(state, skillsRespecConfirm);
-      return;
-    }
-
     const buySkillBtn = e.target.closest('[data-buy-skill]');
     if (buySkillBtn) {
-      if (buySkillLevel(state, buySkillBtn.dataset.buySkill)) renderUpgradesTab(state, skillsRespecConfirm);
+      if (buySkillLevel(state, buySkillBtn.dataset.buySkill)) renderUpgradesTab(state);
       return;
     }
 
     const buySpecialBtn = e.target.closest('[data-buy-special]');
     if (buySpecialBtn) {
-      if (buySpecial(state, buySpecialBtn.dataset.buySpecial)) renderUpgradesTab(state, skillsRespecConfirm);
-      return;
-    }
-
-    const respecBtn = e.target.closest('[data-respec-class]');
-    if (respecBtn) {
-      skillsRespecConfirm = true;
-      renderUpgradesTab(state, skillsRespecConfirm);
-      return;
-    }
-
-    const cancelRespecBtn = e.target.closest('[data-cancel-respec-class]');
-    if (cancelRespecBtn) {
-      skillsRespecConfirm = false;
-      renderUpgradesTab(state, skillsRespecConfirm);
-      return;
-    }
-
-    const confirmRespecBtn = e.target.closest('[data-confirm-respec-class]');
-    if (confirmRespecBtn) {
-      const classId = getActiveClass(state);
-      skillsRespecConfirm = false;
-      respecClass(state);
-      renderUpgradesTab(state, skillsRespecConfirm);
-      showToast(`🔄 Classe ${classId ? CLASS_META[classId]?.name : ''} resetada — escolha de novo.`);
+      if (buySpecial(state, buySpecialBtn.dataset.buySpecial)) renderUpgradesTab(state);
     }
   });
 }
