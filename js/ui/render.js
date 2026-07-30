@@ -530,20 +530,30 @@ export function showItemDetailModal(state, uid, pickerOpenSlot = null, confirmDe
   showModal('', itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
 }
 
-/// Linha do atributo base do item (destacada, já escalada pelo enhance) +
-/// uma linha por atributo bônus rolado (ver rollAdditionalStats em
-/// data/items.js), cada um na sua própria linha — inclusive quando o bônus é
-/// o MESMO atributo do item ('attrSelf') ou repete um valor igual ao da
-/// base: não funde com a linha de cima, aparece separado (não escala com
-/// enhance, igual todo atributo bônus).
+/// Linha do atributo base do item + a linha do 2º adicional base (dano pra
+/// arma, vida pra armadura, armadura pra anel/colar — ver
+/// secondaryStatKeyForCategory em data/items.js), ambas destacadas e já
+/// escaladas pelo enhance, seguidas de uma linha por atributo bônus rolado
+/// (ver rollAdditionalStats em data/items.js) — inclusive quando o bônus é o
+/// MESMO atributo do item ('attrSelf') ou repete um valor igual ao da base:
+/// não funde com as linhas de cima, aparece separado (não escala com
+/// enhance, igual todo atributo bônus). Itens de um save antigo (rolados
+/// antes do 2º adicional existir) simplesmente não têm essa chave em
+/// baseStats — secondaryLine fica vazia, sem quebrar.
 function itemDetailStatsHtml(item, entry) {
   const mult = enhancementMultiplier(entry.enhanceLevel || 0, !!entry.isMaster);
   const baseValue = Math.round((entry.baseStats?.[item.attribute] || 0) * mult);
   const baseLine = ATTRIBUTE_STAT_LABEL[item.attribute](baseValue);
+
+  const secondaryKey = Object.keys(entry.baseStats || {}).find((key) => key !== item.attribute);
+  const secondaryValue = secondaryKey ? Math.round((entry.baseStats[secondaryKey] || 0) * mult) : 0;
+  const secondaryLine = secondaryKey && BONUS_STAT_LABEL[secondaryKey]
+    ? `<strong>${BONUS_STAT_LABEL[secondaryKey](secondaryValue)}</strong>` : null;
+
   const bonusLines = (entry.additionalStats || [])
     .map((add) => (BONUS_STAT_LABEL[add.stat] ? BONUS_STAT_LABEL[add.stat](add.value) : null))
     .filter(Boolean);
-  return [baseLine, ...bonusLines].join('<br>');
+  return [baseLine, secondaryLine, ...bonusLines].filter(Boolean).join('<br>');
 }
 
 function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
