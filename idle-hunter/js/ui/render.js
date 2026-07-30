@@ -1,7 +1,7 @@
 import { BOSSES, findMaterialInfo, ZONES } from '../data/monsters.js';
 import {
-  getSlot, getItem, getEnhancedStats, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
-  getNextItemTemplate, getAscensionCost, getDamageType, ENHANCE_MAX_LEVEL,
+  getSlot, getItem, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
+  getNextItemTemplate, getAscensionCost, getDamageType, ENHANCE_MAX_LEVEL, enhancementMultiplier,
   DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName,
 } from '../data/items.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
@@ -56,10 +56,11 @@ const ATTRIBUTE_STAT_LABEL = {
 };
 
 // Atributos bônus (ver rollAdditionalStats em data/items.js) — mostrados
-// abaixo do atributo base do item, um por linha. O bônus 'attrSelf' (mesmo
-// atributo do item) não tem entrada própria aqui: funde com o valor do
-// atributo base (mesma chave, ver getEnhancedStats) e some naturalmente no
-// número de cima.
+// abaixo do atributo base do item, cada um na sua própria linha (ver
+// itemDetailStatsHtml). Inclui 'attrSelf' (mesmo atributo do item, pode
+// repetir o mesmo valor da base) e 'attrOther' (um dos outros dois
+// atributos) — ambos usam as mesmas chaves forca/destreza/inteligencia de
+// ATTRIBUTE_STAT_LABEL, por isso o spread abaixo.
 const BONUS_STAT_LABEL = {
   ...ATTRIBUTE_STAT_LABEL,
   dpsPercent: (v) => `+${formatPercent(v)} DPS`,
@@ -524,15 +525,18 @@ export function showItemDetailModal(state, uid, pickerOpenSlot = null, confirmDe
   showModal('', itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
 }
 
-/// Linha do atributo base do item (destacada) + uma linha por atributo
-/// bônus rolado (ver rollAdditionalStats em data/items.js) — o bônus
-/// 'attrSelf' não aparece separado, já fundiu no número do atributo base
-/// (mesma chave em enhancedStats).
-function itemDetailStatsHtml(item, enhancedStats) {
-  const baseLine = ATTRIBUTE_STAT_LABEL[item.attribute](enhancedStats[item.attribute] || 0);
-  const bonusLines = Object.entries(enhancedStats)
-    .filter(([key]) => key !== item.attribute)
-    .map(([key, value]) => (BONUS_STAT_LABEL[key] ? BONUS_STAT_LABEL[key](value) : null))
+/// Linha do atributo base do item (destacada, já escalada pelo enhance) +
+/// uma linha por atributo bônus rolado (ver rollAdditionalStats em
+/// data/items.js), cada um na sua própria linha — inclusive quando o bônus é
+/// o MESMO atributo do item ('attrSelf') ou repete um valor igual ao da
+/// base: não funde com a linha de cima, aparece separado (não escala com
+/// enhance, igual todo atributo bônus).
+function itemDetailStatsHtml(item, entry) {
+  const mult = enhancementMultiplier(entry.enhanceLevel || 0, !!entry.isMaster);
+  const baseValue = Math.round((entry.baseStats?.[item.attribute] || 0) * mult);
+  const baseLine = ATTRIBUTE_STAT_LABEL[item.attribute](baseValue);
+  const bonusLines = (entry.additionalStats || [])
+    .map((add) => (BONUS_STAT_LABEL[add.stat] ? BONUS_STAT_LABEL[add.stat](add.value) : null))
     .filter(Boolean);
   return [baseLine, ...bonusLines].join('<br>');
 }
@@ -541,7 +545,6 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   const item = getItem(entry.itemId);
   const categoryLabel = getCategoryLabel(item.category);
-  const enhancedStats = getEnhancedStats(entry);
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
   const rarity = getRarity(entry.rarityId);
   const equippedSlotId = findEquippedSlotId(state, uid);
@@ -572,7 +575,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
       <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
-      <div class="item-detail-stats">${itemDetailStatsHtml(item, enhancedStats)}</div>
+      <div class="item-detail-stats">${itemDetailStatsHtml(item, entry)}</div>
       ${resistanceLine}
       ${weaponRequirementNote}
       ${cardSlotsHtml}

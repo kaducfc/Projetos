@@ -1,11 +1,12 @@
 import { getCard } from './data/cards.js';
 import { ZONES } from './data/monsters.js';
 
-// Bumped from v2: the equipment rewrite goes from 6 slots to 10 (colar, 2
-// anéis, arma secundária) and adds Força/Destreza/Inteligência per item, so
-// state.equipped and every inventory entry's itemId scheme changed
-// incompatibly — same "start fresh under a new key" call as the v1→v2 bump.
-const SAVE_KEY = 'idleHunterSave.v3';
+// Bumped from v3: item baseStats/additionalStats schema changed
+// incompatibly (base attribute agora é um valor cru só, e o pool de
+// atributos bônus foi reformulado do zero) — itens antigos de um save v3
+// não têm as chaves novas e mostrariam 0 no atributo base. Mesmo "start
+// fresh under a new key" call das duas bumps anteriores.
+const SAVE_KEY = 'idleHunterSave.v4';
 
 export function createDefaultState() {
   return {
