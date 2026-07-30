@@ -215,12 +215,23 @@ export function rollDrops(zoneIndex, isBoss, dropMult, monsterId) {
 // assets/ui/scenes/scene1..N.png and ui/render.js).
 export const WEAK_MONSTER_SCENE_COUNT = 3;
 
+/// Pausa entre a morte de um monstro (fraco ou chefe) e o próximo aparecer —
+/// só na Caça principal (Torre/Chefe de Evento/Mina de Ouro têm seu próprio
+/// ritmo, sem essa pausa). Também descontada do cálculo de progresso
+/// offline (ver computeOfflineProgress em systems/offline.js), senão o
+/// offline ficaria mais rápido que jogar ao vivo.
+export const MONSTER_RESPAWN_DELAY_MS = 1500;
+
 /// Sorteia um dos state.selectedMonsters (uniforme) e monta o monstro atual
 /// — chamado sempre que monsterHp está null (precisa (re)spawnar). Sem
 /// monstro selecionado, deixa currentMonster null (a UI mostra a tela de
-/// "escolha seus monstros" nesse caso).
+/// "escolha seus monstros" nesse caso). Respeita state.nextMonsterSpawnAt
+/// (ver applyDamage abaixo): enquanto esse prazo não vencer, não spawna
+/// nada — a Caça fica com o monstro anterior morto no relógio ("esperando").
 export function ensureMonsterSpawned(state) {
   if (state.monsterHp != null) return;
+  if (state.nextMonsterSpawnAt && Date.now() < state.nextMonsterSpawnAt) return;
+  state.nextMonsterSpawnAt = null;
   const pool = state.selectedMonsters || [];
   if (!pool.length) {
     state.currentMonster = null;
@@ -305,7 +316,8 @@ export function applyDamage(state, amount, stats) {
   const levelsGained = grantXp(state, xpGained);
 
   state.monsterHp = null;
-  ensureMonsterSpawned(state);
+  state.currentMonster = null;
+  state.nextMonsterSpawnAt = Date.now() + MONSTER_RESPAWN_DELAY_MS;
 
   return { zoneIndex, wasBoss, goldGained, drops, reprocced, xpGained, levelsGained, itemDropResult, eggGained };
 }
@@ -332,6 +344,7 @@ export function setSelectedMonsters(state, list) {
   if (!filtered.length) return false;
   state.selectedMonsters = filtered;
   state.monsterHp = null;
+  state.nextMonsterSpawnAt = null;
   ensureMonsterSpawned(state);
   return true;
 }
