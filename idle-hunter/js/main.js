@@ -1202,6 +1202,11 @@ function showOfflineProgressIfAny() {
   const progress = computeOfflineProgress(state);
   if (!progress) return;
   applyOfflineProgress(state, progress);
+  // applyOfflineProgress pode ter empurrado itens novos pro inventário
+  // (ver itemDropCount) depois que fullRefresh() já rodou no init() — sem
+  // isso a aba Equipamentos ficaria mostrando o inventário desatualizado
+  // até a próxima ação disparar um re-render.
+  if (progress.itemDropCount > 0) renderInventoryTabNow();
 
   const hours = Math.floor(progress.elapsedSeconds / 3600);
   const minutes = Math.floor((progress.elapsedSeconds % 3600) / 60);
@@ -1217,8 +1222,11 @@ function showOfflineProgressIfAny() {
     const icon = iconMarkup(card?.image, card?.emoji ?? '🃏', card?.name ?? id);
     return `+${formatNumber(qty)} <span class="icon">${icon}</span> ${card?.name ?? id}`;
   });
-  const itemsHtml = [...materialLines, ...cardLines].length
-    ? `<p class="offline-item-lines">${[...materialLines, ...cardLines].join('<br>')}</p>`
+  const equipmentLine = progress.itemDropCount > 0
+    ? `+${formatNumber(progress.itemDropCount)} <span class="icon">🎒</span> ${progress.itemDropCount === 1 ? 'equipamento' : 'equipamentos'} (ver aba Equipamentos)`
+    : null;
+  const itemsHtml = [...materialLines, ...cardLines, ...(equipmentLine ? [equipmentLine] : [])].length
+    ? `<p class="offline-item-lines">${[...materialLines, ...cardLines, ...(equipmentLine ? [equipmentLine] : [])].join('<br>')}</p>`
     : '';
 
   showModal('Bem-vindo de volta!', `
