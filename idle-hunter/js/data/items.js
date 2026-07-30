@@ -234,6 +234,13 @@ const WEAPON_ARCHETYPES = {
   },
 };
 
+/// Nome genérico do arquétipo de arma pro (slot, atributo) — usado pela UI
+/// pra explicar o requisito de arma secundária (ver canEquipItem em
+/// systems/equipment.js): "Aljava" só equipa junto de "Arco", etc.
+export function getWeaponArchetypeName(category, attributeId) {
+  return WEAPON_ARCHETYPES[category]?.[attributeId]?.name ?? '';
+}
+
 // Arco/Aljava têm nome e arte fixos por zona (tier), em vez de "Arco de
 // <Boss>" como os demais arquétipos — pedido de design, não segue o padrão
 // genérico das outras armas/atributos.

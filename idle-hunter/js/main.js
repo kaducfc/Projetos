@@ -431,7 +431,7 @@ function wireModalEvents() {
         const cardWillBeStripped = entry && ensureCardIds(entry).some(
           (cardId, slotIndex) => cardId && countEquippedCardCopies(state, cardId, uid, slotIndex) >= MAX_EQUIPPED_CARD_COPIES
         );
-        equipItem(state, uid);
+        if (!equipItem(state, uid)) return; // bloqueado (ver canEquipItem) — botão já vem disabled, defensivo
         hideModal();
         if (cardWillBeStripped) {
           showToast(`🃏 Já havia ${MAX_EQUIPPED_CARD_COPIES} cartas dessa equipadas — a carta voltou pro inventário.`);

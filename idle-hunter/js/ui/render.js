@@ -2,11 +2,11 @@ import { BOSSES, findMaterialInfo, ZONES } from '../data/monsters.js';
 import {
   getSlot, getItem, getEnhancedStats, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
   getNextItemTemplate, getAscensionCost, getDamageType, getDamageTypeForAttribute, ENHANCE_MAX_LEVEL,
-  DROP_CATEGORIES, getItemInventoryCap,
+  DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName,
 } from '../data/items.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
-import { getEquippedEntry, findEquippedSlotId } from '../systems/equipment.js';
+import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds } from '../systems/crafting.js';
 import { isZoneUnlocked, isBossUnlocked, xpToNextLevel } from '../systems/leveling.js';
@@ -527,9 +527,17 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
     ? `<div class="element-resistance">${elementBadgeHtml(item.element)} +${Math.round(ELEMENT_RESISTANCE_PER_PIECE * 100)}% resistência</div>`
     : `<div class="element-resistance">${elementBadgeHtml(item.element)} elemento de ataque</div>`;
 
+  // Aljava/Livro/Escudo (weapon2) só equipam junto da arma primária do
+  // mesmo atributo (Arco/Cajado/Espada, ver canEquipItem em
+  // systems/equipment.js) — mostra o motivo em vez de só desabilitar o
+  // botão sem explicação.
+  const weaponRequirementNote = (!isEquipped && item.category === 'weapon2' && !canEquipItem(state, uid))
+    ? `<p class="weapon-requirement-note">⚠️ Equipe primeiro ${getWeaponArchetypeName('weapon1', item.attribute)} (mesmo atributo) na arma primária.</p>`
+    : '';
+
   const actionBtn = isEquipped
     ? `<button class="modal-action-btn" data-modal-unequip="${equippedSlotId}">Desequipar</button>`
-    : `<button class="modal-action-btn" data-modal-equip="${uid}">Equipar</button>`;
+    : `<button class="modal-action-btn" data-modal-equip="${uid}" ${canEquipItem(state, uid) ? '' : 'disabled'}>Equipar</button>`;
 
   const cardSlotsHtml = ensureCardIds(entry)
     .map((cardId, slotIndex) => cardSlotHtml(state, uid, entry, pickerOpenSlot === slotIndex, slotIndex))
@@ -543,6 +551,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
       <div class="item-detail-attribute" style="color:${attribute.color}; font-weight:700; font-size:11.5px;">${attribute.name} (${getDamageType(getDamageTypeForAttribute(item.attribute)).emoji} ${getDamageType(getDamageTypeForAttribute(item.attribute)).name})</div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
+      ${weaponRequirementNote}
       ${cardSlotsHtml}
       ${enhancePanelHtml(state, uid, entry, item)}
       <div class="modal-action-row">
