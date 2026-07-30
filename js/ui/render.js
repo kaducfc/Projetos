@@ -450,7 +450,9 @@ export function showEquipSlotModal(state, slotId) {
   const slot = getSlot(slotId);
   const uid = state.equipped[slotId];
   if (uid) {
-    showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, false));
+    // Sem título — mesmo padrão do showItemDetailModal (o nome do item já
+    // aparece embaixo do ícone, não precisa repetir aqui em cima).
+    showModal('', itemDetailHtml(state, uid, false));
   } else {
     showModal(`${slot.emoji} ${slot.name}`, `
       <div class="item-detail">
