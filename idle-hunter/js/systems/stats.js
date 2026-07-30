@@ -3,6 +3,8 @@ import { UPGRADES } from '../data/upgrades.js';
 import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard, CARD_DAMAGE_BONUS } from '../data/cards.js';
 import { ensureCardIds } from './crafting.js';
+import { getClassTree } from '../data/skills.js';
+import { getActiveClass, getSkillLevel, getChosenSpecialId } from './skills.js';
 
 // Sem arma nenhuma equipada, o caçador ainda bate com as próprias mãos —
 // suficiente pra matar o primeiro monstro fraco da Zona 1 (~68 HP) em
@@ -133,6 +135,55 @@ export function computePlayerStats(state, currentHp = null) {
 
     equippedSlotCount += 1;
     equippedElements.add(item.element || DEFAULT_WEAPON_ELEMENT);
+  }
+
+  // Árvore de habilidades passivas (ver data/skills.js + systems/skills.js)
+  // — soma os níveis comprados na classe ativa + a especial escolhida de
+  // cada etapa já destravada, nos MESMOS acumuladores usados pelo
+  // equipamento. Força/Destreza/Inteligência entram em forcaTotal/
+  // destrezaTotal/inteligenciaTotal ANTES da conversão abaixo, então um
+  // ponto de atributo vale o mesmo venha da árvore ou do equipamento.
+  // Recalculado do zero a cada chamada a partir de state.skillTree — nunca
+  // aplicado como um delta permanente, então não duplica bônus num reload.
+  function addTreeStat(stat, total) {
+    if (stat === 'forca') forcaTotal += total;
+    else if (stat === 'destreza') destrezaTotal += total;
+    else if (stat === 'inteligencia') inteligenciaTotal += total;
+    else if (stat === 'hpFlat') hpFlat += total;
+    else if (stat === 'armorFlat') armorFlat += total;
+    else if (stat === 'hpPercent') hpPercent += total;
+    else if (stat === 'armorPercent') armorPercent += total;
+    else if (stat === 'danoFisicoFlat') danoFisicoFlat += total;
+    else if (stat === 'danoPerfuracaoFlat') danoPerfuracaoFlat += total;
+    else if (stat === 'danoMagicoFlat') danoMagicoFlat += total;
+    else if (stat === 'critChancePercent') critChancePercent += total;
+    else if (stat === 'critDamagePercent') critDamagePercent += total;
+    else if (stat === 'attackSpeedPercent') attackSpeedPercent += total;
+    else if (stat === 'dodgePercent') dodgePercent += total;
+    else if (stat === 'goldPercent') goldPercent += total;
+    else if (stat === 'dropPercent') dropPercent += total;
+    else if (stat === 'dpsPercent') dpsPercent += total;
+    else if (stat === 'lifestealFlat') lifestealFlat += total;
+  }
+
+  const activeClassId = getActiveClass(state);
+  const classTree = activeClassId ? getClassTree(activeClassId) : null;
+  if (classTree) {
+    for (const stage of classTree.stages) {
+      for (const row of stage.rows) {
+        for (const skill of row) {
+          const level = getSkillLevel(state, skill.id);
+          if (level > 0) addTreeStat(skill.stat, skill.perLevel * level);
+        }
+      }
+      if (stage.special) {
+        const chosenId = getChosenSpecialId(state, stage.stageIndex);
+        const option = chosenId && stage.special.options.find((o) => o.id === chosenId);
+        if (option) {
+          for (const bonus of option.bonuses) addTreeStat(bonus.stat, bonus.value);
+        }
+      }
+    }
   }
 
   // Converte o atributo total equipado pros stats de combate de verdade
