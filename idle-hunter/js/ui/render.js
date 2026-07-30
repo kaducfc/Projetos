@@ -1,7 +1,7 @@
 import { BOSSES, findMaterialInfo, ZONES } from '../data/monsters.js';
 import {
   getSlot, getItem, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
-  getNextItemTemplate, getAscensionCost, getDamageType, ENHANCE_MAX_LEVEL, enhancementMultiplier,
+  getAscensionCost, getDamageType, ENHANCE_MAX_LEVEL, enhancementMultiplier,
   DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName,
 } from '../data/items.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
@@ -645,11 +645,11 @@ function cardSlotHtml(state, uid, entry, pickerOpen, slotIndex) {
 
 function enhancePanelHtml(state, uid, entry, item) {
   if (entry.isMaster) {
-    const nextTemplate = getNextItemTemplate(item);
-    if (!nextTemplate) {
-      return `<div class="enhance-maxed">✨ Rank Master alcançado (Zona máxima)</div>`;
+    const cost = getAscensionCost(item, entry.rarityId);
+    if (!cost) {
+      return `<div class="enhance-maxed">✨ Rank Master alcançado (Raridade máxima)</div>`;
     }
-    const cost = getAscensionCost(item);
+    const nextRarity = getRarity(cost.nextRarityId);
     const haveCrystal = state.materials[cost.crystalMaterialId] || 0;
     const crystalInfo = findMaterialInfo(cost.crystalMaterialId);
     const matInfo = findMaterialInfo(cost.matId);
@@ -659,7 +659,7 @@ function enhancePanelHtml(state, uid, entry, item) {
       <div class="enhance-maxed">✨ Rank Master alcançado</div>
       <div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${matMet ? 'met' : 'missing'}">${formatNumber(haveMat)}/${formatNumber(cost.qty)}</span></div>
       <div class="recipe-cost"><span><span class="icon">${iconMarkup(crystalInfo.image, crystalInfo.emoji, crystalInfo.name)}</span> ${crystalInfo.name}</span><span class="${haveCrystal >= 1 ? 'met' : 'missing'}">${formatNumber(haveCrystal)}/1</span></div>
-      <button class="master-btn" data-ascend-uid="${uid}" ${canAscendItem(state, uid) ? '' : 'disabled'}>Ascender para ${nextTemplate.name}</button>
+      <button class="master-btn" data-ascend-uid="${uid}" ${canAscendItem(state, uid) ? '' : 'disabled'}>Ascender para <span style="color:${nextRarity.color}">${nextRarity.name}</span> +0</button>
     </div>`;
   }
 

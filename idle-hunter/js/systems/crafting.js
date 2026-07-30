@@ -1,6 +1,6 @@
 import {
   getItem, ENHANCE_MAX_LEVEL, rollDroppedItem, getRarity, getSlotIdsForCategory,
-  getNextItemTemplate, getAscensionCost, rollBaseStatsFromTemplate,
+  getAscensionCost, rollBaseStatsFromTemplate, rollAdditionalStats,
   getItemInventoryCap, getItemScrapMaterial,
 } from '../data/items.js';
 
@@ -159,18 +159,16 @@ export function upgradeToMaster(state, uid) {
   return true;
 }
 
-/// Ascensão: uma vez em Rank Master, vira o item equivalente (mesma
-/// categoria/atributo) da ZONA SEGUINTE, voltando pra +0 — mantém rarityId e
-/// additionalStats como estão, só recalcula baseStats do zero pra magnitude
-/// da nova zona (ver getNextItemTemplate/getAscensionCost/
-/// rollBaseStatsFromTemplate em data/items.js). null se já está na última
-/// zona (nada pra onde ascender).
+/// Ascensão: uma vez em Rank Master, sobe de raridade (mesmo item, mesma
+/// zona/categoria/atributo), voltando pra +0 — rerola baseStats e
+/// additionalStats do zero pra magnitude da raridade nova (que também ganha
+/// mais slots de atributo bônus, ver RARITIES em data/items.js). null se o
+/// item já está em Mítico (última raridade, nada pra onde ascender).
 export function canAscendItem(state, uid) {
   const entry = getEntry(state, uid);
   if (!entry || !entry.isMaster) return false;
   const item = getItem(entry.itemId);
-  if (!getNextItemTemplate(item)) return false;
-  const cost = getAscensionCost(item);
+  const cost = getAscensionCost(item, entry.rarityId);
   if (!cost) return false;
   return (
     (state.materials[cost.crystalMaterialId] || 0) >= 1 &&
@@ -182,14 +180,14 @@ export function ascendItem(state, uid) {
   if (!canAscendItem(state, uid)) return false;
   const entry = getEntry(state, uid);
   const item = getItem(entry.itemId);
-  const nextTemplate = getNextItemTemplate(item);
-  const cost = getAscensionCost(item);
+  const cost = getAscensionCost(item, entry.rarityId);
   state.materials[cost.crystalMaterialId] -= 1;
   state.materials[cost.matId] -= cost.qty;
 
-  const rarity = getRarity(entry.rarityId);
-  entry.itemId = nextTemplate.id;
-  entry.baseStats = rollBaseStatsFromTemplate(nextTemplate.stats, rarity);
+  const nextRarity = getRarity(cost.nextRarityId);
+  entry.rarityId = nextRarity.id;
+  entry.baseStats = rollBaseStatsFromTemplate(item.stats, nextRarity);
+  entry.additionalStats = rollAdditionalStats(nextRarity.additionals, item.zoneIndex, item.attribute, entry.baseStats[item.attribute]);
   entry.enhanceLevel = 0;
   entry.isMaster = false;
   return true;
