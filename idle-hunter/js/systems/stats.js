@@ -16,6 +16,22 @@ const DEFAULT_WEAPON_ELEMENT = 'neutro';
 const BASE_CRIT_CHANCE = 5;
 const BASE_CRIT_DAMAGE = 50;
 
+// Conversão do atributo total equipado (soma de Força/Destreza/Inteligência
+// de todas as peças — cada item agora só carrega um valor cru do seu
+// próprio atributo, ver data/items.js attributeBaseStats) pros stats de
+// combate de verdade. Números de partida, fáceis de re-tunar — a
+// calibração fina (junto com o rebalanceamento dos monstros) fica pra
+// depois.
+const FORCA_DANO_PER_POINT = 6;
+const FORCA_HP_PER_POINT = 8;
+const FORCA_ARMOR_PER_POINT = 2;
+const DESTREZA_DANO_PER_POINT = 6;
+const DESTREZA_CRIT_CHANCE_PER_POINT = 0.15;
+const DESTREZA_CRIT_DAMAGE_PER_POINT = 0.3;
+const INTELIGENCIA_DANO_PER_POINT = 6;
+const INTELIGENCIA_GOLD_PERCENT_PER_POINT = 0.2;
+const INTELIGENCIA_DROP_PERCENT_PER_POINT = 0.15;
+
 /// currentHp: the caller's current HP in whatever fight this is for (main
 /// combat, Torre Infinita — each has its own separate pool, see main.js).
 /// Only consulted by HP-conditional card specials (Colhedor Carmesim,
@@ -89,28 +105,41 @@ export function computePlayerStats(state, currentHp = null) {
     if (!item) continue;
     const stats = getEnhancedStats(invEntry);
 
-    dpsFlat += stats.dpsFlat || 0;
+    // Affixes "adicionais" da raridade (ver ADDITIONAL_STAT_POOL em
+    // data/items.js) continuam sendo somados direto, item a item — só o
+    // atributo base em si (forca/destreza/inteligencia) virou um valor cru
+    // por item, acumulado abaixo e convertido em stats de verdade depois
+    // do loop.
     dpsPercent += stats.dpsPercent || 0;
     attackSpeedPercent += stats.attackSpeedPercent || 0;
     goldPercent += stats.goldPercent || 0;
     dropPercent += stats.dropPercent || 0;
-    hpFlat += stats.hpFlat || 0;
-    armorFlat += stats.armorFlat || 0;
     hpPercent += stats.hpPercent || 0;
     armorPercent += stats.armorPercent || 0;
     critChancePercent += stats.critChancePercent || 0;
     critDamagePercent += stats.critDamagePercent || 0;
-    danoFisicoFlat += stats.danoFisicoFlat || 0;
-    danoPerfuracaoFlat += stats.danoPerfuracaoFlat || 0;
-    danoMagicoFlat += stats.danoMagicoFlat || 0;
 
-    if (item.attribute === 'forca') forcaTotal += stats.danoFisicoFlat || 0;
-    else if (item.attribute === 'destreza') destrezaTotal += stats.danoPerfuracaoFlat || 0;
-    else if (item.attribute === 'inteligencia') inteligenciaTotal += stats.danoMagicoFlat || 0;
+    if (item.attribute === 'forca') forcaTotal += stats.forca || 0;
+    else if (item.attribute === 'destreza') destrezaTotal += stats.destreza || 0;
+    else if (item.attribute === 'inteligencia') inteligenciaTotal += stats.inteligencia || 0;
 
     equippedSlotCount += 1;
     equippedElements.add(item.element || DEFAULT_WEAPON_ELEMENT);
   }
+
+  // Converte o atributo total equipado pros stats de combate de verdade
+  // (ver constantes *_PER_POINT no topo do arquivo): Força vira dano físico
+  // + vida + armadura, Destreza vira dano de perfuração + crítico,
+  // Inteligência vira dano mágico + ouro%/drop%.
+  danoFisicoFlat += forcaTotal * FORCA_DANO_PER_POINT;
+  hpFlat += forcaTotal * FORCA_HP_PER_POINT;
+  armorFlat += forcaTotal * FORCA_ARMOR_PER_POINT;
+  danoPerfuracaoFlat += destrezaTotal * DESTREZA_DANO_PER_POINT;
+  critChancePercent += destrezaTotal * DESTREZA_CRIT_CHANCE_PER_POINT;
+  critDamagePercent += destrezaTotal * DESTREZA_CRIT_DAMAGE_PER_POINT;
+  danoMagicoFlat += inteligenciaTotal * INTELIGENCIA_DANO_PER_POINT;
+  goldPercent += inteligenciaTotal * INTELIGENCIA_GOLD_PERCENT_PER_POINT;
+  dropPercent += inteligenciaTotal * INTELIGENCIA_DROP_PERCENT_PER_POINT;
 
   const activeDamagePool = activeDamageType === 'fisico' ? danoFisicoFlat
     : activeDamageType === 'perfuracao' ? danoPerfuracaoFlat
