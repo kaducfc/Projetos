@@ -42,7 +42,7 @@ export const WEAK_CARD_DROP_CHANCE = 0.0003; // 0.03% (~1 per 3,333 kills)
 // Chance a kill drops a piece of equipment (see rollDroppedItem in
 // data/items.js), independent of materials/cards, scaled by the same
 // dropMult as the "regular" material chance above.
-export const ITEM_DROP_CHANCE = 0.08; // 8%
+export const ITEM_DROP_CHANCE = 0.04; // 4%
 
 export function monsterMaxHp(canonicalStage, isBoss) {
   const base = HP_BASE * Math.pow(HP_GROWTH, canonicalStage - 1);
