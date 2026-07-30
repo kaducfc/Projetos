@@ -1,8 +1,10 @@
 import { computePlayerStats } from './stats.js';
-import { monsterMaxHp, monsterGoldReward, rollDrops, MONSTER_RESPAWN_DELAY_MS } from './combat.js';
+import { monsterMaxHp, monsterGoldReward, rollDrops, MONSTER_RESPAWN_DELAY_MS, ITEM_DROP_CHANCE } from './combat.js';
 import { getZone } from '../data/monsters.js';
 import { xpForZone, grantXp } from './leveling.js';
 import { recordCardDiscovered } from './cards.js';
+import { addDroppedItem } from './crafting.js';
+import { DROP_CATEGORIES } from '../data/items.js';
 
 export const MAX_OFFLINE_SECONDS = 8 * 60 * 60; // cap idle gains at 8 hours
 export const OFFLINE_EFFICIENCY = 0.7; // offline kills/drops run at 70% of online output
@@ -53,6 +55,7 @@ export function computeOfflineProgress(state) {
 
   let goldGainedSim = 0;
   let xpGainedSim = 0;
+  let itemDropsSim = 0;
   const materialsGained = {};
   const cardsGained = {};
   for (let i = 0; i < simulatedKills; i++) {
@@ -67,6 +70,13 @@ export function computeOfflineProgress(state) {
       const bucket = drop.isCard ? cardsGained : materialsGained;
       bucket[drop.id] = (bucket[drop.id] || 0) + drop.qty;
     }
+    // Mesma chance de dropar equipamento do combate ao vivo (ver
+    // applyDamage em systems/combat.js) — só conta quantas vezes bateu
+    // aqui; os itens de verdade só são criados em applyOfflineProgress
+    // (ver itemDropCount abaixo), depois de escalar pro total de kills.
+    if (Math.random() < Math.min(0.95, ITEM_DROP_CHANCE * stats.dropMult)) {
+      itemDropsSim += 1;
+    }
   }
   const goldGained = Math.round(goldGainedSim * scale);
   const xpGained = Math.round(xpGainedSim * scale);
@@ -76,8 +86,13 @@ export function computeOfflineProgress(state) {
   for (const id of Object.keys(cardsGained)) {
     cardsGained[id] = Math.round(cardsGained[id] * scale);
   }
+  // Extrapola do mesmo jeito que ouro/materiais/XP (ver `scale` acima) —
+  // simulatedKills já rolou sua parcela de drops de equipamento; o resto
+  // dos kills (kills - simulatedKills, quando SIMULATION_CAP entra em
+  // jogo) rende a mesma proporção.
+  const itemDropCount = Math.round(itemDropsSim * scale);
 
-  return { elapsedSeconds, kills, goldGained, xpGained, materialsGained, cardsGained };
+  return { elapsedSeconds, kills, goldGained, xpGained, materialsGained, cardsGained, itemDropCount };
 }
 
 export function applyOfflineProgress(state, progress) {
@@ -91,4 +106,15 @@ export function applyOfflineProgress(state, progress) {
   }
   state.totalKills += progress.kills;
   grantXp(state, progress.xpGained || 0);
+
+  // Cria os itens de equipamento de verdade agora (addDroppedItem já rola
+  // atributo/raridade e cuida do inventário cheio virando sucata sozinho,
+  // ver systems/crafting.js) — cada um sorteia seu próprio monstro/zona do
+  // pool selecionado, igual um kill ao vivo faria.
+  for (let i = 0; i < (progress.itemDropCount || 0); i++) {
+    const pick = pickOfflineMonster(state);
+    if (!pick) break;
+    const category = DROP_CATEGORIES[Math.floor(Math.random() * DROP_CATEGORIES.length)];
+    addDroppedItem(state, pick.zoneIndex, category);
+  }
 }
