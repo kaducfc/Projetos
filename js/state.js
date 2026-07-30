@@ -142,16 +142,13 @@ export function createDefaultState() {
     vip: false,
     freeRightPetChoiceCycle: null,
 
-    // Árvore de habilidades passivas (ver data/skills.js + systems/
-    // skills.js): 1 ponto por nível de caça, nunca guardado à parte — é
-    // sempre derivado de hunterLevel menos o total gasto aqui, então não
-    // tem como duplicar bônus num reload. classId é a classe escolhida
-    // (null = ainda não escolheu); trocar de classe reseta purchased/
-    // specials (ver chooseClass). purchased: skillId -> nível comprado.
-    // specials: stageIndex (0-3) -> id da opção especial escolhida (só 1
-    // por etapa, escolha permanente até trocar de classe).
+    // Árvore de habilidades passivas ÚNICA (ver data/skills.js + systems/
+    // skills.js — antes eram 3 árvores por classe, agora uma só): 1 ponto
+    // por nível de caça, nunca guardado à parte — é sempre derivado de
+    // hunterLevel menos o total gasto aqui, então não tem como duplicar
+    // bônus num reload. purchased: skillId -> nível comprado. specials:
+    // stageIndex (0-3) -> id da opção especial escolhida (só 1 por etapa).
     skillTree: {
-      classId: null,
       purchased: {},
       specials: {},
     },
@@ -182,6 +179,17 @@ export function loadState() {
     // instead, once, so the slot is usable again.
     for (const entry of state.inventory) {
       entry.cardIds = (entry.cardIds || []).map((id) => (id && !getCard(id) ? null : id));
+    }
+    // A árvore de habilidades era 3 árvores por classe (state.skillTree.
+    // classId marcava qual) e virou uma árvore única sem classe — os ids
+    // salvos em purchased/specials de um save antigo (ex: "arqueiro_0_0_0")
+    // não existem mais na árvore nova. Sem essa limpeza eles ficariam
+    // "presos" contando como pontos gastos pra sempre (ver
+    // getSpentSkillPoints em systems/skills.js), sem dar bônus nenhum —
+    // reseta pra árvore nova em branco (os pontos, sempre derivados do
+    // hunterLevel, continuam intactos pra redistribuir).
+    if ('classId' in (state.skillTree || {})) {
+      state.skillTree = { purchased: {}, specials: {} };
     }
     return state;
   } catch (err) {

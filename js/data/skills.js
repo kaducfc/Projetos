@@ -1,31 +1,30 @@
 // ---------------------------------------------------------------------
-// Árvore de habilidades passivas — 3 classes (Arqueiro/Guerreiro/Mago), cada
-// uma com sua própria árvore. 1 ponto por nível de caça (ver
-// systems/leveling.js xpToNextLevel/grantXp) — os pontos em si nunca são
-// guardados à parte, são sempre (hunterLevel - 1) menos o total já gasto
-// (ver getTotalSkillPoints/getSpentSkillPoints em systems/skills.js), então
-// não tem como duplicar bônus num reload nem ficar negativo.
+// Árvore de habilidades passivas — ÚNICA (sem distinção de classe: era 3
+// árvores separadas, agora é uma só, misturando o melhor de cada uma). 1
+// ponto por nível de caça (ver systems/leveling.js xpToNextLevel/grantXp) —
+// os pontos em si nunca são guardados à parte, são sempre (hunterLevel - 1)
+// menos o total já gasto (ver getTotalSkillPoints/getSpentSkillPoints em
+// systems/skills.js), então não tem como duplicar bônus num reload nem
+// ficar negativo.
 //
-// Formato de cada árvore: 5 ETAPAS, cada uma com 3 LINHAS normais (3
-// habilidades cada, uma por COLUNA) + 1 linha ESPECIAL logo depois (3
-// opções mutuamente exclusivas, só 1 pode ser comprada) que trava a etapa
-// seguinte. Tudo gerado por tabela (colunas/valores por etapa) em vez de
-// escrito à mão habilidade por habilidade — trocar um valor, nome ou
-// quantidade de níveis é só mexer nas tabelas abaixo, sem tocar em
-// systems/skills.js nem em stats.js.
+// Formato: 5 ETAPAS, cada uma com 3 LINHAS normais (3 habilidades cada, uma
+// por COLUNA) + 1 linha ESPECIAL logo depois (3 opções mutuamente
+// exclusivas, só 1 pode ser comprada) que trava a etapa seguinte. Tudo
+// gerado por tabela (colunas/valores por etapa) em vez de escrito à mão
+// habilidade por habilidade — trocar um valor, nome ou quantidade de
+// níveis é só mexer nas tabelas abaixo, sem tocar em systems/skills.js nem
+// em stats.js.
+//
+// Cada coluna tem uma IDENTIDADE temática (Ofensivo/Defensivo/Atributos &
+// Sorte) mas RODA por uma lista de 5 stats (não 3, como antes) — o ciclo
+// não reseta a cada etapa, continua rolando pelas 15 linhas inteiras, então
+// nenhuma etapa repete a mesma combinação de stats que a anterior. Menos
+// repetitivo que "sempre os mesmos 3 stats toda etapa".
 //
 // Orçamento: 3 linhas × 3 colunas × (2,2,3,3,4) níveis por etapa = 18+18+27+
 // 27+36 = 126, + 4 especiais (1 ponto cada) = 130 pontos pra completar a
-// árvore inteira, como pedido.
+// árvore inteira.
 // ---------------------------------------------------------------------
-
-export const SKILL_CLASSES = ['arqueiro', 'guerreiro', 'mago'];
-
-export const CLASS_META = {
-  arqueiro: { name: 'Arqueiro', emoji: '🏹', color: '#27ae60', description: 'Destreza, crítico e velocidade de ataque.' },
-  guerreiro: { name: 'Guerreiro', emoji: '⚔️', color: '#c0392b', description: 'Força, vida e armadura.' },
-  mago: { name: 'Mago', emoji: '🔮', color: '#2980b9', description: 'Inteligência, dano mágico e sorte.' },
-};
 
 // Nível máximo de cada habilidade normal, por etapa (0-based).
 export const STAGE_MAX_LEVEL = [2, 2, 3, 3, 4];
@@ -36,13 +35,12 @@ export const STAGE_MAX_LEVEL = [2, 2, 3, 3, 4];
 // da última).
 export const SPECIAL_THRESHOLDS = [10, 30, 55, 80];
 
-// Nomes exibidos por estágio/linha global (1ª linha da árvore inteira = I,
-// última = XV) — só cosmético, pra toda habilidade não se chamar igual
-// dentro da mesma etapa.
+// Nomes exibidos por linha global (1ª linha da árvore inteira = I, última =
+// XV) — só cosmético, pra toda habilidade não se chamar igual.
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV'];
 
 // Nome legível de cada stat — reusado tanto pro nome gerado da habilidade
-// quanto pra descrição (ver skillDescription em ui/render.js).
+// quanto pra descrição (ver skillValueLabel em ui/render.js).
 export const STAT_DISPLAY_NAME = {
   forca: 'Força',
   destreza: 'Destreza',
@@ -61,7 +59,6 @@ export const STAT_DISPLAY_NAME = {
   goldPercent: 'Ouro Obtido',
   dropPercent: 'Materiais Obtidos',
   dpsPercent: 'DPS',
-  lifestealFlat: 'Cura por Acerto',
 };
 
 const ATTRIBUTE_STATS = new Set(['forca', 'destreza', 'inteligencia']);
@@ -70,11 +67,10 @@ const PERCENT_STATS = new Set([
   'goldPercent', 'dropPercent', 'dpsPercent', 'hpPercent', 'armorPercent',
 ]);
 
-// Progressão por etapa (0-based) — ver enunciado: atributos base +1/+2/+3/
-// +4/+5 por nível, percentuais 1%/2%/3%/4%/5% por nível (dentro da faixa
-// pedida de 1-2/1.5-3/2-4/2.5-5/3-6). Stats "flat" (vida/armadura/dano/cura)
-// não têm fórmula explícita no pedido — escalam na mesma proporção, em
-// tabelas próprias, fáceis de re-tunar aqui sem mexer em mais nada.
+// Progressão por etapa (0-based): atributos base +1/+2/+3/+4/+5 por nível,
+// percentuais 1%/2%/3%/4%/5% por nível. Stats "flat" (vida/armadura/dano)
+// escalam na mesma proporção, em tabelas próprias, fáceis de re-tunar aqui
+// sem mexer em mais nada.
 const ATTRIBUTE_PER_LEVEL = [1, 2, 3, 4, 5];
 const PERCENT_PER_LEVEL = [1, 2, 3, 4, 5];
 const FLAT_PER_LEVEL = {
@@ -83,7 +79,6 @@ const FLAT_PER_LEVEL = {
   danoFisicoFlat: [5, 10, 15, 20, 25],
   danoPerfuracaoFlat: [5, 10, 15, 20, 25],
   danoMagicoFlat: [5, 10, 15, 20, 25],
-  lifestealFlat: [1, 2, 3, 4, 5],
 };
 
 function valuePerLevel(stat, stageIndex) {
@@ -93,21 +88,28 @@ function valuePerLevel(stat, stageIndex) {
   throw new Error(`Sem tabela de progressão pro stat ${stat}`);
 }
 
-/// Monta a árvore inteira de uma classe a partir de 3 "colunas": colA é o
-/// mesmo stat em toda linha (o atributo da classe, aparece nas 15 linhas —
-/// "deve aparecer com frequência em todas as etapas"); colB/colC alternam
-/// entre os stats da lista, um por linha dentro da etapa (linha 1 usa
-/// index 0, linha 2 usa index 1, linha 3 usa index 2, repete a cada etapa).
-function buildClassTree(classId, colA, colBRotation, colCRotation, specialsByStage) {
+// As 3 colunas da árvore, cada uma com uma rotação de 5 stats — o stat de
+// uma linha é `rotation[globalRow % 5]` (globalRow 0..14, contínuo pelas 5
+// etapas, não reseta): cada stat aparece só 3x na árvore inteira (contra 5x
+// quando o ciclo era de 3), e a combinação de stats de uma etapa nunca é
+// igual à da etapa anterior (o ciclo de 5 não bate com o período de 3
+// linhas por etapa).
+const OFFENSE_ROTATION = ['danoFisicoFlat', 'danoPerfuracaoFlat', 'danoMagicoFlat', 'critChancePercent', 'critDamagePercent'];
+const DEFENSE_ROTATION = ['hpFlat', 'hpPercent', 'armorFlat', 'armorPercent', 'dodgePercent'];
+const ATTRIBUTE_LUCK_ROTATION = ['forca', 'destreza', 'inteligencia', 'goldPercent', 'dropPercent'];
+
+/// Monta a árvore inteira a partir das 3 rotações de coluna + as opções de
+/// especial de cada etapa (specialsByStage[i] === undefined pra etapa sem
+/// especial — só a última, ver STAGE_MAX_LEVEL, não tem uma depois dela).
+function buildTree(columnRotations, specialsByStage) {
   const stages = STAGE_MAX_LEVEL.map((maxLevel, stageIndex) => {
     const rows = [0, 1, 2].map((rowIndex) => {
       const globalRow = stageIndex * 3 + rowIndex; // 0..14
-      const cols = [colA, colBRotation[rowIndex], colCRotation[rowIndex]];
-      return cols.map((stat, colIndex) => {
+      return columnRotations.map((rotation, colIndex) => {
+        const stat = rotation[globalRow % rotation.length];
         const perLevel = valuePerLevel(stat, stageIndex);
         return {
-          id: `${classId}_${stageIndex}_${rowIndex}_${colIndex}`,
-          classId,
+          id: `${stageIndex}_${rowIndex}_${colIndex}`,
           stageIndex,
           rowIndex,
           colIndex,
@@ -122,8 +124,7 @@ function buildClassTree(classId, colA, colBRotation, colCRotation, specialsBySta
       stageIndex,
       threshold: SPECIAL_THRESHOLDS[stageIndex],
       options: specialsByStage[stageIndex].map((opt, optionIndex) => ({
-        id: `${classId}_special${stageIndex}_${optionIndex}`,
-        classId,
+        id: `special${stageIndex}_${optionIndex}`,
         stageIndex,
         optionIndex,
         name: opt.name,
@@ -132,148 +133,66 @@ function buildClassTree(classId, colA, colBRotation, colCRotation, specialsBySta
     } : null;
     return { stageIndex, maxLevel, rows, special };
   });
-  return { classId, stages };
+  return { stages };
 }
 
-// ---------------------------------------------------------------------
-// ARQUEIRO — Destreza sempre na coluna A. Coluna B alterna Dano Perfurante/
-// Chance Crítica/Dano Crítico; coluna C alterna Velocidade de Ataque/
-// Esquiva/DPS.
-// ---------------------------------------------------------------------
-const ARQUEIRO_TREE = buildClassTree(
-  'arqueiro',
-  'destreza',
-  ['danoPerfuracaoFlat', 'critChancePercent', 'critDamagePercent'],
-  ['attackSpeedPercent', 'dodgePercent', 'dpsPercent'],
+// Especiais: em cada etapa, 3 opções mutuamente exclusivas representando um
+// "estilo de build" (ofensivo/defensivo/sorte) em vez de uma classe —
+// reaproveita os mesmos números das antigas especiais de Arqueiro/
+// Guerreiro/Mago (já calibrados), só sem o rótulo de classe.
+const SPECIALS_BY_STAGE = [
   [
-    [
-      { name: 'Precisão Aguçada', bonuses: [{ stat: 'destreza', value: 4 }, { stat: 'critChancePercent', value: 3 }] },
-      { name: 'Reflexos Rápidos', bonuses: [{ stat: 'destreza', value: 4 }, { stat: 'attackSpeedPercent', value: 3 }] },
-      { name: 'Golpe Perfurante', bonuses: [{ stat: 'danoPerfuracaoFlat', value: 15 }, { stat: 'critDamagePercent', value: 4 }] },
-    ],
-    [
-      { name: 'Olho de Falcão', bonuses: [{ stat: 'destreza', value: 8 }, { stat: 'critChancePercent', value: 5 }, { stat: 'critDamagePercent', value: 5 }] },
-      { name: 'Passo Fantasma', bonuses: [{ stat: 'destreza', value: 8 }, { stat: 'dodgePercent', value: 5 }, { stat: 'attackSpeedPercent', value: 4 }] },
-      { name: 'Chuva de Flechas', bonuses: [{ stat: 'danoPerfuracaoFlat', value: 30 }, { stat: 'dpsPercent', value: 6 }] },
-    ],
-    [
-      { name: 'Instinto Predador', bonuses: [{ stat: 'destreza', value: 14 }, { stat: 'critChancePercent', value: 7 }, { stat: 'critDamagePercent', value: 8 }, { stat: 'dpsPercent', value: 5 }] },
-      { name: 'Vento Cortante', bonuses: [{ stat: 'destreza', value: 14 }, { stat: 'attackSpeedPercent', value: 7 }, { stat: 'dodgePercent', value: 6 }] },
-      { name: 'Marca da Caça', bonuses: [{ stat: 'danoPerfuracaoFlat', value: 50 }, { stat: 'critDamagePercent', value: 10 }, { stat: 'dpsPercent', value: 6 }] },
-    ],
-    [
-      { name: 'Fúria do Arqueiro', bonuses: [{ stat: 'destreza', value: 22 }, { stat: 'critChancePercent', value: 10 }, { stat: 'critDamagePercent', value: 12 }, { stat: 'dpsPercent', value: 8 }] },
-      { name: 'Sombra Veloz', bonuses: [{ stat: 'destreza', value: 22 }, { stat: 'attackSpeedPercent', value: 10 }, { stat: 'dodgePercent', value: 10 }, { stat: 'dpsPercent', value: 6 }] },
-      { name: 'Tempestade de Flechas', bonuses: [{ stat: 'danoPerfuracaoFlat', value: 80 }, { stat: 'critChancePercent', value: 8 }, { stat: 'dpsPercent', value: 10 }] },
-    ],
+    { name: 'Golpe Certeiro', bonuses: [{ stat: 'critChancePercent', value: 3 }, { stat: 'critDamagePercent', value: 4 }] },
+    { name: 'Pele de Aço', bonuses: [{ stat: 'hpFlat', value: 15 }, { stat: 'armorFlat', value: 10 }] },
+    { name: 'Bolsa da Sorte', bonuses: [{ stat: 'goldPercent', value: 3 }, { stat: 'dropPercent', value: 3 }] },
   ],
-);
-
-// ---------------------------------------------------------------------
-// GUERREIRO — Força sempre na coluna A. Coluna B alterna Vida/Vida%/Dano
-// Físico; coluna C alterna Armadura/Armadura%/DPS.
-// ---------------------------------------------------------------------
-const GUERREIRO_TREE = buildClassTree(
-  'guerreiro',
-  'forca',
-  ['hpFlat', 'hpPercent', 'danoFisicoFlat'],
-  ['armorFlat', 'armorPercent', 'dpsPercent'],
   [
-    [
-      { name: 'Coração Bravo', bonuses: [{ stat: 'forca', value: 4 }, { stat: 'hpPercent', value: 3 }] },
-      { name: 'Pele de Pedra', bonuses: [{ stat: 'forca', value: 4 }, { stat: 'armorFlat', value: 10 }] },
-      { name: 'Punho de Ferro', bonuses: [{ stat: 'danoFisicoFlat', value: 15 }, { stat: 'forca', value: 4 }] },
-    ],
-    [
-      { name: 'Sangue Fervente', bonuses: [{ stat: 'forca', value: 8 }, { stat: 'hpFlat', value: 40 }, { stat: 'hpPercent', value: 5 }] },
-      { name: 'Muralha Viva', bonuses: [{ stat: 'forca', value: 8 }, { stat: 'armorFlat', value: 25 }, { stat: 'armorPercent', value: 5 }] },
-      { name: 'Fúria Bruta', bonuses: [{ stat: 'danoFisicoFlat', value: 30 }, { stat: 'forca', value: 8 }, { stat: 'dpsPercent', value: 5 }] },
-    ],
-    [
-      { name: 'Vontade de Aço', bonuses: [{ stat: 'forca', value: 14 }, { stat: 'hpFlat', value: 70 }, { stat: 'hpPercent', value: 8 }] },
-      { name: 'Bastião Inabalável', bonuses: [{ stat: 'forca', value: 14 }, { stat: 'armorFlat', value: 45 }, { stat: 'armorPercent', value: 8 }, { stat: 'hpFlat', value: 30 }] },
-      { name: 'Golpe Devastador', bonuses: [{ stat: 'danoFisicoFlat', value: 50 }, { stat: 'forca', value: 14 }, { stat: 'dpsPercent', value: 7 }] },
-    ],
-    [
-      { name: 'Sede de Sangue', bonuses: [{ stat: 'forca', value: 22 }, { stat: 'hpFlat', value: 110 }, { stat: 'hpPercent', value: 12 }, { stat: 'dpsPercent', value: 6 }] },
-      { name: 'Fortaleza Ambulante', bonuses: [{ stat: 'forca', value: 22 }, { stat: 'armorFlat', value: 70 }, { stat: 'armorPercent', value: 12 }, { stat: 'hpFlat', value: 50 }] },
-      { name: 'Avatar da Guerra', bonuses: [{ stat: 'danoFisicoFlat', value: 80 }, { stat: 'forca', value: 22 }, { stat: 'dpsPercent', value: 10 }] },
-    ],
+    { name: 'Instinto Assassino', bonuses: [{ stat: 'critChancePercent', value: 5 }, { stat: 'critDamagePercent', value: 5 }, { stat: 'dpsPercent', value: 6 }] },
+    { name: 'Muralha Viva', bonuses: [{ stat: 'hpFlat', value: 40 }, { stat: 'armorFlat', value: 25 }, { stat: 'armorPercent', value: 5 }] },
+    { name: 'Fortuna Redobrada', bonuses: [{ stat: 'goldPercent', value: 6 }, { stat: 'dropPercent', value: 6 }, { stat: 'dpsPercent', value: 5 }] },
   ],
-);
-
-// ---------------------------------------------------------------------
-// MAGO — Inteligência sempre na coluna A. Coluna B alterna Dano Mágico/
-// Dano Mágico/Cura por Acerto (dano mágico é o foco, aparece 2 em 3);
-// coluna C alterna Ouro Obtido/Materiais Obtidos/DPS.
-// ---------------------------------------------------------------------
-const MAGO_TREE = buildClassTree(
-  'mago',
-  'inteligencia',
-  ['danoMagicoFlat', 'danoMagicoFlat', 'lifestealFlat'],
-  ['goldPercent', 'dropPercent', 'dpsPercent'],
   [
-    [
-      { name: 'Chama Arcana', bonuses: [{ stat: 'inteligencia', value: 4 }, { stat: 'danoMagicoFlat', value: 15 }] },
-      { name: 'Toque Vital', bonuses: [{ stat: 'inteligencia', value: 4 }, { stat: 'lifestealFlat', value: 2 }] },
-      { name: 'Bolsa Encantada', bonuses: [{ stat: 'goldPercent', value: 3 }, { stat: 'dropPercent', value: 3 }] },
-    ],
-    [
-      { name: 'Explosão Arcana', bonuses: [{ stat: 'inteligencia', value: 8 }, { stat: 'danoMagicoFlat', value: 30 }, { stat: 'dpsPercent', value: 5 }] },
-      { name: 'Pacto Vital', bonuses: [{ stat: 'inteligencia', value: 8 }, { stat: 'lifestealFlat', value: 4 }, { stat: 'danoMagicoFlat', value: 15 }] },
-      { name: 'Sorte do Mago', bonuses: [{ stat: 'goldPercent', value: 6 }, { stat: 'dropPercent', value: 6 }] },
-    ],
-    [
-      { name: 'Ruptura Arcana', bonuses: [{ stat: 'inteligencia', value: 14 }, { stat: 'danoMagicoFlat', value: 50 }, { stat: 'dpsPercent', value: 7 }] },
-      { name: 'Ciclo Vital', bonuses: [{ stat: 'inteligencia', value: 14 }, { stat: 'lifestealFlat', value: 6 }, { stat: 'danoMagicoFlat', value: 25 }] },
-      { name: 'Fortuna Mística', bonuses: [{ stat: 'goldPercent', value: 10 }, { stat: 'dropPercent', value: 10 }, { stat: 'dpsPercent', value: 4 }] },
-    ],
-    [
-      { name: 'Supremacia Arcana', bonuses: [{ stat: 'inteligencia', value: 22 }, { stat: 'danoMagicoFlat', value: 80 }, { stat: 'dpsPercent', value: 10 }] },
-      { name: 'Renascer Místico', bonuses: [{ stat: 'inteligencia', value: 22 }, { stat: 'lifestealFlat', value: 9 }, { stat: 'danoMagicoFlat', value: 40 }] },
-      { name: 'Riqueza Absoluta', bonuses: [{ stat: 'goldPercent', value: 16 }, { stat: 'dropPercent', value: 16 }, { stat: 'dpsPercent', value: 6 }] },
-    ],
+    { name: 'Fúria Crescente', bonuses: [{ stat: 'critChancePercent', value: 7 }, { stat: 'critDamagePercent', value: 8 }, { stat: 'attackSpeedPercent', value: 7 }] },
+    { name: 'Bastião Inabalável', bonuses: [{ stat: 'hpFlat', value: 70 }, { stat: 'armorFlat', value: 45 }, { stat: 'armorPercent', value: 8 }] },
+    { name: 'Fortuna Mística', bonuses: [{ stat: 'goldPercent', value: 10 }, { stat: 'dropPercent', value: 10 }, { stat: 'dpsPercent', value: 7 }] },
   ],
-);
+  [
+    { name: 'Ceifador Implacável', bonuses: [{ stat: 'critChancePercent', value: 10 }, { stat: 'critDamagePercent', value: 12 }, { stat: 'attackSpeedPercent', value: 10 }, { stat: 'dpsPercent', value: 8 }] },
+    { name: 'Fortaleza Ambulante', bonuses: [{ stat: 'hpFlat', value: 110 }, { stat: 'armorFlat', value: 70 }, { stat: 'armorPercent', value: 12 }] },
+    { name: 'Riqueza Absoluta', bonuses: [{ stat: 'goldPercent', value: 16 }, { stat: 'dropPercent', value: 16 }, { stat: 'dpsPercent', value: 10 }] },
+  ],
+];
 
-const TREES = {
-  arqueiro: ARQUEIRO_TREE,
-  guerreiro: GUERREIRO_TREE,
-  mago: MAGO_TREE,
-};
+const SKILL_TREE = buildTree([OFFENSE_ROTATION, DEFENSE_ROTATION, ATTRIBUTE_LUCK_ROTATION], SPECIALS_BY_STAGE);
 
-export function getClassTree(classId) {
-  return TREES[classId] || null;
+export function getSkillTree() {
+  return SKILL_TREE;
 }
 
-/// Acha uma habilidade normal pelo id, em qualquer classe (usado quando só
-/// se tem o id salvo, ex: state.skillTree.purchased).
+/// Acha uma habilidade normal pelo id (usado quando só se tem o id salvo,
+/// ex: state.skillTree.purchased).
 export function findSkillById(skillId) {
-  for (const tree of Object.values(TREES)) {
-    for (const stage of tree.stages) {
-      for (const row of stage.rows) {
-        for (const skill of row) {
-          if (skill.id === skillId) return skill;
-        }
+  for (const stage of SKILL_TREE.stages) {
+    for (const row of stage.rows) {
+      for (const skill of row) {
+        if (skill.id === skillId) return skill;
       }
     }
   }
   return null;
 }
 
-/// Acha uma opção de especial pelo id, em qualquer classe.
+/// Acha uma opção de especial pelo id.
 export function findSpecialById(specialId) {
-  for (const tree of Object.values(TREES)) {
-    for (const stage of tree.stages) {
-      if (!stage.special) continue;
-      for (const option of stage.special.options) {
-        if (option.id === specialId) return option;
-      }
+  for (const stage of SKILL_TREE.stages) {
+    if (!stage.special) continue;
+    for (const option of stage.special.options) {
+      if (option.id === specialId) return option;
     }
   }
   return null;
 }
 
-// Total de pontos possíveis pra completar a árvore inteira (mesmo em toda
-// classe, pela simetria da estrutura) — só informativo pra UI.
+// Total de pontos possíveis pra completar a árvore inteira — só informativo
+// pra UI.
 export const TOTAL_TREE_POINTS = STAGE_MAX_LEVEL.reduce((sum, max) => sum + max * 9, 0) + SPECIAL_THRESHOLDS.length;

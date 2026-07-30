@@ -21,10 +21,10 @@ import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
 import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
 import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, PET_MAX_LEVEL, getPetInventoryCap } from '../data/pets.js';
 import { getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet } from '../systems/pets.js';
-import { SKILL_CLASSES, CLASS_META, getClassTree, STAT_DISPLAY_NAME, SPECIAL_THRESHOLDS } from '../data/skills.js';
+import { getSkillTree, STAT_DISPLAY_NAME, SPECIAL_THRESHOLDS } from '../data/skills.js';
 import {
-  getTotalSkillPoints, getSpentSkillPoints, getAvailableSkillPoints, getActiveClass, getSkillLevel,
-  isRowUnlocked, canBuySkillLevel, isSpecialChosen, getChosenSpecialId, canBuySpecial, isStageUnlocked,
+  getTotalSkillPoints, getSpentSkillPoints, getAvailableSkillPoints, getSkillLevel,
+  isRowUnlocked, canBuySkillLevel, getChosenSpecialId, canBuySpecial, isStageUnlocked,
 } from '../systems/skills.js';
 
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
@@ -710,11 +710,11 @@ function enhancePanelHtml(state, uid, entry, item) {
 }
 
 // ---------------------------------------------------------------
-// Árvore de habilidades passivas (ver data/skills.js + systems/skills.js) —
-// 1 ponto por nível de caça, 3 classes com árvore própria (Arqueiro/
-// Guerreiro/Mago), 5 etapas de 3 linhas (3 habilidades cada) + 1 especial
-// (3 opções mutuamente exclusivas) entre cada etapa. Ocupa a aba
-// "Aprimoramentos" (tab-upgrades) — era só um placeholder até aqui.
+// Árvore de habilidades passivas ÚNICA (ver data/skills.js + systems/
+// skills.js — era 3 árvores por classe, agora uma só): 1 ponto por nível de
+// caça, 5 etapas de 3 linhas (3 habilidades cada) + 1 especial (3 opções
+// mutuamente exclusivas) entre cada etapa. Ocupa a aba "Aprimoramentos"
+// (tab-upgrades) — era só um placeholder antes disso tudo existir.
 // ---------------------------------------------------------------
 
 /// "+valor Nome do Stat" — mesma convenção usada nos afixos de item (ver
@@ -778,27 +778,8 @@ function specialOptionHtml(state, option) {
   `;
 }
 
-function skillClassPickerHtml() {
-  const cards = SKILL_CLASSES.map((classId) => {
-    const meta = CLASS_META[classId];
-    return `
-      <button class="skill-class-card" data-choose-class="${classId}" style="border-color:${meta.color}">
-        <div class="skill-class-card-emoji">${meta.emoji}</div>
-        <div class="skill-class-card-name" style="color:${meta.color}">${meta.name}</div>
-        <div class="skill-class-card-desc">${meta.description}</div>
-      </button>
-    `;
-  }).join('');
-  return `
-    <div class="skill-class-picker">
-      <div class="skill-class-picker-title">Escolha sua classe</div>
-      <div class="skill-class-picker-grid">${cards}</div>
-    </div>
-  `;
-}
-
-function skillTreeHtml(state, classId) {
-  const tree = getClassTree(classId);
+function skillTreeHtml(state) {
+  const tree = getSkillTree();
   const stagesHtml = tree.stages.map((stage) => {
     const stageUnlocked = isStageUnlocked(state, stage.stageIndex);
     const rowsHtml = stage.rows.map((row) => `
@@ -824,33 +805,21 @@ function skillTreeHtml(state, classId) {
   return `<div class="skill-tree">${stagesHtml}</div>`;
 }
 
-export function renderUpgradesTab(state, confirmRespec = false) {
+export function renderUpgradesTab(state) {
   const container = document.getElementById('tab-upgrades');
-  const classId = getActiveClass(state);
   const total = getTotalSkillPoints(state);
   const available = getAvailableSkillPoints(state);
 
   const header = `
     <div class="skills-header">
       <div class="skills-points">🔹 Pontos disponíveis: <strong>${available}</strong> (${getSpentSkillPoints(state)}/${total} gastos)</div>
-      ${classId ? `
-        <div class="skill-class-active" style="color:${CLASS_META[classId].color}">
-          ${CLASS_META[classId].emoji} ${CLASS_META[classId].name}
-          ${confirmRespec
-            ? `<button class="modal-action-btn destroy-btn" data-confirm-respec-class>Confirmar troca (reseta a árvore)</button>
-               <button class="modal-action-btn" data-cancel-respec-class>Cancelar</button>`
-            : `<button class="modal-action-btn" data-respec-class>Trocar de classe</button>`}
-        </div>
-      ` : ''}
     </div>
   `;
-
-  const body = classId ? skillTreeHtml(state, classId) : skillClassPickerHtml();
 
   container.innerHTML = `
     <img class="section-banner-img" src="assets/ui/titles/aprimoramentos.png" alt="Habilidades">
     ${header}
-    ${body}
+    ${skillTreeHtml(state)}
   `;
 }
 
