@@ -1141,6 +1141,36 @@ button:disabled {
   padding-top: 14px;
 }
 
+/* Cabeçalho do Inventário + botão de entrar no modo de seleção em massa
+   (ver data-bulk-toggle-select) lado a lado — o border/padding do
+   .equip-inventory-header sozinho vira duplicado aqui dentro, então essa
+   linha assume os dois e a header interna some com os seus. */
+.equip-inventory-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 3px dashed var(--border);
+  padding-top: 14px;
+}
+
+.equip-inventory-header-row .equip-inventory-header {
+  border-top: none;
+  padding-top: 0;
+}
+
+.bulk-select-toggle-btn {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--grad-gold);
+  border: none;
+  border-radius: 8px;
+  padding: 5px 9px;
+  box-shadow: 0 2px 0 var(--gold-dark);
+}
+
 .equip-inventory-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
