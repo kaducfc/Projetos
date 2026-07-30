@@ -3,8 +3,8 @@ import { UPGRADES } from '../data/upgrades.js';
 import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard, CARD_DAMAGE_BONUS } from '../data/cards.js';
 import { ensureCardIds } from './crafting.js';
-import { getClassTree } from '../data/skills.js';
-import { getActiveClass, getSkillLevel, getChosenSpecialId } from './skills.js';
+import { getSkillTree } from '../data/skills.js';
+import { getSkillLevel, getChosenSpecialId } from './skills.js';
 
 // Sem arma nenhuma equipada, o caçador ainda bate com as próprias mãos —
 // suficiente pra matar o primeiro monstro fraco da Zona 1 (~68 HP) em
@@ -145,10 +145,10 @@ export function computePlayerStats(state, currentHp = null) {
     equippedElements.add(item.element || DEFAULT_WEAPON_ELEMENT);
   }
 
-  // Árvore de habilidades passivas (ver data/skills.js + systems/skills.js)
-  // — soma os níveis comprados na classe ativa + a especial escolhida de
-  // cada etapa já destravada, nos MESMOS acumuladores usados pelo
-  // equipamento. Força/Destreza/Inteligência entram em forcaTotal/
+  // Árvore de habilidades passivas ÚNICA (ver data/skills.js + systems/
+  // skills.js) — soma os níveis comprados + a especial escolhida de cada
+  // etapa já destravada, nos MESMOS acumuladores usados pelo equipamento.
+  // Força/Destreza/Inteligência entram em forcaTotal/
   // destrezaTotal/inteligenciaTotal ANTES da conversão abaixo, então um
   // ponto de atributo vale o mesmo venha da árvore ou do equipamento.
   // Recalculado do zero a cada chamada a partir de state.skillTree — nunca
@@ -174,22 +174,18 @@ export function computePlayerStats(state, currentHp = null) {
     else if (stat === 'lifestealFlat') lifestealFlat += total;
   }
 
-  const activeClassId = getActiveClass(state);
-  const classTree = activeClassId ? getClassTree(activeClassId) : null;
-  if (classTree) {
-    for (const stage of classTree.stages) {
-      for (const row of stage.rows) {
-        for (const skill of row) {
-          const level = getSkillLevel(state, skill.id);
-          if (level > 0) addTreeStat(skill.stat, skill.perLevel * level);
-        }
+  for (const stage of getSkillTree().stages) {
+    for (const row of stage.rows) {
+      for (const skill of row) {
+        const level = getSkillLevel(state, skill.id);
+        if (level > 0) addTreeStat(skill.stat, skill.perLevel * level);
       }
-      if (stage.special) {
-        const chosenId = getChosenSpecialId(state, stage.stageIndex);
-        const option = chosenId && stage.special.options.find((o) => o.id === chosenId);
-        if (option) {
-          for (const bonus of option.bonuses) addTreeStat(bonus.stat, bonus.value);
-        }
+    }
+    if (stage.special) {
+      const chosenId = getChosenSpecialId(state, stage.stageIndex);
+      const option = chosenId && stage.special.options.find((o) => o.id === chosenId);
+      if (option) {
+        for (const bonus of option.bonuses) addTreeStat(bonus.stat, bonus.value);
       }
     }
   }

@@ -1,4 +1,4 @@
-import { getClassTree, findSkillById, findSpecialById, SPECIAL_THRESHOLDS } from '../data/skills.js';
+import { getSkillTree, findSkillById, findSpecialById, SPECIAL_THRESHOLDS } from '../data/skills.js';
 
 /// Pontos totais já ganhos: 1 por nível de caça acima do 1 (nunca guardado
 /// à parte — ver comentário em state.js). Sempre derivado, então nunca
@@ -7,10 +7,8 @@ export function getTotalSkillPoints(state) {
   return Math.max(0, (state.hunterLevel || 1) - 1);
 }
 
-/// Pontos já gastos na árvore ativa: soma de todo nível comprado em
-/// habilidades normais + 1 por especial escolhida. Só existe dado da classe
-/// ATIVA em purchased/specials (trocar de classe reseta os dois, ver
-/// chooseClass), então não precisa filtrar por classId aqui.
+/// Pontos já gastos na árvore: soma de todo nível comprado em habilidades
+/// normais + 1 por especial escolhida.
 export function getSpentSkillPoints(state) {
   const tree = state.skillTree;
   if (!tree) return 0;
@@ -21,34 +19,6 @@ export function getSpentSkillPoints(state) {
 
 export function getAvailableSkillPoints(state) {
   return Math.max(0, getTotalSkillPoints(state) - getSpentSkillPoints(state));
-}
-
-export function getActiveClass(state) {
-  return state.skillTree?.classId || null;
-}
-
-/// Escolhe (ou troca de) classe — trocar reseta purchased/specials (respec
-/// completo, pontos voltam a ficar disponíveis) já que cada árvore tem
-/// identidade própria e não faz sentido misturar progresso entre elas.
-/// Escolher a MESMA classe já ativa não faz nada (evita resetar à toa).
-export function chooseClass(state, classId) {
-  if (!getClassTree(classId)) return false;
-  if (state.skillTree.classId === classId) return true;
-  state.skillTree.classId = classId;
-  state.skillTree.purchased = {};
-  state.skillTree.specials = {};
-  return true;
-}
-
-/// Reset completo: limpa classe/purchased/specials, todos os pontos gastos
-/// voltam a ficar disponíveis. Usado pelo botão "Trocar de classe" (ver
-/// ui/render.js "skill-class-active") — chooseClass() já faz isso
-/// automaticamente ao trocar pra outra classe, esta função é só pro caso de
-/// querer voltar pra "nenhuma classe escolhida" explicitamente.
-export function respecClass(state) {
-  state.skillTree.classId = null;
-  state.skillTree.purchased = {};
-  state.skillTree.specials = {};
 }
 
 export function getSkillLevel(state, skillId) {
@@ -76,8 +46,7 @@ export function isStageUnlocked(state, stageIndex) {
 export function isRowUnlocked(state, stageIndex, rowIndex) {
   if (!isStageUnlocked(state, stageIndex)) return false;
   if (rowIndex === 0) return true;
-  const tree = getClassTree(getActiveClass(state));
-  if (!tree) return false;
+  const tree = getSkillTree();
   const prevRow = tree.stages[stageIndex].rows[rowIndex - 1];
   return prevRow.some((skill) => getSkillLevel(state, skill.id) > 0);
 }
@@ -85,7 +54,6 @@ export function isRowUnlocked(state, stageIndex, rowIndex) {
 export function canBuySkillLevel(state, skillId) {
   const skill = findSkillById(skillId);
   if (!skill) return false;
-  if (skill.classId !== getActiveClass(state)) return false;
   if (!isRowUnlocked(state, skill.stageIndex, skill.rowIndex)) return false;
   if (getSkillLevel(state, skillId) >= skill.maxLevel) return false;
   return getAvailableSkillPoints(state) >= 1;
@@ -106,7 +74,6 @@ export function buySkillLevel(state, skillId) {
 export function canBuySpecial(state, specialOptionId) {
   const option = findSpecialById(specialOptionId);
   if (!option) return false;
-  if (option.classId !== getActiveClass(state)) return false;
   if (option.stageIndex > 0 && !isSpecialChosen(state, option.stageIndex - 1)) return false;
   if (isSpecialChosen(state, option.stageIndex)) return false;
   if (getSpentSkillPoints(state) < SPECIAL_THRESHOLDS[option.stageIndex]) return false;
