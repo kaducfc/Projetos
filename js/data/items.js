@@ -99,10 +99,6 @@ export function armorCategoryLabel(attributeId) {
 // above the next tier's base item, regardless of zone.
 export const TIER_GROWTH = 2.15;
 
-function tierBase(tier) {
-  return 8 * Math.pow(TIER_GROWTH, tier);
-}
-
 // Enhancement: +1..+5 (grindable material, "little by little"), then a
 // single big "Rank Master" jump gated by that zone's Crystal. Rank Master is
 // defined as a fixed target relative to the tier's base power —
@@ -204,19 +200,20 @@ function rollAdditionalStat(tier) {
 // ter baseStats/raridade/additionalStats diferentes.
 // ---------------------------------------------------------------------
 
-// Peso relativo de cada categoria na magnitude do atributo principal — arma
-// primária bate mais forte, acessórios são mais discretos, o resto fica no
-// meio. Fácil de re-tunar depois.
-const CATEGORY_POWER = {
-  weapon1: 1.0,
-  weapon2: 0.8,
-  head: 0.7,
-  chest: 0.9,
-  legs: 0.7,
-  hands: 0.6,
-  boots: 0.6,
-  ring: 0.4,
-  necklace: 0.4,
+// Passo de atributo base por categoria, por zona — armas (weapon1/weapon2)
+// sobem de 6 em 6, acessórios (ring/necklace) de 5 em 5, o resto (peças de
+// armadura) de 4 em 4. Zona 1 (tier 0) dá 1x o passo, Zona 10 (tier 9) dá
+// 10x (ver attributeBaseStats abaixo).
+const ATTRIBUTE_STEP_BY_CATEGORY = {
+  weapon1: 6,
+  weapon2: 6,
+  head: 4,
+  chest: 4,
+  legs: 4,
+  hands: 4,
+  boots: 4,
+  ring: 5,
+  necklace: 5,
 };
 
 // Arquétipos de arma por atributo — evita precisar de 60 nomes de arma
@@ -614,34 +611,17 @@ const ITEM_SET_OVERRIDES = {
   },
 };
 
-/// Pontos de atributo → 2 stats finais fixos por atributo (ver
-/// systems/stats.js pra como isso se converte em vida/armadura/dps/
-/// velocidade/crítico no final). tier é o zoneIndex (0-based); categoryPower
-/// escala a magnitude por categoria (arma bate mais que colar, etc).
-function attributeBaseStats(attributeId, tier, categoryPower) {
-  const base = tierBase(tier);
-  switch (attributeId) {
-    case 'forca':
-      return {
-        danoFisicoFlat: Math.round(base * 2.6 * categoryPower),
-        hpFlat: Math.round(base * 3 * categoryPower),
-        armorFlat: Math.round(base * 0.8 * categoryPower),
-      };
-    case 'destreza':
-      return {
-        danoPerfuracaoFlat: Math.round(base * 2.6 * categoryPower),
-        critChancePercent: Math.round((3 + tier * 1.5) * categoryPower * 10) / 10,
-        critDamagePercent: Math.round((5 + tier * 2.5) * categoryPower * 10) / 10,
-      };
-    case 'inteligencia':
-      return {
-        danoMagicoFlat: Math.round(base * 2.6 * categoryPower),
-        goldPercent: Math.round((8 + tier * 4) * categoryPower * 10) / 10,
-        dropPercent: Math.round((5 + tier * 2) * categoryPower * 10) / 10,
-      };
-    default:
-      throw new Error(`Unknown attribute ${attributeId}`);
-  }
+/// Atributo base de um item — um valor só, no PRÓPRIO atributo do item
+/// (Força/Destreza/Inteligência), sem mais stats derivados (dano/vida/
+/// crítico/etc direto no item, como era antes). Escala LINEAR por zona: o
+/// passo da categoria (ver ATTRIBUTE_STEP_BY_CATEGORY acima) × (tier + 1) —
+/// Zona 1 (tier 0) dá 1x o passo, Zona 10 (tier 9) dá 10x. A conversão do
+/// atributo total equipado (soma de todas as peças) pra stats de combate de
+/// verdade (dano/vida/armadura/crítico/ouro%/drop%) acontece em
+/// systems/stats.js, não aqui.
+function attributeBaseStats(attributeId, tier, category) {
+  const step = ATTRIBUTE_STEP_BY_CATEGORY[category];
+  return { [attributeId]: step * (tier + 1) };
 }
 
 /// Custo de enhance (+1..+5, depois Rank Master) continua vindo de
@@ -665,8 +645,7 @@ function buildEnhanceCosts(categoryIndex, weakGroup) {
 }
 
 function buildItemTemplate(boss, tier, category, attributeId, categoryIndex, weakGroup) {
-  const power = CATEGORY_POWER[category];
-  const stats = attributeBaseStats(attributeId, tier, power);
+  const stats = attributeBaseStats(attributeId, tier, category);
   const attr = getAttribute(attributeId);
   let name;
   let emoji;

@@ -1,7 +1,7 @@
 import { BOSSES, findMaterialInfo, ZONES } from '../data/monsters.js';
 import {
   getSlot, getItem, getEnhancedStats, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
-  getNextItemTemplate, getAscensionCost, getDamageType, getDamageTypeForAttribute, ENHANCE_MAX_LEVEL,
+  getNextItemTemplate, getAscensionCost, getDamageType, ENHANCE_MAX_LEVEL,
   DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName,
 } from '../data/items.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
@@ -59,6 +59,12 @@ const STAT_LABELS = {
   armorPercent: (v) => `+${formatPercent(v)} Armadura`,
   critChancePercent: (v) => `+${formatPercent(v)} Chance Crítica`,
   critDamagePercent: (v) => `+${formatPercent(v)} Dano Crítico`,
+  // Atributo base do item em si (ver data/items.js attributeBaseStats) — a
+  // cor própria do atributo já identifica o "estilo" do item, sem precisar
+  // de uma linha separada de atributo/tipo de dano acima.
+  forca: (v) => `<span style="color:${getAttribute('forca').color}; font-weight:800;">+${formatNumber(v)} Força</span>`,
+  destreza: (v) => `<span style="color:${getAttribute('destreza').color}; font-weight:800;">+${formatNumber(v)} Destreza</span>`,
+  inteligencia: (v) => `<span style="color:${getAttribute('inteligencia').color}; font-weight:800;">+${formatNumber(v)} Inteligência</span>`,
 };
 
 function formatStatsLines(stats) {
@@ -516,7 +522,6 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   const item = getItem(entry.itemId);
   const categoryLabel = getCategoryLabel(item.category);
-  const attribute = getAttribute(item.attribute);
   const enhancedStats = getEnhancedStats(entry);
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
   const rarity = getRarity(entry.rarityId);
@@ -548,7 +553,6 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
       <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
-      <div class="item-detail-attribute" style="color:${attribute.color}; font-weight:700; font-size:11.5px;">${attribute.name} (${getDamageType(getDamageTypeForAttribute(item.attribute)).emoji} ${getDamageType(getDamageTypeForAttribute(item.attribute)).name})</div>
       <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
       ${resistanceLine}
       ${weaponRequirementNote}
