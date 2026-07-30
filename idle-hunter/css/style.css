@@ -731,6 +731,16 @@ button:disabled {
   flex-wrap: wrap;
 }
 
+/* Aviso no modal de detalhe do item quando a arma secundária (Aljava/
+   Livro/Escudo) ainda não pode ser equipada por faltar a primária do
+   mesmo atributo — ver weaponRequirementNote em ui/render.js. */
+.weapon-requirement-note {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--red-dark);
+  margin: 0 0 8px;
+}
+
 #player-status {
   display: flex;
   align-items: center;
