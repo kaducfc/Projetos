@@ -116,15 +116,23 @@ export function computePlayerStats(state, currentHp = null) {
     // data/items.js) continuam sendo somados direto, item a item — só o
     // atributo base em si (forca/destreza/inteligencia) virou um valor cru
     // por item, acumulado abaixo e convertido em stats de verdade depois
-    // do loop.
+    // do loop. hpFlat/armorFlat/danoXFlat somados aqui cobrem tanto o 2º
+    // adicional base de todo item (ver secondaryStatKeyForCategory em
+    // data/items.js) quanto um afixo de raridade que role a mesma chave —
+    // os dois se fundem no mesmo objeto `stats` (ver getEnhancedStats).
     dpsPercent += stats.dpsPercent || 0;
     attackSpeedPercent += stats.attackSpeedPercent || 0;
     goldPercent += stats.goldPercent || 0;
     dropPercent += stats.dropPercent || 0;
+    hpFlat += stats.hpFlat || 0;
+    armorFlat += stats.armorFlat || 0;
     hpPercent += stats.hpPercent || 0;
     armorPercent += stats.armorPercent || 0;
     critChancePercent += stats.critChancePercent || 0;
     critDamagePercent += stats.critDamagePercent || 0;
+    danoFisicoFlat += stats.danoFisicoFlat || 0;
+    danoPerfuracaoFlat += stats.danoPerfuracaoFlat || 0;
+    danoMagicoFlat += stats.danoMagicoFlat || 0;
     lifestealFlat += stats.lifestealFlat || 0;
     petDamagePercent += stats.petDamagePercent || 0;
     dodgePercent += stats.dodgePercent || 0;

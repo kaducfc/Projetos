@@ -197,23 +197,30 @@ const COMMON_BONUS_STATS = [
   'danoPerfuracaoFlat', 'armorFlat', 'hpFlat', 'critDamagePercent', 'petDamagePercent', 'dodgePercent',
 ];
 
-/// Magnitude de cada tipo de bônus, por zona (tier, 0-based). Percentuais
-/// crescem suave por zona (mesma curva de antes); os planos (dano/vida/
-/// armadura) escalam linear como o atributo base; cura por golpe fica de
-/// propósito baixa e quase plana (é um efeito por hit, não por dano total).
-function rollBonusMagnitude(stat, tier) {
-  if (stat.endsWith('Percent')) return Math.round((2 + Math.random() * 4) * (1 + tier * 0.12) * 10) / 10;
-  if (stat === 'lifestealFlat') return Math.max(1, Math.round(1 + tier * 0.5));
-  return Math.round((3 + Math.random() * 3) * (tier + 1));
+/// Magnitude de cada tipo de bônus, por zona (tier, 0-based) E por raridade
+/// (rarityMult = rarity.mult, a MESMA curva já usada pra escalar o atributo
+/// base — 1.0/1.15/1.35/1.6/2.0/2.5 de Comum a Mítico, ver RARITIES acima):
+/// quanto melhor a raridade, melhor o bônus, sem inventar uma curva nova só
+/// pros afixos (ex: 1% de crítico Comum vira ~1.15% Incomum, ~1.35% Raro...
+/// mesmo "quanto mais raro, mais forte" pedido, mantendo tudo equilibrado
+/// com o resto do item). Percentuais crescem suave por zona (mesma curva de
+/// antes); os planos (dano/vida/armadura) escalam linear como o atributo
+/// base; cura por golpe fica de propósito baixa e quase plana (é um efeito
+/// por hit, não por dano total).
+function rollBonusMagnitude(stat, tier, rarityMult) {
+  if (stat.endsWith('Percent')) return Math.round((2 + Math.random() * 4) * (1 + tier * 0.12) * rarityMult * 10) / 10;
+  if (stat === 'lifestealFlat') return Math.max(1, Math.round((1 + tier * 0.5) * rarityMult));
+  return Math.round((3 + Math.random() * 3) * (tier + 1) * rarityMult);
 }
 
 /// Rola um único atributo bônus ainda não usado neste item (usedKeys evita
 /// repetição — ver rollAdditionalStats abaixo). ownAttributeId/ownBaseValue
 /// são o atributo do próprio item e seu valor já rolado (pro caso
-/// 'attrSelf'). Tenta algumas vezes até achar um estat livre; com só 6
-/// bônus no máximo (Mítico) contra um pool de ~17 chaves possíveis, isso
+/// 'attrSelf' — já vem escalado pela raridade, não precisa de rarityMult de
+/// novo). Tenta algumas vezes até achar um estat livre; com só 6 bônus no
+/// máximo (Mítico) contra um pool de ~17 chaves possíveis, isso
 /// praticamente nunca esgota.
-function rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys) {
+function rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys, rarityMult) {
   for (let attempt = 0; attempt < 30; attempt++) {
     const group = Math.random() < RARE_BONUS_CHANCE ? RARE_BONUS_STATS : COMMON_BONUS_STATS;
     const pick = group[Math.floor(Math.random() * group.length)];
@@ -229,20 +236,20 @@ function rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys) {
       const key = `attr:${otherId}`;
       if (usedKeys.has(key)) continue;
       usedKeys.add(key);
-      return { stat: otherId, value: rollBonusMagnitude(otherId, tier) };
+      return { stat: otherId, value: rollBonusMagnitude(otherId, tier, rarityMult) };
     }
     if (usedKeys.has(pick)) continue;
     usedKeys.add(pick);
-    return { stat: pick, value: rollBonusMagnitude(pick, tier) };
+    return { stat: pick, value: rollBonusMagnitude(pick, tier, rarityMult) };
   }
   return null;
 }
 
-function rollAdditionalStats(count, tier, ownAttributeId, ownBaseValue) {
+function rollAdditionalStats(count, tier, ownAttributeId, ownBaseValue, rarityMult = 1) {
   const usedKeys = new Set();
   const result = [];
   for (let i = 0; i < count; i++) {
-    const rolled = rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys);
+    const rolled = rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys, rarityMult);
     if (rolled) result.push(rolled);
   }
   return result;
@@ -273,6 +280,36 @@ const ATTRIBUTE_STEP_BY_CATEGORY = {
   ring: 5,
   necklace: 5,
 };
+
+// Segundo adicional base de cada item, sempre presente junto do atributo
+// (ver attributeBaseStats abaixo) — armas dão dano (do tipo que já casa com
+// o próprio atributo da arma: Força→Físico, Destreza→Perfuração,
+// Inteligência→Mágico, mesma tabela de DAMAGE_TYPE_BY_ATTRIBUTE), peças de
+// armadura dão vida, anéis/colar dão armadura. É um valor "secundário" de
+// propósito — step menor que o do atributo (ATTRIBUTE_STEP_BY_CATEGORY),
+// pra não ofuscar a conversão de atributo que já existe (ver *_PER_POINT em
+// systems/stats.js) — só um plus a mais que todo item carrega, escala com
+// enhance igual o atributo (mesmo objeto baseStats, ver getEnhancedStats).
+const SECONDARY_STAT_STEP_BY_CATEGORY = {
+  weapon1: 3,
+  weapon2: 3,
+  head: 2,
+  chest: 2,
+  legs: 2,
+  hands: 2,
+  boots: 2,
+  ring: 2,
+  necklace: 2,
+};
+
+function secondaryStatKeyForCategory(category, attributeId) {
+  if (category === 'weapon1' || category === 'weapon2') {
+    const damageType = DAMAGE_TYPE_BY_ATTRIBUTE[attributeId];
+    return damageType === 'fisico' ? 'danoFisicoFlat' : damageType === 'perfuracao' ? 'danoPerfuracaoFlat' : 'danoMagicoFlat';
+  }
+  if (category === 'ring' || category === 'necklace') return 'armorFlat';
+  return 'hpFlat'; // head/chest/legs/hands/boots
+}
 
 // Arquétipos de arma por atributo — evita precisar de 60 nomes de arma
 // escritos à mão (10 zonas × 2 slots × 3 atributos).
@@ -669,17 +706,24 @@ const ITEM_SET_OVERRIDES = {
   },
 };
 
-/// Atributo base de um item — um valor só, no PRÓPRIO atributo do item
-/// (Força/Destreza/Inteligência), sem mais stats derivados (dano/vida/
-/// crítico/etc direto no item, como era antes). Escala LINEAR por zona: o
-/// passo da categoria (ver ATTRIBUTE_STEP_BY_CATEGORY acima) × (tier + 1) —
-/// Zona 1 (tier 0) dá 1x o passo, Zona 10 (tier 9) dá 10x. A conversão do
-/// atributo total equipado (soma de todas as peças) pra stats de combate de
-/// verdade (dano/vida/armadura/crítico/ouro%/drop%) acontece em
-/// systems/stats.js, não aqui.
+/// Os 2 adicionais base de um item: o atributo (Força/Destreza/
+/// Inteligência) + a stat própria da categoria (dano pra arma, vida pra
+/// armadura, armadura pra anel/colar — ver secondaryStatKeyForCategory
+/// acima). Ambos escalam LINEAR por zona: o passo da categoria (ver
+/// ATTRIBUTE_STEP_BY_CATEGORY/SECONDARY_STAT_STEP_BY_CATEGORY acima) ×
+/// (tier + 1) — Zona 1 (tier 0) dá 1x o passo, Zona 10 (tier 9) dá 10x. A
+/// conversão do atributo total equipado (soma de todas as peças) pra stats
+/// de combate de verdade (dano/vida/armadura/crítico/ouro%/drop%) acontece
+/// em systems/stats.js, não aqui — a stat secundária já nasce pronta (não
+/// precisa de conversão, é somada direto, ver computePlayerStats).
 function attributeBaseStats(attributeId, tier, category) {
   const step = ATTRIBUTE_STEP_BY_CATEGORY[category];
-  return { [attributeId]: step * (tier + 1) };
+  const secondaryStat = secondaryStatKeyForCategory(category, attributeId);
+  const secondaryStep = SECONDARY_STAT_STEP_BY_CATEGORY[category];
+  return {
+    [attributeId]: step * (tier + 1),
+    [secondaryStat]: secondaryStep * (tier + 1),
+  };
 }
 
 /// Custo de enhance (+1..+5, depois Rank Master) continua vindo de
@@ -796,7 +840,7 @@ export function rollDroppedItem(zoneIndex, category) {
 
   const rarity = pickRarity();
   const baseStats = rollBaseStatsFromTemplate(item.stats, rarity);
-  const additionalStats = rollAdditionalStats(rarity.additionals, zoneIndex, attributeId, baseStats[attributeId]);
+  const additionalStats = rollAdditionalStats(rarity.additionals, zoneIndex, attributeId, baseStats[attributeId], rarity.mult);
 
   return {
     itemId: item.id,
