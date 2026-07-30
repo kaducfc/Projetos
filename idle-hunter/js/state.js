@@ -136,6 +136,20 @@ export function createDefaultState() {
     // a escolha grátis do pet da direita.
     vip: false,
     freeRightPetChoiceCycle: null,
+
+    // Árvore de habilidades passivas (ver data/skills.js + systems/
+    // skills.js): 1 ponto por nível de caça, nunca guardado à parte — é
+    // sempre derivado de hunterLevel menos o total gasto aqui, então não
+    // tem como duplicar bônus num reload. classId é a classe escolhida
+    // (null = ainda não escolheu); trocar de classe reseta purchased/
+    // specials (ver chooseClass). purchased: skillId -> nível comprado.
+    // specials: stageIndex (0-3) -> id da opção especial escolhida (só 1
+    // por etapa, escolha permanente até trocar de classe).
+    skillTree: {
+      classId: null,
+      purchased: {},
+      specials: {},
+    },
   };
 }
 

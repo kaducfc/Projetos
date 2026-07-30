@@ -21,6 +21,11 @@ import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
 import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
 import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, PET_MAX_LEVEL, getPetInventoryCap } from '../data/pets.js';
 import { getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet } from '../systems/pets.js';
+import { SKILL_CLASSES, CLASS_META, getClassTree, STAT_DISPLAY_NAME, SPECIAL_THRESHOLDS } from '../data/skills.js';
+import {
+  getTotalSkillPoints, getSpentSkillPoints, getAvailableSkillPoints, getActiveClass, getSkillLevel,
+  isRowUnlocked, canBuySkillLevel, isSpecialChosen, getChosenSpecialId, canBuySpecial, isStageUnlocked,
+} from '../systems/skills.js';
 
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
 /// to the caller: images are set to `width/height: 1em` in CSS so they scale
@@ -687,15 +692,148 @@ function enhancePanelHtml(state, uid, entry, item) {
   </div>`;
 }
 
-// A aba de compra de upgrades com ouro foi retirada — vai virar um sistema
-// de habilidades passivas (ainda por definir). Placeholder até lá.
-export function renderUpgradesTab(state) {
+// ---------------------------------------------------------------
+// Árvore de habilidades passivas (ver data/skills.js + systems/skills.js) —
+// 1 ponto por nível de caça, 3 classes com árvore própria (Arqueiro/
+// Guerreiro/Mago), 5 etapas de 3 linhas (3 habilidades cada) + 1 especial
+// (3 opções mutuamente exclusivas) entre cada etapa. Ocupa a aba
+// "Aprimoramentos" (tab-upgrades) — era só um placeholder até aqui.
+// ---------------------------------------------------------------
+
+/// "+valor Nome do Stat" — mesma convenção usada nos afixos de item (ver
+/// BONUS_STAT_LABEL acima), só que genérica a partir de STAT_DISPLAY_NAME
+/// (data/skills.js) em vez de uma função por stat: stats que terminam em
+/// "Percent" formatam como %, o resto como número puro.
+function skillValueLabel(stat, value) {
+  const amount = stat.endsWith('Percent') ? `+${formatPercent(value)}` : `+${formatNumber(value)}`;
+  return `${amount} ${STAT_DISPLAY_NAME[stat] || stat}`;
+}
+
+/// □ □ □ □ → ■ ■ □ □ conforme o nível comprado — indicador de progresso
+/// pedido explicitamente pro design (ver instruções da árvore).
+function skillSquaresHtml(level, maxLevel) {
+  return Array.from({ length: maxLevel }, (_, i) => (i < level ? '■' : '□')).join(' ');
+}
+
+/// Estado visual de uma habilidade NORMAL — 5 dos 7 estados pedidos
+/// (bloqueada/disponível/parcial/maximizada/sem pontos); os outros 2
+/// (especial disponível/comprada) são só pra specialOptionHtml abaixo.
+function skillCardHtml(state, skill) {
+  const level = getSkillLevel(state, skill.id);
+  const unlocked = isRowUnlocked(state, skill.stageIndex, skill.rowIndex);
+  const maxed = level >= skill.maxLevel;
+  const hasPoints = getAvailableSkillPoints(state) >= 1;
+  let stateClass;
+  if (!unlocked) stateClass = 'locked';
+  else if (maxed) stateClass = 'maxed';
+  else if (!hasPoints) stateClass = 'no-points';
+  else if (level > 0) stateClass = 'partial';
+  else stateClass = 'available';
+
+  const canBuy = canBuySkillLevel(state, skill.id);
+  return `
+    <button class="skill-card ${stateClass}" data-buy-skill="${skill.id}" ${canBuy ? '' : 'disabled'} title="${unlocked ? '' : 'Compre a linha anterior primeiro'}">
+      <div class="skill-card-name">${skill.name}</div>
+      <div class="skill-card-desc">${skillValueLabel(skill.stat, skill.perLevel)} por nível</div>
+      <div class="skill-card-level">Nível ${level} / ${skill.maxLevel}</div>
+      <div class="skill-card-squares">${skillSquaresHtml(level, skill.maxLevel)}</div>
+    </button>
+  `;
+}
+
+/// Uma das 3 opções mutuamente exclusivas do especial de uma etapa —
+/// 'special-bought' pra opção escolhida, 'special-available' pra qualquer
+/// uma enquanto nenhuma foi escolhida ainda (e o requisito de pontos
+/// gastos foi atingido), 'locked' pro resto (requisito não atingido, ou
+/// uma opção IRMÃ já foi escolhida).
+function specialOptionHtml(state, option) {
+  const chosenId = getChosenSpecialId(state, option.stageIndex);
+  const isChosen = chosenId === option.id;
+  const canBuy = canBuySpecial(state, option.id);
+  const stateClass = isChosen ? 'special-bought' : canBuy ? 'special-available' : 'locked';
+  const desc = option.bonuses.map((b) => skillValueLabel(b.stat, b.value)).join(', ');
+  return `
+    <button class="skill-card skill-special ${stateClass}" data-buy-special="${option.id}" ${canBuy ? '' : 'disabled'}>
+      <div class="skill-card-name">✨ ${option.name}</div>
+      <div class="skill-card-desc">${desc}</div>
+      <div class="skill-card-level">${isChosen ? 'Escolhida' : 'Nível 0 / 1'}</div>
+    </button>
+  `;
+}
+
+function skillClassPickerHtml() {
+  const cards = SKILL_CLASSES.map((classId) => {
+    const meta = CLASS_META[classId];
+    return `
+      <button class="skill-class-card" data-choose-class="${classId}" style="border-color:${meta.color}">
+        <div class="skill-class-card-emoji">${meta.emoji}</div>
+        <div class="skill-class-card-name" style="color:${meta.color}">${meta.name}</div>
+        <div class="skill-class-card-desc">${meta.description}</div>
+      </button>
+    `;
+  }).join('');
+  return `
+    <div class="skill-class-picker">
+      <div class="skill-class-picker-title">Escolha sua classe</div>
+      <div class="skill-class-picker-grid">${cards}</div>
+    </div>
+  `;
+}
+
+function skillTreeHtml(state, classId) {
+  const tree = getClassTree(classId);
+  const stagesHtml = tree.stages.map((stage) => {
+    const stageUnlocked = isStageUnlocked(state, stage.stageIndex);
+    const rowsHtml = stage.rows.map((row) => `
+      <div class="skill-row">${row.map((skill) => skillCardHtml(state, skill)).join('')}</div>
+    `).join('');
+    const specialHtml = stage.special ? `
+      <div class="skill-special-gate">
+        <div class="skill-special-gate-label">
+          🔒 Especial da Etapa ${stage.stageIndex + 1} — precisa gastar ${SPECIAL_THRESHOLDS[stage.stageIndex]} pontos no total
+          (${Math.min(getSpentSkillPoints(state), SPECIAL_THRESHOLDS[stage.stageIndex])}/${SPECIAL_THRESHOLDS[stage.stageIndex]})
+        </div>
+        <div class="skill-row skill-special-row">${stage.special.options.map((opt) => specialOptionHtml(state, opt)).join('')}</div>
+      </div>
+    ` : '';
+    return `
+      <div class="skill-stage ${stageUnlocked ? '' : 'locked'}">
+        <div class="skill-stage-title">Etapa ${stage.stageIndex + 1}</div>
+        ${rowsHtml}
+        ${specialHtml}
+      </div>
+    `;
+  }).join('');
+  return `<div class="skill-tree">${stagesHtml}</div>`;
+}
+
+export function renderUpgradesTab(state, confirmRespec = false) {
   const container = document.getElementById('tab-upgrades');
+  const classId = getActiveClass(state);
+  const total = getTotalSkillPoints(state);
+  const available = getAvailableSkillPoints(state);
+
+  const header = `
+    <div class="skills-header">
+      <div class="skills-points">🔹 Pontos disponíveis: <strong>${available}</strong> (${getSpentSkillPoints(state)}/${total} gastos)</div>
+      ${classId ? `
+        <div class="skill-class-active" style="color:${CLASS_META[classId].color}">
+          ${CLASS_META[classId].emoji} ${CLASS_META[classId].name}
+          ${confirmRespec
+            ? `<button class="modal-action-btn destroy-btn" data-confirm-respec-class>Confirmar troca (reseta a árvore)</button>
+               <button class="modal-action-btn" data-cancel-respec-class>Cancelar</button>`
+            : `<button class="modal-action-btn" data-respec-class>Trocar de classe</button>`}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  const body = classId ? skillTreeHtml(state, classId) : skillClassPickerHtml();
+
   container.innerHTML = `
-    <img class="section-banner-img" src="assets/ui/titles/aprimoramentos.png" alt="Aprimoramentos">
-    <p style="color:var(--text-dim); font-size:13px; text-align:center; margin-top:20px;">
-      🔒 Habilidades Passivas — em construção.
-    </p>
+    <img class="section-banner-img" src="assets/ui/titles/aprimoramentos.png" alt="Habilidades">
+    ${header}
+    ${body}
   `;
 }
 
