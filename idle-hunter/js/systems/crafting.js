@@ -1,6 +1,6 @@
 import {
   getItem, ENHANCE_MAX_LEVEL, rollDroppedItem, getRarity, getSlotIdsForCategory,
-  getAscensionCost, rollBaseStatsFromTemplate, rollAdditionalStats,
+  getAscensionCost, rollBaseStatsFromTemplate, rollAscensionBonusCandidates,
   getItemInventoryCap, getItemScrapMaterial,
 } from '../data/items.js';
 
@@ -176,18 +176,51 @@ export function canAscendItem(state, uid) {
   );
 }
 
-export function ascendItem(state, uid) {
+/// Etapa 1 da Ascensão: rerola baseStats pra magnitude da raridade seguinte
+/// (sem mutar o state ainda) e sorteia 3 candidatos de bônus adicional pro
+/// jogador escolher — o novo bônus da raridade seguinte (que sempre tem
+/// exatamente +1 slot de adicional a mais que a atual, ver RARITIES em
+/// data/items.js) não é mais rerolado sozinho como os demais adicionais já
+/// existentes, que continuam intactos. Retorna null se a ascensão não for
+/// possível agora (rank/material insuficiente); o chamador (main.js) guarda
+/// o resultado até o jogador clicar num dos 3 candidatos, aí sim chama
+/// finalizeAscension.
+export function rollAscensionCandidates(state, uid) {
+  if (!canAscendItem(state, uid)) return null;
+  const entry = getEntry(state, uid);
+  const item = getItem(entry.itemId);
+  const cost = getAscensionCost(item, entry.rarityId);
+  const nextRarity = getRarity(cost.nextRarityId);
+  const newBaseStats = rollBaseStatsFromTemplate(item.stats, nextRarity, item.attribute);
+  const candidates = rollAscensionBonusCandidates(
+    item.zoneIndex, item.attribute, newBaseStats[item.attribute],
+    entry.additionalStats, nextRarity.mult,
+  );
+  return { uid, nextRarityId: nextRarity.id, newBaseStats, candidates };
+}
+
+/// Etapa 2 da Ascensão: cobra o custo e commita a escolha do jogador (um dos
+/// `pending.candidates` de rollAscensionCandidates) como o único bônus NOVO
+/// — os adicionais que o item já tinha são mantidos como estavam. Confere de
+/// novo se a ascensão ainda é possível e se `pending` ainda bate com a
+/// raridade atual do item (guarda contra o item ter mudado entre abrir o
+/// modal e escolher, ex: outra aba/ação nesse meio tempo).
+export function finalizeAscension(state, uid, pending, chosenIndex) {
+  if (!pending || pending.uid !== uid) return false;
   if (!canAscendItem(state, uid)) return false;
   const entry = getEntry(state, uid);
   const item = getItem(entry.itemId);
   const cost = getAscensionCost(item, entry.rarityId);
+  if (!cost || cost.nextRarityId !== pending.nextRarityId) return false;
+  const chosen = pending.candidates[chosenIndex];
+  if (!chosen) return false;
+
   state.materials[cost.crystalMaterialId] -= 1;
   state.materials[cost.matId] -= cost.qty;
 
-  const nextRarity = getRarity(cost.nextRarityId);
-  entry.rarityId = nextRarity.id;
-  entry.baseStats = rollBaseStatsFromTemplate(item.stats, nextRarity, item.attribute);
-  entry.additionalStats = rollAdditionalStats(nextRarity.additionals, item.zoneIndex, item.attribute, entry.baseStats[item.attribute], nextRarity.mult);
+  entry.rarityId = pending.nextRarityId;
+  entry.baseStats = pending.newBaseStats;
+  entry.additionalStats = [...entry.additionalStats, chosen];
   entry.enhanceLevel = 0;
   entry.isMaster = false;
   return true;
