@@ -33,7 +33,7 @@ import {
   renderPlayerHp, spawnDamagePopup, spawnPetDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab, pulseEventBoss,
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster, pulseGoldMineBoss,
-  renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal,
+  renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON,
 } from './ui/render.js';
 
@@ -799,6 +799,12 @@ function wireInventoryTabEvents() {
     const slotBtn = e.target.closest('[data-equip-slot]');
     if (slotBtn) {
       showEquipSlotModal(state, slotBtn.dataset.equipSlot);
+      return;
+    }
+
+    const viewFullStatsBtn = e.target.closest('[data-view-full-stats]');
+    if (viewFullStatsBtn) {
+      showFullStatsModal(state);
       return;
     }
 

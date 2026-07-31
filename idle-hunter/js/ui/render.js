@@ -418,6 +418,75 @@ function attributeTotalsHtml(state) {
   }).join('')}</div>`;
 }
 
+function fullStatsRowHtml(label, value) {
+  return `<div class="full-stats-row"><span>${label}</span><strong>${value}</strong></div>`;
+}
+
+function fullStatsSectionHtml(title, rows) {
+  if (!rows.length) return '';
+  return `
+    <div class="full-stats-section">
+      <div class="full-stats-section-title">${title}</div>
+      ${rows.map(([label, value]) => fullStatsRowHtml(label, value)).join('')}
+    </div>
+  `;
+}
+
+/// Janela "Ver Estatísticas" (botão abaixo do quadro compacto de 6 linhas,
+/// ver equipStatsBoxHtml acima) — TODO atributo que computePlayerStats()
+/// calcula, sem exceção, agrupado por categoria e sempre recalculado na
+/// hora (nada fica desatualizado, já que só lê o state atual). Specials de
+/// carta (goldDoubleChance/bossReprocChance/hitBurst*) só aparecem quando
+/// alguma carta socketada de fato os concede (0 = nenhuma carta com aquele
+/// efeito equipada) — mostrar "0%" pra todo mundo só poluiria a lista.
+export function showFullStatsModal(state) {
+  const stats = computePlayerStats(state);
+  const damageType = getDamageType(stats.activeDamageType);
+
+  const combatRows = [
+    [`${damageType.emoji} DPS (${damageType.name})`, formatNumber(stats.dps)],
+    ['⚡ Velocidade de Ataque', `${stats.attackSpeedPerSec.toFixed(2)}/s`],
+    ['❤️ Vida Máxima', formatNumber(stats.maxHp)],
+    ['🛡️ Armadura', formatNumber(stats.armor)],
+    ['🎯 Chance Crítica', formatPercent(stats.critChance)],
+    ['💢 Dano Crítico', formatPercent(stats.critDamage)],
+    ['🌀 Esquiva', formatPercent(stats.dodgeChance)],
+    ['💚 Cura por Golpe', formatNumber(stats.lifesteal)],
+    ['🌈 Elemento de Ataque', elementBadgeHtml(stats.weaponElement)],
+  ];
+
+  const damageRows = [
+    [`🗡️ Dano Físico${stats.activeDamageType === 'fisico' ? ' (ativo)' : ''}`, formatNumber(stats.danoFisico)],
+    [`🏹 Dano de Perfuração${stats.activeDamageType === 'perfuracao' ? ' (ativo)' : ''}`, formatNumber(stats.danoPerfuracao)],
+    [`🔮 Dano Mágico${stats.activeDamageType === 'magico' ? ' (ativo)' : ''}`, formatNumber(stats.danoMagico)],
+  ];
+
+  const economyRows = [
+    ['💰 Ouro', `+${formatPercent((stats.goldMult - 1) * 100)}`],
+    ['📦 Chance de Material', `+${formatPercent((stats.dropMult - 1) * 100)}`],
+    ['🐾 Dano do Mascote', `+${formatPercent((stats.petDamageMult - 1) * 100)}`],
+  ];
+
+  const attributeRows = [
+    [`💪 ${getAttribute('forca').name}`, formatNumber(stats.forca)],
+    [`🏃 ${getAttribute('destreza').name}`, formatNumber(stats.destreza)],
+    [`🧠 ${getAttribute('inteligencia').name}`, formatNumber(stats.inteligencia)],
+  ];
+
+  const specialRows = [];
+  if (stats.goldDoubleChance > 0) specialRows.push(['🍀 Chance de Ouro em Dobro', formatPercent(stats.goldDoubleChance)]);
+  if (stats.bossReprocChance > 0) specialRows.push(['👑 Chance de Derrotar o Chefe 2x', formatPercent(stats.bossReprocChance)]);
+  if (stats.hitBurstEveryN) specialRows.push(['💥 Explosão de Golpe', `a cada ${stats.hitBurstEveryN} golpes, ${stats.hitBurstDamageMult}x dano`]);
+
+  showModal('📊 Estatísticas Completas', `
+    ${fullStatsSectionHtml('Combate', combatRows)}
+    ${fullStatsSectionHtml('Dano por Tipo', damageRows)}
+    ${fullStatsSectionHtml('Economia', economyRows)}
+    ${fullStatsSectionHtml('Atributos', attributeRows)}
+    ${fullStatsSectionHtml('Especiais de Carta', specialRows)}
+  `);
+}
+
 function equipRingContentHtml(state, filterCategory = null, bulkSelect = null) {
   const filtered = filterCategory
     ? state.inventory.filter((entry) => getItem(entry.itemId)?.category === filterCategory)
@@ -439,6 +508,9 @@ function equipRingContentHtml(state, filterCategory = null, bulkSelect = null) {
           <div class="paperdoll-overlay-col paperdoll-overlay-right">${PAPERDOLL_RIGHT.map((id) => slotIconHtml(state, getSlot(id))).join('')}</div>
         </div>
         ${equipStatsBoxHtml(state)}
+      </div>
+      <div class="view-full-stats-row">
+        <button class="view-full-stats-btn" data-view-full-stats>📊 Ver Estatísticas</button>
       </div>
       ${attributeTotalsHtml(state)}
       <div class="equip-inventory-header-row">
