@@ -1069,6 +1069,43 @@ export function showHatchModal(state, candidates) {
   `);
 }
 
+/// Um dos 3 candidatos rolados por rollAscensionCandidates (systems/
+/// crafting.js) — cada candidato é só um {stat, value} adicional ainda não
+/// commitado, formatado com o mesmo BONUS_STAT_LABEL usado no popup de
+/// detalhe do item (ver itemDetailStatsHtml acima).
+function ascensionCandidateHtml(uid, candidate, index) {
+  const line = BONUS_STAT_LABEL[candidate.stat] ? BONUS_STAT_LABEL[candidate.stat](candidate.value) : candidate.stat;
+  return `
+    <div class="ascension-candidate">
+      <div class="item-detail-icon">🌟</div>
+      <div class="item-detail-name" style="font-size:12.5px;">${line}</div>
+      <button class="modal-action-btn" data-ascend-choose="${uid}" data-ascend-choose-index="${index}">Escolher</button>
+    </div>
+  `;
+}
+
+/// Segundo passo da Ascensão (ver rollAscensionCandidates/finalizeAscension
+/// em systems/crafting.js): o item já rerolou baseStats pra magnitude da
+/// raridade seguinte, e 3 bônus adicionais candidatos já foram sorteados —
+/// falta só o jogador escolher 1 dos 3 pra virar o novo adicional (os que o
+/// item já tinha continuam intactos). `pending` é o objeto retornado por
+/// rollAscensionCandidates, guardado em main.js até o clique de escolha.
+export function showAscensionModal(state, uid, pending) {
+  const entry = state.inventory.find((i) => i.uid === uid);
+  if (!entry) return;
+  const item = getItem(entry.itemId);
+  const nextRarity = getRarity(pending.nextRarityId);
+  showModal('🌟 Ascensão!', `
+    <p style="font-size:12px; color:var(--text-dim); text-align:center;">
+      ${item.name} vai virar <span style="color:${nextRarity.color}; font-weight:800;">${nextRarity.name}</span>.
+      Escolha 1 dos 3 bônus abaixo — ele vira o novo adicional do item.
+    </p>
+    <div class="ascension-choice-row">
+      ${pending.candidates.map((c, i) => ascensionCandidateHtml(uid, c, i)).join('')}
+    </div>
+  `);
+}
+
 function formatDuration(ms) {
   const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
   const m = Math.floor(totalSeconds / 60);

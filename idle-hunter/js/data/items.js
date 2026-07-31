@@ -269,6 +269,30 @@ function rollAdditionalStats(count, tier, ownAttributeId, ownBaseValue, rarityMu
   return result;
 }
 
+/// Chave usada em usedKeys pra um additionalStat já existente no item —
+/// espelha a mesma convenção interna de rollOneBonusStat ('attr:<id>' pros
+/// atributos attrSelf/attrOther, a própria chave do stat pros demais).
+function usedKeyForExisting(add) {
+  return ATTRIBUTES.some((a) => a.id === add.stat) ? `attr:${add.stat}` : add.stat;
+}
+
+/// Rola `count` (3) candidatos de bônus DISTINTOS entre si e distintos dos
+/// bônus adicionais que o item já tem (existingAdditionalStats), sem
+/// commitar nada — usado só na Ascensão (ver ascendItem/systems/
+/// crafting.js), onde o jogador escolhe 1 dos 3 pra virar o novo bônus da
+/// raridade seguinte. Mantém as mesmas regras de sempre (10% chance de
+/// bônus raro por candidato, ver RARE_BONUS_CHANCE/rollOneBonusStat) — só
+/// muda QUEM decide qual dos rolados vira o bônus de fato.
+export function rollAscensionBonusCandidates(tier, ownAttributeId, ownBaseValue, existingAdditionalStats, rarityMult, count = 3) {
+  const usedKeys = new Set((existingAdditionalStats || []).map(usedKeyForExisting));
+  const candidates = [];
+  for (let i = 0; i < count; i++) {
+    const rolled = rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys, rarityMult);
+    if (rolled) candidates.push(rolled);
+  }
+  return candidates;
+}
+
 // ---------------------------------------------------------------------
 // Catálogo de itens: 9 moldes por zona (um por categoria), cada um em 3
 // variantes de atributo — 270 combinações no total (10 zonas × 9 × 3).
@@ -907,8 +931,8 @@ export function getAscensionCost(item, currentRarityId) {
 }
 
 /// rollBaseStatsFromTemplate/rollAdditionalStats exportadas só pra
-/// ascendItem (systems/crafting.js) reusar a mesma rolagem ao recalcular os
-/// números pra raridade nova.
+/// systems/crafting.js (rollAscensionCandidates/finalizeAscension) reusar a
+/// mesma rolagem ao recalcular os números pra raridade nova.
 export { rollBaseStatsFromTemplate, rollAdditionalStats };
 
 /// Material "de sucata" que um item dropado converte quando o inventário de

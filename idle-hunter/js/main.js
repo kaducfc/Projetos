@@ -7,7 +7,7 @@ import {
 import { findMaterialInfo, BOSSES } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot } from './systems/equipment.js';
-import { enhanceItem, upgradeToMaster, ascendItem, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
+import { enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscension, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
 import { getItem, getRarity } from './data/items.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
@@ -33,7 +33,7 @@ import {
   renderPlayerHp, spawnDamagePopup, spawnPetDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab, pulseEventBoss,
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster, pulseGoldMineBoss,
-  renderPetsTab, showPetDetailModal, showHatchModal,
+  renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON,
 } from './ui/render.js';
 
@@ -97,6 +97,13 @@ let bulkConfirmingDestroy = false;
 // commitados em state.pets quando o jogador escolhe um lado (data-hatch-choose
 // no modal, ver wireModalEvents).
 let pendingHatchCandidates = null;
+// Os 3 candidatos de bônus adicional rolados ao ascender um item de Rank
+// Master pra próxima raridade (ver rollAscensionCandidates em
+// systems/crafting.js) — só commitado quando o jogador escolhe 1 dos 3
+// (data-ascend-choose no modal, ver wireModalEvents). O restante do item
+// (custo, raridade, baseStats novos) já veio junto no objeto pending; só
+// falta saber qual dos 3 bônus vira o adicional novo.
+let pendingAscension = null;
 
 function renderInventoryTabNow() {
   renderInventoryTab(state, inventoryFilterCategory, {
@@ -511,9 +518,26 @@ function wireModalEvents() {
     if (ascendBtn) {
       runModalAction(() => {
         const uid = Number(ascendBtn.dataset.ascendUid);
-        if (ascendItem(state, uid)) {
+        const pending = rollAscensionCandidates(state, uid);
+        if (pending) {
+          pendingAscension = pending;
+          showAscensionModal(state, uid, pending);
+        }
+      });
+      return;
+    }
+
+    const ascendChooseBtn = e.target.closest('[data-ascend-choose]');
+    if (ascendChooseBtn) {
+      runModalAction(() => {
+        const uid = Number(ascendChooseBtn.dataset.ascendChoose);
+        const chosenIndex = Number(ascendChooseBtn.dataset.ascendChooseIndex);
+        if (!pendingAscension) return;
+        const pending = pendingAscension;
+        pendingAscension = null;
+        if (finalizeAscension(state, uid, pending, chosenIndex)) {
           showItemDetailModal(state, uid);
-          showToast('🌟 Item ascendeu para a próxima zona!');
+          showToast('🌟 Item ascendeu de raridade!');
           fullRefresh();
         }
       });
