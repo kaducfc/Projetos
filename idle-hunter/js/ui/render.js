@@ -590,6 +590,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
 
   return `
     <div class="item-detail">
+      <div class="item-detail-tier-badge">Tier ${item.zoneIndex + 1}</div>
       <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
