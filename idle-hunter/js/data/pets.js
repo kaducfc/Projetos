@@ -131,16 +131,16 @@ export function rollPetCandidate() {
   return { speciesId: species.id, rarityId: rarity.id, level: 1 };
 }
 
-// Base 70, +30 (100 no total) com VIP — mesmo bônus do inventário de
+// Base 100, +50 (150 no total) com VIP — mesmo bônus do inventário de
 // equipamentos (ver data/items.js ITEM_INVENTORY_CAP/getItemInventoryCap).
-export const PET_INVENTORY_CAP = 70;
+export const PET_INVENTORY_CAP = 100;
 
 export function getPetInventoryCap(state) {
   return PET_INVENTORY_CAP + (state.vip ? VIP_INVENTORY_BONUS : 0);
 }
 
-/// Valor de venda em ouro — usado tanto pro auto-sell ao bater o limite de
-/// 70 quanto pra venda manual. Escala com raridade e nível de fusão.
+/// Valor de venda em ouro — usado tanto pro auto-sell ao bater o limite do
+/// inventário quanto pra venda manual. Escala com raridade e nível de fusão.
 export function getPetSellValue(petEntry) {
   const rarityIdx = RARITIES.findIndex((r) => r.id === petEntry.rarityId);
   const base = 20 * (Math.max(0, rarityIdx) + 1);
