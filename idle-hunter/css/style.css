@@ -2130,6 +2130,56 @@ button:disabled {
   margin-bottom: 10px;
 }
 
+/* Botão "Ver Estatísticas" logo abaixo do quadro compacto de 6 linhas (ver
+   equipStatsBoxHtml/showFullStatsModal em ui/render.js) — abre a janela com
+   TODOS os atributos calculados, não só os 6 que cabem na arte do frame. */
+.view-full-stats-row {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 10px;
+}
+
+.view-full-stats-btn {
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--grad-neutral);
+  border-radius: 12px;
+  box-shadow: var(--shadow-btn);
+}
+
+/* Conteúdo da janela "Ver Estatísticas" — seções agrupadas (Combate, Dano
+   por Tipo, Economia, Atributos, Especiais de Carta), mesmo padrão visual
+   de linha rótulo/valor do item-detail-stats. */
+.full-stats-section {
+  text-align: left;
+  margin-bottom: 12px;
+}
+
+.full-stats-section-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: var(--gold-dark);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 3px;
+  margin-bottom: 6px;
+}
+
+.full-stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  padding: 2px 0;
+}
+
+.full-stats-row strong {
+  font-weight: 800;
+}
+
 .item-detail-attribute {
   margin-bottom: 4px;
 }
