@@ -8,7 +8,7 @@ import {
 /// systems/combat.js rollItemDropOnKill / data/items.js rollDroppedItem) —
 /// não craft, não custo: o item já nasce pronto, sem auto-equipar (o
 /// jogador equipa manualmente, mesmo fluxo de sempre via equipItem). Se o
-/// inventário já estiver no limite (70, ou 100 com VIP, ver
+/// inventário já estiver no limite (100, ou 150 com VIP, ver
 /// getItemInventoryCap), o item NOVO é descartado automaticamente em vez de
 /// entrar, e vira material (ver getItemScrapMaterial) direto pro jogador.
 /// Retorna { uid, discarded, material? }, ou null se a rolagem de drop

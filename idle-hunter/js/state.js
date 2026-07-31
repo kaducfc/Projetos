@@ -133,8 +133,8 @@ export function createDefaultState() {
     petFragments: 0,
     // Sistema VIP ainda por vir (mais funcionalidades futuras) — por
     // enquanto controla se o jogador pode escolher livremente entre os 2
-    // pets ao chocar um ovo, e dá +30 de capacidade nos inventários de
-    // equipamentos e de mascotes (70 → 100, ver data/items.js
+    // pets ao chocar um ovo, e dá +50 de capacidade nos inventários de
+    // equipamentos e de mascotes (100 → 150, ver data/items.js
     // getItemInventoryCap / data/pets.js getPetInventoryCap).
     // freeRightPetChoiceCycle guarda o último ciclo diário (ver
     // systems/pets.js currentDailyCycle) em que um jogador não-VIP já usou

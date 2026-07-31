@@ -12,7 +12,7 @@ function isPetEquipped(state, uid) {
 }
 
 /// Adiciona um candidato já escolhido (ver hatch flow em main.js) ao
-/// inventário de pets — se o inventário já estiver no limite (70, ou 100 com
+/// inventário de pets — se o inventário já estiver no limite (100, ou 150 com
 /// VIP, ver getPetInventoryCap), o pet NOVO é descartado automaticamente em
 /// vez de entrar, e vira Fragmentos (state.petFragments) na mesma
 /// quantidade que renderia se fosse vendido (getPetSellValue).

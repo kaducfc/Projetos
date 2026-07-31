@@ -167,11 +167,11 @@ export function getRarity(rarityId) {
   return RARITIES.find((r) => r.id === rarityId) || RARITIES[0];
 }
 
-// Limite de slots do inventário de equipamentos — 70 de base, +30 (100 no
+// Limite de slots do inventário de equipamentos — 100 de base, +50 (150 no
 // total) com VIP. Mesmo bônus de VIP usado pelo inventário de mascotes (ver
 // data/pets.js PET_INVENTORY_CAP/getPetInventoryCap).
-export const ITEM_INVENTORY_CAP = 70;
-export const VIP_INVENTORY_BONUS = 30;
+export const ITEM_INVENTORY_CAP = 100;
+export const VIP_INVENTORY_BONUS = 50;
 
 export function getItemInventoryCap(state) {
   return ITEM_INVENTORY_CAP + (state.vip ? VIP_INVENTORY_BONUS : 0);
