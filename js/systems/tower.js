@@ -1,4 +1,7 @@
-import { isBossStage, getBossForStage, pickRandomWeakMonster, getWeakMonster, getWeakMonsterGroupForStage } from '../data/monsters.js';
+import {
+  isBossStage, getBossForStage, pickRandomWeakMonster, getWeakMonster, getWeakMonsterGroupForStage,
+  BOSSES, WEAK_MONSTER_GROUPS,
+} from '../data/monsters.js';
 import { monsterMaxHp, monsterDamagePerSecond, monsterGoldReward } from './combat.js';
 import { getTowerWindow, TOWER_MAX_LEVEL, TOWER_CURRENCY_BASE, TOWER_CURRENCY_PER_LEVEL, TOWER_CLEAR_BONUS } from '../data/events.js';
 import { EVENT_EGG_DROP_CHANCE } from '../data/pets.js';
@@ -8,6 +11,36 @@ import { EVENT_EGG_DROP_CHANCE } from '../data/pets.js';
 // weak-monster band matching how far the run reached (same band used to
 // spawn the run's own weak monsters, via resolveWeakPowerStage below).
 const TOWER_MATERIAL_DROPS = 20;
+
+// --- TEMP DEBUG OVERRIDE (pedido do usuário pra facilitar testar outras
+// mecânicas do jogo) --------------------------------------------------
+// Enquanto true, endTowerRun ignora computeTowerReward/rollTowerMaterials e
+// sempre dá DEBUG_TOWER_CURRENCY de Moeda de Evento + DEBUG_TOWER_MATERIAL_QTY
+// de CADA material de monstro existente, não importa o andar alcançado.
+// Pra reverter pro balanceamento normal, é só voltar essa flag pra false —
+// computeTowerReward/rollTowerMaterials continuam intactas logo abaixo.
+const DEBUG_FLAT_TOWER_REWARDS = true;
+const DEBUG_TOWER_CURRENCY = 50000;
+const DEBUG_TOWER_MATERIAL_QTY = 2000;
+
+/// Todo material de monstro que existe no jogo (drop principal 1/2 e
+/// Cristal de cada chefe, material de cada monstro fraco), sem duplicar —
+/// usado só pelo override de debug acima.
+function allMonsterMaterials() {
+  const seen = new Map();
+  for (const boss of BOSSES) {
+    for (const mat of [boss.materials.primary1, boss.materials.primary2, boss.crystal]) {
+      if (!seen.has(mat.id)) seen.set(mat.id, mat);
+    }
+  }
+  for (const group of WEAK_MONSTER_GROUPS) {
+    for (const monster of group.monsters) {
+      if (!seen.has(monster.material.id)) seen.set(monster.material.id, monster.material);
+    }
+  }
+  return [...seen.values()];
+}
+// --- fim do override de debug -----------------------------------------
 
 /// Level 20*k -> real boss stage 10*k (Chispim@20, Solkaiser@40, ...,
 /// Bahamorth@200); every other level -> the real stage "in between" two
@@ -153,15 +186,22 @@ function rollTowerMaterials(level) {
 export function endTowerRun(state, cleared200 = false) {
   const level = state.towerLevel;
   state.towerBestLevel = Math.max(state.towerBestLevel, level);
-  const currency = computeTowerReward(level, cleared200);
+  const currency = DEBUG_FLAT_TOWER_REWARDS ? DEBUG_TOWER_CURRENCY : computeTowerReward(level, cleared200);
   const goldGained = computeTowerGoldReward(level);
-  const materialDrops = rollTowerMaterials(level);
 
   const gained = {};
-  for (const mat of materialDrops) {
-    state.materials[mat.id] = (state.materials[mat.id] || 0) + 1;
-    if (!gained[mat.id]) gained[mat.id] = { qty: 0, emoji: mat.emoji, name: mat.name, image: mat.image || null };
-    gained[mat.id].qty += 1;
+  if (DEBUG_FLAT_TOWER_REWARDS) {
+    for (const mat of allMonsterMaterials()) {
+      state.materials[mat.id] = (state.materials[mat.id] || 0) + DEBUG_TOWER_MATERIAL_QTY;
+      gained[mat.id] = { qty: DEBUG_TOWER_MATERIAL_QTY, emoji: mat.emoji, name: mat.name, image: mat.image || null };
+    }
+  } else {
+    const materialDrops = rollTowerMaterials(level);
+    for (const mat of materialDrops) {
+      state.materials[mat.id] = (state.materials[mat.id] || 0) + 1;
+      if (!gained[mat.id]) gained[mat.id] = { qty: 0, emoji: mat.emoji, name: mat.name, image: mat.image || null };
+      gained[mat.id].qty += 1;
+    }
   }
 
   state.eventCurrency += currency;
