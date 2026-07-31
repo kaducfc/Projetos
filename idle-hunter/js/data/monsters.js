@@ -247,31 +247,30 @@ export const BOSSES = [
   },
   {
     stage: 40,
+    // id/crystalMaterialId ficam 'colhedor_carmesim'/
+    // 'colhedor_carmesim_crystal' de propósito — mesmo reskin display-only
+    // das outras 3 zonas acima (ver comentário no Chispim). Fecha a Zona 4
+    // (Plasmion/Corcel da Tempestade/Sabion/Serpentorax, ver
+    // WEAK_MONSTER_GROUPS acima) como o 5º e mais forte monstro.
     id: 'colhedor_carmesim',
-    name: 'Colhedor Carmesim',
-    element: 'planta',
-    emoji: '🌺',
-    image: 'assets/colhedor_carmesim/monster.png',
-    // Idle-loop animation — same standard as Chispim's (see that entry's
-    // comment above): 150ms/frame, plain src swap. Only 3 frames this
-    // time (vs. the usual 4), still cropped to the same union bounding box.
-    animFrames: [
-      'assets/colhedor_carmesim/anim/frame1.png',
-      'assets/colhedor_carmesim/anim/frame2.png',
-      'assets/colhedor_carmesim/anim/frame3.png',
-    ],
-    // Same size boost as the first 3 bosses (see Chispim's spriteScale
-    // comment above) — explicitly requested to match, not the default 1x.
+    name: 'Eletyra',
+    element: 'eletrico',
+    emoji: '⚡',
+    image: 'assets/eletyra/monster.png',
+    // Sem animação de frames (só 1 imagem estática recebida).
+    animFrames: null,
     spriteScale: 2.1,
-    // Boss-specific background (see Chispim's `scene` comment above).
-    scene: 'assets/ui/scenes/boss-colhedor-carmesim.png',
+    // Só 1 material de drop de verdade (Círculo da Tempestade) — mesmo
+    // truque das outras 3 zonas (primary1/primary2 apontam pro mesmo id).
     materials: {
-      // id kept as colhedor_carmesim_scythe (save-file key) even though the
-      // item was re-arted/renamed from "Foice Carmesim" to "Rosa Escarlate".
-      primary1: { id: 'colhedor_carmesim_scythe', name: 'Rosa Escarlate', emoji: '🌹', image: 'assets/colhedor_carmesim/rosa.png' },
-      primary2: { id: 'colhedor_carmesim_root', name: 'Raiz Sanguínea', emoji: '🩸', image: 'assets/colhedor_carmesim/raiz.png' },
+      primary1: { id: 'colhedor_carmesim_scythe', name: 'Círculo da Tempestade', emoji: '🌀', image: 'assets/eletyra/circulo.png' },
+      primary2: { id: 'colhedor_carmesim_scythe', name: 'Círculo da Tempestade', emoji: '🌀', image: 'assets/eletyra/circulo.png' },
     },
-    crystal: { id: 'colhedor_carmesim_crystal', name: 'Cristal do Colhedor Carmesim', emoji: '💎', image: 'assets/crystals/colhedor_carmesim.png' },
+    crystal: { id: 'colhedor_carmesim_crystal', name: 'Cristal de Eletyra', emoji: '💎', image: 'assets/crystals/colhedor_carmesim.png' },
+    // Rank de poder dentro da Zona 4 (ver monsterMaxHp/
+    // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4
+    // é só 1 degrau acima do Serpentorax (rank 3).
+    powerRank: 4,
   },
   {
     stage: 50,
@@ -445,15 +444,18 @@ export const WEAK_MONSTER_GROUPS = [
       { id: 'mimicus', name: 'Mimicus', element: 'neutro', emoji: '📦', image: 'assets/mimicus/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'mimicus_lock', name: 'Fechadura Mimética', emoji: '🔒', image: 'assets/mimicus/fechadura.png' } },
     ],
   },
+  // Zona 4 (stage 30-39) — mesmo tratamento das Zonas 1/2/3: 4 monstros
+  // próprios, elemento Elétrico, cada um um pouco mais forte que o
+  // anterior (powerRank). O 5º e mais forte (Eletyra) é o chefe da zona
+  // (ver BOSSES[3] abaixo).
   {
     startStage: 30,
     endStage: 39,
     monsters: [
-      { id: 'volpix', name: 'Volpix', element: 'fogo', emoji: '🦊', image: 'assets/volpix/monster.png', material: { id: 'volpix_fur', name: 'Pelo Flamejante', emoji: '🔥', image: 'assets/volpix/fur.png' } },
-      { id: 'cascafria', name: 'Cascafria', element: 'agua', emoji: '🐢', image: 'assets/cascafria/monster.png', material: { id: 'cascafria_shell', name: 'Casco Congelado', emoji: '❄️', image: 'assets/cascafria/shell.png' } },
-      { id: 'grunco', name: 'Grunco', element: 'neutro', emoji: '🐗', image: 'assets/grunco/monster.png', material: { id: 'grunco_hide', name: 'Couro Grosso', emoji: '🟤', image: 'assets/grunco/hide.png' } },
-      { id: 'cogumeloide', name: 'Cogumeloide', element: 'planta', emoji: '🍄', image: 'assets/cogumeloide/monster.png', material: { id: 'cogumeloide_fiber', name: 'Fibra Fúngica', emoji: '🍄', image: 'assets/cogumeloide/fiber.png' } },
-      { id: 'faisca', name: 'Faísca', element: 'eletrico', emoji: '🐿️', image: 'assets/faisca/monster.png', material: { id: 'faisca_core', name: 'Núcleo Elétrico', emoji: '🔋', image: 'assets/faisca/core.png' } },
+      { id: 'plasmion', name: 'Plasmion', element: 'eletrico', emoji: '⚡', image: 'assets/plasmion/monster.png', powerRank: 0, spriteScale: 2.1, material: { id: 'plasmion_core', name: 'Núcleo Plasmático', emoji: '🔮', image: 'assets/plasmion/nucleo.png' } },
+      { id: 'corcel_tempestade', name: 'Corcel da Tempestade', element: 'eletrico', emoji: '🐴', image: 'assets/corcel_tempestade/monster.png', powerRank: 1, spriteScale: 2.1, material: { id: 'corcel_tempestade_horseshoe', name: 'Ferradura Trovejante', emoji: '🧲', image: 'assets/corcel_tempestade/ferradura.png' } },
+      { id: 'sabion', name: 'Sabion', element: 'eletrico', emoji: '🧙', image: 'assets/sabion/monster.png', powerRank: 2, spriteScale: 2.1, material: { id: 'sabion_scepter', name: 'Cetro do Oráculo', emoji: '🪄', image: 'assets/sabion/cetro.png' } },
+      { id: 'serpentorax', name: 'Serpentorax', element: 'eletrico', emoji: '🐍', image: 'assets/serpentorax/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'serpentorax_scale', name: 'Escama Trovejante', emoji: '🟡', image: 'assets/serpentorax/escama.png' } },
     ],
   },
   {
