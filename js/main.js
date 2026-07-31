@@ -12,7 +12,7 @@ import { getItem, getRarity } from './data/items.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
 import { getTowerWindow, TOWER_RUN_DURATION_MS, GOLDMINE_FIGHT_DURATION_MS } from './data/events.js';
-import { applyEventDamage, claimEventVictory, startEvent } from './systems/events.js';
+import { applyEventDamage, claimEventVictory, startEvent, resetEventEncounter } from './systems/events.js';
 import { canEnterTower, startTowerRun, ensureTowerMonsterSpawned, getTowerMonster, applyTowerDamage, endTowerRun } from './systems/tower.js';
 import { startGoldMineRun, applyGoldMineDamage, endGoldMineRun } from './systems/goldmine.js';
 import { claimAchievement } from './systems/achievements.js';
@@ -843,6 +843,20 @@ function enterEvent() {
   renderTopBar(state);
 }
 
+/// Encerra a Invasão de Chefes em andamento sem derrotar o chefe — ao
+/// contrário da Torre/Mina de Ouro (que sempre recompensam pelo progresso,
+/// ver finishTowerRun/finishGoldMine), a Invasão só recompensa na vitória
+/// (ver claimEventVictory), então desistir não dá nada. A entrada dessa
+/// janela já foi consumida (eventEnteredCycle), então isso só libera a tela
+/// de volta pro banner "Fecha em:"/"Abre em:" sem gastar uma segunda
+/// tentativa.
+function giveUpEvent() {
+  if (state.eventBossHp == null) return;
+  resetEventEncounter(state);
+  showToast('🚪 Invasão de Chefes encerrada.');
+  renderEventsTabNow();
+}
+
 /// Called from tickEventBoss() (see above) — whichever tick lands the
 /// killing blow reports the same way.
 function handleEventBossVictory(boss) {
@@ -1071,6 +1085,21 @@ function wireEventTabEvents() {
 
     if (e.target.closest('[data-goldmine-enter]')) {
       enterGoldMine();
+      return;
+    }
+
+    if (e.target.closest('[data-event-giveup]')) {
+      giveUpEvent();
+      return;
+    }
+
+    if (e.target.closest('[data-tower-giveup]')) {
+      finishTowerRun(false);
+      return;
+    }
+
+    if (e.target.closest('[data-goldmine-giveup]')) {
+      finishGoldMine();
       return;
     }
   });
