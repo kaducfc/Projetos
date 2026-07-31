@@ -1200,6 +1200,7 @@ function invasaoChefesFightPanelHtml(state) {
           <button id="event-boss-sprite" class="event-boss-sprite" >${iconMarkup(boss.image, boss.emoji, boss.name)}</button>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(maxHp)}</span></div>
           <p class="event-reward-info">🎁 10 itens ao derrotar (materiais/Cristal) + chance de Carta + ${EVENT_ICON} Moeda de Evento</p>
+          <button class="event-giveup-btn" data-event-giveup>Encerrar</button>
         </div>
       </div>
     </div>`;
@@ -1262,6 +1263,7 @@ function torreProvacoesFightPanelHtml(state, runRemainingMs, towerHp, towerMaxHp
           <p class="event-sub">Sua vida na torre</p>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${hpPlayerPct}%; background:var(--danger, #e05656);"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(towerMaxHp)}</span></div>
           <p class="event-reward-info">🎁 Recompensa ao final: ${EVENT_ICON} Moeda de Evento, conforme o nível alcançado.</p>
+          <button class="event-giveup-btn" data-tower-giveup>Encerrar</button>
         </div>
       </div>
     </div>`;
@@ -1329,6 +1331,7 @@ function goldMineFightPanelHtml(state, runRemainingMs) {
           <button id="goldmine-boss-sprite" class="event-boss-sprite event-boss-sprite-goldmine" >${iconMarkup(GOLDMINE_BOSS_ANIM_FRAMES[frameIdx], '🐉', 'Dragão Dourado')}</button>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.goldMineBossHp)} / ${formatNumber(maxHp)}</span></div>
           <p class="event-reward-info">🎁 Recompensa ao final: ${GOLD_ICON} 1 Ouro por ponto de dano causado.</p>
+          <button class="event-giveup-btn" data-goldmine-giveup>Encerrar</button>
         </div>
       </div>
     </div>`;

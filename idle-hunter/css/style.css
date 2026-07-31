@@ -2330,6 +2330,26 @@ button:disabled {
   color: var(--text-dim);
 }
 
+/* Botão pequeno pra desistir/encerrar um evento em andamento sem esperar o
+   fim natural (kill/timeout) — ver giveUpEvent/finishTowerRun/finishGoldMine
+   em main.js. Discreto de propósito (não é a ação principal da tela). */
+.event-giveup-btn {
+  margin-top: 10px;
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.event-giveup-btn:hover {
+  color: var(--danger, #e05656);
+  border-color: var(--danger, #e05656);
+}
+
 /* ---------------- Sub-tab switcher (Equipamento's Equipar/Forjar/
    Materiais, Loja's Cash/Moeda de Evento) — shared layout, contextual
    accent color per tab below. ---------------- */
