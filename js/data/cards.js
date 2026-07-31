@@ -32,7 +32,8 @@ const CARD_IMAGES = {
   solkaiser: 'assets/marokar/monster.png',
   // Mesmo motivo acima — reskin Vorlith (ver data/monsters.js BOSSES[2]).
   tartarok: 'assets/vorlith/monster.png',
-  colhedor_carmesim: 'assets/cards/colhedor_carmesim.png',
+  // Mesmo motivo acima — reskin Eletyra (ver data/monsters.js BOSSES[3]).
+  colhedor_carmesim: 'assets/eletyra/monster.png',
   grommuk: 'assets/cards/grommuk.png',
   vulkarion: 'assets/cards/vulkarion.png',
   leviargon: 'assets/cards/leviargon.png',
