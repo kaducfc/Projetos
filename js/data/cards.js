@@ -38,7 +38,8 @@ const CARD_IMAGES = {
   grommuk: 'assets/pyravalis/monster.png',
   // Mesmo motivo acima — reskin Vortexor (ver data/monsters.js BOSSES[5]).
   vulkarion: 'assets/vortexor/monster.png',
-  leviargon: 'assets/cards/leviargon.png',
+  // Mesmo motivo acima — reskin Magmarok (ver data/monsters.js BOSSES[6]).
+  leviargon: 'assets/magmarok/monster.png',
   tempestron: 'assets/cards/tempestron.png',
   gaiatron: 'assets/cards/gaiatron.png',
   bahamorth: 'assets/cards/bahamorth.png',
