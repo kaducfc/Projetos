@@ -327,29 +327,30 @@ export const BOSSES = [
   },
   {
     stage: 70,
+    // id/crystalMaterialId ficam 'leviargon'/'leviargon_crystal' de
+    // propósito — mesmo reskin display-only das Zonas 1-6 acima (ver
+    // comentário no Chispim). Fecha a Zona 7 (Pyrorian/Infernus/Sentinela
+    // de Magma/Ignivoran, ver WEAK_MONSTER_GROUPS abaixo) como o 5º e mais
+    // forte monstro.
     id: 'leviargon',
-    name: 'Leviargon',
-    element: 'agua',
-    emoji: '🐋',
-    image: 'assets/leviargon/monster.png',
-    animFrames: [
-      'assets/leviargon/anim/frame1.png',
-      'assets/leviargon/anim/frame2.png',
-      'assets/leviargon/anim/frame3.png',
-      'assets/leviargon/anim/frame4.png',
-      'assets/leviargon/anim/frame5.png',
-      'assets/leviargon/anim/frame6.png',
-    ],
-    // Same size boost as the earlier animated bosses (see Chispim's
-    // spriteScale comment above).
+    name: 'Magmarok',
+    element: 'fogo',
+    emoji: '🌋',
+    image: 'assets/magmarok/monster.png',
+    // Sem animação de frames (só 1 imagem estática recebida).
+    animFrames: null,
     spriteScale: 2.1,
-    // Boss-specific background (see Chispim's `scene` comment above).
-    scene: 'assets/ui/scenes/boss-leviargon.png',
+    // Só 1 material de drop de verdade (Fragmento de Magmarok) — mesmo
+    // truque das outras zonas (primary1/primary2 apontam pro mesmo id).
     materials: {
-      primary1: { id: 'leviargon_fin', name: 'Barbatana de Leviargon', emoji: '🦈', image: 'assets/leviargon/barbatana.png' },
-      primary2: { id: 'leviargon_eye', name: 'Olho Abissal', emoji: '👁️', image: 'assets/leviargon/olho.png' },
+      primary1: { id: 'leviargon_fin', name: 'Fragmento de Magmarok', emoji: '🌋', image: 'assets/magmarok/fragmento.png' },
+      primary2: { id: 'leviargon_fin', name: 'Fragmento de Magmarok', emoji: '🌋', image: 'assets/magmarok/fragmento.png' },
     },
-    crystal: { id: 'leviargon_crystal', name: 'Cristal de Leviargon', emoji: '💎', image: 'assets/crystals/leviargon.png' },
+    crystal: { id: 'leviargon_crystal', name: 'Cristal de Magmarok', emoji: '💎', image: 'assets/crystals/leviargon.png' },
+    // Rank de poder dentro da Zona 7 (ver monsterMaxHp/
+    // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4 é
+    // só 1 degrau acima do Ignivoran (rank 3).
+    powerRank: 4,
   },
   {
     stage: 80,
@@ -489,8 +490,23 @@ export const WEAK_MONSTER_GROUPS = [
       { id: 'minotauro_trovao', name: 'Minotauro do Trovão', element: 'eletrico', emoji: '🐂', image: 'assets/minotauro_trovao/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'minotauro_trovao_hammer', name: 'Martelo Trovejante', emoji: '🔨', image: 'assets/minotauro_trovao/martelo.png' } },
     ],
   },
+  // Zona 7 (stage 61-69) — mesmo tratamento das Zonas 1-6 acima: 4 monstros
+  // próprios, elemento Fogo (mesmo do chefe da zona), cada um um pouco mais
+  // forte que o anterior (powerRank). O 5º e mais forte (Magmarok) é o
+  // chefe da zona (ver BOSSES[6] acima — id interno 'leviargon', mantido
+  // por compatibilidade).
   {
     startStage: 61,
+    endStage: 69,
+    monsters: [
+      { id: 'pyrorian', name: 'Pyrorian', element: 'fogo', emoji: '🔥', image: 'assets/pyrorian/monster.png', powerRank: 0, spriteScale: 2.1, material: { id: 'pyrorian_staff', name: 'Cajado Ígneo', emoji: '🔥', image: 'assets/pyrorian/cajado.png' } },
+      { id: 'infernus', name: 'Infernus', element: 'fogo', emoji: '👹', image: 'assets/infernus/monster.png', powerRank: 1, spriteScale: 2.1, material: { id: 'infernus_axe', name: 'Machado Abissal', emoji: '🪓', image: 'assets/infernus/machado.png' } },
+      { id: 'sentinela_magma', name: 'Sentinela de Magma', element: 'fogo', emoji: '🗿', image: 'assets/sentinela_magma/monster.png', powerRank: 2, spriteScale: 2.1, material: { id: 'sentinela_magma_shield', name: 'Escudo da Rocha Vulcânica', emoji: '🛡️', image: 'assets/sentinela_magma/escudo.png' } },
+      { id: 'ignivoran', name: 'Ignivoran', element: 'fogo', emoji: '🦅', image: 'assets/ignivoran/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'ignivoran_feather', name: 'Pena de Ignivoran', emoji: '🪶', image: 'assets/ignivoran/pena.png' } },
+    ],
+  },
+  {
+    startStage: 71,
     endStage: 79,
     monsters: [
       { id: 'pimpira', name: 'Pimpira', element: 'fogo', emoji: '🦋', image: 'assets/pimpira/monster.png', material: { id: 'pimpira_wing', name: 'Asa Flamejante', emoji: '🔥', image: 'assets/pimpira/wing.png' } },
