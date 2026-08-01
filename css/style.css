@@ -2907,6 +2907,39 @@ button:disabled {
   color: var(--text);
 }
 
+/* Botão "Resetar Pontos" (ver skillResetRowHtml em ui/render.js) — devolve
+   todos os pontos investidos na árvore pro jogador redistribuir. Discreto
+   de propósito (não é a ação principal da aba). */
+.skill-reset-btn {
+  padding: 6px 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.skill-reset-btn:hover {
+  color: var(--danger, #e05656);
+  border-color: var(--danger, #e05656);
+}
+
+.skill-reset-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, .08);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: center;
+}
+
 .skill-tree {
   display: flex;
   flex-direction: column;

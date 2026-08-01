@@ -26,7 +26,7 @@ import {
   equipPet, unequipPetSlot, sellPet, canFusePets, fusePets, getFusePartners,
   addPetToInventory, getPetEntry, canChooseRightPet, useFreeRightPetChoice,
 } from './systems/pets.js';
-import { buySkillLevel, buySpecial } from './systems/skills.js';
+import { buySkillLevel, buySpecial, resetSkillTree } from './systems/skills.js';
 import {
   renderAll, renderTopBar, renderHunterLevel, renderCombatStats, renderMonster, renderNoMonsterSelected,
   renderInventoryTab, renderUpgradesTab, renderBossTimer,
@@ -104,6 +104,16 @@ let pendingHatchCandidates = null;
 // (custo, raridade, baseStats novos) já veio junto no objeto pending; só
 // falta saber qual dos 3 bônus vira o adicional novo.
 let pendingAscension = null;
+// "Resetar Pontos" da árvore de habilidades — mesmo padrão non-blocking de
+// confirmação do bulkConfirmingDestroy acima. Precisa sobreviver a
+// re-renders incidentais da aba (ver renderUpgradesTabNow abaixo, chamada
+// a cada kill pra refletir XP/pontos novos) — sem isso, matar um monstro
+// bem no meio da confirmação fecharia o diálogo sozinho.
+let skillResetConfirming = false;
+
+function renderUpgradesTabNow() {
+  renderUpgradesTab(state, skillResetConfirming);
+}
 
 function renderInventoryTabNow() {
   renderInventoryTab(state, inventoryFilterCategory, {
@@ -258,7 +268,7 @@ function handleKillEvent(event) {
   // Gold/materials just changed, so refresh whatever depends on affordability
   // even if the player isn't actively interacting with those tabs right now.
   renderInventoryTabNow();
-  renderUpgradesTab(state);
+  renderUpgradesTabNow();
   renderCardsTab(state); // a card drop just changed discovered/claimable state
   resetPlayerHp(); // a fresh monster just spawned — full heal for the new fight
   armBossTimer(); // the new monster may (or may not) be a boss
@@ -1173,13 +1183,36 @@ function wireSkillsTabEvents() {
   document.getElementById('tab-upgrades').addEventListener('click', (e) => {
     const buySkillBtn = e.target.closest('[data-buy-skill]');
     if (buySkillBtn) {
-      if (buySkillLevel(state, buySkillBtn.dataset.buySkill)) renderUpgradesTab(state);
+      if (buySkillLevel(state, buySkillBtn.dataset.buySkill)) renderUpgradesTabNow();
       return;
     }
 
     const buySpecialBtn = e.target.closest('[data-buy-special]');
     if (buySpecialBtn) {
-      if (buySpecial(state, buySpecialBtn.dataset.buySpecial)) renderUpgradesTab(state);
+      if (buySpecial(state, buySpecialBtn.dataset.buySpecial)) renderUpgradesTabNow();
+      return;
+    }
+
+    const resetStartBtn = e.target.closest('[data-skill-reset-start]');
+    if (resetStartBtn) {
+      skillResetConfirming = true;
+      renderUpgradesTabNow();
+      return;
+    }
+
+    const resetCancelBtn = e.target.closest('[data-skill-reset-cancel]');
+    if (resetCancelBtn) {
+      skillResetConfirming = false;
+      renderUpgradesTabNow();
+      return;
+    }
+
+    const resetConfirmBtn = e.target.closest('[data-skill-reset-confirm]');
+    if (resetConfirmBtn) {
+      resetSkillTree(state);
+      skillResetConfirming = false;
+      renderUpgradesTabNow();
+      showToast('🔄 Pontos de habilidade resetados!');
     }
   });
 }

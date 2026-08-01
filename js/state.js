@@ -15,7 +15,7 @@ const SAVE_KEY = 'idleHunterSave.v4';
 // purchased/specials de qualquer save que não esteja nessa versão, em vez
 // de deixar o jogador com pontos investidos silenciosamente realocados pra
 // outro stat.
-const SKILL_TREE_VERSION = 2;
+export const SKILL_TREE_VERSION = 2;
 
 export function createDefaultState() {
   return {
