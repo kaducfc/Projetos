@@ -8,6 +8,15 @@ import { ZONES } from './data/monsters.js';
 // fresh under a new key" call das duas bumps anteriores.
 const SAVE_KEY = 'idleHunterSave.v4';
 
+// Versão do FORMATO da árvore de habilidades (ver skillTree.treeVersion
+// acima) — v1 era 5 etapas de 3 linhas cada; v2 é 6 etapas de 7 linhas
+// cada. Um id "stageIndex_rowIndex_colIndex" salvo na v1 aponta pra um stat
+// diferente na v2 (a conta de linha global mudou), então loadState() reseta
+// purchased/specials de qualquer save que não esteja nessa versão, em vez
+// de deixar o jogador com pontos investidos silenciosamente realocados pra
+// outro stat.
+const SKILL_TREE_VERSION = 2;
+
 export function createDefaultState() {
   return {
     gold: 0,
@@ -147,10 +156,16 @@ export function createDefaultState() {
     // por nível de caça, nunca guardado à parte — é sempre derivado de
     // hunterLevel menos o total gasto aqui, então não tem como duplicar
     // bônus num reload. purchased: skillId -> nível comprado. specials:
-    // stageIndex (0-3) -> id da opção especial escolhida (só 1 por etapa).
+    // stageIndex -> id da opção especial escolhida (só 1 por etapa).
+    // treeVersion identifica o FORMATO da árvore (não o conteúdo/valores) —
+    // bump necessário sempre que a forma stageIndex_rowIndex_colIndex mudar
+    // de significado (ver SKILL_TREE_VERSION/loadState abaixo), pra saves
+    // antigos resetarem em vez de ficar com pontos investidos em stats
+    // trocados silenciosamente.
     skillTree: {
       purchased: {},
       specials: {},
+      treeVersion: SKILL_TREE_VERSION,
     },
   };
 }
@@ -188,8 +203,8 @@ export function loadState() {
     // getSpentSkillPoints em systems/skills.js), sem dar bônus nenhum —
     // reseta pra árvore nova em branco (os pontos, sempre derivados do
     // hunterLevel, continuam intactos pra redistribuir).
-    if ('classId' in (state.skillTree || {})) {
-      state.skillTree = { purchased: {}, specials: {} };
+    if ('classId' in (state.skillTree || {}) || (state.skillTree?.treeVersion || 1) < SKILL_TREE_VERSION) {
+      state.skillTree = { purchased: {}, specials: {}, treeVersion: SKILL_TREE_VERSION };
     }
     return state;
   } catch (err) {
