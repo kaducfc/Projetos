@@ -1,11 +1,12 @@
 import { ZONES } from '../data/monsters.js';
 
-// Curva de "kills pra próximo nível" — cada monstro derrotado dá exatamente
-// 1 XP (ver xpForZone abaixo), então esses valores já são uma contagem
-// direta de kills, não uma quantia abstrata. Progressão de longo prazo, de
-// propósito: ~39 mil kills no total pra alcançar o nível 180 (Zona 10) —
-// a meta é levar pelo menos umas duas semanas de jogo pra zerar as zonas,
-// não algumas horas.
+// Curva de XP pra próximo nível — cada monstro derrotado dá XP igual ao
+// número da sua zona (1-based, ver xpForZone abaixo: Zona 1 = 1 XP, Zona 10
+// = 10 XP), então caçar em zonas mais altas rende nível mais rápido, não só
+// mais ouro/material. Progressão de longo prazo, de propósito: a curva foi
+// calibrada pra ~39 mil kills-equivalentes (assumindo 1 XP/kill) pra
+// alcançar o nível 180 — a meta é levar pelo menos umas duas semanas de
+// jogo pra zerar as zonas, não algumas horas.
 const HUNTER_XP_BASE = 5;
 const HUNTER_XP_GROWTH = 1.031;
 
@@ -13,11 +14,11 @@ export function xpToNextLevel(level) {
   return Math.round(HUNTER_XP_BASE * Math.pow(HUNTER_XP_GROWTH, level - 1));
 }
 
-// XP por kill: fixo em 1 por monstro derrotado, não importa a zona nem se
-// é chefe — "nível de caça" agora é literalmente uma contagem de monstros
-// derrotados (xpToNextLevel acima passa a ler como "quantos kills faltam").
-export function xpForZone(_zoneIndex, _isBoss) {
-  return 1;
+// XP por kill: igual ao número da zona (1-based) onde o monstro está, não
+// importa se é chefe ou monstro fraco — Zona 1 dá 1 XP, Zona 2 dá 2 XP,
+// ..., Zona 10 dá 10 XP.
+export function xpForZone(zoneIndex, _isBoss) {
+  return zoneIndex + 1;
 }
 
 /// Soma XP e resolve quantos níveis isso rende (pode subir mais de 1 de uma
