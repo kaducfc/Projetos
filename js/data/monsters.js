@@ -274,55 +274,56 @@ export const BOSSES = [
   },
   {
     stage: 50,
+    // id/crystalMaterialId ficam 'grommuk'/'grommuk_crystal' de propósito —
+    // mesmo reskin display-only das Zonas 1-4 acima (ver comentário no
+    // Chispim). Fecha a Zona 5 (Lavasalam/Fornitus/Emberimp/Ember Warden,
+    // ver WEAK_MONSTER_GROUPS abaixo) como o 5º e mais forte monstro.
     id: 'grommuk',
-    name: 'Grommuk',
-    element: 'neutro',
-    emoji: '👹',
-    image: 'assets/grommuk/monster.png',
-    animFrames: [
-      'assets/grommuk/anim/frame1.png',
-      'assets/grommuk/anim/frame2.png',
-      'assets/grommuk/anim/frame3.png',
-      'assets/grommuk/anim/frame4.png',
-      'assets/grommuk/anim/frame5.png',
-      'assets/grommuk/anim/frame6.png',
-    ],
-    // Same size boost as the earlier animated bosses (see Chispim's
-    // spriteScale comment above).
+    name: 'Pyravalis',
+    element: 'fogo',
+    emoji: '🔥',
+    image: 'assets/pyravalis/monster.png',
+    // Sem animação de frames (só 1 imagem estática recebida).
+    animFrames: null,
     spriteScale: 2.1,
-    // Boss-specific background (see Chispim's `scene` comment above).
-    scene: 'assets/ui/scenes/boss-grommuk.png',
+    // Só 1 material de drop de verdade (Pena Ígnea) — mesmo truque das
+    // outras 4 zonas (primary1/primary2 apontam pro mesmo id).
     materials: {
-      primary1: { id: 'grommuk_fang', name: 'Presa de Grommuk', emoji: '🦷', image: 'assets/grommuk/presa.png' },
-      primary2: { id: 'grommuk_medallion', name: 'Medalhão Tribal', emoji: '🥉', image: 'assets/grommuk/medalhao.png' },
+      primary1: { id: 'grommuk_fang', name: 'Pena Ígnea', emoji: '🪶', image: 'assets/pyravalis/pena.png' },
+      primary2: { id: 'grommuk_fang', name: 'Pena Ígnea', emoji: '🪶', image: 'assets/pyravalis/pena.png' },
     },
-    crystal: { id: 'grommuk_crystal', name: 'Cristal de Grommuk', emoji: '💎', image: 'assets/crystals/grommuk.png' },
+    crystal: { id: 'grommuk_crystal', name: 'Cristal de Pyravalis', emoji: '💎', image: 'assets/crystals/grommuk.png' },
+    // Rank de poder dentro da Zona 5 (ver monsterMaxHp/
+    // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4 é
+    // só 1 degrau acima do Ember Warden (rank 3).
+    powerRank: 4,
   },
   {
     stage: 60,
+    // id/crystalMaterialId ficam 'vulkarion'/'vulkarion_crystal' de
+    // propósito — mesmo reskin display-only das Zonas 1-5 acima (ver
+    // comentário no Chispim). Fecha a Zona 6 (Luxoris/Ecliptor/Thundrak/
+    // Minotauro do Trovão, ver WEAK_MONSTER_GROUPS abaixo) como o 5º e mais
+    // forte monstro.
     id: 'vulkarion',
-    name: 'Vulkarion',
-    element: 'fogo',
-    emoji: '🐂',
-    image: 'assets/vulkarion/monster.png',
-    animFrames: [
-      'assets/vulkarion/anim/frame1.png',
-      'assets/vulkarion/anim/frame2.png',
-      'assets/vulkarion/anim/frame3.png',
-      'assets/vulkarion/anim/frame4.png',
-      'assets/vulkarion/anim/frame5.png',
-      'assets/vulkarion/anim/frame6.png',
-    ],
-    // Same size boost as the earlier animated bosses (see Chispim's
-    // spriteScale comment above).
+    name: 'Vortexor',
+    element: 'eletrico',
+    emoji: '🌀',
+    image: 'assets/vortexor/monster.png',
+    // Sem animação de frames (só 1 imagem estática recebida).
+    animFrames: null,
     spriteScale: 2.1,
-    // Boss-specific background (see Chispim's `scene` comment above).
-    scene: 'assets/ui/scenes/boss-vulkarion.png',
+    // Só 1 material de drop de verdade (Talismã do Vortexor) — mesmo
+    // truque das outras 4 zonas (primary1/primary2 apontam pro mesmo id).
     materials: {
-      primary1: { id: 'vulkarion_horn', name: 'Chifre de Vulkarion', emoji: '🐮', image: 'assets/vulkarion/chifre.png' },
-      primary2: { id: 'vulkarion_heart', name: 'Coração Vulcânico', emoji: '🌋', image: 'assets/vulkarion/coracao.png' },
+      primary1: { id: 'vulkarion_horn', name: 'Talismã do Vortexor', emoji: '🌀', image: 'assets/vortexor/talisma.png' },
+      primary2: { id: 'vulkarion_horn', name: 'Talismã do Vortexor', emoji: '🌀', image: 'assets/vortexor/talisma.png' },
     },
-    crystal: { id: 'vulkarion_crystal', name: 'Cristal de Vulkarion', emoji: '💎', image: 'assets/crystals/vulkarion.png' },
+    crystal: { id: 'vulkarion_crystal', name: 'Cristal de Vortexor', emoji: '💎', image: 'assets/crystals/vulkarion.png' },
+    // Rank de poder dentro da Zona 6 (ver monsterMaxHp/
+    // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4 é
+    // só 1 degrau acima do Minotauro do Trovão (rank 3).
+    powerRank: 4,
   },
   {
     stage: 70,
@@ -458,15 +459,34 @@ export const WEAK_MONSTER_GROUPS = [
       { id: 'serpentorax', name: 'Serpentorax', element: 'eletrico', emoji: '🐍', image: 'assets/serpentorax/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'serpentorax_scale', name: 'Escama Trovejante', emoji: '🟡', image: 'assets/serpentorax/escama.png' } },
     ],
   },
+  // Zona 5 (stage 41-49) — mesmo tratamento das Zonas 1-4 acima: 4 monstros
+  // próprios, elemento Fogo (mesmo do chefe da zona), cada um um pouco mais
+  // forte que o anterior (powerRank). O 5º e mais forte (Pyravalis) é o
+  // chefe da zona (ver BOSSES[4] acima — id interno 'grommuk', mantido por
+  // compatibilidade).
   {
     startStage: 41,
+    endStage: 49,
+    monsters: [
+      { id: 'lavasalam', name: 'Lavasalam', element: 'fogo', emoji: '🦎', image: 'assets/lavasalam/monster.png', powerRank: 0, spriteScale: 2.1, material: { id: 'lavasalam_drop', name: 'Gota de Lava Pura', emoji: '🔥', image: 'assets/lavasalam/gota.png' } },
+      { id: 'fornitus', name: 'Fornitus', element: 'fogo', emoji: '🌋', image: 'assets/fornitus/monster.png', powerRank: 1, spriteScale: 2.1, material: { id: 'fornitus_core', name: 'Núcleo de Magma', emoji: '🟠', image: 'assets/fornitus/nucleo.png' } },
+      { id: 'emberimp', name: 'Emberimp', element: 'fogo', emoji: '👺', image: 'assets/emberimp/monster.png', powerRank: 2, spriteScale: 2.1, material: { id: 'emberimp_ember', name: 'Fragmento de Brasa', emoji: '🔥', image: 'assets/emberimp/fragmento.png' } },
+      { id: 'ember_warden', name: 'Ember Warden', element: 'fogo', emoji: '🛡️', image: 'assets/ember_warden/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'ember_warden_blade', name: 'Lâmina Encandescente', emoji: '⚔️', image: 'assets/ember_warden/lamina.png' } },
+    ],
+  },
+  // Zona 6 (stage 51-59) — mesmo tratamento das Zonas 1-5 acima: 4 monstros
+  // próprios, elemento Elétrico (mesmo do chefe da zona), cada um um pouco
+  // mais forte que o anterior (powerRank). O 5º e mais forte (Vortexor) é
+  // o chefe da zona (ver BOSSES[5] acima — id interno 'vulkarion', mantido
+  // por compatibilidade).
+  {
+    startStage: 51,
     endStage: 59,
     monsters: [
-      { id: 'lamel', name: 'Lamel', element: 'fogo', emoji: '🦎', image: 'assets/lamel/monster.png', material: { id: 'lamel_scale', name: 'Escama Flamejante', emoji: '🔥', image: 'assets/lamel/scale.png' } },
-      { id: 'marrelho', name: 'Marrelho', element: 'agua', emoji: '🦀', image: 'assets/marrelho/monster.png', material: { id: 'marrelho_claw', name: 'Garra Marinha', emoji: '🦀', image: 'assets/marrelho/claw.png' } },
-      { id: 'casquelo', name: 'Casquelo', element: 'neutro', emoji: '🐌', image: 'assets/casquelo/monster.png', material: { id: 'casquelo_shell', name: 'Casco Rochoso', emoji: '🪨', image: 'assets/casquelo/shell.png' } },
-      { id: 'folhante', name: 'Folhante', element: 'planta', emoji: '🌿', image: 'assets/folhante/monster.png', material: { id: 'folhante_leaf', name: 'Folha Carnívora', emoji: '🌿', image: 'assets/folhante/leaf.png' } },
-      { id: 'dentelha', name: 'Dentelha', element: 'eletrico', emoji: '🐟', image: 'assets/dentelha/monster.png', material: { id: 'dentelha_fang', name: 'Presa Elétrica', emoji: '⚡', image: 'assets/dentelha/fang.png' } },
+      { id: 'luxoris', name: 'Luxoris', element: 'eletrico', emoji: '🌿', image: 'assets/luxoris/monster.png', powerRank: 0, spriteScale: 2.1, material: { id: 'luxoris_branch', name: 'Galhos de Luxoris', emoji: '🌿', image: 'assets/luxoris/galhos.png' } },
+      { id: 'ecliptor', name: 'Ecliptor', element: 'eletrico', emoji: '🌒', image: 'assets/ecliptor/monster.png', powerRank: 1, spriteScale: 2.1, material: { id: 'ecliptor_chain', name: 'Corrente do Eclipse', emoji: '⛓️', image: 'assets/ecliptor/corrente.png' } },
+      { id: 'thundrak', name: 'Thundrak', element: 'eletrico', emoji: '🐉', image: 'assets/thundrak/monster.png', powerRank: 2, spriteScale: 2.1, material: { id: 'thundrak_horn', name: 'Chifre Trovejante', emoji: '⚡', image: 'assets/thundrak/chifre.png' } },
+      { id: 'minotauro_trovao', name: 'Minotauro do Trovão', element: 'eletrico', emoji: '🐂', image: 'assets/minotauro_trovao/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'minotauro_trovao_hammer', name: 'Martelo Trovejante', emoji: '🔨', image: 'assets/minotauro_trovao/martelo.png' } },
     ],
   },
   {
