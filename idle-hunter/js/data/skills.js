@@ -7,37 +7,59 @@
 // systems/skills.js), então não tem como duplicar bônus num reload nem
 // ficar negativo.
 //
-// Formato: 5 ETAPAS, cada uma com 3 LINHAS normais (3 habilidades cada, uma
+// Formato: 6 ETAPAS, cada uma com 7 LINHAS normais (3 habilidades cada, uma
 // por COLUNA) + 1 linha ESPECIAL logo depois (3 opções mutuamente
-// exclusivas, só 1 pode ser comprada) que trava a etapa seguinte. Tudo
-// gerado por tabela (colunas/valores por etapa) em vez de escrito à mão
-// habilidade por habilidade — trocar um valor, nome ou quantidade de
-// níveis é só mexer nas tabelas abaixo, sem tocar em systems/skills.js nem
-// em stats.js.
+// exclusivas, só 1 pode ser comprada) que trava a etapa seguinte — exceto a
+// última etapa, que não tem especial (não tem uma etapa seguinte pra
+// destravar). Tudo gerado por tabela (colunas/valores por etapa) em vez de
+// escrito à mão habilidade por habilidade — trocar um valor, nome ou
+// quantidade de níveis é só mexer nas tabelas abaixo, sem tocar em
+// systems/skills.js nem em stats.js.
 //
 // Cada coluna tem uma IDENTIDADE temática (Ofensivo/Defensivo/Atributos &
-// Sorte) mas RODA por uma lista de 5 stats (não 3, como antes) — o ciclo
-// não reseta a cada etapa, continua rolando pelas 15 linhas inteiras, então
-// nenhuma etapa repete a mesma combinação de stats que a anterior. Menos
-// repetitivo que "sempre os mesmos 3 stats toda etapa".
+// Sorte) mas RODA por uma lista de 5 stats — o ciclo não reseta a cada
+// etapa, continua rolando pelas 42 linhas inteiras (6 etapas × 7 linhas),
+// então a combinação de stats de uma etapa nunca é igual à da etapa
+// anterior (o ciclo de 5 não bate com o período de 7 linhas por etapa).
 //
-// Orçamento: 3 linhas × 3 colunas × (2,2,3,3,4) níveis por etapa = 18+18+27+
-// 27+36 = 126, + 4 especiais (1 ponto cada) = 130 pontos pra completar a
-// árvore inteira.
+// Orçamento: 7 linhas × 3 colunas × (2,2,3,3,4,4) níveis por etapa =
+// 42+42+63+63+84+84 = 378, + 5 especiais (1 ponto cada, sem especial
+// depois da 6ª etapa) = 383 pontos pra completar a árvore inteira.
 // ---------------------------------------------------------------------
 
+// Quantas linhas normais cada etapa tem (fixo — só existe pra não repetir o
+// número mágico 7 espalhado pelo arquivo).
+const ROWS_PER_STAGE = 7;
+
 // Nível máximo de cada habilidade normal, por etapa (0-based).
-export const STAGE_MAX_LEVEL = [2, 2, 3, 3, 4];
+export const STAGE_MAX_LEVEL = [2, 2, 3, 3, 4, 4];
 
 // Pontos totais já gastos na árvore (soma de todas as habilidades normais +
 // especiais compradas) necessários pra poder comprar o especial que destrava
-// a etapa seguinte. 4 especiais (entre as 5 etapas — não tem especial depois
+// a etapa seguinte. 5 especiais (entre as 6 etapas — não tem especial depois
 // da última).
-export const SPECIAL_THRESHOLDS = [10, 30, 55, 80];
+export const SPECIAL_THRESHOLDS = [25, 51, 89, 128, 179];
 
 // Nomes exibidos por linha global (1ª linha da árvore inteira = I, última =
-// XV) — só cosmético, pra toda habilidade não se chamar igual.
-const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV'];
+// a linha 42) — só cosmético, pra toda habilidade não se chamar igual.
+// Função em vez de tabela fixa (a árvore agora tem 42 linhas globais, não
+// 15) — sem limite prático de tamanho.
+const ROMAN_SYMBOLS = [
+  [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
+  [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
+  [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
+];
+function toRoman(n) {
+  let result = '';
+  let remaining = n;
+  for (const [value, symbol] of ROMAN_SYMBOLS) {
+    while (remaining >= value) {
+      result += symbol;
+      remaining -= value;
+    }
+  }
+  return result;
+}
 
 // Nome legível de cada stat — reusado tanto pro nome gerado da habilidade
 // quanto pra descrição (ver skillValueLabel em ui/render.js).
@@ -67,18 +89,18 @@ const PERCENT_STATS = new Set([
   'goldPercent', 'dropPercent', 'dpsPercent', 'hpPercent', 'armorPercent',
 ]);
 
-// Progressão por etapa (0-based): atributos base +1/+2/+3/+4/+5 por nível,
-// percentuais 1%/2%/3%/4%/5% por nível. Stats "flat" (vida/armadura/dano)
-// escalam na mesma proporção, em tabelas próprias, fáceis de re-tunar aqui
-// sem mexer em mais nada.
-const ATTRIBUTE_PER_LEVEL = [1, 2, 3, 4, 5];
-const PERCENT_PER_LEVEL = [1, 2, 3, 4, 5];
+// Progressão por etapa (0-based): atributos base +1/+2/+3/+4/+5/+6 por
+// nível, percentuais 1%/2%/3%/4%/5%/6% por nível. Stats "flat" (vida/
+// armadura/dano) escalam na mesma proporção, em tabelas próprias, fáceis de
+// re-tunar aqui sem mexer em mais nada.
+const ATTRIBUTE_PER_LEVEL = [1, 2, 3, 4, 5, 6];
+const PERCENT_PER_LEVEL = [1, 2, 3, 4, 5, 6];
 const FLAT_PER_LEVEL = {
-  hpFlat: [6, 12, 18, 24, 30],
-  armorFlat: [3, 6, 9, 12, 15],
-  danoFisicoFlat: [5, 10, 15, 20, 25],
-  danoPerfuracaoFlat: [5, 10, 15, 20, 25],
-  danoMagicoFlat: [5, 10, 15, 20, 25],
+  hpFlat: [6, 12, 18, 24, 30, 36],
+  armorFlat: [3, 6, 9, 12, 15, 18],
+  danoFisicoFlat: [5, 10, 15, 20, 25, 30],
+  danoPerfuracaoFlat: [5, 10, 15, 20, 25, 30],
+  danoMagicoFlat: [5, 10, 15, 20, 25, 30],
 };
 
 function valuePerLevel(stat, stageIndex) {
@@ -89,11 +111,8 @@ function valuePerLevel(stat, stageIndex) {
 }
 
 // As 3 colunas da árvore, cada uma com uma rotação de 5 stats — o stat de
-// uma linha é `rotation[globalRow % 5]` (globalRow 0..14, contínuo pelas 5
-// etapas, não reseta): cada stat aparece só 3x na árvore inteira (contra 5x
-// quando o ciclo era de 3), e a combinação de stats de uma etapa nunca é
-// igual à da etapa anterior (o ciclo de 5 não bate com o período de 3
-// linhas por etapa).
+// uma linha é `rotation[globalRow % 5]` (globalRow 0..41, contínuo pelas 6
+// etapas, não reseta a cada etapa).
 const OFFENSE_ROTATION = ['danoFisicoFlat', 'danoPerfuracaoFlat', 'danoMagicoFlat', 'critChancePercent', 'critDamagePercent'];
 const DEFENSE_ROTATION = ['hpFlat', 'hpPercent', 'armorFlat', 'armorPercent', 'dodgePercent'];
 const ATTRIBUTE_LUCK_ROTATION = ['forca', 'destreza', 'inteligencia', 'goldPercent', 'dropPercent'];
@@ -103,8 +122,8 @@ const ATTRIBUTE_LUCK_ROTATION = ['forca', 'destreza', 'inteligencia', 'goldPerce
 /// especial — só a última, ver STAGE_MAX_LEVEL, não tem uma depois dela).
 function buildTree(columnRotations, specialsByStage) {
   const stages = STAGE_MAX_LEVEL.map((maxLevel, stageIndex) => {
-    const rows = [0, 1, 2].map((rowIndex) => {
-      const globalRow = stageIndex * 3 + rowIndex; // 0..14
+    const rows = Array.from({ length: ROWS_PER_STAGE }, (_, rowIndex) => {
+      const globalRow = stageIndex * ROWS_PER_STAGE + rowIndex; // 0..41
       return columnRotations.map((rotation, colIndex) => {
         const stat = rotation[globalRow % rotation.length];
         const perLevel = valuePerLevel(stat, stageIndex);
@@ -114,7 +133,7 @@ function buildTree(columnRotations, specialsByStage) {
           rowIndex,
           colIndex,
           stat,
-          name: `${STAT_DISPLAY_NAME[stat]} ${ROMAN[globalRow]}`,
+          name: `${STAT_DISPLAY_NAME[stat]} ${toRoman(globalRow + 1)}`,
           maxLevel,
           perLevel,
         };
@@ -139,7 +158,8 @@ function buildTree(columnRotations, specialsByStage) {
 // Especiais: em cada etapa, 3 opções mutuamente exclusivas representando um
 // "estilo de build" (ofensivo/defensivo/sorte) em vez de uma classe —
 // reaproveita os mesmos números das antigas especiais de Arqueiro/
-// Guerreiro/Mago (já calibrados), só sem o rótulo de classe.
+// Guerreiro/Mago (já calibrados) pras primeiras 4 etapas, com uma 5ª etapa
+// nova continuando a mesma escalada pra fechar as 6 etapas.
 const SPECIALS_BY_STAGE = [
   [
     { name: 'Golpe Certeiro', bonuses: [{ stat: 'critChancePercent', value: 3 }, { stat: 'critDamagePercent', value: 4 }] },
@@ -160,6 +180,11 @@ const SPECIALS_BY_STAGE = [
     { name: 'Ceifador Implacável', bonuses: [{ stat: 'critChancePercent', value: 10 }, { stat: 'critDamagePercent', value: 12 }, { stat: 'attackSpeedPercent', value: 10 }, { stat: 'dpsPercent', value: 8 }] },
     { name: 'Fortaleza Ambulante', bonuses: [{ stat: 'hpFlat', value: 110 }, { stat: 'armorFlat', value: 70 }, { stat: 'armorPercent', value: 12 }] },
     { name: 'Riqueza Absoluta', bonuses: [{ stat: 'goldPercent', value: 16 }, { stat: 'dropPercent', value: 16 }, { stat: 'dpsPercent', value: 10 }] },
+  ],
+  [
+    { name: 'Predador Supremo', bonuses: [{ stat: 'critChancePercent', value: 14 }, { stat: 'critDamagePercent', value: 17 }, { stat: 'attackSpeedPercent', value: 14 }, { stat: 'dpsPercent', value: 12 }] },
+    { name: 'Titã Imortal', bonuses: [{ stat: 'hpFlat', value: 160 }, { stat: 'armorFlat', value: 100 }, { stat: 'armorPercent', value: 17 }] },
+    { name: 'Tesouro Lendário', bonuses: [{ stat: 'goldPercent', value: 23 }, { stat: 'dropPercent', value: 23 }, { stat: 'dpsPercent', value: 14 }] },
   ],
 ];
 
@@ -195,4 +220,4 @@ export function findSpecialById(specialId) {
 
 // Total de pontos possíveis pra completar a árvore inteira — só informativo
 // pra UI.
-export const TOTAL_TREE_POINTS = STAGE_MAX_LEVEL.reduce((sum, max) => sum + max * 9, 0) + SPECIAL_THRESHOLDS.length;
+export const TOTAL_TREE_POINTS = STAGE_MAX_LEVEL.reduce((sum, max) => sum + max * ROWS_PER_STAGE * 3, 0) + SPECIAL_THRESHOLDS.length;
