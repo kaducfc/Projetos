@@ -874,7 +874,28 @@ function skillTreeHtml(state) {
   return `<div class="skill-tree">${stagesHtml}</div>`;
 }
 
-export function renderUpgradesTab(state) {
+/// resetConfirming: true depois do 1º clique em "Resetar Pontos" — mostra
+/// a confirmação inline (mesmo padrão non-blocking do "Destruir
+/// selecionados" do inventário, ver bulkSelectToolbarHtml acima —
+/// window.confirm fica bloqueado no iframe sandboxed do Artifact) antes de
+/// zerar purchased/specials de vez.
+function skillResetRowHtml(state, resetConfirming) {
+  if (getSpentSkillPoints(state) < 1) return '';
+  if (resetConfirming) {
+    return `
+      <div class="skill-reset-row">
+        <span>Resetar todos os pontos investidos na árvore?</span>
+        <div class="modal-action-row">
+          <button class="modal-action-btn destroy-btn" data-skill-reset-confirm>Confirmar reset</button>
+          <button class="modal-action-btn" data-skill-reset-cancel>Cancelar</button>
+        </div>
+      </div>
+    `;
+  }
+  return `<button class="skill-reset-btn" data-skill-reset-start>🔄 Resetar Pontos</button>`;
+}
+
+export function renderUpgradesTab(state, resetConfirming = false) {
   const container = document.getElementById('tab-upgrades');
   const total = getTotalSkillPoints(state);
   const available = getAvailableSkillPoints(state);
@@ -882,6 +903,7 @@ export function renderUpgradesTab(state) {
   const header = `
     <div class="skills-header">
       <div class="skills-points">🔹 Pontos disponíveis: <strong>${available}</strong> (${getSpentSkillPoints(state)}/${total} gastos)</div>
+      ${skillResetRowHtml(state, resetConfirming)}
     </div>
   `;
 
