@@ -1,4 +1,5 @@
 import { getSkillTree, findSkillById, findSpecialById, SPECIAL_THRESHOLDS } from '../data/skills.js';
+import { SKILL_TREE_VERSION } from '../state.js';
 
 /// Pontos totais já ganhos: 1 por nível de caça acima do 1 (nunca guardado
 /// à parte — ver comentário em state.js). Sempre derivado, então nunca
@@ -84,5 +85,17 @@ export function buySpecial(state, specialOptionId) {
   if (!canBuySpecial(state, specialOptionId)) return false;
   const option = findSpecialById(specialOptionId);
   state.skillTree.specials[option.stageIndex] = option.id;
+  return true;
+}
+
+/// Reseta a árvore inteira: limpa purchased/specials, devolvendo todos os
+/// pontos gastos (nunca ficam "perdidos" — getAvailableSkillPoints já é
+/// sempre hunterLevel-1 menos o total gasto aqui, então esvaziar
+/// purchased/specials já basta pra devolver tudo, sem precisar guardar um
+/// contador de pontos à parte). Mantém treeVersion (mesmo formato de
+/// árvore, só o progresso zera) pra loadState() não achar que é um save
+/// desatualizado.
+export function resetSkillTree(state) {
+  state.skillTree = { purchased: {}, specials: {}, treeVersion: SKILL_TREE_VERSION };
   return true;
 }

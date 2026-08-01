@@ -37,8 +37,9 @@ export const STAGE_MAX_LEVEL = [2, 2, 3, 3, 4, 4];
 // Pontos totais já gastos na árvore (soma de todas as habilidades normais +
 // especiais compradas) necessários pra poder comprar o especial que destrava
 // a etapa seguinte. 5 especiais (entre as 6 etapas — não tem especial depois
-// da última).
-export const SPECIAL_THRESHOLDS = [25, 51, 89, 128, 179];
+// da última). Reduzido em 40% do valor original ([25, 51, 89, 128, 179]) a
+// pedido do usuário, pra destravar etapa mais cedo.
+export const SPECIAL_THRESHOLDS = [15, 31, 53, 77, 107];
 
 // Nomes exibidos por linha global (1ª linha da árvore inteira = I, última =
 // a linha 42) — só cosmético, pra toda habilidade não se chamar igual.
