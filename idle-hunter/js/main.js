@@ -111,9 +111,18 @@ let pendingAscension = null;
 // a cada kill pra refletir XP/pontos novos) — sem isso, matar um monstro
 // bem no meio da confirmação fecharia o diálogo sozinho.
 let skillResetConfirming = false;
+// Ordenação da grade de Inventário da aba Mascotes — null = ordem padrão
+// (a de state.pets, ou seja, ordem de chocar/fundir); 'level'/'rarity'/
+// 'element' reordenam só a EXIBIÇÃO (ver sortPetsForDisplay em
+// ui/render.js), nunca mexem em state.pets em si.
+let petSortMode = null;
 
 function renderUpgradesTabNow() {
   renderUpgradesTab(state, skillResetConfirming);
+}
+
+function renderPetsTabNow() {
+  renderPetsTab(state, petSortMode);
 }
 
 function renderInventoryTabNow() {
@@ -227,7 +236,7 @@ function fullRefresh() {
   renderCardsTab(state);
   renderEventsTabNow();
   renderShopTab(state, activeShopSubTab);
-  renderPetsTab(state);
+  renderPetsTabNow();
 }
 
 function refreshCombatOnly() {
@@ -262,7 +271,7 @@ function handleKillEvent(event) {
   }
   if (event.eggGained) {
     showToast('🥚 Ovo de mascote encontrado!');
-    renderPetsTab(state);
+    renderPetsTabNow();
   }
   renderTopBar(state);
   renderHunterLevel(state);
@@ -671,7 +680,7 @@ function wireModalEvents() {
           return;
         }
         showPetDetailModal(state, uid);
-        renderPetsTab(state);
+        renderPetsTabNow();
       });
       return;
     }
@@ -683,7 +692,7 @@ function wireModalEvents() {
         const slotIndex = state.equippedPetUids.indexOf(uid);
         if (slotIndex !== -1) unequipPetSlot(state, slotIndex);
         showPetDetailModal(state, uid);
-        renderPetsTab(state);
+        renderPetsTabNow();
       });
       return;
     }
@@ -697,7 +706,7 @@ function wireModalEvents() {
           hideModal();
           showToast(`💰 Mascote vendido por +${formatNumber(value)} ouro.`);
           renderTopBar(state);
-          renderPetsTab(state);
+          renderPetsTabNow();
         }
       });
       return;
@@ -720,7 +729,7 @@ function wireModalEvents() {
         if (fused) {
           showToast(`✨ Mascotes fundidos! Novo nível: +${fused.level}`);
           showPetDetailModal(state, fused.uid);
-          renderPetsTab(state);
+          renderPetsTabNow();
         }
       });
       return;
@@ -742,7 +751,7 @@ function wireModalEvents() {
           ? `🎒 Inventário de mascotes cheio! Mascote convertido em +${formatNumber(fragments)} 🧩 Fragmentos.`
           : '🐣 Novo mascote chocado!');
         renderTopBar(state);
-        renderPetsTab(state);
+        renderPetsTabNow();
       });
       return;
     }
@@ -883,7 +892,7 @@ function giveUpEvent() {
 function handleEventBossVictory(boss) {
   const { gained, currency, cardDropped, eggGained } = claimEventVictory(state, state.eventEnteredCycle, boss);
   showEventRewardModal(boss, gained, currency, cardDropped);
-  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
+  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTabNow(); }
   renderTopBar(state);
   renderInventoryTabNow();
   renderCardsTab(state);
@@ -960,7 +969,7 @@ function finishTowerRun(cleared200) {
   towerDeadline = null;
   towerHp = null;
   showTowerRewardModal(level, cleared200, currency, goldGained, gained, eggsGained);
-  renderPetsTab(state);
+  renderPetsTabNow();
   renderEventsTabNow();
   renderTopBar(state);
   renderInventoryTabNow();
@@ -1049,7 +1058,7 @@ function finishGoldMine() {
   const { goldGained, eggGained } = endGoldMineRun(state);
   goldMineDeadline = null;
   showGoldMineRewardModal(goldGained);
-  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
+  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTabNow(); }
   renderEventsTabNow();
   renderTopBar(state);
 }
@@ -1174,7 +1183,7 @@ function hatchAllEggsNow() {
   }
   showToast(msg);
   renderTopBar(state);
-  renderPetsTab(state);
+  renderPetsTabNow();
 }
 
 function fuseAllPetsNow() {
@@ -1184,7 +1193,7 @@ function fuseAllPetsNow() {
     return;
   }
   showToast(`🌟 ${fusionsPerformed} fusão${fusionsPerformed === 1 ? '' : 'ões'} realizada${fusionsPerformed === 1 ? '' : 's'}, resultando em ${resultingPets} mascote${resultingPets === 1 ? '' : 's'}!`);
-  renderPetsTab(state);
+  renderPetsTabNow();
 }
 
 function wirePetsTabEvents() {
@@ -1197,6 +1206,13 @@ function wirePetsTabEvents() {
 
     const fuseAllBtn = e.target.closest('[data-fuse-all-btn]');
     if (fuseAllBtn) { fuseAllPetsNow(); return; }
+
+    const sortBtn = e.target.closest('[data-pet-sort]');
+    if (sortBtn) {
+      petSortMode = sortBtn.dataset.petSort || null;
+      renderPetsTabNow();
+      return;
+    }
 
     const slotBtn = e.target.closest('[data-pet-slot]');
     if (slotBtn) {
@@ -1297,7 +1313,7 @@ function wireShopTabEvents() {
         // nelas se não fossem re-renderizadas aqui também (nenhuma das duas
         // é a Loja, então o tick normal de combate não as toca).
         renderInventoryTabNow();
-        renderPetsTab(state);
+        renderPetsTabNow();
       }
       return;
     }
