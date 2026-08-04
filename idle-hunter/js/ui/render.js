@@ -975,13 +975,19 @@ export function renderCardsTab(state) {
   const commonCards = CARDS.filter((c) => !c.isBossCard);
   const bossOwned = bossCards.filter((c) => isCardDiscovered(state, c.id)).length;
   const commonOwned = commonCards.filter((c) => isCardDiscovered(state, c.id)).length;
+  // Bônus de DPS por COLEÇÃO (ver getCardCollectionDpsBonusPercent em
+  // systems/cards.js — 1%/carta de monstro, 5%/carta de boss, permanente
+  // por descoberta) — mostrado ao lado de cada contador, já quebrado por
+  // seção, pra ficar óbvio de onde cada parte do bônus vem.
+  const bossDpsBonus = bossOwned * 5;
+  const commonDpsBonus = commonOwned * 1;
 
   container.innerHTML = `
     <img class="section-banner-img" src="assets/ui/titles/cartas.png" alt="Cartas">
     ${cardsSummaryHtml(state)}
-    <h3 class="cards-section-title">👑 Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span></h3>
+    <h3 class="cards-section-title">👑 Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span> <span class="cards-dps-bonus">+${bossDpsBonus}% DPS</span></h3>
     <div class="card-grid">${bossCards.map((c) => cardTileHtml(state, c)).join('')}</div>
-    <h3 class="cards-section-title">🃏 Cartas de Monstros <span class="cards-collected">Colecionadas: ${commonOwned}/${commonCards.length}</span></h3>
+    <h3 class="cards-section-title">🃏 Cartas de Monstros <span class="cards-collected">Colecionadas: ${commonOwned}/${commonCards.length}</span> <span class="cards-dps-bonus">+${commonDpsBonus}% DPS</span></h3>
     <div class="card-grid">${commonCards.map((c) => cardTileHtml(state, c)).join('')}</div>
   `;
 }
