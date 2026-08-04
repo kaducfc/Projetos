@@ -3,18 +3,20 @@
 export const CASH_SHOP_ITEMS = [
   { id: 'cash_gold_s', name: 'Saco de Ouro', emoji: '💰', cost: 10, kind: 'gold', amount: 5000, description: '+5.000 de ouro na hora.' },
   { id: 'cash_gold_l', name: 'Baú de Ouro', emoji: '🪙', cost: 40, kind: 'gold', amount: 30000, description: '+30.000 de ouro na hora.' },
-  // Por tempo, não permanente — cada compra soma VIP_DURATION_MS (30 dias)
-  // a state.vipExpiresAt, empilhando em cima do que já restava (ver
-  // buyCashItem em systems/shop.js, isVipActive em state.js). Sem "amount"
-  // nenhum pra dar (kind: 'vip' é tratado à parte de kind: 'gold' em
-  // buyCashItem). Efeitos reais enquanto ativo: +50 no limite de
-  // inventário de itens/pets (VIP_INVENTORY_BONUS, ver data/items.js/
-  // data/pets.js), escolha livre do mascote da direita ao chocar ovo (ver
-  // canChooseRightPet em systems/pets.js), e "Chocar Todos" liberado (ver
-  // canHatchAllEggs em systems/pets.js).
+  // Por tempo, NÃO empilhável — cada compra soma VIP_DURATION_MS (30 dias)
+  // a partir de agora (ver buyCashItem em systems/shop.js); enquanto
+  // state.vipExpiresAt ainda está no futuro (isVipActive, ver state.js), a
+  // compra fica bloqueada (canBuyCashItem) até o contador zerar de vez.
+  // Sem "amount" nenhum pra dar (kind: 'vip' é tratado à parte de
+  // kind: 'gold' em buyCashItem). Efeitos reais enquanto ativo: +50 no
+  // limite de inventário de itens (VIP_INVENTORY_BONUS, ver
+  // data/items.js) e +100 no de mascotes (PET_VIP_INVENTORY_BONUS, ver
+  // data/pets.js — valor próprio, maior), escolha livre do mascote da
+  // direita ao chocar ovo (ver canChooseRightPet em systems/pets.js), e
+  // "Chocar Todos" liberado (ver canHatchAllEggs em systems/pets.js).
   {
     id: 'cash_vip', name: 'VIP', emoji: '👑', cost: 10, kind: 'vip',
-    description: '30 dias de: +50 no limite de inventário (itens e mascotes), escolha livre do mascote da direita ao chocar ovo, e o botão Chocar Todos. Empilha se comprar de novo.',
+    description: '30 dias de: +50 no limite de inventário de itens, +100 no de mascotes, escolha livre do mascote da direita ao chocar ovo, e o botão Chocar Todos.',
   },
 ];
 

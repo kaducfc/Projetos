@@ -1609,15 +1609,17 @@ function cashShopHtml(state) {
     </div>`).join('');
 
   const shopItemsHtml = CASH_SHOP_ITEMS.map((item) => {
-    // VIP é por tempo e empilhável (ver systems/shop.js buyCashItem) — o
-    // botão de comprar continua sempre ativo (respeitando só o custo em
-    // Cash), diferente de um desbloqueio único que travaria depois da 1ª
-    // compra. A linha de status abaixo do nome mostra quantos dias restam
-    // quando já está ativo.
-    const vipStatus = item.kind === 'vip' && isVipActive(state)
-      ? `<div class="desc vip-days-left">👑 Ativo — expira em ${Math.max(1, Math.ceil((state.vipExpiresAt - Date.now()) / 86400000))} dia(s). Comprar de novo soma +30 dias.</div>`
+    // VIP é por tempo, não empilhável (ver systems/shop.js
+    // canBuyCashItem/buyCashItem) — o botão fica travado enquanto ainda
+    // está ativo, só volta a ficar comprável depois que os dias
+    // restantes zerarem e o VIP expirar de vez.
+    const vipActiveNow = item.kind === 'vip' && isVipActive(state);
+    const vipStatus = vipActiveNow
+      ? `<div class="desc vip-days-left">👑 Ativo — expira em ${Math.max(1, Math.ceil((state.vipExpiresAt - Date.now()) / 86400000))} dia(s). Só dá pra comprar de novo depois de expirar.</div>`
       : '';
-    const buyBtn = `<button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>`;
+    const buyBtn = vipActiveNow
+      ? `<button disabled title="Já é VIP — espere o contador zerar pra comprar de novo">👑 Ativo</button>`
+      : `<button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>`;
     return `
     <div class="shop-item-card">
       <span class="icon">${item.emoji}</span>
