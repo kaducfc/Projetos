@@ -32,11 +32,36 @@ export function addPetToInventory(state, candidate) {
   return { uid, discarded: false };
 }
 
+/// Só 1 mascote equipado por elemento — equipar um 2º do mesmo elemento
+/// (fogo/planta/elétrico/água) é bloqueado, mesmo que sobre slot vazio;
+/// desequipar o outro primeiro é intencional (mesmo padrão de "sem
+/// substituição automática" que qualquer bloqueio explícito no jogo). Um
+/// pet já equipado sempre pode "equipar de novo" nele mesmo (uid igual —
+/// no-op via equipPet, usado por engano não deveria travar em nada).
+export function canEquipPet(state, uid) {
+  const pet = getPetEntry(state, uid);
+  if (!pet) return false;
+  const species = getPetSpecies(pet.speciesId);
+  if (!species) return false;
+  return !(state.equippedPetUids || []).some((eqUid) => {
+    if (!eqUid || eqUid === uid) return false;
+    const eqPet = getPetEntry(state, eqUid);
+    const eqSpecies = eqPet ? getPetSpecies(eqPet.speciesId) : null;
+    return eqSpecies && eqSpecies.element === species.element;
+  });
+}
+
 /// Equipa sem precisar escolher slot manualmente: primeiro slot vazio, ou
 /// sobrescreve o slot 0 se os 4 já estiverem ocupados — mesmo padrão do
-/// anel em systems/equipment.js (equipItem).
+/// anel em systems/equipment.js (equipItem). Com a regra de 1-por-elemento
+/// acima, "os 4 já estiverem ocupados" na prática só acontece quando os 4
+/// elementos diferentes já estão representados — nesse ponto canEquipPet já
+/// teria barrado antes de chegar aqui pra qualquer pet cujo elemento já
+/// esteja equipado, então esse fallback de sobrescrever o slot 0 nunca
+/// chega a rodar de verdade nesse caso (documentado, não removido, pra não
+/// mudar o formato do array por engano).
 export function equipPet(state, uid) {
-  if (!getPetEntry(state, uid)) return false;
+  if (!canEquipPet(state, uid)) return false;
   state.equippedPetUids = state.equippedPetUids.map((u) => (u === uid ? null : u));
   const emptyIndex = state.equippedPetUids.findIndex((u) => !u);
   state.equippedPetUids[emptyIndex !== -1 ? emptyIndex : 0] = uid;
