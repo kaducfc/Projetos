@@ -1,12 +1,12 @@
 import { CASH_SHOP_ITEMS, AD_WATCH_COOLDOWN_MS, AD_WATCH_CASH_REWARD } from '../data/shop.js';
+import { isVipActive, VIP_DURATION_MS } from '../state.js';
 
 export function canBuyCashItem(state, id) {
   const item = CASH_SHOP_ITEMS.find((i) => i.id === id);
   if (!item) return false;
-  // VIP é um desbloqueio permanente, não um consumível — sem isso o botão
-  // continuaria "comprável" pra sempre e cada clique gastaria mais 10 Cash
-  // à toa (state.vip = true de novo não faz nada, mas o Cash sumiria).
-  if (item.kind === 'vip' && state.vip) return false;
+  // VIP é por tempo, não permanente — comprar de novo é sempre válido,
+  // mesmo já sendo VIP (empilha mais VIP_DURATION_MS em cima, ver
+  // buyCashItem abaixo), diferente de um desbloqueio único.
   return state.cash >= item.cost;
 }
 
@@ -15,7 +15,14 @@ export function buyCashItem(state, id) {
   const item = CASH_SHOP_ITEMS.find((i) => i.id === id);
   state.cash -= item.cost;
   if (item.kind === 'gold') state.gold += item.amount;
-  else if (item.kind === 'vip') state.vip = true;
+  else if (item.kind === 'vip') {
+    // Empilha: se o VIP ainda está ativo, soma a partir do vencimento
+    // atual (não perde o tempo que já tinha); se já expirou (ou nunca
+    // comprou), começa a contar a partir de agora.
+    const now = Date.now();
+    const base = isVipActive(state, now) ? state.vipExpiresAt : now;
+    state.vipExpiresAt = base + VIP_DURATION_MS;
+  }
   return true;
 }
 
