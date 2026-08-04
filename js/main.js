@@ -1,4 +1,4 @@
-import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
+import { createDefaultState, loadState, saveState, hardResetState, isVipActive } from './state.js';
 import { computePlayerStats, getElementalResistance, getCardDamageBonus } from './systems/stats.js';
 import {
   getCurrentMonster, applyDamage, ensureMonsterSpawned, armorReduction, resolveHit,
@@ -729,7 +729,7 @@ function wireModalEvents() {
         const side = hatchChooseBtn.dataset.hatchChoose;
         if (!pendingHatchCandidates) return;
         if (side === 'right' && !canChooseRightPet(state)) return; // defensivo — botão já vem disabled
-        if (side === 'right' && !state.vip) useFreeRightPetChoice(state);
+        if (side === 'right' && !isVipActive(state)) useFreeRightPetChoice(state);
         const chosen = pendingHatchCandidates[side === 'left' ? 0 : 1];
         pendingHatchCandidates = null;
         state.eggCount = Math.max(0, (state.eggCount || 0) - 1);
@@ -1153,6 +1153,7 @@ function openHatchModal() {
 }
 
 function hatchAllEggsNow() {
+  if (!isVipActive(state)) { showToast('👑 Chocar Todos é uma funcionalidade exclusiva de VIP — compre na loja de Cash.'); return; }
   if ((state.eggCount || 0) < 1) return;
   const summary = hatchAllEggs(state);
   const rarityBreakdown = Object.entries(summary.byRarity)
@@ -1283,6 +1284,12 @@ function wireShopTabEvents() {
         showToast('🛒 Compra realizada!');
         renderTopBar(state);
         renderShopTab(state, activeShopSubTab);
+        // VIP muda o limite de inventário (itens/mascotes) e libera "Chocar
+        // Todos" — essas 2 abas ficariam com dado velho até a próxima ação
+        // nelas se não fossem re-renderizadas aqui também (nenhuma das duas
+        // é a Loja, então o tick normal de combate não as toca).
+        renderInventoryTabNow();
+        renderPetsTab(state);
       }
       return;
     }

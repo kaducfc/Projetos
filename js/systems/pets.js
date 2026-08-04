@@ -3,6 +3,7 @@ import {
   rollPetCandidate, isPetCandidateBetter,
 } from '../data/pets.js';
 import { elementDamageModifier } from '../data/elements.js';
+import { isVipActive } from '../state.js';
 
 export const MAX_EQUIPPED_PETS = 4;
 
@@ -146,7 +147,7 @@ export function currentDailyCycle(now = Date.now()) {
 }
 
 export function canChooseRightPet(state) {
-  if (state.vip) return true;
+  if (isVipActive(state)) return true;
   return state.freeRightPetChoiceCycle !== currentDailyCycle();
 }
 
@@ -232,25 +233,30 @@ export function fuseAllPossiblePets(state) {
 }
 
 // ---------------------------------------------------------------------
-// Chocar todos os ovos de uma vez (botão "Chocar Todos" na aba Mascotes).
+// Chocar todos os ovos de uma vez (botão "Chocar Todos" na aba Mascotes)
+// — funcionalidade exclusiva de VIP ativo (ver isVipActive em state.js).
 // Cada ovo continua rolando os mesmos 2 candidatos independentes de
 // sempre (ver rollPetCandidate em data/pets.js) — só a ESCOLHA entre os 2
 // é automática aqui em vez de abrir o modal, priorizando sempre maior
-// raridade e, empatado, maior Tier (ver isPetCandidateBetter). A regra de
-// VIP/escolha grátis diária pro lado direito continua valendo igual ao
-// choco manual (canChooseRightPet/useFreeRightPetChoice) — processa ovo a
-// ovo, então só o 1º ovo do lote pode usar a escolha grátis do dia se o
-// jogador não for VIP; os demais ficam restritos ao lado esquerdo até lá,
-// exatamente como aconteceria chocando um por um.
+// raridade e, empatado, maior Tier (ver isPetCandidateBetter). Como só
+// roda com VIP ativo, canChooseRightPet(state) já dá true sempre aqui
+// dentro (VIP sempre pode o lado direito, sem gastar a escolha diária) —
+// mantido explícito mesmo assim, e útil se essa função algum dia rodar
+// fora do gate de VIP.
+export function canHatchAllEggs(state) {
+  return isVipActive(state) && (state.eggCount || 0) > 0;
+}
+
 export function hatchAllEggs(state) {
   const summary = { hatched: 0, discardedCount: 0, fragmentsGained: 0, byRarity: {} };
+  if (!canHatchAllEggs(state)) return summary;
   while ((state.eggCount || 0) > 0) {
     const left = rollPetCandidate();
     const right = rollPetCandidate();
     let chosen = left;
     if (canChooseRightPet(state) && isPetCandidateBetter(right, left)) {
       chosen = right;
-      if (!state.vip) useFreeRightPetChoice(state);
+      if (!isVipActive(state)) useFreeRightPetChoice(state);
     }
     state.eggCount -= 1;
     const { discarded, fragments } = addPetToInventory(state, chosen);
