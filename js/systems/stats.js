@@ -3,6 +3,7 @@ import { UPGRADES } from '../data/upgrades.js';
 import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard, CARD_DAMAGE_BONUS } from '../data/cards.js';
 import { ensureCardIds } from './crafting.js';
+import { getCardCollectionDpsBonusPercent } from './cards.js';
 import { getSkillTree } from '../data/skills.js';
 import { getSkillLevel, getChosenSpecialId } from './skills.js';
 
@@ -254,6 +255,11 @@ export function computePlayerStats(state, currentHp = null) {
   if (vulkarionCount > 0) {
     dpsPercent += (1 - hpFraction) * 60 * vulkarionCount;
   }
+
+  // Bônus de coleção de cartas (ver getCardCollectionDpsBonusPercent em
+  // systems/cards.js) — permanente por carta já descoberta ao menos uma vez,
+  // separado do bônus de carta SOCKETADA acima (os dois se somam).
+  dpsPercent += getCardCollectionDpsBonusPercent(state);
 
   const goldDoubleChance = Math.min(100, 20 * (specialCounts.gold_double_chance || 0));
   const bossReprocChance = Math.min(100, 10 * (specialCounts.boss_kill_reproc || 0));

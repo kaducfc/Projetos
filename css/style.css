@@ -2636,6 +2636,16 @@ button:disabled {
   color: var(--text-dim);
 }
 
+/* Bônus de DPS por coleção (ver getCardCollectionDpsBonusPercent em
+   systems/cards.js) — ao lado do contador de coleção, cor própria pra
+   separar visualmente "quantas tenho" (cards-collected, neutro) de "quanto
+   isso já rende" (verde, positivo). */
+.cards-dps-bonus {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--green, #2e9e4f);
+}
+
 .cards-summary-box {
   background: var(--grad-neutral);
   border: 2px solid var(--border);

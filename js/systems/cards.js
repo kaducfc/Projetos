@@ -1,4 +1,4 @@
-import { CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
+import { CARD_DISCOVERY_CASH_REWARD, CARDS } from '../data/cards.js';
 
 /// True forever once the player has ever obtained at least one copy of
 /// this card — independent of the live count in state.cards, which can
@@ -32,4 +32,24 @@ export function claimCardReward(state, cardId) {
   state.cardsRewardClaimed[cardId] = true;
   state.cash += CARD_DISCOVERY_CASH_REWARD;
   return true;
+}
+
+// ---------------------------------------------------------------------
+// Bônus de DPS por COLECIONAR — permanente assim que uma carta é descoberta
+// pela 1ª vez (isCardDiscovered acima), independente de ela ainda estar na
+// mão ou já ter sido socketada num item (diferente do bônus de carta
+// socketada, ver getCard/CARD_EFFECTS em stats.js — os dois se somam).
+// Nunca diminui: uma carta descoberta continua contando pra sempre, mesmo
+// se o jogador nunca mais tiver uma cópia dela em mãos.
+// ---------------------------------------------------------------------
+const NORMAL_CARD_DPS_BONUS_PERCENT = 1;
+const BOSS_CARD_DPS_BONUS_PERCENT = 5;
+
+export function getCardCollectionDpsBonusPercent(state) {
+  let bonus = 0;
+  for (const card of CARDS) {
+    if (!isCardDiscovered(state, card.id)) continue;
+    bonus += card.isBossCard ? BOSS_CARD_DPS_BONUS_PERCENT : NORMAL_CARD_DPS_BONUS_PERCENT;
+  }
+  return bonus;
 }
