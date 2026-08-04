@@ -1,4 +1,5 @@
 import { RARITIES, getRarity, VIP_INVENTORY_BONUS } from './items.js';
+import { isVipActive } from '../state.js';
 
 // Mascotes causam um dano ELEMENTAL à parte do dano do personagem (que
 // agora é sempre Neutro, ver systems/stats.js) — só os 4 elementos "de
@@ -166,7 +167,7 @@ export function isPetCandidateBetter(a, b) {
 export const PET_INVENTORY_CAP = 100;
 
 export function getPetInventoryCap(state) {
-  return PET_INVENTORY_CAP + (state.vip ? VIP_INVENTORY_BONUS : 0);
+  return PET_INVENTORY_CAP + (isVipActive(state) ? VIP_INVENTORY_BONUS : 0);
 }
 
 /// Valor de venda em ouro — usado tanto pro auto-sell ao bater o limite do

@@ -20,7 +20,8 @@ import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../sy
 import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
 import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
 import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, getPetDpsBonusPercent, PET_MAX_LEVEL, getPetInventoryCap } from '../data/pets.js';
-import { getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet } from '../systems/pets.js';
+import { getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet, canHatchAllEggs } from '../systems/pets.js';
+import { isVipActive } from '../state.js';
 import { getSkillTree, STAT_DISPLAY_NAME, SPECIAL_THRESHOLDS } from '../data/skills.js';
 import {
   getTotalSkillPoints, getSpentSkillPoints, getAvailableSkillPoints, getSkillLevel,
@@ -1056,13 +1057,17 @@ export function renderPetsTab(state) {
     : `<p class="empty-slot">Nenhum mascote ainda. Derrote monstros ou vença eventos pra achar ovos, depois choque na aba aqui em cima.</p>`;
 
   const eggCount = state.eggCount || 0;
+  const vipActive = isVipActive(state);
+  const hatchAllTitle = vipActive
+    ? 'Escolhe sempre o mascote de maior raridade (e maior Tier no empate) de cada ovo, sem abrir o modal de escolha'
+    : 'Funcionalidade exclusiva de VIP (loja de Cash)';
   container.innerHTML = `
     <div class="section-banner section-banner-sm">🐾 Mascotes</div>
     <div class="pets-egg-row">
       <span class="pets-egg-count">🥚 Ovos: <strong>${formatNumber(eggCount)}</strong></span>
       <span class="pets-egg-count">🧩 Fragmentos: <strong>${formatNumber(state.petFragments || 0)}</strong></span>
       <button class="pets-hatch-btn" data-hatch-egg-btn ${eggCount < 1 ? 'disabled' : ''}>Chocar Ovo</button>
-      <button class="pets-hatch-btn" data-hatch-all-btn ${eggCount < 1 ? 'disabled' : ''} title="Escolhe sempre o mascote de maior raridade (e maior Tier no empate) de cada ovo, sem abrir o modal de escolha">Chocar Todos (${formatNumber(eggCount)})</button>
+      <button class="pets-hatch-btn" data-hatch-all-btn ${canHatchAllEggs(state) ? '' : 'disabled'} title="${hatchAllTitle}">👑 Chocar Todos (${formatNumber(eggCount)})</button>
     </div>
     <div class="equip-inventory-header">Equipados (até ${MAX_EQUIPPED_PETS})</div>
     <div class="pets-equip-row">${equipRow}</div>
@@ -1159,8 +1164,8 @@ export function showHatchModal(state, candidates) {
       ${hatchCandidateHtml(left, 'left', true)}
       ${hatchCandidateHtml(right, 'right', canRight)}
     </div>
-    ${!state.vip && canRight ? '<p class="hatch-free-note">✨ Escolha grátis do lado direito disponível hoje!</p>' : ''}
-    ${!state.vip && !canRight ? '<p class="hatch-free-note">🔒 O lado direito só com VIP (ou amanhã, na próxima escolha grátis).</p>' : ''}
+    ${!isVipActive(state) && canRight ? '<p class="hatch-free-note">✨ Escolha grátis do lado direito disponível hoje!</p>' : ''}
+    ${!isVipActive(state) && !canRight ? '<p class="hatch-free-note">🔒 O lado direito só com VIP (ou amanhã, na próxima escolha grátis).</p>' : ''}
   `);
 }
 
@@ -1542,16 +1547,22 @@ function cashShopHtml(state) {
     </div>`).join('');
 
   const shopItemsHtml = CASH_SHOP_ITEMS.map((item) => {
-    const alreadyOwned = item.kind === 'vip' && state.vip;
-    const buyBtn = alreadyOwned
-      ? `<button disabled>👑 VIP ativo</button>`
-      : `<button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>`;
+    // VIP é por tempo e empilhável (ver systems/shop.js buyCashItem) — o
+    // botão de comprar continua sempre ativo (respeitando só o custo em
+    // Cash), diferente de um desbloqueio único que travaria depois da 1ª
+    // compra. A linha de status abaixo do nome mostra quantos dias restam
+    // quando já está ativo.
+    const vipStatus = item.kind === 'vip' && isVipActive(state)
+      ? `<div class="desc vip-days-left">👑 Ativo — expira em ${Math.max(1, Math.ceil((state.vipExpiresAt - Date.now()) / 86400000))} dia(s). Comprar de novo soma +30 dias.</div>`
+      : '';
+    const buyBtn = `<button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>`;
     return `
     <div class="shop-item-card">
       <span class="icon">${item.emoji}</span>
       <div class="info">
         <div class="name">${item.name}</div>
         <div class="desc">${item.description}</div>
+        ${vipStatus}
       </div>
       ${buyBtn}
     </div>`;
