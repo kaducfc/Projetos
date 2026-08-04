@@ -2,7 +2,12 @@ import { CASH_SHOP_ITEMS, AD_WATCH_COOLDOWN_MS, AD_WATCH_CASH_REWARD } from '../
 
 export function canBuyCashItem(state, id) {
   const item = CASH_SHOP_ITEMS.find((i) => i.id === id);
-  return !!item && state.cash >= item.cost;
+  if (!item) return false;
+  // VIP é um desbloqueio permanente, não um consumível — sem isso o botão
+  // continuaria "comprável" pra sempre e cada clique gastaria mais 10 Cash
+  // à toa (state.vip = true de novo não faz nada, mas o Cash sumiria).
+  if (item.kind === 'vip' && state.vip) return false;
+  return state.cash >= item.cost;
 }
 
 export function buyCashItem(state, id) {
@@ -10,6 +15,7 @@ export function buyCashItem(state, id) {
   const item = CASH_SHOP_ITEMS.find((i) => i.id === id);
   state.cash -= item.cost;
   if (item.kind === 'gold') state.gold += item.amount;
+  else if (item.kind === 'vip') state.vip = true;
   return true;
 }
 

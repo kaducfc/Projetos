@@ -1055,16 +1055,21 @@ export function renderPetsTab(state) {
     ? state.pets.map((p) => petTileHtml(state, p)).join('')
     : `<p class="empty-slot">Nenhum mascote ainda. Derrote monstros ou vença eventos pra achar ovos, depois choque na aba aqui em cima.</p>`;
 
+  const eggCount = state.eggCount || 0;
   container.innerHTML = `
     <div class="section-banner section-banner-sm">🐾 Mascotes</div>
     <div class="pets-egg-row">
-      <span class="pets-egg-count">🥚 Ovos: <strong>${formatNumber(state.eggCount || 0)}</strong></span>
+      <span class="pets-egg-count">🥚 Ovos: <strong>${formatNumber(eggCount)}</strong></span>
       <span class="pets-egg-count">🧩 Fragmentos: <strong>${formatNumber(state.petFragments || 0)}</strong></span>
-      <button class="pets-hatch-btn" data-hatch-egg-btn ${(state.eggCount || 0) < 1 ? 'disabled' : ''}>Chocar Ovo</button>
+      <button class="pets-hatch-btn" data-hatch-egg-btn ${eggCount < 1 ? 'disabled' : ''}>Chocar Ovo</button>
+      <button class="pets-hatch-btn" data-hatch-all-btn ${eggCount < 1 ? 'disabled' : ''} title="Escolhe sempre o mascote de maior raridade (e maior Tier no empate) de cada ovo, sem abrir o modal de escolha">Chocar Todos (${formatNumber(eggCount)})</button>
     </div>
     <div class="equip-inventory-header">Equipados (até ${MAX_EQUIPPED_PETS})</div>
     <div class="pets-equip-row">${equipRow}</div>
-    <div class="equip-inventory-header">Inventário (${state.pets.length}/${getPetInventoryCap(state)})</div>
+    <div class="equip-inventory-header-row">
+      <div class="equip-inventory-header">Inventário (${state.pets.length}/${getPetInventoryCap(state)})</div>
+      <button class="bulk-select-toggle-btn" data-fuse-all-btn title="Funde em cascata todo par de mascotes iguais (mesma espécie, raridade e nível) não equipado">🌟 Fundir Tudo</button>
+    </div>
     <div class="equip-inventory-grid">${petsHtml}</div>
   `;
 }
@@ -1536,15 +1541,21 @@ function cashShopHtml(state) {
       <button disabled>Em breve</button>
     </div>`).join('');
 
-  const shopItemsHtml = CASH_SHOP_ITEMS.map((item) => `
+  const shopItemsHtml = CASH_SHOP_ITEMS.map((item) => {
+    const alreadyOwned = item.kind === 'vip' && state.vip;
+    const buyBtn = alreadyOwned
+      ? `<button disabled>👑 VIP ativo</button>`
+      : `<button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>`;
+    return `
     <div class="shop-item-card">
       <span class="icon">${item.emoji}</span>
       <div class="info">
         <div class="name">${item.name}</div>
         <div class="desc">${item.description}</div>
       </div>
-      <button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>
-    </div>`).join('');
+      ${buyBtn}
+    </div>`;
+  }).join('');
 
   return `
     <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>

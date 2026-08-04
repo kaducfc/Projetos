@@ -3,6 +3,17 @@
 export const CASH_SHOP_ITEMS = [
   { id: 'cash_gold_s', name: 'Saco de Ouro', emoji: '💰', cost: 10, kind: 'gold', amount: 5000, description: '+5.000 de ouro na hora.' },
   { id: 'cash_gold_l', name: 'Baú de Ouro', emoji: '🪙', cost: 40, kind: 'gold', amount: 30000, description: '+30.000 de ouro na hora.' },
+  // Desbloqueio permanente (não expira, não recompra — ver canBuyCashItem
+  // em systems/shop.js), não "amount" nenhum pra dar (kind: 'vip' é tratado
+  // à parte de kind: 'gold' em buyCashItem). Efeitos reais de state.vip:
+  // +50 no limite de inventário de itens/pets (VIP_INVENTORY_BONUS, ver
+  // data/items.js/data/pets.js) e a escolha do lado direito ao chocar ovo
+  // sempre liberada, sem esperar a escolha grátis diária (ver
+  // canChooseRightPet em systems/pets.js).
+  {
+    id: 'cash_vip', name: 'VIP', emoji: '👑', cost: 10, kind: 'vip',
+    description: '+50 no limite de inventário (itens e mascotes) e escolha livre do mascote da direita ao chocar ovo. Permanente.',
+  },
 ];
 
 // Free Cash source #1 (besides achievements): a simulated ad view on a

@@ -1,4 +1,7 @@
-import { PET_MAX_LEVEL, getPetInventoryCap, getPetSellValue, getPetDamage, getPetSpecies, getPetDpsBonusPercent } from '../data/pets.js';
+import {
+  PET_MAX_LEVEL, getPetInventoryCap, getPetSellValue, getPetDamage, getPetSpecies, getPetDpsBonusPercent,
+  rollPetCandidate, isPetCandidateBetter,
+} from '../data/pets.js';
 import { elementDamageModifier } from '../data/elements.js';
 
 export const MAX_EQUIPPED_PETS = 4;
@@ -149,4 +152,114 @@ export function canChooseRightPet(state) {
 
 export function useFreeRightPetChoice(state) {
   state.freeRightPetChoiceCycle = currentDailyCycle();
+}
+
+// ---------------------------------------------------------------------
+// Fundir tudo de uma vez (botão "Fundir Tudo" na aba Mascotes).
+//
+// Regra de fusão continua EXATAMENTE a de canFusePets/fusePets acima: só
+// 2 pets de mesma espécie + mesma raridade + mesmo nível, nenhum dos dois
+// equipado. Essa função só automatiza aplicar essa regra em cascata em
+// todo o inventário de uma vez, sem mudar o que é ou não permitido fundir.
+//
+// Cascata: 4 pets Tier1/Comum/nv1 devem virar 1 pet Tier1/Comum/nv3 (2
+// fusões nv1->nv2 sobre os 4, depois 1 fusão nv2->nv3 sobre os 2
+// resultantes) — não só "1 fusão e para". Pra isso, agrupa por
+// espécie+raridade (só aí que uma fusão é válida), e dentro de cada grupo
+// resolve nível a nível, do mais baixo pro mais alto: casa pares no nível
+// N, manda o resultado pro "balde" do nível N+1, e só então passa a
+// processar esse balde. Isso é equivalente a somar em binário (cada par
+// vira 1 "carry" pro nível seguinte) — dado importante pra não fundir 2x
+// o mesmo pet nem perder pets pelo caminho:
+//   - Todo pet elegível (não equipado) entra em exatamente 1 balde
+//     (speciesId+raridade+nível) no início.
+//   - Cada `pop()` de um balde marca aquele pet como CONSUMIDO (uid real
+//     -> vai pra consumedUids, removido de state.pets no fim). Um pet só
+//     é removido de state.pets se realmente foi consumido numa fusão.
+//   - O resultado de cada fusão (uid: null) só vira um pet de verdade
+//     (uid novo + entra em state.pets) se sobreviver até o fim sem ser
+//     ele mesmo consumido por uma fusão de nível seguinte.
+// Pets já no nível máximo (PET_MAX_LEVEL) nunca entram no loop de fusão
+// (o `for` de nível para em PET_MAX_LEVEL - 1), então ficam sempre
+// intocados — mesma regra de canFusePets (a.level >= PET_MAX_LEVEL bloqueia).
+export function fuseAllPossiblePets(state) {
+  const groups = new Map(); // "speciesId|rarityId" -> Map(level -> [pets])
+  for (const pet of state.pets) {
+    if (isPetEquipped(state, pet.uid)) continue;
+    const key = `${pet.speciesId}|${pet.rarityId}`;
+    if (!groups.has(key)) groups.set(key, new Map());
+    const byLevel = groups.get(key);
+    if (!byLevel.has(pet.level)) byLevel.set(pet.level, []);
+    byLevel.get(pet.level).push(pet);
+  }
+
+  const consumedUids = new Set();
+  let fusionsPerformed = 0;
+
+  for (const byLevel of groups.values()) {
+    for (let level = 1; level < PET_MAX_LEVEL; level++) {
+      const bucket = byLevel.get(level);
+      if (!bucket) continue;
+      while (bucket.length >= 2) {
+        const a = bucket.pop();
+        const b = bucket.pop();
+        if (a.uid != null) consumedUids.add(a.uid);
+        if (b.uid != null) consumedUids.add(b.uid);
+        fusionsPerformed += 1;
+        const nextLevel = level + 1;
+        if (!byLevel.has(nextLevel)) byLevel.set(nextLevel, []);
+        byLevel.get(nextLevel).push({ uid: null, speciesId: a.speciesId, rarityId: a.rarityId, level: nextLevel });
+      }
+    }
+  }
+
+  if (fusionsPerformed === 0) return { fusionsPerformed: 0, resultingPets: 0 };
+
+  state.pets = state.pets.filter((p) => !consumedUids.has(p.uid));
+  let resultingPets = 0;
+  for (const byLevel of groups.values()) {
+    for (const bucket of byLevel.values()) {
+      for (const pet of bucket) {
+        if (pet.uid == null) {
+          pet.uid = state.nextPetUid++;
+          state.pets.push(pet);
+          resultingPets += 1;
+        }
+      }
+    }
+  }
+  return { fusionsPerformed, resultingPets };
+}
+
+// ---------------------------------------------------------------------
+// Chocar todos os ovos de uma vez (botão "Chocar Todos" na aba Mascotes).
+// Cada ovo continua rolando os mesmos 2 candidatos independentes de
+// sempre (ver rollPetCandidate em data/pets.js) — só a ESCOLHA entre os 2
+// é automática aqui em vez de abrir o modal, priorizando sempre maior
+// raridade e, empatado, maior Tier (ver isPetCandidateBetter). A regra de
+// VIP/escolha grátis diária pro lado direito continua valendo igual ao
+// choco manual (canChooseRightPet/useFreeRightPetChoice) — processa ovo a
+// ovo, então só o 1º ovo do lote pode usar a escolha grátis do dia se o
+// jogador não for VIP; os demais ficam restritos ao lado esquerdo até lá,
+// exatamente como aconteceria chocando um por um.
+export function hatchAllEggs(state) {
+  const summary = { hatched: 0, discardedCount: 0, fragmentsGained: 0, byRarity: {} };
+  while ((state.eggCount || 0) > 0) {
+    const left = rollPetCandidate();
+    const right = rollPetCandidate();
+    let chosen = left;
+    if (canChooseRightPet(state) && isPetCandidateBetter(right, left)) {
+      chosen = right;
+      if (!state.vip) useFreeRightPetChoice(state);
+    }
+    state.eggCount -= 1;
+    const { discarded, fragments } = addPetToInventory(state, chosen);
+    summary.hatched += 1;
+    if (discarded) {
+      summary.discardedCount += 1;
+      summary.fragmentsGained += fragments;
+    }
+    summary.byRarity[chosen.rarityId] = (summary.byRarity[chosen.rarityId] || 0) + 1;
+  }
+  return summary;
 }

@@ -147,6 +147,20 @@ export function rollPetCandidate() {
   return { speciesId: species.id, rarityId: rarity.id, level: 1 };
 }
 
+/// Compara 2 candidatos recém-rolados (ver rollPetCandidate) pra decidir
+/// qual escolher automaticamente no choco em lote (ver hatchAllEggs em
+/// systems/pets.js) — raridade primeiro (RARITIES é ordenada Comum→Mítico,
+/// então índice maior = melhor), Tier como desempate. Retorna true se `a`
+/// é estritamente melhor que `b`.
+export function isPetCandidateBetter(a, b) {
+  const rarityRankA = RARITIES.findIndex((r) => r.id === a.rarityId);
+  const rarityRankB = RARITIES.findIndex((r) => r.id === b.rarityId);
+  if (rarityRankA !== rarityRankB) return rarityRankA > rarityRankB;
+  const tierA = getPetSpecies(a.speciesId)?.tier || 0;
+  const tierB = getPetSpecies(b.speciesId)?.tier || 0;
+  return tierA > tierB;
+}
+
 // Base 100, +50 (150 no total) com VIP — mesmo bônus do inventário de
 // equipamentos (ver data/items.js ITEM_INVENTORY_CAP/getItemInventoryCap).
 export const PET_INVENTORY_CAP = 100;
