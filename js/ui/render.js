@@ -2,7 +2,7 @@ import { BOSSES, findMaterialInfo, ZONES } from '../data/monsters.js';
 import {
   getSlot, getItem, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
   getAscensionCost, getDamageType, ENHANCE_MAX_LEVEL, enhancementMultiplier,
-  DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName,
+  DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName, RARITIES,
 } from '../data/items.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
@@ -19,7 +19,7 @@ import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventS
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
 import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
 import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
-import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, getPetDpsBonusPercent, PET_MAX_LEVEL, getPetInventoryCap } from '../data/pets.js';
+import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, getPetDpsBonusPercent, PET_MAX_LEVEL, getPetInventoryCap, PET_ELEMENTS } from '../data/pets.js';
 import { getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet, canHatchAllEggs, canEquipPet } from '../systems/pets.js';
 import { isVipActive } from '../state.js';
 import { getSkillTree, STAT_DISPLAY_NAME, SPECIAL_THRESHOLDS } from '../data/skills.js';
@@ -1049,11 +1049,46 @@ function petTileHtml(state, pet) {
   </button>`;
 }
 
-export function renderPetsTab(state) {
+/// Reordena só a EXIBIÇÃO da grade de mascotes — nunca muta state.pets (a
+/// ordem "real" ali continua sendo a de aquisição/fusão, o que importa pra
+/// getFusePartners/fuseAllPossiblePets não depender de exibição nenhuma).
+/// null/'none' = ordem original. 'level'/'rarity' descem (maior primeiro);
+/// 'element' agrupa pela ordem fixa de PET_ELEMENTS (fogo/planta/elétrico/
+/// água), com Tier crescente dentro de cada grupo pra ficar previsível.
+const PET_SORT_LABELS = { level: '🔼 Nível', rarity: '💠 Raridade', element: '🔥 Elemento' };
+
+function sortPetsForDisplay(pets, sortMode) {
+  if (!sortMode) return pets;
+  const withSpecies = pets.map((pet) => ({ pet, species: getPetSpecies(pet.speciesId) }));
+  if (sortMode === 'level') {
+    withSpecies.sort((a, b) => b.pet.level - a.pet.level);
+  } else if (sortMode === 'rarity') {
+    const rarityRank = (rarityId) => RARITIES.findIndex((r) => r.id === rarityId);
+    withSpecies.sort((a, b) => rarityRank(b.pet.rarityId) - rarityRank(a.pet.rarityId));
+  } else if (sortMode === 'element') {
+    const elementRank = (elementId) => PET_ELEMENTS.indexOf(elementId);
+    withSpecies.sort((a, b) => {
+      const elDiff = elementRank(a.species?.element) - elementRank(b.species?.element);
+      if (elDiff !== 0) return elDiff;
+      return (a.species?.tier || 0) - (b.species?.tier || 0);
+    });
+  }
+  return withSpecies.map((w) => w.pet);
+}
+
+function petSortRowHtml(sortMode) {
+  const chips = [{ id: null, label: '📋 Padrão' }, ...Object.entries(PET_SORT_LABELS).map(([id, label]) => ({ id, label }))];
+  return `<div class="element-filter-row pet-sort-row">${chips.map((c) => `
+    <button class="element-filter-btn pet-sort-btn ${sortMode === c.id ? 'active' : ''}" data-pet-sort="${c.id ?? ''}">${c.label}</button>
+  `).join('')}</div>`;
+}
+
+export function renderPetsTab(state, sortMode = null) {
   const container = document.getElementById('tab-pets');
   const equipRow = (state.equippedPetUids || []).map((uid, i) => petSlotIconHtml(state, uid, i)).join('');
+  const sortedPets = sortPetsForDisplay(state.pets, sortMode);
   const petsHtml = state.pets.length
-    ? state.pets.map((p) => petTileHtml(state, p)).join('')
+    ? sortedPets.map((p) => petTileHtml(state, p)).join('')
     : `<p class="empty-slot">Nenhum mascote ainda. Derrote monstros ou vença eventos pra achar ovos, depois choque na aba aqui em cima.</p>`;
 
   const eggCount = state.eggCount || 0;
@@ -1075,6 +1110,7 @@ export function renderPetsTab(state) {
       <div class="equip-inventory-header">Inventário (${state.pets.length}/${getPetInventoryCap(state)})</div>
       <button class="bulk-select-toggle-btn" data-fuse-all-btn title="Funde em cascata todo par de mascotes iguais (mesma espécie, raridade e nível) não equipado">🌟 Fundir Tudo</button>
     </div>
+    ${petSortRowHtml(sortMode)}
     <div class="equip-inventory-grid">${petsHtml}</div>
   `;
 }
