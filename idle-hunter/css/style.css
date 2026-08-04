@@ -1223,6 +1223,24 @@ button:disabled {
   transform: translateY(1px);
 }
 
+/* Botões de ordenação da aba Mascotes (Padrão/Nível/Raridade/Elemento) —
+   mesma linguagem visual do filtro de categoria (.element-filter-btn),
+   mas com rótulo de texto em vez de só 1 emoji, então precisam de largura
+   automática (não o quadrado fixo de 34x34) e podem quebrar linha num
+   inventário estreito. */
+.pet-sort-row {
+  flex-wrap: wrap;
+}
+
+.pet-sort-btn {
+  width: auto;
+  height: auto;
+  padding: 7px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .inventory-tile {
   position: relative;
   aspect-ratio: 1;
