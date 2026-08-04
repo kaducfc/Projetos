@@ -1537,6 +1537,16 @@ button:disabled {
   font-weight: 500;
 }
 
+/* iconMarkup() em ui/render.js pode render um <img> aqui (parceiro de
+   fusão de mascote) em vez de emoji — sem isso o img nativo (355x357px,
+   ver assets/pets/) estouraria a linha inteira. */
+.card-slot-option img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex: none;
+}
+
 /* Tela de seleção de monstros (estilo IdleArc) — até 4 monstros de
    qualquer zona liberada, ver showMonsterSelectModal em ui/render.js. */
 .monster-select-count {
