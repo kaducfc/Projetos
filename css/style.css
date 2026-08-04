@@ -357,11 +357,11 @@ button:disabled {
   flex: 0 0 auto;
 }
 
-/* Scenic backdrop behind the monster: a real scene photo for weak-monster
-   stages (see renderMonster in ui/render.js, which sets background-image
-   inline — assets/ui/scenes/scene1..3.png, picked once per spawn) with
-   this CSS gradient only as the fallback for boss stages, which don't
-   have scene art yet. */
+/* Scenic backdrop behind the monster: 1 fixed scene per zone (see
+   ZONES[].sceneImage in data/monsters.js, applied inline in renderMonster
+   in ui/render.js), same background for weak monster or boss of that
+   zone. This CSS gradient is only the fallback if a zone somehow has no
+   sceneImage set. */
 #monster-area {
   position: relative;
   background-color: #bfe6fb;
