@@ -1160,9 +1160,14 @@ function hatchAllEggsNow() {
     .sort((a, b) => b[1] - a[1])
     .map(([rarityId, qty]) => `${qty}x ${getRarity(rarityId).name}`)
     .join(', ');
-  let msg = `🐣 ${summary.hatched} ovo${summary.hatched === 1 ? '' : 's'} chocado${summary.hatched === 1 ? '' : 's'}! ${rarityBreakdown}`;
+  let msg = summary.hatched > 0
+    ? `🐣 ${summary.hatched} ovo${summary.hatched === 1 ? '' : 's'} chocado${summary.hatched === 1 ? '' : 's'}! ${rarityBreakdown}`
+    : '🎒 Inventário de mascotes já está cheio — nenhum ovo chocado.';
   if (summary.discardedCount > 0) {
     msg += ` — inventário cheio: ${summary.discardedCount} viraram +${formatNumber(summary.fragmentsGained)} 🧩 Fragmentos.`;
+  } else if (summary.stoppedInventoryFull) {
+    const remaining = state.eggCount || 0;
+    msg += ` Parou no limite do inventário — ${formatNumber(remaining)} ovo${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'} guardado${remaining === 1 ? '' : 's'} pra depois.`;
   }
   showToast(msg);
   renderTopBar(state);
