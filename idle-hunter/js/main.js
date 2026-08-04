@@ -21,11 +21,10 @@ import { AD_WATCH_CASH_REWARD } from './data/shop.js';
 import { claimCardReward } from './systems/cards.js';
 import { CARD_DISCOVERY_CASH_REWARD, getCard } from './data/cards.js';
 import { GAME_BUILD } from './version.js';
-import { rollPetCandidate } from './data/pets.js';
 import {
   equipPet, unequipPetSlot, sellPet, canFusePets, fusePets, getFusePartners,
   addPetToInventory, getPetEntry, canChooseRightPet, useFreeRightPetChoice, getActivePetDpsMultiplier,
-  fuseAllPossiblePets, hatchAllEggs,
+  fuseAllPossiblePets, hatchAllEggs, rollHatchCandidates, recordPetHatchOutcome,
 } from './systems/pets.js';
 import { buySkillLevel, buySpecial, resetSkillTree } from './systems/skills.js';
 import {
@@ -746,6 +745,7 @@ function wireModalEvents() {
         pendingHatchCandidates = null;
         state.eggCount = Math.max(0, (state.eggCount || 0) - 1);
         const { discarded, fragments } = addPetToInventory(state, chosen);
+        recordPetHatchOutcome(state, chosen.rarityId);
         hideModal();
         showToast(discarded
           ? `🎒 Inventário de mascotes cheio! Mascote convertido em +${formatNumber(fragments)} 🧩 Fragmentos.`
@@ -1160,7 +1160,7 @@ function wireCardsTabEvents() {
 
 function openHatchModal() {
   if ((state.eggCount || 0) < 1) return;
-  pendingHatchCandidates = [rollPetCandidate(), rollPetCandidate()];
+  pendingHatchCandidates = rollHatchCandidates(state);
   showHatchModal(state, pendingHatchCandidates);
 }
 

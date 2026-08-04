@@ -20,7 +20,10 @@ import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../sy
 import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
 import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
 import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, getPetDpsBonusPercent, PET_MAX_LEVEL, getPetInventoryCap, PET_ELEMENTS } from '../data/pets.js';
-import { getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet, canHatchAllEggs, canEquipPet } from '../systems/pets.js';
+import {
+  getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet, canHatchAllEggs, canEquipPet,
+  MYTHIC_PITY_THRESHOLD, LEGENDARY_PITY_THRESHOLD,
+} from '../systems/pets.js';
 import { isVipActive } from '../state.js';
 import { getSkillTree, STAT_DISPLAY_NAME, SPECIAL_THRESHOLDS } from '../data/skills.js';
 import {
@@ -1193,11 +1196,32 @@ function hatchCandidateHtml(candidate, side, unlocked) {
   `;
 }
 
+/// Contador de pity (ver systems/pets.js MYTHIC_PITY_THRESHOLD/
+/// LEGENDARY_PITY_THRESHOLD) — mostra quantos chocos já passaram desde a
+/// última raridade daquele tipo, incluindo ESTE choco que está prestes a
+/// acontecer (por isso o +1: se faltasse 1 antes de abrir o modal, essa
+/// é a garantia batendo agora). Nunca passa de N/N — o pity garante que
+/// esse choco específico já sai na raridade quando o contador bateria o
+/// limite, então o rótulo mostra "garantido!" em vez de ultrapassar.
+function petPityRowHtml(state) {
+  const mythicSoFar = Math.min(MYTHIC_PITY_THRESHOLD, (state.petHatchesSinceMythic || 0) + 1);
+  const legendarySoFar = Math.min(LEGENDARY_PITY_THRESHOLD, (state.petHatchesSinceLegendary || 0) + 1);
+  const mythicLabel = mythicSoFar >= MYTHIC_PITY_THRESHOLD ? 'garantido!' : `${mythicSoFar}/${MYTHIC_PITY_THRESHOLD}`;
+  const legendaryLabel = legendarySoFar >= LEGENDARY_PITY_THRESHOLD ? 'garantido!' : `${legendarySoFar}/${LEGENDARY_PITY_THRESHOLD}`;
+  return `
+    <div class="pet-pity-row">
+      <span class="pet-pity-chip">💠 Lendário: <strong>${legendaryLabel}</strong></span>
+      <span class="pet-pity-chip">✨ Mítico: <strong>${mythicLabel}</strong></span>
+    </div>
+  `;
+}
+
 export function showHatchModal(state, candidates) {
   const [left, right] = candidates;
   const canRight = canChooseRightPet(state);
   showModal('🥚 Ovo Chocado!', `
     <p style="font-size:12px; color:var(--text-dim); text-align:center;">Escolha 1 dos 2 mascotes — o outro se perde.</p>
+    ${petPityRowHtml(state)}
     <div class="hatch-choice-row">
       ${hatchCandidateHtml(left, 'left', true)}
       ${hatchCandidateHtml(right, 'right', canRight)}
