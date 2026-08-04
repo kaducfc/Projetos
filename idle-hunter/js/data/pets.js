@@ -110,6 +110,18 @@ export function getPetDamage(petEntry) {
   return Math.round(species.baseDamage * rarity.mult * petLevelMultiplier(petEntry.level));
 }
 
+// % de DPS que o pet ATIVO (ver getBestEquippedPet/getActivePetDpsMultiplier
+// em systems/pets.js) empresta ao caçador, além do próprio dano do pet —
+// escala só com raridade + nível de fusão (não com tier/espécie, que já é
+// só o que diferencia o dano base do pet). Nível 1 Comum = +2% DPS; nível
+// 10 Mítico = +2 * 2.5 * 1.22^9 ≈ +30.5% DPS.
+const PET_DPS_BONUS_BASE_PERCENT = 2;
+
+export function getPetDpsBonusPercent(petEntry) {
+  const rarity = getRarity(petEntry.rarityId);
+  return PET_DPS_BONUS_BASE_PERCENT * rarity.mult * petLevelMultiplier(petEntry.level);
+}
+
 // ---------------------------------------------------------------------
 // Ovo: um tipo só, genérico — ao chocar, sorteia 2 candidatos
 // independentes (espécie + raridade cada, ver rollPetCandidate), e o
