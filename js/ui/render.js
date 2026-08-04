@@ -1615,7 +1615,7 @@ function cashShopHtml(state) {
     // restantes zerarem e o VIP expirar de vez.
     const vipActiveNow = item.kind === 'vip' && isVipActive(state);
     const vipStatus = vipActiveNow
-      ? `<div class="desc vip-days-left">👑 Ativo — expira em ${Math.max(1, Math.ceil((state.vipExpiresAt - Date.now()) / 86400000))} dia(s). Só dá pra comprar de novo depois de expirar.</div>`
+      ? `<div class="desc vip-days-left">👑 Ativo — expira em ${Math.max(1, Math.ceil((state.vipExpiresAt - Date.now()) / 86400000))} dia(s).</div>`
       : '';
     const buyBtn = vipActiveNow
       ? `<button disabled title="Já é VIP — espere o contador zerar pra comprar de novo">👑 Ativo</button>`
