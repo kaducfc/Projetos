@@ -243,14 +243,28 @@ export function fuseAllPossiblePets(state) {
 // dentro (VIP sempre pode o lado direito, sem gastar a escolha diária) —
 // mantido explícito mesmo assim, e útil se essa função algum dia rodar
 // fora do gate de VIP.
+//
+// PARA no limite do inventário de mascotes: diferente do choco manual (1
+// ovo por clique, ver addPetToInventory — lá o descarte automático em
+// Fragmentos é aceitável, é 1 ovo por vez, escolha consciente), chocar
+// TODOS de uma vez com o inventário quase cheio poderia consumir uma
+// pilha inteira de ovos e converter a maioria em Fragmentos de baixo
+// valor sem o jogador perceber. Em vez disso, hatchAllEggs para assim que
+// o inventário enche — os ovos restantes ficam intactos em state.eggCount
+// pra serem chocados depois (com mais espaço livre), nunca viram
+// Fragmentos aqui.
 export function canHatchAllEggs(state) {
   return isVipActive(state) && (state.eggCount || 0) > 0;
 }
 
 export function hatchAllEggs(state) {
-  const summary = { hatched: 0, discardedCount: 0, fragmentsGained: 0, byRarity: {} };
+  const summary = { hatched: 0, discardedCount: 0, fragmentsGained: 0, byRarity: {}, stoppedInventoryFull: false };
   if (!canHatchAllEggs(state)) return summary;
   while ((state.eggCount || 0) > 0) {
+    if (state.pets.length >= getPetInventoryCap(state)) {
+      summary.stoppedInventoryFull = true;
+      break;
+    }
     const left = rollPetCandidate();
     const right = rollPetCandidate();
     let chosen = left;
