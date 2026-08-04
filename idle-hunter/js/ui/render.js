@@ -146,17 +146,6 @@ export function renderPlayerHp(current, max) {
   document.getElementById('player-hp-bar-text').textContent = `${formatNumber(hp)} / ${formatNumber(max)}`;
 }
 
-// Listed as plain static string literals (not built via template-literal
-// interpolation) on purpose — build-bundle.mjs's asset inliner only
-// recognizes literal 'assets/...' paths in the source text, and a dynamic
-// `scene${n}.png` path would either be missed or (worse) wrongly matched
-// as one literal spanning the whole `${...}` expression.
-const SCENE_IMAGES = [
-  'assets/ui/scenes/scene1.png',
-  'assets/ui/scenes/scene2.png',
-  'assets/ui/scenes/scene3.png',
-];
-
 // Idle-loop sprite animation (see monsters.js's `animFrames` on a boss/weak
 // entry). renderMonster() runs every game tick (100ms, see main.js's
 // tick()) — rebuilding the sprite's markup every single call would reset any
@@ -197,14 +186,11 @@ function startMonsterIdleAnim(frames) {
 export function renderMonster(state, monster) {
   if (!monster) return;
 
-  // Todo mundo mostra um dos 3 cenários genéricos "da zona", sorteado uma
-  // vez por spawn (ver ensureMonsterSpawned em systems/combat.js — nunca
-  // resorteado aqui, ou o fundo piscaria a cada render) — fraco ou chefe,
-  // sem distinção nenhuma (nenhum chefe tem cenário próprio mais).
+  // Cada zona tem 1 cenário de fundo fixo (ver ZONES[].sceneImage em
+  // data/monsters.js) — fraco ou chefe da mesma zona mostram o mesmo fundo.
+  const zone = ZONES[monster.zoneIndex];
   const monsterArea = document.getElementById('monster-area');
-  monsterArea.style.backgroundImage = monster.sceneIndex != null
-    ? `url('${SCENE_IMAGES[monster.sceneIndex]}')`
-    : '';
+  monsterArea.style.backgroundImage = zone?.sceneImage ? `url('${zone.sceneImage}')` : '';
   monsterArea.style.backgroundPosition = '';
 
   const spriteKey = monster.bossId || monster.weakMonsterId || monster.name;
