@@ -952,17 +952,17 @@ function enterTower() {
 }
 
 function finishTowerRun(cleared200) {
-  const { level, currency, goldGained, gained, eggGained } = endTowerRun(state, cleared200);
+  const { level, currency, goldGained, gained, eggsGained } = endTowerRun(state, cleared200);
   towerDeadline = null;
   towerHp = null;
-  showTowerRewardModal(level, cleared200, currency, goldGained, gained);
-  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
+  showTowerRewardModal(level, cleared200, currency, goldGained, gained, eggsGained);
+  renderPetsTab(state);
   renderEventsTabNow();
   renderTopBar(state);
   renderInventoryTabNow();
 }
 
-function showTowerRewardModal(level, cleared200, currency, goldGained, gained) {
+function showTowerRewardModal(level, cleared200, currency, goldGained, gained, eggsGained) {
   const lootLines = Object.values(gained)
     .map((g) => `<div class="offline-item-lines">+${g.qty} <span class="icon">${iconMarkup(g.image, g.emoji, g.name)}</span> ${g.name}</div>`)
     .join('');
@@ -972,6 +972,7 @@ function showTowerRewardModal(level, cleared200, currency, goldGained, gained) {
     <p class="offline-item-lines">+${formatNumber(goldGained)} ${GOLD_ICON} Ouro</p>
     ${lootLines}
     <p class="offline-item-lines">+${formatNumber(currency)} ${EVENT_ICON} Moeda de Evento</p>
+    <p class="offline-item-lines">+${formatNumber(eggsGained)} 🥚 Ovo${eggsGained === 1 ? '' : 's'} de Mascote</p>
   `);
 }
 

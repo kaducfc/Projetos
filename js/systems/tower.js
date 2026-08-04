@@ -12,6 +12,12 @@ import { EVENT_EGG_DROP_CHANCE } from '../data/pets.js';
 // spawn the run's own weak monsters, via resolveWeakPowerStage below).
 const TOWER_MATERIAL_DROPS = 20;
 
+// Bônus fixo pedido pelo usuário: toda run da Torre (chegue onde chegar)
+// dá esses ovos de mascote, além de tudo que já dava — inclusive o extra
+// de EVENT_EGG_DROP_CHANCE mais abaixo, que continua existindo em cima
+// disso.
+const TOWER_EGG_REWARD = 200;
+
 // --- TEMP DEBUG OVERRIDE (pedido do usuário pra facilitar testar outras
 // mecânicas do jogo) --------------------------------------------------
 // Enquanto true, endTowerRun ignora computeTowerReward/rollTowerMaterials e
@@ -211,8 +217,9 @@ export function endTowerRun(state, cleared200 = false) {
   state.towerMonsterHp = null;
   state.towerWeakMonsterId = null;
 
-  const eggGained = Math.random() < EVENT_EGG_DROP_CHANCE;
-  if (eggGained) state.eggCount = (state.eggCount || 0) + 1;
+  const bonusEggGained = Math.random() < EVENT_EGG_DROP_CHANCE;
+  const eggsGained = TOWER_EGG_REWARD + (bonusEggGained ? 1 : 0);
+  state.eggCount = (state.eggCount || 0) + eggsGained;
 
-  return { level, cleared200, currency, goldGained, gained, eggGained };
+  return { level, cleared200, currency, goldGained, gained, eggGained: bonusEggGained, eggsGained };
 }
