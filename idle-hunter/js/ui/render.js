@@ -20,7 +20,7 @@ import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../sy
 import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
 import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
 import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, getPetDpsBonusPercent, PET_MAX_LEVEL, getPetInventoryCap } from '../data/pets.js';
-import { getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet, canHatchAllEggs } from '../systems/pets.js';
+import { getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet, canHatchAllEggs, canEquipPet } from '../systems/pets.js';
 import { isVipActive } from '../state.js';
 import { getSkillTree, STAT_DISPLAY_NAME, SPECIAL_THRESHOLDS } from '../data/skills.js';
 import {
@@ -1069,7 +1069,7 @@ export function renderPetsTab(state) {
       <button class="pets-hatch-btn" data-hatch-egg-btn ${eggCount < 1 ? 'disabled' : ''}>Chocar Ovo</button>
       <button class="pets-hatch-btn" data-hatch-all-btn ${canHatchAllEggs(state) ? '' : 'disabled'} title="${hatchAllTitle}">👑 Chocar Todos (${formatNumber(eggCount)})</button>
     </div>
-    <div class="equip-inventory-header">Equipados (até ${MAX_EQUIPPED_PETS})</div>
+    <div class="equip-inventory-header">Equipados (até ${MAX_EQUIPPED_PETS}, 1 por elemento)</div>
     <div class="pets-equip-row">${equipRow}</div>
     <div class="equip-inventory-header-row">
       <div class="equip-inventory-header">Inventário (${state.pets.length}/${getPetInventoryCap(state)})</div>
@@ -1103,7 +1103,9 @@ function petDetailHtml(state, uid, showFuseList) {
 
   const actionBtn = isEquipped
     ? `<button class="modal-action-btn" data-unequip-pet-uid="${uid}">Desequipar</button>`
-    : `<button class="modal-action-btn" data-equip-pet-uid="${uid}">Equipar</button>`;
+    : canEquipPet(state, uid)
+      ? `<button class="modal-action-btn" data-equip-pet-uid="${uid}">Equipar</button>`
+      : `<button class="modal-action-btn" disabled title="Já tem um mascote de ${getElement(species.element).name} equipado — desequipe ele primeiro">🔒 Equipar</button>`;
 
   const fuseSection = showFuseList
     ? fusePartnersHtml(state, uid)

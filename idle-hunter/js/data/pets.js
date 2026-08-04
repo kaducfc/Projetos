@@ -1,4 +1,4 @@
-import { RARITIES, getRarity, VIP_INVENTORY_BONUS } from './items.js';
+import { RARITIES, getRarity } from './items.js';
 import { isVipActive } from '../state.js';
 
 // Mascotes causam um dano ELEMENTAL à parte do dano do personagem (que
@@ -162,12 +162,15 @@ export function isPetCandidateBetter(a, b) {
   return tierA > tierB;
 }
 
-// Base 100, +50 (150 no total) com VIP — mesmo bônus do inventário de
-// equipamentos (ver data/items.js ITEM_INVENTORY_CAP/getItemInventoryCap).
-export const PET_INVENTORY_CAP = 100;
+// Base 200, +100 (300 no total) com VIP — bônus PRÓPRIO do inventário de
+// mascotes, maior e independente do bônus de equipamentos (ver
+// data/items.js ITEM_INVENTORY_CAP/VIP_INVENTORY_BONUS/getItemInventoryCap
+// — esse aqui não muda).
+export const PET_INVENTORY_CAP = 200;
+export const PET_VIP_INVENTORY_BONUS = 100;
 
 export function getPetInventoryCap(state) {
-  return PET_INVENTORY_CAP + (isVipActive(state) ? VIP_INVENTORY_BONUS : 0);
+  return PET_INVENTORY_CAP + (isVipActive(state) ? PET_VIP_INVENTORY_BONUS : 0);
 }
 
 /// Valor de venda em ouro — usado tanto pro auto-sell ao bater o limite do

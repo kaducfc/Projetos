@@ -666,7 +666,10 @@ function wireModalEvents() {
     if (equipPetBtn) {
       runModalAction(() => {
         const uid = Number(equipPetBtn.dataset.equipPetUid);
-        equipPet(state, uid);
+        if (!equipPet(state, uid)) {
+          showToast('🔒 Só dá pra equipar 1 mascote por elemento — desequipe o outro do mesmo elemento primeiro.');
+          return;
+        }
         showPetDetailModal(state, uid);
         renderPetsTab(state);
       });
