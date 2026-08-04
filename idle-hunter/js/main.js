@@ -25,6 +25,7 @@ import { rollPetCandidate } from './data/pets.js';
 import {
   equipPet, unequipPetSlot, sellPet, canFusePets, fusePets, getFusePartners,
   addPetToInventory, getPetEntry, canChooseRightPet, useFreeRightPetChoice, getActivePetDpsMultiplier,
+  fuseAllPossiblePets, hatchAllEggs,
 } from './systems/pets.js';
 import { buySkillLevel, buySpecial, resetSkillTree } from './systems/skills.js';
 import {
@@ -1151,10 +1152,42 @@ function openHatchModal() {
   showHatchModal(state, pendingHatchCandidates);
 }
 
+function hatchAllEggsNow() {
+  if ((state.eggCount || 0) < 1) return;
+  const summary = hatchAllEggs(state);
+  const rarityBreakdown = Object.entries(summary.byRarity)
+    .sort((a, b) => b[1] - a[1])
+    .map(([rarityId, qty]) => `${qty}x ${getRarity(rarityId).name}`)
+    .join(', ');
+  let msg = `🐣 ${summary.hatched} ovo${summary.hatched === 1 ? '' : 's'} chocado${summary.hatched === 1 ? '' : 's'}! ${rarityBreakdown}`;
+  if (summary.discardedCount > 0) {
+    msg += ` — inventário cheio: ${summary.discardedCount} viraram +${formatNumber(summary.fragmentsGained)} 🧩 Fragmentos.`;
+  }
+  showToast(msg);
+  renderTopBar(state);
+  renderPetsTab(state);
+}
+
+function fuseAllPetsNow() {
+  const { fusionsPerformed, resultingPets } = fuseAllPossiblePets(state);
+  if (fusionsPerformed < 1) {
+    showToast('🌟 Nenhum par de mascotes iguais (mesma espécie/raridade/nível) disponível pra fundir agora.');
+    return;
+  }
+  showToast(`🌟 ${fusionsPerformed} fusão${fusionsPerformed === 1 ? '' : 'ões'} realizada${fusionsPerformed === 1 ? '' : 's'}, resultando em ${resultingPets} mascote${resultingPets === 1 ? '' : 's'}!`);
+  renderPetsTab(state);
+}
+
 function wirePetsTabEvents() {
   document.getElementById('tab-pets').addEventListener('click', (e) => {
     const hatchBtn = e.target.closest('[data-hatch-egg-btn]');
     if (hatchBtn) { openHatchModal(); return; }
+
+    const hatchAllBtn = e.target.closest('[data-hatch-all-btn]');
+    if (hatchAllBtn) { hatchAllEggsNow(); return; }
+
+    const fuseAllBtn = e.target.closest('[data-fuse-all-btn]');
+    if (fuseAllBtn) { fuseAllPetsNow(); return; }
 
     const slotBtn = e.target.closest('[data-pet-slot]');
     if (slotBtn) {
