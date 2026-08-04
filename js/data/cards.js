@@ -40,9 +40,12 @@ const CARD_IMAGES = {
   vulkarion: 'assets/vortexor/monster.png',
   // Mesmo motivo acima — reskin Magmarok (ver data/monsters.js BOSSES[6]).
   leviargon: 'assets/magmarok/monster.png',
-  tempestron: 'assets/cards/tempestron.png',
-  gaiatron: 'assets/cards/gaiatron.png',
-  bahamorth: 'assets/cards/bahamorth.png',
+  // Mesmo motivo acima — reskin Hidraelion (ver data/monsters.js BOSSES[7]).
+  tempestron: 'assets/hidraelion/monster.png',
+  // Mesmo motivo acima — reskin Florakar (ver data/monsters.js BOSSES[8]).
+  gaiatron: 'assets/florakar/monster.png',
+  // Mesmo motivo acima — reskin Malgorath (ver data/monsters.js BOSSES[9]).
+  bahamorth: 'assets/malgorath/monster.png',
 };
 
 // One boss card's full effect = a list of simple, always-on stat bonuses

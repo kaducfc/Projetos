@@ -354,42 +354,84 @@ export const BOSSES = [
   },
   {
     stage: 80,
+    // id/crystalMaterialId ficam 'tempestron'/'tempestron_crystal' de
+    // propósito — mesmo reskin display-only das Zonas 1-7 acima (ver
+    // comentário no Chispim). Fecha a Zona 8 (Capitão Marvik/Abissorrok/
+    // Thalassok/Serpentyra, ver WEAK_MONSTER_GROUPS acima) como o 5º e mais
+    // forte monstro.
     id: 'tempestron',
-    name: 'Tempestron',
-    element: 'eletrico',
-    emoji: '⛈️',
-    image: 'assets/tempestron/monster.png',
+    name: 'Hidraelion',
+    element: 'agua',
+    emoji: '🐙',
+    image: 'assets/hidraelion/monster.png',
+    // Sem animação de frames (só 1 imagem estática recebida).
+    animFrames: null,
+    spriteScale: 2.1,
+    // Só 1 material de drop de verdade (Núcleo de Hidraelion) — mesmo
+    // truque das outras zonas (primary1/primary2 apontam pro mesmo id).
     materials: {
-      primary1: { id: 'tempestron_heart', name: 'Coração Tempestuoso', emoji: '💜', image: 'assets/tempestron/coracao.png' },
-      primary2: { id: 'tempestron_orb', name: 'Orbe Trovejante', emoji: '🔮', image: 'assets/tempestron/orbe.png' },
+      primary1: { id: 'tempestron_heart', name: 'Núcleo de Hidraelion', emoji: '🔮', image: 'assets/hidraelion/nucleo.png' },
+      primary2: { id: 'tempestron_heart', name: 'Núcleo de Hidraelion', emoji: '🔮', image: 'assets/hidraelion/nucleo.png' },
     },
-    crystal: { id: 'tempestron_crystal', name: 'Cristal de Tempestron', emoji: '💎', image: 'assets/crystals/tempestron.png' },
+    crystal: { id: 'tempestron_crystal', name: 'Cristal de Hidraelion', emoji: '💎', image: 'assets/crystals/tempestron.png' },
+    // Rank de poder dentro da Zona 8 (ver monsterMaxHp/
+    // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4 é
+    // só 1 degrau acima do Serpentyra (rank 3).
+    powerRank: 4,
   },
   {
     stage: 90,
+    // id/crystalMaterialId ficam 'gaiatron'/'gaiatron_crystal' de propósito
+    // — mesmo reskin display-only das Zonas 1-8 acima (ver comentário no
+    // Chispim). Fecha a Zona 9 (Thornviel/Verdanthra/Guardião Verdor/
+    // Granvorok, ver WEAK_MONSTER_GROUPS acima) como o 5º e mais forte
+    // monstro.
     id: 'gaiatron',
-    name: 'Gaiatron',
+    name: 'Florakar',
     element: 'planta',
     emoji: '🌳',
-    image: 'assets/gaiatron/monster.png',
+    image: 'assets/florakar/monster.png',
+    // Sem animação de frames (só 1 imagem estática recebida).
+    animFrames: null,
+    spriteScale: 2.1,
+    // Só 1 material de drop de verdade (Garra de Florakar) — mesmo truque
+    // das outras zonas (primary1/primary2 apontam pro mesmo id).
     materials: {
-      primary1: { id: 'gaiatron_branch', name: 'Galho Primordial', emoji: '🌿', image: 'assets/gaiatron/galho.png' },
-      primary2: { id: 'gaiatron_seed', name: 'Semente Ancestral', emoji: '🌰', image: 'assets/gaiatron/semente.png' },
+      primary1: { id: 'gaiatron_branch', name: 'Garra de Florakar', emoji: '🌿', image: 'assets/florakar/garra.png' },
+      primary2: { id: 'gaiatron_branch', name: 'Garra de Florakar', emoji: '🌿', image: 'assets/florakar/garra.png' },
     },
-    crystal: { id: 'gaiatron_crystal', name: 'Cristal de Gaiatron', emoji: '💎', image: 'assets/crystals/gaiatron.png' },
+    crystal: { id: 'gaiatron_crystal', name: 'Cristal de Florakar', emoji: '💎', image: 'assets/crystals/gaiatron.png' },
+    // Rank de poder dentro da Zona 9 (ver monsterMaxHp/
+    // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4 é
+    // só 1 degrau acima do Granvorok (rank 3).
+    powerRank: 4,
   },
   {
     stage: 100,
+    // id/crystalMaterialId ficam 'bahamorth'/'bahamorth_crystal' de
+    // propósito — mesmo reskin display-only das Zonas 1-9 acima (ver
+    // comentário no Chispim). Fecha a Zona 10 (Draxorian/Grommash/
+    // Morvanthal/Aurelion, ver WEAK_MONSTER_GROUPS acima) como o 5º e mais
+    // forte monstro.
     id: 'bahamorth',
-    name: 'Bahamorth',
+    name: 'Malgorath',
     element: 'neutro',
-    emoji: '🐲',
-    image: 'assets/bahamorth/monster.png',
+    emoji: '🗡️',
+    image: 'assets/malgorath/monster.png',
+    // Sem animação de frames (só 1 imagem estática recebida).
+    animFrames: null,
+    spriteScale: 2.1,
+    // Só 1 material de drop de verdade (Espada do Vazio Eterno) — mesmo
+    // truque das outras zonas (primary1/primary2 apontam pro mesmo id).
     materials: {
-      primary1: { id: 'bahamorth_scale', name: 'Escama de Bahamorth', emoji: '🩶', image: 'assets/bahamorth/escama.png' },
-      primary2: { id: 'bahamorth_soul', name: 'Alma Dracônica', emoji: '👻', image: 'assets/bahamorth/alma.png' },
+      primary1: { id: 'bahamorth_scale', name: 'Espada do Vazio Eterno', emoji: '🗡️', image: 'assets/malgorath/espada.png' },
+      primary2: { id: 'bahamorth_scale', name: 'Espada do Vazio Eterno', emoji: '🗡️', image: 'assets/malgorath/espada.png' },
     },
-    crystal: { id: 'bahamorth_crystal', name: 'Cristal de Bahamorth', emoji: '💎', image: 'assets/crystals/bahamorth.png' },
+    crystal: { id: 'bahamorth_crystal', name: 'Cristal de Malgorath', emoji: '💎', image: 'assets/crystals/bahamorth.png' },
+    // Rank de poder dentro da Zona 10 (ver monsterMaxHp/
+    // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4 é
+    // só 1 degrau acima do Aurelion (rank 3).
+    powerRank: 4,
   },
 ];
 
@@ -505,26 +547,49 @@ export const WEAK_MONSTER_GROUPS = [
       { id: 'ignivoran', name: 'Ignivoran', element: 'fogo', emoji: '🦅', image: 'assets/ignivoran/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'ignivoran_feather', name: 'Pena de Ignivoran', emoji: '🪶', image: 'assets/ignivoran/pena.png' } },
     ],
   },
+  // Zona 8 (stage 71-79) — mesmo tratamento das Zonas 1-7 acima: 4 monstros
+  // próprios, elemento Água (mesmo do chefe da zona), cada um um pouco mais
+  // forte que o anterior (powerRank). O 5º e mais forte (Hidraelion) é o
+  // chefe da zona (ver BOSSES[7] abaixo — id interno 'tempestron', mantido
+  // por compatibilidade).
   {
     startStage: 71,
     endStage: 79,
     monsters: [
-      { id: 'pimpira', name: 'Pimpira', element: 'fogo', emoji: '🦋', image: 'assets/pimpira/monster.png', material: { id: 'pimpira_wing', name: 'Asa Flamejante', emoji: '🔥', image: 'assets/pimpira/wing.png' } },
-      { id: 'bolhumo', name: 'Bolhumo', element: 'agua', emoji: '🫧', image: 'assets/bolhumo/monster.png', material: { id: 'bolhumo_essence', name: 'Essência Aquática', emoji: '💧', image: 'assets/bolhumo/essence.png' } },
-      { id: 'escamito', name: 'Escamito', element: 'neutro', emoji: '🦎', image: 'assets/escamito/monster.png', material: { id: 'escamito_scale', name: 'Escama Metálica', emoji: '⚙️', image: 'assets/escamito/scale.png' } },
-      { id: 'muskar', name: 'Muskar', element: 'planta', emoji: '🦫', image: 'assets/muskar/monster.png', material: { id: 'muskar_fur', name: 'Pelo Musgoso', emoji: '🌿', image: 'assets/muskar/fur.png' } },
-      { id: 'voltouro', name: 'Voltouro', element: 'eletrico', emoji: '🦏', image: 'assets/voltouro/monster.png', material: { id: 'voltouro_horn', name: 'Chifre Condutor', emoji: '⚡', image: 'assets/voltouro/horn.png' } },
+      { id: 'capitao_marvik', name: 'Capitão Marvik', element: 'agua', emoji: '🏴‍☠️', image: 'assets/capitao_marvik/monster.png', powerRank: 0, spriteScale: 2.1, material: { id: 'capitao_marvik_anchor', name: 'Âncora do Abismo', emoji: '⚓', image: 'assets/capitao_marvik/ancora.png' } },
+      { id: 'abissorrok', name: 'Abissorrok', element: 'agua', emoji: '🐙', image: 'assets/abissorrok/monster.png', powerRank: 1, spriteScale: 2.1, material: { id: 'abissorrok_hammer', name: 'Marreta Abissal', emoji: '🔨', image: 'assets/abissorrok/marreta.png' } },
+      { id: 'thalassok', name: 'Thalassok', element: 'agua', emoji: '🦑', image: 'assets/thalassok/monster.png', powerRank: 2, spriteScale: 2.1, material: { id: 'thalassok_pearls', name: 'Pérolas das Profundezas', emoji: '⚪', image: 'assets/thalassok/perolas.png' } },
+      { id: 'serpentyra', name: 'Serpentyra', element: 'agua', emoji: '🐍', image: 'assets/serpentyra/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'serpentyra_trident', name: 'Tridente da Serpente', emoji: '🔱', image: 'assets/serpentyra/tridente.png' } },
     ],
   },
+  // Zona 9 (stage 81-89) — mesmo tratamento das Zonas 1-8 acima: 4 monstros
+  // próprios, elemento Planta (mesmo do chefe da zona), cada um um pouco
+  // mais forte que o anterior (powerRank). O 5º e mais forte (Florakar) é
+  // o chefe da zona (ver BOSSES[8] abaixo — id interno 'gaiatron', mantido
+  // por compatibilidade).
   {
     startStage: 81,
-    endStage: 100,
+    endStage: 89,
     monsters: [
-      { id: 'carvao', name: 'Carvão', element: 'fogo', emoji: '⚫', image: 'assets/carvao/monster.png', material: { id: 'carvao_vivo', name: 'Carvão Vivo', emoji: '🔥', image: 'assets/carvao/coal.png' } },
-      { id: 'serpilha', name: 'Serpilha', element: 'agua', emoji: '🐍', image: 'assets/serpilha/monster.png', material: { id: 'serpilha_skin', name: 'Pele Escamosa', emoji: '💧', image: 'assets/serpilha/skin.png' } },
-      { id: 'cascudon', name: 'Cascudon', element: 'neutro', emoji: '🐢', image: 'assets/cascudon/monster.png', material: { id: 'cascudon_shell', name: 'Carapaça Grossa', emoji: '🛡️', image: 'assets/cascudon/shell.png' } },
-      { id: 'esporim', name: 'Esporim', element: 'planta', emoji: '🍄', image: 'assets/esporim/monster.png', material: { id: 'esporim_spore', name: 'Esporo Venenoso', emoji: '☠️', image: 'assets/esporim/spore.png' } },
-      { id: 'ventrix', name: 'Ventrix', element: 'eletrico', emoji: '🦅', image: 'assets/ventrix/monster.png', material: { id: 'ventrix_feather', name: 'Pena Celeste', emoji: '🪽', image: 'assets/ventrix/feather.png' } },
+      { id: 'thornviel', name: 'Thornviel', element: 'planta', emoji: '🥷', image: 'assets/thornviel/monster.png', powerRank: 0, spriteScale: 2.1, material: { id: 'thornviel_hood', name: 'Capuz da Folhagem Sombria', emoji: '🌿', image: 'assets/thornviel/capuz.png' } },
+      { id: 'verdanthra', name: 'Verdanthra', element: 'planta', emoji: '🌱', image: 'assets/verdanthra/monster.png', powerRank: 1, spriteScale: 2.1, material: { id: 'verdanthra_core', name: 'Núcleo da Fome Verde', emoji: '🟢', image: 'assets/verdanthra/nucleo.png' } },
+      { id: 'guardiao_verdor', name: 'Guardião Verdor', element: 'planta', emoji: '🗿', image: 'assets/guardiao_verdor/monster.png', powerRank: 2, spriteScale: 2.1, material: { id: 'guardiao_verdor_shield', name: 'Escudo do Guardião Eterno', emoji: '🛡️', image: 'assets/guardiao_verdor/escudo.png' } },
+      { id: 'granvorok', name: 'Granvorok', element: 'planta', emoji: '🐗', image: 'assets/granvorok/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'granvorok_crystal', name: 'Fragmento de Cristal Vivo', emoji: '💠', image: 'assets/granvorok/fragmento.png' } },
+    ],
+  },
+  // Zona 10 (stage 91-99) — mesmo tratamento das Zonas 1-9 acima: 4 monstros
+  // próprios, elemento Neutro (mesmo do chefe da zona), cada um um pouco
+  // mais forte que o anterior (powerRank). O 5º e mais forte (Malgorath) é
+  // o chefe da zona (ver BOSSES[9] abaixo — id interno 'bahamorth', mantido
+  // por compatibilidade).
+  {
+    startStage: 91,
+    endStage: 99,
+    monsters: [
+      { id: 'draxorian', name: 'Draxorian', element: 'neutro', emoji: '🐉', image: 'assets/draxorian/monster.png', powerRank: 0, spriteScale: 2.1, material: { id: 'draxorian_chest', name: 'Peitoral do Devastador', emoji: '🛡️', image: 'assets/draxorian/peitoral.png' } },
+      { id: 'grommash', name: 'Grommash', element: 'neutro', emoji: '👹', image: 'assets/grommash/monster.png', powerRank: 1, spriteScale: 2.1, material: { id: 'grommash_crown', name: 'Coroa do Colosso', emoji: '👑', image: 'assets/grommash/coroa.png' } },
+      { id: 'morvanthal', name: 'Morvanthal', element: 'neutro', emoji: '💀', image: 'assets/morvanthal/monster.png', powerRank: 2, spriteScale: 2.1, material: { id: 'morvanthal_scepter', name: 'Cetro do Domínio Ósseo', emoji: '🦴', image: 'assets/morvanthal/cetro.png' } },
+      { id: 'aurelion', name: 'Aurelion', element: 'neutro', emoji: '👼', image: 'assets/aurelion/monster.png', powerRank: 3, spriteScale: 2.1, material: { id: 'aurelion_spear', name: 'Lança da Sinfonia Celestial', emoji: '🗡️', image: 'assets/aurelion/lanca.png' } },
     ],
   },
 ];
