@@ -19,7 +19,7 @@ import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventS
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
 import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
 import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
-import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, PET_MAX_LEVEL, getPetInventoryCap } from '../data/pets.js';
+import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, getPetDpsBonusPercent, PET_MAX_LEVEL, getPetInventoryCap } from '../data/pets.js';
 import { getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet } from '../systems/pets.js';
 import { getSkillTree, STAT_DISPLAY_NAME, SPECIAL_THRESHOLDS } from '../data/skills.js';
 import {
@@ -1101,13 +1101,16 @@ function petDetailHtml(state, uid, showFuseList) {
       ? `<button class="modal-action-btn" data-open-pet-fuse="${uid}">🌟 Fundir</button>`
       : `<div class="enhance-maxed">✨ Nível máximo (+10)</div>`;
 
+  const dpsBonusPercent = getPetDpsBonusPercent(pet);
   return `
     <div class="item-detail">
+      <div class="item-detail-tier-badge">Tier ${species.tier}</div>
       <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(species.image, species.emoji, species.name)}</div>
       <div class="item-detail-name">${species.name} <span class="enhance-badge">+${pet.level}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-attribute" style="color:${getPetElementColor(species.element)}; font-weight:700; font-size:11.5px;">${elementBadgeHtml(species.element)} ${getElement(species.element).name}</div>
       <div class="item-detail-stats">+${formatNumber(damage)} Dano ${getElement(species.element).name}</div>
+      <div class="item-detail-stats">+${dpsBonusPercent.toFixed(1)}% DPS do caçador (só enquanto ativo em combate)</div>
       ${fuseSection}
       <div class="modal-action-row">
         ${actionBtn}
@@ -1131,6 +1134,7 @@ function hatchCandidateHtml(candidate, side, unlocked) {
   const rarity = getRarity(candidate.rarityId);
   return `
     <div class="hatch-candidate ${unlocked ? '' : 'locked'}">
+      <div class="item-detail-tier-badge">Tier ${species.tier}</div>
       <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(species.image, species.emoji, species.name)}</div>
       <div class="item-detail-name">${species.name}</div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>

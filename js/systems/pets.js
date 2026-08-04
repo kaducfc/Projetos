@@ -1,4 +1,4 @@
-import { PET_MAX_LEVEL, getPetInventoryCap, getPetSellValue, getPetDamage, getPetSpecies } from '../data/pets.js';
+import { PET_MAX_LEVEL, getPetInventoryCap, getPetSellValue, getPetDamage, getPetSpecies, getPetDpsBonusPercent } from '../data/pets.js';
 import { elementDamageModifier } from '../data/elements.js';
 
 export const MAX_EQUIPPED_PETS = 4;
@@ -95,7 +95,11 @@ export function getFusePartners(state, uid) {
 /// Dentre os pets equipados, qual causaria mais dano agora contra
 /// `monsterElement` — usado pra resolver automaticamente qual mascote ataca
 /// a cada hit (ver systems/combat.js resolvePetHit, chamado do main.js).
-/// Retorna null se nenhum pet estiver equipado.
+/// Retorna null se nenhum pet estiver equipado. Só ESSE pet (o "ativo")
+/// empresta seu bônus de %DPS ao caçador (ver dpsBonusPercent/
+/// getActivePetDpsMultiplier abaixo) — os outros até 3 equipados ficam de
+/// reserva, sem efeito nenhum até serem eles os escolhidos contra outro
+/// elemento.
 export function getBestEquippedPet(state, monsterElement) {
   let best = null;
   let bestDamage = -Infinity;
@@ -109,10 +113,20 @@ export function getBestEquippedPet(state, monsterElement) {
     const damage = getPetDamage(pet) * modifier;
     if (damage > bestDamage) {
       bestDamage = damage;
-      best = { pet, species, damage };
+      best = { pet, species, damage, dpsBonusPercent: getPetDpsBonusPercent(pet) };
     }
   }
   return best;
+}
+
+/// Multiplicador de DPS do caçador vindo só do pet ATIVO no momento (ver
+/// getBestEquippedPet acima) — 1 (sem efeito) se nenhum pet estiver
+/// equipado. Cada um dos 4 contextos de combate (main.js) multiplica isso
+/// no elementalMultiplier antes de chamar resolveHit(), igual já faz com
+/// getCardDamageBonus.
+export function getActivePetDpsMultiplier(state, monsterElement) {
+  const best = getBestEquippedPet(state, monsterElement);
+  return best ? 1 + best.dpsBonusPercent / 100 : 1;
 }
 
 // ---------------------------------------------------------------------
