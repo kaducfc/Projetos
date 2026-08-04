@@ -1033,7 +1033,7 @@ function petSlotIconHtml(state, uid, slotIndex) {
   const rarityClass = rarity ? ' has-rarity' : '';
   const rarityStyle = rarity ? ` style="--rarity-color:${rarity.color};"` : '';
   return `<button class="equip-slot-icon ${pet ? 'filled' : 'empty'}${rarityClass}" data-pet-slot="${slotIndex}" title="Mascote ${slotIndex + 1}"${rarityStyle}>
-    <span class="icon">${species ? species.emoji : '🐾'}</span>
+    <span class="icon">${species ? iconMarkup(species.image, species.emoji, species.name) : '🐾'}</span>
     ${pet ? `<span class="mini-badge">+${pet.level}</span>` : ''}
   </button>`;
 }
@@ -1043,7 +1043,7 @@ function petTileHtml(state, pet) {
   const rarity = getRarity(pet.rarityId);
   const isEquipped = (state.equippedPetUids || []).includes(pet.uid);
   return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''}" style="--rarity-color:${rarity.color};" data-view-pet="${pet.uid}" title="${species.name}">
-    <span class="icon">${species.emoji}</span>
+    <span class="icon">${iconMarkup(species.image, species.emoji, species.name)}</span>
     <span class="mini-badge">+${pet.level}</span>
   </button>`;
 }
@@ -1079,7 +1079,7 @@ function fusePartnersHtml(state, uid) {
     <div class="card-slot-options">${partners.map((p) => {
       const species = getPetSpecies(p.speciesId);
       const rarity = getRarity(p.rarityId);
-      return `<button class="card-slot-option" data-fuse-base="${uid}" data-fuse-with="${p.uid}">${species.emoji} ${species.name} +${p.level} <span class="qty">${rarity.name}</span></button>`;
+      return `<button class="card-slot-option" data-fuse-base="${uid}" data-fuse-with="${p.uid}">${iconMarkup(species.image, species.emoji, species.name)} ${species.name} +${p.level} <span class="qty">${rarity.name}</span></button>`;
     }).join('')}</div>
   </div>`;
 }
@@ -1103,7 +1103,7 @@ function petDetailHtml(state, uid, showFuseList) {
 
   return `
     <div class="item-detail">
-      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${species.emoji}</div>
+      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(species.image, species.emoji, species.name)}</div>
       <div class="item-detail-name">${species.name} <span class="enhance-badge">+${pet.level}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-attribute" style="color:${getPetElementColor(species.element)}; font-weight:700; font-size:11.5px;">${elementBadgeHtml(species.element)} ${getElement(species.element).name}</div>
@@ -1131,7 +1131,7 @@ function hatchCandidateHtml(candidate, side, unlocked) {
   const rarity = getRarity(candidate.rarityId);
   return `
     <div class="hatch-candidate ${unlocked ? '' : 'locked'}">
-      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${species.emoji}</div>
+      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(species.image, species.emoji, species.name)}</div>
       <div class="item-detail-name">${species.name}</div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       ${unlocked
