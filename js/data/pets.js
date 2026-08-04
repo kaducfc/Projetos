@@ -34,39 +34,42 @@ function petTierDamage(tier) {
   return Math.round(PET_TIER_BASE * Math.pow(PET_TIER_GROWTH, tier - 1));
 }
 
+// Nome + arte real (assets/pets/<elemento>/tN.png) por espécie — recebidas
+// já nomeadas/tieradas pelo arquivo de origem (ex: "t3 Magmox - Fogo.png").
+// emoji fica só de fallback (iconMarkup() em ui/render.js cai nele se
+// image alguma vez faltar).
 const PET_SPECIES_BY_ELEMENT = {
   fogo: [
-    { name: 'Salamandra Filhote', emoji: '🦎' },
-    { name: 'Raposa das Brasas', emoji: '🦊' },
-    { name: 'Fênix Jovem', emoji: '🐦' },
-    { name: 'Dragão Ígneo', emoji: '🐉' },
-    { name: 'Fera Solar', emoji: '☀️' },
+    { name: 'Emberu', emoji: '🦎' },
+    { name: 'Salaflame', emoji: '🦊' },
+    { name: 'Magmox', emoji: '🐉' },
+    { name: 'Sunko', emoji: '☀️' },
+    { name: 'Kitsara', emoji: '🔥' },
   ],
   planta: [
-    { name: 'Lagarta Verde', emoji: '🐛' },
-    { name: 'Caramujo Espinhoso', emoji: '🐌' },
-    { name: 'Borboleta Feérica', emoji: '🦋' },
-    { name: 'Broto Ancestral', emoji: '🌳' },
-    { name: 'Guardião da Selva', emoji: '🌲' },
+    { name: 'Spriggo', emoji: '🐛' },
+    { name: 'Folhito', emoji: '🦋' },
+    { name: 'Galharis', emoji: '🌳' },
+    { name: 'Floriel', emoji: '🌸' },
+    { name: 'Pandrion', emoji: '🌲' },
   ],
   eletrico: [
-    { name: 'Rato Elétrico', emoji: '🐭' },
-    { name: 'Esquilo Voltaico', emoji: '🐿️' },
-    { name: 'Coelho Relâmpago', emoji: '🐰' },
-    { name: 'Lobo do Trovão', emoji: '🐺' },
-    { name: 'Fênix Elétrica', emoji: '⚡' },
+    { name: 'Sparko', emoji: '🐭' },
+    { name: 'Zappin', emoji: '🐿️' },
+    { name: 'Raion', emoji: '🐺' },
+    { name: 'Thundor', emoji: '⚡' },
+    { name: 'Zephryx', emoji: '🦅' },
   ],
   agua: [
-    { name: 'Girino Azul', emoji: '🐸' },
-    { name: 'Peixinho Prateado', emoji: '🐟' },
-    { name: 'Tartaruga das Marés', emoji: '🐢' },
-    { name: 'Golfinho Cristalino', emoji: '🐬' },
-    { name: 'Serpente Abissal', emoji: '🐍' },
+    { name: 'Conchy', emoji: '🐸' },
+    { name: 'Croakus', emoji: '🐟' },
+    { name: 'Glacik', emoji: '🐢' },
+    { name: 'Tideon', emoji: '🐬' },
+    { name: 'Nerivor', emoji: '🐍' },
   ],
 };
 
-// 20 espécies no total (4 elementos × 5 tiers) — sem arte nova, cai no
-// emoji (mesmo padrão já usado pros itens de zona/atributo).
+// 20 espécies no total (4 elementos × 5 tiers).
 export const PETS = [];
 PET_ELEMENTS.forEach((element) => {
   PET_SPECIES_BY_ELEMENT[element].forEach((sp, i) => {
@@ -75,6 +78,7 @@ PET_ELEMENTS.forEach((element) => {
       id: `${element}_${tier}`,
       name: sp.name,
       emoji: sp.emoji,
+      image: `assets/pets/${element}/t${tier}.png`,
       element,
       tier,
       baseDamage: petTierDamage(tier),
