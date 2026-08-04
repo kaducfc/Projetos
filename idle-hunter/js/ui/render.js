@@ -840,15 +840,20 @@ function skillTreeHtml(state) {
     const rowsHtml = stage.rows.map((row) => `
       <div class="skill-row">${row.map((skill) => skillCardHtml(state, skill)).join('')}</div>
     `).join('');
-    const specialHtml = stage.special ? `
+    const specialHtml = stage.special ? (() => {
+      const lastRow = stage.rows[stage.rows.length - 1];
+      const lastRowDone = lastRow.some((skill) => getSkillLevel(state, skill.id) > 0);
+      return `
       <div class="skill-special-gate">
         <div class="skill-special-gate-label">
           🔒 Especial da Etapa ${stage.stageIndex + 1} — precisa gastar ${SPECIAL_THRESHOLDS[stage.stageIndex]} pontos no total
           (${Math.min(getSpentSkillPoints(state), SPECIAL_THRESHOLDS[stage.stageIndex])}/${SPECIAL_THRESHOLDS[stage.stageIndex]})
+          e ter pelo menos 1 nível na linha de cima ${lastRowDone ? '✅' : '❌'}
         </div>
         <div class="skill-row skill-special-row">${stage.special.options.map((opt) => specialOptionHtml(state, opt)).join('')}</div>
       </div>
-    ` : '';
+    `;
+    })() : '';
     return `
       <div class="skill-stage ${stageUnlocked ? '' : 'locked'}">
         <div class="skill-stage-title">Etapa ${stage.stageIndex + 1}</div>
