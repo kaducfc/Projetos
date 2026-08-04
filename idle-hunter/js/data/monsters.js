@@ -160,13 +160,9 @@ export const BOSSES = [
     // renderMonster() em ui/render.js já lida bem com isso, mostra a
     // imagem parada.
     animFrames: null,
-    // Sem cena de fundo própria pra esse (nenhuma arte de cenário
-    // recebida) — cai no gradiente CSS padrão, igual todo boss sem scene.
+    // Campo morto — cenário de batalha agora vem sempre de ZONES[].sceneImage
+    // (1 por zona, ver o topo do arquivo), nenhum boss tem cenário próprio.
     scene: null,
-    // Boss-specific background for the battle scene (renderMonster() in
-    // ui/render.js uses this instead of the random SCENE_IMAGES rotation
-    // used for weak-monster stages). Optional — bosses without one fall
-    // back to the plain CSS gradient backdrop, same as before.
     // Battle-sprite scale multiplier (renderMonster() in ui/render.js
     // applies this as font-size on #monster-sprite, since the sprite's
     // width/height are 1em) — bosses read as unimpressive next to weak
@@ -685,11 +681,33 @@ function bossUnlockLevelFor(zoneIndex) {
   return 10 * (zoneIndex + 1);
 }
 
+// Nome + cenário de fundo próprio por zona (1 imagem fixa cada) —
+// substitui os 3 cenários genéricos sorteados aleatoriamente que existiam
+// antes (ver ui/render.js). Caminhos escritos como literais completos (não
+// via template `zone${n}.jpg`) de propósito — build-bundle.mjs só inlina
+// como base64 os literais 'assets/...' que consegue casar por regex no
+// texto-fonte, uma interpolação dinâmica passaria despercebida e quebraria
+// o build publicado.
+const ZONE_INFO = [
+  { name: 'Fenda da Raiz Gigante', sceneImage: 'assets/ui/scenes/zone1.jpg' },
+  { name: 'Trilha da Cachoeira', sceneImage: 'assets/ui/scenes/zone2.jpg' },
+  { name: 'Catacumbas Antigas', sceneImage: 'assets/ui/scenes/zone3.jpg' },
+  { name: 'Vale dos Ventos Elétricos', sceneImage: 'assets/ui/scenes/zone4.jpg' },
+  { name: 'Floresta Incandescente', sceneImage: 'assets/ui/scenes/zone5.jpg' },
+  { name: 'Gruta dos Cristais', sceneImage: 'assets/ui/scenes/zone6.jpg' },
+  { name: 'Deserto Abrasador', sceneImage: 'assets/ui/scenes/zone7.jpg' },
+  { name: 'Túnel Subterrâneo', sceneImage: 'assets/ui/scenes/zone8.jpg' },
+  { name: 'Pântano da Corrupção', sceneImage: 'assets/ui/scenes/zone9.jpg' },
+  { name: 'Ruína Cósmica', sceneImage: 'assets/ui/scenes/zone10.jpg' },
+];
+
 export const ZONES = BOSSES.map((boss, zoneIndex) => {
   const canonicalStage = (zoneIndex + 1) * ZONE_SIZE;
+  const info = ZONE_INFO[zoneIndex] || { name: `Zona ${zoneIndex + 1}`, sceneImage: null };
   return {
     index: zoneIndex,
-    name: `Zona ${zoneIndex + 1}`,
+    name: info.name,
+    sceneImage: info.sceneImage,
     canonicalStage,
     weakMonsters: getWeakMonsterGroupForStage(canonicalStage - 1).monsters,
     boss,
