@@ -18,34 +18,74 @@ export const CARD_DAMAGE_BONUS = 0.03;
 // (see systems/cards.js).
 export const CARD_DISCOVERY_CASH_REWARD = 5;
 
-// Real card art now exists for all 10 bosses (see assets/cards/*.png) —
-// any boss missing here would fall back to the 🃏 emoji, same as every
-// weak-monster card for now.
+// Arte de carta real pra TODOS os 50 monstros do roster (10 chefes + 40
+// fracos, ver assets/cards/*.png) — recebida como c1..c50.png, na ordem
+// m1..m50 (ver data/monsters.js): dentro de cada zona de 5, as 4 primeiras
+// são os fracos (na mesma ordem de WEAK_MONSTER_GROUPS) e a 5ª (múltiplo de
+// 5: c5, c10, ..., c50) é o chefe daquela zona. Chave = monsterId (mesmo id
+// usado tanto por BOSSES quanto pelos grupos de fraco), então um mapa único
+// cobre os dois — sem essa arte, getCardForMonster() cai no emoji 🃏.
 const CARD_IMAGES = {
-  // Reusa o sprite de batalha (não tem arte de carta dedicada pro reskin
-  // Thornak, ver data/monsters.js BOSSES[0]) — melhor que continuar
-  // mostrando o Chispim antigo numa carta que agora se chama "Carta de
-  // Thornak".
-  chispim: 'assets/thornak/monster.png',
-  // Mesmo motivo do Thornak acima — reskin Marokar (ver data/monsters.js
-  // BOSSES[1]) sem arte de carta dedicada, reusa o sprite de batalha.
-  solkaiser: 'assets/marokar/monster.png',
-  // Mesmo motivo acima — reskin Vorlith (ver data/monsters.js BOSSES[2]).
-  tartarok: 'assets/vorlith/monster.png',
-  // Mesmo motivo acima — reskin Eletyra (ver data/monsters.js BOSSES[3]).
-  colhedor_carmesim: 'assets/eletyra/monster.png',
-  // Mesmo motivo acima — reskin Pyravalis (ver data/monsters.js BOSSES[4]).
-  grommuk: 'assets/pyravalis/monster.png',
-  // Mesmo motivo acima — reskin Vortexor (ver data/monsters.js BOSSES[5]).
-  vulkarion: 'assets/vortexor/monster.png',
-  // Mesmo motivo acima — reskin Magmarok (ver data/monsters.js BOSSES[6]).
-  leviargon: 'assets/magmarok/monster.png',
-  // Mesmo motivo acima — reskin Hidraelion (ver data/monsters.js BOSSES[7]).
-  tempestron: 'assets/hidraelion/monster.png',
-  // Mesmo motivo acima — reskin Florakar (ver data/monsters.js BOSSES[8]).
-  gaiatron: 'assets/florakar/monster.png',
-  // Mesmo motivo acima — reskin Malgorath (ver data/monsters.js BOSSES[9]).
-  bahamorth: 'assets/malgorath/monster.png',
+  // Zona 1
+  sylkar: 'assets/cards/sylkar.png',
+  musgorn: 'assets/cards/musgorn.png',
+  guardiao_druida: 'assets/cards/guardiao_druida.png',
+  granclaw: 'assets/cards/granclaw.png',
+  chispim: 'assets/cards/chispim.png',
+  // Zona 2
+  marfang: 'assets/cards/marfang.png',
+  mizan: 'assets/cards/mizan.png',
+  lyria: 'assets/cards/lyria.png',
+  hydrakon: 'assets/cards/hydrakon.png',
+  solkaiser: 'assets/cards/solkaiser.png',
+  // Zona 3
+  esqueleto_guerreiro: 'assets/cards/esqueleto_guerreiro.png',
+  assassino_sombrio: 'assets/cards/assassino_sombrio.png',
+  garruk: 'assets/cards/garruk.png',
+  mimicus: 'assets/cards/mimicus.png',
+  tartarok: 'assets/cards/tartarok.png',
+  // Zona 4
+  plasmion: 'assets/cards/plasmion.png',
+  corcel_tempestade: 'assets/cards/corcel_tempestade.png',
+  sabion: 'assets/cards/sabion.png',
+  serpentorax: 'assets/cards/serpentorax.png',
+  colhedor_carmesim: 'assets/cards/colhedor_carmesim.png',
+  // Zona 5
+  lavasalam: 'assets/cards/lavasalam.png',
+  fornitus: 'assets/cards/fornitus.png',
+  emberimp: 'assets/cards/emberimp.png',
+  ember_warden: 'assets/cards/ember_warden.png',
+  grommuk: 'assets/cards/grommuk.png',
+  // Zona 6
+  luxoris: 'assets/cards/luxoris.png',
+  ecliptor: 'assets/cards/ecliptor.png',
+  thundrak: 'assets/cards/thundrak.png',
+  minotauro_trovao: 'assets/cards/minotauro_trovao.png',
+  vulkarion: 'assets/cards/vulkarion.png',
+  // Zona 7
+  pyrorian: 'assets/cards/pyrorian.png',
+  infernus: 'assets/cards/infernus.png',
+  sentinela_magma: 'assets/cards/sentinela_magma.png',
+  ignivoran: 'assets/cards/ignivoran.png',
+  leviargon: 'assets/cards/leviargon.png',
+  // Zona 8
+  capitao_marvik: 'assets/cards/capitao_marvik.png',
+  abissorrok: 'assets/cards/abissorrok.png',
+  thalassok: 'assets/cards/thalassok.png',
+  serpentyra: 'assets/cards/serpentyra.png',
+  tempestron: 'assets/cards/tempestron.png',
+  // Zona 9
+  thornviel: 'assets/cards/thornviel.png',
+  verdanthra: 'assets/cards/verdanthra.png',
+  guardiao_verdor: 'assets/cards/guardiao_verdor.png',
+  granvorok: 'assets/cards/granvorok.png',
+  gaiatron: 'assets/cards/gaiatron.png',
+  // Zona 10
+  draxorian: 'assets/cards/draxorian.png',
+  grommash: 'assets/cards/grommash.png',
+  morvanthal: 'assets/cards/morvanthal.png',
+  aurelion: 'assets/cards/aurelion.png',
+  bahamorth: 'assets/cards/bahamorth.png',
 };
 
 // One boss card's full effect = a list of simple, always-on stat bonuses
@@ -160,7 +200,7 @@ export const CARDS = [
     isBossCard: false,
     name: `Carta de ${monster.name}`,
     emoji: '🃏',
-    image: null,
+    image: CARD_IMAGES[monster.id] || null,
     element: monster.element,
     bonuses: [],
     special: null,
