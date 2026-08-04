@@ -152,6 +152,13 @@ export function createDefaultState() {
     // pet é descartado automaticamente por o inventário estar cheio — ver
     // addPetToInventory em systems/pets.js.
     petFragments: 0,
+    // Pity de raridade ao chocar (ver MYTHIC_PITY_THRESHOLD/
+    // LEGENDARY_PITY_THRESHOLD em systems/pets.js): quantos ovos foram
+    // chocados desde o último Mítico/Lendário obtido — cada contador é
+    // independente (só reseta ao chocar EXATAMENTE aquela raridade) e
+    // conta até garantir a raridade correspondente no próximo choco.
+    petHatchesSinceMythic: 0,
+    petHatchesSinceLegendary: 0,
     // Sistema VIP — por tempo, não permanente (ver isVipActive/
     // VIP_DURATION_MS abaixo): cada compra na loja de Cash (data/shop.js
     // cash_vip, systems/shop.js buyCashItem) soma mais VIP_DURATION_MS a

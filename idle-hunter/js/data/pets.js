@@ -142,9 +142,12 @@ function pickPetRarity() {
   return RARITIES[0];
 }
 
-export function rollPetCandidate() {
+/// forcedRarityId (opcional) força a raridade em vez de sortear — usado
+/// pelo pity de choco (ver rollHatchCandidates em systems/pets.js), que
+/// garante Lendário a cada 20 chocos e Mítico a cada 60 sem último obtido.
+export function rollPetCandidate(forcedRarityId = null) {
   const species = PETS[Math.floor(Math.random() * PETS.length)];
-  const rarity = pickPetRarity();
+  const rarity = forcedRarityId ? getRarity(forcedRarityId) : pickPetRarity();
   return { speciesId: species.id, rarityId: rarity.id, level: 1 };
 }
 

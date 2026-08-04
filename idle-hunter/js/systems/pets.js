@@ -7,6 +7,50 @@ import { isVipActive } from '../state.js';
 
 export const MAX_EQUIPPED_PETS = 4;
 
+// ---------------------------------------------------------------------
+// Pity de raridade ao chocar — sem isso, Lendário (1.5%) e Mítico (0.5%)
+// dependem 100% de sorte e podem nunca sair. state.petHatchesSinceMythic/
+// petHatchesSinceLegendary (ver state.js) contam ovos chocados desde a
+// última vez que cada raridade saiu — cada um reseta só quando a raridade
+// EXATA dele é chocada (respectivo contador, não um reset cruzado).
+// ---------------------------------------------------------------------
+export const MYTHIC_PITY_THRESHOLD = 60;
+export const LEGENDARY_PITY_THRESHOLD = 20;
+
+/// Qual raridade (se alguma) o PRÓXIMO choco deve garantir. Prioriza
+/// Mítico sobre Lendário se os 2 gatilhos coincidirem no mesmo choco
+/// (Mítico > Lendário, então cumpre a promessa dos dois de qualquer jeito
+/// — o contador de Lendário simplesmente continua subindo até sair um
+/// Lendário de verdade, igual documentado acima).
+export function nextHatchGuaranteedRarity(state) {
+  if (((state.petHatchesSinceMythic || 0) + 1) >= MYTHIC_PITY_THRESHOLD) return 'mitico';
+  if (((state.petHatchesSinceLegendary || 0) + 1) >= LEGENDARY_PITY_THRESHOLD) return 'lendario';
+  return null;
+}
+
+/// Rola os 2 candidatos de 1 choco de ovo, já respeitando a garantia de
+/// pity acima. Quando há raridade garantida, os DOIS candidatos saem
+/// nela (só espécie/Tier variam entre eles) — assim a garantia vale não
+/// importa qual dos 2 o jogador escolher, sem precisar torcer a escolha
+/// manual/automática em cada fluxo (choco manual em main.js, choco em
+/// lote em hatchAllEggs abaixo).
+export function rollHatchCandidates(state) {
+  const forcedRarityId = nextHatchGuaranteedRarity(state);
+  return [rollPetCandidate(forcedRarityId), rollPetCandidate(forcedRarityId)];
+}
+
+/// Atualiza os 2 contadores de pity depois que um choco é COMMITADO (o pet
+/// escolhido realmente entra no inventário, não só rolado) — chamada
+/// obrigatória de todo fluxo de choco (manual em main.js, lote em
+/// hatchAllEggs abaixo), sempre com a raridade do pet que de fato foi
+/// escolhido.
+export function recordPetHatchOutcome(state, chosenRarityId) {
+  state.petHatchesSinceMythic = (state.petHatchesSinceMythic || 0) + 1;
+  state.petHatchesSinceLegendary = (state.petHatchesSinceLegendary || 0) + 1;
+  if (chosenRarityId === 'mitico') state.petHatchesSinceMythic = 0;
+  if (chosenRarityId === 'lendario') state.petHatchesSinceLegendary = 0;
+}
+
 export function getPetEntry(state, uid) {
   return state.pets.find((p) => p.uid === uid) || null;
 }
@@ -290,8 +334,7 @@ export function hatchAllEggs(state) {
       summary.stoppedInventoryFull = true;
       break;
     }
-    const left = rollPetCandidate();
-    const right = rollPetCandidate();
+    const [left, right] = rollHatchCandidates(state);
     let chosen = left;
     if (canChooseRightPet(state) && isPetCandidateBetter(right, left)) {
       chosen = right;
@@ -299,6 +342,7 @@ export function hatchAllEggs(state) {
     }
     state.eggCount -= 1;
     const { discarded, fragments } = addPetToInventory(state, chosen);
+    recordPetHatchOutcome(state, chosen.rarityId);
     summary.hatched += 1;
     if (discarded) {
       summary.discardedCount += 1;
