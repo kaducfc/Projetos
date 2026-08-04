@@ -66,18 +66,25 @@ export function buySkillLevel(state, skillId) {
   return true;
 }
 
-/// A especial de uma etapa só pode ser comprada depois de gastar o total
-/// de pontos exigido (ver SPECIAL_THRESHOLDS em data/skills.js) — na
-/// prática, isso já é inalcançável fora de ordem, porque a etapa seguinte
-/// só destrava (e vira gastável) depois da especial anterior (ver
-/// isStageUnlocked), mas o check de "especial anterior escolhida" abaixo
-/// deixa essa invariante explícita em vez de depender só da conta.
+/// A especial de uma etapa só pode ser comprada com 2 requisitos: (1) o
+/// total de pontos gastos na árvore inteira (ver SPECIAL_THRESHOLDS em
+/// data/skills.js) e (2) pelo menos 1 nível comprado na ÚLTIMA linha
+/// daquela etapa — sem isso, dava pra "pular" a etapa inteira comprando só
+/// habilidades de OUTRAS etapas até acumular pontos suficientes, sem nunca
+/// ter chegado na linha de cima da especial. Isso também já é inalcançável
+/// fora de ordem, porque a etapa seguinte só destrava (e vira gastável)
+/// depois da especial anterior (ver isStageUnlocked), mas o check de
+/// "especial anterior escolhida" abaixo deixa essa invariante explícita em
+/// vez de depender só da conta.
 export function canBuySpecial(state, specialOptionId) {
   const option = findSpecialById(specialOptionId);
   if (!option) return false;
   if (option.stageIndex > 0 && !isSpecialChosen(state, option.stageIndex - 1)) return false;
   if (isSpecialChosen(state, option.stageIndex)) return false;
   if (getSpentSkillPoints(state) < SPECIAL_THRESHOLDS[option.stageIndex]) return false;
+  const stage = getSkillTree().stages[option.stageIndex];
+  const lastRow = stage.rows[stage.rows.length - 1];
+  if (!lastRow.some((skill) => getSkillLevel(state, skill.id) > 0)) return false;
   return getAvailableSkillPoints(state) >= 1;
 }
 
