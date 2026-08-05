@@ -36,8 +36,8 @@ const COMMON_DROP_CHANCE = 0.35;
 // explicitly never scaled by dropMult. Drop bonuses only affect the
 // "regular" materials above; the rare stuff always stays this rare.
 export const CRYSTAL_DROP_CHANCE = 0.01; // 1%
-export const BOSS_CARD_DROP_CHANCE = 0.0007; // 0.07% (~1 per 1,429 boss kills)
-export const WEAK_CARD_DROP_CHANCE = 0.0003; // 0.03% (~1 per 3,333 kills)
+export const BOSS_CARD_DROP_CHANCE = 0.001; // 0.1% (~1 per 1,000 boss kills)
+export const WEAK_CARD_DROP_CHANCE = 0.001; // 0.1% (~1 per 1,000 kills) — mesma taxa do chefe, pedido do usuário
 
 // Chance a kill drops a piece of equipment (see rollDroppedItem in
 // data/items.js), independent of materials/cards, scaled by the same
