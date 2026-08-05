@@ -118,17 +118,25 @@ export function unequipPetSlot(state, slotIndex) {
   return true;
 }
 
+/// Só recicla um mascote que não esteja equipado — desequipar primeiro é
+/// intencional (mesmo padrão de "sem ação destrutiva num slot em uso sem
+/// avisar" já usado em canFusePets).
+export function canRecyclePet(state, uid) {
+  const pet = getPetEntry(state, uid);
+  if (!pet) return false;
+  return !isPetEquipped(state, uid);
+}
+
 /// Recicla um mascote em Fragmento de Mascote (ver getPetRecycleValue em
 /// data/pets.js) — era "Vender" por ouro antes, virou reciclagem por
 /// pedido do usuário. Fragmento é a moeda do 2º caminho de evolução (ver
 /// donatePetFragments abaixo).
 export function recyclePet(state, uid) {
+  if (!canRecyclePet(state, uid)) return null;
   const pet = getPetEntry(state, uid);
-  if (!pet) return null;
   const value = getPetRecycleValue(pet);
   state.petFragments = (state.petFragments || 0) + value;
   state.pets = state.pets.filter((p) => p.uid !== uid);
-  state.equippedPetUids = state.equippedPetUids.map((u) => (u === uid ? null : u));
   return value;
 }
 
