@@ -17,6 +17,18 @@ const SAVE_KEY = 'idleHunterSave.v4';
 // outro stat.
 export const SKILL_TREE_VERSION = 2;
 
+// Duração de cada compra de VIP na loja (ver data/shop.js cash_vip,
+// systems/shop.js buyCashItem) — 30 dias corridos, empilhável.
+export const VIP_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
+
+/// Única fonte de verdade pra "o VIP está ativo agora" — nunca ler
+/// state.vipExpiresAt cru fora daqui, pra não esquecer o `> now` em algum
+/// lugar. now é parâmetro (não Date.now() interno) só pra facilitar teste
+/// determinístico; todo chamador real usa o default.
+export function isVipActive(state, now = Date.now()) {
+  return !!(state.vipExpiresAt && state.vipExpiresAt > now);
+}
+
 export function createDefaultState() {
   return {
     gold: 0,
@@ -140,15 +152,26 @@ export function createDefaultState() {
     // pet é descartado automaticamente por o inventário estar cheio — ver
     // addPetToInventory em systems/pets.js.
     petFragments: 0,
-    // Sistema VIP ainda por vir (mais funcionalidades futuras) — por
-    // enquanto controla se o jogador pode escolher livremente entre os 2
-    // pets ao chocar um ovo, e dá +50 de capacidade nos inventários de
-    // equipamentos e de mascotes (100 → 150, ver data/items.js
-    // getItemInventoryCap / data/pets.js getPetInventoryCap).
-    // freeRightPetChoiceCycle guarda o último ciclo diário (ver
-    // systems/pets.js currentDailyCycle) em que um jogador não-VIP já usou
-    // a escolha grátis do pet da direita.
-    vip: false,
+    // Pity de raridade ao chocar (ver MYTHIC_PITY_THRESHOLD/
+    // LEGENDARY_PITY_THRESHOLD em systems/pets.js): quantos ovos foram
+    // chocados desde o último Mítico/Lendário obtido — cada contador é
+    // independente (só reseta ao chocar EXATAMENTE aquela raridade) e
+    // conta até garantir a raridade correspondente no próximo choco.
+    petHatchesSinceMythic: 0,
+    petHatchesSinceLegendary: 0,
+    // Sistema VIP — por tempo, não permanente (ver isVipActive/
+    // VIP_DURATION_MS abaixo): cada compra na loja de Cash (data/shop.js
+    // cash_vip, systems/shop.js buyCashItem) soma mais VIP_DURATION_MS a
+    // vipExpiresAt, empilhando em cima do tempo que já restava se a compra
+    // acontecer enquanto o VIP ainda está ativo. null = nunca comprou/já
+    // expirou. Enquanto ativo: escolha livre entre os 2 pets ao chocar um
+    // ovo, +50 de capacidade nos inventários de equipamentos e de mascotes
+    // (100 → 150, ver data/items.js getItemInventoryCap / data/pets.js
+    // getPetInventoryCap), e a única forma de usar "Chocar Todos" (ver
+    // canHatchAllEggs em systems/pets.js). freeRightPetChoiceCycle guarda o
+    // último ciclo diário (ver systems/pets.js currentDailyCycle) em que um
+    // jogador não-VIP já usou a escolha grátis do pet da direita.
+    vipExpiresAt: null,
     freeRightPetChoiceCycle: null,
 
     // Árvore de habilidades passivas ÚNICA (ver data/skills.js + systems/
@@ -206,6 +229,15 @@ export function loadState() {
     if ('classId' in (state.skillTree || {}) || (state.skillTree?.treeVersion || 1) < SKILL_TREE_VERSION) {
       state.skillTree = { purchased: {}, specials: {}, treeVersion: SKILL_TREE_VERSION };
     }
+    // VIP era um boolean permanente (state.vip) antes de virar por tempo
+    // (state.vipExpiresAt, ver isVipActive acima) — um save antigo que já
+    // tinha comprado nessa breve janela vira 30 dias a partir de agora em
+    // vez de simplesmente perder o VIP que pagou. `delete` pra não deixar
+    // o campo morto boiando no save daqui pra frente.
+    if (parsed.vip === true && !state.vipExpiresAt) {
+      state.vipExpiresAt = Date.now() + VIP_DURATION_MS;
+    }
+    delete state.vip;
     return state;
   } catch (err) {
     console.warn('Falha ao carregar o save, começando um jogo novo:', err);

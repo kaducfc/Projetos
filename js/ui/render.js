@@ -2,7 +2,7 @@ import { BOSSES, findMaterialInfo, ZONES } from '../data/monsters.js';
 import {
   getSlot, getItem, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
   getAscensionCost, getDamageType, ENHANCE_MAX_LEVEL, enhancementMultiplier,
-  DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName,
+  DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName, RARITIES,
 } from '../data/items.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatPercent } from '../format.js';
@@ -19,8 +19,12 @@ import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventS
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
 import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
 import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
-import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, PET_MAX_LEVEL, getPetInventoryCap } from '../data/pets.js';
-import { getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet } from '../systems/pets.js';
+import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, getPetDpsBonusPercent, PET_MAX_LEVEL, getPetInventoryCap, PET_ELEMENTS } from '../data/pets.js';
+import {
+  getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet, canHatchAllEggs, canEquipPet,
+  MYTHIC_PITY_THRESHOLD, LEGENDARY_PITY_THRESHOLD,
+} from '../systems/pets.js';
+import { isVipActive } from '../state.js';
 import { getSkillTree, STAT_DISPLAY_NAME, SPECIAL_THRESHOLDS } from '../data/skills.js';
 import {
   getTotalSkillPoints, getSpentSkillPoints, getAvailableSkillPoints, getSkillLevel,
@@ -146,17 +150,6 @@ export function renderPlayerHp(current, max) {
   document.getElementById('player-hp-bar-text').textContent = `${formatNumber(hp)} / ${formatNumber(max)}`;
 }
 
-// Listed as plain static string literals (not built via template-literal
-// interpolation) on purpose — build-bundle.mjs's asset inliner only
-// recognizes literal 'assets/...' paths in the source text, and a dynamic
-// `scene${n}.png` path would either be missed or (worse) wrongly matched
-// as one literal spanning the whole `${...}` expression.
-const SCENE_IMAGES = [
-  'assets/ui/scenes/scene1.png',
-  'assets/ui/scenes/scene2.png',
-  'assets/ui/scenes/scene3.png',
-];
-
 // Idle-loop sprite animation (see monsters.js's `animFrames` on a boss/weak
 // entry). renderMonster() runs every game tick (100ms, see main.js's
 // tick()) — rebuilding the sprite's markup every single call would reset any
@@ -197,14 +190,11 @@ function startMonsterIdleAnim(frames) {
 export function renderMonster(state, monster) {
   if (!monster) return;
 
-  // Todo mundo mostra um dos 3 cenários genéricos "da zona", sorteado uma
-  // vez por spawn (ver ensureMonsterSpawned em systems/combat.js — nunca
-  // resorteado aqui, ou o fundo piscaria a cada render) — fraco ou chefe,
-  // sem distinção nenhuma (nenhum chefe tem cenário próprio mais).
+  // Cada zona tem 1 cenário de fundo fixo (ver ZONES[].sceneImage em
+  // data/monsters.js) — fraco ou chefe da mesma zona mostram o mesmo fundo.
+  const zone = ZONES[monster.zoneIndex];
   const monsterArea = document.getElementById('monster-area');
-  monsterArea.style.backgroundImage = monster.sceneIndex != null
-    ? `url('${SCENE_IMAGES[monster.sceneIndex]}')`
-    : '';
+  monsterArea.style.backgroundImage = zone?.sceneImage ? `url('${zone.sceneImage}')` : '';
   monsterArea.style.backgroundPosition = '';
 
   const spriteKey = monster.bossId || monster.weakMonsterId || monster.name;
@@ -854,15 +844,20 @@ function skillTreeHtml(state) {
     const rowsHtml = stage.rows.map((row) => `
       <div class="skill-row">${row.map((skill) => skillCardHtml(state, skill)).join('')}</div>
     `).join('');
-    const specialHtml = stage.special ? `
+    const specialHtml = stage.special ? (() => {
+      const lastRow = stage.rows[stage.rows.length - 1];
+      const lastRowDone = lastRow.some((skill) => getSkillLevel(state, skill.id) > 0);
+      return `
       <div class="skill-special-gate">
         <div class="skill-special-gate-label">
           🔒 Especial da Etapa ${stage.stageIndex + 1} — precisa gastar ${SPECIAL_THRESHOLDS[stage.stageIndex]} pontos no total
           (${Math.min(getSpentSkillPoints(state), SPECIAL_THRESHOLDS[stage.stageIndex])}/${SPECIAL_THRESHOLDS[stage.stageIndex]})
+          e ter pelo menos 1 nível na linha de cima ${lastRowDone ? '✅' : '❌'}
         </div>
         <div class="skill-row skill-special-row">${stage.special.options.map((opt) => specialOptionHtml(state, opt)).join('')}</div>
       </div>
-    ` : '';
+    `;
+    })() : '';
     return `
       <div class="skill-stage ${stageUnlocked ? '' : 'locked'}">
         <div class="skill-stage-title">Etapa ${stage.stageIndex + 1}</div>
@@ -980,13 +975,19 @@ export function renderCardsTab(state) {
   const commonCards = CARDS.filter((c) => !c.isBossCard);
   const bossOwned = bossCards.filter((c) => isCardDiscovered(state, c.id)).length;
   const commonOwned = commonCards.filter((c) => isCardDiscovered(state, c.id)).length;
+  // Bônus de DPS por COLEÇÃO (ver getCardCollectionDpsBonusPercent em
+  // systems/cards.js — 1%/carta de monstro, 5%/carta de boss, permanente
+  // por descoberta) — mostrado ao lado de cada contador, já quebrado por
+  // seção, pra ficar óbvio de onde cada parte do bônus vem.
+  const bossDpsBonus = bossOwned * 5;
+  const commonDpsBonus = commonOwned * 1;
 
   container.innerHTML = `
     <img class="section-banner-img" src="assets/ui/titles/cartas.png" alt="Cartas">
     ${cardsSummaryHtml(state)}
-    <h3 class="cards-section-title">👑 Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span></h3>
+    <h3 class="cards-section-title">👑 Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span> <span class="cards-dps-bonus">+${bossDpsBonus}% DPS</span></h3>
     <div class="card-grid">${bossCards.map((c) => cardTileHtml(state, c)).join('')}</div>
-    <h3 class="cards-section-title">🃏 Cartas de Monstros <span class="cards-collected">Colecionadas: ${commonOwned}/${commonCards.length}</span></h3>
+    <h3 class="cards-section-title">🃏 Cartas de Monstros <span class="cards-collected">Colecionadas: ${commonOwned}/${commonCards.length}</span> <span class="cards-dps-bonus">+${commonDpsBonus}% DPS</span></h3>
     <div class="card-grid">${commonCards.map((c) => cardTileHtml(state, c)).join('')}</div>
   `;
 }
@@ -1042,7 +1043,7 @@ function petSlotIconHtml(state, uid, slotIndex) {
   const rarityClass = rarity ? ' has-rarity' : '';
   const rarityStyle = rarity ? ` style="--rarity-color:${rarity.color};"` : '';
   return `<button class="equip-slot-icon ${pet ? 'filled' : 'empty'}${rarityClass}" data-pet-slot="${slotIndex}" title="Mascote ${slotIndex + 1}"${rarityStyle}>
-    <span class="icon">${species ? species.emoji : '🐾'}</span>
+    <span class="icon">${species ? iconMarkup(species.image, species.emoji, species.name) : '🐾'}</span>
     ${pet ? `<span class="mini-badge">+${pet.level}</span>` : ''}
   </button>`;
 }
@@ -1052,28 +1053,73 @@ function petTileHtml(state, pet) {
   const rarity = getRarity(pet.rarityId);
   const isEquipped = (state.equippedPetUids || []).includes(pet.uid);
   return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''}" style="--rarity-color:${rarity.color};" data-view-pet="${pet.uid}" title="${species.name}">
-    <span class="icon">${species.emoji}</span>
+    <span class="icon">${iconMarkup(species.image, species.emoji, species.name)}</span>
     <span class="mini-badge">+${pet.level}</span>
   </button>`;
 }
 
-export function renderPetsTab(state) {
+/// Reordena só a EXIBIÇÃO da grade de mascotes — nunca muta state.pets (a
+/// ordem "real" ali continua sendo a de aquisição/fusão, o que importa pra
+/// getFusePartners/fuseAllPossiblePets não depender de exibição nenhuma).
+/// null/'none' = ordem original. 'level'/'rarity' descem (maior primeiro);
+/// 'element' agrupa pela ordem fixa de PET_ELEMENTS (fogo/planta/elétrico/
+/// água), com Tier crescente dentro de cada grupo pra ficar previsível.
+const PET_SORT_LABELS = { level: '🔼 Nível', rarity: '💠 Raridade', element: '🔥 Elemento' };
+
+function sortPetsForDisplay(pets, sortMode) {
+  if (!sortMode) return pets;
+  const withSpecies = pets.map((pet) => ({ pet, species: getPetSpecies(pet.speciesId) }));
+  if (sortMode === 'level') {
+    withSpecies.sort((a, b) => b.pet.level - a.pet.level);
+  } else if (sortMode === 'rarity') {
+    const rarityRank = (rarityId) => RARITIES.findIndex((r) => r.id === rarityId);
+    withSpecies.sort((a, b) => rarityRank(b.pet.rarityId) - rarityRank(a.pet.rarityId));
+  } else if (sortMode === 'element') {
+    const elementRank = (elementId) => PET_ELEMENTS.indexOf(elementId);
+    withSpecies.sort((a, b) => {
+      const elDiff = elementRank(a.species?.element) - elementRank(b.species?.element);
+      if (elDiff !== 0) return elDiff;
+      return (a.species?.tier || 0) - (b.species?.tier || 0);
+    });
+  }
+  return withSpecies.map((w) => w.pet);
+}
+
+function petSortRowHtml(sortMode) {
+  const chips = [{ id: null, label: '📋 Padrão' }, ...Object.entries(PET_SORT_LABELS).map(([id, label]) => ({ id, label }))];
+  return `<div class="element-filter-row pet-sort-row">${chips.map((c) => `
+    <button class="element-filter-btn pet-sort-btn ${sortMode === c.id ? 'active' : ''}" data-pet-sort="${c.id ?? ''}">${c.label}</button>
+  `).join('')}</div>`;
+}
+
+export function renderPetsTab(state, sortMode = null) {
   const container = document.getElementById('tab-pets');
   const equipRow = (state.equippedPetUids || []).map((uid, i) => petSlotIconHtml(state, uid, i)).join('');
+  const sortedPets = sortPetsForDisplay(state.pets, sortMode);
   const petsHtml = state.pets.length
-    ? state.pets.map((p) => petTileHtml(state, p)).join('')
+    ? sortedPets.map((p) => petTileHtml(state, p)).join('')
     : `<p class="empty-slot">Nenhum mascote ainda. Derrote monstros ou vença eventos pra achar ovos, depois choque na aba aqui em cima.</p>`;
 
+  const eggCount = state.eggCount || 0;
+  const vipActive = isVipActive(state);
+  const hatchAllTitle = vipActive
+    ? 'Escolhe sempre o mascote de maior raridade (e maior Tier no empate) de cada ovo, sem abrir o modal de escolha'
+    : 'Funcionalidade exclusiva de VIP (loja de Cash)';
   container.innerHTML = `
     <div class="section-banner section-banner-sm">🐾 Mascotes</div>
     <div class="pets-egg-row">
-      <span class="pets-egg-count">🥚 Ovos: <strong>${formatNumber(state.eggCount || 0)}</strong></span>
+      <span class="pets-egg-count">🥚 Ovos: <strong>${formatNumber(eggCount)}</strong></span>
       <span class="pets-egg-count">🧩 Fragmentos: <strong>${formatNumber(state.petFragments || 0)}</strong></span>
-      <button class="pets-hatch-btn" data-hatch-egg-btn ${(state.eggCount || 0) < 1 ? 'disabled' : ''}>Chocar Ovo</button>
+      <button class="pets-hatch-btn" data-hatch-egg-btn ${eggCount < 1 ? 'disabled' : ''}>Chocar Ovo</button>
+      <button class="pets-hatch-btn" data-hatch-all-btn ${canHatchAllEggs(state) ? '' : 'disabled'} title="${hatchAllTitle}">👑 Chocar Todos (${formatNumber(eggCount)})</button>
     </div>
-    <div class="equip-inventory-header">Equipados (até ${MAX_EQUIPPED_PETS})</div>
+    <div class="equip-inventory-header">Equipados (até ${MAX_EQUIPPED_PETS}, 1 por elemento)</div>
     <div class="pets-equip-row">${equipRow}</div>
-    <div class="equip-inventory-header">Inventário (${state.pets.length}/${getPetInventoryCap(state)})</div>
+    <div class="equip-inventory-header-row">
+      <div class="equip-inventory-header">Inventário (${state.pets.length}/${getPetInventoryCap(state)})</div>
+      <button class="bulk-select-toggle-btn" data-fuse-all-btn title="Funde em cascata todo par de mascotes iguais (mesma espécie, raridade e nível) não equipado">🌟 Fundir Tudo</button>
+    </div>
+    ${petSortRowHtml(sortMode)}
     <div class="equip-inventory-grid">${petsHtml}</div>
   `;
 }
@@ -1088,7 +1134,7 @@ function fusePartnersHtml(state, uid) {
     <div class="card-slot-options">${partners.map((p) => {
       const species = getPetSpecies(p.speciesId);
       const rarity = getRarity(p.rarityId);
-      return `<button class="card-slot-option" data-fuse-base="${uid}" data-fuse-with="${p.uid}">${species.emoji} ${species.name} +${p.level} <span class="qty">${rarity.name}</span></button>`;
+      return `<button class="card-slot-option" data-fuse-base="${uid}" data-fuse-with="${p.uid}">${iconMarkup(species.image, species.emoji, species.name)} ${species.name} +${p.level} <span class="qty">${rarity.name}</span></button>`;
     }).join('')}</div>
   </div>`;
 }
@@ -1102,7 +1148,9 @@ function petDetailHtml(state, uid, showFuseList) {
 
   const actionBtn = isEquipped
     ? `<button class="modal-action-btn" data-unequip-pet-uid="${uid}">Desequipar</button>`
-    : `<button class="modal-action-btn" data-equip-pet-uid="${uid}">Equipar</button>`;
+    : canEquipPet(state, uid)
+      ? `<button class="modal-action-btn" data-equip-pet-uid="${uid}">Equipar</button>`
+      : `<button class="modal-action-btn" disabled title="Já tem um mascote de ${getElement(species.element).name} equipado — desequipe ele primeiro">🔒 Equipar</button>`;
 
   const fuseSection = showFuseList
     ? fusePartnersHtml(state, uid)
@@ -1110,13 +1158,16 @@ function petDetailHtml(state, uid, showFuseList) {
       ? `<button class="modal-action-btn" data-open-pet-fuse="${uid}">🌟 Fundir</button>`
       : `<div class="enhance-maxed">✨ Nível máximo (+10)</div>`;
 
+  const dpsBonusPercent = getPetDpsBonusPercent(pet);
   return `
     <div class="item-detail">
-      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${species.emoji}</div>
+      <div class="item-detail-tier-badge">Tier ${species.tier}</div>
+      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(species.image, species.emoji, species.name)}</div>
       <div class="item-detail-name">${species.name} <span class="enhance-badge">+${pet.level}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-attribute" style="color:${getPetElementColor(species.element)}; font-weight:700; font-size:11.5px;">${elementBadgeHtml(species.element)} ${getElement(species.element).name}</div>
       <div class="item-detail-stats">+${formatNumber(damage)} Dano ${getElement(species.element).name}</div>
+      <div class="item-detail-stats">+${dpsBonusPercent.toFixed(1)}% DPS do caçador (só enquanto ativo em combate)</div>
       ${fuseSection}
       <div class="modal-action-row">
         ${actionBtn}
@@ -1140,7 +1191,8 @@ function hatchCandidateHtml(candidate, side, unlocked) {
   const rarity = getRarity(candidate.rarityId);
   return `
     <div class="hatch-candidate ${unlocked ? '' : 'locked'}">
-      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${species.emoji}</div>
+      <div class="item-detail-tier-badge">Tier ${species.tier}</div>
+      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(species.image, species.emoji, species.name)}</div>
       <div class="item-detail-name">${species.name}</div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       ${unlocked
@@ -1150,17 +1202,38 @@ function hatchCandidateHtml(candidate, side, unlocked) {
   `;
 }
 
+/// Contador de pity (ver systems/pets.js MYTHIC_PITY_THRESHOLD/
+/// LEGENDARY_PITY_THRESHOLD) — mostra quantos chocos já passaram desde a
+/// última raridade daquele tipo, incluindo ESTE choco que está prestes a
+/// acontecer (por isso o +1: se faltasse 1 antes de abrir o modal, essa
+/// é a garantia batendo agora). Nunca passa de N/N — o pity garante que
+/// esse choco específico já sai na raridade quando o contador bateria o
+/// limite, então o rótulo mostra "garantido!" em vez de ultrapassar.
+function petPityRowHtml(state) {
+  const mythicSoFar = Math.min(MYTHIC_PITY_THRESHOLD, (state.petHatchesSinceMythic || 0) + 1);
+  const legendarySoFar = Math.min(LEGENDARY_PITY_THRESHOLD, (state.petHatchesSinceLegendary || 0) + 1);
+  const mythicLabel = mythicSoFar >= MYTHIC_PITY_THRESHOLD ? 'garantido!' : `${mythicSoFar}/${MYTHIC_PITY_THRESHOLD}`;
+  const legendaryLabel = legendarySoFar >= LEGENDARY_PITY_THRESHOLD ? 'garantido!' : `${legendarySoFar}/${LEGENDARY_PITY_THRESHOLD}`;
+  return `
+    <div class="pet-pity-row">
+      <span class="pet-pity-chip">💠 Lendário: <strong>${legendaryLabel}</strong></span>
+      <span class="pet-pity-chip">✨ Mítico: <strong>${mythicLabel}</strong></span>
+    </div>
+  `;
+}
+
 export function showHatchModal(state, candidates) {
   const [left, right] = candidates;
   const canRight = canChooseRightPet(state);
   showModal('🥚 Ovo Chocado!', `
     <p style="font-size:12px; color:var(--text-dim); text-align:center;">Escolha 1 dos 2 mascotes — o outro se perde.</p>
+    ${petPityRowHtml(state)}
     <div class="hatch-choice-row">
       ${hatchCandidateHtml(left, 'left', true)}
       ${hatchCandidateHtml(right, 'right', canRight)}
     </div>
-    ${!state.vip && canRight ? '<p class="hatch-free-note">✨ Escolha grátis do lado direito disponível hoje!</p>' : ''}
-    ${!state.vip && !canRight ? '<p class="hatch-free-note">🔒 O lado direito só com VIP (ou amanhã, na próxima escolha grátis).</p>' : ''}
+    ${!isVipActive(state) && canRight ? '<p class="hatch-free-note">✨ Escolha grátis do lado direito disponível hoje!</p>' : ''}
+    ${!isVipActive(state) && !canRight ? '<p class="hatch-free-note">🔒 O lado direito só com VIP (ou amanhã, na próxima escolha grátis).</p>' : ''}
   `);
 }
 
@@ -1541,15 +1614,29 @@ function cashShopHtml(state) {
       <button disabled>Em breve</button>
     </div>`).join('');
 
-  const shopItemsHtml = CASH_SHOP_ITEMS.map((item) => `
+  const shopItemsHtml = CASH_SHOP_ITEMS.map((item) => {
+    // VIP é por tempo, não empilhável (ver systems/shop.js
+    // canBuyCashItem/buyCashItem) — o botão fica travado enquanto ainda
+    // está ativo, só volta a ficar comprável depois que os dias
+    // restantes zerarem e o VIP expirar de vez.
+    const vipActiveNow = item.kind === 'vip' && isVipActive(state);
+    const vipStatus = vipActiveNow
+      ? `<div class="desc vip-days-left">👑 Ativo — expira em ${Math.max(1, Math.ceil((state.vipExpiresAt - Date.now()) / 86400000))} dia(s).</div>`
+      : '';
+    const buyBtn = vipActiveNow
+      ? `<button disabled title="Já é VIP — espere o contador zerar pra comprar de novo">👑 Ativo</button>`
+      : `<button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>`;
+    return `
     <div class="shop-item-card">
       <span class="icon">${item.emoji}</span>
       <div class="info">
         <div class="name">${item.name}</div>
         <div class="desc">${item.description}</div>
+        ${vipStatus}
       </div>
-      <button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>
-    </div>`).join('');
+      ${buyBtn}
+    </div>`;
+  }).join('');
 
   return `
     <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>

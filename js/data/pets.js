@@ -1,4 +1,5 @@
-import { RARITIES, getRarity, VIP_INVENTORY_BONUS } from './items.js';
+import { RARITIES, getRarity } from './items.js';
+import { isVipActive } from '../state.js';
 
 // Mascotes causam um dano ELEMENTAL à parte do dano do personagem (que
 // agora é sempre Neutro, ver systems/stats.js) — só os 4 elementos "de
@@ -34,39 +35,42 @@ function petTierDamage(tier) {
   return Math.round(PET_TIER_BASE * Math.pow(PET_TIER_GROWTH, tier - 1));
 }
 
+// Nome + arte real (assets/pets/<elemento>/tN.png) por espécie — recebidas
+// já nomeadas/tieradas pelo arquivo de origem (ex: "t3 Magmox - Fogo.png").
+// emoji fica só de fallback (iconMarkup() em ui/render.js cai nele se
+// image alguma vez faltar).
 const PET_SPECIES_BY_ELEMENT = {
   fogo: [
-    { name: 'Salamandra Filhote', emoji: '🦎' },
-    { name: 'Raposa das Brasas', emoji: '🦊' },
-    { name: 'Fênix Jovem', emoji: '🐦' },
-    { name: 'Dragão Ígneo', emoji: '🐉' },
-    { name: 'Fera Solar', emoji: '☀️' },
+    { name: 'Emberu', emoji: '🦎' },
+    { name: 'Salaflame', emoji: '🦊' },
+    { name: 'Magmox', emoji: '🐉' },
+    { name: 'Sunko', emoji: '☀️' },
+    { name: 'Kitsara', emoji: '🔥' },
   ],
   planta: [
-    { name: 'Lagarta Verde', emoji: '🐛' },
-    { name: 'Caramujo Espinhoso', emoji: '🐌' },
-    { name: 'Borboleta Feérica', emoji: '🦋' },
-    { name: 'Broto Ancestral', emoji: '🌳' },
-    { name: 'Guardião da Selva', emoji: '🌲' },
+    { name: 'Spriggo', emoji: '🐛' },
+    { name: 'Folhito', emoji: '🦋' },
+    { name: 'Galharis', emoji: '🌳' },
+    { name: 'Floriel', emoji: '🌸' },
+    { name: 'Pandrion', emoji: '🌲' },
   ],
   eletrico: [
-    { name: 'Rato Elétrico', emoji: '🐭' },
-    { name: 'Esquilo Voltaico', emoji: '🐿️' },
-    { name: 'Coelho Relâmpago', emoji: '🐰' },
-    { name: 'Lobo do Trovão', emoji: '🐺' },
-    { name: 'Fênix Elétrica', emoji: '⚡' },
+    { name: 'Sparko', emoji: '🐭' },
+    { name: 'Zappin', emoji: '🐿️' },
+    { name: 'Raion', emoji: '🐺' },
+    { name: 'Thundor', emoji: '⚡' },
+    { name: 'Zephryx', emoji: '🦅' },
   ],
   agua: [
-    { name: 'Girino Azul', emoji: '🐸' },
-    { name: 'Peixinho Prateado', emoji: '🐟' },
-    { name: 'Tartaruga das Marés', emoji: '🐢' },
-    { name: 'Golfinho Cristalino', emoji: '🐬' },
-    { name: 'Serpente Abissal', emoji: '🐍' },
+    { name: 'Conchy', emoji: '🐸' },
+    { name: 'Croakus', emoji: '🐟' },
+    { name: 'Glacik', emoji: '🐢' },
+    { name: 'Tideon', emoji: '🐬' },
+    { name: 'Nerivor', emoji: '🐍' },
   ],
 };
 
-// 20 espécies no total (4 elementos × 5 tiers) — sem arte nova, cai no
-// emoji (mesmo padrão já usado pros itens de zona/atributo).
+// 20 espécies no total (4 elementos × 5 tiers).
 export const PETS = [];
 PET_ELEMENTS.forEach((element) => {
   PET_SPECIES_BY_ELEMENT[element].forEach((sp, i) => {
@@ -75,6 +79,7 @@ PET_ELEMENTS.forEach((element) => {
       id: `${element}_${tier}`,
       name: sp.name,
       emoji: sp.emoji,
+      image: `assets/pets/${element}/t${tier}.png`,
       element,
       tier,
       baseDamage: petTierDamage(tier),
@@ -106,6 +111,18 @@ export function getPetDamage(petEntry) {
   return Math.round(species.baseDamage * rarity.mult * petLevelMultiplier(petEntry.level));
 }
 
+// % de DPS que o pet ATIVO (ver getBestEquippedPet/getActivePetDpsMultiplier
+// em systems/pets.js) empresta ao caçador, além do próprio dano do pet —
+// escala só com raridade + nível de fusão (não com tier/espécie, que já é
+// só o que diferencia o dano base do pet). Nível 1 Comum = +2% DPS; nível
+// 10 Mítico = +2 * 2.5 * 1.22^9 ≈ +30.5% DPS.
+const PET_DPS_BONUS_BASE_PERCENT = 2;
+
+export function getPetDpsBonusPercent(petEntry) {
+  const rarity = getRarity(petEntry.rarityId);
+  return PET_DPS_BONUS_BASE_PERCENT * rarity.mult * petLevelMultiplier(petEntry.level);
+}
+
 // ---------------------------------------------------------------------
 // Ovo: um tipo só, genérico — ao chocar, sorteia 2 candidatos
 // independentes (espécie + raridade cada, ver rollPetCandidate), e o
@@ -125,18 +142,38 @@ function pickPetRarity() {
   return RARITIES[0];
 }
 
-export function rollPetCandidate() {
+/// forcedRarityId (opcional) força a raridade em vez de sortear — usado
+/// pelo pity de choco (ver rollHatchCandidates em systems/pets.js), que
+/// garante Lendário a cada 20 chocos e Mítico a cada 60 sem último obtido.
+export function rollPetCandidate(forcedRarityId = null) {
   const species = PETS[Math.floor(Math.random() * PETS.length)];
-  const rarity = pickPetRarity();
+  const rarity = forcedRarityId ? getRarity(forcedRarityId) : pickPetRarity();
   return { speciesId: species.id, rarityId: rarity.id, level: 1 };
 }
 
-// Base 100, +50 (150 no total) com VIP — mesmo bônus do inventário de
-// equipamentos (ver data/items.js ITEM_INVENTORY_CAP/getItemInventoryCap).
-export const PET_INVENTORY_CAP = 100;
+/// Compara 2 candidatos recém-rolados (ver rollPetCandidate) pra decidir
+/// qual escolher automaticamente no choco em lote (ver hatchAllEggs em
+/// systems/pets.js) — raridade primeiro (RARITIES é ordenada Comum→Mítico,
+/// então índice maior = melhor), Tier como desempate. Retorna true se `a`
+/// é estritamente melhor que `b`.
+export function isPetCandidateBetter(a, b) {
+  const rarityRankA = RARITIES.findIndex((r) => r.id === a.rarityId);
+  const rarityRankB = RARITIES.findIndex((r) => r.id === b.rarityId);
+  if (rarityRankA !== rarityRankB) return rarityRankA > rarityRankB;
+  const tierA = getPetSpecies(a.speciesId)?.tier || 0;
+  const tierB = getPetSpecies(b.speciesId)?.tier || 0;
+  return tierA > tierB;
+}
+
+// Base 200, +100 (300 no total) com VIP — bônus PRÓPRIO do inventário de
+// mascotes, maior e independente do bônus de equipamentos (ver
+// data/items.js ITEM_INVENTORY_CAP/VIP_INVENTORY_BONUS/getItemInventoryCap
+// — esse aqui não muda).
+export const PET_INVENTORY_CAP = 200;
+export const PET_VIP_INVENTORY_BONUS = 100;
 
 export function getPetInventoryCap(state) {
-  return PET_INVENTORY_CAP + (state.vip ? VIP_INVENTORY_BONUS : 0);
+  return PET_INVENTORY_CAP + (isVipActive(state) ? PET_VIP_INVENTORY_BONUS : 0);
 }
 
 /// Valor de venda em ouro — usado tanto pro auto-sell ao bater o limite do

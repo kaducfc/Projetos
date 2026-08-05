@@ -357,11 +357,11 @@ button:disabled {
   flex: 0 0 auto;
 }
 
-/* Scenic backdrop behind the monster: a real scene photo for weak-monster
-   stages (see renderMonster in ui/render.js, which sets background-image
-   inline — assets/ui/scenes/scene1..3.png, picked once per spawn) with
-   this CSS gradient only as the fallback for boss stages, which don't
-   have scene art yet. */
+/* Scenic backdrop behind the monster: 1 fixed scene per zone (see
+   ZONES[].sceneImage in data/monsters.js, applied inline in renderMonster
+   in ui/render.js), same background for weak monster or boss of that
+   zone. This CSS gradient is only the fallback if a zone somehow has no
+   sceneImage set. */
 #monster-area {
   position: relative;
   background-color: #bfe6fb;
@@ -1223,6 +1223,24 @@ button:disabled {
   transform: translateY(1px);
 }
 
+/* Botões de ordenação da aba Mascotes (Padrão/Nível/Raridade/Elemento) —
+   mesma linguagem visual do filtro de categoria (.element-filter-btn),
+   mas com rótulo de texto em vez de só 1 emoji, então precisam de largura
+   automática (não o quadrado fixo de 34x34) e podem quebrar linha num
+   inventário estreito. */
+.pet-sort-row {
+  flex-wrap: wrap;
+}
+
+.pet-sort-btn {
+  width: auto;
+  height: auto;
+  padding: 7px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .inventory-tile {
   position: relative;
   aspect-ratio: 1;
@@ -1535,6 +1553,16 @@ button:disabled {
   margin-left: auto;
   color: var(--text-dim);
   font-weight: 500;
+}
+
+/* iconMarkup() em ui/render.js pode render um <img> aqui (parceiro de
+   fusão de mascote) em vez de emoji — sem isso o img nativo (355x357px,
+   ver assets/pets/) estouraria a linha inteira. */
+.card-slot-option img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex: none;
 }
 
 /* Tela de seleção de monstros (estilo IdleArc) — até 4 monstros de
@@ -2190,6 +2218,8 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   background: var(--bg-card);
   border: 2px solid var(--border);
   border-radius: 12px;
@@ -2220,6 +2250,29 @@ button:disabled {
   margin-bottom: 14px;
 }
 
+/* Contador de pity (ver petPityRowHtml em ui/render.js) — 2 chips lado a
+   lado, entre a explicação e as 2 opções de mascote. */
+.pet-pity-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.pet-pity-chip {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 10px;
+}
+
+.pet-pity-chip strong {
+  color: var(--text);
+}
+
 .hatch-choice-row {
   display: flex;
   gap: 12px;
@@ -2228,6 +2281,7 @@ button:disabled {
 }
 
 .hatch-candidate {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -2582,6 +2636,16 @@ button:disabled {
   color: var(--text-dim);
 }
 
+/* Bônus de DPS por coleção (ver getCardCollectionDpsBonusPercent em
+   systems/cards.js) — ao lado do contador de coleção, cor própria pra
+   separar visualmente "quantas tenho" (cards-collected, neutro) de "quanto
+   isso já rende" (verde, positivo). */
+.cards-dps-bonus {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--green, #2e9e4f);
+}
+
 .cards-summary-box {
   background: var(--grad-neutral);
   border: 2px solid var(--border);
@@ -2725,6 +2789,12 @@ button:disabled {
 .shop-item-card .info .desc {
   font-size: 10.5px;
   color: var(--text-dim);
+}
+
+.shop-item-card .info .vip-days-left {
+  margin-top: 3px;
+  color: var(--gold-dark, #b8860b);
+  font-weight: 700;
 }
 
 .shop-item-card button {

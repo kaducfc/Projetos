@@ -1,4 +1,5 @@
 import { BOSSES, getWeakMonsterGroupForStage } from './monsters.js';
+import { isVipActive } from '../state.js';
 
 // 10 slots físicos, 9 categorias de drop — anel ocupa 2 slots mas é uma
 // categoria só (mesmo item pode ser equipado nos dois, ver
@@ -174,7 +175,7 @@ export const ITEM_INVENTORY_CAP = 100;
 export const VIP_INVENTORY_BONUS = 50;
 
 export function getItemInventoryCap(state) {
-  return ITEM_INVENTORY_CAP + (state.vip ? VIP_INVENTORY_BONUS : 0);
+  return ITEM_INVENTORY_CAP + (isVipActive(state) ? VIP_INVENTORY_BONUS : 0);
 }
 
 function pickRarity() {
