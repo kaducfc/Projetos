@@ -135,11 +135,13 @@ export function recyclePet(state, uid) {
 // ---------------------------------------------------------------------
 // Doar Fragmento de Mascote pra barra de XP de um pet — 2º caminho pra
 // evoluir nível, além de fundir 2 pets iguais (ver xpToNextPetLevel/
-// applyPetXp em data/pets.js). Doa TODO o Fragmento disponível de uma vez
-// (não desperdiça nada — o que sobra além do necessário pro próximo nível
-// fica banked como XP parcial do pet, pronto pra continuar somando na
-// próxima doação), podendo subir mais de 1 nível de uma vez se o total
-// bastar (applyPetXp já cascateia).
+// applyPetXp em data/pets.js). Cada clique doa só o que falta pro PRÓXIMO
+// nível (nunca mais que isso, mesmo com fragmento de sobra) — pedido
+// explícito do usuário: precisa de 100 e tem 50 -> doa os 50, fica 50/100;
+// precisa de 100 e tem 200 -> doa só 100, os outros 100 continuam
+// guardados pro jogador decidir depois (outro pet, ou o próximo nível
+// deste mesmo). Sem fragmento suficiente pro nível inteiro, doa tudo que
+// tiver disponível (banked como XP parcial, sem desperdiçar nada).
 // ---------------------------------------------------------------------
 export function canDonatePetFragments(state, uid) {
   const pet = getPetEntry(state, uid);
@@ -147,12 +149,22 @@ export function canDonatePetFragments(state, uid) {
   return (state.petFragments || 0) > 0;
 }
 
+/// Fragmentos realmente gastos numa doação agora (min entre o que falta
+/// pro próximo nível e o que o jogador tem disponível) — usado tanto pra
+/// executar a doação quanto pra UI mostrar de antemão quanto vai sair.
+export function petFragmentsToDonateNow(state, uid) {
+  const pet = getPetEntry(state, uid);
+  if (!pet || pet.level >= PET_MAX_LEVEL) return 0;
+  const needed = Math.max(0, xpToNextPetLevel(pet) - (pet.xp || 0));
+  return Math.min(state.petFragments || 0, needed);
+}
+
 /// Retorna { levelsGained, fragmentsSpent } ou null se não deu pra doar.
 export function donatePetFragments(state, uid) {
   if (!canDonatePetFragments(state, uid)) return null;
   const pet = getPetEntry(state, uid);
-  const fragmentsSpent = state.petFragments || 0;
-  state.petFragments = 0;
+  const fragmentsSpent = petFragmentsToDonateNow(state, uid);
+  state.petFragments = (state.petFragments || 0) - fragmentsSpent;
   const levelsGained = applyPetXp(pet, fragmentsSpent);
   return { levelsGained, fragmentsSpent };
 }
