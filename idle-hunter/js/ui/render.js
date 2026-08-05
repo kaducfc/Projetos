@@ -1187,7 +1187,10 @@ function petDetailHtml(state, uid, showFuseList) {
   const pet = getPetEntry(state, uid);
   const species = getPetSpecies(pet.speciesId);
   const rarity = getRarity(pet.rarityId);
-  const damage = getPetDamage(pet);
+  // Dano do pet agora é % do DPS do próprio caçador (ver getPetDamage em
+  // data/pets.js) — precisa do DPS atual pra mostrar um número de verdade
+  // aqui, não só a % crua.
+  const damage = getPetDamage(pet, computePlayerStats(state).dps);
   const isEquipped = (state.equippedPetUids || []).includes(uid);
 
   const actionBtn = isEquipped
