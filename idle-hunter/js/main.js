@@ -350,7 +350,7 @@ function tick() {
     const totalDealt = hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0);
     const event = applyDamage(state, totalDealt, stats);
     spawnDamagePopup(hit.dealt, hit.isCrit);
-    if (petHit) spawnPetDamagePopup(petHit.dealt, petHit.species);
+    if (petHit) spawnPetDamagePopup(petHit.dealt, petHit.species, petHit.isCrit);
     if (doubleHit) spawnDamagePopup(doubleHit.dealt, doubleHit.isCrit);
     if (stats.lifesteal) currentHp = Math.min(currentHp + stats.lifesteal, stats.maxHp);
     pulseMonster();
