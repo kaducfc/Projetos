@@ -53,8 +53,30 @@ export const ITEM_DROP_CHANCE = 0.04; // 4%
 // isBoss ? BOSS_*_MULT : 1 de sempre, então nenhuma outra zona muda.
 const RANK_MULT = [1, 1.08, 1.16, 1.24, 1.32];
 
+// A partir do estágio 70 (fim da Zona 7) o crescimento exponencial de HP_GROWTH
+// vinha ficando exagerado — Zona 10 chegava a ~17,5M de HP no chefe, um salto
+// de quase 60x sobre a Zona 7 (301.427 HP). Pedido do usuário: manter a Zona 7
+// como está e reequilibrar dali até a Zona 10 (~3.000.000 no chefe), uma curva
+// bem mais suave nesse trecho final. LATE_GAME_HP_BREAKPOINT_STAGE é o ponto
+// de junção (contínuo — a curva antiga e a nova coincidem exatamente ali, sem
+// degrau), e LATE_GAME_HP_GROWTH é o multiplicador por estágio dali em diante,
+// calculado pra bater ~3.000.000 no chefe da Zona 10 (estágio 100):
+// baseNoEstágio70 * LATE_GAME_HP_GROWTH^30 * RANK_MULT[4] ≈ 3.000.000.
+// Zonas 1-7 (estágio ≤70) continuam usando a curva exponencial de sempre,
+// sem nenhuma mudança.
+const LATE_GAME_HP_BREAKPOINT_STAGE = 70;
+const LATE_GAME_HP_GROWTH = 1.0796;
+
+function baseHpAtStage(canonicalStage) {
+  if (canonicalStage <= LATE_GAME_HP_BREAKPOINT_STAGE) {
+    return HP_BASE * Math.pow(HP_GROWTH, canonicalStage - 1);
+  }
+  const breakpointBase = HP_BASE * Math.pow(HP_GROWTH, LATE_GAME_HP_BREAKPOINT_STAGE - 1);
+  return breakpointBase * Math.pow(LATE_GAME_HP_GROWTH, canonicalStage - LATE_GAME_HP_BREAKPOINT_STAGE);
+}
+
 export function monsterMaxHp(canonicalStage, isBoss, powerRank) {
-  const base = HP_BASE * Math.pow(HP_GROWTH, canonicalStage - 1);
+  const base = baseHpAtStage(canonicalStage);
   const mult = powerRank != null ? RANK_MULT[powerRank] : (isBoss ? BOSS_HP_MULT : 1);
   return Math.max(1, Math.round(base * mult));
 }
