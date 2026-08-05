@@ -349,6 +349,7 @@ function bulkSelectToolbarHtml(bulkSelect) {
     <div class="bulk-select-toolbar">
       <span>${count} ${plural} selecionado${count === 1 ? '' : 's'}</span>
       <div class="modal-action-row">
+        <button class="modal-action-btn" data-bulk-select-all>Selecionar Todos</button>
         <button class="modal-action-btn destroy-btn" data-bulk-destroy-selected ${count < 1 ? 'disabled' : ''}>Destruir selecionados</button>
         <button class="modal-action-btn" data-bulk-exit-select>Sair da seleção</button>
       </div>
