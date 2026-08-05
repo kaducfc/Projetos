@@ -3,6 +3,7 @@ import { UPGRADES } from '../data/upgrades.js';
 import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard, CARD_DAMAGE_BONUS } from '../data/cards.js';
 import { ensureCardIds } from './crafting.js';
+import { getCardCollectionDpsBonusPercent } from './cards.js';
 import { getSkillTree } from '../data/skills.js';
 import { getSkillLevel, getChosenSpecialId } from './skills.js';
 
@@ -255,8 +256,18 @@ export function computePlayerStats(state, currentHp = null) {
     dpsPercent += (1 - hpFraction) * 60 * vulkarionCount;
   }
 
+  // Bônus de coleção de cartas (ver getCardCollectionDpsBonusPercent em
+  // systems/cards.js) — permanente por carta já descoberta ao menos uma vez,
+  // separado do bônus de carta SOCKETADA acima (os dois se somam).
+  dpsPercent += getCardCollectionDpsBonusPercent(state);
+
   const goldDoubleChance = Math.min(100, 20 * (specialCounts.gold_double_chance || 0));
   const bossReprocChance = Math.min(100, 10 * (specialCounts.boss_kill_reproc || 0));
+  // Golpe Duplo: por enquanto só concedido por carta (nenhuma ainda atribuída
+  // — ver data/cards.js CARD_EFFECTS); cada cópia soma 15% de chance de um
+  // 2º hit independente (próprio crit) acontecer junto com o hit principal,
+  // ver resolveDoubleHit em systems/combat.js.
+  const doubleHitChance = Math.min(100, 15 * (specialCounts.double_hit_chance || 0));
   const solkaiserCount = specialCounts.hit_counter_burst || 0;
   // More copies make the burst land sooner rather than hit harder — see
   // resolveHit() in systems/combat.js, which is what actually reads these.
@@ -278,7 +289,7 @@ export function computePlayerStats(state, currentHp = null) {
     maxHp, armor, weaponElement,
     critChance, critDamage,
     lifesteal, petDamageMult, dodgeChance,
-    goldDoubleChance, bossReprocChance, hitBurstEveryN, hitBurstDamageMult,
+    goldDoubleChance, bossReprocChance, hitBurstEveryN, hitBurstDamageMult, doubleHitChance,
     forca: forcaTotal, destreza: destrezaTotal, inteligencia: inteligenciaTotal,
     activeDamageType,
     danoFisico: danoFisicoFlat, danoPerfuracao: danoPerfuracaoFlat, danoMagico: danoMagicoFlat,

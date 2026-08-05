@@ -141,9 +141,22 @@ export function resolvePetHit(state, monsterElement, stats) {
   return { dealt: best.damage * (stats?.petDamageMult || 1), species: best.species };
 }
 
+/// Golpe Duplo (ver stats.doubleHitChance, systems/stats.js): chance de um 2º
+/// hit do próprio caçador acontecer junto do hit principal — totalmente
+/// independente (própria rolagem de crítico, via rollCrit), nunca combinado
+/// no mesmo número exibido (ver spawnDamagePopup chamado uma 2ª vez em cada
+/// contexto de combate, main.js). Retorna null quando não procar ou quando o
+/// stat não está presente (nenhuma carta com esse special socketada ainda).
+export function resolveDoubleHit(stats, elementalMultiplier) {
+  if (!stats.doubleHitChance) return null;
+  if (Math.random() * 100 >= stats.doubleHitChance) return null;
+  const crit = rollCrit(stats);
+  return { dealt: stats.dps * elementalMultiplier * crit.multiplier, isCrit: crit.isCrit };
+}
+
 // ---------------------------------------------------------------------
 // Monstro atual: resolvido a partir de state.currentMonster ({ zoneIndex,
-// kind: 'weak'|'boss', monsterId, sceneIndex }), que por sua vez é sorteado
+// kind: 'weak'|'boss', monsterId }), que por sua vez é sorteado
 // uniformemente entre state.selectedMonsters a cada respawn (ver
 // ensureMonsterSpawned). O "estágio canônico" da zona (10, 20, ...100)
 // escala HP/Ouro/Dano de TODOS os monstros daquela zona, fraco ou chefe —
@@ -155,7 +168,7 @@ export function resolvePetHit(state, monsterElement, stats) {
 
 export function getCurrentMonster(currentMonsterRef) {
   if (!currentMonsterRef) return null;
-  const { zoneIndex, kind, monsterId, sceneIndex } = currentMonsterRef;
+  const { zoneIndex, kind, monsterId } = currentMonsterRef;
   const zone = getZone(zoneIndex);
   if (!zone) return null;
   const isBoss = kind === 'boss';
@@ -171,11 +184,6 @@ export function getCurrentMonster(currentMonsterRef) {
       spriteScale: b.spriteScale || 1, element: b.element,
       maxHp: monsterMaxHp(canonicalStage, true, b.powerRank),
       dps: monsterDamagePerSecond(canonicalStage, true, b.powerRank),
-      // Chefe usa o mesmo cenário "da zona" sorteado pros fracos (ver
-      // ensureMonsterSpawned acima) — nenhum chefe tem mais cenário/
-      // posição próprios (scene/scenePosition), sempre o cenário genérico
-      // de SCENE_IMAGES em ui/render.js.
-      sceneIndex: sceneIndex ?? 0,
     };
   }
 
@@ -188,7 +196,6 @@ export function getCurrentMonster(currentMonsterRef) {
     spriteScale: weak.spriteScale || 1,
     maxHp: monsterMaxHp(canonicalStage, false, weak.powerRank),
     dps: monsterDamagePerSecond(canonicalStage, false, weak.powerRank),
-    sceneIndex: sceneIndex ?? 0,
   };
 }
 
@@ -230,12 +237,6 @@ export function rollDrops(zoneIndex, isBoss, dropMult, monsterId) {
   return drops;
 }
 
-// How many background scenes exist (see assets/ui/scenes/scene1..N.png and
-// ui/render.js) — compartilhadas por todo mundo, fraco ou chefe (ver
-// ensureMonsterSpawned abaixo): nenhum chefe tem mais cenário próprio, usa
-// o mesmo sorteio "da zona" que os fracos já usavam.
-export const WEAK_MONSTER_SCENE_COUNT = 3;
-
 /// Pausa entre a morte de um monstro (fraco ou chefe) e o próximo aparecer —
 /// só na Caça principal (Torre/Chefe de Evento/Mina de Ouro têm seu próprio
 /// ritmo, sem essa pausa). Também descontada do cálculo de progresso
@@ -263,7 +264,6 @@ export function ensureMonsterSpawned(state) {
     zoneIndex: pick.zoneIndex,
     kind: pick.kind,
     monsterId: pick.monsterId,
-    sceneIndex: Math.floor(Math.random() * WEAK_MONSTER_SCENE_COUNT),
   };
   const monster = getCurrentMonster(state.currentMonster);
   state.monsterHp = monster.maxHp;

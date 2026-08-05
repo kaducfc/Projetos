@@ -1,8 +1,9 @@
-import { createDefaultState, loadState, saveState, hardResetState } from './state.js';
+import { createDefaultState, loadState, saveState, hardResetState, isVipActive } from './state.js';
 import { computePlayerStats, getElementalResistance, getCardDamageBonus } from './systems/stats.js';
 import {
   getCurrentMonster, applyDamage, ensureMonsterSpawned, armorReduction, resolveHit,
   advanceHitClock, setSelectedMonsters, canSelectMonster, MAX_SELECTED_MONSTERS, resolvePetHit, rollDodge,
+  resolveDoubleHit,
 } from './systems/combat.js';
 import { findMaterialInfo, BOSSES } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
@@ -21,10 +22,10 @@ import { AD_WATCH_CASH_REWARD } from './data/shop.js';
 import { claimCardReward } from './systems/cards.js';
 import { CARD_DISCOVERY_CASH_REWARD, getCard } from './data/cards.js';
 import { GAME_BUILD } from './version.js';
-import { rollPetCandidate } from './data/pets.js';
 import {
   equipPet, unequipPetSlot, sellPet, canFusePets, fusePets, getFusePartners,
-  addPetToInventory, getPetEntry, canChooseRightPet, useFreeRightPetChoice,
+  addPetToInventory, getPetEntry, canChooseRightPet, useFreeRightPetChoice, getActivePetDpsMultiplier,
+  fuseAllPossiblePets, hatchAllEggs, rollHatchCandidates, recordPetHatchOutcome,
 } from './systems/pets.js';
 import { buySkillLevel, buySpecial, resetSkillTree } from './systems/skills.js';
 import {
@@ -110,9 +111,18 @@ let pendingAscension = null;
 // a cada kill pra refletir XP/pontos novos) — sem isso, matar um monstro
 // bem no meio da confirmação fecharia o diálogo sozinho.
 let skillResetConfirming = false;
+// Ordenação da grade de Inventário da aba Mascotes — null = ordem padrão
+// (a de state.pets, ou seja, ordem de chocar/fundir); 'level'/'rarity'/
+// 'element' reordenam só a EXIBIÇÃO (ver sortPetsForDisplay em
+// ui/render.js), nunca mexem em state.pets em si.
+let petSortMode = null;
 
 function renderUpgradesTabNow() {
   renderUpgradesTab(state, skillResetConfirming);
+}
+
+function renderPetsTabNow() {
+  renderPetsTab(state, petSortMode);
 }
 
 function renderInventoryTabNow() {
@@ -226,7 +236,7 @@ function fullRefresh() {
   renderCardsTab(state);
   renderEventsTabNow();
   renderShopTab(state, activeShopSubTab);
-  renderPetsTab(state);
+  renderPetsTabNow();
 }
 
 function refreshCombatOnly() {
@@ -261,7 +271,7 @@ function handleKillEvent(event) {
   }
   if (event.eggGained) {
     showToast('🥚 Ovo de mascote encontrado!');
-    renderPetsTab(state);
+    renderPetsTabNow();
   }
   renderTopBar(state);
   renderHunterLevel(state);
@@ -315,13 +325,16 @@ function tick() {
   nextHitAt = clock.nextHitAt;
 
   if (clock.hit) {
-    const elementalMultiplier = 1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element);
+    const elementalMultiplier = (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element))
+      * getActivePetDpsMultiplier(state, monster.element);
     const hit = resolveHit(state, stats, elementalMultiplier);
     const petHit = resolvePetHit(state, monster.element, stats);
-    const totalDealt = hit.dealt + (petHit ? petHit.dealt : 0);
+    const doubleHit = resolveDoubleHit(stats, elementalMultiplier);
+    const totalDealt = hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0);
     const event = applyDamage(state, totalDealt, stats);
     spawnDamagePopup(hit.dealt, hit.isCrit, hit.isBurst);
     if (petHit) spawnPetDamagePopup(petHit.dealt, petHit.species);
+    if (doubleHit) spawnDamagePopup(doubleHit.dealt, doubleHit.isCrit);
     if (stats.lifesteal) currentHp = Math.min(currentHp + stats.lifesteal, stats.maxHp);
     pulseMonster();
     if (event) {
@@ -664,9 +677,12 @@ function wireModalEvents() {
     if (equipPetBtn) {
       runModalAction(() => {
         const uid = Number(equipPetBtn.dataset.equipPetUid);
-        equipPet(state, uid);
+        if (!equipPet(state, uid)) {
+          showToast('🔒 Só dá pra equipar 1 mascote por elemento — desequipe o outro do mesmo elemento primeiro.');
+          return;
+        }
         showPetDetailModal(state, uid);
-        renderPetsTab(state);
+        renderPetsTabNow();
       });
       return;
     }
@@ -678,7 +694,7 @@ function wireModalEvents() {
         const slotIndex = state.equippedPetUids.indexOf(uid);
         if (slotIndex !== -1) unequipPetSlot(state, slotIndex);
         showPetDetailModal(state, uid);
-        renderPetsTab(state);
+        renderPetsTabNow();
       });
       return;
     }
@@ -692,7 +708,7 @@ function wireModalEvents() {
           hideModal();
           showToast(`💰 Mascote vendido por +${formatNumber(value)} ouro.`);
           renderTopBar(state);
-          renderPetsTab(state);
+          renderPetsTabNow();
         }
       });
       return;
@@ -715,7 +731,7 @@ function wireModalEvents() {
         if (fused) {
           showToast(`✨ Mascotes fundidos! Novo nível: +${fused.level}`);
           showPetDetailModal(state, fused.uid);
-          renderPetsTab(state);
+          renderPetsTabNow();
         }
       });
       return;
@@ -727,17 +743,18 @@ function wireModalEvents() {
         const side = hatchChooseBtn.dataset.hatchChoose;
         if (!pendingHatchCandidates) return;
         if (side === 'right' && !canChooseRightPet(state)) return; // defensivo — botão já vem disabled
-        if (side === 'right' && !state.vip) useFreeRightPetChoice(state);
+        if (side === 'right' && !isVipActive(state)) useFreeRightPetChoice(state);
         const chosen = pendingHatchCandidates[side === 'left' ? 0 : 1];
         pendingHatchCandidates = null;
         state.eggCount = Math.max(0, (state.eggCount || 0) - 1);
         const { discarded, fragments } = addPetToInventory(state, chosen);
+        recordPetHatchOutcome(state, chosen.rarityId);
         hideModal();
         showToast(discarded
           ? `🎒 Inventário de mascotes cheio! Mascote convertido em +${formatNumber(fragments)} 🧩 Fragmentos.`
           : '🐣 Novo mascote chocado!');
         renderTopBar(state);
-        renderPetsTab(state);
+        renderPetsTabNow();
       });
       return;
     }
@@ -878,7 +895,7 @@ function giveUpEvent() {
 function handleEventBossVictory(boss) {
   const { gained, currency, cardDropped, eggGained } = claimEventVictory(state, state.eventEnteredCycle, boss);
   showEventRewardModal(boss, gained, currency, cardDropped);
-  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
+  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTabNow(); }
   renderTopBar(state);
   renderInventoryTabNow();
   renderCardsTab(state);
@@ -916,10 +933,12 @@ function tickEventBoss(stats) {
   const clock = advanceHitClock(nextEventHitAt, stats.attackSpeedPerSec);
   nextEventHitAt = clock.nextHitAt;
   if (clock.hit && stats.dps > 0) {
-    const elementalMultiplier = 1 + elementDamageModifier(stats.weaponElement, boss.element) + getCardDamageBonus(state, boss.element);
+    const elementalMultiplier = (1 + elementDamageModifier(stats.weaponElement, boss.element) + getCardDamageBonus(state, boss.element))
+      * getActivePetDpsMultiplier(state, boss.element);
     const hit = resolveHit(state, stats, elementalMultiplier);
     const petHit = resolvePetHit(state, boss.element, stats);
-    const killed = applyEventDamage(state, hit.dealt + (petHit ? petHit.dealt : 0));
+    const doubleHit = resolveDoubleHit(stats, elementalMultiplier);
+    const killed = applyEventDamage(state, hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0));
     if (stats.lifesteal) currentHp = Math.min(currentHp + stats.lifesteal, stats.maxHp);
     pulseEventBoss();
     if (killed) {
@@ -950,17 +969,17 @@ function enterTower() {
 }
 
 function finishTowerRun(cleared200) {
-  const { level, currency, goldGained, gained, eggGained } = endTowerRun(state, cleared200);
+  const { level, currency, goldGained, gained, eggsGained } = endTowerRun(state, cleared200);
   towerDeadline = null;
   towerHp = null;
-  showTowerRewardModal(level, cleared200, currency, goldGained, gained);
-  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
+  showTowerRewardModal(level, cleared200, currency, goldGained, gained, eggsGained);
+  renderPetsTabNow();
   renderEventsTabNow();
   renderTopBar(state);
   renderInventoryTabNow();
 }
 
-function showTowerRewardModal(level, cleared200, currency, goldGained, gained) {
+function showTowerRewardModal(level, cleared200, currency, goldGained, gained, eggsGained) {
   const lootLines = Object.values(gained)
     .map((g) => `<div class="offline-item-lines">+${g.qty} <span class="icon">${iconMarkup(g.image, g.emoji, g.name)}</span> ${g.name}</div>`)
     .join('');
@@ -970,6 +989,7 @@ function showTowerRewardModal(level, cleared200, currency, goldGained, gained) {
     <p class="offline-item-lines">+${formatNumber(goldGained)} ${GOLD_ICON} Ouro</p>
     ${lootLines}
     <p class="offline-item-lines">+${formatNumber(currency)} ${EVENT_ICON} Moeda de Evento</p>
+    <p class="offline-item-lines">+${formatNumber(eggsGained)} 🥚 Ovo${eggsGained === 1 ? '' : 's'} de Mascote</p>
   `);
 }
 
@@ -995,10 +1015,12 @@ function tickTower() {
   const clock = advanceHitClock(nextTowerHitAt, stats.attackSpeedPerSec);
   nextTowerHitAt = clock.nextHitAt;
   if (clock.hit && stats.dps > 0) {
-    const elementalMultiplier = 1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element);
+    const elementalMultiplier = (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element))
+      * getActivePetDpsMultiplier(state, monster.element);
     const hit = resolveHit(state, stats, elementalMultiplier);
     const petHit = resolvePetHit(state, monster.element, stats);
-    const event = applyTowerDamage(state, hit.dealt + (petHit ? petHit.dealt : 0));
+    const doubleHit = resolveDoubleHit(stats, elementalMultiplier);
+    const event = applyTowerDamage(state, hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0));
     if (stats.lifesteal) towerHp = Math.min(towerHp + stats.lifesteal, stats.maxHp);
     pulseTowerMonster();
     if (event) {
@@ -1041,7 +1063,7 @@ function finishGoldMine() {
   const { goldGained, eggGained } = endGoldMineRun(state);
   goldMineDeadline = null;
   showGoldMineRewardModal(goldGained);
-  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTab(state); }
+  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTabNow(); }
   renderEventsTabNow();
   renderTopBar(state);
 }
@@ -1071,9 +1093,10 @@ function tickGoldMine() {
   const clock = advanceHitClock(nextGoldMineHitAt, stats.attackSpeedPerSec);
   nextGoldMineHitAt = clock.nextHitAt;
   if (clock.hit && stats.dps > 0) {
-    const hit = resolveHit(state, stats, 1);
+    const hit = resolveHit(state, stats, getActivePetDpsMultiplier(state, 'neutro'));
     const petHit = resolvePetHit(state, 'neutro', stats);
-    const killed = applyGoldMineDamage(state, hit.dealt + (petHit ? petHit.dealt : 0));
+    const doubleHit = resolveDoubleHit(stats, getActivePetDpsMultiplier(state, 'neutro'));
+    const killed = applyGoldMineDamage(state, hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0));
     if (stats.lifesteal) currentHp = Math.min(currentHp + stats.lifesteal, stats.maxHp);
     pulseGoldMineBoss();
     if (killed) {
@@ -1143,14 +1166,59 @@ function wireCardsTabEvents() {
 
 function openHatchModal() {
   if ((state.eggCount || 0) < 1) return;
-  pendingHatchCandidates = [rollPetCandidate(), rollPetCandidate()];
+  pendingHatchCandidates = rollHatchCandidates(state);
   showHatchModal(state, pendingHatchCandidates);
+}
+
+function hatchAllEggsNow() {
+  if (!isVipActive(state)) { showToast('👑 Chocar Todos é uma funcionalidade exclusiva de VIP — compre na loja de Cash.'); return; }
+  if ((state.eggCount || 0) < 1) return;
+  const summary = hatchAllEggs(state);
+  const rarityBreakdown = Object.entries(summary.byRarity)
+    .sort((a, b) => b[1] - a[1])
+    .map(([rarityId, qty]) => `${qty}x ${getRarity(rarityId).name}`)
+    .join(', ');
+  let msg = summary.hatched > 0
+    ? `🐣 ${summary.hatched} ovo${summary.hatched === 1 ? '' : 's'} chocado${summary.hatched === 1 ? '' : 's'}! ${rarityBreakdown}`
+    : '🎒 Inventário de mascotes já está cheio — nenhum ovo chocado.';
+  if (summary.discardedCount > 0) {
+    msg += ` — inventário cheio: ${summary.discardedCount} viraram +${formatNumber(summary.fragmentsGained)} 🧩 Fragmentos.`;
+  } else if (summary.stoppedInventoryFull) {
+    const remaining = state.eggCount || 0;
+    msg += ` Parou no limite do inventário — ${formatNumber(remaining)} ovo${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'} guardado${remaining === 1 ? '' : 's'} pra depois.`;
+  }
+  showToast(msg);
+  renderTopBar(state);
+  renderPetsTabNow();
+}
+
+function fuseAllPetsNow() {
+  const { fusionsPerformed, resultingPets } = fuseAllPossiblePets(state);
+  if (fusionsPerformed < 1) {
+    showToast('🌟 Nenhum par de mascotes iguais (mesma espécie/raridade/nível) disponível pra fundir agora.');
+    return;
+  }
+  showToast(`🌟 ${fusionsPerformed} fusão${fusionsPerformed === 1 ? '' : 'ões'} realizada${fusionsPerformed === 1 ? '' : 's'}, resultando em ${resultingPets} mascote${resultingPets === 1 ? '' : 's'}!`);
+  renderPetsTabNow();
 }
 
 function wirePetsTabEvents() {
   document.getElementById('tab-pets').addEventListener('click', (e) => {
     const hatchBtn = e.target.closest('[data-hatch-egg-btn]');
     if (hatchBtn) { openHatchModal(); return; }
+
+    const hatchAllBtn = e.target.closest('[data-hatch-all-btn]');
+    if (hatchAllBtn) { hatchAllEggsNow(); return; }
+
+    const fuseAllBtn = e.target.closest('[data-fuse-all-btn]');
+    if (fuseAllBtn) { fuseAllPetsNow(); return; }
+
+    const sortBtn = e.target.closest('[data-pet-sort]');
+    if (sortBtn) {
+      petSortMode = sortBtn.dataset.petSort || null;
+      renderPetsTabNow();
+      return;
+    }
 
     const slotBtn = e.target.closest('[data-pet-slot]');
     if (slotBtn) {
@@ -1246,6 +1314,12 @@ function wireShopTabEvents() {
         showToast('🛒 Compra realizada!');
         renderTopBar(state);
         renderShopTab(state, activeShopSubTab);
+        // VIP muda o limite de inventário (itens/mascotes) e libera "Chocar
+        // Todos" — essas 2 abas ficariam com dado velho até a próxima ação
+        // nelas se não fossem re-renderizadas aqui também (nenhuma das duas
+        // é a Loja, então o tick normal de combate não as toca).
+        renderInventoryTabNow();
+        renderPetsTabNow();
       }
       return;
     }
