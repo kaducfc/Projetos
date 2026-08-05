@@ -32,7 +32,7 @@ import {
 } from '../data/pets.js';
 import {
   getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet, canHatchAllEggs, canEquipPet,
-  MYTHIC_PITY_THRESHOLD, LEGENDARY_PITY_THRESHOLD, canDonatePetFragments,
+  MYTHIC_PITY_THRESHOLD, LEGENDARY_PITY_THRESHOLD, canDonatePetFragments, petFragmentsToDonateNow,
 } from '../systems/pets.js';
 import { isVipActive } from '../state.js';
 import { getSkillTree, STAT_DISPLAY_NAME, SPECIAL_THRESHOLDS } from '../data/skills.js';
@@ -1188,19 +1188,22 @@ function fusePartnersHtml(state, uid) {
 
 /// Barra de XP do pet + botão "Doar Fragmentos" — 2º caminho pra evoluir
 /// nível além de fundir (ver donatePetFragments em systems/pets.js). Some
-/// no nível máximo (não tem próximo nível pra progredir rumo a ele).
+/// no nível máximo (não tem próximo nível pra progredir rumo a ele). O
+/// botão mostra exatamente quanto VAI ser doado agora — só o que falta pro
+/// próximo nível (nunca mais, mesmo com fragmento de sobra — ver
+/// petFragmentsToDonateNow).
 function petXpSectionHtml(state, pet, uid) {
   if (pet.level >= PET_MAX_LEVEL) return '';
   const xp = pet.xp || 0;
   const xpNeeded = xpToNextPetLevel(pet);
   const pct = xpNeeded > 0 ? Math.max(0, Math.min(100, (xp / xpNeeded) * 100)) : 0;
-  const fragments = state.petFragments || 0;
+  const toDonate = petFragmentsToDonateNow(state, uid);
   const canDonate = canDonatePetFragments(state, uid);
   return `
     <div class="pet-xp-section">
       <div class="pet-xp-label">🧩 XP: ${formatNumber(xp)} / ${formatNumber(xpNeeded)}</div>
       <div class="pet-xp-bar-outer"><div class="pet-xp-bar-fill" style="width:${pct}%"></div></div>
-      <button class="modal-action-btn" data-donate-pet-fragments-uid="${uid}" ${canDonate ? '' : 'disabled'}>🧩 Doar Fragmentos (${formatNumber(fragments)} disponíveis)</button>
+      <button class="modal-action-btn" data-donate-pet-fragments-uid="${uid}" ${canDonate ? '' : 'disabled'}>🧩 Doar Fragmentos (+${formatNumber(toDonate)})</button>
     </div>
   `;
 }
