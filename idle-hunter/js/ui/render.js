@@ -9,7 +9,7 @@ import { formatNumber, formatPercent } from '../format.js';
 import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds } from '../systems/crafting.js';
-import { isZoneUnlocked, isBossUnlocked, xpToNextLevel } from '../systems/leveling.js';
+import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, HUNTER_MAX_LEVEL } from '../systems/leveling.js';
 import { getEventWindow, getTowerWindow, TOWER_MAX_LEVEL, getGoldMineWindow, GOLDMINE_BOSS_HP } from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
 import { getTowerMonster } from '../systems/tower.js';
@@ -111,12 +111,19 @@ export function renderTopBar(state) {
 }
 
 /// Nível/XP do caçador — só libera zonas/chefes por enquanto (ver
-/// systems/leveling.js), mostrado como uma barra de progresso simples.
+/// systems/leveling.js), mostrado como uma barra de progresso simples. No
+/// nível máximo (HUNTER_MAX_LEVEL), a barra fica cheia e mostra "MÁXIMO"
+/// em vez de uma fração de XP que nunca mais vai encher de verdade.
 export function renderHunterLevel(state) {
   const level = state.hunterLevel || 1;
+  document.getElementById('hunter-level-label').textContent = `Nível de Caça ${level}`;
+  if (level >= HUNTER_MAX_LEVEL) {
+    document.getElementById('hunter-xp-bar-fill').style.width = '100%';
+    document.getElementById('hunter-xp-bar-text').textContent = 'NÍVEL MÁXIMO';
+    return;
+  }
   const xp = state.hunterXp || 0;
   const next = xpToNextLevel(level);
-  document.getElementById('hunter-level-label').textContent = `Nível de Caça ${level}`;
   const pct = next > 0 ? Math.max(0, Math.min(100, (xp / next) * 100)) : 0;
   document.getElementById('hunter-xp-bar-fill').style.width = `${pct}%`;
   document.getElementById('hunter-xp-bar-text').textContent = `${formatNumber(xp)} / ${formatNumber(next)}`;
