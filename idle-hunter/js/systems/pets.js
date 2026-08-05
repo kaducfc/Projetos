@@ -173,7 +173,7 @@ export function getFusePartners(state, uid) {
 /// getActivePetDpsMultiplier abaixo) — os outros até 3 equipados ficam de
 /// reserva, sem efeito nenhum até serem eles os escolhidos contra outro
 /// elemento.
-export function getBestEquippedPet(state, monsterElement) {
+export function getBestEquippedPet(state, monsterElement, hunterDps) {
   let best = null;
   let bestDamage = -Infinity;
   for (const uid of state.equippedPetUids || []) {
@@ -183,7 +183,7 @@ export function getBestEquippedPet(state, monsterElement) {
     const species = getPetSpecies(pet.speciesId);
     if (!species) continue;
     const modifier = 1 + elementDamageModifier(species.element, monsterElement);
-    const damage = getPetDamage(pet) * modifier;
+    const damage = getPetDamage(pet, hunterDps) * modifier;
     if (damage > bestDamage) {
       bestDamage = damage;
       best = { pet, species, damage, dpsBonusPercent: getPetDpsBonusPercent(pet) };
@@ -197,7 +197,11 @@ export function getBestEquippedPet(state, monsterElement) {
 /// equipado. Cada um dos 4 contextos de combate (main.js) multiplica isso
 /// no elementalMultiplier antes de chamar resolveHit().
 export function getActivePetDpsMultiplier(state, monsterElement) {
-  const best = getBestEquippedPet(state, monsterElement);
+  // dps=1 (valor fictício): só interessa QUAL pet ganha o desempate (o
+  // elemento/vantagem decide isso, não o valor de DPS em si — todo pet
+  // equipado escala pelo MESMO DPS, então o ranking nunca muda), não o
+  // dano de verdade — dpsBonusPercent independe de dano/DPS.
+  const best = getBestEquippedPet(state, monsterElement, 1);
   return best ? 1 + best.dpsBonusPercent / 100 : 1;
 }
 

@@ -158,12 +158,13 @@ export function resolveHit(state, stats, elementalMultiplier) {
 
 /// Resolve o dano do mascote nesse mesmo hit — o jogo escolhe sozinho, entre
 /// os até 4 pets equipados, qual causaria mais dano contra `monsterElement`
-/// agora (dano base do pet × vantagem/desvantagem elemental, ver
+/// agora (dano base do pet, uma % do DPS do próprio caçador — ver
+/// getPetDamage em data/pets.js — × vantagem/desvantagem elemental, ver
 /// getBestEquippedPet em systems/pets.js). Chamado ao lado de resolveHit()
 /// em cada um dos 4 contextos de combate (main.js) — retorna null se
 /// nenhum pet estiver equipado.
 export function resolvePetHit(state, monsterElement, stats) {
-  const best = getBestEquippedPet(state, monsterElement);
+  const best = getBestEquippedPet(state, monsterElement, stats?.dps);
   if (!best) return null;
   return { dealt: best.damage * (stats?.petDamageMult || 1), species: best.species };
 }
