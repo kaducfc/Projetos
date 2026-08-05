@@ -998,17 +998,17 @@ function enterTower() {
 }
 
 function finishTowerRun(cleared200) {
-  const { level, currency, goldGained, gained, eggsGained } = endTowerRun(state, cleared200);
+  const { level, currency, goldGained, gained, eggsGained, cardFragmentsGained } = endTowerRun(state, cleared200);
   towerDeadline = null;
   towerHp = null;
-  showTowerRewardModal(level, cleared200, currency, goldGained, gained, eggsGained);
+  showTowerRewardModal(level, cleared200, currency, goldGained, gained, eggsGained, cardFragmentsGained);
   renderPetsTabNow();
   renderEventsTabNow();
   renderTopBar(state);
   renderInventoryTabNow();
 }
 
-function showTowerRewardModal(level, cleared200, currency, goldGained, gained, eggsGained) {
+function showTowerRewardModal(level, cleared200, currency, goldGained, gained, eggsGained, cardFragmentsGained) {
   const lootLines = Object.values(gained)
     .map((g) => `<div class="offline-item-lines">+${g.qty} <span class="icon">${iconMarkup(g.image, g.emoji, g.name)}</span> ${g.name}</div>`)
     .join('');
@@ -1019,6 +1019,7 @@ function showTowerRewardModal(level, cleared200, currency, goldGained, gained, e
     ${lootLines}
     <p class="offline-item-lines">+${formatNumber(currency)} ${EVENT_ICON} Moeda de Evento</p>
     <p class="offline-item-lines">+${formatNumber(eggsGained)} 🥚 Ovo${eggsGained === 1 ? '' : 's'} de Mascote</p>
+    <p class="offline-item-lines">+${formatNumber(cardFragmentsGained)} ${CARD_FRAGMENT_EMOJI} ${CARD_FRAGMENT_NAME}</p>
   `);
 }
 
