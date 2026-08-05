@@ -32,7 +32,7 @@ import {
 } from '../data/pets.js';
 import {
   getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet, canHatchAllEggs, canEquipPet,
-  MYTHIC_PITY_THRESHOLD, LEGENDARY_PITY_THRESHOLD, canDonatePetFragments, petFragmentsToDonateNow,
+  MYTHIC_PITY_THRESHOLD, LEGENDARY_PITY_THRESHOLD, canDonatePetFragments, petFragmentsToDonateNow, canRecyclePet,
 } from '../systems/pets.js';
 import { isVipActive } from '../state.js';
 import { getSkillTree, STAT_DISPLAY_NAME, SPECIAL_THRESHOLDS } from '../data/skills.js';
@@ -1232,6 +1232,9 @@ function petDetailHtml(state, uid, showFuseList) {
 
   const dpsBonusPercent = getPetDpsBonusPercent(pet);
   const xpSection = petXpSectionHtml(state, pet, uid);
+  const recycleBtn = canRecyclePet(state, uid)
+    ? `<button class="modal-action-btn destroy-btn" data-recycle-pet-uid="${uid}">♻️ Reciclar (+${formatNumber(getPetRecycleValue(pet))} 🧩)</button>`
+    : `<button class="modal-action-btn destroy-btn" disabled title="Mascote equipado não pode ser reciclado — desequipe ele primeiro">🔒 Reciclar</button>`;
   return `
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier ${species.tier}</div>
@@ -1245,7 +1248,7 @@ function petDetailHtml(state, uid, showFuseList) {
       ${fuseSection}
       <div class="modal-action-row">
         ${actionBtn}
-        <button class="modal-action-btn destroy-btn" data-recycle-pet-uid="${uid}">♻️ Reciclar (+${formatNumber(getPetRecycleValue(pet))} 🧩)</button>
+        ${recycleBtn}
       </div>
     </div>
   `;
