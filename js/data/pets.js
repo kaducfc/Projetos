@@ -24,16 +24,17 @@ export function getPetElementColor(elementId) {
 
 export const PET_TIER_COUNT = 5;
 
-// Crescimento bem achatado entre os 5 tiers do mesmo elemento (pedido
-// explícito: "pouca diferença entre os tiers") — é a raridade sorteada e o
-// nível de fusão (+1 a +10) que fazem a diferença real de poder, não qual
-// dos 5 pets do elemento você tirou.
-const PET_TIER_BASE = 10;
-const PET_TIER_GROWTH = 1.12;
-
-function petTierDamage(tier) {
-  return Math.round(PET_TIER_BASE * Math.pow(PET_TIER_GROWTH, tier - 1));
-}
+// Dano do pet = uma % do DPS do próprio caçador (pedido explícito do
+// usuário) — não mais um número absoluto independente. Os 2 pontos-âncora
+// que fixam a curva inteira: Tier 1 Comum nível 1 = 1% do DPS; Tier 5
+// Mítico nível 10 = 100% do DPS. TIER_BASE_PERCENT[tier-1] é a % de base
+// (rarity.mult=1, petLevelMultiplier=1 aplicados por cima, ver
+// getPetDamagePercent abaixo) — geometricamente interpolada entre esses 2
+// pontos (rarity.mult vai de 1.0 a 2.5 entre Comum e Mítico, ver RARITIES
+// em data/items.js; petLevelMultiplier(10) = PET_LEVEL_GROWTH^9, ver
+// abaixo), então o crescimento entre tiers deixou de ser "achatado" —
+// virou o que os 2 pontos-âncora exigem.
+const PET_TIER_BASE_PERCENT = [1, 1.6077, 2.5847, 4.1554, 6.6807];
 
 // Nome + arte real (assets/pets/<elemento>/tN.png) por espécie — recebidas
 // já nomeadas/tieradas pelo arquivo de origem (ex: "t3 Magmox - Fogo.png").
@@ -82,7 +83,6 @@ PET_ELEMENTS.forEach((element) => {
       image: `assets/pets/${element}/t${tier}.png`,
       element,
       tier,
-      baseDamage: petTierDamage(tier),
     });
   });
 });
@@ -102,13 +102,24 @@ export function petLevelMultiplier(level) {
   return Math.pow(PET_LEVEL_GROWTH, Math.max(0, (level || 1) - 1));
 }
 
-/// Dano de uma instância específica de pet, já com raridade + nível de fusão
-/// aplicados.
-export function getPetDamage(petEntry) {
+/// % do DPS do caçador que essa instância de pet representa como dano base
+/// — já com raridade + nível de fusão aplicados (ver PET_TIER_BASE_PERCENT
+/// acima pro porquê dos números). Independente de qualquer valor de DPS
+/// real, só a % em si — getPetDamage abaixo é que converte isso num
+/// número de dano de verdade.
+export function getPetDamagePercent(petEntry) {
   const species = getPetSpecies(petEntry.speciesId);
   if (!species) return 0;
   const rarity = getRarity(petEntry.rarityId);
-  return Math.round(species.baseDamage * rarity.mult * petLevelMultiplier(petEntry.level));
+  return PET_TIER_BASE_PERCENT[species.tier - 1] * rarity.mult * petLevelMultiplier(petEntry.level);
+}
+
+/// Dano de uma instância específica de pet contra o DPS atual do caçador —
+/// essa é a base "crua" (sem o bônus % de Dano de Mascote do equipamento/
+/// carta ainda por cima, ver petDamageMult em resolvePetHit/systems/
+/// combat.js, que multiplica isso depois).
+export function getPetDamage(petEntry, hunterDps) {
+  return (hunterDps || 0) * (getPetDamagePercent(petEntry) / 100);
 }
 
 // % de DPS que o pet ATIVO (ver getBestEquippedPet/getActivePetDpsMultiplier
