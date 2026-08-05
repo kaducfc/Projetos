@@ -1,17 +1,13 @@
 import { BOSSES, WEAK_MONSTER_GROUPS } from './monsters.js';
-import { getElement } from './elements.js';
 
 // One collectible card per monster in the live roster (bosses + weak
 // monsters — see monsters.js) — a rare drop from that specific monster
 // (BOSS_CARD_DROP_CHANCE / WEAK_CARD_DROP_CHANCE in systems/combat.js —
 // fixed rates that drop-bonus upgrades never touch). Socketing one into an
 // equipped item's card slot (see socketCard()/unsocketCard() in
-// systems/crafting.js) consumes it from state.cards.
-//
-// Every card (boss or weak monster) grants the same generic elemental-damage
-// bonus via its `element`, exactly like elementDamageModifier() does for gear
-// (see getCardDamageBonus() in systems/stats.js).
-export const CARD_DAMAGE_BONUS = 0.03;
+// systems/crafting.js) consumes it from state.cards. A card's only effect
+// is its own `bonuses` list (ver CARD_EFFECTS abaixo) — sem bônus elemental
+// automático nem qualquer outro efeito implícito.
 
 // One-time Cash bonus for finding any given card for the first time ever —
 // claimed from the Cartas tab, same "claim once" shape as an achievement
@@ -331,13 +327,8 @@ const CARD_EFFECTS = {
   },
 };
 
-function cardDescription(name, elementId, effect) {
-  const element = getElement(elementId);
-  const elementLine = element.id === 'neutro'
-    ? ''
-    : ` +${Math.round(CARD_DAMAGE_BONUS * 100)}% de dano contra inimigos do elemento ${element.name}.`;
-  const effectLine = effect ? ` ${effect.text}` : ' Efeito adicional ainda não definido.';
-  return `Poder selado de ${name}.${elementLine}${effectLine}`;
+function cardDescription(effect) {
+  return effect ? effect.text : 'Efeito adicional ainda não definido.';
 }
 
 export const CARDS = [
@@ -352,7 +343,7 @@ export const CARDS = [
       image: CARD_IMAGES[boss.id] || null,
       element: boss.element,
       bonuses: effect ? effect.bonuses : [],
-      description: cardDescription(boss.name, boss.element, effect),
+      description: cardDescription(effect),
     };
   }),
   ...WEAK_MONSTER_GROUPS.flatMap((group) => group.monsters).map((monster) => {
@@ -366,7 +357,7 @@ export const CARDS = [
       image: CARD_IMAGES[monster.id] || null,
       element: monster.element,
       bonuses: effect ? effect.bonuses : [],
-      description: cardDescription(monster.name, monster.element, effect),
+      description: cardDescription(effect),
     };
   }),
 ];

@@ -1,5 +1,5 @@
 import { createDefaultState, loadState, saveState, hardResetState, isVipActive } from './state.js';
-import { computePlayerStats, getElementalResistance, getCardDamageBonus } from './systems/stats.js';
+import { computePlayerStats, getElementalResistance } from './systems/stats.js';
 import {
   getCurrentMonster, applyDamage, ensureMonsterSpawned, armorReduction, resolveHit,
   advanceHitClock, setSelectedMonsters, canSelectMonster, MAX_SELECTED_MONSTERS, resolvePetHit, rollDodge,
@@ -324,7 +324,7 @@ function tick() {
   nextHitAt = clock.nextHitAt;
 
   if (clock.hit) {
-    const elementalMultiplier = (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element))
+    const elementalMultiplier = (1 + elementDamageModifier(stats.weaponElement, monster.element))
       * getActivePetDpsMultiplier(state, monster.element);
     const hit = resolveHit(state, stats, elementalMultiplier);
     const petHit = resolvePetHit(state, monster.element, stats);
@@ -932,7 +932,7 @@ function tickEventBoss(stats) {
   const clock = advanceHitClock(nextEventHitAt, stats.attackSpeedPerSec);
   nextEventHitAt = clock.nextHitAt;
   if (clock.hit && stats.dps > 0) {
-    const elementalMultiplier = (1 + elementDamageModifier(stats.weaponElement, boss.element) + getCardDamageBonus(state, boss.element))
+    const elementalMultiplier = (1 + elementDamageModifier(stats.weaponElement, boss.element))
       * getActivePetDpsMultiplier(state, boss.element);
     const hit = resolveHit(state, stats, elementalMultiplier);
     const petHit = resolvePetHit(state, boss.element, stats);
@@ -1014,7 +1014,7 @@ function tickTower() {
   const clock = advanceHitClock(nextTowerHitAt, stats.attackSpeedPerSec);
   nextTowerHitAt = clock.nextHitAt;
   if (clock.hit && stats.dps > 0) {
-    const elementalMultiplier = (1 + elementDamageModifier(stats.weaponElement, monster.element) + getCardDamageBonus(state, monster.element))
+    const elementalMultiplier = (1 + elementDamageModifier(stats.weaponElement, monster.element))
       * getActivePetDpsMultiplier(state, monster.element);
     const hit = resolveHit(state, stats, elementalMultiplier);
     const petHit = resolvePetHit(state, monster.element, stats);
