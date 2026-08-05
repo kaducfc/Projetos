@@ -10,6 +10,11 @@ import { ZONES } from '../data/monsters.js';
 const HUNTER_XP_BASE = 5;
 const HUNTER_XP_GROWTH = 1.031;
 
+// Nível máximo do caçador — pedido explícito do usuário. Zona 10 (a mais
+// avançada) já libera no nível 180 (ver zoneUnlockLevelFor em
+// data/monsters.js), então o cap em 200 não trava nada do conteúdo.
+export const HUNTER_MAX_LEVEL = 200;
+
 export function xpToNextLevel(level) {
   return Math.round(HUNTER_XP_BASE * Math.pow(HUNTER_XP_GROWTH, level - 1));
 }
@@ -23,15 +28,20 @@ export function xpForZone(zoneIndex, _isBoss) {
 
 /// Soma XP e resolve quantos níveis isso rende (pode subir mais de 1 de uma
 /// vez). Retorna o número de níveis ganhos (0 se não subiu nenhum) — o
-/// chamador usa isso pra mostrar um toast de "Level Up!".
+/// chamador usa isso pra mostrar um toast de "Level Up!". Já no nível
+/// máximo (HUNTER_MAX_LEVEL), XP extra é simplesmente descartado — nem
+/// chega a acumular em hunterXp, pra barra de XP não ficar com progresso
+/// "fantasma" que nunca vira nível.
 export function grantXp(state, amount) {
+  if ((state.hunterLevel || 1) >= HUNTER_MAX_LEVEL) return 0;
   state.hunterXp = (state.hunterXp || 0) + amount;
   let levelsGained = 0;
-  while (state.hunterXp >= xpToNextLevel(state.hunterLevel)) {
+  while (state.hunterLevel < HUNTER_MAX_LEVEL && state.hunterXp >= xpToNextLevel(state.hunterLevel)) {
     state.hunterXp -= xpToNextLevel(state.hunterLevel);
     state.hunterLevel += 1;
     levelsGained += 1;
   }
+  if (state.hunterLevel >= HUNTER_MAX_LEVEL) state.hunterXp = 0;
   return levelsGained;
 }
 
