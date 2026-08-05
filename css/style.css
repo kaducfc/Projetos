@@ -1217,6 +1217,16 @@ button:disabled {
   object-fit: contain;
 }
 
+/* Ícone real do slot vazio (ver iconMarkup em categoryFilterRowHtml,
+   ui/render.js) dentro de um botão de filtro de categoria — mesmo tamanho
+   do .element-filter-icon acima, só que aplicado direto na tag <img> já
+   que iconMarkup() não aceita passar uma classe. */
+.element-filter-btn img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
 .element-filter-btn.active {
   border-color: var(--navy);
   box-shadow: 0 0 0 3px rgba(31, 95, 168, .3), var(--shadow-card);

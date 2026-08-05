@@ -46,10 +46,10 @@ export function getSlot(slotId) {
 export function getCategoryLabel(category) {
   if (category === 'ring') {
     const ringSlot = getSlot('ring1');
-    return { name: 'Anel', emoji: ringSlot.emoji, kind: ringSlot.kind };
+    return { name: 'Anel', emoji: ringSlot.emoji, kind: ringSlot.kind, image: ringSlot.emptyIcon };
   }
   const slot = getSlot(category);
-  return slot ? { name: slot.name, emoji: slot.emoji, kind: slot.kind } : null;
+  return slot ? { name: slot.name, emoji: slot.emoji, kind: slot.kind, image: slot.emptyIcon } : null;
 }
 
 // ---------------------------------------------------------------------

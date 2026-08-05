@@ -367,7 +367,7 @@ function bulkSelectToolbarHtml(bulkSelect) {
 function categoryFilterRowHtml(filterCategory) {
   const chips = [{ id: null, emoji: '📦', name: 'Todos' }, ...DROP_CATEGORIES.map((category) => ({ id: category, ...getCategoryLabel(category) }))];
   return `<div class="element-filter-row">${chips.map((c) => `
-    <button class="element-filter-btn ${filterCategory === c.id ? 'active' : ''}" data-filter-category="${c.id ?? ''}" title="${c.name}">${c.emoji}</button>
+    <button class="element-filter-btn ${filterCategory === c.id ? 'active' : ''}" data-filter-category="${c.id ?? ''}" title="${c.name}">${iconMarkup(c.image, c.emoji, c.name)}</button>
   `).join('')}</div>`;
 }
 
