@@ -5,6 +5,7 @@ import {
 import { monsterMaxHp, monsterDamagePerSecond, monsterGoldReward } from './combat.js';
 import { getTowerWindow, TOWER_MAX_LEVEL, TOWER_CURRENCY_BASE, TOWER_CURRENCY_PER_LEVEL, TOWER_CLEAR_BONUS } from '../data/events.js';
 import { EVENT_EGG_DROP_CHANCE } from '../data/pets.js';
+import { CARD_FRAGMENT_ID } from '../data/cards.js';
 
 // End-of-run rewards (see endTowerRun) also include a batch of weak-monster
 // materials — this many rolls, each landing on a random material from the
@@ -17,6 +18,11 @@ const TOWER_MATERIAL_DROPS = 20;
 // de EVENT_EGG_DROP_CHANCE mais abaixo, que continua existindo em cima
 // disso.
 const TOWER_EGG_REWARD = 200;
+
+// Mesmo tratamento do TOWER_EGG_REWARD acima, agora pra Fragmento de Carta
+// (ver data/cards.js) — pedido explícito do usuário: toda run da Torre,
+// não importa onde termine, também dá esse tanto fixo de fragmento.
+const TOWER_CARD_FRAGMENT_REWARD = 100000;
 
 // --- TEMP DEBUG OVERRIDE (pedido do usuário pra facilitar testar outras
 // mecânicas do jogo) --------------------------------------------------
@@ -221,5 +227,10 @@ export function endTowerRun(state, cleared200 = false) {
   const eggsGained = TOWER_EGG_REWARD + (bonusEggGained ? 1 : 0);
   state.eggCount = (state.eggCount || 0) + eggsGained;
 
-  return { level, cleared200, currency, goldGained, gained, eggGained: bonusEggGained, eggsGained };
+  state.materials[CARD_FRAGMENT_ID] = (state.materials[CARD_FRAGMENT_ID] || 0) + TOWER_CARD_FRAGMENT_REWARD;
+
+  return {
+    level, cleared200, currency, goldGained, gained, eggGained: bonusEggGained, eggsGained,
+    cardFragmentsGained: TOWER_CARD_FRAGMENT_REWARD,
+  };
 }
