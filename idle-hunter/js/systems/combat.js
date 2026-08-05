@@ -113,20 +113,9 @@ export function advanceHitClock(nextHitAt, attackSpeedPerSec, now = Date.now()) 
 /// Resolves one discrete hit's damage — shared by every combat context (Caça,
 /// Evento, Torre, Mina de Ouro). elementalMultiplier is the caller's
 /// precomputed `1 + elementDamageModifier(...) + getCardDamageBonus(...)`.
-/// state.solkaiserHitCounter is persisted (state.js) so the countdown
-/// survives a reload; only advances/resets when the card is actually
-/// socketed (stats.hitBurstEveryN is null otherwise, see stats.js).
 export function resolveHit(state, stats, elementalMultiplier) {
-  if (stats.hitBurstEveryN) {
-    state.solkaiserHitCounter = (state.solkaiserHitCounter || 0) + 1;
-    if (state.solkaiserHitCounter > stats.hitBurstEveryN) {
-      state.solkaiserHitCounter = 0;
-      const dealt = stats.dps * elementalMultiplier * stats.hitBurstDamageMult;
-      return { dealt, isCrit: true, isBurst: true };
-    }
-  }
   const crit = rollCrit(stats);
-  return { dealt: stats.dps * elementalMultiplier * crit.multiplier, isCrit: crit.isCrit, isBurst: false };
+  return { dealt: stats.dps * elementalMultiplier * crit.multiplier, isCrit: crit.isCrit };
 }
 
 /// Resolve o dano do mascote nesse mesmo hit — o jogo escolhe sozinho, entre
@@ -141,12 +130,13 @@ export function resolvePetHit(state, monsterElement, stats) {
   return { dealt: best.damage * (stats?.petDamageMult || 1), species: best.species };
 }
 
-/// Golpe Duplo (ver stats.doubleHitChance, systems/stats.js): chance de um 2º
-/// hit do próprio caçador acontecer junto do hit principal — totalmente
-/// independente (própria rolagem de crítico, via rollCrit), nunca combinado
-/// no mesmo número exibido (ver spawnDamagePopup chamado uma 2ª vez em cada
-/// contexto de combate, main.js). Retorna null quando não procar ou quando o
-/// stat não está presente (nenhuma carta com esse special socketada ainda).
+/// Golpe Duplo (ver stats.doubleHitChance, systems/stats.js — concedido por
+/// carta, ver data/cards.js CARD_EFFECTS): chance de um 2º hit do próprio
+/// caçador acontecer junto do hit principal — totalmente independente
+/// (própria rolagem de crítico, via rollCrit), nunca combinado no mesmo
+/// número exibido (ver spawnDamagePopup chamado uma 2ª vez em cada contexto
+/// de combate, main.js). Retorna null quando não proca ou quando nenhuma
+/// carta socketada concede o stat.
 export function resolveDoubleHit(stats, elementalMultiplier) {
   if (!stats.doubleHitChance) return null;
   if (Math.random() * 100 >= stats.doubleHitChance) return null;
@@ -286,29 +276,8 @@ export function applyDamage(state, amount, stats) {
   const wasBoss = ref.kind === 'boss';
   const powerRank = wasBoss ? zone.boss.powerRank : zone.weakMonsters.find((m) => m.id === ref.monsterId)?.powerRank;
 
-  // Rolls one kill's worth of gold (Chispim card: independent chance to
-  // double it) + drops — factored out so the Gaiatron reproc below can
-  // reuse it for "all the same rewards, a second time" without duplicating
-  // the roll logic.
-  const rollReward = () => {
-    let gold = Math.round(monsterGoldReward(zone.canonicalStage, wasBoss, powerRank) * stats.goldMult);
-    if (Math.random() * 100 < (stats.goldDoubleChance || 0)) gold *= 2;
-    return { gold, drops: rollDrops(zoneIndex, wasBoss, stats.dropMult, ref.monsterId) };
-  };
-
-  let goldGained = 0;
-  let drops = [];
-  let reprocced = false;
-  const first = rollReward();
-  goldGained += first.gold;
-  drops = drops.concat(first.drops);
-
-  if (wasBoss && Math.random() * 100 < (stats.bossReprocChance || 0)) {
-    reprocced = true;
-    const second = rollReward();
-    goldGained += second.gold;
-    drops = drops.concat(second.drops);
-  }
+  const goldGained = Math.round(monsterGoldReward(zone.canonicalStage, wasBoss, powerRank) * stats.goldMult);
+  const drops = rollDrops(zoneIndex, wasBoss, stats.dropMult, ref.monsterId);
 
   state.gold += goldGained;
   for (const drop of drops) {
@@ -349,7 +318,7 @@ export function applyDamage(state, amount, stats) {
   state.currentMonster = null;
   state.nextMonsterSpawnAt = Date.now() + MONSTER_RESPAWN_DELAY_MS;
 
-  return { zoneIndex, wasBoss, goldGained, drops, reprocced, xpGained, levelsGained, itemDropResult, eggGained };
+  return { zoneIndex, wasBoss, goldGained, drops, xpGained, levelsGained, itemDropResult, eggGained };
 }
 
 // ---------------------------------------------------------------------
