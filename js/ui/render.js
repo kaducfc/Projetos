@@ -425,10 +425,10 @@ function fullStatsSectionHtml(title, rows) {
 /// Janela "Ver Estatísticas" (botão abaixo do quadro compacto de 6 linhas,
 /// ver equipStatsBoxHtml acima) — TODO atributo que computePlayerStats()
 /// calcula, sem exceção, agrupado por categoria e sempre recalculado na
-/// hora (nada fica desatualizado, já que só lê o state atual). Specials de
-/// carta (goldDoubleChance/bossReprocChance/hitBurst*) só aparecem quando
-/// alguma carta socketada de fato os concede (0 = nenhuma carta com aquele
-/// efeito equipada) — mostrar "0%" pra todo mundo só poluiria a lista.
+/// hora (nada fica desatualizado, já que só lê o state atual). Golpe Duplo
+/// (doubleHitChance) só aparece quando alguma carta socketada de fato o
+/// concede (0 = nenhuma carta com esse efeito equipada) — mostrar "0%" pra
+/// todo mundo só poluiria a lista.
 export function showFullStatsModal(state) {
   const stats = computePlayerStats(state);
   const damageType = getDamageType(stats.activeDamageType);
@@ -464,9 +464,7 @@ export function showFullStatsModal(state) {
   ];
 
   const specialRows = [];
-  if (stats.goldDoubleChance > 0) specialRows.push(['🍀 Chance de Ouro em Dobro', formatPercent(stats.goldDoubleChance)]);
-  if (stats.bossReprocChance > 0) specialRows.push(['👑 Chance de Derrotar o Chefe 2x', formatPercent(stats.bossReprocChance)]);
-  if (stats.hitBurstEveryN) specialRows.push(['💥 Explosão de Golpe', `a cada ${stats.hitBurstEveryN} golpes, ${stats.hitBurstDamageMult}x dano`]);
+  if (stats.doubleHitChance > 0) specialRows.push(['👊 Golpe Duplo', formatPercent(stats.doubleHitChance)]);
 
   showModal('📊 Estatísticas Completas', `
     ${fullStatsSectionHtml('Combate', combatRows)}
@@ -938,8 +936,13 @@ const CARD_BONUS_LABELS = {
   dpsPercent: '💥 DPS', attackSpeedPercent: '⚡ Velocidade de Ataque', goldPercent: `${GOLD_ICON} Ouro Obtido`,
   dropPercent: '🎒 Chance de Drop', critChancePercent: '🎯 Chance Crítica', critDamagePercent: '💢 Dano Crítico',
   hpPercent: '❤️ Vida Máxima', armorPercent: '🛡️ Armadura', hpFlat: '❤️ Vida Máxima', armorFlat: '🛡️ Armadura',
-  dpsFlat: '💥 DPS',
+  dpsFlat: '💥 DPS', forca: '💪 Força', destreza: '🏃 Destreza', inteligencia: '🧠 Inteligência',
+  lifestealFlat: '💚 Cura por Golpe', petDamagePercent: '🐾 Dano de Mascote', dodgePercent: '🌀 Esquiva',
+  danoFisicoPercent: '🗡️ Dano Físico', danoPerfuracaoPercent: '🏹 Dano Perfurante', danoMagicoPercent: '🔮 Dano Mágico',
+  doubleHitChance: '👊 Golpe Duplo',
 };
+
+const CARD_BONUS_PERCENT_STATS = new Set(['doubleHitChance']);
 
 function cardsSummaryHtml(state) {
   const totals = {};
@@ -957,7 +960,7 @@ function cardsSummaryHtml(state) {
 
   const rows = Object.entries(totals).filter(([, v]) => v).map(([stat, v]) => {
     const label = CARD_BONUS_LABELS[stat] || stat;
-    const value = stat.endsWith('Percent') ? `+${formatPercent(v)}` : `+${formatNumber(v)}`;
+    const value = (stat.endsWith('Percent') || CARD_BONUS_PERCENT_STATS.has(stat)) ? `+${formatPercent(v)}` : `+${formatNumber(v)}`;
     return `<div class="battle-info-row"><span>${label}</span><strong>${value}</strong></div>`;
   }).join('');
 

@@ -254,7 +254,6 @@ function refreshCombatOnly() {
 function handleKillEvent(event) {
   if (!event) return;
   showLootPopup(event.goldGained, event.drops);
-  if (event.reprocced) showToast('🔁 Gaiatron: o chefe caiu de novo instantaneamente! Recompensas dobradas.');
   if (event.itemDropResult?.discarded) {
     const { matId, qty } = event.itemDropResult.material;
     const matInfo = findMaterialInfo(matId);
@@ -332,7 +331,7 @@ function tick() {
     const doubleHit = resolveDoubleHit(stats, elementalMultiplier);
     const totalDealt = hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0);
     const event = applyDamage(state, totalDealt, stats);
-    spawnDamagePopup(hit.dealt, hit.isCrit, hit.isBurst);
+    spawnDamagePopup(hit.dealt, hit.isCrit);
     if (petHit) spawnPetDamagePopup(petHit.dealt, petHit.species);
     if (doubleHit) spawnDamagePopup(doubleHit.dealt, doubleHit.isCrit);
     if (stats.lifesteal) currentHp = Math.min(currentHp + stats.lifesteal, stats.maxHp);
