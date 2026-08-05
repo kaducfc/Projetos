@@ -191,6 +191,29 @@ const SPECIALS_BY_STAGE = [
 
 const SKILL_TREE = buildTree([OFFENSE_ROTATION, DEFENSE_ROTATION, ATTRIBUTE_LUCK_ROTATION], SPECIALS_BY_STAGE);
 
+// Correção pontual pedida pelo usuário: a rotação Defensiva original dava
+// esquiva demais — comprando TODOS os pontos possíveis da árvore, dava pra
+// chegar a 100% de esquiva, bem acima do cap de 70% (ver DODGE_CHANCE_CAP em
+// systems/stats.js), desperdiçando pontos de verdade que poderiam ir pra
+// outro stat. Essas 3 ocorrências específicas de dodgePercent (as 2 da
+// Etapa 3 e a da Etapa 4, coluna Defensivo) viram Dano Crítico, Velocidade
+// de Ataque e Vida — com isso, maxar a árvore inteira agora rende exatamente
+// 70% de esquiva (2+4+20+20+24, ver as ocorrências restantes), batendo
+// certinho no cap sem sobrar ponto perdido.
+const DODGE_ROW_OVERRIDES = {
+  '2_0_1': 'critDamagePercent',
+  '2_5_1': 'attackSpeedPercent',
+  '3_3_1': 'hpFlat',
+};
+for (const [skillId, newStat] of Object.entries(DODGE_ROW_OVERRIDES)) {
+  const skill = findSkillById(skillId);
+  if (!skill) throw new Error(`DODGE_ROW_OVERRIDES: habilidade ${skillId} não existe`);
+  skill.stat = newStat;
+  skill.perLevel = valuePerLevel(newStat, skill.stageIndex);
+  const globalRow = skill.stageIndex * ROWS_PER_STAGE + skill.rowIndex;
+  skill.name = `${STAT_DISPLAY_NAME[newStat]} ${toRoman(globalRow + 1)}`;
+}
+
 export function getSkillTree() {
   return SKILL_TREE;
 }
