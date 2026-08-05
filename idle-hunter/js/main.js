@@ -3,6 +3,7 @@ import { computePlayerStats, getElementalResistance, getCardDamageBonus } from '
 import {
   getCurrentMonster, applyDamage, ensureMonsterSpawned, armorReduction, resolveHit,
   advanceHitClock, setSelectedMonsters, canSelectMonster, MAX_SELECTED_MONSTERS, resolvePetHit, rollDodge,
+  resolveDoubleHit,
 } from './systems/combat.js';
 import { findMaterialInfo, BOSSES } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
@@ -328,10 +329,12 @@ function tick() {
       * getActivePetDpsMultiplier(state, monster.element);
     const hit = resolveHit(state, stats, elementalMultiplier);
     const petHit = resolvePetHit(state, monster.element, stats);
-    const totalDealt = hit.dealt + (petHit ? petHit.dealt : 0);
+    const doubleHit = resolveDoubleHit(stats, elementalMultiplier);
+    const totalDealt = hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0);
     const event = applyDamage(state, totalDealt, stats);
     spawnDamagePopup(hit.dealt, hit.isCrit, hit.isBurst);
     if (petHit) spawnPetDamagePopup(petHit.dealt, petHit.species);
+    if (doubleHit) spawnDamagePopup(doubleHit.dealt, doubleHit.isCrit);
     if (stats.lifesteal) currentHp = Math.min(currentHp + stats.lifesteal, stats.maxHp);
     pulseMonster();
     if (event) {
@@ -934,7 +937,8 @@ function tickEventBoss(stats) {
       * getActivePetDpsMultiplier(state, boss.element);
     const hit = resolveHit(state, stats, elementalMultiplier);
     const petHit = resolvePetHit(state, boss.element, stats);
-    const killed = applyEventDamage(state, hit.dealt + (petHit ? petHit.dealt : 0));
+    const doubleHit = resolveDoubleHit(stats, elementalMultiplier);
+    const killed = applyEventDamage(state, hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0));
     if (stats.lifesteal) currentHp = Math.min(currentHp + stats.lifesteal, stats.maxHp);
     pulseEventBoss();
     if (killed) {
@@ -1015,7 +1019,8 @@ function tickTower() {
       * getActivePetDpsMultiplier(state, monster.element);
     const hit = resolveHit(state, stats, elementalMultiplier);
     const petHit = resolvePetHit(state, monster.element, stats);
-    const event = applyTowerDamage(state, hit.dealt + (petHit ? petHit.dealt : 0));
+    const doubleHit = resolveDoubleHit(stats, elementalMultiplier);
+    const event = applyTowerDamage(state, hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0));
     if (stats.lifesteal) towerHp = Math.min(towerHp + stats.lifesteal, stats.maxHp);
     pulseTowerMonster();
     if (event) {
@@ -1090,7 +1095,8 @@ function tickGoldMine() {
   if (clock.hit && stats.dps > 0) {
     const hit = resolveHit(state, stats, getActivePetDpsMultiplier(state, 'neutro'));
     const petHit = resolvePetHit(state, 'neutro', stats);
-    const killed = applyGoldMineDamage(state, hit.dealt + (petHit ? petHit.dealt : 0));
+    const doubleHit = resolveDoubleHit(stats, getActivePetDpsMultiplier(state, 'neutro'));
+    const killed = applyGoldMineDamage(state, hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0));
     if (stats.lifesteal) currentHp = Math.min(currentHp + stats.lifesteal, stats.maxHp);
     pulseGoldMineBoss();
     if (killed) {

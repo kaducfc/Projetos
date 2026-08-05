@@ -141,6 +141,19 @@ export function resolvePetHit(state, monsterElement, stats) {
   return { dealt: best.damage * (stats?.petDamageMult || 1), species: best.species };
 }
 
+/// Golpe Duplo (ver stats.doubleHitChance, systems/stats.js): chance de um 2º
+/// hit do próprio caçador acontecer junto do hit principal — totalmente
+/// independente (própria rolagem de crítico, via rollCrit), nunca combinado
+/// no mesmo número exibido (ver spawnDamagePopup chamado uma 2ª vez em cada
+/// contexto de combate, main.js). Retorna null quando não procar ou quando o
+/// stat não está presente (nenhuma carta com esse special socketada ainda).
+export function resolveDoubleHit(stats, elementalMultiplier) {
+  if (!stats.doubleHitChance) return null;
+  if (Math.random() * 100 >= stats.doubleHitChance) return null;
+  const crit = rollCrit(stats);
+  return { dealt: stats.dps * elementalMultiplier * crit.multiplier, isCrit: crit.isCrit };
+}
+
 // ---------------------------------------------------------------------
 // Monstro atual: resolvido a partir de state.currentMonster ({ zoneIndex,
 // kind: 'weak'|'boss', monsterId }), que por sua vez é sorteado
