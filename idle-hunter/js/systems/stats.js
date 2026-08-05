@@ -1,4 +1,4 @@
-import { getItem, getEnhancedStats, SLOTS, getDamageTypeForAttribute } from '../data/items.js';
+import { getItem, getEnhancedStats, getDamageTypeForAttribute } from '../data/items.js';
 import { UPGRADES } from '../data/upgrades.js';
 import { ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { getCard, CARD_DAMAGE_BONUS } from '../data/cards.js';
@@ -35,15 +35,7 @@ const INTELIGENCIA_DANO_PER_POINT = 6;
 const INTELIGENCIA_GOLD_PERCENT_PER_POINT = 0.2;
 const INTELIGENCIA_DROP_PERCENT_PER_POINT = 0.15;
 
-/// currentHp: the caller's current HP in whatever fight this is for (main
-/// combat, Torre Infinita — each has its own separate pool, see main.js).
-/// Only consulted by HP-conditional card specials (Colhedor Carmesim,
-/// Vulkarion, below); null means "unknown/not applicable" and is treated
-/// as full HP, which is the safe default for every non-combat caller (UI
-/// previews, offline-progress math, achievement checks, etc.) — full HP
-/// activates Colhedor Carmesim's bonus and gives Vulkarion's zero, neither
-/// of which hands out an undeserved buff.
-export function computePlayerStats(state, currentHp = null) {
+export function computePlayerStats(state) {
   let dpsFlat = BASE_DPS;
   let dpsPercent = 0;
   let attackSpeedPercent = BASE_ATTACK_SPEED_PERCENT;
@@ -85,11 +77,16 @@ export function computePlayerStats(state, currentHp = null) {
   let destrezaTotal = 0;
   let inteligenciaTotal = 0;
 
-  // How many equipped cards carry each special.id — most specials scale
-  // their magnitude linearly with this count (see applySpecials below).
-  const specialCounts = {};
-  let equippedSlotCount = 0;
-  let equippedElements = new Set();
+  // % aplicado sobre danoXFlat DEPOIS da conversão de atributo abaixo — só
+  // cartas concedem isso por enquanto (ver data/cards.js CARD_EFFECTS).
+  let danoFisicoPercent = 0;
+  let danoPerfuracaoPercent = 0;
+  let danoMagicoPercent = 0;
+
+  // Golpe Duplo (ver resolveDoubleHit em systems/combat.js): chance de um 2º
+  // hit independente (crítico próprio) acontecer junto do hit principal — só
+  // concedido por carta hoje, soma linear entre cópias equipadas.
+  let doubleHitChancePercent = 0;
 
   const weapon1Entry = state.equipped.weapon1 ? state.inventory.find((i) => i.uid === state.equipped.weapon1) : null;
   const weapon1Item = weapon1Entry ? getItem(weapon1Entry.itemId) : null;
@@ -105,7 +102,6 @@ export function computePlayerStats(state, currentHp = null) {
       const card = getCard(cardId);
       if (card) {
         for (const b of card.bonuses || []) addStat(b.stat, b.value);
-        if (card.special) specialCounts[card.special.id] = (specialCounts[card.special.id] || 0) + 1;
       }
     }
 
@@ -141,9 +137,6 @@ export function computePlayerStats(state, currentHp = null) {
     if (item.attribute === 'forca') forcaTotal += stats.forca || 0;
     else if (item.attribute === 'destreza') destrezaTotal += stats.destreza || 0;
     else if (item.attribute === 'inteligencia') inteligenciaTotal += stats.inteligencia || 0;
-
-    equippedSlotCount += 1;
-    equippedElements.add(item.element || DEFAULT_WEAPON_ELEMENT);
   }
 
   // Árvore de habilidades passivas ÚNICA (ver data/skills.js + systems/
@@ -205,6 +198,13 @@ export function computePlayerStats(state, currentHp = null) {
   goldPercent += inteligenciaTotal * INTELIGENCIA_GOLD_PERCENT_PER_POINT;
   dropPercent += inteligenciaTotal * INTELIGENCIA_DROP_PERCENT_PER_POINT;
 
+  // % de dano por tipo (só cartas concedem isso por enquanto, ver
+  // data/cards.js) — aplicado sobre o pool já convertido acima, antes de
+  // escolher qual pool vira DPS de verdade (activeDamageType, logo abaixo).
+  danoFisicoFlat *= 1 + danoFisicoPercent / 100;
+  danoPerfuracaoFlat *= 1 + danoPerfuracaoPercent / 100;
+  danoMagicoFlat *= 1 + danoMagicoPercent / 100;
+
   const activeDamagePool = activeDamageType === 'fisico' ? danoFisicoFlat
     : activeDamageType === 'perfuracao' ? danoPerfuracaoFlat
     : danoMagicoFlat;
@@ -229,50 +229,26 @@ export function computePlayerStats(state, currentHp = null) {
     else if (stat === 'armorPercent') armorPercent += total;
     else if (stat === 'critChancePercent') critChancePercent += total;
     else if (stat === 'critDamagePercent') critDamagePercent += total;
+    else if (stat === 'forca') forcaTotal += total;
+    else if (stat === 'destreza') destrezaTotal += total;
+    else if (stat === 'inteligencia') inteligenciaTotal += total;
+    else if (stat === 'lifestealFlat') lifestealFlat += total;
+    else if (stat === 'petDamagePercent') petDamagePercent += total;
+    else if (stat === 'dodgePercent') dodgePercent += total;
+    else if (stat === 'danoFisicoPercent') danoFisicoPercent += total;
+    else if (stat === 'danoPerfuracaoPercent') danoPerfuracaoPercent += total;
+    else if (stat === 'danoMagicoPercent') danoMagicoPercent += total;
+    else if (stat === 'doubleHitChance') doubleHitChancePercent += total;
   }
 
-  // maxHp/armor need to be final before HP-conditional specials below can
-  // check the player's HP fraction against them.
+  // maxHp/armor final.
   const maxHp = Math.round(hpFlat * (1 + hpPercent / 100));
   const armor = Math.round(armorFlat * (1 + armorPercent / 100));
-  const hpFraction = currentHp == null ? 1 : Math.max(0, Math.min(1, currentHp / maxHp));
-
-  // Card specials that aren't a plain stat sum — each reads its own count
-  // from specialCounts (0 if that card isn't socketed at all) and folds its
-  // effect into dpsPercent, or exposes a proc chance/multiplier on the
-  // returned stats object for combat.js/main.js to act on directly.
-  const colhedorCount = specialCounts.hp_threshold_dps || 0;
-  if (colhedorCount > 0 && hpFraction >= 0.8) {
-    dpsPercent += 45 * colhedorCount;
-  }
-
-  const grommukCount = specialCounts.same_element_set || 0;
-  if (grommukCount > 0 && equippedSlotCount === SLOTS.length && equippedElements.size === 1) {
-    dpsPercent += 60 * grommukCount;
-  }
-
-  const vulkarionCount = specialCounts.low_hp_dps_scale || 0;
-  if (vulkarionCount > 0) {
-    dpsPercent += (1 - hpFraction) * 60 * vulkarionCount;
-  }
 
   // Bônus de coleção de cartas (ver getCardCollectionDpsBonusPercent em
   // systems/cards.js) — permanente por carta já descoberta ao menos uma vez,
   // separado do bônus de carta SOCKETADA acima (os dois se somam).
   dpsPercent += getCardCollectionDpsBonusPercent(state);
-
-  const goldDoubleChance = Math.min(100, 20 * (specialCounts.gold_double_chance || 0));
-  const bossReprocChance = Math.min(100, 10 * (specialCounts.boss_kill_reproc || 0));
-  // Golpe Duplo: por enquanto só concedido por carta (nenhuma ainda atribuída
-  // — ver data/cards.js CARD_EFFECTS); cada cópia soma 15% de chance de um
-  // 2º hit independente (próprio crit) acontecer junto com o hit principal,
-  // ver resolveDoubleHit em systems/combat.js.
-  const doubleHitChance = Math.min(100, 15 * (specialCounts.double_hit_chance || 0));
-  const solkaiserCount = specialCounts.hit_counter_burst || 0;
-  // More copies make the burst land sooner rather than hit harder — see
-  // resolveHit() in systems/combat.js, which is what actually reads these.
-  const hitBurstEveryN = solkaiserCount > 0 ? Math.max(1, Math.round(50 / solkaiserCount)) : null;
-  const hitBurstDamageMult = solkaiserCount > 0 ? 6 : null;
 
   const dps = dpsFlat * (1 + dpsPercent / 100);
   const attackSpeedPerSec = Math.max(0.05, 1 * (1 + attackSpeedPercent / 100));
@@ -283,13 +259,13 @@ export function computePlayerStats(state, currentHp = null) {
   const lifesteal = Math.max(0, lifestealFlat);
   const petDamageMult = 1 + petDamagePercent / 100;
   const dodgeChance = Math.max(0, Math.min(100, dodgePercent));
+  const doubleHitChance = Math.max(0, Math.min(100, doubleHitChancePercent));
 
   return {
     dps, attackSpeedPerSec, goldMult, dropMult,
     maxHp, armor, weaponElement,
     critChance, critDamage,
-    lifesteal, petDamageMult, dodgeChance,
-    goldDoubleChance, bossReprocChance, hitBurstEveryN, hitBurstDamageMult, doubleHitChance,
+    lifesteal, petDamageMult, dodgeChance, doubleHitChance,
     forca: forcaTotal, destreza: destrezaTotal, inteligencia: inteligenciaTotal,
     activeDamageType,
     danoFisico: danoFisicoFlat, danoPerfuracao: danoPerfuracaoFlat, danoMagico: danoMagicoFlat,

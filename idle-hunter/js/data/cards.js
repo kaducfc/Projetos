@@ -88,83 +88,245 @@ const CARD_IMAGES = {
   bahamorth: 'assets/cards/bahamorth.png',
 };
 
-// One boss card's full effect = a list of simple, always-on stat bonuses
-// (`bonuses` — same generic stat keys computePlayerStats() already knows,
-// see systems/stats.js) plus at most one `special` — a named, hand-coded
-// mechanic (conditional bonus, proc, hit-counter burst) that stats.js/
-// combat.js/main.js implement individually by special.id, since none of
-// these fit the generic stat-sum model. `text` is the exact effect
-// description shown in the Cartas tab (kept as authored, not
-// auto-generated, since the mechanics are too varied for one template).
-// Socketing more than one copy of the same card (up to
-// MAX_EQUIPPED_CARD_COPIES, see systems/crafting.js) stacks `bonuses`
-// additively (ordinary addStat loop) and scales `special`'s magnitude by
-// however many copies are equipped — see systems/stats.js.
+// Cada carta (chefe ou monstro fraco) concede uma lista fixa de bônus
+// simples (`bonuses` — mesmas chaves de stat genéricas que
+// computePlayerStats() já conhece, ver systems/stats.js), sem mais nenhuma
+// mecânica "special" hand-coded (a antiga geração de cartas com proc/
+// contador/threshold foi inteiramente substituída por esta lista, definida
+// pelo usuário para as 50 cartas do roster). `text` é a descrição exata
+// mostrada na aba Cartas. Socketar mais de uma cópia da mesma carta (até
+// MAX_EQUIPPED_CARD_COPIES, ver systems/crafting.js) soma `bonuses`
+// aditivamente (addStat, ver systems/stats.js).
 const CARD_EFFECTS = {
+  // Zona 1
+  sylkar: {
+    text: '+8% Velocidade de Ataque, +6 Destreza.',
+    bonuses: [{ stat: 'attackSpeedPercent', value: 8 }, { stat: 'destreza', value: 6 }],
+  },
+  musgorn: {
+    text: '+60 Vida, +4 Cura por Golpe.',
+    bonuses: [{ stat: 'hpFlat', value: 60 }, { stat: 'lifestealFlat', value: 4 }],
+  },
+  guardiao_druida: {
+    text: '+35 Armadura, +20 Inteligência.',
+    bonuses: [{ stat: 'armorFlat', value: 35 }, { stat: 'inteligencia', value: 20 }],
+  },
+  granclaw: {
+    text: '+12% Dano Perfurante, +8 Destreza.',
+    bonuses: [{ stat: 'danoPerfuracaoPercent', value: 12 }, { stat: 'destreza', value: 8 }],
+  },
   chispim: {
-    text: '+8% DPS. Todo ouro coletado possui 20% de chance de ser dobrado.',
-    bonuses: [{ stat: 'dpsPercent', value: 8 }],
-    special: { id: 'gold_double_chance', chance: 20 },
+    text: '+10% DPS, +8% Vida, -5% Velocidade de Ataque.',
+    bonuses: [
+      { stat: 'dpsPercent', value: 10 },
+      { stat: 'hpPercent', value: 8 },
+      { stat: 'attackSpeedPercent', value: -5 },
+    ],
+  },
+  // Zona 2
+  marfang: {
+    text: '+12% Dano Físico, +8 Força.',
+    bonuses: [{ stat: 'danoFisicoPercent', value: 12 }, { stat: 'forca', value: 8 }],
+  },
+  mizan: {
+    text: '+12% Esquiva, +10% Dano de Mascote.',
+    bonuses: [{ stat: 'dodgePercent', value: 12 }, { stat: 'petDamagePercent', value: 10 }],
+  },
+  lyria: {
+    text: '+20 Inteligência, +6 Cura por Golpe.',
+    bonuses: [{ stat: 'inteligencia', value: 20 }, { stat: 'lifestealFlat', value: 6 }],
+  },
+  hydrakon: {
+    text: '+15% Dano Mágico, +50 Vida.',
+    bonuses: [{ stat: 'danoMagicoPercent', value: 15 }, { stat: 'hpFlat', value: 50 }],
   },
   solkaiser: {
-    text: 'A cada 50 golpes, o próximo golpe causa 600% do dano normal e sempre é crítico.',
-    bonuses: [],
-    special: { id: 'hit_counter_burst', everyN: 50, damageMult: 6 },
+    text: '+12% DPS, +15% Dano Perfurante.',
+    bonuses: [{ stat: 'dpsPercent', value: 12 }, { stat: 'danoPerfuracaoPercent', value: 15 }],
+  },
+  // Zona 3
+  esqueleto_guerreiro: {
+    text: '+38 Força, -5 Inteligência.',
+    bonuses: [{ stat: 'forca', value: 38 }, { stat: 'inteligencia', value: -5 }],
+  },
+  assassino_sombrio: {
+    text: '+10% Chance Crítica, +10 Destreza.',
+    bonuses: [{ stat: 'critChancePercent', value: 10 }, { stat: 'destreza', value: 10 }],
+  },
+  garruk: {
+    text: '+15% Dano Físico, +30 Vida.',
+    bonuses: [{ stat: 'danoFisicoPercent', value: 15 }, { stat: 'hpFlat', value: 30 }],
+  },
+  mimicus: {
+    text: '+20% Ouro, -5% Vida.',
+    bonuses: [{ stat: 'goldPercent', value: 20 }, { stat: 'hpPercent', value: -5 }],
   },
   tartarok: {
-    text: 'Aumenta 20% da vida, 20% da armadura, +20% ouro.',
-    bonuses: [
-      { stat: 'hpPercent', value: 20 },
-      { stat: 'armorPercent', value: 20 },
-      { stat: 'goldPercent', value: 20 },
-    ],
+    text: '+18% Dano Mágico, +8% Esquiva.',
+    bonuses: [{ stat: 'danoMagicoPercent', value: 18 }, { stat: 'dodgePercent', value: 8 }],
+  },
+  // Zona 4
+  plasmion: {
+    text: '+30 Inteligência, +10% Dano Mágico.',
+    bonuses: [{ stat: 'inteligencia', value: 30 }, { stat: 'danoMagicoPercent', value: 10 }],
+  },
+  corcel_tempestade: {
+    text: '+12% Velocidade de Ataque, +8% Esquiva.',
+    bonuses: [{ stat: 'attackSpeedPercent', value: 12 }, { stat: 'dodgePercent', value: 8 }],
+  },
+  sabion: {
+    text: '+20 Inteligência, +8% Chance Crítica.',
+    bonuses: [{ stat: 'inteligencia', value: 20 }, { stat: 'critChancePercent', value: 8 }],
+  },
+  serpentorax: {
+    text: '+15% Dano Perfurante, +10% Velocidade de Ataque.',
+    bonuses: [{ stat: 'danoPerfuracaoPercent', value: 15 }, { stat: 'attackSpeedPercent', value: 10 }],
   },
   colhedor_carmesim: {
-    text: 'Enquanto estiver com HP acima de 80%: +45% DPS.',
-    bonuses: [],
-    special: { id: 'hp_threshold_dps', threshold: 80, dpsPercent: 45 },
+    text: '+18% DPS, +15 Inteligência.',
+    bonuses: [{ stat: 'dpsPercent', value: 18 }, { stat: 'inteligencia', value: 15 }],
+  },
+  // Zona 5
+  lavasalam: {
+    text: '+15% Dano Físico, +35 Força.',
+    bonuses: [{ stat: 'danoFisicoPercent', value: 15 }, { stat: 'forca', value: 35 }],
+  },
+  fornitus: {
+    text: '+50 Armadura, -6% Esquiva.',
+    bonuses: [{ stat: 'armorFlat', value: 50 }, { stat: 'dodgePercent', value: -6 }],
+  },
+  emberimp: {
+    text: '+18% Ouro, +8% Drop, +15% Dano de Mascote.',
+    bonuses: [
+      { stat: 'goldPercent', value: 18 },
+      { stat: 'dropPercent', value: 8 },
+      { stat: 'petDamagePercent', value: 15 },
+    ],
+  },
+  ember_warden: {
+    text: '+35 Armadura, +60 Vida.',
+    bonuses: [{ stat: 'armorFlat', value: 35 }, { stat: 'hpFlat', value: 60 }],
   },
   grommuk: {
-    text: 'Enquanto todos os equipamentos forem do mesmo elemento: +60% DPS.',
-    bonuses: [],
-    special: { id: 'same_element_set', dpsPercent: 60 },
+    text: '+25% Dano Crítico, 5% de Golpe Duplo.',
+    bonuses: [{ stat: 'critDamagePercent', value: 25 }, { stat: 'doubleHitChance', value: 5 }],
+  },
+  // Zona 6
+  luxoris: {
+    text: '+35 Inteligência, +15% Drop.',
+    bonuses: [{ stat: 'inteligencia', value: 35 }, { stat: 'dropPercent', value: 15 }],
+  },
+  ecliptor: {
+    text: '+12% Chance Crítica, +10% Esquiva.',
+    bonuses: [{ stat: 'critChancePercent', value: 12 }, { stat: 'dodgePercent', value: 10 }],
+  },
+  thundrak: {
+    text: '+18% DPS, +15 Força.',
+    bonuses: [{ stat: 'dpsPercent', value: 18 }, { stat: 'forca', value: 15 }],
+  },
+  minotauro_trovao: {
+    text: '+60 Força, -5% Esquiva.',
+    bonuses: [{ stat: 'forca', value: 60 }, { stat: 'dodgePercent', value: -5 }],
   },
   vulkarion: {
-    text: 'Quanto menor sua vida, maior seu DPS. Bônus máximo: +60%.',
-    bonuses: [],
-    special: { id: 'low_hp_dps_scale', maxBonusPercent: 60 },
+    text: '+15% Velocidade de Ataque, +20% Dano de Mascote.',
+    bonuses: [{ stat: 'attackSpeedPercent', value: 15 }, { stat: 'petDamagePercent', value: 20 }],
+  },
+  // Zona 7
+  pyrorian: {
+    text: '+50 Inteligência, +15% Dano Mágico.',
+    bonuses: [{ stat: 'inteligencia', value: 50 }, { stat: 'danoMagicoPercent', value: 15 }],
+  },
+  infernus: {
+    text: '+20% Dano Físico, -50 Vida.',
+    bonuses: [{ stat: 'danoFisicoPercent', value: 20 }, { stat: 'hpFlat', value: -50 }],
+  },
+  sentinela_magma: {
+    text: '+60 Armadura, +30 Força.',
+    bonuses: [{ stat: 'armorFlat', value: 60 }, { stat: 'forca', value: 30 }],
+  },
+  ignivoran: {
+    text: '+10% Chance Crítica, +15% Velocidade de Ataque.',
+    bonuses: [{ stat: 'critChancePercent', value: 10 }, { stat: 'attackSpeedPercent', value: 15 }],
   },
   leviargon: {
-    text: 'Chance de crítico +15%, dano crítico +50%.',
-    bonuses: [
-      { stat: 'critChancePercent', value: 15 },
-      { stat: 'critDamagePercent', value: 50 },
-    ],
+    text: '+20% DPS, +60 Armadura.',
+    bonuses: [{ stat: 'dpsPercent', value: 20 }, { stat: 'armorFlat', value: 60 }],
+  },
+  // Zona 8
+  capitao_marvik: {
+    text: '+25% Ouro, +10% Vida.',
+    bonuses: [{ stat: 'goldPercent', value: 25 }, { stat: 'hpPercent', value: 10 }],
+  },
+  abissorrok: {
+    text: '+110 Vida, +20% Dano de Mascote.',
+    bonuses: [{ stat: 'hpFlat', value: 110 }, { stat: 'petDamagePercent', value: 20 }],
+  },
+  thalassok: {
+    text: '+15% DPS, +12% Vida.',
+    bonuses: [{ stat: 'dpsPercent', value: 15 }, { stat: 'hpPercent', value: 12 }],
+  },
+  serpentyra: {
+    text: '+15% Dano Crítico, +20% Dano de Mascote.',
+    bonuses: [{ stat: 'critDamagePercent', value: 15 }, { stat: 'petDamagePercent', value: 20 }],
   },
   tempestron: {
-    text: '+35% Ouro, +35% Materiais, +15% DPS.',
-    bonuses: [
-      { stat: 'goldPercent', value: 35 },
-      { stat: 'dropPercent', value: 35 },
-      { stat: 'dpsPercent', value: 15 },
-    ],
+    text: '+15% Vida, +20% DPS.',
+    bonuses: [{ stat: 'hpPercent', value: 15 }, { stat: 'dpsPercent', value: 20 }],
+  },
+  // Zona 9
+  thornviel: {
+    text: '+15% Esquiva, +62 Destreza.',
+    bonuses: [{ stat: 'dodgePercent', value: 15 }, { stat: 'destreza', value: 62 }],
+  },
+  verdanthra: {
+    text: '+30% Drop.',
+    bonuses: [{ stat: 'dropPercent', value: 30 }],
+  },
+  guardiao_verdor: {
+    text: '+150 Vida, +18% Drop.',
+    bonuses: [{ stat: 'hpFlat', value: 150 }, { stat: 'dropPercent', value: 18 }],
+  },
+  granvorok: {
+    text: '+60 Força, +15% Vida.',
+    bonuses: [{ stat: 'forca', value: 60 }, { stat: 'hpPercent', value: 15 }],
   },
   gaiatron: {
-    text: 'DPS +10%. Ao derrotar um Boss: 10% de chance de derrotá-lo novamente instantaneamente, recebendo todas as recompensas outra vez.',
-    bonuses: [{ stat: 'dpsPercent', value: 10 }],
-    special: { id: 'boss_kill_reproc', chance: 10 },
+    text: '+15% Vida, +10% de Golpe Duplo, +15 Cura por Golpe.',
+    bonuses: [
+      { stat: 'hpPercent', value: 15 },
+      { stat: 'doubleHitChance', value: 10 },
+      { stat: 'lifestealFlat', value: 15 },
+    ],
+  },
+  // Zona 10
+  draxorian: {
+    text: '+18% DPS, +15% Armadura.',
+    bonuses: [{ stat: 'dpsPercent', value: 18 }, { stat: 'armorPercent', value: 15 }],
+  },
+  grommash: {
+    text: '+100 Força, -8% Velocidade de Ataque.',
+    bonuses: [{ stat: 'forca', value: 100 }, { stat: 'attackSpeedPercent', value: -8 }],
+  },
+  morvanthal: {
+    text: '+25% Dano Mágico, +15% Dano Crítico.',
+    bonuses: [{ stat: 'danoMagicoPercent', value: 25 }, { stat: 'critDamagePercent', value: 15 }],
+  },
+  aurelion: {
+    text: '+15% Vida, +250 Vida, +12% de Golpe Duplo.',
+    bonuses: [
+      { stat: 'hpPercent', value: 15 },
+      { stat: 'hpFlat', value: 250 },
+      { stat: 'doubleHitChance', value: 12 },
+    ],
   },
   bahamorth: {
-    text: 'Todos os atributos aumentam em 15% (DPS, Velocidade de Ataque, Ouro, Drop, Crítico, Vida, Armadura).',
+    text: '+25% DPS, +15% de Golpe Duplo, +15% Dano Crítico, +20% Dano de Mascote.',
     bonuses: [
-      { stat: 'dpsPercent', value: 15 },
-      { stat: 'attackSpeedPercent', value: 15 },
-      { stat: 'goldPercent', value: 15 },
-      { stat: 'dropPercent', value: 15 },
-      { stat: 'critChancePercent', value: 15 },
+      { stat: 'dpsPercent', value: 25 },
+      { stat: 'doubleHitChance', value: 15 },
       { stat: 'critDamagePercent', value: 15 },
-      { stat: 'hpPercent', value: 15 },
-      { stat: 'armorPercent', value: 15 },
+      { stat: 'petDamagePercent', value: 20 },
     ],
   },
 };
@@ -190,22 +352,23 @@ export const CARDS = [
       image: CARD_IMAGES[boss.id] || null,
       element: boss.element,
       bonuses: effect ? effect.bonuses : [],
-      special: effect ? effect.special || null : null,
       description: cardDescription(boss.name, boss.element, effect),
     };
   }),
-  ...WEAK_MONSTER_GROUPS.flatMap((group) => group.monsters).map((monster) => ({
-    id: `${monster.id}_card`,
-    monsterId: monster.id,
-    isBossCard: false,
-    name: `Carta de ${monster.name}`,
-    emoji: '🃏',
-    image: CARD_IMAGES[monster.id] || null,
-    element: monster.element,
-    bonuses: [],
-    special: null,
-    description: cardDescription(monster.name, monster.element, null),
-  })),
+  ...WEAK_MONSTER_GROUPS.flatMap((group) => group.monsters).map((monster) => {
+    const effect = CARD_EFFECTS[monster.id] || null;
+    return {
+      id: `${monster.id}_card`,
+      monsterId: monster.id,
+      isBossCard: false,
+      name: `Carta de ${monster.name}`,
+      emoji: '🃏',
+      image: CARD_IMAGES[monster.id] || null,
+      element: monster.element,
+      bonuses: effect ? effect.bonuses : [],
+      description: cardDescription(monster.name, monster.element, effect),
+    };
+  }),
 ];
 
 export function getCard(cardId) {
