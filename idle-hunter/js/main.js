@@ -7,7 +7,7 @@ import {
 } from './systems/combat.js';
 import { findMaterialInfo, BOSSES } from './data/monsters.js';
 import { elementDamageModifier } from './data/elements.js';
-import { equipItem, unequipSlot } from './systems/equipment.js';
+import { equipItem, unequipSlot, findEquippedSlotId } from './systems/equipment.js';
 import { enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscension, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
 import { getItem, getRarity } from './data/items.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
@@ -154,6 +154,22 @@ function exitBulkSelectMode() {
 function toggleBulkSelected(uid) {
   if (bulkSelectedUids.has(uid)) bulkSelectedUids.delete(uid);
   else bulkSelectedUids.add(uid);
+  renderInventoryTabNow();
+}
+
+/// "Selecionar Todos" — marca todo item elegível pra seleção em massa:
+/// respeita o filtro de categoria ativo (mesmo conjunto mostrado na grade,
+/// ver equipRingContentHtml em ui/render.js) e pula qualquer item já
+/// equipado, exatamente como o clique individual já recusa (ver
+/// bulkLocked em inventoryTileHtml) — um item equipado nunca entra na
+/// seleção em massa.
+function selectAllBulkEligible() {
+  const filtered = inventoryFilterCategory
+    ? state.inventory.filter((entry) => getItem(entry.itemId)?.category === inventoryFilterCategory)
+    : state.inventory;
+  bulkSelectedUids = new Set(
+    filtered.filter((entry) => findEquippedSlotId(state, entry.uid) == null).map((entry) => entry.uid),
+  );
   renderInventoryTabNow();
 }
 
@@ -804,6 +820,12 @@ function wireInventoryTabEvents() {
     const bulkToggleBtn = e.target.closest('[data-bulk-toggle-select]');
     if (bulkToggleBtn) {
       enterBulkSelectMode();
+      return;
+    }
+
+    const bulkSelectAllBtn = e.target.closest('[data-bulk-select-all]');
+    if (bulkSelectAllBtn) {
+      selectAllBulkEligible();
       return;
     }
 
