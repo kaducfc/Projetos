@@ -206,14 +206,14 @@ export function getPetRecycleValue(petEntry) {
 // iguais — "doar" Fragmento de Mascote direto pra barra de XP (ver
 // donatePetFragments em systems/pets.js). Custa PET_XP_TO_NEXT_MULTIPLIER×
 // o valor de reciclagem de um pet idêntico (mesmo tier/raridade/nível no
-// nível ATUAL, antes de subir) — fica sempre um pouco mais caro que fundir
-// 2 pets prontos (que já carregam seu próprio custo embutido de terem sido
-// construídos), mas ainda uma alternativa viável pra usar fragmento
-// sobrando. tier/raridade/nível influenciam os 2 lados (custo de XP E
-// valor de reciclagem) pela mesma fórmula-base, então os dois sistemas
-// ficam proporcionais entre si por construção.
+// nível ATUAL, antes de subir) — pedido explícito do usuário pra aumentar
+// esse custo em 5x (de 3x pra 15x o valor de reciclagem), deixando doar
+// fragmentos uma alternativa bem mais cara que fundir 2 pets prontos.
+// tier/raridade/nível influenciam os 2 lados (custo de XP E valor de
+// reciclagem) pela mesma fórmula-base, então os dois sistemas ficam
+// proporcionais entre si por construção.
 // ---------------------------------------------------------------------
-const PET_XP_TO_NEXT_MULTIPLIER = 3;
+const PET_XP_TO_NEXT_MULTIPLIER = 15;
 
 export function xpToNextPetLevel(petEntry) {
   return PET_XP_TO_NEXT_MULTIPLIER * getPetRecycleValue(petEntry);
