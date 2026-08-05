@@ -1,6 +1,6 @@
 import {
-  PET_MAX_LEVEL, getPetInventoryCap, getPetSellValue, getPetDamage, getPetSpecies, getPetDpsBonusPercent,
-  rollPetCandidate, isPetCandidateBetter,
+  PET_MAX_LEVEL, getPetInventoryCap, getPetRecycleValue, getPetDamage, getPetSpecies, getPetDpsBonusPercent,
+  rollPetCandidate, isPetCandidateBetter, xpToNextPetLevel, applyPetXp,
 } from '../data/pets.js';
 import { elementDamageModifier } from '../data/elements.js';
 import { isVipActive } from '../state.js';
@@ -63,15 +63,15 @@ function isPetEquipped(state, uid) {
 /// inventário de pets — se o inventário já estiver no limite (100, ou 150 com
 /// VIP, ver getPetInventoryCap), o pet NOVO é descartado automaticamente em
 /// vez de entrar, e vira Fragmentos (state.petFragments) na mesma
-/// quantidade que renderia se fosse vendido (getPetSellValue).
+/// quantidade que renderia se fosse reciclado (getPetRecycleValue).
 export function addPetToInventory(state, candidate) {
   if (state.pets.length >= getPetInventoryCap(state)) {
-    const fragments = getPetSellValue(candidate);
+    const fragments = getPetRecycleValue(candidate);
     state.petFragments = (state.petFragments || 0) + fragments;
     return { uid: null, discarded: true, fragments };
   }
   const uid = state.nextPetUid++;
-  const pet = { uid, speciesId: candidate.speciesId, rarityId: candidate.rarityId, level: candidate.level || 1 };
+  const pet = { uid, speciesId: candidate.speciesId, rarityId: candidate.rarityId, level: candidate.level || 1, xp: 0 };
   state.pets.push(pet);
   return { uid, discarded: false };
 }
@@ -118,14 +118,43 @@ export function unequipPetSlot(state, slotIndex) {
   return true;
 }
 
-export function sellPet(state, uid) {
+/// Recicla um mascote em Fragmento de Mascote (ver getPetRecycleValue em
+/// data/pets.js) — era "Vender" por ouro antes, virou reciclagem por
+/// pedido do usuário. Fragmento é a moeda do 2º caminho de evolução (ver
+/// donatePetFragments abaixo).
+export function recyclePet(state, uid) {
   const pet = getPetEntry(state, uid);
   if (!pet) return null;
-  const value = getPetSellValue(pet);
-  state.gold += value;
+  const value = getPetRecycleValue(pet);
+  state.petFragments = (state.petFragments || 0) + value;
   state.pets = state.pets.filter((p) => p.uid !== uid);
   state.equippedPetUids = state.equippedPetUids.map((u) => (u === uid ? null : u));
   return value;
+}
+
+// ---------------------------------------------------------------------
+// Doar Fragmento de Mascote pra barra de XP de um pet — 2º caminho pra
+// evoluir nível, além de fundir 2 pets iguais (ver xpToNextPetLevel/
+// applyPetXp em data/pets.js). Doa TODO o Fragmento disponível de uma vez
+// (não desperdiça nada — o que sobra além do necessário pro próximo nível
+// fica banked como XP parcial do pet, pronto pra continuar somando na
+// próxima doação), podendo subir mais de 1 nível de uma vez se o total
+// bastar (applyPetXp já cascateia).
+// ---------------------------------------------------------------------
+export function canDonatePetFragments(state, uid) {
+  const pet = getPetEntry(state, uid);
+  if (!pet || pet.level >= PET_MAX_LEVEL) return false;
+  return (state.petFragments || 0) > 0;
+}
+
+/// Retorna { levelsGained, fragmentsSpent } ou null se não deu pra doar.
+export function donatePetFragments(state, uid) {
+  if (!canDonatePetFragments(state, uid)) return null;
+  const pet = getPetEntry(state, uid);
+  const fragmentsSpent = state.petFragments || 0;
+  state.petFragments = 0;
+  const levelsGained = applyPetXp(pet, fragmentsSpent);
+  return { levelsGained, fragmentsSpent };
 }
 
 /// Só funde 2 pets DIFERENTES (uids distintos), mesma espécie + raridade +
@@ -142,12 +171,18 @@ export function canFusePets(state, uidA, uidB) {
   return true;
 }
 
-/// Funde 2 pets iguais num só, nível+1 — consome os dois originais.
+/// Funde 2 pets iguais num só — o nível sobe +1 automaticamente (sempre,
+/// não depende de XP), e a XP que cada um já tinha acumulado (doações
+/// parciais, ver donatePetFragments) é somada e aplicada por cima no pet
+/// resultante — se a soma já bastar pro próximo nível também, sobe mais
+/// de 1 de uma vez (applyPetXp cascateia). Consome os dois originais.
 export function fusePets(state, uidA, uidB) {
   if (!canFusePets(state, uidA, uidB)) return null;
   const a = getPetEntry(state, uidA);
+  const b = getPetEntry(state, uidB);
   const uid = state.nextPetUid++;
-  const fused = { uid, speciesId: a.speciesId, rarityId: a.rarityId, level: a.level + 1 };
+  const fused = { uid, speciesId: a.speciesId, rarityId: a.rarityId, level: a.level + 1, xp: 0 };
+  applyPetXp(fused, (a.xp || 0) + (b.xp || 0));
   state.pets = state.pets.filter((p) => p.uid !== uidA && p.uid !== uidB);
   state.pets.push(fused);
   return fused;
@@ -279,9 +314,14 @@ export function fuseAllPossiblePets(state) {
         if (a.uid != null) consumedUids.add(a.uid);
         if (b.uid != null) consumedUids.add(b.uid);
         fusionsPerformed += 1;
-        const nextLevel = level + 1;
-        if (!byLevel.has(nextLevel)) byLevel.set(nextLevel, []);
-        byLevel.get(nextLevel).push({ uid: null, speciesId: a.speciesId, rarityId: a.rarityId, level: nextLevel });
+        // Mesma regra de fusePets: nível+1 sempre, XP dos 2 somada e
+        // aplicada por cima (pode cascatear além de nextLevel se a soma
+        // bastar) — o pet resultante entra no balde do nível FINAL dele
+        // depois da cascata, não sempre em nextLevel.
+        const merged = { uid: null, speciesId: a.speciesId, rarityId: a.rarityId, level: level + 1, xp: 0 };
+        applyPetXp(merged, (a.xp || 0) + (b.xp || 0));
+        if (!byLevel.has(merged.level)) byLevel.set(merged.level, []);
+        byLevel.get(merged.level).push(merged);
       }
     }
   }
