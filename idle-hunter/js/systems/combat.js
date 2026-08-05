@@ -67,6 +67,14 @@ const RANK_MULT = [1, 1.08, 1.16, 1.24, 1.32];
 const LATE_GAME_HP_BREAKPOINT_STAGE = 70;
 const LATE_GAME_HP_GROWTH = 1.0796;
 
+// Razão entre o crescimento novo (pós-estágio 70) e o antigo — é exatamente
+// o quanto o HP tardio encolheu proporcionalmente em relação à curva
+// exponencial de sempre. Reaproveitada abaixo pro dano que o monstro causa
+// no jogador, pra reduzir na MESMA proporção (pedido explícito do
+// usuário: "reduza proporcionalmente também o dano dos monstros").
+const LATE_GAME_GROWTH_RATIO = LATE_GAME_HP_GROWTH / HP_GROWTH;
+const LATE_GAME_DPS_TAKEN_GROWTH = PLAYER_DPS_TAKEN_GROWTH * LATE_GAME_GROWTH_RATIO;
+
 function baseHpAtStage(canonicalStage) {
   if (canonicalStage <= LATE_GAME_HP_BREAKPOINT_STAGE) {
     return HP_BASE * Math.pow(HP_GROWTH, canonicalStage - 1);
@@ -87,8 +95,16 @@ export function monsterGoldReward(canonicalStage, isBoss, powerRank) {
   return Math.max(1, Math.round(base * mult * GOLD_DROP_BONUS));
 }
 
+function dpsTakenBaseAtStage(canonicalStage) {
+  if (canonicalStage <= LATE_GAME_HP_BREAKPOINT_STAGE) {
+    return PLAYER_DPS_TAKEN_BASE * Math.pow(PLAYER_DPS_TAKEN_GROWTH, canonicalStage - 1);
+  }
+  const breakpointBase = PLAYER_DPS_TAKEN_BASE * Math.pow(PLAYER_DPS_TAKEN_GROWTH, LATE_GAME_HP_BREAKPOINT_STAGE - 1);
+  return breakpointBase * Math.pow(LATE_GAME_DPS_TAKEN_GROWTH, canonicalStage - LATE_GAME_HP_BREAKPOINT_STAGE);
+}
+
 export function monsterDamagePerSecond(canonicalStage, isBoss, powerRank) {
-  const base = PLAYER_DPS_TAKEN_BASE * Math.pow(PLAYER_DPS_TAKEN_GROWTH, canonicalStage - 1);
+  const base = dpsTakenBaseAtStage(canonicalStage);
   const mult = powerRank != null ? RANK_MULT[powerRank] : (isBoss ? BOSS_DPS_TAKEN_MULT : 1);
   return Math.max(0.1, base * mult);
 }
