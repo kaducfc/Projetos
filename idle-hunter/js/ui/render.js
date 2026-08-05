@@ -19,7 +19,7 @@ import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventS
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
 import {
   CARDS, getCard, CARD_DISCOVERY_CASH_REWARD,
-  CARD_FRAGMENT_ID, CARD_FRAGMENT_NAME, CARD_FRAGMENT_EMOJI,
+  CARD_FRAGMENT_ID, CARD_FRAGMENT_NAME,
   getCardRecycleValue, getCardCraftCost,
 } from '../data/cards.js';
 import {
@@ -53,6 +53,13 @@ export function iconMarkup(image, emoji, alt) {
 export const GOLD_ICON = `<img class="currency-icon" src="assets/ui/currency-gold.png" alt="Ouro">`;
 export const EVENT_ICON = `<img class="currency-icon" src="assets/ui/currency-event.png" alt="Moeda de Evento">`;
 export const ESMERALDA_ICON = `<img class="currency-icon" src="assets/ui/currency-esmeralda.png" alt="Esmeralda">`;
+
+// Ícone genérico de Carta (qualquer menção a "carta" sem ser a arte
+// específica de um monstro — badge de contagem, título de seção, toast de
+// socket/unsocket, etc.) e de Fragmento de Carta (ver CARD_FRAGMENT_ID em
+// data/cards.js) — substituem os antigos emoji 🃏/🧩 em todo lugar.
+export const CARD_ICON = `<img class="currency-icon" src="assets/ui/cards/card_generic.png" alt="Carta">`;
+export const CARD_FRAGMENT_ICON = `<img class="currency-icon" src="assets/ui/cards/card_fragment.png" alt="Fragmento de Carta">`;
 
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
@@ -524,7 +531,7 @@ function equipRingContentHtml(state, filterCategory = null, bulkSelect = null) {
 // badge (bottom-right) but only shows once at least one card is socketed.
 function cardCountBadgeHtml(entry) {
   const count = ensureCardIds(entry).filter(Boolean).length;
-  return count > 0 ? `<span class="card-count-badge">🃏 ${count}</span>` : '';
+  return count > 0 ? `<span class="card-count-badge">${CARD_ICON} ${count}</span>` : '';
 }
 
 function slotIconHtml(state, slot) {
@@ -706,7 +713,7 @@ function cardSlotHtml(state, uid, entry, pickerOpen, slotIndex) {
 
   if (!pickerOpen) {
     return `<div class="card-slot-badge">
-      <span class="icon">🃏</span>
+      <span class="icon">${CARD_ICON}</span>
       <div class="card-slot-info"><div class="card-slot-name">Slot de Carta: vazio</div></div>
       <button class="card-slot-equip-btn" data-open-card-picker="${uid}" data-open-card-picker-slot="${slotIndex}">Equipar Carta</button>
     </div>`;
@@ -715,12 +722,12 @@ function cardSlotHtml(state, uid, entry, pickerOpen, slotIndex) {
   const owned = CARDS.filter((c) => (state.cards[c.id] || 0) > 0);
   if (!owned.length) {
     return `<div class="card-slot-picker">
-      <div class="card-slot-label">🃏 Você ainda não tem nenhuma carta. Derrote monstros para conseguir uma.</div>
+      <div class="card-slot-label">${CARD_ICON} Você ainda não tem nenhuma carta. Derrote monstros para conseguir uma.</div>
     </div>`;
   }
 
   return `<div class="card-slot-picker">
-    <div class="card-slot-label">🃏 Escolha uma carta:</div>
+    <div class="card-slot-label">${CARD_ICON} Escolha uma carta:</div>
     <div class="card-slot-options">${owned.map((c) => `
       <button class="card-slot-option" data-socket-uid="${uid}" data-socket-slot="${slotIndex}" data-socket-card-id="${c.id}" title="${c.description}">
         <span class="icon">${iconMarkup(c.image, c.emoji, c.name)}</span> ${c.name} <span class="qty">×${state.cards[c.id]}</span>
@@ -996,11 +1003,11 @@ export function renderCardsTab(state) {
 
   container.innerHTML = `
     <img class="section-banner-img" src="assets/ui/titles/cartas.png" alt="Cartas">
-    <div class="card-fragment-total">${CARD_FRAGMENT_EMOJI} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
+    <div class="card-fragment-total">${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
     ${cardsSummaryHtml(state)}
     <h3 class="cards-section-title">👑 Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span> <span class="cards-dps-bonus">+${bossDpsBonus}% DPS</span></h3>
     <div class="card-grid">${bossCards.map((c) => cardTileHtml(state, c)).join('')}</div>
-    <h3 class="cards-section-title">🃏 Cartas de Monstros <span class="cards-collected">Colecionadas: ${commonOwned}/${commonCards.length}</span> <span class="cards-dps-bonus">+${commonDpsBonus}% DPS</span></h3>
+    <h3 class="cards-section-title">${CARD_ICON} Cartas de Monstros <span class="cards-collected">Colecionadas: ${commonOwned}/${commonCards.length}</span> <span class="cards-dps-bonus">+${commonDpsBonus}% DPS</span></h3>
     <div class="card-grid">${commonCards.map((c) => cardTileHtml(state, c)).join('')}</div>
   `;
 }
@@ -1037,10 +1044,10 @@ function cardDetailHtml(state, card) {
         ${discovered ? `<div class="card-detail-owned">Você tem: ${formatNumber(owned)}</div>` : ''}
         ${actionHtml}
         <div class="card-fragment-box">
-          <div class="card-fragment-count">${CARD_FRAGMENT_EMOJI} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
+          <div class="card-fragment-count">${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
           <div class="card-fragment-actions">
-            ${owned > 0 ? `<button class="modal-action-btn" data-recycle-card="${card.id}" ${canRecycle ? '' : 'disabled'}>♻️ Reciclar (+${recycleValue} ${CARD_FRAGMENT_EMOJI})</button>` : ''}
-            <button class="modal-action-btn" data-craft-card="${card.id}" ${canCraft ? '' : 'disabled'}>🛠️ Craftar (${craftCost} ${CARD_FRAGMENT_EMOJI})</button>
+            ${owned > 0 ? `<button class="modal-action-btn" data-recycle-card="${card.id}" ${canRecycle ? '' : 'disabled'}>♻️ Reciclar (+${recycleValue} ${CARD_FRAGMENT_ICON})</button>` : ''}
+            <button class="modal-action-btn" data-craft-card="${card.id}" ${canCraft ? '' : 'disabled'}>🛠️ Craftar (${craftCost} ${CARD_FRAGMENT_ICON})</button>
           </div>
         </div>
       </div>
@@ -1051,6 +1058,9 @@ function cardDetailHtml(state, card) {
 export function showCardDetailModal(state, cardId) {
   const card = getCard(cardId);
   if (!card) return;
+  // showModal() usa textContent pro título (não innerHTML) — não dá pra
+  // passar markup <img> ali, então esse continua sendo o único lugar que
+  // ainda usa o emoji de texto puro em vez do CARD_ICON de verdade.
   showModal(`${card.isBossCard ? '👑' : '🃏'} ${card.name}`, cardDetailHtml(state, card));
 }
 
