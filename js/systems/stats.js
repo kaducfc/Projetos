@@ -19,6 +19,9 @@ const DEFAULT_WEAPON_ELEMENT = 'neutro';
 const BASE_CRIT_CHANCE = 5;
 const BASE_CRIT_DAMAGE = 50;
 
+// Esquiva nunca passa disso, não importa quanto dodgePercent seja somado.
+const DODGE_CHANCE_CAP = 70;
+
 // Conversão do atributo total equipado (soma de Força/Destreza/Inteligência
 // de todas as peças — cada item agora só carrega um valor cru do seu
 // próprio atributo, ver data/items.js attributeBaseStats) pros stats de
@@ -258,7 +261,9 @@ export function computePlayerStats(state) {
   const critDamage = Math.max(0, BASE_CRIT_DAMAGE + critDamagePercent);
   const lifesteal = Math.max(0, lifestealFlat);
   const petDamageMult = 1 + petDamagePercent / 100;
-  const dodgeChance = Math.max(0, Math.min(100, dodgePercent));
+  // Cap de 70% — qualquer valor acumulado acima disso é simplesmente
+  // ignorado, a esquiva nunca passa de 70%.
+  const dodgeChance = Math.max(0, Math.min(DODGE_CHANCE_CAP, dodgePercent));
   const doubleHitChance = Math.max(0, Math.min(100, doubleHitChancePercent));
 
   return {

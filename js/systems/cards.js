@@ -1,4 +1,7 @@
-import { CARD_DISCOVERY_CASH_REWARD, CARDS } from '../data/cards.js';
+import {
+  CARD_DISCOVERY_CASH_REWARD, CARDS, getCard, CARD_FRAGMENT_ID,
+  getCardRecycleValue, getCardCraftCost,
+} from '../data/cards.js';
 
 /// True forever once the player has ever obtained at least one copy of
 /// this card — independent of the live count in state.cards, which can
@@ -52,4 +55,47 @@ export function getCardCollectionDpsBonusPercent(state) {
     bonus += card.isBossCard ? BOSS_CARD_DPS_BONUS_PERCENT : NORMAL_CARD_DPS_BONUS_PERCENT;
   }
   return bonus;
+}
+
+// ---------------------------------------------------------------------
+// Fragmento de Carta (ver CARD_FRAGMENT_ID/getCardRecycleValue/
+// getCardCraftCost em data/cards.js): reciclar consome 1 cópia de uma
+// carta que o jogador tem e devolve fragmentos (mais por carta de zona
+// avançada, mais ainda se for carta de chefe); craftar faz o caminho
+// inverso, gastando fragmentos pra ganhar 1 cópia de uma carta qualquer
+// (mesmo que ainda não descoberta — craftar também conta como descoberta,
+// igual um drop).
+// ---------------------------------------------------------------------
+
+export function canRecycleCard(state, cardId) {
+  return (state.cards[cardId] || 0) >= 1;
+}
+
+/// Retorna true se reciclou. Consome 1 cópia da carta e devolve fragmentos
+/// (ver getCardRecycleValue).
+export function recycleCard(state, cardId) {
+  if (!canRecycleCard(state, cardId)) return false;
+  const card = getCard(cardId);
+  if (!card) return false;
+  state.cards[cardId] -= 1;
+  state.materials[CARD_FRAGMENT_ID] = (state.materials[CARD_FRAGMENT_ID] || 0) + getCardRecycleValue(card);
+  return true;
+}
+
+export function canCraftCard(state, cardId) {
+  const card = getCard(cardId);
+  if (!card) return false;
+  return (state.materials[CARD_FRAGMENT_ID] || 0) >= getCardCraftCost(card);
+}
+
+/// Retorna true se craftou. Consome os fragmentos (ver getCardCraftCost) e
+/// entrega 1 cópia da carta, marcando-a como descoberta (mesmo tratamento
+/// de uma carta obtida por drop).
+export function craftCard(state, cardId) {
+  if (!canCraftCard(state, cardId)) return false;
+  const card = getCard(cardId);
+  state.materials[CARD_FRAGMENT_ID] -= getCardCraftCost(card);
+  state.cards[cardId] = (state.cards[cardId] || 0) + 1;
+  recordCardDiscovered(state, cardId);
+  return true;
 }
