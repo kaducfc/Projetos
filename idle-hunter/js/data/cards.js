@@ -14,13 +14,20 @@ import { BOSSES, WEAK_MONSTER_GROUPS } from './monsters.js';
 // (see systems/cards.js).
 export const CARD_DISCOVERY_CASH_REWARD = 5;
 
+// Ícone genérico de carta (ver CARD_ICON em ui/render.js) usado como
+// fallback de `image` pra qualquer monstro que por acaso não tenha entrada
+// em CARD_IMAGES abaixo — hoje todos os 50 têm, então isso nunca deveria
+// disparar de verdade, mas garante que `image` nunca fica vazio (sem
+// depender de um emoji de texto como último recurso).
+export const CARD_GENERIC_IMAGE = 'assets/ui/cards/card_generic.png';
+
 // Arte de carta real pra TODOS os 50 monstros do roster (10 chefes + 40
 // fracos, ver assets/cards/*.png) — recebida como c1..c50.png, na ordem
 // m1..m50 (ver data/monsters.js): dentro de cada zona de 5, as 4 primeiras
 // são os fracos (na mesma ordem de WEAK_MONSTER_GROUPS) e a 5ª (múltiplo de
 // 5: c5, c10, ..., c50) é o chefe daquela zona. Chave = monsterId (mesmo id
 // usado tanto por BOSSES quanto pelos grupos de fraco), então um mapa único
-// cobre os dois — sem essa arte, getCardForMonster() cai no emoji 🃏.
+// cobre os dois.
 const CARD_IMAGES = {
   // Zona 1
   sylkar: 'assets/cards/sylkar.png',
@@ -340,8 +347,7 @@ export const CARDS = [
       isBossCard: true,
       zoneIndex,
       name: `Carta de ${boss.name}`,
-      emoji: '🃏',
-      image: CARD_IMAGES[boss.id] || null,
+      image: CARD_IMAGES[boss.id] || CARD_GENERIC_IMAGE,
       element: boss.element,
       bonuses: effect ? effect.bonuses : [],
       description: cardDescription(effect),
@@ -355,8 +361,7 @@ export const CARDS = [
       isBossCard: false,
       zoneIndex,
       name: `Carta de ${monster.name}`,
-      emoji: '🃏',
-      image: CARD_IMAGES[monster.id] || null,
+      image: CARD_IMAGES[monster.id] || CARD_GENERIC_IMAGE,
       element: monster.element,
       bonuses: effect ? effect.bonuses : [],
       description: cardDescription(effect),
@@ -371,7 +376,6 @@ export const CARDS = [
 // mesma carta de volta custa 10x o valor de reciclagem dela.
 export const CARD_FRAGMENT_ID = 'card_fragment';
 export const CARD_FRAGMENT_NAME = 'Fragmento de Carta';
-export const CARD_FRAGMENT_EMOJI = '🧩';
 const CARD_CRAFT_COST_MULTIPLIER = 10;
 
 export function getCardRecycleValue(card) {

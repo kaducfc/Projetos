@@ -21,7 +21,7 @@ import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
 import { claimCardReward, recycleCard, craftCard } from './systems/cards.js';
 import {
-  CARD_DISCOVERY_CASH_REWARD, getCard, CARD_FRAGMENT_NAME, CARD_FRAGMENT_EMOJI, getCardRecycleValue,
+  CARD_DISCOVERY_CASH_REWARD, getCard, CARD_FRAGMENT_NAME, getCardRecycleValue,
 } from './data/cards.js';
 import { GAME_BUILD } from './version.js';
 import {
@@ -37,7 +37,7 @@ import {
   showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab, pulseEventBoss,
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster, pulseGoldMineBoss,
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
-  GOLD_ICON, EVENT_ICON, ESMERALDA_ICON,
+  GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -487,7 +487,7 @@ function wireModalEvents() {
         if (!equipItem(state, uid)) return; // bloqueado (ver canEquipItem) — botão já vem disabled, defensivo
         hideModal();
         if (cardWillBeStripped) {
-          showToast(`🃏 Já havia ${MAX_EQUIPPED_CARD_COPIES} cartas dessa equipadas — a carta voltou pro inventário.`);
+          showToast(`${CARD_ICON} Já havia ${MAX_EQUIPPED_CARD_COPIES} cartas dessa equipadas — a carta voltou pro inventário.`);
         }
         fullRefresh();
       });
@@ -594,7 +594,7 @@ function wireModalEvents() {
         }
         if (socketCard(state, uid, slotIndex, cardId)) {
           showItemDetailModal(state, uid);
-          showToast('🃏 Carta encaixada!');
+          showToast(`${CARD_ICON} Carta encaixada!`);
           fullRefresh();
         }
       });
@@ -608,7 +608,7 @@ function wireModalEvents() {
         const slotIndex = Number(unsocketBtn.dataset.unsocketSlot);
         if (unsocketCard(state, uid, slotIndex)) {
           showItemDetailModal(state, uid);
-          showToast('🃏 Carta removida.');
+          showToast(`${CARD_ICON} Carta removida.`);
           fullRefresh();
         }
       });
@@ -678,7 +678,7 @@ function wireModalEvents() {
         const card = getCard(cardId);
         if (card && recycleCard(state, cardId)) {
           showCardDetailModal(state, cardId); // keep the popup open, with fresh state
-          showToast(`♻️ ${card.name} reciclada: +${getCardRecycleValue(card)} ${CARD_FRAGMENT_EMOJI} ${CARD_FRAGMENT_NAME}!`);
+          showToast(`♻️ ${card.name} reciclada: +${getCardRecycleValue(card)} ${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}!`);
           renderCardsTab(state);
         }
       });
@@ -1019,7 +1019,7 @@ function showTowerRewardModal(level, cleared200, currency, goldGained, gained, e
     ${lootLines}
     <p class="offline-item-lines">+${formatNumber(currency)} ${EVENT_ICON} Moeda de Evento</p>
     <p class="offline-item-lines">+${formatNumber(eggsGained)} 🥚 Ovo${eggsGained === 1 ? '' : 's'} de Mascote</p>
-    <p class="offline-item-lines">+${formatNumber(cardFragmentsGained)} ${CARD_FRAGMENT_EMOJI} ${CARD_FRAGMENT_NAME}</p>
+    <p class="offline-item-lines">+${formatNumber(cardFragmentsGained)} ${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}</p>
   `);
 }
 
@@ -1417,7 +1417,7 @@ function showOfflineProgressIfAny() {
   });
   const cardLines = Object.entries(progress.cardsGained).map(([id, qty]) => {
     const card = getCard(id);
-    const icon = iconMarkup(card?.image, card?.emoji ?? '🃏', card?.name ?? id);
+    const icon = iconMarkup(card?.image, CARD_ICON, card?.name ?? id);
     return `+${formatNumber(qty)} <span class="icon">${icon}</span> ${card?.name ?? id}`;
   });
   const equipmentLine = progress.itemDropCount > 0
