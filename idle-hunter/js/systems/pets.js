@@ -195,8 +195,7 @@ export function getBestEquippedPet(state, monsterElement) {
 /// Multiplicador de DPS do caçador vindo só do pet ATIVO no momento (ver
 /// getBestEquippedPet acima) — 1 (sem efeito) se nenhum pet estiver
 /// equipado. Cada um dos 4 contextos de combate (main.js) multiplica isso
-/// no elementalMultiplier antes de chamar resolveHit(), igual já faz com
-/// getCardDamageBonus.
+/// no elementalMultiplier antes de chamar resolveHit().
 export function getActivePetDpsMultiplier(state, monsterElement) {
   const best = getBestEquippedPet(state, monsterElement);
   return best ? 1 + best.dpsBonusPercent / 100 : 1;
