@@ -1751,13 +1751,14 @@ export function spawnDamagePopup(amount, isCrit = false, isBurst = false) {
 
 /// Popup separado pro dano do mascote (ver systems/combat.js resolvePetHit)
 /// — cor do elemento do pet, pra ficar visualmente distinto do dano normal
-/// do personagem (que agora é sempre Neutro).
-export function spawnPetDamagePopup(amount, species) {
+/// do personagem (que agora é sempre Neutro). isCrit usa a mesma chance/
+/// dano crítico do caçador (rolagem própria, ver resolvePetHit).
+export function spawnPetDamagePopup(amount, species, isCrit = false) {
   const container = document.getElementById('damage-popups');
   const el = document.createElement('div');
-  el.className = 'damage-popup pet-damage';
+  el.className = isCrit ? 'damage-popup pet-damage crit' : 'damage-popup pet-damage';
   el.style.color = getPetElementColor(species.element);
-  el.textContent = `${species.emoji} -${formatNumber(amount)}`;
+  el.textContent = isCrit ? `${species.emoji} -${formatNumber(amount)} CRÍTICO!` : `${species.emoji} -${formatNumber(amount)}`;
   el.style.left = `${30 + Math.random() * 40}%`;
   el.style.top = `${30 + Math.random() * 20}%`;
   container.appendChild(el);
