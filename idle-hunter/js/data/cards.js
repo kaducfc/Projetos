@@ -332,12 +332,13 @@ function cardDescription(effect) {
 }
 
 export const CARDS = [
-  ...BOSSES.map((boss) => {
+  ...BOSSES.map((boss, zoneIndex) => {
     const effect = CARD_EFFECTS[boss.id] || null;
     return {
       id: `${boss.id}_card`,
       monsterId: boss.id,
       isBossCard: true,
+      zoneIndex,
       name: `Carta de ${boss.name}`,
       emoji: '🃏',
       image: CARD_IMAGES[boss.id] || null,
@@ -346,12 +347,13 @@ export const CARDS = [
       description: cardDescription(effect),
     };
   }),
-  ...WEAK_MONSTER_GROUPS.flatMap((group) => group.monsters).map((monster) => {
+  ...WEAK_MONSTER_GROUPS.flatMap((group, zoneIndex) => group.monsters.map((monster) => ({ monster, zoneIndex }))).map(({ monster, zoneIndex }) => {
     const effect = CARD_EFFECTS[monster.id] || null;
     return {
       id: `${monster.id}_card`,
       monsterId: monster.id,
       isBossCard: false,
+      zoneIndex,
       name: `Carta de ${monster.name}`,
       emoji: '🃏',
       image: CARD_IMAGES[monster.id] || null,
@@ -361,6 +363,25 @@ export const CARDS = [
     };
   }),
 ];
+
+// Fragmento de Carta (ver systems/cards.js recycleCard/craftCard): quanto
+// mais avançada a zona da carta, mais fragmentos ela dá ao ser reciclada —
+// 10 por zona pra carta de monstro fraco, 20 por zona pra carta de chefe
+// (Zona 1: 10/20, Zona 2: 20/40, ..., Zona 10: 100/200). Craftar essa
+// mesma carta de volta custa 10x o valor de reciclagem dela.
+export const CARD_FRAGMENT_ID = 'card_fragment';
+export const CARD_FRAGMENT_NAME = 'Fragmento de Carta';
+export const CARD_FRAGMENT_EMOJI = '🧩';
+const CARD_CRAFT_COST_MULTIPLIER = 10;
+
+export function getCardRecycleValue(card) {
+  const zoneNumber = card.zoneIndex + 1;
+  return (card.isBossCard ? 20 : 10) * zoneNumber;
+}
+
+export function getCardCraftCost(card) {
+  return getCardRecycleValue(card) * CARD_CRAFT_COST_MULTIPLIER;
+}
 
 export function getCard(cardId) {
   return CARDS.find((c) => c.id === cardId);
