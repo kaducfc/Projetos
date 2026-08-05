@@ -25,9 +25,9 @@ import {
 } from './data/cards.js';
 import { GAME_BUILD } from './version.js';
 import {
-  equipPet, unequipPetSlot, sellPet, canFusePets, fusePets, getFusePartners,
+  equipPet, unequipPetSlot, recyclePet, canFusePets, fusePets, getFusePartners,
   addPetToInventory, getPetEntry, canChooseRightPet, useFreeRightPetChoice, getActivePetDpsMultiplier,
-  fuseAllPossiblePets, hatchAllEggs, rollHatchCandidates, recordPetHatchOutcome,
+  fuseAllPossiblePets, hatchAllEggs, rollHatchCandidates, recordPetHatchOutcome, donatePetFragments,
 } from './systems/pets.js';
 import { buySkillLevel, buySpecial, resetSkillTree } from './systems/skills.js';
 import {
@@ -744,15 +744,30 @@ function wireModalEvents() {
       return;
     }
 
-    const sellPetBtn = e.target.closest('[data-sell-pet-uid]');
-    if (sellPetBtn) {
+    const recyclePetBtn = e.target.closest('[data-recycle-pet-uid]');
+    if (recyclePetBtn) {
       runModalAction(() => {
-        const uid = Number(sellPetBtn.dataset.sellPetUid);
-        const value = sellPet(state, uid);
+        const uid = Number(recyclePetBtn.dataset.recyclePetUid);
+        const value = recyclePet(state, uid);
         if (value != null) {
           hideModal();
-          showToast(`💰 Mascote vendido por +${formatNumber(value)} ouro.`);
-          renderTopBar(state);
+          showToast(`♻️ Mascote reciclado: +${formatNumber(value)} 🧩 Fragmentos.`);
+          renderPetsTabNow();
+        }
+      });
+      return;
+    }
+
+    const donatePetFragmentsBtn = e.target.closest('[data-donate-pet-fragments-uid]');
+    if (donatePetFragmentsBtn) {
+      runModalAction(() => {
+        const uid = Number(donatePetFragmentsBtn.dataset.donatePetFragmentsUid);
+        const result = donatePetFragments(state, uid);
+        if (result) {
+          showToast(result.levelsGained > 0
+            ? `🧩 +${formatNumber(result.fragmentsSpent)} XP doado — subiu ${result.levelsGained} nível${result.levelsGained === 1 ? '' : 'is'}!`
+            : `🧩 +${formatNumber(result.fragmentsSpent)} XP doado.`);
+          showPetDetailModal(state, uid); // keep the popup open, with fresh state
           renderPetsTabNow();
         }
       });

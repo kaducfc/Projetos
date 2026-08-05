@@ -1407,6 +1407,39 @@ button:disabled {
   margin-bottom: 8px;
 }
 
+/* Barra de XP de mascote (ver petXpSectionHtml, ui/render.js) — mesma
+   linguagem visual da barra de XP do caçador (#hunter-xp-bar-*), só que
+   como classes reusáveis (o modal de detalhe do pet pode reabrir várias
+   vezes, não é um elemento único fixo no DOM). */
+.pet-xp-section {
+  margin-bottom: 10px;
+}
+
+.pet-xp-label {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.pet-xp-bar-outer {
+  position: relative;
+  height: 14px;
+  background: #fff3d6;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 5px rgba(74, 47, 20, .2);
+  margin-bottom: 8px;
+}
+
+.pet-xp-bar-fill {
+  height: 100%;
+  background: var(--grad-purple);
+  width: 0%;
+  transition: width 0.15s ease-out;
+}
+
 .mega-drop-banner {
   text-align: center;
   font-size: 18px;

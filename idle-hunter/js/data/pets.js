@@ -187,12 +187,53 @@ export function getPetInventoryCap(state) {
   return PET_INVENTORY_CAP + (isVipActive(state) ? PET_VIP_INVENTORY_BONUS : 0);
 }
 
-/// Valor de venda em ouro — usado tanto pro auto-sell ao bater o limite do
-/// inventário quanto pra venda manual. Escala com raridade e nível de fusão.
-export function getPetSellValue(petEntry) {
-  const rarityIdx = RARITIES.findIndex((r) => r.id === petEntry.rarityId);
-  const base = 20 * (Math.max(0, rarityIdx) + 1);
-  return Math.round(base * petLevelMultiplier(petEntry.level));
+/// Valor de reciclagem em Fragmento de Mascote (ver systems/pets.js
+/// recyclePet) — usado tanto pro auto-descarte ao bater o limite do
+/// inventário quanto pra reciclagem manual. Escala com TIER, raridade e
+/// nível de fusão — os 3 juntos, pedido explícito do usuário (antes só
+/// escalava com raridade+nível).
+const PET_RECYCLE_BASE = 5;
+
+export function getPetRecycleValue(petEntry) {
+  const species = getPetSpecies(petEntry.speciesId);
+  if (!species) return 0;
+  const rarity = getRarity(petEntry.rarityId);
+  return Math.round(PET_RECYCLE_BASE * species.tier * rarity.mult * petLevelMultiplier(petEntry.level));
+}
+
+// ---------------------------------------------------------------------
+// XP de mascote: 2º caminho pra evoluir nível, além de fundir 2 pets
+// iguais — "doar" Fragmento de Mascote direto pra barra de XP (ver
+// donatePetFragments em systems/pets.js). Custa PET_XP_TO_NEXT_MULTIPLIER×
+// o valor de reciclagem de um pet idêntico (mesmo tier/raridade/nível no
+// nível ATUAL, antes de subir) — fica sempre um pouco mais caro que fundir
+// 2 pets prontos (que já carregam seu próprio custo embutido de terem sido
+// construídos), mas ainda uma alternativa viável pra usar fragmento
+// sobrando. tier/raridade/nível influenciam os 2 lados (custo de XP E
+// valor de reciclagem) pela mesma fórmula-base, então os dois sistemas
+// ficam proporcionais entre si por construção.
+// ---------------------------------------------------------------------
+const PET_XP_TO_NEXT_MULTIPLIER = 3;
+
+export function xpToNextPetLevel(petEntry) {
+  return PET_XP_TO_NEXT_MULTIPLIER * getPetRecycleValue(petEntry);
+}
+
+/// Aplica XP a um pet "in-place" (muta level/xp), subindo quantos níveis o
+/// total permitir em cascata — usado tanto pela doação de fragmentos
+/// quanto pela soma de XP ao fundir 2 pets (ver fusePets/
+/// fuseAllPossiblePets em systems/pets.js). Nunca passa de PET_MAX_LEVEL;
+/// pet já no nível máximo não acumula XP à toa (fica sempre 0).
+export function applyPetXp(pet, amount) {
+  pet.xp = (pet.xp || 0) + Math.max(0, amount || 0);
+  let levelsGained = 0;
+  while (pet.level < PET_MAX_LEVEL && pet.xp >= xpToNextPetLevel(pet)) {
+    pet.xp -= xpToNextPetLevel(pet);
+    pet.level += 1;
+    levelsGained += 1;
+  }
+  if (pet.level >= PET_MAX_LEVEL) pet.xp = 0;
+  return levelsGained;
 }
 
 // Chances de drop de ovo — baixas em kill normal (parecido com carta),
