@@ -112,7 +112,7 @@ export function advanceHitClock(nextHitAt, attackSpeedPerSec, now = Date.now()) 
 
 /// Resolves one discrete hit's damage — shared by every combat context (Caça,
 /// Evento, Torre, Mina de Ouro). elementalMultiplier is the caller's
-/// precomputed `1 + elementDamageModifier(...) + getCardDamageBonus(...)`.
+/// precomputed `1 + elementDamageModifier(...)`.
 export function resolveHit(state, stats, elementalMultiplier) {
   const crit = rollCrit(stats);
   return { dealt: stats.dps * elementalMultiplier * crit.multiplier, isCrit: crit.isCrit };
