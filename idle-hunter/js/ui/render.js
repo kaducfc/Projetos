@@ -17,8 +17,15 @@ import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
 import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
-import { CARDS, getCard, CARD_DISCOVERY_CASH_REWARD } from '../data/cards.js';
-import { isCardDiscovered, canClaimCardReward, isCardRewardClaimed } from '../systems/cards.js';
+import {
+  CARDS, getCard, CARD_DISCOVERY_CASH_REWARD,
+  CARD_FRAGMENT_ID, CARD_FRAGMENT_NAME, CARD_FRAGMENT_EMOJI,
+  getCardRecycleValue, getCardCraftCost,
+} from '../data/cards.js';
+import {
+  isCardDiscovered, canClaimCardReward, isCardRewardClaimed,
+  canRecycleCard, canCraftCard,
+} from '../systems/cards.js';
 import { getPetSpecies, getPetDamage, getPetSellValue, getPetElementColor, getPetDpsBonusPercent, PET_MAX_LEVEL, getPetInventoryCap, PET_ELEMENTS } from '../data/pets.js';
 import {
   getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet, canHatchAllEggs, canEquipPet,
@@ -985,8 +992,11 @@ export function renderCardsTab(state) {
   const bossDpsBonus = bossOwned * 5;
   const commonDpsBonus = commonOwned * 1;
 
+  const fragments = state.materials[CARD_FRAGMENT_ID] || 0;
+
   container.innerHTML = `
     <img class="section-banner-img" src="assets/ui/titles/cartas.png" alt="Cartas">
+    <div class="card-fragment-total">${CARD_FRAGMENT_EMOJI} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
     ${cardsSummaryHtml(state)}
     <h3 class="cards-section-title">👑 Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span> <span class="cards-dps-bonus">+${bossDpsBonus}% DPS</span></h3>
     <div class="card-grid">${bossCards.map((c) => cardTileHtml(state, c)).join('')}</div>
@@ -1012,6 +1022,12 @@ function cardDetailHtml(state, card) {
     actionHtml = '';
   }
 
+  const fragments = state.materials[CARD_FRAGMENT_ID] || 0;
+  const recycleValue = getCardRecycleValue(card);
+  const craftCost = getCardCraftCost(card);
+  const canRecycle = canRecycleCard(state, card.id);
+  const canCraft = canCraftCard(state, card.id);
+
   return `
     <div class="card-detail ${discovered ? '' : 'undiscovered'}">
       <div class="card-detail-image">${iconMarkup(card.image, card.emoji, card.name)}</div>
@@ -1020,6 +1036,13 @@ function cardDetailHtml(state, card) {
         <div class="card-detail-desc">${card.description}</div>
         ${discovered ? `<div class="card-detail-owned">Você tem: ${formatNumber(owned)}</div>` : ''}
         ${actionHtml}
+        <div class="card-fragment-box">
+          <div class="card-fragment-count">${CARD_FRAGMENT_EMOJI} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
+          <div class="card-fragment-actions">
+            ${owned > 0 ? `<button class="modal-action-btn" data-recycle-card="${card.id}" ${canRecycle ? '' : 'disabled'}>♻️ Reciclar (+${recycleValue} ${CARD_FRAGMENT_EMOJI})</button>` : ''}
+            <button class="modal-action-btn" data-craft-card="${card.id}" ${canCraft ? '' : 'disabled'}>🛠️ Craftar (${craftCost} ${CARD_FRAGMENT_EMOJI})</button>
+          </div>
+        </div>
       </div>
     </div>
   `;

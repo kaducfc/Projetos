@@ -19,8 +19,10 @@ import { startGoldMineRun, applyGoldMineDamage, endGoldMineRun } from './systems
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
-import { claimCardReward } from './systems/cards.js';
-import { CARD_DISCOVERY_CASH_REWARD, getCard } from './data/cards.js';
+import { claimCardReward, recycleCard, craftCard } from './systems/cards.js';
+import {
+  CARD_DISCOVERY_CASH_REWARD, getCard, CARD_FRAGMENT_NAME, CARD_FRAGMENT_EMOJI, getCardRecycleValue,
+} from './data/cards.js';
 import { GAME_BUILD } from './version.js';
 import {
   equipPet, unequipPetSlot, sellPet, canFusePets, fusePets, getFusePartners,
@@ -663,6 +665,34 @@ function wireModalEvents() {
           showCardDetailModal(state, cardId); // keep the popup open, with fresh state
           showToast(`🎁 +${formatNumber(CARD_DISCOVERY_CASH_REWARD)} ${ESMERALDA_ICON} Esmeralda!`);
           renderTopBar(state);
+          renderCardsTab(state);
+        }
+      });
+      return;
+    }
+
+    const recycleCardBtn = e.target.closest('[data-recycle-card]');
+    if (recycleCardBtn) {
+      runModalAction(() => {
+        const cardId = recycleCardBtn.dataset.recycleCard;
+        const card = getCard(cardId);
+        if (card && recycleCard(state, cardId)) {
+          showCardDetailModal(state, cardId); // keep the popup open, with fresh state
+          showToast(`♻️ ${card.name} reciclada: +${getCardRecycleValue(card)} ${CARD_FRAGMENT_EMOJI} ${CARD_FRAGMENT_NAME}!`);
+          renderCardsTab(state);
+        }
+      });
+      return;
+    }
+
+    const craftCardBtn = e.target.closest('[data-craft-card]');
+    if (craftCardBtn) {
+      runModalAction(() => {
+        const cardId = craftCardBtn.dataset.craftCard;
+        const card = getCard(cardId);
+        if (card && craftCard(state, cardId)) {
+          showCardDetailModal(state, cardId); // keep the popup open, with fresh state
+          showToast(`🛠️ ${card.name} craftada!`);
           renderCardsTab(state);
         }
       });

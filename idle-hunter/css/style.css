@@ -2646,6 +2646,13 @@ button:disabled {
   color: var(--green, #2e9e4f);
 }
 
+.card-fragment-total {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--text-dim);
+  margin: 2px 0 8px;
+}
+
 .cards-summary-box {
   background: var(--grad-neutral);
   border: 2px solid var(--border);
@@ -2756,6 +2763,30 @@ button:disabled {
   font-size: 11.5px;
   color: var(--text-dim);
   font-weight: 600;
+}
+
+.card-fragment-box {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.card-fragment-count {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.card-fragment-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-fragment-actions .modal-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .shop-item-grid {
