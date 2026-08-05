@@ -162,11 +162,19 @@ export function resolveHit(state, stats, elementalMultiplier) {
 /// getPetDamage em data/pets.js — × vantagem/desvantagem elemental, ver
 /// getBestEquippedPet em systems/pets.js). Chamado ao lado de resolveHit()
 /// em cada um dos 4 contextos de combate (main.js) — retorna null se
-/// nenhum pet estiver equipado.
+/// nenhum pet estiver equipado. Crítico do mascote usa a MESMA chance/dano
+/// crítico do caçador (stats.critChance/critDamage) — rolagem própria,
+/// independente da do hit principal, igual ao Golpe Duplo (ver
+/// resolveDoubleHit abaixo).
 export function resolvePetHit(state, monsterElement, stats) {
   const best = getBestEquippedPet(state, monsterElement, stats?.dps);
   if (!best) return null;
-  return { dealt: best.damage * (stats?.petDamageMult || 1), species: best.species };
+  const crit = rollCrit(stats);
+  return {
+    dealt: best.damage * (stats?.petDamageMult || 1) * crit.multiplier,
+    species: best.species,
+    isCrit: crit.isCrit,
+  };
 }
 
 /// Golpe Duplo (ver stats.doubleHitChance, systems/stats.js — concedido por
