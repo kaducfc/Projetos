@@ -55,8 +55,8 @@ const ARENA_REWARD_CONFIG = {
   eventCurrency: { unlockIndex: 5, min: 15, max: 300, power: 1.25 },
   eggs: { unlockIndex: 10, min: 4, max: 40, power: 1.2 },
   material: { unlockIndex: 15, min: 10, max: 150, power: 1.2 },
-  // Reduzido 100x a pedido do usuário (era 400-3000).
-  cardFragments: { unlockIndex: 25, min: 4, max: 30, power: 1.2 },
+  // Ajustado a pedido do usuário: 5-130 ao longo dos ranks (era 4-30).
+  cardFragments: { unlockIndex: 25, min: 5, max: 130, power: 1.2 },
 };
 
 function rewardValueForIndex(index, cfg) {
