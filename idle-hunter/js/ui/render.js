@@ -1608,7 +1608,7 @@ function expeditionRewardRowsHtml(rows, iconHtml) {
   return rows.map((row, i) => {
     const guaranteed = row.chance >= 1;
     const qtyLabel = guaranteed ? `${formatNumber(row.qty)}` : `+${formatNumber(row.qty)}`;
-    const chanceLabel = guaranteed ? '' : `<span class="expedition-drop-chance">${Math.round(row.chance * 100)}%</span>`;
+    const chanceLabel = `<span class="expedition-drop-chance">${Math.round(row.chance * 100)}%</span>`;
     return `<div class="expedition-drop-row ${guaranteed ? 'guaranteed' : 'bonus'}">${chanceLabel}${iconHtml} ${qtyLabel}</div>`;
   }).join('');
 }
