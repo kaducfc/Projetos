@@ -1206,22 +1206,25 @@ function enterArena() {
 }
 
 function finishArenaRun() {
-  const { rank, damageDealt } = endArenaRun(state);
+  const { rank, damageDealt, materialsGranted } = endArenaRun(state);
   arenaDeadline = null;
-  showArenaRewardModal(rank, damageDealt);
+  showArenaRewardModal(rank, damageDealt, materialsGranted);
   renderEventsTabNow();
   renderTopBar(state);
   renderPetsTabNow();
   renderInventoryTabNow();
 }
 
-function showArenaRewardModal(rank, damageDealt) {
+function showArenaRewardModal(rank, damageDealt, materialsGranted) {
   const { rewards } = rank;
   const lines = [`<p class="offline-item-lines">+${formatNumber(rewards.gold)} ${GOLD_ICON} Ouro</p>`];
   if (rewards.eventCurrency > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.eventCurrency)} ${EVENT_ICON} Moeda de Evento</p>`);
   if (rewards.eggs > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.eggs)} 🥚 Ovo${rewards.eggs === 1 ? '' : 's'} de Mascote</p>`);
-  if (rewards.material && rewards.materialQty > 0) {
-    lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.materialQty)} <span class="icon">${iconMarkup(rewards.material.image, rewards.material.emoji, rewards.material.name)}</span> ${rewards.material.name}</p>`);
+  if (materialsGranted && materialsGranted.length > 0) {
+    const materialLines = materialsGranted
+      .map((entry) => `<span class="icon">${iconMarkup(entry.material.image, entry.material.emoji, entry.material.name)}</span> ${entry.material.name} (+${formatNumber(entry.qty)})`)
+      .join('<br>');
+    lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.materialsTotal)} Materiais de Monstros:</p><p class="offline-item-lines">${materialLines}</p>`);
   }
   if (rewards.cardFragments > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.cardFragments)} ${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}</p>`);
 

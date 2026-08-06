@@ -1647,7 +1647,7 @@ function arenaRankRowHtml(rank) {
         ${arenaRewardLineHtml(GOLD_ICON, rewards.gold, 'Ouro')}
         ${rewards.eventCurrency > 0 ? arenaRewardLineHtml(EVENT_ICON, rewards.eventCurrency, 'Moeda de Evento') : ''}
         ${rewards.eggs > 0 ? arenaRewardLineHtml('🥚', rewards.eggs, 'Ovo de Mascote') : ''}
-        ${rewards.material ? arenaRewardLineHtml(iconMarkup(rewards.material.image, rewards.material.emoji, rewards.material.name), rewards.materialQty, rewards.material.name) : ''}
+        ${rewards.materialsTotal > 0 ? arenaRewardLineHtml('📦', rewards.materialsTotal, 'Materiais de Monstros (várias zonas)') : ''}
         ${rewards.cardFragments > 0 ? arenaRewardLineHtml(CARD_FRAGMENT_ICON, rewards.cardFragments, CARD_FRAGMENT_NAME) : ''}
       </div>
     </details>`;

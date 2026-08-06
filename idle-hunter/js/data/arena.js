@@ -1,5 +1,3 @@
-import { WEAK_MONSTER_GROUPS } from './monsters.js';
-
 // "Combate Permanente": um saco de pancada que nunca revida, por
 // ARENA_RUN_DURATION_MS (30s) — o dano total causado no fim do tempo decide
 // em qual Rank o caçador termina (ver getArenaRankForDamage abaixo e
@@ -17,11 +15,13 @@ export const ARENA_RANKS_PER_TIER = 5;
 export const ARENA_RANK_COUNT = ARENA_TIER_NAMES.length * ARENA_RANKS_PER_TIER; // 35
 export const ARENA_MAX_DAMAGE = 50_000_000;
 
-// Curva de dano por degrau: >1 faz o crescimento se acumular mais no fim
-// (ranks baixos pedem pouco dano — quase todo mundo avança rápido no
-// início — ranks altos exigem uma explosão real de DPS), uma curva de
-// potência contínua de 0 (Ferro 5) até ARENA_MAX_DAMAGE (Lendário 1).
-const ARENA_DAMAGE_CURVE_POWER = 2.3;
+// Curva de dano por degrau — pedido explícito do usuário pra crescer AINDA
+// mais no fim: do início até o meio da lista o dano pedido cresce pouco
+// (ex.: Ferro 1 pede só ~53K, Prata 5 ~1M), e da metade pro fim a diferença
+// entre ranks vizinhos passa a ser bem maior (ex.: Diamante 1 -> Lendário 1
+// pula 30M -> 50M). Curva de potência contínua de 0 (Ferro 5) até
+// ARENA_MAX_DAMAGE (Lendário 1); POWER mais alto = mais back-loaded.
+const ARENA_DAMAGE_CURVE_POWER = 3.2;
 
 function roundNiceDamage(value) {
   if (value <= 0) return 0;
@@ -45,12 +45,18 @@ function damageThresholdForIndex(index) {
 // pro seguinte) até o valor máximo no Lendário 1. Ordem de entrada: Gold
 // (desde o início) -> Moeda de Evento (Bronze 5) -> Ovo de Mascote (Prata
 // 5) -> Material de Monstro (Ouro 5) -> Fragmento de Carta (Diamante 5).
+// "material" aqui é só o TOTAL de itens a conceder — quais materiais de
+// verdade (várias zonas diferentes, ponderado pelas mais avançadas já
+// liberadas) só é decidido no momento de conceder, em systems/arena.js
+// rollArenaMaterialBasket (depende do progresso do jogador, não é uma
+// propriedade fixa do rank).
 const ARENA_REWARD_CONFIG = {
   gold: { unlockIndex: 0, min: 3000, max: 200000, power: 1.35 },
   eventCurrency: { unlockIndex: 5, min: 15, max: 300, power: 1.25 },
   eggs: { unlockIndex: 10, min: 4, max: 40, power: 1.2 },
   material: { unlockIndex: 15, min: 10, max: 150, power: 1.2 },
-  cardFragments: { unlockIndex: 25, min: 400, max: 3000, power: 1.2 },
+  // Reduzido 100x a pedido do usuário (era 400-3000).
+  cardFragments: { unlockIndex: 25, min: 4, max: 30, power: 1.2 },
 };
 
 function rewardValueForIndex(index, cfg) {
@@ -58,19 +64,6 @@ function rewardValueForIndex(index, cfg) {
   const span = ARENA_RANK_COUNT - 1 - cfg.unlockIndex;
   const t = span <= 0 ? 1 : (index - cfg.unlockIndex) / span;
   return Math.round(cfg.min + (cfg.max - cfg.min) * Math.pow(t, cfg.power));
-}
-
-// O material concedido (Ouro 5 em diante) vem de uma zona escalada com a
-// posição global do rank — Ouro 5 sorteia perto da Zona 4, Lendário 1
-// fecha na Zona 10 — "proporcional à dificuldade (Rank) com nível do
-// monstro" (pedido do usuário). Sempre o 1º monstro do grupo daquela zona,
-// pra ser um material previsível/consultável (não sorteado por run).
-function materialForIndex(index) {
-  const zoneIdx = Math.min(
-    WEAK_MONSTER_GROUPS.length - 1,
-    Math.floor((index / (ARENA_RANK_COUNT - 1)) * (WEAK_MONSTER_GROUPS.length - 1)),
-  );
-  return WEAK_MONSTER_GROUPS[zoneIdx].monsters[0].material;
 }
 
 export const ARENA_RANKS = (() => {
@@ -86,7 +79,6 @@ export const ARENA_RANKS = (() => {
     if (threshold <= prevThreshold) threshold = prevThreshold + 1;
     prevThreshold = threshold;
 
-    const materialUnlocked = i >= ARENA_REWARD_CONFIG.material.unlockIndex;
     ranks.push({
       index: i,
       tier: ARENA_TIER_NAMES[tierIndex],
@@ -98,8 +90,7 @@ export const ARENA_RANKS = (() => {
         gold: rewardValueForIndex(i, ARENA_REWARD_CONFIG.gold),
         eventCurrency: rewardValueForIndex(i, ARENA_REWARD_CONFIG.eventCurrency),
         eggs: rewardValueForIndex(i, ARENA_REWARD_CONFIG.eggs),
-        materialQty: rewardValueForIndex(i, ARENA_REWARD_CONFIG.material),
-        material: materialUnlocked ? materialForIndex(i) : null,
+        materialsTotal: rewardValueForIndex(i, ARENA_REWARD_CONFIG.material),
         cardFragments: rewardValueForIndex(i, ARENA_REWARD_CONFIG.cardFragments),
       },
     });
