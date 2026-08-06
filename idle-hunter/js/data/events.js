@@ -134,23 +134,24 @@ export const EXPEDITION_TIERS = [
 // {chance, qty}. A 1ª linha de cada lista tem sempre chance 1 (garantida,
 // sempre entra); as demais são rolls independentes que, quando acontecem,
 // SOMAM ao total (não são tiers exclusivos de "pelo menos X") — ver
-// rollExpeditionRewardRows em systems/expedition.js. Ex.: garantido 400 +
-// 25% chance de mais 600 + 2% chance de mais 1500 (podendo empilhar os 2
-// bônus na mesma expedição). Quantidades crescem com a duração (mais que
-// linear — recompensa maior por hora quanto mais tempo travado), e as
-// chances dos bônus também melhoram nas durações maiores.
+// rollExpeditionRewardRows em systems/expedition.js. Ex.: garantido 4 + 25%
+// chance de mais 5 + 2% chance de mais 8 (podendo empilhar os 2 bônus na
+// mesma expedição). Valores pedidos explicitamente pelo usuário (ovos
+// 4/5/8, 14/17/28, 23/31/50 por duração); moeda de evento segue o mesmo
+// formato/proporção — só os 2 extremos (1h=20, 8h=140) foram dados, o resto
+// foi calculado espelhando a mesma progressão usada nos ovos.
 export const EXPEDITION_REWARDS = {
   '1h': {
-    currency: [{ chance: 1, qty: 400 }, { chance: 0.25, qty: 600 }, { chance: 0.02, qty: 1500 }],
-    eggs: [{ chance: 1, qty: 4 }, { chance: 0.25, qty: 5 }, { chance: 0.02, qty: 12 }],
+    currency: [{ chance: 1, qty: 20 }, { chance: 0.25, qty: 25 }, { chance: 0.02, qty: 40 }],
+    eggs: [{ chance: 1, qty: 4 }, { chance: 0.25, qty: 5 }, { chance: 0.02, qty: 8 }],
   },
   '4h': {
-    currency: [{ chance: 1, qty: 1800 }, { chance: 0.3, qty: 2600 }, { chance: 0.03, qty: 6500 }],
-    eggs: [{ chance: 1, qty: 16 }, { chance: 0.3, qty: 22 }, { chance: 0.03, qty: 55 }],
+    currency: [{ chance: 1, qty: 80 }, { chance: 0.3, qty: 95 }, { chance: 0.03, qty: 160 }],
+    eggs: [{ chance: 1, qty: 14 }, { chance: 0.3, qty: 17 }, { chance: 0.03, qty: 28 }],
   },
   '8h': {
-    currency: [{ chance: 1, qty: 4000 }, { chance: 0.35, qty: 5800 }, { chance: 0.05, qty: 14500 }],
-    eggs: [{ chance: 1, qty: 34 }, { chance: 0.35, qty: 48 }, { chance: 0.05, qty: 120 }],
+    currency: [{ chance: 1, qty: 140 }, { chance: 0.35, qty: 190 }, { chance: 0.05, qty: 300 }],
+    eggs: [{ chance: 1, qty: 23 }, { chance: 0.35, qty: 31 }, { chance: 0.05, qty: 50 }],
   },
 };
 
