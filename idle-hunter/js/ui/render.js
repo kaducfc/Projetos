@@ -17,6 +17,8 @@ import {
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
 import { getTowerMonster } from '../systems/tower.js';
 import { canEnterExpedition, expeditionRemainingMs } from '../systems/expedition.js';
+import { ARENA_RANKS, getArenaRankForDamage, getArenaRankByIndex } from '../data/arena.js';
+import { canEnterArena } from '../systems/arena.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
 import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
@@ -1586,6 +1588,87 @@ function goldMineFightPanelHtml(state, runRemainingMs) {
     </div>`;
 }
 
+// Combate Permanente (see data/arena.js ARENA_RANKS + systems/arena.js): a
+// training dummy that never fights back, on a fixed 30s clock — no per-cycle
+// window (the "Permanente" name is literal, see canEnterArena). The banner
+// just offers "Entrar" (when no run is active) plus a button opening the
+// full 35-rank reward list; the active fight renders in its own panel below,
+// showing the current rank name and a progress bar toward the next one
+// (filled by cumulative damage dealt, not HP draining down).
+function arenaBannerHtml(state) {
+  const canEnter = canEnterArena(state);
+  return `<div class="event-card">
+    <div class="event-card-body">
+      <div class="event-panel">
+        <div class="event-icon">⚔️</div>
+        <h3>Combate Permanente</h3>
+        <p class="event-sub">Um saco de pancada que não revida — cause o máximo de dano possível em 30 segundos e suba de Rank.</p>
+        <div class="arena-banner-actions">
+          ${canEnter ? `<button class="expedition-enter-btn" style="--tier-color:#e0553f" data-arena-enter>Entrar</button>` : ''}
+          <button class="view-full-stats-btn" data-arena-view-ranks>🏆 Ver Ranks e Recompensas</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function arenaFightPanelHtml(state, runRemainingMs) {
+  const damage = state.arenaDamageDealt || 0;
+  const currentRank = getArenaRankForDamage(damage);
+  const nextRank = getArenaRankByIndex(currentRank.index + 1);
+  const pct = nextRank
+    ? Math.max(0, Math.min(100, ((damage - currentRank.damageThreshold) / (nextRank.damageThreshold - currentRank.damageThreshold)) * 100))
+    : 100;
+  return `
+    <div class="event-card">
+      <div class="event-card-body">
+        <div class="event-panel">
+          <div class="event-active-badge">⚔️ ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
+          <h3>Saco de Pancada <span class="boss-tag">TREINO</span></h3>
+          <button id="arena-target-sprite" class="event-boss-sprite">🥊</button>
+          <div class="arena-rank-label">${currentRank.name}</div>
+          <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${pct.toFixed(0)}%${nextRank ? ` para ${nextRank.name}` : ' — RANK MÁXIMO'}</span></div>
+          <p class="event-reward-info">🎯 Dano causado: ${formatNumber(damage)}${nextRank ? ` (faltam ${formatNumber(Math.max(0, nextRank.damageThreshold - damage))} para o próximo rank)` : ''}</p>
+        </div>
+      </div>
+    </div>`;
+}
+
+function arenaRewardLineHtml(iconHtml, qty, label) {
+  return `<p class="offline-item-lines">+${formatNumber(qty)} ${iconHtml} ${label}</p>`;
+}
+
+function arenaRankRowHtml(rank) {
+  const { rewards } = rank;
+  return `
+    <details class="arena-rank-row">
+      <summary><span class="arena-rank-name">${rank.name}</span><span class="arena-rank-threshold">${formatNumber(rank.damageThreshold)} dano</span></summary>
+      <div class="arena-rank-rewards">
+        ${arenaRewardLineHtml(GOLD_ICON, rewards.gold, 'Ouro')}
+        ${rewards.eventCurrency > 0 ? arenaRewardLineHtml(EVENT_ICON, rewards.eventCurrency, 'Moeda de Evento') : ''}
+        ${rewards.eggs > 0 ? arenaRewardLineHtml('🥚', rewards.eggs, 'Ovo de Mascote') : ''}
+        ${rewards.material ? arenaRewardLineHtml(iconMarkup(rewards.material.image, rewards.material.emoji, rewards.material.name), rewards.materialQty, rewards.material.name) : ''}
+        ${rewards.cardFragments > 0 ? arenaRewardLineHtml(CARD_FRAGMENT_ICON, rewards.cardFragments, CARD_FRAGMENT_NAME) : ''}
+      </div>
+    </details>`;
+}
+
+export function showArenaRanksModal() {
+  const rowsHtml = ARENA_RANKS.map(arenaRankRowHtml).join('');
+  showModal('🏆 Ranks do Combate Permanente', `
+    <p class="event-sub">Recompensa concedida ao final do combate, de acordo com o Rank alcançado pelo dano total causado. Toque num Rank pra ver a recompensa dele.</p>
+    <div class="arena-rank-list">${rowsHtml}</div>
+  `);
+}
+
+export function pulseArenaTarget() {
+  const sprite = document.getElementById('arena-target-sprite');
+  if (!sprite) return;
+  sprite.classList.remove('hit');
+  void sprite.offsetWidth; // restart animation
+  sprite.classList.add('hit');
+}
+
 // Expedição do Caçador (see data/events.js EXPEDITION_TIERS/EXPEDITION_REWARDS
 // + systems/expedition.js): no fight, no per-cycle window — 3 fixed duration
 // cards (1h/4h/8h), each with its own accent color. Entering grants the
@@ -1649,7 +1732,7 @@ function expeditionSectionHtml(state) {
     </div>`;
 }
 
-export function renderEventsTab(state, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null, goldMineRunRemainingMs = null) {
+export function renderEventsTab(state, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null, goldMineRunRemainingMs = null, arenaRunRemainingMs = null) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `
     <img class="section-banner-img" src="assets/ui/titles/eventos.png" alt="Eventos">
@@ -1660,6 +1743,8 @@ export function renderEventsTab(state, towerRunRemainingMs = null, towerHp = nul
     ${state.towerRunActive ? torreProvacoesFightPanelHtml(state, towerRunRemainingMs, towerHp, towerMaxHp) : ''}
     ${goldMineBannerHtml(state)}
     ${state.goldMineRunActive ? goldMineFightPanelHtml(state, goldMineRunRemainingMs) : ''}
+    ${arenaBannerHtml(state)}
+    ${state.arenaRunActive ? arenaFightPanelHtml(state, arenaRunRemainingMs) : ''}
     ${expeditionSectionHtml(state)}
   </div>`;
 }

@@ -17,6 +17,7 @@ import { applyEventDamage, claimEventVictory, startEvent, resetEventEncounter } 
 import { canEnterTower, startTowerRun, ensureTowerMonsterSpawned, getTowerMonster, applyTowerDamage, endTowerRun } from './systems/tower.js';
 import { startGoldMineRun, applyGoldMineDamage, endGoldMineRun } from './systems/goldmine.js';
 import { enterExpedition } from './systems/expedition.js';
+import { ARENA_RUN_DURATION_MS, canEnterArena, startArenaRun, applyArenaDamage, endArenaRun } from './systems/arena.js';
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
@@ -39,6 +40,7 @@ import {
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster, pulseGoldMineBoss,
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
+  showArenaRanksModal, pulseArenaTarget,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -79,6 +81,14 @@ let goldMineDeadline = null;
 
 function currentGoldMineRunRemainingMs() {
   return goldMineDeadline == null ? null : Math.max(0, goldMineDeadline - Date.now());
+}
+
+// Combate Permanente's own 30s fight clock — same "a reload gives a fresh
+// attempt" trade-off as towerDeadline/goldMineDeadline above (not persisted).
+let arenaDeadline = null;
+
+function currentArenaRunRemainingMs() {
+  return arenaDeadline == null ? null : Math.max(0, arenaDeadline - Date.now());
 }
 
 // Which sub-tab is showing in Loja (Cash/Evento/Conquistas), plus which
@@ -177,7 +187,7 @@ function selectAllBulkEligible() {
 function renderEventsTabNow() {
   const towerMaxHp = state.towerRunActive ? computePlayerStats(state).maxHp : null;
   if (towerHp != null && towerMaxHp != null) towerHp = Math.min(towerHp, towerMaxHp);
-  renderEventsTab(state, currentTowerRunRemainingMs(), towerHp, towerMaxHp, currentGoldMineRunRemainingMs());
+  renderEventsTab(state, currentTowerRunRemainingMs(), towerHp, towerMaxHp, currentGoldMineRunRemainingMs(), currentArenaRunRemainingMs());
 }
 
 // Um chefe só tem cronômetro quando é o monstro ativo agora — nunca "trava
@@ -334,6 +344,7 @@ function tick() {
   tickEventBoss(stats);
   tickTower();
   tickGoldMine();
+  tickArena();
 
   ensureMonsterSpawned(state);
   const monster = getCurrentMonster(state.currentMonster);
@@ -1177,6 +1188,74 @@ function tickGoldMine() {
 }
 
 // ---------------------------------------------------------------
+// Combate Permanente (ver systems/arena.js) — saco de pancada que nunca
+// revida, num clock fixo de 30s (ARENA_RUN_DURATION_MS). Sem janela por
+// ciclo: canEnterArena só bloqueia 2 combates simultâneos, não um cooldown.
+// A cada tick só se resolve o dano do próprio caçador (+pet/Golpe Duplo,
+// mesmo padrão de tickGoldMine) contra o alvo fictício 'neutro' — nada de
+// HP descendo, applyArenaDamage só acumula o total causado.
+// ---------------------------------------------------------------
+
+let nextArenaHitAt = null;
+
+function enterArena() {
+  if (!startArenaRun(state)) return;
+  arenaDeadline = Date.now() + ARENA_RUN_DURATION_MS;
+  showToast('⚔️ Combate Permanente iniciado! Cause o máximo de dano possível em 30 segundos.');
+  renderEventsTabNow();
+}
+
+function finishArenaRun() {
+  const { rank, damageDealt } = endArenaRun(state);
+  arenaDeadline = null;
+  showArenaRewardModal(rank, damageDealt);
+  renderEventsTabNow();
+  renderTopBar(state);
+  renderPetsTabNow();
+  renderInventoryTabNow();
+}
+
+function showArenaRewardModal(rank, damageDealt) {
+  const { rewards } = rank;
+  const lines = [`<p class="offline-item-lines">+${formatNumber(rewards.gold)} ${GOLD_ICON} Ouro</p>`];
+  if (rewards.eventCurrency > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.eventCurrency)} ${EVENT_ICON} Moeda de Evento</p>`);
+  if (rewards.eggs > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.eggs)} 🥚 Ovo${rewards.eggs === 1 ? '' : 's'} de Mascote</p>`);
+  if (rewards.material && rewards.materialQty > 0) {
+    lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.materialQty)} <span class="icon">${iconMarkup(rewards.material.image, rewards.material.emoji, rewards.material.name)}</span> ${rewards.material.name}</p>`);
+  }
+  if (rewards.cardFragments > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.cardFragments)} ${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}</p>`);
+
+  showModal(`⚔️ Combate encerrado — ${rank.name}`, `
+    <p>Dano total causado: <strong>${formatNumber(damageDealt)}</strong></p>
+    <p><strong>Recompensas:</strong></p>
+    ${lines.join('')}
+  `);
+}
+
+function tickArena() {
+  if (!state.arenaRunActive) return;
+
+  if (Date.now() >= arenaDeadline) {
+    finishArenaRun();
+    return;
+  }
+
+  const stats = computePlayerStats(state);
+  const clock = advanceHitClock(nextArenaHitAt, stats.attackSpeedPerSec);
+  nextArenaHitAt = clock.nextHitAt;
+  if (clock.hit && stats.dps > 0) {
+    const hit = resolveHit(state, stats, getActivePetDpsMultiplier(state, 'neutro'));
+    const petHit = resolvePetHit(state, 'neutro', stats);
+    const doubleHit = resolveDoubleHit(stats, getActivePetDpsMultiplier(state, 'neutro'));
+    applyArenaDamage(state, hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0));
+    if (stats.lifesteal) currentHp = Math.min(currentHp + stats.lifesteal, stats.maxHp);
+    pulseArenaTarget();
+  }
+
+  renderEventsTabNow();
+}
+
+// ---------------------------------------------------------------
 // Expedição do Caçador (ver systems/expedition.js) — sem luta e sem
 // cronômetro próprio de tick: um clique concede a recompensa na hora e
 // arma o cooldown compartilhado. O relógio na tela só precisa do refresh
@@ -1227,6 +1306,16 @@ function wireEventTabEvents() {
     const expeditionBtn = e.target.closest('[data-expedition-enter]');
     if (expeditionBtn) {
       enterExpeditionTier(expeditionBtn.dataset.expeditionEnter);
+      return;
+    }
+
+    if (e.target.closest('[data-arena-enter]')) {
+      enterArena();
+      return;
+    }
+
+    if (e.target.closest('[data-arena-view-ranks]')) {
+      showArenaRanksModal();
       return;
     }
 
@@ -1533,6 +1622,9 @@ function init() {
   if (state.goldMineRunActive) {
     goldMineDeadline = Date.now() + GOLDMINE_FIGHT_DURATION_MS;
   }
+  if (state.arenaRunActive) {
+    arenaDeadline = Date.now() + ARENA_RUN_DURATION_MS;
+  }
   fullRefresh();
   armBossTimer();
 
@@ -1566,6 +1658,7 @@ function init() {
     getTowerHp: () => towerHp,
     setTowerHp: (v) => { towerHp = v; renderEventsTabNow(); },
     forceTowerTimeout: () => { if (towerDeadline != null) towerDeadline = Date.now() - 1; },
+    forceArenaTimeout: () => { if (arenaDeadline != null) arenaDeadline = Date.now() - 1; },
   };
 }
 
