@@ -2308,6 +2308,85 @@ button:disabled {
   margin-top: 8px;
 }
 
+/* Combate Permanente (ver arenaBannerHtml/arenaFightPanelHtml em
+   ui/render.js) — banner com "Entrar" + botão pra abrir a lista dos 35
+   ranks, e o painel de combate ativo mostra o nome do rank atual + a
+   barrinha de progresso (enche com o dano causado, não uma HP descendo). A
+   lista de ranks usa <details>/<summary> nativos — expandir cada linha não
+   precisa de wiring nenhum em main.js. */
+.arena-banner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.arena-rank-label {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 4px 0 6px;
+}
+
+.arena-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.arena-rank-row {
+  background: var(--grad-neutral);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.arena-rank-row summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  list-style: none;
+}
+
+.arena-rank-row summary::-webkit-details-marker {
+  display: none;
+}
+
+.arena-rank-row summary::after {
+  content: '▾';
+  margin-left: 8px;
+  color: var(--text-dim);
+  transition: transform 0.15s ease;
+}
+
+.arena-rank-row[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.arena-rank-name {
+  color: var(--text);
+}
+
+.arena-rank-threshold {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.arena-rank-rewards {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+}
+
 
 .attribute-totals-row {
   display: flex;

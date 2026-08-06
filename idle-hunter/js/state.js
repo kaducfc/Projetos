@@ -144,6 +144,15 @@ export function createDefaultState() {
     expeditionReadyAt: null,
     expeditionLastTierId: null,
 
+    // Combate Permanente (see data/arena.js + systems/arena.js): um saco de
+    // pancada de 30s que nunca revida — o dano total causado decide o Rank
+    // final ao fechar (ver endArenaRun). Sem janela por ciclo nem cooldown,
+    // só não dá pra ter 2 combates rodando ao mesmo tempo (ver
+    // canEnterArena). O clock de 30s em si NÃO é persistido (mesmo trade-off
+    // já feito pra Torre/Mina — ver main.js), só o progresso acumulado.
+    arenaRunActive: false,
+    arenaDamageDealt: 0,
+
     // Mascotes (ver data/pets.js + systems/pets.js): { uid, speciesId,
     // rarityId, level } — inventário próprio, não aparece na aba
     // Equipamentos. equippedPetUids tem sempre 4 posições (slot vazio =
