@@ -16,6 +16,7 @@ import { getTowerWindow, TOWER_RUN_DURATION_MS, GOLDMINE_FIGHT_DURATION_MS } fro
 import { applyEventDamage, claimEventVictory, startEvent, resetEventEncounter } from './systems/events.js';
 import { canEnterTower, startTowerRun, ensureTowerMonsterSpawned, getTowerMonster, applyTowerDamage, endTowerRun } from './systems/tower.js';
 import { startGoldMineRun, applyGoldMineDamage, endGoldMineRun } from './systems/goldmine.js';
+import { enterExpedition } from './systems/expedition.js';
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
@@ -37,7 +38,7 @@ import {
   showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab, pulseEventBoss,
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster, pulseGoldMineBoss,
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
-  GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON,
+  GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -1175,6 +1176,35 @@ function tickGoldMine() {
   renderEventsTabNow();
 }
 
+// ---------------------------------------------------------------
+// Expedição do Caçador (ver systems/expedition.js) — sem luta e sem
+// cronômetro próprio de tick: um clique concede a recompensa na hora e
+// arma o cooldown compartilhado. O relógio na tela só precisa do refresh
+// periódico já existente (ver setInterval(renderEventsTabNow) mais abaixo),
+// não precisa de nenhum tick dedicado como Torre/Mina.
+// ---------------------------------------------------------------
+
+function enterExpeditionTier(tierId) {
+  const result = enterExpedition(state, tierId);
+  if (!result) return;
+  showExpeditionRewardModal(result);
+  renderEventsTabNow();
+  renderTopBar(state);
+  renderPetsTabNow();
+}
+
+function showExpeditionRewardModal(result) {
+  const { tier, currencyGained, eggsGained, currencyBonusHits, eggBonusHits } = result;
+  const currencyBonusNote = currencyBonusHits > 0 ? ` <span class="offline-item-lines">(+${currencyBonusHits} bônus!)</span>` : '';
+  const eggBonusNote = eggBonusHits > 0 ? ` <span class="offline-item-lines">(+${eggBonusHits} bônus!)</span>` : '';
+  showModal(`🧭 Expedição de ${tier.label}`, `
+    <p><strong>Recompensas:</strong></p>
+    <p class="offline-item-lines">+${formatNumber(currencyGained)} ${EVENT_ICON} Moeda de Evento${currencyBonusNote}</p>
+    <p class="offline-item-lines">+${formatNumber(eggsGained)} 🥚 Ovo${eggsGained === 1 ? '' : 's'} de Mascote${eggBonusNote}</p>
+    <p class="event-sub">Você poderá entrar em outra expedição em ${expeditionDurationLabel(tier.durationMs)}.</p>
+  `);
+}
+
 function wireEventTabEvents() {
   const container = document.getElementById('tab-events');
 
@@ -1191,6 +1221,12 @@ function wireEventTabEvents() {
 
     if (e.target.closest('[data-goldmine-enter]')) {
       enterGoldMine();
+      return;
+    }
+
+    const expeditionBtn = e.target.closest('[data-expedition-enter]');
+    if (expeditionBtn) {
+      enterExpeditionTier(expeditionBtn.dataset.expeditionEnter);
       return;
     }
 
