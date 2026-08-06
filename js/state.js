@@ -134,6 +134,16 @@ export function createDefaultState() {
     goldMineDamageDealt: 0,
     goldMineEnteredCycle: null,
 
+    // Expedição do Caçador (see data/events.js EXPEDITION_TIERS + systems/
+    // expedition.js): sem luta — Entrar concede a recompensa na hora e arma
+    // expeditionReadyAt (now + duração escolhida), um cooldown ÚNICO
+    // compartilhado entre as 3 durações (1h/4h/8h), não uma janela por
+    // ciclo como os outros eventos acima. expeditionLastTierId só guarda
+    // qual duração foi escolhida da última vez, pra UI informativa (não
+    // afeta o cooldown em si, que já está todo em expeditionReadyAt).
+    expeditionReadyAt: null,
+    expeditionLastTierId: null,
+
     // Mascotes (ver data/pets.js + systems/pets.js): { uid, speciesId,
     // rarityId, level } — inventário próprio, não aparece na aba
     // Equipamentos. equippedPetUids tem sempre 4 posições (slot vazio =

@@ -110,3 +110,50 @@ export function getGoldMineWindow(now = Date.now()) {
     msUntilNextWindow: cycleStart + GOLDMINE_CYCLE_MS - now,
   };
 }
+
+// ---------------------------------------------------------------------
+// "Expedição do Caçador" — bem mais simples que os 3 eventos acima: não é
+// uma janela por ciclo nem uma luta. O jogador escolhe 1 de 3 durações
+// (1h/4h/8h); ao clicar Entrar, a recompensa (Moeda de Evento + Ovo de
+// Mascote) é concedida NA HORA, sem precisar voltar depois pra "coletar"
+// nada. O único gate é um cooldown ÚNICO e COMPARTILHADO entre as 3
+// durações (não 3 relógios independentes) — ao entrar numa expedição de
+// duração D, o jogador só pode entrar em QUALQUER expedição de novo depois
+// de D (ver state.expeditionReadyAt / canEnterExpedition em
+// systems/expedition.js). Escolher uma duração maior trava por mais tempo,
+// mas rende proporcionalmente mais — e com melhores chances de bônus, ver
+// EXPEDITION_REWARDS abaixo.
+// ---------------------------------------------------------------------
+export const EXPEDITION_TIERS = [
+  { id: '1h', label: '1 Hora', durationMs: 1 * 60 * 60 * 1000, color: '#63d47a', image: 'assets/ui/scenes/zone1.jpg' },
+  { id: '4h', label: '4 Horas', durationMs: 4 * 60 * 60 * 1000, color: '#b56de0', image: 'assets/ui/scenes/zone5.jpg' },
+  { id: '8h', label: '8 Horas', durationMs: 8 * 60 * 60 * 1000, color: '#e8c94a', image: 'assets/ui/scenes/zone10.jpg' },
+];
+
+// Cada recompensa (currency/eggs) é uma lista de "linhas" independentes —
+// {chance, qty}. A 1ª linha de cada lista tem sempre chance 1 (garantida,
+// sempre entra); as demais são rolls independentes que, quando acontecem,
+// SOMAM ao total (não são tiers exclusivos de "pelo menos X") — ver
+// rollExpeditionRewardRows em systems/expedition.js. Ex.: garantido 400 +
+// 25% chance de mais 600 + 2% chance de mais 1500 (podendo empilhar os 2
+// bônus na mesma expedição). Quantidades crescem com a duração (mais que
+// linear — recompensa maior por hora quanto mais tempo travado), e as
+// chances dos bônus também melhoram nas durações maiores.
+export const EXPEDITION_REWARDS = {
+  '1h': {
+    currency: [{ chance: 1, qty: 400 }, { chance: 0.25, qty: 600 }, { chance: 0.02, qty: 1500 }],
+    eggs: [{ chance: 1, qty: 4 }, { chance: 0.25, qty: 5 }, { chance: 0.02, qty: 12 }],
+  },
+  '4h': {
+    currency: [{ chance: 1, qty: 1800 }, { chance: 0.3, qty: 2600 }, { chance: 0.03, qty: 6500 }],
+    eggs: [{ chance: 1, qty: 16 }, { chance: 0.3, qty: 22 }, { chance: 0.03, qty: 55 }],
+  },
+  '8h': {
+    currency: [{ chance: 1, qty: 4000 }, { chance: 0.35, qty: 5800 }, { chance: 0.05, qty: 14500 }],
+    eggs: [{ chance: 1, qty: 34 }, { chance: 0.35, qty: 48 }, { chance: 0.05, qty: 120 }],
+  },
+};
+
+export function getExpeditionTier(tierId) {
+  return EXPEDITION_TIERS.find((t) => t.id === tierId) || null;
+}

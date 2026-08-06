@@ -10,9 +10,13 @@ import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/e
 import { computePlayerStats } from '../systems/stats.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds } from '../systems/crafting.js';
 import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, HUNTER_MAX_LEVEL } from '../systems/leveling.js';
-import { getEventWindow, getTowerWindow, TOWER_MAX_LEVEL, getGoldMineWindow, GOLDMINE_BOSS_HP } from '../data/events.js';
+import {
+  getEventWindow, getTowerWindow, TOWER_MAX_LEVEL, getGoldMineWindow, GOLDMINE_BOSS_HP,
+  EXPEDITION_TIERS, EXPEDITION_REWARDS,
+} from '../data/events.js';
 import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
 import { getTowerMonster } from '../systems/tower.js';
+import { canEnterExpedition, expeditionRemainingMs } from '../systems/expedition.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
 import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
@@ -1582,6 +1586,69 @@ function goldMineFightPanelHtml(state, runRemainingMs) {
     </div>`;
 }
 
+// Expedição do Caçador (see data/events.js EXPEDITION_TIERS/EXPEDITION_REWARDS
+// + systems/expedition.js): no fight, no per-cycle window — 3 fixed duration
+// cards (1h/4h/8h), each with its own accent color. Entering grants the
+// reward immediately and arms a single cooldown shared across all 3 cards
+// (see canEnterExpedition), so while on cooldown every card shows the same
+// countdown instead of its own "Entrar" button.
+export function expeditionDurationLabel(ms) {
+  const totalMinutes = Math.max(0, Math.ceil(ms / 60000));
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${m}m`;
+}
+
+/// A 1ª linha (chance 1) é a garantida, sempre exibida sem %; as demais são
+/// bônus que SOMAM ao total quando o roll bate (ver rollExpeditionRewardRows)
+/// — mostradas como "+qty" com a % de chance ao lado.
+function expeditionRewardRowsHtml(rows, iconHtml) {
+  return rows.map((row, i) => {
+    const guaranteed = row.chance >= 1;
+    const qtyLabel = guaranteed ? `${formatNumber(row.qty)}` : `+${formatNumber(row.qty)}`;
+    const chanceLabel = guaranteed ? '' : `<span class="expedition-drop-chance">${Math.round(row.chance * 100)}%</span>`;
+    return `<div class="expedition-drop-row ${guaranteed ? 'guaranteed' : 'bonus'}">${chanceLabel}${iconHtml} ${qtyLabel}</div>`;
+  }).join('');
+}
+
+function expeditionCardHtml(state, tier, ready, remainingMs) {
+  const rewards = EXPEDITION_REWARDS[tier.id];
+  const btnHtml = ready
+    ? `<button class="expedition-enter-btn" style="--tier-color:${tier.color}" data-expedition-enter="${tier.id}">Entrar</button>`
+    : `<button class="expedition-enter-btn" disabled>${expeditionDurationLabel(remainingMs)} restantes</button>`;
+  return `
+    <div class="expedition-card" style="--tier-color:${tier.color}">
+      <div class="expedition-card-title">Expedição de ${tier.label}</div>
+      <div class="expedition-banner" style="background-image:url('${tier.image}')"></div>
+      ${btnHtml}
+      <div class="expedition-rewards">
+        <div>
+          <div class="expedition-reward-col-title">${EVENT_ICON} Moeda de Evento</div>
+          ${expeditionRewardRowsHtml(rewards.currency, EVENT_ICON)}
+        </div>
+        <div>
+          <div class="expedition-reward-col-title">🥚 Ovo de Mascote</div>
+          ${expeditionRewardRowsHtml(rewards.eggs, '🥚')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function expeditionSectionHtml(state) {
+  const now = Date.now();
+  const ready = canEnterExpedition(state, now);
+  const remainingMs = expeditionRemainingMs(state, now);
+  const cardsHtml = EXPEDITION_TIERS.map((tier) => expeditionCardHtml(state, tier, ready, remainingMs)).join('');
+  return `
+    <div class="expedition-section">
+      <div class="expedition-section-title">🧭 Expedição do Caçador</div>
+      <div class="expedition-tier-grid">${cardsHtml}</div>
+      <p class="expedition-note">Escolha 1 duração — a recompensa é concedida na hora, e as 3 ficam bloqueadas até o tempo escolhido passar. A linha garantida (sem %) sempre entra; as demais se somam quando o bônus bate.</p>
+    </div>`;
+}
+
 export function renderEventsTab(state, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null, goldMineRunRemainingMs = null) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `
@@ -1593,6 +1660,7 @@ export function renderEventsTab(state, towerRunRemainingMs = null, towerHp = nul
     ${state.towerRunActive ? torreProvacoesFightPanelHtml(state, towerRunRemainingMs, towerHp, towerMaxHp) : ''}
     ${goldMineBannerHtml(state)}
     ${state.goldMineRunActive ? goldMineFightPanelHtml(state, goldMineRunRemainingMs) : ''}
+    ${expeditionSectionHtml(state)}
   </div>`;
 }
 

@@ -2191,6 +2191,123 @@ button:disabled {
   box-shadow: 0 2px 0 var(--event-dark);
 }
 
+/* Expedição do Caçador — sem janela por ciclo nem luta (ver
+   data/events.js/systems/expedition.js): 3 cartões lado a lado (1h/4h/8h),
+   cada um com sua própria cor de destaque (--tier-color), foto de cenário,
+   botão Entrar (ou o cooldown compartilhado contando, quando travado) e as
+   2 colunas de recompensa (Moeda de Evento / Ovo de Mascote) com as linhas
+   de chance de bônus. */
+.expedition-section-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  text-align: center;
+  margin: 4px 0 10px;
+}
+
+.expedition-tier-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.expedition-card {
+  background: var(--grad-neutral);
+  border: 2px solid var(--tier-color, var(--border));
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .04), var(--shadow-card);
+}
+
+.expedition-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--tier-color, var(--text));
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.expedition-banner {
+  aspect-ratio: 16 / 7;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+}
+
+.expedition-enter-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff;
+  background: var(--tier-color, var(--grad-event));
+  box-shadow: var(--shadow-btn);
+  margin-bottom: 10px;
+}
+
+.expedition-enter-btn:disabled {
+  background: var(--text-dim);
+  opacity: .65;
+  box-shadow: none;
+}
+
+.expedition-rewards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 10px;
+}
+
+.expedition-reward-col-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.expedition-drop-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 0;
+  color: var(--text-dim);
+}
+
+.expedition-drop-row.guaranteed {
+  color: var(--text);
+}
+
+.expedition-drop-row img,
+.expedition-drop-row .icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.expedition-drop-chance {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--tier-color, var(--accent, var(--text-dim)));
+  min-width: 30px;
+  text-align: right;
+}
+
+.expedition-note {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-top: 8px;
+}
+
 
 .attribute-totals-row {
   display: flex;
