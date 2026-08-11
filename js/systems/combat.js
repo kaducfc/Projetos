@@ -83,7 +83,14 @@ function baseHpAtStage(canonicalStage) {
   return breakpointBase * Math.pow(LATE_GAME_HP_GROWTH, canonicalStage - LATE_GAME_HP_BREAKPOINT_STAGE);
 }
 
+// HP fixo pedido pelo usuário só pro chefe final (Malgorath, stage 100,
+// único chefe nesse estágio) — sobrepõe a curva normal sem mexer em mais
+// nada (a fórmula abaixo continua valendo pra todo o resto do jogo).
+const MALGORATH_STAGE = 100;
+const MALGORATH_FIXED_HP = 4_000_000;
+
 export function monsterMaxHp(canonicalStage, isBoss, powerRank) {
+  if (isBoss && canonicalStage === MALGORATH_STAGE) return MALGORATH_FIXED_HP;
   const base = baseHpAtStage(canonicalStage);
   const mult = powerRank != null ? RANK_MULT[powerRank] : (isBoss ? BOSS_HP_MULT : 1);
   return Math.max(1, Math.round(base * mult));
