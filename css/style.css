@@ -2630,9 +2630,52 @@ button:disabled {
   gap: 8px;
 }
 
+/* Painel de luta do Combate Permanente — cenário (arena-scene.png) como
+   fundo do próprio .event-panel, com um véu escuro por cima pra manter o
+   texto (nome/rank/badges) legível sobre a arte. */
+.arena-scene-panel {
+  background-size: cover;
+  background-position: center 30%;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.arena-scene-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20, 10, 5, .55) 0%, rgba(20, 10, 5, .3) 40%, rgba(20, 10, 5, .65) 100%);
+  z-index: -1;
+}
+
+.arena-scene-panel h3 {
+  color: #fff;
+  margin-bottom: 2px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .6);
+}
+
+.arena-monster-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f0dca0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+  margin-bottom: 10px;
+}
+
+.arena-scene-panel .arena-rank-label {
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .6);
+}
+
+.arena-scene-panel .event-reward-info {
+  color: #f0dca0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+}
+
 .event-boss-sprite {
   position: relative;
-  font-size: 72px;
+  font-size: 130px;
   line-height: 1;
   background: transparent;
   box-shadow: none;
