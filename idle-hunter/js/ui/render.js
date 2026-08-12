@@ -1389,9 +1389,9 @@ function arenaBannerHtml(state) {
   const rewardIcons = eventBannerRewardIconsHtml([GOLD_ICON, EVENT_ICON, EGG_ICON]);
   let statusHtml;
   if (state.arenaRunActive) {
-    statusHtml = `<div class="event-banner-status-value">🔥 Em combate!</div>`;
+    statusHtml = `<div class="event-banner-status-value event-banner-status-value-solo">🔥 Em combate!</div>`;
   } else if (canEnter) {
-    statusHtml = `<div class="event-banner-status-value">Pronto!</div>`;
+    statusHtml = `<div class="event-banner-status-value event-banner-status-value-solo">Pronto!</div>`;
   } else {
     statusHtml = `<div class="event-banner-status-label">Disponível em:</div><div class="event-banner-status-value">${expeditionDurationLabel(arenaRemainingMs(state, now))}</div>`;
   }
@@ -1531,7 +1531,7 @@ function expeditionBannerHtml(state) {
   const remainingMs = expeditionRemainingMs(state, now);
   const rewardIcons = eventBannerRewardIconsHtml([EVENT_ICON, EGG_ICON]);
   const statusHtml = ready
-    ? `<div class="event-banner-status-value">Pronto!</div>`
+    ? `<div class="event-banner-status-value event-banner-status-value-solo">Pronto!</div>`
     : `<div class="event-banner-status-label">Disponível em:</div><div class="event-banner-status-value">${expeditionDurationLabel(remainingMs)}</div>`;
   const enterBtnHtml = ready ? `<button class="event-banner-enter-btn" data-expedition-banner-enter aria-label="Entrar"></button>` : '';
   return `<div class="event-card event-card-banner">
