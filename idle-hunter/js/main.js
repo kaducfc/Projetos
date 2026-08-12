@@ -40,6 +40,7 @@ import {
   renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster, pulseGoldMineBoss,
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
+  EGG_ICON, PET_FRAGMENT_ICON,
   showArenaRanksModal, pulseArenaTarget,
 } from './ui/render.js';
 
@@ -298,7 +299,7 @@ function handleKillEvent(event) {
     showToast(`⭐ Nível de caça ${state.hunterLevel}! Novas zonas/chefes podem ter sido liberados.`);
   }
   if (event.eggGained) {
-    showToast('🥚 Ovo de mascote encontrado!');
+    showToast(`${EGG_ICON} Ovo de mascote encontrado!`);
     renderPetsTabNow();
   }
   renderTopBar(state);
@@ -763,7 +764,7 @@ function wireModalEvents() {
         const value = recyclePet(state, uid);
         if (value != null) {
           hideModal();
-          showToast(`♻️ Mascote reciclado: +${formatNumber(value)} 🧩 Fragmentos.`);
+          showToast(`♻️ Mascote reciclado: +${formatNumber(value)} ${PET_FRAGMENT_ICON} Fragmentos.`);
           renderPetsTabNow();
         }
       });
@@ -777,8 +778,8 @@ function wireModalEvents() {
         const result = donatePetFragments(state, uid);
         if (result) {
           showToast(result.levelsGained > 0
-            ? `🧩 +${formatNumber(result.fragmentsSpent)} XP doado — subiu ${result.levelsGained} nível${result.levelsGained === 1 ? '' : 'is'}!`
-            : `🧩 +${formatNumber(result.fragmentsSpent)} XP doado.`);
+            ? `${PET_FRAGMENT_ICON} +${formatNumber(result.fragmentsSpent)} XP doado — subiu ${result.levelsGained} nível${result.levelsGained === 1 ? '' : 'is'}!`
+            : `${PET_FRAGMENT_ICON} +${formatNumber(result.fragmentsSpent)} XP doado.`);
           showPetDetailModal(state, uid); // keep the popup open, with fresh state
           renderPetsTabNow();
         }
@@ -823,7 +824,7 @@ function wireModalEvents() {
         recordPetHatchOutcome(state, chosen.rarityId);
         hideModal();
         showToast(discarded
-          ? `🎒 Inventário de mascotes cheio! Mascote convertido em +${formatNumber(fragments)} 🧩 Fragmentos.`
+          ? `🎒 Inventário de mascotes cheio! Mascote convertido em +${formatNumber(fragments)} ${PET_FRAGMENT_ICON} Fragmentos.`
           : '🐣 Novo mascote chocado!');
         renderTopBar(state);
         renderPetsTabNow();
@@ -973,7 +974,7 @@ function giveUpEvent() {
 function handleEventBossVictory(boss) {
   const { gained, currency, cardDropped, eggGained } = claimEventVictory(state, state.eventEnteredCycle, boss);
   showEventRewardModal(boss, gained, currency, cardDropped);
-  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTabNow(); }
+  if (eggGained) { showToast(`${EGG_ICON} Ovo de mascote encontrado!`); renderPetsTabNow(); }
   renderTopBar(state);
   renderInventoryTabNow();
   renderCardsTab(state);
@@ -1067,7 +1068,7 @@ function showTowerRewardModal(level, cleared200, currency, goldGained, gained, e
     <p class="offline-item-lines">+${formatNumber(goldGained)} ${GOLD_ICON} Ouro</p>
     ${lootLines}
     <p class="offline-item-lines">+${formatNumber(currency)} ${EVENT_ICON} Moeda de Evento</p>
-    <p class="offline-item-lines">+${formatNumber(eggsGained)} 🥚 Ovo${eggsGained === 1 ? '' : 's'} de Mascote</p>
+    <p class="offline-item-lines">+${formatNumber(eggsGained)} ${EGG_ICON} Ovo${eggsGained === 1 ? '' : 's'} de Mascote</p>
     <p class="offline-item-lines">+${formatNumber(cardFragmentsGained)} ${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}</p>
   `);
 }
@@ -1142,7 +1143,7 @@ function finishGoldMine() {
   const { goldGained, eggGained } = endGoldMineRun(state);
   goldMineDeadline = null;
   showGoldMineRewardModal(goldGained);
-  if (eggGained) { showToast('🥚 Ovo de mascote encontrado!'); renderPetsTabNow(); }
+  if (eggGained) { showToast(`${EGG_ICON} Ovo de mascote encontrado!`); renderPetsTabNow(); }
   renderEventsTabNow();
   renderTopBar(state);
 }
@@ -1219,7 +1220,7 @@ function showArenaRewardModal(rank, damageDealt, materialsGranted) {
   const { rewards } = rank;
   const lines = [`<p class="offline-item-lines">+${formatNumber(rewards.gold)} ${GOLD_ICON} Ouro</p>`];
   if (rewards.eventCurrency > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.eventCurrency)} ${EVENT_ICON} Moeda de Evento</p>`);
-  if (rewards.eggs > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.eggs)} 🥚 Ovo${rewards.eggs === 1 ? '' : 's'} de Mascote</p>`);
+  if (rewards.eggs > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.eggs)} ${EGG_ICON} Ovo${rewards.eggs === 1 ? '' : 's'} de Mascote</p>`);
   if (materialsGranted && materialsGranted.length > 0) {
     const materialLines = materialsGranted
       .map((entry) => `<span class="icon">${iconMarkup(entry.material.image, entry.material.emoji, entry.material.name)}</span> ${entry.material.name} (+${formatNumber(entry.qty)})`)
@@ -1282,7 +1283,7 @@ function showExpeditionRewardModal(result) {
   showModal(`🧭 Expedição de ${tier.label}`, `
     <p><strong>Recompensas:</strong></p>
     <p class="offline-item-lines">+${formatNumber(currencyGained)} ${EVENT_ICON} Moeda de Evento${currencyBonusNote}</p>
-    <p class="offline-item-lines">+${formatNumber(eggsGained)} 🥚 Ovo${eggsGained === 1 ? '' : 's'} de Mascote${eggBonusNote}</p>
+    <p class="offline-item-lines">+${formatNumber(eggsGained)} ${EGG_ICON} Ovo${eggsGained === 1 ? '' : 's'} de Mascote${eggBonusNote}</p>
     <p class="event-sub">Você poderá entrar em outra expedição em ${expeditionDurationLabel(tier.durationMs)}.</p>
   `);
 }
@@ -1377,7 +1378,7 @@ function hatchAllEggsNow() {
     ? `🐣 ${summary.hatched} ovo${summary.hatched === 1 ? '' : 's'} chocado${summary.hatched === 1 ? '' : 's'}! ${rarityBreakdown}`
     : '🎒 Inventário de mascotes já está cheio — nenhum ovo chocado.';
   if (summary.discardedCount > 0) {
-    msg += ` — inventário cheio: ${summary.discardedCount} viraram +${formatNumber(summary.fragmentsGained)} 🧩 Fragmentos.`;
+    msg += ` — inventário cheio: ${summary.discardedCount} viraram +${formatNumber(summary.fragmentsGained)} ${PET_FRAGMENT_ICON} Fragmentos.`;
   } else if (summary.stoppedInventoryFull) {
     const remaining = state.eggCount || 0;
     msg += ` Parou no limite do inventário — ${formatNumber(remaining)} ovo${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'} guardado${remaining === 1 ? '' : 's'} pra depois.`;
