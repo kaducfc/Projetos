@@ -1423,7 +1423,7 @@ function arenaFightPanelHtml(state, runRemainingMs) {
           <h3>Aeternox</h3>
           <div class="arena-monster-title">Colosso do Infinito</div>
           <button id="arena-target-sprite" class="event-boss-sprite"><img src="assets/ui/events/arena-monster.png" alt="Aeternox"></button>
-          <div class="arena-rank-label">${currentRank.name}</div>
+          <div class="arena-rank-label" style="color: ${currentRank.color}">${currentRank.name}</div>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">Dano causado: ${formatNumber(damage)}</span></div>
         </div>
       </div>
