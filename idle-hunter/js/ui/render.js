@@ -1386,7 +1386,7 @@ function eventBannerRewardIconsHtml(icons) {
 function arenaBannerHtml(state) {
   const now = Date.now();
   const canEnter = canEnterArena(state, now);
-  const rewardIcons = eventBannerRewardIconsHtml([GOLD_ICON, EVENT_ICON, EGG_ICON]);
+  const rewardIcons = eventBannerRewardIconsHtml([CARD_FRAGMENT_ICON, EVENT_ICON, EGG_ICON]);
   let statusHtml;
   if (state.arenaRunActive) {
     statusHtml = `<div class="event-banner-status-value event-banner-status-value-solo">🔥 Em combate!</div>`;
@@ -1506,6 +1506,10 @@ function expeditionCardHtml(state, tier, ready, remainingMs) {
       ${btnHtml}
       <div class="expedition-rewards">
         <div>
+          <div class="expedition-reward-col-title">${GOLD_ICON} Ouro</div>
+          ${expeditionRewardRowsHtml(rewards.gold, GOLD_ICON)}
+        </div>
+        <div>
           <div class="expedition-reward-col-title">${EVENT_ICON} Moeda de Evento</div>
           ${expeditionRewardRowsHtml(rewards.currency, EVENT_ICON)}
         </div>
@@ -1529,7 +1533,7 @@ function expeditionBannerHtml(state) {
   const now = Date.now();
   const ready = canEnterExpedition(state, now);
   const remainingMs = expeditionRemainingMs(state, now);
-  const rewardIcons = eventBannerRewardIconsHtml([EVENT_ICON, EGG_ICON]);
+  const rewardIcons = eventBannerRewardIconsHtml([EVENT_ICON, EGG_ICON, GOLD_ICON]);
   const statusHtml = ready
     ? `<div class="event-banner-status-value event-banner-status-value-solo">Pronto!</div>`
     : `<div class="event-banner-status-label">Disponível em:</div><div class="event-banner-status-value">${expeditionDurationLabel(remainingMs)}</div>`;
