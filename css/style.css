@@ -2056,6 +2056,23 @@ button:disabled {
   overflow: hidden;
 }
 
+/* Título do evento sobreposto na arte (a arte nova não vem com nome
+   embutido, ao contrário dos banners antigos) — canto superior esquerdo,
+   bem acima da fileira "RECOMPENSAS", fonte grande. Largura limitada a
+   55% pra nunca encostar na caixa de status (que começa em ~59%). */
+.event-banner-title {
+  position: absolute;
+  left: 4%;
+  top: 8%;
+  width: 53%;
+  text-align: left;
+  font-size: clamp(15px, 5.2vw, 26px);
+  font-weight: 800;
+  line-height: 1.15;
+  color: #fff;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .7), 0 0 10px rgba(0, 0, 0, .5);
+}
+
 .event-banner-status-box {
   position: absolute;
   left: 76.45%;
@@ -2067,7 +2084,7 @@ button:disabled {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .event-banner-status-label {
@@ -2084,15 +2101,24 @@ button:disabled {
   text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
 }
 
+/* Botão "Entrar" real (assets/ui/entrar-button.png, mesma arte dos banners
+   antigos, pedido explícito do usuário) — sempre embaixo da caixa de
+   status, na mesma coluna (mesmo left/transform), só aparece quando o
+   status mostra "Pronto!" (ver arenaBannerHtml/expeditionBannerHtml). */
 .event-banner-enter-btn {
-  padding: clamp(6px, 2vw, 10px) clamp(14px, 5vw, 24px);
+  position: absolute;
+  left: 76.45%;
+  top: 51%;
+  transform: translate(-50%, -50%);
+  width: 21%;
+  aspect-ratio: 500 / 190;
+  padding: 0;
   border: none;
   border-radius: 10px;
-  font-weight: 800;
-  font-size: clamp(11px, 3vw, 15px);
-  color: #fff;
-  background: var(--grad-event);
-  box-shadow: 0 2px 0 var(--event-dark);
+  background: transparent;
+  background-image: url('../assets/ui/entrar-button.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
 /* Preview icons dropados nos 3 quadrados vazios "RECOMPENSAS" do banner —
@@ -2187,13 +2213,6 @@ button:disabled {
    botão Entrar (ou o cooldown compartilhado contando, quando travado) e as
    2 colunas de recompensa (Moeda de Evento / Ovo de Mascote) com as linhas
    de chance de bônus. */
-.expedition-section-title {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text);
-  text-align: center;
-  margin: 4px 0 10px;
-}
 
 .expedition-tier-grid {
   display: flex;

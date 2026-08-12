@@ -1386,13 +1386,14 @@ function eventBannerRewardIconsHtml(icons) {
 function arenaBannerHtml(state) {
   const canEnter = canEnterArena(state);
   const rewardIcons = eventBannerRewardIconsHtml([GOLD_ICON, EVENT_ICON, EGG_ICON]);
-  const statusBoxHtml = state.arenaRunActive
-    ? `<div class="event-banner-status-label">🔥 Em combate!</div>`
-    : `<button class="event-banner-enter-btn" data-arena-enter>Entrar</button>`;
+  const statusLabel = state.arenaRunActive ? '🔥 Em combate!' : 'Pronto!';
+  const enterBtnHtml = canEnter ? `<button class="event-banner-enter-btn" data-arena-enter aria-label="Entrar"></button>` : '';
   return `<div class="event-card event-card-banner">
     <div class="event-banner" style="background-image: url('assets/ui/events/banner-arena.png')">
+      <div class="event-banner-title">⚔️ Combate Permanente</div>
       ${rewardIcons}
-      <div class="event-banner-status-box">${statusBoxHtml}</div>
+      <div class="event-banner-status-box"><div class="event-banner-status-value">${statusLabel}</div></div>
+      ${enterBtnHtml}
     </div>
     <div class="event-banner-caption-row">
       <p class="event-sub">Um saco de pancada que não revida — cause o máximo de dano possível em 30 segundos e suba de Rank.</p>
@@ -1510,47 +1511,56 @@ function expeditionCardHtml(state, tier, ready, remainingMs) {
 
 // A janela de status do banner encaixa perfeitamente o cooldown único e
 // compartilhado da Expedição (ver canEnterExpedition/expeditionRemainingMs
-// em systems/expedition.js) — mesmo padrão "Abre em:"/"Pronto!" de status
-// que os banners antigos já usavam, só que sem "Entrar" aqui dentro: com 3
-// durações pra escolher, a ação de verdade continua nos 3 cartões abaixo.
+// em systems/expedition.js) — mesmo padrão "Abre em:"/"Pronto!" que os
+// banners antigos já usavam. Quando pronto, o botão "Entrar" aparece
+// embaixo da caixa de status (mesma arte/posição do Combate Permanente) —
+// aqui ele não inicia nada sozinho, só abre/fecha os 3 cartões de duração
+// abaixo (ver expeditionCardsVisible em main.js), já que a ação de
+// verdade (escolher 1h/4h/8h) precisa de uma 2ª escolha.
 function expeditionBannerHtml(state) {
   const now = Date.now();
   const ready = canEnterExpedition(state, now);
   const remainingMs = expeditionRemainingMs(state, now);
   const rewardIcons = eventBannerRewardIconsHtml([EVENT_ICON, EGG_ICON]);
   const statusHtml = ready
-    ? `<div class="event-banner-status-label">Pronto!</div>`
+    ? `<div class="event-banner-status-value">Pronto!</div>`
     : `<div class="event-banner-status-label">Disponível em:</div><div class="event-banner-status-value">${expeditionDurationLabel(remainingMs)}</div>`;
+  const enterBtnHtml = ready ? `<button class="event-banner-enter-btn" data-expedition-banner-enter aria-label="Entrar"></button>` : '';
   return `<div class="event-card event-card-banner">
     <div class="event-banner" style="background-image: url('assets/ui/events/banner-expedicao.png')">
+      <div class="event-banner-title">🧭 Expedição do Caçador</div>
       ${rewardIcons}
       <div class="event-banner-status-box">${statusHtml}</div>
+      ${enterBtnHtml}
     </div>
   </div>`;
 }
 
-function expeditionSectionHtml(state) {
+function expeditionSectionHtml(state, cardsVisible) {
   const now = Date.now();
   const ready = canEnterExpedition(state, now);
   const remainingMs = expeditionRemainingMs(state, now);
-  const cardsHtml = EXPEDITION_TIERS.map((tier) => expeditionCardHtml(state, tier, ready, remainingMs)).join('');
+  const cardsHtml = cardsVisible
+    ? `
+      <div class="expedition-tier-grid">${EXPEDITION_TIERS.map((tier) => expeditionCardHtml(state, tier, ready, remainingMs)).join('')}</div>
+      <p class="expedition-note">Escolha 1 duração — a recompensa é concedida na hora, e as 3 ficam bloqueadas até o tempo escolhido passar. A linha garantida (sem %) sempre entra; as demais se somam quando o bônus bate.</p>
+    `
+    : '';
   return `
     <div class="expedition-section">
       ${expeditionBannerHtml(state)}
-      <div class="expedition-section-title">🧭 Expedição do Caçador</div>
-      <div class="expedition-tier-grid">${cardsHtml}</div>
-      <p class="expedition-note">Escolha 1 duração — a recompensa é concedida na hora, e as 3 ficam bloqueadas até o tempo escolhido passar. A linha garantida (sem %) sempre entra; as demais se somam quando o bônus bate.</p>
+      ${cardsHtml}
     </div>`;
 }
 
-export function renderEventsTab(state, arenaRunRemainingMs = null) {
+export function renderEventsTab(state, arenaRunRemainingMs = null, expeditionCardsVisible = false) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `
     <img class="section-banner-img" src="assets/ui/titles/eventos.png" alt="Eventos">
     <div class="event-list">
     ${arenaBannerHtml(state)}
     ${state.arenaRunActive ? arenaFightPanelHtml(state, arenaRunRemainingMs) : ''}
-    ${expeditionSectionHtml(state)}
+    ${expeditionSectionHtml(state, expeditionCardsVisible)}
   </div>`;
 }
 
