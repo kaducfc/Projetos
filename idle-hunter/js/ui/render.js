@@ -1418,10 +1418,11 @@ function arenaFightPanelHtml(state, runRemainingMs) {
     <p class="arena-fight-desc">Um monstro que não revida, cause o máximo de dano possível em 30 segundos, suba de rank e ganhe recompensas.</p>
     <div class="event-card">
       <div class="event-card-body">
-        <div class="event-panel">
+        <div class="event-panel arena-scene-panel" style="background-image: url('assets/ui/events/arena-scene.png')">
           <div class="event-active-badge">⚔️ ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
-          <h3>Saco de Pancada <span class="boss-tag">TREINO</span></h3>
-          <button id="arena-target-sprite" class="event-boss-sprite">🥊</button>
+          <h3>Aeternox</h3>
+          <div class="arena-monster-title">Colosso do Infinito</div>
+          <button id="arena-target-sprite" class="event-boss-sprite"><img src="assets/ui/events/arena-monster.png" alt="Aeternox"></button>
           <div class="arena-rank-label">${currentRank.name}</div>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${pct.toFixed(0)}%${nextRank ? ` para ${nextRank.name}` : ' — RANK MÁXIMO'}</span></div>
           <p class="event-reward-info">🎯 Dano causado: ${formatNumber(damage)}${nextRank ? ` (faltam ${formatNumber(Math.max(0, nextRank.damageThreshold - damage))} para o próximo rank)` : ''}</p>
