@@ -2103,6 +2103,13 @@ button:disabled {
   transform: translateY(-10%);
 }
 
+/* "Pronto!"/"Em combate!" aparecem sozinhos na caixa (sem rótulo em cima)
+   — o ajuste de -10% do valor emparelhado com o rótulo não se aplica
+   aqui, a posição sem rótulo já estava perfeita antes desse ajuste. */
+.event-banner-status-value-solo {
+  transform: none;
+}
+
 /* Botão "Entrar" real (assets/ui/entrar-button.png, mesma arte dos banners
    antigos, pedido explícito do usuário) — sempre embaixo da caixa de
    status, na mesma coluna (mesmo left/transform), só aparece quando o
