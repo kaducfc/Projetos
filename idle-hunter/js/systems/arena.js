@@ -1,10 +1,15 @@
-import { ARENA_RUN_DURATION_MS, getArenaRankForDamage } from '../data/arena.js';
+import { ARENA_RUN_DURATION_MS, ARENA_COOLDOWN_MS, getArenaRankForDamage } from '../data/arena.js';
 import { CARD_FRAGMENT_ID } from '../data/cards.js';
 import { WEAK_MONSTER_GROUPS } from '../data/monsters.js';
 import { isZoneUnlocked } from './leveling.js';
 
-export function canEnterArena(state) {
-  return !state.arenaRunActive;
+export function canEnterArena(state, now = Date.now()) {
+  if (state.arenaRunActive) return false;
+  return !state.arenaReadyAt || state.arenaReadyAt <= now;
+}
+
+export function arenaRemainingMs(state, now = Date.now()) {
+  return Math.max(0, (state.arenaReadyAt || 0) - now);
 }
 
 export function startArenaRun(state) {
@@ -101,8 +106,9 @@ export function endArenaRun(state) {
   const damageDealt = state.arenaDamageDealt;
   state.arenaRunActive = false;
   state.arenaDamageDealt = 0;
+  state.arenaReadyAt = Date.now() + ARENA_COOLDOWN_MS;
 
   return { rank: finalRank, damageDealt, materialsGranted };
 }
 
-export { ARENA_RUN_DURATION_MS };
+export { ARENA_RUN_DURATION_MS, ARENA_COOLDOWN_MS };

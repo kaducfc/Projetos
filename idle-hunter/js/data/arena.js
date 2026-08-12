@@ -1,10 +1,12 @@
 // "Combate Permanente": um saco de pancada que nunca revida, por
 // ARENA_RUN_DURATION_MS (30s) — o dano total causado no fim do tempo decide
 // em qual Rank o caçador termina (ver getArenaRankForDamage abaixo e
-// systems/arena.js endArenaRun). Sem janela por ciclo nem cooldown — o nome
-// "Permanente" é literal, dá pra tentar de novo assim que o combate atual
-// terminar (ver canEnterArena em systems/arena.js).
+// systems/arena.js endArenaRun). Depois que o combate termina, um
+// cooldown de ARENA_COOLDOWN_MS (5 min) trava uma nova entrada — pedido
+// explícito do usuário (ver canEnterArena/arenaRemainingMs em
+// systems/arena.js).
 export const ARENA_RUN_DURATION_MS = 30 * 1000;
+export const ARENA_COOLDOWN_MS = 5 * 60 * 1000;
 
 // 7 tiers x 5 ranks cada = 35 degraus, do Ferro 5 (índice 0, 0 de dano) ao
 // Lendário 1 (índice 34, ARENA_MAX_DAMAGE de dano) — dentro de um tier o

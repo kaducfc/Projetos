@@ -13,7 +13,7 @@ import { getItem, getRarity } from './data/items.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
 import { enterExpedition } from './systems/expedition.js';
-import { ARENA_RUN_DURATION_MS, canEnterArena, startArenaRun, applyArenaDamage, endArenaRun } from './systems/arena.js';
+import { ARENA_RUN_DURATION_MS, ARENA_COOLDOWN_MS, canEnterArena, startArenaRun, applyArenaDamage, endArenaRun } from './systems/arena.js';
 import { claimAchievement } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
@@ -910,11 +910,11 @@ function wireInventoryTabEvents() {
 
 // ---------------------------------------------------------------
 // Combate Permanente (ver systems/arena.js) — saco de pancada que nunca
-// revida, num clock fixo de 30s (ARENA_RUN_DURATION_MS). Sem janela por
-// ciclo: canEnterArena só bloqueia 2 combates simultâneos, não um cooldown.
-// A cada tick só se resolve o dano do próprio caçador (+pet/Golpe Duplo)
-// contra o alvo fictício 'neutro' — nada de HP descendo, applyArenaDamage
-// só acumula o total causado.
+// revida, num clock fixo de 30s (ARENA_RUN_DURATION_MS). Ao terminar, um
+// cooldown de 5min (ARENA_COOLDOWN_MS) trava uma nova entrada — ver
+// canEnterArena. A cada tick só se resolve o dano do próprio caçador
+// (+pet/Golpe Duplo) contra o alvo fictício 'neutro' — nada de HP
+// descendo, applyArenaDamage só acumula o total causado.
 // ---------------------------------------------------------------
 
 let nextArenaHitAt = null;
@@ -953,6 +953,7 @@ function showArenaRewardModal(rank, damageDealt, materialsGranted) {
     <p>Dano total causado: <strong>${formatNumber(damageDealt)}</strong></p>
     <p><strong>Recompensas:</strong></p>
     ${lines.join('')}
+    <p class="event-sub">Você poderá entrar em outro combate em ${expeditionDurationLabel(ARENA_COOLDOWN_MS)}.</p>
   `);
 }
 

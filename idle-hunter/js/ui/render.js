@@ -13,7 +13,7 @@ import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, HUNTER_MAX_LEVEL } from 
 import { EXPEDITION_TIERS, EXPEDITION_REWARDS } from '../data/events.js';
 import { canEnterExpedition, expeditionRemainingMs } from '../systems/expedition.js';
 import { ARENA_RANKS, getArenaRankForDamage, getArenaRankByIndex } from '../data/arena.js';
-import { canEnterArena } from '../systems/arena.js';
+import { canEnterArena, arenaRemainingMs } from '../systems/arena.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
 import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
@@ -1384,15 +1384,23 @@ function eventBannerRewardIconsHtml(icons) {
 // showing the current rank name and a progress bar toward the next one
 // (filled by cumulative damage dealt, not HP draining down).
 function arenaBannerHtml(state) {
-  const canEnter = canEnterArena(state);
+  const now = Date.now();
+  const canEnter = canEnterArena(state, now);
   const rewardIcons = eventBannerRewardIconsHtml([GOLD_ICON, EVENT_ICON, EGG_ICON]);
-  const statusLabel = state.arenaRunActive ? '🔥 Em combate!' : 'Pronto!';
+  let statusHtml;
+  if (state.arenaRunActive) {
+    statusHtml = `<div class="event-banner-status-value">🔥 Em combate!</div>`;
+  } else if (canEnter) {
+    statusHtml = `<div class="event-banner-status-value">Pronto!</div>`;
+  } else {
+    statusHtml = `<div class="event-banner-status-label">Disponível em:</div><div class="event-banner-status-value">${expeditionDurationLabel(arenaRemainingMs(state, now))}</div>`;
+  }
   const enterBtnHtml = canEnter ? `<button class="event-banner-enter-btn" data-arena-enter aria-label="Entrar"></button>` : '';
   return `<div class="event-card event-card-banner">
     <div class="event-banner" style="background-image: url('assets/ui/events/banner-arena.png')">
       <div class="event-banner-title">Combate Permanente</div>
       ${rewardIcons}
-      <div class="event-banner-status-box"><div class="event-banner-status-value">${statusLabel}</div></div>
+      <div class="event-banner-status-box">${statusHtml}</div>
       ${enterBtnHtml}
     </div>
     <div class="event-banner-caption-row">

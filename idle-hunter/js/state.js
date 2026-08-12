@@ -103,12 +103,15 @@ export function createDefaultState() {
 
     // Combate Permanente (see data/arena.js + systems/arena.js): um saco de
     // pancada de 30s que nunca revida — o dano total causado decide o Rank
-    // final ao fechar (ver endArenaRun). Sem janela por ciclo nem cooldown,
-    // só não dá pra ter 2 combates rodando ao mesmo tempo (ver
-    // canEnterArena). O clock de 30s em si NÃO é persistido — um reload dá
-    // um ataque novo (mesmo progresso acumulado, clock reiniciado).
+    // final ao fechar (ver endArenaRun), que também arma arenaReadyAt (now +
+    // ARENA_COOLDOWN_MS, 5 min) — um cooldown único antes de poder entrar
+    // de novo (ver canEnterArena). O clock de 30s em si NÃO é persistido —
+    // um reload dá um ataque novo (mesmo progresso acumulado, clock
+    // reiniciado); o cooldown de 5 min já é por timestamp, então sobrevive
+    // a reload normalmente.
     arenaRunActive: false,
     arenaDamageDealt: 0,
+    arenaReadyAt: null,
 
     // Mascotes (ver data/pets.js + systems/pets.js): { uid, speciesId,
     // rarityId, level } — inventário próprio, não aparece na aba
