@@ -1649,7 +1649,7 @@ function arenaRankRowHtml(rank) {
   const { rewards } = rank;
   return `
     <details class="arena-rank-row">
-      <summary><span class="arena-rank-name">${rank.name}</span><span class="arena-rank-threshold">${formatNumber(rank.damageThreshold)} dano</span></summary>
+      <summary><span class="arena-rank-name" style="color:${rank.color}">${rank.name}</span><span class="arena-rank-threshold">${formatNumber(rank.damageThreshold)} dano</span></summary>
       <div class="arena-rank-rewards">
         ${arenaRewardLineHtml(GOLD_ICON, rewards.gold, 'Ouro')}
         ${rewards.eventCurrency > 0 ? arenaRewardLineHtml(EVENT_ICON, rewards.eventCurrency, 'Moeda de Evento') : ''}
