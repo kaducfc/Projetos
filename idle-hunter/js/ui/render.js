@@ -1415,12 +1415,12 @@ function arenaFightPanelHtml(state, runRemainingMs) {
     ? Math.max(0, Math.min(100, ((damage - currentRank.damageThreshold) / (nextRank.damageThreshold - currentRank.damageThreshold)) * 100))
     : 100;
   return `
+    <p class="arena-fight-desc">Um monstro que não revida, cause o máximo de dano possível em 30 segundos, suba de rank e ganhe recompensas.</p>
     <div class="event-card">
       <div class="event-card-body">
         <div class="event-panel">
           <div class="event-active-badge">⚔️ ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
           <h3>Saco de Pancada <span class="boss-tag">TREINO</span></h3>
-          <p class="event-sub">Um monstro que não revida, cause o máximo de dano possível em 30 segundos, suba de rank e ganhe recompensas.</p>
           <button id="arena-target-sprite" class="event-boss-sprite">🥊</button>
           <div class="arena-rank-label">${currentRank.name}</div>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${pct.toFixed(0)}%${nextRank ? ` para ${nextRank.name}` : ' — RANK MÁXIMO'}</span></div>
