@@ -70,6 +70,13 @@ export const ESMERALDA_ICON = `<img class="currency-icon" src="assets/ui/currenc
 export const CARD_ICON = `<img class="currency-icon" src="assets/ui/cards/card_generic.png" alt="Carta">`;
 export const CARD_FRAGMENT_ICON = `<img class="currency-icon" src="assets/ui/cards/card_fragment.png" alt="Fragmento de Carta">`;
 
+// Mesmo tratamento pro Ovo de Mascote (qualquer menção genérica a "ovo" —
+// contador, toast de drop, recompensa de evento/expedição/arena, etc.) e
+// pro Fragmento de Mascote (ver state.petFragments) — substituem os
+// antigos emoji 🥚/🧩 em todo lugar.
+export const EGG_ICON = `<img class="currency-icon" src="assets/ui/pets/egg_generic.png" alt="Ovo de Mascote">`;
+export const PET_FRAGMENT_ICON = `<img class="currency-icon" src="assets/ui/pets/egg_fragment.png" alt="Fragmento de Mascote">`;
+
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
   return `<img class="element-badge-icon" src="${el.image}" alt="${el.name}" title="${el.name}">`;
@@ -1161,8 +1168,8 @@ export function renderPetsTab(state, sortMode = null) {
   container.innerHTML = `
     <div class="section-banner section-banner-sm">🐾 Mascotes</div>
     <div class="pets-egg-row">
-      <span class="pets-egg-count">🥚 Ovos: <strong>${formatNumber(eggCount)}</strong></span>
-      <span class="pets-egg-count">🧩 Fragmentos: <strong>${formatNumber(state.petFragments || 0)}</strong></span>
+      <span class="pets-egg-count">${EGG_ICON} Ovos: <strong>${formatNumber(eggCount)}</strong></span>
+      <span class="pets-egg-count">${PET_FRAGMENT_ICON} Fragmentos: <strong>${formatNumber(state.petFragments || 0)}</strong></span>
       <button class="pets-hatch-btn" data-hatch-egg-btn ${eggCount < 1 ? 'disabled' : ''}>Chocar Ovo</button>
       <button class="pets-hatch-btn" data-hatch-all-btn ${canHatchAllEggs(state) ? '' : 'disabled'} title="${hatchAllTitle}">👑 Chocar Todos (${formatNumber(eggCount)})</button>
     </div>
@@ -1207,9 +1214,9 @@ function petXpSectionHtml(state, pet, uid) {
   const canDonate = canDonatePetFragments(state, uid);
   return `
     <div class="pet-xp-section">
-      <div class="pet-xp-label">🧩 XP: ${formatNumber(xp)} / ${formatNumber(xpNeeded)}</div>
+      <div class="pet-xp-label">${PET_FRAGMENT_ICON} XP: ${formatNumber(xp)} / ${formatNumber(xpNeeded)}</div>
       <div class="pet-xp-bar-outer"><div class="pet-xp-bar-fill" style="width:${pct}%"></div></div>
-      <button class="modal-action-btn" data-donate-pet-fragments-uid="${uid}" ${canDonate ? '' : 'disabled'}>🧩 Doar Fragmentos (+${formatNumber(toDonate)})</button>
+      <button class="modal-action-btn" data-donate-pet-fragments-uid="${uid}" ${canDonate ? '' : 'disabled'}>${PET_FRAGMENT_ICON} Doar Fragmentos (+${formatNumber(toDonate)})</button>
     </div>
   `;
 }
@@ -1239,7 +1246,7 @@ function petDetailHtml(state, uid, showFuseList) {
   const dpsBonusPercent = getPetDpsBonusPercent(pet);
   const xpSection = petXpSectionHtml(state, pet, uid);
   const recycleBtn = canRecyclePet(state, uid)
-    ? `<button class="modal-action-btn destroy-btn" data-recycle-pet-uid="${uid}">♻️ Reciclar (+${formatNumber(getPetRecycleValue(pet))} 🧩)</button>`
+    ? `<button class="modal-action-btn destroy-btn" data-recycle-pet-uid="${uid}">♻️ Reciclar (+${formatNumber(getPetRecycleValue(pet))} ${PET_FRAGMENT_ICON})</button>`
     : `<button class="modal-action-btn destroy-btn" disabled title="Mascote equipado não pode ser reciclado — desequipe ele primeiro">🔒 Reciclar</button>`;
   return `
     <div class="item-detail">
@@ -1646,7 +1653,7 @@ function arenaRankRowHtml(rank) {
       <div class="arena-rank-rewards">
         ${arenaRewardLineHtml(GOLD_ICON, rewards.gold, 'Ouro')}
         ${rewards.eventCurrency > 0 ? arenaRewardLineHtml(EVENT_ICON, rewards.eventCurrency, 'Moeda de Evento') : ''}
-        ${rewards.eggs > 0 ? arenaRewardLineHtml('🥚', rewards.eggs, 'Ovo de Mascote') : ''}
+        ${rewards.eggs > 0 ? arenaRewardLineHtml(EGG_ICON, rewards.eggs, 'Ovo de Mascote') : ''}
         ${rewards.materialsTotal > 0 ? arenaRewardLineHtml('📦', rewards.materialsTotal, 'Materiais de Monstros (várias zonas)') : ''}
         ${rewards.cardFragments > 0 ? arenaRewardLineHtml(CARD_FRAGMENT_ICON, rewards.cardFragments, CARD_FRAGMENT_NAME) : ''}
       </div>
@@ -1712,8 +1719,8 @@ function expeditionCardHtml(state, tier, ready, remainingMs) {
           ${expeditionRewardRowsHtml(rewards.currency, EVENT_ICON)}
         </div>
         <div>
-          <div class="expedition-reward-col-title">🥚 Ovo de Mascote</div>
-          ${expeditionRewardRowsHtml(rewards.eggs, '🥚')}
+          <div class="expedition-reward-col-title">${EGG_ICON} Ovo de Mascote</div>
+          ${expeditionRewardRowsHtml(rewards.eggs, EGG_ICON)}
         </div>
       </div>
     </div>`;
