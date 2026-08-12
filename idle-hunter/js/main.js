@@ -108,6 +108,11 @@ let skillResetConfirming = false;
 // 'element' reordenam só a EXIBIÇÃO (ver sortPetsForDisplay em
 // ui/render.js), nunca mexem em state.pets em si.
 let petSortMode = null;
+// Os 3 cartões de duração da Expedição do Caçador ficam escondidos até o
+// jogador clicar "Entrar" no banner — depois de escolher 1 e receber a
+// recompensa (ver enterExpeditionTier abaixo), voltam a ficar escondidos,
+// sobrando só o banner de vitrine. Pura UI state, não faz parte do save.
+let expeditionCardsVisible = false;
 
 function renderUpgradesTabNow() {
   renderUpgradesTab(state, skillResetConfirming);
@@ -164,7 +169,7 @@ function selectAllBulkEligible() {
 }
 
 function renderEventsTabNow() {
-  renderEventsTab(state, currentArenaRunRemainingMs());
+  renderEventsTab(state, currentArenaRunRemainingMs(), expeditionCardsVisible);
 }
 
 // Um chefe só tem cronômetro quando é o monstro ativo agora — nunca "trava
@@ -985,10 +990,18 @@ function tickArena() {
 function enterExpeditionTier(tierId) {
   const result = enterExpedition(state, tierId);
   if (!result) return;
+  expeditionCardsVisible = false;
   showExpeditionRewardModal(result);
   renderEventsTabNow();
   renderTopBar(state);
   renderPetsTabNow();
+}
+
+/// Botão "Entrar" do banner da Expedição — não inicia nada sozinho, só
+/// abre/fecha os 3 cartões de duração abaixo (ver expeditionCardsVisible).
+function toggleExpeditionCards() {
+  expeditionCardsVisible = !expeditionCardsVisible;
+  renderEventsTabNow();
 }
 
 function showExpeditionRewardModal(result) {
@@ -1007,6 +1020,11 @@ function wireEventTabEvents() {
   const container = document.getElementById('tab-events');
 
   container.addEventListener('click', (e) => {
+    if (e.target.closest('[data-expedition-banner-enter]')) {
+      toggleExpeditionCards();
+      return;
+    }
+
     const expeditionBtn = e.target.closest('[data-expedition-enter]');
     if (expeditionBtn) {
       enterExpeditionTier(expeditionBtn.dataset.expeditionEnter);
