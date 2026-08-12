@@ -1390,7 +1390,7 @@ function arenaBannerHtml(state) {
   const enterBtnHtml = canEnter ? `<button class="event-banner-enter-btn" data-arena-enter aria-label="Entrar"></button>` : '';
   return `<div class="event-card event-card-banner">
     <div class="event-banner" style="background-image: url('assets/ui/events/banner-arena.png')">
-      <div class="event-banner-title">⚔️ Combate Permanente</div>
+      <div class="event-banner-title">Combate Permanente</div>
       ${rewardIcons}
       <div class="event-banner-status-box"><div class="event-banner-status-value">${statusLabel}</div></div>
       ${enterBtnHtml}
@@ -1528,7 +1528,7 @@ function expeditionBannerHtml(state) {
   const enterBtnHtml = ready ? `<button class="event-banner-enter-btn" data-expedition-banner-enter aria-label="Entrar"></button>` : '';
   return `<div class="event-card event-card-banner">
     <div class="event-banner" style="background-image: url('assets/ui/events/banner-expedicao.png')">
-      <div class="event-banner-title">🧭 Expedição do Caçador</div>
+      <div class="event-banner-title">Expedição do Caçador</div>
       ${rewardIcons}
       <div class="event-banner-status-box">${statusHtml}</div>
       ${enterBtnHtml}
