@@ -87,52 +87,9 @@ export function createDefaultState() {
     lastAdWatchTime: null,
     achievementsClaimed: {}, // achievementId -> true
 
-    // Caça Aprimorada: a random boss (among those the player has already
-    // reached, see pickEligibleEventBoss in systems/events.js) is rolled
-    // the moment the player clicks "Entrar" during the window (see
-    // data/events.js) — eventEnteredCycle blocks a second entry that same
-    // window (even across a reload). eventBossId records which boss this
-    // run's fight is against; eventBossHp/eventBossMaxHp persist so an
-    // in-progress fight survives a reload (it has no timer of its own —
-    // only clicking "Entrar" is time-gated); eventClaimedCycle blocks
-    // re-entering after a win, same window.
+    // Moeda de Evento — moeda compartilhada entre os eventos ainda no jogo
+    // (Expedição do Caçador, Combate Permanente) e a Loja (aba Evento).
     eventCurrency: 0,
-    eventBossId: null,
-    eventBossHp: null,
-    eventBossMaxHp: null,
-    eventEnteredCycle: null,
-    eventClaimedCycle: null,
-    eventWins: 0,
-
-    // Torre Infinita (see data/events.js + systems/tower.js): a single
-    // continuous run through 200 levels, entered once per TOWER_ACTIVE_MS
-    // window. towerEnteredCycle blocks a second entry within that same
-    // window (even across a reload); towerRunActive/towerLevel/
-    // towerMonsterHp/towerWeakMonsterId are the persisted run state so an
-    // in-progress climb survives a reload the same way normal combat does.
-    // The run's own 5-minute clock is intentionally NOT persisted (see
-    // main.js) — same "a reload gives a fresh attempt clock" trade-off
-    // already made for the boss timer and the Caça Aprimorada attempt.
-    towerRunActive: false,
-    towerLevel: 1,
-    towerMonsterHp: null,
-    towerWeakMonsterId: null,
-    towerEnteredCycle: null,
-    towerBestLevel: 0,
-
-    // Mina de Ouro (see data/events.js + systems/goldmine.js): a single
-    // fixed Gold Boss fought on its own short 35s clock, entered once per
-    // GOLDMINE_ACTIVE_MS window. goldMineEnteredCycle blocks a second entry
-    // within that same window; goldMineRunActive/goldMineBossHp/
-    // goldMineDamageDealt are the persisted run state so an in-progress
-    // fight survives a reload. The run's own 35s clock is intentionally
-    // NOT persisted (see main.js) — same "a reload gives a fresh attempt
-    // clock" trade-off already made for the boss timer/Torre/Caça
-    // Aprimorada attempts.
-    goldMineRunActive: false,
-    goldMineBossHp: 0,
-    goldMineDamageDealt: 0,
-    goldMineEnteredCycle: null,
 
     // Expedição do Caçador (see data/events.js EXPEDITION_TIERS + systems/
     // expedition.js): sem luta — Entrar concede a recompensa na hora e arma
@@ -148,8 +105,8 @@ export function createDefaultState() {
     // pancada de 30s que nunca revida — o dano total causado decide o Rank
     // final ao fechar (ver endArenaRun). Sem janela por ciclo nem cooldown,
     // só não dá pra ter 2 combates rodando ao mesmo tempo (ver
-    // canEnterArena). O clock de 30s em si NÃO é persistido (mesmo trade-off
-    // já feito pra Torre/Mina — ver main.js), só o progresso acumulado.
+    // canEnterArena). O clock de 30s em si NÃO é persistido — um reload dá
+    // um ataque novo (mesmo progresso acumulado, clock reiniciado).
     arenaRunActive: false,
     arenaDamageDealt: 0,
 

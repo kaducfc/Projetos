@@ -12,10 +12,6 @@ import { enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscensio
 import { getItem, getRarity } from './data/items.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
-import { getTowerWindow, TOWER_RUN_DURATION_MS, GOLDMINE_FIGHT_DURATION_MS } from './data/events.js';
-import { applyEventDamage, claimEventVictory, startEvent, resetEventEncounter } from './systems/events.js';
-import { canEnterTower, startTowerRun, ensureTowerMonsterSpawned, getTowerMonster, applyTowerDamage, endTowerRun } from './systems/tower.js';
-import { startGoldMineRun, applyGoldMineDamage, endGoldMineRun } from './systems/goldmine.js';
 import { enterExpedition } from './systems/expedition.js';
 import { ARENA_RUN_DURATION_MS, canEnterArena, startArenaRun, applyArenaDamage, endArenaRun } from './systems/arena.js';
 import { claimAchievement } from './systems/achievements.js';
@@ -36,8 +32,8 @@ import {
   renderAll, renderTopBar, renderHunterLevel, renderCombatStats, renderMonster, renderNoMonsterSelected,
   renderInventoryTab, renderUpgradesTab, renderBossTimer,
   renderPlayerHp, spawnDamagePopup, spawnPetDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
-  showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab, pulseEventBoss,
-  renderCardsTab, showCardDetailModal, iconMarkup, pulseTowerMonster, pulseGoldMineBoss,
+  showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab,
+  renderCardsTab, showCardDetailModal, iconMarkup,
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   EGG_ICON, PET_FRAGMENT_ICON,
@@ -65,27 +61,9 @@ function resetPlayerHp() {
   currentHp = computePlayerStats(state).maxHp;
 }
 
-// Torre Infinita run clock + the player's HP pool while inside it — both
-// transient, same "a reload gives a fresh attempt" trade-off already made
-// for the boss timer and the Caça Aprimorada attempt above. Re-armed from
-// state.towerRunActive on init() if a run was mid-flight at save time.
-let towerDeadline = null;
-let towerHp = null;
-
-function currentTowerRunRemainingMs() {
-  return towerDeadline == null ? null : Math.max(0, towerDeadline - Date.now());
-}
-
-// Mina de Ouro's own 35s fight clock — same "a reload gives a fresh
-// attempt" trade-off as towerDeadline above (not persisted).
-let goldMineDeadline = null;
-
-function currentGoldMineRunRemainingMs() {
-  return goldMineDeadline == null ? null : Math.max(0, goldMineDeadline - Date.now());
-}
-
 // Combate Permanente's own 30s fight clock — same "a reload gives a fresh
-// attempt" trade-off as towerDeadline/goldMineDeadline above (not persisted).
+// attempt" trade-off already made for the boss timer and the Caça
+// Aprimorada attempt above (not persisted).
 let arenaDeadline = null;
 
 function currentArenaRunRemainingMs() {
@@ -186,9 +164,7 @@ function selectAllBulkEligible() {
 }
 
 function renderEventsTabNow() {
-  const towerMaxHp = state.towerRunActive ? computePlayerStats(state).maxHp : null;
-  if (towerHp != null && towerMaxHp != null) towerHp = Math.min(towerHp, towerMaxHp);
-  renderEventsTab(state, currentTowerRunRemainingMs(), towerHp, towerMaxHp, currentGoldMineRunRemainingMs(), currentArenaRunRemainingMs());
+  renderEventsTab(state, currentArenaRunRemainingMs());
 }
 
 // Um chefe só tem cronômetro quando é o monstro ativo agora — nunca "trava
@@ -323,10 +299,10 @@ function totalIncomingReduction(stats, monsterElement) {
 }
 
 // Relógio de hit discreto do combate principal (Caça) — cada contexto de
-// combate tem o seu (ver tickEventBoss/tickTower/tickGoldMine abaixo),
-// independente entre si. Sem clique: o personagem golpeia sozinho no ritmo
-// de attackSpeedPerSec (ver systems/stats.js), e advanceHitClock() (ver
-// systems/combat.js) decide a cada tick se já é hora do próximo golpe.
+// combate tem o seu (ver tickArena abaixo), independente entre si. Sem
+// clique: o personagem golpeia sozinho no ritmo de attackSpeedPerSec (ver
+// systems/stats.js), e advanceHitClock() (ver systems/combat.js) decide a
+// cada tick se já é hora do próximo golpe.
 let nextHitAt = null;
 
 function tick() {
@@ -338,13 +314,6 @@ function tick() {
   const stats = computePlayerStats(state, currentHp);
   currentHp = Math.min(currentHp, stats.maxHp);
 
-  // Runs unconditionally, before the main-hunt combat below — that block
-  // can `return` early on a kill, and a fast attack-speed build can kill
-  // the main monster almost every tick, which would otherwise starve the
-  // event boss of its own ticks entirely.
-  tickEventBoss(stats);
-  tickTower();
-  tickGoldMine();
   tickArena();
 
   ensureMonsterSpawned(state);
@@ -935,266 +904,12 @@ function wireInventoryTabEvents() {
 }
 
 // ---------------------------------------------------------------
-// Events tab — Caça Aprimorada: click "Entrar" during the window (see
-// data/events.js) to roll a random eligible boss and start fighting it
-// immediately — the fight itself is 100% automático (tickEventBoss(),
-// called from the main tick() loop above), no clique. The only difference
-// from a normal monster: no damage comes back to the player, and there's no
-// clock on the fight itself once entered — only entry (once per window) is
-// time-gated. #tab-events is never recreated by innerHTML wholesale during
-// a fight (renderEventsTab only ever replaces its own contents, same
-// container), so the delegated listener from wireEventTabEvents() (see
-// init()) is wired once and keeps working across every re-render.
-// ---------------------------------------------------------------
-
-function enterEvent() {
-  const boss = startEvent(state);
-  if (!boss) return;
-  showToast(`🎪 Você entrou na Invasão de Chefes! Enfrentando ${boss.name}.`);
-  renderEventsTabNow();
-  renderTopBar(state);
-}
-
-/// Encerra a Invasão de Chefes em andamento sem derrotar o chefe — ao
-/// contrário da Torre/Mina de Ouro (que sempre recompensam pelo progresso,
-/// ver finishTowerRun/finishGoldMine), a Invasão só recompensa na vitória
-/// (ver claimEventVictory), então desistir não dá nada. A entrada dessa
-/// janela já foi consumida (eventEnteredCycle), então isso só libera a tela
-/// de volta pro banner "Fecha em:"/"Abre em:" sem gastar uma segunda
-/// tentativa.
-function giveUpEvent() {
-  if (state.eventBossHp == null) return;
-  resetEventEncounter(state);
-  showToast('🚪 Invasão de Chefes encerrada.');
-  renderEventsTabNow();
-}
-
-/// Called from tickEventBoss() (see above) — whichever tick lands the
-/// killing blow reports the same way.
-function handleEventBossVictory(boss) {
-  const { gained, currency, cardDropped, eggGained } = claimEventVictory(state, state.eventEnteredCycle, boss);
-  showEventRewardModal(boss, gained, currency, cardDropped);
-  if (eggGained) { showToast(`${EGG_ICON} Ovo de mascote encontrado!`); renderPetsTabNow(); }
-  renderTopBar(state);
-  renderInventoryTabNow();
-  renderCardsTab(state);
-  renderShopTab(state, activeShopSubTab);
-  renderEventsTabNow();
-}
-
-function showEventRewardModal(boss, gained, currency, cardDropped) {
-  const lootLines = Object.values(gained)
-    .map((g) => `<div class="offline-item-lines">+${g.qty} <span class="icon">${iconMarkup(g.image, g.emoji, g.name)}</span> ${g.name}</div>`)
-    .join('');
-  const cardBanner = cardDropped
-    ? `<div class="mega-drop-banner">🌟 MEGA DROP! 🌟<br><span class="icon">${iconMarkup(cardDropped.image, cardDropped.emoji, cardDropped.name)}</span> +1 ${cardDropped.name}</div>`
-    : '';
-  showModal(`🎉 ${boss.name} derrotado!`, `
-    ${cardBanner}
-    <p><strong>Recompensas:</strong></p>
-    ${lootLines}
-    <p class="offline-item-lines">+${formatNumber(currency)} ${EVENT_ICON} Moeda de Evento</p>
-  `);
-}
-
-// Relógio de hit próprio do chefe de evento — sem clique, resolve um golpe
-// discreto por vez no ritmo de attackSpeedPerSec, igual ao combate
-// principal (ver tick() acima).
-let nextEventHitAt = null;
-
-/// Called every game tick (see tick() above) — resolves the event boss's
-/// own discrete hits while a fight is in progress.
-function tickEventBoss(stats) {
-  if (state.eventBossHp == null) return;
-  const boss = BOSSES.find((b) => b.id === state.eventBossId);
-  if (!boss) return;
-
-  const clock = advanceHitClock(nextEventHitAt, stats.attackSpeedPerSec);
-  nextEventHitAt = clock.nextHitAt;
-  if (clock.hit && stats.dps > 0) {
-    const elementalMultiplier = (1 + elementDamageModifier(stats.weaponElement, boss.element))
-      * getActivePetDpsMultiplier(state, boss.element);
-    const hit = resolveHit(state, stats, elementalMultiplier);
-    const petHit = resolvePetHit(state, boss.element, stats);
-    const doubleHit = resolveDoubleHit(stats, elementalMultiplier);
-    const killed = applyEventDamage(state, hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0));
-    if (stats.lifesteal) currentHp = Math.min(currentHp + stats.lifesteal, stats.maxHp);
-    pulseEventBoss();
-    if (killed) {
-      handleEventBossVictory(boss);
-      return;
-    }
-  }
-  renderEventsTabNow();
-}
-
-// ---------------------------------------------------------------
-// Torre Infinita — a continuous climb through 200 levels, entered from a
-// recurring window (see data/events.js) and fought 100% automaticamente
-// (discrete hits out, monster DPS in — see tickTower() above), but against
-// its own separate HP pool (towerHp) so it never touches the player's
-// main-hunt fight. Ends on death, on the run's own 5-minute clock running out, or on
-// clearing the level 200 boss — see endTowerRun() in systems/tower.js for
-// the reward calculation.
-// ---------------------------------------------------------------
-
-function enterTower() {
-  if (!startTowerRun(state)) return;
-  towerDeadline = Date.now() + TOWER_RUN_DURATION_MS;
-  towerHp = computePlayerStats(state).maxHp;
-  showToast('🗼 Você entrou na Torre das Provações! Suba o quanto conseguir em 5 minutos.');
-  renderEventsTabNow();
-  renderTopBar(state);
-}
-
-function finishTowerRun(cleared200) {
-  const { level, currency, goldGained, gained, eggsGained, cardFragmentsGained } = endTowerRun(state, cleared200);
-  towerDeadline = null;
-  towerHp = null;
-  showTowerRewardModal(level, cleared200, currency, goldGained, gained, eggsGained, cardFragmentsGained);
-  renderPetsTabNow();
-  renderEventsTabNow();
-  renderTopBar(state);
-  renderInventoryTabNow();
-}
-
-function showTowerRewardModal(level, cleared200, currency, goldGained, gained, eggsGained, cardFragmentsGained) {
-  const lootLines = Object.values(gained)
-    .map((g) => `<div class="offline-item-lines">+${g.qty} <span class="icon">${iconMarkup(g.image, g.emoji, g.name)}</span> ${g.name}</div>`)
-    .join('');
-  const title = cleared200 ? '👑 Torre conquistada!' : `🗼 Torre encerrada no nível ${level}`;
-  showModal(title, `
-    <p><strong>Recompensas:</strong></p>
-    <p class="offline-item-lines">+${formatNumber(goldGained)} ${GOLD_ICON} Ouro</p>
-    ${lootLines}
-    <p class="offline-item-lines">+${formatNumber(currency)} ${EVENT_ICON} Moeda de Evento</p>
-    <p class="offline-item-lines">+${formatNumber(eggsGained)} ${EGG_ICON} Ovo${eggsGained === 1 ? '' : 's'} de Mascote</p>
-    <p class="offline-item-lines">+${formatNumber(cardFragmentsGained)} ${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}</p>
-  `);
-}
-
-// Relógio de hit próprio da Torre — mesma lógica de tickEventBoss acima.
-let nextTowerHitAt = null;
-
-/// Called every game tick — resolves the tower monster's discrete hits and
-/// its own DPS back into towerHp while a run is active, and closes out the
-/// run if its clock runs out or the player's tower HP hits 0.
-function tickTower() {
-  if (!state.towerRunActive) return;
-
-  if (Date.now() >= towerDeadline) {
-    finishTowerRun(false);
-    return;
-  }
-
-  const stats = computePlayerStats(state, towerHp);
-  towerHp = Math.min(towerHp, stats.maxHp);
-  ensureTowerMonsterSpawned(state);
-  const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
-
-  const clock = advanceHitClock(nextTowerHitAt, stats.attackSpeedPerSec);
-  nextTowerHitAt = clock.nextHitAt;
-  if (clock.hit && stats.dps > 0) {
-    const elementalMultiplier = (1 + elementDamageModifier(stats.weaponElement, monster.element))
-      * getActivePetDpsMultiplier(state, monster.element);
-    const hit = resolveHit(state, stats, elementalMultiplier);
-    const petHit = resolvePetHit(state, monster.element, stats);
-    const doubleHit = resolveDoubleHit(stats, elementalMultiplier);
-    const event = applyTowerDamage(state, hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0));
-    if (stats.lifesteal) towerHp = Math.min(towerHp + stats.lifesteal, stats.maxHp);
-    pulseTowerMonster();
-    if (event) {
-      if (event.cleared200) finishTowerRun(true);
-      else renderEventsTabNow();
-      return;
-    }
-  }
-
-  const reduction = totalIncomingReduction(stats, monster.element);
-  const incoming = rollDodge(stats) ? 0 : monster.dps * (1 - reduction) * (TICK_MS / 1000);
-  towerHp -= incoming;
-
-  if (towerHp <= 0) {
-    finishTowerRun(false);
-    return;
-  }
-
-  renderEventsTabNow();
-}
-
-// ---------------------------------------------------------------
-// Mina de Ouro — a single fixed Gold Boss (130M HP) fought on its own
-// short 35s clock, entered from a recurring window (see data/events.js).
-// Unlike the Torre or Caça Aprimorada, the Gold Boss never fights back
-// (no HP pool of its own to manage) and the run always ends in a reward:
-// killing it early or the clock running out both grant gold for however
-// much damage was actually dealt — see endGoldMineRun() in
-// systems/goldmine.js for the reward calculation.
-// ---------------------------------------------------------------
-
-function enterGoldMine() {
-  if (!startGoldMineRun(state)) return;
-  goldMineDeadline = Date.now() + GOLDMINE_FIGHT_DURATION_MS;
-  showToast('⛏️ Você entrou na Mina de Ouro! Cause o máximo de dano em 35 segundos.');
-  renderEventsTabNow();
-}
-
-function finishGoldMine() {
-  const { goldGained, eggGained } = endGoldMineRun(state);
-  goldMineDeadline = null;
-  showGoldMineRewardModal(goldGained);
-  if (eggGained) { showToast(`${EGG_ICON} Ovo de mascote encontrado!`); renderPetsTabNow(); }
-  renderEventsTabNow();
-  renderTopBar(state);
-}
-
-function showGoldMineRewardModal(goldGained) {
-  showModal('⛏️ Mina de Ouro encerrada', `
-    <p><strong>Recompensa:</strong></p>
-    <p class="offline-item-lines">+${formatNumber(goldGained)} ${GOLD_ICON} Ouro</p>
-  `);
-}
-
-// Relógio de hit próprio da Mina de Ouro — mesma lógica de tickEventBoss.
-let nextGoldMineHitAt = null;
-
-/// Called every game tick — resolves discrete hits against the Gold Boss
-/// while a run is active, and closes out the run if its clock runs out or
-/// the boss falls.
-function tickGoldMine() {
-  if (!state.goldMineRunActive) return;
-
-  if (Date.now() >= goldMineDeadline) {
-    finishGoldMine();
-    return;
-  }
-
-  const stats = computePlayerStats(state);
-  const clock = advanceHitClock(nextGoldMineHitAt, stats.attackSpeedPerSec);
-  nextGoldMineHitAt = clock.nextHitAt;
-  if (clock.hit && stats.dps > 0) {
-    const hit = resolveHit(state, stats, getActivePetDpsMultiplier(state, 'neutro'));
-    const petHit = resolvePetHit(state, 'neutro', stats);
-    const doubleHit = resolveDoubleHit(stats, getActivePetDpsMultiplier(state, 'neutro'));
-    const killed = applyGoldMineDamage(state, hit.dealt + (petHit ? petHit.dealt : 0) + (doubleHit ? doubleHit.dealt : 0));
-    if (stats.lifesteal) currentHp = Math.min(currentHp + stats.lifesteal, stats.maxHp);
-    pulseGoldMineBoss();
-    if (killed) {
-      finishGoldMine();
-      return;
-    }
-  }
-
-  renderEventsTabNow();
-}
-
-// ---------------------------------------------------------------
 // Combate Permanente (ver systems/arena.js) — saco de pancada que nunca
 // revida, num clock fixo de 30s (ARENA_RUN_DURATION_MS). Sem janela por
 // ciclo: canEnterArena só bloqueia 2 combates simultâneos, não um cooldown.
-// A cada tick só se resolve o dano do próprio caçador (+pet/Golpe Duplo,
-// mesmo padrão de tickGoldMine) contra o alvo fictício 'neutro' — nada de
-// HP descendo, applyArenaDamage só acumula o total causado.
+// A cada tick só se resolve o dano do próprio caçador (+pet/Golpe Duplo)
+// contra o alvo fictício 'neutro' — nada de HP descendo, applyArenaDamage
+// só acumula o total causado.
 // ---------------------------------------------------------------
 
 let nextArenaHitAt = null;
@@ -1292,21 +1007,6 @@ function wireEventTabEvents() {
   const container = document.getElementById('tab-events');
 
   container.addEventListener('click', (e) => {
-    if (e.target.closest('[data-tower-enter]')) {
-      enterTower();
-      return;
-    }
-
-    if (e.target.closest('[data-event-enter]')) {
-      enterEvent();
-      return;
-    }
-
-    if (e.target.closest('[data-goldmine-enter]')) {
-      enterGoldMine();
-      return;
-    }
-
     const expeditionBtn = e.target.closest('[data-expedition-enter]');
     if (expeditionBtn) {
       enterExpeditionTier(expeditionBtn.dataset.expeditionEnter);
@@ -1320,21 +1020,6 @@ function wireEventTabEvents() {
 
     if (e.target.closest('[data-arena-view-ranks]')) {
       showArenaRanksModal();
-      return;
-    }
-
-    if (e.target.closest('[data-event-giveup]')) {
-      giveUpEvent();
-      return;
-    }
-
-    if (e.target.closest('[data-tower-giveup]')) {
-      finishTowerRun(false);
-      return;
-    }
-
-    if (e.target.closest('[data-goldmine-giveup]')) {
-      finishGoldMine();
       return;
     }
   });
@@ -1618,14 +1303,6 @@ function init() {
   wirePetsTabEvents();
   wireSkillsTabEvents();
   resetPlayerHp();
-  if (state.towerRunActive) {
-    towerDeadline = Date.now() + TOWER_RUN_DURATION_MS;
-    towerHp = computePlayerStats(state).maxHp;
-    ensureTowerMonsterSpawned(state);
-  }
-  if (state.goldMineRunActive) {
-    goldMineDeadline = Date.now() + GOLDMINE_FIGHT_DURATION_MS;
-  }
   if (state.arenaRunActive) {
     arenaDeadline = Date.now() + ARENA_RUN_DURATION_MS;
   }
@@ -1658,10 +1335,6 @@ function init() {
     forceBossTimeout: () => { if (bossDeadline != null) bossDeadline = Date.now() - 1; },
     getCurrentHp: () => currentHp,
     setCurrentHp: (v) => { currentHp = v; renderPlayerHp(currentHp, computePlayerStats(state).maxHp); },
-    getTowerDeadline: () => towerDeadline,
-    getTowerHp: () => towerHp,
-    setTowerHp: (v) => { towerHp = v; renderEventsTabNow(); },
-    forceTowerTimeout: () => { if (towerDeadline != null) towerDeadline = Date.now() - 1; },
     forceArenaTimeout: () => { if (arenaDeadline != null) arenaDeadline = Date.now() - 1; },
   };
 }

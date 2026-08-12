@@ -10,12 +10,7 @@ import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/e
 import { computePlayerStats } from '../systems/stats.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds } from '../systems/crafting.js';
 import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, HUNTER_MAX_LEVEL } from '../systems/leveling.js';
-import {
-  getEventWindow, getTowerWindow, TOWER_MAX_LEVEL, getGoldMineWindow, GOLDMINE_BOSS_HP,
-  EXPEDITION_TIERS, EXPEDITION_REWARDS,
-} from '../data/events.js';
-import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
-import { getTowerMonster } from '../systems/tower.js';
+import { EXPEDITION_TIERS, EXPEDITION_REWARDS } from '../data/events.js';
 import { canEnterExpedition, expeditionRemainingMs } from '../systems/expedition.js';
 import { ARENA_RANKS, getArenaRankForDamage, getArenaRankByIndex } from '../data/arena.js';
 import { canEnterArena } from '../systems/arena.js';
@@ -1371,228 +1366,14 @@ function formatDuration(ms) {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-// ---------------------------------------------------------------
-// Events tab: fixed (non-collapsible) banner cards, each owning its own
-// rotation clock (see data/events.js). "Mercador" was removed entirely.
-//
-// "Invasão de Chefes" and "Torre das Provações" share the same format —
-// real mockup art as a fixed banner (title/subtitle/rewards frame baked
-// in), an "Abre em:"/"Fecha em:" status overlaid on the art's empty box,
-// and an "Entrar" button that appears there when the window is open. Once
-// entered, the fight/run itself renders in a separate panel below the
-// banner, not nested inside/expanding from it.
-// ---------------------------------------------------------------
-
-// Invasão de Chefes ("Caça Aprimorada" under the hood, see systems/events.js
-// for the canEnterEvent/startEvent lifecycle): a fixed, non-expandable
-// banner (invasao-banner.png, see invasaoChefesBannerHtml) showing the
-// open/closed status and, when open, a real "Entrar" button. Once entered,
-// the fight itself renders in a separate panel below the banner
-// (invasaoChefesFightPanelHtml) — not nested inside/expanding from the
-// banner card, per the user's "outra janela" request.
-function invasaoChefesStatusParts(state) {
-  const win = getEventWindow();
-  if (win.active && state.eventEnteredCycle !== win.cycleIndex && !isEventClaimed(state, win.cycleIndex)) {
-    return { label: 'Fecha em:', value: formatDuration(win.remainingActiveMs) };
-  }
-  return { label: 'Abre em:', value: formatDuration(win.msUntilNextWindow) };
-}
-
-// Whether the "Entrar" button should show below the status box: window
-// open, not already used/claimed this cycle, not already fighting, and the
-// player has unlocked at least one zone's boss so there's an eligible boss
-// to roll.
-function invasaoChefesCanEnter(state) {
-  if (state.eventBossHp != null) return false;
-  const win = getEventWindow();
-  if (!win.active) return false;
-  if (isEventClaimed(state, win.cycleIndex)) return false;
-  if (state.eventEnteredCycle === win.cycleIndex) return false;
-  return BOSSES.some((b, zoneIndex) => isBossUnlocked(state, zoneIndex));
-}
-
-// The 3 empty "RECOMPENSAS" squares baked into the banner art are just a
-// preview row (purely illustrative — real rewards are rolled/granted on
-// victory, same as before), overlaid with 3 real icons positioned over
-// the art's squares. `variant` picks the vertical position matching that
-// banner's own square row (measured separately per source mockup — Torre's
-// squares sit noticeably higher than Invasão's, see CSS).
-function rewardPreviewIconsHtml(icons, variant) {
+// Banner art (assets/ui/events/banner-*.png) for the 2 remaining events —
+// same template for both (a big empty status box top-right, 3 empty
+// "RECOMPENSAS" squares bottom-left), positions measured directly off the
+// source art. Only up to 3 icons fit; fewer is fine (Expedição only shows 2).
+function eventBannerRewardIconsHtml(icons) {
   return icons
-    .map((src, i) => `<img class="invasion-reward-icon reward-${variant} invasion-reward-${i + 1}" src="${src}" alt="">`)
+    .map((iconHtml, i) => `<div class="event-banner-reward-icon event-banner-reward-${i + 1}">${iconHtml}</div>`)
     .join('');
-}
-
-function invasaoChefesBannerHtml(state) {
-  const { label, value } = invasaoChefesStatusParts(state);
-  const canEnter = invasaoChefesCanEnter(state);
-  const rewardIcons = rewardPreviewIconsHtml([
-    'assets/crystals/leviargon.png',
-    'assets/cards/leviargon.png',
-    'assets/ui/currency-event.png',
-  ], 'invasion');
-  return `<div class="event-card event-card-invasion">
-    <div class="invasion-banner" style="background-image: url('assets/ui/invasao-banner.png')">
-      ${rewardIcons}
-      <div class="invasion-status-box">
-        <div class="invasion-status-label">${label}</div>
-        <div class="invasion-status-value">${value}</div>
-      </div>
-      ${canEnter ? `<button class="invasion-enter-btn" data-event-enter aria-label="Entrar"></button>` : ''}
-    </div>
-  </div>`;
-}
-
-function invasaoChefesFightPanelHtml(state) {
-  const boss = BOSSES.find((b) => b.id === state.eventBossId);
-  if (!boss) return `<div class="event-card"><div class="event-card-body"><div class="event-panel"><p class="event-sub">Chefe do evento não encontrado — tente recarregar.</p></div></div></div>`;
-  const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(boss);
-  const hp = state.eventBossHp ?? maxHp;
-  const pct = maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 0;
-  return `
-    <div class="event-card">
-      <div class="event-card-body">
-        <div class="event-panel">
-          <div class="event-active-badge">🎪 Em combate!</div>
-          <h3>${boss.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(boss.element)}</h3>
-          <button id="event-boss-sprite" class="event-boss-sprite" >${iconMarkup(boss.image, boss.emoji, boss.name)}</button>
-          <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(maxHp)}</span></div>
-          <p class="event-reward-info">🎁 10 itens ao derrotar (materiais/Cristal) + chance de Carta + ${EVENT_ICON} Moeda de Evento</p>
-          <button class="event-giveup-btn" data-event-giveup>Encerrar</button>
-        </div>
-      </div>
-    </div>`;
-}
-
-// Torre das Provações ("Torre Infinita" under the hood, see data/events.js
-// for the window timing and systems/tower.js for level->monster resolution
-// + run lifecycle) — same fixed-banner format as Invasão de Chefes (see
-// torre-banner.png), just its own art/theme. The active-run view (once
-// entered) renders separately, below the banner.
-function torreProvacoesStatusParts(state) {
-  const win = getTowerWindow();
-  if (win.active && state.towerEnteredCycle !== win.cycleIndex && !state.towerRunActive) {
-    return { label: 'Fecha em:', value: formatDuration(win.remainingActiveMs) };
-  }
-  return { label: 'Abre em:', value: formatDuration(win.msUntilNextWindow) };
-}
-
-function torreProvacoesCanEnter(state) {
-  if (state.towerRunActive) return false;
-  const win = getTowerWindow();
-  if (!win.active) return false;
-  return state.towerEnteredCycle !== win.cycleIndex;
-}
-
-function torreProvacoesBannerHtml(state) {
-  const { label, value } = torreProvacoesStatusParts(state);
-  const canEnter = torreProvacoesCanEnter(state);
-  const rewardIcons = rewardPreviewIconsHtml([
-    'assets/grunco/hide.png',
-    'assets/ui/currency-gold.png',
-    'assets/ui/currency-event.png',
-  ], 'torre');
-  return `<div class="event-card event-card-invasion">
-    <div class="invasion-banner" style="background-image: url('assets/ui/torre-banner.png')">
-      ${rewardIcons}
-      <div class="invasion-status-box">
-        <div class="invasion-status-label">${label}</div>
-        <div class="invasion-status-value">${value}</div>
-      </div>
-      ${canEnter ? `<button class="invasion-enter-btn" data-tower-enter aria-label="Entrar"></button>` : ''}
-    </div>
-  </div>`;
-}
-
-function torreProvacoesFightPanelHtml(state, runRemainingMs, towerHp, towerMaxHp) {
-  const monster = getTowerMonster(state.towerLevel, state.towerWeakMonsterId);
-  const hp = towerHp ?? monster.maxHp;
-  const maxHp = towerMaxHp ?? monster.maxHp;
-  const pct = maxHp > 0 ? Math.max(0, Math.min(100, (state.towerMonsterHp / maxHp) * 100)) : 0;
-  const hpPlayerPct = maxHp > 0 && towerMaxHp > 0 ? Math.max(0, Math.min(100, (hp / towerMaxHp) * 100)) : 0;
-  return `
-    <div class="event-card">
-      <div class="event-card-body">
-        <div class="event-panel">
-          <div class="event-active-badge">🗼 Nível ${state.towerLevel}/${TOWER_MAX_LEVEL} — ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
-          <h3>${monster.name} ${monster.isBoss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}</h3>
-          <button id="tower-monster-sprite" class="event-boss-sprite" >${iconMarkup(monster.image, monster.emoji, monster.name)}</button>
-          <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.towerMonsterHp)} / ${formatNumber(maxHp)}</span></div>
-          <p class="event-sub">Sua vida na torre</p>
-          <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${hpPlayerPct}%; background:var(--danger, #e05656);"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(towerMaxHp)}</span></div>
-          <p class="event-reward-info">🎁 Recompensa ao final: ${EVENT_ICON} Moeda de Evento, conforme o nível alcançado.</p>
-          <button class="event-giveup-btn" data-tower-giveup>Encerrar</button>
-        </div>
-      </div>
-    </div>`;
-}
-
-// Mina de Ouro (see data/events.js for window/fight timing and
-// systems/goldmine.js for the run lifecycle) — same fixed-banner format as
-// the other two, but the fight itself is a single Gold Boss on its own
-// short 35s clock instead of a boss/level roll: the Gold Boss never fights
-// back, and the run always ends in a reward (kill or timeout both grant
-// gold for however much damage was actually dealt — see
-// computeGoldMineReward), so there's no "loss" state to render.
-function goldMineStatusParts(state) {
-  const win = getGoldMineWindow();
-  if (win.active && state.goldMineEnteredCycle !== win.cycleIndex && !state.goldMineRunActive) {
-    return { label: 'Fecha em:', value: formatDuration(win.remainingActiveMs) };
-  }
-  return { label: 'Abre em:', value: formatDuration(win.msUntilNextWindow) };
-}
-
-function goldMineCanEnter(state) {
-  if (state.goldMineRunActive) return false;
-  const win = getGoldMineWindow();
-  if (!win.active) return false;
-  return state.goldMineEnteredCycle !== win.cycleIndex;
-}
-
-function goldMineBannerHtml(state) {
-  const { label, value } = goldMineStatusParts(state);
-  const canEnter = goldMineCanEnter(state);
-  const rewardIcons = rewardPreviewIconsHtml([
-    'assets/ui/currency-gold.png',
-    'assets/ui/currency-gold.png',
-    'assets/ui/currency-gold.png',
-  ], 'goldmine');
-  return `<div class="event-card event-card-invasion">
-    <div class="invasion-banner" style="background-image: url('assets/ui/goldmine-banner.png')">
-      ${rewardIcons}
-      <div class="invasion-status-box">
-        <div class="invasion-status-label">${label}</div>
-        <div class="invasion-status-value">${value}</div>
-      </div>
-      ${canEnter ? `<button class="invasion-enter-btn" data-goldmine-enter aria-label="Entrar"></button>` : ''}
-    </div>
-  </div>`;
-}
-
-const GOLDMINE_BOSS_ANIM_FRAMES = [
-  'assets/goldmine_boss/anim/frame1.png',
-  'assets/goldmine_boss/anim/frame2.png',
-  'assets/goldmine_boss/anim/frame3.png',
-  'assets/goldmine_boss/anim/frame4.png',
-];
-
-function goldMineFightPanelHtml(state, runRemainingMs) {
-  const maxHp = GOLDMINE_BOSS_HP;
-  const pct = maxHp > 0 ? Math.max(0, Math.min(100, (state.goldMineBossHp / maxHp) * 100)) : 0;
-  const frameIdx = Math.floor(Date.now() / MONSTER_IDLE_FRAME_MS) % GOLDMINE_BOSS_ANIM_FRAMES.length;
-  return `
-    <div class="event-card">
-      <div class="event-card-body">
-        <div class="event-panel event-panel-goldmine">
-          <div class="event-active-badge">⛏️ ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
-          <h3>Dragão Dourado <span class="boss-tag">EVENTO</span></h3>
-          <button id="goldmine-boss-sprite" class="event-boss-sprite event-boss-sprite-goldmine" >${iconMarkup(GOLDMINE_BOSS_ANIM_FRAMES[frameIdx], '🐉', 'Dragão Dourado')}</button>
-          <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(state.goldMineBossHp)} / ${formatNumber(maxHp)}</span></div>
-          <p class="event-reward-info">🎁 Recompensa ao final: ${GOLD_ICON} 1 Ouro por ponto de dano causado.</p>
-          <button class="event-giveup-btn" data-goldmine-giveup>Encerrar</button>
-        </div>
-      </div>
-    </div>`;
 }
 
 // Combate Permanente (see data/arena.js ARENA_RANKS + systems/arena.js): a
@@ -1604,17 +1385,18 @@ function goldMineFightPanelHtml(state, runRemainingMs) {
 // (filled by cumulative damage dealt, not HP draining down).
 function arenaBannerHtml(state) {
   const canEnter = canEnterArena(state);
-  return `<div class="event-card">
-    <div class="event-card-body">
-      <div class="event-panel">
-        <div class="event-icon">⚔️</div>
-        <h3>Combate Permanente</h3>
-        <p class="event-sub">Um saco de pancada que não revida — cause o máximo de dano possível em 30 segundos e suba de Rank.</p>
-        <div class="arena-banner-actions">
-          ${canEnter ? `<button class="expedition-enter-btn" style="--tier-color:#e0553f" data-arena-enter>Entrar</button>` : ''}
-          <button class="view-full-stats-btn" data-arena-view-ranks>🏆 Ver Ranks e Recompensas</button>
-        </div>
-      </div>
+  const rewardIcons = eventBannerRewardIconsHtml([GOLD_ICON, EVENT_ICON, EGG_ICON]);
+  const statusBoxHtml = state.arenaRunActive
+    ? `<div class="event-banner-status-label">🔥 Em combate!</div>`
+    : `<button class="event-banner-enter-btn" data-arena-enter>Entrar</button>`;
+  return `<div class="event-card event-card-banner">
+    <div class="event-banner" style="background-image: url('assets/ui/events/banner-arena.png')">
+      ${rewardIcons}
+      <div class="event-banner-status-box">${statusBoxHtml}</div>
+    </div>
+    <div class="event-banner-caption-row">
+      <p class="event-sub">Um saco de pancada que não revida — cause o máximo de dano possível em 30 segundos e suba de Rank.</p>
+      <button class="view-full-stats-btn" data-arena-view-ranks>🏆 Ver Ranks e Recompensas</button>
     </div>
   </div>`;
 }
@@ -1726,6 +1508,27 @@ function expeditionCardHtml(state, tier, ready, remainingMs) {
     </div>`;
 }
 
+// A janela de status do banner encaixa perfeitamente o cooldown único e
+// compartilhado da Expedição (ver canEnterExpedition/expeditionRemainingMs
+// em systems/expedition.js) — mesmo padrão "Abre em:"/"Pronto!" de status
+// que os banners antigos já usavam, só que sem "Entrar" aqui dentro: com 3
+// durações pra escolher, a ação de verdade continua nos 3 cartões abaixo.
+function expeditionBannerHtml(state) {
+  const now = Date.now();
+  const ready = canEnterExpedition(state, now);
+  const remainingMs = expeditionRemainingMs(state, now);
+  const rewardIcons = eventBannerRewardIconsHtml([EVENT_ICON, EGG_ICON]);
+  const statusHtml = ready
+    ? `<div class="event-banner-status-label">Pronto!</div>`
+    : `<div class="event-banner-status-label">Disponível em:</div><div class="event-banner-status-value">${expeditionDurationLabel(remainingMs)}</div>`;
+  return `<div class="event-card event-card-banner">
+    <div class="event-banner" style="background-image: url('assets/ui/events/banner-expedicao.png')">
+      ${rewardIcons}
+      <div class="event-banner-status-box">${statusHtml}</div>
+    </div>
+  </div>`;
+}
+
 function expeditionSectionHtml(state) {
   const now = Date.now();
   const ready = canEnterExpedition(state, now);
@@ -1733,51 +1536,22 @@ function expeditionSectionHtml(state) {
   const cardsHtml = EXPEDITION_TIERS.map((tier) => expeditionCardHtml(state, tier, ready, remainingMs)).join('');
   return `
     <div class="expedition-section">
+      ${expeditionBannerHtml(state)}
       <div class="expedition-section-title">🧭 Expedição do Caçador</div>
       <div class="expedition-tier-grid">${cardsHtml}</div>
       <p class="expedition-note">Escolha 1 duração — a recompensa é concedida na hora, e as 3 ficam bloqueadas até o tempo escolhido passar. A linha garantida (sem %) sempre entra; as demais se somam quando o bônus bate.</p>
     </div>`;
 }
 
-export function renderEventsTab(state, towerRunRemainingMs = null, towerHp = null, towerMaxHp = null, goldMineRunRemainingMs = null, arenaRunRemainingMs = null) {
+export function renderEventsTab(state, arenaRunRemainingMs = null) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `
     <img class="section-banner-img" src="assets/ui/titles/eventos.png" alt="Eventos">
     <div class="event-list">
-    ${invasaoChefesBannerHtml(state)}
-    ${state.eventBossHp != null ? invasaoChefesFightPanelHtml(state) : ''}
-    ${torreProvacoesBannerHtml(state)}
-    ${state.towerRunActive ? torreProvacoesFightPanelHtml(state, towerRunRemainingMs, towerHp, towerMaxHp) : ''}
-    ${goldMineBannerHtml(state)}
-    ${state.goldMineRunActive ? goldMineFightPanelHtml(state, goldMineRunRemainingMs) : ''}
     ${arenaBannerHtml(state)}
     ${state.arenaRunActive ? arenaFightPanelHtml(state, arenaRunRemainingMs) : ''}
     ${expeditionSectionHtml(state)}
   </div>`;
-}
-
-export function pulseEventBoss() {
-  const sprite = document.getElementById('event-boss-sprite');
-  if (!sprite) return;
-  sprite.classList.remove('hit');
-  void sprite.offsetWidth; // restart animation
-  sprite.classList.add('hit');
-}
-
-export function pulseTowerMonster() {
-  const sprite = document.getElementById('tower-monster-sprite');
-  if (!sprite) return;
-  sprite.classList.remove('hit');
-  void sprite.offsetWidth; // restart animation
-  sprite.classList.add('hit');
-}
-
-export function pulseGoldMineBoss() {
-  const sprite = document.getElementById('goldmine-boss-sprite');
-  if (!sprite) return;
-  sprite.classList.remove('hit');
-  void sprite.offsetWidth; // restart animation
-  sprite.classList.add('hit');
 }
 
 // ---------------------------------------------------------------
