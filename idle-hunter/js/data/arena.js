@@ -13,15 +13,25 @@ export const ARENA_RUN_DURATION_MS = 30 * 1000;
 export const ARENA_TIER_NAMES = ['Ferro', 'Bronze', 'Prata', 'Ouro', 'Platina', 'Diamante', 'Lendário'];
 export const ARENA_RANKS_PER_TIER = 5;
 export const ARENA_RANK_COUNT = ARENA_TIER_NAMES.length * ARENA_RANKS_PER_TIER; // 35
-export const ARENA_MAX_DAMAGE = 50_000_000;
 
-// Curva de dano por degrau — pedido explícito do usuário pra crescer AINDA
-// mais no fim: do início até o meio da lista o dano pedido cresce pouco
-// (ex.: Ferro 1 pede só ~53K, Prata 5 ~1M), e da metade pro fim a diferença
-// entre ranks vizinhos passa a ser bem maior (ex.: Diamante 1 -> Lendário 1
-// pula 30M -> 50M). Curva de potência contínua de 0 (Ferro 5) até
-// ARENA_MAX_DAMAGE (Lendário 1); POWER mais alto = mais back-loaded.
-const ARENA_DAMAGE_CURVE_POWER = 3.2;
+// Teto de dano (Lendário 1) — pedido do usuário pra subir de 50M pra 100M,
+// SÓ a partir do Diamante 5 (índices 0-24, Ferro 5 a Platina 1, ficam
+// intocados). Por isso a curva vira 2 pedaços:
+//  1) índices 0-24: a curva de potência original, na escala original de
+//     50M (ARENA_CURVE1_MAX_DAMAGE) — exatamente os mesmos números de
+//     antes, só reaproveitada como base.
+//  2) índices 25-34 (Diamante 5 a Lendário 1): uma curva própria, mais
+//     equilibrada (crescimento por degrau entre ~13%-29%, sem saltos
+//     grandes de um rank pro seguinte), que sai de onde o pedaço 1 deixou
+//     o Diamante 5 e sobe até ARENA_MAX_DAMAGE no Lendário 1.
+export const ARENA_MAX_DAMAGE = 100_000_000;
+
+const ARENA_CURVE1_POWER = 3.2;
+const ARENA_CURVE1_MAX_DAMAGE = 50_000_000;
+
+const ARENA_CURVE2_START_INDEX = 25; // Diamante 5 — ponto de junção entre as 2 curvas
+const ARENA_CURVE2_END_INDEX = ARENA_RANK_COUNT - 1; // Lendário 1
+const ARENA_CURVE2_POWER = 1.3;
 
 function roundNiceDamage(value) {
   if (value <= 0) return 0;
@@ -32,11 +42,18 @@ function roundNiceDamage(value) {
   return Math.round(value / 50000) * 50000;
 }
 
+function curve1Threshold(index) {
+  const t = index / (ARENA_RANK_COUNT - 1);
+  return roundNiceDamage(ARENA_CURVE1_MAX_DAMAGE * Math.pow(t, ARENA_CURVE1_POWER));
+}
+
 function damageThresholdForIndex(index) {
   if (index <= 0) return 0;
-  if (index >= ARENA_RANK_COUNT - 1) return ARENA_MAX_DAMAGE;
-  const t = index / (ARENA_RANK_COUNT - 1);
-  return roundNiceDamage(ARENA_MAX_DAMAGE * Math.pow(t, ARENA_DAMAGE_CURVE_POWER));
+  if (index < ARENA_CURVE2_START_INDEX) return curve1Threshold(index);
+  if (index >= ARENA_CURVE2_END_INDEX) return ARENA_MAX_DAMAGE;
+  const start = curve1Threshold(ARENA_CURVE2_START_INDEX);
+  const t = (index - ARENA_CURVE2_START_INDEX) / (ARENA_CURVE2_END_INDEX - ARENA_CURVE2_START_INDEX);
+  return roundNiceDamage(start + (ARENA_MAX_DAMAGE - start) * Math.pow(t, ARENA_CURVE2_POWER));
 }
 
 // Nem toda recompensa aparece desde o Rank 0 (pedido explícito do usuário)
@@ -66,6 +83,21 @@ function rewardValueForIndex(index, cfg) {
   return Math.round(cfg.min + (cfg.max - cfg.min) * Math.pow(t, cfg.power));
 }
 
+// Cor de exibição do nome de cada Rank (ver arenaRankRowHtml em
+// ui/render.js) — cada tier combinando com o material/metal que dá nome a
+// ele (Ferro cinza-metálico, Bronze acobreado, Prata prateada, Ouro
+// amarelo-dourado, Platina azul-esverdeado claro, Diamante azul, Lendário
+// laranja — pedido explícito do usuário nesses 2 últimos).
+const ARENA_TIER_COLORS = {
+  Ferro: '#6b7280',
+  Bronze: '#a3591f',
+  Prata: '#8a94a6',
+  Ouro: '#c9960c',
+  Platina: '#3fb6b0',
+  Diamante: '#2f9bdb',
+  Lendário: '#e8791c',
+};
+
 export const ARENA_RANKS = (() => {
   const ranks = [];
   let prevThreshold = -1;
@@ -85,6 +117,7 @@ export const ARENA_RANKS = (() => {
       tierIndex,
       rank: rankNum,
       name: `${ARENA_TIER_NAMES[tierIndex]} ${rankNum}`,
+      color: ARENA_TIER_COLORS[ARENA_TIER_NAMES[tierIndex]],
       damageThreshold: threshold,
       rewards: {
         gold: rewardValueForIndex(i, ARENA_REWARD_CONFIG.gold),
