@@ -2155,13 +2155,28 @@ button:disabled {
 .event-banner-reward-2 { left: 32.2%; }
 .event-banner-reward-3 { left: 43.3%; }
 
-.event-banner-caption-row {
+/* Botão "Ver Ranks e Recompensas" do Combate Permanente — virou só um
+   ícone de troféu sobreposto na própria arte do banner (não mais um botão
+   com texto abaixo dela), à esquerda da fileira de ícones de recompensa
+   (à esquerda do Fragmento de Carta, o 1º da fileira). Mesma linha
+   vertical dos ícones de recompensa (top:77.56%). */
+.event-banner-ranks-btn {
+  position: absolute;
+  left: 10%;
+  top: 77.56%;
+  transform: translate(-50%, -50%);
+  width: 8%;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: 2px solid #e8c94a;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3c4, #e8c94a 55%, #a8791f 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .5);
+  font-size: clamp(12px, 3.4vw, 18px);
+  line-height: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 12px 14px 4px;
-  text-align: center;
+  justify-content: center;
 }
 
 .event-panel {

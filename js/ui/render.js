@@ -1399,13 +1399,10 @@ function arenaBannerHtml(state) {
   return `<div class="event-card event-card-banner">
     <div class="event-banner" style="background-image: url('assets/ui/events/banner-arena.png')">
       <div class="event-banner-title">Combate Permanente</div>
+      <button class="event-banner-ranks-btn" data-arena-view-ranks aria-label="Ver Ranks e Recompensas" title="Ver Ranks e Recompensas">🏆</button>
       ${rewardIcons}
       <div class="event-banner-status-box">${statusHtml}</div>
       ${enterBtnHtml}
-    </div>
-    <div class="event-banner-caption-row">
-      <p class="event-sub">Um saco de pancada que não revida — cause o máximo de dano possível em 30 segundos e suba de Rank.</p>
-      <button class="view-full-stats-btn" data-arena-view-ranks>🏆 Ver Ranks e Recompensas</button>
     </div>
   </div>`;
 }
@@ -1423,6 +1420,7 @@ function arenaFightPanelHtml(state, runRemainingMs) {
         <div class="event-panel">
           <div class="event-active-badge">⚔️ ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
           <h3>Saco de Pancada <span class="boss-tag">TREINO</span></h3>
+          <p class="event-sub">Um monstro que não revida, cause o máximo de dano possível em 30 segundos, suba de rank e ganhe recompensas.</p>
           <button id="arena-target-sprite" class="event-boss-sprite">🥊</button>
           <div class="arena-rank-label">${currentRank.name}</div>
           <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${pct.toFixed(0)}%${nextRank ? ` para ${nextRank.name}` : ' — RANK MÁXIMO'}</span></div>
