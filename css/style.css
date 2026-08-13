@@ -3193,6 +3193,22 @@ button:disabled {
   box-shadow: none;
 }
 
+/* Botão "Benefícios" do card de VIP — secundário (contorno, sem
+   background sólido), pra não competir visualmente com o botão de compra
+   logo abaixo (esse sim usa o .shop-item-card button padrão dourado). */
+.shop-item-card button.vip-benefits-btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: transparent;
+  color: var(--gold-dark, #b8860b);
+  border: 2px solid var(--gold-dark, #b8860b);
+  box-shadow: none;
+  border-radius: 10px;
+}
+
 .cash-package-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));

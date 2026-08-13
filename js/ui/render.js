@@ -16,7 +16,7 @@ import { ARENA_RANKS, getArenaRankForDamage, getArenaRankByIndex } from '../data
 import { canEnterArena, arenaRemainingMs } from '../systems/arena.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
-import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
+import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, CASH_ONE_TIME_PURCHASES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
 import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
 import {
   CARDS, getCard, CARD_DISCOVERY_CASH_REWARD,
@@ -1646,27 +1646,46 @@ function cashShopHtml(state) {
       <button disabled>Em breve</button>
     </div>`).join('');
 
+  const oneTimeHtml = CASH_ONE_TIME_PURCHASES.map((item) => `
+    <div class="cash-package-card disabled" title="Requer integração de pagamento — ainda não disponível">
+      <div class="icon">${item.emoji}</div>
+      <div class="name">${item.name}</div>
+      <div class="price">${item.priceLabel}</div>
+      <button disabled>Em breve</button>
+    </div>`).join('');
+
   const shopItemsHtml = CASH_SHOP_ITEMS.map((item) => {
     // VIP é por tempo, não empilhável (ver systems/shop.js
     // canBuyCashItem/buyCashItem) — o botão fica travado enquanto ainda
     // está ativo, só volta a ficar comprável depois que os dias
     // restantes zerarem e o VIP expirar de vez.
-    const vipActiveNow = item.kind === 'vip' && isVipActive(state);
-    const vipStatus = vipActiveNow
-      ? `<div class="desc vip-days-left">👑 Ativo — expira em ${Math.max(1, Math.ceil((state.vipExpiresAt - Date.now()) / 86400000))} dia(s).</div>`
-      : '';
-    const buyBtn = vipActiveNow
-      ? `<button disabled title="Já é VIP — espere o contador zerar pra comprar de novo">👑 Ativo</button>`
-      : `<button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>`;
+    if (item.kind === 'vip') {
+      const vipActiveNow = isVipActive(state);
+      const vipStatus = vipActiveNow
+        ? `<div class="desc vip-days-left">👑 Ativo — expira em ${Math.max(1, Math.ceil((state.vipExpiresAt - Date.now()) / 86400000))} dia(s).</div>`
+        : `<div class="desc">${item.durationLabel}</div>`;
+      const buyBtn = vipActiveNow
+        ? `<button disabled title="Já é VIP — espere o contador zerar pra comprar de novo">👑 Ativo</button>`
+        : `<button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>`;
+      return `
+      <div class="shop-item-card">
+        <span class="icon">${item.emoji}</span>
+        <div class="info">
+          <div class="name">${item.name}</div>
+          ${vipStatus}
+          <button class="vip-benefits-btn" data-vip-benefits>Benefícios</button>
+        </div>
+        ${buyBtn}
+      </div>`;
+    }
     return `
     <div class="shop-item-card">
       <span class="icon">${item.emoji}</span>
       <div class="info">
         <div class="name">${item.name}</div>
         <div class="desc">${item.description}</div>
-        ${vipStatus}
       </div>
-      ${buyBtn}
+      <button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>
     </div>`;
   }).join('');
 
@@ -1680,7 +1699,17 @@ function cashShopHtml(state) {
     <h4 class="shop-section-title">Comprar Esmeralda (dinheiro real)</h4>
     <p class="shop-note">Ainda não disponível nesta versão — em breve.</p>
     <div class="cash-package-grid">${packagesHtml}</div>
+
+    <h4 class="shop-section-title">Outras compras</h4>
+    <p class="shop-note">Ainda não disponível nesta versão — em breve.</p>
+    <div class="cash-package-grid">${oneTimeHtml}</div>
   `;
+}
+
+export function showVipBenefitsModal() {
+  const vipItem = CASH_SHOP_ITEMS.find((i) => i.kind === 'vip');
+  const linesHtml = vipItem.benefits.map((b) => `<p class="offline-item-lines">✅ ${b}</p>`).join('');
+  showModal('👑 Benefícios do VIP', linesHtml);
 }
 
 function eventShopHtml(state) {
