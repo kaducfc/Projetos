@@ -366,14 +366,50 @@ function tick() {
 // Tabs
 // ---------------------------------------------------------------
 
+// "Outros" no menu de baixo abre um popup (#more-menu) com Cartas/Loja, que
+// não cabem mais nas 6 vagas fixas do nav principal. Um clique num
+// data-tab, seja no nav principal ou dentro do popup, ativa a aba do mesmo
+// jeito de sempre — só que se veio do popup, o botão "Outros" (não a aba
+// real) é quem fica marcado como ativo no nav principal, já que Cartas/Loja
+// não têm mais vaga própria lá.
+const MORE_MENU_TAB_IDS = ['cards', 'shop'];
+
+function closeMoreMenu() {
+  document.getElementById('more-menu').classList.add('hidden');
+}
+
 function setupTabs() {
-  document.querySelectorAll('.tab-btn').forEach((btn) => {
+  const moreToggleBtn = document.getElementById('more-toggle-btn');
+  const moreMenu = document.getElementById('more-menu');
+
+  function activateTab(tabId) {
+    document.querySelectorAll('.tab-btn, .more-menu-btn').forEach((b) => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
+    document.getElementById(`tab-${tabId}`).classList.add('active');
+    if (MORE_MENU_TAB_IDS.includes(tabId)) {
+      moreToggleBtn.classList.add('active');
+      document.querySelector(`.more-menu-btn[data-tab="${tabId}"]`).classList.add('active');
+    } else {
+      document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+    }
+  }
+
+  document.querySelectorAll('.tab-btn[data-tab], .more-menu-btn[data-tab]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+      activateTab(btn.dataset.tab);
+      closeMoreMenu();
     });
+  });
+
+  moreToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    moreMenu.classList.toggle('hidden');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (moreMenu.classList.contains('hidden')) return;
+    if (moreMenu.contains(e.target) || e.target === moreToggleBtn) return;
+    closeMoreMenu();
   });
 }
 

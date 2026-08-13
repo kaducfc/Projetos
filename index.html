@@ -104,14 +104,20 @@
     </section>
   </main>
 
+  <div id="more-menu-anchor" class="more-menu-anchor">
+    <div id="more-menu" class="more-menu hidden">
+      <button class="more-menu-btn" data-tab="cards"><img class="tab-btn-icon" src="assets/ui/nav/cartas.png" alt="">Cartas</button>
+      <button class="more-menu-btn" data-tab="shop"><img class="tab-btn-icon" src="assets/ui/nav/loja.png" alt="">Loja</button>
+    </div>
+  </div>
+
   <nav id="tab-nav">
     <button class="tab-btn" data-tab="inventory"><img class="tab-btn-icon" src="assets/ui/nav/equipamentos.png" alt="">Equipamentos</button>
     <button class="tab-btn" data-tab="upgrades"><img class="tab-btn-icon" src="assets/ui/nav/aprimoramentos.png" alt="">Habilidades</button>
     <button class="tab-btn active" data-tab="hunt"><img class="tab-btn-icon" src="assets/ui/nav/caca.png" alt="">Caça</button>
-    <button class="tab-btn" data-tab="cards"><img class="tab-btn-icon" src="assets/ui/nav/cartas.png" alt="">Cartas</button>
     <button class="tab-btn" data-tab="pets"><span class="tab-btn-icon" style="font-size:20px; line-height:1;">🐾</span>Mascotes</button>
     <button class="tab-btn" data-tab="events"><img class="tab-btn-icon" src="assets/ui/nav/eventos.png" alt="">Eventos</button>
-    <button class="tab-btn" data-tab="shop"><img class="tab-btn-icon" src="assets/ui/nav/loja.png" alt="">Loja</button>
+    <button class="tab-btn" id="more-toggle-btn" data-more-toggle><span class="tab-btn-icon" style="font-size:20px; line-height:1;">⋯</span>Outros</button>
   </nav>
 
   <div id="modal-overlay" class="hidden">
