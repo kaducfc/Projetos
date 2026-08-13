@@ -6,8 +6,11 @@ import { ZONES } from '../data/monsters.js';
 // mais ouro/material. Progressão de longo prazo, de propósito: a curva foi
 // calibrada pra ~39 mil kills-equivalentes (assumindo 1 XP/kill) pra
 // alcançar o nível 180 — a meta é levar pelo menos umas duas semanas de
-// jogo pra zerar as zonas, não algumas horas.
-const HUNTER_XP_BASE = 5;
+// jogo pra zerar as zonas, não algumas horas. HUNTER_XP_BASE em 30 (era 5,
+// pedido do usuário pra multiplicar por 6 o XP necessário de TODOS os
+// níveis — multiplicar só a base escala a curva inteira igualmente, já
+// que ela é base * growth^(nível-1)).
+const HUNTER_XP_BASE = 30;
 const HUNTER_XP_GROWTH = 1.031;
 
 // Nível máximo do caçador — pedido explícito do usuário. Zona 10 (a mais
