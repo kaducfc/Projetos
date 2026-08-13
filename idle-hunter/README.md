@@ -84,11 +84,12 @@ Depois abra `http://localhost:8000` no navegador.
    zona), com a raridade decidindo o quão forte é a rolagem daquela peça.
    Bordas e fundo dos ícones de item (inventário, paperdoll de
    equipamento, popup de detalhe) refletem a cor da raridade.
-6. **Aprimoramento (+1 a +5 e Rank Master)**: continua igual a antes — cada
-   peça pode ser aprimorada individualmente, consumindo materiais que
-   ainda dropam dos monstros (agora só alimentam o aprimoramento, não mais
-   um custo de craft). Rank Master consome também 1 Cristal do chefe
-   daquele set.
+6. **Aprimoramento (+1 a +5 e Rank Master)**: cada peça pode ser
+   aprimorada individualmente, consumindo materiais que ainda dropam dos
+   monstros (agora só alimentam o aprimoramento, não mais um custo de
+   craft) mais uma pequena quantia de ouro por passo, que escala com o
+   tier da zona e o nível do passo (ver `ENHANCE_GOLD_BASE` em
+   `data/items.js`).
 7. **Elementos**: todo monstro tem um elemento (Neutro, Fogo, Planta,
    Elétrico ou Água) — ver "Como os elementos funcionam" abaixo.
 8. **Upgrades**: comprados com ouro, aumentam DPS/Velocidade de
@@ -164,7 +165,7 @@ js/
     stats.js                Agrega equipamento + upgrades → DPS/velocidade de ataque/vida/armadura/resistência finais
     combat.js                HP/recompensa/dano do monstro por zona, relógio de hit (advanceHitClock/resolveHit), drops, seleção de monstro
     equipment.js              Equipar/desequipar, resolver o que está em cada slot
-    crafting.js                Aprimoramento (+1..+5, Rank Master via Cristal), slot de carta (desbloqueio/encaixe/remoção), destruir item
+    crafting.js                Aprimoramento (+1..+5, Rank Master), slot de carta (desbloqueio/encaixe/remoção), destruir item
     upgrades.js                 Compra de upgrades
     offline.js                    Progresso estimado (XP, drops) enquanto a aba estava fechada
     events.js                     Dano/HP/recompensa do chefe de evento
@@ -185,9 +186,10 @@ chama `render.js` para atualizar a tela.
 Pontos mais fáceis de ajustar:
 
 - `js/systems/combat.js`: `HP_GROWTH`, `GOLD_GROWTH`, `ITEM_DROP_CHANCE`
-  (8%), `CRYSTAL_DROP_CHANCE`, `BOSS_CARD_DROP_CHANCE`/`WEAK_CARD_DROP_CHANCE`.
+  (8%), `BOSS_CARD_DROP_CHANCE`/`WEAK_CARD_DROP_CHANCE`.
 - `js/data/items.js`: `RARITIES` (pesos, multiplicador e nº de adicionais
-  por tier), `TIER_GROWTH`, `ENHANCE_PER_LEVEL_MULT`, `MASTER_MARGIN`.
+  por tier), `TIER_GROWTH`, `ENHANCE_PER_LEVEL_MULT`, `MASTER_MARGIN`,
+  `ENHANCE_GOLD_BASE` (custo de ouro do enhance/Rank Master).
 - `js/data/monsters.js`: `zoneUnlockLevelFor`/`bossUnlockLevelFor` (nível
   de caça pra liberar zona/boss), `BOSSES`/`WEAK_MONSTER_GROUPS` (roster).
 - `js/systems/leveling.js`: `xpToNextLevel()`/`xpForZone()` (curva de XP).

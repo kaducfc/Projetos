@@ -139,7 +139,7 @@ export const MONSTER_FAMILIES = [
 export const BOSSES = [
   {
     stage: 10,
-    // id/crystalMaterialId ficam 'chispim'/'chispim_crystal' de propósito —
+    // id ficam 'chispim'/'chispim_crystal' de propósito —
     // são chaves de save (materials/inventory), cartas (data/cards.js) e
     // rotação de evento (data/events.js). Reskin de display only, mesmo
     // padrão já usado quando a família 'boar' virou "Chispim" (ver
@@ -180,7 +180,6 @@ export const BOSSES = [
       primary1: { id: 'chispim_heart', name: 'Crânio de Thornak', emoji: '💀', image: 'assets/thornak/cranio.png' },
       primary2: { id: 'chispim_heart', name: 'Crânio de Thornak', emoji: '💀', image: 'assets/thornak/cranio.png' },
     },
-    crystal: { id: 'chispim_crystal', name: 'Cristal de Thornak', emoji: '💎', image: 'assets/crystals/chispim.png' },
     // Rank de poder dentro da Zona 1 (ver WEAK_MONSTER_GROUPS acima e
     // monsterMaxHp/monsterDamagePerSecond/monsterGoldReward em
     // systems/combat.js) — 4 é só 1 degrau acima do GranClaw (rank 3),
@@ -189,7 +188,7 @@ export const BOSSES = [
   },
   {
     stage: 20,
-    // id/crystalMaterialId ficam 'solkaiser'/'solkaiser_crystal' de
+    // id ficam 'solkaiser'/'solkaiser_crystal' de
     // propósito — mesmo reskin display-only do Chispim→Thornak acima (ver
     // comentário lá). Fecha a Zona 2 (Marfang/Mizan/Lyria/Hydrakon, ver
     // WEAK_MONSTER_GROUPS acima) como o 5º e mais forte monstro.
@@ -208,7 +207,6 @@ export const BOSSES = [
       primary1: { id: 'solkaiser_feather', name: 'Tridente de Marokar', emoji: '🔱', image: 'assets/marokar/tridente.png' },
       primary2: { id: 'solkaiser_feather', name: 'Tridente de Marokar', emoji: '🔱', image: 'assets/marokar/tridente.png' },
     },
-    crystal: { id: 'solkaiser_crystal', name: 'Cristal de Marokar', emoji: '💎', image: 'assets/crystals/solkaiser.png' },
     // Rank de poder dentro da Zona 2 (ver monsterMaxHp/
     // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4
     // é só 1 degrau acima do Hydrakon (rank 3).
@@ -216,7 +214,7 @@ export const BOSSES = [
   },
   {
     stage: 30,
-    // id/crystalMaterialId ficam 'tartarok'/'tartarok_crystal' de
+    // id ficam 'tartarok'/'tartarok_crystal' de
     // propósito — mesmo reskin display-only do Chispim→Thornak/
     // Solkaiser→Marokar acima (ver comentário no Chispim). Fecha a Zona 3
     // (Esqueleto Guerreiro/Assassino Sombrio/Garruk/Mimicus, ver
@@ -235,7 +233,6 @@ export const BOSSES = [
       primary1: { id: 'tartarok_shell', name: 'Manto Esvaído', emoji: '🖤', image: 'assets/vorlith/manto.png' },
       primary2: { id: 'tartarok_shell', name: 'Manto Esvaído', emoji: '🖤', image: 'assets/vorlith/manto.png' },
     },
-    crystal: { id: 'tartarok_crystal', name: 'Cristal de Vorlith', emoji: '💎', image: 'assets/crystals/tartarok.png' },
     // Rank de poder dentro da Zona 3 (ver monsterMaxHp/
     // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4
     // é só 1 degrau acima do Mimicus (rank 3).
@@ -243,7 +240,7 @@ export const BOSSES = [
   },
   {
     stage: 40,
-    // id/crystalMaterialId ficam 'colhedor_carmesim'/
+    // id ficam 'colhedor_carmesim'/
     // 'colhedor_carmesim_crystal' de propósito — mesmo reskin display-only
     // das outras 3 zonas acima (ver comentário no Chispim). Fecha a Zona 4
     // (Plasmion/Corcel da Tempestade/Sabion/Serpentorax, ver
@@ -262,7 +259,6 @@ export const BOSSES = [
       primary1: { id: 'colhedor_carmesim_scythe', name: 'Círculo da Tempestade', emoji: '🌀', image: 'assets/eletyra/circulo.png' },
       primary2: { id: 'colhedor_carmesim_scythe', name: 'Círculo da Tempestade', emoji: '🌀', image: 'assets/eletyra/circulo.png' },
     },
-    crystal: { id: 'colhedor_carmesim_crystal', name: 'Cristal de Eletyra', emoji: '💎', image: 'assets/crystals/colhedor_carmesim.png' },
     // Rank de poder dentro da Zona 4 (ver monsterMaxHp/
     // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4
     // é só 1 degrau acima do Serpentorax (rank 3).
@@ -270,7 +266,7 @@ export const BOSSES = [
   },
   {
     stage: 50,
-    // id/crystalMaterialId ficam 'grommuk'/'grommuk_crystal' de propósito —
+    // id ficam 'grommuk'/'grommuk_crystal' de propósito —
     // mesmo reskin display-only das Zonas 1-4 acima (ver comentário no
     // Chispim). Fecha a Zona 5 (Lavasalam/Fornitus/Emberimp/Ember Warden,
     // ver WEAK_MONSTER_GROUPS abaixo) como o 5º e mais forte monstro.
@@ -288,7 +284,6 @@ export const BOSSES = [
       primary1: { id: 'grommuk_fang', name: 'Pena Ígnea', emoji: '🪶', image: 'assets/pyravalis/pena.png' },
       primary2: { id: 'grommuk_fang', name: 'Pena Ígnea', emoji: '🪶', image: 'assets/pyravalis/pena.png' },
     },
-    crystal: { id: 'grommuk_crystal', name: 'Cristal de Pyravalis', emoji: '💎', image: 'assets/crystals/grommuk.png' },
     // Rank de poder dentro da Zona 5 (ver monsterMaxHp/
     // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4 é
     // só 1 degrau acima do Ember Warden (rank 3).
@@ -296,7 +291,7 @@ export const BOSSES = [
   },
   {
     stage: 60,
-    // id/crystalMaterialId ficam 'vulkarion'/'vulkarion_crystal' de
+    // id ficam 'vulkarion'/'vulkarion_crystal' de
     // propósito — mesmo reskin display-only das Zonas 1-5 acima (ver
     // comentário no Chispim). Fecha a Zona 6 (Luxoris/Ecliptor/Thundrak/
     // Minotauro do Trovão, ver WEAK_MONSTER_GROUPS abaixo) como o 5º e mais
@@ -315,7 +310,6 @@ export const BOSSES = [
       primary1: { id: 'vulkarion_horn', name: 'Talismã do Vortexor', emoji: '🌀', image: 'assets/vortexor/talisma.png' },
       primary2: { id: 'vulkarion_horn', name: 'Talismã do Vortexor', emoji: '🌀', image: 'assets/vortexor/talisma.png' },
     },
-    crystal: { id: 'vulkarion_crystal', name: 'Cristal de Vortexor', emoji: '💎', image: 'assets/crystals/vulkarion.png' },
     // Rank de poder dentro da Zona 6 (ver monsterMaxHp/
     // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4 é
     // só 1 degrau acima do Minotauro do Trovão (rank 3).
@@ -323,7 +317,7 @@ export const BOSSES = [
   },
   {
     stage: 70,
-    // id/crystalMaterialId ficam 'leviargon'/'leviargon_crystal' de
+    // id ficam 'leviargon'/'leviargon_crystal' de
     // propósito — mesmo reskin display-only das Zonas 1-6 acima (ver
     // comentário no Chispim). Fecha a Zona 7 (Pyrorian/Infernus/Sentinela
     // de Magma/Ignivoran, ver WEAK_MONSTER_GROUPS abaixo) como o 5º e mais
@@ -342,7 +336,6 @@ export const BOSSES = [
       primary1: { id: 'leviargon_fin', name: 'Fragmento de Magmarok', emoji: '🌋', image: 'assets/magmarok/fragmento.png' },
       primary2: { id: 'leviargon_fin', name: 'Fragmento de Magmarok', emoji: '🌋', image: 'assets/magmarok/fragmento.png' },
     },
-    crystal: { id: 'leviargon_crystal', name: 'Cristal de Magmarok', emoji: '💎', image: 'assets/crystals/leviargon.png' },
     // Rank de poder dentro da Zona 7 (ver monsterMaxHp/
     // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4 é
     // só 1 degrau acima do Ignivoran (rank 3).
@@ -350,7 +343,7 @@ export const BOSSES = [
   },
   {
     stage: 80,
-    // id/crystalMaterialId ficam 'tempestron'/'tempestron_crystal' de
+    // id ficam 'tempestron'/'tempestron_crystal' de
     // propósito — mesmo reskin display-only das Zonas 1-7 acima (ver
     // comentário no Chispim). Fecha a Zona 8 (Capitão Marvik/Abissorrok/
     // Thalassok/Serpentyra, ver WEAK_MONSTER_GROUPS acima) como o 5º e mais
@@ -369,7 +362,6 @@ export const BOSSES = [
       primary1: { id: 'tempestron_heart', name: 'Núcleo de Hidraelion', emoji: '🔮', image: 'assets/hidraelion/nucleo.png' },
       primary2: { id: 'tempestron_heart', name: 'Núcleo de Hidraelion', emoji: '🔮', image: 'assets/hidraelion/nucleo.png' },
     },
-    crystal: { id: 'tempestron_crystal', name: 'Cristal de Hidraelion', emoji: '💎', image: 'assets/crystals/tempestron.png' },
     // Rank de poder dentro da Zona 8 (ver monsterMaxHp/
     // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4 é
     // só 1 degrau acima do Serpentyra (rank 3).
@@ -377,7 +369,7 @@ export const BOSSES = [
   },
   {
     stage: 90,
-    // id/crystalMaterialId ficam 'gaiatron'/'gaiatron_crystal' de propósito
+    // id ficam 'gaiatron'/'gaiatron_crystal' de propósito
     // — mesmo reskin display-only das Zonas 1-8 acima (ver comentário no
     // Chispim). Fecha a Zona 9 (Thornviel/Verdanthra/Guardião Verdor/
     // Granvorok, ver WEAK_MONSTER_GROUPS acima) como o 5º e mais forte
@@ -396,7 +388,6 @@ export const BOSSES = [
       primary1: { id: 'gaiatron_branch', name: 'Garra de Florakar', emoji: '🌿', image: 'assets/florakar/garra.png' },
       primary2: { id: 'gaiatron_branch', name: 'Garra de Florakar', emoji: '🌿', image: 'assets/florakar/garra.png' },
     },
-    crystal: { id: 'gaiatron_crystal', name: 'Cristal de Florakar', emoji: '💎', image: 'assets/crystals/gaiatron.png' },
     // Rank de poder dentro da Zona 9 (ver monsterMaxHp/
     // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4 é
     // só 1 degrau acima do Granvorok (rank 3).
@@ -404,7 +395,7 @@ export const BOSSES = [
   },
   {
     stage: 100,
-    // id/crystalMaterialId ficam 'bahamorth'/'bahamorth_crystal' de
+    // id ficam 'bahamorth'/'bahamorth_crystal' de
     // propósito — mesmo reskin display-only das Zonas 1-9 acima (ver
     // comentário no Chispim). Fecha a Zona 10 (Draxorian/Grommash/
     // Morvanthal/Aurelion, ver WEAK_MONSTER_GROUPS acima) como o 5º e mais
@@ -423,7 +414,6 @@ export const BOSSES = [
       primary1: { id: 'bahamorth_scale', name: 'Espada do Vazio Eterno', emoji: '🗡️', image: 'assets/malgorath/espada.png' },
       primary2: { id: 'bahamorth_scale', name: 'Espada do Vazio Eterno', emoji: '🗡️', image: 'assets/malgorath/espada.png' },
     },
-    crystal: { id: 'bahamorth_crystal', name: 'Cristal de Malgorath', emoji: '💎', image: 'assets/crystals/bahamorth.png' },
     // Rank de poder dentro da Zona 10 (ver monsterMaxHp/
     // monsterDamagePerSecond/monsterGoldReward em systems/combat.js) — 4 é
     // só 1 degrau acima do Aurelion (rank 3).
@@ -602,7 +592,7 @@ export function getBossForStage(stage) {
 }
 
 /// Looks up a material's display info ({id, name, emoji}) by id across
-/// every source that can produce one — boss "drop principal"/Crystal, weak
+/// every source that can produce one — boss "drop principal", weak
 /// monster material, or (for saves/inventory predating the boss-roster
 /// rebuild) the old MONSTER_FAMILIES common/rare/gem. Used wherever a UI
 /// needs to show a material it only knows the id of (e.g. a crafting
@@ -612,7 +602,6 @@ export function findMaterialInfo(materialId) {
   for (const boss of BOSSES) {
     if (boss.materials.primary1.id === materialId) return boss.materials.primary1;
     if (boss.materials.primary2.id === materialId) return boss.materials.primary2;
-    if (boss.crystal.id === materialId) return boss.crystal;
   }
   for (const group of WEAK_MONSTER_GROUPS) {
     for (const monster of group.monsters) {

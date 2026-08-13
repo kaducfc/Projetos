@@ -35,16 +35,12 @@ export const CASH_REAL_MONEY_PACKAGES = [
   { id: 'pack_l', cashAmount: 1200, priceLabel: 'R$ 79,90' },
 ];
 
-// Event-currency sink, generated per boss so every unlocked one has a
-// Crystal (bypasses its 0.1% drop chance) and bulk bundles of its
-// "drop principal" material(s) for sale. `tier` is the boss's index in
-// BOSSES (0-based), same knob items.js uses to scale crafting costs.
+// Event-currency sink, generated per boss so every unlocked one has bulk
+// bundles of its "drop principal" material(s) for sale. `tier` is the
+// boss's index in BOSSES (0-based), same knob items.js uses to scale
+// crafting costs.
 export function eventShopItemsForBoss(boss, tier) {
   const items = [
-    {
-      id: `${boss.id}_crystal_buy`, name: boss.crystal.name, emoji: boss.crystal.emoji, image: boss.crystal.image || null,
-      matId: boss.crystal.id, amount: 1, cost: Math.round(30 + tier * 15),
-    },
     {
       id: `${boss.id}_primary1_bundle`, name: `${boss.materials.primary1.name} (x25)`, emoji: boss.materials.primary1.emoji, image: boss.materials.primary1.image || null,
       matId: boss.materials.primary1.id, amount: 25, cost: Math.round(8 + tier * 3),
