@@ -8,15 +8,33 @@ export const CASH_SHOP_ITEMS = [
   // state.vipExpiresAt ainda está no futuro (isVipActive, ver state.js), a
   // compra fica bloqueada (canBuyCashItem) até o contador zerar de vez.
   // Sem "amount" nenhum pra dar (kind: 'vip' é tratado à parte de
-  // kind: 'gold' em buyCashItem). Efeitos reais enquanto ativo: +50 no
-  // limite de inventário de itens (VIP_INVENTORY_BONUS, ver
-  // data/items.js) e +100 no de mascotes (PET_VIP_INVENTORY_BONUS, ver
-  // data/pets.js — valor próprio, maior), escolha livre do mascote da
-  // direita ao chocar ovo (ver canChooseRightPet em systems/pets.js), e
-  // "Chocar Todos" liberado (ver canHatchAllEggs em systems/pets.js).
+  // kind: 'gold' em buyCashItem). `durationLabel` e `benefits` alimentam o
+  // card enxuto (nome/duração/botão "Benefícios"/preço, ver cashShopHtml em
+  // ui/render.js) — o botão "Benefícios" abre um modal listando `benefits`
+  // um por linha, em vez do card mostrar tudo de uma vez.
   {
     id: 'cash_vip', name: 'VIP', emoji: '👑', cost: 10, kind: 'vip',
-    description: '30 dias de: +50 no limite de inventário de itens, +100 no de mascotes, escolha livre do mascote da direita ao chocar ovo, e o botão Chocar Todos.',
+    durationLabel: '30 dias',
+    benefits: [
+      '+50 no limite de inventário de itens',
+      '+100 no limite de inventário de mascotes',
+      'Escolha livre do mascote da direita ao chocar ovo',
+      'Botão "Chocar Todos" liberado',
+    ],
+  },
+];
+
+// Compra única (não é assinatura, não expira) em dinheiro real — mesma
+// situação de CASH_REAL_MONEY_PACKAGES abaixo: sem processador de
+// pagamento de verdade nesse protótipo, então renderiza como placeholder
+// desabilitado ("Em breve") na loja, não uma compra funcional. Não há SDK
+// de anúncio de verdade no jogo (ver AD_WATCH_COOLDOWN_MS acima), então
+// "remover anúncios" hoje não muda nenhum comportamento — é só o item da
+// loja, pronto pra quando a integração de pagamento/anúncio existir.
+export const CASH_ONE_TIME_PURCHASES = [
+  {
+    id: 'no_ads', name: 'No Ads', emoji: '🚫', priceLabel: 'R$ 10,00',
+    description: 'Retira os anúncios do jogo.',
   },
 ];
 

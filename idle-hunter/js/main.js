@@ -37,7 +37,7 @@ import {
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   EGG_ICON, PET_FRAGMENT_ICON,
-  showArenaRanksModal, pulseArenaTarget,
+  showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -1243,6 +1243,12 @@ function wireShopTabEvents() {
     if (subtabBtn) {
       activeShopSubTab = subtabBtn.dataset.shopSubtab;
       renderShopTab(state, activeShopSubTab);
+      return;
+    }
+
+    const vipBenefitsBtn = e.target.closest('[data-vip-benefits]');
+    if (vipBenefitsBtn) {
+      showVipBenefitsModal();
       return;
     }
 
