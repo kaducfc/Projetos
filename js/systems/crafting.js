@@ -125,7 +125,7 @@ export function getEnhanceCost(state, uid) {
 export function canEnhance(state, uid) {
   const cost = getEnhanceCost(state, uid);
   if (cost == null) return false;
-  return (state.materials[cost.matId] || 0) >= cost.qty;
+  return (state.materials[cost.matId] || 0) >= cost.qty && (state.gold || 0) >= cost.gold;
 }
 
 export function enhanceItem(state, uid) {
@@ -133,6 +133,7 @@ export function enhanceItem(state, uid) {
   if (!canEnhance(state, uid)) return false;
   const entry = getEntry(state, uid);
   state.materials[cost.matId] -= cost.qty;
+  state.gold -= cost.gold;
   entry.enhanceLevel += 1;
   return true;
 }
@@ -143,8 +144,8 @@ export function canUpgradeToMaster(state, uid) {
   const item = getItem(entry.itemId);
   const m = item.masterMaterialCost;
   return (
-    (state.materials[item.crystalMaterialId] || 0) >= 1 &&
-    (state.materials[m.matId] || 0) >= m.qty
+    (state.materials[m.matId] || 0) >= m.qty &&
+    (state.gold || 0) >= m.gold
   );
 }
 
@@ -153,8 +154,8 @@ export function upgradeToMaster(state, uid) {
   const entry = getEntry(state, uid);
   const item = getItem(entry.itemId);
   const m = item.masterMaterialCost;
-  state.materials[item.crystalMaterialId] -= 1;
   state.materials[m.matId] -= m.qty;
+  state.gold -= m.gold;
   entry.isMaster = true;
   return true;
 }
@@ -170,10 +171,7 @@ export function canAscendItem(state, uid) {
   const item = getItem(entry.itemId);
   const cost = getAscensionCost(item, entry.rarityId);
   if (!cost) return false;
-  return (
-    (state.materials[cost.crystalMaterialId] || 0) >= 1 &&
-    (state.materials[cost.matId] || 0) >= cost.qty
-  );
+  return (state.materials[cost.matId] || 0) >= cost.qty;
 }
 
 /// Etapa 1 da Ascensão: rerola baseStats pra magnitude da raridade seguinte
@@ -215,7 +213,6 @@ export function finalizeAscension(state, uid, pending, chosenIndex) {
   const chosen = pending.candidates[chosenIndex];
   if (!chosen) return false;
 
-  state.materials[cost.crystalMaterialId] -= 1;
   state.materials[cost.matId] -= cost.qty;
 
   entry.rarityId = pending.nextRarityId;
@@ -239,7 +236,6 @@ function materialsSpentOn(item, entry) {
   if (entry.isMaster) {
     const m = item.masterMaterialCost;
     spent[m.matId] = (spent[m.matId] || 0) + m.qty;
-    spent[item.crystalMaterialId] = (spent[item.crystalMaterialId] || 0) + 1;
   }
   return spent;
 }
