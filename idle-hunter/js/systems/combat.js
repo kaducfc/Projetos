@@ -32,10 +32,9 @@ const ARMOR_CONSTANT = 100;
 // dropMult (Drop upgrades/gear), same as before.
 const COMMON_DROP_CHANCE = 0.35;
 
-// Boss-only Crystal and any monster/boss card are both *fixed* rates —
-// explicitly never scaled by dropMult. Drop bonuses only affect the
-// "regular" materials above; the rare stuff always stays this rare.
-export const CRYSTAL_DROP_CHANCE = 0.01; // 1%
+// Any monster/boss card is a *fixed* rate — explicitly never scaled by
+// dropMult. Drop bonuses only affect the "regular" materials above; cards
+// always stay this rare.
 export const BOSS_CARD_DROP_CHANCE = 0.001; // 0.1% (~1 per 1,000 boss kills)
 export const WEAK_CARD_DROP_CHANCE = 0.001; // 0.1% (~1 per 1,000 kills) — mesma taxa do chefe, pedido do usuário
 
@@ -244,8 +243,7 @@ export function getCurrentMonster(currentMonsterRef) {
 }
 
 /// Boss: rolls each of the two "drop principal" materials independently
-/// (dropMult-scaled), plus the boss's own Crystal and its card, both at a
-/// fixed rate dropMult never touches.
+/// (dropMult-scaled), plus its card at a fixed rate dropMult never touches.
 /// Weak monster: rolls its one material (dropMult-scaled) plus its own
 /// card, also at that same fixed rate.
 export function rollDrops(zoneIndex, isBoss, dropMult, monsterId) {
@@ -259,9 +257,6 @@ export function rollDrops(zoneIndex, isBoss, dropMult, monsterId) {
       if (Math.random() < chance) {
         drops.push({ id: mat.id, name: mat.name, emoji: mat.emoji, image: mat.image || null, qty: 1 });
       }
-    }
-    if (Math.random() < CRYSTAL_DROP_CHANCE) {
-      drops.push({ id: b.crystal.id, name: b.crystal.name, emoji: b.crystal.emoji, image: b.crystal.image || null, qty: 1 });
     }
     if (Math.random() < BOSS_CARD_DROP_CHANCE) {
       const card = getCardForMonster(b.id);

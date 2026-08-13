@@ -100,9 +100,9 @@ export function armorCategoryLabel(attributeId) {
 // above the next tier's base item, regardless of zone.
 export const TIER_GROWTH = 2.15;
 
-// Enhancement: +1..+5 (grindable material, "little by little"), then a
-// single big "Rank Master" jump gated by that zone's Crystal. Rank Master is
-// defined as a fixed target relative to the tier's base power —
+// Enhancement: +1..+5 (grindable material + gold, "little by little"), then
+// a single big "Rank Master" jump. Rank Master is defined as a fixed target
+// relative to the tier's base power —
 // TIER_GROWTH * MASTER_MARGIN — so it's always just a bit stronger than the
 // next zone's own +0 item, whatever tier it is.
 export const ENHANCE_MAX_LEVEL = 5;
@@ -765,11 +765,22 @@ function attributeBaseStats(attributeId, tier, category) {
   };
 }
 
-/// Custo de enhance (+1..+5, depois Rank Master) continua vindo de
-/// state.materials — agora dropados diretamente pelos monstros da zona (ver
-/// combat.js rollDrops), sem receita de craft por trás. Cicla pelos 5
-/// monstros fracos da zona, um mais adiante por categoria, igual antes.
-function buildEnhanceCosts(categoryIndex, weakGroup) {
+/// Custo de enhance (+1..+5, depois Rank Master) vem de state.materials —
+/// dropados diretamente pelos monstros da zona (ver combat.js rollDrops),
+/// sem receita de craft por trás — MAIS uma pequena quantia de state.gold
+/// (pedido do usuário depois que os Cristais de chefe foram removidos do
+/// jogo: nenhum requisito ficou no lugar deles, só esse gold, que também
+/// entra em todo passo de +1..+5). Cicla pelos 5 monstros fracos da zona,
+/// um mais adiante por categoria, igual antes. O ouro escala pelo tier da
+/// zona (`tier`, 0-9 — zonas mais avançadas custam mais) e pelo nível do
+/// passo (`i` — 0 é +1, ENHANCE_MAX_LEVEL é o próprio Rank Master), então
+/// tier e nível do item influenciam o custo, como pedido.
+const ENHANCE_GOLD_BASE = 20;
+function enhanceGoldStep(tier, i) {
+  return Math.round(ENHANCE_GOLD_BASE * (tier + 1) * (1 + i * 0.5));
+}
+
+function buildEnhanceCosts(tier, categoryIndex, weakGroup) {
   const bandSize = weakGroup.monsters.length;
   const weakAt = (offset) => weakGroup.monsters[(categoryIndex + offset) % bandSize];
   const baseQty = 10;
@@ -777,10 +788,12 @@ function buildEnhanceCosts(categoryIndex, weakGroup) {
   const enhanceCost = Array.from({ length: ENHANCE_MAX_LEVEL }, (_, i) => ({
     matId: weakAt(2 + i).material.id,
     qty: enhanceCostStep(i),
+    gold: enhanceGoldStep(tier, i),
   }));
   const masterMaterialCost = {
     matId: weakAt(2 + ENHANCE_MAX_LEVEL).material.id,
     qty: enhanceCostStep(ENHANCE_MAX_LEVEL),
+    gold: enhanceGoldStep(tier, ENHANCE_MAX_LEVEL),
   };
   return { enhanceCost, masterMaterialCost };
 }
@@ -813,7 +826,7 @@ function buildItemTemplate(boss, tier, category, attributeId, categoryIndex, wea
     emoji = label.emoji;
   }
 
-  const { enhanceCost, masterMaterialCost } = buildEnhanceCosts(categoryIndex, weakGroup);
+  const { enhanceCost, masterMaterialCost } = buildEnhanceCosts(tier, categoryIndex, weakGroup);
 
   return {
     id: `${boss.id}_${category}_${attributeId}`,
@@ -826,7 +839,6 @@ function buildItemTemplate(boss, tier, category, attributeId, categoryIndex, wea
     image,
     element: boss.element,
     stats,
-    crystalMaterialId: boss.crystal.id,
     enhanceCost,
     masterMaterialCost,
   };
@@ -907,11 +919,10 @@ export function getNextRarity(rarityId) {
   return RARITIES[currentIndex + 1] || null;
 }
 
-/// Custo de Ascensão (Rank Master → raridade seguinte, +0, MESMA zona): 1
-/// Cristal do chefe da própria zona do item + uma quantidade de material
-/// daquela zona, crescendo com o índice da raridade alvo (subir pra Mítico
-/// custa mais que subir pra Incomum). Retorna null se o item já está na
-/// última raridade (Mítico).
+/// Custo de Ascensão (Rank Master → raridade seguinte, +0, MESMA zona): uma
+/// quantidade de material daquela zona, crescendo com o índice da raridade
+/// alvo (subir pra Mítico custa mais que subir pra Incomum). Retorna null se
+/// o item já está na última raridade (Mítico).
 export function getAscensionCost(item, currentRarityId) {
   const currentIndex = RARITIES.findIndex((r) => r.id === currentRarityId);
   const nextRarity = RARITIES[currentIndex + 1];
@@ -925,7 +936,6 @@ export function getAscensionCost(item, currentRarityId) {
   const qty = Math.max(1, Math.round(10 * (0.5 + step * 0.5) * 1.5));
   return {
     nextRarityId: nextRarity.id,
-    crystalMaterialId: item.crystalMaterialId,
     matId: weakAt.material.id,
     qty,
   };
