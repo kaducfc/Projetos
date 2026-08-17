@@ -6,6 +6,7 @@ import { ensureCardIds } from './crafting.js';
 import { getCardCollectionDpsBonusPercent } from './cards.js';
 import { getSkillTree } from '../data/skills.js';
 import { getSkillLevel, getChosenSpecialId } from './skills.js';
+import { getActiveDpsBoostPercent } from './shop.js';
 
 // Sem arma nenhuma equipada, o caçador ainda bate com as próprias mãos —
 // suficiente pra matar o primeiro monstro fraco da Zona 1 (~68 HP) em
@@ -252,6 +253,11 @@ export function computePlayerStats(state) {
   // systems/cards.js) — permanente por carta já descoberta ao menos uma vez,
   // separado do bônus de carta SOCKETADA acima (os dois se somam).
   dpsPercent += getCardCollectionDpsBonusPercent(state);
+
+  // Turbo de DPS via anúncio (ver data/shop.js DPS_BOOST_*, systems/shop.js
+  // getActiveDpsBoostPercent) — cargas com timer próprio, somam por cima de
+  // tudo o resto igual ao bônus de coleção de cartas acima.
+  dpsPercent += getActiveDpsBoostPercent(state);
 
   const dps = dpsFlat * (1 + dpsPercent / 100);
   const attackSpeedPerSec = Math.max(0.05, 1 * (1 + attackSpeedPercent / 100));

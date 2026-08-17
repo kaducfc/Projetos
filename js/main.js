@@ -15,7 +15,7 @@ import { formatNumber } from './format.js';
 import { enterExpedition } from './systems/expedition.js';
 import { ARENA_RUN_DURATION_MS, ARENA_COOLDOWN_MS, canEnterArena, startArenaRun, applyArenaDamage, endArenaRun } from './systems/arena.js';
 import { claimAchievement } from './systems/achievements.js';
-import { watchAd, buyCashItem, buyEventItem } from './systems/shop.js';
+import { watchAd, buyCashItem, buyEventItem, watchDpsBoostAd, watchOfflineBonusAd } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
 import { claimCardReward, recycleCard, craftCard } from './systems/cards.js';
 import {
@@ -1303,6 +1303,24 @@ function wireShopTabEvents() {
       }
       return;
     }
+
+    const dpsAdBtn = e.target.closest('[data-watch-dps-ad]');
+    if (dpsAdBtn) {
+      if (watchDpsBoostAd(state)) {
+        showToast('⚡ Turbo de DPS ativado! +30% de DPS por 30 min.');
+        renderShopTab(state, activeShopSubTab);
+      }
+      return;
+    }
+
+    const offlineAdBtn = e.target.closest('[data-watch-offline-ad]');
+    if (offlineAdBtn) {
+      if (watchOfflineBonusAd(state)) {
+        showToast('⏰ +30 min no limite de recompensa offline!');
+        renderShopTab(state, activeShopSubTab);
+      }
+      return;
+    }
   });
 }
 
@@ -1341,8 +1359,9 @@ function showOfflineProgressIfAny() {
     ? `<p class="offline-item-lines">${[...materialLines, ...cardLines, ...(equipmentLine ? [equipmentLine] : [])].join('<br>')}</p>`
     : '';
 
+  const maxOfflineHours = (progress.maxOfflineSeconds / 3600).toFixed(1).replace(/\.0$/, '');
   showModal('Bem-vindo de volta!', `
-    <p>Você ficou fora por <strong>${timeStr}</strong> (máximo 8h de recompensa offline).</p>
+    <p>Você ficou fora por <strong>${timeStr}</strong> (máximo ${maxOfflineHours}h de recompensa offline).</p>
     <p>Seu personagem continuou lutando sozinho, a ${Math.round(OFFLINE_EFFICIENCY * 100)}% de eficiência, e conseguiu:</p>
     <p>💀 ${formatNumber(progress.kills)} monstros derrotados<br>
        ${GOLD_ICON} +${formatNumber(progress.goldGained)} ouro</p>
