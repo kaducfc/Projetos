@@ -5,7 +5,12 @@ import {
   DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName, RARITIES,
 } from '../data/items.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
-import { formatNumber, formatPercent } from '../format.js';
+import { formatNumber, formatPercent, escapeHtml } from '../format.js';
+import { PROFILE_ICONS, NAME_CHANGE_COST, MAX_PLAYER_NAME_LENGTH } from '../data/profile.js';
+import {
+  getPlayerName, isFirstNameChangeFree, canAffordNameChange, getSelectedProfileIcon,
+  isProfileIconUnlocked, isSoundOn, isMusicOn,
+} from '../systems/profile.js';
 import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds } from '../systems/crafting.js';
@@ -127,6 +132,11 @@ export function renderTopBar(state) {
   document.getElementById('cash-value').textContent = formatNumber(state.cash);
   document.getElementById('event-currency-value').textContent = formatNumber(state.eventCurrency);
   document.getElementById('level-value').textContent = state.hunterLevel || 1;
+
+  const profileBtn = document.getElementById('profile-btn');
+  const profileIcon = getSelectedProfileIcon(state);
+  document.getElementById('profile-btn-icon').src = profileIcon.image;
+  profileBtn.title = `${getPlayerName(state)} — Perfil`;
 }
 
 /// Nível/XP do caçador — só libera zonas/chefes por enquanto (ver
@@ -1767,6 +1777,65 @@ export function showVipBenefitsModal() {
   const vipItem = CASH_SHOP_ITEMS.find((i) => i.kind === 'vip');
   const linesHtml = vipItem.benefits.map((b) => `<p class="offline-item-lines">✅ ${b}</p>`).join('');
   showModal('👑 Benefícios do VIP', linesHtml);
+}
+
+// ---------------------------------------------------------------
+// Perfil (aberto pelo #profile-btn no canto superior esquerdo da barra):
+// nick (1ª troca grátis, próximas custam NAME_CHANGE_COST Esmeralda, ver
+// systems/profile.js), ícone da conta (catálogo em data/profile.js,
+// desbloqueados via state.unlockedProfileIconIds) e os toggles de Som/
+// Música (só liga/desliga persistido — sem player de áudio de verdade
+// ainda, ver systems/profile.js). Reaproveita o #modal-overlay
+// compartilhado (ver wireModalEvents em main.js pros data-* abaixo).
+// ---------------------------------------------------------------
+
+function profileIconGridHtml(state) {
+  return PROFILE_ICONS.map((icon) => {
+    const unlocked = isProfileIconUnlocked(state, icon.id);
+    const selected = state.profileIconId === icon.id;
+    const lockHtml = unlocked ? '' : '<span class="profile-icon-lock">🔒</span>';
+    return `<button
+      class="profile-icon-option ${selected ? 'selected' : ''} ${unlocked ? '' : 'locked'}"
+      data-select-profile-icon="${icon.id}"
+      ${unlocked ? '' : 'disabled'}
+      title="${escapeHtml(icon.name)}${unlocked ? '' : ' (bloqueado — obtido em eventos/recompensas futuras)'}"
+    ><img src="${icon.image}" alt="${escapeHtml(icon.name)}">${lockHtml}</button>`;
+  }).join('');
+}
+
+function profileModalHtml(state) {
+  const name = getPlayerName(state);
+  const freeChange = isFirstNameChangeFree(state);
+  const affordable = canAffordNameChange(state);
+  const costLabel = freeChange ? 'Grátis (1ª troca)' : `${ESMERALDA_ICON} ${NAME_CHANGE_COST}`;
+
+  return `
+    <div class="profile-name-section">
+      <div class="shop-section-title" style="margin-top:0">Nick</div>
+      <div class="profile-name-row">
+        <input id="profile-name-input" type="text" maxlength="${MAX_PLAYER_NAME_LENGTH}" value="${escapeHtml(name)}" placeholder="Seu nick">
+        <button data-save-profile-name ${affordable ? '' : 'disabled'}>Salvar</button>
+      </div>
+      <p class="shop-note">Troca de nick: ${costLabel}${affordable ? '' : ' — Esmeralda insuficiente'}</p>
+    </div>
+
+    <div class="shop-section-title">Ícone do Perfil</div>
+    <div class="profile-icon-grid">${profileIconGridHtml(state)}</div>
+
+    <div class="shop-section-title">Áudio</div>
+    <div class="profile-toggle-row">
+      <span>🔊 Efeitos Sonoros</span>
+      <button class="profile-toggle-btn ${isSoundOn(state) ? 'on' : 'off'}" data-toggle-sound>${isSoundOn(state) ? 'On' : 'Off'}</button>
+    </div>
+    <div class="profile-toggle-row">
+      <span>🎵 Música</span>
+      <button class="profile-toggle-btn ${isMusicOn(state) ? 'on' : 'off'}" data-toggle-music>${isMusicOn(state) ? 'On' : 'Off'}</button>
+    </div>
+  `;
+}
+
+export function showProfileModal(state) {
+  showModal('👤 Perfil', profileModalHtml(state));
 }
 
 function eventShopHtml(state) {

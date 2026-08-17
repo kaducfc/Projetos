@@ -21,3 +21,12 @@ export function formatNumber(value) {
 export function formatPercent(value) {
   return `${value.toFixed(1)}%`;
 }
+
+const HTML_ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+/// Escapa texto vindo do jogador (hoje só o nick, ver systems/profile.js)
+/// antes de injetar em innerHTML/atributo — os outros nomes exibidos no
+/// jogo vêm sempre de data/* estático, nunca precisaram disso.
+export function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (ch) => HTML_ESCAPE_MAP[ch]);
+}

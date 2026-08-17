@@ -28,6 +28,7 @@ import {
   fuseAllPossiblePets, hatchAllEggs, rollHatchCandidates, recordPetHatchOutcome, donatePetFragments,
 } from './systems/pets.js';
 import { buySkillLevel, buySpecial, resetSkillTree } from './systems/skills.js';
+import { setPlayerName, toggleSound, toggleMusic, selectProfileIcon, isValidPlayerName, getPlayerName } from './systems/profile.js';
 import {
   renderAll, renderTopBar, renderHunterLevel, renderCombatStats, renderMonster, renderNoMonsterSelected,
   renderInventoryTab, renderUpgradesTab, renderBossTimer,
@@ -37,7 +38,7 @@ import {
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   EGG_ICON, PET_FRAGMENT_ICON,
-  showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal,
+  showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -460,6 +461,19 @@ function setupMonsterSelection() {
 }
 
 // ---------------------------------------------------------------
+// Perfil (botão no canto superior esquerdo da barra, ver #profile-btn em
+// index.html) — só abre o modal; as ações de dentro dele (salvar nick,
+// trocar ícone, toggles de som/música) são tratadas em wireModalEvents,
+// junto com todo resto que usa o #modal-overlay compartilhado.
+// ---------------------------------------------------------------
+
+function setupProfile() {
+  document.getElementById('profile-btn').addEventListener('click', () => {
+    showProfileModal(state);
+  });
+}
+
+// ---------------------------------------------------------------
 // Item detail modal (opened from equipment slots and inventory tiles)
 // ---------------------------------------------------------------
 
@@ -838,6 +852,56 @@ function wireModalEvents() {
           : '🐣 Novo mascote chocado!');
         renderTopBar(state);
         renderPetsTabNow();
+      });
+      return;
+    }
+
+    const saveNameBtn = e.target.closest('[data-save-profile-name]');
+    if (saveNameBtn) {
+      runModalAction(() => {
+        const input = document.getElementById('profile-name-input');
+        const rawName = input ? input.value : '';
+        if (!isValidPlayerName(rawName)) {
+          showToast('❌ Nick precisa ter entre 3 e 16 caracteres.');
+          return;
+        }
+        if (rawName.trim() === getPlayerName(state)) return; // nada mudou, não cobra
+        if (setPlayerName(state, rawName)) {
+          showToast('✅ Nick atualizado!');
+          renderTopBar(state);
+          showProfileModal(state);
+        } else {
+          showToast(`❌ ${ESMERALDA_ICON} insuficiente pra trocar o nick.`);
+        }
+      });
+      return;
+    }
+
+    const toggleSoundBtn = e.target.closest('[data-toggle-sound]');
+    if (toggleSoundBtn) {
+      runModalAction(() => {
+        toggleSound(state);
+        showProfileModal(state);
+      });
+      return;
+    }
+
+    const toggleMusicBtn = e.target.closest('[data-toggle-music]');
+    if (toggleMusicBtn) {
+      runModalAction(() => {
+        toggleMusic(state);
+        showProfileModal(state);
+      });
+      return;
+    }
+
+    const selectIconBtn = e.target.closest('[data-select-profile-icon]');
+    if (selectIconBtn) {
+      runModalAction(() => {
+        if (selectProfileIcon(state, selectIconBtn.dataset.selectProfileIcon)) {
+          renderTopBar(state);
+          showProfileModal(state);
+        }
       });
       return;
     }
@@ -1377,6 +1441,7 @@ function init() {
   document.getElementById('build-tag').textContent = GAME_BUILD;
   setupTabs();
   setupMonsterSelection();
+  setupProfile();
   wireModalEvents(); // one-time delegated listener, see wireModalEvents()
   wireInventoryTabEvents();
   wireCardsTabEvents();
