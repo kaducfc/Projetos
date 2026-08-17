@@ -1,6 +1,6 @@
 import {
   CASH_SHOP_ITEMS, AD_WATCH_COOLDOWN_MS, AD_WATCH_CASH_REWARD,
-  DPS_BOOST_PERCENT_PER_STACK, DPS_BOOST_DURATION_MS, DPS_BOOST_MAX_STACKS,
+  DPS_BOOST_PERCENT, DPS_BOOST_DURATION_MS, DPS_BOOST_MAX_DURATION_MS,
   OFFLINE_BONUS_SECONDS_PER_STACK, OFFLINE_BONUS_MAX_SECONDS,
 } from '../data/shop.js';
 import { isVipActive, VIP_DURATION_MS } from '../state.js';
@@ -58,37 +58,36 @@ export function watchAd(state) {
 }
 
 // ---------------------------------------------------------------
-// Turbo de DPS (anúncio #2): até DPS_BOOST_MAX_STACKS cargas de +
-// DPS_BOOST_PERCENT_PER_STACK% de DPS por DPS_BOOST_DURATION_MS cada,
-// empilháveis. Cada carga tem seu próprio timestamp de expiração (real,
-// corre mesmo offline) — sem cooldown separado, o limite de cargas ativas
-// já regula quantas vezes dá pra assistir.
+// Turbo de DPS (anúncio #2): bônus fixo de DPS_BOOST_PERCENT% de DPS
+// enquanto o relógio (state.dpsBoostExpiresAt, real, corre mesmo offline)
+// não zerar. Assistir de novo NÃO aumenta o bônus (sempre +30%) — só
+// estende o relógio em +DPS_BOOST_DURATION_MS, até um teto de
+// DPS_BOOST_MAX_DURATION_MS (2h) de tempo restante.
 // ---------------------------------------------------------------
 
-/// Filtra as cargas já expiradas (e persiste o array já limpo de volta em
-/// state, pra não crescer sem limite) e devolve as que ainda estão ativas.
-export function getActiveDpsBoostStacks(state) {
-  const now = Date.now();
-  const active = (state.dpsBoostExpirations || []).filter((expiresAt) => expiresAt > now);
-  state.dpsBoostExpirations = active;
-  return active;
+export function getDpsBoostRemainingMs(state) {
+  return Math.max(0, (state.dpsBoostExpiresAt || 0) - Date.now());
 }
 
-/// % de DPS a somar em computePlayerStats (ver systems/stats.js) — 0 se
-/// nenhuma carga ativa.
+export function isDpsBoostActive(state) {
+  return getDpsBoostRemainingMs(state) > 0;
+}
+
+/// % de DPS a somar em computePlayerStats (ver systems/stats.js) — 0 se o
+/// relógio já zerou.
 export function getActiveDpsBoostPercent(state) {
-  return getActiveDpsBoostStacks(state).length * DPS_BOOST_PERCENT_PER_STACK;
+  return isDpsBoostActive(state) ? DPS_BOOST_PERCENT : 0;
 }
 
 export function canWatchDpsBoostAd(state) {
-  return getActiveDpsBoostStacks(state).length < DPS_BOOST_MAX_STACKS;
+  return getDpsBoostRemainingMs(state) < DPS_BOOST_MAX_DURATION_MS;
 }
 
 export function watchDpsBoostAd(state) {
   if (!canWatchDpsBoostAd(state)) return false;
-  const active = getActiveDpsBoostStacks(state);
-  active.push(Date.now() + DPS_BOOST_DURATION_MS);
-  state.dpsBoostExpirations = active;
+  const now = Date.now();
+  const base = Math.max(now, state.dpsBoostExpiresAt || 0);
+  state.dpsBoostExpiresAt = Math.min(base + DPS_BOOST_DURATION_MS, now + DPS_BOOST_MAX_DURATION_MS);
   return true;
 }
 
