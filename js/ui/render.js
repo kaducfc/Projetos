@@ -23,12 +23,12 @@ import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
 import {
   CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, CASH_ONE_TIME_PURCHASES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss,
-  DPS_BOOST_PERCENT_PER_STACK, DPS_BOOST_MAX_STACKS,
+  DPS_BOOST_PERCENT, DPS_BOOST_MAX_DURATION_MS,
   OFFLINE_BONUS_SECONDS_PER_STACK, OFFLINE_BONUS_MAX_STACKS,
 } from '../data/shop.js';
 import {
   canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining,
-  getActiveDpsBoostStacks, canWatchDpsBoostAd, canWatchOfflineBonusAd,
+  getDpsBoostRemainingMs, canWatchDpsBoostAd, canWatchOfflineBonusAd,
 } from '../systems/shop.js';
 import { getMaxOfflineSeconds } from '../systems/offline.js';
 import {
@@ -1385,6 +1385,16 @@ function formatDuration(ms) {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
+/// Igual formatDuration, mas em h/min em vez de min/s — usado pros bônus de
+/// anúncio (Turbo de DPS/Bônus Idle, ver adBonusesHtml) que somam até 2h,
+/// onde "120m 0s" seria estranho de ler.
+function formatHoursMinutes(ms) {
+  const totalMinutes = Math.max(0, Math.ceil(ms / 60000));
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return h > 0 ? `${h}h ${m}min` : `${m}min`;
+}
+
 // Banner art (assets/ui/events/banner-*.png) for the 2 remaining events —
 // same template for both (a big empty status box top-right, 3 empty
 // "RECOMPENSAS" squares bottom-left), positions measured directly off the
@@ -1660,16 +1670,15 @@ export function renderShopTab(state, activeSubTab) {
 /// systems/shop.js watchDpsBoostAd/watchOfflineBonusAd. Renderizado dentro
 /// da aba Esmeralda da Loja (ver cashShopHtml).
 function adBonusesHtml(state) {
-  const dpsStacks = getActiveDpsBoostStacks(state);
-  const dpsActive = dpsStacks.length;
+  const dpsRemainingMs = getDpsBoostRemainingMs(state);
+  const dpsRemainingLabel = formatHoursMinutes(dpsRemainingMs);
   const dpsReady = canWatchDpsBoostAd(state);
-  const dpsPercentNow = dpsActive * DPS_BOOST_PERCENT_PER_STACK;
-  const dpsStatus = dpsActive > 0
-    ? `<div class="desc">⚡ +${dpsPercentNow}% ativo agora (${dpsActive}/${DPS_BOOST_MAX_STACKS}) — próxima carga expira em ${formatDuration(Math.min(...dpsStacks) - Date.now())}</div>`
-    : `<div class="desc">+${DPS_BOOST_PERCENT_PER_STACK}% de DPS por 30 min, empilha até ${DPS_BOOST_MAX_STACKS}x (2h no total)</div>`;
+  const dpsStatus = dpsRemainingMs > 0
+    ? `<div class="desc">⚡ +${DPS_BOOST_PERCENT}% de DPS ativo — restam ${dpsRemainingLabel}</div>`
+    : `<div class="desc">+${DPS_BOOST_PERCENT}% de DPS (fixo) por 30 min; assistir de novo estende o tempo, até ${DPS_BOOST_MAX_DURATION_MS / 3600000}h no total</div>`;
   const dpsBtn = dpsReady
     ? `<button data-watch-dps-ad>🎬 Assistir Anúncio</button>`
-    : `<button disabled title="Máximo de ${DPS_BOOST_MAX_STACKS} cargas ativas">🎬 Máximo (${dpsActive}/${DPS_BOOST_MAX_STACKS})</button>`;
+    : `<button disabled title="Tempo restante já no máximo de 2h">🎬 Máximo (${dpsRemainingLabel})</button>`;
 
   const offlineBonusSeconds = state.offlineBonusSeconds || 0;
   const offlineStacks = Math.round(offlineBonusSeconds / OFFLINE_BONUS_SECONDS_PER_STACK);

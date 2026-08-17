@@ -49,13 +49,16 @@ export const AD_WATCH_CASH_REWARD = 5;
 // próprio "estoque" de até 4 cargas — sem cooldown de tempo entre
 // assistidas, o limite de 4 cargas já é o que impede assistir sem parar.
 //
-// 1) Turbo de DPS: +30% de DPS por 30 min, empilhável até 4x (2h no total)
-// — cada carga tem seu próprio relógio (real, corre mesmo offline, ver
-// systems/shop.js getActiveDpsBoostPercent), então cargas assistidas em
-// momentos diferentes expiram em momentos diferentes.
-export const DPS_BOOST_PERCENT_PER_STACK = 30;
+// 1) Turbo de DPS: +30% de DPS fixo (NÃO empilha — assistir de novo não
+// aumenta o bônus) por até 30 min a cada assistida, "empilhável até 4x" só
+// no sentido de ESTENDER a duração: cada assistida soma +30 min ao relógio
+// (real, corre mesmo offline, ver systems/shop.js watchDpsBoostAd), até um
+// teto de 2h restantes (DPS_BOOST_DURATION_MS * DPS_BOOST_MAX_EXTENSIONS).
+// O bônus em si nunca passa de +30%, só a duração que dá pra acumular.
+export const DPS_BOOST_PERCENT = 30;
 export const DPS_BOOST_DURATION_MS = 30 * 60 * 1000;
-export const DPS_BOOST_MAX_STACKS = 4;
+export const DPS_BOOST_MAX_EXTENSIONS = 4;
+export const DPS_BOOST_MAX_DURATION_MS = DPS_BOOST_DURATION_MS * DPS_BOOST_MAX_EXTENSIONS; // 2h
 
 // 2) Bônus Idle: +30 min no limite da recompensa offline, empilhável até 4x
 // (2h no total). Diferente do Turbo de DPS acima, isso NÃO é um timer que
