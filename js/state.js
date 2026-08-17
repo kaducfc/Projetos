@@ -1,5 +1,6 @@
 import { getCard } from './data/cards.js';
 import { ZONES } from './data/monsters.js';
+import { DEFAULT_PLAYER_NAME, DEFAULT_PROFILE_ICON_ID } from './data/profile.js';
 
 // Bumped from v3: item baseStats/additionalStats schema changed
 // incompatibly (base attribute agora é um valor cru só, e o pool de
@@ -86,6 +87,29 @@ export function createDefaultState() {
     cash: 0,
     lastAdWatchTime: null,
     achievementsClaimed: {}, // achievementId -> true
+
+    // Perfil (ver data/profile.js + systems/profile.js): nick + ícone de
+    // conta, abertos pelo botão no canto superior esquerdo da barra
+    // superior (ver ui/render.js renderTopBar/profileModalHtml).
+    // nameChangesUsed conta trocas de nick já feitas — a 1ª é grátis, as
+    // seguintes custam NAME_CHANGE_COST em Esmeralda (ver
+    // systems/profile.js setPlayerName). unlockedProfileIconIds começa só
+    // com o ícone padrão do Caçador; mais ícones (eventos/recompensas
+    // futuras) entram nessa lista pra ficarem selecionáveis.
+    playerName: DEFAULT_PLAYER_NAME,
+    nameChangesUsed: 0,
+    profileIconId: DEFAULT_PROFILE_ICON_ID,
+    unlockedProfileIconIds: [DEFAULT_PROFILE_ICON_ID],
+
+    // Som/Música: só liga/desliga persistido por enquanto — nenhum player
+    // de áudio de verdade existe ainda no jogo (ver comentário em
+    // data/profile.js), essas 2 flags só preparam o terreno pra quando o
+    // sistema de efeitos sonoros/música entrar. Padrão ligado (mesma
+    // expectativa de qualquer jogo com áudio).
+    settings: {
+      soundOn: true,
+      musicOn: true,
+    },
 
     // Turbo de DPS via anúncio (ver data/shop.js DPS_BOOST_*, systems/shop.js
     // getActiveDpsBoostPercent) — lista de timestamps de expiração (um por
