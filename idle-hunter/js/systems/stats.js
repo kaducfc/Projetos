@@ -255,8 +255,9 @@ export function computePlayerStats(state) {
   dpsPercent += getCardCollectionDpsBonusPercent(state);
 
   // Turbo de DPS via anúncio (ver data/shop.js DPS_BOOST_*, systems/shop.js
-  // getActiveDpsBoostPercent) — cargas com timer próprio, somam por cima de
-  // tudo o resto igual ao bônus de coleção de cartas acima.
+  // getActiveDpsBoostPercent) — bônus fixo (não empilha) enquanto o timer
+  // não zerar, soma por cima de tudo o resto igual ao bônus de coleção de
+  // cartas acima.
   dpsPercent += getActiveDpsBoostPercent(state);
 
   const dps = dpsFlat * (1 + dpsPercent / 100);

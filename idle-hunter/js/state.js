@@ -112,11 +112,10 @@ export function createDefaultState() {
     },
 
     // Turbo de DPS via anúncio (ver data/shop.js DPS_BOOST_*, systems/shop.js
-    // getActiveDpsBoostPercent) — lista de timestamps de expiração (um por
-    // carga assistida, até DPS_BOOST_MAX_STACKS). Timer real, corre mesmo
-    // offline; entradas expiradas são filtradas ao ler, nunca removidas
-    // "no meio" do array.
-    dpsBoostExpirations: [],
+    // getActiveDpsBoostPercent) — bônus fixo de +30% DPS enquanto este
+    // timestamp não passar; cada assistida ESTENDE o relógio (não aumenta o
+    // bônus), até um teto de 2h restantes. Timer real, corre mesmo offline.
+    dpsBoostExpiresAt: null,
     // Bônus Idle via anúncio (ver data/shop.js OFFLINE_BONUS_*, systems/
     // offline.js computeOfflineProgress) — banco de segundos extras pro
     // limite de recompensa offline, só gasto quando o jogador realmente
