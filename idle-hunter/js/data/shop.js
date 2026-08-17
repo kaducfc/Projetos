@@ -44,6 +44,29 @@ export const CASH_ONE_TIME_PURCHASES = [
 export const AD_WATCH_COOLDOWN_MS = 5 * 60 * 1000;
 export const AD_WATCH_CASH_REWARD = 5;
 
+// 2 bônus adicionais, também via anúncio simulado (sem SDK de anúncio de
+// verdade, mesma situação do AD_WATCH_CASH_REWARD acima), cada um com seu
+// próprio "estoque" de até 4 cargas — sem cooldown de tempo entre
+// assistidas, o limite de 4 cargas já é o que impede assistir sem parar.
+//
+// 1) Turbo de DPS: +30% de DPS por 30 min, empilhável até 4x (2h no total)
+// — cada carga tem seu próprio relógio (real, corre mesmo offline, ver
+// systems/shop.js getActiveDpsBoostPercent), então cargas assistidas em
+// momentos diferentes expiram em momentos diferentes.
+export const DPS_BOOST_PERCENT_PER_STACK = 30;
+export const DPS_BOOST_DURATION_MS = 30 * 60 * 1000;
+export const DPS_BOOST_MAX_STACKS = 4;
+
+// 2) Bônus Idle: +30 min no limite da recompensa offline, empilhável até 4x
+// (2h no total). Diferente do Turbo de DPS acima, isso NÃO é um timer que
+// corre sozinho — é um "banco" de minutos extras que só é gasto quando o
+// jogador realmente fica offline além do limite base (ver
+// systems/offline.js computeOfflineProgress): ficar offline por menos que
+// o limite base não consome nada do banco, ele continua cheio pra próxima.
+export const OFFLINE_BONUS_SECONDS_PER_STACK = 30 * 60;
+export const OFFLINE_BONUS_MAX_STACKS = 4;
+export const OFFLINE_BONUS_MAX_SECONDS = OFFLINE_BONUS_SECONDS_PER_STACK * OFFLINE_BONUS_MAX_STACKS; // 2h
+
 // Free Cash source #2: real-money packages. No payment processor exists in
 // this prototype, so these render as disabled placeholders in the shop —
 // scaffolding for a future integration, not a working purchase flow.

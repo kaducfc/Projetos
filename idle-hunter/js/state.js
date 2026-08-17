@@ -87,6 +87,18 @@ export function createDefaultState() {
     lastAdWatchTime: null,
     achievementsClaimed: {}, // achievementId -> true
 
+    // Turbo de DPS via anúncio (ver data/shop.js DPS_BOOST_*, systems/shop.js
+    // getActiveDpsBoostPercent) — lista de timestamps de expiração (um por
+    // carga assistida, até DPS_BOOST_MAX_STACKS). Timer real, corre mesmo
+    // offline; entradas expiradas são filtradas ao ler, nunca removidas
+    // "no meio" do array.
+    dpsBoostExpirations: [],
+    // Bônus Idle via anúncio (ver data/shop.js OFFLINE_BONUS_*, systems/
+    // offline.js computeOfflineProgress) — banco de segundos extras pro
+    // limite de recompensa offline, só gasto quando o jogador realmente
+    // fica offline além do limite base (não é um timer, não decai sozinho).
+    offlineBonusSeconds: 0,
+
     // Moeda de Evento — moeda compartilhada entre os eventos ainda no jogo
     // (Expedição do Caçador, Combate Permanente) e a Loja (aba Evento).
     eventCurrency: 0,
