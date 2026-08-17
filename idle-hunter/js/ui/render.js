@@ -5,7 +5,12 @@ import {
   DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName, RARITIES,
 } from '../data/items.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
-import { formatNumber, formatPercent } from '../format.js';
+import { formatNumber, formatPercent, escapeHtml } from '../format.js';
+import { PROFILE_ICONS, NAME_CHANGE_COST, MAX_PLAYER_NAME_LENGTH } from '../data/profile.js';
+import {
+  getPlayerName, isFirstNameChangeFree, canAffordNameChange, getSelectedProfileIcon,
+  isProfileIconUnlocked, isSoundOn, isMusicOn,
+} from '../systems/profile.js';
 import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds } from '../systems/crafting.js';
@@ -16,8 +21,16 @@ import { ARENA_RANKS, getArenaRankForDamage, getArenaRankByIndex } from '../data
 import { canEnterArena, arenaRemainingMs } from '../systems/arena.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
 import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
-import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, CASH_ONE_TIME_PURCHASES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
-import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
+import {
+  CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, CASH_ONE_TIME_PURCHASES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss,
+  DPS_BOOST_PERCENT_PER_STACK, DPS_BOOST_MAX_STACKS,
+  OFFLINE_BONUS_SECONDS_PER_STACK, OFFLINE_BONUS_MAX_STACKS,
+} from '../data/shop.js';
+import {
+  canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining,
+  getActiveDpsBoostStacks, canWatchDpsBoostAd, canWatchOfflineBonusAd,
+} from '../systems/shop.js';
+import { getMaxOfflineSeconds } from '../systems/offline.js';
 import {
   CARDS, getCard, CARD_DISCOVERY_CASH_REWARD,
   CARD_FRAGMENT_ID, CARD_FRAGMENT_NAME,
@@ -119,6 +132,11 @@ export function renderTopBar(state) {
   document.getElementById('cash-value').textContent = formatNumber(state.cash);
   document.getElementById('event-currency-value').textContent = formatNumber(state.eventCurrency);
   document.getElementById('level-value').textContent = state.hunterLevel || 1;
+
+  const profileBtn = document.getElementById('profile-btn');
+  const profileIcon = getSelectedProfileIcon(state);
+  document.getElementById('profile-btn-icon').src = profileIcon.image;
+  profileBtn.title = `${getPlayerName(state)} — Perfil`;
 }
 
 /// Nível/XP do caçador — só libera zonas/chefes por enquanto (ver
@@ -1637,6 +1655,52 @@ export function renderShopTab(state, activeSubTab) {
   `;
 }
 
+/// 2 bônus obtidos assistindo anúncio (sem gastar Esmeralda), cada um com
+/// até 4 cargas — ver data/shop.js DPS_BOOST_*/OFFLINE_BONUS_* e
+/// systems/shop.js watchDpsBoostAd/watchOfflineBonusAd. Renderizado dentro
+/// da aba Esmeralda da Loja (ver cashShopHtml).
+function adBonusesHtml(state) {
+  const dpsStacks = getActiveDpsBoostStacks(state);
+  const dpsActive = dpsStacks.length;
+  const dpsReady = canWatchDpsBoostAd(state);
+  const dpsPercentNow = dpsActive * DPS_BOOST_PERCENT_PER_STACK;
+  const dpsStatus = dpsActive > 0
+    ? `<div class="desc">⚡ +${dpsPercentNow}% ativo agora (${dpsActive}/${DPS_BOOST_MAX_STACKS}) — próxima carga expira em ${formatDuration(Math.min(...dpsStacks) - Date.now())}</div>`
+    : `<div class="desc">+${DPS_BOOST_PERCENT_PER_STACK}% de DPS por 30 min, empilha até ${DPS_BOOST_MAX_STACKS}x (2h no total)</div>`;
+  const dpsBtn = dpsReady
+    ? `<button data-watch-dps-ad>🎬 Assistir Anúncio</button>`
+    : `<button disabled title="Máximo de ${DPS_BOOST_MAX_STACKS} cargas ativas">🎬 Máximo (${dpsActive}/${DPS_BOOST_MAX_STACKS})</button>`;
+
+  const offlineBonusSeconds = state.offlineBonusSeconds || 0;
+  const offlineStacks = Math.round(offlineBonusSeconds / OFFLINE_BONUS_SECONDS_PER_STACK);
+  const offlineReady = canWatchOfflineBonusAd(state);
+  const maxOfflineHoursNow = (getMaxOfflineSeconds(state) + offlineBonusSeconds) / 3600;
+  const offlineStatus = offlineBonusSeconds > 0
+    ? `<div class="desc">⏰ +${Math.round(offlineBonusSeconds / 60)}min guardado (${offlineStacks}/${OFFLINE_BONUS_MAX_STACKS}) — limite offline atual: ${maxOfflineHoursNow}h</div>`
+    : `<div class="desc">+30 min no limite da recompensa offline, empilha até ${OFFLINE_BONUS_MAX_STACKS}x (2h no total)</div>`;
+  const offlineBtn = offlineReady
+    ? `<button data-watch-offline-ad>🎬 Assistir Anúncio</button>`
+    : `<button disabled title="Máximo de ${OFFLINE_BONUS_MAX_STACKS} cargas guardadas">🎬 Máximo (${offlineStacks}/${OFFLINE_BONUS_MAX_STACKS})</button>`;
+
+  return `
+    <div class="shop-item-card">
+      <span class="icon">⚡</span>
+      <div class="info">
+        <div class="name">Turbo de DPS</div>
+        ${dpsStatus}
+      </div>
+      ${dpsBtn}
+    </div>
+    <div class="shop-item-card">
+      <span class="icon">⏰</span>
+      <div class="info">
+        <div class="name">Bônus Idle</div>
+        ${offlineStatus}
+      </div>
+      ${offlineBtn}
+    </div>`;
+}
+
 function cashShopHtml(state) {
   const packagesHtml = CASH_REAL_MONEY_PACKAGES.map((p) => `
     <div class="cash-package-card disabled" title="Requer integração de pagamento — ainda não disponível">
@@ -1693,6 +1757,9 @@ function cashShopHtml(state) {
     <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>
     <p class="shop-note">Ganhe Esmeralda na aba 🏆 Conquistas.</p>
 
+    <h4 class="shop-section-title">Bônus (assistir anúncio)</h4>
+    <div class="shop-item-grid">${adBonusesHtml(state)}</div>
+
     <h4 class="shop-section-title">Comprar com Esmeralda</h4>
     <div class="shop-item-grid">${shopItemsHtml}</div>
 
@@ -1710,6 +1777,65 @@ export function showVipBenefitsModal() {
   const vipItem = CASH_SHOP_ITEMS.find((i) => i.kind === 'vip');
   const linesHtml = vipItem.benefits.map((b) => `<p class="offline-item-lines">✅ ${b}</p>`).join('');
   showModal('👑 Benefícios do VIP', linesHtml);
+}
+
+// ---------------------------------------------------------------
+// Perfil (aberto pelo #profile-btn no canto superior esquerdo da barra):
+// nick (1ª troca grátis, próximas custam NAME_CHANGE_COST Esmeralda, ver
+// systems/profile.js), ícone da conta (catálogo em data/profile.js,
+// desbloqueados via state.unlockedProfileIconIds) e os toggles de Som/
+// Música (só liga/desliga persistido — sem player de áudio de verdade
+// ainda, ver systems/profile.js). Reaproveita o #modal-overlay
+// compartilhado (ver wireModalEvents em main.js pros data-* abaixo).
+// ---------------------------------------------------------------
+
+function profileIconGridHtml(state) {
+  return PROFILE_ICONS.map((icon) => {
+    const unlocked = isProfileIconUnlocked(state, icon.id);
+    const selected = state.profileIconId === icon.id;
+    const lockHtml = unlocked ? '' : '<span class="profile-icon-lock">🔒</span>';
+    return `<button
+      class="profile-icon-option ${selected ? 'selected' : ''} ${unlocked ? '' : 'locked'}"
+      data-select-profile-icon="${icon.id}"
+      ${unlocked ? '' : 'disabled'}
+      title="${escapeHtml(icon.name)}${unlocked ? '' : ' (bloqueado — obtido em eventos/recompensas futuras)'}"
+    ><img src="${icon.image}" alt="${escapeHtml(icon.name)}">${lockHtml}</button>`;
+  }).join('');
+}
+
+function profileModalHtml(state) {
+  const name = getPlayerName(state);
+  const freeChange = isFirstNameChangeFree(state);
+  const affordable = canAffordNameChange(state);
+  const costLabel = freeChange ? 'Grátis (1ª troca)' : `${ESMERALDA_ICON} ${NAME_CHANGE_COST}`;
+
+  return `
+    <div class="profile-name-section">
+      <div class="shop-section-title" style="margin-top:0">Nick</div>
+      <div class="profile-name-row">
+        <input id="profile-name-input" type="text" maxlength="${MAX_PLAYER_NAME_LENGTH}" value="${escapeHtml(name)}" placeholder="Seu nick">
+        <button data-save-profile-name ${affordable ? '' : 'disabled'}>Salvar</button>
+      </div>
+      <p class="shop-note">Troca de nick: ${costLabel}${affordable ? '' : ' — Esmeralda insuficiente'}</p>
+    </div>
+
+    <div class="shop-section-title">Ícone do Perfil</div>
+    <div class="profile-icon-grid">${profileIconGridHtml(state)}</div>
+
+    <div class="shop-section-title">Áudio</div>
+    <div class="profile-toggle-row">
+      <span>🔊 Efeitos Sonoros</span>
+      <button class="profile-toggle-btn ${isSoundOn(state) ? 'on' : 'off'}" data-toggle-sound>${isSoundOn(state) ? 'On' : 'Off'}</button>
+    </div>
+    <div class="profile-toggle-row">
+      <span>🎵 Música</span>
+      <button class="profile-toggle-btn ${isMusicOn(state) ? 'on' : 'off'}" data-toggle-music>${isMusicOn(state) ? 'On' : 'Off'}</button>
+    </div>
+  `;
+}
+
+export function showProfileModal(state) {
+  showModal('👤 Perfil', profileModalHtml(state));
 }
 
 function eventShopHtml(state) {

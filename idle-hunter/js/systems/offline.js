@@ -5,8 +5,21 @@ import { xpForZone, grantXp } from './leveling.js';
 import { recordCardDiscovered } from './cards.js';
 import { addDroppedItem } from './crafting.js';
 import { DROP_CATEGORIES } from '../data/items.js';
+import { isVipActive } from '../state.js';
 
-export const MAX_OFFLINE_SECONDS = 8 * 60 * 60; // cap idle gains at 8 hours
+// Limite base de recompensa offline: 4h sem VIP, +4h de bônus pra quem tem
+// VIP ativo (8h no total) — ver getMaxOfflineSeconds abaixo. Em cima disso,
+// o Bônus Idle via anúncio (ver data/shop.js OFFLINE_BONUS_*, systems/
+// shop.js watchOfflineBonusAd) pode somar até +2h extras (30min x4 cargas),
+// gastas só quando o jogador realmente fica offline além desse limite base
+// — sem VIP dá até 6h no total, com VIP até 10h.
+export const BASE_OFFLINE_SECONDS = 4 * 60 * 60;
+export const VIP_OFFLINE_BONUS_SECONDS = 4 * 60 * 60;
+
+export function getMaxOfflineSeconds(state) {
+  return BASE_OFFLINE_SECONDS + (isVipActive(state) ? VIP_OFFLINE_BONUS_SECONDS : 0);
+}
+
 export const OFFLINE_EFFICIENCY = 0.7; // offline kills/drops run at 70% of online output
 const SIMULATION_CAP = 2000; // roll drops for at most this many kills, then scale up
 
@@ -20,7 +33,7 @@ function pickOfflineMonster(state) {
 }
 
 /// Approximates progress made while the tab was closed, capped at
-/// MAX_OFFLINE_SECONDS and run at OFFLINE_EFFICIENCY of the player's real
+/// getMaxOfflineSeconds(state) + the Bônus Idle bank and run at OFFLINE_EFFICIENCY of the player's real
 /// throughput (dps * attackSpeedPerSec). Each individual simulated kill
 /// re-rolls its own monster from state.selectedMonsters, so gold/materials/
 /// XP reflect the player's whole chosen roster, not just one of them.
@@ -28,7 +41,15 @@ export function computeOfflineProgress(state) {
   const elapsedMs = Date.now() - (state.lastSaveTime || Date.now());
   let elapsedSeconds = Math.floor(elapsedMs / 1000);
   if (elapsedSeconds < 30) return null;
-  elapsedSeconds = Math.min(elapsedSeconds, MAX_OFFLINE_SECONDS);
+
+  // O banco de Bônus Idle (ver data/shop.js OFFLINE_BONUS_*) só entra em
+  // jogo depois que o limite base (4h, +4h se VIP) já foi todo consumido —
+  // "os minutos bônus são os últimos a serem contados". Ficar offline por
+  // menos que o limite base não gasta nada do banco, ele continua cheio.
+  const baseCapSeconds = getMaxOfflineSeconds(state);
+  const bonusBankSeconds = state.offlineBonusSeconds || 0;
+  elapsedSeconds = Math.min(elapsedSeconds, baseCapSeconds + bonusBankSeconds);
+  const bonusSecondsUsed = Math.max(0, elapsedSeconds - baseCapSeconds);
 
   const stats = computePlayerStats(state);
   const effectiveDps = stats.dps * stats.attackSpeedPerSec * OFFLINE_EFFICIENCY;
@@ -92,10 +113,24 @@ export function computeOfflineProgress(state) {
   // jogo) rende a mesma proporção.
   const itemDropCount = Math.round(itemDropsSim * scale);
 
-  return { elapsedSeconds, kills, goldGained, xpGained, materialsGained, cardsGained, itemDropCount };
+  // Guardado pra UI conseguir mostrar "máximo Xh" na mensagem de boas-vindas
+  // (ver main.js showOfflineProgressIfAny) mesmo depois que
+  // applyOfflineProgress já tiver descontado bonusSecondsUsed do banco.
+  const maxOfflineSeconds = baseCapSeconds + bonusBankSeconds;
+
+  return {
+    elapsedSeconds, kills, goldGained, xpGained, materialsGained, cardsGained, itemDropCount,
+    bonusSecondsUsed, maxOfflineSeconds,
+  };
 }
 
 export function applyOfflineProgress(state, progress) {
+  // Gasta do banco de Bônus Idle só a parcela realmente usada (ver
+  // bonusSecondsUsed em computeOfflineProgress acima) — cargas não usadas
+  // continuam disponíveis pra próxima vez que o jogador ficar offline.
+  if (progress.bonusSecondsUsed > 0) {
+    state.offlineBonusSeconds = Math.max(0, (state.offlineBonusSeconds || 0) - progress.bonusSecondsUsed);
+  }
   state.gold += progress.goldGained;
   for (const [id, qty] of Object.entries(progress.materialsGained)) {
     state.materials[id] = (state.materials[id] || 0) + qty;
