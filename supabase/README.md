@@ -134,6 +134,14 @@ abaixo). Clique em **⚔️ Atacar** em qualquer linha (menos a sua).
   toda a lógica de `systems/stats.js` no servidor). Pus um teto de sanidade
   na Edge Function (rejeita números absurdos) como um primeiro freio, mas
   não é uma prova completa contra isso.
+- **Página "Ranks" (menu Outros)**: os 3 rankeamentos (Arena/Nível/
+  Transcender) usam `pvp_profiles` como fonte — a ÚNICA fonte global de
+  dados do jogo, já que o resto do save é só local no navegador. Um
+  jogador que NUNCA abriu o jogo com internet (ou nunca sincronizou —
+  a sincronização automática roda sozinha ao abrir o jogo, ver
+  `PVP_AUTO_SYNC_INTERVAL_MS` em `js/main.js`) simplesmente não aparece em
+  nenhum dos 3 ranks, mesmo tendo nível/transcendências altas — não tem
+  como ranquear alguém que o servidor nunca viu.
 
 ## O que cada arquivo faz
 
@@ -142,6 +150,7 @@ abaixo). Clique em **⚔️ Atacar** em qualquer linha (menos a sua).
 | `migrations/0001_pvp_arena.sql` | Schema base + RLS |
 | `migrations/0002_pvp_tiers.sql` | Tiers, bots, Entradas, reset semanal (pg_cron) |
 | `migrations/0007_pvp_groups.sql` | Grupos de até 100 jogadores por tier + regra especial do Lendário no reset |
+| `migrations/0008_pvp_ranks.sql` | Página "Ranks": rankeamentos globais de Arena/Nível/Transcender |
 | `functions/resolve-pvp-battle/index.ts` | Resolve 1 ataque (deploy como Edge Function) |
 | `../js/data/pvpConfig.js` | URL/chave do projeto + metadados dos tiers (nome/emoji/pontos-base) |
 | `../js/systems/pvp.js` | Cliente: login anônimo, sincronizar stats, buscar o tier, atacar |

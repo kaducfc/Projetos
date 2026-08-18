@@ -14,7 +14,7 @@ import {
 import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds } from '../systems/crafting.js';
-import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, HUNTER_MAX_LEVEL } from '../systems/leveling.js';
+import { isZoneUnlocked, isBossUnlocked, xpToNextLevel } from '../systems/leveling.js';
 import { EXPEDITION_TIERS, EXPEDITION_REWARDS } from '../data/events.js';
 import { canEnterExpedition, expeditionRemainingMs } from '../systems/expedition.js';
 import { ARENA_RANKS, getArenaRankForDamage, getArenaRankByIndex } from '../data/arena.js';
@@ -144,17 +144,12 @@ export function renderTopBar(state) {
 }
 
 /// Nível/XP do caçador — só libera zonas/chefes por enquanto (ver
-/// systems/leveling.js), mostrado como uma barra de progresso simples. No
-/// nível máximo (HUNTER_MAX_LEVEL), a barra fica cheia e mostra "MÁXIMO"
-/// em vez de uma fração de XP que nunca mais vai encher de verdade.
+/// systems/leveling.js), mostrado como uma barra de progresso simples.
+/// Sem nível máximo — sobe indefinidamente (fica bem mais devagar a
+/// partir do 201, ver xpToNextLevel).
 export function renderHunterLevel(state) {
   const level = state.hunterLevel || 1;
   document.getElementById('hunter-level-label').textContent = `Nível de Caça ${level}`;
-  if (level >= HUNTER_MAX_LEVEL) {
-    document.getElementById('hunter-xp-bar-fill').style.width = '100%';
-    document.getElementById('hunter-xp-bar-text').textContent = 'NÍVEL MÁXIMO';
-    return;
-  }
   const xp = state.hunterXp || 0;
   const next = xpToNextLevel(level);
   const pct = next > 0 ? Math.max(0, Math.min(100, (xp / next) * 100)) : 0;
@@ -1994,6 +1989,76 @@ export function showPvpCombatPickerModal(tierInfo, opponents) {
     ? opponents.map(pvpCombatOptionHtml).join('')
     : '<p class="shop-note">Ninguém por perto pra desafiar agora — tenta de novo em instantes.</p>';
   showModal(`${tierInfo.emoji} Escolha um alvo`, `<div class="achievement-list">${body}</div>`);
+}
+
+// ---------------------------------------------------------------
+// Página "Ranks" (menu Outros) — 3 rankeamentos globais (Arena, Nível de
+// Caçador, Transcender), cada um já vindo pronto do Supabase como top 100
+// + a própria linha do jogador no fim se ele estiver fora dos 100 (ver
+// fetchArenaRank/fetchLevelRank/fetchTranscendRank em systems/pvp.js e
+// supabase/migrations/0008_pvp_ranks.sql). Cruza TODOS os tiers/grupos da
+// Arena — não é a mesma coisa que renderPvpTab acima (que mostra só o
+// próprio tier+grupo do jogador).
+// ---------------------------------------------------------------
+
+function pvpRankRowHtml(row, myId, extraLabel) {
+  const isSelf = row.entity_id === myId;
+  return `
+    <div class="achievement-card ${isSelf ? 'pvp-self-row' : ''}">
+      <span class="pvp-rank">#${row.position}</span>
+      ${pvpProfileIconHtml(row.icon_id)}
+      <div class="info">
+        <div class="name">${escapeHtml(row.nick)}</div>
+        <div class="desc">${extraLabel}</div>
+      </div>
+      ${isSelf ? '<span class="pvp-self-tag">Você</span>' : ''}
+    </div>`;
+}
+
+// A RPC já devolve o top 100 em ordem + (se o jogador estiver fora)
+// 1 linha extra com a posição real dele no fim — um "⋯" antes dessa
+// última linha deixa claro visualmente que ela não é a #101, é bem mais
+// distante (ver o pulo entre row.position e a posição anterior).
+function pvpRankSectionHtml(rows, myId, extraLabelFn) {
+  if (!rows.length) return '<p class="shop-note">Ninguém no rank ainda.</p>';
+  let html = '';
+  let prevPosition = 0;
+  for (const row of rows) {
+    if (prevPosition > 0 && row.position > prevPosition + 1) {
+      html += '<div class="pvp-rank-gap">⋯</div>';
+    }
+    html += pvpRankRowHtml(row, myId, extraLabelFn(row));
+    prevPosition = row.position;
+  }
+  return html;
+}
+
+export function renderRanksTab(ranksData, myProfile) {
+  const container = document.getElementById('tab-ranks');
+  const myId = myProfile?.id;
+
+  const arenaHtml = pvpRankSectionHtml(ranksData.arena, myId, (row) => {
+    const tierInfo = getPvpTierInfo(row.tier);
+    const scoreLabel = row.rating == null ? '' : ` · ⭐ ${formatInteger(row.rating)}`;
+    return `${tierInfo.emoji} ${tierInfo.label}${scoreLabel}`;
+  });
+  const levelHtml = pvpRankSectionHtml(ranksData.level, myId, (row) => `Nível ${formatNumber(row.hunter_level)}`);
+  const transcendHtml = pvpRankSectionHtml(ranksData.transcend, myId, (row) => `🌌 ${formatInteger(row.transcend_count)}x`);
+
+  container.innerHTML = `
+    <div class="section-banner">🏆 Ranks</div>
+    <p class="shop-note">Top 100 de cada rank — se você não estiver entre os 100, sua posição aparece no fim da lista.</p>
+    <button class="transcend-btn" data-ranks-refresh ${ranksData.loading ? 'disabled' : ''}>🔄 ${ranksData.loaded ? 'Atualizar' : 'Carregar Ranks'}</button>
+
+    <h4 class="shop-section-title">🏟️ Arena</h4>
+    <div class="achievement-list">${arenaHtml}</div>
+
+    <h4 class="shop-section-title">⭐ Nível de Caçador</h4>
+    <div class="achievement-list">${levelHtml}</div>
+
+    <h4 class="shop-section-title">🌌 Transcender</h4>
+    <div class="achievement-list">${transcendHtml}</div>
+  `;
 }
 
 function pvpErrorMessage(result) {
