@@ -11,7 +11,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, PVP_MAX_ENTRIES, PVP_ENTRY_REGEN_MS } from '../data/pvpConfig.js';
 
 let client = null;
-function getClient() {
+export function getClient() {
   if (!client) client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   return client;
 }
@@ -229,3 +229,88 @@ async function fetchPvpRank(rpcName) {
 export const fetchArenaRank = () => fetchPvpRank('pvp_rank_arena');
 export const fetchLevelRank = () => fetchPvpRank('pvp_rank_level');
 export const fetchTranscendRank = () => fetchPvpRank('pvp_rank_transcend');
+
+// ---------------------------------------------------------------
+// Recompensas automáticas da Arena — diária (por grupo) e semanal (por
+// tier inteiro), ver supabase/migrations/0011_pvp_daily_weekly_rewards.sql
+// pras curvas de verdade (essas tabelas aqui são um espelho EXATO, só pra
+// pré-visualizar "quanto você ganha se terminar assim" na UI sem precisar
+// de uma ida ao servidor — quem de fato manda a recompensa pro Correio é
+// sempre o cron no servidor, isso aqui nunca concede nada sozinho).
+// ---------------------------------------------------------------
+
+const DAILY_ARENA_REWARD_CURVE = {
+  bronze: { best: 20, worst: 10 },
+  prata: { best: 28, worst: 14 },
+  ouro: { best: 40, worst: 20 },
+  platina: { best: 56, worst: 28 },
+  diamante: { best: 80, worst: 40 },
+};
+const LEGENDARY_DAILY_BEST = 100;
+const LEGENDARY_DAILY_WORST = 70;
+
+/// Prévia da recompensa diária (fragmento de carta + de mascote, mesma
+/// quantidade dos 2) pra uma linha do tier_board — real_rank/
+/// real_player_count vêm da RPC pvp_tier_board (só jogadores de verdade,
+/// bots não contam nem entram na conta). Retorna null se a linha não vai
+/// ganhar nada (fora da metade de cima, exceto Lendário que sempre ganha).
+export function previewDailyArenaReward(tier, realRank, realPlayerCount) {
+  if (!realRank || !realPlayerCount) return null;
+  if (tier === 'lendario') {
+    const amount = realPlayerCount <= 1
+      ? LEGENDARY_DAILY_BEST
+      : Math.round(LEGENDARY_DAILY_BEST - (LEGENDARY_DAILY_BEST - LEGENDARY_DAILY_WORST) * (realRank - 1) / (realPlayerCount - 1));
+    return { cardFragment: amount, petFragment: amount };
+  }
+  const curve = DAILY_ARENA_REWARD_CURVE[tier];
+  if (!curve) return null;
+  const cutoff = Math.max(1, Math.ceil(realPlayerCount / 2));
+  if (realRank > cutoff) return null;
+  const amount = cutoff <= 1 ? curve.best : Math.round(curve.best - (curve.best - curve.worst) * (realRank - 1) / (cutoff - 1));
+  return { cardFragment: amount, petFragment: amount };
+}
+
+const WEEKLY_ARENA_REWARD_CURVE = {
+  bronze: { kind: 'card_fragment', best1: 100, worst1: 50, bestEggs: 60, worstEggs: 30 },
+  prata: { kind: 'card_fragment', best1: 174, worst1: 87, bestEggs: 100, worstEggs: 50 },
+  ouro: { kind: 'card_fragment', best1: 300, worst1: 150, bestEggs: 170, worstEggs: 85 },
+  platina: { kind: 'random_card', best1: 1, worst1: 1, bestEggs: 226, worstEggs: 113 },
+  diamante: { kind: 'random_card', best1: 1, worst1: 1, bestEggs: 302, worstEggs: 151 },
+  lendario: { kind: 'random_card', best1: 1, worst1: 1, bestEggs: 400, worstEggs: 200 },
+};
+
+/// Prévia da recompensa semanal (carta/fragmento + ovos) pra uma linha do
+/// rank de Arena (ver pvp_rank_arena) — tierPosition/tierPlayerCount são a
+/// posição do jogador DENTRO do próprio tier inteiro (ignora grupo, é
+/// assim que o reset semanal de verdade decide). Retorna null se fora da
+/// metade de cima do tier.
+export function previewWeeklyArenaReward(tier, tierPosition, tierPlayerCount) {
+  const curve = WEEKLY_ARENA_REWARD_CURVE[tier];
+  if (!curve || !tierPosition || !tierPlayerCount) return null;
+  const cutoff = Math.max(1, Math.ceil(tierPlayerCount / 2));
+  if (tierPosition > cutoff) return null;
+  const lerp = (best, worst) => (cutoff <= 1 ? best : Math.round(best - (best - worst) * (tierPosition - 1) / (cutoff - 1)));
+  return { kind: curve.kind, amount: lerp(curve.best1, curve.worst1), eggs: lerp(curve.bestEggs, curve.worstEggs) };
+}
+
+// ---------------------------------------------------------------
+// Contadores regressivos — mesma conta de sempre pros crons (Brasília não
+// tem mais horário de verão desde 2019, sempre UTC-3): diário reseta
+// 00:00 UTC = 21h de Brasília todo dia; semanal reseta domingo 00:00 UTC
+// = sábado 21h de Brasília.
+// ---------------------------------------------------------------
+
+export function msUntilNextDailyArenaReset(now = Date.now()) {
+  const d = new Date(now);
+  const todayReset = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0);
+  const target = todayReset > now ? todayReset : todayReset + 24 * 60 * 60 * 1000;
+  return target - now;
+}
+
+export function msUntilNextWeeklyArenaReset(now = Date.now()) {
+  const d = new Date(now);
+  const daysUntilSunday = (7 - d.getUTCDay()) % 7;
+  const base = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + daysUntilSunday, 0, 0, 0, 0);
+  const target = base > now ? base : base + 7 * 24 * 60 * 60 * 1000;
+  return target - now;
+}

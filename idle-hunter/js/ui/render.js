@@ -34,7 +34,11 @@ import { getMaxOfflineSeconds } from '../systems/offline.js';
 import { AWAKENING_SHOP_ITEMS, AWAKENING_SHARD_NAME, AWAKENING_SHARD_EMOJI } from '../data/awakening.js';
 import { canTranscend, getTranscendCount, getAwakeningShards, canBuyAwakeningItem } from '../systems/awakening.js';
 import { PVP_MAX_ENTRIES, getPvpTierInfo } from '../data/pvpConfig.js';
-import { projectPvpEntries } from '../systems/pvp.js';
+import {
+  projectPvpEntries, previewDailyArenaReward, previewWeeklyArenaReward,
+  msUntilNextDailyArenaReset, msUntilNextWeeklyArenaReset,
+} from '../systems/pvp.js';
+import { mailHasReward, mailIsFullyClaimed } from '../systems/mailbox.js';
 import {
   CARDS, getCard, CARD_DISCOVERY_CASH_REWARD,
   CARD_FRAGMENT_ID, CARD_FRAGMENT_NAME,
@@ -1918,6 +1922,13 @@ function pvpBoardRowHtml(pvp, tierInfo, row) {
   const scoreLabel = tierInfo.hiddenScore ? '' : ` · ⭐ ${formatInteger(row.rating)}`;
   const levelLabel = row.is_bot ? 'Bot' : `Nível ${formatNumber(row.hunter_level)}`;
   const winsLabel = row.is_bot ? '' : ` · 🏆 ${formatInteger(row.wins || 0)}`;
+  // Prévia da recompensa diária (ver previewDailyArenaReward em
+  // systems/pvp.js) — só faz sentido pra jogador de verdade, bot nunca
+  // recebe nada (real_rank vem null da RPC pra linha de bot).
+  const reward = row.is_bot ? null : previewDailyArenaReward(pvp.myProfile?.tier, row.real_rank, row.real_player_count);
+  const rewardLabel = reward
+    ? `<div class="desc pvp-reward-preview">🎁 ${formatInteger(reward.cardFragment)} frag. carta · ${formatInteger(reward.petFragment)} frag. mascote</div>`
+    : '';
   return `
     <div class="achievement-card ${isSelf ? 'pvp-self-row' : ''}">
       <span class="pvp-rank">#${row.position}</span>
@@ -1925,6 +1936,7 @@ function pvpBoardRowHtml(pvp, tierInfo, row) {
       <div class="info">
         <div class="name">${escapeHtml(row.nick)}</div>
         <div class="desc">${levelLabel}${scoreLabel}${winsLabel}</div>
+        ${rewardLabel}
       </div>
       ${isSelf ? '<span class="pvp-self-tag">Você</span>' : ''}
     </div>`;
@@ -1947,16 +1959,37 @@ export function renderPvpTab(state, pvp) {
     ? `<button class="transcend-btn" data-pvp-open-combat>⚔️ Combate</button>`
     : '';
 
+  // Contador regressivo até a recompensa diária (21h de Brasília) — só
+  // faz sentido mostrar depois de conectado (precisa saber o tier/grupo
+  // do jogador pra sequer ter uma lista pra premiar).
+  const countdownHtml = myProfile
+    ? `<p class="shop-note">🎁 Recompensa diária em <strong id="pvp-daily-countdown"></strong></p>`
+    : '';
+
   container.innerHTML = `
     <div class="section-banner">🏟️ Arena PvP</div>
     <p class="shop-note">PvP assíncrono: você ataca a última cópia salva das stats de outro jogador (ou um bot) — ele não precisa estar online.</p>
     ${connectHtml}
     <button class="transcend-btn" data-pvp-refresh ${pvp.loading ? 'disabled' : ''}>🔄 ${myProfile ? 'Sincronizar Stats' : 'Conectar à Arena'}</button>
     ${combatBtn}
+    ${countdownHtml}
 
     <h4 class="shop-section-title">${tierInfo.emoji} Tier ${tierInfo.label}</h4>
     <div class="achievement-list">${boardHtml}</div>
   `;
+  if (myProfile) tickPvpDailyCountdown();
+}
+
+let pvpDailyCountdownIntervalId = null;
+function tickPvpDailyCountdown() {
+  if (pvpDailyCountdownIntervalId) clearInterval(pvpDailyCountdownIntervalId);
+  const update = () => {
+    const el = document.getElementById('pvp-daily-countdown');
+    if (!el) { clearInterval(pvpDailyCountdownIntervalId); pvpDailyCountdownIntervalId = null; return; }
+    el.textContent = formatHoursMinutes(msUntilNextDailyArenaReset());
+  };
+  update();
+  pvpDailyCountdownIntervalId = setInterval(update, 30000);
 }
 
 /// Corpo da janela de "Combate" (ver js/main.js openPvpCombatPicker) — até
@@ -2001,7 +2034,7 @@ export function showPvpCombatPickerModal(tierInfo, opponents) {
 // próprio tier+grupo do jogador).
 // ---------------------------------------------------------------
 
-function pvpRankRowHtml(row, myId, extraLabel) {
+function pvpRankRowHtml(row, myId, extraLabel, rewardLabel) {
   const isSelf = row.entity_id === myId;
   return `
     <div class="achievement-card ${isSelf ? 'pvp-self-row' : ''}">
@@ -2010,6 +2043,7 @@ function pvpRankRowHtml(row, myId, extraLabel) {
       <div class="info">
         <div class="name">${escapeHtml(row.nick)}</div>
         <div class="desc">${extraLabel}</div>
+        ${rewardLabel ? `<div class="desc pvp-reward-preview">${rewardLabel}</div>` : ''}
       </div>
       ${isSelf ? '<span class="pvp-self-tag">Você</span>' : ''}
     </div>`;
@@ -2019,7 +2053,7 @@ function pvpRankRowHtml(row, myId, extraLabel) {
 // 1 linha extra com a posição real dele no fim — um "⋯" antes dessa
 // última linha deixa claro visualmente que ela não é a #101, é bem mais
 // distante (ver o pulo entre row.position e a posição anterior).
-function pvpRankSectionHtml(rows, myId, extraLabelFn) {
+function pvpRankSectionHtml(rows, myId, extraLabelFn, rewardLabelFn) {
   if (!rows.length) return '<p class="shop-note">Ninguém no rank ainda.</p>';
   let html = '';
   let prevPosition = 0;
@@ -2027,10 +2061,21 @@ function pvpRankSectionHtml(rows, myId, extraLabelFn) {
     if (prevPosition > 0 && row.position > prevPosition + 1) {
       html += '<div class="pvp-rank-gap">⋯</div>';
     }
-    html += pvpRankRowHtml(row, myId, extraLabelFn(row));
+    html += pvpRankRowHtml(row, myId, extraLabelFn(row), rewardLabelFn ? rewardLabelFn(row) : null);
     prevPosition = row.position;
   }
   return html;
+}
+
+/// Prévia da recompensa SEMANAL (ver previewWeeklyArenaReward em
+/// systems/pvp.js) pra uma linha do rank de Arena — carta/fragmento +
+/// ovos, ou nada se a posição do jogador DENTRO do próprio tier está fora
+/// da metade de cima.
+function pvpWeeklyRewardLabel(row) {
+  const reward = previewWeeklyArenaReward(row.tier, row.tier_position, row.tier_player_count);
+  if (!reward) return null;
+  const mainLabel = reward.kind === 'random_card' ? '1 carta aleatória' : `${formatInteger(reward.amount)} frag. carta`;
+  return `🎁 ${mainLabel} · ${formatInteger(reward.eggs)} ovos`;
 }
 
 const RANKS_SECTIONS = {
@@ -2054,7 +2099,30 @@ function ranksSectionListHtml(ranksData, myId) {
     const tierInfo = getPvpTierInfo(row.tier);
     const scoreLabel = row.rating == null ? '' : ` · ⭐ ${formatInteger(row.rating)}`;
     return `${tierInfo.emoji} ${tierInfo.label}${scoreLabel} · Nível ${formatNumber(row.hunter_level)} · 🏆 ${formatInteger(row.wins || 0)}`;
-  });
+  }, pvpWeeklyRewardLabel);
+}
+
+/// Igual formatHoursMinutes, mas conta dias também — o contador semanal
+/// (até 7 dias) fica ilegível como "168h 0min".
+function formatDaysHoursMinutes(ms) {
+  const totalMinutes = Math.max(0, Math.ceil(ms / 60000));
+  const d = Math.floor(totalMinutes / 1440);
+  const h = Math.floor((totalMinutes % 1440) / 60);
+  const m = totalMinutes % 60;
+  if (d > 0) return `${d}d ${h}h`;
+  return h > 0 ? `${h}h ${m}min` : `${m}min`;
+}
+
+let ranksWeeklyCountdownIntervalId = null;
+function tickRanksWeeklyCountdown() {
+  if (ranksWeeklyCountdownIntervalId) clearInterval(ranksWeeklyCountdownIntervalId);
+  const update = () => {
+    const el = document.getElementById('ranks-weekly-countdown');
+    if (!el) { clearInterval(ranksWeeklyCountdownIntervalId); ranksWeeklyCountdownIntervalId = null; return; }
+    el.textContent = formatDaysHoursMinutes(msUntilNextWeeklyArenaReset());
+  };
+  update();
+  ranksWeeklyCountdownIntervalId = setInterval(update, 30000);
 }
 
 export function renderRanksTab(ranksData, myProfile) {
@@ -2066,14 +2134,92 @@ export function renderRanksTab(ranksData, myProfile) {
     <button class="pvp-rank-tab-btn ${key === activeSection ? 'active' : ''}" data-ranks-section="${key}">${info.label}</button>
   `).join('');
 
+  // Contador semanal só faz sentido na aba Arena — é onde a recompensa
+  // semanal de tier (ver pvp_rank_arena) é mostrada.
+  const weeklyCountdownHtml = activeSection === 'arena'
+    ? `<p class="shop-note">🎁 Recompensa semanal em <strong id="ranks-weekly-countdown"></strong></p>`
+    : '';
+
   container.innerHTML = `
     <div class="section-banner">🏆 Ranks</div>
     <button class="transcend-btn" data-ranks-refresh ${ranksData.loading ? 'disabled' : ''}>🔄 ${ranksData.loaded ? 'Atualizar' : 'Carregar Ranks'}</button>
 
     <div class="pvp-rank-tabs">${tabsHtml}</div>
+    ${weeklyCountdownHtml}
     <h4 class="shop-section-title">${RANKS_SECTIONS[activeSection].title}</h4>
     <div class="achievement-list">${ranksSectionListHtml({ ...ranksData, activeSection }, myId)}</div>
   `;
+  if (activeSection === 'arena') tickRanksWeeklyCountdown();
+}
+
+// ---------------------------------------------------------------
+// Correio (menu Outros) — avisos do Admin + recompensas automáticas da
+// Arena (ver systems/mailbox.js e supabase/migrations/0010/0011). Lista
+// só mostra título + indicador de presente; o corpo/botão de resgatar
+// aparece na janela de detalhe (ver showMailDetailModal, aberta ao
+// clicar numa mensagem — data-mail-open, ver wireMailboxTabEvents em
+// main.js).
+// ---------------------------------------------------------------
+
+function mailRewardLineHtml(type, amount) {
+  if (type === 'card_fragment') return `${CARD_FRAGMENT_ICON} +${formatInteger(amount)} Fragmento de Carta`;
+  if (type === 'pet_fragment') return `${PET_FRAGMENT_ICON} +${formatInteger(amount)} Fragmento de Mascote`;
+  if (type === 'egg') return `${EGG_ICON} +${formatInteger(amount)} Ovo de Mascote`;
+  if (type === 'random_card') return `${CARD_ICON} 1 Carta Aleatória`;
+  return '';
+}
+
+function mailListItemHtml(message) {
+  const hasReward = mailHasReward(message);
+  const giftIcon = hasReward ? (message.claimed ? '✅ ' : '🎁 ') : '';
+  const date = new Date(message.created_at).toLocaleDateString('pt-BR');
+  return `
+    <div class="achievement-card" data-mail-open="${message.id}" style="cursor:pointer;">
+      <div class="info">
+        <div class="name">${giftIcon}${escapeHtml(message.title)}</div>
+        <div class="desc">${date}</div>
+      </div>
+    </div>`;
+}
+
+export function renderMailboxTab(mailboxData) {
+  const container = document.getElementById('tab-mailbox');
+  const hasClaimable = mailboxData.messages.some((m) => mailHasReward(m) && !m.claimed);
+  const listHtml = mailboxData.messages.length
+    ? mailboxData.messages.map(mailListItemHtml).join('')
+    : `<p class="shop-note">${mailboxData.loading ? 'Carregando...' : 'Nenhuma mensagem por enquanto.'}</p>`;
+
+  container.innerHTML = `
+    <div class="section-banner">✉️ Correio</div>
+    <p class="shop-note">Avisos e recompensas da Arena chegam aqui.</p>
+    <button class="transcend-btn" data-mail-refresh ${mailboxData.loading ? 'disabled' : ''}>🔄 Atualizar</button>
+    ${hasClaimable ? '<button class="transcend-btn" data-mail-claim-all>🎁 Resgatar Todos</button>' : ''}
+    <div class="achievement-list">${listHtml}</div>
+  `;
+}
+
+/// Janela de detalhe de UMA mensagem — corpo + linha(s) de recompensa +
+/// botão de resgatar (se tiver item pendente) ou apagar (se não tiver
+/// nada pendente, ver mailIsFullyClaimed).
+export function showMailDetailModal(message) {
+  const rewardLines = [
+    message.reward_type !== 'none' ? mailRewardLineHtml(message.reward_type, message.reward_amount) : '',
+    message.reward2_type ? mailRewardLineHtml(message.reward2_type, message.reward2_amount) : '',
+  ].filter(Boolean).map((line) => `<p class="offline-item-lines">${line}</p>`).join('');
+
+  const canClaim = mailHasReward(message) && !message.claimed;
+  const canDelete = mailIsFullyClaimed(message);
+  const actionBtn = canClaim
+    ? `<button class="transcend-btn" data-mail-claim="${message.id}">🎁 Resgatar Item</button>`
+    : canDelete
+      ? `<button class="transcend-btn" data-mail-delete="${message.id}">🗑️ Apagar</button>`
+      : '<p class="shop-note">Resgate o item antes de apagar essa mensagem.</p>';
+
+  showModal(message.title, `
+    <p>${escapeHtml(message.body)}</p>
+    ${rewardLines}
+    ${actionBtn}
+  `);
 }
 
 function pvpErrorMessage(result) {
