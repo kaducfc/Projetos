@@ -2217,10 +2217,17 @@ export function showMailDetailModal(message) {
       ? `<button class="transcend-btn" data-mail-delete="${message.id}">🗑️ Apagar</button>`
       : '<p class="shop-note">Resgate o item antes de apagar essa mensagem.</p>';
 
+  // Prazo de validade (ver expires_at em 0012_pvp_mailbox_expiry.sql) —
+  // 30 dias por padrão, depois disso a mensagem some sozinha mesmo com
+  // item pendente.
+  const expiresDate = message.expires_at ? new Date(message.expires_at).toLocaleDateString('pt-BR') : null;
+  const expiryNote = expiresDate ? `<p class="shop-note">Expira em ${expiresDate}.</p>` : '';
+
   showModal(message.title, `
     <p>${escapeHtml(message.body)}</p>
     ${rewardLines}
     ${actionBtn}
+    ${expiryNote}
   `);
 }
 
