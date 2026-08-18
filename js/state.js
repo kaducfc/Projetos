@@ -82,6 +82,16 @@ export function createDefaultState() {
     totalKills: 0,
     lastSaveTime: Date.now(),
 
+    // Transcender (ver data/awakening.js + systems/awakening.js): um reset
+    // de prestígio liberado ao derrotar pela 1ª vez o chefe da última zona
+    // (transcendUnlocked). Cada Transcender soma +1 em transcendCount e +1
+    // Fragmento do Despertar (awakeningShards) — ambos sobrevivem ao reset
+    // que o próprio Transcender causa (transcendUnlocked volta a false,
+    // exigindo derrotar o chefe de novo pra liberar o próximo).
+    transcendUnlocked: false,
+    transcendCount: 0,
+    awakeningShards: 0,
+
     // Premium currency: earned via achievements or the (simulated) ad-watch
     // reward for now; a real-money purchase flow is a future integration.
     cash: 0,
