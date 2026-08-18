@@ -249,8 +249,14 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'stale_opponent' }, 409);
   }
 
-  const attackerTtk = timeToKill(defenderSnap.max_hp, effectiveDps(attackerSnap, defenderSnap));
-  const defenderTtk = timeToKill(attackerSnap.max_hp, effectiveDps(defenderSnap, attackerSnap));
+  // dps efetivo de cada lado contra o outro — devolvido na resposta pro
+  // cliente animar a "barra de HP descendo" na janela de batalha (ver
+  // js/ui/render.js showPvpBattleModal) com os números REAIS da luta, não
+  // um enfeite aleatório.
+  const attackerEffectiveDps = effectiveDps(attackerSnap, defenderSnap);
+  const defenderEffectiveDps = effectiveDps(defenderSnap, attackerSnap);
+  const attackerTtk = timeToKill(defenderSnap.max_hp, attackerEffectiveDps);
+  const defenderTtk = timeToKill(attackerSnap.max_hp, defenderEffectiveDps);
   const attackerWins = attackerTtk < defenderTtk;
 
   const swing = computeSwing(attackerBoardRow.position, defenderBoardRow.position, board.length);
@@ -324,5 +330,11 @@ Deno.serve(async (req) => {
     entriesRemaining: entriesNow - 1,
     goldReward,
     defenderNick,
+    // Pra animar a barra de HP na janela de batalha (ver
+    // js/ui/render.js showPvpBattleModal) — números reais, não decorativos.
+    attackerEffectiveDps,
+    defenderEffectiveDps,
+    attackerMaxHp: attackerSnap.max_hp,
+    defenderMaxHp: defenderSnap.max_hp,
   });
 });

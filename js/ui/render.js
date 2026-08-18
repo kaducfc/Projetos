@@ -1962,20 +1962,21 @@ export function renderPvpTab(state, pvp) {
   `;
 }
 
-export function showPvpBattleResultModal(result) {
-  if (result.error) {
-    let message;
-    if (result.error === 'no_entries') {
-      message = `⏳ Sem entradas agora. Próxima em ${formatHoursMinutes(result.retryAfterMs || 0)}.`;
-    } else if (result.error === 'different_tier' || result.error === 'stale_opponent') {
-      message = '❌ Esse oponente não está mais nesse tier — sincronize de novo.';
-    } else {
-      message = '❌ Não foi possível atacar agora. Tente sincronizar de novo.';
-    }
-    showModal('⚔️ Arena PvP', `<p>${message}</p>`);
-    return;
+function pvpErrorMessage(result) {
+  if (result.error === 'no_entries') {
+    return `⏳ Sem entradas agora. Próxima em ${formatHoursMinutes(result.retryAfterMs || 0)}.`;
   }
+  if (result.error === 'different_tier' || result.error === 'stale_opponent') {
+    return '❌ Esse oponente não está mais nesse tier — sincronize de novo.';
+  }
+  return '❌ Não foi possível atacar agora. Tente sincronizar de novo.';
+}
 
+/// Corpo do resultado (pontos ganhos/perdidos ou posição no caso do
+/// Lendário, ouro, entradas restantes) — usado tanto pelo modal simples
+/// (showPvpBattleResultModal, sem animação) quanto revelado no FIM da
+/// animação de batalha (ver showPvpBattleModal).
+function pvpResultContentHtml(result) {
   const won = result.attackerWins;
   const tierInfo = getPvpTierInfo(result.tier);
 
@@ -1995,12 +1996,157 @@ export function showPvpBattleResultModal(result) {
     scoreLine = `<p class="offline-item-lines">⭐ Pontos: ${result.attackerRatingBefore} → ${result.attackerRatingAfter} <span class="${deltaClass}">(${deltaLabel})</span></p>`;
   }
 
-  showModal(won ? '🏆 Vitória!' : '💀 Derrota', `
+  return `
+    <div class="pvp-result-banner ${won ? 'win' : 'lose'}">${won ? '🏆 Vitória!' : '💀 Derrota'}</div>
     <p>Você atacou <strong>${escapeHtml(result.defenderNick)}</strong>.</p>
     ${scoreLine}
     ${won ? `<p class="offline-item-lines">${GOLD_ICON} +${formatNumber(result.goldReward)} Ouro</p>` : ''}
     <p class="shop-note">🎟️ Entradas restantes: ${result.entriesRemaining}/${PVP_MAX_ENTRIES}</p>
+  `;
+}
+
+/// Modal de resultado SEM animação — usado só pros casos de erro (sem
+/// entrada, oponente sumiu, etc.), onde não faz sentido nenhum abrir a
+/// arena. Sucesso de verdade sempre passa por showPvpBattleModal abaixo.
+export function showPvpBattleResultModal(result) {
+  if (result.error) {
+    showModal('⚔️ Arena PvP', `<p>${pvpErrorMessage(result)}</p>`);
+    return;
+  }
+  showModal(result.attackerWins ? '🏆 Vitória!' : '💀 Derrota', pvpResultContentHtml(result));
+}
+
+// ---------------------------------------------------------------
+// Janela de batalha animada: 2 retratos com nick em cima, barras de HP
+// baseadas nos números REAIS da luta (dps efetivo/HP de cada lado, ver
+// attackerEffectiveDps/defenderEffectiveDps/attackerMaxHp/defenderMaxHp
+// na resposta da Edge Function) — a barra do lado que perde sempre
+// termina exatamente em 0 no fim da animação, coerente com attackerWins.
+// O resultado (vitória/derrota, pontos, ouro) só aparece DEPOIS da
+// animação terminar.
+// ---------------------------------------------------------------
+
+const PVP_ANIMATION_MS = 2600;
+const PVP_DAMAGE_TICK_MS = 350;
+
+let pvpAnimationFrameId = null;
+
+function stopPvpBattleAnimation() {
+  if (pvpAnimationFrameId != null) {
+    cancelAnimationFrame(pvpAnimationFrameId);
+    pvpAnimationFrameId = null;
+  }
+}
+
+function spawnPvpDamagePopup(portraitId, amount) {
+  const portrait = document.getElementById(portraitId);
+  if (!portrait || amount <= 0) return;
+  const el = document.createElement('div');
+  el.className = 'pvp-damage-popup';
+  el.textContent = `-${formatNumber(Math.round(amount))}`;
+  portrait.appendChild(el);
+  setTimeout(() => el.remove(), 700);
+}
+
+/// Anima as 2 barras de HP de 100% até o resultado real da luta, num
+/// tempo de parede fixo (PVP_ANIMATION_MS) independente de quão rápido ou
+/// lento o "tempo de luta simulado" (attackerMaxHp/dps) realmente seria —
+/// só reescala esse tempo simulado pra caber na animação. Chama
+/// onComplete() quando termina (ou na hora, se por algum motivo nenhum
+/// dos 2 lados causa dano nenhum).
+function animatePvpBattle(result, onComplete) {
+  stopPvpBattleAnimation();
+
+  const { attackerMaxHp, defenderMaxHp, attackerEffectiveDps, defenderEffectiveDps } = result;
+  const attackerTtk = attackerEffectiveDps > 0 ? defenderMaxHp / attackerEffectiveDps : Infinity;
+  const defenderTtk = defenderEffectiveDps > 0 ? attackerMaxHp / defenderEffectiveDps : Infinity;
+  const endSimTime = Math.min(attackerTtk, defenderTtk);
+
+  if (!Number.isFinite(endSimTime) || endSimTime <= 0) {
+    onComplete();
+    return;
+  }
+
+  const attackerBar = document.getElementById('pvp-hp-attacker');
+  const defenderBar = document.getElementById('pvp-hp-defender');
+  const start = performance.now();
+  let lastTickElapsed = 0;
+  let lastAttackerHp = attackerMaxHp;
+  let lastDefenderHp = defenderMaxHp;
+
+  function frame(now) {
+    const elapsed = now - start;
+    const t = Math.min(1, elapsed / PVP_ANIMATION_MS);
+    const simT = t * endSimTime;
+
+    const attackerHp = Math.max(0, attackerMaxHp - defenderEffectiveDps * simT);
+    const defenderHp = Math.max(0, defenderMaxHp - attackerEffectiveDps * simT);
+    if (attackerBar) attackerBar.style.width = `${(attackerHp / attackerMaxHp) * 100}%`;
+    if (defenderBar) defenderBar.style.width = `${(defenderHp / defenderMaxHp) * 100}%`;
+
+    if (elapsed - lastTickElapsed >= PVP_DAMAGE_TICK_MS) {
+      lastTickElapsed = elapsed;
+      spawnPvpDamagePopup('pvp-portrait-defender', lastDefenderHp - defenderHp);
+      spawnPvpDamagePopup('pvp-portrait-attacker', lastAttackerHp - attackerHp);
+      lastAttackerHp = attackerHp;
+      lastDefenderHp = defenderHp;
+    }
+
+    if (t < 1) {
+      pvpAnimationFrameId = requestAnimationFrame(frame);
+    } else {
+      pvpAnimationFrameId = null;
+      onComplete();
+    }
+  }
+  pvpAnimationFrameId = requestAnimationFrame(frame);
+}
+
+function pvpFighterHtml(side, nick, iconId) {
+  const icon = getProfileIcon(iconId);
+  return `
+    <div class="pvp-fighter pvp-fighter-${side}">
+      <div class="pvp-fighter-nick">${escapeHtml(nick)}</div>
+      <div class="pvp-fighter-portrait" id="pvp-portrait-${side}">${iconMarkup(icon.image, '', icon.name)}</div>
+      <div class="pvp-hp-bar-outer"><div class="pvp-hp-bar-fill" id="pvp-hp-${side}"></div></div>
+    </div>`;
+}
+
+/// `defenderInfo` ({ nick, iconId }) vem de main.js, lido do tier_board já
+/// em memória ANTES do ataque (a resposta da Edge Function não repete o
+/// ícone do defensor, só o nick). Erros pulam a animação e caem direto no
+/// modal simples de sempre.
+export function showPvpBattleModal(pvp, defenderInfo, result) {
+  if (result.error) {
+    showPvpBattleResultModal(result);
+    return;
+  }
+
+  const myProfile = pvp.myProfile;
+  showModal('⚔️ Batalha', `
+    <div class="pvp-arena">
+      ${pvpFighterHtml('attacker', myProfile.nick, myProfile.icon_id)}
+      <div class="pvp-vs">⚔️</div>
+      ${pvpFighterHtml('defender', defenderInfo.nick, defenderInfo.iconId)}
+    </div>
+    <div id="pvp-battle-result-slot"></div>
   `);
+  // Setado em 2 passos (CSS já nasce em 0%, isso preenche 100% no 1º
+  // frame) só pra garantir que a barra sempre começa visivelmente cheia
+  // antes da animação de verdade começar a esvaziar ela.
+  requestAnimationFrame(() => {
+    const attackerBar = document.getElementById('pvp-hp-attacker');
+    const defenderBar = document.getElementById('pvp-hp-defender');
+    if (attackerBar) attackerBar.style.width = '100%';
+    if (defenderBar) defenderBar.style.width = '100%';
+  });
+
+  animatePvpBattle(result, () => {
+    const titleEl = document.getElementById('modal-title');
+    if (titleEl) titleEl.textContent = result.attackerWins ? '🏆 Vitória!' : '💀 Derrota';
+    const slot = document.getElementById('pvp-battle-result-slot');
+    if (slot) slot.innerHTML = pvpResultContentHtml(result);
+  });
 }
 
 // ---------------------------------------------------------------
@@ -2177,5 +2323,6 @@ export function showModal(title, bodyHtml) {
 }
 
 export function hideModal() {
+  stopPvpBattleAnimation(); // sem-op se não tinha nenhuma luta animando
   document.getElementById('modal-overlay').classList.add('hidden');
 }
