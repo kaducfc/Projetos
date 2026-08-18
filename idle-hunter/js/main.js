@@ -13,7 +13,7 @@ import {
   fetchArenaRank, fetchLevelRank, fetchTranscendRank,
 } from './systems/pvp.js';
 import { getPvpTierInfo } from './data/pvpConfig.js';
-import { fetchMailbox, claimMailReward, deleteMail, mailHasReward } from './systems/mailbox.js';
+import { fetchMailbox, claimMailReward, deleteMail, mailHasReward, hasUnreadMail, markMailRead } from './systems/mailbox.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot, findEquippedSlotId } from './systems/equipment.js';
 import { enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscension, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
@@ -1701,6 +1701,17 @@ async function refreshMailboxTab() {
     mailboxData = { ...mailboxData, loading: false };
   }
   renderMailboxTab(mailboxData);
+  updateMailBadges();
+}
+
+/// Bolinha vermelha no botão "Outros" (nav principal) e no item "Correio"
+/// dentro do menu, indicando que tem mensagem não lida — some sozinha
+/// assim que a última não-lida for aberta (ver data-mail-open em
+/// wireModalEvents, que chama markMailRead).
+function updateMailBadges() {
+  const unread = hasUnreadMail(mailboxData.messages);
+  document.getElementById('mail-badge-outros').classList.toggle('hidden', !unread);
+  document.getElementById('mail-badge-menu').classList.toggle('hidden', !unread);
 }
 
 function wireMailboxTabEvents() {
@@ -1718,7 +1729,17 @@ function wireMailboxTabEvents() {
     const openBtn = e.target.closest('[data-mail-open]');
     if (openBtn) {
       const message = mailboxData.messages.find((m) => String(m.id) === openBtn.dataset.mailOpen);
-      if (message) showMailDetailModal(message);
+      if (!message) return;
+      showMailDetailModal(message);
+      if (!message.read) {
+        mailboxData = {
+          ...mailboxData,
+          messages: mailboxData.messages.map((m) => (m.id === message.id ? { ...m, read: true } : m)),
+        };
+        renderMailboxTab(mailboxData);
+        updateMailBadges();
+        markMailRead(message.id);
+      }
     }
   });
 }
@@ -1865,6 +1886,13 @@ function init() {
   // carregamento do jogo por causa de uma chamada de rede externa.
   refreshPvpTab({ silent: true });
   setInterval(() => refreshPvpTab({ silent: true }), PVP_AUTO_SYNC_INTERVAL_MS);
+
+  // Mesma ideia pro Correio — busca sozinho ao abrir o jogo (e depois
+  // periodicamente) só pra saber se tem mensagem não lida e acender a
+  // bolinha em "Outros"/"Correio" (ver updateMailBadges), sem precisar
+  // que o jogador abra a aba pra descobrir.
+  refreshMailboxTab();
+  setInterval(refreshMailboxTab, PVP_AUTO_SYNC_INTERVAL_MS);
 
   setInterval(tick, TICK_MS);
   // Events/Achievements/Shop have their own slow clocks (window countdown,

@@ -2176,11 +2176,12 @@ function mailRewardLineHtml(type, amount) {
 function mailListItemHtml(message) {
   const hasReward = mailHasReward(message);
   const giftIcon = hasReward ? (message.claimed ? '✅ ' : '🎁 ') : '';
+  const unreadDot = !message.read ? '<span class="mail-unread-dot"></span>' : '';
   const date = new Date(message.created_at).toLocaleDateString('pt-BR');
   return `
-    <div class="achievement-card" data-mail-open="${message.id}" style="cursor:pointer;">
+    <div class="achievement-card ${!message.read ? 'mail-unread' : ''}" data-mail-open="${message.id}" style="cursor:pointer;">
       <div class="info">
-        <div class="name">${giftIcon}${escapeHtml(message.title)}</div>
+        <div class="name">${unreadDot}${giftIcon}${escapeHtml(message.title)}</div>
         <div class="desc">${date}</div>
       </div>
     </div>`;

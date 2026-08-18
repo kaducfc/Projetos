@@ -33,6 +33,26 @@ export function mailHasReward(message) {
   return message.reward_type !== 'none' || !!message.reward2_type;
 }
 
+export function hasUnreadMail(messages) {
+  return messages.some((m) => !m.read);
+}
+
+/// Marca a mensagem como LIDA (diferente de resgatada, ver claimMailReward
+/// abaixo) — chamado ao abrir a janela de detalhe (ver showMailDetailModal
+/// em ui/render.js), é o que apaga o indicador de "não lida" (ver
+/// 0014_pvp_mailbox_read.sql).
+export async function markMailRead(messageId) {
+  const userId = await ensureSignedIn();
+  if (!userId) return false;
+  const { error } = await getClient()
+    .from('pvp_mailbox').update({ read: true }).eq('id', messageId).eq('profile_id', userId);
+  if (error) {
+    console.warn('Correio: falha ao marcar como lida:', error.message);
+    return false;
+  }
+  return true;
+}
+
 export function mailIsFullyClaimed(message) {
   return !mailHasReward(message) || message.claimed;
 }
