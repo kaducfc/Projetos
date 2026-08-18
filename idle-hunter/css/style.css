@@ -3283,6 +3283,50 @@ button:disabled {
   box-shadow: none;
 }
 
+/* ---------------- Despertar (aba da Loja + modal de confirmação) ---------------- */
+
+.transcend-status-card {
+  text-align: center;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 2px solid var(--border);
+  background: var(--grad-neutral);
+  box-shadow: var(--shadow-card);
+}
+
+.transcend-status-card .name {
+  font-weight: 800;
+  font-size: 14.5px;
+  margin-bottom: 4px;
+}
+
+.transcend-status-card.ready {
+  border-color: var(--purple-dark);
+  background: linear-gradient(180deg, #2a1a4a 0%, #1a1030 100%);
+  color: #fff;
+}
+
+.transcend-status-card.ready .shop-note {
+  color: rgba(255, 255, 255, .75);
+}
+
+.transcend-status-card.locked {
+  opacity: 0.85;
+}
+
+.transcend-btn {
+  margin-top: 8px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 14px;
+  background: var(--grad-purple);
+  color: #fff;
+  box-shadow: 0 3px 0 var(--purple-dark);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+}
+
 /* ---------------- Perfil (modal aberto pelo #profile-btn) ---------------- */
 
 .profile-name-row {
