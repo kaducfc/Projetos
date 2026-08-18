@@ -217,6 +217,7 @@ Deno.serve(async (req) => {
   let defenderNick: string;
   let defenderTier: string;
   let defenderRatingBefore: number;
+  let defenderWinsBefore = 0;
   let defenderSnap: Snapshot | null;
   let defenderProfileForUpdate: { id: string } | null = null;
 
@@ -237,6 +238,7 @@ Deno.serve(async (req) => {
     defenderNick = defenderProfile.nick;
     defenderTier = defenderProfile.tier;
     defenderRatingBefore = defenderProfile.rating;
+    defenderWinsBefore = defenderProfile.wins || 0;
     defenderSnap = clampSnapshot(snap as Snapshot);
     defenderProfileForUpdate = { id: defenderProfile.id };
   }
@@ -337,11 +339,18 @@ Deno.serve(async (req) => {
       pvp_entries: entriesNow - 1,
       pvp_entries_updated_at: newAnchorIso,
       last_attack_at: new Date().toISOString(),
+      ...(attackerWins ? { wins: attackerProfile.wins + 1 } : {}),
     }).eq('id', attackerId),
   ];
   if (defenderProfileForUpdate) {
     writes.push(
-      supabaseAdmin.from('pvp_profiles').update({ rating: defenderRatingAfter }).eq('id', defenderProfileForUpdate.id),
+      supabaseAdmin.from('pvp_profiles').update({
+        rating: defenderRatingAfter,
+        // Defensor só ganha "vitória" contada se ele de fato venceu (o
+        // atacante perdeu) — bot nunca entra aqui, pvp_bots não guarda
+        // histórico de vitórias.
+        ...(!attackerWins ? { wins: defenderWinsBefore + 1 } : {}),
+      }).eq('id', defenderProfileForUpdate.id),
     );
   }
   const results = await Promise.all(writes);
