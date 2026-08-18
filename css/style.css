@@ -3503,6 +3503,27 @@ button:disabled {
 .pvp-reward-preview {
   color: var(--green-dark, #15803d);
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pvp-reward-preview .currency-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+
+.pvp-countdown {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  margin: 8px 0;
+}
+
+.pvp-countdown strong {
+  color: var(--red-dark, #b91c1c);
 }
 
 .pvp-rank-tab-btn.active {
