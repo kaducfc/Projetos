@@ -13,6 +13,7 @@ import {
   fetchArenaRank, fetchLevelRank, fetchTranscendRank,
 } from './systems/pvp.js';
 import { getPvpTierInfo } from './data/pvpConfig.js';
+import { fetchMailbox, claimMailReward, deleteMail, mailHasReward } from './systems/mailbox.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot, findEquippedSlotId } from './systems/equipment.js';
 import { enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscension, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
@@ -48,6 +49,7 @@ import {
   EGG_ICON, PET_FRAGMENT_ICON,
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
   renderTranscendTab, renderPvpTab, showPvpBattleModal, showPvpCombatPickerModal, renderRanksTab,
+  renderMailboxTab, showMailDetailModal,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -144,6 +146,10 @@ let pvpData = { myProfile: null, board: [], loading: false, attackingId: null };
 // pelo menos uma vez nessa sessão (só refaz no clique manual em
 // "Atualizar", não toda vez que a aba abre de novo).
 let ranksData = { arena: [], level: [], transcend: [], loading: false, loaded: false, activeSection: 'arena' };
+
+// Correio (ver systems/mailbox.js): dados vivem no Supabase, igual
+// Arena/Ranks — esse cache só existe em memória, refeito a cada sessão.
+let mailboxData = { messages: [], loading: false };
 
 function renderUpgradesTabNow() {
   renderUpgradesTab(state, skillResetConfirming);
@@ -412,7 +418,7 @@ function tick() {
 // jeito de sempre — só que se veio do popup, o botão "Outros" (não a aba
 // real) é quem fica marcado como ativo no nav principal, já que Cartas/Loja
 // não têm mais vaga própria lá.
-const MORE_MENU_TAB_IDS = ['cards', 'shop', 'transcend', 'pvp', 'ranks'];
+const MORE_MENU_TAB_IDS = ['cards', 'shop', 'transcend', 'pvp', 'ranks', 'mailbox'];
 
 function closeMoreMenu() {
   document.getElementById('more-menu').classList.add('hidden');
@@ -443,6 +449,11 @@ function setupTabs() {
       if (btn.dataset.tab === 'pvp' && !pvpData.myProfile && !pvpData.loading) refreshPvpTab();
       // Mesma lógica pra Ranks (também vive no Supabase, ver refreshRanksTab).
       if (btn.dataset.tab === 'ranks' && !ranksData.loaded && !ranksData.loading) refreshRanksTab();
+      // Correio (ver refreshMailboxTab): busca de novo toda vez que a aba
+      // abre (diferente de Ranks) — mensagem nova pode ter chegado a
+      // qualquer momento (recompensa automática da Arena, aviso do
+      // Admin), não faz sentido cachear por sessão inteira igual o rank.
+      if (btn.dataset.tab === 'mailbox' && !mailboxData.loading) refreshMailboxTab();
       closeMoreMenu();
     });
   });
@@ -565,6 +576,41 @@ function wireModalEvents() {
     const pvpAttackBtn = e.target.closest('[data-pvp-attack]');
     if (pvpAttackBtn && !pvpData.attackingId) {
       handlePvpAttack(pvpAttackBtn.dataset.pvpAttack, pvpAttackBtn.dataset.pvpAttackBot === '1');
+      return;
+    }
+
+    // Correio: botões "Resgatar Item"/"Apagar" dentro do modal de detalhe
+    // de UMA mensagem (ver showMailDetailModal em ui/render.js).
+    const mailClaimBtn = e.target.closest('[data-mail-claim]');
+    if (mailClaimBtn) {
+      runModalAction(() => {
+        const message = mailboxData.messages.find((m) => String(m.id) === mailClaimBtn.dataset.mailClaim);
+        if (!message) return;
+        claimMailReward(state, message).then((claimed) => {
+          if (!claimed) return;
+          mailboxData = {
+            ...mailboxData,
+            messages: mailboxData.messages.map((m) => (m.id === message.id ? { ...m, claimed: true } : m)),
+          };
+          renderMailboxTab(mailboxData);
+          fullRefresh();
+          hideModal();
+          showToast('🎁 Recompensa resgatada!');
+        });
+      });
+      return;
+    }
+    const mailDeleteBtn = e.target.closest('[data-mail-delete]');
+    if (mailDeleteBtn) {
+      runModalAction(() => {
+        const id = mailDeleteBtn.dataset.mailDelete;
+        deleteMail(id).then((deleted) => {
+          if (!deleted) return;
+          mailboxData = { ...mailboxData, messages: mailboxData.messages.filter((m) => String(m.id) !== id) };
+          renderMailboxTab(mailboxData);
+          hideModal();
+        });
+      });
       return;
     }
 
@@ -1637,6 +1683,65 @@ function wireRanksTabEvents() {
 }
 
 // ---------------------------------------------------------------
+// Correio (ver systems/mailbox.js): avisos do Admin + recompensas
+// automáticas da Arena. A lista em si (renderMailboxTab) só mostra
+// título/ícone de presente; abrir uma mensagem (data-mail-open) mostra o
+// corpo + botão de resgatar/apagar num modal (showMailDetailModal),
+// wireado no #modal-overlay compartilhado (ver wireModalEvents).
+// ---------------------------------------------------------------
+
+async function refreshMailboxTab() {
+  mailboxData = { ...mailboxData, loading: true };
+  renderMailboxTab(mailboxData);
+  try {
+    const messages = await fetchMailbox();
+    mailboxData = { messages, loading: false };
+  } catch (err) {
+    console.warn('Correio: falha ao buscar:', err);
+    mailboxData = { ...mailboxData, loading: false };
+  }
+  renderMailboxTab(mailboxData);
+}
+
+function wireMailboxTabEvents() {
+  document.getElementById('tab-mailbox').addEventListener('click', (e) => {
+    const refreshBtn = e.target.closest('[data-mail-refresh]');
+    if (refreshBtn && !mailboxData.loading) {
+      refreshMailboxTab();
+      return;
+    }
+    const claimAllBtn = e.target.closest('[data-mail-claim-all]');
+    if (claimAllBtn) {
+      claimAllMail();
+      return;
+    }
+    const openBtn = e.target.closest('[data-mail-open]');
+    if (openBtn) {
+      const message = mailboxData.messages.find((m) => String(m.id) === openBtn.dataset.mailOpen);
+      if (message) showMailDetailModal(message);
+    }
+  });
+}
+
+/// "🎁 Resgatar Todos" — resgata em sequência toda mensagem com item
+/// pendente (evita disparar N updates em paralelo sem necessidade; o
+/// volume aqui é sempre pequeno o bastante pra não incomodar).
+async function claimAllMail() {
+  const claimable = mailboxData.messages.filter((m) => mailHasReward(m) && !m.claimed);
+  for (const message of claimable) {
+    // eslint-disable-next-line no-await-in-loop
+    await claimMailReward(state, message);
+  }
+  mailboxData = {
+    ...mailboxData,
+    messages: mailboxData.messages.map((m) => (mailHasReward(m) ? { ...m, claimed: true } : m)),
+  };
+  renderMailboxTab(mailboxData);
+  fullRefresh();
+  showToast('🎁 Recompensas resgatadas!');
+}
+
+// ---------------------------------------------------------------
 // Transcender: reset de prestígio (ver systems/awakening.js transcend()) —
 // troca a referência local `state` por um state novo (quase tudo
 // resetado, ver PRESERVED_KEYS lá) e reinicia todo o estado de combate
@@ -1738,6 +1843,7 @@ function init() {
   wireTranscendTabEvents();
   wirePvpTabEvents();
   wireRanksTabEvents();
+  wireMailboxTabEvents();
   wirePetsTabEvents();
   wireSkillsTabEvents();
   resetPlayerHp();
