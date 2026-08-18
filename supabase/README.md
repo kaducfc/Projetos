@@ -183,14 +183,37 @@ insert into public.pvp_mailbox (profile_id, title, body, reward_type, reward_amo
 select id, '🏆 Prêmio especial', 'Você está entre os melhores do jogo!',
        'random_card', 1
 from public.pvp_profiles where tier = 'lendario';
+
+-- Recompensa com 2 itens na MESMA mensagem (ex: Ouro + Esmeralda).
+insert into public.pvp_mailbox (profile_id, title, body, reward_type, reward_amount, reward2_type, reward2_amount)
+select id, '🎁 Presente da equipe', 'Aproveite!',
+       'gold', 50000, 'esmeralda', 100
+from public.pvp_profiles;
+
+-- Recompensa só pra UM jogador específico (troque 'NickDoJogador' pelo
+-- nick real, ver a coluna "nick" em pvp_profiles).
+insert into public.pvp_mailbox (profile_id, title, body, reward_type, reward_amount)
+select id, '🎁 Compensação', 'Por causa daquele bug, aqui está uma ajudinha.',
+       'gold', 20000
+from public.pvp_profiles where nick = 'NickDoJogador';
 ```
 
-`reward_type`: `'none'` (padrão, sem item), `'card_fragment'`,
-`'pet_fragment'`, `'egg'` ou `'random_card'` (nesse último `reward_amount`
-é ignorado, sempre concede 1 carta aleatória). `reward2_type`/
-`reward2_amount` (opcionais) dão uma 2ª recompensa na MESMA mensagem —
-é assim que a recompensa diária da Arena manda fragmento de carta E de
-mascote juntos.
+`reward_type`/`reward2_type`: `'none'` (padrão, sem item),
+`'card_fragment'`, `'pet_fragment'`, `'egg'`, `'random_card'` (nesse
+último `reward_amount` é ignorado, sempre concede 1 carta aleatória),
+`'gold'` (Ouro) ou `'esmeralda'` (a moeda premium/paga do jogo — campo
+interno chama `cash`, mas em toda a UI ela aparece como "Esmeralda").
+`reward2_type`/`reward2_amount` (opcionais) dão uma 2ª recompensa na
+MESMA mensagem — é assim que a recompensa diária da Arena manda
+fragmento de carta E de mascote juntos; use o mesmo campo pra combinar
+qualquer par (ex: Ouro + Esmeralda, ou fragmento + ovo).
+
+**Resumindo pra mandar AGORA pra todos os jogadores**: abra o SQL Editor,
+cole um dos blocos `insert into public.pvp_mailbox (...) select id, ...
+from public.pvp_profiles;` acima (sem `where`, pra pegar todo mundo),
+ajusta o título/corpo/recompensa como quiser, e roda. Cada linha de
+`pvp_profiles` vira uma mensagem separada pra aquele jogador — chega no
+Correio dele na hora, sem precisar de deploy nem reiniciar nada.
 
 ## Próximos passos possíveis (ainda não implementados)
 

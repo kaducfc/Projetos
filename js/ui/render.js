@@ -2168,6 +2168,8 @@ function mailRewardLineHtml(type, amount) {
   if (type === 'pet_fragment') return `${PET_FRAGMENT_ICON} +${formatInteger(amount)} Fragmento de Mascote`;
   if (type === 'egg') return `${EGG_ICON} +${formatInteger(amount)} Ovo de Mascote`;
   if (type === 'random_card') return `${CARD_ICON} 1 Carta Aleatória`;
+  if (type === 'gold') return `${GOLD_ICON} +${formatNumber(amount)} Ouro`;
+  if (type === 'esmeralda') return `${ESMERALDA_ICON} +${formatNumber(amount)} Esmeralda`;
   return '';
 }
 
