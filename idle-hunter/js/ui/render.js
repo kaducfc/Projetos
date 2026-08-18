@@ -2001,7 +2001,28 @@ function pvpResultContentHtml(result) {
     <p>Você atacou <strong>${escapeHtml(result.defenderNick)}</strong>.</p>
     ${scoreLine}
     ${won ? `<p class="offline-item-lines">${GOLD_ICON} +${formatNumber(result.goldReward)} Ouro</p>` : ''}
+    ${pvpBattleStatsHtml(result)}
     <p class="shop-note">🎟️ Entradas restantes: ${result.entriesRemaining}/${PVP_MAX_ENTRIES}</p>
+  `;
+}
+
+/// Estatísticas do combate (dano causado/recebido, mascote, crítico,
+/// esquiva) — números REAIS calculados no servidor (ver
+/// effectiveDpsBreakdown/attackerDamageDealt etc. na Edge Function
+/// resolve-pvp-battle), não decoração. "Dano do Mascote" só aparece se o
+/// lado em questão de fato tinha um mascote ativo na luta.
+function pvpBattleStatsHtml(result) {
+  const petLine = result.attackerPetDamageDealt > 0
+    ? `<div class="pvp-stat-row">🐾 Dano do seu mascote<span>${formatNumber(result.attackerPetDamageDealt)}</span></div>`
+    : '';
+  return `
+    <div class="pvp-battle-stats">
+      <div class="pvp-stat-row">⚔️ Dano causado<span>${formatNumber(result.attackerDamageDealt)}</span></div>
+      ${petLine}
+      <div class="pvp-stat-row">🩸 Dano recebido<span>${formatNumber(result.defenderDamageDealt)}</span></div>
+      <div class="pvp-stat-row">💥 Sua chance crítica<span>${formatPercent(result.attackerCritChance)}</span></div>
+      <div class="pvp-stat-row">🌀 Sua esquiva<span>${formatPercent(result.attackerDodgeChance)}</span></div>
+    </div>
   `;
 }
 
