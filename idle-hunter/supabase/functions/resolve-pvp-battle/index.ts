@@ -41,6 +41,27 @@ const GOLD_REWARD_PER_RATING = 0.05; // um pouco mais de ouro atacando alvos mai
 // legítimo no fim de jogo atual.
 const SANE_MAX = { dps: 5_000_000, max_hp: 20_000_000, armor: 500_000, crit_chance: 100, crit_damage: 2000, dodge_chance: 95 };
 
+// ---------------------------------------------------------------
+// CORS: o navegador manda um preflight OPTIONS antes de qualquer POST
+// "não simples" (com header Authorization, que o supabase-js sempre
+// manda) — sem responder esse OPTIONS com os headers abaixo, o navegador
+// bloqueia o POST de verdade ANTES dele nem chegar na função (é isso que
+// causava "Não foi possível atacar agora" pro jogador: toda chamada
+// aparecia como OPTIONS 405 nos logs, o POST real nunca rodava).
+// ---------------------------------------------------------------
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
 function armorReduction(armor: number): number {
   return armor / (armor + ARMOR_CONSTANT);
 }
@@ -121,8 +142,11 @@ function projectEntries(stored: number, updatedAt: string, now: number) {
 }
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'method_not_allowed' }), { status: 405 });
+    return jsonResponse({ error: 'method_not_allowed' }, 405);
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -134,7 +158,7 @@ Deno.serve(async (req) => {
     authHeader.replace('Bearer ', ''),
   );
   if (userError || !userData?.user) {
-    return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 });
+    return jsonResponse({ error: 'unauthorized' }, 401);
   }
   const attackerId = userData.user.id;
 
@@ -142,21 +166,21 @@ Deno.serve(async (req) => {
   try {
     body = await req.json();
   } catch {
-    return new Response(JSON.stringify({ error: 'invalid_body' }), { status: 400 });
+    return jsonResponse({ error: 'invalid_body' }, 400);
   }
   const defenderId = body.defenderId;
   const defenderIsBot = body.isBot === true;
   if (!defenderId || typeof defenderId !== 'string') {
-    return new Response(JSON.stringify({ error: 'missing_defender_id' }), { status: 400 });
+    return jsonResponse({ error: 'missing_defender_id' }, 400);
   }
   if (!defenderIsBot && defenderId === attackerId) {
-    return new Response(JSON.stringify({ error: 'cannot_attack_self' }), { status: 400 });
+    return jsonResponse({ error: 'cannot_attack_self' }, 400);
   }
 
   const { data: attackerProfile } = await supabaseAdmin
     .from('pvp_profiles').select('*').eq('id', attackerId).maybeSingle();
   if (!attackerProfile) {
-    return new Response(JSON.stringify({ error: 'attacker_profile_not_found' }), { status: 404 });
+    return jsonResponse({ error: 'attacker_profile_not_found' }, 404);
   }
 
   // Entradas: projeta a regeneração, recusa se não sobrou nenhuma.
@@ -166,10 +190,7 @@ Deno.serve(async (req) => {
   );
   if (entriesNow < 1) {
     const msUntilNext = ENTRY_REGEN_MS - (now - new Date(newAnchorIso).getTime());
-    return new Response(
-      JSON.stringify({ error: 'no_entries', retryAfterMs: Math.max(0, msUntilNext) }),
-      { status: 429 },
-    );
+    return jsonResponse({ error: 'no_entries', retryAfterMs: Math.max(0, msUntilNext) }, 429);
   }
 
   // Defensor: jogador de verdade OU bot — tabelas diferentes.
@@ -181,7 +202,7 @@ Deno.serve(async (req) => {
 
   if (defenderIsBot) {
     const { data: bot } = await supabaseAdmin.from('pvp_bots').select('*').eq('id', defenderId).maybeSingle();
-    if (!bot) return new Response(JSON.stringify({ error: 'defender_bot_not_found' }), { status: 404 });
+    if (!bot) return jsonResponse({ error: 'defender_bot_not_found' }, 404);
     defenderNick = bot.nick;
     defenderTier = bot.tier;
     defenderRatingBefore = bot.rating;
@@ -189,10 +210,10 @@ Deno.serve(async (req) => {
   } else {
     const { data: defenderProfile } = await supabaseAdmin
       .from('pvp_profiles').select('*').eq('id', defenderId).maybeSingle();
-    if (!defenderProfile) return new Response(JSON.stringify({ error: 'defender_profile_not_found' }), { status: 404 });
+    if (!defenderProfile) return jsonResponse({ error: 'defender_profile_not_found' }, 404);
     const { data: snap } = await supabaseAdmin
       .from('pvp_snapshots').select('*').eq('profile_id', defenderId).maybeSingle();
-    if (!snap) return new Response(JSON.stringify({ error: 'snapshot_missing' }), { status: 409 });
+    if (!snap) return jsonResponse({ error: 'snapshot_missing' }, 409);
     defenderNick = defenderProfile.nick;
     defenderTier = defenderProfile.tier;
     defenderRatingBefore = defenderProfile.rating;
@@ -201,13 +222,13 @@ Deno.serve(async (req) => {
   }
 
   if (defenderTier !== attackerProfile.tier) {
-    return new Response(JSON.stringify({ error: 'different_tier' }), { status: 400 });
+    return jsonResponse({ error: 'different_tier' }, 400);
   }
 
   const { data: attackerSnapRaw } = await supabaseAdmin
     .from('pvp_snapshots').select('*').eq('profile_id', attackerId).maybeSingle();
   if (!attackerSnapRaw) {
-    return new Response(JSON.stringify({ error: 'snapshot_missing' }), { status: 409 });
+    return jsonResponse({ error: 'snapshot_missing' }, 409);
   }
   const attackerSnap = clampSnapshot(attackerSnapRaw as Snapshot);
 
@@ -216,7 +237,7 @@ Deno.serve(async (req) => {
   // pontos crua, que decide o tamanho do ganho/perda (ver computeSwing).
   const { data: board, error: boardError } = await supabaseAdmin.rpc('pvp_tier_board', { target_tier: attackerProfile.tier });
   if (boardError || !board) {
-    return new Response(JSON.stringify({ error: 'tier_board_failed' }), { status: 500 });
+    return jsonResponse({ error: 'tier_board_failed' }, 500);
   }
   const attackerBoardRow = board.find((r: { entity_id: string; is_bot: boolean }) => r.entity_id === attackerId && !r.is_bot);
   const defenderBoardRow = board.find((r: { entity_id: string; is_bot: boolean }) =>
@@ -225,7 +246,7 @@ Deno.serve(async (req) => {
     // Bot que acabou de sumir da lista (jogador novo entrou no meio) ou
     // estado meio inconsistente — pede pro cliente tentar de novo com a
     // lista atualizada em vez de arriscar um cálculo com posição errada.
-    return new Response(JSON.stringify({ error: 'stale_opponent' }), { status: 409 });
+    return jsonResponse({ error: 'stale_opponent' }, 409);
   }
 
   const attackerTtk = timeToKill(defenderSnap.max_hp, effectiveDps(attackerSnap, defenderSnap));
@@ -270,7 +291,7 @@ Deno.serve(async (req) => {
   const results = await Promise.all(writes);
   const writeError = results.find((r) => r.error);
   if (writeError?.error) {
-    return new Response(JSON.stringify({ error: 'write_failed', detail: writeError.error.message }), { status: 500 });
+    return jsonResponse({ error: 'write_failed', detail: writeError.error.message }, 500);
   }
 
   // Recalcula a posição do atacante DEPOIS do rating novo já gravado —
@@ -287,7 +308,7 @@ Deno.serve(async (req) => {
 
   const tierHidesScore = attackerProfile.tier === 'lendario';
 
-  return new Response(JSON.stringify({
+  return jsonResponse({
     attackerWins,
     tier: attackerProfile.tier,
     hiddenScore: tierHidesScore,
@@ -303,5 +324,5 @@ Deno.serve(async (req) => {
     entriesRemaining: entriesNow - 1,
     goldReward,
     defenderNick,
-  }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  });
 });
