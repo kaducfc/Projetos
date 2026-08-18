@@ -99,43 +99,50 @@ create policy "bots are publicly readable" on public.pvp_bots
 -- seguro rodar de novo, não duplica.
 delete from public.pvp_bots;
 
+-- rating: TODOS os bots de um tier começam com a MESMA pontuação-base do
+-- tier (igual jogador de verdade — ver pvp_tiers.base_points), pedido
+-- explícito do usuário. Isso NÃO afeta a força de combate deles (dps/
+-- max_hp/etc. continuam variando entre os 5, pra dar uma progressão de
+-- dificuldade) — só a pontuação/posição no ranking. Como o rating empata
+-- entre os 5, row_number() em pvp_tier_board desempata por entity_id (o
+-- uuid do bot), ordem arbitrária mas estável.
 insert into public.pvp_bots (tier, slot_index, nick, rating, dps, max_hp, armor, crit_chance, crit_damage, dodge_chance) values
   -- Bronze — "Tier 1", máximo Incomum
   ('bronze', 1, 'Caçador Iniciante', 1000, 40,  250,  15, 5, 50, 0),
-  ('bronze', 2, 'Caçador Iniciante', 1030, 55,  320,  20, 5, 50, 0),
-  ('bronze', 3, 'Caçador Iniciante', 1060, 70,  400,  25, 6, 55, 1),
-  ('bronze', 4, 'Caçador Iniciante', 1090, 90,  480,  30, 6, 55, 1),
-  ('bronze', 5, 'Caçador Iniciante', 1120, 110, 560,  35, 7, 60, 2),
+  ('bronze', 2, 'Caçador Iniciante', 1000, 55,  320,  20, 5, 50, 0),
+  ('bronze', 3, 'Caçador Iniciante', 1000, 70,  400,  25, 6, 55, 1),
+  ('bronze', 4, 'Caçador Iniciante', 1000, 90,  480,  30, 6, 55, 1),
+  ('bronze', 5, 'Caçador Iniciante', 1000, 110, 560,  35, 7, 60, 2),
   -- Prata — "Tier 2", máximo Incomum
   ('prata', 1, 'Caçador Patrulheiro', 1200, 150, 800,  50, 7, 60, 2),
-  ('prata', 2, 'Caçador Patrulheiro', 1230, 180, 950,  60, 7, 60, 2),
-  ('prata', 3, 'Caçador Patrulheiro', 1260, 220, 1100, 70, 8, 65, 3),
-  ('prata', 4, 'Caçador Patrulheiro', 1290, 260, 1300, 80, 8, 65, 3),
-  ('prata', 5, 'Caçador Patrulheiro', 1320, 310, 1500, 95, 9, 70, 3),
+  ('prata', 2, 'Caçador Patrulheiro', 1200, 180, 950,  60, 7, 60, 2),
+  ('prata', 3, 'Caçador Patrulheiro', 1200, 220, 1100, 70, 8, 65, 3),
+  ('prata', 4, 'Caçador Patrulheiro', 1200, 260, 1300, 80, 8, 65, 3),
+  ('prata', 5, 'Caçador Patrulheiro', 1200, 310, 1500, 95, 9, 70, 3),
   -- Ouro — "Tier 3", máximo Raro
   ('ouro', 1, 'Caçador Avançado', 1400, 400,  2000, 120, 10, 75, 4),
-  ('ouro', 2, 'Caçador Avançado', 1430, 470,  2400, 140, 10, 75, 4),
-  ('ouro', 3, 'Caçador Avançado', 1460, 550,  2800, 160, 11, 80, 4),
-  ('ouro', 4, 'Caçador Avançado', 1490, 640,  3300, 185, 11, 80, 5),
-  ('ouro', 5, 'Caçador Avançado', 1520, 740,  3800, 210, 12, 85, 5),
+  ('ouro', 2, 'Caçador Avançado', 1400, 470,  2400, 140, 10, 75, 4),
+  ('ouro', 3, 'Caçador Avançado', 1400, 550,  2800, 160, 11, 80, 4),
+  ('ouro', 4, 'Caçador Avançado', 1400, 640,  3300, 185, 11, 80, 5),
+  ('ouro', 5, 'Caçador Avançado', 1400, 740,  3800, 210, 12, 85, 5),
   -- Platina — "Tier 4", máximo Raro
   ('platina', 1, 'Caçador Elite', 1600, 1000, 5000,  250, 13, 90, 6),
-  ('platina', 2, 'Caçador Elite', 1630, 1150, 5800,  280, 13, 90, 6),
-  ('platina', 3, 'Caçador Elite', 1660, 1320, 6700,  320, 14, 95, 6),
-  ('platina', 4, 'Caçador Elite', 1690, 1500, 7700,  360, 14, 95, 7),
-  ('platina', 5, 'Caçador Elite', 1720, 1700, 8800,  400, 15, 100, 7),
+  ('platina', 2, 'Caçador Elite', 1600, 1150, 5800,  280, 13, 90, 6),
+  ('platina', 3, 'Caçador Elite', 1600, 1320, 6700,  320, 14, 95, 6),
+  ('platina', 4, 'Caçador Elite', 1600, 1500, 7700,  360, 14, 95, 7),
+  ('platina', 5, 'Caçador Elite', 1600, 1700, 8800,  400, 15, 100, 7),
   -- Diamante — "Tier 5", máximo Épico
   ('diamante', 1, 'Caçador Chefe', 1800, 2500, 12000, 450, 16, 110, 8),
-  ('diamante', 2, 'Caçador Chefe', 1830, 2850, 13500, 500, 16, 110, 8),
-  ('diamante', 3, 'Caçador Chefe', 1860, 3250, 15200, 560, 17, 115, 8),
-  ('diamante', 4, 'Caçador Chefe', 1890, 3700, 17100, 620, 17, 115, 9),
-  ('diamante', 5, 'Caçador Chefe', 1920, 4200, 19200, 690, 18, 120, 9),
+  ('diamante', 2, 'Caçador Chefe', 1800, 2850, 13500, 500, 16, 110, 8),
+  ('diamante', 3, 'Caçador Chefe', 1800, 3250, 15200, 560, 17, 115, 8),
+  ('diamante', 4, 'Caçador Chefe', 1800, 3700, 17100, 620, 17, 115, 9),
+  ('diamante', 5, 'Caçador Chefe', 1800, 4200, 19200, 690, 18, 120, 9),
   -- Lendário — máximo Lendário
   ('lendario', 1, 'Caçador Deus', 2000, 6000,  28000, 700, 20, 140, 10),
-  ('lendario', 2, 'Caçador Deus', 2030, 6800,  31500, 770, 20, 140, 10),
-  ('lendario', 3, 'Caçador Deus', 2060, 7700,  35300, 850, 21, 145, 10),
-  ('lendario', 4, 'Caçador Deus', 2090, 8700,  39500, 930, 21, 145, 11),
-  ('lendario', 5, 'Caçador Deus', 2120, 9800,  44000, 1020, 22, 150, 11);
+  ('lendario', 2, 'Caçador Deus', 2000, 6800,  31500, 770, 20, 140, 10),
+  ('lendario', 3, 'Caçador Deus', 2000, 7700,  35300, 850, 21, 145, 10),
+  ('lendario', 4, 'Caçador Deus', 2000, 8700,  39500, 930, 21, 145, 11),
+  ('lendario', 5, 'Caçador Deus', 2000, 9800,  44000, 1020, 22, 150, 11);
 
 -- ---------------------------------------------------------------
 -- pvp_matches: agora um ataque pode ser contra um bot, não só contra
