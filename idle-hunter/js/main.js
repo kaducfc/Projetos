@@ -41,7 +41,7 @@ import {
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   EGG_ICON, PET_FRAGMENT_ICON,
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
-  renderTranscendTab, renderPvpTab, showPvpBattleResultModal,
+  renderTranscendTab, renderPvpTab, showPvpBattleModal,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -1491,6 +1491,12 @@ async function refreshPvpTab({ silent = false } = {}) {
 }
 
 async function handlePvpAttack(defenderId, isBot) {
+  // Capturado ANTES do ataque — a resposta da Edge Function só repete o
+  // nick do defensor, não o ícone (ver showPvpBattleModal em ui/render.js),
+  // e pvpData.board ainda reflete a lista que o jogador estava vendo.
+  const defenderRow = pvpData.board.find((r) => r.entity_id === defenderId && r.is_bot === isBot);
+  const defenderInfo = { nick: defenderRow?.nick ?? '???', iconId: defenderRow?.icon_id ?? 'hunter' };
+
   pvpData = { ...pvpData, attackingId: defenderId };
   renderPvpTab(state, pvpData);
 
@@ -1514,7 +1520,7 @@ async function handlePvpAttack(defenderId, isBot) {
       myProfile: { ...pvpData.myProfile, ...ratingPatch, pvp_entries: result.entriesRemaining, pvp_entries_updated_at: new Date().toISOString() },
     };
   }
-  showPvpBattleResultModal(result);
+  showPvpBattleModal(pvpData, defenderInfo, result);
   renderPvpTab(state, pvpData);
   // Posições/pontos do tier inteiro podem ter mudado (o próprio e/ou o
   // alvo) — busca o tier de novo pra refletir, sem travar a resposta da
