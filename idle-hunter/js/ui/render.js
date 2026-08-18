@@ -2068,7 +2068,6 @@ export function renderRanksTab(ranksData, myProfile) {
 
   container.innerHTML = `
     <div class="section-banner">🏆 Ranks</div>
-    <p class="shop-note">Top 100 do rank — se você não estiver entre os 100, sua posição aparece no fim da lista.</p>
     <button class="transcend-btn" data-ranks-refresh ${ranksData.loading ? 'disabled' : ''}>🔄 ${ranksData.loaded ? 'Atualizar' : 'Carregar Ranks'}</button>
 
     <div class="pvp-rank-tabs">${tabsHtml}</div>
