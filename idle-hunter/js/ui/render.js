@@ -5,7 +5,7 @@ import {
   DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName, RARITIES,
 } from '../data/items.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
-import { formatNumber, formatPercent, escapeHtml } from '../format.js';
+import { formatNumber, formatInteger, formatPercent, escapeHtml } from '../format.js';
 import { PROFILE_ICONS, NAME_CHANGE_COST, MAX_PLAYER_NAME_LENGTH, getProfileIcon } from '../data/profile.js';
 import {
   getPlayerName, isFirstNameChangeFree, canAffordNameChange, getSelectedProfileIcon,
@@ -1906,13 +1906,13 @@ function pvpEntriesLabel(myProfile) {
 function pvpMyStatusHtml(myProfile, tierInfo) {
   const scoreLine = tierInfo.hiddenScore
     ? 'Pontuação oculta nesse tier — só a posição conta.'
-    : `⭐ ${formatNumber(myProfile.rating)} pontos`;
+    : `⭐ ${formatInteger(myProfile.rating)} pontos`;
   return `
     <div class="achievement-card">
       ${pvpProfileIconHtml(myProfile.icon_id)}
       <div class="info">
         <div class="name">${escapeHtml(myProfile.nick)} · ${tierInfo.emoji} ${tierInfo.label}</div>
-        <div class="desc">Nível ${formatNumber(myProfile.hunter_level)} · ${scoreLine}</div>
+        <div class="desc">Nível ${formatNumber(myProfile.hunter_level)} · ${scoreLine} · 🏆 ${formatInteger(myProfile.wins || 0)} vitórias</div>
         <div class="desc">🎟️ Entradas: ${pvpEntriesLabel(myProfile)}</div>
       </div>
     </div>`;
@@ -1921,8 +1921,9 @@ function pvpMyStatusHtml(myProfile, tierInfo) {
 function pvpBoardRowHtml(pvp, tierInfo, row) {
   const isSelf = !row.is_bot && pvp.myProfile && row.entity_id === pvp.myProfile.id;
   const attacking = pvp.attackingId === row.entity_id;
-  const scoreLabel = tierInfo.hiddenScore ? '' : ` · ⭐ ${formatNumber(row.rating)}`;
+  const scoreLabel = tierInfo.hiddenScore ? '' : ` · ⭐ ${formatInteger(row.rating)}`;
   const levelLabel = row.is_bot ? 'Bot' : `Nível ${formatNumber(row.hunter_level)}`;
+  const winsLabel = row.is_bot ? '' : ` · 🏆 ${formatInteger(row.wins || 0)}`;
   const attackBtn = isSelf
     ? '<span class="pvp-self-tag">Você</span>'
     : `<button data-pvp-attack="${row.entity_id}" data-pvp-attack-bot="${row.is_bot ? '1' : '0'}" ${attacking ? 'disabled' : ''}>${attacking ? '⏳' : '⚔️ Atacar'}</button>`;
@@ -1932,7 +1933,7 @@ function pvpBoardRowHtml(pvp, tierInfo, row) {
       ${pvpProfileIconHtml(row.icon_id)}
       <div class="info">
         <div class="name">${escapeHtml(row.nick)}</div>
-        <div class="desc">${levelLabel}${scoreLabel}</div>
+        <div class="desc">${levelLabel}${scoreLabel}${winsLabel}</div>
       </div>
       ${attackBtn}
     </div>`;

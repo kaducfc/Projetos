@@ -1521,9 +1521,13 @@ async function handlePvpAttack(defenderId, isBot) {
   }
   if (!result.error && pvpData.myProfile) {
     const ratingPatch = result.hiddenScore ? {} : { rating: result.attackerRatingAfter };
+    const winsPatch = result.attackerWins ? { wins: (pvpData.myProfile.wins || 0) + 1 } : {};
     pvpData = {
       ...pvpData,
-      myProfile: { ...pvpData.myProfile, ...ratingPatch, pvp_entries: result.entriesRemaining, pvp_entries_updated_at: new Date().toISOString() },
+      myProfile: {
+        ...pvpData.myProfile, ...ratingPatch, ...winsPatch,
+        pvp_entries: result.entriesRemaining, pvp_entries_updated_at: new Date().toISOString(),
+      },
     };
   }
   showPvpBattleModal(pvpData, defenderInfo, result);
