@@ -1,4 +1,4 @@
-import { BOSSES, WEAK_MONSTER_GROUPS } from './monsters.js';
+import { BOSSES, WEAK_MONSTER_GROUPS, ZONE_COUNT } from './monsters.js';
 
 // One collectible card per monster in the live roster (bosses + weak
 // monsters — see monsters.js) — a rare drop from that specific monster
@@ -338,7 +338,30 @@ function cardDescription(effect) {
   return effect ? effect.text : 'Efeito adicional ainda não definido.';
 }
 
+// Carta exclusiva da Loja do Despertar (ver data/awakening.js/systems/
+// awakening.js) — NÃO tem monsterId (nenhum monstro dropa ela: rollDrops
+// em systems/combat.js só chama getCardForMonster com o id do monstro
+// morto, então essa nunca casa por acidente) e não pode ser craftada com
+// Fragmento de Carta comum (ver noCraft abaixo + canCraftCard em
+// systems/cards.js) — só se ganha comprando com Fragmento do Despertar.
+// Placeholder de 1 carta só por enquanto; o usuário disse que vai criar
+// itens personalizados depois pra Loja do Despertar.
+export const SUPREMO_CARD_ID = 'supremo_card';
+const SUPREMO_CARD = {
+  id: SUPREMO_CARD_ID,
+  monsterId: null,
+  isBossCard: true,
+  zoneIndex: ZONE_COUNT - 1,
+  name: 'Supremo',
+  image: CARD_GENERIC_IMAGE,
+  element: null,
+  bonuses: [{ stat: 'dpsPercent', value: 50 }],
+  description: 'Carta exclusiva da Loja do Despertar — não dropa de monstro nem craft com Fragmento de Carta. +50% de DPS quando equipada.',
+  noCraft: true,
+};
+
 export const CARDS = [
+  SUPREMO_CARD,
   ...BOSSES.map((boss, zoneIndex) => {
     const effect = CARD_EFFECTS[boss.id] || null;
     return {
