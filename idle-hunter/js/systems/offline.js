@@ -1,11 +1,12 @@
 import { computePlayerStats } from './stats.js';
 import { monsterMaxHp, monsterGoldReward, rollDrops, MONSTER_RESPAWN_DELAY_MS, ITEM_DROP_CHANCE } from './combat.js';
-import { getZone } from '../data/monsters.js';
+import { getZone, ZONE_COUNT } from '../data/monsters.js';
 import { xpForZone, grantXp } from './leveling.js';
 import { recordCardDiscovered } from './cards.js';
 import { addDroppedItem } from './crafting.js';
 import { DROP_CATEGORIES } from '../data/items.js';
 import { isVipActive } from '../state.js';
+import { unlockTranscend } from './awakening.js';
 
 // Limite base de recompensa offline: 4h sem VIP, +4h de bônus pra quem tem
 // VIP ativo (8h no total) — ver getMaxOfflineSeconds abaixo. Em cima disso,
@@ -77,12 +78,18 @@ export function computeOfflineProgress(state) {
   let goldGainedSim = 0;
   let xpGainedSim = 0;
   let itemDropsSim = 0;
+  // Se um kill simulado for do chefe da última zona, o jogador pode ter
+  // liberado Transcender enquanto estava offline (ver unlockTranscend em
+  // applyOfflineProgress abaixo) — sem isso, a 1ª derrota dele só contaria
+  // se acontecesse ao vivo (ver handleKillEvent em main.js).
+  let killedFinalBoss = false;
   const materialsGained = {};
   const cardsGained = {};
   for (let i = 0; i < simulatedKills; i++) {
     const pick = pickOfflineMonster(state);
     const zone = getZone(pick.zoneIndex);
     const isBoss = pick.kind === 'boss';
+    if (isBoss && pick.zoneIndex === ZONE_COUNT - 1) killedFinalBoss = true;
     const powerRank = isBoss ? zone.boss.powerRank : zone.weakMonsters.find((m) => m.id === pick.monsterId)?.powerRank;
     goldGainedSim += monsterGoldReward(zone.canonicalStage, isBoss, powerRank) * stats.goldMult;
     xpGainedSim += xpForZone(pick.zoneIndex, isBoss);
@@ -120,11 +127,16 @@ export function computeOfflineProgress(state) {
 
   return {
     elapsedSeconds, kills, goldGained, xpGained, materialsGained, cardsGained, itemDropCount,
-    bonusSecondsUsed, maxOfflineSeconds,
+    bonusSecondsUsed, maxOfflineSeconds, killedFinalBoss,
   };
 }
 
 export function applyOfflineProgress(state, progress) {
+  // Ver killedFinalBoss em computeOfflineProgress acima — unlockTranscend
+  // já é no-op se já estava liberado (ver systems/awakening.js), e não
+  // mostra toast nenhum aqui: showOfflineProgressIfAny (main.js) decide se
+  // avisa, junto com o resto do resumo "Bem-vindo de volta!".
+  if (progress.killedFinalBoss) unlockTranscend(state);
   // Gasta do banco de Bônus Idle só a parcela realmente usada (ver
   // bonusSecondsUsed em computeOfflineProgress acima) — cargas não usadas
   // continuam disponíveis pra próxima vez que o jogador ficar offline.

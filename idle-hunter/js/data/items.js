@@ -892,13 +892,16 @@ function rollBaseStatsFromTemplate(templateStats, rarity, attributeId) {
 /// custo: o item já nasce pronto pra entrar no inventário. Cada chamada rola
 /// tudo de novo, então dois drops da mesma zona/categoria quase nunca saem
 /// idênticos.
-export function rollDroppedItem(zoneIndex, category) {
+/// forcedRarityId (opcional) pula o sorteio de raridade — usado pela Loja
+/// do Despertar (ver systems/awakening.js) pra garantir Mítico em vez de
+/// deixar na sorte normal de pickRarity().
+export function rollDroppedItem(zoneIndex, category, forcedRarityId = null) {
   const boss = BOSSES[zoneIndex] || BOSSES[BOSSES.length - 1];
   const attributeId = ATTRIBUTES[Math.floor(Math.random() * ATTRIBUTES.length)].id;
   const item = getItem(`${boss.id}_${category}_${attributeId}`);
   if (!item) return null;
 
-  const rarity = pickRarity();
+  const rarity = forcedRarityId ? getRarity(forcedRarityId) : pickRarity();
   const baseStats = rollBaseStatsFromTemplate(item.stats, rarity, attributeId);
   const additionalStats = rollAdditionalStats(rarity.additionals, zoneIndex, attributeId, baseStats[attributeId], rarity.mult);
 

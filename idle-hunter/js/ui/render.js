@@ -31,6 +31,8 @@ import {
   getDpsBoostRemainingMs, canWatchDpsBoostAd, canWatchOfflineBonusAd,
 } from '../systems/shop.js';
 import { getMaxOfflineSeconds } from '../systems/offline.js';
+import { AWAKENING_SHOP_ITEMS, AWAKENING_SHARD_NAME, AWAKENING_SHARD_EMOJI } from '../data/awakening.js';
+import { canTranscend, getTranscendCount, getAwakeningShards, canBuyAwakeningItem } from '../systems/awakening.js';
 import {
   CARDS, getCard, CARD_DISCOVERY_CASH_REWARD,
   CARD_FRAGMENT_ID, CARD_FRAGMENT_NAME,
@@ -517,12 +519,18 @@ export function showFullStatsModal(state) {
   const specialRows = [];
   if (stats.doubleHitChance > 0) specialRows.push(['👊 Golpe Duplo', formatPercent(stats.doubleHitChance)]);
 
+  const progressRows = [
+    ['🌌 Vezes Transcendido', formatNumber(getTranscendCount(state))],
+    [`${AWAKENING_SHARD_EMOJI} ${AWAKENING_SHARD_NAME}`, formatNumber(getAwakeningShards(state))],
+  ];
+
   showModal('📊 Estatísticas Completas', `
     ${fullStatsSectionHtml('Combate', combatRows)}
     ${fullStatsSectionHtml('Dano por Tipo', damageRows)}
     ${fullStatsSectionHtml('Economia', economyRows)}
     ${fullStatsSectionHtml('Atributos', attributeRows)}
     ${fullStatsSectionHtml('Especiais de Carta', specialRows)}
+    ${fullStatsSectionHtml('Transcendência', progressRows)}
   `);
 }
 
@@ -1652,6 +1660,7 @@ export function renderShopTab(state, activeSubTab) {
   let body;
   if (activeSubTab === 'event') body = eventShopHtml(state);
   else if (activeSubTab === 'achievements') body = achievementsContentHtml(state);
+  else if (activeSubTab === 'awakening') body = awakeningShopHtml(state);
   else body = cashShopHtml(state);
 
   container.innerHTML = `
@@ -1659,6 +1668,7 @@ export function renderShopTab(state, activeSubTab) {
     <div class="inner-subnav">
       <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">${ESMERALDA_ICON} Esmeralda</button>
       <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">${EVENT_ICON} Evento</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'awakening' ? 'active' : ''}" data-shop-subtab="awakening">${AWAKENING_SHARD_EMOJI} Despertar</button>
       <button class="inner-subtab-btn ${activeSubTab === 'achievements' ? 'active' : ''}" data-shop-subtab="achievements">🏆 Conquistas</button>
     </div>
     ${body}
@@ -1786,6 +1796,77 @@ export function showVipBenefitsModal() {
   const vipItem = CASH_SHOP_ITEMS.find((i) => i.kind === 'vip');
   const linesHtml = vipItem.benefits.map((b) => `<p class="offline-item-lines">✅ ${b}</p>`).join('');
   showModal('👑 Benefícios do VIP', linesHtml);
+}
+
+// ---------------------------------------------------------------
+// Despertar (aba "🌌 Despertar" dentro da Loja, ver renderShopTab): status
+// do Transcender (ver systems/awakening.js) + a Loja do Despertar em si,
+// onde o Fragmento do Despertar acumulado compra equipamento/carta/
+// mascote Mítico garantido (ver data/awakening.js AWAKENING_SHOP_ITEMS).
+// ---------------------------------------------------------------
+
+function transcendStatusHtml(state) {
+  const count = getTranscendCount(state);
+  const countLine = count > 0
+    ? `<p class="shop-note">Você já Transcendeu ${count}x.</p>`
+    : '';
+
+  if (canTranscend(state)) {
+    return `
+      <div class="transcend-status-card ready">
+        <div class="name">🌌 Transcender está disponível!</div>
+        <p class="shop-note">Reinicie sua jornada e ganhe +1 ${AWAKENING_SHARD_EMOJI} ${AWAKENING_SHARD_NAME}.</p>
+        <button class="transcend-btn" data-open-transcend-confirm>🌌 Transcender</button>
+      </div>
+      ${countLine}`;
+  }
+
+  return `
+    <div class="transcend-status-card locked">
+      <div class="name">🌌 Transcender</div>
+      <p class="shop-note">Derrote o chefe da última zona (Malgorath) pela 1ª vez pra liberar.</p>
+    </div>
+    ${countLine}`;
+}
+
+function awakeningShopItemCardHtml(state, item) {
+  const affordable = canBuyAwakeningItem(state, item.id);
+  return `
+    <div class="shop-item-card">
+      <span class="icon">${item.emoji}</span>
+      <div class="info">
+        <div class="name">${item.name}</div>
+        <div class="desc">${item.description}</div>
+      </div>
+      <button data-buy-awakening="${item.id}" ${affordable ? '' : 'disabled'}>${AWAKENING_SHARD_EMOJI} ${item.cost}</button>
+    </div>`;
+}
+
+function awakeningShopHtml(state) {
+  const itemsHtml = AWAKENING_SHOP_ITEMS.map((item) => awakeningShopItemCardHtml(state, item)).join('');
+
+  return `
+    ${transcendStatusHtml(state)}
+
+    <div class="shop-balance">${AWAKENING_SHARD_EMOJI} Você tem <strong>${formatNumber(getAwakeningShards(state))}</strong> ${AWAKENING_SHARD_NAME}</div>
+    <p class="shop-note">Só se ganha ${AWAKENING_SHARD_NAME} Transcendendo — 1 garantido por vez.</p>
+
+    <h4 class="shop-section-title">Loja do Despertar</h4>
+    <div class="shop-item-grid">${itemsHtml}</div>
+  `;
+}
+
+export function showTranscendConfirmModal(state) {
+  showModal('🌌 Transcender', `
+    <p>Isso vai reiniciar sua jornada quase do zero:</p>
+    <p class="offline-item-lines">❌ Nível, ouro, materiais, equipamentos, inventário<br>
+       ❌ Mascotes (exceto os do Despertar), habilidades, eventos</p>
+    <p class="offline-item-lines">✅ Cartas descobertas<br>
+       ✅ Itens/mascotes comprados na Loja do Despertar<br>
+       ✅ Esmeralda, VIP, Conquistas, Perfil<br>
+       ✅ +1 ${AWAKENING_SHARD_EMOJI} ${AWAKENING_SHARD_NAME} (${getAwakeningShards(state)} → ${getAwakeningShards(state) + 1})</p>
+    <button class="transcend-btn" data-confirm-transcend>🌌 Confirmar Transcendência</button>
+  `);
 }
 
 // ---------------------------------------------------------------

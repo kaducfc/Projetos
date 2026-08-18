@@ -5,7 +5,9 @@ import {
   advanceHitClock, setSelectedMonsters, canSelectMonster, MAX_SELECTED_MONSTERS, resolvePetHit, rollDodge,
   resolveDoubleHit,
 } from './systems/combat.js';
-import { findMaterialInfo, BOSSES } from './data/monsters.js';
+import { findMaterialInfo, BOSSES, ZONE_COUNT } from './data/monsters.js';
+import { getPetSpecies } from './data/pets.js';
+import { canTranscend, unlockTranscend, transcend, buyAwakeningItem } from './systems/awakening.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot, findEquippedSlotId } from './systems/equipment.js';
 import { enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscension, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
@@ -38,7 +40,7 @@ import {
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   EGG_ICON, PET_FRAGMENT_ICON,
-  showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal,
+  showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -283,6 +285,12 @@ function handleKillEvent(event) {
   if (event.eggGained) {
     showToast(`${EGG_ICON} Ovo de mascote encontrado!`);
     renderPetsTabNow();
+  }
+  // 1ª morte do chefe da última zona libera Transcender pro resto da run
+  // atual (ver systems/awakening.js unlockTranscend/canTranscend) — só
+  // dispara uma vez (unlockTranscend já é no-op se já tiver liberado).
+  if (event.wasBoss && event.zoneIndex === ZONE_COUNT - 1 && unlockTranscend(state)) {
+    showToast('🌌 Transcender desbloqueado! Veja a aba Despertar na Loja.');
   }
   renderTopBar(state);
   renderHunterLevel(state);
@@ -905,6 +913,12 @@ function wireModalEvents() {
       });
       return;
     }
+
+    const confirmTranscendBtn = e.target.closest('[data-confirm-transcend]');
+    if (confirmTranscendBtn) {
+      runModalAction(() => performTranscend());
+      return;
+    }
   });
 }
 
@@ -1385,7 +1399,71 @@ function wireShopTabEvents() {
       }
       return;
     }
+
+    const buyAwakeningBtn = e.target.closest('[data-buy-awakening]');
+    if (buyAwakeningBtn) {
+      const result = buyAwakeningItem(state, buyAwakeningBtn.dataset.buyAwakening);
+      if (result) {
+        if (result.kind === 'gear') {
+          const dropped = state.inventory.find((i) => i.uid === result.uid);
+          const item = dropped ? getItem(dropped.itemId) : null;
+          showToast(`🌌 ${item?.name ?? 'Item'} (Mítico) recebido!`);
+        } else if (result.kind === 'card') {
+          const card = getCard(result.cardId);
+          showToast(`🌌 Carta recebida: ${card?.name ?? ''}!`);
+        } else if (result.kind === 'pet_egg') {
+          const species = getPetSpecies(result.speciesId);
+          showToast(`🌌 Mascote Mítico recebido: ${species?.name ?? ''}!`);
+        }
+        renderTopBar(state);
+        renderShopTab(state, activeShopSubTab);
+        renderInventoryTabNow();
+        renderPetsTabNow();
+      }
+      return;
+    }
+
+    const openTranscendBtn = e.target.closest('[data-open-transcend-confirm]');
+    if (openTranscendBtn) {
+      if (canTranscend(state)) showTranscendConfirmModal(state);
+      return;
+    }
   });
+}
+
+// ---------------------------------------------------------------
+// Transcender: reset de prestígio (ver systems/awakening.js transcend()) —
+// troca a referência local `state` por um state novo (quase tudo
+// resetado, ver PRESERVED_KEYS lá) e reinicia todo o estado de combate
+// "por sessão" que não é parte do save (currentHp/bossDeadline/etc.),
+// igual um load do zero faria.
+// ---------------------------------------------------------------
+
+function performTranscend() {
+  if (!canTranscend(state)) return;
+  state = transcend(state);
+  ensureMonsterSpawned(state);
+
+  bossDeadline = null;
+  nextHitAt = null;
+  pendingMonsterSelection = [];
+  pendingHatchCandidates = null;
+  pendingAscension = null;
+  bulkSelectMode = false;
+  bulkSelectedUids = new Set();
+  bulkConfirmingDestroy = false;
+  skillResetConfirming = false;
+  petSortMode = null;
+  expeditionCardsVisible = false;
+  inventoryFilterCategory = null;
+  activeShopSubTab = 'cash';
+
+  hideModal();
+  resetPlayerHp();
+  saveState(state);
+  fullRefresh();
+  armBossTimer();
+  showToast('🌌 Você Transcendeu! Uma nova jornada começa.');
 }
 
 // ---------------------------------------------------------------
@@ -1395,12 +1473,16 @@ function wireShopTabEvents() {
 function showOfflineProgressIfAny() {
   const progress = computeOfflineProgress(state);
   if (!progress) return;
+  const wasTranscendUnlocked = canTranscend(state);
   applyOfflineProgress(state, progress);
   // applyOfflineProgress pode ter empurrado itens novos pro inventário
   // (ver itemDropCount) depois que fullRefresh() já rodou no init() — sem
   // isso a aba Equipamentos ficaria mostrando o inventário desatualizado
   // até a próxima ação disparar um re-render.
   if (progress.itemDropCount > 0) renderInventoryTabNow();
+  if (!wasTranscendUnlocked && canTranscend(state)) {
+    showToast('🌌 Transcender desbloqueado! Veja a aba Despertar na Loja.');
+  }
 
   const hours = Math.floor(progress.elapsedSeconds / 3600);
   const minutes = Math.floor((progress.elapsedSeconds % 3600) / 60);
