@@ -3483,6 +3483,29 @@ button:disabled {
   padding: 2px 0;
 }
 
+.pvp-rank-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 4px;
+}
+
+.pvp-rank-tab-btn {
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: rgba(0, 0, 0, .06);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pvp-rank-tab-btn.active {
+  background: var(--grad-blue, #3b82f6);
+  color: #fff;
+  border-color: rgba(0, 0, 0, .1);
+}
+
 /* ---------------- Despertar (aba da Loja + modal de confirmação) ---------------- */
 
 .transcend-status-card {
