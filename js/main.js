@@ -47,6 +47,11 @@ import {
 const TICK_MS = 100;
 const SAVE_INTERVAL_MS = 10000;
 const BOSS_TIME_LIMIT_MS = 30000;
+// Arena PvP (ver systems/pvp.js): de quanto em quanto tempo o jogo re-sobe
+// sozinho as stats de combate atuais pro Supabase (ver refreshPvpTab em
+// init() abaixo) — mantém o snapshot que outros jogadores atacam
+// razoavelmente fresco sem precisar de clique manual.
+const PVP_AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 
 let state = loadState() || createDefaultState();
 ensureMonsterSpawned(state);
@@ -1456,9 +1461,15 @@ function wireTranscendTabEvents() {
 // que pode estar incompleta ou fora do ar; o try/catch é o que impede um
 // erro de rede de deixar pvpData.loading travado em true pra sempre (botão
 // desabilitado, "Conectando..." eterno) sem nenhum feedback pro jogador.
-async function refreshPvpTab() {
+// `silent`: usado pela sincronização automática (ao abrir o jogo e a cada
+// PVP_AUTO_SYNC_INTERVAL_MS, ver init() abaixo) — falha calada (só
+// console.warn), sem toast de erro incomodando o jogador por algo que ele
+// nem pediu pra acontecer agora. O clique manual em "Sincronizar"/"Conectar
+// à Arena" (wirePvpTabEvents) sempre chama sem silent, então esse SIM avisa
+// se der errado.
+async function refreshPvpTab({ silent = false } = {}) {
   pvpData.loading = true;
-  renderPvpTab(state, pvpData);
+  if (!silent) renderPvpTab(state, pvpData);
 
   let myProfile = null;
   let leaderboard = [];
@@ -1477,7 +1488,7 @@ async function refreshPvpTab() {
 
   pvpData = { ...pvpData, loading: false, myProfile, leaderboard, opponents };
   renderPvpTab(state, pvpData);
-  if (!myProfile) {
+  if (!myProfile && !silent) {
     showToast('❌ Não foi possível conectar à Arena PvP agora. Tente de novo mais tarde.');
   }
 }
@@ -1647,6 +1658,15 @@ function init() {
   document.getElementById('modal-close').addEventListener('click', hideModal);
 
   showOfflineProgressIfAny();
+
+  // Conecta e sincroniza a Arena PvP sozinho ao abrir o jogo — o jogador
+  // não precisa clicar em nada pra outros conseguirem te atacar com stats
+  // atualizadas. `silent: true` = falha calada se o Supabase ainda não
+  // estiver configurado (ver supabase/README.md) ou sem internet; não
+  // aguardado (sem `await`) de propósito, pra não atrasar o resto do
+  // carregamento do jogo por causa de uma chamada de rede externa.
+  refreshPvpTab({ silent: true });
+  setInterval(() => refreshPvpTab({ silent: true }), PVP_AUTO_SYNC_INTERVAL_MS);
 
   setInterval(tick, TICK_MS);
   // Events/Achievements/Shop have their own slow clocks (window countdown,

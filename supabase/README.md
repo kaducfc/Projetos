@@ -45,11 +45,17 @@ supabase functions deploy resolve-pvp-battle
 
 ## Depois disso
 
-Abra o jogo, vá em **Outros → 🏟️ Arena PvP**, clique em **"Conectar à
-Arena"**. Isso cria sua conta anônima, sobe suas stats atuais pro banco, e
-já mostra o ranking. Pra testar um ataque de verdade, você vai precisar de
-uma 2ª conta com stats diferentes — abra o jogo numa aba anônima do
-navegador (ou em outro navegador) pra simular um 2º jogador.
+O jogo já conecta e sincroniza sozinho ao abrir (login anônimo + stats
+atuais sobem pro banco automaticamente, e de novo a cada 5 minutos
+enquanto o jogo fica aberto — ver `PVP_AUTO_SYNC_INTERVAL_MS`/
+`refreshPvpTab` em `js/main.js`). Não precisa clicar em nada — só abrir
+**Outros → 🏟️ Arena PvP** já mostra ranking/oponentes prontos. O botão
+"Sincronizar Stats" continua lá pra forçar uma atualização na hora (ex:
+depois de trocar de equipamento e querer que isso reflita já).
+
+Pra testar um ataque de verdade, você vai precisar de uma 2ª conta com
+stats diferentes — abra o jogo numa aba anônima do navegador (ou em outro
+navegador) pra simular um 2º jogador.
 
 ## O que cada arquivo faz
 
