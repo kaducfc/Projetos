@@ -39,7 +39,10 @@ const GOLD_REWARD_PER_RATING = 0.05; // um pouco mais de ouro atacando alvos mai
 // escopo por ora), só um freio contra alguém mandar um número absurdo
 // direto pela API. Folgado o bastante pra nunca incomodar um jogador
 // legítimo no fim de jogo atual.
-const SANE_MAX = { dps: 5_000_000, max_hp: 20_000_000, armor: 500_000, crit_chance: 100, crit_damage: 2000, dodge_chance: 95 };
+const SANE_MAX = {
+  dps: 5_000_000, max_hp: 20_000_000, armor: 500_000, crit_chance: 100, crit_damage: 2000,
+  dodge_chance: 95, attack_speed_per_sec: 30,
+};
 
 // ---------------------------------------------------------------
 // CORS: o navegador manda um preflight OPTIONS antes de qualquer POST
@@ -74,6 +77,7 @@ interface Snapshot {
   crit_damage: number;
   dodge_chance: number;
   pet_dps: number;
+  attack_speed_per_sec: number;
 }
 
 function clampSnapshot(s: Snapshot): Snapshot {
@@ -85,6 +89,7 @@ function clampSnapshot(s: Snapshot): Snapshot {
     crit_damage: Math.min(Math.max(0, s.crit_damage), SANE_MAX.crit_damage),
     dodge_chance: Math.min(Math.max(0, s.dodge_chance), SANE_MAX.dodge_chance),
     pet_dps: Math.min(Math.max(0, s.pet_dps || 0), SANE_MAX.dps),
+    attack_speed_per_sec: Math.min(Math.max(0.05, s.attack_speed_per_sec || 1), SANE_MAX.attack_speed_per_sec),
   };
 }
 
@@ -288,6 +293,22 @@ Deno.serve(async (req) => {
   const defenderDamageDealt = Math.round(defenderBreakdown.total * fightDurationSec);
   const defenderPetDamageDealt = Math.round(defenderBreakdown.pet * fightDurationSec);
 
+  // Golpes de cada lado durante a luta (mesmo relógio pro dano do caçador
+  // e do mascote — ver resolvePetHit chamado junto de resolveHit em
+  // js/main.js, os 2 sempre acontecem no mesmo tick) — usado só pra
+  // converter % de crítico/esquiva em CONTAGEM de vezes que aconteceu
+  // (valor esperado arredondado, não RNG, mesmo espírito do resto desta
+  // função), pedido pelo usuário pras estatísticas pós-combate.
+  const attackerHits = Math.round(fightDurationSec * attackerSnap.attack_speed_per_sec);
+  const defenderHits = Math.round(fightDurationSec * defenderSnap.attack_speed_per_sec);
+  const attackerCritCount = Math.round(attackerHits * (attackerSnap.crit_chance / 100));
+  const defenderCritCount = Math.round(defenderHits * (defenderSnap.crit_chance / 100));
+  // Esquivas do atacante = quantas vezes ele esquivou golpes do defensor
+  // (dodge_chance é sempre "chance de EU esquivar", ver stats.js), então
+  // usa os golpes do OUTRO lado.
+  const attackerDodgeCount = Math.round(defenderHits * (attackerSnap.dodge_chance / 100));
+  const defenderDodgeCount = Math.round(attackerHits * (defenderSnap.dodge_chance / 100));
+
   const swing = computeSwing(attackerBoardRow.position, defenderBoardRow.position, board.length);
   const attackerDelta = attackerWins ? swing.attackerWinDelta : swing.attackerLossDelta;
   const defenderDelta = attackerWins ? swing.defenderLossDelta : swing.defenderWinDelta;
@@ -366,15 +387,17 @@ Deno.serve(async (req) => {
     attackerMaxHp: attackerSnap.max_hp,
     defenderMaxHp: defenderSnap.max_hp,
     // Estatísticas pós-combate (ver pvpResultContentHtml em
-    // js/ui/render.js) — dano total já inclui a fatia do mascote,
-    // attackerPetDamageDealt/defenderPetDamageDealt são só a fatia dele.
+    // js/ui/render.js), simétricas pros 2 lados — dano total já inclui a
+    // fatia do mascote, attackerPetDamageDealt/defenderPetDamageDealt são
+    // só a fatia dele. Crítico/esquiva vêm como CONTAGEM (quantas vezes
+    // aconteceu na luta), não a % de chance crua.
     attackerDamageDealt,
     attackerPetDamageDealt,
-    attackerCritChance: attackerSnap.crit_chance,
-    attackerDodgeChance: attackerSnap.dodge_chance,
+    attackerCritCount,
+    attackerDodgeCount,
     defenderDamageDealt,
     defenderPetDamageDealt,
-    defenderCritChance: defenderSnap.crit_chance,
-    defenderDodgeChance: defenderSnap.dodge_chance,
+    defenderCritCount,
+    defenderDodgeCount,
   });
 });
