@@ -3448,15 +3448,32 @@ button:disabled {
 }
 
 .pvp-stat-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1.3fr 0.85fr 0.85fr;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
 }
 
 .pvp-stat-row span {
   font-weight: 700;
+  text-align: right;
 }
+
+.pvp-stat-row span:first-child {
+  text-align: left;
+  font-weight: 400;
+}
+
+.pvp-stat-header {
+  font-size: 11px;
+  text-transform: uppercase;
+  opacity: .65;
+  letter-spacing: .02em;
+}
+
+.pvp-stat-header span:first-child { font-weight: 400; }
+.pvp-stat-header span { font-weight: 700; }
 
 /* ---------------- Despertar (aba da Loja + modal de confirmação) ---------------- */
 
