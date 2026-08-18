@@ -7,6 +7,7 @@ import {
 } from './systems/combat.js';
 import { findMaterialInfo, BOSSES, ZONE_COUNT } from './data/monsters.js';
 import { canTranscend, unlockTranscend, transcend, buyAwakeningItem } from './systems/awakening.js';
+import { syncProfile, getMyPvpProfile, fetchLeaderboard, fetchOpponents, attackOpponent } from './systems/pvp.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot, findEquippedSlotId } from './systems/equipment.js';
 import { enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscension, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
@@ -40,7 +41,7 @@ import {
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   EGG_ICON, PET_FRAGMENT_ICON,
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
-  renderTranscendTab,
+  renderTranscendTab, renderPvpTab, showPvpBattleResultModal,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -116,6 +117,13 @@ let petSortMode = null;
 // recompensa (ver enterExpeditionTier abaixo), voltam a ficar escondidos,
 // sobrando só o banner de vitrine. Pura UI state, não faz parte do save.
 let expeditionCardsVisible = false;
+// Arena PvP (ver systems/pvp.js): dados vivem no Supabase, não no save
+// local — esse cache só existe em memória, refeito a cada sessão (ver
+// refreshPvpTab). loading trava o botão "Atualizar" contra clique duplo;
+// attackingId identifica qual card de oponente está com o botão "Atacar"
+// desabilitado no momento (evita atacar 2x o mesmo antes da resposta
+// voltar, sem travar o resto da lista).
+let pvpData = { myProfile: null, leaderboard: [], opponents: [], loading: false, attackingId: null };
 
 function renderUpgradesTabNow() {
   renderUpgradesTab(state, skillResetConfirming);
@@ -252,6 +260,7 @@ function fullRefresh() {
   renderShopTab(state, activeShopSubTab);
   renderPetsTabNow();
   renderTranscendTab(state);
+  renderPvpTab(state, pvpData);
 }
 
 function refreshCombatOnly() {
@@ -383,7 +392,7 @@ function tick() {
 // jeito de sempre — só que se veio do popup, o botão "Outros" (não a aba
 // real) é quem fica marcado como ativo no nav principal, já que Cartas/Loja
 // não têm mais vaga própria lá.
-const MORE_MENU_TAB_IDS = ['cards', 'shop', 'transcend'];
+const MORE_MENU_TAB_IDS = ['cards', 'shop', 'transcend', 'pvp'];
 
 function closeMoreMenu() {
   document.getElementById('more-menu').classList.add('hidden');
@@ -408,6 +417,10 @@ function setupTabs() {
   document.querySelectorAll('.tab-btn[data-tab], .more-menu-btn[data-tab]').forEach((btn) => {
     btn.addEventListener('click', () => {
       activateTab(btn.dataset.tab);
+      // Arena PvP não é parte de state/fullRefresh (dados vivem no
+      // Supabase, não no save local) — só busca na 1ª vez que a aba abre
+      // nessa sessão (ver refreshPvpTab, cacheia em pvpData).
+      if (btn.dataset.tab === 'pvp' && !pvpData.myProfile && !pvpData.loading) refreshPvpTab();
       closeMoreMenu();
     });
   });
@@ -1433,6 +1446,95 @@ function wireTranscendTabEvents() {
 }
 
 // ---------------------------------------------------------------
+// Arena PvP (ver systems/pvp.js + supabase/): tudo aqui é assíncrono (dados
+// vivem no Supabase, não no save local) — pvpData é o cache em memória que
+// renderPvpTab só LÊ de forma síncrona; refreshPvpTab é quem busca de
+// verdade e reatribui esse cache antes de re-renderizar.
+// ---------------------------------------------------------------
+
+// Tudo aqui depende de rede/config externa (Supabase — ver supabase/README.md)
+// que pode estar incompleta ou fora do ar; o try/catch é o que impede um
+// erro de rede de deixar pvpData.loading travado em true pra sempre (botão
+// desabilitado, "Conectando..." eterno) sem nenhum feedback pro jogador.
+async function refreshPvpTab() {
+  pvpData.loading = true;
+  renderPvpTab(state, pvpData);
+
+  let myProfile = null;
+  let leaderboard = [];
+  let opponents = [];
+  try {
+    const stats = computePlayerStats(state);
+    await syncProfile(state, stats, getPlayerName(state), state.profileIconId);
+    myProfile = await getMyPvpProfile();
+    [leaderboard, opponents] = await Promise.all([
+      fetchLeaderboard(),
+      myProfile ? fetchOpponents(myProfile.rating, myProfile.id) : Promise.resolve([]),
+    ]);
+  } catch (err) {
+    console.warn('Arena PvP: falha ao conectar:', err);
+  }
+
+  pvpData = { ...pvpData, loading: false, myProfile, leaderboard, opponents };
+  renderPvpTab(state, pvpData);
+  if (!myProfile) {
+    showToast('❌ Não foi possível conectar à Arena PvP agora. Tente de novo mais tarde.');
+  }
+}
+
+async function handlePvpAttack(defenderId) {
+  pvpData = { ...pvpData, attackingId: defenderId };
+  renderPvpTab(state, pvpData);
+
+  let result;
+  try {
+    result = await attackOpponent(defenderId);
+  } catch (err) {
+    console.warn('Arena PvP: falha ao atacar:', err);
+    result = { error: 'unknown_error' };
+  }
+  pvpData = { ...pvpData, attackingId: null };
+
+  if (!result.error && result.goldReward) {
+    state.gold += result.goldReward;
+    renderTopBar(state);
+  }
+  if (!result.error && pvpData.myProfile) {
+    pvpData = { ...pvpData, myProfile: { ...pvpData.myProfile, rating: result.attackerRatingAfter } };
+  }
+  showPvpBattleResultModal(result);
+  renderPvpTab(state, pvpData);
+  // Rating mudou (o próprio e/ou o do alvo) — busca ranking/oponentes de
+  // novo pra refletir, sem travar a resposta da luta esperando por isso.
+  if (!result.error) {
+    try {
+      const [leaderboard, opponents] = await Promise.all([
+        fetchLeaderboard(),
+        pvpData.myProfile ? fetchOpponents(pvpData.myProfile.rating, pvpData.myProfile.id) : Promise.resolve([]),
+      ]);
+      pvpData = { ...pvpData, leaderboard, opponents };
+      renderPvpTab(state, pvpData);
+    } catch (err) {
+      console.warn('Arena PvP: falha ao atualizar ranking/oponentes após a luta:', err);
+    }
+  }
+}
+
+function wirePvpTabEvents() {
+  document.getElementById('tab-pvp').addEventListener('click', (e) => {
+    const refreshBtn = e.target.closest('[data-pvp-refresh]');
+    if (refreshBtn && !pvpData.loading) {
+      refreshPvpTab();
+      return;
+    }
+    const attackBtn = e.target.closest('[data-pvp-attack]');
+    if (attackBtn && !pvpData.attackingId) {
+      handlePvpAttack(attackBtn.dataset.pvpAttack);
+    }
+  });
+}
+
+// ---------------------------------------------------------------
 // Transcender: reset de prestígio (ver systems/awakening.js transcend()) —
 // troca a referência local `state` por um state novo (quase tudo
 // resetado, ver PRESERVED_KEYS lá) e reinicia todo o estado de combate
@@ -1532,6 +1634,7 @@ function init() {
   wireEventTabEvents();
   wireShopTabEvents();
   wireTranscendTabEvents();
+  wirePvpTabEvents();
   wirePetsTabEvents();
   wireSkillsTabEvents();
   resetPlayerHp();
