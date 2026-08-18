@@ -53,6 +53,7 @@ export async function syncProfile(state, stats, playerName, profileIconId) {
       nick: playerName,
       icon_id: profileIconId,
       hunter_level: state.hunterLevel || 1,
+      transcend_count: state.transcendCount || 0,
       updated_at: new Date().toISOString(),
     }),
     supabase.from('pvp_snapshots').upsert({
@@ -205,3 +206,26 @@ async function tryParseJson(body) {
   }
   return null;
 }
+
+// ---------------------------------------------------------------
+// Página "Ranks" (menu Outros) — 3 rankeamentos GLOBAIS, cruzando todos os
+// tiers/grupos (ver supabase/migrations/0008_pvp_ranks.sql). Cada RPC já
+// devolve o top 100 + a própria linha do jogador (com a posição real)
+// caso ele não esteja entre os 100 — por isso todos precisam do próprio
+// id como viewer_id.
+// ---------------------------------------------------------------
+
+async function fetchPvpRank(rpcName) {
+  const userId = await ensureSignedIn();
+  if (!userId) return [];
+  const { data, error } = await getClient().rpc(rpcName, { viewer_id: userId });
+  if (error) {
+    console.warn(`Arena PvP: falha ao buscar ${rpcName}:`, error.message);
+    return [];
+  }
+  return data || [];
+}
+
+export const fetchArenaRank = () => fetchPvpRank('pvp_rank_arena');
+export const fetchLevelRank = () => fetchPvpRank('pvp_rank_level');
+export const fetchTranscendRank = () => fetchPvpRank('pvp_rank_transcend');

@@ -13,13 +13,16 @@ import { ZONES } from '../data/monsters.js';
 const HUNTER_XP_BASE = 30;
 const HUNTER_XP_GROWTH = 1.031;
 
-// Nível máximo do caçador — pedido explícito do usuário. Zona 10 (a mais
-// avançada) já libera no nível 180 (ver zoneUnlockLevelFor em
-// data/monsters.js), então o cap em 200 não trava nada do conteúdo.
-export const HUNTER_MAX_LEVEL = 200;
+// O cap de nível 200 (pedido antes) foi removido de novo — nível volta a
+// ser ilimitado. Em troca, a partir do nível 201 a curva fica bem mais
+// dura: mesma forma exponencial de sempre (base * growth^(nível-1)), só
+// que triplicada — pedido explícito do usuário, usando o mesmo "formato"
+// da curva 170-200 como referência, não uma curva nova.
+const HUNTER_XP_TRIPLE_FROM_LEVEL = 201;
 
 export function xpToNextLevel(level) {
-  return Math.round(HUNTER_XP_BASE * Math.pow(HUNTER_XP_GROWTH, level - 1));
+  const base = Math.round(HUNTER_XP_BASE * Math.pow(HUNTER_XP_GROWTH, level - 1));
+  return level >= HUNTER_XP_TRIPLE_FROM_LEVEL ? base * 3 : base;
 }
 
 // XP por kill: igual ao número da zona (1-based) onde o monstro está, não
@@ -31,20 +34,16 @@ export function xpForZone(zoneIndex, _isBoss) {
 
 /// Soma XP e resolve quantos níveis isso rende (pode subir mais de 1 de uma
 /// vez). Retorna o número de níveis ganhos (0 se não subiu nenhum) — o
-/// chamador usa isso pra mostrar um toast de "Level Up!". Já no nível
-/// máximo (HUNTER_MAX_LEVEL), XP extra é simplesmente descartado — nem
-/// chega a acumular em hunterXp, pra barra de XP não ficar com progresso
-/// "fantasma" que nunca vira nível.
+/// chamador usa isso pra mostrar um toast de "Level Up!". Sem cap de nível
+/// — sobe indefinidamente (ver xpToNextLevel acima pra curva além do 200).
 export function grantXp(state, amount) {
-  if ((state.hunterLevel || 1) >= HUNTER_MAX_LEVEL) return 0;
   state.hunterXp = (state.hunterXp || 0) + amount;
   let levelsGained = 0;
-  while (state.hunterLevel < HUNTER_MAX_LEVEL && state.hunterXp >= xpToNextLevel(state.hunterLevel)) {
+  while (state.hunterXp >= xpToNextLevel(state.hunterLevel)) {
     state.hunterXp -= xpToNextLevel(state.hunterLevel);
     state.hunterLevel += 1;
     levelsGained += 1;
   }
-  if (state.hunterLevel >= HUNTER_MAX_LEVEL) state.hunterXp = 0;
   return levelsGained;
 }
 
