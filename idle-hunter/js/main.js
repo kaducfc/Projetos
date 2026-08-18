@@ -10,6 +10,7 @@ import { canTranscend, unlockTranscend, transcend, buyAwakeningItem } from './sy
 import {
   syncProfile, getMyPvpProfile, fetchTierBoard, attackOpponent,
   pickRandomPvpOpponents, previewPvpAttackSwing,
+  fetchArenaRank, fetchLevelRank, fetchTranscendRank,
 } from './systems/pvp.js';
 import { getPvpTierInfo } from './data/pvpConfig.js';
 import { elementDamageModifier } from './data/elements.js';
@@ -46,7 +47,7 @@ import {
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   EGG_ICON, PET_FRAGMENT_ICON,
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
-  renderTranscendTab, renderPvpTab, showPvpBattleModal, showPvpCombatPickerModal,
+  renderTranscendTab, renderPvpTab, showPvpBattleModal, showPvpCombatPickerModal, renderRanksTab,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -135,6 +136,14 @@ let expeditionCardsVisible = false;
 // linha está com o botão "Atacar" desabilitado no momento (evita atacar
 // 2x o mesmo antes da resposta voltar, sem travar o resto da lista).
 let pvpData = { myProfile: null, board: [], loading: false, attackingId: null };
+
+// Página "Ranks" (menu Outros, ver refreshRanksTab): 3 listas globais
+// (Arena/Nível/Transcender), cada uma já vindo pronta do Supabase (top
+// 100 + a própria linha do jogador se estiver fora — ver
+// supabase/migrations/0008_pvp_ranks.sql). `loaded` marca que já buscou
+// pelo menos uma vez nessa sessão (só refaz no clique manual em
+// "Atualizar", não toda vez que a aba abre de novo).
+let ranksData = { arena: [], level: [], transcend: [], loading: false, loaded: false };
 
 function renderUpgradesTabNow() {
   renderUpgradesTab(state, skillResetConfirming);
@@ -403,7 +412,7 @@ function tick() {
 // jeito de sempre — só que se veio do popup, o botão "Outros" (não a aba
 // real) é quem fica marcado como ativo no nav principal, já que Cartas/Loja
 // não têm mais vaga própria lá.
-const MORE_MENU_TAB_IDS = ['cards', 'shop', 'transcend', 'pvp'];
+const MORE_MENU_TAB_IDS = ['cards', 'shop', 'transcend', 'pvp', 'ranks'];
 
 function closeMoreMenu() {
   document.getElementById('more-menu').classList.add('hidden');
@@ -432,6 +441,8 @@ function setupTabs() {
       // Supabase, não no save local) — só busca na 1ª vez que a aba abre
       // nessa sessão (ver refreshPvpTab, cacheia em pvpData).
       if (btn.dataset.tab === 'pvp' && !pvpData.myProfile && !pvpData.loading) refreshPvpTab();
+      // Mesma lógica pra Ranks (também vive no Supabase, ver refreshRanksTab).
+      if (btn.dataset.tab === 'ranks' && !ranksData.loaded && !ranksData.loading) refreshRanksTab();
       closeMoreMenu();
     });
   });
@@ -1591,6 +1602,32 @@ function wirePvpTabEvents() {
   });
 }
 
+// Mesmo padrão de refreshPvpTab acima, só que buscando os 3 rankeamentos
+// globais em paralelo (ver fetchArenaRank/fetchLevelRank/fetchTranscendRank
+// em systems/pvp.js) — cada um já cruza todos os tiers/grupos, então não
+// depende do tier/grupo do jogador feito refreshPvpTab depende.
+async function refreshRanksTab() {
+  ranksData = { ...ranksData, loading: true };
+  renderRanksTab(ranksData, pvpData.myProfile);
+  try {
+    const [arena, level, transcend] = await Promise.all([
+      fetchArenaRank(), fetchLevelRank(), fetchTranscendRank(),
+    ]);
+    ranksData = { arena, level, transcend, loading: false, loaded: true };
+  } catch (err) {
+    console.warn('Ranks: falha ao buscar:', err);
+    ranksData = { ...ranksData, loading: false };
+  }
+  renderRanksTab(ranksData, pvpData.myProfile);
+}
+
+function wireRanksTabEvents() {
+  document.getElementById('tab-ranks').addEventListener('click', (e) => {
+    const refreshBtn = e.target.closest('[data-ranks-refresh]');
+    if (refreshBtn && !ranksData.loading) refreshRanksTab();
+  });
+}
+
 // ---------------------------------------------------------------
 // Transcender: reset de prestígio (ver systems/awakening.js transcend()) —
 // troca a referência local `state` por um state novo (quase tudo
@@ -1692,6 +1729,7 @@ function init() {
   wireShopTabEvents();
   wireTranscendTabEvents();
   wirePvpTabEvents();
+  wireRanksTabEvents();
   wirePetsTabEvents();
   wireSkillsTabEvents();
   resetPlayerHp();
