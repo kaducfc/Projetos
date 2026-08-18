@@ -28,6 +28,7 @@ import {
   equipPet, unequipPetSlot, recyclePet, canFusePets, fusePets, getFusePartners,
   addPetToInventory, getPetEntry, canChooseRightPet, useFreeRightPetChoice, getActivePetDpsMultiplier,
   fuseAllPossiblePets, hatchAllEggs, rollHatchCandidates, recordPetHatchOutcome, donatePetFragments,
+  getBestEquippedPet,
 } from './systems/pets.js';
 import { buySkillLevel, buySpecial, resetSkillTree } from './systems/skills.js';
 import { setPlayerName, toggleSound, toggleMusic, selectProfileIcon, isValidPlayerName, getPlayerName } from './systems/profile.js';
@@ -1476,7 +1477,12 @@ async function refreshPvpTab({ silent = false } = {}) {
   let board = [];
   try {
     const stats = computePlayerStats(state);
-    await syncProfile(state, stats, getPlayerName(state), state.profileIconId);
+    // 'neutro': PvP não tem "elemento do monstro" — mesma convenção do
+    // próprio dano do caçador (weaponElement em stats.js), só decide qual
+    // pet equipado bate mais forte, sem vantagem/desvantagem elemental.
+    const bestPet = getBestEquippedPet(state, 'neutro', stats.dps);
+    const petDps = bestPet ? bestPet.damage * (stats.petDamageMult || 1) : 0;
+    await syncProfile(state, { ...stats, petDps }, getPlayerName(state), state.profileIconId);
     myProfile = await getMyPvpProfile();
     if (myProfile) board = await fetchTierBoard(myProfile.tier);
   } catch (err) {

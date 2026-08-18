@@ -3437,6 +3437,27 @@ button:disabled {
 .pvp-result-banner.win { color: var(--green-dark); }
 .pvp-result-banner.lose { color: var(--red-dark); }
 
+.pvp-battle-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, .04);
+}
+
+.pvp-stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.pvp-stat-row span {
+  font-weight: 700;
+}
+
 /* ---------------- Despertar (aba da Loja + modal de confirmação) ---------------- */
 
 .transcend-status-card {
