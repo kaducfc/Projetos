@@ -1,41 +1,48 @@
-// Arena PvP (assíncrona) — resolve UM ataque no servidor.
+// Arena PvP — resolve UM ataque no servidor (v2: tiers/rank, bots,
+// sistema de entradas, pontuação por posição).
 //
-// Por que isso precisa ser uma Edge Function (e não lógica no cliente):
-// o resultado de uma luta PvP não pode depender de números que o cliente
-// que está atacando informa na hora — ele poderia simplesmente mandar
-// "meu DPS é 999999999" e vencer sempre. Em vez disso, o cliente só manda
-// QUEM ele quer atacar; esta função busca os snapshots de stats dos DOIS
-// jogadores já salvos no banco (o do atacante foi salvo da última vez que
-// ele sincronizou, ver js/systems/pvp.js syncProfile) e roda a simulação
-// aqui, com a service_role key (que ignora RLS) — só esta função tem
-// permissão de escrever em pvp_matches e de atualizar rating (ver
-// supabase/migrations/0001_pvp_arena.sql).
+// Por que isso precisa ser uma Edge Function: o cliente nunca decide quem
+// venceu nem quantos pontos mudam de mão — ele só manda "quero atacar X".
+// Esta função busca os snapshots de stats dos dois lados já salvos no
+// banco (o do atacante veio da última sincronização automática, ver
+// js/systems/pvp.js syncProfile) e resolve tudo aqui, com a service_role
+// key (ignora RLS) — só ela tem permissão de fato de gravar
+// pvp_matches/mudar rating/tier/entradas (ver GRANTs em
+// supabase/migrations/0002_pvp_tiers.sql).
 //
-// Deploy: supabase functions deploy resolve-pvp-battle
-// (ou cole o conteúdo no editor de Edge Functions do painel Supabase)
+// Deploy: cole este arquivo inteiro no editor de Edge Functions do painel
+// Supabase, função "resolve-pvp-battle" (mesmo nome de antes — só o
+// CONTEÚDO mudou).
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const ARMOR_CONSTANT = 100; // mesma fórmula de js/systems/combat.js armorReduction
-const ATTACK_COOLDOWN_MS = 60_000; // 1 min entre ataques (por atacante)
-const ELO_K_FACTOR = 32;
-const GOLD_REWARD_BASE = 50;
+const MAX_ENTRIES = 5;
+const ENTRY_REGEN_MS = 60 * 60 * 1000; // +1 entrada a cada 1h
+
+// Faixa de pontos por luta pedida pelo usuário: nunca menos que 3, nunca
+// mais que 10. Quando as posições dos 2 jogadores no tier estão bem
+// próximas, os 2 lados ficam perto de 5 (nem favorito nem azarão claro).
+// Quanto mais distantes as posições, mais os extremos se separam: o
+// favorito (melhor posição) ganha pouco vencendo e perde muito perdendo;
+// o azarão (pior posição) ganha muito vencendo e perde pouco perdendo —
+// ver computeSwing abaixo.
+const MIN_SWING = 3;
+const MID_SWING = 5;
+const MAX_SWING = 10;
+const GOLD_REWARD_BASE = 30;
 const GOLD_REWARD_PER_RATING = 0.05; // um pouco mais de ouro atacando alvos mais fortes
+
+// Teto de sanidade pras stats que o cliente reporta no snapshot — não é
+// uma prova de anti-cheat de verdade (validar 100% exigiria o servidor
+// recalcular as stats a partir do inventário/skills reais, fora do
+// escopo por ora), só um freio contra alguém mandar um número absurdo
+// direto pela API. Folgado o bastante pra nunca incomodar um jogador
+// legítimo no fim de jogo atual.
+const SANE_MAX = { dps: 5_000_000, max_hp: 20_000_000, armor: 500_000, crit_chance: 100, crit_damage: 2000, dodge_chance: 95 };
 
 function armorReduction(armor: number): number {
   return armor / (armor + ARMOR_CONSTANT);
-}
-
-/// DPS "esperado" de A contra B: crítico e esquiva são eventos
-/// probabilísticos no combate ao vivo (ver resolveHit/rollDodge em
-/// js/systems/combat.js), mas aqui usamos o valor esperado direto em vez
-/// de rolar dado — dá o mesmo resultado em média, sem depender de nenhum
-/// RNG que uma das partes pudesse alegar ter sido "injusto".
-function effectiveDps(attacker: Snapshot, defender: Snapshot): number {
-  const critMultiplier = 1 + (attacker.crit_chance / 100) * (attacker.crit_damage / 100);
-  const dodgeMultiplier = 1 - Math.min(0.95, defender.dodge_chance / 100);
-  const armorMultiplier = 1 - armorReduction(defender.armor);
-  return Math.max(0, attacker.dps * critMultiplier * dodgeMultiplier * armorMultiplier);
 }
 
 interface Snapshot {
@@ -47,16 +54,70 @@ interface Snapshot {
   dodge_chance: number;
 }
 
-/// Tempo (segundos) que cada lado leva pra derrubar o outro, dado o DPS
-/// efetivo de cada um (ver effectiveDps acima) — quem tem o menor tempo
-/// "vence a corrida" primeiro. dpsToOpponent == 0 é tratado como "nunca
-/// mata" (Infinity), não divisão por zero.
+function clampSnapshot(s: Snapshot): Snapshot {
+  return {
+    dps: Math.min(Math.max(0, s.dps), SANE_MAX.dps),
+    max_hp: Math.min(Math.max(1, s.max_hp), SANE_MAX.max_hp),
+    armor: Math.min(Math.max(0, s.armor), SANE_MAX.armor),
+    crit_chance: Math.min(Math.max(0, s.crit_chance), SANE_MAX.crit_chance),
+    crit_damage: Math.min(Math.max(0, s.crit_damage), SANE_MAX.crit_damage),
+    dodge_chance: Math.min(Math.max(0, s.dodge_chance), SANE_MAX.dodge_chance),
+  };
+}
+
+/// DPS "esperado" de A contra B — valor esperado em vez de rolar dado
+/// (crítico/esquiva são probabilísticos no combate ao vivo, ver
+/// resolveHit/rollDodge em js/systems/combat.js), pra não depender de
+/// nenhum RNG que uma das partes pudesse alegar injusto.
+function effectiveDps(attacker: Snapshot, defender: Snapshot): number {
+  const critMultiplier = 1 + (attacker.crit_chance / 100) * (attacker.crit_damage / 100);
+  const dodgeMultiplier = 1 - Math.min(0.95, defender.dodge_chance / 100);
+  const armorMultiplier = 1 - armorReduction(defender.armor);
+  return Math.max(0, attacker.dps * critMultiplier * dodgeMultiplier * armorMultiplier);
+}
+
 function timeToKill(hp: number, dps: number): number {
   return dps > 0 ? hp / dps : Infinity;
 }
 
-function eloExpectedScore(ratingSelf: number, ratingOpponent: number): number {
-  return 1 / (1 + 10 ** ((ratingOpponent - ratingSelf) / 400));
+/// Ganho/perda de pontos dos 2 lados, baseado na DISTÂNCIA DE POSIÇÃO no
+/// tier (não na diferença de pontos crua) — ver a explicação do usuário:
+/// perto = ~5 pra ambos; longe = favorito ganha pouco (3) ou perde muito
+/// (10), azarão ganha muito (10) ou perde pouco (3). tierSize é quantas
+/// entradas existem no tier_board (jogadores + bots visíveis) — usado só
+/// pra normalizar "o que é longe" (gap grande num tier de 6 é bem mais
+/// significativo que num de 200).
+function computeSwing(attackerPosition: number, defenderPosition: number, tierSize: number) {
+  const gap = Math.abs(attackerPosition - defenderPosition);
+  const normalizedGap = tierSize > 1 ? Math.min(1, gap / (tierSize - 1)) : 0;
+
+  // Posição MENOR = melhor colocado = favorito.
+  const attackerIsFavored = attackerPosition < defenderPosition;
+
+  const favoredWinGain = Math.round(MID_SWING - (MID_SWING - MIN_SWING) * normalizedGap);
+  const favoredLossPenalty = Math.round(MID_SWING + (MAX_SWING - MID_SWING) * normalizedGap);
+  const underdogWinGain = Math.round(MID_SWING + (MAX_SWING - MID_SWING) * normalizedGap);
+  const underdogLossPenalty = Math.round(MID_SWING - (MID_SWING - MIN_SWING) * normalizedGap);
+
+  return {
+    attackerWinDelta: attackerIsFavored ? favoredWinGain : underdogWinGain,
+    attackerLossDelta: attackerIsFavored ? -favoredLossPenalty : -underdogLossPenalty,
+    defenderWinDelta: attackerIsFavored ? underdogWinGain : favoredWinGain,
+    defenderLossDelta: attackerIsFavored ? -underdogLossPenalty : -favoredLossPenalty,
+  };
+}
+
+/// Entradas disponíveis AGORA, projetando a regeneração (+1/hora) desde a
+/// última vez que a linha foi atualizada — mesmo padrão de "energia" de
+/// jogo mobile. Retorna também o novo timestamp-âncora (avança só pelos
+/// ticks de fato consumidos, não pula pra "agora", pra não perder
+/// progresso parcial rumo à próxima entrada).
+function projectEntries(stored: number, updatedAt: string, now: number) {
+  const elapsedMs = now - new Date(updatedAt).getTime();
+  const regen = Math.max(0, Math.floor(elapsedMs / ENTRY_REGEN_MS));
+  const current = Math.min(MAX_ENTRIES, stored + regen);
+  const newAnchorMs = new Date(updatedAt).getTime() + regen * ENTRY_REGEN_MS;
+  return { current, newAnchorIso: new Date(newAnchorMs).toISOString() };
 }
 
 Deno.serve(async (req) => {
@@ -68,10 +129,6 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const authHeader = req.headers.get('Authorization') ?? '';
 
-  // Client "de serviço" (service_role, ignora RLS — só ele grava
-  // pvp_matches/atualiza rating) e um client separado só pra descobrir
-  // QUEM está chamando, a partir do JWT que o cliente já manda (o mesmo
-  // token da sessão anônima do Supabase Auth).
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
   const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(
     authHeader.replace('Bearer ', ''),
@@ -81,100 +138,170 @@ Deno.serve(async (req) => {
   }
   const attackerId = userData.user.id;
 
-  let body: { defenderId?: string };
+  let body: { defenderId?: string; isBot?: boolean };
   try {
     body = await req.json();
   } catch {
     return new Response(JSON.stringify({ error: 'invalid_body' }), { status: 400 });
   }
   const defenderId = body.defenderId;
+  const defenderIsBot = body.isBot === true;
   if (!defenderId || typeof defenderId !== 'string') {
     return new Response(JSON.stringify({ error: 'missing_defender_id' }), { status: 400 });
   }
-  if (defenderId === attackerId) {
+  if (!defenderIsBot && defenderId === attackerId) {
     return new Response(JSON.stringify({ error: 'cannot_attack_self' }), { status: 400 });
   }
 
-  const [{ data: attackerProfile }, { data: defenderProfile }] = await Promise.all([
-    supabaseAdmin.from('pvp_profiles').select('*').eq('id', attackerId).maybeSingle(),
-    supabaseAdmin.from('pvp_profiles').select('*').eq('id', defenderId).maybeSingle(),
-  ]);
+  const { data: attackerProfile } = await supabaseAdmin
+    .from('pvp_profiles').select('*').eq('id', attackerId).maybeSingle();
   if (!attackerProfile) {
     return new Response(JSON.stringify({ error: 'attacker_profile_not_found' }), { status: 404 });
   }
-  if (!defenderProfile) {
-    return new Response(JSON.stringify({ error: 'defender_profile_not_found' }), { status: 404 });
+
+  // Entradas: projeta a regeneração, recusa se não sobrou nenhuma.
+  const now = Date.now();
+  const { current: entriesNow, newAnchorIso } = projectEntries(
+    attackerProfile.pvp_entries, attackerProfile.pvp_entries_updated_at, now,
+  );
+  if (entriesNow < 1) {
+    const msUntilNext = ENTRY_REGEN_MS - (now - new Date(newAnchorIso).getTime());
+    return new Response(
+      JSON.stringify({ error: 'no_entries', retryAfterMs: Math.max(0, msUntilNext) }),
+      { status: 429 },
+    );
   }
 
-  if (attackerProfile.last_attack_at) {
-    const elapsed = Date.now() - new Date(attackerProfile.last_attack_at).getTime();
-    if (elapsed < ATTACK_COOLDOWN_MS) {
-      return new Response(
-        JSON.stringify({ error: 'cooldown', retryAfterMs: ATTACK_COOLDOWN_MS - elapsed }),
-        { status: 429 },
-      );
-    }
+  // Defensor: jogador de verdade OU bot — tabelas diferentes.
+  let defenderNick: string;
+  let defenderTier: string;
+  let defenderRatingBefore: number;
+  let defenderSnap: Snapshot | null;
+  let defenderProfileForUpdate: { id: string } | null = null;
+
+  if (defenderIsBot) {
+    const { data: bot } = await supabaseAdmin.from('pvp_bots').select('*').eq('id', defenderId).maybeSingle();
+    if (!bot) return new Response(JSON.stringify({ error: 'defender_bot_not_found' }), { status: 404 });
+    defenderNick = bot.nick;
+    defenderTier = bot.tier;
+    defenderRatingBefore = bot.rating;
+    defenderSnap = clampSnapshot(bot as Snapshot);
+  } else {
+    const { data: defenderProfile } = await supabaseAdmin
+      .from('pvp_profiles').select('*').eq('id', defenderId).maybeSingle();
+    if (!defenderProfile) return new Response(JSON.stringify({ error: 'defender_profile_not_found' }), { status: 404 });
+    const { data: snap } = await supabaseAdmin
+      .from('pvp_snapshots').select('*').eq('profile_id', defenderId).maybeSingle();
+    if (!snap) return new Response(JSON.stringify({ error: 'snapshot_missing' }), { status: 409 });
+    defenderNick = defenderProfile.nick;
+    defenderTier = defenderProfile.tier;
+    defenderRatingBefore = defenderProfile.rating;
+    defenderSnap = clampSnapshot(snap as Snapshot);
+    defenderProfileForUpdate = { id: defenderProfile.id };
   }
 
-  const [{ data: attackerSnap }, { data: defenderSnap }] = await Promise.all([
-    supabaseAdmin.from('pvp_snapshots').select('*').eq('profile_id', attackerId).maybeSingle(),
-    supabaseAdmin.from('pvp_snapshots').select('*').eq('profile_id', defenderId).maybeSingle(),
-  ]);
-  if (!attackerSnap || !defenderSnap) {
+  if (defenderTier !== attackerProfile.tier) {
+    return new Response(JSON.stringify({ error: 'different_tier' }), { status: 400 });
+  }
+
+  const { data: attackerSnapRaw } = await supabaseAdmin
+    .from('pvp_snapshots').select('*').eq('profile_id', attackerId).maybeSingle();
+  if (!attackerSnapRaw) {
     return new Response(JSON.stringify({ error: 'snapshot_missing' }), { status: 409 });
+  }
+  const attackerSnap = clampSnapshot(attackerSnapRaw as Snapshot);
+
+  // Posição dos 2 no tier_board (ver pvp_tier_board em
+  // supabase/migrations/0002_pvp_tiers.sql) — é ISSO, não a diferença de
+  // pontos crua, que decide o tamanho do ganho/perda (ver computeSwing).
+  const { data: board, error: boardError } = await supabaseAdmin.rpc('pvp_tier_board', { target_tier: attackerProfile.tier });
+  if (boardError || !board) {
+    return new Response(JSON.stringify({ error: 'tier_board_failed' }), { status: 500 });
+  }
+  const attackerBoardRow = board.find((r: { entity_id: string; is_bot: boolean }) => r.entity_id === attackerId && !r.is_bot);
+  const defenderBoardRow = board.find((r: { entity_id: string; is_bot: boolean }) =>
+    r.entity_id === defenderId && r.is_bot === defenderIsBot);
+  if (!attackerBoardRow || !defenderBoardRow) {
+    // Bot que acabou de sumir da lista (jogador novo entrou no meio) ou
+    // estado meio inconsistente — pede pro cliente tentar de novo com a
+    // lista atualizada em vez de arriscar um cálculo com posição errada.
+    return new Response(JSON.stringify({ error: 'stale_opponent' }), { status: 409 });
   }
 
   const attackerTtk = timeToKill(defenderSnap.max_hp, effectiveDps(attackerSnap, defenderSnap));
   const defenderTtk = timeToKill(attackerSnap.max_hp, effectiveDps(defenderSnap, attackerSnap));
-  // Empate genuíno (os 2 nunca se matam, ex: os 2 com 0 de DPS) vira
-  // vitória do defensor — corresponde ao padrão comum de PvP assíncrono
-  // ("o desafiante precisa vencer de forma clara pra levar a recompensa").
   const attackerWins = attackerTtk < defenderTtk;
 
-  const attackerExpected = eloExpectedScore(attackerProfile.rating, defenderProfile.rating);
-  const defenderExpected = 1 - attackerExpected;
-  const attackerActual = attackerWins ? 1 : 0;
-  const defenderActual = 1 - attackerActual;
-  const attackerRatingAfter = Math.round(attackerProfile.rating + ELO_K_FACTOR * (attackerActual - attackerExpected));
-  const defenderRatingAfter = Math.round(defenderProfile.rating + ELO_K_FACTOR * (defenderActual - defenderExpected));
+  const swing = computeSwing(attackerBoardRow.position, defenderBoardRow.position, board.length);
+  const attackerDelta = attackerWins ? swing.attackerWinDelta : swing.attackerLossDelta;
+  const defenderDelta = attackerWins ? swing.defenderLossDelta : swing.defenderWinDelta;
 
-  const goldReward = attackerWins
-    ? Math.round(GOLD_REWARD_BASE + defenderProfile.rating * GOLD_REWARD_PER_RATING)
-    : 0;
+  const attackerRatingAfter = attackerProfile.rating + attackerDelta;
+  const defenderRatingAfter = defenderRatingBefore + defenderDelta;
 
-  const now = new Date().toISOString();
-  const winnerId = attackerWins ? attackerId : defenderId;
+  const goldReward = attackerWins ? Math.round(GOLD_REWARD_BASE + defenderRatingBefore * GOLD_REWARD_PER_RATING) : 0;
+  const winnerEntityId = attackerWins ? attackerId : defenderId;
 
-  const [matchResult] = await Promise.all([
+  const writes = [
     supabaseAdmin.from('pvp_matches').insert({
       attacker_id: attackerId,
-      defender_id: defenderId,
-      winner_id: winnerId,
+      defender_id: defenderIsBot ? null : defenderId,
+      defender_is_bot: defenderIsBot,
+      defender_bot_id: defenderIsBot ? defenderId : null,
+      winner_id: winnerEntityId,
       attacker_rating_before: attackerProfile.rating,
-      defender_rating_before: defenderProfile.rating,
+      defender_rating_before: defenderRatingBefore,
       attacker_rating_after: attackerRatingAfter,
       defender_rating_after: defenderRatingAfter,
       gold_reward: goldReward,
     }),
     supabaseAdmin.from('pvp_profiles').update({
       rating: attackerRatingAfter,
-      last_attack_at: now,
+      pvp_entries: entriesNow - 1,
+      pvp_entries_updated_at: newAnchorIso,
+      last_attack_at: new Date().toISOString(),
     }).eq('id', attackerId),
-    supabaseAdmin.from('pvp_profiles').update({
-      rating: defenderRatingAfter,
-    }).eq('id', defenderId),
-  ]);
-  if (matchResult.error) {
-    return new Response(JSON.stringify({ error: 'write_failed', detail: matchResult.error.message }), { status: 500 });
+  ];
+  if (defenderProfileForUpdate) {
+    writes.push(
+      supabaseAdmin.from('pvp_profiles').update({ rating: defenderRatingAfter }).eq('id', defenderProfileForUpdate.id),
+    );
   }
+  const results = await Promise.all(writes);
+  const writeError = results.find((r) => r.error);
+  if (writeError?.error) {
+    return new Response(JSON.stringify({ error: 'write_failed', detail: writeError.error.message }), { status: 500 });
+  }
+
+  // Recalcula a posição do atacante DEPOIS do rating novo já gravado —
+  // essencial pro Lendário, que só mostra "subiu/desceu N posições", não
+  // o número de pontos (ver hiddenScore abaixo). Custa 1 query a mais,
+  // mas é o único jeito de saber a posição de verdade em vez de assumir
+  // pelo sinal do delta de pontos (ganhar pontos nem sempre muda posição,
+  // ex: já era o 1º do tier).
+  const { data: boardAfter } = await supabaseAdmin.rpc('pvp_tier_board', { target_tier: attackerProfile.tier });
+  const attackerBoardRowAfter = boardAfter?.find((r: { entity_id: string; is_bot: boolean }) => r.entity_id === attackerId && !r.is_bot);
+  const attackerPositionAfter = attackerBoardRowAfter?.position ?? attackerBoardRow.position;
+  // Positivo = subiu de posição (número de posição diminuiu).
+  const attackerPositionDelta = attackerBoardRow.position - attackerPositionAfter;
+
+  const tierHidesScore = attackerProfile.tier === 'lendario';
 
   return new Response(JSON.stringify({
     attackerWins,
-    attackerRatingBefore: attackerProfile.rating,
-    attackerRatingAfter,
-    defenderRatingBefore: defenderProfile.rating,
-    defenderRatingAfter,
+    tier: attackerProfile.tier,
+    hiddenScore: tierHidesScore,
+    // Tiers normais: mostra os pontos de verdade (attackerRatingBefore/
+    // After). Lendário: omite os pontos, o cliente (ver
+    // js/ui/render.js showPvpBattleResultModal) mostra só
+    // attackerPositionDelta em verde (subiu) ou vermelho (desceu).
+    attackerRatingBefore: tierHidesScore ? undefined : attackerProfile.rating,
+    attackerRatingAfter: tierHidesScore ? undefined : attackerRatingAfter,
+    attackerPositionBefore: attackerBoardRow.position,
+    attackerPositionAfter,
+    attackerPositionDelta,
+    entriesRemaining: entriesNow - 1,
     goldReward,
-    defenderNick: defenderProfile.nick,
+    defenderNick,
   }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 });

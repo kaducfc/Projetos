@@ -3285,48 +3285,42 @@ button:disabled {
 
 /* ---------------- Arena PvP ---------------- */
 
-.pvp-leaderboard {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.pvp-rank {
+  min-width: 30px;
+  flex: 0 0 auto;
+  font-weight: 800;
+  color: var(--text-dim);
+  text-align: center;
 }
 
-.pvp-leaderboard-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: var(--grad-neutral);
-  border: 2px solid var(--border);
-  font-size: 12.5px;
-  font-weight: 700;
-}
-
-.pvp-leaderboard-row.self {
+.achievement-card.pvp-self-row {
   border-color: var(--gold-dark);
   background: var(--grad-gold);
   color: #4a2e00;
 }
 
-.pvp-leaderboard-row .icon {
-  font-size: 20px;
-}
-
-.pvp-rank {
-  min-width: 28px;
-  color: var(--text-dim);
-}
-
-.pvp-leaderboard-row.self .pvp-rank {
+.pvp-self-row .pvp-rank,
+.pvp-self-row .desc {
   color: inherit;
 }
 
-.pvp-nick {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.pvp-self-tag {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 800;
+  color: inherit;
+  opacity: 0.8;
+  padding: 6px 10px;
+}
+
+.pvp-delta-up {
+  color: var(--green-dark);
+  font-weight: 800;
+}
+
+.pvp-delta-down {
+  color: var(--red-dark);
+  font-weight: 800;
 }
 
 /* ---------------- Despertar (aba da Loja + modal de confirmação) ---------------- */
