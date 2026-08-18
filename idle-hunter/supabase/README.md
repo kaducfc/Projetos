@@ -1,80 +1,140 @@
 # Arena PvP — configuração do Supabase
 
 O código do jogo já está pronto (`js/systems/pvp.js`, `js/data/pvpConfig.js`,
-nova aba "🏟️ Arena PvP" dentro de "Outros"). Faltam só 3 passos manuais no
-painel do seu projeto Supabase — nenhum deles precisa de instalar nada na
-sua máquina.
+aba "🏟️ Arena PvP" dentro de "Outros"). Você já rodou o **Passo 1**
+(`0001_pvp_arena.sql`) e publicou a Edge Function antiga — agora o sistema
+ganhou Tiers/Rank, bots e o sistema de Entradas, então faltam mais alguns
+passos (um SQL novo + reenviar o código da Edge Function, que mudou).
 
-## 1. Rodar o schema do banco
+## 1. Rodar o schema base (já feito, se você seguiu o guia anterior)
 
-1. Abra o [painel do seu projeto](https://supabase.com/dashboard/project/xkcvvcvyzobnojgkkngy) → **SQL Editor** → **New query**.
-2. Cole o conteúdo inteiro de `supabase/migrations/0001_pvp_arena.sql` e clique **Run**.
-3. Isso cria 3 tabelas (`pvp_profiles`, `pvp_snapshots`, `pvp_matches`) e as
-   políticas de RLS que garantem que um jogador só edita a própria linha e
-   nunca escreve um resultado de luta direto no banco.
+`supabase/migrations/0001_pvp_arena.sql` no SQL Editor — cria
+`pvp_profiles`/`pvp_snapshots`/`pvp_matches` + RLS. Pule se já rodou.
 
-## 2. Habilitar login anônimo
+## 2. Rodar o schema dos Tiers (NOVO — precisa rodar agora)
 
-O jogo usa **login anônimo** do Supabase Auth — sem e-mail/senha, sem
-fricção nenhuma pro jogador.
+1. **SQL Editor** → **New query**.
+2. Cole o conteúdo inteiro de `supabase/migrations/0002_pvp_tiers.sql` e
+   clique **Run**.
+3. Isso adiciona: os 6 tiers (Bronze/Prata/Ouro/Platina/Diamante/
+   Lendário), 30 bots (5 por tier), o sistema de Entradas, a função que
+   calcula a "prancheta" de cada tier, e agenda a atualização automática
+   de todo sábado 21h (Brasília).
 
-1. **Authentication** → **Providers** (ou **Sign In / Providers**, o nome
-   muda um pouco entre versões do painel).
-2. Habilite **"Allow anonymous sign-ins"**.
+**Se der erro tipo "permission denied to create extension" ou "extension
+pg_cron is not available"** perto do fim: vá em **Database → Extensions**
+no painel, procure **pg_cron**, clique em **Enable** por lá, volte no SQL
+Editor e rode só este trecho de novo (o resto do arquivo já rodou):
+```sql
+do $$
+begin
+  if exists (select 1 from cron.job where jobname = 'pvp-weekly-tier-reset') then
+    perform cron.unschedule('pvp-weekly-tier-reset');
+  end if;
+end $$;
 
-## 3. Publicar a Edge Function que resolve as lutas
-
-O código está em `supabase/functions/resolve-pvp-battle/index.ts`. É ELE
-quem decide quem venceu — o cliente nunca decide isso sozinho (ver o
-comentário no topo do arquivo pra entender por quê).
-
-**Caminho mais simples (sem instalar nada):**
-1. No painel: **Edge Functions** → **Create a new function**.
-2. Nome: `resolve-pvp-battle` (tem que ser exatamente esse — é o nome que
-   `js/systems/pvp.js` chama).
-3. Cole o conteúdo de `supabase/functions/resolve-pvp-battle/index.ts` no
-   editor e clique em **Deploy**.
-
-**Caminho com a CLI (se preferir, ou pra deploys futuros mais rápidos):**
-```bash
-npm install -g supabase
-supabase login
-supabase link --project-ref xkcvvcvyzobnojgkkngy
-supabase functions deploy resolve-pvp-battle
+select cron.schedule(
+  'pvp-weekly-tier-reset',
+  '0 0 * * 0',
+  $$select public.run_weekly_pvp_reset();$$
+);
 ```
+
+## 3. Habilitar login anônimo (já feito, se você seguiu o guia anterior)
+
+**Authentication → Providers → "Allow anonymous sign-ins"**. Pule se já
+fez.
+
+## 4. Reenviar a Edge Function (o CONTEÚDO mudou — precisa atualizar)
+
+O código de `supabase/functions/resolve-pvp-battle/index.ts` mudou bastante
+(agora calcula pontos por posição no tier, entende bots, sistema de
+entradas em vez de cooldown simples). O NOME da função continua o mesmo
+(`resolve-pvp-battle`), então é só **substituir o conteúdo**:
+
+1. **Edge Functions** → clique na função `resolve-pvp-battle` já existente.
+2. Abra o editor dela (deve ter um botão tipo "Edit" ou o ícone de lápis).
+3. **Apague tudo** e cole o conteúdo novo de
+   `supabase/functions/resolve-pvp-battle/index.ts`.
+4. **Deploy** de novo.
 
 ## Depois disso
 
-O jogo já conecta e sincroniza sozinho ao abrir (login anônimo + stats
-atuais sobem pro banco automaticamente, e de novo a cada 5 minutos
-enquanto o jogo fica aberto — ver `PVP_AUTO_SYNC_INTERVAL_MS`/
-`refreshPvpTab` em `js/main.js`). Não precisa clicar em nada — só abrir
-**Outros → 🏟️ Arena PvP** já mostra ranking/oponentes prontos. O botão
-"Sincronizar Stats" continua lá pra forçar uma atualização na hora (ex:
-depois de trocar de equipamento e querer que isso reflita já).
+Abra **Outros → 🏟️ Arena PvP**. Você deve ver seu Tier (começa no
+**Bronze**, 1000 pontos), sua contagem de **Entradas** (começa 5/5, +1 a
+cada hora), e uma lista única com todo mundo do seu tier — jogadores de
+verdade e os bots que ainda estão "preenchendo vaga" (ver explicação
+abaixo). Clique em **⚔️ Atacar** em qualquer linha (menos a sua).
 
-Pra testar um ataque de verdade, você vai precisar de uma 2ª conta com
-stats diferentes — abra o jogo numa aba anônima do navegador (ou em outro
-navegador) pra simular um 2º jogador.
+## Como o sistema de Tiers funciona (resumo do que foi implementado)
+
+- **6 tiers**: Bronze (1000 pts) → Prata (1200) → Ouro (1400) → Platina
+  (1600) → Diamante (1800) → Lendário (2000, pontuação **oculta** — só
+  mostra a posição, e depois de cada luta mostra "subiu/desceu N
+  posições" em verde/vermelho).
+- **Pontos por luta**: 3 a 10, calculado pela DISTÂNCIA DE POSIÇÃO entre
+  os 2 lutadores dentro do tier (não pela diferença de pontos crua) —
+  perto = ~5 pra ambos os lados; longe = quem tá na frente ganha pouco
+  (3)/perde muito (10) e quem tá atrás ganha muito (10)/perde pouco (3).
+- **Entradas**: até 5 guardadas, +1 por hora, cada ataque gasta 1 — o
+  servidor (Edge Function) que controla isso, o cliente só mostra.
+- **Bots**: 5 por tier, nomes fixos (Caçador Iniciante/Patrulheiro/
+  Avançado/Elite/Chefe/Deus, do Bronze ao Lendário), somem conforme
+  jogadores de verdade entram no tier (1 jogador → 5 bots, 2 → 4, 3 → 3...
+  até sumir todo mundo). Não entram na contagem de promoção/rebaixamento
+  nem mudam de força sozinhos — as stats deles são um primeiro chute
+  (fácil de re-tunar com um `UPDATE public.pvp_bots ...` no SQL Editor).
+- **Reset semanal** (sábado 21h Brasília, automático via `pg_cron`): tier
+  com menos de 10 jogadores → os 3 melhores sobem 1 tier, ninguém desce;
+  tier com 10+ → os 20% de cima sobem, os 20% de baixo descem. Todo mundo
+  (subiu, ficou ou desceu) recomeça a semana com a pontuação BASE do tier
+  em que ficou.
+
+### Decisões que tomei sem você ter especificado (revise se quiser mudar)
+
+- **Pontuação base do Lendário**: 2000 (seguindo a progressão de 200 em
+  200 dos outros tiers — você não tinha dito esse número).
+- **"10+ jogadores"**: tratei como "10 ou mais" indo pra regra dos 20%
+  (você disse "menos de 10" pra regra dos 3 primeiros e "mais de 10" pra
+  regra dos 20% — o caso exato de 10 jogadores eu decidi que cai na regra
+  dos 20%, não na dos 3 primeiros).
+- **Arredondamento dos 20%**: pra baixo (`floor`) — ex: 23 jogadores →
+  4 sobem, 4 descem (20% de 23 = 4,6 → 4).
+- **Segurança**: além do que já existia, tranquei o Supabase pra o
+  cliente não conseguir editar `rating`/`tier`/`entradas` da própria
+  linha diretamente (só nick/ícone/nível, que são cosméticos) — só a Edge
+  Function (que roda com uma chave que o navegador nunca vê) pode mexer
+  nesses campos agora. Isso não existia na v1 e era uma falha real.
+- **Limitação que continua existindo**: o cliente ainda reporta as
+  PRÓPRIAS stats de combate (DPS/HP/etc.) pro servidor por conta própria
+  — um jogador tecnicamente ainda poderia mandar um valor mentiroso
+  chamando a API diretamente (não pela tela do jogo). Resolver isso de
+  verdade exigiria o servidor recalcular as stats a partir do
+  inventário/skills reais do jogador, o que é um projeto bem maior (embutir
+  toda a lógica de `systems/stats.js` no servidor). Pus um teto de sanidade
+  na Edge Function (rejeita números absurdos) como um primeiro freio, mas
+  não é uma prova completa contra isso.
 
 ## O que cada arquivo faz
 
 | Arquivo | Papel |
 |---|---|
-| `migrations/0001_pvp_arena.sql` | Schema + RLS (rode 1x no SQL Editor) |
+| `migrations/0001_pvp_arena.sql` | Schema base + RLS |
+| `migrations/0002_pvp_tiers.sql` | Tiers, bots, Entradas, reset semanal (pg_cron) |
 | `functions/resolve-pvp-battle/index.ts` | Resolve 1 ataque (deploy como Edge Function) |
-| `../js/data/pvpConfig.js` | URL + chave pública do projeto (já preenchidas) |
-| `../js/systems/pvp.js` | Cliente: login anônimo, sincronizar stats, buscar ranking/oponentes, atacar |
+| `../js/data/pvpConfig.js` | URL/chave do projeto + metadados dos tiers (nome/emoji/pontos-base) |
+| `../js/systems/pvp.js` | Cliente: login anônimo, sincronizar stats, buscar o tier, atacar |
 | `../js/ui/render.js` (`renderPvpTab`) | A tela da aba Arena PvP |
 | `../js/main.js` (`refreshPvpTab`/`handlePvpAttack`) | Liga a UI ao `systems/pvp.js` |
 
 ## Próximos passos possíveis (ainda não implementados)
 
-- Cooldown de ataque visível no cliente (hoje só o servidor recusa e a UI
-  mostra o erro depois de tentar).
-- Recompensa/penalidade pro jogador que foi atacado (hoje só quem ataca
-  ganha ouro).
+- Banner de "você foi promovido!"/"você caiu de tier!" depois do reset de
+  sábado (hoje o jogador só percebe olhando o tier atual).
 - Histórico de lutas (a tabela `pvp_matches` já guarda tudo, só falta uma
   tela pra mostrar).
-- Sincronizar automaticamente as stats a cada X minutos, em vez de só
-  quando o jogador clica "Sincronizar".
+- Recompensa/penalidade pro jogador que foi atacado (hoje só quem ataca
+  ganha ouro).
+- Itens/equipamentos/mascotes de verdade nos bots (hoje eles só têm
+  números de DPS/HP/etc., sem inventário nenhum por trás — o jogo não
+  usa isso pra nada além do cálculo de luta).

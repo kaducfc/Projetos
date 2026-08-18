@@ -7,7 +7,7 @@ import {
 } from './systems/combat.js';
 import { findMaterialInfo, BOSSES, ZONE_COUNT } from './data/monsters.js';
 import { canTranscend, unlockTranscend, transcend, buyAwakeningItem } from './systems/awakening.js';
-import { syncProfile, getMyPvpProfile, fetchLeaderboard, fetchOpponents, attackOpponent } from './systems/pvp.js';
+import { syncProfile, getMyPvpProfile, fetchTierBoard, attackOpponent } from './systems/pvp.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot, findEquippedSlotId } from './systems/equipment.js';
 import { enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscension, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
@@ -124,11 +124,12 @@ let petSortMode = null;
 let expeditionCardsVisible = false;
 // Arena PvP (ver systems/pvp.js): dados vivem no Supabase, não no save
 // local — esse cache só existe em memória, refeito a cada sessão (ver
-// refreshPvpTab). loading trava o botão "Atualizar" contra clique duplo;
-// attackingId identifica qual card de oponente está com o botão "Atacar"
-// desabilitado no momento (evita atacar 2x o mesmo antes da resposta
-// voltar, sem travar o resto da lista).
-let pvpData = { myProfile: null, leaderboard: [], opponents: [], loading: false, attackingId: null };
+// refreshPvpTab). `board` é a prancheta inteira do tier atual do jogador
+// (ranking + oponentes num só lugar, ver fetchTierBoard). loading trava o
+// botão "Atualizar" contra clique duplo; attackingId identifica qual
+// linha está com o botão "Atacar" desabilitado no momento (evita atacar
+// 2x o mesmo antes da resposta voltar, sem travar o resto da lista).
+let pvpData = { myProfile: null, board: [], loading: false, attackingId: null };
 
 function renderUpgradesTabNow() {
   renderUpgradesTab(state, skillResetConfirming);
@@ -1472,34 +1473,30 @@ async function refreshPvpTab({ silent = false } = {}) {
   if (!silent) renderPvpTab(state, pvpData);
 
   let myProfile = null;
-  let leaderboard = [];
-  let opponents = [];
+  let board = [];
   try {
     const stats = computePlayerStats(state);
     await syncProfile(state, stats, getPlayerName(state), state.profileIconId);
     myProfile = await getMyPvpProfile();
-    [leaderboard, opponents] = await Promise.all([
-      fetchLeaderboard(),
-      myProfile ? fetchOpponents(myProfile.rating, myProfile.id) : Promise.resolve([]),
-    ]);
+    if (myProfile) board = await fetchTierBoard(myProfile.tier);
   } catch (err) {
     console.warn('Arena PvP: falha ao conectar:', err);
   }
 
-  pvpData = { ...pvpData, loading: false, myProfile, leaderboard, opponents };
+  pvpData = { ...pvpData, loading: false, myProfile, board };
   renderPvpTab(state, pvpData);
   if (!myProfile && !silent) {
     showToast('❌ Não foi possível conectar à Arena PvP agora. Tente de novo mais tarde.');
   }
 }
 
-async function handlePvpAttack(defenderId) {
+async function handlePvpAttack(defenderId, isBot) {
   pvpData = { ...pvpData, attackingId: defenderId };
   renderPvpTab(state, pvpData);
 
   let result;
   try {
-    result = await attackOpponent(defenderId);
+    result = await attackOpponent(defenderId, isBot);
   } catch (err) {
     console.warn('Arena PvP: falha ao atacar:', err);
     result = { error: 'unknown_error' };
@@ -1511,22 +1508,24 @@ async function handlePvpAttack(defenderId) {
     renderTopBar(state);
   }
   if (!result.error && pvpData.myProfile) {
-    pvpData = { ...pvpData, myProfile: { ...pvpData.myProfile, rating: result.attackerRatingAfter } };
+    const ratingPatch = result.hiddenScore ? {} : { rating: result.attackerRatingAfter };
+    pvpData = {
+      ...pvpData,
+      myProfile: { ...pvpData.myProfile, ...ratingPatch, pvp_entries: result.entriesRemaining, pvp_entries_updated_at: new Date().toISOString() },
+    };
   }
   showPvpBattleResultModal(result);
   renderPvpTab(state, pvpData);
-  // Rating mudou (o próprio e/ou o do alvo) — busca ranking/oponentes de
-  // novo pra refletir, sem travar a resposta da luta esperando por isso.
-  if (!result.error) {
+  // Posições/pontos do tier inteiro podem ter mudado (o próprio e/ou o
+  // alvo) — busca o tier de novo pra refletir, sem travar a resposta da
+  // luta esperando por isso.
+  if (!result.error && pvpData.myProfile) {
     try {
-      const [leaderboard, opponents] = await Promise.all([
-        fetchLeaderboard(),
-        pvpData.myProfile ? fetchOpponents(pvpData.myProfile.rating, pvpData.myProfile.id) : Promise.resolve([]),
-      ]);
-      pvpData = { ...pvpData, leaderboard, opponents };
+      const board = await fetchTierBoard(pvpData.myProfile.tier);
+      pvpData = { ...pvpData, board };
       renderPvpTab(state, pvpData);
     } catch (err) {
-      console.warn('Arena PvP: falha ao atualizar ranking/oponentes após a luta:', err);
+      console.warn('Arena PvP: falha ao atualizar o tier após a luta:', err);
     }
   }
 }
@@ -1540,7 +1539,7 @@ function wirePvpTabEvents() {
     }
     const attackBtn = e.target.closest('[data-pvp-attack]');
     if (attackBtn && !pvpData.attackingId) {
-      handlePvpAttack(attackBtn.dataset.pvpAttack);
+      handlePvpAttack(attackBtn.dataset.pvpAttack, attackBtn.dataset.pvpAttackBot === '1');
     }
   });
 }
