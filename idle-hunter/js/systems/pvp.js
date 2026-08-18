@@ -64,6 +64,7 @@ export async function syncProfile(state, stats, playerName, profileIconId) {
       crit_damage: stats.critDamage,
       dodge_chance: stats.dodgeChance,
       pet_dps: stats.petDps || 0,
+      attack_speed_per_sec: stats.attackSpeedPerSec || 1,
       updated_at: new Date().toISOString(),
     }),
   ]);
