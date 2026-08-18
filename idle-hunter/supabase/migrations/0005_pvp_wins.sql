@@ -10,6 +10,10 @@ alter table public.pvp_profiles
 
 -- Mesma função de antes (ver 0002_pvp_tiers.sql), só acrescentando "wins"
 -- na saída — 0 fixo pros bots (eles não guardam histórico de vitórias).
+-- Precisa dropar antes: o Postgres não deixa trocar o formato de retorno
+-- (as colunas OUT) de uma função existente só com "create or replace".
+drop function if exists public.pvp_tier_board(text);
+
 create or replace function public.pvp_tier_board(target_tier text)
 returns table (
   entity_id uuid,
