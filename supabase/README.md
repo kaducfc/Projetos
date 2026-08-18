@@ -151,11 +151,46 @@ abaixo). Clique em **⚔️ Atacar** em qualquer linha (menos a sua).
 | `migrations/0002_pvp_tiers.sql` | Tiers, bots, Entradas, reset semanal (pg_cron) |
 | `migrations/0007_pvp_groups.sql` | Grupos de até 100 jogadores por tier + regra especial do Lendário no reset |
 | `migrations/0008_pvp_ranks.sql` | Página "Ranks": rankeamentos globais de Arena/Nível/Transcender |
+| `migrations/0010_pvp_mailbox.sql` | Correio: tabela + RLS |
+| `migrations/0011_pvp_daily_weekly_rewards.sql` | Recompensa diária (por grupo) e semanal (por tier) da Arena, mandadas pro Correio |
 | `functions/resolve-pvp-battle/index.ts` | Resolve 1 ataque (deploy como Edge Function) |
+| `../js/systems/mailbox.js` | Cliente: buscar/resgatar/apagar mensagens do Correio |
 | `../js/data/pvpConfig.js` | URL/chave do projeto + metadados dos tiers (nome/emoji/pontos-base) |
 | `../js/systems/pvp.js` | Cliente: login anônimo, sincronizar stats, buscar o tier, atacar |
 | `../js/ui/render.js` (`renderPvpTab`) | A tela da aba Arena PvP |
 | `../js/main.js` (`refreshPvpTab`/`handlePvpAttack`) | Liga a UI ao `systems/pvp.js` |
+
+## Como enviar uma mensagem pro Correio (manual, como Admin)
+
+Sem tela de admin — você manda direto pelo SQL Editor, rodando como
+`postgres` (ignora a RLS que bloqueia jogadores de inserir mensagem
+sozinhos). Exemplos:
+
+```sql
+-- Aviso pra TODO MUNDO, sem item.
+insert into public.pvp_mailbox (profile_id, title, body)
+select id, '🔧 Correção de bug', 'Corrigimos um problema na Arena PvP. Bom jogo!'
+from public.pvp_profiles;
+
+-- Recompensa pra TODO MUNDO (ex: comemoração de marco do jogo).
+insert into public.pvp_mailbox (profile_id, title, body, reward_type, reward_amount)
+select id, '🎉 Obrigado por jogar!', 'Uma lembrancinha por chegar até aqui.',
+       'egg', 20
+from public.pvp_profiles;
+
+-- Recompensa só pra quem está no Lendário.
+insert into public.pvp_mailbox (profile_id, title, body, reward_type, reward_amount)
+select id, '🏆 Prêmio especial', 'Você está entre os melhores do jogo!',
+       'random_card', 1
+from public.pvp_profiles where tier = 'lendario';
+```
+
+`reward_type`: `'none'` (padrão, sem item), `'card_fragment'`,
+`'pet_fragment'`, `'egg'` ou `'random_card'` (nesse último `reward_amount`
+é ignorado, sempre concede 1 carta aleatória). `reward2_type`/
+`reward2_amount` (opcionais) dão uma 2ª recompensa na MESMA mensagem —
+é assim que a recompensa diária da Arena manda fragmento de carta E de
+mascote juntos.
 
 ## Próximos passos possíveis (ainda não implementados)
 
