@@ -26,6 +26,9 @@ export async function fetchMailbox() {
   return data || [];
 }
 
+// reward_type/reward2_type possíveis (ver check constraint em
+// 0010/0013): 'none', 'card_fragment', 'pet_fragment', 'egg',
+// 'random_card', 'gold', 'esmeralda'.
 export function mailHasReward(message) {
   return message.reward_type !== 'none' || !!message.reward2_type;
 }
@@ -44,6 +47,10 @@ function applyMailReward(state, type, amount) {
     state.petFragments = (state.petFragments || 0) + amount;
   } else if (type === 'egg') {
     state.eggCount = (state.eggCount || 0) + amount;
+  } else if (type === 'gold') {
+    state.gold = (state.gold || 0) + amount;
+  } else if (type === 'esmeralda') {
+    state.cash = (state.cash || 0) + amount;
   } else if (type === 'random_card') {
     const card = CARDS[Math.floor(Math.random() * CARDS.length)];
     if (card) {
