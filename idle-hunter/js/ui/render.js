@@ -1927,7 +1927,7 @@ function pvpBoardRowHtml(pvp, tierInfo, row) {
   // recebe nada (real_rank vem null da RPC pra linha de bot).
   const reward = row.is_bot ? null : previewDailyArenaReward(pvp.myProfile?.tier, row.real_rank, row.real_player_count);
   const rewardLabel = reward
-    ? `<div class="desc pvp-reward-preview">🎁 ${formatInteger(reward.cardFragment)} frag. carta · ${formatInteger(reward.petFragment)} frag. mascote</div>`
+    ? `<div class="desc pvp-reward-preview">${CARD_FRAGMENT_ICON} ${formatInteger(reward.cardFragment)} · ${PET_FRAGMENT_ICON} ${formatInteger(reward.petFragment)}</div>`
     : '';
   return `
     <div class="achievement-card ${isSelf ? 'pvp-self-row' : ''}">
@@ -1963,7 +1963,7 @@ export function renderPvpTab(state, pvp) {
   // faz sentido mostrar depois de conectado (precisa saber o tier/grupo
   // do jogador pra sequer ter uma lista pra premiar).
   const countdownHtml = myProfile
-    ? `<p class="shop-note">🎁 Recompensa diária em <strong id="pvp-daily-countdown"></strong></p>`
+    ? `<p class="pvp-countdown">Recompensa diária em <strong id="pvp-daily-countdown"></strong></p>`
     : '';
 
   container.innerHTML = `
@@ -2074,8 +2074,10 @@ function pvpRankSectionHtml(rows, myId, extraLabelFn, rewardLabelFn) {
 function pvpWeeklyRewardLabel(row) {
   const reward = previewWeeklyArenaReward(row.tier, row.tier_position, row.tier_player_count);
   if (!reward) return null;
-  const mainLabel = reward.kind === 'random_card' ? '1 carta aleatória' : `${formatInteger(reward.amount)} frag. carta`;
-  return `🎁 ${mainLabel} · ${formatInteger(reward.eggs)} ovos`;
+  const mainLabel = reward.kind === 'random_card'
+    ? `${CARD_ICON} 1`
+    : `${CARD_FRAGMENT_ICON} ${formatInteger(reward.amount)}`;
+  return `${mainLabel} · ${EGG_ICON} ${formatInteger(reward.eggs)}`;
 }
 
 const RANKS_SECTIONS = {
@@ -2137,7 +2139,7 @@ export function renderRanksTab(ranksData, myProfile) {
   // Contador semanal só faz sentido na aba Arena — é onde a recompensa
   // semanal de tier (ver pvp_rank_arena) é mostrada.
   const weeklyCountdownHtml = activeSection === 'arena'
-    ? `<p class="shop-note">🎁 Recompensa semanal em <strong id="ranks-weekly-countdown"></strong></p>`
+    ? `<p class="pvp-countdown">Recompensa semanal em <strong id="ranks-weekly-countdown"></strong></p>`
     : '';
 
   container.innerHTML = `
