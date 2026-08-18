@@ -2033,31 +2033,47 @@ function pvpRankSectionHtml(rows, myId, extraLabelFn) {
   return html;
 }
 
+const RANKS_SECTIONS = {
+  arena: { label: '🏟️ Arena', title: '🏟️ Arena' },
+  level: { label: '⭐ Nível', title: '⭐ Nível de Caçador' },
+  transcend: { label: '🌌 Transcender', title: '🌌 Transcender' },
+};
+
+function ranksSectionListHtml(ranksData, myId) {
+  if (ranksData.activeSection === 'level') {
+    return pvpRankSectionHtml(ranksData.level, myId, (row) => `Nível ${formatNumber(row.hunter_level)}`);
+  }
+  if (ranksData.activeSection === 'transcend') {
+    return pvpRankSectionHtml(ranksData.transcend, myId, (row) => `🌌 ${formatInteger(row.transcend_count)}x`);
+  }
+  // Arena: nick+ícone (na linha, ver pvpRankRowHtml) + nível + vitórias +
+  // tier/pontuação — no Lendário a pontuação é omitida (row.rating vem
+  // null da RPC, mesma regra de "score oculto" de sempre), só a posição
+  // global (já mostrada no #rank de cada linha) representa o jogador ali.
+  return pvpRankSectionHtml(ranksData.arena, myId, (row) => {
+    const tierInfo = getPvpTierInfo(row.tier);
+    const scoreLabel = row.rating == null ? '' : ` · ⭐ ${formatInteger(row.rating)}`;
+    return `${tierInfo.emoji} ${tierInfo.label}${scoreLabel} · Nível ${formatNumber(row.hunter_level)} · 🏆 ${formatInteger(row.wins || 0)}`;
+  });
+}
+
 export function renderRanksTab(ranksData, myProfile) {
   const container = document.getElementById('tab-ranks');
   const myId = myProfile?.id;
+  const activeSection = RANKS_SECTIONS[ranksData.activeSection] ? ranksData.activeSection : 'arena';
 
-  const arenaHtml = pvpRankSectionHtml(ranksData.arena, myId, (row) => {
-    const tierInfo = getPvpTierInfo(row.tier);
-    const scoreLabel = row.rating == null ? '' : ` · ⭐ ${formatInteger(row.rating)}`;
-    return `${tierInfo.emoji} ${tierInfo.label}${scoreLabel}`;
-  });
-  const levelHtml = pvpRankSectionHtml(ranksData.level, myId, (row) => `Nível ${formatNumber(row.hunter_level)}`);
-  const transcendHtml = pvpRankSectionHtml(ranksData.transcend, myId, (row) => `🌌 ${formatInteger(row.transcend_count)}x`);
+  const tabsHtml = Object.entries(RANKS_SECTIONS).map(([key, info]) => `
+    <button class="pvp-rank-tab-btn ${key === activeSection ? 'active' : ''}" data-ranks-section="${key}">${info.label}</button>
+  `).join('');
 
   container.innerHTML = `
     <div class="section-banner">🏆 Ranks</div>
-    <p class="shop-note">Top 100 de cada rank — se você não estiver entre os 100, sua posição aparece no fim da lista.</p>
+    <p class="shop-note">Top 100 do rank — se você não estiver entre os 100, sua posição aparece no fim da lista.</p>
     <button class="transcend-btn" data-ranks-refresh ${ranksData.loading ? 'disabled' : ''}>🔄 ${ranksData.loaded ? 'Atualizar' : 'Carregar Ranks'}</button>
 
-    <h4 class="shop-section-title">🏟️ Arena</h4>
-    <div class="achievement-list">${arenaHtml}</div>
-
-    <h4 class="shop-section-title">⭐ Nível de Caçador</h4>
-    <div class="achievement-list">${levelHtml}</div>
-
-    <h4 class="shop-section-title">🌌 Transcender</h4>
-    <div class="achievement-list">${transcendHtml}</div>
+    <div class="pvp-rank-tabs">${tabsHtml}</div>
+    <h4 class="shop-section-title">${RANKS_SECTIONS[activeSection].title}</h4>
+    <div class="achievement-list">${ranksSectionListHtml({ ...ranksData, activeSection }, myId)}</div>
   `;
 }
 
