@@ -49,7 +49,7 @@ import {
   EGG_ICON, PET_FRAGMENT_ICON,
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
   renderTranscendTab, renderPvpTab, showPvpBattleModal, showPvpCombatPickerModal, renderRanksTab,
-  renderMailboxTab, showMailDetailModal,
+  renderMailboxTab, showMailDetailModal, renderAchievementsTab,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -284,6 +284,7 @@ function fullRefresh() {
   renderCardsTab(state);
   renderEventsTabNow();
   renderShopTab(state, activeShopSubTab);
+  renderAchievementsTab(state);
   renderPetsTabNow();
   renderTranscendTab(state);
   renderPvpTab(state, pvpData);
@@ -418,7 +419,7 @@ function tick() {
 // jeito de sempre — só que se veio do popup, o botão "Outros" (não a aba
 // real) é quem fica marcado como ativo no nav principal, já que Cartas/Loja
 // não têm mais vaga própria lá.
-const MORE_MENU_TAB_IDS = ['cards', 'shop', 'transcend', 'pvp', 'ranks', 'mailbox'];
+const MORE_MENU_TAB_IDS = ['cards', 'shop', 'transcend', 'pvp', 'ranks', 'mailbox', 'achievements'];
 
 function closeMoreMenu() {
   document.getElementById('more-menu').classList.add('hidden');
@@ -1455,26 +1456,6 @@ function wireShopTabEvents() {
       return;
     }
 
-    const claimBtn = e.target.closest('[data-claim-achievement]');
-    if (claimBtn) {
-      if (claimAchievement(state, claimBtn.dataset.claimAchievement)) {
-        showToast('🏆 Conquista resgatada!');
-        renderTopBar(state);
-        renderShopTab(state, activeShopSubTab);
-      }
-      return;
-    }
-
-    const adBtn = e.target.closest('#watch-ad-btn');
-    if (adBtn) {
-      if (watchAd(state)) {
-        showToast(`🎬 +${formatNumber(AD_WATCH_CASH_REWARD)} ${ESMERALDA_ICON} Esmeralda!`);
-        renderTopBar(state);
-        renderShopTab(state, activeShopSubTab);
-      }
-      return;
-    }
-
     const dpsAdBtn = e.target.closest('[data-watch-dps-ad]');
     if (dpsAdBtn) {
       if (watchDpsBoostAd(state)) {
@@ -1503,6 +1484,31 @@ function wireShopTabEvents() {
         renderCardsTab(state);
       }
       return;
+    }
+  });
+}
+
+// Conquistas — aba própria dentro de "Outros" (antes era uma sub-aba da
+// Loja, ver renderAchievementsTab em ui/render.js).
+function wireAchievementsTabEvents() {
+  document.getElementById('tab-achievements').addEventListener('click', (e) => {
+    const claimBtn = e.target.closest('[data-claim-achievement]');
+    if (claimBtn) {
+      if (claimAchievement(state, claimBtn.dataset.claimAchievement)) {
+        showToast('🏆 Conquista resgatada!');
+        renderTopBar(state);
+        renderAchievementsTab(state);
+      }
+      return;
+    }
+
+    const adBtn = e.target.closest('#watch-ad-btn');
+    if (adBtn) {
+      if (watchAd(state)) {
+        showToast(`🎬 +${formatNumber(AD_WATCH_CASH_REWARD)} ${ESMERALDA_ICON} Esmeralda!`);
+        renderTopBar(state);
+        renderAchievementsTab(state);
+      }
     }
   });
 }
@@ -1861,6 +1867,7 @@ function init() {
   wireCardsTabEvents();
   wireEventTabEvents();
   wireShopTabEvents();
+  wireAchievementsTabEvents();
   wireTranscendTabEvents();
   wirePvpTabEvents();
   wireRanksTabEvents();

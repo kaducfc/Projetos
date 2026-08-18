@@ -1615,14 +1615,13 @@ export function renderEventsTab(state, arenaRunRemainingMs = null, expeditionCar
 }
 
 // ---------------------------------------------------------------
-// Achievements content — "earn Cash" side (achievement claims + the
-// simulated ad-watch reward). Folded into the Shop tab as a 3rd sub-tab
-// (see renderShopTab below) for now — the bottom nav only has room for
-// Inventário/Forja/Caçada/Aprimoramento/Cartas/Loja, so Conquistas rides
-// along inside Loja until it earns its own slot.
+// Conquistas — aba própria dentro de "Outros" (antes vivia como uma
+// sub-aba da Loja). Claim de conquista + anúncio simulado pra Esmeralda
+// (ver wireAchievementsTabEvents em main.js).
 // ---------------------------------------------------------------
 
-function achievementsContentHtml(state) {
+export function renderAchievementsTab(state) {
+  const container = document.getElementById('tab-achievements');
   const cooldownMs = adWatchCooldownRemaining(state);
   const adReady = cooldownMs <= 0;
 
@@ -1642,7 +1641,8 @@ function achievementsContentHtml(state) {
     </div>`;
   }).join('');
 
-  return `
+  container.innerHTML = `
+    <div class="section-banner">🏆 Conquistas</div>
     <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>
     <button id="watch-ad-btn" class="watch-ad-btn" ${adReady ? '' : 'disabled'}>
       ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' ' + ESMERALDA_ICON + ')' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
@@ -1653,16 +1653,14 @@ function achievementsContentHtml(state) {
 
 // ---------------------------------------------------------------
 // Shop tab: Cash sub-tab (spend on gold packs, plus a disabled real-money
-// package stub), Event-currency sub-tab (per-boss material bundles), and
-// Conquistas (see achievementsContentHtml above).
-// `activeSubTab` is owned by main.js.
+// package stub), Event-currency sub-tab (per-boss material bundles), e
+// Despertar. `activeSubTab` is owned by main.js.
 // ---------------------------------------------------------------
 
 export function renderShopTab(state, activeSubTab) {
   const container = document.getElementById('tab-shop');
   let body;
   if (activeSubTab === 'event') body = eventShopHtml(state);
-  else if (activeSubTab === 'achievements') body = achievementsContentHtml(state);
   else if (activeSubTab === 'awakening') body = awakeningShopHtml(state);
   else body = cashShopHtml(state);
 
@@ -1672,7 +1670,6 @@ export function renderShopTab(state, activeSubTab) {
       <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">${ESMERALDA_ICON} Esmeralda</button>
       <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">${EVENT_ICON} Evento</button>
       <button class="inner-subtab-btn ${activeSubTab === 'awakening' ? 'active' : ''}" data-shop-subtab="awakening">${AWAKENING_SHARD_EMOJI} Despertar</button>
-      <button class="inner-subtab-btn ${activeSubTab === 'achievements' ? 'active' : ''}" data-shop-subtab="achievements">🏆 Conquistas</button>
     </div>
     ${body}
   `;
