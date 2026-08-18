@@ -84,7 +84,7 @@ export function recycleCard(state, cardId) {
 
 export function canCraftCard(state, cardId) {
   const card = getCard(cardId);
-  if (!card) return false;
+  if (!card || card.noCraft) return false;
   return (state.materials[CARD_FRAGMENT_ID] || 0) >= getCardCraftCost(card);
 }
 
