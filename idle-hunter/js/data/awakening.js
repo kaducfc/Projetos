@@ -1,4 +1,4 @@
-import { ZONE_COUNT } from './monsters.js';
+import { SUPREMO_CARD_ID } from './cards.js';
 
 // Transcender (ver systems/awakening.js): um reset de prestígio liberado
 // depois de derrotar pela 1ª vez o chefe da última zona. Cada Transcender
@@ -9,27 +9,13 @@ export const AWAKENING_SHARD_ID = 'awakening_shard';
 export const AWAKENING_SHARD_NAME = 'Fragmento do Despertar';
 export const AWAKENING_SHARD_EMOJI = '🌌';
 
-// Zona usada pra escalar o equipamento da Loja do Despertar — a última
-// (mesmo poder-base do fim de jogo), sempre Mítico garantido (ver
-// systems/awakening.js buyAwakeningItem/rollDroppedItem forcedRarityId).
-export const AWAKENING_ITEM_ZONE_INDEX = ZONE_COUNT - 1;
-
-// Catálogo inicial da Loja do Despertar — 3 tipos (equipamento/carta/
-// mascote), cada um sempre no MELHOR resultado possível daquele sistema
-// (Mítico garantido), por isso o preço alto em Fragmentos. Primeira
-// leva, fácil de re-tunar/expandir depois (mesmo espírito de
-// CASH_SHOP_ITEMS em data/shop.js).
+// Catálogo da Loja do Despertar — por enquanto só a carta Supremo
+// (placeholder; o usuário vai criar os itens personalizados depois). Cada
+// entrada carrega `kind` + o id do que ela concede, lido por
+// systems/awakening.js buyAwakeningItem.
 export const AWAKENING_SHOP_ITEMS = [
   {
-    id: 'awk_gear', name: 'Relíquia do Despertar', emoji: '🌌', kind: 'gear', cost: 5,
-    description: 'Um equipamento Mítico garantido, do mesmo poder do fim de jogo.',
-  },
-  {
-    id: 'awk_card', name: 'Carta Ancestral', emoji: '🃏', kind: 'card', cost: 8,
-    description: 'Uma carta de chefe garantida — prioriza uma que você ainda não tem.',
-  },
-  {
-    id: 'awk_pet_egg', name: 'Ovo Primordial', emoji: '🥚', kind: 'pet_egg', cost: 10,
-    description: 'Um mascote Mítico garantido, pronto pra equipar.',
+    id: 'awk_supremo_card', name: 'Supremo', emoji: '🌌', kind: 'card', cardId: SUPREMO_CARD_ID, cost: 1,
+    description: '+50% de DPS quando equipada.',
   },
 ];

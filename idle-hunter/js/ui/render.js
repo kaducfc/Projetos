@@ -1093,7 +1093,9 @@ function cardDetailHtml(state, card) {
           <div class="card-fragment-count">${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
           <div class="card-fragment-actions">
             ${owned > 0 ? `<button class="modal-action-btn" data-recycle-card="${card.id}" ${canRecycle ? '' : 'disabled'}>♻️ Reciclar (+${recycleValue} ${CARD_FRAGMENT_ICON})</button>` : ''}
-            <button class="modal-action-btn" data-craft-card="${card.id}" ${canCraft ? '' : 'disabled'}>🛠️ Craftar (${craftCost} ${CARD_FRAGMENT_ICON})</button>
+            ${card.noCraft
+              ? `<div class="card-detail-status">🌌 Só disponível na Loja do Despertar (aba Despertar da Loja)</div>`
+              : `<button class="modal-action-btn" data-craft-card="${card.id}" ${canCraft ? '' : 'disabled'}>🛠️ Craftar (${craftCost} ${CARD_FRAGMENT_ICON})</button>`}
           </div>
         </div>
       </div>
@@ -1799,34 +1801,42 @@ export function showVipBenefitsModal() {
 }
 
 // ---------------------------------------------------------------
-// Despertar (aba "🌌 Despertar" dentro da Loja, ver renderShopTab): status
-// do Transcender (ver systems/awakening.js) + a Loja do Despertar em si,
-// onde o Fragmento do Despertar acumulado compra equipamento/carta/
-// mascote Mítico garantido (ver data/awakening.js AWAKENING_SHOP_ITEMS).
+// Despertar: 2 lugares separados agora —
+// 1) aba "🌌 Transcender", dentro do popup "Outros" (ver renderTranscendTab
+//    abaixo, chamada de main.js) — status/botão do Transcender em si.
+// 2) aba "🌌 Despertar" dentro da Loja (ver awakeningShopHtml) — só a Loja
+//    do Despertar, onde o Fragmento do Despertar acumulado compra os itens
+//    de data/awakening.js AWAKENING_SHOP_ITEMS.
 // ---------------------------------------------------------------
 
-function transcendStatusHtml(state) {
+export function renderTranscendTab(state) {
+  const container = document.getElementById('tab-transcend');
   const count = getTranscendCount(state);
   const countLine = count > 0
     ? `<p class="shop-note">Você já Transcendeu ${count}x.</p>`
     : '';
 
-  if (canTranscend(state)) {
-    return `
+  const statusHtml = canTranscend(state)
+    ? `
       <div class="transcend-status-card ready">
         <div class="name">🌌 Transcender está disponível!</div>
         <p class="shop-note">Reinicie sua jornada e ganhe +1 ${AWAKENING_SHARD_EMOJI} ${AWAKENING_SHARD_NAME}.</p>
         <button class="transcend-btn" data-open-transcend-confirm>🌌 Transcender</button>
       </div>
+      ${countLine}`
+    : `
+      <div class="transcend-status-card locked">
+        <div class="name">🌌 Transcender</div>
+        <p class="shop-note">Derrote o chefe da última zona (Malgorath) pela 1ª vez pra liberar.</p>
+      </div>
       ${countLine}`;
-  }
 
-  return `
-    <div class="transcend-status-card locked">
-      <div class="name">🌌 Transcender</div>
-      <p class="shop-note">Derrote o chefe da última zona (Malgorath) pela 1ª vez pra liberar.</p>
-    </div>
-    ${countLine}`;
+  container.innerHTML = `
+    <div class="section-banner">🌌 Transcender</div>
+    ${statusHtml}
+    <div class="shop-balance">${AWAKENING_SHARD_EMOJI} Você tem <strong>${formatNumber(getAwakeningShards(state))}</strong> ${AWAKENING_SHARD_NAME}</div>
+    <p class="shop-note">Só se ganha ${AWAKENING_SHARD_NAME} Transcendendo — 1 garantido por vez. Gaste na aba 🌌 Despertar da Loja.</p>
+  `;
 }
 
 function awakeningShopItemCardHtml(state, item) {
@@ -1846,10 +1856,8 @@ function awakeningShopHtml(state) {
   const itemsHtml = AWAKENING_SHOP_ITEMS.map((item) => awakeningShopItemCardHtml(state, item)).join('');
 
   return `
-    ${transcendStatusHtml(state)}
-
     <div class="shop-balance">${AWAKENING_SHARD_EMOJI} Você tem <strong>${formatNumber(getAwakeningShards(state))}</strong> ${AWAKENING_SHARD_NAME}</div>
-    <p class="shop-note">Só se ganha ${AWAKENING_SHARD_NAME} Transcendendo — 1 garantido por vez.</p>
+    <p class="shop-note">Ganhe ${AWAKENING_SHARD_NAME} na aba 🌌 Transcender (dentro de Outros).</p>
 
     <h4 class="shop-section-title">Loja do Despertar</h4>
     <div class="shop-item-grid">${itemsHtml}</div>

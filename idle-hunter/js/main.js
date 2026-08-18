@@ -6,7 +6,6 @@ import {
   resolveDoubleHit,
 } from './systems/combat.js';
 import { findMaterialInfo, BOSSES, ZONE_COUNT } from './data/monsters.js';
-import { getPetSpecies } from './data/pets.js';
 import { canTranscend, unlockTranscend, transcend, buyAwakeningItem } from './systems/awakening.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot, findEquippedSlotId } from './systems/equipment.js';
@@ -41,6 +40,7 @@ import {
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   EGG_ICON, PET_FRAGMENT_ICON,
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
+  renderTranscendTab,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -251,6 +251,7 @@ function fullRefresh() {
   renderEventsTabNow();
   renderShopTab(state, activeShopSubTab);
   renderPetsTabNow();
+  renderTranscendTab(state);
 }
 
 function refreshCombatOnly() {
@@ -290,7 +291,8 @@ function handleKillEvent(event) {
   // atual (ver systems/awakening.js unlockTranscend/canTranscend) — só
   // dispara uma vez (unlockTranscend já é no-op se já tiver liberado).
   if (event.wasBoss && event.zoneIndex === ZONE_COUNT - 1 && unlockTranscend(state)) {
-    showToast('🌌 Transcender desbloqueado! Veja a aba Despertar na Loja.');
+    showToast('🌌 Transcender desbloqueado! Veja a aba Transcender em Outros.');
+    renderTranscendTab(state);
   }
   renderTopBar(state);
   renderHunterLevel(state);
@@ -381,7 +383,7 @@ function tick() {
 // jeito de sempre — só que se veio do popup, o botão "Outros" (não a aba
 // real) é quem fica marcado como ativo no nav principal, já que Cartas/Loja
 // não têm mais vaga própria lá.
-const MORE_MENU_TAB_IDS = ['cards', 'shop'];
+const MORE_MENU_TAB_IDS = ['cards', 'shop', 'transcend'];
 
 function closeMoreMenu() {
   document.getElementById('more-menu').classList.add('hidden');
@@ -1403,30 +1405,29 @@ function wireShopTabEvents() {
     const buyAwakeningBtn = e.target.closest('[data-buy-awakening]');
     if (buyAwakeningBtn) {
       const result = buyAwakeningItem(state, buyAwakeningBtn.dataset.buyAwakening);
-      if (result) {
-        if (result.kind === 'gear') {
-          const dropped = state.inventory.find((i) => i.uid === result.uid);
-          const item = dropped ? getItem(dropped.itemId) : null;
-          showToast(`🌌 ${item?.name ?? 'Item'} (Mítico) recebido!`);
-        } else if (result.kind === 'card') {
-          const card = getCard(result.cardId);
-          showToast(`🌌 Carta recebida: ${card?.name ?? ''}!`);
-        } else if (result.kind === 'pet_egg') {
-          const species = getPetSpecies(result.speciesId);
-          showToast(`🌌 Mascote Mítico recebido: ${species?.name ?? ''}!`);
-        }
-        renderTopBar(state);
+      if (result?.kind === 'card') {
+        const card = getCard(result.cardId);
+        showToast(`🌌 Carta recebida: ${card?.name ?? ''}!`);
         renderShopTab(state, activeShopSubTab);
-        renderInventoryTabNow();
-        renderPetsTabNow();
+        renderCardsTab(state);
       }
       return;
     }
+  });
+}
 
+// ---------------------------------------------------------------
+// Transcender: aba própria dentro de "Outros" (ver #tab-transcend em
+// index.html + MORE_MENU_TAB_IDS acima) — só o botão de abrir o modal de
+// confirmação; a compra na Loja do Despertar continua em
+// wireShopTabEvents acima (aba "Despertar" da Loja).
+// ---------------------------------------------------------------
+
+function wireTranscendTabEvents() {
+  document.getElementById('tab-transcend').addEventListener('click', (e) => {
     const openTranscendBtn = e.target.closest('[data-open-transcend-confirm]');
     if (openTranscendBtn) {
       if (canTranscend(state)) showTranscendConfirmModal(state);
-      return;
     }
   });
 }
@@ -1481,7 +1482,8 @@ function showOfflineProgressIfAny() {
   // até a próxima ação disparar um re-render.
   if (progress.itemDropCount > 0) renderInventoryTabNow();
   if (!wasTranscendUnlocked && canTranscend(state)) {
-    showToast('🌌 Transcender desbloqueado! Veja a aba Despertar na Loja.');
+    showToast('🌌 Transcender desbloqueado! Veja a aba Transcender em Outros.');
+    renderTranscendTab(state);
   }
 
   const hours = Math.floor(progress.elapsedSeconds / 3600);
@@ -1529,6 +1531,7 @@ function init() {
   wireCardsTabEvents();
   wireEventTabEvents();
   wireShopTabEvents();
+  wireTranscendTabEvents();
   wirePetsTabEvents();
   wireSkillsTabEvents();
   resetPlayerHp();
