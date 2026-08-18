@@ -73,6 +73,7 @@ interface Snapshot {
   crit_chance: number;
   crit_damage: number;
   dodge_chance: number;
+  pet_dps: number;
 }
 
 function clampSnapshot(s: Snapshot): Snapshot {
@@ -83,18 +84,32 @@ function clampSnapshot(s: Snapshot): Snapshot {
     crit_chance: Math.min(Math.max(0, s.crit_chance), SANE_MAX.crit_chance),
     crit_damage: Math.min(Math.max(0, s.crit_damage), SANE_MAX.crit_damage),
     dodge_chance: Math.min(Math.max(0, s.dodge_chance), SANE_MAX.dodge_chance),
+    pet_dps: Math.min(Math.max(0, s.pet_dps || 0), SANE_MAX.dps),
   };
 }
 
-/// DPS "esperado" de A contra B — valor esperado em vez de rolar dado
-/// (crítico/esquiva são probabilísticos no combate ao vivo, ver
-/// resolveHit/rollDodge em js/systems/combat.js), pra não depender de
-/// nenhum RNG que uma das partes pudesse alegar injusto.
-function effectiveDps(attacker: Snapshot, defender: Snapshot): number {
+/// Fator de crítico/esquiva/armadura de A atacando B — o MESMO fator (valor
+/// esperado, não RNG — ver resolveHit/rollDodge em js/systems/combat.js)
+/// vale tanto pro dano do próprio caçador quanto do mascote (o mascote
+/// crítica com a mesma chance/dano do caçador, ver resolvePetHit em
+/// js/systems/combat.js), então dá pra escalar os 2 pelo mesmo número.
+function combatMultiplier(attacker: Snapshot, defender: Snapshot): number {
   const critMultiplier = 1 + (attacker.crit_chance / 100) * (attacker.crit_damage / 100);
   const dodgeMultiplier = 1 - Math.min(0.95, defender.dodge_chance / 100);
   const armorMultiplier = 1 - armorReduction(defender.armor);
-  return Math.max(0, attacker.dps * critMultiplier * dodgeMultiplier * armorMultiplier);
+  return Math.max(0, critMultiplier * dodgeMultiplier * armorMultiplier);
+}
+
+/// DPS "esperado" de A contra B, já separado em dano do próprio caçador +
+/// dano do mascote ativo (ver getBestEquippedPet em js/systems/pets.js) —
+/// devolvido em 2 pedaços pra alimentar as estatísticas pós-combate
+/// (ver pvpResultContentHtml em js/ui/render.js), mas o total é o que
+/// decide quem vence (ver timeToKill mais abaixo).
+function effectiveDpsBreakdown(attacker: Snapshot, defender: Snapshot) {
+  const multiplier = combatMultiplier(attacker, defender);
+  const character = attacker.dps * multiplier;
+  const pet = attacker.pet_dps * multiplier;
+  return { character, pet, total: character + pet };
 }
 
 function timeToKill(hp: number, dps: number): number {
@@ -249,15 +264,29 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'stale_opponent' }, 409);
   }
 
-  // dps efetivo de cada lado contra o outro — devolvido na resposta pro
-  // cliente animar a "barra de HP descendo" na janela de batalha (ver
-  // js/ui/render.js showPvpBattleModal) com os números REAIS da luta, não
-  // um enfeite aleatório.
-  const attackerEffectiveDps = effectiveDps(attackerSnap, defenderSnap);
-  const defenderEffectiveDps = effectiveDps(defenderSnap, attackerSnap);
+  // dps efetivo de cada lado contra o outro (caçador + mascote já
+  // separados) — devolvido na resposta pro cliente animar a "barra de HP
+  // descendo" na janela de batalha (ver js/ui/render.js showPvpBattleModal)
+  // com os números REAIS da luta, e também pras estatísticas pós-combate
+  // (dano causado, dano do mascote — ver pvpResultContentHtml).
+  const attackerBreakdown = effectiveDpsBreakdown(attackerSnap, defenderSnap);
+  const defenderBreakdown = effectiveDpsBreakdown(defenderSnap, attackerSnap);
+  const attackerEffectiveDps = attackerBreakdown.total;
+  const defenderEffectiveDps = defenderBreakdown.total;
   const attackerTtk = timeToKill(defenderSnap.max_hp, attackerEffectiveDps);
   const defenderTtk = timeToKill(attackerSnap.max_hp, defenderEffectiveDps);
   const attackerWins = attackerTtk < defenderTtk;
+
+  // A luta acaba quando o lado perdedor chega a 0 de HP — é esse instante
+  // (não um tempo fixo) que define quanto dano cada lado de fato causou.
+  // Os 2 lados com 0 dps (nunca deveria acontecer de verdade, HP mínimo é
+  // 1 — ver clampSnapshot) dariam Infinity; cai pra 0 dano nesse caso raro.
+  const rawFightDuration = Math.min(attackerTtk, defenderTtk);
+  const fightDurationSec = Number.isFinite(rawFightDuration) ? rawFightDuration : 0;
+  const attackerDamageDealt = Math.round(attackerBreakdown.total * fightDurationSec);
+  const attackerPetDamageDealt = Math.round(attackerBreakdown.pet * fightDurationSec);
+  const defenderDamageDealt = Math.round(defenderBreakdown.total * fightDurationSec);
+  const defenderPetDamageDealt = Math.round(defenderBreakdown.pet * fightDurationSec);
 
   const swing = computeSwing(attackerBoardRow.position, defenderBoardRow.position, board.length);
   const attackerDelta = attackerWins ? swing.attackerWinDelta : swing.attackerLossDelta;
@@ -336,5 +365,16 @@ Deno.serve(async (req) => {
     defenderEffectiveDps,
     attackerMaxHp: attackerSnap.max_hp,
     defenderMaxHp: defenderSnap.max_hp,
+    // Estatísticas pós-combate (ver pvpResultContentHtml em
+    // js/ui/render.js) — dano total já inclui a fatia do mascote,
+    // attackerPetDamageDealt/defenderPetDamageDealt são só a fatia dele.
+    attackerDamageDealt,
+    attackerPetDamageDealt,
+    attackerCritChance: attackerSnap.crit_chance,
+    attackerDodgeChance: attackerSnap.dodge_chance,
+    defenderDamageDealt,
+    defenderPetDamageDealt,
+    defenderCritChance: defenderSnap.crit_chance,
+    defenderDodgeChance: defenderSnap.dodge_chance,
   });
 });

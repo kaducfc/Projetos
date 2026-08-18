@@ -63,6 +63,7 @@ export async function syncProfile(state, stats, playerName, profileIconId) {
       crit_chance: stats.critChance,
       crit_damage: stats.critDamage,
       dodge_chance: stats.dodgeChance,
+      pet_dps: stats.petDps || 0,
       updated_at: new Date().toISOString(),
     }),
   ]);
