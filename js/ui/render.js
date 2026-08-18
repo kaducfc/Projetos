@@ -33,6 +33,8 @@ import {
 import { getMaxOfflineSeconds } from '../systems/offline.js';
 import { AWAKENING_SHOP_ITEMS, AWAKENING_SHARD_NAME, AWAKENING_SHARD_EMOJI } from '../data/awakening.js';
 import { canTranscend, getTranscendCount, getAwakeningShards, canBuyAwakeningItem } from '../systems/awakening.js';
+import { PVP_MAX_ENTRIES, getPvpTierInfo } from '../data/pvpConfig.js';
+import { projectPvpEntries } from '../systems/pvp.js';
 import {
   CARDS, getCard, CARD_DISCOVERY_CASH_REWARD,
   CARD_FRAGMENT_ID, CARD_FRAGMENT_NAME,
@@ -1882,8 +1884,11 @@ export function showTranscendConfirmModal(state) {
 // todo resto do jogo, os dados aqui NÃO vêm de `state` (o save local) — vêm
 // do Supabase (ver systems/pvp.js), cacheados em memória por main.js
 // (pvpData) porque buscar é assíncrono e o resto do jogo renderiza tudo
-// síncrono. `pvp` é esse cache: { myProfile, leaderboard, opponents,
-// loading, attackingId }.
+// síncrono. `pvp` é esse cache: { myProfile, board, loading, attackingId }
+// — `board` é o retorno de fetchTierBoard(tier): todo jogador de verdade
+// daquele tier + os bots ainda visíveis, já ordenado por posição (ver
+// pvp_tier_board em supabase/migrations/0002_pvp_tiers.sql). É a MESMA
+// lista pro ranking e pra escolher quem atacar — o tier é o pool inteiro.
 // ---------------------------------------------------------------
 
 function pvpProfileIconHtml(iconId) {
@@ -1891,85 +1896,110 @@ function pvpProfileIconHtml(iconId) {
   return `<span class="icon">${iconMarkup(icon.image, '', icon.name)}</span>`;
 }
 
-function pvpMyProfileCardHtml(myProfile) {
+function pvpEntriesLabel(myProfile) {
+  const { current, msUntilNext } = projectPvpEntries(myProfile.pvp_entries, myProfile.pvp_entries_updated_at);
+  return msUntilNext == null
+    ? `${current}/${PVP_MAX_ENTRIES} (cheio)`
+    : `${current}/${PVP_MAX_ENTRIES} (próxima em ${formatHoursMinutes(msUntilNext)})`;
+}
+
+function pvpMyStatusHtml(myProfile, tierInfo) {
+  const scoreLine = tierInfo.hiddenScore
+    ? 'Pontuação oculta nesse tier — só a posição conta.'
+    : `⭐ ${formatNumber(myProfile.rating)} pontos`;
   return `
     <div class="achievement-card">
       ${pvpProfileIconHtml(myProfile.icon_id)}
       <div class="info">
-        <div class="name">${escapeHtml(myProfile.nick)}</div>
-        <div class="desc">Nível ${formatNumber(myProfile.hunter_level)} · ⭐ Rating ${formatNumber(myProfile.rating)}</div>
+        <div class="name">${escapeHtml(myProfile.nick)} · ${tierInfo.emoji} ${tierInfo.label}</div>
+        <div class="desc">Nível ${formatNumber(myProfile.hunter_level)} · ${scoreLine}</div>
+        <div class="desc">🎟️ Entradas: ${pvpEntriesLabel(myProfile)}</div>
       </div>
     </div>`;
 }
 
-function pvpOpponentRowHtml(pvp, opponent) {
-  const attacking = pvp.attackingId === opponent.id;
+function pvpBoardRowHtml(pvp, tierInfo, row) {
+  const isSelf = !row.is_bot && pvp.myProfile && row.entity_id === pvp.myProfile.id;
+  const attacking = pvp.attackingId === row.entity_id;
+  const scoreLabel = tierInfo.hiddenScore ? '' : ` · ⭐ ${formatNumber(row.rating)}`;
+  const levelLabel = row.is_bot ? 'Bot' : `Nível ${formatNumber(row.hunter_level)}`;
+  const attackBtn = isSelf
+    ? '<span class="pvp-self-tag">Você</span>'
+    : `<button data-pvp-attack="${row.entity_id}" data-pvp-attack-bot="${row.is_bot ? '1' : '0'}" ${attacking ? 'disabled' : ''}>${attacking ? '⏳' : '⚔️ Atacar'}</button>`;
   return `
-    <div class="achievement-card">
-      ${pvpProfileIconHtml(opponent.icon_id)}
+    <div class="achievement-card ${isSelf ? 'pvp-self-row' : ''}">
+      <span class="pvp-rank">#${row.position}</span>
+      ${pvpProfileIconHtml(row.icon_id)}
       <div class="info">
-        <div class="name">${escapeHtml(opponent.nick)}</div>
-        <div class="desc">Nível ${formatNumber(opponent.hunter_level)} · ⭐ Rating ${formatNumber(opponent.rating)}</div>
+        <div class="name">${escapeHtml(row.nick)}</div>
+        <div class="desc">${levelLabel}${scoreLabel}</div>
       </div>
-      <button data-pvp-attack="${opponent.id}" ${attacking ? 'disabled' : ''}>${attacking ? '⏳' : '⚔️ Atacar'}</button>
-    </div>`;
-}
-
-function pvpLeaderboardRowHtml(entry, selfId) {
-  return `
-    <div class="pvp-leaderboard-row ${entry.id === selfId ? 'self' : ''}">
-      <span class="pvp-rank">#${entry.rank}</span>
-      ${pvpProfileIconHtml(entry.icon_id)}
-      <span class="pvp-nick">${escapeHtml(entry.nick)}</span>
-      <span class="pvp-rating">⭐ ${formatNumber(entry.rating)}</span>
+      ${attackBtn}
     </div>`;
 }
 
 export function renderPvpTab(state, pvp) {
   const container = document.getElementById('tab-pvp');
-  const selfId = pvp.myProfile?.id ?? null;
+  const myProfile = pvp.myProfile;
+  const tierInfo = getPvpTierInfo(myProfile?.tier);
 
-  const opponentsHtml = pvp.opponents.length
-    ? pvp.opponents.map((o) => pvpOpponentRowHtml(pvp, o)).join('')
-    : `<p class="shop-note">${pvp.myProfile ? 'Nenhum oponente com rating parecido agora — tente sincronizar de novo mais tarde.' : ''}</p>`;
-
-  const leaderboardHtml = pvp.leaderboard.length
-    ? pvp.leaderboard.map((e, i) => pvpLeaderboardRowHtml({ ...e, rank: i + 1 }, selfId)).join('')
-    : '<p class="shop-note">Ranking vazio por enquanto.</p>';
-
-  const connectHtml = pvp.myProfile
-    ? pvpMyProfileCardHtml(pvp.myProfile)
+  const connectHtml = myProfile
+    ? pvpMyStatusHtml(myProfile, tierInfo)
     : `<p class="shop-note">${pvp.loading ? 'Conectando à Arena...' : 'Conecte-se pra sincronizar suas stats e desafiar outros jogadores.'}</p>`;
+
+  const boardHtml = pvp.board.length
+    ? pvp.board.map((row) => pvpBoardRowHtml(pvp, tierInfo, row)).join('')
+    : `<p class="shop-note">${myProfile ? 'Ninguém nesse tier ainda — sincronize de novo em instantes.' : ''}</p>`;
 
   container.innerHTML = `
     <div class="section-banner">🏟️ Arena PvP</div>
-    <p class="shop-note">PvP assíncrono: você ataca a última cópia salva das stats de outro jogador — ele não precisa estar online.</p>
+    <p class="shop-note">PvP assíncrono: você ataca a última cópia salva das stats de outro jogador (ou um bot) — ele não precisa estar online.</p>
     ${connectHtml}
-    <button class="transcend-btn" data-pvp-refresh ${pvp.loading ? 'disabled' : ''}>🔄 ${pvp.myProfile ? 'Sincronizar Stats' : 'Conectar à Arena'}</button>
+    <button class="transcend-btn" data-pvp-refresh ${pvp.loading ? 'disabled' : ''}>🔄 ${myProfile ? 'Sincronizar Stats' : 'Conectar à Arena'}</button>
 
-    <h4 class="shop-section-title">🎯 Oponentes</h4>
-    <div class="achievement-list">${opponentsHtml}</div>
-
-    <h4 class="shop-section-title">🏆 Ranking</h4>
-    <div class="pvp-leaderboard">${leaderboardHtml}</div>
+    <h4 class="shop-section-title">${tierInfo.emoji} Tier ${tierInfo.label}</h4>
+    <div class="achievement-list">${boardHtml}</div>
   `;
 }
 
 export function showPvpBattleResultModal(result) {
   if (result.error) {
-    const message = result.error === 'cooldown'
-      ? `⏳ Espere ${Math.ceil((result.retryAfterMs || 0) / 1000)}s pra atacar de novo.`
-      : '❌ Não foi possível atacar agora. Tente sincronizar de novo.';
+    let message;
+    if (result.error === 'no_entries') {
+      message = `⏳ Sem entradas agora. Próxima em ${formatHoursMinutes(result.retryAfterMs || 0)}.`;
+    } else if (result.error === 'different_tier' || result.error === 'stale_opponent') {
+      message = '❌ Esse oponente não está mais nesse tier — sincronize de novo.';
+    } else {
+      message = '❌ Não foi possível atacar agora. Tente sincronizar de novo.';
+    }
     showModal('⚔️ Arena PvP', `<p>${message}</p>`);
     return;
   }
+
   const won = result.attackerWins;
-  const ratingDelta = result.attackerRatingAfter - result.attackerRatingBefore;
-  const deltaLabel = `${ratingDelta >= 0 ? '+' : ''}${ratingDelta}`;
+  const tierInfo = getPvpTierInfo(result.tier);
+
+  let scoreLine;
+  if (result.hiddenScore) {
+    const posDelta = result.attackerPositionDelta || 0;
+    const posLabel = posDelta > 0
+      ? `<span class="pvp-delta-up">▲ Subiu ${posDelta} posiç${posDelta === 1 ? 'ão' : 'ões'}</span>`
+      : posDelta < 0
+        ? `<span class="pvp-delta-down">▼ Caiu ${Math.abs(posDelta)} posiç${Math.abs(posDelta) === 1 ? 'ão' : 'ões'}</span>`
+        : '<span>Sem mudança de posição</span>';
+    scoreLine = `<p class="offline-item-lines">${tierInfo.emoji} Posição #${result.attackerPositionBefore} → #${result.attackerPositionAfter}<br>${posLabel}</p>`;
+  } else {
+    const ratingDelta = result.attackerRatingAfter - result.attackerRatingBefore;
+    const deltaLabel = `${ratingDelta >= 0 ? '+' : ''}${ratingDelta}`;
+    const deltaClass = ratingDelta >= 0 ? 'pvp-delta-up' : 'pvp-delta-down';
+    scoreLine = `<p class="offline-item-lines">⭐ Pontos: ${result.attackerRatingBefore} → ${result.attackerRatingAfter} <span class="${deltaClass}">(${deltaLabel})</span></p>`;
+  }
+
   showModal(won ? '🏆 Vitória!' : '💀 Derrota', `
     <p>Você atacou <strong>${escapeHtml(result.defenderNick)}</strong>.</p>
-    <p class="offline-item-lines">⭐ Rating: ${result.attackerRatingBefore} → ${result.attackerRatingAfter} (${deltaLabel})</p>
+    ${scoreLine}
     ${won ? `<p class="offline-item-lines">${GOLD_ICON} +${formatNumber(result.goldReward)} Ouro</p>` : ''}
+    <p class="shop-note">🎟️ Entradas restantes: ${result.entriesRemaining}/${PVP_MAX_ENTRIES}</p>
   `);
 }
 
