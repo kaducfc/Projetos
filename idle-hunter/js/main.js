@@ -7,7 +7,11 @@ import {
 } from './systems/combat.js';
 import { findMaterialInfo, BOSSES, ZONE_COUNT } from './data/monsters.js';
 import { canTranscend, unlockTranscend, transcend, buyAwakeningItem } from './systems/awakening.js';
-import { syncProfile, getMyPvpProfile, fetchTierBoard, attackOpponent } from './systems/pvp.js';
+import {
+  syncProfile, getMyPvpProfile, fetchTierBoard, attackOpponent,
+  pickRandomPvpOpponents, previewPvpAttackSwing,
+} from './systems/pvp.js';
+import { getPvpTierInfo } from './data/pvpConfig.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot, findEquippedSlotId } from './systems/equipment.js';
 import { enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscension, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
@@ -42,7 +46,7 @@ import {
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   EGG_ICON, PET_FRAGMENT_ICON,
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
-  renderTranscendTab, renderPvpTab, showPvpBattleModal,
+  renderTranscendTab, renderPvpTab, showPvpBattleModal, showPvpCombatPickerModal,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -543,6 +547,16 @@ function wireModalEvents() {
   const overlay = document.getElementById('modal-overlay');
 
   overlay.addEventListener('click', (e) => {
+    // Janela de "Combate" (ver showPvpCombatPickerModal em ui/render.js) —
+    // fora do padrão runModalAction porque handlePvpAttack já tem seu
+    // próprio guard (pvpData.attackingId) e é assíncrona; ela mesma troca
+    // o conteúdo do modal pro resultado da luta ao terminar.
+    const pvpAttackBtn = e.target.closest('[data-pvp-attack]');
+    if (pvpAttackBtn && !pvpData.attackingId) {
+      handlePvpAttack(pvpAttackBtn.dataset.pvpAttack, pvpAttackBtn.dataset.pvpAttackBot === '1');
+      return;
+    }
+
     const monsterChip = e.target.closest('[data-select-monster-zone]');
     if (monsterChip) {
       runModalAction(() => {
@@ -1484,7 +1498,7 @@ async function refreshPvpTab({ silent = false } = {}) {
     const petDps = bestPet ? bestPet.damage * (stats.petDamageMult || 1) : 0;
     await syncProfile(state, { ...stats, petDps }, getPlayerName(state), state.profileIconId);
     myProfile = await getMyPvpProfile();
-    if (myProfile) board = await fetchTierBoard(myProfile.tier);
+    if (myProfile) board = await fetchTierBoard(myProfile.tier, myProfile.group_index);
   } catch (err) {
     console.warn('Arena PvP: falha ao conectar:', err);
   }
@@ -1537,13 +1551,30 @@ async function handlePvpAttack(defenderId, isBot) {
   // luta esperando por isso.
   if (!result.error && pvpData.myProfile) {
     try {
-      const board = await fetchTierBoard(pvpData.myProfile.tier);
+      const board = await fetchTierBoard(pvpData.myProfile.tier, pvpData.myProfile.group_index);
       pvpData = { ...pvpData, board };
       renderPvpTab(state, pvpData);
     } catch (err) {
       console.warn('Arena PvP: falha ao atualizar o tier após a luta:', err);
     }
   }
+}
+
+// "⚔️ Combate" (ver wirePvpTabEvents) — sorteia até 5 oponentes num raio
+// de posição ao redor do jogador (ver pickRandomPvpOpponents em
+// systems/pvp.js) e abre a janela de escolha. Tudo calculado em cima do
+// pvp.board já carregado — não busca nada novo do servidor só pra isso.
+function openPvpCombatPicker() {
+  const myProfile = pvpData.myProfile;
+  if (!myProfile) return;
+  const myRow = pvpData.board.find((r) => !r.is_bot && r.entity_id === myProfile.id);
+  if (!myRow) return;
+  const tierInfo = getPvpTierInfo(myProfile.tier);
+  const opponents = pickRandomPvpOpponents(pvpData.board, myProfile.id, myRow.position).map((row) => ({
+    ...row,
+    swing: tierInfo.hiddenScore ? null : previewPvpAttackSwing(myRow.position, row.position, pvpData.board.length),
+  }));
+  showPvpCombatPickerModal(tierInfo, opponents);
 }
 
 function wirePvpTabEvents() {
@@ -1553,9 +1584,9 @@ function wirePvpTabEvents() {
       refreshPvpTab();
       return;
     }
-    const attackBtn = e.target.closest('[data-pvp-attack]');
-    if (attackBtn && !pvpData.attackingId) {
-      handlePvpAttack(attackBtn.dataset.pvpAttack, attackBtn.dataset.pvpAttackBot === '1');
+    const combatBtn = e.target.closest('[data-pvp-open-combat]');
+    if (combatBtn) {
+      openPvpCombatPicker();
     }
   });
 }

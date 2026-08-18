@@ -1920,13 +1920,9 @@ function pvpMyStatusHtml(myProfile, tierInfo) {
 
 function pvpBoardRowHtml(pvp, tierInfo, row) {
   const isSelf = !row.is_bot && pvp.myProfile && row.entity_id === pvp.myProfile.id;
-  const attacking = pvp.attackingId === row.entity_id;
   const scoreLabel = tierInfo.hiddenScore ? '' : ` · ⭐ ${formatInteger(row.rating)}`;
   const levelLabel = row.is_bot ? 'Bot' : `Nível ${formatNumber(row.hunter_level)}`;
   const winsLabel = row.is_bot ? '' : ` · 🏆 ${formatInteger(row.wins || 0)}`;
-  const attackBtn = isSelf
-    ? '<span class="pvp-self-tag">Você</span>'
-    : `<button data-pvp-attack="${row.entity_id}" data-pvp-attack-bot="${row.is_bot ? '1' : '0'}" ${attacking ? 'disabled' : ''}>${attacking ? '⏳' : '⚔️ Atacar'}</button>`;
   return `
     <div class="achievement-card ${isSelf ? 'pvp-self-row' : ''}">
       <span class="pvp-rank">#${row.position}</span>
@@ -1935,7 +1931,7 @@ function pvpBoardRowHtml(pvp, tierInfo, row) {
         <div class="name">${escapeHtml(row.nick)}</div>
         <div class="desc">${levelLabel}${scoreLabel}${winsLabel}</div>
       </div>
-      ${attackBtn}
+      ${isSelf ? '<span class="pvp-self-tag">Você</span>' : ''}
     </div>`;
 }
 
@@ -1952,15 +1948,52 @@ export function renderPvpTab(state, pvp) {
     ? pvp.board.map((row) => pvpBoardRowHtml(pvp, tierInfo, row)).join('')
     : `<p class="shop-note">${myProfile ? 'Ninguém nesse tier ainda — sincronize de novo em instantes.' : ''}</p>`;
 
+  const combatBtn = myProfile
+    ? `<button class="transcend-btn" data-pvp-open-combat>⚔️ Combate</button>`
+    : '';
+
   container.innerHTML = `
     <div class="section-banner">🏟️ Arena PvP</div>
     <p class="shop-note">PvP assíncrono: você ataca a última cópia salva das stats de outro jogador (ou um bot) — ele não precisa estar online.</p>
     ${connectHtml}
     <button class="transcend-btn" data-pvp-refresh ${pvp.loading ? 'disabled' : ''}>🔄 ${myProfile ? 'Sincronizar Stats' : 'Conectar à Arena'}</button>
+    ${combatBtn}
 
     <h4 class="shop-section-title">${tierInfo.emoji} Tier ${tierInfo.label}</h4>
     <div class="achievement-list">${boardHtml}</div>
   `;
+}
+
+/// Corpo da janela de "Combate" (ver js/main.js openPvpCombatPicker) — até
+/// 5 oponentes sorteados perto da posição do jogador, cada um com botão de
+/// "Atacar" próprio (delegado no #modal-overlay, ver wireModalEvents em
+/// main.js — os botões aqui são os MESMOS data-pvp-attack/data-pvp-attack-bot
+/// de antes, só que agora vivem dentro do modal em vez de cada linha do
+/// rank). A prévia de pontos usa previewPvpAttackSwing (client-side, mesma
+/// fórmula da Edge Function) — some no Lendário, onde pontuação é oculta.
+function pvpCombatOptionHtml(opponent) {
+  const levelLabel = opponent.is_bot ? 'Bot' : `Nível ${formatNumber(opponent.hunter_level)}`;
+  const swingLabel = opponent.swing
+    ? `<div class="desc">Vencendo: <span class="pvp-delta-up">+${opponent.swing.winDelta}</span> · Perdendo: <span class="pvp-delta-down">${opponent.swing.lossDelta}</span></div>`
+    : '';
+  return `
+    <div class="achievement-card">
+      <span class="pvp-rank">#${opponent.position}</span>
+      ${pvpProfileIconHtml(opponent.icon_id)}
+      <div class="info">
+        <div class="name">${escapeHtml(opponent.nick)}</div>
+        <div class="desc">${levelLabel}</div>
+        ${swingLabel}
+      </div>
+      <button data-pvp-attack="${opponent.entity_id}" data-pvp-attack-bot="${opponent.is_bot ? '1' : '0'}">⚔️ Atacar</button>
+    </div>`;
+}
+
+export function showPvpCombatPickerModal(tierInfo, opponents) {
+  const body = opponents.length
+    ? opponents.map(pvpCombatOptionHtml).join('')
+    : '<p class="shop-note">Ninguém por perto pra desafiar agora — tenta de novo em instantes.</p>';
+  showModal(`${tierInfo.emoji} Escolha um alvo`, `<div class="achievement-list">${body}</div>`);
 }
 
 function pvpErrorMessage(result) {

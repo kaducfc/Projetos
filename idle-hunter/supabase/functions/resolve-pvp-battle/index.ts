@@ -257,7 +257,10 @@ Deno.serve(async (req) => {
   // Posição dos 2 no tier_board (ver pvp_tier_board em
   // supabase/migrations/0002_pvp_tiers.sql) — é ISSO, não a diferença de
   // pontos crua, que decide o tamanho do ganho/perda (ver computeSwing).
-  const { data: board, error: boardError } = await supabaseAdmin.rpc('pvp_tier_board', { target_tier: attackerProfile.tier });
+  const { data: board, error: boardError } = await supabaseAdmin.rpc('pvp_tier_board', {
+    target_tier: attackerProfile.tier,
+    target_group: attackerProfile.group_index,
+  });
   if (boardError || !board) {
     return jsonResponse({ error: 'tier_board_failed' }, 500);
   }
@@ -365,7 +368,10 @@ Deno.serve(async (req) => {
   // mas é o único jeito de saber a posição de verdade em vez de assumir
   // pelo sinal do delta de pontos (ganhar pontos nem sempre muda posição,
   // ex: já era o 1º do tier).
-  const { data: boardAfter } = await supabaseAdmin.rpc('pvp_tier_board', { target_tier: attackerProfile.tier });
+  const { data: boardAfter } = await supabaseAdmin.rpc('pvp_tier_board', {
+    target_tier: attackerProfile.tier,
+    target_group: attackerProfile.group_index,
+  });
   const attackerBoardRowAfter = boardAfter?.find((r: { entity_id: string; is_bot: boolean }) => r.entity_id === attackerId && !r.is_bot);
   const attackerPositionAfter = attackerBoardRowAfter?.position ?? attackerBoardRow.position;
   // Positivo = subiu de posição (número de posição diminuiu).
