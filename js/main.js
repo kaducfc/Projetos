@@ -143,7 +143,7 @@ let pvpData = { myProfile: null, board: [], loading: false, attackingId: null };
 // supabase/migrations/0008_pvp_ranks.sql). `loaded` marca que já buscou
 // pelo menos uma vez nessa sessão (só refaz no clique manual em
 // "Atualizar", não toda vez que a aba abre de novo).
-let ranksData = { arena: [], level: [], transcend: [], loading: false, loaded: false };
+let ranksData = { arena: [], level: [], transcend: [], loading: false, loaded: false, activeSection: 'arena' };
 
 function renderUpgradesTabNow() {
   renderUpgradesTab(state, skillResetConfirming);
@@ -1613,7 +1613,7 @@ async function refreshRanksTab() {
     const [arena, level, transcend] = await Promise.all([
       fetchArenaRank(), fetchLevelRank(), fetchTranscendRank(),
     ]);
-    ranksData = { arena, level, transcend, loading: false, loaded: true };
+    ranksData = { ...ranksData, arena, level, transcend, loading: false, loaded: true };
   } catch (err) {
     console.warn('Ranks: falha ao buscar:', err);
     ranksData = { ...ranksData, loading: false };
@@ -1624,7 +1624,15 @@ async function refreshRanksTab() {
 function wireRanksTabEvents() {
   document.getElementById('tab-ranks').addEventListener('click', (e) => {
     const refreshBtn = e.target.closest('[data-ranks-refresh]');
-    if (refreshBtn && !ranksData.loading) refreshRanksTab();
+    if (refreshBtn && !ranksData.loading) {
+      refreshRanksTab();
+      return;
+    }
+    const sectionBtn = e.target.closest('[data-ranks-section]');
+    if (sectionBtn) {
+      ranksData = { ...ranksData, activeSection: sectionBtn.dataset.ranksSection };
+      renderRanksTab(ranksData, pvpData.myProfile);
+    }
   });
 }
 
