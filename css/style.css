@@ -3526,6 +3526,35 @@ button:disabled {
   color: var(--red-dark, #b91c1c);
 }
 
+.nav-badge-dot {
+  position: relative;
+  top: -10px;
+  right: -2px;
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--red-dark, #dc2626);
+  border: 1.5px solid #fff;
+}
+
+.nav-badge-dot.hidden {
+  display: none;
+}
+
+.mail-unread .name {
+  font-weight: 800;
+}
+
+.mail-unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red-dark, #dc2626);
+  margin-right: 4px;
+}
+
 .pvp-rank-tab-btn.active {
   background: var(--grad-blue, #3b82f6);
   color: #fff;
