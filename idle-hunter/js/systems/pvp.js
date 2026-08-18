@@ -97,19 +97,79 @@ export function projectPvpEntries(storedEntries, updatedAtIso) {
   return { current, msUntilNext };
 }
 
-/// A "prancheta" de 1 tier inteiro — todo jogador de verdade daquele tier
-/// + os bots ainda visíveis, já ordenados e numerados por posição (ver
-/// pvp_tier_board em supabase/migrations/0002_pvp_tiers.sql). Serve tanto
-/// de ranking quanto de lista de oponentes — não tem mais 2 buscas
-/// separadas como na v1 (fetchLeaderboard/fetchOpponents): o tier JÁ é o
-/// pool de matchmaking inteiro.
-export async function fetchTierBoard(tier) {
-  const { data, error } = await getClient().rpc('pvp_tier_board', { target_tier: tier });
+/// A "prancheta" de 1 tier inteiro (só o GRUPO do jogador, do Bronze ao
+/// Diamante — ver 0007_pvp_groups.sql sobre por que existem grupos e por
+/// que o jogador nunca vê esse número; no Lendário groupIndex é ignorado
+/// no servidor, o pool é o tier inteiro) — todo jogador de verdade + os
+/// bots ainda visíveis, já ordenados e numerados por posição. Serve tanto
+/// de ranking quanto de base pra sortear oponentes (ver
+/// pickRandomPvpOpponents abaixo).
+export async function fetchTierBoard(tier, groupIndex) {
+  const { data, error } = await getClient().rpc('pvp_tier_board', {
+    target_tier: tier,
+    target_group: groupIndex,
+  });
   if (error) {
     console.warn('Arena PvP: falha ao buscar o tier:', error.message);
     return [];
   }
   return data || [];
+}
+
+// Mesma faixa de pontos por luta da Edge Function (ver
+// supabase/functions/resolve-pvp-battle/index.ts computeSwing) — usada
+// aqui só pra PRÉ-VISUALIZAR quanto o jogador ganha/perde antes de
+// escolher um oponente na janela de "Combate" (ver
+// pickRandomPvpOpponents/previewPvpAttackSwing). O valor real é sempre
+// recalculado no servidor no momento do ataque; se a posição de alguém
+// mudou entre a prévia e o clique em "Atacar", o número real pode diferir
+// um pouco — mesmo espírito de qualquer outra prévia de jogo.
+const SWING_MIN = 3;
+const SWING_MID = 5;
+const SWING_MAX = 10;
+
+/// Quanto EU (na posição myPosition) ganho vencendo ou perco perdendo
+/// contra alguém na posição opponentPosition, dentro de um grupo/tier com
+/// groupSize entradas (jogadores + bots visíveis) — mesma fórmula
+/// (distância de posição normalizada) da Edge Function, só que calculada
+/// aqui pra não precisar de uma ida ao servidor só pra mostrar a prévia.
+export function previewPvpAttackSwing(myPosition, opponentPosition, groupSize) {
+  const gap = Math.abs(myPosition - opponentPosition);
+  const normalizedGap = groupSize > 1 ? Math.min(1, gap / (groupSize - 1)) : 0;
+  const iAmFavored = myPosition < opponentPosition;
+
+  const favoredWinGain = Math.round(SWING_MID - (SWING_MID - SWING_MIN) * normalizedGap);
+  const favoredLossPenalty = Math.round(SWING_MID + (SWING_MAX - SWING_MID) * normalizedGap);
+  const underdogWinGain = Math.round(SWING_MID + (SWING_MAX - SWING_MID) * normalizedGap);
+  const underdogLossPenalty = Math.round(SWING_MID - (SWING_MID - SWING_MIN) * normalizedGap);
+
+  return {
+    winDelta: iAmFavored ? favoredWinGain : underdogWinGain,
+    lossDelta: iAmFavored ? -favoredLossPenalty : -underdogLossPenalty,
+  };
+}
+
+// Raio pedido pelo usuário: "5 jogadores entre o rank 35 e 65" pra quem
+// está no 50 — ±15 posições ao redor de quem vai atacar.
+export const PVP_COMBAT_OPPONENT_RADIUS = 15;
+export const PVP_COMBAT_OPPONENT_COUNT = 5;
+
+/// Sorteia até PVP_COMBAT_OPPONENT_COUNT oponentes (jogadores OU bots, os
+/// 2 contam) dentro de ±PVP_COMBAT_OPPONENT_RADIUS posições de myPosition
+/// no board já carregado — é isso que alimenta a janela de "Combate" (ver
+/// js/ui/render.js showPvpCombatPickerModal). Se a vizinhança tiver menos
+/// candidatos que o pedido (tier/grupo pequeno), devolve só os que existem.
+export function pickRandomPvpOpponents(board, myEntityId, myPosition) {
+  const pool = board.filter((row) => {
+    if (!row.is_bot && row.entity_id === myEntityId) return false;
+    return Math.abs(row.position - myPosition) <= PVP_COMBAT_OPPONENT_RADIUS;
+  });
+  const picked = [];
+  while (pool.length && picked.length < PVP_COMBAT_OPPONENT_COUNT) {
+    const idx = Math.floor(Math.random() * pool.length);
+    picked.push(pool.splice(idx, 1)[0]);
+  }
+  return picked;
 }
 
 /// Ataca outro jogador OU um bot — a luta em si roda inteira na Edge

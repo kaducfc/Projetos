@@ -105,6 +105,26 @@ abaixo). Clique em **⚔️ Atacar** em qualquer linha (menos a sua).
   linha diretamente (só nick/ícone/nível, que são cosméticos) — só a Edge
   Function (que roda com uma chave que o navegador nunca vê) pode mexer
   nesses campos agora. Isso não existia na v1 e era uma falha real.
+- **Grupos por tier (Bronze–Diamante)**: cada tier é dividido em "salas"
+  de até 100 jogadores de verdade (o jogador nunca vê esse número — é só
+  particionamento interno, ver `migrations/0007_pvp_groups.sql`). Quando
+  um grupo enche, o próximo jogador a entrar naquele tier abre um grupo
+  novo, que começa com os mesmos 5 bots de sempre. O Lendário não tem
+  grupo — todo mundo do tier compete no mesmo pool, sem limite de
+  jogadores.
+- **Lendário no reset semanal**: em vez da regra genérica de top/bottom
+  20%, só os 200 primeiros (por posição) continuam no Lendário — todo o
+  resto cai pro Diamante, seja qual for a porcentagem que isso representa.
+  O Diamante continua promovendo pro Lendário pela regra genérica de
+  sempre (top 3 ou top 20%), enchendo as vagas que sobraram.
+- **Botão "Combate"**: em vez de atacar direto da lista do rank, o
+  jogador clica em "⚔️ Combate" e recebe até 5 oponentes sorteados numa
+  janela de ±15 posições ao redor da própria posição no grupo — pedido
+  explícito do usuário. A prévia de pontos ganhos/perdidos é calculada no
+  próprio navegador (mesma fórmula da Edge Function, ver
+  `previewPvpAttackSwing` em `js/systems/pvp.js`) só pra não precisar de
+  uma ida ao servidor pra mostrar; o valor real é sempre recalculado no
+  servidor no momento do ataque.
 - **Limitação que continua existindo**: o cliente ainda reporta as
   PRÓPRIAS stats de combate (DPS/HP/etc.) pro servidor por conta própria
   — um jogador tecnicamente ainda poderia mandar um valor mentiroso
@@ -121,6 +141,7 @@ abaixo). Clique em **⚔️ Atacar** em qualquer linha (menos a sua).
 |---|---|
 | `migrations/0001_pvp_arena.sql` | Schema base + RLS |
 | `migrations/0002_pvp_tiers.sql` | Tiers, bots, Entradas, reset semanal (pg_cron) |
+| `migrations/0007_pvp_groups.sql` | Grupos de até 100 jogadores por tier + regra especial do Lendário no reset |
 | `functions/resolve-pvp-battle/index.ts` | Resolve 1 ataque (deploy como Edge Function) |
 | `../js/data/pvpConfig.js` | URL/chave do projeto + metadados dos tiers (nome/emoji/pontos-base) |
 | `../js/systems/pvp.js` | Cliente: login anônimo, sincronizar stats, buscar o tier, atacar |
