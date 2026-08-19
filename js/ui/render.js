@@ -1926,7 +1926,7 @@ function pvpMyStatusHtml(myProfile, tierInfo) {
     <div class="achievement-card">
       ${pvpProfileIconHtml(myProfile.icon_id)}
       <div class="info">
-        <div class="name">${escapeHtml(myProfile.nick)} · ${tierInfo.emoji} ${tierInfo.label}</div>
+        <div class="name">${escapeHtml(myProfile.nick)} · ${tierInfo.icon} ${tierInfo.label}</div>
         <div class="desc">Nível ${formatNumber(myProfile.hunter_level)} · ${scoreLine} · 🏆 ${formatInteger(myProfile.wins || 0)} vitórias</div>
         <div class="desc">${PVP_TICKET_ICON} Entradas: ${pvpEntriesLabel(myProfile)}</div>
       </div>
@@ -1990,7 +1990,7 @@ export function renderPvpTab(state, pvp) {
     ${combatBtn}
     ${countdownHtml}
 
-    <h4 class="shop-section-title">${tierInfo.emoji} Tier ${tierInfo.label}</h4>
+    <h4 class="shop-section-title">${tierInfo.icon} Tier ${tierInfo.label}</h4>
     <div class="achievement-list">${boardHtml}</div>
   `;
   if (myProfile) tickPvpDailyCountdown();
@@ -2116,7 +2116,7 @@ function ranksSectionListHtml(ranksData, myId) {
   return pvpRankSectionHtml(ranksData.arena, myId, (row) => {
     const tierInfo = getPvpTierInfo(row.tier);
     const scoreLabel = row.rating == null ? '' : ` · ⭐ ${formatInteger(row.rating)}`;
-    return `${tierInfo.emoji} ${tierInfo.label}${scoreLabel} · Nível ${formatNumber(row.hunter_level)} · 🏆 ${formatInteger(row.wins || 0)}`;
+    return `${tierInfo.icon} ${tierInfo.label}${scoreLabel} · Nível ${formatNumber(row.hunter_level)} · 🏆 ${formatInteger(row.wins || 0)}`;
   }, pvpWeeklyRewardLabel);
 }
 
@@ -2276,7 +2276,7 @@ function pvpResultContentHtml(result) {
       : posDelta < 0
         ? `<span class="pvp-delta-down">▼ Caiu ${Math.abs(posDelta)} posiç${Math.abs(posDelta) === 1 ? 'ão' : 'ões'}</span>`
         : '<span>Sem mudança de posição</span>';
-    scoreLine = `<p class="offline-item-lines">${tierInfo.emoji} Posição #${result.attackerPositionBefore} → #${result.attackerPositionAfter}<br>${posLabel}</p>`;
+    scoreLine = `<p class="offline-item-lines">${tierInfo.icon} Posição #${result.attackerPositionBefore} → #${result.attackerPositionAfter}<br>${posLabel}</p>`;
   } else {
     const ratingDelta = result.attackerRatingAfter - result.attackerRatingBefore;
     const deltaLabel = `${ratingDelta >= 0 ? '+' : ''}${ratingDelta}`;

@@ -11,13 +11,19 @@ export const SUPABASE_ANON_KEY = 'sb_publishable_IpU7-k0nwnkQMxjBjjgNmA_TOkaIb_e
 // (pvp_tiers), só pro CLIENTE não precisar de uma consulta a mais só pra
 // saber nome/emoji/cor de exibição. A pontuação-base e a ordem têm que
 // bater exatamente com o banco (ver run_weekly_pvp_reset lá).
+//
+// `icon`: arte nova pedida pelo usuário (ver assets/ui/nav/tier_*.png) —
+// substitui `emoji` em TODO lugar que se referencia ao tier (rank/tier
+// board da Arena, página Ranks, resultado de luta, etc.). `emoji` continua
+// existindo só como texto alternativo pra contexto onde HTML não é opção
+// (ex: título de modal, que só aceita texto puro).
 export const PVP_TIERS = [
-  { name: 'bronze', label: 'Bronze', emoji: '🥉', basePoints: 1000, hiddenScore: false },
-  { name: 'prata', label: 'Prata', emoji: '🥈', basePoints: 1200, hiddenScore: false },
-  { name: 'ouro', label: 'Ouro', emoji: '🥇', basePoints: 1400, hiddenScore: false },
-  { name: 'platina', label: 'Platina', emoji: '💠', basePoints: 1600, hiddenScore: false },
-  { name: 'diamante', label: 'Diamante', emoji: '💎', basePoints: 1800, hiddenScore: false },
-  { name: 'lendario', label: 'Lendário', emoji: '👑', basePoints: 2000, hiddenScore: true },
+  { name: 'bronze', label: 'Bronze', emoji: '🥉', icon: '<img class="currency-icon" src="assets/ui/nav/tier_bronze.png" alt="Bronze">', basePoints: 1000, hiddenScore: false },
+  { name: 'prata', label: 'Prata', emoji: '🥈', icon: '<img class="currency-icon" src="assets/ui/nav/tier_prata.png" alt="Prata">', basePoints: 1200, hiddenScore: false },
+  { name: 'ouro', label: 'Ouro', emoji: '🥇', icon: '<img class="currency-icon" src="assets/ui/nav/tier_ouro.png" alt="Ouro">', basePoints: 1400, hiddenScore: false },
+  { name: 'platina', label: 'Platina', emoji: '💠', icon: '<img class="currency-icon" src="assets/ui/nav/tier_platina.png" alt="Platina">', basePoints: 1600, hiddenScore: false },
+  { name: 'diamante', label: 'Diamante', emoji: '💎', icon: '<img class="currency-icon" src="assets/ui/nav/tier_diamante.png" alt="Diamante">', basePoints: 1800, hiddenScore: false },
+  { name: 'lendario', label: 'Lendário', emoji: '👑', icon: '<img class="currency-icon" src="assets/ui/nav/tier_lendario.png" alt="Lendário">', basePoints: 2000, hiddenScore: true },
 ];
 
 export function getPvpTierInfo(tierName) {
