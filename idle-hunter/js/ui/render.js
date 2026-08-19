@@ -106,6 +106,11 @@ export const RANK_ICON = `<img class="currency-icon" src="assets/ui/nav/rank.png
 export const TRANSCEND_ICON = `<img class="currency-icon" src="assets/ui/nav/transcender.png" alt="Transcender">`;
 export const AWAKENING_SHARD_ICON = `<img class="currency-icon" src="assets/ui/nav/fragmento_despertar.png" alt="Fragmento do Despertar">`;
 export const GIFT_ICON = `<img class="currency-icon" src="assets/ui/nav/presentes.png" alt="Presente">`;
+// Ícone da categoria "Nível" no rank de Nível de Caçador (substitui a
+// ⭐ só ali — a ⭐ de "pontos"/rating em outros lugares da Arena continua
+// a mesma) e o "ticket" de Entradas da Arena PvP (substitui 🎟️).
+export const RANK_LEVEL_ICON = `<img class="currency-icon" src="assets/ui/nav/nivel.png" alt="Nível">`;
+export const PVP_TICKET_ICON = `<img class="currency-icon" src="assets/ui/nav/ticket_pvp.png" alt="Entrada da Arena">`;
 
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
@@ -1923,7 +1928,7 @@ function pvpMyStatusHtml(myProfile, tierInfo) {
       <div class="info">
         <div class="name">${escapeHtml(myProfile.nick)} · ${tierInfo.emoji} ${tierInfo.label}</div>
         <div class="desc">Nível ${formatNumber(myProfile.hunter_level)} · ${scoreLine} · 🏆 ${formatInteger(myProfile.wins || 0)} vitórias</div>
-        <div class="desc">🎟️ Entradas: ${pvpEntriesLabel(myProfile)}</div>
+        <div class="desc">${PVP_TICKET_ICON} Entradas: ${pvpEntriesLabel(myProfile)}</div>
       </div>
     </div>`;
 }
@@ -2093,7 +2098,7 @@ function pvpWeeklyRewardLabel(row) {
 
 const RANKS_SECTIONS = {
   arena: { label: `${ARENA_ICON} Arena`, title: `${ARENA_ICON} Arena` },
-  level: { label: '⭐ Nível', title: '⭐ Nível de Caçador' },
+  level: { label: `${RANK_LEVEL_ICON} Nível`, title: `${RANK_LEVEL_ICON} Nível de Caçador` },
   transcend: { label: `${TRANSCEND_ICON} Transcender`, title: `${TRANSCEND_ICON} Transcender` },
 };
 
@@ -2285,7 +2290,7 @@ function pvpResultContentHtml(result) {
     ${scoreLine}
     ${won ? `<p class="offline-item-lines">${GOLD_ICON} +${formatNumber(result.goldReward)} Ouro</p>` : ''}
     ${pvpBattleStatsHtml(result)}
-    <p class="shop-note">🎟️ Entradas restantes: ${result.entriesRemaining}/${PVP_MAX_ENTRIES}</p>
+    <p class="shop-note">${PVP_TICKET_ICON} Entradas restantes: ${result.entriesRemaining}/${PVP_MAX_ENTRIES}</p>
   `;
 }
 
