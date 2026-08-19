@@ -2294,11 +2294,13 @@ function pvpResultContentHtml(result) {
   `;
 }
 
-/// Estatísticas do combate — mesma lista pros 2 lados (dano causado,
-/// dano do mascote, críticos, esquivas, vida), lado a lado. Números REAIS
-/// calculados no servidor (ver attackerDamageDealt/attackerCritCount/etc.
-/// na Edge Function resolve-pvp-battle: crítico/esquiva já vêm como
-/// CONTAGEM — quantas vezes aconteceu na luta — não a % de chance crua).
+/// Estatísticas do combate — mesma lista pros 2 lados, nessa ordem
+/// (pedido explícito do usuário): Vida, Armadura, DPS, Dano causado, Dano
+/// do Mascote, Críticos, Esquivas. Números REAIS calculados no servidor
+/// (ver attackerDamageDealt/attackerCritCount/etc. na Edge Function
+/// resolve-pvp-battle: crítico/esquiva já vêm como CONTAGEM — quantas
+/// vezes aconteceu na luta — não a % de chance crua; DPS é o efetivo já
+/// considerando crítico/esquiva/armadura do oponente, não o bruto).
 /// "Dano do Mascote" só aparece se ALGUM dos 2 lados tinha mascote ativo.
 function pvpBattleStatsHtml(result) {
   const showPetRow = result.attackerPetDamageDealt > 0 || result.defenderPetDamageDealt > 0;
@@ -2310,11 +2312,13 @@ function pvpBattleStatsHtml(result) {
       <div class="pvp-stat-row pvp-stat-header">
         <span></span><span>Você</span><span>${escapeHtml(result.defenderNick)}</span>
       </div>
+      ${pvpStatRow('❤️ Vida', formatNumber(result.attackerMaxHp), formatNumber(result.defenderMaxHp))}
+      ${pvpStatRow('🛡️ Armadura', formatNumber(result.attackerArmor), formatNumber(result.defenderArmor))}
+      ${pvpStatRow('⚡ DPS', formatNumber(result.attackerDps), formatNumber(result.defenderDps))}
       ${pvpStatRow('⚔️ Dano causado', formatNumber(result.attackerDamageDealt), formatNumber(result.defenderDamageDealt))}
       ${petRow}
       ${pvpStatRow('💥 Críticos', result.attackerCritCount, result.defenderCritCount)}
       ${pvpStatRow('🌀 Esquivas', result.attackerDodgeCount, result.defenderDodgeCount)}
-      ${pvpStatRow('❤️ Vida', formatNumber(result.attackerMaxHp), formatNumber(result.defenderMaxHp))}
     </div>
   `;
 }
