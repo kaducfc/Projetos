@@ -41,6 +41,8 @@ import {
   msUntilNextDailyArenaReset, msUntilNextWeeklyArenaReset,
 } from '../systems/pvp.js';
 import { mailHasReward, mailIsFullyClaimed } from '../systems/mailbox.js';
+import { DAILY_MISSION_TYPES, getDailyMissionType } from '../data/dailyMissions.js';
+import { msUntilNextDailyMissionReset } from '../systems/dailyMissions.js';
 import {
   CARDS, getCard, CARD_DISCOVERY_CASH_REWARD,
   CARD_FRAGMENT_ID, CARD_FRAGMENT_NAME,
@@ -1698,6 +1700,114 @@ export function renderAchievementsTab(state) {
     </button>
     <div class="achievement-list">${achievementsHtml}</div>
   `;
+}
+
+// ---------------------------------------------------------------
+// Missão Diária: aba "📋 Missão Diária" dentro do popup "Outros" (ver
+// systems/dailyMissions.js pro fluxo completo — seleção/desistência/
+// reroll/conclusão automática). 100% local (sem Supabase), 3 missões por
+// dia, só 1 pode estar "ativa" (contando progresso) por vez.
+// ---------------------------------------------------------------
+
+export function dailyMissionRewardLineHtml(reward) {
+  if (reward.type === 'card_fragment') return `${CARD_FRAGMENT_ICON} +${formatInteger(reward.amount)} Fragmento de Carta`;
+  if (reward.type === 'egg') return `${EGG_ICON} +${formatInteger(reward.amount)} Ovo de Mascote`;
+  if (reward.type === 'random_card') return `${CARD_ICON} 1 Carta Aleatória`;
+  if (reward.type === 'equipment') {
+    const rarity = getRarity(reward.minRarity);
+    return `🎁 ${reward.count}x Equipamento (${rarity.name}+)`;
+  }
+  return '';
+}
+
+function dailyMissionSlotHtml(slot, index, anyCompleted, anyActive) {
+  const type = getDailyMissionType(slot.typeId);
+  const tier = type.tiers[slot.tierIndex];
+  const target = tier.target;
+
+  if (slot.status === 'abandoned') {
+    return `<div class="achievement-card daily-mission-card abandoned">
+      <span class="icon">${type.emoji}</span>
+      <div class="info">
+        <div class="name">${type.name}</div>
+        <div class="desc">Desistiu dessa missão hoje.</div>
+      </div>
+    </div>`;
+  }
+
+  const completed = slot.status === 'completed';
+  const active = slot.status === 'active';
+  // "idle" mas travada: já tem outra ativa, ou já concluiu a missão do
+  // dia (pedido do usuário: só 1 conclusão por dia) — não dá pra escolher
+  // nem sortear de novo até o reset.
+  const locked = !completed && !active && (anyCompleted || anyActive);
+
+  const progressHtml = active
+    ? `<div class="daily-mission-progress">${formatNumber(slot.progress)} / ${formatNumber(target)}</div>`
+    : '';
+  const statusTag = completed ? `<div class="daily-mission-status">✅ Concluída</div>` : '';
+  const descHtml = `<div class="desc">${type.describe(target)}<br>${dailyMissionRewardLineHtml(tier.reward)}</div>`;
+
+  let actionHtml = '';
+  if (active) {
+    actionHtml = `<button data-mission-abandon="${index}">Desistir</button>`;
+  } else if (locked) {
+    actionHtml = `<button disabled>Bloqueada</button>`;
+  } else if (!completed) {
+    actionHtml = `
+      <div class="daily-mission-actions">
+        <button data-mission-select="${index}">Selecionar</button>
+        ${slot.rerollUsed ? '' : `<button class="daily-mission-reroll" data-mission-reroll="${index}" title="Trocar por outra missão aleatória (1x por dia)">🔄</button>`}
+      </div>`;
+  }
+
+  const cardClass = completed ? 'completed' : active ? 'active' : locked ? 'locked' : '';
+
+  return `<div class="achievement-card daily-mission-card ${cardClass}">
+    <span class="icon">${type.emoji}</span>
+    <div class="info">
+      ${statusTag}
+      <div class="name">${type.name}</div>
+      ${descHtml}
+      ${progressHtml}
+    </div>
+    ${actionHtml}
+  </div>`;
+}
+
+let dailyMissionCountdownIntervalId = null;
+function tickDailyMissionCountdown() {
+  if (dailyMissionCountdownIntervalId) clearInterval(dailyMissionCountdownIntervalId);
+  const update = () => {
+    const el = document.getElementById('daily-mission-countdown');
+    if (!el) { clearInterval(dailyMissionCountdownIntervalId); dailyMissionCountdownIntervalId = null; return; }
+    el.textContent = formatHoursMinutes(msUntilNextDailyMissionReset());
+  };
+  update();
+  dailyMissionCountdownIntervalId = setInterval(update, 30000);
+}
+
+export function renderDailyMissionsTab(state) {
+  const container = document.getElementById('tab-daily-missions');
+  const slots = state.dailyMissions.slots;
+  const anyCompleted = slots.some((s) => s.status === 'completed');
+  const anyActive = slots.some((s) => s.status === 'active');
+  const slotsHtml = slots.map((slot, i) => dailyMissionSlotHtml(slot, i, anyCompleted, anyActive)).join('');
+
+  container.innerHTML = `
+    <div class="section-banner">📋 Missão Diária</div>
+    <p class="pvp-countdown">Reseta em <strong id="daily-mission-countdown"></strong></p>
+    ${anyCompleted ? '<p class="shop-note">Você já concluiu a missão de hoje — volte depois do reset.</p>' : ''}
+    <div class="achievement-list">${slotsHtml}</div>
+  `;
+  tickDailyMissionCountdown();
+}
+
+export function showDailyMissionCompleteModal(result) {
+  showModal('🎉 Missão Concluída!', `
+    <p class="offline-item-lines"><strong>${escapeHtml(result.missionName)}</strong></p>
+    <p class="offline-item-lines">${dailyMissionRewardLineHtml(result.reward)}</p>
+  `);
 }
 
 // ---------------------------------------------------------------
