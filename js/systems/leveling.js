@@ -72,3 +72,14 @@ export function isBossUnlocked(state, zoneIndex) {
   if (!zone) return false;
   return (state.hunterLevel || 1) >= zone.bossUnlockLevel;
 }
+
+/// Zona mais alta já desbloqueada (0-based) — usada pra recompensa de
+/// equipamento das Missões Diárias (ver systems/dailyMissions.js), que
+/// precisa "cair" na mesma força de item que o jogador já enfrenta.
+export function highestUnlockedZoneIndex(state) {
+  let idx = 0;
+  for (let i = 0; i < ZONES.length; i++) {
+    if (isZoneUnlocked(state, i)) idx = i; else break;
+  }
+  return idx;
+}

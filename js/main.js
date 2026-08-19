@@ -23,6 +23,9 @@ import { formatNumber } from './format.js';
 import { enterExpedition } from './systems/expedition.js';
 import { ARENA_RUN_DURATION_MS, ARENA_COOLDOWN_MS, canEnterArena, startArenaRun, applyArenaDamage, endArenaRun } from './systems/arena.js';
 import { claimAchievementStage } from './systems/achievements.js';
+import {
+  ensureDailyMissionsFresh, recordDailyMissionProgress, selectMission, abandonMission, rerollMission,
+} from './systems/dailyMissions.js';
 import { watchAd, buyCashItem, buyEventItem, watchDpsBoostAd, watchOfflineBonusAd } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
 import { claimCardReward, recycleCard, craftCard } from './systems/cards.js';
@@ -51,6 +54,7 @@ import {
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
   renderTranscendTab, renderPvpTab, showPvpBattleModal, showPvpCombatPickerModal, renderRanksTab,
   renderMailboxTab, showMailDetailModal, renderAchievementsTab,
+  renderDailyMissionsTab, showDailyMissionCompleteModal, dailyMissionRewardLineHtml,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -289,6 +293,15 @@ function fullRefresh() {
   renderPetsTabNow();
   renderTranscendTab(state);
   renderPvpTab(state, pvpData);
+  refreshDailyMissionsTab();
+}
+
+// Missão Diária (ver systems/dailyMissions.js): 100% local, sem Supabase —
+// ensureDailyMissionsFresh só regenera as 3 missões se o reset (21h de
+// Brasília) já passou, então é seguro/barato chamar toda vez.
+function refreshDailyMissionsTab() {
+  ensureDailyMissionsFresh(state);
+  renderDailyMissionsTab(state);
 }
 
 function refreshCombatOnly() {
@@ -330,6 +343,11 @@ function handleKillEvent(event) {
   if (event.wasBoss && event.zoneIndex === ZONE_COUNT - 1 && unlockTranscend(state)) {
     showToast(`${TRANSCEND_ICON} Transcender desbloqueado! Veja a aba Transcender em Outros.`);
     renderTranscendTab(state);
+  }
+  const killMissionResult = recordDailyMissionProgress(state, 'kill_monsters');
+  if (killMissionResult?.completed) {
+    showDailyMissionCompleteModal(killMissionResult);
+    refreshDailyMissionsTab();
   }
   renderTopBar(state);
   renderHunterLevel(state);
@@ -420,7 +438,7 @@ function tick() {
 // jeito de sempre — só que se veio do popup, o botão "Outros" (não a aba
 // real) é quem fica marcado como ativo no nav principal, já que Cartas/Loja
 // não têm mais vaga própria lá.
-const MORE_MENU_TAB_IDS = ['cards', 'shop', 'transcend', 'pvp', 'ranks', 'mailbox', 'achievements'];
+const MORE_MENU_TAB_IDS = ['cards', 'shop', 'transcend', 'pvp', 'ranks', 'mailbox', 'achievements', 'daily-missions'];
 
 function closeMoreMenu() {
   document.getElementById('more-menu').classList.add('hidden');
@@ -456,6 +474,9 @@ function setupTabs() {
       // qualquer momento (recompensa automática da Arena, aviso do
       // Admin), não faz sentido cachear por sessão inteira igual o rank.
       if (btn.dataset.tab === 'mailbox' && !mailboxData.loading) refreshMailboxTab();
+      // Missão Diária: local, sem loading assíncrono — só reconfere o
+      // reset toda vez que a aba abre (ver refreshDailyMissionsTab).
+      if (btn.dataset.tab === 'daily-missions') refreshDailyMissionsTab();
       closeMoreMenu();
     });
   });
@@ -675,7 +696,9 @@ function wireModalEvents() {
         if (enhanceItem(state, uid)) {
           showItemDetailModal(state, uid); // keep the popup open, with fresh numbers
           showToast('⬆️ Item aprimorado!');
+          const missionResult = recordDailyMissionProgress(state, 'enhance_items');
           fullRefresh();
+          if (missionResult?.completed) showDailyMissionCompleteModal(missionResult);
         }
       });
       return;
@@ -688,7 +711,9 @@ function wireModalEvents() {
         if (upgradeToMaster(state, uid)) {
           showItemDetailModal(state, uid);
           showToast('✨ Item evoluiu para Rank Master!');
+          const missionResult = recordDailyMissionProgress(state, 'rank_master_items');
           fullRefresh();
+          if (missionResult?.completed) showDailyMissionCompleteModal(missionResult);
         }
       });
       return;
@@ -949,12 +974,15 @@ function wireModalEvents() {
         state.eggCount = Math.max(0, (state.eggCount || 0) - 1);
         const { discarded, fragments } = addPetToInventory(state, chosen);
         recordPetHatchOutcome(state, chosen.rarityId);
+        const missionResult = recordDailyMissionProgress(state, 'hatch_eggs');
         hideModal();
         showToast(discarded
           ? `🎒 Inventário de mascotes cheio! Mascote convertido em +${formatNumber(fragments)} ${PET_FRAGMENT_ICON} Fragmentos.`
           : '🐣 Novo mascote chocado!');
         renderTopBar(state);
         renderPetsTabNow();
+        refreshDailyMissionsTab();
+        if (missionResult?.completed) showDailyMissionCompleteModal(missionResult);
       });
       return;
     }
@@ -1301,6 +1329,11 @@ function hatchAllEggsNow() {
   showToast(msg);
   renderTopBar(state);
   renderPetsTabNow();
+  if (summary.hatched > 0) {
+    const missionResult = recordDailyMissionProgress(state, 'hatch_eggs', summary.hatched);
+    refreshDailyMissionsTab();
+    if (missionResult?.completed) showDailyMissionCompleteModal(missionResult);
+  }
 }
 
 function fuseAllPetsNow() {
@@ -1514,6 +1547,42 @@ function wireAchievementsTabEvents() {
   });
 }
 
+// Missão Diária — aba própria dentro de "Outros" (ver
+// systems/dailyMissions.js pro fluxo completo). Só 1 pode estar ativa por
+// vez: selecionar já falha sozinho (retorna false) se outra já estiver
+// ativa ou se a missão do dia já tiver sido concluída — o botão nem
+// deveria aparecer nesse caso (ver dailyMissionSlotHtml em ui/render.js),
+// isso aqui é só a defesa de qualquer forma.
+function wireDailyMissionsTabEvents() {
+  document.getElementById('tab-daily-missions').addEventListener('click', (e) => {
+    const selectBtn = e.target.closest('[data-mission-select]');
+    if (selectBtn) {
+      if (selectMission(state, Number(selectBtn.dataset.missionSelect))) {
+        showToast('📋 Missão selecionada — boa sorte!');
+        refreshDailyMissionsTab();
+      }
+      return;
+    }
+
+    const abandonBtn = e.target.closest('[data-mission-abandon]');
+    if (abandonBtn) {
+      if (abandonMission(state, Number(abandonBtn.dataset.missionAbandon))) {
+        showToast('🚫 Missão abandonada.');
+        refreshDailyMissionsTab();
+      }
+      return;
+    }
+
+    const rerollBtn = e.target.closest('[data-mission-reroll]');
+    if (rerollBtn) {
+      if (rerollMission(state, Number(rerollBtn.dataset.missionReroll))) {
+        showToast('🔄 Nova missão sorteada!');
+        refreshDailyMissionsTab();
+      }
+    }
+  });
+}
+
 // ---------------------------------------------------------------
 // Transcender: aba própria dentro de "Outros" (ver #tab-transcend em
 // index.html + MORE_MENU_TAB_IDS acima) — só o botão de abrir o modal de
@@ -1608,6 +1677,23 @@ async function handlePvpAttack(defenderId, isBot) {
   if (!result.error && result.attackerWins) {
     state.pvpWinsTotal = (state.pvpWinsTotal || 0) + 1;
   }
+  // Missão Diária "Ataque"/"Vença na Arena" (ver systems/dailyMissions.js).
+  // Um toast em vez do modal de conclusão de sempre porque
+  // showPvpBattleModal (logo abaixo) já ocupa o popup com o resultado da
+  // luta — um modal por cima esconderia esse resultado.
+  if (!result.error) {
+    const attackMissionResult = recordDailyMissionProgress(state, 'arena_attacks');
+    if (attackMissionResult?.completed) {
+      showToast(`📋 Missão concluída! ${dailyMissionRewardLineHtml(attackMissionResult.reward)}`);
+    }
+  }
+  if (!result.error && result.attackerWins) {
+    const winMissionResult = recordDailyMissionProgress(state, 'arena_wins');
+    if (winMissionResult?.completed) {
+      showToast(`📋 Missão concluída! ${dailyMissionRewardLineHtml(winMissionResult.reward)}`);
+    }
+  }
+  refreshDailyMissionsTab();
   if (!result.error && pvpData.myProfile) {
     const ratingPatch = result.hiddenScore ? {} : { rating: result.attackerRatingAfter };
     const winsPatch = result.attackerWins ? { wins: (pvpData.myProfile.wins || 0) + 1 } : {};
@@ -1880,6 +1966,7 @@ function init() {
   wireEventTabEvents();
   wireShopTabEvents();
   wireAchievementsTabEvents();
+  wireDailyMissionsTabEvents();
   wireTranscendTabEvents();
   wirePvpTabEvents();
   wireRanksTabEvents();

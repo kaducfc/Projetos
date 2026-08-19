@@ -42,6 +42,10 @@ const PRESERVED_KEYS = [
   'lifetimeHunterLevel', 'lifetimeTotalKills', 'lifetimeGoldEarned',
   'lifetimeEggsHatched', 'lifetimeRankMasterCount',
   'pvpHighestTierIndex', 'pvpWinsTotal',
+  // Missão Diária (ver systems/dailyMissions.js) — nem a missão do dia
+  // em andamento nem o contador histórico têm a ver com progresso de run,
+  // não faz sentido Transcender apagar isso.
+  'dailyMissions', 'dailyMissionsCompletedTotal',
 ];
 
 /// O reset de prestígio em si — retorna um state NOVO (não muta o

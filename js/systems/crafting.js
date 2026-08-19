@@ -13,8 +13,8 @@ import {
 /// entrar, e vira material (ver getItemScrapMaterial) direto pro jogador.
 /// Retorna { uid, discarded, material? }, ou null se a rolagem de drop
 /// falhar por algum motivo.
-export function addDroppedItem(state, zoneIndex, slotId) {
-  const rolled = rollDroppedItem(zoneIndex, slotId);
+export function addDroppedItem(state, zoneIndex, slotId, forcedRarityId = null) {
+  const rolled = rollDroppedItem(zoneIndex, slotId, forcedRarityId);
   if (!rolled) return null;
   if (state.inventory.length >= getItemInventoryCap(state)) {
     const item = getItem(rolled.itemId);
