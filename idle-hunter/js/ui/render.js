@@ -1895,7 +1895,7 @@ export function showTranscendConfirmModal(state) {
 }
 
 // ---------------------------------------------------------------
-// Arena PvP: aba "🏟️ Arena PvP", dentro do popup "Outros". Diferente de
+// Arena: aba "🏟️ Arena", dentro do popup "Outros". Diferente de
 // todo resto do jogo, os dados aqui NÃO vêm de `state` (o save local) — vêm
 // do Supabase (ver systems/pvp.js), cacheados em memória por main.js
 // (pvpData) porque buscar é assíncrono e o resto do jogo renderiza tudo
@@ -1983,8 +1983,7 @@ export function renderPvpTab(state, pvp) {
     : '';
 
   container.innerHTML = `
-    <div class="section-banner">${ARENA_ICON} Arena PvP</div>
-    <p class="shop-note">PvP assíncrono: você ataca a última cópia salva das stats de outro jogador (ou um bot) — ele não precisa estar online.</p>
+    <div class="section-banner">${ARENA_ICON} Arena</div>
     ${connectHtml}
     <button class="transcend-btn" data-pvp-refresh ${pvp.loading ? 'disabled' : ''}>🔄 ${myProfile ? 'Sincronizar Stats' : 'Conectar à Arena'}</button>
     ${combatBtn}
@@ -2332,7 +2331,7 @@ function pvpStatRow(label, attackerValue, defenderValue) {
 /// arena. Sucesso de verdade sempre passa por showPvpBattleModal abaixo.
 export function showPvpBattleResultModal(result) {
   if (result.error) {
-    showModal('⚔️ Arena PvP', `<p>${pvpErrorMessage(result)}</p>`);
+    showModal('⚔️ Arena', `<p>${pvpErrorMessage(result)}</p>`);
     return;
   }
   showModal(result.attackerWins ? '🏆 Vitória!' : '💀 Derrota', pvpResultContentHtml(result));
