@@ -1707,7 +1707,7 @@ function adBonusesHtml(state) {
     : `<div class="desc">+${DPS_BOOST_PERCENT}% de DPS (fixo) por 30 min; assistir de novo estende o tempo, até ${DPS_BOOST_MAX_DURATION_MS / 3600000}h no total</div>`;
   const dpsBtn = dpsReady
     ? `<button data-watch-dps-ad>🎬 Assistir Anúncio</button>`
-    : `<button disabled title="Tempo restante já no máximo de 2h">🎬 Máximo (${dpsRemainingLabel})</button>`;
+    : `<button disabled title="Espere a última carga de 30min acabar pra liberar o próximo anúncio">🎬 Máximo (${dpsRemainingLabel})</button>`;
 
   const offlineBonusSeconds = state.offlineBonusSeconds || 0;
   const offlineStacks = Math.round(offlineBonusSeconds / OFFLINE_BONUS_SECONDS_PER_STACK);
@@ -1718,7 +1718,7 @@ function adBonusesHtml(state) {
     : `<div class="desc">+30 min no limite da recompensa offline, empilha até ${OFFLINE_BONUS_MAX_STACKS}x (2h no total)</div>`;
   const offlineBtn = offlineReady
     ? `<button data-watch-offline-ad>🎬 Assistir Anúncio</button>`
-    : `<button disabled title="Máximo de ${OFFLINE_BONUS_MAX_STACKS} cargas guardadas">🎬 Máximo (${offlineStacks}/${OFFLINE_BONUS_MAX_STACKS})</button>`;
+    : `<button disabled title="Espere a última carga de 30min acabar (ficando offline) pra liberar o próximo anúncio">🎬 Máximo (${offlineStacks}/${OFFLINE_BONUS_MAX_STACKS})</button>`;
 
   return `
     <div class="shop-item-card">
