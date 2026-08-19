@@ -3532,6 +3532,59 @@ button:disabled {
   color: var(--red-dark, #b91c1c);
 }
 
+/* Rank do tier na Arena (#tab-pvp) e as 3 listas da página Ranks
+   (#tab-ranks) — pedido do usuário pra deixar tudo (letra, ícone de
+   pontuação/moeda, posição) um pouco maior e mais destacado, já que a
+   lista compacta original ficava difícil de ler. Escopado só nessas 2
+   telas — Conquistas/Correio continuam no tamanho padrão. */
+#tab-pvp .achievement-card,
+#tab-ranks .achievement-card {
+  padding: 12px 14px;
+  gap: 12px;
+}
+
+#tab-pvp .achievement-card .info .name,
+#tab-ranks .achievement-card .info .name {
+  font-size: 15.5px;
+  font-weight: 800;
+}
+
+#tab-pvp .achievement-card .info .desc,
+#tab-ranks .achievement-card .info .desc {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+#tab-pvp .achievement-card .icon,
+#tab-ranks .achievement-card .icon {
+  font-size: 30px;
+}
+
+#tab-pvp .achievement-card .pvp-rank,
+#tab-ranks .achievement-card .pvp-rank {
+  font-size: 16px;
+  min-width: 34px;
+}
+
+#tab-pvp .achievement-card .currency-icon,
+#tab-ranks .achievement-card .currency-icon {
+  width: 19px;
+  height: 19px;
+  vertical-align: -4px;
+}
+
+#tab-pvp .achievement-card .pvp-reward-preview,
+#tab-ranks .achievement-card .pvp-reward-preview {
+  font-size: 13.5px;
+}
+
+#tab-pvp .achievement-card .pvp-reward-preview .currency-icon,
+#tab-ranks .achievement-card .pvp-reward-preview .currency-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
 .nav-badge-dot {
   position: relative;
   top: -10px;
