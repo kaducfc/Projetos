@@ -46,6 +46,7 @@ import {
   renderCardsTab, showCardDetailModal, iconMarkup,
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
+  ACHIEVEMENT_ICON, GIFT_ICON, TRANSCEND_ICON,
   EGG_ICON, PET_FRAGMENT_ICON,
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
   renderTranscendTab, renderPvpTab, showPvpBattleModal, showPvpCombatPickerModal, renderRanksTab,
@@ -327,7 +328,7 @@ function handleKillEvent(event) {
   // atual (ver systems/awakening.js unlockTranscend/canTranscend) — só
   // dispara uma vez (unlockTranscend já é no-op se já tiver liberado).
   if (event.wasBoss && event.zoneIndex === ZONE_COUNT - 1 && unlockTranscend(state)) {
-    showToast('🌌 Transcender desbloqueado! Veja a aba Transcender em Outros.');
+    showToast(`${TRANSCEND_ICON} Transcender desbloqueado! Veja a aba Transcender em Outros.`);
     renderTranscendTab(state);
   }
   renderTopBar(state);
@@ -596,7 +597,7 @@ function wireModalEvents() {
           renderMailboxTab(mailboxData);
           fullRefresh();
           hideModal();
-          showToast('🎁 Recompensa resgatada!');
+          showToast(`${GIFT_ICON} Recompensa resgatada!`);
         });
       });
       return;
@@ -818,7 +819,7 @@ function wireModalEvents() {
         const cardId = claimCardBtn.dataset.claimCard;
         if (claimCardReward(state, cardId)) {
           showCardDetailModal(state, cardId); // keep the popup open, with fresh state
-          showToast(`🎁 +${formatNumber(CARD_DISCOVERY_CASH_REWARD)} ${ESMERALDA_ICON} Esmeralda!`);
+          showToast(`${GIFT_ICON} +${formatNumber(CARD_DISCOVERY_CASH_REWARD)} ${ESMERALDA_ICON} Esmeralda!`);
           renderTopBar(state);
           renderCardsTab(state);
         }
@@ -1495,7 +1496,7 @@ function wireAchievementsTabEvents() {
     const claimBtn = e.target.closest('[data-claim-achievement]');
     if (claimBtn) {
       if (claimAchievement(state, claimBtn.dataset.claimAchievement)) {
-        showToast('🏆 Conquista resgatada!');
+        showToast(`${ACHIEVEMENT_ICON} Conquista resgatada!`);
         renderTopBar(state);
         renderAchievementsTab(state);
       }
@@ -1765,7 +1766,7 @@ async function claimAllMail() {
   };
   renderMailboxTab(mailboxData);
   fullRefresh();
-  showToast('🎁 Recompensas resgatadas!');
+  showToast(`${GIFT_ICON} Recompensas resgatadas!`);
 }
 
 // ---------------------------------------------------------------
@@ -1800,7 +1801,7 @@ function performTranscend() {
   saveState(state);
   fullRefresh();
   armBossTimer();
-  showToast('🌌 Você Transcendeu! Uma nova jornada começa.');
+  showToast(`${TRANSCEND_ICON} Você Transcendeu! Uma nova jornada começa.`);
 }
 
 // ---------------------------------------------------------------
@@ -1818,7 +1819,7 @@ function showOfflineProgressIfAny() {
   // até a próxima ação disparar um re-render.
   if (progress.itemDropCount > 0) renderInventoryTabNow();
   if (!wasTranscendUnlocked && canTranscend(state)) {
-    showToast('🌌 Transcender desbloqueado! Veja a aba Transcender em Outros.');
+    showToast(`${TRANSCEND_ICON} Transcender desbloqueado! Veja a aba Transcender em Outros.`);
     renderTranscendTab(state);
   }
 

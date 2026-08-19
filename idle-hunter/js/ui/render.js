@@ -31,7 +31,7 @@ import {
   getDpsBoostRemainingMs, canWatchDpsBoostAd, canWatchOfflineBonusAd,
 } from '../systems/shop.js';
 import { getMaxOfflineSeconds } from '../systems/offline.js';
-import { AWAKENING_SHOP_ITEMS, AWAKENING_SHARD_NAME, AWAKENING_SHARD_EMOJI } from '../data/awakening.js';
+import { AWAKENING_SHOP_ITEMS, AWAKENING_SHARD_NAME } from '../data/awakening.js';
 import { canTranscend, getTranscendCount, getAwakeningShards, canBuyAwakeningItem } from '../systems/awakening.js';
 import { PVP_MAX_ENTRIES, getPvpTierInfo } from '../data/pvpConfig.js';
 import {
@@ -92,6 +92,20 @@ export const CARD_FRAGMENT_ICON = `<img class="currency-icon" src="assets/ui/car
 // antigos emoji 🥚/🧩 em todo lugar.
 export const EGG_ICON = `<img class="currency-icon" src="assets/ui/pets/egg_generic.png" alt="Ovo de Mascote">`;
 export const PET_FRAGMENT_ICON = `<img class="currency-icon" src="assets/ui/pets/egg_fragment.png" alt="Fragmento de Mascote">`;
+
+// Ícones das páginas dentro de "Outros" — substituem os emoji 🏟️/🏆/✉️/🌌/🎁
+// em títulos de seção, botões de ação e indicadores (arte nova pedida
+// pelo usuário, ver assets/ui/nav/*.png). AWAKENING_SHARD_ICON é só pra
+// carta/moeda "Fragmento do Despertar" (a cristal roxa); TRANSCEND_ICON é
+// pra aba/ação "Transcender" em si (a silhueta ascendendo) — são conceitos
+// diferentes mesmo reaproveitando o mesmo emoji 🌌 antes.
+export const ARENA_ICON = `<img class="currency-icon" src="assets/ui/nav/arena.png" alt="Arena">`;
+export const ACHIEVEMENT_ICON = `<img class="currency-icon" src="assets/ui/nav/conquistas.png" alt="Conquista">`;
+export const MAIL_ICON = `<img class="currency-icon" src="assets/ui/nav/correio.png" alt="Correio">`;
+export const RANK_ICON = `<img class="currency-icon" src="assets/ui/nav/rank.png" alt="Rank">`;
+export const TRANSCEND_ICON = `<img class="currency-icon" src="assets/ui/nav/transcender.png" alt="Transcender">`;
+export const AWAKENING_SHARD_ICON = `<img class="currency-icon" src="assets/ui/nav/fragmento_despertar.png" alt="Fragmento do Despertar">`;
+export const GIFT_ICON = `<img class="currency-icon" src="assets/ui/nav/presentes.png" alt="Presente">`;
 
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
@@ -521,8 +535,8 @@ export function showFullStatsModal(state) {
   if (stats.doubleHitChance > 0) specialRows.push(['👊 Golpe Duplo', formatPercent(stats.doubleHitChance)]);
 
   const progressRows = [
-    ['🌌 Vezes Transcendido', formatNumber(getTranscendCount(state))],
-    [`${AWAKENING_SHARD_EMOJI} ${AWAKENING_SHARD_NAME}`, formatNumber(getAwakeningShards(state))],
+    [`${TRANSCEND_ICON} Vezes Transcendido`, formatNumber(getTranscendCount(state))],
+    [`${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME}`, formatNumber(getAwakeningShards(state))],
   ];
 
   showModal('📊 Estatísticas Completas', `
@@ -983,7 +997,7 @@ function cardTileHtml(state, card) {
   const discovered = isCardDiscovered(state, card.id);
   const claimable = canClaimCardReward(state, card.id);
   return `<button class="card-tile ${discovered ? 'discovered' : 'undiscovered'}" data-view-card="${card.id}">
-    ${claimable ? '<span class="card-tile-badge">🎁</span>' : ''}
+    ${claimable ? `<span class="card-tile-badge">${GIFT_ICON}</span>` : ''}
     <div class="icon">${iconMarkup(card.image, card.emoji, card.name)}</div>
     <div class="name">${card.name}</div>
   </button>`;
@@ -1067,9 +1081,9 @@ function cardDetailHtml(state, card) {
 
   let actionHtml;
   if (claimable) {
-    actionHtml = `<button class="modal-action-btn" data-claim-card="${card.id}">🎁 Resgatar +${CARD_DISCOVERY_CASH_REWARD} ${ESMERALDA_ICON} Esmeralda</button>`;
+    actionHtml = `<button class="modal-action-btn" data-claim-card="${card.id}">${GIFT_ICON} Resgatar +${CARD_DISCOVERY_CASH_REWARD} ${ESMERALDA_ICON} Esmeralda</button>`;
   } else if (claimed) {
-    actionHtml = `<div class="card-detail-status">🎁 Recompensa já resgatada</div>`;
+    actionHtml = `<div class="card-detail-status">${GIFT_ICON} Recompensa já resgatada</div>`;
   } else if (!discovered) {
     actionHtml = `<div class="card-detail-status">🔒 Ainda não obtida — derrote o monstro dela para ter uma chance de conseguir.</div>`;
   } else {
@@ -1095,7 +1109,7 @@ function cardDetailHtml(state, card) {
           <div class="card-fragment-actions">
             ${owned > 0 ? `<button class="modal-action-btn" data-recycle-card="${card.id}" ${canRecycle ? '' : 'disabled'}>♻️ Reciclar (+${recycleValue} ${CARD_FRAGMENT_ICON})</button>` : ''}
             ${card.noCraft
-              ? `<div class="card-detail-status">🌌 Só disponível na Loja do Despertar (aba Despertar da Loja)</div>`
+              ? `<div class="card-detail-status">${AWAKENING_SHARD_ICON} Só disponível na Loja do Despertar (aba Despertar da Loja)</div>`
               : `<button class="modal-action-btn" data-craft-card="${card.id}" ${canCraft ? '' : 'disabled'}>🛠️ Craftar (${craftCost} ${CARD_FRAGMENT_ICON})</button>`}
           </div>
         </div>
@@ -1642,7 +1656,7 @@ export function renderAchievementsTab(state) {
   }).join('');
 
   container.innerHTML = `
-    <div class="section-banner">🏆 Conquistas</div>
+    <div class="section-banner">${ACHIEVEMENT_ICON} Conquistas</div>
     <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>
     <button id="watch-ad-btn" class="watch-ad-btn" ${adReady ? '' : 'disabled'}>
       ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' ' + ESMERALDA_ICON + ')' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
@@ -1669,7 +1683,7 @@ export function renderShopTab(state, activeSubTab) {
     <div class="inner-subnav">
       <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">${ESMERALDA_ICON} Esmeralda</button>
       <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">${EVENT_ICON} Evento</button>
-      <button class="inner-subtab-btn ${activeSubTab === 'awakening' ? 'active' : ''}" data-shop-subtab="awakening">${AWAKENING_SHARD_EMOJI} Despertar</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'awakening' ? 'active' : ''}" data-shop-subtab="awakening">${AWAKENING_SHARD_ICON} Despertar</button>
     </div>
     ${body}
   `;
@@ -1774,7 +1788,7 @@ function cashShopHtml(state) {
 
   return `
     <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>
-    <p class="shop-note">Ganhe Esmeralda na aba 🏆 Conquistas.</p>
+    <p class="shop-note">Ganhe Esmeralda na aba ${ACHIEVEMENT_ICON} Conquistas.</p>
 
     <h4 class="shop-section-title">Bônus (assistir anúncio)</h4>
     <div class="shop-item-grid">${adBonusesHtml(state)}</div>
@@ -1817,23 +1831,23 @@ export function renderTranscendTab(state) {
   const statusHtml = canTranscend(state)
     ? `
       <div class="transcend-status-card ready">
-        <div class="name">🌌 Transcender está disponível!</div>
-        <p class="shop-note">Reinicie sua jornada e ganhe +1 ${AWAKENING_SHARD_EMOJI} ${AWAKENING_SHARD_NAME}.</p>
-        <button class="transcend-btn" data-open-transcend-confirm>🌌 Transcender</button>
+        <div class="name">${TRANSCEND_ICON} Transcender está disponível!</div>
+        <p class="shop-note">Reinicie sua jornada e ganhe +1 ${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME}.</p>
+        <button class="transcend-btn" data-open-transcend-confirm>${TRANSCEND_ICON} Transcender</button>
       </div>
       ${countLine}`
     : `
       <div class="transcend-status-card locked">
-        <div class="name">🌌 Transcender</div>
+        <div class="name">${TRANSCEND_ICON} Transcender</div>
         <p class="shop-note">Derrote o chefe da última zona (Malgorath) pela 1ª vez pra liberar.</p>
       </div>
       ${countLine}`;
 
   container.innerHTML = `
-    <div class="section-banner">🌌 Transcender</div>
+    <div class="section-banner">${TRANSCEND_ICON} Transcender</div>
     ${statusHtml}
-    <div class="shop-balance">${AWAKENING_SHARD_EMOJI} Você tem <strong>${formatNumber(getAwakeningShards(state))}</strong> ${AWAKENING_SHARD_NAME}</div>
-    <p class="shop-note">Só se ganha ${AWAKENING_SHARD_NAME} Transcendendo — 1 garantido por vez. Gaste na aba 🌌 Despertar da Loja.</p>
+    <div class="shop-balance">${AWAKENING_SHARD_ICON} Você tem <strong>${formatNumber(getAwakeningShards(state))}</strong> ${AWAKENING_SHARD_NAME}</div>
+    <p class="shop-note">Só se ganha ${AWAKENING_SHARD_NAME} Transcendendo — 1 garantido por vez. Gaste na aba ${AWAKENING_SHARD_ICON} Despertar da Loja.</p>
   `;
 }
 
@@ -1846,7 +1860,7 @@ function awakeningShopItemCardHtml(state, item) {
         <div class="name">${item.name}</div>
         <div class="desc">${item.description}</div>
       </div>
-      <button data-buy-awakening="${item.id}" ${affordable ? '' : 'disabled'}>${AWAKENING_SHARD_EMOJI} ${item.cost}</button>
+      <button data-buy-awakening="${item.id}" ${affordable ? '' : 'disabled'}>${AWAKENING_SHARD_ICON} ${item.cost}</button>
     </div>`;
 }
 
@@ -1854,8 +1868,8 @@ function awakeningShopHtml(state) {
   const itemsHtml = AWAKENING_SHOP_ITEMS.map((item) => awakeningShopItemCardHtml(state, item)).join('');
 
   return `
-    <div class="shop-balance">${AWAKENING_SHARD_EMOJI} Você tem <strong>${formatNumber(getAwakeningShards(state))}</strong> ${AWAKENING_SHARD_NAME}</div>
-    <p class="shop-note">Ganhe ${AWAKENING_SHARD_NAME} na aba 🌌 Transcender (dentro de Outros).</p>
+    <div class="shop-balance">${AWAKENING_SHARD_ICON} Você tem <strong>${formatNumber(getAwakeningShards(state))}</strong> ${AWAKENING_SHARD_NAME}</div>
+    <p class="shop-note">Ganhe ${AWAKENING_SHARD_NAME} na aba ${TRANSCEND_ICON} Transcender (dentro de Outros).</p>
 
     <h4 class="shop-section-title">Loja do Despertar</h4>
     <div class="shop-item-grid">${itemsHtml}</div>
@@ -1870,8 +1884,8 @@ export function showTranscendConfirmModal(state) {
     <p class="offline-item-lines">✅ Cartas descobertas<br>
        ✅ Itens/mascotes comprados na Loja do Despertar<br>
        ✅ Esmeralda, VIP, Conquistas, Perfil<br>
-       ✅ +1 ${AWAKENING_SHARD_EMOJI} ${AWAKENING_SHARD_NAME} (${getAwakeningShards(state)} → ${getAwakeningShards(state) + 1})</p>
-    <button class="transcend-btn" data-confirm-transcend>🌌 Confirmar Transcendência</button>
+       ✅ +1 ${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME} (${getAwakeningShards(state)} → ${getAwakeningShards(state) + 1})</p>
+    <button class="transcend-btn" data-confirm-transcend>${TRANSCEND_ICON} Confirmar Transcendência</button>
   `);
 }
 
@@ -1964,7 +1978,7 @@ export function renderPvpTab(state, pvp) {
     : '';
 
   container.innerHTML = `
-    <div class="section-banner">🏟️ Arena PvP</div>
+    <div class="section-banner">${ARENA_ICON} Arena PvP</div>
     <p class="shop-note">PvP assíncrono: você ataca a última cópia salva das stats de outro jogador (ou um bot) — ele não precisa estar online.</p>
     ${connectHtml}
     <button class="transcend-btn" data-pvp-refresh ${pvp.loading ? 'disabled' : ''}>🔄 ${myProfile ? 'Sincronizar Stats' : 'Conectar à Arena'}</button>
@@ -2078,9 +2092,9 @@ function pvpWeeklyRewardLabel(row) {
 }
 
 const RANKS_SECTIONS = {
-  arena: { label: '🏟️ Arena', title: '🏟️ Arena' },
+  arena: { label: `${ARENA_ICON} Arena`, title: `${ARENA_ICON} Arena` },
   level: { label: '⭐ Nível', title: '⭐ Nível de Caçador' },
-  transcend: { label: '🌌 Transcender', title: '🌌 Transcender' },
+  transcend: { label: `${TRANSCEND_ICON} Transcender`, title: `${TRANSCEND_ICON} Transcender` },
 };
 
 function ranksSectionListHtml(ranksData, myId) {
@@ -2088,7 +2102,7 @@ function ranksSectionListHtml(ranksData, myId) {
     return pvpRankSectionHtml(ranksData.level, myId, (row) => `Nível ${formatNumber(row.hunter_level)}`);
   }
   if (ranksData.activeSection === 'transcend') {
-    return pvpRankSectionHtml(ranksData.transcend, myId, (row) => `🌌 ${formatInteger(row.transcend_count)}x`);
+    return pvpRankSectionHtml(ranksData.transcend, myId, (row) => `${TRANSCEND_ICON} ${formatInteger(row.transcend_count)}x`);
   }
   // Arena: nick+ícone (na linha, ver pvpRankRowHtml) + nível + vitórias +
   // tier/pontuação — no Lendário a pontuação é omitida (row.rating vem
@@ -2140,7 +2154,7 @@ export function renderRanksTab(ranksData, myProfile) {
     : '';
 
   container.innerHTML = `
-    <div class="section-banner">🏆 Ranks</div>
+    <div class="section-banner">${RANK_ICON} Ranks</div>
     <button class="transcend-btn" data-ranks-refresh ${ranksData.loading ? 'disabled' : ''}>🔄 ${ranksData.loaded ? 'Atualizar' : 'Carregar Ranks'}</button>
 
     <div class="pvp-rank-tabs">${tabsHtml}</div>
@@ -2172,7 +2186,7 @@ function mailRewardLineHtml(type, amount) {
 
 function mailListItemHtml(message) {
   const hasReward = mailHasReward(message);
-  const giftIcon = hasReward ? (message.claimed ? '✅ ' : '🎁 ') : '';
+  const giftIcon = hasReward ? (message.claimed ? '✅ ' : `${GIFT_ICON} `) : '';
   const unreadDot = !message.read ? '<span class="mail-unread-dot"></span>' : '';
   const date = new Date(message.created_at).toLocaleDateString('pt-BR');
   return `
@@ -2192,10 +2206,10 @@ export function renderMailboxTab(mailboxData) {
     : `<p class="shop-note">${mailboxData.loading ? 'Carregando...' : 'Nenhuma mensagem por enquanto.'}</p>`;
 
   container.innerHTML = `
-    <div class="section-banner">✉️ Correio</div>
+    <div class="section-banner">${MAIL_ICON} Correio</div>
     <p class="shop-note">Avisos e recompensas da Arena chegam aqui.</p>
     <button class="transcend-btn" data-mail-refresh ${mailboxData.loading ? 'disabled' : ''}>🔄 Atualizar</button>
-    ${hasClaimable ? '<button class="transcend-btn" data-mail-claim-all>🎁 Resgatar Todos</button>' : ''}
+    ${hasClaimable ? `<button class="transcend-btn" data-mail-claim-all>${GIFT_ICON} Resgatar Todos</button>` : ''}
     <div class="achievement-list">${listHtml}</div>
   `;
 }
@@ -2212,7 +2226,7 @@ export function showMailDetailModal(message) {
   const canClaim = mailHasReward(message) && !message.claimed;
   const canDelete = mailIsFullyClaimed(message);
   const actionBtn = canClaim
-    ? `<button class="transcend-btn" data-mail-claim="${message.id}">🎁 Resgatar Item</button>`
+    ? `<button class="transcend-btn" data-mail-claim="${message.id}">${GIFT_ICON} Resgatar Item</button>`
     : canDelete
       ? `<button class="transcend-btn" data-mail-delete="${message.id}">🗑️ Apagar</button>`
       : '<p class="shop-note">Resgate o item antes de apagar essa mensagem.</p>';
