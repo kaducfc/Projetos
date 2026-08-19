@@ -329,12 +329,14 @@ export function applyDamage(state, amount, stats) {
   const drops = rollDrops(zoneIndex, wasBoss, stats.dropMult, ref.monsterId);
 
   state.gold += goldGained;
+  state.lifetimeGoldEarned = (state.lifetimeGoldEarned || 0) + goldGained;
   for (const drop of drops) {
     const bucket = drop.isCard ? state.cards : state.materials;
     bucket[drop.id] = (bucket[drop.id] || 0) + drop.qty;
     if (drop.isCard) recordCardDiscovered(state, drop.id);
   }
   state.totalKills += 1;
+  state.lifetimeTotalKills = (state.lifetimeTotalKills || 0) + 1;
 
   let itemDropResult = null;
   if (Math.random() < Math.min(0.95, ITEM_DROP_CHANCE * stats.dropMult)) {

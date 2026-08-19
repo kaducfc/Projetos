@@ -12,7 +12,7 @@ import {
   pickRandomPvpOpponents, previewPvpAttackSwing,
   fetchArenaRank, fetchLevelRank, fetchTranscendRank,
 } from './systems/pvp.js';
-import { getPvpTierInfo } from './data/pvpConfig.js';
+import { getPvpTierInfo, PVP_TIERS } from './data/pvpConfig.js';
 import { fetchMailbox, claimMailReward, deleteMail, mailHasReward, hasUnreadMail, markMailRead } from './systems/mailbox.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot, findEquippedSlotId } from './systems/equipment.js';
@@ -22,7 +22,7 @@ import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from
 import { formatNumber } from './format.js';
 import { enterExpedition } from './systems/expedition.js';
 import { ARENA_RUN_DURATION_MS, ARENA_COOLDOWN_MS, canEnterArena, startArenaRun, applyArenaDamage, endArenaRun } from './systems/arena.js';
-import { claimAchievement } from './systems/achievements.js';
+import { claimAchievementStage } from './systems/achievements.js';
 import { watchAd, buyCashItem, buyEventItem, watchDpsBoostAd, watchOfflineBonusAd } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
 import { claimCardReward, recycleCard, craftCard } from './systems/cards.js';
@@ -1495,7 +1495,7 @@ function wireAchievementsTabEvents() {
   document.getElementById('tab-achievements').addEventListener('click', (e) => {
     const claimBtn = e.target.closest('[data-claim-achievement]');
     if (claimBtn) {
-      if (claimAchievement(state, claimBtn.dataset.claimAchievement)) {
+      if (claimAchievementStage(state, claimBtn.dataset.claimAchievement)) {
         showToast(`${ACHIEVEMENT_ICON} Conquista resgatada!`);
         renderTopBar(state);
         renderAchievementsTab(state);
@@ -1562,7 +1562,14 @@ async function refreshPvpTab({ silent = false } = {}) {
     const petDps = bestPet ? bestPet.damage * (stats.petDamageMult || 1) : 0;
     await syncProfile(state, { ...stats, petDps }, getPlayerName(state), state.profileIconId);
     myProfile = await getMyPvpProfile();
-    if (myProfile) board = await fetchTierBoard(myProfile.tier, myProfile.group_index);
+    if (myProfile) {
+      board = await fetchTierBoard(myProfile.tier, myProfile.group_index);
+      // Conquista "Tier da Arena" (ver data/achievements.js): maior tier já
+      // alcançado, não o atual — não pode regredir se um reset semanal
+      // rebaixar o jogador de novo.
+      const tierIndex = PVP_TIERS.findIndex((t) => t.name === myProfile.tier);
+      if (tierIndex > (state.pvpHighestTierIndex || 0)) state.pvpHighestTierIndex = tierIndex;
+    }
   } catch (err) {
     console.warn('Arena PvP: falha ao conectar:', err);
   }
@@ -1595,7 +1602,11 @@ async function handlePvpAttack(defenderId, isBot) {
 
   if (!result.error && result.goldReward) {
     state.gold += result.goldReward;
+    state.lifetimeGoldEarned = (state.lifetimeGoldEarned || 0) + result.goldReward;
     renderTopBar(state);
+  }
+  if (!result.error && result.attackerWins) {
+    state.pvpWinsTotal = (state.pvpWinsTotal || 0) + 1;
   }
   if (!result.error && pvpData.myProfile) {
     const ratingPatch = result.hiddenScore ? {} : { rating: result.attackerRatingAfter };

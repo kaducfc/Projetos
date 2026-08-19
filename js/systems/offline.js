@@ -144,6 +144,7 @@ export function applyOfflineProgress(state, progress) {
     state.offlineBonusSeconds = Math.max(0, (state.offlineBonusSeconds || 0) - progress.bonusSecondsUsed);
   }
   state.gold += progress.goldGained;
+  state.lifetimeGoldEarned = (state.lifetimeGoldEarned || 0) + progress.goldGained;
   for (const [id, qty] of Object.entries(progress.materialsGained)) {
     state.materials[id] = (state.materials[id] || 0) + qty;
   }
@@ -152,6 +153,7 @@ export function applyOfflineProgress(state, progress) {
     recordCardDiscovered(state, id);
   }
   state.totalKills += progress.kills;
+  state.lifetimeTotalKills = (state.lifetimeTotalKills || 0) + progress.kills;
   grantXp(state, progress.xpGained || 0);
 
   // Cria os itens de equipamento de verdade agora (addDroppedItem já rola

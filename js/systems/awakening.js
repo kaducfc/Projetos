@@ -35,6 +35,13 @@ const PRESERVED_KEYS = [
   'cash', 'lastAdWatchTime', 'vipExpiresAt', 'achievementsClaimed',
   'playerName', 'nameChangesUsed', 'profileIconId', 'unlockedProfileIconIds',
   'settings', 'dpsBoostExpiresAt', 'offlineBonusSeconds',
+  // Contadores lifetime das Conquistas (ver data/achievements.js) — têm
+  // que sobreviver ao reset abaixo, senão nenhuma conquista de etapa alta
+  // seria alcançável (hunterLevel/totalKills/gold/etc voltam a zero a
+  // cada Transcender).
+  'lifetimeHunterLevel', 'lifetimeTotalKills', 'lifetimeGoldEarned',
+  'lifetimeEggsHatched', 'lifetimeRankMasterCount',
+  'pvpHighestTierIndex', 'pvpWinsTotal',
 ];
 
 /// O reset de prestígio em si — retorna um state NOVO (não muta o
