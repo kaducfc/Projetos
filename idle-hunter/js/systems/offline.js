@@ -8,14 +8,14 @@ import { DROP_CATEGORIES } from '../data/items.js';
 import { isVipActive } from '../state.js';
 import { unlockTranscend } from './awakening.js';
 
-// Limite base de recompensa offline: 4h sem VIP, +4h de bônus pra quem tem
-// VIP ativo (8h no total) — ver getMaxOfflineSeconds abaixo. Em cima disso,
+// Limite base de recompensa offline: 4h sem VIP, +2h de bônus pra quem tem
+// VIP ativo (6h no total) — ver getMaxOfflineSeconds abaixo. Em cima disso,
 // o Bônus Idle via anúncio (ver data/shop.js OFFLINE_BONUS_*, systems/
 // shop.js watchOfflineBonusAd) pode somar até +2h extras (30min x4 cargas),
 // gastas só quando o jogador realmente fica offline além desse limite base
-// — sem VIP dá até 6h no total, com VIP até 10h.
+// — sem VIP dá até 6h no total, com VIP até 8h.
 export const BASE_OFFLINE_SECONDS = 4 * 60 * 60;
-export const VIP_OFFLINE_BONUS_SECONDS = 4 * 60 * 60;
+export const VIP_OFFLINE_BONUS_SECONDS = 2 * 60 * 60;
 
 export function getMaxOfflineSeconds(state) {
   return BASE_OFFLINE_SECONDS + (isVipActive(state) ? VIP_OFFLINE_BONUS_SECONDS : 0);
