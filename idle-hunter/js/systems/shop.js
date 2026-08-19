@@ -79,8 +79,14 @@ export function getActiveDpsBoostPercent(state) {
   return isDpsBoostActive(state) ? DPS_BOOST_PERCENT : 0;
 }
 
+// Depois que o banco enche de vez (4/4 cargas, teto de
+// DPS_BOOST_MAX_DURATION_MS), o próximo anúncio só libera quando sobrar mais
+// de uma carga (DPS_BOOST_DURATION_MS) de espaço pra encher de novo — ou
+// seja, precisa a última carga "acabar" antes de poder assistir outro,
+// em vez de poder completar o banco a qualquer segundo que ele não esteja
+// 100% cheio.
 export function canWatchDpsBoostAd(state) {
-  return getDpsBoostRemainingMs(state) < DPS_BOOST_MAX_DURATION_MS;
+  return getDpsBoostRemainingMs(state) <= DPS_BOOST_MAX_DURATION_MS - DPS_BOOST_DURATION_MS;
 }
 
 export function watchDpsBoostAd(state) {
@@ -100,8 +106,12 @@ export function watchDpsBoostAd(state) {
 // jogador fica offline além do limite base.
 // ---------------------------------------------------------------
 
+// Mesma regra do Turbo de DPS acima: depois que o banco enche de vez (4/4
+// cargas), só libera o próximo anúncio quando sobrar mais de uma carga
+// (OFFLINE_BONUS_SECONDS_PER_STACK) de espaço — precisa a última carga
+// "acabar" (ser gasta ficando offline) antes de poder assistir outro.
 export function canWatchOfflineBonusAd(state) {
-  return (state.offlineBonusSeconds || 0) < OFFLINE_BONUS_MAX_SECONDS;
+  return (state.offlineBonusSeconds || 0) <= OFFLINE_BONUS_MAX_SECONDS - OFFLINE_BONUS_SECONDS_PER_STACK;
 }
 
 export function watchOfflineBonusAd(state) {
