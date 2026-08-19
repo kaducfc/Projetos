@@ -406,6 +406,14 @@ Deno.serve(async (req) => {
     // fatia do mascote, attackerPetDamageDealt/defenderPetDamageDealt são
     // só a fatia dele. Crítico/esquiva vêm como CONTAGEM (quantas vezes
     // aconteceu na luta), não a % de chance crua.
+    attackerArmor: attackerSnap.armor,
+    defenderArmor: defenderSnap.armor,
+    // DPS "cru" de cada um (o próprio stat, sem considerar armadura/
+    // esquiva do adversário) — attackerEffectiveDps/defenderEffectiveDps
+    // acima já são o "contra ESSE oponente", usados pra animar a barra de
+    // HP; esse aqui é só o stat pessoal, igual Vida/Armadura ao lado.
+    attackerDps: attackerSnap.dps,
+    defenderDps: defenderSnap.dps,
     attackerDamageDealt,
     attackerPetDamageDealt,
     attackerCritCount,
