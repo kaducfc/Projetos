@@ -2982,6 +2982,39 @@ button:disabled {
   box-shadow: none;
 }
 
+.achievement-card.achievement-pending {
+  opacity: 0.6;
+}
+
+.achievement-progress {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.achievement-stage-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.stage-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+}
+
+.stage-dot.filled {
+  background: var(--grad-cash);
+  border-color: transparent;
+}
+
+.stage-dot.current {
+  border-color: var(--cash-dark, #c99a2e);
+}
+
 /* ---------------- Cartas tab ---------------- */
 
 .cards-section-title {

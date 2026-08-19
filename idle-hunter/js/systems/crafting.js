@@ -157,6 +157,10 @@ export function upgradeToMaster(state, uid) {
   state.materials[m.matId] -= m.qty;
   state.gold -= m.gold;
   entry.isMaster = true;
+  // Conquista "Itens Rank Master" (ver data/achievements.js) — contagem
+  // histórica de itens já evoluídos, não quantos estão em Rank Master
+  // agora (sobrevive a descarte/substituição e a Transcender).
+  state.lifetimeRankMasterCount = (state.lifetimeRankMasterCount || 0) + 1;
   return true;
 }
 

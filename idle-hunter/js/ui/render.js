@@ -19,8 +19,10 @@ import { EXPEDITION_TIERS, EXPEDITION_REWARDS } from '../data/events.js';
 import { canEnterExpedition, expeditionRemainingMs } from '../systems/expedition.js';
 import { ARENA_RANKS, getArenaRankForDamage, getArenaRankByIndex } from '../data/arena.js';
 import { canEnterArena, arenaRemainingMs } from '../systems/arena.js';
-import { ACHIEVEMENTS } from '../data/achievements.js';
-import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
+import { ACHIEVEMENTS, ACHIEVEMENT_STAGE_CASH_REWARD } from '../data/achievements.js';
+import {
+  claimedStageCount, currentStageTarget, isAchievementStageReady, isAchievementFullyClaimed,
+} from '../systems/achievements.js';
 import {
   CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, CASH_ONE_TIME_PURCHASES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss,
   DPS_BOOST_PERCENT, DPS_BOOST_MAX_DURATION_MS,
@@ -1645,16 +1647,44 @@ export function renderAchievementsTab(state) {
   const adReady = cooldownMs <= 0;
 
   const achievementsHtml = ACHIEVEMENTS.map((a) => {
-    const claimed = isAchievementClaimed(state, a.id);
-    const ready = isAchievementReady(state, a);
-    const statusBtn = claimed
-      ? `<button disabled>Resgatado</button>`
-      : `<button data-claim-achievement="${a.id}" ${ready ? '' : 'disabled'}>${ESMERALDA_ICON} +${a.cashReward}</button>`;
-    return `<div class="achievement-card ${claimed ? 'claimed' : ''}">
+    // "daily_missions" fica com `stages` vazio até o sistema de Missões
+    // Diárias existir (ver data/achievements.js) — sem etapa nenhuma pra
+    // mostrar bolinha/botão, só um aviso de "em breve".
+    if (a.stages.length === 0) {
+      return `<div class="achievement-card achievement-pending">
+        <span class="icon">${a.emoji}</span>
+        <div class="info">
+          <div class="name">${a.name}</div>
+          <div class="desc">Em breve.</div>
+        </div>
+      </div>`;
+    }
+
+    const claimedCount = claimedStageCount(state, a.id);
+    const fullyClaimed = isAchievementFullyClaimed(state, a);
+    const target = currentStageTarget(state, a);
+    const ready = isAchievementStageReady(state, a);
+    const formatVal = a.formatProgress || ((v) => formatNumber(v));
+
+    const dotsHtml = a.stages.map((_, i) => {
+      const cls = i < claimedCount ? 'filled' : i === claimedCount ? 'current' : 'locked';
+      return `<span class="stage-dot ${cls}"></span>`;
+    }).join('');
+
+    const desc = fullyClaimed
+      ? 'Todas as etapas concluídas!'
+      : `${a.stageDescription(target)} <span class="achievement-progress">(${formatVal(a.progress(state))} / ${formatVal(target)})</span>`;
+
+    const statusBtn = fullyClaimed
+      ? `<button disabled>Completo</button>`
+      : `<button data-claim-achievement="${a.id}" ${ready ? '' : 'disabled'}>${ESMERALDA_ICON} +${ACHIEVEMENT_STAGE_CASH_REWARD}</button>`;
+
+    return `<div class="achievement-card ${fullyClaimed ? 'claimed' : ''}">
       <span class="icon">${a.emoji}</span>
       <div class="info">
         <div class="name">${a.name}</div>
-        <div class="desc">${a.description}</div>
+        <div class="desc">${desc}</div>
+        <div class="achievement-stage-dots">${dotsHtml}</div>
       </div>
       ${statusBtn}
     </div>`;
