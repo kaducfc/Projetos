@@ -25,6 +25,7 @@ import { ARENA_RUN_DURATION_MS, ARENA_COOLDOWN_MS, canEnterArena, startArenaRun,
 import { claimAchievementStage } from './systems/achievements.js';
 import {
   ensureDailyMissionsFresh, recordDailyMissionProgress, selectMission, abandonMission, rerollMission,
+  claimDailyMission,
 } from './systems/dailyMissions.js';
 import { watchAd, buyCashItem, buyEventItem, watchDpsBoostAd, watchOfflineBonusAd } from './systems/shop.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
@@ -54,7 +55,7 @@ import {
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
   renderTranscendTab, renderPvpTab, showPvpBattleModal, showPvpCombatPickerModal, renderRanksTab,
   renderMailboxTab, showMailDetailModal, renderAchievementsTab,
-  renderDailyMissionsTab, showDailyMissionCompleteModal, dailyMissionRewardLineHtml,
+  renderDailyMissionsTab, showDailyMissionCompleteModal,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -344,11 +345,8 @@ function handleKillEvent(event) {
     showToast(`${TRANSCEND_ICON} Transcender desbloqueado! Veja a aba Transcender em Outros.`);
     renderTranscendTab(state);
   }
-  const killMissionResult = recordDailyMissionProgress(state, 'kill_monsters');
-  if (killMissionResult?.completed) {
-    showDailyMissionCompleteModal(killMissionResult);
-    refreshDailyMissionsTab();
-  }
+  recordDailyMissionProgress(state, 'kill_monsters');
+  refreshDailyMissionsTab();
   renderTopBar(state);
   renderHunterLevel(state);
   // Gold/materials just changed, so refresh whatever depends on affordability
@@ -696,9 +694,8 @@ function wireModalEvents() {
         if (enhanceItem(state, uid)) {
           showItemDetailModal(state, uid); // keep the popup open, with fresh numbers
           showToast('⬆️ Item aprimorado!');
-          const missionResult = recordDailyMissionProgress(state, 'enhance_items');
+          recordDailyMissionProgress(state, 'enhance_items');
           fullRefresh();
-          if (missionResult?.completed) showDailyMissionCompleteModal(missionResult);
         }
       });
       return;
@@ -711,9 +708,8 @@ function wireModalEvents() {
         if (upgradeToMaster(state, uid)) {
           showItemDetailModal(state, uid);
           showToast('✨ Item evoluiu para Rank Master!');
-          const missionResult = recordDailyMissionProgress(state, 'rank_master_items');
+          recordDailyMissionProgress(state, 'rank_master_items');
           fullRefresh();
-          if (missionResult?.completed) showDailyMissionCompleteModal(missionResult);
         }
       });
       return;
@@ -974,7 +970,7 @@ function wireModalEvents() {
         state.eggCount = Math.max(0, (state.eggCount || 0) - 1);
         const { discarded, fragments } = addPetToInventory(state, chosen);
         recordPetHatchOutcome(state, chosen.rarityId);
-        const missionResult = recordDailyMissionProgress(state, 'hatch_eggs');
+        recordDailyMissionProgress(state, 'hatch_eggs');
         hideModal();
         showToast(discarded
           ? `🎒 Inventário de mascotes cheio! Mascote convertido em +${formatNumber(fragments)} ${PET_FRAGMENT_ICON} Fragmentos.`
@@ -982,7 +978,6 @@ function wireModalEvents() {
         renderTopBar(state);
         renderPetsTabNow();
         refreshDailyMissionsTab();
-        if (missionResult?.completed) showDailyMissionCompleteModal(missionResult);
       });
       return;
     }
@@ -1330,9 +1325,8 @@ function hatchAllEggsNow() {
   renderTopBar(state);
   renderPetsTabNow();
   if (summary.hatched > 0) {
-    const missionResult = recordDailyMissionProgress(state, 'hatch_eggs', summary.hatched);
+    recordDailyMissionProgress(state, 'hatch_eggs', summary.hatched);
     refreshDailyMissionsTab();
-    if (missionResult?.completed) showDailyMissionCompleteModal(missionResult);
   }
 }
 
@@ -1555,6 +1549,16 @@ function wireAchievementsTabEvents() {
 // isso aqui é só a defesa de qualquer forma.
 function wireDailyMissionsTabEvents() {
   document.getElementById('tab-daily-missions').addEventListener('click', (e) => {
+    const claimBtn = e.target.closest('[data-mission-claim]');
+    if (claimBtn) {
+      const result = claimDailyMission(state, Number(claimBtn.dataset.missionClaim));
+      if (result) {
+        showDailyMissionCompleteModal(result);
+        fullRefresh();
+      }
+      return;
+    }
+
     const selectBtn = e.target.closest('[data-mission-select]');
     if (selectBtn) {
       if (selectMission(state, Number(selectBtn.dataset.missionSelect))) {
@@ -1677,22 +1681,11 @@ async function handlePvpAttack(defenderId, isBot) {
   if (!result.error && result.attackerWins) {
     state.pvpWinsTotal = (state.pvpWinsTotal || 0) + 1;
   }
-  // Missão Diária "Ataque"/"Vença na Arena" (ver systems/dailyMissions.js).
-  // Um toast em vez do modal de conclusão de sempre porque
-  // showPvpBattleModal (logo abaixo) já ocupa o popup com o resultado da
-  // luta — um modal por cima esconderia esse resultado.
-  if (!result.error) {
-    const attackMissionResult = recordDailyMissionProgress(state, 'arena_attacks');
-    if (attackMissionResult?.completed) {
-      showToast(`📋 Missão concluída! ${dailyMissionRewardLineHtml(attackMissionResult.reward)}`);
-    }
-  }
-  if (!result.error && result.attackerWins) {
-    const winMissionResult = recordDailyMissionProgress(state, 'arena_wins');
-    if (winMissionResult?.completed) {
-      showToast(`📋 Missão concluída! ${dailyMissionRewardLineHtml(winMissionResult.reward)}`);
-    }
-  }
+  // Missão Diária "Ataque"/"Vença na Arena" (ver systems/dailyMissions.js)
+  // — só marca progresso aqui; a recompensa em si só sai quando o
+  // jogador clicar "Concluir Missão" na aba (ver claimDailyMission).
+  if (!result.error) recordDailyMissionProgress(state, 'arena_attacks');
+  if (!result.error && result.attackerWins) recordDailyMissionProgress(state, 'arena_wins');
   refreshDailyMissionsTab();
   if (!result.error && pvpData.myProfile) {
     const ratingPatch = result.hiddenScore ? {} : { rating: result.attackerRatingAfter };

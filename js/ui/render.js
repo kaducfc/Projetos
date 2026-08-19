@@ -1720,7 +1720,7 @@ export function dailyMissionRewardLineHtml(reward) {
   return '';
 }
 
-function dailyMissionSlotHtml(slot, index, anyCompleted, anyActive) {
+function dailyMissionSlotHtml(slot, index, budgetUsed, anyActive) {
   const type = getDailyMissionType(slot.typeId);
   const tier = type.tiers[slot.tierIndex];
   const target = tier.target;
@@ -1736,20 +1736,27 @@ function dailyMissionSlotHtml(slot, index, anyCompleted, anyActive) {
   }
 
   const completed = slot.status === 'completed';
+  const ready = slot.status === 'ready';
   const active = slot.status === 'active';
-  // "idle" mas travada: já tem outra ativa, ou já concluiu a missão do
-  // dia (pedido do usuário: só 1 conclusão por dia) — não dá pra escolher
-  // nem sortear de novo até o reset.
-  const locked = !completed && !active && (anyCompleted || anyActive);
+  // "idle" mas travada: já tem outra ativa, ou o dia já tem uma missão
+  // pronta/concluída (pedido do usuário: só 1 conclusão por dia) — não dá
+  // pra escolher nem sortear de novo até o reset.
+  const locked = !completed && !ready && !active && (budgetUsed || anyActive);
 
   const progressHtml = active
     ? `<div class="daily-mission-progress">${formatNumber(slot.progress)} / ${formatNumber(target)}</div>`
     : '';
-  const statusTag = completed ? `<div class="daily-mission-status">✅ Concluída</div>` : '';
+  const statusTag = completed
+    ? `<div class="daily-mission-status">✅ Concluída</div>`
+    : ready
+      ? `<div class="daily-mission-status">🎁 Pronta pra resgatar!</div>`
+      : '';
   const descHtml = `<div class="desc">${type.describe(target)}<br>${dailyMissionRewardLineHtml(tier.reward)}</div>`;
 
   let actionHtml = '';
-  if (active) {
+  if (ready) {
+    actionHtml = `<button class="transcend-btn" data-mission-claim="${index}">🎁 Concluir Missão</button>`;
+  } else if (active) {
     actionHtml = `<button data-mission-abandon="${index}">Desistir</button>`;
   } else if (locked) {
     actionHtml = `<button disabled>Bloqueada</button>`;
@@ -1761,7 +1768,7 @@ function dailyMissionSlotHtml(slot, index, anyCompleted, anyActive) {
       </div>`;
   }
 
-  const cardClass = completed ? 'completed' : active ? 'active' : locked ? 'locked' : '';
+  const cardClass = completed || ready ? 'completed' : active ? 'active' : locked ? 'locked' : '';
 
   return `<div class="achievement-card daily-mission-card ${cardClass}">
     <span class="icon">${type.emoji}</span>
@@ -1790,14 +1797,14 @@ function tickDailyMissionCountdown() {
 export function renderDailyMissionsTab(state) {
   const container = document.getElementById('tab-daily-missions');
   const slots = state.dailyMissions.slots;
-  const anyCompleted = slots.some((s) => s.status === 'completed');
+  const budgetUsed = slots.some((s) => s.status === 'ready' || s.status === 'completed');
   const anyActive = slots.some((s) => s.status === 'active');
-  const slotsHtml = slots.map((slot, i) => dailyMissionSlotHtml(slot, i, anyCompleted, anyActive)).join('');
+  const slotsHtml = slots.map((slot, i) => dailyMissionSlotHtml(slot, i, budgetUsed, anyActive)).join('');
 
   container.innerHTML = `
     <div class="section-banner">📋 Missão Diária</div>
     <p class="pvp-countdown">Reseta em <strong id="daily-mission-countdown"></strong></p>
-    ${anyCompleted ? '<p class="shop-note">Você já concluiu a missão de hoje — volte depois do reset.</p>' : ''}
+    ${budgetUsed ? '<p class="shop-note">Você já garantiu a missão de hoje — volte depois do reset pras próximas.</p>' : ''}
     <div class="achievement-list">${slotsHtml}</div>
   `;
   tickDailyMissionCountdown();

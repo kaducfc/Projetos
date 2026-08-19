@@ -37,7 +37,12 @@ function rollSlot() {
   return {
     typeId: type.id,
     tierIndex: pickWeightedTierIndex(type),
-    status: 'idle', // 'idle' | 'active' | 'completed' | 'abandoned'
+    // 'idle' -> 'active' (jogador selecionou) -> 'ready' (bateu a meta,
+    // esperando o jogador clicar "Concluir Missão" — a recompensa só é
+    // concedida NESSE clique, não na hora que a meta é batida) ->
+    // 'completed' (resgatada). 'abandoned' se o jogador desistiu de uma
+    // 'active'.
+    status: 'idle',
     progress: 0,
     rerollUsed: false,
   };
@@ -63,13 +68,15 @@ export function getActiveMissionSlotIndex(state) {
   return state.dailyMissions.slots.findIndex((s) => s.status === 'active');
 }
 
-function anyMissionCompletedToday(state) {
-  return state.dailyMissions.slots.some((s) => s.status === 'completed');
+// "Trancada" pro resto do dia assim que UMA missão bate a meta (mesmo
+// antes de resgatada) — só 1 conclusão por dia, pedido do usuário.
+function dailyMissionBudgetUsed(state) {
+  return state.dailyMissions.slots.some((s) => s.status === 'ready' || s.status === 'completed');
 }
 
 export function canSelectMission(state, slotIndex) {
   const slot = state.dailyMissions.slots[slotIndex];
-  return !!slot && slot.status === 'idle' && getActiveMissionSlotIndex(state) === -1 && !anyMissionCompletedToday(state);
+  return !!slot && slot.status === 'idle' && getActiveMissionSlotIndex(state) === -1 && !dailyMissionBudgetUsed(state);
 }
 
 export function selectMission(state, slotIndex) {
@@ -95,7 +102,7 @@ export function abandonMission(state, slotIndex) {
 
 export function canRerollMission(state, slotIndex) {
   const slot = state.dailyMissions.slots[slotIndex];
-  return !!slot && slot.status === 'idle' && !slot.rerollUsed && !anyMissionCompletedToday(state);
+  return !!slot && slot.status === 'idle' && !slot.rerollUsed && !dailyMissionBudgetUsed(state);
 }
 
 /// Cada uma das 3 missões tem seu PRÓPRIO reroll (1x/dia cada, não 1
@@ -147,11 +154,12 @@ function grantDailyMissionReward(state, reward) {
 
 /// Chamada pelos sistemas de jogo (combate, forja, chocar ovo, PvP) toda
 /// vez que um evento relevante acontece — se a missão ATIVA hoje for
-/// desse mesmo tipo, soma progresso; ao bater o alvo, conclui na hora:
-/// concede a recompensa, marca a etapa (ver data/achievements.js
-/// "daily_missions", ainda pendente) e devolve { completed: true, reward }
-/// pro chamador mostrar a janela de "recompensa recebida" (ver main.js).
-/// null se não havia missão ativa desse tipo agora (não faz nada).
+/// desse mesmo tipo, soma progresso. Ao bater o alvo, NÃO concede a
+/// recompensa ainda: só marca a missão como 'ready' (borda verde + botão
+/// "Concluir Missão" na UI, ver dailyMissionSlotHtml em ui/render.js) —
+/// a recompensa de verdade só sai quando o jogador clica em concluir (ver
+/// claimDailyMission abaixo). Retorna { ready: true } na hora que vira
+/// 'ready', ou null se não havia missão ativa desse tipo agora.
 export function recordDailyMissionProgress(state, typeId, amount = 1) {
   ensureDailyMissionsFresh(state);
   const idx = getActiveMissionSlotIndex(state);
@@ -162,10 +170,31 @@ export function recordDailyMissionProgress(state, typeId, amount = 1) {
   const type = getDailyMissionType(slot.typeId);
   const tier = type.tiers[slot.tierIndex];
   slot.progress = Math.min(tier.target, slot.progress + amount);
-  if (slot.progress < tier.target) return { completed: false };
+  if (slot.progress < tier.target) return { ready: false };
+
+  slot.status = 'ready';
+  return { ready: true };
+}
+
+export function canClaimMission(state, slotIndex) {
+  return state.dailyMissions.slots[slotIndex]?.status === 'ready';
+}
+
+/// O clique em "Concluir Missão" (ver data-mission-claim em main.js) —
+/// SÓ AQUI a recompensa é de fato concedida (fragmento/ovo/equipamento/
+/// carta), a etapa da Conquista "Missões Diárias Feitas" (ver
+/// data/achievements.js) é contada, e a missão vira 'completed' de vez
+/// (fica com "Concluída" na UI, sem botão, até o reset). Retorna
+/// { reward, missionName } pro chamador mostrar a janela de recompensa,
+/// ou false se a missão não estava pronta pra resgatar.
+export function claimDailyMission(state, slotIndex) {
+  if (!canClaimMission(state, slotIndex)) return false;
+  const slot = state.dailyMissions.slots[slotIndex];
+  const type = getDailyMissionType(slot.typeId);
+  const tier = type.tiers[slot.tierIndex];
 
   slot.status = 'completed';
   grantDailyMissionReward(state, tier.reward);
   state.dailyMissionsCompletedTotal = (state.dailyMissionsCompletedTotal || 0) + 1;
-  return { completed: true, reward: tier.reward, missionName: type.name };
+  return { reward: tier.reward, missionName: type.name };
 }

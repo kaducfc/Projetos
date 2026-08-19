@@ -63,10 +63,7 @@ export const ACHIEVEMENTS = [
     id: 'daily_missions',
     name: 'Missões Diárias Feitas',
     emoji: '📋',
-    // Pendente — aguardando o sistema de Missões Diárias existir de
-    // verdade. `stages` vazio faz a UI mostrar "Em breve" em vez de uma
-    // etapa clicável (ver renderAchievementsTab em ui/render.js).
-    stages: [],
+    stages: [5, 15, 30, 60, 100, 200],
     progress: (s) => s.dailyMissionsCompletedTotal || 0,
     stageDescription: (target) => `Complete ${target} missões diárias.`,
   },
