@@ -3,26 +3,37 @@ import { ZONES } from '../data/monsters.js';
 // Curva de XP pra próximo nível — cada monstro derrotado dá XP igual ao
 // número da sua zona (1-based, ver xpForZone abaixo: Zona 1 = 1 XP, Zona 10
 // = 10 XP), então caçar em zonas mais altas rende nível mais rápido, não só
-// mais ouro/material. Progressão de longo prazo, de propósito: a curva foi
-// calibrada pra ~39 mil kills-equivalentes (assumindo 1 XP/kill) pra
-// alcançar o nível 180 — a meta é levar pelo menos umas duas semanas de
-// jogo pra zerar as zonas, não algumas horas. HUNTER_XP_BASE em 30 (era 5,
-// pedido do usuário pra multiplicar por 6 o XP necessário de TODOS os
-// níveis — multiplicar só a base escala a curva inteira igualmente, já
-// que ela é base * growth^(nível-1)).
+// mais ouro/material. Reformulada do zero (pedido do usuário: nível 100
+// chegava em menos de 1 dia, rápido demais) — 2 fases de crescimento
+// exponencial (base * growth^(nível-1)), calibradas por simulação
+// assumindo 6s por kill:
+// - Nível 1-19 (HUNTER_XP_GROWTH_EARLY): começo rápido, ~1h até o nível 10
+//   e ~3h até o 20 jogando ativo sem parar.
+// - Nível 20-200 (HUNTER_XP_GROWTH_MID): uma única taxa uniforme (mais
+//   dura que a de antes) — nível 150 em ~10 dias e nível 200 em ~3 semanas,
+//   num ritmo de 3h ativas + 4h offline por dia.
 const HUNTER_XP_BASE = 30;
-const HUNTER_XP_GROWTH = 1.031;
+const HUNTER_XP_GROWTH_EARLY = 1.115;
+const HUNTER_XP_EARLY_CAP_LEVEL = 19;
+const HUNTER_XP_GROWTH_MID = 1.0222693465578296;
 
-// O cap de nível 200 (pedido antes) foi removido de novo — nível volta a
-// ser ilimitado. Em troca, a partir do nível 201 a curva fica bem mais
-// dura: mesma forma exponencial de sempre (base * growth^(nível-1)), só
-// que triplicada — pedido explícito do usuário, usando o mesmo "formato"
-// da curva 170-200 como referência, não uma curva nova.
-const HUNTER_XP_TRIPLE_FROM_LEVEL = 201;
+// Sem cap de nível — sobe indefinidamente. A partir do nível 201 a curva
+// fica consideravelmente mais dura: continua a mesma taxa da fase
+// 20-200 (HUNTER_XP_GROWTH_MID), só que quintuplicada — pedido explícito
+// do usuário, ~5x mais difícil que o salto do 190 ao 200.
+const HUNTER_XP_QUINTUPLE_FROM_LEVEL = 201;
+
+function baseXpToNextLevel(level) {
+  if (level <= HUNTER_XP_EARLY_CAP_LEVEL) {
+    return HUNTER_XP_BASE * Math.pow(HUNTER_XP_GROWTH_EARLY, level - 1);
+  }
+  const xpAtEarlyCap = HUNTER_XP_BASE * Math.pow(HUNTER_XP_GROWTH_EARLY, HUNTER_XP_EARLY_CAP_LEVEL - 1);
+  return xpAtEarlyCap * Math.pow(HUNTER_XP_GROWTH_MID, level - HUNTER_XP_EARLY_CAP_LEVEL);
+}
 
 export function xpToNextLevel(level) {
-  const base = Math.round(HUNTER_XP_BASE * Math.pow(HUNTER_XP_GROWTH, level - 1));
-  return level >= HUNTER_XP_TRIPLE_FROM_LEVEL ? base * 3 : base;
+  const base = Math.round(baseXpToNextLevel(level));
+  return level >= HUNTER_XP_QUINTUPLE_FROM_LEVEL ? base * 5 : base;
 }
 
 // XP por kill: igual ao número da zona (1-based) onde o monstro está, não
