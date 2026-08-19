@@ -19,7 +19,10 @@ export function buyCashItem(state, id) {
   if (!canBuyCashItem(state, id)) return false;
   const item = CASH_SHOP_ITEMS.find((i) => i.id === id);
   state.cash -= item.cost;
-  if (item.kind === 'gold') state.gold += item.amount;
+  if (item.kind === 'gold') {
+    state.gold += item.amount;
+    state.lifetimeGoldEarned = (state.lifetimeGoldEarned || 0) + item.amount;
+  }
   // canBuyCashItem já garante que o VIP não está ativo aqui (bloqueado
   // acima), então sempre conta VIP_DURATION_MS a partir de agora — nunca
   // precisa somar em cima de um vencimento anterior.

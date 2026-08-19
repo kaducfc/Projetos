@@ -91,6 +91,7 @@ export function endArenaRun(state) {
   const { rewards } = finalRank;
 
   state.gold += rewards.gold;
+  state.lifetimeGoldEarned = (state.lifetimeGoldEarned || 0) + rewards.gold;
   if (rewards.eventCurrency > 0) state.eventCurrency = (state.eventCurrency || 0) + rewards.eventCurrency;
   if (rewards.eggs > 0) state.eggCount = (state.eggCount || 0) + rewards.eggs;
 

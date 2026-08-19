@@ -49,6 +49,10 @@ export function recordPetHatchOutcome(state, chosenRarityId) {
   state.petHatchesSinceLegendary = (state.petHatchesSinceLegendary || 0) + 1;
   if (chosenRarityId === 'mitico') state.petHatchesSinceMythic = 0;
   if (chosenRarityId === 'lendario') state.petHatchesSinceLegendary = 0;
+  // Conquista "Ovos Chocados" (ver data/achievements.js) — contagem
+  // histórica, sobrevive a Transcender (ver PRESERVED_KEYS em
+  // systems/awakening.js).
+  state.lifetimeEggsHatched = (state.lifetimeEggsHatched || 0) + 1;
 }
 
 export function getPetEntry(state, uid) {

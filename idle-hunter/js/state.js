@@ -96,7 +96,22 @@ export function createDefaultState() {
     // reward for now; a real-money purchase flow is a future integration.
     cash: 0,
     lastAdWatchTime: null,
-    achievementsClaimed: {}, // achievementId -> true
+    // achievementId -> quantas etapas dessa conquista já foram resgatadas
+    // (0..stages.length) — ver data/achievements.js + systems/achievements.js.
+    achievementsClaimed: {},
+
+    // Contadores "lifetime" só pra alimentar conquistas com etapas altas
+    // (ver data/achievements.js) — sobrevivem a Transcender (ver
+    // PRESERVED_KEYS em systems/awakening.js), ao contrário das variáveis
+    // "de run" que eles espelham (hunterLevel/totalKills/gold/etc, que
+    // resetam no Transcender ou nunca existiram como contador).
+    lifetimeHunterLevel: 1,
+    lifetimeTotalKills: 0,
+    lifetimeGoldEarned: 0,
+    lifetimeEggsHatched: 0,
+    lifetimeRankMasterCount: 0,
+    pvpHighestTierIndex: 0,
+    pvpWinsTotal: 0,
 
     // Perfil (ver data/profile.js + systems/profile.js): nick + ícone de
     // conta, abertos pelo botão no canto superior esquerdo da barra

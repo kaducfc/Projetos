@@ -55,6 +55,9 @@ export function grantXp(state, amount) {
     state.hunterLevel += 1;
     levelsGained += 1;
   }
+  // Conquista "Nível de Caçador" (ver data/achievements.js) — maior nível
+  // já alcançado, não o atual (que volta a 1 a cada Transcender).
+  if (state.hunterLevel > (state.lifetimeHunterLevel || 1)) state.lifetimeHunterLevel = state.hunterLevel;
   return levelsGained;
 }
 
