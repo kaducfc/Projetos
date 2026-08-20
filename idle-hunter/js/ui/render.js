@@ -1960,7 +1960,7 @@ function cashShopHtml(state) {
 
 export function showVipBenefitsModal() {
   const vipItem = CASH_SHOP_ITEMS.find((i) => i.kind === 'vip');
-  const linesHtml = vipItem.benefits.map((b) => `<p class="offline-item-lines">✅ ${b}</p>`).join('');
+  const linesHtml = vipItem.benefits.map((b) => `<p class="vip-benefit-line">✅ ${b}</p>`).join('');
   showModal('👑 Benefícios do VIP', linesHtml);
 }
 

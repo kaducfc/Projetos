@@ -20,6 +20,8 @@ export const CASH_SHOP_ITEMS = [
       '+100 no limite de inventário de mascotes',
       'Escolha livre do mascote da direita ao chocar ovo',
       'Botão "Chocar Todos" liberado',
+      '+2h no limite de recompensa offline (6h no total)',
+      'Nick colorido animado (Arena, Ranks, Combate, Perfil)',
     ],
   },
 ];
