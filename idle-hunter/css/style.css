@@ -3428,6 +3428,34 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
+/* Nick de jogador VIP — gradiente animado passando pelas letras (pedido
+   do usuário, ver referência de imagem). background-position em loop cria
+   o efeito de "cor mexendo"; prefers-reduced-motion vira estático. */
+.vip-nick {
+  background: linear-gradient(90deg, #ff5f6d, #ffc371, #4ade80, #4facfe, #b26bff, #ff5f6d);
+  background-size: 400% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 800;
+  animation: vip-nick-shift 5s linear infinite;
+}
+
+@keyframes vip-nick-shift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 400% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vip-nick { animation: none; background-position: 0% 50%; }
+}
+
+.profile-name-preview {
+  font-size: 13px;
+  margin: 4px 0 8px;
+}
+
 .pvp-fighter-portrait {
   position: relative;
   width: 62px;

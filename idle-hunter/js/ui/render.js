@@ -2058,6 +2058,18 @@ function pvpProfileIconHtml(iconId) {
   return `<span class="icon">${iconMarkup(icon.image, '', icon.name)}</span>`;
 }
 
+/// Nick colorido (efeito arco-íris animado, ver .vip-nick no CSS) pra
+/// jogadores VIP — pedido do usuário, usado em toda tela que mostra nick
+/// de alguém (board da Arena, janela de Combate, resultado de luta,
+/// página Ranks, Perfil). `isVip` vem de is_vip (ver
+/// 0015_pvp_vip_nick.sql), ou localmente via isVipActive(state) pro
+/// próprio jogador quando o nick ainda não veio de nenhuma linha do
+/// servidor.
+function nickHtml(nick, isVip) {
+  const safe = escapeHtml(nick);
+  return isVip ? `<span class="vip-nick">${safe}</span>` : safe;
+}
+
 function pvpEntriesLabel(myProfile) {
   const { current, msUntilNext } = projectPvpEntries(myProfile.pvp_entries, myProfile.pvp_entries_updated_at);
   return msUntilNext == null
@@ -2073,7 +2085,7 @@ function pvpMyStatusHtml(myProfile, tierInfo) {
     <div class="achievement-card">
       ${pvpProfileIconHtml(myProfile.icon_id)}
       <div class="info">
-        <div class="name">${escapeHtml(myProfile.nick)} · ${tierInfo.icon} ${tierInfo.label}</div>
+        <div class="name">${nickHtml(myProfile.nick, myProfile.is_vip)} · ${tierInfo.icon} ${tierInfo.label}</div>
         <div class="desc">Nível ${formatNumber(myProfile.hunter_level)} · ${scoreLine} · 🏆 ${formatInteger(myProfile.wins || 0)} vitórias</div>
         <div class="desc">${PVP_TICKET_ICON} Entradas: ${pvpEntriesLabel(myProfile)}</div>
       </div>
@@ -2097,7 +2109,7 @@ function pvpBoardRowHtml(pvp, tierInfo, row) {
       <span class="pvp-rank">#${row.position}</span>
       ${pvpProfileIconHtml(row.icon_id)}
       <div class="info">
-        <div class="name">${escapeHtml(row.nick)}</div>
+        <div class="name">${nickHtml(row.nick, row.is_vip)}</div>
         <div class="desc">${levelLabel}${scoreLabel}${winsLabel}</div>
         ${rewardLabel}
       </div>
@@ -2171,7 +2183,7 @@ function pvpCombatOptionHtml(opponent) {
       <span class="pvp-rank">#${opponent.position}</span>
       ${pvpProfileIconHtml(opponent.icon_id)}
       <div class="info">
-        <div class="name">${escapeHtml(opponent.nick)}</div>
+        <div class="name">${nickHtml(opponent.nick, opponent.is_vip)}</div>
         <div class="desc">${levelLabel}</div>
         ${swingLabel}
       </div>
@@ -2203,7 +2215,7 @@ function pvpRankRowHtml(row, myId, extraLabel, rewardLabel) {
       <span class="pvp-rank">#${row.position}</span>
       ${pvpProfileIconHtml(row.icon_id)}
       <div class="info">
-        <div class="name">${escapeHtml(row.nick)}</div>
+        <div class="name">${nickHtml(row.nick, row.is_vip)}</div>
         <div class="desc">${extraLabel}</div>
         ${rewardLabel ? `<div class="desc pvp-reward-preview">${rewardLabel}</div>` : ''}
       </div>
@@ -2570,20 +2582,21 @@ function animatePvpBattle(result, onComplete) {
   pvpAnimationFrameId = requestAnimationFrame(frame);
 }
 
-function pvpFighterHtml(side, nick, iconId) {
+function pvpFighterHtml(side, nick, iconId, isVip) {
   const icon = getProfileIcon(iconId);
   return `
     <div class="pvp-fighter pvp-fighter-${side}">
-      <div class="pvp-fighter-nick">${escapeHtml(nick)}</div>
+      <div class="pvp-fighter-nick">${nickHtml(nick, isVip)}</div>
       <div class="pvp-fighter-portrait" id="pvp-portrait-${side}">${iconMarkup(icon.image, '', icon.name)}</div>
       <div class="pvp-hp-bar-outer"><div class="pvp-hp-bar-fill" id="pvp-hp-${side}"></div></div>
     </div>`;
 }
 
-/// `defenderInfo` ({ nick, iconId }) vem de main.js, lido do tier_board já
-/// em memória ANTES do ataque (a resposta da Edge Function não repete o
-/// ícone do defensor, só o nick). Erros pulam a animação e caem direto no
-/// modal simples de sempre.
+/// `defenderInfo` ({ nick, iconId, isVip }) vem de main.js, lido do
+/// tier_board já em memória ANTES do ataque — depois sobrescrito com
+/// defenderIsVip da resposta da Edge Function (mais fresco), que também
+/// não repete o ícone do defensor, só nick/is_vip. Erros pulam a
+/// animação e caem direto no modal simples de sempre.
 export function showPvpBattleModal(pvp, defenderInfo, result) {
   if (result.error) {
     showPvpBattleResultModal(result);
@@ -2593,9 +2606,9 @@ export function showPvpBattleModal(pvp, defenderInfo, result) {
   const myProfile = pvp.myProfile;
   showModal('⚔️ Batalha', `
     <div class="pvp-arena">
-      ${pvpFighterHtml('attacker', myProfile.nick, myProfile.icon_id)}
+      ${pvpFighterHtml('attacker', myProfile.nick, myProfile.icon_id, myProfile.is_vip)}
       <div class="pvp-vs">⚔️</div>
-      ${pvpFighterHtml('defender', defenderInfo.nick, defenderInfo.iconId)}
+      ${pvpFighterHtml('defender', defenderInfo.nick, defenderInfo.iconId, defenderInfo.isVip)}
     </div>
     <div id="pvp-battle-result-slot"></div>
   `);
@@ -2646,10 +2659,12 @@ function profileModalHtml(state) {
   const freeChange = isFirstNameChangeFree(state);
   const affordable = canAffordNameChange(state);
   const costLabel = freeChange ? 'Grátis (1ª troca)' : `${ESMERALDA_ICON} ${NAME_CHANGE_COST}`;
+  const vipActive = isVipActive(state);
 
   return `
     <div class="profile-name-section">
       <div class="shop-section-title" style="margin-top:0">Nick</div>
+      ${vipActive ? `<p class="profile-name-preview">Como aparece pros outros: ${nickHtml(name, true)}</p>` : ''}
       <div class="profile-name-row">
         <input id="profile-name-input" type="text" maxlength="${MAX_PLAYER_NAME_LENGTH}" value="${escapeHtml(name)}" placeholder="Seu nick">
         <button data-save-profile-name ${affordable ? '' : 'disabled'}>Salvar</button>
