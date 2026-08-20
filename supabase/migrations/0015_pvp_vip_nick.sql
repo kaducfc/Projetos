@@ -105,10 +105,12 @@ as $$
   ),
   ranked as (
     select
-      p.id as entity_id, p.nick, p.icon_id, p.tier, p.hunter_level, p.wins, p.is_vip,
+      p.id as entity_id, p.nick, p.icon_id, p.tier, p.hunter_level,
       case when t.hidden_score then null else p.rating end as rating,
+      p.wins,
       tr.tier_position, tr.tier_player_count,
-      row_number() over (order by t.order_index desc, p.rating desc, p.id asc)::int as "position"
+      row_number() over (order by t.order_index desc, p.rating desc, p.id asc)::int as "position",
+      p.is_vip
     from public.pvp_profiles p
     join public.pvp_tiers t on t.name = p.tier
     join tier_ranked tr on tr.id = p.id
@@ -137,8 +139,9 @@ language sql
 stable
 as $$
   with ranked as (
-    select id as entity_id, nick, icon_id, hunter_level, is_vip,
-           row_number() over (order by hunter_level desc, id asc)::int as "position"
+    select id as entity_id, nick, icon_id, hunter_level,
+           row_number() over (order by hunter_level desc, id asc)::int as "position",
+           is_vip
     from public.pvp_profiles
   )
   select * from ranked where "position" <= 100 or entity_id = viewer_id
@@ -165,8 +168,9 @@ language sql
 stable
 as $$
   with ranked as (
-    select id as entity_id, nick, icon_id, transcend_count, is_vip,
-           row_number() over (order by transcend_count desc, id asc)::int as "position"
+    select id as entity_id, nick, icon_id, transcend_count,
+           row_number() over (order by transcend_count desc, id asc)::int as "position",
+           is_vip
     from public.pvp_profiles
   )
   select * from ranked where "position" <= 100 or entity_id = viewer_id
