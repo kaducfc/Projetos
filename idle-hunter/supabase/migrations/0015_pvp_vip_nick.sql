@@ -17,6 +17,14 @@
 alter table public.pvp_profiles
   add column if not exists is_vip boolean not null default false;
 
+-- pvp_profiles só deixa "authenticated" atualizar uma lista específica de
+-- colunas (ver 0002/0008_pvp_ranks.sql) — sem is_vip nessa lista, o
+-- upsert inteiro em syncProfile (ver js/systems/pvp.js) falhava calado
+-- (erro só no console do navegador, nada visível no jogo), e nem os
+-- OUTROS campos (nick/hunter_level/etc) chegavam a atualizar.
+grant update (id, nick, icon_id, hunter_level, transcend_count, is_vip, updated_at)
+  on public.pvp_profiles to authenticated;
+
 -- ---------------------------------------------------------------
 -- pvp_tier_board: + is_vip (bot nunca é VIP, sempre false).
 -- ---------------------------------------------------------------
