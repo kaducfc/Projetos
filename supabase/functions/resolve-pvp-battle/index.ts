@@ -220,6 +220,7 @@ Deno.serve(async (req) => {
   let defenderWinsBefore = 0;
   let defenderSnap: Snapshot | null;
   let defenderProfileForUpdate: { id: string } | null = null;
+  let defenderIsVip = false; // bot nunca é VIP
 
   if (defenderIsBot) {
     const { data: bot } = await supabaseAdmin.from('pvp_bots').select('*').eq('id', defenderId).maybeSingle();
@@ -241,6 +242,7 @@ Deno.serve(async (req) => {
     defenderWinsBefore = defenderProfile.wins || 0;
     defenderSnap = clampSnapshot(snap as Snapshot);
     defenderProfileForUpdate = { id: defenderProfile.id };
+    defenderIsVip = !!defenderProfile.is_vip;
   }
 
   if (defenderTier !== attackerProfile.tier) {
@@ -395,6 +397,7 @@ Deno.serve(async (req) => {
     entriesRemaining: entriesNow - 1,
     goldReward,
     defenderNick,
+    defenderIsVip,
     // Pra animar a barra de HP na janela de batalha (ver
     // js/ui/render.js showPvpBattleModal) — números reais, não decorativos.
     attackerEffectiveDps,
