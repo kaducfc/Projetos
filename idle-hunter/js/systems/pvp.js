@@ -9,6 +9,7 @@
 // mantém o mesmo login anônimo.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, PVP_MAX_ENTRIES, PVP_ENTRY_REGEN_MS } from '../data/pvpConfig.js';
+import { isVipActive } from '../state.js';
 
 let client = null;
 export function getClient() {
@@ -54,6 +55,9 @@ export async function syncProfile(state, stats, playerName, profileIconId) {
       icon_id: profileIconId,
       hunter_level: state.hunterLevel || 1,
       transcend_count: state.transcendCount || 0,
+      // Nick colorido (ver 0015_pvp_vip_nick.sql + CSS .vip-nick) —
+      // auto-reportado, mesmo modelo de confiança de hunter_level acima.
+      is_vip: isVipActive(state),
       updated_at: new Date().toISOString(),
     }),
     supabase.from('pvp_snapshots').upsert({

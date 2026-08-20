@@ -1655,11 +1655,14 @@ async function refreshPvpTab({ silent = false } = {}) {
 }
 
 async function handlePvpAttack(defenderId, isBot) {
-  // Capturado ANTES do ataque — a resposta da Edge Function só repete o
-  // nick do defensor, não o ícone (ver showPvpBattleModal em ui/render.js),
-  // e pvpData.board ainda reflete a lista que o jogador estava vendo.
+  // Capturado ANTES do ataque — a resposta da Edge Function repete o nick
+  // e o is_vip do defensor (pra colorir o nick, ver .vip-nick no CSS), mas
+  // não o ícone (ver showPvpBattleModal em ui/render.js), e pvpData.board
+  // ainda reflete a lista que o jogador estava vendo.
   const defenderRow = pvpData.board.find((r) => r.entity_id === defenderId && r.is_bot === isBot);
-  const defenderInfo = { nick: defenderRow?.nick ?? '???', iconId: defenderRow?.icon_id ?? 'hunter' };
+  const defenderInfo = {
+    nick: defenderRow?.nick ?? '???', iconId: defenderRow?.icon_id ?? 'hunter', isVip: defenderRow?.is_vip ?? false,
+  };
 
   pvpData = { ...pvpData, attackingId: defenderId };
   renderPvpTab(state, pvpData);
@@ -1698,6 +1701,7 @@ async function handlePvpAttack(defenderId, isBot) {
       },
     };
   }
+  if (!result.error && typeof result.defenderIsVip === 'boolean') defenderInfo.isVip = result.defenderIsVip;
   showPvpBattleModal(pvpData, defenderInfo, result);
   renderPvpTab(state, pvpData);
   // Posições/pontos do tier inteiro podem ter mudado (o próprio e/ou o
