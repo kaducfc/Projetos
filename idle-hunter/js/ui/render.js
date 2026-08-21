@@ -115,6 +115,13 @@ export const GIFT_ICON = `<img class="currency-icon" src="assets/ui/nav/presente
 // a mesma) e o "ticket" de Entradas da Arena PvP (substitui 🎟️).
 export const RANK_LEVEL_ICON = `<img class="currency-icon" src="assets/ui/nav/nivel.png" alt="Nível">`;
 export const PVP_TICKET_ICON = `<img class="currency-icon" src="assets/ui/nav/ticket_pvp.png" alt="Entrada da Arena">`;
+// Ícone da página Missão Diária (substitui 📋 no nav — ver index.html —
+// e no toast de seleção — ver main.js). O ícone novo de Mascotes só é
+// usado no nav (index.html, markup estático), sem constante JS: nenhum
+// outro lugar do código usa um emoji representando "a página Mascotes"
+// em si — o 🐾 que aparece em outros lugares é nome de STAT ("Dano de
+// Mascote") ou emoji de item de drop, conceitos diferentes.
+export const DAILY_MISSION_ICON = `<img class="currency-icon" src="assets/ui/nav/missao_diaria.png" alt="Missão Diária">`;
 
 // ---------------------------------------------------------------
 // Banner oficial de página (ver assets/ui/banner.png) — pedido do
