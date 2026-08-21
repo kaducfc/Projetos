@@ -10,7 +10,7 @@ import { canTranscend, unlockTranscend, transcend, buyAwakeningItem } from './sy
 import {
   syncProfile, getMyPvpProfile, fetchTierBoard, attackOpponent,
   pickRandomPvpOpponents, previewPvpAttackSwing,
-  fetchArenaRank, fetchLevelRank, fetchTranscendRank,
+  fetchArenaRank, fetchLevelRank, fetchTranscendRank, isNickAvailable,
 } from './systems/pvp.js';
 import { getPvpTierInfo, PVP_TIERS } from './data/pvpConfig.js';
 import { fetchMailbox, claimMailReward, deleteMail, mailHasReward, hasUnreadMail, markMailRead } from './systems/mailbox.js';
@@ -42,6 +42,7 @@ import {
 } from './systems/pets.js';
 import { buySkillLevel, buySpecial, resetSkillTree } from './systems/skills.js';
 import { setPlayerName, toggleSound, toggleMusic, selectProfileIcon, isValidPlayerName, getPlayerName } from './systems/profile.js';
+import { DEFAULT_PLAYER_NAME } from './data/profile.js';
 import {
   renderAll, renderTopBar, renderHunterLevel, renderCombatStats, renderMonster, renderNoMonsterSelected,
   renderInventoryTab, renderUpgradesTab, renderBossTimer,
@@ -583,6 +584,43 @@ function setupProfile() {
   });
 }
 
+/// Botão "Salvar" do nick (ver profileModalHtml em ui/render.js) — 3
+/// regras, nessa ordem: (1) formato (letras/números/1 espaço entre
+/// palavras, 3-16 chars — ver isValidPlayerName em systems/profile.js),
+/// (2) nada mudou (sem-op, não cobra), (3) nick já em uso por OUTRO
+/// jogador (ver isNickAvailable em systems/pvp.js — pulado se o nome for
+/// o padrão "Caçador", todo jogador novo já começa com ele). Qualquer
+/// violação mostra "Nick Impossibilitado" em vermelho (ver
+/// #profile-name-error) — o jogador tenta outro nick até passar em todas.
+async function saveProfileNameFlow() {
+  const input = document.getElementById('profile-name-input');
+  const errorEl = document.getElementById('profile-name-error');
+  const rawName = input ? input.value : '';
+  const trimmed = rawName.trim();
+
+  if (!isValidPlayerName(rawName)) {
+    if (errorEl) errorEl.textContent = '❌ Nick Impossibilitado';
+    return;
+  }
+  if (trimmed === getPlayerName(state)) return; // nada mudou, não cobra
+
+  if (trimmed.toLowerCase() !== DEFAULT_PLAYER_NAME.toLowerCase()) {
+    const available = await isNickAvailable(trimmed);
+    if (!available) {
+      if (errorEl) errorEl.textContent = '❌ Nick Impossibilitado';
+      return;
+    }
+  }
+
+  if (setPlayerName(state, rawName)) {
+    showToast('✅ Nick atualizado!');
+    renderTopBar(state);
+    showProfileModal(state);
+  } else {
+    showToast(`❌ ${ESMERALDA_ICON} insuficiente pra trocar o nick.`);
+  }
+}
+
 // ---------------------------------------------------------------
 // Item detail modal (opened from equipment slots and inventory tiles)
 // ---------------------------------------------------------------
@@ -1023,22 +1061,7 @@ function wireModalEvents() {
 
     const saveNameBtn = e.target.closest('[data-save-profile-name]');
     if (saveNameBtn) {
-      runModalAction(() => {
-        const input = document.getElementById('profile-name-input');
-        const rawName = input ? input.value : '';
-        if (!isValidPlayerName(rawName)) {
-          showToast('❌ Nick precisa ter entre 3 e 16 caracteres.');
-          return;
-        }
-        if (rawName.trim() === getPlayerName(state)) return; // nada mudou, não cobra
-        if (setPlayerName(state, rawName)) {
-          showToast('✅ Nick atualizado!');
-          renderTopBar(state);
-          showProfileModal(state);
-        } else {
-          showToast(`❌ ${ESMERALDA_ICON} insuficiente pra trocar o nick.`);
-        }
-      });
+      runModalAction(() => saveProfileNameFlow());
       return;
     }
 

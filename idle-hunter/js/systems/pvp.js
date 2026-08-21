@@ -37,6 +37,24 @@ export async function ensureSignedIn() {
   return data.user?.id ?? null;
 }
 
+/// Checa se `nick` já está em uso por outra conta (ver DEFAULT_PLAYER_NAME
+/// em data/profile.js — o chamador NÃO deve chamar isso pro nome padrão,
+/// todo jogador novo já começa com ele, não faz sentido bloquear). Busca
+/// case-insensitive (ilike) pra "Kadu" e "kadu" contarem como o mesmo
+/// nick. Falha de rede = "disponível" (não trava o jogador por causa de
+/// conexão instável, mesmo espírito de todo o resto do PvP — só nick
+/// repetido de propósito é bloqueado, nunca uma falha técnica).
+export async function isNickAvailable(nick) {
+  const userId = await ensureSignedIn();
+  const supabase = getClient();
+  const { data, error } = await supabase.from('pvp_profiles').select('id').ilike('nick', nick).limit(5);
+  if (error) {
+    console.warn('Arena PvP: falha ao checar nick disponível:', error.message);
+    return true;
+  }
+  return !(data || []).some((row) => row.id !== userId);
+}
+
 /// Envia o nick/ícone/nível (ver systems/profile.js) e as stats de combate
 /// atuais (ver computePlayerStats em systems/stats.js) pro servidor — é
 /// contra ESSA cópia salva que qualquer outro jogador te ataca. tier/

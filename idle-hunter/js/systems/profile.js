@@ -1,6 +1,6 @@
 import {
   DEFAULT_PLAYER_NAME, MIN_PLAYER_NAME_LENGTH, MAX_PLAYER_NAME_LENGTH, NAME_CHANGE_COST,
-  PROFILE_ICONS, DEFAULT_PROFILE_ICON_ID, getProfileIcon,
+  PLAYER_NAME_PATTERN, PROFILE_ICONS, DEFAULT_PROFILE_ICON_ID, getProfileIcon,
 } from '../data/profile.js';
 
 export function getPlayerName(state) {
@@ -21,9 +21,13 @@ export function canAffordNameChange(state) {
   return isFirstNameChangeFree(state) || state.cash >= NAME_CHANGE_COST;
 }
 
+/// Formato (comprimento + charset) — não checa duplicidade, que depende do
+/// Supabase (ver isNickAvailable em systems/pvp.js, assíncrono).
 export function isValidPlayerName(rawName) {
   const trimmed = (rawName || '').trim();
-  return trimmed.length >= MIN_PLAYER_NAME_LENGTH && trimmed.length <= MAX_PLAYER_NAME_LENGTH;
+  return trimmed.length >= MIN_PLAYER_NAME_LENGTH
+    && trimmed.length <= MAX_PLAYER_NAME_LENGTH
+    && PLAYER_NAME_PATTERN.test(trimmed);
 }
 
 /// Cobra a Esmeralda (se não for a 1ª troca) e só then aplica o nick novo —
