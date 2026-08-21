@@ -2112,19 +2112,21 @@ export function renderTranscendTab(state) {
 /// em systems/awakening.js pra fonte-da-verdade do que sobrevive.
 function transcendResetInfoHtml() {
   const resetItems = [
-    'Nível, ouro e materiais',
-    'Equipamentos e inventário',
-    'Mascotes (exceto Despertar)',
+    'Nível',
+    'Ouro',
+    'Materiais',
+    'Equipamentos',
+    'Mascotes',
     'Habilidades',
-    'Eventos',
+    'Moeda de Evento',
   ];
   const keepItems = [
-    'Cartas descobertas',
-    'Itens/mascotes do Despertar',
+    'Cartas',
+    'Itens do Despertar',
+    'Mascote do Despertar',
     'Esmeralda',
     'VIP',
     'Conquistas',
-    'Perfil (nick, ícone)',
     'Fragmento do Despertar',
   ];
   const listHtml = (items) => `<ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul>`;
