@@ -2680,7 +2680,9 @@ function profileModalHtml(state) {
         <input id="profile-name-input" type="text" maxlength="${MAX_PLAYER_NAME_LENGTH}" value="${escapeHtml(name)}" placeholder="Seu nick">
         <button data-save-profile-name ${affordable ? '' : 'disabled'}>Salvar</button>
       </div>
+      <p id="profile-name-error" class="profile-name-error"></p>
       <p class="shop-note">Troca de nick: ${costLabel}${affordable ? '' : ' — Esmeralda insuficiente'}</p>
+      <p class="shop-note">Só letras, números e 1 espaço entre palavras — sem repetir o nick de outro jogador.</p>
     </div>
 
     <div class="shop-section-title">Ícone do Perfil</div>
