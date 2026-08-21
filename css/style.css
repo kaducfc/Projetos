@@ -3839,6 +3839,43 @@ button:disabled {
   text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
 }
 
+.transcend-reset-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 10px;
+}
+
+.transcend-reset-col-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.transcend-reset-col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.transcend-reset-col li {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  font-weight: 600;
+  padding: 3px 0;
+  border-bottom: 1px dashed rgba(168, 103, 44, .25);
+}
+
+.transcend-reset-col li:last-child {
+  border-bottom: none;
+}
+
 /* ---------------- Perfil (modal aberto pelo #profile-btn) ---------------- */
 
 .profile-name-row {
