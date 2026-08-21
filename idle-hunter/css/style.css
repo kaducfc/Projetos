@@ -1492,11 +1492,18 @@ button:disabled {
   margin-bottom: 8px;
 }
 
-.select-monster-btn {
+/* Especificidade extra (.recipe-cost button.select-monster-btn) de
+   propósito — só ".select-monster-btn" perdia pra ".enhance-panel
+   button" (mais específica) e saía do tamanho de um botão de ação
+   normal, ocupando a linha toda. */
+.recipe-cost button.select-monster-btn {
+  display: inline-block;
+  width: auto;
   font-size: 9px;
   font-weight: 700;
   line-height: 1;
   padding: 2px 5px;
+  margin-top: 0;
   border-radius: 6px;
   background: var(--grad-neutral);
   color: var(--text-dim);
@@ -1504,7 +1511,7 @@ button:disabled {
   vertical-align: middle;
 }
 
-.select-monster-btn:active:not(:disabled) {
+.recipe-cost button.select-monster-btn:active:not(:disabled) {
   transform: none;
 }
 
