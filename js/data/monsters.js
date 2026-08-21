@@ -717,6 +717,26 @@ export function findZoneForMonster(kind, monsterId) {
   return ZONES.find((z) => z.weakMonsters.some((m) => m.id === monsterId)) || null;
 }
 
+/// Acha QUEM dropa um material pelo id — chefe (2 materiais por chefe,
+/// primary1/primary2) ou monstro fraco (1 cada) — devolvendo já pronto
+/// { zoneIndex, kind, monsterId } pra alimentar state.selectedMonsters
+/// (ver botão "Selecionar" no popup de aprimorar item, main.js
+/// selectMonsterForMaterial). Um grupo de monstros fracos é compartilhado
+/// por 2 zonas (ver comentário em WEAK_MONSTER_GROUPS) — pega sempre a
+/// primeira (mais baixa) zona que bate, mesma escolha de findZoneForMonster
+/// acima. null se o material não vier de monstro nenhum (ex: material de
+/// evento/crafting sem drop de combate).
+export function findMonsterSourceForMaterial(materialId) {
+  for (const zone of ZONES) {
+    if (zone.boss.materials.primary1.id === materialId || zone.boss.materials.primary2.id === materialId) {
+      return { zoneIndex: zone.index, kind: 'boss', monsterId: zone.boss.id };
+    }
+    const weak = zone.weakMonsters.find((m) => m.material.id === materialId);
+    if (weak) return { zoneIndex: zone.index, kind: 'weak', monsterId: weak.id };
+  }
+  return null;
+}
+
 export function getMonsterInfo(stage, weakMonsterId) {
   const boss = isBossStage(stage);
 

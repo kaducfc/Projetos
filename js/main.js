@@ -5,7 +5,7 @@ import {
   advanceHitClock, setSelectedMonsters, canSelectMonster, MAX_SELECTED_MONSTERS, resolvePetHit, rollDodge,
   resolveDoubleHit,
 } from './systems/combat.js';
-import { findMaterialInfo, BOSSES, ZONE_COUNT } from './data/monsters.js';
+import { findMaterialInfo, findMonsterSourceForMaterial, BOSSES, ZONES, ZONE_COUNT } from './data/monsters.js';
 import { canTranscend, unlockTranscend, transcend, buyAwakeningItem } from './systems/awakening.js';
 import {
   syncProfile, getMyPvpProfile, fetchTierBoard, attackOpponent,
@@ -530,33 +530,33 @@ function confirmMonsterSelection() {
   }
 }
 
-// Botão "Selecionar" no popup de detalhe do item (ver itemDetailHtml em
-// ui/render.js) — atalho pra já ir direto caçar o CHEFE daquele item (todo
-// item é temático de 1 chefe/zona, ver item.bossId/zoneIndex em
-// data/items.js), sem passar pela tela de seleção manual. Mesma regra de
-// sempre (até 4, FIFO troca o mais antigo) — só que aplicada direto em
-// state.selectedMonsters, não em pendingMonsterSelection (esse popup não
-// tem etapa de "Confirmar" separada).
-function selectMonsterFromItem(uid) {
-  const entry = state.inventory.find((i) => i.uid === uid);
-  if (!entry) return;
-  const item = getItem(entry.itemId);
-  const zoneIndex = item.zoneIndex;
-  const monsterId = item.bossId;
-  if (!canSelectMonster(state, zoneIndex, 'boss')) {
-    showToast('🔒 Chefe ainda não liberado nesse nível.');
+// Botão "Selecionar" do lado do NOME do material, no popup de detalhe do
+// item (ver materialCostRowHtml em ui/render.js) — atalho pra já ir
+// direto caçar o monstro que dropa aquele material, seja ele fraco ou
+// chefe (ver findMonsterSourceForMaterial em data/monsters.js), sem
+// passar pela tela de seleção manual. Mesma regra de sempre (até 4, FIFO
+// troca o mais antigo) — só que aplicada direto em state.selectedMonsters,
+// não em pendingMonsterSelection (esse popup não tem etapa de "Confirmar"
+// separada).
+function selectMonsterForMaterial(materialId) {
+  const source = findMonsterSourceForMaterial(materialId);
+  if (!source) return; // material sem monstro de origem (ex: evento) — botão nem deveria estar aqui
+  const { zoneIndex, kind, monsterId } = source;
+  if (!canSelectMonster(state, zoneIndex, kind)) {
+    showToast('🔒 Monstro ainda não liberado nesse nível.');
     return;
   }
   const current = state.selectedMonsters.map((m) => ({ ...m }));
-  const alreadySelected = current.some((m) => m.zoneIndex === zoneIndex && m.kind === 'boss' && m.monsterId === monsterId);
+  const alreadySelected = current.some((m) => m.zoneIndex === zoneIndex && m.kind === kind && m.monsterId === monsterId);
   if (alreadySelected) {
-    showToast('✅ Esse chefe já está selecionado pra caça.');
+    showToast('✅ Esse monstro já está selecionado pra caça.');
     return;
   }
   if (current.length >= MAX_SELECTED_MONSTERS) current.shift();
-  current.push({ zoneIndex, kind: 'boss', monsterId });
+  current.push({ zoneIndex, kind, monsterId });
   if (setSelectedMonsters(state, current)) {
-    showToast(`🎯 ${BOSSES[zoneIndex].name} selecionado pra caça!`);
+    const monsterName = kind === 'boss' ? BOSSES[zoneIndex].name : ZONES[zoneIndex].weakMonsters.find((m) => m.id === monsterId)?.name ?? monsterId;
+    showToast(`🎯 ${monsterName} selecionado pra caça!`);
     resetPlayerHp();
     fullRefresh();
     armBossTimer();
@@ -684,9 +684,9 @@ function wireModalEvents() {
       runModalAction(() => confirmMonsterSelection());
       return;
     }
-    const selectMonsterForBtn = e.target.closest('[data-select-monster-for]');
-    if (selectMonsterForBtn) {
-      runModalAction(() => selectMonsterFromItem(Number(selectMonsterForBtn.dataset.selectMonsterFor)));
+    const selectMaterialBtn = e.target.closest('[data-select-material]');
+    if (selectMaterialBtn) {
+      runModalAction(() => selectMonsterForMaterial(selectMaterialBtn.dataset.selectMaterial));
       return;
     }
 
