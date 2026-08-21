@@ -32,8 +32,15 @@ function pickWeightedTierIndex(type) {
   return weights.length - 1;
 }
 
-function rollSlot() {
-  const type = DAILY_MISSION_TYPES[Math.floor(Math.random() * DAILY_MISSION_TYPES.length)];
+// `excludeTypeIds` são os tipos já usados hoje pelas OUTRAS missões (ver
+// ensureDailyMissionsFresh/rerollMission abaixo) — pedido do usuário pra
+// nunca cair tipo repetido no mesmo dia, nem no sorteio inicial nem em
+// reroll. Se sobrar só 1 tipo disponível (ou menos tipos cadastrados do
+// que slots), cai de volta pra lista cheia em vez de travar.
+function rollSlot(excludeTypeIds = []) {
+  const pool = DAILY_MISSION_TYPES.filter((t) => !excludeTypeIds.includes(t.id));
+  const source = pool.length > 0 ? pool : DAILY_MISSION_TYPES;
+  const type = source[Math.floor(Math.random() * source.length)];
   return {
     typeId: type.id,
     tierIndex: pickWeightedTierIndex(type),
@@ -55,9 +62,15 @@ function rollSlot() {
 /// chamador saber se precisa re-renderizar do zero).
 export function ensureDailyMissionsFresh(state, now = Date.now()) {
   if (!state.dailyMissions || now >= state.dailyMissions.resetAt) {
+    // Sorteia uma de cada vez, excluindo os tipos já escolhidos pras
+    // outras 2 — garante as 3 sempre de tipos diferentes.
+    const slots = [];
+    for (let i = 0; i < 3; i++) {
+      slots.push(rollSlot(slots.map((s) => s.typeId)));
+    }
     state.dailyMissions = {
       resetAt: nextDailyMissionResetAt(now),
-      slots: [rollSlot(), rollSlot(), rollSlot()],
+      slots,
     };
     return true;
   }
@@ -109,7 +122,12 @@ export function canRerollMission(state, slotIndex) {
 /// compartilhado) — pedido explícito do usuário.
 export function rerollMission(state, slotIndex) {
   if (!canRerollMission(state, slotIndex)) return false;
-  state.dailyMissions.slots[slotIndex] = { ...rollSlot(), rerollUsed: true };
+  // Exclui os tipos das OUTRAS 2 missões de hoje — o novo sorteio nunca
+  // repete um tipo que já está em outro slot no mesmo dia.
+  const otherTypeIds = state.dailyMissions.slots
+    .filter((_, i) => i !== slotIndex)
+    .map((s) => s.typeId);
+  state.dailyMissions.slots[slotIndex] = { ...rollSlot(otherTypeIds), rerollUsed: true };
   return true;
 }
 
