@@ -470,7 +470,7 @@ function monsterSelectZoneHtml(state, zone, pendingSelection) {
 
 export function showMonsterSelectModal(state, pendingSelection) {
   const zonesHtml = ZONES.map((zone) => monsterSelectZoneHtml(state, zone, pendingSelection)).join('');
-  showModal('🎯 Selecionar Monstros', `
+  showModal('Selecionar Monstros', `
     <p style="font-size:12px;color:var(--text-dim);">Escolha até 4 monstros de qualquer zona liberada — um deles é sorteado aleatoriamente a cada caçada.</p>
     <div class="monster-select-count">Selecionados: <strong>${pendingSelection.length}/4</strong></div>
     <div class="monster-select-list">${zonesHtml}</div>
@@ -701,7 +701,7 @@ function equipRingContentHtml(state, filterCategory = null, bulkSelect = null) {
         ${equipStatsBoxHtml(state)}
       </div>
       <div class="view-full-stats-row">
-        <button class="view-full-stats-btn" data-view-full-stats>📊 Ver Estatísticas</button>
+        <button class="view-full-stats-btn" data-view-full-stats>Ver Estatísticas</button>
       </div>
       ${attributeTotalsHtml(state)}
       <div class="equip-inventory-header-row">
@@ -1181,7 +1181,7 @@ function cardsSummaryHtml(state) {
 
   return `
     <div class="cards-summary-box">
-      <div class="equip-stats-title">✨ Bônus das Cartas Ativas</div>
+      <div class="equip-stats-title">Bônus das Cartas Ativas</div>
       ${rows || '<p style="font-size:11px;color:var(--text-dim); margin:0;">Nenhuma carta equipada ainda.</p>'}
     </div>
   `;
@@ -1206,7 +1206,7 @@ export function renderCardsTab(state) {
     ${pageBannerHtml('Cartas')}
     <div class="card-fragment-total">${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
     ${cardsSummaryHtml(state)}
-    <h3 class="cards-section-title">👑 Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span> <span class="cards-dps-bonus">+${bossDpsBonus}% DPS</span></h3>
+    <h3 class="cards-section-title">${CARD_ICON} Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span> <span class="cards-dps-bonus">+${bossDpsBonus}% DPS</span></h3>
     <div class="card-grid">${bossCards.map((c) => cardTileHtml(state, c)).join('')}</div>
     <h3 class="cards-section-title">${CARD_ICON} Cartas de Monstros <span class="cards-collected">Colecionadas: ${commonOwned}/${commonCards.length}</span> <span class="cards-dps-bonus">+${commonDpsBonus}% DPS</span></h3>
     <div class="card-grid">${commonCards.map((c) => cardTileHtml(state, c)).join('')}</div>
@@ -1350,7 +1350,7 @@ export function renderPetsTab(state, sortMode = null) {
       <span class="pets-egg-count">${EGG_ICON} Ovos: <strong>${formatNumber(eggCount)}</strong></span>
       <span class="pets-egg-count">${PET_FRAGMENT_ICON} Fragmentos: <strong>${formatNumber(state.petFragments || 0)}</strong></span>
       <button class="pets-hatch-btn" data-hatch-egg-btn ${eggCount < 1 ? 'disabled' : ''}>Chocar Ovo</button>
-      <button class="pets-hatch-btn" data-hatch-all-btn ${canHatchAllEggs(state) ? '' : 'disabled'} title="${hatchAllTitle}">👑 Chocar Todos (${formatNumber(eggCount)})</button>
+      <button class="pets-hatch-btn" data-hatch-all-btn ${canHatchAllEggs(state) ? '' : 'disabled'} title="${hatchAllTitle}">Chocar Todos (${formatNumber(eggCount)})</button>
     </div>
     <div class="equip-inventory-header">Equipados (até ${MAX_EQUIPPED_PETS}, 1 por elemento)</div>
     <div class="pets-equip-row">${equipRow}</div>
@@ -2071,7 +2071,6 @@ function cashShopHtml(state) {
 
   return `
     <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>
-    <p class="shop-note">Ganhe Esmeralda na aba ${ACHIEVEMENT_ICON} Conquistas.</p>
 
     <h4 class="shop-section-title">Bônus (assistir anúncio)</h4>
     <div class="shop-item-grid">${adBonusesHtml(state)}</div>
