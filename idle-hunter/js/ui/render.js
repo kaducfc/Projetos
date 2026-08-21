@@ -127,30 +127,30 @@ export const DAILY_MISSION_ICON = `<img class="currency-icon" src="assets/ui/nav
 // bulk-select-toggle-btn/data-fuse-all-btn — o 🌟 do botão "Fundir" de par
 // único e do rótulo do seletor de parceiro continuam os mesmos, conceito
 // visualmente ligado mas não é "a mesma ação" que esse ícone representa).
-export const MERGE_ALL_ICON = `<img class="currency-icon" src="assets/ui/nav/fundir_todos.png" alt="Fundir Tudo">`;
+export const MERGE_ALL_ICON = `<img class="currency-icon currency-icon-lg" src="assets/ui/nav/fundir_todos.png" alt="Fundir Tudo">`;
 // Ícone de "pontuação"/rating da Arena (substitui a ⭐ nesse uso específico
 // em todo lugar que aparece — status próprio, board, ranks, resultado de
 // batalha). A ⭐ de "Nível" no rank de Nível de Caçador já tinha sido
 // substituída antes por RANK_LEVEL_ICON (conceito diferente).
-export const RATING_ICON = `<img class="currency-icon" src="assets/ui/nav/pontos.png" alt="Pontuação">`;
+export const RATING_ICON = `<img class="currency-icon currency-icon-lg" src="assets/ui/nav/pontos.png" alt="Pontuação">`;
 // Ícone universal de "Atualizar/Sincronizar/Resetar" (substitui 🔄 em TODO
 // lugar que usava o emoji de reload — botões de sincronizar Arena,
 // carregar Ranks, atualizar Correio, resetar pontos de habilidade, sortear
 // outra missão diária — é sempre o mesmo conceito de "atualizar/repetir").
-export const REFRESH_ICON = `<img class="currency-icon" src="assets/ui/nav/atualizar.png" alt="Atualizar">`;
+export const REFRESH_ICON = `<img class="currency-icon currency-icon-lg" src="assets/ui/nav/atualizar.png" alt="Atualizar">`;
 // Ícone do botão "Combate" da Arena (substitui ⚔️ só nesse botão
 // específico — data-pvp-open-combat — os outros usos de ⚔️ no jogo, como
 // vantagem elemental, "Atacar", título de modal, etc, continuam o emoji).
-export const COMBAT_ICON = `<img class="currency-icon" src="assets/ui/nav/combate.png" alt="Combate">`;
+export const COMBAT_ICON = `<img class="currency-icon currency-icon-lg" src="assets/ui/nav/combate.png" alt="Combate">`;
 // Selo de "mensagem já lida/recolhida" do Correio — mostrado só depois que
 // o jogador abre a mensagem (e recolhe os itens, se tiver); as mensagens
 // não lidas não têm nenhum ícone, só o título (ver renderMailboxTab).
-export const MAIL_READ_ICON = `<img class="currency-icon" src="assets/ui/nav/recebido.png" alt="Lida">`;
+export const MAIL_READ_ICON = `<img class="currency-icon currency-icon-lg" src="assets/ui/nav/recebido.png" alt="Lida">`;
 // Ícone de "vitórias" da Arena (substitui 🏆 só nesse uso — contagem de
 // vitórias do jogador/linha, no status próprio, board e Ranks Arena — os
 // outros 🏆 do jogo, como o banner "Vitória!" de resultado de batalha ou o
 // botão de abrir Ranks, continuam o emoji).
-export const WINS_ICON = `<img class="currency-icon" src="assets/ui/nav/vitoria.png" alt="Vitórias">`;
+export const WINS_ICON = `<img class="currency-icon currency-icon-lg" src="assets/ui/nav/vitoria.png" alt="Vitórias">`;
 
 // ---------------------------------------------------------------
 // Banner oficial de página (ver assets/ui/banner.png) — pedido do
