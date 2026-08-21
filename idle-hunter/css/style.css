@@ -1493,14 +1493,19 @@ button:disabled {
 }
 
 .select-monster-btn {
-  font-size: 10.5px;
+  font-size: 9px;
   font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 10px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 6px;
   background: var(--grad-neutral);
-  color: var(--text);
-  box-shadow: var(--shadow-btn);
+  color: var(--text-dim);
+  box-shadow: none;
   vertical-align: middle;
+}
+
+.select-monster-btn:active:not(:disabled) {
+  transform: none;
 }
 
 .item-detail-stats {
