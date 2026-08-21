@@ -2123,7 +2123,6 @@ function transcendResetInfoHtml() {
   const keepItems = [
     'Cartas',
     'Itens do Despertar',
-    'Mascote do Despertar',
     'Esmeralda',
     'VIP',
     'Conquistas',
