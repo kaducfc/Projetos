@@ -137,14 +137,52 @@ html, body {
   margin-top: 2px;
 }
 
-/* Real title-banner art (see assets/ui/titles/*.png), used in place of
-   .section-banner on every tab now that the user supplied real art for
-   each page's title instead of the CSS clip-path ribbon. */
-.section-banner-img {
+/* Banner oficial de página (ver assets/ui/banner.png + pageBannerHtml em
+   ui/render.js) — usado em TODA página no lugar do ribbon CSS acima e das
+   artes antigas com texto já desenhado (uma imagem só, sem texto, com o
+   título sobreposto). Losangos dourados grandes ficam a ~17.3%/82.7% da
+   largura — é essa faixa livre que .page-banner-title-wrap reserva pro
+   texto, com um respiro (não os 17.3%/82.7% exatos) pra não encostar. */
+.page-banner {
+  position: relative;
+  width: 100%;
+  margin: 0 0 8px;
+}
+
+.page-banner img {
   display: block;
   width: 100%;
   height: auto;
-  margin: 0 0 8px;
+}
+
+.page-banner-title-wrap {
+  position: absolute;
+  top: 50%;
+  left: 17.3%;
+  width: 65.4%;
+  height: 40%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* "Opção 4" das 5 propostas — cartoon grosso, escolhida pelo usuário.
+   Tamanho real é ajustado por JS (ver fitPageBannerTitles em
+   ui/render.js) pra cada título caber certinho entre os losangos. */
+.page-banner-title {
+  display: inline-block;
+  white-space: nowrap;
+  text-transform: uppercase;
+  font-family: 'Luckiest Guy', 'Baloo 2', cursive;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 2px #5a3200;
+  paint-order: stroke fill;
+  text-shadow: 0 3px 0 #5a3200, 0 5px 7px rgba(0, 0, 0, .5);
 }
 
 button {
