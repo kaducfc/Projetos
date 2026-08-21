@@ -8,6 +8,11 @@ export const DEFAULT_PLAYER_NAME = 'Caçador';
 export const MIN_PLAYER_NAME_LENGTH = 3;
 export const MAX_PLAYER_NAME_LENGTH = 16;
 
+// Só letras (com acento — jogo em PT-BR), números e 1 espaço só entre
+// palavras/letras — nada de espaço duplo, espaço nas pontas, ou qualquer
+// caractere especial/emoji (ver isValidPlayerName em systems/profile.js).
+export const PLAYER_NAME_PATTERN = /^[\p{L}\p{N}]+(?: [\p{L}\p{N}]+)*$/u;
+
 // Custo em Esmeralda de cada troca de nick a partir da 2ª (a 1ª é sempre
 // grátis, ver systems/profile.js isFirstNameChangeFree).
 export const NAME_CHANGE_COST = 20;
