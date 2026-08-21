@@ -57,6 +57,7 @@ import {
   renderTranscendTab, renderPvpTab, showPvpBattleModal, showPvpCombatPickerModal, renderRanksTab,
   renderMailboxTab, showMailDetailModal, renderAchievementsTab,
   renderDailyMissionsTab, showDailyMissionCompleteModal, DAILY_MISSION_ICON,
+  REFRESH_ICON,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -1480,7 +1481,7 @@ function wireSkillsTabEvents() {
       resetSkillTree(state);
       skillResetConfirming = false;
       renderUpgradesTabNow();
-      showToast('🔄 Pontos de habilidade resetados!');
+      showToast(`${REFRESH_ICON} Pontos de habilidade resetados!`);
     }
   });
 }
@@ -1642,7 +1643,7 @@ function wireDailyMissionsTabEvents() {
     const rerollBtn = e.target.closest('[data-mission-reroll]');
     if (rerollBtn) {
       if (rerollMission(state, Number(rerollBtn.dataset.missionReroll))) {
-        showToast('🔄 Nova missão sorteada!');
+        showToast(`${REFRESH_ICON} Nova missão sorteada!`);
         refreshDailyMissionsTab();
       }
     }

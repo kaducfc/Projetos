@@ -123,6 +123,35 @@ export const PVP_TICKET_ICON = `<img class="currency-icon" src="assets/ui/nav/ti
 // Mascote") ou emoji de item de drop, conceitos diferentes.
 export const DAILY_MISSION_ICON = `<img class="currency-icon" src="assets/ui/nav/missao_diaria.png" alt="Missão Diária">`;
 
+// Ícone do botão "Fundir Tudo" (substitui 🌟 só ali — o mascote
+// bulk-select-toggle-btn/data-fuse-all-btn — o 🌟 do botão "Fundir" de par
+// único e do rótulo do seletor de parceiro continuam os mesmos, conceito
+// visualmente ligado mas não é "a mesma ação" que esse ícone representa).
+export const MERGE_ALL_ICON = `<img class="currency-icon" src="assets/ui/nav/fundir_todos.png" alt="Fundir Tudo">`;
+// Ícone de "pontuação"/rating da Arena (substitui a ⭐ nesse uso específico
+// em todo lugar que aparece — status próprio, board, ranks, resultado de
+// batalha). A ⭐ de "Nível" no rank de Nível de Caçador já tinha sido
+// substituída antes por RANK_LEVEL_ICON (conceito diferente).
+export const RATING_ICON = `<img class="currency-icon" src="assets/ui/nav/pontos.png" alt="Pontuação">`;
+// Ícone universal de "Atualizar/Sincronizar/Resetar" (substitui 🔄 em TODO
+// lugar que usava o emoji de reload — botões de sincronizar Arena,
+// carregar Ranks, atualizar Correio, resetar pontos de habilidade, sortear
+// outra missão diária — é sempre o mesmo conceito de "atualizar/repetir").
+export const REFRESH_ICON = `<img class="currency-icon" src="assets/ui/nav/atualizar.png" alt="Atualizar">`;
+// Ícone do botão "Combate" da Arena (substitui ⚔️ só nesse botão
+// específico — data-pvp-open-combat — os outros usos de ⚔️ no jogo, como
+// vantagem elemental, "Atacar", título de modal, etc, continuam o emoji).
+export const COMBAT_ICON = `<img class="currency-icon" src="assets/ui/nav/combate.png" alt="Combate">`;
+// Selo de "mensagem já lida/recolhida" do Correio — mostrado só depois que
+// o jogador abre a mensagem (e recolhe os itens, se tiver); as mensagens
+// não lidas não têm nenhum ícone, só o título (ver renderMailboxTab).
+export const MAIL_READ_ICON = `<img class="currency-icon" src="assets/ui/nav/recebido.png" alt="Lida">`;
+// Ícone de "vitórias" da Arena (substitui 🏆 só nesse uso — contagem de
+// vitórias do jogador/linha, no status próprio, board e Ranks Arena — os
+// outros 🏆 do jogo, como o banner "Vitória!" de resultado de batalha ou o
+// botão de abrir Ranks, continuam o emoji).
+export const WINS_ICON = `<img class="currency-icon" src="assets/ui/nav/vitoria.png" alt="Vitórias">`;
+
 // ---------------------------------------------------------------
 // Banner oficial de página (ver assets/ui/banner.png) — pedido do
 // usuário pra substituir TODOS os banners antigos (tanto a arte
@@ -1071,7 +1100,7 @@ function skillResetRowHtml(state, resetConfirming) {
       </div>
     `;
   }
-  return `<button class="skill-reset-btn" data-skill-reset-start>🔄 Resetar Pontos</button>`;
+  return `<button class="skill-reset-btn" data-skill-reset-start>${REFRESH_ICON} Resetar Pontos</button>`;
 }
 
 export function renderUpgradesTab(state, resetConfirming = false) {
@@ -1327,7 +1356,7 @@ export function renderPetsTab(state, sortMode = null) {
     <div class="pets-equip-row">${equipRow}</div>
     <div class="equip-inventory-header-row">
       <div class="equip-inventory-header">Inventário (${state.pets.length}/${getPetInventoryCap(state)})</div>
-      <button class="bulk-select-toggle-btn" data-fuse-all-btn title="Funde em cascata todo par de mascotes iguais (mesma espécie, raridade e nível) não equipado">🌟 Fundir Tudo</button>
+      <button class="bulk-select-toggle-btn" data-fuse-all-btn title="Funde em cascata todo par de mascotes iguais (mesma espécie, raridade e nível) não equipado">${MERGE_ALL_ICON} Fundir Tudo</button>
     </div>
     ${petSortRowHtml(sortMode)}
     <div class="equip-inventory-grid">${petsHtml}</div>
@@ -1866,7 +1895,7 @@ function dailyMissionSlotHtml(slot, index, budgetUsed, anyActive) {
     actionHtml = `
       <div class="daily-mission-actions">
         <button data-mission-select="${index}">Selecionar</button>
-        ${slot.rerollUsed ? '' : `<button class="daily-mission-reroll" data-mission-reroll="${index}" title="Trocar por outra missão aleatória (1x por dia)">🔄</button>`}
+        ${slot.rerollUsed ? '' : `<button class="daily-mission-reroll" data-mission-reroll="${index}" title="Trocar por outra missão aleatória (1x por dia)">${REFRESH_ICON}</button>`}
       </div>`;
   }
 
@@ -2219,13 +2248,13 @@ function pvpEntriesLabel(myProfile) {
 function pvpMyStatusHtml(myProfile, tierInfo) {
   const scoreLine = tierInfo.hiddenScore
     ? 'Pontuação oculta nesse tier — só a posição conta.'
-    : `⭐ ${formatInteger(myProfile.rating)} pontos`;
+    : `${RATING_ICON} ${formatInteger(myProfile.rating)} pontos`;
   return `
     <div class="achievement-card">
       ${pvpProfileIconHtml(myProfile.icon_id)}
       <div class="info">
         <div class="name">${nickHtml(myProfile.nick, myProfile.is_vip)} · ${tierInfo.icon} ${tierInfo.label}</div>
-        <div class="desc">Nível ${formatNumber(myProfile.hunter_level)} · ${scoreLine} · 🏆 ${formatInteger(myProfile.wins || 0)} vitórias</div>
+        <div class="desc">Nível ${formatNumber(myProfile.hunter_level)} · ${scoreLine} · ${WINS_ICON} ${formatInteger(myProfile.wins || 0)} vitórias</div>
         <div class="desc">${PVP_TICKET_ICON} Entradas: ${pvpEntriesLabel(myProfile)}</div>
       </div>
     </div>`;
@@ -2233,9 +2262,9 @@ function pvpMyStatusHtml(myProfile, tierInfo) {
 
 function pvpBoardRowHtml(pvp, tierInfo, row) {
   const isSelf = !row.is_bot && pvp.myProfile && row.entity_id === pvp.myProfile.id;
-  const scoreLabel = tierInfo.hiddenScore ? '' : ` · ⭐ ${formatInteger(row.rating)}`;
+  const scoreLabel = tierInfo.hiddenScore ? '' : ` · ${RATING_ICON} ${formatInteger(row.rating)}`;
   const levelLabel = row.is_bot ? 'Bot' : `Nível ${formatNumber(row.hunter_level)}`;
-  const winsLabel = row.is_bot ? '' : ` · 🏆 ${formatInteger(row.wins || 0)}`;
+  const winsLabel = row.is_bot ? '' : ` · ${WINS_ICON} ${formatInteger(row.wins || 0)}`;
   // Prévia da recompensa diária (ver previewDailyArenaReward em
   // systems/pvp.js) — só faz sentido pra jogador de verdade, bot nunca
   // recebe nada (real_rank vem null da RPC pra linha de bot).
@@ -2270,7 +2299,7 @@ export function renderPvpTab(state, pvp) {
     : `<p class="shop-note">${myProfile ? 'Ninguém nesse tier ainda — sincronize de novo em instantes.' : ''}</p>`;
 
   const combatBtn = myProfile
-    ? `<button class="transcend-btn" data-pvp-open-combat>⚔️ Combate</button>`
+    ? `<button class="transcend-btn" data-pvp-open-combat>${COMBAT_ICON} Combate</button>`
     : '';
 
   // Contador regressivo até a recompensa diária (21h de Brasília) — só
@@ -2283,7 +2312,7 @@ export function renderPvpTab(state, pvp) {
   container.innerHTML = `
     ${pageBannerHtml('Arena')}
     ${connectHtml}
-    <button class="transcend-btn" data-pvp-refresh ${pvp.loading ? 'disabled' : ''}>🔄 ${myProfile ? 'Sincronizar Stats' : 'Conectar à Arena'}</button>
+    <button class="transcend-btn" data-pvp-refresh ${pvp.loading ? 'disabled' : ''}>${REFRESH_ICON} ${myProfile ? 'Sincronizar Stats' : 'Conectar à Arena'}</button>
     ${combatBtn}
     ${countdownHtml}
 
@@ -2412,8 +2441,8 @@ function ranksSectionListHtml(ranksData, myId) {
   // global (já mostrada no #rank de cada linha) representa o jogador ali.
   return pvpRankSectionHtml(ranksData.arena, myId, (row) => {
     const tierInfo = getPvpTierInfo(row.tier);
-    const scoreLabel = row.rating == null ? '' : ` · ⭐ ${formatInteger(row.rating)}`;
-    return `${tierInfo.icon} ${tierInfo.label}${scoreLabel} · Nível ${formatNumber(row.hunter_level)} · 🏆 ${formatInteger(row.wins || 0)}`;
+    const scoreLabel = row.rating == null ? '' : ` · ${RATING_ICON} ${formatInteger(row.rating)}`;
+    return `${tierInfo.icon} ${tierInfo.label}${scoreLabel} · Nível ${formatNumber(row.hunter_level)} · ${WINS_ICON} ${formatInteger(row.wins || 0)}`;
   }, pvpWeeklyRewardLabel);
 }
 
@@ -2457,7 +2486,7 @@ export function renderRanksTab(ranksData, myProfile) {
 
   container.innerHTML = `
     ${pageBannerHtml('Ranks')}
-    <button class="transcend-btn" data-ranks-refresh ${ranksData.loading ? 'disabled' : ''}>🔄 ${ranksData.loaded ? 'Atualizar' : 'Carregar Ranks'}</button>
+    <button class="transcend-btn" data-ranks-refresh ${ranksData.loading ? 'disabled' : ''}>${REFRESH_ICON} ${ranksData.loaded ? 'Atualizar' : 'Carregar Ranks'}</button>
 
     <div class="pvp-rank-tabs">${tabsHtml}</div>
     ${weeklyCountdownHtml}
@@ -2487,14 +2516,17 @@ function mailRewardLineHtml(type, amount) {
 }
 
 function mailListItemHtml(message) {
-  const hasReward = mailHasReward(message);
-  const giftIcon = hasReward ? (message.claimed ? '✅ ' : `${GIFT_ICON} `) : '';
-  const unreadDot = !message.read ? '<span class="mail-unread-dot"></span>' : '';
+  // Mensagem "concluída" (já aberta e, se tinha recompensa, já resgatada)
+  // ganha o selo ${MAIL_READ_ICON} antes do título — qualquer outro estado
+  // (não lida, ou lida mas com recompensa pendente) mostra só o título,
+  // sem nenhum ícone/emote (pedido do usuário).
+  const isDone = message.read && (!mailHasReward(message) || message.claimed);
+  const readIcon = isDone ? `${MAIL_READ_ICON} ` : '';
   const date = new Date(message.created_at).toLocaleDateString('pt-BR');
   return `
     <div class="achievement-card ${!message.read ? 'mail-unread' : ''}" data-mail-open="${message.id}" style="cursor:pointer;">
       <div class="info">
-        <div class="name">${unreadDot}${giftIcon}${escapeHtml(message.title)}</div>
+        <div class="name">${readIcon}${escapeHtml(message.title)}</div>
         <div class="desc">${date}</div>
       </div>
     </div>`;
@@ -2510,7 +2542,7 @@ export function renderMailboxTab(mailboxData) {
   container.innerHTML = `
     ${pageBannerHtml('Correio')}
     <p class="shop-note">Avisos e recompensas da Arena chegam aqui.</p>
-    <button class="transcend-btn" data-mail-refresh ${mailboxData.loading ? 'disabled' : ''}>🔄 Atualizar</button>
+    <button class="transcend-btn" data-mail-refresh ${mailboxData.loading ? 'disabled' : ''}>${REFRESH_ICON} Atualizar</button>
     ${hasClaimable ? `<button class="transcend-btn" data-mail-claim-all>${GIFT_ICON} Resgatar Todos</button>` : ''}
     <div class="achievement-list">${listHtml}</div>
   `;
@@ -2578,7 +2610,7 @@ function pvpResultContentHtml(result) {
     const ratingDelta = result.attackerRatingAfter - result.attackerRatingBefore;
     const deltaLabel = `${ratingDelta >= 0 ? '+' : ''}${ratingDelta}`;
     const deltaClass = ratingDelta >= 0 ? 'pvp-delta-up' : 'pvp-delta-down';
-    scoreLine = `<p class="offline-item-lines">⭐ Pontos: ${result.attackerRatingBefore} → ${result.attackerRatingAfter} <span class="${deltaClass}">(${deltaLabel})</span></p>`;
+    scoreLine = `<p class="offline-item-lines">${RATING_ICON} Pontos: ${result.attackerRatingBefore} → ${result.attackerRatingAfter} <span class="${deltaClass}">(${deltaLabel})</span></p>`;
   }
 
   return `
