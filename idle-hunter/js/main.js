@@ -56,7 +56,7 @@ import {
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
   renderTranscendTab, renderPvpTab, showPvpBattleModal, showPvpCombatPickerModal, renderRanksTab,
   renderMailboxTab, showMailDetailModal, renderAchievementsTab,
-  renderDailyMissionsTab, showDailyMissionCompleteModal,
+  renderDailyMissionsTab, showDailyMissionCompleteModal, DAILY_MISSION_ICON,
 } from './ui/render.js';
 
 const TICK_MS = 100;
@@ -1624,7 +1624,7 @@ function wireDailyMissionsTabEvents() {
     const selectBtn = e.target.closest('[data-mission-select]');
     if (selectBtn) {
       if (selectMission(state, Number(selectBtn.dataset.missionSelect))) {
-        showToast('📋 Missão selecionada — boa sorte!');
+        showToast(`${DAILY_MISSION_ICON} Missão selecionada — boa sorte!`);
         refreshDailyMissionsTab();
       }
       return;
