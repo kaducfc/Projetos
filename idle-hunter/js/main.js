@@ -530,6 +530,39 @@ function confirmMonsterSelection() {
   }
 }
 
+// Botão "Selecionar" no popup de detalhe do item (ver itemDetailHtml em
+// ui/render.js) — atalho pra já ir direto caçar o CHEFE daquele item (todo
+// item é temático de 1 chefe/zona, ver item.bossId/zoneIndex em
+// data/items.js), sem passar pela tela de seleção manual. Mesma regra de
+// sempre (até 4, FIFO troca o mais antigo) — só que aplicada direto em
+// state.selectedMonsters, não em pendingMonsterSelection (esse popup não
+// tem etapa de "Confirmar" separada).
+function selectMonsterFromItem(uid) {
+  const entry = state.inventory.find((i) => i.uid === uid);
+  if (!entry) return;
+  const item = getItem(entry.itemId);
+  const zoneIndex = item.zoneIndex;
+  const monsterId = item.bossId;
+  if (!canSelectMonster(state, zoneIndex, 'boss')) {
+    showToast('🔒 Chefe ainda não liberado nesse nível.');
+    return;
+  }
+  const current = state.selectedMonsters.map((m) => ({ ...m }));
+  const alreadySelected = current.some((m) => m.zoneIndex === zoneIndex && m.kind === 'boss' && m.monsterId === monsterId);
+  if (alreadySelected) {
+    showToast('✅ Esse chefe já está selecionado pra caça.');
+    return;
+  }
+  if (current.length >= MAX_SELECTED_MONSTERS) current.shift();
+  current.push({ zoneIndex, kind: 'boss', monsterId });
+  if (setSelectedMonsters(state, current)) {
+    showToast(`🎯 ${BOSSES[zoneIndex].name} selecionado pra caça!`);
+    resetPlayerHp();
+    fullRefresh();
+    armBossTimer();
+  }
+}
+
 function setupMonsterSelection() {
   document.getElementById('select-monsters-btn').addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
@@ -651,6 +684,12 @@ function wireModalEvents() {
       runModalAction(() => confirmMonsterSelection());
       return;
     }
+    const selectMonsterForBtn = e.target.closest('[data-select-monster-for]');
+    if (selectMonsterForBtn) {
+      runModalAction(() => selectMonsterFromItem(Number(selectMonsterForBtn.dataset.selectMonsterFor)));
+      return;
+    }
+
     const equipBtn = e.target.closest('[data-modal-equip]');
     if (equipBtn) {
       runModalAction(() => {
