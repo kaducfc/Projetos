@@ -2102,7 +2102,43 @@ export function renderTranscendTab(state) {
     ${statusHtml}
     <div class="shop-balance">${AWAKENING_SHARD_ICON} Você tem <strong>${formatNumber(getAwakeningShards(state))}</strong> ${AWAKENING_SHARD_NAME}</div>
     <p class="shop-note">Só se ganha ${AWAKENING_SHARD_NAME} Transcendendo — 1 garantido por vez. Gaste na aba ${AWAKENING_SHARD_ICON} Despertar da Loja.</p>
+    ${transcendResetInfoHtml()}
   `;
+}
+
+/// Lista o que reseta (esquerda) vs o que se mantém (direita) ao
+/// Transcender — mesma divisão de showTranscendConfirmModal acima, mas
+/// sempre visível na aba (não só na hora de confirmar). Ver PRESERVED_KEYS
+/// em systems/awakening.js pra fonte-da-verdade do que sobrevive.
+function transcendResetInfoHtml() {
+  const resetItems = [
+    'Nível, ouro e materiais',
+    'Equipamentos e inventário',
+    'Mascotes (exceto Despertar)',
+    'Habilidades',
+    'Eventos',
+  ];
+  const keepItems = [
+    'Cartas descobertas',
+    'Itens/mascotes do Despertar',
+    'Esmeralda',
+    'VIP',
+    'Conquistas',
+    'Perfil (nick, ícone)',
+    'Fragmento do Despertar',
+  ];
+  const listHtml = (items) => `<ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul>`;
+  return `
+    <div class="transcend-reset-info">
+      <div class="transcend-reset-col">
+        <div class="transcend-reset-col-title">❌ Reseta</div>
+        ${listHtml(resetItems)}
+      </div>
+      <div class="transcend-reset-col">
+        <div class="transcend-reset-col-title">✅ Mantém</div>
+        ${listHtml(keepItems)}
+      </div>
+    </div>`;
 }
 
 function awakeningShopItemCardHtml(state, item) {
