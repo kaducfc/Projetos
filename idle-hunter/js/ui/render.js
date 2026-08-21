@@ -735,7 +735,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier ${item.zoneIndex + 1}</div>
       <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
-      <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span> <button class="select-monster-btn" data-select-monster-for="${uid}" title="Selecionar o chefe desse item pra caça">Selecionar</button></div>
+      <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${itemDetailStatsHtml(item, entry)}</div>
       ${resistanceLine}
@@ -810,6 +810,20 @@ function enhanceGoldCostRowHtml(state, gold) {
   return `<div class="recipe-cost"><span><span class="icon">${GOLD_ICON}</span> Ouro</span><span class="${met ? 'met' : 'missing'}">${formatNumber(state.gold || 0)}/${formatNumber(gold)}</span></div>`;
 }
 
+/// Linha de custo de material (aprimorar/Rank Master/Ascensão) — com o
+/// botão "Selecionar" do lado do NOME do material (pedido do usuário),
+/// não do item: seleciona pra caça o monstro (fraco OU chefe, qualquer um
+/// dos 2) que dropa esse material específico (ver
+/// findMonsterSourceForMaterial em data/monsters.js + data-select-material
+/// em main.js).
+function materialCostRowHtml(matInfo, have, qty) {
+  const met = have >= qty;
+  return `<div class="recipe-cost">
+    <span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name} <button class="select-monster-btn" data-select-material="${matInfo.id}" title="Selecionar o monstro que dropa esse material pra caça">Selecionar</button></span>
+    <span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(qty)}</span>
+  </div>`;
+}
+
 function enhancePanelHtml(state, uid, entry, item) {
   if (entry.isMaster) {
     const cost = getAscensionCost(item, entry.rarityId);
@@ -819,10 +833,9 @@ function enhancePanelHtml(state, uid, entry, item) {
     const nextRarity = getRarity(cost.nextRarityId);
     const matInfo = findMaterialInfo(cost.matId);
     const haveMat = state.materials[cost.matId] || 0;
-    const matMet = haveMat >= cost.qty;
     return `<div class="enhance-panel">
       <div class="enhance-maxed">✨ Rank Master alcançado</div>
-      <div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${matMet ? 'met' : 'missing'}">${formatNumber(haveMat)}/${formatNumber(cost.qty)}</span></div>
+      ${materialCostRowHtml(matInfo, haveMat, cost.qty)}
       <button class="master-btn" data-ascend-uid="${uid}" ${canAscendItem(state, uid) ? '' : 'disabled'}>Ascender para <span style="color:${nextRarity.color}">${nextRarity.name}</span> +0</button>
     </div>`;
   }
@@ -831,9 +844,8 @@ function enhancePanelHtml(state, uid, entry, item) {
     const cost = item.enhanceCost[entry.enhanceLevel];
     const have = state.materials[cost.matId] || 0;
     const matInfo = findMaterialInfo(cost.matId);
-    const met = have >= cost.qty;
     return `<div class="enhance-panel">
-      <div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(cost.qty)}</span></div>
+      ${materialCostRowHtml(matInfo, have, cost.qty)}
       ${enhanceGoldCostRowHtml(state, cost.gold)}
       <button data-enhance="${uid}" ${canEnhance(state, uid) ? '' : 'disabled'}>Aprimorar para +${entry.enhanceLevel + 1}</button>
     </div>`;
@@ -842,9 +854,8 @@ function enhancePanelHtml(state, uid, entry, item) {
   const masterCost = item.masterMaterialCost;
   const matInfo = findMaterialInfo(masterCost.matId);
   const haveMat = state.materials[masterCost.matId] || 0;
-  const matMet = haveMat >= masterCost.qty;
   return `<div class="enhance-panel">
-    <div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${matMet ? 'met' : 'missing'}">${formatNumber(haveMat)}/${formatNumber(masterCost.qty)}</span></div>
+    ${materialCostRowHtml(matInfo, haveMat, masterCost.qty)}
     ${enhanceGoldCostRowHtml(state, masterCost.gold)}
     <button class="master-btn" data-master-upgrade="${uid}" ${canUpgradeToMaster(state, uid) ? '' : 'disabled'}>Evoluir para Rank Master</button>
   </div>`;
