@@ -116,6 +116,90 @@ export const GIFT_ICON = `<img class="currency-icon" src="assets/ui/nav/presente
 export const RANK_LEVEL_ICON = `<img class="currency-icon" src="assets/ui/nav/nivel.png" alt="Nível">`;
 export const PVP_TICKET_ICON = `<img class="currency-icon" src="assets/ui/nav/ticket_pvp.png" alt="Entrada da Arena">`;
 
+// ---------------------------------------------------------------
+// Banner oficial de página (ver assets/ui/banner.png) — pedido do
+// usuário pra substituir TODOS os banners antigos (tanto a arte
+// pré-pronta de titles/*.png quanto o ribbon CSS .section-banner) por
+// essa mesma imagem em toda página, com o TÍTULO desenhado por cima,
+// centralizado entre os 2 losangos grandes dourados. "Opção 4" escolhida
+// entre 5 propostas: fonte "Luckiest Guy" (cartoon grosso), branco com
+// contorno marrom. Sem ícone — só o texto, igual as artes antigas que já
+// vinham só com o nome escrito.
+//
+// O texto não tem tamanho fixo: títulos maiores ("MISSÃO DIÁRIA") e
+// menores ("ARENA") precisam ocupar visualmente o mesmo espaço entre os
+// losangos — ver fitBannerTitleEl/observers abaixo, que encolhem a fonte
+// pra cada título caber na faixa livre (17.3% a 82.7% da largura do
+// banner — medido a olho nos losangos da arte), com uma folga a mais
+// (PAGE_BANNER_FIT_RATIO) pra nunca encostar neles.
+export function pageBannerHtml(title) {
+  return `
+    <div class="page-banner">
+      <img src="assets/ui/banner.png" alt="">
+      <div class="page-banner-title-wrap"><span class="page-banner-title">${escapeHtml(title)}</span></div>
+    </div>`;
+}
+
+const PAGE_BANNER_MIN_FONT_PX = 10;
+const PAGE_BANNER_MAX_FONT_PX = 34;
+// Respiro dentro da faixa livre — sem isso, um título comprido
+// ("EQUIPAMENTOS") cresce até encostar bem nos losangos.
+const PAGE_BANNER_FIT_RATIO = 0.9;
+
+/// Busca binária pela maior fonte que ainda cabe (com folga) na faixa
+/// livre do banner (ver .page-banner-title-wrap no CSS).
+function fitBannerTitleEl(wrap) {
+  const el = wrap.querySelector('.page-banner-title');
+  const maxWidth = wrap.clientWidth * PAGE_BANNER_FIT_RATIO;
+  if (!el || maxWidth <= 0) return;
+  let lo = PAGE_BANNER_MIN_FONT_PX;
+  let hi = PAGE_BANNER_MAX_FONT_PX;
+  let best = lo;
+  for (let i = 0; i < 16; i++) {
+    const mid = (lo + hi) / 2;
+    el.style.fontSize = `${mid}px`;
+    if (el.scrollWidth <= maxWidth) { best = mid; lo = mid; } else { hi = mid; }
+  }
+  el.style.fontSize = `${best}px`;
+}
+
+// Auto-ajuste, sem precisar de um call site espalhado por todo canto que
+// pode desenhar um banner (toda troca de aba, todo refresh assíncrono de
+// Ranks/Correio/Missão Diária/Arena que substitui o innerHTML depois de
+// buscar dados do Supabase — muito fácil esquecer um desses). Cada
+// `.page-banner-title-wrap` que aparecer no DOM ganha seu próprio
+// ResizeObserver — reajusta sozinho assim que o tamanho de verdade
+// existir (aba escondida é display:none, vira visível só depois).
+const pageBannerResizeObserver = typeof ResizeObserver !== 'undefined'
+  ? new ResizeObserver((entries) => { for (const entry of entries) fitBannerTitleEl(entry.target); })
+  : null;
+const observedPageBannerWraps = new WeakSet();
+
+function ensurePageBannerWrapObserved(wrap) {
+  if (observedPageBannerWraps.has(wrap)) return;
+  observedPageBannerWraps.add(wrap);
+  if (pageBannerResizeObserver) pageBannerResizeObserver.observe(wrap);
+  fitBannerTitleEl(wrap);
+}
+
+if (typeof document !== 'undefined' && typeof MutationObserver !== 'undefined') {
+  new MutationObserver(() => {
+    document.querySelectorAll('.page-banner-title-wrap').forEach(ensurePageBannerWrapObserved);
+  }).observe(document.documentElement, { childList: true, subtree: true });
+
+  // A fonte "Luckiest Guy" carrega via rede (ver <link> em index.html) —
+  // se um título já tiver sido medido com a fonte de fallback antes dela
+  // chegar, o tamanho fica errado assim que ela troca (a troca de fonte
+  // não redimensiona o wrap, só o texto dentro — o ResizeObserver acima
+  // não percebe isso sozinho). Reajusta tudo de novo quando a fonte de
+  // verdade estiver pronta.
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(() => {
+      document.querySelectorAll('.page-banner-title-wrap').forEach(fitBannerTitleEl);
+    });
+  }
+}
+
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
   return `<img class="element-badge-icon" src="${el.image}" alt="${el.name}" title="${el.name}">`;
@@ -388,7 +472,7 @@ export function renderBossTimer(remainingMs) {
 /// comportamento normal (clique abre o detalhe do item).
 export function renderInventoryTab(state, filterCategory = null, bulkSelect = null) {
   const container = document.getElementById('tab-inventory');
-  const banner = `<img class="section-banner-img" src="assets/ui/titles/equipamentos.png" alt="Equipamentos">`;
+  const banner = pageBannerHtml('Equipamentos');
   container.innerHTML = banner + equipRingContentHtml(state, filterCategory, bulkSelect);
 }
 
@@ -996,7 +1080,7 @@ export function renderUpgradesTab(state, resetConfirming = false) {
   `;
 
   container.innerHTML = `
-    <img class="section-banner-img" src="assets/ui/titles/aprimoramentos.png" alt="Habilidades">
+    ${pageBannerHtml('Habilidades')}
     ${header}
     ${skillTreeHtml(state)}
   `;
@@ -1083,7 +1167,7 @@ export function renderCardsTab(state) {
   const fragments = state.materials[CARD_FRAGMENT_ID] || 0;
 
   container.innerHTML = `
-    <img class="section-banner-img" src="assets/ui/titles/cartas.png" alt="Cartas">
+    ${pageBannerHtml('Cartas')}
     <div class="card-fragment-total">${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
     ${cardsSummaryHtml(state)}
     <h3 class="cards-section-title">👑 Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span> <span class="cards-dps-bonus">+${bossDpsBonus}% DPS</span></h3>
@@ -1225,7 +1309,7 @@ export function renderPetsTab(state, sortMode = null) {
     ? 'Escolhe sempre o mascote de maior raridade (e maior Tier no empate) de cada ovo, sem abrir o modal de escolha'
     : 'Funcionalidade exclusiva de VIP (loja de Cash)';
   container.innerHTML = `
-    <div class="section-banner section-banner-sm">🐾 Mascotes</div>
+    ${pageBannerHtml('Mascotes')}
     <div class="pets-egg-row">
       <span class="pets-egg-count">${EGG_ICON} Ovos: <strong>${formatNumber(eggCount)}</strong></span>
       <span class="pets-egg-count">${PET_FRAGMENT_ICON} Fragmentos: <strong>${formatNumber(state.petFragments || 0)}</strong></span>
@@ -1640,7 +1724,7 @@ function expeditionSectionHtml(state, cardsVisible) {
 export function renderEventsTab(state, arenaRunRemainingMs = null, expeditionCardsVisible = false) {
   const container = document.getElementById('tab-events');
   container.innerHTML = `
-    <img class="section-banner-img" src="assets/ui/titles/eventos.png" alt="Eventos">
+    ${pageBannerHtml('Eventos')}
     <div class="event-list">
     ${arenaBannerHtml(state)}
     ${state.arenaRunActive ? arenaFightPanelHtml(state, arenaRunRemainingMs) : ''}
@@ -1704,7 +1788,7 @@ export function renderAchievementsTab(state) {
   }).join('');
 
   container.innerHTML = `
-    <div class="section-banner">${ACHIEVEMENT_ICON} Conquistas</div>
+    ${pageBannerHtml('Conquistas')}
     <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>
     <button id="watch-ad-btn" class="watch-ad-btn" ${adReady ? '' : 'disabled'}>
       ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' ' + ESMERALDA_ICON + ')' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
@@ -1813,7 +1897,7 @@ export function renderDailyMissionsTab(state) {
   const slotsHtml = slots.map((slot, i) => dailyMissionSlotHtml(slot, i, budgetUsed, anyActive)).join('');
 
   container.innerHTML = `
-    <div class="section-banner">📋 Missão Diária</div>
+    ${pageBannerHtml('Missão Diária')}
     <p class="pvp-countdown">Reseta em <strong id="daily-mission-countdown"></strong></p>
     ${budgetUsed ? '<p class="shop-note">Você já garantiu a missão de hoje — volte depois do reset pras próximas.</p>' : ''}
     <div class="achievement-list">${slotsHtml}</div>
@@ -1842,7 +1926,7 @@ export function renderShopTab(state, activeSubTab) {
   else body = cashShopHtml(state);
 
   container.innerHTML = `
-    <img class="section-banner-img" src="assets/ui/titles/loja.png" alt="Loja">
+    ${pageBannerHtml('Loja')}
     <div class="inner-subnav">
       <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">${ESMERALDA_ICON} Esmeralda</button>
       <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">${EVENT_ICON} Evento</button>
@@ -2007,7 +2091,7 @@ export function renderTranscendTab(state) {
       ${countLine}`;
 
   container.innerHTML = `
-    <div class="section-banner">${TRANSCEND_ICON} Transcender</div>
+    ${pageBannerHtml('Transcender')}
     ${statusHtml}
     <div class="shop-balance">${AWAKENING_SHARD_ICON} Você tem <strong>${formatNumber(getAwakeningShards(state))}</strong> ${AWAKENING_SHARD_NAME}</div>
     <p class="shop-note">Só se ganha ${AWAKENING_SHARD_NAME} Transcendendo — 1 garantido por vez. Gaste na aba ${AWAKENING_SHARD_ICON} Despertar da Loja.</p>
@@ -2153,7 +2237,7 @@ export function renderPvpTab(state, pvp) {
     : '';
 
   container.innerHTML = `
-    <div class="section-banner">${ARENA_ICON} Arena</div>
+    ${pageBannerHtml('Arena')}
     ${connectHtml}
     <button class="transcend-btn" data-pvp-refresh ${pvp.loading ? 'disabled' : ''}>🔄 ${myProfile ? 'Sincronizar Stats' : 'Conectar à Arena'}</button>
     ${combatBtn}
@@ -2328,7 +2412,7 @@ export function renderRanksTab(ranksData, myProfile) {
     : '';
 
   container.innerHTML = `
-    <div class="section-banner">${RANK_ICON} Ranks</div>
+    ${pageBannerHtml('Ranks')}
     <button class="transcend-btn" data-ranks-refresh ${ranksData.loading ? 'disabled' : ''}>🔄 ${ranksData.loaded ? 'Atualizar' : 'Carregar Ranks'}</button>
 
     <div class="pvp-rank-tabs">${tabsHtml}</div>
@@ -2380,7 +2464,7 @@ export function renderMailboxTab(mailboxData) {
     : `<p class="shop-note">${mailboxData.loading ? 'Carregando...' : 'Nenhuma mensagem por enquanto.'}</p>`;
 
   container.innerHTML = `
-    <div class="section-banner">${MAIL_ICON} Correio</div>
+    ${pageBannerHtml('Correio')}
     <p class="shop-note">Avisos e recompensas da Arena chegam aqui.</p>
     <button class="transcend-btn" data-mail-refresh ${mailboxData.loading ? 'disabled' : ''}>🔄 Atualizar</button>
     ${hasClaimable ? `<button class="transcend-btn" data-mail-claim-all>${GIFT_ICON} Resgatar Todos</button>` : ''}
