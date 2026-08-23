@@ -1425,7 +1425,12 @@ function cardDetailHtml(state, card) {
   } else if (claimed) {
     actionHtml = `<div class="card-detail-status">${GIFT_ICON} Recompensa já resgatada</div>`;
   } else if (!discovered) {
-    actionHtml = `<div class="card-detail-status">🔒 Ainda não obtida — derrote o monstro dela para ter uma chance de conseguir.</div>`;
+    // Carta Deus não dropa de monstro nenhum (ver GOD_CARDS em
+    // data/cards.js) — a explicação de "derrote o monstro dela" não faz
+    // sentido pra ela, só pras cartas de Boss/Monstro normais.
+    actionHtml = card.isGodCard
+      ? `<div class="card-detail-status">🔒 Ainda não obtida</div>`
+      : `<div class="card-detail-status">🔒 Ainda não obtida — derrote o monstro dela para ter uma chance de conseguir.</div>`;
   } else {
     actionHtml = '';
   }
@@ -1449,7 +1454,7 @@ function cardDetailHtml(state, card) {
           <div class="card-fragment-actions">
             ${owned > 0 ? `<button class="modal-action-btn" data-recycle-card="${card.id}" ${canRecycle ? '' : 'disabled'}>♻️ Reciclar (+${recycleValue} ${CARD_FRAGMENT_ICON})</button>` : ''}
             ${card.noCraft
-              ? `<div class="card-detail-status">${AWAKENING_SHARD_ICON} Só disponível na Loja do Despertar (aba Despertar da Loja)</div>`
+              ? `<div class="card-detail-status">${AWAKENING_SHARD_ICON} Só disponível na Loja do Despertar</div>`
               : `<button class="modal-action-btn" data-craft-card="${card.id}" ${canCraft ? '' : 'disabled'}>🛠️ Craftar (${craftCost} ${CARD_FRAGMENT_ICON})</button>`}
           </div>
         </div>
@@ -2431,21 +2436,56 @@ function godShopItemCardHtml(shopItem) {
     </div>`;
 }
 
-function awakeningShopItemCardHtml(state, item) {
-  if (item.kind === 'god_item') return godShopItemCardHtml(item);
-  const affordable = canBuyAwakeningItem(state, item.id);
-  // Cartas Deus (ver GOD_CARD_SHOP_ITEMS em data/awakening.js) já vêm com
-  // `image` (a arte real da carta) — prioriza sobre o emoji de fallback.
+// Carta da Loja do Despertar (ver GOD_CARD_SHOP_ITEMS em data/awakening.js):
+// mesmo padrão dos itens Tier God — clicar na imagem OU no botão só abre a
+// janela de especificações (showCardShopDetailModal abaixo); a compra em
+// si só é confirmada lá dentro, nunca direto na vitrine.
+function cardShopItemCardHtml(item) {
   const icon = item.image ? iconMarkup(item.image, item.emoji, item.name) : item.emoji;
   return `
-    <div class="shop-item-card">
+    <div class="shop-item-card god-shop-item" data-open-card-shop-item="${item.id}" style="cursor:pointer;">
       <span class="icon">${icon}</span>
+      <div class="info">
+        <div class="name">${item.name}</div>
+      </div>
+      <button data-open-card-shop-item="${item.id}">${AWAKENING_SHARD_ICON} ${item.cost}</button>
+    </div>`;
+}
+
+function awakeningShopItemCardHtml(state, item) {
+  if (item.kind === 'god_item') return godShopItemCardHtml(item);
+  if (item.kind === 'card') return cardShopItemCardHtml(item);
+  const affordable = canBuyAwakeningItem(state, item.id);
+  return `
+    <div class="shop-item-card">
+      <span class="icon">${item.emoji}</span>
       <div class="info">
         <div class="name">${item.name}</div>
         <div class="desc">${item.description}</div>
       </div>
       <button data-buy-awakening="${item.id}" ${affordable ? '' : 'disabled'}>${AWAKENING_SHARD_ICON} ${item.cost}</button>
     </div>`;
+}
+
+/// Janela de "especificações" aberta ao clicar numa carta da Loja do
+/// Despertar (ver cardShopItemCardHtml acima) — mesmo padrão de
+/// showGodItemShopDetailModal (arma/item Tier God): mostra a arte real,
+/// nome, descrição/efeito e o botão de confirmar a compra.
+export function showCardShopDetailModal(state, shopItemId) {
+  const shopItem = AWAKENING_SHOP_ITEMS.find((i) => i.id === shopItemId);
+  if (!shopItem) return;
+  const affordable = canBuyAwakeningItem(state, shopItemId);
+  const icon = shopItem.image ? iconMarkup(shopItem.image, shopItem.emoji, shopItem.name) : shopItem.emoji;
+  showModal('', `
+    <div class="item-detail">
+      <div class="item-detail-icon item-detail-icon-lg">${icon}</div>
+      <div class="item-detail-name">${CARD_ICON} ${shopItem.name}</div>
+      <div class="item-detail-stats">${shopItem.description}</div>
+      <div class="modal-action-row">
+        <button class="modal-action-btn" data-buy-awakening="${shopItemId}" ${affordable ? '' : 'disabled'}>${AWAKENING_SHARD_ICON} Comprar por ${shopItem.cost}</button>
+      </div>
+    </div>
+  `);
 }
 
 /// Janela de "especificações" aberta ao clicar num item Tier God na Loja
