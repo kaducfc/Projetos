@@ -1,4 +1,4 @@
-import { SUPREMO_CARD_ID } from './cards.js';
+import { GOD_CARDS } from './cards.js';
 import { GOD_ITEMS } from './items.js';
 
 // Transcender (ver systems/awakening.js): um reset de prestígio liberado
@@ -10,14 +10,22 @@ export const AWAKENING_SHARD_ID = 'awakening_shard';
 export const AWAKENING_SHARD_NAME = 'Fragmento do Despertar';
 export const AWAKENING_SHARD_EMOJI = '🌌';
 
-// Catálogo da Loja do Despertar — por enquanto só a carta Supremo
-// (placeholder; o usuário vai criar os itens personalizados depois). Cada
-// entrada carrega `kind` + o id do que ela concede, lido por
-// systems/awakening.js buyAwakeningItem.
+// Catálogo da Loja do Despertar. Cada entrada carrega `kind` + o id do que
+// ela concede, lido por systems/awakening.js buyAwakeningItem.
+//
+// As 5 cartas "Deus" (ver GOD_CARDS em data/cards.js) — compra instantânea
+// (botão direto no card da loja, mesmo fluxo que a antiga carta Supremo
+// tinha), 1 Fragmento do Despertar cada. name/image/description já vêm do
+// próprio card, sem duplicar aqui.
+const GOD_CARD_SHOP_ITEMS = GOD_CARDS.map((card) => ({
+  id: `awk_${card.id}`, name: card.name, emoji: '🃏', image: card.image,
+  kind: 'card', cardId: card.id, cost: 1, description: card.description,
+}));
+
 // Os 13 itens "Tier God" (ver GOD_ITEMS em data/items.js) — cada entrada
 // só guarda o id do molde + custo; nome/imagem/atributo etc já vêm do
 // próprio getItem(itemId), sem duplicar aqui (ver awakeningShopItemCardHtml
-// em ui/render.js). Diferente da carta Supremo (compra instantânea, botão
+// em ui/render.js). Diferente das cartas acima (compra instantânea, botão
 // direto no card da loja), clicar num item Deus abre uma janela de
 // "especificações" antes de confirmar a compra (showGodItemShopDetailModal
 // em ui/render.js) — pedido explícito do usuário.
@@ -26,9 +34,6 @@ const GOD_SHOP_ITEMS = GOD_ITEMS.map((item) => ({
 }));
 
 export const AWAKENING_SHOP_ITEMS = [
-  {
-    id: 'awk_supremo_card', name: 'Supremo', emoji: '🌌', kind: 'card', cardId: SUPREMO_CARD_ID, cost: 1,
-    description: '+50% de DPS quando equipada.',
-  },
+  ...GOD_CARD_SHOP_ITEMS,
   ...GOD_SHOP_ITEMS,
 ];
