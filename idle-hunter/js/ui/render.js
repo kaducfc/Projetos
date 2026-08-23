@@ -2309,7 +2309,7 @@ function godShopItemCardHtml(shopItem) {
       <div class="info">
         <div class="name">${item.name}</div>
       </div>
-      <button data-open-god-item="${shopItem.id}">${AWAKENING_SHARD_ICON} Comprar por ${shopItem.cost}</button>
+      <button data-open-god-item="${shopItem.id}">${AWAKENING_SHARD_ICON} ${shopItem.cost}</button>
     </div>`;
 }
 
