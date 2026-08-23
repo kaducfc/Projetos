@@ -995,8 +995,16 @@ export const GOD_BONUS_SLOTS = 8;
 const GOD_MAGNITUDE_TIER = BOSSES.length - 1;
 const GOD_STRENGTH_MULT = 1.3;
 
-export function godAttributeBaseValue(category) {
-  return Math.round(ATTRIBUTE_STEP_BY_CATEGORY[category] * (GOD_MAGNITUDE_TIER + 1) * GOD_STRENGTH_MULT);
+// Atributo base (1º dos 9) fixo em 90 pra QUALQUER item Deus — armas já
+// nascem com 90 do próprio atributo do arquétipo, as demais categorias dão
+// 90 do atributo escolhido pelo jogador (ver chooseGodAttribute em
+// systems/godItems.js). Só os 8 bônus seguintes continuam na fórmula "30%
+// mais forte que o Tier 10" (ver rollGodBonusCandidates abaixo) —
+// `category` fica só por compatibilidade de assinatura com quem já chama
+// isso (não influencia mais o valor).
+export const GOD_BASE_ATTRIBUTE_VALUE = 90;
+export function godAttributeBaseValue(_category) {
+  return GOD_BASE_ATTRIBUTE_VALUE;
 }
 
 /// Rola 3 candidatos pro próximo dos 8 slots de bônus de um item Deus —
