@@ -746,6 +746,102 @@ function slotIconHtml(state, slot) {
   </button>`;
 }
 
+// ---------------------------------------------------------------
+// Equipamento de OUTRO jogador (aba Ranks — clicar numa linha que não seja
+// a sua abre isso, ver wireRanksTabEvents em main.js) — mesmo boneco/
+// slots da aba Equipamentos, só que a partir de `equipped_snapshot`
+// (fetchPlayerEquipment em systems/pvp.js) em vez de state.equipped/
+// state.inventory, e sem NENHUMA ação (equipar/aprimorar/destruir): é só
+// uma vitrine somente-leitura. `equippedBySlot` é o objeto {slotId:
+// {itemId, rarityId, baseStats, additionalStats, enhanceLevel, isMaster,
+// cardIds, godAttribute?}} já no formato salvo pelo servidor.
+// ---------------------------------------------------------------
+
+function foreignSlotIconHtml(equippedBySlot, slot) {
+  const entry = equippedBySlot[slot.id];
+  const item = entry ? getItem(entry.itemId) : null;
+  const icon = item
+    ? iconMarkup(item.image, item.emoji, item.name)
+    : iconMarkup(slot.emptyIcon, slot.emoji, slot.name);
+  const badge = entry
+    ? `<span class="mini-badge ${entry.isMaster ? 'master' : ''}">${getEnhanceLabel(entry.enhanceLevel, entry.isMaster)}</span>`
+    : '';
+  const rarity = entry ? getRarity(entry.rarityId) : null;
+  const rarityClass = rarity ? ' has-rarity' : '';
+  const rarityStyle = rarity ? ` style="--rarity-color:${rarity.color};"` : '';
+  const clickAttr = item ? `data-view-foreign-item="${slot.id}"` : 'disabled';
+  return `<button class="equip-slot-icon ${item ? 'filled' : 'empty'}${rarityClass}" ${clickAttr} title="${slot.name}"${rarityStyle}>
+    <span class="icon">${icon}</span>
+    ${badge}
+  </button>`;
+}
+
+/// Janela do boneco de equipamentos de outro jogador — `player` é o
+/// retorno de fetchPlayerEquipment (systems/pvp.js): {nick, icon_id,
+/// is_vip, equipped_snapshot}. Guarda equipped_snapshot em main.js
+/// (viewingForeignEquipment) pra resolver o clique num slot preenchido
+/// (data-view-foreign-item, ver showForeignItemDetailModal abaixo).
+export function showForeignEquipmentModal(player) {
+  const equippedBySlot = player.equipped_snapshot || {};
+  const portraitStyle = PLAYER_PORTRAIT_IMAGE ? `style="background-image: url('${PLAYER_PORTRAIT_IMAGE}')"` : '';
+  // Sem título — showModal() usa textContent (não innerHTML), então ícone
+  // de perfil + nick colorido (ambos markup HTML) têm que ir no corpo, não
+  // no título (mesmo motivo/correção já aplicada em showCardDetailModal).
+  showModal('', `
+    <div class="item-detail-name" style="text-align:center; margin-bottom:10px;">${pvpProfileIconHtml(player.icon_id)} ${nickHtml(player.nick, player.is_vip)}</div>
+    <div class="paperdoll-card" ${portraitStyle}>
+      ${PLAYER_PORTRAIT_IMAGE ? '' : '<div class="paperdoll-placeholder">🧑‍🚀</div>'}
+      <div class="paperdoll-overlay-col paperdoll-overlay-left">${PAPERDOLL_LEFT.map((id) => foreignSlotIconHtml(equippedBySlot, getSlot(id))).join('')}</div>
+      <div class="paperdoll-overlay-col paperdoll-overlay-right">${PAPERDOLL_RIGHT.map((id) => foreignSlotIconHtml(equippedBySlot, getSlot(id))).join('')}</div>
+    </div>
+  `);
+}
+
+function foreignCardSlotHtml(cardId) {
+  if (cardId && getCard(cardId)) {
+    const card = getCard(cardId);
+    return `<div class="card-slot-badge filled">
+      <span class="icon">${iconMarkup(card.image, card.emoji, card.name)}</span>
+      <div class="card-slot-info">
+        <div class="card-slot-name">${card.name}</div>
+        <div class="card-slot-desc">${card.description}</div>
+      </div>
+    </div>`;
+  }
+  return `<div class="card-slot-badge">
+    <span class="icon">${CARD_ICON}</span>
+    <div class="card-slot-info"><div class="card-slot-name">Slot de Carta: vazio</div></div>
+  </div>`;
+}
+
+/// Detalhe somente-leitura de UM item equipado por outro jogador — clicado
+/// a partir de showForeignEquipmentModal acima. Reusa itemDetailStatsHtml/
+/// godItemDetailStatsHtml (não precisam de `state`/uid, só de item+entry),
+/// sem NENHUM botão de ação (equipar/aprimorar/destruir não existem aqui).
+export function showForeignItemDetailModal(entry) {
+  const item = entry ? getItem(entry.itemId) : null;
+  if (!item) {
+    showModal('', '<p class="shop-note">Item desconhecido.</p>');
+    return;
+  }
+  const rarity = item.isGodTier ? GOD_RARITY : getRarity(entry.rarityId);
+  const tierBadge = item.isGodTier ? 'Tier God' : `Tier ${item.zoneIndex + 1}`;
+  const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
+  const statsHtml = item.isGodTier ? godItemDetailStatsHtml(entry, item) : itemDetailStatsHtml(item, entry);
+  const cardSlotsHtml = (entry.cardIds || []).map((cardId) => foreignCardSlotHtml(cardId)).join('');
+
+  showModal('', `
+    <div class="item-detail">
+      <div class="item-detail-tier-badge">${tierBadge}</div>
+      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
+      <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
+      <div class="item-detail-stats">${statsHtml}</div>
+      ${cardSlotsHtml}
+    </div>
+  `);
+}
+
 function inventoryTileHtml(state, entry, bulkSelect = null) {
   const item = getItem(entry.itemId);
   const isEquipped = findEquippedSlotId(state, entry.uid) != null;
@@ -2576,8 +2672,13 @@ export function showPvpCombatPickerModal(tierInfo, opponents) {
 
 function pvpRankRowHtml(row, myId, extraLabel, rewardLabel) {
   const isSelf = row.entity_id === myId;
+  // Clicar em QUALQUER jogador que não seja você mesmo abre o boneco de
+  // equipamentos dele (ver showForeignEquipmentModal, wireado em
+  // wireRanksTabEvents/main.js) — nas 3 seções do rank (Arena/Nível/
+  // Transcender), pedido explícito do usuário ("independente do Rank").
+  const viewAttr = isSelf ? '' : `data-view-player-equipment="${row.entity_id}" style="cursor:pointer;"`;
   return `
-    <div class="achievement-card ${isSelf ? 'pvp-self-row' : ''}">
+    <div class="achievement-card ${isSelf ? 'pvp-self-row' : ''}" ${viewAttr}>
       <span class="pvp-rank">#${row.position}</span>
       ${pvpProfileIconHtml(row.icon_id)}
       <div class="info">
