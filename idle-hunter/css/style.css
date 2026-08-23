@@ -1521,6 +1521,18 @@ button:disabled {
   opacity: .8;
 }
 
+/* Canto oposto do badge "Tier God" acima — requisito de Nível dos itens
+   Tier God (ver godItemDetailHtml em ui/render.js), em vermelho pra chamar
+   atenção. */
+.item-detail-level-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--danger);
+}
+
 .item-detail-icon {
   font-size: 48px;
   margin-bottom: 6px;
