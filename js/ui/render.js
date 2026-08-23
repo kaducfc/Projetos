@@ -2266,7 +2266,7 @@ export function renderTranscendTab(state) {
     ${pageBannerHtml('Transcender')}
     ${statusHtml}
     <div class="shop-balance">${AWAKENING_SHARD_ICON} Você tem <strong>${formatNumber(getAwakeningShards(state))}</strong> ${AWAKENING_SHARD_NAME}</div>
-    <p class="shop-note">Só se ganha ${AWAKENING_SHARD_NAME} Transcendendo — 1 garantido por vez. Gaste na aba ${AWAKENING_SHARD_ICON} Despertar da Loja.</p>
+    <p class="shop-note">Ao transcender, recebe 1 ${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME}.</p>
     ${transcendResetInfoHtml()}
   `;
 }
