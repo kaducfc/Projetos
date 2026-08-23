@@ -32,9 +32,12 @@ function getEntry(state, uid) {
 }
 
 /// Every item has exactly 1 card slot, regardless of enhance/Master/
-/// Ascensão — simplified from the old "2 slots once Master" rule.
-export function maxCardSlots(_entry) {
-  return 1;
+/// Ascensão — simplified from the old "2 slots once Master" rule. Itens
+/// Tier God (ver data/items.js GOD_ITEMS) são a única exceção, com 2 slots
+/// fixos desde a compra (item.cardSlots), pedido explícito do usuário.
+export function maxCardSlots(entry) {
+  const item = getItem(entry.itemId);
+  return item?.cardSlots || 1;
 }
 
 /// Lazily grows entry.cardIds to match maxCardSlots (also covers saves from
@@ -119,6 +122,9 @@ export function getEnhanceCost(state, uid) {
   const entry = getEntry(state, uid);
   if (!entry || entry.isMaster || entry.enhanceLevel >= ENHANCE_MAX_LEVEL) return null;
   const item = getItem(entry.itemId);
+  // Item Tier God não aprimora/evolui/ascende — já nasce no auge, montado
+  // atributo a atributo na compra (ver systems/godItems.js).
+  if (item.isGodTier) return null;
   return item.enhanceCost[entry.enhanceLevel];
 }
 
@@ -142,6 +148,7 @@ export function canUpgradeToMaster(state, uid) {
   const entry = getEntry(state, uid);
   if (!entry || entry.isMaster || entry.enhanceLevel < ENHANCE_MAX_LEVEL) return false;
   const item = getItem(entry.itemId);
+  if (item.isGodTier) return false;
   const m = item.masterMaterialCost;
   return (
     (state.materials[m.matId] || 0) >= m.qty &&
@@ -173,6 +180,7 @@ export function canAscendItem(state, uid) {
   const entry = getEntry(state, uid);
   if (!entry || !entry.isMaster) return false;
   const item = getItem(entry.itemId);
+  if (item.isGodTier) return false;
   const cost = getAscensionCost(item, entry.rarityId);
   if (!cost) return false;
   return (state.materials[cost.matId] || 0) >= cost.qty;
@@ -256,6 +264,9 @@ export function destroyItem(state, uid) {
   const entry = getEntry(state, uid);
   if (!entry) return null;
   const item = getItem(entry.itemId);
+  // Item Tier God nunca pode ser destruído/vendido — fica pra sempre na
+  // conta uma vez comprado (pedido explícito do usuário).
+  if (item.isGodTier) return null;
 
   ensureCardIds(entry).forEach((cardId, slotIndex) => {
     if (cardId) unsocketCard(state, uid, slotIndex);

@@ -18,6 +18,7 @@ import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot, findEquippedSlotId } from './systems/equipment.js';
 import { enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscension, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
 import { getItem, getRarity } from './data/items.js';
+import { chooseGodAttribute, rollGodBonusChoice, finalizeGodBonus } from './systems/godItems.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
 import { enterExpedition } from './systems/expedition.js';
@@ -50,6 +51,7 @@ import {
   showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab,
   renderCardsTab, showCardDetailModal, iconMarkup,
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
+  showGodBonusModal, showGodItemShopDetailModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   ACHIEVEMENT_ICON, GIFT_ICON, TRANSCEND_ICON,
   EGG_ICON, PET_FRAGMENT_ICON,
@@ -122,6 +124,11 @@ let pendingHatchCandidates = null;
 // (custo, raridade, baseStats novos) já veio junto no objeto pending; só
 // falta saber qual dos 3 bônus vira o adicional novo.
 let pendingAscension = null;
+// Mesmo padrão de pendingAscension acima, pro fluxo de montar um item Tier
+// God (ver rollGodBonusChoice/finalizeGodBonus em systems/godItems.js) —
+// os 3 candidatos do bônus atual (1 dos 8), até o jogador escolher 1
+// (data-god-bonus-choose, ver wireModalEvents).
+let pendingGodBonus = null;
 // "Resetar Pontos" da árvore de habilidades — mesmo padrão non-blocking de
 // confirmação do bulkConfirmingDestroy acima. Precisa sobreviver a
 // re-renders incidentais da aba (ver renderUpgradesTabNow abaixo, chamada
@@ -819,6 +826,65 @@ function wireModalEvents() {
           showToast('🌟 Item ascendeu de raridade!');
           fullRefresh();
         }
+      });
+      return;
+    }
+
+    // Fluxo de montar um item Tier God (ver systems/godItems.js): 1)
+    // escolher o atributo base (só armadura/anel/colar, arma já vem
+    // pronta), 2) rolar+escolher cada um dos 8 bônus, um de cada vez.
+    const godChooseAttrBtn = e.target.closest('[data-god-choose-attr]');
+    if (godChooseAttrBtn) {
+      runModalAction(() => {
+        const uid = Number(godChooseAttrBtn.dataset.godChooseAttr);
+        const attributeId = godChooseAttrBtn.dataset.godChooseAttrValue;
+        if (chooseGodAttribute(state, uid, attributeId)) {
+          showItemDetailModal(state, uid);
+          fullRefresh();
+        }
+      });
+      return;
+    }
+
+    const godRollBonusBtn = e.target.closest('[data-god-roll-bonus]');
+    if (godRollBonusBtn) {
+      runModalAction(() => {
+        const uid = Number(godRollBonusBtn.dataset.godRollBonus);
+        const pending = rollGodBonusChoice(state, uid);
+        if (pending) {
+          pendingGodBonus = pending;
+          showGodBonusModal(state, uid, pending);
+        }
+      });
+      return;
+    }
+
+    const godBonusChooseBtn = e.target.closest('[data-god-bonus-choose]');
+    if (godBonusChooseBtn) {
+      runModalAction(() => {
+        const uid = Number(godBonusChooseBtn.dataset.godBonusChoose);
+        const chosenIndex = Number(godBonusChooseBtn.dataset.godBonusChooseIndex);
+        if (!pendingGodBonus) return;
+        const pending = pendingGodBonus;
+        pendingGodBonus = null;
+        if (finalizeGodBonus(state, uid, pending, chosenIndex)) {
+          showItemDetailModal(state, uid);
+          showToast('✨ Bônus escolhido!');
+          fullRefresh();
+        }
+      });
+      return;
+    }
+
+    // Botão "Comprar" dentro da janela de especificações de um item Tier
+    // God (showGodItemShopDetailModal, ver ui/render.js) — o modal não é
+    // filho de #tab-shop no DOM, então o listener de lá (wireShopTabEvents)
+    // não alcança esse clique; handleBuyAwakeningItem é compartilhado com
+    // ele.
+    const modalBuyAwakeningBtn = e.target.closest('[data-buy-awakening]');
+    if (modalBuyAwakeningBtn) {
+      runModalAction(() => {
+        handleBuyAwakeningItem(modalBuyAwakeningBtn.dataset.buyAwakening);
       });
       return;
     }
@@ -1567,16 +1633,36 @@ function wireShopTabEvents() {
 
     const buyAwakeningBtn = e.target.closest('[data-buy-awakening]');
     if (buyAwakeningBtn) {
-      const result = buyAwakeningItem(state, buyAwakeningBtn.dataset.buyAwakening);
-      if (result?.kind === 'card') {
-        const card = getCard(result.cardId);
-        showToast(`🌌 Carta recebida: ${card?.name ?? ''}!`);
-        renderShopTab(state, activeShopSubTab);
-        renderCardsTab(state);
-      }
+      handleBuyAwakeningItem(buyAwakeningBtn.dataset.buyAwakening);
+      return;
+    }
+
+    const openGodItemBtn = e.target.closest('[data-open-god-item]');
+    if (openGodItemBtn) {
+      showGodItemShopDetailModal(state, openGodItemBtn.dataset.openGodItem);
       return;
     }
   });
+}
+
+/// Compartilhado entre o clique direto na Loja (carta Supremo) e o botão
+/// "Comprar" dentro da janela de especificações de um item Tier God
+/// (showGodItemShopDetailModal, ver ui/render.js) — os 2 lugares chamam
+/// isso, um pelo listener da aba (#tab-shop), outro pelo do modal
+/// (wireModalEvents), já que o modal não é filho de #tab-shop no DOM.
+function handleBuyAwakeningItem(shopItemId) {
+  const result = buyAwakeningItem(state, shopItemId);
+  if (result?.kind === 'card') {
+    const card = getCard(result.cardId);
+    showToast(`🌌 Carta recebida: ${card?.name ?? ''}!`);
+    renderShopTab(state, activeShopSubTab);
+    renderCardsTab(state);
+  } else if (result?.kind === 'god_item') {
+    hideModal();
+    showToast(`✨ ${result.itemName} comprado! Escolha os atributos no inventário.`);
+    renderShopTab(state, activeShopSubTab);
+    renderInventoryTabNow();
+  }
 }
 
 // Conquistas — aba própria dentro de "Outros" (antes era uma sub-aba da
@@ -1944,6 +2030,7 @@ function performTranscend() {
   pendingMonsterSelection = [];
   pendingHatchCandidates = null;
   pendingAscension = null;
+  pendingGodBonus = null;
   bulkSelectMode = false;
   bulkSelectedUids = new Set();
   bulkConfirmingDestroy = false;

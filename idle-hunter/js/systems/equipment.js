@@ -1,5 +1,6 @@
-import { getItem, getSlotIdsForCategory } from '../data/items.js';
+import { getItem, getSlotIdsForCategory, GOD_MIN_LEVEL } from '../data/items.js';
 import { countEquippedCardCopies, unsocketCard, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './crafting.js';
+import { isGodItemComplete } from './godItems.js';
 
 export function getInventoryEntry(state, uid) {
   return state.inventory.find((i) => i.uid === uid) || null;
@@ -26,6 +27,15 @@ export function canEquipItem(state, uid) {
   if (!entry) return false;
   const item = getItem(entry.itemId);
   if (!item) return false;
+  // Item Tier God: só equipa completo (9 atributos escolhidos, ver
+  // isGodItemComplete em systems/godItems.js) e com Nível de Caçador >=
+  // GOD_MIN_LEVEL — abaixo disso fica no inventário com o botão
+  // desabilitado, sem mensagem de erro (ver godRequirementNote em
+  // ui/render.js pro aviso).
+  if (item.isGodTier) {
+    if (!isGodItemComplete(entry, item)) return false;
+    if ((state.hunterLevel || 1) < GOD_MIN_LEVEL) return false;
+  }
   if (item.category !== 'weapon2') return true;
   const primary = getEquippedEntry(state, 'weapon1');
   return !!primary && primary.item.attribute === item.attribute;
