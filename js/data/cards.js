@@ -365,7 +365,7 @@ export const GOD_CARDS = GOD_CARD_DEFS.map((def) => ({
   image: def.image,
   element: null,
   bonuses: [{ stat: 'dpsPercent', value: 5 }],
-  description: '+5% DPS quando equipada. Exclusiva da Loja do Despertar — não dropa de monstro nem craft com Fragmento de Carta.',
+  description: '+5% DPS quando equipada.',
   noCraft: true,
 }));
 
