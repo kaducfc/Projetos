@@ -18,7 +18,7 @@ import {
 import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds, countEquippedCardCopies } from '../systems/crafting.js';
-import { isZoneUnlocked, isBossUnlocked, xpToNextLevel } from '../systems/leveling.js';
+import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, getTranscendXpBonusPercent } from '../systems/leveling.js';
 import { EXPEDITION_TIERS, EXPEDITION_REWARDS } from '../data/events.js';
 import { canEnterExpedition, expeditionRemainingMs } from '../systems/expedition.js';
 import { ARENA_RANKS, getArenaRankForDamage, getArenaRankByIndex } from '../data/arena.js';
@@ -1339,7 +1339,7 @@ function cardDetailHtml(state, card) {
     <div class="card-detail ${discovered ? '' : 'undiscovered'}">
       <div class="card-detail-image">${iconMarkup(card.image, card.emoji, card.name)}</div>
       <div class="card-detail-info">
-        <div class="card-detail-name">${card.name}</div>
+        <div class="card-detail-name">${CARD_ICON} ${card.name}</div>
         <div class="card-detail-desc">${card.description}</div>
         ${discovered ? `<div class="card-detail-owned">Você tem: ${formatNumber(totalOwned)}</div>` : ''}
         ${actionHtml}
@@ -1360,10 +1360,12 @@ function cardDetailHtml(state, card) {
 export function showCardDetailModal(state, cardId) {
   const card = getCard(cardId);
   if (!card) return;
-  // showModal() usa textContent pro título (não innerHTML) — não dá pra
-  // passar markup <img> ali, então esse continua sendo o único lugar que
-  // ainda usa o emoji de texto puro em vez do CARD_ICON de verdade.
-  showModal(`${CARD_ICON} ${card.name}`, cardDetailHtml(state, card));
+  // Sem título — showModal() usa textContent pro título (não innerHTML),
+  // então não dá pra passar markup <img> ali (era isso que deixava a tag
+  // <img...> aparecendo como texto puro no topo do popup). O nome +
+  // CARD_ICON já aparecem no corpo (ver card-detail-name em
+  // cardDetailHtml), mesmo padrão de showItemDetailModal/showPetDetailModal.
+  showModal('', cardDetailHtml(state, card));
 }
 
 // ---------------------------------------------------------------
@@ -2235,6 +2237,10 @@ export function showVipBenefitsModal() {
 export function renderTranscendTab(state) {
   const container = document.getElementById('tab-transcend');
   const count = getTranscendCount(state);
+  // Sempre visível, mesmo em 0% (antes do 1º Transcender) — o jogador vê
+  // de cara que esse bônus existe e vai crescer a cada Transcender (ver
+  // getTranscendXpBonusPercent em systems/leveling.js).
+  const xpBonusLine = `<p class="shop-note">Bônus de Exp: +${formatNumber(getTranscendXpBonusPercent(state))}%</p>`;
   const countLine = count > 0
     ? `<p class="shop-note">Você já Transcendeu ${count}x.</p>`
     : '';
@@ -2246,13 +2252,15 @@ export function renderTranscendTab(state) {
         <p class="shop-note">Reinicie sua jornada e ganhe +1 ${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME}.</p>
         <button class="transcend-btn" data-open-transcend-confirm>${TRANSCEND_ICON} Transcender</button>
       </div>
-      ${countLine}`
+      ${countLine}
+      ${xpBonusLine}`
     : `
       <div class="transcend-status-card locked">
         <div class="name">${TRANSCEND_ICON} Transcender</div>
         <p class="shop-note">Derrote o chefe da última zona (Malgorath) pela 1ª vez pra liberar.</p>
       </div>
-      ${countLine}`;
+      ${countLine}
+      ${xpBonusLine}`;
 
   container.innerHTML = `
     ${pageBannerHtml('Transcender')}
