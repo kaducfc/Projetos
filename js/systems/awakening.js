@@ -1,6 +1,7 @@
 import { createDefaultState } from '../state.js';
 import { AWAKENING_SHOP_ITEMS } from '../data/awakening.js';
 import { recordCardDiscovered } from './cards.js';
+import { getItem, getItemInventoryCap, GOD_RARITY_ID, godAttributeBaseValue } from '../data/items.js';
 
 export function canTranscend(state) {
   return !!state.transcendUnlocked;
@@ -95,7 +96,12 @@ export function transcend(state) {
 export function canBuyAwakeningItem(state, itemId) {
   const item = AWAKENING_SHOP_ITEMS.find((i) => i.id === itemId);
   if (!item) return false;
-  return getAwakeningShards(state) >= item.cost;
+  if (getAwakeningShards(state) < item.cost) return false;
+  // Item Tier God ocupa slot de inventário normal (ver buyAwakeningItem
+  // abaixo) — sem espaço, o botão de compra fica desabilitado em vez de
+  // deixar comprar e perder o Fragmento à toa.
+  if (item.kind === 'god_item' && state.inventory.length >= getItemInventoryCap(state)) return false;
+  return true;
 }
 
 /// Retorna um resumo do que foi concedido ({kind, ...}) pra UI mostrar um
@@ -110,6 +116,32 @@ export function buyAwakeningItem(state, itemId) {
     state.cards[item.cardId] = (state.cards[item.cardId] || 0) + 1;
     recordCardDiscovered(state, item.cardId);
     return { kind: 'card', cardId: item.cardId };
+  }
+
+  // Item Tier God: entra no inventário já com fromAwakening (sobrevive a
+  // Transcender igual carta/mascote do Despertar, ver PRESERVED_KEYS/
+  // transcend() acima — nenhum código novo precisou pra isso). Arma
+  // (weapon1/weapon2) já nasce com o atributo/base do arquétipo prontos
+  // (item.attribute fixo, ver GOD_ITEMS em data/items.js); as demais
+  // categorias nascem com baseStats vazio — o jogador escolhe o atributo
+  // como o 1º dos 9 bônus (ver systems/godItems.js chooseGodAttribute).
+  if (item.kind === 'god_item') {
+    const godItem = getItem(item.itemId);
+    const uid = state.nextUid++;
+    const isWeapon = !!godItem.attribute;
+    const entry = {
+      uid,
+      itemId: godItem.id,
+      rarityId: GOD_RARITY_ID,
+      baseStats: isWeapon ? { [godItem.attribute]: godAttributeBaseValue(godItem.category) } : {},
+      additionalStats: [],
+      enhanceLevel: 0,
+      isMaster: false,
+      cardIds: [null, null],
+      fromAwakening: true,
+    };
+    state.inventory.push(entry);
+    return { kind: 'god_item', uid, itemName: godItem.name };
   }
 
   return null;
