@@ -165,6 +165,13 @@ export const RARITIES = [
 ];
 
 export function getRarity(rarityId) {
+  // 'deus' não faz parte de RARITIES de propósito (nunca pode ser sorteada
+  // num drop/ascensão normal, ver GOD_RARITY mais abaixo) — resolvida aqui
+  // à parte pra todo lugar que já usa getRarity(entry.rarityId) sem saber
+  // se o item é normal ou Tier God (cor de fundo do inventário/slot
+  // equipado, nome da raridade no popup, etc.) já pegar o objeto certo sem
+  // precisar de um caminho especial em cada chamador.
+  if (rarityId === GOD_RARITY_ID) return GOD_RARITY;
   return RARITIES.find((r) => r.id === rarityId) || RARITIES[0];
 }
 
