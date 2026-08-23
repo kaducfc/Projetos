@@ -959,3 +959,82 @@ export function getItemScrapMaterial(item, rarityId) {
   const base = item.enhanceCost[0];
   return { matId: base.matId, qty: Math.max(1, Math.round(base.qty * rarity.mult)) };
 }
+
+// ---------------------------------------------------------------------
+// Itens "Tier God" (Loja do Despertar, ver data/awakening.js
+// AWAKENING_SHOP_ITEMS/systems/awakening.js buyAwakeningItem) — 13 itens
+// especiais comprados só com Fragmento do Despertar, nunca dropados (os
+// ids abaixo não seguem o padrão `${bossId}_${category}_${attributeId}` de
+// rollDroppedItem, então nunca colidem com um drop de verdade). Raridade
+// "Deus" (GOD_RARITY, acima de Mítico), atributos 30% mais fortes que um
+// item de Tier 10 (mesma fórmula de sempre — ATTRIBUTE_STEP_BY_CATEGORY ×
+// tier pro atributo base, rollBonusMagnitude × rarityMult pros bônus — só
+// que calculada no tier do Tier 10 e multiplicada por 1.3 no fim).
+//
+// 9 atributos no total contando a base: armas (weapon1/weapon2) já vêm com
+// o atributo preso ao arquétipo (Espada/Escudo→Força, Arco/Aljava→
+// Destreza, Cajado/Livro→Inteligência, mesma convenção de
+// WEAPON_ARCHETYPES) + 8 bônus escolhidos um a um pelo jogador (rola 3,
+// escolhe 1 — ver rollGodBonusCandidates abaixo e systems/godItems.js). As
+// demais categorias (armadura/anel/colar) não têm atributo preso no molde
+// (`attribute: null`) — o jogador escolhe Força/Destreza/Inteligência como
+// o 1º dos 9 bônus, e SÓ DAÍ o item tem uma base (ver godAttributeBaseValue
+// abaixo); como o molde é compartilhado por toda cópia do mesmo itemId, a
+// escolha de cada instância fica em `entry.godAttribute` (não no molde),
+// ver getGodAttribute em systems/godItems.js.
+// ---------------------------------------------------------------------
+export const GOD_RARITY_ID = 'deus';
+export const GOD_RARITY = {
+  id: GOD_RARITY_ID, name: 'Deus', mult: getRarity('mitico').mult * 1.3, additionals: 8, weight: 0,
+  color: '#5be3ff',
+};
+export const GOD_MIN_LEVEL = 100;
+export const GOD_BONUS_SLOTS = 8;
+// Tier 10 = zona 10 = zoneIndex 9 (BOSSES é 0-based) — base de magnitude
+// pro "30% mais forte que o Tier 10" pedido pelo usuário.
+const GOD_MAGNITUDE_TIER = BOSSES.length - 1;
+const GOD_STRENGTH_MULT = 1.3;
+
+export function godAttributeBaseValue(category) {
+  return Math.round(ATTRIBUTE_STEP_BY_CATEGORY[category] * (GOD_MAGNITUDE_TIER + 1) * GOD_STRENGTH_MULT);
+}
+
+/// Rola 3 candidatos pro próximo dos 8 slots de bônus de um item Deus —
+/// mesma mecânica de rollAscensionBonusCandidates (rola 3, o jogador
+/// escolhe 1 e os outros dois somem), só que sempre na magnitude/raridade
+/// do Tier God, não na raridade atual de um item normal.
+export function rollGodBonusCandidates(ownAttributeId, ownBaseValue, existingAdditionalStats) {
+  return rollAscensionBonusCandidates(GOD_MAGNITUDE_TIER, ownAttributeId, ownBaseValue, existingAdditionalStats, GOD_RARITY.mult, 3);
+}
+
+const godImage = (file) => `assets/god/${file}`;
+
+export const GOD_ITEMS = [
+  { id: 'god_espada', category: 'weapon1', attribute: 'forca', name: 'Espada do Despertar', emoji: '⚔️', image: godImage('tespada.png') },
+  { id: 'god_arco', category: 'weapon1', attribute: 'destreza', name: 'Arco do Despertar', emoji: '🏹', image: godImage('tarco.png') },
+  { id: 'god_cajado', category: 'weapon1', attribute: 'inteligencia', name: 'Cajado do Despertar', emoji: '🔮', image: godImage('tcajado.png') },
+  { id: 'god_escudo', category: 'weapon2', attribute: 'forca', name: 'Escudo do Despertar', emoji: '🛡️', image: godImage('tescudo.png') },
+  { id: 'god_aljava', category: 'weapon2', attribute: 'destreza', name: 'Aljava do Despertar', emoji: '🎒', image: godImage('taljava.png') },
+  { id: 'god_livro', category: 'weapon2', attribute: 'inteligencia', name: 'Livro do Despertar', emoji: '📖', image: godImage('tlivro.png') },
+  { id: 'god_elmo', category: 'head', attribute: null, name: 'Elmo do Despertar', emoji: '🪖', image: godImage('tcabeca.png') },
+  { id: 'god_armadura', category: 'chest', attribute: null, name: 'Armadura do Despertar', emoji: '🛡️', image: godImage('tpeito.png') },
+  { id: 'god_calca', category: 'legs', attribute: null, name: 'Calça do Despertar', emoji: '👖', image: godImage('tcalca.png') },
+  { id: 'god_luva', category: 'hands', attribute: null, name: 'Luva do Despertar', emoji: '🧤', image: godImage('tluva.png') },
+  { id: 'god_bota', category: 'boots', attribute: null, name: 'Bota do Despertar', emoji: '👢', image: godImage('tbota.png') },
+  { id: 'god_anel', category: 'ring', attribute: null, name: 'Anel do Despertar', emoji: '💍', image: godImage('tanel.png') },
+  { id: 'god_colar', category: 'necklace', attribute: null, name: 'Colar do Despertar', emoji: '📿', image: godImage('tcolar.png') },
+].map((tpl) => ({
+  ...tpl,
+  isGodTier: true,
+  element: 'neutro',
+  zoneIndex: GOD_MAGNITUDE_TIER,
+  stats: {},
+  enhanceCost: [],
+  masterMaterialCost: null,
+  cardSlots: 2,
+}));
+
+// getItem() acima já cobre esses 13 (ITEMS ganha os moldes Deus aqui,
+// depois de já pronto) — nenhum outro código precisa saber a diferença
+// entre um ITEMS "normal" e um Deus além de checar `item.isGodTier`.
+ITEMS.push(...GOD_ITEMS);

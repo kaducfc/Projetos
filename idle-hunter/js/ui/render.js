@@ -3,7 +3,11 @@ import {
   getSlot, getItem, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
   getAscensionCost, getDamageType, ENHANCE_MAX_LEVEL, enhancementMultiplier,
   DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName, RARITIES,
+  GOD_MIN_LEVEL, GOD_BONUS_SLOTS, GOD_RARITY, ATTRIBUTES, godAttributeBaseValue,
 } from '../data/items.js';
+import {
+  needsGodAttributeChoice, canRollGodBonus, isGodItemComplete, getGodAttribute,
+} from '../systems/godItems.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
 import { formatNumber, formatInteger, formatPercent, escapeHtml } from '../format.js';
 import { PROFILE_ICONS, NAME_CHANGE_COST, MAX_PLAYER_NAME_LENGTH, getProfileIcon } from '../data/profile.js';
@@ -822,9 +826,95 @@ function itemDetailStatsHtml(item, entry) {
   return [baseLine, secondaryLine, ...bonusLines].filter(Boolean).join('<br>');
 }
 
+/// 3 estados possíveis pra um item Tier God (ver systems/godItems.js):
+/// 1) sem atributo ainda (só armadura/anel/colar — arma já nasce com o
+///    atributo do arquétipo) — mostra os 3 botões Força/Destreza/
+///    Inteligência, nada mais;
+/// 2) atributo definido mas faltam bônus (< GOD_BONUS_SLOTS) — mostra os
+///    bônus já escolhidos + botão "Escolher Bônus (X/8)";
+/// 3) completo — mostra os 9 atributos como um item normal, sem painel de
+///    aprimorar/evoluir/ascender (não existe pra Tier God) e sem botão de
+///    destruir (nunca pode ser destruído).
+function godAttributeChoiceHtml(uid, item) {
+  const rows = ATTRIBUTES.map((a) => a.id).map((attrId) => {
+    const attr = getAttribute(attrId);
+    const value = godAttributeBaseValue(item.category);
+    return `<button class="modal-action-btn" style="color:${attr.color};" data-god-choose-attr="${uid}" data-god-choose-attr-value="${attrId}">+${formatNumber(value)} ${attr.name}</button>`;
+  }).join('');
+  return `
+    <p style="font-size:12px; color:var(--text-dim); text-align:center;">Escolha o atributo base deste item (1º dos 9 bônus).</p>
+    <div class="ascension-choice-row">${rows}</div>
+  `;
+}
+
+function godItemDetailStatsHtml(entry, item) {
+  const attributeId = getGodAttribute(entry, item);
+  const baseValue = entry.baseStats?.[attributeId] || 0;
+  const baseLine = ATTRIBUTE_STAT_LABEL[attributeId] ? ATTRIBUTE_STAT_LABEL[attributeId](baseValue) : '';
+  const bonusLines = (entry.additionalStats || [])
+    .map((add) => (BONUS_STAT_LABEL[add.stat] ? BONUS_STAT_LABEL[add.stat](add.value) : null))
+    .filter(Boolean);
+  return [baseLine, ...bonusLines].filter(Boolean).join('<br>');
+}
+
+function godItemDetailHtml(state, uid, entry, item, pickerOpenSlot = null) {
+  const rarity = GOD_RARITY;
+  const cardSlotsHtml = ensureCardIds(entry)
+    .map((cardId, slotIndex) => cardSlotHtml(state, uid, entry, pickerOpenSlot === slotIndex, slotIndex))
+    .join('');
+
+  if (needsGodAttributeChoice(entry, item)) {
+    return `
+      <div class="item-detail">
+        <div class="item-detail-tier-badge">Tier God</div>
+        <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+        <div class="item-detail-name">${item.name}</div>
+        <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
+        ${godAttributeChoiceHtml(uid, item)}
+      </div>
+    `;
+  }
+
+  const bonusCount = entry.additionalStats?.length || 0;
+  const complete = isGodItemComplete(entry, item);
+  const bonusPanel = complete
+    ? `<div class="enhance-maxed">✨ Item Especial — Tier God (montagem completa)</div>`
+    : `<div class="enhance-panel">
+        <button class="master-btn" data-god-roll-bonus="${uid}">Escolher Bônus (${bonusCount}/${GOD_BONUS_SLOTS})</button>
+      </div>`;
+
+  const belowLevel = (state.hunterLevel || 1) < GOD_MIN_LEVEL;
+  const levelNote = complete && belowLevel
+    ? `<p class="weapon-requirement-note">⚠️ Requer Nível de Caçador ${GOD_MIN_LEVEL} pra equipar (você está no ${state.hunterLevel || 1}).</p>`
+    : '';
+
+  const equippedSlotId = findEquippedSlotId(state, uid);
+  const isEquipped = equippedSlotId != null;
+  const actionBtn = isEquipped
+    ? `<button class="modal-action-btn" data-modal-unequip="${equippedSlotId}">Desequipar</button>`
+    : `<button class="modal-action-btn" data-modal-equip="${uid}" ${canEquipItem(state, uid) ? '' : 'disabled'}>Equipar</button>`;
+
+  return `
+    <div class="item-detail">
+      <div class="item-detail-tier-badge">Tier God</div>
+      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-name">${item.name}</div>
+      <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
+      <div class="item-detail-stats">${godItemDetailStatsHtml(entry, item)}</div>
+      ${levelNote}
+      ${cardSlotsHtml}
+      ${bonusPanel}
+      <div class="modal-action-row">
+        ${actionBtn}
+      </div>
+    </div>
+  `;
+}
+
 function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   const item = getItem(entry.itemId);
+  if (item.isGodTier) return godItemDetailHtml(state, uid, entry, item, pickerOpenSlot);
   const categoryLabel = getCategoryLabel(item.category);
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
   const rarity = getRarity(entry.rarityId);
@@ -1543,6 +1633,36 @@ export function showAscensionModal(state, uid, pending) {
   `);
 }
 
+/// Mesma mecânica de showAscensionModal (rola 3, escolhe 1), pro fluxo de
+/// montar um item Tier God — ver rollGodBonusChoice/finalizeGodBonus em
+/// systems/godItems.js. `pending` é o retorno de rollGodBonusChoice,
+/// guardado em main.js até o clique de escolha.
+function godBonusCandidateHtml(uid, candidate, index) {
+  const line = BONUS_STAT_LABEL[candidate.stat] ? BONUS_STAT_LABEL[candidate.stat](candidate.value) : candidate.stat;
+  return `
+    <div class="ascension-candidate">
+      <div class="item-detail-icon">🌟</div>
+      <div class="item-detail-name" style="font-size:12.5px;">${line}</div>
+      <button class="modal-action-btn" data-god-bonus-choose="${uid}" data-god-bonus-choose-index="${index}">Escolher</button>
+    </div>
+  `;
+}
+
+export function showGodBonusModal(state, uid, pending) {
+  const entry = state.inventory.find((i) => i.uid === uid);
+  if (!entry) return;
+  const item = getItem(entry.itemId);
+  const bonusCount = entry.additionalStats?.length || 0;
+  showModal('✨ Item Tier God', `
+    <p style="font-size:12px; color:var(--text-dim); text-align:center;">
+      ${item.name} — bônus ${bonusCount + 1}/${GOD_BONUS_SLOTS}. Escolha 1 dos 3 abaixo.
+    </p>
+    <div class="ascension-choice-row">
+      ${pending.candidates.map((c, i) => godBonusCandidateHtml(uid, c, i)).join('')}
+    </div>
+  `);
+}
+
 function formatDuration(ms) {
   const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
   const m = Math.floor(totalSeconds / 60);
@@ -2170,7 +2290,24 @@ function transcendResetInfoHtml() {
     </div>`;
 }
 
+// Item Tier God: sem botão de compra direto no card (diferente da carta
+// Supremo) — clicar abre a janela de "especificações" primeiro
+// (showGodItemShopDetailModal abaixo), pedido explícito do usuário.
+function godShopItemCardHtml(shopItem) {
+  const item = getItem(shopItem.itemId);
+  return `
+    <button class="shop-item-card" data-open-god-item="${shopItem.id}" style="text-align:left; cursor:pointer;">
+      <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
+      <div class="info">
+        <div class="name">${item.name}</div>
+        <div class="desc" style="color:${GOD_RARITY.color}; font-weight:800;">Tier God</div>
+      </div>
+      <span>${AWAKENING_SHARD_ICON} ${shopItem.cost}</span>
+    </button>`;
+}
+
 function awakeningShopItemCardHtml(state, item) {
+  if (item.kind === 'god_item') return godShopItemCardHtml(item);
   const affordable = canBuyAwakeningItem(state, item.id);
   return `
     <div class="shop-item-card">
@@ -2181,6 +2318,44 @@ function awakeningShopItemCardHtml(state, item) {
       </div>
       <button data-buy-awakening="${item.id}" ${affordable ? '' : 'disabled'}>${AWAKENING_SHARD_ICON} ${item.cost}</button>
     </div>`;
+}
+
+/// Janela de "especificações" aberta ao clicar num item Tier God na Loja
+/// do Despertar (ver godShopItemCardHtml acima) — mostra o atributo base
+/// (já definido pras armas, "a escolher" pras demais categorias) + quantos
+/// bônus o item vai ter (+8 pra arma, já contando a base; +9 pras demais,
+/// já que a base entra como o 1º bônus escolhido — ver GOD_ITEMS em
+/// data/items.js), os 2 slots de carta vazios, e o botão de confirmar a
+/// compra por Fragmento do Despertar.
+export function showGodItemShopDetailModal(state, shopItemId) {
+  const shopItem = AWAKENING_SHOP_ITEMS.find((i) => i.id === shopItemId);
+  if (!shopItem) return;
+  const item = getItem(shopItem.itemId);
+  const isWeapon = !!item.attribute;
+  const baseLine = isWeapon
+    ? ATTRIBUTE_STAT_LABEL[item.attribute](godAttributeBaseValue(item.category))
+    : '<span style="color:var(--text-dim);">Atributo base: escolhido após a compra</span>';
+  const bonusLine = isWeapon ? '+8 Bônus (escolhidos após a compra)' : '+9 Bônus (escolhidos após a compra)';
+  const affordable = canBuyAwakeningItem(state, shopItemId);
+  const cardSlotsHtml = Array.from({ length: 2 }, () => `
+    <div class="card-slot-badge">
+      <span class="icon">${CARD_ICON}</span>
+      <div class="card-slot-info"><div class="card-slot-name">Slot de Carta: vazio</div></div>
+    </div>`).join('');
+
+  showModal('', `
+    <div class="item-detail">
+      <div class="item-detail-tier-badge">Tier God</div>
+      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${GOD_RARITY.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-name">${item.name}</div>
+      <div class="item-detail-rarity" style="color:${GOD_RARITY.color}; font-weight:800; font-size:12px;">${GOD_RARITY.name}</div>
+      <div class="item-detail-stats">${baseLine}<br><span style="color:var(--text-dim);">${bonusLine}</span></div>
+      ${cardSlotsHtml}
+      <div class="modal-action-row">
+        <button class="modal-action-btn" data-buy-awakening="${shopItemId}" ${affordable ? '' : 'disabled'}>${AWAKENING_SHARD_ICON} Comprar por ${shopItem.cost}</button>
+      </div>
+    </div>
+  `);
 }
 
 function awakeningShopHtml(state) {
