@@ -51,7 +51,7 @@ import {
   showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab,
   renderCardsTab, showCardDetailModal, iconMarkup,
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
-  showGodBonusModal, showGodItemShopDetailModal,
+  showGodBonusModal, showGodItemShopDetailModal, showCardShopDetailModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   ACHIEVEMENT_ICON, GIFT_ICON, TRANSCEND_ICON,
   EGG_ICON, PET_FRAGMENT_ICON,
@@ -1659,6 +1659,12 @@ function wireShopTabEvents() {
     const openGodItemBtn = e.target.closest('[data-open-god-item]');
     if (openGodItemBtn) {
       showGodItemShopDetailModal(state, openGodItemBtn.dataset.openGodItem);
+      return;
+    }
+
+    const openCardShopBtn = e.target.closest('[data-open-card-shop-item]');
+    if (openCardShopBtn) {
+      showCardShopDetailModal(state, openCardShopBtn.dataset.openCardShopItem);
       return;
     }
   });
