@@ -2057,7 +2057,7 @@ export function renderDailyMissionsTab(state) {
   container.innerHTML = `
     ${pageBannerHtml('Missão Diária')}
     <p class="pvp-countdown">Reseta em <strong id="daily-mission-countdown"></strong></p>
-    ${budgetUsed ? '<p class="shop-note">Você já garantiu a missão de hoje — volte depois do reset pras próximas.</p>' : ''}
+    ${budgetUsed ? '<p class="shop-note">Você já concluiu a missão hoje. Volte amanhã!</p>' : ''}
     <div class="achievement-list">${slotsHtml}</div>
   `;
   tickDailyMissionCountdown();
