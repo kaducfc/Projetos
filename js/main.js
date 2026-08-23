@@ -2131,7 +2131,8 @@ function showOfflineProgressIfAny() {
     <p>Você ficou fora por <strong>${timeStr}</strong> (máximo ${maxOfflineHours}h de recompensa offline).</p>
     <p>Seu personagem continuou lutando sozinho, a ${Math.round(OFFLINE_EFFICIENCY * 100)}% de eficiência, e conseguiu:</p>
     <p>💀 ${formatNumber(progress.kills)} monstros derrotados<br>
-       ${GOLD_ICON} +${formatNumber(progress.goldGained)} ouro</p>
+       ${GOLD_ICON} +${formatNumber(progress.goldGained)} ouro<br>
+       ✨ +${formatNumber(progress.xpGained)} Exp</p>
     ${itemsHtml}
   `);
 }
