@@ -10,7 +10,7 @@ import { canTranscend, unlockTranscend, transcend, buyAwakeningItem } from './sy
 import {
   syncProfile, getMyPvpProfile, fetchTierBoard, attackOpponent,
   pickRandomPvpOpponents, previewPvpAttackSwing,
-  fetchArenaRank, fetchLevelRank, fetchTranscendRank, isNickAvailable,
+  fetchArenaRank, fetchLevelRank, fetchTranscendRank, isNickAvailable, fetchPlayerEquipment,
 } from './systems/pvp.js';
 import { getPvpTierInfo, PVP_TIERS } from './data/pvpConfig.js';
 import { fetchMailbox, claimMailReward, deleteMail, mailHasReward, hasUnreadMail, markMailRead } from './systems/mailbox.js';
@@ -56,6 +56,7 @@ import {
   ACHIEVEMENT_ICON, GIFT_ICON, TRANSCEND_ICON,
   EGG_ICON, PET_FRAGMENT_ICON,
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
+  showForeignEquipmentModal, showForeignItemDetailModal,
   renderTranscendTab, renderPvpTab, showPvpBattleModal, showPvpCombatPickerModal, renderRanksTab,
   renderMailboxTab, showMailDetailModal, renderAchievementsTab,
   renderDailyMissionsTab, showDailyMissionCompleteModal, DAILY_MISSION_ICON,
@@ -129,6 +130,13 @@ let pendingAscension = null;
 // os 3 candidatos do bônus atual (1 dos 8), até o jogador escolher 1
 // (data-god-bonus-choose, ver wireModalEvents).
 let pendingGodBonus = null;
+// Equipamento de outro jogador, aberto a partir de um clique numa linha da
+// aba Ranks (ver wireRanksTabEvents abaixo e showForeignEquipmentModal em
+// ui/render.js) — o objeto {slotId: entry} devolvido por
+// fetchPlayerEquipment (systems/pvp.js), guardado só pra resolver o clique
+// num item preenchido (data-view-foreign-item) sem precisar buscar de
+// novo do servidor.
+let viewingForeignEquipment = null;
 // "Resetar Pontos" da árvore de habilidades — mesmo padrão non-blocking de
 // confirmação do bulkConfirmingDestroy acima. Precisa sobreviver a
 // re-renders incidentais da aba (ver renderUpgradesTabNow abaixo, chamada
@@ -669,6 +677,17 @@ function wireModalEvents() {
   const overlay = document.getElementById('modal-overlay');
 
   overlay.addEventListener('click', (e) => {
+    // Slot preenchido no boneco de equipamentos de OUTRO jogador (ver
+    // showForeignEquipmentModal, aberto a partir da aba Ranks) — mostra os
+    // bônus/cartas daquele item, sempre somente-leitura (viewingForeignEquipment
+    // é o {slotId: entry} guardado no clique da linha, ver wireRanksTabEvents).
+    const foreignItemBtn = e.target.closest('[data-view-foreign-item]');
+    if (foreignItemBtn) {
+      const entry = viewingForeignEquipment?.[foreignItemBtn.dataset.viewForeignItem];
+      if (entry) showForeignItemDetailModal(entry);
+      return;
+    }
+
     // Janela de "Combate" (ver showPvpCombatPickerModal em ui/render.js) —
     // fora do padrão runModalAction porque handlePvpAttack já tem seu
     // próprio guard (pvpData.attackingId) e é assíncrona; ela mesma troca
@@ -1928,6 +1947,25 @@ function wireRanksTabEvents() {
     if (sectionBtn) {
       ranksData = { ...ranksData, activeSection: sectionBtn.dataset.ranksSection };
       renderRanksTab(ranksData, pvpData.myProfile);
+      return;
+    }
+
+    // Clique numa linha de outro jogador (qualquer seção — ver
+    // data-view-player-equipment em pvpRankRowHtml/ui/render.js, que já
+    // omite esse atributo na sua própria linha) — busca o equipamento
+    // sincronizado dele e abre o boneco somente-leitura.
+    const viewEquipBtn = e.target.closest('[data-view-player-equipment]');
+    if (viewEquipBtn) {
+      const entityId = viewEquipBtn.dataset.viewPlayerEquipment;
+      showModal('', '<p class="shop-note">Carregando equipamento...</p>');
+      fetchPlayerEquipment(entityId).then((player) => {
+        if (!player) {
+          showModal('', '<p class="shop-note">Não foi possível carregar o equipamento desse jogador agora.</p>');
+          return;
+        }
+        viewingForeignEquipment = player.equipped_snapshot || {};
+        showForeignEquipmentModal(player);
+      });
     }
   });
 }

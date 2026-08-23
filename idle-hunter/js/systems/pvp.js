@@ -55,6 +55,32 @@ export async function isNickAvailable(nick) {
   return !(data || []).some((row) => row.id !== userId);
 }
 
+/// "Prancheta" do equipamento atual — 1 entrada por slotId ocupado, com só
+/// o necessário pra exibir na janela de outro jogador (ver
+/// showForeignEquipmentModal em ui/render.js): sem uid (não faz sentido
+/// fora do inventário de quem é dono) nem fromAwakening (não afeta exibição).
+/// godAttribute só entra quando existe (itens Deus sem atributo preso ao
+/// molde, ver data/items.js GOD_ITEMS/systems/godItems.js).
+function serializeEquippedSnapshot(state) {
+  const bySlot = {};
+  for (const [slotId, uid] of Object.entries(state.equipped || {})) {
+    if (!uid) continue;
+    const entry = state.inventory.find((i) => i.uid === uid);
+    if (!entry) continue;
+    bySlot[slotId] = {
+      itemId: entry.itemId,
+      rarityId: entry.rarityId,
+      baseStats: entry.baseStats,
+      additionalStats: entry.additionalStats,
+      enhanceLevel: entry.enhanceLevel,
+      isMaster: entry.isMaster,
+      cardIds: entry.cardIds,
+      ...(entry.godAttribute ? { godAttribute: entry.godAttribute } : {}),
+    };
+  }
+  return bySlot;
+}
+
 /// Envia o nick/ícone/nível (ver systems/profile.js) e as stats de combate
 /// atuais (ver computePlayerStats em systems/stats.js) pro servidor — é
 /// contra ESSA cópia salva que qualquer outro jogador te ataca. tier/
@@ -76,6 +102,10 @@ export async function syncProfile(state, stats, playerName, profileIconId) {
       // Nick colorido (ver 0015_pvp_vip_nick.sql + CSS .vip-nick) —
       // auto-reportado, mesmo modelo de confiança de hunter_level acima.
       is_vip: isVipActive(state),
+      // Equipamento visível na página Ranks (ver 0016_pvp_equipment_view.sql
+      // + showForeignEquipmentModal em ui/render.js) — mesmo modelo de
+      // confiança, puramente cosmético.
+      equipped_snapshot: serializeEquippedSnapshot(state),
       updated_at: new Date().toISOString(),
     }),
     supabase.from('pvp_snapshots').upsert({
@@ -94,6 +124,25 @@ export async function syncProfile(state, stats, playerName, profileIconId) {
   if (profileError) console.warn('Arena PvP: falha ao sincronizar perfil:', profileError.message);
   if (snapshotError) console.warn('Arena PvP: falha ao sincronizar stats:', snapshotError.message);
   return !profileError && !snapshotError;
+}
+
+/// Equipamento sincronizado (ver serializeEquippedSnapshot/syncProfile
+/// acima) de OUTRO jogador — chamado ao clicar numa linha da página Ranks
+/// (ver wireRanksTabEvents em main.js). Null tanto pra erro de rede quanto
+/// pra perfil sem nenhuma peça equipada ainda (equipped_snapshot vem
+/// '{}' — showForeignEquipmentModal mostra o boneco vazio nesse caso, não
+/// precisa diferenciar dos dois motivos aqui).
+export async function fetchPlayerEquipment(entityId) {
+  const { data, error } = await getClient()
+    .from('pvp_profiles')
+    .select('nick, icon_id, is_vip, equipped_snapshot')
+    .eq('id', entityId)
+    .maybeSingle();
+  if (error) {
+    console.warn('Arena PvP: falha ao buscar equipamento de outro jogador:', error.message);
+    return null;
+  }
+  return data;
 }
 
 export async function getMyPvpProfile() {
