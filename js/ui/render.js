@@ -17,7 +17,7 @@ import {
 } from '../systems/profile.js';
 import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
-import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds } from '../systems/crafting.js';
+import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds, countEquippedCardCopies } from '../systems/crafting.js';
 import { isZoneUnlocked, isBossUnlocked, xpToNextLevel } from '../systems/leveling.js';
 import { EXPEDITION_TIERS, EXPEDITION_REWARDS } from '../data/events.js';
 import { canEnterExpedition, expeditionRemainingMs } from '../systems/expedition.js';
@@ -1309,7 +1309,14 @@ function cardDetailHtml(state, card) {
   const discovered = isCardDiscovered(state, card.id);
   const claimable = canClaimCardReward(state, card.id);
   const claimed = isCardRewardClaimed(state, card.id);
+  // "Você tem" mostra o TOTAL (state.cards, o estoque solto, + cada cópia
+  // já socketada em algum item equipado, ver countEquippedCardCopies em
+  // systems/crafting.js) — sem isso, socketar uma cópia fazia a carta
+  // "sumir" da contagem, embora o jogador continue com ela (só que presa
+  // num item). Reciclar/craftar continuam usando só `owned` (o estoque
+  // solto), que é o que essas ações realmente consomem/produzem.
   const owned = state.cards[card.id] || 0;
+  const totalOwned = owned + countEquippedCardCopies(state, card.id);
 
   let actionHtml;
   if (claimable) {
@@ -1334,7 +1341,7 @@ function cardDetailHtml(state, card) {
       <div class="card-detail-info">
         <div class="card-detail-name">${card.name}</div>
         <div class="card-detail-desc">${card.description}</div>
-        ${discovered ? `<div class="card-detail-owned">Você tem: ${formatNumber(owned)}</div>` : ''}
+        ${discovered ? `<div class="card-detail-owned">Você tem: ${formatNumber(totalOwned)}</div>` : ''}
         ${actionHtml}
         <div class="card-fragment-box">
           <div class="card-fragment-count">${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
@@ -1356,7 +1363,7 @@ export function showCardDetailModal(state, cardId) {
   // showModal() usa textContent pro título (não innerHTML) — não dá pra
   // passar markup <img> ali, então esse continua sendo o único lugar que
   // ainda usa o emoji de texto puro em vez do CARD_ICON de verdade.
-  showModal(`${card.isBossCard ? '👑' : '🃏'} ${card.name}`, cardDetailHtml(state, card));
+  showModal(`${CARD_ICON} ${card.name}`, cardDetailHtml(state, card));
 }
 
 // ---------------------------------------------------------------
