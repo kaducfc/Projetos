@@ -1377,14 +1377,17 @@ function cardsSummaryHtml(state) {
 
 export function renderCardsTab(state) {
   const container = document.getElementById('tab-cards');
+  const godCards = CARDS.filter((c) => c.isGodCard);
   const bossCards = CARDS.filter((c) => c.isBossCard);
-  const commonCards = CARDS.filter((c) => !c.isBossCard);
+  const commonCards = CARDS.filter((c) => !c.isBossCard && !c.isGodCard);
+  const godOwned = godCards.filter((c) => isCardDiscovered(state, c.id)).length;
   const bossOwned = bossCards.filter((c) => isCardDiscovered(state, c.id)).length;
   const commonOwned = commonCards.filter((c) => isCardDiscovered(state, c.id)).length;
   // Bônus de DPS por COLEÇÃO (ver getCardCollectionDpsBonusPercent em
-  // systems/cards.js — 1%/carta de monstro, 5%/carta de boss, permanente
-  // por descoberta) — mostrado ao lado de cada contador, já quebrado por
-  // seção, pra ficar óbvio de onde cada parte do bônus vem.
+  // systems/cards.js — 1%/carta de monstro, 5%/carta de boss, 5%/carta
+  // Deus, permanente por descoberta) — mostrado ao lado de cada contador,
+  // já quebrado por seção, pra ficar óbvio de onde cada parte do bônus vem.
+  const godDpsBonus = godOwned * 5;
   const bossDpsBonus = bossOwned * 5;
   const commonDpsBonus = commonOwned * 1;
 
@@ -1394,6 +1397,8 @@ export function renderCardsTab(state) {
     ${pageBannerHtml('Cartas')}
     <div class="card-fragment-total">${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
     ${cardsSummaryHtml(state)}
+    <h3 class="cards-section-title">${CARD_ICON} Cartas Deus <span class="cards-collected">Colecionadas: ${godOwned}/${godCards.length}</span> <span class="cards-dps-bonus">+${godDpsBonus}% DPS</span></h3>
+    <div class="card-grid">${godCards.map((c) => cardTileHtml(state, c)).join('')}</div>
     <h3 class="cards-section-title">${CARD_ICON} Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span> <span class="cards-dps-bonus">+${bossDpsBonus}% DPS</span></h3>
     <div class="card-grid">${bossCards.map((c) => cardTileHtml(state, c)).join('')}</div>
     <h3 class="cards-section-title">${CARD_ICON} Cartas de Monstros <span class="cards-collected">Colecionadas: ${commonOwned}/${commonCards.length}</span> <span class="cards-dps-bonus">+${commonDpsBonus}% DPS</span></h3>
@@ -2429,9 +2434,12 @@ function godShopItemCardHtml(shopItem) {
 function awakeningShopItemCardHtml(state, item) {
   if (item.kind === 'god_item') return godShopItemCardHtml(item);
   const affordable = canBuyAwakeningItem(state, item.id);
+  // Cartas Deus (ver GOD_CARD_SHOP_ITEMS em data/awakening.js) já vêm com
+  // `image` (a arte real da carta) — prioriza sobre o emoji de fallback.
+  const icon = item.image ? iconMarkup(item.image, item.emoji, item.name) : item.emoji;
   return `
     <div class="shop-item-card">
-      <span class="icon">${item.emoji}</span>
+      <span class="icon">${icon}</span>
       <div class="info">
         <div class="name">${item.name}</div>
         <div class="desc">${item.description}</div>
