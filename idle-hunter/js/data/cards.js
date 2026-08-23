@@ -338,30 +338,39 @@ function cardDescription(effect) {
   return effect ? effect.text : 'Efeito adicional ainda não definido.';
 }
 
-// Carta exclusiva da Loja do Despertar (ver data/awakening.js/systems/
-// awakening.js) — NÃO tem monsterId (nenhum monstro dropa ela: rollDrops
-// em systems/combat.js só chama getCardForMonster com o id do monstro
-// morto, então essa nunca casa por acidente) e não pode ser craftada com
-// Fragmento de Carta comum (ver noCraft abaixo + canCraftCard em
-// systems/cards.js) — só se ganha comprando com Fragmento do Despertar.
-// Placeholder de 1 carta só por enquanto; o usuário disse que vai criar
-// itens personalizados depois pra Loja do Despertar.
-export const SUPREMO_CARD_ID = 'supremo_card';
-const SUPREMO_CARD = {
-  id: SUPREMO_CARD_ID,
+// Cartas "Deus" — 3ª categoria de carta (além de Boss/Monstro), exclusiva
+// da Loja do Despertar (ver data/awakening.js/systems/awakening.js): NÃO
+// têm monsterId (nenhum monstro dropa elas: rollDrops em systems/combat.js
+// só chama getCardForMonster com o id do monstro morto, então nunca casam
+// por acidente) e não podem ser craftadas com Fragmento de Carta comum
+// (ver noCraft abaixo + canCraftCard em systems/cards.js) — só se ganham
+// comprando com Fragmento do Despertar, 1 por carta. Ainda sem efeito
+// próprio definido (pedido do usuário) — todas as 5 usam o mesmo
+// placeholder "+5% DPS" por enquanto, a trocar depois.
+const GOD_CARD_DEFS = [
+  { id: 'god_card_regulus', name: 'Regulus', image: 'assets/god-cards/ct1.png' },
+  { id: 'god_card_selene', name: 'Selene', image: 'assets/god-cards/ct2.png' },
+  { id: 'god_card_caeloryx', name: 'Caeloryx', image: 'assets/god-cards/ct3.png' },
+  { id: 'god_card_aetheron', name: 'Aetheron', image: 'assets/god-cards/ct4.png' },
+  { id: 'god_card_azrathul', name: 'Azrathul', image: 'assets/god-cards/ct5.png' },
+];
+
+export const GOD_CARDS = GOD_CARD_DEFS.map((def) => ({
+  id: def.id,
   monsterId: null,
-  isBossCard: true,
+  isBossCard: false,
+  isGodCard: true,
   zoneIndex: ZONE_COUNT - 1,
-  name: 'Supremo',
-  image: CARD_GENERIC_IMAGE,
+  name: def.name,
+  image: def.image,
   element: null,
-  bonuses: [{ stat: 'dpsPercent', value: 50 }],
-  description: 'Carta exclusiva da Loja do Despertar — não dropa de monstro nem craft com Fragmento de Carta. +50% de DPS quando equipada.',
+  bonuses: [{ stat: 'dpsPercent', value: 5 }],
+  description: '+5% DPS quando equipada. Exclusiva da Loja do Despertar — não dropa de monstro nem craft com Fragmento de Carta.',
   noCraft: true,
-};
+}));
 
 export const CARDS = [
-  SUPREMO_CARD,
+  ...GOD_CARDS,
   ...BOSSES.map((boss, zoneIndex) => {
     const effect = CARD_EFFECTS[boss.id] || null;
     return {

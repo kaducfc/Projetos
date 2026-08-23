@@ -47,12 +47,18 @@ export function claimCardReward(state, cardId) {
 // ---------------------------------------------------------------------
 const NORMAL_CARD_DPS_BONUS_PERCENT = 1;
 const BOSS_CARD_DPS_BONUS_PERCENT = 5;
+// Cartas Deus (ver GOD_CARDS em data/cards.js): 5% de DPS cada, 5 cartas no
+// total — coleção completa (5/5) dá +25% de DPS, pedido explícito do
+// usuário.
+const GOD_CARD_DPS_BONUS_PERCENT = 5;
 
 export function getCardCollectionDpsBonusPercent(state) {
   let bonus = 0;
   for (const card of CARDS) {
     if (!isCardDiscovered(state, card.id)) continue;
-    bonus += card.isBossCard ? BOSS_CARD_DPS_BONUS_PERCENT : NORMAL_CARD_DPS_BONUS_PERCENT;
+    bonus += card.isGodCard
+      ? GOD_CARD_DPS_BONUS_PERCENT
+      : card.isBossCard ? BOSS_CARD_DPS_BONUS_PERCENT : NORMAL_CARD_DPS_BONUS_PERCENT;
   }
   return bonus;
 }
