@@ -2295,15 +2295,22 @@ function transcendResetInfoHtml() {
 // (showGodItemShopDetailModal abaixo), pedido explícito do usuário.
 function godShopItemCardHtml(shopItem) {
   const item = getItem(shopItem.itemId);
+  // Clicar na imagem OU no botão abre a mesma janela de especificações
+  // (showGodItemShopDetailModal) — a compra em si só é confirmada lá
+  // dentro, nunca direto na vitrine (pedido do usuário). O card em si não
+  // é mais um <button> (só o "Comprar" é) pra não aninhar botão dentro de
+  // botão; clicar em qualquer ponto do card ainda funciona porque
+  // data-open-god-item está tanto no card quanto no botão, e o clique
+  // borbulha até o primeiro ancestral com o atributo (ver wireShopTabEvents
+  // em main.js).
   return `
-    <button class="shop-item-card" data-open-god-item="${shopItem.id}" style="text-align:left; cursor:pointer;">
+    <div class="shop-item-card god-shop-item" data-open-god-item="${shopItem.id}" style="cursor:pointer;">
       <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
       <div class="info">
         <div class="name">${item.name}</div>
-        <div class="desc" style="color:${GOD_RARITY.color}; font-weight:800;">Tier God</div>
       </div>
-      <span>${AWAKENING_SHARD_ICON} ${shopItem.cost}</span>
-    </button>`;
+      <button data-open-god-item="${shopItem.id}">${AWAKENING_SHARD_ICON} Comprar por ${shopItem.cost}</button>
+    </div>`;
 }
 
 function awakeningShopItemCardHtml(state, item) {

@@ -986,7 +986,7 @@ export function getItemScrapMaterial(item, rarityId) {
 export const GOD_RARITY_ID = 'deus';
 export const GOD_RARITY = {
   id: GOD_RARITY_ID, name: 'Deus', mult: getRarity('mitico').mult * 1.3, additionals: 8, weight: 0,
-  color: '#5be3ff',
+  color: '#4de8c9',
 };
 export const GOD_MIN_LEVEL = 100;
 export const GOD_BONUS_SLOTS = 8;
