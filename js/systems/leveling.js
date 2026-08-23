@@ -47,12 +47,26 @@ export function xpForZone(zoneIndex, _isBoss) {
   return zoneIndex + 1;
 }
 
+// +20% de XP por Transcender já feito (acumulativo, nunca reseta — ver
+// PRESERVED_KEYS em systems/awakening.js: transcendCount sobrevive ao
+// próprio Transcender). Pedido explícito do usuário, mostrado na aba
+// Transcender (ver transcendXpBonusLineHtml em ui/render.js).
+export const TRANSCEND_XP_BONUS_PERCENT_PER_COUNT = 20;
+
+export function getTranscendXpBonusPercent(state) {
+  return (state.transcendCount || 0) * TRANSCEND_XP_BONUS_PERCENT_PER_COUNT;
+}
+
 /// Soma XP e resolve quantos níveis isso rende (pode subir mais de 1 de uma
 /// vez). Retorna o número de níveis ganhos (0 se não subiu nenhum) — o
 /// chamador usa isso pra mostrar um toast de "Level Up!". Sem cap de nível
 /// — sobe indefinidamente (ver xpToNextLevel acima pra curva além do 200).
+/// `amount` já sai com o bônus de Transcender aplicado (getTranscendXpBonusPercent
+/// acima) — cobre tanto XP de kill ao vivo (combat.js) quanto XP offline
+/// simulado (offline.js), já que os dois só chamam grantXp no fim.
 export function grantXp(state, amount) {
-  state.hunterXp = (state.hunterXp || 0) + amount;
+  const bonusMult = 1 + getTranscendXpBonusPercent(state) / 100;
+  state.hunterXp = (state.hunterXp || 0) + amount * bonusMult;
   let levelsGained = 0;
   while (state.hunterXp >= xpToNextLevel(state.hunterLevel)) {
     state.hunterXp -= xpToNextLevel(state.hunterLevel);
