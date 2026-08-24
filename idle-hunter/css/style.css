@@ -1533,26 +1533,25 @@ button:disabled {
   color: var(--danger);
 }
 
-/* Power do item (ver systems/power.js) — canto inferior esquerdo da JANELA
-   inteira (mesma referência que .item-detail-tier-badge/.item-detail-
-   level-badge acima, só que embaixo — todos relativos a .item-detail).
-   Sempre recalculado do entry atual: aprimorar/Rank Master/ascender/
-   encaixar-tirar carta já reflete aqui na próxima renderização do popup. */
-.item-detail-power-badge {
-  position: absolute;
-  bottom: -6px;
-  left: -6px;
+/* Power do item/mascote (ver systems/power.js) — linha normal alinhada à
+   esquerda (mesmo layout de .element-resistance), logo acima da linha de
+   resistência elemental/slots de carta (item) ou da barra de XP (mascote,
+   ver petDetailHtml) — não é mais um badge no canto: em popups mais
+   curtos (mascote, item Deus incompleto) ficava em cima dos botões de
+   ação. Sempre recalculado do valor atual: aprimorar/Rank Master/
+   ascender/encaixar-tirar carta/subir nível de mascote já reflete aqui na
+   próxima renderização do popup. */
+.item-detail-power-line {
   font-size: 12.5px;
   font-weight: 800;
-  color: #fff;
-  background: var(--grad-gold);
-  border-radius: 8px;
-  padding: 3px 6px;
-  line-height: 1.3;
-  box-shadow: 0 2px 0 var(--gold-dark);
+  color: var(--gold-dark);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.item-detail-power-badge .currency-icon {
+.item-detail-power-line .currency-icon {
   width: 18px;
   height: 18px;
   vertical-align: -4px;
