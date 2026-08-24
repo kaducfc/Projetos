@@ -137,6 +137,16 @@ let pendingGodBonus = null;
 // num item preenchido (data-view-foreign-item) sem precisar buscar de
 // novo do servidor.
 let viewingForeignEquipment = null;
+// Jogador atualmente sendo observado (mesmo fluxo acima) — guardado pra dar
+// pra reabrir showForeignEquipmentModal quando o modal de detalhe do item
+// (data-view-foreign-item) for fechado, ver modalBackHandler.
+let viewingForeignPlayer = null;
+// Se setado, o botão de fechar do modal (#modal-close) chama isso em vez de
+// hideModal() — usado pra "voltar" ao modal anterior de uma cadeia (ex:
+// detalhe de item de outro jogador -> volta pro boneco de equipamento dele)
+// em vez de fechar tudo de uma vez. Sempre limpo antes de decidir o próximo
+// valor, pra não vazar entre cadeias diferentes de modal.
+let modalBackHandler = null;
 // "Resetar Pontos" da árvore de habilidades — mesmo padrão non-blocking de
 // confirmação do bulkConfirmingDestroy acima. Precisa sobreviver a
 // re-renders incidentais da aba (ver renderUpgradesTabNow abaixo, chamada
@@ -684,7 +694,13 @@ function wireModalEvents() {
     const foreignItemBtn = e.target.closest('[data-view-foreign-item]');
     if (foreignItemBtn) {
       const entry = viewingForeignEquipment?.[foreignItemBtn.dataset.viewForeignItem];
-      if (entry) showForeignItemDetailModal(entry);
+      if (entry) {
+        showForeignItemDetailModal(entry);
+        modalBackHandler = () => {
+          modalBackHandler = null;
+          if (viewingForeignPlayer) showForeignEquipmentModal(viewingForeignPlayer);
+        };
+      }
       return;
     }
 
@@ -1963,6 +1979,7 @@ function wireRanksTabEvents() {
     const viewEquipBtn = e.target.closest('[data-view-player-equipment]');
     if (viewEquipBtn) {
       const entityId = viewEquipBtn.dataset.viewPlayerEquipment;
+      modalBackHandler = null;
       showModal('', '<p class="shop-note">Carregando equipamento...</p>');
       fetchPlayerEquipment(entityId).then((player) => {
         if (!player) {
@@ -1970,6 +1987,7 @@ function wireRanksTabEvents() {
           return;
         }
         viewingForeignEquipment = player.equipped_snapshot || {};
+        viewingForeignPlayer = player;
         showForeignEquipmentModal(player);
       });
     }
@@ -2172,7 +2190,13 @@ function init() {
   fullRefresh();
   armBossTimer();
 
-  document.getElementById('modal-close').addEventListener('click', hideModal);
+  document.getElementById('modal-close').addEventListener('click', () => {
+    if (modalBackHandler) {
+      modalBackHandler();
+      return;
+    }
+    hideModal();
+  });
 
   showOfflineProgressIfAny();
 
