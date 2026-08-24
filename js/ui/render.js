@@ -839,11 +839,11 @@ export function showForeignItemDetailModal(entry) {
   showModal('', `
     <div class="item-detail">
       <div class="item-detail-tier-badge">${tierBadge}</div>
-      ${itemPowerBadgeHtml(entry)}
       <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${statsHtml}</div>
+      ${itemPowerBadgeHtml(entry)}
       ${cardSlotsHtml}
     </div>
   `);
@@ -936,9 +936,13 @@ function itemDetailStatsHtml(item, entry) {
 // recebido: aprimorar, virar Rank Master, ascender, encaixar/tirar carta,
 // ou subir nível/fundir mascote já aparece aqui na próxima renderização do
 // popup (toda ação de item/mascote já reabre o popup, ver wireModalEvents/
-// wirePetsTabEvents em main.js).
+// wirePetsTabEvents em main.js). Linha normal (não mais badge no canto —
+// ficava em cima dos botões de ação em popups mais curtos), alinhada à
+// esquerda igual a linha de resistência elemental/barra de XP logo abaixo
+// dela (ver .item-detail-power-line no CSS, mesmo layout de
+// .element-resistance).
 function powerBadgeHtml(powerValue) {
-  return `<div class="item-detail-power-badge">${POWER_ICON} ${formatInteger(powerValue)}</div>`;
+  return `<div class="item-detail-power-line">${POWER_ICON} Power: ${formatInteger(powerValue)}</div>`;
 }
 
 function itemPowerBadgeHtml(entry) {
@@ -1018,12 +1022,12 @@ function godItemDetailHtml(state, uid, entry, item, pickerOpenSlot = null) {
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier God</div>
       <div class="item-detail-level-badge">Lv.${GOD_MIN_LEVEL}</div>
-      ${itemPowerBadgeHtml(entry)}
       <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name}</div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${godItemDetailStatsHtml(entry, item)}</div>
       ${levelNote}
+      ${itemPowerBadgeHtml(entry)}
       ${cardSlotsHtml}
       ${bonusPanel}
       <div class="modal-action-row">
@@ -1066,11 +1070,11 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
   return `
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier ${item.zoneIndex + 1}</div>
-      ${itemPowerBadgeHtml(entry)}
       <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${itemDetailStatsHtml(item, entry)}</div>
+      ${itemPowerBadgeHtml(entry)}
       ${resistanceLine}
       ${weaponRequirementNote}
       ${cardSlotsHtml}
@@ -1662,13 +1666,13 @@ function petDetailHtml(state, uid, showFuseList) {
   return `
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier ${species.tier}</div>
-      ${powerBadgeHtml(computePetPower(pet))}
       <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(species.image, species.emoji, species.name)}</div>
       <div class="item-detail-name">${species.name} <span class="enhance-badge">+${pet.level}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-attribute" style="color:${getPetElementColor(species.element)}; font-weight:700; font-size:11.5px;">${elementBadgeHtml(species.element)} ${getElement(species.element).name}</div>
       <div class="item-detail-stats">+${formatNumber(damage)} Dano ${getElement(species.element).name}</div>
       <div class="item-detail-stats">+${dpsBonusPercent.toFixed(1)}% DPS do caçador (só enquanto ativo em combate)</div>
+      ${powerBadgeHtml(computePetPower(pet))}
       ${xpSection}
       ${fuseSection}
       <div class="modal-action-row">
