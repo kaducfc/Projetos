@@ -1533,29 +1533,29 @@ button:disabled {
   color: var(--danger);
 }
 
-/* Embrulha só o ícone (não o popup inteiro) pra posicionar o badge de Power
-   relativo a ELE (canto inferior esquerdo do ícone), não do card inteiro —
-   ver itemPowerBadgeHtml/withItemPowerBadge em ui/render.js. */
-.item-detail-icon-frame {
-  position: relative;
-  display: inline-block;
-}
-
-/* Power do item (ver systems/power.js) — sempre recalculado do entry
-   atual: aprimorar/Rank Master/ascender/encaixar-tirar carta já reflete
-   aqui na próxima renderização do popup. */
+/* Power do item (ver systems/power.js) — canto inferior esquerdo da JANELA
+   inteira (mesma referência que .item-detail-tier-badge/.item-detail-
+   level-badge acima, só que embaixo — todos relativos a .item-detail).
+   Sempre recalculado do entry atual: aprimorar/Rank Master/ascender/
+   encaixar-tirar carta já reflete aqui na próxima renderização do popup. */
 .item-detail-power-badge {
   position: absolute;
-  bottom: 4px;
+  bottom: -6px;
   left: -6px;
-  font-size: 10.5px;
+  font-size: 12.5px;
   font-weight: 800;
   color: #fff;
   background: var(--grad-gold);
   border-radius: 8px;
-  padding: 2px 5px;
+  padding: 3px 6px;
   line-height: 1.3;
   box-shadow: 0 2px 0 var(--gold-dark);
+}
+
+.item-detail-power-badge .currency-icon {
+  width: 18px;
+  height: 18px;
+  vertical-align: -4px;
 }
 
 .item-detail-icon {
