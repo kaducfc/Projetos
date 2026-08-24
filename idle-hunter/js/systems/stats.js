@@ -29,15 +29,19 @@ const DODGE_CHANCE_CAP = 70;
 // combate de verdade. Números de partida, fáceis de re-tunar — a
 // calibração fina (junto com o rebalanceamento dos monstros) fica pra
 // depois.
-const FORCA_DANO_PER_POINT = 6;
-const FORCA_HP_PER_POINT = 8;
-const FORCA_ARMOR_PER_POINT = 2;
-const DESTREZA_DANO_PER_POINT = 6;
-const DESTREZA_CRIT_CHANCE_PER_POINT = 0.15;
-const DESTREZA_CRIT_DAMAGE_PER_POINT = 0.3;
-const INTELIGENCIA_DANO_PER_POINT = 6;
-const INTELIGENCIA_GOLD_PERCENT_PER_POINT = 0.2;
-const INTELIGENCIA_DROP_PERCENT_PER_POINT = 0.15;
+// Exportadas — reusadas por systems/power.js pra converter o atributo cru
+// de um item isolado (fora do agregado de computePlayerStats) nos mesmos
+// stats de combate de verdade, com a MESMA curva, ao calcular o Power
+// daquele item.
+export const FORCA_DANO_PER_POINT = 6;
+export const FORCA_HP_PER_POINT = 8;
+export const FORCA_ARMOR_PER_POINT = 2;
+export const DESTREZA_DANO_PER_POINT = 6;
+export const DESTREZA_CRIT_CHANCE_PER_POINT = 0.15;
+export const DESTREZA_CRIT_DAMAGE_PER_POINT = 0.3;
+export const INTELIGENCIA_DANO_PER_POINT = 6;
+export const INTELIGENCIA_GOLD_PERCENT_PER_POINT = 0.2;
+export const INTELIGENCIA_DROP_PERCENT_PER_POINT = 0.15;
 
 export function computePlayerStats(state) {
   let dpsFlat = BASE_DPS;

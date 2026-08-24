@@ -818,6 +818,7 @@ function wireModalEvents() {
           showToast('⬆️ Item aprimorado!');
           recordDailyMissionProgress(state, 'enhance_items');
           fullRefresh();
+          syncPvpIfEquipped(uid);
         }
       });
       return;
@@ -832,6 +833,7 @@ function wireModalEvents() {
           showToast('✨ Item evoluiu para Rank Master!');
           recordDailyMissionProgress(state, 'rank_master_items');
           fullRefresh();
+          syncPvpIfEquipped(uid);
         }
       });
       return;
@@ -862,6 +864,7 @@ function wireModalEvents() {
           showItemDetailModal(state, uid);
           showToast('🌟 Item ascendeu de raridade!');
           fullRefresh();
+          syncPvpIfEquipped(uid);
         }
       });
       return;
@@ -878,6 +881,7 @@ function wireModalEvents() {
         if (chooseGodAttribute(state, uid, attributeId)) {
           showItemDetailModal(state, uid);
           fullRefresh();
+          syncPvpIfEquipped(uid);
         }
       });
       return;
@@ -908,6 +912,7 @@ function wireModalEvents() {
           showItemDetailModal(state, uid);
           showToast('✨ Bônus escolhido!');
           fullRefresh();
+          syncPvpIfEquipped(uid);
         }
       });
       return;
@@ -1856,6 +1861,15 @@ async function refreshPvpTab({ silent = false } = {}) {
 // PVP_AUTO_SYNC_INTERVAL_MS (até 5min desatualizado).
 function syncPvpEquipmentSilently() {
   refreshPvpTab({ silent: true });
+}
+
+// Mesma ideia acima, mas só dispara se `uid` está atualmente equipado —
+// usado por aprimorar/Rank Master/ascender/montar item Deus (systems/
+// crafting.js, systems/godItems.js), que também mudam o Power do item (ver
+// systems/power.js) mas só valem a pena sincronizar se o item afetado
+// estiver equipado (senão o Power total do jogador nem mudou).
+function syncPvpIfEquipped(uid) {
+  if (Object.values(state.equipped).includes(uid)) syncPvpEquipmentSilently();
 }
 
 async function handlePvpAttack(defenderId, isBot) {
