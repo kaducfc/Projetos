@@ -708,7 +708,7 @@ function equipRingContentHtml(state, filterCategory = null, bulkSelect = null) {
         </div>
         ${equipStatsBoxHtml(state)}
       </div>
-      <div class="player-power-row">${POWER_ICON} Power: <strong>${formatInteger(computePlayerPower(state))}</strong></div>
+      <div class="player-power-row">${POWER_ICON} Power: <strong class="power-total-value">${formatInteger(computePlayerPower(state))}</strong></div>
       <div class="view-full-stats-row">
         <button class="view-full-stats-btn" data-view-full-stats>Ver Estatísticas</button>
       </div>

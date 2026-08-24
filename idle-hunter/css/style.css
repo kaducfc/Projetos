@@ -2663,6 +2663,23 @@ button:disabled {
   font-size: 16px;
 }
 
+/* Power total do jogador (Equipamentos) — gradiente animado azul/roxo/preto,
+   mesmo mecanismo do nick VIP (.vip-nick acima: texto vira "moldura" pro
+   gradiente via background-clip), só com outra paleta. */
+.power-total-value {
+  background: linear-gradient(90deg, #1e3a8a, #4361ee, #7209b7, #2d0a4e, #0a0a0f, #4361ee, #1e3a8a);
+  background-size: 400% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: vip-nick-shift 5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .power-total-value { animation: none; background-position: 0% 50%; }
+}
+
 .view-full-stats-row {
   display: flex;
   justify-content: center;
