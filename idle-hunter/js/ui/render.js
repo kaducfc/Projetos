@@ -839,7 +839,8 @@ export function showForeignItemDetailModal(entry) {
   showModal('', `
     <div class="item-detail">
       <div class="item-detail-tier-badge">${tierBadge}</div>
-      ${withItemPowerBadge(entry, `<div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>`)}
+      ${itemPowerBadgeHtml(entry)}
+      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${statsHtml}</div>
@@ -928,19 +929,15 @@ function itemDetailStatsHtml(item, entry) {
   return [baseLine, secondaryLine, ...bonusLines].filter(Boolean).join('<br>');
 }
 
-// Canto inferior esquerdo do ÍCONE (não do popup inteiro — ver
-// .item-detail-icon-frame no CSS, que embrulha só o ícone pra posicionar
-// o badge relativo a ele) — Power daquele item específico (ver
+// Canto inferior esquerdo da JANELA inteira (mesma referência do badge
+// "Tier", só que embaixo em vez de em cima — ambos posicionados relativo a
+// .item-detail, ver CSS) — Power daquele item específico (ver
 // computeItemPower em systems/power.js), sempre recalculado na hora a
 // partir do entry atual: aprimorar, virar Rank Master, ascender ou
 // encaixar/tirar carta já aparece aqui na próxima renderização do popup
 // (toda ação de item já reabre o popup, ver wireModalEvents em main.js).
 function itemPowerBadgeHtml(entry) {
   return `<div class="item-detail-power-badge">${POWER_ICON} ${formatInteger(computeItemPower(entry))}</div>`;
-}
-
-function withItemPowerBadge(entry, iconHtml) {
-  return `<div class="item-detail-icon-frame">${iconHtml}${itemPowerBadgeHtml(entry)}</div>`;
 }
 
 /// 3 estados possíveis pra um item Tier God (ver systems/godItems.js):
@@ -1016,7 +1013,8 @@ function godItemDetailHtml(state, uid, entry, item, pickerOpenSlot = null) {
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier God</div>
       <div class="item-detail-level-badge">Lv.${GOD_MIN_LEVEL}</div>
-      ${withItemPowerBadge(entry, `<div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>`)}
+      ${itemPowerBadgeHtml(entry)}
+      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name}</div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${godItemDetailStatsHtml(entry, item)}</div>
@@ -1063,7 +1061,8 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
   return `
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier ${item.zoneIndex + 1}</div>
-      ${withItemPowerBadge(entry, `<div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>`)}
+      ${itemPowerBadgeHtml(entry)}
+      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${itemDetailStatsHtml(item, entry)}</div>
