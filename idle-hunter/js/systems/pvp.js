@@ -10,6 +10,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, PVP_MAX_ENTRIES, PVP_ENTRY_REGEN_MS } from '../data/pvpConfig.js';
 import { isVipActive } from '../state.js';
+import { computePlayerPower } from './power.js';
 
 let client = null;
 export function getClient() {
@@ -118,6 +119,9 @@ export async function syncProfile(state, stats, playerName, profileIconId) {
       dodge_chance: stats.dodgeChance,
       pet_dps: stats.petDps || 0,
       attack_speed_per_sec: stats.attackSpeedPerSec || 1,
+      // Power total (ver js/systems/power.js + 0018_pvp_power.sql) — mostrado
+      // na lista de jogadores da Arena (ver pvpBoardRowHtml em ui/render.js).
+      power: computePlayerPower(state),
       updated_at: new Date().toISOString(),
     }),
   ]);
