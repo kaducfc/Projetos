@@ -17,7 +17,7 @@ import {
 } from '../systems/profile.js';
 import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
-import { computeItemPower, computePlayerPower, computePowerFromEquippedSnapshot } from '../systems/power.js';
+import { computeItemPower, computePetPower, computePlayerPower, computePowerFromEquippedSnapshot } from '../systems/power.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds, countEquippedCardCopies } from '../systems/crafting.js';
 import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, getTranscendXpBonusPercent } from '../systems/leveling.js';
 import { EXPEDITION_TIERS, EXPEDITION_REWARDS } from '../data/events.js';
@@ -931,13 +931,18 @@ function itemDetailStatsHtml(item, entry) {
 
 // Canto inferior esquerdo da JANELA inteira (mesma referência do badge
 // "Tier", só que embaixo em vez de em cima — ambos posicionados relativo a
-// .item-detail, ver CSS) — Power daquele item específico (ver
-// computeItemPower em systems/power.js), sempre recalculado na hora a
-// partir do entry atual: aprimorar, virar Rank Master, ascender ou
-// encaixar/tirar carta já aparece aqui na próxima renderização do popup
-// (toda ação de item já reabre o popup, ver wireModalEvents em main.js).
+// .item-detail, ver CSS) — Power de um item/mascote específico (ver
+// systems/power.js), sempre recalculado na hora a partir do valor
+// recebido: aprimorar, virar Rank Master, ascender, encaixar/tirar carta,
+// ou subir nível/fundir mascote já aparece aqui na próxima renderização do
+// popup (toda ação de item/mascote já reabre o popup, ver wireModalEvents/
+// wirePetsTabEvents em main.js).
+function powerBadgeHtml(powerValue) {
+  return `<div class="item-detail-power-badge">${POWER_ICON} ${formatInteger(powerValue)}</div>`;
+}
+
 function itemPowerBadgeHtml(entry) {
-  return `<div class="item-detail-power-badge">${POWER_ICON} ${formatInteger(computeItemPower(entry))}</div>`;
+  return powerBadgeHtml(computeItemPower(entry));
 }
 
 /// 3 estados possíveis pra um item Tier God (ver systems/godItems.js):
@@ -1657,6 +1662,7 @@ function petDetailHtml(state, uid, showFuseList) {
   return `
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier ${species.tier}</div>
+      ${powerBadgeHtml(computePetPower(pet))}
       <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(species.image, species.emoji, species.name)}</div>
       <div class="item-detail-name">${species.name} <span class="enhance-badge">+${pet.level}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
