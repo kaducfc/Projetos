@@ -95,8 +95,8 @@ export const ESMERALDA_ICON = `<img class="currency-icon" src="assets/ui/currenc
 export const CARD_ICON = `<img class="currency-icon" src="assets/ui/cards/card_generic.png" alt="Carta">`;
 export const CARD_FRAGMENT_ICON = `<img class="currency-icon" src="assets/ui/cards/card_fragment.png" alt="Fragmento de Carta">`;
 
-// Sistema de Power (ver systems/power.js) — sem asset próprio, emoji mesmo.
-export const POWER_ICON = '⚡';
+// Sistema de Power (ver systems/power.js).
+export const POWER_ICON = `<img class="currency-icon" src="assets/ui/power/power.png" alt="Power">`;
 
 // Mesmo tratamento pro Ovo de Mascote (qualquer menção genérica a "ovo" —
 // contador, toast de drop, recompensa de evento/expedição/arena, etc.) e
