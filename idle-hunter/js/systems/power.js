@@ -27,6 +27,13 @@ import {
 // vale MUITO mais por ponto que um % puramente econômico (ouro/drop), e
 // vida/armadura plana valem menos que dano por ponto (é preciso bem mais HP
 // pra "equivaler" a um ponto de dano em utilidade ofensiva).
+// Multiplicador só de exibição (ver computeItemPower abaixo) — pedido do
+// usuário pra deixar o número final maior/mais "preciso", sem mexer no
+// peso relativo de nenhum stat. Se mudar, atualize também o ×10 hardcoded
+// na fórmula do Power estimado dos bots em supabase/migrations (ver
+// 0019_pvp_power_x10.sql).
+export const POWER_DISPLAY_MULTIPLIER = 10;
+
 export const POWER_WEIGHTS = {
   danoFlatPerPoint: 1,
   hpFlatPerPoint: 0.25,
@@ -125,7 +132,10 @@ export function computeItemPower(entry) {
     }
   }
 
-  return Math.max(0, Math.round(statPoolToPower(stats)));
+  // ×10 só pra exibição — o número em si fica maior/mais "preciso" (mais
+  // casas antes de virar 1k, 10k...), sem mudar a relevância relativa de
+  // nenhum stat entre si (todo mundo escala igual, ver POWER_WEIGHTS acima).
+  return Math.max(0, Math.round(statPoolToPower(stats) * POWER_DISPLAY_MULTIPLIER));
 }
 
 /// Power TOTAL do jogador — soma o Power de cada item atualmente equipado
