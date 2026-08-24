@@ -1,19 +1,25 @@
-// Sistema de "Power": um único número que resume o quão forte um item (ou,
-// somado, o jogador inteiro) está, calculado a partir dos MESMOS stats
-// brutos que computePlayerStats (ver systems/stats.js) já usa pro dano/vida/
-// crítico/etc de verdade — cada stat vira "pontos de Power" através de um
-// peso próprio (ver POWER_WEIGHTS abaixo), calibrado pra refletir o quanto
-// aquele stat realmente contribui pra força de combate (dano/sobrevivência
-// pesam mais que utilidade econômica, por exemplo).
+// Sistema de "Power": um único número que resume o quão forte um item, um
+// mascote (ou, somado, o jogador inteiro) está, calculado a partir dos
+// MESMOS stats brutos que computePlayerStats (ver systems/stats.js) já usa
+// pro dano/vida/crítico/etc de verdade — cada stat vira "pontos de Power"
+// através de um peso próprio (ver POWER_WEIGHTS abaixo), calibrado pra
+// refletir o quanto aquele stat realmente contribui pra força de combate
+// (dano/sobrevivência pesam mais que utilidade econômica, por exemplo).
 //
-// Só cobre EQUIPAMENTO (item + cartas encaixadas nele) — de propósito: o
-// pedido era "o Power daquele item" e "o Power do jogador", e a forma mais
-// direta/consistente de garantir que os dois nunca dessincronizem é definir
-// Power do jogador = soma do Power de cada item equipado, sem misturar
-// árvore de habilidades/upgrades permanentes (que já aparecem nos outros
-// stats normalmente).
+// Power do jogador (computePlayerPower) = Power de cada item equipado +
+// Power de cada mascote equipado + "bônus da conta" (árvore de habilidades
+// passivas, upgrades permanentes, bônus de coleção de cartas, turbo de DPS
+// ativo — ver computeAccountBonusPower). Esse último bloco é só um NÚMERO
+// somado ao total; de propósito não é quebrado stat a stat pro jogador (só
+// os itens/mascotes individuais mostram seu próprio Power).
 import { getItem, getEnhancedStats } from '../data/items.js';
 import { getCard } from '../data/cards.js';
+import { getPetSpecies, getPetDamagePercent, getPetDpsBonusPercent } from '../data/pets.js';
+import { getSkillTree } from '../data/skills.js';
+import { getSkillLevel, getChosenSpecialId } from './skills.js';
+import { UPGRADES } from '../data/upgrades.js';
+import { getCardCollectionDpsBonusPercent } from './cards.js';
+import { getActiveDpsBoostPercent } from './shop.js';
 import {
   FORCA_DANO_PER_POINT, FORCA_HP_PER_POINT, FORCA_ARMOR_PER_POINT,
   DESTREZA_DANO_PER_POINT, DESTREZA_CRIT_CHANCE_PER_POINT, DESTREZA_CRIT_DAMAGE_PER_POINT,
@@ -54,10 +60,12 @@ export const POWER_WEIGHTS = {
 };
 
 /// Soma um objeto plano de stats brutos (mesma forma que getEnhancedStats()
-/// devolve, ou os bônus de uma carta) em "pontos de Power" — primeiro
-/// converte Força/Destreza/Inteligência cru nos MESMOS stats de combate que
-/// computePlayerStats converteria (dano/vida/armadura/crítico/ouro/drop, ver
-/// constantes importadas de stats.js), depois aplica o peso de cada stat.
+/// devolve, os bônus de uma carta, ou os de uma habilidade/upgrade — todos
+/// usam a MESMA nomenclatura de stat, ver computePlayerStats em stats.js)
+/// em "pontos de Power" — primeiro converte Força/Destreza/Inteligência cru
+/// nos MESMOS stats de combate que computePlayerStats converteria (dano/
+/// vida/armadura/crítico/ouro/drop, ver constantes importadas de stats.js),
+/// depois aplica o peso de cada stat.
 function statPoolToPower(stats) {
   const w = POWER_WEIGHTS;
 
@@ -85,6 +93,9 @@ function statPoolToPower(stats) {
   dropPercent += inteligencia * INTELIGENCIA_DROP_PERCENT_PER_POINT;
 
   let power = 0;
+  // dpsFlat entra igual danoXFlat (mesma unidade — só upgrades permanentes
+  // usam essa chave, ver data/upgrades.js).
+  power += (stats.dpsFlat || 0) * w.danoFlatPerPoint;
   power += (danoFisicoFlat + danoPerfuracaoFlat + danoMagicoFlat) * w.danoFlatPerPoint;
   power += hpFlat * w.hpFlatPerPoint;
   power += armorFlat * w.armorFlatPerPoint;
@@ -106,6 +117,13 @@ function statPoolToPower(stats) {
   power += (stats.doubleHitChance || 0) * w.doubleHitChancePerPoint;
 
   return power;
+}
+
+/// statPoolToPower() + o ×10 de exibição + arredondamento/clamp em 0 —
+/// ponto único usado por toda fonte de Power (item, mascote, bônus da
+/// conta) pra garantir que a mesma escala/regra se aplica em todo lugar.
+function powerFromStatPool(stats) {
+  return Math.max(0, Math.round(statPoolToPower(stats) * POWER_DISPLAY_MULTIPLIER));
 }
 
 /// Power de UM item equipado (ou não — funciona pra qualquer inventory
@@ -132,16 +150,92 @@ export function computeItemPower(entry) {
     }
   }
 
-  // ×10 só pra exibição — o número em si fica maior/mais "preciso" (mais
-  // casas antes de virar 1k, 10k...), sem mudar a relevância relativa de
-  // nenhum stat entre si (todo mundo escala igual, ver POWER_WEIGHTS acima).
-  return Math.max(0, Math.round(statPoolToPower(stats) * POWER_DISPLAY_MULTIPLIER));
+  return powerFromStatPool(stats);
 }
 
-/// Power TOTAL do jogador — soma o Power de cada item atualmente equipado
-/// (state.equipped). Sempre recalculado do zero a partir do estado atual, a
-/// mesma garantia de computeItemPower: nunca fica desatualizado, qualquer
-/// troca de equipamento/carta/aprimoramento já reflete na próxima chamada.
+/// Power de UM mascote — o dano dele (% do DPS do caçador, ver
+/// getPetDamagePercent em data/pets.js) e o bônus de %DPS que ele empresta
+/// quando é o ativo em combate (getPetDpsBonusPercent) entram os dois como
+/// "dpsPercent" no mesmo conversor de stats de item/habilidade acima: os
+/// dois já SÃO percentuais que multiplicam a força ofensiva do jogador,
+/// então usam o mesmo peso (dpsPercentPerPoint) sem precisar de uma escala
+/// própria. Recalculado do zero a cada chamada — subir de nível/raridade/
+/// fusão já reflete na próxima renderização do popup do mascote.
+export function computePetPower(petEntry) {
+  if (!petEntry) return 0;
+  const species = getPetSpecies(petEntry.speciesId);
+  if (!species) return 0;
+  const dpsPercent = getPetDamagePercent(petEntry) + getPetDpsBonusPercent(petEntry);
+  return powerFromStatPool({ dpsPercent });
+}
+
+/// Soma o Power de cada mascote atualmente equipado (até 4 slots, ver
+/// MAX_EQUIPPED_PETS em systems/pets.js) — todos os equipados contam, não
+/// só o que estaria ativo contra o monstro atual (o Power é uma força
+/// "potencial" do jogador, independente de qual mascote a mecânica de
+/// combate escolheria agora).
+export function computeEquippedPetsPower(state) {
+  let total = 0;
+  for (const uid of state.equippedPetUids || []) {
+    if (!uid) continue;
+    const pet = (state.pets || []).find((p) => p.uid === uid);
+    if (pet) total += computePetPower(pet);
+  }
+  return Math.round(total);
+}
+
+/// "Bônus da conta": tudo que fortalece o jogador SEM vir de um item ou
+/// mascote específico — árvore de habilidades passivas (pontos investidos +
+/// especial escolhido de cada etapa destravada), upgrades permanentes
+/// (Loja > Esmeralda), o bônus de %DPS por carta já descoberta (coleção,
+/// ver getCardCollectionDpsBonusPercent) e o turbo de %DPS por anúncio
+/// enquanto ativo (getActiveDpsBoostPercent). De propósito não some cada um
+/// desses pedaços separadamente pro jogador (só entra como 1 número dentro
+/// do Power total) — mesma soma de stats que qualquer outra fonte, só que
+/// aqui não amarrada a um item/mascote visível.
+function computeAccountBonusStats(state) {
+  const stats = {};
+  const add = (stat, value) => {
+    if (!value) return;
+    stats[stat] = (stats[stat] || 0) + value;
+  };
+
+  for (const stage of getSkillTree().stages) {
+    for (const row of stage.rows) {
+      for (const skill of row) {
+        const level = getSkillLevel(state, skill.id);
+        if (level > 0) add(skill.stat, skill.perLevel * level);
+      }
+    }
+    if (stage.special) {
+      const chosenId = getChosenSpecialId(state, stage.stageIndex);
+      const option = chosenId && stage.special.options.find((o) => o.id === chosenId);
+      if (option) {
+        for (const bonus of option.bonuses) add(bonus.stat, bonus.value);
+      }
+    }
+  }
+
+  for (const upgrade of UPGRADES) {
+    const level = state.upgrades[upgrade.id] || 0;
+    if (level > 0) add(upgrade.stat, level * upgrade.valuePerLevel);
+  }
+
+  add('dpsPercent', getCardCollectionDpsBonusPercent(state));
+  add('dpsPercent', getActiveDpsBoostPercent(state));
+
+  return stats;
+}
+
+export function computeAccountBonusPower(state) {
+  return powerFromStatPool(computeAccountBonusStats(state));
+}
+
+/// Power TOTAL do jogador — itens equipados + mascotes equipados + bônus da
+/// conta (habilidades/upgrades/coleção de cartas/turbo ativo, ver acima).
+/// Sempre recalculado do zero a partir do estado atual: qualquer troca de
+/// equipamento/mascote/carta/aprimoramento/ponto de habilidade já reflete
+/// na próxima chamada, nunca fica desatualizado.
 export function computePlayerPower(state) {
   let total = 0;
   for (const uid of Object.values(state.equipped || {})) {
@@ -150,13 +244,18 @@ export function computePlayerPower(state) {
     if (!entry) continue;
     total += computeItemPower(entry);
   }
+  total += computeEquippedPetsPower(state);
+  total += computeAccountBonusPower(state);
   return Math.round(total);
 }
 
-/// Mesma soma acima, mas a partir de um equipped_snapshot (ver
-/// showForeignEquipmentModal em ui/render.js) — pra calcular o Power total
-/// de OUTRO jogador a partir do que o servidor devolveu, sem precisar de
-/// nenhum campo extra sincronizado só pra isso.
+/// Mesma soma de itens acima, mas a partir de um equipped_snapshot (ver
+/// showForeignEquipmentModal em ui/render.js) — pra calcular o Power de
+/// EQUIPAMENTO de OUTRO jogador a partir do que o servidor devolveu, sem
+/// precisar de nenhum campo extra sincronizado só pra isso. Não inclui
+/// mascotes/bônus da conta (não são sincronizados) — é só o mesmo total
+/// mostrado no boneco de equipamentos daquele jogador, não o Power dele
+/// por completo (esse já vem sincronizado pronto, ver 0018_pvp_power.sql).
 export function computePowerFromEquippedSnapshot(equippedBySlot) {
   let total = 0;
   for (const entry of Object.values(equippedBySlot || {})) {
