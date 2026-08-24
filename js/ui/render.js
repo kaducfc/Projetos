@@ -17,6 +17,7 @@ import {
 } from '../systems/profile.js';
 import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
+import { computeItemPower, computePlayerPower, computePowerFromEquippedSnapshot } from '../systems/power.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds, countEquippedCardCopies } from '../systems/crafting.js';
 import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, getTranscendXpBonusPercent } from '../systems/leveling.js';
 import { EXPEDITION_TIERS, EXPEDITION_REWARDS } from '../data/events.js';
@@ -93,6 +94,9 @@ export const ESMERALDA_ICON = `<img class="currency-icon" src="assets/ui/currenc
 // data/cards.js) — substituem os antigos emoji 🃏/🧩 em todo lugar.
 export const CARD_ICON = `<img class="currency-icon" src="assets/ui/cards/card_generic.png" alt="Carta">`;
 export const CARD_FRAGMENT_ICON = `<img class="currency-icon" src="assets/ui/cards/card_fragment.png" alt="Fragmento de Carta">`;
+
+// Sistema de Power (ver systems/power.js) — sem asset próprio, emoji mesmo.
+export const POWER_ICON = '⚡';
 
 // Mesmo tratamento pro Ovo de Mascote (qualquer menção genérica a "ovo" —
 // contador, toast de drop, recompensa de evento/expedição/arena, etc.) e
@@ -704,6 +708,7 @@ function equipRingContentHtml(state, filterCategory = null, bulkSelect = null) {
         </div>
         ${equipStatsBoxHtml(state)}
       </div>
+      <div class="player-power-row">${POWER_ICON} Power: <strong>${formatInteger(computePlayerPower(state))}</strong></div>
       <div class="view-full-stats-row">
         <button class="view-full-stats-btn" data-view-full-stats>Ver Estatísticas</button>
       </div>
@@ -794,6 +799,7 @@ export function showForeignEquipmentModal(player) {
       <div class="paperdoll-overlay-col paperdoll-overlay-left">${PAPERDOLL_LEFT.map((id) => foreignSlotIconHtml(equippedBySlot, getSlot(id))).join('')}</div>
       <div class="paperdoll-overlay-col paperdoll-overlay-right">${PAPERDOLL_RIGHT.map((id) => foreignSlotIconHtml(equippedBySlot, getSlot(id))).join('')}</div>
     </div>
+    <div class="player-power-row">${POWER_ICON} Power: <strong>${formatInteger(computePowerFromEquippedSnapshot(equippedBySlot))}</strong></div>
   `);
 }
 
@@ -833,7 +839,7 @@ export function showForeignItemDetailModal(entry) {
   showModal('', `
     <div class="item-detail">
       <div class="item-detail-tier-badge">${tierBadge}</div>
-      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      ${withItemPowerBadge(entry, `<div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>`)}
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${statsHtml}</div>
@@ -922,6 +928,21 @@ function itemDetailStatsHtml(item, entry) {
   return [baseLine, secondaryLine, ...bonusLines].filter(Boolean).join('<br>');
 }
 
+// Canto inferior esquerdo do ÍCONE (não do popup inteiro — ver
+// .item-detail-icon-frame no CSS, que embrulha só o ícone pra posicionar
+// o badge relativo a ele) — Power daquele item específico (ver
+// computeItemPower em systems/power.js), sempre recalculado na hora a
+// partir do entry atual: aprimorar, virar Rank Master, ascender ou
+// encaixar/tirar carta já aparece aqui na próxima renderização do popup
+// (toda ação de item já reabre o popup, ver wireModalEvents em main.js).
+function itemPowerBadgeHtml(entry) {
+  return `<div class="item-detail-power-badge">${POWER_ICON} ${formatInteger(computeItemPower(entry))}</div>`;
+}
+
+function withItemPowerBadge(entry, iconHtml) {
+  return `<div class="item-detail-icon-frame">${iconHtml}${itemPowerBadgeHtml(entry)}</div>`;
+}
+
 /// 3 estados possíveis pra um item Tier God (ver systems/godItems.js):
 /// 1) sem atributo ainda (só armadura/anel/colar — arma já nasce com o
 ///    atributo do arquétipo) — mostra os 3 botões Força/Destreza/
@@ -995,7 +1016,7 @@ function godItemDetailHtml(state, uid, entry, item, pickerOpenSlot = null) {
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier God</div>
       <div class="item-detail-level-badge">Lv.${GOD_MIN_LEVEL}</div>
-      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      ${withItemPowerBadge(entry, `<div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>`)}
       <div class="item-detail-name">${item.name}</div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${godItemDetailStatsHtml(entry, item)}</div>
@@ -1042,7 +1063,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
   return `
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier ${item.zoneIndex + 1}</div>
-      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      ${withItemPowerBadge(entry, `<div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>`)}
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${itemDetailStatsHtml(item, entry)}</div>
@@ -2607,6 +2628,7 @@ function pvpBoardRowHtml(pvp, tierInfo, row) {
   const scoreLabel = tierInfo.hiddenScore ? '' : ` · ${RATING_ICON} ${formatInteger(row.rating)}`;
   const levelLabel = row.is_bot ? 'Bot' : `Nível ${formatNumber(row.hunter_level)}`;
   const winsLabel = row.is_bot ? '' : ` · ${WINS_ICON} ${formatInteger(row.wins || 0)}`;
+  const powerLabel = ` · ${POWER_ICON} ${formatInteger(row.power || 0)}`;
   // Prévia da recompensa diária (ver previewDailyArenaReward em
   // systems/pvp.js) — só faz sentido pra jogador de verdade, bot nunca
   // recebe nada (real_rank vem null da RPC pra linha de bot).
@@ -2620,7 +2642,7 @@ function pvpBoardRowHtml(pvp, tierInfo, row) {
       ${pvpProfileIconHtml(row.icon_id)}
       <div class="info">
         <div class="name">${nickHtml(row.nick, row.is_vip)}</div>
-        <div class="desc">${levelLabel}${scoreLabel}${winsLabel}</div>
+        <div class="desc">${levelLabel}${scoreLabel}${winsLabel}${powerLabel}</div>
         ${rewardLabel}
       </div>
       ${isSelf ? '<span class="pvp-self-tag">Você</span>' : ''}

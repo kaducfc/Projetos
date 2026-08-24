@@ -1533,6 +1533,31 @@ button:disabled {
   color: var(--danger);
 }
 
+/* Embrulha só o ícone (não o popup inteiro) pra posicionar o badge de Power
+   relativo a ELE (canto inferior esquerdo do ícone), não do card inteiro —
+   ver itemPowerBadgeHtml/withItemPowerBadge em ui/render.js. */
+.item-detail-icon-frame {
+  position: relative;
+  display: inline-block;
+}
+
+/* Power do item (ver systems/power.js) — sempre recalculado do entry
+   atual: aprimorar/Rank Master/ascender/encaixar-tirar carta já reflete
+   aqui na próxima renderização do popup. */
+.item-detail-power-badge {
+  position: absolute;
+  bottom: 4px;
+  left: -6px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--grad-gold);
+  border-radius: 8px;
+  padding: 2px 5px;
+  line-height: 1.3;
+  box-shadow: 0 2px 0 var(--gold-dark);
+}
+
 .item-detail-icon {
   font-size: 48px;
   margin-bottom: 6px;
@@ -2623,6 +2648,22 @@ button:disabled {
 /* Botão "Ver Estatísticas" logo abaixo do quadro compacto de 6 linhas (ver
    equipStatsBoxHtml/showFullStatsModal em ui/render.js) — abre a janela com
    TODOS os atributos calculados, não só os 6 que cabem na arte do frame. */
+/* Power total do jogador (soma do Power de cada item equipado, ver
+   computePlayerPower em systems/power.js) — logo abaixo do boneco de
+   equipamentos, ver equipRingContentHtml em ui/render.js. */
+.player-power-row {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin: 6px 0 0;
+}
+
+.player-power-row strong {
+  color: var(--gold-dark);
+  font-size: 16px;
+}
+
 .view-full-stats-row {
   display: flex;
   justify-content: center;
