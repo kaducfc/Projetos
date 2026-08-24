@@ -785,6 +785,7 @@ function wireModalEvents() {
           showToast(`${CARD_ICON} Já havia ${MAX_EQUIPPED_CARD_COPIES} cartas dessa equipadas — a carta voltou pro inventário.`);
         }
         fullRefresh();
+        syncPvpEquipmentSilently();
       });
       return;
     }
@@ -795,6 +796,7 @@ function wireModalEvents() {
         unequipSlot(state, unequipBtn.dataset.modalUnequip);
         hideModal();
         fullRefresh();
+        syncPvpEquipmentSilently();
       });
       return;
     }
@@ -952,6 +954,7 @@ function wireModalEvents() {
           showItemDetailModal(state, uid);
           showToast(`${CARD_ICON} Carta encaixada!`);
           fullRefresh();
+          if (isEquipped) syncPvpEquipmentSilently();
         }
       });
       return;
@@ -962,10 +965,12 @@ function wireModalEvents() {
       runModalAction(() => {
         const uid = Number(unsocketBtn.dataset.unsocketUid);
         const slotIndex = Number(unsocketBtn.dataset.unsocketSlot);
+        const isEquipped = Object.values(state.equipped).includes(uid);
         if (unsocketCard(state, uid, slotIndex)) {
           showItemDetailModal(state, uid);
           showToast(`${CARD_ICON} Carta removida.`);
           fullRefresh();
+          if (isEquipped) syncPvpEquipmentSilently();
         }
       });
       return;
@@ -1842,6 +1847,15 @@ async function refreshPvpTab({ silent = false } = {}) {
   if (!myProfile && !silent) {
     showToast('❌ Não foi possível conectar à Arena PvP agora. Tente de novo mais tarde.');
   }
+}
+
+// Equipar/desequipar um item, ou encaixar/tirar uma carta de um item já
+// equipado, muda o que outros jogadores veem no boneco somente-leitura da
+// aba Ranks (ver equipped_snapshot) — sincroniza na hora, igual o clique
+// manual em "Sincronizar", em vez de esperar o próximo ciclo automático de
+// PVP_AUTO_SYNC_INTERVAL_MS (até 5min desatualizado).
+function syncPvpEquipmentSilently() {
+  refreshPvpTab({ silent: true });
 }
 
 async function handlePvpAttack(defenderId, isBot) {
