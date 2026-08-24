@@ -1435,6 +1435,60 @@ export function renderCardsTab(state) {
   `;
 }
 
+// Nome legível de cada stat que aparece em bonuses de carta (ver
+// CARD_EFFECTS/GOD_CARDS em data/cards.js) — próprio da carta em vez de
+// reusar BONUS_STAT_LABEL (ui/render.js): aquele hardcoda o sinal "+" e
+// nunca precisou lidar com valor negativo (nenhum item tem), enquanto
+// várias cartas têm efeito colateral negativo (ex: -5% Velocidade de
+// Ataque) — cardBonusLineHtml abaixo trata o sinal certo pros dois casos.
+const CARD_DETAIL_BONUS_STAT_NAME = {
+  dpsPercent: 'DPS',
+  hpPercent: 'Vida',
+  hpFlat: 'Vida',
+  armorFlat: 'Armadura',
+  armorPercent: 'Armadura',
+  attackSpeedPercent: 'Velocidade de Ataque',
+  critChancePercent: 'Chance Crítica',
+  critDamagePercent: 'Dano Crítico',
+  danoFisicoPercent: 'Dano Físico',
+  danoPerfuracaoPercent: 'Dano Perfurante',
+  danoMagicoPercent: 'Dano Mágico',
+  dodgePercent: 'Esquiva',
+  petDamagePercent: 'Dano de Mascote',
+  goldPercent: 'Ouro',
+  dropPercent: 'Chance de Material',
+  forca: 'Força',
+  destreza: 'Destreza',
+  inteligencia: 'Inteligência',
+  lifestealFlat: 'Cura por Golpe',
+  doubleHitChance: 'Chance de Golpe Duplo',
+};
+
+const CARD_DETAIL_BONUS_PERCENT_STATS = new Set([
+  'dpsPercent', 'hpPercent', 'armorPercent', 'attackSpeedPercent', 'critChancePercent', 'critDamagePercent',
+  'danoFisicoPercent', 'danoPerfuracaoPercent', 'danoMagicoPercent', 'dodgePercent', 'petDamagePercent',
+  'goldPercent', 'dropPercent', 'doubleHitChance',
+]);
+
+function cardBonusLineHtml(bonus) {
+  const name = CARD_DETAIL_BONUS_STAT_NAME[bonus.stat] || bonus.stat;
+  const sign = bonus.value >= 0 ? '+' : '';
+  const value = CARD_DETAIL_BONUS_PERCENT_STATS.has(bonus.stat) ? `${bonus.value.toFixed(1)}%` : formatNumber(bonus.value);
+  return `${sign}${value} ${name}`;
+}
+
+// Um bônus por linha (pedido do usuário — antes vinha tudo numa frase só,
+// separada por vírgula, ver card.description/CARD_EFFECTS em
+// data/cards.js) — gerado direto de card.bonuses (a mesma lista que
+// stats.js já usa pra aplicar o efeito de verdade), não do texto cru, pra
+// nunca desalinhar do que a carta realmente concede. card.description
+// continua existindo como fallback só pro caso (hoje inexistente) de uma
+// carta sem nenhum bonus.
+function cardBonusListHtml(card) {
+  const lines = (card.bonuses || []).map(cardBonusLineHtml);
+  return lines.length ? lines.join('<br>') : card.description;
+}
+
 function cardDetailHtml(state, card) {
   const discovered = isCardDiscovered(state, card.id);
   const claimable = canClaimCardReward(state, card.id);
@@ -1475,7 +1529,7 @@ function cardDetailHtml(state, card) {
       <div class="card-detail-image">${iconMarkup(card.image, card.emoji, card.name)}</div>
       <div class="card-detail-info">
         <div class="card-detail-name">${CARD_ICON} ${card.name}</div>
-        <div class="card-detail-desc">${card.description}</div>
+        <div class="card-detail-desc">${cardBonusListHtml(card)}</div>
         ${discovered ? `<div class="card-detail-owned">Você tem: ${formatNumber(totalOwned)}</div>` : ''}
         ${actionHtml}
         <div class="card-fragment-box">
