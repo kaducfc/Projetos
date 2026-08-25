@@ -375,7 +375,7 @@ const GOD_CARD_DEFS = [
     bonuses: [
       { stat: 'reflectPercent', value: 15 },
       { stat: 'hpFlat', value: 300 },
-      { stat: 'dpsFlat', value: 10 },
+      { stat: 'dpsPercent', value: 10 },
     ],
   },
   {
@@ -411,7 +411,7 @@ const GOD_CARD_BONUS_STAT_LABEL = {
   dpsPercent: 'DPS', dpsFlat: 'DPS', hpPercent: 'Vida', hpFlat: 'Vida',
   armorFlat: 'Armadura', armorPercent: 'Armadura', attackSpeedPercent: 'Velocidade de Ataque',
   critChancePercent: 'Chance Crítica', critDamagePercent: 'Dano Crítico',
-  doubleHitChance: 'Golpe Duplo', reflectPercent: 'Reflexo de Dano',
+  doubleHitChance: 'Golpe Duplo', reflectPercent: 'Reflete',
   forca: 'Força', destreza: 'Destreza', inteligencia: 'Inteligência',
 };
 const GOD_CARD_PERCENT_STATS = new Set([
