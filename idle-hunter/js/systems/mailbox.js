@@ -27,8 +27,8 @@ export async function fetchMailbox() {
 }
 
 // reward_type/reward2_type possíveis (ver check constraint em
-// 0010/0013): 'none', 'card_fragment', 'pet_fragment', 'egg',
-// 'random_card', 'gold', 'esmeralda'.
+// 0010/0013/0020): 'none', 'card_fragment', 'pet_fragment', 'egg',
+// 'random_card', 'gold', 'esmeralda', 'awakening_shard'.
 export function mailHasReward(message) {
   return message.reward_type !== 'none' || !!message.reward2_type;
 }
@@ -71,6 +71,8 @@ function applyMailReward(state, type, amount) {
     state.gold = (state.gold || 0) + amount;
   } else if (type === 'esmeralda') {
     state.cash = (state.cash || 0) + amount;
+  } else if (type === 'awakening_shard') {
+    state.awakeningShards = (state.awakeningShards || 0) + amount;
   } else if (type === 'random_card') {
     const card = CARDS[Math.floor(Math.random() * CARDS.length)];
     if (card) {
