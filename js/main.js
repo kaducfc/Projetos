@@ -3,7 +3,7 @@ import { computePlayerStats, getElementalResistance } from './systems/stats.js';
 import {
   getCurrentMonster, applyDamage, ensureMonsterSpawned, armorReduction, resolveHit,
   advanceHitClock, setSelectedMonsters, canSelectMonster, MAX_SELECTED_MONSTERS, resolvePetHit, rollDodge,
-  resolveDoubleHit,
+  resolveDoubleHit, rollCrit,
 } from './systems/combat.js';
 import { findMaterialInfo, findMonsterSourceForMaterial, BOSSES, ZONES, ZONE_COUNT } from './data/monsters.js';
 import { canTranscend, unlockTranscend, transcend, buyAwakeningItem } from './systems/awakening.js';
@@ -460,11 +460,14 @@ function tick() {
   // monstro sozinho, com ouro/drop/XP normais). Checado DEPOIS do "morreu"
   // acima de propósito: um golpe letal mata o jogador mesmo se o reflexo
   // também mataria o monstro no mesmo tick (reflexo nunca salva de um
-  // golpe fatal).
+  // golpe fatal). Também pode critar — mesma chance/dano crítico do
+  // jogador (ver rollCrit em systems/combat.js), pedido explícito do
+  // usuário.
   if (!dodged && stats.reflectChance > 0) {
-    const reflected = rawAttack * (stats.reflectChance / 100);
+    const crit = rollCrit(stats);
+    const reflected = rawAttack * (stats.reflectChance / 100) * crit.multiplier;
     const reflectEvent = applyDamage(state, reflected, stats);
-    spawnReflectDamagePopup(reflected);
+    spawnReflectDamagePopup(reflected, crit.isCrit);
     if (reflectEvent) {
       pulseMonster();
       refreshCombatOnly();
