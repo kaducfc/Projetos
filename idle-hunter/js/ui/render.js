@@ -2693,7 +2693,7 @@ function pvpMyStatusHtml(myProfile, tierInfo) {
 function pvpBoardRowHtml(pvp, tierInfo, row) {
   const isSelf = !row.is_bot && pvp.myProfile && row.entity_id === pvp.myProfile.id;
   const scoreLabel = tierInfo.hiddenScore ? '' : ` · ${RATING_ICON} ${formatInteger(row.rating)}`;
-  const levelLabel = row.is_bot ? 'Bot' : `Nível ${formatNumber(row.hunter_level)}`;
+  const levelLabel = row.is_bot ? 'Bot' : `${RANK_LEVEL_ICON} ${formatNumber(row.hunter_level)}`;
   const winsLabel = row.is_bot ? '' : ` · ${WINS_ICON} ${formatInteger(row.wins || 0)}`;
   const powerLabel = ` · ${POWER_ICON} ${formatInteger(row.power || 0)}`;
   // Prévia da recompensa diária (ver previewDailyArenaReward em
@@ -2773,7 +2773,7 @@ function tickPvpDailyCountdown() {
 /// rank). A prévia de pontos usa previewPvpAttackSwing (client-side, mesma
 /// fórmula da Edge Function) — some no Lendário, onde pontuação é oculta.
 function pvpCombatOptionHtml(opponent) {
-  const levelLabel = opponent.is_bot ? 'Bot' : `Nível ${formatNumber(opponent.hunter_level)}`;
+  const levelLabel = opponent.is_bot ? 'Bot' : `${RANK_LEVEL_ICON} ${formatNumber(opponent.hunter_level)}`;
   const swingLabel = opponent.swing
     ? `<div class="desc">Vencendo: <span class="pvp-delta-up">+${opponent.swing.winDelta}</span> · Perdendo: <span class="pvp-delta-down">${opponent.swing.lossDelta}</span></div>`
     : '';
