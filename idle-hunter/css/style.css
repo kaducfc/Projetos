@@ -4082,6 +4082,30 @@ button:disabled {
   color: var(--text-dim);
 }
 
+.profile-language-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.profile-language-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.profile-language-btn.active {
+  border-color: var(--accent, #6d8cff);
+  transform: scale(1.05);
+  box-shadow: 0 2px 0 var(--border);
+}
+
 /* ---------------- Modal / Toast ---------------- */
 
 #modal-overlay {
