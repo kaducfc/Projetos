@@ -57,6 +57,10 @@ export const POWER_WEIGHTS = {
   petDamagePercentPerPoint: 2,
   dodgePercentPerPoint: 6,
   doubleHitChancePerPoint: 7,
+  // Só dispara quando o jogador TOMA dano (não some sozinho, depende do
+  // monstro bater) — peso um pouco abaixo de dpsPercent por isso, mas
+  // ainda alto (é dano extra de verdade, ver reflectChance em stats.js).
+  reflectPercentPerPoint: 6,
 };
 
 /// Soma um objeto plano de stats brutos (mesma forma que getEnhancedStats()
@@ -115,6 +119,7 @@ function statPoolToPower(stats) {
   power += (stats.petDamagePercent || 0) * w.petDamagePercentPerPoint;
   power += (stats.dodgePercent || 0) * w.dodgePercentPerPoint;
   power += (stats.doubleHitChance || 0) * w.doubleHitChancePerPoint;
+  power += (stats.reflectPercent || 0) * w.reflectPercentPerPoint;
 
   return power;
 }
