@@ -41,7 +41,7 @@ const GOLD_REWARD_PER_RATING = 0.05; // um pouco mais de ouro atacando alvos mai
 // legítimo no fim de jogo atual.
 const SANE_MAX = {
   dps: 5_000_000, max_hp: 20_000_000, armor: 500_000, crit_chance: 100, crit_damage: 2000,
-  dodge_chance: 95, attack_speed_per_sec: 30,
+  dodge_chance: 95, attack_speed_per_sec: 30, reflect_percent: 500,
 };
 
 // ---------------------------------------------------------------
@@ -78,6 +78,7 @@ interface Snapshot {
   dodge_chance: number;
   pet_dps: number;
   attack_speed_per_sec: number;
+  reflect_percent: number;
 }
 
 function clampSnapshot(s: Snapshot): Snapshot {
@@ -90,6 +91,7 @@ function clampSnapshot(s: Snapshot): Snapshot {
     dodge_chance: Math.min(Math.max(0, s.dodge_chance), SANE_MAX.dodge_chance),
     pet_dps: Math.min(Math.max(0, s.pet_dps || 0), SANE_MAX.dps),
     attack_speed_per_sec: Math.min(Math.max(0.05, s.attack_speed_per_sec || 1), SANE_MAX.attack_speed_per_sec),
+    reflect_percent: Math.min(Math.max(0, s.reflect_percent || 0), SANE_MAX.reflect_percent),
   };
 }
 
@@ -283,8 +285,18 @@ Deno.serve(async (req) => {
   // (dano causado, dano do mascote — ver pvpResultContentHtml).
   const attackerBreakdown = effectiveDpsBreakdown(attackerSnap, defenderSnap);
   const defenderBreakdown = effectiveDpsBreakdown(defenderSnap, attackerSnap);
-  const attackerEffectiveDps = attackerBreakdown.total;
-  const defenderEffectiveDps = defenderBreakdown.total;
+
+  // Reflexo de Dano (ver reflect_percent, 0022_pvp_reflect.sql, concedido
+  // por carta — ex: Caeloryx, Tier God). Regra pedida pelo usuário: na
+  // Arena (diferente do PvE, que reflete o ataque BRUTO do monstro — ver
+  // js/main.js tick()) o reflexo é uma % do dano que o ADVERSÁRIO causa
+  // DEPOIS de todos os cálculos (attackerBreakdown/defenderBreakdown.total
+  // já saem daqui com crítico/esquiva/armadura aplicados) — cada lado
+  // reflete uma fatia do dano que RECEBE de volta como dps extra próprio.
+  const attackerReflectDps = defenderBreakdown.total * (attackerSnap.reflect_percent / 100);
+  const defenderReflectDps = attackerBreakdown.total * (defenderSnap.reflect_percent / 100);
+  const attackerEffectiveDps = attackerBreakdown.total + attackerReflectDps;
+  const defenderEffectiveDps = defenderBreakdown.total + defenderReflectDps;
   const attackerTtk = timeToKill(defenderSnap.max_hp, attackerEffectiveDps);
   const defenderTtk = timeToKill(attackerSnap.max_hp, defenderEffectiveDps);
   const attackerWins = attackerTtk < defenderTtk;
@@ -295,9 +307,9 @@ Deno.serve(async (req) => {
   // 1 — ver clampSnapshot) dariam Infinity; cai pra 0 dano nesse caso raro.
   const rawFightDuration = Math.min(attackerTtk, defenderTtk);
   const fightDurationSec = Number.isFinite(rawFightDuration) ? rawFightDuration : 0;
-  const attackerDamageDealt = Math.round(attackerBreakdown.total * fightDurationSec);
+  const attackerDamageDealt = Math.round(attackerEffectiveDps * fightDurationSec);
   const attackerPetDamageDealt = Math.round(attackerBreakdown.pet * fightDurationSec);
-  const defenderDamageDealt = Math.round(defenderBreakdown.total * fightDurationSec);
+  const defenderDamageDealt = Math.round(defenderEffectiveDps * fightDurationSec);
   const defenderPetDamageDealt = Math.round(defenderBreakdown.pet * fightDurationSec);
 
   // Golpes de cada lado durante a luta (mesmo relógio pro dano do caçador
