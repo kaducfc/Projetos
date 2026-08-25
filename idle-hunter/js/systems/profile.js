@@ -84,3 +84,18 @@ export function toggleMusic(state) {
   state.settings.musicOn = !state.settings.musicOn;
   return state.settings.musicOn;
 }
+
+// ---------------------------------------------------------------
+// Idioma: 'pt' (padrão) ou 'en'. Ver js/i18n.js pra tradução de fato.
+// ---------------------------------------------------------------
+
+export function getLanguage(state) {
+  return (state.settings && state.settings.language) || 'pt';
+}
+
+export function setLanguage(state, lang) {
+  if (lang !== 'pt' && lang !== 'en') return getLanguage(state);
+  state.settings = state.settings || {};
+  state.settings.language = lang;
+  return lang;
+}
