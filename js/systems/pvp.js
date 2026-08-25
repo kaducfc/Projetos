@@ -119,6 +119,11 @@ export async function syncProfile(state, stats, playerName, profileIconId) {
       dodge_chance: stats.dodgeChance,
       pet_dps: stats.petDps || 0,
       attack_speed_per_sec: stats.attackSpeedPerSec || 1,
+      // Reflexo de Dano (ver reflectChance em systems/stats.js + 0022_pvp_reflect.sql)
+      // — usado pela Edge Function resolve-pvp-battle pra refletir % do
+      // dano que o ADVERSÁRIO causa (já pós-crítico/esquiva/armadura) de
+      // volta nele, na Arena.
+      reflect_percent: stats.reflectChance || 0,
       // Power total (ver js/systems/power.js + 0018_pvp_power.sql) — mostrado
       // na lista de jogadores da Arena (ver pvpBoardRowHtml em ui/render.js).
       power: computePlayerPower(state),

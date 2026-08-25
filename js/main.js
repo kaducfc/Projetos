@@ -440,7 +440,9 @@ function tick() {
   }
 
   const reduction = totalIncomingReduction(stats, monster.element);
-  const incoming = rollDodge(stats) ? 0 : monster.dps * (1 - reduction) * (TICK_MS / 1000);
+  const dodged = rollDodge(stats);
+  const rawAttack = monster.dps * (TICK_MS / 1000);
+  const incoming = dodged ? 0 : rawAttack * (1 - reduction);
   currentHp -= incoming;
 
   if (currentHp <= 0) {
@@ -449,16 +451,18 @@ function tick() {
   }
 
   // Reflexo de Dano (ver reflectChance em systems/stats.js, concedido por
-  // carta — ex: Caeloryx, Tier God): parte do dano que o jogador acabou de
-  // TOMAR volta pro monstro na hora, mesmo esquema de applyDamage() que um
-  // hit normal usa (então pode matar o monstro sozinho, com direito a
-  // ouro/drop/XP igual qualquer outro golpe). Só reflete o que realmente
-  // foi tomado — esquivou (incoming = 0), não reflete nada. Checado DEPOIS
-  // do "morreu" acima de propósito: um golpe letal mata o jogador mesmo se
-  // o reflexo também mataria o monstro no mesmo tick (reflexo nunca salva
-  // de um golpe fatal).
-  if (incoming > 0 && stats.reflectChance > 0) {
-    const reflected = incoming * (stats.reflectChance / 100);
+  // carta — ex: Caeloryx, Tier God): pedido explícito do usuário — baseado
+  // no ATAQUE TOTAL do monstro (rawAttack, sem descontar armadura/
+  // resistência elemental — a mesma redução que já protegeu o jogador não
+  // desconta de novo aqui), não no `incoming` (que já foi reduzido). Só
+  // esquivar zera o reflexo (não houve golpe nenhum pra refletir). Mesmo
+  // esquema de applyDamage() que um hit normal usa (então pode matar o
+  // monstro sozinho, com ouro/drop/XP normais). Checado DEPOIS do "morreu"
+  // acima de propósito: um golpe letal mata o jogador mesmo se o reflexo
+  // também mataria o monstro no mesmo tick (reflexo nunca salva de um
+  // golpe fatal).
+  if (!dodged && stats.reflectChance > 0) {
+    const reflected = rawAttack * (stats.reflectChance / 100);
     const reflectEvent = applyDamage(state, reflected, stats);
     spawnReflectDamagePopup(reflected);
     if (reflectEvent) {
