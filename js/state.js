@@ -134,6 +134,9 @@ export function createDefaultState() {
     settings: {
       soundOn: true,
       musicOn: true,
+      // Idioma do jogo: 'pt' (Português do Brasil, padrão) ou 'en' (Inglês).
+      // Ver js/i18n.js — troca via Perfil > Linguagem.
+      language: 'pt',
     },
 
     // Turbo de DPS via anúncio (ver data/shop.js DPS_BOOST_*, systems/shop.js

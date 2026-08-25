@@ -42,7 +42,8 @@ import {
   getBestEquippedPet,
 } from './systems/pets.js';
 import { buySkillLevel, buySpecial, resetSkillTree } from './systems/skills.js';
-import { setPlayerName, toggleSound, toggleMusic, selectProfileIcon, isValidPlayerName, getPlayerName } from './systems/profile.js';
+import { setPlayerName, toggleSound, toggleMusic, selectProfileIcon, isValidPlayerName, getPlayerName, setLanguage as setLanguageSetting } from './systems/profile.js';
+import { initLanguage, setLanguage as setUiLanguage, translateContainer } from './i18n.js';
 import { DEFAULT_PLAYER_NAME } from './data/profile.js';
 import {
   renderAll, renderTopBar, renderHunterLevel, renderCombatStats, renderMonster, renderNoMonsterSelected,
@@ -74,6 +75,7 @@ const PVP_AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 
 let state = loadState() || createDefaultState();
 ensureMonsterSpawned(state);
+initLanguage(state);
 
 // Not persisted on purpose — a short combat timer shouldn't survive a reload
 // or an offline gap, so every fresh session gives a clean 30s attempt.
@@ -1223,6 +1225,19 @@ function wireModalEvents() {
       return;
     }
 
+    const setLanguageBtn = e.target.closest('[data-set-language]');
+    if (setLanguageBtn) {
+      runModalAction(() => {
+        setUiLanguage(setLanguageBtn.dataset.setLanguage);
+        setLanguageSetting(state, setLanguageBtn.dataset.setLanguage);
+        translateContainer(document.body);
+        renderTopBar(state);
+        fullRefresh();
+        showProfileModal(state);
+      });
+      return;
+    }
+
     const selectIconBtn = e.target.closest('[data-select-profile-icon]');
     if (selectIconBtn) {
       runModalAction(() => {
@@ -2244,6 +2259,7 @@ function init() {
     arenaDeadline = Date.now() + ARENA_RUN_DURATION_MS;
   }
   fullRefresh();
+  translateContainer(document.body);
   armBossTimer();
 
   document.getElementById('modal-close').addEventListener('click', () => {

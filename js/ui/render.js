@@ -15,6 +15,7 @@ import {
   getPlayerName, isFirstNameChangeFree, canAffordNameChange, getSelectedProfileIcon,
   isProfileIconUnlocked, isSoundOn, isMusicOn,
 } from '../systems/profile.js';
+import { getLanguage, translateText, translateContainer } from '../i18n.js';
 import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
 import { computePlayerStats } from '../systems/stats.js';
 import { computeItemPower, computePetPower, computePlayerPower, computePowerFromEquippedSnapshot } from '../systems/power.js';
@@ -295,7 +296,7 @@ export function renderTopBar(state) {
   const profileBtn = document.getElementById('profile-btn');
   const profileIcon = getSelectedProfileIcon(state);
   document.getElementById('profile-btn-icon').src = profileIcon.image;
-  profileBtn.title = `${getPlayerName(state)} — Perfil`;
+  profileBtn.title = translateText(`${getPlayerName(state)} — Perfil`);
 }
 
 /// Nível/XP do caçador — só libera zonas/chefes por enquanto (ver
@@ -304,7 +305,7 @@ export function renderTopBar(state) {
 /// partir do 201, ver xpToNextLevel).
 export function renderHunterLevel(state) {
   const level = state.hunterLevel || 1;
-  document.getElementById('hunter-level-label').textContent = `Nível de Caça ${level}`;
+  document.getElementById('hunter-level-label').textContent = translateText(`Nível de Caça ${level}`);
   const xp = state.hunterXp || 0;
   const next = xpToNextLevel(level);
   const pct = next > 0 ? Math.max(0, Math.min(100, (xp / next) * 100)) : 0;
@@ -315,7 +316,7 @@ export function renderHunterLevel(state) {
 export function renderCombatStats(stats, monster) {
   document.getElementById('attack-speed-value').textContent = `${stats.attackSpeedPerSec.toFixed(2)}/s`;
   const damageType = getDamageType(stats.activeDamageType);
-  document.getElementById('dps-label').textContent = `${damageType.emoji} DPS (${damageType.name})`;
+  document.getElementById('dps-label').textContent = translateText(`${damageType.emoji} DPS (${damageType.name})`);
   document.getElementById('dps-value').textContent = formatNumber(stats.dps);
   document.getElementById('armor-value').textContent = formatNumber(stats.armor);
   document.getElementById('crit-chance-value').textContent = formatPercent(stats.critChance);
@@ -333,10 +334,10 @@ export function renderCombatStats(stats, monster) {
   if (monster) {
     const mod = elementDamageModifier(stats.weaponElement, monster.element);
     if (mod > 0) {
-      modEl.textContent = `⚔️ Vantagem elemental (+${Math.round(mod * 100)}%)`;
+      modEl.textContent = translateText(`⚔️ Vantagem elemental (+${Math.round(mod * 100)}%)`);
       modEl.className = 'advantage';
     } else if (mod < 0) {
-      modEl.textContent = `⚠️ Desvantagem elemental (${Math.round(mod * 100)}%)`;
+      modEl.textContent = translateText(`⚠️ Desvantagem elemental (${Math.round(mod * 100)}%)`);
       modEl.className = 'disadvantage';
     } else {
       modEl.textContent = '';
@@ -518,6 +519,7 @@ export function renderInventoryTab(state, filterCategory = null, bulkSelect = nu
   const container = document.getElementById('tab-inventory');
   const banner = pageBannerHtml('Equipamentos');
   container.innerHTML = banner + equipRingContentHtml(state, filterCategory, bulkSelect);
+  translateContainer(container);
 }
 
 function bulkSelectToolbarHtml(bulkSelect) {
@@ -1338,6 +1340,7 @@ export function renderUpgradesTab(state, resetConfirming = false) {
     ${header}
     ${skillTreeHtml(state)}
   `;
+  translateContainer(container);
 }
 
 // ---------------------------------------------------------------
@@ -1434,6 +1437,7 @@ export function renderCardsTab(state) {
     <h3 class="cards-section-title">${CARD_ICON} Cartas de Monstros <span class="cards-collected">Colecionadas: ${commonOwned}/${commonCards.length}</span> <span class="cards-dps-bonus">+${commonDpsBonus}% DPS</span></h3>
     <div class="card-grid">${commonCards.map((c) => cardTileHtml(state, c)).join('')}</div>
   `;
+  translateContainer(container);
 }
 
 // Nome legível de cada stat que aparece em bonuses de carta (ver
@@ -1654,6 +1658,7 @@ export function renderPetsTab(state, sortMode = null) {
     ${petSortRowHtml(sortMode)}
     <div class="equip-inventory-grid">${petsHtml}</div>
   `;
+  translateContainer(container);
 }
 
 function fusePartnersHtml(state, uid) {
@@ -2090,6 +2095,7 @@ export function renderEventsTab(state, arenaRunRemainingMs = null, expeditionCar
     ${state.arenaRunActive ? arenaFightPanelHtml(state, arenaRunRemainingMs) : ''}
     ${expeditionSectionHtml(state, expeditionCardsVisible)}
   </div>`;
+  translateContainer(container);
 }
 
 // ---------------------------------------------------------------
@@ -2155,6 +2161,7 @@ export function renderAchievementsTab(state) {
     </button>
     <div class="achievement-list">${achievementsHtml}</div>
   `;
+  translateContainer(container);
 }
 
 // ---------------------------------------------------------------
@@ -2262,6 +2269,7 @@ export function renderDailyMissionsTab(state) {
     ${budgetUsed ? '<p class="shop-note">Você já concluiu a missão hoje. Volte amanhã!</p>' : ''}
     <div class="achievement-list">${slotsHtml}</div>
   `;
+  translateContainer(container);
   tickDailyMissionCountdown();
 }
 
@@ -2294,6 +2302,7 @@ export function renderShopTab(state, activeSubTab) {
     </div>
     ${body}
   `;
+  translateContainer(container);
 }
 
 /// 2 bônus obtidos assistindo anúncio (sem gastar Esmeralda), cada um com
@@ -2462,6 +2471,7 @@ export function renderTranscendTab(state) {
     <p class="shop-note">Ao transcender, recebe 1 ${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME}.</p>
     ${transcendResetInfoHtml()}
   `;
+  translateContainer(container);
 }
 
 /// Lista o que reseta (esquerda) vs o que se mantém (direita) ao
@@ -2750,6 +2760,7 @@ export function renderPvpTab(state, pvp) {
     <h4 class="shop-section-title">${tierInfo.icon} Tier ${tierInfo.label}</h4>
     <div class="achievement-list">${boardHtml}</div>
   `;
+  translateContainer(container);
   if (myProfile) tickPvpDailyCountdown();
 }
 
@@ -2929,6 +2940,7 @@ export function renderRanksTab(ranksData, myProfile) {
     <h4 class="shop-section-title">${RANKS_SECTIONS[activeSection].title}</h4>
     <div class="achievement-list">${ranksSectionListHtml({ ...ranksData, activeSection }, myId)}</div>
   `;
+  translateContainer(container);
   if (activeSection === 'arena') tickRanksWeeklyCountdown();
 }
 
@@ -2983,6 +2995,7 @@ export function renderMailboxTab(mailboxData) {
     ${hasClaimable ? `<button class="transcend-btn" data-mail-claim-all>${GIFT_ICON} Resgatar Todos</button>` : ''}
     <div class="achievement-list">${listHtml}</div>
   `;
+  translateContainer(container);
 }
 
 /// Janela de detalhe de UMA mensagem — corpo + linha(s) de recompensa +
@@ -3294,6 +3307,12 @@ function profileModalHtml(state) {
       <span>🎵 Música</span>
       <button class="profile-toggle-btn ${isMusicOn(state) ? 'on' : 'off'}" data-toggle-music>${isMusicOn(state) ? 'On' : 'Off'}</button>
     </div>
+
+    <div class="shop-section-title">Linguagem</div>
+    <div class="profile-language-row">
+      <button class="profile-language-btn ${getLanguage() === 'pt' ? 'active' : ''}" data-set-language="pt" title="Português (Brasil)">🇧🇷</button>
+      <button class="profile-language-btn ${getLanguage() === 'en' ? 'active' : ''}" data-set-language="en" title="English (US)">🇺🇸</button>
+    </div>
   `;
 }
 
@@ -3399,6 +3418,7 @@ export function showLootPopup(goldGained, drops) {
   const el = document.createElement('div');
   el.className = 'loot-popup-entry';
   el.innerHTML = parts.join(' ');
+  translateContainer(el);
   container.appendChild(el);
   while (container.childNodes.length > 3) container.removeChild(container.firstChild);
   setTimeout(() => el.remove(), 2500);
@@ -3421,15 +3441,18 @@ export function showToast(message) {
   const el = document.createElement('div');
   el.className = 'toast';
   el.innerHTML = message;
+  translateContainer(el);
   container.appendChild(el);
   setTimeout(() => el.remove(), 3000);
 }
 
 export function showModal(title, bodyHtml) {
   const titleEl = document.getElementById('modal-title');
-  titleEl.textContent = title;
+  titleEl.textContent = translateText(title);
   titleEl.style.display = title ? '' : 'none';
-  document.getElementById('modal-body').innerHTML = bodyHtml;
+  const bodyEl = document.getElementById('modal-body');
+  bodyEl.innerHTML = bodyHtml;
+  translateContainer(bodyEl);
   document.getElementById('modal-overlay').classList.remove('hidden');
 }
 
