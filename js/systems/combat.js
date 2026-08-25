@@ -109,10 +109,19 @@ function dpsTakenBaseAtStage(canonicalStage) {
   return breakpointBase * Math.pow(LATE_GAME_DPS_TAKEN_GROWTH, canonicalStage - LATE_GAME_HP_BREAKPOINT_STAGE);
 }
 
+// Zonas 7-10 (canonicalStage 70/80/90/100 — cada zona usa 1 estágio fixo,
+// zoneIndex+1 * ZONE_SIZE, ver data/monsters.js): dano de monstros E chefes
+// reduzido em 20%, pedido explícito do usuário. Só o dano que o jogador
+// TOMA (essa função) — HP/Ouro dos monstros dessas zonas não mudam.
+const LATE_ZONE_DPS_TAKEN_REDUCTION_START_STAGE = 70;
+const LATE_ZONE_DPS_TAKEN_REDUCTION_MULT = 0.8;
+
 export function monsterDamagePerSecond(canonicalStage, isBoss, powerRank) {
   const base = dpsTakenBaseAtStage(canonicalStage);
   const mult = powerRank != null ? RANK_MULT[powerRank] : (isBoss ? BOSS_DPS_TAKEN_MULT : 1);
-  return Math.max(0.1, base * mult);
+  const lateZoneReduction = canonicalStage >= LATE_ZONE_DPS_TAKEN_REDUCTION_START_STAGE
+    ? LATE_ZONE_DPS_TAKEN_REDUCTION_MULT : 1;
+  return Math.max(0.1, base * mult * lateZoneReduction);
 }
 
 /// Rolled independently for every single hit — so a fast-attack-speed build
