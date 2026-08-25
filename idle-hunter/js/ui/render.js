@@ -646,7 +646,7 @@ export function showFullStatsModal(state) {
     ['🎯 Chance Crítica', formatPercent(stats.critChance)],
     ['💢 Dano Crítico', formatPercent(stats.critDamage)],
     ['🌀 Esquiva', formatPercent(stats.dodgeChance)],
-    ['🔱 Reflexo de Dano', formatPercent(stats.reflectChance)],
+    ['🔱 Reflete', formatPercent(stats.reflectChance)],
     ['💚 Cura por Golpe', formatNumber(stats.lifesteal)],
     ['🌈 Elemento de Ataque', elementBadgeHtml(stats.weaponElement)],
   ];
@@ -1372,7 +1372,7 @@ const CARD_BONUS_LABELS = {
   dpsFlat: '💥 DPS', forca: '💪 Força', destreza: '🏃 Destreza', inteligencia: '🧠 Inteligência',
   lifestealFlat: '💚 Cura por Golpe', petDamagePercent: '🐾 Dano de Mascote', dodgePercent: '🌀 Esquiva',
   danoFisicoPercent: '🗡️ Dano Físico', danoPerfuracaoPercent: '🏹 Dano Perfurante', danoMagicoPercent: '🔮 Dano Mágico',
-  doubleHitChance: '👊 Golpe Duplo', reflectPercent: '🔱 Reflexo de Dano',
+  doubleHitChance: '👊 Golpe Duplo', reflectPercent: '🔱 Reflete',
 };
 
 const CARD_BONUS_PERCENT_STATS = new Set(['doubleHitChance']);
@@ -1464,7 +1464,7 @@ const CARD_DETAIL_BONUS_STAT_NAME = {
   inteligencia: 'Inteligência',
   lifestealFlat: 'Cura por Golpe',
   doubleHitChance: 'Chance de Golpe Duplo',
-  reflectPercent: 'Reflexo de Dano',
+  reflectPercent: 'Reflete',
 };
 
 const CARD_DETAIL_BONUS_PERCENT_STATS = new Set([
