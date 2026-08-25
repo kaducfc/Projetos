@@ -47,7 +47,7 @@ import { DEFAULT_PLAYER_NAME } from './data/profile.js';
 import {
   renderAll, renderTopBar, renderHunterLevel, renderCombatStats, renderMonster, renderNoMonsterSelected,
   renderInventoryTab, renderUpgradesTab, renderBossTimer,
-  renderPlayerHp, spawnDamagePopup, spawnPetDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
+  renderPlayerHp, spawnDamagePopup, spawnPetDamagePopup, spawnReflectDamagePopup, pulseMonster, showToast, showLootPopup, showModal, hideModal,
   showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab,
   renderCardsTab, showCardDetailModal, iconMarkup,
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
@@ -446,6 +446,27 @@ function tick() {
   if (currentHp <= 0) {
     retreat('death');
     return;
+  }
+
+  // Reflexo de Dano (ver reflectChance em systems/stats.js, concedido por
+  // carta — ex: Caeloryx, Tier God): parte do dano que o jogador acabou de
+  // TOMAR volta pro monstro na hora, mesmo esquema de applyDamage() que um
+  // hit normal usa (então pode matar o monstro sozinho, com direito a
+  // ouro/drop/XP igual qualquer outro golpe). Só reflete o que realmente
+  // foi tomado — esquivou (incoming = 0), não reflete nada. Checado DEPOIS
+  // do "morreu" acima de propósito: um golpe letal mata o jogador mesmo se
+  // o reflexo também mataria o monstro no mesmo tick (reflexo nunca salva
+  // de um golpe fatal).
+  if (incoming > 0 && stats.reflectChance > 0) {
+    const reflected = incoming * (stats.reflectChance / 100);
+    const reflectEvent = applyDamage(state, reflected, stats);
+    spawnReflectDamagePopup(reflected);
+    if (reflectEvent) {
+      pulseMonster();
+      refreshCombatOnly();
+      handleKillEvent(reflectEvent);
+      return;
+    }
   }
 
   renderMonster(state, monster);
