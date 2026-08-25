@@ -344,16 +344,89 @@ function cardDescription(effect) {
 // só chama getCardForMonster com o id do monstro morto, então nunca casam
 // por acidente) e não podem ser craftadas com Fragmento de Carta comum
 // (ver noCraft abaixo + canCraftCard em systems/cards.js) — só se ganham
-// comprando com Fragmento do Despertar, 1 por carta. Ainda sem efeito
-// próprio definido (pedido do usuário) — todas as 5 usam o mesmo
-// placeholder "+5% DPS" por enquanto, a trocar depois.
+// comprando com Fragmento do Despertar, 1 por carta.
+//
+// Efeitos definidos pelo usuário — 30-50% mais fortes que a carta de Zona
+// 10 mais forte hoje (Bahamorth: +25% DPS, +15% Golpe Duplo, +15% Dano
+// Crítico, +20% Dano de Mascote). Caeloryx usa 'reflectPercent' (Reflexo
+// de Dano — mecânica NOVA, ver reflectChance em systems/stats.js + o bloco
+// de reflexo em main.js tick()): parte do dano que o jogador TOMA de um
+// monstro/chefe volta como dano extra pra ele, capaz de matar sozinho
+// (mesmo caminho de applyDamage() que um hit normal usa).
 const GOD_CARD_DEFS = [
-  { id: 'god_card_regulus', name: 'Regulus', image: 'assets/god-cards/ct1.png' },
-  { id: 'god_card_selene', name: 'Selene', image: 'assets/god-cards/ct2.png' },
-  { id: 'god_card_caeloryx', name: 'Caeloryx', image: 'assets/god-cards/ct3.png' },
-  { id: 'god_card_aetheron', name: 'Aetheron', image: 'assets/god-cards/ct4.png' },
-  { id: 'god_card_azrathul', name: 'Azrathul', image: 'assets/god-cards/ct5.png' },
+  {
+    id: 'god_card_regulus', name: 'Regulus', image: 'assets/god-cards/ct1.png',
+    bonuses: [
+      { stat: 'doubleHitChance', value: 20 },
+      { stat: 'attackSpeedPercent', value: 25 },
+      { stat: 'dpsPercent', value: 10 },
+    ],
+  },
+  {
+    id: 'god_card_selene', name: 'Selene', image: 'assets/god-cards/ct2.png',
+    bonuses: [
+      { stat: 'forca', value: 120 },
+      { stat: 'destreza', value: 120 },
+      { stat: 'inteligencia', value: 120 },
+    ],
+  },
+  {
+    id: 'god_card_caeloryx', name: 'Caeloryx', image: 'assets/god-cards/ct3.png',
+    bonuses: [
+      { stat: 'reflectPercent', value: 15 },
+      { stat: 'hpFlat', value: 300 },
+      { stat: 'dpsFlat', value: 10 },
+    ],
+  },
+  {
+    id: 'god_card_aetheron', name: 'Aetheron', image: 'assets/god-cards/ct4.png',
+    bonuses: [
+      { stat: 'hpPercent', value: 30 },
+      { stat: 'hpFlat', value: 400 },
+      { stat: 'armorPercent', value: 20 },
+    ],
+  },
+  {
+    id: 'god_card_azrathul', name: 'Azrathul', image: 'assets/god-cards/ct5.png',
+    bonuses: [
+      { stat: 'dpsPercent', value: 10 },
+      { stat: 'critDamagePercent', value: 10 },
+      { stat: 'attackSpeedPercent', value: 8 },
+      { stat: 'doubleHitChance', value: 8 },
+      { stat: 'hpFlat', value: 200 },
+      { stat: 'hpPercent', value: 10 },
+      { stat: 'armorFlat', value: 200 },
+      { stat: 'armorPercent', value: 10 },
+    ],
+  },
 ];
+
+// Só pra `description` (usada em contextos de texto plano — tooltip do
+// seletor de carta, linha embaixo da carta encaixada num item — que não
+// aceitam <br>, ao contrário do popup de detalhe/loja, que já lê
+// card.bonuses direto via cardBonusListHtml em ui/render.js). Mantido só
+// nos dados (não em ui/), já que description é lido de vários lugares que
+// não sabem nada sobre bonuses.
+const GOD_CARD_BONUS_STAT_LABEL = {
+  dpsPercent: 'DPS', dpsFlat: 'DPS', hpPercent: 'Vida', hpFlat: 'Vida',
+  armorFlat: 'Armadura', armorPercent: 'Armadura', attackSpeedPercent: 'Velocidade de Ataque',
+  critChancePercent: 'Chance Crítica', critDamagePercent: 'Dano Crítico',
+  doubleHitChance: 'Golpe Duplo', reflectPercent: 'Reflexo de Dano',
+  forca: 'Força', destreza: 'Destreza', inteligencia: 'Inteligência',
+};
+const GOD_CARD_PERCENT_STATS = new Set([
+  'dpsPercent', 'hpPercent', 'armorPercent', 'attackSpeedPercent',
+  'critChancePercent', 'critDamagePercent', 'doubleHitChance', 'reflectPercent',
+]);
+
+function godCardDescription(bonuses) {
+  return `${bonuses.map((b) => {
+    const name = GOD_CARD_BONUS_STAT_LABEL[b.stat] || b.stat;
+    const sign = b.value >= 0 ? '+' : '';
+    const value = GOD_CARD_PERCENT_STATS.has(b.stat) ? `${b.value}%` : `${b.value}`;
+    return `${sign}${value} ${name}`;
+  }).join(', ')}.`;
+}
 
 export const GOD_CARDS = GOD_CARD_DEFS.map((def) => ({
   id: def.id,
@@ -364,8 +437,8 @@ export const GOD_CARDS = GOD_CARD_DEFS.map((def) => ({
   name: def.name,
   image: def.image,
   element: null,
-  bonuses: [{ stat: 'dpsPercent', value: 5 }],
-  description: '+5% DPS quando equipada.',
+  bonuses: def.bonuses,
+  description: godCardDescription(def.bonuses),
   noCraft: true,
 }));
 

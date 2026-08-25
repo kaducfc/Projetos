@@ -714,6 +714,15 @@ button:disabled {
   text-shadow: -1px -1px 0 rgba(0, 0, 0, .55), 1px -1px 0 rgba(0, 0, 0, .55), -1px 1px 0 rgba(0, 0, 0, .55), 1px 1px 0 rgba(0, 0, 0, .55);
 }
 
+/* Reflexo de Dano (ver reflectChance em systems/stats.js, spawnReflectDamagePopup
+   em ui/render.js) — roxo, distinto do dano normal (branco/dourado no crítico)
+   e do dano de mascote (cor do elemento) acima. */
+.damage-popup.reflect-damage {
+  color: #b26bff;
+  font-size: 16px;
+  text-shadow: -1px -1px 0 rgba(0, 0, 0, .55), 1px -1px 0 rgba(0, 0, 0, .55), -1px 1px 0 rgba(0, 0, 0, .55), 1px 1px 0 rgba(0, 0, 0, .55);
+}
+
 /* ---- Informações de Batalha: two-column stat comparison ---- */
 
 .section-banner-sm {

@@ -96,6 +96,12 @@ export function computePlayerStats(state) {
   // concedido por carta hoje, soma linear entre cópias equipadas.
   let doubleHitChancePercent = 0;
 
+  // Reflexo de Dano (ver applyReflectDamage em main.js): % do dano que o
+  // jogador TOMA de um monstro/chefe que volta como dano extra pra ele — só
+  // concedido por carta hoje (ex: Caeloryx, Tier God), soma linear entre
+  // cópias equipadas, sem cap (mesmo padrão de doubleHitChancePercent acima).
+  let reflectPercent = 0;
+
   const weapon1Entry = state.equipped.weapon1 ? state.inventory.find((i) => i.uid === state.equipped.weapon1) : null;
   const weapon1Item = weapon1Entry ? getItem(weapon1Entry.itemId) : null;
   const activeDamageType = getDamageTypeForAttribute(weapon1Item ? weapon1Item.attribute : 'forca');
@@ -247,6 +253,7 @@ export function computePlayerStats(state) {
     else if (stat === 'danoPerfuracaoPercent') danoPerfuracaoPercent += total;
     else if (stat === 'danoMagicoPercent') danoMagicoPercent += total;
     else if (stat === 'doubleHitChance') doubleHitChancePercent += total;
+    else if (stat === 'reflectPercent') reflectPercent += total;
   }
 
   // maxHp/armor final.
@@ -276,12 +283,15 @@ export function computePlayerStats(state) {
   // ignorado, a esquiva nunca passa de 70%.
   const dodgeChance = Math.max(0, Math.min(DODGE_CHANCE_CAP, dodgePercent));
   const doubleHitChance = Math.max(0, Math.min(100, doubleHitChancePercent));
+  // Sem cap — reflete quanto vier de cartas, o dano refletido em si já é
+  // proporcional ao dano recebido (não empilha indefinidamente sozinho).
+  const reflectChance = Math.max(0, reflectPercent);
 
   return {
     dps, attackSpeedPerSec, goldMult, dropMult,
     maxHp, armor, weaponElement,
     critChance, critDamage,
-    lifesteal, petDamageMult, dodgeChance, doubleHitChance,
+    lifesteal, petDamageMult, dodgeChance, doubleHitChance, reflectChance,
     forca: forcaTotal, destreza: destrezaTotal, inteligencia: inteligenciaTotal,
     activeDamageType,
     danoFisico: danoFisicoFlat, danoPerfuracao: danoPerfuracaoFlat, danoMagico: danoMagicoFlat,
