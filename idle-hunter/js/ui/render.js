@@ -3370,12 +3370,16 @@ export function spawnPetDamagePopup(amount, species, isCrit = false) {
 
 /// Popup do dano de Reflexo (ver reflectChance em systems/stats.js, main.js
 /// tick()) — cor roxa própria, pra ficar visualmente distinto tanto do dano
-/// normal do personagem quanto do dano do mascote.
-export function spawnReflectDamagePopup(amount) {
+/// normal do personagem quanto do dano do mascote. Pode critar (mesma
+/// chance/dano crítico do jogador, ver rollCrit em systems/combat.js),
+/// pedido explícito do usuário — isCrit só muda o texto, a cor roxa
+/// continua a mesma (não empresta o amarelo do crítico normal, senão fica
+/// indistinguível do dano do personagem).
+export function spawnReflectDamagePopup(amount, isCrit = false) {
   const container = document.getElementById('damage-popups');
   const el = document.createElement('div');
   el.className = 'damage-popup reflect-damage';
-  el.textContent = `🔱 -${formatNumber(amount)}`;
+  el.textContent = isCrit ? `🔱 -${formatNumber(amount)} CRÍTICO!` : `🔱 -${formatNumber(amount)}`;
   el.style.left = `${30 + Math.random() * 40}%`;
   el.style.top = `${30 + Math.random() * 20}%`;
   container.appendChild(el);
