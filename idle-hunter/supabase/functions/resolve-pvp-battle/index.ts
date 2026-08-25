@@ -95,16 +95,23 @@ function clampSnapshot(s: Snapshot): Snapshot {
   };
 }
 
+/// Fator de crítico esperado (valor esperado, não RNG — ver rollCrit em
+/// js/systems/combat.js) de alguém batendo — usado tanto pelo dano normal
+/// (combatMultiplier abaixo) quanto pelo dano de Reflexo (que crita com a
+/// mesma chance/dano crítico de quem reflete, pedido explícito do usuário).
+function critMultiplier(attacker: Snapshot): number {
+  return 1 + (attacker.crit_chance / 100) * (attacker.crit_damage / 100);
+}
+
 /// Fator de crítico/esquiva/armadura de A atacando B — o MESMO fator (valor
 /// esperado, não RNG — ver resolveHit/rollDodge em js/systems/combat.js)
 /// vale tanto pro dano do próprio caçador quanto do mascote (o mascote
 /// crítica com a mesma chance/dano do caçador, ver resolvePetHit em
 /// js/systems/combat.js), então dá pra escalar os 2 pelo mesmo número.
 function combatMultiplier(attacker: Snapshot, defender: Snapshot): number {
-  const critMultiplier = 1 + (attacker.crit_chance / 100) * (attacker.crit_damage / 100);
   const dodgeMultiplier = 1 - Math.min(0.95, defender.dodge_chance / 100);
   const armorMultiplier = 1 - armorReduction(defender.armor);
-  return Math.max(0, critMultiplier * dodgeMultiplier * armorMultiplier);
+  return Math.max(0, critMultiplier(attacker) * dodgeMultiplier * armorMultiplier);
 }
 
 /// DPS "esperado" de A contra B, já separado em dano do próprio caçador +
@@ -293,8 +300,11 @@ Deno.serve(async (req) => {
   // DEPOIS de todos os cálculos (attackerBreakdown/defenderBreakdown.total
   // já saem daqui com crítico/esquiva/armadura aplicados) — cada lado
   // reflete uma fatia do dano que RECEBE de volta como dps extra próprio.
-  const attackerReflectDps = defenderBreakdown.total * (attackerSnap.reflect_percent / 100);
-  const defenderReflectDps = attackerBreakdown.total * (defenderSnap.reflect_percent / 100);
+  // Esse dano refletido TAMBÉM crita, com a chance/dano crítico de quem
+  // reflete (pedido explícito do usuário) — critMultiplier() é o mesmo
+  // fator usado no dano normal (ver combatMultiplier acima).
+  const attackerReflectDps = defenderBreakdown.total * (attackerSnap.reflect_percent / 100) * critMultiplier(attackerSnap);
+  const defenderReflectDps = attackerBreakdown.total * (defenderSnap.reflect_percent / 100) * critMultiplier(defenderSnap);
   const attackerEffectiveDps = attackerBreakdown.total + attackerReflectDps;
   const defenderEffectiveDps = defenderBreakdown.total + defenderReflectDps;
   const attackerTtk = timeToKill(defenderSnap.max_hp, attackerEffectiveDps);
