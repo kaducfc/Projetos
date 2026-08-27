@@ -54,17 +54,26 @@ const RANK_MULT = [1, 1.08, 1.16, 1.24, 1.32];
 
 // A partir do estágio 70 (fim da Zona 7) o crescimento exponencial de HP_GROWTH
 // vinha ficando exagerado — Zona 10 chegava a ~17,5M de HP no chefe, um salto
-// de quase 60x sobre a Zona 7 (301.427 HP). Pedido do usuário: manter a Zona 7
-// como está e reequilibrar dali até a Zona 10 (~3.000.000 no chefe), uma curva
-// bem mais suave nesse trecho final. LATE_GAME_HP_BREAKPOINT_STAGE é o ponto
-// de junção (contínuo — a curva antiga e a nova coincidem exatamente ali, sem
-// degrau), e LATE_GAME_HP_GROWTH é o multiplicador por estágio dali em diante,
-// calculado pra bater ~3.000.000 no chefe da Zona 10 (estágio 100):
-// baseNoEstágio70 * LATE_GAME_HP_GROWTH^30 * RANK_MULT[4] ≈ 3.000.000.
-// Zonas 1-7 (estágio ≤70) continuam usando a curva exponencial de sempre,
-// sem nenhuma mudança.
-const LATE_GAME_HP_BREAKPOINT_STAGE = 70;
-const LATE_GAME_HP_GROWTH = 1.0796;
+// de quase 60x sobre a Zona 7 (301.427 HP). Reequilíbrio original: manter a
+// Zona 7 na curva de sempre e suavizar dali até a Zona 10.
+//
+// Pedido do usuário (nova rodada): as "zonas finais" pra fins de dificuldade
+// são a Zona 7-10 (não só 8-10), então o ponto de junção foi puxado pro fim
+// da Zona 6 (estágio 60) — a Zona 7 inteira passa a usar a curva suave junto
+// das Zonas 8/9/10, em vez de ficar na curva exponencial antiga sozinha.
+// LATE_GAME_HP_GROWTH foi recalculado pra, apesar da junção mais cedo (agora
+// 40 estágios de curva suave em vez de 30), ainda bater na MESMA base no
+// estágio 100 de antes (baseNoEstágio60 * LATE_GAME_HP_GROWTH^40 ≈
+// baseNoEstágio70Antigo * 1.0796^30) — ou seja, o Malgorath (chefe da Zona
+// 10, powerRank 4) continua saindo em ~3.000.000 (RANK_MULT[4]=1.32) ANTES
+// do corte de -15% das Zonas 7-10 abaixo (LATE_ZONE_HP_REDUCTION_MULT).
+// Zonas 1-6 (estágio ≤60) continuam na curva exponencial de sempre, sem
+// nenhuma mudança — a junção mais cedo já resolve sozinha a suavização
+// entre Zona 6 e Zona 7 (não precisou mexer nos números de 1-6: o próprio
+// formato multiplicativo garante que cada zona já fica bem acima da
+// anterior, ver conferência no changelog).
+const LATE_GAME_HP_BREAKPOINT_STAGE = 60;
+const LATE_GAME_HP_GROWTH = 1.0955911831572802;
 
 // Razão entre o crescimento novo (pós-estágio 70) e o antigo — é exatamente
 // o quanto o HP tardio encolheu proporcionalmente em relação à curva
@@ -82,17 +91,21 @@ function baseHpAtStage(canonicalStage) {
   return breakpointBase * Math.pow(LATE_GAME_HP_GROWTH, canonicalStage - LATE_GAME_HP_BREAKPOINT_STAGE);
 }
 
-// HP fixo pedido pelo usuário só pro chefe final (Malgorath, stage 100,
-// único chefe nesse estágio) — sobrepõe a curva normal sem mexer em mais
-// nada (a fórmula abaixo continua valendo pra todo o resto do jogo).
-const MALGORATH_STAGE = 100;
-const MALGORATH_FIXED_HP = 4_000_000;
+// Zonas 7-10 (canonicalStage 70/80/90/100): HP reduzido em 15%, pedido
+// explícito do usuário — além da junção de curva mais cedo acima (que já
+// suaviza o CRESCIMENTO), esse corte reduz o VALOR em si dessas 4 zonas.
+// Malgorath (Zona 10, chefe) cai de ~4.000.000 (valor fixo antigo, removido
+// abaixo — ele volta a seguir a curva normal) pra ~3.000.000 pela curva
+// recalibrada acima, e mais uns -15% em cima disso: ~2.550.000.
+const LATE_ZONE_HP_REDUCTION_START_STAGE = 70;
+const LATE_ZONE_HP_REDUCTION_MULT = 0.85;
 
 export function monsterMaxHp(canonicalStage, isBoss, powerRank) {
-  if (isBoss && canonicalStage === MALGORATH_STAGE) return MALGORATH_FIXED_HP;
   const base = baseHpAtStage(canonicalStage);
   const mult = powerRank != null ? RANK_MULT[powerRank] : (isBoss ? BOSS_HP_MULT : 1);
-  return Math.max(1, Math.round(base * mult));
+  const lateZoneReduction = canonicalStage >= LATE_ZONE_HP_REDUCTION_START_STAGE
+    ? LATE_ZONE_HP_REDUCTION_MULT : 1;
+  return Math.max(1, Math.round(base * mult * lateZoneReduction));
 }
 
 export function monsterGoldReward(canonicalStage, isBoss, powerRank) {
@@ -111,10 +124,10 @@ function dpsTakenBaseAtStage(canonicalStage) {
 
 // Zonas 7-10 (canonicalStage 70/80/90/100 — cada zona usa 1 estágio fixo,
 // zoneIndex+1 * ZONE_SIZE, ver data/monsters.js): dano de monstros E chefes
-// reduzido em 20%, pedido explícito do usuário. Só o dano que o jogador
-// TOMA (essa função) — HP/Ouro dos monstros dessas zonas não mudam.
+// reduzido em 15% (era 20%, ajustado pra bater com o corte de HP acima).
+// Só o dano que o jogador TOMA (essa função) — Ouro dessas zonas não muda.
 const LATE_ZONE_DPS_TAKEN_REDUCTION_START_STAGE = 70;
-const LATE_ZONE_DPS_TAKEN_REDUCTION_MULT = 0.8;
+const LATE_ZONE_DPS_TAKEN_REDUCTION_MULT = 0.85;
 
 export function monsterDamagePerSecond(canonicalStage, isBoss, powerRank) {
   const base = dpsTakenBaseAtStage(canonicalStage);

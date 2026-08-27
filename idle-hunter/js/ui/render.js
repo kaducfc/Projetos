@@ -20,7 +20,7 @@ import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/e
 import { computePlayerStats } from '../systems/stats.js';
 import { computeItemPower, computePetPower, computePlayerPower, computePowerFromEquippedSnapshot } from '../systems/power.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds, countEquippedCardCopies } from '../systems/crafting.js';
-import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, getTranscendXpBonusPercent } from '../systems/leveling.js';
+import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, getTranscendXpBonusPercent, getExpeditionXpReward } from '../systems/leveling.js';
 import { EXPEDITION_TIERS, EXPEDITION_REWARDS } from '../data/events.js';
 import { canEnterExpedition, expeditionRemainingMs } from '../systems/expedition.js';
 import { ARENA_RANKS, getArenaRankForDamage, getArenaRankByIndex } from '../data/arena.js';
@@ -2017,6 +2017,7 @@ function expeditionRewardRowsHtml(rows, iconHtml) {
 
 function expeditionCardHtml(state, tier, ready, remainingMs) {
   const rewards = EXPEDITION_REWARDS[tier.id];
+  const xpReward = getExpeditionXpReward(state.hunterLevel || 1, tier.durationMs);
   const btnHtml = ready
     ? `<button class="expedition-enter-btn" style="--tier-color:${tier.color}" data-expedition-enter="${tier.id}">Entrar</button>`
     : `<button class="expedition-enter-btn" disabled>${expeditionDurationLabel(remainingMs)} restantes</button>`;
@@ -2037,6 +2038,10 @@ function expeditionCardHtml(state, tier, ready, remainingMs) {
         <div>
           <div class="expedition-reward-col-title">${EGG_ICON} Ovo de Mascote</div>
           ${expeditionRewardRowsHtml(rewards.eggs, EGG_ICON)}
+        </div>
+        <div>
+          <div class="expedition-reward-col-title">✨ XP</div>
+          <div class="expedition-drop-row guaranteed">${formatNumber(xpReward)}</div>
         </div>
       </div>
     </div>`;

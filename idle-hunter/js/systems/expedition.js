@@ -1,4 +1,5 @@
 import { EXPEDITION_REWARDS, getExpeditionTier } from '../data/events.js';
+import { getExpeditionXpReward, grantXp } from './leveling.js';
 
 export function canEnterExpedition(state, now = Date.now()) {
   return !state.expeditionReadyAt || state.expeditionReadyAt <= now;
@@ -26,8 +27,8 @@ export function rollExpeditionRewardRows(rows) {
 }
 
 /// Retorna null se ainda em cooldown ou tier inválido; senão concede a
-/// recompensa na hora (Ouro + Moeda de Evento + Ovo de Mascote) e arma o
-/// cooldown compartilhado pro tempo da expedição escolhida.
+/// recompensa na hora (Ouro + Moeda de Evento + Ovo de Mascote + XP) e arma
+/// o cooldown compartilhado pro tempo da expedição escolhida.
 export function enterExpedition(state, tierId, now = Date.now()) {
   if (!canEnterExpedition(state, now)) return null;
   const tier = getExpeditionTier(tierId);
@@ -37,18 +38,22 @@ export function enterExpedition(state, tierId, now = Date.now()) {
   const goldResult = rollExpeditionRewardRows(rewardTable.gold);
   const currencyResult = rollExpeditionRewardRows(rewardTable.currency);
   const eggsResult = rollExpeditionRewardRows(rewardTable.eggs);
+  const xpGained = getExpeditionXpReward(state.hunterLevel || 1, tier.durationMs);
 
   state.gold = (state.gold || 0) + goldResult.total;
   state.eventCurrency = (state.eventCurrency || 0) + currencyResult.total;
   state.eggCount = (state.eggCount || 0) + eggsResult.total;
   state.expeditionReadyAt = now + tier.durationMs;
   state.expeditionLastTierId = tierId;
+  const levelsGained = grantXp(state, xpGained);
 
   return {
     tier,
     goldGained: goldResult.total,
     currencyGained: currencyResult.total,
     eggsGained: eggsResult.total,
+    xpGained,
+    levelsGained,
     goldBonusHits: goldResult.hits.length - 1,
     currencyBonusHits: currencyResult.hits.length - 1,
     eggBonusHits: eggsResult.hits.length - 1,
