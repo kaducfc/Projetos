@@ -54,18 +54,28 @@ export function xpForZone(zoneIndex, _isBoss) {
 // jogador e da DURAÇÃO escolhida — nada de gear/DPS real, pra não precisar
 // simular combate de verdade. A referência é "quanto XP por hora um
 // jogador daquele nível ganharia caçando ativamente", assumindo:
-//   - Velocidade de ataque BASE (1 hit/s, sem bônus de equipamento — ver
-//     BASE_ATTACK_SPEED_PERCENT em systems/stats.js), já que a tabela não
-//     conhece o equipamento de ninguém.
-//   - Mata cada monstro em exatamente 3 hits (valor dado pelo usuário) ->
-//     3 segundos por kill -> 1200 kills/hora (3600/3).
+//   - Mata cada monstro em 6 hits (valor revisado pelo usuário, era 3) +
+//     o tempo de respawn do próximo monstro (MONSTER_RESPAWN_DELAY_MS em
+//     systems/combat.js = 1,5s — hardcoded aqui em vez de importado, pra
+//     não criar import circular com combat.js, que já importa daqui).
+//   - EXPEDITION_SECONDS_PER_HIT: calibrado (não é a velocidade de ataque
+//     BASE de stats.js) pra bater com o relato do usuário na conta real
+//     dele — nível 175, ~8h jogadas por dia, ~4.000 e poucos de XP/dia —
+//     ou seja, XP/hora ≈ 500-550 no nível 175 (Zona 9, 9 XP/kill). Com 6
+//     hits + 1,5s de respawn, isso exige ~10s por hit (bem mais lento que
+//     a velocidade base de combate de verdade — é só uma constante de
+//     calibração da tabela, não uma alegação sobre a velocidade real).
 //   - Caça na zona mais alta já desbloqueada nesse nível (zoneUnlockLevel =
 //     20*zoneIndex, ver data/monsters.js) -> xpForZone(zoneIndex) por kill.
 // EXPEDITION_XP_PER_HOUR_BY_LEVEL[nível] guarda esse valor pra cada nível de
 // 1 a 200 (nível 0 fica null, não existe) — calculado uma vez aqui e
 // reaproveitado por getExpeditionXpReward, em vez de recalculado a cada
 // expedição.
-const EXPEDITION_KILLS_PER_HOUR = 3600 / 3; // 3 hits/kill a 1 hit/s = 3s/kill
+const EXPEDITION_HITS_PER_KILL = 6;
+const EXPEDITION_SECONDS_PER_HIT = 10;
+const EXPEDITION_RESPAWN_DELAY_SECONDS = 1.5;
+const EXPEDITION_SECONDS_PER_KILL = EXPEDITION_HITS_PER_KILL * EXPEDITION_SECONDS_PER_HIT + EXPEDITION_RESPAWN_DELAY_SECONDS;
+const EXPEDITION_KILLS_PER_HOUR = 3600 / EXPEDITION_SECONDS_PER_KILL;
 
 function zoneIndexForLevel(level) {
   let idx = 0;
