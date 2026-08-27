@@ -12,11 +12,11 @@ import { ZONES } from '../data/monsters.js';
 // - Nível 20-200 (HUNTER_XP_GROWTH_MID): uma única taxa uniforme (mais
 //   dura que a de antes) — nível 150 em ~10 dias e nível 200 em ~3 semanas,
 //   num ritmo de 3h ativas + 4h offline por dia.
-// HUNTER_XP_BASE em 40/3 (era 20, antes disso 30 — pedido do usuário pra
-// reduzir 1/3 do XP necessário de TODOS os níveis igualmente, de novo —
-// reduzir só a base encolhe a curva inteira na mesma proporção, já que
-// ela é base * growth^(nível-1)).
-const HUNTER_XP_BASE = 40 / 3;
+// HUNTER_XP_BASE em (40/3)*0.7 (era 40/3, antes 20, antes disso 30 — pedido
+// do usuário pra reduzir 30% do XP necessário de TODOS os níveis igualmente,
+// de novo — reduzir só a base encolhe a curva inteira na mesma proporção,
+// já que ela é base * growth^(nível-1)).
+const HUNTER_XP_BASE = (40 / 3) * 0.7;
 const HUNTER_XP_GROWTH_EARLY = 1.115;
 const HUNTER_XP_EARLY_CAP_LEVEL = 19;
 const HUNTER_XP_GROWTH_MID = 1.0222693465578296;
@@ -45,6 +45,60 @@ export function xpToNextLevel(level) {
 // ..., Zona 10 dá 10 XP.
 export function xpForZone(zoneIndex, _isBoss) {
   return zoneIndex + 1;
+}
+
+// ---------------------------------------------------------------
+// XP de Expedição (Eventos > Expedição do Caçador, ver systems/expedition.js)
+// ---------------------------------------------------------------
+// Pedido do usuário: a recompensa de XP da Expedição depende só do NÍVEL do
+// jogador e da DURAÇÃO escolhida — nada de gear/DPS real, pra não precisar
+// simular combate de verdade. A referência é "quanto XP por hora um
+// jogador daquele nível ganharia caçando ativamente", assumindo:
+//   - Velocidade de ataque BASE (1 hit/s, sem bônus de equipamento — ver
+//     BASE_ATTACK_SPEED_PERCENT em systems/stats.js), já que a tabela não
+//     conhece o equipamento de ninguém.
+//   - Mata cada monstro em exatamente 3 hits (valor dado pelo usuário) ->
+//     3 segundos por kill -> 1200 kills/hora (3600/3).
+//   - Caça na zona mais alta já desbloqueada nesse nível (zoneUnlockLevel =
+//     20*zoneIndex, ver data/monsters.js) -> xpForZone(zoneIndex) por kill.
+// EXPEDITION_XP_PER_HOUR_BY_LEVEL[nível] guarda esse valor pra cada nível de
+// 1 a 200 (nível 0 fica null, não existe) — calculado uma vez aqui e
+// reaproveitado por getExpeditionXpReward, em vez de recalculado a cada
+// expedição.
+const EXPEDITION_KILLS_PER_HOUR = 3600 / 3; // 3 hits/kill a 1 hit/s = 3s/kill
+
+function zoneIndexForLevel(level) {
+  let idx = 0;
+  for (let i = 0; i < ZONES.length; i++) {
+    if (level >= ZONES[i].zoneUnlockLevel) idx = i; else break;
+  }
+  return idx;
+}
+
+export const EXPEDITION_XP_MAX_LEVEL = 200;
+
+export const EXPEDITION_XP_PER_HOUR_BY_LEVEL = (() => {
+  const table = [null]; // índice 0 não existe (nível mínimo é 1)
+  for (let level = 1; level <= EXPEDITION_XP_MAX_LEVEL; level++) {
+    const zoneIndex = zoneIndexForLevel(level);
+    table.push(EXPEDITION_KILLS_PER_HOUR * xpForZone(zoneIndex));
+  }
+  return table;
+})();
+
+/// XP médio por hora pro nível dado — nível acima de 200 usa o valor do 200
+/// (zona 10 já é a última mesmo, o valor não mudaria de qualquer forma).
+export function getExpeditionXpPerHour(level) {
+  const clamped = Math.max(1, Math.min(EXPEDITION_XP_MAX_LEVEL, Math.round(level)));
+  return EXPEDITION_XP_PER_HOUR_BY_LEVEL[clamped];
+}
+
+/// Recompensa de XP de uma Expedição: metade do tempo escolhido "conta"
+/// como caçada ativa (pedido do usuário — 8h de expedição rende o mesmo XP
+/// que 4h de caçada ativa, 4h rende o de 2h, 1h rende o de 30min).
+export function getExpeditionXpReward(level, durationMs) {
+  const activeHoursEquivalent = (durationMs / (60 * 60 * 1000)) / 2;
+  return Math.round(getExpeditionXpPerHour(level) * activeHoursEquivalent);
 }
 
 // +20% de XP por Transcender já feito (acumulativo, nunca reseta — ver

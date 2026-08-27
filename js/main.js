@@ -1444,6 +1444,7 @@ function enterExpeditionTier(tierId) {
   showExpeditionRewardModal(result);
   renderEventsTabNow();
   renderTopBar(state);
+  renderHunterLevel(state);
   renderPetsTabNow();
 }
 
@@ -1455,15 +1456,17 @@ function toggleExpeditionCards() {
 }
 
 function showExpeditionRewardModal(result) {
-  const { tier, goldGained, currencyGained, eggsGained, goldBonusHits, currencyBonusHits, eggBonusHits } = result;
+  const { tier, goldGained, currencyGained, eggsGained, xpGained, levelsGained, goldBonusHits, currencyBonusHits, eggBonusHits } = result;
   const goldBonusNote = goldBonusHits > 0 ? ` <span class="offline-item-lines">(+${goldBonusHits} bônus!)</span>` : '';
   const currencyBonusNote = currencyBonusHits > 0 ? ` <span class="offline-item-lines">(+${currencyBonusHits} bônus!)</span>` : '';
   const eggBonusNote = eggBonusHits > 0 ? ` <span class="offline-item-lines">(+${eggBonusHits} bônus!)</span>` : '';
+  const levelUpNote = levelsGained > 0 ? ` <span class="offline-item-lines">(+${levelsGained} ${levelsGained === 1 ? 'nível' : 'níveis'}!)</span>` : '';
   showModal(`🧭 Expedição de ${tier.label}`, `
     <p><strong>Recompensas:</strong></p>
     <p class="offline-item-lines">+${formatNumber(goldGained)} ${GOLD_ICON} Ouro${goldBonusNote}</p>
     <p class="offline-item-lines">+${formatNumber(currencyGained)} ${EVENT_ICON} Moeda de Evento${currencyBonusNote}</p>
     <p class="offline-item-lines">+${formatNumber(eggsGained)} ${EGG_ICON} Ovo${eggsGained === 1 ? '' : 's'} de Mascote${eggBonusNote}</p>
+    <p class="offline-item-lines">✨ +${formatNumber(xpGained)} XP${levelUpNote}</p>
     <p class="event-sub">Você poderá entrar em outra expedição em ${expeditionDurationLabel(tier.durationMs)}.</p>
   `);
 }
