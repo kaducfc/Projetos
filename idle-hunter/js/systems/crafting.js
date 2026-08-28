@@ -1,8 +1,9 @@
 import {
   getItem, ENHANCE_MAX_LEVEL, rollDroppedItem, getRarity, getSlotIdsForCategory,
   getAscensionCost, rollBaseStatsFromTemplate, rollAscensionBonusCandidates,
-  getItemInventoryCap, getItemScrapMaterial,
+  getItemInventoryCap, getItemScrapMaterial, RARITIES,
 } from '../data/items.js';
+import { ZONES } from '../data/monsters.js';
 
 /// Adiciona ao inventário um item recém-dropado (ver
 /// systems/combat.js rollItemDropOnKill / data/items.js rollDroppedItem) —
@@ -239,27 +240,18 @@ export function finalizeAscension(state, uid, pending, chosenIndex) {
 /// (there's no craft cost anymore — the item itself was a free drop): one
 /// enhanceCost[i] per level already bought, plus the Rank Master cost if it
 /// went through that upgrade.
-function materialsSpentOn(item, entry) {
-  const spent = {};
-  for (let i = 0; i < entry.enhanceLevel; i++) {
-    const step = item.enhanceCost[i];
-    spent[step.matId] = (spent[step.matId] || 0) + step.qty;
-  }
-  if (entry.isMaster) {
-    const m = item.masterMaterialCost;
-    spent[m.matId] = (spent[m.matId] || 0) + m.qty;
-  }
-  return spent;
-}
-
-export const DESTROY_REFUND_RATE = 0.8;
-
-/// Destroys an inventory instance, refunding DESTROY_REFUND_RATE (80%) of
-/// every material it consumed across enhance/master upgrades so far
-/// (rounded down per material). Any socketed cards are
-/// unsocketed back into state.cards first — see unsocketCard() above.
-/// Unequips the slot if this was the equipped piece. Returns the refunded
-/// {materialId: qty} map, or null if uid doesn't exist.
+/// Destroys an inventory instance, refunding 1 material per monster of the
+/// item's own zone (the 4 "weak" monsters + the zone boss, ZONES[zoneIndex]
+/// — ver data/monsters.js), multiplicado pela posição da raridade do item
+/// na lista RARITIES (Comum = índice 0 -> x1, Épico = índice 3 -> x4, etc,
+/// pedido explícito do usuário: "Item Tier 1 comum" = 1 material de cada
+/// monstro da Zona 1; "item Épico do Tier 5" = 4 materiais de cada monstro
+/// da Zona 5). Substitui o antigo reembolso de 80% do material GASTO no
+/// aprimoramento — agora não depende de quanto foi gasto, só da zona/
+/// raridade do item em si. Any socketed cards are unsocketed back into
+/// state.cards first — see unsocketCard() above. Unequips the slot if this
+/// was the equipped piece. Returns the refunded {materialId: qty} map, or
+/// null if uid doesn't exist.
 export function destroyItem(state, uid) {
   const entry = getEntry(state, uid);
   if (!entry) return null;
@@ -272,12 +264,18 @@ export function destroyItem(state, uid) {
     if (cardId) unsocketCard(state, uid, slotIndex);
   });
 
+  const rarityIndex = Math.max(0, RARITIES.findIndex((r) => r.id === entry.rarityId));
+  const qtyPerMonster = rarityIndex + 1;
+  const zone = ZONES[item.zoneIndex];
+  const matIds = [
+    ...(zone?.weakMonsters || []).map((m) => m.material?.id),
+    zone?.boss?.materials?.primary1?.id,
+  ].filter(Boolean);
+
   const refund = {};
-  for (const [matId, qty] of Object.entries(materialsSpentOn(item, entry))) {
-    const amount = Math.floor(qty * DESTROY_REFUND_RATE);
-    if (amount <= 0) continue;
-    state.materials[matId] = (state.materials[matId] || 0) + amount;
-    refund[matId] = amount;
+  for (const matId of matIds) {
+    state.materials[matId] = (state.materials[matId] || 0) + qtyPerMonster;
+    refund[matId] = (refund[matId] || 0) + qtyPerMonster;
   }
 
   for (const slotId of getSlotIdsForCategory(item.category)) {
