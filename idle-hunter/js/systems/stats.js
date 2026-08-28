@@ -43,6 +43,11 @@ export const INTELIGENCIA_DANO_PER_POINT = 6;
 export const INTELIGENCIA_GOLD_PERCENT_PER_POINT = 0.2;
 export const INTELIGENCIA_DROP_PERCENT_PER_POINT = 0.15;
 
+// Bônus final de HP/DPS por Transcendência (ver aplicação no fim de
+// computePlayerStats abaixo) — exportada pra ui/render.js mostrar o valor
+// na aba Transcender sem duplicar o número.
+export const TRANSCEND_HP_DPS_BONUS_PERCENT_PER_COUNT = 2;
+
 export function computePlayerStats(state) {
   let dpsFlat = BASE_DPS;
   let dpsPercent = 0;
@@ -257,7 +262,7 @@ export function computePlayerStats(state) {
   }
 
   // maxHp/armor final.
-  const maxHp = Math.round(hpFlat * (1 + hpPercent / 100));
+  const maxHpBeforeTranscendBonus = Math.round(hpFlat * (1 + hpPercent / 100));
   const armor = Math.round(armorFlat * (1 + armorPercent / 100));
 
   // Bônus de coleção de cartas (ver getCardCollectionDpsBonusPercent em
@@ -271,7 +276,7 @@ export function computePlayerStats(state) {
   // cartas acima.
   dpsPercent += getActiveDpsBoostPercent(state);
 
-  const dps = dpsFlat * (1 + dpsPercent / 100);
+  const dpsBeforeTranscendBonus = dpsFlat * (1 + dpsPercent / 100);
   const attackSpeedPerSec = Math.max(0.05, 1 * (1 + attackSpeedPercent / 100));
   const goldMult = 1 + goldPercent / 100;
   const dropMult = 1 + dropPercent / 100;
@@ -286,6 +291,17 @@ export function computePlayerStats(state) {
   // Sem cap — reflete quanto vier de cartas, o dano refletido em si já é
   // proporcional ao dano recebido (não empilha indefinidamente sozinho).
   const reflectChance = Math.max(0, reflectPercent);
+
+  // Bônus de Transcendência em HP/DPS — +2% cada, POR ÚLTIMO, multiplicando
+  // por cima do HP/DPS já totalmente calculado acima (não entra na soma de
+  // hpPercent/dpsPercent com o resto dos bônus, é um multiplicador final
+  // separado). Empilha por Transcendência (state.transcendCount, nunca
+  // reseta — ver PRESERVED_KEYS em systems/awakening.js). O bônus de XP por
+  // Transcendência é o de sempre, só que reduzido de 20% pra 10% (ver
+  // TRANSCEND_XP_BONUS_PERCENT_PER_COUNT em systems/leveling.js).
+  const transcendBonusMult = 1 + ((state.transcendCount || 0) * TRANSCEND_HP_DPS_BONUS_PERCENT_PER_COUNT) / 100;
+  const dps = dpsBeforeTranscendBonus * transcendBonusMult;
+  const maxHp = Math.round(maxHpBeforeTranscendBonus * transcendBonusMult);
 
   return {
     dps, attackSpeedPerSec, goldMult, dropMult,
