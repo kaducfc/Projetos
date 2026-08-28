@@ -12,11 +12,12 @@ import { ZONES } from '../data/monsters.js';
 // - Nível 20-200 (HUNTER_XP_GROWTH_MID): uma única taxa uniforme (mais
 //   dura que a de antes) — nível 150 em ~10 dias e nível 200 em ~3 semanas,
 //   num ritmo de 3h ativas + 4h offline por dia.
-// HUNTER_XP_BASE em (40/3)*0.7 (era 40/3, antes 20, antes disso 30 — pedido
-// do usuário pra reduzir 30% do XP necessário de TODOS os níveis igualmente,
-// de novo — reduzir só a base encolhe a curva inteira na mesma proporção,
-// já que ela é base * growth^(nível-1)).
-const HUNTER_XP_BASE = (40 / 3) * 0.7;
+// HUNTER_XP_BASE em (40/3)*0.7*1.1 (era (40/3)*0.7, antes 40/3, antes 20,
+// antes disso 30 — pedido do usuário pra aumentar 10% o XP necessário de
+// TODOS os níveis igualmente a partir do valor atual — mexer só na base
+// escala a curva inteira na mesma proporção, já que ela é
+// base * growth^(nível-1)).
+const HUNTER_XP_BASE = (40 / 3) * 0.7 * 1.1;
 const HUNTER_XP_GROWTH_EARLY = 1.115;
 const HUNTER_XP_EARLY_CAP_LEVEL = 19;
 const HUNTER_XP_GROWTH_MID = 1.0222693465578296;
