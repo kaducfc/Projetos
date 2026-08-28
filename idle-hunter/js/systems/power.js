@@ -24,6 +24,7 @@ import {
   FORCA_DANO_PER_POINT, FORCA_HP_PER_POINT, FORCA_ARMOR_PER_POINT,
   DESTREZA_DANO_PER_POINT, DESTREZA_CRIT_CHANCE_PER_POINT, DESTREZA_CRIT_DAMAGE_PER_POINT,
   INTELIGENCIA_DANO_PER_POINT, INTELIGENCIA_GOLD_PERCENT_PER_POINT, INTELIGENCIA_DROP_PERCENT_PER_POINT,
+  TRANSCEND_HP_DPS_BONUS_PERCENT_PER_COUNT,
 } from './stats.js';
 
 // Pontos de Power por unidade de cada stat. Dano/vida/armadura "flat" usam a
@@ -228,6 +229,15 @@ function computeAccountBonusStats(state) {
 
   add('dpsPercent', getCardCollectionDpsBonusPercent(state));
   add('dpsPercent', getActiveDpsBoostPercent(state));
+
+  // Bônus de Vida/DPS por Transcendência (ver TRANSCEND_HP_DPS_BONUS_PERCENT_PER_COUNT
+  // em systems/stats.js — lá é um multiplicador final separado sobre o
+  // DPS/HP já totalmente calculados; aqui, pro Power, entra como
+  // dpsPercent/hpPercent igual qualquer outra fonte, já que o Power soma
+  // tudo pelo mesmo pool de stats ponderado).
+  const transcendBonusPercent = (state.transcendCount || 0) * TRANSCEND_HP_DPS_BONUS_PERCENT_PER_COUNT;
+  add('dpsPercent', transcendBonusPercent);
+  add('hpPercent', transcendBonusPercent);
 
   return stats;
 }
