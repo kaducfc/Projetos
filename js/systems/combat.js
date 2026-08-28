@@ -29,8 +29,9 @@ const ARMOR_CONSTANT = 100;
 
 // Base chance for a "regular" material drop — the weak monster's one
 // material, or each of a boss's two "drop principal" materials. Scaled by
-// dropMult (Drop upgrades/gear), same as before.
-const COMMON_DROP_CHANCE = 0.35;
+// dropMult (Drop upgrades/gear), same as before. Era 0.35, +25% (pedido do
+// usuário) = 0.4375.
+const COMMON_DROP_CHANCE = 0.35 * 1.25;
 
 // Any monster/boss card is a *fixed* rate — explicitly never scaled by
 // dropMult. Drop bonuses only affect the "regular" materials above; cards
