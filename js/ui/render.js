@@ -2449,7 +2449,7 @@ export function renderTranscendTab(state) {
   // getTranscendXpBonusPercent em systems/leveling.js).
   const xpBonusLine = `<p class="shop-note">Bônus de Exp: +${formatNumber(getTranscendXpBonusPercent(state))}%</p>`;
   const hpDpsBonusPercent = count * TRANSCEND_HP_DPS_BONUS_PERCENT_PER_COUNT;
-  const hpDpsBonusLine = `<p class="shop-note">Bônus de Vida/DPS (final): +${formatNumber(hpDpsBonusPercent)}%</p>`;
+  const hpDpsBonusLine = `<p class="shop-note">Bônus de Vida/DPS: +${formatNumber(hpDpsBonusPercent)}%</p>`;
   const countLine = count > 0
     ? `<p class="shop-note">Você já Transcendeu ${count}x.</p>`
     : '';
