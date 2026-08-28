@@ -787,11 +787,16 @@ function enhanceGoldStep(tier, i) {
   return Math.round(ENHANCE_GOLD_BASE * (tier + 1) * (1 + i * 0.5));
 }
 
+// -25% na quantidade de MATERIAL de todo o caminho de upgrade — enhance
+// (+1..+5), Rank Master e Ascensão de raridade (getAscensionCost abaixo) —
+// pedido do usuário. Só material, o custo em ouro (enhanceGoldStep) não muda.
+const ENHANCE_MATERIAL_COST_MULT = 0.75;
+
 function buildEnhanceCosts(tier, categoryIndex, weakGroup) {
   const bandSize = weakGroup.monsters.length;
   const weakAt = (offset) => weakGroup.monsters[(categoryIndex + offset) % bandSize];
   const baseQty = 10;
-  const enhanceCostStep = (i) => Math.max(1, Math.round(baseQty * (0.5 + i * 0.5)));
+  const enhanceCostStep = (i) => Math.max(1, Math.round(baseQty * (0.5 + i * 0.5) * ENHANCE_MATERIAL_COST_MULT));
   const enhanceCost = Array.from({ length: ENHANCE_MAX_LEVEL }, (_, i) => ({
     matId: weakAt(2 + i).material.id,
     qty: enhanceCostStep(i),
@@ -943,7 +948,7 @@ export function getAscensionCost(item, currentRarityId) {
   const bandSize = weakGroup.monsters.length;
   const step = ENHANCE_MAX_LEVEL + 1 + currentIndex;
   const weakAt = weakGroup.monsters[(categoryIndex + 2 + step) % bandSize];
-  const qty = Math.max(1, Math.round(10 * (0.5 + step * 0.5) * 1.5));
+  const qty = Math.max(1, Math.round(10 * (0.5 + step * 0.5) * 1.5 * ENHANCE_MATERIAL_COST_MULT));
   return {
     nextRarityId: nextRarity.id,
     matId: weakAt.material.id,
