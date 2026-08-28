@@ -529,7 +529,7 @@ function bulkSelectToolbarHtml(bulkSelect) {
   if (bulkSelect.confirming) {
     return `
       <div class="bulk-select-toolbar">
-        <span>Destruir ${count} ${plural} selecionado${count === 1 ? '' : 's'}? (-80% material cada)</span>
+        <span>Destruir ${count} ${plural} selecionado${count === 1 ? '' : 's'}?</span>
         <div class="modal-action-row">
           <button class="modal-action-btn destroy-btn" data-bulk-confirm-destroy>Confirmar destruição</button>
           <button class="modal-action-btn" data-bulk-cancel-confirm>Cancelar</button>
@@ -1087,7 +1087,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
         ${confirmDestroy
           ? `<button class="modal-action-btn destroy-btn" data-confirm-destroy-uid="${uid}">Confirmar destruição</button>
              <button class="modal-action-btn" data-cancel-destroy-uid="${uid}">Cancelar</button>`
-          : `<button class="modal-action-btn destroy-btn" data-destroy-uid="${uid}">Destruir (-80% material)</button>`}
+          : `<button class="modal-action-btn destroy-btn" data-destroy-uid="${uid}">Destruir</button>`}
       </div>
     </div>
   `;
