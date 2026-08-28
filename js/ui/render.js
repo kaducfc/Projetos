@@ -17,7 +17,7 @@ import {
 } from '../systems/profile.js';
 import { getLanguage, translateText, translateContainer } from '../i18n.js';
 import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
-import { computePlayerStats } from '../systems/stats.js';
+import { computePlayerStats, TRANSCEND_HP_DPS_BONUS_PERCENT_PER_COUNT } from '../systems/stats.js';
 import { computeItemPower, computePetPower, computePlayerPower, computePowerFromEquippedSnapshot } from '../systems/power.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds, countEquippedCardCopies } from '../systems/crafting.js';
 import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, getTranscendXpBonusPercent, getExpeditionXpReward } from '../systems/leveling.js';
@@ -2448,6 +2448,8 @@ export function renderTranscendTab(state) {
   // de cara que esse bônus existe e vai crescer a cada Transcender (ver
   // getTranscendXpBonusPercent em systems/leveling.js).
   const xpBonusLine = `<p class="shop-note">Bônus de Exp: +${formatNumber(getTranscendXpBonusPercent(state))}%</p>`;
+  const hpDpsBonusPercent = count * TRANSCEND_HP_DPS_BONUS_PERCENT_PER_COUNT;
+  const hpDpsBonusLine = `<p class="shop-note">Bônus de Vida/DPS (final): +${formatNumber(hpDpsBonusPercent)}%</p>`;
   const countLine = count > 0
     ? `<p class="shop-note">Você já Transcendeu ${count}x.</p>`
     : '';
@@ -2460,14 +2462,16 @@ export function renderTranscendTab(state) {
         <button class="transcend-btn" data-open-transcend-confirm>${TRANSCEND_ICON} Transcender</button>
       </div>
       ${countLine}
-      ${xpBonusLine}`
+      ${xpBonusLine}
+      ${hpDpsBonusLine}`
     : `
       <div class="transcend-status-card locked">
         <div class="name">${TRANSCEND_ICON} Transcender</div>
         <p class="shop-note">Derrote o chefe da última zona (Malgorath) pela 1ª vez pra liberar.</p>
       </div>
       ${countLine}
-      ${xpBonusLine}`;
+      ${xpBonusLine}
+      ${hpDpsBonusLine}`;
 
   container.innerHTML = `
     ${pageBannerHtml('Transcender')}

@@ -111,11 +111,13 @@ export function getExpeditionXpReward(level, durationMs) {
   return Math.round(getExpeditionXpPerHour(level) * activeHoursEquivalent);
 }
 
-// +20% de XP por Transcender já feito (acumulativo, nunca reseta — ver
-// PRESERVED_KEYS em systems/awakening.js: transcendCount sobrevive ao
-// próprio Transcender). Pedido explícito do usuário, mostrado na aba
+// +10% de XP por Transcender já feito (era 20%, reduzido — junto do novo
+// bônus de +2% HP/+2% DPS final por Transcendência, ver
+// TRANSCEND_HP_DPS_BONUS_PERCENT_PER_COUNT em systems/stats.js) —
+// acumulativo, nunca reseta (ver PRESERVED_KEYS em systems/awakening.js:
+// transcendCount sobrevive ao próprio Transcender). Mostrado na aba
 // Transcender (ver transcendXpBonusLineHtml em ui/render.js).
-export const TRANSCEND_XP_BONUS_PERCENT_PER_COUNT = 20;
+export const TRANSCEND_XP_BONUS_PERCENT_PER_COUNT = 10;
 
 export function getTranscendXpBonusPercent(state) {
   return (state.transcendCount || 0) * TRANSCEND_XP_BONUS_PERCENT_PER_COUNT;
