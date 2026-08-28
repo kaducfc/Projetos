@@ -64,6 +64,29 @@ export function transcend(state) {
   fresh.transcendCount = getTranscendCount(state) + 1;
   fresh.awakeningShards = getAwakeningShards(state) + 1;
 
+  // Cartas encaixadas em itens do inventário atual (entry.cardIds) somem
+  // junto do item quando o inventário reseta abaixo — a carta em si já
+  // tinha sido descontada de state.cards no momento do encaixe (ver
+  // socketCard em systems/crafting.js), então sem isso ela se perde de
+  // vez. Pedido do usuário: desencaixar automaticamente antes do reset e
+  // devolver pro estoque de cartas, igual um unsocketCard manual faria.
+  // `fresh.cards` acima é a MESMA referência de state.cards (a linha do
+  // PRESERVED_KEYS só copia o ponteiro) — troca por uma cópia com as
+  // cartas desencaixadas somadas, sem mutar o `state` recebido.
+  // fromAwakening (item do Despertar) sobrevive junto com seu socket
+  // intacto no loop mais abaixo — não desencaixa esses, senão a carta
+  // duplicaria (ficaria encaixada no item sobrevivente E de volta no
+  // estoque).
+  const cardsAfterUnsocket = { ...state.cards };
+  for (const entry of state.inventory) {
+    if (entry.fromAwakening) continue;
+    for (const cardId of entry.cardIds || []) {
+      if (!cardId) continue;
+      cardsAfterUnsocket[cardId] = (cardsAfterUnsocket[cardId] || 0) + 1;
+    }
+  }
+  fresh.cards = cardsAfterUnsocket;
+
   // Itens/mascotes comprados na Loja do Despertar (fromAwakening: true) são
   // a ÚNICA exceção de progresso de run que sobrevive, além das cartas
   // acima — uids recomeçam do 1 (equipped já reseta pra tudo vazio, então
