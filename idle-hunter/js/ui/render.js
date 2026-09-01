@@ -3347,6 +3347,7 @@ function chestCardHtml(state, chestId) {
     : `${CHEST_COST_ICON[chest.costType]} ${formatNumber(chest.cost)}`;
   return `
     <div class="chest-card">
+      <button class="chest-card-info-btn" data-chest-info="${chestId}" title="Ver chances">!</button>
       <div class="chest-card-limit">${usedToday}/${CHEST_DAILY_LIMIT} hoje</div>
       <img class="chest-card-img" src="${chest.image}" alt="${chest.name}">
       <div class="chest-card-name">${chest.name}</div>
