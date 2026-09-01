@@ -1495,12 +1495,43 @@ function chestRewardLineHtml(reward) {
     if (reward.discarded) {
       return `🐾 ${label} (inventário cheio, virou +${formatNumber(reward.fragments)} ${PET_FRAGMENT_ICON} Fragmentos)`;
     }
-    return `🐾 Novo Mascote: ${iconMarkup(species?.image, species?.emoji ?? '🐾', species?.name ?? '')} ${label}`;
+    return `🐾 Novo Mascote: <span class="chest-reward-pet-img">${iconMarkup(species?.image, species?.emoji ?? '🐾', species?.name ?? '')}</span> ${label}`;
   }
   if (reward.type === 'card') {
-    return `${CARD_ICON} Nova Carta: ${iconMarkup(reward.card.image, reward.card.emoji ?? '', reward.card.name)} ${reward.card.name}`;
+    return `${CARD_ICON} Nova Carta: <span class="chest-reward-card-img">${iconMarkup(reward.card.image, reward.card.emoji ?? '', reward.card.name)}</span> ${reward.card.name}`;
   }
   return '';
+}
+
+/// Descrição de 1 entrada do pool de um Baú (ver data/chests.js) pro popup
+/// de chances (showChestInfoModal abaixo) — mesma cara de
+/// chestRewardLineHtml acima, mas descrevendo a entrada em si (antes de
+/// sortear), não uma recompensa já aplicada ao state.
+function chestPoolEntryLabel(entry) {
+  if (entry.type === 'egg') return `${EGG_ICON} Ovo de Mascote x${entry.amount}`;
+  if (entry.type === 'petFragment') return `${PET_FRAGMENT_ICON} Fragmento de Mascote x${entry.amount}`;
+  if (entry.type === 'cardFragment') return `${CARD_FRAGMENT_ICON} Fragmento de Carta x${entry.amount}`;
+  if (entry.type === 'awakeningShard') return `${AWAKENING_SHARD_ICON} Fragmento do Despertar x${entry.amount}`;
+  if (entry.type === 'petTier5') return `🐾 Mascote Tier 5 aleatório — ${getRarity(entry.rarityId).name}`;
+  if (entry.type === 'cardRandom') {
+    const zoneLabel = `Zona ${entry.zoneMin + 1}-${entry.zoneMax + 1}`;
+    return `${CARD_ICON} Carta${entry.bossOnly ? ' de Chefe' : ''} aleatória (${zoneLabel})`;
+  }
+  return '';
+}
+
+function showChestInfoModal(chestId) {
+  const chest = CHESTS[chestId];
+  const total = chest.pool.reduce((sum, e) => sum + e.weight, 0);
+  const rows = chest.pool
+    .slice()
+    .sort((a, b) => b.weight - a.weight)
+    .map((entry) => {
+      const pct = (entry.weight / total) * 100;
+      const pctLabel = Number.isInteger(pct) ? `${pct}%` : `${pct.toFixed(1)}%`;
+      return `<p class="offline-item-lines">${chestPoolEntryLabel(entry)} — <strong>${pctLabel}</strong></p>`;
+    }).join('');
+  showModal(`ℹ️ ${chest.name}`, `<p><strong>Chances de recompensa:</strong></p>${rows}`);
 }
 
 function showChestRewardModal(chestId, reward) {
@@ -1725,6 +1756,12 @@ function wireShopTabEvents() {
         renderInventoryTabNow();
         renderPetsTabNow();
       }
+      return;
+    }
+
+    const chestInfoBtn = e.target.closest('[data-chest-info]');
+    if (chestInfoBtn) {
+      showChestInfoModal(chestInfoBtn.dataset.chestInfo);
       return;
     }
 

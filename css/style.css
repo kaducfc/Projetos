@@ -3560,6 +3560,23 @@ button:disabled {
   color: #fff;
 }
 
+.chest-card button.chest-card-info-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  box-shadow: none;
+}
+
 .chest-card-img {
   width: 100%;
   max-width: 110px;
@@ -3589,6 +3606,31 @@ button:disabled {
   background: var(--grad-neutral);
   color: var(--text-dim);
   box-shadow: none;
+}
+
+/* Popup de resultado ao abrir 1 Baú (ver showChestRewardModal em main.js)
+   — sem isso a arte de pet/carta renderiza no tamanho natural do arquivo
+   (bem maior que o popup), cortando a imagem. Carta é retrato (mais alta
+   que larga) e tem o dobro da resolução do pet, então limita a bem menos
+   pra não estourar a altura do popup. */
+.chest-reward-pet-img,
+.chest-reward-card-img {
+  display: block;
+  margin: 10px auto;
+}
+
+.chest-reward-pet-img img {
+  display: block;
+  width: 180px;
+  height: auto;
+  border-radius: 10px;
+}
+
+.chest-reward-card-img img {
+  display: block;
+  width: 90px;
+  height: auto;
+  border-radius: 10px;
 }
 
 /* ---------------- Arena PvP ---------------- */
