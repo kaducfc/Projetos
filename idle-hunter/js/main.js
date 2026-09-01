@@ -28,7 +28,9 @@ import {
   ensureDailyMissionsFresh, recordDailyMissionProgress, selectMission, abandonMission, rerollMission,
   claimDailyMission,
 } from './systems/dailyMissions.js';
-import { watchAd, buyCashItem, buyEventItem, watchDpsBoostAd, watchOfflineBonusAd } from './systems/shop.js';
+import { watchAd, buyCashItem, watchDpsBoostAd, watchOfflineBonusAd } from './systems/shop.js';
+import { openChest } from './systems/chests.js';
+import { CHESTS } from './data/chests.js';
 import { AD_WATCH_CASH_REWARD } from './data/shop.js';
 import { claimCardReward, recycleCard, craftCard } from './systems/cards.js';
 import {
@@ -41,6 +43,7 @@ import {
   fuseAllPossiblePets, hatchAllEggs, rollHatchCandidates, recordPetHatchOutcome, donatePetFragments,
   getBestEquippedPet,
 } from './systems/pets.js';
+import { getPetSpecies } from './data/pets.js';
 import { buySkillLevel, buySpecial, resetSkillTree } from './systems/skills.js';
 import { setPlayerName, toggleSound, toggleMusic, selectProfileIcon, isValidPlayerName, getPlayerName, setLanguage as setLanguageSetting } from './systems/profile.js';
 import { initLanguage, setLanguage as setUiLanguage, translateContainer } from './i18n.js';
@@ -55,7 +58,7 @@ import {
   showGodBonusModal, showGodItemShopDetailModal, showCardShopDetailModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   ACHIEVEMENT_ICON, GIFT_ICON, TRANSCEND_ICON,
-  EGG_ICON, PET_FRAGMENT_ICON,
+  EGG_ICON, PET_FRAGMENT_ICON, AWAKENING_SHARD_ICON,
   showArenaRanksModal, pulseArenaTarget, showVipBenefitsModal, showProfileModal, showTranscendConfirmModal,
   showForeignEquipmentModal, showForeignItemDetailModal,
   renderTranscendTab, renderPvpTab, showPvpBattleModal, showPvpCombatPickerModal, renderRanksTab,
@@ -1477,6 +1480,37 @@ function showExpeditionRewardModal(result) {
   `);
 }
 
+/// Popup de resultado ao abrir 1 Baú (ver openChest em systems/chests.js) —
+/// cada `reward.type` sabe montar sua própria linha (ícone + texto), igual
+/// showExpeditionRewardModal acima.
+function chestRewardLineHtml(reward) {
+  if (reward.type === 'egg') return `+${formatNumber(reward.amount)} ${EGG_ICON} Ovo${reward.amount === 1 ? '' : 's'} de Mascote`;
+  if (reward.type === 'petFragment') return `+${formatNumber(reward.amount)} ${PET_FRAGMENT_ICON} Fragmento${reward.amount === 1 ? '' : 's'} de Mascote`;
+  if (reward.type === 'cardFragment') return `+${formatNumber(reward.amount)} ${CARD_FRAGMENT_ICON} Fragmento${reward.amount === 1 ? '' : 's'} de Carta`;
+  if (reward.type === 'awakeningShard') return `+${formatNumber(reward.amount)} ${AWAKENING_SHARD_ICON} Fragmento${reward.amount === 1 ? '' : 's'} do Despertar`;
+  if (reward.type === 'pet') {
+    const species = getPetSpecies(reward.speciesId);
+    const rarity = getRarity(reward.rarityId);
+    const label = `${species?.name ?? 'Mascote'} Tier 5 — ${rarity.name}`;
+    if (reward.discarded) {
+      return `🐾 ${label} (inventário cheio, virou +${formatNumber(reward.fragments)} ${PET_FRAGMENT_ICON} Fragmentos)`;
+    }
+    return `🐾 Novo Mascote: ${iconMarkup(species?.image, species?.emoji ?? '🐾', species?.name ?? '')} ${label}`;
+  }
+  if (reward.type === 'card') {
+    return `${CARD_ICON} Nova Carta: ${iconMarkup(reward.card.image, reward.card.emoji ?? '', reward.card.name)} ${reward.card.name}`;
+  }
+  return '';
+}
+
+function showChestRewardModal(chestId, reward) {
+  const chest = CHESTS[chestId];
+  showModal(`🎁 ${chest.name}`, `
+    <p><strong>Você recebeu:</strong></p>
+    <p class="offline-item-lines">${chestRewardLineHtml(reward)}</p>
+  `);
+}
+
 function wireEventTabEvents() {
   const container = document.getElementById('tab-events');
 
@@ -1694,18 +1728,16 @@ function wireShopTabEvents() {
       return;
     }
 
-    const buyEventBtn = e.target.closest('[data-buy-event-mat]');
-    if (buyEventBtn) {
-      const item = {
-        matId: buyEventBtn.dataset.buyEventMat,
-        amount: Number(buyEventBtn.dataset.buyEventAmount),
-        cost: Number(buyEventBtn.dataset.buyEventCost),
-      };
-      if (buyEventItem(state, item)) {
-        showToast('🛒 Compra realizada!');
+    const openChestBtn = e.target.closest('[data-open-chest]');
+    if (openChestBtn) {
+      const chestId = openChestBtn.dataset.openChest;
+      const reward = openChest(state, chestId);
+      if (reward) {
+        showChestRewardModal(chestId, reward);
         renderTopBar(state);
         renderShopTab(state, activeShopSubTab);
         renderInventoryTabNow();
+        renderPetsTabNow();
       }
       return;
     }
