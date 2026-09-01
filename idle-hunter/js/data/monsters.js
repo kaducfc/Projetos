@@ -174,8 +174,7 @@ export const BOSSES = [
     // que os dois apontam pro MESMO id/material aqui (dropa até 2 por
     // kill, já que cada um rola sua própria chance — só reforça que o
     // chefe rende mais desse material que um fraco, sem introduzir um 2º
-    // material de verdade). shop.js já pula a 2ª linha duplicada quando os
-    // ids batem — ver eventShopItemsForBoss.
+    // material de verdade).
     materials: {
       primary1: { id: 'chispim_heart', name: 'Crânio de Thornak', emoji: '💀', image: 'assets/thornak/cranio.png' },
       primary2: { id: 'chispim_heart', name: 'Crânio de Thornak', emoji: '💀', image: 'assets/thornak/cranio.png' },
@@ -202,7 +201,7 @@ export const BOSSES = [
     spriteScale: 2.1,
     // Só 1 material de drop de verdade (Tridente de Marokar) — mesmo
     // truque do Thornak (primary1/primary2 apontam pro mesmo id, ver
-    // comentário lá + eventShopItemsForBoss em data/shop.js).
+    // comentário lá).
     materials: {
       primary1: { id: 'solkaiser_feather', name: 'Tridente de Marokar', emoji: '🔱', image: 'assets/marokar/tridente.png' },
       primary2: { id: 'solkaiser_feather', name: 'Tridente de Marokar', emoji: '🔱', image: 'assets/marokar/tridente.png' },

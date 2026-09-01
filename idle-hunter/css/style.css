@@ -3526,6 +3526,71 @@ button:disabled {
   box-shadow: none;
 }
 
+/* ---------------- Baús (sub-aba "Baús" da Loja, ver chestsShopHtml) ---------------- */
+
+.chest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.chest-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: var(--shadow-card);
+}
+
+.chest-card-limit {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+}
+
+.chest-card-img {
+  width: 100%;
+  max-width: 110px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  margin-top: 6px;
+}
+
+.chest-card-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chest-card button {
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--grad-cash);
+  color: #fff;
+  box-shadow: 0 3px 0 var(--cash-dark);
+  border-radius: 10px;
+}
+
+.chest-card button:disabled {
+  background: var(--grad-neutral);
+  color: var(--text-dim);
+  box-shadow: none;
+}
+
 /* ---------------- Arena PvP ---------------- */
 
 .pvp-rank {

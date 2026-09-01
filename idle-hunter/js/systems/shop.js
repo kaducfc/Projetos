@@ -30,20 +30,6 @@ export function buyCashItem(state, id) {
   return true;
 }
 
-/// { matId, amount, cost } — deliberately not a full data/shop.js item
-/// lookup, since event-shop entries are generated per-boss and the
-/// caller (render.js) already has the exact one the player clicked.
-export function canBuyEventItem(state, item) {
-  return state.eventCurrency >= item.cost;
-}
-
-export function buyEventItem(state, item) {
-  if (!canBuyEventItem(state, item)) return false;
-  state.eventCurrency -= item.cost;
-  state.materials[item.matId] = (state.materials[item.matId] || 0) + item.amount;
-  return true;
-}
-
 export function adWatchCooldownRemaining(state) {
   const last = state.lastAdWatchTime || 0;
   return Math.max(0, AD_WATCH_COOLDOWN_MS - (Date.now() - last));

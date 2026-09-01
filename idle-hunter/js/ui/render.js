@@ -30,14 +30,16 @@ import {
   claimedStageCount, currentStageTarget, isAchievementStageReady, isAchievementFullyClaimed,
 } from '../systems/achievements.js';
 import {
-  CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, CASH_ONE_TIME_PURCHASES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss,
+  CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, CASH_ONE_TIME_PURCHASES, AD_WATCH_CASH_REWARD,
   DPS_BOOST_PERCENT, DPS_BOOST_MAX_DURATION_MS,
   OFFLINE_BONUS_SECONDS_PER_STACK, OFFLINE_BONUS_MAX_STACKS,
 } from '../data/shop.js';
 import {
-  canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining,
+  canBuyCashItem, adWatchCooldownRemaining,
   getDpsBoostRemainingMs, canWatchDpsBoostAd, canWatchOfflineBonusAd,
 } from '../systems/shop.js';
+import { CHESTS, CHEST_ORDER, CHEST_DAILY_LIMIT } from '../data/chests.js';
+import { canBuyChest, getChestPurchasesToday } from '../systems/chests.js';
 import { getMaxOfflineSeconds } from '../systems/offline.js';
 import { AWAKENING_SHOP_ITEMS, AWAKENING_SHARD_NAME } from '../data/awakening.js';
 import { canTranscend, getTranscendCount, getAwakeningShards, canBuyAwakeningItem } from '../systems/awakening.js';
@@ -2294,7 +2296,7 @@ export function showDailyMissionCompleteModal(result) {
 export function renderShopTab(state, activeSubTab) {
   const container = document.getElementById('tab-shop');
   let body;
-  if (activeSubTab === 'event') body = eventShopHtml(state);
+  if (activeSubTab === 'event') body = chestsShopHtml(state);
   else if (activeSubTab === 'awakening') body = awakeningShopHtml(state);
   else body = cashShopHtml(state);
 
@@ -2302,7 +2304,7 @@ export function renderShopTab(state, activeSubTab) {
     ${pageBannerHtml('Loja')}
     <div class="inner-subnav">
       <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">${ESMERALDA_ICON} Esmeralda</button>
-      <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">${EVENT_ICON} Evento</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">🎁 Baús</button>
       <button class="inner-subtab-btn ${activeSubTab === 'awakening' ? 'active' : ''}" data-shop-subtab="awakening">${AWAKENING_SHARD_ICON} Despertar</button>
     </div>
     ${body}
@@ -3329,28 +3331,35 @@ export function showProfileModal(state) {
   showModal('👤 Perfil', profileModalHtml(state));
 }
 
-function eventShopHtml(state) {
-  const bossesHtml = BOSSES.map((boss, tier) => {
-    const unlocked = isBossUnlocked(state, tier);
-    if (!unlocked) return '';
-    const items = eventShopItemsForBoss(boss, tier);
-    return `<div class="family-group">
-      <h3><span class="icon">${iconMarkup(boss.image, boss.emoji, boss.name)}</span> ${boss.name}</h3>
-      <div class="shop-item-grid">${items.map((item) => `
-        <div class="shop-item-card event-variant">
-          <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
-          <div class="info">
-            <div class="name">${item.name}</div>
-          </div>
-          <button data-buy-event-mat="${item.matId}" data-buy-event-amount="${item.amount}" data-buy-event-cost="${item.cost}" ${canBuyEventItem(state, item) ? '' : 'disabled'}>${EVENT_ICON} ${item.cost}</button>
-        </div>`).join('')}</div>
-    </div>`;
-  }).join('');
+const CHEST_COST_ICON = {
+  gold: GOLD_ICON,
+  event: EVENT_ICON,
+  cash: ESMERALDA_ICON,
+};
 
+function chestCardHtml(state, chestId) {
+  const chest = CHESTS[chestId];
+  const usedToday = getChestPurchasesToday(state, chestId);
+  const remaining = CHEST_DAILY_LIMIT - usedToday;
+  const soldOutToday = remaining <= 0;
+  const btnLabel = soldOutToday
+    ? 'Esgotado hoje'
+    : `${CHEST_COST_ICON[chest.costType]} ${formatNumber(chest.cost)}`;
   return `
-    <div class="shop-balance event-variant">${EVENT_ICON} Você tem <strong>${formatNumber(state.eventCurrency)}</strong> Moeda de Evento</div>
-    <p class="shop-note">Ganhe Moeda de Evento derrotando o chefe de evento na aba 🎪 Eventos.</p>
-    ${bossesHtml || '<p class="shop-note">Nenhum chefe desbloqueado ainda.</p>'}
+    <div class="chest-card">
+      <div class="chest-card-limit">${usedToday}/${CHEST_DAILY_LIMIT} hoje</div>
+      <img class="chest-card-img" src="${chest.image}" alt="${chest.name}">
+      <div class="chest-card-name">${chest.name}</div>
+      <button data-open-chest="${chestId}" ${canBuyChest(state, chestId) ? '' : 'disabled'}>${btnLabel}</button>
+    </div>`;
+}
+
+function chestsShopHtml(state) {
+  const cardsHtml = CHEST_ORDER.map((chestId) => chestCardHtml(state, chestId)).join('');
+  return `
+    <div class="shop-balance">${GOLD_ICON} <strong>${formatNumber(state.gold)}</strong> &nbsp; ${EVENT_ICON} <strong>${formatNumber(state.eventCurrency)}</strong> &nbsp; ${ESMERALDA_ICON} <strong>${formatNumber(state.cash)}</strong></div>
+    <p class="shop-note">Abra Baús pra ganhar Ovos/Fragmentos de Mascote, mascotes Tier 5, Fragmentos de Carta, cartas aleatórias e mais. Limite de ${CHEST_DAILY_LIMIT} compras por baú a cada dia.</p>
+    <div class="chest-grid">${cardsHtml}</div>
   `;
 }
 
