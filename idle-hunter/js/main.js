@@ -1044,7 +1044,10 @@ function wireModalEvents() {
         if (refund) {
           hideModal();
           const refundStr = Object.entries(refund)
-            .map(([matId, qty]) => `+${qty} ${findMaterialInfo(matId)?.emoji ?? ''}`)
+            .map(([matId, qty]) => {
+              const info = findMaterialInfo(matId);
+              return `+${qty} ${iconMarkup(info?.image, info?.emoji ?? '', info?.name ?? '')}`;
+            })
             .join(' ');
           showToast(`🗑️ ${itemName} destruído! ${refundStr}`);
           fullRefresh();
@@ -1312,7 +1315,10 @@ function wireInventoryTabEvents() {
       }
       exitBulkSelectMode();
       const refundStr = Object.entries(totalRefund)
-        .map(([matId, qty]) => `+${qty} ${findMaterialInfo(matId)?.emoji ?? ''}`)
+        .map(([matId, qty]) => {
+          const info = findMaterialInfo(matId);
+          return `+${qty} ${iconMarkup(info?.image, info?.emoji ?? '', info?.name ?? '')}`;
+        })
         .join(' ');
       showToast(`🗑️ ${destroyedCount} ${destroyedCount === 1 ? 'item destruído' : 'itens destruídos'}! ${refundStr}`);
       renderTopBar(state);
