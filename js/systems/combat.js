@@ -11,8 +11,15 @@ const HP_GROWTH = 1.145;
 const HP_BASE = 20;
 const BOSS_HP_MULT = 9;
 
-const GOLD_GROWTH = 1.115;
-const GOLD_BASE = 4;
+// Curva de ouro reequilibrada (pedido do usuário, pra calibrar o preço em
+// ouro de futuros Baús de Gacha): mantém a Zona 1 igual (~820 ouro/hora,
+// numa cadência de referência de ~58,5 kills/hora) e reduz a Zona 10 de
+// ~15M/hora pra ~500K/hora — GOLD_GROWTH/GOLD_BASE recalculados pra bater
+// exatamente nesses 2 pontos (crescimento geométrico único, sem quebra de
+// curva no meio — cada zona rende ~2.14x a anterior, contra ~3x de antes).
+// Era GOLD_GROWTH=1.115, GOLD_BASE=4.
+const GOLD_GROWTH = 1.073856324990486;
+const GOLD_BASE = 5.610714658981961;
 const BOSS_GOLD_MULT = 6;
 const GOLD_DROP_BONUS = 1.15; // +15% gold per kill across the board
 
