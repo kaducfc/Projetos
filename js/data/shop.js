@@ -80,27 +80,3 @@ export const CASH_REAL_MONEY_PACKAGES = [
   { id: 'pack_m', cashAmount: 550, priceLabel: 'R$ 39,90' },
   { id: 'pack_l', cashAmount: 1200, priceLabel: 'R$ 79,90' },
 ];
-
-// Event-currency sink, generated per boss so every unlocked one has bulk
-// bundles of its "drop principal" material(s) for sale. `tier` is the
-// boss's index in BOSSES (0-based), same knob items.js uses to scale
-// crafting costs.
-export function eventShopItemsForBoss(boss, tier) {
-  const items = [
-    {
-      id: `${boss.id}_primary1_bundle`, name: `${boss.materials.primary1.name} (x25)`, emoji: boss.materials.primary1.emoji, image: boss.materials.primary1.image || null,
-      matId: boss.materials.primary1.id, amount: 25, cost: Math.round(8 + tier * 3),
-    },
-  ];
-  // Alguns bosses (ex: Thornak, ver data/monsters.js) têm só 1 material de
-  // drop de verdade — primary1 e primary2 apontam pro mesmo id nesse caso
-  // (o schema compartilhado ainda exige os 2 campos preenchidos) — pula a
-  // 2ª linha pra não vender o mesmo material duas vezes na loja.
-  if (boss.materials.primary2.id !== boss.materials.primary1.id) {
-    items.push({
-      id: `${boss.id}_primary2_bundle`, name: `${boss.materials.primary2.name} (x25)`, emoji: boss.materials.primary2.emoji, image: boss.materials.primary2.image || null,
-      matId: boss.materials.primary2.id, amount: 25, cost: Math.round(8 + tier * 3),
-    });
-  }
-  return items;
-}
