@@ -109,6 +109,7 @@ function currentArenaRunRemainingMs() {
 // state.selectedMonsters on "Confirmar") — pure UI state, not part of the save.
 let activeShopSubTab = 'cash';
 let inventoryFilterCategory = null;
+let inventorySortByTier = null;
 let pendingMonsterSelection = [];
 // Seleção em massa no Inventário (segurar um item por 1s pra entrar no modo,
 // ver wireInventoryTabEvents): selectedUids sobrevive a re-renders (a aba é
@@ -202,7 +203,15 @@ function renderInventoryTabNow() {
     active: bulkSelectMode,
     selectedUids: bulkSelectedUids,
     confirming: bulkConfirmingDestroy,
-  });
+  }, inventorySortByTier);
+}
+
+/// Botão de seta no cabeçalho do Inventário (ver data-toggle-tier-sort em
+/// equipRingContentHtml/ui/render.js) — 1º clique ordena por Tier do maior
+/// pro menor, clicar de novo no mesmo botão inverte (menor pro maior).
+function toggleInventoryTierSort() {
+  inventorySortByTier = inventorySortByTier === 'desc' ? 'asc' : 'desc';
+  renderInventoryTabNow();
 }
 
 // uid opcional: chamado sem argumento pelo botão "☑️ Selecionar" (entra no
@@ -1363,6 +1372,12 @@ function wireInventoryTabEvents() {
       renderInventoryTabNow();
       return;
     }
+
+    const tierSortBtn = e.target.closest('[data-toggle-tier-sort]');
+    if (tierSortBtn) {
+      toggleInventoryTierSort();
+      return;
+    }
   });
 }
 
@@ -2249,6 +2264,7 @@ function performTranscend() {
   petSortMode = null;
   expeditionCardsVisible = false;
   inventoryFilterCategory = null;
+  inventorySortByTier = null;
   activeShopSubTab = 'cash';
 
   hideModal();
