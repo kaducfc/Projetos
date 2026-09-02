@@ -1049,7 +1049,7 @@ function wireModalEvents() {
           const refundStr = Object.entries(refund)
             .map(([matId, qty]) => {
               const info = findMaterialInfo(matId);
-              return `+${qty} ${iconMarkup(info?.image, info?.emoji ?? '', info?.name ?? '')}`;
+              return `+${qty} <span class="icon">${iconMarkup(info?.image, info?.emoji ?? '', info?.name ?? '')}</span>`;
             })
             .join(' ');
           showToast(`🗑️ ${itemName} destruído! ${refundStr}`);
@@ -1320,7 +1320,7 @@ function wireInventoryTabEvents() {
       const refundStr = Object.entries(totalRefund)
         .map(([matId, qty]) => {
           const info = findMaterialInfo(matId);
-          return `+${qty} ${iconMarkup(info?.image, info?.emoji ?? '', info?.name ?? '')}`;
+          return `+${qty} <span class="icon">${iconMarkup(info?.image, info?.emoji ?? '', info?.name ?? '')}</span>`;
         })
         .join(' ');
       showToast(`🗑️ ${destroyedCount} ${destroyedCount === 1 ? 'item destruído' : 'itens destruídos'}! ${refundStr}`);
