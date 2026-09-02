@@ -517,10 +517,15 @@ export function renderBossTimer(remainingMs) {
 /// — ver seleção em massa (segurar um item por 1s) em main.js
 /// wireInventoryTabEvents(). null/omitido = fora do modo de seleção,
 /// comportamento normal (clique abre o detalhe do item).
-export function renderInventoryTab(state, filterCategory = null, bulkSelect = null) {
+/// sortByTier (opcional): null = ordem natural (drop mais recente por
+/// último); 'desc'/'asc' = ordenado por Tier (item.zoneIndex + 1, ver
+/// tierBadge em inventoryTileHtml) do maior pro menor ou vice-versa — ver
+/// botão de seta em equip-inventory-header-row abaixo e
+/// toggleInventoryTierSort em main.js.
+export function renderInventoryTab(state, filterCategory = null, bulkSelect = null, sortByTier = null) {
   const container = document.getElementById('tab-inventory');
   const banner = pageBannerHtml('Equipamentos');
-  container.innerHTML = banner + equipRingContentHtml(state, filterCategory, bulkSelect);
+  container.innerHTML = banner + equipRingContentHtml(state, filterCategory, bulkSelect, sortByTier);
   translateContainer(container);
 }
 
@@ -691,10 +696,17 @@ export function showFullStatsModal(state) {
   `);
 }
 
-function equipRingContentHtml(state, filterCategory = null, bulkSelect = null) {
-  const filtered = filterCategory
+function equipRingContentHtml(state, filterCategory = null, bulkSelect = null, sortByTier = null) {
+  let filtered = filterCategory
     ? state.inventory.filter((entry) => getItem(entry.itemId)?.category === filterCategory)
     : state.inventory;
+  if (sortByTier) {
+    filtered = [...filtered].sort((a, b) => {
+      const tierA = getItem(a.itemId)?.zoneIndex ?? -1;
+      const tierB = getItem(b.itemId)?.zoneIndex ?? -1;
+      return sortByTier === 'desc' ? tierB - tierA : tierA - tierB;
+    });
+  }
   const inventoryHtml = filtered.length
     ? filtered.map((entry) => inventoryTileHtml(state, entry, bulkSelect)).join('')
     : state.inventory.length
@@ -720,7 +732,10 @@ function equipRingContentHtml(state, filterCategory = null, bulkSelect = null) {
       ${attributeTotalsHtml(state)}
       <div class="equip-inventory-header-row">
         <div class="equip-inventory-header">Inventário (${state.inventory.length}/${getItemInventoryCap(state)})</div>
-        ${bulkSelect?.active ? '' : '<button class="bulk-select-toggle-btn" data-bulk-toggle-select>☑️ Selecionar</button>'}
+        <div class="equip-inventory-header-actions">
+          <button class="tier-sort-toggle-btn ${sortByTier ? 'active' : ''} ${sortByTier === 'asc' ? 'asc' : ''}" data-toggle-tier-sort title="${sortByTier === 'asc' ? 'Ordenado por Tier: menor para maior' : sortByTier === 'desc' ? 'Ordenado por Tier: maior para menor' : 'Ordenar por Tier'}">⬆️</button>
+          ${bulkSelect?.active ? '' : '<button class="bulk-select-toggle-btn" data-bulk-toggle-select>☑️ Selecionar</button>'}
+        </div>
       </div>
       ${categoryFilterRowHtml(filterCategory)}
       ${bulkSelectToolbarHtml(bulkSelect)}
