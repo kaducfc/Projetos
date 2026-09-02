@@ -1320,6 +1320,13 @@ button:disabled {
   padding-top: 0;
 }
 
+.equip-inventory-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .bulk-select-toggle-btn {
   flex-shrink: 0;
   font-size: 11px;
@@ -1330,6 +1337,33 @@ button:disabled {
   border-radius: 8px;
   padding: 5px 9px;
   box-shadow: 0 2px 0 var(--gold-dark);
+}
+
+/* Botão de ordenar o inventário por Tier (ver toggleInventoryTierSort em
+   main.js) — 1 clique ordena do maior Tier pro menor, clicar de novo
+   inverte a direção; a seta gira 180° pra indicar a direção atual (ícone
+   provisório, ver pedido do usuário de trocar o símbolo mais pra frente). */
+.tier-sort-toggle-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font-size: 13px;
+  color: #fff;
+  background: var(--grad-neutral);
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 0 var(--border);
+  transition: transform 0.15s ease;
+}
+
+.tier-sort-toggle-btn.active {
+  background: var(--grad-gold);
+  box-shadow: 0 2px 0 var(--gold-dark);
+}
+
+.tier-sort-toggle-btn.asc {
+  transform: rotate(180deg);
 }
 
 .equip-inventory-grid {
