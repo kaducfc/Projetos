@@ -1,0 +1,46 @@
+name: Bots diários (Idle Hunter)
+
+# Roda 1x por dia — cada execução avança os 30 bots em 1 "dia" de
+# progresso real de jogo e sincroniza com a Arena/Ranks de verdade no
+# Supabase (ver idle-hunter/scripts/bots/). O estado de cada bot (save +
+# sessão do Supabase) é commitado de volta no repo, então a MESMA conta
+# anônima é sempre reusada — nunca cria uma conta nova por engano.
+#
+# `workflow_dispatch` deixa rodar manualmente (aba Actions do GitHub) pra
+# testar sem esperar o horário agendado.
+on:
+  schedule:
+    - cron: '0 15 * * *' # ~12h em Brasília (UTC-3)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  run-bots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instala dependências dos bots
+        working-directory: idle-hunter/scripts/bots
+        run: npm install
+
+      - name: Roda 1 dia de progresso pra cada bot
+        working-directory: idle-hunter/scripts/bots
+        run: node run.mjs
+
+      - name: Salva o progresso dos bots de volta no repo
+        working-directory: idle-hunter/scripts/bots
+        run: |
+          git config user.name "idle-hunter-bots"
+          git config user.email "actions@github.com"
+          git add state/
+          git diff --cached --quiet && echo "Nada novo pra commitar hoje." || git commit -m "Progresso diário dos bots"
+          git push

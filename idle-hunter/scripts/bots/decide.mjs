@@ -1,0 +1,263 @@
+// Motor de decisão "Experiente" — reusa os módulos REAIS de regras do
+// jogo (js/systems/*.js), sem reimplementar nada em Python/paralelo. Cada
+// chamada de runOneDay avança 1 dia de progresso pra 1 bot, na mesma
+// ordem que um jogador Experiente de verdade jogaria: checa missão/VIP,
+// aplica o progresso offline acumulado (mesmíssimo mecanismo de
+// systems/offline.js que roda pro jogador humano), e então gasta os
+// recursos ganhos em aprimorar equipamento, chocar ovo, abrir Baú,
+// Expedição, Combate Permanente e Transcender.
+import { createDefaultState, isVipActive } from '../../js/state.js';
+import { computePlayerStats } from '../../js/systems/stats.js';
+import { computePlayerPower, computeItemPower } from '../../js/systems/power.js';
+import {
+  ensureMonsterSpawned, canSelectMonster, setSelectedMonsters, MAX_SELECTED_MONSTERS,
+} from '../../js/systems/combat.js';
+import { computeOfflineProgress, applyOfflineProgress } from '../../js/systems/offline.js';
+import { ZONES } from '../../js/data/monsters.js';
+import { highestUnlockedZoneIndex, isBossUnlocked } from '../../js/systems/leveling.js';
+import {
+  canEnhance, enhanceItem, canUpgradeToMaster, upgradeToMaster, canAscendItem,
+  rollAscensionCandidates, finalizeAscension, canRerollBonus, rollBonusReroll, finalizeBonusReroll,
+  canSocketCard, socketCard, ensureCardIds, canDestroyItem, destroyItem,
+} from '../../js/systems/crafting.js';
+import { getItem, getSlotIdsForCategory, MYSTIC_DIE_ID } from '../../js/data/items.js';
+import {
+  rollHatchCandidates, canChooseRightPet, useFreeRightPetChoice,
+  addPetToInventory, recordPetHatchOutcome, fuseAllPossiblePets,
+  equipPet, canEquipPet,
+} from '../../js/systems/pets.js';
+import { getPetInventoryCap, isPetCandidateBetter } from '../../js/data/pets.js';
+import { canBuyChest, openChest } from '../../js/systems/chests.js';
+import { canBuyCashItem, buyCashItem } from '../../js/systems/shop.js';
+import { canEnterExpedition, enterExpedition } from '../../js/systems/expedition.js';
+import { canEnterArena, startArenaRun, applyArenaDamage, endArenaRun } from '../../js/systems/arena.js';
+import { canTranscend, transcend } from '../../js/systems/awakening.js';
+import { ensureDailyMissionsFresh, getActiveMissionSlotIndex, canSelectMission, selectMission, canClaimMission, claimDailyMission } from '../../js/systems/dailyMissions.js';
+import { equipItem, canEquipItem, findEquippedSlotId } from '../../js/systems/equipment.js';
+import { isAchievementStageReady, isAchievementFullyClaimed, claimAchievementStage } from '../../js/systems/achievements.js';
+import { ACHIEVEMENTS } from '../../js/data/achievements.js';
+
+export function newBotState() {
+  return createDefaultState();
+}
+
+/// Sempre mantém os 4 melhores monstros selecionados no MAIOR zone/boss já
+/// liberado (o farm mais eficiente pra XP/ouro/materiais nesse ponto do
+/// jogo) — mesma escolha que um Experiente faria manualmente.
+function refreshMonsterSelection(state) {
+  const zoneIndex = highestUnlockedZoneIndex(state);
+  const zone = ZONES[zoneIndex];
+  const list = [];
+  if (isBossUnlocked(state, zoneIndex)) list.push({ zoneIndex, kind: 'boss', monsterId: zone.boss.id });
+  for (const m of zone.weakMonsters) {
+    if (list.length >= MAX_SELECTED_MONSTERS) break;
+    list.push({ zoneIndex, kind: 'weak', monsterId: m.id });
+  }
+  if (list.length && canSelectMonster(state, zoneIndex, list[0].kind)) setSelectedMonsters(state, list);
+  ensureMonsterSpawned(state);
+}
+
+/// Fonte real de Esmeralda (sem microtransação de verdade nesse
+/// protótipo, ver data/shop.js) — resgata toda etapa de conquista pronta.
+function claimReadyAchievements(state) {
+  for (const achievement of ACHIEVEMENTS) {
+    let guard = 0;
+    while (!isAchievementFullyClaimed(state, achievement) && isAchievementStageReady(state, achievement) && guard++ < 50) {
+      claimAchievementStage(state, achievement.id);
+    }
+  }
+}
+
+function buyVipAsapAndAscendPriorities(state) {
+  if (!isVipActive(state) && canBuyCashItem(state, 'cash_vip')) buyCashItem(state, 'cash_vip');
+}
+
+/// Aprimora/evolui/ascende TODO item equipado até travar por falta de
+/// material/ouro — e usa Dado Místico pra rerolar 1 bônus aleatório de vez
+/// em quando (só quando sobra bastante estoque, pra não gastar tudo de
+/// uma vez achando que só vale a pena melhorar aos poucos).
+function upgradeEquippedItems(state) {
+  for (const uid of Object.values(state.equipped)) {
+    if (!uid) continue;
+    let guard = 0;
+    while (canEnhance(state, uid) && guard++ < 20) enhanceItem(state, uid);
+    if (canUpgradeToMaster(state, uid)) upgradeToMaster(state, uid);
+    if (canAscendItem(state, uid)) {
+      const pending = rollAscensionCandidates(state, uid);
+      if (pending) finalizeAscension(state, uid, pending, Math.floor(Math.random() * pending.candidates.length));
+    }
+    const entry = state.inventory.find((i) => i.uid === uid);
+    const bonusCount = entry?.additionalStats?.length || 0;
+    if (bonusCount > 0 && (state.materials[MYSTIC_DIE_ID] || 0) >= 10) {
+      const statIndex = Math.floor(Math.random() * bonusCount);
+      if (canRerollBonus(state, uid, statIndex)) {
+        const pending = rollBonusReroll(state, uid, statIndex);
+        if (pending) finalizeBonusReroll(state, uid, pending, 0);
+      }
+    }
+  }
+}
+
+/// Power do slot mais FRACO ocupado por essa categoria (ou -1 se algum dos
+/// slots da categoria ainda está vazio — sempre vale a pena preencher).
+/// equipItem() sempre preenche um slot vazio antes de sobrescrever, então
+/// comparar contra o mínimo é a aproximação certa pra saber se o item novo
+/// é mesmo uma melhoria antes de gastar o equip nele.
+function weakestEquippedPowerForCategory(state, category) {
+  const slotIds = getSlotIdsForCategory(category);
+  let weakest = Infinity;
+  for (const slotId of slotIds) {
+    const uid = state.equipped[slotId];
+    if (!uid) return -1;
+    const entry = state.inventory.find((i) => i.uid === uid);
+    weakest = Math.min(weakest, entry ? computeItemPower(entry) : -1);
+  }
+  return weakest;
+}
+
+/// Só equipa quando o item é de fato uma melhoria de Power no slot certo
+/// (compara contra o mais fraco já equipado daquela categoria) — sem isso
+/// qualquer drop novo sobrescreveria o equipamento bom por engano
+/// (equipItem() não compara nada sozinho, ver systems/equipment.js). O
+/// resto — não equipado e não uma melhoria — é lixo: destrói tudo pra
+/// nunca lotar o inventário e ainda reverter em material.
+function manageInventory(state) {
+  for (const entry of [...state.inventory]) {
+    const item = getItem(entry.itemId);
+    if (item.isGodTier) continue;
+    if (findEquippedSlotId(state, entry.uid) != null) continue;
+    if (!canEquipItem(state, entry.uid)) continue;
+    const myPower = computeItemPower(entry);
+    if (myPower > weakestEquippedPowerForCategory(state, item.category)) equipItem(state, entry.uid);
+  }
+  for (const entry of [...state.inventory]) {
+    if (findEquippedSlotId(state, entry.uid) != null) continue;
+    if (canDestroyItem(state, entry.uid)) destroyItem(state, entry.uid);
+  }
+  // Socket de carta: qualquer slot vazio recebe a 1ª carta disponível.
+  for (const uid of Object.values(state.equipped)) {
+    if (!uid) continue;
+    const entry = state.inventory.find((i) => i.uid === uid);
+    if (!entry) continue;
+    ensureCardIds(entry).forEach((cardId, slotIndex) => {
+      if (cardId) return;
+      const ownedCardId = Object.keys(state.cards || {}).find((id) => (state.cards[id] || 0) > 0);
+      if (ownedCardId && canSocketCard(state, uid, slotIndex, ownedCardId)) socketCard(state, uid, slotIndex, ownedCardId);
+    });
+  }
+}
+
+function hatchAllEggsAlways(state) {
+  let guard = 0;
+  while ((state.eggCount || 0) > 0 && state.pets.length < getPetInventoryCap(state) && guard++ < 2000) {
+    const [left, right] = rollHatchCandidates(state);
+    let chosen = left;
+    if (canChooseRightPet(state) && isPetCandidateBetter(right, left)) {
+      chosen = right;
+      if (!isVipActive(state)) useFreeRightPetChoice(state);
+    }
+    state.eggCount -= 1;
+    const { uid } = addPetToInventory(state, chosen);
+    recordPetHatchOutcome(state, chosen.rarityId);
+    if (uid && canEquipPet(state, uid)) equipPet(state, uid);
+  }
+  fuseAllPossiblePets(state);
+  // Reequipa o melhor pet livre de cada elemento (pode ter melhorado com fusão).
+  for (const pet of state.pets) {
+    if (canEquipPet(state, pet.uid)) equipPet(state, pet.uid);
+  }
+}
+
+/// Prioridade de Baú: Evento (melhor custo-benefício, moeda própria) >
+/// Premium (se já tem VIP garantido e sobra Esmeralda) > Mascote/Cartas
+/// com o ouro que sobrar.
+function openChestsUpToLimit(state) {
+  for (const chestId of ['evento', 'premium', 'mascote', 'cartas']) {
+    let guard = 0;
+    while (canBuyChest(state, chestId) && guard++ < 3) openChest(state, chestId);
+  }
+}
+
+function playCombatePermanente(state, stats) {
+  if (!canEnterArena(state)) return;
+  startArenaRun(state);
+  const effectiveDps = stats.dps * (stats.attackSpeedPerSec || 1);
+  applyArenaDamage(state, effectiveDps * 30);
+  endArenaRun(state);
+}
+
+function playExpedition(state) {
+  if (!canEnterExpedition(state)) return;
+  enterExpedition(state, '8h');
+}
+
+function playDailyMission(state) {
+  ensureDailyMissionsFresh(state);
+  if (getActiveMissionSlotIndex(state) === -1) {
+    const idx = (state.dailyMissions?.slots || []).findIndex((s) => s.status === 'idle');
+    if (idx !== -1 && canSelectMission(state, idx)) selectMission(state, idx);
+  }
+  (state.dailyMissions?.slots || []).forEach((slot, idx) => {
+    if (slot.status === 'ready' && canClaimMission(state, idx)) claimDailyMission(state, idx);
+  });
+}
+
+/// Transcende assim que possível (Experiente agressivo — cada Transcender
+/// dá bônus permanente de XP/HP/DPS, compensa reiniciar).
+function maybeTranscend(state) {
+  if (canTranscend(state)) return transcend(state);
+  return state;
+}
+
+/// Avança 1 "dia" de jogo pra 1 bot — chamado 1x por execução diária (ver
+/// run.mjs). `elapsedMsOverride` (opcional, só pra teste local) força o
+/// tempo "offline" simulado em vez de usar o relógio real.
+// Um Experiente de verdade abre o jogo várias vezes ao longo do dia (não
+// só 1x) — cada "abertura" só conta progresso até o teto de recompensa
+// offline (ver getMaxOfflineSeconds em systems/offline.js, ~6h com VIP),
+// então rodar computeOfflineProgress só 1x por dia jogado desperdiçaria a
+// maior parte das ~24h reais entre execuções. CHECK_INS_PER_DAY simula
+// esses vários acessos, cada um batendo o teto por conta própria.
+const CHECK_INS_PER_DAY = 4;
+
+export function runOneDay(state, elapsedMsOverride = null) {
+  const totalElapsedMs = elapsedMsOverride != null ? elapsedMsOverride : (Date.now() - (state.lastSaveTime || Date.now()));
+
+  playDailyMission(state);
+  claimReadyAchievements(state);
+  buyVipAsapAndAscendPriorities(state);
+  refreshMonsterSelection(state);
+
+  let remaining = totalElapsedMs;
+  for (let i = 0; i < CHECK_INS_PER_DAY && remaining > 0; i++) {
+    const chunk = Math.floor(remaining / (CHECK_INS_PER_DAY - i));
+    remaining -= chunk;
+    state.lastSaveTime = Date.now() - chunk;
+    const progress = computeOfflineProgress(state);
+    if (progress) applyOfflineProgress(state, progress);
+    state.lastSaveTime = Date.now();
+  }
+
+  manageInventory(state);
+  upgradeEquippedItems(state);
+  hatchAllEggsAlways(state);
+  openChestsUpToLimit(state);
+  playExpedition(state);
+
+  let stats = computePlayerStats(state);
+  playCombatePermanente(state, stats);
+
+  // Mais conquistas provavelmente desbloquearam durante o dia (nível/ouro/
+  // kills subiram) — resgata de novo e tenta o VIP com a Esmeralda nova.
+  claimReadyAchievements(state);
+  buyVipAsapAndAscendPriorities(state);
+
+  state = maybeTranscend(state);
+
+  // Recalcula depois de tudo (Transcender pode ter mudado o state inteiro).
+  refreshMonsterSelection(state);
+  stats = computePlayerStats(state);
+  const power = computePlayerPower(state);
+
+  return { state, stats, power };
+}
