@@ -1,7 +1,7 @@
 import { createDefaultState } from '../state.js';
 import { AWAKENING_SHOP_ITEMS } from '../data/awakening.js';
 import { recordCardDiscovered } from './cards.js';
-import { getItem, getItemInventoryCap, GOD_RARITY_ID, godAttributeBaseValue } from '../data/items.js';
+import { getItem, getItemInventoryCap, GOD_RARITY_ID, godAttributeBaseValue, MYSTIC_DIE_ID } from '../data/items.js';
 
 export function canTranscend(state) {
   return !!state.transcendUnlocked;
@@ -106,6 +106,8 @@ export function transcend(state) {
     fresh.pets.push({ ...pet, uid: nextPetUid++ });
   }
   fresh.nextPetUid = nextPetUid;
+
+  fresh.materials[MYSTIC_DIE_ID] = state.materials[MYSTIC_DIE_ID] || 0;
 
   return fresh;
 }
