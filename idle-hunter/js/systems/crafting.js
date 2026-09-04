@@ -249,11 +249,15 @@ export function finalizeAscension(state, uid, pending, chosenIndex) {
 // outro dado (ver reuso de `pendingBonusReroll` em main.js).
 // ---------------------------------------------------------------------
 
+/// Vale pra item normal E Tier God (getRarity/rollBonusRerollCandidates,
+/// data/items.js, já sabem resolver os dois — raridade Deus fixa e
+/// atributo "efetivo" preso no molde ou escolhido pelo jogador). Só bônus
+/// JÁ rolados podem ser trocados (statIndex dentro do array atual) — num
+/// item Deus ainda incompleto isso naturalmente restringe aos slots já
+/// preenchidos pelo fluxo normal de "Escolher Bônus".
 export function canRerollBonus(state, uid, statIndex) {
   const entry = getEntry(state, uid);
   if (!entry) return false;
-  const item = getItem(entry.itemId);
-  if (item.isGodTier) return false;
   if (statIndex < 0 || statIndex >= (entry.additionalStats || []).length) return false;
   return (state.materials[MYSTIC_DIE_ID] || 0) >= 1;
 }
