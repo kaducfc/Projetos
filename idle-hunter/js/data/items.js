@@ -312,7 +312,10 @@ export function rollAscensionBonusCandidates(tier, ownAttributeId, ownBaseValue,
 // ---------------------------------------------------------------------
 export const MYSTIC_DIE_ID = 'mystic_die';
 export const MYSTIC_DIE_NAME = 'Dado Místico';
-export const MYSTIC_DIE_EMOJI = '🎲';
+// Ícone de verdade (assets/ui/mystic-die.png) em vez do emoji 🎲 — usado em
+// TODO lugar que mostra Dado Místico (correio, evento, popup de reroll,
+// toasts, botão "Trocar de novo"), pedido explícito do usuário.
+export const MYSTIC_DIE_EMOJI = '<img class="currency-icon" src="assets/ui/mystic-die.png" alt="Dado Místico">';
 
 /// Rola 3 candidatos pra substituir o bônus adicional `statIndex` de um
 /// item — mesma mecânica de rollAscensionBonusCandidates (rola 3, o
