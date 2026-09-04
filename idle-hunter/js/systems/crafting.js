@@ -2,6 +2,7 @@ import {
   getItem, ENHANCE_MAX_LEVEL, rollDroppedItem, getRarity, getSlotIdsForCategory,
   getAscensionCost, rollBaseStatsFromTemplate, rollAscensionBonusCandidates,
   getItemInventoryCap, getItemScrapMaterial, RARITIES,
+  MYSTIC_DIE_ID, rollBonusRerollCandidates,
 } from '../data/items.js';
 import { ZONES } from '../data/monsters.js';
 
@@ -233,6 +234,52 @@ export function finalizeAscension(state, uid, pending, chosenIndex) {
   entry.additionalStats = [...entry.additionalStats, chosen];
   entry.enhanceLevel = 0;
   entry.isMaster = false;
+  return true;
+}
+
+// ---------------------------------------------------------------------
+// Reroll de bônus com Dado Místico (ver MYSTIC_DIE_ID em data/items.js):
+// substitui UM bônus adicional já existente de um item normal (não Tier
+// God, que tem seu próprio fluxo de montagem em systems/godItems.js) por 1
+// de 3 candidatos sorteados na raridade ATUAL do item. Diferente da
+// Ascensão (que cobra o custo só ao ESCOLHER um dos 3), o Dado Místico é
+// consumido na hora de ROLAR os 3 candidatos (pedido explícito do
+// usuário) — o chamador (main.js) guarda o resultado em memória até o
+// jogador escolher, e reabrir sem escolher NÃO rola de novo nem cobra
+// outro dado (ver reuso de `pendingBonusReroll` em main.js).
+// ---------------------------------------------------------------------
+
+export function canRerollBonus(state, uid, statIndex) {
+  const entry = getEntry(state, uid);
+  if (!entry) return false;
+  const item = getItem(entry.itemId);
+  if (item.isGodTier) return false;
+  if (statIndex < 0 || statIndex >= (entry.additionalStats || []).length) return false;
+  return (state.materials[MYSTIC_DIE_ID] || 0) >= 1;
+}
+
+/// Retorna null (sem cobrar nada) se não puder rerolar agora — index
+/// inválido, item Tier God ou sem Dado Místico.
+export function rollBonusReroll(state, uid, statIndex) {
+  if (!canRerollBonus(state, uid, statIndex)) return null;
+  const entry = getEntry(state, uid);
+  const item = getItem(entry.itemId);
+  state.materials[MYSTIC_DIE_ID] -= 1;
+  const candidates = rollBonusRerollCandidates(item, entry, statIndex);
+  return { uid, statIndex, candidates };
+}
+
+/// Commita a escolha de 1 dos 3 candidatos de rollBonusReroll — não cobra
+/// nada (o Dado Místico já foi gasto na rolagem). `pending` é o retorno de
+/// rollBonusReroll, guardado em main.js até o clique de escolha.
+export function finalizeBonusReroll(state, uid, pending, chosenIndex) {
+  if (!pending || pending.uid !== uid) return false;
+  const entry = getEntry(state, uid);
+  if (!entry) return false;
+  if (pending.statIndex < 0 || pending.statIndex >= (entry.additionalStats || []).length) return false;
+  const chosen = pending.candidates[chosenIndex];
+  if (!chosen) return false;
+  entry.additionalStats[pending.statIndex] = chosen;
   return true;
 }
 
