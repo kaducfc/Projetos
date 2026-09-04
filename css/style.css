@@ -1584,12 +1584,18 @@ button:disabled {
   position: absolute;
   top: -8px;
   right: -4px;
-  padding: 8px;
-  font-size: 30px;
-  background: none;
-  border: none;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  font-size: 26px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 10px;
   box-shadow: none;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Badge pequeno no canto do card do Inventário (ver inventoryTileHtml,
