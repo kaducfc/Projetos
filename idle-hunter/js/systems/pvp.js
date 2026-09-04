@@ -335,6 +335,7 @@ async function fetchPvpRank(rpcName) {
 export const fetchArenaRank = () => fetchPvpRank('pvp_rank_arena');
 export const fetchLevelRank = () => fetchPvpRank('pvp_rank_level');
 export const fetchTranscendRank = () => fetchPvpRank('pvp_rank_transcend');
+export const fetchPowerRank = () => fetchPvpRank('pvp_rank_power');
 
 // ---------------------------------------------------------------
 // Recompensas automáticas da Arena — diária (por grupo) e semanal (por
