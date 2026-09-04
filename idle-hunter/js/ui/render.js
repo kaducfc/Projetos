@@ -3043,6 +3043,7 @@ function mailRewardLineHtml(type, amount) {
   if (type === 'gold') return `${GOLD_ICON} +${formatNumber(amount)} Ouro`;
   if (type === 'esmeralda') return `${ESMERALDA_ICON} +${formatNumber(amount)} Esmeralda`;
   if (type === 'awakening_shard') return `${AWAKENING_SHARD_ICON} +${formatInteger(amount)} ${AWAKENING_SHARD_NAME}`;
+  if (type === 'mystic_die') return `${MYSTIC_DIE_EMOJI} +${formatInteger(amount)} ${MYSTIC_DIE_NAME}`;
   return '';
 }
 
