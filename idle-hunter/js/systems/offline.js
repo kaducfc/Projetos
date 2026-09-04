@@ -7,6 +7,7 @@ import { addDroppedItem } from './crafting.js';
 import { DROP_CATEGORIES } from '../data/items.js';
 import { isVipActive } from '../state.js';
 import { unlockTranscend } from './awakening.js';
+import { getActivePetDpsMultiplier, getBestEquippedPet } from './pets.js';
 
 // Limite base de recompensa offline: 4h sem VIP, +2h de bônus pra quem tem
 // VIP ativo (6h no total) — ver getMaxOfflineSeconds abaixo. Em cima disso,
@@ -53,7 +54,27 @@ export function computeOfflineProgress(state) {
   const bonusSecondsUsed = Math.max(0, elapsedSeconds - baseCapSeconds);
 
   const stats = computePlayerStats(state);
-  const effectiveDps = stats.dps * stats.attackSpeedPerSec * OFFLINE_EFFICIENCY;
+  // Dano por hit de verdade (ver o loop de combate em main.js, ~linha 446):
+  // um hit não é só stats.dps — soma o bônus de %DPS do mascote ATIVO
+  // (getActivePetDpsMultiplier), o dano crítico médio (critChance% de chance
+  // de bater critDamage% a mais, aqui usado como valor esperado em vez de
+  // rolar por hit), o dano do PRÓPRIO mascote como um hit extra
+  // (resolvePetHit) e o Golpe Duplo (doubleHitChance% de chance de um 2º
+  // hit inteiro, só carta). Usar só stats.dps (como antes) ignorava tudo
+  // isso e podia fazer o offline levar bem mais tempo por kill do que o
+  // jogo ao vivo de fato leva, principalmente com mascote forte equipado.
+  // Elemento do monstro varia demais nesse cálculo agregado (o pool
+  // selecionado pode ter zonas/elementos diferentes) pra rastrear com
+  // exatidão — 'neutro' é usado como aproximação (sem vantagem/desvantagem
+  // elemental, nem pra cima nem pra baixo).
+  const avgCritMult = 1 + ((stats.critChance || 0) / 100) * ((stats.critDamage || 0) / 100);
+  const petDpsMultiplier = getActivePetDpsMultiplier(state, 'neutro');
+  const bestPet = getBestEquippedPet(state, 'neutro', stats.dps);
+  const hitDamage = stats.dps * petDpsMultiplier * avgCritMult;
+  const petHitDamageAvg = bestPet ? bestPet.damage * (stats.petDamageMult || 1) * avgCritMult : 0;
+  const doubleHitDamageAvg = ((stats.doubleHitChance || 0) / 100) * hitDamage;
+  const damagePerHit = hitDamage + petHitDamageAvg + doubleHitDamageAvg;
+  const effectiveDps = damagePerHit * stats.attackSpeedPerSec * OFFLINE_EFFICIENCY;
   if (effectiveDps <= 0) return null;
 
   const pool = state.selectedMonsters || [];
