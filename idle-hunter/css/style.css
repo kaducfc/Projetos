@@ -1576,6 +1576,34 @@ button:disabled {
   color: var(--danger);
 }
 
+/* Cadeado (ver toggleItemLock em systems/crafting.js) — canto superior
+   direito do popup de item (item normal; item Deus já usa esse canto pro
+   badge de Nível, ver .item-detail-level-badge acima, então não ganha
+   cadeado). Sem fundo/moldura, só o emoji maior — clicável direto. */
+.item-detail-lock-btn {
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  padding: 4px;
+  font-size: 15px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  line-height: 1;
+}
+
+/* Badge pequeno no canto do card do Inventário (ver inventoryTileHtml,
+   ui/render.js) — mesmo canto do .mini-badge (nível de aprimoramento),
+   um pouco acima pra não sobrepor. */
+.lock-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 11px;
+  z-index: 2;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .4));
+}
+
 /* Power do item/mascote (ver systems/power.js) — linha normal alinhada à
    esquerda (mesmo layout de .element-resistance), logo acima da linha de
    resistência elemental/slots de carta (item) ou da barra de XP (mascote,

@@ -19,7 +19,7 @@ import { equipItem, unequipSlot, findEquippedSlotId } from './systems/equipment.
 import {
   enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscension, socketCard, unsocketCard,
   destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds,
-  rollBonusReroll, finalizeBonusReroll,
+  rollBonusReroll, finalizeBonusReroll, toggleItemLock,
 } from './systems/crafting.js';
 import { getItem, getRarity, MYSTIC_DIE_ID, MYSTIC_DIE_NAME } from './data/items.js';
 import { chooseGodAttribute, rollGodBonusChoice, finalizeGodBonus } from './systems/godItems.js';
@@ -249,15 +249,15 @@ function toggleBulkSelected(uid) {
 /// "Selecionar Todos" — marca todo item elegível pra seleção em massa:
 /// respeita o filtro de categoria ativo (mesmo conjunto mostrado na grade,
 /// ver equipRingContentHtml em ui/render.js) e pula qualquer item já
-/// equipado, exatamente como o clique individual já recusa (ver
-/// bulkLocked em inventoryTileHtml) — um item equipado nunca entra na
+/// equipado OU travado, exatamente como o clique individual já recusa
+/// (ver bulkLocked em inventoryTileHtml) — nenhum dos dois entra na
 /// seleção em massa.
 function selectAllBulkEligible() {
   const filtered = inventoryFilterCategory
     ? state.inventory.filter((entry) => getItem(entry.itemId)?.category === inventoryFilterCategory)
     : state.inventory;
   bulkSelectedUids = new Set(
-    filtered.filter((entry) => findEquippedSlotId(state, entry.uid) == null).map((entry) => entry.uid),
+    filtered.filter((entry) => findEquippedSlotId(state, entry.uid) == null && !entry.locked).map((entry) => entry.uid),
   );
   renderInventoryTabNow();
 }
@@ -1086,6 +1086,18 @@ function wireModalEvents() {
     // native window.confirm dialog: those are blocked/silently swallowed
     // inside a sandboxed iframe, e.g. when this game runs as a Claude
     // Artifact, which made the button look completely dead).
+    const toggleLockBtn = e.target.closest('[data-toggle-item-lock]');
+    if (toggleLockBtn) {
+      runModalAction(() => {
+        const uid = Number(toggleLockBtn.dataset.toggleItemLock);
+        if (toggleItemLock(state, uid)) {
+          showItemDetailModal(state, uid);
+          renderInventoryTabNow();
+        }
+      });
+      return;
+    }
+
     const destroyBtn = e.target.closest('[data-destroy-uid]');
     if (destroyBtn) {
       runModalAction(() => {

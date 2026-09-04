@@ -876,15 +876,20 @@ function inventoryTileHtml(state, entry, bulkSelect = null) {
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
   const rarity = getRarity(entry.rarityId);
   const isSelected = !!bulkSelect?.active && bulkSelect.selectedUids.has(entry.uid);
-  // No modo de seleção em massa, itens equipados ficam escurecidos e fora
-  // de seleção — destruir em massa é pra descartar sucata, não pra pegar
-  // sem querer algo que já está no personagem (destruir um equipado
-  // continua possível pelo popup de detalhe individual, que já desequipa
-  // sozinho, ver destroyItem em systems/crafting.js).
-  const bulkLocked = !!bulkSelect?.active && isEquipped;
-  const title = bulkLocked ? `${item.name} (equipado — desequipe antes de selecionar)` : item.name;
+  // No modo de seleção em massa, itens equipados OU travados (ver
+  // toggleItemLock em systems/crafting.js) ficam escurecidos e fora de
+  // seleção — destruir em massa é pra descartar sucata, não pra pegar sem
+  // querer algo que já está no personagem ou que o jogador marcou pra
+  // guardar (destruir um equipado continua possível pelo popup de
+  // detalhe individual, que já desequipa sozinho; um travado só destrava
+  // pelo mesmo popup, ver destroyItem em systems/crafting.js).
+  const bulkLocked = !!bulkSelect?.active && (isEquipped || entry.locked);
+  const title = entry.locked
+    ? `${item.name} (travado)`
+    : bulkLocked ? `${item.name} (equipado — desequipe antes de selecionar)` : item.name;
   return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''} ${isSelected ? 'bulk-selected' : ''} ${bulkLocked ? 'bulk-locked' : ''}" style="--rarity-color:${rarity.color};" data-equip-item="${entry.uid}" title="${title}" ${bulkLocked ? 'disabled' : ''}>
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
+    ${entry.locked ? '<span class="lock-badge">🔒</span>' : ''}
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
     ${cardCountBadgeHtml(entry)}
     ${bulkSelect?.active && !bulkLocked ? `<span class="bulk-select-check">${isSelected ? '✅' : '⬜'}</span>` : ''}
@@ -1112,9 +1117,15 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
     .map((cardId, slotIndex) => cardSlotHtml(state, uid, entry, pickerOpenSlot === slotIndex, slotIndex))
     .join('');
 
+  // Cadeado (ver toggleItemLock em systems/crafting.js): trava contra
+  // destruir e contra a seleção em massa do Inventário.
+  const locked = !!entry.locked;
+  const lockBtn = `<button class="item-detail-lock-btn ${locked ? 'locked' : ''}" data-toggle-item-lock="${uid}" title="${locked ? 'Destravar item' : 'Travar item (impede destruir/selecionar em massa)'}">${locked ? '🔒' : '🔓'}</button>`;
+
   return `
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier ${item.zoneIndex + 1}</div>
+      ${lockBtn}
       <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
@@ -1122,6 +1133,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
       ${itemPowerBadgeHtml(entry)}
       ${resistanceLine}
       ${weaponRequirementNote}
+      ${locked ? `<p class="weapon-requirement-note">🔒 Item travado — destrave pra poder destruir ou selecionar em massa.</p>` : ''}
       ${cardSlotsHtml}
       ${enhancePanelHtml(state, uid, entry, item)}
       <div class="modal-action-row">
@@ -1129,7 +1141,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
         ${confirmDestroy
           ? `<button class="modal-action-btn destroy-btn" data-confirm-destroy-uid="${uid}">Confirmar destruição</button>
              <button class="modal-action-btn" data-cancel-destroy-uid="${uid}">Cancelar</button>`
-          : `<button class="modal-action-btn destroy-btn" data-destroy-uid="${uid}">Destruir</button>`}
+          : `<button class="modal-action-btn destroy-btn" data-destroy-uid="${uid}" ${locked ? 'disabled' : ''}>Destruir</button>`}
       </div>
     </div>
   `;
