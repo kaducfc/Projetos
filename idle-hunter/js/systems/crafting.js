@@ -306,6 +306,11 @@ export function finalizeBonusReroll(state, uid, pending, chosenIndex) {
 export function destroyItem(state, uid) {
   const entry = getEntry(state, uid);
   if (!entry) return null;
+  // Item travado (ver toggleItemLock abaixo) nunca pode ser destruído até
+  // o jogador destravar de novo — pedido explícito do usuário, mesma
+  // trava vale pra seleção em massa (ver bulkLocked em inventoryTileHtml,
+  // ui/render.js).
+  if (entry.locked) return null;
   const item = getItem(entry.itemId);
   // Item Tier God nunca pode ser destruído/vendido — fica pra sempre na
   // conta uma vez comprado (pedido explícito do usuário).
@@ -334,4 +339,30 @@ export function destroyItem(state, uid) {
   }
   state.inventory = state.inventory.filter((i) => i.uid !== uid);
   return refund;
+}
+
+/// Cadeado de item (ver botão no popup de detalhe, ui/render.js): trava
+/// contra destruir (canDestroyItem/destroyItem acima) e contra entrar na
+/// seleção em massa do Inventário (ver bulkLocked em inventoryTileHtml,
+/// ui/render.js) — igual um item equipado já ficava de fora da seleção em
+/// massa, só que manual em vez de automático. Não afeta equipar/
+/// desequipar/aprimorar/socket de carta, só destruir e a seleção em massa.
+export function canDestroyItem(state, uid) {
+  const entry = getEntry(state, uid);
+  if (!entry) return false;
+  if (entry.locked) return false;
+  const item = getItem(entry.itemId);
+  return !item.isGodTier;
+}
+
+export function isItemLocked(state, uid) {
+  const entry = getEntry(state, uid);
+  return !!entry?.locked;
+}
+
+export function toggleItemLock(state, uid) {
+  const entry = getEntry(state, uid);
+  if (!entry) return false;
+  entry.locked = !entry.locked;
+  return true;
 }
