@@ -625,6 +625,41 @@ nova completa. Os três reparos de clique (lock de 300ms, toasts sem
 igualmente para os novos botões "Tentar Desbloquear" e "Equipar Carta",
 que passam pelo mesmo `runModalAction()`.
 
+## Eventos especiais (aba 🎪 Eventos)
+
+Além do chefe de evento por família (item 8 do Loop de jogo acima), a aba
+Eventos reúne três eventos independentes, cada um com seu próprio banner
+fixo e janela por relógio de parede (mesmo padrão de `getEventWindow()`:
+`cycleIndex`/`active`/`remainingActiveMs`/`msUntilNextWindow`, sem nada
+salvo sobre "quando abre"):
+
+- **Invasão de Chefes**: reaproveita o chefe de evento por família (acima).
+- **Torre das Provações** (`js/systems/tower.js`): andares progressivos —
+  cada andar é um chefe mais forte que o anterior; o jogador sobe enquanto
+  aguentar, com HP próprio (o único dos três que causa dano de volta).
+- **Mina de Ouro** (`js/systems/goldmine.js`): um único Chefe de Ouro com
+  130 milhões de HP e prazo fixo de 35s por tentativa. Diferente dos
+  outros dois, a recompensa não vem de uma tabela de drop — é **1 Ouro
+  por ponto de dano causado** ao chefe (`computeGoldMineReward()`),
+  acumulado mesmo se o tempo acabar antes de matá-lo. Ao final (por tempo
+  ou por matar o chefe), abre um popup informando quanto de Ouro foi
+  ganho.
+
+Os três compartilham o mesmo componente visual de banner fixo
+(`.event-card-invasion`/`.invasion-banner`/`.invasion-status-box`, com 3
+ícones de recompensa posicionados sobre a imagem) — só a imagem de fundo,
+o conteúdo da luta e a fórmula de recompensa mudam.
+
+## Ícones reais no popup de drop
+
+O popup de "+X" que aparece no canto inferior direito ao matar um monstro
+(`showLootPopup()` em `js/ui/render.js`) mostra o ícone real de cada
+recompensa — ouro, material ou carta — em vez de emoji genérico, reusando
+o mesmo helper `iconMarkup()` já usado no resto do jogo. Cada drop
+(`rollDrops()` em `js/systems/combat.js`) carrega o campo `image` junto
+com `id`/`name`/`emoji`/`qty`, e `iconMarkup(d.image, d.emoji, d.name)`
+decide entre `<img>` real e emoji conforme a arte exista ou não.
+
 ## Estrutura
 
 ```
@@ -653,6 +688,8 @@ js/
     upgrades.js                 Compra de upgrades
     offline.js                    Progresso estimado enquanto a aba estava fechada
     events.js                     Dano/HP/recompensa do chefe de evento (rotaciona pelos 10 BOSSES agora)
+    tower.js                       Torre das Provações (evento de andares progressivos)
+    goldmine.js                    Mina de Ouro (evento de chefe único, recompensa = dano causado)
     achievements.js                Checagem e resgate de conquistas
     shop.js                        Compra com Cash / Moeda de Evento, cooldown do anúncio
   ui/

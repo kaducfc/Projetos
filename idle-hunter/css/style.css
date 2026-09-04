@@ -44,6 +44,26 @@
   --shadow-btn: 0 3px 0 rgba(120, 76, 24, .4), 0 5px 10px rgba(74, 47, 20, .18);
   --shadow-card: 0 3px 0 rgba(184, 140, 80, .3), 0 4px 10px rgba(74, 47, 20, .14);
   --shadow-panel: 0 10px 24px rgba(38, 65, 90, .28);
+
+  /* ---- Reformulação visual (mockups mobile) ---- */
+  /* Deep-navy "banner/chrome" theme: top bar, section title ribbons,
+     bottom nav, and event/card frames all key off this, layered on top of
+     the existing parchment panels (which stay as the readable content
+     surface — the mockups use the same cream/tan for their inner panels). */
+  --navy-top: #2f7fd6;
+  --navy: #1f5fa8;
+  --navy-deep: #123361;
+  --navy-deepest: #0b1f3d;
+  --navy-border: #0a2a52;
+
+  --shadow-banner: 0 4px 0 var(--navy-border), 0 8px 18px rgba(8, 20, 40, .35);
+}
+
+/* Mobile app viewport: a real phone is ~360-430px wide in CSS px — this is
+   the shape the game will actually ship in on the Play Store, so design
+   and test at this width rather than the old desktop-preview-ish 720px. */
+:root {
+  --app-max-width: 430px;
 }
 
 * {
@@ -72,18 +92,66 @@ html, body {
 }
 
 #app {
-  max-width: 720px;
+  max-width: var(--app-max-width);
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  /* Bottom nav is fixed (see #bottom-nav) — this keeps its own height
+     reserved so the last bit of scrolling content is never hidden under it. */
+  padding-bottom: 78px;
+  position: relative;
+}
+
+/* ---------------- Section banner ----------------
+   The dark-navy "ribbon" title used everywhere the mockups put a bold
+   centered heading with a notched/pointed silhouette: zone name + stage
+   number, "Informações de Batalha", "Equipamentos", "Cartas", "Eventos".
+   The notches are cut with clip-path rather than an image, so it scales
+   cleanly at any width without needing art. */
+.section-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 14px;
+  padding: 10px 34px;
+  min-height: 40px;
+  background: linear-gradient(180deg, var(--navy-top) 0%, var(--navy) 55%, var(--navy-deep) 100%);
+  border: 2px solid var(--gold);
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  text-align: center;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .4);
+  box-shadow: var(--shadow-banner);
+  clip-path: polygon(3% 0%, 97% 0%, 100% 50%, 97% 100%, 3% 100%, 0% 50%);
+}
+
+.section-banner .section-banner-sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffe8a3;
+  margin-top: 2px;
+}
+
+/* Real title-banner art (see assets/ui/titles/*.png), used in place of
+   .section-banner on every tab now that the user supplied real art for
+   each page's title instead of the CSS clip-path ribbon. */
+.section-banner-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 0 8px;
 }
 
 button {
   font-family: inherit;
   cursor: pointer;
   border: none;
-  border-radius: 14px;
+  border-radius: 10px;
   color: var(--text);
   background: var(--grad-neutral);
   box-shadow: var(--shadow-btn);
@@ -109,7 +177,7 @@ button:disabled {
 
 /* Colored "candy buttons" (gold/green/purple/cash/event) all get a subtle
    text-pop so labels stay legible against a saturated gradient fill. */
-.modal-action-btn, .card-slot-unlock-btn, .card-slot-equip-btn,
+.modal-action-btn, .card-slot-equip-btn,
 .enhance-panel button, .recipe-card button, .upgrade-card button,
 .watch-ad-btn, .achievement-card button,
 .shop-item-card button, .event-active-badge,
@@ -123,14 +191,14 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
-  padding: 12px 16px;
-  background: linear-gradient(180deg, #4fb0e8 0%, #2f86c9 100%);
-  border-bottom: 4px solid #1e5f97;
-  box-shadow: 0 4px 14px rgba(20, 50, 80, .3), inset 0 2px 0 rgba(255, 255, 255, .35);
+  gap: 8px 10px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, var(--navy-top) 0%, var(--navy) 100%);
+  border-bottom: 4px solid var(--navy-border);
+  box-shadow: 0 4px 14px rgba(8, 20, 40, .35), inset 0 2px 0 rgba(255, 255, 255, .3);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
 }
 
 .resource {
@@ -140,16 +208,36 @@ button:disabled {
   font-weight: 800;
   font-size: 14px;
   color: #fff;
-  background: rgba(15, 45, 75, .28);
-  border: 2px solid rgba(255, 255, 255, .35);
-  border-radius: 999px;
-  padding: 4px 12px 4px 6px;
+  border: 2px solid rgba(255, 255, 255, .5);
+  border-radius: 12px;
+  padding: 5px 12px 5px 8px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .18);
 }
 
+/* Each resource gets its own solid color, matching the reference mockup
+   (gold coin = orange, gem = blue, event ticket = dark navy, stage flag =
+   red) instead of one uniform translucent pill for all four. */
+.resource-gold { background: linear-gradient(180deg, #ffc94d, #f0a000); border-color: #ffe29a; }
+.resource-cash { background: linear-gradient(180deg, #3dd68c, #189b5c); border-color: #a3f0cb; }
+.resource-event { background: linear-gradient(180deg, #4a5f7a, #263a52); border-color: #7f96b0; }
+.resource-stage { background: linear-gradient(180deg, #ff6b6b, #d13f3f); border-color: #ffb0b0; }
+
 .resource-icon {
-  font-size: 18px;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35));
+}
+
+/* Small inline currency icon used in place of the gold/event/esmeralda
+   emoji anywhere it shows up mid-text (buttons, labels, toasts) — see
+   GOLD_ICON/EVENT_ICON/ESMERALDA_ICON in ui/render.js. */
+.currency-icon {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  vertical-align: -3px;
 }
 
 .resource-label {
@@ -170,43 +258,88 @@ button:disabled {
 
 /* ---------------- Combat panel ---------------- */
 
-#combat-panel {
-  padding: 16px 16px 8px;
+#tab-hunt {
+  padding: 12px 12px 8px;
   text-align: center;
 }
 
-#stage-controls {
+/* Plain overlay row (no blue ribbon) sitting right on top of the scene
+   art — just the stage label, prev/next arrows and the flag button, all
+   glassy/translucent so the background photo shows through. */
+#zone-banner {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 10px;
+  padding: 0 54px 0 44px;
+  margin: 0 0 10px;
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .55);
 }
 
-#stage-controls button {
-  padding: 7px 12px;
+.banner-nav-btn {
+  background: rgba(255, 255, 255, .12);
+  border: 2px solid rgba(255, 255, 255, .4);
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   font-size: 13px;
+  border-radius: 8px;
+  box-shadow: none;
+  flex: 0 0 auto;
 }
 
 #stage-label {
-  min-width: 120px;
+  min-width: 90px;
   font-weight: 800;
-  background: var(--bg-card);
-  border: 2px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 12px;
-  box-shadow: var(--shadow-card);
+  font-size: 14px;
   display: inline-block;
 }
 
+.stage-max-flag-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 15px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .12);
+  border: 2px solid rgba(255, 255, 255, .4);
+  color: #fff;
+  box-shadow: none;
+  flex: 0 0 auto;
+}
+
+/* Scenic backdrop behind the monster: a real scene photo for weak-monster
+   stages (see renderMonster in ui/render.js, which sets background-image
+   inline — assets/ui/scenes/scene1..3.png, picked once per spawn) with
+   this CSS gradient only as the fallback for boss stages, which don't
+   have scene art yet. */
 #monster-area {
   position: relative;
-  background: linear-gradient(180deg, #fffaf0 0%, #ffedc0 100%);
+  background-color: #bfe6fb;
+  background-size: cover;
+  background-position: center 40%;
+  background-image:
+    radial-gradient(ellipse 160px 60px at 25% 12%, rgba(255, 255, 255, .55), transparent 70%),
+    radial-gradient(ellipse 130px 50px at 78% 8%, rgba(255, 255, 255, .45), transparent 70%),
+    linear-gradient(180deg, #bfe6fb 0%, #e3f4ff 45%, #eaf7e2 78%, #d9ecc7 100%);
   border: 4px solid var(--border);
   border-radius: 26px;
-  padding: 22px 14px 18px;
+  padding: 18px 14px 18px;
   box-shadow: 0 6px 0 var(--border-strong), var(--shadow-panel), inset 0 2px 0 rgba(255, 255, 255, .6);
   overflow: hidden;
+}
+
+#monster-nameplate {
+  margin-bottom: 12px;
 }
 
 #monster-name {
@@ -264,7 +397,8 @@ button:disabled {
    is needed beyond this one. */
 .icon img,
 .item-detail-icon img,
-#monster-sprite img {
+#monster-sprite img,
+.loot-popup-entry img {
   width: 1em;
   height: 1em;
   object-fit: contain;
@@ -280,15 +414,44 @@ button:disabled {
   100% { transform: scale(1); }
 }
 
+#attack-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(180deg, var(--navy-top) 0%, var(--navy) 55%, var(--navy-deep) 100%);
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--navy-border), 0 6px 14px rgba(8, 20, 40, .3);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+#attack-damage-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffe8a3;
+}
+
+/* Small and thin on purpose — no text at all, just the red fill draining
+   as the monster's HP drops. The actual numbers already live in
+   "Informações do Inimigo" below, so this is purely a quick-glance meter. */
 #hp-bar-outer {
   position: relative;
-  height: 26px;
+  height: 8px;
+  width: 60%;
+  margin: 6px auto 0;
   background: #fff3d6;
-  border: 3px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 999px;
   overflow: hidden;
-  margin-top: 10px;
-  box-shadow: inset 0 3px 6px rgba(74, 47, 20, .22);
+  box-shadow: inset 0 1px 3px rgba(74, 47, 20, .22);
 }
 
 #hp-bar-fill {
@@ -306,24 +469,53 @@ button:disabled {
   background: linear-gradient(180deg, rgba(255, 255, 255, .55) 0%, transparent 48%);
 }
 
-#hp-bar-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12.5px;
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, .55);
-  z-index: 1;
-}
-
 #damage-popups {
   position: absolute;
   inset: 0;
   pointer-events: none;
   overflow: visible;
+}
+
+#loot-popup {
+  position: absolute;
+  right: 12px;
+  bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.loot-popup-entry {
+  background: rgba(74, 47, 20, .72);
+  color: #fff8dc;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .2);
+  animation: loot-popup-in 0.15s ease-out, loot-popup-out 0.3s ease-in 2.2s forwards;
+}
+
+/* Real item/material/card art reads better a bit bigger than the plain
+   1em (== this popup's own tiny 10px font-size) the shared .icon img rule
+   would otherwise give it. */
+.loot-popup-entry img {
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes loot-popup-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loot-popup-out {
+  to { opacity: 0; transform: translateY(-4px); }
 }
 
 #boss-timer {
@@ -368,29 +560,88 @@ button:disabled {
   100% { opacity: 0; transform: translate(-50%, -50px) scale(1.15); }
 }
 
-#dps-readout {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 12px;
-  font-size: 13px;
+.damage-popup.crit {
+  font-size: 25px;
+  color: #ffd23f;
+  text-shadow: -1px -1px 0 #9c1c0e, 1px -1px 0 #9c1c0e, -1px 1px 0 #9c1c0e, 1px 1px 0 #9c1c0e, 0 4px 8px rgba(0, 0, 0, .35);
+  animation: float-up-crit 0.75s ease-out forwards;
+}
+
+@keyframes float-up-crit {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(1.1); }
+  30% { transform: translate(-50%, -12px) scale(1.35); }
+  100% { opacity: 0; transform: translate(-50%, -55px) scale(1.2); }
+}
+
+.damage-popup.burst {
+  font-size: 30px;
+  color: #ff6bd6;
+  text-shadow: -1px -1px 0 #4a0e42, 1px -1px 0 #4a0e42, -1px 1px 0 #4a0e42, 1px 1px 0 #4a0e42, 0 4px 10px rgba(0, 0, 0, .4);
+  animation: float-up-burst 0.9s ease-out forwards;
+}
+
+@keyframes float-up-burst {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(1.2); }
+  25% { transform: translate(-50%, -16px) scale(1.55); }
+  100% { opacity: 0; transform: translate(-50%, -60px) scale(1.3); }
+}
+
+/* ---- Informações de Batalha: two-column stat comparison ---- */
+
+.section-banner-sm {
+  font-size: 12.5px;
+  padding: 7px 30px;
+  min-height: 30px;
+  margin-bottom: 10px;
+}
+
+#battle-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 4px;
+}
+
+.battle-info-col-title {
+  font-size: 10.5px;
+  font-weight: 800;
   color: var(--text-dim);
-  font-weight: 600;
+  margin-bottom: 6px;
+  white-space: nowrap;
 }
 
-#dps-readout strong {
-  color: var(--text);
-}
-
-#element-readout {
+.battle-info-row {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 10.5px;
   color: var(--text-dim);
   font-weight: 600;
-  flex-wrap: wrap;
+  padding: 3px 0;
+  border-bottom: 1px dashed rgba(168, 103, 44, .25);
+}
+
+.battle-info-row:last-child {
+  border-bottom: none;
+}
+
+.battle-info-row strong {
+  color: var(--text);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+#element-matchup {
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin: 6px 0;
 }
 
 #element-matchup.advantage {
@@ -403,47 +654,13 @@ button:disabled {
   font-weight: 800;
 }
 
-.element-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 10.5px;
-  font-weight: 800;
-  padding: 3px 9px;
-  border-radius: 999px;
-  border: 2px solid var(--border);
-  background: var(--bg-card);
-  white-space: nowrap;
-}
-
-.element-badge.element-neutro {
-  color: #5a5a68;
-  background: #eceef2;
-  border-color: #c7cad4;
-}
-
-.element-badge.element-fogo {
-  color: #c94b1c;
-  background: #ffe3d3;
-  border-color: #ff8a5c;
-}
-
-.element-badge.element-planta {
-  color: var(--green-dark);
-  background: #dff5e3;
-  border-color: var(--green);
-}
-
-.element-badge.element-eletrico {
-  color: #a5860a;
-  background: #fff6c2;
-  border-color: #f4d94d;
-}
-
-.element-badge.element-agua {
-  color: #1c7fb0;
-  background: #dbf1ff;
-  border-color: #5cc2ff;
+/* Just the icon, no pill/border/name — see elementBadgeHtml in
+   ui/render.js. */
+.element-badge-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .element-resistance {
@@ -461,15 +678,37 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 12px;
-  padding: 0 4px;
+  margin: 10px 0 14px;
+  padding: 8px 10px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+#player-portrait {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .2);
+}
+
+#player-status-info {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
 }
 
 #player-hp-label {
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: var(--text-dim);
-  font-weight: 700;
+  font-weight: 800;
   white-space: nowrap;
+  display: block;
+  margin-bottom: 3px;
 }
 
 #player-hp-bar-outer {
@@ -515,44 +754,73 @@ button:disabled {
   z-index: 1;
 }
 
-/* ---------------- Tabs ---------------- */
+/* ---------------- Bottom nav ----------------
+   Fixed to the viewport bottom (not the document), same idea as a native
+   Android bottom tab bar — icon on top, label underneath, active tab lit
+   up gold. #app reserves --bottom-nav-height of padding (see #app above)
+   so the last scrolled content never sits under it. */
 
 #tab-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--app-max-width);
   display: flex;
-  overflow-x: auto;
-  gap: 6px;
-  padding: 14px 16px 0;
+  background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+  border-top: 3px solid var(--gold);
+  box-shadow: 0 -6px 18px rgba(8, 20, 40, .4);
+  padding: 6px 2px;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
 }
 
 .tab-btn {
-  padding: 10px 14px 9px;
-  font-size: 13px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 5px 1px;
+  font-size: 8px;
   font-weight: 700;
   white-space: nowrap;
-  background: var(--grad-neutral);
-  border: 3px solid var(--border);
-  border-bottom: none;
-  border-radius: 14px 14px 0 0;
-  color: var(--text-dim);
-  box-shadow: inset 0 -2px 0 rgba(255, 255, 255, .4);
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, .65);
+  box-shadow: none;
+}
+
+.tab-btn .tab-btn-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .3));
+}
+
+.tab-btn:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
 }
 
 .tab-btn.active {
-  background: linear-gradient(180deg, #fff8e6, #fff1c8);
-  color: var(--gold-dark);
-  border-color: var(--border-strong);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, .5);
-  transform: translateY(1px);
+  background: rgba(255, 255, 255, .1);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 2px rgba(240, 165, 0, .5);
+}
+
+.tab-btn.active .tab-btn-icon {
+  filter: drop-shadow(0 0 5px rgba(240, 165, 0, .7));
 }
 
 #tab-panels {
   flex: 1;
-  padding: 18px 16px 32px;
+  padding: 16px 12px 24px;
   background: linear-gradient(180deg, #fff8e6, #fff1c8);
-  border: 4px solid var(--border-strong);
-  border-top: none;
-  border-radius: 0 0 24px 24px;
-  box-shadow: var(--shadow-panel);
 }
 
 .tab-panel {
@@ -571,64 +839,101 @@ button:disabled {
   gap: 16px;
 }
 
-.equip-ring {
+/* Top row: the paper-doll card (character + 6 equip slots overlaid, 2
+   columns of 3) side by side with the stats card — both roughly square,
+   same shape as the reference layout, with the inventory grid spanning
+   full width below (see .equip-inventory-grid). */
+.equip-top-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
+  align-items: stretch;
+  gap: 10px;
 }
 
-.equip-side {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.equip-character {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 130px;
-  height: 196px;
-  border-radius: 20px;
-  background: radial-gradient(ellipse at center, rgba(255, 205, 92, .28), rgba(255, 255, 255, .12) 60%, transparent 75%);
-  border: 3px solid var(--border);
-  box-shadow: inset 0 2px 8px rgba(255, 255, 255, .4), var(--shadow-card);
-}
-
-.equip-character svg {
-  display: block;
-}
-
-.character-visual {
+.paperdoll-card {
   position: relative;
-  width: 110px;
-  height: 184px;
+  flex: 1 1 50%;
+  aspect-ratio: 1122 / 1402;
+  background-size: cover;
+  background-position: center;
+  background-color: #cfe8f7;
+  background-image:
+    radial-gradient(ellipse 90px 40px at 25% 10%, rgba(255, 255, 255, .5), transparent 70%),
+    linear-gradient(180deg, #bfe6fb 0%, #e3f4ff 45%, #eaf7e2 78%, #d9ecc7 100%);
+  border: 3px solid var(--border-strong);
+  border-radius: 20px;
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
 }
 
-.character-visual svg {
+/* Plain emoji placeholder until the real character illustration is added
+   (see PLAYER_PORTRAIT_IMAGE in ui/render.js) — once that's set, this
+   element isn't rendered at all and the image shows via background-image
+   on .paperdoll-card instead. */
+.paperdoll-placeholder {
   position: absolute;
   inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30cqw;
+  font-size: min(30vw, 90px);
+  filter: drop-shadow(0 6px 6px rgba(74, 47, 20, .3));
 }
 
-/* Real-art gear overlays on the paper doll: anchored by center-point
-   (left/top set inline per slot in GEAR_OVERLAY_ANCHORS), sized as a
-   percentage of the doll box so they scale together with it. */
-.gear-overlay {
+.paperdoll-overlay-col {
   position: absolute;
-  transform: translate(-50%, -50%);
-  height: auto;
-  object-fit: contain;
-  pointer-events: none;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+  top: 8px;
+  bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 27%;
+}
+
+.paperdoll-overlay-left { left: 8px; }
+.paperdoll-overlay-right { right: 8px; }
+
+.equip-stats-box {
+  position: relative;
+  flex: 1 1 50%;
+  aspect-ratio: 1122 / 1402;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Rows are absolutely positioned to sit right above the parchment's baked-in
+   divider lines (see STATS_ROW_POSITIONS in ui/render.js) instead of
+   flowing normally, since the frame art already supplies the title,
+   border and lines. */
+.stats-frame-row {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  transform: translateY(-100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #5a4423;
+  line-height: 1.15;
+}
+
+.stats-frame-row strong {
+  font-size: 11px;
+  color: #3a2c14;
+  white-space: nowrap;
 }
 
 .equip-slot-icon {
   position: relative;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: var(--grad-neutral);
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #332c50, #1c1830);
   border: 3px solid var(--border);
   box-shadow: var(--shadow-card);
   display: flex;
@@ -638,14 +943,12 @@ button:disabled {
 }
 
 .equip-slot-icon .icon {
-  font-size: 30px;
-  filter: drop-shadow(0 2px 2px rgba(74, 47, 20, .25));
+  font-size: 34px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
 }
 
 .equip-slot-icon.filled {
-  border-color: var(--gold);
-  background: linear-gradient(180deg, #fff3d6, #ffe49a);
-  box-shadow: 0 0 0 3px rgba(245, 168, 0, .25), var(--shadow-card);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .12), var(--shadow-card);
 }
 
 .equip-slot-icon.empty .icon {
@@ -688,11 +991,47 @@ button:disabled {
   gap: 8px;
 }
 
+.equip-inventory-grid .empty-slot {
+  grid-column: 1 / -1;
+}
+
+.element-filter-row {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+
+.element-filter-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font-size: 16px;
+  border-radius: 10px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.element-filter-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.element-filter-btn.active {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(31, 95, 168, .3), var(--shadow-card);
+  transform: translateY(1px);
+}
+
 .inventory-tile {
   position: relative;
   aspect-ratio: 1;
-  border-radius: 14px;
-  background: var(--grad-neutral);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #332c50, #1c1830);
   border: 3px solid var(--border);
   box-shadow: var(--shadow-card);
   display: flex;
@@ -703,12 +1042,11 @@ button:disabled {
 
 .inventory-tile .icon {
   font-size: 24px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
 }
 
 .inventory-tile.equipped {
-  border-color: var(--green);
-  background: linear-gradient(180deg, #e3f7e6, #c7f0cf);
-  box-shadow: 0 0 0 3px rgba(47, 168, 79, .2), var(--shadow-card);
+  box-shadow: 0 0 0 2px var(--green), var(--shadow-card);
 }
 
 /* Item detail popup (shown via the shared #modal-overlay) */
@@ -737,6 +1075,27 @@ button:disabled {
   margin-bottom: 8px;
 }
 
+.mega-drop-banner {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff8dc;
+  background: linear-gradient(135deg, #ff6bd6, #ffb347, #ff6bd6);
+  background-size: 200% 200%;
+  border: 2px solid #fff;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .4);
+  box-shadow: 0 4px 12px rgba(255, 107, 214, .5);
+  animation: mega-drop-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes mega-drop-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
 .modal-action-btn {
   width: 100%;
   margin-top: 10px;
@@ -747,6 +1106,25 @@ button:disabled {
   color: #4a2e00;
   box-shadow: 0 3px 0 var(--gold-dark), 0 5px 10px rgba(74, 47, 20, .2);
   border-radius: 14px;
+}
+
+.modal-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modal-action-row .modal-action-btn {
+  width: auto;
+  flex: 1;
+  min-width: 110px;
+}
+
+.modal-action-btn.destroy-btn {
+  background: var(--grad-red);
+  color: #fff;
+  box-shadow: 0 3px 0 var(--red-dark), 0 5px 10px rgba(74, 47, 20, .2);
+  font-size: 11.5px;
 }
 
 .card-slot-badge {
@@ -807,41 +1185,6 @@ button:disabled {
   background: var(--grad-purple);
   color: #fff;
   box-shadow: 0 2px 0 var(--purple-dark);
-}
-
-.card-slot-locked {
-  width: 100%;
-  box-sizing: border-box;
-  text-align: left;
-  background: var(--bg-card);
-  border: 2px dashed var(--border);
-  border-radius: 12px;
-  padding: 9px;
-  margin-bottom: 9px;
-}
-
-.card-slot-unlock-info {
-  font-size: 10.5px;
-  color: var(--text-dim);
-  font-weight: 600;
-  margin: 4px 0 8px;
-}
-
-.card-slot-unlock-btn {
-  width: 100%;
-  padding: 8px;
-  font-size: 11.5px;
-  font-weight: 800;
-  background: var(--grad-gold);
-  color: #4a2e00;
-  box-shadow: 0 3px 0 var(--gold-dark);
-  border-radius: 10px;
-}
-
-.card-slot-unlock-btn:disabled {
-  background: var(--grad-neutral);
-  color: var(--text-dim);
-  box-shadow: none;
 }
 
 .card-slot-picker {
@@ -981,7 +1324,7 @@ button:disabled {
   font-size: 11px;
   font-weight: 700;
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 10px;
   background: var(--grad-neutral);
   border: 2px solid var(--border);
   color: var(--text-dim);
@@ -995,6 +1338,7 @@ button:disabled {
 }
 
 .recipe-card {
+  position: relative;
   background: var(--grad-neutral);
   border: 2px solid var(--border);
   border-radius: 14px;
@@ -1198,28 +1542,119 @@ button:disabled {
 
 /* ---------------- Events ---------------- */
 
-.event-list-item {
-  margin-bottom: 14px;
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.event-list-header {
-  cursor: pointer;
+/* Each event gets its own themed gradient banner (per event id, see the
+   theme classes below) — same idea as the mockup's Invasão do
+   Dragão/Bosque Ancestral/etc. cards, just mapped to this game's real 3
+   events instead of fictional ones. */
+.event-card {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 2px solid var(--navy-border);
+  box-shadow: var(--shadow-panel);
 }
 
-.event-list-body {
-  margin-top: 10px;
+.event-card-body {
+  background: linear-gradient(180deg, #fff8e6, #fff1c8);
+  padding: 14px;
 }
 
-.trade-card.selected {
-  border-color: var(--gold-dark);
-  box-shadow: 0 0 0 3px rgba(230, 168, 27, .25), var(--shadow-card);
+/* Invasão de Chefes: real mockup art (invasao-banner.png) as a fixed,
+   non-expandable card — title/subtitle/rewards frame all baked in — see
+   invasaoChefesBannerHtml in ui/render.js. Only the status text (open/
+   closed countdown) and, when open, the "Entrar" button are overlaid live
+   in the art's empty right-hand box. The fight itself, once entered,
+   renders in a separate panel below (invasaoChefesFightPanelHtml), not
+   nested inside this card. */
+.event-card-invasion {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
-.trade-card button {
-  width: 100%;
-  margin-top: 6px;
-  padding: 6px;
-  font-size: 10.5px;
+.invasion-banner {
+  position: relative;
+  aspect-ratio: 900 / 374;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.invasion-status-box {
+  position: absolute;
+  left: 80%;
+  top: 30%;
+  transform: translate(-50%, -50%);
+  width: 27%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.invasion-status-label {
+  font-size: clamp(8px, 2.6vw, 11px);
+  font-weight: 700;
+  color: rgba(243, 221, 184, .85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
+}
+
+.invasion-status-value {
+  font-size: clamp(10px, 3.4vw, 15px);
+  font-weight: 800;
+  color: #f3ddb8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
+}
+
+.invasion-enter-btn {
+  position: absolute;
+  left: 80%;
+  top: 52%;
+  transform: translateX(-50%);
+  width: 25%;
+  padding: 8px 4px;
+  font-size: clamp(10px, 3vw, 13px);
+  border-radius: 10px;
+  background: var(--grad-gold);
+  border: 2px solid var(--gold-dark);
+  color: #4a2f00;
+  box-shadow: 0 3px 0 var(--gold-dark);
+}
+
+/* Preview icons dropped into the banner art's 3 empty "RECOMPENSAS"
+   squares — horizontal positions measured against the source mockups
+   (Evento2.png/Evento3.png, both 1945x809) are close enough to share, but
+   the vertical position differs: Torre's squares sit noticeably higher
+   than Invasão's, hence the separate .reward-invasion/.reward-torre top
+   offsets. */
+.invasion-reward-icon {
+  position: absolute;
+  width: 9%;
+  height: auto;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .4));
+}
+
+.reward-invasion { top: 70.2%; }
+.reward-torre { top: 68.4%; }
+
+.reward-invasion.invasion-reward-1 { left: 19.3%; }
+.reward-invasion.invasion-reward-2 { left: 32.3%; }
+.reward-invasion.invasion-reward-3 { left: 45.7%; }
+
+.reward-torre.invasion-reward-1 { left: 18.4%; }
+.reward-torre.invasion-reward-2 { left: 32.2%; }
+.reward-torre.invasion-reward-3 { left: 45.8%; }
+
+/* Cristal/Carta de Leviargon specifically, 20% smaller than the standard
+   reward-icon size (the Moeda de Evento slot stays at the normal size). */
+.reward-invasion.invasion-reward-1,
+.reward-invasion.invasion-reward-2 {
+  width: 7.2%;
 }
 
 .event-panel {
@@ -1272,6 +1707,19 @@ button:disabled {
   padding: 5px 12px;
   margin-bottom: 10px;
   box-shadow: 0 2px 0 var(--event-dark);
+}
+
+.set-bonus-banner {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #4a2f16;
+  background: linear-gradient(180deg, #ffe9a8, #ffd873);
+  border: 1px solid #e0b84a;
+  border-radius: 10px;
+  padding: 7px 11px;
+  margin-bottom: 10px;
+  text-align: center;
+  line-height: 1.5;
 }
 
 .event-panel h3 {
@@ -1508,6 +1956,140 @@ button:disabled {
   background: var(--grad-neutral);
   color: var(--text-dim);
   box-shadow: none;
+}
+
+/* ---------------- Cartas tab ---------------- */
+
+.cards-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 800;
+  margin: 4px 0 10px;
+}
+
+.cards-section-title:not(:first-child) {
+  margin-top: 20px;
+}
+
+.cards-collected {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.cards-summary-box {
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 10px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+}
+
+.card-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--purple);
+  border-radius: 14px;
+  padding: 10px 6px;
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.card-tile .icon {
+  font-size: 34px;
+}
+
+.card-tile .name {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.card-tile.undiscovered {
+  border-color: var(--border);
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+
+.card-tile-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 16px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35));
+}
+
+.card-detail {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  text-align: left;
+}
+
+.card-detail-image {
+  flex: 0 0 auto;
+  width: 96px;
+  font-size: 96px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 4px rgba(74, 47, 20, .25));
+}
+
+.card-detail-image img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.card-detail.undiscovered .card-detail-image {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+}
+
+.card-detail-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-detail-name {
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.card-detail-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.card-detail-owned {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--green-dark);
+  margin-bottom: 8px;
+}
+
+.card-detail-status {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  font-weight: 600;
 }
 
 .shop-item-grid {

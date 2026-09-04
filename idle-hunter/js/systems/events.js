@@ -1,8 +1,48 @@
-import { EVENT_CURRENCY_BASE, EVENT_CURRENCY_PER_STAGE, EVENT_DIFFICULTY_MULT, TRADE_COST, TRADE_YIELD } from '../data/events.js';
+import {
+  EVENT_CURRENCY_BASE, EVENT_CURRENCY_PER_STAGE, EVENT_DIFFICULTY_MULT,
+  EVENT_DROP_ROLLS, EVENT_DROP_PRIMARY1_CHANCE, EVENT_DROP_PRIMARY2_CHANCE, EVENT_CARD_DROP_CHANCE,
+  getEventWindow,
+} from '../data/events.js';
+import { BOSSES } from '../data/monsters.js';
+import { getCardForMonster } from '../data/cards.js';
 import { monsterMaxHp } from './combat.js';
+import { recordCardDiscovered } from './cards.js';
 
 export function isEventClaimed(state, cycleIndex) {
   return state.eventClaimedCycle === cycleIndex;
+}
+
+/// Only bosses the player has already reached in real combat (stage <=
+/// maxStage) can show up — a fresh account can't roll Bahamorth on their
+/// first-ever window. Returns null if no boss is eligible yet (maxStage
+/// hasn't reached the first boss's stage, 10).
+export function pickEligibleEventBoss(maxStage) {
+  const eligible = BOSSES.filter((b) => b.stage <= maxStage);
+  if (!eligible.length) return null;
+  return eligible[Math.floor(Math.random() * eligible.length)];
+}
+
+export function canEnterEvent(state, now = Date.now()) {
+  const win = getEventWindow(now);
+  if (!win.active) return false;
+  if (state.eventEnteredCycle === win.cycleIndex) return false;
+  if (isEventClaimed(state, win.cycleIndex)) return false;
+  return pickEligibleEventBoss(state.maxStage) != null;
+}
+
+/// Rolls the random eligible boss, marks this cycle "entered" (blocking a
+/// second entry) and spawns the fight. Returns the boss just rolled, or
+/// null if entry wasn't allowed right now.
+export function startEvent(state, now = Date.now()) {
+  if (!canEnterEvent(state, now)) return null;
+  const win = getEventWindow(now);
+  const boss = pickEligibleEventBoss(state.maxStage);
+  state.eventEnteredCycle = win.cycleIndex;
+  state.eventBossId = boss.id;
+  state.eventBossHp = null;
+  state.eventBossMaxHp = null;
+  ensureEventBossSpawned(state, boss);
+  return boss;
 }
 
 /// boss.stage is always a boss stage by definition, so this is "that boss's
@@ -33,30 +73,43 @@ export function applyEventDamage(state, amount) {
   return state.eventBossHp <= 0;
 }
 
-// "Increased drop chance" is expressed directly as a guaranteed bundle of
-// 1-6 material drops (mostly the two "drop principal" materials, rarely the
-// Crystal) rather than as dice rolls that can whiff — a normal kill can
-// drop nothing, an event kill never does.
+// "Increased drop chance" is now EVENT_DROP_ROLLS independent picks, each
+// landing on primary1/primary2/crystal per the weights in data/events.js
+// (which sum to 1 — every roll always lands on something, an event kill
+// never whiffs on any of its 10). The boss's own card is a wholly separate
+// roll (see claimEventVictory below), not one of these 10.
 function rollEventDrops(boss) {
-  const count = 1 + Math.floor(Math.random() * 6);
   const drops = [];
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < EVENT_DROP_ROLLS; i++) {
     const roll = Math.random();
-    const mat = roll < 0.45 ? boss.materials.primary1 : roll < 0.9 ? boss.materials.primary2 : boss.crystal;
+    const mat = roll < EVENT_DROP_PRIMARY1_CHANCE
+      ? boss.materials.primary1
+      : roll < EVENT_DROP_PRIMARY1_CHANCE + EVENT_DROP_PRIMARY2_CHANCE
+        ? boss.materials.primary2
+        : boss.crystal;
     drops.push(mat);
   }
   return drops;
 }
 
-/// Grants rewards, marks this cycle claimed (blocks re-farming it) and
-/// clears the encounter. Returns a summary for the toast/UI.
+/// Grants rewards, marks this cycle claimed (blocks re-farming/re-entering
+/// it) and clears the encounter. Returns a summary for the reward modal —
+/// cardDropped is null unless the separate 5% card roll hit.
 export function claimEventVictory(state, cycleIndex, boss) {
   const drops = rollEventDrops(boss);
   const gained = {};
   for (const mat of drops) {
     state.materials[mat.id] = (state.materials[mat.id] || 0) + 1;
-    if (!gained[mat.id]) gained[mat.id] = { qty: 0, emoji: mat.emoji, name: mat.name };
+    if (!gained[mat.id]) gained[mat.id] = { qty: 0, emoji: mat.emoji, name: mat.name, image: mat.image || null };
     gained[mat.id].qty += 1;
+  }
+
+  let cardDropped = null;
+  if (Math.random() < EVENT_CARD_DROP_CHANCE) {
+    const card = getCardForMonster(boss.id);
+    state.cards[card.id] = (state.cards[card.id] || 0) + 1;
+    recordCardDiscovered(state, card.id);
+    cardDropped = card;
   }
 
   const currency = Math.round(EVENT_CURRENCY_BASE + state.maxStage * EVENT_CURRENCY_PER_STAGE);
@@ -65,28 +118,5 @@ export function claimEventVictory(state, cycleIndex, boss) {
   state.eventWins = (state.eventWins || 0) + 1;
   resetEventEncounter(state);
 
-  return { gained, currency };
-}
-
-// ---------------------------------------------------------------------
-// "Mercador" — trade TRADE_COST of one weak-monster material for
-// TRADE_YIELD of another, both from whichever band getTradeWindow() has
-// active. Only lets the player trade within that band (not, say, a stage
-// 1-19 material for a stage 81-100 one) and only materials they actually
-// have enough of.
-// ---------------------------------------------------------------------
-
-export function canTrade(state, group, fromMaterialId, toMaterialId) {
-  if (fromMaterialId === toMaterialId) return false;
-  const inGroup = (id) => group.monsters.some((m) => m.material.id === id);
-  if (!inGroup(fromMaterialId) || !inGroup(toMaterialId)) return false;
-  return (state.materials[fromMaterialId] || 0) >= TRADE_COST;
-}
-
-/// Returns true if the trade went through.
-export function performTrade(state, group, fromMaterialId, toMaterialId) {
-  if (!canTrade(state, group, fromMaterialId, toMaterialId)) return false;
-  state.materials[fromMaterialId] -= TRADE_COST;
-  state.materials[toMaterialId] = (state.materials[toMaterialId] || 0) + TRADE_YIELD;
-  return true;
+  return { gained, currency, cardDropped };
 }
