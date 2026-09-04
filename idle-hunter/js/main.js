@@ -10,7 +10,7 @@ import { canTranscend, unlockTranscend, transcend, buyAwakeningItem } from './sy
 import {
   syncProfile, getMyPvpProfile, fetchTierBoard, attackOpponent,
   pickRandomPvpOpponents, previewPvpAttackSwing,
-  fetchArenaRank, fetchLevelRank, fetchTranscendRank, isNickAvailable, claimNick, fetchPlayerEquipment,
+  fetchArenaRank, fetchLevelRank, fetchTranscendRank, fetchPowerRank, isNickAvailable, claimNick, fetchPlayerEquipment,
 } from './systems/pvp.js';
 import { getPvpTierInfo, PVP_TIERS } from './data/pvpConfig.js';
 import { fetchMailbox, claimMailReward, deleteMail, mailHasReward, hasUnreadMail, markMailRead } from './systems/mailbox.js';
@@ -194,7 +194,7 @@ let pvpData = { myProfile: null, board: [], loading: false, attackingId: null };
 // supabase/migrations/0008_pvp_ranks.sql). `loaded` marca que já buscou
 // pelo menos uma vez nessa sessão (só refaz no clique manual em
 // "Atualizar", não toda vez que a aba abre de novo).
-let ranksData = { arena: [], level: [], transcend: [], loading: false, loaded: false, activeSection: 'arena' };
+let ranksData = { arena: [], level: [], transcend: [], power: [], loading: false, loaded: false, activeSection: 'arena' };
 
 // Correio (ver systems/mailbox.js): dados vivem no Supabase, igual
 // Arena/Ranks — esse cache só existe em memória, refeito a cada sessão.
@@ -2233,10 +2233,10 @@ async function refreshRanksTab() {
   ranksData = { ...ranksData, loading: true };
   renderRanksTab(ranksData, pvpData.myProfile);
   try {
-    const [arena, level, transcend] = await Promise.all([
-      fetchArenaRank(), fetchLevelRank(), fetchTranscendRank(),
+    const [arena, level, transcend, power] = await Promise.all([
+      fetchArenaRank(), fetchLevelRank(), fetchTranscendRank(), fetchPowerRank(),
     ]);
-    ranksData = { ...ranksData, arena, level, transcend, loading: false, loaded: true };
+    ranksData = { ...ranksData, arena, level, transcend, power, loading: false, loaded: true };
   } catch (err) {
     console.warn('Ranks: falha ao buscar:', err);
     ranksData = { ...ranksData, loading: false };
