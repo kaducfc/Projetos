@@ -69,11 +69,11 @@ function damageThresholdForIndex(index) {
 // liberadas) só é decidido no momento de conceder, em systems/arena.js
 // rollArenaMaterialBasket (depende do progresso do jogador, não é uma
 // propriedade fixa do rank).
-// Dado Místico (ver data/items.js MYSTIC_DIE_ID): recompensa fixa só no
-// rank mais fraco (Ferro 5, índice 0) — pedido explícito do usuário, pra
-// todo jogador sair do 1º Combate Permanente já com um estoque de dados
-// pra rerolar bônus de item.
-export const MYSTIC_DICE_FIRST_RANK_REWARD = 100;
+// Dado Místico (ver data/items.js MYSTIC_DIE_ID): recompensa fixa em TODO
+// rank (não escala com o rank, ao contrário das demais recompensas acima)
+// — pedido explícito do usuário, pra qualquer resultado do Combate
+// Permanente sempre render um estoque de dados pra rerolar bônus de item.
+export const MYSTIC_DICE_REWARD = 100;
 
 const ARENA_REWARD_CONFIG = {
   gold: { unlockIndex: 0, min: 3000, max: 200000, power: 1.35 },
@@ -133,10 +133,9 @@ export const ARENA_RANKS = (() => {
         eggs: rewardValueForIndex(i, ARENA_REWARD_CONFIG.eggs),
         materialsTotal: rewardValueForIndex(i, ARENA_REWARD_CONFIG.material),
         cardFragments: rewardValueForIndex(i, ARENA_REWARD_CONFIG.cardFragments),
-        // Fixo, só no 1º/mais fraco rank (Ferro 5, índice 0) — pedido
-        // explícito do usuário, diferente das demais recompensas acima que
-        // escalam suavemente por todo o ladder (ver ARENA_REWARD_CONFIG).
-        mysticDice: i === 0 ? MYSTIC_DICE_FIRST_RANK_REWARD : 0,
+        // Fixo em TODO rank (não escala como as demais recompensas acima)
+        // — pedido explícito do usuário.
+        mysticDice: MYSTIC_DICE_REWARD,
       },
     });
   }
