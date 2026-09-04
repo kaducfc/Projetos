@@ -306,7 +306,9 @@ export function rollAscensionBonusCandidates(tier, ownAttributeId, ownBaseValue,
 // padrão de Fragmento de Carta) que reroла UM bônus adicional já existente
 // de um item (ver rerollBonus em systems/crafting.js) — diferente da
 // Ascensão (que ADICIONA um bônus novo, na raridade seguinte), o reroll
-// SUBSTITUI um bônus que o item já tem, na raridade ATUAL dele.
+// SUBSTITUI um bônus que o item já tem, na raridade ATUAL dele. Funciona
+// tanto pra item normal quanto Tier God (getRarity já resolve GOD_RARITY_ID
+// acima, e GOD_ITEMS.zoneIndex já vem GOD_MAGNITUDE_TIER — ver mais abaixo).
 // ---------------------------------------------------------------------
 export const MYSTIC_DIE_ID = 'mystic_die';
 export const MYSTIC_DIE_NAME = 'Dado Místico';
@@ -319,10 +321,17 @@ export const MYSTIC_DIE_EMOJI = '🎲';
 /// existingAdditionalStats normalmente (pra nunca repetir stat), mas o
 /// próprio bônus sendo trocado NÃO conta como "já usado" — senão ele nunca
 /// poderia rolar de novo pro mesmo stat com um valor diferente.
+/// item.attribute é null pras categorias Deus sem atributo preso no molde
+/// (armadura/anel/colar, ver GOD_ITEMS abaixo) — nesse caso o atributo
+/// "efetivo" da instância vem de entry.godAttribute (mesma resolução de
+/// getGodAttribute em systems/godItems.js, duplicada aqui pra não criar
+/// import circular: godItems.js já importa deste arquivo).
 export function rollBonusRerollCandidates(item, entry, statIndex, count = 3) {
   const rarity = getRarity(entry.rarityId);
+  const attributeId = item.attribute || entry.godAttribute || null;
+  const ownBaseValue = entry.baseStats?.[attributeId] || 0;
   const otherStats = (entry.additionalStats || []).filter((_, i) => i !== statIndex);
-  return rollAscensionBonusCandidates(item.zoneIndex, item.attribute, entry.baseStats[item.attribute], otherStats, rarity.mult, count);
+  return rollAscensionBonusCandidates(item.zoneIndex, attributeId, ownBaseValue, otherStats, rarity.mult, count);
 }
 
 // ---------------------------------------------------------------------

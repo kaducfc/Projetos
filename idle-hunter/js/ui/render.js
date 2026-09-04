@@ -854,7 +854,7 @@ export function showForeignItemDetailModal(entry) {
   const rarity = item.isGodTier ? GOD_RARITY : getRarity(entry.rarityId);
   const tierBadge = item.isGodTier ? 'Tier God' : `Tier ${item.zoneIndex + 1}`;
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
-  const statsHtml = item.isGodTier ? godItemDetailStatsHtml(entry, item) : itemDetailStatsHtml(item, entry);
+  const statsHtml = item.isGodTier ? godItemDetailStatsHtml(null, entry, item) : itemDetailStatsHtml(null, item, entry);
   const cardSlotsHtml = (entry.cardIds || []).map((cardId) => foreignCardSlotHtml(cardId)).join('');
 
   showModal('', `
@@ -941,13 +941,18 @@ export function showItemDetailModal(state, uid, pickerOpenSlot = null, confirmDe
 /// linha (item Tier God usa godItemDetailStatsHtml abaixo, sem botão — o
 /// próprio bônus lá ainda está sendo "montado" pelo fluxo de Escolher
 /// Bônus, reroll não se aplica).
+/// uid null (ver showForeignItemDetailModal — item de OUTRO jogador,
+/// somente-leitura) omite o botão de reroll por completo, caindo pra uma
+/// linha de texto simples.
 function bonusStatRowHtml(uid, index, label) {
+  if (uid == null) return `<div>${label}</div>`;
   return `<div class="item-detail-bonus-row">
     <span>${label}</span>
     <button class="bonus-reroll-btn" data-reroll-bonus-uid="${uid}" data-reroll-bonus-index="${index}" title="Rerolar com ${MYSTIC_DIE_NAME}">${REFRESH_ICON}</button>
   </div>`;
 }
 
+/// uid: null pro modo somente-leitura (ver bonusStatRowHtml acima).
 function itemDetailStatsHtml(uid, item, entry) {
   const mult = enhancementMultiplier(entry.enhanceLevel || 0, !!entry.isMaster);
   const baseValue = entry.baseStats?.[item.attribute] || 0;
@@ -1007,14 +1012,17 @@ function godAttributeChoiceHtml(uid, item) {
   `;
 }
 
-function godItemDetailStatsHtml(entry, item) {
+/// uid: null pro modo somente-leitura (ver bonusStatRowHtml acima) — item
+/// Deus de outro jogador (showForeignItemDetailModal).
+function godItemDetailStatsHtml(uid, entry, item) {
   const attributeId = getGodAttribute(entry, item);
   const baseValue = entry.baseStats?.[attributeId] || 0;
   const baseLine = ATTRIBUTE_STAT_LABEL[attributeId] ? ATTRIBUTE_STAT_LABEL[attributeId](baseValue) : '';
-  const bonusLines = (entry.additionalStats || [])
-    .map((add) => (BONUS_STAT_LABEL[add.stat] ? BONUS_STAT_LABEL[add.stat](add.value) : null))
-    .filter(Boolean);
-  return [baseLine, ...bonusLines].filter(Boolean).join('<br>');
+  const bonusRows = (entry.additionalStats || [])
+    .map((add, i) => (BONUS_STAT_LABEL[add.stat] ? bonusStatRowHtml(uid, i, BONUS_STAT_LABEL[add.stat](add.value)) : null))
+    .filter(Boolean)
+    .join('');
+  return `${baseLine}${bonusRows}`;
 }
 
 function godItemDetailHtml(state, uid, entry, item, pickerOpenSlot = null) {
@@ -1062,7 +1070,7 @@ function godItemDetailHtml(state, uid, entry, item, pickerOpenSlot = null) {
       <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name}</div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
-      <div class="item-detail-stats">${godItemDetailStatsHtml(entry, item)}</div>
+      <div class="item-detail-stats">${godItemDetailStatsHtml(uid, entry, item)}</div>
       ${levelNote}
       ${itemPowerBadgeHtml(entry)}
       ${cardSlotsHtml}
