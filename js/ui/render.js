@@ -2988,8 +2988,12 @@ function pvpWeeklyRewardLabel(row) {
   return `${mainLabel} · ${EGG_ICON} ${formatInteger(reward.eggs)}`;
 }
 
+// Ordem do objeto = ordem no grid 2x2 de botões (ver .pvp-rank-tabs em
+// style.css): Arena/Power na 1ª linha, Nível/Transcender na 2ª — pedido
+// explícito do usuário.
 const RANKS_SECTIONS = {
   arena: { label: `${ARENA_ICON} Arena`, title: `${ARENA_ICON} Arena` },
+  power: { label: `${POWER_ICON} Power`, title: `${POWER_ICON} Power` },
   level: { label: `${RANK_LEVEL_ICON} Nível`, title: `${RANK_LEVEL_ICON} Nível de Caçador` },
   transcend: { label: `${TRANSCEND_ICON} Transcender`, title: `${TRANSCEND_ICON} Transcender` },
 };
@@ -3000,6 +3004,9 @@ function ranksSectionListHtml(ranksData, myId) {
   }
   if (ranksData.activeSection === 'transcend') {
     return pvpRankSectionHtml(ranksData.transcend, myId, (row) => `${TRANSCEND_ICON} ${formatInteger(row.transcend_count)}x`);
+  }
+  if (ranksData.activeSection === 'power') {
+    return pvpRankSectionHtml(ranksData.power, myId, (row) => `${POWER_ICON} ${formatInteger(row.power || 0)}`);
   }
   // Arena: nick+ícone (na linha, ver pvpRankRowHtml) + nível + vitórias +
   // tier/pontuação — no Lendário a pontuação é omitida (row.rating vem

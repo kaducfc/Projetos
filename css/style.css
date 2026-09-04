@@ -3972,13 +3972,13 @@ button:disabled {
 }
 
 .pvp-rank-tabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
   margin: 10px 0 4px;
 }
 
 .pvp-rank-tab-btn {
-  flex: 1;
   padding: 8px 6px;
   border-radius: 10px;
   border: 2px solid transparent;
