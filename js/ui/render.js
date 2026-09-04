@@ -1905,7 +1905,7 @@ function bonusRerollCandidateHtml(uid, candidate, index) {
   const line = BONUS_STAT_LABEL[candidate.stat] ? BONUS_STAT_LABEL[candidate.stat](candidate.value) : candidate.stat;
   return `
     <div class="ascension-candidate">
-      <div class="item-detail-icon">🎲</div>
+      <div class="item-detail-icon">${MYSTIC_DIE_EMOJI}</div>
       <div class="item-detail-name" style="font-size:12.5px;">${line}</div>
       <button class="modal-action-btn" data-reroll-bonus-choose="${uid}" data-reroll-bonus-choose-index="${index}">Escolher</button>
     </div>
@@ -1925,10 +1925,17 @@ export function showBonusRerollModal(state, uid, pending) {
   const rerollAgainBtn = `
     <button class="modal-action-btn" data-reroll-bonus-again="${uid}" data-reroll-bonus-again-index="${pending.statIndex}"
       ${mysticDieCount < 1 ? 'disabled' : ''}>
-      Trocar (${MYSTIC_DIE_EMOJI}${mysticDieCount})
+      Trocar (${MYSTIC_DIE_EMOJI} ${mysticDieCount})
     </button>
   `;
-  showModal('🎲 Reroll de Bônus', `
+  // Sem emoji no título — showModal() define o título via textContent (não
+  // renderiza HTML), então o cabeçalho com o ícone de verdade do Dado
+  // Místico é montado à mão aqui (mesmo padrão do popup de Transcender).
+  showModal('', `
+    <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:6px;">
+      <img src="assets/ui/mystic-die.png" alt="Dado Místico" style="width:26px; height:26px;">
+      <span style="font-size:16px; font-weight:800; color:var(--gold-dark);">Reroll de Bônus</span>
+    </div>
     <p style="font-size:12px; color:var(--text-dim); text-align:center;">
       ${item.name} — escolha 1 dos 3 abaixo pra substituir o bônus.
     </p>
@@ -2067,7 +2074,7 @@ function arenaRankRowHtml(rank) {
         ${rewards.eggs > 0 ? arenaRewardLineHtml(EGG_ICON, rewards.eggs, 'Ovo de Mascote') : ''}
         ${rewards.materialsTotal > 0 ? arenaRewardLineHtml('📦', rewards.materialsTotal, 'Materiais de Monstros (várias zonas)') : ''}
         ${rewards.cardFragments > 0 ? arenaRewardLineHtml(CARD_FRAGMENT_ICON, rewards.cardFragments, CARD_FRAGMENT_NAME) : ''}
-        ${rewards.mysticDice > 0 ? arenaRewardLineHtml('🎲', rewards.mysticDice, MYSTIC_DIE_NAME) : ''}
+        ${rewards.mysticDice > 0 ? arenaRewardLineHtml(MYSTIC_DIE_EMOJI, rewards.mysticDice, MYSTIC_DIE_NAME) : ''}
       </div>
     </details>`;
 }
