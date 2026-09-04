@@ -1,17 +1,30 @@
 name: Bots diários (Idle Hunter)
 
-# Roda 1x por dia — cada execução avança os 30 bots em 1 "dia" de
-# progresso real de jogo e sincroniza com a Arena/Ranks de verdade no
-# Supabase (ver idle-hunter/scripts/bots/). O estado de cada bot (save +
-# sessão do Supabase) é commitado de volta no repo, então a MESMA conta
-# anônima é sempre reusada — nunca cria uma conta nova por engano.
+# Roda 4x por dia (a cada ~6h) — cada execução avança os 30 bots num
+# pedaço de progresso real de jogo (proporcional ao tempo desde a última
+# execução, ver runOneDay em decide.mjs) e sincroniza com a Arena/Ranks
+# de verdade no Supabase (ver idle-hunter/scripts/bots/). O estado de
+# cada bot (save + sessão do Supabase) é commitado de volta no repo,
+# então a MESMA conta anônima é sempre reusada — nunca cria uma conta
+# nova por engano.
 #
 # `workflow_dispatch` deixa rodar manualmente (aba Actions do GitHub) pra
-# testar sem esperar o horário agendado.
+# testar sem esperar o próximo horário agendado.
 on:
   schedule:
-    - cron: '0 15 * * *' # ~12h em Brasília (UTC-3)
+    - cron: '0 3 * * *'  # ~00h em Brasília (UTC-3)
+    - cron: '0 9 * * *'  # ~06h em Brasília
+    - cron: '0 15 * * *' # ~12h em Brasília
+    - cron: '0 21 * * *' # ~18h em Brasília
   workflow_dispatch: {}
+
+# Nunca deixa 2 execuções mexerem em state/ ao mesmo tempo (uma delas
+# atrasar não deveria colidir com a próxima do cron) — espera a anterior
+# terminar em vez de cancelar (perderia progresso já sincronizado no
+# Supabase mas ainda não commitado no repo).
+concurrency:
+  group: bots-daily
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -32,7 +45,7 @@ jobs:
         working-directory: idle-hunter/scripts/bots
         run: npm install
 
-      - name: Roda 1 dia de progresso pra cada bot
+      - name: Roda 1 rodada de progresso pra cada bot
         working-directory: idle-hunter/scripts/bots
         run: node run.mjs
 
@@ -42,5 +55,6 @@ jobs:
           git config user.name "idle-hunter-bots"
           git config user.email "actions@github.com"
           git add state/
-          git diff --cached --quiet && echo "Nada novo pra commitar hoje." || git commit -m "Progresso diário dos bots"
+          git diff --cached --quiet && echo "Nada novo pra commitar dessa vez." || git commit -m "Progresso dos bots"
+          git pull --rebase origin main
           git push
