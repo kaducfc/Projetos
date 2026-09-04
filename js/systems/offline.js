@@ -59,12 +59,17 @@ export function computeOfflineProgress(state) {
   const pool = state.selectedMonsters || [];
   if (!pool.length) return null;
 
-  // Referência de HP: usa o primeiro selecionado só pra estimar quantos
-  // kills cabem no tempo disponível — cada kill simulado individualmente
-  // ainda sorteia seu próprio monstro/zona no loop abaixo.
-  const sample = pool[0];
-  const sampleZone = getZone(sample.zoneIndex);
-  const referenceHp = monsterMaxHp(sampleZone.canonicalStage, sample.kind === 'boss');
+  // Referência de HP pra estimar quantos kills cabem no tempo disponível:
+  // média entre TODOS os monstros selecionados, não só o primeiro — cada
+  // kill (ao vivo ou simulado abaixo) sorteia um do pool com chance igual
+  // (ver pickOfflineMonster/ensureMonsterSpawned), então usar só pool[0]
+  // super-estimava o tempo por kill sempre que ele calhava de ser o mais
+  // forte (ex.: chefe até 9x mais HP que um monstro fraco), fazendo o
+  // offline render muito menos kills do que o jogo ao vivo de fato rende.
+  const referenceHp = pool.reduce((sum, m) => {
+    const zone = getZone(m.zoneIndex);
+    return sum + monsterMaxHp(zone.canonicalStage, m.kind === 'boss');
+  }, 0) / pool.length;
   // Cada kill também gasta a pausa de respawn (ver MONSTER_RESPAWN_DELAY_MS
   // em systems/combat.js) — sem isso, o offline ficaria mais rápido que
   // jogar ao vivo.
