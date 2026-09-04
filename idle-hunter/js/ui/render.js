@@ -19,7 +19,7 @@ import {
 import { getLanguage, translateText, translateContainer } from '../i18n.js';
 import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
 import { computePlayerStats, TRANSCEND_HP_DPS_BONUS_PERCENT_PER_COUNT } from '../systems/stats.js';
-import { computeItemPower, computePetPower, computePlayerPower, computePowerFromEquippedSnapshot } from '../systems/power.js';
+import { computeItemPower, computePetPower, computePlayerPower } from '../systems/power.js';
 import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds, countEquippedCardCopies } from '../systems/crafting.js';
 import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, getTranscendXpBonusPercent, getExpeditionXpReward } from '../systems/leveling.js';
 import { EXPEDITION_TIERS, EXPEDITION_REWARDS } from '../data/events.js';
@@ -820,7 +820,7 @@ export function showForeignEquipmentModal(player) {
       <div class="paperdoll-overlay-col paperdoll-overlay-left">${PAPERDOLL_LEFT.map((id) => foreignSlotIconHtml(equippedBySlot, getSlot(id))).join('')}</div>
       <div class="paperdoll-overlay-col paperdoll-overlay-right">${PAPERDOLL_RIGHT.map((id) => foreignSlotIconHtml(equippedBySlot, getSlot(id))).join('')}</div>
     </div>
-    <div class="player-power-row">${POWER_ICON} Power dos Equipamentos: <strong>${formatInteger(computePowerFromEquippedSnapshot(equippedBySlot))}</strong></div>
+    <div class="player-power-row">${POWER_ICON} Power: <strong>${formatInteger(player.power || 0)}</strong></div>
   `);
 }
 

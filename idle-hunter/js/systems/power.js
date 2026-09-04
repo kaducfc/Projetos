@@ -263,18 +263,3 @@ export function computePlayerPower(state) {
   total += computeAccountBonusPower(state);
   return Math.round(total);
 }
-
-/// Mesma soma de itens acima, mas a partir de um equipped_snapshot (ver
-/// showForeignEquipmentModal em ui/render.js) — pra calcular o Power de
-/// EQUIPAMENTO de OUTRO jogador a partir do que o servidor devolveu, sem
-/// precisar de nenhum campo extra sincronizado só pra isso. Não inclui
-/// mascotes/bônus da conta (não são sincronizados) — é só o mesmo total
-/// mostrado no boneco de equipamentos daquele jogador, não o Power dele
-/// por completo (esse já vem sincronizado pronto, ver 0018_pvp_power.sql).
-export function computePowerFromEquippedSnapshot(equippedBySlot) {
-  let total = 0;
-  for (const entry of Object.values(equippedBySlot || {})) {
-    total += computeItemPower(entry);
-  }
-  return Math.round(total);
-}
