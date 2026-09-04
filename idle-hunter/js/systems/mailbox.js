@@ -13,6 +13,7 @@
 import { getClient, ensureSignedIn } from './pvp.js';
 import { CARD_FRAGMENT_ID, CARDS } from '../data/cards.js';
 import { recordCardDiscovered } from './cards.js';
+import { MYSTIC_DIE_ID } from '../data/items.js';
 
 export async function fetchMailbox() {
   const userId = await ensureSignedIn();
@@ -73,6 +74,9 @@ function applyMailReward(state, type, amount) {
     state.cash = (state.cash || 0) + amount;
   } else if (type === 'awakening_shard') {
     state.awakeningShards = (state.awakeningShards || 0) + amount;
+  } else if (type === 'mystic_die') {
+    state.materials = state.materials || {};
+    state.materials[MYSTIC_DIE_ID] = (state.materials[MYSTIC_DIE_ID] || 0) + amount;
   } else if (type === 'random_card') {
     const card = CARDS[Math.floor(Math.random() * CARDS.length)];
     if (card) {
