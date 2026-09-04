@@ -820,7 +820,7 @@ export function showForeignEquipmentModal(player) {
       <div class="paperdoll-overlay-col paperdoll-overlay-left">${PAPERDOLL_LEFT.map((id) => foreignSlotIconHtml(equippedBySlot, getSlot(id))).join('')}</div>
       <div class="paperdoll-overlay-col paperdoll-overlay-right">${PAPERDOLL_RIGHT.map((id) => foreignSlotIconHtml(equippedBySlot, getSlot(id))).join('')}</div>
     </div>
-    <div class="player-power-row">${POWER_ICON} Power: <strong>${formatInteger(computePowerFromEquippedSnapshot(equippedBySlot))}</strong></div>
+    <div class="player-power-row">${POWER_ICON} Power dos Equipamentos: <strong>${formatInteger(computePowerFromEquippedSnapshot(equippedBySlot))}</strong></div>
   `);
 }
 
