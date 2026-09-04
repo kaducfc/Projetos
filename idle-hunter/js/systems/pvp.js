@@ -56,6 +56,32 @@ export async function isNickAvailable(nick) {
   return !(data || []).some((row) => row.id !== userId);
 }
 
+/// Grava SÓ o nick no servidor NA HORA que o jogador confirma a troca (ver
+/// saveProfileNameFlow em main.js) — não espera o próximo ciclo periódico
+/// de syncProfile. isNickAvailable acima ainda roda antes, pra UX rápida
+/// (a maioria dos casos já barra ali), mas só essa escrita aqui é
+/// AUTORITATIVA: o índice único do banco (ver
+/// 0025_pvp_profiles_nick_unique.sql) é quem decide de verdade, fechando
+/// a janela de corrida entre 2 sessões passando no isNickAvailable quase
+/// ao mesmo tempo. 'taken' = outra sessão venceu a corrida (o chamador
+/// deve desfazer a troca local); 'network' = falha técnica, sem sinal
+/// confiável — o chamador decide se aceita a troca local mesmo assim
+/// (mesmo espírito de "falha de rede não trava o jogador" do resto do
+/// PvP), sabendo que o próximo syncProfile periódico tenta de novo.
+export async function claimNick(nick) {
+  const userId = await ensureSignedIn();
+  if (!userId) return { ok: false, reason: 'network' };
+  const { error } = await getClient().from('pvp_profiles').upsert({
+    id: userId, nick, updated_at: new Date().toISOString(),
+  });
+  if (error) {
+    if (error.code === '23505') return { ok: false, reason: 'taken' };
+    console.warn('Arena PvP: falha ao gravar nick:', error.message);
+    return { ok: false, reason: 'network' };
+  }
+  return { ok: true };
+}
+
 /// "Prancheta" do equipamento atual — 1 entrada por slotId ocupado, com só
 /// o necessário pra exibir na janela de outro jogador (ver
 /// showForeignEquipmentModal em ui/render.js): sem uid (não faz sentido

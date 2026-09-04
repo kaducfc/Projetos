@@ -10,7 +10,7 @@ import { canTranscend, unlockTranscend, transcend, buyAwakeningItem } from './sy
 import {
   syncProfile, getMyPvpProfile, fetchTierBoard, attackOpponent,
   pickRandomPvpOpponents, previewPvpAttackSwing,
-  fetchArenaRank, fetchLevelRank, fetchTranscendRank, isNickAvailable, fetchPlayerEquipment,
+  fetchArenaRank, fetchLevelRank, fetchTranscendRank, isNickAvailable, claimNick, fetchPlayerEquipment,
 } from './systems/pvp.js';
 import { getPvpTierInfo, PVP_TIERS } from './data/pvpConfig.js';
 import { fetchMailbox, claimMailReward, deleteMail, mailHasReward, hasUnreadMail, markMailRead } from './systems/mailbox.js';
@@ -670,6 +670,16 @@ function setupProfile() {
 /// o padrão "Caçador", todo jogador novo já começa com ele). Qualquer
 /// violação mostra "Nick Impossibilitado" em vermelho (ver
 /// #profile-name-error) — o jogador tenta outro nick até passar em todas.
+///
+/// isNickAvailable acima é só a checagem RÁPIDA (evita a maioria dos
+/// conflitos na hora); depois de aplicar a troca local, claimNick grava o
+/// nick no servidor IMEDIATAMENTE (não espera o próximo ciclo periódico
+/// de syncProfile) — é essa escrita que é autoritativa de verdade (índice
+/// único no banco, ver 0025_pvp_profiles_nick_unique.sql). Se outra sessão
+/// venceu a corrida nesse meio-tempo (reason 'taken'), desfaz a troca
+/// local (nome, custo cobrado, contador de trocas) e avisa o jogador.
+/// Falha de rede (reason 'network') não desfaz nada — mesmo espírito do
+/// resto do PvP, o próximo syncProfile periódico tenta de novo sozinho.
 async function saveProfileNameFlow() {
   const input = document.getElementById('profile-name-input');
   const errorEl = document.getElementById('profile-name-error');
@@ -682,7 +692,8 @@ async function saveProfileNameFlow() {
   }
   if (trimmed === getPlayerName(state)) return; // nada mudou, não cobra
 
-  if (trimmed.toLowerCase() !== DEFAULT_PLAYER_NAME.toLowerCase()) {
+  const isDefaultName = trimmed.toLowerCase() === DEFAULT_PLAYER_NAME.toLowerCase();
+  if (!isDefaultName) {
     const available = await isNickAvailable(trimmed);
     if (!available) {
       if (errorEl) errorEl.textContent = '❌ Nick Impossibilitado';
@@ -690,13 +701,35 @@ async function saveProfileNameFlow() {
     }
   }
 
-  if (setPlayerName(state, rawName)) {
-    showToast('✅ Nick atualizado!');
-    renderTopBar(state);
-    showProfileModal(state);
-  } else {
+  const prevName = getPlayerName(state);
+  const prevCash = state.cash;
+  const prevChangesUsed = state.nameChangesUsed || 0;
+
+  if (!setPlayerName(state, rawName)) {
     showToast(`❌ ${ESMERALDA_ICON} insuficiente pra trocar o nick.`);
+    return;
   }
+
+  if (!isDefaultName) {
+    const result = await claimNick(trimmed);
+    if (!result.ok && result.reason === 'taken') {
+      state.playerName = prevName;
+      state.cash = prevCash;
+      state.nameChangesUsed = prevChangesUsed;
+      // showProfileModal recria o HTML do modal (incluindo um
+      // #profile-name-error novo e vazio) — setar o texto ANTES seria
+      // apagado por esse re-render, então a mensagem entra DEPOIS, no
+      // elemento novo.
+      showProfileModal(state);
+      const newErrorEl = document.getElementById('profile-name-error');
+      if (newErrorEl) newErrorEl.textContent = '❌ Nick Impossibilitado';
+      return;
+    }
+  }
+
+  showToast('✅ Nick atualizado!');
+  renderTopBar(state);
+  showProfileModal(state);
 }
 
 // ---------------------------------------------------------------
