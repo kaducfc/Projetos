@@ -12,8 +12,15 @@ name: Bots diários (Idle Hunter)
 # `workflow_dispatch` deixa rodar manualmente (aba Actions do GitHub) pra
 # testar sem esperar o próximo horário agendado.
 on:
+  # Minuto 7 (em vez de 0) de propósito: o minuto exato ":00" é o mais
+  # concorrido de longe no agendador do GitHub Actions (praticamente todo
+  # workflow cron do mundo tenta rodar nesse instante), o que faz slots
+  # nesse minuto serem pulados com muito mais frequência. Um minuto
+  # "quebrado" reduz a fila e ajuda o cron a disparar de fato — foi
+  # observado ZERO execuções agendadas rodando em ":00" ao longo de várias
+  # janelas seguidas antes dessa mudança.
   schedule:
-    - cron: '0 */3 * * *' # a cada 3h, começando 00h UTC (= 21h Brasília)
+    - cron: '7 */3 * * *' # a cada 3h aos :07 (00h07/03h07/06h07... em Brasília)
   workflow_dispatch: {}
 
 # Nunca deixa 2 execuções mexerem em state/ ao mesmo tempo (uma delas
