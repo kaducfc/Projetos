@@ -9,13 +9,19 @@
 -- Como aplicar: cole este arquivo inteiro no SQL Editor do painel Supabase
 -- e rode uma vez. Seguro rodar de novo.
 
+-- drop antes do create or replace: a função já existe (rodada antes sem
+-- is_vip) e o Postgres não deixa mudar as colunas de retorno de uma
+-- função existente só com create or replace.
+drop function if exists public.pvp_rank_power(uuid);
+
 create or replace function public.pvp_rank_power(viewer_id uuid)
 returns table (
   entity_id uuid,
   nick text,
   icon_id text,
   power integer,
-  "position" integer
+  "position" integer,
+  is_vip boolean
 )
 language sql
 stable
@@ -23,7 +29,8 @@ as $$
   with ranked as (
     select p.id as entity_id, p.nick, p.icon_id,
            round(coalesce(s.power, 0))::int as power,
-           row_number() over (order by coalesce(s.power, 0) desc, p.id asc)::int as "position"
+           row_number() over (order by coalesce(s.power, 0) desc, p.id asc)::int as "position",
+           p.is_vip
     from public.pvp_profiles p
     left join public.pvp_snapshots s on s.profile_id = p.id
   )
