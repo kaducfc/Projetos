@@ -16,8 +16,12 @@ import { getPvpTierInfo, PVP_TIERS } from './data/pvpConfig.js';
 import { fetchMailbox, claimMailReward, deleteMail, mailHasReward, hasUnreadMail, markMailRead } from './systems/mailbox.js';
 import { elementDamageModifier } from './data/elements.js';
 import { equipItem, unequipSlot, findEquippedSlotId } from './systems/equipment.js';
-import { enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscension, socketCard, unsocketCard, destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds } from './systems/crafting.js';
-import { getItem, getRarity } from './data/items.js';
+import {
+  enhanceItem, upgradeToMaster, rollAscensionCandidates, finalizeAscension, socketCard, unsocketCard,
+  destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds,
+  rollBonusReroll, finalizeBonusReroll,
+} from './systems/crafting.js';
+import { getItem, getRarity, MYSTIC_DIE_ID, MYSTIC_DIE_NAME } from './data/items.js';
 import { chooseGodAttribute, rollGodBonusChoice, finalizeGodBonus } from './systems/godItems.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
@@ -55,7 +59,7 @@ import {
   showItemDetailModal, showEquipSlotModal, showMonsterSelectModal, renderEventsTab, renderShopTab,
   renderCardsTab, showCardDetailModal, iconMarkup,
   renderPetsTab, showPetDetailModal, showHatchModal, showAscensionModal, showFullStatsModal,
-  showGodBonusModal, showGodItemShopDetailModal, showCardShopDetailModal,
+  showGodBonusModal, showGodItemShopDetailModal, showCardShopDetailModal, showBonusRerollModal,
   GOLD_ICON, EVENT_ICON, ESMERALDA_ICON, CARD_ICON, CARD_FRAGMENT_ICON, expeditionDurationLabel,
   ACHIEVEMENT_ICON, GIFT_ICON, TRANSCEND_ICON,
   EGG_ICON, PET_FRAGMENT_ICON, AWAKENING_SHARD_ICON,
@@ -136,6 +140,12 @@ let pendingAscension = null;
 // os 3 candidatos do bônus atual (1 dos 8), até o jogador escolher 1
 // (data-god-bonus-choose, ver wireModalEvents).
 let pendingGodBonus = null;
+// Mesmo padrão de pendingAscension acima, pro reroll de bônus com Dado
+// Místico (ver rollBonusReroll/finalizeBonusReroll em systems/crafting.js)
+// — os 3 candidatos pro bônus `statIndex` sendo trocado, até o jogador
+// escolher 1 (data-reroll-bonus-choose, ver wireModalEvents). O Dado
+// Místico já foi gasto no momento de rolar, não aqui.
+let pendingBonusReroll = null;
 // Equipamento de outro jogador, aberto a partir de um clique numa linha da
 // aba Ranks (ver wireRanksTabEvents abaixo e showForeignEquipmentModal em
 // ui/render.js) — o objeto {slotId: entry} devolvido por
@@ -885,11 +895,16 @@ function wireModalEvents() {
     if (ascendBtn) {
       runModalAction(() => {
         const uid = Number(ascendBtn.dataset.ascendUid);
-        const pending = rollAscensionCandidates(state, uid);
-        if (pending) {
+        // Reabrir o modal (fechou sem escolher e clicou em Ascender de
+        // novo) reusa os MESMOS 3 candidatos em vez de rerolar — bug
+        // corrigido a pedido do usuário: as opções só mudam quando de
+        // fato rerola (item diferente, ou depois de escolher).
+        let pending = pendingAscension && pendingAscension.uid === uid ? pendingAscension : null;
+        if (!pending) {
+          pending = rollAscensionCandidates(state, uid);
           pendingAscension = pending;
-          showAscensionModal(state, uid, pending);
         }
+        if (pending) showAscensionModal(state, uid, pending);
       });
       return;
     }
@@ -933,10 +948,54 @@ function wireModalEvents() {
     if (godRollBonusBtn) {
       runModalAction(() => {
         const uid = Number(godRollBonusBtn.dataset.godRollBonus);
-        const pending = rollGodBonusChoice(state, uid);
-        if (pending) {
+        // Mesmo fix de pendingAscension acima: reabrir sem ter escolhido
+        // reusa os mesmos 3 candidatos em vez de rerolar.
+        let pending = pendingGodBonus && pendingGodBonus.uid === uid ? pendingGodBonus : null;
+        if (!pending) {
+          pending = rollGodBonusChoice(state, uid);
           pendingGodBonus = pending;
-          showGodBonusModal(state, uid, pending);
+        }
+        if (pending) showGodBonusModal(state, uid, pending);
+      });
+      return;
+    }
+
+    const rerollBonusBtn = e.target.closest('[data-reroll-bonus-uid]');
+    if (rerollBonusBtn) {
+      runModalAction(() => {
+        const uid = Number(rerollBonusBtn.dataset.rerollBonusUid);
+        const statIndex = Number(rerollBonusBtn.dataset.rerollBonusIndex);
+        // Mesmo fix de pendingAscension acima: reabrir sem ter escolhido
+        // reusa os mesmos 3 candidatos, sem gastar outro Dado Místico.
+        let pending = pendingBonusReroll
+          && pendingBonusReroll.uid === uid && pendingBonusReroll.statIndex === statIndex
+          ? pendingBonusReroll : null;
+        if (!pending) {
+          if ((state.materials[MYSTIC_DIE_ID] || 0) < 1) {
+            showToast(`🎲 Você não tem ${MYSTIC_DIE_NAME}.`);
+            return;
+          }
+          pending = rollBonusReroll(state, uid, statIndex);
+          pendingBonusReroll = pending;
+        }
+        if (pending) showBonusRerollModal(state, uid, pending);
+      });
+      return;
+    }
+
+    const rerollBonusChooseBtn = e.target.closest('[data-reroll-bonus-choose]');
+    if (rerollBonusChooseBtn) {
+      runModalAction(() => {
+        const uid = Number(rerollBonusChooseBtn.dataset.rerollBonusChoose);
+        const chosenIndex = Number(rerollBonusChooseBtn.dataset.rerollBonusChooseIndex);
+        if (!pendingBonusReroll) return;
+        const pending = pendingBonusReroll;
+        pendingBonusReroll = null;
+        if (finalizeBonusReroll(state, uid, pending, chosenIndex)) {
+          showItemDetailModal(state, uid);
+          showToast('🎲 Bônus rerolado!');
+          fullRefresh();
+          syncPvpIfEquipped(uid);
         }
       });
       return;
@@ -1421,6 +1480,7 @@ function showArenaRewardModal(rank, damageDealt, materialsGranted) {
     lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.materialsTotal)} Materiais de Monstros:</p><p class="offline-item-lines">${materialLines}</p>`);
   }
   if (rewards.cardFragments > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.cardFragments)} ${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}</p>`);
+  if (rewards.mysticDice > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.mysticDice)} 🎲 ${MYSTIC_DIE_NAME}</p>`);
 
   showModal(`⚔️ Combate encerrado — ${rank.name}`, `
     <p>Dano total causado: <strong>${formatNumber(damageDealt)}</strong></p>
@@ -2257,6 +2317,7 @@ function performTranscend() {
   pendingHatchCandidates = null;
   pendingAscension = null;
   pendingGodBonus = null;
+  pendingBonusReroll = null;
   bulkSelectMode = false;
   bulkSelectedUids = new Set();
   bulkConfirmingDestroy = false;

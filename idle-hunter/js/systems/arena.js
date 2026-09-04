@@ -1,5 +1,6 @@
 import { ARENA_RUN_DURATION_MS, ARENA_COOLDOWN_MS, getArenaRankForDamage } from '../data/arena.js';
 import { CARD_FRAGMENT_ID } from '../data/cards.js';
+import { MYSTIC_DIE_ID } from '../data/items.js';
 import { WEAK_MONSTER_GROUPS } from '../data/monsters.js';
 import { isZoneUnlocked } from './leveling.js';
 
@@ -102,6 +103,10 @@ export function endArenaRun(state) {
 
   if (rewards.cardFragments > 0) {
     state.materials[CARD_FRAGMENT_ID] = (state.materials[CARD_FRAGMENT_ID] || 0) + rewards.cardFragments;
+  }
+
+  if (rewards.mysticDice > 0) {
+    state.materials[MYSTIC_DIE_ID] = (state.materials[MYSTIC_DIE_ID] || 0) + rewards.mysticDice;
   }
 
   const damageDealt = state.arenaDamageDealt;

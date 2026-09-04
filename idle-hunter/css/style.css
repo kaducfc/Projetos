@@ -1651,6 +1651,35 @@ button:disabled {
   margin-bottom: 8px;
 }
 
+/* 1 linha de bônus adicional + botão de reroll com Dado Místico (ver
+   bonusStatRowHtml, ui/render.js) — texto à esquerda, botãozinho redondo
+   com o ícone de "atualizar" (REFRESH_ICON) do lado direito. */
+.item-detail-bonus-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.item-detail-bonus-row button.bonus-reroll-btn {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--grad-neutral);
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-detail-bonus-row .bonus-reroll-btn img {
+  width: 12px;
+  height: 12px;
+  vertical-align: 0;
+}
+
 /* Barra de XP de mascote (ver petXpSectionHtml, ui/render.js) — mesma
    linguagem visual da barra de XP do caçador (#hunter-xp-bar-*), só que
    como classes reusáveis (o modal de detalhe do pet pode reabrir várias

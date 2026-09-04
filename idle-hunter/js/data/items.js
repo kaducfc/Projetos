@@ -302,6 +302,30 @@ export function rollAscensionBonusCandidates(tier, ownAttributeId, ownBaseValue,
 }
 
 // ---------------------------------------------------------------------
+// Dado Místico: material consumível (guardado em state.materials, mesmo
+// padrão de Fragmento de Carta) que reroла UM bônus adicional já existente
+// de um item (ver rerollBonus em systems/crafting.js) — diferente da
+// Ascensão (que ADICIONA um bônus novo, na raridade seguinte), o reroll
+// SUBSTITUI um bônus que o item já tem, na raridade ATUAL dele.
+// ---------------------------------------------------------------------
+export const MYSTIC_DIE_ID = 'mystic_die';
+export const MYSTIC_DIE_NAME = 'Dado Místico';
+export const MYSTIC_DIE_EMOJI = '🎲';
+
+/// Rola 3 candidatos pra substituir o bônus adicional `statIndex` de um
+/// item — mesma mecânica de rollAscensionBonusCandidates (rola 3, o
+/// jogador escolhe 1), na magnitude/raridade ATUAL do item (não a
+/// próxima, como na Ascensão). Os OUTROS bônus que o item já tem entram em
+/// existingAdditionalStats normalmente (pra nunca repetir stat), mas o
+/// próprio bônus sendo trocado NÃO conta como "já usado" — senão ele nunca
+/// poderia rolar de novo pro mesmo stat com um valor diferente.
+export function rollBonusRerollCandidates(item, entry, statIndex, count = 3) {
+  const rarity = getRarity(entry.rarityId);
+  const otherStats = (entry.additionalStats || []).filter((_, i) => i !== statIndex);
+  return rollAscensionBonusCandidates(item.zoneIndex, item.attribute, entry.baseStats[item.attribute], otherStats, rarity.mult, count);
+}
+
+// ---------------------------------------------------------------------
 // Catálogo de itens: 9 moldes por zona (um por categoria), cada um em 3
 // variantes de atributo — 270 combinações no total (10 zonas × 9 × 3).
 // Nomes/emoji são gerados por template (sem arte nova ainda; cai no emoji
