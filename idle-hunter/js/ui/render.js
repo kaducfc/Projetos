@@ -2746,14 +2746,24 @@ function awakeningShopHtml(state) {
 }
 
 export function showTranscendConfirmModal(state) {
-  showModal('🌌 Transcender', `
-    <p>Isso vai reiniciar sua jornada quase do zero:</p>
-    <p class="offline-item-lines">❌ Nível, ouro, materiais, equipamentos, inventário<br>
-       ❌ Mascotes (exceto os do Despertar), habilidades, eventos</p>
-    <p class="offline-item-lines">✅ Cartas descobertas<br>
-       ✅ Itens/mascotes comprados na Loja do Despertar<br>
-       ✅ Esmeralda, VIP, Conquistas, Perfil<br>
-       ✅ +1 ${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME} (${getAwakeningShards(state)} → ${getAwakeningShards(state) + 1})</p>
+  // Título com o próprio ícone de Transcender (assets/ui/nav/transcender.png)
+  // em vez do emoji 🌌 — showModal() define o título via textContent, que
+  // não renderiza HTML, então o cabeçalho é montado à mão aqui dentro do
+  // corpo do modal (mesmo padrão do popup de item Tier God acima).
+  showModal('', `
+    <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px;">
+      <img class="currency-icon-lg" src="assets/ui/nav/transcender.png" alt="Transcender">
+      <span style="font-size:18px; font-weight:800; color:var(--gold-dark);">Transcender</span>
+    </div>
+    <div style="text-align:left;">
+      <p>Isso vai reiniciar sua jornada quase do zero:</p>
+      <p class="offline-item-lines">❌ Nível, ouro, materiais, equipamentos, inventário<br>
+         ❌ Mascotes (exceto os do Despertar), habilidades, eventos</p>
+      <p class="offline-item-lines">✅ Cartas descobertas<br>
+         ✅ Itens/mascotes comprados na Loja do Despertar<br>
+         ✅ Esmeralda, VIP, Conquistas, Perfil<br>
+         ✅ +1 ${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME} (${getAwakeningShards(state)} → ${getAwakeningShards(state) + 1})</p>
+    </div>
     <button class="transcend-btn" data-confirm-transcend>${TRANSCEND_ICON} Confirmar Transcendência</button>
   `);
 }
