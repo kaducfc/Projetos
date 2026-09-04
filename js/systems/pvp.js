@@ -166,18 +166,20 @@ export async function syncProfile(state, stats, playerName, profileIconId) {
 /// (ver wireRanksTabEvents em main.js). Null tanto pra erro de rede quanto
 /// pra perfil sem nenhuma peça equipada ainda (equipped_snapshot vem
 /// '{}' — showForeignEquipmentModal mostra o boneco vazio nesse caso, não
-/// precisa diferenciar dos dois motivos aqui).
+/// precisa diferenciar dos dois motivos aqui). `power` vem à parte de
+/// pvp_snapshots (mesmo Power TOTAL já sincronizado pro Rank Power, ver
+/// syncProfile acima) — pedido explícito do usuário pra mostrar sempre o
+/// Power da conta inteira aqui, não só o dos itens visíveis no boneco.
 export async function fetchPlayerEquipment(entityId) {
-  const { data, error } = await getClient()
-    .from('pvp_profiles')
-    .select('nick, icon_id, is_vip, equipped_snapshot')
-    .eq('id', entityId)
-    .maybeSingle();
+  const [{ data, error }, { data: snapshot }] = await Promise.all([
+    getClient().from('pvp_profiles').select('nick, icon_id, is_vip, equipped_snapshot').eq('id', entityId).maybeSingle(),
+    getClient().from('pvp_snapshots').select('power').eq('profile_id', entityId).maybeSingle(),
+  ]);
   if (error) {
     console.warn('Arena PvP: falha ao buscar equipamento de outro jogador:', error.message);
     return null;
   }
-  return data;
+  return { ...data, power: snapshot?.power || 0 };
 }
 
 export async function getMyPvpProfile() {
