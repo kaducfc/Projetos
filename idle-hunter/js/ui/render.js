@@ -1916,12 +1916,27 @@ export function showBonusRerollModal(state, uid, pending) {
   const entry = state.inventory.find((i) => i.uid === uid);
   if (!entry) return;
   const item = getItem(entry.itemId);
+  const mysticDieCount = state.materials[MYSTIC_DIE_ID] || 0;
+  // Rerola de novo os 3 candidatos SEM fechar a tela (pedido explícito do
+  // usuário — antes só dava pra rerolar de novo fechando e reabrindo o
+  // detalhe do item). Gasta mais 1 Dado Místico, igual o botão original de
+  // rerolar (ver data-reroll-bonus-uid, systems/crafting.js
+  // rollBonusReroll) — desabilitado quando não sobra nenhum.
+  const rerollAgainBtn = `
+    <button class="modal-action-btn" data-reroll-bonus-again="${uid}" data-reroll-bonus-again-index="${pending.statIndex}"
+      ${mysticDieCount < 1 ? 'disabled' : ''}>
+      Trocar (${MYSTIC_DIE_EMOJI}${mysticDieCount})
+    </button>
+  `;
   showModal('🎲 Reroll de Bônus', `
     <p style="font-size:12px; color:var(--text-dim); text-align:center;">
       ${item.name} — escolha 1 dos 3 abaixo pra substituir o bônus.
     </p>
     <div class="ascension-choice-row">
       ${pending.candidates.map((c, i) => bonusRerollCandidateHtml(uid, c, i)).join('')}
+    </div>
+    <div style="display:flex; justify-content:center; margin-top:10px;">
+      ${rerollAgainBtn}
     </div>
   `);
 }
