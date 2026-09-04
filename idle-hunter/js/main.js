@@ -21,7 +21,7 @@ import {
   destroyItem, countEquippedCardCopies, MAX_EQUIPPED_CARD_COPIES, ensureCardIds,
   rollBonusReroll, finalizeBonusReroll, toggleItemLock,
 } from './systems/crafting.js';
-import { getItem, getRarity, MYSTIC_DIE_ID, MYSTIC_DIE_NAME } from './data/items.js';
+import { getItem, getRarity, MYSTIC_DIE_ID, MYSTIC_DIE_NAME, MYSTIC_DIE_EMOJI } from './data/items.js';
 import { chooseGodAttribute, rollGodBonusChoice, finalizeGodBonus } from './systems/godItems.js';
 import { computeOfflineProgress, applyOfflineProgress, OFFLINE_EFFICIENCY } from './systems/offline.js';
 import { formatNumber } from './format.js';
@@ -1005,7 +1005,7 @@ function wireModalEvents() {
           ? pendingBonusReroll : null;
         if (!pending) {
           if ((state.materials[MYSTIC_DIE_ID] || 0) < 1) {
-            showToast(`🎲 Você não tem ${MYSTIC_DIE_NAME}.`);
+            showToast(`${MYSTIC_DIE_EMOJI} Você não tem ${MYSTIC_DIE_NAME}.`);
             return;
           }
           pending = rollBonusReroll(state, uid, statIndex);
@@ -1022,7 +1022,7 @@ function wireModalEvents() {
         const uid = Number(rerollBonusAgainBtn.dataset.rerollBonusAgain);
         const statIndex = Number(rerollBonusAgainBtn.dataset.rerollBonusAgainIndex);
         if ((state.materials[MYSTIC_DIE_ID] || 0) < 1) {
-          showToast(`🎲 Você não tem ${MYSTIC_DIE_NAME}.`);
+          showToast(`${MYSTIC_DIE_EMOJI} Você não tem ${MYSTIC_DIE_NAME}.`);
           return;
         }
         const pending = rollBonusReroll(state, uid, statIndex);
@@ -1043,7 +1043,7 @@ function wireModalEvents() {
         pendingBonusReroll = null;
         if (finalizeBonusReroll(state, uid, pending, chosenIndex)) {
           showItemDetailModal(state, uid);
-          showToast('🎲 Bônus rerolado!');
+          showToast(`${MYSTIC_DIE_EMOJI} Bônus rerolado!`);
           fullRefresh();
           syncPvpIfEquipped(uid);
         }
@@ -1542,7 +1542,7 @@ function showArenaRewardModal(rank, damageDealt, materialsGranted) {
     lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.materialsTotal)} Materiais de Monstros:</p><p class="offline-item-lines">${materialLines}</p>`);
   }
   if (rewards.cardFragments > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.cardFragments)} ${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}</p>`);
-  if (rewards.mysticDice > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.mysticDice)} 🎲 ${MYSTIC_DIE_NAME}</p>`);
+  if (rewards.mysticDice > 0) lines.push(`<p class="offline-item-lines">+${formatNumber(rewards.mysticDice)} ${MYSTIC_DIE_EMOJI} ${MYSTIC_DIE_NAME}</p>`);
 
   showModal(`⚔️ Combate encerrado — ${rank.name}`, `
     <p>Dano total causado: <strong>${formatNumber(damageDealt)}</strong></p>
