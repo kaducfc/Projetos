@@ -1652,13 +1652,16 @@ button:disabled {
 }
 
 /* 1 linha de bônus adicional + botão de reroll com Dado Místico (ver
-   bonusStatRowHtml, ui/render.js) — texto à esquerda, botão do lado
-   direito que é o PRÓPRIO ícone de "atualizar" (REFRESH_ICON) por
-   inteiro, sem fundo/moldura de botão em volta. */
+   bonusStatRowHtml, ui/render.js) — texto à esquerda, botão logo depois
+   dele (não alinhado numa coluna reta à direita — a distância do texto é
+   sempre a mesma, ~3 espaços, então o botão "flutua" mais perto ou mais
+   longe da borda conforme o tamanho do texto de cada bônus), que é o
+   PRÓPRIO ícone de "atualizar" (REFRESH_ICON) por inteiro, sem fundo/
+   moldura de botão em volta. */
 .item-detail-bonus-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 6px;
 }
 
@@ -1667,6 +1670,7 @@ button:disabled {
   width: 16px;
   height: 16px;
   padding: 0;
+  margin-left: 18px;
   background: none;
   border: none;
   box-shadow: none;
