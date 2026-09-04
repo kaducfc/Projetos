@@ -2758,11 +2758,11 @@ export function showTranscendConfirmModal(state) {
     <div style="text-align:left;">
       <p>Isso vai reiniciar sua jornada quase do zero:</p>
       <p class="offline-item-lines">❌ Nível, ouro, materiais, equipamentos, inventário<br>
-         ❌ Mascotes (exceto os do Despertar), habilidades, eventos</p>
+         ❌ Mascotes, habilidades, eventos</p>
       <p class="offline-item-lines">✅ Cartas descobertas<br>
-         ✅ Itens/mascotes comprados na Loja do Despertar<br>
+         ✅ Itens do Despertar<br>
          ✅ Esmeralda, VIP, Conquistas, Perfil<br>
-         ✅ +1 ${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME} (${getAwakeningShards(state)} → ${getAwakeningShards(state) + 1})</p>
+         ✅ +1 ${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME}</p>
     </div>
     <button class="transcend-btn" data-confirm-transcend>${TRANSCEND_ICON} Confirmar Transcendência</button>
   `);
