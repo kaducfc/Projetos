@@ -4,6 +4,7 @@ import {
   getAscensionCost, getDamageType, ENHANCE_MAX_LEVEL, enhancementMultiplier,
   DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName, RARITIES,
   GOD_MIN_LEVEL, GOD_BONUS_SLOTS, GOD_RARITY, ATTRIBUTES, godAttributeBaseValue,
+  MYSTIC_DIE_ID, MYSTIC_DIE_NAME, MYSTIC_DIE_EMOJI,
 } from '../data/items.js';
 import {
   needsGodAttributeChoice, canRollGodBonus, isGodItemComplete, getGodAttribute,
@@ -933,7 +934,21 @@ export function showItemDetailModal(state, uid, pickerOpenSlot = null, confirmDe
 /// funde). Itens de um save antigo (rolados antes do 2º adicional existir)
 /// simplesmente não têm essa chave em baseStats — secondaryLine fica
 /// vazia, sem quebrar.
-function itemDetailStatsHtml(item, entry) {
+/// Linha de 1 bônus adicional já rolado + o botãozinho de reroll (ícone
+/// "atualizar", ver REFRESH_ICON) que consome 1 Dado Místico — ver
+/// data-reroll-bonus-uid/index em main.js e rollBonusReroll/
+/// finalizeBonusReroll em systems/crafting.js. Só itens normais têm essa
+/// linha (item Tier God usa godItemDetailStatsHtml abaixo, sem botão — o
+/// próprio bônus lá ainda está sendo "montado" pelo fluxo de Escolher
+/// Bônus, reroll não se aplica).
+function bonusStatRowHtml(uid, index, label) {
+  return `<div class="item-detail-bonus-row">
+    <span>${label}</span>
+    <button class="bonus-reroll-btn" data-reroll-bonus-uid="${uid}" data-reroll-bonus-index="${index}" title="Rerolar com ${MYSTIC_DIE_NAME}">${REFRESH_ICON}</button>
+  </div>`;
+}
+
+function itemDetailStatsHtml(uid, item, entry) {
   const mult = enhancementMultiplier(entry.enhanceLevel || 0, !!entry.isMaster);
   const baseValue = entry.baseStats?.[item.attribute] || 0;
   const baseLine = ATTRIBUTE_STAT_LABEL[item.attribute](baseValue);
@@ -943,10 +958,12 @@ function itemDetailStatsHtml(item, entry) {
   const secondaryLine = secondaryKey && BONUS_STAT_LABEL[secondaryKey]
     ? `<strong>${BONUS_STAT_LABEL[secondaryKey](secondaryValue)}</strong>` : null;
 
-  const bonusLines = (entry.additionalStats || [])
-    .map((add) => (BONUS_STAT_LABEL[add.stat] ? BONUS_STAT_LABEL[add.stat](add.value) : null))
-    .filter(Boolean);
-  return [baseLine, secondaryLine, ...bonusLines].filter(Boolean).join('<br>');
+  const topLines = [baseLine, secondaryLine].filter(Boolean).join('<br>');
+  const bonusRows = (entry.additionalStats || [])
+    .map((add, i) => (BONUS_STAT_LABEL[add.stat] ? bonusStatRowHtml(uid, i, BONUS_STAT_LABEL[add.stat](add.value)) : null))
+    .filter(Boolean)
+    .join('');
+  return `${topLines}${bonusRows}`;
 }
 
 // Canto inferior esquerdo da JANELA inteira (mesma referência do badge
@@ -1093,7 +1110,7 @@ function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
       <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
-      <div class="item-detail-stats">${itemDetailStatsHtml(item, entry)}</div>
+      <div class="item-detail-stats">${itemDetailStatsHtml(uid, item, entry)}</div>
       ${itemPowerBadgeHtml(entry)}
       ${resistanceLine}
       ${weaponRequirementNote}
@@ -1859,6 +1876,36 @@ export function showAscensionModal(state, uid, pending) {
   `);
 }
 
+/// Mesma mecânica de showAscensionModal (rola 3, escolhe 1), pro reroll de
+/// bônus com Dado Místico — ver rollBonusReroll/finalizeBonusReroll em
+/// systems/crafting.js. `pending` é o retorno de rollBonusReroll, guardado
+/// em main.js até o clique de escolha (o Dado Místico já foi gasto na
+/// hora de rolar os 3, não aqui).
+function bonusRerollCandidateHtml(uid, candidate, index) {
+  const line = BONUS_STAT_LABEL[candidate.stat] ? BONUS_STAT_LABEL[candidate.stat](candidate.value) : candidate.stat;
+  return `
+    <div class="ascension-candidate">
+      <div class="item-detail-icon">🎲</div>
+      <div class="item-detail-name" style="font-size:12.5px;">${line}</div>
+      <button class="modal-action-btn" data-reroll-bonus-choose="${uid}" data-reroll-bonus-choose-index="${index}">Escolher</button>
+    </div>
+  `;
+}
+
+export function showBonusRerollModal(state, uid, pending) {
+  const entry = state.inventory.find((i) => i.uid === uid);
+  if (!entry) return;
+  const item = getItem(entry.itemId);
+  showModal('🎲 Reroll de Bônus', `
+    <p style="font-size:12px; color:var(--text-dim); text-align:center;">
+      ${item.name} — escolha 1 dos 3 abaixo pra substituir o bônus.
+    </p>
+    <div class="ascension-choice-row">
+      ${pending.candidates.map((c, i) => bonusRerollCandidateHtml(uid, c, i)).join('')}
+    </div>
+  `);
+}
+
 /// Mesma mecânica de showAscensionModal (rola 3, escolhe 1), pro fluxo de
 /// montar um item Tier God — ver rollGodBonusChoice/finalizeGodBonus em
 /// systems/godItems.js. `pending` é o retorno de rollGodBonusChoice,
@@ -1985,6 +2032,7 @@ function arenaRankRowHtml(rank) {
         ${rewards.eggs > 0 ? arenaRewardLineHtml(EGG_ICON, rewards.eggs, 'Ovo de Mascote') : ''}
         ${rewards.materialsTotal > 0 ? arenaRewardLineHtml('📦', rewards.materialsTotal, 'Materiais de Monstros (várias zonas)') : ''}
         ${rewards.cardFragments > 0 ? arenaRewardLineHtml(CARD_FRAGMENT_ICON, rewards.cardFragments, CARD_FRAGMENT_NAME) : ''}
+        ${rewards.mysticDice > 0 ? arenaRewardLineHtml('🎲', rewards.mysticDice, MYSTIC_DIE_NAME) : ''}
       </div>
     </details>`;
 }
