@@ -1016,6 +1016,23 @@ function wireModalEvents() {
       return;
     }
 
+    const rerollBonusAgainBtn = e.target.closest('[data-reroll-bonus-again]');
+    if (rerollBonusAgainBtn) {
+      runModalAction(() => {
+        const uid = Number(rerollBonusAgainBtn.dataset.rerollBonusAgain);
+        const statIndex = Number(rerollBonusAgainBtn.dataset.rerollBonusAgainIndex);
+        if ((state.materials[MYSTIC_DIE_ID] || 0) < 1) {
+          showToast(`🎲 Você não tem ${MYSTIC_DIE_NAME}.`);
+          return;
+        }
+        const pending = rollBonusReroll(state, uid, statIndex);
+        if (!pending) return;
+        pendingBonusReroll = pending;
+        showBonusRerollModal(state, uid, pending);
+      });
+      return;
+    }
+
     const rerollBonusChooseBtn = e.target.closest('[data-reroll-bonus-choose]');
     if (rerollBonusChooseBtn) {
       runModalAction(() => {
