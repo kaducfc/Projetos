@@ -2,9 +2,9 @@
   "index": 12,
   "name": "Shikamaru Nara",
   "gameState": {
-    "gold": 138680,
+    "gold": 177668,
     "hunterLevel": 104,
-    "hunterXp": 122,
+    "hunterXp": 458,
     "selectedMonsters": [
       {
         "zoneIndex": 5,
@@ -30,12 +30,12 @@
     "currentMonster": {
       "zoneIndex": 5,
       "kind": "weak",
-      "monsterId": "ecliptor"
+      "monsterId": "thundrak"
     },
-    "monsterHp": 63676,
+    "monsterHp": 68393,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 246,
+      "mystic_die": 237,
       "chispim_heart": 879,
       "sylkar_blade": 321,
       "guardiao_druida_antler": 155,
@@ -51,15 +51,15 @@
       "plasmion_core": 106,
       "sabion_scepter": 247,
       "serpentorax_scale": 24,
-      "fornitus_core": 68,
-      "emberimp_ember": 10,
-      "grommuk_fang": 232,
-      "lavasalam_drop": 61,
-      "ember_warden_blade": 5,
-      "vulkarion_horn": 34,
-      "luxoris_branch": 17,
-      "thundrak_horn": 9,
-      "ecliptor_chain": 25,
+      "fornitus_core": 56,
+      "emberimp_ember": 13,
+      "grommuk_fang": 235,
+      "lavasalam_drop": 53,
+      "ember_warden_blade": 0,
+      "vulkarion_horn": 64,
+      "luxoris_branch": 21,
+      "thundrak_horn": 18,
+      "ecliptor_chain": 27,
       "minotauro_trovao_hammer": 3,
       "card_fragment": 1000
     },
@@ -96,7 +96,7 @@
           },
           {
             "stat": "hpFlat",
-            "value": 9
+            "value": 8
           },
           {
             "stat": "dpsPercent",
@@ -127,8 +127,8 @@
             "value": 6.2
           },
           {
-            "stat": "danoMagicoFlat",
-            "value": 12
+            "stat": "danoPerfuracaoFlat",
+            "value": 17
           }
         ],
         "enhanceLevel": 2,
@@ -147,8 +147,8 @@
         },
         "additionalStats": [
           {
-            "stat": "dpsPercent",
-            "value": 8.1
+            "stat": "critChancePercent",
+            "value": 12.6
           },
           {
             "stat": "dropPercent",
@@ -191,8 +191,8 @@
             "value": 4.5
           },
           {
-            "stat": "goldPercent",
-            "value": 7.3
+            "stat": "armorFlat",
+            "value": 18
           }
         ],
         "enhanceLevel": 3,
@@ -211,11 +211,11 @@
         },
         "additionalStats": [
           {
-            "stat": "destreza",
-            "value": 25
+            "stat": "lifestealFlat",
+            "value": 3
           }
         ],
-        "enhanceLevel": 1,
+        "enhanceLevel": 4,
         "isMaster": false,
         "cardIds": [
           null
@@ -232,41 +232,13 @@
         "additionalStats": [
           {
             "stat": "danoMagicoFlat",
-            "value": 21
+            "value": 28
           }
         ],
         "enhanceLevel": 5,
         "isMaster": true,
         "cardIds": [
           null
-        ]
-      },
-      {
-        "uid": 264,
-        "itemId": "grommuk_weapon2_forca",
-        "rarityId": "raro",
-        "baseStats": {
-          "forca": 30,
-          "danoFisicoFlat": 19
-        },
-        "additionalStats": [
-          {
-            "stat": "danoPerfuracaoFlat",
-            "value": 24
-          },
-          {
-            "stat": "danoFisicoFlat",
-            "value": 17
-          },
-          {
-            "stat": "petDamagePercent",
-            "value": 10.2
-          }
-        ],
-        "enhanceLevel": 3,
-        "isMaster": false,
-        "cardIds": [
-          "musgorn_card"
         ]
       },
       {
@@ -291,38 +263,14 @@
             "value": 8.7
           },
           {
-            "stat": "forca",
-            "value": 24
+            "stat": "armorFlat",
+            "value": 47
           }
         ],
         "enhanceLevel": 1,
         "isMaster": false,
         "cardIds": [
           "fornitus_card"
-        ]
-      },
-      {
-        "uid": 282,
-        "itemId": "vulkarion_weapon1_forca",
-        "rarityId": "incomum",
-        "baseStats": {
-          "forca": 36,
-          "danoFisicoFlat": 21
-        },
-        "additionalStats": [
-          {
-            "stat": "hpFlat",
-            "value": 40
-          },
-          {
-            "stat": "inteligencia",
-            "value": 36
-          }
-        ],
-        "enhanceLevel": 1,
-        "isMaster": false,
-        "cardIds": [
-          "musgorn_card"
         ]
       },
       {
@@ -335,7 +283,7 @@
         },
         "additionalStats": [
           {
-            "stat": "destreza",
+            "stat": "hpFlat",
             "value": 24
           },
           {
@@ -346,14 +294,38 @@
         "enhanceLevel": 0,
         "isMaster": false,
         "cardIds": [
-          null
+          "musgorn_card"
+        ]
+      },
+      {
+        "uid": 288,
+        "itemId": "vulkarion_weapon1_destreza",
+        "rarityId": "incomum",
+        "baseStats": {
+          "destreza": 36,
+          "danoPerfuracaoFlat": 20
+        },
+        "additionalStats": [
+          {
+            "stat": "forca",
+            "value": 36
+          },
+          {
+            "stat": "armorFlat",
+            "value": 25
+          }
+        ],
+        "enhanceLevel": 4,
+        "isMaster": false,
+        "cardIds": [
+          "musgorn_card"
         ]
       }
     ],
-    "nextUid": 285,
+    "nextUid": 290,
     "equipped": {
-      "weapon1": 282,
-      "weapon2": 264,
+      "weapon1": 288,
+      "weapon2": null,
       "head": 131,
       "chest": 123,
       "legs": 281,
@@ -364,8 +336,8 @@
       "necklace": 242
     },
     "upgrades": {},
-    "totalKills": 6425,
-    "lastSaveTime": 1788620559243,
+    "totalKills": 6481,
+    "lastSaveTime": 1788628585645,
     "transcendUnlocked": false,
     "transcendCount": 0,
     "awakeningShards": 0,
@@ -379,8 +351,8 @@
       "rank_master_items": 1
     },
     "lifetimeHunterLevel": 104,
-    "lifetimeTotalKills": 6425,
-    "lifetimeGoldEarned": 624320,
+    "lifetimeTotalKills": 6481,
+    "lifetimeGoldEarned": 664748,
     "lifetimeEggsHatched": 166,
     "lifetimeRankMasterCount": 16,
     "pvpHighestTierIndex": 0,
@@ -1132,8 +1104,8 @@
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJhNmM3NjgxMi00YWJmLTQ3NWMtYWMzOS0xZDIxNTY3ZjA3MTciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4NjI0MTU5LCJpYXQiOjE3ODg2MjA1NTksImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzMTJ9XSwic2Vzc2lvbl9pZCI6IjVjZDQyM2NkLTY4YzUtNDZkYS05MTgyLWQwZGY1NjJmYzQyYiIsImlzX2Fub255bW91cyI6dHJ1ZX0.DHXzHktgMdKwmCDJ-33XlNjp7pK7g362yXL6GI_2a9_pdVD6mg10zLVLPMTazuUQvNR0jRaMWso_7o3KOAUdMg",
-    "refresh_token": "xlbrcrivai6g"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJhNmM3NjgxMi00YWJmLTQ3NWMtYWMzOS0xZDIxNTY3ZjA3MTciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4NjMyMTg1LCJpYXQiOjE3ODg2Mjg1ODUsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzMTJ9XSwic2Vzc2lvbl9pZCI6IjVjZDQyM2NkLTY4YzUtNDZkYS05MTgyLWQwZGY1NjJmYzQyYiIsImlzX2Fub255bW91cyI6dHJ1ZX0.n_G74ncpMMhlqtocBkvPuGh5YGLZu_zHNVzE-5NotuVpeigHOCPxRY7WW8f0dcCdr05Fzhtcm6opQp07ZrxrvQ",
+    "refresh_token": "lv7fy7chw6ns"
   },
   "nickClaimed": true,
   "userId": "a6c76812-4abf-475c-ac39-1d21567f0717"
