@@ -2,9 +2,9 @@
   "index": 29,
   "name": "Hidan",
   "gameState": {
-    "gold": 101882,
-    "hunterLevel": 100,
-    "hunterXp": 240,
+    "gold": 145328,
+    "hunterLevel": 104,
+    "hunterXp": 188,
     "selectedMonsters": [
       {
         "zoneIndex": 5,
@@ -29,13 +29,13 @@
     ],
     "currentMonster": {
       "zoneIndex": 5,
-      "kind": "weak",
-      "monsterId": "thundrak"
+      "kind": "boss",
+      "monsterId": "vulkarion"
     },
-    "monsterHp": 68393,
+    "monsterHp": 77827,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 237,
+      "mystic_die": 227,
       "guardiao_druida_antler": 314,
       "sylkar_blade": 256,
       "chispim_heart": 943,
@@ -51,11 +51,16 @@
       "corcel_tempestade_horseshoe": 6,
       "plasmion_core": 112,
       "serpentorax_scale": 19,
-      "lavasalam_drop": 212,
-      "fornitus_core": 196,
-      "grommuk_fang": 426,
-      "emberimp_ember": 30,
-      "ember_warden_blade": 5
+      "lavasalam_drop": 216,
+      "fornitus_core": 200,
+      "grommuk_fang": 430,
+      "emberimp_ember": 34,
+      "ember_warden_blade": 9,
+      "thundrak_horn": 8,
+      "vulkarion_horn": 27,
+      "ecliptor_chain": 6,
+      "luxoris_branch": 11,
+      "minotauro_trovao_hammer": 1
     },
     "cards": {
       "tempestron_card": 0,
@@ -85,8 +90,8 @@
         },
         "additionalStats": [
           {
-            "stat": "danoMagicoFlat",
-            "value": 4
+            "stat": "goldPercent",
+            "value": 4.1
           },
           {
             "stat": "forca",
@@ -121,8 +126,8 @@
             "value": 48
           },
           {
-            "stat": "critDamagePercent",
-            "value": 8.3
+            "stat": "danoFisicoFlat",
+            "value": 31
           },
           {
             "stat": "destreza",
@@ -149,8 +154,8 @@
         },
         "additionalStats": [
           {
-            "stat": "danoMagicoFlat",
-            "value": 26
+            "stat": "dropPercent",
+            "value": 5.3
           },
           {
             "stat": "dodgePercent",
@@ -161,26 +166,6 @@
         "isMaster": false,
         "cardIds": [
           "lavasalam_card"
-        ]
-      },
-      {
-        "uid": 255,
-        "itemId": "grommuk_necklace_forca",
-        "rarityId": "comum",
-        "baseStats": {
-          "forca": 25,
-          "armorFlat": 11
-        },
-        "additionalStats": [
-          {
-            "stat": "goldPercent",
-            "value": 4.1
-          }
-        ],
-        "enhanceLevel": 1,
-        "isMaster": false,
-        "cardIds": [
-          null
         ]
       },
       {
@@ -205,42 +190,14 @@
             "value": 8.7
           },
           {
-            "stat": "danoFisicoFlat",
-            "value": 41
+            "stat": "petDamagePercent",
+            "value": 7.1
           }
         ],
         "enhanceLevel": 5,
         "isMaster": false,
         "cardIds": [
           "tempestron_card"
-        ]
-      },
-      {
-        "uid": 270,
-        "itemId": "grommuk_hands_destreza",
-        "rarityId": "raro",
-        "baseStats": {
-          "destreza": 20,
-          "hpFlat": 13
-        },
-        "additionalStats": [
-          {
-            "stat": "dropPercent",
-            "value": 4.4
-          },
-          {
-            "stat": "goldPercent",
-            "value": 5.4
-          },
-          {
-            "stat": "petDamagePercent",
-            "value": 9.9
-          }
-        ],
-        "enhanceLevel": 4,
-        "isMaster": false,
-        "cardIds": [
-          "verdanthra_card"
         ]
       },
       {
@@ -257,8 +214,8 @@
             "value": 39
           },
           {
-            "stat": "critDamagePercent",
-            "value": 10
+            "stat": "danoFisicoFlat",
+            "value": 43
           },
           {
             "stat": "hpFlat",
@@ -301,8 +258,8 @@
             "value": 42
           },
           {
-            "stat": "dropPercent",
-            "value": 13.3
+            "stat": "goldPercent",
+            "value": 16.8
           }
         ],
         "enhanceLevel": 5,
@@ -321,8 +278,8 @@
         },
         "additionalStats": [
           {
-            "stat": "danoFisicoFlat",
-            "value": 19
+            "stat": "petDamagePercent",
+            "value": 5.8
           }
         ],
         "enhanceLevel": 2,
@@ -330,24 +287,104 @@
         "cardIds": [
           null
         ]
+      },
+      {
+        "uid": 293,
+        "itemId": "vulkarion_weapon2_destreza",
+        "rarityId": "incomum",
+        "baseStats": {
+          "destreza": 36,
+          "danoPerfuracaoFlat": 20
+        },
+        "additionalStats": [
+          {
+            "stat": "petDamagePercent",
+            "value": 6.6
+          },
+          {
+            "stat": "hpFlat",
+            "value": 36
+          }
+        ],
+        "enhanceLevel": 0,
+        "isMaster": false,
+        "cardIds": [
+          "verdanthra_card"
+        ]
+      },
+      {
+        "uid": 294,
+        "itemId": "vulkarion_hands_inteligencia",
+        "rarityId": "raro",
+        "baseStats": {
+          "inteligencia": 24,
+          "hpFlat": 18
+        },
+        "additionalStats": [
+          {
+            "stat": "critDamagePercent",
+            "value": 10.1
+          },
+          {
+            "stat": "critChancePercent",
+            "value": 8.1
+          },
+          {
+            "stat": "dodgePercent",
+            "value": 7.6
+          }
+        ],
+        "enhanceLevel": 0,
+        "isMaster": false,
+        "cardIds": [
+          null
+        ]
+      },
+      {
+        "uid": 295,
+        "itemId": "vulkarion_necklace_forca",
+        "rarityId": "raro",
+        "baseStats": {
+          "forca": 30,
+          "armorFlat": 16
+        },
+        "additionalStats": [
+          {
+            "stat": "danoMagicoFlat",
+            "value": 37
+          },
+          {
+            "stat": "goldPercent",
+            "value": 12
+          },
+          {
+            "stat": "dodgePercent",
+            "value": 10.2
+          }
+        ],
+        "enhanceLevel": 1,
+        "isMaster": false,
+        "cardIds": [
+          null
+        ]
       }
     ],
-    "nextUid": 292,
+    "nextUid": 296,
     "equipped": {
       "weapon1": 263,
-      "weapon2": null,
+      "weapon2": 293,
       "head": 283,
       "chest": 186,
       "legs": 271,
-      "hands": 270,
+      "hands": 294,
       "boots": 230,
       "ring1": 291,
       "ring2": 13,
-      "necklace": 255
+      "necklace": 295
     },
     "upgrades": {},
-    "totalKills": 6144,
-    "lastSaveTime": 1788628683213,
+    "totalKills": 6200,
+    "lastSaveTime": 1788639446529,
     "transcendUnlocked": false,
     "transcendCount": 0,
     "awakeningShards": 0,
@@ -361,9 +398,9 @@
       "cards_collected": 1,
       "rank_master_items": 1
     },
-    "lifetimeHunterLevel": 100,
-    "lifetimeTotalKills": 6144,
-    "lifetimeGoldEarned": 590312,
+    "lifetimeHunterLevel": 104,
+    "lifetimeTotalKills": 6200,
+    "lifetimeGoldEarned": 626878,
     "lifetimeEggsHatched": 131,
     "lifetimeRankMasterCount": 16,
     "pvpHighestTierIndex": 0,
@@ -381,8 +418,8 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 10,
-    "expeditionReadyAt": 1788632987567,
+    "eventCurrency": 340,
+    "expeditionReadyAt": 1788668246530,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
@@ -963,7 +1000,7 @@
       4,
       5
     ],
-    "eggCount": 0,
+    "eggCount": 23,
     "petFragments": 850,
     "petHatchesSinceMythic": 18,
     "petHatchesSinceLegendary": 4,
@@ -1011,8 +1048,8 @@
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJlNTczNmEzMS0wOTlhLTRiZDktOTkxYy0xM2JiMjFjNGFkYjIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4NjMyMjgzLCJpYXQiOjE3ODg2Mjg2ODMsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzODh9XSwic2Vzc2lvbl9pZCI6IjM2NTc1MzQ4LWY2MDAtNDljMi05ZDVkLTVmZWM2N2ZiMTFlYyIsImlzX2Fub255bW91cyI6dHJ1ZX0.IHt2eD-0KuYoiL_J8k1YMhPI3lfs_jt1WYGIBBU_GAMyYBXOk8uEztjsuPK6CCsEsF19TdZ7rcKDhJjnZ_SlJw",
-    "refresh_token": "i4r4vb3wbi6t"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJlNTczNmEzMS0wOTlhLTRiZDktOTkxYy0xM2JiMjFjNGFkYjIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4NjQzMDQ2LCJpYXQiOjE3ODg2Mzk0NDYsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzODh9XSwic2Vzc2lvbl9pZCI6IjM2NTc1MzQ4LWY2MDAtNDljMi05ZDVkLTVmZWM2N2ZiMTFlYyIsImlzX2Fub255bW91cyI6dHJ1ZX0.dy2sqWjHVI6Jzj1F6pfgAothTKE7x3vI3luI0WM0Fmb8d-BdJRvSU40z7-CzGy0MFF-a6X56yJ6tyrfV7d88dw",
+    "refresh_token": "uyy6afx5cwah"
   },
   "nickClaimed": true,
   "userId": "e5736a31-099a-4bd9-991c-13bb21c4adb2"

@@ -2,9 +2,9 @@
   "index": 13,
   "name": "Choji Akimichi",
   "gameState": {
-    "gold": 390335,
-    "hunterLevel": 91,
-    "hunterXp": 190,
+    "gold": 460894,
+    "hunterLevel": 97,
+    "hunterXp": 104,
     "selectedMonsters": [
       {
         "zoneIndex": 4,
@@ -29,13 +29,13 @@
     ],
     "currentMonster": {
       "zoneIndex": 4,
-      "kind": "weak",
-      "monsterId": "lavasalam"
+      "kind": "boss",
+      "monsterId": "grommuk"
     },
-    "monsterHp": 15223,
+    "monsterHp": 20094,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 235,
+      "mystic_die": 225,
       "sylkar_blade": 400,
       "guardiao_druida_antler": 333,
       "chispim_heart": 956,
@@ -46,17 +46,17 @@
       "esqueleto_guerreiro_shield": 75,
       "garruk_pelt": 11,
       "mimicus_lock": 18,
-      "sabion_scepter": 65,
-      "colhedor_carmesim_scythe": 271,
-      "corcel_tempestade_horseshoe": 67,
-      "plasmion_core": 62,
-      "serpentorax_scale": 8,
+      "sabion_scepter": 66,
+      "colhedor_carmesim_scythe": 272,
+      "corcel_tempestade_horseshoe": 68,
+      "plasmion_core": 63,
+      "serpentorax_scale": 9,
       "card_fragment": 1500,
-      "lavasalam_drop": 38,
-      "grommuk_fang": 121,
-      "emberimp_ember": 5,
-      "fornitus_core": 17,
-      "ember_warden_blade": 2
+      "lavasalam_drop": 60,
+      "grommuk_fang": 178,
+      "emberimp_ember": 25,
+      "fornitus_core": 32,
+      "ember_warden_blade": 6
     },
     "cards": {
       "sylkar_card": 0,
@@ -88,8 +88,8 @@
             "value": 8.7
           },
           {
-            "stat": "danoFisicoFlat",
-            "value": 6
+            "stat": "dodgePercent",
+            "value": 7.2
           },
           {
             "stat": "armorFlat",
@@ -116,8 +116,8 @@
             "value": 6.6
           },
           {
-            "stat": "forca",
-            "value": 12
+            "stat": "petDamagePercent",
+            "value": 5
           },
           {
             "stat": "danoFisicoFlat",
@@ -144,8 +144,8 @@
         },
         "additionalStats": [
           {
-            "stat": "dpsPercent",
-            "value": 6.4
+            "stat": "critDamagePercent",
+            "value": 6.2
           },
           {
             "stat": "dodgePercent",
@@ -176,8 +176,8 @@
             "value": 11.4
           },
           {
-            "stat": "armorFlat",
-            "value": 21
+            "stat": "danoMagicoFlat",
+            "value": 20
           },
           {
             "stat": "attackSpeedPercent",
@@ -204,8 +204,8 @@
         },
         "additionalStats": [
           {
-            "stat": "danoPerfuracaoFlat",
-            "value": 32
+            "stat": "danoMagicoFlat",
+            "value": 27
           },
           {
             "stat": "lifestealFlat",
@@ -220,26 +220,6 @@
         "isMaster": false,
         "cardIds": [
           "sylkar_card"
-        ]
-      },
-      {
-        "uid": 192,
-        "itemId": "colhedor_carmesim_weapon2_forca",
-        "rarityId": "comum",
-        "baseStats": {
-          "forca": 24,
-          "danoFisicoFlat": 11
-        },
-        "additionalStats": [
-          {
-            "stat": "critDamagePercent",
-            "value": 4.7
-          }
-        ],
-        "enhanceLevel": 4,
-        "isMaster": false,
-        "cardIds": [
-          "musgorn_card"
         ]
       },
       {
@@ -264,8 +244,8 @@
             "value": 37
           },
           {
-            "stat": "petDamagePercent",
-            "value": 11.9
+            "stat": "danoFisicoFlat",
+            "value": 30
           }
         ],
         "enhanceLevel": 4,
@@ -288,8 +268,8 @@
             "value": 6.2
           },
           {
-            "stat": "dropPercent",
-            "value": 3.4
+            "stat": "dodgePercent",
+            "value": 4.5
           }
         ],
         "enhanceLevel": 2,
@@ -312,8 +292,8 @@
             "value": 32
           },
           {
-            "stat": "critDamagePercent",
-            "value": 8.7
+            "stat": "goldPercent",
+            "value": 8
           }
         ],
         "enhanceLevel": 3,
@@ -323,30 +303,50 @@
         ]
       },
       {
-        "uid": 209,
-        "itemId": "grommuk_necklace_destreza",
+        "uid": 215,
+        "itemId": "grommuk_weapon2_forca",
         "rarityId": "comum",
         "baseStats": {
-          "destreza": 25,
-          "armorFlat": 9
+          "forca": 30,
+          "danoFisicoFlat": 14
         },
         "additionalStats": [
           {
-            "stat": "danoPerfuracaoFlat",
-            "value": 21
+            "stat": "hpFlat",
+            "value": 29
           }
         ],
-        "enhanceLevel": 5,
+        "enhanceLevel": 4,
+        "isMaster": false,
+        "cardIds": [
+          "musgorn_card"
+        ]
+      },
+      {
+        "uid": 217,
+        "itemId": "grommuk_necklace_forca",
+        "rarityId": "comum",
+        "baseStats": {
+          "forca": 25,
+          "armorFlat": 10
+        },
+        "additionalStats": [
+          {
+            "stat": "critDamagePercent",
+            "value": 6.4
+          }
+        ],
+        "enhanceLevel": 1,
         "isMaster": false,
         "cardIds": [
           null
         ]
       }
     ],
-    "nextUid": 211,
+    "nextUid": 219,
     "equipped": {
       "weapon1": 183,
-      "weapon2": 192,
+      "weapon2": 215,
       "head": 173,
       "chest": 131,
       "legs": 166,
@@ -354,11 +354,11 @@
       "boots": 205,
       "ring1": 203,
       "ring2": 17,
-      "necklace": 209
+      "necklace": 217
     },
     "upgrades": {},
-    "totalKills": 5282,
-    "lastSaveTime": 1788628589256,
+    "totalKills": 5482,
+    "lastSaveTime": 1788639366247,
     "transcendUnlocked": false,
     "transcendCount": 0,
     "awakeningShards": 0,
@@ -370,9 +370,9 @@
       "eggs_hatched": 4,
       "gold_earned": 1
     },
-    "lifetimeHunterLevel": 91,
-    "lifetimeTotalKills": 5282,
-    "lifetimeGoldEarned": 371505,
+    "lifetimeHunterLevel": 97,
+    "lifetimeTotalKills": 5482,
+    "lifetimeGoldEarned": 426364,
     "lifetimeEggsHatched": 100,
     "lifetimeRankMasterCount": 7,
     "pvpHighestTierIndex": 0,
@@ -390,8 +390,8 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 200,
-    "expeditionReadyAt": 1788632903336,
+    "eventCurrency": 530,
+    "expeditionReadyAt": 1788668166248,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
@@ -867,7 +867,7 @@
       4,
       7
     ],
-    "eggCount": 0,
+    "eggCount": 54,
     "petFragments": 0,
     "petHatchesSinceMythic": 27,
     "petHatchesSinceLegendary": 18,
@@ -914,8 +914,8 @@
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIxNmYxNTE0NC01NjI2LTQxN2ItYmUwOS0wMjY0Nzg0ODg1ZmIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4NjMyMTg5LCJpYXQiOjE3ODg2Mjg1ODksImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzMTd9XSwic2Vzc2lvbl9pZCI6ImE3NjdhNjYzLTM4N2ItNDdmZC1iOTVjLWM0OWE1OTAyODIxMSIsImlzX2Fub255bW91cyI6dHJ1ZX0.v6_v5OQTXwHz4mI-DgWk9vl19vQnewLBVVCdfNDXmTF7_hZ8p9_HucAXuNLA5bQmghCCe9Z0mEozZ9icliegLw",
-    "refresh_token": "xfbwjyzmvvgy"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIxNmYxNTE0NC01NjI2LTQxN2ItYmUwOS0wMjY0Nzg0ODg1ZmIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4NjQyOTY2LCJpYXQiOjE3ODg2MzkzNjYsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzMTd9XSwic2Vzc2lvbl9pZCI6ImE3NjdhNjYzLTM4N2ItNDdmZC1iOTVjLWM0OWE1OTAyODIxMSIsImlzX2Fub255bW91cyI6dHJ1ZX0.-qX7tjril-lZoVMwY-V2FsaRO2-Z0FbvwrC3HPtQDMScS27Kf8B11EfV5kd1i4obg1sTr0zKDbBvI9xY4gG7jw",
+    "refresh_token": "67ynfspkltdu"
   },
   "nickClaimed": true,
   "userId": "16f15144-5626-417b-be09-0264784885fb"

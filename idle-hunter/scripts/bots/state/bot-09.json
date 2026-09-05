@@ -2,9 +2,9 @@
   "index": 9,
   "name": "Rock Lee",
   "gameState": {
-    "gold": 120195,
-    "hunterLevel": 102,
-    "hunterXp": 157,
+    "gold": 154138,
+    "hunterLevel": 105,
+    "hunterXp": 412,
     "selectedMonsters": [
       {
         "zoneIndex": 5,
@@ -29,13 +29,13 @@
     ],
     "currentMonster": {
       "zoneIndex": 5,
-      "kind": "boss",
-      "monsterId": "vulkarion"
+      "kind": "weak",
+      "monsterId": "luxoris"
     },
-    "monsterHp": 77827,
+    "monsterHp": 58959,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 233,
+      "mystic_die": 223,
       "chispim_heart": 944,
       "sylkar_blade": 280,
       "musgorn_hat": 382,
@@ -46,16 +46,16 @@
       "esqueleto_guerreiro_shield": 87,
       "tartarok_shell": 254,
       "mimicus_lock": 7,
-      "plasmion_core": 327,
-      "corcel_tempestade_horseshoe": 301,
-      "colhedor_carmesim_scythe": 773,
-      "sabion_scepter": 275,
-      "serpentorax_scale": 2,
-      "luxoris_branch": 26,
-      "vulkarion_horn": 59,
-      "thundrak_horn": 9,
-      "ecliptor_chain": 27,
-      "minotauro_trovao_hammer": 4
+      "plasmion_core": 328,
+      "corcel_tempestade_horseshoe": 302,
+      "colhedor_carmesim_scythe": 774,
+      "sabion_scepter": 276,
+      "serpentorax_scale": 3,
+      "luxoris_branch": 34,
+      "vulkarion_horn": 71,
+      "thundrak_horn": 8,
+      "ecliptor_chain": 33,
+      "minotauro_trovao_hammer": 6
     },
     "cards": {
       "chispim_card": 1,
@@ -85,7 +85,7 @@
             "value": 6.2
           },
           {
-            "stat": "armorFlat",
+            "stat": "hpFlat",
             "value": 5
           },
           {
@@ -121,8 +121,8 @@
             "value": 12
           },
           {
-            "stat": "critDamagePercent",
-            "value": 8.5
+            "stat": "danoFisicoFlat",
+            "value": 28
           },
           {
             "stat": "petDamagePercent",
@@ -161,8 +161,8 @@
             "value": 11.1
           },
           {
-            "stat": "hpFlat",
-            "value": 24
+            "stat": "destreza",
+            "value": 12
           }
         ],
         "enhanceLevel": 5,
@@ -185,8 +185,8 @@
             "value": 9.9
           },
           {
-            "stat": "dropPercent",
-            "value": 11.3
+            "stat": "forca",
+            "value": 12
           },
           {
             "stat": "armorFlat",
@@ -230,7 +230,7 @@
           },
           {
             "stat": "danoMagicoFlat",
-            "value": 21
+            "value": 17
           }
         ],
         "enhanceLevel": 0,
@@ -269,8 +269,8 @@
             "value": 7.2
           },
           {
-            "stat": "dodgePercent",
-            "value": 9.5
+            "stat": "petDamagePercent",
+            "value": 9.1
           }
         ],
         "enhanceLevel": 0,
@@ -301,34 +301,14 @@
             "value": 30
           },
           {
-            "stat": "danoPerfuracaoFlat",
-            "value": 31
+            "stat": "dropPercent",
+            "value": 7.7
           }
         ],
         "enhanceLevel": 1,
         "isMaster": false,
         "cardIds": [
           "chispim_card"
-        ]
-      },
-      {
-        "uid": 266,
-        "itemId": "colhedor_carmesim_ring_inteligencia",
-        "rarityId": "comum",
-        "baseStats": {
-          "inteligencia": 20,
-          "armorFlat": 7
-        },
-        "additionalStats": [
-          {
-            "stat": "danoMagicoFlat",
-            "value": 18
-          }
-        ],
-        "enhanceLevel": 2,
-        "isMaster": false,
-        "cardIds": [
-          null
         ]
       },
       {
@@ -361,8 +341,8 @@
             "value": 8.1
           },
           {
-            "stat": "dropPercent",
-            "value": 17.1
+            "stat": "armorFlat",
+            "value": 56
           }
         ],
         "enhanceLevel": 5,
@@ -381,8 +361,8 @@
         },
         "additionalStats": [
           {
-            "stat": "hpFlat",
-            "value": 38
+            "stat": "critDamagePercent",
+            "value": 4.2
           },
           {
             "stat": "destreza",
@@ -394,9 +374,29 @@
         "cardIds": [
           null
         ]
+      },
+      {
+        "uid": 272,
+        "itemId": "vulkarion_ring_destreza",
+        "rarityId": "comum",
+        "baseStats": {
+          "destreza": 30,
+          "armorFlat": 11
+        },
+        "additionalStats": [
+          {
+            "stat": "critDamagePercent",
+            "value": 6.6
+          }
+        ],
+        "enhanceLevel": 2,
+        "isMaster": false,
+        "cardIds": [
+          null
+        ]
       }
     ],
-    "nextUid": 271,
+    "nextUid": 274,
     "equipped": {
       "weapon1": 238,
       "weapon2": 186,
@@ -405,13 +405,13 @@
       "legs": 267,
       "hands": 189,
       "boots": 123,
-      "ring1": 266,
+      "ring1": 272,
       "ring2": 7,
       "necklace": 270
     },
     "upgrades": {},
-    "totalKills": 6430,
-    "lastSaveTime": 1788628559274,
+    "totalKills": 6470,
+    "lastSaveTime": 1788639333865,
     "transcendUnlocked": false,
     "transcendCount": 0,
     "awakeningShards": 0,
@@ -424,9 +424,9 @@
       "gold_earned": 1,
       "rank_master_items": 1
     },
-    "lifetimeHunterLevel": 102,
-    "lifetimeTotalKills": 6430,
-    "lifetimeGoldEarned": 612115,
+    "lifetimeHunterLevel": 105,
+    "lifetimeTotalKills": 6470,
+    "lifetimeGoldEarned": 639358,
     "lifetimeEggsHatched": 120,
     "lifetimeRankMasterCount": 15,
     "pvpHighestTierIndex": 0,
@@ -444,8 +444,8 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 90,
-    "expeditionReadyAt": 1788632880277,
+    "eventCurrency": 230,
+    "expeditionReadyAt": 1788668133865,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
@@ -991,7 +991,7 @@
       3,
       5
     ],
-    "eggCount": 0,
+    "eggCount": 54,
     "petFragments": 550,
     "petHatchesSinceMythic": 29,
     "petHatchesSinceLegendary": 5,
@@ -1039,8 +1039,8 @@
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2Yzg5MjIzOS05MTg0LTQ4OTAtODlmNC0yODMyNjJlZmE5ZWMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4NjMyMTU5LCJpYXQiOjE3ODg2Mjg1NTksImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUyOTN9XSwic2Vzc2lvbl9pZCI6IjM2ZjM3OTBjLTA5ZTMtNDk5Zi1hOTNlLTM2NjllNDMzMjA3NSIsImlzX2Fub255bW91cyI6dHJ1ZX0.NUzaCzRSO4O_SXwVWZ6elpelfFcrNXgFyh-VbM-mYUnki07kgxmSoZiEwKb9j6bl5NL0h0vDheKGoVgDWk01kw",
-    "refresh_token": "3icgmglddfc6"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2Yzg5MjIzOS05MTg0LTQ4OTAtODlmNC0yODMyNjJlZmE5ZWMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4NjQyOTMzLCJpYXQiOjE3ODg2MzkzMzMsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUyOTN9XSwic2Vzc2lvbl9pZCI6IjM2ZjM3OTBjLTA5ZTMtNDk5Zi1hOTNlLTM2NjllNDMzMjA3NSIsImlzX2Fub255bW91cyI6dHJ1ZX0._sDCp-KnzBPn4UlhPjfT3uYQ97C8dqIOdh75kjKIeSzh1scOArqeOk_JABK9VQxg8s5KFfQjvjfWYNocI3a2BA",
+    "refresh_token": "5cxkh4pb4hl3"
   },
   "nickClaimed": true,
   "userId": "6c892239-9184-4890-89f4-283262efa9ec"
