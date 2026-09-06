@@ -2,9 +2,9 @@
   "index": 23,
   "name": "Konan",
   "gameState": {
-    "gold": 333407,
-    "hunterLevel": 111,
-    "hunterXp": 328,
+    "gold": 485792,
+    "hunterLevel": 115,
+    "hunterXp": 528,
     "selectedMonsters": [
       {
         "zoneIndex": 5,
@@ -30,12 +30,12 @@
     "currentMonster": {
       "zoneIndex": 5,
       "kind": "weak",
-      "monsterId": "ecliptor"
+      "monsterId": "luxoris"
     },
-    "monsterHp": 63676,
+    "monsterHp": 58959,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 298,
+      "mystic_die": 289,
       "musgorn_hat": 357,
       "chispim_heart": 1063,
       "sylkar_blade": 325,
@@ -52,16 +52,16 @@
       "colhedor_carmesim_scythe": 455,
       "corcel_tempestade_horseshoe": 107,
       "serpentorax_scale": 11,
-      "fornitus_core": 44,
-      "lavasalam_drop": 8,
-      "grommuk_fang": 256,
-      "emberimp_ember": 9,
-      "ember_warden_blade": 7,
-      "ecliptor_chain": 4,
-      "vulkarion_horn": 125,
-      "luxoris_branch": 24,
-      "thundrak_horn": 19,
-      "minotauro_trovao_hammer": 1
+      "fornitus_core": 45,
+      "lavasalam_drop": 9,
+      "grommuk_fang": 257,
+      "emberimp_ember": 10,
+      "ember_warden_blade": 8,
+      "ecliptor_chain": 19,
+      "vulkarion_horn": 184,
+      "luxoris_branch": 49,
+      "thundrak_horn": 26,
+      "minotauro_trovao_hammer": 0
     },
     "cards": {
       "sylkar_card": 0,
@@ -89,8 +89,8 @@
         },
         "additionalStats": [
           {
-            "stat": "dodgePercent",
-            "value": 3
+            "stat": "petDamagePercent",
+            "value": 5.1
           }
         ],
         "enhanceLevel": 5,
@@ -109,8 +109,8 @@
         },
         "additionalStats": [
           {
-            "stat": "armorFlat",
-            "value": 39
+            "stat": "danoMagicoFlat",
+            "value": 28
           },
           {
             "stat": "danoPerfuracaoFlat",
@@ -128,26 +128,6 @@
         ]
       },
       {
-        "uid": 243,
-        "itemId": "grommuk_weapon1_inteligencia",
-        "rarityId": "comum",
-        "baseStats": {
-          "inteligencia": 30,
-          "danoMagicoFlat": 15
-        },
-        "additionalStats": [
-          {
-            "stat": "hpFlat",
-            "value": 19
-          }
-        ],
-        "enhanceLevel": 5,
-        "isMaster": false,
-        "cardIds": [
-          "sylkar_card"
-        ]
-      },
-      {
         "uid": 246,
         "itemId": "grommuk_hands_forca",
         "rarityId": "epico",
@@ -162,7 +142,7 @@
           },
           {
             "stat": "goldPercent",
-            "value": 10.9
+            "value": 11.6
           },
           {
             "stat": "critDamagePercent",
@@ -197,8 +177,8 @@
             "value": 48
           },
           {
-            "stat": "danoFisicoFlat",
-            "value": 44
+            "stat": "inteligencia",
+            "value": 24
           },
           {
             "stat": "critDamagePercent",
@@ -233,8 +213,8 @@
             "value": 35
           },
           {
-            "stat": "danoMagicoFlat",
-            "value": 34
+            "stat": "attackSpeedPercent",
+            "value": 10.6
           }
         ],
         "enhanceLevel": 5,
@@ -253,8 +233,8 @@
         },
         "additionalStats": [
           {
-            "stat": "dodgePercent",
-            "value": 5.2
+            "stat": "armorFlat",
+            "value": 29
           }
         ],
         "enhanceLevel": 3,
@@ -273,8 +253,8 @@
         },
         "additionalStats": [
           {
-            "stat": "inteligencia",
-            "value": 24
+            "stat": "dropPercent",
+            "value": 5.9
           }
         ],
         "enhanceLevel": 2,
@@ -284,17 +264,45 @@
         ]
       },
       {
-        "uid": 274,
-        "itemId": "vulkarion_ring_inteligencia",
-        "rarityId": "comum",
+        "uid": 281,
+        "itemId": "vulkarion_weapon1_forca",
+        "rarityId": "raro",
         "baseStats": {
-          "inteligencia": 30,
-          "armorFlat": 12
+          "forca": 36,
+          "danoFisicoFlat": 24
         },
         "additionalStats": [
           {
-            "stat": "critDamagePercent",
-            "value": 7.2
+            "stat": "hpPercent",
+            "value": 6.1
+          },
+          {
+            "stat": "goldPercent",
+            "value": 6.9
+          },
+          {
+            "stat": "danoFisicoFlat",
+            "value": 43
+          }
+        ],
+        "enhanceLevel": 5,
+        "isMaster": false,
+        "cardIds": [
+          "sylkar_card"
+        ]
+      },
+      {
+        "uid": 282,
+        "itemId": "vulkarion_ring_forca",
+        "rarityId": "comum",
+        "baseStats": {
+          "forca": 30,
+          "armorFlat": 13
+        },
+        "additionalStats": [
+          {
+            "stat": "dropPercent",
+            "value": 3.2
           }
         ],
         "enhanceLevel": 2,
@@ -304,22 +312,22 @@
         ]
       }
     ],
-    "nextUid": 277,
+    "nextUid": 283,
     "equipped": {
-      "weapon1": 243,
+      "weapon1": 281,
       "weapon2": null,
       "head": 260,
       "chest": 273,
       "legs": 238,
       "hands": 246,
       "boots": 269,
-      "ring1": 274,
+      "ring1": 282,
       "ring2": 20,
       "necklace": 262
     },
     "upgrades": {},
-    "totalKills": 6889,
-    "lastSaveTime": 1788691662103,
+    "totalKills": 7069,
+    "lastSaveTime": 1788708253335,
     "transcendUnlocked": false,
     "transcendCount": 0,
     "awakeningShards": 0,
@@ -333,9 +341,9 @@
       "rank_master_items": 1,
       "cards_collected": 1
     },
-    "lifetimeHunterLevel": 111,
-    "lifetimeTotalKills": 6889,
-    "lifetimeGoldEarned": 802287,
+    "lifetimeHunterLevel": 115,
+    "lifetimeTotalKills": 7069,
+    "lifetimeGoldEarned": 949172,
     "lifetimeEggsHatched": 208,
     "lifetimeRankMasterCount": 15,
     "pvpHighestTierIndex": 0,
@@ -353,8 +361,8 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 180,
-    "expeditionReadyAt": 1788697267163,
+    "eventCurrency": 320,
+    "expeditionReadyAt": 1788737053336,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
@@ -1089,7 +1097,7 @@
       5,
       8
     ],
-    "eggCount": 0,
+    "eggCount": 23,
     "petFragments": 1100,
     "petHatchesSinceMythic": 3,
     "petHatchesSinceLegendary": 1,
@@ -1133,8 +1141,8 @@
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3MTdmODZhZC0yNDA5LTQ5MzQtYWQxMC1mMGZjZGU1Y2Q3YTgiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4Njk1MjYyLCJpYXQiOjE3ODg2OTE2NjIsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzNjJ9XSwic2Vzc2lvbl9pZCI6ImE5NjI4M2ZlLTA5ZDctNGY3NC04NWVlLTA2NmMxMzE4N2QwZCIsImlzX2Fub255bW91cyI6dHJ1ZX0.6SWaxAV-mA6uLOifPPEd7nApGtshDfZncR3c4bn0KZ5uBsx0FmjoPkHLfib6QzEetpkkD2PDbpZZK3jueojO_g",
-    "refresh_token": "xel7oi3dl6d4"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3MTdmODZhZC0yNDA5LTQ5MzQtYWQxMC1mMGZjZGU1Y2Q3YTgiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4NzExODUzLCJpYXQiOjE3ODg3MDgyNTMsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzNjJ9XSwic2Vzc2lvbl9pZCI6ImE5NjI4M2ZlLTA5ZDctNGY3NC04NWVlLTA2NmMxMzE4N2QwZCIsImlzX2Fub255bW91cyI6dHJ1ZX0.y8PNkCShuJywaytmYcnwNiJDKMCY46-zJpG1vYbTghb06ZZGe45Lxxvy0rle5kaVEkhkvesE35dNwWsta2WmRA",
+    "refresh_token": "myfem7uy3nqv"
   },
   "nickClaimed": true,
   "userId": "717f86ad-2409-4934-ad10-f0fcde5cd7a8"
