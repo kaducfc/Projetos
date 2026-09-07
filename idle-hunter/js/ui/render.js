@@ -1,208 +1,346 @@
-import { isBossStage, BOSSES, WEAK_MONSTER_GROUPS, findMaterialInfo } from '../data/monsters.js';
-import { getSlot, getItemsForBoss, getItem, getEnhancedStats, getEnhanceLabel, ENHANCE_MAX_LEVEL } from '../data/items.js';
-import { UPGRADES } from '../data/upgrades.js';
+import { BOSSES, findMaterialInfo, ZONES } from '../data/monsters.js';
+import {
+  getSlot, getItem, getEnhanceLabel, getRarity, getAttribute, getCategoryLabel,
+  getAscensionCost, getDamageType, ENHANCE_MAX_LEVEL, enhancementMultiplier,
+  DROP_CATEGORIES, getItemInventoryCap, getWeaponArchetypeName, RARITIES,
+  GOD_MIN_LEVEL, GOD_BONUS_SLOTS, GOD_RARITY, ATTRIBUTES, godAttributeBaseValue,
+  MYSTIC_DIE_ID, MYSTIC_DIE_NAME, MYSTIC_DIE_EMOJI,
+} from '../data/items.js';
+import {
+  needsGodAttributeChoice, canRollGodBonus, isGodItemComplete, getGodAttribute,
+} from '../systems/godItems.js';
 import { getElement, elementDamageModifier, ELEMENT_RESISTANCE_PER_PIECE } from '../data/elements.js';
-import { formatNumber, formatPercent } from '../format.js';
-import { getEquippedEntry } from '../systems/equipment.js';
-import { canCraft, canEnhance, canUpgradeToMaster, canAttemptCardSlotUnlock, CARD_SLOT_UNLOCK_CHANCE } from '../systems/crafting.js';
-import { getUpgradeLevel, getUpgradeCost } from '../systems/upgrades.js';
-import { getEventWindow, getTradeWindow, TRADE_COST, TRADE_YIELD } from '../data/events.js';
-import { isEventClaimed, computeEventBossMaxHp } from '../systems/events.js';
-import { ACHIEVEMENTS } from '../data/achievements.js';
-import { isAchievementClaimed, isAchievementReady } from '../systems/achievements.js';
-import { CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, AD_WATCH_CASH_REWARD, eventShopItemsForBoss } from '../data/shop.js';
-import { canBuyCashItem, canBuyEventItem, adWatchCooldownRemaining } from '../systems/shop.js';
-import { CARDS, getCard } from '../data/cards.js';
+import { formatNumber, formatInteger, formatPercent, escapeHtml } from '../format.js';
+import { PROFILE_ICONS, NAME_CHANGE_COST, MAX_PLAYER_NAME_LENGTH, getProfileIcon } from '../data/profile.js';
+import {
+  getPlayerName, isFirstNameChangeFree, canAffordNameChange, getSelectedProfileIcon,
+  isProfileIconUnlocked, isSoundOn, isMusicOn,
+} from '../systems/profile.js';
+import { getLanguage, translateText, translateContainer } from '../i18n.js';
+import { getEquippedEntry, findEquippedSlotId, canEquipItem } from '../systems/equipment.js';
+import { computePlayerStats, TRANSCEND_HP_DPS_BONUS_PERCENT_PER_COUNT } from '../systems/stats.js';
+import { computeItemPower, computePetPower, computePlayerPower } from '../systems/power.js';
+import { canEnhance, canUpgradeToMaster, canAscendItem, ensureCardIds, countEquippedCardCopies } from '../systems/crafting.js';
+import { isZoneUnlocked, isBossUnlocked, xpToNextLevel, getTranscendXpBonusPercent, getExpeditionXpReward } from '../systems/leveling.js';
+import { EXPEDITION_TIERS, EXPEDITION_REWARDS } from '../data/events.js';
+import { canEnterExpedition, expeditionRemainingMs } from '../systems/expedition.js';
+import { ARENA_RANKS, getArenaRankForDamage, getArenaRankByIndex } from '../data/arena.js';
+import { canEnterArena, arenaRemainingMs } from '../systems/arena.js';
+import { ACHIEVEMENTS, ACHIEVEMENT_STAGE_CASH_REWARD } from '../data/achievements.js';
+import {
+  claimedStageCount, currentStageTarget, isAchievementStageReady, isAchievementFullyClaimed,
+} from '../systems/achievements.js';
+import {
+  CASH_SHOP_ITEMS, CASH_REAL_MONEY_PACKAGES, CASH_ONE_TIME_PURCHASES, AD_WATCH_CASH_REWARD,
+  DPS_BOOST_PERCENT, DPS_BOOST_MAX_DURATION_MS,
+  OFFLINE_BONUS_SECONDS_PER_STACK, OFFLINE_BONUS_MAX_STACKS,
+} from '../data/shop.js';
+import {
+  canBuyCashItem, adWatchCooldownRemaining,
+  getDpsBoostRemainingMs, canWatchDpsBoostAd, canWatchOfflineBonusAd,
+} from '../systems/shop.js';
+import { CHESTS, CHEST_ORDER, CHEST_DAILY_LIMIT } from '../data/chests.js';
+import { canBuyChest, getChestPurchasesToday } from '../systems/chests.js';
+import { getMaxOfflineSeconds } from '../systems/offline.js';
+import { AWAKENING_SHOP_ITEMS, AWAKENING_SHARD_NAME } from '../data/awakening.js';
+import { canTranscend, getTranscendCount, getAwakeningShards, canBuyAwakeningItem } from '../systems/awakening.js';
+import { PVP_MAX_ENTRIES, getPvpTierInfo } from '../data/pvpConfig.js';
+import {
+  projectPvpEntries, previewDailyArenaReward, previewWeeklyArenaReward,
+  msUntilNextDailyArenaReset, msUntilNextWeeklyArenaReset,
+} from '../systems/pvp.js';
+import { mailHasReward, mailIsFullyClaimed } from '../systems/mailbox.js';
+import { DAILY_MISSION_TYPES, getDailyMissionType } from '../data/dailyMissions.js';
+import { msUntilNextDailyMissionReset } from '../systems/dailyMissions.js';
+import {
+  CARDS, getCard, CARD_DISCOVERY_CASH_REWARD,
+  CARD_FRAGMENT_ID, CARD_FRAGMENT_NAME,
+  getCardRecycleValue, getCardCraftCost,
+} from '../data/cards.js';
+import {
+  isCardDiscovered, canClaimCardReward, isCardRewardClaimed,
+  canRecycleCard, canCraftCard,
+} from '../systems/cards.js';
+import {
+  getPetSpecies, getPetDamage, getPetRecycleValue, getPetElementColor, getPetDpsBonusPercent, PET_MAX_LEVEL,
+  getPetInventoryCap, PET_ELEMENTS, xpToNextPetLevel,
+} from '../data/pets.js';
+import {
+  getPetEntry, getFusePartners, MAX_EQUIPPED_PETS, canChooseRightPet, canHatchAllEggs, canEquipPet,
+  MYTHIC_PITY_THRESHOLD, LEGENDARY_PITY_THRESHOLD, canDonatePetFragments, petFragmentsToDonateNow, canRecyclePet,
+} from '../systems/pets.js';
+import { isVipActive } from '../state.js';
+import { getSkillTree, STAT_DISPLAY_NAME, SPECIAL_THRESHOLDS } from '../data/skills.js';
+import {
+  getTotalSkillPoints, getSpentSkillPoints, getAvailableSkillPoints, getSkillLevel,
+  isRowUnlocked, canBuySkillLevel, getChosenSpecialId, canBuySpecial, isStageUnlocked,
+} from '../systems/skills.js';
 
 /// Real art if the family has it, emoji fallback otherwise. Sizing is left
 /// to the caller: images are set to `width/height: 1em` in CSS so they scale
 /// with whatever font-size the surrounding `.icon`-ish element already has.
-function iconMarkup(image, emoji, alt) {
+export function iconMarkup(image, emoji, alt) {
   return image ? `<img src="${image}" alt="${alt || ''}">` : emoji;
+}
+
+// Real currency icons (see assets/ui/currency-*.png) used in place of the
+// 💰/🎫/💎 emoji anywhere a currency amount shows up — top bar, shop,
+// toasts, recipe/upgrade costs, achievement/ad rewards, etc. "Cash" is
+// user-facing "Esmeralda" now (see ESMERALDA_ICON), though the underlying
+// state field/variable names stay `cash` internally.
+export const GOLD_ICON = `<img class="currency-icon" src="assets/ui/currency-gold.png" alt="Ouro">`;
+export const EVENT_ICON = `<img class="currency-icon" src="assets/ui/currency-event.png" alt="Moeda de Evento">`;
+export const ESMERALDA_ICON = `<img class="currency-icon" src="assets/ui/currency-esmeralda.png" alt="Esmeralda">`;
+
+// Ícone genérico de Carta (qualquer menção a "carta" sem ser a arte
+// específica de um monstro — badge de contagem, título de seção, toast de
+// socket/unsocket, etc.) e de Fragmento de Carta (ver CARD_FRAGMENT_ID em
+// data/cards.js) — substituem os antigos emoji 🃏/🧩 em todo lugar.
+export const CARD_ICON = `<img class="currency-icon" src="assets/ui/cards/card_generic.png" alt="Carta">`;
+export const CARD_FRAGMENT_ICON = `<img class="currency-icon" src="assets/ui/cards/card_fragment.png" alt="Fragmento de Carta">`;
+
+// Sistema de Power (ver systems/power.js).
+export const POWER_ICON = `<img class="currency-icon" src="assets/ui/power/power.png" alt="Power">`;
+
+// Mesmo tratamento pro Ovo de Mascote (qualquer menção genérica a "ovo" —
+// contador, toast de drop, recompensa de evento/expedição/arena, etc.) e
+// pro Fragmento de Mascote (ver state.petFragments) — substituem os
+// antigos emoji 🥚/🧩 em todo lugar.
+export const EGG_ICON = `<img class="currency-icon" src="assets/ui/pets/egg_generic.png" alt="Ovo de Mascote">`;
+export const PET_FRAGMENT_ICON = `<img class="currency-icon" src="assets/ui/pets/egg_fragment.png" alt="Fragmento de Mascote">`;
+
+// Ícones das páginas dentro de "Outros" — substituem os emoji 🏟️/🏆/✉️/🌌/🎁
+// em títulos de seção, botões de ação e indicadores (arte nova pedida
+// pelo usuário, ver assets/ui/nav/*.png). AWAKENING_SHARD_ICON é só pra
+// carta/moeda "Fragmento do Despertar" (a cristal roxa); TRANSCEND_ICON é
+// pra aba/ação "Transcender" em si (a silhueta ascendendo) — são conceitos
+// diferentes mesmo reaproveitando o mesmo emoji 🌌 antes.
+export const ARENA_ICON = `<img class="currency-icon" src="assets/ui/nav/arena.png" alt="Arena">`;
+export const ACHIEVEMENT_ICON = `<img class="currency-icon" src="assets/ui/nav/conquistas.png" alt="Conquista">`;
+export const MAIL_ICON = `<img class="currency-icon" src="assets/ui/nav/correio.png" alt="Correio">`;
+export const RANK_ICON = `<img class="currency-icon" src="assets/ui/nav/rank.png" alt="Rank">`;
+export const TRANSCEND_ICON = `<img class="currency-icon" src="assets/ui/nav/transcender.png" alt="Transcender">`;
+export const AWAKENING_SHARD_ICON = `<img class="currency-icon" src="assets/ui/nav/fragmento_despertar.png" alt="Fragmento do Despertar">`;
+export const GIFT_ICON = `<img class="currency-icon" src="assets/ui/nav/presentes.png" alt="Presente">`;
+// Ícone da categoria "Nível" no rank de Nível de Caçador (substitui a
+// ⭐ só ali — a ⭐ de "pontos"/rating em outros lugares da Arena continua
+// a mesma) e o "ticket" de Entradas da Arena PvP (substitui 🎟️).
+export const RANK_LEVEL_ICON = `<img class="currency-icon" src="assets/ui/nav/nivel.png" alt="Nível">`;
+export const PVP_TICKET_ICON = `<img class="currency-icon" src="assets/ui/nav/ticket_pvp.png" alt="Entrada da Arena">`;
+// Ícone da página Missão Diária (substitui 📋 no nav — ver index.html —
+// e no toast de seleção — ver main.js). O ícone novo de Mascotes só é
+// usado no nav (index.html, markup estático), sem constante JS: nenhum
+// outro lugar do código usa um emoji representando "a página Mascotes"
+// em si — o 🐾 que aparece em outros lugares é nome de STAT ("Dano de
+// Mascote") ou emoji de item de drop, conceitos diferentes.
+export const DAILY_MISSION_ICON = `<img class="currency-icon" src="assets/ui/nav/missao_diaria.png" alt="Missão Diária">`;
+
+// Ícone do botão "Fundir Tudo" (substitui 🌟 só ali — o mascote
+// bulk-select-toggle-btn/data-fuse-all-btn — o 🌟 do botão "Fundir" de par
+// único e do rótulo do seletor de parceiro continuam os mesmos, conceito
+// visualmente ligado mas não é "a mesma ação" que esse ícone representa).
+export const MERGE_ALL_ICON = `<img class="currency-icon currency-icon-lg" src="assets/ui/nav/fundir_todos.png" alt="Fundir Tudo">`;
+// Ícone de "pontuação"/rating da Arena (substitui a ⭐ nesse uso específico
+// em todo lugar que aparece — status próprio, board, ranks, resultado de
+// batalha). A ⭐ de "Nível" no rank de Nível de Caçador já tinha sido
+// substituída antes por RANK_LEVEL_ICON (conceito diferente).
+export const RATING_ICON = `<img class="currency-icon currency-icon-lg" src="assets/ui/nav/pontos.png" alt="Pontuação">`;
+// Ícone universal de "Atualizar/Sincronizar/Resetar" (substitui 🔄 em TODO
+// lugar que usava o emoji de reload — botões de sincronizar Arena,
+// carregar Ranks, atualizar Correio, resetar pontos de habilidade, sortear
+// outra missão diária — é sempre o mesmo conceito de "atualizar/repetir").
+export const REFRESH_ICON = `<img class="currency-icon currency-icon-lg" src="assets/ui/nav/atualizar.png" alt="Atualizar">`;
+// Ícone do botão "Combate" da Arena (substitui ⚔️ só nesse botão
+// específico — data-pvp-open-combat — os outros usos de ⚔️ no jogo, como
+// vantagem elemental, "Atacar", título de modal, etc, continuam o emoji).
+export const COMBAT_ICON = `<img class="currency-icon currency-icon-lg" src="assets/ui/nav/combate.png" alt="Combate">`;
+// Selo de "mensagem já lida/recolhida" do Correio — mostrado só depois que
+// o jogador abre a mensagem (e recolhe os itens, se tiver); as mensagens
+// não lidas não têm nenhum ícone, só o título (ver renderMailboxTab).
+export const MAIL_READ_ICON = `<img class="currency-icon currency-icon-lg" src="assets/ui/nav/recebido.png" alt="Lida">`;
+// Ícone de "vitórias" da Arena (substitui 🏆 só nesse uso — contagem de
+// vitórias do jogador/linha, no status próprio, board e Ranks Arena — os
+// outros 🏆 do jogo, como o banner "Vitória!" de resultado de batalha ou o
+// botão de abrir Ranks, continuam o emoji).
+export const WINS_ICON = `<img class="currency-icon currency-icon-lg" src="assets/ui/nav/vitoria.png" alt="Vitórias">`;
+
+// ---------------------------------------------------------------
+// Banner oficial de página (ver assets/ui/banner.png) — pedido do
+// usuário pra substituir TODOS os banners antigos (tanto a arte
+// pré-pronta de titles/*.png quanto o ribbon CSS .section-banner) por
+// essa mesma imagem em toda página, com o TÍTULO desenhado por cima,
+// centralizado entre os 2 losangos grandes dourados. "Opção 4" escolhida
+// entre 5 propostas: fonte "Luckiest Guy" (cartoon grosso), branco com
+// contorno marrom. Sem ícone — só o texto, igual as artes antigas que já
+// vinham só com o nome escrito.
+//
+// O texto não tem tamanho fixo: títulos maiores ("MISSÃO DIÁRIA") e
+// menores ("ARENA") precisam ocupar visualmente o mesmo espaço entre os
+// losangos — ver fitBannerTitleEl/observers abaixo, que encolhem a fonte
+// pra cada título caber na faixa livre (17.3% a 82.7% da largura do
+// banner — medido a olho nos losangos da arte), com uma folga a mais
+// (PAGE_BANNER_FIT_RATIO) pra nunca encostar neles.
+export function pageBannerHtml(title) {
+  return `
+    <div class="page-banner">
+      <img src="assets/ui/banner.png" alt="">
+      <div class="page-banner-title-wrap"><span class="page-banner-title">${escapeHtml(title)}</span></div>
+    </div>`;
+}
+
+const PAGE_BANNER_MIN_FONT_PX = 10;
+const PAGE_BANNER_MAX_FONT_PX = 34;
+// Respiro dentro da faixa livre — sem isso, um título comprido
+// ("EQUIPAMENTOS") cresce até encostar bem nos losangos.
+const PAGE_BANNER_FIT_RATIO = 0.9;
+
+/// Busca binária pela maior fonte que ainda cabe (com folga) na faixa
+/// livre do banner (ver .page-banner-title-wrap no CSS).
+function fitBannerTitleEl(wrap) {
+  const el = wrap.querySelector('.page-banner-title');
+  const maxWidth = wrap.clientWidth * PAGE_BANNER_FIT_RATIO;
+  if (!el || maxWidth <= 0) return;
+  let lo = PAGE_BANNER_MIN_FONT_PX;
+  let hi = PAGE_BANNER_MAX_FONT_PX;
+  let best = lo;
+  for (let i = 0; i < 16; i++) {
+    const mid = (lo + hi) / 2;
+    el.style.fontSize = `${mid}px`;
+    if (el.scrollWidth <= maxWidth) { best = mid; lo = mid; } else { hi = mid; }
+  }
+  el.style.fontSize = `${best}px`;
+}
+
+// Auto-ajuste, sem precisar de um call site espalhado por todo canto que
+// pode desenhar um banner (toda troca de aba, todo refresh assíncrono de
+// Ranks/Correio/Missão Diária/Arena que substitui o innerHTML depois de
+// buscar dados do Supabase — muito fácil esquecer um desses). Cada
+// `.page-banner-title-wrap` que aparecer no DOM ganha seu próprio
+// ResizeObserver — reajusta sozinho assim que o tamanho de verdade
+// existir (aba escondida é display:none, vira visível só depois).
+const pageBannerResizeObserver = typeof ResizeObserver !== 'undefined'
+  ? new ResizeObserver((entries) => { for (const entry of entries) fitBannerTitleEl(entry.target); })
+  : null;
+const observedPageBannerWraps = new WeakSet();
+
+function ensurePageBannerWrapObserved(wrap) {
+  if (observedPageBannerWraps.has(wrap)) return;
+  observedPageBannerWraps.add(wrap);
+  if (pageBannerResizeObserver) pageBannerResizeObserver.observe(wrap);
+  fitBannerTitleEl(wrap);
+}
+
+if (typeof document !== 'undefined' && typeof MutationObserver !== 'undefined') {
+  new MutationObserver(() => {
+    document.querySelectorAll('.page-banner-title-wrap').forEach(ensurePageBannerWrapObserved);
+  }).observe(document.documentElement, { childList: true, subtree: true });
+
+  // A fonte "Luckiest Guy" carrega via rede (ver <link> em index.html) —
+  // se um título já tiver sido medido com a fonte de fallback antes dela
+  // chegar, o tamanho fica errado assim que ela troca (a troca de fonte
+  // não redimensiona o wrap, só o texto dentro — o ResizeObserver acima
+  // não percebe isso sozinho). Reajusta tudo de novo quando a fonte de
+  // verdade estiver pronta.
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(() => {
+      document.querySelectorAll('.page-banner-title-wrap').forEach(fitBannerTitleEl);
+    });
+  }
 }
 
 function elementBadgeHtml(elementId) {
   const el = getElement(elementId);
-  return `<span class="element-badge element-${el.id}">${el.emoji} ${el.name}</span>`;
+  return `<img class="element-badge-icon" src="${el.image}" alt="${el.name}" title="${el.name}">`;
 }
 
-const ELEMENT_COLORS = {
-  neutro: '#9a9ab0',
-  fogo: '#ff6a3d',
-  planta: '#4caf7d',
-  eletrico: '#f4e04d',
-  agua: '#5cc2ff',
+
+// Atributo base do item em si (ver data/items.js attributeBaseStats) — é a
+// linha de destaque no card do item, na cor própria do atributo (identifica
+// o "estilo" sozinho, sem precisar de uma linha separada de atributo/tipo
+// de dano). Reusado também pros atributos bônus 'attrOther' (ver
+// BONUS_STAT_LABEL abaixo), que dão um dos OUTROS dois atributos.
+const ATTRIBUTE_STAT_LABEL = {
+  forca: (v) => `<span style="color:${getAttribute('forca').color}; font-weight:800;">+${formatNumber(v)} Força</span>`,
+  destreza: (v) => `<span style="color:${getAttribute('destreza').color}; font-weight:800;">+${formatNumber(v)} Destreza</span>`,
+  inteligencia: (v) => `<span style="color:${getAttribute('inteligencia').color}; font-weight:800;">+${formatNumber(v)} Inteligência</span>`,
 };
 
-/// Everything the doll needs to know about one equipped slot: the element
-/// color (used for the tinted-shape fallback) and, when the family has real
-/// art, the image to overlay instead of that shape.
-function gearVisual(state, slotId) {
-  const eq = getEquippedEntry(state, slotId);
-  if (!eq) return null;
-  return {
-    color: ELEMENT_COLORS[eq.item.element] || ELEMENT_COLORS.neutro,
-    image: eq.item.image || null,
-    name: eq.item.name,
-  };
-}
-
-/// Layered paper doll: a generic cartoon guy in swim trunks (SVG), with each
-/// equipped piece drawn on top. Slots backed by real art (see
-/// assets/chispim/) get their actual sprite overlaid via <img>; slots
-/// without art fall back to a flat shape tinted by the item's element
-/// color, same as before. Pure presentation — reads equipped state, renders
-/// nothing interactive (clicks go to the slot icons around it).
-function characterSvg(visuals) {
-  const skin = '#f2c19b';
-  const skinShade = '#e0a87e';
-  const hair = '#4a3626';
-  const trunk = '#e2445c';
-  const blade = '#cfd6e4';
-
-  // Only render the tinted-shape fallback when there's no real image for
-  // that slot — otherwise the <img> overlay (see gearOverlaysHtml) covers it.
-  const helmet = visuals.helmet && !visuals.helmet.image ? visuals.helmet.color : null;
-  const chest = visuals.armor && !visuals.armor.image ? visuals.armor.color : null;
-  const pants = visuals.pants && !visuals.pants.image ? visuals.pants.color : null;
-  const gloves = visuals.gloves && !visuals.gloves.image ? visuals.gloves.color : null;
-  const boots = visuals.boots && !visuals.boots.image ? visuals.boots.color : null;
-  const weapon = visuals.weapon && !visuals.weapon.image ? visuals.weapon.color : null;
-
-  return `<svg viewBox="0 0 120 200" width="110" height="184" role="img" aria-label="Seu personagem">
-    <g stroke="#14141c" stroke-width="2" stroke-linejoin="round">
-      <!-- arms (behind torso) -->
-      <rect x="30" y="66" width="11" height="42" rx="5.5" fill="${skin}" />
-      <rect x="79" y="66" width="11" height="42" rx="5.5" fill="${skin}" />
-      <!-- legs + feet -->
-      <rect x="47" y="110" width="11" height="62" rx="5" fill="${skin}" />
-      <rect x="62" y="110" width="11" height="62" rx="5" fill="${skin}" />
-      <ellipse cx="51" cy="175" rx="9" ry="5" fill="${skinShade}" />
-      <ellipse cx="69" cy="175" rx="9" ry="5" fill="${skinShade}" />
-      <!-- torso -->
-      <rect x="42" y="60" width="36" height="54" rx="11" fill="${skin}" />
-      <!-- sunga (always on) -->
-      <path d="M42 97 h36 v9 q-8 9 -18 9 q-10 0 -18 -9 z" fill="${trunk}" />
-      <line x1="42" y1="99" x2="78" y2="99" stroke="#a32b42" />
-      ${pants ? `
-        <rect x="45" y="100" width="14" height="64" rx="6" fill="${pants}" />
-        <rect x="61" y="100" width="14" height="64" rx="6" fill="${pants}" />
-        <rect x="42" y="97" width="36" height="9" rx="3" fill="${pants}" />` : ''}
-      ${boots ? `
-        <rect x="44" y="154" width="14" height="18" rx="4" fill="${boots}" />
-        <rect x="62" y="154" width="14" height="18" rx="4" fill="${boots}" />
-        <ellipse cx="51" cy="175" rx="10" ry="5.5" fill="${boots}" />
-        <ellipse cx="69" cy="175" rx="10" ry="5.5" fill="${boots}" />` : ''}
-      ${chest ? `
-        <rect x="40" y="58" width="40" height="48" rx="10" fill="${chest}" />
-        <circle cx="40" cy="66" r="8" fill="${chest}" />
-        <circle cx="80" cy="66" r="8" fill="${chest}" />
-        <line x1="60" y1="64" x2="60" y2="100" stroke="#14141c" stroke-opacity="0.35" />` : ''}
-      <!-- head -->
-      <circle cx="60" cy="38" r="21" fill="${skin}" />
-      <path d="M39 36 a21 21 0 0 1 42 0 z" fill="${hair}" />
-      ${helmet ? `
-        <path d="M37 38 a23 23 0 0 1 46 0 z" fill="${helmet}" />
-        <rect x="35" y="36" width="50" height="7" rx="3.5" fill="${helmet}" />` : ''}
-      <!-- face (drawn after helmet so it never gets covered) -->
-      <circle cx="53" cy="42" r="2.4" fill="#222" stroke="none" />
-      <circle cx="67" cy="42" r="2.4" fill="#222" stroke="none" />
-      <path d="M53 50 q7 6 14 0" stroke="#222" fill="none" stroke-width="2" stroke-linecap="round" />
-      ${weapon ? `
-        <polygon points="84,104 91,56 97,61 90,106" fill="${blade}" />
-        <circle cx="87" cy="103" r="3.6" fill="${weapon}" />
-        <polygon points="36,104 29,56 23,61 30,106" fill="${blade}" />
-        <circle cx="33" cy="103" r="3.6" fill="${weapon}" />` : ''}
-      <!-- hands (over blade hilts so the grip reads as "holding") -->
-      <circle cx="35.5" cy="111" r="6" fill="${skin}" />
-      <circle cx="84.5" cy="111" r="6" fill="${skin}" />
-      ${gloves ? `
-        <circle cx="35.5" cy="111" r="7.5" fill="${gloves}" />
-        <rect x="29" y="100" width="13" height="7" rx="3" fill="${gloves}" />
-        <circle cx="84.5" cy="111" r="7.5" fill="${gloves}" />
-        <rect x="78" y="100" width="13" height="7" rx="3" fill="${gloves}" />` : ''}
-    </g>
-  </svg>`;
-}
-
-// Anchor point (center, as % of the 110×184 doll box) + width (as % of box
-// width) for each slot's real-art overlay. z-index controls draw order —
-// roughly back-to-front the way a person gets dressed, with the weapon
-// last so it reads as held in front of the hands.
-const GEAR_OVERLAY_ANCHORS = {
-  weapon: { left: 50, top: 57, width: 96, z: 6 },
-  pants: { left: 50, top: 68, width: 38, z: 2 },
-  boots: { left: 50, top: 90, width: 36, z: 3 },
-  armor: { left: 50, top: 46, width: 50, z: 4 },
-  helmet: { left: 50, top: 17, width: 46, z: 5 },
-  gloves: { left: 50, top: 55, width: 48, z: 7 },
-};
-
-function gearOverlaysHtml(visuals) {
-  return Object.entries(visuals)
-    .filter(([, v]) => v && v.image)
-    .map(([slotId, v]) => {
-      const a = GEAR_OVERLAY_ANCHORS[slotId];
-      return `<img class="gear-overlay" src="${v.image}" alt="${v.name}"
-        style="left:${a.left}%; top:${a.top}%; width:${a.width}%; z-index:${a.z};">`;
-    })
-    .join('');
-}
-
-/// Combines the base SVG doll with real-art overlays into the final markup
-/// for `.equip-character`.
-function characterVisual(state) {
-  const visuals = {
-    helmet: gearVisual(state, 'helmet'),
-    armor: gearVisual(state, 'armor'),
-    pants: gearVisual(state, 'pants'),
-    gloves: gearVisual(state, 'gloves'),
-    boots: gearVisual(state, 'boots'),
-    weapon: gearVisual(state, 'weapon'),
-  };
-  return `<div class="character-visual">${characterSvg(visuals)}${gearOverlaysHtml(visuals)}</div>`;
-}
-
-const STAT_LABELS = {
-  clickFlat: (v) => `+${formatNumber(v)} Dano de Clique`,
-  dpsFlat: (v) => `+${formatNumber(v)} DPS`,
-  clickPercent: (v) => `+${formatPercent(v)} Dano de Clique`,
+// Atributos bônus (ver rollAdditionalStats em data/items.js) — mostrados
+// abaixo do atributo base do item, cada um na sua própria linha (ver
+// itemDetailStatsHtml). Inclui 'attrSelf' (mesmo atributo do item, pode
+// repetir o mesmo valor da base) e 'attrOther' (um dos outros dois
+// atributos) — ambos usam as mesmas chaves forca/destreza/inteligencia de
+// ATTRIBUTE_STAT_LABEL, por isso o spread abaixo.
+const BONUS_STAT_LABEL = {
+  ...ATTRIBUTE_STAT_LABEL,
   dpsPercent: (v) => `+${formatPercent(v)} DPS`,
+  hpPercent: (v) => `+${formatPercent(v)} Vida`,
+  attackSpeedPercent: (v) => `+${formatPercent(v)} Velocidade de Ataque`,
+  critChancePercent: (v) => `+${formatPercent(v)} Chance Crítica`,
+  critDamagePercent: (v) => `+${formatPercent(v)} Dano Crítico`,
   goldPercent: (v) => `+${formatPercent(v)} Ouro`,
   dropPercent: (v) => `+${formatPercent(v)} Chance de Material`,
-  hpFlat: (v) => `+${formatNumber(v)} Vida`,
+  danoFisicoFlat: (v) => `+${formatNumber(v)} Dano Físico`,
+  danoMagicoFlat: (v) => `+${formatNumber(v)} Dano Mágico`,
+  danoPerfuracaoFlat: (v) => `+${formatNumber(v)} Dano de Perfuração`,
   armorFlat: (v) => `+${formatNumber(v)} Armadura`,
+  hpFlat: (v) => `+${formatNumber(v)} Vida`,
+  petDamagePercent: (v) => `+${formatPercent(v)} Dano do Mascote`,
+  dodgePercent: (v) => `+${formatPercent(v)} Esquiva`,
+  lifestealFlat: (v) => `+${formatNumber(v)} Cura por Golpe`,
 };
-
-function formatStatsLines(stats) {
-  return Object.entries(stats)
-    .map(([key, value]) => (STAT_LABELS[key] ? STAT_LABELS[key](value) : null))
-    .filter(Boolean);
-}
 
 export function renderTopBar(state) {
   document.getElementById('gold-value').textContent = formatNumber(state.gold);
   document.getElementById('cash-value').textContent = formatNumber(state.cash);
   document.getElementById('event-currency-value').textContent = formatNumber(state.eventCurrency);
-  document.getElementById('stage-value').textContent = state.maxStage;
+  document.getElementById('level-value').textContent = state.hunterLevel || 1;
+
+  const profileBtn = document.getElementById('profile-btn');
+  const profileIcon = getSelectedProfileIcon(state);
+  document.getElementById('profile-btn-icon').src = profileIcon.image;
+  profileBtn.title = translateText(`${getPlayerName(state)} — Perfil`);
+}
+
+/// Nível/XP do caçador — só libera zonas/chefes por enquanto (ver
+/// systems/leveling.js), mostrado como uma barra de progresso simples.
+/// Sem nível máximo — sobe indefinidamente (fica bem mais devagar a
+/// partir do 201, ver xpToNextLevel).
+export function renderHunterLevel(state) {
+  const level = state.hunterLevel || 1;
+  document.getElementById('hunter-level-label').textContent = translateText(`Nível de Caça ${level}`);
+  const xp = state.hunterXp || 0;
+  const next = xpToNextLevel(level);
+  const pct = next > 0 ? Math.max(0, Math.min(100, (xp / next) * 100)) : 0;
+  document.getElementById('hunter-xp-bar-fill').style.width = `${pct}%`;
+  document.getElementById('hunter-xp-bar-text').textContent = `${formatNumber(xp)} / ${formatNumber(next)}`;
 }
 
 export function renderCombatStats(stats, monster) {
-  document.getElementById('click-damage-value').textContent = formatNumber(stats.clickDamage);
+  document.getElementById('attack-speed-value').textContent = `${stats.attackSpeedPerSec.toFixed(2)}/s`;
+  const damageType = getDamageType(stats.activeDamageType);
+  document.getElementById('dps-label').textContent = translateText(`${damageType.emoji} DPS (${damageType.name})`);
   document.getElementById('dps-value').textContent = formatNumber(stats.dps);
   document.getElementById('armor-value').textContent = formatNumber(stats.armor);
+  document.getElementById('crit-chance-value').textContent = formatPercent(stats.critChance);
+  document.getElementById('crit-damage-value').textContent = formatPercent(stats.critDamage);
 
   const weaponEl = document.getElementById('weapon-element-value');
   weaponEl.innerHTML = elementBadgeHtml(stats.weaponElement);
+
+  if (monster) {
+    document.getElementById('enemy-dps-value').textContent = formatNumber(monster.dps);
+    document.getElementById('enemy-element-value').innerHTML = elementBadgeHtml(monster.element);
+  }
 
   const modEl = document.getElementById('element-matchup');
   if (monster) {
     const mod = elementDamageModifier(stats.weaponElement, monster.element);
     if (mod > 0) {
-      modEl.textContent = `⚔️ Vantagem elemental (+${Math.round(mod * 100)}%)`;
+      modEl.textContent = translateText(`⚔️ Vantagem elemental (+${Math.round(mod * 100)}%)`);
       modEl.className = 'advantage';
     } else if (mod < 0) {
-      modEl.textContent = `⚠️ Desvantagem elemental (${Math.round(mod * 100)}%)`;
+      modEl.textContent = translateText(`⚠️ Desvantagem elemental (${Math.round(mod * 100)}%)`);
       modEl.className = 'disadvantage';
     } else {
       modEl.textContent = '';
@@ -220,21 +358,138 @@ export function renderPlayerHp(current, max) {
   document.getElementById('player-hp-bar-text').textContent = `${formatNumber(hp)} / ${formatNumber(max)}`;
 }
 
-export function renderMonster(state, monster) {
-  const boss = isBossStage(state.stage);
-  document.getElementById('monster-sprite').innerHTML = iconMarkup(monster.image, monster.emoji, monster.name);
-  document.getElementById('monster-name').innerHTML =
-    `${monster.name}${boss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
-  document.getElementById('stage-label').textContent = `Estágio ${state.stage}`;
+// Idle-loop sprite animation (see monsters.js's `animFrames` on a boss/weak
+// entry). renderMonster() runs every game tick (100ms, see main.js's
+// tick()) — rebuilding the sprite's markup every single call would reset any
+// running animation right back to frame 0 before it ever visibly advanced.
+// So the sprite's innerHTML (and the frame-cycling interval) is only
+// (re)built when the monster identity actually changes; same-monster
+// re-renders leave the sprite element — and its animation — untouched.
+//
+// 150ms/frame, plain src swap (no crossfade) is the established standard
+// for every monster's idle animation, set once here and shared by all of
+// them — tuned and locked in on the Chispim reference (assets/chispim/anim/,
+// 4 frames). Don't tune this per-monster; if a future set of frames feels
+// off at this speed, the frames themselves (count/similarity) are the
+// thing to revisit, not this constant.
+const MONSTER_IDLE_FRAME_MS = 150;
+let currentMonsterSpriteKey = null;
+let monsterIdleAnimTimer = null;
 
-  const hp = Math.max(0, state.monsterHp ?? monster.maxHp);
+function stopMonsterIdleAnim() {
+  if (monsterIdleAnimTimer) {
+    clearInterval(monsterIdleAnimTimer);
+    monsterIdleAnimTimer = null;
+  }
+}
+
+function startMonsterIdleAnim(frames) {
+  stopMonsterIdleAnim();
+  if (!frames || frames.length < 2) return;
+  const img = document.querySelector('#monster-sprite img');
+  if (!img) return;
+  let i = 0;
+  monsterIdleAnimTimer = setInterval(() => {
+    i = (i + 1) % frames.length;
+    img.src = frames[i];
+  }, MONSTER_IDLE_FRAME_MS);
+}
+
+export function renderMonster(state, monster) {
+  if (!monster) return;
+
+  // Cada zona tem 1 cenário de fundo fixo (ver ZONES[].sceneImage em
+  // data/monsters.js) — fraco ou chefe da mesma zona mostram o mesmo fundo.
+  const zone = ZONES[monster.zoneIndex];
+  const monsterArea = document.getElementById('monster-area');
+  monsterArea.style.backgroundImage = zone?.sceneImage ? `url('${zone.sceneImage}')` : '';
+  monsterArea.style.backgroundPosition = '';
+
+  const spriteKey = monster.bossId || monster.weakMonsterId || monster.name;
+  if (spriteKey !== currentMonsterSpriteKey) {
+    currentMonsterSpriteKey = spriteKey;
+    const sprite = document.getElementById('monster-sprite');
+    const initialImage = (monster.animFrames && monster.animFrames[0]) || monster.image;
+    sprite.innerHTML = iconMarkup(initialImage, monster.emoji, monster.name);
+    startMonsterIdleAnim(monster.animFrames);
+    // Per-boss size boost (see monsters.js's `spriteScale`) via font-size
+    // — not transform:scale, which would fight the .hit CSS animation
+    // (also transform-based) every time it fires and snap back to 1x for
+    // the animation's 0.12s duration. Sizing off font-size composes
+    // cleanly since #monster-sprite img is already 1em/1em.
+    sprite.style.fontSize = monster.spriteScale && monster.spriteScale !== 1
+      ? `${92 * monster.spriteScale}px`
+      : '';
+  }
+  document.getElementById('monster-name').innerHTML =
+    `${monster.name}${monster.isBoss ? '<span class="boss-tag">CHEFE</span>' : ''} ${elementBadgeHtml(monster.element)}`;
+
+  // state.monsterHp só fica null enquanto esse `monster` é na verdade o
+  // último morto, ainda exibido durante a pausa de respawn (ver
+  // state.lastMonsterRef/main.js) — nesse caso a barra fica zerada, nunca
+  // cheia (um monstro vivo de verdade sempre tem monsterHp numérico, ver
+  // ensureMonsterSpawned em systems/combat.js).
+  const hp = Math.max(0, state.monsterHp ?? 0);
   const pct = Math.max(0, Math.min(100, (hp / monster.maxHp) * 100));
   document.getElementById('hp-bar-fill').style.width = `${pct}%`;
-  document.getElementById('hp-bar-text').textContent = `${formatNumber(hp)} / ${formatNumber(monster.maxHp)}`;
+  document.getElementById('enemy-hp-value').textContent = `${formatNumber(hp)} / ${formatNumber(monster.maxHp)}`;
+}
 
-  document.getElementById('stage-prev').disabled = state.stage <= 1;
-  document.getElementById('stage-next').disabled = state.stage >= state.maxStage;
-  document.getElementById('stage-max').disabled = state.stage >= state.maxStage;
+/// Nenhum monstro selecionado ainda (ex: save novo com selectedMonsters
+/// esvaziado manualmente) — mostra um convite pra abrir a seleção em vez de
+/// uma tela de combate quebrada.
+export function renderNoMonsterSelected() {
+  document.getElementById('monster-name').textContent = '';
+  document.getElementById('hp-bar-fill').style.width = '0%';
+  document.getElementById('enemy-hp-value').textContent = '—';
+  const sprite = document.getElementById('monster-sprite');
+  currentMonsterSpriteKey = null;
+  stopMonsterIdleAnim();
+  sprite.innerHTML = '❓';
+  sprite.style.fontSize = '';
+}
+
+// ---------------------------------------------------------------
+// Seleção de monstros (estilo IdleArc): até 4, de qualquer zona liberada,
+// escolhidos pelo jogador — só esses aparecem sorteados na Caça (ver
+// systems/combat.js ensureMonsterSpawned/setSelectedMonsters). pendingSelection
+// é o estado de edição (main.js), só vira state.selectedMonsters de fato ao
+// confirmar.
+// ---------------------------------------------------------------
+function monsterChipHtml(zoneIndex, kind, monsterId, name, emoji, image, pendingSelection) {
+  const selected = pendingSelection.some((m) => m.zoneIndex === zoneIndex && m.kind === kind && m.monsterId === monsterId);
+  return `<button class="monster-select-chip ${selected ? 'selected' : ''} ${kind === 'boss' ? 'boss-chip' : ''}"
+    data-select-monster-zone="${zoneIndex}" data-select-monster-kind="${kind}" data-select-monster-id="${monsterId}">
+    <span class="icon">${iconMarkup(image, emoji, name)}</span> ${name}
+  </button>`;
+}
+
+function monsterSelectZoneHtml(state, zone, pendingSelection) {
+  if (!isZoneUnlocked(state, zone.index)) {
+    return `<div class="monster-select-zone locked">
+      <div class="monster-select-zone-title">🔒 ${zone.name} <span class="zone-req">(nível ${zone.zoneUnlockLevel})</span></div>
+    </div>`;
+  }
+  const weakChips = zone.weakMonsters.map((m) => monsterChipHtml(zone.index, 'weak', m.id, m.name, m.emoji, m.image, pendingSelection)).join('');
+  const bossChip = isBossUnlocked(state, zone.index)
+    ? monsterChipHtml(zone.index, 'boss', zone.boss.id, zone.boss.name, zone.boss.emoji, zone.boss.image, pendingSelection)
+    : `<button class="monster-select-chip locked" disabled title="Nível ${zone.bossUnlockLevel} necessário">🔒 ${zone.boss.name}</button>`;
+  return `<div class="monster-select-zone">
+    <div class="monster-select-zone-title">${zone.name}</div>
+    <div class="monster-select-chips">${weakChips}${bossChip}</div>
+  </div>`;
+}
+
+export function showMonsterSelectModal(state, pendingSelection) {
+  const zonesHtml = ZONES.map((zone) => monsterSelectZoneHtml(state, zone, pendingSelection)).join('');
+  showModal('Selecionar Monstros', `
+    <p style="font-size:12px;color:var(--text-dim);">Escolha até 4 monstros de qualquer zona liberada — um deles é sorteado aleatoriamente a cada caçada.</p>
+    <div class="monster-select-count">Selecionados: <strong>${pendingSelection.length}/4</strong></div>
+    <div class="monster-select-list">${zonesHtml}</div>
+    <div class="modal-action-row">
+      <button class="modal-action-btn" data-confirm-monster-selection>Confirmar</button>
+    </div>
+  `);
 }
 
 /// remainingMs === null hides the timer (not fighting an unconquered boss).
@@ -247,89 +502,397 @@ export function renderBossTimer(remainingMs) {
   const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
   el.classList.remove('hidden');
   el.classList.toggle('urgent', seconds <= 10);
-  el.textContent = `⏱ ${seconds}s para derrotar o chefe!`;
+  el.textContent = `⏱ ${seconds}s`;
 }
 
-// Left/right split of the 6 slots around the character avatar (see the
-// reference layout: weapon + upper-body gear on one side, the rest on the
-// other). Purely cosmetic grouping — any slot can go in either side.
-const LEFT_SLOT_IDS = ['helmet', 'armor', 'weapon'];
-const RIGHT_SLOT_IDS = ['pants', 'gloves', 'boots'];
+// Inventário (paper-doll + owned items) e Forja (craft recipes +
+// Materiais) are separate bottom-nav tabs — previously sub-tabs of one
+// combined "Equipamento" tab, split apart per the mockups' bottom-nav
+// layout (Inventário, Forja, Caçada, Aprimoramento, Cartas, Loja).
+// Interactive elements in each are handled by their own delegated listener
+// wired once in main.js's init() (wireInventoryTabEvents()/
+// wireForgeTabEvents()), since these tabs re-render often (every kill) and
+// per-render re-wiring is exactly the bug class that bit this project
+// twice before.
+/// bulkSelect (opcional) é { active, selectedUids: Set<number>, confirming }
+/// — ver seleção em massa (segurar um item por 1s) em main.js
+/// wireInventoryTabEvents(). null/omitido = fora do modo de seleção,
+/// comportamento normal (clique abre o detalhe do item).
+/// sortByTier (opcional): null = ordem natural (drop mais recente por
+/// último); 'desc'/'asc' = ordenado por Tier (item.zoneIndex + 1, ver
+/// tierBadge em inventoryTileHtml) do maior pro menor ou vice-versa — ver
+/// botão de seta em equip-inventory-header-row abaixo e
+/// toggleInventoryTierSort em main.js.
+export function renderInventoryTab(state, filterCategory = null, bulkSelect = null, sortByTier = null) {
+  const container = document.getElementById('tab-inventory');
+  const banner = pageBannerHtml('Equipamentos');
+  container.innerHTML = banner + equipRingContentHtml(state, filterCategory, bulkSelect, sortByTier);
+  translateContainer(container);
+}
 
-// The Equipment tab now also houses Forja and Materiais as sub-tabs (they
-// used to be top-level tabs) — one less thing competing for space in the
-// tab-nav, and thematically all three are "stuff about your gear" anyway.
-// `activeSubTab` is owned by main.js (transient UI state, not part of the
-// save), same pattern as Shop's Cash/Event split. All interactive elements
-// here (subtab buttons, equip slots/inventory tiles, craft buttons) are
-// handled by ONE delegated listener on #tab-equipment wired once in
-// main.js's init() — see wireEquipmentTabEvents() — since this tab
-// re-renders very often (every kill) and per-render re-wiring is exactly
-// the bug class that bit this project twice before.
-const EQUIP_SUBTABS = [
-  { id: 'equip', label: '🎽 Equipar' },
-  { id: 'forge', label: '🔨 Forjar' },
-  { id: 'materials', label: '🎒 Materiais' },
-  { id: 'cards', label: '🃏 Cartas' },
-];
+function bulkSelectToolbarHtml(bulkSelect) {
+  if (!bulkSelect?.active) return '';
+  const count = bulkSelect.selectedUids.size;
+  const plural = count === 1 ? 'item' : 'itens';
+  if (bulkSelect.confirming) {
+    return `
+      <div class="bulk-select-toolbar">
+        <span>Destruir ${count} ${plural} selecionado${count === 1 ? '' : 's'}?</span>
+        <div class="modal-action-row">
+          <button class="modal-action-btn destroy-btn" data-bulk-confirm-destroy>Confirmar destruição</button>
+          <button class="modal-action-btn" data-bulk-cancel-confirm>Cancelar</button>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="bulk-select-toolbar">
+      <span>${count} ${plural} selecionado${count === 1 ? '' : 's'}</span>
+      <div class="modal-action-row">
+        <button class="modal-action-btn" data-bulk-select-all>Selecionar Todos</button>
+        <button class="modal-action-btn destroy-btn" data-bulk-destroy-selected ${count < 1 ? 'disabled' : ''}>Destruir selecionados</button>
+        <button class="modal-action-btn" data-bulk-exit-select>Sair da seleção</button>
+      </div>
+    </div>
+  `;
+}
 
-export function renderEquipmentTab(state, activeSubTab = 'equip', expandedForgeBosses = new Set()) {
-  const container = document.getElementById('tab-equipment');
-  const subnav = `<div class="inner-subnav">${EQUIP_SUBTABS.map((t) => `
-    <button class="inner-subtab-btn ${activeSubTab === t.id ? 'active' : ''}" data-equip-subtab="${t.id}">${t.label}</button>
+function categoryFilterRowHtml(filterCategory) {
+  const chips = [{ id: null, emoji: '📦', name: 'Todos' }, ...DROP_CATEGORIES.map((category) => ({ id: category, ...getCategoryLabel(category) }))];
+  return `<div class="element-filter-row">${chips.map((c) => `
+    <button class="element-filter-btn ${filterCategory === c.id ? 'active' : ''}" data-filter-category="${c.id ?? ''}" title="${c.name}">${iconMarkup(c.image, c.emoji, c.name)}</button>
   `).join('')}</div>`;
-
-  let body;
-  if (activeSubTab === 'forge') body = forgeContentHtml(state, expandedForgeBosses);
-  else if (activeSubTab === 'materials') body = materialsContentHtml(state);
-  else if (activeSubTab === 'cards') body = cardsContentHtml(state);
-  else body = equipRingContentHtml(state);
-
-  container.innerHTML = subnav + body;
 }
 
-function equipRingContentHtml(state) {
-  const leftSlots = LEFT_SLOT_IDS.map(getSlot);
-  const rightSlots = RIGHT_SLOT_IDS.map(getSlot);
+// Paper-doll: a square card with the character art as its background and
+// the 10 equip slots overlaid on top of it in 2 columns of 5 — armas +
+// cabeça/peito no lado esquerdo, calça/mãos/botas/anéis/colar no direito.
+const PAPERDOLL_LEFT = ['head', 'chest', 'hands', 'legs', 'boots'];
+const PAPERDOLL_RIGHT = ['weapon1', 'weapon2', 'ring1', 'necklace', 'ring2'];
+const PLAYER_PORTRAIT_IMAGE = 'assets/ui/hero-portrait.png';
 
-  const inventoryHtml = state.inventory.length
-    ? state.inventory.map((entry) => inventoryTileHtml(state, entry)).join('')
-    : `<p class="empty-slot">Nada craftado ainda. Vá até a aba Forjar.</p>`;
+// Row centers as % of the stats-frame.png height, measured against its
+// baked-in divider lines (banner "ESTATÍSTICAS" + 6 rows on a parchment
+// scroll) so each stat sits right above its line in the artwork. Os totais
+// de Força/Destreza/Inteligência ficam FORA desse frame (ver
+// attributeTotalsHtml) — a arte do frame já tem só 6 linhas desenhadas, não
+// dá pra espremer mais 3 sem ficar torto.
+const STATS_ROW_POSITIONS = [18.2, 30.8, 42.9, 55.0, 67.1, 79.2];
+
+function equipStatsBoxHtml(state) {
+  const stats = computePlayerStats(state);
+  const damageType = getDamageType(stats.activeDamageType);
+  const rows = [
+    ['⚡ Velocidade de Ataque', `${stats.attackSpeedPerSec.toFixed(2)}/s`],
+    [`${damageType.emoji} DPS (${damageType.name})`, formatNumber(stats.dps)],
+    ['🛡️ Armadura', formatNumber(stats.armor)],
+    ['🎯 Taxa de Crítico', formatPercent(stats.critChance)],
+    ['💢 Dano Crítico', formatPercent(stats.critDamage)],
+    ['❤️ Vida Máxima', formatNumber(stats.maxHp)],
+  ];
+  const rowsHtml = rows
+    .map(
+      ([label, value], i) => `
+        <div class="stats-frame-row" style="top: ${STATS_ROW_POSITIONS[i]}%">
+          <span>${label}</span><strong>${value}</strong>
+        </div>`
+    )
+    .join('');
+  return `
+    <div class="equip-stats-box" style="background-image: url('assets/ui/stats-frame.png')">
+      ${rowsHtml}
+    </div>
+  `;
+}
+
+/// Totais de Força/Destreza/Inteligência somados do equipamento atual — ver
+/// systems/stats.js (forcaTotal/destrezaTotal/inteligenciaTotal). Cada peça
+/// já converte seu atributo direto em stats reais (vida/armadura/dps/
+/// velocidade/crítico, ver equipStatsBoxHtml acima); esses números aqui só
+/// mostram quanto de cada atributo o build atual está priorizando.
+function attributeTotalsHtml(state) {
+  const stats = computePlayerStats(state);
+  const attrs = [
+    ['forca', '💪', stats.forca],
+    ['destreza', '🏃', stats.destreza],
+    ['inteligencia', '🧠', stats.inteligencia],
+  ];
+  return `<div class="attribute-totals-row">${attrs.map(([id, emoji, value]) => {
+    const attr = getAttribute(id);
+    return `<span class="attribute-total" style="color:${attr.color};">${emoji} ${attr.name}: <strong>${formatNumber(value)}</strong></span>`;
+  }).join('')}</div>`;
+}
+
+function fullStatsRowHtml(label, value) {
+  return `<div class="full-stats-row"><span>${label}</span><strong>${value}</strong></div>`;
+}
+
+function fullStatsSectionHtml(title, rows) {
+  if (!rows.length) return '';
+  return `
+    <div class="full-stats-section">
+      <div class="full-stats-section-title">${title}</div>
+      ${rows.map(([label, value]) => fullStatsRowHtml(label, value)).join('')}
+    </div>
+  `;
+}
+
+/// Janela "Ver Estatísticas" (botão abaixo do quadro compacto de 6 linhas,
+/// ver equipStatsBoxHtml acima) — TODO atributo que computePlayerStats()
+/// calcula, sem exceção, agrupado por categoria e sempre recalculado na
+/// hora (nada fica desatualizado, já que só lê o state atual). Golpe Duplo
+/// (doubleHitChance) só aparece quando alguma carta socketada de fato o
+/// concede (0 = nenhuma carta com esse efeito equipada) — mostrar "0%" pra
+/// todo mundo só poluiria a lista.
+export function showFullStatsModal(state) {
+  const stats = computePlayerStats(state);
+  const damageType = getDamageType(stats.activeDamageType);
+
+  const combatRows = [
+    [`${damageType.emoji} DPS (${damageType.name})`, formatNumber(stats.dps)],
+    ['⚡ Velocidade de Ataque', `${stats.attackSpeedPerSec.toFixed(2)}/s`],
+    ['❤️ Vida Máxima', formatNumber(stats.maxHp)],
+    ['🛡️ Armadura', formatNumber(stats.armor)],
+    ['🎯 Chance Crítica', formatPercent(stats.critChance)],
+    ['💢 Dano Crítico', formatPercent(stats.critDamage)],
+    ['🌀 Esquiva', formatPercent(stats.dodgeChance)],
+    ['🔱 Reflete', formatPercent(stats.reflectChance)],
+    ['💚 Cura por Golpe', formatNumber(stats.lifesteal)],
+    ['🌈 Elemento de Ataque', elementBadgeHtml(stats.weaponElement)],
+  ];
+
+  const damageRows = [
+    [`🗡️ Dano Físico${stats.activeDamageType === 'fisico' ? ' (ativo)' : ''}`, formatNumber(stats.danoFisico)],
+    [`🏹 Dano de Perfuração${stats.activeDamageType === 'perfuracao' ? ' (ativo)' : ''}`, formatNumber(stats.danoPerfuracao)],
+    [`🔮 Dano Mágico${stats.activeDamageType === 'magico' ? ' (ativo)' : ''}`, formatNumber(stats.danoMagico)],
+  ];
+
+  const economyRows = [
+    ['💰 Ouro', `+${formatPercent((stats.goldMult - 1) * 100)}`],
+    ['📦 Chance de Material', `+${formatPercent((stats.dropMult - 1) * 100)}`],
+    ['🐾 Dano do Mascote', `+${formatPercent((stats.petDamageMult - 1) * 100)}`],
+  ];
+
+  const attributeRows = [
+    [`💪 ${getAttribute('forca').name}`, formatNumber(stats.forca)],
+    [`🏃 ${getAttribute('destreza').name}`, formatNumber(stats.destreza)],
+    [`🧠 ${getAttribute('inteligencia').name}`, formatNumber(stats.inteligencia)],
+  ];
+
+  const specialRows = [];
+  if (stats.doubleHitChance > 0) specialRows.push(['👊 Golpe Duplo', formatPercent(stats.doubleHitChance)]);
+
+  const progressRows = [
+    [`${TRANSCEND_ICON} Vezes Transcendido`, formatNumber(getTranscendCount(state))],
+    [`${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME}`, formatNumber(getAwakeningShards(state))],
+  ];
+
+  showModal('📊 Estatísticas Completas', `
+    ${fullStatsSectionHtml('Combate', combatRows)}
+    ${fullStatsSectionHtml('Dano por Tipo', damageRows)}
+    ${fullStatsSectionHtml('Economia', economyRows)}
+    ${fullStatsSectionHtml('Atributos', attributeRows)}
+    ${fullStatsSectionHtml('Especiais de Carta', specialRows)}
+    ${fullStatsSectionHtml('Transcendência', progressRows)}
+  `);
+}
+
+function equipRingContentHtml(state, filterCategory = null, bulkSelect = null, sortByTier = null) {
+  let filtered = filterCategory
+    ? state.inventory.filter((entry) => getItem(entry.itemId)?.category === filterCategory)
+    : state.inventory;
+  if (sortByTier) {
+    filtered = [...filtered].sort((a, b) => {
+      const tierA = getItem(a.itemId)?.zoneIndex ?? -1;
+      const tierB = getItem(b.itemId)?.zoneIndex ?? -1;
+      return sortByTier === 'desc' ? tierB - tierA : tierA - tierB;
+    });
+  }
+  const inventoryHtml = filtered.length
+    ? filtered.map((entry) => inventoryTileHtml(state, entry, bulkSelect)).join('')
+    : state.inventory.length
+      ? `<p class="empty-slot">Nenhum item desse tipo.</p>`
+      : `<p class="empty-slot">Nenhum item ainda. Derrote monstros na Caça para conseguir equipamentos.</p>`;
+
+  const portraitStyle = PLAYER_PORTRAIT_IMAGE ? `style="background-image: url('${PLAYER_PORTRAIT_IMAGE}')"` : '';
 
   return `
     <div class="equip-screen">
-      <div class="equip-ring">
-        <div class="equip-side">${leftSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
-        <div class="equip-character">${characterVisual(state)}</div>
-        <div class="equip-side">${rightSlots.map((s) => slotIconHtml(state, s)).join('')}</div>
+      <div class="equip-top-row">
+        <div class="paperdoll-card" ${portraitStyle}>
+          ${PLAYER_PORTRAIT_IMAGE ? '' : '<div class="paperdoll-placeholder">🧑‍🚀</div>'}
+          <div class="paperdoll-overlay-col paperdoll-overlay-left">${PAPERDOLL_LEFT.map((id) => slotIconHtml(state, getSlot(id))).join('')}</div>
+          <div class="paperdoll-overlay-col paperdoll-overlay-right">${PAPERDOLL_RIGHT.map((id) => slotIconHtml(state, getSlot(id))).join('')}</div>
+        </div>
+        ${equipStatsBoxHtml(state)}
       </div>
-      <div class="equip-inventory-header">Inventário</div>
+      <div class="player-power-row">${POWER_ICON} Power: <strong class="power-total-value">${formatInteger(computePlayerPower(state))}</strong></div>
+      <div class="view-full-stats-row">
+        <button class="view-full-stats-btn" data-view-full-stats>Ver Estatísticas</button>
+      </div>
+      ${attributeTotalsHtml(state)}
+      <div class="equip-inventory-header-row">
+        <div class="equip-inventory-header">Inventário (${state.inventory.length}/${getItemInventoryCap(state)})</div>
+        <div class="equip-inventory-header-actions">
+          <button class="tier-sort-toggle-btn ${sortByTier ? 'active' : ''} ${sortByTier === 'asc' ? 'asc' : ''}" data-toggle-tier-sort title="${sortByTier === 'asc' ? 'Ordenado por Tier: menor para maior' : sortByTier === 'desc' ? 'Ordenado por Tier: maior para menor' : 'Ordenar por Tier'}">⬆️</button>
+          ${bulkSelect?.active ? '' : '<button class="bulk-select-toggle-btn" data-bulk-toggle-select>☑️ Selecionar</button>'}
+        </div>
+      </div>
+      ${categoryFilterRowHtml(filterCategory)}
+      ${bulkSelectToolbarHtml(bulkSelect)}
       <div class="equip-inventory-grid">${inventoryHtml}</div>
     </div>
   `;
+}
+
+// Small "N cards socketed" badge, bottom-left of an equipment icon — see
+// .card-count-badge in style.css. Mirrors .mini-badge's enhance-level
+// badge (bottom-right) but only shows once at least one card is socketed.
+function cardCountBadgeHtml(entry) {
+  const count = ensureCardIds(entry).filter(Boolean).length;
+  return count > 0 ? `<span class="card-count-badge">${CARD_ICON} ${count}</span>` : '';
 }
 
 function slotIconHtml(state, slot) {
   const equipped = getEquippedEntry(state, slot.id);
   const icon = equipped
     ? iconMarkup(equipped.item.image, equipped.item.emoji, equipped.item.name)
-    : slot.emoji;
+    : iconMarkup(slot.emptyIcon, slot.emoji, slot.name);
   const badge = equipped
     ? `<span class="mini-badge ${equipped.entry.isMaster ? 'master' : ''}">${getEnhanceLabel(equipped.entry.enhanceLevel, equipped.entry.isMaster)}</span>`
     : '';
-  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}" data-equip-slot="${slot.id}" title="${slot.name}">
+  const rarity = equipped ? getRarity(equipped.entry.rarityId) : null;
+  const rarityClass = rarity ? ' has-rarity' : '';
+  const rarityStyle = rarity ? ` style="--rarity-color:${rarity.color};"` : '';
+  return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}${rarityClass}" data-equip-slot="${slot.id}" title="${slot.name}"${rarityStyle}>
+
+    <span class="icon">${icon}</span>
+    ${badge}
+    ${equipped ? cardCountBadgeHtml(equipped.entry) : ''}
+  </button>`;
+}
+
+// ---------------------------------------------------------------
+// Equipamento de OUTRO jogador (aba Ranks — clicar numa linha que não seja
+// a sua abre isso, ver wireRanksTabEvents em main.js) — mesmo boneco/
+// slots da aba Equipamentos, só que a partir de `equipped_snapshot`
+// (fetchPlayerEquipment em systems/pvp.js) em vez de state.equipped/
+// state.inventory, e sem NENHUMA ação (equipar/aprimorar/destruir): é só
+// uma vitrine somente-leitura. `equippedBySlot` é o objeto {slotId:
+// {itemId, rarityId, baseStats, additionalStats, enhanceLevel, isMaster,
+// cardIds, godAttribute?}} já no formato salvo pelo servidor.
+// ---------------------------------------------------------------
+
+function foreignSlotIconHtml(equippedBySlot, slot) {
+  const entry = equippedBySlot[slot.id];
+  const item = entry ? getItem(entry.itemId) : null;
+  const icon = item
+    ? iconMarkup(item.image, item.emoji, item.name)
+    : iconMarkup(slot.emptyIcon, slot.emoji, slot.name);
+  const badge = entry
+    ? `<span class="mini-badge ${entry.isMaster ? 'master' : ''}">${getEnhanceLabel(entry.enhanceLevel, entry.isMaster)}</span>`
+    : '';
+  const rarity = entry ? getRarity(entry.rarityId) : null;
+  const rarityClass = rarity ? ' has-rarity' : '';
+  const rarityStyle = rarity ? ` style="--rarity-color:${rarity.color};"` : '';
+  const clickAttr = item ? `data-view-foreign-item="${slot.id}"` : 'disabled';
+  return `<button class="equip-slot-icon ${item ? 'filled' : 'empty'}${rarityClass}" ${clickAttr} title="${slot.name}"${rarityStyle}>
     <span class="icon">${icon}</span>
     ${badge}
   </button>`;
 }
 
-function inventoryTileHtml(state, entry) {
-  const item = getItem(entry.itemId);
-  const isEquipped = state.equipped[item.slotId] === entry.uid;
+/// Janela do boneco de equipamentos de outro jogador — `player` é o
+/// retorno de fetchPlayerEquipment (systems/pvp.js): {nick, icon_id,
+/// is_vip, equipped_snapshot}. Guarda equipped_snapshot em main.js
+/// (viewingForeignEquipment) pra resolver o clique num slot preenchido
+/// (data-view-foreign-item, ver showForeignItemDetailModal abaixo).
+export function showForeignEquipmentModal(player) {
+  const equippedBySlot = player.equipped_snapshot || {};
+  const portraitStyle = PLAYER_PORTRAIT_IMAGE ? `style="background-image: url('${PLAYER_PORTRAIT_IMAGE}')"` : '';
+  // Sem título — showModal() usa textContent (não innerHTML), então ícone
+  // de perfil + nick colorido (ambos markup HTML) têm que ir no corpo, não
+  // no título (mesmo motivo/correção já aplicada em showCardDetailModal).
+  showModal('', `
+    <div class="item-detail-name" style="text-align:center; margin-bottom:10px;">${pvpProfileIconHtml(player.icon_id)} ${nickHtml(player.nick, player.is_vip)}</div>
+    <div class="paperdoll-card" ${portraitStyle}>
+      ${PLAYER_PORTRAIT_IMAGE ? '' : '<div class="paperdoll-placeholder">🧑‍🚀</div>'}
+      <div class="paperdoll-overlay-col paperdoll-overlay-left">${PAPERDOLL_LEFT.map((id) => foreignSlotIconHtml(equippedBySlot, getSlot(id))).join('')}</div>
+      <div class="paperdoll-overlay-col paperdoll-overlay-right">${PAPERDOLL_RIGHT.map((id) => foreignSlotIconHtml(equippedBySlot, getSlot(id))).join('')}</div>
+    </div>
+    <div class="player-power-row">${POWER_ICON} Power: <strong>${formatInteger(player.power || 0)}</strong></div>
+  `);
+}
+
+function foreignCardSlotHtml(cardId) {
+  if (cardId && getCard(cardId)) {
+    const card = getCard(cardId);
+    return `<div class="card-slot-badge filled">
+      <span class="icon">${iconMarkup(card.image, card.emoji, card.name)}</span>
+      <div class="card-slot-info">
+        <div class="card-slot-name">${card.name}</div>
+        <div class="card-slot-desc">${card.description}</div>
+      </div>
+    </div>`;
+  }
+  return `<div class="card-slot-badge">
+    <span class="icon">${CARD_ICON}</span>
+    <div class="card-slot-info"><div class="card-slot-name">Slot de Carta: vazio</div></div>
+  </div>`;
+}
+
+/// Detalhe somente-leitura de UM item equipado por outro jogador — clicado
+/// a partir de showForeignEquipmentModal acima. Reusa itemDetailStatsHtml/
+/// godItemDetailStatsHtml (não precisam de `state`/uid, só de item+entry),
+/// sem NENHUM botão de ação (equipar/aprimorar/destruir não existem aqui).
+export function showForeignItemDetailModal(entry) {
+  const item = entry ? getItem(entry.itemId) : null;
+  if (!item) {
+    showModal('', '<p class="shop-note">Item desconhecido.</p>');
+    return;
+  }
+  const rarity = item.isGodTier ? GOD_RARITY : getRarity(entry.rarityId);
+  const tierBadge = item.isGodTier ? 'Tier God' : `Tier ${item.zoneIndex + 1}`;
   const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
-  return `<button class="inventory-tile ${isEquipped ? 'equipped' : ''}" data-equip-item="${entry.uid}" title="${item.name}">
+  const statsHtml = item.isGodTier ? godItemDetailStatsHtml(null, entry, item) : itemDetailStatsHtml(null, item, entry);
+  const cardSlotsHtml = (entry.cardIds || []).map((cardId) => foreignCardSlotHtml(cardId)).join('');
+
+  showModal('', `
+    <div class="item-detail">
+      <div class="item-detail-tier-badge">${tierBadge}</div>
+      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
+      <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
+      <div class="item-detail-stats">${statsHtml}</div>
+      ${itemPowerBadgeHtml(entry)}
+      ${cardSlotsHtml}
+    </div>
+  `);
+}
+
+function inventoryTileHtml(state, entry, bulkSelect = null) {
+  const item = getItem(entry.itemId);
+  const isEquipped = findEquippedSlotId(state, entry.uid) != null;
+  const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
+  const rarity = getRarity(entry.rarityId);
+  const isSelected = !!bulkSelect?.active && bulkSelect.selectedUids.has(entry.uid);
+  // No modo de seleção em massa, itens equipados OU travados (ver
+  // toggleItemLock em systems/crafting.js) ficam escurecidos e fora de
+  // seleção — destruir em massa é pra descartar sucata, não pra pegar sem
+  // querer algo que já está no personagem ou que o jogador marcou pra
+  // guardar (destruir um equipado continua possível pelo popup de
+  // detalhe individual, que já desequipa sozinho; um travado só destrava
+  // pelo mesmo popup, ver destroyItem em systems/crafting.js).
+  const bulkLocked = !!bulkSelect?.active && (isEquipped || entry.locked);
+  const title = entry.locked
+    ? `${item.name} (travado)`
+    : bulkLocked ? `${item.name} (equipado — desequipe antes de selecionar)` : item.name;
+  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''} ${isSelected ? 'bulk-selected' : ''} ${bulkLocked ? 'bulk-locked' : ''}" style="--rarity-color:${rarity.color};" data-equip-item="${entry.uid}" title="${title}" ${bulkLocked ? 'disabled' : ''}>
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
+    ${entry.locked ? '<span class="lock-badge">🔒</span>' : ''}
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
+    ${cardCountBadgeHtml(entry)}
+    ${bulkSelect?.active && !bulkLocked ? `<span class="bulk-select-check">${isSelected ? '✅' : '⬜'}</span>` : ''}
   </button>`;
 }
 
@@ -338,282 +901,1081 @@ export function showEquipSlotModal(state, slotId) {
   const slot = getSlot(slotId);
   const uid = state.equipped[slotId];
   if (uid) {
-    showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, false));
+    // Sem título — mesmo padrão do showItemDetailModal (o nome do item já
+    // aparece embaixo do ícone, não precisa repetir aqui em cima).
+    showModal('', itemDetailHtml(state, uid, false));
   } else {
     showModal(`${slot.emoji} ${slot.name}`, `
       <div class="item-detail">
         <div class="item-detail-icon">${slot.emoji}</div>
-        <p style="color:var(--text-dim); font-size:12.5px;">Nenhum item equipado neste slot ainda. Crafte um na aba Forjar.</p>
+        <p style="color:var(--text-dim); font-size:12.5px;">Nenhum item equipado neste slot ainda. Derrote monstros para conseguir um.</p>
       </div>
     `);
   }
 }
 
 /// Opens the detail popup for a specific inventory item (equipped or not).
-/// pickerOpen controls whether the card-picker sub-panel starts expanded
-/// (only true right after the player clicks "Equipar Carta" — see main.js).
-export function showItemDetailModal(state, uid, pickerOpen = false) {
+/// pickerOpenSlot controls whether a card-picker sub-panel starts expanded
+/// for that specific slot index (only set right after the player clicks
+/// "Equipar Carta" on that slot — see main.js); null means every slot is
+/// closed.
+export function showItemDetailModal(state, uid, pickerOpenSlot = null, confirmDestroy = false) {
   const entry = state.inventory.find((i) => i.uid === uid);
   if (!entry) return;
-  const item = getItem(entry.itemId);
-  const slot = getSlot(item.slotId);
-  showModal(`${slot.emoji} ${slot.name}`, itemDetailHtml(state, uid, pickerOpen));
+  // Sem título — o nome do item já aparece uma vez, embaixo do ícone (ver
+  // item-detail-name em itemDetailHtml), não precisa repetir aqui em cima.
+  showModal('', itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy));
 }
 
-function itemDetailHtml(state, uid, pickerOpen) {
-  const entry = state.inventory.find((i) => i.uid === uid);
-  const item = getItem(entry.itemId);
-  const slot = getSlot(item.slotId);
-  const enhancedStats = getEnhancedStats(item, entry.enhanceLevel, entry.isMaster);
-  const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
-  const isEquipped = state.equipped[item.slotId] === uid;
+/// Linha do atributo base do item (FIXA — só muda pelo tier/zona do item,
+/// nunca por raridade/enhance, ver rollBaseStatsFromTemplate/
+/// getEnhancedStats em data/items.js) + a linha do 2º adicional base (dano
+/// pra arma, vida pra armadura, armadura pra anel/colar — ver
+/// secondaryStatKeyForCategory em data/items.js), essa sim escalada pelo
+/// enhance, seguidas de uma linha por atributo bônus rolado (ver
+/// rollAdditionalStats em data/items.js) — inclusive quando o bônus é o
+/// MESMO atributo do item ('attrSelf') ou um dos outros dois ('attrOther'):
+/// sempre no mesmo valor fixo da base, mas numa linha separada (soma, não
+/// funde). Itens de um save antigo (rolados antes do 2º adicional existir)
+/// simplesmente não têm essa chave em baseStats — secondaryLine fica
+/// vazia, sem quebrar.
+/// Linha de 1 bônus adicional já rolado + o botãozinho de reroll (ícone
+/// "atualizar", ver REFRESH_ICON) que consome 1 Dado Místico — ver
+/// data-reroll-bonus-uid/index em main.js e rollBonusReroll/
+/// finalizeBonusReroll em systems/crafting.js. Só itens normais têm essa
+/// linha (item Tier God usa godItemDetailStatsHtml abaixo, sem botão — o
+/// próprio bônus lá ainda está sendo "montado" pelo fluxo de Escolher
+/// Bônus, reroll não se aplica).
+/// uid null (ver showForeignItemDetailModal — item de OUTRO jogador,
+/// somente-leitura) omite o botão de reroll por completo, caindo pra uma
+/// linha de texto simples.
+function bonusStatRowHtml(uid, index, label) {
+  if (uid == null) return `<div>${label}</div>`;
+  return `<div class="item-detail-bonus-row">
+    <span>${label}</span>
+    <button class="bonus-reroll-btn" data-reroll-bonus-uid="${uid}" data-reroll-bonus-index="${index}" title="Rerolar com ${MYSTIC_DIE_NAME}">${REFRESH_ICON}</button>
+  </div>`;
+}
 
-  const resistanceLine = slot.kind === 'defense'
-    ? `<div class="element-resistance">${elementBadgeHtml(item.element)} +${Math.round(ELEMENT_RESISTANCE_PER_PIECE * 100)}% resistência</div>`
-    : `<div class="element-resistance">${elementBadgeHtml(item.element)} elemento de ataque</div>`;
+/// uid: null pro modo somente-leitura (ver bonusStatRowHtml acima).
+function itemDetailStatsHtml(uid, item, entry) {
+  const mult = enhancementMultiplier(entry.enhanceLevel || 0, !!entry.isMaster);
+  const baseValue = entry.baseStats?.[item.attribute] || 0;
+  const baseLine = ATTRIBUTE_STAT_LABEL[item.attribute](baseValue);
 
+  const secondaryKey = Object.keys(entry.baseStats || {}).find((key) => key !== item.attribute);
+  const secondaryValue = secondaryKey ? Math.round((entry.baseStats[secondaryKey] || 0) * mult) : 0;
+  const secondaryLine = secondaryKey && BONUS_STAT_LABEL[secondaryKey]
+    ? `<strong>${BONUS_STAT_LABEL[secondaryKey](secondaryValue)}</strong>` : null;
+
+  const topLines = [baseLine, secondaryLine].filter(Boolean).join('<br>');
+  const bonusRows = (entry.additionalStats || [])
+    .map((add, i) => (BONUS_STAT_LABEL[add.stat] ? bonusStatRowHtml(uid, i, BONUS_STAT_LABEL[add.stat](add.value)) : null))
+    .filter(Boolean)
+    .join('');
+  return `${topLines}${bonusRows}`;
+}
+
+// Canto inferior esquerdo da JANELA inteira (mesma referência do badge
+// "Tier", só que embaixo em vez de em cima — ambos posicionados relativo a
+// .item-detail, ver CSS) — Power de um item/mascote específico (ver
+// systems/power.js), sempre recalculado na hora a partir do valor
+// recebido: aprimorar, virar Rank Master, ascender, encaixar/tirar carta,
+// ou subir nível/fundir mascote já aparece aqui na próxima renderização do
+// popup (toda ação de item/mascote já reabre o popup, ver wireModalEvents/
+// wirePetsTabEvents em main.js). Linha normal (não mais badge no canto —
+// ficava em cima dos botões de ação em popups mais curtos), alinhada à
+// esquerda igual a linha de resistência elemental/barra de XP logo abaixo
+// dela (ver .item-detail-power-line no CSS, mesmo layout de
+// .element-resistance).
+function powerBadgeHtml(powerValue) {
+  return `<div class="item-detail-power-line">${POWER_ICON} Power: ${formatInteger(powerValue)}</div>`;
+}
+
+function itemPowerBadgeHtml(entry) {
+  return powerBadgeHtml(computeItemPower(entry));
+}
+
+/// 3 estados possíveis pra um item Tier God (ver systems/godItems.js):
+/// 1) sem atributo ainda (só armadura/anel/colar — arma já nasce com o
+///    atributo do arquétipo) — mostra os 3 botões Força/Destreza/
+///    Inteligência, nada mais;
+/// 2) atributo definido mas faltam bônus (< GOD_BONUS_SLOTS) — mostra os
+///    bônus já escolhidos + botão "Escolher Bônus (X/8)";
+/// 3) completo — mostra os 9 atributos como um item normal, sem painel de
+///    aprimorar/evoluir/ascender (não existe pra Tier God) e sem botão de
+///    destruir (nunca pode ser destruído).
+function godAttributeChoiceHtml(uid, item) {
+  const rows = ATTRIBUTES.map((a) => a.id).map((attrId) => {
+    const attr = getAttribute(attrId);
+    const value = godAttributeBaseValue(item.category);
+    return `<button class="modal-action-btn" style="color:${attr.color};" data-god-choose-attr="${uid}" data-god-choose-attr-value="${attrId}">+${formatNumber(value)} ${attr.name}</button>`;
+  }).join('');
+  return `
+    <p style="font-size:12px; color:var(--text-dim); text-align:center;">Escolha o atributo base deste item (1º dos 9 bônus).</p>
+    <div class="ascension-choice-row">${rows}</div>
+  `;
+}
+
+/// uid: null pro modo somente-leitura (ver bonusStatRowHtml acima) — item
+/// Deus de outro jogador (showForeignItemDetailModal).
+function godItemDetailStatsHtml(uid, entry, item) {
+  const attributeId = getGodAttribute(entry, item);
+  const baseValue = entry.baseStats?.[attributeId] || 0;
+  const baseLine = ATTRIBUTE_STAT_LABEL[attributeId] ? ATTRIBUTE_STAT_LABEL[attributeId](baseValue) : '';
+  const bonusRows = (entry.additionalStats || [])
+    .map((add, i) => (BONUS_STAT_LABEL[add.stat] ? bonusStatRowHtml(uid, i, BONUS_STAT_LABEL[add.stat](add.value)) : null))
+    .filter(Boolean)
+    .join('');
+  return `${baseLine}${bonusRows}`;
+}
+
+function godItemDetailHtml(state, uid, entry, item, pickerOpenSlot = null) {
+  const rarity = GOD_RARITY;
+  const cardSlotsHtml = ensureCardIds(entry)
+    .map((cardId, slotIndex) => cardSlotHtml(state, uid, entry, pickerOpenSlot === slotIndex, slotIndex))
+    .join('');
+
+  if (needsGodAttributeChoice(entry, item)) {
+    return `
+      <div class="item-detail">
+        <div class="item-detail-tier-badge">Tier God</div>
+        <div class="item-detail-level-badge">Lv.${GOD_MIN_LEVEL}</div>
+        <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+        <div class="item-detail-name">${item.name}</div>
+        <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
+        ${godAttributeChoiceHtml(uid, item)}
+      </div>
+    `;
+  }
+
+  const bonusCount = entry.additionalStats?.length || 0;
+  const complete = isGodItemComplete(entry, item);
+  const bonusPanel = complete
+    ? `<div class="enhance-maxed">✨ Item Especial — Tier God (montagem completa)</div>`
+    : `<div class="enhance-panel">
+        <button class="master-btn" data-god-roll-bonus="${uid}">Escolher Bônus (${bonusCount}/${GOD_BONUS_SLOTS})</button>
+      </div>`;
+
+  const belowLevel = (state.hunterLevel || 1) < GOD_MIN_LEVEL;
+  const levelNote = complete && belowLevel
+    ? `<p class="weapon-requirement-note">⚠️ Requer Nível de Caçador ${GOD_MIN_LEVEL} pra equipar (você está no ${state.hunterLevel || 1}).</p>`
+    : '';
+
+  const equippedSlotId = findEquippedSlotId(state, uid);
+  const isEquipped = equippedSlotId != null;
   const actionBtn = isEquipped
-    ? `<button class="modal-action-btn" data-modal-unequip="${item.slotId}">Desequipar</button>`
-    : `<button class="modal-action-btn" data-modal-equip="${uid}">Equipar</button>`;
+    ? `<button class="modal-action-btn" data-modal-unequip="${equippedSlotId}">Desequipar</button>`
+    : `<button class="modal-action-btn" data-modal-equip="${uid}" ${canEquipItem(state, uid) ? '' : 'disabled'}>Equipar</button>`;
 
   return `
     <div class="item-detail">
-      <div class="item-detail-icon">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-tier-badge">Tier God</div>
+      <div class="item-detail-level-badge">Lv.${GOD_MIN_LEVEL}</div>
+      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-name">${item.name}</div>
+      <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
+      <div class="item-detail-stats">${godItemDetailStatsHtml(uid, entry, item)}</div>
+      ${levelNote}
+      ${itemPowerBadgeHtml(entry)}
+      ${cardSlotsHtml}
+      ${bonusPanel}
+      <div class="modal-action-row">
+        ${actionBtn}
+      </div>
+    </div>
+  `;
+}
+
+function itemDetailHtml(state, uid, pickerOpenSlot, confirmDestroy = false) {
+  const entry = state.inventory.find((i) => i.uid === uid);
+  const item = getItem(entry.itemId);
+  if (item.isGodTier) return godItemDetailHtml(state, uid, entry, item, pickerOpenSlot);
+  const categoryLabel = getCategoryLabel(item.category);
+  const label = getEnhanceLabel(entry.enhanceLevel, entry.isMaster);
+  const rarity = getRarity(entry.rarityId);
+  const equippedSlotId = findEquippedSlotId(state, uid);
+  const isEquipped = equippedSlotId != null;
+
+  const resistanceLine = categoryLabel.kind === 'armor'
+    ? `<div class="element-resistance">${elementBadgeHtml(item.element)} +${Math.round(ELEMENT_RESISTANCE_PER_PIECE * 100)}% resistência</div>`
+    : `<div class="element-resistance">${elementBadgeHtml(item.element)} elemento de ataque</div>`;
+
+  // Aljava/Livro/Escudo (weapon2) só equipam junto da arma primária do
+  // mesmo atributo (Arco/Cajado/Espada, ver canEquipItem em
+  // systems/equipment.js) — mostra o motivo em vez de só desabilitar o
+  // botão sem explicação.
+  const weaponRequirementNote = (!isEquipped && item.category === 'weapon2' && !canEquipItem(state, uid))
+    ? `<p class="weapon-requirement-note">⚠️ Equipe primeiro ${getWeaponArchetypeName('weapon1', item.attribute)} (mesmo atributo) na arma primária.</p>`
+    : '';
+
+  const actionBtn = isEquipped
+    ? `<button class="modal-action-btn" data-modal-unequip="${equippedSlotId}">Desequipar</button>`
+    : `<button class="modal-action-btn" data-modal-equip="${uid}" ${canEquipItem(state, uid) ? '' : 'disabled'}>Equipar</button>`;
+
+  const cardSlotsHtml = ensureCardIds(entry)
+    .map((cardId, slotIndex) => cardSlotHtml(state, uid, entry, pickerOpenSlot === slotIndex, slotIndex))
+    .join('');
+
+  // Cadeado (ver toggleItemLock em systems/crafting.js): trava contra
+  // destruir e contra a seleção em massa do Inventário.
+  const locked = !!entry.locked;
+  const lockBtn = `<button class="item-detail-lock-btn ${locked ? 'locked' : ''}" data-toggle-item-lock="${uid}" title="${locked ? 'Destravar item' : 'Travar item (impede destruir/selecionar em massa)'}">${locked ? '🔒' : '🔓'}</button>`;
+
+  return `
+    <div class="item-detail">
+      <div class="item-detail-tier-badge">Tier ${item.zoneIndex + 1}</div>
+      ${lockBtn}
+      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
-      <div class="item-detail-stats">${formatStatsLines(enhancedStats).join('<br>')}</div>
+      <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
+      <div class="item-detail-stats">${itemDetailStatsHtml(uid, item, entry)}</div>
+      ${itemPowerBadgeHtml(entry)}
       ${resistanceLine}
-      ${cardSlotHtml(state, uid, entry, pickerOpen, item)}
+      ${weaponRequirementNote}
+      ${locked ? `<p class="weapon-requirement-note">🔒 Item travado — destrave pra poder destruir ou selecionar em massa.</p>` : ''}
+      ${cardSlotsHtml}
       ${enhancePanelHtml(state, uid, entry, item)}
-      ${actionBtn}
+      <div class="modal-action-row">
+        ${actionBtn}
+        ${confirmDestroy
+          ? `<button class="modal-action-btn destroy-btn" data-confirm-destroy-uid="${uid}">Confirmar destruição</button>
+             <button class="modal-action-btn" data-cancel-destroy-uid="${uid}">Cancelar</button>`
+          : `<button class="modal-action-btn destroy-btn" data-destroy-uid="${uid}" ${locked ? 'disabled' : ''}>Destruir</button>`}
+      </div>
     </div>
   `;
 }
 
 // A card is consumed from state.cards (a stackable count, like a material)
 // the moment it's socketed. Cards themselves have no slotId restriction: any
-// card can go in any item's slot. The slot itself has three states:
-//   1. locked — the item was just crafted, must be unlocked first (RNG,
-//      paid in that item's own boss Crystal — see attemptCardSlotUnlock())
-//   2. unlocked, empty — either closed (a button to open the picker) or with
-//      the picker expanded (pickerOpen), listing every owned card
-//   3. unlocked, filled — the socketed card, with a Remover button
-function cardSlotHtml(state, uid, entry, pickerOpen, item) {
-  const unlocked = entry.cardSlotUnlocked || !!entry.cardId;
-
-  if (!unlocked) {
-    const crystalInfo = findMaterialInfo(item.crystalMaterialId);
-    const haveCrystal = state.materials[item.crystalMaterialId] || 0;
-    const canAttempt = canAttemptCardSlotUnlock(state, uid);
-    return `<div class="card-slot-locked">
-      <div class="card-slot-label">🔒 Slot de Carta bloqueado</div>
-      <div class="card-slot-unlock-info">${Math.round(CARD_SLOT_UNLOCK_CHANCE * 100)}% de chance de sucesso · custo: 1 ${crystalInfo.emoji} ${crystalInfo.name} (você tem ${formatNumber(haveCrystal)})</div>
-      <button class="card-slot-unlock-btn" data-unlock-card-slot="${uid}" ${canAttempt ? '' : 'disabled'}>Tentar Desbloquear</button>
-    </div>`;
-  }
+// card can go in any item's slot. Every item comes with 1 card slot already
+// unlocked from the moment it's crafted; Rank Master grants a 2nd (see
+// maxCardSlots/ensureCardIds in systems/crafting.js) — there's no more RNG
+// unlock step. Each slot (identified by slotIndex) is either:
+//   1. empty — either closed (a button to open the picker) or with the
+//      picker expanded (pickerOpen), listing every owned card
+//   2. filled — the socketed card, with a Remover button
+function cardSlotHtml(state, uid, entry, pickerOpen, slotIndex) {
+  const cardId = entry.cardIds[slotIndex];
 
   // getCard() can miss for an old save's cardId (the roster that generates
   // CARDS was replaced — see data/cards.js) — fall through to the normal
   // empty-slot display below rather than crash on a stale reference.
-  if (entry.cardId && getCard(entry.cardId)) {
-    const card = getCard(entry.cardId);
+  if (cardId && getCard(cardId)) {
+    const card = getCard(cardId);
     return `<div class="card-slot-badge filled">
-      <span class="icon">${card.emoji}</span>
+      <span class="icon">${iconMarkup(card.image, card.emoji, card.name)}</span>
       <div class="card-slot-info">
         <div class="card-slot-name">${card.name}</div>
         <div class="card-slot-desc">${card.description}</div>
       </div>
-      <button class="card-slot-remove" data-unsocket-uid="${uid}">Remover</button>
+      <button class="card-slot-remove" data-unsocket-uid="${uid}" data-unsocket-slot="${slotIndex}">Remover</button>
     </div>`;
   }
 
   if (!pickerOpen) {
     return `<div class="card-slot-badge">
-      <span class="icon">🃏</span>
+      <span class="icon">${CARD_ICON}</span>
       <div class="card-slot-info"><div class="card-slot-name">Slot de Carta: vazio</div></div>
-      <button class="card-slot-equip-btn" data-open-card-picker="${uid}">Equipar Carta</button>
+      <button class="card-slot-equip-btn" data-open-card-picker="${uid}" data-open-card-picker-slot="${slotIndex}">Equipar Carta</button>
     </div>`;
   }
 
   const owned = CARDS.filter((c) => (state.cards[c.id] || 0) > 0);
   if (!owned.length) {
     return `<div class="card-slot-picker">
-      <div class="card-slot-label">🃏 Você ainda não tem nenhuma carta. Derrote monstros para conseguir uma.</div>
+      <div class="card-slot-label">${CARD_ICON} Você ainda não tem nenhuma carta. Derrote monstros para conseguir uma.</div>
     </div>`;
   }
 
   return `<div class="card-slot-picker">
-    <div class="card-slot-label">🃏 Escolha uma carta:</div>
+    <div class="card-slot-label">${CARD_ICON} Escolha uma carta:</div>
     <div class="card-slot-options">${owned.map((c) => `
-      <button class="card-slot-option" data-socket-uid="${uid}" data-socket-card-id="${c.id}" title="${c.description}">
-        ${c.emoji} ${c.name} <span class="qty">×${state.cards[c.id]}</span>
+      <button class="card-slot-option" data-socket-uid="${uid}" data-socket-slot="${slotIndex}" data-socket-card-id="${c.id}" title="${c.description}">
+        <span class="icon">${iconMarkup(c.image, c.emoji, c.name)}</span> ${c.name} <span class="qty">×${state.cards[c.id]}</span>
       </button>
     `).join('')}</div>
   </div>`;
 }
 
+function enhanceGoldCostRowHtml(state, gold) {
+  const met = (state.gold || 0) >= gold;
+  return `<div class="recipe-cost"><span><span class="icon">${GOLD_ICON}</span> Ouro</span><span class="${met ? 'met' : 'missing'}">${formatNumber(state.gold || 0)}/${formatNumber(gold)}</span></div>`;
+}
+
+/// Linha de custo de material (aprimorar/Rank Master/Ascensão) — com o
+/// botão "Selecionar" do lado do NOME do material (pedido do usuário),
+/// não do item: seleciona pra caça o monstro (fraco OU chefe, qualquer um
+/// dos 2) que dropa esse material específico (ver
+/// findMonsterSourceForMaterial em data/monsters.js + data-select-material
+/// em main.js).
+function materialCostRowHtml(matInfo, have, qty) {
+  const met = have >= qty;
+  return `<div class="recipe-cost">
+    <span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name} <button class="select-monster-btn" data-select-material="${matInfo.id}" title="Selecionar o monstro que dropa esse material pra caça">Selecionar</button></span>
+    <span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(qty)}</span>
+  </div>`;
+}
+
 function enhancePanelHtml(state, uid, entry, item) {
   if (entry.isMaster) {
-    return `<div class="enhance-maxed">✨ Rank Master alcançado</div>`;
+    const cost = getAscensionCost(item, entry.rarityId);
+    if (!cost) {
+      return `<div class="enhance-maxed">✨ Rank Master alcançado (Raridade máxima)</div>`;
+    }
+    const nextRarity = getRarity(cost.nextRarityId);
+    const matInfo = findMaterialInfo(cost.matId);
+    const haveMat = state.materials[cost.matId] || 0;
+    return `<div class="enhance-panel">
+      <div class="enhance-maxed">✨ Rank Master alcançado</div>
+      ${materialCostRowHtml(matInfo, haveMat, cost.qty)}
+      <button class="master-btn" data-ascend-uid="${uid}" ${canAscendItem(state, uid) ? '' : 'disabled'}>Ascender para <span style="color:${nextRarity.color}">${nextRarity.name}</span> +0</button>
+    </div>`;
   }
 
   if (entry.enhanceLevel < ENHANCE_MAX_LEVEL) {
     const cost = item.enhanceCost[entry.enhanceLevel];
-    const have = state.materials[item.commonMaterialId] || 0;
-    const matInfo = findMaterialInfo(item.commonMaterialId);
-    const met = have >= cost;
+    const have = state.materials[cost.matId] || 0;
+    const matInfo = findMaterialInfo(cost.matId);
     return `<div class="enhance-panel">
-      <div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(cost)}</span></div>
+      ${materialCostRowHtml(matInfo, have, cost.qty)}
+      ${enhanceGoldCostRowHtml(state, cost.gold)}
       <button data-enhance="${uid}" ${canEnhance(state, uid) ? '' : 'disabled'}>Aprimorar para +${entry.enhanceLevel + 1}</button>
     </div>`;
   }
 
-  const crystalInfo = findMaterialInfo(item.crystalMaterialId);
-  const haveCrystal = state.materials[item.crystalMaterialId] || 0;
-  const matInfo = findMaterialInfo(item.commonMaterialId);
-  const haveMat = state.materials[item.commonMaterialId] || 0;
-  const matMet = haveMat >= item.masterMaterialCost;
+  const masterCost = item.masterMaterialCost;
+  const matInfo = findMaterialInfo(masterCost.matId);
+  const haveMat = state.materials[masterCost.matId] || 0;
   return `<div class="enhance-panel">
-    <div class="recipe-cost"><span>${matInfo.emoji} ${matInfo.name}</span><span class="${matMet ? 'met' : 'missing'}">${formatNumber(haveMat)}/${formatNumber(item.masterMaterialCost)}</span></div>
-    <div class="recipe-cost"><span>${crystalInfo.emoji} ${crystalInfo.name}</span><span class="${haveCrystal >= 1 ? 'met' : 'missing'}">${formatNumber(haveCrystal)}/1</span></div>
+    ${materialCostRowHtml(matInfo, haveMat, masterCost.qty)}
+    ${enhanceGoldCostRowHtml(state, masterCost.gold)}
     <button class="master-btn" data-master-upgrade="${uid}" ${canUpgradeToMaster(state, uid) ? '' : 'disabled'}>Evoluir para Rank Master</button>
   </div>`;
 }
 
-// Spoiler control: show every unlocked boss, plus exactly one preview of
-// whatever comes next (so there's always something to look forward to)
-// — everything further out stays a complete surprise instead of listing
-// every future boss's name/element/art up front.
-function forgeContentHtml(state, expandedForgeBosses) {
-  const nextLockedIndex = BOSSES.findIndex((b) => b.stage > state.maxStage);
-  const visibleBosses = nextLockedIndex === -1 ? BOSSES : BOSSES.slice(0, nextLockedIndex + 1);
-  return visibleBosses.map((boss) => bossGroupHtml(state, boss, expandedForgeBosses)).join('');
+// ---------------------------------------------------------------
+// Árvore de habilidades passivas ÚNICA (ver data/skills.js + systems/
+// skills.js — era 3 árvores por classe, agora uma só): 1 ponto por nível de
+// caça, 5 etapas de 3 linhas (3 habilidades cada) + 1 especial (3 opções
+// mutuamente exclusivas) entre cada etapa. Ocupa a aba "Aprimoramentos"
+// (tab-upgrades) — era só um placeholder antes disso tudo existir.
+// ---------------------------------------------------------------
+
+/// "+valor Nome do Stat" — mesma convenção usada nos afixos de item (ver
+/// BONUS_STAT_LABEL acima), só que genérica a partir de STAT_DISPLAY_NAME
+/// (data/skills.js) em vez de uma função por stat: stats que terminam em
+/// "Percent" formatam como %, o resto como número puro.
+function skillValueLabel(stat, value) {
+  const amount = stat.endsWith('Percent') ? `+${formatPercent(value)}` : `+${formatNumber(value)}`;
+  return `${amount} ${STAT_DISPLAY_NAME[stat] || stat}`;
 }
 
-function bossGroupHtml(state, boss, expandedForgeBosses) {
-  const unlocked = state.maxStage >= boss.stage;
-  const header = `<h3><span class="icon">${iconMarkup(boss.image, boss.emoji, boss.name)}</span> ${boss.name} ${elementBadgeHtml(boss.element)} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">(Chefe do Estágio ${boss.stage})</span></h3>`;
+/// □ □ □ □ → ■ ■ □ □ conforme o nível comprado — indicador de progresso
+/// pedido explicitamente pro design (ver instruções da árvore).
+function skillSquaresHtml(level, maxLevel) {
+  return Array.from({ length: maxLevel }, (_, i) => (i < level ? '■' : '□')).join(' ');
+}
 
-  if (!unlocked) {
-    return `<div class="family-group">
-      ${header}
-      <p style="color:var(--text-dim); font-size:12px;">🔒 Alcance o estágio ${boss.stage} para desbloquear.</p>
-    </div>`;
+/// Estado visual de uma habilidade NORMAL — 5 dos 7 estados pedidos
+/// (bloqueada/disponível/parcial/maximizada/sem pontos); os outros 2
+/// (especial disponível/comprada) são só pra specialOptionHtml abaixo.
+function skillCardHtml(state, skill) {
+  const level = getSkillLevel(state, skill.id);
+  const unlocked = isRowUnlocked(state, skill.stageIndex, skill.rowIndex);
+  const maxed = level >= skill.maxLevel;
+  const hasPoints = getAvailableSkillPoints(state) >= 1;
+  let stateClass;
+  if (!unlocked) stateClass = 'locked';
+  else if (maxed) stateClass = 'maxed';
+  else if (!hasPoints) stateClass = 'no-points';
+  else if (level > 0) stateClass = 'partial';
+  else stateClass = 'available';
+
+  const canBuy = canBuySkillLevel(state, skill.id);
+  return `
+    <button class="skill-card ${stateClass}" data-buy-skill="${skill.id}" ${canBuy ? '' : 'disabled'} title="${unlocked ? '' : 'Compre a linha anterior primeiro'}">
+      <div class="skill-card-name">${skill.name}</div>
+      <div class="skill-card-desc">${skillValueLabel(skill.stat, skill.perLevel)} por nível</div>
+      <div class="skill-card-level">Nível ${level} / ${skill.maxLevel}</div>
+      <div class="skill-card-squares">${skillSquaresHtml(level, skill.maxLevel)}</div>
+    </button>
+  `;
+}
+
+/// Uma das 3 opções mutuamente exclusivas do especial de uma etapa —
+/// 'special-bought' pra opção escolhida, 'special-available' pra qualquer
+/// uma enquanto nenhuma foi escolhida ainda (e o requisito de pontos
+/// gastos foi atingido), 'locked' pro resto (requisito não atingido, ou
+/// uma opção IRMÃ já foi escolhida).
+function specialOptionHtml(state, option) {
+  const chosenId = getChosenSpecialId(state, option.stageIndex);
+  const isChosen = chosenId === option.id;
+  const canBuy = canBuySpecial(state, option.id);
+  const stateClass = isChosen ? 'special-bought' : canBuy ? 'special-available' : 'locked';
+  const desc = option.bonuses.map((b) => skillValueLabel(b.stat, b.value)).join(', ');
+  return `
+    <button class="skill-card skill-special ${stateClass}" data-buy-special="${option.id}" ${canBuy ? '' : 'disabled'}>
+      <div class="skill-card-name">✨ ${option.name}</div>
+      <div class="skill-card-desc">${desc}</div>
+      <div class="skill-card-level">${isChosen ? 'Escolhida' : 'Nível 0 / 1'}</div>
+    </button>
+  `;
+}
+
+function skillTreeHtml(state) {
+  const tree = getSkillTree();
+  const stagesHtml = tree.stages.map((stage) => {
+    const stageUnlocked = isStageUnlocked(state, stage.stageIndex);
+    const rowsHtml = stage.rows.map((row) => `
+      <div class="skill-row">${row.map((skill) => skillCardHtml(state, skill)).join('')}</div>
+    `).join('');
+    const specialHtml = stage.special ? (() => {
+      const lastRow = stage.rows[stage.rows.length - 1];
+      const lastRowDone = lastRow.some((skill) => getSkillLevel(state, skill.id) > 0);
+      return `
+      <div class="skill-special-gate">
+        <div class="skill-special-gate-label">
+          🔒 Especial da Etapa ${stage.stageIndex + 1} — precisa gastar ${SPECIAL_THRESHOLDS[stage.stageIndex]} pontos no total
+          (${Math.min(getSpentSkillPoints(state), SPECIAL_THRESHOLDS[stage.stageIndex])}/${SPECIAL_THRESHOLDS[stage.stageIndex]})
+          e ter pelo menos 1 nível na linha de cima ${lastRowDone ? '✅' : '❌'}
+        </div>
+        <div class="skill-row skill-special-row">${stage.special.options.map((opt) => specialOptionHtml(state, opt)).join('')}</div>
+      </div>
+    `;
+    })() : '';
+    return `
+      <div class="skill-stage ${stageUnlocked ? '' : 'locked'}">
+        <div class="skill-stage-title">Etapa ${stage.stageIndex + 1}</div>
+        ${rowsHtml}
+        ${specialHtml}
+      </div>
+    `;
+  }).join('');
+  return `<div class="skill-tree">${stagesHtml}</div>`;
+}
+
+/// resetConfirming: true depois do 1º clique em "Resetar Pontos" — mostra
+/// a confirmação inline (mesmo padrão non-blocking do "Destruir
+/// selecionados" do inventário, ver bulkSelectToolbarHtml acima —
+/// window.confirm fica bloqueado no iframe sandboxed do Artifact) antes de
+/// zerar purchased/specials de vez.
+function skillResetRowHtml(state, resetConfirming) {
+  if (getSpentSkillPoints(state) < 1) return '';
+  if (resetConfirming) {
+    return `
+      <div class="skill-reset-row">
+        <span>Resetar todos os pontos investidos na árvore?</span>
+        <div class="modal-action-row">
+          <button class="modal-action-btn destroy-btn" data-skill-reset-confirm>Confirmar reset</button>
+          <button class="modal-action-btn" data-skill-reset-cancel>Cancelar</button>
+        </div>
+      </div>
+    `;
+  }
+  return `<button class="skill-reset-btn" data-skill-reset-start>${REFRESH_ICON} Resetar Pontos</button>`;
+}
+
+export function renderUpgradesTab(state, resetConfirming = false) {
+  const container = document.getElementById('tab-upgrades');
+  const total = getTotalSkillPoints(state);
+  const available = getAvailableSkillPoints(state);
+
+  const header = `
+    <div class="skills-header">
+      <div class="skills-points">🔹 Pontos disponíveis: <strong>${available}</strong> (${getSpentSkillPoints(state)}/${total} gastos)</div>
+      ${skillResetRowHtml(state, resetConfirming)}
+    </div>
+  `;
+
+  container.innerHTML = `
+    ${pageBannerHtml('Habilidades')}
+    ${header}
+    ${skillTreeHtml(state)}
+  `;
+  translateContainer(container);
+}
+
+// ---------------------------------------------------------------
+// Cartas tab: every card in the game (see data/cards.js), split into Boss
+// and Common sections, always visible — undiscovered ones render dimmed
+// (`.card-tile.undiscovered`) rather than being hidden, so the collection's
+// full size is visible as a goal. Clicking any tile opens a bigger detail
+// popup (showCardDetailModal, shares the #modal-overlay with the item
+// detail popup) with the full-size art, description, and — the first time
+// a card is ever obtained — a claimable one-time Cash reward (see
+// systems/cards.js), same "claim once" idea as an achievement.
+// ---------------------------------------------------------------
+
+function cardTileHtml(state, card) {
+  const discovered = isCardDiscovered(state, card.id);
+  const claimable = canClaimCardReward(state, card.id);
+  return `<button class="card-tile ${discovered ? 'discovered' : 'undiscovered'}" data-view-card="${card.id}">
+    ${claimable ? `<span class="card-tile-badge">${GIFT_ICON}</span>` : ''}
+    <div class="icon">${iconMarkup(card.image, card.emoji, card.name)}</div>
+    <div class="name">${card.name}</div>
+  </button>`;
+}
+
+// Real data, not mockup flavor: sums every socketed card's `bonuses` (see
+// data/cards.js) across all 6 equip slots (each slot can carry up to
+// maxCardSlots(entry) cards — see systems/crafting.js) — the panel the
+// mockup calls "Bônus das Cartas Ativas".
+const CARD_BONUS_LABELS = {
+  dpsPercent: '💥 DPS', attackSpeedPercent: '⚡ Velocidade de Ataque', goldPercent: `${GOLD_ICON} Ouro Obtido`,
+  dropPercent: '🎒 Chance de Drop', critChancePercent: '🎯 Chance Crítica', critDamagePercent: '💢 Dano Crítico',
+  hpPercent: '❤️ Vida Máxima', armorPercent: '🛡️ Armadura', hpFlat: '❤️ Vida Máxima', armorFlat: '🛡️ Armadura',
+  dpsFlat: '💥 DPS', forca: '💪 Força', destreza: '🏃 Destreza', inteligencia: '🧠 Inteligência',
+  lifestealFlat: '💚 Cura por Golpe', petDamagePercent: '🐾 Dano de Mascote', dodgePercent: '🌀 Esquiva',
+  danoFisicoPercent: '🗡️ Dano Físico', danoPerfuracaoPercent: '🏹 Dano Perfurante', danoMagicoPercent: '🔮 Dano Mágico',
+  doubleHitChance: '👊 Golpe Duplo', reflectPercent: '🔱 Reflete',
+};
+
+const CARD_BONUS_PERCENT_STATS = new Set(['doubleHitChance']);
+
+function cardsSummaryHtml(state) {
+  const totals = {};
+  for (const uid of Object.values(state.equipped)) {
+    if (!uid) continue;
+    const entry = state.inventory.find((i) => i.uid === uid);
+    if (!entry) continue;
+    for (const cardId of ensureCardIds(entry)) {
+      if (!cardId) continue;
+      const card = getCard(cardId);
+      if (!card) continue;
+      for (const b of card.bonuses || []) totals[b.stat] = (totals[b.stat] || 0) + b.value;
+    }
   }
 
-  const items = getItemsForBoss(boss.id);
-  const expanded = expandedForgeBosses.has(boss.id);
-
-  return `<div class="family-group">
-    <div class="family-group-header">
-      ${header}
-      <button class="forge-toggle-btn" data-toggle-forge="${boss.id}">${expanded ? '▲ Recolher' : '▼ Expandir'}</button>
-    </div>
-    ${expanded ? `<div class="recipe-grid">${items.map((item) => recipeCardHtml(state, item)).join('')}</div>` : ''}
-  </div>`;
-}
-
-function recipeCardHtml(state, item) {
-  const craftable = canCraft(state, item.id);
-  const equipped = state.equipped[item.slotId] && state.inventory.find((i) => i.uid === state.equipped[item.slotId])?.itemId === item.id;
-
-  const costLines = Object.entries(item.materialCost).map(([matId, qty]) => {
-    const matInfo = findMaterialInfo(matId);
-    const have = state.materials[matId] || 0;
-    const met = have >= qty;
-    return `<div class="recipe-cost"><span><span class="icon">${iconMarkup(matInfo.image, matInfo.emoji, matInfo.name)}</span> ${matInfo.name}</span><span class="${met ? 'met' : 'missing'}">${formatNumber(have)}/${formatNumber(qty)}</span></div>`;
+  const rows = Object.entries(totals).filter(([, v]) => v).map(([stat, v]) => {
+    const label = CARD_BONUS_LABELS[stat] || stat;
+    const value = (stat.endsWith('Percent') || CARD_BONUS_PERCENT_STATS.has(stat)) ? `+${formatPercent(v)}` : `+${formatNumber(v)}`;
+    return `<div class="battle-info-row"><span>${label}</span><strong>${value}</strong></div>`;
   }).join('');
 
-  const goldMet = state.gold >= item.goldCost;
-
-  return `<div class="recipe-card ${equipped ? 'equipped' : ''}">
-    <div class="recipe-header"><span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span><span class="name">${item.name}</span></div>
-    <div class="element-resistance">${elementBadgeHtml(item.element)}</div>
-    <div class="recipe-stats">${formatStatsLines(item.stats).join('<br>')}</div>
-    <div class="recipe-cost"><span>💰 Ouro</span><span class="${goldMet ? 'met' : 'missing'}">${formatNumber(state.gold)}/${formatNumber(item.goldCost)}</span></div>
-    ${costLines}
-    <button data-craft="${item.id}" ${craftable ? '' : 'disabled'}>${equipped ? 'Craftado (equipado)' : 'Craftar'}</button>
-  </div>`;
-}
-
-// Upgrade bonuses are always `level * valuePerLevel` — just formatted per
-// stat type (percent stats get a %, everything else is flat).
-function formatUpgradeBonus(stat, value) {
-  if (stat.endsWith('Percent')) return `+${formatPercent(value)}`;
-  return `+${formatNumber(value)}`;
-}
-
-function upgradeProgressHtml(upgrade, level) {
-  const current = formatUpgradeBonus(upgrade.stat, level * upgrade.valuePerLevel);
-  const next = formatUpgradeBonus(upgrade.stat, (level + 1) * upgrade.valuePerLevel);
-  return `<div class="upgrade-progress">
-    <span>Atual: <strong>${level > 0 ? current : '—'}</strong></span>
-    <span class="arrow">→</span>
-    <span>Próximo: <strong>${next}</strong></span>
-  </div>`;
-}
-
-export function renderUpgradesTab(state) {
-  const container = document.getElementById('tab-upgrades');
-  container.innerHTML = `<div class="upgrade-list">${UPGRADES.map((u) => upgradeCardHtml(state, u)).join('')}</div>`;
-}
-
-function upgradeCardHtml(state, upgrade) {
-  const level = getUpgradeLevel(state, upgrade.id);
-  const cost = getUpgradeCost(state, upgrade.id);
-  const affordable = state.gold >= cost;
-
-  return `<div class="upgrade-card">
-    <span class="icon">${upgrade.emoji}</span>
-    <div class="info">
-      <div class="name">${upgrade.name}</div>
-      <div class="desc">${upgrade.description}</div>
-      <div class="level">Nível ${level}</div>
-      ${upgradeProgressHtml(upgrade, level)}
+  return `
+    <div class="cards-summary-box">
+      <div class="equip-stats-title">Bônus das Cartas Ativas</div>
+      ${rows || '<p style="font-size:11px;color:var(--text-dim); margin:0;">Nenhuma carta equipada ainda.</p>'}
     </div>
-    <button data-upgrade="${upgrade.id}" ${affordable ? '' : 'disabled'}>💰 ${formatNumber(cost)}</button>
+  `;
+}
+
+export function renderCardsTab(state) {
+  const container = document.getElementById('tab-cards');
+  const godCards = CARDS.filter((c) => c.isGodCard);
+  const bossCards = CARDS.filter((c) => c.isBossCard);
+  const commonCards = CARDS.filter((c) => !c.isBossCard && !c.isGodCard);
+  const godOwned = godCards.filter((c) => isCardDiscovered(state, c.id)).length;
+  const bossOwned = bossCards.filter((c) => isCardDiscovered(state, c.id)).length;
+  const commonOwned = commonCards.filter((c) => isCardDiscovered(state, c.id)).length;
+  // Bônus de DPS por COLEÇÃO (ver getCardCollectionDpsBonusPercent em
+  // systems/cards.js — 1%/carta de monstro, 5%/carta de boss, 5%/carta
+  // Deus, permanente por descoberta) — mostrado ao lado de cada contador,
+  // já quebrado por seção, pra ficar óbvio de onde cada parte do bônus vem.
+  const godDpsBonus = godOwned * 5;
+  const bossDpsBonus = bossOwned * 5;
+  const commonDpsBonus = commonOwned * 1;
+
+  const fragments = state.materials[CARD_FRAGMENT_ID] || 0;
+
+  container.innerHTML = `
+    ${pageBannerHtml('Cartas')}
+    <div class="card-fragment-total">${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
+    ${cardsSummaryHtml(state)}
+    <h3 class="cards-section-title">${CARD_ICON} Cartas Deus <span class="cards-collected">Colecionadas: ${godOwned}/${godCards.length}</span> <span class="cards-dps-bonus">+${godDpsBonus}% DPS</span></h3>
+    <div class="card-grid">${godCards.map((c) => cardTileHtml(state, c)).join('')}</div>
+    <h3 class="cards-section-title">${CARD_ICON} Cartas de Boss <span class="cards-collected">Colecionadas: ${bossOwned}/${bossCards.length}</span> <span class="cards-dps-bonus">+${bossDpsBonus}% DPS</span></h3>
+    <div class="card-grid">${bossCards.map((c) => cardTileHtml(state, c)).join('')}</div>
+    <h3 class="cards-section-title">${CARD_ICON} Cartas de Monstros <span class="cards-collected">Colecionadas: ${commonOwned}/${commonCards.length}</span> <span class="cards-dps-bonus">+${commonDpsBonus}% DPS</span></h3>
+    <div class="card-grid">${commonCards.map((c) => cardTileHtml(state, c)).join('')}</div>
+  `;
+  translateContainer(container);
+}
+
+// Nome legível de cada stat que aparece em bonuses de carta (ver
+// CARD_EFFECTS/GOD_CARDS em data/cards.js) — próprio da carta em vez de
+// reusar BONUS_STAT_LABEL (ui/render.js): aquele hardcoda o sinal "+" e
+// nunca precisou lidar com valor negativo (nenhum item tem), enquanto
+// várias cartas têm efeito colateral negativo (ex: -5% Velocidade de
+// Ataque) — cardBonusLineHtml abaixo trata o sinal certo pros dois casos.
+const CARD_DETAIL_BONUS_STAT_NAME = {
+  dpsPercent: 'DPS',
+  dpsFlat: 'DPS',
+  hpPercent: 'Vida',
+  hpFlat: 'Vida',
+  armorFlat: 'Armadura',
+  armorPercent: 'Armadura',
+  attackSpeedPercent: 'Velocidade de Ataque',
+  critChancePercent: 'Chance Crítica',
+  critDamagePercent: 'Dano Crítico',
+  danoFisicoPercent: 'Dano Físico',
+  danoPerfuracaoPercent: 'Dano Perfurante',
+  danoMagicoPercent: 'Dano Mágico',
+  dodgePercent: 'Esquiva',
+  petDamagePercent: 'Dano de Mascote',
+  goldPercent: 'Ouro',
+  dropPercent: 'Chance de Material',
+  forca: 'Força',
+  destreza: 'Destreza',
+  inteligencia: 'Inteligência',
+  lifestealFlat: 'Cura por Golpe',
+  doubleHitChance: 'Chance de Golpe Duplo',
+  reflectPercent: 'Reflete',
+};
+
+const CARD_DETAIL_BONUS_PERCENT_STATS = new Set([
+  'dpsPercent', 'hpPercent', 'armorPercent', 'attackSpeedPercent', 'critChancePercent', 'critDamagePercent',
+  'danoFisicoPercent', 'danoPerfuracaoPercent', 'danoMagicoPercent', 'dodgePercent', 'petDamagePercent',
+  'goldPercent', 'dropPercent', 'doubleHitChance', 'reflectPercent',
+]);
+
+function cardBonusLineHtml(bonus) {
+  const name = CARD_DETAIL_BONUS_STAT_NAME[bonus.stat] || bonus.stat;
+  const sign = bonus.value >= 0 ? '+' : '';
+  const value = CARD_DETAIL_BONUS_PERCENT_STATS.has(bonus.stat) ? `${bonus.value.toFixed(1)}%` : formatNumber(bonus.value);
+  return `${sign}${value} ${name}`;
+}
+
+// Um bônus por linha (pedido do usuário — antes vinha tudo numa frase só,
+// separada por vírgula, ver card.description/CARD_EFFECTS em
+// data/cards.js) — gerado direto de card.bonuses (a mesma lista que
+// stats.js já usa pra aplicar o efeito de verdade), não do texto cru, pra
+// nunca desalinhar do que a carta realmente concede. card.description
+// continua existindo como fallback só pro caso (hoje inexistente) de uma
+// carta sem nenhum bonus.
+function cardBonusListHtml(card) {
+  const lines = (card.bonuses || []).map(cardBonusLineHtml);
+  return lines.length ? lines.join('<br>') : card.description;
+}
+
+function cardDetailHtml(state, card) {
+  const discovered = isCardDiscovered(state, card.id);
+  const claimable = canClaimCardReward(state, card.id);
+  const claimed = isCardRewardClaimed(state, card.id);
+  // "Você tem" mostra o TOTAL (state.cards, o estoque solto, + cada cópia
+  // já socketada em algum item equipado, ver countEquippedCardCopies em
+  // systems/crafting.js) — sem isso, socketar uma cópia fazia a carta
+  // "sumir" da contagem, embora o jogador continue com ela (só que presa
+  // num item). Reciclar/craftar continuam usando só `owned` (o estoque
+  // solto), que é o que essas ações realmente consomem/produzem.
+  const owned = state.cards[card.id] || 0;
+  const totalOwned = owned + countEquippedCardCopies(state, card.id);
+
+  let actionHtml;
+  if (claimable) {
+    actionHtml = `<button class="modal-action-btn" data-claim-card="${card.id}">${GIFT_ICON} Resgatar +${CARD_DISCOVERY_CASH_REWARD} ${ESMERALDA_ICON} Esmeralda</button>`;
+  } else if (claimed) {
+    actionHtml = `<div class="card-detail-status">${GIFT_ICON} Recompensa já resgatada</div>`;
+  } else if (!discovered) {
+    // Carta Deus não dropa de monstro nenhum (ver GOD_CARDS em
+    // data/cards.js) — a explicação de "derrote o monstro dela" não faz
+    // sentido pra ela, só pras cartas de Boss/Monstro normais.
+    actionHtml = card.isGodCard
+      ? `<div class="card-detail-status">🔒 Ainda não obtida</div>`
+      : `<div class="card-detail-status">🔒 Ainda não obtida — derrote o monstro dela para ter uma chance de conseguir.</div>`;
+  } else {
+    actionHtml = '';
+  }
+
+  const fragments = state.materials[CARD_FRAGMENT_ID] || 0;
+  const recycleValue = getCardRecycleValue(card);
+  const craftCost = getCardCraftCost(card);
+  const canRecycle = canRecycleCard(state, card.id);
+  const canCraft = canCraftCard(state, card.id);
+
+  return `
+    <div class="card-detail ${discovered ? '' : 'undiscovered'}">
+      <div class="card-detail-image">${iconMarkup(card.image, card.emoji, card.name)}</div>
+      <div class="card-detail-info">
+        <div class="card-detail-name">${CARD_ICON} ${card.name}</div>
+        <div class="card-detail-desc">${cardBonusListHtml(card)}</div>
+        ${discovered ? `<div class="card-detail-owned">Você tem: ${formatNumber(totalOwned)}</div>` : ''}
+        ${actionHtml}
+        <div class="card-fragment-box">
+          <div class="card-fragment-count">${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
+          <div class="card-fragment-actions">
+            ${owned > 0 ? `<button class="modal-action-btn" data-recycle-card="${card.id}" ${canRecycle ? '' : 'disabled'}>♻️ Reciclar (+${recycleValue} ${CARD_FRAGMENT_ICON})</button>` : ''}
+            ${card.noCraft
+              ? `<div class="card-detail-status">${AWAKENING_SHARD_ICON} Só disponível na Loja do Despertar</div>`
+              : `<button class="modal-action-btn" data-craft-card="${card.id}" ${canCraft ? '' : 'disabled'}>🛠️ Craftar (${craftCost} ${CARD_FRAGMENT_ICON})</button>`}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function showCardDetailModal(state, cardId) {
+  const card = getCard(cardId);
+  if (!card) return;
+  // Sem título — showModal() usa textContent pro título (não innerHTML),
+  // então não dá pra passar markup <img> ali (era isso que deixava a tag
+  // <img...> aparecendo como texto puro no topo do popup). O nome +
+  // CARD_ICON já aparecem no corpo (ver card-detail-name em
+  // cardDetailHtml), mesmo padrão de showItemDetailModal/showPetDetailModal.
+  showModal('', cardDetailHtml(state, card));
+}
+
+// ---------------------------------------------------------------
+// Mascotes: chocam de ovo (achado em kills/eventos), causam um dano
+// elemental à parte do personagem (que agora é sempre Neutro — ver
+// systems/stats.js), até 4 equipados de uma vez (o jogo escolhe sozinho o
+// melhor contra o monstro atual, ver getBestEquippedPet em
+// systems/pets.js), e podem ser fundidos (2 iguais -> +1 nível, até +10).
+// ---------------------------------------------------------------
+
+function petSlotIconHtml(state, uid, slotIndex) {
+  const pet = uid ? getPetEntry(state, uid) : null;
+  const species = pet ? getPetSpecies(pet.speciesId) : null;
+  const rarity = pet ? getRarity(pet.rarityId) : null;
+  const rarityClass = rarity ? ' has-rarity' : '';
+  const rarityStyle = rarity ? ` style="--rarity-color:${rarity.color};"` : '';
+  return `<button class="equip-slot-icon ${pet ? 'filled' : 'empty'}${rarityClass}" data-pet-slot="${slotIndex}" title="Mascote ${slotIndex + 1}"${rarityStyle}>
+    <span class="icon">${species ? iconMarkup(species.image, species.emoji, species.name) : '🐾'}</span>
+    ${pet ? `<span class="mini-badge">+${pet.level}</span>` : ''}
+  </button>`;
+}
+
+function petTileHtml(state, pet) {
+  const species = getPetSpecies(pet.speciesId);
+  const rarity = getRarity(pet.rarityId);
+  const isEquipped = (state.equippedPetUids || []).includes(pet.uid);
+  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''}" style="--rarity-color:${rarity.color};" data-view-pet="${pet.uid}" title="${species.name}">
+    <span class="icon">${iconMarkup(species.image, species.emoji, species.name)}</span>
+    <span class="mini-badge">+${pet.level}</span>
+  </button>`;
+}
+
+/// Reordena só a EXIBIÇÃO da grade de mascotes — nunca muta state.pets (a
+/// ordem "real" ali continua sendo a de aquisição/fusão, o que importa pra
+/// getFusePartners/fuseAllPossiblePets não depender de exibição nenhuma).
+/// null/'none' = ordem original. 'level'/'rarity' descem (maior primeiro);
+/// 'element' agrupa pela ordem fixa de PET_ELEMENTS (fogo/planta/elétrico/
+/// água), com Tier crescente dentro de cada grupo pra ficar previsível.
+const PET_SORT_LABELS = { level: '🔼 Nível', rarity: '💠 Raridade', element: '🔥 Elemento' };
+
+function sortPetsForDisplay(pets, sortMode) {
+  if (!sortMode) return pets;
+  const withSpecies = pets.map((pet) => ({ pet, species: getPetSpecies(pet.speciesId) }));
+  if (sortMode === 'level') {
+    withSpecies.sort((a, b) => b.pet.level - a.pet.level);
+  } else if (sortMode === 'rarity') {
+    const rarityRank = (rarityId) => RARITIES.findIndex((r) => r.id === rarityId);
+    withSpecies.sort((a, b) => rarityRank(b.pet.rarityId) - rarityRank(a.pet.rarityId));
+  } else if (sortMode === 'element') {
+    const elementRank = (elementId) => PET_ELEMENTS.indexOf(elementId);
+    withSpecies.sort((a, b) => {
+      const elDiff = elementRank(a.species?.element) - elementRank(b.species?.element);
+      if (elDiff !== 0) return elDiff;
+      return (a.species?.tier || 0) - (b.species?.tier || 0);
+    });
+  }
+  return withSpecies.map((w) => w.pet);
+}
+
+function petSortRowHtml(sortMode) {
+  const chips = [{ id: null, label: '📋 Padrão' }, ...Object.entries(PET_SORT_LABELS).map(([id, label]) => ({ id, label }))];
+  return `<div class="element-filter-row pet-sort-row">${chips.map((c) => `
+    <button class="element-filter-btn pet-sort-btn ${sortMode === c.id ? 'active' : ''}" data-pet-sort="${c.id ?? ''}">${c.label}</button>
+  `).join('')}</div>`;
+}
+
+export function renderPetsTab(state, sortMode = null) {
+  const container = document.getElementById('tab-pets');
+  const equipRow = (state.equippedPetUids || []).map((uid, i) => petSlotIconHtml(state, uid, i)).join('');
+  const sortedPets = sortPetsForDisplay(state.pets, sortMode);
+  const petsHtml = state.pets.length
+    ? sortedPets.map((p) => petTileHtml(state, p)).join('')
+    : `<p class="empty-slot">Nenhum mascote ainda. Derrote monstros ou vença eventos pra achar ovos, depois choque na aba aqui em cima.</p>`;
+
+  const eggCount = state.eggCount || 0;
+  const vipActive = isVipActive(state);
+  const hatchAllTitle = vipActive
+    ? 'Escolhe sempre o mascote de maior raridade (e maior Tier no empate) de cada ovo, sem abrir o modal de escolha'
+    : 'Funcionalidade exclusiva de VIP (loja de Cash)';
+  container.innerHTML = `
+    ${pageBannerHtml('Mascotes')}
+    <div class="pets-egg-row">
+      <span class="pets-egg-count">${EGG_ICON} Ovos: <strong>${formatNumber(eggCount)}</strong></span>
+      <span class="pets-egg-count">${PET_FRAGMENT_ICON} Fragmentos: <strong>${formatNumber(state.petFragments || 0)}</strong></span>
+      <button class="pets-hatch-btn" data-hatch-egg-btn ${eggCount < 1 ? 'disabled' : ''}>Chocar Ovo</button>
+      <button class="pets-hatch-btn" data-hatch-all-btn ${canHatchAllEggs(state) ? '' : 'disabled'} title="${hatchAllTitle}">Chocar Todos (${formatNumber(eggCount)})</button>
+    </div>
+    <div class="equip-inventory-header">Equipados (até ${MAX_EQUIPPED_PETS}, 1 por elemento)</div>
+    <div class="pets-equip-row">${equipRow}</div>
+    <div class="equip-inventory-header-row">
+      <div class="equip-inventory-header">Inventário (${state.pets.length}/${getPetInventoryCap(state)})</div>
+      <button class="bulk-select-toggle-btn" data-fuse-all-btn title="Funde em cascata todo par de mascotes iguais (mesma espécie, raridade e nível) não equipado">${MERGE_ALL_ICON} Fundir Tudo</button>
+    </div>
+    ${petSortRowHtml(sortMode)}
+    <div class="equip-inventory-grid">${petsHtml}</div>
+  `;
+  translateContainer(container);
+}
+
+function fusePartnersHtml(state, uid) {
+  const partners = getFusePartners(state, uid);
+  if (!partners.length) {
+    return `<div class="card-slot-picker"><div class="card-slot-label">Nenhum outro mascote igual (mesma espécie, raridade e nível) disponível pra fundir.</div></div>`;
+  }
+  return `<div class="card-slot-picker">
+    <div class="card-slot-label">🌟 Escolha o parceiro pra fundir:</div>
+    <div class="card-slot-options">${partners.map((p) => {
+      const species = getPetSpecies(p.speciesId);
+      const rarity = getRarity(p.rarityId);
+      return `<button class="card-slot-option" data-fuse-base="${uid}" data-fuse-with="${p.uid}">${iconMarkup(species.image, species.emoji, species.name)} ${species.name} +${p.level} <span class="qty">${rarity.name}</span></button>`;
+    }).join('')}</div>
   </div>`;
 }
 
-// MONSTER_FAMILIES materials (lobo, javali etc.) are intentionally excluded
-// here — leftovers from the pre-boss-roster v1 that nothing can drop
-// anymore (see the comment atop MONSTER_FAMILIES in data/monsters.js).
-// The live roster (BOSSES + WEAK_MONSTER_GROUPS) is also filtered to
-// owned-only, so a material never spoils a boss/monster the player hasn't
-// reached yet.
-function materialsContentHtml(state) {
-  const ownedMaterials = BOSSES.flatMap((b) => [b.materials.primary1, b.materials.primary2, b.crystal])
-    .concat(WEAK_MONSTER_GROUPS.flatMap((g) => g.monsters).map((m) => m.material))
-    .filter((m) => (state.materials[m.id] || 0) > 0);
-
-  if (!ownedMaterials.length) {
-    return `<p style="color:var(--text-dim); font-size:13px;">Nenhum material coletado ainda. Derrote monstros para conseguir materiais de craft.</p>`;
-  }
-
-  return `<div class="material-grid">${ownedMaterials.map((m) => `
-    <div class="material-card">
-      <div class="icon">${iconMarkup(m.image, m.emoji, m.name)}</div>
-      <div class="name">${m.name}</div>
-      <div class="qty">${formatNumber(state.materials[m.id] || 0)}</div>
-    </div>`).join('')}</div>`;
+/// Barra de XP do pet + botão "Doar Fragmentos" — 2º caminho pra evoluir
+/// nível além de fundir (ver donatePetFragments em systems/pets.js). Some
+/// no nível máximo (não tem próximo nível pra progredir rumo a ele). O
+/// botão mostra exatamente quanto VAI ser doado agora — só o que falta pro
+/// próximo nível (nunca mais, mesmo com fragmento de sobra — ver
+/// petFragmentsToDonateNow).
+function petXpSectionHtml(state, pet, uid) {
+  if (pet.level >= PET_MAX_LEVEL) return '';
+  const xp = pet.xp || 0;
+  const xpNeeded = xpToNextPetLevel(pet);
+  const pct = xpNeeded > 0 ? Math.max(0, Math.min(100, (xp / xpNeeded) * 100)) : 0;
+  const toDonate = petFragmentsToDonateNow(state, uid);
+  const canDonate = canDonatePetFragments(state, uid);
+  return `
+    <div class="pet-xp-section">
+      <div class="pet-xp-label">${PET_FRAGMENT_ICON} XP: ${formatNumber(xp)} / ${formatNumber(xpNeeded)}</div>
+      <div class="pet-xp-bar-outer"><div class="pet-xp-bar-fill" style="width:${pct}%"></div></div>
+      <button class="modal-action-btn" data-donate-pet-fragments-uid="${uid}" ${canDonate ? '' : 'disabled'}>${PET_FRAGMENT_ICON} Doar Fragmentos (+${formatNumber(toDonate)})</button>
+    </div>
+  `;
 }
 
-// Cards drop rarely from any monster of their family (see systems/combat.js)
-// and just sit in this inventory for now — there's no socketing UI yet
-// (see data/cards.js), so this is purely a "what have I collected" view.
-function cardsContentHtml(state) {
-  const owned = CARDS.filter((c) => (state.cards[c.id] || 0) > 0);
+function petDetailHtml(state, uid, showFuseList) {
+  const pet = getPetEntry(state, uid);
+  const species = getPetSpecies(pet.speciesId);
+  const rarity = getRarity(pet.rarityId);
+  // Dano do pet agora é % do DPS do próprio caçador (ver getPetDamage em
+  // data/pets.js) — precisa do DPS atual pra mostrar um número de verdade
+  // aqui, não só a % crua.
+  const damage = getPetDamage(pet, computePlayerStats(state).dps);
+  const isEquipped = (state.equippedPetUids || []).includes(uid);
 
-  if (!owned.length) {
-    return `<p style="color:var(--text-dim); font-size:13px;">Nenhuma carta coletada ainda. Monstros têm uma pequena chance de dropar a carta deles ao morrer.</p>`;
-  }
+  const actionBtn = isEquipped
+    ? `<button class="modal-action-btn" data-unequip-pet-uid="${uid}">Desequipar</button>`
+    : canEquipPet(state, uid)
+      ? `<button class="modal-action-btn" data-equip-pet-uid="${uid}">Equipar</button>`
+      : `<button class="modal-action-btn" disabled title="Já tem um mascote de ${getElement(species.element).name} equipado — desequipe ele primeiro">🔒 Equipar</button>`;
 
-  return `<div class="material-grid">${owned.map((c) => `
-    <div class="material-card card-item">
-      <div class="icon">${c.emoji}</div>
-      <div class="name">${c.name}</div>
-      <div class="card-desc">${c.description}</div>
-      <div class="qty">${formatNumber(state.cards[c.id] || 0)}</div>
-    </div>`).join('')}</div>`;
+  const fuseSection = showFuseList
+    ? fusePartnersHtml(state, uid)
+    : pet.level < PET_MAX_LEVEL
+      ? `<button class="modal-action-btn" data-open-pet-fuse="${uid}">🌟 Fundir</button>`
+      : `<div class="enhance-maxed">✨ Nível máximo (+10)</div>`;
+
+  const dpsBonusPercent = getPetDpsBonusPercent(pet);
+  const xpSection = petXpSectionHtml(state, pet, uid);
+  const recycleBtn = canRecyclePet(state, uid)
+    ? `<button class="modal-action-btn destroy-btn" data-recycle-pet-uid="${uid}">♻️ Reciclar (+${formatNumber(getPetRecycleValue(pet))} ${PET_FRAGMENT_ICON})</button>`
+    : `<button class="modal-action-btn destroy-btn" disabled title="Mascote equipado não pode ser reciclado — desequipe ele primeiro">🔒 Reciclar</button>`;
+  return `
+    <div class="item-detail">
+      <div class="item-detail-tier-badge">Tier ${species.tier}</div>
+      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(species.image, species.emoji, species.name)}</div>
+      <div class="item-detail-name">${species.name} <span class="enhance-badge">+${pet.level}</span></div>
+      <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
+      <div class="item-detail-attribute" style="color:${getPetElementColor(species.element)}; font-weight:700; font-size:11.5px;">${elementBadgeHtml(species.element)} ${getElement(species.element).name}</div>
+      <div class="item-detail-stats">+${formatNumber(damage)} Dano ${getElement(species.element).name}</div>
+      <div class="item-detail-stats">+${dpsBonusPercent.toFixed(1)}% DPS do caçador (só enquanto ativo em combate)</div>
+      ${powerBadgeHtml(computePetPower(pet))}
+      ${xpSection}
+      ${fuseSection}
+      <div class="modal-action-row">
+        ${actionBtn}
+        ${recycleBtn}
+      </div>
+    </div>
+  `;
+}
+
+export function showPetDetailModal(state, uid, showFuseList = false) {
+  const pet = getPetEntry(state, uid);
+  if (!pet) return;
+  // Sem título — o nome do mascote já aparece uma vez, embaixo do ícone
+  // (ver item-detail-name em petDetailHtml), não precisa repetir aqui em
+  // cima (mesmo padrão do modal de item, ver showItemDetailModal).
+  showModal('', petDetailHtml(state, uid, showFuseList));
+}
+
+function hatchCandidateHtml(candidate, side, unlocked) {
+  const species = getPetSpecies(candidate.speciesId);
+  const rarity = getRarity(candidate.rarityId);
+  return `
+    <div class="hatch-candidate ${unlocked ? '' : 'locked'}">
+      <div class="item-detail-tier-badge">Tier ${species.tier}</div>
+      <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(species.image, species.emoji, species.name)}</div>
+      <div class="item-detail-name">${species.name}</div>
+      <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
+      ${unlocked
+        ? `<button class="modal-action-btn" data-hatch-choose="${side}">Escolher</button>`
+        : `<button class="modal-action-btn" disabled>🔒 VIP</button>`}
+    </div>
+  `;
+}
+
+/// Contador de pity (ver systems/pets.js MYTHIC_PITY_THRESHOLD/
+/// LEGENDARY_PITY_THRESHOLD) — mostra quantos chocos já passaram desde a
+/// última raridade daquele tipo, incluindo ESTE choco que está prestes a
+/// acontecer (por isso o +1: se faltasse 1 antes de abrir o modal, essa
+/// é a garantia batendo agora). Nunca passa de N/N — o pity garante que
+/// esse choco específico já sai na raridade quando o contador bateria o
+/// limite, então o rótulo mostra "garantido!" em vez de ultrapassar.
+function petPityRowHtml(state) {
+  const mythicSoFar = Math.min(MYTHIC_PITY_THRESHOLD, (state.petHatchesSinceMythic || 0) + 1);
+  const legendarySoFar = Math.min(LEGENDARY_PITY_THRESHOLD, (state.petHatchesSinceLegendary || 0) + 1);
+  const mythicLabel = mythicSoFar >= MYTHIC_PITY_THRESHOLD ? 'garantido!' : `${mythicSoFar}/${MYTHIC_PITY_THRESHOLD}`;
+  const legendaryLabel = legendarySoFar >= LEGENDARY_PITY_THRESHOLD ? 'garantido!' : `${legendarySoFar}/${LEGENDARY_PITY_THRESHOLD}`;
+  return `
+    <div class="pet-pity-row">
+      <span class="pet-pity-chip">💠 Lendário: <strong>${legendaryLabel}</strong></span>
+      <span class="pet-pity-chip">✨ Mítico: <strong>${mythicLabel}</strong></span>
+    </div>
+  `;
+}
+
+export function showHatchModal(state, candidates) {
+  const [left, right] = candidates;
+  const canRight = canChooseRightPet(state);
+  showModal('🥚 Ovo Chocado!', `
+    <p style="font-size:12px; color:var(--text-dim); text-align:center;">Escolha 1 dos 2 mascotes — o outro se perde.</p>
+    ${petPityRowHtml(state)}
+    <div class="hatch-choice-row">
+      ${hatchCandidateHtml(left, 'left', true)}
+      ${hatchCandidateHtml(right, 'right', canRight)}
+    </div>
+    ${!isVipActive(state) && canRight ? '<p class="hatch-free-note">✨ Escolha grátis do lado direito disponível hoje!</p>' : ''}
+    ${!isVipActive(state) && !canRight ? '<p class="hatch-free-note">🔒 O lado direito só com VIP (ou amanhã, na próxima escolha grátis).</p>' : ''}
+  `);
+}
+
+/// Um dos 3 candidatos rolados por rollAscensionCandidates (systems/
+/// crafting.js) — cada candidato é só um {stat, value} adicional ainda não
+/// commitado, formatado com o mesmo BONUS_STAT_LABEL usado no popup de
+/// detalhe do item (ver itemDetailStatsHtml acima).
+function ascensionCandidateHtml(uid, candidate, index) {
+  const line = BONUS_STAT_LABEL[candidate.stat] ? BONUS_STAT_LABEL[candidate.stat](candidate.value) : candidate.stat;
+  return `
+    <div class="ascension-candidate">
+      <div class="item-detail-icon">🌟</div>
+      <div class="item-detail-name" style="font-size:12.5px;">${line}</div>
+      <button class="modal-action-btn" data-ascend-choose="${uid}" data-ascend-choose-index="${index}">Escolher</button>
+    </div>
+  `;
+}
+
+/// Segundo passo da Ascensão (ver rollAscensionCandidates/finalizeAscension
+/// em systems/crafting.js): o item já rerolou baseStats pra magnitude da
+/// raridade seguinte, e 3 bônus adicionais candidatos já foram sorteados —
+/// falta só o jogador escolher 1 dos 3 pra virar o novo adicional (os que o
+/// item já tinha continuam intactos). `pending` é o objeto retornado por
+/// rollAscensionCandidates, guardado em main.js até o clique de escolha.
+export function showAscensionModal(state, uid, pending) {
+  const entry = state.inventory.find((i) => i.uid === uid);
+  if (!entry) return;
+  const item = getItem(entry.itemId);
+  const nextRarity = getRarity(pending.nextRarityId);
+  showModal('🌟 Ascensão!', `
+    <p style="font-size:12px; color:var(--text-dim); text-align:center;">
+      ${item.name} vai virar <span style="color:${nextRarity.color}; font-weight:800;">${nextRarity.name}</span>.
+      Escolha 1 dos 3 bônus abaixo — ele vira o novo adicional do item.
+    </p>
+    <div class="ascension-choice-row">
+      ${pending.candidates.map((c, i) => ascensionCandidateHtml(uid, c, i)).join('')}
+    </div>
+  `);
+}
+
+/// Mesma mecânica de showAscensionModal (rola 3, escolhe 1), pro reroll de
+/// bônus com Dado Místico — ver rollBonusReroll/finalizeBonusReroll em
+/// systems/crafting.js. `pending` é o retorno de rollBonusReroll, guardado
+/// em main.js até o clique de escolha (o Dado Místico já foi gasto na
+/// hora de rolar os 3, não aqui).
+function bonusRerollCandidateHtml(uid, candidate, index) {
+  const line = BONUS_STAT_LABEL[candidate.stat] ? BONUS_STAT_LABEL[candidate.stat](candidate.value) : candidate.stat;
+  return `
+    <div class="ascension-candidate">
+      <div class="item-detail-icon">${MYSTIC_DIE_EMOJI}</div>
+      <div class="item-detail-name" style="font-size:12.5px;">${line}</div>
+      <button class="modal-action-btn" data-reroll-bonus-choose="${uid}" data-reroll-bonus-choose-index="${index}">Escolher</button>
+    </div>
+  `;
+}
+
+export function showBonusRerollModal(state, uid, pending) {
+  const entry = state.inventory.find((i) => i.uid === uid);
+  if (!entry) return;
+  const item = getItem(entry.itemId);
+  const mysticDieCount = state.materials[MYSTIC_DIE_ID] || 0;
+  // Rerola de novo os 3 candidatos SEM fechar a tela (pedido explícito do
+  // usuário — antes só dava pra rerolar de novo fechando e reabrindo o
+  // detalhe do item). Gasta mais 1 Dado Místico, igual o botão original de
+  // rerolar (ver data-reroll-bonus-uid, systems/crafting.js
+  // rollBonusReroll) — desabilitado quando não sobra nenhum.
+  const rerollAgainBtn = `
+    <button class="modal-action-btn" data-reroll-bonus-again="${uid}" data-reroll-bonus-again-index="${pending.statIndex}"
+      ${mysticDieCount < 1 ? 'disabled' : ''}>
+      Trocar (${MYSTIC_DIE_EMOJI} ${mysticDieCount})
+    </button>
+  `;
+  // Sem emoji no título — showModal() define o título via textContent (não
+  // renderiza HTML), então o cabeçalho com o ícone de verdade do Dado
+  // Místico é montado à mão aqui (mesmo padrão do popup de Transcender).
+  showModal('', `
+    <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:6px;">
+      <img src="assets/ui/mystic-die.png" alt="Dado Místico" style="width:26px; height:26px;">
+      <span style="font-size:16px; font-weight:800; color:var(--gold-dark);">Reroll de Bônus</span>
+    </div>
+    <p style="font-size:12px; color:var(--text-dim); text-align:center;">
+      ${item.name} — escolha 1 dos 3 abaixo pra substituir o bônus.
+    </p>
+    <div class="ascension-choice-row">
+      ${pending.candidates.map((c, i) => bonusRerollCandidateHtml(uid, c, i)).join('')}
+    </div>
+    <div style="display:flex; justify-content:center; margin-top:10px;">
+      ${rerollAgainBtn}
+    </div>
+  `);
+}
+
+/// Mesma mecânica de showAscensionModal (rola 3, escolhe 1), pro fluxo de
+/// montar um item Tier God — ver rollGodBonusChoice/finalizeGodBonus em
+/// systems/godItems.js. `pending` é o retorno de rollGodBonusChoice,
+/// guardado em main.js até o clique de escolha.
+function godBonusCandidateHtml(uid, candidate, index) {
+  const line = BONUS_STAT_LABEL[candidate.stat] ? BONUS_STAT_LABEL[candidate.stat](candidate.value) : candidate.stat;
+  return `
+    <div class="ascension-candidate">
+      <div class="item-detail-icon">🌟</div>
+      <div class="item-detail-name" style="font-size:12.5px;">${line}</div>
+      <button class="modal-action-btn" data-god-bonus-choose="${uid}" data-god-bonus-choose-index="${index}">Escolher</button>
+    </div>
+  `;
+}
+
+export function showGodBonusModal(state, uid, pending) {
+  const entry = state.inventory.find((i) => i.uid === uid);
+  if (!entry) return;
+  const item = getItem(entry.itemId);
+  const bonusCount = entry.additionalStats?.length || 0;
+  showModal('✨ Item Tier God', `
+    <p style="font-size:12px; color:var(--text-dim); text-align:center;">
+      ${item.name} — bônus ${bonusCount + 1}/${GOD_BONUS_SLOTS}. Escolha 1 dos 3 abaixo.
+    </p>
+    <div class="ascension-choice-row">
+      ${pending.candidates.map((c, i) => godBonusCandidateHtml(uid, c, i)).join('')}
+    </div>
+  `);
 }
 
 function formatDuration(ms) {
@@ -623,154 +1985,235 @@ function formatDuration(ms) {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-// ---------------------------------------------------------------
-// Events tab: a list of independent, individually-collapsible events (same
-// collapse/expand treatment as the Forja boss groups). Each one owns its
-// own rotation clock (see data/events.js) — there is no shared "the event
-// tab" state anymore, just two unrelated event cards.
-//
-// "Caça Aprimorada" is the original rotating event boss, fought by
-// clicking only (see systems/events.js and main.js's onClickEventBoss for
-// why there's no passive-DPS tick here). `engagementRemainingMs` is owned
-// by main.js (a transient, un-persisted "time left in this attempt" clock,
-// same idea as the regular boss timer) — null means no attempt in progress.
-//
-// "Mercador" lets the player trade weak-monster materials 2-for-1 within
-// whichever WEAK_MONSTER_GROUPS band is currently up (see getTradeWindow).
-// `tradeFromMaterialId` is the material picked as the trade-in, also
-// main.js-owned transient UI state — null means nothing selected yet.
-// ---------------------------------------------------------------
+/// Igual formatDuration, mas em h/min em vez de min/s — usado pros bônus de
+/// anúncio (Turbo de DPS/Bônus Idle, ver adBonusesHtml) que somam até 2h,
+/// onde "120m 0s" seria estranho de ler.
+function formatHoursMinutes(ms) {
+  const totalMinutes = Math.max(0, Math.ceil(ms / 60000));
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return h > 0 ? `${h}h ${m}min` : `${m}min`;
+}
 
-function eventListItemHtml(id, icon, name, statusLine, expanded, bodyHtml) {
-  return `<div class="event-list-item">
-    <div class="family-group-header event-list-header" data-toggle-event="${id}">
-      <h3><span class="icon">${icon}</span> ${name} <span style="color:var(--text-dim); font-weight:400; font-size:11px;">${statusLine}</span></h3>
-      <button class="forge-toggle-btn" data-toggle-event="${id}">${expanded ? '▲ Recolher' : '▼ Expandir'}</button>
+// Banner art (assets/ui/events/banner-*.png) for the 2 remaining events —
+// same template for both (a big empty status box top-right, 3 empty
+// "RECOMPENSAS" squares bottom-left), positions measured directly off the
+// source art. Only up to 3 icons fit; fewer is fine (Expedição only shows 2).
+function eventBannerRewardIconsHtml(icons) {
+  return icons
+    .map((iconHtml, i) => `<div class="event-banner-reward-icon event-banner-reward-${i + 1}">${iconHtml}</div>`)
+    .join('');
+}
+
+// Combate Permanente (see data/arena.js ARENA_RANKS + systems/arena.js): a
+// training dummy that never fights back, on a fixed 30s clock — no per-cycle
+// window (the "Permanente" name is literal, see canEnterArena). The banner
+// just offers "Entrar" (when no run is active) plus a button opening the
+// full 35-rank reward list; the active fight renders in its own panel below,
+// showing the current rank name and a progress bar toward the next one
+// (filled by cumulative damage dealt, not HP draining down).
+function arenaBannerHtml(state) {
+  const now = Date.now();
+  const canEnter = canEnterArena(state, now);
+  const rewardIcons = eventBannerRewardIconsHtml([CARD_FRAGMENT_ICON, EVENT_ICON, EGG_ICON]);
+  let statusHtml;
+  if (state.arenaRunActive) {
+    statusHtml = `<div class="event-banner-status-value event-banner-status-value-solo">🔥 Em combate!</div>`;
+  } else if (canEnter) {
+    statusHtml = `<div class="event-banner-status-value event-banner-status-value-solo">Pronto!</div>`;
+  } else {
+    statusHtml = `<div class="event-banner-status-label">Disponível em:</div><div class="event-banner-status-value">${expeditionDurationLabel(arenaRemainingMs(state, now))}</div>`;
+  }
+  const enterBtnHtml = canEnter ? `<button class="event-banner-enter-btn" data-arena-enter aria-label="Entrar"></button>` : '';
+  return `<div class="event-card event-card-banner">
+    <div class="event-banner" style="background-image: url('assets/ui/events/banner-arena.png')">
+      <div class="event-banner-title">Combate Permanente</div>
+      <button class="event-banner-ranks-btn" data-arena-view-ranks aria-label="Ver Ranks e Recompensas" title="Ver Ranks e Recompensas">🏆</button>
+      ${rewardIcons}
+      <div class="event-banner-status-box">${statusHtml}</div>
+      ${enterBtnHtml}
     </div>
-    ${expanded ? `<div class="event-list-body">${bodyHtml}</div>` : ''}
   </div>`;
 }
 
-function cacaAprimoradaContentHtml(state, engagementRemainingMs) {
-  const win = getEventWindow();
-  const claimed = isEventClaimed(state, win.cycleIndex);
-
-  if (!win.active || claimed) {
-    // The *next* window's boss isn't win.boss (that's whoever is/was up
-    // this cycle) — it's whichever boss the next cycle index lands on.
-    const nextBoss = BOSSES[(win.cycleIndex + 1) % BOSSES.length];
-    const heading = claimed ? 'Evento concluído!' : 'Nenhum evento ativo agora';
-    const sub = claimed
-      ? 'Você já derrotou o chefe de evento deste ciclo.'
-      : 'Volte quando o próximo ciclo começar.';
-    return `
-      <div class="event-panel">
-        <div class="event-icon dim">🎪</div>
-        <h3>${heading}</h3>
-        <p class="event-sub">${sub}</p>
-        <p class="event-next">Próximo: ${iconMarkup(nextBoss.image, nextBoss.emoji, nextBoss.name)} <strong>${nextBoss.name}</strong> em <strong>${formatDuration(win.msUntilNextWindow)}</strong></p>
-      </div>`;
-  }
-
-  const maxHp = state.eventBossMaxHp ?? computeEventBossMaxHp(win.boss);
-  const hp = state.eventBossHp ?? maxHp;
-  const pct = maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 0;
-  const timerHtml = engagementRemainingMs != null
-    ? `<div class="event-countdown ${engagementRemainingMs <= 10000 ? 'urgent' : ''}">⏱ ${Math.ceil(engagementRemainingMs / 1000)}s para derrotar!</div>`
-    : `<div class="event-countdown hint">Clique para começar a atacar</div>`;
-
+function arenaFightPanelHtml(state, runRemainingMs) {
+  const damage = state.arenaDamageDealt || 0;
+  const currentRank = getArenaRankForDamage(damage);
+  const nextRank = getArenaRankByIndex(currentRank.index + 1);
+  const pct = nextRank
+    ? Math.max(0, Math.min(100, ((damage - currentRank.damageThreshold) / (nextRank.damageThreshold - currentRank.damageThreshold)) * 100))
+    : 100;
   return `
-    <div class="event-panel">
-      <div class="event-active-badge">🎪 Evento ativo — janela fecha em ${formatDuration(win.remainingActiveMs)}</div>
-      <h3>${win.boss.name} <span class="boss-tag">EVENTO</span> ${elementBadgeHtml(win.boss.element)}</h3>
-      <button id="event-boss-sprite" class="event-boss-sprite" title="Clique para atacar">${iconMarkup(win.boss.image, win.boss.emoji, win.boss.name)}</button>
-      <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">${formatNumber(hp)} / ${formatNumber(maxHp)}</span></div>
-      ${timerHtml}
-      <p class="event-reward-info">🎁 Recompensa ao derrotar: 1–6 materiais + 🎫 Moeda de Evento</p>
+    <p class="arena-fight-desc">Um monstro que não revida, cause o máximo de dano possível em 30 segundos, suba de rank e ganhe recompensas.</p>
+    <div class="event-card">
+      <div class="event-card-body">
+        <div class="event-panel arena-scene-panel" style="background-image: url('assets/ui/events/arena-scene.png')">
+          <div class="event-active-badge">⚔️ ${runRemainingMs != null ? formatDuration(runRemainingMs) : ''} restantes</div>
+          <h3>Aeternox</h3>
+          <div class="arena-monster-title">Colosso do Infinito</div>
+          <button id="arena-target-sprite" class="event-boss-sprite"><img src="assets/ui/events/arena-monster.png" alt="Aeternox"></button>
+          <div class="arena-rank-label" style="color: ${currentRank.color}">${currentRank.name}</div>
+          <div class="event-hp-bar-outer"><div class="event-hp-bar-fill" style="width:${pct}%"></div><span class="event-hp-bar-text">Dano causado: ${formatNumber(damage)}</span></div>
+        </div>
+      </div>
     </div>`;
 }
 
-function cacaAprimoradaStatusLine(state) {
-  const win = getEventWindow();
-  const claimed = isEventClaimed(state, win.cycleIndex);
-  if (win.active && !claimed) return '🎪 Ativo agora!';
-  if (claimed) return `✅ Concluído · próximo em ${formatDuration(win.msUntilNextWindow)}`;
-  return `Próximo em ${formatDuration(win.msUntilNextWindow)}`;
+function arenaRewardLineHtml(iconHtml, qty, label) {
+  return `<p class="offline-item-lines">+${formatNumber(qty)} ${iconHtml} ${label}</p>`;
 }
 
-function tradeMaterialCardHtml(state, group, mat, tradeFromMaterialId) {
-  const have = state.materials[mat.id] || 0;
-  const isFrom = tradeFromMaterialId === mat.id;
-  const canBeFrom = have >= TRADE_COST;
-
-  if (tradeFromMaterialId == null) {
-    return `<div class="material-card trade-card">
-      <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
-      <div class="name">${mat.name}</div>
-      <div class="qty">${formatNumber(have)}</div>
-      <button class="forge-toggle-btn" data-trade-select="${mat.id}" ${canBeFrom ? '' : 'disabled'}>Trocar</button>
-    </div>`;
-  }
-
-  if (isFrom) {
-    return `<div class="material-card trade-card selected">
-      <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
-      <div class="name">${mat.name}</div>
-      <div class="qty">${formatNumber(have)}</div>
-      <button class="forge-toggle-btn" data-trade-cancel>Cancelar</button>
-    </div>`;
-  }
-
-  return `<div class="material-card trade-card">
-    <div class="icon">${iconMarkup(mat.image, mat.emoji, mat.name)}</div>
-    <div class="name">${mat.name}</div>
-    <div class="qty">${formatNumber(have)}</div>
-    <button class="forge-toggle-btn" data-trade-target="${mat.id}">Receber (2→1)</button>
-  </div>`;
-}
-
-function mercadorContentHtml(state, tradeFromMaterialId) {
-  const trade = getTradeWindow();
-  const { group } = trade;
-  const fromMat = tradeFromMaterialId != null ? group.monsters.find((m) => m.material.id === tradeFromMaterialId)?.material : null;
-
-  const hint = tradeFromMaterialId == null
-    ? `<p class="event-sub">Escolha um material para trocar (${TRADE_COST} dele → ${TRADE_YIELD} de outro da mesma categoria).</p>`
-    : `<p class="event-sub">Trocando <strong>${TRADE_COST} ${fromMat?.name ?? ''}</strong> — escolha o material que vai receber.</p>`;
-
+function arenaRankRowHtml(rank) {
+  const { rewards } = rank;
   return `
-    <div class="event-panel">
-      <div class="event-active-badge">🧺 Categoria ativa: Estágio ${group.startStage}–${group.endStage} · rotaciona em ${formatDuration(trade.msUntilNextRotation)}</div>
-      ${hint}
-      <div class="material-grid">${group.monsters.map((m) => tradeMaterialCardHtml(state, group, m.material, tradeFromMaterialId)).join('')}</div>
-    </div>`;
+    <details class="arena-rank-row">
+      <summary><span class="arena-rank-name" style="color:${rank.color}">${rank.name}</span><span class="arena-rank-threshold">${formatNumber(rank.damageThreshold)} dano</span></summary>
+      <div class="arena-rank-rewards">
+        ${arenaRewardLineHtml(GOLD_ICON, rewards.gold, 'Ouro')}
+        ${rewards.eventCurrency > 0 ? arenaRewardLineHtml(EVENT_ICON, rewards.eventCurrency, 'Moeda de Evento') : ''}
+        ${rewards.eggs > 0 ? arenaRewardLineHtml(EGG_ICON, rewards.eggs, 'Ovo de Mascote') : ''}
+        ${rewards.materialsTotal > 0 ? arenaRewardLineHtml('📦', rewards.materialsTotal, 'Materiais de Monstros (várias zonas)') : ''}
+        ${rewards.cardFragments > 0 ? arenaRewardLineHtml(CARD_FRAGMENT_ICON, rewards.cardFragments, CARD_FRAGMENT_NAME) : ''}
+        ${rewards.mysticDice > 0 ? arenaRewardLineHtml(MYSTIC_DIE_EMOJI, rewards.mysticDice, MYSTIC_DIE_NAME) : ''}
+      </div>
+    </details>`;
 }
 
-function mercadorStatusLine() {
-  const trade = getTradeWindow();
-  return `Estágio ${trade.group.startStage}–${trade.group.endStage} · rotaciona em ${formatDuration(trade.msUntilNextRotation)}`;
+export function showArenaRanksModal() {
+  const rowsHtml = ARENA_RANKS.map(arenaRankRowHtml).join('');
+  showModal('🏆 Ranks do Combate Permanente', `
+    <p class="event-sub">Recompensa concedida ao final do combate, de acordo com o Rank alcançado pelo dano total causado. Toque num Rank pra ver a recompensa dele.</p>
+    <div class="arena-rank-list">${rowsHtml}</div>
+  `);
 }
 
-export function renderEventsTab(state, engagementRemainingMs, expandedEvents = new Set(), tradeFromMaterialId = null) {
-  const container = document.getElementById('tab-events');
-  container.innerHTML = `<div class="event-list">
-    ${eventListItemHtml('caca', '🎪', 'Caça Aprimorada', cacaAprimoradaStatusLine(state), expandedEvents.has('caca'), cacaAprimoradaContentHtml(state, engagementRemainingMs))}
-    ${eventListItemHtml('mercador', '🧺', 'Mercador', mercadorStatusLine(), expandedEvents.has('mercador'), mercadorContentHtml(state, tradeFromMaterialId))}
-  </div>`;
-}
-
-export function pulseEventBoss() {
-  const sprite = document.getElementById('event-boss-sprite');
+export function pulseArenaTarget() {
+  const sprite = document.getElementById('arena-target-sprite');
   if (!sprite) return;
   sprite.classList.remove('hit');
   void sprite.offsetWidth; // restart animation
   sprite.classList.add('hit');
 }
 
+// Expedição do Caçador (see data/events.js EXPEDITION_TIERS/EXPEDITION_REWARDS
+// + systems/expedition.js): no fight, no per-cycle window — 3 fixed duration
+// cards (1h/4h/8h), each with its own accent color. Entering grants the
+// reward immediately and arms a single cooldown shared across all 3 cards
+// (see canEnterExpedition), so while on cooldown every card shows the same
+// countdown instead of its own "Entrar" button.
+export function expeditionDurationLabel(ms) {
+  const totalMinutes = Math.max(0, Math.ceil(ms / 60000));
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${m}m`;
+}
+
+/// A 1ª linha (chance 1) é a garantida, sempre exibida sem %; as demais são
+/// bônus que SOMAM ao total quando o roll bate (ver rollExpeditionRewardRows)
+/// — mostradas como "+qty" com a % de chance ao lado.
+function expeditionRewardRowsHtml(rows, iconHtml) {
+  return rows.map((row, i) => {
+    const guaranteed = row.chance >= 1;
+    const qtyLabel = guaranteed ? `${formatNumber(row.qty)}` : `+${formatNumber(row.qty)}`;
+    const chanceLabel = `<span class="expedition-drop-chance">${Math.round(row.chance * 100)}%</span>`;
+    return `<div class="expedition-drop-row ${guaranteed ? 'guaranteed' : 'bonus'}">${chanceLabel}${iconHtml} ${qtyLabel}</div>`;
+  }).join('');
+}
+
+function expeditionCardHtml(state, tier, ready, remainingMs) {
+  const rewards = EXPEDITION_REWARDS[tier.id];
+  const xpReward = getExpeditionXpReward(state.hunterLevel || 1, tier.durationMs);
+  const btnHtml = ready
+    ? `<button class="expedition-enter-btn" style="--tier-color:${tier.color}" data-expedition-enter="${tier.id}">Entrar</button>`
+    : `<button class="expedition-enter-btn" disabled>${expeditionDurationLabel(remainingMs)} restantes</button>`;
+  return `
+    <div class="expedition-card" style="--tier-color:${tier.color}">
+      <div class="expedition-card-title">Expedição de ${tier.label}</div>
+      <div class="expedition-banner" style="background-image:url('${tier.image}')"></div>
+      ${btnHtml}
+      <div class="expedition-rewards">
+        <div>
+          <div class="expedition-reward-col-title">${GOLD_ICON} Ouro</div>
+          ${expeditionRewardRowsHtml(rewards.gold, GOLD_ICON)}
+        </div>
+        <div>
+          <div class="expedition-reward-col-title">${EVENT_ICON} Moeda de Evento</div>
+          ${expeditionRewardRowsHtml(rewards.currency, EVENT_ICON)}
+        </div>
+        <div>
+          <div class="expedition-reward-col-title">${EGG_ICON} Ovo de Mascote</div>
+          ${expeditionRewardRowsHtml(rewards.eggs, EGG_ICON)}
+        </div>
+        <div>
+          <div class="expedition-reward-col-title">✨ XP</div>
+          <div class="expedition-drop-row guaranteed">${formatNumber(xpReward)}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// A janela de status do banner encaixa perfeitamente o cooldown único e
+// compartilhado da Expedição (ver canEnterExpedition/expeditionRemainingMs
+// em systems/expedition.js) — mesmo padrão "Abre em:"/"Pronto!" que os
+// banners antigos já usavam. Quando pronto, o botão "Entrar" aparece
+// embaixo da caixa de status (mesma arte/posição do Combate Permanente) —
+// aqui ele não inicia nada sozinho, só abre/fecha os 3 cartões de duração
+// abaixo (ver expeditionCardsVisible em main.js), já que a ação de
+// verdade (escolher 1h/4h/8h) precisa de uma 2ª escolha.
+function expeditionBannerHtml(state) {
+  const now = Date.now();
+  const ready = canEnterExpedition(state, now);
+  const remainingMs = expeditionRemainingMs(state, now);
+  const rewardIcons = eventBannerRewardIconsHtml([EVENT_ICON, EGG_ICON, GOLD_ICON]);
+  const statusHtml = ready
+    ? `<div class="event-banner-status-value event-banner-status-value-solo">Pronto!</div>`
+    : `<div class="event-banner-status-label">Disponível em:</div><div class="event-banner-status-value">${expeditionDurationLabel(remainingMs)}</div>`;
+  const enterBtnHtml = ready ? `<button class="event-banner-enter-btn" data-expedition-banner-enter aria-label="Entrar"></button>` : '';
+  return `<div class="event-card event-card-banner">
+    <div class="event-banner" style="background-image: url('assets/ui/events/banner-expedicao.png')">
+      <div class="event-banner-title">Expedição do Caçador</div>
+      ${rewardIcons}
+      <div class="event-banner-status-box">${statusHtml}</div>
+      ${enterBtnHtml}
+    </div>
+  </div>`;
+}
+
+function expeditionSectionHtml(state, cardsVisible) {
+  const now = Date.now();
+  const ready = canEnterExpedition(state, now);
+  const remainingMs = expeditionRemainingMs(state, now);
+  const cardsHtml = cardsVisible
+    ? `
+      <div class="expedition-tier-grid">${EXPEDITION_TIERS.map((tier) => expeditionCardHtml(state, tier, ready, remainingMs)).join('')}</div>
+      <p class="expedition-note">Escolha 1 duração — a recompensa é concedida na hora, e as 3 ficam bloqueadas até o tempo escolhido passar. A linha garantida (sem %) sempre entra; as demais se somam quando o bônus bate.</p>
+    `
+    : '';
+  return `
+    <div class="expedition-section">
+      ${expeditionBannerHtml(state)}
+      ${cardsHtml}
+    </div>`;
+}
+
+export function renderEventsTab(state, arenaRunRemainingMs = null, expeditionCardsVisible = false) {
+  const container = document.getElementById('tab-events');
+  container.innerHTML = `
+    ${pageBannerHtml('Eventos')}
+    <div class="event-list">
+    ${arenaBannerHtml(state)}
+    ${state.arenaRunActive ? arenaFightPanelHtml(state, arenaRunRemainingMs) : ''}
+    ${expeditionSectionHtml(state, expeditionCardsVisible)}
+  </div>`;
+  translateContainer(container);
+}
+
 // ---------------------------------------------------------------
-// Achievements tab: the "earn Cash" side (achievement claims + the
-// simulated ad-watch reward), split out from the Shop, which is purely
-// "spend Cash / spend Event Currency" now.
+// Conquistas — aba própria dentro de "Outros" (antes vivia como uma
+// sub-aba da Loja). Claim de conquista + anúncio simulado pra Esmeralda
+// (ver wireAchievementsTabEvents em main.js).
 // ---------------------------------------------------------------
 
 export function renderAchievementsTab(state) {
@@ -779,101 +2222,1268 @@ export function renderAchievementsTab(state) {
   const adReady = cooldownMs <= 0;
 
   const achievementsHtml = ACHIEVEMENTS.map((a) => {
-    const claimed = isAchievementClaimed(state, a.id);
-    const ready = isAchievementReady(state, a);
-    const statusBtn = claimed
-      ? `<button disabled>Resgatado</button>`
-      : `<button data-claim-achievement="${a.id}" ${ready ? '' : 'disabled'}>💎 +${a.cashReward}</button>`;
-    return `<div class="achievement-card ${claimed ? 'claimed' : ''}">
+    // "daily_missions" fica com `stages` vazio até o sistema de Missões
+    // Diárias existir (ver data/achievements.js) — sem etapa nenhuma pra
+    // mostrar bolinha/botão, só um aviso de "em breve".
+    if (a.stages.length === 0) {
+      return `<div class="achievement-card achievement-pending">
+        <span class="icon">${a.emoji}</span>
+        <div class="info">
+          <div class="name">${a.name}</div>
+          <div class="desc">Em breve.</div>
+        </div>
+      </div>`;
+    }
+
+    const claimedCount = claimedStageCount(state, a.id);
+    const fullyClaimed = isAchievementFullyClaimed(state, a);
+    const target = currentStageTarget(state, a);
+    const ready = isAchievementStageReady(state, a);
+    const formatVal = a.formatProgress || ((v) => formatNumber(v));
+
+    const dotsHtml = a.stages.map((_, i) => {
+      const cls = i < claimedCount ? 'filled' : i === claimedCount ? 'current' : 'locked';
+      return `<span class="stage-dot ${cls}"></span>`;
+    }).join('');
+
+    const desc = fullyClaimed
+      ? 'Todas as etapas concluídas!'
+      : `${a.stageDescription(target)} <span class="achievement-progress">(${formatVal(a.progress(state))} / ${formatVal(target)})</span>`;
+
+    const statusBtn = fullyClaimed
+      ? `<button disabled>Completo</button>`
+      : `<button data-claim-achievement="${a.id}" ${ready ? '' : 'disabled'}>${ESMERALDA_ICON} +${ACHIEVEMENT_STAGE_CASH_REWARD}</button>`;
+
+    return `<div class="achievement-card ${fullyClaimed ? 'claimed' : ''}">
       <span class="icon">${a.emoji}</span>
       <div class="info">
         <div class="name">${a.name}</div>
-        <div class="desc">${a.description}</div>
+        <div class="desc">${desc}</div>
+        <div class="achievement-stage-dots">${dotsHtml}</div>
       </div>
       ${statusBtn}
     </div>`;
   }).join('');
 
   container.innerHTML = `
-    <div class="shop-balance">💎 Você tem <strong>${formatNumber(state.cash)}</strong> Cash</div>
+    ${pageBannerHtml('Conquistas')}
+    <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>
     <button id="watch-ad-btn" class="watch-ad-btn" ${adReady ? '' : 'disabled'}>
-      ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' 💎)' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
+      ${adReady ? '🎬 Assistir Anúncio (+' + AD_WATCH_CASH_REWARD + ' ' + ESMERALDA_ICON + ')' : `🎬 Anúncio disponível em ${formatDuration(cooldownMs)}`}
     </button>
     <div class="achievement-list">${achievementsHtml}</div>
   `;
+  translateContainer(container);
+}
+
+// ---------------------------------------------------------------
+// Missão Diária: aba "📋 Missão Diária" dentro do popup "Outros" (ver
+// systems/dailyMissions.js pro fluxo completo — seleção/desistência/
+// reroll/conclusão automática). 100% local (sem Supabase), 3 missões por
+// dia, só 1 pode estar "ativa" (contando progresso) por vez.
+// ---------------------------------------------------------------
+
+export function dailyMissionRewardLineHtml(reward) {
+  if (reward.type === 'card_fragment') return `${CARD_FRAGMENT_ICON} +${formatInteger(reward.amount)} Fragmento de Carta`;
+  if (reward.type === 'egg') return `${EGG_ICON} +${formatInteger(reward.amount)} Ovo de Mascote`;
+  if (reward.type === 'random_card') return `${CARD_ICON} 1 Carta Aleatória`;
+  if (reward.type === 'equipment') {
+    const rarity = getRarity(reward.minRarity);
+    return `🎁 ${reward.count}x Equipamento (${rarity.name}+)`;
+  }
+  return '';
+}
+
+function dailyMissionSlotHtml(slot, index, budgetUsed, anyActive) {
+  const type = getDailyMissionType(slot.typeId);
+  const tier = type.tiers[slot.tierIndex];
+  const target = tier.target;
+
+  if (slot.status === 'abandoned') {
+    return `<div class="achievement-card daily-mission-card abandoned">
+      <span class="icon">${type.emoji}</span>
+      <div class="info">
+        <div class="name">${type.name}</div>
+        <div class="desc">Desistiu dessa missão hoje.</div>
+      </div>
+    </div>`;
+  }
+
+  const completed = slot.status === 'completed';
+  const ready = slot.status === 'ready';
+  const active = slot.status === 'active';
+  // "idle" mas travada: já tem outra ativa, ou o dia já tem uma missão
+  // pronta/concluída (pedido do usuário: só 1 conclusão por dia) — não dá
+  // pra escolher nem sortear de novo até o reset.
+  const locked = !completed && !ready && !active && (budgetUsed || anyActive);
+
+  const progressHtml = active
+    ? `<div class="daily-mission-progress">${formatNumber(slot.progress)} / ${formatNumber(target)}</div>`
+    : '';
+  const statusTag = completed
+    ? `<div class="daily-mission-status">✅ Concluída</div>`
+    : ready
+      ? `<div class="daily-mission-status">🎁 Pronta pra resgatar!</div>`
+      : '';
+  const descHtml = `<div class="desc">${type.describe(target)}<br>${dailyMissionRewardLineHtml(tier.reward)}</div>`;
+
+  let actionHtml = '';
+  if (ready) {
+    actionHtml = `<button class="transcend-btn" data-mission-claim="${index}">🎁 Concluir Missão</button>`;
+  } else if (active) {
+    actionHtml = `<button data-mission-abandon="${index}">Desistir</button>`;
+  } else if (locked) {
+    actionHtml = `<button disabled>Bloqueada</button>`;
+  } else if (!completed) {
+    actionHtml = `
+      <div class="daily-mission-actions">
+        <button data-mission-select="${index}">Selecionar</button>
+        ${slot.rerollUsed ? '' : `<button class="daily-mission-reroll" data-mission-reroll="${index}" title="Trocar por outra missão aleatória (1x por dia)">${REFRESH_ICON}</button>`}
+      </div>`;
+  }
+
+  const cardClass = completed || ready ? 'completed' : active ? 'active' : locked ? 'locked' : '';
+
+  return `<div class="achievement-card daily-mission-card ${cardClass}">
+    <span class="icon">${type.emoji}</span>
+    <div class="info">
+      ${statusTag}
+      <div class="name">${type.name}</div>
+      ${descHtml}
+      ${progressHtml}
+    </div>
+    ${actionHtml}
+  </div>`;
+}
+
+let dailyMissionCountdownIntervalId = null;
+function tickDailyMissionCountdown() {
+  if (dailyMissionCountdownIntervalId) clearInterval(dailyMissionCountdownIntervalId);
+  const update = () => {
+    const el = document.getElementById('daily-mission-countdown');
+    if (!el) { clearInterval(dailyMissionCountdownIntervalId); dailyMissionCountdownIntervalId = null; return; }
+    el.textContent = formatHoursMinutes(msUntilNextDailyMissionReset());
+  };
+  update();
+  dailyMissionCountdownIntervalId = setInterval(update, 30000);
+}
+
+export function renderDailyMissionsTab(state) {
+  const container = document.getElementById('tab-daily-missions');
+  const slots = state.dailyMissions.slots;
+  const budgetUsed = slots.some((s) => s.status === 'ready' || s.status === 'completed');
+  const anyActive = slots.some((s) => s.status === 'active');
+  const slotsHtml = slots.map((slot, i) => dailyMissionSlotHtml(slot, i, budgetUsed, anyActive)).join('');
+
+  container.innerHTML = `
+    ${pageBannerHtml('Missão Diária')}
+    <p class="pvp-countdown">Reseta em <strong id="daily-mission-countdown"></strong></p>
+    ${budgetUsed ? '<p class="shop-note">Você já concluiu a missão hoje. Volte amanhã!</p>' : ''}
+    <div class="achievement-list">${slotsHtml}</div>
+  `;
+  translateContainer(container);
+  tickDailyMissionCountdown();
+}
+
+export function showDailyMissionCompleteModal(result) {
+  showModal('🎉 Missão Concluída!', `
+    <p class="offline-item-lines"><strong>${escapeHtml(result.missionName)}</strong></p>
+    <p class="offline-item-lines">${dailyMissionRewardLineHtml(result.reward)}</p>
+  `);
 }
 
 // ---------------------------------------------------------------
 // Shop tab: Cash sub-tab (spend on gold packs, plus a disabled real-money
-// package stub) and Event-currency sub-tab (per-boss Crystal/material
-// bundles). `activeSubTab` is owned by main.js.
+// package stub), Event-currency sub-tab (per-boss material bundles), e
+// Despertar. `activeSubTab` is owned by main.js.
 // ---------------------------------------------------------------
 
 export function renderShopTab(state, activeSubTab) {
   const container = document.getElementById('tab-shop');
+  let body;
+  if (activeSubTab === 'event') body = chestsShopHtml(state);
+  else if (activeSubTab === 'awakening') body = awakeningShopHtml(state);
+  else body = cashShopHtml(state);
+
   container.innerHTML = `
+    ${pageBannerHtml('Loja')}
     <div class="inner-subnav">
-      <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">💎 Cash</button>
-      <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">🎫 Moeda de Evento</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'cash' ? 'active' : ''}" data-shop-subtab="cash">${ESMERALDA_ICON} Esmeralda</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'event' ? 'active' : ''}" data-shop-subtab="event">🎁 Baús</button>
+      <button class="inner-subtab-btn ${activeSubTab === 'awakening' ? 'active' : ''}" data-shop-subtab="awakening">${AWAKENING_SHARD_ICON} Despertar</button>
     </div>
-    ${activeSubTab === 'event' ? eventShopHtml(state) : cashShopHtml(state)}
+    ${body}
   `;
+  translateContainer(container);
+}
+
+/// 2 bônus obtidos assistindo anúncio (sem gastar Esmeralda), cada um com
+/// até 4 cargas — ver data/shop.js DPS_BOOST_*/OFFLINE_BONUS_* e
+/// systems/shop.js watchDpsBoostAd/watchOfflineBonusAd. Renderizado dentro
+/// da aba Esmeralda da Loja (ver cashShopHtml).
+function adBonusesHtml(state) {
+  const dpsRemainingMs = getDpsBoostRemainingMs(state);
+  const dpsRemainingLabel = formatHoursMinutes(dpsRemainingMs);
+  const dpsReady = canWatchDpsBoostAd(state);
+  const dpsStatus = dpsRemainingMs > 0
+    ? `<div class="desc">⚡ +${DPS_BOOST_PERCENT}% de DPS ativo — restam ${dpsRemainingLabel}</div>`
+    : `<div class="desc">+${DPS_BOOST_PERCENT}% de DPS (fixo) por 30 min; assistir de novo estende o tempo, até ${DPS_BOOST_MAX_DURATION_MS / 3600000}h no total</div>`;
+  const dpsBtn = dpsReady
+    ? `<button data-watch-dps-ad>🎬 Assistir Anúncio</button>`
+    : `<button disabled title="Espere a última carga de 30min acabar pra liberar o próximo anúncio">🎬 Máximo (${dpsRemainingLabel})</button>`;
+
+  const offlineBonusSeconds = state.offlineBonusSeconds || 0;
+  const offlineStacks = Math.round(offlineBonusSeconds / OFFLINE_BONUS_SECONDS_PER_STACK);
+  const offlineReady = canWatchOfflineBonusAd(state);
+  const maxOfflineHoursNow = (getMaxOfflineSeconds(state) + offlineBonusSeconds) / 3600;
+  const offlineStatus = offlineBonusSeconds > 0
+    ? `<div class="desc">⏰ +${Math.round(offlineBonusSeconds / 60)}min guardado (${offlineStacks}/${OFFLINE_BONUS_MAX_STACKS}) — limite offline atual: ${maxOfflineHoursNow}h</div>`
+    : `<div class="desc">+30 min no limite da recompensa offline, empilha até ${OFFLINE_BONUS_MAX_STACKS}x (2h no total)</div>`;
+  const offlineBtn = offlineReady
+    ? `<button data-watch-offline-ad>🎬 Assistir Anúncio</button>`
+    : `<button disabled title="Espere a última carga de 30min acabar (ficando offline) pra liberar o próximo anúncio">🎬 Máximo (${offlineStacks}/${OFFLINE_BONUS_MAX_STACKS})</button>`;
+
+  return `
+    <div class="shop-item-card">
+      <span class="icon">⚡</span>
+      <div class="info">
+        <div class="name">Turbo de DPS</div>
+        ${dpsStatus}
+      </div>
+      ${dpsBtn}
+    </div>
+    <div class="shop-item-card">
+      <span class="icon">⏰</span>
+      <div class="info">
+        <div class="name">Bônus Idle</div>
+        ${offlineStatus}
+      </div>
+      ${offlineBtn}
+    </div>`;
 }
 
 function cashShopHtml(state) {
   const packagesHtml = CASH_REAL_MONEY_PACKAGES.map((p) => `
     <div class="cash-package-card disabled" title="Requer integração de pagamento — ainda não disponível">
-      <div class="icon">💎</div>
-      <div class="name">${p.cashAmount} Cash</div>
+      <div class="icon">${ESMERALDA_ICON}</div>
+      <div class="name">${p.cashAmount} Esmeralda</div>
       <div class="price">${p.priceLabel}</div>
       <button disabled>Em breve</button>
     </div>`).join('');
 
-  const shopItemsHtml = CASH_SHOP_ITEMS.map((item) => `
+  const oneTimeHtml = CASH_ONE_TIME_PURCHASES.map((item) => `
+    <div class="cash-package-card disabled" title="Requer integração de pagamento — ainda não disponível">
+      <div class="icon">${item.emoji}</div>
+      <div class="name">${item.name}</div>
+      <div class="price">${item.priceLabel}</div>
+      <button disabled>Em breve</button>
+    </div>`).join('');
+
+  const shopItemsHtml = CASH_SHOP_ITEMS.map((item) => {
+    // VIP é por tempo, não empilhável (ver systems/shop.js
+    // canBuyCashItem/buyCashItem) — o botão fica travado enquanto ainda
+    // está ativo, só volta a ficar comprável depois que os dias
+    // restantes zerarem e o VIP expirar de vez.
+    if (item.kind === 'vip') {
+      const vipActiveNow = isVipActive(state);
+      const vipStatus = vipActiveNow
+        ? `<div class="desc vip-days-left">👑 Ativo — expira em ${Math.max(1, Math.ceil((state.vipExpiresAt - Date.now()) / 86400000))} dia(s).</div>`
+        : `<div class="desc">${item.durationLabel}</div>`;
+      const buyBtn = vipActiveNow
+        ? `<button disabled title="Já é VIP — espere o contador zerar pra comprar de novo">👑 Ativo</button>`
+        : `<button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>`;
+      return `
+      <div class="shop-item-card">
+        <span class="icon">${item.emoji}</span>
+        <div class="info">
+          <div class="name">${item.name}</div>
+          ${vipStatus}
+          <button class="vip-benefits-btn" data-vip-benefits>Benefícios</button>
+        </div>
+        ${buyBtn}
+      </div>`;
+    }
+    return `
     <div class="shop-item-card">
       <span class="icon">${item.emoji}</span>
       <div class="info">
         <div class="name">${item.name}</div>
         <div class="desc">${item.description}</div>
       </div>
-      <button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>💎 ${item.cost}</button>
-    </div>`).join('');
-
-  return `
-    <div class="shop-balance">💎 Você tem <strong>${formatNumber(state.cash)}</strong> Cash</div>
-    <p class="shop-note">Ganhe Cash na aba 🏆 Conquistas.</p>
-
-    <h4 class="shop-section-title">Comprar com Cash</h4>
-    <div class="shop-item-grid">${shopItemsHtml}</div>
-
-    <h4 class="shop-section-title">Comprar Cash (dinheiro real)</h4>
-    <p class="shop-note">Ainda não disponível nesta versão — em breve.</p>
-    <div class="cash-package-grid">${packagesHtml}</div>
-  `;
-}
-
-function eventShopHtml(state) {
-  const bossesHtml = BOSSES.map((boss, tier) => {
-    const unlocked = state.maxStage >= boss.stage;
-    if (!unlocked) return '';
-    const items = eventShopItemsForBoss(boss, tier);
-    return `<div class="family-group">
-      <h3><span class="icon">${iconMarkup(boss.image, boss.emoji, boss.name)}</span> ${boss.name}</h3>
-      <div class="shop-item-grid">${items.map((item) => `
-        <div class="shop-item-card event-variant">
-          <span class="icon">${item.emoji}</span>
-          <div class="info">
-            <div class="name">${item.name}</div>
-          </div>
-          <button data-buy-event-mat="${item.matId}" data-buy-event-amount="${item.amount}" data-buy-event-cost="${item.cost}" ${canBuyEventItem(state, item) ? '' : 'disabled'}>🎫 ${item.cost}</button>
-        </div>`).join('')}</div>
+      <button data-buy-cash="${item.id}" ${canBuyCashItem(state, item.id) ? '' : 'disabled'}>${ESMERALDA_ICON} ${item.cost}</button>
     </div>`;
   }).join('');
 
   return `
-    <div class="shop-balance event-variant">🎫 Você tem <strong>${formatNumber(state.eventCurrency)}</strong> Moeda de Evento</div>
-    <p class="shop-note">Ganhe Moeda de Evento derrotando o chefe de evento na aba 🎪 Eventos.</p>
-    ${bossesHtml || '<p class="shop-note">Nenhum chefe desbloqueado ainda.</p>'}
+    <div class="shop-balance">${ESMERALDA_ICON} Você tem <strong>${formatNumber(state.cash)}</strong> Esmeralda</div>
+
+    <h4 class="shop-section-title">Bônus (assistir anúncio)</h4>
+    <div class="shop-item-grid">${adBonusesHtml(state)}</div>
+
+    <h4 class="shop-section-title">Comprar com Esmeralda</h4>
+    <div class="shop-item-grid">${shopItemsHtml}</div>
+
+    <h4 class="shop-section-title">Comprar Esmeralda (dinheiro real)</h4>
+    <p class="shop-note">Ainda não disponível nesta versão — em breve.</p>
+    <div class="cash-package-grid">${packagesHtml}</div>
+
+    <h4 class="shop-section-title">Outras compras</h4>
+    <p class="shop-note">Ainda não disponível nesta versão — em breve.</p>
+    <div class="cash-package-grid">${oneTimeHtml}</div>
+  `;
+}
+
+export function showVipBenefitsModal() {
+  const vipItem = CASH_SHOP_ITEMS.find((i) => i.kind === 'vip');
+  const linesHtml = vipItem.benefits.map((b) => `<p class="vip-benefit-line">✅ ${b}</p>`).join('');
+  showModal('👑 Benefícios do VIP', linesHtml);
+}
+
+// ---------------------------------------------------------------
+// Despertar: 2 lugares separados agora —
+// 1) aba "🌌 Transcender", dentro do popup "Outros" (ver renderTranscendTab
+//    abaixo, chamada de main.js) — status/botão do Transcender em si.
+// 2) aba "🌌 Despertar" dentro da Loja (ver awakeningShopHtml) — só a Loja
+//    do Despertar, onde o Fragmento do Despertar acumulado compra os itens
+//    de data/awakening.js AWAKENING_SHOP_ITEMS.
+// ---------------------------------------------------------------
+
+export function renderTranscendTab(state) {
+  const container = document.getElementById('tab-transcend');
+  const count = getTranscendCount(state);
+  // Sempre visível, mesmo em 0% (antes do 1º Transcender) — o jogador vê
+  // de cara que esse bônus existe e vai crescer a cada Transcender (ver
+  // getTranscendXpBonusPercent em systems/leveling.js).
+  const xpBonusLine = `<p class="shop-note">Bônus de Exp: +${formatNumber(getTranscendXpBonusPercent(state))}%</p>`;
+  const hpDpsBonusPercent = count * TRANSCEND_HP_DPS_BONUS_PERCENT_PER_COUNT;
+  const hpDpsBonusLine = `<p class="shop-note">Bônus de Vida/DPS: +${formatNumber(hpDpsBonusPercent)}%</p>`;
+  const countLine = count > 0
+    ? `<p class="shop-note">Você já Transcendeu ${count}x.</p>`
+    : '';
+
+  const statusHtml = canTranscend(state)
+    ? `
+      <div class="transcend-status-card ready">
+        <div class="name">${TRANSCEND_ICON} Transcender está disponível!</div>
+        <p class="shop-note">Reinicie sua jornada e ganhe +1 ${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME}.</p>
+        <button class="transcend-btn" data-open-transcend-confirm>${TRANSCEND_ICON} Transcender</button>
+      </div>
+      ${countLine}
+      ${xpBonusLine}
+      ${hpDpsBonusLine}`
+    : `
+      <div class="transcend-status-card locked">
+        <div class="name">${TRANSCEND_ICON} Transcender</div>
+        <p class="shop-note">Derrote o chefe da última zona (Malgorath) pela 1ª vez pra liberar.</p>
+      </div>
+      ${countLine}
+      ${xpBonusLine}
+      ${hpDpsBonusLine}`;
+
+  container.innerHTML = `
+    ${pageBannerHtml('Transcender')}
+    ${statusHtml}
+    <div class="shop-balance">${AWAKENING_SHARD_ICON} Você tem <strong>${formatNumber(getAwakeningShards(state))}</strong> ${AWAKENING_SHARD_NAME}</div>
+    <p class="shop-note">Ao transcender, recebe 1 ${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME}.</p>
+    ${transcendResetInfoHtml()}
+  `;
+  translateContainer(container);
+}
+
+/// Lista o que reseta (esquerda) vs o que se mantém (direita) ao
+/// Transcender — mesma divisão de showTranscendConfirmModal acima, mas
+/// sempre visível na aba (não só na hora de confirmar). Ver PRESERVED_KEYS
+/// em systems/awakening.js pra fonte-da-verdade do que sobrevive.
+function transcendResetInfoHtml() {
+  const resetItems = [
+    'Nível',
+    'Ouro',
+    'Materiais',
+    'Equipamentos',
+    'Mascotes',
+    'Habilidades',
+    'Moeda de Evento',
+  ];
+  const keepItems = [
+    'Cartas',
+    'Itens do Despertar',
+    'Esmeralda',
+    'VIP',
+    'Conquistas',
+    'Fragmento do Despertar',
+  ];
+  const listHtml = (items) => `<ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul>`;
+  return `
+    <div class="transcend-reset-info">
+      <div class="transcend-reset-col">
+        <div class="transcend-reset-col-title">❌ Reseta</div>
+        ${listHtml(resetItems)}
+      </div>
+      <div class="transcend-reset-col">
+        <div class="transcend-reset-col-title">✅ Mantém</div>
+        ${listHtml(keepItems)}
+      </div>
+    </div>`;
+}
+
+// Item Tier God: sem botão de compra direto no card (diferente da carta
+// Supremo) — clicar abre a janela de "especificações" primeiro
+// (showGodItemShopDetailModal abaixo), pedido explícito do usuário.
+function godShopItemCardHtml(shopItem) {
+  const item = getItem(shopItem.itemId);
+  // Clicar na imagem OU no botão abre a mesma janela de especificações
+  // (showGodItemShopDetailModal) — a compra em si só é confirmada lá
+  // dentro, nunca direto na vitrine (pedido do usuário). O card em si não
+  // é mais um <button> (só o "Comprar" é) pra não aninhar botão dentro de
+  // botão; clicar em qualquer ponto do card ainda funciona porque
+  // data-open-god-item está tanto no card quanto no botão, e o clique
+  // borbulha até o primeiro ancestral com o atributo (ver wireShopTabEvents
+  // em main.js).
+  return `
+    <div class="shop-item-card god-shop-item" data-open-god-item="${shopItem.id}" style="cursor:pointer;">
+      <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
+      <div class="info">
+        <div class="name">${item.name}</div>
+      </div>
+      <button data-open-god-item="${shopItem.id}">${AWAKENING_SHARD_ICON} ${shopItem.cost}</button>
+    </div>`;
+}
+
+// Carta da Loja do Despertar (ver GOD_CARD_SHOP_ITEMS em data/awakening.js):
+// mesmo padrão dos itens Tier God — clicar na imagem OU no botão só abre a
+// janela de especificações (showCardShopDetailModal abaixo); a compra em
+// si só é confirmada lá dentro, nunca direto na vitrine.
+function cardShopItemCardHtml(item) {
+  const icon = item.image ? iconMarkup(item.image, item.emoji, item.name) : item.emoji;
+  return `
+    <div class="shop-item-card god-shop-item" data-open-card-shop-item="${item.id}" style="cursor:pointer;">
+      <span class="icon">${icon}</span>
+      <div class="info">
+        <div class="name">${item.name}</div>
+      </div>
+      <button data-open-card-shop-item="${item.id}">${AWAKENING_SHARD_ICON} ${item.cost}</button>
+    </div>`;
+}
+
+function awakeningShopItemCardHtml(state, item) {
+  if (item.kind === 'god_item') return godShopItemCardHtml(item);
+  if (item.kind === 'card') return cardShopItemCardHtml(item);
+  const affordable = canBuyAwakeningItem(state, item.id);
+  return `
+    <div class="shop-item-card">
+      <span class="icon">${item.emoji}</span>
+      <div class="info">
+        <div class="name">${item.name}</div>
+        <div class="desc">${item.description}</div>
+      </div>
+      <button data-buy-awakening="${item.id}" ${affordable ? '' : 'disabled'}>${AWAKENING_SHARD_ICON} ${item.cost}</button>
+    </div>`;
+}
+
+/// Janela de "especificações" aberta ao clicar numa carta da Loja do
+/// Despertar (ver cardShopItemCardHtml acima) — mesmo padrão de
+/// showGodItemShopDetailModal (arma/item Tier God): mostra a arte real,
+/// nome, descrição/efeito e o botão de confirmar a compra.
+export function showCardShopDetailModal(state, shopItemId) {
+  const shopItem = AWAKENING_SHOP_ITEMS.find((i) => i.id === shopItemId);
+  if (!shopItem) return;
+  const affordable = canBuyAwakeningItem(state, shopItemId);
+  const icon = shopItem.image ? iconMarkup(shopItem.image, shopItem.emoji, shopItem.name) : shopItem.emoji;
+  const card = shopItem.cardId ? getCard(shopItem.cardId) : null;
+  showModal('', `
+    <div class="item-detail">
+      <div class="item-detail-icon item-detail-icon-lg">${icon}</div>
+      <div class="item-detail-name">${CARD_ICON} ${shopItem.name}</div>
+      <div class="item-detail-stats">${card ? cardBonusListHtml(card) : shopItem.description}</div>
+      <div class="modal-action-row">
+        <button class="modal-action-btn" data-buy-awakening="${shopItemId}" ${affordable ? '' : 'disabled'}>${AWAKENING_SHARD_ICON} Comprar por ${shopItem.cost}</button>
+      </div>
+    </div>
+  `);
+}
+
+/// Janela de "especificações" aberta ao clicar num item Tier God na Loja
+/// do Despertar (ver godShopItemCardHtml acima) — mostra o atributo base
+/// (já definido pras armas, "a escolher" pras demais categorias) + quantos
+/// bônus o item vai ter (+8 pra arma, já contando a base; +9 pras demais,
+/// já que a base entra como o 1º bônus escolhido — ver GOD_ITEMS em
+/// data/items.js), os 2 slots de carta vazios, e o botão de confirmar a
+/// compra por Fragmento do Despertar.
+export function showGodItemShopDetailModal(state, shopItemId) {
+  const shopItem = AWAKENING_SHOP_ITEMS.find((i) => i.id === shopItemId);
+  if (!shopItem) return;
+  const item = getItem(shopItem.itemId);
+  const isWeapon = !!item.attribute;
+  const baseLine = isWeapon
+    ? ATTRIBUTE_STAT_LABEL[item.attribute](godAttributeBaseValue(item.category))
+    : '<span style="color:var(--text-dim);">Atributo base: escolhido após a compra</span>';
+  const bonusLine = isWeapon ? '+8 Bônus (escolhidos após a compra)' : '+9 Bônus (escolhidos após a compra)';
+  const affordable = canBuyAwakeningItem(state, shopItemId);
+  const cardSlotsHtml = Array.from({ length: 2 }, () => `
+    <div class="card-slot-badge">
+      <span class="icon">${CARD_ICON}</span>
+      <div class="card-slot-info"><div class="card-slot-name">Slot de Carta: vazio</div></div>
+    </div>`).join('');
+
+  showModal('', `
+    <div class="item-detail">
+      <div class="item-detail-tier-badge">Tier God</div>
+      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${GOD_RARITY.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-name">${item.name}</div>
+      <div class="item-detail-rarity" style="color:${GOD_RARITY.color}; font-weight:800; font-size:12px;">${GOD_RARITY.name}</div>
+      <div class="item-detail-stats">${baseLine}<br><span style="color:var(--text-dim);">${bonusLine}</span></div>
+      ${cardSlotsHtml}
+      <div class="modal-action-row">
+        <button class="modal-action-btn" data-buy-awakening="${shopItemId}" ${affordable ? '' : 'disabled'}>${AWAKENING_SHARD_ICON} Comprar por ${shopItem.cost}</button>
+      </div>
+    </div>
+  `);
+}
+
+function awakeningShopHtml(state) {
+  const itemsHtml = AWAKENING_SHOP_ITEMS.map((item) => awakeningShopItemCardHtml(state, item)).join('');
+
+  return `
+    <div class="shop-balance">${AWAKENING_SHARD_ICON} Você tem <strong>${formatNumber(getAwakeningShards(state))}</strong> ${AWAKENING_SHARD_NAME}</div>
+    <p class="shop-note">Ganhe ${AWAKENING_SHARD_NAME} na aba ${TRANSCEND_ICON} Transcender (dentro de Outros).</p>
+
+    <h4 class="shop-section-title">Loja do Despertar</h4>
+    <div class="shop-item-grid">${itemsHtml}</div>
+  `;
+}
+
+export function showTranscendConfirmModal(state) {
+  // Título com o próprio ícone de Transcender (assets/ui/nav/transcender.png)
+  // em vez do emoji 🌌 — showModal() define o título via textContent, que
+  // não renderiza HTML, então o cabeçalho é montado à mão aqui dentro do
+  // corpo do modal (mesmo padrão do popup de item Tier God acima).
+  showModal('', `
+    <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px;">
+      <img class="currency-icon-lg" src="assets/ui/nav/transcender.png" alt="Transcender">
+      <span style="font-size:18px; font-weight:800; color:var(--gold-dark);">Transcender</span>
+    </div>
+    <div style="text-align:left;">
+      <p>Isso vai reiniciar sua jornada quase do zero:</p>
+      <p class="offline-item-lines">❌ Nível, ouro, materiais, equipamentos, inventário<br>
+         ❌ Mascotes, habilidades, eventos</p>
+      <p class="offline-item-lines">✅ Cartas descobertas<br>
+         ✅ Itens do Despertar<br>
+         ✅ Esmeralda, VIP, Conquistas, Perfil<br>
+         ✅ +1 ${AWAKENING_SHARD_ICON} ${AWAKENING_SHARD_NAME}</p>
+    </div>
+    <button class="transcend-btn" data-confirm-transcend>${TRANSCEND_ICON} Confirmar Transcendência</button>
+  `);
+}
+
+// ---------------------------------------------------------------
+// Arena: aba "🏟️ Arena", dentro do popup "Outros". Diferente de
+// todo resto do jogo, os dados aqui NÃO vêm de `state` (o save local) — vêm
+// do Supabase (ver systems/pvp.js), cacheados em memória por main.js
+// (pvpData) porque buscar é assíncrono e o resto do jogo renderiza tudo
+// síncrono. `pvp` é esse cache: { myProfile, board, loading, attackingId }
+// — `board` é o retorno de fetchTierBoard(tier): todo jogador de verdade
+// daquele tier + os bots ainda visíveis, já ordenado por posição (ver
+// pvp_tier_board em supabase/migrations/0002_pvp_tiers.sql). É a MESMA
+// lista pro ranking e pra escolher quem atacar — o tier é o pool inteiro.
+// ---------------------------------------------------------------
+
+function pvpProfileIconHtml(iconId) {
+  const icon = getProfileIcon(iconId);
+  return `<span class="icon">${iconMarkup(icon.image, '', icon.name)}</span>`;
+}
+
+/// Nick colorido (efeito arco-íris animado, ver .vip-nick no CSS) pra
+/// jogadores VIP — pedido do usuário, usado em toda tela que mostra nick
+/// de alguém (board da Arena, janela de Combate, resultado de luta,
+/// página Ranks, Perfil). `isVip` vem de is_vip (ver
+/// 0015_pvp_vip_nick.sql), ou localmente via isVipActive(state) pro
+/// próprio jogador quando o nick ainda não veio de nenhuma linha do
+/// servidor.
+function nickHtml(nick, isVip) {
+  const safe = escapeHtml(nick);
+  return isVip ? `<span class="vip-nick">${safe}</span>` : safe;
+}
+
+function pvpEntriesLabel(myProfile) {
+  const { current, msUntilNext } = projectPvpEntries(myProfile.pvp_entries, myProfile.pvp_entries_updated_at);
+  return msUntilNext == null
+    ? `${current}/${PVP_MAX_ENTRIES} (cheio)`
+    : `${current}/${PVP_MAX_ENTRIES} (próxima em ${formatHoursMinutes(msUntilNext)})`;
+}
+
+function pvpMyStatusHtml(myProfile, tierInfo) {
+  const scoreLine = tierInfo.hiddenScore
+    ? 'Pontuação oculta nesse tier — só a posição conta.'
+    : `${RATING_ICON} ${formatInteger(myProfile.rating)} pontos`;
+  return `
+    <div class="achievement-card">
+      ${pvpProfileIconHtml(myProfile.icon_id)}
+      <div class="info">
+        <div class="name">${nickHtml(myProfile.nick, myProfile.is_vip)} · ${tierInfo.icon} ${tierInfo.label}</div>
+        <div class="desc">Nível ${formatNumber(myProfile.hunter_level)} · ${scoreLine} · ${WINS_ICON} ${formatInteger(myProfile.wins || 0)} vitórias</div>
+        <div class="desc">${PVP_TICKET_ICON} Entradas: ${pvpEntriesLabel(myProfile)}</div>
+      </div>
+    </div>`;
+}
+
+function pvpBoardRowHtml(pvp, tierInfo, row) {
+  const isSelf = !row.is_bot && pvp.myProfile && row.entity_id === pvp.myProfile.id;
+  const scoreLabel = tierInfo.hiddenScore ? '' : ` · ${RATING_ICON} ${formatInteger(row.rating)}`;
+  const levelLabel = row.is_bot ? 'Bot' : `${RANK_LEVEL_ICON} ${formatNumber(row.hunter_level)}`;
+  const winsLabel = row.is_bot ? '' : ` · ${WINS_ICON} ${formatInteger(row.wins || 0)}`;
+  const powerLabel = ` · ${POWER_ICON} ${formatInteger(row.power || 0)}`;
+  // Prévia da recompensa diária (ver previewDailyArenaReward em
+  // systems/pvp.js) — só faz sentido pra jogador de verdade, bot nunca
+  // recebe nada (real_rank vem null da RPC pra linha de bot).
+  const reward = row.is_bot ? null : previewDailyArenaReward(pvp.myProfile?.tier, row.real_rank, row.real_player_count);
+  const rewardLabel = reward
+    ? `<div class="desc pvp-reward-preview">${CARD_FRAGMENT_ICON} ${formatInteger(reward.cardFragment)} · ${PET_FRAGMENT_ICON} ${formatInteger(reward.petFragment)}</div>`
+    : '';
+  return `
+    <div class="achievement-card ${isSelf ? 'pvp-self-row' : ''}">
+      <span class="pvp-rank">#${row.position}</span>
+      ${pvpProfileIconHtml(row.icon_id)}
+      <div class="info">
+        <div class="name">${nickHtml(row.nick, row.is_vip)}</div>
+        <div class="desc">${levelLabel}${scoreLabel}${winsLabel}${powerLabel}</div>
+        ${rewardLabel}
+      </div>
+      ${isSelf ? '<span class="pvp-self-tag">Você</span>' : ''}
+    </div>`;
+}
+
+export function renderPvpTab(state, pvp) {
+  const container = document.getElementById('tab-pvp');
+  const myProfile = pvp.myProfile;
+  const tierInfo = getPvpTierInfo(myProfile?.tier);
+
+  const connectHtml = myProfile
+    ? pvpMyStatusHtml(myProfile, tierInfo)
+    : `<p class="shop-note">${pvp.loading ? 'Conectando à Arena...' : 'Conecte-se pra sincronizar suas stats e desafiar outros jogadores.'}</p>`;
+
+  const boardHtml = pvp.board.length
+    ? pvp.board.map((row) => pvpBoardRowHtml(pvp, tierInfo, row)).join('')
+    : `<p class="shop-note">${myProfile ? 'Ninguém nesse tier ainda — sincronize de novo em instantes.' : ''}</p>`;
+
+  const combatBtn = myProfile
+    ? `<button class="transcend-btn" data-pvp-open-combat>${COMBAT_ICON} Combate</button>`
+    : '';
+
+  // Contador regressivo até a recompensa diária (21h de Brasília) — só
+  // faz sentido mostrar depois de conectado (precisa saber o tier/grupo
+  // do jogador pra sequer ter uma lista pra premiar).
+  const countdownHtml = myProfile
+    ? `<p class="pvp-countdown">Recompensa diária em <strong id="pvp-daily-countdown"></strong></p>`
+    : '';
+
+  container.innerHTML = `
+    ${pageBannerHtml('Arena')}
+    ${connectHtml}
+    <button class="transcend-btn" data-pvp-refresh ${pvp.loading ? 'disabled' : ''}>${REFRESH_ICON} ${myProfile ? 'Sincronizar Stats' : 'Conectar à Arena'}</button>
+    ${combatBtn}
+    ${countdownHtml}
+
+    <h4 class="shop-section-title">${tierInfo.icon} Tier ${tierInfo.label}</h4>
+    <div class="achievement-list">${boardHtml}</div>
+  `;
+  translateContainer(container);
+  if (myProfile) tickPvpDailyCountdown();
+}
+
+let pvpDailyCountdownIntervalId = null;
+function tickPvpDailyCountdown() {
+  if (pvpDailyCountdownIntervalId) clearInterval(pvpDailyCountdownIntervalId);
+  const update = () => {
+    const el = document.getElementById('pvp-daily-countdown');
+    if (!el) { clearInterval(pvpDailyCountdownIntervalId); pvpDailyCountdownIntervalId = null; return; }
+    el.textContent = formatHoursMinutes(msUntilNextDailyArenaReset());
+  };
+  update();
+  pvpDailyCountdownIntervalId = setInterval(update, 30000);
+}
+
+/// Corpo da janela de "Combate" (ver js/main.js openPvpCombatPicker) — até
+/// 5 oponentes sorteados perto da posição do jogador, cada um com botão de
+/// "Atacar" próprio (delegado no #modal-overlay, ver wireModalEvents em
+/// main.js — os botões aqui são os MESMOS data-pvp-attack/data-pvp-attack-bot
+/// de antes, só que agora vivem dentro do modal em vez de cada linha do
+/// rank). A prévia de pontos usa previewPvpAttackSwing (client-side, mesma
+/// fórmula da Edge Function) — some no Lendário, onde pontuação é oculta.
+function pvpCombatOptionHtml(opponent) {
+  const levelLabel = opponent.is_bot ? 'Bot' : `${RANK_LEVEL_ICON} ${formatNumber(opponent.hunter_level)}`;
+  const swingLabel = opponent.swing
+    ? `<div class="desc">Vencendo: <span class="pvp-delta-up">+${opponent.swing.winDelta}</span> · Perdendo: <span class="pvp-delta-down">${opponent.swing.lossDelta}</span></div>`
+    : '';
+  return `
+    <div class="achievement-card">
+      <span class="pvp-rank">#${opponent.position}</span>
+      ${pvpProfileIconHtml(opponent.icon_id)}
+      <div class="info">
+        <div class="name">${nickHtml(opponent.nick, opponent.is_vip)}</div>
+        <div class="desc">${levelLabel}</div>
+        ${swingLabel}
+      </div>
+      <button data-pvp-attack="${opponent.entity_id}" data-pvp-attack-bot="${opponent.is_bot ? '1' : '0'}">⚔️ Atacar</button>
+    </div>`;
+}
+
+export function showPvpCombatPickerModal(tierInfo, opponents) {
+  const body = opponents.length
+    ? opponents.map(pvpCombatOptionHtml).join('')
+    : '<p class="shop-note">Ninguém por perto pra desafiar agora — tenta de novo em instantes.</p>';
+  showModal(`${tierInfo.emoji} Escolha um alvo`, `<div class="achievement-list">${body}</div>`);
+}
+
+// ---------------------------------------------------------------
+// Página "Ranks" (menu Outros) — 3 rankeamentos globais (Arena, Nível de
+// Caçador, Transcender), cada um já vindo pronto do Supabase como top 100
+// + a própria linha do jogador no fim se ele estiver fora dos 100 (ver
+// fetchArenaRank/fetchLevelRank/fetchTranscendRank em systems/pvp.js e
+// supabase/migrations/0008_pvp_ranks.sql). Cruza TODOS os tiers/grupos da
+// Arena — não é a mesma coisa que renderPvpTab acima (que mostra só o
+// próprio tier+grupo do jogador).
+// ---------------------------------------------------------------
+
+function pvpRankRowHtml(row, myId, extraLabel, rewardLabel) {
+  const isSelf = row.entity_id === myId;
+  // Clicar em QUALQUER jogador que não seja você mesmo abre o boneco de
+  // equipamentos dele (ver showForeignEquipmentModal, wireado em
+  // wireRanksTabEvents/main.js) — nas 3 seções do rank (Arena/Nível/
+  // Transcender), pedido explícito do usuário ("independente do Rank").
+  const viewAttr = isSelf ? '' : `data-view-player-equipment="${row.entity_id}" style="cursor:pointer;"`;
+  return `
+    <div class="achievement-card ${isSelf ? 'pvp-self-row' : ''}" ${viewAttr}>
+      <span class="pvp-rank">#${row.position}</span>
+      ${pvpProfileIconHtml(row.icon_id)}
+      <div class="info">
+        <div class="name">${nickHtml(row.nick, row.is_vip)}</div>
+        <div class="desc">${extraLabel}</div>
+        ${rewardLabel ? `<div class="desc pvp-reward-preview">${rewardLabel}</div>` : ''}
+      </div>
+      ${isSelf ? '<span class="pvp-self-tag">Você</span>' : ''}
+    </div>`;
+}
+
+// A RPC já devolve o top 100 em ordem + (se o jogador estiver fora)
+// 1 linha extra com a posição real dele no fim — um "⋯" antes dessa
+// última linha deixa claro visualmente que ela não é a #101, é bem mais
+// distante (ver o pulo entre row.position e a posição anterior).
+function pvpRankSectionHtml(rows, myId, extraLabelFn, rewardLabelFn) {
+  if (!rows.length) return '<p class="shop-note">Ninguém no rank ainda.</p>';
+  let html = '';
+  let prevPosition = 0;
+  for (const row of rows) {
+    if (prevPosition > 0 && row.position > prevPosition + 1) {
+      html += '<div class="pvp-rank-gap">⋯</div>';
+    }
+    html += pvpRankRowHtml(row, myId, extraLabelFn(row), rewardLabelFn ? rewardLabelFn(row) : null);
+    prevPosition = row.position;
+  }
+  return html;
+}
+
+/// Prévia da recompensa SEMANAL (ver previewWeeklyArenaReward em
+/// systems/pvp.js) pra uma linha do rank de Arena — carta/fragmento +
+/// ovos, ou nada se a posição do jogador DENTRO do próprio tier está fora
+/// da metade de cima.
+function pvpWeeklyRewardLabel(row) {
+  const reward = previewWeeklyArenaReward(row.tier, row.tier_position, row.tier_player_count);
+  if (!reward) return null;
+  const mainLabel = reward.kind === 'random_card'
+    ? `${CARD_ICON} 1`
+    : `${CARD_FRAGMENT_ICON} ${formatInteger(reward.amount)}`;
+  return `${mainLabel} · ${EGG_ICON} ${formatInteger(reward.eggs)}`;
+}
+
+// Ordem do objeto = ordem no grid 2x2 de botões (ver .pvp-rank-tabs em
+// style.css): Arena/Power na 1ª linha, Nível/Transcender na 2ª — pedido
+// explícito do usuário.
+const RANKS_SECTIONS = {
+  arena: { label: `${ARENA_ICON} Arena`, title: `${ARENA_ICON} Arena` },
+  power: { label: `${POWER_ICON} Power`, title: `${POWER_ICON} Power` },
+  level: { label: `${RANK_LEVEL_ICON} Nível`, title: `${RANK_LEVEL_ICON} Nível de Caçador` },
+  transcend: { label: `${TRANSCEND_ICON} Transcender`, title: `${TRANSCEND_ICON} Transcender` },
+};
+
+function ranksSectionListHtml(ranksData, myId) {
+  if (ranksData.activeSection === 'level') {
+    return pvpRankSectionHtml(ranksData.level, myId, (row) => `Nível ${formatNumber(row.hunter_level)}`);
+  }
+  if (ranksData.activeSection === 'transcend') {
+    return pvpRankSectionHtml(ranksData.transcend, myId, (row) => `${TRANSCEND_ICON} ${formatInteger(row.transcend_count)}x`);
+  }
+  if (ranksData.activeSection === 'power') {
+    return pvpRankSectionHtml(ranksData.power, myId, (row) => `${POWER_ICON} ${formatInteger(row.power || 0)}`);
+  }
+  // Arena: nick+ícone (na linha, ver pvpRankRowHtml) + nível + vitórias +
+  // tier/pontuação — no Lendário a pontuação é omitida (row.rating vem
+  // null da RPC, mesma regra de "score oculto" de sempre), só a posição
+  // global (já mostrada no #rank de cada linha) representa o jogador ali.
+  return pvpRankSectionHtml(ranksData.arena, myId, (row) => {
+    const tierInfo = getPvpTierInfo(row.tier);
+    const scoreLabel = row.rating == null ? '' : ` · ${RATING_ICON} ${formatInteger(row.rating)}`;
+    return `${tierInfo.icon} ${tierInfo.label}${scoreLabel} · Nível ${formatNumber(row.hunter_level)} · ${WINS_ICON} ${formatInteger(row.wins || 0)}`;
+  }, pvpWeeklyRewardLabel);
+}
+
+/// Igual formatHoursMinutes, mas conta dias também — o contador semanal
+/// (até 7 dias) fica ilegível como "168h 0min".
+function formatDaysHoursMinutes(ms) {
+  const totalMinutes = Math.max(0, Math.ceil(ms / 60000));
+  const d = Math.floor(totalMinutes / 1440);
+  const h = Math.floor((totalMinutes % 1440) / 60);
+  const m = totalMinutes % 60;
+  if (d > 0) return `${d}d ${h}h`;
+  return h > 0 ? `${h}h ${m}min` : `${m}min`;
+}
+
+let ranksWeeklyCountdownIntervalId = null;
+function tickRanksWeeklyCountdown() {
+  if (ranksWeeklyCountdownIntervalId) clearInterval(ranksWeeklyCountdownIntervalId);
+  const update = () => {
+    const el = document.getElementById('ranks-weekly-countdown');
+    if (!el) { clearInterval(ranksWeeklyCountdownIntervalId); ranksWeeklyCountdownIntervalId = null; return; }
+    el.textContent = formatDaysHoursMinutes(msUntilNextWeeklyArenaReset());
+  };
+  update();
+  ranksWeeklyCountdownIntervalId = setInterval(update, 30000);
+}
+
+export function renderRanksTab(ranksData, myProfile) {
+  const container = document.getElementById('tab-ranks');
+  const myId = myProfile?.id;
+  const activeSection = RANKS_SECTIONS[ranksData.activeSection] ? ranksData.activeSection : 'arena';
+
+  const tabsHtml = Object.entries(RANKS_SECTIONS).map(([key, info]) => `
+    <button class="pvp-rank-tab-btn ${key === activeSection ? 'active' : ''}" data-ranks-section="${key}">${info.label}</button>
+  `).join('');
+
+  // Contador semanal só faz sentido na aba Arena — é onde a recompensa
+  // semanal de tier (ver pvp_rank_arena) é mostrada.
+  const weeklyCountdownHtml = activeSection === 'arena'
+    ? `<p class="pvp-countdown">Recompensa semanal em <strong id="ranks-weekly-countdown"></strong></p>`
+    : '';
+
+  container.innerHTML = `
+    ${pageBannerHtml('Ranks')}
+    <button class="transcend-btn" data-ranks-refresh ${ranksData.loading ? 'disabled' : ''}>${REFRESH_ICON} ${ranksData.loaded ? 'Atualizar' : 'Carregar Ranks'}</button>
+
+    <div class="pvp-rank-tabs">${tabsHtml}</div>
+    ${weeklyCountdownHtml}
+    <h4 class="shop-section-title">${RANKS_SECTIONS[activeSection].title}</h4>
+    <div class="achievement-list">${ranksSectionListHtml({ ...ranksData, activeSection }, myId)}</div>
+  `;
+  translateContainer(container);
+  if (activeSection === 'arena') tickRanksWeeklyCountdown();
+}
+
+// ---------------------------------------------------------------
+// Correio (menu Outros) — avisos do Admin + recompensas automáticas da
+// Arena (ver systems/mailbox.js e supabase/migrations/0010/0011). Lista
+// só mostra título + indicador de presente; o corpo/botão de resgatar
+// aparece na janela de detalhe (ver showMailDetailModal, aberta ao
+// clicar numa mensagem — data-mail-open, ver wireMailboxTabEvents em
+// main.js).
+// ---------------------------------------------------------------
+
+function mailRewardLineHtml(type, amount) {
+  if (type === 'card_fragment') return `${CARD_FRAGMENT_ICON} +${formatInteger(amount)} Fragmento de Carta`;
+  if (type === 'pet_fragment') return `${PET_FRAGMENT_ICON} +${formatInteger(amount)} Fragmento de Mascote`;
+  if (type === 'egg') return `${EGG_ICON} +${formatInteger(amount)} Ovo de Mascote`;
+  if (type === 'random_card') return `${CARD_ICON} 1 Carta Aleatória`;
+  if (type === 'gold') return `${GOLD_ICON} +${formatNumber(amount)} Ouro`;
+  if (type === 'esmeralda') return `${ESMERALDA_ICON} +${formatNumber(amount)} Esmeralda`;
+  if (type === 'awakening_shard') return `${AWAKENING_SHARD_ICON} +${formatInteger(amount)} ${AWAKENING_SHARD_NAME}`;
+  if (type === 'mystic_die') return `${MYSTIC_DIE_EMOJI} +${formatInteger(amount)} ${MYSTIC_DIE_NAME}`;
+  return '';
+}
+
+function mailListItemHtml(message) {
+  // Mensagem "concluída" (já aberta e, se tinha recompensa, já resgatada)
+  // ganha o selo ${MAIL_READ_ICON} antes do título — qualquer outro estado
+  // (não lida, ou lida mas com recompensa pendente) mostra só o título,
+  // sem nenhum ícone/emote (pedido do usuário).
+  const isDone = message.read && (!mailHasReward(message) || message.claimed);
+  const readIcon = isDone ? `${MAIL_READ_ICON} ` : '';
+  const date = new Date(message.created_at).toLocaleDateString('pt-BR');
+  return `
+    <div class="achievement-card ${!message.read ? 'mail-unread' : ''}" data-mail-open="${message.id}" style="cursor:pointer;">
+      <div class="info">
+        <div class="name">${readIcon}${escapeHtml(message.title)}</div>
+        <div class="desc">${date}</div>
+      </div>
+    </div>`;
+}
+
+export function renderMailboxTab(mailboxData) {
+  const container = document.getElementById('tab-mailbox');
+  const hasClaimable = mailboxData.messages.some((m) => mailHasReward(m) && !m.claimed);
+  const listHtml = mailboxData.messages.length
+    ? mailboxData.messages.map(mailListItemHtml).join('')
+    : `<p class="shop-note">${mailboxData.loading ? 'Carregando...' : 'Nenhuma mensagem por enquanto.'}</p>`;
+
+  container.innerHTML = `
+    ${pageBannerHtml('Correio')}
+    <p class="shop-note">Avisos e recompensas da Arena chegam aqui.</p>
+    <button class="transcend-btn" data-mail-refresh ${mailboxData.loading ? 'disabled' : ''}>${REFRESH_ICON} Atualizar</button>
+    ${hasClaimable ? `<button class="transcend-btn" data-mail-claim-all>${GIFT_ICON} Resgatar Todos</button>` : ''}
+    <div class="achievement-list">${listHtml}</div>
+  `;
+  translateContainer(container);
+}
+
+/// Janela de detalhe de UMA mensagem — corpo + linha(s) de recompensa +
+/// botão de resgatar (se tiver item pendente) ou apagar (se não tiver
+/// nada pendente, ver mailIsFullyClaimed).
+export function showMailDetailModal(message) {
+  const rewardLines = [
+    message.reward_type !== 'none' ? mailRewardLineHtml(message.reward_type, message.reward_amount) : '',
+    message.reward2_type ? mailRewardLineHtml(message.reward2_type, message.reward2_amount) : '',
+  ].filter(Boolean).map((line) => `<p class="offline-item-lines">${line}</p>`).join('');
+
+  const canClaim = mailHasReward(message) && !message.claimed;
+  const canDelete = mailIsFullyClaimed(message);
+  const actionBtn = canClaim
+    ? `<button class="transcend-btn" data-mail-claim="${message.id}">${GIFT_ICON} Resgatar Item</button>`
+    : canDelete
+      ? `<button class="transcend-btn" data-mail-delete="${message.id}">🗑️ Apagar</button>`
+      : '<p class="shop-note">Resgate o item antes de apagar essa mensagem.</p>';
+
+  // Prazo de validade (ver expires_at em 0012_pvp_mailbox_expiry.sql) —
+  // 30 dias por padrão, depois disso a mensagem some sozinha mesmo com
+  // item pendente.
+  const expiresDate = message.expires_at ? new Date(message.expires_at).toLocaleDateString('pt-BR') : null;
+  const expiryNote = expiresDate ? `<p class="shop-note">Expira em ${expiresDate}.</p>` : '';
+
+  showModal(message.title, `
+    <p>${escapeHtml(message.body)}</p>
+    ${rewardLines}
+    ${actionBtn}
+    ${expiryNote}
+  `);
+}
+
+function pvpErrorMessage(result) {
+  if (result.error === 'no_entries') {
+    return `⏳ Sem entradas agora. Próxima em ${formatHoursMinutes(result.retryAfterMs || 0)}.`;
+  }
+  if (result.error === 'different_tier' || result.error === 'stale_opponent') {
+    return '❌ Esse oponente não está mais nesse tier — sincronize de novo.';
+  }
+  return '❌ Não foi possível atacar agora. Tente sincronizar de novo.';
+}
+
+/// Corpo do resultado (pontos ganhos/perdidos ou posição no caso do
+/// Lendário, ouro, entradas restantes) — usado tanto pelo modal simples
+/// (showPvpBattleResultModal, sem animação) quanto revelado no FIM da
+/// animação de batalha (ver showPvpBattleModal).
+function pvpResultContentHtml(result) {
+  const won = result.attackerWins;
+  const tierInfo = getPvpTierInfo(result.tier);
+
+  let scoreLine;
+  if (result.hiddenScore) {
+    const posDelta = result.attackerPositionDelta || 0;
+    const posLabel = posDelta > 0
+      ? `<span class="pvp-delta-up">▲ Subiu ${posDelta} posiç${posDelta === 1 ? 'ão' : 'ões'}</span>`
+      : posDelta < 0
+        ? `<span class="pvp-delta-down">▼ Caiu ${Math.abs(posDelta)} posiç${Math.abs(posDelta) === 1 ? 'ão' : 'ões'}</span>`
+        : '<span>Sem mudança de posição</span>';
+    scoreLine = `<p class="offline-item-lines">${tierInfo.icon} Posição #${result.attackerPositionBefore} → #${result.attackerPositionAfter}<br>${posLabel}</p>`;
+  } else {
+    const ratingDelta = result.attackerRatingAfter - result.attackerRatingBefore;
+    const deltaLabel = `${ratingDelta >= 0 ? '+' : ''}${ratingDelta}`;
+    const deltaClass = ratingDelta >= 0 ? 'pvp-delta-up' : 'pvp-delta-down';
+    scoreLine = `<p class="offline-item-lines">${RATING_ICON} Pontos: ${result.attackerRatingBefore} → ${result.attackerRatingAfter} <span class="${deltaClass}">(${deltaLabel})</span></p>`;
+  }
+
+  return `
+    <div class="pvp-result-banner ${won ? 'win' : 'lose'}">${won ? '🏆 Vitória!' : '💀 Derrota'}</div>
+    <p>Você atacou <strong>${escapeHtml(result.defenderNick)}</strong>.</p>
+    ${scoreLine}
+    ${won ? `<p class="offline-item-lines">${GOLD_ICON} +${formatNumber(result.goldReward)} Ouro</p>` : ''}
+    ${pvpBattleStatsHtml(result)}
+    <p class="shop-note">${PVP_TICKET_ICON} Entradas restantes: ${result.entriesRemaining}/${PVP_MAX_ENTRIES}</p>
+  `;
+}
+
+/// Estatísticas do combate — mesma lista pros 2 lados, nessa ordem
+/// (pedido explícito do usuário): Vida, Armadura, DPS, Dano causado, Dano
+/// do Mascote, Críticos, Esquivas. Números REAIS calculados no servidor
+/// (ver attackerDamageDealt/attackerCritCount/etc. na Edge Function
+/// resolve-pvp-battle: crítico/esquiva já vêm como CONTAGEM — quantas
+/// vezes aconteceu na luta — não a % de chance crua; DPS é o efetivo já
+/// considerando crítico/esquiva/armadura do oponente, não o bruto).
+/// "Dano do Mascote" só aparece se ALGUM dos 2 lados tinha mascote ativo.
+function pvpBattleStatsHtml(result) {
+  const showPetRow = result.attackerPetDamageDealt > 0 || result.defenderPetDamageDealt > 0;
+  const petRow = showPetRow
+    ? pvpStatRow('🐾 Dano do mascote', formatNumber(result.attackerPetDamageDealt), formatNumber(result.defenderPetDamageDealt))
+    : '';
+  return `
+    <div class="pvp-battle-stats">
+      <div class="pvp-stat-row pvp-stat-header">
+        <span></span><span>Você</span><span>${escapeHtml(result.defenderNick)}</span>
+      </div>
+      ${pvpStatRow('❤️ Vida', formatNumber(result.attackerMaxHp), formatNumber(result.defenderMaxHp))}
+      ${pvpStatRow('🛡️ Armadura', formatNumber(result.attackerArmor), formatNumber(result.defenderArmor))}
+      ${pvpStatRow('⚡ DPS', formatNumber(result.attackerDps), formatNumber(result.defenderDps))}
+      ${pvpStatRow('⚔️ Dano causado', formatNumber(result.attackerDamageDealt), formatNumber(result.defenderDamageDealt))}
+      ${petRow}
+      ${pvpStatRow('💥 Críticos', result.attackerCritCount, result.defenderCritCount)}
+      ${pvpStatRow('🌀 Esquivas', result.attackerDodgeCount, result.defenderDodgeCount)}
+    </div>
+  `;
+}
+
+function pvpStatRow(label, attackerValue, defenderValue) {
+  return `<div class="pvp-stat-row"><span>${label}</span><span>${attackerValue}</span><span>${defenderValue}</span></div>`;
+}
+
+/// Modal de resultado SEM animação — usado só pros casos de erro (sem
+/// entrada, oponente sumiu, etc.), onde não faz sentido nenhum abrir a
+/// arena. Sucesso de verdade sempre passa por showPvpBattleModal abaixo.
+export function showPvpBattleResultModal(result) {
+  if (result.error) {
+    showModal('⚔️ Arena', `<p>${pvpErrorMessage(result)}</p>`);
+    return;
+  }
+  showModal(result.attackerWins ? '🏆 Vitória!' : '💀 Derrota', pvpResultContentHtml(result));
+}
+
+// ---------------------------------------------------------------
+// Janela de batalha animada: 2 retratos com nick em cima, barras de HP
+// baseadas nos números REAIS da luta (dps efetivo/HP de cada lado, ver
+// attackerEffectiveDps/defenderEffectiveDps/attackerMaxHp/defenderMaxHp
+// na resposta da Edge Function) — a barra do lado que perde sempre
+// termina exatamente em 0 no fim da animação, coerente com attackerWins.
+// O resultado (vitória/derrota, pontos, ouro) só aparece DEPOIS da
+// animação terminar.
+// ---------------------------------------------------------------
+
+const PVP_ANIMATION_MS = 2600;
+const PVP_DAMAGE_TICK_MS = 350;
+
+let pvpAnimationFrameId = null;
+
+function stopPvpBattleAnimation() {
+  if (pvpAnimationFrameId != null) {
+    cancelAnimationFrame(pvpAnimationFrameId);
+    pvpAnimationFrameId = null;
+  }
+}
+
+function spawnPvpDamagePopup(portraitId, amount) {
+  const portrait = document.getElementById(portraitId);
+  if (!portrait || amount <= 0) return;
+  const el = document.createElement('div');
+  el.className = 'pvp-damage-popup';
+  el.textContent = `-${formatNumber(Math.round(amount))}`;
+  portrait.appendChild(el);
+  setTimeout(() => el.remove(), 700);
+}
+
+/// Anima as 2 barras de HP de 100% até o resultado real da luta, num
+/// tempo de parede fixo (PVP_ANIMATION_MS) independente de quão rápido ou
+/// lento o "tempo de luta simulado" (attackerMaxHp/dps) realmente seria —
+/// só reescala esse tempo simulado pra caber na animação. Chama
+/// onComplete() quando termina (ou na hora, se por algum motivo nenhum
+/// dos 2 lados causa dano nenhum).
+function animatePvpBattle(result, onComplete) {
+  stopPvpBattleAnimation();
+
+  const { attackerMaxHp, defenderMaxHp, attackerEffectiveDps, defenderEffectiveDps } = result;
+  const attackerTtk = attackerEffectiveDps > 0 ? defenderMaxHp / attackerEffectiveDps : Infinity;
+  const defenderTtk = defenderEffectiveDps > 0 ? attackerMaxHp / defenderEffectiveDps : Infinity;
+  const endSimTime = Math.min(attackerTtk, defenderTtk);
+
+  if (!Number.isFinite(endSimTime) || endSimTime <= 0) {
+    onComplete();
+    return;
+  }
+
+  const attackerBar = document.getElementById('pvp-hp-attacker');
+  const defenderBar = document.getElementById('pvp-hp-defender');
+  const start = performance.now();
+  let lastTickElapsed = 0;
+  let lastAttackerHp = attackerMaxHp;
+  let lastDefenderHp = defenderMaxHp;
+
+  function frame(now) {
+    const elapsed = now - start;
+    const t = Math.min(1, elapsed / PVP_ANIMATION_MS);
+    const simT = t * endSimTime;
+
+    const attackerHp = Math.max(0, attackerMaxHp - defenderEffectiveDps * simT);
+    const defenderHp = Math.max(0, defenderMaxHp - attackerEffectiveDps * simT);
+    if (attackerBar) attackerBar.style.width = `${(attackerHp / attackerMaxHp) * 100}%`;
+    if (defenderBar) defenderBar.style.width = `${(defenderHp / defenderMaxHp) * 100}%`;
+
+    if (elapsed - lastTickElapsed >= PVP_DAMAGE_TICK_MS) {
+      lastTickElapsed = elapsed;
+      spawnPvpDamagePopup('pvp-portrait-defender', lastDefenderHp - defenderHp);
+      spawnPvpDamagePopup('pvp-portrait-attacker', lastAttackerHp - attackerHp);
+      lastAttackerHp = attackerHp;
+      lastDefenderHp = defenderHp;
+    }
+
+    if (t < 1) {
+      pvpAnimationFrameId = requestAnimationFrame(frame);
+    } else {
+      pvpAnimationFrameId = null;
+      onComplete();
+    }
+  }
+  pvpAnimationFrameId = requestAnimationFrame(frame);
+}
+
+function pvpFighterHtml(side, nick, iconId, isVip) {
+  const icon = getProfileIcon(iconId);
+  return `
+    <div class="pvp-fighter pvp-fighter-${side}">
+      <div class="pvp-fighter-nick">${nickHtml(nick, isVip)}</div>
+      <div class="pvp-fighter-portrait" id="pvp-portrait-${side}">${iconMarkup(icon.image, '', icon.name)}</div>
+      <div class="pvp-hp-bar-outer"><div class="pvp-hp-bar-fill" id="pvp-hp-${side}"></div></div>
+    </div>`;
+}
+
+/// `defenderInfo` ({ nick, iconId, isVip }) vem de main.js, lido do
+/// tier_board já em memória ANTES do ataque — depois sobrescrito com
+/// defenderIsVip da resposta da Edge Function (mais fresco), que também
+/// não repete o ícone do defensor, só nick/is_vip. Erros pulam a
+/// animação e caem direto no modal simples de sempre.
+export function showPvpBattleModal(pvp, defenderInfo, result) {
+  if (result.error) {
+    showPvpBattleResultModal(result);
+    return;
+  }
+
+  const myProfile = pvp.myProfile;
+  showModal('⚔️ Batalha', `
+    <div class="pvp-arena">
+      ${pvpFighterHtml('attacker', myProfile.nick, myProfile.icon_id, myProfile.is_vip)}
+      <div class="pvp-vs">⚔️</div>
+      ${pvpFighterHtml('defender', defenderInfo.nick, defenderInfo.iconId, defenderInfo.isVip)}
+    </div>
+    <div id="pvp-battle-result-slot"></div>
+  `);
+  // Setado em 2 passos (CSS já nasce em 0%, isso preenche 100% no 1º
+  // frame) só pra garantir que a barra sempre começa visivelmente cheia
+  // antes da animação de verdade começar a esvaziar ela.
+  requestAnimationFrame(() => {
+    const attackerBar = document.getElementById('pvp-hp-attacker');
+    const defenderBar = document.getElementById('pvp-hp-defender');
+    if (attackerBar) attackerBar.style.width = '100%';
+    if (defenderBar) defenderBar.style.width = '100%';
+  });
+
+  animatePvpBattle(result, () => {
+    const titleEl = document.getElementById('modal-title');
+    if (titleEl) titleEl.textContent = result.attackerWins ? '🏆 Vitória!' : '💀 Derrota';
+    const slot = document.getElementById('pvp-battle-result-slot');
+    if (slot) slot.innerHTML = pvpResultContentHtml(result);
+  });
+}
+
+// ---------------------------------------------------------------
+// Perfil (aberto pelo #profile-btn no canto superior esquerdo da barra):
+// nick (1ª troca grátis, próximas custam NAME_CHANGE_COST Esmeralda, ver
+// systems/profile.js), ícone da conta (catálogo em data/profile.js,
+// desbloqueados via state.unlockedProfileIconIds) e os toggles de Som/
+// Música (só liga/desliga persistido — sem player de áudio de verdade
+// ainda, ver systems/profile.js). Reaproveita o #modal-overlay
+// compartilhado (ver wireModalEvents em main.js pros data-* abaixo).
+// ---------------------------------------------------------------
+
+function profileIconGridHtml(state) {
+  return PROFILE_ICONS.map((icon) => {
+    const unlocked = isProfileIconUnlocked(state, icon.id);
+    const selected = state.profileIconId === icon.id;
+    const lockHtml = unlocked ? '' : '<span class="profile-icon-lock">🔒</span>';
+    return `<button
+      class="profile-icon-option ${selected ? 'selected' : ''} ${unlocked ? '' : 'locked'}"
+      data-select-profile-icon="${icon.id}"
+      ${unlocked ? '' : 'disabled'}
+      title="${escapeHtml(icon.name)}${unlocked ? '' : ' (bloqueado — obtido em eventos/recompensas futuras)'}"
+    ><img src="${icon.image}" alt="${escapeHtml(icon.name)}">${lockHtml}</button>`;
+  }).join('');
+}
+
+function profileModalHtml(state) {
+  const name = getPlayerName(state);
+  const freeChange = isFirstNameChangeFree(state);
+  const affordable = canAffordNameChange(state);
+  const costLabel = freeChange ? 'Grátis (1ª troca)' : `${ESMERALDA_ICON} ${NAME_CHANGE_COST}`;
+  const vipActive = isVipActive(state);
+
+  return `
+    <div class="profile-name-section">
+      <div class="shop-section-title" style="margin-top:0">Nick</div>
+      ${vipActive ? `<p class="profile-name-preview">Como aparece pros outros: ${nickHtml(name, true)}</p>` : ''}
+      <div class="profile-name-row">
+        <input id="profile-name-input" type="text" maxlength="${MAX_PLAYER_NAME_LENGTH}" value="${escapeHtml(name)}" placeholder="Seu nick">
+        <button data-save-profile-name ${affordable ? '' : 'disabled'}>Salvar</button>
+      </div>
+      <p id="profile-name-error" class="profile-name-error"></p>
+      <p class="shop-note">Troca de nick: ${costLabel}${affordable ? '' : ' — Esmeralda insuficiente'}</p>
+      <p class="shop-note">Só letras, números e 1 espaço entre palavras — sem repetir o nick de outro jogador.</p>
+    </div>
+
+    <div class="shop-section-title">Ícone do Perfil</div>
+    <div class="profile-icon-grid">${profileIconGridHtml(state)}</div>
+
+    <div class="shop-section-title">Áudio</div>
+    <div class="profile-toggle-row">
+      <span>🔊 Efeitos Sonoros</span>
+      <button class="profile-toggle-btn ${isSoundOn(state) ? 'on' : 'off'}" data-toggle-sound>${isSoundOn(state) ? 'On' : 'Off'}</button>
+    </div>
+    <div class="profile-toggle-row">
+      <span>🎵 Música</span>
+      <button class="profile-toggle-btn ${isMusicOn(state) ? 'on' : 'off'}" data-toggle-music>${isMusicOn(state) ? 'On' : 'Off'}</button>
+    </div>
+
+    <div class="shop-section-title">Linguagem</div>
+    <div class="profile-language-row">
+      <button class="profile-language-btn ${getLanguage() === 'pt' ? 'active' : ''}" data-set-language="pt" title="Português (Brasil)">🇧🇷</button>
+      <button class="profile-language-btn ${getLanguage() === 'en' ? 'active' : ''}" data-set-language="en" title="English (US)">🇺🇸</button>
+    </div>
+  `;
+}
+
+export function showProfileModal(state) {
+  showModal('👤 Perfil', profileModalHtml(state));
+}
+
+const CHEST_COST_ICON = {
+  gold: GOLD_ICON,
+  event: EVENT_ICON,
+  cash: ESMERALDA_ICON,
+};
+
+function chestCardHtml(state, chestId) {
+  const chest = CHESTS[chestId];
+  const usedToday = getChestPurchasesToday(state, chestId);
+  const remaining = CHEST_DAILY_LIMIT - usedToday;
+  const soldOutToday = remaining <= 0;
+  const btnLabel = soldOutToday
+    ? 'Esgotado hoje'
+    : `${CHEST_COST_ICON[chest.costType]} ${formatNumber(chest.cost)}`;
+  return `
+    <div class="chest-card">
+      <button class="chest-card-info-btn" data-chest-info="${chestId}" title="Ver chances">!</button>
+      <div class="chest-card-limit">${usedToday}/${CHEST_DAILY_LIMIT} hoje</div>
+      <img class="chest-card-img" src="${chest.image}" alt="${chest.name}">
+      <div class="chest-card-name">${chest.name}</div>
+      <button data-open-chest="${chestId}" ${canBuyChest(state, chestId) ? '' : 'disabled'}>${btnLabel}</button>
+    </div>`;
+}
+
+function chestsShopHtml(state) {
+  const cardsHtml = CHEST_ORDER.map((chestId) => chestCardHtml(state, chestId)).join('');
+  return `
+    <div class="shop-balance">${GOLD_ICON} <strong>${formatNumber(state.gold)}</strong> &nbsp; ${EVENT_ICON} <strong>${formatNumber(state.eventCurrency)}</strong> &nbsp; ${ESMERALDA_ICON} <strong>${formatNumber(state.cash)}</strong></div>
+    <p class="shop-note">Abra Baús pra ganhar Ovos/Fragmentos de Mascote, mascotes Tier 5, Fragmentos de Carta, cartas aleatórias e mais. Limite de ${CHEST_DAILY_LIMIT} compras por baú a cada dia.</p>
+    <div class="chest-grid">${cardsHtml}</div>
   `;
 }
 
@@ -888,12 +3498,51 @@ export function renderAll(state, monster, stats) {
   renderUpgradesTab(state);
 }
 
-export function spawnDamagePopup(amount) {
+export function spawnDamagePopup(amount, isCrit = false, isBurst = false) {
   const container = document.getElementById('damage-popups');
   const el = document.createElement('div');
-  el.className = 'damage-popup';
-  el.textContent = `-${formatNumber(amount)}`;
-  el.style.left = `${45 + Math.random() * 10}%`;
+  el.className = isBurst ? 'damage-popup burst' : isCrit ? 'damage-popup crit' : 'damage-popup';
+  el.textContent = isBurst ? `-${formatNumber(amount)} GOLPE DEVASTADOR!` : isCrit ? `-${formatNumber(amount)} CRÍTICO!` : `-${formatNumber(amount)}`;
+  // Wide, randomized spread on both axes — a fast attack-speed build spawns
+  // several of these within the same 750ms window, and a narrow fixed spot
+  // made them pile up unreadably on top of each other (looking like hits got
+  // dropped even though every one of them landed).
+  el.style.left = `${30 + Math.random() * 40}%`;
+  el.style.top = `${30 + Math.random() * 20}%`;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 750);
+}
+
+/// Popup separado pro dano do mascote (ver systems/combat.js resolvePetHit)
+/// — cor do elemento do pet, pra ficar visualmente distinto do dano normal
+/// do personagem (que agora é sempre Neutro). isCrit usa a mesma chance/
+/// dano crítico do caçador (rolagem própria, ver resolvePetHit).
+export function spawnPetDamagePopup(amount, species, isCrit = false) {
+  const container = document.getElementById('damage-popups');
+  const el = document.createElement('div');
+  el.className = isCrit ? 'damage-popup pet-damage crit' : 'damage-popup pet-damage';
+  el.style.color = getPetElementColor(species.element);
+  el.textContent = isCrit ? `${species.emoji} -${formatNumber(amount)} CRÍTICO!` : `${species.emoji} -${formatNumber(amount)}`;
+  el.style.left = `${30 + Math.random() * 40}%`;
+  el.style.top = `${30 + Math.random() * 20}%`;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 750);
+}
+
+/// Popup do dano de Reflexo (ver reflectChance em systems/stats.js, main.js
+/// tick()) — cor roxa própria, pra ficar visualmente distinto tanto do dano
+/// normal do personagem quanto do dano do mascote. Pode critar (mesma
+/// chance/dano crítico do jogador, ver rollCrit em systems/combat.js),
+/// pedido explícito do usuário — isCrit só muda o texto, a cor roxa
+/// continua a mesma (não empresta o amarelo do crítico normal, senão fica
+/// indistinguível do dano do personagem).
+export function spawnReflectDamagePopup(amount, isCrit = false) {
+  const container = document.getElementById('damage-popups');
+  const el = document.createElement('div');
+  el.className = 'damage-popup reflect-damage';
+  el.textContent = isCrit ? `🔱 -${formatNumber(amount)} CRÍTICO!` : `🔱 -${formatNumber(amount)}`;
+  el.style.left = `${30 + Math.random() * 40}%`;
+  el.style.top = `${30 + Math.random() * 20}%`;
   container.appendChild(el);
   setTimeout(() => el.remove(), 750);
 }
@@ -905,21 +3554,51 @@ export function pulseMonster() {
   sprite.classList.add('hit');
 }
 
+export function showLootPopup(goldGained, drops) {
+  const container = document.getElementById('loot-popup');
+  const parts = [`+${formatNumber(goldGained)} ${GOLD_ICON}`, ...drops.map((d) => `+${d.qty} ${iconMarkup(d.image, d.emoji, d.name)}`)];
+  const el = document.createElement('div');
+  el.className = 'loot-popup-entry';
+  el.innerHTML = parts.join(' ');
+  translateContainer(el);
+  container.appendChild(el);
+  while (container.childNodes.length > 3) container.removeChild(container.firstChild);
+  setTimeout(() => el.remove(), 2500);
+}
+
+// Global cooldown across every toast, regardless of source: a monster that
+// one-shots the player in a fast/tough zone would otherwise retrigger
+// retreat()'s "você morreu" toast every fight (sub-second), flooding the
+// screen and burying anything else happening at the same time. One message
+// per 10s window is enough to inform without drowning play out.
+const TOAST_COOLDOWN_MS = 10000;
+let lastToastAt = -Infinity;
+
 export function showToast(message) {
+  const now = Date.now();
+  if (now - lastToastAt < TOAST_COOLDOWN_MS) return;
+  lastToastAt = now;
+
   const container = document.getElementById('toast-container');
   const el = document.createElement('div');
   el.className = 'toast';
-  el.textContent = message;
+  el.innerHTML = message;
+  translateContainer(el);
   container.appendChild(el);
   setTimeout(() => el.remove(), 3000);
 }
 
 export function showModal(title, bodyHtml) {
-  document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-body').innerHTML = bodyHtml;
+  const titleEl = document.getElementById('modal-title');
+  titleEl.textContent = translateText(title);
+  titleEl.style.display = title ? '' : 'none';
+  const bodyEl = document.getElementById('modal-body');
+  bodyEl.innerHTML = bodyHtml;
+  translateContainer(bodyEl);
   document.getElementById('modal-overlay').classList.remove('hidden');
 }
 
 export function hideModal() {
+  stopPvpBattleAnimation(); // sem-op se não tinha nenhuma luta animando
   document.getElementById('modal-overlay').classList.add('hidden');
 }

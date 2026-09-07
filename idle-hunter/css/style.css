@@ -44,6 +44,26 @@
   --shadow-btn: 0 3px 0 rgba(120, 76, 24, .4), 0 5px 10px rgba(74, 47, 20, .18);
   --shadow-card: 0 3px 0 rgba(184, 140, 80, .3), 0 4px 10px rgba(74, 47, 20, .14);
   --shadow-panel: 0 10px 24px rgba(38, 65, 90, .28);
+
+  /* ---- Reformulação visual (mockups mobile) ---- */
+  /* Deep-navy "banner/chrome" theme: top bar, section title ribbons,
+     bottom nav, and event/card frames all key off this, layered on top of
+     the existing parchment panels (which stay as the readable content
+     surface — the mockups use the same cream/tan for their inner panels). */
+  --navy-top: #2f7fd6;
+  --navy: #1f5fa8;
+  --navy-deep: #123361;
+  --navy-deepest: #0b1f3d;
+  --navy-border: #0a2a52;
+
+  --shadow-banner: 0 4px 0 var(--navy-border), 0 8px 18px rgba(8, 20, 40, .35);
+}
+
+/* Mobile app viewport: a real phone is ~360-430px wide in CSS px — this is
+   the shape the game will actually ship in on the Play Store, so design
+   and test at this width rather than the old desktop-preview-ish 720px. */
+:root {
+  --app-max-width: 430px;
 }
 
 * {
@@ -72,18 +92,104 @@ html, body {
 }
 
 #app {
-  max-width: 720px;
+  max-width: var(--app-max-width);
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  /* Bottom nav is fixed (see #bottom-nav) — this keeps its own height
+     reserved so the last bit of scrolling content is never hidden under it. */
+  padding-bottom: 78px;
+  position: relative;
+}
+
+/* ---------------- Section banner ----------------
+   The dark-navy "ribbon" title used everywhere the mockups put a bold
+   centered heading with a notched/pointed silhouette: zone name + stage
+   number, "Informações de Batalha", "Equipamentos", "Cartas", "Eventos".
+   The notches are cut with clip-path rather than an image, so it scales
+   cleanly at any width without needing art. */
+.section-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 14px;
+  padding: 10px 34px;
+  min-height: 40px;
+  background: linear-gradient(180deg, var(--navy-top) 0%, var(--navy) 55%, var(--navy-deep) 100%);
+  border: 2px solid var(--gold);
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  text-align: center;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .4);
+  box-shadow: var(--shadow-banner);
+  clip-path: polygon(3% 0%, 97% 0%, 100% 50%, 97% 100%, 3% 100%, 0% 50%);
+}
+
+.section-banner .section-banner-sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffe8a3;
+  margin-top: 2px;
+}
+
+/* Banner oficial de página (ver assets/ui/banner.png + pageBannerHtml em
+   ui/render.js) — usado em TODA página no lugar do ribbon CSS acima e das
+   artes antigas com texto já desenhado (uma imagem só, sem texto, com o
+   título sobreposto). Losangos dourados grandes ficam a ~17.3%/82.7% da
+   largura — é essa faixa livre que .page-banner-title-wrap reserva pro
+   texto, com um respiro (não os 17.3%/82.7% exatos) pra não encostar. */
+.page-banner {
+  position: relative;
+  width: 100%;
+  margin: 0 0 8px;
+}
+
+.page-banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.page-banner-title-wrap {
+  position: absolute;
+  top: 50%;
+  left: 17.3%;
+  width: 65.4%;
+  height: 40%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* "Opção 4" das 5 propostas — cartoon grosso, escolhida pelo usuário.
+   Tamanho real é ajustado por JS (ver fitPageBannerTitles em
+   ui/render.js) pra cada título caber certinho entre os losangos. */
+.page-banner-title {
+  display: inline-block;
+  white-space: nowrap;
+  text-transform: uppercase;
+  font-family: 'Luckiest Guy', 'Baloo 2', cursive;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 2px #5a3200;
+  paint-order: stroke fill;
+  text-shadow: 0 3px 0 #5a3200, 0 5px 7px rgba(0, 0, 0, .5);
 }
 
 button {
   font-family: inherit;
   cursor: pointer;
   border: none;
-  border-radius: 14px;
+  border-radius: 10px;
   color: var(--text);
   background: var(--grad-neutral);
   box-shadow: var(--shadow-btn);
@@ -109,7 +215,7 @@ button:disabled {
 
 /* Colored "candy buttons" (gold/green/purple/cash/event) all get a subtle
    text-pop so labels stay legible against a saturated gradient fill. */
-.modal-action-btn, .card-slot-unlock-btn, .card-slot-equip-btn,
+.modal-action-btn, .card-slot-equip-btn,
 .enhance-panel button, .recipe-card button, .upgrade-card button,
 .watch-ad-btn, .achievement-card button,
 .shop-item-card button, .event-active-badge,
@@ -123,14 +229,36 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
-  padding: 12px 16px;
-  background: linear-gradient(180deg, #4fb0e8 0%, #2f86c9 100%);
-  border-bottom: 4px solid #1e5f97;
-  box-shadow: 0 4px 14px rgba(20, 50, 80, .3), inset 0 2px 0 rgba(255, 255, 255, .35);
+  gap: 8px 10px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, var(--navy-top) 0%, var(--navy) 100%);
+  border-bottom: 4px solid var(--navy-border);
+  box-shadow: 0 4px 14px rgba(8, 20, 40, .35), inset 0 2px 0 rgba(255, 255, 255, .3);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
+}
+
+/* Botão de perfil (ícone do personagem), sempre o 1º elemento da barra
+   superior — abre o modal de Perfil (nick, ícone da conta, som/música, ver
+   ui/render.js profileModalHtml). */
+#profile-btn {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .5);
+  background: var(--grad-gold);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .18);
+  overflow: hidden;
+}
+
+#profile-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .resource {
@@ -140,16 +268,47 @@ button:disabled {
   font-weight: 800;
   font-size: 14px;
   color: #fff;
-  background: rgba(15, 45, 75, .28);
-  border: 2px solid rgba(255, 255, 255, .35);
-  border-radius: 999px;
-  padding: 4px 12px 4px 6px;
+  border: 2px solid rgba(255, 255, 255, .5);
+  border-radius: 12px;
+  padding: 5px 12px 5px 8px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .18);
 }
 
+/* Each resource gets its own solid color, matching the reference mockup
+   (gold coin = orange, gem = blue, event ticket = dark navy, stage flag =
+   red) instead of one uniform translucent pill for all four. */
+.resource-gold { background: linear-gradient(180deg, #ffc94d, #f0a000); border-color: #ffe29a; }
+.resource-cash { background: linear-gradient(180deg, #3dd68c, #189b5c); border-color: #a3f0cb; }
+.resource-event { background: linear-gradient(180deg, #4a5f7a, #263a52); border-color: #7f96b0; }
+.resource-stage { background: linear-gradient(180deg, #ff6b6b, #d13f3f); border-color: #ffb0b0; }
+
 .resource-icon {
-  font-size: 18px;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35));
+}
+
+/* Small inline currency icon used in place of the gold/event/esmeralda
+   emoji anywhere it shows up mid-text (buttons, labels, toasts) — see
+   GOLD_ICON/EVENT_ICON/ESMERALDA_ICON in ui/render.js. */
+.currency-icon {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  vertical-align: -3px;
+}
+
+/* +125% (2 rounds de +50%, o 2º pedido pelo usuário por ainda estar
+   pequeno) pro conjunto de ícones novos (Fundir Tudo, Pontuação, Atualizar,
+   Combate, Vitórias, selo de mensagem lida do Correio — ver MERGE_ALL_ICON
+   e afins em ui/render.js), sem mexer no tamanho dos ícones de
+   moeda/recurso mais antigos. */
+.currency-icon-lg {
+  width: 33.75px;
+  height: 33.75px;
+  vertical-align: -10px;
 }
 
 .resource-label {
@@ -170,43 +329,128 @@ button:disabled {
 
 /* ---------------- Combat panel ---------------- */
 
-#combat-panel {
-  padding: 16px 16px 8px;
+#tab-hunt {
+  padding: 12px 12px 8px;
   text-align: center;
 }
 
-#stage-controls {
+/* Plain overlay row (no blue ribbon) sitting right on top of the scene
+   art — just the stage label, prev/next arrows and the flag button, all
+   glassy/translucent so the background photo shows through. */
+#zone-banner {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-#stage-controls button {
-  padding: 7px 12px;
-  font-size: 13px;
-}
-
-#stage-label {
-  min-width: 120px;
+  gap: 10px;
+  padding: 0 12px;
+  margin: 0 0 10px;
+  color: #fff;
   font-weight: 800;
-  background: var(--bg-card);
-  border: 2px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 12px;
-  box-shadow: var(--shadow-card);
-  display: inline-block;
+  font-size: 14px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .55);
 }
 
+.banner-nav-btn {
+  background: rgba(255, 255, 255, .12);
+  border: 2px solid rgba(255, 255, 255, .4);
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 13px;
+  border-radius: 8px;
+  box-shadow: none;
+  flex: 0 0 auto;
+}
+
+#stage-label,
+.stage-label-btn {
+  min-width: 90px;
+  font-weight: 800;
+  font-size: 14px;
+  display: inline-block;
+  background: rgba(255, 255, 255, .12);
+  border: 2px solid rgba(255, 255, 255, .4);
+  color: #fff;
+  border-radius: 8px;
+  padding: 3px 10px;
+  box-shadow: none;
+  text-shadow: inherit;
+}
+
+.stage-label-btn::after {
+  content: ' ▾';
+  opacity: .8;
+}
+
+.stage-label-btn:disabled {
+  opacity: .6;
+}
+
+.stage-jump-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stage-jump-option {
+  padding: 10px 6px;
+  border-radius: 10px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: 0 2px 0 var(--border-strong);
+}
+
+.stage-jump-option.current {
+  background: var(--grad-gold);
+  border-color: var(--gold-dark);
+  box-shadow: 0 2px 0 var(--gold-dark);
+}
+
+.stage-max-flag-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 15px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .12);
+  border: 2px solid rgba(255, 255, 255, .4);
+  color: #fff;
+  box-shadow: none;
+  flex: 0 0 auto;
+}
+
+/* Scenic backdrop behind the monster: 1 fixed scene per zone (see
+   ZONES[].sceneImage in data/monsters.js, applied inline in renderMonster
+   in ui/render.js), same background for weak monster or boss of that
+   zone. This CSS gradient is only the fallback if a zone somehow has no
+   sceneImage set. */
 #monster-area {
   position: relative;
-  background: linear-gradient(180deg, #fffaf0 0%, #ffedc0 100%);
+  background-color: #bfe6fb;
+  background-size: cover;
+  background-position: center 40%;
+  background-image:
+    radial-gradient(ellipse 160px 60px at 25% 12%, rgba(255, 255, 255, .55), transparent 70%),
+    radial-gradient(ellipse 130px 50px at 78% 8%, rgba(255, 255, 255, .45), transparent 70%),
+    linear-gradient(180deg, #bfe6fb 0%, #e3f4ff 45%, #eaf7e2 78%, #d9ecc7 100%);
   border: 4px solid var(--border);
   border-radius: 26px;
-  padding: 22px 14px 18px;
+  padding: 18px 14px 18px;
   box-shadow: 0 6px 0 var(--border-strong), var(--shadow-panel), inset 0 2px 0 rgba(255, 255, 255, .6);
   overflow: hidden;
+}
+
+#monster-nameplate {
+  margin-bottom: 12px;
 }
 
 #monster-name {
@@ -214,6 +458,12 @@ button:disabled {
   margin-bottom: 6px;
   font-size: 16px;
   letter-spacing: 0.01em;
+  /* Thin white outline so the name stays legible over busy scene art
+     (assets/ui/scenes/*, boss-specific backgrounds) behind it. */
+  text-shadow:
+    -1px -1px 0 #fff, 0 -1px 0 #fff, 1px -1px 0 #fff,
+    -1px 0 0 #fff, 1px 0 0 #fff,
+    -1px 1px 0 #fff, 0 1px 0 #fff, 1px 1px 0 #fff;
 }
 
 #monster-name .boss-tag {
@@ -264,7 +514,9 @@ button:disabled {
    is needed beyond this one. */
 .icon img,
 .item-detail-icon img,
-#monster-sprite img {
+#monster-sprite img,
+.loot-popup-entry img,
+.event-boss-sprite img {
   width: 1em;
   height: 1em;
   object-fit: contain;
@@ -280,15 +532,44 @@ button:disabled {
   100% { transform: scale(1); }
 }
 
+#attack-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(180deg, var(--navy-top) 0%, var(--navy) 55%, var(--navy-deep) 100%);
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--navy-border), 0 6px 14px rgba(8, 20, 40, .3);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+#attack-damage-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffe8a3;
+}
+
+/* Small and thin on purpose — no text at all, just the red fill draining
+   as the monster's HP drops. The actual numbers already live in
+   "Informações do Inimigo" below, so this is purely a quick-glance meter. */
 #hp-bar-outer {
   position: relative;
-  height: 26px;
+  height: 8px;
+  width: 60%;
+  margin: 6px auto 0;
   background: #fff3d6;
-  border: 3px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 999px;
   overflow: hidden;
-  margin-top: 10px;
-  box-shadow: inset 0 3px 6px rgba(74, 47, 20, .22);
+  box-shadow: inset 0 1px 3px rgba(74, 47, 20, .22);
 }
 
 #hp-bar-fill {
@@ -306,19 +587,6 @@ button:disabled {
   background: linear-gradient(180deg, rgba(255, 255, 255, .55) 0%, transparent 48%);
 }
 
-#hp-bar-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12.5px;
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, .55);
-  z-index: 1;
-}
-
 #damage-popups {
   position: absolute;
   inset: 0;
@@ -326,17 +594,64 @@ button:disabled {
   overflow: visible;
 }
 
+#loot-popup {
+  position: absolute;
+  right: 12px;
+  bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.loot-popup-entry {
+  background: rgba(74, 47, 20, .72);
+  color: #fff8dc;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .2);
+  animation: loot-popup-in 0.15s ease-out, loot-popup-out 0.3s ease-in 2.2s forwards;
+}
+
+/* Real item/material/card art reads better a bit bigger than the plain
+   1em (== this popup's own tiny 10px font-size) the shared .icon img rule
+   would otherwise give it. */
+.loot-popup-entry img {
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes loot-popup-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loot-popup-out {
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
+/* Small and out of the way, in the opposite corner from #loot-popup
+   (bottom-right) — just the clock + seconds, not a full sentence. */
 #boss-timer {
-  margin-top: 12px;
-  padding: 7px 14px;
+  position: absolute;
+  left: 12px;
+  bottom: 4px;
+  padding: 3px 8px;
   border-radius: 999px;
   background: var(--grad-red);
   color: #fff;
-  font-size: 12.5px;
+  font-size: 10.5px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 3px 0 var(--red-dark);
+  box-shadow: 0 2px 0 var(--red-dark);
   display: inline-block;
+  z-index: 2;
 }
 
 #boss-timer.hidden {
@@ -368,29 +683,102 @@ button:disabled {
   100% { opacity: 0; transform: translate(-50%, -50px) scale(1.15); }
 }
 
-#dps-readout {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 12px;
-  font-size: 13px;
+.damage-popup.crit {
+  font-size: 25px;
+  color: #ffd23f;
+  text-shadow: -1px -1px 0 #9c1c0e, 1px -1px 0 #9c1c0e, -1px 1px 0 #9c1c0e, 1px 1px 0 #9c1c0e, 0 4px 8px rgba(0, 0, 0, .35);
+  animation: float-up-crit 0.75s ease-out forwards;
+}
+
+@keyframes float-up-crit {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(1.1); }
+  30% { transform: translate(-50%, -12px) scale(1.35); }
+  100% { opacity: 0; transform: translate(-50%, -55px) scale(1.2); }
+}
+
+.damage-popup.burst {
+  font-size: 30px;
+  color: #ff6bd6;
+  text-shadow: -1px -1px 0 #4a0e42, 1px -1px 0 #4a0e42, -1px 1px 0 #4a0e42, 1px 1px 0 #4a0e42, 0 4px 10px rgba(0, 0, 0, .4);
+  animation: float-up-burst 0.9s ease-out forwards;
+}
+
+@keyframes float-up-burst {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(1.2); }
+  25% { transform: translate(-50%, -16px) scale(1.55); }
+  100% { opacity: 0; transform: translate(-50%, -60px) scale(1.3); }
+}
+
+.damage-popup.pet-damage {
+  font-size: 16px;
+  text-shadow: -1px -1px 0 rgba(0, 0, 0, .55), 1px -1px 0 rgba(0, 0, 0, .55), -1px 1px 0 rgba(0, 0, 0, .55), 1px 1px 0 rgba(0, 0, 0, .55);
+}
+
+/* Reflexo de Dano (ver reflectChance em systems/stats.js, spawnReflectDamagePopup
+   em ui/render.js) — roxo, distinto do dano normal (branco/dourado no crítico)
+   e do dano de mascote (cor do elemento) acima. */
+.damage-popup.reflect-damage {
+  color: #b26bff;
+  font-size: 16px;
+  text-shadow: -1px -1px 0 rgba(0, 0, 0, .55), 1px -1px 0 rgba(0, 0, 0, .55), -1px 1px 0 rgba(0, 0, 0, .55), 1px 1px 0 rgba(0, 0, 0, .55);
+}
+
+/* ---- Informações de Batalha: two-column stat comparison ---- */
+
+.section-banner-sm {
+  font-size: 12.5px;
+  padding: 7px 30px;
+  min-height: 30px;
+  margin-bottom: 10px;
+}
+
+#battle-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 4px;
+}
+
+.battle-info-col-title {
+  font-size: 10.5px;
+  font-weight: 800;
   color: var(--text-dim);
-  font-weight: 600;
+  margin-bottom: 6px;
+  white-space: nowrap;
 }
 
-#dps-readout strong {
-  color: var(--text);
-}
-
-#element-readout {
+.battle-info-row {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 10.5px;
   color: var(--text-dim);
   font-weight: 600;
-  flex-wrap: wrap;
+  padding: 3px 0;
+  border-bottom: 1px dashed rgba(168, 103, 44, .25);
+}
+
+.battle-info-row:last-child {
+  border-bottom: none;
+}
+
+.battle-info-row strong {
+  color: var(--text);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+#element-matchup {
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin: 6px 0;
 }
 
 #element-matchup.advantage {
@@ -403,47 +791,13 @@ button:disabled {
   font-weight: 800;
 }
 
-.element-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 10.5px;
-  font-weight: 800;
-  padding: 3px 9px;
-  border-radius: 999px;
-  border: 2px solid var(--border);
-  background: var(--bg-card);
-  white-space: nowrap;
-}
-
-.element-badge.element-neutro {
-  color: #5a5a68;
-  background: #eceef2;
-  border-color: #c7cad4;
-}
-
-.element-badge.element-fogo {
-  color: #c94b1c;
-  background: #ffe3d3;
-  border-color: #ff8a5c;
-}
-
-.element-badge.element-planta {
-  color: var(--green-dark);
-  background: #dff5e3;
-  border-color: var(--green);
-}
-
-.element-badge.element-eletrico {
-  color: #a5860a;
-  background: #fff6c2;
-  border-color: #f4d94d;
-}
-
-.element-badge.element-agua {
-  color: #1c7fb0;
-  background: #dbf1ff;
-  border-color: #5cc2ff;
+/* Just the icon, no pill/border/name — see elementBadgeHtml in
+   ui/render.js. */
+.element-badge-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .element-resistance {
@@ -457,19 +811,51 @@ button:disabled {
   flex-wrap: wrap;
 }
 
+/* Aviso no modal de detalhe do item quando a arma secundária (Aljava/
+   Livro/Escudo) ainda não pode ser equipada por faltar a primária do
+   mesmo atributo — ver weaponRequirementNote em ui/render.js. */
+.weapon-requirement-note {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--red-dark);
+  margin: 0 0 8px;
+}
+
 #player-status {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 12px;
-  padding: 0 4px;
+  margin: 10px 0 14px;
+  padding: 8px 10px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+#player-portrait {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .2);
+}
+
+#player-status-info {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
 }
 
 #player-hp-label {
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: var(--text-dim);
-  font-weight: 700;
+  font-weight: 800;
   white-space: nowrap;
+  display: block;
+  margin-bottom: 3px;
 }
 
 #player-hp-bar-outer {
@@ -502,6 +888,58 @@ button:disabled {
   background: var(--grad-red);
 }
 
+/* Nível/XP do caçador — mesmo estilo visual da barra de HP do jogador
+   acima, mas em roxo pra não se confundir com HP (verde/vermelho) nem com
+   Ouro (dourado). Só desbloqueia Zona/Chefe por enquanto (ver
+   systems/leveling.js). */
+#hunter-level-info {
+  margin: 0 0 14px;
+  padding: 8px 10px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  text-align: left;
+}
+
+#hunter-level-label {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  font-weight: 800;
+  white-space: nowrap;
+  display: block;
+  margin-bottom: 3px;
+}
+
+#hunter-xp-bar-outer {
+  position: relative;
+  height: 16px;
+  background: #fff3d6;
+  border: 3px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 5px rgba(74, 47, 20, .2);
+}
+
+#hunter-xp-bar-fill {
+  height: 100%;
+  background: var(--grad-purple);
+  width: 0%;
+  transition: width 0.15s ease-out;
+}
+
+#hunter-xp-bar-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--text);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .6);
+}
+
 #player-hp-bar-text {
   position: absolute;
   inset: 0;
@@ -515,44 +953,144 @@ button:disabled {
   z-index: 1;
 }
 
-/* ---------------- Tabs ---------------- */
+/* ---------------- Bottom nav ----------------
+   Fixed to the viewport bottom (not the document), same idea as a native
+   Android bottom tab bar — icon on top, label underneath, active tab lit
+   up gold. #app reserves --bottom-nav-height of padding (see #app above)
+   so the last scrolled content never sits under it. */
 
 #tab-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--app-max-width);
   display: flex;
-  overflow-x: auto;
-  gap: 6px;
-  padding: 14px 16px 0;
+  background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+  border-top: 3px solid var(--gold);
+  box-shadow: 0 -6px 18px rgba(8, 20, 40, .4);
+  padding: 6px 2px;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
 }
 
 .tab-btn {
-  padding: 10px 14px 9px;
-  font-size: 13px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 5px 1px;
+  font-size: 8px;
   font-weight: 700;
   white-space: nowrap;
-  background: var(--grad-neutral);
-  border: 3px solid var(--border);
-  border-bottom: none;
-  border-radius: 14px 14px 0 0;
-  color: var(--text-dim);
-  box-shadow: inset 0 -2px 0 rgba(255, 255, 255, .4);
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, .65);
+  box-shadow: none;
+}
+
+.tab-btn .tab-btn-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .3));
+}
+
+.tab-btn:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
 }
 
 .tab-btn.active {
-  background: linear-gradient(180deg, #fff8e6, #fff1c8);
-  color: var(--gold-dark);
-  border-color: var(--border-strong);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, .5);
-  transform: translateY(1px);
+  background: rgba(255, 255, 255, .1);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 2px rgba(240, 165, 0, .5);
+}
+
+.tab-btn.active .tab-btn-icon {
+  filter: drop-shadow(0 0 5px rgba(240, 165, 0, .7));
+}
+
+/* ---------------- "Outros" pop-up menu ----------------
+   Cartas/Loja moved off the main 6-slot bottom nav into this floating menu,
+   opened by the "Outros" nav button. The anchor is a full-width fixed strip
+   (same centering trick as #tab-nav) sitting just above the nav bar, with
+   pointer-events off everywhere except the menu card itself so it doesn't
+   block clicks elsewhere on the page — the card is right-aligned inside it
+   so it lands above the rightmost nav slot ("Outros" itself). */
+.more-menu-anchor {
+  position: fixed;
+  left: 50%;
+  bottom: 78px;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--app-max-width);
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 6px;
+  pointer-events: none;
+  z-index: 31;
+}
+
+.more-menu {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 140px;
+  margin-bottom: 10px;
+  background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+  border: 2px solid var(--gold);
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: 0 6px 18px rgba(8, 20, 40, .5);
+}
+
+.more-menu.hidden {
+  display: none;
+}
+
+.more-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, .06);
+  border: none;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, .8);
+  box-shadow: none;
+}
+
+.more-menu-btn .tab-btn-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .3));
+}
+
+.more-menu-btn.active {
+  background: rgba(255, 255, 255, .14);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 2px rgba(240, 165, 0, .5);
+}
+
+.more-menu-btn.active .tab-btn-icon {
+  filter: drop-shadow(0 0 5px rgba(240, 165, 0, .7));
 }
 
 #tab-panels {
   flex: 1;
-  padding: 18px 16px 32px;
+  padding: 16px 12px 24px;
   background: linear-gradient(180deg, #fff8e6, #fff1c8);
-  border: 4px solid var(--border-strong);
-  border-top: none;
-  border-radius: 0 0 24px 24px;
-  box-shadow: var(--shadow-panel);
 }
 
 .tab-panel {
@@ -571,81 +1109,148 @@ button:disabled {
   gap: 16px;
 }
 
-.equip-ring {
+/* Top row: the paper-doll card (character + 6 equip slots overlaid, 2
+   columns of 3) side by side with the stats card — both roughly square,
+   same shape as the reference layout, with the inventory grid spanning
+   full width below (see .equip-inventory-grid). */
+.equip-top-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
+  align-items: stretch;
+  gap: 10px;
 }
 
-.equip-side {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.equip-character {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 130px;
-  height: 196px;
-  border-radius: 20px;
-  background: radial-gradient(ellipse at center, rgba(255, 205, 92, .28), rgba(255, 255, 255, .12) 60%, transparent 75%);
-  border: 3px solid var(--border);
-  box-shadow: inset 0 2px 8px rgba(255, 255, 255, .4), var(--shadow-card);
-}
-
-.equip-character svg {
-  display: block;
-}
-
-.character-visual {
+.paperdoll-card {
   position: relative;
-  width: 110px;
-  height: 184px;
+  flex: 1 1 50%;
+  aspect-ratio: 1122 / 1402;
+  background-size: cover;
+  background-position: center;
+  background-color: #cfe8f7;
+  background-image:
+    radial-gradient(ellipse 90px 40px at 25% 10%, rgba(255, 255, 255, .5), transparent 70%),
+    linear-gradient(180deg, #bfe6fb 0%, #e3f4ff 45%, #eaf7e2 78%, #d9ecc7 100%);
+  border: 3px solid var(--border-strong);
+  border-radius: 20px;
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
 }
 
-.character-visual svg {
+/* Plain emoji placeholder until the real character illustration is added
+   (see PLAYER_PORTRAIT_IMAGE in ui/render.js) — once that's set, this
+   element isn't rendered at all and the image shows via background-image
+   on .paperdoll-card instead. */
+.paperdoll-placeholder {
   position: absolute;
   inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30cqw;
+  font-size: min(30vw, 90px);
+  filter: drop-shadow(0 6px 6px rgba(74, 47, 20, .3));
 }
 
-/* Real-art gear overlays on the paper doll: anchored by center-point
-   (left/top set inline per slot in GEAR_OVERLAY_ANCHORS), sized as a
-   percentage of the doll box so they scale together with it. */
-.gear-overlay {
+.paperdoll-overlay-col {
   position: absolute;
-  transform: translate(-50%, -50%);
-  height: auto;
-  object-fit: contain;
-  pointer-events: none;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+  top: 8px;
+  bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 21%;
+}
+
+.paperdoll-overlay-left { left: 8px; }
+.paperdoll-overlay-right { right: 8px; }
+
+.equip-stats-box {
+  position: relative;
+  flex: 1 1 50%;
+  aspect-ratio: 1122 / 1402;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Rows are absolutely positioned to sit centered in the band between the
+   parchment's baked-in divider lines (see STATS_ROW_POSITIONS in
+   ui/render.js, already calibrated to each band's center) instead of
+   flowing normally, since the frame art already supplies the title,
+   border and lines. translateY(-50%) + align-items:center (not
+   translateY(-100%) + flex-end) is what actually centers the text in that
+   band — the old bottom-anchored version rendered every row glued to the
+   top of its line instead of centered between the two lines. */
+.stats-frame-row {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #5a4423;
+  line-height: 1.15;
+}
+
+.stats-frame-row strong {
+  font-size: 11px;
+  color: #3a2c14;
+  white-space: nowrap;
 }
 
 .equip-slot-icon {
   position: relative;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: var(--grad-neutral);
-  border: 3px solid var(--border);
-  box-shadow: var(--shadow-card);
+  aspect-ratio: 1;
+  width: 100%;
+  container-type: inline-size;
+  background: url('../assets/ui/equip-slot-frame.png') center / 100% 100% no-repeat;
+  border: none;
+  box-shadow: none;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
 }
 
-.equip-slot-icon .icon {
-  font-size: 30px;
-  filter: drop-shadow(0 2px 2px rgba(74, 47, 20, .25));
+/* Round rarity-color glow sitting between the slot frame and the item art
+   in front of it. inset is smaller than the icon's own 7.5% box (below) so
+   the glow's ring peeks out past the art on every side. No white mixed in
+   (unlike an earlier version) — against this frame's own gold/red trim, a
+   white-lightened glow (e.g. Mítico's red gone pale pink) blended in and
+   read as no glow at all; keeping the rarity color's full saturation is
+   what actually shows up here. */
+.equip-slot-icon.has-rarity::before {
+  content: '';
+  position: absolute;
+  inset: 2%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--rarity-color) 0%, color-mix(in srgb, var(--rarity-color) 55%, transparent) 45%, transparent 75%);
+  z-index: 0;
 }
 
-.equip-slot-icon.filled {
-  border-color: var(--gold);
-  background: linear-gradient(180deg, #fff3d6, #ffe49a);
-  box-shadow: 0 0 0 3px rgba(245, 168, 0, .25), var(--shadow-card);
+/* Same reasoning as .inventory-tile .icon above: pins .icon to a definite
+   85%x85% square via absolute inset so tall/narrow art (e.g. Aljava) can't
+   stretch the slot out of square by resolving its height against nothing. */
+.equip-slot-icon .icon {
+  position: absolute;
+  inset: 7.5%;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 85cqw;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
+}
+
+.equip-slot-icon .icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .equip-slot-icon.empty .icon {
@@ -672,6 +1277,21 @@ button:disabled {
   box-shadow: 0 2px 0 var(--purple-dark);
 }
 
+.card-count-badge {
+  position: absolute;
+  bottom: -6px;
+  left: -6px;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--grad-purple);
+  border-radius: 8px;
+  padding: 2px 5px;
+  line-height: 1.3;
+  box-shadow: 0 2px 0 var(--purple-dark);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+}
+
 .equip-inventory-header {
   font-size: 13px;
   font-weight: 800;
@@ -682,39 +1302,337 @@ button:disabled {
   padding-top: 14px;
 }
 
+/* Cabeçalho do Inventário + botão de entrar no modo de seleção em massa
+   (ver data-bulk-toggle-select) lado a lado — o border/padding do
+   .equip-inventory-header sozinho vira duplicado aqui dentro, então essa
+   linha assume os dois e a header interna some com os seus. */
+.equip-inventory-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 3px dashed var(--border);
+  padding-top: 14px;
+}
+
+.equip-inventory-header-row .equip-inventory-header {
+  border-top: none;
+  padding-top: 0;
+}
+
+.equip-inventory-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.bulk-select-toggle-btn {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--grad-gold);
+  border: none;
+  border-radius: 8px;
+  padding: 5px 9px;
+  box-shadow: 0 2px 0 var(--gold-dark);
+}
+
+/* Botão de ordenar o inventário por Tier (ver toggleInventoryTierSort em
+   main.js) — 1 clique ordena do maior Tier pro menor, clicar de novo
+   inverte a direção; a seta gira 180° pra indicar a direção atual (ícone
+   provisório, ver pedido do usuário de trocar o símbolo mais pra frente). */
+.tier-sort-toggle-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font-size: 13px;
+  color: #fff;
+  background: var(--grad-neutral);
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 0 var(--border);
+  transition: transform 0.15s ease;
+}
+
+.tier-sort-toggle-btn.active {
+  background: var(--grad-gold);
+  box-shadow: 0 2px 0 var(--gold-dark);
+}
+
+.tier-sort-toggle-btn.asc {
+  transform: rotate(180deg);
+}
+
 .equip-inventory-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
   gap: 8px;
 }
 
+.equip-inventory-grid .empty-slot {
+  grid-column: 1 / -1;
+}
+
+.element-filter-row {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+
+.element-filter-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font-size: 16px;
+  border-radius: 10px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.element-filter-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+/* Ícone real do slot vazio (ver iconMarkup em categoryFilterRowHtml,
+   ui/render.js) dentro de um botão de filtro de categoria — mesmo tamanho
+   do .element-filter-icon acima, só que aplicado direto na tag <img> já
+   que iconMarkup() não aceita passar uma classe. */
+.element-filter-btn img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.element-filter-btn.active {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(31, 95, 168, .3), var(--shadow-card);
+  transform: translateY(1px);
+}
+
+/* Botões de ordenação da aba Mascotes (Padrão/Nível/Raridade/Elemento) —
+   mesma linguagem visual do filtro de categoria (.element-filter-btn),
+   mas com rótulo de texto em vez de só 1 emoji, então precisam de largura
+   automática (não o quadrado fixo de 34x34) e podem quebrar linha num
+   inventário estreito. */
+.pet-sort-row {
+  flex-wrap: wrap;
+}
+
+.pet-sort-btn {
+  width: auto;
+  height: auto;
+  padding: 7px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .inventory-tile {
   position: relative;
   aspect-ratio: 1;
-  border-radius: 14px;
-  background: var(--grad-neutral);
-  border: 3px solid var(--border);
-  box-shadow: var(--shadow-card);
+  container-type: inline-size;
+  background: url('../assets/ui/inventory-tile-frame.png') center / 100% 100% no-repeat;
+  border: none;
+  box-shadow: none;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
 }
 
+/* Round rarity-color glow sitting between the tile frame and the item art
+   in front of it. inset is smaller than the icon's own 7.5% box (below) so
+   the glow's ring peeks out past the art on every side instead of mostly
+   hiding behind it whenever the art fills its box tightly. No white mixed
+   in — a white-lightened glow reads as barely-there against some frames. */
+.inventory-tile.has-rarity::before {
+  content: '';
+  position: absolute;
+  inset: 2%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--rarity-color) 0%, color-mix(in srgb, var(--rarity-color) 55%, transparent) 45%, transparent 75%);
+  z-index: 0;
+}
+
+/* .icon is an inline <span>, so a percentage height on its img child can't
+   resolve against it (no definite height to resolve against) — the tall
+   Aljava art was ignoring that height and stretching the grid row instead
+   of being contained. Pinning .icon itself to a definite 85%x85% square via
+   absolute inset (percentages of the tile's own definite size, always
+   reliable) and centering the img inside with object-fit: contain keeps
+   every item — square or tall/narrow art alike — inside that square, no
+   matter its native aspect ratio. */
 .inventory-tile .icon {
-  font-size: 24px;
+  position: absolute;
+  inset: 7.5%;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 85cqw;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
+}
+
+.inventory-tile .icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.inventory-tile .mini-badge,
+.inventory-tile .card-count-badge {
+  z-index: 1;
 }
 
 .inventory-tile.equipped {
-  border-color: var(--green);
-  background: linear-gradient(180deg, #e3f7e6, #c7f0cf);
-  box-shadow: 0 0 0 3px rgba(47, 168, 79, .2), var(--shadow-card);
+  box-shadow: 0 0 0 2px var(--green);
+}
+
+/* Segurar um item por 1s entra no modo de seleção em massa (ver
+   wireInventoryTabEvents em main.js) — touch-action/user-select evita que o
+   segurar dispare o menu de contexto/seleção de texto do navegador
+   enquanto o timer de long-press está rodando. */
+.inventory-tile {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.inventory-tile.bulk-selected {
+  box-shadow: 0 0 0 3px var(--danger);
+}
+
+/* Equipado durante o modo de seleção em massa — escurecido e fora de
+   seleção (ver bulkLocked em ui/render.js inventoryTileHtml). */
+.inventory-tile.bulk-locked {
+  opacity: 0.45;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
+}
+
+.bulk-select-check {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 1;
+  font-size: 13px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6));
+}
+
+.bulk-select-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, .08);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: center;
 }
 
 /* Item detail popup (shown via the shared #modal-overlay) */
 
 .item-detail {
+  position: relative;
   text-align: center;
+}
+
+/* Tier = zona onde o item dropa (Zona 1 -> Tier 1, Zona 2 -> Tier 2, ...) —
+   só um identificador rápido de "qualidade" no canto do popup, separado do
+   badge de raridade (que já mostra cor/nome embaixo do ícone). */
+.item-detail-tier-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  opacity: .8;
+}
+
+/* Canto oposto do badge "Tier God" acima — requisito de Nível dos itens
+   Tier God (ver godItemDetailHtml em ui/render.js), em vermelho pra chamar
+   atenção. */
+.item-detail-level-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--danger);
+}
+
+/* Cadeado (ver toggleItemLock em systems/crafting.js) — canto superior
+   direito do popup de item (item normal; item Deus já usa esse canto pro
+   badge de Nível, ver .item-detail-level-badge acima, então não ganha
+   cadeado). Sem fundo/moldura, só o emoji maior — clicável direto. */
+.item-detail-lock-btn {
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  z-index: 5;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  font-size: 26px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  box-shadow: none;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Badge pequeno no canto do card do Inventário (ver inventoryTileHtml,
+   ui/render.js) — mesmo canto do .mini-badge (nível de aprimoramento),
+   um pouco acima pra não sobrepor. */
+.lock-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 11px;
+  z-index: 2;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .4));
+}
+
+/* Power do item/mascote (ver systems/power.js) — linha normal alinhada à
+   esquerda (mesmo layout de .element-resistance), logo acima da linha de
+   resistência elemental/slots de carta (item) ou da barra de XP (mascote,
+   ver petDetailHtml) — não é mais um badge no canto: em popups mais
+   curtos (mascote, item Deus incompleto) ficava em cima dos botões de
+   ação. Sempre recalculado do valor atual: aprimorar/Rank Master/
+   ascender/encaixar-tirar carta/subir nível de mascote já reflete aqui na
+   próxima renderização do popup. */
+.item-detail-power-line {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--gold-dark);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.item-detail-power-line .currency-icon {
+  width: 18px;
+  height: 18px;
+  vertical-align: -4px;
 }
 
 .item-detail-icon {
@@ -723,10 +1641,41 @@ button:disabled {
   filter: drop-shadow(0 4px 4px rgba(74, 47, 20, .25));
 }
 
+/* Quadruple size (2x, then 2x again per feedback), just for the equipment
+   item detail popup (not the empty-slot fallback or pet species icons
+   above, which share the base class) — the item itself should stand out
+   more when its full detail card is open. */
+.item-detail-icon-lg {
+  font-size: 192px;
+}
+
 .item-detail-name {
   font-size: 15px;
   font-weight: 800;
   margin-bottom: 8px;
+}
+
+/* Especificidade extra (.recipe-cost button.select-monster-btn) de
+   propósito — só ".select-monster-btn" perdia pra ".enhance-panel
+   button" (mais específica) e saía do tamanho de um botão de ação
+   normal, ocupando a linha toda. */
+.recipe-cost button.select-monster-btn {
+  display: inline-block;
+  width: auto;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 5px;
+  margin-top: 0;
+  border-radius: 6px;
+  background: var(--grad-neutral);
+  color: var(--text-dim);
+  box-shadow: none;
+  vertical-align: middle;
+}
+
+.recipe-cost button.select-monster-btn:active:not(:disabled) {
+  transform: none;
 }
 
 .item-detail-stats {
@@ -735,6 +1684,94 @@ button:disabled {
   font-weight: 600;
   line-height: 1.6;
   margin-bottom: 8px;
+}
+
+/* 1 linha de bônus adicional + botão de reroll com Dado Místico (ver
+   bonusStatRowHtml, ui/render.js) — texto à esquerda, botão logo depois
+   dele (não alinhado numa coluna reta à direita — a distância do texto é
+   sempre a mesma, ~3 espaços, então o botão "flutua" mais perto ou mais
+   longe da borda conforme o tamanho do texto de cada bônus), que é o
+   PRÓPRIO ícone de "atualizar" (REFRESH_ICON) por inteiro, sem fundo/
+   moldura de botão em volta. */
+.item-detail-bonus-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+.item-detail-bonus-row button.bonus-reroll-btn {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin-left: 18px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-detail-bonus-row .bonus-reroll-btn img {
+  width: 16px;
+  height: 16px;
+  vertical-align: 0;
+}
+
+/* Barra de XP de mascote (ver petXpSectionHtml, ui/render.js) — mesma
+   linguagem visual da barra de XP do caçador (#hunter-xp-bar-*), só que
+   como classes reusáveis (o modal de detalhe do pet pode reabrir várias
+   vezes, não é um elemento único fixo no DOM). */
+.pet-xp-section {
+  margin-bottom: 10px;
+}
+
+.pet-xp-label {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.pet-xp-bar-outer {
+  position: relative;
+  height: 14px;
+  background: #fff3d6;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 5px rgba(74, 47, 20, .2);
+  margin-bottom: 8px;
+}
+
+.pet-xp-bar-fill {
+  height: 100%;
+  background: var(--grad-purple);
+  width: 0%;
+  transition: width 0.15s ease-out;
+}
+
+.mega-drop-banner {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff8dc;
+  background: linear-gradient(135deg, #ff6bd6, #ffb347, #ff6bd6);
+  background-size: 200% 200%;
+  border: 2px solid #fff;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .4);
+  box-shadow: 0 4px 12px rgba(255, 107, 214, .5);
+  animation: mega-drop-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes mega-drop-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .modal-action-btn {
@@ -747,6 +1784,25 @@ button:disabled {
   color: #4a2e00;
   box-shadow: 0 3px 0 var(--gold-dark), 0 5px 10px rgba(74, 47, 20, .2);
   border-radius: 14px;
+}
+
+.modal-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modal-action-row .modal-action-btn {
+  width: auto;
+  flex: 1;
+  min-width: 110px;
+}
+
+.modal-action-btn.destroy-btn {
+  background: var(--grad-red);
+  color: #fff;
+  box-shadow: 0 3px 0 var(--red-dark), 0 5px 10px rgba(74, 47, 20, .2);
+  font-size: 11.5px;
 }
 
 .card-slot-badge {
@@ -809,41 +1865,6 @@ button:disabled {
   box-shadow: 0 2px 0 var(--purple-dark);
 }
 
-.card-slot-locked {
-  width: 100%;
-  box-sizing: border-box;
-  text-align: left;
-  background: var(--bg-card);
-  border: 2px dashed var(--border);
-  border-radius: 12px;
-  padding: 9px;
-  margin-bottom: 9px;
-}
-
-.card-slot-unlock-info {
-  font-size: 10.5px;
-  color: var(--text-dim);
-  font-weight: 600;
-  margin: 4px 0 8px;
-}
-
-.card-slot-unlock-btn {
-  width: 100%;
-  padding: 8px;
-  font-size: 11.5px;
-  font-weight: 800;
-  background: var(--grad-gold);
-  color: #4a2e00;
-  box-shadow: 0 3px 0 var(--gold-dark);
-  border-radius: 10px;
-}
-
-.card-slot-unlock-btn:disabled {
-  background: var(--grad-neutral);
-  color: var(--text-dim);
-  box-shadow: none;
-}
-
 .card-slot-picker {
   width: 100%;
   text-align: left;
@@ -888,6 +1909,99 @@ button:disabled {
   margin-left: auto;
   color: var(--text-dim);
   font-weight: 500;
+}
+
+/* iconMarkup() em ui/render.js pode render um <img> aqui (parceiro de
+   fusão de mascote) em vez de emoji — sem isso o img nativo (355x357px,
+   ver assets/pets/) estouraria a linha inteira. */
+.card-slot-option img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex: none;
+}
+
+/* Tela de seleção de monstros (estilo IdleArc) — até 4 monstros de
+   qualquer zona liberada, ver showMonsterSelectModal em ui/render.js. */
+.monster-select-count {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text);
+  text-align: center;
+  margin: 6px 0 10px;
+}
+
+.monster-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 340px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.monster-select-zone {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  background: var(--bg-card);
+}
+
+.monster-select-zone.locked {
+  opacity: 0.6;
+}
+
+.monster-select-zone-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.zone-req {
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.monster-select-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.monster-select-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 9px;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  color: var(--text);
+  border-radius: 999px;
+}
+
+.monster-select-chip .icon img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.monster-select-chip.selected {
+  background: var(--grad-purple);
+  border-color: var(--purple-dark);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+}
+
+.monster-select-chip.boss-chip {
+  border-color: var(--danger);
+}
+
+.monster-select-chip.locked {
+  opacity: 0.55;
 }
 
 .enhance-badge {
@@ -981,7 +2095,7 @@ button:disabled {
   font-size: 11px;
   font-weight: 700;
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 10px;
   background: var(--grad-neutral);
   border: 2px solid var(--border);
   color: var(--text-dim);
@@ -995,6 +2109,7 @@ button:disabled {
 }
 
 .recipe-card {
+  position: relative;
   background: var(--grad-neutral);
   border: 2px solid var(--border);
   border-radius: 14px;
@@ -1031,7 +2146,7 @@ button:disabled {
 }
 
 .recipe-cost {
-  font-size: 11px;
+  font-size: 13.5px;
   font-weight: 600;
   margin-bottom: 3px;
   display: flex;
@@ -1083,36 +2198,43 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--grad-neutral);
-  border: 2px solid var(--border);
-  border-radius: 14px;
+  background: url('../assets/ui/upgrade-card-frame.png') center / 100% 100% no-repeat;
+  border: none;
+  box-shadow: none;
   padding: 11px 13px;
-  box-shadow: var(--shadow-card);
 }
 
 .upgrade-card .icon {
-  font-size: 26px;
+  font-size: 66px;
+  flex: 0 0 auto;
+  line-height: 1;
+  transform: translateY(-8%);
 }
 
 .upgrade-card .info {
   flex: 1;
+  margin-left: 8px;
 }
 
 .upgrade-card .info .name {
   font-weight: 700;
   font-size: 13px;
+  line-height: 1.15;
+  color: #fff;
 }
 
 .upgrade-card .info .desc {
   font-size: 11.5px;
-  color: var(--text-dim);
+  line-height: 1.2;
+  color: #d3d9e8;
 }
 
 .upgrade-card .level {
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-dim);
-  margin-top: 2px;
+  line-height: 1.15;
+  color: #b7c0d6;
+  margin-top: 1px;
 }
 
 .upgrade-progress {
@@ -1121,12 +2243,13 @@ button:disabled {
   gap: 5px;
   flex-wrap: wrap;
   font-size: 11px;
-  color: var(--text-dim);
-  margin-top: 3px;
+  line-height: 1.15;
+  color: #b7c0d6;
+  margin-top: 1px;
 }
 
 .upgrade-progress strong {
-  color: var(--text);
+  color: #fff;
   font-weight: 800;
 }
 
@@ -1135,20 +2258,24 @@ button:disabled {
 }
 
 .upgrade-card button {
-  padding: 9px 13px;
-  font-size: 12px;
+  padding: 10.8px 15.6px;
+  font-size: 14.4px;
   font-weight: 700;
-  background: var(--grad-gold);
-  color: #4a2e00;
+  background: url('../assets/ui/upgrade-button-frame.png') center / 100% 100% no-repeat;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .45);
   white-space: nowrap;
-  box-shadow: 0 3px 0 var(--gold-dark);
-  border-radius: 12px;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .upgrade-card button:disabled {
-  background: var(--grad-neutral);
-  color: var(--text-dim);
-  box-shadow: none;
+  opacity: 0.55;
+}
+
+.upgrade-card button .currency-icon {
+  width: 18px;
+  height: 18px;
 }
 
 /* ---------------- Materials ---------------- */
@@ -1198,28 +2325,171 @@ button:disabled {
 
 /* ---------------- Events ---------------- */
 
-.event-list-item {
-  margin-bottom: 14px;
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.event-list-header {
-  cursor: pointer;
+/* Each event gets its own themed gradient banner (per event id, see the
+   theme classes below) — same idea as the mockup's Invasão do
+   Dragão/Bosque Ancestral/etc. cards, just mapped to this game's real 3
+   events instead of fictional ones. */
+.event-card {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 2px solid var(--navy-border);
+  box-shadow: var(--shadow-panel);
 }
 
-.event-list-body {
-  margin-top: 10px;
+.event-card-body {
+  background: linear-gradient(180deg, #fff8e6, #fff1c8);
+  padding: 14px;
 }
 
-.trade-card.selected {
-  border-color: var(--gold-dark);
-  box-shadow: 0 0 0 3px rgba(230, 168, 27, .25), var(--shadow-card);
+/* Banner art dos 2 eventos restantes (assets/ui/events/banner-*.png) —
+   mesmo template nos dois (uma caixa de status vazia em cima à direita, 3
+   quadrados vazios de "RECOMPENSAS" embaixo à esquerda), ver
+   arenaBannerHtml/expeditionBannerHtml em ui/render.js. Posições medidas
+   direto na arte-fonte (2172x724): caixa de status e quadrados de
+   recompensa em % do banner, não pixels fixos, pra escalar em qualquer
+   largura de tela. */
+.event-card-banner {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
-.trade-card button {
-  width: 100%;
-  margin-top: 6px;
-  padding: 6px;
-  font-size: 10.5px;
+.event-banner {
+  position: relative;
+  aspect-ratio: 2172 / 724;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* Título do evento sobreposto na arte (a arte nova não vem com nome
+   embutido, ao contrário dos banners antigos) — canto superior esquerdo,
+   bem acima da fileira "RECOMPENSAS", fonte grande. Largura limitada a
+   55% pra nunca encostar na caixa de status (que começa em ~59%). */
+.event-banner-title {
+  position: absolute;
+  left: 4%;
+  top: 11.52%;
+  width: 55%;
+  text-align: left;
+  white-space: nowrap;
+  font-size: clamp(12.65px, 3.68vw, 17.25px);
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .7), 0 0 10px rgba(0, 0, 0, .5);
+}
+
+.event-banner-status-box {
+  position: absolute;
+  left: 76.45%;
+  top: 24.3%;
+  transform: translate(-50%, -50%);
+  width: 33%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.event-banner-status-label {
+  font-size: clamp(9px, 2.8vw, 13px);
+  font-weight: 700;
+  color: rgba(243, 221, 184, .9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
+  transform: translateY(10%);
+}
+
+.event-banner-status-value {
+  font-size: clamp(11px, 3.6vw, 17px);
+  font-weight: 800;
+  color: #f3ddb8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
+  transform: translateY(-10%);
+}
+
+/* "Pronto!"/"Em combate!" aparecem sozinhos na caixa (sem rótulo em cima)
+   — o ajuste de -10% do valor emparelhado com o rótulo não se aplica
+   aqui, a posição sem rótulo já estava perfeita antes desse ajuste. */
+.event-banner-status-value-solo {
+  transform: none;
+}
+
+/* Botão "Entrar" real (assets/ui/entrar-button.png, mesma arte dos banners
+   antigos, pedido explícito do usuário) — sempre embaixo da caixa de
+   status, na mesma coluna (mesmo left/transform), só aparece quando o
+   status mostra "Pronto!" (ver arenaBannerHtml/expeditionBannerHtml). */
+.event-banner-enter-btn {
+  position: absolute;
+  left: 76.45%;
+  top: 60%;
+  transform: translate(-50%, -50%);
+  width: 22.1%;
+  aspect-ratio: 500 / 190;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  background-image: url('../assets/ui/entrar-button.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* Preview icons dropados nos 3 quadrados vazios "RECOMPENSAS" do banner —
+   só ilustrativo (a recompensa de verdade é resolvida ao entrar/terminar
+   o evento, não tem relação com esses ícones). */
+.event-banner-reward-icon {
+  position: absolute;
+  top: 77.56%;
+  width: 8.3%;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .4));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-banner-reward-icon img {
+  width: 55%;
+  height: 55%;
+  object-fit: contain;
+}
+
+.event-banner-reward-1 { left: 21.1%; }
+.event-banner-reward-2 { left: 32.2%; }
+.event-banner-reward-3 { left: 43.3%; }
+
+/* Botão "Ver Ranks e Recompensas" do Combate Permanente — virou só um
+   ícone de troféu sobreposto na própria arte do banner (não mais um botão
+   com texto abaixo dela), à esquerda da fileira de ícones de recompensa
+   (à esquerda do Fragmento de Carta, o 1º da fileira). Mesma linha
+   vertical dos ícones de recompensa (top:77.56%). */
+.event-banner-ranks-btn {
+  position: absolute;
+  left: 10%;
+  top: 77.56%;
+  transform: translate(-50%, -50%);
+  width: 8%;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: 2px solid #e8c94a;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3c4, #e8c94a 55%, #a8791f 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .5);
+  font-size: clamp(12px, 3.4vw, 18px);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .event-panel {
@@ -1262,6 +2532,19 @@ button:disabled {
   margin-top: 10px;
 }
 
+/* Descrição do Combate Permanente durante a luta — fica fora da caixa
+   (.event-panel), acima do contador de 30s, num espaço mais curto e com
+   letra mais fina/menor que o .event-sub padrão. */
+.arena-fight-desc {
+  max-width: 78%;
+  margin: 0 auto 10px;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--text-dim);
+  text-align: center;
+}
+
 .event-active-badge {
   display: inline-block;
   font-size: 11px;
@@ -1274,6 +2557,415 @@ button:disabled {
   box-shadow: 0 2px 0 var(--event-dark);
 }
 
+/* Expedição do Caçador — sem janela por ciclo nem luta (ver
+   data/events.js/systems/expedition.js): 3 cartões lado a lado (1h/4h/8h),
+   cada um com sua própria cor de destaque (--tier-color), foto de cenário,
+   botão Entrar (ou o cooldown compartilhado contando, quando travado) e as
+   2 colunas de recompensa (Moeda de Evento / Ovo de Mascote) com as linhas
+   de chance de bônus. */
+
+.expedition-tier-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.expedition-card {
+  background: var(--grad-neutral);
+  border: 2px solid var(--tier-color, var(--border));
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .04), var(--shadow-card);
+}
+
+.expedition-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--tier-color, var(--text));
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.expedition-banner {
+  aspect-ratio: 16 / 7;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15);
+}
+
+.expedition-enter-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff;
+  background: var(--tier-color, var(--grad-event));
+  box-shadow: var(--shadow-btn);
+  margin-bottom: 10px;
+}
+
+.expedition-enter-btn:disabled {
+  background: var(--text-dim);
+  opacity: .65;
+  box-shadow: none;
+}
+
+.expedition-rewards {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px 6px;
+}
+
+.expedition-reward-col-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.expedition-drop-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 0;
+  color: var(--text-dim);
+}
+
+.expedition-drop-row.guaranteed {
+  color: var(--text);
+}
+
+.expedition-drop-row img,
+.expedition-drop-row .icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.expedition-drop-chance {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--tier-color, var(--accent, var(--text-dim)));
+  min-width: 30px;
+  text-align: right;
+}
+
+.expedition-note {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* Combate Permanente (ver arenaBannerHtml/arenaFightPanelHtml em
+   ui/render.js) — banner com "Entrar" + botão pra abrir a lista dos 35
+   ranks, e o painel de combate ativo mostra o nome do rank atual + a
+   barrinha de progresso (enche com o dano causado, não uma HP descendo). A
+   lista de ranks usa <details>/<summary> nativos — expandir cada linha não
+   precisa de wiring nenhum em main.js. */
+.arena-banner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.arena-rank-label {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 4px 0 6px;
+}
+
+.arena-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.arena-rank-row {
+  background: var(--grad-neutral);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.arena-rank-row summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  list-style: none;
+}
+
+.arena-rank-row summary::-webkit-details-marker {
+  display: none;
+}
+
+.arena-rank-row summary::after {
+  content: '▾';
+  margin-left: 8px;
+  color: var(--text-dim);
+  transition: transform 0.15s ease;
+}
+
+.arena-rank-row[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.arena-rank-name {
+  color: var(--text);
+}
+
+.arena-rank-threshold {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.arena-rank-rewards {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+}
+
+
+.attribute-totals-row {
+  display: flex;
+  justify-content: space-around;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+/* Botão "Ver Estatísticas" logo abaixo do quadro compacto de 6 linhas (ver
+   equipStatsBoxHtml/showFullStatsModal em ui/render.js) — abre a janela com
+   TODOS os atributos calculados, não só os 6 que cabem na arte do frame. */
+/* Power total do jogador (soma do Power de cada item equipado, ver
+   computePlayerPower em systems/power.js) — logo abaixo do boneco de
+   equipamentos, ver equipRingContentHtml em ui/render.js. */
+.player-power-row {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin: 6px 0 0;
+}
+
+.player-power-row strong {
+  color: var(--gold-dark);
+  font-size: 16px;
+}
+
+/* Power total do jogador (Equipamentos) — gradiente animado azul/roxo/preto,
+   mesmo mecanismo do nick VIP (.vip-nick acima: texto vira "moldura" pro
+   gradiente via background-clip), só com outra paleta. */
+.power-total-value {
+  background: linear-gradient(90deg, #1e3a8a, #4361ee, #7209b7, #2d0a4e, #0a0a0f, #4361ee, #1e3a8a);
+  background-size: 400% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: vip-nick-shift 5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .power-total-value { animation: none; background-position: 0% 50%; }
+}
+
+.view-full-stats-row {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 10px;
+}
+
+.view-full-stats-btn {
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--grad-neutral);
+  border-radius: 12px;
+  box-shadow: var(--shadow-btn);
+}
+
+/* Conteúdo da janela "Ver Estatísticas" — seções agrupadas (Combate, Dano
+   por Tipo, Economia, Atributos, Especiais de Carta), mesmo padrão visual
+   de linha rótulo/valor do item-detail-stats. */
+.full-stats-section {
+  text-align: left;
+  margin-bottom: 12px;
+}
+
+.full-stats-section-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: var(--gold-dark);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 3px;
+  margin-bottom: 6px;
+}
+
+.full-stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  padding: 2px 0;
+}
+
+.full-stats-row strong {
+  font-weight: 800;
+}
+
+.item-detail-attribute {
+  margin-bottom: 4px;
+}
+
+/* ---- Aba Mascotes ---- */
+
+.pets-egg-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pets-hatch-btn {
+  background: var(--grad-purple);
+  color: #fff;
+  border: 2px solid var(--purple-dark);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pets-hatch-btn:disabled {
+  opacity: .45;
+}
+
+.pets-equip-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* Contador de pity (ver petPityRowHtml em ui/render.js) — 2 chips lado a
+   lado, entre a explicação e as 2 opções de mascote. */
+.pet-pity-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.pet-pity-chip {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 10px;
+}
+
+.pet-pity-chip strong {
+  color: var(--text);
+}
+
+.hatch-choice-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.hatch-candidate {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+}
+
+.hatch-candidate .item-detail-icon {
+  font-size: 40px;
+}
+
+.hatch-candidate.locked {
+  opacity: .55;
+}
+
+.hatch-free-note {
+  font-size: 11.5px;
+  text-align: center;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+/* Escolha de bônus na Ascensão (ver showAscensionModal em ui/render.js) —
+   mesmo layout de cartão do hatch-choice-row acima, só com 3 opções em vez
+   de 2 e sem estado "locked". */
+.ascension-choice-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.ascension-candidate {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  text-align: center;
+}
+
+.ascension-candidate .item-detail-icon {
+  font-size: 32px;
+}
+
 .event-panel h3 {
   font-size: 15px;
   font-weight: 800;
@@ -1284,10 +2976,49 @@ button:disabled {
   gap: 8px;
 }
 
+/* Painel de luta do Combate Permanente — cenário (arena-scene.png) como
+   fundo do próprio .event-panel, com um véu escuro por cima pra manter o
+   texto (nome/rank/badges) legível sobre a arte. */
+.arena-scene-panel {
+  background-size: cover;
+  background-position: center 30%;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.arena-scene-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20, 10, 5, .55) 0%, rgba(20, 10, 5, .3) 40%, rgba(20, 10, 5, .65) 100%);
+  z-index: -1;
+}
+
+.arena-scene-panel h3 {
+  color: #fff;
+  margin-bottom: 2px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .6);
+}
+
+.arena-monster-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f0dca0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+  margin-bottom: 10px;
+}
+
+.arena-scene-panel .arena-rank-label {
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .6);
+}
+
 .event-boss-sprite {
   position: relative;
-  font-size: 72px;
+  font-size: 260px;
   line-height: 1;
+  margin-top: 96px;
   background: transparent;
   box-shadow: none;
   padding: 4px;
@@ -1302,6 +3033,7 @@ button:disabled {
 .event-boss-sprite.hit {
   animation: monster-hit 0.12s ease-out;
 }
+
 
 .event-hp-bar-outer {
   position: relative;
@@ -1356,13 +3088,6 @@ button:disabled {
 .event-countdown.urgent {
   color: var(--hp-red);
   animation: boss-timer-pulse 0.6s ease-in-out infinite;
-}
-
-.event-reward-info {
-  margin-top: 12px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-dim);
 }
 
 /* ---------------- Sub-tab switcher (Equipamento's Equipar/Forjar/
@@ -1434,6 +3159,15 @@ button:disabled {
   font-size: 11.5px;
   color: var(--text-dim);
   margin: 0 0 10px;
+}
+
+/* Benefícios do VIP (ver showVipBenefitsModal) — #modal-box centraliza
+   texto por padrão; aqui as frases precisam começar todas na mesma
+   margem esquerda. */
+.vip-benefit-line {
+  text-align: left;
+  margin: 0 0 8px;
+  font-size: 13px;
 }
 
 .watch-ad-btn {
@@ -1510,6 +3244,258 @@ button:disabled {
   box-shadow: none;
 }
 
+.achievement-card.achievement-pending {
+  opacity: 0.6;
+}
+
+.achievement-progress {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.achievement-stage-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.stage-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+}
+
+.stage-dot.filled {
+  background: var(--grad-cash);
+  border-color: transparent;
+}
+
+.stage-dot.current {
+  border-color: var(--cash-dark, #c99a2e);
+}
+
+.daily-mission-card.active {
+  border-color: var(--gold, #f5b942);
+  box-shadow: 0 0 0 2px rgba(245, 185, 66, 0.35);
+}
+
+.daily-mission-card.completed {
+  border-color: #3fb950;
+  box-shadow: 0 0 0 2px rgba(63, 185, 80, 0.35);
+}
+
+.daily-mission-card.locked,
+.daily-mission-card.abandoned {
+  opacity: 0.45;
+}
+
+.daily-mission-status {
+  color: #3fb950;
+  font-weight: 800;
+  font-size: 11.5px;
+}
+
+.daily-mission-progress {
+  margin-top: 4px;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.daily-mission-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.daily-mission-reroll {
+  padding: 8px 10px !important;
+}
+
+/* ---------------- Cartas tab ---------------- */
+
+.cards-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 800;
+  margin: 4px 0 10px;
+}
+
+.cards-section-title:not(:first-child) {
+  margin-top: 20px;
+}
+
+.cards-collected {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+/* Bônus de DPS por coleção (ver getCardCollectionDpsBonusPercent em
+   systems/cards.js) — ao lado do contador de coleção, cor própria pra
+   separar visualmente "quantas tenho" (cards-collected, neutro) de "quanto
+   isso já rende" (verde, positivo). */
+.cards-dps-bonus {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--green, #2e9e4f);
+}
+
+.card-fragment-total {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--text-dim);
+  margin: 2px 0 8px;
+}
+
+.cards-summary-box {
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 10px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+}
+
+.card-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: url('../assets/ui/card-tile-box.png') center / 100% 100% no-repeat;
+  border: none;
+  border-radius: 0;
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.card-tile .icon {
+  font-size: 34px;
+}
+
+.card-tile .name {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+}
+
+.card-tile.undiscovered {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+
+.card-tile-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 16px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35));
+}
+
+.card-tile-badge .currency-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: 0;
+}
+
+.card-detail {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  text-align: left;
+}
+
+.card-detail-image {
+  flex: 0 0 auto;
+  width: 96px;
+  font-size: 96px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 4px rgba(74, 47, 20, .25));
+}
+
+.card-detail-image img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.card-detail.undiscovered .card-detail-image {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+}
+
+.card-detail-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-detail-name {
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.card-detail-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.card-detail-owned {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--green-dark);
+  margin-bottom: 8px;
+}
+
+.card-detail-status {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.card-fragment-box {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.card-fragment-count {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.card-fragment-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-fragment-actions .modal-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .shop-item-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -1533,6 +3519,14 @@ button:disabled {
   font-size: 26px;
 }
 
+/* Dobra o tamanho do ícone/arte dos itens da vitrine da Loja do Despertar
+   (itens God e cartas Deus — ver godShopItemCardHtml/cardShopItemCardHtml
+   em ui/render.js) — só ali, sem mexer no tamanho dos outros cards de loja
+   (Esmeralda/Evento) nem nos botões/nomes. */
+.god-shop-item .icon {
+  font-size: 52px;
+}
+
 .shop-item-card .info .name {
   font-size: 12px;
   font-weight: 700;
@@ -1541,6 +3535,12 @@ button:disabled {
 .shop-item-card .info .desc {
   font-size: 10.5px;
   color: var(--text-dim);
+}
+
+.shop-item-card .info .vip-days-left {
+  margin-top: 3px;
+  color: var(--gold-dark, #b8860b);
+  font-weight: 700;
 }
 
 .shop-item-card button {
@@ -1559,6 +3559,22 @@ button:disabled {
   background: var(--grad-neutral);
   color: var(--text-dim);
   box-shadow: none;
+}
+
+/* Botão "Benefícios" do card de VIP — secundário (contorno, sem
+   background sólido), pra não competir visualmente com o botão de compra
+   logo abaixo (esse sim usa o .shop-item-card button padrão dourado). */
+.shop-item-card button.vip-benefits-btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: transparent;
+  color: var(--gold-dark, #b8860b);
+  border: 2px solid var(--gold-dark, #b8860b);
+  box-shadow: none;
+  border-radius: 10px;
 }
 
 .cash-package-grid {
@@ -1611,6 +3627,695 @@ button:disabled {
   background: var(--grad-neutral);
   color: var(--text-dim);
   box-shadow: none;
+}
+
+/* ---------------- Baús (sub-aba "Baús" da Loja, ver chestsShopHtml) ---------------- */
+
+.chest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.chest-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: var(--shadow-card);
+}
+
+.chest-card-limit {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+}
+
+.chest-card button.chest-card-info-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  box-shadow: none;
+}
+
+.chest-card-img {
+  width: 100%;
+  max-width: 110px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  margin-top: 6px;
+}
+
+.chest-card-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chest-card button {
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--grad-cash);
+  color: #fff;
+  box-shadow: 0 3px 0 var(--cash-dark);
+  border-radius: 10px;
+}
+
+.chest-card button:disabled {
+  background: var(--grad-neutral);
+  color: var(--text-dim);
+  box-shadow: none;
+}
+
+/* Popup de resultado ao abrir 1 Baú (ver showChestRewardModal em main.js)
+   — sem isso a arte de pet/carta renderiza no tamanho natural do arquivo
+   (bem maior que o popup), cortando a imagem. Carta é retrato (mais alta
+   que larga) e tem o dobro da resolução do pet, então limita a bem menos
+   pra não estourar a altura do popup. */
+.chest-reward-pet-img,
+.chest-reward-card-img {
+  display: block;
+  margin: 10px auto;
+}
+
+.chest-reward-pet-img img {
+  display: block;
+  width: 180px;
+  height: auto;
+  border-radius: 10px;
+}
+
+.chest-reward-card-img img {
+  display: block;
+  width: 90px;
+  height: auto;
+  border-radius: 10px;
+}
+
+/* ---------------- Arena PvP ---------------- */
+
+.pvp-rank {
+  min-width: 30px;
+  flex: 0 0 auto;
+  font-weight: 800;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.achievement-card.pvp-self-row {
+  border-color: var(--gold-dark);
+  background: var(--grad-gold);
+  color: #4a2e00;
+}
+
+.pvp-self-row .pvp-rank,
+.pvp-self-row .desc {
+  color: inherit;
+}
+
+.pvp-self-tag {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 800;
+  color: inherit;
+  opacity: 0.8;
+  padding: 6px 10px;
+}
+
+.pvp-delta-up {
+  color: var(--green-dark);
+  font-weight: 800;
+}
+
+.pvp-delta-down {
+  color: var(--red-dark);
+  font-weight: 800;
+}
+
+/* Janela de batalha animada (ver showPvpBattleModal em ui/render.js) —
+   2 retratos com nick em cima e barra de HP que esvazia em tempo real até
+   o resultado real da luta (attackerWins). */
+.pvp-arena {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.pvp-fighter {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.pvp-fighter-nick {
+  font-weight: 800;
+  font-size: 12.5px;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Nick de jogador VIP — gradiente animado passando pelas letras (pedido
+   do usuário, ver referência de imagem). background-position em loop cria
+   o efeito de "cor mexendo"; prefers-reduced-motion vira estático. */
+.vip-nick {
+  background: linear-gradient(90deg, #ff5f6d, #ffc371, #4ade80, #4facfe, #b26bff, #ff5f6d);
+  background-size: 400% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 800;
+  animation: vip-nick-shift 5s linear infinite;
+}
+
+@keyframes vip-nick-shift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 400% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vip-nick { animation: none; background-position: 0% 50%; }
+}
+
+.profile-name-preview {
+  font-size: 13px;
+  margin: 4px 0 8px;
+}
+
+.profile-name-error {
+  color: var(--danger);
+  font-weight: 800;
+  font-size: 12.5px;
+  margin: 6px 0 0;
+}
+
+.pvp-fighter-portrait {
+  position: relative;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  border: 3px solid var(--border-strong);
+  background: var(--grad-neutral);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  overflow: visible;
+  box-shadow: var(--shadow-card);
+}
+
+.pvp-fighter-portrait img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.pvp-fighter-defender .pvp-fighter-portrait {
+  border-color: var(--red-dark);
+}
+
+.pvp-fighter-attacker .pvp-fighter-portrait {
+  border-color: var(--green-dark);
+}
+
+.pvp-vs {
+  flex: 0 0 auto;
+  font-size: 20px;
+  margin-bottom: 24px;
+}
+
+.pvp-hp-bar-outer {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .18);
+  border: 2px solid var(--border);
+  overflow: hidden;
+}
+
+.pvp-hp-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--grad-green);
+  transition: width 0.12s linear;
+}
+
+.pvp-fighter-defender .pvp-hp-bar-fill {
+  background: var(--grad-red);
+}
+
+.pvp-damage-popup {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--red-dark);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, .6);
+  animation: pvp-damage-float 0.7s ease-out forwards;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes pvp-damage-float {
+  0% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -26px); }
+}
+
+.pvp-result-banner {
+  text-align: center;
+  font-weight: 800;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.pvp-result-banner.win { color: var(--green-dark); }
+.pvp-result-banner.lose { color: var(--red-dark); }
+
+.pvp-battle-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, .04);
+}
+
+.pvp-stat-row {
+  display: grid;
+  grid-template-columns: 1.3fr 0.85fr 0.85fr;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.pvp-stat-row span {
+  font-weight: 700;
+  text-align: right;
+}
+
+.pvp-stat-row span:first-child {
+  text-align: left;
+  font-weight: 400;
+}
+
+.pvp-stat-header {
+  font-size: 11px;
+  text-transform: uppercase;
+  opacity: .65;
+  letter-spacing: .02em;
+}
+
+.pvp-stat-header span:first-child { font-weight: 400; }
+.pvp-stat-header span { font-weight: 700; }
+
+.pvp-rank-gap {
+  text-align: center;
+  opacity: .5;
+  font-weight: 800;
+  letter-spacing: .2em;
+  padding: 2px 0;
+}
+
+.pvp-rank-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 10px 0 4px;
+}
+
+.pvp-rank-tab-btn {
+  padding: 8px 6px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: rgba(0, 0, 0, .06);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pvp-reward-preview {
+  color: var(--green-dark, #15803d);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pvp-reward-preview .currency-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+
+.pvp-countdown {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  margin: 8px 0;
+}
+
+.pvp-countdown strong {
+  color: var(--red-dark, #b91c1c);
+}
+
+/* Rank do tier na Arena (#tab-pvp) e as 3 listas da página Ranks
+   (#tab-ranks) — pedido do usuário pra deixar tudo (letra, ícone de
+   pontuação/moeda, posição) um pouco maior e mais destacado, já que a
+   lista compacta original ficava difícil de ler. Escopado só nessas 2
+   telas — Conquistas/Correio continuam no tamanho padrão. */
+#tab-pvp .achievement-card,
+#tab-ranks .achievement-card {
+  padding: 12px 14px;
+  gap: 12px;
+}
+
+#tab-pvp .achievement-card .info .name,
+#tab-ranks .achievement-card .info .name {
+  font-size: 15.5px;
+  font-weight: 800;
+}
+
+#tab-pvp .achievement-card .info .desc,
+#tab-ranks .achievement-card .info .desc {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+#tab-pvp .achievement-card .icon,
+#tab-ranks .achievement-card .icon {
+  font-size: 30px;
+}
+
+#tab-pvp .achievement-card .pvp-rank,
+#tab-ranks .achievement-card .pvp-rank {
+  font-size: 16px;
+  min-width: 34px;
+}
+
+#tab-pvp .achievement-card .currency-icon,
+#tab-ranks .achievement-card .currency-icon {
+  width: 19px;
+  height: 19px;
+  vertical-align: -4px;
+}
+
+#tab-pvp .achievement-card .pvp-reward-preview,
+#tab-ranks .achievement-card .pvp-reward-preview {
+  font-size: 13.5px;
+}
+
+#tab-pvp .achievement-card .pvp-reward-preview .currency-icon,
+#tab-ranks .achievement-card .pvp-reward-preview .currency-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+.nav-badge-dot {
+  position: relative;
+  top: -10px;
+  right: -2px;
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--red-dark, #dc2626);
+  border: 1.5px solid #fff;
+}
+
+.nav-badge-dot.hidden {
+  display: none;
+}
+
+.mail-unread .name {
+  font-weight: 800;
+}
+
+.mail-unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red-dark, #dc2626);
+  margin-right: 4px;
+}
+
+.pvp-rank-tab-btn.active {
+  background: var(--grad-blue, #3b82f6);
+  color: #fff;
+  border-color: rgba(0, 0, 0, .1);
+}
+
+/* ---------------- Despertar (aba da Loja + modal de confirmação) ---------------- */
+
+.transcend-status-card {
+  text-align: center;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 2px solid var(--border);
+  background: var(--grad-neutral);
+  box-shadow: var(--shadow-card);
+}
+
+.transcend-status-card .name {
+  font-weight: 800;
+  font-size: 14.5px;
+  margin-bottom: 4px;
+}
+
+.transcend-status-card.ready {
+  border-color: var(--purple-dark);
+  background: linear-gradient(180deg, #2a1a4a 0%, #1a1030 100%);
+  color: #fff;
+}
+
+.transcend-status-card.ready .shop-note {
+  color: rgba(255, 255, 255, .75);
+}
+
+.transcend-status-card.locked {
+  opacity: 0.85;
+}
+
+.transcend-btn {
+  margin-top: 8px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 14px;
+  background: var(--grad-purple);
+  color: #fff;
+  box-shadow: 0 3px 0 var(--purple-dark);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+}
+
+.transcend-reset-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 10px;
+}
+
+.transcend-reset-col-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.transcend-reset-col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.transcend-reset-col li {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  font-weight: 600;
+  padding: 3px 0;
+  border-bottom: 1px dashed rgba(168, 103, 44, .25);
+}
+
+.transcend-reset-col li:last-child {
+  border-bottom: none;
+}
+
+/* ---------------- Perfil (modal aberto pelo #profile-btn) ---------------- */
+
+.profile-name-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#profile-name-input {
+  flex: 1;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: #fff;
+  color: var(--text);
+}
+
+#profile-name-input:focus {
+  outline: none;
+  border-color: var(--gold-dark);
+}
+
+.profile-name-row button {
+  flex: 0 0 auto;
+  padding: 9px 14px;
+  background: var(--grad-gold);
+  color: #4a2e00;
+  box-shadow: 0 3px 0 var(--gold-dark);
+}
+
+.profile-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.profile-icon-option {
+  position: relative;
+  padding: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  border: 3px solid var(--border);
+  background: var(--grad-neutral);
+  overflow: hidden;
+}
+
+.profile-icon-option img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-icon-option.selected {
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 0 3px rgba(240, 160, 0, .35);
+}
+
+.profile-icon-option.locked img {
+  filter: grayscale(1) brightness(.6);
+}
+
+.profile-icon-lock {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+}
+
+.profile-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  margin-bottom: 8px;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+
+.profile-toggle-btn {
+  min-width: 56px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.profile-toggle-btn.on {
+  background: var(--grad-green);
+  color: #fff;
+  box-shadow: 0 2px 0 var(--green-dark);
+}
+
+.profile-toggle-btn.off {
+  background: var(--grad-neutral);
+  color: var(--text-dim);
+}
+
+.profile-language-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.profile-language-btn {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 34px;
+  padding: 0;
+  border-radius: 8px;
+  background: var(--grad-neutral);
+  border: 2px solid var(--border);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.profile-language-btn.active {
+  border-color: var(--accent, #6d8cff);
+  transform: scale(1.05);
+  box-shadow: 0 2px 0 var(--border);
 }
 
 /* ---------------- Modal / Toast ---------------- */
@@ -1702,4 +4407,168 @@ button:disabled {
 
 @keyframes toast-out {
   to { opacity: 0; transform: translateY(-6px); }
+}
+
+/* ---------------------------------------------------------------
+   Árvore de habilidades passivas (aba "Habilidades" / tab-upgrades) — ver
+   ui/render.js renderUpgradesTab / data/skills.js / systems/skills.js.
+   --------------------------------------------------------------- */
+
+.skills-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.skills-points {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Botão "Resetar Pontos" (ver skillResetRowHtml em ui/render.js) — devolve
+   todos os pontos investidos na árvore pro jogador redistribuir. Discreto
+   de propósito (não é a ação principal da aba). */
+.skill-reset-btn {
+  padding: 6px 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.skill-reset-btn:hover {
+  color: var(--danger, #e05656);
+  border-color: var(--danger, #e05656);
+}
+
+.skill-reset-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, .08);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.skill-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 8px 20px;
+}
+
+.skill-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+}
+
+.skill-stage.locked {
+  opacity: 0.5;
+}
+
+.skill-stage-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text-dim);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.skill-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.skill-special-gate {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 2px solid var(--border);
+}
+
+.skill-special-gate-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.skill-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 6px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.skill-card:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+}
+
+.skill-card:disabled {
+  cursor: default;
+}
+
+.skill-card-name { font-size: 11px; font-weight: 800; color: var(--text); }
+.skill-card-desc { font-size: 10px; color: var(--text-dim); line-height: 1.25; }
+.skill-card-level { font-size: 9.5px; color: var(--text-dim); }
+.skill-card-squares { font-size: 13px; letter-spacing: 2px; color: var(--gold-dark); }
+
+.skill-card.locked {
+  opacity: 0.4;
+  filter: grayscale(0.8);
+}
+
+.skill-card.no-points {
+  opacity: 0.65;
+  border-color: var(--text-dim);
+}
+
+.skill-card.partial {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(245, 168, 0, .25);
+}
+
+.skill-card.maxed {
+  border-color: var(--purple);
+  background: linear-gradient(180deg, var(--bg-card), #f1e6ff);
+}
+
+.skill-card.maxed .skill-card-squares { color: var(--purple-dark); }
+
+.skill-card.available {
+  border-color: var(--border-strong);
+}
+
+.skill-card.special-available {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px rgba(245, 168, 0, .5);
+}
+
+.skill-card.special-bought {
+  border-color: var(--purple);
+  background: linear-gradient(180deg, #fffaf0, #f1e6ff);
+  box-shadow: 0 0 10px rgba(155, 93, 229, .5);
 }

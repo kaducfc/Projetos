@@ -1,0 +1,65 @@
+name: Bots diários (Idle Hunter)
+
+# Roda 8x por dia (a cada ~3h: 00/03/06/09/12/15/18/21h em Brasília) —
+# cada execução avança os 30 bots num pedaço de progresso real de jogo
+# (proporcional ao tempo desde a última execução, ver runOneDay em
+# decide.mjs) e sincroniza com a Arena/Ranks de verdade no Supabase (ver
+# idle-hunter/scripts/bots/) — pedido do usuário pra acompanhar o Rank
+# com mais fluidez. O estado de cada bot (save + sessão do Supabase) é
+# commitado de volta no repo, então a MESMA conta anônima é sempre
+# reusada — nunca cria uma conta nova por engano.
+#
+# `workflow_dispatch` deixa rodar manualmente (aba Actions do GitHub) pra
+# testar sem esperar o próximo horário agendado.
+on:
+  # Minuto 7 (em vez de 0) de propósito: o minuto exato ":00" é o mais
+  # concorrido de longe no agendador do GitHub Actions (praticamente todo
+  # workflow cron do mundo tenta rodar nesse instante), o que faz slots
+  # nesse minuto serem pulados com muito mais frequência. Um minuto
+  # "quebrado" reduz a fila e ajuda o cron a disparar de fato — foi
+  # observado ZERO execuções agendadas rodando em ":00" ao longo de várias
+  # janelas seguidas antes dessa mudança.
+  schedule:
+    - cron: '7 */3 * * *' # a cada 3h aos :07 (00h07/03h07/06h07... em Brasília)
+  workflow_dispatch: {}
+
+# Nunca deixa 2 execuções mexerem em state/ ao mesmo tempo (uma delas
+# atrasar não deveria colidir com a próxima do cron) — espera a anterior
+# terminar em vez de cancelar (perderia progresso já sincronizado no
+# Supabase mas ainda não commitado no repo).
+concurrency:
+  group: bots-daily
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run-bots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instala dependências dos bots
+        working-directory: idle-hunter/scripts/bots
+        run: npm install
+
+      - name: Roda 1 rodada de progresso pra cada bot
+        working-directory: idle-hunter/scripts/bots
+        run: node run.mjs
+
+      - name: Salva o progresso dos bots de volta no repo
+        working-directory: idle-hunter/scripts/bots
+        run: |
+          git config user.name "idle-hunter-bots"
+          git config user.email "actions@github.com"
+          git add state/
+          git diff --cached --quiet && echo "Nada novo pra commitar dessa vez." || git commit -m "Progresso dos bots"
+          git pull --rebase origin main
+          git push
