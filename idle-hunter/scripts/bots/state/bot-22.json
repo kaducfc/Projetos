@@ -2,9 +2,9 @@
   "index": 22,
   "name": "Madara Uchiha",
   "gameState": {
-    "gold": 438949,
-    "hunterLevel": 141,
-    "hunterXp": 876,
+    "gold": 746174,
+    "hunterLevel": 147,
+    "hunterXp": 641,
     "selectedMonsters": [
       {
         "zoneIndex": 6,
@@ -30,12 +30,12 @@
     "currentMonster": {
       "zoneIndex": 6,
       "kind": "weak",
-      "monsterId": "ignivoran"
+      "monsterId": "sentinela_magma"
     },
-    "monsterHp": 154839,
+    "monsterHp": 144849,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 444,
+      "mystic_die": 440,
       "chispim_heart": 815,
       "musgorn_hat": 212,
       "sylkar_blade": 66,
@@ -52,16 +52,16 @@
       "lavasalam_drop": 91,
       "fornitus_core": 59,
       "ember_warden_blade": 4,
-      "ecliptor_chain": 401,
-      "thundrak_horn": 234,
+      "ecliptor_chain": 270,
+      "thundrak_horn": 150,
       "vulkarion_horn": 552,
-      "luxoris_branch": 343,
-      "minotauro_trovao_hammer": 56,
-      "leviargon_fin": 22,
-      "pyrorian_staff": 7,
-      "sentinela_magma_shield": 3,
-      "infernus_axe": 4,
-      "ignivoran_feather": 3
+      "luxoris_branch": 215,
+      "minotauro_trovao_hammer": 3,
+      "leviargon_fin": 97,
+      "pyrorian_staff": 228,
+      "sentinela_magma_shield": 230,
+      "infernus_axe": 217,
+      "ignivoran_feather": 235
     },
     "cards": {
       "chispim_card": 0,
@@ -70,7 +70,9 @@
       "tartarok_card": 0,
       "emberimp_card": 0,
       "fornitus_card": 0,
-      "ecliptor_card": 0
+      "ecliptor_card": 0,
+      "serpentorax_card": 1,
+      "thalassok_card": 1
     },
     "cardsDiscovered": {
       "chispim_card": true,
@@ -79,7 +81,9 @@
       "tartarok_card": true,
       "emberimp_card": true,
       "fornitus_card": true,
-      "ecliptor_card": true
+      "ecliptor_card": true,
+      "serpentorax_card": true,
+      "thalassok_card": true
     },
     "cardsRewardClaimed": {},
     "inventory": [
@@ -141,8 +145,8 @@
             "value": 49
           },
           {
-            "stat": "petDamagePercent",
-            "value": 20
+            "stat": "armorFlat",
+            "value": 75
           },
           {
             "stat": "forca",
@@ -185,8 +189,8 @@
             "value": 12.7
           }
         ],
-        "enhanceLevel": 0,
-        "isMaster": false,
+        "enhanceLevel": 5,
+        "isMaster": true,
         "cardIds": [
           "ecliptor_card"
         ]
@@ -253,7 +257,7 @@
             "value": 65
           }
         ],
-        "enhanceLevel": 0,
+        "enhanceLevel": 1,
         "isMaster": false,
         "cardIds": [
           null
@@ -262,10 +266,10 @@
       {
         "uid": 437,
         "itemId": "vulkarion_head_forca",
-        "rarityId": "raro",
+        "rarityId": "epico",
         "baseStats": {
           "forca": 24,
-          "hpFlat": 15
+          "hpFlat": 18
         },
         "additionalStats": [
           {
@@ -279,6 +283,10 @@
           {
             "stat": "critChancePercent",
             "value": 6.2
+          },
+          {
+            "stat": "danoFisicoFlat",
+            "value": 55
           }
         ],
         "enhanceLevel": 0,
@@ -305,15 +313,15 @@
             "value": 8.2
           },
           {
-            "stat": "petDamagePercent",
-            "value": 7.7
+            "stat": "hpFlat",
+            "value": 36
           },
           {
             "stat": "attackSpeedPercent",
             "value": 6.1
           }
         ],
-        "enhanceLevel": 0,
+        "enhanceLevel": 4,
         "isMaster": false,
         "cardIds": [
           "emberimp_card"
@@ -337,7 +345,7 @@
             "value": 9.3
           }
         ],
-        "enhanceLevel": 0,
+        "enhanceLevel": 2,
         "isMaster": false,
         "cardIds": [
           null
@@ -346,10 +354,10 @@
       {
         "uid": 465,
         "itemId": "vulkarion_ring_forca",
-        "rarityId": "raro",
+        "rarityId": "epico",
         "baseStats": {
           "forca": 30,
-          "armorFlat": 17
+          "armorFlat": 18
         },
         "additionalStats": [
           {
@@ -357,12 +365,16 @@
             "value": 48
           },
           {
-            "stat": "inteligencia",
-            "value": 30
+            "stat": "hpFlat",
+            "value": 39
           },
           {
             "stat": "armorFlat",
             "value": 34
+          },
+          {
+            "stat": "critDamagePercent",
+            "value": 7
           }
         ],
         "enhanceLevel": 0,
@@ -397,8 +409,8 @@
             "value": 8.1
           },
           {
-            "stat": "dropPercent",
-            "value": 22.7
+            "stat": "hpPercent",
+            "value": 16.4
           },
           {
             "stat": "petDamagePercent",
@@ -412,7 +424,7 @@
         ]
       }
     ],
-    "nextUid": 495,
+    "nextUid": 541,
     "equipped": {
       "weapon1": 315,
       "weapon2": 329,
@@ -426,8 +438,8 @@
       "necklace": 432
     },
     "upgrades": {},
-    "totalKills": 10145,
-    "lastSaveTime": 1788783522835,
+    "totalKills": 11081,
+    "lastSaveTime": 1788808242123,
     "transcendUnlocked": false,
     "transcendCount": 0,
     "awakeningShards": 1,
@@ -441,11 +453,11 @@
       "gold_earned": 2,
       "cards_collected": 1
     },
-    "lifetimeHunterLevel": 141,
-    "lifetimeTotalKills": 10145,
-    "lifetimeGoldEarned": 2902549,
-    "lifetimeEggsHatched": 334,
-    "lifetimeRankMasterCount": 36,
+    "lifetimeHunterLevel": 147,
+    "lifetimeTotalKills": 11081,
+    "lifetimeGoldEarned": 4215894,
+    "lifetimeEggsHatched": 362,
+    "lifetimeRankMasterCount": 39,
     "pvpHighestTierIndex": 0,
     "pvpWinsTotal": 0,
     "playerName": "Caçador",
@@ -461,7 +473,7 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 505,
+    "eventCurrency": 205,
     "expeditionReadyAt": 1788812322837,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
@@ -588,13 +600,6 @@
         "xp": 0
       },
       {
-        "uid": 127,
-        "speciesId": "fogo_2",
-        "rarityId": "epico",
-        "level": 2,
-        "xp": 0
-      },
-      {
         "uid": 136,
         "speciesId": "eletrico_2",
         "rarityId": "incomum",
@@ -606,13 +611,6 @@
         "speciesId": "fogo_4",
         "rarityId": "mitico",
         "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 148,
-        "speciesId": "planta_5",
-        "rarityId": "raro",
-        "level": 2,
         "xp": 0
       },
       {
@@ -686,13 +684,6 @@
         "xp": 0
       },
       {
-        "uid": 203,
-        "speciesId": "eletrico_4",
-        "rarityId": "epico",
-        "level": 1,
-        "xp": 0
-      },
-      {
         "uid": 208,
         "speciesId": "planta_4",
         "rarityId": "lendario",
@@ -746,13 +737,6 @@
         "speciesId": "planta_5",
         "rarityId": "comum",
         "level": 4,
-        "xp": 0
-      },
-      {
-        "uid": 251,
-        "speciesId": "planta_1",
-        "rarityId": "incomum",
-        "level": 2,
         "xp": 0
       },
       {
@@ -854,23 +838,9 @@
         "xp": 0
       },
       {
-        "uid": 300,
-        "speciesId": "fogo_2",
-        "rarityId": "raro",
-        "level": 2,
-        "xp": 0
-      },
-      {
         "uid": 301,
         "speciesId": "fogo_4",
         "rarityId": "incomum",
-        "level": 3,
-        "xp": 0
-      },
-      {
-        "uid": 303,
-        "speciesId": "agua_3",
-        "rarityId": "raro",
         "level": 3,
         "xp": 0
       },
@@ -931,20 +901,6 @@
         "xp": 0
       },
       {
-        "uid": 332,
-        "speciesId": "planta_2",
-        "rarityId": "epico",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 334,
-        "speciesId": "fogo_3",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
         "uid": 335,
         "speciesId": "agua_3",
         "rarityId": "epico",
@@ -955,20 +911,6 @@
         "uid": 341,
         "speciesId": "planta_5",
         "rarityId": "epico",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 342,
-        "speciesId": "agua_3",
-        "rarityId": "raro",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 347,
-        "speciesId": "fogo_2",
-        "rarityId": "incomum",
         "level": 1,
         "xp": 0
       },
@@ -1120,13 +1062,6 @@
         "xp": 0
       },
       {
-        "uid": 386,
-        "speciesId": "planta_5",
-        "rarityId": "comum",
-        "level": 2,
-        "xp": 0
-      },
-      {
         "uid": 387,
         "speciesId": "planta_4",
         "rarityId": "raro",
@@ -1155,13 +1090,6 @@
         "xp": 0
       },
       {
-        "uid": 393,
-        "speciesId": "planta_5",
-        "rarityId": "raro",
-        "level": 1,
-        "xp": 0
-      },
-      {
         "uid": 394,
         "speciesId": "agua_5",
         "rarityId": "incomum",
@@ -1179,13 +1107,6 @@
         "uid": 398,
         "speciesId": "agua_5",
         "rarityId": "raro",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 399,
-        "speciesId": "agua_3",
-        "rarityId": "comum",
         "level": 1,
         "xp": 0
       },
@@ -1249,13 +1170,6 @@
         "uid": 419,
         "speciesId": "eletrico_4",
         "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 421,
-        "speciesId": "fogo_2",
-        "rarityId": "raro",
         "level": 1,
         "xp": 0
       },
@@ -1400,13 +1314,6 @@
         "xp": 0
       },
       {
-        "uid": 459,
-        "speciesId": "agua_3",
-        "rarityId": "raro",
-        "level": 2,
-        "xp": 0
-      },
-      {
         "uid": 460,
         "speciesId": "agua_5",
         "rarityId": "comum",
@@ -1440,19 +1347,166 @@
         "rarityId": "epico",
         "level": 2,
         "xp": 0
+      },
+      {
+        "uid": 470,
+        "speciesId": "eletrico_5",
+        "rarityId": "incomum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 472,
+        "speciesId": "agua_3",
+        "rarityId": "incomum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 481,
+        "speciesId": "agua_4",
+        "rarityId": "lendario",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 482,
+        "speciesId": "agua_5",
+        "rarityId": "mitico",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 490,
+        "speciesId": "planta_1",
+        "rarityId": "raro",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 492,
+        "speciesId": "fogo_5",
+        "rarityId": "comum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 493,
+        "speciesId": "fogo_2",
+        "rarityId": "epico",
+        "level": 3,
+        "xp": 0
+      },
+      {
+        "uid": 494,
+        "speciesId": "planta_5",
+        "rarityId": "raro",
+        "level": 3,
+        "xp": 0
+      },
+      {
+        "uid": 495,
+        "speciesId": "planta_2",
+        "rarityId": "comum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 496,
+        "speciesId": "eletrico_4",
+        "rarityId": "epico",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 497,
+        "speciesId": "planta_5",
+        "rarityId": "comum",
+        "level": 3,
+        "xp": 0
+      },
+      {
+        "uid": 498,
+        "speciesId": "planta_1",
+        "rarityId": "incomum",
+        "level": 3,
+        "xp": 0
+      },
+      {
+        "uid": 499,
+        "speciesId": "fogo_2",
+        "rarityId": "incomum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 500,
+        "speciesId": "planta_4",
+        "rarityId": "incomum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 501,
+        "speciesId": "eletrico_2",
+        "rarityId": "raro",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 502,
+        "speciesId": "agua_3",
+        "rarityId": "comum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 503,
+        "speciesId": "fogo_2",
+        "rarityId": "raro",
+        "level": 3,
+        "xp": 0
+      },
+      {
+        "uid": 504,
+        "speciesId": "agua_3",
+        "rarityId": "raro",
+        "level": 4,
+        "xp": 0
+      },
+      {
+        "uid": 505,
+        "speciesId": "planta_2",
+        "rarityId": "epico",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 506,
+        "speciesId": "fogo_3",
+        "rarityId": "incomum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 507,
+        "speciesId": "agua_5",
+        "rarityId": "comum",
+        "level": 2,
+        "xp": 0
       }
     ],
-    "nextPetUid": 465,
+    "nextPetUid": 508,
     "equippedPetUids": [
       1,
       2,
       3,
       6
     ],
-    "eggCount": 28,
+    "eggCount": 0,
     "petFragments": 1800,
-    "petHatchesSinceMythic": 42,
-    "petHatchesSinceLegendary": 3,
+    "petHatchesSinceMythic": 10,
+    "petHatchesSinceLegendary": 11,
     "vipExpiresAt": 1791107353857,
     "freeRightPetChoiceCycle": null,
     "skillTree": {
@@ -1490,14 +1544,15 @@
     "chestPurchases": {
       "resetAt": 1788825600000,
       "counts": {
-        "evento": 1,
-        "mascote": 3
+        "evento": 2,
+        "mascote": 3,
+        "cartas": 1
       }
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwMmYyMTkxMS0zNWZmLTQyNTktOTA2OS1mMGIwOTMxODA1NDAiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4Nzg3MTIyLCJpYXQiOjE3ODg3ODM1MjIsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzNTN9XSwic2Vzc2lvbl9pZCI6IjBmYTRmMzY3LTlmZDktNDI3YS1iYzllLTI2NzZmMDU0YjQ5YyIsImlzX2Fub255bW91cyI6dHJ1ZX0.ASHIWxOd2XzVc26RBWsznrjgc9W4Kah6FviswfogrZqEKEhYtZCvcFzbVXiq6S9z3vzPvuqg34v5CPP1eydNrA",
-    "refresh_token": "gb42qw27dbbh"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwMmYyMTkxMS0zNWZmLTQyNTktOTA2OS1mMGIwOTMxODA1NDAiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4ODExODQyLCJpYXQiOjE3ODg4MDgyNDIsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzNTN9XSwic2Vzc2lvbl9pZCI6IjBmYTRmMzY3LTlmZDktNDI3YS1iYzllLTI2NzZmMDU0YjQ5YyIsImlzX2Fub255bW91cyI6dHJ1ZX0.mtXLOW81dyvyQD8dMfyTZShNk8NcpPhmxuGJhSBiywxqGbY_ai1BV9mPk9aOdR-kHxFgkCUiv7N4y7K4n7qafA",
+    "refresh_token": "sdmc2nacctxy"
   },
   "nickClaimed": true,
   "userId": "02f21911-35ff-4259-9069-f0b093180540"
