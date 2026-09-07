@@ -45,7 +45,7 @@ import {
   equipPet, unequipPetSlot, recyclePet, canFusePets, fusePets, getFusePartners,
   addPetToInventory, getPetEntry, canChooseRightPet, useFreeRightPetChoice, getActivePetDpsMultiplier,
   fuseAllPossiblePets, hatchAllEggs, rollHatchCandidates, recordPetHatchOutcome, donatePetFragments,
-  getBestEquippedPet,
+  getBestEquippedPet, togglePetLock, canRecyclePet,
 } from './systems/pets.js';
 import { getPetSpecies } from './data/pets.js';
 import { buySkillLevel, buySpecial, resetSkillTree } from './systems/skills.js';
@@ -124,6 +124,13 @@ let pendingMonsterSelection = [];
 let bulkSelectMode = false;
 let bulkSelectedUids = new Set();
 let bulkConfirmingDestroy = false;
+// Mesma mecânica acima, só que pra reciclar mascotes em massa na aba
+// Mascotes (ver wirePetsTabEvents) — pedido explícito do usuário, mesmo
+// padrão de "Selecionar"/"Selecionar Todos"/cadeado do Inventário de
+// equipamentos.
+let petBulkSelectMode = false;
+let petBulkSelectedUids = new Set();
+let petBulkConfirmingRecycle = false;
 // Os 2 candidatos rolados ao chocar um ovo (ver openHatchModal) — só
 // commitados em state.pets quando o jogador escolhe um lado (data-hatch-choose
 // no modal, ver wireModalEvents).
@@ -205,7 +212,11 @@ function renderUpgradesTabNow() {
 }
 
 function renderPetsTabNow() {
-  renderPetsTab(state, petSortMode);
+  renderPetsTab(state, petSortMode, {
+    active: petBulkSelectMode,
+    selectedUids: petBulkSelectedUids,
+    confirming: petBulkConfirmingRecycle,
+  });
 }
 
 function renderInventoryTabNow() {
@@ -260,6 +271,39 @@ function selectAllBulkEligible() {
     filtered.filter((entry) => findEquippedSlotId(state, entry.uid) == null && !entry.locked).map((entry) => entry.uid),
   );
   renderInventoryTabNow();
+}
+
+// Mesmo trio de funções acima (enterBulkSelectMode/exitBulkSelectMode/
+// toggleBulkSelected/selectAllBulkEligible), só que pra mascotes — ver
+// petBulkSelectMode/petBulkSelectedUids/petBulkConfirmingRecycle.
+function enterPetBulkSelectMode() {
+  petBulkSelectMode = true;
+  petBulkSelectedUids = new Set();
+  petBulkConfirmingRecycle = false;
+  renderPetsTabNow();
+}
+
+function exitPetBulkSelectMode() {
+  petBulkSelectMode = false;
+  petBulkSelectedUids = new Set();
+  petBulkConfirmingRecycle = false;
+  renderPetsTabNow();
+}
+
+function togglePetBulkSelected(uid) {
+  if (petBulkSelectedUids.has(uid)) petBulkSelectedUids.delete(uid);
+  else petBulkSelectedUids.add(uid);
+  renderPetsTabNow();
+}
+
+/// "Selecionar Todos" pra mascotes — pula qualquer mascote já equipado OU
+/// travado, exatamente como o clique individual já recusa (ver bulkLocked
+/// em petTileHtml).
+function selectAllPetBulkEligible() {
+  petBulkSelectedUids = new Set(
+    state.pets.filter((pet) => canRecyclePet(state, pet.uid)).map((pet) => pet.uid),
+  );
+  renderPetsTabNow();
 }
 
 function renderEventsTabNow() {
@@ -1148,6 +1192,18 @@ function wireModalEvents() {
       return;
     }
 
+    const togglePetLockBtn = e.target.closest('[data-toggle-pet-lock]');
+    if (togglePetLockBtn) {
+      runModalAction(() => {
+        const uid = Number(togglePetLockBtn.dataset.togglePetLock);
+        if (togglePetLock(state, uid)) {
+          showPetDetailModal(state, uid);
+          renderPetsTabNow();
+        }
+      });
+      return;
+    }
+
     const destroyBtn = e.target.closest('[data-destroy-uid]');
     if (destroyBtn) {
       runModalAction(() => {
@@ -1786,6 +1842,57 @@ function wirePetsTabEvents() {
       return;
     }
 
+    // Seleção em massa de mascotes pra reciclar (mesmo padrão do Inventário
+    // de equipamentos, ver wireInventoryTabEvents) — pedido explícito do
+    // usuário.
+    const petBulkToggleBtn = e.target.closest('[data-pet-bulk-toggle-select]');
+    if (petBulkToggleBtn) {
+      enterPetBulkSelectMode();
+      return;
+    }
+
+    const petBulkSelectAllBtn = e.target.closest('[data-pet-bulk-select-all]');
+    if (petBulkSelectAllBtn) {
+      selectAllPetBulkEligible();
+      return;
+    }
+
+    const petBulkRecycleBtn = e.target.closest('[data-pet-bulk-recycle-selected]');
+    if (petBulkRecycleBtn) {
+      if (petBulkSelectedUids.size < 1) return;
+      petBulkConfirmingRecycle = true;
+      renderPetsTabNow();
+      return;
+    }
+
+    const petBulkCancelConfirmBtn = e.target.closest('[data-pet-bulk-cancel-confirm]');
+    if (petBulkCancelConfirmBtn) {
+      petBulkConfirmingRecycle = false;
+      renderPetsTabNow();
+      return;
+    }
+
+    const petBulkConfirmBtn = e.target.closest('[data-pet-bulk-confirm-recycle]');
+    if (petBulkConfirmBtn) {
+      let totalValue = 0;
+      let recycledCount = 0;
+      for (const uid of petBulkSelectedUids) {
+        const value = recyclePet(state, uid);
+        if (value == null) continue;
+        recycledCount += 1;
+        totalValue += value;
+      }
+      exitPetBulkSelectMode();
+      showToast(`♻️ ${recycledCount} ${recycledCount === 1 ? 'mascote reciclado' : 'mascotes reciclados'}! +${formatNumber(totalValue)} ${PET_FRAGMENT_ICON} Fragmentos.`);
+      return;
+    }
+
+    const petBulkExitBtn = e.target.closest('[data-pet-bulk-exit-select]');
+    if (petBulkExitBtn) {
+      exitPetBulkSelectMode();
+      return;
+    }
+
     const slotBtn = e.target.closest('[data-pet-slot]');
     if (slotBtn) {
       const uid = state.equippedPetUids[Number(slotBtn.dataset.petSlot)];
@@ -1803,7 +1910,14 @@ function wirePetsTabEvents() {
     }
 
     const tile = e.target.closest('[data-view-pet]');
-    if (tile) showPetDetailModal(state, Number(tile.dataset.viewPet));
+    if (tile) {
+      const uid = Number(tile.dataset.viewPet);
+      if (petBulkSelectMode) {
+        togglePetBulkSelected(uid);
+      } else {
+        showPetDetailModal(state, uid);
+      }
+    }
   });
 }
 
@@ -2383,6 +2497,9 @@ function performTranscend() {
   bulkSelectMode = false;
   bulkSelectedUids = new Set();
   bulkConfirmingDestroy = false;
+  petBulkSelectMode = false;
+  petBulkSelectedUids = new Set();
+  petBulkConfirmingRecycle = false;
   skillResetConfirming = false;
   petSortMode = null;
   expeditionCardsVisible = false;

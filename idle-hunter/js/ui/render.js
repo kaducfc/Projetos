@@ -1638,14 +1638,58 @@ function petSlotIconHtml(state, uid, slotIndex) {
   </button>`;
 }
 
-function petTileHtml(state, pet) {
+/// bulkSelect (opcional) é { active, selectedUids: Set<number>, confirming }
+/// — mesmo formato/mecânica do bulkSelect do Inventário de equipamentos
+/// (ver inventoryTileHtml/bulkSelectToolbarHtml acima) aplicado aos
+/// mascotes, pedido explícito do usuário: equipado OU travado (ver
+/// togglePetLock em systems/pets.js) fica de fora da seleção em massa,
+/// igual já valia pra equipamentos.
+function petTileHtml(state, pet, bulkSelect = null) {
   const species = getPetSpecies(pet.speciesId);
   const rarity = getRarity(pet.rarityId);
   const isEquipped = (state.equippedPetUids || []).includes(pet.uid);
-  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''}" style="--rarity-color:${rarity.color};" data-view-pet="${pet.uid}" title="${species.name}">
+  const isSelected = !!bulkSelect?.active && bulkSelect.selectedUids.has(pet.uid);
+  const bulkLocked = !!bulkSelect?.active && (isEquipped || pet.locked);
+  const title = pet.locked
+    ? `${species.name} (travado)`
+    : bulkLocked ? `${species.name} (equipado — desequipe antes de selecionar)` : species.name;
+  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''} ${isSelected ? 'bulk-selected' : ''} ${bulkLocked ? 'bulk-locked' : ''}" style="--rarity-color:${rarity.color};" data-view-pet="${pet.uid}" title="${title}" ${bulkLocked ? 'disabled' : ''}>
     <span class="icon">${iconMarkup(species.image, species.emoji, species.name)}</span>
+    ${pet.locked ? '<span class="lock-badge">🔒</span>' : ''}
     <span class="mini-badge">+${pet.level}</span>
+    ${bulkSelect?.active && !bulkLocked ? `<span class="bulk-select-check">${isSelected ? '✅' : '⬜'}</span>` : ''}
   </button>`;
+}
+
+/// Mesma mecânica de bulkSelectToolbarHtml (Inventário de equipamentos)
+/// acima, só que reciclando mascotes em vez de destruindo itens — pedido
+/// explícito do usuário ("selecionar todos... pra poder reciclar em
+/// massa").
+function petBulkSelectToolbarHtml(bulkSelect) {
+  if (!bulkSelect?.active) return '';
+  const count = bulkSelect.selectedUids.size;
+  const plural = count === 1 ? 'mascote' : 'mascotes';
+  if (bulkSelect.confirming) {
+    return `
+      <div class="bulk-select-toolbar">
+        <span>Reciclar ${count} ${plural} selecionado${count === 1 ? '' : 's'}?</span>
+        <div class="modal-action-row">
+          <button class="modal-action-btn destroy-btn" data-pet-bulk-confirm-recycle>Confirmar reciclagem</button>
+          <button class="modal-action-btn" data-pet-bulk-cancel-confirm>Cancelar</button>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="bulk-select-toolbar">
+      <span>${count} ${plural} selecionado${count === 1 ? '' : 's'}</span>
+      <div class="modal-action-row">
+        <button class="modal-action-btn" data-pet-bulk-select-all>Selecionar Todos</button>
+        <button class="modal-action-btn destroy-btn" data-pet-bulk-recycle-selected ${count < 1 ? 'disabled' : ''}>Reciclar selecionados</button>
+        <button class="modal-action-btn" data-pet-bulk-exit-select>Sair da seleção</button>
+      </div>
+    </div>
+  `;
 }
 
 /// Reordena só a EXIBIÇÃO da grade de mascotes — nunca muta state.pets (a
@@ -1682,12 +1726,12 @@ function petSortRowHtml(sortMode) {
   `).join('')}</div>`;
 }
 
-export function renderPetsTab(state, sortMode = null) {
+export function renderPetsTab(state, sortMode = null, bulkSelect = null) {
   const container = document.getElementById('tab-pets');
   const equipRow = (state.equippedPetUids || []).map((uid, i) => petSlotIconHtml(state, uid, i)).join('');
   const sortedPets = sortPetsForDisplay(state.pets, sortMode);
   const petsHtml = state.pets.length
-    ? sortedPets.map((p) => petTileHtml(state, p)).join('')
+    ? sortedPets.map((p) => petTileHtml(state, p, bulkSelect)).join('')
     : `<p class="empty-slot">Nenhum mascote ainda. Derrote monstros ou vença eventos pra achar ovos, depois choque na aba aqui em cima.</p>`;
 
   const eggCount = state.eggCount || 0;
@@ -1695,6 +1739,13 @@ export function renderPetsTab(state, sortMode = null) {
   const hatchAllTitle = vipActive
     ? 'Escolhe sempre o mascote de maior raridade (e maior Tier no empate) de cada ovo, sem abrir o modal de escolha'
     : 'Funcionalidade exclusiva de VIP (loja de Cash)';
+  // "☑️ Selecionar"/"Fundir Tudo" somem no modo de seleção em massa, dando
+  // lugar à barra de ações (petBulkSelectToolbarHtml) — mesmo padrão do
+  // Inventário de equipamentos (ver equipRingContentHtml acima).
+  const headerActionsHtml = bulkSelect?.active ? '' : `
+    <button class="bulk-select-toggle-btn" data-fuse-all-btn title="Funde em cascata todo par de mascotes iguais (mesma espécie, raridade e nível) não equipado">${MERGE_ALL_ICON} Fundir Tudo</button>
+    <button class="bulk-select-toggle-btn" data-pet-bulk-toggle-select>☑️ Selecionar</button>
+  `;
   container.innerHTML = `
     ${pageBannerHtml('Mascotes')}
     <div class="pets-egg-row">
@@ -1707,9 +1758,10 @@ export function renderPetsTab(state, sortMode = null) {
     <div class="pets-equip-row">${equipRow}</div>
     <div class="equip-inventory-header-row">
       <div class="equip-inventory-header">Inventário (${state.pets.length}/${getPetInventoryCap(state)})</div>
-      <button class="bulk-select-toggle-btn" data-fuse-all-btn title="Funde em cascata todo par de mascotes iguais (mesma espécie, raridade e nível) não equipado">${MERGE_ALL_ICON} Fundir Tudo</button>
+      <div class="equip-inventory-header-actions">${headerActionsHtml}</div>
     </div>
     ${petSortRowHtml(sortMode)}
+    ${petBulkSelectToolbarHtml(bulkSelect)}
     <div class="equip-inventory-grid">${petsHtml}</div>
   `;
   translateContainer(container);
@@ -1776,12 +1828,18 @@ function petDetailHtml(state, uid, showFuseList) {
 
   const dpsBonusPercent = getPetDpsBonusPercent(pet);
   const xpSection = petXpSectionHtml(state, pet, uid);
+  // Cadeado (ver togglePetLock em systems/pets.js): trava contra reciclar e
+  // contra a seleção em massa da aba Mascotes — mesmo padrão/visual do
+  // cadeado de item (ver lockBtn em itemDetailHtml acima).
+  const locked = !!pet.locked;
+  const lockBtn = `<button class="item-detail-lock-btn ${locked ? 'locked' : ''}" data-toggle-pet-lock="${uid}" title="${locked ? 'Destravar mascote' : 'Travar mascote (impede reciclar/selecionar em massa)'}">${locked ? '🔒' : '🔓'}</button>`;
   const recycleBtn = canRecyclePet(state, uid)
     ? `<button class="modal-action-btn destroy-btn" data-recycle-pet-uid="${uid}">♻️ Reciclar (+${formatNumber(getPetRecycleValue(pet))} ${PET_FRAGMENT_ICON})</button>`
-    : `<button class="modal-action-btn destroy-btn" disabled title="Mascote equipado não pode ser reciclado — desequipe ele primeiro">🔒 Reciclar</button>`;
+    : `<button class="modal-action-btn destroy-btn" disabled title="${isEquipped ? 'Mascote equipado não pode ser reciclado — desequipe ele primeiro' : 'Mascote travado não pode ser reciclado — destrave primeiro'}">🔒 Reciclar</button>`;
   return `
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier ${species.tier}</div>
+      ${lockBtn}
       <div class="item-detail-icon" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(species.image, species.emoji, species.name)}</div>
       <div class="item-detail-name">${species.name} <span class="enhance-badge">+${pet.level}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
@@ -1789,6 +1847,7 @@ function petDetailHtml(state, uid, showFuseList) {
       <div class="item-detail-stats">+${formatNumber(damage)} Dano ${getElement(species.element).name}</div>
       <div class="item-detail-stats">+${dpsBonusPercent.toFixed(1)}% DPS do caçador (só enquanto ativo em combate)</div>
       ${powerBadgeHtml(computePetPower(pet))}
+      ${locked ? `<p class="weapon-requirement-note">🔒 Mascote travado — destrave pra poder reciclar ou selecionar em massa.</p>` : ''}
       ${xpSection}
       ${fuseSection}
       <div class="modal-action-row">

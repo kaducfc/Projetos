@@ -122,13 +122,34 @@ export function unequipPetSlot(state, slotIndex) {
   return true;
 }
 
-/// Só recicla um mascote que não esteja equipado — desequipar primeiro é
+/// Só recicla um mascote que não esteja equipado nem travado (ver
+/// isPetLocked/togglePetLock abaixo) — desequipar/destravar primeiro é
 /// intencional (mesmo padrão de "sem ação destrutiva num slot em uso sem
 /// avisar" já usado em canFusePets).
 export function canRecyclePet(state, uid) {
   const pet = getPetEntry(state, uid);
   if (!pet) return false;
+  if (pet.locked) return false;
   return !isPetEquipped(state, uid);
+}
+
+/// Cadeado de mascote (mesmo padrão de toggleItemLock em systems/crafting.js
+/// pro Inventário de equipamentos): trava contra reciclar (canRecyclePet
+/// acima) e contra entrar na seleção em massa da aba Mascotes (ver
+/// bulkLocked em petTileHtml, ui/render.js) — igual um mascote já equipado
+/// ficava de fora dos dois, só que manual em vez de automático. Não afeta
+/// equipar/desequipar/fundir/doar fragmentos, só reciclar e a seleção em
+/// massa.
+export function isPetLocked(state, uid) {
+  const pet = getPetEntry(state, uid);
+  return !!pet?.locked;
+}
+
+export function togglePetLock(state, uid) {
+  const pet = getPetEntry(state, uid);
+  if (!pet) return false;
+  pet.locked = !pet.locked;
+  return true;
 }
 
 /// Recicla um mascote em Fragmento de Mascote (ver getPetRecycleValue em
