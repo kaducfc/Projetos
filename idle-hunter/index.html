@@ -3,85 +3,140 @@
 <title>Idle Hunter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Luckiest+Guy&display=swap" />
 <link rel="stylesheet" href="css/style.css" />
 
 <div id="app">
   <header id="top-bar">
-    <div class="resource">
-      <span class="resource-icon">💰</span>
+    <button id="profile-btn" title="Perfil">
+      <img id="profile-btn-icon" src="assets/ui/hero-life-icon.png" alt="Perfil">
+    </button>
+    <div class="resource resource-gold">
+      <img class="resource-icon" src="assets/ui/currency-gold.png" alt="">
       <span id="gold-value">0</span>
     </div>
-    <div class="resource">
-      <span class="resource-icon">💎</span>
+    <div class="resource resource-cash">
+      <img class="resource-icon" src="assets/ui/currency-esmeralda.png" alt="">
       <span id="cash-value">0</span>
     </div>
-    <div class="resource">
-      <span class="resource-icon">🎫</span>
+    <div class="resource resource-event">
+      <img class="resource-icon" src="assets/ui/currency-event.png" alt="">
       <span id="event-currency-value">0</span>
     </div>
-    <div class="resource">
-      <span class="resource-icon">🚩</span>
-      <span id="stage-value">1</span>
+    <div class="resource resource-stage">
+      <img class="resource-icon" src="assets/ui/nav/nivel.png" alt="">
+      <span id="level-value">1</span>
     </div>
     <span id="build-tag" title="Versão do jogo"></span>
   </header>
 
   <main>
-    <section id="combat-panel">
-      <div id="stage-controls">
-        <button id="stage-prev" title="Estágio anterior">◀</button>
-        <span id="stage-label">Estágio 1</span>
-        <button id="stage-next" title="Próximo estágio">▶</button>
-        <button id="stage-max" title="Ir para o estágio mais avançado">Máx ⏩</button>
-      </div>
-
-      <div id="monster-area">
-        <div id="damage-popups"></div>
-        <div id="monster-name"></div>
-        <button id="monster-sprite" title="Clique para atacar">🐗</button>
-        <div id="hp-bar-outer">
-          <div id="hp-bar-fill"></div>
-          <span id="hp-bar-text">0 / 0</span>
-        </div>
-        <div id="boss-timer" class="hidden"></div>
-      </div>
-
-      <div id="player-status">
-        <span id="player-hp-label">🧑 Vida</span>
-        <div id="player-hp-bar-outer">
-          <div id="player-hp-bar-fill"></div>
-          <span id="player-hp-bar-text">0 / 0</span>
-        </div>
-      </div>
-
-      <div id="dps-readout">
-        <span>Dano de clique: <strong id="click-damage-value">0</strong></span>
-        <span>DPS: <strong id="dps-value">0</strong></span>
-        <span>Armadura: <strong id="armor-value">0</strong></span>
-      </div>
-      <div id="element-readout">
-        <span>Elemento da arma: <strong id="weapon-element-value"></strong></span>
-        <span id="element-matchup"></span>
-      </div>
-    </section>
-
-    <nav id="tab-nav">
-      <button class="tab-btn active" data-tab="equipment">🎽 Equipamento</button>
-      <button class="tab-btn" data-tab="upgrades">📈 Upgrades</button>
-      <button class="tab-btn" data-tab="events">🎪 Eventos</button>
-      <button class="tab-btn" data-tab="achievements">🏆 Conquistas</button>
-      <button class="tab-btn" data-tab="shop">🛒 Loja</button>
-    </nav>
-
     <section id="tab-panels">
-      <div id="tab-equipment" class="tab-panel active"></div>
+      <div id="tab-inventory" class="tab-panel"></div>
+
+      <!-- Caçada: the hunt keeps running (DPS ticks, kills, gold/drops) even
+           while this tab isn't the active one — tick() and every renderXxx()
+           call in main.js/render.js just update these elements by id
+           regardless of the tab-panel's CSS display state, so navigating
+           away never pauses combat. -->
+      <div id="tab-hunt" class="tab-panel active">
+        <div class="page-banner">
+          <img src="assets/ui/banner.png" alt="">
+          <div class="page-banner-title-wrap"><span class="page-banner-title">Caça</span></div>
+        </div>
+
+        <div id="monster-area">
+          <div id="damage-popups"></div>
+          <div id="zone-banner">
+            <button id="select-monsters-btn" class="stage-label-btn" title="Escolher quais monstros caçar">Selecionar Monstros</button>
+          </div>
+          <div id="monster-nameplate">
+            <div id="monster-name"></div>
+            <div id="hp-bar-outer">
+              <div id="hp-bar-fill"></div>
+            </div>
+          </div>
+          <button id="monster-sprite">🐗</button>
+          <div id="loot-popup"></div>
+          <div id="boss-timer" class="hidden"></div>
+        </div>
+
+        <div id="player-status">
+          <img id="player-portrait" src="assets/ui/hero-life-icon.png" alt="">
+          <div id="player-status-info">
+            <span id="player-hp-label">Caçador</span>
+            <div id="player-hp-bar-outer">
+              <div id="player-hp-bar-fill"></div>
+              <span id="player-hp-bar-text">0 / 0</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="hunter-level-info">
+          <span id="hunter-level-label">Nível de Caça 1</span>
+          <div id="hunter-xp-bar-outer">
+            <div id="hunter-xp-bar-fill"></div>
+            <span id="hunter-xp-bar-text">0 / 0</span>
+          </div>
+        </div>
+
+        <div class="section-banner section-banner-sm">Informações de Batalha</div>
+
+        <div id="battle-info">
+          <div class="battle-info-col">
+            <div class="battle-info-col-title">🟢 Seus Atributos</div>
+            <div class="battle-info-row"><span>⚡ Velocidade de Ataque</span><strong id="attack-speed-value">0</strong></div>
+            <div class="battle-info-row"><span id="dps-label">💥 DPS</span><strong id="dps-value">0</strong></div>
+            <div class="battle-info-row"><span>🛡️ Armadura</span><strong id="armor-value">0</strong></div>
+            <div class="battle-info-row"><span>🎯 Taxa de Crítico</span><strong id="crit-chance-value">0</strong></div>
+            <div class="battle-info-row"><span>💢 Dano Crítico</span><strong id="crit-damage-value">0</strong></div>
+            <div class="battle-info-row"><span>✨ Elemento</span><strong id="weapon-element-value"></strong></div>
+          </div>
+          <div class="battle-info-col">
+            <div class="battle-info-col-title">💀 Informações do Inimigo</div>
+            <div class="battle-info-row"><span>❤️ Vida Atual</span><strong id="enemy-hp-value">0</strong></div>
+            <div class="battle-info-row"><span>⚔️ Dano de Ataque</span><strong id="enemy-dps-value">0</strong></div>
+            <div class="battle-info-row"><span>✨ Elemento</span><strong id="enemy-element-value"></strong></div>
+          </div>
+        </div>
+        <div id="element-matchup"></div>
+      </div>
+
       <div id="tab-upgrades" class="tab-panel"></div>
+      <div id="tab-cards" class="tab-panel"></div>
+      <div id="tab-pets" class="tab-panel"></div>
       <div id="tab-events" class="tab-panel"></div>
-      <div id="tab-achievements" class="tab-panel"></div>
       <div id="tab-shop" class="tab-panel"></div>
+      <div id="tab-transcend" class="tab-panel"></div>
+      <div id="tab-pvp" class="tab-panel"></div>
+      <div id="tab-ranks" class="tab-panel"></div>
+      <div id="tab-mailbox" class="tab-panel"></div>
+      <div id="tab-achievements" class="tab-panel"></div>
+      <div id="tab-daily-missions" class="tab-panel"></div>
     </section>
   </main>
+
+  <div id="more-menu-anchor" class="more-menu-anchor">
+    <div id="more-menu" class="more-menu hidden">
+      <button class="more-menu-btn" data-tab="cards"><img class="tab-btn-icon" src="assets/ui/nav/cartas.png" alt="">Cartas</button>
+      <button class="more-menu-btn" data-tab="shop"><img class="tab-btn-icon" src="assets/ui/nav/loja.png" alt="">Loja</button>
+      <button class="more-menu-btn" data-tab="achievements"><img class="tab-btn-icon" src="assets/ui/nav/conquistas.png" alt="">Conquistas</button>
+      <button class="more-menu-btn" data-tab="daily-missions"><img class="tab-btn-icon" src="assets/ui/nav/missao_diaria.png" alt="">Missão Diária</button>
+      <button class="more-menu-btn" data-tab="transcend"><img class="tab-btn-icon" src="assets/ui/nav/transcender.png" alt="">Transcender</button>
+      <button class="more-menu-btn" data-tab="pvp"><img class="tab-btn-icon" src="assets/ui/nav/arena.png" alt="">Arena</button>
+      <button class="more-menu-btn" data-tab="ranks"><img class="tab-btn-icon" src="assets/ui/nav/rank.png" alt="">Ranks</button>
+      <button class="more-menu-btn" data-tab="mailbox"><img class="tab-btn-icon" src="assets/ui/nav/correio.png" alt="">Correio<span id="mail-badge-menu" class="nav-badge-dot hidden"></span></button>
+    </div>
+  </div>
+
+  <nav id="tab-nav">
+    <button class="tab-btn" data-tab="inventory"><img class="tab-btn-icon" src="assets/ui/nav/equipamentos.png" alt="">Equipamentos</button>
+    <button class="tab-btn" data-tab="upgrades"><img class="tab-btn-icon" src="assets/ui/nav/aprimoramentos.png" alt="">Habilidades</button>
+    <button class="tab-btn active" data-tab="hunt"><img class="tab-btn-icon" src="assets/ui/nav/caca.png" alt="">Caça</button>
+    <button class="tab-btn" data-tab="pets"><img class="tab-btn-icon" src="assets/ui/nav/mascotes.png" alt="">Mascotes</button>
+    <button class="tab-btn" data-tab="events"><img class="tab-btn-icon" src="assets/ui/nav/eventos.png" alt="">Eventos</button>
+    <button class="tab-btn" id="more-toggle-btn" data-more-toggle><span class="tab-btn-icon" style="font-size:20px; line-height:1;">⋯</span>Outros<span id="mail-badge-outros" class="nav-badge-dot hidden"></span></button>
+  </nav>
 
   <div id="modal-overlay" class="hidden">
     <div id="modal-box">
