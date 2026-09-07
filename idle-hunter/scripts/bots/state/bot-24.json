@@ -2,40 +2,40 @@
   "index": 24,
   "name": "Nagato",
   "gameState": {
-    "gold": 371555,
-    "hunterLevel": 151,
-    "hunterXp": 1040,
+    "gold": 266651,
+    "hunterLevel": 157,
+    "hunterXp": 1004,
     "selectedMonsters": [
       {
-        "zoneIndex": 5,
+        "zoneIndex": 6,
         "kind": "weak",
-        "monsterId": "luxoris"
+        "monsterId": "pyrorian"
       },
       {
-        "zoneIndex": 5,
+        "zoneIndex": 6,
         "kind": "weak",
-        "monsterId": "ecliptor"
+        "monsterId": "infernus"
       },
       {
-        "zoneIndex": 5,
+        "zoneIndex": 6,
         "kind": "weak",
-        "monsterId": "thundrak"
+        "monsterId": "sentinela_magma"
       },
       {
-        "zoneIndex": 5,
+        "zoneIndex": 6,
         "kind": "weak",
-        "monsterId": "minotauro_trovao"
+        "monsterId": "ignivoran"
       }
     ],
     "currentMonster": {
-      "zoneIndex": 5,
+      "zoneIndex": 6,
       "kind": "weak",
-      "monsterId": "thundrak"
+      "monsterId": "infernus"
     },
-    "monsterHp": 68393,
+    "monsterHp": 134860,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 446,
+      "mystic_die": 442,
       "musgorn_hat": 317,
       "sylkar_blade": 292,
       "chispim_heart": 1131,
@@ -56,12 +56,12 @@
       "fornitus_core": 91,
       "grommuk_fang": 518,
       "ember_warden_blade": 11,
-      "card_fragment": 700,
-      "ecliptor_chain": 647,
-      "luxoris_branch": 719,
-      "thundrak_horn": 562,
-      "vulkarion_horn": 703,
-      "minotauro_trovao_hammer": 437,
+      "card_fragment": 950,
+      "ecliptor_chain": 833,
+      "luxoris_branch": 885,
+      "thundrak_horn": 646,
+      "vulkarion_horn": 791,
+      "minotauro_trovao_hammer": 521,
       "infernus_axe": 27,
       "leviargon_fin": 82,
       "pyrorian_staff": 32,
@@ -158,8 +158,8 @@
             "value": 69
           },
           {
-            "stat": "goldPercent",
-            "value": 19.6
+            "stat": "danoFisicoFlat",
+            "value": 67
           },
           {
             "stat": "dpsPercent",
@@ -250,8 +250,8 @@
             "value": 67
           }
         ],
-        "enhanceLevel": 0,
-        "isMaster": false,
+        "enhanceLevel": 5,
+        "isMaster": true,
         "cardIds": [
           "guardiao_druida_card"
         ]
@@ -309,52 +309,12 @@
         ]
       },
       {
-        "uid": 399,
-        "itemId": "vulkarion_necklace_forca",
-        "rarityId": "mitico",
-        "baseStats": {
-          "forca": 30,
-          "armorFlat": 31
-        },
-        "additionalStats": [
-          {
-            "stat": "dodgePercent",
-            "value": 14
-          },
-          {
-            "stat": "hpFlat",
-            "value": 50
-          },
-          {
-            "stat": "armorFlat",
-            "value": 31
-          },
-          {
-            "stat": "attackSpeedPercent",
-            "value": 6.2
-          },
-          {
-            "stat": "danoFisicoFlat",
-            "value": 63
-          },
-          {
-            "stat": "critDamagePercent",
-            "value": 14.2
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          null
-        ]
-      },
-      {
         "uid": 443,
         "itemId": "vulkarion_legs_forca",
-        "rarityId": "epico",
+        "rarityId": "lendario",
         "baseStats": {
           "forca": 24,
-          "hpFlat": 21
+          "hpFlat": 25
         },
         "additionalStats": [
           {
@@ -372,6 +332,10 @@
           {
             "stat": "danoFisicoFlat",
             "value": 43
+          },
+          {
+            "stat": "dodgePercent",
+            "value": 18.6
           }
         ],
         "enhanceLevel": 0,
@@ -398,8 +362,8 @@
             "value": 51
           },
           {
-            "stat": "petDamagePercent",
-            "value": 13.6
+            "stat": "forca",
+            "value": 30
           },
           {
             "stat": "inteligencia",
@@ -414,14 +378,46 @@
             "value": 89
           }
         ],
-        "enhanceLevel": 0,
-        "isMaster": false,
+        "enhanceLevel": 5,
+        "isMaster": true,
         "cardIds": [
           "emberimp_card"
         ]
+      },
+      {
+        "uid": 578,
+        "itemId": "vulkarion_necklace_forca",
+        "rarityId": "epico",
+        "baseStats": {
+          "forca": 30,
+          "armorFlat": 19
+        },
+        "additionalStats": [
+          {
+            "stat": "critDamagePercent",
+            "value": 14.7
+          },
+          {
+            "stat": "armorFlat",
+            "value": 46
+          },
+          {
+            "stat": "destreza",
+            "value": 30
+          },
+          {
+            "stat": "hpFlat",
+            "value": 42
+          }
+        ],
+        "enhanceLevel": 0,
+        "isMaster": false,
+        "cardIds": [
+          null
+        ]
       }
     ],
-    "nextUid": 573,
+    "nextUid": 623,
     "equipped": {
       "weapon1": 366,
       "weapon2": 353,
@@ -432,11 +428,11 @@
       "boots": 268,
       "ring1": 463,
       "ring2": 20,
-      "necklace": 399
+      "necklace": 578
     },
     "upgrades": {},
-    "totalKills": 11971,
-    "lastSaveTime": 1788808264188,
+    "totalKills": 13063,
+    "lastSaveTime": 1788823668867,
     "transcendUnlocked": false,
     "transcendCount": 0,
     "awakeningShards": 0,
@@ -450,11 +446,11 @@
       "gold_earned": 2,
       "cards_collected": 1
     },
-    "lifetimeHunterLevel": 151,
-    "lifetimeTotalKills": 11971,
-    "lifetimeGoldEarned": 5359115,
+    "lifetimeHunterLevel": 157,
+    "lifetimeTotalKills": 13063,
+    "lifetimeGoldEarned": 6253691,
     "lifetimeEggsHatched": 440,
-    "lifetimeRankMasterCount": 34,
+    "lifetimeRankMasterCount": 38,
     "pvpHighestTierIndex": 0,
     "pvpWinsTotal": 0,
     "playerName": "Caçador",
@@ -470,8 +466,8 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 125,
-    "expeditionReadyAt": 1788812331144,
+    "eventCurrency": 455,
+    "expeditionReadyAt": 1788852468868,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
@@ -1535,7 +1531,7 @@
       12,
       20
     ],
-    "eggCount": 0,
+    "eggCount": 54,
     "petFragments": 3700,
     "petHatchesSinceMythic": 13,
     "petHatchesSinceLegendary": 7,
@@ -1578,13 +1574,13 @@
       "counts": {
         "mascote": 3,
         "evento": 1,
-        "cartas": 2
+        "cartas": 3
       }
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwOTM3NzY5My1kZjM5LTRhNzctODdlYS01ODNjZDU4OTQ1NzIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4ODExODY0LCJpYXQiOjE3ODg4MDgyNjQsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzNzF9XSwic2Vzc2lvbl9pZCI6Ijc3MjZlODhmLWNhMWQtNGM2Ny1iYWYwLTg4OGU1NTM1MTRlOSIsImlzX2Fub255bW91cyI6dHJ1ZX0.tDOAQxgXN539o7-4mIG7SEDFnnq4mgnGMSx5FYJWvGSh0FtGXIR9gx9bbEzQSLlTsux5aNX08M0gdwNfwIq9QA",
-    "refresh_token": "j7id5da6ccvs"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwOTM3NzY5My1kZjM5LTRhNzctODdlYS01ODNjZDU4OTQ1NzIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4ODI3MjY4LCJpYXQiOjE3ODg4MjM2NjgsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzNzF9XSwic2Vzc2lvbl9pZCI6Ijc3MjZlODhmLWNhMWQtNGM2Ny1iYWYwLTg4OGU1NTM1MTRlOSIsImlzX2Fub255bW91cyI6dHJ1ZX0.CBQ7R90fgOtsWrFZR8eCrnrVgLkVBYRJLcE6SHQb7UHQOKy4Jh7U9SNEJqBGC8bUoiJKbwIg1xiz4ycJCVRn8g",
+    "refresh_token": "47xfcogdaefp"
   },
   "nickClaimed": true,
   "userId": "09377693-df39-4a77-87ea-583cd5894572"
