@@ -33,7 +33,7 @@ import { canEnterExpedition, enterExpedition } from '../../js/systems/expedition
 import { canEnterArena, startArenaRun, applyArenaDamage, endArenaRun } from '../../js/systems/arena.js';
 import { canTranscend, transcend } from '../../js/systems/awakening.js';
 import { ensureDailyMissionsFresh, getActiveMissionSlotIndex, canSelectMission, selectMission, canClaimMission, claimDailyMission } from '../../js/systems/dailyMissions.js';
-import { equipItem, canEquipItem, findEquippedSlotId } from '../../js/systems/equipment.js';
+import { equipItem, canEquipItem, findEquippedSlotId, unequipSlot } from '../../js/systems/equipment.js';
 import { isAchievementStageReady, isAchievementFullyClaimed, claimAchievementStage } from '../../js/systems/achievements.js';
 import { ACHIEVEMENTS } from '../../js/data/achievements.js';
 
@@ -72,11 +72,67 @@ function buyVipAsapAndAscendPriorities(state) {
   if (!isVipActive(state) && canBuyCashItem(state, 'cash_vip')) buyCashItem(state, 'cash_vip');
 }
 
+/// A build de 1 bot é definida pela ARMA PRIMÁRIA equipada (mesma regra de
+/// activeDamageType em systems/stats.js: Força->Físico, Destreza->
+/// Perfuração, Inteligência->Mágico) — null enquanto nenhuma arma foi
+/// equipada ainda (bootstrapping, ver manageInventory abaixo). Recalculada
+/// do zero a cada chamada, nunca guardada — se a arma equipada mudar
+/// (upgrade melhor de outro atributo raríssimo), a build acompanha.
+function getBuildAttribute(state) {
+  const uid = state.equipped.weapon1;
+  if (!uid) return null;
+  const entry = state.inventory.find((i) => i.uid === uid);
+  const item = entry && getItem(entry.itemId);
+  return (item && item.attribute) || null;
+}
+
+// Pedido explícito do usuário: bots especializados em 1 único atributo
+// (baseado na arma) — só o tipo de dano que combina com esse atributo
+// interessa (dano físico pra Força, perfuração pra Destreza, mágico pra
+// Inteligência, já que só o dano da ARMA PRIMÁRIA vira dano de verdade, ver
+// activeDamageType em systems/stats.js), fora os stats universalmente úteis
+// pra qualquer build (vida, crítico, velocidade de ataque, esquiva).
+const UNIVERSAL_GOOD_STATS = new Set([
+  'dpsPercent', 'hpPercent', 'hpFlat', 'armorFlat', 'critChancePercent',
+  'critDamagePercent', 'attackSpeedPercent', 'dodgePercent', 'lifestealFlat',
+]);
+const DANO_STAT_BY_ATTRIBUTE = {
+  forca: 'danoFisicoFlat', destreza: 'danoPerfuracaoFlat', inteligencia: 'danoMagicoFlat',
+};
+
+/// Pontua um stat de bônus (candidate.stat de rollAscensionCandidates/
+/// rollBonusReroll) pra quão bem ele serve a build atual — usado tanto pra
+/// ESCOLHER o melhor dos 3 candidatos (Ascensão/reroll) quanto pra achar
+/// qual bônus JÁ EXISTENTE num item vale a pena trocar.
+function scoreBonusStat(buildAttribute, stat) {
+  if (UNIVERSAL_GOOD_STATS.has(stat)) return 100;
+  if (buildAttribute) {
+    if (stat === buildAttribute) return 100; // attrSelf/attrOther no atributo da build
+    if (DANO_STAT_BY_ATTRIBUTE[buildAttribute] === stat) return 100; // tipo de dano da build
+    if (stat === 'forca' || stat === 'destreza' || stat === 'inteligencia') return 20; // outro atributo — ainda dá HP/armadura/crítico de brinde
+    if (Object.values(DANO_STAT_BY_ATTRIBUTE).includes(stat)) return 5; // tipo de dano que a build NÃO usa
+  }
+  return 10; // goldPercent/dropPercent/petDamagePercent — ou build ainda não definida
+}
+
+function bestCandidateIndex(buildAttribute, candidates) {
+  let bestIndex = 0;
+  let bestScore = -Infinity;
+  candidates.forEach((c, i) => {
+    const score = scoreBonusStat(buildAttribute, c.stat);
+    if (score > bestScore) { bestScore = score; bestIndex = i; }
+  });
+  return bestIndex;
+}
+
 /// Aprimora/evolui/ascende TODO item equipado até travar por falta de
-/// material/ouro — e usa Dado Místico pra rerolar 1 bônus aleatório de vez
-/// em quando (só quando sobra bastante estoque, pra não gastar tudo de
-/// uma vez achando que só vale a pena melhorar aos poucos).
+/// material/ouro — na Ascensão, sempre escolhe o candidato que melhor serve
+/// a build atual (ver scoreBonusStat acima) em vez de um aleatório. Com
+/// Dado Místico sobrando (>=10), rerola o bônus MAIS DESALINHADO da build
+/// que o item já tem (só se realmente vale a pena, score < 50 — senão
+/// guarda o estoque) pelo melhor dos 3 candidatos novos.
 function upgradeEquippedItems(state) {
+  const buildAttribute = getBuildAttribute(state);
   for (const uid of Object.values(state.equipped)) {
     if (!uid) continue;
     let guard = 0;
@@ -84,15 +140,20 @@ function upgradeEquippedItems(state) {
     if (canUpgradeToMaster(state, uid)) upgradeToMaster(state, uid);
     if (canAscendItem(state, uid)) {
       const pending = rollAscensionCandidates(state, uid);
-      if (pending) finalizeAscension(state, uid, pending, Math.floor(Math.random() * pending.candidates.length));
+      if (pending) finalizeAscension(state, uid, pending, bestCandidateIndex(buildAttribute, pending.candidates));
     }
     const entry = state.inventory.find((i) => i.uid === uid);
-    const bonusCount = entry?.additionalStats?.length || 0;
-    if (bonusCount > 0 && (state.materials[MYSTIC_DIE_ID] || 0) >= 10) {
-      const statIndex = Math.floor(Math.random() * bonusCount);
-      if (canRerollBonus(state, uid, statIndex)) {
-        const pending = rollBonusReroll(state, uid, statIndex);
-        if (pending) finalizeBonusReroll(state, uid, pending, 0);
+    const additionalStats = entry?.additionalStats || [];
+    if (additionalStats.length > 0 && (state.materials[MYSTIC_DIE_ID] || 0) >= 10) {
+      let worstIndex = -1;
+      let worstScore = Infinity;
+      additionalStats.forEach((add, i) => {
+        const score = scoreBonusStat(buildAttribute, add.stat);
+        if (score < worstScore) { worstScore = score; worstIndex = i; }
+      });
+      if (worstIndex !== -1 && worstScore < 50 && canRerollBonus(state, uid, worstIndex)) {
+        const pending = rollBonusReroll(state, uid, worstIndex);
+        if (pending) finalizeBonusReroll(state, uid, pending, bestCandidateIndex(buildAttribute, pending.candidates));
       }
     }
   }
@@ -121,14 +182,56 @@ function weakestEquippedPowerForCategory(state, category) {
 /// (equipItem() não compara nada sozinho, ver systems/equipment.js). O
 /// resto — não equipado e não uma melhoria — é lixo: destrói tudo pra
 /// nunca lotar o inventário e ainda reverter em material.
+///
+/// 2 passadas pra manter a build de 1 atributo só (ver getBuildAttribute
+/// acima): a 1ª só aceita upgrade de item do MESMO atributo da build atual
+/// (nunca deixa um item de fora do atributo substituir um já equipado —
+/// pedido explícito do usuário, "focado em 1 único atributo"); a 2ª só
+/// preenche categorias ainda vazias (nenhuma peça equipada nelas ainda) com
+/// o que sobrar, pra nunca travar o bot com um slot vazio esperando o
+/// atributo certo cair. Sem build definida ainda (nenhuma arma equipada),
+/// a 1ª passada aceita qualquer atributo — a 1ª arma que o bot pegar decide
+/// a build dali pra frente.
 function manageInventory(state) {
+  const buildAttribute = getBuildAttribute(state);
+  // Anel é a ÚNICA categoria com 2 slots físicos (ring1+ring2, ver
+  // getSlotIdsForCategory em data/items.js) — e equipItem() sempre
+  // sobrescreve ring1 primeiro quando os 2 já estão ocupados (ver
+  // systems/equipment.js), então um anel fora da build que caiu em ring2
+  // nunca seria alcançado pelas passadas de equip abaixo (só ring1 giraria
+  // pra sempre). Libera ele aqui ANTES das passadas — só quando já existe
+  // algum anel do atributo certo disponível no inventário, pra nunca ficar
+  // com o slot vazio à toa.
+  if (buildAttribute) {
+    const hasOnBuildRing = state.inventory.some((e) => {
+      const it = getItem(e.itemId);
+      return it && !it.isGodTier && it.category === 'ring' && it.attribute === buildAttribute && findEquippedSlotId(state, e.uid) == null;
+    });
+    if (hasOnBuildRing) {
+      for (const slotId of ['ring1', 'ring2']) {
+        const uid = state.equipped[slotId];
+        const entry = uid && state.inventory.find((i) => i.uid === uid);
+        const it = entry && getItem(entry.itemId);
+        if (it && !it.isGodTier && it.attribute && it.attribute !== buildAttribute) unequipSlot(state, slotId);
+      }
+    }
+  }
   for (const entry of [...state.inventory]) {
     const item = getItem(entry.itemId);
     if (item.isGodTier) continue;
     if (findEquippedSlotId(state, entry.uid) != null) continue;
     if (!canEquipItem(state, entry.uid)) continue;
+    if (buildAttribute && item.attribute && item.attribute !== buildAttribute) continue;
     const myPower = computeItemPower(entry);
     if (myPower > weakestEquippedPowerForCategory(state, item.category)) equipItem(state, entry.uid);
+  }
+  for (const entry of [...state.inventory]) {
+    const item = getItem(entry.itemId);
+    if (item.isGodTier) continue;
+    if (findEquippedSlotId(state, entry.uid) != null) continue;
+    if (!canEquipItem(state, entry.uid)) continue;
+    if (weakestEquippedPowerForCategory(state, item.category) !== -1) continue;
+    equipItem(state, entry.uid);
   }
   for (const entry of [...state.inventory]) {
     if (findEquippedSlotId(state, entry.uid) != null) continue;
