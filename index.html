@@ -6,6 +6,15 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Luckiest+Guy&display=swap" />
 <link rel="stylesheet" href="css/style.css" />
 
+<!-- PWA: instalável via "Adicionar à tela inicial" no navegador, e base
+     pra empacotar como app Android (TWA/Bubblewrap) sem mudar nada do
+     jogo em si — ver manifest.json/sw.js. -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#6cc3f5" />
+<link rel="icon" href="assets/icons/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="icon" href="assets/icons/favicon-16.png" sizes="16x16" type="image/png" />
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+
 <div id="app">
   <header id="top-bar">
     <button id="profile-btn" title="Perfil">
@@ -150,3 +159,13 @@
 </div>
 
 <script type="module" src="js/main.js"></script>
+<script>
+  // Registra o Service Worker (ver sw.js) — condição de instalabilidade do
+  // PWA. Roda depois do "load" pra não competir com o carregamento do
+  // jogo em si por banda/CPU.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
