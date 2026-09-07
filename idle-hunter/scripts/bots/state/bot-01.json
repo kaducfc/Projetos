@@ -2,40 +2,40 @@
   "index": 1,
   "name": "Sasuke Uchiha",
   "gameState": {
-    "gold": 93687,
-    "hunterLevel": 118,
-    "hunterXp": 473,
+    "gold": 227754,
+    "hunterLevel": 123,
+    "hunterXp": 461,
     "selectedMonsters": [
       {
-        "zoneIndex": 5,
-        "kind": "boss",
-        "monsterId": "vulkarion"
+        "zoneIndex": 4,
+        "kind": "weak",
+        "monsterId": "lavasalam"
       },
       {
-        "zoneIndex": 5,
+        "zoneIndex": 4,
         "kind": "weak",
-        "monsterId": "luxoris"
+        "monsterId": "fornitus"
       },
       {
-        "zoneIndex": 5,
+        "zoneIndex": 4,
         "kind": "weak",
-        "monsterId": "ecliptor"
+        "monsterId": "emberimp"
       },
       {
-        "zoneIndex": 5,
+        "zoneIndex": 4,
         "kind": "weak",
-        "monsterId": "thundrak"
+        "monsterId": "ember_warden"
       }
     ],
     "currentMonster": {
-      "zoneIndex": 5,
-      "kind": "boss",
-      "monsterId": "vulkarion"
+      "zoneIndex": 4,
+      "kind": "weak",
+      "monsterId": "fornitus"
     },
-    "monsterHp": 77827,
+    "monsterHp": 16441,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 363,
+      "mystic_die": 355,
       "chispim_heart": 945,
       "musgorn_hat": 288,
       "sylkar_blade": 477,
@@ -52,11 +52,16 @@
       "plasmion_core": 198,
       "serpentorax_scale": 0,
       "card_fragment": 3500,
-      "ecliptor_chain": 52,
-      "vulkarion_horn": 309,
-      "thundrak_horn": 26,
-      "luxoris_branch": 99,
-      "minotauro_trovao_hammer": 10
+      "ecliptor_chain": 56,
+      "vulkarion_horn": 313,
+      "thundrak_horn": 30,
+      "luxoris_branch": 103,
+      "minotauro_trovao_hammer": 14,
+      "lavasalam_drop": 80,
+      "ember_warden_blade": 6,
+      "emberimp_ember": 20,
+      "fornitus_core": 58,
+      "grommuk_fang": 32
     },
     "cards": {
       "sylkar_card": 0,
@@ -82,8 +87,8 @@
         },
         "additionalStats": [
           {
-            "stat": "goldPercent",
-            "value": 3.7
+            "stat": "hpPercent",
+            "value": 4.8
           }
         ],
         "enhanceLevel": 5,
@@ -102,8 +107,8 @@
         },
         "additionalStats": [
           {
-            "stat": "danoPerfuracaoFlat",
-            "value": 21
+            "stat": "hpPercent",
+            "value": 9
           },
           {
             "stat": "goldPercent",
@@ -138,8 +143,8 @@
             "value": 59
           },
           {
-            "stat": "danoMagicoFlat",
-            "value": 51
+            "stat": "dpsPercent",
+            "value": 19.3
           },
           {
             "stat": "dropPercent",
@@ -174,8 +179,8 @@
         },
         "additionalStats": [
           {
-            "stat": "danoMagicoFlat",
-            "value": 23
+            "stat": "hpFlat",
+            "value": 24
           },
           {
             "stat": "danoFisicoFlat",
@@ -198,8 +203,8 @@
         },
         "additionalStats": [
           {
-            "stat": "inteligencia",
-            "value": 16
+            "stat": "danoFisicoFlat",
+            "value": 17
           },
           {
             "stat": "forca",
@@ -241,34 +246,6 @@
         ]
       },
       {
-        "uid": 309,
-        "itemId": "vulkarion_necklace_inteligencia",
-        "rarityId": "raro",
-        "baseStats": {
-          "inteligencia": 30,
-          "armorFlat": 18
-        },
-        "additionalStats": [
-          {
-            "stat": "dodgePercent",
-            "value": 12.3
-          },
-          {
-            "stat": "dropPercent",
-            "value": 11.2
-          },
-          {
-            "stat": "hpFlat",
-            "value": 39
-          }
-        ],
-        "enhanceLevel": 5,
-        "isMaster": false,
-        "cardIds": [
-          null
-        ]
-      },
-      {
         "uid": 319,
         "itemId": "vulkarion_weapon2_forca",
         "rarityId": "raro",
@@ -286,8 +263,8 @@
             "value": 46
           },
           {
-            "stat": "danoPerfuracaoFlat",
-            "value": 36
+            "stat": "hpFlat",
+            "value": 46
           }
         ],
         "enhanceLevel": 4,
@@ -306,8 +283,8 @@
         },
         "additionalStats": [
           {
-            "stat": "dropPercent",
-            "value": 5.2
+            "stat": "dodgePercent",
+            "value": 6.2
           }
         ],
         "enhanceLevel": 4,
@@ -317,27 +294,63 @@
         ]
       },
       {
-        "uid": 337,
-        "itemId": "vulkarion_ring_inteligencia",
-        "rarityId": "comum",
+        "uid": 352,
+        "itemId": "grommuk_necklace_forca",
+        "rarityId": "epico",
         "baseStats": {
-          "inteligencia": 30,
-          "armorFlat": 12
+          "forca": 25,
+          "armorFlat": 17
         },
         "additionalStats": [
           {
+            "stat": "destreza",
+            "value": 25
+          },
+          {
+            "stat": "critDamagePercent",
+            "value": 11.4
+          },
+          {
             "stat": "danoFisicoFlat",
-            "value": 22
+            "value": 32
+          },
+          {
+            "stat": "dodgePercent",
+            "value": 11.8
           }
         ],
-        "enhanceLevel": 2,
+        "enhanceLevel": 5,
+        "isMaster": true,
+        "cardIds": [
+          null
+        ]
+      },
+      {
+        "uid": 362,
+        "itemId": "grommuk_ring_forca",
+        "rarityId": "incomum",
+        "baseStats": {
+          "forca": 25,
+          "armorFlat": 11
+        },
+        "additionalStats": [
+          {
+            "stat": "armorFlat",
+            "value": 26
+          },
+          {
+            "stat": "hpFlat",
+            "value": 19
+          }
+        ],
+        "enhanceLevel": 0,
         "isMaster": false,
         "cardIds": [
           null
         ]
       }
     ],
-    "nextUid": 342,
+    "nextUid": 363,
     "equipped": {
       "weapon1": 304,
       "weapon2": 319,
@@ -346,13 +359,13 @@
       "legs": 237,
       "hands": 332,
       "boots": 233,
-      "ring1": 337,
+      "ring1": 362,
       "ring2": 39,
-      "necklace": 309
+      "necklace": 352
     },
     "upgrades": {},
-    "totalKills": 7211,
-    "lastSaveTime": 1788735058007,
+    "totalKills": 7555,
+    "lastSaveTime": 1788740338499,
     "transcendUnlocked": false,
     "transcendCount": 0,
     "awakeningShards": 0,
@@ -365,11 +378,11 @@
       "gold_earned": 2,
       "rank_master_items": 1
     },
-    "lifetimeHunterLevel": 118,
-    "lifetimeTotalKills": 7211,
-    "lifetimeGoldEarned": 1044617,
+    "lifetimeHunterLevel": 123,
+    "lifetimeTotalKills": 7555,
+    "lifetimeGoldEarned": 1174384,
     "lifetimeEggsHatched": 244,
-    "lifetimeRankMasterCount": 17,
+    "lifetimeRankMasterCount": 19,
     "pvpHighestTierIndex": 0,
     "pvpWinsTotal": 0,
     "playerName": "Caçador",
@@ -385,8 +398,8 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 210,
-    "expeditionReadyAt": 1788736912990,
+    "eventCurrency": 350,
+    "expeditionReadyAt": 1788769138502,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
@@ -1226,7 +1239,7 @@
       6,
       9
     ],
-    "eggCount": 0,
+    "eggCount": 54,
     "petFragments": 300,
     "petHatchesSinceMythic": 37,
     "petHatchesSinceLegendary": 15,
@@ -1238,25 +1251,25 @@
       "treeVersion": 2
     },
     "dailyMissions": {
-      "resetAt": 1788739200000,
+      "resetAt": 1788825600000,
       "slots": [
         {
-          "typeId": "enhance_items",
-          "tierIndex": 1,
+          "typeId": "kill_monsters",
+          "tierIndex": 2,
           "status": "active",
           "progress": 0,
           "rerollUsed": false
         },
         {
-          "typeId": "arena_wins",
-          "tierIndex": 1,
+          "typeId": "hatch_eggs",
+          "tierIndex": 2,
           "status": "idle",
           "progress": 0,
           "rerollUsed": false
         },
         {
-          "typeId": "kill_monsters",
-          "tierIndex": 2,
+          "typeId": "arena_wins",
+          "tierIndex": 0,
           "status": "idle",
           "progress": 0,
           "rerollUsed": false
@@ -1265,16 +1278,13 @@
     },
     "nextMonsterSpawnAt": null,
     "chestPurchases": {
-      "resetAt": 1788739200000,
-      "counts": {
-        "evento": 1,
-        "mascote": 1
-      }
+      "resetAt": 1788825600000,
+      "counts": {}
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJlNmFmNDBmYS02ZTg1LTQ4MGUtOWFmNy0yYmM3NDQ1Y2M3ZGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4NzM4NjU3LCJpYXQiOjE3ODg3MzUwNTcsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUyMzd9XSwic2Vzc2lvbl9pZCI6ImM0ZmM1MjA0LTc1MDItNDc5MS04ZTQ0LWEzZGY5OWVkYzcwMyIsImlzX2Fub255bW91cyI6dHJ1ZX0.vz4q_1kPOkVbgPKhTrt7mnXW76tB9sZpo_i6paC6SwfIAQiVm8CEBUAw-pbfuryyoevlrmiE59-zW0ED8kxPCQ",
-    "refresh_token": "bnmgybggojw4"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJlNmFmNDBmYS02ZTg1LTQ4MGUtOWFmNy0yYmM3NDQ1Y2M3ZGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4NzQzOTM4LCJpYXQiOjE3ODg3NDAzMzgsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUyMzd9XSwic2Vzc2lvbl9pZCI6ImM0ZmM1MjA0LTc1MDItNDc5MS04ZTQ0LWEzZGY5OWVkYzcwMyIsImlzX2Fub255bW91cyI6dHJ1ZX0.KjvSRQnoXvXzNJHk4nV4aRpt-1cg08frWx2ou2qwk_b9vwOwYNbIPEvTyvSI-amc4vrihRUuNqK7hB-TR_zwNQ",
+    "refresh_token": "na73yl7skg4y"
   },
   "nickClaimed": true,
   "userId": "e6af40fa-6e85-480e-9af7-2bc7445cc7db"
