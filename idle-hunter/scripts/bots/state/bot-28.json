@@ -2,9 +2,9 @@
   "index": 28,
   "name": "Sasori",
   "gameState": {
-    "gold": 18540,
-    "hunterLevel": 127,
-    "hunterXp": 486,
+    "gold": 395569,
+    "hunterLevel": 139,
+    "hunterXp": 735,
     "selectedMonsters": [
       {
         "zoneIndex": 5,
@@ -30,12 +30,12 @@
     "currentMonster": {
       "zoneIndex": 5,
       "kind": "weak",
-      "monsterId": "thundrak"
+      "monsterId": "minotauro_trovao"
     },
-    "monsterHp": 68393,
+    "monsterHp": 73110,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 359,
+      "mystic_die": 456,
       "chispim_heart": 734,
       "guardiao_druida_antler": 220,
       "musgorn_hat": 225,
@@ -46,7 +46,7 @@
       "garruk_pelt": 70,
       "esqueleto_guerreiro_shield": 113,
       "mimicus_lock": 10,
-      "card_fragment": 5000,
+      "card_fragment": 8000,
       "colhedor_carmesim_scythe": 263,
       "corcel_tempestade_horseshoe": 60,
       "sabion_scepter": 6,
@@ -57,11 +57,11 @@
       "grommuk_fang": 362,
       "lavasalam_drop": 212,
       "ember_warden_blade": 6,
-      "luxoris_branch": 115,
-      "vulkarion_horn": 256,
-      "thundrak_horn": 70,
-      "ecliptor_chain": 126,
-      "minotauro_trovao_hammer": 5
+      "luxoris_branch": 252,
+      "vulkarion_horn": 370,
+      "thundrak_horn": 269,
+      "ecliptor_chain": 249,
+      "minotauro_trovao_hammer": 174
     },
     "cards": {
       "sylkar_card": 0,
@@ -183,8 +183,8 @@
             "value": 45
           },
           {
-            "stat": "goldPercent",
-            "value": 9.8
+            "stat": "critDamagePercent",
+            "value": 17.5
           },
           {
             "stat": "armorFlat",
@@ -215,8 +215,8 @@
             "value": 50
           },
           {
-            "stat": "inteligencia",
-            "value": 36
+            "stat": "dodgePercent",
+            "value": 22.8
           },
           {
             "stat": "critDamagePercent",
@@ -238,68 +238,12 @@
         ]
       },
       {
-        "uid": 241,
-        "itemId": "vulkarion_necklace_forca",
-        "rarityId": "epico",
-        "baseStats": {
-          "forca": 30,
-          "armorFlat": 18
-        },
-        "additionalStats": [
-          {
-            "stat": "danoFisicoFlat",
-            "value": 46
-          },
-          {
-            "stat": "dpsPercent",
-            "value": 7.4
-          },
-          {
-            "stat": "armorFlat",
-            "value": 45
-          },
-          {
-            "stat": "hpFlat",
-            "value": 33
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          null
-        ]
-      },
-      {
-        "uid": 254,
-        "itemId": "vulkarion_ring_forca",
-        "rarityId": "incomum",
-        "baseStats": {
-          "forca": 30,
-          "armorFlat": 15
-        },
-        "additionalStats": [
-          {
-            "stat": "hpFlat",
-            "value": 28
-          },
-          {
-            "stat": "critDamagePercent",
-            "value": 9.3
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          null
-        ]
-      },
-      {
         "uid": 260,
         "itemId": "vulkarion_boots_destreza",
-        "rarityId": "epico",
+        "rarityId": "lendario",
         "baseStats": {
           "destreza": 24,
-          "hpFlat": 19
+          "hpFlat": 22
         },
         "additionalStats": [
           {
@@ -317,6 +261,10 @@
           {
             "stat": "dpsPercent",
             "value": 12.6
+          },
+          {
+            "stat": "hpFlat",
+            "value": 57
           }
         ],
         "enhanceLevel": 0,
@@ -346,21 +294,25 @@
         ]
       },
       {
-        "uid": 312,
+        "uid": 350,
         "itemId": "vulkarion_chest_forca",
-        "rarityId": "incomum",
+        "rarityId": "raro",
         "baseStats": {
           "forca": 24,
-          "hpFlat": 14
+          "hpFlat": 17
         },
         "additionalStats": [
           {
-            "stat": "armorFlat",
-            "value": 36
+            "stat": "dropPercent",
+            "value": 9.4
           },
           {
-            "stat": "critDamagePercent",
-            "value": 10.9
+            "stat": "forca",
+            "value": 24
+          },
+          {
+            "stat": "lifestealFlat",
+            "value": 5
           }
         ],
         "enhanceLevel": 0,
@@ -368,42 +320,90 @@
         "cardIds": [
           "assassino_sombrio_card"
         ]
+      },
+      {
+        "uid": 360,
+        "itemId": "vulkarion_ring_forca",
+        "rarityId": "incomum",
+        "baseStats": {
+          "forca": 30,
+          "armorFlat": 14
+        },
+        "additionalStats": [
+          {
+            "stat": "hpFlat",
+            "value": 28
+          },
+          {
+            "stat": "critDamagePercent",
+            "value": 7.8
+          }
+        ],
+        "enhanceLevel": 0,
+        "isMaster": false,
+        "cardIds": [
+          null
+        ]
+      },
+      {
+        "uid": 372,
+        "itemId": "vulkarion_necklace_forca",
+        "rarityId": "incomum",
+        "baseStats": {
+          "forca": 30,
+          "armorFlat": 14
+        },
+        "additionalStats": [
+          {
+            "stat": "forca",
+            "value": 30
+          },
+          {
+            "stat": "danoFisicoFlat",
+            "value": 21
+          }
+        ],
+        "enhanceLevel": 0,
+        "isMaster": false,
+        "cardIds": [
+          null
+        ]
       }
     ],
-    "nextUid": 318,
+    "nextUid": 381,
     "equipped": {
       "weapon1": 228,
       "weapon2": 239,
       "head": 217,
-      "chest": 312,
+      "chest": 350,
       "legs": 168,
       "hands": 169,
       "boots": 260,
-      "ring1": 254,
+      "ring1": 360,
       "ring2": 282,
-      "necklace": 241
+      "necklace": 372
     },
     "upgrades": {},
-    "totalKills": 7301,
-    "lastSaveTime": 1788754818327,
+    "totalKills": 8849,
+    "lastSaveTime": 1788783566398,
     "transcendUnlocked": false,
     "transcendCount": 0,
     "awakeningShards": 0,
-    "cash": 110,
+    "cash": 20,
     "lastAdWatchTime": null,
     "achievementsClaimed": {
-      "hunter_level": 6,
+      "hunter_level": 7,
       "monsters_killed": 5,
       "eggs_hatched": 6,
       "gold_earned": 2,
       "cards_collected": 1,
       "rank_master_items": 2
     },
-    "lifetimeHunterLevel": 127,
-    "lifetimeTotalKills": 7301,
-    "lifetimeGoldEarned": 1465620,
+    "lifetimeHunterLevel": 139,
+    "lifetimeTotalKills": 8849,
+    "lifetimeGoldEarned": 2332629,
     "lifetimeEggsHatched": 320,
-    "lifetimeRankMasterCount": 21,
+    "lifetimeRankMasterCount": 25,
     "pvpHighestTierIndex": 0,
     "pvpWinsTotal": 0,
     "playerName": "Caçador",
@@ -419,12 +419,12 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 240,
-    "expeditionReadyAt": 1788769250462,
+    "eventCurrency": 570,
+    "expeditionReadyAt": 1788812366400,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
-    "arenaReadyAt": 1788769307650,
+    "arenaReadyAt": 1788826766400,
     "pets": [
       {
         "uid": 1,
@@ -1337,7 +1337,7 @@
       3,
       6
     ],
-    "eggCount": 0,
+    "eggCount": 59,
     "petFragments": 720,
     "petHatchesSinceMythic": 17,
     "petHatchesSinceLegendary": 2,
@@ -1378,13 +1378,14 @@
     "chestPurchases": {
       "resetAt": 1788825600000,
       "counts": {
-        "mascote": 2
+        "mascote": 3,
+        "premium": 1
       }
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzYTVkMGMxNi1hZDY5LTRhZDktYWFlZi0xOGZhOTliZjY0YWIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4NzU4NDE4LCJpYXQiOjE3ODg3NTQ4MTgsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzODd9XSwic2Vzc2lvbl9pZCI6IjE2NjdhNmQxLWI0ZjAtNDA3My1iMmI1LTU3ZGQ4YzZmN2U0YiIsImlzX2Fub255bW91cyI6dHJ1ZX0.c-YNgqi2PB_s8lwqBrfMOmNeu9E3YC43HETPhSUumzPfOakYQqHhZSwt93Ad7A9U0xLZGQG0iG1YL0kTx3zZcw",
-    "refresh_token": "5p2ejcimkbi4"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzYTVkMGMxNi1hZDY5LTRhZDktYWFlZi0xOGZhOTliZjY0YWIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4Nzg3MTY2LCJpYXQiOjE3ODg3ODM1NjYsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzODd9XSwic2Vzc2lvbl9pZCI6IjE2NjdhNmQxLWI0ZjAtNDA3My1iMmI1LTU3ZGQ4YzZmN2U0YiIsImlzX2Fub255bW91cyI6dHJ1ZX0.sCIGIKcDylSuk3FuB3elhj_1MWCDx5lCuUkrnqemmV_TTBvpnocaD1O-0jRYXjR7-K56Mb_EwiwfeMOXAmyS6A",
+    "refresh_token": "dc2kiagrzbkn"
   },
   "nickClaimed": true,
   "userId": "3a5d0c16-ad69-4ad9-aaef-18fa99bf64ab"
