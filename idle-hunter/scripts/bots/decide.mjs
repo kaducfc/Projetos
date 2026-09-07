@@ -11,6 +11,7 @@ import { computePlayerStats } from '../../js/systems/stats.js';
 import { computePlayerPower, computeItemPower } from '../../js/systems/power.js';
 import {
   ensureMonsterSpawned, canSelectMonster, setSelectedMonsters, MAX_SELECTED_MONSTERS,
+  monsterMaxHp, MONSTER_RESPAWN_DELAY_MS,
 } from '../../js/systems/combat.js';
 import { computeOfflineProgress, applyOfflineProgress } from '../../js/systems/offline.js';
 import { ZONES } from '../../js/data/monsters.js';
@@ -41,14 +42,48 @@ export function newBotState() {
   return createDefaultState();
 }
 
-/// Sempre mantém os 4 melhores monstros selecionados no MAIOR zone/boss já
-/// liberado (o farm mais eficiente pra XP/ouro/materiais nesse ponto do
-/// jogo) — mesma escolha que um Experiente faria manualmente.
-function refreshMonsterSelection(state) {
-  const zoneIndex = highestUnlockedZoneIndex(state);
+// Pedido explícito do usuário: se a zona mais alta já desbloqueada (só por
+// NÍVEL, ver isZoneUnlocked em systems/leveling.js — não tem relação
+// nenhuma com o DPS de verdade) for forte demais pro Power atual, o bot
+// ficaria caçando ali pra sempre sem nenhum kill de verdade saindo (HP do
+// monstro alto demais pro DPS atual = tempo por kill gigantesco = zero
+// kills mesmo depois de várias "aberturas" do dia) — nunca ganharia XP/
+// ouro/material pra se fortificar e nunca sairia de lá sozinho. Recua zona
+// por zona até achar uma onde o monstro FRACO (sempre o mais fácil da
+// zona) morre num tempo razoável (MAX_ACCEPTABLE_SECONDS_PER_KILL) —
+// refreshMonsterSelection roda de novo a cada dia simulado, então assim
+// que o Power crescer o suficiente (farmando/aprimorando na zona mais
+// fácil), a escolha sobe de volta pra zona mais difícil sozinha, sem
+// precisar guardar nenhum estado extra.
+const MAX_ACCEPTABLE_SECONDS_PER_KILL = 30;
+
+function estimatedSecondsToKill(stats, zoneIndex, isBoss) {
+  const zone = ZONES[zoneIndex];
+  const effectiveDps = stats.dps * (stats.attackSpeedPerSec || 1);
+  if (effectiveDps <= 0) return Infinity;
+  return monsterMaxHp(zone.canonicalStage, isBoss) / effectiveDps + MONSTER_RESPAWN_DELAY_MS / 1000;
+}
+
+function pickFarmableZoneIndex(state, stats) {
+  let zoneIndex = highestUnlockedZoneIndex(state);
+  while (zoneIndex > 0 && estimatedSecondsToKill(stats, zoneIndex, false) > MAX_ACCEPTABLE_SECONDS_PER_KILL) {
+    zoneIndex -= 1;
+  }
+  return zoneIndex;
+}
+
+/// Sempre mantém os 4 melhores monstros selecionados na zona mais difícil
+/// que o bot já libera E consegue de fato matar (ver pickFarmableZoneIndex
+/// acima) — o farm mais eficiente pra XP/ouro/materiais nesse ponto do
+/// jogo, mas nunca uma zona que travaria o progresso. O chefe só entra na
+/// seleção se também morrer num tempo razoável (senão só os fracos da
+/// mesma zona, sempre mais fáceis).
+function refreshMonsterSelection(state, stats) {
+  const zoneIndex = pickFarmableZoneIndex(state, stats);
   const zone = ZONES[zoneIndex];
   const list = [];
-  if (isBossUnlocked(state, zoneIndex)) list.push({ zoneIndex, kind: 'boss', monsterId: zone.boss.id });
+  const bossKillable = isBossUnlocked(state, zoneIndex) && estimatedSecondsToKill(stats, zoneIndex, true) <= MAX_ACCEPTABLE_SECONDS_PER_KILL;
+  if (bossKillable) list.push({ zoneIndex, kind: 'boss', monsterId: zone.boss.id });
   for (const m of zone.weakMonsters) {
     if (list.length >= MAX_SELECTED_MONSTERS) break;
     list.push({ zoneIndex, kind: 'weak', monsterId: m.id });
@@ -329,7 +364,7 @@ export function runOneDay(state, elapsedMsOverride = null) {
   playDailyMission(state);
   claimReadyAchievements(state);
   buyVipAsapAndAscendPriorities(state);
-  refreshMonsterSelection(state);
+  refreshMonsterSelection(state, computePlayerStats(state));
 
   let remaining = totalElapsedMs;
   for (let i = 0; i < CHECK_INS_PER_DAY && remaining > 0; i++) {
@@ -358,8 +393,8 @@ export function runOneDay(state, elapsedMsOverride = null) {
   state = maybeTranscend(state);
 
   // Recalcula depois de tudo (Transcender pode ter mudado o state inteiro).
-  refreshMonsterSelection(state);
   stats = computePlayerStats(state);
+  refreshMonsterSelection(state, stats);
   const power = computePlayerPower(state);
 
   return { state, stats, power };
