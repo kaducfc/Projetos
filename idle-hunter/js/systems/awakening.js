@@ -2,6 +2,7 @@ import { createDefaultState } from '../state.js';
 import { AWAKENING_SHOP_ITEMS } from '../data/awakening.js';
 import { recordCardDiscovered } from './cards.js';
 import { getItem, getItemInventoryCap, GOD_RARITY_ID, godAttributeBaseValue, MYSTIC_DIE_ID } from '../data/items.js';
+import { CARD_FRAGMENT_ID } from '../data/cards.js';
 
 export function canTranscend(state) {
   return !!state.transcendUnlocked;
@@ -108,6 +109,8 @@ export function transcend(state) {
   fresh.nextPetUid = nextPetUid;
 
   fresh.materials[MYSTIC_DIE_ID] = state.materials[MYSTIC_DIE_ID] || 0;
+  fresh.materials[CARD_FRAGMENT_ID] = state.materials[CARD_FRAGMENT_ID] || 0;
+  fresh.petFragments = state.petFragments || 0;
 
   return fresh;
 }
