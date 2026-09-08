@@ -1464,6 +1464,46 @@ button:disabled {
   z-index: 0;
 }
 
+/* Pulso sutil pro Tier God (pedido explícito do usuário): o glow verde
+   piscina (--rarity-color de GOD_RARITY, ver data/items.js) mistura um
+   pouco de azul piscina e aumenta/reduz o brilho, dando a impressão de
+   estar "respirando" — igual o nick VIP/Power já tinham sua própria
+   animação, esse é o equivalente pros itens Tier God. Mesma keyframe
+   reaproveitada pro glow de fundo (tile/slot) e pro ícone grande do popup
+   de detalhe (.item-detail-icon-lg.is-god-tier, ver js/ui/render.js). */
+@keyframes god-tier-glow-pulse {
+  0%, 100% {
+    background: radial-gradient(circle, #4de8c9 0%, color-mix(in srgb, #4de8c9 55%, transparent) 45%, transparent 75%);
+    opacity: 0.85;
+  }
+  50% {
+    background: radial-gradient(circle, #33d9f0 0%, color-mix(in srgb, #33d9f0 55%, transparent) 45%, transparent 75%);
+    opacity: 1;
+  }
+}
+
+.inventory-tile.is-god-tier::before,
+.equip-slot-icon.is-god-tier::before {
+  animation: god-tier-glow-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes god-tier-icon-pulse {
+  0%, 100% { filter: drop-shadow(0 0 10px #4de8c9) brightness(1); }
+  50% { filter: drop-shadow(0 0 16px #33d9f0) brightness(1.18); }
+}
+
+.item-detail-icon.is-god-tier {
+  animation: god-tier-icon-pulse 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inventory-tile.is-god-tier::before,
+  .equip-slot-icon.is-god-tier::before,
+  .item-detail-icon.is-god-tier {
+    animation: none;
+  }
+}
+
 /* .icon is an inline <span>, so a percentage height on its img child can't
    resolve against it (no definite height to resolve against) — the tall
    Aljava art was ignoring that height and stretching the grid row instead
