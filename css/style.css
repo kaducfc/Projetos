@@ -1467,33 +1467,33 @@ button:disabled {
 /* Pulso pro Tier God (pedido explícito do usuário): mantém a cor original
    (verde piscina, --rarity-color de GOD_RARITY em data/items.js) sem
    misturar outra cor — só a intensidade (opacidade/brilho) sobe e desce,
-   igual uma "respiração" bem mais forte que a 1ª tentativa (mais opaco no
-   pico, bem mais fraco no vale). Mesma keyframe reaproveitada pro glow de
-   fundo (tile/slot) e pro ícone grande do popup de detalhe
-   (.item-detail-icon-lg.is-god-tier, ver js/ui/render.js). */
+   forte (bem mais opaco no pico, bem mais fraco no vale). Só 2 estados
+   (from/to) + animation-direction:alternate em vez de 3 keyframes (0%/50%/
+   100%) — com 3 pontos, "ease-in-out" reaplicado em cada trecho criava uma
+   pausa dupla bem no início/fim do ciclo (sentia como um corte seco toda
+   vez que voltava pro começo). Com alternate, a animação só troca de
+   sentido (sobe, desce, sobe...) sem nunca "resetar" — o fim de um trecho
+   já É o início exato do próximo, looping de verdade contínuo. Mesma
+   keyframe reaproveitada pro glow de fundo (tile/slot) e pro ícone grande
+   do popup de detalhe (.item-detail-icon-lg.is-god-tier, ver
+   js/ui/render.js). */
 @keyframes god-tier-glow-pulse {
-  0%, 100% {
-    background: radial-gradient(circle, #4de8c9 0%, color-mix(in srgb, #4de8c9 55%, transparent) 45%, transparent 75%);
-    opacity: 0.55;
-  }
-  50% {
-    background: radial-gradient(circle, #4de8c9 0%, color-mix(in srgb, #4de8c9 55%, transparent) 45%, transparent 75%);
-    opacity: 1;
-  }
+  from { opacity: 0.55; }
+  to { opacity: 1; }
 }
 
 .inventory-tile.is-god-tier::before,
 .equip-slot-icon.is-god-tier::before {
-  animation: god-tier-glow-pulse 2.6s ease-in-out infinite;
+  animation: god-tier-glow-pulse 1.3s ease-in-out infinite alternate;
 }
 
 @keyframes god-tier-icon-pulse {
-  0%, 100% { filter: drop-shadow(0 0 6px #4de8c9) brightness(0.9); }
-  50% { filter: drop-shadow(0 0 20px #4de8c9) brightness(1.35); }
+  from { filter: drop-shadow(0 0 6px #4de8c9) brightness(0.9); }
+  to { filter: drop-shadow(0 0 20px #4de8c9) brightness(1.35); }
 }
 
 .item-detail-icon.is-god-tier {
-  animation: god-tier-icon-pulse 2.6s ease-in-out infinite;
+  animation: god-tier-icon-pulse 1.3s ease-in-out infinite alternate;
 }
 
 @media (prefers-reduced-motion: reduce) {
