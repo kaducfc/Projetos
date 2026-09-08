@@ -762,7 +762,7 @@ function slotIconHtml(state, slot) {
     ? `<span class="mini-badge ${equipped.entry.isMaster ? 'master' : ''}">${getEnhanceLabel(equipped.entry.enhanceLevel, equipped.entry.isMaster)}</span>`
     : '';
   const rarity = equipped ? getRarity(equipped.entry.rarityId) : null;
-  const rarityClass = rarity ? ' has-rarity' : '';
+  const rarityClass = rarity ? ` has-rarity${rarity === GOD_RARITY ? ' is-god-tier' : ''}` : '';
   const rarityStyle = rarity ? ` style="--rarity-color:${rarity.color};"` : '';
   return `<button class="equip-slot-icon ${equipped ? 'filled' : 'empty'}${rarityClass}" data-equip-slot="${slot.id}" title="${slot.name}"${rarityStyle}>
 
@@ -793,7 +793,7 @@ function foreignSlotIconHtml(equippedBySlot, slot) {
     ? `<span class="mini-badge ${entry.isMaster ? 'master' : ''}">${getEnhanceLabel(entry.enhanceLevel, entry.isMaster)}</span>`
     : '';
   const rarity = entry ? getRarity(entry.rarityId) : null;
-  const rarityClass = rarity ? ' has-rarity' : '';
+  const rarityClass = rarity ? ` has-rarity${rarity === GOD_RARITY ? ' is-god-tier' : ''}` : '';
   const rarityStyle = rarity ? ` style="--rarity-color:${rarity.color};"` : '';
   const clickAttr = item ? `data-view-foreign-item="${slot.id}"` : 'disabled';
   return `<button class="equip-slot-icon ${item ? 'filled' : 'empty'}${rarityClass}" ${clickAttr} title="${slot.name}"${rarityStyle}>
@@ -860,7 +860,7 @@ export function showForeignItemDetailModal(entry) {
   showModal('', `
     <div class="item-detail">
       <div class="item-detail-tier-badge">${tierBadge}</div>
-      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-icon item-detail-icon-lg ${item.isGodTier ? 'is-god-tier' : ''}" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name} <span class="enhance-badge ${entry.isMaster ? 'master' : ''}">${label}</span></div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${statsHtml}</div>
@@ -887,7 +887,7 @@ function inventoryTileHtml(state, entry, bulkSelect = null) {
   const title = entry.locked
     ? `${item.name} (travado)`
     : bulkLocked ? `${item.name} (equipado — desequipe antes de selecionar)` : item.name;
-  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''} ${isSelected ? 'bulk-selected' : ''} ${bulkLocked ? 'bulk-locked' : ''}" style="--rarity-color:${rarity.color};" data-equip-item="${entry.uid}" title="${title}" ${bulkLocked ? 'disabled' : ''}>
+  return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''} ${isSelected ? 'bulk-selected' : ''} ${bulkLocked ? 'bulk-locked' : ''} ${rarity === GOD_RARITY ? 'is-god-tier' : ''}" style="--rarity-color:${rarity.color};" data-equip-item="${entry.uid}" title="${title}" ${bulkLocked ? 'disabled' : ''}>
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
     ${entry.locked ? '<span class="lock-badge">🔒</span>' : ''}
     <span class="mini-badge ${entry.isMaster ? 'master' : ''}">${label}</span>
@@ -1041,7 +1041,7 @@ function godItemDetailHtml(state, uid, entry, item, pickerOpenSlot = null) {
       <div class="item-detail">
         <div class="item-detail-tier-badge">Tier God</div>
         <div class="item-detail-level-badge">Lv.${GOD_MIN_LEVEL}</div>
-        <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+        <div class="item-detail-icon item-detail-icon-lg is-god-tier" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
         <div class="item-detail-name">${item.name}</div>
         <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
         ${godAttributeChoiceHtml(uid, item)}
@@ -1072,7 +1072,7 @@ function godItemDetailHtml(state, uid, entry, item, pickerOpenSlot = null) {
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier God</div>
       <div class="item-detail-level-badge">Lv.${GOD_MIN_LEVEL}</div>
-      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-icon item-detail-icon-lg is-god-tier" style="filter: drop-shadow(0 0 10px ${rarity.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name}</div>
       <div class="item-detail-rarity" style="color:${rarity.color}; font-weight:800; font-size:12px;">${rarity.name}</div>
       <div class="item-detail-stats">${godItemDetailStatsHtml(uid, entry, item)}</div>
@@ -2787,7 +2787,7 @@ export function showGodItemShopDetailModal(state, shopItemId) {
   showModal('', `
     <div class="item-detail">
       <div class="item-detail-tier-badge">Tier God</div>
-      <div class="item-detail-icon item-detail-icon-lg" style="filter: drop-shadow(0 0 10px ${GOD_RARITY.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
+      <div class="item-detail-icon item-detail-icon-lg is-god-tier" style="filter: drop-shadow(0 0 10px ${GOD_RARITY.color});">${iconMarkup(item.image, item.emoji, item.name)}</div>
       <div class="item-detail-name">${item.name}</div>
       <div class="item-detail-rarity" style="color:${GOD_RARITY.color}; font-weight:800; font-size:12px;">${GOD_RARITY.name}</div>
       <div class="item-detail-stats">${baseLine}<br><span style="color:var(--text-dim);">${bonusLine}</span></div>
