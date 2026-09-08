@@ -1467,33 +1467,54 @@ button:disabled {
 /* Pulso pro Tier God (pedido explícito do usuário): mantém a cor original
    (verde piscina, --rarity-color de GOD_RARITY em data/items.js) sem
    misturar outra cor — só a intensidade (opacidade/brilho) sobe e desce,
-   forte (bem mais opaco no pico, bem mais fraco no vale). Só 2 estados
-   (from/to) + animation-direction:alternate em vez de 3 keyframes (0%/50%/
-   100%) — com 3 pontos, "ease-in-out" reaplicado em cada trecho criava uma
-   pausa dupla bem no início/fim do ciclo (sentia como um corte seco toda
-   vez que voltava pro começo). Com alternate, a animação só troca de
-   sentido (sobe, desce, sobe...) sem nunca "resetar" — o fim de um trecho
-   já É o início exato do próximo, looping de verdade contínuo. Mesma
-   keyframe reaproveitada pro glow de fundo (tile/slot) e pro ícone grande
-   do popup de detalhe (.item-detail-icon-lg.is-god-tier, ver
+   forte (bem mais opaco no pico, bem mais fraco no vale).
+   from/to+alternate ainda deixava um corte perceptível na virada (some
+   navegadores não espelham a curva de easing perfeitamente no sentido
+   reverso). Troca por uma curva senoidal de verdade — 11 paradas (a cada
+   10%) amostrando opacity = midpoint - amplitude*cos(2π·t) — com
+   animation-timing-function:linear (sem nenhum easing por trecho, só
+   interpola reto entre paradas já curvas). Como cos(0) e cos(2π) são
+   idênticos (mesmo valor E mesma derivada, é uma função periódica de
+   verdade), a parada 0% e a 100% são o mesmo ponto exato da curva — o
+   loop fecha sem nenhuma descontinuidade de valor OU de velocidade.
+   Mesma keyframe reaproveitada pro glow de fundo (tile/slot) e pro ícone
+   grande do popup de detalhe (.item-detail-icon-lg.is-god-tier, ver
    js/ui/render.js). */
 @keyframes god-tier-glow-pulse {
-  from { opacity: 0.55; }
-  to { opacity: 1; }
+  0%   { opacity: 0.55; }
+  10%  { opacity: 0.593; }
+  20%  { opacity: 0.706; }
+  30%  { opacity: 0.845; }
+  40%  { opacity: 0.957; }
+  50%  { opacity: 1; }
+  60%  { opacity: 0.957; }
+  70%  { opacity: 0.845; }
+  80%  { opacity: 0.706; }
+  90%  { opacity: 0.593; }
+  100% { opacity: 0.55; }
 }
 
 .inventory-tile.is-god-tier::before,
 .equip-slot-icon.is-god-tier::before {
-  animation: god-tier-glow-pulse 1.3s ease-in-out infinite alternate;
+  animation: god-tier-glow-pulse 2.6s linear infinite;
 }
 
 @keyframes god-tier-icon-pulse {
-  from { filter: drop-shadow(0 0 6px #4de8c9) brightness(0.9); }
-  to { filter: drop-shadow(0 0 20px #4de8c9) brightness(1.35); }
+  0%   { filter: drop-shadow(0 0 6px #4de8c9) brightness(0.9); }
+  10%  { filter: drop-shadow(0 0 7.3px #4de8c9) brightness(0.943); }
+  20%  { filter: drop-shadow(0 0 10.8px #4de8c9) brightness(1.056); }
+  30%  { filter: drop-shadow(0 0 15.2px #4de8c9) brightness(1.195); }
+  40%  { filter: drop-shadow(0 0 18.7px #4de8c9) brightness(1.307); }
+  50%  { filter: drop-shadow(0 0 20px #4de8c9) brightness(1.35); }
+  60%  { filter: drop-shadow(0 0 18.7px #4de8c9) brightness(1.307); }
+  70%  { filter: drop-shadow(0 0 15.2px #4de8c9) brightness(1.195); }
+  80%  { filter: drop-shadow(0 0 10.8px #4de8c9) brightness(1.056); }
+  90%  { filter: drop-shadow(0 0 7.3px #4de8c9) brightness(0.943); }
+  100% { filter: drop-shadow(0 0 6px #4de8c9) brightness(0.9); }
 }
 
 .item-detail-icon.is-god-tier {
-  animation: god-tier-icon-pulse 1.3s ease-in-out infinite alternate;
+  animation: god-tier-icon-pulse 2.6s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
