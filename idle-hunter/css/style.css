@@ -1464,20 +1464,20 @@ button:disabled {
   z-index: 0;
 }
 
-/* Pulso sutil pro Tier God (pedido explícito do usuário): o glow verde
-   piscina (--rarity-color de GOD_RARITY, ver data/items.js) mistura um
-   pouco de azul piscina e aumenta/reduz o brilho, dando a impressão de
-   estar "respirando" — igual o nick VIP/Power já tinham sua própria
-   animação, esse é o equivalente pros itens Tier God. Mesma keyframe
-   reaproveitada pro glow de fundo (tile/slot) e pro ícone grande do popup
-   de detalhe (.item-detail-icon-lg.is-god-tier, ver js/ui/render.js). */
+/* Pulso pro Tier God (pedido explícito do usuário): mantém a cor original
+   (verde piscina, --rarity-color de GOD_RARITY em data/items.js) sem
+   misturar outra cor — só a intensidade (opacidade/brilho) sobe e desce,
+   igual uma "respiração" bem mais forte que a 1ª tentativa (mais opaco no
+   pico, bem mais fraco no vale). Mesma keyframe reaproveitada pro glow de
+   fundo (tile/slot) e pro ícone grande do popup de detalhe
+   (.item-detail-icon-lg.is-god-tier, ver js/ui/render.js). */
 @keyframes god-tier-glow-pulse {
   0%, 100% {
     background: radial-gradient(circle, #4de8c9 0%, color-mix(in srgb, #4de8c9 55%, transparent) 45%, transparent 75%);
-    opacity: 0.85;
+    opacity: 0.55;
   }
   50% {
-    background: radial-gradient(circle, #33d9f0 0%, color-mix(in srgb, #33d9f0 55%, transparent) 45%, transparent 75%);
+    background: radial-gradient(circle, #4de8c9 0%, color-mix(in srgb, #4de8c9 55%, transparent) 45%, transparent 75%);
     opacity: 1;
   }
 }
@@ -1488,8 +1488,8 @@ button:disabled {
 }
 
 @keyframes god-tier-icon-pulse {
-  0%, 100% { filter: drop-shadow(0 0 10px #4de8c9) brightness(1); }
-  50% { filter: drop-shadow(0 0 16px #33d9f0) brightness(1.18); }
+  0%, 100% { filter: drop-shadow(0 0 6px #4de8c9) brightness(0.9); }
+  50% { filter: drop-shadow(0 0 20px #4de8c9) brightness(1.35); }
 }
 
 .item-detail-icon.is-god-tier {
