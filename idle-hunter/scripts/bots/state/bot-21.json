@@ -2,51 +2,56 @@
   "index": 21,
   "name": "Obito Uchiha",
   "gameState": {
-    "gold": 117732,
-    "hunterLevel": 75,
-    "hunterXp": 204.1999999999996,
+    "gold": 207101,
+    "hunterLevel": 123,
+    "hunterXp": 59.400000000000546,
     "selectedMonsters": [
       {
-        "zoneIndex": 3,
-        "kind": "weak",
-        "monsterId": "plasmion"
+        "zoneIndex": 9,
+        "kind": "boss",
+        "monsterId": "bahamorth"
       },
       {
-        "zoneIndex": 3,
+        "zoneIndex": 5,
         "kind": "weak",
-        "monsterId": "corcel_tempestade"
+        "monsterId": "luxoris"
       },
       {
-        "zoneIndex": 3,
+        "zoneIndex": 5,
         "kind": "weak",
-        "monsterId": "sabion"
+        "monsterId": "ecliptor"
       },
       {
-        "zoneIndex": 3,
+        "zoneIndex": 5,
         "kind": "weak",
-        "monsterId": "serpentorax"
+        "monsterId": "thundrak"
       }
     ],
     "currentMonster": {
-      "zoneIndex": 3,
+      "zoneIndex": 5,
       "kind": "weak",
-      "monsterId": "corcel_tempestade"
+      "monsterId": "thundrak"
     },
-    "monsterHp": 4245,
+    "monsterHp": 68393,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 893,
+      "mystic_die": 889,
       "card_fragment": 0,
-      "musgorn_hat": 7,
-      "sylkar_blade": 34,
-      "granclaw_claw": 84,
-      "guardiao_druida_antler": 30,
-      "chispim_heart": 64,
-      "solkaiser_feather": 859,
-      "marfang_fang": 296,
-      "mizan_kunai": 310,
-      "lyria_scale": 302,
-      "hydrakon_heart": 6
+      "musgorn_hat": 11,
+      "sylkar_blade": 38,
+      "granclaw_claw": 88,
+      "guardiao_druida_antler": 34,
+      "chispim_heart": 68,
+      "solkaiser_feather": 862,
+      "marfang_fang": 287,
+      "mizan_kunai": 290,
+      "lyria_scale": 271,
+      "hydrakon_heart": 5,
+      "serpentorax_scale": 644,
+      "corcel_tempestade_horseshoe": 841,
+      "plasmion_core": 791,
+      "sabion_scepter": 793,
+      "colhedor_carmesim_scythe": 230
     },
     "cards": {
       "guardiao_druida_card": 0,
@@ -168,38 +173,6 @@
         "godAttribute": "destreza"
       },
       {
-        "uid": 5,
-        "itemId": "chispim_chest_inteligencia",
-        "rarityId": "epico",
-        "baseStats": {
-          "inteligencia": 4,
-          "hpFlat": 3
-        },
-        "additionalStats": [
-          {
-            "stat": "hpFlat",
-            "value": 8
-          },
-          {
-            "stat": "critChancePercent",
-            "value": 7.4
-          },
-          {
-            "stat": "critDamagePercent",
-            "value": 4.3
-          },
-          {
-            "stat": "dodgePercent",
-            "value": 5.5
-          }
-        ],
-        "enhanceLevel": 4,
-        "isMaster": false,
-        "cardIds": [
-          "guardiao_druida_card"
-        ]
-      },
-      {
         "uid": 7,
         "itemId": "chispim_legs_destreza",
         "rarityId": "incomum",
@@ -261,8 +234,8 @@
             "value": 6
           },
           {
-            "stat": "petDamagePercent",
-            "value": 6.4
+            "stat": "critDamagePercent",
+            "value": 4.5
           },
           {
             "stat": "danoPerfuracaoFlat",
@@ -313,7 +286,7 @@
             "value": 6.1
           }
         ],
-        "enhanceLevel": 0,
+        "enhanceLevel": 3,
         "isMaster": false,
         "cardIds": [
           "sylkar_card"
@@ -349,7 +322,7 @@
             "value": 10.8
           }
         ],
-        "enhanceLevel": 0,
+        "enhanceLevel": 4,
         "isMaster": false,
         "cardIds": [
           "garruk_card"
@@ -369,8 +342,8 @@
             "value": 28
           },
           {
-            "stat": "dropPercent",
-            "value": 7.8
+            "stat": "dodgePercent",
+            "value": 12
           },
           {
             "stat": "destreza",
@@ -413,32 +386,40 @@
             "value": 4.3
           }
         ],
-        "enhanceLevel": 0,
+        "enhanceLevel": 2,
         "isMaster": false,
         "cardIds": [
           null
         ]
       },
       {
-        "uid": 143,
-        "itemId": "solkaiser_necklace_destreza",
-        "rarityId": "raro",
+        "uid": 174,
+        "itemId": "colhedor_carmesim_necklace_destreza",
+        "rarityId": "lendario",
         "baseStats": {
-          "destreza": 10,
-          "armorFlat": 5
+          "destreza": 20,
+          "armorFlat": 16
         },
         "additionalStats": [
           {
-            "stat": "armorFlat",
-            "value": 15
+            "stat": "dropPercent",
+            "value": 11.4
+          },
+          {
+            "stat": "lifestealFlat",
+            "value": 5
+          },
+          {
+            "stat": "forca",
+            "value": 20
+          },
+          {
+            "stat": "petDamagePercent",
+            "value": 10.6
           },
           {
             "stat": "hpFlat",
-            "value": 9
-          },
-          {
-            "stat": "dodgePercent",
-            "value": 4.6
+            "value": 31
           }
         ],
         "enhanceLevel": 0,
@@ -446,24 +427,64 @@
         "cardIds": [
           null
         ]
+      },
+      {
+        "uid": 234,
+        "itemId": "colhedor_carmesim_chest_destreza",
+        "rarityId": "mitico",
+        "baseStats": {
+          "destreza": 16,
+          "hpFlat": 20
+        },
+        "additionalStats": [
+          {
+            "stat": "dpsPercent",
+            "value": 14
+          },
+          {
+            "stat": "danoPerfuracaoFlat",
+            "value": 31
+          },
+          {
+            "stat": "critDamagePercent",
+            "value": 18.7
+          },
+          {
+            "stat": "destreza",
+            "value": 16
+          },
+          {
+            "stat": "hpFlat",
+            "value": 32
+          },
+          {
+            "stat": "forca",
+            "value": 16
+          }
+        ],
+        "enhanceLevel": 0,
+        "isMaster": false,
+        "cardIds": [
+          "guardiao_druida_card"
+        ]
       }
     ],
-    "nextUid": 147,
+    "nextUid": 285,
     "equipped": {
-      "weapon1": 38,
+      "weapon1": 1,
       "weapon2": 106,
-      "head": 77,
-      "chest": 5,
+      "head": 2,
+      "chest": 234,
       "legs": 7,
       "hands": 103,
       "boots": 30,
       "ring1": 136,
       "ring2": 59,
-      "necklace": 143
+      "necklace": 174
     },
     "upgrades": {},
-    "totalKills": 4084,
-    "lastSaveTime": 1788995466065,
+    "totalKills": 8448,
+    "lastSaveTime": 1789014222020,
     "transcendUnlocked": false,
     "transcendCount": 2,
     "awakeningShards": 0,
@@ -479,10 +500,10 @@
       "transcend_count": 1
     },
     "lifetimeHunterLevel": 174,
-    "lifetimeTotalKills": 32141,
-    "lifetimeGoldEarned": 6061634,
+    "lifetimeTotalKills": 36505,
+    "lifetimeGoldEarned": 6653723,
     "lifetimeEggsHatched": 614,
-    "lifetimeRankMasterCount": 67,
+    "lifetimeRankMasterCount": 69,
     "pvpHighestTierIndex": 0,
     "pvpWinsTotal": 0,
     "playerName": "Caçador",
@@ -660,7 +681,7 @@
       4,
       9
     ],
-    "eggCount": 0,
+    "eggCount": 35,
     "petFragments": 600,
     "petHatchesSinceMythic": 23,
     "petHatchesSinceLegendary": 1,
@@ -672,25 +693,25 @@
       "treeVersion": 2
     },
     "dailyMissions": {
-      "resetAt": 1788998400000,
+      "resetAt": 1789084800000,
       "slots": [
         {
           "typeId": "enhance_items",
-          "tierIndex": 1,
+          "tierIndex": 0,
           "status": "active",
           "progress": 0,
           "rerollUsed": false
         },
         {
-          "typeId": "hatch_eggs",
+          "typeId": "rank_master_items",
           "tierIndex": 0,
           "status": "idle",
           "progress": 0,
           "rerollUsed": false
         },
         {
-          "typeId": "arena_wins",
-          "tierIndex": 1,
+          "typeId": "arena_attacks",
+          "tierIndex": 0,
           "status": "idle",
           "progress": 0,
           "rerollUsed": false
@@ -700,13 +721,15 @@
     "botBuildAttribute": "destreza",
     "nextMonsterSpawnAt": null,
     "chestPurchases": {
-      "resetAt": 1788998400000,
-      "counts": {}
+      "resetAt": 1789084800000,
+      "counts": {
+        "mascote": 1
+      }
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwMzZiZjE5OC0yNzZmLTQ3N2YtODQxNS0xNWQwZjdjMmM0N2UiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg4OTk5MDY1LCJpYXQiOjE3ODg5OTU0NjUsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzNDV9XSwic2Vzc2lvbl9pZCI6ImUwZmMzMjkyLTY5OTktNGIxNC1hYTZhLThkZmU1M2ZhMDMzOSIsImlzX2Fub255bW91cyI6dHJ1ZX0.FNxUHioIQ8YHzXKX6wXL9BWIaDbqDhpm4OOrjmDGBX3Tl4L69YTbbWe7DvCjdLG46TZjCZN4jdhurjSuq0llsw",
-    "refresh_token": "hfuafokkiogt"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwMzZiZjE5OC0yNzZmLTQ3N2YtODQxNS0xNWQwZjdjMmM0N2UiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg5MDE3ODIxLCJpYXQiOjE3ODkwMTQyMjEsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzNDV9XSwic2Vzc2lvbl9pZCI6ImUwZmMzMjkyLTY5OTktNGIxNC1hYTZhLThkZmU1M2ZhMDMzOSIsImlzX2Fub255bW91cyI6dHJ1ZX0.cEgmnjweXJ3Pm1lblfdPj5ULePZLOZX9UUav83Zl5TWUspF0BBSIWfhmfKhlZMtKYvjyKV1Om9OAfUTA4f2DVQ",
+    "refresh_token": "qndnmtx2igdn"
   },
   "nickClaimed": true,
   "userId": "036bf198-276f-477f-8415-15d0f7c2c47e"
