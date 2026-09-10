@@ -1596,7 +1596,7 @@ function cardDetailHtml(state, card) {
         <div class="card-fragment-box">
           <div class="card-fragment-count">${CARD_FRAGMENT_ICON} ${CARD_FRAGMENT_NAME}: ${formatNumber(fragments)}</div>
           <div class="card-fragment-actions">
-            ${owned > 0 ? `<button class="modal-action-btn" data-recycle-card="${card.id}" ${canRecycle ? '' : 'disabled'}>♻️ Reciclar (+${recycleValue} ${CARD_FRAGMENT_ICON})</button>` : ''}
+            ${owned > 0 ? `<button class="modal-action-btn" data-recycle-card="${card.id}" ${canRecycle ? '' : 'disabled'} ${card.isGodCard ? 'title="Carta Deus não pode ser reciclada"' : ''}>♻️ Reciclar (+${recycleValue} ${CARD_FRAGMENT_ICON})</button>` : ''}
             ${card.noCraft
               ? `<div class="card-detail-status">${AWAKENING_SHARD_ICON} Só disponível na Loja do Despertar</div>`
               : `<button class="modal-action-btn" data-craft-card="${card.id}" ${canCraft ? '' : 'disabled'}>🛠️ Craftar (${craftCost} ${CARD_FRAGMENT_ICON})</button>`}
