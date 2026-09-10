@@ -74,7 +74,14 @@ export function getCardCollectionDpsBonusPercent(state) {
 // ---------------------------------------------------------------------
 
 export function canRecycleCard(state, cardId) {
-  return (state.cards[cardId] || 0) >= 1;
+  if ((state.cards[cardId] || 0) < 1) return false;
+  // Carta Deus (ver GOD_CARDS em data/cards.js, noCraft:true) nunca pode
+  // ser reciclada — só vem da Loja do Despertar (Fragmento do Despertar),
+  // não dá pra recuperar craftando de volta, então reciclar seria perda
+  // permanente. Pedido explícito do usuário.
+  const card = getCard(cardId);
+  if (card?.isGodCard) return false;
+  return true;
 }
 
 /// Retorna true se reciclou. Consome 1 cópia da carta e devolve fragmentos
