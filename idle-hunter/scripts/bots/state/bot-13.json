@@ -2,71 +2,51 @@
   "index": 13,
   "name": "Choji Akimichi",
   "gameState": {
-    "gold": 409627,
-    "hunterLevel": 124,
-    "hunterXp": 181.70000000000118,
+    "gold": 0,
+    "hunterLevel": 1,
+    "hunterXp": 0,
     "selectedMonsters": [
       {
-        "zoneIndex": 9,
-        "kind": "boss",
-        "monsterId": "bahamorth"
+        "zoneIndex": 0,
+        "kind": "weak",
+        "monsterId": "sylkar"
       },
       {
-        "zoneIndex": 6,
+        "zoneIndex": 0,
         "kind": "weak",
-        "monsterId": "pyrorian"
+        "monsterId": "musgorn"
       },
       {
-        "zoneIndex": 6,
+        "zoneIndex": 0,
         "kind": "weak",
-        "monsterId": "infernus"
+        "monsterId": "guardiao_druida"
       },
       {
-        "zoneIndex": 6,
+        "zoneIndex": 0,
         "kind": "weak",
-        "monsterId": "sentinela_magma"
+        "monsterId": "granclaw"
       }
     ],
     "currentMonster": {
-      "zoneIndex": 6,
+      "zoneIndex": 0,
       "kind": "weak",
-      "monsterId": "sentinela_magma"
+      "monsterId": "musgorn"
     },
-    "monsterHp": 144849,
+    "monsterHp": 73,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 1148,
-      "card_fragment": 50,
-      "guardiao_druida_antler": 32,
-      "musgorn_hat": 12,
-      "sylkar_blade": 54,
-      "granclaw_claw": 12,
-      "chispim_heart": 98,
-      "esqueleto_guerreiro_shield": 171,
-      "garruk_pelt": 145,
-      "assassino_sombrio_hood": 120,
-      "tartarok_shell": 527,
-      "mimicus_lock": 1,
-      "sabion_scepter": 19,
-      "plasmion_core": 132,
-      "colhedor_carmesim_scythe": 299,
-      "corcel_tempestade_horseshoe": 134,
-      "serpentorax_scale": 4,
-      "emberimp_ember": 220,
-      "ember_warden_blade": 320,
-      "fornitus_core": 230,
-      "lavasalam_drop": 338,
-      "grommuk_fang": 173
+      "mystic_die": 1141,
+      "card_fragment": 50
     },
     "cards": {
       "sylkar_card": 0,
-      "musgorn_card": 6,
-      "garruk_card": 0,
+      "musgorn_card": 7,
+      "garruk_card": 1,
       "fornitus_card": 0,
-      "luxoris_card": 0,
+      "luxoris_card": 1,
       "granvorok_card": 0,
       "aurelion_card": 0,
-      "mizan_card": 0
+      "mizan_card": 2
     },
     "cardsDiscovered": {
       "sylkar_card": true,
@@ -109,8 +89,8 @@
             "value": 90
           },
           {
-            "stat": "goldPercent",
-            "value": 24.4
+            "stat": "dropPercent",
+            "value": 36.3
           },
           {
             "stat": "hpFlat",
@@ -125,7 +105,7 @@
         "isMaster": false,
         "cardIds": [
           "aurelion_card",
-          null
+          "musgorn_card"
         ],
         "fromAwakening": true
       },
@@ -166,15 +146,15 @@
             "value": 31
           },
           {
-            "stat": "inteligencia",
-            "value": 90
+            "stat": "petDamagePercent",
+            "value": 32.6
           }
         ],
         "enhanceLevel": 0,
         "isMaster": false,
         "cardIds": [
           "granvorok_card",
-          null
+          "sylkar_card"
         ],
         "fromAwakening": true,
         "godAttribute": "forca"
@@ -200,8 +180,8 @@
             "value": 174
           },
           {
-            "stat": "petDamagePercent",
-            "value": 39.2
+            "stat": "hpPercent",
+            "value": 34.8
           },
           {
             "stat": "dpsPercent",
@@ -223,335 +203,45 @@
         "enhanceLevel": 0,
         "isMaster": false,
         "cardIds": [
-          null,
+          "sylkar_card",
           null
         ],
         "fromAwakening": true,
         "godAttribute": "forca"
       },
       {
-        "uid": 60,
-        "itemId": "tartarok_ring_forca",
-        "rarityId": "comum",
-        "baseStats": {
-          "forca": 15,
-          "armorFlat": 6
-        },
-        "additionalStats": [
-          {
-            "stat": "danoFisicoFlat",
-            "value": 18
-          }
-        ],
-        "enhanceLevel": 2,
+        "uid": 4,
+        "itemId": "god_calca",
+        "rarityId": "deus",
+        "baseStats": {},
+        "additionalStats": [],
+        "enhanceLevel": 0,
         "isMaster": false,
         "cardIds": [
+          null,
           null
-        ]
-      },
-      {
-        "uid": 92,
-        "itemId": "tartarok_boots_forca",
-        "rarityId": "lendario",
-        "baseStats": {
-          "forca": 12,
-          "hpFlat": 12
-        },
-        "additionalStats": [
-          {
-            "stat": "goldPercent",
-            "value": 5.8
-          },
-          {
-            "stat": "dodgePercent",
-            "value": 8.5
-          },
-          {
-            "stat": "forca",
-            "value": 12
-          },
-          {
-            "stat": "attackSpeedPercent",
-            "value": 10.7
-          },
-          {
-            "stat": "critDamagePercent",
-            "value": 11.2
-          }
         ],
-        "enhanceLevel": 3,
-        "isMaster": false,
-        "cardIds": [
-          "mizan_card"
-        ]
-      },
-      {
-        "uid": 97,
-        "itemId": "tartarok_head_forca",
-        "rarityId": "mitico",
-        "baseStats": {
-          "forca": 12,
-          "hpFlat": 15
-        },
-        "additionalStats": [
-          {
-            "stat": "armorFlat",
-            "value": 20
-          },
-          {
-            "stat": "hpFlat",
-            "value": 29
-          },
-          {
-            "stat": "dodgePercent",
-            "value": 14.5
-          },
-          {
-            "stat": "critDamagePercent",
-            "value": 9.4
-          },
-          {
-            "stat": "forca",
-            "value": 12
-          },
-          {
-            "stat": "danoFisicoFlat",
-            "value": 25
-          }
-        ],
-        "enhanceLevel": 3,
-        "isMaster": false,
-        "cardIds": [
-          "sylkar_card"
-        ]
-      },
-      {
-        "uid": 159,
-        "itemId": "colhedor_carmesim_legs_forca",
-        "rarityId": "mitico",
-        "baseStats": {
-          "forca": 16,
-          "hpFlat": 22
-        },
-        "additionalStats": [
-          {
-            "stat": "danoFisicoFlat",
-            "value": 46
-          },
-          {
-            "stat": "hpFlat",
-            "value": 48
-          },
-          {
-            "stat": "armorFlat",
-            "value": 35
-          },
-          {
-            "stat": "lifestealFlat",
-            "value": 6
-          },
-          {
-            "stat": "inteligencia",
-            "value": 16
-          },
-          {
-            "stat": "critChancePercent",
-            "value": 18.1
-          }
-        ],
-        "enhanceLevel": 5,
-        "isMaster": false,
-        "cardIds": [
-          "garruk_card"
-        ]
-      },
-      {
-        "uid": 184,
-        "itemId": "grommuk_weapon2_forca",
-        "rarityId": "raro",
-        "baseStats": {
-          "forca": 30,
-          "danoFisicoFlat": 20
-        },
-        "additionalStats": [
-          {
-            "stat": "forca",
-            "value": 30
-          },
-          {
-            "stat": "destreza",
-            "value": 30
-          },
-          {
-            "stat": "danoFisicoFlat",
-            "value": 32
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          "musgorn_card"
-        ]
-      },
-      {
-        "uid": 211,
-        "itemId": "grommuk_chest_forca",
-        "rarityId": "lendario",
-        "baseStats": {
-          "forca": 20,
-          "hpFlat": 20
-        },
-        "additionalStats": [
-          {
-            "stat": "inteligencia",
-            "value": 20
-          },
-          {
-            "stat": "critDamagePercent",
-            "value": 11
-          },
-          {
-            "stat": "destreza",
-            "value": 20
-          },
-          {
-            "stat": "danoFisicoFlat",
-            "value": 41
-          },
-          {
-            "stat": "hpFlat",
-            "value": 46
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          "sylkar_card"
-        ]
-      },
-      {
-        "uid": 223,
-        "itemId": "grommuk_hands_forca",
-        "rarityId": "incomum",
-        "baseStats": {
-          "forca": 20,
-          "hpFlat": 13
-        },
-        "additionalStats": [
-          {
-            "stat": "armorFlat",
-            "value": 33
-          },
-          {
-            "stat": "attackSpeedPercent",
-            "value": 9.9
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          "mizan_card"
-        ]
-      },
-      {
-        "uid": 236,
-        "itemId": "grommuk_ring_forca",
-        "rarityId": "incomum",
-        "baseStats": {
-          "forca": 25,
-          "armorFlat": 12
-        },
-        "additionalStats": [
-          {
-            "stat": "destreza",
-            "value": 25
-          },
-          {
-            "stat": "dodgePercent",
-            "value": 8
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          "luxoris_card"
-        ]
-      },
-      {
-        "uid": 273,
-        "itemId": "grommuk_necklace_forca",
-        "rarityId": "raro",
-        "baseStats": {
-          "forca": 25,
-          "armorFlat": 14
-        },
-        "additionalStats": [
-          {
-            "stat": "armorFlat",
-            "value": 20
-          },
-          {
-            "stat": "critDamagePercent",
-            "value": 6.9
-          },
-          {
-            "stat": "hpFlat",
-            "value": 35
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          null
-        ]
-      },
-      {
-        "uid": 282,
-        "itemId": "grommuk_weapon1_forca",
-        "rarityId": "raro",
-        "baseStats": {
-          "forca": 30,
-          "danoFisicoFlat": 21
-        },
-        "additionalStats": [
-          {
-            "stat": "armorFlat",
-            "value": 26
-          },
-          {
-            "stat": "danoMagicoFlat",
-            "value": 32
-          },
-          {
-            "stat": "danoFisicoFlat",
-            "value": 33
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          "musgorn_card"
-        ]
+        "fromAwakening": true
       }
     ],
-    "nextUid": 287,
+    "nextUid": 5,
     "equipped": {
-      "weapon1": 1,
-      "weapon2": 184,
-      "head": 2,
-      "chest": 3,
-      "legs": 159,
-      "hands": 223,
-      "boots": 92,
-      "ring1": 236,
-      "ring2": 60,
-      "necklace": 273
+      "weapon1": null,
+      "weapon2": null,
+      "head": null,
+      "chest": null,
+      "legs": null,
+      "hands": null,
+      "boots": null,
+      "ring1": null,
+      "ring2": null,
+      "necklace": null
     },
     "upgrades": {},
-    "totalKills": 6360,
-    "lastSaveTime": 1789100538327,
+    "totalKills": 0,
+    "lastSaveTime": 1789124799668,
     "transcendUnlocked": false,
-    "transcendCount": 3,
+    "transcendCount": 4,
     "awakeningShards": 0,
     "cash": 30,
     "lastAdWatchTime": null,
@@ -565,10 +255,10 @@
       "transcend_count": 2
     },
     "lifetimeHunterLevel": 162,
-    "lifetimeTotalKills": 35646,
-    "lifetimeGoldEarned": 8039837,
-    "lifetimeEggsHatched": 659,
-    "lifetimeRankMasterCount": 107,
+    "lifetimeTotalKills": 35722,
+    "lifetimeGoldEarned": 8420632,
+    "lifetimeEggsHatched": 733,
+    "lifetimeRankMasterCount": 111,
     "pvpHighestTierIndex": 0,
     "pvpWinsTotal": 0,
     "playerName": "Caçador",
@@ -584,277 +274,24 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 189,
-    "expeditionReadyAt": 1789129338332,
-    "expeditionLastTierId": "8h",
+    "eventCurrency": 0,
+    "expeditionReadyAt": null,
+    "expeditionLastTierId": null,
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
-    "arenaReadyAt": 1789143738333,
-    "pets": [
-      {
-        "uid": 1,
-        "speciesId": "fogo_5",
-        "rarityId": "comum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 2,
-        "speciesId": "agua_4",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 3,
-        "speciesId": "planta_2",
-        "rarityId": "comum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 4,
-        "speciesId": "fogo_1",
-        "rarityId": "raro",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 5,
-        "speciesId": "eletrico_4",
-        "rarityId": "comum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 6,
-        "speciesId": "eletrico_5",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 8,
-        "speciesId": "fogo_4",
-        "rarityId": "comum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 10,
-        "speciesId": "eletrico_3",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 11,
-        "speciesId": "eletrico_3",
-        "rarityId": "comum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 13,
-        "speciesId": "planta_3",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 14,
-        "speciesId": "agua_4",
-        "rarityId": "epico",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 16,
-        "speciesId": "fogo_1",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 18,
-        "speciesId": "eletrico_4",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 19,
-        "speciesId": "eletrico_3",
-        "rarityId": "raro",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 20,
-        "speciesId": "planta_4",
-        "rarityId": "lendario",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 21,
-        "speciesId": "agua_2",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 22,
-        "speciesId": "agua_3",
-        "rarityId": "comum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 24,
-        "speciesId": "eletrico_5",
-        "rarityId": "comum",
-        "level": 2,
-        "xp": 0
-      },
-      {
-        "uid": 25,
-        "speciesId": "fogo_5",
-        "rarityId": "comum",
-        "level": 2,
-        "xp": 0
-      },
-      {
-        "uid": 26,
-        "speciesId": "fogo_5",
-        "rarityId": "comum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 27,
-        "speciesId": "planta_2",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 29,
-        "speciesId": "agua_4",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 30,
-        "speciesId": "agua_4",
-        "rarityId": "comum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 31,
-        "speciesId": "agua_3",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 32,
-        "speciesId": "agua_5",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 33,
-        "speciesId": "planta_3",
-        "rarityId": "comum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 35,
-        "speciesId": "fogo_3",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 38,
-        "speciesId": "eletrico_2",
-        "rarityId": "comum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 39,
-        "speciesId": "eletrico_4",
-        "rarityId": "comum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 41,
-        "speciesId": "fogo_4",
-        "rarityId": "incomum",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 42,
-        "speciesId": "fogo_5",
-        "rarityId": "lendario",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 46,
-        "speciesId": "planta_5",
-        "rarityId": "comum",
-        "level": 2,
-        "xp": 0
-      },
-      {
-        "uid": 47,
-        "speciesId": "agua_5",
-        "rarityId": "raro",
-        "level": 2,
-        "xp": 0
-      },
-      {
-        "uid": 48,
-        "speciesId": "eletrico_1",
-        "rarityId": "raro",
-        "level": 2,
-        "xp": 0
-      },
-      {
-        "uid": 49,
-        "speciesId": "agua_4",
-        "rarityId": "incomum",
-        "level": 2,
-        "xp": 0
-      },
-      {
-        "uid": 50,
-        "speciesId": "fogo_3",
-        "rarityId": "incomum",
-        "level": 2,
-        "xp": 0
-      }
-    ],
-    "nextPetUid": 51,
+    "arenaReadyAt": null,
+    "pets": [],
+    "nextPetUid": 1,
     "equippedPetUids": [
-      1,
-      2,
-      3,
-      5
+      null,
+      null,
+      null,
+      null
     ],
-    "eggCount": 74,
-    "petFragments": 0,
-    "petHatchesSinceMythic": 43,
-    "petHatchesSinceLegendary": 3,
+    "eggCount": 0,
+    "petFragments": 50,
+    "petHatchesSinceMythic": 0,
+    "petHatchesSinceLegendary": 0,
     "vipExpiresAt": 1791107318099,
     "freeRightPetChoiceCycle": null,
     "skillTree": {
@@ -889,17 +326,11 @@
       ]
     },
     "botBuildAttribute": "forca",
-    "nextMonsterSpawnAt": null,
-    "chestPurchases": {
-      "resetAt": 1789171200000,
-      "counts": {
-        "mascote": 1
-      }
-    }
+    "nextMonsterSpawnAt": null
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIxNmYxNTE0NC01NjI2LTQxN2ItYmUwOS0wMjY0Nzg0ODg1ZmIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg5MTA0MTM4LCJpYXQiOjE3ODkxMDA1MzgsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzMTd9XSwic2Vzc2lvbl9pZCI6ImE3NjdhNjYzLTM4N2ItNDdmZC1iOTVjLWM0OWE1OTAyODIxMSIsImlzX2Fub255bW91cyI6dHJ1ZX0.UGsYqpufVKUfs-iTAfcw-urAn1vvH7nK0cpiA-DG0zj-PbwnZVL4qccf3ebh5A299HATMUrs4P_3Waf7tYpvKQ",
-    "refresh_token": "rigksmrsqnux"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIxNmYxNTE0NC01NjI2LTQxN2ItYmUwOS0wMjY0Nzg0ODg1ZmIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg5MTI4Mzk5LCJpYXQiOjE3ODkxMjQ3OTksImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzMTd9XSwic2Vzc2lvbl9pZCI6ImE3NjdhNjYzLTM4N2ItNDdmZC1iOTVjLWM0OWE1OTAyODIxMSIsImlzX2Fub255bW91cyI6dHJ1ZX0.vrMGZOXS1i4eunL8dR2qs1yOJOc3GI0lKo2IJYjYKJeoL_NivpHWMO0sDYH-tHHUjkGKlLaWszwyLuLG77A9rQ",
+    "refresh_token": "fg53y3xh5lka"
   },
   "nickClaimed": true,
   "userId": "16f15144-5626-417b-be09-0264784885fb"
