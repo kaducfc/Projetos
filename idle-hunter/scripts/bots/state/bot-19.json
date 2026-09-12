@@ -2,51 +2,56 @@
   "index": 19,
   "name": "Minato Namikaze",
   "gameState": {
-    "gold": 183041,
-    "hunterLevel": 90,
-    "hunterXp": 121,
+    "gold": 296969,
+    "hunterLevel": 120,
+    "hunterXp": 619.5,
     "selectedMonsters": [
       {
-        "zoneIndex": 4,
-        "kind": "weak",
-        "monsterId": "lavasalam"
+        "zoneIndex": 9,
+        "kind": "boss",
+        "monsterId": "bahamorth"
       },
       {
-        "zoneIndex": 4,
+        "zoneIndex": 6,
         "kind": "weak",
-        "monsterId": "fornitus"
+        "monsterId": "pyrorian"
       },
       {
-        "zoneIndex": 4,
+        "zoneIndex": 6,
         "kind": "weak",
-        "monsterId": "emberimp"
+        "monsterId": "infernus"
       },
       {
-        "zoneIndex": 4,
+        "zoneIndex": 6,
         "kind": "weak",
-        "monsterId": "ember_warden"
+        "monsterId": "sentinela_magma"
       }
     ],
     "currentMonster": {
-      "zoneIndex": 4,
+      "zoneIndex": 6,
       "kind": "weak",
-      "monsterId": "ember_warden"
+      "monsterId": "infernus"
     },
-    "monsterHp": 18876,
+    "monsterHp": 134860,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 1345,
+      "mystic_die": 1337,
       "card_fragment": 80,
-      "sylkar_blade": 2,
-      "musgorn_hat": 0,
-      "granclaw_claw": 19,
-      "guardiao_druida_antler": 19,
-      "chispim_heart": 40,
-      "solkaiser_feather": 1231,
-      "marfang_fang": 714,
-      "lyria_scale": 591,
-      "mizan_kunai": 521,
-      "hydrakon_heart": 98
+      "sylkar_blade": 8,
+      "musgorn_hat": 6,
+      "granclaw_claw": 25,
+      "guardiao_druida_antler": 25,
+      "chispim_heart": 46,
+      "solkaiser_feather": 1248,
+      "marfang_fang": 640,
+      "lyria_scale": 562,
+      "mizan_kunai": 504,
+      "hydrakon_heart": 81,
+      "emberimp_ember": 355,
+      "lavasalam_drop": 361,
+      "fornitus_core": 353,
+      "ember_warden_blade": 185,
+      "grommuk_fang": 183
     },
     "cards": {
       "mizan_card": 0,
@@ -352,30 +357,6 @@
         ]
       },
       {
-        "uid": 19,
-        "itemId": "chispim_legs_inteligencia",
-        "rarityId": "incomum",
-        "baseStats": {
-          "inteligencia": 4,
-          "hpFlat": 2
-        },
-        "additionalStats": [
-          {
-            "stat": "hpFlat",
-            "value": 5
-          },
-          {
-            "stat": "dodgePercent",
-            "value": 2.4
-          }
-        ],
-        "enhanceLevel": 5,
-        "isMaster": false,
-        "cardIds": [
-          "serpentorax_card"
-        ]
-      },
-      {
         "uid": 23,
         "itemId": "chispim_head_inteligencia",
         "rarityId": "raro",
@@ -404,44 +385,12 @@
         ]
       },
       {
-        "uid": 32,
-        "itemId": "chispim_boots_inteligencia",
-        "rarityId": "epico",
-        "baseStats": {
-          "inteligencia": 4,
-          "hpFlat": 3
-        },
-        "additionalStats": [
-          {
-            "stat": "hpFlat",
-            "value": 5
-          },
-          {
-            "stat": "danoMagicoFlat",
-            "value": 9
-          },
-          {
-            "stat": "dodgePercent",
-            "value": 5.5
-          },
-          {
-            "stat": "petDamagePercent",
-            "value": 3.5
-          }
-        ],
-        "enhanceLevel": 1,
-        "isMaster": false,
-        "cardIds": [
-          "marfang_card"
-        ]
-      },
-      {
         "uid": 41,
         "itemId": "solkaiser_ring_inteligencia",
-        "rarityId": "incomum",
+        "rarityId": "raro",
         "baseStats": {
           "inteligencia": 10,
-          "armorFlat": 4
+          "armorFlat": 6
         },
         "additionalStats": [
           {
@@ -449,8 +398,12 @@
             "value": 9
           },
           {
-            "stat": "destreza",
-            "value": 10
+            "stat": "armorFlat",
+            "value": 9
+          },
+          {
+            "stat": "hpFlat",
+            "value": 9
           }
         ],
         "enhanceLevel": 0,
@@ -478,7 +431,7 @@
           },
           {
             "stat": "dropPercent",
-            "value": 13.4
+            "value": 6.4
           },
           {
             "stat": "dpsPercent",
@@ -493,36 +446,28 @@
             "value": 17
           }
         ],
-        "enhanceLevel": 0,
-        "isMaster": false,
+        "enhanceLevel": 5,
+        "isMaster": true,
         "cardIds": [
           "emberimp_card"
         ]
       },
       {
-        "uid": 107,
-        "itemId": "solkaiser_ring_inteligencia",
-        "rarityId": "epico",
+        "uid": 175,
+        "itemId": "grommuk_necklace_inteligencia",
+        "rarityId": "incomum",
         "baseStats": {
-          "inteligencia": 10,
-          "armorFlat": 6
+          "inteligencia": 25,
+          "armorFlat": 12
         },
         "additionalStats": [
           {
             "stat": "dodgePercent",
-            "value": 8.5
+            "value": 10.2
           },
           {
-            "stat": "danoMagicoFlat",
-            "value": 15
-          },
-          {
-            "stat": "dropPercent",
-            "value": 7.9
-          },
-          {
-            "stat": "lifestealFlat",
-            "value": 2
+            "stat": "critDamagePercent",
+            "value": 3.5
           }
         ],
         "enhanceLevel": 0,
@@ -532,65 +477,73 @@
         ]
       },
       {
-        "uid": 108,
-        "itemId": "solkaiser_weapon1_inteligencia",
-        "rarityId": "raro",
+        "uid": 197,
+        "itemId": "grommuk_boots_inteligencia",
+        "rarityId": "mitico",
         "baseStats": {
-          "inteligencia": 12,
-          "danoMagicoFlat": 9
+          "inteligencia": 20,
+          "hpFlat": 26
         },
         "additionalStats": [
           {
-            "stat": "hpFlat",
-            "value": 11
+            "stat": "goldPercent",
+            "value": 17.9
           },
           {
             "stat": "attackSpeedPercent",
-            "value": 4.8
+            "value": 9.6
           },
           {
-            "stat": "critDamagePercent",
-            "value": 3.2
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          "musgorn_card"
-        ]
-      },
-      {
-        "uid": 123,
-        "itemId": "solkaiser_weapon2_inteligencia",
-        "rarityId": "mitico",
-        "baseStats": {
-          "inteligencia": 12,
-          "danoMagicoFlat": 15
-        },
-        "additionalStats": [
-          {
-            "stat": "dropPercent",
-            "value": 5.8
-          },
-          {
-            "stat": "critDamagePercent",
-            "value": 11.8
-          },
-          {
-            "stat": "hpFlat",
-            "value": 17
+            "stat": "dodgePercent",
+            "value": 21.9
           },
           {
             "stat": "danoMagicoFlat",
-            "value": 25
+            "value": 72
           },
           {
-            "stat": "goldPercent",
-            "value": 9.3
+            "stat": "destreza",
+            "value": 20
+          },
+          {
+            "stat": "forca",
+            "value": 20
+          }
+        ],
+        "enhanceLevel": 5,
+        "isMaster": true,
+        "cardIds": [
+          "marfang_card"
+        ]
+      },
+      {
+        "uid": 204,
+        "itemId": "grommuk_weapon1_inteligencia",
+        "rarityId": "lendario",
+        "baseStats": {
+          "inteligencia": 30,
+          "danoMagicoFlat": 33
+        },
+        "additionalStats": [
+          {
+            "stat": "critChancePercent",
+            "value": 11.8
+          },
+          {
+            "stat": "critDamagePercent",
+            "value": 12.3
           },
           {
             "stat": "armorFlat",
-            "value": 30
+            "value": 29
+          },
+          {
+            "stat": "dpsPercent",
+            "value": 12
+          },
+          {
+            "stat": "danoMagicoFlat",
+            "value": 42
           }
         ],
         "enhanceLevel": 0,
@@ -600,29 +553,85 @@
         ]
       },
       {
-        "uid": 167,
-        "itemId": "solkaiser_necklace_inteligencia",
-        "rarityId": "epico",
+        "uid": 210,
+        "itemId": "grommuk_weapon2_inteligencia",
+        "rarityId": "raro",
         "baseStats": {
-          "inteligencia": 10,
-          "armorFlat": 6
+          "inteligencia": 30,
+          "danoMagicoFlat": 21
         },
         "additionalStats": [
           {
-            "stat": "armorFlat",
-            "value": 10
-          },
-          {
             "stat": "forca",
-            "value": 10
-          },
-          {
-            "stat": "critDamagePercent",
-            "value": 4.5
+            "value": 30
           },
           {
             "stat": "hpFlat",
-            "value": 17
+            "value": 38
+          },
+          {
+            "stat": "armorFlat",
+            "value": 35
+          }
+        ],
+        "enhanceLevel": 0,
+        "isMaster": false,
+        "cardIds": [
+          "musgorn_card"
+        ]
+      },
+      {
+        "uid": 251,
+        "itemId": "grommuk_legs_inteligencia",
+        "rarityId": "lendario",
+        "baseStats": {
+          "inteligencia": 20,
+          "hpFlat": 20
+        },
+        "additionalStats": [
+          {
+            "stat": "petDamagePercent",
+            "value": 11.7
+          },
+          {
+            "stat": "hpFlat",
+            "value": 28
+          },
+          {
+            "stat": "critDamagePercent",
+            "value": 7
+          },
+          {
+            "stat": "forca",
+            "value": 20
+          },
+          {
+            "stat": "armorFlat",
+            "value": 56
+          }
+        ],
+        "enhanceLevel": 0,
+        "isMaster": false,
+        "cardIds": [
+          "serpentorax_card"
+        ]
+      },
+      {
+        "uid": 282,
+        "itemId": "grommuk_ring_inteligencia",
+        "rarityId": "incomum",
+        "baseStats": {
+          "inteligencia": 25,
+          "armorFlat": 12
+        },
+        "additionalStats": [
+          {
+            "stat": "lifestealFlat",
+            "value": 3
+          },
+          {
+            "stat": "hpFlat",
+            "value": 33
           }
         ],
         "enhanceLevel": 0,
@@ -632,30 +641,30 @@
         ]
       }
     ],
-    "nextUid": 168,
+    "nextUid": 289,
     "equipped": {
-      "weapon1": 108,
-      "weapon2": 123,
-      "head": 23,
-      "chest": 14,
-      "legs": 19,
-      "hands": 84,
-      "boots": 32,
-      "ring1": 107,
+      "weapon1": 1,
+      "weapon2": 210,
+      "head": 2,
+      "chest": 3,
+      "legs": 4,
+      "hands": 5,
+      "boots": 197,
+      "ring1": 282,
       "ring2": 41,
-      "necklace": 167
+      "necklace": 175
     },
     "upgrades": {},
-    "totalKills": 4516,
-    "lastSaveTime": 1789186871644,
+    "totalKills": 6252,
+    "lastSaveTime": 1789209379757,
     "transcendUnlocked": false,
     "transcendCount": 5,
     "awakeningShards": 0,
-    "cash": 20,
+    "cash": 30,
     "lastAdWatchTime": null,
     "achievementsClaimed": {
       "hunter_level": 8,
-      "monsters_killed": 7,
+      "monsters_killed": 8,
       "eggs_hatched": 8,
       "rank_master_items": 4,
       "gold_earned": 3,
@@ -663,10 +672,10 @@
       "transcend_count": 3
     },
     "lifetimeHunterLevel": 172,
-    "lifetimeTotalKills": 49388,
-    "lifetimeGoldEarned": 11909503,
+    "lifetimeTotalKills": 51124,
+    "lifetimeGoldEarned": 12525611,
     "lifetimeEggsHatched": 725,
-    "lifetimeRankMasterCount": 158,
+    "lifetimeRankMasterCount": 166,
     "pvpHighestTierIndex": 0,
     "pvpWinsTotal": 0,
     "playerName": "Caçador",
@@ -682,8 +691,8 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 140,
-    "expeditionReadyAt": 1789197105227,
+    "eventCurrency": 280,
+    "expeditionReadyAt": 1789238179760,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
@@ -975,16 +984,23 @@
         "rarityId": "incomum",
         "level": 2,
         "xp": 0
+      },
+      {
+        "uid": 66,
+        "speciesId": "eletrico_5",
+        "rarityId": "mitico",
+        "level": 1,
+        "xp": 0
       }
     ],
-    "nextPetUid": 66,
+    "nextPetUid": 67,
     "equippedPetUids": [
       1,
       5,
       6,
       14
     ],
-    "eggCount": 0,
+    "eggCount": 23,
     "petFragments": 0,
     "petHatchesSinceMythic": 54,
     "petHatchesSinceLegendary": 14,
@@ -1025,12 +1041,14 @@
     "nextMonsterSpawnAt": null,
     "chestPurchases": {
       "resetAt": 1789257600000,
-      "counts": {}
+      "counts": {
+        "mascote": 1
+      }
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwZmNhNmUwYy05OTJiLTQzNzUtYjBlNS1jMGExYjNlNzhjNDMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg5MTkwNDcxLCJpYXQiOjE3ODkxODY4NzEsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzNDF9XSwic2Vzc2lvbl9pZCI6IjI0NjljODE4LWE4MmQtNDA4MS04NjA1LTUxNTE3ZTkyMTcwYSIsImlzX2Fub255bW91cyI6dHJ1ZX0.GM2gHGXTgt14DU2xv17Uah0ruAbQGrMKc6s4N-JmpqmEcE9Xrgcz54o87h1mHsoxpbV8TNmr4ieYSKY8O2KjXQ",
-    "refresh_token": "o6ixp5xyqi5r"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwZmNhNmUwYy05OTJiLTQzNzUtYjBlNS1jMGExYjNlNzhjNDMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg5MjEyOTc5LCJpYXQiOjE3ODkyMDkzNzksImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzNDF9XSwic2Vzc2lvbl9pZCI6IjI0NjljODE4LWE4MmQtNDA4MS04NjA1LTUxNTE3ZTkyMTcwYSIsImlzX2Fub255bW91cyI6dHJ1ZX0.Ita37DoEPakb8j5NZhHEcbRE78sZHbgVe4aYYIXr54zWkNzZZ5xxqhbLgXBrTOFeVxm1s0hWXIgHTCD8EcGqQQ",
+    "refresh_token": "reo5fybpbyq5"
   },
   "nickClaimed": true,
   "userId": "0fca6e0c-992b-4375-b0e5-c0a1b3e78c43"
