@@ -2,51 +2,56 @@
   "index": 6,
   "name": "Tsunade",
   "gameState": {
-    "gold": 145774,
-    "hunterLevel": 91,
-    "hunterXp": 2.800000000000182,
+    "gold": 332563,
+    "hunterLevel": 104,
+    "hunterXp": 113.80000000000018,
     "selectedMonsters": [
       {
-        "zoneIndex": 4,
-        "kind": "weak",
-        "monsterId": "lavasalam"
+        "zoneIndex": 9,
+        "kind": "boss",
+        "monsterId": "bahamorth"
       },
       {
-        "zoneIndex": 4,
+        "zoneIndex": 5,
         "kind": "weak",
-        "monsterId": "fornitus"
+        "monsterId": "luxoris"
       },
       {
-        "zoneIndex": 4,
+        "zoneIndex": 5,
         "kind": "weak",
-        "monsterId": "emberimp"
+        "monsterId": "ecliptor"
       },
       {
-        "zoneIndex": 4,
+        "zoneIndex": 5,
         "kind": "weak",
-        "monsterId": "ember_warden"
+        "monsterId": "thundrak"
       }
     ],
     "currentMonster": {
-      "zoneIndex": 4,
+      "zoneIndex": 5,
       "kind": "weak",
-      "monsterId": "ember_warden"
+      "monsterId": "thundrak"
     },
-    "monsterHp": 18876,
+    "monsterHp": 68393,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 1588,
+      "mystic_die": 1581,
       "card_fragment": 50,
       "granclaw_claw": 48,
       "guardiao_druida_antler": 4,
       "sylkar_blade": 5,
-      "musgorn_hat": 31,
+      "musgorn_hat": 27,
       "chispim_heart": 102,
-      "garruk_pelt": 163,
-      "esqueleto_guerreiro_shield": 228,
-      "tartarok_shell": 659,
-      "assassino_sombrio_hood": 81,
-      "mimicus_lock": 3
+      "garruk_pelt": 129,
+      "esqueleto_guerreiro_shield": 217,
+      "tartarok_shell": 671,
+      "assassino_sombrio_hood": 8,
+      "mimicus_lock": 0,
+      "emberimp_ember": 64,
+      "fornitus_core": 14,
+      "ember_warden_blade": 62,
+      "lavasalam_drop": 50,
+      "grommuk_fang": 45
     },
     "cards": {
       "guardiao_druida_card": 0,
@@ -457,8 +462,8 @@
             "value": 14.4
           },
           {
-            "stat": "destreza",
-            "value": 4
+            "stat": "petDamagePercent",
+            "value": 13.8
           }
         ],
         "enhanceLevel": 5,
@@ -485,31 +490,7 @@
             "value": 4.8
           }
         ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          null
-        ]
-      },
-      {
-        "uid": 96,
-        "itemId": "tartarok_boots_inteligencia",
-        "rarityId": "incomum",
-        "baseStats": {
-          "inteligencia": 12,
-          "hpFlat": 6
-        },
-        "additionalStats": [
-          {
-            "stat": "danoMagicoFlat",
-            "value": 15
-          },
-          {
-            "stat": "petDamagePercent",
-            "value": 5.6
-          }
-        ],
-        "enhanceLevel": 3,
+        "enhanceLevel": 1,
         "isMaster": false,
         "cardIds": [
           null
@@ -525,8 +506,8 @@
         },
         "additionalStats": [
           {
-            "stat": "forca",
-            "value": 15
+            "stat": "hpPercent",
+            "value": 8.5
           },
           {
             "stat": "dodgePercent",
@@ -552,40 +533,12 @@
         ]
       },
       {
-        "uid": 115,
-        "itemId": "tartarok_weapon1_inteligencia",
-        "rarityId": "raro",
-        "baseStats": {
-          "inteligencia": 18,
-          "danoMagicoFlat": 13
-        },
-        "additionalStats": [
-          {
-            "stat": "armorFlat",
-            "value": 18
-          },
-          {
-            "stat": "danoMagicoFlat",
-            "value": 16
-          },
-          {
-            "stat": "dodgePercent",
-            "value": 8.4
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          "musgorn_card"
-        ]
-      },
-      {
         "uid": 118,
         "itemId": "tartarok_chest_inteligencia",
-        "rarityId": "raro",
+        "rarityId": "epico",
         "baseStats": {
           "inteligencia": 12,
-          "hpFlat": 8
+          "hpFlat": 10
         },
         "additionalStats": [
           {
@@ -599,6 +552,10 @@
           {
             "stat": "danoMagicoFlat",
             "value": 17
+          },
+          {
+            "stat": "dodgePercent",
+            "value": 8.3
           }
         ],
         "enhanceLevel": 0,
@@ -617,8 +574,8 @@
         },
         "additionalStats": [
           {
-            "stat": "destreza",
-            "value": 12
+            "stat": "critDamagePercent",
+            "value": 6.6
           },
           {
             "stat": "armorFlat",
@@ -653,8 +610,8 @@
             "value": 34
           },
           {
-            "stat": "destreza",
-            "value": 12
+            "stat": "danoMagicoFlat",
+            "value": 41
           },
           {
             "stat": "inteligencia",
@@ -673,32 +630,72 @@
             "value": 15.8
           }
         ],
-        "enhanceLevel": 0,
+        "enhanceLevel": 4,
         "isMaster": false,
         "cardIds": [
           null
         ]
       },
       {
-        "uid": 148,
-        "itemId": "tartarok_weapon2_inteligencia",
-        "rarityId": "raro",
+        "uid": 178,
+        "itemId": "grommuk_boots_inteligencia",
+        "rarityId": "comum",
         "baseStats": {
-          "inteligencia": 18,
-          "danoMagicoFlat": 12
+          "inteligencia": 20,
+          "hpFlat": 9
+        },
+        "additionalStats": [
+          {
+            "stat": "hpFlat",
+            "value": 21
+          }
+        ],
+        "enhanceLevel": 5,
+        "isMaster": false,
+        "cardIds": [
+          null
+        ]
+      },
+      {
+        "uid": 186,
+        "itemId": "grommuk_ring_inteligencia",
+        "rarityId": "comum",
+        "baseStats": {
+          "inteligencia": 25,
+          "armorFlat": 10
         },
         "additionalStats": [
           {
             "stat": "critDamagePercent",
-            "value": 7.2
+            "value": 7.8
+          }
+        ],
+        "enhanceLevel": 4,
+        "isMaster": false,
+        "cardIds": [
+          null
+        ]
+      },
+      {
+        "uid": 190,
+        "itemId": "grommuk_weapon1_inteligencia",
+        "rarityId": "raro",
+        "baseStats": {
+          "inteligencia": 30,
+          "danoMagicoFlat": 21
+        },
+        "additionalStats": [
+          {
+            "stat": "critDamagePercent",
+            "value": 6.6
+          },
+          {
+            "stat": "hpFlat",
+            "value": 26
           },
           {
             "stat": "dodgePercent",
-            "value": 6.9
-          },
-          {
-            "stat": "armorFlat",
-            "value": 23
+            "value": 5.3
           }
         ],
         "enhanceLevel": 0,
@@ -708,54 +705,46 @@
         ]
       },
       {
-        "uid": 176,
-        "itemId": "tartarok_ring_inteligencia",
-        "rarityId": "epico",
+        "uid": 194,
+        "itemId": "grommuk_weapon2_inteligencia",
+        "rarityId": "incomum",
         "baseStats": {
-          "inteligencia": 15,
-          "armorFlat": 10
+          "inteligencia": 30,
+          "danoMagicoFlat": 16
         },
         "additionalStats": [
           {
-            "stat": "dodgePercent",
-            "value": 6.9
+            "stat": "armorFlat",
+            "value": 24
           },
           {
-            "stat": "critDamagePercent",
-            "value": 10.6
-          },
-          {
-            "stat": "danoPerfuracaoFlat",
-            "value": 16
-          },
-          {
-            "stat": "attackSpeedPercent",
-            "value": 8.8
+            "stat": "critChancePercent",
+            "value": 8.7
           }
         ],
         "enhanceLevel": 0,
         "isMaster": false,
         "cardIds": [
-          null
+          "musgorn_card"
         ]
       }
     ],
-    "nextUid": 177,
+    "nextUid": 207,
     "equipped": {
-      "weapon1": 115,
-      "weapon2": 148,
-      "head": 37,
-      "chest": 118,
-      "legs": 122,
-      "hands": 138,
-      "boots": 96,
-      "ring1": 176,
+      "weapon1": 1,
+      "weapon2": 194,
+      "head": 2,
+      "chest": 3,
+      "legs": 4,
+      "hands": 5,
+      "boots": 6,
+      "ring1": 7,
       "ring2": 58,
       "necklace": 99
     },
     "upgrades": {},
-    "totalKills": 3412,
-    "lastSaveTime": 1789332011531,
+    "totalKills": 4048,
+    "lastSaveTime": 1789340725020,
     "transcendUnlocked": false,
     "transcendCount": 7,
     "awakeningShards": 0,
@@ -771,10 +760,10 @@
       "transcend_count": 3
     },
     "lifetimeHunterLevel": 166,
-    "lifetimeTotalKills": 54548,
-    "lifetimeGoldEarned": 13897169,
+    "lifetimeTotalKills": 55184,
+    "lifetimeGoldEarned": 14089608,
     "lifetimeEggsHatched": 796,
-    "lifetimeRankMasterCount": 183,
+    "lifetimeRankMasterCount": 186,
     "pvpHighestTierIndex": 0,
     "pvpWinsTotal": 0,
     "playerName": "Caçador",
@@ -1349,8 +1338,8 @@
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI5MGYzNWFkMi1lNGE0LTRmMzEtOTNjYi0xYWFjMjdjYmJiZGYiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg5MzM1NjExLCJpYXQiOjE3ODkzMzIwMTEsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUyNjV9XSwic2Vzc2lvbl9pZCI6IjZkYzAwZGE0LTViOTUtNGI4Mi04NTQ4LTBmZTFiYmFhMWUxMSIsImlzX2Fub255bW91cyI6dHJ1ZX0.7-wjbBZoBzY_gZUtr7ONqK_4JTyx0xpkl4ma1hAv2M8cOAzWWZ5bFzCD7bM9Fw7vFIZ4T-jBOJtgL0fkBDwqLQ",
-    "refresh_token": "ftlujee3rmxc"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI5MGYzNWFkMi1lNGE0LTRmMzEtOTNjYi0xYWFjMjdjYmJiZGYiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg5MzQ0MzI0LCJpYXQiOjE3ODkzNDA3MjQsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUyNjV9XSwic2Vzc2lvbl9pZCI6IjZkYzAwZGE0LTViOTUtNGI4Mi04NTQ4LTBmZTFiYmFhMWUxMSIsImlzX2Fub255bW91cyI6dHJ1ZX0.ET7VMauhxrR9ofhCs8Z_qevxpJyG0hkSun3ZSEu5QV_Li5s_v_g4xI67Oz8xDt90-yJhaCbBkSM-xlxxidVzMQ",
+    "refresh_token": "lkco6yjkpvf2"
   },
   "nickClaimed": true,
   "userId": "90f35ad2-e4a4-4f31-93cb-1aac27cbbbdf"
