@@ -639,7 +639,15 @@ function toggleMonsterSelection(zoneIndex, kind, monsterId) {
     pendingMonsterSelection.shift();
     pendingMonsterSelection.push({ zoneIndex, kind, monsterId });
   }
+  // showMonsterSelectModal recria o HTML inteiro do popup (ver showModal em
+  // ui/render.js: bodyEl.innerHTML = ...), o que zera o scroll da lista de
+  // monstros (.monster-select-list, rolagem própria) — sem isso, marcar/
+  // desmarcar um monstro de zona avançada jogava a tela de volta pro topo
+  // toda vez. Guarda a posição antes e restaura depois do re-render.
+  const scrollTop = document.querySelector('.monster-select-list')?.scrollTop || 0;
   showMonsterSelectModal(state, pendingMonsterSelection);
+  const list = document.querySelector('.monster-select-list');
+  if (list) list.scrollTop = scrollTop;
 }
 
 function confirmMonsterSelection() {
