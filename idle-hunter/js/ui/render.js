@@ -890,10 +890,14 @@ function inventoryTileHtml(state, entry, bulkSelect = null) {
   // querer algo que já está no personagem ou que o jogador marcou pra
   // guardar (destruir um equipado continua possível pelo popup de
   // detalhe individual, que já desequipa sozinho; um travado só destrava
-  // pelo mesmo popup, ver destroyItem em systems/crafting.js).
-  const bulkLocked = !!bulkSelect?.active && (isEquipped || entry.locked);
+  // pelo mesmo popup, ver destroyItem em systems/crafting.js). Item Tier
+  // God nunca sai da conta (ver destroyItem/canDestroyItem em systems/
+  // crafting.js) — fica de fora da seleção também, pra não dar a entender
+  // ao jogador que ele pode ser destruído.
+  const bulkLocked = !!bulkSelect?.active && (isEquipped || entry.locked || item.isGodTier);
   const title = entry.locked
     ? `${item.name} (travado)`
+    : item.isGodTier && bulkSelect?.active ? `${item.name} (Tier God nunca pode ser destruído)`
     : bulkLocked ? `${item.name} (equipado — desequipe antes de selecionar)` : item.name;
   return `<button class="inventory-tile has-rarity ${isEquipped ? 'equipped' : ''} ${isSelected ? 'bulk-selected' : ''} ${bulkLocked ? 'bulk-locked' : ''} ${rarity === GOD_RARITY ? 'is-god-tier' : ''}" style="--rarity-color:${rarity.color};" data-equip-item="${entry.uid}" title="${title}" ${bulkLocked ? 'disabled' : ''}>
     <span class="icon">${iconMarkup(item.image, item.emoji, item.name)}</span>
