@@ -2222,6 +2222,15 @@ async function refreshPvpTab({ silent = false } = {}) {
       // rebaixar o jogador de novo.
       const tierIndex = PVP_TIERS.findIndex((t) => t.name === myProfile.tier);
       if (tierIndex > (state.pvpHighestTierIndex || 0)) state.pvpHighestTierIndex = tierIndex;
+      // Autocura de transcendCount local (ver 0028_pvp_transcend_count_no_regress.sql):
+      // o servidor nunca aceita um valor menor que o já registrado, então se
+      // ele estiver na frente do save local (ex: save corrompido/perdido
+      // localmente, ou instalação nova do PWA sem esse dado) é porque o
+      // local é que está errado — adota o valor do servidor de volta.
+      if ((myProfile.transcend_count || 0) > (state.transcendCount || 0)) {
+        state.transcendCount = myProfile.transcend_count;
+        renderTopBar(state);
+      }
     }
   } catch (err) {
     console.warn('Arena PvP: falha ao conectar:', err);
