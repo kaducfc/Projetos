@@ -268,7 +268,9 @@ function selectAllBulkEligible() {
     ? state.inventory.filter((entry) => getItem(entry.itemId)?.category === inventoryFilterCategory)
     : state.inventory;
   bulkSelectedUids = new Set(
-    filtered.filter((entry) => findEquippedSlotId(state, entry.uid) == null && !entry.locked).map((entry) => entry.uid),
+    filtered
+      .filter((entry) => findEquippedSlotId(state, entry.uid) == null && !entry.locked && !getItem(entry.itemId)?.isGodTier)
+      .map((entry) => entry.uid),
   );
   renderInventoryTabNow();
 }
