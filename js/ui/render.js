@@ -296,6 +296,14 @@ export function renderTopBar(state) {
   document.getElementById('event-currency-value').textContent = formatNumber(state.eventCurrency);
   document.getElementById('level-value').textContent = state.hunterLevel || 1;
 
+  // Marcador de Transcendência (pedido explícito do usuário): só aparece a
+  // partir do 1º Transcender, nunca antes — mesma linha dos outros
+  // recursos, mesmo ícone já usado em qualquer outro lugar do jogo
+  // (transcender.png, ver TRANSCEND_ICON).
+  const transcendCount = getTranscendCount(state);
+  document.getElementById('transcend-count-pill').classList.toggle('hidden', transcendCount < 1);
+  document.getElementById('transcend-count-value').textContent = transcendCount;
+
   const profileBtn = document.getElementById('profile-btn');
   const profileIcon = getSelectedProfileIcon(state);
   document.getElementById('profile-btn-icon').src = profileIcon.image;
