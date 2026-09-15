@@ -282,6 +282,10 @@ button:disabled {
 .resource-cash { background: linear-gradient(180deg, #3dd68c, #189b5c); border-color: #a3f0cb; }
 .resource-event { background: linear-gradient(180deg, #4a5f7a, #263a52); border-color: #7f96b0; }
 .resource-stage { background: linear-gradient(180deg, #ff6b6b, #d13f3f); border-color: #ffb0b0; }
+/* Pedido explícito do usuário: só aparece a partir do 1º Transcender —
+   toggle da classe "hidden" em renderTopBar (ui/render.js). */
+.resource-transcend { background: linear-gradient(180deg, #b98cf0, #7b3fd6); border-color: #d9b8fa; }
+.resource-transcend.hidden { display: none; }
 
 .resource-icon {
   width: 20px;
