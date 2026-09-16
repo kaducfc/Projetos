@@ -279,7 +279,7 @@ const BONUS_STAT_LABEL = {
   critChancePercent: (v) => `+${formatPercent(v)} Chance Crítica`,
   critDamagePercent: (v) => `+${formatPercent(v)} Dano Crítico`,
   goldPercent: (v) => `+${formatPercent(v)} Ouro`,
-  dropPercent: (v) => `+${formatPercent(v)} Chance de Material`,
+  dropPercent: (v) => `+${formatPercent(v)} Bônus de Drop`,
   danoFisicoFlat: (v) => `+${formatNumber(v)} Dano Físico`,
   danoMagicoFlat: (v) => `+${formatNumber(v)} Dano Mágico`,
   danoPerfuracaoFlat: (v) => `+${formatNumber(v)} Dano de Perfuração`,
@@ -677,7 +677,7 @@ export function showFullStatsModal(state) {
 
   const economyRows = [
     ['💰 Ouro', `+${formatPercent((stats.goldMult - 1) * 100)}`],
-    ['📦 Chance de Material', `+${formatPercent((stats.dropMult - 1) * 100)}`],
+    ['📦 Bônus de Drop', `+${formatPercent((stats.dropMult - 1) * 100)}`],
     ['🐾 Dano do Mascote', `+${formatPercent((stats.petDamageMult - 1) * 100)}`],
   ];
 
@@ -1436,7 +1436,7 @@ function cardTileHtml(state, card) {
 // mockup calls "Bônus das Cartas Ativas".
 const CARD_BONUS_LABELS = {
   dpsPercent: '💥 DPS', attackSpeedPercent: '⚡ Velocidade de Ataque', goldPercent: `${GOLD_ICON} Ouro Obtido`,
-  dropPercent: '🎒 Chance de Drop', critChancePercent: '🎯 Chance Crítica', critDamagePercent: '💢 Dano Crítico',
+  dropPercent: '🎒 Bônus de Drop', critChancePercent: '🎯 Chance Crítica', critDamagePercent: '💢 Dano Crítico',
   hpPercent: '❤️ Vida Máxima', armorPercent: '🛡️ Armadura', hpFlat: '❤️ Vida Máxima', armorFlat: '🛡️ Armadura',
   dpsFlat: '💥 DPS', forca: '💪 Força', destreza: '🏃 Destreza', inteligencia: '🧠 Inteligência',
   lifestealFlat: '💚 Cura por Golpe', petDamagePercent: '🐾 Dano de Mascote', dodgePercent: '🌀 Esquiva',
@@ -1528,7 +1528,7 @@ const CARD_DETAIL_BONUS_STAT_NAME = {
   dodgePercent: 'Esquiva',
   petDamagePercent: 'Dano de Mascote',
   goldPercent: 'Ouro',
-  dropPercent: 'Chance de Material',
+  dropPercent: 'Bônus de Drop',
   forca: 'Força',
   destreza: 'Destreza',
   inteligencia: 'Inteligência',

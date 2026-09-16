@@ -507,7 +507,7 @@ const WORD_MAP = [
   ['Dano Crítico', 'Crit Damage'],
   ['Taxa de Crítico', 'Crit Chance'],
   ['Chance Crítica', 'Crit Chance'],
-  ['Chance de Material', 'Material Chance'],
+  ['Bônus de Drop', 'Drop Bonus'],
   ['Dano do Mascote', 'Pet Damage'],
   ['Cura por Golpe', 'Lifesteal per Hit'],
   ['Esquiva', 'Dodge'],
