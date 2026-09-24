@@ -1,30 +1,63 @@
-import { newCareer, chooseOffer, chooseEvent, advance, continueAfterSeason, retire } from './engine/career.js';
+import { newCareer, chooseOffer, chooseEvent, advance, continueAfterSeason, retire, legacyLabel, legacyScore, teamOf } from './engine/career.js';
 import { renderCreate } from './ui/create.js';
 import { renderGame, careerSummaryText } from './ui/game.js';
+import { ROLES } from './data/world.js';
+import * as platform from '../../../shared/platform.js';
+import { mountSiteBar } from '../../../shared/account.js';
 
-const SAVE_KEY = 'riftcareer.save.v1';
+const GAME_ID = 'carreira-no-rift';
+const OLD_SAVE_KEY = 'riftcareer.save.v1';
 const app = document.getElementById('app');
 
-let state = load();
+const valid = (s) => (s && s.v === 2 ? s : null);
 
-
-function load() {
+// Save antigo (antes do site ter contas): migra uma vez para a plataforma.
+function migrateOldSave() {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    const s = raw ? JSON.parse(raw) : null;
-    return s && s.v === 2 ? s : null;
+    const raw = localStorage.getItem(OLD_SAVE_KEY);
+    if (!raw) return null;
+    localStorage.removeItem(OLD_SAVE_KEY);
+    const s = valid(JSON.parse(raw));
+    if (s) platform.writeSave(GAME_ID, s);
+    return s;
   } catch {
     return null;
   }
 }
 
+let state = valid(platform.loadLocalSave(GAME_ID)) ?? migrateOldSave();
+
 function save() {
-  try {
-    if (state) localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-    else localStorage.removeItem(SAVE_KEY);
-  } catch {
-    // Sem localStorage (aba anônima etc.): o jogo segue, só não salva.
-  }
+  if (state) platform.writeSave(GAME_ID, state);
+  else platform.clearSave(GAME_ID);
+}
+
+// Carreira encerrada: vai para o histórico do site (uma vez só).
+function recordIfRetired() {
+  const p = state?.player;
+  if (!p?.retired || state.resultRecorded) return;
+  state.resultRecorded = true;
+  const legacy = legacyLabel(p);
+  const count = (name) => p.trophies.filter((t) => t.name === name).length;
+  platform.recordResult(GAME_ID, {
+    score: legacyScore(p),
+    summary: {
+      text: `${p.nick} · ${ROLES[p.role].name} · ${legacy.title} · OVR máx. ${p.peakOvr}`,
+      nick: p.nick,
+      role: p.role,
+      legacy: legacy.title,
+      peakOvr: p.peakOvr,
+      seasons: p.history.length,
+      games: p.stats.games,
+      titles: {
+        ligas: p.trophies.filter((t) => t.kind === 'league').length,
+        firstStand: count('First Stand'),
+        msi: count('MSI'),
+        mundial: count('Mundial'),
+      },
+      clubs: [...new Set(p.history.map((h) => teamOf(state, h.teamId).name))],
+    },
+  });
 }
 
 function render({ scrollTop = false } = {}) {
@@ -59,6 +92,7 @@ function confirmed(el, label) {
 
 function act(fn, opts = { scrollTop: true }) {
   fn();
+  recordIfRetired();
   save();
   render(opts);
 }
@@ -108,4 +142,20 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && state?.modals.length) act(() => state.modals.shift(), {});
 });
 
+mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
+
+// Ao entrar na conta, a carreira salva na nuvem (se for mais recente)
+// substitui a deste aparelho; ao sair, o aparelho é limpo.
+platform.onChange((evt) => {
+  if (evt.type === 'save' && evt.gameId === GAME_ID) {
+    state = valid(evt.data);
+    render({ scrollTop: true });
+  }
+  if (evt.type === 'auth' && evt.cleared) {
+    state = null;
+    render({ scrollTop: true });
+  }
+});
+
 render();
+platform.init();

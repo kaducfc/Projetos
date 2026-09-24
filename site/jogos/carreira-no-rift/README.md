@@ -10,10 +10,13 @@ dependências, igual ao `idle-hunter`.
 
 ## Rodando localmente
 
+Faz parte do site [Rift Arcade](../../README.md): sirva a pasta `site/`
+inteira para o jogo encontrar os arquivos compartilhados (conta, saves).
+
 ```bash
-cd rift-career
+cd site
 python3 -m http.server 8000
-# abra http://localhost:8000
+# abra http://localhost:8000/jogos/carreira-no-rift/
 ```
 
 (Abrir o `index.html` direto pelo `file://` não funciona por causa dos ES modules.)
@@ -81,12 +84,15 @@ Coreia e China exigem um nível mais alto.
 aos 35. O relatório final mostra o legado, os clubes, os títulos e um resumo
 para compartilhar.
 
-O progresso fica salvo no `localStorage` do navegador.
+O progresso é salvo pela plataforma do site (`site/shared/platform.js`):
+no navegador como visitante e na nuvem com conta. Ao se aposentar, a
+carreira entra no histórico com os **pontos de legado** (OVR máximo × 2 +
+títulos e prêmios).
 
 ## Estrutura
 
 ```
-rift-career/
+carreira-no-rift/
 ├── index.html
 ├── css/style.css
 ├── js/

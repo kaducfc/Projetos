@@ -3,7 +3,7 @@
 import { ATTRS, REGIONS, ROLES, nationById } from '../data/world.js';
 import { eventById } from '../data/events.js';
 import { ovrOf, marketValue, STATUS } from '../engine/player.js';
-import { teamOf, leagueName, standings, seasonStages, legacyLabel } from '../engine/career.js';
+import { teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore } from '../engine/career.js';
 import { teamBadge, trophySvg, stars } from './art.js';
 import { esc, fmtKda, fmtMoney, fmtSalary } from '../util.js';
 
@@ -439,7 +439,7 @@ export function careerSummaryText(state) {
   const clubs = [...new Set(p.history.map((h) => teamOf(state, h.teamId).tag))];
   return [
     `${nat.flag} ${p.nick} · ${ROLES[p.role].name} · ${legacy.title}`,
-    `OVR máximo ${p.peakOvr} · ${p.history.length} temporadas · ${p.stats.games} jogos · KDA ${fmtKda(p.stats.k, p.stats.d, p.stats.a)}`,
+    `${legacyScore(p)} pontos de legado · OVR máximo ${p.peakOvr} · ${p.history.length} temporadas · ${p.stats.games} jogos · KDA ${fmtKda(p.stats.k, p.stats.d, p.stats.a)}`,
     `🏆 ${leagues} ligas · ${count('MSI')} MSI · ${count('Mundial')} Mundial`,
     `Clubes: ${clubs.join(' → ')}`,
     '#CarreiraNoRift',
@@ -471,6 +471,7 @@ function retiredPanel(state) {
       <p class="lead">${esc(p.nick)} se aposenta aos ${p.age} anos, depois de ${p.history.length} temporadas.</p></div>
     </div>
     <div class="stat-row big">
+      <div><small>Pontos de legado</small><b class="gold">${legacyScore(p)}</b></div>
       <div><small>OVR máximo</small><b>${p.peakOvr}</b></div>
       <div><small>Jogos</small><b>${st.games}</b></div>
       <div><small>Vitórias</small><b>${st.games ? Math.round((st.wins / st.games) * 100) : 0}%</b></div>

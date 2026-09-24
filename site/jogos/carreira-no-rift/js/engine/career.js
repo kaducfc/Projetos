@@ -715,6 +715,18 @@ export function legacyLabel(p) {
   return { title: 'Talento que não decolou', tone: 'plain' };
 }
 
+// Pontuação única da carreira (histórico e recordes do site).
+export function legacyScore(p) {
+  const intl = { Mundial: 120, MSI: 60, 'First Stand': 35 };
+  let score = p.peakOvr * 2;
+  for (const t of p.trophies) {
+    if (t.kind === 'intl') score += intl[t.name] || 0;
+    else if (t.kind === 'league') score += { 1: 20, 2: 8, 3: 4 }[t.tier] || 0;
+    else if (t.kind === 'award') score += t.name === 'MVP da Final do Mundial' ? 25 : 10;
+  }
+  return Math.round(score);
+}
+
 export function retire(state) {
   state.player.retired = true;
   state.screen = { type: 'retired' };
