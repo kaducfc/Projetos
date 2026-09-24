@@ -34,12 +34,14 @@ npm test   # testes do sistema de contas
 - **Ao entrar**, o que foi jogado como visitante é enviado para a conta, e
   o save mais recente (do aparelho ou da nuvem) vence.
 - **Ao sair**, o aparelho é limpo; entrando de novo, tudo volta da nuvem.
-- As contas usam o mesmo projeto Supabase do Idle Hunter, com tabelas
-  próprias (`site_*`) e sessão separada (chave `rift-arcade-auth`), então
-  não interfere no login anônimo do Idle Hunter.
+- O site usa um projeto Supabase só dele (separado do Idle Hunter).
+  Enquanto `SUPABASE_URL` e `SUPABASE_ANON_KEY` estiverem vazios em
+  `shared/config.js`, o site roda só em modo visitante.
 
 ## Configuração no Supabase (uma vez)
 
+0. Crie um projeto novo em supabase.com e copie a **Project URL** e a
+   **publishable key** (Project Settings → API) para `shared/config.js`.
 1. **SQL Editor → New query:** cole `supabase/migrations/0001_site_accounts.sql`
    inteiro e clique em **Run**. Cria as tabelas `site_profiles`,
    `site_game_saves` e `site_game_results`, as regras de segurança (cada conta

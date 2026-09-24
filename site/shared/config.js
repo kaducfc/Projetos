@@ -2,10 +2,13 @@
 
 export const SITE_NAME = 'Rift Arcade';
 
-// Mesmo projeto Supabase do Idle Hunter. A chave "publishable" é pública
-// por natureza (a segurança vem das regras RLS do banco).
-export const SUPABASE_URL = 'https://xkcvvcvyzobnojgkkngy.supabase.co';
-export const SUPABASE_ANON_KEY = 'sb_publishable_IpU7-k0nwnkQMxjBjjgNmA_TOkaIb_e';
+// Projeto Supabase próprio do site (separado do Idle Hunter).
+// Preencha com Project Settings → API do projeto novo. Enquanto estiver
+// vazio, o site funciona só em modo visitante (tudo no navegador).
+// A chave "publishable" é pública por natureza: a segurança vem das regras
+// RLS do banco. Nunca coloque aqui a chave service_role.
+export const SUPABASE_URL = '';
+export const SUPABASE_ANON_KEY = '';
 
 // Catálogo exibido no hub. `path` é relativo à raiz do site.
 // status: 'live' (jogável) ou 'soon' (em breve).

@@ -4,9 +4,8 @@
 -- Como aplicar: cole este arquivo inteiro no SQL Editor do painel Supabase
 -- e clique em Run. Rodar de novo é seguro (usa "if not exists"/"or replace").
 --
--- Usa o mesmo projeto do Idle Hunter, mas com tabelas próprias (prefixo
--- site_). As contas anônimas do Idle Hunter não ganham perfil aqui: o
--- gatilho só cria perfil quando o cadastro vem com um nome de usuário.
+-- Feito para um projeto Supabase exclusivo do site. O gatilho só cria
+-- perfil quando o cadastro vem com um nome de usuário.
 
 -- ---------------------------------------------------------------
 -- site_profiles: 1 linha por conta do site. O nome de usuário é público

@@ -78,9 +78,9 @@ export function onChange(fn) {
   return () => listeners.delete(fn);
 }
 
-// Na versão publicada como arquivo único (sem acesso ao servidor) o site
-// roda só em modo visitante.
-export const cloudEnabled = () => !globalThis.__SITE_OFFLINE;
+// Modo visitante quando: é a versão em arquivo único (sem acesso ao
+// servidor) ou o Supabase ainda não foi configurado em config.js.
+export const cloudEnabled = () => !globalThis.__SITE_OFFLINE && Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 export const getUser = () => user;
 
@@ -95,7 +95,7 @@ export function __setClientForTests(client) {
 function unavailable() {
   return new Error(cloudEnabled()
     ? 'Não foi possível falar com o servidor de contas. Verifique a internet e tente de novo.'
-    : 'Login indisponível nesta versão. Jogue pelo site para salvar na nuvem.');
+    : 'Login indisponível no momento. Seu progresso continua salvo neste navegador.');
 }
 
 async function getClient() {
@@ -104,7 +104,6 @@ async function getClient() {
   if (!clientPromise) {
     clientPromise = import(/* @vite-ignore */ SDK_URL)
       .then(({ createClient }) => createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        // Chave própria para não misturar com a sessão anônima do Idle Hunter.
         auth: { storageKey: 'rift-arcade-auth', persistSession: true, autoRefreshToken: true },
       }))
       .catch((err) => {

@@ -101,7 +101,7 @@ test('sem servidor (modo visitante), login falha com mensagem clara', async () =
   globalThis.__SITE_OFFLINE = true;
   try {
     await platform.init();
-    await assert.rejects(platform.signIn({ email: 'x@example.com', password: '123456' }), /indisponível nesta versão/);
+    await assert.rejects(platform.signIn({ email: 'x@example.com', password: '123456' }), /indisponível/);
     platform.writeSave(GAME, { v: 2 });
     assert.deepEqual(platform.loadLocalSave(GAME), { v: 2 });
   } finally {
