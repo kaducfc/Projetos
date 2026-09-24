@@ -13,24 +13,16 @@ import { clamp, pick, rand, randInt, roll, shuffle, weightedPick } from '../util
 
 export const START_YEAR = 2026;
 
-// Ligas principais: Copa → First Stand → Split 1 → MSI → Split 2 → Mundial.
+// 3 decisões por ano, uma antes de cada etapa. Cada etapa (fase de pontos +
+// playoffs) é simulada de uma vez e mostrada numa tela só.
+// Liga principal: Copa → First Stand → Split 1 → MSI → Split 2 → Mundial.
 // Divisões de acesso: só os dois splits.
-const QUEUE_TIER1 = [
-  'ev0', 'cup_a', 'cup_b', 'cup_po', 'firstStand',
-  's1_a', 'ev1a', 's1_b', 'ev1b', 's1_po', 'msi',
-  's2_a', 'ev2a', 's2_b', 'ev2b', 's2_po', 'worlds', 'end',
-];
-const QUEUE_LOWER = [
-  'ev0', 's1_a', 'ev1a', 's1_b', 'ev1b', 's1_po',
-  's2_a', 'ev2a', 's2_b', 'ev2b', 's2_po', 'end',
-];
+const QUEUE_TIER1 = ['ev0', 'cup', 'firstStand', 'ev1', 's1', 'msi', 'ev2', 's2', 'worlds', 'end'];
+const QUEUE_LOWER = ['ev0', 's1', 'ev1', 's2', 'ev2', 'end'];
 
-export const STAGE_LABEL = {
-  ev0: 'PRÉ-TEMPORADA',
-  ev1a: 'SPLIT 1 · MEIO DO SPLIT',
-  ev1b: 'SPLIT 1 · RETA FINAL',
-  ev2a: 'SPLIT 2 · MEIO DO SPLIT',
-  ev2b: 'SPLIT 2 · RETA FINAL',
+const STAGE_LABELS = {
+  1: { ev0: 'PRÉ-TEMPORADA', ev1: 'ANTES DO SPLIT 1', ev2: 'ANTES DO SPLIT 2' },
+  lower: { ev0: 'PRÉ-TEMPORADA', ev1: 'ENTRE OS SPLITS', ev2: 'FIM DE TEMPORADA' },
 };
 
 export const INTL = {
@@ -43,9 +35,9 @@ export const INTL = {
 export function seasonStages(s) {
   const names = s.tier === 1 ? REGIONS[s.region].stages : [`${s.league} · Split 1`, `${s.league} · Split 2`];
   const list = s.tier === 1
-    ? [['cup', 'cup_a', names[0]], ['firstStand', 'firstStand', 'First Stand'], ['s1', 's1_a', names[1]],
-      ['msi', 'msi', 'MSI'], ['s2', 's2_a', names[2]], ['worlds', 'worlds', 'Mundial']]
-    : [['s1', 's1_a', names[0]], ['s2', 's2_a', names[1]]];
+    ? [['cup', 'cup', names[0]], ['firstStand', 'firstStand', 'First Stand'], ['s1', 's1', names[1]],
+      ['msi', 'msi', 'MSI'], ['s2', 's2', names[2]], ['worlds', 'worlds', 'Mundial']]
+    : [['s1', 's1', names[0]], ['s2', 's2', names[1]]];
   const done = s.queue.slice(0, s.idx);
   return list.map(([id, start, name]) => {
     const result = INTL[id] ? s.intl[id] : s.placements[id];
@@ -253,10 +245,7 @@ export function advance(state) {
       continue;
     }
     if (step === 'end') return endSeason(state);
-    const [kind, part] = step.split('_');
-    if (part === 'a') s.split = newSplit(state, kind);
-    if (part === 'po') return playoffs(state);
-    return regularBlock(state);
+    return runStage(state, step);
   }
 }
 
@@ -329,16 +318,12 @@ function aiPower(state, id) {
   return teamOf(state, id).rating + (split?.form[id] || 0);
 }
 
-function regularBlock(state) {
+function playRegular(state) {
   const s = state.season;
   const split = s.split;
-  const half = Math.ceil(split.rounds.length / 2);
-  const target = split.played < half ? half : split.rounds.length;
-  const from = split.played;
   const results = [];
-
-  for (let r = from; r < target; r++) {
-    for (const [a, b] of split.rounds[r]) {
+  split.rounds.forEach((pairs, r) => {
+    for (const [a, b] of pairs) {
       let winner;
       if (a === s.teamId || b === s.teamId) {
         const opp = a === s.teamId ? b : a;
@@ -353,19 +338,27 @@ function regularBlock(state) {
       split.table[winner].w++;
       split.table[loser].l++;
     }
-  }
-  split.played = target;
+  });
+  split.played = split.rounds.length;
+  return results;
+}
 
+// Etapa completa: fase de pontos + playoffs, numa tela só.
+function runStage(state, kind) {
+  const s = state.season;
+  s.split = newSplit(state, kind);
+  const results = playRegular(state);
+  const regularPos = standings(s.split).indexOf(s.teamId) + 1;
+  const po = playoffs(state);
   state.screen = {
-    type: 'regular',
-    name: split.name,
-    bo: split.bo,
-    poSize: split.poSize,
-    from: from + 1,
-    to: target,
-    total: split.rounds.length,
-    final: target === split.rounds.length,
+    type: 'stage',
+    kind,
+    name: s.split.name,
+    bo: s.split.bo,
+    poSize: s.split.poSize,
     results,
+    regularPos,
+    ...po,
   };
 }
 
@@ -428,14 +421,7 @@ function playoffs(state) {
     pushModal(state, { kind: 'trophy', trophy });
   }
 
-  state.screen = {
-    type: 'playoffs',
-    name: split.name,
-    matches,
-    inPlayoffs: seeds.includes(s.teamId),
-    placement,
-    championId: champ,
-  };
+  return { matches, inPlayoffs: seeds.includes(s.teamId), placement, championId: champ };
 }
 
 // ---------------------------------------------------------------- internacional
@@ -599,7 +585,8 @@ function eventScreen(state, stage) {
     const attrBonus = c.attr ? (p.attrs[c.attr] - 60) * 0.5 : 0;
     return Math.round(clamp(c.base + attrBonus + (p.morale - 50) * 0.1, 5, 95));
   });
-  state.screen = { type: 'event', stage, eventId: ev.id, chances, choice: null, ok: null, ovrDelta: 0 };
+  const label = STAGE_LABELS[state.season.tier === 1 ? 1 : 'lower'][stage];
+  state.screen = { type: 'event', stage, label, eventId: ev.id, chances, choice: null, ok: null, ovrDelta: 0 };
 }
 
 export function chooseEvent(state, index) {
@@ -700,6 +687,9 @@ function endSeason(state) {
 export function continueAfterSeason(state) {
   if (state.screen.forced) return retire(state);
   offseasonScreen(state);
+  // Sem propostas e com contrato em vigor não há o que decidir: segue direto.
+  const scr = state.screen;
+  if (!scr.offers.length && scr.stay && !scr.stay.renew) chooseOffer(state, 'stay');
 }
 
 // ---------------------------------------------------------------- aposentadoria

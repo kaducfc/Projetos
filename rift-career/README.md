@@ -57,7 +57,12 @@ Vagas internacionais por região:
 As regiões dos dois finalistas do MSI ganham +1 vaga no Mundial. First
 Stand e MSI têm play-in para os times mais fracos e chave de 8. O Mundial
 tem fase suíça e chave de 8. As divisões de acesso (academias e ligas
-amadoras) jogam só os dois splits. Há 5 eventos de história por temporada.
+amadoras) jogam só os dois splits.
+
+Cada temporada tem **3 decisões** (eventos de história), uma antes de cada
+etapa. Cada etapa (fase de pontos + playoffs) é simulada de uma vez e
+aparece numa tela só. Se não chegar nenhuma proposta e o contrato ainda
+estiver em vigor, a janela de transferências é pulada.
 
 Simplificações: os playoffs são de eliminação simples (na vida real a
 maioria é de eliminação dupla), e as vagas de cada região são fixas.

@@ -462,6 +462,9 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .standings tr.me td { background: rgba(200, 170, 110, 0.12); font-weight: 700; }
 .standings tr.cut td { border-bottom: 2px dashed rgba(31, 209, 193, 0.4); }
 
+.stage-details { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 12px; }
+.stage-details summary { cursor: pointer; font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+.stage-details summary:hover { color: var(--text); }
 .matches { display: flex; flex-direction: column; gap: 8px; }
 .match {
   display: grid; grid-template-columns: 120px minmax(0, 1fr) 70px minmax(0, 1fr); gap: 10px; align-items: center;

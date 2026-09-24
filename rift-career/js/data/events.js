@@ -323,9 +323,9 @@ export const EVENTS = [
   },
   {
     id: 'torcida_estadio', tag: 'ARENA', icon: '🏟️', scene: 'stage',
-    title: 'Final com arena lotada',
-    text: 'Quinze mil pessoas, luzes apagadas, seu nome no telão. Suas mãos estão geladas.',
-    when: (p, ctx) => ctx.stage === 'ev2b',
+    title: 'Arena lotada',
+    text: 'Estreia do split com quinze mil pessoas, luzes apagadas, seu nome no telão. Suas mãos estão geladas.',
+    when: (p, ctx) => ctx.stage === 'ev2' && ctx.team?.tier === 1,
     choices: [
       { label: 'Respirar e seguir a rotina', base: 75, attr: 'mental', good: 'joga no seu nível', bad: 'trava no começo',
         ok: { text: 'Três respirações longas. No primeiro abate, o nervosismo sumiu.', fx: { mental: 2, morale: 3 } },

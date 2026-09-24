@@ -3,7 +3,7 @@
 import { ATTRS, REGIONS, ROLES, nationById } from '../data/world.js';
 import { eventById } from '../data/events.js';
 import { ovrOf, marketValue, STATUS } from '../engine/player.js';
-import { teamOf, leagueName, standings, seasonStages, STAGE_LABEL, legacyLabel } from '../engine/career.js';
+import { teamOf, leagueName, standings, seasonStages, legacyLabel } from '../engine/career.js';
 import { teamBadge, trophySvg, stars } from './art.js';
 import { esc, fmtKda, fmtMoney, fmtSalary } from '../util.js';
 
@@ -110,7 +110,7 @@ function leagueCard(state) {
   if (pos > 2) rows.push(s.teamId);
   return `
   <div class="card side-card">
-    <div class="league-head"><h4 class="side-title">${esc(s.split.name)}</h4><b>${pos + 1}º</b></div>
+    <div class="league-head"><h4 class="side-title">${esc(s.split.name)} · fase de pontos</h4><b>${pos + 1}º</b></div>
     <div class="progress"><i style="width:${(s.split.played / s.split.rounds.length) * 100}%"></i></div>
     ${rows.map((id) => {
       const t = teamOf(state, id);
@@ -229,7 +229,7 @@ function eventPanel(state) {
   <div class="panel event">
     <div class="scene scene-${ev.scene}"><span class="scene-icon">${ev.icon}</span></div>
     <div class="event-body">
-      <div class="tags"><span class="tag">${STAGE_LABEL[scr.stage] || ''}</span><span class="tag-accent">⚡ ${esc(ev.tag)}</span></div>
+      <div class="tags"><span class="tag">${scr.label || ''}</span><span class="tag-accent">⚡ ${esc(ev.tag)}</span></div>
       <h2>${fill(ev.title, state)}</h2>
       <p>${fill(ev.text, state)}</p>
     </div>
@@ -279,36 +279,6 @@ function lineTxt(line) {
   return `${line.k}/${line.d}/${line.a}${line.pog ? ' <span class="pog" title="Player of the Game">★ POG</span>' : ''}`;
 }
 
-function regularPanel(state) {
-  const scr = state.screen;
-  const s = state.season;
-  const w = scr.results.filter((r) => r.won).length;
-  const played = scr.results.filter((r) => r.line.played).length;
-  const k = scr.results.reduce((a, r) => a + r.line.k, 0);
-  const d = scr.results.reduce((a, r) => a + r.line.d, 0);
-  const as = scr.results.reduce((a, r) => a + r.line.a, 0);
-  return `
-  <div class="panel">
-    <div class="eyebrow">${esc(scr.name)} · Rodadas ${scr.from}–${scr.to} de ${scr.total} · ${scr.bo === 1 ? 'MD1' : 'MD3'}</div>
-    <h1 class="display">${scr.final ? 'Fim da fase de pontos' : 'Fase de pontos'}</h1>
-    <p class="lead">${w}V ${scr.results.length - w}D nesse bloco · os ${scr.poSize} primeiros vão aos playoffs · você jogou ${played} de ${scr.results.length}${played ? ` · KDA ${fmtKda(k, d, as)}` : ''}</p>
-    <div class="two-col">
-      <div class="results">
-        ${scr.results.map((r) => {
-          const t = teamOf(state, r.oppId);
-          return `<div class="res-row ${r.won ? 'w' : 'l'}">
-            <span class="rnd">R${r.round}</span>${teamBadge(t, 20)}<span class="nm">${esc(t.name)}</span>
-            <span class="line">${lineTxt(r.line)}</span>
-            <span class="wl">${scr.bo > 1 ? `${r.w}–${r.l}` : r.won ? 'V' : 'D'}</span>
-          </div>`;
-        }).join('')}
-      </div>
-      ${standingsTable(state)}
-    </div>
-    <div class="actions"><button class="btn-primary" data-act="next">Continuar</button></div>
-  </div>`;
-}
-
 function matchRow(state, m) {
   const a = teamOf(state, m.a);
   const b = teamOf(state, m.b);
@@ -334,10 +304,15 @@ function qualifyNote(state) {
   return ` · ${vagas} ao ${next[1]}${got ? ' — <b class="ok-text">você está classificado!</b>' : ''}`;
 }
 
-function playoffsPanel(state) {
+// Etapa inteira numa tela: resumo, seus jogos, tabela e playoffs.
+function stagePanel(state) {
   const scr = state.screen;
-  const s = state.season;
   const champ = teamOf(state, scr.championId);
+  const w = scr.results.filter((r) => r.won).length;
+  const played = scr.results.filter((r) => r.line.played).length;
+  const k = scr.results.reduce((a, r) => a + r.line.k, 0);
+  const d = scr.results.reduce((a, r) => a + r.line.d, 0);
+  const as = scr.results.reduce((a, r) => a + r.line.a, 0);
   let title;
   if (scr.placement === 1) title = 'Campeões!';
   else if (scr.placement === 2) title = 'Vice-campeões';
@@ -345,10 +320,28 @@ function playoffsPanel(state) {
   else title = `Fora dos playoffs · ${scr.placement}º lugar`;
   return `
   <div class="panel">
-    <div class="eyebrow">${esc(scr.name)} · Playoffs</div>
+    <div class="eyebrow">${esc(scr.name)} · ${scr.bo === 1 ? 'MD1' : 'MD3'} · top ${scr.poSize} nos playoffs</div>
     <h1 class="display">${title}</h1>
-    <p class="lead">Campeão: <b>${esc(champ.name)}</b>${qualifyNote(state)}</p>
+    <p class="lead">Fase de pontos: <b>${w}V ${scr.results.length - w}D</b> (${scr.regularPos}º) · você jogou ${played} de ${scr.results.length}${played ? ` · KDA ${fmtKda(k, d, as)}` : ''}<br>
+      Campeão: <b>${esc(champ.name)}</b>${qualifyNote(state)}</p>
+    <h4 class="sub-title">Playoffs</h4>
     <div class="matches">${scr.matches.map((m) => matchRow(state, m)).join('')}</div>
+    <details class="stage-details">
+      <summary>Ver fase de pontos</summary>
+      <div class="two-col">
+        <div class="results">
+          ${scr.results.map((r) => {
+            const t = teamOf(state, r.oppId);
+            return `<div class="res-row ${r.won ? 'w' : 'l'}">
+              <span class="rnd">R${r.round}</span>${teamBadge(t, 20)}<span class="nm">${esc(t.name)}</span>
+              <span class="line">${lineTxt(r.line)}</span>
+              <span class="wl">${scr.bo > 1 ? `${r.w}–${r.l}` : r.won ? 'V' : 'D'}</span>
+            </div>`;
+          }).join('')}
+        </div>
+        ${standingsTable(state)}
+      </div>
+    </details>
     <div class="actions"><button class="btn-primary" data-act="next">Continuar</button></div>
   </div>`;
 }
@@ -482,8 +475,7 @@ function centerPanel(state) {
   switch (state.screen.type) {
     case 'offers': return offersPanel(state);
     case 'event': return eventPanel(state);
-    case 'regular': return regularPanel(state);
-    case 'playoffs': return playoffsPanel(state);
+    case 'stage': return stagePanel(state);
     case 'intl': return intlPanel(state);
     case 'seasonEnd': return seasonEndPanel(state);
     case 'retired': return retiredPanel(state);
