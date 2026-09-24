@@ -43,6 +43,19 @@ function render({ scrollTop = false } = {}) {
   }
 }
 
+// Confirmação em dois cliques no próprio botão (sem confirm(), que alguns
+// navegadores embutidos bloqueiam).
+function confirmed(el, label) {
+  if (el.dataset.armed) return true;
+  const original = el.textContent;
+  el.dataset.armed = '1';
+  el.textContent = label;
+  setTimeout(() => {
+    if (el.isConnected) { delete el.dataset.armed; el.textContent = original; }
+  }, 3000);
+  return false;
+}
+
 function act(fn, opts = { scrollTop: true }) {
   fn();
   save();
@@ -61,14 +74,14 @@ app.addEventListener('click', (e) => {
     case 'next': return act(() => advance(state));
     case 'season-next': return act(() => continueAfterSeason(state));
     case 'retire':
-      if (confirm('Anunciar a aposentadoria? A carreira termina aqui.')) act(() => retire(state));
+      if (confirmed(el, 'Clique de novo para se aposentar')) act(() => retire(state));
       return;
     case 'modal-close':
       // Clique no fundo escuro ou no botão fecha; clique dentro do card não.
       if (e.target.closest('.modal') && !e.target.closest('button')) return;
       return act(() => state.modals.shift(), {});
     case 'restart':
-      if (confirm('Reiniciar a carreira? Todo o progresso será perdido.')) {
+      if (confirmed(el, 'Clique de novo: todo o progresso será perdido')) {
         state = null;
         save();
         render({ scrollTop: true });

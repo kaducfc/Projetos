@@ -18,6 +18,12 @@ python3 -m http.server 8000
 
 (Abrir o `index.html` direto pelo `file://` não funciona por causa dos ES modules.)
 
+Para gerar um arquivo único, que abre com dois cliques ou pode ser publicado como Artifact:
+
+```bash
+node scripts/build-bundle.mjs > bundle.html
+```
+
 ## Como funciona
 
 **Criação:** nick, estilo de jogo (agressivo ou controlado), nacionalidade
@@ -77,7 +83,8 @@ rift-career/
 │       ├── art.js         # SVGs (escudos, troféus, camisa, minimapa)
 │       ├── create.js      # tela de criação
 │       └── game.js        # tela principal
-└── scripts/simulate.mjs   # simula milhares de carreiras para balanceamento
+├── scripts/simulate.mjs   # simula milhares de carreiras para balanceamento
+└── scripts/build-bundle.mjs  # gera um HTML único com tudo embutido
 ```
 
 ## Balanceamento
