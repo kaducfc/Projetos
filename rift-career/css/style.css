@@ -276,6 +276,12 @@ input { font: inherit; color: inherit; }
 .mini-row { display: grid; grid-template-columns: 18px 18px 1fr auto; gap: 8px; align-items: center; padding: 5px 6px; font-size: 13px; border-radius: 7px; }
 .mini-row .pos { color: var(--muted); }
 .mini-row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 6px; font-size: 13px; border-radius: 7px; }
+.cal-row + .cal-row { border-top: 1px solid var(--line); }
+.cal-row.intl span:first-child { color: var(--cyan); font-weight: 600; }
+.cal-row.current { background: rgba(200, 170, 110, 0.12); }
+.cal-row .now { color: var(--gold-2); font-size: 12px; }
+.ok-text { color: #7de3a5; }
 .mini-row.me { background: rgba(200, 170, 110, 0.12); font-weight: 700; }
 
 /* tabela da carreira */

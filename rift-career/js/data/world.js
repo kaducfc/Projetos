@@ -52,14 +52,34 @@ export const STYLES = {
   },
 };
 
-// msi/worlds = vagas da região nos torneios internacionais.
+// Calendário de 2026 (simplificado): cada liga principal tem uma Copa e dois
+// splits. Vagas internacionais: `firstStand` (pela Copa), `msi` (pelo Split 1)
+// e `worlds` (pelo Split 2; as regiões dos finalistas do MSI ganham +1).
 export const REGIONS = {
-  br: { id: 'br', name: 'Brasil', flag: '🇧🇷', leagues: { 1: 'CBLOL', 2: 'CBLOL Academy', 3: 'Circuito Desafiante' }, msi: 1, worlds: 1 },
-  kr: { id: 'kr', name: 'Coreia do Sul', flag: '🇰🇷', leagues: { 1: 'LCK', 2: 'LCK Challengers', 3: 'Liga Amadora Coreana' }, msi: 2, worlds: 4 },
-  cn: { id: 'cn', name: 'China', flag: '🇨🇳', leagues: { 1: 'LPL', 2: 'LDL', 3: 'Copa Universitária Chinesa' }, msi: 2, worlds: 4 },
-  eu: { id: 'eu', name: 'Europa', flag: '🇪🇺', leagues: { 1: 'LEC', 2: 'ERL Premier', 3: 'ERL Divisão 2' }, msi: 2, worlds: 3 },
-  na: { id: 'na', name: 'América do Norte', flag: '🇺🇸', leagues: { 1: 'LCS', 2: 'NACL', 3: 'Liga Universitária NA' }, msi: 1, worlds: 2 },
+  br: {
+    id: 'br', name: 'Brasil', flag: '🇧🇷', leagues: { 1: 'CBLOL', 2: 'CBLOL Academy', 3: 'Circuito Desafiante' },
+    stages: ['Copa CBLOL', 'CBLOL · Split 1', 'CBLOL · Split 2'], firstStand: 1, msi: 1, worlds: 1,
+  },
+  kr: {
+    id: 'kr', name: 'Coreia do Sul', flag: '🇰🇷', leagues: { 1: 'LCK', 2: 'LCK Challengers', 3: 'Liga Amadora Coreana' },
+    stages: ['LCK Cup', 'LCK · Rounds 1–2', 'LCK · Rounds 3–4'], firstStand: 2, msi: 2, worlds: 3,
+  },
+  cn: {
+    id: 'cn', name: 'China', flag: '🇨🇳', leagues: { 1: 'LPL', 2: 'LDL', 3: 'Copa Universitária Chinesa' },
+    stages: ['LPL · Split 1', 'LPL · Split 2', 'LPL · Split 3'], firstStand: 2, msi: 2, worlds: 3,
+  },
+  eu: {
+    id: 'eu', name: 'Europa', flag: '🇪🇺', leagues: { 1: 'LEC', 2: 'ERL Premier', 3: 'ERL Divisão 2' },
+    stages: ['LEC Versus', 'LEC Spring', 'LEC Summer'], firstStand: 1, msi: 2, worlds: 3,
+  },
+  na: {
+    id: 'na', name: 'América do Norte', flag: '🇺🇸', leagues: { 1: 'LCS', 2: 'NACL', 3: 'Liga Universitária NA' },
+    stages: ['LCS Lock-In', 'LCS Spring', 'LCS Summer'], firstStand: 1, msi: 2, worlds: 2,
+  },
 };
+
+// Vagas dos convidados (Pacífico/Vietnã) em cada torneio internacional.
+export const WILDCARD_SLOTS = { firstStand: 1, msi: 1, worlds: 2 };
 
 export const NATIONS = [
   { id: 'BR', name: 'Brasil', flag: '🇧🇷', region: 'br' },
@@ -128,10 +148,8 @@ const TIER1 = {
     ['100t', '100 Thieves', '100T', 77, '#e3202b', '#111111'],
     ['dig', 'Dignitas', 'DIG', 74, '#f7b500', '#111111'],
     ['sr', 'Shopify Rebellion', 'SR', 74, '#95bf47', '#111111'],
-    ['nrg', 'NRG', 'NRG', 73, '#111111', '#ffffff'],
     ['lyon', 'LYON', 'LYON', 72, '#0033a0', '#ffffff'],
     ['dsg', 'Disguised', 'DSG', 71, '#7c3aed', '#ffffff'],
-    ['imt', 'Immortals', 'IMT', 70, '#2dd4bf', '#111111'],
   ],
   br: [
     ['png', 'paiN Gaming', 'PNG', 78, '#e10600', '#111111'],
@@ -141,8 +159,6 @@ const TIER1 = {
     ['red', 'RED Canids', 'RED', 74, '#d4002a', '#ffffff'],
     ['lev', 'Leviatán', 'LEV', 73, '#1c3f94', '#ffffff'],
     ['fx', 'Fluxo W7M', 'FX', 72, '#ff4d00', '#111111'],
-    ['intz', 'INTZ', 'ITZ', 71, '#111111', '#ffffff'],
-    ['kbm', 'KaBuM! Esports', 'KBM', 70, '#ff6500', '#0f2e8a'],
     ['lg', 'Los Grandes', 'LG', 69, '#0e7c3a', '#ffd400'],
   ],
 };

@@ -38,15 +38,29 @@ Jungle depende mais de Macro, o ADC de Mecânica/Teamfight etc.). Além deles:
 - **Fama:** melhora as propostas recebidas.
 - **Potencial (oculto):** o teto de evolução do jogador.
 
-**Temporada** (1 por ano):
+**Temporada** (1 por ano), seguindo o calendário de 2026 do LoL:
 
-1. Evento de pré-temporada
-2. Split 1: fase de pontos (turno único) com 2 eventos, depois playoffs com os 4 melhores
-3. MSI, se o time foi campeão do split numa liga tier 1
-4. Split 2: mesmo formato
-5. Mundial, se o time ficou nas vagas da região (fase suíça + mata-mata)
-6. Balanço: evolução do OVR (jovens crescem, veteranos caem), prêmios
-   individuais (MVP, Seleção da liga, Revelação) e janela de transferências
+| Etapa | CBLOL | LCK | LPL | LEC | LCS | Formato no jogo | Vale vaga para |
+|---|---|---|---|---|---|---|---|
+| Copa | Copa CBLOL | LCK Cup | Split 1 | Versus | Lock-In | turno único MD1, top 4 nos playoffs (MD5) | First Stand |
+| Split 1 | Split 1 | Rounds 1–2 | Split 2 | Spring | Spring | turno único MD3, top 6 nos playoffs (MD5) | MSI |
+| Split 2 | Split 2 | Rounds 3–4 | Split 3 | Summer | Summer | turno único MD3, top 6 nos playoffs (MD5) | Mundial |
+
+Vagas internacionais por região:
+
+| | Brasil | Coreia | China | Europa | Am. do Norte | Convidados |
+|---|---|---|---|---|---|---|
+| First Stand | 1 | 2 | 2 | 1 | 1 | 1 |
+| MSI | 1 | 2 | 2 | 2 | 2 | 1 |
+| Mundial | 1 | 3 | 3 | 3 | 2 | 2 |
+
+As regiões dos dois finalistas do MSI ganham +1 vaga no Mundial. First
+Stand e MSI têm play-in para os times mais fracos e chave de 8. O Mundial
+tem fase suíça e chave de 8. As divisões de acesso (academias e ligas
+amadoras) jogam só os dois splits. Há 5 eventos de história por temporada.
+
+Simplificações: os playoffs são de eliminação simples (na vida real a
+maioria é de eliminação dupla), e as vagas de cada região são fixas.
 
 **Eventos:** cada escolha mostra a chance de dar certo (ex.: 70% / 30%). A
 chance muda conforme o atributo ligado à escolha e a confiança do técnico. O

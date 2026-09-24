@@ -3,7 +3,7 @@
 //
 // Toda a lógica muda `state` e define `state.screen`; a UI só desenha.
 
-import { buildTeams, REGIONS, TIER_RANGE, nationById } from '../data/world.js';
+import { buildTeams, REGIONS, TIER_RANGE, WILDCARD_SLOTS, nationById } from '../data/world.js';
 import { EVENTS, eventById } from '../data/events.js';
 import {
   createPlayer, ovrOf, effectiveOvr, applyFx, seasonGrowth, salaryFor, statusFor, STATUS,
@@ -13,9 +13,16 @@ import { clamp, pick, rand, randInt, roll, shuffle, weightedPick } from '../util
 
 export const START_YEAR = 2026;
 
-const SEASON_QUEUE = [
-  'ev0', 'reg1a', 'ev1a', 'reg1b', 'ev1b', 'po1', 'msi',
-  'reg2a', 'ev2a', 'reg2b', 'ev2b', 'po2', 'worlds', 'end',
+// Ligas principais: Copa → First Stand → Split 1 → MSI → Split 2 → Mundial.
+// Divisões de acesso: só os dois splits.
+const QUEUE_TIER1 = [
+  'ev0', 'cup_a', 'cup_b', 'cup_po', 'firstStand',
+  's1_a', 'ev1a', 's1_b', 'ev1b', 's1_po', 'msi',
+  's2_a', 'ev2a', 's2_b', 'ev2b', 's2_po', 'worlds', 'end',
+];
+const QUEUE_LOWER = [
+  'ev0', 's1_a', 'ev1a', 's1_b', 'ev1b', 's1_po',
+  's2_a', 'ev2a', 's2_b', 'ev2b', 's2_po', 'end',
 ];
 
 export const STAGE_LABEL = {
@@ -25,6 +32,27 @@ export const STAGE_LABEL = {
   ev2a: 'SPLIT 2 · MEIO DO SPLIT',
   ev2b: 'SPLIT 2 · RETA FINAL',
 };
+
+export const INTL = {
+  firstStand: { name: 'First Stand', rank: 'cup' },
+  msi: { name: 'MSI', rank: 's1' },
+  worlds: { name: 'Mundial', rank: 's2' },
+};
+
+// Etapas da temporada para o calendário da UI: [id, passo da fila que a inicia].
+export function seasonStages(s) {
+  const names = s.tier === 1 ? REGIONS[s.region].stages : [`${s.league} · Split 1`, `${s.league} · Split 2`];
+  const list = s.tier === 1
+    ? [['cup', 'cup_a', names[0]], ['firstStand', 'firstStand', 'First Stand'], ['s1', 's1_a', names[1]],
+      ['msi', 'msi', 'MSI'], ['s2', 's2_a', names[2]], ['worlds', 'worlds', 'Mundial']]
+    : [['s1', 's1_a', names[0]], ['s2', 's2_a', names[1]]];
+  const done = s.queue.slice(0, s.idx);
+  return list.map(([id, start, name]) => {
+    const result = INTL[id] ? s.intl[id] : s.placements[id];
+    const started = done.includes(start);
+    return { id, name, intl: !!INTL[id], result, started };
+  });
+}
 
 // ---------------------------------------------------------------- helpers
 
@@ -66,7 +94,7 @@ function pushModal(state, modal) {
 export function newCareer(form) {
   const nation = nationById(form.nat);
   const state = {
-    v: 1,
+    v: 2,
     world: { year: START_YEAR, teams: buildTeams() },
     player: createPlayer({ ...form, region: nation.region }),
     season: null,
@@ -200,12 +228,15 @@ function startSeason(state) {
     region: team.region,
     league: leagueName(team),
     ovrStart: ovrOf(p),
-    queue: SEASON_QUEUE.slice(),
+    queue: (team.tier === 1 ? QUEUE_TIER1 : QUEUE_LOWER).slice(),
     idx: 0,
     stats: { games: 0, wins: 0, k: 0, d: 0, a: 0, pog: 0, teamGames: 0, teamWins: 0 },
     titles: [],
     awards: [],
     placements: {},
+    rankings: {},
+    msiFinalRegions: [],
+    intl: {},
     split: null,
   };
 }
@@ -215,21 +246,17 @@ export function advance(state) {
   while (s.idx < s.queue.length) {
     const step = s.queue[s.idx++];
     if (step.startsWith('ev')) return eventScreen(state, step);
-    if (step === 'reg1a' || step === 'reg2a') {
-      s.split = newSplit(state, step === 'reg1a' ? 1 : 2);
-      return regularBlock(state);
-    }
-    if (step === 'reg1b' || step === 'reg2b') return regularBlock(state);
-    if (step === 'po1' || step === 'po2') return playoffs(state);
-    if (step === 'msi') {
-      if (qualifies(state, 'msi')) return runMsi(state);
-      continue;
-    }
-    if (step === 'worlds') {
-      if (qualifies(state, 'worlds')) return runWorlds(state);
+    if (INTL[step]) {
+      // O torneio sempre é simulado (o resultado do MSI define vagas extras
+      // no Mundial); a tela só aparece se o time do jogador estiver nele.
+      if (runIntl(state, step)) return;
       continue;
     }
     if (step === 'end') return endSeason(state);
+    const [kind, part] = step.split('_');
+    if (part === 'a') s.split = newSplit(state, kind);
+    if (part === 'po') return playoffs(state);
+    return regularBlock(state);
   }
 }
 
@@ -273,10 +300,22 @@ function playerSeries(state, oppPower, bestOf) {
 
 // ---------------------------------------------------------------- liga
 
-function newSplit(state, n) {
-  const team = teamOf(state, state.season.teamId);
+// Copa: turno único em MD1, 4 nos playoffs.
+// Splits da liga principal: turno único em MD3, 6 nos playoffs (1º e 2º direto na semi).
+// Divisões de acesso: turno único em MD1, 4 nos playoffs.
+function splitConfig(s, kind) {
+  const n = kind === 'cup' ? 0 : Number(kind[1]);
+  if (s.tier === 1) {
+    return { n, name: REGIONS[s.region].stages[n], bo: kind === 'cup' ? 1 : 3, poSize: kind === 'cup' ? 4 : 6 };
+  }
+  return { n, name: `${s.league} · Split ${n}`, bo: 1, poSize: 4 };
+}
+
+function newSplit(state, kind) {
+  const s = state.season;
+  const team = teamOf(state, s.teamId);
   const ids = leagueTeams(state, team).map((t) => t.id);
-  const split = { n, ids, table: {}, form: {}, tb: {}, rounds: roundRobin(ids), played: 0 };
+  const split = { kind, ...splitConfig(s, kind), ids, table: {}, form: {}, tb: {}, rounds: roundRobin(ids), played: 0 };
   ids.forEach((id) => {
     split.table[id] = { w: 0, l: 0 };
     split.form[id] = rand(-4, 4);
@@ -303,11 +342,11 @@ function regularBlock(state) {
       let winner;
       if (a === s.teamId || b === s.teamId) {
         const opp = a === s.teamId ? b : a;
-        const res = playerSeries(state, aiPower(state, opp), 1);
+        const res = playerSeries(state, aiPower(state, opp), split.bo);
         winner = res.won ? s.teamId : opp;
         results.push({ round: r + 1, oppId: opp, w: res.w, l: res.l, won: res.won, line: res.line });
       } else {
-        const res = simSeries(aiPower(state, a), aiPower(state, b), 1);
+        const res = simSeries(aiPower(state, a), aiPower(state, b), split.bo);
         winner = res.a > res.b ? a : b;
       }
       const loser = winner === a ? b : a;
@@ -319,7 +358,9 @@ function regularBlock(state) {
 
   state.screen = {
     type: 'regular',
-    split: split.n,
+    name: split.name,
+    bo: split.bo,
+    poSize: split.poSize,
     from: from + 1,
     to: target,
     total: split.rounds.length,
@@ -332,11 +373,12 @@ function playoffs(state) {
   const s = state.season;
   const split = s.split;
   const table = standings(split);
-  const top4 = table.slice(0, 4);
+  const seeds = table.slice(0, split.poSize);
   const bo = s.tier === 3 ? 3 : 5;
   const matches = [];
+  const out = { qf: [], sf: [] };
 
-  const series = (a, b, label) => {
+  const series = (a, b, label, round) => {
     let sa;
     let sb;
     if (a === s.teamId || b === s.teamId) {
@@ -351,25 +393,34 @@ function playoffs(state) {
     }
     const winner = sa > sb ? a : b;
     matches.push({ label, a, b, sa, sb, winner });
+    if (out[round]) out[round].push(winner === a ? b : a);
     return winner;
   };
 
-  const w1 = series(top4[0], top4[3], 'Semifinal');
-  const w2 = series(top4[1], top4[2], 'Semifinal');
-  const champ = series(w1, w2, 'Final');
+  let semis;
+  if (seeds.length === 6) {
+    const q1 = series(seeds[2], seeds[5], 'Quartas de final', 'qf');
+    const q2 = series(seeds[3], seeds[4], 'Quartas de final', 'qf');
+    semis = [[seeds[0], q2], [seeds[1], q1]];
+  } else {
+    semis = [[seeds[0], seeds[3]], [seeds[1], seeds[2]]];
+  }
+  const w1 = series(semis[0][0], semis[0][1], 'Semifinal', 'sf');
+  const w2 = series(semis[1][0], semis[1][1], 'Semifinal', 'sf');
+  const champ = series(w1, w2, 'Final', 'final');
 
-  let placement;
-  const inPlayoffs = top4.includes(s.teamId);
-  if (champ === s.teamId) placement = 1;
-  else if (w1 === s.teamId || w2 === s.teamId) placement = 2;
-  else if (inPlayoffs) placement = top4.indexOf(s.teamId) < 2 ? 3 : 4;
-  else placement = table.indexOf(s.teamId) + 1;
-  s.placements[split.n] = placement;
+  // Classificação final: campeão, vice, semifinalistas, quartas, resto da tabela.
+  const bySeed = (a, b) => table.indexOf(a) - table.indexOf(b);
+  const ranking = [champ, champ === w1 ? w2 : w1, ...out.sf.sort(bySeed), ...out.qf.sort(bySeed)];
+  table.forEach((id) => { if (!ranking.includes(id)) ranking.push(id); });
+  s.rankings[split.kind] = ranking;
+
+  const placement = ranking.indexOf(s.teamId) + 1;
+  s.placements[split.kind] = placement;
 
   if (champ === s.teamId) {
-    const trophy = {
-      kind: 'league', name: s.league, detail: `Split ${split.n}`, year: s.year, teamId: s.teamId, tier: s.tier,
-    };
+    const detail = { 1: 'Liga principal', 2: 'Divisão de acesso', 3: 'Liga amadora' }[s.tier];
+    const trophy = { kind: 'league', name: split.name, detail, year: s.year, teamId: s.teamId, tier: s.tier };
     s.titles.push(trophy);
     state.player.trophies.push(trophy);
     state.player.fame = clamp(state.player.fame + (4 - s.tier) * 3, 0, 100);
@@ -379,9 +430,9 @@ function playoffs(state) {
 
   state.screen = {
     type: 'playoffs',
-    split: split.n,
+    name: split.name,
     matches,
-    inPlayoffs,
+    inPlayoffs: seeds.includes(s.teamId),
     placement,
     championId: champ,
   };
@@ -389,29 +440,30 @@ function playoffs(state) {
 
 // ---------------------------------------------------------------- internacional
 
-function qualifies(state, key) {
-  const s = state.season;
-  if (s.tier !== 1 || s.region === 'wc') return false;
-  const slots = REGIONS[s.region][key];
-  if (key === 'msi') return s.placements[1] <= slots;
-  return s.placements[2] <= slots || (slots > 1 && s.placements[1] === 1);
-}
-
-// Seleciona os representantes de cada região (o time do jogador ocupa uma vaga).
+// Representantes de cada região. Na região do jogador (liga principal), as
+// vagas seguem a classificação real da etapa; nas outras, sorteio por força.
 function intlField(state, key) {
   const s = state.season;
-  const field = [s.teamId];
+  const ranking = s.tier === 1 ? s.rankings[INTL[key].rank] : null;
+  const field = [];
   for (const region of Object.values(REGIONS)) {
-    const n = region[key] - (region.id === s.region ? 1 : 0);
-    const pool = Object.values(state.world.teams)
-      .filter((t) => t.region === region.id && t.tier === 1 && t.id !== s.teamId)
+    let n = region[key];
+    if (key === 'worlds' && s.msiFinalRegions.includes(region.id)) n++;
+    if (ranking && region.id === s.region) {
+      field.push(...ranking.slice(0, n));
+      continue;
+    }
+    Object.values(state.world.teams)
+      .filter((t) => t.region === region.id && t.tier === 1)
       .map((t) => ({ id: t.id, v: t.rating + rand(-4, 4) }))
-      .sort((a, b) => b.v - a.v);
-    pool.slice(0, n).forEach((t) => field.push(t.id));
+      .sort((a, b) => b.v - a.v)
+      .slice(0, n)
+      .forEach((t) => field.push(t.id));
   }
-  if (key === 'worlds') {
-    Object.values(state.world.teams).filter((t) => t.region === 'wc').forEach((t) => field.push(t.id));
-  }
+  Object.values(state.world.teams)
+    .filter((t) => t.region === 'wc')
+    .slice(0, WILDCARD_SLOTS[key])
+    .forEach((t) => field.push(t.id));
   return field;
 }
 
@@ -422,8 +474,18 @@ function intlForm(state, ids) {
   return form;
 }
 
-function knockout(state, ids, labels, matches, form) {
+function intlSeries(state, a, b, bo, form) {
   const s = state.season;
+  if (a === s.teamId || b === s.teamId) {
+    const opp = a === s.teamId ? b : a;
+    const res = playerSeries(state, teamOf(state, opp).rating + form[opp], bo);
+    return a === s.teamId ? { sa: res.w, sb: res.l } : { sa: res.l, sb: res.w };
+  }
+  const res = simSeries(teamOf(state, a).rating + form[a], teamOf(state, b).rating + form[b], bo);
+  return { sa: res.a, sb: res.b };
+}
+
+function knockout(state, ids, labels, matches, form) {
   let round = shuffle(ids);
   let li = 0;
   while (round.length > 1) {
@@ -431,18 +493,7 @@ function knockout(state, ids, labels, matches, form) {
     for (let i = 0; i < round.length; i += 2) {
       const a = round[i];
       const b = round[i + 1];
-      let sa;
-      let sb;
-      if (a === s.teamId || b === s.teamId) {
-        const opp = a === s.teamId ? b : a;
-        const res = playerSeries(state, teamOf(state, opp).rating + form[opp], 5);
-        sa = a === s.teamId ? res.w : res.l;
-        sb = a === s.teamId ? res.l : res.w;
-      } else {
-        const res = simSeries(teamOf(state, a).rating + form[a], teamOf(state, b).rating + form[b], 5);
-        sa = res.a;
-        sb = res.b;
-      }
+      const { sa, sb } = intlSeries(state, a, b, 5, form);
       const winner = sa > sb ? a : b;
       matches.push({ label: labels[li], a, b, sa, sb, winner });
       next.push(winner);
@@ -458,50 +509,78 @@ function winIntl(state, name) {
   const trophy = { kind: 'intl', name, detail: 'Internacional', year: s.year, teamId: s.teamId, tier: 0 };
   s.titles.push(trophy);
   state.player.trophies.push(trophy);
-  state.player.fame = clamp(state.player.fame + (name === 'Mundial' ? 20 : 12), 0, 100);
+  const fame = { Mundial: 20, MSI: 12, 'First Stand': 8 }[name];
+  state.player.fame = clamp(state.player.fame + fame, 0, 100);
   state.player.morale = clamp(state.player.morale + 10, 0, 100);
   pushModal(state, { kind: 'trophy', trophy });
 }
 
-function runMsi(state) {
+// First Stand e MSI: os times mais fracos disputam um play-in até sobrar
+// uma chave de 8. Mundial: fase suíça + chave de 8.
+// Retorna true se o time do jogador participou (e há tela para mostrar).
+function runIntl(state, key) {
   const s = state.season;
-  const field = intlField(state, 'msi');
-  const matches = [];
-  const champ = knockout(state, field, ['Quartas de final', 'Semifinal', 'Final'], matches, intlForm(state, field));
-  if (champ === s.teamId) winIntl(state, 'MSI');
-  state.screen = { type: 'intl', name: 'MSI', swiss: null, matches, championId: champ, eliminated: champ !== s.teamId };
-}
-
-function runWorlds(state) {
-  const s = state.season;
-  const field = intlField(state, 'worlds');
-  const others = field.filter((id) => id !== s.teamId);
+  const { name } = INTL[key];
+  const field = intlField(state, key);
   const form = intlForm(state, field);
-
-  // Fase suíça: avança com 3 vitórias, cai com 3 derrotas.
-  const swiss = { w: 0, l: 0, matches: [] };
-  const opps = shuffle(others);
-  let i = 0;
-  while (swiss.w < 3 && swiss.l < 3) {
-    const opp = opps[i++ % opps.length];
-    const decisive = swiss.w === 2 || swiss.l === 2;
-    const res = playerSeries(state, teamOf(state, opp).rating + form[opp], decisive ? 3 : 1);
-    if (res.won) swiss.w++; else swiss.l++;
-    swiss.matches.push({ oppId: opp, w: res.w, l: res.l, won: res.won });
-  }
-
-  const advanced = swiss.w === 3;
-  const pool = others.slice();
-  const bracket = advanced ? [s.teamId] : [];
-  while (bracket.length < 8) {
-    const t = weightedPick(pool, (id) => Math.pow(Math.max(1, teamOf(state, id).rating - 65), 2));
-    pool.splice(pool.indexOf(t), 1);
-    bracket.push(t);
-  }
+  const involved = field.includes(s.teamId);
   const matches = [];
+  let bracket;
+  let swiss = null;
+  let advanced = true;
+
+  if (key === 'worlds') {
+    const others = field.filter((id) => id !== s.teamId);
+    bracket = [];
+    if (involved) {
+      // Fase suíça do jogador: avança com 3 vitórias, cai com 3 derrotas.
+      swiss = { w: 0, l: 0, matches: [] };
+      const opps = shuffle(others);
+      let i = 0;
+      while (swiss.w < 3 && swiss.l < 3) {
+        const opp = opps[i++ % opps.length];
+        const decisive = swiss.w === 2 || swiss.l === 2;
+        const { sa, sb } = intlSeries(state, s.teamId, opp, decisive ? 3 : 1, form);
+        if (sa > sb) swiss.w++; else swiss.l++;
+        swiss.matches.push({ oppId: opp, w: sa, l: sb, won: sa > sb });
+      }
+      advanced = swiss.w === 3;
+      if (advanced) bracket.push(s.teamId);
+    }
+    const pool = others.slice();
+    while (bracket.length < 8) {
+      const t = weightedPick(pool, (id) => Math.pow(Math.max(1, teamOf(state, id).rating + form[id] - 65), 2));
+      pool.splice(pool.indexOf(t), 1);
+      bracket.push(t);
+    }
+  } else {
+    const seeded = field.slice().sort((a, b) => teamOf(state, b).rating - teamOf(state, a).rating);
+    const extra = Math.max(0, seeded.length - 8);
+    bracket = seeded.slice(0, seeded.length - extra * 2);
+    const playIn = seeded.slice(seeded.length - extra * 2);
+    for (let i = 0; i < extra; i++) {
+      const a = playIn[i];
+      const b = playIn[playIn.length - 1 - i];
+      const { sa, sb } = intlSeries(state, a, b, 5, form);
+      const winner = sa > sb ? a : b;
+      matches.push({ label: 'Play-in', a, b, sa, sb, winner });
+      bracket.push(winner);
+      if (winner !== s.teamId && (a === s.teamId || b === s.teamId)) advanced = false;
+    }
+  }
+
   const champ = knockout(state, bracket, ['Quartas de final', 'Semifinal', 'Final'], matches, form);
-  if (champ === s.teamId) winIntl(state, 'Mundial');
-  state.screen = { type: 'intl', name: 'Mundial', swiss, advanced, matches, championId: champ, eliminated: champ !== s.teamId };
+  if (key === 'msi') {
+    const final = matches[matches.length - 1];
+    s.msiFinalRegions = [teamOf(state, final.a).region, teamOf(state, final.b).region];
+  }
+  s.intl[key] = !involved ? 'out' : champ === s.teamId ? 'champion' : 'eliminated';
+  if (!involved) return false;
+  if (champ === s.teamId) winIntl(state, name);
+  state.screen = {
+    type: 'intl', key, name, swiss, advanced, matches, championId: champ, eliminated: champ !== s.teamId,
+  };
+  return true;
 }
 
 // ---------------------------------------------------------------- eventos
@@ -545,7 +624,7 @@ function computeAwards(state, playedRatio) {
   const ovr = ovrOf(p);
   const team = teamOf(state, s.teamId);
   const leagueTop = Math.max(...leagueTeams(state, team).map((t) => t.rating));
-  const best = Math.min(s.placements[1] || 99, s.placements[2] || 99);
+  const best = Math.min(99, ...Object.values(s.placements));
   const pogRate = s.stats.pog / Math.max(1, s.stats.games);
   const awards = [];
 
@@ -632,7 +711,7 @@ export function legacyLabel(p) {
   const playedT1 = p.history.some((h) => h.tier === 1);
   if (worlds >= 3 || (worlds >= 2 && p.peakOvr >= 92)) return { title: 'Lenda do Rift', tone: 'gold' };
   if (worlds) return { title: 'Campeão mundial', tone: 'gold' };
-  if (msi || t1 >= 3) return { title: 'Ídolo da região', tone: 'silver' };
+  if (msi || t1 >= 5) return { title: 'Ídolo da região', tone: 'silver' };
   if (t1) return { title: 'Campeão nacional', tone: 'silver' };
   if (playedT1) return { title: 'Profissional de elite', tone: 'bronze' };
   if (p.trophies.some((t) => t.kind === 'league')) return { title: 'Ídolo do cenário de acesso', tone: 'bronze' };

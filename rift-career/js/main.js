@@ -11,7 +11,7 @@ function load() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     const s = raw ? JSON.parse(raw) : null;
-    return s && s.v === 1 ? s : null;
+    return s && s.v === 2 ? s : null;
   } catch {
     return null;
   }

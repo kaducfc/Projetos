@@ -3,7 +3,7 @@
 import { ATTRS, REGIONS, ROLES, nationById } from '../data/world.js';
 import { eventById } from '../data/events.js';
 import { ovrOf, marketValue, STATUS } from '../engine/player.js';
-import { teamOf, leagueName, standings, STAGE_LABEL, legacyLabel } from '../engine/career.js';
+import { teamOf, leagueName, standings, seasonStages, STAGE_LABEL, legacyLabel } from '../engine/career.js';
 import { teamBadge, trophySvg, stars } from './art.js';
 import { esc, fmtKda, fmtMoney, fmtSalary } from '../util.js';
 
@@ -75,6 +75,32 @@ function attrsCard(state) {
   </div>`;
 }
 
+function calendarCard(state) {
+  const s = state.season;
+  if (!s || state.screen.type === 'offers' || state.screen.type === 'retired') return '';
+  const stages = seasonStages(s);
+  const current = [...stages].reverse().find((st) => st.started && st.result === undefined && !st.intl);
+  const label = (st) => {
+    if (st.intl) {
+      if (st.result === 'champion') return '<b class="ok-text">Campeão</b>';
+      if (st.result === 'eliminated') return 'Eliminado';
+      if (st.result === 'out') return '<span class="muted">Não foi</span>';
+      return '<span class="muted">—</span>';
+    }
+    if (st.result === 1) return '<b class="ok-text">Campeão</b>';
+    if (st.result) return `${st.result}º`;
+    if (st === current) return '<b class="now">Em andamento</b>';
+    return '<span class="muted">—</span>';
+  };
+  return `
+  <div class="card side-card">
+    <h4 class="side-title">Temporada ${s.year}</h4>
+    ${stages.map((st) => `<div class="cal-row${st.intl ? ' intl' : ''}${st === current ? ' current' : ''}">
+      <span>${st.intl ? '🌍 ' : ''}${esc(st.name)}</span><span>${label(st)}</span>
+    </div>`).join('')}
+  </div>`;
+}
+
 function leagueCard(state) {
   const s = state.season;
   if (!s || !s.split || state.screen.type === 'offers' || state.screen.type === 'retired') return '';
@@ -84,7 +110,7 @@ function leagueCard(state) {
   if (pos > 2) rows.push(s.teamId);
   return `
   <div class="card side-card">
-    <div class="league-head"><h4 class="side-title">${esc(s.league)} · Split ${s.split.n}</h4><b>${pos + 1}º</b></div>
+    <div class="league-head"><h4 class="side-title">${esc(s.split.name)}</h4><b>${pos + 1}º</b></div>
     <div class="progress"><i style="width:${(s.split.played / s.split.rounds.length) * 100}%"></i></div>
     ${rows.map((id) => {
       const t = teamOf(state, id);
@@ -243,7 +269,7 @@ function standingsTable(state) {
     <tbody>${table.map((id, i) => {
       const t = teamOf(state, id);
       const r = s.split.table[id];
-      return `<tr class="${id === s.teamId ? 'me' : ''}${i === 3 ? ' cut' : ''}"><td>${i + 1}</td><td class="club">${teamBadge(t, 18)}<span>${esc(t.name)}</span></td><td>${r.w}</td><td>${r.l}</td></tr>`;
+      return `<tr class="${id === s.teamId ? 'me' : ''}${i === s.split.poSize - 1 ? ' cut' : ''}"><td>${i + 1}</td><td class="club">${teamBadge(t, 18)}<span>${esc(t.name)}</span></td><td>${r.w}</td><td>${r.l}</td></tr>`;
     }).join('')}</tbody>
   </table>`;
 }
@@ -263,9 +289,9 @@ function regularPanel(state) {
   const as = scr.results.reduce((a, r) => a + r.line.a, 0);
   return `
   <div class="panel">
-    <div class="eyebrow">${esc(s.league)} · Split ${scr.split} · Rodadas ${scr.from}–${scr.to} de ${scr.total}</div>
+    <div class="eyebrow">${esc(scr.name)} · Rodadas ${scr.from}–${scr.to} de ${scr.total} · ${scr.bo === 1 ? 'MD1' : 'MD3'}</div>
     <h1 class="display">${scr.final ? 'Fim da fase de pontos' : 'Fase de pontos'}</h1>
-    <p class="lead">${w}V ${scr.results.length - w}D nesse bloco · você jogou ${played} de ${scr.results.length}${played ? ` · KDA ${fmtKda(k, d, as)}` : ''}</p>
+    <p class="lead">${w}V ${scr.results.length - w}D nesse bloco · os ${scr.poSize} primeiros vão aos playoffs · você jogou ${played} de ${scr.results.length}${played ? ` · KDA ${fmtKda(k, d, as)}` : ''}</p>
     <div class="two-col">
       <div class="results">
         ${scr.results.map((r) => {
@@ -273,7 +299,7 @@ function regularPanel(state) {
           return `<div class="res-row ${r.won ? 'w' : 'l'}">
             <span class="rnd">R${r.round}</span>${teamBadge(t, 20)}<span class="nm">${esc(t.name)}</span>
             <span class="line">${lineTxt(r.line)}</span>
-            <span class="wl">${r.won ? 'V' : 'D'}</span>
+            <span class="wl">${scr.bo > 1 ? `${r.w}–${r.l}` : r.won ? 'V' : 'D'}</span>
           </div>`;
         }).join('')}
       </div>
@@ -297,6 +323,17 @@ function matchRow(state, m) {
   </div>`;
 }
 
+// Diz o que a colocação vale (vaga internacional da etapa).
+function qualifyNote(state) {
+  const s = state.season;
+  if (s.tier !== 1) return '';
+  const next = { cup: ['firstStand', 'First Stand'], s1: ['msi', 'MSI'], s2: ['worlds', 'Mundial'] }[s.split.kind];
+  const slots = REGIONS[s.region][next[0]] + (next[0] === 'worlds' && s.msiFinalRegions.includes(s.region) ? 1 : 0);
+  const got = s.placements[s.split.kind] <= slots;
+  const vagas = slots === 1 ? 'Só o campeão vai' : `Os ${slots} primeiros vão`;
+  return ` · ${vagas} ao ${next[1]}${got ? ' — <b class="ok-text">você está classificado!</b>' : ''}`;
+}
+
 function playoffsPanel(state) {
   const scr = state.screen;
   const s = state.season;
@@ -304,13 +341,13 @@ function playoffsPanel(state) {
   let title;
   if (scr.placement === 1) title = 'Campeões!';
   else if (scr.placement === 2) title = 'Vice-campeões';
-  else if (scr.inPlayoffs) title = 'Eliminados na semifinal';
+  else if (scr.inPlayoffs) title = scr.placement <= 4 ? 'Eliminados na semifinal' : 'Eliminados nas quartas';
   else title = `Fora dos playoffs · ${scr.placement}º lugar`;
   return `
   <div class="panel">
-    <div class="eyebrow">${esc(s.league)} · Playoffs · Split ${scr.split}</div>
+    <div class="eyebrow">${esc(scr.name)} · Playoffs</div>
     <h1 class="display">${title}</h1>
-    <p class="lead">Campeão do split: <b>${esc(champ.name)}</b></p>
+    <p class="lead">Campeão: <b>${esc(champ.name)}</b>${qualifyNote(state)}</p>
     <div class="matches">${scr.matches.map((m) => matchRow(state, m)).join('')}</div>
     <div class="actions"><button class="btn-primary" data-act="next">Continuar</button></div>
   </div>`;
@@ -321,8 +358,9 @@ function intlPanel(state) {
   const me = state.season.teamId;
   const champ = teamOf(state, scr.championId);
   let title;
-  if (!scr.eliminated) title = scr.name === 'Mundial' ? 'Campeões do mundo!' : 'Campeões do MSI!';
+  if (!scr.eliminated) title = scr.name === 'Mundial' ? 'Campeões do mundo!' : `Campeões do ${scr.name}!`;
   else if (scr.swiss && !scr.advanced) title = 'Eliminados na fase suíça';
+  else if (!scr.advanced) title = 'Eliminados no play-in';
   else {
     const lost = scr.matches.find((m) => (m.a === me || m.b === me) && m.winner !== me);
     title = lost ? `Eliminados: ${lost.label.toLowerCase()}` : 'Eliminados';
@@ -486,6 +524,7 @@ export function renderGame(root, state) {
     <aside class="col-left">
       ${playerCard(state)}
       <button class="btn-restart" data-act="restart">↺ Reiniciar carreira</button>
+      ${calendarCard(state)}
       ${leagueCard(state)}
       ${attrsCard(state)}
     </aside>
