@@ -24,7 +24,7 @@
 html, body { margin: 0; }
 body {
   background:
-    radial-gradient(1200px 600px at 50% -200px, rgba(200, 170, 110, 0.08), transparent 70%),
+    radial-gradient(1200px 600px at 50% -200px, color-mix(in srgb, var(--gold) 8%, transparent), transparent 70%),
     linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px) 0 0 / 40px 40px,
     linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px) 0 0 / 40px 40px,
     var(--bg);
@@ -101,7 +101,7 @@ input { font: inherit; color: inherit; }
   display: grid;
   place-items: center;
   padding: 10px 0 18px;
-  background: radial-gradient(closest-side, rgba(200, 170, 110, 0.18), transparent);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--gold) 18%, transparent), transparent);
 }
 .jersey { width: 190px; max-width: 100%; filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.5)); }
 .field { display: block; margin-top: 14px; }
@@ -160,7 +160,7 @@ input { font: inherit; color: inherit; }
   text-overflow: ellipsis;
 }
 .nat:hover { background: rgba(255, 255, 255, 0.03); }
-.nat.on { color: var(--gold-2); background: rgba(200, 170, 110, 0.1); }
+.nat.on { color: var(--gold-2); background: color-mix(in srgb, var(--gold) 10%, transparent); }
 .nat-note { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; }
 .nat-note b { color: var(--text); }
 
@@ -279,10 +279,10 @@ input { font: inherit; color: inherit; }
 .cal-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 6px; font-size: 13px; border-radius: 7px; }
 .cal-row + .cal-row { border-top: 1px solid var(--line); }
 .cal-row.intl span:first-child { color: var(--cyan); font-weight: 600; }
-.cal-row.current { background: rgba(200, 170, 110, 0.12); }
+.cal-row.current { background: color-mix(in srgb, var(--gold) 12%, transparent); }
 .cal-row .now { color: var(--gold-2); font-size: 12px; }
 .ok-text { color: #7de3a5; }
-.mini-row.me { background: rgba(200, 170, 110, 0.12); font-weight: 700; }
+.mini-row.me { background: color-mix(in srgb, var(--gold) 12%, transparent); font-weight: 700; }
 
 /* tabela da carreira */
 .career-card { overflow: hidden; }
@@ -316,7 +316,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .career-total {
   display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: space-between;
   padding: 12px 14px; font-size: 12.5px; font-weight: 700;
-  background: rgba(31, 209, 193, 0.06); border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--cyan) 6%, transparent); border-top: 1px solid var(--line);
 }
 .career-total span:first-child { color: var(--cyan); text-transform: uppercase; letter-spacing: 1.5px; font-size: 11px; }
 
@@ -337,7 +337,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .lead b { color: var(--text); }
 .note {
   border-left: 3px solid var(--gold);
-  background: rgba(200, 170, 110, 0.08);
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
   padding: 12px 16px;
   border-radius: 0 10px 10px 0;
   font-weight: 600;
@@ -371,14 +371,14 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 
 /* resumo de First Stand / MSI */
 .recap {
-  border: 1px solid rgba(31, 209, 193, 0.35);
-  background: linear-gradient(180deg, rgba(31, 209, 193, 0.08), var(--panel));
+  border: 1px solid color-mix(in srgb, var(--cyan) 35%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cyan) 8%, transparent), var(--panel));
   border-radius: var(--radius);
   padding: 16px 18px;
   margin-bottom: 14px;
   display: flex; flex-direction: column; gap: 10px;
 }
-.recap.won { border-color: rgba(240, 213, 140, 0.6); background: linear-gradient(180deg, rgba(200, 170, 110, 0.14), var(--panel)); }
+.recap.won { border-color: color-mix(in srgb, var(--gold-2) 60%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 14%, transparent), var(--panel)); }
 .recap-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
 .recap-head b { font-family: var(--display); font-weight: 400; font-size: 28px; line-height: 1; }
 .recap .stage-details { margin-top: 0; }
@@ -426,7 +426,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .choice:hover:not(:disabled) { background: rgba(255, 255, 255, 0.03); }
 .choice-txt b { display: block; font-size: 16px; }
 .choice-txt small { color: var(--muted); font-size: 12.5px; }
-.odds { display: flex; height: 32px; border-radius: 99px; overflow: hidden; font-size: 12.5px; font-weight: 800; }
+.odds { display: flex; height: 32px; border-radius: 0; overflow: hidden; font-size: 12.5px; font-weight: 800; }
 .odds span { display: grid; place-items: center; min-width: 0; overflow: hidden; }
 .o-ok { background: #1c8a4c; }
 .o-bad { background: #b83a33; }
@@ -473,8 +473,8 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .standings td { padding: 7px 10px; border-top: 1px solid var(--line); font-size: 13px; }
 .standings .club { display: flex; align-items: center; gap: 8px; }
 .standings .club span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
-.standings tr.me td { background: rgba(200, 170, 110, 0.12); font-weight: 700; }
-.standings tr.cut td { border-bottom: 2px dashed rgba(31, 209, 193, 0.4); }
+.standings tr.me td { background: color-mix(in srgb, var(--gold) 12%, transparent); font-weight: 700; }
+.standings tr.cut td { border-bottom: 2px dashed color-mix(in srgb, var(--cyan) 40%, transparent); }
 
 .stage-details { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 12px; }
 .stage-details summary { cursor: pointer; font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
@@ -500,7 +500,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .delta.up { color: #7de3a5; }
 .delta.down { color: #f0948e; }
 .season-trophies { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-.st-item { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: rgba(200, 170, 110, 0.05); }
+.st-item { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: color-mix(in srgb, var(--gold) 5%, transparent); }
 .st-item b { display: block; }
 .st-item small { color: var(--muted); }
 
@@ -536,13 +536,13 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   border: 1px solid var(--gold);
   border-radius: 20px;
   padding: 34px 26px 26px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(200, 170, 110, 0.18);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px color-mix(in srgb, var(--gold) 18%, transparent);
   animation: pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 @keyframes pop { from { transform: scale(0.7); opacity: 0; } }
 .rays {
   position: absolute; left: 50%; top: 110px; width: 520px; height: 520px; margin: -260px 0 0 -260px;
-  background: repeating-conic-gradient(from 0deg, rgba(240, 213, 140, 0.12) 0 8deg, transparent 8deg 22deg);
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--gold-2) 12%, transparent) 0 8deg, transparent 8deg 22deg);
   border-radius: 50%;
   mask-image: radial-gradient(closest-side, #000, transparent);
   -webkit-mask-image: radial-gradient(closest-side, #000, transparent);
@@ -608,4 +608,137 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+
+/* ===========================================================
+   Estilos alternativos (preto + dourado). Escolhidos pelo
+   seletor no canto da tela: html[data-skin="1|2|3"].
+   =========================================================== */
+
+.skin-picker {
+  position: fixed; z-index: 60;
+  right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 6px;
+  background: var(--panel-2); border: 1px solid var(--line-2);
+  padding: 6px 8px; border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  font-size: 12px; font-weight: 700; color: var(--muted);
+}
+.skin-picker button {
+  background: transparent; border: 1px solid var(--line-2); color: var(--text);
+  border-radius: 6px; padding: 6px 10px; font-weight: 800; font-size: 12px;
+}
+.skin-picker button.on { background: var(--gold); color: #111; border-color: var(--gold); }
+
+/* ---------- 1 · Ouro Clássico: sóbrio, cantos discretos ---------- */
+:root[data-skin="1"] {
+  --bg: #09090a; --panel: #121212; --panel-2: #181818;
+  --line: #27241d; --line-2: #3b352a;
+  --text: #f4efe4; --muted: #9b9383;
+  --gold: #d9a82b; --gold-2: #f5cf5a; --cyan: #e9c150;
+  --radius: 6px;
+}
+[data-skin="1"] body {
+  background:
+    radial-gradient(900px 500px at 50% -220px, rgba(217, 168, 43, 0.12), transparent 70%),
+    var(--bg);
+}
+[data-skin="1"] * { border-radius: 4px !important; }
+[data-skin="1"] .odds, [data-skin="1"] .odds span { border-radius: 0 !important; }
+[data-skin="1"] .odds { height: 30px; gap: 2px; background: var(--bg); }
+[data-skin="1"] .o-ok { background: #3c8a4e; }
+[data-skin="1"] .o-bad { background: #a3352c; }
+[data-skin="1"] .ovr-badge { background: linear-gradient(160deg, #f7d774, #c4901c 70%, #8f6510); color: #140f02; }
+[data-skin="1"] .ovr-badge small { color: #4a3708; }
+[data-skin="1"] .ovr-cell { background: linear-gradient(160deg, #f7d774, #c4901c); color: #140f02; }
+[data-skin="1"] .btn-primary { background: var(--gold); color: #140f02; }
+[data-skin="1"] .panel, [data-skin="1"] .card { border-color: var(--line-2); }
+
+/* ---------- 2 · Transmissão: amarelo vivo, tudo reto ---------- */
+:root[data-skin="2"] {
+  --bg: #000; --panel: #0b0b0b; --panel-2: #121212;
+  --line: #232323; --line-2: #343434;
+  --text: #ffffff; --muted: #8e8e8e;
+  --gold: #ffd21f; --gold-2: #ffe36b; --cyan: #ffd21f;
+  --radius: 0px;
+  --display: 'Chakra Petch', 'Bebas Neue', Impact, sans-serif;
+}
+[data-skin="2"] body { background: var(--bg); }
+[data-skin="2"] * { border-radius: 0 !important; }
+[data-skin="2"] .display, [data-skin="2"] .offer h3, [data-skin="2"] .result h3, [data-skin="2"] .recap-head b {
+  font-weight: 700; text-transform: uppercase; font-style: italic; letter-spacing: -0.5px;
+}
+[data-skin="2"] .panel { border-top: 3px solid var(--gold); }
+[data-skin="2"] .odds { height: 34px; gap: 3px; background: #000; }
+[data-skin="2"] .o-ok { background: var(--gold); color: #000; }
+[data-skin="2"] .o-bad { background: #e3342a; color: #fff; }
+[data-skin="2"] .ovr-badge { background: var(--gold); color: #000; box-shadow: none; }
+[data-skin="2"] .ovr-badge small { color: #000; }
+[data-skin="2"] .ovr-badge b { font-family: var(--display); font-weight: 700; font-style: italic; }
+[data-skin="2"] .ovr-cell { background: #fff; color: #000; }
+[data-skin="2"] .ovr-cell.q { background: var(--gold); color: #000; }
+[data-skin="2"] .btn-primary {
+  background: var(--gold); color: #000; text-transform: uppercase; font-style: italic;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%); padding-right: 30px;
+}
+[data-skin="2"] .tag { background: var(--gold); color: #000; border-color: var(--gold); }
+[data-skin="2"] .chip { background: #000; }
+[data-skin="2"] .eyebrow { color: var(--gold); }
+
+/* ---------- 3 · Troféu: dourado metálico, barra segmentada ---------- */
+:root[data-skin="3"] {
+  --bg: #0b0906; --panel: #13100a; --panel-2: #1a160e;
+  --line: #2e2718; --line-2: #4a3d22;
+  --text: #f2e8d0; --muted: #a59577;
+  --gold: #c9a24a; --gold-2: #efd48c; --cyan: #e2c275;
+  --radius: 2px;
+  --display: 'Cinzel', 'Bebas Neue', Georgia, serif;
+}
+[data-skin="3"] body {
+  background:
+    radial-gradient(1000px 600px at 50% -260px, rgba(201, 162, 74, 0.16), transparent 70%),
+    var(--bg);
+}
+[data-skin="3"] * { border-radius: 2px !important; }
+[data-skin="3"] .display, [data-skin="3"] .offer h3, [data-skin="3"] .result h3, [data-skin="3"] .recap-head b {
+  font-weight: 700; letter-spacing: 1px;
+}
+[data-skin="3"] .panel h1.display { font-size: 40px; }
+[data-skin="3"] .panel, [data-skin="3"] .card { border-color: var(--line-2); outline: 1px solid var(--line); outline-offset: 3px; }
+[data-skin="3"] .odds {
+  height: 22px;
+  /* 10 blocos de 10% cada, separados por um vão de 2px */
+  -webkit-mask: linear-gradient(90deg, #000 calc(100% - 2px), transparent 0) 0 0 / 10% 100%;
+  mask: linear-gradient(90deg, #000 calc(100% - 2px), transparent 0) 0 0 / 10% 100%;
+}
+/* Nesta opção o número fica só no texto da escolha ("71%: ..."). */
+[data-skin="3"] .odds span { font-size: 0; }
+[data-skin="3"] .o-ok { background: linear-gradient(180deg, #e7c46a, #a9812f); }
+[data-skin="3"] .o-bad { background: linear-gradient(180deg, #8e3526, #5c1f15); }
+[data-skin="3"] .ovr-badge { background: #0b0906; color: var(--gold-2); border: 1px solid var(--gold); box-shadow: inset 0 0 0 3px #0b0906, inset 0 0 0 4px var(--line-2); }
+[data-skin="3"] .ovr-badge small { color: var(--muted); }
+[data-skin="3"] .ovr-badge b { font-family: var(--display); font-weight: 700; }
+[data-skin="3"] .ovr-cell { background: transparent; color: var(--gold-2); border: 1px solid var(--line-2); }
+[data-skin="3"] .ovr-cell.q { background: var(--gold); color: #1a1205; }
+[data-skin="3"] .btn-primary { background: linear-gradient(180deg, #efd48c, #b88d36); color: #1a1205; letter-spacing: 1.5px; text-transform: uppercase; font-size: 13px; }
+[data-skin="3"] .tag { background: transparent; color: var(--gold-2); border-color: var(--line-2); }
+
+/* Cenas dos eventos no tom de cada estilo */
+[data-skin="1"] .scene { background: radial-gradient(circle at 50% 25%, #4a370c, #0c0a06 72%); }
+[data-skin="2"] .scene {
+  background:
+    repeating-linear-gradient(-45deg, rgba(255, 210, 31, 0.07) 0 14px, transparent 14px 28px),
+    radial-gradient(circle at 50% 30%, #2a2400, #000 70%);
+}
+[data-skin="3"] .scene { background: radial-gradient(circle at 50% 30%, #3b2a12, #0b0906 70%); }
+[data-skin="1"] .scene::after, [data-skin="3"] .scene::after {
+  background: linear-gradient(180deg, transparent 45%, var(--panel));
+}
+[data-skin="2"] .scene::after { background: linear-gradient(180deg, transparent 55%, var(--panel)); }
+@media (max-width: 820px) {
+  .skin-picker { left: 16px; right: 16px; justify-content: center; }
+  .skin-picker > span { display: none; }
+  .skin-picker button { flex: 1; padding: 8px 4px; }
+  .game { padding-bottom: 90px; }
 }
