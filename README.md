@@ -1,5 +1,15 @@
 # Projetos
 
+## Carreira no Rift
+
+Simulador de carreira de jogador profissional de League of Legends: crie o
+jogador aos 16 anos, escolha propostas, tome decisões com porcentagem de
+sucesso e dispute ligas, MSI e Mundial até a aposentadoria. HTML + CSS +
+JavaScript puro.
+
+- **Código-fonte e documentação:** [`rift-career/`](rift-career/)
+- **Rodar localmente:** `cd rift-career && python3 -m http.server 8000`
+
 ## Idle Hunter
 
 Jogo idle/clicker mobile-first, inspirado em **Clicker Heroes** + **Monster
