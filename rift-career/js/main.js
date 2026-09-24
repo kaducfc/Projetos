@@ -7,33 +7,6 @@ const app = document.getElementById('app');
 
 let state = load();
 
-// Seletor de estilo (temporário, para comparar as 3 opções visuais).
-const SKIN_KEY = 'riftcareer.skin';
-const SKINS = [['1', 'Ouro Clássico'], ['2', 'Transmissão'], ['3', 'Troféu']];
-
-function applySkin(id) {
-  document.documentElement.dataset.skin = id;
-  try { localStorage.setItem(SKIN_KEY, id); } catch { /* sem storage */ }
-  document.querySelectorAll('.skin-picker button').forEach((b) => {
-    b.classList.toggle('on', b.dataset.skin === id);
-  });
-}
-
-function mountSkinPicker() {
-  const el = document.createElement('div');
-  el.className = 'skin-picker';
-  el.innerHTML = `<span>Estilo</span>${SKINS.map(([id, name]) => `<button type="button" data-skin="${id}" title="${name}">${id} · ${name}</button>`).join('')}`;
-  el.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-skin]');
-    if (b) applySkin(b.dataset.skin);
-  });
-  document.body.appendChild(el);
-  let saved = null;
-  try { saved = localStorage.getItem(SKIN_KEY); } catch { /* sem storage */ }
-  applySkin(SKINS.some(([id]) => id === saved) ? saved : '1');
-}
-
-mountSkinPicker();
 
 function load() {
   try {

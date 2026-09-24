@@ -49,13 +49,13 @@ export function jerseySvg(nick, roleShort) {
   const fs = name.length > 9 ? 15 : 19;
   return `<svg class="jersey" viewBox="0 0 200 190" aria-hidden="true">
     <defs>
-      <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16324a"/><stop offset="1" stop-color="#0b1826"/></linearGradient>
+      <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232018"/><stop offset="1" stop-color="#0c0b09"/></linearGradient>
     </defs>
-    <path d="M62 12 L84 5 Q100 20 116 5 L138 12 L194 42 L174 84 L150 72 L150 182 L50 182 L50 72 L26 84 L6 42 Z" fill="url(#${id})" stroke="#c8aa6e" stroke-width="2.5" stroke-linejoin="round"/>
-    <path d="M84 5 Q100 20 116 5" fill="none" stroke="#c8aa6e" stroke-width="4"/>
-    <path d="M50 72 L50 182 M150 72 L150 182" stroke="#c8aa6e" stroke-opacity=".35" stroke-width="6"/>
+    <path d="M62 12 L84 5 Q100 20 116 5 L138 12 L194 42 L174 84 L150 72 L150 182 L50 182 L50 72 L26 84 L6 42 Z" fill="url(#${id})" stroke="#d9a82b" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M84 5 Q100 20 116 5" fill="none" stroke="#d9a82b" stroke-width="4"/>
+    <path d="M50 72 L50 182 M150 72 L150 182" stroke="#d9a82b" stroke-opacity=".35" stroke-width="6"/>
     <text x="100" y="62" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="${fs}" letter-spacing="1.5" fill="#f0e6d2">${name}</text>
-    <text x="100" y="128" text-anchor="middle" font-family="'Bebas Neue', Inter, sans-serif" font-size="44" font-weight="700" fill="#c8aa6e">${esc(roleShort || '?')}</text>
+    <text x="100" y="128" text-anchor="middle" font-family="'Bebas Neue', Inter, sans-serif" font-size="44" font-weight="700" fill="#d9a82b">${esc(roleShort || '?')}</text>
   </svg>`;
 }
 
