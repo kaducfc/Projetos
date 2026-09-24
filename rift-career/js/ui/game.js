@@ -226,6 +226,7 @@ function eventPanel(state) {
   const done = scr.choice !== null;
   const outcome = done ? (scr.ok ? ev.choices[scr.choice].ok : ev.choices[scr.choice].fail) : null;
   return `
+  ${scr.recap ? recapCard(state, scr.recap) : ''}
   <div class="panel event">
     <div class="scene scene-${ev.scene}"><span class="scene-icon">${ev.icon}</span></div>
     <div class="event-body">
@@ -252,7 +253,7 @@ function eventPanel(state) {
         const pct = scr.chances[i];
         return `<button class="choice${done && scr.choice === i ? ' picked' : ''}" data-act="choice" data-i="${i}" ${done ? 'disabled' : ''}>
           <div class="choice-txt"><b>${esc(c.label)}</b><small>${pct}%: ${fill(c.good, state)}. Erro: ${fill(c.bad, state)}</small></div>
-          <div class="odds"><span class="o-ok" style="flex:${pct}">${pct}%</span><span class="o-bad" style="flex:${100 - pct}">${100 - pct}%</span></div>
+          <div class="odds"><span class="o-ok" style="flex:${pct}">${pct >= 15 ? `${pct}%` : ''}</span><span class="o-bad" style="flex:${100 - pct}">${100 - pct >= 15 ? `${100 - pct}%` : ''}</span></div>
           <span class="arrow">→</span>
         </button>`;
       }).join('')}
@@ -346,18 +347,39 @@ function stagePanel(state) {
   </div>`;
 }
 
+function intlTitle(r, me) {
+  if (!r.eliminated) return r.name === 'Mundial' ? 'Campeões do mundo!' : `Campeões do ${r.name}!`;
+  if (r.swiss && !r.advanced) return 'Eliminados na fase suíça';
+  if (!r.advanced) return 'Eliminados no play-in';
+  const lost = r.matches.find((m) => (m.a === me || m.b === me) && m.winner !== me);
+  return lost ? `Eliminados: ${lost.label.toLowerCase()}` : 'Eliminados';
+}
+
+// Resumo do First Stand/MSI no topo da decisão seguinte (sem clique extra).
+function recapCard(state, r) {
+  const me = state.season.teamId;
+  const champ = teamOf(state, r.championId);
+  const mine = r.matches.filter((m) => m.a === me || m.b === me);
+  return `
+  <div class="recap ${r.eliminated ? 'lost' : 'won'}">
+    <div class="recap-head">
+      <span class="eyebrow intl">🏆 ${esc(r.name)} ${state.season.year}</span>
+      <b>${intlTitle(r, me)}</b>
+      <span class="muted small">Campeão: ${esc(champ.name)}</span>
+    </div>
+    <div class="matches">${mine.map((m) => matchRow(state, m)).join('')}</div>
+    <details class="stage-details">
+      <summary>Ver chave completa</summary>
+      <div class="matches">${r.matches.map((m) => matchRow(state, m)).join('')}</div>
+    </details>
+  </div>`;
+}
+
 function intlPanel(state) {
   const scr = state.screen;
   const me = state.season.teamId;
   const champ = teamOf(state, scr.championId);
-  let title;
-  if (!scr.eliminated) title = scr.name === 'Mundial' ? 'Campeões do mundo!' : `Campeões do ${scr.name}!`;
-  else if (scr.swiss && !scr.advanced) title = 'Eliminados na fase suíça';
-  else if (!scr.advanced) title = 'Eliminados no play-in';
-  else {
-    const lost = scr.matches.find((m) => (m.a === me || m.b === me) && m.winner !== me);
-    title = lost ? `Eliminados: ${lost.label.toLowerCase()}` : 'Eliminados';
-  }
+  const title = intlTitle(scr, me);
   return `
   <div class="panel">
     <div class="eyebrow intl">${scr.name === 'Mundial' ? '🌍' : '🏆'} ${scr.name} ${state.season.year}</div>

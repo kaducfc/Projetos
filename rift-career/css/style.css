@@ -369,6 +369,20 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .stars { color: var(--gold-2); letter-spacing: 1px; }
 .stars i { font-style: normal; color: #34414d; }
 
+/* resumo de First Stand / MSI */
+.recap {
+  border: 1px solid rgba(31, 209, 193, 0.35);
+  background: linear-gradient(180deg, rgba(31, 209, 193, 0.08), var(--panel));
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.recap.won { border-color: rgba(240, 213, 140, 0.6); background: linear-gradient(180deg, rgba(200, 170, 110, 0.14), var(--panel)); }
+.recap-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.recap-head b { font-family: var(--display); font-weight: 400; font-size: 28px; line-height: 1; }
+.recap .stage-details { margin-top: 0; }
+
 /* evento */
 .event { padding: 0; overflow: hidden; }
 .scene {

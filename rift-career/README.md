@@ -61,7 +61,8 @@ amadoras) jogam só os dois splits.
 
 Cada temporada tem **3 decisões** (eventos de história), uma antes de cada
 etapa. Cada etapa (fase de pontos + playoffs) é simulada de uma vez e
-aparece numa tela só. Se não chegar nenhuma proposta e o contrato ainda
+aparece numa tela só. First Stand e MSI não têm tela própria: o resumo
+aparece no topo da decisão seguinte. Só o Mundial tem tela. Se não chegar nenhuma proposta e o contrato ainda
 estiver em vigor, a janela de transferências é pulada.
 
 Simplificações: os playoffs são de eliminação simples (na vida real a

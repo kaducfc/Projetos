@@ -503,7 +503,7 @@ function winIntl(state, name) {
 
 // First Stand e MSI: os times mais fracos disputam um play-in até sobrar
 // uma chave de 8. Mundial: fase suíça + chave de 8.
-// Retorna true se o time do jogador participou (e há tela para mostrar).
+// Retorna true quando há tela para mostrar (Mundial com o time do jogador).
 function runIntl(state, key) {
   const s = state.season;
   const { name } = INTL[key];
@@ -563,9 +563,14 @@ function runIntl(state, key) {
   s.intl[key] = !involved ? 'out' : champ === s.teamId ? 'champion' : 'eliminated';
   if (!involved) return false;
   if (champ === s.teamId) winIntl(state, name);
-  state.screen = {
-    type: 'intl', key, name, swiss, advanced, matches, championId: champ, eliminated: champ !== s.teamId,
-  };
+  const result = { key, name, swiss, advanced, matches, championId: champ, eliminated: champ !== s.teamId };
+  // First Stand e MSI não têm tela própria: o resumo aparece no topo da
+  // próxima decisão. Só o Mundial ganha tela.
+  if (key !== 'worlds') {
+    s.recap = result;
+    return false;
+  }
+  state.screen = { type: 'intl', ...result };
   return true;
 }
 
@@ -586,7 +591,9 @@ function eventScreen(state, stage) {
     return Math.round(clamp(c.base + attrBonus + (p.morale - 50) * 0.1, 5, 95));
   });
   const label = STAGE_LABELS[state.season.tier === 1 ? 1 : 'lower'][stage];
-  state.screen = { type: 'event', stage, label, eventId: ev.id, chances, choice: null, ok: null, ovrDelta: 0 };
+  const recap = state.season.recap || null;
+  state.season.recap = null;
+  state.screen = { type: 'event', stage, label, eventId: ev.id, chances, choice: null, ok: null, ovrDelta: 0, recap };
 }
 
 export function chooseEvent(state, index) {
