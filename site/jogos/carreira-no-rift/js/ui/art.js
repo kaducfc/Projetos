@@ -37,10 +37,11 @@ if (typeof window !== 'undefined') {
       let n = 0;
       for (let i = 0; i < px.length; i += 4) {
         if (px[i + 3] < 128) continue;
-        lum += 0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2];
+        // Brilho = canal mais forte: vermelho/roxo vivos não contam como escuros.
+        lum += Math.max(px[i], px[i + 1], px[i + 2]);
         n += 1;
       }
-      if (n && lum / n < 70) img.classList.add('dark');
+      if (n && lum / n < 80) img.classList.add('dark');
     } catch { /* imagem de outra origem: fica como está */ }
   };
 }
