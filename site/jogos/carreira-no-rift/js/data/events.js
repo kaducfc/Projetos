@@ -1,5 +1,6 @@
 // Eventos narrativos. Cada escolha tem uma chance base de dar certo; `attr`
-// indica qual atributo aumenta (ou diminui) essa chance.
+// indica qual atributo aumenta (ou diminui) essa chance. A chance final fica
+// sempre entre 20% e 80% (ver CHANCE_MIN/CHANCE_MAX em engine/career.js).
 //
 // fx: mec/rota/macro/tf/mental = pontos de atributo,
 //     morale = confiança do técnico, fame = reputação.

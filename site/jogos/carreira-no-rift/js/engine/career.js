@@ -666,6 +666,10 @@ function runIntl(state, key) {
 
 // ---------------------------------------------------------------- eventos
 
+// Nenhuma escolha é garantida nem impossível: chance sempre entre 20% e 80%.
+const CHANCE_MIN = 20;
+const CHANCE_MAX = 80;
+
 // Escolhas do evento que valem para a rota do jogador (índices originais).
 function choicesFor(ev, role) {
   return ev.choices.map((c, idx) => ({ c, idx })).filter(({ c }) => roleAllows(c, role));
@@ -683,7 +687,7 @@ function eventScreen(state, stage) {
 
   const options = choicesFor(ev, p.role).map(({ c, idx }) => {
     const attrBonus = c.attr ? (p.attrs[c.attr] - 60) * 0.5 : 0;
-    return { idx, chance: Math.round(clamp(c.base + attrBonus + (p.morale - 50) * 0.1, 5, 95)) };
+    return { idx, chance: Math.round(clamp(c.base + attrBonus + (p.morale - 50) * 0.1, CHANCE_MIN, CHANCE_MAX)) };
   });
   const label = STAGE_LABELS[state.season.tier === 1 ? 1 : 'lower'][stage];
   const recap = state.season.recap || null;
@@ -693,7 +697,8 @@ function eventScreen(state, stage) {
 
 // Opções da tela de evento (compatível com saves antigos, que tinham `chances`).
 export function eventOptions(scr) {
-  return scr.options || scr.chances.map((chance, idx) => ({ idx, chance }));
+  const opts = scr.options || scr.chances.map((chance, idx) => ({ idx, chance }));
+  return opts.map((o) => ({ ...o, chance: clamp(o.chance, CHANCE_MIN, CHANCE_MAX) }));
 }
 
 export function chooseEvent(state, pos) {
