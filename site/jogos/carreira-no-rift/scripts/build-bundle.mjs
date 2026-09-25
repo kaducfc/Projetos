@@ -1,11 +1,15 @@
 // Empacota o jogo num único HTML autocontido (CSS + todos os módulos JS),
 // útil para publicar como Artifact ou mandar o arquivo para alguém.
-// Uso: node scripts/build-bundle.mjs > bundle.html
-import { readFileSync } from 'node:fs';
+// Uso: node scripts/build-bundle.mjs [--logos=oficiais|escudos] > bundle.html
+// As imagens dos times (shared/assets/times e emblemas) vão embutidas no arquivo.
+// --logos troca o modo de TEAM_LOGOS só nesta versão (útil para testar as logos).
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const assetsDir = resolve(root, '../../shared/assets');
+const logosMode = process.argv.find((a) => a.startsWith('--logos='))?.slice('--logos='.length);
 const order = [];
 const seen = new Set();
 
@@ -22,7 +26,11 @@ visit(join(root, 'js/main.js'));
 const key = (file) => relative(root, file);
 const modules = order.map(({ file, src }) => {
   const exported = [];
-  let body = src.replace(/import\s*\*\s*as\s+(\w+)\s*from\s*'([^']+)';?/g, (_, name, from) => `const ${name} = __m['${key(join(dirname(file), from))}'];`);
+  let body = src;
+  if (logosMode && key(file).endsWith('shared/config.js')) {
+    body = body.replace(/export const TEAM_LOGOS = '[^']*'/, `export const TEAM_LOGOS = '${logosMode}'`);
+  }
+  body = body.replace(/import\s*\*\s*as\s+(\w+)\s*from\s*'([^']+)';?/g, (_, name, from) => `const ${name} = __m['${key(join(dirname(file), from))}'];`);
   body = body.replace(/import\s*\{([^}]*)\}\s*from\s*'([^']+)';?/g, (_, names, from) => {
     const binds = names.split(',').map((n) => n.trim()).filter(Boolean)
       .map((n) => n.replace(/\s+as\s+/, ': ')).join(', ');
@@ -45,11 +53,21 @@ const body = html.match(/<body>([\s\S]*)<\/body>/)[1]
   .replace(/<script type="module"[^>]*><\/script>\s*/, '')
   .replace(/<noscript>[\s\S]*?<\/noscript>\s*/, '');
 
+const logoData = {};
+for (const dir of ['times', 'emblemas']) {
+  const d = join(assetsDir, dir);
+  if (!existsSync(d)) continue;
+  for (const f of readdirSync(d).filter((x) => x.endsWith('.png'))) {
+    logoData[`${dir}/${f}`] = `data:image/png;base64,${readFileSync(join(d, f)).toString('base64')}`;
+  }
+}
+
 // O arquivo único não alcança o servidor do site: roda em modo visitante.
 process.stdout.write(`${head.trim()}
 ${body.trim()}
 <script>
 window.__SITE_OFFLINE = true;
+window.__TEAM_LOGO_DATA = ${JSON.stringify(logoData)};
 const __m = {};
 ${modules.join('\n')}
 </script>

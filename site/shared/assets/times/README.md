@@ -13,6 +13,11 @@ usar estas imagens.
 - Academias usam a logo do time principal automaticamente.
 - Times amadores (fictícios) continuam com o escudo gerado.
 - Time sem arquivo aqui também continua com o escudo gerado.
+- Logos escuras (pretas) ganham um contorno claro automático para aparecer
+  no fundo preto do site. Se existir a versão branca/clara da logo, ela
+  fica ainda melhor.
+- Para testar as logos na versão em arquivo único:
+  `node jogos/carreira-no-rift/scripts/build-bundle.mjs --logos=oficiais > teste.html`
 
 | Região | Arquivos |
 |---|---|

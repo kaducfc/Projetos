@@ -10,12 +10,39 @@ let uid = 0;
 // amadores (fictícios) usam só o escudo gerado. Sem arquivo, o escudo gerado
 // continua aparecendo.
 const ASSETS = '../../shared/assets/';
+// Na versão em arquivo único (scripts/build-bundle.mjs) as imagens vêm embutidas.
+const EMBEDDED = typeof window !== 'undefined' ? window.__TEAM_LOGO_DATA : null;
 
 function logoSrc(team) {
   if (team.tier === 3) return null;
   const id = team.id.replace(/_ac$/, '');
   const official = TEAM_LOGOS === 'oficiais' || OFFICIAL_LOGOS_ALLOWED.includes(id);
-  return `${ASSETS}${official ? 'times' : 'emblemas'}/${id}.png`;
+  const path = `${official ? 'times' : 'emblemas'}/${id}.png`;
+  if (EMBEDDED) return EMBEDDED[path] || null;
+  return ASSETS + path;
+}
+
+// Quando a logo carrega, o escudo gerado sai. Logos escuras (ex.: pretas)
+// sumiriam no fundo preto do site, então ganham um contorno claro.
+if (typeof window !== 'undefined') {
+  window.__badgeLogoLoaded = (img) => {
+    img.previousElementSibling?.remove();
+    try {
+      const c = document.createElement('canvas');
+      c.width = c.height = 32;
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0, 32, 32);
+      const px = ctx.getImageData(0, 0, 32, 32).data;
+      let lum = 0;
+      let n = 0;
+      for (let i = 0; i < px.length; i += 4) {
+        if (px[i + 3] < 128) continue;
+        lum += 0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2];
+        n += 1;
+      }
+      if (n && lum / n < 70) img.classList.add('dark');
+    } catch { /* imagem de outra origem: fica como está */ }
+  };
 }
 
 function shieldSvg(team, size) {
@@ -32,7 +59,7 @@ export function teamBadge(team, size = 28) {
   const shield = shieldSvg(team, size);
   if (!src) return `<span class="badge">${shield}</span>`;
   // A logo carrega por cima; quando carrega, o escudo sai. Se falhar, a logo sai.
-  return `<span class="badge" style="width:${size}px;height:${Math.round(size * 1.15)}px">${shield}<img class="badge-logo" src="${src}" alt="" loading="lazy" onload="this.previousElementSibling?.remove()" onerror="this.remove()"></span>`;
+  return `<span class="badge" style="width:${size}px;height:${Math.round(size * 1.15)}px">${shield}<img class="badge-logo" src="${src}" alt="" loading="lazy" onload="__badgeLogoLoaded(this)" onerror="this.remove()"></span>`;
 }
 
 const TONES = {
