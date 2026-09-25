@@ -205,7 +205,12 @@ em `engine/player.js`, `engine/sim.js` ou `engine/career.js`.
 - **Placeholders:** `{nick}`, `{team}`, `{league}`, `{doLeague}` ("do CBLOL",
   "da LCK"), `{naLeague}` ("no CBLOL", "na LCK") e `{lane}`.
 - **Times:** `TIER1` em `js/data/world.js` (id, nome, sigla, rating, cores).
+  Times que saíram (ex.: FPX, 100 Thieves) ficam em `RETIRED_TEAMS`: só
+  voltam em saves antigos que os citam, fora das ligas e das propostas.
   As academias são geradas a partir dos 8 primeiros times de cada região.
 
-Os nomes de times e ligas reais aparecem só como referência de fã. Os
-escudos são gerados (sigla + cores), sem logos oficiais.
+Os nomes de times e ligas reais aparecem só como referência de fã. Por
+padrão o jogo mostra as logos oficiais de `shared/assets/times/`
+(`TEAM_LOGOS = 'oficiais'` em `shared/config.js`); trocando para `'escudos'`,
+volta aos escudos próprios/gerados (sigla + cores). Times sem arquivo e os
+times amadores fictícios sempre usam o escudo gerado.

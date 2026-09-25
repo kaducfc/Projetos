@@ -16,11 +16,13 @@ export const SUPABASE_ANON_KEY = '';
 export const DONATION_URL = '';
 
 // Logos dos times nos jogos:
-//   'escudos'  → escudo próprio do site (padrão). Usa a arte em
-//                assets/emblemas/<id>.png se existir; senão, o escudo gerado.
 //   'oficiais' → logo oficial em assets/times/<id>.png para todos os times
-//                que tiverem o arquivo.
-export const TEAM_LOGOS = 'escudos';
+//                que tiverem o arquivo (padrão atual).
+//   'escudos'  → escudo próprio do site. Usa a arte em
+//                assets/emblemas/<id>.png se existir; senão, o escudo gerado.
+// Se algum time pedir para tirar a logo, troque para 'escudos' e libere só
+// quem autorizou em OFFICIAL_LOGOS_ALLOWED.
+export const TEAM_LOGOS = 'oficiais';
 
 // Times com logo oficial liberada mesmo no modo 'escudos' (ex.: times que
 // autorizaram o uso). Use o id do time, como em assets/times/README.md.

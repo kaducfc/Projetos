@@ -1,7 +1,8 @@
 # Logos oficiais dos times
 
-Usadas quando `TEAM_LOGOS = 'oficiais'` em `shared/config.js`, ou só para os
-times listados em `OFFICIAL_LOGOS_ALLOWED` (ex.: times que autorizaram).
+Usadas quando `TEAM_LOGOS = 'oficiais'` em `shared/config.js` (o padrão
+atual), ou só para os times listados em `OFFICIAL_LOGOS_ALLOWED` no modo
+`'escudos'` (ex.: times que autorizaram).
 Os escudos próprios do site ficam em `../emblemas/`, com os mesmos nomes.
 
 Coloque aqui as logos em **PNG com fundo transparente**, com o nome do
@@ -10,6 +11,10 @@ usar estas imagens.
 
 - Tamanho recomendado: **256×256 px**, logo centralizada, com uma pequena
   margem. Tente deixar cada arquivo com menos de ~30 KB.
+- As logos atuais foram padronizadas: margens transparentes cortadas e
+  cada logo centralizada num quadrado de 256×256 com o mesmo "tamanho
+  visual" (logos quadradas um pouco menores, logos só de texto usando a
+  largura toda). Ao trocar uma logo, siga o mesmo padrão.
 - Academias usam a logo do time principal automaticamente.
 - Times amadores (fictícios) continuam com o escudo gerado.
 - Time sem arquivo aqui também continua com o escudo gerado.
