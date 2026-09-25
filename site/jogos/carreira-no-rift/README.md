@@ -138,8 +138,8 @@ pagam mais, CBLOL bem menos). Premiações (parte do jogador, em US$):
 A Copa paga 60% de um split; academias pagam 2 mil ao campeão e ligas
 amadoras 600. Prêmios individuais: MVP de 3 a 10 mil (conforme a liga),
 Seleção metade disso, Revelação 3 mil e MVP da Final do Mundial 20 mil.
-O balanço de cada temporada mostra os ganhos, e o relatório final mostra o
-total arrecadado.
+O dinheiro só aparece no relatório final da aposentadoria (total arrecadado,
+salários e premiações); durante a carreira o foco fica no jogo.
 
 **Pontos de legado:** OVR máximo × 2, títulos (Mundial 120, MSI 60, First
 Stand 35, liga principal 20, academia 8, amadora 4), prêmios (MVP da Final

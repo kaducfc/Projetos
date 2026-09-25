@@ -419,16 +419,6 @@ function intlPanel(state) {
   </div>`;
 }
 
-// Ganhos da temporada: salário do ano + premiações (com a origem de cada uma).
-function earningsBlock(e) {
-  return `
-  <div class="earnings">
-    <div class="earn-total"><small>Ganhos na temporada</small><b>${fmtMoney(e.salary + e.prizes)}</b></div>
-    <div class="earn-split"><span>Salário <b>${fmtMoney(e.salary)}</b></span><span>Premiações <b>${fmtMoney(e.prizes)}</b></span></div>
-    ${e.items.length ? `<ul class="earn-items">${e.items.map((i) => `<li><span>${esc(i.label)}</span><b>${fmtMoney(i.amount)}</b></li>`).join('')}</ul>` : ''}
-  </div>`;
-}
-
 function seasonEndPanel(state) {
   const scr = state.screen;
   const p = state.player;
@@ -452,7 +442,6 @@ function seasonEndPanel(state) {
       <div><small>POG</small><b>${st.pog}</b></div>
     </div>
     ${all.length ? `<div class="season-trophies">${all.map((t) => `<div class="st-item">${trophySvg(t.kind, 40)}<div><b>${esc(t.name)}</b><small>${esc(t.detail)}</small></div></div>`).join('')}</div>` : '<p class="muted">Nenhum título nesta temporada.</p>'}
-    ${scr.earnings ? earningsBlock(scr.earnings) : ''}
     ${scr.loanNext ? '<div class="note warn">Temporada difícil. A diretoria está pensando em te emprestar para outro time na próxima janela.</div>' : ''}
     ${scr.forced ? `<div class="note">${p.age >= 35 ? `Aos ${p.age} anos, é hora de pendurar o mouse.` : 'Sem espaço no cenário, você decide encerrar a carreira.'}</div>` : ''}
     <div class="actions">
