@@ -197,13 +197,13 @@ function fallbackOffers(state, max) {
     .map((t) => makeOffer(state, t));
 }
 
-// Empréstimo forçado: até 2 times mais fracos que o atual (mesma região),
-// onde o jogador teria minutos. Sem opção possível, não há empréstimo.
+// Empréstimo forçado: até 2 times do mesmo nível ou mais fracos que o atual
+// (mesma região, nunca melhores). Sem opção possível, não há empréstimo.
 function loanOffers(state) {
   const p = state.player;
   const cur = teamOf(state, p.teamId);
   const pool = Object.values(state.world.teams).filter((t) => t.region === cur.region && t.id !== cur.id
-    && t.tier >= cur.tier && t.rating < cur.rating - 2);
+    && t.tier >= cur.tier && t.rating <= cur.rating);
   return pool
     .sort((a, b) => b.rating - a.rating)
     .slice(0, 4)

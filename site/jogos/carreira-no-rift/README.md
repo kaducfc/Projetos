@@ -88,7 +88,7 @@ LEC, LCS), academias e ligas amadoras.
   (LEC/LCS a partir de ~76, LCK/LPL a partir de ~83).
 - **Empréstimo:** depois de uma temporada muito ruim (quase não jogou, nível
   bem abaixo do time ou em atrito com o técnico), a diretoria pode emprestar
-  o jogador por 1 temporada a um time mais fraco. Não há opção de ficar; no
+  o jogador por 1 temporada a um time do mesmo nível ou mais fraco (nunca melhor). Não há opção de ficar; no
   fim, ele volta ao clube de origem (se ainda houver contrato) ou recebe
   outras propostas.
 
