@@ -26,7 +26,7 @@ export function createPlayer({ nick, nat, region, role, style, attrs }) {
     nick, nat, role, style, region,
     attrs: { ...attrs },
     // Mediana ~77; 90+ só para ~6%; potencial de lenda (93+) é bem raro.
-    potential: 74 + Math.round(18 * Math.pow(Math.random(), 1.9)),
+    potential: 74 + Math.round(21 * Math.pow(Math.random(), 1.9)),
     age: 16,
     morale: 55,
     fame: 5,

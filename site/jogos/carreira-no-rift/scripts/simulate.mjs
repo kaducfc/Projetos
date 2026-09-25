@@ -8,7 +8,7 @@ import { ROLES } from '../js/data/world.js';
 const N = Number(process.argv[2] || 500);
 const NAT = process.argv[3] || 'BR';
 const roles = Object.keys(ROLES);
-const agg = { peak: [], seasons: [], worlds: 0, msi: 0, t1: 0, legacy: {}, t1Players: 0, abroad: 0, games: [], windows: 0, maxOptions: 0, optionHist: {}, bets: 0, betTaken: 0, loans: 0, entries: 0, entryTaken: 0, climbed: 0, strong: 0, peakStrong: [], peakHome: [] };
+const agg = { peak: [], seasons: [], worlds: 0, msi: 0, t1: 0, legacy: {}, t1Players: 0, abroad: 0, games: [], windows: 0, maxOptions: 0, optionHist: {}, bets: 0, betTaken: 0, loans: 0, entries: 0, entryTaken: 0, climbed: 0, strong: 0, peakStrong: [], peakHome: [], intlBy: {} };
 const STRATEGY = process.argv[4] || 'ambicioso';
 
 for (let i = 0; i < N; i++) {
@@ -47,6 +47,10 @@ for (let i = 0; i < N; i++) {
   agg.games.push(p.stats.games / Math.max(1, p.history.length));
   agg.worlds += p.trophies.filter((t) => t.name === 'Mundial').length;
   agg.msi += p.trophies.filter((t) => t.name === 'MSI').length;
+  for (const t of p.trophies.filter((x) => x.kind === 'intl')) {
+    const k = `${t.name} · ${teamOf(state, t.teamId).region}`;
+    agg.intlBy[k] = (agg.intlBy[k] || 0) + 1;
+  }
   agg.t1 += p.trophies.filter((t) => t.kind === 'league' && t.tier === 1).length;
   if (p.history.some((h) => h.tier === 1)) agg.t1Players++;
   if (p.history.some((h) => teamOf(state, h.teamId).region !== p.region)) agg.abroad++;
@@ -69,6 +73,8 @@ console.log(`temporadas: média ${avg(agg.seasons)} · jogos/temporada ${avg(agg
 console.log(`chegou ao tier 1: ${(agg.t1Players / N * 100).toFixed(0)}% · jogou no exterior: ${(agg.abroad / N * 100).toFixed(0)}%`);
 console.log(`títulos por carreira: liga T1 ${(agg.t1 / N).toFixed(2)} · MSI ${(agg.msi / N).toFixed(2)} · Mundial ${(agg.worlds / N).toFixed(2)}`);
 console.log(`estratégia: ${STRATEGY}`);
+console.log('títulos internacionais por região do time (por 1000 carreiras):',
+  Object.fromEntries(Object.entries(agg.intlBy).sort().map(([k, v]) => [k, +(v / N * 1000).toFixed(1)])));
 console.log(`janelas: ${agg.windows} · máx. opções numa janela: ${agg.maxOptions} · distribuição:`, agg.optionHist);
 console.log(`janelas com aposta: ${(agg.bets / agg.windows * 100).toFixed(1)}% · apostas aceitas: ${agg.betTaken} · empréstimos: ${(agg.loans / N).toFixed(2)} por carreira`);
 console.log(`jogou na LCK/LPL: ${(agg.strong / N * 100).toFixed(0)}% · OVR pico de quem foi: ${agg.peakStrong.length ? avg(agg.peakStrong) : '—'} · de quem não foi: ${agg.peakHome.length ? avg(agg.peakHome) : '—'}`);

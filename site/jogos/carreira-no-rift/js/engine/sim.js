@@ -4,6 +4,15 @@ import { poisson, rand, shuffle } from '../util.js';
 // Diferença de 10 pontos de força ≈ 74% de vitória por partida.
 export const winProb = (a, b) => 1 / (1 + Math.pow(10, (b - a) / 22));
 
+// Forma de um time numa etapa/torneio. Quase sempre oscila pouco, mas às
+// vezes o time vive uma fase iluminada (a "zebra"): é o que dá a qualquer
+// time uma chance, mesmo pequena, de ser campeão.
+export const HOT_STREAK = { chance: 0.1, min: 5, max: 13 };
+export function formRoll(spread) {
+  const hot = Math.random() < HOT_STREAK.chance ? rand(HOT_STREAK.min, HOT_STREAK.max) : 0;
+  return rand(-spread, spread) + hot;
+}
+
 export function simGame(powerA, powerB) {
   return Math.random() < winProb(powerA + rand(-3, 3), powerB + rand(-3, 3));
 }

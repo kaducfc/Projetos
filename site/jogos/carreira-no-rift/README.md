@@ -115,12 +115,28 @@ OVR crescer mais e aumenta o teto (potencial) do jogador.
 | CBLOL (Brasil) | base | — |
 
 Títulos internacionais e prêmios de MVP também aumentam o teto em +0,5.
-Quem já tem potencial 84+ ganha só 20% desses aumentos (teto máximo 96).
+Quem já tem potencial 88+ ganha só 60% desses aumentos (teto máximo 96).
 
-**Distribuição esperada** (2.500 carreiras simuladas no Brasil): OVR máximo
-mediano ~79; <75 ~12%, 75–79 ~41%, 80–84 ~25%, 85–89 ~17% e 90+ ~5%.
-Chegar a 80 já é uma boa carreira; 90+ é para poucos. Cerca de 55% das
+**Distribuição esperada** (3.000 carreiras simuladas no Brasil): OVR máximo
+mediano ~80; <75 ~14%, 75–79 ~35%, 80–84 ~20%, 85–89 ~17% e 90+ ~15%.
+Chegar a 80 já é uma boa carreira; 90+ é para poucos. Cerca de 58% das
 carreiras passam pela LCK/LPL.
+
+**Zebras:** a forma de cada time numa etapa ou torneio oscila um pouco, e
+em 10% das vezes o time vive uma "fase iluminada" (+5 a +13 de força). Assim
+qualquer time pode ser campeão, cada um com a sua dificuldade. Chance de
+título por temporada (`node scripts/odds.mjs`):
+
+| Time | Liga | MSI | Mundial |
+|---|---|---|---|
+| Gen.G (LCK, 91) | ~35% | ~26% | ~21% |
+| G2 (LEC, 85) | ~36% | ~7% | ~5% |
+| FlyQuest (LCS, 81) | ~31% | ~2% | ~1% |
+| paiN (CBLOL, 78) | ~26% | ~0,5% | ~0,4% |
+| Pior time da LCK (75) | ~0,4% | — | — |
+
+Somando todos os times do CBLOL, o Brasil ganha ~1% dos MSIs e ~0,6% dos
+Mundiais: quase impossível, mas não zero.
 
 **Curva de evolução:** começa devagar aos 16–17, cresce forte dos 18 aos 22 e
 chega ao auge entre 19 e 24 anos. Dos 25 aos 26 mantém ou cresce pouco, e a
@@ -180,6 +196,7 @@ carreira-no-rift/
 │       ├── create.js      # tela de criação
 │       └── game.js        # tela principal
 ├── scripts/simulate.mjs   # simula milhares de carreiras para balanceamento
+├── scripts/odds.mjs       # chance de título de cada time (ligas e internacionais)
 └── scripts/build-bundle.mjs  # gera um HTML único com tudo embutido
 ```
 
@@ -187,6 +204,7 @@ carreira-no-rift/
 
 ```bash
 node scripts/simulate.mjs 1000 BR   # quantidade de carreiras, país
+node scripts/odds.mjs 4000          # chance de título de cada time
 ```
 
 Mostra a distribuição do OVR máximo, quantos jogadores chegam ao tier 1, a

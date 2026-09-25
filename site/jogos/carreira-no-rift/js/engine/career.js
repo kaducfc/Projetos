@@ -8,7 +8,7 @@ import { EVENTS, eventById, roleAllows } from '../data/events.js';
 import {
   createPlayer, ovrOf, effectiveOvr, applyFx, seasonGrowth, salaryFor, statusFor, STATUS,
 } from './player.js';
-import { simGame, simSeries, roundRobin, gameStats } from './sim.js';
+import { simGame, simSeries, roundRobin, gameStats, formRoll } from './sim.js';
 import { clamp, pick, rand, randInt, roll, shuffle, weightedPick } from '../util.js';
 
 export const START_YEAR = 2026;
@@ -467,7 +467,7 @@ function newSplit(state, kind) {
   const split = { kind, ...splitConfig(s, kind), ids, table: {}, form: {}, tb: {}, rounds: roundRobin(ids), played: 0 };
   ids.forEach((id) => {
     split.table[id] = { w: 0, l: 0 };
-    split.form[id] = rand(-4, 4);
+    split.form[id] = formRoll(4);
     split.tb[id] = Math.random();
   });
   return split;
@@ -618,7 +618,7 @@ function intlField(state, key) {
 // Forma de cada time no torneio internacional (sorteada uma vez por evento).
 function intlForm(state, ids) {
   const form = {};
-  ids.forEach((id) => { form[id] = rand(-5, 5); });
+  ids.forEach((id) => { form[id] = formRoll(5); });
   return form;
 }
 
@@ -723,6 +723,7 @@ function runIntl(state, key) {
     s.msiFinalRegions = [teamOf(state, final.a).region, teamOf(state, final.b).region];
   }
   s.intl[key] = !involved ? 'out' : champ === s.teamId ? 'champion' : 'eliminated';
+  s.intlChampions = { ...(s.intlChampions || {}), [key]: champ };
   if (involved) {
     // Fase alcançada: campeão, vice, semifinal, quartas ou antes disso.
     const lost = matches.find((m) => (m.a === s.teamId || m.b === s.teamId) && m.winner !== s.teamId);
@@ -863,7 +864,7 @@ function endSeason(state) {
   const tierFactor = { 1: 1, 2: 0.9, 3: 0.8 }[s.tier];
   const intlTitle = s.titles.some((t) => t.kind === 'intl');
   const mvp = s.awards.some((a) => a.name.startsWith('MVP'));
-  p.potential = Math.min(96, p.potential + ((level?.potential || 0) + (intlTitle ? 0.5 : 0) + (mvp ? 0.5 : 0)) * (p.potential >= 84 ? 0.2 : 1));
+  p.potential = Math.min(96, p.potential + ((level?.potential || 0) + (intlTitle ? 0.5 : 0) + (mvp ? 0.5 : 0)) * (p.potential >= 88 ? 0.6 : 1));
   const growth = seasonGrowth(p, { playedRatio, winRate, env: (level?.growth ?? 1) * tierFactor });
   const ovrEnd = ovrOf(p);
   p.lastSeason = {
@@ -969,3 +970,6 @@ export function retire(state) {
   state.player.retired = true;
   state.screen = { type: 'retired' };
 }
+
+// Só para scripts de balanceamento (scripts/odds.mjs).
+export const __runIntlForTests = runIntl;
