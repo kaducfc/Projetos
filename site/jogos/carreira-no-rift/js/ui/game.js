@@ -3,7 +3,9 @@
 import { ATTRS, REGIONS, ROLES, nationById, ofLeague, inLeague } from '../data/world.js';
 import { eventById, roleText } from '../data/events.js';
 import { ovrOf, marketValue, STATUS } from '../engine/player.js';
-import { teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore, eventOptions } from '../engine/career.js';
+import {
+  teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore, legacyBreakdown, careerEarnings, eventOptions,
+} from '../engine/career.js';
 import { teamBadge, trophySvg, stars } from './art.js';
 import { esc, fmtKda, fmtMoney, fmtSalary } from '../util.js';
 import { FAN_NOTICE, DONATION_NOTICE } from '../../../../shared/footer.js';
@@ -417,6 +419,16 @@ function intlPanel(state) {
   </div>`;
 }
 
+// Ganhos da temporada: salário do ano + premiações (com a origem de cada uma).
+function earningsBlock(e) {
+  return `
+  <div class="earnings">
+    <div class="earn-total"><small>Ganhos na temporada</small><b>${fmtMoney(e.salary + e.prizes)}</b></div>
+    <div class="earn-split"><span>Salário <b>${fmtMoney(e.salary)}</b></span><span>Premiações <b>${fmtMoney(e.prizes)}</b></span></div>
+    ${e.items.length ? `<ul class="earn-items">${e.items.map((i) => `<li><span>${esc(i.label)}</span><b>${fmtMoney(i.amount)}</b></li>`).join('')}</ul>` : ''}
+  </div>`;
+}
+
 function seasonEndPanel(state) {
   const scr = state.screen;
   const p = state.player;
@@ -440,6 +452,7 @@ function seasonEndPanel(state) {
       <div><small>POG</small><b>${st.pog}</b></div>
     </div>
     ${all.length ? `<div class="season-trophies">${all.map((t) => `<div class="st-item">${trophySvg(t.kind, 40)}<div><b>${esc(t.name)}</b><small>${esc(t.detail)}</small></div></div>`).join('')}</div>` : '<p class="muted">Nenhum título nesta temporada.</p>'}
+    ${scr.earnings ? earningsBlock(scr.earnings) : ''}
     ${scr.loanNext ? '<div class="note warn">Temporada difícil. A diretoria está pensando em te emprestar para outro time na próxima janela.</div>' : ''}
     ${scr.forced ? `<div class="note">${p.age >= 35 ? `Aos ${p.age} anos, é hora de pendurar o mouse.` : 'Sem espaço no cenário, você decide encerrar a carreira.'}</div>` : ''}
     <div class="actions">
@@ -460,7 +473,7 @@ export function careerSummaryText(state) {
   const clubs = [...new Set(p.history.map((h) => teamOf(state, h.teamId).tag))];
   return [
     `${nat.flag} ${p.nick} · ${ROLES[p.role].name} · ${legacy.title}`,
-    `${legacyScore(p)} pontos de legado · OVR máximo ${p.peakOvr} · ${p.history.length} temporadas · ${p.stats.games} jogos · KDA ${fmtKda(p.stats.k, p.stats.d, p.stats.a)}`,
+    `${legacyScore(p)} pontos de legado · ${fmtMoney(careerEarnings(p))} arrecadados · OVR máximo ${p.peakOvr} · ${p.history.length} temporadas · ${p.stats.games} jogos · KDA ${fmtKda(p.stats.k, p.stats.d, p.stats.a)}`,
     `🏆 ${leagues} ligas · ${count('MSI')} MSI · ${count('Mundial')} Mundial`,
     `Clubes: ${clubs.join(' → ')}`,
     '#CarreiraNoRift',
@@ -493,6 +506,7 @@ function retiredPanel(state) {
     </div>
     <div class="stat-row big">
       <div><small>Pontos de legado</small><b class="gold">${legacyScore(p)}</b></div>
+      <div><small>Dinheiro arrecadado</small><b class="money">${fmtMoney(careerEarnings(p))}</b></div>
       <div><small>OVR máximo</small><b>${p.peakOvr}</b></div>
       <div><small>Jogos</small><b>${st.games}</b></div>
       <div><small>Vitórias</small><b>${st.games ? Math.round((st.wins / st.games) * 100) : 0}%</b></div>
@@ -500,6 +514,12 @@ function retiredPanel(state) {
       <div><small>Abates</small><b>${st.k}</b></div>
       <div><small>POG</small><b>${st.pog}</b></div>
     </div>
+    <p class="muted small">Salários ${fmtMoney(p.earnings?.salary || 0)} · premiações ${fmtMoney(p.earnings?.prizes || 0)}</p>
+    <h4 class="sub-title">Como os pontos de legado foram calculados</h4>
+    <ul class="legacy-calc">
+      ${legacyBreakdown(p).map((x) => `<li><span>${esc(x.label)}</span><b>+${x.points}</b></li>`).join('')}
+      <li class="total"><span>Total</span><b>${legacyScore(p)}</b></li>
+    </ul>
     <h4 class="sub-title">Clubes</h4>
     <div class="spells">${spells.map((sp) => {
       const t = teamOf(state, sp.teamId);

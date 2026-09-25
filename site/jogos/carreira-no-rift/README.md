@@ -118,14 +118,36 @@ chega ao auge entre 19 e 24 anos. Dos 25 aos 26 mantém ou cresce pouco, e a
 queda começa por volta dos 27 (mais forte a partir dos 28). Ter 75+ aos 17–18
 anos é raro (~1% das carreiras, jogadores com potencial altíssimo).
 
+**Dinheiro:** cada temporada soma o salário do ano (contrato mensal × 12) e
+as premiações. O salário depende do OVR, da divisão e da liga (LPL e LCS
+pagam mais, CBLOL bem menos). Premiações (parte do jogador, em US$):
+
+| Torneio | Campeão | Vice | Semifinal | Quartas | Fase anterior |
+|---|---|---|---|---|---|
+| Mundial | 90 mil | 45 mil | 25 mil | 12 mil | 5 mil |
+| MSI | 50 mil | 25 mil | 12 mil | 6 mil | 3 mil |
+| First Stand | 40 mil | 20 mil | 10 mil | 5 mil | 2,5 mil |
+| Split da liga principal (LCK/LPL · LEC · LCS · CBLOL) | 30 · 20 · 18 · 8 mil | 50% | 25% | 10% | — |
+
+A Copa paga 60% de um split; academias pagam 2 mil ao campeão e ligas
+amadoras 600. Prêmios individuais: MVP de 3 a 10 mil (conforme a liga),
+Seleção metade disso, Revelação 3 mil e MVP da Final do Mundial 20 mil.
+O balanço de cada temporada mostra os ganhos, e o relatório final mostra o
+total arrecadado.
+
+**Pontos de legado:** OVR máximo × 2, títulos (Mundial 120, MSI 60, First
+Stand 35, liga principal 20, academia 8, amadora 4), prêmios (MVP da Final
+do Mundial 25, outros 10) e o dinheiro arrecadado, que conta pouco: +10 por
+US$ 100 mil, +20 por US$ 1 milhão, +30 por US$ 10 milhões. O relatório final
+mostra a conta.
+
 **Aposentadoria:** pode ser anunciada a partir dos 27 anos e é obrigatória
 aos 35. O relatório final mostra o legado, os clubes, os títulos e um resumo
 para compartilhar.
 
 O progresso é salvo pela plataforma do site (`site/shared/platform.js`):
 no navegador como visitante e na nuvem com conta. Ao se aposentar, a
-carreira entra no histórico com os **pontos de legado** (OVR máximo × 2 +
-títulos e prêmios).
+carreira entra no histórico com os **pontos de legado**.
 
 ## Estrutura
 

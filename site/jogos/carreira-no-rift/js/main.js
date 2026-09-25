@@ -1,4 +1,6 @@
-import { newCareer, chooseOffer, chooseEvent, advance, continueAfterSeason, retire, legacyLabel, legacyScore, teamOf } from './engine/career.js';
+import {
+  newCareer, chooseOffer, chooseEvent, advance, continueAfterSeason, retire, legacyLabel, legacyScore, careerEarnings, teamOf,
+} from './engine/career.js';
 import { renderCreate } from './ui/create.js';
 import { renderGame, careerSummaryText } from './ui/game.js';
 import { ROLES } from './data/world.js';
@@ -53,6 +55,7 @@ function recordIfRetired() {
       peakOvr: p.peakOvr,
       seasons: p.history.length,
       games: p.stats.games,
+      earnings: careerEarnings(p),
       titles: {
         ligas: p.trophies.filter((t) => t.kind === 'league').length,
         firstStand: count('First Stand'),

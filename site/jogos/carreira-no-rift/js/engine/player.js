@@ -34,6 +34,7 @@ export function createPlayer({ nick, nat, region, role, style, attrs }) {
     contract: null,
     status: 'titular',
     stats: { games: 0, wins: 0, k: 0, d: 0, a: 0, pog: 0 },
+    earnings: { salary: 0, prizes: 0 },
     history: [],
     trophies: [],
     usedEvents: [],
@@ -98,9 +99,15 @@ export function marketValue(p) {
   return Math.round(20000 * Math.exp((ovr - 50) / 7) * ageMult * (1 + p.fame / 200));
 }
 
-export function salaryFor(ovr, tier) {
-  const tierMult = { 1: 1.2, 2: 0.65, 3: 0.35 }[tier];
-  return Math.round(1500 * Math.exp((ovr - 55) / 9) * tierMult * rand(0.9, 1.15));
+// Salário mensal (US$). Depende do OVR, da divisão e de quanto cada liga
+// paga: LPL e LCS pagam mais, CBLOL bem menos. Cada divisão tem um piso.
+const REGION_PAY = { cn: 1.1, na: 1, kr: 0.9, eu: 0.8, br: 0.35, wc: 0.5 };
+const TIER_PAY = { 1: 1, 2: 0.4, 3: 0.2 };
+const TIER_FLOOR = { 1: 2500, 2: 800, 3: 400 };
+
+export function salaryFor(ovr, team) {
+  const pay = 1000 * Math.exp((ovr - 55) / 9) * TIER_PAY[team.tier] * (REGION_PAY[team.region] ?? 1);
+  return Math.round(Math.max(TIER_FLOOR[team.tier], pay) * rand(0.9, 1.15));
 }
 
 // Titular / disputa / reserva conforme o OVR em relação ao nível do time.

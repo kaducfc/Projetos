@@ -46,6 +46,26 @@ export function seasonStages(s) {
   });
 }
 
+// Premiações (parte do jogador, em US$), proporcionais ao peso de cada torneio.
+// Liga: valor do campeão por região; Copa paga 60% de um split. As demais
+// colocações recebem uma fração do valor do campeão.
+const LEAGUE_PRIZE = { kr: 30000, cn: 30000, eu: 20000, na: 18000, br: 8000 };
+const LOWER_PRIZE = { 2: 2000, 3: 600 };
+const PLACE_SHARE = { 1: 1, 2: 0.5, 3: 0.25, 4: 0.25, 5: 0.1, 6: 0.1 };
+// Internacionais por fase alcançada: 1 campeão, 2 vice, 3 semifinal, 5 quartas, 9 fase anterior.
+const INTL_PRIZE = {
+  worlds: { 1: 90000, 2: 45000, 3: 25000, 5: 12000, 9: 5000 },
+  msi: { 1: 50000, 2: 25000, 3: 12000, 5: 6000, 9: 3000 },
+  firstStand: { 1: 40000, 2: 20000, 3: 10000, 5: 5000, 9: 2500 },
+};
+
+function addPrize(state, label, amount) {
+  if (!amount) return;
+  const e = state.season.earnings;
+  e.prizes += amount;
+  e.items.push({ label, amount: Math.round(amount) });
+}
+
 // ---------------------------------------------------------------- helpers
 
 export const teamOf = (state, id) => state.world.teams[id];
@@ -113,7 +133,7 @@ function makeOffer(state, team, { first = false, bet = false, loan = false } = {
   if (bet && status === 'reserva') status = 'disputa';
   return {
     teamId: team.id,
-    salary: salaryFor(ovr, team.tier) * (bet ? 1.2 : 1),
+    salary: Math.round(salaryFor(ovr, team) * (bet ? 1.2 : 1)),
     years: loan ? 1 : first ? 2 : bet ? 2 : randInt(1, 3),
     status,
     ambition: loan ? 'Empréstimo de 1 temporada' : bet ? 'Aposta no seu potencial' : ambitionLabel(state, team),
@@ -295,7 +315,7 @@ export function offseasonScreen(state) {
   } else {
     const wanted = team.rating <= ovr + p.fame / 20 + 5 && p.morale >= 25;
     if (wanted) {
-      stay = { teamId: team.id, years: randInt(1, 3), salary: salaryFor(ovr, team.tier), renew: true };
+      stay = { teamId: team.id, years: randInt(1, 3), salary: salaryFor(ovr, team), renew: true };
       note = `Seu contrato acabou. ${team.name} quer renovar, e outros times estão de olho.`;
     } else {
       note = `Seu contrato acabou e ${team.name} não quis renovar.`;
@@ -362,6 +382,7 @@ function startSeason(state) {
     rankings: {},
     msiFinalRegions: [],
     intl: {},
+    earnings: { salary: 0, prizes: 0, items: [] },
     split: null,
   };
 }
@@ -543,6 +564,8 @@ function playoffs(state) {
 
   const placement = ranking.indexOf(s.teamId) + 1;
   s.placements[split.kind] = placement;
+  const top = s.tier === 1 ? LEAGUE_PRIZE[s.region] * (split.kind === 'cup' ? 0.6 : 1) : LOWER_PRIZE[s.tier];
+  if (PLACE_SHARE[placement]) addPrize(state, `${split.name} · ${placement}º lugar`, top * PLACE_SHARE[placement]);
 
   if (champ === s.teamId) {
     const detail = { 1: 'Liga principal', 2: 'Divisão de acesso', 3: 'Liga amadora' }[s.tier];
@@ -694,6 +717,14 @@ function runIntl(state, key) {
     s.msiFinalRegions = [teamOf(state, final.a).region, teamOf(state, final.b).region];
   }
   s.intl[key] = !involved ? 'out' : champ === s.teamId ? 'champion' : 'eliminated';
+  if (involved) {
+    // Fase alcançada: campeão, vice, semifinal, quartas ou antes disso.
+    const lost = matches.find((m) => (m.a === s.teamId || m.b === s.teamId) && m.winner !== s.teamId);
+    const finish = champ === s.teamId ? 1
+      : { Final: 2, Semifinal: 3, 'Quartas de final': 5 }[lost?.label] ?? 9;
+    const stage = { 1: 'campeão', 2: 'vice', 3: 'semifinal', 5: 'quartas de final', 9: 'fase inicial' }[finish];
+    addPrize(state, `${name} · ${stage}`, INTL_PRIZE[key][finish]);
+  }
   if (!involved) return false;
   if (champ === s.teamId) winIntl(state, name);
   const result = { key, name, swiss, advanced, matches, championId: champ, eliminated: champ !== s.teamId };
@@ -787,7 +818,13 @@ function computeAwards(state, playedRatio) {
     awards.push('MVP da Final do Mundial');
   }
 
+  const mvpPrize = s.tier === 1 ? { kr: 10000, cn: 10000, eu: 7000, na: 6000, br: 3000 }[s.region] : { 2: 1000, 3: 300 }[s.tier];
   for (const name of awards) {
+    const amount = name === 'MVP da Final do Mundial' ? 20000
+      : name.startsWith('MVP') ? mvpPrize
+        : name.startsWith('Seleção') ? mvpPrize / 2
+          : 3000;
+    addPrize(state, name, amount);
     const trophy = { kind: 'award', name, detail: 'Prêmio individual', year: s.year, teamId: s.teamId, tier: s.tier };
     p.trophies.push(trophy);
     s.awards.push(trophy);
@@ -828,9 +865,17 @@ function endSeason(state) {
     bestPlace: Math.min(99, ...Object.values(s.placements)),
   };
 
+  // Salário do ano (contrato mensal × 12) + premiações da temporada.
+  const earn = s.earnings || { salary: 0, prizes: 0, items: [] };
+  earn.salary = Math.round(p.contract.salary * 12);
+  p.earnings = p.earnings || { salary: 0, prizes: 0 };
+  p.earnings.salary += earn.salary;
+  p.earnings.prizes += earn.prizes;
+
   p.history.push({
     age: s.age, year: s.year, teamId: s.teamId, tier: s.tier, ovr: ovrEnd,
     games: st.games, wins: st.wins, k: st.k, d: st.d, a: st.a, pog: st.pog, titles: s.titles.length,
+    earnings: earn.salary + earn.prizes,
   });
   p.contract.years = Math.max(0, p.contract.years - 1);
   if (p.loan) p.loan.years = Math.max(0, p.loan.years - 1);
@@ -855,6 +900,7 @@ function endSeason(state) {
     stats: { ...st },
     titles: s.titles.slice(),
     awards: s.awards.slice(),
+    earnings: { salary: earn.salary, prizes: Math.round(earn.prizes), items: earn.items.slice() },
     forced,
     canRetire: p.age >= 27,
     loanNext: p.pendingLoan,
@@ -886,16 +932,31 @@ export function legacyLabel(p) {
   return { title: 'Talento que não decolou', tone: 'plain' };
 }
 
+export const careerEarnings = (p) => (p.earnings ? p.earnings.salary + p.earnings.prizes : 0);
+
+// Pontos de legado, parte por parte (o relatório final mostra a conta).
+export function legacyBreakdown(p) {
+  const count = (fn) => p.trophies.filter(fn).length;
+  const parts = [
+    { label: `OVR máximo (${p.peakOvr} × 2)`, points: p.peakOvr * 2 },
+    { label: 'Mundiais', n: count((t) => t.name === 'Mundial'), each: 120 },
+    { label: 'MSI', n: count((t) => t.name === 'MSI'), each: 60 },
+    { label: 'First Stand', n: count((t) => t.name === 'First Stand'), each: 35 },
+    { label: 'Títulos de liga principal', n: count((t) => t.kind === 'league' && t.tier === 1), each: 20 },
+    { label: 'Títulos de academia', n: count((t) => t.kind === 'league' && t.tier === 2), each: 8 },
+    { label: 'Títulos de liga amadora', n: count((t) => t.kind === 'league' && t.tier === 3), each: 4 },
+    { label: 'MVP da Final do Mundial', n: count((t) => t.name === 'MVP da Final do Mundial'), each: 25 },
+    { label: 'Outros prêmios individuais', n: count((t) => t.kind === 'award' && t.name !== 'MVP da Final do Mundial'), each: 10 },
+  ].map((x) => (x.points != null ? x : { label: x.n ? `${x.label} (${x.n} × ${x.each})` : x.label, points: x.n * x.each }));
+  // Dinheiro conta pouco: +10 por US$ 100 mil, +20 por US$ 1 milhão, +30 por US$ 10 milhões.
+  const money = careerEarnings(p);
+  parts.push({ label: 'Dinheiro arrecadado', points: money > 10000 ? Math.round(10 * Math.log10(money / 10000)) : 0 });
+  return parts.filter((x) => x.points > 0);
+}
+
 // Pontuação única da carreira (histórico e recordes do site).
 export function legacyScore(p) {
-  const intl = { Mundial: 120, MSI: 60, 'First Stand': 35 };
-  let score = p.peakOvr * 2;
-  for (const t of p.trophies) {
-    if (t.kind === 'intl') score += intl[t.name] || 0;
-    else if (t.kind === 'league') score += { 1: 20, 2: 8, 3: 4 }[t.tier] || 0;
-    else if (t.kind === 'award') score += t.name === 'MVP da Final do Mundial' ? 25 : 10;
-  }
-  return Math.round(score);
+  return legacyBreakdown(p).reduce((sum, x) => sum + x.points, 0);
 }
 
 export function retire(state) {

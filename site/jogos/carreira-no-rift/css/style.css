@@ -249,7 +249,11 @@ input { font: inherit; color: inherit; }
 .stat-row > div { padding: 10px 6px; text-align: center; }
 .stat-row > div + div { border-left: 1px solid var(--line); }
 .stat-row b { font-size: 20px; font-variant-numeric: tabular-nums; }
-.stat-row.big { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); margin: 18px 0; }
+.stat-row.big { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); margin: 18px 0; }
+.stat-row.big > div { border-bottom: 1px solid var(--line); }
+.stat-row.big b { white-space: nowrap; }
+.stat-row.big > div { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; }
+.stat-row.big b.money { font-size: 21px; }
 .stat-row.big b { font-size: 26px; }
 .gallery { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-top: 12px; }
 .gallery > span:first-child { white-space: nowrap; }
@@ -513,6 +517,19 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .st-item { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: color-mix(in srgb, var(--gold) 5%, transparent); }
 .st-item b { display: block; }
 .st-item small { color: var(--muted); }
+
+/* ganhos e conta do legado */
+.earnings { border: 1px solid var(--line-2); border-radius: 12px; padding: 14px 16px; margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+.earn-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.earn-total small { font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+.earn-total b { font-family: var(--display); font-size: 30px; color: var(--gold-2); font-weight: 400; }
+.earn-split { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.earn-split b { color: var(--text); }
+.earn-items, .legacy-calc { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.earn-items li, .legacy-calc li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-top: 1px solid var(--line); }
+.earn-items b { color: #7de3a5; font-variant-numeric: tabular-nums; }
+.legacy-calc b { color: var(--gold-2); font-variant-numeric: tabular-nums; }
+.legacy-calc li.total { font-weight: 800; border-top: 2px solid var(--line-2); }
 
 /* aposentadoria */
 .legacy { display: flex; gap: 18px; align-items: center; margin: 12px 0 0; }
