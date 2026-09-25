@@ -161,7 +161,7 @@ function betOffer(state, score) {
   if (hype < 5 || !roll(hype * 4)) return null;
   const pool = Object.values(state.world.teams).filter((t) => t.tier === 1 && t.region !== 'wc'
     && t.id !== p.teamId && REGION_LEVEL[t.region].rank > curRank
-    && (REGION_LEVEL[t.region].rank < 3 || ovrOf(p) >= 78 || p.nat === 'KR')
+    && (REGION_LEVEL[t.region].rank < 3 || ovrOf(p) >= 77 || p.nat === 'KR')
     && t.rating >= score - 4 && t.rating <= score + 7 + hype / 3);
   if (!pool.length) return null;
   const t = weightedPick(pool, (x) => REGION_LEVEL[x.region].rank);
@@ -182,7 +182,7 @@ function entryOffer(state, score) {
   for (const region of Object.keys(REGION_LEVEL)) {
     if (REGION_LEVEL[region].rank <= curRank) continue;
     // LCK/LPL só abrem a porta para quem já tem nível de liga principal.
-    if (REGION_LEVEL[region].rank === 3 && ovrOf(p) < 77 && p.nat !== 'KR') continue;
+    if (REGION_LEVEL[region].rank === 3 && ovrOf(p) < 76 && p.nat !== 'KR') continue;
     const tier1 = Object.values(state.world.teams).filter((t) => t.region === region && t.tier === 1)
       .sort((x, y) => x.rating - y.rating).slice(0, 4);
     pool.push(...tier1);
@@ -857,7 +857,7 @@ function endSeason(state) {
   const tierFactor = { 1: 1, 2: 0.9, 3: 0.8 }[s.tier];
   const intlTitle = s.titles.some((t) => t.kind === 'intl');
   const mvp = s.awards.some((a) => a.name.startsWith('MVP'));
-  p.potential = Math.min(99, p.potential + (level?.potential || 0) + (intlTitle ? 1 : 0) + (mvp ? 1 : 0));
+  p.potential = Math.min(96, p.potential + ((level?.potential || 0) + (intlTitle ? 0.5 : 0) + (mvp ? 0.5 : 0)) * (p.potential >= 84 ? 0.2 : 1));
   const growth = seasonGrowth(p, { playedRatio, winRate, env: (level?.growth ?? 1) * tierFactor });
   const ovrEnd = ovrOf(p);
   p.lastSeason = {

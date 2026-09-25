@@ -25,8 +25,8 @@ export function createPlayer({ nick, nat, region, role, style, attrs }) {
   return {
     nick, nat, role, style, region,
     attrs: { ...attrs },
-    // Maioria fica entre 78 e 90; potencial de lenda (94+) é raro.
-    potential: 72 + Math.round(24 * Math.pow(Math.random(), 1.35)),
+    // Mediana ~77; 90+ só para ~6%; potencial de lenda (93+) é bem raro.
+    potential: 74 + Math.round(18 * Math.pow(Math.random(), 1.9)),
     age: 16,
     morale: 55,
     fame: 5,
@@ -44,7 +44,7 @@ export function createPlayer({ nick, nat, region, role, style, attrs }) {
 
 export function applyFx(p, fx) {
   // Ganhos rendem menos quando o jogador já está perto do teto (potencial).
-  const room = clamp((p.potential - ovrOf(p)) / 8, 0.25, 1);
+  const room = clamp((p.potential - ovrOf(p)) / 8, 0.1, 1);
   for (const a of ATTRS) {
     const v = fx[a.id];
     if (v) p.attrs[a.id] = clamp(p.attrs[a.id] + (v > 0 ? v * room : v), 30, 99);
@@ -67,10 +67,12 @@ export function seasonGrowth(p, perf) {
   // forte dos 18 aos 22, chega ao auge entre 19 e 24, depois mantém ou
   // cresce pouco e começa a cair por volta dos 27. Ter 75+ aos 17-18 é raro
   // (só com potencial altíssimo).
-  if (p.age <= 17) g = gap * 0.07 + rand(0, 0.8);
-  else if (p.age <= 22) g = gap * 0.17 + rand(0, 1.2);
-  else if (p.age <= 24) g = gap * 0.1 + rand(-0.3, 0.8);
-  else if (p.age <= 26) g = gap * 0.03 + rand(-0.8, 0.5);
+  // A parte aleatória do crescimento some quando o jogador chega ao teto.
+  const r = clamp(gap / 4, 0, 1);
+  if (p.age <= 17) g = gap * 0.07 + rand(0, 0.8) * r;
+  else if (p.age <= 22) g = gap * 0.17 + rand(0, 1.2) * r;
+  else if (p.age <= 24) g = gap * 0.1 + rand(-0.3, 0.8 * r);
+  else if (p.age <= 26) g = gap * 0.03 + rand(-0.8, 0.5 * r);
   else if (p.age === 27) g = -rand(0.3, 1.3);
   else g = -rand(1, 2.5) - (p.age - 28) * 0.5;
 

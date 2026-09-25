@@ -93,7 +93,7 @@ LEC, LCS), academias e ligas amadoras.
   mesmo acima do nível que o jogador alcançaria normalmente.
 - **Exterior (propostas normais):** com OVR alto chegam propostas de times
   de fora (LEC/LCS a partir de ~75, LCK/LPL a partir de ~88; a porta de entrada e
-  as apostas da LCK/LPL exigem OVR 77+ e 78+).
+  as apostas da LCK/LPL exigem OVR 76+ e 77+).
 - **Empréstimo:** depois de uma temporada muito ruim (quase não jogou, nível
   bem abaixo do time ou em atrito com o técnico), a diretoria pode emprestar
   o jogador por 1 temporada a um time do mesmo nível ou mais fraco (nunca melhor). Não há opção de ficar; no
@@ -105,18 +105,24 @@ OVR crescer mais e aumenta o teto (potencial) do jogador.
 
 | Região | Evolução | Teto por temporada |
 |---|---|---|
-| LCK (Coreia) | +30% | +0,5 |
-| LPL (China) | +25% | +0,5 |
-| LEC (Europa) | +15% | +0,25 |
-| LCS (Am. do Norte) | +10% | +0,25 |
+| LCK (Coreia) | +20% | +0,25 |
+| LPL (China) | +18% | +0,25 |
+| LEC (Europa) | +10% | +0,1 |
+| LCS (Am. do Norte) | +6% | +0,1 |
 | CBLOL (Brasil) | base | — |
 
-Títulos internacionais e prêmios de MVP também aumentam o teto em +1.
+Títulos internacionais e prêmios de MVP também aumentam o teto em +0,5.
+Quem já tem potencial 84+ ganha só 20% desses aumentos (teto máximo 96).
+
+**Distribuição esperada** (2.500 carreiras simuladas no Brasil): OVR máximo
+mediano ~79; <75 ~12%, 75–79 ~41%, 80–84 ~25%, 85–89 ~17% e 90+ ~5%.
+Chegar a 80 já é uma boa carreira; 90+ é para poucos. Cerca de 55% das
+carreiras passam pela LCK/LPL.
 
 **Curva de evolução:** começa devagar aos 16–17, cresce forte dos 18 aos 22 e
 chega ao auge entre 19 e 24 anos. Dos 25 aos 26 mantém ou cresce pouco, e a
 queda começa por volta dos 27 (mais forte a partir dos 28). Ter 75+ aos 17–18
-anos é raro (~1% das carreiras, jogadores com potencial altíssimo).
+anos é raríssimo (bem menos de 1% das carreiras: só os "gênios").
 
 **Dinheiro:** cada temporada soma o salário do ano (contrato mensal × 12) e
 as premiações. O salário depende do OVR, da divisão e da liga (LPL e LCS

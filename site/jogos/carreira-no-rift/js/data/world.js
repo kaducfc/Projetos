@@ -83,10 +83,10 @@ export const REGIONS = {
 // joga na liga principal da região; `potential` é quanto o teto do jogador
 // sobe por temporada treinando nesse ambiente.
 export const REGION_LEVEL = {
-  kr: { rank: 3, growth: 1.3, potential: 0.5 },
-  cn: { rank: 3, growth: 1.25, potential: 0.5 },
-  eu: { rank: 2, growth: 1.15, potential: 0.25 },
-  na: { rank: 2, growth: 1.1, potential: 0.25 },
+  kr: { rank: 3, growth: 1.2, potential: 0.25 },
+  cn: { rank: 3, growth: 1.18, potential: 0.25 },
+  eu: { rank: 2, growth: 1.1, potential: 0.1 },
+  na: { rank: 2, growth: 1.06, potential: 0.1 },
   br: { rank: 1, growth: 1, potential: 0 },
 };
 
