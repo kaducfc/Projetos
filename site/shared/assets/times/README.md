@@ -21,7 +21,7 @@ usar estas imagens.
 
 | Região | Arquivos |
 |---|---|
-| Coreia (LCK) | gen.png, t1.png, hle.png, kt.png, dk.png, fox.png, ns.png, drx.png, bro.png, dnf.png |
+| Coreia (LCK) | gen.png, t1.png, hle.png, kt.png, dk.png, fox.png, ns.png, drx.png, bro.png (HANJIN BRION), dnf.png (DN SOOPers) |
 | China (LPL) | blg.png, al.png, tes.png, jdg.png, wbg.png, ig.png, edg.png, lng.png, nip.png, fpx.png |
 | Europa (LEC) | g2.png, fnc.png, mkoi.png, kc.png, vit.png, gx.png, th.png, sk.png, bds.png (Shifters), navi.png |
 | Am. do Norte (LCS) | fly.png, c9.png, tl.png, 100t.png, dig.png, sr.png, lyon.png, dsg.png |

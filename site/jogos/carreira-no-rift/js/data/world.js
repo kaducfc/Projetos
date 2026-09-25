@@ -125,9 +125,9 @@ const TIER1 = {
     ['dk', 'Dplus KIA', 'DK', 83, '#1b1b1b', '#2fd6c3'],
     ['fox', 'BNK FEARX', 'FOX', 79, '#f4a300', '#111111'],
     ['ns', 'Nongshim RedForce', 'NS', 78, '#de2027', '#ffffff'],
-    ['drx', 'DRX', 'DRX', 77, '#5a8dee', '#0b1a3a'],
-    ['bro', 'OKSavingsBank BRION', 'BRO', 76, '#0f5c3a', '#ffffff'],
-    ['dnf', 'DN Freecs', 'DNF', 75, '#f2b600', '#1b1b1b'],
+    ['drx', 'Kiwoom DRX', 'DRX', 77, '#5a8dee', '#0b1a3a'],
+    ['bro', 'HANJIN BRION', 'BRO', 76, '#0f5c3a', '#ffffff'],
+    ['dnf', 'DN SOOPers', 'DNS', 75, '#1f5bd8', '#ffffff'],
   ],
   cn: [
     ['blg', 'Bilibili Gaming', 'BLG', 89, '#00a1d6', '#ffffff'],
