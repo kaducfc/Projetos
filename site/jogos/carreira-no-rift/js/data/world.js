@@ -150,7 +150,7 @@ const TIER1 = {
     ['gx', 'GIANTX', 'GX', 78, '#6ad3a8', '#111111'],
     ['th', 'Team Heretics', 'TH', 76, '#1b1b1b', '#e0b45a'],
     ['sk', 'SK Gaming', 'SK', 75, '#1b1b1b', '#ffffff'],
-    ['bds', 'Team BDS', 'BDS', 75, '#e6007e', '#ffffff'],
+    ['bds', 'Shifters', 'SHFT', 75, '#7a5bd0', '#ffffff'],
     ['navi', 'Natus Vincere', 'NAVI', 74, '#fde100', '#111111'],
   ],
   na: [
