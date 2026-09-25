@@ -155,8 +155,8 @@ const TIER1 = {
   ],
   na: [
     ['fly', 'FlyQuest', 'FLY', 81, '#1e8f4e', '#ffffff'],
-    ['c9', 'Cloud9', 'C9', 80, '#1ea1f2', '#ffffff'],
-    ['tl', 'Team Liquid', 'TL', 79, '#0c223f', '#6cc0ff'],
+    ['c9', 'Cloud9 Kia', 'C9', 80, '#1ea1f2', '#ffffff'],
+    ['tl', 'Team Liquid Alienware', 'TL', 79, '#0c223f', '#6cc0ff'],
     ['sen', 'Sentinels', 'SEN', 75, '#ce0037', '#ffffff'],
     ['dig', 'Dignitas', 'DIG', 74, '#f7b500', '#111111'],
     ['sr', 'Shopify Rebellion', 'SR', 74, '#95bf47', '#111111'],
