@@ -3,7 +3,7 @@
 //
 // Toda a lógica muda `state` e define `state.screen`; a UI só desenha.
 
-import { buildTeams, REGIONS, TIER_RANGE, WILDCARD_SLOTS, nationById } from '../data/world.js';
+import { buildTeams, REGIONS, REGION_LEVEL, TIER_RANGE, WILDCARD_SLOTS, nationById } from '../data/world.js';
 import { EVENTS, eventById } from '../data/events.js';
 import {
   createPlayer, ovrOf, effectiveOvr, applyFx, seasonGrowth, salaryFor, statusFor, STATUS,
@@ -96,7 +96,7 @@ export function newCareer(form) {
   state.screen = {
     type: 'offers',
     first: true,
-    offers: genOffers(state, true),
+    offers: genOffers(state, { first: true, max: randInt(2, 3) }),
     stay: null,
     note: '',
   };
@@ -105,19 +105,50 @@ export function newCareer(form) {
 
 // ---------------------------------------------------------------- propostas
 
-function makeOffer(state, team, first) {
+function makeOffer(state, team, { first = false, bet = false, loan = false } = {}) {
   const p = state.player;
   const ovr = ovrOf(p);
+  let status = statusFor(ovr, team.rating, 55);
+  // Numa aposta o time garante espaço: no mínimo disputa de vaga.
+  if (bet && status === 'reserva') status = 'disputa';
   return {
     teamId: team.id,
-    salary: salaryFor(ovr, team.tier),
-    years: first ? 2 : randInt(1, 3),
-    status: statusFor(ovr, team.rating, 55),
-    ambition: ambitionLabel(state, team),
+    salary: salaryFor(ovr, team.tier) * (bet ? 1.2 : 1),
+    years: loan ? 1 : first ? 2 : bet ? 2 : randInt(1, 3),
+    status,
+    ambition: loan ? 'Empréstimo de 1 temporada' : bet ? 'Aposta no seu potencial' : ambitionLabel(state, team),
+    bet,
+    loan,
   };
 }
 
-export function genOffers(state, first = false) {
+// "Hype" do jogador: resultados recentes, prêmios, evolução e juventude.
+// Quanto maior, mais chance de uma liga mais forte apostar nele.
+function hypeOf(p) {
+  const last = p.lastSeason || {};
+  return (p.fame / 20) + (last.titles || 0) * 1.5 + (last.awards || 0) * 2
+    + Math.max(0, last.growth || 0) * 0.5 + (p.age <= 20 ? 1.5 : 0) + (last.bestPlace === 1 ? 1 : 0);
+}
+
+// Uma liga mais forte que a atual aposta no jogador: time acima do nível
+// que ele normalmente alcançaria.
+function betOffer(state, score) {
+  const p = state.player;
+  const cur = teamOf(state, p.teamId);
+  const curRank = cur ? (cur.tier === 1 ? REGION_LEVEL[cur.region]?.rank ?? 1 : 0) : 0;
+  const hype = hypeOf(p);
+  if (hype < 5 || !roll(hype * 4)) return null;
+  const pool = Object.values(state.world.teams).filter((t) => t.tier === 1 && t.region !== 'wc'
+    && t.id !== p.teamId && REGION_LEVEL[t.region].rank > curRank
+    && t.rating >= score - 4 && t.rating <= score + 7 + hype / 3);
+  if (!pool.length) return null;
+  const t = weightedPick(pool, (x) => REGION_LEVEL[x.region].rank);
+  return makeOffer(state, t, { bet: true });
+}
+
+// Propostas da janela. `max` = quantas no máximo (o total de opções na tela,
+// contando "continuar no clube", fica entre 2 e 3).
+export function genOffers(state, { first = false, max = 3 } = {}) {
   const p = state.player;
   const ovr = ovrOf(p);
   const score = ovr + p.fame / 20;
@@ -134,8 +165,7 @@ export function genOffers(state, first = false) {
       if (t.rating < lo || t.rating > hi) return false;
       if (t.region !== p.region) {
         if (t.tier > 1) return false;
-        const strong = t.region === 'kr' || t.region === 'cn';
-        const need = p.nat === 'KR' ? 74 : strong ? 84 : 77;
+        const need = p.nat === 'KR' ? 72 : REGION_LEVEL[t.region].rank === 3 ? 83 : 76;
         if (ovr < need) return false;
       }
       return true;
@@ -143,37 +173,82 @@ export function genOffers(state, first = false) {
   }
 
   const offers = [];
-  const pool = cands.slice();
-  const count = first ? 3 : clamp(Math.round(1 + p.fame / 30 + rand(0, 2)), 1, 3);
-  while (offers.length < count && pool.length) {
-    const t = weightedPick(pool, (x) => Math.pow(Math.max(1, x.rating - lo), 1.4) * (x.region === p.region ? 1 : 0.6));
+  if (!first && max > 0) {
+    const bet = betOffer(state, score);
+    if (bet) offers.push(bet);
+  }
+  const pool = cands.filter((t) => !offers.some((o) => o.teamId === t.id));
+  while (offers.length < max && pool.length) {
+    // Times melhores e de ligas mais fortes chamam mais atenção.
+    const t = weightedPick(pool, (x) => Math.pow(Math.max(1, x.rating - lo), 1.4)
+      * (x.region === p.region ? 1 : 0.4 + REGION_LEVEL[x.region].rank * 0.1));
     pool.splice(pool.indexOf(t), 1);
-    offers.push(makeOffer(state, t, first));
+    offers.push(makeOffer(state, t, { first }));
   }
   return offers;
 }
 
-function fallbackOffers(state) {
+function fallbackOffers(state, max) {
   const p = state.player;
-  const pool = Object.values(state.world.teams)
+  return Object.values(state.world.teams)
     .filter((t) => t.region === p.region && t.tier === 3 && t.id !== p.teamId)
     .sort((a, b) => a.rating - b.rating)
-    .slice(0, 3);
-  return pool.map((t) => makeOffer(state, t, false));
+    .slice(0, max)
+    .map((t) => makeOffer(state, t));
+}
+
+// Empréstimo forçado: até 2 times mais fracos que o atual (mesma região),
+// onde o jogador teria minutos. Sem opção possível, não há empréstimo.
+function loanOffers(state) {
+  const p = state.player;
+  const cur = teamOf(state, p.teamId);
+  const pool = Object.values(state.world.teams).filter((t) => t.region === cur.region && t.id !== cur.id
+    && t.tier >= cur.tier && t.rating < cur.rating - 2);
+  return pool
+    .sort((a, b) => b.rating - a.rating)
+    .slice(0, 4)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 2)
+    .map((t) => ({ ...makeOffer(state, t, { loan: true }), salary: p.contract.salary }));
 }
 
 export function offseasonScreen(state) {
   const p = state.player;
   const team = teamOf(state, p.teamId);
   const ovr = ovrOf(p);
+  const total = randInt(2, 3);
+
+  // Desempenho muito ruim: a diretoria empresta o jogador, sem opção de ficar.
+  if (p.pendingLoan) {
+    p.pendingLoan = false;
+    const offers = loanOffers(state);
+    if (offers.length) {
+      state.screen = {
+        type: 'offers', kind: 'loan', first: false, offers, stay: null,
+        note: `A diretoria de ${team.name} decidiu te emprestar por 1 temporada para você ganhar minutos. Escolha o destino.`,
+      };
+      return;
+    }
+  }
+
   let stay = null;
   let note = '';
   let offers;
 
-  if (p.contract.years > 0) {
+  if (p.loan) {
+    // Fim do empréstimo: volta para o clube dono do contrato, se ainda houver contrato.
+    const parent = teamOf(state, p.loan.parentId);
+    if (p.loan.years > 0) {
+      stay = { teamId: parent.id, years: p.loan.years, salary: p.loan.salary, renew: false, back: true };
+      note = `Seu empréstimo acabou. ${parent.name} quer você de volta, mas outros times também ligaram.`;
+    } else {
+      note = `Seu empréstimo acabou e o contrato com ${parent.name} terminou. Você está livre no mercado.`;
+    }
+    offers = genOffers(state, { max: total - (stay ? 1 : 0) });
+  } else if (p.contract.years > 0) {
     stay = { teamId: team.id, years: p.contract.years, salary: p.contract.salary, renew: false };
-    const interest = roll(55 + p.fame / 3) || ovr > team.rating + 3;
-    offers = interest ? genOffers(state) : [];
+    const interest = roll(55 + p.fame / 3) || ovr > team.rating + 3 || hypeOf(p) >= 8;
+    offers = interest ? genOffers(state, { max: total - 1 }) : [];
     note = offers.length
       ? `Você ainda tem ${p.contract.years} ${p.contract.years > 1 ? 'anos' : 'ano'} de contrato com ${team.name}, mas chegaram propostas.`
       : `Nenhuma proposta nesta janela. Seu contrato com ${team.name} segue válido.`;
@@ -185,11 +260,16 @@ export function offseasonScreen(state) {
     } else {
       note = `Seu contrato acabou e ${team.name} não quis renovar.`;
     }
-    offers = genOffers(state);
-    if (!stay && !offers.length) offers = fallbackOffers(state);
+    offers = genOffers(state, { max: total - (stay ? 1 : 0) });
+    if (!stay && !offers.length) offers = fallbackOffers(state, total);
+  }
+  if (!stay && !offers.length) offers = fallbackOffers(state, total);
+  if (offers.some((o) => o.bet)) {
+    const bet = offers.find((o) => o.bet);
+    note += ` ${leagueName(teamOf(state, bet.teamId))} está apostando em você!`;
   }
 
-  state.screen = { type: 'offers', first: false, offers, stay, note };
+  state.screen = { type: 'offers', kind: 'transfer', first: false, offers, stay, note: note.trim() };
 }
 
 export function chooseOffer(state, index) {
@@ -197,10 +277,19 @@ export function chooseOffer(state, index) {
   const scr = state.screen;
   const offer = index === 'stay' ? scr.stay : scr.offers[index];
   const moved = offer.teamId !== p.teamId;
-  if (moved && p.teamId) p.fame = clamp(p.fame + 2, 0, 100);
+  if (moved && p.teamId) p.fame = clamp(p.fame + (offer.bet ? 5 : 2), 0, 100);
+
+  if (offer.loan) {
+    // O contrato com o clube de origem continua; volta ao fim da temporada.
+    p.loan = { parentId: p.teamId, years: p.contract.years, salary: p.contract.salary };
+    p.contract = { years: 1, salary: offer.salary };
+  } else {
+    p.loan = null; // voltou ao clube de origem ou saiu de vez dele
+    p.contract = { years: offer.years, salary: offer.salary };
+  }
   p.teamId = offer.teamId;
-  p.contract = { years: offer.years, salary: offer.salary };
-  if (moved) p.morale = 55;
+  if (moved) p.morale = offer.bet ? 62 : 55;
+  p.betSeason = Boolean(offer.bet);
   startSeason(state);
   advance(state);
 }
@@ -212,6 +301,7 @@ function startSeason(state) {
   const team = teamOf(state, p.teamId);
   p.morale = Math.round(p.morale + (55 - p.morale) * 0.3);
   p.status = statusFor(ovrOf(p), team.rating, p.morale);
+  if (p.betSeason && p.status === 'reserva') p.status = 'disputa';
   state.season = {
     year: state.world.year,
     age: p.age,
@@ -664,14 +754,34 @@ function endSeason(state) {
   const winRate = st.games ? st.wins / st.games : st.teamWins / Math.max(1, st.teamGames);
 
   computeAwards(state, playedRatio);
-  seasonGrowth(p, { playedRatio, winRate });
+
+  // Ambiente de treino: ligas mais fortes fazem o jogador evoluir mais e
+  // aumentam o teto dele; títulos internacionais e MVP também.
+  const level = s.tier === 1 ? REGION_LEVEL[s.region] : null;
+  const tierFactor = { 1: 1, 2: 0.9, 3: 0.8 }[s.tier];
+  const intlTitle = s.titles.some((t) => t.kind === 'intl');
+  const mvp = s.awards.some((a) => a.name.startsWith('MVP'));
+  p.potential = Math.min(99, p.potential + (level?.potential || 0) + (intlTitle ? 1 : 0) + (mvp ? 1 : 0));
+  const growth = seasonGrowth(p, { playedRatio, winRate, env: (level?.growth ?? 1) * tierFactor });
   const ovrEnd = ovrOf(p);
+  p.lastSeason = {
+    titles: s.titles.length, awards: s.awards.length, growth, playedRatio,
+    bestPlace: Math.min(99, ...Object.values(s.placements)),
+  };
 
   p.history.push({
     age: s.age, year: s.year, teamId: s.teamId, tier: s.tier, ovr: ovrEnd,
     games: st.games, wins: st.wins, k: st.k, d: st.d, a: st.a, pog: st.pog, titles: s.titles.length,
   });
   p.contract.years = Math.max(0, p.contract.years - 1);
+  if (p.loan) p.loan.years = Math.max(0, p.loan.years - 1);
+
+  // Temporada muito ruim (quase não jogou, nível bem abaixo do time ou em
+  // atrito com o técnico): a diretoria pode forçar um empréstimo.
+  const team = teamOf(state, s.teamId);
+  const poor = playedRatio < 0.35 || ovrEnd < team.rating - 9 || p.morale < 25;
+  p.pendingLoan = !p.loan && p.contract.years > 0 && poor && roll(75);
+  p.betSeason = false;
   p.fame = clamp(Math.round(p.fame * 0.93), 0, 100);
   p.age++;
   state.world.year++;
@@ -688,6 +798,8 @@ function endSeason(state) {
     awards: s.awards.slice(),
     forced,
     canRetire: p.age >= 27,
+    loanNext: p.pendingLoan,
+    growth,
   };
 }
 

@@ -78,6 +78,18 @@ export const REGIONS = {
   },
 };
 
+// Nível de cada região: `rank` (3 = mais forte) define as propostas-aposta
+// vindas de ligas mais fortes; `growth` multiplica a evolução do OVR de quem
+// joga na liga principal da região; `potential` é quanto o teto do jogador
+// sobe por temporada treinando nesse ambiente.
+export const REGION_LEVEL = {
+  kr: { rank: 3, growth: 1.3, potential: 0.5 },
+  cn: { rank: 3, growth: 1.25, potential: 0.5 },
+  eu: { rank: 2, growth: 1.15, potential: 0.25 },
+  na: { rank: 2, growth: 1.1, potential: 0.25 },
+  br: { rank: 1, growth: 1, potential: 0 },
+};
+
 // Vagas dos convidados (Pacífico/Vietnã) em cada torneio internacional.
 export const WILDCARD_SLOTS = { firstStand: 1, msi: 1, worlds: 2 };
 

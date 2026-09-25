@@ -72,6 +72,9 @@ export function seasonGrowth(p, perf) {
   const bonus = (perf.playedRatio - 0.6) * 1.5 + (perf.winRate - 0.5) * 1.5 + (p.morale - 50) / 60;
   g += bonus > 0 ? bonus * clamp(gap / 6, 0, 1) : bonus;
 
+  // Liga forte = treino e adversários melhores = evolução maior.
+  if (g > 0) g *= perf.env ?? 1;
+
   if (g >= 0) {
     for (const a of ATTRS) p.attrs[a.id] = clamp(p.attrs[a.id] + g * rand(0.7, 1.3), 30, 99);
   } else {

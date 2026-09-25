@@ -355,6 +355,17 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   transition: border-color 0.15s, transform 0.15s;
 }
 .offer:hover { border-color: var(--gold); transform: translateY(-2px); }
+.offer { position: relative; }
+.offer.bet { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset, 0 10px 30px rgba(217, 168, 43, 0.12); }
+.offer.flagged { padding-top: 32px; }
+.offer-flag {
+  position: absolute; top: -1px; right: -1px;
+  background: var(--gold); color: #140f02;
+  font-size: 10.5px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 4px 8px;
+}
+.offer-flag.loan { background: #a3352c; color: #fff; }
+.note.warn { border-left-color: #c9503f; background: rgba(201, 80, 63, 0.1); }
 .offer-top { font-size: 10.5px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; color: var(--gold-2); min-height: 30px; }
 .offer-badge { margin: 8px 0 4px; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5)); }
 .offer h3 { font-family: var(--display); font-weight: 400; font-size: 28px; margin: 0; letter-spacing: 0.5px; line-height: 1.05; }

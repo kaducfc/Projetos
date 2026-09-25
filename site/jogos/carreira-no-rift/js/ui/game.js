@@ -178,8 +178,10 @@ function careerTable(state) {
 function offerCard(state, o, act, label) {
   const t = teamOf(state, o.teamId);
   const region = REGIONS[t.region];
+  const flag = o.bet ? '<span class="offer-flag">Aposta</span>' : o.loan ? '<span class="offer-flag loan">Empréstimo</span>' : '';
   return `
-  <button class="offer" data-act="${act}" ${act === 'offer' ? `data-i="${o.i}"` : ''}>
+  <button class="offer${o.bet ? ' bet' : ''}${flag ? ' flagged' : ''}" data-act="${act}" ${act === 'offer' ? `data-i="${o.i}"` : ''}>
+    ${flag}
     <div class="offer-top">${label} · ${esc(leagueName(t))} · ${esc(o.ambition || 'Seu clube atual')}</div>
     <div class="offer-badge">${teamBadge(t, 64)}</div>
     <h3>${esc(t.name)}</h3>
@@ -191,22 +193,32 @@ function offerCard(state, o, act, label) {
 
 function offersPanel(state) {
   const scr = state.screen;
-  const cards = scr.offers.map((o, i) => offerCard(state, { ...o, i }, 'offer', 'Assinar com'));
+  const loan = scr.kind === 'loan';
+  const cards = scr.offers.map((o, i) => offerCard(state, { ...o, i }, 'offer', o.loan ? 'Emprestado para' : 'Assinar com'));
   if (scr.stay) {
     const status = state.player.status;
-    cards.unshift(offerCard(state, { ...scr.stay, status, ambition: scr.stay.renew ? 'Renovação' : 'Contrato vigente' }, 'stay', scr.stay.renew ? 'Renovar com' : 'Continuar no'));
+    const label = scr.stay.back ? 'Voltar para' : scr.stay.renew ? 'Renovar com' : 'Continuar no';
+    const ambition = scr.stay.back ? 'Fim do empréstimo' : scr.stay.renew ? 'Renovação' : 'Contrato vigente';
+    cards.unshift(offerCard(state, { ...scr.stay, status, ambition }, 'stay', label));
   }
-  const title = scr.first ? 'Propostas da base' : 'Escolha o seu próximo clube';
-  const eyebrow = scr.first ? `Temporada ${state.world.year}` : `Janela de transferências · ${state.world.year}`;
-  const sub = scr.first
-    ? 'Três times querem você nas categorias de base. Escolha onde a sua carreira começa.'
-    : 'Chegaram propostas. Aceite uma delas ou siga no clube atual.';
+  let title = 'Escolha o seu próximo clube';
+  let eyebrow = `Janela de transferências · ${state.world.year}`;
+  let sub = cards.length > 1 ? 'Chegaram propostas. Aceite uma delas ou siga no clube atual.' : '';
+  if (scr.first) {
+    title = 'Propostas da base';
+    eyebrow = `Temporada ${state.world.year}`;
+    sub = `${cards.length === 2 ? 'Dois' : 'Três'} times querem você nas categorias de base. Escolha onde a sua carreira começa.`;
+  } else if (loan) {
+    title = 'Você vai ser emprestado';
+    eyebrow = `Empréstimo · ${state.world.year}`;
+    sub = 'Ficar não é uma opção nesta janela. Jogue bem fora e volte valorizado.';
+  }
   return `
   <div class="panel">
     <div class="eyebrow">${eyebrow}</div>
     <h1 class="display">${title}</h1>
-    <p class="lead">${sub}</p>
-    ${scr.note ? `<div class="note">${esc(scr.note)}</div>` : ''}
+    ${sub ? `<p class="lead">${sub}</p>` : ''}
+    ${scr.note ? `<div class="note${loan ? ' warn' : ''}">${esc(scr.note)}</div>` : ''}
     <div class="offers-grid">${cards.join('')}</div>
   </div>`;
 }
@@ -420,6 +432,7 @@ function seasonEndPanel(state) {
       <div><small>POG</small><b>${st.pog}</b></div>
     </div>
     ${all.length ? `<div class="season-trophies">${all.map((t) => `<div class="st-item">${trophySvg(t.kind, 40)}<div><b>${esc(t.name)}</b><small>${esc(t.detail)}</small></div></div>`).join('')}</div>` : '<p class="muted">Nenhum título nesta temporada.</p>'}
+    ${scr.loanNext ? '<div class="note warn">Temporada difícil. A diretoria está pensando em te emprestar para outro time na próxima janela.</div>' : ''}
     ${scr.forced ? `<div class="note">${p.age >= 35 ? `Aos ${p.age} anos, é hora de pendurar o mouse.` : 'Sem espaço no cenário, você decide encerrar a carreira.'}</div>` : ''}
     <div class="actions">
       ${scr.forced

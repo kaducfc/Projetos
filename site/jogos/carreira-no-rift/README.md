@@ -75,10 +75,35 @@ maioria é de eliminação dupla), e as vagas de cada região são fixas.
 chance muda conforme o atributo ligado à escolha e a confiança do técnico. O
 resultado altera atributos, confiança e fama.
 
-**Propostas:** dependem principalmente do OVR (e um pouco da fama). Os times
-estão em 3 divisões por região: tier 1 (CBLOL, LCK, LPL, LEC, LCS),
-academias e ligas amadoras. Com OVR alto, chegam propostas do exterior.
-Coreia e China exigem um nível mais alto.
+**Propostas:** cada janela tem **2 ou 3 opções** no total, contando
+"continuar no clube". Elas dependem principalmente do OVR (e um pouco da
+fama). Os times estão em 3 divisões por região: tier 1 (CBLOL, LCK, LPL,
+LEC, LCS), academias e ligas amadoras.
+
+- **Apostas:** quando o jogador está em alta (títulos, prêmios, evolução
+  rápida, juventude), uma liga mais forte que a atual pode apostar nele,
+  oferecendo um time acima do nível que ele normalmente alcançaria.
+  Aparece com o selo "Aposta".
+- **Exterior:** com OVR alto chegam propostas normais de fora
+  (LEC/LCS a partir de ~76, LCK/LPL a partir de ~83).
+- **Empréstimo:** depois de uma temporada muito ruim (quase não jogou, nível
+  bem abaixo do time ou em atrito com o técnico), a diretoria pode emprestar
+  o jogador por 1 temporada a um time mais fraco. Não há opção de ficar; no
+  fim, ele volta ao clube de origem (se ainda houver contrato) ou recebe
+  outras propostas.
+
+**Nível das regiões:** jogar na liga principal de uma região forte faz o
+OVR crescer mais e aumenta o teto (potencial) do jogador.
+
+| Região | Evolução | Teto por temporada |
+|---|---|---|
+| LCK (Coreia) | +30% | +0,5 |
+| LPL (China) | +25% | +0,5 |
+| LEC (Europa) | +15% | +0,25 |
+| LCS (Am. do Norte) | +10% | +0,25 |
+| CBLOL (Brasil) | base | — |
+
+Títulos internacionais e prêmios de MVP também aumentam o teto em +1.
 
 **Aposentadoria:** pode ser anunciada a partir dos 27 anos e é obrigatória
 aos 35. O relatório final mostra o legado, os clubes, os títulos e um resumo
