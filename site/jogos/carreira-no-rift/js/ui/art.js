@@ -1,17 +1,21 @@
 // Artes geradas em SVG: escudos de time, troféus, camisa e minimapa.
 import { esc } from '../util.js';
+import { TEAM_LOGOS, OFFICIAL_LOGOS_ALLOWED } from '../../../../shared/config.js';
 
 let uid = 0;
 
-// Logos reais ficam em site/shared/assets/times/<id>.png (caminho relativo
-// à página do jogo). Academias usam a logo do time principal; times amadores
-// (fictícios) usam só o escudo gerado. Se o arquivo não existir, o escudo
-// gerado continua aparecendo.
-const LOGO_BASE = '../../shared/assets/times/';
+// Imagens dos times (caminhos relativos à página do jogo). O modo vem de
+// shared/config.js: logo oficial (assets/times) ou escudo do site
+// (assets/emblemas). Academias usam a imagem do time principal; times
+// amadores (fictícios) usam só o escudo gerado. Sem arquivo, o escudo gerado
+// continua aparecendo.
+const ASSETS = '../../shared/assets/';
 
-function logoId(team) {
+function logoSrc(team) {
   if (team.tier === 3) return null;
-  return team.id.replace(/_ac$/, '');
+  const id = team.id.replace(/_ac$/, '');
+  const official = TEAM_LOGOS === 'oficiais' || OFFICIAL_LOGOS_ALLOWED.includes(id);
+  return `${ASSETS}${official ? 'times' : 'emblemas'}/${id}.png`;
 }
 
 function shieldSvg(team, size) {
@@ -24,11 +28,11 @@ function shieldSvg(team, size) {
 
 export function teamBadge(team, size = 28) {
   if (!team) return '';
-  const id = logoId(team);
+  const src = logoSrc(team);
   const shield = shieldSvg(team, size);
-  if (!id) return `<span class="badge">${shield}</span>`;
+  if (!src) return `<span class="badge">${shield}</span>`;
   // A logo carrega por cima; quando carrega, o escudo sai. Se falhar, a logo sai.
-  return `<span class="badge" style="width:${size}px;height:${Math.round(size * 1.15)}px">${shield}<img class="badge-logo" src="${LOGO_BASE}${id}.png" alt="" loading="lazy" onload="this.previousElementSibling?.remove()" onerror="this.remove()"></span>`;
+  return `<span class="badge" style="width:${size}px;height:${Math.round(size * 1.15)}px">${shield}<img class="badge-logo" src="${src}" alt="" loading="lazy" onload="this.previousElementSibling?.remove()" onerror="this.remove()"></span>`;
 }
 
 const TONES = {

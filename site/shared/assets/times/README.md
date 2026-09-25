@@ -1,4 +1,8 @@
-# Logos dos times
+# Logos oficiais dos times
+
+Usadas quando `TEAM_LOGOS = 'oficiais'` em `shared/config.js`, ou só para os
+times listados em `OFFICIAL_LOGOS_ALLOWED` (ex.: times que autorizaram).
+Os escudos próprios do site ficam em `../emblemas/`, com os mesmos nomes.
 
 Coloque aqui as logos em **PNG com fundo transparente**, com o nome do
 arquivo igual ao id do time (tudo minúsculo). Qualquer jogo do site pode

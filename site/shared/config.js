@@ -10,6 +10,18 @@ export const SITE_NAME = 'Rift Arcade';
 export const SUPABASE_URL = '';
 export const SUPABASE_ANON_KEY = '';
 
+// Logos dos times nos jogos:
+//   'escudos'  → escudo próprio do site (padrão). Usa a arte em
+//                assets/emblemas/<id>.png se existir; senão, o escudo gerado.
+//   'oficiais' → logo oficial em assets/times/<id>.png para todos os times
+//                que tiverem o arquivo.
+export const TEAM_LOGOS = 'escudos';
+
+// Times com logo oficial liberada mesmo no modo 'escudos' (ex.: times que
+// autorizaram o uso). Use o id do time, como em assets/times/README.md.
+// Exemplo: export const OFFICIAL_LOGOS_ALLOWED = ['loud', 'png'];
+export const OFFICIAL_LOGOS_ALLOWED = [];
+
 // Catálogo exibido no hub. `path` é relativo à raiz do site.
 // status: 'live' (jogável) ou 'soon' (em breve).
 export const GAMES = [
