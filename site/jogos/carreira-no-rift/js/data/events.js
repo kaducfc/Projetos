@@ -3,7 +3,8 @@
 //
 // fx: mec/rota/macro/tf/mental = pontos de atributo,
 //     morale = confiança do técnico, fame = reputação.
-// Placeholders no texto: {nick}, {team}, {league}.
+// Placeholders no texto: {nick}, {team}, {league}, {doLeague} ("do CBLOL" /
+// "da LCK"), {naLeague} ("no CBLOL" / "na LCK") e {lane}.
 //
 // `when(p, ctx)` (opcional) restringe quando o evento pode aparecer.
 //
@@ -232,7 +233,7 @@ export const EVENTS = [
   {
     id: 'caster_critica', tag: 'IMPRENSA', icon: '📺', scene: 'stage',
     title: '"O mais superestimado da liga"',
-    text: 'Um comentarista famoso da {league} te escolheu como o jogador mais superestimado da temporada.',
+    text: 'Um comentarista famoso {doLeague} te escolheu como o jogador mais superestimado da temporada.',
     choices: [
       { label: 'Usar como combustível', base: 65, attr: 'mental', good: 'resposta dentro do jogo', bad: 'joga ansioso',
         ok: { text: 'Três MVPs seguidos. O comentarista pediu desculpas ao vivo.', fx: { fame: 6, rota: 1 } },
@@ -319,7 +320,7 @@ export const EVENTS = [
   {
     id: 'rival_rota', tag: 'RIVALIDADE', icon: '😤', scene: 'stage',
     title: 'O rival te marcou numa postagem',
-    text: 'O melhor jogador da sua {lane} na {league} postou um vídeo das suas mortes com a legenda "treino".',
+    text: 'O melhor jogador da sua {lane} {naLeague} postou um vídeo das suas mortes com a legenda "treino".',
     choices: [
       { label: 'Desafiar para um 1v1 público', notRoles: ['support'], base: 45, attr: 'rota', good: 'humilha o rival', bad: 'humilhado ao vivo',
         ok: { text: '3 a 0 no 1v1 com transmissão oficial. Agora quem posta é você.', fx: { rota: 2, fame: 8 } },
@@ -493,6 +494,165 @@ export const EVENTS = [
       { label: 'Adaptar seu pool ao estilo dele', base: 60, attr: 'rota', good: 'combos novos', bad: 'fica fora da zona de conforto',
         ok: { text: 'Novos campeões, combos novos. A rota inferior passa a ganhar os primeiros minutos.', fx: { rota: 2 } },
         fail: { text: 'Os campeões novos não encaixaram no seu estilo.', fx: { mec: -1 } } },
+    ],
+  },
+  {
+    id: 'remake_palco', tag: 'PAUSA TÉCNICA', icon: '🔌', scene: 'stage',
+    title: 'Seu teclado morreu no meio da final',
+    text: 'Minuto 22, luta decisiva chegando e seu personagem para no meio da rota. O teclado simplesmente apagou. O juiz pede pausa técnica.',
+    choices: [
+      { label: 'Manter a calma e esperar o técnico da liga', base: 80, attr: 'mental', good: 'volta frio como gelo', bad: 'esfria o ritmo do time',
+        ok: { text: 'Doze minutos de pausa, um teclado novo e você volta como se nada tivesse acontecido. A câmera te pegou bocejando.', fx: { mental: 2, fame: 2 } },
+        fail: { text: 'A pausa demorou tanto que o time esfriou e perdeu a luta seguinte.', fx: { morale: -3 } } },
+      { label: 'Fazer uma dancinha para a câmera enquanto espera', base: 55, attr: 'mental', good: 'vira meme do bom', bad: 'técnico não achou graça',
+        ok: { text: 'A dancinha passou no telão, a arena cantou seu nome e o clipe bateu 2 milhões de views.', fx: { fame: 7 } },
+        fail: { text: 'O técnico te olhou com cara de "a gente conversa depois". E conversou.', fx: { morale: -5, fame: 2 } } },
+    ],
+  },
+  {
+    id: 'bicho_teclado', tag: 'AO VIVO', icon: '🐈', scene: 'stream',
+    title: 'O gato pisou no teclado em live',
+    text: 'Live com 20 mil pessoas, SoloQ no Challenger. Seu gato atravessa o teclado e usa o Flash direto para dentro da torre inimiga.',
+    choices: [
+      { label: 'Adotar o gato como mascote da live', base: 75, attr: 'mental', good: 'o gato vira estrela', bad: 'o chat só quer o gato',
+        ok: { text: 'O gato ganhou nome, emote e mais seguidores que você. Patrocinador de ração já ligou.', fx: { fame: 6, mental: 1 } },
+        fail: { text: 'Agora o chat só pergunta do gato. Ninguém quer ver você jogar.', fx: { fame: 2 } } },
+      { label: 'Tentar salvar a partida do jeito que der', base: 40, attr: 'mec', good: 'escape impossível', bad: 'morre e perde o PDL',
+        ok: { text: 'Você sai da torre com 12 de vida e ainda pega um abate. O clipe foi para a página inicial do Reddit.', fx: { mec: 1, fame: 5 } },
+        fail: { text: 'Morreu, perdeu a partida e 25 de PDL. O gato não demonstrou arrependimento.', fx: { mental: -1 } } },
+    ],
+  },
+  {
+    id: 'nick_errado', tag: 'TRANSMISSÃO', icon: '🗣️', scene: 'stage',
+    title: 'O narrador erra seu nick a temporada inteira',
+    text: 'Toda rodada, o narrador principal {doLeague} chama {nick} de um jeito diferente. O chat já criou um bingo com as versões.',
+    choices: [
+      { label: 'Abraçar a zoeira e mudar o nick de brincadeira', base: 65, attr: 'mental', good: 'a torcida adota', bad: 'confusão nos contratos',
+        ok: { text: 'Você entra numa partida com o nick errado. O narrador ri ao vivo e agora vocês são amigos.', fx: { fame: 6, morale: 2 } },
+        fail: { text: 'O departamento jurídico da {team} teve que refazer três documentos. Ninguém riu lá.', fx: { morale: -3, fame: 2 } } },
+      { label: 'Mandar um áudio ensinando a pronúncia', base: 85, attr: 'mental', good: 'problema resolvido', bad: 'ele erra de um jeito novo',
+        ok: { text: 'Ele agradece no ar e acerta pelo resto do ano. A comunidade achou fofo.', fx: { fame: 2 } },
+        fail: { text: 'Ele inventou uma pronúncia totalmente nova. O bingo ganhou mais uma casa.', fx: { fame: 3 } } },
+    ],
+  },
+  {
+    id: 'pick_troll', tag: 'DRAFT', icon: '🍄', scene: 'lab',
+    title: 'O técnico quer um pick "diferente"',
+    text: 'Série decisiva e o técnico chega com uma ideia: um campeão que ninguém joga no competitivo há anos. Ele jura que é "a leitura do meta".',
+    choices: [
+      { label: 'Confiar no técnico e jogar o pick', base: 45, attr: 'mec', good: 'vira lenda', bad: 'vira meme eterno',
+        ok: { text: 'Ninguém sabia contra o que estava jogando. Vitória esmagadora e o pick vira tendência mundial por uma semana.', fx: { mec: 1, fame: 8, morale: 4 } },
+        fail: { text: 'Derrota em 22 minutos. O print do seu placar vai aparecer em toda retrospectiva do ano.', fx: { fame: -2, mental: -2, morale: 2 } } },
+      { label: 'Pedir para jogar o seguro', base: 75, attr: 'macro', good: 'vitória sem susto', bad: 'técnico fica magoado',
+        ok: { text: 'Pick padrão, jogo limpo, vitória. O técnico guardou a ideia "para o Mundial".', fx: { macro: 1, morale: 1 } },
+        fail: { text: 'Vocês perderam do jeito normal, e o técnico passou a semana dizendo "eu avisei".', fx: { morale: -4 } } },
+    ],
+  },
+  {
+    id: 'energetico', tag: 'PATROCÍNIO', icon: '🥤', scene: 'stream',
+    title: 'O energético novo do patrocinador',
+    text: 'O patrocinador lançou um sabor "Barão Roxo" e quer você bebendo ao vivo na câmera. O gosto lembra xarope de tosse com chiclete.',
+    choices: [
+      { label: 'Beber e elogiar com a cara mais séria do mundo', base: 50, attr: 'mental', good: 'patrocinador feliz', bad: 'careta viraliza',
+        ok: { text: '"Refrescante, com notas de vitória." O patrocinador renovou por mais um ano.', fx: { fame: 3, morale: 3 } },
+        fail: { text: 'Sua careta durou 0,3 segundos, mas o suficiente para virar figurinha no Brasil inteiro.', fx: { fame: 4, morale: -3 } } },
+      { label: 'Sugerir um sabor novo para a marca', base: 60, attr: 'macro', good: 'sabor com seu nome', bad: 'marca ignora',
+        ok: { text: 'O sabor "Pentakill de Limão" com a sua cara na lata vende muito.', fx: { fame: 6 } },
+        fail: { text: 'A marca respondeu com um "vamos avaliar" que nunca foi avaliado.', fx: {} } },
+    ],
+  },
+  {
+    id: 'smite_roubado', tag: 'JUNGLE', icon: '🐉', scene: 'stage', roles: ['jungle'],
+    title: 'Roubaram o Barão no seu smite',
+    text: 'Barão com 800 de vida, seu smite tira 1200. O jungle deles pula do nada, dá smite antes e rouba. O replay está em todas as redes.',
+    choices: [
+      { label: 'Treinar timing de smite até sonhar com ele', base: 75, attr: 'mec', good: 'nunca mais perde um', bad: 'fica paranoico',
+        ok: { text: 'Uma semana na ferramenta de treino. No jogo seguinte, você rouba um dragão ancião de volta.', fx: { mec: 2, fame: 3 } },
+        fail: { text: 'Agora você dá smite cedo demais de nervoso. O técnico pediu calma.', fx: { mental: -2 } } },
+      { label: 'Postar "foi a sorte dele" nas redes', base: 30, attr: 'mental', good: 'comunidade concorda', bad: 'vira chacota',
+        ok: { text: 'Até o jungle rival admitiu que foi sorte. Vocês viraram amigos de SoloQ.', fx: { fame: 3 } },
+        fail: { text: 'A comunidade montou uma compilação de todos os seus smites errados. São muitos.', fx: { fame: -4, mental: -1 } } },
+    ],
+  },
+  {
+    id: 'kill_roubada', tag: 'COMPANHEIROS', icon: '💢', scene: 'office', notRoles: ['support'],
+    title: 'Roubaram seu pentakill',
+    text: 'Você fez quatro abates na luta final e o quinto estava com 30 de vida. Seu suporte deu o último golpe e ficou com o abate.',
+    choices: [
+      { label: 'Rir e transformar em piada interna', base: 80, attr: 'mental', good: 'time mais unido', bad: 'piada cansa',
+        ok: { text: 'O time imprimiu uma foto do placar e pendurou na gaming house. Vocês nunca estiveram tão unidos.', fx: { morale: 4, mental: 1 } },
+        fail: { text: 'A piada foi repetida tantas vezes que perdeu a graça. Principalmente para você.', fx: { mental: -1 } } },
+      { label: 'Exigir que ele pague o jantar da equipe', base: 65, attr: 'mental', good: 'rodízio de graça', bad: 'discussão sobre o preço',
+        ok: { text: 'Rodízio completo por conta dele. Ninguém mais rouba abate de ninguém.', fx: { morale: 3 } },
+        fail: { text: 'Ele escolheu o restaurante mais barato da cidade. Ninguém comeu direito.', fx: { morale: -2 } } },
+    ],
+  },
+  {
+    id: 'flash_tecla', tag: 'POLÊMICA', icon: '⌨️', scene: 'night',
+    title: 'Flash no D ou no F?',
+    text: 'O time novo inteiro usa o Flash numa tecla diferente da sua. O técnico quer padronizar "para facilitar as calls".',
+    when: (p) => p.age <= 24,
+    choices: [
+      { label: 'Trocar a tecla do Flash', base: 45, attr: 'mec', good: 'adaptação rápida', bad: 'Flash errado em jogo oficial',
+        ok: { text: 'Duas semanas de sofrimento e pronto: agora você nem lembra que era diferente.', fx: { mec: 1, morale: 3 } },
+        fail: { text: 'Em jogo oficial, você usou Teleporte em vez de Flash para fugir. O narrador não conseguiu parar de rir.', fx: { mec: -1, fame: 3, morale: -3 } } },
+      { label: 'Defender sua tecla com uma apresentação de slides', base: 65, attr: 'macro', good: 'convence o time', bad: 'slides viram meme',
+        ok: { text: '14 slides e um gráfico de pizza depois, o técnico cedeu. Você mantém a sua tecla.', fx: { macro: 1, mental: 1 } },
+        fail: { text: 'Os slides vazaram e viraram o assunto da semana no cenário.', fx: { fame: 3, morale: -2 } } },
+    ],
+  },
+  {
+    id: 'avo_fa', tag: 'FAMÍLIA', icon: '👵', scene: 'city',
+    title: 'Sua avó virou a maior fã do cenário',
+    text: 'Ela aprendeu a assistir às partidas, criou conta no X e comenta "esse é meu neto" em todo post {doLeague}.',
+    choices: [
+      { label: 'Levar ela para assistir na arena', base: 85, attr: 'mental', good: 'dia inesquecível', bad: 'ela briga com a torcida rival',
+        ok: { text: 'A câmera a achou na arena com uma placa escrita "{nick} MEU NETO". A arena inteira aplaudiu.', fx: { fame: 6, mental: 2, morale: 3 } },
+        fail: { text: 'Ela discutiu com a torcida rival sobre o draft. Na verdade, ela estava certa.', fx: { fame: 3 } } },
+      { label: 'Pedir com carinho para ela comentar menos', base: 60, attr: 'mental', good: 'ela entende', bad: 'ela abre uma conta secundária',
+        ok: { text: 'Ela entendeu e agora só manda mensagem no privado com dicas de posicionamento.', fx: { mental: 1 } },
+        fail: { text: 'Ela criou uma conta secundária. Agora são duas avós comentando em tudo.', fx: { fame: 2 } } },
+    ],
+  },
+  {
+    id: 'skin_mundial', tag: 'SKIN DE CAMPEÃO', icon: '🎨', scene: 'lab',
+    title: 'A skin do título mundial',
+    text: 'Como campeão mundial, você escolhe o campeão que vai ganhar a skin comemorativa do seu time.',
+    // Só na pré-temporada logo depois de ganhar o Mundial.
+    when: (p, ctx) => ctx.stage === 'ev0' && p.trophies.some((t) => t.name === 'Mundial' && t.year === ctx.year - 1),
+    choices: [
+      { label: 'O campeão que você jogou na final', base: 85, attr: 'mental', good: 'todo mundo compra', bad: 'reclamam da cor',
+        ok: { text: 'A skin é um sucesso e você vê seu nome no cliente toda vez que alguém entra na partida com ela.', fx: { fame: 8, mental: 1 } },
+        fail: { text: 'O fórum inteiro reclamou do tom de dourado. Você achou lindo.', fx: { fame: 4 } } },
+      { label: 'Um campeão que ninguém joga, só pela zoeira', base: 50, attr: 'mental', good: 'lenda da comunidade', bad: 'o time inteiro protesta',
+        ok: { text: 'A skin mais comentada da história. O campeão voltou ao meta só por causa dela.', fx: { fame: 10 } },
+        fail: { text: 'O resto do time não gostou de dividir a skin com um campeão que ninguém joga.', fx: { fame: 4, morale: -4 } } },
+    ],
+  },
+  {
+    id: 'fila_dodge', tag: 'SOLO QUEUE', icon: '⏳', scene: 'night',
+    title: 'O troll da SoloQ te persegue',
+    text: 'Um jogador aleatório cai no seu time em toda partida e escolhe um suporte no mid. Já são cinco derrotas seguidas.',
+    choices: [
+      { label: 'Dar dodge até ele sumir', base: 70, attr: 'mental', good: 'fila limpa', bad: 'perde PDL de dodge',
+        ok: { text: 'Três dodges e ele sumiu. Você volta a subir no ranking.', fx: { mental: 1 } },
+        fail: { text: 'Ele também deu dodge. Vocês caíram juntos de novo. E de novo.', fx: { mental: -2 } } },
+      { label: 'Ensinar ele a jogar pelo chat', base: 35, attr: 'mental', good: 'ganha um fã', bad: 'recebe um report',
+        ok: { text: 'Ele virou seu fã, parou de trollar e agora manda mensagens motivacionais antes de cada jogo oficial.', fx: { fame: 3, mental: 1 } },
+        fail: { text: 'Ele te reportou por "excesso de positividade". Você não sabia que isso existia.', fx: { mental: -1 } } },
+    ],
+  },
+  {
+    id: 'patch_quarta', tag: 'PATCH', icon: '🛠️', scene: 'lab',
+    title: 'O patch saiu na véspera do jogo',
+    text: 'Um patch de emergência na quarta-feira mudou o campeão que o time treinou a semana inteira. O jogo é na sexta.',
+    choices: [
+      { label: 'Virar a noite testando no servidor de testes', base: 60, attr: 'macro', good: 'estratégia salva', bad: 'time exausto',
+        ok: { text: 'Às 5 da manhã, o time achou uma adaptação que ninguém tinha pensado. Vitória na sexta.', fx: { macro: 2, morale: 3 } },
+        fail: { text: 'Todo mundo dormiu no palco. Literalmente: a câmera pegou o top cochilando no draft.', fx: { morale: -4, fame: 2 } } },
+      { label: 'Ignorar o patch e confiar no treino', base: 50, attr: 'mec', good: 'executa melhor que todos', bad: 'estratégia quebrada',
+        ok: { text: 'Mesmo mais fraco, o campeão funcionou porque vocês jogavam ele melhor que todo mundo.', fx: { mec: 1, tf: 1 } },
+        fail: { text: 'O campeão estava irreconhecível. Parecia que vocês tinham esquecido o jogo.', fx: { morale: -4 } } },
     ],
   },
 ];

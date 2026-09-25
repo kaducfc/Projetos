@@ -1,6 +1,6 @@
 // Tela principal: coluna do jogador, painel central (fase atual) e
 // tabela da carreira. Tudo é reconstruído a cada ação.
-import { ATTRS, REGIONS, ROLES, nationById } from '../data/world.js';
+import { ATTRS, REGIONS, ROLES, nationById, ofLeague, inLeague } from '../data/world.js';
 import { eventById, roleText } from '../data/events.js';
 import { ovrOf, marketValue, STATUS } from '../engine/player.js';
 import { teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore, eventOptions } from '../engine/career.js';
@@ -16,6 +16,8 @@ const fill = (text, state) => {
     .replaceAll('{lane}', role === 'jungle' ? 'selva' : 'rota')
     .replaceAll('{nick}', esc(state.player.nick))
     .replaceAll('{team}', esc(team?.name || 'seu time'))
+    .replaceAll('{doLeague}', esc(team ? ofLeague(leagueName(team)) : 'da liga'))
+    .replaceAll('{naLeague}', esc(team ? inLeague(leagueName(team)) : 'na liga'))
     .replaceAll('{league}', esc(team ? leagueName(team) : 'liga'));
 };
 

@@ -161,6 +161,8 @@ em `engine/player.js`, `engine/sim.js` ou `engine/career.js`.
   `{lane}` vira "selva" para o Jungle e "rota" para as demais. Há eventos
   exclusivos de cada rota (teleporte do top, invasão do jungle, roam do mid,
   posicionamento do ADC, visão e dupla do suporte).
+- **Placeholders:** `{nick}`, `{team}`, `{league}`, `{doLeague}` ("do CBLOL",
+  "da LCK"), `{naLeague}` ("no CBLOL", "na LCK") e `{lane}`.
 - **Times:** `TIER1` em `js/data/world.js` (id, nome, sigla, rating, cores).
   As academias são geradas a partir dos 8 primeiros times de cada região.
 

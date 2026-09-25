@@ -3,7 +3,7 @@
 //
 // Toda a lógica muda `state` e define `state.screen`; a UI só desenha.
 
-import { buildTeams, REGIONS, REGION_LEVEL, TIER_RANGE, WILDCARD_SLOTS, nationById } from '../data/world.js';
+import { buildTeams, REGIONS, REGION_LEVEL, TIER_RANGE, WILDCARD_SLOTS, nationById, ofLeague } from '../data/world.js';
 import { EVENTS, eventById, roleAllows } from '../data/events.js';
 import {
   createPlayer, ovrOf, effectiveOvr, applyFx, seasonGrowth, salaryFor, statusFor, STATUS,
@@ -673,7 +673,7 @@ function choicesFor(ev, role) {
 
 function eventScreen(state, stage) {
   const p = state.player;
-  const ctx = { stage, team: teamOf(state, p.teamId) };
+  const ctx = { stage, team: teamOf(state, p.teamId), year: state.season.year };
   const ok = (e) => (!e.when || e.when(p, ctx)) && roleAllows(e, p.role) && choicesFor(e, p.role).length >= 2;
   let pool = EVENTS.filter((e) => ok(e) && !p.usedEvents.includes(e.id));
   if (!pool.length) pool = EVENTS.filter(ok);
@@ -726,13 +726,13 @@ function computeAwards(state, playedRatio) {
   if (playedRatio >= 0.5) {
     const place = best === 1 ? 15 : best === 2 ? 6 : 0;
     if (roll(clamp((ovr - leagueTop) * 6 + 12 + place + pogRate * 40, 0, 75))) {
-      awards.push(`MVP da ${s.league}`);
+      awards.push(`MVP ${ofLeague(s.league)}`);
     } else if (roll(clamp((ovr - leagueTop + 8) * 8 + place, 0, 85))) {
-      awards.push(`Seleção da ${s.league}`);
+      awards.push(`Seleção ${ofLeague(s.league)}`);
     }
     const firstInTier = !p.history.some((h) => h.tier === s.tier);
     if (s.tier === 1 && firstInTier && p.age <= 20 && roll(clamp((ovr - 68) * 7 + 25, 0, 85))) {
-      awards.push(`Revelação da ${s.league}`);
+      awards.push(`Revelação ${ofLeague(s.league)}`);
     }
   }
   if (s.titles.some((t) => t.name === 'Mundial') && roll(clamp(30 + (ovr - 85) * 4, 10, 70))) {

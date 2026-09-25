@@ -232,3 +232,8 @@ export function buildTeams() {
 }
 
 export const nationById = (id) => NATIONS.find((n) => n.id === id);
+
+// Gênero do nome das ligas: "o CBLOL", "a LCK", "o Circuito Desafiante".
+const MASCULINE_LEAGUES = new Set(['CBLOL', 'CBLOL Academy', 'Circuito Desafiante']);
+export const ofLeague = (name) => `${MASCULINE_LEAGUES.has(name) ? 'do' : 'da'} ${name}`;
+export const inLeague = (name) => `${MASCULINE_LEAGUES.has(name) ? 'no' : 'na'} ${name}`;
