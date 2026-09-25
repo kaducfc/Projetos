@@ -57,6 +57,21 @@ npm test   # testes do sistema de contas
    endereço onde o site vai ficar (ex.: `https://kaducfc.github.io/Projetos/arcade/`).
    O link do e-mail de confirmação leva para lá.
 
+## Aviso de fã e doações
+
+O rodapé (`shared/footer.js`) aparece no hub e em todos os jogos. Ele diz que
+o site é um projeto de fã, gratuito e sem fins lucrativos, sem vínculo com a
+Riot Games, as ligas ou os times, e que as doações são opcionais e servem só
+para a manutenção (servidor e domínio), sem vantagem nos jogos. Versões
+curtas do aviso aparecem na criação do jogador, no relatório da
+aposentadoria e na janela de login.
+
+Para mostrar o botão **"Apoiar o projeto"**, coloque o link (Pix, Ko-fi,
+Livepix…) em `DONATION_URL` no `shared/config.js`. Vazio, o botão some.
+
+Jogos novos: incluam `<footer id="site-footer"></footer>` no `index.html` e
+chamem `mountSiteFooter(document.getElementById('site-footer'))`.
+
 ## Publicação
 
 O login só funciona com o site hospedado de verdade (GitHub Pages, Netlify,

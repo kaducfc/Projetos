@@ -5,6 +5,7 @@ import { ROLES } from './data/world.js';
 import { packState, unpackState } from './engine/save.js';
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
+import { mountSiteFooter } from '../../../shared/footer.js';
 
 const GAME_ID = 'carreira-no-rift';
 const OLD_SAVE_KEY = 'riftcareer.save.v1';
@@ -146,6 +147,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
+mountSiteFooter(document.getElementById('site-footer'));
 
 // Ao entrar na conta, a carreira salva na nuvem (se for mais recente)
 // substitui a deste aparelho; ao sair, o aparelho é limpo.

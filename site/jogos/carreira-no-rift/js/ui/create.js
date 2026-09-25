@@ -3,6 +3,7 @@ import { ATTRS, NATIONS, REGIONS, ROLES, STYLES } from '../data/world.js';
 import { calcOvr, rollAttrs } from '../engine/player.js';
 import { jerseySvg, minimapSvg } from './art.js';
 import { esc } from '../util.js';
+import { FAN_NOTICE } from '../../../../shared/footer.js';
 
 const NICK_RE = /^[\p{L}\p{N}_. -]{2,14}$/u;
 
@@ -16,6 +17,7 @@ export function renderCreate(root, onConfirm) {
         <div class="brand"><span class="brand-mark">◆</span> CARREIRA NO RIFT</div>
         <h1>Crie o seu jogador</h1>
         <p>Aos 16 anos, você sai da SoloQ direto pro cenário. Escolha quem você é e onde começa.</p>
+        <p class="fan-note">${FAN_NOTICE}</p>
       </header>
       <div class="create-cols">
         <section class="create-col">

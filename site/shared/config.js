@@ -10,6 +10,11 @@ export const SITE_NAME = 'Rift Arcade';
 export const SUPABASE_URL = '';
 export const SUPABASE_ANON_KEY = '';
 
+// Link de doação (Pix, Ko-fi, Livepix…). Vazio = botão "Apoiar" escondido.
+// As doações são opcionais, só para manter o site no ar, e não dão vantagem
+// nenhuma nos jogos.
+export const DONATION_URL = '';
+
 // Logos dos times nos jogos:
 //   'escudos'  → escudo próprio do site (padrão). Usa a arte em
 //                assets/emblemas/<id>.png se existir; senão, o escudo gerado.

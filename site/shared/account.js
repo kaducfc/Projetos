@@ -2,6 +2,7 @@
 // Usada pelo hub e por todos os jogos: mountSiteBar(el, { hubHref }).
 import * as platform from './platform.js';
 import { SITE_NAME } from './config.js';
+import { FAN_NOTICE } from './footer.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -94,6 +95,7 @@ export function openAuthModal(tab = 'login') {
         <p class="acc-msg" role="status"></p>
         <button type="submit" class="acc-submit"></button>
       </form>
+      <p class="acc-fan">${FAN_NOTICE}</p>
     </div>`;
   document.body.appendChild(modal);
 

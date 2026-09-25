@@ -1,6 +1,7 @@
 import * as platform from '../shared/platform.js';
 import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { GAMES, SITE_NAME, gameById } from '../shared/config.js';
+import { mountSiteFooter } from '../shared/footer.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -12,6 +13,7 @@ const fmtScore = (n) => (n == null ? '—' : Number(n).toLocaleString('pt-BR'));
 document.getElementById('site-name').textContent = SITE_NAME;
 document.title = SITE_NAME;
 mountSiteBar(document.getElementById('site-bar'), { showBrand: true });
+mountSiteFooter(document.getElementById('site-footer'));
 
 function renderGames(results) {
   document.getElementById('games').innerHTML = GAMES.map((g) => {
