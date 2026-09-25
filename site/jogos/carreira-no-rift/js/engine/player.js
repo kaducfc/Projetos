@@ -62,13 +62,15 @@ export function seasonGrowth(p, perf) {
   const before = ovrOf(p);
   const gap = Math.max(0, p.potential - before);
   let g;
-  // Curva de carreira: cresce devagar na adolescência, acelera dos 20 aos 25
-  // e atinge o auge por volta dos 24-26 anos. Chegar a 75+ aos 19 é coisa
-  // de gênio (potencial altíssimo e tudo dando certo).
-  if (p.age <= 19) g = gap * 0.08 + rand(0, 1);
-  else if (p.age <= 22) g = gap * 0.12 + rand(-0.2, 1);
-  else if (p.age <= 25) g = gap * 0.11 + rand(-0.5, 0.8);
-  else if (p.age <= 27) g = gap * 0.04 + rand(-1.2, 0.5);
+  // Curva de carreira (auge do LoL é cedo): começa devagar aos 16-17, cresce
+  // forte dos 18 aos 22, chega ao auge entre 19 e 24, depois mantém ou
+  // cresce pouco e começa a cair por volta dos 27. Ter 75+ aos 17-18 é raro
+  // (só com potencial altíssimo).
+  if (p.age <= 17) g = gap * 0.07 + rand(0, 0.8);
+  else if (p.age <= 22) g = gap * 0.17 + rand(0, 1.2);
+  else if (p.age <= 24) g = gap * 0.1 + rand(-0.3, 0.8);
+  else if (p.age <= 26) g = gap * 0.03 + rand(-0.8, 0.5);
+  else if (p.age === 27) g = -rand(0.3, 1.3);
   else g = -rand(1, 2.5) - (p.age - 28) * 0.5;
 
   // Quem joga e vence evolui mais; quem fica no banco estagna.

@@ -92,8 +92,8 @@ LEC, LCS), academias e ligas amadoras.
   evolução forte), times melhores da própria liga passam a fazer proposta,
   mesmo acima do nível que o jogador alcançaria normalmente.
 - **Exterior (propostas normais):** com OVR alto chegam propostas de times
-  de fora (LEC/LCS a partir de ~75, LCK/LPL a partir de ~86; a porta de entrada
-  da LCK/LPL exige OVR 77+).
+  de fora (LEC/LCS a partir de ~75, LCK/LPL a partir de ~88; a porta de entrada e
+  as apostas da LCK/LPL exigem OVR 77+ e 78+).
 - **Empréstimo:** depois de uma temporada muito ruim (quase não jogou, nível
   bem abaixo do time ou em atrito com o técnico), a diretoria pode emprestar
   o jogador por 1 temporada a um time do mesmo nível ou mais fraco (nunca melhor). Não há opção de ficar; no
@@ -113,9 +113,10 @@ OVR crescer mais e aumenta o teto (potencial) do jogador.
 
 Títulos internacionais e prêmios de MVP também aumentam o teto em +1.
 
-**Curva de evolução:** o jogador cresce devagar na adolescência, acelera dos
-20 aos 25 e atinge o auge por volta dos 24–26 anos. Chegar a 75+ aos 19 anos é
-raro (~6% das carreiras, jogadores com potencial muito alto).
+**Curva de evolução:** começa devagar aos 16–17, cresce forte dos 18 aos 22 e
+chega ao auge entre 19 e 24 anos. Dos 25 aos 26 mantém ou cresce pouco, e a
+queda começa por volta dos 27 (mais forte a partir dos 28). Ter 75+ aos 17–18
+anos é raro (~1% das carreiras, jogadores com potencial altíssimo).
 
 **Aposentadoria:** pode ser anunciada a partir dos 27 anos e é obrigatória
 aos 35. O relatório final mostra o legado, os clubes, os títulos e um resumo

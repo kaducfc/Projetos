@@ -141,6 +141,7 @@ function betOffer(state, score) {
   if (hype < 5 || !roll(hype * 4)) return null;
   const pool = Object.values(state.world.teams).filter((t) => t.tier === 1 && t.region !== 'wc'
     && t.id !== p.teamId && REGION_LEVEL[t.region].rank > curRank
+    && (REGION_LEVEL[t.region].rank < 3 || ovrOf(p) >= 78 || p.nat === 'KR')
     && t.rating >= score - 4 && t.rating <= score + 7 + hype / 3);
   if (!pool.length) return null;
   const t = weightedPick(pool, (x) => REGION_LEVEL[x.region].rank);
@@ -202,7 +203,7 @@ export function genOffers(state, { first = false, max = 3 } = {}) {
       if (t.rating < lo || t.rating > hiFor(t)) return false;
       if (t.region !== p.region && !sameLeague(t)) {
         if (t.tier > 1) return false;
-        const need = p.nat === 'KR' ? 72 : REGION_LEVEL[t.region].rank === 3 ? 86 : 75;
+        const need = p.nat === 'KR' ? 72 : REGION_LEVEL[t.region].rank === 3 ? 88 : 75;
         if (ovr < need) return false;
       }
       return true;
