@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createFakeSupabase, installMemoryStorage } from './fake-supabase.js';
 import * as platform from '../shared/platform.js';
@@ -108,3 +108,51 @@ test('sem servidor (modo visitante), login falha com mensagem clara', async () =
     delete globalThis.__SITE_OFFLINE;
   }
 });
+
+test('várias jogadas no mesmo minuto viram um envio só, e falhas são tentadas de novo', async () => {
+  mock.timers.enable({ apis: ['setTimeout', 'Date'], now: Date.parse('2026-09-25T12:00:00Z') });
+  try {
+    const sb = createFakeSupabase();
+    installMemoryStorage();
+    platform.__setClientForTests(sb);
+    await platform.signUp({ email: 'd@example.com', password: 'segredo123', username: 'dani' });
+    const base = sb.stats.upserts;
+
+    // Primeira jogada: vai logo (nada foi enviado no último minuto).
+    platform.writeSave(GAME, { v: 2, click: 0 });
+    mock.timers.tick(1_500);
+    await tick0();
+    assert.equal(sb.stats.upserts, base + 1);
+
+    // Mais 29 jogadas seguidas: nada vai para a nuvem antes de fechar 1 minuto.
+    for (let i = 1; i < 30; i++) platform.writeSave(GAME, { v: 2, click: i });
+    mock.timers.tick(57_000);
+    await tick0();
+    assert.equal(sb.stats.upserts, base + 1);
+
+    // Fechou 1 minuto desde o primeiro envio: um único envio, com o save mais recente.
+    mock.timers.tick(3_000);
+    await tick0();
+    assert.equal(sb.stats.upserts, base + 2);
+    assert.deepEqual(sb.db.site_game_saves[0].data, { v: 2, click: 29 });
+
+    // Servidor falha: nova tentativa sozinha depois de alguns segundos.
+    sb.stats.failNextUpserts = 1;
+    platform.writeSave(GAME, { v: 2, click: 30 }, { urgent: true });
+    mock.timers.tick(1_500);
+    await tick0();
+    assert.equal(sb.stats.upserts, base + 3);
+    assert.deepEqual(sb.db.site_game_saves[0].data, { v: 2, click: 29 }, 'falhou, ainda não gravou');
+    mock.timers.tick(5_000);
+    await tick0();
+    assert.equal(sb.stats.upserts, base + 4);
+    assert.deepEqual(sb.db.site_game_saves[0].data, { v: 2, click: 30 });
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+// Deixa as promessas pendentes (timers já disparados) terminarem.
+async function tick0() {
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+}

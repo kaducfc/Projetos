@@ -19,7 +19,12 @@ const SDK_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const SAVE_PREFIX = 'site.save.';
 const RESULTS_KEY = 'site.results';
 const MAX_LOCAL_RESULTS = 200;
-const PUSH_DELAY_MS = 1500;
+// Envio para a nuvem: no máximo 1 vez por minuto por jogo (o navegador
+// salva na hora). Pico de 5 mil jogadores ≈ 80 gravações/s no servidor.
+const PUSH_INTERVAL_MS = 60_000;
+const URGENT_DELAY_MS = 1500;
+const RETRY_MIN_MS = 5_000;
+const RETRY_MAX_MS = 5 * 60_000;
 
 const listeners = new Set();
 let clientPromise = null;
@@ -28,6 +33,8 @@ let initPromise = null;
 let user = null; // { id, email, username }
 let loggingIn = null;
 const pushTimers = new Map();
+const lastPushAt = new Map();
+const retryDelay = new Map();
 
 // ------------------------------------------------------------------ utilidades
 
@@ -82,10 +89,17 @@ export function onChange(fn) {
 // servidor) ou o Supabase ainda não foi configurado em config.js.
 export const cloudEnabled = () => !globalThis.__SITE_OFFLINE && Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
+// Versão em arquivo único (fora do site): não há hub para onde voltar.
+export const isStandalone = () => Boolean(globalThis.__SITE_OFFLINE);
+
 export const getUser = () => user;
 
 // Só para testes automatizados: troca o cliente Supabase por um falso.
 export function __setClientForTests(client) {
+  pushTimers.forEach((t) => clearTimeout(t.id));
+  pushTimers.clear();
+  lastPushAt.clear();
+  retryDelay.clear();
   injectedClient = client;
   clientPromise = null;
   initPromise = null;
@@ -225,13 +239,15 @@ export function loadLocalSave(gameId) {
   return readLS(SAVE_PREFIX + gameId, null)?.data ?? null;
 }
 
-export function writeSave(gameId, data) {
+// `urgent`: manda em ~1,5 s em vez de esperar a janela de 1 minuto
+// (ex.: fim de carreira, que o jogador espera ver no histórico já).
+export function writeSave(gameId, data, { urgent = false } = {}) {
   writeLS(SAVE_PREFIX + gameId, { data, updatedAt: new Date().toISOString(), synced: false });
-  if (user) schedulePush(gameId);
+  if (user) schedulePush(gameId, urgent ? URGENT_DELAY_MS : null);
 }
 
 export async function clearSave(gameId) {
-  clearTimeout(pushTimers.get(gameId));
+  clearTimeout(pushTimers.get(gameId)?.id);
   pushTimers.delete(gameId);
   writeLS(SAVE_PREFIX + gameId, null);
   const sb = await getClient();
@@ -241,33 +257,47 @@ export async function clearSave(gameId) {
   }
 }
 
-function schedulePush(gameId) {
-  clearTimeout(pushTimers.get(gameId));
-  pushTimers.set(gameId, setTimeout(() => {
+// Agenda o envio. Sem `delay`, respeita o intervalo mínimo desde o último
+// envio; um envio já agendado só é antecipado, nunca adiado. Na hora de
+// enviar, lê o save mais recente do navegador.
+function schedulePush(gameId, delay = null) {
+  const since = Date.now() - (lastPushAt.get(gameId) || 0);
+  const wait = delay ?? Math.max(URGENT_DELAY_MS, PUSH_INTERVAL_MS - since);
+  const timer = pushTimers.get(gameId);
+  if (timer && timer.due <= Date.now() + wait) return;
+  clearTimeout(timer?.id);
+  const id = setTimeout(() => {
     pushTimers.delete(gameId);
     pushSave(gameId);
-  }, PUSH_DELAY_MS));
+  }, wait);
+  pushTimers.set(gameId, { id, due: Date.now() + wait });
 }
 
 async function pushSave(gameId) {
   const sb = await getClient();
   const entry = readLS(SAVE_PREFIX + gameId, null);
-  if (!sb || !user || !entry) return;
+  if (!sb || !user || !entry || entry.synced) return;
+  lastPushAt.set(gameId, Date.now());
   const { error } = await sb.from('site_game_saves').upsert({
     user_id: user.id, game_id: gameId, data: entry.data, updated_at: entry.updatedAt,
   });
   if (error) {
-    console.warn('Site: falha ao salvar na nuvem:', error.message);
+    // Servidor ocupado ou sem internet: tenta de novo, esperando cada vez mais.
+    const next = Math.min(RETRY_MAX_MS, (retryDelay.get(gameId) || RETRY_MIN_MS / 2) * 2);
+    retryDelay.set(gameId, next);
+    console.warn(`Site: falha ao salvar na nuvem (nova tentativa em ${Math.round(next / 1000)}s):`, error.message);
+    schedulePush(gameId, next);
     return;
   }
+  retryDelay.delete(gameId);
   const current = readLS(SAVE_PREFIX + gameId, null);
   if (current && current.updatedAt === entry.updatedAt) writeLS(SAVE_PREFIX + gameId, { ...current, synced: true });
 }
 
-// Envia o que estiver esperando (ex.: ao fechar a aba).
+// Envia na hora o que estiver esperando (ex.: ao sair da aba ou do site).
 export async function flushPushes() {
   const ids = [...pushTimers.keys()];
-  ids.forEach((id) => clearTimeout(pushTimers.get(id)));
+  ids.forEach((id) => clearTimeout(pushTimers.get(id).id));
   pushTimers.clear();
   await Promise.all(ids.map(pushSave));
 }
@@ -276,6 +306,8 @@ if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') flushPushes();
   });
+  globalThis.addEventListener?.('pagehide', () => flushPushes());
+  globalThis.addEventListener?.('online', () => flushPushes());
 }
 
 // Ao entrar: junta o que foi jogado como visitante com o que está na conta.

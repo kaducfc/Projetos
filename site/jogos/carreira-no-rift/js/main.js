@@ -2,6 +2,7 @@ import { newCareer, chooseOffer, chooseEvent, advance, continueAfterSeason, reti
 import { renderCreate } from './ui/create.js';
 import { renderGame, careerSummaryText } from './ui/game.js';
 import { ROLES } from './data/world.js';
+import { packState, unpackState } from './engine/save.js';
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 
@@ -9,7 +10,7 @@ const GAME_ID = 'carreira-no-rift';
 const OLD_SAVE_KEY = 'riftcareer.save.v1';
 const app = document.getElementById('app');
 
-const valid = (s) => (s && s.v === 2 ? s : null);
+const valid = (s) => (s && s.v === 2 ? unpackState(s) : null);
 
 // Save antigo (antes do site ter contas): migra uma vez para a plataforma.
 function migrateOldSave() {
@@ -18,7 +19,7 @@ function migrateOldSave() {
     if (!raw) return null;
     localStorage.removeItem(OLD_SAVE_KEY);
     const s = valid(JSON.parse(raw));
-    if (s) platform.writeSave(GAME_ID, s);
+    if (s) platform.writeSave(GAME_ID, packState(s));
     return s;
   } catch {
     return null;
@@ -27,8 +28,10 @@ function migrateOldSave() {
 
 let state = valid(platform.loadLocalSave(GAME_ID)) ?? migrateOldSave();
 
+// Salva no navegador a cada jogada; a plataforma manda para a nuvem no
+// máximo 1 vez por minuto (na hora, se a carreira acabou de terminar).
 function save() {
-  if (state) platform.writeSave(GAME_ID, state);
+  if (state) platform.writeSave(GAME_ID, packState(state), { urgent: Boolean(state.player?.retired) });
   else platform.clearSave(GAME_ID);
 }
 

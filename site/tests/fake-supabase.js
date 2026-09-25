@@ -3,6 +3,8 @@
 
 export function createFakeSupabase() {
   const db = { site_profiles: [], site_game_saves: [], site_game_results: [] };
+  // Contagem de gravações e falha simulada (servidor ocupado).
+  const stats = { upserts: 0, failNextUpserts: 0 };
   const users = [];
   const callbacks = [];
   let session = null;
@@ -50,6 +52,11 @@ export function createFakeSupabase() {
         return { data: q.single ? rows[0] ?? null : rows.map((r) => ({ ...r })), error: null };
       }
       if (q.op === 'upsert') {
+        stats.upserts++;
+        if (stats.failNextUpserts > 0) {
+          stats.failNextUpserts--;
+          return { data: null, error: { message: 'upstream request timeout' } };
+        }
         const list = Array.isArray(q.rows) ? q.rows : [q.rows];
         if (list.some((r) => r.user_id !== uid)) return { data: null, error: { message: 'new row violates row-level security policy' } };
         const k = keys[table];
@@ -85,7 +92,7 @@ export function createFakeSupabase() {
     return { data: null, error: { message: 'rpc desconhecida' } };
   }
 
-  return { auth, from, rpc, db };
+  return { auth, from, rpc, db, stats };
 }
 
 // localStorage em memória para rodar no Node.

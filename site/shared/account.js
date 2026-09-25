@@ -12,7 +12,7 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
   const paint = () => {
     const u = platform.getUser();
     const brand = showBrand
-      ? (hubHref && platform.cloudEnabled()
+      ? (hubHref && !platform.isStandalone()
         ? `<a class="sb-brand" href="${hubHref}">← ${esc(SITE_NAME)}</a>`
         : `<span class="sb-brand">${esc(SITE_NAME)}</span>`)
       : '<span></span>';

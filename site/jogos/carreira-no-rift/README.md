@@ -104,7 +104,8 @@ carreira-no-rift/
 │   ├── engine/
 │   │   ├── player.js      # OVR, evolução, valor de mercado, salário
 │   │   ├── sim.js         # partidas, séries, turno único, estatísticas
-│   │   └── career.js      # fluxo da temporada, propostas, torneios, prêmios
+│   │   ├── career.js      # fluxo da temporada, propostas, torneios, prêmios
+│   │   └── save.js        # save compacto (~7 KB): só o que muda nos times
 │   └── ui/
 │       ├── art.js         # SVGs (escudos, troféus, camisa, minimapa)
 │       ├── create.js      # tela de criação

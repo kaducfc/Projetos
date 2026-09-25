@@ -29,8 +29,11 @@ npm test   # testes do sistema de contas
 ## Como funcionam as contas
 
 - **Visitante:** tudo fica no `localStorage` do navegador (progresso e histórico).
-- **Com conta** (e-mail + senha + nome de usuário): o progresso vai para a
-  nuvem logo após cada jogada, e cada partida terminada entra no histórico.
+- **Com conta** (e-mail + senha + nome de usuário): o progresso é salvo no
+  navegador a cada jogada e enviado para a nuvem **no máximo 1 vez por
+  minuto** (e na hora ao sair da aba ou ao terminar a partida). Se o servidor
+  falhar, o envio é tentado de novo sozinho, esperando cada vez mais.
+  Cada partida terminada entra no histórico.
 - **Ao entrar**, o que foi jogado como visitante é enviado para a conta, e
   o save mais recente (do aparelho ou da nuvem) vence.
 - **Ao sair**, o aparelho é limpo; entrando de novo, tudo volta da nuvem.
