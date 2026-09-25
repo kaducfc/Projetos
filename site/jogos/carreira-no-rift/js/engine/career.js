@@ -160,6 +160,8 @@ function entryOffer(state, score) {
   const pool = [];
   for (const region of Object.keys(REGION_LEVEL)) {
     if (REGION_LEVEL[region].rank <= curRank) continue;
+    // LCK/LPL só abrem a porta para quem já tem nível de liga principal.
+    if (REGION_LEVEL[region].rank === 3 && ovrOf(p) < 77 && p.nat !== 'KR') continue;
     const tier1 = Object.values(state.world.teams).filter((t) => t.region === region && t.tier === 1)
       .sort((x, y) => x.rating - y.rating).slice(0, 4);
     pool.push(...tier1);
@@ -200,7 +202,7 @@ export function genOffers(state, { first = false, max = 3 } = {}) {
       if (t.rating < lo || t.rating > hiFor(t)) return false;
       if (t.region !== p.region && !sameLeague(t)) {
         if (t.tier > 1) return false;
-        const need = p.nat === 'KR' ? 72 : REGION_LEVEL[t.region].rank === 3 ? 83 : 75;
+        const need = p.nat === 'KR' ? 72 : REGION_LEVEL[t.region].rank === 3 ? 86 : 75;
         if (ovr < need) return false;
       }
       return true;

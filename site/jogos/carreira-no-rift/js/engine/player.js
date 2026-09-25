@@ -26,7 +26,7 @@ export function createPlayer({ nick, nat, region, role, style, attrs }) {
     nick, nat, role, style, region,
     attrs: { ...attrs },
     // Maioria fica entre 78 e 90; potencial de lenda (94+) é raro.
-    potential: 71 + Math.round(25 * Math.pow(Math.random(), 1.35)),
+    potential: 72 + Math.round(24 * Math.pow(Math.random(), 1.35)),
     age: 16,
     morale: 55,
     fame: 5,
@@ -62,10 +62,13 @@ export function seasonGrowth(p, perf) {
   const before = ovrOf(p);
   const gap = Math.max(0, p.potential - before);
   let g;
-  if (p.age <= 19) g = gap * 0.17 + rand(0.2, 1.6);
-  else if (p.age <= 22) g = gap * 0.13 + rand(-0.4, 1.1);
-  else if (p.age <= 25) g = gap * 0.07 + rand(-0.8, 0.9);
-  else if (p.age <= 27) g = rand(-1.5, 0.5);
+  // Curva de carreira: cresce devagar na adolescência, acelera dos 20 aos 25
+  // e atinge o auge por volta dos 24-26 anos. Chegar a 75+ aos 19 é coisa
+  // de gênio (potencial altíssimo e tudo dando certo).
+  if (p.age <= 19) g = gap * 0.08 + rand(0, 1);
+  else if (p.age <= 22) g = gap * 0.12 + rand(-0.2, 1);
+  else if (p.age <= 25) g = gap * 0.11 + rand(-0.5, 0.8);
+  else if (p.age <= 27) g = gap * 0.04 + rand(-1.2, 0.5);
   else g = -rand(1, 2.5) - (p.age - 28) * 0.5;
 
   // Quem joga e vence evolui mais; quem fica no banco estagna.
