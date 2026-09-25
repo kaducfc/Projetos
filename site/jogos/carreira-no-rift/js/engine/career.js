@@ -70,13 +70,19 @@ function addPrize(state, label, amount) {
 
 export const teamOf = (state, id) => state.world.teams[id];
 
+// Times em atividade. Times que saíram do jogo (RETIRED_TEAMS) só existem em
+// saves antigos, para o histórico; não entram em ligas nem fazem propostas.
+// Exceção: o time atual do jogador segue ativo até ele sair.
+const activeTeams = (state) => Object.values(state.world.teams)
+  .filter((t) => !t.retired || t.id === state.player?.teamId);
+
 export function leagueName(team) {
   if (team.region === 'wc') return 'Wildcard';
   return REGIONS[team.region].leagues[team.tier];
 }
 
 export function leagueTeams(state, team) {
-  return Object.values(state.world.teams).filter((t) => t.region === team.region && t.tier === team.tier);
+  return activeTeams(state).filter((t) => t.region === team.region && t.tier === team.tier);
 }
 
 function ambitionLabel(state, team) {
@@ -159,7 +165,7 @@ function betOffer(state, score) {
   const curRank = leagueRank(teamOf(state, p.teamId));
   const hype = hypeOf(p);
   if (hype < 5 || !roll(hype * 4)) return null;
-  const pool = Object.values(state.world.teams).filter((t) => t.tier === 1 && t.region !== 'wc'
+  const pool = activeTeams(state).filter((t) => t.tier === 1 && t.region !== 'wc'
     && t.id !== p.teamId && REGION_LEVEL[t.region].rank > curRank
     && (REGION_LEVEL[t.region].rank < 3 || ovrOf(p) >= 77 || p.nat === 'KR')
     && t.rating >= score - 4 && t.rating <= score + 7 + hype / 3);
@@ -183,11 +189,11 @@ function entryOffer(state, score) {
     if (REGION_LEVEL[region].rank <= curRank) continue;
     // LCK/LPL só abrem a porta para quem já tem nível de liga principal.
     if (REGION_LEVEL[region].rank === 3 && ovrOf(p) < 76 && p.nat !== 'KR') continue;
-    const tier1 = Object.values(state.world.teams).filter((t) => t.region === region && t.tier === 1)
+    const tier1 = activeTeams(state).filter((t) => t.region === region && t.tier === 1)
       .sort((x, y) => x.rating - y.rating).slice(0, 4);
     pool.push(...tier1);
     if (p.age <= 20) {
-      pool.push(...Object.values(state.world.teams).filter((t) => t.region === region && t.tier === 2).slice(0, 3));
+      pool.push(...activeTeams(state).filter((t) => t.region === region && t.tier === 2).slice(0, 3));
     }
   }
   const fits = pool.filter((t) => t.id !== p.teamId && t.rating <= score + 5 && t.rating >= score - 14);
@@ -206,7 +212,7 @@ export function genOffers(state, { first = false, max = 3 } = {}) {
   const ovr = ovrOf(p);
   const score = ovr + p.fame / 20;
   const cur = teamOf(state, p.teamId);
-  const all = Object.values(state.world.teams).filter((t) => t.region !== 'wc' && t.id !== p.teamId);
+  const all = activeTeams(state).filter((t) => t.region !== 'wc' && t.id !== p.teamId);
   const lo = score - 12;
   // Quem foi bem na temporada chama a atenção dos times grandes da própria liga.
   const last = p.lastSeason || {};
@@ -250,7 +256,7 @@ export function genOffers(state, { first = false, max = 3 } = {}) {
 
 function fallbackOffers(state, max) {
   const p = state.player;
-  return Object.values(state.world.teams)
+  return activeTeams(state)
     .filter((t) => t.region === p.region && t.tier === 3 && t.id !== p.teamId)
     .sort((a, b) => a.rating - b.rating)
     .slice(0, max)
@@ -262,7 +268,7 @@ function fallbackOffers(state, max) {
 function loanOffers(state) {
   const p = state.player;
   const cur = teamOf(state, p.teamId);
-  const pool = Object.values(state.world.teams).filter((t) => t.region === cur.region && t.id !== cur.id
+  const pool = activeTeams(state).filter((t) => t.region === cur.region && t.id !== cur.id
     && t.tier >= cur.tier && t.rating <= cur.rating);
   return pool
     .sort((a, b) => b.rating - a.rating)
@@ -595,14 +601,14 @@ function intlField(state, key) {
       field.push(...ranking.slice(0, n));
       continue;
     }
-    Object.values(state.world.teams)
+    activeTeams(state)
       .filter((t) => t.region === region.id && t.tier === 1)
       .map((t) => ({ id: t.id, v: t.rating + rand(-4, 4) }))
       .sort((a, b) => b.v - a.v)
       .slice(0, n)
       .forEach((t) => field.push(t.id));
   }
-  Object.values(state.world.teams)
+  activeTeams(state)
     .filter((t) => t.region === 'wc')
     .slice(0, WILDCARD_SLOTS[key])
     .forEach((t) => field.push(t.id));
@@ -834,7 +840,7 @@ function computeAwards(state, playedRatio) {
 }
 
 function driftWorld(state) {
-  for (const t of Object.values(state.world.teams)) {
+  for (const t of activeTeams(state)) {
     const [lo, hi] = TIER_RANGE[t.tier];
     // Oscila em torno do nível histórico do clube, pra manter a hierarquia entre regiões.
     const pull = ((t.base ?? t.rating) - t.rating) * 0.2;

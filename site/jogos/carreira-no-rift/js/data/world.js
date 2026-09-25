@@ -139,7 +139,7 @@ const TIER1 = {
     ['edg', 'EDward Gaming', 'EDG', 81, '#111111', '#ffffff'],
     ['lng', 'LNG Esports', 'LNG', 80, '#2b6cb0', '#ffffff'],
     ['nip', 'Ninjas in Pyjamas', 'NIP', 77, '#1b1b1b', '#f0e14a'],
-    ['fpx', 'FunPlus Phoenix', 'FPX', 76, '#e4002b', '#1b1b1b'],
+    ['we', 'Team WE', 'WE', 75, '#e02a2f', '#ffffff'],
   ],
   eu: [
     ['g2', 'G2 Esports', 'G2', 85, '#ef3d23', '#111111'],
@@ -193,6 +193,12 @@ const WILDCARDS = [
   ['cfo', 'CTBC Flying Oyster', 'CFO', 78, '#0f766e', '#ffffff'],
   ['gam', 'GAM Esports', 'GAM', 75, '#facc15', '#111111'],
 ];
+
+// Times que saíram do jogo. Só voltam para carreiras salvas que ainda os
+// citam (histórico, temporada em andamento), para nada quebrar.
+export const RETIRED_TEAMS = {
+  fpx: { id: 'fpx', name: 'FunPlus Phoenix', tag: 'FPX', region: 'cn', tier: 1, rating: 76, base: 76, c1: '#e4002b', c2: '#1b1b1b', retired: true },
+};
 
 export const TIER_RANGE = { 1: [66, 95], 2: [55, 80], 3: [44, 66] };
 

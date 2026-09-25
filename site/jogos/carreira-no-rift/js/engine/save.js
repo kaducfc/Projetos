@@ -4,7 +4,7 @@
 //   - a força atual dos times que mudou em relação ao nível histórico;
 //   - os dados completos dos times por onde o jogador passou (para a
 //     carreira continuar legível mesmo se a lista de times mudar no futuro).
-import { buildTeams } from '../data/world.js';
+import { buildTeams, RETIRED_TEAMS } from '../data/world.js';
 
 function playerTeamIds(state) {
   const p = state.player;
@@ -31,6 +31,10 @@ export function packState(state) {
 export function unpackState(saved) {
   if (!saved || saved.world?.teams) return saved; // formato antigo (completo)
   const teams = buildTeams();
+  const raw = JSON.stringify(saved);
+  for (const [id, team] of Object.entries(RETIRED_TEAMS)) {
+    if (raw.includes(`"${id}"`)) teams[id] = { ...team };
+  }
   for (const [id, team] of Object.entries(saved.world.keep || {})) {
     teams[id] = { ...teams[id], ...team };
   }
