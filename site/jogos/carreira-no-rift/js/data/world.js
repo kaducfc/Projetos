@@ -157,7 +157,7 @@ const TIER1 = {
     ['fly', 'FlyQuest', 'FLY', 81, '#1e8f4e', '#ffffff'],
     ['c9', 'Cloud9', 'C9', 80, '#1ea1f2', '#ffffff'],
     ['tl', 'Team Liquid', 'TL', 79, '#0c223f', '#6cc0ff'],
-    ['100t', '100 Thieves', '100T', 77, '#e3202b', '#111111'],
+    ['sen', 'Sentinels', 'SEN', 75, '#ce0037', '#ffffff'],
     ['dig', 'Dignitas', 'DIG', 74, '#f7b500', '#111111'],
     ['sr', 'Shopify Rebellion', 'SR', 74, '#95bf47', '#111111'],
     ['lyon', 'LYON', 'LYON', 72, '#0033a0', '#ffffff'],
@@ -198,6 +198,8 @@ const WILDCARDS = [
 // citam (histórico, temporada em andamento), para nada quebrar.
 export const RETIRED_TEAMS = {
   fpx: { id: 'fpx', name: 'FunPlus Phoenix', tag: 'FPX', region: 'cn', tier: 1, rating: 76, base: 76, c1: '#e4002b', c2: '#1b1b1b', retired: true },
+  '100t': { id: '100t', name: '100 Thieves', tag: '100T', region: 'na', tier: 1, rating: 77, base: 77, c1: '#e3202b', c2: '#111111', retired: true },
+  '100t_ac': { id: '100t_ac', name: '100 Thieves Academy', tag: '100T.A', region: 'na', tier: 2, rating: 62, base: 62, c1: '#e3202b', c2: '#111111', retired: true },
 };
 
 export const TIER_RANGE = { 1: [66, 95], 2: [55, 80], 3: [44, 66] };
