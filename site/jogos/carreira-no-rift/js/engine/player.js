@@ -25,8 +25,8 @@ export function createPlayer({ nick, nat, region, role, style, attrs }) {
   return {
     nick, nat, role, style, region,
     attrs: { ...attrs },
-    // Maioria fica entre 75 e 88; potencial de lenda (93+) é raro.
-    potential: 70 + Math.round(26 * Math.pow(Math.random(), 1.4)),
+    // Maioria fica entre 78 e 90; potencial de lenda (94+) é raro.
+    potential: 71 + Math.round(25 * Math.pow(Math.random(), 1.35)),
     age: 16,
     morale: 55,
     fame: 5,
@@ -62,9 +62,9 @@ export function seasonGrowth(p, perf) {
   const before = ovrOf(p);
   const gap = Math.max(0, p.potential - before);
   let g;
-  if (p.age <= 19) g = gap * 0.16 + rand(0, 1.5);
-  else if (p.age <= 22) g = gap * 0.12 + rand(-0.5, 1);
-  else if (p.age <= 25) g = gap * 0.06 + rand(-1, 0.8);
+  if (p.age <= 19) g = gap * 0.17 + rand(0.2, 1.6);
+  else if (p.age <= 22) g = gap * 0.13 + rand(-0.4, 1.1);
+  else if (p.age <= 25) g = gap * 0.07 + rand(-0.8, 0.9);
   else if (p.age <= 27) g = rand(-1.5, 0.5);
   else g = -rand(1, 2.5) - (p.age - 28) * 0.5;
 

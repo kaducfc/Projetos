@@ -8,7 +8,7 @@ import { ROLES } from '../js/data/world.js';
 const N = Number(process.argv[2] || 500);
 const NAT = process.argv[3] || 'BR';
 const roles = Object.keys(ROLES);
-const agg = { peak: [], seasons: [], worlds: 0, msi: 0, t1: 0, legacy: {}, t1Players: 0, abroad: 0, games: [], windows: 0, maxOptions: 0, optionHist: {}, bets: 0, betTaken: 0, loans: 0, strong: 0, peakStrong: [], peakHome: [] };
+const agg = { peak: [], seasons: [], worlds: 0, msi: 0, t1: 0, legacy: {}, t1Players: 0, abroad: 0, games: [], windows: 0, maxOptions: 0, optionHist: {}, bets: 0, betTaken: 0, loans: 0, entries: 0, entryTaken: 0, climbed: 0, strong: 0, peakStrong: [], peakHome: [] };
 const STRATEGY = process.argv[4] || 'ambicioso';
 
 for (let i = 0; i < N; i++) {
@@ -24,11 +24,13 @@ for (let i = 0; i < N; i++) {
       agg.windows++; agg.maxOptions = Math.max(agg.maxOptions, n); agg.optionHist[n] = (agg.optionHist[n] || 0) + 1;
       if (s.kind === 'loan') agg.loans++;
       if (s.offers.some((o) => o.bet)) agg.bets++;
-      const opts = s.offers.map((o, j) => ({ j, r: teamOf(state, o.teamId).rating, bet: o.bet }));
+      if (s.offers.some((o) => o.entry)) agg.entries++;
+      const opts = s.offers.map((o, j) => ({ j, r: teamOf(state, o.teamId).rating, bet: o.bet, entry: o.entry }));
       if (s.stay) opts.push({ j: 'stay', r: teamOf(state, s.stay.teamId).rating - 1 });
       // ambicioso: sempre o time mais forte; aleatorio: qualquer opção.
       const pickd = STRATEGY === 'aleatorio' ? opts[Math.floor(Math.random() * opts.length)] : opts.sort((a, b) => b.r - a.r)[0];
       if (pickd.bet) agg.betTaken++;
+      if (pickd.entry) agg.entryTaken++;
       chooseOffer(state, pickd.j);
     } else if (s.type === 'event' && s.choice === null) {
       chooseEvent(state, Math.floor(Math.random() * s.options.length));
@@ -50,6 +52,11 @@ for (let i = 0; i < N; i++) {
   if (p.history.some((h) => teamOf(state, h.teamId).region !== p.region)) agg.abroad++;
   const wentStrong = p.history.some((h) => h.tier === 1 && ['kr', 'cn'].includes(teamOf(state, h.teamId).region));
   if (wentStrong) { agg.strong++; agg.peakStrong.push(p.peakOvr); } else agg.peakHome.push(p.peakOvr);
+  // Subiu de time dentro da mesma liga estrangeira (entrou por baixo e cresceu lá).
+  const abroadT1 = p.history.filter((h) => h.tier === 1 && teamOf(state, h.teamId).region !== p.region);
+  if (abroadT1.some((h, i) => i > 0 && h.teamId !== abroadT1[i - 1].teamId
+    && teamOf(state, h.teamId).region === teamOf(state, abroadT1[i - 1].teamId).region
+    && teamOf(state, h.teamId).base > teamOf(state, abroadT1[i - 1].teamId).base)) agg.climbed++;
   const l = legacyLabel(p).title;
   agg.legacy[l] = (agg.legacy[l] || 0) + 1;
 }
@@ -65,4 +72,7 @@ console.log(`estratégia: ${STRATEGY}`);
 console.log(`janelas: ${agg.windows} · máx. opções numa janela: ${agg.maxOptions} · distribuição:`, agg.optionHist);
 console.log(`janelas com aposta: ${(agg.bets / agg.windows * 100).toFixed(1)}% · apostas aceitas: ${agg.betTaken} · empréstimos: ${(agg.loans / N).toFixed(2)} por carreira`);
 console.log(`jogou na LCK/LPL: ${(agg.strong / N * 100).toFixed(0)}% · OVR pico de quem foi: ${agg.peakStrong.length ? avg(agg.peakStrong) : '—'} · de quem não foi: ${agg.peakHome.length ? avg(agg.peakHome) : '—'}`);
+console.log(`janelas com proposta de entrada no exterior: ${(agg.entries / agg.windows * 100).toFixed(1)}% · aceitas: ${agg.entryTaken} · subiu de time dentro da liga estrangeira: ${(agg.climbed / N * 100).toFixed(0)}% das carreiras`);
+const bucket = (lo, hi) => (agg.peak.filter((x) => x >= lo && x < hi).length / N * 100).toFixed(0) + '%';
+console.log(`OVR máximo: <75 ${bucket(0, 75)} · 75-79 ${bucket(75, 80)} · 80-84 ${bucket(80, 85)} · 85-89 ${bucket(85, 90)} · 90+ ${bucket(90, 100)}`);
 console.log('legado:', agg.legacy);

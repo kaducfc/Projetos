@@ -3,7 +3,7 @@
 //
 // Toda a lógica muda `state` e define `state.screen`; a UI só desenha.
 
-import { buildTeams, REGIONS, REGION_LEVEL, TIER_RANGE, WILDCARD_SLOTS, nationById, ofLeague } from '../data/world.js';
+import { buildTeams, REGIONS, REGION_LEVEL, TIER_RANGE, WILDCARD_SLOTS, nationById, ofLeague, inLeague } from '../data/world.js';
 import { EVENTS, eventById, roleAllows } from '../data/events.js';
 import {
   createPlayer, ovrOf, effectiveOvr, applyFx, seasonGrowth, salaryFor, statusFor, STATUS,
@@ -130,12 +130,13 @@ function hypeOf(p) {
     + Math.max(0, last.growth || 0) * 0.5 + (p.age <= 20 ? 1.5 : 0) + (last.bestPlace === 1 ? 1 : 0);
 }
 
+const leagueRank = (team) => (team && team.tier === 1 ? REGION_LEVEL[team.region]?.rank ?? 1 : 0);
+
 // Uma liga mais forte que a atual aposta no jogador: time acima do nível
 // que ele normalmente alcançaria.
 function betOffer(state, score) {
   const p = state.player;
-  const cur = teamOf(state, p.teamId);
-  const curRank = cur ? (cur.tier === 1 ? REGION_LEVEL[cur.region]?.rank ?? 1 : 0) : 0;
+  const curRank = leagueRank(teamOf(state, p.teamId));
   const hype = hypeOf(p);
   if (hype < 5 || !roll(hype * 4)) return null;
   const pool = Object.values(state.world.teams).filter((t) => t.tier === 1 && t.region !== 'wc'
@@ -146,15 +147,49 @@ function betOffer(state, score) {
   return makeOffer(state, t, { bet: true });
 }
 
+// Porta de entrada numa liga mais forte: um time de menor expressão de lá
+// (os mais fracos da liga principal, ou a academia de um time grande para
+// quem ainda é bem novo). É o caminho mais comum para sair do país.
+function entryOffer(state, score) {
+  const p = state.player;
+  const cur = teamOf(state, p.teamId);
+  const curRank = leagueRank(cur);
+  if (curRank >= 3 || ovrOf(p) < 70) return null;
+  const chance = clamp(8 + hypeOf(p) * 2.5 + (score - 74) * 1.2, 0, 40);
+  if (!roll(chance)) return null;
+  const pool = [];
+  for (const region of Object.keys(REGION_LEVEL)) {
+    if (REGION_LEVEL[region].rank <= curRank) continue;
+    const tier1 = Object.values(state.world.teams).filter((t) => t.region === region && t.tier === 1)
+      .sort((x, y) => x.rating - y.rating).slice(0, 4);
+    pool.push(...tier1);
+    if (p.age <= 20) {
+      pool.push(...Object.values(state.world.teams).filter((t) => t.region === region && t.tier === 2).slice(0, 3));
+    }
+  }
+  const fits = pool.filter((t) => t.id !== p.teamId && t.rating <= score + 5 && t.rating >= score - 14);
+  if (!fits.length) return null;
+  const t = weightedPick(fits, (x) => REGION_LEVEL[x.region].rank);
+  const offer = makeOffer(state, t);
+  offer.entry = true;
+  offer.ambition = t.tier === 1 ? `Porta de entrada ${inLeague(leagueName(t))}` : `Academia de ponta ${inLeague(leagueName(t))}`;
+  return offer;
+}
+
 // Propostas da janela. `max` = quantas no máximo (o total de opções na tela,
 // contando "continuar no clube", fica entre 2 e 3).
 export function genOffers(state, { first = false, max = 3 } = {}) {
   const p = state.player;
   const ovr = ovrOf(p);
   const score = ovr + p.fame / 20;
+  const cur = teamOf(state, p.teamId);
   const all = Object.values(state.world.teams).filter((t) => t.region !== 'wc' && t.id !== p.teamId);
   const lo = score - 12;
-  const hi = score + 2;
+  // Quem foi bem na temporada chama a atenção dos times grandes da própria liga.
+  const last = p.lastSeason || {};
+  const shined = (last.bestPlace || 99) <= 4 || (last.awards || 0) > 0 || (last.growth || 0) >= 2;
+  const sameLeague = (t) => cur && t.region === cur.region && t.tier === cur.tier;
+  const hiFor = (t) => score + 2 + (sameLeague(t) && shined ? 4 : 0);
 
   let cands;
   if (first) {
@@ -162,10 +197,10 @@ export function genOffers(state, { first = false, max = 3 } = {}) {
     cands = all.filter((t) => t.region === p.region && t.tier >= 2 && t.rating <= score + 6);
   } else {
     cands = all.filter((t) => {
-      if (t.rating < lo || t.rating > hi) return false;
-      if (t.region !== p.region) {
+      if (t.rating < lo || t.rating > hiFor(t)) return false;
+      if (t.region !== p.region && !sameLeague(t)) {
         if (t.tier > 1) return false;
-        const need = p.nat === 'KR' ? 72 : REGION_LEVEL[t.region].rank === 3 ? 83 : 76;
+        const need = p.nat === 'KR' ? 72 : REGION_LEVEL[t.region].rank === 3 ? 83 : 75;
         if (ovr < need) return false;
       }
       return true;
@@ -174,14 +209,16 @@ export function genOffers(state, { first = false, max = 3 } = {}) {
 
   const offers = [];
   if (!first && max > 0) {
-    const bet = betOffer(state, score);
-    if (bet) offers.push(bet);
+    const special = betOffer(state, score) || entryOffer(state, score);
+    if (special) offers.push(special);
   }
   const pool = cands.filter((t) => !offers.some((o) => o.teamId === t.id));
   while (offers.length < max && pool.length) {
-    // Times melhores e de ligas mais fortes chamam mais atenção.
+    // Times melhores, da mesma liga (quando o jogador brilhou) e de ligas
+    // mais fortes chamam mais atenção.
     const t = weightedPick(pool, (x) => Math.pow(Math.max(1, x.rating - lo), 1.4)
-      * (x.region === p.region ? 1 : 0.4 + REGION_LEVEL[x.region].rank * 0.1));
+      * (x.region === p.region || sameLeague(x) ? 1 : 0.5 + REGION_LEVEL[x.region].rank * 0.12)
+      * (sameLeague(x) && shined && x.rating > (cur?.rating ?? 0) ? 1.8 : 1));
     pool.splice(pool.indexOf(t), 1);
     offers.push(makeOffer(state, t, { first }));
   }
@@ -267,6 +304,9 @@ export function offseasonScreen(state) {
   if (offers.some((o) => o.bet)) {
     const bet = offers.find((o) => o.bet);
     note += ` ${leagueName(teamOf(state, bet.teamId))} está apostando em você!`;
+  } else if (offers.some((o) => o.entry)) {
+    const entry = teamOf(state, offers.find((o) => o.entry).teamId);
+    note += ` Um time ${ofLeague(leagueName(entry))} quer te levar para ${entry.region === 'br' ? 'o' : 'a'} ${REGIONS[entry.region].name}.`;
   }
 
   state.screen = { type: 'offers', kind: 'transfer', first: false, offers, stay, note: note.trim() };

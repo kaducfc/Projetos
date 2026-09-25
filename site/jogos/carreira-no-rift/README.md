@@ -84,8 +84,15 @@ LEC, LCS), academias e ligas amadoras.
   rápida, juventude), uma liga mais forte que a atual pode apostar nele,
   oferecendo um time acima do nível que ele normalmente alcançaria.
   Aparece com o selo "Aposta".
-- **Exterior:** com OVR alto chegam propostas normais de fora
-  (LEC/LCS a partir de ~76, LCK/LPL a partir de ~83).
+- **Porta de entrada no exterior (selo "Exterior"):** a partir de OVR 70,
+  times de menor expressão de uma liga mais forte (os mais fracos da liga
+  principal ou, para quem tem até 20 anos, uma academia de ponta) podem fazer
+  proposta. A chance cresce com o OVR e o "hype".
+- **Subir dentro da liga:** depois de uma boa temporada (top 4, prêmio ou
+  evolução forte), times melhores da própria liga passam a fazer proposta,
+  mesmo acima do nível que o jogador alcançaria normalmente.
+- **Exterior (propostas normais):** com OVR alto chegam propostas de times
+  de fora (LEC/LCS a partir de ~75, LCK/LPL a partir de ~83).
 - **Empréstimo:** depois de uma temporada muito ruim (quase não jogou, nível
   bem abaixo do time ou em atrito com o técnico), a diretoria pode emprestar
   o jogador por 1 temporada a um time do mesmo nível ou mais fraco (nunca melhor). Não há opção de ficar; no

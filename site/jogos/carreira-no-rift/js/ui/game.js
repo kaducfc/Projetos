@@ -184,7 +184,9 @@ function careerTable(state) {
 function offerCard(state, o, act, label) {
   const t = teamOf(state, o.teamId);
   const region = REGIONS[t.region];
-  const flag = o.bet ? '<span class="offer-flag">Aposta</span>' : o.loan ? '<span class="offer-flag loan">Empréstimo</span>' : '';
+  const flag = o.bet ? '<span class="offer-flag">Aposta</span>'
+    : o.loan ? '<span class="offer-flag loan">Empréstimo</span>'
+      : o.entry ? '<span class="offer-flag entry">Exterior</span>' : '';
   return `
   <button class="offer${o.bet ? ' bet' : ''}${flag ? ' flagged' : ''}" data-act="${act}" ${act === 'offer' ? `data-i="${o.i}"` : ''}>
     ${flag}
