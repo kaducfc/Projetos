@@ -4,7 +4,7 @@
 // Toda a lógica muda `state` e define `state.screen`; a UI só desenha.
 
 import { buildTeams, REGIONS, REGION_LEVEL, TIER_RANGE, WILDCARD_SLOTS, nationById } from '../data/world.js';
-import { EVENTS, eventById } from '../data/events.js';
+import { EVENTS, eventById, roleAllows } from '../data/events.js';
 import {
   createPlayer, ovrOf, effectiveOvr, applyFx, seasonGrowth, salaryFor, statusFor, STATUS,
 } from './player.js';
@@ -666,36 +666,47 @@ function runIntl(state, key) {
 
 // ---------------------------------------------------------------- eventos
 
+// Escolhas do evento que valem para a rota do jogador (índices originais).
+function choicesFor(ev, role) {
+  return ev.choices.map((c, idx) => ({ c, idx })).filter(({ c }) => roleAllows(c, role));
+}
+
 function eventScreen(state, stage) {
   const p = state.player;
   const ctx = { stage, team: teamOf(state, p.teamId) };
-  const ok = (e) => !e.when || e.when(p, ctx);
+  const ok = (e) => (!e.when || e.when(p, ctx)) && roleAllows(e, p.role) && choicesFor(e, p.role).length >= 2;
   let pool = EVENTS.filter((e) => ok(e) && !p.usedEvents.includes(e.id));
   if (!pool.length) pool = EVENTS.filter(ok);
   const ev = pick(pool);
   p.usedEvents.push(ev.id);
   if (p.usedEvents.length > 16) p.usedEvents.shift();
 
-  const chances = ev.choices.map((c) => {
+  const options = choicesFor(ev, p.role).map(({ c, idx }) => {
     const attrBonus = c.attr ? (p.attrs[c.attr] - 60) * 0.5 : 0;
-    return Math.round(clamp(c.base + attrBonus + (p.morale - 50) * 0.1, 5, 95));
+    return { idx, chance: Math.round(clamp(c.base + attrBonus + (p.morale - 50) * 0.1, 5, 95)) };
   });
   const label = STAGE_LABELS[state.season.tier === 1 ? 1 : 'lower'][stage];
   const recap = state.season.recap || null;
   state.season.recap = null;
-  state.screen = { type: 'event', stage, label, eventId: ev.id, chances, choice: null, ok: null, ovrDelta: 0, recap };
+  state.screen = { type: 'event', stage, label, eventId: ev.id, options, choice: null, ok: null, ovrDelta: 0, recap };
 }
 
-export function chooseEvent(state, index) {
+// Opções da tela de evento (compatível com saves antigos, que tinham `chances`).
+export function eventOptions(scr) {
+  return scr.options || scr.chances.map((chance, idx) => ({ idx, chance }));
+}
+
+export function chooseEvent(state, pos) {
   const scr = state.screen;
   const ev = eventById(scr.eventId);
-  const choice = ev.choices[index];
-  const ok = roll(scr.chances[index]);
+  const opt = eventOptions(scr)[pos];
+  const choice = ev.choices[opt.idx];
+  const ok = roll(opt.chance);
   const before = ovrOf(state.player);
   applyFx(state.player, (ok ? choice.ok : choice.fail).fx);
   const team = teamOf(state, state.player.teamId);
   state.player.status = statusFor(ovrOf(state.player), team.rating, state.player.morale);
-  scr.choice = index;
+  scr.choice = opt.idx;
   scr.ok = ok;
   scr.ovrDelta = ovrOf(state.player) - before;
 }

@@ -6,6 +6,13 @@
 // Placeholders no texto: {nick}, {team}, {league}.
 //
 // `when(p, ctx)` (opcional) restringe quando o evento pode aparecer.
+//
+// Rotas: um evento ou uma escolha pode ter `roles: [...]` (só aparece para
+// essas rotas) ou `notRoles: [...]` (nunca aparece para elas). Rotas: top,
+// jungle, mid, adc, support. Um evento só é sorteado se sobrarem pelo menos
+// 2 escolhas válidas para a rota do jogador.
+// Textos podem variar por rota: { default: '...', jungle: '...', support: '...' }.
+// O placeholder {lane} vira "selva" para o Jungle e "rota" para as demais.
 
 export const EVENTS = [
   {
@@ -147,8 +154,16 @@ export const EVENTS = [
     title: 'O microfone está aberto',
     text: 'Entrevista pós-jogo. O repórter pergunta o que você acha do seu adversário direto na próxima rodada.',
     choices: [
-      { label: 'Provocar: "Ele não chega na minha rota"', base: 45, attr: 'rota', good: 'amassa e vira ídolo', bad: 'toma solo kill ao vivo',
-        ok: { text: 'Solo kill aos 4 minutos. A arena explode e seu nome vira trending topic.', fx: { fame: 8, rota: 1, morale: 3 } },
+      { label: 'Provocar: "Ele não chega na minha {lane}"', base: 45, attr: 'rota', good: 'amassa e vira ídolo',
+        bad: { default: 'toma solo kill ao vivo', jungle: 'tem a selva invadida ao vivo', support: 'vê seu ADC morrer por sua causa' },
+        ok: {
+          text: {
+            default: 'Solo kill aos 4 minutos. A arena explode e seu nome vira trending topic.',
+            jungle: 'Você invade a selva dele no nível 3 e rouba o Arauto na cara dele. A arena explode e seu nome vira trending topic.',
+            support: 'Gancho perfeito no nível 2 e first blood para o seu ADC. A arena explode e seu nome vira trending topic.',
+          },
+          fx: { fame: 8, rota: 1, morale: 3 },
+        },
         fail: { text: 'Ele te abateu duas vezes antes dos 10 minutos. O clipe foi reprisado a semana inteira.', fx: { fame: -5, mental: -2 } } },
       { label: 'Elogiar e manter a humildade', base: 85, attr: 'mental', good: 'imagem limpa', bad: 'resposta sem graça',
         ok: { text: 'Resposta madura. Os patrocinadores gostaram.', fx: { fame: 2, morale: 2 } },
@@ -160,9 +175,12 @@ export const EVENTS = [
     title: 'A luta do Barão está armada',
     text: 'Jogo decisivo, 35 minutos. Seu time está atrás, mas o adversário se aproxima do Barão sem visão.',
     choices: [
-      { label: 'Entrar de flanco sozinho', base: 40, attr: 'mec', good: 'jogada histórica', bad: 'morre e perde o jogo',
+      { label: 'Entrar de flanco sozinho', notRoles: ['support'], base: 40, attr: 'mec', good: 'jogada histórica', bad: 'morre e perde o jogo',
         ok: { text: 'Flash, combo, quadrakill. O narrador perde a voz. Você virou highlight mundial.', fx: { mec: 2, fame: 8, morale: 5 } },
         fail: { text: 'Você foi pego no flanco e o adversário fez o Barão livre.', fx: { morale: -6, mental: -1 } } },
+      { label: 'Achar o engage perfeito', roles: ['support'], base: 45, attr: 'tf', good: 'luta decidida no seu gancho', bad: 'engage sozinho',
+        ok: { text: 'Você pega três de uma vez e seu ADC limpa a luta. O narrador grita seu nome.', fx: { tf: 2, fame: 8, morale: 5 } },
+        fail: { text: 'Você entrou e ninguém veio atrás. O adversário fez o Barão com calma.', fx: { morale: -6, mental: -1 } } },
       { label: 'Esperar o time e brigar junto', base: 70, attr: 'tf', good: 'vitória coletiva', bad: 'chega tarde',
         ok: { text: 'O time entra junto, ace limpo. O técnico comemora de pé.', fx: { tf: 2, morale: 4 } },
         fail: { text: 'O inimigo fez o Barão e recuou. A chance passou.', fx: { tf: 1 } } },
@@ -226,6 +244,7 @@ export const EVENTS = [
   },
   {
     id: 'dupla_de_rota', tag: 'SINERGIA', icon: '🧩', scene: 'office',
+    notRoles: ['jungle'],
     title: 'Falta sinergia com o jungle',
     text: 'Vocês não se entendem: ele nunca vem no seu lado e você nunca acompanha as invasões.',
     choices: [
@@ -235,7 +254,7 @@ export const EVENTS = [
       { label: 'Pedir ao técnico pra resolver', base: 55, attr: 'mental', good: 'técnico ajusta a estratégia', bad: 'parece que você reclama',
         ok: { text: 'O técnico reorganiza as prioridades do mapa. Seu lado recebe mais atenção.', fx: { rota: 1, morale: 2 } },
         fail: { text: '"Resolve você com ele." Nada mudou.', fx: { morale: -3 } } },
-      { label: 'Jogar independente dele', base: 50, attr: 'rota', good: 'vira uma ilha forte', bad: 'morre isolado',
+      { label: 'Jogar independente dele', roles: ['top', 'mid'], base: 50, attr: 'rota', good: 'vira uma ilha forte', bad: 'morre isolado',
         ok: { text: 'Você passa a vencer sua rota sozinho. Ninguém precisa te ajudar.', fx: { rota: 2 } },
         fail: { text: 'Sem cobertura, você morreu para ganks três vezes no mesmo jogo.', fx: { rota: -1, morale: -4 } } },
     ],
@@ -276,9 +295,12 @@ export const EVENTS = [
       { label: 'Assumir as calls', base: 55, attr: 'macro', good: 'vira o líder', bad: 'confunde o time',
         ok: { text: 'Sua voz organiza o time. O técnico te nomeia capitão.', fx: { macro: 2, mental: 1, morale: 8 } },
         fail: { text: 'Calls atrasadas e contraditórias. Duas derrotas por falta de comunicação.', fx: { morale: -6, mental: -1 } } },
-      { label: 'Deixar para o suporte', base: 80, attr: 'tf', good: 'foco no seu jogo', bad: 'time sem voz',
+      { label: 'Deixar para o suporte', notRoles: ['support'], base: 80, attr: 'tf', good: 'foco no seu jogo', bad: 'time sem voz',
         ok: { text: 'Com menos coisa na cabeça, você joga solto.', fx: { tf: 1, mec: 1 } },
         fail: { text: 'Ninguém assumiu de verdade. O time ficou perdido no mid game.', fx: { morale: -2 } } },
+      { label: 'Dividir as calls com o jungle', roles: ['support'], base: 70, attr: 'macro', good: 'comunicação equilibrada', bad: 'calls se atropelam',
+        ok: { text: 'Você cuida da visão e das lutas, ele cuida dos objetivos. O time nunca falou tão bem.', fx: { macro: 1, tf: 1, morale: 4 } },
+        fail: { text: 'Duas vozes mandando ao mesmo tempo. O time hesitou nas lutas decisivas.', fx: { morale: -3 } } },
     ],
   },
   {
@@ -297,13 +319,16 @@ export const EVENTS = [
   {
     id: 'rival_rota', tag: 'RIVALIDADE', icon: '😤', scene: 'stage',
     title: 'O rival te marcou numa postagem',
-    text: 'O melhor jogador da sua rota na {league} postou um vídeo das suas mortes com a legenda "treino".',
+    text: 'O melhor jogador da sua {lane} na {league} postou um vídeo das suas mortes com a legenda "treino".',
     choices: [
-      { label: 'Desafiar para um 1v1 público', base: 45, attr: 'rota', good: 'humilha o rival', bad: 'humilhado ao vivo',
+      { label: 'Desafiar para um 1v1 público', notRoles: ['support'], base: 45, attr: 'rota', good: 'humilha o rival', bad: 'humilhado ao vivo',
         ok: { text: '3 a 0 no 1v1 com transmissão oficial. Agora quem posta é você.', fx: { rota: 2, fame: 8 } },
         fail: { text: 'Ele venceu os três. O vídeo virou o mais assistido da semana.', fx: { fame: -4, mental: -2 } } },
+      { label: 'Desafiar a dupla dele para um 2v2', roles: ['support'], base: 45, attr: 'rota', good: 'sua dupla humilha a dele', bad: 'humilhados ao vivo',
+        ok: { text: 'Você e seu ADC vencem por 3 a 0 com transmissão oficial. Agora quem posta é você.', fx: { rota: 2, fame: 8 } },
+        fail: { text: 'A dupla dele venceu os três. O vídeo virou o mais assistido da semana.', fx: { fame: -4, mental: -2 } } },
       { label: 'Responder no confronto oficial', base: 60, attr: 'mec', good: 'vitória na partida', bad: 'perde de novo',
-        ok: { text: 'Você venceu a rota e a partida. Não precisou dizer nada.', fx: { mec: 1, rota: 1, fame: 4 } },
+        ok: { text: 'Você venceu o duelo e a partida. Não precisou dizer nada.', fx: { mec: 1, rota: 1, fame: 4 } },
         fail: { text: 'Ele venceu de novo. A rivalidade virou freguesia.', fx: { morale: -4, fame: -2 } } },
     ],
   },
@@ -338,7 +363,7 @@ export const EVENTS = [
   {
     id: 'reserva_chance', tag: 'OPORTUNIDADE', icon: '⭐', scene: 'office',
     title: 'O titular passou mal',
-    text: 'Faltando uma hora para o jogo, o titular da sua rota passou mal. O técnico olha para você.',
+    text: 'Faltando uma hora para o jogo, o titular da sua posição passou mal. O técnico olha para você.',
     when: (p) => p.status !== 'titular',
     choices: [
       { label: 'Assumir a responsabilidade', base: 60, attr: 'mental', good: 'ganha a vaga', bad: 'perde a chance',
@@ -376,6 +401,106 @@ export const EVENTS = [
         fail: { text: 'O corpo cobrou. Dores nas mãos e semanas de recuperação.', fx: { mec: -2, morale: -4 } } },
     ],
   },
+  {
+    id: 'top_teleporte', tag: 'TOP', icon: '🌀', scene: 'stage', roles: ['top'],
+    title: 'O teleporte está pronto',
+    text: 'Sua rota está empatada e o time vai brigar pelo dragão do outro lado do mapa. Você tem o teleporte.',
+    choices: [
+      { label: 'Teleportar no flanco da luta', base: 55, attr: 'tf', good: 'luta virada', bad: 'chega atrasado',
+        ok: { text: 'Você cai atrás da linha de trás deles. Ace e dragão. O caster chama de "TP do ano".', fx: { tf: 2, fame: 4 } },
+        fail: { text: 'O teleporte foi cancelado e o time perdeu a luta 4 contra 5.', fx: { morale: -4 } } },
+      { label: 'Ficar e pressionar a torre', base: 70, attr: 'macro', good: 'troca de objetivos', bad: 'time perde a luta',
+        ok: { text: 'Você derruba duas torres enquanto eles fazem o dragão. Troca vantajosa.', fx: { macro: 2, rota: 1 } },
+        fail: { text: 'Sem você, o time perdeu a luta e ainda voltou a tempo de defender.', fx: { morale: -3 } } },
+    ],
+  },
+  {
+    id: 'jungle_invasao', tag: 'JUNGLE', icon: '🌲', scene: 'city', roles: ['jungle'],
+    title: 'Invasão no nível 1',
+    text: 'No scrim contra o rival da semana, o time propõe invadir a selva adversária logo no começo.',
+    choices: [
+      { label: 'Liderar a invasão', base: 55, attr: 'macro', good: 'rouba o buff e o ritmo', bad: 'first blood contra',
+        ok: { text: 'Buff roubado e o jungle deles atrasado o jogo inteiro. Você controlou o mapa.', fx: { macro: 2, morale: 3 } },
+        fail: { text: 'Eles estavam esperando. First blood contra e rota inteira atrasada.', fx: { morale: -4, mental: -1 } } },
+      { label: 'Fazer o caminho normal e contar os tempos', base: 75, attr: 'macro', good: 'rastreia o jungle deles', bad: 'jogo lento',
+        ok: { text: 'Você leu o caminho dele e armou um counter-gank perfeito aos 6 minutos.', fx: { macro: 1, rota: 1 } },
+        fail: { text: 'Um jogo parado, sem nada acontecendo. O técnico pediu mais iniciativa.', fx: { morale: -2 } } },
+    ],
+  },
+  {
+    id: 'jungle_mid_sinergia', tag: 'SINERGIA', icon: '🧩', scene: 'office', roles: ['jungle'],
+    title: 'O mid não acompanha seus ganks',
+    text: 'Você chega nas rotas laterais e o mid nunca está junto. Nos objetivos, você fica sempre em desvantagem.',
+    choices: [
+      { label: 'Propor sessões só de vocês dois', base: 75, attr: 'macro', good: 'dupla afinada', bad: 'discutem mais',
+        ok: { text: 'Em duas semanas, vocês se movem juntos pelo mapa. Os objetivos começam a sair.', fx: { macro: 1, tf: 2, morale: 3 } },
+        fail: { text: 'As sessões viraram discussão. O técnico teve que separar.', fx: { morale: -5 } } },
+      { label: 'Focar o jogo no lado do top', base: 60, attr: 'macro', good: 'novo plano de jogo', bad: 'mid isolado',
+        ok: { text: 'Você e o top dominam o lado de cima do mapa. O Arauto vira seu.', fx: { macro: 2 } },
+        fail: { text: 'O mid ficou sozinho e morreu três vezes para ganks.', fx: { morale: -4 } } },
+    ],
+  },
+  {
+    id: 'mid_roam', tag: 'MID', icon: '🧭', scene: 'lab', roles: ['mid'],
+    title: 'Roamar ou farmar?',
+    text: 'Você ganhou a rota, mas o bot está sofrendo. O jungle pede ajuda para virar o jogo lá embaixo.',
+    choices: [
+      { label: 'Roamar para o bot', base: 60, attr: 'macro', good: 'bot volta pro jogo', bad: 'perde farm e torre',
+        ok: { text: 'Dois roams, dois abates e o bot voltou ao jogo. Você virou o motor do time.', fx: { macro: 2, fame: 3 } },
+        fail: { text: 'O mid adversário empurrou e levou sua torre. Seu farm despencou.', fx: { rota: -1, morale: -3 } } },
+      { label: 'Continuar farmando e escalar', base: 70, attr: 'rota', good: 'item de poder cedo', bad: 'bot desmorona',
+        ok: { text: 'Com 60 de CS de vantagem, você carrega as lutas do meio de jogo sozinho.', fx: { rota: 2, mec: 1 } },
+        fail: { text: 'O bot desmoronou e o adversário escalou antes de você.', fx: { morale: -3 } } },
+    ],
+  },
+  {
+    id: 'adc_posicionamento', tag: 'ADC', icon: '🏹', scene: 'stage', roles: ['adc'],
+    title: 'Mergulharam na linha de trás',
+    text: 'Na última série, você morreu em todas as lutas: o adversário sempre mergulha em você primeiro.',
+    choices: [
+      { label: 'Treinar posicionamento com o analista', base: 75, attr: 'tf', good: 'sobrevive às lutas', bad: 'fica passivo demais',
+        ok: { text: 'Horas de replay depois, você bate do lugar certo e sobrevive até o fim das lutas.', fx: { tf: 2, mental: 1 } },
+        fail: { text: 'Você ficou tão para trás que não causou dano nenhum.', fx: { tf: -1, morale: -2 } } },
+      { label: 'Pedir peel do suporte e do top', base: 60, attr: 'macro', good: 'time te protege', bad: 'time desconfortável',
+        ok: { text: 'O time muda a composição para te proteger. Você vira a principal fonte de dano.', fx: { tf: 1, morale: 3 } },
+        fail: { text: 'O time achou que você estava tirando o corpo fora.', fx: { morale: -5 } } },
+      { label: 'Jogar mais agressivo e punir o mergulho', base: 45, attr: 'mec', good: 'kiting de highlight', bad: 'morre primeiro de novo',
+        ok: { text: 'Você recua batendo e derruba quem mergulhou. Highlight da rodada.', fx: { mec: 2, fame: 4 } },
+        fail: { text: 'Mais uma vez, o primeiro a cair foi você.', fx: { mental: -2 } } },
+    ],
+  },
+  {
+    id: 'sup_visao', tag: 'SUPORTE', icon: '👁️', scene: 'night', roles: ['support'],
+    title: 'A guerra de visão',
+    text: 'O analista mostra: o time perde os objetivos porque o adversário sempre tem mais visão perto deles.',
+    choices: [
+      { label: 'Montar um plano de visão com o jungle', base: 75, attr: 'macro', good: 'objetivos garantidos', bad: 'rotas descobertas',
+        ok: { text: 'Com o mapa iluminado antes de cada dragão, o time não perde mais objetivos.', fx: { macro: 2, morale: 3 } },
+        fail: { text: 'Você passou tanto tempo sentinelando que o ADC ficou sozinho.', fx: { rota: -1, morale: -2 } } },
+      { label: 'Sair para limpar a visão deles', base: 55, attr: 'mec', good: 'deixa o inimigo cego', bad: 'pego sozinho',
+        ok: { text: 'Você limpa a visão deles e o time arma uma emboscada perfeita.', fx: { macro: 1, tf: 1, fame: 2 } },
+        fail: { text: 'Você entrou sozinho na selva deles e foi pego.', fx: { morale: -4 } } },
+    ],
+  },
+  {
+    id: 'sup_dupla_adc', tag: 'SUPORTE', icon: '🤝', scene: 'office', roles: ['support'],
+    title: 'Seu ADC está frustrado',
+    text: 'Depois de uma sequência de derrotas, seu ADC diz em voz alta que "suporte nenhum acompanha o jogo dele".',
+    choices: [
+      { label: 'Conversar em particular com ele', base: 70, attr: 'mental', good: 'dupla mais unida', bad: 'clima piora',
+        ok: { text: 'Uma conversa sincera depois do treino. A dupla nunca jogou tão sincronizada.', fx: { rota: 1, mental: 1, morale: 3 } },
+        fail: { text: 'A conversa terminou em discussão. O clima no bot ficou pesado.', fx: { morale: -4 } } },
+      { label: 'Adaptar seu pool ao estilo dele', base: 60, attr: 'rota', good: 'combos novos', bad: 'fica fora da zona de conforto',
+        ok: { text: 'Novos campeões, combos novos. A rota inferior passa a ganhar os primeiros minutos.', fx: { rota: 2 } },
+        fail: { text: 'Os campeões novos não encaixaram no seu estilo.', fx: { mec: -1 } } },
+    ],
+  },
 ];
 
 export const eventById = (id) => EVENTS.find((e) => e.id === id);
+
+export const roleAllows = (item, role) => (!item.roles || item.roles.includes(role))
+  && !(item.notRoles || []).includes(role);
+
+// Resolve um texto que pode variar por rota.
+export const roleText = (value, role) => (value && typeof value === 'object' ? value[role] ?? value.default : value);

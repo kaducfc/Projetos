@@ -31,7 +31,7 @@ for (let i = 0; i < N; i++) {
       if (pickd.bet) agg.betTaken++;
       chooseOffer(state, pickd.j);
     } else if (s.type === 'event' && s.choice === null) {
-      chooseEvent(state, Math.floor(Math.random() * s.chances.length));
+      chooseEvent(state, Math.floor(Math.random() * s.options.length));
     } else if (s.type === 'seasonEnd') {
       if (s.canRetire && state.player.age >= 32 && Math.random() < 0.4) state.player.retired = true;
       else continueAfterSeason(state);

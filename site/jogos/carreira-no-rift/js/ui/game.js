@@ -1,16 +1,19 @@
 // Tela principal: coluna do jogador, painel central (fase atual) e
 // tabela da carreira. Tudo é reconstruído a cada ação.
 import { ATTRS, REGIONS, ROLES, nationById } from '../data/world.js';
-import { eventById } from '../data/events.js';
+import { eventById, roleText } from '../data/events.js';
 import { ovrOf, marketValue, STATUS } from '../engine/player.js';
-import { teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore } from '../engine/career.js';
+import { teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore, eventOptions } from '../engine/career.js';
 import { teamBadge, trophySvg, stars } from './art.js';
 import { esc, fmtKda, fmtMoney, fmtSalary } from '../util.js';
 import { FAN_NOTICE, DONATION_NOTICE } from '../../../../shared/footer.js';
 
+// Texto de evento: escolhe a variação da rota e troca os placeholders.
 const fill = (text, state) => {
   const team = state.player.teamId ? teamOf(state, state.player.teamId) : null;
-  return esc(text)
+  const role = state.player.role;
+  return esc(roleText(text, role))
+    .replaceAll('{lane}', role === 'jungle' ? 'selva' : 'rota')
     .replaceAll('{nick}', esc(state.player.nick))
     .replaceAll('{team}', esc(team?.name || 'seu time'))
     .replaceAll('{league}', esc(team ? leagueName(team) : 'liga'));
@@ -254,7 +257,7 @@ function eventPanel(state) {
         </div>
         <div class="result-main">
           <div>
-            <h3>${esc(ev.choices[scr.choice].label)} · ${scr.ok ? 'A escolha deu certo' : 'Não saiu como planejado'}</h3>
+            <h3>${fill(ev.choices[scr.choice].label, state)} · ${scr.ok ? 'A escolha deu certo' : 'Não saiu como planejado'}</h3>
             <p>${fill(outcome.text, state)}</p>
           </div>
           <div class="fx-list">${fxChips(outcome.fx)}${scr.ovrDelta ? `<span class="fx ${scr.ovrDelta > 0 ? 'up' : 'down'}">OVR <b>${signed(scr.ovrDelta)}</b></span>` : ''}</div>
@@ -262,10 +265,10 @@ function eventPanel(state) {
         <div class="tap">Toque para continuar ›</div>
       </button>` : ''}
     <div class="choices${done ? ' locked' : ''}">
-      ${ev.choices.map((c, i) => {
-        const pct = scr.chances[i];
-        return `<button class="choice${done && scr.choice === i ? ' picked' : ''}" data-act="choice" data-i="${i}" ${done ? 'disabled' : ''}>
-          <div class="choice-txt"><b>${esc(c.label)}</b><small>${pct}%: ${fill(c.good, state)}. Erro: ${fill(c.bad, state)}</small></div>
+      ${eventOptions(scr).map(({ idx, chance: pct }, i) => {
+        const c = ev.choices[idx];
+        return `<button class="choice${done && scr.choice === idx ? ' picked' : ''}" data-act="choice" data-i="${i}" ${done ? 'disabled' : ''}>
+          <div class="choice-txt"><b>${fill(c.label, state)}</b><small>${pct}%: ${fill(c.good, state)}. Erro: ${fill(c.bad, state)}</small></div>
           <div class="odds"><span class="o-ok" style="flex:${pct}">${pct >= 15 ? `${pct}%` : ''}</span><span class="o-bad" style="flex:${100 - pct}">${100 - pct >= 15 ? `${100 - pct}%` : ''}</span></div>
           <span class="arrow">→</span>
         </button>`;

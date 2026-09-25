@@ -154,6 +154,13 @@ em `engine/player.js`, `engine/sim.js` ou `engine/career.js`.
 - **Eventos:** acrescente objetos em `js/data/events.js`. Cada escolha tem
   `base` (chance base), `attr` (atributo que ajusta a chance) e os resultados
   `ok`/`fail` com `fx`.
+- **Eventos por rota:** um evento ou uma escolha aceita `roles: ['support']`
+  (só aparece para essas rotas) ou `notRoles: ['support']` (nunca aparece para
+  elas). Um evento só é sorteado se sobrarem pelo menos 2 escolhas válidas.
+  Textos podem variar por rota (`{ default: '...', jungle: '...' }`), e
+  `{lane}` vira "selva" para o Jungle e "rota" para as demais. Há eventos
+  exclusivos de cada rota (teleporte do top, invasão do jungle, roam do mid,
+  posicionamento do ADC, visão e dupla do suporte).
 - **Times:** `TIER1` em `js/data/world.js` (id, nome, sigla, rating, cores).
   As academias são geradas a partir dos 8 primeiros times de cada região.
 
