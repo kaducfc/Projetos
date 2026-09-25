@@ -24,6 +24,6 @@ usar estas imagens.
 | Coreia (LCK) | gen.png, t1.png, hle.png, kt.png, dk.png, fox.png, ns.png, drx.png, bro.png (HANJIN BRION), dnf.png (DN SOOPers) |
 | China (LPL) | blg.png, al.png, tes.png, jdg.png, wbg.png, ig.png, edg.png, lng.png, nip.png, we.png (Team WE) |
 | Europa (LEC) | g2.png, fnc.png, mkoi.png, kc.png, vit.png, gx.png, th.png, sk.png, bds.png (Shifters), navi.png |
-| Am. do Norte (LCS) | fly.png, c9.png (Cloud9 Kia), tl.png (Team Liquid Alienware), sen.png (Sentinels), dig.png, sr.png, lyon.png, dsg.png |
+| Am. do Norte (LCS) | fly.png, c9.png, tl.png, sen.png (Sentinels), dig.png, sr.png, lyon.png, dsg.png |
 | Brasil (CBLOL) | png.png (paiN Gaming), loud.png, vks.png, fur.png, red.png, lev.png, fx.png, lg.png |
 | Convidados | cfo.png (CTBC Flying Oyster), gam.png (GAM Esports) |
