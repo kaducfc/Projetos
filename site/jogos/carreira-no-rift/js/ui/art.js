@@ -3,13 +3,32 @@ import { esc } from '../util.js';
 
 let uid = 0;
 
-export function teamBadge(team, size = 28) {
-  if (!team) return '';
+// Logos reais ficam em site/shared/assets/times/<id>.png (caminho relativo
+// à página do jogo). Academias usam a logo do time principal; times amadores
+// (fictícios) usam só o escudo gerado. Se o arquivo não existir, o escudo
+// gerado continua aparecendo.
+const LOGO_BASE = '../../shared/assets/times/';
+
+function logoId(team) {
+  if (team.tier === 3) return null;
+  return team.id.replace(/_ac$/, '');
+}
+
+function shieldSvg(team, size) {
   const fs = team.tag.length > 3 ? 8.5 : team.tag.length > 2 ? 10.5 : 13;
-  return `<svg class="badge" width="${size}" height="${Math.round(size * 1.15)}" viewBox="0 0 40 46" aria-hidden="true">
+  return `<svg class="badge-shield" width="${size}" height="${Math.round(size * 1.15)}" viewBox="0 0 40 46" aria-hidden="true">
     <path d="M20 1.5 L37.5 7.5 V22 C37.5 33.5 30 40.5 20 44.5 C10 40.5 2.5 33.5 2.5 22 V7.5 Z" fill="${team.c1}" stroke="${team.c2}" stroke-width="2.2"/>
     <text x="20" y="${26 + (13 - fs) / 3}" text-anchor="middle" font-size="${fs}" font-weight="800" font-family="Inter, sans-serif" fill="${team.c2}">${esc(team.tag)}</text>
   </svg>`;
+}
+
+export function teamBadge(team, size = 28) {
+  if (!team) return '';
+  const id = logoId(team);
+  const shield = shieldSvg(team, size);
+  if (!id) return `<span class="badge">${shield}</span>`;
+  // A logo carrega por cima; quando carrega, o escudo sai. Se falhar, a logo sai.
+  return `<span class="badge" style="width:${size}px;height:${Math.round(size * 1.15)}px">${shield}<img class="badge-logo" src="${LOGO_BASE}${id}.png" alt="" loading="lazy" onload="this.previousElementSibling?.remove()" onerror="this.remove()"></span>`;
 }
 
 const TONES = {

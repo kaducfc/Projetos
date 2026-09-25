@@ -232,7 +232,9 @@ input { font: inherit; color: inherit; }
 .chip-reserva { color: #f0948e; border-color: rgba(217, 72, 63, 0.45); }
 .nick { margin: 8px 0 4px; font-size: 26px; font-weight: 800; overflow-wrap: anywhere; line-height: 1.1; }
 .team-line { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-.badge { flex: none; display: block; }
+.badge { flex: none; display: inline-block; position: relative; line-height: 0; }
+.badge-shield { display: block; }
+.badge-logo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 
 .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
 .kv > div { background: rgba(255, 255, 255, 0.025); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; min-width: 0; }
