@@ -37,6 +37,8 @@ export function unpackState(saved) {
   }
   for (const [id, team] of Object.entries(saved.world.keep || {})) {
     teams[id] = { ...teams[id], ...team };
+    // Time que saiu do jogo: vale a divisão/estado atuais, não os do save.
+    if (RETIRED_TEAMS[id]) Object.assign(teams[id], { tier: RETIRED_TEAMS[id].tier, retired: true });
   }
   for (const [id, rating] of Object.entries(saved.world.ratings || {})) {
     if (teams[id]) teams[id].rating = rating;

@@ -59,8 +59,8 @@ Vagas internacionais por região:
 
 As regiões dos dois finalistas do MSI ganham +1 vaga no Mundial. First
 Stand e MSI têm play-in para os times mais fracos e chave de 8. O Mundial
-tem fase suíça e chave de 8. As divisões de acesso (academias e ligas
-amadoras) jogam só os dois splits.
+tem fase suíça e chave de 8. As divisões de acesso (Circuito Desafiante,
+academias e ligas amadoras) jogam só os dois splits.
 
 Cada temporada tem **3 decisões** (eventos de história), uma antes de cada
 etapa. Cada etapa (fase de pontos + playoffs) é simulada de uma vez e
@@ -77,8 +77,11 @@ resultado altera atributos, confiança e fama.
 
 **Propostas:** cada janela tem **2 ou 3 opções** no total, contando
 "continuar no clube". Elas dependem principalmente do OVR (e um pouco da
-fama). Os times estão em 3 divisões por região: tier 1 (CBLOL, LCK, LPL,
-LEC, LCS), academias e ligas amadoras.
+fama). Os times estão em divisões por região: tier 1 (CBLOL, LCK, LPL,
+LEC, LCS), a divisão de acesso e, fora do Brasil, ligas amadoras. O Brasil
+tem só 2 divisões, como em 2026: CBLOL e **Circuito Desafiante** (10 times
+reais: academias de Keyd, paiN e RED, mais KaBuM! IDL, INTZ, Estral, TEAM
+SOLID, 7REX, RMD e Ei Nerd).
 
 - **Apostas:** quando o jogador está em alta (títulos, prêmios, evolução
   rápida, juventude), uma liga mais forte que a atual pode apostar nele,
@@ -135,7 +138,7 @@ pagam mais, CBLOL bem menos). Premiações (parte do jogador, em US$):
 | First Stand | 40 mil | 20 mil | 10 mil | 5 mil | 2,5 mil |
 | Split da liga principal (LCK/LPL · LEC · LCS · CBLOL) | 30 · 20 · 18 · 8 mil | 50% | 25% | 10% | — |
 
-A Copa paga 60% de um split; academias pagam 2 mil ao campeão e ligas
+A Copa paga 60% de um split; divisões de acesso pagam 2 mil ao campeão e ligas
 amadoras 600. Prêmios individuais: MVP de 3 a 10 mil (conforme a liga),
 Seleção metade disso, Revelação 3 mil e MVP da Final do Mundial 20 mil.
 O dinheiro só aparece no relatório final da aposentadoria (total arrecadado,
@@ -207,7 +210,8 @@ em `engine/player.js`, `engine/sim.js` ou `engine/career.js`.
 - **Times:** `TIER1` em `js/data/world.js` (id, nome, sigla, rating, cores).
   Times que saíram (ex.: FPX, 100 Thieves) ficam em `RETIRED_TEAMS`: só
   voltam em saves antigos que os citam, fora das ligas e das propostas.
-  As academias são geradas a partir dos 8 primeiros times de cada região.
+  A 2ª divisão do Brasil está em `TIER2` (times reais); nas outras regiões
+  as academias são geradas a partir dos 8 primeiros times.
 
 Os nomes de times e ligas reais aparecem só como referência de fã. Por
 padrão o jogo mostra as logos oficiais de `shared/assets/times/`

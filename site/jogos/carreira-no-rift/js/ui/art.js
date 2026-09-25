@@ -7,7 +7,7 @@ let uid = 0;
 // Imagens dos times (caminhos relativos à página do jogo). O modo vem de
 // shared/config.js: logo oficial (assets/times) ou escudo do site
 // (assets/emblemas). Academias usam a imagem do time principal; times
-// amadores (fictícios) usam só o escudo gerado. Sem arquivo, o escudo gerado
+// amadores (fictícios, 3ª divisão fora do Brasil) usam só o escudo gerado. Sem arquivo, o escudo gerado
 // continua aparecendo.
 const ASSETS = '../../shared/assets/';
 // Na versão em arquivo único (scripts/build-bundle.mjs) as imagens vêm embutidas.

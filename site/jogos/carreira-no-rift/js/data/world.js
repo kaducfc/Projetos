@@ -57,7 +57,7 @@ export const STYLES = {
 // e `worlds` (pelo Split 2; as regiões dos finalistas do MSI ganham +1).
 export const REGIONS = {
   br: {
-    id: 'br', name: 'Brasil', flag: '🇧🇷', leagues: { 1: 'CBLOL', 2: 'CBLOL Academy', 3: 'Circuito Desafiante' },
+    id: 'br', name: 'Brasil', flag: '🇧🇷', leagues: { 1: 'CBLOL', 2: 'Circuito Desafiante' },
     stages: ['Copa CBLOL', 'CBLOL · Split 1', 'CBLOL · Split 2'], firstStand: 1, msi: 1, worlds: 1,
   },
   kr: {
@@ -175,9 +175,26 @@ const TIER1 = {
   ],
 };
 
-// Times da 3ª divisão são fictícios.
+// 2ª divisão com times reais (em vez das academias geradas). Brasil 2026:
+// o Circuito Desafiante tem 3 academias de times do CBLOL e 7 independentes.
+// Academias usam o id `<time>_ac` (e a logo do time principal).
+const TIER2 = {
+  br: [
+    ['vks_ac', 'Vivo Keyd Stars Academy', 'VKS.A', 64, '#660099', '#ffffff'],
+    ['kabum', 'KaBuM! IDL', 'KBM', 63, '#0060ae', '#ff6500'],
+    ['png_ac', 'paiN Gaming Academy', 'PNG.A', 62, '#e10600', '#111111'],
+    ['red_ac', 'RED Canids Academy', 'RED.A', 60, '#d4002a', '#ffffff'],
+    ['intz', 'INTZ', 'ITZ', 60, '#111111', '#ffffff'],
+    ['estral', 'Estral Esports', 'EST', 58, '#1d4ed8', '#ffffff'],
+    ['solid', 'TEAM SOLID', 'SOL', 57, '#111111', '#e5e7eb'],
+    ['7rex', '7REX Team', '7REX', 57, '#dc2626', '#111111'],
+    ['rmd', 'RMD Gaming', 'RMD', 56, '#7c3aed', '#ffffff'],
+    ['einerd', 'Ei Nerd Esports', 'EIN', 55, '#16a34a', '#111111'],
+  ],
+};
+
+// Times da 3ª divisão são fictícios (o Brasil só tem 2 divisões).
 const TIER3 = {
-  br: ['Vórtex Gaming', 'Caiçara Esports', 'Hydra Clã', 'Rei do Norte', 'Nordeste Legends', 'Tempest BR', 'Aurora Gaming', 'Serpentes Azuis'],
   kr: ['Seoul Dynamo', 'Busan Tide', 'Incheon Phoenix', 'Daegu Storm', 'Gwangju Rising', 'Jeju Waves', 'Ulsan Titans', 'Suwon Blaze'],
   cn: ['Chengdu Pandas', 'Wuhan River', 'Hangzhou Mist', "Xi'an Terracota", 'Shenzhen Volt', 'Nanjing Lotus', 'Qingdao Tide', 'Harbin Frost'],
   eu: ['Berlin Wolves', 'Lisboa Navigators', 'Madrid Toros', 'Warsaw Hussars', 'Nordic Aurora', 'Milano Vespa', 'London Ravens', 'Paris Lumière'],
@@ -201,6 +218,29 @@ export const RETIRED_TEAMS = {
   '100t': { id: '100t', name: '100 Thieves', tag: '100T', region: 'na', tier: 1, rating: 77, base: 77, c1: '#e3202b', c2: '#111111', retired: true },
   '100t_ac': { id: '100t_ac', name: '100 Thieves Academy', tag: '100T.A', region: 'na', tier: 2, rating: 62, base: 62, c1: '#e3202b', c2: '#111111', retired: true },
 };
+// Brasil antes de 2026: academias de todos os times do CBLOL e 3ª divisão
+// fictícia. Numa carreira antiga, se o jogador ainda estiver num desses
+// times, ele passa a jogar o Circuito Desafiante (tier 2) até sair.
+[
+  ['loud_ac', 'LOUD Academy', 'LOUD.A', 62, '#13d552', '#111111'],
+  ['fur_ac', 'FURIA Academy', 'FUR.A', 59, '#1b1b1b', '#ffffff'],
+  ['lev_ac', 'Leviatán Academy', 'LEV.A', 56, '#1c3f94', '#ffffff'],
+  ['fx_ac', 'Fluxo W7M Academy', 'FX.A', 57, '#ff4d00', '#111111'],
+  ['lg_ac', 'Los Grandes Academy', 'LG.A', 56, '#0e7c3a', '#ffd400'],
+  ['br_t3_0', 'Vórtex Gaming', 'VG', 50, '#7c3aed', '#f5f5f5'],
+  ['br_t3_1', 'Caiçara Esports', 'CE', 55, '#0ea5e9', '#0b1a2a'],
+  ['br_t3_2', 'Hydra Clã', 'HC', 60, '#16a34a', '#f5f5f5'],
+  ['br_t3_3', 'Rei do Norte', 'RDN', 53, '#dc2626', '#f5f5f5'],
+  ['br_t3_4', 'Nordeste Legends', 'NL', 58, '#f59e0b', '#1b1b1b'],
+  ['br_t3_5', 'Tempest BR', 'TB', 51, '#475569', '#f5f5f5'],
+  ['br_t3_6', 'Aurora Gaming', 'AG', 56, '#db2777', '#f5f5f5'],
+  ['br_t3_7', 'Serpentes Azuis', 'SA', 61, '#0d9488', '#f5f5f5'],
+].forEach(([id, name, tag, rating, c1, c2]) => {
+  RETIRED_TEAMS[id] = { id, name, tag, region: 'br', tier: 2, rating, base: rating, c1, c2, retired: true, fictional: id.startsWith('br_t3') };
+});
+
+// Divisão mais baixa de cada região (2 no Brasil, 3 nas outras).
+export const lowestTier = (region) => Math.max(...Object.keys(REGIONS[region].leagues).map(Number));
 
 export const TIER_RANGE = { 1: [66, 95], 2: [55, 80], 3: [44, 66] };
 
@@ -217,15 +257,21 @@ export function buildTeams() {
     list.forEach(([id, name, tag, rating, c1, c2]) => {
       teams[id] = { id, name, tag, region, tier: 1, rating, c1, c2 };
     });
-    // Academias (2ª divisão) das 8 primeiras organizações.
-    list.slice(0, 8).forEach(([id, name, tag, rating, c1, c2], i) => {
-      const aid = `${id}_ac`;
-      teams[aid] = {
-        id: aid, name: `${name} Academy`, tag: `${tag}.A`, region, tier: 2,
-        rating: rating - 15 + ((i * 7) % 5) - 2, c1, c2,
-      };
-    });
-    TIER3[region].forEach((name, i) => {
+    if (TIER2[region]) {
+      TIER2[region].forEach(([id, name, tag, rating, c1, c2]) => {
+        teams[id] = { id, name, tag, region, tier: 2, rating, c1, c2 };
+      });
+    } else {
+      // Academias (2ª divisão) das 8 primeiras organizações.
+      list.slice(0, 8).forEach(([id, name, tag, rating, c1, c2], i) => {
+        const aid = `${id}_ac`;
+        teams[aid] = {
+          id: aid, name: `${name} Academy`, tag: `${tag}.A`, region, tier: 2,
+          rating: rating - 15 + ((i * 7) % 5) - 2, c1, c2,
+        };
+      });
+    }
+    (TIER3[region] || []).forEach((name, i) => {
       const id = `${region}_t3_${i}`;
       const [c1, c2] = TIER3_COLORS[i % TIER3_COLORS.length];
       teams[id] = { id, name, tag: tagFromName(name), region, tier: 3, rating: 50 + ((i * 5) % 12), c1, c2 };

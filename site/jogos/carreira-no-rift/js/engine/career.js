@@ -3,7 +3,7 @@
 //
 // Toda a lógica muda `state` e define `state.screen`; a UI só desenha.
 
-import { buildTeams, REGIONS, REGION_LEVEL, TIER_RANGE, WILDCARD_SLOTS, nationById, ofLeague, inLeague } from '../data/world.js';
+import { buildTeams, REGIONS, REGION_LEVEL, TIER_RANGE, WILDCARD_SLOTS, nationById, ofLeague, inLeague, lowestTier } from '../data/world.js';
 import { EVENTS, eventById, roleAllows } from '../data/events.js';
 import {
   createPlayer, ovrOf, effectiveOvr, applyFx, seasonGrowth, salaryFor, statusFor, STATUS,
@@ -257,7 +257,7 @@ export function genOffers(state, { first = false, max = 3 } = {}) {
 function fallbackOffers(state, max) {
   const p = state.player;
   return activeTeams(state)
-    .filter((t) => t.region === p.region && t.tier === 3 && t.id !== p.teamId)
+    .filter((t) => t.region === p.region && t.tier === lowestTier(p.region) && t.id !== p.teamId)
     .sort((a, b) => a.rating - b.rating)
     .slice(0, max)
     .map((t) => makeOffer(state, t));
@@ -949,7 +949,7 @@ export function legacyBreakdown(p) {
     { label: 'MSI', n: count((t) => t.name === 'MSI'), each: 60 },
     { label: 'First Stand', n: count((t) => t.name === 'First Stand'), each: 35 },
     { label: 'Títulos de liga principal', n: count((t) => t.kind === 'league' && t.tier === 1), each: 20 },
-    { label: 'Títulos de academia', n: count((t) => t.kind === 'league' && t.tier === 2), each: 8 },
+    { label: 'Títulos de divisão de acesso', n: count((t) => t.kind === 'league' && t.tier === 2), each: 8 },
     { label: 'Títulos de liga amadora', n: count((t) => t.kind === 'league' && t.tier === 3), each: 4 },
     { label: 'MVP da Final do Mundial', n: count((t) => t.name === 'MVP da Final do Mundial'), each: 25 },
     { label: 'Outros prêmios individuais', n: count((t) => t.kind === 'award' && t.name !== 'MVP da Final do Mundial'), each: 10 },
