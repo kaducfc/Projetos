@@ -345,7 +345,11 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
 
 /* propostas */
-.offers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+/* Cards centralizados: com 2 opções ficam no meio, com mais respiro. */
+.offers-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.offers-grid > .offer { flex: 1 1 180px; max-width: 240px; }
+.offers-grid.count-2 { gap: 36px; }
+.offers-grid.count-1 > .offer { max-width: 280px; }
 .offer {
   display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
   background: linear-gradient(180deg, #131e28, #0d151c);

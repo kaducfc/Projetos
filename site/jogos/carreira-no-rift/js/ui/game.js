@@ -219,7 +219,7 @@ function offersPanel(state) {
     <h1 class="display">${title}</h1>
     ${sub ? `<p class="lead">${sub}</p>` : ''}
     ${scr.note ? `<div class="note${loan ? ' warn' : ''}">${esc(scr.note)}</div>` : ''}
-    <div class="offers-grid">${cards.join('')}</div>
+    <div class="offers-grid count-${cards.length}">${cards.join('')}</div>
   </div>`;
 }
 
