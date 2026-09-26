@@ -2,9 +2,9 @@
   "index": 2,
   "name": "Sakura Haruno",
   "gameState": {
-    "gold": 62116307,
-    "hunterLevel": 207,
-    "hunterXp": 1366,
+    "gold": 89745866,
+    "hunterLevel": 210,
+    "hunterXp": 16629.5,
     "selectedMonsters": [
       {
         "zoneIndex": 9,
@@ -30,9 +30,9 @@
     "currentMonster": {
       "zoneIndex": 9,
       "kind": "weak",
-      "monsterId": "aurelion"
+      "monsterId": "grommash"
     },
-    "monsterHp": 2395165,
+    "monsterHp": 2086112,
     "lastMonsterRef": null,
     "materials": {
       "mystic_die": 3819,
@@ -47,11 +47,11 @@
       "lavasalam_drop": 776,
       "fornitus_core": 731,
       "grommuk_fang": 220,
-      "draxorian_chest": 1287,
-      "aurelion_spear": 1239,
-      "grommash_crown": 1256,
-      "morvanthal_scepter": 1221,
-      "bahamorth_scale": 411
+      "draxorian_chest": 1886,
+      "aurelion_spear": 1775,
+      "grommash_crown": 1790,
+      "morvanthal_scepter": 1821,
+      "bahamorth_scale": 618
     },
     "cards": {
       "guardiao_druida_card": 1,
@@ -634,21 +634,29 @@
         ]
       },
       {
-        "uid": 507,
+        "uid": 631,
         "itemId": "bahamorth_ring_destreza",
-        "rarityId": "incomum",
+        "rarityId": "epico",
         "baseStats": {
           "destreza": 50,
-          "armorFlat": 23
+          "armorFlat": 32
         },
         "additionalStats": [
           {
-            "stat": "hpFlat",
-            "value": 58
+            "stat": "critDamagePercent",
+            "value": 6.3
           },
           {
-            "stat": "destreza",
-            "value": 50
+            "stat": "danoPerfuracaoFlat",
+            "value": 74
+          },
+          {
+            "stat": "critChancePercent",
+            "value": 10.2
+          },
+          {
+            "stat": "armorFlat",
+            "value": 57
           }
         ],
         "enhanceLevel": 0,
@@ -658,7 +666,7 @@
         ]
       }
     ],
-    "nextUid": 508,
+    "nextUid": 646,
     "equipped": {
       "weapon1": 1,
       "weapon2": 10,
@@ -672,8 +680,8 @@
       "necklace": 9
     },
     "upgrades": {},
-    "totalKills": 13494,
-    "lastSaveTime": 1790439317165,
+    "totalKills": 15702,
+    "lastSaveTime": 1790456340851,
     "transcendUnlocked": false,
     "transcendCount": 25,
     "awakeningShards": 15,
@@ -688,11 +696,11 @@
       "cards_collected": 3,
       "transcend_count": 6
     },
-    "lifetimeHunterLevel": 207,
-    "lifetimeTotalKills": 202358,
-    "lifetimeGoldEarned": 179120861,
+    "lifetimeHunterLevel": 210,
+    "lifetimeTotalKills": 204566,
+    "lifetimeGoldEarned": 206746120,
     "lifetimeEggsHatched": 1809,
-    "lifetimeRankMasterCount": 494,
+    "lifetimeRankMasterCount": 495,
     "pvpHighestTierIndex": 0,
     "pvpWinsTotal": 0,
     "playerName": "Caçador",
@@ -708,8 +716,8 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 43,
-    "expeditionReadyAt": 1790450037808,
+    "eventCurrency": 183,
+    "expeditionReadyAt": 1790485140857,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
@@ -873,13 +881,6 @@
         "uid": 41,
         "speciesId": "planta_4",
         "rarityId": "lendario",
-        "level": 1,
-        "xp": 0
-      },
-      {
-        "uid": 44,
-        "speciesId": "fogo_5",
-        "rarityId": "epico",
         "level": 1,
         "xp": 0
       },
@@ -1206,21 +1207,21 @@
         "xp": 0
       },
       {
-        "uid": 130,
+        "uid": 131,
         "speciesId": "fogo_5",
         "rarityId": "epico",
-        "level": 1,
+        "level": 2,
         "xp": 0
       }
     ],
-    "nextPetUid": 131,
+    "nextPetUid": 132,
     "equippedPetUids": [
       1,
       2,
       3,
       4
     ],
-    "eggCount": 0,
+    "eggCount": 23,
     "petFragments": 2450,
     "petHatchesSinceMythic": 1,
     "petHatchesSinceLegendary": 13,
@@ -1269,8 +1270,8 @@
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3ZTE2NjExMC0yNGUyLTQ3ZmUtODZhNi0wNTVmNzJkNDg5ZDAiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzkwNDQyOTE3LCJpYXQiOjE3OTA0MzkzMTcsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUyNDB9XSwic2Vzc2lvbl9pZCI6IjI0MGNiMGFjLTU5MzEtNDQ5Ni1iMDQ3LTA1ZTkyY2Y1MjBhNCIsImlzX2Fub255bW91cyI6dHJ1ZX0.DnJY_AcpFRkHDfg9VzRl8KOpeMzAGd0UslYrNedov9CWEXbwk7mEkWjPHez-XHU6oTk9LoHW5dx__0XakpgV8w",
-    "refresh_token": "ozdh4arv2spq"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3ZTE2NjExMC0yNGUyLTQ3ZmUtODZhNi0wNTVmNzJkNDg5ZDAiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzkwNDU5OTQwLCJpYXQiOjE3OTA0NTYzNDAsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUyNDB9XSwic2Vzc2lvbl9pZCI6IjI0MGNiMGFjLTU5MzEtNDQ5Ni1iMDQ3LTA1ZTkyY2Y1MjBhNCIsImlzX2Fub255bW91cyI6dHJ1ZX0.yMI-adBiHJQjBqih0MO-ZYkaf82934rqf1x-5X54QMNmn--ymLAUdBmb0atZPaoalTMQr2KPjb2YVW7739lXRw",
+    "refresh_token": "prfksl5gbd2h"
   },
   "nickClaimed": true,
   "userId": "7e166110-24e2-47fe-86a6-055f72d489d0"
