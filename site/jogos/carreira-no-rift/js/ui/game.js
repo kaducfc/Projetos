@@ -6,7 +6,7 @@ import { ovrOf, marketValue, STATUS } from '../engine/player.js';
 import {
   teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore, legacyBreakdown, careerEarnings, eventOptions,
 } from '../engine/career.js';
-import { teamBadge, trophySvg, stars } from './art.js';
+import { teamBadge, trophySvg, trophyArt, stars } from './art.js';
 import { esc, fmtKda, fmtMoney, fmtSalary } from '../util.js';
 import { FAN_NOTICE, DONATION_NOTICE } from '../../../../shared/footer.js';
 
@@ -63,7 +63,7 @@ function playerCard(state) {
     <div class="gallery">
       <span><small>Galeria</small> <b class="gold">${p.trophies.length}</b></span>
       <span class="gallery-icons">${p.trophies.length
-        ? p.trophies.slice(-8).map((t) => `<span title="${esc(`${t.name} ${t.detail} ${t.year}`)}">${trophySvg(t.kind === 'award' ? 'award' : t.kind, 22)}</span>`).join('')
+        ? p.trophies.slice(-8).map((t) => `<span title="${esc(`${t.name} ${t.detail} ${t.year}`)}">${trophyArt(t, 22)}</span>`).join('')
         : '<span class="muted small">Galeria vazia</span>'}</span>
     </div>
   </div>`;
@@ -441,7 +441,7 @@ function seasonEndPanel(state) {
       <div><small>KDA</small><b>${fmtKda(st.k, st.d, st.a)}</b></div>
       <div><small>POG</small><b>${st.pog}</b></div>
     </div>
-    ${all.length ? `<div class="season-trophies">${all.map((t) => `<div class="st-item">${trophySvg(t.kind, 40)}<div><b>${esc(t.name)}</b><small>${esc(t.detail)}</small></div></div>`).join('')}</div>` : '<p class="muted">Nenhum título nesta temporada.</p>'}
+    ${all.length ? `<div class="season-trophies">${all.map((t) => `<div class="st-item">${trophyArt(t, 40)}<div><b>${esc(t.name)}</b><small>${esc(t.detail)}</small></div></div>`).join('')}</div>` : '<p class="muted">Nenhum título nesta temporada.</p>'}
     ${scr.loanNext ? '<div class="note warn">Temporada difícil. A diretoria está pensando em te emprestar para outro time na próxima janela.</div>' : ''}
     ${scr.forced ? `<div class="note">${p.age >= 35 ? `Aos ${p.age} anos, é hora de pendurar o mouse.` : 'Sem espaço no cenário, você decide encerrar a carreira.'}</div>` : ''}
     <div class="actions">
@@ -515,7 +515,7 @@ function retiredPanel(state) {
       return `<div class="spell">${teamBadge(t, 26)}<div><b>${esc(t.name)}</b><small>${sp.from === sp.to ? sp.from : `${sp.from}–${sp.to}`} · ${sp.games} jogos${sp.titles ? ` · ${sp.titles} título${sp.titles > 1 ? 's' : ''}` : ''}</small></div></div>`;
     }).join('')}</div>
     <h4 class="sub-title">Títulos e prêmios</h4>
-    ${Object.keys(grouped).length ? `<div class="season-trophies">${Object.values(grouped).map(({ t, n }) => `<div class="st-item">${trophySvg(t.kind, 40)}<div><b>${n > 1 ? `${n}× ` : ''}${esc(t.name)}</b><small>${t.kind === 'award' ? 'Prêmio individual' : t.kind === 'intl' ? 'Internacional' : 'Liga'}</small></div></div>`).join('')}</div>` : '<p class="muted">Nenhum título na carreira.</p>'}
+    ${Object.keys(grouped).length ? `<div class="season-trophies">${Object.values(grouped).map(({ t, n }) => `<div class="st-item">${trophyArt(t, 40)}<div><b>${n > 1 ? `${n}× ` : ''}${esc(t.name)}</b><small>${t.kind === 'award' ? 'Prêmio individual' : t.kind === 'intl' ? 'Internacional' : 'Liga'}</small></div></div>`).join('')}</div>` : '<p class="muted">Nenhum título na carreira.</p>'}
     <p class="fan-note">${FAN_NOTICE} ${DONATION_NOTICE}</p>
     <pre class="share" id="share-text">${esc(careerSummaryText(state))}</pre>
     <div class="actions">
@@ -549,7 +549,7 @@ export function trophyModal(state) {
   <div class="modal-backdrop" data-act="modal-close">
     <div class="modal trophy-modal kind-${t.kind}" role="dialog" aria-modal="true">
       <div class="rays"></div>
-      <div class="trophy-art">${trophySvg(t.kind, 150)}</div>
+      <div class="trophy-art">${trophyArt(t, 150)}</div>
       <div class="eyebrow">${award ? 'Prêmio individual' : 'Campeão'} · ${t.year}</div>
       <h2 class="display">${esc(t.name)}</h2>
       <p>${award ? esc(state.player.nick) : esc(t.detail)} · ${teamBadge(team, 18)} ${esc(team.name)}</p>

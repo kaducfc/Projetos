@@ -515,6 +515,8 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .delta.up { color: #7de3a5; }
 .delta.down { color: #f0948e; }
 .season-trophies { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.trophy-img { position: relative; display: inline-block; flex: none; line-height: 0; }
+.trophy-img > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
 .st-item { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: color-mix(in srgb, var(--gold) 5%, transparent); }
 .st-item b { display: block; }
 .st-item small { color: var(--muted); }

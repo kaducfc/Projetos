@@ -5,7 +5,10 @@ Coloque aqui em **PNG com fundo transparente**, com o nome do arquivo
 exatamente como na tabela (tudo minúsculo).
 
 - Tamanho recomendado: cerca de **256 px de altura** (troféus costumam ser
-  mais altos que largos). As imagens serão padronizadas depois de enviadas.
+  mais altos que largos). Depois de enviadas, as imagens são padronizadas
+  em **300×345 px**: margens cortadas, troféu centralizado e apoiado na base.
+- Medalhas/troféus opcionais (Copa, medalha por liga) só são usados se o
+  nome estiver em `OPTIONAL_TROPHIES` em `jogos/carreira-no-rift/js/ui/art.js`.
 - Pode enviar aos poucos: prêmio sem imagem continua com o troféu desenhado
   pelo jogo (dourado = internacional, prateado = liga, bronze = individual).
 

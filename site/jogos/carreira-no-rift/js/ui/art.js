@@ -1,6 +1,7 @@
 // Artes geradas em SVG: escudos de time, troféus, camisa e minimapa.
 import { esc } from '../util.js';
 import { TEAM_LOGOS, OFFICIAL_LOGOS_ALLOWED } from '../../../../shared/config.js';
+import { REGIONS } from '../data/world.js';
 
 let uid = 0;
 
@@ -91,6 +92,81 @@ export function trophySvg(kind = 'league', size = 120) {
     <path d="M38 100 H82 L88 116 H32 Z" fill="url(#${id})" stroke="${c}" stroke-width="1.5"/>
     <rect x="26" y="116" width="68" height="14" rx="3" fill="${c}"/>
   </svg>`;
+}
+
+// Imagens dos troféus e medalhas (shared/assets/trofeus). Cada prêmio tem
+// uma lista de arquivos em ordem de preferência (ex.: medalha da liga antes
+// da genérica); sem nenhum arquivo, fica o troféu desenhado acima.
+const TROPHY_FILES = {
+  intl: { Mundial: 'mundial', MSI: 'msi', 'First Stand': 'first-stand' },
+  lower: {
+    'Circuito Desafiante': 'circuito-desafiante', 'LCK Challengers': 'lck-challengers',
+    LDL: 'ldl', 'ERL Premier': 'erl', NACL: 'nacl',
+  },
+};
+// Arquivos opcionais (troféu próprio da Copa, medalha por liga) só são
+// procurados se estiverem listados aqui, para o site não pedir arquivos que
+// não existem. Ex.: 'copa-cblol', 'mvp-cblol', 'selecao-lck'.
+const OPTIONAL_TROPHIES = new Set([]);
+// Arquivos principais (lista em shared/assets/trofeus/README.md).
+const MAIN_TROPHIES = new Set([
+  'mundial', 'msi', 'first-stand', 'cblol', 'lck', 'lpl', 'lec', 'lcs',
+  'circuito-desafiante', 'lck-challengers', 'ldl', 'erl', 'nacl', 'amador',
+  'mvp', 'selecao', 'revelacao', 'mvp-final-mundial',
+]);
+const slug = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+function trophyFiles(t) {
+  if (t.kind === 'intl') return TROPHY_FILES.intl[t.name] ? [TROPHY_FILES.intl[t.name]] : [];
+  if (t.kind === 'award') {
+    if (t.name === 'MVP da Final do Mundial') return ['mvp-final-mundial', 'mvp'];
+    const [type, ...rest] = t.name.split(' ');
+    const league = rest.slice(1).join(' '); // "MVP do CBLOL" → "CBLOL"
+    const base = { MVP: 'mvp', 'Seleção': 'selecao', 'Revelação': 'revelacao' }[type];
+    return base ? [`${base}-${slug(league)}`, base] : [];
+  }
+  // Liga: a Copa pode ter troféu próprio (ex.: copa-cblol, lck-cup).
+  if (t.tier === 1) {
+    const region = Object.values(REGIONS).find((r) => r.stages.includes(t.name));
+    if (!region) return [];
+    const main = slug(region.leagues[1]);
+    return t.name.includes('·') ? [main] : [slug(t.name), main]; // a Copa não tem "·" no nome
+  }
+  if (t.tier === 2) {
+    const league = Object.keys(TROPHY_FILES.lower).find((l) => t.name.startsWith(l));
+    return league ? [TROPHY_FILES.lower[league]] : [];
+  }
+  return t.tier === 3 ? ['amador'] : [];
+}
+
+if (typeof window !== 'undefined') {
+  // Arquivo não existe: tenta o próximo da lista; acabou, fica o desenho.
+  window.__trophyNext = (img) => {
+    const rest = (img.dataset.next || '').split(',').filter(Boolean);
+    if (!rest.length) { img.remove(); return; }
+    img.dataset.next = rest.slice(1).join(',');
+    img.src = `${ASSETS}trofeus/${rest[0]}.png`;
+  };
+}
+
+// Troféu de um título/prêmio: imagem quando existir, senão o desenho.
+export function trophyArt(t, size = 120) {
+  const svg = trophySvg(t.kind, size);
+  let files = trophyFiles(t);
+  files = files.filter((f) => EMBEDDED || MAIN_TROPHIES.has(f) || OPTIONAL_TROPHIES.has(f));
+  let src;
+  if (EMBEDDED) {
+    const f = files.find((x) => EMBEDDED[`trofeus/${x}.png`]);
+    if (!f) return svg;
+    src = EMBEDDED[`trofeus/${f}.png`];
+    files = [];
+  } else {
+    if (!files.length) return svg;
+    src = `${ASSETS}trofeus/${files[0]}.png`;
+    files = files.slice(1);
+  }
+  const h = Math.round(size * 1.15);
+  return `<span class="trophy-img" style="width:${size}px;height:${h}px">${svg}<img src="${src}" alt="" data-next="${files.join(',')}" onload="this.previousElementSibling?.remove()" onerror="__trophyNext(this)"></span>`;
 }
 
 // Camisa usada na tela de criação (nick nas costas).

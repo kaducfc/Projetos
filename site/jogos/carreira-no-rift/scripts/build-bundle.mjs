@@ -1,7 +1,7 @@
 // Empacota o jogo num único HTML autocontido (CSS + todos os módulos JS),
 // útil para publicar como Artifact ou mandar o arquivo para alguém.
 // Uso: node scripts/build-bundle.mjs [--logos=oficiais|escudos] > bundle.html
-// As imagens dos times (shared/assets/times e emblemas) vão embutidas no arquivo.
+// As imagens dos times e troféus (shared/assets/times, emblemas e trofeus) vão embutidas no arquivo.
 // --logos troca o modo de TEAM_LOGOS só nesta versão (útil para testar as logos).
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -54,7 +54,7 @@ const body = html.match(/<body>([\s\S]*)<\/body>/)[1]
   .replace(/<noscript>[\s\S]*?<\/noscript>\s*/, '');
 
 const logoData = {};
-for (const dir of ['times', 'emblemas']) {
+for (const dir of ['times', 'emblemas', 'trofeus']) {
   const d = join(assetsDir, dir);
   if (!existsSync(d)) continue;
   for (const f of readdirSync(d).filter((x) => x.endsWith('.png'))) {
