@@ -1,4 +1,4 @@
-import { ATTRS, ROLES, STYLES } from '../data/world.js';
+import { ATTRS, ROLES, STYLES, REGION_LEVEL } from '../data/world.js';
 import { clamp, rand, randInt } from '../util.js';
 
 export function calcOvr(attrs, role) {
@@ -25,8 +25,10 @@ export function createPlayer({ nick, nat, region, role, style, attrs }) {
   return {
     nick, nat, role, style, region,
     attrs: { ...attrs },
-    // Mediana ~77; 90+ só para ~6%; potencial de lenda (93+) é bem raro.
-    potential: 74 + Math.round(21 * Math.pow(Math.random(), 1.9)),
+    // Teto sorteado (potencial de lenda, 93+, é bem raro). Quem começa na
+    // Coreia ou na China cresce no ambiente mais competitivo: +2 de teto.
+    potential: 74 + Math.round(21 * Math.pow(Math.random(), 1.9))
+      + (REGION_LEVEL[region]?.rank === 3 ? 2 : 0),
     age: 16,
     morale: 55,
     fame: 5,

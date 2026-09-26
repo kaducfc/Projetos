@@ -865,8 +865,14 @@ function endSeason(state) {
   computeAwards(state, playedRatio);
 
   // Ambiente de treino: ligas mais fortes fazem o jogador evoluir mais e
-  // aumentam o teto dele; títulos internacionais e MVP também.
-  const level = s.tier === 1 ? REGION_LEVEL[s.region] : null;
+  // aumentam o teto dele; títulos internacionais e MVP também. A divisão de
+  // acesso de uma região forte (LCK CL, LDL) também ajuda, em 60%.
+  const regionLevel = REGION_LEVEL[s.region];
+  const envScale = s.tier === 1 ? 1 : 0.6;
+  const level = regionLevel && {
+    growth: 1 + (regionLevel.growth - 1) * envScale,
+    potential: regionLevel.potential * envScale,
+  };
   const tierFactor = { 1: 1, 2: 0.9, 3: 0.8 }[s.tier];
   const intlTitle = s.titles.some((t) => t.kind === 'intl');
   const mvp = s.awards.some((a) => a.name.startsWith('MVP'));
