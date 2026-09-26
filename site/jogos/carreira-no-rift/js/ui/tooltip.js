@@ -4,6 +4,7 @@
 // para não ser cortado por áreas com rolagem.
 let box = null;
 let current = null;
+let pinned = null; // aberto por toque/clique: fica até tocar de novo ou fora
 
 function show(el) {
   if (!box) {
@@ -25,6 +26,7 @@ function show(el) {
 
 function hide() {
   current = null;
+  pinned = null;
   box?.classList.remove('on');
 }
 
@@ -35,18 +37,17 @@ export function mountTooltips(root = document) {
   });
   root.addEventListener('mouseout', (e) => {
     const el = e.target.closest('[data-tip]');
-    if (el && !el.contains(e.relatedTarget)) hide();
+    if (el && el !== pinned && !el.contains(e.relatedTarget)) hide();
   });
   root.addEventListener('focusin', (e) => {
     const el = e.target.closest('[data-tip]');
     if (el) show(el);
   });
-  root.addEventListener('focusout', hide);
+  root.addEventListener('focusout', (e) => { if (e.target !== pinned) hide(); });
   // Toque/clique: abre; tocar de novo ou fora fecha.
   document.addEventListener('click', (e) => {
     const el = e.target.closest('[data-tip]');
-    if (el && el !== current) show(el);
-    else hide();
+    if (el && el !== pinned) { show(el); pinned = el; } else hide();
   });
   window.addEventListener('scroll', hide, { passive: true });
 }

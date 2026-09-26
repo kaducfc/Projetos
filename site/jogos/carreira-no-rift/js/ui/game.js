@@ -63,7 +63,7 @@ function playerCard(state) {
     <div class="gallery">
       <span><small>Galeria</small> <b class="gold">${p.trophies.length}</b></span>
       <span class="gallery-icons">${p.trophies.length
-        ? p.trophies.slice(-8).map((t) => `<span class="has-tip" tabindex="0" data-tip="${esc(`${t.name} · ${t.year}`)}">${trophyArt(t, 22)}</span>`).join('')
+        ? p.trophies.slice(-8).map((t) => `<span class="has-tip" tabindex="0" data-tip="${esc(`${t.name} (${t.year})`)}">${trophyArt(t, 22)}</span>`).join('')
         : '<span class="muted small">Galeria vazia</span>'}</span>
     </div>
   </div>`;
@@ -135,7 +135,7 @@ function leagueCard(state) {
 // Títulos (coletivos) de uma temporada do histórico, para a dica do 🏆.
 function seasonTitles(p, h) {
   const names = p.trophies.filter((t) => t.year === h.year && t.kind !== 'award' && t.teamId === h.teamId).map((t) => t.name);
-  return names.length ? names.join(' · ') : 'Títulos';
+  return names.length ? names.join('\n') : 'Títulos';
 }
 
 function careerTable(state) {
