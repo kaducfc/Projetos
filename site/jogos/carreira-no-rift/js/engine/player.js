@@ -26,9 +26,9 @@ export function createPlayer({ nick, nat, region, role, style, attrs }) {
     nick, nat, role, style, region,
     attrs: { ...attrs },
     // Teto sorteado (potencial de lenda, 93+, é bem raro). Quem começa na
-    // Coreia ou na China cresce no ambiente mais competitivo: +2 de teto.
+    // Coreia ou na China cresce no ambiente mais competitivo: +3 de teto.
     potential: 74 + Math.round(21 * Math.pow(Math.random(), 1.9))
-      + (REGION_LEVEL[region]?.rank === 3 ? 2 : 0),
+      + (REGION_LEVEL[region]?.rank === 3 ? 3 : 0),
     age: 16,
     morale: 55,
     fame: 5,

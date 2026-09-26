@@ -120,8 +120,8 @@ A divisão de acesso de cada região dá 60% desse bônus (LCK Challengers e LDL
 também desenvolvem mais).
 
 **Começar na Coreia ou na China** é mais fácil: além do ambiente, o jogador
-nasce com +2 de teto. Resultado (2.000 carreiras): OVR máximo mediano ~82,
-90+ ~20% e quase ninguém abaixo de 75 (no Brasil: mediana ~80, 90+ ~14%).
+nasce com +3 de teto. Resultado (2.500 carreiras): OVR máximo mediano ~83,
+90+ ~25% e quase ninguém abaixo de 75 (no Brasil: mediana ~80, 90+ ~14%).
 
 **Distribuição esperada** (3.000 carreiras simuladas no Brasil): OVR máximo
 mediano ~80; <75 ~14%, 75–79 ~35%, 80–84 ~20%, 85–89 ~17% e 90+ ~15%.
