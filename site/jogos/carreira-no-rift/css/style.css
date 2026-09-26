@@ -259,6 +259,14 @@ input { font: inherit; color: inherit; }
 .gallery { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-top: 12px; }
 .gallery > span:first-child { white-space: nowrap; }
 .gallery small { font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.has-tip { cursor: help; }
+.tipbox {
+  position: fixed; z-index: 90; max-width: min(320px, calc(100vw - 16px)); padding: 5px 9px;
+  background: rgba(18, 18, 18, 0.96); border: 1px solid var(--line-2); color: var(--text);
+  font-size: 12px; font-weight: 600; line-height: 1.35; pointer-events: none;
+  opacity: 0; transform: translateY(2px); transition: opacity 0.12s, transform 0.12s;
+}
+.tipbox.on { opacity: 1; transform: none; }
 .gallery-icons { display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
 
 .btn-restart {

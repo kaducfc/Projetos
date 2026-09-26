@@ -63,7 +63,7 @@ function playerCard(state) {
     <div class="gallery">
       <span><small>Galeria</small> <b class="gold">${p.trophies.length}</b></span>
       <span class="gallery-icons">${p.trophies.length
-        ? p.trophies.slice(-8).map((t) => `<span title="${esc(`${t.name} ${t.detail} ${t.year}`)}">${trophyArt(t, 22)}</span>`).join('')
+        ? p.trophies.slice(-8).map((t) => `<span class="has-tip" tabindex="0" data-tip="${esc(`${t.name} · ${t.year}`)}">${trophyArt(t, 22)}</span>`).join('')
         : '<span class="muted small">Galeria vazia</span>'}</span>
     </div>
   </div>`;
@@ -132,6 +132,12 @@ function leagueCard(state) {
 
 // ------------------------------------------------------------ tabela da carreira
 
+// Títulos (coletivos) de uma temporada do histórico, para a dica do 🏆.
+function seasonTitles(p, h) {
+  const names = p.trophies.filter((t) => t.year === h.year && t.kind !== 'award' && t.teamId === h.teamId).map((t) => t.name);
+  return names.length ? names.join(' · ') : 'Títulos';
+}
+
 function careerTable(state) {
   const p = state.player;
   const s = state.season;
@@ -139,7 +145,7 @@ function careerTable(state) {
     const t = teamOf(state, h.teamId);
     return `<tr>
       <td>${h.age}</td>
-      <td class="club">${teamBadge(t, 18)}<span>${esc(t.name)}</span>${h.titles ? `<em title="Títulos">🏆${h.titles > 1 ? h.titles : ''}</em>` : ''}</td>
+      <td class="club">${teamBadge(t, 18)}<span>${esc(t.name)}</span>${h.titles ? `<em class="has-tip" tabindex="0" data-tip="${esc(seasonTitles(p, h))}">🏆${h.titles > 1 ? h.titles : ''}</em>` : ''}</td>
       <td><span class="ovr-cell">${h.ovr}</span></td>
       <td>${h.games}</td>
       <td>${h.games ? Math.round((h.wins / h.games) * 100) + '%' : '—'}</td>
