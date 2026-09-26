@@ -42,11 +42,6 @@ Opcional, se a Copa tiver troféu próprio: `copa-cblol.png`, `lck-cup.png`,
 | `erl.png` | ERL Premier (Europa) |
 | `nacl.png` | NACL (América do Norte) |
 
-### Ligas amadoras (fictícias, fora do Brasil)
-| Arquivo | Ligas |
-|---|---|
-| `amador.png` | Liga Amadora Coreana, Copa Universitária Chinesa, ERL Divisão 2, Liga Universitária NA |
-
 ## Individuais
 | Arquivo | Prêmio |
 |---|---|

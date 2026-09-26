@@ -8,14 +8,14 @@ let uid = 0;
 // Imagens dos times (caminhos relativos à página do jogo). O modo vem de
 // shared/config.js: logo oficial (assets/times) ou escudo do site
 // (assets/emblemas). Academias usam a imagem do time principal; times
-// amadores (fictícios, 3ª divisão fora do Brasil) usam só o escudo gerado. Sem arquivo, o escudo gerado
+// fictícios (antigas ligas amadoras, só em saves antigos) usam o escudo gerado. Sem arquivo, o escudo gerado
 // continua aparecendo.
 const ASSETS = '../../shared/assets/';
 // Na versão em arquivo único (scripts/build-bundle.mjs) as imagens vêm embutidas.
 const EMBEDDED = typeof window !== 'undefined' ? window.__TEAM_LOGO_DATA : null;
 
 function logoSrc(team) {
-  if (team.tier === 3) return null;
+  if (team.tier === 3 || team.fictional) return null;
   const id = team.id.replace(/_ac$/, '');
   const official = TEAM_LOGOS === 'oficiais' || OFFICIAL_LOGOS_ALLOWED.includes(id);
   const path = `${official ? 'times' : 'emblemas'}/${id}.png`;
@@ -111,7 +111,7 @@ const OPTIONAL_TROPHIES = new Set([]);
 // Arquivos principais (lista em shared/assets/trofeus/README.md).
 const MAIN_TROPHIES = new Set([
   'mundial', 'msi', 'first-stand', 'cblol', 'lck', 'lpl', 'lec', 'lcs',
-  'circuito-desafiante', 'lck-challengers', 'ldl', 'erl', 'nacl', 'amador',
+  'circuito-desafiante', 'lck-challengers', 'ldl', 'erl', 'nacl',
   'mvp', 'selecao', 'revelacao', 'mvp-final-mundial',
 ]);
 const slug = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -136,7 +136,7 @@ function trophyFiles(t) {
     const league = Object.keys(TROPHY_FILES.lower).find((l) => t.name.startsWith(l));
     return league ? [TROPHY_FILES.lower[league]] : [];
   }
-  return t.tier === 3 ? ['amador'] : [];
+  return []; // antigas ligas amadoras (saves antigos): troféu desenhado
 }
 
 if (typeof window !== 'undefined') {

@@ -60,7 +60,7 @@ Vagas internacionais por região:
 As regiões dos dois finalistas do MSI ganham +1 vaga no Mundial. First
 Stand e MSI têm play-in para os times mais fracos e chave de 8. O Mundial
 tem fase suíça e chave de 8. As divisões de acesso (Circuito Desafiante,
-academias e ligas amadoras) jogam só os dois splits.
+LCK Challengers, LDL, ERL Premier e NACL) jogam só os dois splits.
 
 Cada temporada tem **3 decisões** (eventos de história), uma antes de cada
 etapa. Cada etapa (fase de pontos + playoffs) é simulada de uma vez e
@@ -77,9 +77,9 @@ resultado altera atributos, confiança e fama.
 
 **Propostas:** cada janela tem **2 ou 3 opções** no total, contando
 "continuar no clube". Elas dependem principalmente do OVR (e um pouco da
-fama). Os times estão em divisões por região: tier 1 (CBLOL, LCK, LPL,
-LEC, LCS), a divisão de acesso e, fora do Brasil, ligas amadoras. O Brasil
-tem só 2 divisões, como em 2026: CBLOL e **Circuito Desafiante** (10 times
+fama). Os times estão em 2 divisões por região: tier 1 (CBLOL, LCK, LPL,
+LEC, LCS) e a divisão de acesso (tier 2), onde toda carreira começa. No Brasil,
+como em 2026: CBLOL e **Circuito Desafiante** (10 times
 reais: academias de Keyd, paiN e RED, mais KaBuM! IDL, INTZ, Estral, TEAM
 SOLID, 7REX, RMD e Ei Nerd).
 
@@ -154,14 +154,13 @@ pagam mais, CBLOL bem menos). Premiações (parte do jogador, em US$):
 | First Stand | 40 mil | 20 mil | 10 mil | 5 mil | 2,5 mil |
 | Split da liga principal (LCK/LPL · LEC · LCS · CBLOL) | 30 · 20 · 18 · 8 mil | 50% | 25% | 10% | — |
 
-A Copa paga 60% de um split; divisões de acesso pagam 2 mil ao campeão e ligas
-amadoras 600. Prêmios individuais: MVP de 3 a 10 mil (conforme a liga),
+A Copa paga 60% de um split; divisões de acesso pagam 2 mil ao campeão. Prêmios individuais: MVP de 3 a 10 mil (conforme a liga),
 Seleção metade disso, Revelação 3 mil e MVP da Final do Mundial 20 mil.
 O dinheiro só aparece no relatório final da aposentadoria (total arrecadado,
 salários e premiações); durante a carreira o foco fica no jogo.
 
 **Pontos de legado:** OVR máximo × 2, títulos (Mundial 120, MSI 60, First
-Stand 35, liga principal 20, academia 8, amadora 4), prêmios (MVP da Final
+Stand 35, liga principal 20, divisão de acesso 8), prêmios (MVP da Final
 do Mundial 25, outros 10) e o dinheiro arrecadado, que conta pouco: +10 por
 US$ 100 mil, +20 por US$ 1 milhão, +30 por US$ 10 milhões. O relatório final
 mostra a conta.
@@ -234,5 +233,5 @@ em `engine/player.js`, `engine/sim.js` ou `engine/career.js`.
 Os nomes de times e ligas reais aparecem só como referência de fã. Por
 padrão o jogo mostra as logos oficiais de `shared/assets/times/`
 (`TEAM_LOGOS = 'oficiais'` em `shared/config.js`); trocando para `'escudos'`,
-volta aos escudos próprios/gerados (sigla + cores). Times sem arquivo e os
-times amadores fictícios sempre usam o escudo gerado.
+volta aos escudos próprios/gerados (sigla + cores). Times sem arquivo usam
+o escudo gerado.

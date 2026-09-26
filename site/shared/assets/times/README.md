@@ -16,7 +16,6 @@ usar estas imagens.
   visual" (logos quadradas um pouco menores, logos só de texto usando a
   largura toda). Ao trocar uma logo, siga o mesmo padrão.
 - Academias usam a logo do time principal automaticamente.
-- Times amadores (fictícios, fora do Brasil) continuam com o escudo gerado.
 - Time sem arquivo aqui também continua com o escudo gerado.
 - Logos escuras (pretas) ganham um contorno claro automático para aparecer
   no fundo preto do site. Se existir a versão branca/clara da logo, ela

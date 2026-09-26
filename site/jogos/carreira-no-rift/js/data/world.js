@@ -61,19 +61,19 @@ export const REGIONS = {
     stages: ['Copa CBLOL', 'CBLOL · Split 1', 'CBLOL · Split 2'], firstStand: 1, msi: 1, worlds: 1,
   },
   kr: {
-    id: 'kr', name: 'Coreia do Sul', flag: '🇰🇷', leagues: { 1: 'LCK', 2: 'LCK Challengers', 3: 'Liga Amadora Coreana' },
+    id: 'kr', name: 'Coreia do Sul', flag: '🇰🇷', leagues: { 1: 'LCK', 2: 'LCK Challengers' },
     stages: ['LCK Cup', 'LCK · Rounds 1–2', 'LCK · Rounds 3–4'], firstStand: 2, msi: 2, worlds: 3,
   },
   cn: {
-    id: 'cn', name: 'China', flag: '🇨🇳', leagues: { 1: 'LPL', 2: 'LDL', 3: 'Copa Universitária Chinesa' },
+    id: 'cn', name: 'China', flag: '🇨🇳', leagues: { 1: 'LPL', 2: 'LDL' },
     stages: ['LPL · Split 1', 'LPL · Split 2', 'LPL · Split 3'], firstStand: 2, msi: 2, worlds: 3,
   },
   eu: {
-    id: 'eu', name: 'Europa', flag: '🇪🇺', leagues: { 1: 'LEC', 2: 'ERL Premier', 3: 'ERL Divisão 2' },
+    id: 'eu', name: 'Europa', flag: '🇪🇺', leagues: { 1: 'LEC', 2: 'ERL Premier' },
     stages: ['LEC Versus', 'LEC Spring', 'LEC Summer'], firstStand: 1, msi: 2, worlds: 3,
   },
   na: {
-    id: 'na', name: 'América do Norte', flag: '🇺🇸', leagues: { 1: 'LCS', 2: 'NACL', 3: 'Liga Universitária NA' },
+    id: 'na', name: 'América do Norte', flag: '🇺🇸', leagues: { 1: 'LCS', 2: 'NACL' },
     stages: ['LCS Lock-In', 'LCS Spring', 'LCS Summer'], firstStand: 1, msi: 2, worlds: 2,
   },
 };
@@ -193,14 +193,15 @@ const TIER2 = {
   ],
 };
 
-// Times da 3ª divisão são fictícios (o Brasil só tem 2 divisões).
-const TIER3 = {
+// Antiga 3ª divisão (fictícia), removida: todas as regiões têm só a liga
+// principal e a divisão de acesso. Fica aqui para carreiras salvas antigas.
+const OLD_TIER3 = {
   kr: ['Seoul Dynamo', 'Busan Tide', 'Incheon Phoenix', 'Daegu Storm', 'Gwangju Rising', 'Jeju Waves', 'Ulsan Titans', 'Suwon Blaze'],
   cn: ['Chengdu Pandas', 'Wuhan River', 'Hangzhou Mist', "Xi'an Terracota", 'Shenzhen Volt', 'Nanjing Lotus', 'Qingdao Tide', 'Harbin Frost'],
   eu: ['Berlin Wolves', 'Lisboa Navigators', 'Madrid Toros', 'Warsaw Hussars', 'Nordic Aurora', 'Milano Vespa', 'London Ravens', 'Paris Lumière'],
   na: ['Austin Outlaws', 'Seattle Rain', 'Toronto Maple', 'Chicago Wind', 'Miami Heatwave', 'Denver Peaks', 'Boston Harbor', 'Vegas Aces'],
 };
-const TIER3_COLORS = [
+const OLD_TIER3_COLORS = [
   ['#7c3aed', '#f5f5f5'], ['#0ea5e9', '#0b1a2a'], ['#16a34a', '#f5f5f5'], ['#dc2626', '#f5f5f5'],
   ['#f59e0b', '#1b1b1b'], ['#475569', '#f5f5f5'], ['#db2777', '#f5f5f5'], ['#0d9488', '#f5f5f5'],
 ];
@@ -239,7 +240,17 @@ export const RETIRED_TEAMS = {
   RETIRED_TEAMS[id] = { id, name, tag, region: 'br', tier: 2, rating, base: rating, c1, c2, retired: true, fictional: id.startsWith('br_t3') };
 });
 
-// Divisão mais baixa de cada região (2 no Brasil, 3 nas outras).
+// Antigas ligas amadoras (tier 3) de Coreia, China, Europa e América do Norte.
+Object.entries(OLD_TIER3).forEach(([region, names]) => {
+  names.forEach((name, i) => {
+    const id = `${region}_t3_${i}`;
+    const [c1, c2] = OLD_TIER3_COLORS[i % OLD_TIER3_COLORS.length];
+    const rating = 50 + ((i * 5) % 12);
+    RETIRED_TEAMS[id] = { id, name, tag: tagFromName(name), region, tier: 2, rating, base: rating, c1, c2, retired: true, fictional: true };
+  });
+});
+
+// Divisão mais baixa de cada região (hoje, 2 em todas).
 export const lowestTier = (region) => Math.max(...Object.keys(REGIONS[region].leagues).map(Number));
 
 export const TIER_RANGE = { 1: [66, 95], 2: [55, 80], 3: [44, 66] };
@@ -271,11 +282,6 @@ export function buildTeams() {
         };
       });
     }
-    (TIER3[region] || []).forEach((name, i) => {
-      const id = `${region}_t3_${i}`;
-      const [c1, c2] = TIER3_COLORS[i % TIER3_COLORS.length];
-      teams[id] = { id, name, tag: tagFromName(name), region, tier: 3, rating: 50 + ((i * 5) % 12), c1, c2 };
-    });
   }
   WILDCARDS.forEach(([id, name, tag, rating, c1, c2]) => {
     teams[id] = { id, name, tag, region: 'wc', tier: 1, rating, c1, c2 };

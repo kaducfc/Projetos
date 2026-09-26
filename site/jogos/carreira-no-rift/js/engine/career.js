@@ -224,6 +224,12 @@ export function genOffers(state, { first = false, max = 3 } = {}) {
   if (first) {
     // Primeiro contrato: base/academias da região de origem.
     cands = all.filter((t) => t.region === p.region && t.tier >= 2 && t.rating <= score + 6);
+    // Regiões fortes (LCK CL, LDL) podem não ter time "no nível" de um
+    // garoto de 16 anos: aí as academias mais modestas apostam nele.
+    if (cands.length < 3) {
+      cands = all.filter((t) => t.region === p.region && t.tier >= 2)
+        .sort((a, b) => a.rating - b.rating).slice(0, 3);
+    }
   } else {
     cands = all.filter((t) => {
       if (t.rating < lo || t.rating > hiFor(t)) return false;
@@ -951,7 +957,7 @@ export function legacyBreakdown(p) {
     { label: 'First Stand', n: count((t) => t.name === 'First Stand'), each: 35 },
     { label: 'Títulos de liga principal', n: count((t) => t.kind === 'league' && t.tier === 1), each: 20 },
     { label: 'Títulos de divisão de acesso', n: count((t) => t.kind === 'league' && t.tier === 2), each: 8 },
-    { label: 'Títulos de liga amadora', n: count((t) => t.kind === 'league' && t.tier === 3), each: 4 },
+    { label: 'Títulos de liga amadora', n: count((t) => t.kind === 'league' && t.tier === 3), each: 4 }, // só em saves antigos
     { label: 'MVP da Final do Mundial', n: count((t) => t.name === 'MVP da Final do Mundial'), each: 25 },
     { label: 'Outros prêmios individuais', n: count((t) => t.kind === 'award' && t.name !== 'MVP da Final do Mundial'), each: 10 },
   ].map((x) => (x.points != null ? x : { label: x.n ? `${x.label} (${x.n} × ${x.each})` : x.label, points: x.n * x.each }));
