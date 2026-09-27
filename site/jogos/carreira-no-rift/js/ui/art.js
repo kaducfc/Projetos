@@ -179,6 +179,25 @@ export function eventScene(ev) {
   return `<div class="scene scene-${ev.scene}">${img}<span class="scene-icon">${ev.icon}</span></div>`;
 }
 
+// Escudo do OVR, pela faixa: prata (<70), ouro (70–79), platina (80–89),
+// diamante (90–94) e challenger (95+). Imagens em shared/assets/trofeus.
+export function ovrTier(ovr) {
+  if (ovr >= 95) return 'challenger';
+  if (ovr >= 90) return 'diamante';
+  if (ovr >= 80) return 'platina';
+  if (ovr >= 70) return 'ouro';
+  return 'prata';
+}
+
+export function ovrShield(ovr, extraClass = '') {
+  const tier = ovrTier(ovr);
+  const src = EMBEDDED ? EMBEDDED[`trofeus/${tier}.png`] : `${ASSETS}trofeus/${tier}.png`;
+  const img = src
+    ? `<img class="ovr-shield-img" src="${src}" alt="" onerror="this.parentElement.classList.add('no-img'); this.remove()">`
+    : '';
+  return `<div class="ovr-badge ovr-shield tier-${tier}${src ? '' : ' no-img'}${extraClass ? ` ${extraClass}` : ''}" title="OVR ${ovr}">${img}<small>OVR</small><b>${ovr}</b></div>`;
+}
+
 // Camisa usada na tela de criação (nick nas costas).
 export function jerseySvg(nick, roleShort) {
   const id = `jg${++uid}`;

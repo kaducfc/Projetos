@@ -670,3 +670,31 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .ovr-cell { background: linear-gradient(160deg, #f7d774, #c4901c); color: #140f02; }
 .btn-primary { background: var(--gold); color: #140f02; }
 .panel, .card { border-color: var(--line-2); }
+
+/* Escudo do OVR (prata, ouro, platina, diamante, challenger). */
+.ovr-badge.ovr-shield {
+  position: relative; width: 84px; height: 116px;
+  background: none; box-shadow: none; color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding-bottom: 6px; gap: 1px;
+}
+.ovr-shield-img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.5));
+}
+.ovr-shield small, .ovr-shield b { position: relative; }
+.ovr-badge.ovr-shield small { color: rgba(255, 255, 255, 0.88); font-size: 10.5px; letter-spacing: 2.5px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
+.ovr-badge.ovr-shield b { color: #fff; font-size: 48px; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75), 0 0 2px rgba(0, 0, 0, 0.9); }
+.ovr-shield.tier-challenger b { color: #fff6dc; }
+/* Sem imagem: escudo desenhado com a cor da faixa. */
+.ovr-shield.no-img { clip-path: polygon(50% 0, 100% 12%, 100% 80%, 50% 100%, 0 80%, 0 12%); }
+.ovr-shield.no-img.tier-prata { background: linear-gradient(160deg, #b9c2cb, #5d6873); }
+.ovr-shield.no-img.tier-ouro { background: linear-gradient(160deg, #f7d774, #a8781a); }
+.ovr-shield.no-img.tier-platina { background: linear-gradient(160deg, #4fd1c5, #0e5a5a); }
+.ovr-shield.no-img.tier-diamante { background: linear-gradient(160deg, #6f8cff, #1d2f9e); }
+.ovr-shield.no-img.tier-challenger { background: linear-gradient(160deg, #ffd66b, #b36b12); }
+.ovr-change { align-items: center; }
+@media (max-width: 420px) {
+  .ovr-badge.ovr-shield { width: 72px; height: 99px; }
+  .ovr-badge.ovr-shield b { font-size: 41px; }
+}

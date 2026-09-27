@@ -52,3 +52,15 @@ Opcional, se a Copa tiver troféu próprio: `copa-cblol.png`, `lck-cup.png`,
 
 Opcional, medalha por liga: `mvp-cblol.png`, `mvp-lck.png`, `selecao-lec.png`
 etc. (se existir, vale no lugar da genérica).
+
+## Escudos do OVR
+Ficam atrás do número do OVR (card do jogador e balanço da temporada).
+Padronizados em **240×330 px**, todos com a mesma altura e centralizados.
+
+| Arquivo | Faixa de OVR |
+|---|---|
+| `prata.png` | abaixo de 70 |
+| `ouro.png` | 70 a 79 |
+| `platina.png` | 80 a 89 |
+| `diamante.png` | 90 a 94 |
+| `challenger.png` | 95 ou mais |

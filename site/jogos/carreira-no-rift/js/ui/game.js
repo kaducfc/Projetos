@@ -6,7 +6,7 @@ import { ovrOf, marketValue, STATUS } from '../engine/player.js';
 import {
   teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore, legacyBreakdown, careerEarnings, eventOptions,
 } from '../engine/career.js';
-import { teamBadge, trophySvg, trophyArt, eventScene, stars } from './art.js';
+import { teamBadge, trophySvg, trophyArt, eventScene, ovrShield, stars } from './art.js';
 import { esc, fmtKda, fmtMoney, fmtSalary } from '../util.js';
 import { FAN_NOTICE, DONATION_NOTICE } from '../../../../shared/footer.js';
 
@@ -36,7 +36,7 @@ function playerCard(state) {
   return `
   <div class="card player-card">
     <div class="pc-top">
-      <div class="ovr-badge"><small>OVR</small><b>${ovr}</b></div>
+      ${ovrShield(ovr)}
       <div class="pc-id">
         <div class="chips">
           <span class="chip"><span class="flag">${nat.flag}</span>${nat.id}</span>
@@ -436,9 +436,9 @@ function seasonEndPanel(state) {
     <div class="eyebrow">Temporada ${scr.year} encerrada</div>
     <h1 class="display">Balanço da temporada</h1>
     <div class="ovr-change">
-      <div class="ovr-badge"><small>OVR</small><b>${scr.ovrStart}</b></div>
+      ${ovrShield(scr.ovrStart)}
       <span class="arrow-big">→</span>
-      <div class="ovr-badge ${delta >= 0 ? 'up' : 'down'}"><small>OVR</small><b>${scr.ovrEnd}</b></div>
+      ${ovrShield(scr.ovrEnd)}
       <span class="delta ${delta >= 0 ? 'up' : 'down'}">${signed(delta)}</span>
     </div>
     <div class="stat-row big">
