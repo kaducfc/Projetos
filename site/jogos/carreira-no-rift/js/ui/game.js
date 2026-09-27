@@ -281,7 +281,7 @@ function eventPanel(state) {
         const c = ev.choices[idx];
         return `<button class="choice${done && scr.choice === idx ? ' picked' : ''}" data-act="choice" data-i="${i}" ${done ? 'disabled' : ''}>
           <div class="choice-txt"><b>${fill(c.label, state)}</b><small>${pct}%: ${fill(c.good, state)}. Erro: ${fill(c.bad, state)}</small></div>
-          <div class="odds"><span class="o-ok" style="flex:${pct}">${pct >= 15 ? `${pct}%` : ''}</span><span class="o-bad" style="flex:${100 - pct}">${100 - pct >= 15 ? `${100 - pct}%` : ''}</span></div>
+          <div class="odds${done && scr.choice === idx ? ' result-lit' : ''}"${done && scr.choice === idx ? ` data-lit="${scr.ok ? 'ok' : 'bad'}"` : ''}><span class="o-ok" style="flex:${pct}">${pct >= 15 ? `${pct}%` : ''}</span><span class="o-bad" style="flex:${100 - pct}">${100 - pct >= 15 ? `${100 - pct}%` : ''}</span></div>
           <span class="arrow">→</span>
         </button>`;
       }).join('')}

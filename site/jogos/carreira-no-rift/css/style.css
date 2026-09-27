@@ -457,6 +457,18 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .o-ok { background: #1c8a4c; }
 .o-bad { background: #b83a33; }
 .arrow { color: var(--muted); font-size: 18px; }
+/* Roleta da escolha: os dois lados apagam e só o "aceso" brilha. */
+.choices.rolling .choice { pointer-events: none; }
+.choices.rolling .choice:not(.rolling-pick) { opacity: 0.35; transition: opacity 0.2s; }
+.choice.rolling-pick { background: rgba(255, 255, 255, 0.04); }
+.odds.rolling span, .odds.result-lit span { filter: saturate(0.35) brightness(0.45); transition: filter 0.06s, box-shadow 0.06s; }
+.odds[data-lit="ok"] .o-ok,
+.odds[data-lit="bad"] .o-bad { filter: saturate(1.25) brightness(1.35); }
+.odds[data-lit="ok"] .o-ok { box-shadow: 0 0 14px 2px rgba(60, 200, 110, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
+.odds[data-lit="bad"] .o-bad { box-shadow: 0 0 14px 2px rgba(230, 70, 60, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
+.odds.rolling, .odds.result-lit { overflow: visible; }
+.odds.settled[data-lit] span { animation: lit-pulse 0.45s ease-out; }
+@keyframes lit-pulse { 0% { transform: scaleY(1); } 40% { transform: scaleY(1.18); } 100% { transform: scaleY(1); } }
 .choices.locked .choice { opacity: 0.35; }
 .choices.locked .choice.picked { opacity: 0.8; background: rgba(255, 255, 255, 0.03); }
 

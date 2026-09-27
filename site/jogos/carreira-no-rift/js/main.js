@@ -4,6 +4,7 @@ import {
 import { renderCreate } from './ui/create.js';
 import { renderGame, careerSummaryText } from './ui/game.js';
 import { mountTooltips } from './ui/tooltip.js';
+import { rollChoice } from './ui/roll.js';
 import { ROLES } from './data/world.js';
 import { packState, unpackState } from './engine/save.js';
 import * as platform from '../../../shared/platform.js';
@@ -106,6 +107,7 @@ function act(fn, opts = { scrollTop: true }) {
 }
 
 mountTooltips(app);
+let rolling = false;
 
 app.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
@@ -115,7 +117,19 @@ app.addEventListener('click', (e) => {
   switch (el.dataset.act) {
     case 'offer': return act(() => chooseOffer(state, i));
     case 'stay': return act(() => chooseOffer(state, 'stay'));
-    case 'choice': return act(() => chooseEvent(state, i), {});
+    case 'choice':
+      // O resultado é sorteado e salvo na hora; a tela só muda depois da
+      // animação da barra (se recarregar no meio, o resultado já está lá).
+      if (rolling) return;
+      rolling = true;
+      chooseEvent(state, i);
+      save();
+      rollChoice(el, state.screen.ok).finally(() => {
+        rolling = false;
+        recordIfRetired();
+        render({});
+      });
+      return;
     case 'next': return act(() => advance(state));
     case 'season-next': return act(() => continueAfterSeason(state));
     case 'retire':
