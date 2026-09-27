@@ -195,7 +195,33 @@ export function ovrShield(ovr, extraClass = '') {
   const img = src
     ? `<img class="ovr-shield-img" src="${src}" alt="" onerror="this.parentElement.classList.add('no-img'); this.remove()">`
     : '';
-  return `<div class="ovr-badge ovr-shield tier-${tier}${src ? '' : ' no-img'}${extraClass ? ` ${extraClass}` : ''}" title="OVR ${ovr}">${img}<small>OVR</small><b>${ovr}</b></div>`;
+  return `<div class="ovr-badge ovr-shield tier-${tier}${src ? '' : ' no-img'}${extraClass ? ` ${extraClass}` : ''}" title="OVR ${ovr}">${img}<span class="ovr-shine"></span><small>OVR</small><b>${ovr}</b></div>`;
+}
+
+// Reflexo de luz que passa pelos escudos de vez em quando (a cada 5–10 s).
+// O brilho usa a própria imagem do escudo como máscara, então só aparece
+// dentro do desenho.
+export function startShieldShine() {
+  if (typeof window === 'undefined' || window.__shieldShine) return;
+  window.__shieldShine = true;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const style = document.createElement('style');
+  style.textContent = ['prata', 'ouro', 'platina', 'diamante', 'challenger'].map((tier) => {
+    const src = EMBEDDED ? EMBEDDED[`trofeus/${tier}.png`] : `${ASSETS}trofeus/${tier}.png`;
+    return src ? `.ovr-shield.tier-${tier} .ovr-shine { -webkit-mask-image: url("${src}"); mask-image: url("${src}"); }` : '';
+  }).join('\n');
+  document.head.appendChild(style);
+  const tick = () => {
+    document.querySelectorAll('.ovr-shield:not(.no-img) .ovr-shine').forEach((el) => {
+      setTimeout(() => {
+        el.classList.remove('on');
+        void el.offsetWidth; // reinicia a animação
+        el.classList.add('on');
+      }, Math.random() * 500);
+    });
+    setTimeout(tick, 5000 + Math.random() * 5000);
+  };
+  setTimeout(tick, 1500 + Math.random() * 2500);
 }
 
 // Camisa usada na tela de criação (nick nas costas).

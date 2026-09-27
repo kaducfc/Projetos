@@ -5,6 +5,7 @@ import { renderCreate } from './ui/create.js';
 import { renderGame, careerSummaryText } from './ui/game.js';
 import { mountTooltips } from './ui/tooltip.js';
 import { rollChoice } from './ui/roll.js';
+import { startShieldShine } from './ui/art.js';
 import { ROLES } from './data/world.js';
 import { packState, unpackState } from './engine/save.js';
 import * as platform from '../../../shared/platform.js';
@@ -107,6 +108,7 @@ function act(fn, opts = { scrollTop: true }) {
 }
 
 mountTooltips(app);
+startShieldShine();
 let rolling = false;
 
 app.addEventListener('click', (e) => {
