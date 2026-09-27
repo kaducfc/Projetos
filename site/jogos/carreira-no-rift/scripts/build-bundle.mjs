@@ -62,6 +62,14 @@ for (const dir of ['times', 'emblemas', 'trofeus']) {
   }
 }
 
+// Imagens das decisões (img/eventos), com a chave "eventos/<arquivo>".
+const eventsDir = join(root, 'img/eventos');
+if (existsSync(eventsDir)) {
+  for (const f of readdirSync(eventsDir).filter((x) => x.endsWith('.jpg'))) {
+    logoData[`eventos/${f}`] = `data:image/jpeg;base64,${readFileSync(join(eventsDir, f)).toString('base64')}`;
+  }
+}
+
 // O arquivo único não alcança o servidor do site: roda em modo visitante.
 process.stdout.write(`${head.trim()}
 ${body.trim()}

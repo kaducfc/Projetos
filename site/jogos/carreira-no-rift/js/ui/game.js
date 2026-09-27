@@ -6,7 +6,7 @@ import { ovrOf, marketValue, STATUS } from '../engine/player.js';
 import {
   teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore, legacyBreakdown, careerEarnings, eventOptions,
 } from '../engine/career.js';
-import { teamBadge, trophySvg, trophyArt, stars } from './art.js';
+import { teamBadge, trophySvg, trophyArt, eventScene, stars } from './art.js';
 import { esc, fmtKda, fmtMoney, fmtSalary } from '../util.js';
 import { FAN_NOTICE, DONATION_NOTICE } from '../../../../shared/footer.js';
 
@@ -256,7 +256,7 @@ function eventPanel(state) {
   return `
   ${scr.recap ? recapCard(state, scr.recap) : ''}
   <div class="panel event">
-    <div class="scene scene-${ev.scene}"><span class="scene-icon">${ev.icon}</span></div>
+    ${eventScene(ev)}
     <div class="event-body">
       <div class="tags"><span class="tag">${scr.label || ''}</span><span class="tag-accent">⚡ ${esc(ev.tag)}</span></div>
       <h2>${fill(ev.title, state)}</h2>

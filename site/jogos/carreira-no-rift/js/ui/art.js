@@ -169,6 +169,16 @@ export function trophyArt(t, size = 120) {
   return `<span class="trophy-img" style="width:${size}px;height:${h}px">${svg}<img src="${src}" alt="" data-next="${files.join(',')}" onload="this.previousElementSibling?.remove()" onerror="__trophyNext(this)"></span>`;
 }
 
+// Imagem de fundo das decisões (img/eventos/<id>.jpg). Sem arquivo, fica o
+// fundo com o emoji da cena.
+export function eventScene(ev) {
+  const src = EMBEDDED ? EMBEDDED[`eventos/${ev.id}.jpg`] : `img/eventos/${ev.id}.jpg`;
+  const img = src
+    ? `<img class="scene-img" src="${src}" alt="" onload="this.parentElement.classList.add('has-img')" onerror="this.remove()">`
+    : '';
+  return `<div class="scene scene-${ev.scene}">${img}<span class="scene-icon">${ev.icon}</span></div>`;
+}
+
 // Camisa usada na tela de criação (nick nas costas).
 export function jerseySvg(nick, roleShort) {
   const id = `jg${++uid}`;

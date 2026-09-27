@@ -9,6 +9,8 @@ com o fundo atual.
   escurece para o fundo do card.
 - **Nome do arquivo:** exatamente o da coluna "Arquivo" (ex.:
   `soloq_madrugada.png`).
+- Depois de enviadas, as imagens são convertidas para **JPG 1200×520**
+  (`<arquivo>.jpg`, ~90 KB cada) — é esse arquivo que o jogo usa.
 
 ## Rotina, treino e Solo Queue
 | Arquivo | Nome | O que mostrar |
