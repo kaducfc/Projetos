@@ -2,46 +2,51 @@
   "index": 19,
   "name": "Minato Namikaze",
   "gameState": {
-    "gold": 59004,
-    "hunterLevel": 87,
-    "hunterXp": 106.50000000000045,
+    "gold": 85279,
+    "hunterLevel": 165,
+    "hunterXp": 1744.5,
     "selectedMonsters": [
       {
-        "zoneIndex": 4,
-        "kind": "weak",
-        "monsterId": "lavasalam"
+        "zoneIndex": 9,
+        "kind": "boss",
+        "monsterId": "bahamorth"
       },
       {
-        "zoneIndex": 4,
+        "zoneIndex": 8,
         "kind": "weak",
-        "monsterId": "fornitus"
+        "monsterId": "thornviel"
       },
       {
-        "zoneIndex": 4,
+        "zoneIndex": 8,
         "kind": "weak",
-        "monsterId": "emberimp"
+        "monsterId": "verdanthra"
       },
       {
-        "zoneIndex": 4,
+        "zoneIndex": 8,
         "kind": "weak",
-        "monsterId": "ember_warden"
+        "monsterId": "guardiao_verdor"
       }
     ],
     "currentMonster": {
-      "zoneIndex": 4,
-      "kind": "weak",
-      "monsterId": "fornitus"
+      "zoneIndex": 9,
+      "kind": "boss",
+      "monsterId": "bahamorth"
     },
-    "monsterHp": 16441,
+    "monsterHp": 2549692,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 4174,
+      "mystic_die": 4167,
       "card_fragment": 40,
-      "sylkar_blade": 142,
-      "granclaw_claw": 20,
-      "guardiao_druida_antler": 73,
-      "musgorn_hat": 84,
-      "chispim_heart": 133
+      "sylkar_blade": 77,
+      "granclaw_claw": 5,
+      "guardiao_druida_antler": 36,
+      "musgorn_hat": 66,
+      "chispim_heart": 153,
+      "ember_warden_blade": 540,
+      "lavasalam_drop": 549,
+      "emberimp_ember": 530,
+      "fornitus_core": 497,
+      "grommuk_fang": 187
     },
     "cards": {
       "mizan_card": 0,
@@ -67,7 +72,9 @@
       "minotauro_trovao_card": 0,
       "lyria_card": 1,
       "capitao_marvik_card": 1,
-      "assassino_sombrio_card": 1
+      "assassino_sombrio_card": 1,
+      "lavasalam_card": 1,
+      "gaiatron_card": 1
     },
     "cardsDiscovered": {
       "mizan_card": true,
@@ -93,7 +100,9 @@
       "minotauro_trovao_card": true,
       "lyria_card": true,
       "capitao_marvik_card": true,
-      "assassino_sombrio_card": true
+      "assassino_sombrio_card": true,
+      "lavasalam_card": true,
+      "gaiatron_card": true
     },
     "cardsRewardClaimed": {},
     "inventory": [
@@ -598,10 +607,10 @@
       {
         "uid": 42,
         "itemId": "chispim_weapon1_inteligencia",
-        "rarityId": "lendario",
+        "rarityId": "mitico",
         "baseStats": {
           "inteligencia": 6,
-          "danoMagicoFlat": 6
+          "danoMagicoFlat": 7
         },
         "additionalStats": [
           {
@@ -609,8 +618,8 @@
             "value": 6
           },
           {
-            "stat": "destreza",
-            "value": 6
+            "stat": "armorFlat",
+            "value": 9
           },
           {
             "stat": "critDamagePercent",
@@ -623,6 +632,10 @@
           {
             "stat": "critChancePercent",
             "value": 11.6
+          },
+          {
+            "stat": "dodgePercent",
+            "value": 14.7
           }
         ],
         "enhanceLevel": 0,
@@ -649,70 +662,10 @@
             "value": 4
           }
         ],
-        "enhanceLevel": 0,
+        "enhanceLevel": 4,
         "isMaster": false,
         "cardIds": [
           "corcel_tempestade_card"
-        ]
-      },
-      {
-        "uid": 45,
-        "itemId": "chispim_weapon2_inteligencia",
-        "rarityId": "epico",
-        "baseStats": {
-          "inteligencia": 6,
-          "danoMagicoFlat": 5
-        },
-        "additionalStats": [
-          {
-            "stat": "inteligencia",
-            "value": 6
-          },
-          {
-            "stat": "critDamagePercent",
-            "value": 4.5
-          },
-          {
-            "stat": "armorFlat",
-            "value": 8
-          },
-          {
-            "stat": "dodgePercent",
-            "value": 3.8
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          "aurelion_card"
-        ]
-      },
-      {
-        "uid": 51,
-        "itemId": "chispim_chest_inteligencia",
-        "rarityId": "raro",
-        "baseStats": {
-          "inteligencia": 4,
-          "hpFlat": 2
-        },
-        "additionalStats": [
-          {
-            "stat": "critChancePercent",
-            "value": 5.3
-          },
-          {
-            "stat": "armorFlat",
-            "value": 3
-          },
-          {
-            "stat": "dodgePercent",
-            "value": 2.9
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          "musgorn_card"
         ]
       },
       {
@@ -733,38 +686,10 @@
             "value": 3.1
           }
         ],
-        "enhanceLevel": 0,
+        "enhanceLevel": 2,
         "isMaster": false,
         "cardIds": [
           "leviargon_card"
-        ]
-      },
-      {
-        "uid": 61,
-        "itemId": "chispim_legs_inteligencia",
-        "rarityId": "raro",
-        "baseStats": {
-          "inteligencia": 4,
-          "hpFlat": 3
-        },
-        "additionalStats": [
-          {
-            "stat": "armorFlat",
-            "value": 6
-          },
-          {
-            "stat": "dpsPercent",
-            "value": 3.4
-          },
-          {
-            "stat": "dodgePercent",
-            "value": 7.7
-          }
-        ],
-        "enhanceLevel": 0,
-        "isMaster": false,
-        "cardIds": [
-          "musgorn_card"
         ]
       },
       {
@@ -785,32 +710,32 @@
             "value": 4
           }
         ],
-        "enhanceLevel": 0,
+        "enhanceLevel": 3,
         "isMaster": false,
         "cardIds": [
           "colhedor_carmesim_card"
         ]
       },
       {
-        "uid": 72,
-        "itemId": "chispim_head_inteligencia",
+        "uid": 111,
+        "itemId": "grommuk_head_inteligencia",
         "rarityId": "raro",
         "baseStats": {
-          "inteligencia": 4,
-          "hpFlat": 3
+          "inteligencia": 20,
+          "hpFlat": 13
         },
         "additionalStats": [
           {
-            "stat": "hpFlat",
-            "value": 6
+            "stat": "armorFlat",
+            "value": 25
           },
           {
-            "stat": "forca",
-            "value": 4
+            "stat": "inteligencia",
+            "value": 20
           },
           {
-            "stat": "lifestealFlat",
-            "value": 1
+            "stat": "critDamagePercent",
+            "value": 4.2
           }
         ],
         "enhanceLevel": 0,
@@ -820,33 +745,57 @@
         ]
       },
       {
-        "uid": 84,
-        "itemId": "chispim_ring_inteligencia",
-        "rarityId": "lendario",
+        "uid": 136,
+        "itemId": "grommuk_chest_inteligencia",
+        "rarityId": "epico",
         "baseStats": {
-          "inteligencia": 5,
-          "armorFlat": 4
+          "inteligencia": 20,
+          "hpFlat": 15
         },
         "additionalStats": [
           {
-            "stat": "forca",
-            "value": 5
+            "stat": "destreza",
+            "value": 20
           },
           {
-            "stat": "dpsPercent",
-            "value": 4.1
+            "stat": "dropPercent",
+            "value": 10.5
           },
           {
             "stat": "danoMagicoFlat",
-            "value": 7
+            "value": 39
           },
           {
-            "stat": "armorFlat",
-            "value": 6
+            "stat": "hpFlat",
+            "value": 33
+          }
+        ],
+        "enhanceLevel": 0,
+        "isMaster": false,
+        "cardIds": [
+          "musgorn_card"
+        ]
+      },
+      {
+        "uid": 159,
+        "itemId": "grommuk_ring_inteligencia",
+        "rarityId": "raro",
+        "baseStats": {
+          "inteligencia": 25,
+          "armorFlat": 13
+        },
+        "additionalStats": [
+          {
+            "stat": "critDamagePercent",
+            "value": 6.7
           },
           {
             "stat": "dodgePercent",
-            "value": 8.2
+            "value": 4.5
+          },
+          {
+            "stat": "attackSpeedPercent",
+            "value": 4.4
           }
         ],
         "enhanceLevel": 0,
@@ -856,46 +805,102 @@
         ]
       },
       {
-        "uid": 89,
-        "itemId": "chispim_necklace_inteligencia",
-        "rarityId": "incomum",
+        "uid": 168,
+        "itemId": "grommuk_legs_inteligencia",
+        "rarityId": "epico",
         "baseStats": {
-          "inteligencia": 5,
-          "armorFlat": 2
+          "inteligencia": 20,
+          "hpFlat": 15
         },
         "additionalStats": [
           {
-            "stat": "hpPercent",
-            "value": 4.7
+            "stat": "armorFlat",
+            "value": 31
           },
           {
             "stat": "hpFlat",
-            "value": 5
+            "value": 29
+          },
+          {
+            "stat": "critDamagePercent",
+            "value": 7.2
+          },
+          {
+            "stat": "dodgePercent",
+            "value": 5.8
           }
         ],
-        "enhanceLevel": 5,
+        "enhanceLevel": 0,
+        "isMaster": false,
+        "cardIds": [
+          "musgorn_card"
+        ]
+      },
+      {
+        "uid": 196,
+        "itemId": "grommuk_weapon2_inteligencia",
+        "rarityId": "incomum",
+        "baseStats": {
+          "inteligencia": 30,
+          "danoMagicoFlat": 18
+        },
+        "additionalStats": [
+          {
+            "stat": "hpFlat",
+            "value": 30
+          },
+          {
+            "stat": "dodgePercent",
+            "value": 9.7
+          }
+        ],
+        "enhanceLevel": 0,
+        "isMaster": false,
+        "cardIds": [
+          "aurelion_card"
+        ]
+      },
+      {
+        "uid": 212,
+        "itemId": "grommuk_necklace_inteligencia",
+        "rarityId": "incomum",
+        "baseStats": {
+          "inteligencia": 25,
+          "armorFlat": 11
+        },
+        "additionalStats": [
+          {
+            "stat": "danoMagicoFlat",
+            "value": 22
+          },
+          {
+            "stat": "armorFlat",
+            "value": 34
+          }
+        ],
+        "enhanceLevel": 0,
         "isMaster": false,
         "cardIds": [
           "leviargon_card"
         ]
       }
     ],
-    "nextUid": 105,
+    "nextUid": 235,
     "equipped": {
-      "weapon1": 42,
-      "weapon2": 45,
-      "head": 72,
-      "chest": 51,
-      "legs": 61,
-      "hands": 43,
-      "boots": 70,
-      "ring1": 84,
+      "weapon1": 1,
+      "weapon2": 10,
+      "head": 2,
+      "chest": 3,
+      "legs": 4,
+      "hands": 5,
+      "boots": 6,
+      "ring1": 8,
       "ring2": 55,
-      "necklace": 89
+      "necklace": 9
     },
     "upgrades": {},
-    "totalKills": 2308,
-    "lastSaveTime": 1790543805441,
+    "totalKills": 6012,
+    "lastSaveTime": 1790572112630,
     "transcendUnlocked": false,
     "transcendCount": 27,
     "awakeningShards": 18,
@@ -911,10 +916,10 @@
       "transcend_count": 6
     },
     "lifetimeHunterLevel": 179,
-    "lifetimeTotalKills": 178316,
-    "lifetimeGoldEarned": 124777371,
-    "lifetimeEggsHatched": 1655,
-    "lifetimeRankMasterCount": 563,
+    "lifetimeTotalKills": 182020,
+    "lifetimeGoldEarned": 125812296,
+    "lifetimeEggsHatched": 1709,
+    "lifetimeRankMasterCount": 570,
     "pvpHighestTierIndex": 0,
     "pvpWinsTotal": 0,
     "playerName": "Caçador",
@@ -930,24 +935,312 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 330,
+    "eventCurrency": 30,
     "expeditionReadyAt": 1790572605443,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
     "arenaReadyAt": 1790587005443,
-    "pets": [],
-    "nextPetUid": 1,
-    "equippedPetUids": [
-      null,
-      null,
-      null,
-      null
+    "pets": [
+      {
+        "uid": 1,
+        "speciesId": "fogo_4",
+        "rarityId": "comum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 2,
+        "speciesId": "eletrico_1",
+        "rarityId": "raro",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 4,
+        "speciesId": "planta_3",
+        "rarityId": "incomum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 7,
+        "speciesId": "agua_3",
+        "rarityId": "incomum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 8,
+        "speciesId": "eletrico_2",
+        "rarityId": "comum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 9,
+        "speciesId": "eletrico_3",
+        "rarityId": "comum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 10,
+        "speciesId": "eletrico_3",
+        "rarityId": "epico",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 12,
+        "speciesId": "agua_4",
+        "rarityId": "incomum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 13,
+        "speciesId": "fogo_3",
+        "rarityId": "incomum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 14,
+        "speciesId": "agua_2",
+        "rarityId": "incomum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 17,
+        "speciesId": "agua_5",
+        "rarityId": "comum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 23,
+        "speciesId": "fogo_1",
+        "rarityId": "lendario",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 26,
+        "speciesId": "planta_5",
+        "rarityId": "comum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 27,
+        "speciesId": "planta_1",
+        "rarityId": "lendario",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 29,
+        "speciesId": "eletrico_2",
+        "rarityId": "raro",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 33,
+        "speciesId": "eletrico_4",
+        "rarityId": "comum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 35,
+        "speciesId": "agua_5",
+        "rarityId": "epico",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 36,
+        "speciesId": "fogo_5",
+        "rarityId": "comum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 38,
+        "speciesId": "planta_4",
+        "rarityId": "raro",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 40,
+        "speciesId": "fogo_5",
+        "rarityId": "incomum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 41,
+        "speciesId": "agua_1",
+        "rarityId": "incomum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 42,
+        "speciesId": "agua_3",
+        "rarityId": "comum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 48,
+        "speciesId": "planta_4",
+        "rarityId": "incomum",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 49,
+        "speciesId": "agua_4",
+        "rarityId": "raro",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 50,
+        "speciesId": "eletrico_5",
+        "rarityId": "epico",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 52,
+        "speciesId": "agua_3",
+        "rarityId": "epico",
+        "level": 1,
+        "xp": 0
+      },
+      {
+        "uid": 55,
+        "speciesId": "fogo_1",
+        "rarityId": "raro",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 56,
+        "speciesId": "fogo_2",
+        "rarityId": "comum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 57,
+        "speciesId": "planta_3",
+        "rarityId": "incomum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 58,
+        "speciesId": "eletrico_5",
+        "rarityId": "incomum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 59,
+        "speciesId": "agua_5",
+        "rarityId": "comum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 60,
+        "speciesId": "agua_5",
+        "rarityId": "incomum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 61,
+        "speciesId": "fogo_5",
+        "rarityId": "lendario",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 62,
+        "speciesId": "eletrico_2",
+        "rarityId": "incomum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 63,
+        "speciesId": "planta_5",
+        "rarityId": "incomum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 64,
+        "speciesId": "planta_2",
+        "rarityId": "incomum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 65,
+        "speciesId": "planta_5",
+        "rarityId": "comum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 66,
+        "speciesId": "eletrico_3",
+        "rarityId": "incomum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 67,
+        "speciesId": "eletrico_4",
+        "rarityId": "comum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 68,
+        "speciesId": "agua_3",
+        "rarityId": "incomum",
+        "level": 2,
+        "xp": 0
+      },
+      {
+        "uid": 69,
+        "speciesId": "eletrico_5",
+        "rarityId": "epico",
+        "level": 1,
+        "xp": 0
+      }
     ],
-    "eggCount": 54,
+    "nextPetUid": 70,
+    "equippedPetUids": [
+      1,
+      2,
+      4,
+      7
+    ],
+    "eggCount": 0,
     "petFragments": 1800,
-    "petHatchesSinceMythic": 0,
-    "petHatchesSinceLegendary": 0,
+    "petHatchesSinceMythic": 54,
+    "petHatchesSinceLegendary": 7,
     "vipExpiresAt": 1791107341607,
     "freeRightPetChoiceCycle": null,
     "skillTree": {
@@ -956,25 +1249,25 @@
       "treeVersion": 2
     },
     "dailyMissions": {
-      "resetAt": 1790553600000,
+      "resetAt": 1790640000000,
       "slots": [
         {
-          "typeId": "kill_monsters",
+          "typeId": "rank_master_items",
           "tierIndex": 2,
           "status": "active",
           "progress": 0,
           "rerollUsed": false
         },
         {
-          "typeId": "rank_master_items",
-          "tierIndex": 1,
+          "typeId": "arena_attacks",
+          "tierIndex": 0,
           "status": "idle",
           "progress": 0,
           "rerollUsed": false
         },
         {
-          "typeId": "enhance_items",
-          "tierIndex": 2,
+          "typeId": "kill_monsters",
+          "tierIndex": 1,
           "status": "idle",
           "progress": 0,
           "rerollUsed": false
@@ -984,13 +1277,16 @@
     "botBuildAttribute": "inteligencia",
     "nextMonsterSpawnAt": null,
     "chestPurchases": {
-      "resetAt": 1790553600000,
-      "counts": {}
+      "resetAt": 1790640000000,
+      "counts": {
+        "cartas": 1,
+        "evento": 1
+      }
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwZmNhNmUwYy05OTJiLTQzNzUtYjBlNS1jMGExYjNlNzhjNDMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzkwNTQ3NDA1LCJpYXQiOjE3OTA1NDM4MDUsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzNDF9XSwic2Vzc2lvbl9pZCI6IjI0NjljODE4LWE4MmQtNDA4MS04NjA1LTUxNTE3ZTkyMTcwYSIsImlzX2Fub255bW91cyI6dHJ1ZX0.QZEli7jhyaVmzPK99rALA1ITloPBUDYiPkX258vJSmxzIvfCBWshQbN4dL34vOcH6s80pCRZcz6K_jxPextUZQ",
-    "refresh_token": "b3n4zxjy43bj"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwZmNhNmUwYy05OTJiLTQzNzUtYjBlNS1jMGExYjNlNzhjNDMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzkwNTc1NzEyLCJpYXQiOjE3OTA1NzIxMTIsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUzNDF9XSwic2Vzc2lvbl9pZCI6IjI0NjljODE4LWE4MmQtNDA4MS04NjA1LTUxNTE3ZTkyMTcwYSIsImlzX2Fub255bW91cyI6dHJ1ZX0.SIEESHbEX7DusQpDxu-R2X4U29j48NVlrYsVLG-taQNT8uVOVhO3jSDEmmUwZSuLpRo6ew7TwucvoskIdVnU9g",
+    "refresh_token": "omsuhq7bbtar"
   },
   "nickClaimed": true,
   "userId": "0fca6e0c-992b-4375-b0e5-c0a1b3e78c43"

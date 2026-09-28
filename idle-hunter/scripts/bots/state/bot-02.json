@@ -2,9 +2,9 @@
   "index": 2,
   "name": "Sakura Haruno",
   "gameState": {
-    "gold": 227853499,
-    "hunterLevel": 225,
-    "hunterXp": 36.5,
+    "gold": 269582938,
+    "hunterLevel": 228,
+    "hunterXp": 32520,
     "selectedMonsters": [
       {
         "zoneIndex": 9,
@@ -30,13 +30,13 @@
     "currentMonster": {
       "zoneIndex": 9,
       "kind": "weak",
-      "monsterId": "grommash"
+      "monsterId": "morvanthal"
     },
-    "monsterHp": 2086112,
+    "monsterHp": 2240638,
     "lastMonsterRef": null,
     "materials": {
-      "mystic_die": 4015,
-      "card_fragment": 0,
+      "mystic_die": 4114,
+      "card_fragment": 750,
       "guardiao_druida_antler": 52,
       "musgorn_hat": 113,
       "sylkar_blade": 31,
@@ -47,11 +47,11 @@
       "lavasalam_drop": 776,
       "fornitus_core": 731,
       "grommuk_fang": 220,
-      "draxorian_chest": 4644,
-      "aurelion_spear": 4639,
-      "grommash_crown": 4700,
-      "morvanthal_scepter": 4711,
-      "bahamorth_scale": 1635
+      "draxorian_chest": 5545,
+      "aurelion_spear": 5509,
+      "grommash_crown": 5589,
+      "morvanthal_scepter": 5627,
+      "bahamorth_scale": 1864
     },
     "cards": {
       "guardiao_druida_card": 1,
@@ -76,7 +76,7 @@
       "grommuk_card": 0,
       "lyria_card": 1,
       "chispim_card": 1,
-      "tartarok_card": 1,
+      "tartarok_card": 2,
       "emberimp_card": 1
     },
     "cardsDiscovered": {
@@ -634,25 +634,29 @@
         ]
       },
       {
-        "uid": 1231,
+        "uid": 1381,
         "itemId": "bahamorth_ring_destreza",
-        "rarityId": "raro",
+        "rarityId": "epico",
         "baseStats": {
           "destreza": 50,
-          "armorFlat": 25
+          "armorFlat": 32
         },
         "additionalStats": [
           {
-            "stat": "danoPerfuracaoFlat",
-            "value": 76
+            "stat": "dropPercent",
+            "value": 5.9
+          },
+          {
+            "stat": "attackSpeedPercent",
+            "value": 10.1
           },
           {
             "stat": "dodgePercent",
-            "value": 12.5
+            "value": 18.4
           },
           {
-            "stat": "forca",
-            "value": 50
+            "stat": "hpFlat",
+            "value": 83
           }
         ],
         "enhanceLevel": 0,
@@ -662,7 +666,7 @@
         ]
       }
     ],
-    "nextUid": 1251,
+    "nextUid": 1389,
     "equipped": {
       "weapon1": 1,
       "weapon2": 10,
@@ -676,8 +680,8 @@
       "necklace": 9
     },
     "upgrades": {},
-    "totalKills": 27042,
-    "lastSaveTime": 1790543682534,
+    "totalKills": 30718,
+    "lastSaveTime": 1790571987776,
     "transcendUnlocked": false,
     "transcendCount": 25,
     "awakeningShards": 15,
@@ -692,11 +696,11 @@
       "cards_collected": 3,
       "transcend_count": 6
     },
-    "lifetimeHunterLevel": 225,
-    "lifetimeTotalKills": 215906,
-    "lifetimeGoldEarned": 349343753,
+    "lifetimeHunterLevel": 228,
+    "lifetimeTotalKills": 219582,
+    "lifetimeGoldEarned": 395568892,
     "lifetimeEggsHatched": 2042,
-    "lifetimeRankMasterCount": 500,
+    "lifetimeRankMasterCount": 501,
     "pvpHighestTierIndex": 0,
     "pvpWinsTotal": 0,
     "playerName": "Caçador",
@@ -712,12 +716,12 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 289,
-    "expeditionReadyAt": 1790556686463,
+    "eventCurrency": 492,
+    "expeditionReadyAt": 1790600787786,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
-    "arenaReadyAt": 1790553182886,
+    "arenaReadyAt": 1790615187786,
     "pets": [
       {
         "uid": 1,
@@ -1700,8 +1704,8 @@
       3,
       4
     ],
-    "eggCount": 0,
-    "petFragments": 2800,
+    "eggCount": 69,
+    "petFragments": 2920,
     "petHatchesSinceMythic": 51,
     "petHatchesSinceLegendary": 10,
     "vipExpiresAt": 1791107240880,
@@ -1712,25 +1716,25 @@
       "treeVersion": 2
     },
     "dailyMissions": {
-      "resetAt": 1790553600000,
+      "resetAt": 1790640000000,
       "slots": [
         {
-          "typeId": "rank_master_items",
+          "typeId": "hatch_eggs",
           "tierIndex": 2,
           "status": "active",
           "progress": 0,
           "rerollUsed": false
         },
         {
-          "typeId": "enhance_items",
+          "typeId": "kill_monsters",
           "tierIndex": 0,
           "status": "idle",
           "progress": 0,
           "rerollUsed": false
         },
         {
-          "typeId": "kill_monsters",
-          "tierIndex": 2,
+          "typeId": "arena_wins",
+          "tierIndex": 0,
           "status": "idle",
           "progress": 0,
           "rerollUsed": false
@@ -1740,17 +1744,16 @@
     "botBuildAttribute": "destreza",
     "nextMonsterSpawnAt": null,
     "chestPurchases": {
-      "resetAt": 1790553600000,
+      "resetAt": 1790640000000,
       "counts": {
         "cartas": 3,
-        "mascote": 3,
-        "evento": 1
+        "mascote": 3
       }
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3ZTE2NjExMC0yNGUyLTQ3ZmUtODZhNi0wNTVmNzJkNDg5ZDAiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzkwNTQ3MjgyLCJpYXQiOjE3OTA1NDM2ODIsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUyNDB9XSwic2Vzc2lvbl9pZCI6IjI0MGNiMGFjLTU5MzEtNDQ5Ni1iMDQ3LTA1ZTkyY2Y1MjBhNCIsImlzX2Fub255bW91cyI6dHJ1ZX0.Pe2gTDUh-muV-ULdobPZNy1tWsyEfl6aaJj9bdxWAwVxpiK45FQb7DBe8M3ajb7i59xNzkytsPZ2H_xLg3s8TA",
-    "refresh_token": "xsfupmqrtcay"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3ZTE2NjExMC0yNGUyLTQ3ZmUtODZhNi0wNTVmNzJkNDg5ZDAiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzkwNTc1NTg3LCJpYXQiOjE3OTA1NzE5ODcsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUyNDB9XSwic2Vzc2lvbl9pZCI6IjI0MGNiMGFjLTU5MzEtNDQ5Ni1iMDQ3LTA1ZTkyY2Y1MjBhNCIsImlzX2Fub255bW91cyI6dHJ1ZX0.alpZRL2VzzroMd86Bm3CvlvzFXjZMtNsQzxscJ62xslBsIdfjMlHjqRRKjNOXzyROvMATX3zL9-BmrlmWnl-Mg",
+    "refresh_token": "5cpigvtio74n"
   },
   "nickClaimed": true,
   "userId": "7e166110-24e2-47fe-86a6-055f72d489d0"
