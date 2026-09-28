@@ -58,7 +58,7 @@ function playerCard(state) {
       <div><small>Jogos</small><b>${s.games}</b></div>
       <div><small>KDA</small><b>${fmtKda(s.k, s.d, s.a)}</b></div>
       <div><small>Abates</small><b>${s.k}</b></div>
-      <div><small>POG</small><b>${s.pog}</b></div>
+      <div class="has-tip" data-tip="Vezes em que você foi o melhor jogador da partida"><small>MVP</small><b>${s.pog}</b></div>
     </div>
     <div class="gallery">
       <span><small>Galeria</small> <b class="gold">${p.trophies.length}</b></span>
@@ -305,7 +305,7 @@ function standingsTable(state) {
 
 function lineTxt(line) {
   if (!line.played) return '<span class="muted">No banco</span>';
-  return `${line.k}/${line.d}/${line.a}${line.pog ? ' <span class="pog" title="Player of the Game">★ POG</span>' : ''}`;
+  return `${line.k}/${line.d}/${line.a}${line.pog ? ' <span class="pog has-tip" data-tip="Melhor jogador da partida">★ MVP</span>' : ''}`;
 }
 
 function matchRow(state, m) {
@@ -445,7 +445,7 @@ function seasonEndPanel(state) {
       <div><small>Jogos</small><b>${st.games}</b></div>
       <div><small>Vitórias</small><b>${st.wins}</b></div>
       <div><small>KDA</small><b>${fmtKda(st.k, st.d, st.a)}</b></div>
-      <div><small>POG</small><b>${st.pog}</b></div>
+      <div class="has-tip" data-tip="Vezes em que você foi o melhor jogador da partida"><small>MVP</small><b>${st.pog}</b></div>
     </div>
     ${all.length ? `<div class="season-trophies">${all.map((t) => `<div class="st-item">${trophyArt(t, 40)}<div><b>${esc(t.name)}</b><small>${esc(t.detail)}</small></div></div>`).join('')}</div>` : '<p class="muted">Nenhum título nesta temporada.</p>'}
     ${scr.loanNext ? '<div class="note warn">Temporada difícil. A diretoria está pensando em te emprestar para outro time na próxima janela.</div>' : ''}
@@ -507,7 +507,7 @@ function retiredPanel(state) {
       <div><small>Vitórias</small><b>${st.games ? Math.round((st.wins / st.games) * 100) : 0}%</b></div>
       <div><small>KDA</small><b>${fmtKda(st.k, st.d, st.a)}</b></div>
       <div><small>Abates</small><b>${st.k}</b></div>
-      <div><small>POG</small><b>${st.pog}</b></div>
+      <div class="has-tip" data-tip="Vezes em que você foi o melhor jogador da partida"><small>MVP</small><b>${st.pog}</b></div>
     </div>
     <p class="muted small">Salários ${fmtMoney(p.earnings?.salary || 0)} · premiações ${fmtMoney(p.earnings?.prizes || 0)}</p>
     <h4 class="sub-title">Como os pontos de legado foram calculados</h4>
