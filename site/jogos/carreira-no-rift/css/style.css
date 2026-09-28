@@ -236,7 +236,10 @@ input { font: inherit; color: inherit; }
 .team-line { display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .badge { flex: none; display: inline-block; position: relative; line-height: 0; }
 .badge-shield { display: block; }
-.badge-logo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.badge-logo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.2s; }
+.badge-logo.loaded { opacity: 1; }
+/* Enquanto a logo carrega, o escudo gerado fica escondido: só aparece se a imagem falhar. */
+.badge.has-img .badge-shield { visibility: hidden; }
 .badge-logo.dark { filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.35)); }
 
 .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
@@ -430,7 +433,8 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
     repeating-linear-gradient(60deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 22px),
     linear-gradient(180deg, transparent 45%, var(--panel));
 }
-.scene-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.scene-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0; transition: opacity 0.35s; }
+.scene-img.loaded { opacity: 1; }
 .scene.has-img .scene-icon { display: none; }
 .scene.has-img::after { background: linear-gradient(180deg, transparent 55%, var(--panel)); }
 .scene-icon { font-size: 84px; position: relative; z-index: 1; filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.6)); animation: float 4s ease-in-out infinite; }
@@ -554,7 +558,9 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .delta.down { color: #f0948e; }
 .season-trophies { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
 .trophy-img { position: relative; display: inline-block; flex: none; line-height: 0; }
-.trophy-img > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
+.trophy-img > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; opacity: 0; transition: opacity 0.2s; }
+.trophy-img > img.loaded { opacity: 1; }
+.trophy-img.has-img > svg { visibility: hidden; }
 .st-item { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: color-mix(in srgb, var(--gold) 5%, transparent); }
 .st-item b { display: block; }
 .st-item small { color: var(--muted); }
@@ -693,6 +699,8 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding-bottom: 6px; gap: 1px;
 }
+.ovr-shield-img { opacity: 0; transition: opacity 0.2s; }
+.ovr-shield-img.loaded { opacity: 1; }
 .ovr-shield-img {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
   filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.5));

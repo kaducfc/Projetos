@@ -1,7 +1,8 @@
 // Artes geradas em SVG: escudos de time, troféus, camisa e minimapa.
 import { esc } from '../util.js';
 import { TEAM_LOGOS, OFFICIAL_LOGOS_ALLOWED } from '../../../../shared/config.js';
-import { REGIONS } from '../data/world.js';
+import { REGIONS, buildTeams } from '../data/world.js';
+import { EVENTS } from '../data/events.js';
 
 let uid = 0;
 
@@ -27,6 +28,7 @@ function logoSrc(team) {
 // sumiriam no fundo preto do site, então ganham um contorno claro.
 if (typeof window !== 'undefined') {
   window.__badgeLogoLoaded = (img) => {
+    img.classList.add('loaded');
     img.previousElementSibling?.remove();
     try {
       const c = document.createElement('canvas');
@@ -61,7 +63,7 @@ export function teamBadge(team, size = 28) {
   const shield = shieldSvg(team, size);
   if (!src) return `<span class="badge">${shield}</span>`;
   // A logo carrega por cima; quando carrega, o escudo sai. Se falhar, a logo sai.
-  return `<span class="badge" style="width:${size}px;height:${Math.round(size * 1.15)}px">${shield}<img class="badge-logo" src="${src}" alt="" loading="lazy" onload="__badgeLogoLoaded(this)" onerror="this.remove()"></span>`;
+  return `<span class="badge has-img" style="width:${size}px;height:${Math.round(size * 1.15)}px">${shield}<img class="badge-logo" src="${src}" alt="" decoding="async" onload="__badgeLogoLoaded(this)" onerror="this.parentElement.classList.remove('has-img'); this.remove()"></span>`;
 }
 
 const TONES = {
@@ -143,7 +145,7 @@ if (typeof window !== 'undefined') {
   // Arquivo não existe: tenta o próximo da lista; acabou, fica o desenho.
   window.__trophyNext = (img) => {
     const rest = (img.dataset.next || '').split(',').filter(Boolean);
-    if (!rest.length) { img.remove(); return; }
+    if (!rest.length) { img.parentElement?.classList.remove('has-img'); img.remove(); return; }
     img.dataset.next = rest.slice(1).join(',');
     img.src = `${ASSETS}trofeus/${rest[0]}.png`;
   };
@@ -166,7 +168,7 @@ export function trophyArt(t, size = 120) {
     files = files.slice(1);
   }
   const h = Math.round(size * 1.15);
-  return `<span class="trophy-img" style="width:${size}px;height:${h}px">${svg}<img src="${src}" alt="" data-next="${files.join(',')}" onload="this.previousElementSibling?.remove()" onerror="__trophyNext(this)"></span>`;
+  return `<span class="trophy-img has-img" style="width:${size}px;height:${h}px">${svg}<img src="${src}" alt="" decoding="async" data-next="${files.join(',')}" onload="this.classList.add('loaded'); this.previousElementSibling?.remove()" onerror="__trophyNext(this)"></span>`;
 }
 
 // Imagem de fundo das decisões (img/eventos/<id>.jpg). Sem arquivo, fica o
@@ -174,9 +176,9 @@ export function trophyArt(t, size = 120) {
 export function eventScene(ev) {
   const src = EMBEDDED ? EMBEDDED[`eventos/${ev.id}.jpg`] : `img/eventos/${ev.id}.jpg`;
   const img = src
-    ? `<img class="scene-img" src="${src}" alt="" onload="this.parentElement.classList.add('has-img')" onerror="this.remove()">`
+    ? `<img class="scene-img" src="${src}" alt="" decoding="async" onload="this.classList.add('loaded')" onerror="this.parentElement.classList.remove('has-img'); this.remove()">`
     : '';
-  return `<div class="scene scene-${ev.scene}">${img}<span class="scene-icon">${ev.icon}</span></div>`;
+  return `<div class="scene scene-${ev.scene}${src ? ' has-img' : ''}">${img}<span class="scene-icon">${ev.icon}</span></div>`;
 }
 
 // Escudo do OVR, pela faixa: prata (<70), ouro (70–79), platina (80–89),
@@ -193,7 +195,7 @@ export function ovrShield(ovr, extraClass = '') {
   const tier = ovrTier(ovr);
   const src = EMBEDDED ? EMBEDDED[`trofeus/${tier}.png`] : `${ASSETS}trofeus/${tier}.png`;
   const img = src
-    ? `<img class="ovr-shield-img" src="${src}" alt="" onerror="this.parentElement.classList.add('no-img'); this.remove()">`
+    ? `<img class="ovr-shield-img" src="${src}" alt="" onload="this.classList.add('loaded')" onerror="this.parentElement.classList.add('no-img'); this.remove()">`
     : '';
   return `<div class="ovr-badge ovr-shield tier-${tier}${src ? '' : ' no-img'}${extraClass ? ` ${extraClass}` : ''}" title="OVR ${ovr}">${img}<span class="ovr-shine"></span><small>OVR</small><b>${ovr}</b></div>`;
 }
@@ -222,6 +224,34 @@ export function startShieldShine() {
     setTimeout(tick, 5000 + Math.random() * 5000);
   };
   setTimeout(tick, 1500 + Math.random() * 2500);
+}
+
+// Baixa as imagens do jogo em segundo plano (logos, troféus, escudos e, por
+// último, as imagens das decisões), para que já estejam no cache quando
+// aparecerem. Poucas por vez, para não atrapalhar o carregamento da página.
+// Na versão de arquivo único as imagens já vêm embutidas: nada a fazer.
+export function preloadArt() {
+  if (typeof window === 'undefined' || EMBEDDED || window.__artPreloaded) return;
+  window.__artPreloaded = true;
+  const logos = [...new Set(Object.values(buildTeams()).map(logoSrc).filter(Boolean))];
+  const trophies = [...MAIN_TROPHIES, 'prata', 'ouro', 'platina', 'diamante', 'challenger']
+    .map((f) => `${ASSETS}trofeus/${f}.png`);
+  const saveData = navigator.connection?.saveData;
+  const events = saveData ? [] : EVENTS.map((e) => `img/eventos/${e.id}.jpg`);
+  const queue = [...trophies.slice(-5), ...logos, ...trophies, ...events];
+  let active = 0;
+  const next = () => {
+    while (active < 4 && queue.length) {
+      const img = new Image();
+      active += 1;
+      img.onload = img.onerror = () => { active -= 1; next(); };
+      img.decoding = 'async';
+      img.src = queue.shift();
+    }
+  };
+  const start = () => next();
+  if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 2500 });
+  else setTimeout(start, 800);
 }
 
 // Camisa usada na tela de criação (nick nas costas).

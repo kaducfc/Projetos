@@ -1,0 +1,6 @@
+# Cloudflare Pages: as imagens mudam pouco, então o navegador pode usá-las do
+# cache por 1 dia (e mais 7 dias enquanto confere se há versão nova ao fundo).
+/shared/assets/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/jogos/*/img/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
