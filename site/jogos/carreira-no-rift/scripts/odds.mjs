@@ -11,7 +11,7 @@ const pct = (n) => `${((n / N) * 100).toFixed(n / N < 0.01 ? 2 : 1)}%`;
 
 // ---- ligas principais (split: MD3 turno único, 6 nos playoffs em MD5)
 function league(ids) {
-  const form = Object.fromEntries(ids.map((id) => [id, formRoll(4)]));
+  const form = Object.fromEntries(ids.map((id) => [id, formRoll(6)]));
   const pw = (id) => teams[id].rating + form[id];
   const table = Object.fromEntries(ids.map((id) => [id, Math.random() * 0.1]));
   for (const pairs of roundRobin(ids)) for (const [a, b] of pairs) {

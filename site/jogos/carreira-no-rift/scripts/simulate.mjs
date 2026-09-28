@@ -8,7 +8,7 @@ import { ROLES } from '../js/data/world.js';
 const N = Number(process.argv[2] || 500);
 const NAT = process.argv[3] || 'BR';
 const roles = Object.keys(ROLES);
-const agg = { peak: [], seasons: [], worlds: 0, msi: 0, t1: 0, legacy: {}, t1Players: 0, abroad: 0, games: [], windows: 0, maxOptions: 0, optionHist: {}, bets: 0, betTaken: 0, loans: 0, entries: 0, entryTaken: 0, climbed: 0, strong: 0, peakStrong: [], peakHome: [], intlBy: {} };
+const agg = { peak: [], seasons: [], worlds: 0, msi: 0, t1: 0, legacy: {}, t1Players: 0, abroad: 0, games: [], windows: 0, maxOptions: 0, optionHist: {}, bets: 0, betTaken: 0, loans: 0, entries: 0, entryTaken: 0, climbed: 0, strong: 0, peakStrong: [], peakHome: [], intlBy: {}, totals: [], awardsN: [], leaguesN: [], worldsN: [] };
 const STRATEGY = process.argv[4] || 'ambicioso';
 const SPEED = process.argv[5] || 'normal'; // 'normal' ou 'rapido'
 
@@ -52,6 +52,10 @@ for (let i = 0; i < N; i++) {
     const k = `${t.name} · ${teamOf(state, t.teamId).region}`;
     agg.intlBy[k] = (agg.intlBy[k] || 0) + 1;
   }
+  agg.totals.push(p.trophies.length);
+  agg.awardsN.push(p.trophies.filter((t) => t.kind === 'award').length);
+  agg.leaguesN.push(p.trophies.filter((t) => t.kind === 'league').length);
+  agg.worldsN.push(p.trophies.filter((t) => t.name === 'Mundial').length);
   agg.t1 += p.trophies.filter((t) => t.kind === 'league' && t.tier === 1).length;
   if (p.history.some((h) => h.tier === 1)) agg.t1Players++;
   if (p.history.some((h) => teamOf(state, h.teamId).region !== p.region)) agg.abroad++;
@@ -74,6 +78,13 @@ console.log(`temporadas: média ${avg(agg.seasons)} · jogos/temporada ${avg(agg
 console.log(`chegou ao tier 1: ${(agg.t1Players / N * 100).toFixed(0)}% · jogou no exterior: ${(agg.abroad / N * 100).toFixed(0)}%`);
 console.log(`títulos por carreira: liga T1 ${(agg.t1 / N).toFixed(2)} · MSI ${(agg.msi / N).toFixed(2)} · Mundial ${(agg.worlds / N).toFixed(2)}`);
 console.log(`estratégia: ${STRATEGY}`);
+{
+  const q = (a, x) => a.slice().sort((m, n) => m - n)[Math.floor(a.length * x)];
+  const share = (a, fn) => `${(a.filter(fn).length / a.length * 100).toFixed(1)}%`;
+  console.log(`troféus+prêmios por carreira: p50 ${q(agg.totals, 0.5)} · p90 ${q(agg.totals, 0.9)} · p99 ${q(agg.totals, 0.99)} · ≥30: ${share(agg.totals, (x) => x >= 30)}`);
+  console.log(`prêmios individuais: p50 ${q(agg.awardsN, 0.5)} · p90 ${q(agg.awardsN, 0.9)} · p99 ${q(agg.awardsN, 0.99)} | ligas: p50 ${q(agg.leaguesN, 0.5)} · p90 ${q(agg.leaguesN, 0.9)} · p99 ${q(agg.leaguesN, 0.99)}`);
+  console.log(`Mundiais: 1+ ${share(agg.worldsN, (x) => x >= 1)} · 2+ ${share(agg.worldsN, (x) => x >= 2)} · 3+ ${share(agg.worldsN, (x) => x >= 3)}`);
+}
 console.log('títulos internacionais por região do time (por 1000 carreiras):',
   Object.fromEntries(Object.entries(agg.intlBy).sort().map(([k, v]) => [k, +(v / N * 1000).toFixed(1)])));
 console.log(`janelas: ${agg.windows} · máx. opções numa janela: ${agg.maxOptions} · distribuição:`, agg.optionHist);

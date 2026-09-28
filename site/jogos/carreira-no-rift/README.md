@@ -150,6 +150,15 @@ título por temporada (`node scripts/odds.mjs`):
 Somando todos os times do CBLOL, o Brasil ganha ~1% dos MSIs e ~0,6% dos
 Mundiais: quase impossível, mas não zero.
 
+**"O time virou alvo":** cada título já ganho na temporada deixa o time mais
+estudado pelos rivais (−3,5 de forma por título nas etapas seguintes), a não
+ser que ele esteja bem acima do resto da liga (3+ pontos: metade; 6+: sem
+penalidade). Ganhar tudo no mesmo ano continua possível, mas é raríssimo.
+Prêmios individuais também ficaram mais raros (MVP da liga até 40% por
+temporada, Seleção até 55%, MVP da Final do Mundial até 45%).
+Resultado (3.000 carreiras): troféus + prêmios por carreira têm mediana ~11;
+30 ou mais só em ~1% (jogador comum) a ~4% (sempre no melhor time).
+
 **Curva de evolução:** começa devagar aos 16–17, cresce forte dos 18 aos 22 e
 chega ao auge entre 19 e 24 anos. Dos 25 aos 26 mantém ou cresce pouco, e a
 queda começa por volta dos 27 (mais forte a partir dos 28). Ter 75+ aos 17–18

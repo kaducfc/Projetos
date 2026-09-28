@@ -478,6 +478,29 @@ function splitConfig(s, kind) {
   return { n, name: `${s.league} · Split ${n}`, bo: 1, poSize: 4 };
 }
 
+// "O time virou alvo": cada título já conquistado na temporada deixa o time
+// mais estudado pelos rivais (−TARGET_PENALTY de forma nas etapas seguintes).
+// Assim é raro um time ganhar tudo no mesmo ano (Copa, splits, First Stand,
+// MSI e Mundial), e carreiras com dezenas de troféus ficam para poucos.
+const TARGET_PENALTY = 3.5;
+function titlesThisSeason(state, id) {
+  const s = state.season;
+  const league = Object.values(s.rankings || {}).filter((r) => r[0] === id).length;
+  const intl = Object.values(s.intlChampions || {}).filter((c) => c === id).length;
+  return league + intl;
+}
+// Um time muito acima dos rivais da própria liga sente menos a pressão: ainda
+// pode fazer um ano perfeito, mas continua sendo raro.
+function targetPenalty(state, id) {
+  const n = titlesThisSeason(state, id);
+  if (!n) return 0;
+  const t = teamOf(state, id);
+  const rivals = activeTeams(state).filter((x) => x.region === t.region && x.tier === t.tier && x.id !== id);
+  const gap = t.rating - Math.max(...rivals.map((x) => x.rating), 0);
+  const factor = gap >= 6 ? 0 : gap >= 3 ? 0.5 : 1;
+  return TARGET_PENALTY * n * factor;
+}
+
 function newSplit(state, kind) {
   const s = state.season;
   const team = teamOf(state, s.teamId);
@@ -485,7 +508,7 @@ function newSplit(state, kind) {
   const split = { kind, ...splitConfig(s, kind), ids, table: {}, form: {}, tb: {}, rounds: roundRobin(ids), played: 0 };
   ids.forEach((id) => {
     split.table[id] = { w: 0, l: 0 };
-    split.form[id] = formRoll(4);
+    split.form[id] = formRoll(6) - targetPenalty(state, id);
     split.tb[id] = Math.random();
   });
   return split;
@@ -641,7 +664,7 @@ function intlField(state, key) {
 // Forma de cada time no torneio internacional (sorteada uma vez por evento).
 function intlForm(state, ids) {
   const form = {};
-  ids.forEach((id) => { form[id] = formRoll(5); });
+  ids.forEach((id) => { form[id] = formRoll(7) - targetPenalty(state, id); });
   return form;
 }
 
@@ -867,10 +890,11 @@ function computeAwards(state, playedRatio) {
   const awards = [];
 
   if (playedRatio >= 0.5) {
-    const place = best === 1 ? 15 : best === 2 ? 6 : 0;
-    if (roll(clamp((ovr - leagueTop) * 6 + 12 + place + pogRate * 40, 0, 75))) {
+    // Prêmios individuais são raros: nem o melhor jogador ganha todo ano.
+    const place = best === 1 ? 10 : best === 2 ? 4 : 0;
+    if (roll(clamp((ovr - leagueTop) * 4 + 6 + place + pogRate * 30, 0, 40))) {
       awards.push(`MVP ${ofLeague(s.league)}`);
-    } else if (roll(clamp((ovr - leagueTop + 8) * 8 + place, 0, 85))) {
+    } else if (roll(clamp((ovr - leagueTop + 6) * 6 + place, 0, 55))) {
       awards.push(`Seleção ${ofLeague(s.league)}`);
     }
     const firstInTier = !p.history.some((h) => h.tier === s.tier);
@@ -878,7 +902,7 @@ function computeAwards(state, playedRatio) {
       awards.push(`Revelação ${ofLeague(s.league)}`);
     }
   }
-  if (s.titles.some((t) => t.name === 'Mundial') && roll(clamp(30 + (ovr - 85) * 4, 10, 70))) {
+  if (s.titles.some((t) => t.name === 'Mundial') && roll(clamp(22 + (ovr - 85) * 3, 8, 45))) {
     awards.push('MVP da Final do Mundial');
   }
 

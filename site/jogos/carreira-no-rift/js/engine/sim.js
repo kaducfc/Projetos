@@ -1,8 +1,8 @@
 import { ROLES, STYLES } from '../data/world.js';
 import { poisson, rand, shuffle } from '../util.js';
 
-// Diferença de 10 pontos de força ≈ 74% de vitória por partida.
-export const winProb = (a, b) => 1 / (1 + Math.pow(10, (b - a) / 22));
+// Diferença de 10 pontos de força ≈ 70% de vitória por partida.
+export const winProb = (a, b) => 1 / (1 + Math.pow(10, (b - a) / 28));
 
 // Forma de um time numa etapa/torneio. Quase sempre oscila pouco, mas às
 // vezes o time vive uma fase iluminada (a "zebra"): é o que dá a qualquer
