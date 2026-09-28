@@ -762,6 +762,38 @@ function choicesFor(ev, role) {
   return ev.choices.map((c, idx) => ({ c, idx })).filter(({ c }) => roleAllows(c, role));
 }
 
+// Ajusta as chances das opções de uma decisão:
+// - nunca duas iguais: entre uma opção e a próxima há 10 a 15 pontos de
+//   diferença (se a melhor tem 80%, a seguinte fica entre 65% e 70%);
+// - um leve sorteio (±3) e, na maioria das vezes, números que não terminam
+//   em 0 ou 5 (eles ainda aparecem, só que menos);
+// - a ordem (qual opção é mais segura) continua a mesma do cálculo original.
+export function spreadChances(chances) {
+  const n = chances.length;
+  const vals = chances.map((c, i) => ({ i, c: clamp(c + randInt(-3, 3), CHANCE_MIN, CHANCE_MAX) }))
+    .sort((a, b) => b.c - a.c || chances[b.i] - chances[a.i] || Math.random() - 0.5);
+  const gaps = Array.from({ length: n - 1 }, () => randInt(10, 15));
+  let rest = gaps.reduce((sum, g) => sum + g, 0);
+  const out = [clamp(vals[0].c, CHANCE_MIN + rest, CHANCE_MAX)];
+  for (let k = 1; k < n; k++) {
+    rest -= gaps[k - 1];
+    const cap = out[k - 1] - gaps[k - 1];
+    out.push(clamp(Math.min(vals[k].c, cap), CHANCE_MIN + rest, cap));
+  }
+  // Foge dos múltiplos de 5 (70% das vezes), sem quebrar a distância mínima.
+  const fits = (k, v) => v >= CHANCE_MIN && v <= CHANCE_MAX
+    && (k === 0 || out[k - 1] - v >= 10) && (k === n - 1 || v - out[k + 1] >= 10);
+  for (let k = 0; k < n; k++) {
+    if (out[k] % 5 !== 0 || Math.random() >= 0.7) continue;
+    const tries = [1, -1, 2, -2, 3, -3].sort(() => Math.random() - 0.5);
+    const d = tries.find((x) => (out[k] + x) % 5 !== 0 && fits(k, out[k] + x));
+    if (d !== undefined) out[k] += d;
+  }
+  const result = new Array(n);
+  vals.forEach((v, k) => { result[v.i] = out[k]; });
+  return result;
+}
+
 function eventScreen(state, stage) {
   const p = state.player;
   const ctx = { stage, team: teamOf(state, p.teamId), year: state.season.year };
@@ -772,10 +804,12 @@ function eventScreen(state, stage) {
   p.usedEvents.push(ev.id);
   if (p.usedEvents.length > 16) p.usedEvents.shift();
 
-  const options = choicesFor(ev, p.role).map(({ c, idx }) => {
+  const raw = choicesFor(ev, p.role).map(({ c, idx }) => {
     const attrBonus = c.attr ? (p.attrs[c.attr] - 60) * 0.5 : 0;
     return { idx, chance: Math.round(clamp(c.base + attrBonus + (p.morale - 50) * 0.1, CHANCE_MIN, CHANCE_MAX)) };
   });
+  const spread = spreadChances(raw.map((o) => o.chance));
+  const options = raw.map((o, i) => ({ ...o, chance: spread[i] }));
   const label = STAGE_LABELS[state.season.tier === 1 ? 1 : 'lower'][stage];
   const recap = state.season.recap || null;
   state.season.recap = null;
