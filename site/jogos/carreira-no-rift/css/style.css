@@ -495,11 +495,11 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .result { --pulse: 34, 165, 91; cursor: pointer; animation: rise 0.3s ease-out, result-pulse 2.4s ease-in-out 0.5s infinite; }
 .result.fail { --pulse: 217, 72, 63; }
 @keyframes result-pulse {
-  0%, 100% { border-color: rgba(var(--pulse), 0.5); box-shadow: 0 0 0 0 rgba(var(--pulse), 0), inset 0 0 0 0 rgba(var(--pulse), 0); }
-  50% { border-color: rgba(var(--pulse), 0.95); box-shadow: 0 0 22px 1px rgba(var(--pulse), 0.3), inset 0 0 26px rgba(var(--pulse), 0.12); }
+  0%, 100% { border-color: rgba(var(--pulse), 0.45); box-shadow: 0 0 0 0 rgba(var(--pulse), 0), inset 0 0 0 0 rgba(var(--pulse), 0); }
+  50% { border-color: rgba(var(--pulse), 1); box-shadow: 0 0 28px 2px rgba(var(--pulse), 0.42), inset 0 0 32px rgba(var(--pulse), 0.18); }
 }
 .result .dot { animation: dot-pulse 2.4s ease-in-out 0.5s infinite; }
-@keyframes dot-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(var(--pulse), 0); } 50% { box-shadow: 0 0 10px 2px rgba(var(--pulse), 0.7); } }
+@keyframes dot-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(var(--pulse), 0); } 50% { box-shadow: 0 0 12px 3px rgba(var(--pulse), 0.8); } }
 .result .tap { animation: tap-pulse 2.4s ease-in-out 0.5s infinite; }
 @keyframes tap-pulse { 0%, 100% { color: var(--muted); } 50% { color: rgb(var(--pulse)); } }
 .result:hover { border-color: rgba(var(--pulse), 1); }
