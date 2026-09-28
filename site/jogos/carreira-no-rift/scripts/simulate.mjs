@@ -10,11 +10,12 @@ const NAT = process.argv[3] || 'BR';
 const roles = Object.keys(ROLES);
 const agg = { peak: [], seasons: [], worlds: 0, msi: 0, t1: 0, legacy: {}, t1Players: 0, abroad: 0, games: [], windows: 0, maxOptions: 0, optionHist: {}, bets: 0, betTaken: 0, loans: 0, entries: 0, entryTaken: 0, climbed: 0, strong: 0, peakStrong: [], peakHome: [], intlBy: {} };
 const STRATEGY = process.argv[4] || 'ambicioso';
+const SPEED = process.argv[5] || 'normal'; // 'normal' ou 'rapido'
 
 for (let i = 0; i < N; i++) {
   const role = roles[i % roles.length];
   const style = i % 2 ? 'agressivo' : 'controlado';
-  const state = newCareer({ nick: 'sim', nat: NAT, role, style, attrs: rollAttrs(role, style) });
+  const state = newCareer({ nick: 'sim', nat: NAT, role, style, attrs: rollAttrs(role, style), speed: SPEED });
   let guard = 0;
   while (!state.player.retired && guard++ < 2000) {
     const s = state.screen;

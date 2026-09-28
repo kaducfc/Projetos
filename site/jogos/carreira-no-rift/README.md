@@ -65,7 +65,13 @@ LCK Challengers, LDL, ERL Premier e NACL) jogam só os dois splits.
 Cada temporada tem **3 decisões** (eventos de história), uma antes de cada
 etapa. Cada etapa (fase de pontos + playoffs) é simulada de uma vez e
 aparece numa tela só. First Stand e MSI não têm tela própria: o resumo
-aparece no topo da decisão seguinte. Só o Mundial tem tela. Se não chegar nenhuma proposta e o contrato ainda
+aparece no topo da decisão seguinte. Só o Mundial tem tela.
+
+**Velocidade** (escolhida na criação do jogador): **Normal** tem 3 decisões
+por ano; **Rápido** tem só 1 (a do meio do ano), com os efeitos dela valendo
+por três. Assim a carreira rende igual nos dois modos (OVR, títulos e
+prêmios batem nas simulações: `node scripts/simulate.mjs 3000 BR aleatorio
+rapido`). No modo rápido, o resumo do MSI aparece no topo do Split 2. Se não chegar nenhuma proposta e o contrato ainda
 estiver em vigor, a janela de transferências é pulada.
 
 Simplificações: os playoffs são de eliminação simples (na vida real a

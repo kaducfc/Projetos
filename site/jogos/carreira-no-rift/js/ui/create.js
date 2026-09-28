@@ -8,7 +8,7 @@ import { FAN_NOTICE } from '../../../../shared/footer.js';
 const NICK_RE = /^[\p{L}\p{N}_. -]{2,14}$/u;
 
 export function renderCreate(root, onConfirm) {
-  const f = { nick: '', nat: 'BR', role: null, style: 'agressivo', attrs: null };
+  const f = { nick: '', nat: 'BR', role: null, style: 'agressivo', attrs: null, speed: 'normal' };
 
   root.innerHTML = `
   <div class="create-wrap">
@@ -31,6 +31,13 @@ export function renderCreate(root, onConfirm) {
             <span>Estilo de jogo</span>
             <div class="seg" id="style">
               ${Object.values(STYLES).map((s) => `<button type="button" data-style="${s.id}">${s.name}<small>${s.desc}</small></button>`).join('')}
+            </div>
+          </div>
+          <div class="field">
+            <span>Velocidade do jogo</span>
+            <div class="seg" id="speed">
+              <button type="button" data-speed="normal">Normal<small>3 decisões por ano</small></button>
+              <button type="button" data-speed="rapido">Rápido<small>1 decisão por ano</small></button>
             </div>
           </div>
         </section>
@@ -66,6 +73,10 @@ export function renderCreate(root, onConfirm) {
 
   const paintStyle = () => {
     root.querySelectorAll('[data-style]').forEach((b) => b.classList.toggle('on', b.dataset.style === f.style));
+  };
+
+  const paintSpeed = () => {
+    root.querySelectorAll('[data-speed]').forEach((b) => b.classList.toggle('on', b.dataset.speed === f.speed));
   };
 
   const paintNations = () => {
@@ -125,6 +136,12 @@ export function renderCreate(root, onConfirm) {
     paintStyle();
     paintRole();
   });
+  $('speed').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-speed]');
+    if (!b) return;
+    f.speed = b.dataset.speed;
+    paintSpeed();
+  });
   $('nat-q').addEventListener('input', paintNations);
   $('nat-list').addEventListener('click', (e) => {
     const b = e.target.closest('[data-nat]');
@@ -147,11 +164,12 @@ export function renderCreate(root, onConfirm) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickRole(e); }
   });
   $('confirm').addEventListener('click', () => {
-    onConfirm({ nick: f.nick.trim(), nat: f.nat, role: f.role, style: f.style, attrs: f.attrs });
+    onConfirm({ nick: f.nick.trim(), nat: f.nat, role: f.role, style: f.style, attrs: f.attrs, speed: f.speed });
   });
 
   paintJersey();
   paintStyle();
+  paintSpeed();
   paintNations();
   paintRole();
   paintConfirm();

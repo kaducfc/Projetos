@@ -19,6 +19,17 @@ export const START_YEAR = 2026;
 // Divisões de acesso: só os dois splits.
 const QUEUE_TIER1 = ['ev0', 'cup', 'firstStand', 'ev1', 's1', 'msi', 'ev2', 's2', 'worlds', 'end'];
 const QUEUE_LOWER = ['ev0', 's1', 'ev1', 's2', 'ev2', 'end'];
+// Modo rápido: só a decisão do meio do ano (ev1). Para a carreira render o
+// mesmo, os efeitos dessa decisão valem por três (FAST_FX).
+const FAST_SKIP = new Set(['ev0', 'ev2']);
+const FAST_FX = 3;
+export const isFast = (state) => state.speed === 'rapido';
+
+// Efeitos de um resultado de decisão, já ajustados ao modo de jogo.
+export function outcomeFx(state, fx) {
+  if (!isFast(state)) return fx;
+  return Object.fromEntries(Object.entries(fx || {}).map(([k, v]) => [k, v * FAST_FX]));
+}
 
 const STAGE_LABELS = {
   1: { ev0: 'PRÉ-TEMPORADA', ev1: 'ANTES DO SPLIT 1', ev2: 'ANTES DO SPLIT 2' },
@@ -113,6 +124,7 @@ export function newCareer(form) {
   const nation = nationById(form.nat);
   const state = {
     v: 2,
+    speed: form.speed === 'rapido' ? 'rapido' : 'normal',
     world: { year: START_YEAR, teams: buildTeams() },
     player: createPlayer({ ...form, region: nation.region }),
     season: null,
@@ -385,7 +397,7 @@ function startSeason(state) {
     region: team.region,
     league: leagueName(team),
     ovrStart: ovrOf(p),
-    queue: (team.tier === 1 ? QUEUE_TIER1 : QUEUE_LOWER).slice(),
+    queue: (team.tier === 1 ? QUEUE_TIER1 : QUEUE_LOWER).filter((step) => !isFast(state) || !FAST_SKIP.has(step)),
     idx: 0,
     stats: { games: 0, wins: 0, k: 0, d: 0, a: 0, pog: 0, teamGames: 0, teamWins: 0 },
     titles: [],
@@ -516,8 +528,13 @@ function runStage(state, kind) {
   const results = playRegular(state);
   const regularPos = standings(s.split).indexOf(s.teamId) + 1;
   const po = playoffs(state);
+  // Resumo de First Stand/MSI pendente (no modo rápido não há decisão logo
+  // depois do torneio): aparece no topo da etapa.
+  const recap = s.recap || null;
+  s.recap = null;
   state.screen = {
     type: 'stage',
+    recap,
     kind,
     name: s.split.name,
     bo: s.split.bo,
@@ -829,7 +846,7 @@ export function chooseEvent(state, pos) {
   const choice = ev.choices[opt.idx];
   const ok = roll(opt.chance);
   const before = ovrOf(state.player);
-  applyFx(state.player, (ok ? choice.ok : choice.fail).fx);
+  applyFx(state.player, outcomeFx(state, (ok ? choice.ok : choice.fail).fx));
   const team = teamOf(state, state.player.teamId);
   state.player.status = statusFor(ovrOf(state.player), team.rating, state.player.morale);
   scr.choice = opt.idx;

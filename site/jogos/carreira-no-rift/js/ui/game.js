@@ -4,7 +4,7 @@ import { ATTRS, REGIONS, ROLES, nationById, ofLeague, inLeague } from '../data/w
 import { eventById, roleText } from '../data/events.js';
 import { ovrOf, marketValue, STATUS } from '../engine/player.js';
 import {
-  teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore, legacyBreakdown, careerEarnings, eventOptions,
+  teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore, legacyBreakdown, careerEarnings, eventOptions, outcomeFx,
 } from '../engine/career.js';
 import { teamBadge, trophySvg, trophyArt, eventScene, ovrShield, stars } from './art.js';
 import { esc, fmtKda, fmtMoney, fmtSalary } from '../util.js';
@@ -272,7 +272,7 @@ function eventPanel(state) {
             <h3>${fill(ev.choices[scr.choice].label, state)} · ${scr.ok ? 'A escolha deu certo' : 'Não saiu como planejado'}</h3>
             <p>${fill(outcome.text, state)}</p>
           </div>
-          <div class="fx-list">${fxChips(outcome.fx)}${scr.ovrDelta ? `<span class="fx ${scr.ovrDelta > 0 ? 'up' : 'down'}">OVR <b>${signed(scr.ovrDelta)}</b></span>` : ''}</div>
+          <div class="fx-list">${fxChips(outcomeFx(state, outcome.fx))}${scr.ovrDelta ? `<span class="fx ${scr.ovrDelta > 0 ? 'up' : 'down'}">OVR <b>${signed(scr.ovrDelta)}</b></span>` : ''}</div>
         </div>
         <div class="tap">Toque para continuar ›</div>
       </button>` : ''}
@@ -348,6 +348,7 @@ function stagePanel(state) {
   else if (scr.inPlayoffs) title = scr.placement <= 4 ? 'Eliminados na semifinal' : 'Eliminados nas quartas';
   else title = `Fora dos playoffs · ${scr.placement}º lugar`;
   return `
+  ${scr.recap ? recapCard(state, scr.recap) : ''}
   <div class="panel">
     <div class="eyebrow">${esc(scr.name)} · ${scr.bo === 1 ? 'MD1' : 'MD3'} · top ${scr.poSize} nos playoffs</div>
     <h1 class="display">${title}</h1>
