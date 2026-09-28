@@ -491,6 +491,21 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .fx.up b { color: #7de3a5; }
 .fx.down b { color: #f0948e; }
 .tap { text-align: right; font-size: 11.5px; letter-spacing: 1.5px; color: var(--muted); margin-top: 8px; text-transform: uppercase; }
+/* Pulsação suave do resultado: mostra que é preciso clicar nele para seguir. */
+.result { --pulse: 34, 165, 91; cursor: pointer; animation: rise 0.3s ease-out, result-pulse 2.4s ease-in-out 0.5s infinite; }
+.result.fail { --pulse: 217, 72, 63; }
+@keyframes result-pulse {
+  0%, 100% { border-color: rgba(var(--pulse), 0.5); box-shadow: 0 0 0 0 rgba(var(--pulse), 0), inset 0 0 0 0 rgba(var(--pulse), 0); }
+  50% { border-color: rgba(var(--pulse), 0.95); box-shadow: 0 0 22px 1px rgba(var(--pulse), 0.3), inset 0 0 26px rgba(var(--pulse), 0.12); }
+}
+.result .dot { animation: dot-pulse 2.4s ease-in-out 0.5s infinite; }
+@keyframes dot-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(var(--pulse), 0); } 50% { box-shadow: 0 0 10px 2px rgba(var(--pulse), 0.7); } }
+.result .tap { animation: tap-pulse 2.4s ease-in-out 0.5s infinite; }
+@keyframes tap-pulse { 0%, 100% { color: var(--muted); } 50% { color: rgb(var(--pulse)); } }
+.result:hover { border-color: rgba(var(--pulse), 1); }
+@media (prefers-reduced-motion: reduce) {
+  .result, .result .dot, .result .tap { animation: none; }
+}
 
 /* liga */
 .two-col { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
