@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confirme seu e-mail</title>
+</head>
+<body style="margin:0;padding:0;background:#f2efe8;">
+<div style="display:none;max-height:0;overflow:hidden;">Falta só um clique para ativar sua conta no Rift Arcade.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2efe8;padding:32px 12px;">
+  <tr><td align="center">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e4ddcc;">
+      <tr><td style="background:#0d0d0e;padding:22px 32px;border-bottom:3px solid #d9a82b;">
+        <span style="font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;letter-spacing:1px;color:#f5cf5a;">&#9670; RIFT ARCADE</span>
+      </td></tr>
+      <tr><td style="padding:32px 32px 8px;font-family:Arial,Helvetica,sans-serif;color:#1f1b14;">
+        <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#1f1b14;">Confirme seu e-mail</h1>
+        <p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Olá{{ if .Data.username }}, <b>{{ .Data.username }}</b>{{ end }}!</p>
+        <p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Sua conta no Rift Arcade está quase pronta. Clique no botão abaixo para confirmar este e-mail e começar a guardar suas partidas, recordes e carreiras em qualquer aparelho.</p>
+      </td></tr>
+      <tr><td align="center" style="padding:16px 32px 24px;">
+        <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#d9a82b;color:#140f02;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:6px;">Confirmar meu e-mail</a>
+      </td></tr>
+      <tr><td style="padding:0 32px 28px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#6b6456;">
+        <p style="margin:0;">Se você não criou uma conta no Rift Arcade, pode ignorar este e-mail com segurança.</p>
+        <p style="margin:12px 0 0;">Se o botão não funcionar, copie e cole este link no navegador:<br>
+        <a href="{{ .ConfirmationURL }}" style="color:#9a7412;word-break:break-all;">{{ .ConfirmationURL }}</a></p>
+      </td></tr>
+      <tr><td style="background:#faf8f3;border-top:1px solid #ece6d8;padding:18px 32px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#8a8272;">
+        Rift Arcade · minigames do cenário de League of Legends<br>
+        <a href="https://riftarcade.com.br" style="color:#8a8272;">riftarcade.com.br</a> · Este é um e-mail automático, não precisa responder.
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>
