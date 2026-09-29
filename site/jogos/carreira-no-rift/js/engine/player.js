@@ -16,7 +16,7 @@ export function rollAttrs(role, style) {
   const fx = STYLES[style]?.fx || {};
   const attrs = {};
   for (const a of ATTRS) {
-    attrs[a.id] = clamp(Math.round(57 + (w[a.id] - 0.2) * 70 + randInt(-3, 3) + (fx[a.id] || 0)), 30, 99);
+    attrs[a.id] = clamp(Math.round(50 + (w[a.id] - 0.2) * 70 + randInt(-3, 3) + (fx[a.id] || 0)), 30, 99);
   }
   return attrs;
 }
@@ -59,6 +59,9 @@ export function applyFx(p, fx) {
 // Desempenho em jogo leva em conta o momento (confiança do técnico).
 export const effectiveOvr = (p) => ovrOf(p) + (p.morale - 50) / 12;
 
+// Crescimento extra por idade (soma ≈ diferença do OVR inicial mais baixo).
+const YOUTH_BOOST = { 16: 1.2, 17: 1.6, 18: 1.6, 19: 1.3, 20: 1.0, 21: 0.7 };
+
 // Evolução de fim de temporada: jovens crescem em direção ao potencial,
 // veteranos perdem mecânica mas ganham leitura de jogo.
 export function seasonGrowth(p, perf) {
@@ -81,6 +84,9 @@ export function seasonGrowth(p, perf) {
   // Quem joga e vence evolui mais; quem fica no banco estagna.
   const bonus = (perf.playedRatio - 0.6) * 1.5 + (perf.winRate - 0.5) * 1.5 + (p.morale - 50) / 60;
   g += bonus > 0 ? bonus * clamp(gap / 6, 0, 1) : bonus;
+  // Jovem começa com OVR baixo (~50-55) e tem um impulso extra de evolução
+  // até os 21, para alcançar o mesmo nível de antes na fase adulta.
+  g += (YOUTH_BOOST[p.age] || 0) * clamp(gap / 4, 0, 1);
   // Decisões da temporada: acertos (principalmente os arriscados) ajudam.
   g += perf.decisions || 0;
 

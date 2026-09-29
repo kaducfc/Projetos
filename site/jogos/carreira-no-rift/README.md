@@ -31,7 +31,7 @@ node scripts/build-bundle.mjs > bundle.html
 
 **Criação:** nick, estilo de jogo (agressivo ou controlado), nacionalidade
 (define a região inicial) e rota. Os atributos iniciais são sorteados
-de acordo com a rota.
+de acordo com a rota, com OVR inicial entre 50 e 55.
 
 **Atributos → OVR:** Mecânica, Fase de rotas, Macro, Teamfight e Mental.
 O OVR é a média ponderada desses atributos com pesos diferentes por rota (o
@@ -71,10 +71,10 @@ aparece no topo da decisão seguinte. Só o Mundial tem tela.
 difícil (todas as opções ficam mais arriscadas; às vezes nenhuma passa de
 50%). O acerto rende conforme o risco (×0,8 numa jogada segura, ×1 em 60%,
 ×2 em 30%, até ×2,5), e errar uma jogada arriscada custa menos que errar uma
-"certa". As opções mostram a etiqueta *Arriscada* ou *Segura*. As decisões
-também contam no fim da temporada: acertos (sobretudo os arriscados) somam
-até +0,75 de OVR na evolução, erros tiram até −0,75, e o balanço mostra
-quanto. Na média, jogar seguro, arriscar ou escolher ao acaso rendem a mesma
+"certa". As decisões também contam no fim da temporada: acertos (sobretudo
+os arriscados) somam até +0,75 de OVR na evolução e erros tiram até −0,75.
+Tudo isso é interno: o jogador vê só a chance de cada opção, sem etiqueta de
+risco nem de bônus. Na média, jogar seguro, arriscar ou escolher ao acaso rendem a mesma
 mediana de OVR; arriscar só oscila mais.
 
 **Velocidade** (escolhida na criação do jogador): **Normal** tem 3 decisões
@@ -169,8 +169,9 @@ temporada, Seleção até 55%, MVP da Final do Mundial até 45%).
 Resultado (3.000 carreiras): troféus + prêmios por carreira têm mediana ~11;
 30 ou mais só em ~1% (jogador comum) a ~4% (sempre no melhor time).
 
-**Curva de evolução:** começa devagar aos 16–17, cresce forte dos 18 aos 22 e
-chega ao auge entre 19 e 24 anos. Dos 25 aos 26 mantém ou cresce pouco, e a
+**Curva de evolução:** o jogador começa com OVR ~52 e cresce rápido na
+juventude (mediana ~56 aos 16, ~67 aos 18, ~75 aos 20), com um impulso extra
+até os 21 que compensa o início mais baixo. Chega ao auge entre 19 e 24 anos. Dos 25 aos 26 mantém ou cresce pouco, e a
 queda começa por volta dos 27 (mais forte a partir dos 28). Ter 75+ aos 17–18
 anos é raríssimo (bem menos de 1% das carreiras: só os "gênios").
 
