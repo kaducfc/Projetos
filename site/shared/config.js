@@ -7,8 +7,8 @@ export const SITE_NAME = 'Rift Arcade';
 // vazio, o site funciona só em modo visitante (tudo no navegador).
 // A chave "publishable" é pública por natureza: a segurança vem das regras
 // RLS do banco. Nunca coloque aqui a chave service_role.
-export const SUPABASE_URL = '';
-export const SUPABASE_ANON_KEY = '';
+export const SUPABASE_URL = 'https://ixmtnizxirmmcpwdzoeu.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_gA7cL3RGWOnuLqwrlTGL5w_eMigpxdn';
 
 // Link de doação (Pix, Ko-fi, Livepix…). Vazio = botão "Apoiar" escondido.
 // As doações são opcionais, só para manter o site no ar, e não dão vantagem
