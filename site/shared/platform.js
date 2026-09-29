@@ -9,6 +9,7 @@
 //   listResults({gameId, limit})    → histórico de partidas
 //   onChange(fn)                    → avisa login/logout e saves vindos da nuvem
 //   requestPasswordReset(email) / updatePassword(senha) → "Esqueci minha senha"
+//   signInWithGoogle() / claimUsername(nome) → login com Google + escolha do nome
 //
 // Sem conta, tudo fica no localStorage do navegador. Ao entrar, o que foi
 // jogado como visitante é enviado para a conta, e o save mais recente
@@ -33,7 +34,7 @@ const listeners = new Set();
 let clientPromise = null;
 let injectedClient = null;
 let initPromise = null;
-let user = null; // { id, email, username }
+let user = null; // { id, email, username, needsUsername?, suggestedUsername? }
 let loggingIn = null;
 let recovering = false; // entrou pelo link de redefinição: falta escolher a senha nova
 const pushTimers = new Map();
@@ -190,11 +191,17 @@ async function setUser(sb, authUser) {
   if (loggingIn) return loggingIn;
   loggingIn = (async () => {
     const { data: profile } = await sb.from('site_profiles').select('username').eq('id', authUser.id).maybeSingle();
+    const meta = authUser.user_metadata || {};
     user = {
       id: authUser.id,
       email: authUser.email,
-      username: profile?.username || authUser.user_metadata?.username || (authUser.email || 'jogador').split('@')[0],
+      username: profile?.username || meta.username || (authUser.email || 'jogador').split('@')[0],
     };
+    // Entrou pelo Google (ou outro login sem nome de usuário): falta escolher.
+    if (!profile && !meta.username) {
+      user.needsUsername = true;
+      user.suggestedUsername = suggestUsername(meta.full_name || meta.name || authUser.email);
+    }
     await syncAll(sb);
     emit({ type: 'auth', user });
     return user;
@@ -204,6 +211,15 @@ async function setUser(sb, authUser) {
   } finally {
     loggingIn = null;
   }
+}
+
+// "Kadu Silva" → "KaduSilva"; "joão.p@x.com" → "joao.p". Só uma sugestão.
+function suggestUsername(source) {
+  const base = String(source || '').split('@')[0]
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9_.]/g, '')
+    .slice(0, 20);
+  return base.length >= 3 ? base : '';
 }
 
 function handleSignedOut() {
@@ -220,6 +236,10 @@ const ERRORS = [
   [/email not confirmed/i, 'Confirme seu e-mail pelo link que enviamos antes de entrar.'],
   [/should be different from the old password|same_password/i, 'A nova senha precisa ser diferente da atual.'],
   [/password should be at least/i, 'A senha precisa ter pelo menos 6 caracteres.'],
+  [/username_taken/i, 'Esse nome de usuário já está em uso.'],
+  [/invalid_username/i, 'O nome de usuário precisa ter de 3 a 20 letras, números, "_" ou ".".'],
+  [/already_has_username/i, 'Sua conta já tem um nome de usuário.'],
+  [/provider is not enabled|unsupported provider/i, 'O login com Google ainda não está disponível.'],
   [/rate limit|too many/i, 'Muitas tentativas seguidas. Espere um pouco e tente de novo.'],
   [/invalid.*email|email.*invalid/i, 'Esse e-mail não parece válido.'],
   [/fetch|network/i, 'Sem conexão com o servidor. Verifique a internet e tente de novo.'],
@@ -253,6 +273,34 @@ export async function signIn({ email, password }) {
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
   if (error) throw friendly(error);
   await setUser(sb, data.user);
+  return user;
+}
+
+// Leva para a tela do Google; na volta, o Supabase lê a sessão da URL e o
+// onAuthStateChange em init() conecta a conta.
+export async function signInWithGoogle() {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  let redirectTo;
+  if (globalThis.location) {
+    const back = new URL(globalThis.location.href);
+    back.hash = '';
+    redirectTo = back.toString();
+  }
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+  if (error) throw friendly(error);
+}
+
+// Primeiro login pelo Google: grava o nome de usuário escolhido.
+export async function claimUsername(username) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const name = String(username || '').trim();
+  if (!USERNAME_RE.test(name)) throw new Error('O nome de usuário precisa ter de 3 a 20 letras, números, "_" ou ".".');
+  const { error } = await sb.rpc('site_claim_username', { name });
+  if (error) throw friendly(error);
+  user = { id: user.id, email: user.email, username: name };
+  emit({ type: 'auth', user });
   return user;
 }
 

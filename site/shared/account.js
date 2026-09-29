@@ -56,8 +56,15 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
     if (!el.contains(e.target)) el.querySelector('.sb-menu')?.setAttribute('hidden', '');
   });
 
+  const askUsername = () => {
+    const u = platform.getUser();
+    if (u?.needsUsername && !platform.isRecovering() && modalMode !== 'username') openAuthModal('username');
+  };
   platform.onChange((evt) => {
-    if (evt.type === 'auth') paint();
+    if (evt.type === 'auth') {
+      paint();
+      askUsername();
+    }
     if (evt.type === 'recovery') openAuthModal('reset');
     if (evt.type === 'recovery-failed') {
       openAuthModal('forgot', 'Esse link de redefinição venceu ou já foi usado. Peça um novo abaixo.');
@@ -65,12 +72,20 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
   });
   if (platform.isRecovering()) openAuthModal('reset');
   paint();
-  platform.init().then(paint);
+  platform.init().then(() => { paint(); askUsername(); });
 }
 
 // ------------------------------------------------------------------ janela de login
 
 let modal = null;
+let modalMode = null;
+
+const GOOGLE_ICON = `<svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">
+  <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
+  <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+  <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+  <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/>
+</svg>`;
 
 const MODES = {
   login: {
@@ -93,10 +108,16 @@ const MODES = {
     sub: 'Escolha a senha que vai usar daqui em diante.',
     submit: 'Salvar nova senha',
   },
+  username: {
+    title: 'Escolha seu nome de usuário',
+    sub: 'É assim que você vai aparecer no site. Dá para usar letras, números, "_" e ".".',
+    submit: 'Salvar',
+  },
 };
 
 export function openAuthModal(tab = 'login', notice = '') {
   modal?.remove();
+  modalMode = tab;
   modal = document.createElement('div');
   modal.className = 'acc-backdrop';
   modal.innerHTML = `
@@ -108,6 +129,10 @@ export function openAuthModal(tab = 'login', notice = '') {
       </div>
       <h2 id="acc-title" class="acc-title"></h2>
       <p class="acc-sub"></p>
+      <div class="acc-social">
+        <button type="button" class="acc-google" data-acc="google">${GOOGLE_ICON}<span>Continuar com Google</span></button>
+        <div class="acc-or"><span>ou com e-mail</span></div>
+      </div>
       <form class="acc-form" novalidate>
         <label class="acc-field acc-username">
           <span>Nome de usuário</span>
@@ -134,10 +159,13 @@ export function openAuthModal(tab = 'login', notice = '') {
   const setMode = (m) => {
     mode = m;
     modal.querySelectorAll('[data-acc^="tab-"]').forEach((t) => t.classList.toggle('on', t.dataset.acc === `tab-${m}`));
-    $('.acc-tabs').hidden = m === 'forgot' || m === 'reset';
-    $('.acc-username').hidden = m !== 'signup';
-    $('.acc-email').hidden = m === 'reset';
-    $('.acc-password').hidden = m === 'forgot';
+    modalMode = m;
+    const onlyOne = m === 'forgot' || m === 'reset' || m === 'username';
+    $('.acc-tabs').hidden = onlyOne;
+    $('.acc-social').hidden = onlyOne || !platform.cloudEnabled();
+    $('.acc-username').hidden = m !== 'signup' && m !== 'username';
+    $('.acc-email').hidden = m === 'reset' || m === 'username';
+    $('.acc-password').hidden = m === 'forgot' || m === 'username';
     $('.acc-password span').textContent = m === 'reset' ? 'Nova senha' : 'Senha';
     $('#acc-password').autocomplete = m === 'login' ? 'current-password' : 'new-password';
     $('#acc-password').value = '';
@@ -150,12 +178,13 @@ export function openAuthModal(tab = 'login', notice = '') {
     $('.acc-msg').className = 'acc-msg';
   };
   setMode(mode);
+  if (mode === 'username') $('#acc-username').value = platform.getUser()?.suggestedUsername || '';
   if (notice) {
     $('.acc-msg').textContent = notice;
     $('.acc-msg').className = 'acc-msg err';
   }
 
-  const close = () => { modal?.remove(); modal = null; };
+  const close = () => { modal?.remove(); modal = null; modalMode = null; };
   modal.addEventListener('click', (e) => {
     if (e.target === modal) return close();
     const b = e.target.closest('[data-acc]');
@@ -163,6 +192,14 @@ export function openAuthModal(tab = 'login', notice = '') {
     if (b.dataset.acc === 'close') close();
     if (b.dataset.acc === 'tab-login') setMode('login');
     if (b.dataset.acc === 'tab-signup') setMode('signup');
+    if (b.dataset.acc === 'google') {
+      b.disabled = true;
+      platform.signInWithGoogle().catch((err) => {
+        b.disabled = false;
+        $('.acc-msg').textContent = err.message;
+        $('.acc-msg').className = 'acc-msg err';
+      });
+    }
     if (b.dataset.acc === 'forgot') {
       setMode('forgot');
       $('#acc-email').focus();
@@ -179,6 +216,7 @@ export function openAuthModal(tab = 'login', notice = '') {
     const username = $('#acc-username').value.trim();
     const missing = mode === 'forgot' ? (!email ? 'Digite o seu e-mail.' : '')
       : mode === 'reset' ? (!password ? 'Digite a nova senha.' : '')
+      : mode === 'username' ? (!username ? 'Digite um nome de usuário.' : '')
         : (!email || !password ? 'Preencha e-mail e senha.' : '');
     if (missing) {
       msg.textContent = missing;
@@ -202,6 +240,9 @@ export function openAuthModal(tab = 'login', notice = '') {
         await platform.requestPasswordReset(email);
         msg.textContent = `Pronto! Se existir uma conta com ${email}, enviamos um link para criar uma senha nova. Confira também o spam.`;
         msg.className = 'acc-msg ok';
+      } else if (mode === 'username') {
+        await platform.claimUsername(username);
+        close();
       } else if (mode === 'reset') {
         await platform.updatePassword(password);
         $('.acc-password').hidden = true;
@@ -224,5 +265,5 @@ export function openAuthModal(tab = 'login', notice = '') {
     }
   });
 
-  ({ signup: $('#acc-username'), reset: $('#acc-password') }[mode] || $('#acc-email')).focus();
+  ({ signup: $('#acc-username'), username: $('#acc-username'), reset: $('#acc-password') }[mode] || $('#acc-email')).focus();
 }

@@ -30,7 +30,20 @@ export function createFakeSupabase() {
       fire('SIGNED_IN');
       return { data: { user, session }, error: null };
     },
+    _uid: () => session?.user?.id,
     async signOut() { session = null; fire('SIGNED_OUT'); return { error: null }; },
+    oauthRequests: [],
+    async signInWithOAuth(args) { auth.oauthRequests.push(args); return { data: {}, error: null }; },
+    // Simula a volta do Google: conta nova, sem nome de usuário.
+    googleReturn({ email, full_name }) {
+      let user = users.find((u) => u.email === email);
+      if (!user) {
+        user = { id: `user-${++seq}`, email, password: null, user_metadata: { full_name } };
+        users.push(user);
+      }
+      session = { user };
+      fire('SIGNED_IN');
+    },
     resetRequests: [],
     async resetPasswordForEmail(email, opts) { auth.resetRequests.push({ email, ...opts }); return { data: {}, error: null }; },
     async updateUser({ password }) {
@@ -98,6 +111,16 @@ export function createFakeSupabase() {
   async function rpc(name, args) {
     if (name === 'site_username_available') {
       return { data: !db.site_profiles.some((p) => p.username.toLowerCase() === args.name.toLowerCase()), error: null };
+    }
+    if (name === 'site_claim_username') {
+      const uid = auth._uid();
+      if (!uid) return { data: null, error: { message: 'not_authenticated' } };
+      if (db.site_profiles.some((p) => p.id === uid)) return { data: null, error: { message: 'already_has_username' } };
+      if (db.site_profiles.some((p) => p.username.toLowerCase() === args.name.toLowerCase())) {
+        return { data: null, error: { message: 'username_taken' } };
+      }
+      db.site_profiles.push({ id: uid, username: args.name });
+      return { data: args.name, error: null };
     }
     return { data: null, error: { message: 'rpc desconhecida' } };
   }

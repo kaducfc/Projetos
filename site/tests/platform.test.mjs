@@ -180,3 +180,35 @@ test('esqueci minha senha: pede o link e troca a senha', async () => {
   assert.equal(platform.getUser().username, 'senha_teste');
   await platform.signOut();
 });
+
+test('login com Google: pede o nome de usuário no primeiro acesso', async () => {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await platform.signUp({ email: 'ocupado@example.com', password: 'segredo123', username: 'Faker' });
+  await platform.signOut();
+
+  await platform.signInWithGoogle();
+  assert.equal(sb.auth.oauthRequests[0].provider, 'google');
+
+  sb.auth.googleReturn({ email: 'joao@gmail.com', full_name: 'João Pé' });
+  await tick(); await tick();
+  const u = platform.getUser();
+  assert.equal(u.needsUsername, true);
+  assert.equal(u.suggestedUsername, 'JoaoPe');
+
+  await assert.rejects(platform.claimUsername('a!'), /3 a 20/);
+  await assert.rejects(platform.claimUsername('faker'), /já está em uso/);
+  await platform.claimUsername('JoaoPe');
+  assert.equal(platform.getUser().username, 'JoaoPe');
+  assert.equal(platform.getUser().needsUsername, undefined);
+
+  // Na próxima vez, já entra com o nome salvo.
+  await platform.signOut();
+  sb.auth.googleReturn({ email: 'joao@gmail.com', full_name: 'João Pé' });
+  await tick(); await tick();
+  assert.equal(platform.getUser().username, 'JoaoPe');
+  assert.equal(platform.getUser().needsUsername, undefined);
+  await platform.signOut();
+});

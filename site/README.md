@@ -13,7 +13,8 @@ site/
 │   └── account.css
 ├── jogos/
 │   └── carreira-no-rift/                # primeiro jogo
-├── supabase/migrations/0001_site_accounts.sql
+├── supabase/migrations/   # 0001 contas, 0002 login com Google
+├── supabase/email-templates/  # e-mails do Supabase em português
 └── tests/             # testes do platform.js com um Supabase simulado
 ```
 
@@ -56,6 +57,12 @@ npm test   # testes do sistema de contas
 3. **Authentication → URL Configuration:** em **Site URL**, coloque o
    endereço onde o site vai ficar (ex.: `https://kaducfc.github.io/Projetos/arcade/`).
    O link do e-mail de confirmação leva para lá.
+
+4. **Login com Google:** rode também `supabase/migrations/0002_google_login.sql`.
+   Quem entra pelo Google escolhe o nome de usuário no primeiro acesso
+   (função `site_claim_username`). No Google Cloud, crie um cliente OAuth
+   "Web application" com o redirect `https://<projeto>.supabase.co/auth/v1/callback`
+   e cole o Client ID e o Client Secret em **Authentication → Sign In / Providers → Google**.
 
 ## Aviso de fã e doações
 
