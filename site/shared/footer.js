@@ -1,5 +1,14 @@
-// Rodapé do site (hub e jogos): aviso de projeto de fã e doações.
+// Rodapé do site (hub, jogos e páginas institucionais): aviso curto de
+// projeto de fã e links para Quem somos, Privacidade e Termos.
 import { DONATION_URL, SITE_NAME } from './config.js';
+
+// Links a partir da raiz do domínio: o mesmo rodapé serve em qualquer pasta.
+// Na versão em arquivo único (fora do site) não há para onde apontar.
+const LINKS = [
+  ['/sobre/', 'Quem somos'],
+  ['/privacidade/', 'Privacidade'],
+  ['/termos/', 'Termos de uso'],
+];
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -10,15 +19,17 @@ export function mountSiteFooter(el) {
   const donate = DONATION_URL
     ? `<a class="sf-donate" href="${esc(DONATION_URL)}" target="_blank" rel="noopener">♥ Apoiar o projeto</a>`
     : '';
+  const links = globalThis.__SITE_OFFLINE
+    ? ''
+    : `<nav class="sf-links" aria-label="Sobre o site">${LINKS.map(([href, label]) => `<a href="${href}">${label}</a>`).join('')}</nav>`;
   el.innerHTML = `
     <div class="sf-inner">
       <div class="sf-main">
         <p class="sf-title">${esc(SITE_NAME)} · feito por fã, para fãs</p>
-        <p>O ${esc(SITE_NAME)} é um projeto de fã, <b>gratuito e sem fins lucrativos</b>. Não tem vínculo nem aprovação
-          da Riot Games, das ligas (CBLOL, LCK, LPL, LEC, LCS) ou dos times citados. League of Legends é marca da
-          Riot Games, Inc.; nomes e logos de times e ligas pertencem aos seus donos.</p>
-        <p>Os jogos são e continuarão grátis. As <b>doações são opcionais</b> e servem só para pagar a manutenção
-          (servidor e domínio) e manter o site no ar. Doar não dá nenhuma vantagem nos jogos.</p>
+        <p>Projeto de fã, <b>gratuito e sem fins lucrativos</b>. Sem vínculo nem aprovação da Riot Games,
+          das ligas ou dos times citados. League of Legends é marca da Riot Games, Inc.; nomes e logos
+          de times e ligas pertencem aos seus donos.</p>
+        ${links}
       </div>
       ${donate}
     </div>`;

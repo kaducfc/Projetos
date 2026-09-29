@@ -10,6 +10,9 @@ export const SITE_NAME = 'Rift Arcade';
 export const SUPABASE_URL = 'https://ixmtnizxirmmcpwdzoeu.supabase.co';
 export const SUPABASE_ANON_KEY = 'sb_publishable_gA7cL3RGWOnuLqwrlTGL5w_eMigpxdn';
 
+// E-mail de contato mostrado nas páginas de privacidade, termos e "Quem somos".
+export const CONTACT_EMAIL = 'riftarcadeoficial@gmail.com';
+
 // Link de doação (Pix, Ko-fi, Livepix…). Vazio = botão "Apoiar" escondido.
 // As doações são opcionais, só para manter o site no ar, e não dão vantagem
 // nenhuma nos jogos.

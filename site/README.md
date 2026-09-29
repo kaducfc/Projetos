@@ -64,14 +64,13 @@ npm test   # testes do sistema de contas
    "Web application" com o redirect `https://<projeto>.supabase.co/auth/v1/callback`
    e cole o Client ID e o Client Secret em **Authentication → Sign In / Providers → Google**.
 
-## Aviso de fã e doações
+## Aviso de fã, páginas institucionais e doações
 
-O rodapé (`shared/footer.js`) aparece no hub e em todos os jogos. Ele diz que
-o site é um projeto de fã, gratuito e sem fins lucrativos, sem vínculo com a
-Riot Games, as ligas ou os times, e que as doações são opcionais e servem só
-para a manutenção (servidor e domínio), sem vantagem nos jogos. Versões
-curtas do aviso aparecem na criação do jogador, no relatório da
-aposentadoria e na janela de login.
+O rodapé (`shared/footer.js`) aparece no hub e em todos os jogos, com o aviso
+curto de projeto de fã e links para **Quem somos** (`sobre/`),
+**Privacidade** (`privacidade/`) e **Termos de uso** (`termos/`). O texto
+completo sobre o projeto e as doações fica em `sobre/`. O e-mail de contato
+dessas páginas vem de `CONTACT_EMAIL` no `shared/config.js`.
 
 Para mostrar o botão **"Apoiar o projeto"**, coloque o link (Pix, Ko-fi,
 Livepix…) em `DONATION_URL` no `shared/config.js`. Vazio, o botão some.
