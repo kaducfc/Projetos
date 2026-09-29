@@ -63,4 +63,6 @@ test('campeão do dia e estatísticas', () => {
   assert.equal(computeStats({ 0: { tries: 3, won: true } }, 2).streak, 0);
   const t = shareText({ name: 'Jogo', number: 1, guesses: [get('Pantheon'), get('Leona')], answer: get('Leona'), won: true });
   assert.equal(t, 'Jogo #1 2/8\n\n⬆️🟥🟩🟨🟥🟩🟩\n🟩🟩🟩🟩🟩🟩🟩');
+  const th = shareText({ name: 'Jogo', number: 1, guesses: [get('Leona')], answer: get('Leona'), won: true, hint: true });
+  assert.equal(th.split('\n')[0], 'Jogo #1 2/8 💡'); // a dica gasta uma tentativa
 });

@@ -105,8 +105,10 @@ export function computeStats(history, today) {
   };
 }
 
-export function shareText({ name, number, guesses, answer, won, url }) {
+// A dica conta como tentativa (aparece como 💡 no fim).
+export function shareText({ name, number, guesses, answer, won, hint = false, url }) {
   const icon = { ok: '🟩', part: '🟨', miss: '🟥' };
   const rows = guesses.map((g) => compare(g, answer).map((r) => (r.arrow ? (r.arrow === 'up' ? '⬆️' : '⬇️') : icon[r.state])).join(''));
-  return `${name} #${number} ${won ? guesses.length : 'X'}/${MAX_TRIES}\n\n${rows.join('\n')}${url ? `\n\n${url}` : ''}`;
+  const used = guesses.length + (hint ? 1 : 0);
+  return `${name} #${number} ${won ? used : 'X'}/${MAX_TRIES}${hint ? ' 💡' : ''}\n\n${rows.join('\n')}${url ? `\n\n${url}` : ''}`;
 }

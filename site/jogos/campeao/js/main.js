@@ -57,7 +57,9 @@ function loadSave() {
 }
 const persist = (urgent = false) => platform.writeSave(GAME_ID, save, { urgent });
 const won = () => save.guesses.includes(answer.nome);
-const finished = () => won() || save.guesses.length >= MAX_TRIES;
+// A dica gasta uma tentativa.
+const used = () => save.guesses.length + (save.hint ? 1 : 0);
+const finished = () => won() || used() >= MAX_TRIES;
 const labelOf = (key) => COLUMNS.find((c) => c.key === key)?.label || key;
 
 // ------------------------------------------------------------------ tela
@@ -86,7 +88,7 @@ function cellHtml(col, c, res, i) {
 function render({ fresh = false } = {}) {
   const done = finished();
   const ok = won();
-  const n = save.guesses.length;
+  const n = used();
   const rows = save.guesses.slice().reverse().map((name, idx) => {
     const c = byName.get(name);
     const res = compare(c, answer);
@@ -97,7 +99,7 @@ function render({ fresh = false } = {}) {
   }).join('');
   const hint = save.hint
     ? `<div class="hint open">Dica: <span>${esc(labelOf(save.hint))}</span> <b>${esc(formatValue(save.hint, answer))}</b></div>`
-    : '<button type="button" class="hint-btn" data-act="hint">💡 Pedir dica</button>';
+    : (MAX_TRIES - n > 1 ? '<button type="button" class="hint-btn" data-act="hint">💡 Pedir dica (gasta 1 tentativa)</button>' : '');
   const left = MAX_TRIES - n;
   app.innerHTML = `
     <header class="adv-head">
@@ -186,10 +188,10 @@ function guess(name) {
     toast('Você já tentou esse campeão');
     return;
   }
-  if (!save.guesses.length) platform.track('game_start', GAME_ID, { day: today });
+  if (!used()) platform.track('game_start', GAME_ID, { day: today });
   save.guesses.push(c.nome);
   const done = finished();
-  if (done) save.history = { ...save.history, [today]: { tries: save.guesses.length, won: won() } };
+  if (done) save.history = { ...save.history, [today]: { tries: used(), won: won() } };
   persist(done);
   sel = -1;
   render({ fresh: true });
@@ -197,7 +199,7 @@ function guess(name) {
 }
 
 function finish() {
-  const tries = save.guesses.length;
+  const tries = used();
   const ok = won();
   platform.track('game_end', GAME_ID, { day: today, won: ok, tries, hint: Boolean(save.hint), campeao: answer.nome });
   platform.recordResult(GAME_ID, {
@@ -213,12 +215,14 @@ function finish() {
 // Dica (uma por dia, a qualquer momento): confirma uma característica que
 // ainda não ficou verde, sorteada entre as que faltam.
 function useHint() {
-  if (save.hint || finished()) return;
+  // Não deixa a dica gastar a última tentativa.
+  if (save.hint || finished() || MAX_TRIES - used() <= 1) return;
   const key = pickHint(save.guesses.map((n) => byName.get(n)), answer);
   if (!key) {
     toast('Todas as características já estão confirmadas');
     return;
   }
+  if (!used()) platform.track('game_start', GAME_ID, { day: today });
   save.hint = key;
   persist();
   render();
@@ -266,7 +270,7 @@ function openHelp() {
       (corpo a corpo ou à distância). Alguns campeões têm mais de uma posição, classe ou espécie.</p>
     <p class="help-note">Você tem ${MAX_TRIES} tentativas. Só valem nomes de campeões: comece a digitar e escolha
       na lista. Uma vez por dia, a qualquer momento, dá para pedir uma dica, que revela uma característica
-      que você ainda não acertou. Um campeão novo aparece todo dia à meia-noite (horário de Brasília), o mesmo para todo mundo.</p>`,
+      que você ainda não acertou. A dica gasta uma tentativa. Um campeão novo aparece todo dia à meia-noite (horário de Brasília), o mesmo para todo mundo.</p>`,
   { onClose: () => { try { localStorage.setItem(SEEN_HELP, '1'); } catch { /* sem storage */ } } });
 }
 
@@ -274,7 +278,7 @@ function openStats() {
   const st = computeStats(save.history, today);
   const max = Math.max(1, ...st.dist, st.losses);
   const done = finished();
-  const cur = won() ? save.guesses.length : null;
+  const cur = won() ? used() : null;
   const bar = (label, n, now) => `<div class="dist-row"><span>${label}</span><span><i class="bar${now ? ' now' : ''}" style="width:${Math.max(8, (n / max) * 100)}%">${n}</i></span></div>`;
   openModal(`
     <h2>Progresso</h2>
@@ -294,7 +298,7 @@ function openStats() {
 
 async function share() {
   const text = shareText({
-    name: NAME, number: today + 1, guesses: save.guesses.map((n) => byName.get(n)), answer, won: won(), url: 'riftarcade.com.br/jogos/campeao',
+    name: NAME, number: today + 1, guesses: save.guesses.map((n) => byName.get(n)), answer, won: won(), hint: Boolean(save.hint), url: 'riftarcade.com.br/jogos/campeao',
   });
   try {
     if (navigator.share && matchMedia('(pointer: coarse)').matches) await navigator.share({ text });

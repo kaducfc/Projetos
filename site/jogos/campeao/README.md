@@ -6,6 +6,7 @@ as características comparadas com as do campeão do dia. São 8 tentativas,
 só com nomes de campeões (a lista de sugestões mostra os que começam com o
 que foi digitado). Uma vez por dia, a qualquer momento, o jogador pode pedir
 uma dica: uma característica que ainda não ficou verde é revelada (sorteada).
+A dica gasta uma tentativa e não pode ser pedida na última.
 
 ## Características (colunas)
 
