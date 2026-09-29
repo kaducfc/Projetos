@@ -1,10 +1,6 @@
 // Rodapé do site (hub e jogos): aviso de projeto de fã e doações.
 import { DONATION_URL, SITE_NAME } from './config.js';
 
-// Frases curtas para reaproveitar em outros pontos (criação, login, relatório).
-export const FAN_NOTICE = 'Projeto de fã, gratuito e sem fins lucrativos. Sem vínculo com a Riot Games, ligas ou times.';
-export const DONATION_NOTICE = 'Doações são opcionais e servem só para manter o site no ar. Não dão vantagem nos jogos.';
-
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[c]));

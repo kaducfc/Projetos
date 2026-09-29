@@ -8,7 +8,6 @@ import {
 } from '../engine/career.js';
 import { teamBadge, trophySvg, trophyArt, eventScene, ovrShield, stars } from './art.js';
 import { esc, fmtKda, fmtMoney, fmtSalary } from '../util.js';
-import { FAN_NOTICE, DONATION_NOTICE } from '../../../../shared/footer.js';
 
 // Texto de evento: escolhe a variação da rota e troca os placeholders.
 const fill = (text, state) => {
@@ -527,7 +526,6 @@ function retiredPanel(state) {
     }).join('')}</div>
     <h4 class="sub-title">Títulos e prêmios</h4>
     ${Object.keys(grouped).length ? `<div class="season-trophies">${Object.values(grouped).map(({ t, n }) => `<div class="st-item">${trophyArt(t, 40)}<div><b>${n > 1 ? `${n}× ` : ''}${esc(t.name)}</b><small>${t.kind === 'award' ? 'Prêmio individual' : t.kind === 'intl' ? 'Internacional' : 'Liga'}</small></div></div>`).join('')}</div>` : '<p class="muted">Nenhum título na carreira.</p>'}
-    <p class="fan-note">${FAN_NOTICE} ${DONATION_NOTICE}</p>
     <pre class="share" id="share-text">${esc(careerSummaryText(state))}</pre>
     <div class="actions">
       <button class="btn-primary" data-act="copy-summary">Copiar resumo</button>
