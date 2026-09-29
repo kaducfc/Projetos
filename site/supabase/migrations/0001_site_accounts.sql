@@ -55,6 +55,15 @@ alter table public.site_profiles enable row level security;
 alter table public.site_game_saves enable row level security;
 alter table public.site_game_results enable row level security;
 
+-- Permissões explícitas da API (necessárias quando o projeto foi criado com
+-- "Automatically expose new tables" desligado). O RLS acima continua
+-- limitando cada conta às próprias linhas.
+grant usage on schema public to anon, authenticated;
+grant select on public.site_profiles to anon, authenticated;
+grant update on public.site_profiles to authenticated;
+grant select, insert, update, delete on public.site_game_saves to authenticated;
+grant select, insert, delete on public.site_game_results to authenticated;
+
 drop policy if exists "site_profiles leitura publica" on public.site_profiles;
 create policy "site_profiles leitura publica" on public.site_profiles
   for select using (true);
