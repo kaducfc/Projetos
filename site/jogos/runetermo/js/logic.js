@@ -4,11 +4,10 @@
 export const MAX_TRIES = 6;
 // Dia 1 do jogo. A palavra troca à meia-noite de Brasília.
 export const FIRST_DAY = '2026-09-29';
-const TZ = 'America/Sao_Paulo';
 
 // "Kai'Sa" → "KAISA"; "Poção" → "POCAO" (acentos e símbolos não contam).
 export function norm(s) {
-  return String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z]/g, '');
+  return String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z]/g, '');
 }
 
 // Letras para mostrar nas peças, com acento: "Poção" → ["P","O","Ç","Ã","O"].
@@ -36,32 +35,14 @@ export function evaluate(guess, answer) {
   return res;
 }
 
-// Data de hoje em Brasília, "AAAA-MM-DD".
-export function brDate(now = new Date()) {
-  try {
-    return now.toLocaleDateString('sv-SE', { timeZone: TZ });
-  } catch {
-    return new Date(now.getTime() - 3 * 3600e3).toISOString().slice(0, 10);
-  }
-}
+import { brDate, dayIndex as dayIndexFrom, msToNextDay, pickForDay } from '../../../shared/diario.js';
 
-const dayMs = (iso) => {
-  const [y, m, d] = iso.split('-').map(Number);
-  return Date.UTC(y, m - 1, d);
-};
+export { brDate, msToNextDay };
 
 // Número do dia desde o lançamento (0 = primeiro dia).
-export function dayIndex(now = new Date()) {
-  return Math.max(0, Math.round((dayMs(brDate(now)) - dayMs(FIRST_DAY)) / 864e5));
-}
+export const dayIndex = (now = new Date()) => dayIndexFrom(FIRST_DAY, now);
 
-export const answerFor = (index, answers) => answers[((index % answers.length) + answers.length) % answers.length];
-
-// Tempo até a próxima meia-noite de Brasília (UTC−3, sem horário de verão).
-export function msToNextDay(now = new Date()) {
-  const next = dayMs(brDate(now)) + 864e5 + 3 * 3600e3;
-  return Math.max(0, next - now.getTime());
-}
+export const answerFor = pickForDay;
 
 // history: { [dia]: { tries, won } }
 export function computeStats(history, today) {

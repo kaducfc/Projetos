@@ -54,6 +54,15 @@ export const GAMES = [
     scoreLabel: 'Pontos',
   },
   {
+    id: 'campeao',
+    name: 'Adivinhe o Campeão',
+    tagline: 'Um campeão por dia. Descubra pelas pistas: região, posição, classe, espécie e mais.',
+    kind: 'Campeão do dia',
+    path: 'jogos/campeao/',
+    status: 'soon', // em teste: a página já funciona pelo link direto
+    scoreLabel: 'Pontos',
+  },
+  {
     id: 'quiz-do-rift',
     name: 'Quiz do Rift',
     tagline: 'Perguntas rápidas sobre campeões, times e a história do cenário.',

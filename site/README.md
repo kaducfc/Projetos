@@ -13,7 +13,8 @@ site/
 │   └── account.css
 ├── jogos/
 │   ├── carreira-no-rift/                # simulador de carreira
-│   └── runetermo/                       # palavra do dia (estilo Termo)
+│   ├── runetermo/                       # palavra do dia (estilo Termo)
+│   └── campeao/                         # adivinhe o campeão do dia
 ├── supabase/migrations/   # 0001 contas, 0002 login com Google
 ├── supabase/email-templates/  # e-mails do Supabase em português
 └── tests/             # testes do platform.js com um Supabase simulado
