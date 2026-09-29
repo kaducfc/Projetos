@@ -158,5 +158,5 @@ grant execute on function public.site_admin_stats(int) to authenticated;
 -- Quem pode ver o painel: troque o e-mail se precisar e rode de novo.
 -- ---------------------------------------------------------------
 insert into public.site_admins (user_id)
-select id from auth.users where lower(email) = lower('kaducfc@hotmail.com')
+select id from auth.users where lower(email) = lower('riftarcadeoficial@gmail.com')
 on conflict do nothing;
