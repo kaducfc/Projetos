@@ -4,7 +4,7 @@ import * as platform from './platform.js';
 import { SITE_NAME } from './config.js';
 
 // Logo para fundo escuro, a partir da raiz do domínio (serve em qualquer página).
-const LOGO_URL = '/shared/assets/marca/logo-fundo-escuro.png';
+const LOGO_URL = '/shared/assets/marca/logo-barra.png';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -14,7 +14,7 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
   el.classList.add('site-bar');
   const paint = () => {
     const u = platform.getUser();
-    const logo = `<img class="sb-logo" src="${LOGO_URL}" alt="${esc(SITE_NAME)}" width="94" height="36" />`;
+    const logo = `<img class="sb-logo" src="${LOGO_URL}" alt="${esc(SITE_NAME)}" width="96" height="36" />`;
     let brand = '<span></span>';
     if (showBrand && platform.isStandalone()) brand = `<span class="sb-brand">${esc(SITE_NAME)}</span>`;
     else if (showBrand && hubHref) brand = `<a class="sb-brand" href="${hubHref}" title="Voltar ao início"><span aria-hidden="true">←</span>${logo}</a>`;

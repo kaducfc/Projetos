@@ -24,7 +24,7 @@ export function mountSiteFooter(el) {
     : `<nav class="sf-links" aria-label="Sobre o site">${LINKS.map(([href, label]) => `<a href="${href}">${label}</a>`).join('')}</nav>`;
   const mascot = globalThis.__SITE_OFFLINE
     ? ''
-    : `<img class="sf-mascot" src="/shared/assets/marca/mascote.png" alt="" width="28" height="28" />`;
+    : `<img class="sf-mascot" src="/shared/assets/marca/mascote-120.png" alt="" width="28" height="28" />`;
   el.innerHTML = `
     <div class="sf-inner">
       <div class="sf-main">
