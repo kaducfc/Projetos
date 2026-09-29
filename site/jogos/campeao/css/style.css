@@ -67,6 +67,10 @@ button, input { font-family: var(--sans); }
 .hint { padding: 8px 12px; border: 1px dashed var(--line-2); border-radius: 4px; font-size: 13px; color: var(--muted); }
 .hint.open { border-style: solid; border-color: var(--gold); color: var(--text); }
 .hint.open b { color: var(--gold-2); font-size: 15px; }
+.hint.open span { color: var(--muted); }
+.hint-btn { padding: 8px 14px; background: transparent; color: var(--gold-2); border: 1px dashed var(--gold); border-radius: 4px; font-weight: 800; font-size: 13px; cursor: pointer; }
+.hint-btn:hover { background: rgba(217, 168, 43, 0.1); border-style: solid; }
+.win.lost { border-color: var(--miss); background: rgba(163, 53, 44, 0.1); }
 
 /* Vitória */
 .win { width: 100%; max-width: 620px; padding: 16px; border: 1px solid var(--ok); border-radius: 6px; background: rgba(31, 154, 83, 0.08); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
@@ -98,7 +102,9 @@ button, input { font-family: var(--sans); }
 .cell.ok { background: var(--ok); }
 .cell.part { background: var(--part); color: #140f02; }
 .cell.miss { background: var(--miss); }
-.cell .arrow { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(0, 0, 0, 0.28); font-size: 64px; line-height: 1; pointer-events: none; }
+.cell .arrow { position: absolute; inset: 6px 24%; color: rgba(0, 0, 0, 0.32); pointer-events: none; }
+.cell .arrow svg { width: 100%; height: 100%; display: block; }
+.cell .arrow.down svg { transform: rotate(180deg); }
 .cell .val { position: relative; }
 .cell.year { font-size: 17px; }
 .row-new .cell { animation: flip 0.45s ease both; animation-delay: calc(var(--i) * 140ms); }

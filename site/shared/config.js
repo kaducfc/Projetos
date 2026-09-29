@@ -55,26 +55,12 @@ export const GAMES = [
   },
   {
     id: 'campeao',
-    name: 'Adivinhe o Campeão',
+    name: 'Campeão Oculto',
     tagline: 'Um campeão por dia. Descubra pelas pistas: região, posição, classe, espécie e mais.',
     kind: 'Campeão do dia',
     path: 'jogos/campeao/',
-    status: 'soon', // em teste: a página já funciona pelo link direto
+    status: 'live',
     scoreLabel: 'Pontos',
-  },
-  {
-    id: 'quiz-do-rift',
-    name: 'Quiz do Rift',
-    tagline: 'Perguntas rápidas sobre campeões, times e a história do cenário.',
-    kind: 'Quiz',
-    status: 'soon',
-  },
-  {
-    id: 'adivinhe-o-pro',
-    name: 'Adivinhe o Pro',
-    tagline: 'Descubra o jogador profissional pelas dicas: time, rota, país e títulos.',
-    kind: 'Adivinhação diária',
-    status: 'soon',
   },
 ];
 

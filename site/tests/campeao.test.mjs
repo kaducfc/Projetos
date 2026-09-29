@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { compare, search, computeStats, championFor, dayIndex, shareText, COLUMNS } from '../jogos/campeao/js/logic.js';
+import { compare, search, exactMatch, pickHint, computeStats, championFor, dayIndex, shareText, COLUMNS } from '../jogos/campeao/js/logic.js';
 
 const data = JSON.parse(readFileSync(new URL('../jogos/campeao/dados/campeoes.json', import.meta.url)));
 const get = (n) => data.campeoes.find((c) => c.nome === n);
@@ -28,23 +28,39 @@ test('compara características: igual, parcial e seta do ano', () => {
   assert.equal(compare(get('Locke'), get('Aatrox'))[0].arrow, 'down');
 });
 
-test('busca ignora acentos e símbolos', () => {
+test('busca: só nomes que começam com o texto; aceita só nome completo', () => {
+  assert.deepEqual(search('nu', data.campeoes).map((c) => c.nome), ['Nunu e Willump']);
+  assert.ok(search('n', data.campeoes).every((c) => c.nome.startsWith('N')));
   assert.equal(search('kais', data.campeoes)[0].nome, "Kai'Sa");
-  assert.equal(search('nunu', data.campeoes)[0].nome, 'Nunu e Willump');
-  assert.deepEqual(search('drmun', data.campeoes).map((c) => c.nome), ['Dr. Mundo']);
+  assert.deepEqual(search('mundo', data.campeoes), []); // não procura no meio do nome
   assert.ok(!search('ahr', data.campeoes, new Set(['Ahri'])).length);
+  assert.equal(exactMatch("kai'sa", data.campeoes).nome, "Kai'Sa");
+  assert.equal(exactMatch('KAISA', data.campeoes).nome, "Kai'Sa");
+  assert.equal(exactMatch('kai', data.campeoes), null);
+});
+
+test('dica confirma uma característica que ainda não está verde', () => {
+  const ans = get('Leona');
+  // Pantheon já deixou Região, Espécie e Alcance verdes.
+  const seen = new Set();
+  for (let i = 0; i < 40; i++) seen.add(pickHint([get('Pantheon')], ans, () => i / 40));
+  assert.deepEqual([...seen].sort(), ['ano', 'classes', 'genero', 'posicoes'].sort());
+  assert.ok(COLUMNS.some((c) => c.key === pickHint([], ans)));
+  assert.equal(pickHint([ans], ans), null);
 });
 
 test('campeão do dia e estatísticas', () => {
   assert.equal(dayIndex(new Date('2026-09-30T02:59:00Z')), 0);
   assert.equal(championFor(0, data).nome, data.ordem[0]);
-  const s = computeStats({ 0: 3, 1: 5, 3: 1, 4: 12 }, 4);
-  assert.equal(s.played, 4);
-  assert.equal(s.avg, 5.25);
+  const s = computeStats({ 0: { tries: 3, won: true }, 1: { tries: 5, won: true }, 3: { tries: 1, won: true }, 4: { tries: 8, won: false }, 5: 2 }, 5);
+  assert.equal(s.played, 5);
+  assert.equal(s.wins, 4);
+  assert.equal(s.losses, 1);
+  assert.equal(s.avg, 2.75);
   assert.equal(s.best, 2);
-  assert.equal(s.streak, 2);
-  assert.deepEqual(s.dist, [1, 0, 1, 0, 1, 0, 1]);
-  assert.equal(computeStats({ 0: 3 }, 2).streak, 0);
-  const t = shareText({ name: 'Jogo', number: 1, guesses: [get('Pantheon'), get('Leona')], answer: get('Leona') });
-  assert.equal(t, 'Jogo #1: acertei em 2 tentativas\n\n⬆️🟥🟩🟨🟥🟩🟩\n🟩🟩🟩🟩🟩🟩🟩');
+  assert.equal(s.streak, 1);
+  assert.deepEqual(s.dist, [1, 1, 1, 0, 1, 0, 0, 0]);
+  assert.equal(computeStats({ 0: { tries: 3, won: true } }, 2).streak, 0);
+  const t = shareText({ name: 'Jogo', number: 1, guesses: [get('Pantheon'), get('Leona')], answer: get('Leona'), won: true });
+  assert.equal(t, 'Jogo #1 2/8\n\n⬆️🟥🟩🟨🟥🟩🟩\n🟩🟩🟩🟩🟩🟩🟩');
 });

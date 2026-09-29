@@ -1,7 +1,7 @@
-// Adivinhe o Campeão: um campeão de LoL por dia, igual para todos, descoberto
+// Campeão Oculto: um campeão de LoL por dia, igual para todos, descoberto
 // pelas pistas de cada tentativa.
 import {
-  COLUMNS, DIST, compare, search, fold, computeStats, championFor, dayIndex, shareText,
+  COLUMNS, MAX_TRIES, compare, search, exactMatch, pickHint, formatValue, computeStats, championFor, dayIndex, shareText,
 } from './logic.js';
 import { msToNextDay, fmtCountdown } from '../../../shared/diario.js';
 import * as platform from '../../../shared/platform.js';
@@ -10,9 +10,8 @@ import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 
 const GAME_ID = 'campeao';
-const NAME = gameById(GAME_ID)?.name || 'Adivinhe o Campeão';
+const NAME = gameById(GAME_ID)?.name || 'Campeão Oculto';
 const SEEN_HELP = 'campeao.ajuda';
-const HINT_AT = 6; // tentativas para liberar a dica (primeira letra)
 // Ícones dos campeões: Data Dragon, o CDN oficial da Riot (uso permitido para
 // projetos de fã). O endereço leva a versão atual do jogo, buscada ao abrir.
 const DDRAGON = 'https://ddragon.leagueoflegends.com';
@@ -44,7 +43,7 @@ let answer = null;
 let save = { v: 1, day: today, guesses: [], history: {} };
 let modal = null;
 let timer = null;
-let sel = 0; // sugestão marcada na lista
+let sel = -1; // sugestão marcada com as setas do teclado (-1 = nenhuma)
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -52,24 +51,29 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
 
 function loadSave() {
   const s = platform.loadLocalSave(GAME_ID);
-  save = { v: 1, day: today, guesses: [], history: {}, ...(s && s.v === 1 ? s : {}) };
-  if (save.day !== today) save = { ...save, day: today, guesses: [] };
+  save = { v: 1, day: today, guesses: [], hint: null, history: {}, ...(s && s.v === 1 ? s : {}) };
+  if (save.day !== today) save = { ...save, day: today, guesses: [], hint: null };
   save.guesses = save.guesses.filter((n) => byName.has(n));
 }
 const persist = (urgent = false) => platform.writeSave(GAME_ID, save, { urgent });
 const won = () => save.guesses.includes(answer.nome);
+const finished = () => won() || save.guesses.length >= MAX_TRIES;
+const labelOf = (key) => COLUMNS.find((c) => c.key === key)?.label || key;
 
 // ------------------------------------------------------------------ tela
 
 const ICON_HELP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9.1 9a3 3 0 1 1 4.2 2.8c-.8.4-1.3 1.1-1.3 2v.7"/><circle cx="12" cy="18" r=".6" fill="currentColor"/></svg>';
 const ICON_STATS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20V12M10 20V5M15 20v-9M20 20v-5"/></svg>';
 
+// Seta cheia (haste + ponta), virada para baixo com CSS quando precisa.
+const ARROW = '<svg viewBox="0 0 40 60" preserveAspectRatio="none"><path d="M20 2 L38 26 H27 V58 H13 V26 H2 Z" fill="currentColor"/></svg>';
+
 const champIcon = (c) => `<span class="champ-ic" data-fallback="${esc(c.nome[0])}">${ddVersion ? `<img src="${iconUrl(c)}" alt="" loading="lazy" />` : esc(c.nome[0])}</span>`;
 
 function cellHtml(col, c, res, i) {
   const v = c[col.key];
   if (col.kind === 'year') {
-    const arrow = res.arrow ? `<span class="arrow" aria-hidden="true">${res.arrow === 'up' ? '▲' : '▼'}</span>` : '';
+    const arrow = res.arrow ? `<span class="arrow ${res.arrow}" aria-hidden="true">${ARROW}</span>` : '';
     const say = res.arrow ? (res.arrow === 'up' ? ', o campeão do dia é mais novo' : ', o campeão do dia é mais antigo') : '';
     return `<div class="cell year ${res.state}" style="--i:${i}" aria-label="${col.label}: ${v}${say}">${arrow}<span class="val">${v}</span></div>`;
   }
@@ -80,7 +84,8 @@ function cellHtml(col, c, res, i) {
 }
 
 function render({ fresh = false } = {}) {
-  const done = won();
+  const done = finished();
+  const ok = won();
   const n = save.guesses.length;
   const rows = save.guesses.slice().reverse().map((name, idx) => {
     const c = byName.get(name);
@@ -90,23 +95,24 @@ function render({ fresh = false } = {}) {
       ${COLUMNS.map((col, i) => cellHtml(col, c, res[i], i + 1)).join('')}
     </div>`;
   }).join('');
-  const hint = n >= HINT_AT || done
-    ? `<div class="hint open">Dica: o nome começa com <b>${esc(answer.nome[0])}</b></div>`
-    : `<div class="hint">Dica em ${HINT_AT - n} ${HINT_AT - n === 1 ? 'tentativa' : 'tentativas'}</div>`;
+  const hint = save.hint
+    ? `<div class="hint open">Dica: <span>${esc(labelOf(save.hint))}</span> <b>${esc(formatValue(save.hint, answer))}</b></div>`
+    : '<button type="button" class="hint-btn" data-act="hint">💡 Pedir dica</button>';
+  const left = MAX_TRIES - n;
   app.innerHTML = `
     <header class="adv-head">
       <div><button class="icon-btn" data-act="help" aria-label="Como jogar">${ICON_HELP}</button></div>
       <div class="adv-title">
         <p class="eyebrow">◆ Campeão do dia</p>
         <h1>${esc(NAME)}</h1>
-        <p class="sub">#${today + 1} · ${n} ${n === 1 ? 'tentativa' : 'tentativas'}</p>
+        <p class="sub">#${today + 1} · tentativa ${Math.min(n + (done ? 0 : 1), MAX_TRIES)} de ${MAX_TRIES}</p>
       </div>
       <div class="right"><button class="icon-btn" data-act="stats" aria-label="Estatísticas">${ICON_STATS}</button></div>
     </header>
-    ${done ? `<section class="win" aria-live="polite">
+    ${done ? `<section class="win${ok ? '' : ' lost'}" aria-live="polite">
         ${champIcon(answer)}
-        <div class="w-text"><p class="w-label">Você acertou</p><p class="w-name">${esc(answer.nome)}</p>
-          <p class="w-sub">em ${n} ${n === 1 ? 'tentativa' : 'tentativas'}</p></div>
+        <div class="w-text"><p class="w-label">${ok ? 'Você acertou' : 'O campeão era'}</p><p class="w-name">${esc(answer.nome)}</p>
+          <p class="w-sub">${ok ? `em ${n} ${n === 1 ? 'tentativa' : 'tentativas'}` : `As ${MAX_TRIES} tentativas acabaram.`}</p></div>
         <div class="w-next"><span>Próximo campeão em</span><b id="next-time">${fmtCountdown(msToNextDay())}</b></div>
         <div class="w-actions"><button class="btn" data-act="share">Compartilhar</button>
           <button class="btn btn-ghost" data-act="stats">Estatísticas</button></div>
@@ -115,7 +121,8 @@ function render({ fresh = false } = {}) {
         <button class="go" type="submit">Adivinhar</button>
         <ul class="suggest" id="suggest" role="listbox" hidden></ul>
       </form>
-      ${hint}`}
+      <div class="info"><span><b>${left}</b> ${left === 1 ? 'tentativa restante' : 'tentativas restantes'}</span>${hint}</div>`}
+    ${done && save.hint ? `<div class="info">${hint}</div>` : ''}
     ${n ? `<div class="table-scroll"><div class="grid" role="table" aria-label="Tentativas">
       <div class="th">Campeão</div>${COLUMNS.map((c) => `<div class="th">${c.label}</div>`).join('')}
       ${rows}
@@ -166,7 +173,7 @@ function renderSuggest() {
   const list = document.getElementById('suggest');
   if (!list) return;
   const items = suggestions();
-  sel = Math.min(sel, Math.max(0, items.length - 1));
+  if (sel >= items.length) sel = items.length - 1;
   list.hidden = !items.length;
   list.innerHTML = items.map((c, i) => `<li role="option" data-name="${esc(c.nome)}" class="${i === sel ? 'on' : ''}" aria-selected="${i === sel}">${champIcon(c)}${esc(c.nome)}</li>`).join('');
   fixIcons(list);
@@ -174,29 +181,47 @@ function renderSuggest() {
 
 function guess(name) {
   const c = byName.get(name);
-  if (!c || won()) return;
+  if (!c || finished()) return;
   if (save.guesses.includes(c.nome)) {
     toast('Você já tentou esse campeão');
     return;
   }
   if (!save.guesses.length) platform.track('game_start', GAME_ID, { day: today });
   save.guesses.push(c.nome);
-  const done = c.nome === answer.nome;
-  if (done) save.history = { ...save.history, [today]: save.guesses.length };
+  const done = finished();
+  if (done) save.history = { ...save.history, [today]: { tries: save.guesses.length, won: won() } };
   persist(done);
-  sel = 0;
+  sel = -1;
   render({ fresh: true });
   if (done) finish();
 }
 
 function finish() {
   const tries = save.guesses.length;
-  platform.track('game_end', GAME_ID, { day: today, won: true, tries, campeao: answer.nome });
+  const ok = won();
+  platform.track('game_end', GAME_ID, { day: today, won: ok, tries, hint: Boolean(save.hint), campeao: answer.nome });
   platform.recordResult(GAME_ID, {
-    score: Math.max(1, 11 - tries),
-    summary: { text: `#${today + 1} · ${answer.nome} · acertou em ${tries} ${tries === 1 ? 'tentativa' : 'tentativas'}`, day: today + 1, champion: answer.nome, tries },
+    score: ok ? MAX_TRIES + 1 - tries : 0,
+    summary: {
+      text: `#${today + 1} · ${answer.nome} · ${ok ? `acertou em ${tries}/${MAX_TRIES}` : `não acertou (X/${MAX_TRIES})`}`,
+      day: today + 1, champion: answer.nome, won: ok, tries,
+    },
   });
-  setTimeout(() => toast(tries === 1 ? 'De primeira! Lendário!' : 'Acertou!', 1800), 1300);
+  setTimeout(() => toast(ok ? (tries === 1 ? 'De primeira! Lendário!' : 'Acertou!') : `Era ${answer.nome}!`, 1800), 1300);
+}
+
+// Dica (uma por dia, a qualquer momento): confirma uma característica que
+// ainda não ficou verde, sorteada entre as que faltam.
+function useHint() {
+  if (save.hint || finished()) return;
+  const key = pickHint(save.guesses.map((n) => byName.get(n)), answer);
+  if (!key) {
+    toast('Todas as características já estão confirmadas');
+    return;
+  }
+  save.hint = key;
+  persist();
+  render();
 }
 
 // ------------------------------------------------------------------ janelas
@@ -239,31 +264,37 @@ function openHelp() {
     <h3>Características</h3>
     <p class="help-note">Ano de lançamento, gênero, região, posição (rota), classe, espécie e alcance
       (corpo a corpo ou à distância). Alguns campeões têm mais de uma posição, classe ou espécie.</p>
-    <p class="help-note">Depois de ${HINT_AT} tentativas aparece uma dica: a primeira letra do nome.
-      Um campeão novo aparece todo dia à meia-noite (horário de Brasília), o mesmo para todo mundo.</p>`,
+    <p class="help-note">Você tem ${MAX_TRIES} tentativas. Só valem nomes de campeões: comece a digitar e escolha
+      na lista. Uma vez por dia, a qualquer momento, dá para pedir uma dica, que revela uma característica
+      que você ainda não acertou. Um campeão novo aparece todo dia à meia-noite (horário de Brasília), o mesmo para todo mundo.</p>`,
   { onClose: () => { try { localStorage.setItem(SEEN_HELP, '1'); } catch { /* sem storage */ } } });
 }
 
 function openStats() {
   const st = computeStats(save.history, today);
-  const max = Math.max(1, ...st.dist);
+  const max = Math.max(1, ...st.dist, st.losses);
+  const done = finished();
   const cur = won() ? save.guesses.length : null;
+  const bar = (label, n, now) => `<div class="dist-row"><span>${label}</span><span><i class="bar${now ? ' now' : ''}" style="width:${Math.max(8, (n / max) * 100)}%">${n}</i></span></div>`;
   openModal(`
     <h2>Progresso</h2>
     <div class="stats-nums">
       <div><b>${st.played}</b><span>jogos</span></div>
-      <div><b>${st.avg == null ? '—' : st.avg.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}</b><span>média de tentativas</span></div>
-      <div><b>${st.streak}</b><span>dias seguidos</span></div>
+      <div><b>${st.pct}%</b><span>de vitórias</span></div>
+      <div><b>${st.streak}</b><span>sequência de vitórias</span></div>
       <div><b>${st.best}</b><span>melhor sequência</span></div>
     </div>
-    <h3>Acertos por número de tentativas</h3>
-    <div class="dist">${DIST.map((b, i) => `<div class="dist-row"><span>${b.label}</span><span><i class="bar${cur && b.test(cur) ? ' now' : ''}" style="width:${Math.max(8, (st.dist[i] / max) * 100)}%">${st.dist[i]}</i></span></div>`).join('')}</div>
-    ${won() ? '<p style="margin-top:16px"><button class="btn" data-act="share">Compartilhar resultado</button></p>' : ''}`);
+    <h3>Distribuição de tentativas</h3>
+    <div class="dist">
+      ${st.dist.map((n, i) => bar(i + 1, n, cur === i + 1)).join('')}
+      ${bar('💀', st.losses, done && !won())}
+    </div>
+    ${done ? '<p style="margin-top:16px"><button class="btn" data-act="share">Compartilhar resultado</button></p>' : ''}`);
 }
 
 async function share() {
   const text = shareText({
-    name: NAME, number: today + 1, guesses: save.guesses.map((n) => byName.get(n)), answer, url: 'riftarcade.com.br/jogos/campeao',
+    name: NAME, number: today + 1, guesses: save.guesses.map((n) => byName.get(n)), answer, won: won(), url: 'riftarcade.com.br/jogos/campeao',
   });
   try {
     if (navigator.share && matchMedia('(pointer: coarse)').matches) await navigator.share({ text });
@@ -288,22 +319,24 @@ function newDay() {
 }
 
 app.addEventListener('input', (e) => {
-  if (e.target.id === 'q') { sel = 0; renderSuggest(); }
+  if (e.target.id === 'q') { sel = -1; renderSuggest(); }
 });
 app.addEventListener('keydown', (e) => {
   if (e.target.id !== 'q') return;
   const items = suggestions();
   if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(items.length - 1, sel + 1); renderSuggest(); }
-  if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); renderSuggest(); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(-1, sel - 1); renderSuggest(); }
   if (e.key === 'Escape') document.getElementById('suggest').hidden = true;
 });
 app.addEventListener('submit', (e) => {
   e.preventDefault();
   const items = suggestions();
   const q = document.getElementById('q').value;
+  // Vale o nome completo digitado ou a opção marcada na lista.
+  const exact = exactMatch(q, data.campeoes);
   if (items[sel]) guess(items[sel].nome);
-  else if (save.guesses.some((n) => fold(n) === fold(q))) toast('Você já tentou esse campeão');
-  else if (q.trim()) toast('Campeão não encontrado');
+  else if (exact) guess(exact.nome);
+  else if (q.trim()) toast(items.length ? 'Escolha um campeão da lista' : 'Nenhum campeão com esse nome');
 });
 app.addEventListener('click', (e) => {
   const li = e.target.closest('.suggest li');
@@ -312,6 +345,7 @@ app.addEventListener('click', (e) => {
   if (a?.dataset.act === 'help') openHelp();
   if (a?.dataset.act === 'stats') openStats();
   if (a?.dataset.act === 'share') share();
+  if (a?.dataset.act === 'hint') useHint();
 });
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.guess')) { const l = document.getElementById('suggest'); if (l) l.hidden = true; }

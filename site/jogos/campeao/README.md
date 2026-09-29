@@ -1,9 +1,11 @@
-# Adivinhe o Campeão
+# Campeão Oculto
 
 Um campeão de League of Legends por dia, igual para todo mundo (troca à
 meia-noite de Brasília). O jogador digita campeões e cada tentativa mostra
-as características comparadas com as do campeão do dia. Tentativas
-ilimitadas; depois de 6, aparece a primeira letra do nome como dica.
+as características comparadas com as do campeão do dia. São 8 tentativas,
+só com nomes de campeões (a lista de sugestões mostra os que começam com o
+que foi digitado). Uma vez por dia, a qualquer momento, o jogador pode pedir
+uma dica: uma característica que ainda não ficou verde é revelada (sorteada).
 
 ## Características (colunas)
 
