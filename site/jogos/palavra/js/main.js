@@ -225,8 +225,8 @@ const exampleRow = (word, idx, cls) => `<div class="example">${[...word].map((ch
 function openHelp() {
   openModal(`
     <h2>Como jogar</h2>
-    <p>Descubra a palavra do dia em ${MAX_TRIES} tentativas. Todas as respostas são do universo de League of Legends:
-      campeões, regiões, itens, objetivos do mapa, feitiços, elos e termos do jogo.</p>
+    <p>Descubra a palavra do dia em ${MAX_TRIES} tentativas. Todas as respostas são nomes do universo de League of Legends:
+      campeões, regiões e lugares de Runeterra, itens, monstros do mapa e personagens da lore.</p>
     <p>A palavra do dia pode ter de 5 a 10 letras. Depois de cada tentativa, as peças mostram o quão perto você está.</p>
     ${exampleRow('NOXUS', 0, 'ok')}
     <p>A letra <b>N</b> está na palavra e no lugar certo.</p>

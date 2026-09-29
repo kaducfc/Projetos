@@ -1,8 +1,10 @@
 # Palavra do Rift
 
-Jogo da palavra do dia no estilo Termo, só com palavras do universo de
-League of Legends (campeões, regiões, itens, objetivos do mapa, feitiços,
-elos e termos do jogo). O nome do jogo fica em `shared/config.js` (`GAMES`).
+Jogo da palavra do dia no estilo Termo, só com palavras exclusivas do
+universo de League of Legends: campeões, regiões e lugares de Runeterra,
+itens, monstros do mapa e personagens da lore. Palavras comuns do português
+(ex.: "Poção", "Torre", "Suporte", elos, feitiços) ficam de fora das respostas,
+mas continuam valendo como tentativa. O nome do jogo fica em `shared/config.js` (`GAMES`).
 
 ## Regras
 

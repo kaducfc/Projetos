@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Gera os dados do jogo da palavra.
 
-- dados/palavras.json: as respostas, na ordem dos dias. Palavras já
-  existentes mantêm a posição; as novas entram embaralhadas no fim.
+- dados/palavras.json: as respostas, na ordem dos dias. Palavras que
+  continuam na lista mantêm a ordem; as retiradas saem da fila e as novas
+  entram embaralhadas no fim.
 - dados/dicionario.txt: palavras aceitas como tentativa (português comum,
   5 a 10 letras), além das palavras do jogo.
 
@@ -47,7 +48,8 @@ def main():
     caminho = os.path.join(DADOS, 'palavras.json')
     antigas = json.load(open(caminho, encoding='utf-8'))['respostas'] if os.path.exists(caminho) else []
     por_chave = {p['chave']: p for p in novas}
-    ordem = [por_chave.get(p['chave'], p) for p in antigas]  # mantém as já sorteadas
+    # Mantém a ordem das que continuam na lista; as retiradas saem da fila.
+    ordem = [por_chave[p['chave']] for p in antigas if p['chave'] in por_chave]
     vistas = {p['chave'] for p in ordem}
     resto = [p for p in novas if p['chave'] not in vistas]
     random.Random(f'rift-{len(ordem)}').shuffle(resto)
