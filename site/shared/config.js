@@ -45,6 +45,15 @@ export const GAMES = [
     scoreLabel: 'Pontos de legado',
   },
   {
+    id: 'palavra',
+    name: 'Palavra do Rift',
+    tagline: 'Uma palavra do universo de LoL por dia. Descubra em 6 tentativas.',
+    kind: 'Palavra do dia',
+    path: 'jogos/palavra/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+  },
+  {
     id: 'quiz-do-rift',
     name: 'Quiz do Rift',
     tagline: 'Perguntas rápidas sobre campeões, times e a história do cenário.',

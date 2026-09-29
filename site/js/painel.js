@@ -5,6 +5,7 @@ import * as platform from '../shared/platform.js';
 import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { ROLES, REGIONS } from '../jogos/carreira-no-rift/js/data/world.js';
+import { GAMES, gameById } from '../shared/config.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -68,7 +69,11 @@ function render(st) {
   const c = st.carreira || {};
   const rows = st.por_dia || [];
   const visits = columns(rows, 'visitantes', 'visitantes');
-  const games = columns(rows, 'partidas', 'carreiras iniciadas');
+  const games = columns(rows, 'partidas', 'partidas iniciadas');
+  const pw = st.palavra || {};
+  const pwDays = columns(pw.por_dia || rows.map((x) => ({ dia: x.dia, jogadas: 0 })), 'jogadas', 'palavras jogadas');
+  const perGame = st.jogos || {};
+  const pwName = gameById('palavra')?.name || 'Palavra do Rift';
   const conclusao = c.iniciadas ? Math.round((c.terminadas / c.iniciadas) * 100) : null;
 
   body.innerHTML = `
@@ -76,8 +81,8 @@ function render(st) {
     <h2>Hoje</h2>
     <div class="tiles">
       ${tile('Visitantes', num(st.hoje.visitantes), 'navegadores diferentes')}
-      ${tile('Carreiras iniciadas', num(st.hoje.partidas))}
-      ${tile('Carreiras terminadas', num(st.hoje.terminadas))}
+      ${tile('Partidas iniciadas', num(st.hoje.partidas), 'todos os jogos')}
+      ${tile('Partidas terminadas', num(st.hoje.terminadas), 'todos os jogos')}
       ${tile('Contas novas', num(st.hoje.contas))}
     </div>
   </section>
@@ -86,25 +91,55 @@ function render(st) {
     <h2>Últimos ${st.dias} dias</h2>
     <div class="tiles">
       ${tile('Visitantes', num(st.periodo.visitantes), 'navegadores diferentes')}
-      ${tile('Jogadores', num(st.periodo.jogadores), 'começaram ao menos 1 carreira')}
-      ${tile('Carreiras iniciadas', num(st.periodo.partidas))}
-      ${tile('Carreiras terminadas', num(st.periodo.terminadas), conclusao != null ? `${conclusao}% das iniciadas` : '')}
+      ${tile('Jogadores', num(st.periodo.jogadores), 'começaram ao menos 1 partida')}
+      ${tile('Partidas iniciadas', num(st.periodo.partidas), 'todos os jogos')}
+      ${tile('Partidas terminadas', num(st.periodo.terminadas), 'todos os jogos')}
       ${tile('Contas novas', num(st.periodo.contas), `${num(st.total.contas)} no total`)}
     </div>
     <div class="cards">
       <div class="card"><h3>Visitantes por dia</h3><p class="c-sub">${num(visits.total)} visitas diárias somadas</p>${visits.html}</div>
-      <div class="card"><h3>Carreiras iniciadas por dia</h3><p class="c-sub">${num(games.total)} no período</p>${games.html}</div>
+      <div class="card"><h3>Partidas iniciadas por dia</h3><p class="c-sub">${num(games.total)} no período</p>${games.html}</div>
     </div>
     <details class="p-details"><summary>Ver tabela por dia</summary>
       <div class="table-wrap"><table class="p-table">
-        <thead><tr><th>Dia</th><th class="n">Visitantes</th><th class="n">Iniciadas</th><th class="n">Terminadas</th><th class="n">Contas novas</th></tr></thead>
+        <thead><tr><th>Dia</th><th class="n">Visitantes</th><th class="n">Partidas iniciadas</th><th class="n">Terminadas</th><th class="n">Contas novas</th></tr></thead>
         <tbody>${rows.slice().reverse().map((r) => `<tr><td>${esc(diaLongo(r.dia))}</td><td class="n">${num(r.visitantes)}</td><td class="n">${num(r.partidas)}</td><td class="n">${num(r.terminadas)}</td><td class="n">${num(r.contas)}</td></tr>`).join('')}</tbody>
       </table></div>
     </details>
   </section>
 
   <section class="p-section">
+    <h2>Jogos · últimos ${st.dias} dias</h2>
+    <div class="card"><div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Jogo</th><th class="n">Jogadores</th><th class="n">Iniciadas</th><th class="n">Terminadas</th></tr></thead>
+      <tbody>${GAMES.filter((g) => g.status === 'live').map((g) => {
+        const x = perGame[g.id] || {};
+        return `<tr><td>${esc(g.name)}</td><td class="n">${num(x.jogadores || 0)}</td><td class="n">${num(x.iniciadas || 0)}</td><td class="n">${num(x.terminadas || 0)}</td></tr>`;
+      }).join('')}</tbody>
+    </table></div></div>
+  </section>
+
+  <section class="p-section">
+    <h2>${esc(pwName)} · últimos ${st.dias} dias</h2>
+    <div class="tiles">
+      ${tile('Jogaram hoje', num(pw.hoje_jogadas), pw.hoje_vitorias_pct != null ? `${dec(pw.hoje_vitorias_pct)}% acertaram` : '')}
+      ${tile('Jogadas no período', num(pw.jogadas), `${num(pw.jogadores)} jogadores`)}
+      ${tile('Acertaram', pw.vitorias_pct != null ? `${dec(pw.vitorias_pct)}%` : '—', 'das jogadas')}
+      ${tile('Tentativas', pw.tentativas_media != null ? dec(pw.tentativas_media) : '—', 'média de quem acertou')}
+    </div>
+    <div class="cards">
+      <div class="card"><h3>Jogadas por dia</h3><p class="c-sub">${num(pwDays.total)} no período</p>${pwDays.html}</div>
+      <div class="card"><h3>Distribuição de tentativas</h3><p class="c-sub">Em quantas tentativas acertaram</p>
+        ${hbars((pw.dist || []).map((n, i) => [i < 6 ? `${i + 1} tentativa${i ? 's' : ''}` : 'Não acertou', n]), undefined, { sort: false })}</div>
+    </div>
+  </section>
+
+  <section class="p-section">
     <h2>Carreira no Rift · últimos ${st.dias} dias</h2>
+    <div class="tiles">
+      ${tile('Carreiras iniciadas', num(c.iniciadas))}
+      ${tile('Carreiras terminadas', num(c.terminadas), conclusao != null ? `${conclusao}% das iniciadas` : '')}
+    </div>
     ${c.terminadas ? '' : '<p class="p-note">As médias aparecem quando alguém terminar uma carreira (aposentadoria).</p>'}
     <div class="tiles">
       ${tile('OVR máximo médio', dec(c.ovr_medio), c.ovr_mediana != null ? `mediana ${dec(c.ovr_mediana)}` : '')}
