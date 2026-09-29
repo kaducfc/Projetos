@@ -4,7 +4,7 @@ import { ATTRS, REGIONS, ROLES, nationById, ofLeague, inLeague } from '../data/w
 import { eventById, roleText } from '../data/events.js';
 import { ovrOf, marketValue, STATUS } from '../engine/player.js';
 import {
-  teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore, legacyBreakdown, careerEarnings, eventOptions, outcomeFx,
+  teamOf, leagueName, standings, seasonStages, legacyLabel, legacyScore, legacyBreakdown, careerEarnings, eventOptions, outcomeFx, rewardMult,
 } from '../engine/career.js';
 import { teamBadge, trophySvg, trophyArt, eventScene, ovrShield, stars } from './art.js';
 import { esc, fmtKda, fmtMoney, fmtSalary } from '../util.js';
@@ -272,15 +272,18 @@ function eventPanel(state) {
             <h3>${fill(ev.choices[scr.choice].label, state)} · ${scr.ok ? 'A escolha deu certo' : 'Não saiu como planejado'}</h3>
             <p>${fill(outcome.text, state)}</p>
           </div>
-          <div class="fx-list">${fxChips(outcomeFx(state, outcome.fx))}${scr.ovrDelta ? `<span class="fx ${scr.ovrDelta > 0 ? 'up' : 'down'}">OVR <b>${signed(scr.ovrDelta)}</b></span>` : ''}</div>
+          <div class="fx-list">${fxChips(scr.appliedFx || outcomeFx(state, outcome.fx))}${scr.ovrDelta ? `<span class="fx ${scr.ovrDelta > 0 ? 'up' : 'down'}">OVR <b>${signed(scr.ovrDelta)}</b></span>` : ''}</div>
         </div>
         <div class="tap">Toque para continuar ›</div>
       </button>` : ''}
     <div class="choices${done ? ' locked' : ''}">
-      ${eventOptions(scr).map(({ idx, chance: pct }, i) => {
+      ${eventOptions(scr).map(({ idx, chance: pct, mult }, i) => {
         const c = ev.choices[idx];
+        const m = mult ?? rewardMult(pct);
+        const tag = m >= 1.3 ? `<span class="risk hi">Arriscada · bônus ×${String(m).replace('.', ',')}</span>`
+          : m <= 0.8 ? `<span class="risk lo">Segura · bônus ×${String(m).replace('.', ',')}</span>` : '';
         return `<button class="choice${done && scr.choice === idx ? ' picked' : ''}" data-act="choice" data-i="${i}" ${done ? 'disabled' : ''}>
-          <div class="choice-txt"><b>${fill(c.label, state)}</b><small>${pct}%: ${fill(c.good, state)}. Erro: ${fill(c.bad, state)}</small></div>
+          <div class="choice-txt"><b>${fill(c.label, state)}${tag}</b><small>${pct}%: ${fill(c.good, state)}. Erro: ${fill(c.bad, state)}</small></div>
           <div class="odds${done && scr.choice === idx ? ' result-lit' : ''}"${done && scr.choice === idx ? ` data-lit="${scr.ok ? 'ok' : 'bad'}"` : ''}><span class="o-ok" style="flex:${pct}">${pct >= 15 ? `${pct}%` : ''}</span><span class="o-bad" style="flex:${100 - pct}">${100 - pct >= 15 ? `${100 - pct}%` : ''}</span></div>
           <span class="arrow">→</span>
         </button>`;
@@ -442,6 +445,7 @@ function seasonEndPanel(state) {
       ${ovrShield(scr.ovrEnd)}
       <span class="delta ${delta >= 0 ? 'up' : 'down'}">${signed(delta)}</span>
     </div>
+    ${scr.decisionBonus ? `<p class="decision-note ${scr.decisionBonus > 0 ? 'up' : 'down'}">Suas decisões na temporada ${scr.decisionBonus > 0 ? 'ajudaram' : 'atrapalharam'} a evolução: <b>${scr.decisionBonus > 0 ? '+' : ''}${String(scr.decisionBonus).replace('.', ',')} de OVR</b></p>` : ''}
     <div class="stat-row big">
       <div><small>Jogos</small><b>${st.games}</b></div>
       <div><small>Vitórias</small><b>${st.wins}</b></div>

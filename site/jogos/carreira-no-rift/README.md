@@ -67,6 +67,16 @@ etapa. Cada etapa (fase de pontos + playoffs) é simulada de uma vez e
 aparece numa tela só. First Stand e MSI não têm tela própria: o resumo
 aparece no topo da decisão seguinte. Só o Mundial tem tela.
 
+**Risco e recompensa nas decisões:** cerca de 1 em cada 3 decisões é mais
+difícil (todas as opções ficam mais arriscadas; às vezes nenhuma passa de
+50%). O acerto rende conforme o risco (×0,8 numa jogada segura, ×1 em 60%,
+×2 em 30%, até ×2,5), e errar uma jogada arriscada custa menos que errar uma
+"certa". As opções mostram a etiqueta *Arriscada* ou *Segura*. As decisões
+também contam no fim da temporada: acertos (sobretudo os arriscados) somam
+até +0,75 de OVR na evolução, erros tiram até −0,75, e o balanço mostra
+quanto. Na média, jogar seguro, arriscar ou escolher ao acaso rendem a mesma
+mediana de OVR; arriscar só oscila mais.
+
 **Velocidade** (escolhida na criação do jogador): **Normal** tem 3 decisões
 por ano; **Rápido** tem só 1 (a do meio do ano), com os efeitos dela valendo
 por três. Assim a carreira rende igual nos dois modos (OVR, títulos e

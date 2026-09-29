@@ -802,6 +802,28 @@ function choicesFor(ev, role) {
   return ev.choices.map((c, idx) => ({ c, idx })).filter(({ c }) => roleAllows(c, role));
 }
 
+// Recompensa de acordo com o risco: quanto menor a chance, maior o bônus do
+// acerto (×0,8 numa jogada bem segura, ×1 em 60%, ×2 em 30%, até ×2,5).
+// Assim, na média, arriscar rende parecido com jogar seguro: só que oscila
+// muito mais. O texto do erro não muda.
+export function rewardMult(chance) {
+  return Math.round(clamp(60 / chance, 0.75, 2.5) * 10) / 10;
+}
+function scaleFx(fx, mult) {
+  return Object.fromEntries(Object.entries(fx || {}).map(([k, v]) => [k, v > 0 ? Math.max(1, Math.round(v * mult)) : v]));
+}
+// Erro numa jogada arriscada custa menos (era o esperado); numa jogada
+// "certa", custa um pouco mais.
+function scaleFail(fx, chance) {
+  const f = clamp(chance / 60, 0.5, 1.3);
+  return Object.fromEntries(Object.entries(fx || {}).map(([k, v]) => [k, v < 0 ? Math.min(-1, Math.round(v * f)) : v]));
+}
+// Quanto cada decisão pesa na evolução do fim da temporada: acerto soma
+// (mais se for arriscado), erro tira um pouco. Vale até ±1,5 por temporada.
+const DECISION_OK = 0.4;
+const DECISION_FAIL = -0.45;
+const DECISION_GROWTH = 0.5; // OVR de evolução por ponto de decisão
+
 // Ajusta as chances das opções de uma decisão:
 // - nunca duas iguais: entre uma opção e a próxima há 10 a 15 pontos de
 //   diferença (se a melhor tem 80%, a seguinte fica entre 65% e 70%);
@@ -844,12 +866,15 @@ function eventScreen(state, stage) {
   p.usedEvents.push(ev.id);
   if (p.usedEvents.length > 16) p.usedEvents.shift();
 
+  // Algumas decisões são mais difíceis: todas as opções ficam mais arriscadas
+  // (a melhor pode ficar abaixo de 50%), mas o acerto rende mais.
+  const hard = Math.random() < 0.35 ? randInt(18, 30) : 0;
   const raw = choicesFor(ev, p.role).map(({ c, idx }) => {
     const attrBonus = c.attr ? (p.attrs[c.attr] - 60) * 0.5 : 0;
-    return { idx, chance: Math.round(clamp(c.base + attrBonus + (p.morale - 50) * 0.1, CHANCE_MIN, CHANCE_MAX)) };
+    return { idx, chance: Math.round(clamp(c.base + attrBonus + (p.morale - 50) * 0.1 - hard, CHANCE_MIN, CHANCE_MAX)) };
   });
   const spread = spreadChances(raw.map((o) => o.chance));
-  const options = raw.map((o, i) => ({ ...o, chance: spread[i] }));
+  const options = raw.map((o, i) => ({ ...o, chance: spread[i], mult: rewardMult(spread[i]) }));
   const label = STAGE_LABELS[state.season.tier === 1 ? 1 : 'lower'][stage];
   const recap = state.season.recap || null;
   state.season.recap = null;
@@ -869,7 +894,16 @@ export function chooseEvent(state, pos) {
   const choice = ev.choices[opt.idx];
   const ok = roll(opt.chance);
   const before = ovrOf(state.player);
-  applyFx(state.player, outcomeFx(state, (ok ? choice.ok : choice.fail).fx));
+  const mult = opt.mult ?? rewardMult(opt.chance);
+  const fx = outcomeFx(state, ok ? scaleFx(choice.ok.fx, mult) : scaleFail(choice.fail.fx, opt.chance));
+  applyFx(state.player, fx);
+  scr.appliedFx = fx;
+  if (state.season) {
+    const weight = isFast(state) ? FAST_FX : 1;
+    // Errar uma jogada arriscada pesa menos que errar uma jogada "certa".
+    const failCost = DECISION_FAIL * (opt.chance / 60);
+    state.season.decisionScore = (state.season.decisionScore || 0) + (ok ? DECISION_OK * mult : failCost) * weight;
+  }
   const team = teamOf(state, state.player.teamId);
   state.player.status = statusFor(ovrOf(state.player), team.rating, state.player.morale);
   scr.choice = opt.idx;
@@ -952,7 +986,8 @@ function endSeason(state) {
   const intlTitle = s.titles.some((t) => t.kind === 'intl');
   const mvp = s.awards.some((a) => a.name.startsWith('MVP'));
   p.potential = Math.min(96, p.potential + ((level?.potential || 0) + (intlTitle ? 0.5 : 0) + (mvp ? 0.5 : 0)) * (p.potential >= 88 ? 0.6 : 1));
-  const growth = seasonGrowth(p, { playedRatio, winRate, env: (level?.growth ?? 1) * tierFactor });
+  const decisionBonus = clamp(s.decisionScore || 0, -1.5, 1.5) * DECISION_GROWTH;
+  const growth = seasonGrowth(p, { playedRatio, winRate, env: (level?.growth ?? 1) * tierFactor, decisions: decisionBonus });
   const ovrEnd = ovrOf(p);
   p.lastSeason = {
     titles: s.titles.length, awards: s.awards.length, growth, playedRatio,
@@ -999,6 +1034,7 @@ function endSeason(state) {
     canRetire: p.age >= 27,
     loanNext: p.pendingLoan,
     growth,
+    decisionBonus: Math.round(decisionBonus * 10) / 10,
   };
 }
 

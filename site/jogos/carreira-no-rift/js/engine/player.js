@@ -81,6 +81,8 @@ export function seasonGrowth(p, perf) {
   // Quem joga e vence evolui mais; quem fica no banco estagna.
   const bonus = (perf.playedRatio - 0.6) * 1.5 + (perf.winRate - 0.5) * 1.5 + (p.morale - 50) / 60;
   g += bonus > 0 ? bonus * clamp(gap / 6, 0, 1) : bonus;
+  // Decisões da temporada: acertos (principalmente os arriscados) ajudam.
+  g += perf.decisions || 0;
 
   // Liga forte = treino e adversários melhores = evolução maior.
   if (g > 0) g *= perf.env ?? 1;
