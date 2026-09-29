@@ -223,7 +223,7 @@ export const EVENTS = [
     title: 'Um pro coreano te chamou pra duo',
     text: 'Ele viu seu desempenho no ladder e mandou um convite. São 3h da manhã. Amanhã tem jogo oficial.',
     choices: [
-      { label: 'Aceitar e jogar a noite toda', base: 50, attr: 'mec', good: 'aprende truques novos', bad: 'chega sem sono no jogo',
+      { label: 'Aceitar e jogar a noite toda', base: 50, attr: 'mec', good: 'aprende truques novos', bad: 'chega com sono no jogo',
         ok: { text: 'Você aprende mais em uma noite do que em um mês. E ainda foi dormir às 6h.', fx: { mec: 2, rota: 1 } },
         fail: { text: 'No jogo oficial você bocejava no draft. Derrota feia.', fx: { mental: -1, morale: -6 } } },
       { label: 'Jogar só duas partidas', base: 80, attr: 'mental', good: 'equilíbrio', bad: 'ele não chama mais',
