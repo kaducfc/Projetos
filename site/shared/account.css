@@ -93,6 +93,15 @@ a.sb-brand:hover { color: var(--sb-gold); }
   color: var(--sb-text); font: 500 15px 'Inter', sans-serif; padding: 10px 12px;
 }
 .acc-field input:focus { outline: none; border-color: var(--sb-gold); }
+.acc-tabs[hidden], .acc-link[hidden] { display: none; }
+.acc-link {
+  align-self: flex-start; background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--sb-muted); font: 600 12.5px 'Inter', sans-serif; text-decoration: underline; text-underline-offset: 3px;
+}
+.acc-link:hover { color: var(--sb-gold-2); }
+.acc-forgot { margin-top: -4px; }
+.acc-back { align-self: center; }
+.acc-submit[hidden] { display: none; }
 .acc-msg { margin: 0; min-height: 0; font-size: 13px; }
 .acc-msg:empty { display: none; }
 .acc-msg.err { color: var(--sb-err); }

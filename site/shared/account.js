@@ -56,7 +56,14 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
     if (!el.contains(e.target)) el.querySelector('.sb-menu')?.setAttribute('hidden', '');
   });
 
-  platform.onChange((evt) => { if (evt.type === 'auth') paint(); });
+  platform.onChange((evt) => {
+    if (evt.type === 'auth') paint();
+    if (evt.type === 'recovery') openAuthModal('reset');
+    if (evt.type === 'recovery-failed') {
+      openAuthModal('forgot', 'Esse link de redefinição venceu ou já foi usado. Peça um novo abaixo.');
+    }
+  });
+  if (platform.isRecovering()) openAuthModal('reset');
   paint();
   platform.init().then(paint);
 }
@@ -65,7 +72,30 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
 
 let modal = null;
 
-export function openAuthModal(tab = 'login') {
+const MODES = {
+  login: {
+    title: 'Entre na sua conta',
+    sub: 'Seu progresso e seu histórico continuam de onde parou.',
+    submit: 'Entrar',
+  },
+  signup: {
+    title: 'Crie sua conta',
+    sub: 'Guarde partidas, recordes e progresso de todos os jogos, em qualquer aparelho.',
+    submit: 'Criar conta',
+  },
+  forgot: {
+    title: 'Esqueceu a senha?',
+    sub: 'Digite o e-mail da sua conta. Vamos enviar um link para você criar uma senha nova.',
+    submit: 'Enviar link',
+  },
+  reset: {
+    title: 'Crie uma nova senha',
+    sub: 'Escolha a senha que vai usar daqui em diante.',
+    submit: 'Salvar nova senha',
+  },
+};
+
+export function openAuthModal(tab = 'login', notice = '') {
   modal?.remove();
   modal = document.createElement('div');
   modal.className = 'acc-backdrop';
@@ -83,16 +113,18 @@ export function openAuthModal(tab = 'login') {
           <span>Nome de usuário</span>
           <input id="acc-username" name="username" autocomplete="username" maxlength="20" placeholder="ex.: kadu" />
         </label>
-        <label class="acc-field">
+        <label class="acc-field acc-email">
           <span>E-mail</span>
           <input id="acc-email" name="email" type="email" autocomplete="email" required />
         </label>
-        <label class="acc-field">
+        <label class="acc-field acc-password">
           <span>Senha</span>
           <input id="acc-password" name="password" type="password" minlength="6" required />
         </label>
+        <button type="button" class="acc-link acc-forgot" data-acc="forgot">Esqueci minha senha</button>
         <p class="acc-msg" role="status"></p>
         <button type="submit" class="acc-submit"></button>
+        <button type="button" class="acc-link acc-back" data-acc="tab-login">← Voltar para o login</button>
       </form>
     </div>`;
   document.body.appendChild(modal);
@@ -102,17 +134,26 @@ export function openAuthModal(tab = 'login') {
   const setMode = (m) => {
     mode = m;
     modal.querySelectorAll('[data-acc^="tab-"]').forEach((t) => t.classList.toggle('on', t.dataset.acc === `tab-${m}`));
+    $('.acc-tabs').hidden = m === 'forgot' || m === 'reset';
     $('.acc-username').hidden = m !== 'signup';
-    $('#acc-password').autocomplete = m === 'signup' ? 'new-password' : 'current-password';
-    $('.acc-title').textContent = m === 'signup' ? 'Crie sua conta' : 'Entre na sua conta';
-    $('.acc-sub').textContent = m === 'signup'
-      ? 'Guarde partidas, recordes e progresso de todos os jogos, em qualquer aparelho.'
-      : 'Seu progresso e seu histórico continuam de onde parou.';
-    $('.acc-submit').textContent = m === 'signup' ? 'Criar conta' : 'Entrar';
+    $('.acc-email').hidden = m === 'reset';
+    $('.acc-password').hidden = m === 'forgot';
+    $('.acc-password span').textContent = m === 'reset' ? 'Nova senha' : 'Senha';
+    $('#acc-password').autocomplete = m === 'login' ? 'current-password' : 'new-password';
+    $('#acc-password').value = '';
+    $('.acc-forgot').hidden = m !== 'login';
+    $('.acc-back').hidden = m !== 'forgot';
+    $('.acc-title').textContent = MODES[m].title;
+    $('.acc-sub').textContent = MODES[m].sub;
+    $('.acc-submit').textContent = MODES[m].submit;
     $('.acc-msg').textContent = '';
     $('.acc-msg').className = 'acc-msg';
   };
   setMode(mode);
+  if (notice) {
+    $('.acc-msg').textContent = notice;
+    $('.acc-msg').className = 'acc-msg err';
+  }
 
   const close = () => { modal?.remove(); modal = null; };
   modal.addEventListener('click', (e) => {
@@ -122,6 +163,10 @@ export function openAuthModal(tab = 'login') {
     if (b.dataset.acc === 'close') close();
     if (b.dataset.acc === 'tab-login') setMode('login');
     if (b.dataset.acc === 'tab-signup') setMode('signup');
+    if (b.dataset.acc === 'forgot') {
+      setMode('forgot');
+      $('#acc-email').focus();
+    }
   });
   modal.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
 
@@ -132,8 +177,11 @@ export function openAuthModal(tab = 'login') {
     const email = $('#acc-email').value.trim();
     const password = $('#acc-password').value;
     const username = $('#acc-username').value.trim();
-    if (!email || !password) {
-      msg.textContent = 'Preencha e-mail e senha.';
+    const missing = mode === 'forgot' ? (!email ? 'Digite o seu e-mail.' : '')
+      : mode === 'reset' ? (!password ? 'Digite a nova senha.' : '')
+        : (!email || !password ? 'Preencha e-mail e senha.' : '');
+    if (missing) {
+      msg.textContent = missing;
       msg.className = 'acc-msg err';
       return;
     }
@@ -150,6 +198,17 @@ export function openAuthModal(tab = 'login') {
         } else {
           close();
         }
+      } else if (mode === 'forgot') {
+        await platform.requestPasswordReset(email);
+        msg.textContent = `Pronto! Se existir uma conta com ${email}, enviamos um link para criar uma senha nova. Confira também o spam.`;
+        msg.className = 'acc-msg ok';
+      } else if (mode === 'reset') {
+        await platform.updatePassword(password);
+        $('.acc-password').hidden = true;
+        $('.acc-submit').hidden = true;
+        msg.textContent = 'Senha alterada! Você já está conectado.';
+        msg.className = 'acc-msg ok';
+        setTimeout(close, 2200);
       } else {
         await platform.signIn({ email, password });
         close();
@@ -160,10 +219,10 @@ export function openAuthModal(tab = 'login') {
     } finally {
       if (modal) {
         submit.disabled = false;
-        submit.textContent = mode === 'signup' ? 'Criar conta' : 'Entrar';
+        submit.textContent = MODES[mode].submit;
       }
     }
   });
 
-  (mode === 'signup' ? $('#acc-username') : $('#acc-email')).focus();
+  ({ signup: $('#acc-username'), reset: $('#acc-password') }[mode] || $('#acc-email')).focus();
 }

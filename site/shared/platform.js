@@ -8,6 +8,7 @@
 //   recordResult(gameId, {score, summary}) → registra uma partida terminada
 //   listResults({gameId, limit})    → histórico de partidas
 //   onChange(fn)                    → avisa login/logout e saves vindos da nuvem
+//   requestPasswordReset(email) / updatePassword(senha) → "Esqueci minha senha"
 //
 // Sem conta, tudo fica no localStorage do navegador. Ao entrar, o que foi
 // jogado como visitante é enviado para a conta, e o save mais recente
@@ -25,6 +26,8 @@ const PUSH_INTERVAL_MS = 60_000;
 const URGENT_DELAY_MS = 1500;
 const RETRY_MIN_MS = 5_000;
 const RETRY_MAX_MS = 5 * 60_000;
+// Marca na URL de volta do e-mail de "Esqueci minha senha".
+const RECOVERY_PARAM = 'nova-senha';
 
 const listeners = new Set();
 let clientPromise = null;
@@ -32,6 +35,7 @@ let injectedClient = null;
 let initPromise = null;
 let user = null; // { id, email, username }
 let loggingIn = null;
+let recovering = false; // entrou pelo link de redefinição: falta escolher a senha nova
 const pushTimers = new Map();
 const lastPushAt = new Map();
 const retryDelay = new Map();
@@ -93,6 +97,7 @@ export const cloudEnabled = () => !globalThis.__SITE_OFFLINE && Boolean(SUPABASE
 export const isStandalone = () => Boolean(globalThis.__SITE_OFFLINE);
 
 export const getUser = () => user;
+export const isRecovering = () => recovering;
 
 // Só para testes automatizados: troca o cliente Supabase por um falso.
 export function __setClientForTests(client) {
@@ -139,14 +144,18 @@ export function init() {
         emit({ type: 'auth', user: null });
         return null;
       }
+      const wantsRecovery = consumeRecoveryMark();
       const { data } = await sb.auth.getSession();
       const sessionUser = data?.session?.user;
       if (sessionUser && !sessionUser.is_anonymous) await setUser(sb, sessionUser);
       else emit({ type: 'auth', user: null });
+      if (wantsRecovery && user) startRecovery();
+      else if (wantsRecovery) emit({ type: 'recovery-failed' }); // link vencido ou já usado
 
       sb.auth.onAuthStateChange((event, session) => {
         // Chamadas ao Supabase dentro deste callback podem travar; adia.
         setTimeout(() => {
+          if (event === 'PASSWORD_RECOVERY') startRecovery();
           if (event === 'SIGNED_OUT' && user) handleSignedOut();
           else if (session?.user && !session.user.is_anonymous && session.user.id !== user?.id) setUser(sb, session.user);
         }, 0);
@@ -155,6 +164,26 @@ export function init() {
     })();
   }
   return initPromise;
+}
+
+// O link do e-mail volta com ?nova-senha=1 (e, no fluxo implícito, com
+// type=recovery no #). Tira a marca da URL para um F5 não repetir o pedido.
+function consumeRecoveryMark() {
+  const loc = globalThis.location;
+  if (!loc) return false;
+  const url = new URL(loc.href);
+  const marked = url.searchParams.has(RECOVERY_PARAM) || /type=recovery/.test(loc.hash);
+  if (url.searchParams.has(RECOVERY_PARAM)) {
+    url.searchParams.delete(RECOVERY_PARAM);
+    globalThis.history?.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
+  return marked;
+}
+
+function startRecovery() {
+  if (recovering) return;
+  recovering = true;
+  emit({ type: 'recovery' });
 }
 
 async function setUser(sb, authUser) {
@@ -189,6 +218,7 @@ const ERRORS = [
   [/invalid login credentials/i, 'E-mail ou senha incorretos.'],
   [/already registered|already exists/i, 'Já existe uma conta com esse e-mail.'],
   [/email not confirmed/i, 'Confirme seu e-mail pelo link que enviamos antes de entrar.'],
+  [/should be different from the old password|same_password/i, 'A nova senha precisa ser diferente da atual.'],
   [/password should be at least/i, 'A senha precisa ter pelo menos 6 caracteres.'],
   [/rate limit|too many/i, 'Muitas tentativas seguidas. Espere um pouco e tente de novo.'],
   [/invalid.*email|email.*invalid/i, 'Esse e-mail não parece válido.'],
@@ -224,6 +254,31 @@ export async function signIn({ email, password }) {
   if (error) throw friendly(error);
   await setUser(sb, data.user);
   return user;
+}
+
+// Envia o e-mail com o link para criar uma senha nova. Por segurança, o
+// Supabase responde igual exista ou não uma conta com esse e-mail.
+export async function requestPasswordReset(email) {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  let redirectTo;
+  if (globalThis.location) {
+    const back = new URL(globalThis.location.href);
+    back.hash = '';
+    back.searchParams.set(RECOVERY_PARAM, '1');
+    redirectTo = back.toString();
+  }
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) throw friendly(error);
+}
+
+export async function updatePassword(password) {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  if (!password || password.length < 6) throw new Error('A senha precisa ter pelo menos 6 caracteres.');
+  const { error } = await sb.auth.updateUser({ password });
+  if (error) throw friendly(error);
+  recovering = false;
 }
 
 export async function signOut() {

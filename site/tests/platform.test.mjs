@@ -156,3 +156,27 @@ test('várias jogadas no mesmo minuto viram um envio só, e falhas são tentadas
 async function tick0() {
   for (let i = 0; i < 10; i++) await Promise.resolve();
 }
+
+test('esqueci minha senha: pede o link e troca a senha', async () => {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await platform.signUp({ email: 'senha@example.com', password: 'antiga123', username: 'senha_teste' });
+  await platform.signOut();
+
+  await platform.requestPasswordReset('senha@example.com');
+  assert.equal(sb.auth.resetRequests.length, 1);
+  assert.equal(sb.auth.resetRequests[0].email, 'senha@example.com');
+
+  // O link do e-mail abre uma sessão; aí a senha nova é gravada.
+  await platform.signIn({ email: 'senha@example.com', password: 'antiga123' });
+  await assert.rejects(platform.updatePassword('123'), /pelo menos 6/);
+  await assert.rejects(platform.updatePassword('antiga123'), /diferente da atual/);
+  await platform.updatePassword('nova456');
+  await platform.signOut();
+  await assert.rejects(platform.signIn({ email: 'senha@example.com', password: 'antiga123' }), /incorretos/);
+  await platform.signIn({ email: 'senha@example.com', password: 'nova456' });
+  assert.equal(platform.getUser().username, 'senha_teste');
+  await platform.signOut();
+});

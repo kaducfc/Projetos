@@ -31,6 +31,16 @@ export function createFakeSupabase() {
       return { data: { user, session }, error: null };
     },
     async signOut() { session = null; fire('SIGNED_OUT'); return { error: null }; },
+    resetRequests: [],
+    async resetPasswordForEmail(email, opts) { auth.resetRequests.push({ email, ...opts }); return { data: {}, error: null }; },
+    async updateUser({ password }) {
+      if (!session) return { data: {}, error: { message: 'Auth session missing!' } };
+      if (session.user.password === password) {
+        return { data: {}, error: { message: 'New password should be different from the old password.' } };
+      }
+      session.user.password = password;
+      return { data: { user: session.user }, error: null };
+    },
   };
 
   const keys = { site_game_saves: ['user_id', 'game_id'], site_game_results: ['user_id', 'client_id'], site_profiles: ['id'] };
