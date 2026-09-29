@@ -4,7 +4,7 @@ import * as platform from './platform.js';
 import { SITE_NAME } from './config.js';
 
 // Logo para fundo escuro, a partir da raiz do domínio (serve em qualquer página).
-const LOGO_URL = '/shared/assets/marca/logo-barra.png';
+const LOGO_URL = '/shared/assets/marca/logo-barra.png?v=2';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',

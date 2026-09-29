@@ -16,3 +16,7 @@ Os originais em alta resolução ficam em `originais/` (`logo.png` 1555×688 e
 | `compartilhar.jpg` (1200×630) | Imagem que aparece ao compartilhar o link (WhatsApp, Discord, X…). |
 
 Se a logo mudar, troque os arquivos em `originais/` e gere os derivados de novo.
+
+**Cache:** as imagens ficam guardadas no navegador por até 1 dia (mais 7 de
+revalidação). Ao trocar uma imagem mantendo o nome, aumente o `?v=` nos
+endereços (ex.: `?v=2` → `?v=3`) para todos baixarem a versão nova.
