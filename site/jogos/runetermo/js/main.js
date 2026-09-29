@@ -1,4 +1,4 @@
-// Palavra do Rift: uma palavra do universo de LoL por dia, igual para todos.
+// Runetermo: uma palavra do universo de LoL por dia, igual para todos.
 import {
   MAX_TRIES, norm, displayLetters, evaluate, dayIndex, answerFor, msToNextDay, computeStats, keyboardState, shareText,
 } from './logic.js';
@@ -7,9 +7,9 @@ import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 
-const GAME_ID = 'palavra';
-const NAME = gameById(GAME_ID)?.name || 'Palavra do Rift';
-const SEEN_HELP = 'palavra.ajuda';
+const GAME_ID = 'runetermo';
+const NAME = gameById(GAME_ID)?.name || 'Runetermo';
+const SEEN_HELP = 'runetermo.ajuda';
 const CATEGORIES = {
   campeao: 'Campeão', regiao: 'Região de Runeterra', item: 'Item', mapa: 'Mapa e objetivos', feitico: 'Feitiço de invocador',
   elo: 'Elo', termo: 'Termo do jogo', universo: 'Universo de Runeterra', cenario: 'Cenário competitivo',
@@ -284,7 +284,7 @@ function openStats() {
 
 async function share() {
   const text = shareText({
-    name: NAME, number: today + 1, guesses: save.guesses, answer: answer.chave, won: won(), url: 'riftarcade.com.br/jogos/palavra',
+    name: NAME, number: today + 1, guesses: save.guesses, answer: answer.chave, won: won(), url: 'riftarcade.com.br/jogos/runetermo',
   });
   try {
     if (navigator.share && matchMedia('(pointer: coarse)').matches) await navigator.share({ text });

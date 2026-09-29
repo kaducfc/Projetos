@@ -13,7 +13,7 @@ site/
 │   └── account.css
 ├── jogos/
 │   ├── carreira-no-rift/                # simulador de carreira
-│   └── palavra/                         # palavra do dia (estilo Termo)
+│   └── runetermo/                       # palavra do dia (estilo Termo)
 ├── supabase/migrations/   # 0001 contas, 0002 login com Google
 ├── supabase/email-templates/  # e-mails do Supabase em português
 └── tests/             # testes do platform.js com um Supabase simulado
@@ -73,7 +73,7 @@ máximo, temporadas, troféus, legado, rotas, regiões e as 10 melhores
 carreiras). O site registra eventos anônimos em `site_events` (visita 1x por
 dia por navegador, início e fim de partida, via `platform.track`); só a
 função `site_admin_stats` lê essa tabela, e só para contas em `site_admins`.
-Configuração: rode `supabase/migrations/0003_painel.sql` e depois o `0004_painel_palavra.sql` (no fim dele fica o
+Configuração: rode `supabase/migrations/0003_painel.sql` e depois o `0004_painel_runetermo.sql` (no fim dele fica o
 e-mail do administrador). O link "Painel" aparece no menu da conta para quem
 tem acesso.
 

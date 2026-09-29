@@ -1,4 +1,4 @@
--- Painel: estatísticas separadas por jogo e seção da Palavra do Rift.
+-- Painel: estatísticas separadas por jogo e seção do Runetermo.
 --
 -- Como aplicar: cole este arquivo no SQL Editor do Supabase e clique em Run
 -- (depois do 0003). Só troca a função do painel; rodar de novo é seguro.
@@ -43,7 +43,7 @@ begin
     select * from ev where kind = 'game_start' and game_id = 'carreira-no-rift'
   ),
   pfim as (
-    select * from ev where kind = 'game_end' and game_id = 'palavra'
+    select * from ev where kind = 'game_end' and game_id = 'runetermo'
   )
   select jsonb_build_object(
     'dias', days,

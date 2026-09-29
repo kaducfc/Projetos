@@ -73,7 +73,7 @@ function render(st) {
   const pw = st.palavra || {};
   const pwDays = columns(pw.por_dia || rows.map((x) => ({ dia: x.dia, jogadas: 0 })), 'jogadas', 'palavras jogadas');
   const perGame = st.jogos || {};
-  const pwName = gameById('palavra')?.name || 'Palavra do Rift';
+  const pwName = gameById('runetermo')?.name || 'Runetermo';
   const conclusao = c.iniciadas ? Math.round((c.terminadas / c.iniciadas) * 100) : null;
 
   body.innerHTML = `

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   norm, displayLetters, evaluate, brDate, dayIndex, answerFor, msToNextDay, computeStats, keyboardState, shareText,
-} from '../jogos/palavra/js/logic.js';
+} from '../jogos/runetermo/js/logic.js';
 
 test('normaliza acentos e símbolos', () => {
   assert.equal(norm("Kai'Sa"), 'KAISA');

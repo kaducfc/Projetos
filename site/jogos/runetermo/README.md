@@ -1,4 +1,4 @@
-# Palavra do Rift
+# Runetermo
 
 Jogo da palavra do dia no estilo Termo, só com palavras exclusivas do
 universo de League of Legends: campeões, regiões e lugares de Runeterra,
@@ -30,11 +30,11 @@ mas continuam valendo como tentativa. O nome do jogo fica em `shared/config.js` 
   `an-array-of-portuguese-words` (licença MIT). Para refazer:
   `npm pack an-array-of-portuguese-words`, extraia e rode
   `python3 scripts/gerar.py caminho/para/package/words.json`.
-- `js/logic.js`: regras sem tela (testadas em `site/tests/palavra.test.mjs`).
+- `js/logic.js`: regras sem tela (testadas em `site/tests/runetermo.test.mjs`).
 - `js/main.js`: tela, teclado, janelas de ajuda e de estatísticas.
 
 ## Progresso e estatísticas
 
 O progresso (tentativas do dia e histórico) é salvo pelo `platform.js`, no
 navegador e na conta. O fim de cada partida entra no histórico do site e no
-painel do administrador (`supabase/migrations/0004_painel_palavra.sql`).
+painel do administrador (`supabase/migrations/0004_painel_runetermo.sql`).
