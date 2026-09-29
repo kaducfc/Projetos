@@ -25,6 +25,9 @@
 }
 .sb-brand { color: var(--sb-gold-2); text-decoration: none; letter-spacing: 0.5px; font-weight: 800; white-space: nowrap; }
 a.sb-brand:hover { color: var(--sb-gold); }
+.sb-brand:has(.sb-logo) { display: inline-flex; align-items: center; gap: 8px; line-height: 0; }
+.sb-logo { height: 36px; width: auto; display: block; }
+a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
 .sb-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .sb-note { color: var(--sb-muted); font-weight: 500; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sb-btn {
@@ -136,7 +139,8 @@ a.sb-brand:hover { color: var(--sb-gold); }
 .sf-main { max-width: 78ch; display: flex; flex-direction: column; gap: 6px; }
 .sf-main p { margin: 0; }
 .sf-main b { color: var(--sb-text); font-weight: 600; }
-.sf-title { color: var(--sb-gold-2); font-weight: 800; letter-spacing: 0.5px; }
+.sf-title { color: var(--sb-gold-2); font-weight: 800; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+.sf-mascot { width: 28px; height: 28px; }
 .sf-links { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 4px; }
 .sf-links a { color: var(--sb-text); text-decoration: none; font-weight: 600; }
 .sf-links a:hover { color: var(--sb-gold-2); text-decoration: underline; text-underline-offset: 3px; }

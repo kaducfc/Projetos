@@ -10,7 +10,6 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
 const fmtDate = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 const fmtScore = (n) => (n == null ? '—' : Number(n).toLocaleString('pt-BR'));
 
-document.getElementById('site-name').textContent = SITE_NAME;
 document.title = SITE_NAME;
 mountSiteBar(document.getElementById('site-bar'), { showBrand: true });
 mountSiteFooter(document.getElementById('site-footer'));

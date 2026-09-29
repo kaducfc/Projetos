@@ -48,6 +48,7 @@ const html = readFileSync(join(root, 'index.html'), 'utf8');
 const head = html.match(/<head>([\s\S]*)<\/head>/)[1]
   .replace(/<meta charset[^>]*>\s*/, '')
   .replace(/<meta name="viewport"[^>]*>\s*/, '')
+  .replace(/<link rel="(?:icon|apple-touch-icon)"[^>]*>\s*/g, '')
   .replace(/<link rel="stylesheet" href="((?!https?:)[^"]+)" \/>/g, (_, href) => `<style>\n${readFileSync(join(root, href), 'utf8')}\n</style>`);
 const body = html.match(/<body>([\s\S]*)<\/body>/)[1]
   .replace(/<script type="module"[^>]*><\/script>\s*/, '')
