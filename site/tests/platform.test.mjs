@@ -212,3 +212,34 @@ test('login com Google: pede o nome de usuário no primeiro acesso', async () =>
   assert.equal(platform.getUser().needsUsername, undefined);
   await platform.signOut();
 });
+
+test('estatísticas: visita 1x por dia, eventos de partida e painel só para admin', async () => {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await tick();
+  const visits = () => sb.db.site_events.filter((e) => e.kind === 'visit').length;
+  assert.equal(visits(), 1);
+  const device = sb.db.site_events[0].device;
+  assert.ok(device.length >= 8);
+
+  // Outra página no mesmo dia: não conta de novo.
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await tick();
+  assert.equal(visits(), 1);
+
+  await platform.track('game_start', GAME, { role: 'mid' });
+  const ev = sb.db.site_events.at(-1);
+  assert.equal(ev.kind, 'game_start');
+  assert.equal(ev.game_id, GAME);
+  assert.equal(ev.device, device);
+  assert.deepEqual(ev.data, { role: 'mid' });
+
+  assert.equal(await platform.isAdmin(), false);
+  await platform.signUp({ email: 'x@example.com', password: 'segredo123', username: 'comum' });
+  assert.equal(await platform.isAdmin(), false);
+  await assert.rejects(platform.adminStats(7), /não tem acesso/);
+  await platform.signOut();
+});

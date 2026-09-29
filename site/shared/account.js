@@ -31,6 +31,7 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
           <div class="sb-menu" hidden>
             <div class="sb-menu-email">${esc(u.email || '')}</div>
             ${hubHref ? `<a href="${hubHref}#historico">Meu histórico</a>` : '<a href="#historico">Meu histórico</a>'}
+            <a href="/painel/" data-sb-admin hidden>Painel</a>
             <button type="button" data-sb="logout">Sair</button>
           </div>
         </div>`;
@@ -39,6 +40,16 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
         <button type="button" class="sb-btn sb-primary" data-sb="login">Entrar</button>`;
     }
     el.innerHTML = `${brand}<div class="sb-right">${account}</div>`;
+    if (u) revealAdmin(u.id);
+  };
+  // Link do painel só para administradores (checado uma vez por conta).
+  let adminFor = null;
+  let admin = false;
+  const revealAdmin = (id) => {
+    const show = () => { const a = el.querySelector('[data-sb-admin]'); if (a) a.hidden = !admin; };
+    if (adminFor === id) return show();
+    adminFor = id;
+    platform.isAdmin().then((ok) => { admin = ok; show(); });
   };
 
   el.addEventListener('click', async (e) => {

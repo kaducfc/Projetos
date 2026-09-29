@@ -10,6 +10,8 @@
 //   onChange(fn)                    → avisa login/logout e saves vindos da nuvem
 //   requestPasswordReset(email) / updatePassword(senha) → "Esqueci minha senha"
 //   signInWithGoogle() / claimUsername(nome) → login com Google + escolha do nome
+//   track(tipo, gameId, dados)      → estatística anônima (início/fim de partida)
+//   isAdmin() / adminStats(dias)    → painel do administrador
 //
 // Sem conta, tudo fica no localStorage do navegador. Ao entrar, o que foi
 // jogado como visitante é enviado para a conta, e o save mais recente
@@ -27,6 +29,9 @@ const PUSH_INTERVAL_MS = 60_000;
 const URGENT_DELAY_MS = 1500;
 const RETRY_MIN_MS = 5_000;
 const RETRY_MAX_MS = 5 * 60_000;
+// Estatísticas anônimas: um id aleatório por navegador (sem dado pessoal).
+const DEVICE_KEY = 'site.device';
+const VISIT_KEY = 'site.visit';
 // Marca na URL de volta do e-mail de "Esqueci minha senha".
 const RECOVERY_PARAM = 'nova-senha';
 
@@ -145,6 +150,7 @@ export function init() {
         emit({ type: 'auth', user: null });
         return null;
       }
+      trackVisit();
       const wantsRecovery = consumeRecoveryMark();
       const { data } = await sb.auth.getSession();
       const sessionUser = data?.session?.user;
@@ -334,6 +340,58 @@ export async function signOut() {
   await flushPushes();
   if (sb) await sb.auth.signOut();
   if (user) handleSignedOut();
+}
+
+// ------------------------------------------------------------------ estatísticas
+
+function deviceId() {
+  let id = readLS(DEVICE_KEY, null);
+  if (!id) {
+    id = newId();
+    writeLS(DEVICE_KEY, id);
+  }
+  return id;
+}
+
+// Registra um evento anônimo para o painel. Nunca atrapalha o jogo: se
+// falhar (sem internet, servidor fora), só avisa no console.
+export async function track(kind, gameId = null, data = {}) {
+  try {
+    const sb = await getClient();
+    if (!sb) return;
+    const { error } = await sb.from('site_events').insert({ kind, game_id: gameId, device: deviceId(), data });
+    if (error) console.warn('Site: estatística não enviada:', error.message);
+  } catch (err) {
+    console.warn('Site: estatística não enviada:', err);
+  }
+}
+
+// Uma visita por navegador por dia (fuso de Brasília).
+function trackVisit() {
+  let today;
+  try {
+    today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+  } catch {
+    today = new Date().toISOString().slice(0, 10);
+  }
+  if (readLS(VISIT_KEY, null) === today) return;
+  writeLS(VISIT_KEY, today);
+  track('visit', null, { path: globalThis.location?.pathname || '' });
+}
+
+export async function isAdmin() {
+  const sb = await getClient();
+  if (!sb || !user) return false;
+  const { data, error } = await sb.rpc('site_is_admin');
+  return !error && data === true;
+}
+
+export async function adminStats(days = 30) {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_stats', { days });
+  if (error) throw new Error(/not_admin/.test(error.message) ? 'Esta conta não tem acesso ao painel.' : friendly(error).message);
+  return data;
 }
 
 // ------------------------------------------------------------------ saves

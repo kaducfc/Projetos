@@ -2,7 +2,7 @@
 // e as mesmas regras de acesso (cada conta só mexe nas próprias linhas).
 
 export function createFakeSupabase() {
-  const db = { site_profiles: [], site_game_saves: [], site_game_results: [] };
+  const db = { site_profiles: [], site_game_saves: [], site_game_results: [], site_events: [] };
   // Contagem de gravações e falha simulada (servidor ocupado).
   const stats = { upserts: 0, failNextUpserts: 0 };
   const users = [];
@@ -89,6 +89,12 @@ export function createFakeSupabase() {
         }
         return { data: null, error: null };
       }
+      if (q.op === 'insert') {
+        // Como no banco: qualquer um insere eventos, com o próprio id (ou nenhum).
+        const list = Array.isArray(q.rows) ? q.rows : [q.rows];
+        for (const r of list) db[table].push({ ...r, user_id: session?.user?.id ?? null });
+        return { data: null, error: null };
+      }
       if (q.op === 'delete') {
         db[table] = db[table].filter((r) => !(match(r) && r.user_id === uid));
         return { data: null, error: null };
@@ -103,6 +109,7 @@ export function createFakeSupabase() {
       maybeSingle() { q.single = true; return exec(); },
       upsert(rows, opts = {}) { q.op = 'upsert'; q.rows = rows; q.opts = opts; return b; },
       delete() { q.op = 'delete'; return b; },
+      insert(rows) { q.op = 'insert'; q.rows = rows; return b; },
       then(res, rej) { return exec().then(res, rej); },
     };
     return b;
@@ -121,6 +128,11 @@ export function createFakeSupabase() {
       }
       db.site_profiles.push({ id: uid, username: args.name });
       return { data: args.name, error: null };
+    }
+    if (name === 'site_is_admin') return { data: auth._uid() === 'user-admin', error: null };
+    if (name === 'site_admin_stats') {
+      if (auth._uid() !== 'user-admin') return { data: null, error: { message: 'not_admin' } };
+      return { data: { dias: args.days, eventos: db.site_events.length }, error: null };
     }
     return { data: null, error: { message: 'rpc desconhecida' } };
   }

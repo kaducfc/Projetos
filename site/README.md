@@ -64,6 +64,18 @@ npm test   # testes do sistema de contas
    "Web application" com o redirect `https://<projeto>.supabase.co/auth/v1/callback`
    e cole o Client ID e o Client Secret em **Authentication → Sign In / Providers → Google**.
 
+## Painel do administrador
+
+Em `painel/` (fora dos buscadores). Mostra visitantes por dia, carreiras
+iniciadas e terminadas, contas novas e as médias da Carreira no Rift (OVR
+máximo, temporadas, troféus, legado, rotas, regiões e as 10 melhores
+carreiras). O site registra eventos anônimos em `site_events` (visita 1x por
+dia por navegador, início e fim de partida, via `platform.track`); só a
+função `site_admin_stats` lê essa tabela, e só para contas em `site_admins`.
+Configuração: rode `supabase/migrations/0003_painel.sql` (no fim dele fica o
+e-mail do administrador). O link "Painel" aparece no menu da conta para quem
+tem acesso.
+
 ## Aviso de fã, páginas institucionais e doações
 
 O rodapé (`shared/footer.js`) aparece no hub e em todos os jogos, com o aviso

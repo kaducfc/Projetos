@@ -48,6 +48,23 @@ function recordIfRetired() {
   state.resultRecorded = true;
   const legacy = legacyLabel(p);
   const count = (name) => p.trophies.filter((t) => t.name === name).length;
+  platform.track('game_end', GAME_ID, {
+    nick: String(p.nick).slice(0, 20),
+    nat: p.nat,
+    region: p.region,
+    role: p.role,
+    speed: state.speed,
+    score: legacyScore(p),
+    legacy: legacy.title,
+    peakOvr: p.peakOvr,
+    seasons: p.history.length,
+    retireAge: p.age,
+    trophies: p.trophies.length,
+    awards: p.trophies.filter((t) => t.kind === 'award').length,
+    leagues: p.trophies.filter((t) => t.kind === 'league').length,
+    msi: count('MSI'),
+    worlds: count('Mundial'),
+  });
   platform.recordResult(GAME_ID, {
     score: legacyScore(p),
     summary: {
@@ -74,6 +91,9 @@ function render({ scrollTop = false } = {}) {
   if (!state) {
     renderCreate(app, (form) => {
       state = newCareer(form);
+      platform.track('game_start', GAME_ID, {
+        nat: form.nat, region: state.player.region, role: form.role, style: form.style, speed: state.speed,
+      });
       save();
       render({ scrollTop: true });
     });
