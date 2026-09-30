@@ -256,6 +256,38 @@ function renderCampanha({ nova = false } = {}) {
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>`;
 }
 
+// Comemoração do título (igual à da Carreira no Rift quando vem um troféu).
+function comemorar() {
+  const c = jogo.campanha;
+  if (!c || c.resultado !== 'campeao' || c.comemorado || mostrados < c.rodadas.length) return;
+  c.comemorado = true;
+  salvar(true);
+  const jogos = c.rodadas.flatMap((r) => r.jogos);
+  const v = jogos.filter((g) => g.venceu).length;
+  const d = jogos.length - v;
+  const el = document.createElement('div');
+  el.className = 'modal-backdrop';
+  el.innerHTML = `<div class="modal trophy-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-campeao">
+      <div class="rays"></div>
+      <div class="trophy-art"><img src="../../shared/assets/trofeus/cblol.png" alt="Troféu do CBLOL" width="150" /></div>
+      <p class="eyebrow">Campeão do CBLOL · ${esc(NAME)}</p>
+      <h2 id="titulo-campeao">${esc(nomeTime())}</h2>
+      <p class="parabens">Parabéns! O seu time levantou a taça.</p>
+      <div class="t-stats">
+        <div><b>${v}</b><small>${v === 1 ? 'vitória' : 'vitórias'}</small></div>
+        <div><b>${d}</b><small>${d === 1 ? 'derrota' : 'derrotas'}</small></div>
+        <div><b>${pontos(c)}</b><small>pontos</small></div>
+      </div>
+      <button class="btn btn-gold" data-fechar>Continuar</button>
+    </div>`;
+  const fechar = () => { el.remove(); document.removeEventListener('keydown', esc_); };
+  const esc_ = (e) => { if (e.key === 'Escape') fechar(); };
+  el.addEventListener('click', (e) => { if (e.target === el || e.target.closest('[data-fechar]')) fechar(); });
+  document.addEventListener('keydown', esc_);
+  document.body.append(el);
+  el.querySelector('[data-fechar]').focus();
+}
+
 // Mostra o jogo acontecendo: relógio correndo e abates aparecendo aos
 // poucos; o resultado só aparece no fim. "Pular" termina na hora.
 const espera = (ms) => new Promise((ok) => { setTimeout(ok, ms); });
@@ -305,6 +337,7 @@ async function animar(idx) {
   if (eu.parar) return;
   anim = null;
   render();
+  comemorar();
   // Automático: acabou um confronto, começa o próximo.
   if (pref.auto && mostrados < jogo.campanha.rodadas.length) {
     await espera(pausa());
@@ -397,7 +430,7 @@ app.addEventListener('click', (e) => {
       if (anim) { anim.parar = true; anim = null; }
       mostrados = jogo.campanha.rodadas.length;
       if (faltava) terminar();
-      salvar(); render();
+      salvar(); render(); comemorar();
     } else if (act === 'nova') {
       const modo = jogo.modo;
       const nome = jogo.nome;

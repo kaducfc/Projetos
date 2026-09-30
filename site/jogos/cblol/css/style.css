@@ -198,3 +198,26 @@ button { font-family: var(--sans); }
   .round .ph { grid-column: 1 / -1; }
   .sides { grid-template-columns: 1fr; }
 }
+
+/* Comemoração do título (mesma da Carreira no Rift) */
+.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: rgba(3, 6, 9, 0.8); backdrop-filter: blur(4px); animation: fade 0.2s ease-out; }
+@keyframes fade { from { opacity: 0; } }
+.modal { position: relative; overflow: hidden; width: min(420px, 100%); text-align: center; background: linear-gradient(180deg, #1c1810, #0d0c09); border: 1px solid var(--gold); border-radius: 20px; padding: 34px 26px 26px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(217, 168, 43, 0.18); animation: pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1); }
+@keyframes pop { from { transform: scale(0.7); opacity: 0; } }
+.rays { position: absolute; left: 50%; top: 110px; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(245, 207, 90, 0.12) 0 8deg, transparent 8deg 22deg);
+  mask-image: radial-gradient(closest-side, #000, transparent); -webkit-mask-image: radial-gradient(closest-side, #000, transparent);
+  animation: spin 18s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.trophy-art { position: relative; display: flex; justify-content: center; filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.6)); animation: float 3s ease-in-out infinite; }
+.trophy-art img { width: 150px; height: auto; }
+@keyframes float { 50% { transform: translateY(-6px); } }
+.modal .eyebrow { position: relative; margin: 12px 0 0; color: var(--gold); font-size: 11px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; }
+.modal h2 { position: relative; margin: 6px 0 4px; font-family: var(--display); font-weight: 400; font-size: 46px; line-height: 1; letter-spacing: 1px; color: var(--gold-2); overflow-wrap: anywhere; }
+.modal .parabens { position: relative; margin: 0 0 16px; color: #d3ccbc; }
+.t-stats { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+.t-stats div { background: rgba(9, 9, 10, 0.55); border: 1px solid var(--line-2); border-radius: 6px; padding: 8px 4px; display: flex; flex-direction: column; }
+.t-stats b { font-family: var(--display); font-size: 32px; font-weight: 400; line-height: 1; color: var(--text); }
+.t-stats small { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.modal .btn { position: relative; }
+@media (prefers-reduced-motion: reduce) { .rays, .trophy-art, .modal, .modal-backdrop { animation: none; } }
