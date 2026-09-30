@@ -163,15 +163,19 @@ const titulares = (t) => ROTAS.map((r) => t.jogadores.find((j) => j.rota === r &
 
 function jogoSimulado(meu, adv, jogadores, rnd) {
   const venceu = rnd() < chanceVitoria(meu, adv.forca);
-  // Placar de abates acompanha a diferença de força: atropelo quando o
-  // vencedor é bem melhor, jogo apertado quando é equilibrado (ou zebra).
+  // Placar de abates: de 7 a 40 no total, bem variado. Atropelo tende a ser
+  // desigual (8x0, 15x5, 21x5); jogo parelho fica próximo (3x5, 12x12,
+  // 20x18) e o vencedor pode até ter feito menos abates.
   const vant = venceu ? meu - adv.forca : adv.forca - meu;
-  const kv = 12 + Math.floor(rnd() * 15);
-  const razao = Math.max(0.12, Math.min(0.92, 0.6 - vant * 0.035 + (rnd() - 0.5) * 0.2));
-  const kp = Math.max(1, Math.min(kv - 1, Math.round(kv * razao)));
+  const total = 7 + Math.round(((rnd() + rnd()) / 2) * 33);
+  // Zerar o adversário só em placar pequeno (8x0 sim, 36x0 não).
+  const teto = total <= 12 ? 1 : 0.9 - (total - 12) * 0.004;
+  const parte = Math.max(0.4, Math.min(teto, 0.58 + vant * 0.022 + (rnd() - 0.5) * 0.34));
+  const kv = Math.max(1, Math.round(total * parte));
+  const kp = total - kv;
   const placar = venceu ? [kv, kp] : [kp, kv];
   // Duração de 23 a 40 minutos: atropelo acaba cedo, jogo parelho vai longe (em segundos).
-  const parelho = (razao - 0.12) / 0.8;
+  const parelho = Math.min(1, kp / kv);
   const duracao = Math.round((23 + 13 * parelho + rnd() * 4) * 60);
   const nos = linhaDoTime(jogadores, placar[0], placar[1], rnd);
   const eles = linhaDoTime(titulares(adv), placar[1], placar[0], rnd);
