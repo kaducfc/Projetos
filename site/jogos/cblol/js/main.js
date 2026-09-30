@@ -16,7 +16,7 @@ mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
 mountSiteFooter(document.getElementById('site-footer'));
 
 // Posição de cada marcação de rota no desenho do mapa (em % da largura e da altura).
-const POS = { top: [16.6, 12.9], jungle: [27.8, 34.4], mid: [50.4, 44.7], adc: [71.4, 78.0], sup: [87.6, 60.5] };
+const POS = { top: [16.56, 12.88], jungle: [27.88, 34.98], mid: [50.51, 45.05], adc: [71.39, 78.6], sup: [87.66, 60.67] };
 const MAPA = '../../shared/assets/mapa/summoners-rift-1100.webp';
 const SIGLA = { top: 'TOP', jungle: 'JG', mid: 'MID', adc: 'ADC', sup: 'SUP', reserva: 'RES', tecnico: 'TÉC', tecnico2: 'TÉC' };
 
@@ -139,18 +139,12 @@ function scoreBox() {
   const n = VAGAS.filter((v) => jogo.vagas[v]).length;
   const rows = VAGAS.map((v) => {
     const p = jogo.vagas[v];
-    const ign = v === 'reserva' && p && cheio && !f.reservaConta;
-    return `<div class="${ign ? 'ign' : ''}"><span>${NOME_VAGA[v]}</span><span>${p ? esc(p.nome) : '—'}</span><b>${p ? ovrTxt(p.ovr) : ''}</b></div>`;
+    return `<div><span>${NOME_VAGA[v]}</span><span>${p ? esc(p.nome) : '—'}</span><b>${p ? ovrTxt(p.ovr) : ''}</b></div>`;
   }).join('');
-  const nota = cheio
-    ? (f.reservaConta ? 'O reserva é melhor que a média e ajuda a subir o time.' : 'O reserva está abaixo da média e não entra na conta.')
-      + (jogo.vagas.tecnico ? ` Técnico: ${f.ajusteTecnico >= 0 ? '+' : ''}${f.ajusteTecnico.toFixed(1)} de força.` : '')
-    : '';
   return `<div class="box">
-    <div class="score-big"><h3 style="margin:0"><span class="team-name">${esc(nomeTime())}</span>${n}/7 · OVR médio</h3>
-      ${f.media && !oculto() ? ovrShield(Math.round(f.media)) : `<b>${f.media ? '??' : '—'}</b>`}</div>
+    <div class="score-big"><h3 style="margin:0"><span class="team-name">${esc(nomeTime())}</span>${n}/7${cheio ? ' · OVR médio' : ''}</h3>
+      ${cheio ? ovrShield(Math.round(f.media)) : ''}</div>
     <div class="lineup">${rows}</div>
-    ${nota ? `<p class="note">${nota}</p>` : ''}
   </div>`;
 }
 
@@ -158,12 +152,11 @@ function renderMontagem() {
   const cheio = completo(jogo);
   const primeira = !Object.values(jogo.vagas).some(Boolean) && !jogo.atual;
   const left = cheio
-    ? `<div class="box"><h3>Time completo</h3><p class="muted small" style="margin:0 0 12px">Força ${forca(jogo.vagas).forca.toFixed(1)}. Hora de ver até onde ele chega.</p>
+    ? `<div class="box"><h3>Time completo</h3><p class="muted small" style="margin:0 0 12px">Força ${Math.round(forca(jogo.vagas).forca)}. Hora de ver até onde ele chega.</p>
         <button class="btn btn-gold" data-act="simular">Simular campanha →</button></div>`
     : `${primeira || !(jogo.nome || '').trim() ? `<div class="box">
         <h3><label for="nome-time">Nome do seu time</label></h3>
-        <input id="nome-time" class="name-input" maxlength="24" autocomplete="off" placeholder="Ex.: Os Invocadores" value="${esc(jogo.nome || '')}" />
-        <p class="hint-text">É esse nome que vai representar o seu time durante o jogo.</p>
+        <input id="nome-time" class="name-input" maxlength="24" autocomplete="off" value="${esc(jogo.nome || '')}" />
       </div>` : ''}<div class="box">
         <h3>Modo</h3>
         <div class="seg">
@@ -246,7 +239,7 @@ function renderCampanha({ nova = false } = {}) {
   app.innerHTML = `
     <header class="dt-head">
       <div><p class="eyebrow">◆ A campanha · ${esc(NAME)}</p><h1>${esc(nomeTime())}</h1></div>
-      <span class="meta">Força ${c.forca} · Modo ${jogo.modo === 'oculto' ? 'Oculto' : 'Normal'}</span>
+      <span class="meta">Força ${Math.round(c.forca)} · Modo ${jogo.modo === 'oculto' ? 'Oculto' : 'Normal'}</span>
     </header>
     <div class="camp">
       <div class="camp-top"><span class="muted small">Fase de pontos: 7 jogos (3 vitórias classificam) · Quartas MD3 · Semi e final MD5</span>
@@ -340,7 +333,7 @@ function terminar() {
   platform.track('game_end', GAME_ID, { resultado: c.resultado, vitorias: c.vitoriasGrupos, forca: c.forca, modo: jogo.modo, bonus: jogo.bonusUsado });
   platform.recordResult(GAME_ID, {
     score: pontos(c),
-    summary: { text: `${TITULO_RESULTADO[c.resultado]} · força ${c.forca} · ${time.slice(0, 5).join(', ')}`, resultado: c.resultado, modo: jogo.modo },
+    summary: { text: `${TITULO_RESULTADO[c.resultado]} · força ${Math.round(c.forca)} · ${time.slice(0, 5).join(', ')}`, resultado: c.resultado, modo: jogo.modo },
   });
 }
 

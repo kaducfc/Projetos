@@ -273,7 +273,7 @@ export function jerseySvg(nick, roleShort) {
 
 // Posição de cada marcação no desenho do mapa (em % da largura e da altura).
 export const MAP_PINS = {
-  top: [16.6, 12.9], jungle: [27.8, 34.4], mid: [50.4, 44.7], adc: [71.4, 78.0], support: [87.6, 60.5],
+  top: [16.56, 12.88], jungle: [27.88, 34.98], mid: [50.51, 45.05], adc: [71.39, 78.6], support: [87.66, 60.67],
 };
 const MAP_FILE = 'mapa/summoners-rift-640.webp';
 
