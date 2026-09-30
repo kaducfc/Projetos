@@ -137,6 +137,9 @@ test('simulação: K/D/A de cada jogador fecha com o placar de abates', () => {
       assert.equal(soma(g.nos, 'd'), g.placar[1]);
       assert.equal(soma(g.eles, 'd'), g.placar[0]);
       assert.ok(g.duracao >= 23 * 60 && g.duracao <= 40 * 60, `${g.duracao}`);
+      const [v, p] = g.venceu ? g.placar : [g.placar[1], g.placar[0]];
+      assert.ok(v + p >= 7 && v + p <= 40, `total ${v + p}`);
+      assert.ok(p - v <= 3, `vencedor com ${v}x${p}`);
       if (g.venceu) assert.ok(g.nos.some((j) => j.nome === g.mvp));
     }
   }

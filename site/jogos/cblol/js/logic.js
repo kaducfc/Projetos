@@ -171,7 +171,8 @@ function jogoSimulado(meu, adv, jogadores, rnd) {
   // Zerar o adversário só em placar pequeno (8x0 sim, 36x0 não).
   const teto = total <= 12 ? 1 : 0.9 - (total - 12) * 0.004;
   const parte = Math.max(0.4, Math.min(teto, 0.58 + vant * 0.022 + (rnd() - 0.5) * 0.34));
-  const kv = Math.max(1, Math.round(total * parte));
+  // O vencedor pode ter feito menos abates, mas no máximo 3 a menos.
+  const kv = Math.max(1, Math.round(total * parte), Math.ceil((total - 3) / 2));
   const kp = total - kv;
   const placar = venceu ? [kv, kp] : [kp, kv];
   // Duração de 23 a 40 minutos: atropelo acaba cedo, jogo parelho vai longe (em segundos).
