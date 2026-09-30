@@ -6,7 +6,7 @@ Cada "edição" é um split (fase de pontos + playoffs juntos). Cada time de
 cada edição vira um time sorteável, com os jogadores por rota, reservas e
 técnico. Uso: python3 scripts/gerar.py
 """
-import collections, hashlib, json, math, os, re
+import collections, hashlib, json, math, os, re, unicodedata
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.abspath(os.path.join(AQUI, '..', '..', '..', '..'))
@@ -42,6 +42,14 @@ AMOSTRA = 6  # jogos: com poucos jogos o desempenho é puxado para a média
 def limpa(nome):
     return re.sub(r'\s*\(.*?\)\s*$', '', nome or '').strip()
 
+def chave_nome(nome):
+    """Mesma pessoa com grafias diferentes (TaeYeon/Taeyeon, Céos/Ceos) vira uma chave só."""
+    sem_acento = unicodedata.normalize('NFD', nome).encode('ascii', 'ignore').decode()
+    return re.sub(r'[^a-z0-9]', '', sem_acento.lower())
+
+# Mesma grafia (ignorando maiúsculas), mas pessoas diferentes: não juntar.
+NOMES_SEPARADOS = {'stepz'}  # Stepz (ADC 2020) ≠ STEPZ (jungle 2026)
+
 def estavel(*partes):
     """Número estável 0..1 a partir de um texto (mesmo resultado a cada geração)."""
     h = hashlib.md5('|'.join(map(str, partes)).encode()).hexdigest()
@@ -59,6 +67,23 @@ def main():
     d = json.load(open(ENTRADA, encoding='utf-8'))
     pages = [t['OverviewPage'] for t in d['torneios']]
     ed = {p: edicao_de(p) for p in pages if re.search(r'20(1[4-9]|2\d)', p)}
+
+    # Grafia oficial de cada pessoa: a mais usada nos jogos (depois nos elencos).
+    grafias = collections.defaultdict(collections.Counter)
+    for r in d['jogadores']:
+        n = limpa(r['Link'] or r['Name'])
+        grafias[chave_nome(n)][n] += 1000
+    for e in d['elencos']:
+        for n in (e['RosterLinks'] or '').split(';;'):
+            n = limpa(n)
+            if n:
+                grafias[chave_nome(n)][n] += 1
+    canon = {c: g.most_common(1)[0][0] for c, g in grafias.items()}
+
+    def nome_de(n):
+        n = limpa(n)
+        c = chave_nome(n)
+        return n if not n or c in NOMES_SEPARADOS else canon.get(c, n)
 
     # ---------------------------------------------------------------- jogos
     jogo = {g['GameId']: g for g in d['jogos']}
@@ -83,7 +108,7 @@ def main():
         if r['OverviewPage'] not in ed or r['Role'] not in ROLES:
             continue
         base = ed[r['OverviewPage']][0]
-        key = (base, r['Team'], limpa(r['Link'] or r['Name']), ROLES[r['Role']])
+        key = (base, r['Team'], nome_de(r['Link'] or r['Name']), ROLES[r['Role']])
         a = acc[key]
         g = jogo.get(r['GameId'], {})
         mins = g.get('Gamelength') or 30
@@ -195,7 +220,7 @@ def main():
         base = ed[e['OverviewPage']][0]
         el = elencos[(base, e['Team'])]
         for link, role in zip((e['RosterLinks'] or '').split(';;'), (e['Roles'] or '').split(';;')):
-            link = limpa(link)
+            link = nome_de(link)
             if not link:
                 continue
             prim = role.split(',')[0].strip()
@@ -219,6 +244,13 @@ def main():
             jogs.setdefault((link, role), {'nome': link, 'rota': role, 'jogos': 0, 's': None})
         if not jogs:
             continue
+        # Quem jogou em mais de uma rota no split aparece uma vez só: na rota
+        # em que mais jogou (a outra só fica se for a única opção da rota).
+        for nome in {j['nome'] for j in jogs.values()}:
+            entradas = sorted((j for j in jogs.values() if j['nome'] == nome), key=lambda j: -j['jogos'])
+            for extra in entradas[1:]:
+                if any(j['rota'] == extra['rota'] and j['nome'] != nome for j in jogs.values()):
+                    del jogs[(extra['nome'], extra['rota'])]
         place = lugar.get((base, team), (None, False))[0]
         bonus = {1: 2, 2: 1}.get(place, 0)
         # Titular de cada rota: quem mais jogou.

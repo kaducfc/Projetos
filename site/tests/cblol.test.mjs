@@ -5,6 +5,17 @@ import { novoJogo, rolar, escolher, vagasPossiveis, opcoesBonus, usarBonus, comp
 
 const { times } = JSON.parse(readFileSync(new URL('../jogos/cblol/dados/times.json', import.meta.url)));
 
+test('dados: cada pessoa aparece uma vez só em cada time (sem grafias repetidas)', () => {
+  const chave = (n) => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  for (const t of times) {
+    const vistos = new Set();
+    for (const j of t.jogadores) {
+      assert.ok(!vistos.has(chave(j.nome)), `${t.id}: ${j.nome} repetido`);
+      vistos.add(chave(j.nome));
+    }
+  }
+});
+
 test('dados: times com 5 rotas e OVR entre 50 e 98', () => {
   assert.ok(times.length > 200);
   for (const t of times) {

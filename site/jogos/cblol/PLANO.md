@@ -57,7 +57,7 @@ contra times históricos.
 
 ## Como ficou (dados de 30/09/2026)
 
-- 247 times (cada um num split), 1.523 jogadores e 223 técnicos, de 2014 a
+- 247 times (cada um num split), 1.443 jogadores e 223 técnicos, de 2014 a
   2026, com a LTA Sul em 2025. 2012 e 2013 ficaram de fora: a Leaguepedia não
   tem elencos nem estatísticas desses anos.
 - Estatísticas por era: abates/mortes/assistências e farm em todos os anos;
