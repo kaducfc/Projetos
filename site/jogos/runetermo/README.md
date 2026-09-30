@@ -15,8 +15,8 @@ mas continuam valendo como tentativa. O nome do jogo fica em `shared/config.js` 
   Escuro: não está. Letras repetidas contam só quantas vezes existem.
 - Acentos e apóstrofos não contam ("Kai'Sa" = KAISA, "Poção" = POCAO), mas
   aparecem nas peças.
-- Tentativas aceitas: qualquer palavra do dicionário (português comum, 5 a
-  10 letras) ou do jogo, com o mesmo número de letras.
+- Tentativas aceitas: qualquer sequência de letras com o mesmo número de
+  letras da resposta (não precisa ser uma palavra que existe).
 
 ## Arquivos
 
@@ -25,7 +25,7 @@ mas continuam valendo como tentativa. O nome do jogo fica em `shared/config.js` 
 - `dados/palavras.json` (gerado): respostas na ordem dos dias. Palavras já
   sorteadas não mudam de dia; as novas entram embaralhadas no fim. Quando a
   lista acaba, ela recomeça.
-- `dados/dicionario.txt` (gerado): ~79 mil palavras aceitas como tentativa,
+- `dados/dicionario.txt` (gerado): ~79 mil palavras, usado só para mostrar os acentos nas peças,
   tiradas das palavras mais frequentes do pacote npm
   `an-array-of-portuguese-words` (licença MIT). Para refazer:
   `npm pack an-array-of-portuguese-words`, extraia e rode

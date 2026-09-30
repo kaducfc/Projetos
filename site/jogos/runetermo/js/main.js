@@ -21,7 +21,6 @@ mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
 mountSiteFooter(document.getElementById('site-footer'));
 
 let answers = [];
-let valid = new Set(); // chaves aceitas como tentativa
 const accents = new Map(); // chave → forma com acento (para mostrar nas peças)
 let today = dayIndex();
 let answer = null; // { palavra, chave, categoria }
@@ -42,12 +41,9 @@ async function loadData() {
   for (const w of dic.split('\n')) {
     if (!w) continue;
     const k = norm(w);
-    valid.add(k);
     if (!accents.has(k)) accents.set(k, w);
   }
-  for (const k of pal.extras) valid.add(k);
   for (const a of answers) {
-    valid.add(a.chave);
     accents.set(a.chave, a.palavra);
   }
 }
@@ -149,11 +145,6 @@ function submit() {
   if (guess.length < n) {
     render({ shake: true });
     toast(`A palavra tem ${n} letras`);
-    return;
-  }
-  if (!valid.has(guess)) {
-    render({ shake: true });
-    toast('Palavra não aceita');
     return;
   }
   if (!save.guesses.length) platform.track('game_start', GAME_ID, { day: today, length: n, categoria: answer.categoria });
