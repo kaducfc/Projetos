@@ -73,3 +73,9 @@ details.p-details[open] summary { margin-bottom: 8px; }
   .cards { grid-template-columns: 1fr; }
   .tile .t-value { font-size: 26px; }
 }
+
+/* Ferramenta de dados do CBLOL */
+.p-btn { background: var(--gold); color: #140f02; border: 0; border-radius: 4px; padding: 10px 18px; font: 800 14px var(--sans); cursor: pointer; }
+.p-btn:disabled { opacity: 0.5; cursor: default; }
+.p-log { margin: 0; max-height: 420px; overflow: auto; background: #0c0b09; border: 1px solid var(--line); border-radius: 4px; padding: 12px; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; color: #d3ccbc; white-space: pre-wrap; }
+.p-log:empty { display: none; }
