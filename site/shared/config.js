@@ -64,12 +64,11 @@ export const GAMES = [
   },
   {
     id: 'cblol',
-    name: 'CBLOL dos Sonhos', // provisório
+    name: 'Lendas do CBLOL',
     tagline: 'Monte um time com lendas de todas as eras do CBLOL e veja até onde ele chega.',
     kind: 'Monte e simule',
-    path: 'jogos/cblol/',
+    path: 'jogos/lendas-do-cblol/',
     status: 'live',
-    oculto: true, // em teste: ainda fora da página inicial
     scoreLabel: 'Pontos',
   },
 ];

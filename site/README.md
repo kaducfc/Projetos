@@ -14,7 +14,8 @@ site/
 ├── jogos/
 │   ├── carreira-no-rift/                # simulador de carreira
 │   ├── runetermo/                       # palavra do dia (estilo Termo)
-│   └── campeao/                         # adivinhe o campeão do dia
+│   ├── campeao/                         # adivinhe o campeão do dia
+│   └── lendas-do-cblol/                 # monte um time com lendas do CBLOL e simule
 ├── supabase/migrations/   # 0001 contas, 0002 login com Google
 ├── supabase/email-templates/  # e-mails do Supabase em português
 └── tests/             # testes do platform.js com um Supabase simulado

@@ -1,4 +1,4 @@
-# Jogo do CBLOL (nome a definir): regras combinadas
+# Lendas do CBLOL: regras combinadas
 
 Inspirado no "7 a 0": monta-se um time misturando jogadores de times e splits
 diferentes do CBLOL (2012–2026, com a LTA Sul em 2025) e o time é simulado

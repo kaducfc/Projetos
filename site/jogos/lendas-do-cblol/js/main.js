@@ -1,4 +1,4 @@
-// CBLOL dos Sonhos (nome provisório): monte um time com jogadores de todas as
+// Lendas do CBLOL: monte um time com jogadores de todas as
 // eras do CBLOL e simule a campanha.
 import {
   ROTAS, VAGAS, NOME_VAGA, novoJogo, rolar, opcoesBonus, usarBonus, escolher, vagasPossiveis, completo, forca, simular,
@@ -10,7 +10,7 @@ import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 
 const GAME_ID = 'cblol';
-const NAME = gameById(GAME_ID)?.name || 'CBLOL dos Sonhos';
+const NAME = gameById(GAME_ID)?.name || 'Lendas do CBLOL';
 const app = document.getElementById('app');
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -380,7 +380,7 @@ async function compartilhar() {
     '',
     ...c.rodadas.filter((r) => r.fase !== 'Fase de pontos').map(linha),
     '',
-    'Monte o seu: riftarcade.com.br/jogos/cblol',
+    'Monte o seu: riftarcade.com.br/jogos/lendas-do-cblol',
   ].join('\n');
   try {
     if (navigator.share && matchMedia('(pointer: coarse)').matches) await navigator.share({ text });

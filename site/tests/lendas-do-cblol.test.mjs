@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { novoJogo, rolar, escolher, vagasPossiveis, opcoesBonus, usarBonus, completo, forca, simular, VAGAS, ROTAS } from '../jogos/cblol/js/logic.js';
+import { novoJogo, rolar, escolher, vagasPossiveis, opcoesBonus, usarBonus, completo, forca, simular, VAGAS, ROTAS } from '../jogos/lendas-do-cblol/js/logic.js';
 
-const { times } = JSON.parse(readFileSync(new URL('../jogos/cblol/dados/times.json', import.meta.url)));
+const { times } = JSON.parse(readFileSync(new URL('../jogos/lendas-do-cblol/dados/times.json', import.meta.url)));
 
 test('dados: cada pessoa aparece uma vez só em cada time (sem grafias repetidas)', () => {
   const chave = (n) => n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -86,7 +86,7 @@ test('jogador que trocou de rota no split entra pela rota escolhida', () => {
 });
 
 test('OVR decide: 15+ de diferença é impossível; 7 só com sorte', async () => {
-  const { chanceVitoria } = await import('../jogos/cblol/js/logic.js');
+  const { chanceVitoria } = await import('../jogos/lendas-do-cblol/js/logic.js');
   assert.equal(chanceVitoria(77, 92), 0);
   assert.equal(chanceVitoria(70, 92), 0);
   assert.equal(chanceVitoria(92, 77), 1);
