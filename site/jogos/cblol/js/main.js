@@ -142,8 +142,8 @@ function scoreBox() {
     return `<div><span>${NOME_VAGA[v]}</span><span>${p ? esc(p.nome) : '—'}</span><b>${p ? ovrTxt(p.ovr) : ''}</b></div>`;
   }).join('');
   return `<div class="box">
-    <div class="score-big"><h3 style="margin:0"><span class="team-name">${esc(nomeTime())}</span>${n}/7${cheio ? ' · OVR médio' : ''}</h3>
-      ${cheio ? ovrShield(Math.round(f.media)) : ''}</div>
+    <div class="score-big"><h3 style="margin:0"><span class="team-name">${esc(nomeTime())}</span>${n}/7${f.media && !oculto() ? ' · OVR médio' : ''}</h3>
+      ${f.media && !oculto() ? ovrShield(Math.round(f.media)) : ''}</div>
     <div class="lineup">${rows}</div>
   </div>`;
 }
