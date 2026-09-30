@@ -182,7 +182,7 @@ function renderMontagem() {
 // ------------------------------------------------------------------ campanha
 
 const relogio = (seg) => `${Math.floor(seg / 60)}:${String(Math.floor(seg % 60)).padStart(2, '0')}`;
-const chipTxt = (g, i, n) => `${n > 1 ? `J${i + 1} · ` : ''}${g.placar[0]}–${g.placar[1]} abates${g.mvp ? ` · MVP ${esc(g.mvp)}` : ''}`;
+const chipTxt = (g, i, n) => `${n > 1 ? `Game ${i + 1} · ` : ''}${g.placar[0]}–${g.placar[1]} abates${g.mvp ? ` · MVP ${esc(g.mvp)}` : ''}`;
 
 function tabelaLado(titulo, linhas, mvp) {
   const rows = linhas.map((j) => `<tr${j.nome === mvp ? ' class="mvp"' : ''}>
@@ -195,7 +195,7 @@ function tabelaLado(titulo, linhas, mvp) {
 function detalhesHtml(r, i) {
   if (!r.jogos.every((g) => g.nos)) return '';
   const partes = r.jogos.map((g, gi) => `<div class="match">
-      <p class="match-t"><b class="${g.venceu ? 'w' : 'l'}">${r.jogos.length > 1 ? `Jogo ${gi + 1} · ` : ''}${g.venceu ? 'Vitória' : 'Derrota'} ${g.placar[0]}–${g.placar[1]}</b><span>⏱ ${relogio(g.duracao)}</span></p>
+      <p class="match-t"><b class="${g.venceu ? 'w' : 'l'}">${r.jogos.length > 1 ? `Game ${gi + 1} · ` : ''}${g.venceu ? 'Vitória' : 'Derrota'} ${g.placar[0]}–${g.placar[1]}</b><span>⏱ ${relogio(g.duracao)}</span></p>
       <div class="sides">${tabelaLado('Seu time', g.nos, g.mvp)}${tabelaLado(r.adv.time, g.eles, null)}</div>
     </div>`).join('');
   return `<details class="more" data-i="${i}"${abertos.has(i) ? ' open' : ''}><summary>Ver ${r.jogos.length > 1 ? 'as partidas' : 'a partida'}</summary>${partes}</details>`;
@@ -287,7 +287,7 @@ async function animar(idx) {
       const agora = p * g.duracao;
       const feitos = abates.filter((x) => x.t <= agora);
       const nos = feitos.filter((x) => x.lado === 0).length;
-      chip.textContent = `${r.jogos.length > 1 ? `J${gi + 1} · ` : ''}⏱ ${relogio(agora)} · ${nos}–${feitos.length - nos} abates`;
+      chip.textContent = `${r.jogos.length > 1 ? `Game ${gi + 1} · ` : ''}⏱ ${relogio(agora)} · ${nos}–${feitos.length - nos} abates`;
       if (p >= 1) break;
       await new Promise((ok) => { requestAnimationFrame(ok); });
     }
