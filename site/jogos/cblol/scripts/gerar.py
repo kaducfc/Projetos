@@ -30,14 +30,18 @@ ORG = {
 
 # Pesos de cada estatística por rota (somam 1; se faltar uma estatística
 # naquele ano, os pesos das outras são redistribuídos).
+# As mortes já entram no KDA, então quase não pesam de novo sozinhas.
+# gsh = parte do ouro do time; cpm = abates + assistências por minuto.
 PESOS = {
-    'top':    {'wr': .25, 'kda': .20, 'kp': .15, 'csm': .15, 'dmg': .15, 'dth': .10},
-    'jungle': {'wr': .25, 'kp': .25, 'kda': .20, 'obj': .15, 'dth': .10, 'vis': .05},
-    'mid':    {'wr': .25, 'dmg': .20, 'kda': .20, 'kp': .15, 'csm': .15, 'dth': .05},
-    'adc':    {'wr': .25, 'dmg': .20, 'kda': .20, 'csm': .15, 'ksh': .15, 'dth': .05},
-    'sup':    {'wr': .25, 'kp': .25, 'vis': .15, 'apm': .15, 'kda': .10, 'dth': .10},
+    'top':    {'wr': .30, 'kda': .18, 'kp': .12, 'csm': .12, 'dmg': .12, 'gsh': .10, 'dth': .06},
+    'jungle': {'wr': .32, 'kp': .18, 'kda': .16, 'cpm': .12, 'obj': .12, 'csm': .05, 'vis': .05},
+    'mid':    {'wr': .30, 'dmg': .18, 'kda': .16, 'kp': .12, 'csm': .12, 'gsh': .08, 'dth': .04},
+    'adc':    {'wr': .30, 'dmg': .18, 'kda': .16, 'csm': .12, 'ksh': .12, 'gsh': .08, 'dth': .04},
+    'sup':    {'wr': .32, 'kp': .22, 'apm': .14, 'vis': .14, 'kda': .12, 'dth': .06},
 }
 AMOSTRA = 6  # jogos: com poucos jogos o desempenho é puxado para a média
+SPLIT_CHEIO = 18  # quem jogou o split inteiro conta como pelo menos isso de jogos
+PESO_CARREIRA = 0.3  # parte do OVR que vem do nível do jogador em toda a carreira
 
 def limpa(nome):
     return re.sub(r'\s*\(.*?\)\s*$', '', nome or '').strip()
@@ -124,6 +128,8 @@ def main():
             a['cs'] += r['CS']; a['cs_min'] += mins
         if r['DamageToChampions'] is not None and t['dmg']:
             a['dmg'] += r['DamageToChampions']; a['tdmg'] += t['dmg']
+        if r.get('Gold') and r.get('TeamGold'):
+            a['gold'] += r['Gold']; a['tgold'] += r['TeamGold']
         if r['VisionScore'] is not None:
             a['vis'] += r['VisionScore']; a['vis_min'] += mins
         o = objetivos(g, r['Team']) if g else None
@@ -138,6 +144,8 @@ def main():
             'ksh': a['k'] / a['tk'] if a['tk'] else None,
             'dth': -a['d'] / a['n'],
             'apm': a['a'] / a['min'],
+            'cpm': (a['k'] + a['a']) / a['min'],
+            'gsh': a['gold'] / a['tgold'] if a['tgold'] else None,
             'csm': a['cs'] / a['cs_min'] if a['cs_min'] else None,
             'dmg': a['dmg'] / a['tdmg'] if a['tdmg'] else None,
             'vis': a['vis'] / a['vis_min'] if a['vis_min'] else None,
@@ -167,6 +175,12 @@ def main():
                 difs[(role, s)].append(v - ref)
     desvio = {k: (sum(x * x for x in v) / len(v)) ** 0.5 or 1 for k, v in difs.items()}
 
+    jogos_split = collections.Counter()
+    for g in d['jogos']:
+        if g['OverviewPage'] in ed:
+            for t in (g['Team1'], g['Team2']):
+                jogos_split[(ed[g['OverviewPage']][0], t)] += 1
+
     def score(key):
         base, team, name, role = key
         m = M[key]
@@ -175,8 +189,11 @@ def main():
         if not tot_w:
             return 0.0
         z = sum(w * (m[s] - media[(base, role)][s]) / desvio[(role, s)] for s, w in pesos.items()) / tot_w
+        # Split curto (2014 teve 8 jogos): quem jogou tudo não é "amostra pequena".
         n = acc[key]['n']
-        return z * n / (n + AMOSTRA)
+        total = jogos_split.get((base, team)) or n
+        n_ef = max(n, SPLIT_CHEIO * n / total)
+        return z * n_ef / (n_ef + AMOSTRA)
 
     # O score combinado tem desvio menor que 1 (média de várias estatísticas):
     # padroniza por rota para a escala de OVR ficar parecida em todas.
@@ -186,9 +203,32 @@ def main():
             brutos[key[3]].append(score(key))
     esc_role = {r: (sum(v) / len(v), (sum(x * x for x in v) / len(v) - (sum(v) / len(v)) ** 2) ** 0.5 or 1) for r, v in brutos.items()}
 
-    def z_final(key):
+    def z_split(key):
         mu, sd = esc_role[key[3]]
         return (score(key) - mu) / sd
+
+    # Nível de carreira: média dos splits do jogador (pesada pelos jogos),
+    # puxada para a média quando a carreira é curta.
+    carreira_soma = collections.defaultdict(float)
+    carreira_n = collections.Counter()
+    for key in M:
+        if acc[key]['n'] >= 3:
+            carreira_soma[key[2]] += z_split(key) * acc[key]['n']
+            carreira_n[key[2]] += acc[key]['n']
+    carreira = {nome: carreira_soma[nome] / (carreira_n[nome] + 20) for nome in carreira_n}
+
+    def combinado(key):
+        return (1 - PESO_CARREIRA) * z_split(key) + PESO_CARREIRA * carreira.get(key[2], 0)
+
+    comb = collections.defaultdict(list)
+    for key in M:
+        if acc[key]['n'] >= 3:
+            comb[key[3]].append(combinado(key))
+    esc_comb = {r: (sum(v) / len(v), (sum(x * x for x in v) / len(v) - (sum(v) / len(v)) ** 2) ** 0.5 or 1) for r, v in comb.items()}
+
+    def z_final(key):
+        mu, sd = esc_comb[key[3]]
+        return (combinado(key) - mu) / sd
 
     # ---------------------------------------------------------------- colocações
     lugar = {}
@@ -203,10 +243,17 @@ def main():
         if atual is None or (playoff and not atual[1]) or (playoff == atual[1] and c['PlaceNumber'] < atual[0]):
             lugar[k] = (c['PlaceNumber'], playoff)
 
+    # Títulos do CBLOL na carreira (splits; a Final Regional não é título).
+    titulos = collections.Counter()
+    for (base, team), (place, _) in lugar.items():
+        if place == 1 and 'Regional' not in base:
+            for nome in {k[2] for k in acc if k[0] == base and k[1] == team and acc[k]['n'] >= 3}:
+                titulos[nome] += 1
+
     # OVR: média 75; ~90% entre 62 e 89. Acima de 92 e abaixo de 60 a escala
     # comprime, então 95+ e 55- só para quem ficou muito longe da média.
     def ovr_de(s, bonus=0):
-        v = 75 + 8.5 * s + bonus
+        v = 74.3 + 8.5 * s + bonus
         if v > 92: v = 92 + (v - 92) * 0.5
         if v > 95: v = 95 + (v - 95) * 0.35
         if v < 60: v = 60 - (60 - v) * 0.5
@@ -252,7 +299,7 @@ def main():
                 if any(j['rota'] == extra['rota'] and j['nome'] != nome for j in jogs.values()):
                     del jogs[(extra['nome'], extra['rota'])]
         place = lugar.get((base, team), (None, False))[0]
-        bonus = {1: 2, 2: 1}.get(place, 0)
+        bonus = {1: 3, 2: 2, 3: 1}.get(place, 0)
         # Titular de cada rota: quem mais jogou.
         tit = {}
         for j in jogs.values():
@@ -260,7 +307,7 @@ def main():
                 tit[j['rota']] = j
         for j in jogs.values():
             if j['s'] is not None:
-                j['ovr'] = ovr_de(j['s'], bonus)
+                j['ovr'] = ovr_de(j['s'], bonus + min(2, 0.5 * titulos[j['nome']]))
         for j in jogs.values():
             if j['s'] is None:  # reserva que não jogou: um pouco abaixo do titular
                 ref = tit.get(j['rota'], {}).get('ovr', 70)

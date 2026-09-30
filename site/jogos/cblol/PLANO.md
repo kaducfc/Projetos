@@ -16,13 +16,20 @@ contra times históricos.
 - Por rota, comparando com a média da liga no mesmo split (eras comparáveis).
 - Escala: a maioria entre ~60 e ~92; abaixo de 55 só muito abaixo da média;
   acima de 95 só muito acima.
-- Top: participação em abates, KDA, farm/min, parcela de dano.
-- Jungle: participação em abates, objetivos do time, KDA, visão.
-- Mid: parcela de dano, KDA, participação em abates, farm/min.
-- ADC: parcela de dano, farm/min, parcela de abates, KDA.
-- Suporte: participação em abates, assistências/min, visão/min, poucas mortes.
-- Todas: taxa de vitória; bônus pequeno pela colocação final (campeão +2, vice +1).
-- Poucos jogos: OVR puxado para a média (amostra baixa vale pouco).
+- Top: participação em abates, KDA, farm/min, parcela de dano, parcela do ouro.
+- Jungle: participação em abates, KDA, abates+assistências/min, objetivos do
+  time, farm, visão.
+- Mid: parcela de dano, KDA, participação em abates, farm/min, parcela do ouro.
+- ADC: parcela de dano, KDA, farm/min, parcela de abates, parcela do ouro.
+- Suporte: participação em abates, assistências/min, visão/min, KDA.
+- Todas: taxa de vitória (o peso maior, ~30%). Mortes quase não pesam
+  sozinhas, porque já entram no KDA.
+- Carreira: 30% do OVR vem do nível médio do jogador em todos os splits
+  (evita que uma lenda despenque num split ruim).
+- Colocação: campeão +3, vice +2, 3º +1. Títulos do CBLOL na carreira:
+  +0,5 cada (até +2).
+- Poucos jogos: OVR puxado para a média. Quem jogou o split inteiro não
+  conta como amostra pequena, mesmo em split curto (2014 teve 8 jogos).
 - Reserva que não jogou: 4 a 8 abaixo do titular da rota.
 - Splits sem estatística jogo a jogo: OVR pela colocação do time.
 - Técnico: pela colocação final (campeão ~90 … último ~65), ajustada pela
@@ -62,8 +69,7 @@ contra times históricos.
   tem elencos nem estatísticas desses anos.
 - Estatísticas por era: abates/mortes/assistências e farm em todos os anos;
   visão desde 2019; dano desde 2020. Os pesos de quem falta são redistribuídos.
-- OVR: mediana 75, 90% entre 61 e 90, máximo 97 (Revolta 2016 e Kami 2015).
+- OVR: mediana 75, 90% entre 61 e 91, máximo 97 (Mylon 2014).
 - Para refazer depois de baixar dados novos: `python3 scripts/gerar.py`.
 - Equilíbrio (simulador): escolhendo sempre o melhor OVR disponível, o time
-  sai com força ~82 e é campeão em ~36% das vezes; escolhendo ao acaso,
-  força ~76 e ~11% de títulos.
+  é campeão em ~37% das vezes; escolhendo ao acaso, ~14% de títulos.
