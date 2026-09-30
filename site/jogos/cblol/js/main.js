@@ -43,6 +43,17 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const oculto = () => jogo.modo === 'oculto' && !completo(jogo);
 const ovrTxt = (v) => (oculto() ? '?' : String(v));
 const lugarTxt = (n) => (n ? `${n}º lugar` : '');
+const nomeTime = () => (jogo.nome || '').trim() || 'Seu time';
+
+// Escudo do OVR, com as mesmas faixas da Carreira no Rift: prata (<70),
+// ouro (70–79), platina (80–89), diamante (90–94) e challenger (95+).
+const ovrTier = (ovr) => (ovr >= 95 ? 'challenger' : ovr >= 90 ? 'diamante' : ovr >= 80 ? 'platina' : ovr >= 70 ? 'ouro' : 'prata');
+function ovrShield(ovr) {
+  const tier = ovrTier(ovr);
+  return `<div class="ovr-shield tier-${tier}" title="OVR médio ${ovr}">
+    <img src="../../shared/assets/trofeus/${tier}.png" alt="" onload="this.classList.add('loaded')" onerror="this.parentElement.classList.add('no-img'); this.remove()" />
+    <small>OVR</small><b>${ovr}</b></div>`;
+}
 
 function salvar(urgent = false) {
   platform.writeSave(GAME_ID, { v: 1, jogo, historico, mostrados }, { urgent });
@@ -136,7 +147,8 @@ function scoreBox() {
       + (jogo.vagas.tecnico ? ` Técnico: ${f.ajusteTecnico >= 0 ? '+' : ''}${f.ajusteTecnico.toFixed(1)} de força.` : '')
     : '';
   return `<div class="box">
-    <div class="score-big"><h3 style="margin:0">Seu time · ${n}/7</h3><b>${f.media ? (oculto() ? '??' : f.media.toFixed(0)) : '—'}</b></div>
+    <div class="score-big"><h3 style="margin:0"><span class="team-name">${esc(nomeTime())}</span>${n}/7 · OVR médio</h3>
+      ${f.media && !oculto() ? ovrShield(Math.round(f.media)) : `<b>${f.media ? '??' : '—'}</b>`}</div>
     <div class="lineup">${rows}</div>
     ${nota ? `<p class="note">${nota}</p>` : ''}
   </div>`;
@@ -148,7 +160,11 @@ function renderMontagem() {
   const left = cheio
     ? `<div class="box"><h3>Time completo</h3><p class="muted small" style="margin:0 0 12px">Força ${forca(jogo.vagas).forca.toFixed(1)}. Hora de ver até onde ele chega.</p>
         <button class="btn btn-gold" data-act="simular">Simular campanha →</button></div>`
-    : `<div class="box">
+    : `${primeira || !(jogo.nome || '').trim() ? `<div class="box">
+        <h3><label for="nome-time">Nome do seu time</label></h3>
+        <input id="nome-time" class="name-input" maxlength="24" autocomplete="off" placeholder="Ex.: Os Invocadores" value="${esc(jogo.nome || '')}" />
+        <p class="hint-text">É esse nome que vai representar o seu time durante o jogo.</p>
+      </div>` : ''}<div class="box">
         <h3>Modo</h3>
         <div class="seg">
           <button data-modo="normal" class="${jogo.modo === 'normal' ? 'on' : ''}" ${primeira ? '' : 'disabled'}>Normal</button>
@@ -191,7 +207,7 @@ function detalhesHtml(r, i) {
   if (!r.jogos.every((g) => g.nos)) return '';
   const partes = r.jogos.map((g, gi) => `<div class="match">
       <p class="match-t"><b class="${g.venceu ? 'w' : 'l'}">${r.jogos.length > 1 ? `Game ${gi + 1} · ` : ''}${g.venceu ? 'Vitória' : 'Derrota'} ${g.placar[0]}–${g.placar[1]}</b><span>⏱ ${relogio(g.duracao)}</span></p>
-      <div class="sides">${tabelaLado('Seu time', g.nos, g.mvp)}${tabelaLado(r.adv.time, g.eles, null)}</div>
+      <div class="sides">${tabelaLado(nomeTime(), g.nos, g.mvp)}${tabelaLado(r.adv.time, g.eles, null)}</div>
     </div>`).join('');
   return `<details class="more" data-i="${i}"${abertos.has(i) ? ' open' : ''}><summary>Ver ${r.jogos.length > 1 ? 'as partidas' : 'a partida'}</summary>${partes}</details>`;
 }
@@ -229,7 +245,7 @@ function renderCampanha({ nova = false } = {}) {
     : `<button class="btn btn-roll" data-act="proximo">${mostrados ? 'Próximo jogo →' : 'Começar →'}</button>`;
   app.innerHTML = `
     <header class="dt-head">
-      <div><p class="eyebrow">◆ A campanha</p><h1>${esc(NAME)}</h1></div>
+      <div><p class="eyebrow">◆ A campanha · ${esc(NAME)}</p><h1>${esc(nomeTime())}</h1></div>
       <span class="meta">Força ${c.forca} · Modo ${jogo.modo === 'oculto' ? 'Oculto' : 'Normal'}</span>
     </header>
     <div class="camp">
@@ -237,6 +253,7 @@ function renderCampanha({ nova = false } = {}) {
         ${mostrados >= total ? '' : controlesHtml()}</div>
       ${rs}
       ${fim ? `<div class="final${bom ? '' : ' bad'}">
+          <p class="final-team">${esc(nomeTime())}</p>
           <p class="t">${TITULO_RESULTADO[c.resultado]}</p>
           <p>${c.vitoriasGrupos} ${c.vitoriasGrupos === 1 ? 'vitória' : 'vitórias'} na fase de pontos · ${pontos(c)} pontos</p>
           <div class="acts"><button class="btn btn-gold" data-act="compartilhar">Compartilhar</button>
@@ -331,7 +348,7 @@ async function compartilhar() {
   const c = jogo.campanha;
   const linha = (r) => `${r.venceu ? '✅' : '❌'} ${r.fase === 'Fase de pontos' ? '' : `${r.fase}: `}${r.placar.join('–')} vs ${r.adv.time} (${r.adv.edicao.replace(/^CBLOL |^LTA Sul /, '')})`;
   const text = [
-    `${NAME}: ${TITULO_RESULTADO[c.resultado]} (${c.vitoriasGrupos}-${7 - c.vitoriasGrupos} na fase de pontos)`,
+    `${NAME} · ${nomeTime()}: ${TITULO_RESULTADO[c.resultado]} (${c.vitoriasGrupos}-${7 - c.vitoriasGrupos} na fase de pontos)`,
     ROTAS.map((r) => `${NOME_VAGA[r]}: ${jogo.vagas[r].nome}`).join(' · '),
     `Reserva: ${jogo.vagas.reserva.nome} · Técnico: ${jogo.vagas.tecnico.nome}`,
     '',
@@ -369,6 +386,11 @@ app.addEventListener('click', (e) => {
     if (b.dataset.bonus) { usarBonus(jogo, times, b.dataset.bonus); salvar(); render(); return; }
     const act = b.dataset.act;
     if (act === 'rolar') {
+      if (!(jogo.nome || '').trim()) {
+        toast('Dê um nome ao seu time primeiro');
+        document.getElementById('nome-time')?.focus();
+        return;
+      }
       if (!rolar(jogo, times)) toast('Nenhum time com vaga disponível.');
       salvar(); render();
     } else if (act === 'simular') {
@@ -385,11 +407,22 @@ app.addEventListener('click', (e) => {
       salvar(); render();
     } else if (act === 'nova') {
       const modo = jogo.modo;
-      jogo = novoJogo(modo); mostrados = 0; abertos.clear(); salvar(); render(); window.scrollTo(0, 0);
+      const nome = jogo.nome;
+      jogo = novoJogo(modo); jogo.nome = nome; mostrados = 0; abertos.clear(); salvar(); render(); window.scrollTo(0, 0);
     } else if (act === 'compartilhar') compartilhar();
   } catch (err) {
     toast(err.message);
   }
+});
+
+// Nome do time: guarda enquanto digita (sem redesenhar a tela).
+app.addEventListener('input', (e) => {
+  if (e.target.id !== 'nome-time') return;
+  jogo.nome = e.target.value.slice(0, 24);
+  salvar();
+});
+app.addEventListener('keydown', (e) => {
+  if (e.target.id === 'nome-time' && e.key === 'Enter') app.querySelector('[data-act="rolar"]')?.click();
 });
 
 app.addEventListener('change', (e) => {

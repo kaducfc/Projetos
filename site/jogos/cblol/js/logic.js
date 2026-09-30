@@ -10,7 +10,7 @@ export const VITORIAS_PARA_PASSAR = 3;
 const pick = (list, rnd) => list[Math.floor(rnd() * list.length)];
 
 export function novoJogo(modo = 'normal') {
-  return { v: 1, modo, vagas: Object.fromEntries(VAGAS.map((v) => [v, null])), atual: null, bonusUsado: false, fase: 'montagem', campanha: null };
+  return { v: 1, modo, nome: '', vagas: Object.fromEntries(VAGAS.map((v) => [v, null])), atual: null, bonusUsado: false, fase: 'montagem', campanha: null };
 }
 
 const pessoasDoTime = (t) => [

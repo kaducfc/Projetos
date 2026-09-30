@@ -95,7 +95,26 @@ button { font-family: var(--sans); }
 .bench .slot .who { font-size: 13px; }
 
 /* Placar do time */
-.score-big { display: flex; justify-content: space-between; align-items: flex-end; }
+.name-input { width: 100%; padding: 11px 12px; background: var(--panel-2); color: var(--text); border: 1px solid var(--line-2); border-radius: 4px; font: 700 16px var(--sans); }
+.name-input:focus { outline: none; border-color: var(--gold); }
+.team-name { display: block; margin-bottom: 4px; font-family: var(--display); font-size: 26px; font-weight: 400; letter-spacing: 0.5px; line-height: 1.05; text-transform: none; color: var(--text); overflow-wrap: anywhere; }
+.final-team { margin: 0 0 4px !important; font-family: var(--display); font-size: 24px; letter-spacing: 1px; color: var(--text) !important; }
+
+/* Escudo do OVR (mesmas imagens e faixas da Carreira no Rift) */
+.ovr-shield { position: relative; flex: none; width: 76px; height: 105px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 6px; gap: 1px; color: #fff; }
+.ovr-shield img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.2s; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.5)); }
+.ovr-shield img.loaded { opacity: 1; }
+.ovr-shield small, .ovr-shield b { position: relative; }
+.ovr-shield small { font-size: 10px; font-weight: 800; letter-spacing: 2.5px; color: rgba(255, 255, 255, 0.88); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
+.score-big .ovr-shield b { font-family: var(--display); font-size: 44px; line-height: 0.9; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75), 0 0 2px rgba(0, 0, 0, 0.9); }
+.ovr-shield.tier-challenger b { color: #fff6dc; }
+.ovr-shield.no-img { clip-path: polygon(50% 0, 100% 12%, 100% 80%, 50% 100%, 0 80%, 0 12%); }
+.ovr-shield.no-img.tier-prata { background: linear-gradient(160deg, #b9c2cb, #5d6873); }
+.ovr-shield.no-img.tier-ouro { background: linear-gradient(160deg, #f7d774, #a8781a); }
+.ovr-shield.no-img.tier-platina { background: linear-gradient(160deg, #4fd1c5, #0e5a5a); }
+.ovr-shield.no-img.tier-diamante { background: linear-gradient(160deg, #6f8cff, #1d2f9e); }
+.ovr-shield.no-img.tier-challenger { background: linear-gradient(160deg, #ffd66b, #b36b12); }
+.score-big { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .score-big b { font-family: var(--display); font-size: 58px; line-height: 0.9; color: var(--text); }
 .lineup { margin-top: 10px; display: flex; flex-direction: column; }
 .lineup div { display: grid; grid-template-columns: 62px 1fr auto; gap: 8px; padding: 7px 2px; border-bottom: 1px solid var(--line); font-size: 13px; }
