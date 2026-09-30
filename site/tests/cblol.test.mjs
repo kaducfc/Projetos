@@ -85,11 +85,13 @@ test('jogador que trocou de rota no split entra pela rota escolhida', () => {
   assert.equal(escolher(jogo, times, nome, rotas[1]).rota, rotas[1]);
 });
 
-test('OVR decide: 12+ de diferença é impossível; 7 só com sorte', async () => {
+test('OVR decide: 15+ de diferença é impossível; 7 só com sorte', async () => {
   const { chanceVitoria } = await import('../jogos/cblol/js/logic.js');
-  assert.equal(chanceVitoria(78, 92), 0);
-  assert.equal(chanceVitoria(80, 92), 0);
-  assert.ok(chanceVitoria(85, 92) > 0.03 && chanceVitoria(85, 92) < 0.1);
+  assert.equal(chanceVitoria(77, 92), 0);
+  assert.equal(chanceVitoria(70, 92), 0);
+  assert.equal(chanceVitoria(92, 77), 1);
+  assert.ok(chanceVitoria(78, 92) > 0 && chanceVitoria(78, 92) < 0.02);
+  assert.ok(chanceVitoria(85, 92) > 0.05 && chanceVitoria(85, 92) < 0.12);
   assert.equal(chanceVitoria(80, 80), 0.5);
 });
 

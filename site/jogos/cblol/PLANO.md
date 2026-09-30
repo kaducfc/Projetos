@@ -74,6 +74,10 @@ contra times históricos.
   visão desde 2019; dano desde 2020. Os pesos de quem falta são redistribuídos.
 - OVR: mediana 75, 90% entre 61 e 91, máximo 97 (Mylon 2014).
 - Para refazer depois de baixar dados novos: `python3 scripts/gerar.py`.
-- Equilíbrio (simulador): escolhendo sempre o melhor OVR disponível, o time
-  é campeão em ~10% das vezes; escolhendo ao acaso, ~2% de títulos (desde
-  que o mata-mata só sorteia times que chegaram àquela fase de verdade).
+- Chance de vencer um jogo pela diferença de força: 3 pontos ≈ 72%,
+  7 ≈ 90%, 12 ≈ 98% e 15 ou mais: vitória garantida.
+- Bônus interno do "time dos sonhos" (não aparece na tela): +3,8 de força no
+  Normal e +3,7 no Oculto, só na simulação.
+- Equilíbrio (simulador): no Normal, pegando sempre o melhor OVR, o time é
+  campeão em ~25% das vezes. No Oculto, tentando pegar o melhor sem ver o
+  OVR (erro de ~7 pontos na avaliação de cada jogador), ~15%.

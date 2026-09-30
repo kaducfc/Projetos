@@ -108,15 +108,20 @@ export function forcaTime(t) {
   return forca(vagas).forca;
 }
 
-// Chance de vencer um jogo. O OVR pesa muito: 3 pontos de vantagem ≈ 77%,
-// 7 pontos ≈ 94% (o mais fraco só vence com sorte) e 12 ou mais: impossível.
-export const DIFERENCA_IMPOSSIVEL = 12;
+// Chance de vencer um jogo. O OVR pesa muito: 3 pontos de vantagem ≈ 72%,
+// 8 pontos ≈ 93% (o mais fraco só vence com sorte) e 15 ou mais: impossível.
+export const DIFERENCA_IMPOSSIVEL = 15;
 export function chanceVitoria(a, b) {
   const d = a - b;
   if (d >= DIFERENCA_IMPOSSIVEL) return 1;
   if (d <= -DIFERENCA_IMPOSSIVEL) return 0;
-  return 1 / (1 + Math.exp(-d / 2.5));
+  return 1 / (1 + Math.exp(-d / 3.1));
 }
+
+// Bônus interno do "time dos sonhos" (não aparece na tela), calibrado para:
+// quem pega sempre o melhor OVR no modo Normal é campeão ~25% das vezes;
+// quem tenta pegar o melhor no Oculto (sem ver o OVR) ~15%.
+export const BONUS_SONHO = { normal: 3.8, oculto: 3.7 };
 
 // Adversário das quartas (entre times que jogaram playoffs): quanto mais
 // vitórias na fase de pontos, mais fraco.
@@ -191,8 +196,9 @@ function serie(meu, adv, melhorDe, jogadores, rnd) {
 
 const resumoTime = (t) => ({ id: t.id, time: t.time, edicao: t.edicao, ovr: t.ovr, forca: Math.round(t.forca * 10) / 10 });
 
-export function simular(jogo, times, rnd = Math.random) {
+export function simular(jogo, times, rnd = Math.random, bonus = BONUS_SONHO[jogo.modo] ?? 0) {
   const f = forca(jogo.vagas);
+  const meu = f.forca + bonus;
   const jogadores = ROTAS.map((r) => jogo.vagas[r]);
   // Adversários: times sem ninguém do seu elenco (senão a mesma pessoa
   // estaria dos dois lados).
@@ -217,7 +223,7 @@ export function simular(jogo, times, rnd = Math.random) {
   }
   let vit = 0;
   for (const adv of sorteados) {
-    const s = serie(f.forca, adv, 1, jogadores, rnd);
+    const s = serie(meu, adv, 1, jogadores, rnd);
     if (s.venceu) vit++;
     rodadas.push({ fase: 'Fase de pontos', adv: resumoTime(adv), ...s });
   }
@@ -230,7 +236,7 @@ export function simular(jogo, times, rnd = Math.random) {
     resultado = 'quartas';
     for (const [nome, md, lista] of etapas) {
       const adv = pick(lista, rnd);
-      const s = serie(f.forca, adv, md, jogadores, rnd);
+      const s = serie(meu, adv, md, jogadores, rnd);
       rodadas.push({ fase: nome, adv: resumoTime(adv), melhorDe: md, ...s });
       if (!s.venceu) break;
       resultado = { 'Quartas de final': 'semi', Semifinal: 'final', Final: 'campeao' }[nome];
