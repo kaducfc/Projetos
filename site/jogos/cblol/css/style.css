@@ -112,6 +112,30 @@ button { font-family: var(--sans); }
 .round .games span.w { border-color: rgba(31, 154, 83, 0.6); }
 .round .games span.l { border-color: rgba(184, 69, 60, 0.6); }
 .round.new { animation: rise 0.35s ease both; }
+.round .res.live { color: var(--muted); }
+.round .games span.live { color: var(--gold-2); border-color: var(--gold); font-variant-numeric: tabular-nums; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { border-color: rgba(217, 168, 43, 0.35); } }
+
+/* Ver a partida: os dois times com OVR e K/D/A */
+.more { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 8px; }
+.more summary { cursor: pointer; font-size: 12.5px; font-weight: 800; color: var(--gold-2); width: fit-content; }
+.more summary:hover { text-decoration: underline; }
+.match { margin-top: 12px; }
+.match-t { margin: 0 0 6px; display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
+.match-t b.w { color: #6fd79a; }
+.match-t b.l { color: #f0948e; }
+.sides { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.side { min-width: 0; background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; }
+.side-t { margin: 0 0 4px; font-family: var(--display); font-size: 18px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stats { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.stats th { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); text-align: left; padding: 3px 4px; }
+.stats td { padding: 4px; border-top: 1px solid var(--line); }
+.stats .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stats td.r { width: 34px; font-size: 10px; font-weight: 800; color: var(--muted); }
+.stats td.nm { font-weight: 700; overflow-wrap: anywhere; }
+.stats td.kda { font-weight: 700; }
+.stats tr.mvp td { background: rgba(217, 168, 43, 0.08); }
+.stats .star { font-size: 9.5px; font-weight: 800; color: #140f02; background: var(--gold); border-radius: 3px; padding: 1px 4px; vertical-align: 1px; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .final { padding: 20px; border-radius: 6px; text-align: center; border: 1px solid var(--gold); background: rgba(217, 168, 43, 0.08); }
 .final.bad { border-color: var(--line-2); background: var(--panel); }
@@ -138,4 +162,5 @@ button { font-family: var(--sans); }
   .bench { grid-template-columns: 1fr; }
   .round { grid-template-columns: 1fr auto; }
   .round .ph { grid-column: 1 / -1; }
+  .sides { grid-template-columns: 1fr; }
 }

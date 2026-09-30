@@ -24,6 +24,8 @@ let byId = new Map();
 let jogo = novoJogo();
 let historico = [];
 let mostrados = 0; // quantas rodadas da campanha já apareceram na tela
+let anim = null; // rodada sendo mostrada ao vivo
+const abertos = new Set(); // rodadas com "Ver partida" aberto
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const oculto = () => jogo.modo === 'oculto' && !completo(jogo);
@@ -168,22 +170,45 @@ function renderMontagem() {
 
 // ------------------------------------------------------------------ campanha
 
-function roundHtml(r, nova) {
-  const gs = r.jogos.map((g, i) => `<span class="${g.venceu ? 'w' : 'l'}">${r.jogos.length > 1 ? `J${i + 1} ` : ''}${g.placar[0]}–${g.placar[1]} abates${g.mvp ? ` · MVP ${esc(g.mvp)}` : ''}</span>`).join('');
-  return `<div class="round${nova ? ' new' : ''}">
+const relogio = (seg) => `${Math.floor(seg / 60)}:${String(Math.floor(seg % 60)).padStart(2, '0')}`;
+const chipTxt = (g, i, n) => `${n > 1 ? `J${i + 1} · ` : ''}${g.placar[0]}–${g.placar[1]} abates${g.mvp ? ` · MVP ${esc(g.mvp)}` : ''}`;
+
+function tabelaLado(titulo, linhas, mvp) {
+  const rows = linhas.map((j) => `<tr${j.nome === mvp ? ' class="mvp"' : ''}>
+      <td class="r">${SIGLA[j.rota]}</td><td class="nm">${esc(j.nome)}${j.nome === mvp ? ' <span class="star">MVP</span>' : ''}</td>
+      <td class="n">${j.ovr}</td><td class="n kda">${j.k}/${j.d}/${j.a}</td></tr>`).join('');
+  return `<div class="side"><p class="side-t">${esc(titulo)}</p>
+    <table class="stats"><thead><tr><th></th><th>Jogador</th><th class="n">OVR</th><th class="n">K/D/A</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function detalhesHtml(r, i) {
+  if (!r.jogos.every((g) => g.nos)) return '';
+  const partes = r.jogos.map((g, gi) => `<div class="match">
+      <p class="match-t"><b class="${g.venceu ? 'w' : 'l'}">${r.jogos.length > 1 ? `Jogo ${gi + 1} · ` : ''}${g.venceu ? 'Vitória' : 'Derrota'} ${g.placar[0]}–${g.placar[1]}</b><span>⏱ ${relogio(g.duracao)}</span></p>
+      <div class="sides">${tabelaLado('Seu time', g.nos, g.mvp)}${tabelaLado(r.adv.time, g.eles, null)}</div>
+    </div>`).join('');
+  return `<details class="more" data-i="${i}"${abertos.has(i) ? ' open' : ''}><summary>Ver ${r.jogos.length > 1 ? 'as partidas' : 'a partida'}</summary>${partes}</details>`;
+}
+
+function roundHtml(r, i, { nova = false, pendente = false } = {}) {
+  const gs = pendente ? '' : r.jogos.map((g, gi) => `<span class="${g.venceu ? 'w' : 'l'}">${chipTxt(g, gi, r.jogos.length)}</span>`).join('');
+  return `<div class="round${nova ? ' new' : ''}" data-round="${i}">
     <span class="ph">${esc(r.fase)}${r.melhorDe ? ` · MD${r.melhorDe}` : ''}</span>
     <span class="vs">vs ${esc(r.adv.time)}<small>${esc(r.adv.edicao)} · OVR ${r.adv.ovr.toFixed(0)}</small></span>
-    <span class="res ${r.venceu ? 'w' : 'l'}">${r.placar[0]}–${r.placar[1]}</span>
+    <span class="res ${pendente ? 'live' : r.venceu ? 'w' : 'l'}">${pendente ? (r.jogos.length > 1 ? '0–0' : '') : `${r.placar[0]}–${r.placar[1]}`}</span>
     <div class="games">${gs}</div>
+    ${pendente ? '' : detalhesHtml(r, i)}
   </div>`;
 }
 
 function renderCampanha({ nova = false } = {}) {
   const c = jogo.campanha;
   const total = c.rodadas.length;
-  const fim = mostrados >= total;
-  const rs = c.rodadas.slice(0, mostrados).map((r, i) => roundHtml(r, nova && i === mostrados - 1)).join('');
+  const fim = mostrados >= total && !anim;
+  const rs = c.rodadas.slice(0, mostrados).map((r, i) => roundHtml(r, i, { nova: nova && i === mostrados - 1, pendente: anim?.idx === i })).join('');
   const bom = ['campeao', 'vice', 'final'].includes(c.resultado);
+  const botao = anim ? '<button class="btn btn-roll" data-act="pular">Pular ⏩</button>'
+    : `<button class="btn btn-roll" data-act="proximo">${mostrados ? 'Próximo jogo →' : 'Começar →'}</button>`;
   app.innerHTML = `
     <header class="dt-head">
       <div><p class="eyebrow">◆ A campanha</p><h1>${esc(NAME)}</h1></div>
@@ -191,16 +216,62 @@ function renderCampanha({ nova = false } = {}) {
     </header>
     <div class="camp">
       <div class="camp-top"><span class="muted small">Fase de pontos: 7 jogos (3 vitórias classificam) · Quartas MD3 · Semi e final MD5</span>
-        ${fim ? '' : '<button class="btn-ghost" data-act="tudo">Mostrar tudo</button>'}</div>
+        ${mostrados >= total ? '' : '<button class="btn-ghost" data-act="tudo">Mostrar tudo</button>'}</div>
       ${rs}
       ${fim ? `<div class="final${bom ? '' : ' bad'}">
           <p class="t">${TITULO_RESULTADO[c.resultado]}</p>
           <p>${c.vitoriasGrupos} ${c.vitoriasGrupos === 1 ? 'vitória' : 'vitórias'} na fase de pontos · ${pontos(c)} pontos</p>
           <div class="acts"><button class="btn btn-gold" data-act="compartilhar">Compartilhar</button>
             <button class="btn btn-roll" data-act="nova">Nova partida</button></div>
-        </div>` : `<button class="btn btn-roll" data-act="proximo">${mostrados ? 'Próximo jogo →' : 'Começar →'}</button>`}
+        </div>` : botao}
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>`;
+}
+
+// Mostra o jogo acontecendo: relógio correndo e abates aparecendo aos
+// poucos; o resultado só aparece no fim. "Pular" termina na hora.
+const espera = (ms) => new Promise((ok) => { setTimeout(ok, ms); });
+
+async function animar(idx) {
+  const r = jogo.campanha.rodadas[idx];
+  const eu = { idx, pular: false, parar: false };
+  anim = eu;
+  render({ nova: true });
+  const el = app.querySelector(`[data-round="${idx}"]`);
+  el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  const res = el.querySelector('.res');
+  const games = el.querySelector('.games');
+  const duracaoTela = r.jogos.length > 1 ? 2600 : 3400;
+  let v = 0;
+  let d = 0;
+  for (const [gi, g] of r.jogos.entries()) {
+    const chip = document.createElement('span');
+    chip.className = 'live';
+    games.append(chip);
+    // Momento (em segundos de jogo) de cada abate, em ordem.
+    const abates = [...Array(g.placar[0]).fill(0), ...Array(g.placar[1]).fill(1)]
+      .map((lado) => ({ lado, t: (0.1 + Math.random() * 0.88) * g.duracao }))
+      .sort((a, b) => a.t - b.t);
+    const t0 = performance.now();
+    for (;;) {
+      if (eu.parar) return;
+      const p = eu.pular ? 1 : Math.min(1, (performance.now() - t0) / duracaoTela);
+      const agora = p * g.duracao;
+      const feitos = abates.filter((x) => x.t <= agora);
+      const nos = feitos.filter((x) => x.lado === 0).length;
+      chip.textContent = `${r.jogos.length > 1 ? `J${gi + 1} · ` : ''}⏱ ${relogio(agora)} · ${nos}–${feitos.length - nos} abates`;
+      if (p >= 1) break;
+      await new Promise((ok) => { requestAnimationFrame(ok); });
+    }
+    chip.className = g.venceu ? 'w' : 'l';
+    chip.innerHTML = chipTxt(g, gi, r.jogos.length);
+    if (g.venceu) v++; else d++;
+    res.textContent = `${v}–${d}`;
+    if (!eu.pular && gi < r.jogos.length - 1) await espera(700);
+  }
+  if (eu.parar) return;
+  anim = null;
+  render();
 }
 
 function render(opts) {
@@ -258,27 +329,38 @@ app.addEventListener('click', (e) => {
       if (!rolar(jogo, times)) toast('Nenhum time com vaga disponível.');
       salvar(); render();
     } else if (act === 'simular') {
-      simular(jogo, times); mostrados = 0; salvar(true); render();
+      simular(jogo, times); mostrados = 0; abertos.clear(); salvar(true); render();
     } else if (act === 'proximo') {
+      if (anim) return;
       mostrados++;
       if (mostrados >= jogo.campanha.rodadas.length) terminar();
-      salvar(); render({ nova: true });
+      salvar(); animar(mostrados - 1);
+    } else if (act === 'pular') {
+      if (anim) anim.pular = true;
     } else if (act === 'tudo') {
       const faltava = mostrados < jogo.campanha.rodadas.length;
+      if (anim) { anim.parar = true; anim = null; }
       mostrados = jogo.campanha.rodadas.length;
       if (faltava) terminar();
       salvar(); render();
     } else if (act === 'nova') {
       const modo = jogo.modo;
-      jogo = novoJogo(modo); mostrados = 0; salvar(); render(); window.scrollTo(0, 0);
+      jogo = novoJogo(modo); mostrados = 0; abertos.clear(); salvar(); render(); window.scrollTo(0, 0);
     } else if (act === 'compartilhar') compartilhar();
   } catch (err) {
     toast(err.message);
   }
 });
 
+// Lembra quais "Ver partida" estão abertos quando a tela é redesenhada.
+app.addEventListener('toggle', (e) => {
+  const i = Number(e.target.dataset?.i);
+  if (!e.target.matches?.('details.more')) return;
+  if (e.target.open) abertos.add(i); else abertos.delete(i);
+}, true);
+
 platform.onChange((evt) => {
-  if (evt.type === 'save' && evt.gameId === GAME_ID && times.length) { carregar(); render(); }
+  if (evt.type === 'save' && evt.gameId === GAME_ID && times.length && !anim) { carregar(); render(); }
 });
 
 (async () => {

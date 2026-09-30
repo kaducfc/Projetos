@@ -107,3 +107,35 @@ test('sorteio evita times com jogador já escolhido (e ele fica desabilitado)', 
   const p = { ...outro.jogadores.find((j) => j.nome === 'tinowns'), tipo: 'jogador' };
   assert.deepEqual(vagasPossiveis(jogo, p), []);
 });
+
+test('simulação: K/D/A de cada jogador fecha com o placar de abates', () => {
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const jogo = novoJogo();
+  while (!completo(jogo)) {
+    rolar(jogo, times, rnd);
+    const t = times.find((x) => x.id === jogo.atual);
+    const pessoas = [...t.jogadores.map((j) => ({ ...j, tipo: 'jogador' })), ...(t.tecnico ? [{ ...t.tecnico, tipo: 'tecnico', rota: 'tecnico' }] : [])];
+    for (const p of pessoas) {
+      const vs = vagasPossiveis(jogo, p);
+      if (vs.length) { escolher(jogo, times, p.nome, vs[0]); break; }
+    }
+    jogo.atual = null;
+  }
+  const c = simular(jogo, times, rnd);
+  const soma = (ls, k) => ls.reduce((s, j) => s + j[k], 0);
+  const meus = new Set(VAGAS.map((v) => jogo.vagas[v].nome));
+  for (const r of c.rodadas) {
+    for (const g of r.jogos) {
+      assert.ok(!g.eles.some((j) => meus.has(j.nome)), `${r.adv.time} tem alguém do seu time`);
+      assert.equal(g.nos.length, 5);
+      assert.equal(g.eles.length, 5);
+      assert.equal(soma(g.nos, 'k'), g.placar[0]);
+      assert.equal(soma(g.eles, 'k'), g.placar[1]);
+      assert.equal(soma(g.nos, 'd'), g.placar[1]);
+      assert.equal(soma(g.eles, 'd'), g.placar[0]);
+      assert.ok(g.duracao >= 20 * 60 && g.duracao <= 45 * 60);
+      if (g.venceu) assert.ok(g.nos.some((j) => j.nome === g.mvp));
+    }
+  }
+});

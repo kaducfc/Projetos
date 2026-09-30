@@ -121,6 +121,40 @@ export function chanceVitoria(a, b) {
 // Adversário das quartas: quanto mais vitórias na fase de pontos, mais fraco.
 const FAIXA_QUARTAS = { 3: [0, 0.15], 4: [0.15, 0.35], 5: [0.35, 0.6], 6: [0.6, 0.8], 7: [0.8, 1] };
 
+// Peso de cada rota para abates, mortes e assistências.
+const PESO_ABATE = { top: 1, jungle: 0.9, mid: 1.25, adc: 1.45, sup: 0.3 };
+const PESO_MORTE = { top: 1, jungle: 1.05, mid: 0.9, adc: 0.9, sup: 1.15 };
+const PESO_ASSIST = { top: 0.7, jungle: 1.2, mid: 1, adc: 0.8, sup: 1.6 };
+
+function sorteioPeso(pesos, rnd) {
+  let x = rnd() * pesos.reduce((s, w) => s + w, 0);
+  const i = pesos.findIndex((w) => (x -= w) <= 0);
+  return i < 0 ? pesos.length - 1 : i;
+}
+
+// Abates, mortes e assistências de cada jogador de um lado, somando o placar.
+function linhaDoTime(jogadores, abates, mortes, rnd) {
+  const ls = jogadores.map((j) => ({ nome: j.nome, rota: j.rota, ovr: j.ovr, k: 0, d: 0, a: 0 }));
+  const pk = ls.map((j) => PESO_ABATE[j.rota] * (j.ovr / 75) ** 3);
+  const pd = ls.map((j) => PESO_MORTE[j.rota] * (75 / j.ovr) ** 3);
+  for (let i = 0; i < abates; i++) {
+    const autor = sorteioPeso(pk, rnd);
+    ls[autor].k++;
+    // Cada abate tem de 0 a 4 assistências (quase sempre 1 a 3).
+    const n = sorteioPeso([0.08, 0.27, 0.35, 0.22, 0.08], rnd);
+    const livres = ls.map((_, x) => x).filter((x) => x !== autor);
+    for (let a = 0; a < n; a++) {
+      const w = livres.map((x) => PESO_ASSIST[ls[x].rota]);
+      const x = livres.splice(sorteioPeso(w, rnd), 1)[0];
+      ls[x].a++;
+    }
+  }
+  for (let i = 0; i < mortes; i++) ls[sorteioPeso(pd, rnd)].d++;
+  return ls;
+}
+
+const titulares = (t) => ROTAS.map((r) => t.jogadores.find((j) => j.rota === r && j.titular) || t.jogadores.find((j) => j.rota === r));
+
 function jogoSimulado(meu, adv, jogadores, rnd) {
   const venceu = rnd() < chanceVitoria(meu, adv.forca);
   // Placar de abates acompanha a diferença de força: atropelo quando o
@@ -129,13 +163,15 @@ function jogoSimulado(meu, adv, jogadores, rnd) {
   const kv = 12 + Math.floor(rnd() * 15);
   const razao = Math.max(0.12, Math.min(0.92, 0.6 - vant * 0.035 + (rnd() - 0.5) * 0.2));
   const kp = Math.max(1, Math.min(kv - 1, Math.round(kv * razao)));
-  let mvp = null;
-  if (venceu) {
-    const pesos = jogadores.map((j) => j.ovr ** 4);
-    let x = rnd() * pesos.reduce((s, w) => s + w, 0);
-    mvp = jogadores.find((_, i) => (x -= pesos[i]) <= 0)?.nome ?? jogadores[0].nome;
-  }
-  return { venceu, placar: venceu ? [kv, kp] : [kp, kv], mvp };
+  const placar = venceu ? [kv, kp] : [kp, kv];
+  // Duração: atropelo acaba cedo, jogo parelho vai longe (em segundos).
+  const duracao = Math.round((21 + 17 * razao + rnd() * 5) * 60);
+  const nos = linhaDoTime(jogadores, placar[0], placar[1], rnd);
+  const eles = linhaDoTime(titulares(adv), placar[1], placar[0], rnd);
+  // MVP: melhor atuação do time que venceu.
+  const nota = (j) => j.k * 3 + j.a * 1.5 - j.d * 2 + j.ovr / 25;
+  const mvp = venceu ? nos.slice().sort((a, b) => nota(b) - nota(a))[0].nome : null;
+  return { venceu, placar, mvp, duracao, nos, eles };
 }
 
 function serie(meu, adv, melhorDe, jogadores, rnd) {
@@ -156,7 +192,11 @@ const resumoTime = (t) => ({ id: t.id, time: t.time, edicao: t.edicao, ovr: t.ov
 export function simular(jogo, times, rnd = Math.random) {
   const f = forca(jogo.vagas);
   const jogadores = ROTAS.map((r) => jogo.vagas[r]);
-  const comForca = times.map((t) => ({ ...t, forca: forcaTime(t) }));
+  // Adversários: times sem ninguém do seu elenco (senão a mesma pessoa
+  // estaria dos dois lados).
+  const meus = new Set(VAGAS.map((v) => jogo.vagas[v]?.nome).filter(Boolean));
+  const livres = times.filter((t) => !pessoasDoTime(t).some((p) => meus.has(p.nome)));
+  const comForca = (livres.length >= 40 ? livres : times).map((t) => ({ ...t, forca: forcaTime(t) }));
   const rodadas = [];
 
   // Fase de pontos: 7 jogos (MD1) contra times sorteados.
