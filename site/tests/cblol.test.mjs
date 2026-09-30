@@ -139,3 +139,25 @@ test('simulação: K/D/A de cada jogador fecha com o placar de abates', () => {
     }
   }
 });
+
+test('mata-mata: adversários só de times que chegaram àquela fase', () => {
+  const fase = new Map(times.map((t) => [t.id, t.playoffs]));
+  const pode = { 'Quartas de final': ['quartas', 'semi', 'final'], Semifinal: ['semi', 'final'], Final: ['final'] };
+  let vistos = 0;
+  for (let n = 0; n < 150; n++) {
+    const jogo = novoJogo();
+    while (!completo(jogo)) {
+      rolar(jogo, times);
+      const t = times.find((x) => x.id === jogo.atual);
+      const ps = [...t.jogadores.map((j) => ({ ...j, tipo: 'jogador' })), ...(t.tecnico ? [{ ...t.tecnico, tipo: 'tecnico', rota: 'tecnico' }] : [])];
+      const p = ps.filter((x) => vagasPossiveis(jogo, x).length).sort((a, b) => b.ovr - a.ovr)[0];
+      if (p) escolher(jogo, times, p.nome, vagasPossiveis(jogo, p).find((v) => v !== 'reserva') || vagasPossiveis(jogo, p)[0]);
+      jogo.atual = null;
+    }
+    for (const r of simular(jogo, times).rodadas.slice(7)) {
+      assert.ok(pode[r.fase].includes(fase.get(r.adv.id)), `${r.fase}: ${r.adv.id} (${fase.get(r.adv.id)})`);
+      vistos++;
+    }
+  }
+  assert.ok(vistos > 50);
+});

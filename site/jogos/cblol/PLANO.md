@@ -58,9 +58,12 @@ contra times históricos.
 
 - Fase de pontos: 7 jogos (MD1) contra 7 times históricos sorteados.
   3 vitórias ou mais → playoffs.
-- Quartas (MD3): o adversário depende das vitórias na fase de pontos:
+- Quartas (MD3): só times que jogaram os playoffs de algum split (1º a 8º no
+  mata-mata). O adversário depende das vitórias na fase de pontos:
   3 vitórias → adversário com OVR alto; 7 vitórias → adversário com OVR baixo.
-- Semifinal e final (MD5): adversários 100% aleatórios.
+- Semifinal (MD5): sorteio entre times que jogaram uma semifinal (1º a 4º).
+- Final (MD5): sorteio entre os finalistas de algum split (1º e 2º).
+- Nenhum adversário tem alguém do seu elenco.
 
 ## Como ficou (dados de 30/09/2026)
 
@@ -72,4 +75,5 @@ contra times históricos.
 - OVR: mediana 75, 90% entre 61 e 91, máximo 97 (Mylon 2014).
 - Para refazer depois de baixar dados novos: `python3 scripts/gerar.py`.
 - Equilíbrio (simulador): escolhendo sempre o melhor OVR disponível, o time
-  é campeão em ~37% das vezes; escolhendo ao acaso, ~14% de títulos.
+  é campeão em ~10% das vezes; escolhendo ao acaso, ~2% de títulos (desde
+  que o mata-mata só sorteia times que chegaram àquela fase de verdade).

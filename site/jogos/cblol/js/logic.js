@@ -118,7 +118,8 @@ export function chanceVitoria(a, b) {
   return 1 / (1 + Math.exp(-d / 2.5));
 }
 
-// Adversário das quartas: quanto mais vitórias na fase de pontos, mais fraco.
+// Adversário das quartas (entre times que jogaram playoffs): quanto mais
+// vitórias na fase de pontos, mais fraco.
 const FAIXA_QUARTAS = { 3: [0, 0.15], 4: [0.15, 0.35], 5: [0.35, 0.6], 6: [0.6, 0.8], 7: [0.8, 1] };
 
 // Peso de cada rota para abates, mortes e assistências.
@@ -196,8 +197,16 @@ export function simular(jogo, times, rnd = Math.random) {
   // Adversários: times sem ninguém do seu elenco (senão a mesma pessoa
   // estaria dos dois lados).
   const meus = new Set(VAGAS.map((v) => jogo.vagas[v]?.nome).filter(Boolean));
-  const livres = times.filter((t) => !pessoasDoTime(t).some((p) => meus.has(p.nome)));
-  const comForca = (livres.length >= 40 ? livres : times).map((t) => ({ ...t, forca: forcaTime(t) }));
+  const semMeus = (lista) => {
+    const l = lista.filter((t) => !pessoasDoTime(t).some((p) => meus.has(p.nome)));
+    return l.length >= 5 ? l : lista;
+  };
+  const comForca = semMeus(times).map((t) => ({ ...t, forca: forcaTime(t) }));
+  // Mata-mata: só times que chegaram àquela fase no CBLOL de verdade.
+  const chegou = (fases) => semMeus(times.filter((t) => fases.includes(t.playoffs))).map((t) => ({ ...t, forca: forcaTime(t) }));
+  const doQuartas = chegou(['quartas', 'semi', 'final']);
+  const daSemi = chegou(['semi', 'final']);
+  const daFinal = chegou(['final']);
   const rodadas = [];
 
   // Fase de pontos: 7 jogos (MD1) contra times sorteados.
@@ -214,10 +223,10 @@ export function simular(jogo, times, rnd = Math.random) {
   }
   let resultado = 'fase';
   if (vit >= VITORIAS_PARA_PASSAR) {
-    const ordem = comForca.slice().sort((a, b) => b.forca - a.forca);
+    const ordem = doQuartas.slice().sort((a, b) => b.forca - a.forca);
     const [lo, hi] = FAIXA_QUARTAS[vit];
     const faixa = ordem.slice(Math.floor(lo * ordem.length), Math.max(Math.floor(lo * ordem.length) + 1, Math.floor(hi * ordem.length)));
-    const etapas = [['Quartas de final', 3, faixa], ['Semifinal', 5, comForca], ['Final', 5, comForca]];
+    const etapas = [['Quartas de final', 3, faixa], ['Semifinal', 5, daSemi], ['Final', 5, daFinal]];
     resultado = 'quartas';
     for (const [nome, md, lista] of etapas) {
       const adv = pick(lista, rnd);

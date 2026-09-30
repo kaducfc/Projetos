@@ -243,6 +243,23 @@ def main():
         if atual is None or (playoff and not atual[1]) or (playoff == atual[1] and c['PlaceNumber'] < atual[0]):
             lugar[k] = (c['PlaceNumber'], playoff)
 
+    # Até onde cada time foi no mata-mata: colocação nos playoffs (ou no
+    # próprio torneio, quando ele é só chaveamento, sem página de playoffs).
+    com_playoffs = {ed[p][0] for p in ed if p != ed[p][0]}
+    mata = {}
+    for c in d['colocacoes']:
+        if c['OverviewPage'] not in ed or not c['PlaceNumber']:
+            continue
+        base = ed[c['OverviewPage']][0]
+        if base in com_playoffs and c['OverviewPage'] == base:
+            continue  # fase de pontos não conta
+        k = (base, c['Team'])
+        mata[k] = min(mata.get(k, 99), c['PlaceNumber'])
+
+    def fase_mata(k):
+        p = mata.get(k)
+        return None if p is None else 'final' if p <= 2 else 'semi' if p <= 4 else 'quartas' if p <= 8 else None
+
     # Títulos do CBLOL na carreira (splits; a Final Regional não é título).
     titulos = collections.Counter()
     for (base, team), (place, _) in lugar.items():
@@ -329,7 +346,7 @@ def main():
         times.append({
             'id': f"{base}|{team}",
             'time': team, 'org': ORG.get(team, team), 'ano': ano, 'edicao': rotulo, 'ordem': base,
-            'colocacao': place, 'vitorias': vit_time, 'jogos': jogos_time,
+            'colocacao': place, 'playoffs': fase_mata((base, team)), 'vitorias': vit_time, 'jogos': jogos_time,
             'jogadores': [{'nome': j['nome'], 'rota': j['rota'], 'ovr': j['ovr'], 'jogos': j['jogos'],
                            'titular': tit.get(j['rota']) is j} for j in pessoas],
             'tecnico': {'nome': tecnicos[0], 'ovr': coach} if tecnicos else None,
