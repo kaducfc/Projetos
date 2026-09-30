@@ -27,6 +27,15 @@ let mostrados = 0; // quantas rodadas da campanha já apareceram na tela
 let anim = null; // rodada sendo mostrada ao vivo
 const abertos = new Set(); // rodadas com "Ver partida" aberto
 
+// Como a campanha é mostrada (fica guardado neste navegador).
+const VELOCIDADES = { lenta: ['Lenta', 1.8], normal: ['Normal', 1], rapida: ['Rápida', 0.5], ultra: ['Ultra', 0.18] };
+const PREF_KEY = 'cblol.exibicao';
+let pref = { auto: false, vel: 'normal' };
+try { pref = { ...pref, ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; } catch { /* sem armazenamento */ }
+if (!VELOCIDADES[pref.vel]) pref.vel = 'normal';
+const salvarPref = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(pref)); } catch { /* sem armazenamento */ } };
+const fator = () => VELOCIDADES[pref.vel][1];
+
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const oculto = () => jogo.modo === 'oculto' && !completo(jogo);
 const ovrTxt = (v) => (oculto() ? '?' : String(v));
@@ -201,6 +210,18 @@ function roundHtml(r, i, { nova = false, pendente = false } = {}) {
   </div>`;
 }
 
+function controlesHtml() {
+  const opts = Object.entries(VELOCIDADES).map(([k, [nome]]) => `<option value="${k}"${pref.vel === k ? ' selected' : ''}>${nome}</option>`).join('');
+  return `<div class="ctrl">
+    <div class="seg modo-exib">
+      <button data-exib="jogo" class="${pref.auto ? '' : 'on'}">Jogo a jogo</button>
+      <button data-exib="auto" class="${pref.auto ? 'on' : ''}">Automático</button>
+    </div>
+    <label class="vel"><span>Velocidade</span><select data-vel aria-label="Velocidade">${opts}</select></label>
+    <button class="btn-ghost" data-act="tudo">Mostrar tudo</button>
+  </div>`;
+}
+
 function renderCampanha({ nova = false } = {}) {
   const c = jogo.campanha;
   const total = c.rodadas.length;
@@ -216,7 +237,7 @@ function renderCampanha({ nova = false } = {}) {
     </header>
     <div class="camp">
       <div class="camp-top"><span class="muted small">Fase de pontos: 7 jogos (3 vitórias classificam) · Quartas MD3 · Semi e final MD5</span>
-        ${mostrados >= total ? '' : '<button class="btn-ghost" data-act="tudo">Mostrar tudo</button>'}</div>
+        ${mostrados >= total ? '' : controlesHtml()}</div>
       ${rs}
       ${fim ? `<div class="final${bom ? '' : ' bad'}">
           <p class="t">${TITULO_RESULTADO[c.resultado]}</p>
@@ -241,7 +262,7 @@ async function animar(idx) {
   el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   const res = el.querySelector('.res');
   const games = el.querySelector('.games');
-  const duracaoTela = r.jogos.length > 1 ? 2600 : 3400;
+  const base = r.jogos.length > 1 ? 2600 : 3400; // ms na velocidade normal
   let v = 0;
   let d = 0;
   for (const [gi, g] of r.jogos.entries()) {
@@ -252,10 +273,14 @@ async function animar(idx) {
     const abates = [...Array(g.placar[0]).fill(0), ...Array(g.placar[1]).fill(1)]
       .map((lado) => ({ lado, t: (0.1 + Math.random() * 0.88) * g.duracao }))
       .sort((a, b) => a.t - b.t);
-    const t0 = performance.now();
+    let p = 0;
+    let antes = performance.now();
     for (;;) {
       if (eu.parar) return;
-      const p = eu.pular ? 1 : Math.min(1, (performance.now() - t0) / duracaoTela);
+      const agoraMs = performance.now();
+      // Soma aos poucos: trocar a velocidade no meio do jogo vale na hora.
+      p = eu.pular ? 1 : Math.min(1, p + (agoraMs - antes) / (base * fator()));
+      antes = agoraMs;
       const agora = p * g.duracao;
       const feitos = abates.filter((x) => x.t <= agora);
       const nos = feitos.filter((x) => x.lado === 0).length;
@@ -267,11 +292,24 @@ async function animar(idx) {
     chip.innerHTML = chipTxt(g, gi, r.jogos.length);
     if (g.venceu) v++; else d++;
     res.textContent = `${v}–${d}`;
-    if (!eu.pular && gi < r.jogos.length - 1) await espera(700);
+    if (!eu.pular && gi < r.jogos.length - 1) await espera(700 * fator());
   }
   if (eu.parar) return;
   anim = null;
   render();
+  // Automático: acabou um confronto, começa o próximo.
+  if (pref.auto && mostrados < jogo.campanha.rodadas.length) {
+    await espera(900 * fator());
+    if (pref.auto && !anim && jogo.fase === 'fim' && jogo.campanha && mostrados < jogo.campanha.rodadas.length) avancar();
+  }
+}
+
+function avancar() {
+  if (anim || !jogo.campanha || mostrados >= jogo.campanha.rodadas.length) return;
+  mostrados++;
+  if (mostrados >= jogo.campanha.rodadas.length) terminar();
+  salvar();
+  animar(mostrados - 1);
 }
 
 function render(opts) {
@@ -315,6 +353,13 @@ app.addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b || b.disabled) return;
   try {
+    if (b.dataset.exib) {
+      pref.auto = b.dataset.exib === 'auto';
+      salvarPref();
+      app.querySelectorAll('[data-exib]').forEach((x) => x.classList.toggle('on', x === b));
+      if (pref.auto && !anim) avancar();
+      return;
+    }
     if (b.dataset.modo) { jogo.modo = b.dataset.modo; salvar(); render(); return; }
     if (b.dataset.pick) {
       if (!Object.values(jogo.vagas).some(Boolean)) platform.track('game_start', GAME_ID, { modo: jogo.modo });
@@ -331,10 +376,7 @@ app.addEventListener('click', (e) => {
     } else if (act === 'simular') {
       simular(jogo, times); mostrados = 0; abertos.clear(); salvar(true); render();
     } else if (act === 'proximo') {
-      if (anim) return;
-      mostrados++;
-      if (mostrados >= jogo.campanha.rodadas.length) terminar();
-      salvar(); animar(mostrados - 1);
+      avancar();
     } else if (act === 'pular') {
       if (anim) anim.pular = true;
     } else if (act === 'tudo') {
@@ -350,6 +392,12 @@ app.addEventListener('click', (e) => {
   } catch (err) {
     toast(err.message);
   }
+});
+
+app.addEventListener('change', (e) => {
+  if (!e.target.matches('[data-vel]')) return;
+  pref.vel = e.target.value;
+  salvarPref();
 });
 
 // Lembra quais "Ver partida" estão abertos quando a tela é redesenhada.
