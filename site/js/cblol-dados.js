@@ -96,11 +96,12 @@ async function run() {
   logEl.textContent = '';
   const started = Date.now();
   try {
-    log('1/5 Torneios do CBLOL…');
+    log('1/5 Torneios do CBLOL (e da LTA Sul em 2025)…');
     const tournaments = (await cargoAll({
       tables: 'Tournaments',
       fields: 'Tournaments.Name=Name,Tournaments.OverviewPage=OverviewPage,Tournaments.DateStart=DateStart,Tournaments.Date=Date,Tournaments.League=League,Tournaments.Region=Region,Tournaments.Year=Year,Tournaments.Split=Split,Tournaments.SplitNumber=SplitNumber,Tournaments.IsQualifier=IsQualifier,Tournaments.IsPlayoffs=IsPlayoffs,Tournaments.TournamentLevel=TournamentLevel,Tournaments.EventType=EventType',
-      where: "(Tournaments.League LIKE '%Brasileiro%' OR Tournaments.OverviewPage LIKE 'CBLOL%') AND Tournaments.OverviewPage NOT LIKE '%Academy%'",
+      // CBLOL e, em 2025 (quando o CBLOL virou a LTA Sul), a LTA South.
+      where: "(Tournaments.League LIKE '%Brasileiro%' OR Tournaments.OverviewPage LIKE 'CBLOL%' OR Tournaments.League LIKE 'LTA South%' OR Tournaments.OverviewPage LIKE 'LTA South%') AND Tournaments.OverviewPage NOT LIKE '%Academy%'",
       order_by: 'Tournaments.DateStart',
     }, 'torneios'));
     // Só a liga principal: sem qualificatórias, promoção nem torneios à parte.
