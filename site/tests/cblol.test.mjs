@@ -73,3 +73,26 @@ test('jogador que trocou de rota no split entra pela rota escolhida', () => {
   jogo.atual = t.id;
   assert.equal(escolher(jogo, times, nome, rotas[1]).rota, rotas[1]);
 });
+
+test('OVR decide: 12+ de diferença é impossível; 7 só com sorte', async () => {
+  const { chanceVitoria } = await import('../jogos/cblol/js/logic.js');
+  assert.equal(chanceVitoria(78, 92), 0);
+  assert.equal(chanceVitoria(80, 92), 0);
+  assert.ok(chanceVitoria(85, 92) > 0.03 && chanceVitoria(85, 92) < 0.1);
+  assert.equal(chanceVitoria(80, 80), 0.5);
+});
+
+test('sorteio evita times com jogador já escolhido (e ele fica desabilitado)', () => {
+  const jogo = novoJogo();
+  const tin = times.find((t) => t.jogadores.some((j) => j.nome === 'tinowns'));
+  jogo.atual = tin.id;
+  escolher(jogo, times, 'tinowns', 'mid');
+  const comTin = new Set(times.filter((t) => t.jogadores.some((j) => j.nome === 'tinowns')).map((t) => t.id));
+  let repetidos = 0;
+  for (let i = 0; i < 2000; i++) { jogo.atual = null; rolar(jogo, times); if (comTin.has(jogo.atual)) repetidos++; }
+  const esperadoSemFiltro = comTin.size / times.length;
+  assert.ok(repetidos / 2000 < esperadoSemFiltro / 5, `${repetidos} de 2000`);
+  const outro = times.find((t) => t.id !== tin.id && comTin.has(t.id));
+  const p = { ...outro.jogadores.find((j) => j.nome === 'tinowns'), tipo: 'jogador' };
+  assert.deepEqual(vagasPossiveis(jogo, p), []);
+});

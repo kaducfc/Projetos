@@ -33,9 +33,23 @@ export function vagasPossiveis(jogo, pessoa) {
 // Um time só vale no sorteio se tiver alguém que ainda caiba no seu time.
 const serve = (jogo, t) => pessoasDoTime(t).some((p) => vagasPossiveis(jogo, p).length);
 
+// Times que têm alguém já escolhido quase nunca saem no sorteio (peso baixo);
+// se saírem, essa pessoa aparece desabilitada.
+const PESO_REPETIDO = 0.06;
+const temRepetido = (jogo, t) => {
+  const usados = nomesUsados(jogo);
+  return pessoasDoTime(t).some((p) => usados.has(p.nome));
+};
+
+function sortear(jogo, lista, rnd) {
+  const pesos = lista.map((t) => (temRepetido(jogo, t) ? PESO_REPETIDO : 1));
+  let x = rnd() * pesos.reduce((s, w) => s + w, 0);
+  return lista.find((_, i) => (x -= pesos[i]) <= 0) || lista[lista.length - 1];
+}
+
 export function rolar(jogo, times, rnd = Math.random) {
   const ok = times.filter((t) => t.id !== jogo.atual && serve(jogo, t));
-  jogo.atual = ok.length ? pick(ok, rnd).id : null;
+  jogo.atual = ok.length ? sortear(jogo, ok, rnd).id : null;
   return jogo.atual;
 }
 
@@ -53,7 +67,7 @@ export function usarBonus(jogo, times, tipo, rnd = Math.random) {
   const lista = opcoesBonus(jogo, times)[tipo];
   if (!lista?.length) return null;
   jogo.bonusUsado = true;
-  jogo.atual = pick(lista, rnd).id;
+  jogo.atual = sortear(jogo, lista, rnd).id;
   return jogo.atual;
 }
 
@@ -94,15 +108,27 @@ export function forcaTime(t) {
   return forca(vagas).forca;
 }
 
-export const chanceVitoria = (a, b) => 1 / (1 + Math.exp(-(a - b) / 5));
+// Chance de vencer um jogo. O OVR pesa muito: 3 pontos de vantagem ≈ 77%,
+// 7 pontos ≈ 94% (o mais fraco só vence com sorte) e 12 ou mais: impossível.
+export const DIFERENCA_IMPOSSIVEL = 12;
+export function chanceVitoria(a, b) {
+  const d = a - b;
+  if (d >= DIFERENCA_IMPOSSIVEL) return 1;
+  if (d <= -DIFERENCA_IMPOSSIVEL) return 0;
+  return 1 / (1 + Math.exp(-d / 2.5));
+}
 
 // Adversário das quartas: quanto mais vitórias na fase de pontos, mais fraco.
 const FAIXA_QUARTAS = { 3: [0, 0.15], 4: [0.15, 0.35], 5: [0.35, 0.6], 6: [0.6, 0.8], 7: [0.8, 1] };
 
 function jogoSimulado(meu, adv, jogadores, rnd) {
   const venceu = rnd() < chanceVitoria(meu, adv.forca);
-  const kv = 12 + Math.floor(rnd() * 17);
-  const kp = 3 + Math.floor(rnd() * Math.min(15, kv - 2));
+  // Placar de abates acompanha a diferença de força: atropelo quando o
+  // vencedor é bem melhor, jogo apertado quando é equilibrado (ou zebra).
+  const vant = venceu ? meu - adv.forca : adv.forca - meu;
+  const kv = 12 + Math.floor(rnd() * 15);
+  const razao = Math.max(0.12, Math.min(0.92, 0.6 - vant * 0.035 + (rnd() - 0.5) * 0.2));
+  const kp = Math.max(1, Math.min(kv - 1, Math.round(kv * razao)));
   let mvp = null;
   if (venceu) {
     const pesos = jogadores.map((j) => j.ovr ** 4);
