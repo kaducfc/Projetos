@@ -28,13 +28,15 @@ let anim = null; // rodada sendo mostrada ao vivo
 const abertos = new Set(); // rodadas com "Ver partida" aberto
 
 // Como a campanha é mostrada (fica guardado neste navegador).
-const VELOCIDADES = { lenta: ['Lenta', 1.8], normal: ['Normal', 1], rapida: ['Rápida', 0.5], ultra: ['Ultra', 0.18] };
+// [nome, segundos reais de uma partida média, pausa entre partidas em ms]
+const VELOCIDADES = { lenta: ['Lenta', 20, 1400], normal: ['Normal', 14, 1100], rapida: ['Rápida', 8, 700], ultra: ['Ultra', 3, 300] };
+const DURACAO_MEDIA = 29 * 60; // segundos de jogo de uma partida média
 const PREF_KEY = 'cblol.exibicao';
 let pref = { auto: false, vel: 'normal' };
 try { pref = { ...pref, ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; } catch { /* sem armazenamento */ }
 if (!VELOCIDADES[pref.vel]) pref.vel = 'normal';
 const salvarPref = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(pref)); } catch { /* sem armazenamento */ } };
-const fator = () => VELOCIDADES[pref.vel][1];
+const pausa = () => VELOCIDADES[pref.vel][2];
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const oculto = () => jogo.modo === 'oculto' && !completo(jogo);
@@ -262,7 +264,6 @@ async function animar(idx) {
   el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   const res = el.querySelector('.res');
   const games = el.querySelector('.games');
-  const base = r.jogos.length > 1 ? 2600 : 3400; // ms na velocidade normal
   let v = 0;
   let d = 0;
   for (const [gi, g] of r.jogos.entries()) {
@@ -279,7 +280,9 @@ async function animar(idx) {
       if (eu.parar) return;
       const agoraMs = performance.now();
       // Soma aos poucos: trocar a velocidade no meio do jogo vale na hora.
-      p = eu.pular ? 1 : Math.min(1, p + (agoraMs - antes) / (base * fator()));
+      // Partida mais longa demora um pouco mais que a média na tela.
+      const msTela = VELOCIDADES[pref.vel][1] * 1000 * (g.duracao / DURACAO_MEDIA);
+      p = eu.pular ? 1 : Math.min(1, p + (agoraMs - antes) / msTela);
       antes = agoraMs;
       const agora = p * g.duracao;
       const feitos = abates.filter((x) => x.t <= agora);
@@ -292,14 +295,14 @@ async function animar(idx) {
     chip.innerHTML = chipTxt(g, gi, r.jogos.length);
     if (g.venceu) v++; else d++;
     res.textContent = `${v}–${d}`;
-    if (!eu.pular && gi < r.jogos.length - 1) await espera(700 * fator());
+    if (!eu.pular && gi < r.jogos.length - 1) await espera(pausa());
   }
   if (eu.parar) return;
   anim = null;
   render();
   // Automático: acabou um confronto, começa o próximo.
   if (pref.auto && mostrados < jogo.campanha.rodadas.length) {
-    await espera(900 * fator());
+    await espera(pausa());
     if (pref.auto && !anim && jogo.fase === 'fim' && jogo.campanha && mostrados < jogo.campanha.rodadas.length) avancar();
   }
 }

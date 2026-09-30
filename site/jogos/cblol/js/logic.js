@@ -164,8 +164,9 @@ function jogoSimulado(meu, adv, jogadores, rnd) {
   const razao = Math.max(0.12, Math.min(0.92, 0.6 - vant * 0.035 + (rnd() - 0.5) * 0.2));
   const kp = Math.max(1, Math.min(kv - 1, Math.round(kv * razao)));
   const placar = venceu ? [kv, kp] : [kp, kv];
-  // Duração: atropelo acaba cedo, jogo parelho vai longe (em segundos).
-  const duracao = Math.round((21 + 17 * razao + rnd() * 5) * 60);
+  // Duração de 23 a 40 minutos: atropelo acaba cedo, jogo parelho vai longe (em segundos).
+  const parelho = (razao - 0.12) / 0.8;
+  const duracao = Math.round((23 + 13 * parelho + rnd() * 4) * 60);
   const nos = linhaDoTime(jogadores, placar[0], placar[1], rnd);
   const eles = linhaDoTime(titulares(adv), placar[1], placar[0], rnd);
   // MVP: melhor atuação do time que venceu.

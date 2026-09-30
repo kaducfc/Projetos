@@ -134,7 +134,7 @@ test('simulação: K/D/A de cada jogador fecha com o placar de abates', () => {
       assert.equal(soma(g.eles, 'k'), g.placar[1]);
       assert.equal(soma(g.nos, 'd'), g.placar[1]);
       assert.equal(soma(g.eles, 'd'), g.placar[0]);
-      assert.ok(g.duracao >= 20 * 60 && g.duracao <= 45 * 60);
+      assert.ok(g.duracao >= 23 * 60 && g.duracao <= 40 * 60, `${g.duracao}`);
       if (g.venceu) assert.ok(g.nos.some((j) => j.nome === g.mvp));
     }
   }
