@@ -154,3 +154,17 @@ async function run() {
 }
 
 btn.addEventListener('click', run);
+
+// Jeito 1: mostra e copia o script que roda no Console da Leaguepedia.
+const box = document.getElementById('script');
+fetch('script-leaguepedia.js').then((r) => r.text()).then((t) => { box.value = t; });
+document.getElementById('copy').addEventListener('click', async () => {
+  const ok = document.getElementById('copied');
+  try {
+    await navigator.clipboard.writeText(box.value);
+    ok.textContent = 'Copiado! Agora cole no Console da Leaguepedia.';
+  } catch {
+    box.select();
+    ok.textContent = 'Selecionei o script: aperte Ctrl+C para copiar.';
+  }
+});

@@ -27,7 +27,20 @@
   </header>
   <section class="p-section">
     <div class="card">
-      <h3>Baixar da Leaguepedia</h3>
+      <h3>Jeito 1 (recomendado): pelo Console da Leaguepedia</h3>
+      <p class="c-sub">Roda dentro da própria Leaguepedia, que devolve milhares de linhas por pedido. Leva poucos minutos.</p>
+      <ol class="p-steps">
+        <li>Clique em <b>Copiar script</b> abaixo.</li>
+        <li>Abra <a href="https://lol.fandom.com/wiki/CBLOL" target="_blank" rel="noopener">lol.fandom.com/wiki/CBLOL</a> numa aba nova.</li>
+        <li>Nessa aba, aperte <b>F12</b> e clique na guia <b>Console</b>.</li>
+        <li>Cole o script (Ctrl+V) e aperte <b>Enter</b>. Se o Chrome pedir, digite <code>allow pasting</code>, aperte Enter e cole de novo.</li>
+        <li>Acompanhe as mensagens em amarelo. No fim, o arquivo <b>cblol-leaguepedia.json</b> é baixado.</li>
+      </ol>
+      <p><button type="button" class="p-btn" id="copy">Copiar script</button> <span class="c-sub" id="copied"></span></p>
+      <textarea id="script" class="p-log" rows="6" readonly spellcheck="false"></textarea>
+    </div>
+    <div class="card">
+      <h3>Jeito 2: direto por esta página</h3>
       <p class="c-sub">Busca todos os splits do CBLOL, mais a LTA Sul de 2025 (times, jogadores, reservas, técnicos, estatísticas por jogo e
         colocações) na Leaguepedia e gera um arquivo <b>cblol-leaguepedia.json</b>. Pode levar de 15 a 40 minutos (a Leaguepedia limita pedidos por minuto e a página espera sozinha). Deixe a aba aberta.</p>
       <p><button type="button" class="p-btn" id="go">Baixar dados</button></p>
