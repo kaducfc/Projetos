@@ -90,7 +90,14 @@ export function renderCreate(root, onConfirm) {
   };
 
   const paintRole = () => {
-    $('map').innerHTML = minimapSvg(f.role);
+    // O mapa é desenhado uma vez; depois só troca a posição marcada.
+    const map = $('map');
+    if (!map.firstElementChild) map.innerHTML = minimapSvg(f.role);
+    map.firstElementChild.classList.toggle('picked', !!f.role);
+    map.querySelectorAll('[data-role]').forEach((b) => {
+      b.classList.toggle('on', b.dataset.role === f.role);
+      b.setAttribute('aria-pressed', String(b.dataset.role === f.role));
+    });
     if (!f.role) {
       $('role-info').innerHTML = '<p class="muted">Toque numa posição do mapa.</p>';
       return;
@@ -158,9 +165,6 @@ export function renderCreate(root, onConfirm) {
     paintConfirm();
   };
   $('map').addEventListener('click', pickRole);
-  $('map').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickRole(e); }
-  });
   $('confirm').addEventListener('click', () => {
     onConfirm({ nick: f.nick.trim(), nat: f.nat, role: f.role, style: f.style, attrs: f.attrs, speed: f.speed });
   });

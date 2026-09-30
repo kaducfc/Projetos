@@ -63,6 +63,9 @@ for (const dir of ['times', 'emblemas', 'trofeus']) {
   }
 }
 
+// Mapa do Summoner's Rift (tela de criação).
+logoData['mapa/summoners-rift-640.webp'] = `data:image/webp;base64,${readFileSync(join(assetsDir, 'mapa/summoners-rift-640.webp')).toString('base64')}`;
+
 // Imagens das decisões (img/eventos), com a chave "eventos/<arquivo>".
 const eventsDir = join(root, 'img/eventos');
 if (existsSync(eventsDir)) {

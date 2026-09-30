@@ -162,15 +162,15 @@ input { font: inherit; color: inherit; }
 .nat-note { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; }
 .nat-note b { color: var(--text); }
 
-.minimap { width: 100%; max-width: 260px; display: block; margin: 0 auto; }
-.map-node { cursor: pointer; }
-.map-node circle { fill: #0b1c16; stroke: #7fb09a; stroke-width: 2; transition: fill 0.15s; }
-.map-node text { fill: #d8efe5; font: 800 10px var(--sans); pointer-events: none; }
-.map-node:hover circle { fill: #173a2e; }
-.map-node.on circle { fill: var(--gold); stroke: var(--gold-2); }
-.map-node.on text { fill: #1a1407; }
+.minimap { position: relative; width: 100%; max-width: 360px; margin: 0 auto; }
+.minimap img { display: block; width: 100%; height: auto; border-radius: 8px; }
+.map-node { position: absolute; width: 11%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; border: 0; padding: 0; background: transparent; cursor: pointer; transition: box-shadow 0.15s, background 0.15s; }
+.map-node:hover { background: rgba(245, 207, 90, 0.18); box-shadow: 0 0 0 2px rgba(245, 207, 90, 0.7); }
+.map-node.on { box-shadow: 0 0 0 3px var(--gold-2), 0 0 18px 4px rgba(245, 207, 90, 0.65); animation: map-pulse 1.6s ease-in-out infinite; }
+.minimap.picked .map-node:not(.on):not(:hover) { background: rgba(9, 9, 10, 0.45); }
 .map-node:focus { outline: none; }
-.map-node:focus-visible circle { stroke: #fff; stroke-width: 3; }
+.map-node:focus-visible { box-shadow: 0 0 0 3px #fff; }
+@keyframes map-pulse { 50% { box-shadow: 0 0 0 3px var(--gold-2), 0 0 26px 8px rgba(245, 207, 90, 0.4); } }
 .role-info { margin-top: 14px; }
 .role-info p { margin: 4px 0 10px; font-size: 13px; }
 .role-head { display: flex; justify-content: space-between; align-items: center; }
@@ -680,6 +680,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 /* Cantos discretos em tudo; a barra de porcentagem é totalmente reta. */
 * { border-radius: 4px !important; }
 .odds, .odds span { border-radius: 0 !important; }
+.map-node { border-radius: 50% !important; }
 .odds { height: 30px; gap: 2px; background: var(--bg); }
 .o-ok { background: #3c8a4e; }
 .o-bad { background: #a3352c; }

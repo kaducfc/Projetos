@@ -215,7 +215,7 @@ export function simular(jogo, times, rnd = Math.random, bonus = BONUS_SONHO[jogo
   const daFinal = chegou(['final']);
   const rodadas = [];
 
-  // Fase de pontos: 7 jogos (MD1) contra times sorteados.
+  // Fase de pontos: 7 jogos (MD1) contra 7 times sorteados, todos diferentes.
   const sorteados = [];
   while (sorteados.length < FASE_GRUPOS) {
     const t = pick(comForca, rnd);
@@ -234,8 +234,12 @@ export function simular(jogo, times, rnd = Math.random, bonus = BONUS_SONHO[jogo
     const faixa = ordem.slice(Math.floor(lo * ordem.length), Math.max(Math.floor(lo * ordem.length) + 1, Math.floor(hi * ordem.length)));
     const etapas = [['Quartas de final', 3, faixa], ['Semifinal', 5, daSemi], ['Final', 5, daFinal]];
     resultado = 'quartas';
+    // Nos playoffs nenhum adversário se repete (pode ser um da fase de pontos).
+    const jaEnfrentou = new Set();
     for (const [nome, md, lista] of etapas) {
-      const adv = pick(lista, rnd);
+      const novos = lista.filter((t) => !jaEnfrentou.has(t.id));
+      const adv = pick(novos.length ? novos : lista, rnd);
+      jaEnfrentou.add(adv.id);
       const s = serie(meu, adv, md, jogadores, rnd);
       rodadas.push({ fase: nome, adv: resumoTime(adv), melhorDe: md, ...s });
       if (!s.venceu) break;

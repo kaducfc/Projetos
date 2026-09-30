@@ -15,8 +15,9 @@ const app = document.getElementById('app');
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
 mountSiteFooter(document.getElementById('site-footer'));
 
-// Posição de cada rota no mapa (em % do quadrado).
-const POS = { top: [17, 17], jungle: [30, 44], mid: [50, 50], adc: [74, 86], sup: [88, 70] };
+// Posição de cada marcação de rota no desenho do mapa (em % da largura e da altura).
+const POS = { top: [16.6, 12.9], jungle: [27.8, 34.4], mid: [50.4, 44.7], adc: [71.4, 78.0], sup: [87.6, 60.5] };
+const MAPA = '../../shared/assets/mapa/summoners-rift-1100.webp';
 const SIGLA = { top: 'TOP', jungle: 'JG', mid: 'MID', adc: 'ADC', sup: 'SUP', reserva: 'RES', tecnico: 'TÉC', tecnico2: 'TÉC' };
 
 let times = [];
@@ -114,18 +115,12 @@ function slotHtml(v, bench = false) {
   const podeEntrar = !p && pessoasAtual().some((x) => vagasPossiveis(jogo, x).includes(v));
   const cls = `slot${p ? ' full' : ''}${podeEntrar ? ' can' : ''}`;
   const style = bench ? '' : ` style="left:${POS[v][0]}%;top:${POS[v][1]}%"`;
-  const dot = `<span class="dot">${p ? ovrTxt(p.ovr) : SIGLA[v]}</span>`;
+  // No mapa a vaga vazia deixa ver a marcação da rota que já está no desenho.
+  const dot = `<span class="dot">${p ? ovrTxt(p.ovr) : bench ? SIGLA[v] : ''}</span>`;
   const txt = `<span class="lbl">${NOME_VAGA[v]}</span>${p ? `<span class="who">${esc(p.nome)}</span><span class="from">${esc(p.time)} · ${esc(p.edicao.replace(/^CBLOL |^LTA Sul /, ''))}</span>` : ''}`;
   return bench ? `<div class="${cls}">${dot}<span class="txt">${txt}</span></div>` : `<div class="${cls}"${style}>${dot}${txt}</div>`;
 }
 
-const RIFT_SVG = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-  <path d="M4 96 L96 4" stroke="rgba(80,140,200,.22)" stroke-width="9" fill="none"/>
-  <path d="M9 91 L9 9 L91 9" stroke="rgba(214,190,140,.28)" stroke-width="2.4" fill="none"/>
-  <path d="M9 91 L91 91 L91 9" stroke="rgba(214,190,140,.28)" stroke-width="2.4" fill="none"/>
-  <path d="M11 89 L89 11" stroke="rgba(214,190,140,.28)" stroke-width="2.4" fill="none"/>
-  <circle cx="6" cy="94" r="7" fill="rgba(60,110,190,.35)"/><circle cx="94" cy="6" r="7" fill="rgba(190,60,50,.35)"/>
-</svg>`;
 
 function scoreBox() {
   const f = forca(jogo.vagas);
@@ -171,7 +166,7 @@ function renderMontagem() {
     <div class="cols">
       <div class="col-left" style="display:flex;flex-direction:column;gap:12px">${left}</div>
       <div class="col-map">
-        <div class="rift">${RIFT_SVG}${ROTAS.map((r) => slotHtml(r)).join('')}</div>
+        <div class="rift"><img src="${MAPA}" alt="Mapa do Summoner's Rift" width="1100" height="1081" decoding="async" />${ROTAS.map((r) => slotHtml(r)).join('')}</div>
         <div class="bench">${slotHtml('reserva', true)}${slotHtml('tecnico', true)}</div>
       </div>
       <div>${scoreBox()}</div>
@@ -287,7 +282,7 @@ async function animar(idx) {
       const agora = p * g.duracao;
       const feitos = abates.filter((x) => x.t <= agora);
       const nos = feitos.filter((x) => x.lado === 0).length;
-      chip.textContent = `${r.jogos.length > 1 ? `Game ${gi + 1} · ` : ''}⏱ ${relogio(agora)} · ${nos}–${feitos.length - nos} abates`;
+      chip.innerHTML = `${r.jogos.length > 1 ? `Game ${gi + 1} · ` : ''}⏱ ${relogio(agora)} · <b class="ka">${nos}</b>–<b class="ke">${feitos.length - nos}</b> abates`;
       if (p >= 1) break;
       await new Promise((ok) => { requestAnimationFrame(ok); });
     }

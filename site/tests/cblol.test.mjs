@@ -156,7 +156,11 @@ test('mata-mata: adversários só de times que chegaram àquela fase', () => {
       if (p) escolher(jogo, times, p.nome, vagasPossiveis(jogo, p).find((v) => v !== 'reserva') || vagasPossiveis(jogo, p)[0]);
       jogo.atual = null;
     }
-    for (const r of simular(jogo, times).rodadas.slice(7)) {
+    const rs = simular(jogo, times).rodadas;
+    const ids = (lista) => lista.map((r) => r.adv.id);
+    assert.equal(new Set(ids(rs.slice(0, 7))).size, 7, 'fase de pontos sem repetir');
+    assert.equal(new Set(ids(rs.slice(7))).size, rs.length - 7, 'playoffs sem repetir');
+    for (const r of rs.slice(7)) {
       assert.ok(pode[r.fase].includes(fase.get(r.adv.id)), `${r.fase}: ${r.adv.id} (${fase.get(r.adv.id)})`);
       vistos++;
     }

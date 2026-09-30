@@ -271,32 +271,24 @@ export function jerseySvg(nick, roleShort) {
   </svg>`;
 }
 
-const NODES = {
-  top: [40, 52], jungle: [62, 110], mid: [104, 96], adc: [118, 166], support: [158, 148],
+// Posição de cada marcação no desenho do mapa (em % da largura e da altura).
+export const MAP_PINS = {
+  top: [16.6, 12.9], jungle: [27.8, 34.4], mid: [50.4, 44.7], adc: [71.4, 78.0], support: [87.6, 60.5],
 };
+const MAP_FILE = 'mapa/summoners-rift-640.webp';
 
-// Minimapa esquematizado do Summoner's Rift com as 5 posições clicáveis.
+// Mapa do Summoner's Rift (imagem com as marcações das rotas) e um botão
+// transparente sobre cada marcação.
 export function minimapSvg(selected) {
-  const nodes = Object.entries(NODES).map(([role, [x, y]]) => {
-    const on = role === selected;
-    const label = { top: 'TOP', jungle: 'JG', mid: 'MID', adc: 'ADC', support: 'SUP' }[role];
-    return `<g class="map-node${on ? ' on' : ''}" data-role="${role}" tabindex="0" role="button" aria-label="${label}">
-      <circle cx="${x}" cy="${y}" r="17"/>
-      <text x="${x}" y="${y + 4}" text-anchor="middle">${label}</text>
-    </g>`;
+  const src = EMBEDDED ? EMBEDDED[MAP_FILE] : ASSETS + MAP_FILE;
+  const nodes = Object.entries(MAP_PINS).map(([role, [x, y]]) => {
+    const label = { top: 'Top', jungle: 'Jungle', mid: 'Mid', adc: 'ADC', support: 'Suporte' }[role];
+    return `<button type="button" class="map-node${role === selected ? ' on' : ''}" data-role="${role}" style="left:${x}%;top:${y}%" aria-label="${label}" aria-pressed="${role === selected}"></button>`;
   }).join('');
-  return `<svg class="minimap" viewBox="0 0 200 200">
-    <rect x="2" y="2" width="196" height="196" rx="10" fill="#0e2a21" stroke="#2a4a3e" stroke-width="2"/>
-    <path d="M22 22 L178 178" stroke="#16435a" stroke-width="16" stroke-linecap="round" opacity=".9"/>
-    <g fill="none" stroke="#3a6b58" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M28 172 L28 28 L172 28"/>
-      <path d="M28 172 L172 172 L172 28"/>
-      <path d="M28 172 L172 28"/>
-    </g>
-    <circle cx="28" cy="172" r="14" fill="#1d5fa8" stroke="#8fc3ff" stroke-width="2"/>
-    <circle cx="172" cy="28" r="14" fill="#a8321d" stroke="#ffb08f" stroke-width="2"/>
+  return `<div class="minimap${selected ? ' picked' : ''}">
+    <img src="${src}" alt="Mapa do Summoner's Rift com as posições" width="640" height="629" decoding="async" />
     ${nodes}
-  </svg>`;
+  </div>`;
 }
 
 export function stars(rating) {
