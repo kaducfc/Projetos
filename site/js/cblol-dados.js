@@ -9,7 +9,10 @@ mountSiteFooter(document.getElementById('site-footer'));
 
 const API = 'https://lol.fandom.com/api.php';
 const PAGE = 500; // máximo de linhas por pedido
-const PAUSE_MS = 700; // intervalo entre pedidos, para não sobrecarregar a wiki
+// Intervalo entre pedidos. A Leaguepedia limita pedidos por minuto: quando o
+// limite é atingido, o intervalo aumenta sozinho e o pedido espera e repete.
+let pauseMs = 2500;
+const MAX_PAUSE_MS = 12000;
 const logEl = document.getElementById('log');
 const btn = document.getElementById('go');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -19,23 +22,45 @@ function log(msg) {
   logEl.scrollTop = logEl.scrollHeight;
 }
 
-// Um pedido à API, com novas tentativas em caso de erro ou limite de uso.
-async function cargo(params, attempt = 1) {
+// Espera mostrando a contagem regressiva na última linha do registro.
+async function waitWithCountdown(ms, why) {
+  const line = document.createElement('span');
+  logEl.append(line);
+  for (let left = Math.ceil(ms / 1000); left > 0; left--) {
+    line.textContent = `  … ${why}: esperando ${left}s\n`;
+    logEl.scrollTop = logEl.scrollHeight;
+    await sleep(1000);
+  }
+  line.remove();
+}
+
+// Um pedido à API. Nunca desiste por limite de uso: espera cada vez mais
+// (até 2 min) e tenta de novo. Outros erros: até 8 tentativas.
+async function cargo(params) {
   const url = new URL(API);
   const q = { action: 'cargoquery', format: 'json', origin: '*', limit: String(PAGE), ...params };
   for (const [k, v] of Object.entries(q)) url.searchParams.set(k, v);
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    if (json.error) throw new Error(`${json.error.code}: ${json.error.info}`);
-    return (json.cargoquery || []).map((r) => r.title);
-  } catch (err) {
-    if (attempt >= 6) throw err;
-    const wait = 2000 * attempt;
-    log(`  ! ${err.message}. Tentando de novo em ${wait / 1000}s…`);
-    await sleep(wait);
-    return cargo(params, attempt + 1);
+  let limited = 0;
+  let failures = 0;
+  for (;;) {
+    try {
+      const res = await fetch(url);
+      if (res.status === 429) throw Object.assign(new Error('ratelimited'), { rate: true });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (json.error) throw Object.assign(new Error(`${json.error.code}: ${json.error.info}`), { rate: /ratelimit/i.test(json.error.code) });
+      return (json.cargoquery || []).map((r) => r.title);
+    } catch (err) {
+      if (err.rate) {
+        limited++;
+        pauseMs = Math.min(MAX_PAUSE_MS, Math.round(pauseMs * 1.5));
+        await waitWithCountdown(Math.min(120000, 20000 * limited), 'limite de pedidos da Leaguepedia');
+      } else {
+        failures++;
+        if (failures >= 8) throw err;
+        await waitWithCountdown(3000 * failures, `erro (${err.message})`);
+      }
+    }
   }
 }
 
@@ -47,7 +72,7 @@ async function cargoAll(params, label) {
     rows.push(...part);
     if (label) log(`  ${label}: ${rows.length} linhas`);
     if (part.length < PAGE) return rows;
-    await sleep(PAUSE_MS);
+    await sleep(pauseMs);
   }
 }
 
@@ -61,7 +86,7 @@ async function perTournament(table, fields, pages, label, orderBy) {
     const rows = await cargoAll({ tables: table, fields, where: inList(`${table}.OverviewPage`, group), order_by: orderBy }, null);
     out.push(...rows);
     log(`  ${label}: ${out.length} linhas (${group[0]}…)`);
-    await sleep(PAUSE_MS);
+    await sleep(pauseMs);
   }
   return out;
 }
