@@ -45,7 +45,8 @@ test('dica confirma uma característica que ainda não está verde', () => {
   const seen = new Set();
   for (let i = 0; i < 40; i++) seen.add(pickHint([get('Pantheon')], ans, () => i / 40));
   assert.deepEqual([...seen].sort(), ['ano', 'classes', 'genero', 'posicoes'].sort());
-  assert.ok(COLUMNS.some((c) => c.key === pickHint([], ans)));
+  const any = pickHint([], ans); // sem tentativas: qualquer uma das 7
+  assert.ok(COLUMNS.some((c) => c.key === any));
   assert.equal(pickHint([ans], ans), null);
 });
 
