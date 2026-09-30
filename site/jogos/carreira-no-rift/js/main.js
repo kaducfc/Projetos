@@ -173,12 +173,17 @@ app.addEventListener('click', (e) => {
       state = null;
       save();
       return render({ scrollTop: true });
-    case 'copy-summary': {
+    case 'share-summary': {
+      // No celular abre a janela de compartilhar (WhatsApp, Instagram…);
+      // no computador copia o texto para colar.
       const text = careerSummaryText(state);
-      navigator.clipboard?.writeText(text).then(
-        () => { el.textContent = 'Copiado!'; },
+      const copy = () => navigator.clipboard?.writeText(text).then(
+        () => { el.textContent = 'Resumo copiado!'; },
         () => { el.textContent = 'Não foi possível copiar'; },
       );
+      if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+        navigator.share({ text }).catch((err) => { if (err?.name !== 'AbortError') copy(); });
+      } else copy();
       return;
     }
     default:

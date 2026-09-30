@@ -471,6 +471,8 @@ export function careerSummaryText(state) {
     `${legacyScore(p)} pontos de legado · ${fmtMoney(careerEarnings(p))} arrecadados · OVR máximo ${p.peakOvr} · ${p.history.length} temporadas · ${p.stats.games} jogos · KDA ${fmtKda(p.stats.k, p.stats.d, p.stats.a)}`,
     `🏆 ${leagues} ligas · ${count('MSI')} MSI · ${count('Mundial')} Mundial`,
     `Clubes: ${clubs.join(' → ')}`,
+    '',
+    'Monte a sua carreira: riftarcade.com.br/jogos/carreira-no-rift',
     '#CarreiraNoRift',
   ].join('\n');
 }
@@ -524,7 +526,7 @@ function retiredPanel(state) {
     ${Object.keys(grouped).length ? `<div class="season-trophies">${Object.values(grouped).map(({ t, n }) => `<div class="st-item">${trophyArt(t, 40)}<div><b>${n > 1 ? `${n}× ` : ''}${esc(t.name)}</b><small>${t.kind === 'award' ? 'Prêmio individual' : t.kind === 'intl' ? 'Internacional' : 'Liga'}</small></div></div>`).join('')}</div>` : '<p class="muted">Nenhum título na carreira.</p>'}
     <pre class="share" id="share-text">${esc(careerSummaryText(state))}</pre>
     <div class="actions">
-      <button class="btn-primary" data-act="copy-summary">Copiar resumo</button>
+      <button class="btn-primary" data-act="share-summary">Compartilhar</button>
       <button class="btn-ghost" data-act="new-career">Nova carreira</button>
     </div>
   </div>`;
