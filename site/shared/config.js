@@ -62,6 +62,16 @@ export const GAMES = [
     status: 'live',
     scoreLabel: 'Pontos',
   },
+  {
+    id: 'cblol',
+    name: 'CBLOL dos Sonhos', // provisório
+    tagline: 'Monte um time com lendas de todas as eras do CBLOL e veja até onde ele chega.',
+    kind: 'Monte e simule',
+    path: 'jogos/cblol/',
+    status: 'live',
+    oculto: true, // em teste: ainda fora da página inicial
+    scoreLabel: 'Pontos',
+  },
 ];
 
 export const gameById = (id) => GAMES.find((g) => g.id === id);

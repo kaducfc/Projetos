@@ -15,7 +15,8 @@ mountSiteBar(document.getElementById('site-bar'), { showBrand: true });
 mountSiteFooter(document.getElementById('site-footer'));
 
 function renderGames(results) {
-  document.getElementById('games').innerHTML = GAMES.map((g) => {
+  // Jogos em teste (oculto: true) funcionam pelo link, mas ainda não aparecem aqui.
+  document.getElementById('games').innerHTML = GAMES.filter((g) => !g.oculto).map((g) => {
     const mine = results.filter((r) => r.gameId === g.id);
     const best = mine.reduce((m, r) => (r.score != null && (m == null || r.score > m) ? r.score : m), null);
     const stats = mine.length

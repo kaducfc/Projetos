@@ -54,3 +54,16 @@ contra times históricos.
 - Quartas (MD3): o adversário depende das vitórias na fase de pontos:
   3 vitórias → adversário com OVR alto; 7 vitórias → adversário com OVR baixo.
 - Semifinal e final (MD5): adversários 100% aleatórios.
+
+## Como ficou (dados de 30/09/2026)
+
+- 247 times (cada um num split), 1.523 jogadores e 223 técnicos, de 2014 a
+  2026, com a LTA Sul em 2025. 2012 e 2013 ficaram de fora: a Leaguepedia não
+  tem elencos nem estatísticas desses anos.
+- Estatísticas por era: abates/mortes/assistências e farm em todos os anos;
+  visão desde 2019; dano desde 2020. Os pesos de quem falta são redistribuídos.
+- OVR: mediana 75, 90% entre 61 e 90, máximo 97 (Revolta 2016 e Kami 2015).
+- Para refazer depois de baixar dados novos: `python3 scripts/gerar.py`.
+- Equilíbrio (simulador): escolhendo sempre o melhor OVR disponível, o time
+  sai com força ~82 e é campeão em ~36% das vezes; escolhendo ao acaso,
+  força ~76 e ~11% de títulos.
