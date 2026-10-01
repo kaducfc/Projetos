@@ -137,3 +137,11 @@ button.btn-primary:disabled { opacity: 0.6; cursor: default; }
 .rk-link:hover { text-decoration: underline; }
 .rk-queda b { color: var(--text); }
 .rk-queda.perigo { color: #f0948e; }
+
+/* Histórico recolhível */
+.pf-toggle { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 14px; margin-bottom: 10px; background: var(--panel); border: 1px solid var(--line-2); border-radius: 4px; color: var(--text); cursor: pointer; text-align: left; font: inherit; }
+.pf-toggle:hover { border-color: var(--gold); }
+.pf-toggle .section-title { margin: 0; flex: 1; }
+.pf-toggle-n { font-size: 13px; color: var(--muted); font-weight: 700; }
+.pf-toggle-seta { color: var(--gold-2); transition: transform 0.2s; transform: rotate(-90deg); }
+.pf-toggle[aria-expanded="true"] .pf-toggle-seta { transform: none; }

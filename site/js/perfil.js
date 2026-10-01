@@ -24,6 +24,8 @@ let resultados = [];
 let status = null; // situação na ranqueada
 let filtro = 'todos';
 let mostrar = 20;
+// Histórico começa fechado (abre direto se vier do link "Meu histórico").
+let histAberto = location.hash === '#historico';
 
 let toastTimer = null;
 function toast(msg) {
@@ -87,10 +89,14 @@ function historico() {
       <span class="h-score">${r.score != null ? `${num(r.score)}<small>pts</small>` : ''}</span>
     </li>`).join('');
   return `<section class="pf-sec" id="historico">
-    <h2 class="section-title">Histórico de partidas</h2>
-    <div class="pf-chips" role="group" aria-label="Filtrar por jogo">${chips}</div>
+    <button type="button" class="pf-toggle" data-act="historico" aria-expanded="${histAberto}">
+      <span class="section-title">Histórico de partidas</span>
+      <span class="pf-toggle-n">${num(resultados.length)} ${resultados.length === 1 ? 'partida' : 'partidas'}</span>
+      <span class="pf-toggle-seta" aria-hidden="true">▾</span>
+    </button>
+    ${histAberto ? `<div class="pf-chips" role="group" aria-label="Filtrar por jogo">${chips}</div>
     ${lista.length ? `<ul class="pf-hist">${linhas}</ul>` : '<p class="muted">Nenhuma partida aqui ainda.</p>'}
-    ${lista.length > mostrar ? '<button type="button" class="pf-more" data-act="mais">Ver mais partidas</button>' : ''}
+    ${lista.length > mostrar ? '<button type="button" class="pf-more" data-act="mais">Ver mais partidas</button>' : ''}` : ''}
   </section>`;
 }
 
@@ -248,6 +254,7 @@ root.addEventListener('click', async (e) => {
   if (act === 'entrar') openAuthModal('login');
   if (act === 'icone') escolherIcone();
   if (act === 'mais') { mostrar += 30; render(); }
+  if (act === 'historico') { histAberto = !histAberto; render(); }
   if (act === 'excluir') confirmarExclusao();
   if (act === 'sair') { b.disabled = true; await platform.signOut(); }
 });
@@ -299,6 +306,13 @@ platform.onChange(async (evt) => {
 });
 platform.onChange((evt) => {
   if (evt.type === 'results' && platform.getUser()) platform.listResults({ limit: 500 }).then((r) => { resultados = r; render(); });
+});
+
+window.addEventListener('hashchange', () => {
+  if (location.hash !== '#historico' || !platform.getUser()) return;
+  histAberto = true;
+  render();
+  document.getElementById('historico')?.scrollIntoView();
 });
 
 carregar();
