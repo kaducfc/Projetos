@@ -82,3 +82,10 @@ body {
 @media (max-width: 560px) {
   .hub { padding: 24px 16px 48px; gap: 34px; }
 }
+
+/* Faixa da ranqueada */
+.rk-banner { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 18px; border: 1px solid var(--gold); border-radius: 6px; background: linear-gradient(90deg, rgba(217, 168, 43, 0.14), rgba(125, 151, 255, 0.08)); color: var(--text); text-decoration: none; }
+.rk-banner:hover { background: linear-gradient(90deg, rgba(217, 168, 43, 0.22), rgba(125, 151, 255, 0.12)); }
+.rk-banner-txt { font-size: 14px; color: #d3ccbc; }
+.rk-banner-txt b { color: var(--gold-2); font-size: 15px; }
+.rk-banner-cta { font-weight: 800; color: var(--gold-2); white-space: nowrap; }

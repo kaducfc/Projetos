@@ -10,6 +10,13 @@
 .pf-who { min-width: 0; flex: 1; }
 .pf-avatar { position: relative; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 50%; }
 .pf-avatar .avatar { border: 3px solid var(--gold); box-shadow: 0 0 0 4px rgba(217, 168, 43, 0.15), 0 10px 26px rgba(0, 0, 0, 0.5); }
+/* Com elo: a borda é a do elo (account.css), mais grossa aqui. */
+.pf-avatar .avatar.elo-bronze { border: 4px solid #b0784f; }
+.pf-avatar .avatar.elo-prata { border: 4px solid #b4bec8; }
+.pf-avatar .avatar.elo-ouro { border: 4px solid #e8b93f; }
+.pf-avatar .avatar.elo-platina { border: 4px solid #4fc8b9; }
+.pf-avatar .avatar.elo-diamante { border: 4px solid #7d97ff; }
+.pf-avatar .avatar.elo-desafiante { border: 4px solid #f5cf5a; box-shadow: 0 0 0 4px rgba(125, 151, 255, 0.5), 0 0 22px rgba(245, 207, 90, 0.6); }
 .pf-avatar-edit { position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); background: var(--gold); color: #140f02; font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 10px; }
 .pf-avatar:hover .avatar { border-color: var(--gold-2); }
 
@@ -108,3 +115,23 @@
 }
 button.btn-primary { border: 0; cursor: pointer; font: 800 14px var(--sans); }
 button.btn-primary:disabled { opacity: 0.6; cursor: default; }
+
+/* Cartão "Minha ranqueada" (perfil e ranking) */
+.rk-card { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; --cor: #6b6455; }
+.rk-emb { flex: none; padding-top: 6px; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5)); }
+.rk-info { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 8px; }
+.rk-info p { margin: 0; }
+.rk-info h2 { margin: 0; font-size: 44px; color: var(--cor); }
+.rk-dias { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 380px; }
+.rk-dia { border: 1px solid var(--line-2); border-radius: 4px; padding: 6px 10px; display: flex; flex-direction: column; background: var(--panel); }
+.rk-dia span { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.rk-dia b { font-size: 20px; font-variant-numeric: tabular-nums; }
+.rk-dia.hoje { border-color: var(--cor); }
+.rk-dia.futuro { opacity: 0.5; }
+.rk-meta { max-width: 460px; display: flex; flex-direction: column; gap: 5px; }
+.rk-meta-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: #d3ccbc; flex-wrap: wrap; }
+.rk-barra { height: 8px; border-radius: 4px; background: #2a261d; overflow: hidden; }
+.rk-barra i { display: block; height: 100%; border-radius: 4px; }
+.rk-benef, .rk-hist { margin: 0; padding-left: 18px; font-size: 13px; color: #d3ccbc; display: flex; flex-direction: column; gap: 2px; }
+.rk-link { color: var(--gold-2); font-weight: 800; font-size: 13.5px; text-decoration: none; }
+.rk-link:hover { text-decoration: underline; }

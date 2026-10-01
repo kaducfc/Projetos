@@ -27,11 +27,12 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
       account = `
         <div class="sb-user">
           <button type="button" class="sb-btn" data-sb="menu" aria-haspopup="true">
-            ${avatarHtml(u.avatar, u.username, 22, 'sb-avatar')}${esc(u.username)}<span aria-hidden="true">▾</span>
+            ${avatarHtml(u.avatar, u.username, 22, `sb-avatar${u.elo ? ` elo-${u.elo}` : ''}`)}${esc(u.username)}<span aria-hidden="true">▾</span>
           </button>
           <div class="sb-menu" hidden>
             <div class="sb-menu-email">${esc(u.email || '')}</div>
             <a href="/perfil/">Meu perfil</a>
+            <a href="/ranking/">Ranking</a>
             <a href="/perfil/#historico">Meu histórico</a>
             <a href="/painel/" data-sb-admin hidden>Painel</a>
             <button type="button" data-sb="logout">Sair</button>

@@ -6,6 +6,7 @@ import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
+import { vantagens, eloInfo } from '../../../shared/ranked.js';
 
 const GAME_ID = 'runetermo';
 const NAME = gameById(GAME_ID)?.name || 'Runetermo';
@@ -51,13 +52,17 @@ async function loadData() {
 function loadSave() {
   const s = platform.loadLocalSave(GAME_ID);
   save = { v: 1, day: today, guesses: [], history: {}, ...(s && s.v === 1 ? s : {}) };
-  if (save.day !== today) save = { ...save, day: today, guesses: [] };
+  if (save.day !== today) save = { ...save, day: today, guesses: [], maxTries: undefined };
   input = [];
 }
 
 const persist = (urgent = false) => platform.writeSave(GAME_ID, save, { urgent });
 
-const finished = () => save.guesses.at(-1) === answer.chave || save.guesses.length >= MAX_TRIES;
+// Benefícios do elo da ranqueada (Prata: categoria visível; Diamante: +1
+// tentativa). O número de tentativas fica fixo no dia depois do 1º chute.
+const vant = () => vantagens(platform.getUser()?.elo);
+const maxTries = () => save.maxTries || vant().tentativasRunetermo;
+const finished = () => save.guesses.at(-1) === answer.chave || save.guesses.length >= maxTries();
 const won = () => save.guesses.at(-1) === answer.chave;
 const shown = (key) => displayLetters(accents.get(key) || key);
 
@@ -72,7 +77,7 @@ function render({ reveal = false, shake = false, win = false } = {}) {
   const n = answer.chave.length;
   const kb = keyboardState(save.guesses, answer.chave);
   const rows = [];
-  for (let r = 0; r < MAX_TRIES; r++) {
+  for (let r = 0; r < maxTries(); r++) {
     const g = save.guesses[r];
     if (g) {
       const res = evaluate(g, answer.chave);
@@ -99,7 +104,8 @@ function render({ reveal = false, shake = false, win = false } = {}) {
       <div class="pal-title">
         <p class="eyebrow">◆ Palavra do dia</p>
         <h1>${esc(NAME)}</h1>
-        <p class="sub">#${today + 1} · ${n} letras</p>
+        <p class="sub">#${today + 1} · ${n} letras${maxTries() > MAX_TRIES ? ` · ${maxTries()} tentativas` : ''}</p>
+        ${vant().categoriaRunetermo && !finished() ? `<p class="cat-elo" title="Benefício do elo ${esc(eloInfo(platform.getUser()?.elo).nome)} na ranqueada">Categoria: <b>${esc(CATEGORIES[answer.categoria] || '')}</b></p>` : ''}
       </div>
       <div class="right"><button class="icon-btn" data-act="stats" aria-label="Estatísticas">${ICON_STATS}</button></div>
     </header>
@@ -147,7 +153,10 @@ function submit() {
     toast(`A palavra tem ${n} letras`);
     return;
   }
-  if (!save.guesses.length) platform.track('game_start', GAME_ID, { day: today, length: n, categoria: answer.categoria });
+  if (!save.guesses.length) {
+    platform.track('game_start', GAME_ID, { day: today, length: n, categoria: answer.categoria });
+    save.maxTries = vant().tentativasRunetermo;
+  }
   save.guesses.push(guess);
   input = [];
   const done = finished();
@@ -163,7 +172,7 @@ function submit() {
     if (!done) return;
     if (won()) {
       render({ win: true });
-      toast(PRAISE[save.guesses.length - 1], 1800);
+      toast(PRAISE[Math.min(save.guesses.length, PRAISE.length) - 1], 1800);
     } else {
       toast(accents.get(answer.chave) || answer.palavra, 2200);
     }
@@ -177,9 +186,9 @@ function finish() {
   const ok = won();
   platform.track('game_end', GAME_ID, { day: today, won: ok, tries, length: answer.chave.length, categoria: answer.categoria });
   platform.recordResult(GAME_ID, {
-    score: ok ? MAX_TRIES + 1 - tries : 0,
+    score: ok ? Math.max(1, MAX_TRIES + 1 - tries) : 0,
     summary: {
-      text: `#${today + 1} · ${answer.palavra} · ${ok ? `acertou em ${tries}/${MAX_TRIES}` : `não acertou (X/${MAX_TRIES})`}`,
+      text: `#${today + 1} · ${answer.palavra} · ${ok ? `acertou em ${tries}/${maxTries()}` : `não acertou (X/${maxTries()})`}`,
       day: today + 1, word: answer.palavra, won: ok, tries,
     },
   });
@@ -275,7 +284,7 @@ function openStats() {
 
 async function share() {
   const text = shareText({
-    name: NAME, number: today + 1, guesses: save.guesses, answer: answer.chave, won: won(), url: 'riftarcade.com.br/jogos/runetermo',
+    name: NAME, number: today + 1, guesses: save.guesses, answer: answer.chave, won: won(), max: maxTries(), url: 'riftarcade.com.br/jogos/runetermo',
   });
   try {
     if (navigator.share && matchMedia('(pointer: coarse)').matches) await navigator.share({ text });
@@ -329,8 +338,9 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Progresso vindo da nuvem (entrou na conta em outro aparelho).
+// Progresso vindo da nuvem (entrou na conta em outro aparelho) ou elo novo.
 platform.onChange((evt) => {
+  if (evt.type === 'auth' && answer && !busy && !modal) render();
   if (evt.type === 'save' && evt.gameId === GAME_ID && !busy) {
     loadSave();
     if (answer) render();

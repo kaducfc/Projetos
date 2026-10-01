@@ -106,9 +106,10 @@ export function computeStats(history, today) {
 }
 
 // A dica conta como tentativa (aparece como 💡 no fim).
-export function shareText({ name, number, guesses, answer, won, hint = false, url }) {
+export function shareText({ name, number, guesses, answer, won, hint = false, url, max = MAX_TRIES }) {
   const icon = { ok: '🟩', part: '🟨', miss: '🟥' };
   const rows = guesses.map((g) => compare(g, answer).map((r) => (r.arrow ? (r.arrow === 'up' ? '⬆️' : '⬇️') : icon[r.state])).join(''));
-  const used = guesses.length + (hint ? 1 : 0);
-  return `${name} #${number} ${won ? used : 'X'}/${MAX_TRIES}${hint ? ' 💡' : ''}\n\n${rows.join('\n')}${url ? `\n\n${url}` : ''}`;
+  const dicas = Number(hint) || 0; // true/false (1 dica) ou o número de dicas
+  const used = guesses.length + dicas;
+  return `${name} #${number} ${won ? used : 'X'}/${max}${dicas ? ` ${'💡'.repeat(dicas)}` : ''}\n\n${rows.join('\n')}${url ? `\n\n${url}` : ''}`;
 }

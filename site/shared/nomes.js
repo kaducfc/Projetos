@@ -20,7 +20,7 @@ export const PROIBIDO_TRECHO = [
 // palavras normais, como "disputa" ou "cubo").
 export const PROIBIDO_PALAVRA = [
   'cu', 'cus', 'puta', 'puto', 'putas', 'putos', 'fdp', 'vsf', 'vtnc', 'tnc', 'pqp', 'krl', 'crl', 'bct',
-  'pau', 'rola', 'pinto', 'bosta', 'cacete', 'kct', 'pnc', 'gozo', 'gozar', 'anus', 'penis', 'vagina',
+  'pau', 'rola', 'bosta', 'cacete', 'kct', 'pnc', 'gozo', 'gozar', 'anus', 'penis', 'vagina',
   'nazi', 'kkk', 'sex', 'sexo', 'porn', 'porno', 'dick', 'cock', 'fag',
   'admin', 'adm', 'mod', 'staff', 'suporte', 'oficial', 'riot', 'sistema',
 ];

@@ -81,13 +81,25 @@ tem acesso.
 
 ## Perfil do jogador
 
-`perfil/` (link "Meu perfil" no menu da conta): ícone (mascote ou campeão),
-troca de nome (1 vez a cada 7 dias), troca/criação de senha, resumo e
-histórico de partidas por jogo, exclusão da conta e o espaço do modo
-ranqueado (ainda "em breve"). Nomes com palavrões ou reservados são barrados
+`perfil/` (link "Meu perfil" no menu da conta): ícone (mascote ou campeão,
+com borda na cor do elo), troca de nome (1 vez a cada 2 dias), troca/criação
+de senha, situação na ranqueada, resumo e histórico de partidas por jogo e
+exclusão da conta. Nomes com palavrões ou reservados são barrados
 por `shared/nomes.js` (aviso na hora) e pela função `site_nome_proibido` do
 banco (que decide de verdade). Configuração: rode
 `supabase/migrations/0005_perfil.sql`.
+
+## Ranqueada
+
+Só da Carreira no Rift, para contas conectadas: valem as 3 primeiras carreiras
+do dia (nota do dia = a maior). A cada ciclo de 3 dias, quem bater a média do
+próximo elo sobe 1 elo: Bronze → Prata (500) → Ouro (650) → Platina (750) →
+Diamante (850) → Desafiante (950, só 100 vagas). Rankings diário, semanal e
+mensal em `ranking/`. Cada elo dá um pequeno benefício nos outros jogos
+(`shared/ranked.js`). As regras valem no banco (`0006_ranqueada.sql`); os
+ciclos pendentes são fechados quando alguém abre o ranking ou o perfil, sem
+tarefa agendada. Configuração: rode `supabase/migrations/0006_ranqueada.sql`
+depois do `0005`.
 
 ## Aviso de fã, páginas institucionais e doações
 

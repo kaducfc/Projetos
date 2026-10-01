@@ -42,7 +42,7 @@ contra times históricos.
   Técnico só na vaga de técnico. Time: Top, Jungle, Mid, ADC, Suporte,
   Reserva e Técnico.
 - Depois de escolher, aparece "Rolar" e sai outro time.
-- Dado bônus: 1 por partida. Troca o sorteio por outro split do mesmo time OU
+- Dado bônus: 1 por partida (2 para quem é Ouro na ranqueada, 3 para Desafiante). Troca o sorteio por outro split do mesmo time OU
   outro time do mesmo ano.
 - Modos: Normal (OVR visível) e Oculto (só nomes, OVR escondido).
 - Time completo: mostra o OVR de cada um e a média do time.

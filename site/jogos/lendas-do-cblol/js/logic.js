@@ -53,10 +53,15 @@ export function rolar(jogo, times, rnd = Math.random) {
   return jogo.atual;
 }
 
-// Dado bônus (1 por partida): outro split do mesmo time ou outro time do mesmo ano.
+// Dados bônus: outro split do mesmo time ou outro time do mesmo ano. Cada
+// partida tem 1 (o elo da ranqueada pode dar mais: jogo.dadosTotal).
+export const dadosUsados = (jogo) => jogo.dadosUsados ?? (jogo.bonusUsado ? 1 : 0);
+export const dadosTotal = (jogo) => jogo.dadosTotal || 1;
+export const dadosRestantes = (jogo) => Math.max(0, dadosTotal(jogo) - dadosUsados(jogo));
+
 export function opcoesBonus(jogo, times) {
   const t = times.find((x) => x.id === jogo.atual);
-  if (!t || jogo.bonusUsado) return { org: [], ano: [] };
+  if (!t || !dadosRestantes(jogo)) return { org: [], ano: [] };
   return {
     org: times.filter((x) => x.org === t.org && x.id !== t.id && serve(jogo, x)),
     ano: times.filter((x) => x.ano === t.ano && x.org !== t.org && serve(jogo, x)),
@@ -66,6 +71,7 @@ export function opcoesBonus(jogo, times) {
 export function usarBonus(jogo, times, tipo, rnd = Math.random) {
   const lista = opcoesBonus(jogo, times)[tipo];
   if (!lista?.length) return null;
+  jogo.dadosUsados = dadosUsados(jogo) + 1;
   jogo.bonusUsado = true;
   jogo.atual = sortear(jogo, lista, rnd).id;
   return jogo.atual;

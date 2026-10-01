@@ -6,7 +6,7 @@ import * as platform from '../shared/platform.js';
 import { nomeProibido, problemaNoNome, PROIBIDO_TRECHO, PROIBIDO_PALAVRA } from '../shared/nomes.js';
 
 test('filtro de nomes: barra palavrões comuns (com números e letras repetidas) e deixa nomes normais', () => {
-  const ok = ['kadu', 'Kadu_SP', 'brTT', 'tinowns', 'computador', 'disputa', 'Reputacao', 'Cubo', 'Pauleta', 'Assassino', 'Matheus99', 'Mod3rno', 'Pikachu', 'Shaco'];
+  const ok = ['Pinto', 'Pinto_Jr', 'kadu', 'Kadu_SP', 'brTT', 'tinowns', 'computador', 'disputa', 'Reputacao', 'Cubo', 'Pauleta', 'Assassino', 'Matheus99', 'Mod3rno', 'Pikachu', 'Shaco'];
   const ruins = ['porra', 'p0rr4', 'Caralhooo', 'c4r4lh0', 'PutaMerda', 'Puta_Vida', 'cu', 'FdP', 'vsf', 'BUCETA', 'viado123', 'fuck_you', 'xXbitchXx', 'admin', 'RiftArcade', 'hitler88', 'arrombad0', 'Kadu.Merda'];
   for (const n of ok) assert.equal(nomeProibido(n), false, n);
   for (const n of ruins) assert.equal(nomeProibido(n), true, n);
@@ -41,7 +41,7 @@ test('perfil: cadastro barra nome feio, troca de nome com limite, ícone, senha 
   await platform.changeUsername('KaduNovo');
   assert.equal(platform.getUser().username, 'KaduNovo');
   assert.ok(platform.nextUsernameChange() > new Date());
-  await assert.rejects(platform.changeUsername('Kadu2'), /7 dias/);
+  await assert.rejects(platform.changeUsername('Kadu2'), /Faltam? (1 dia e 23 horas|2 dias)/);
   await platform.changeUsername('kadunovo'); // só maiúsculas: pode
   assert.equal(platform.getUser().username, 'kadunovo');
 

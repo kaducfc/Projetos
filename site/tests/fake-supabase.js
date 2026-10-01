@@ -2,7 +2,7 @@
 // e as mesmas regras de acesso (cada conta só mexe nas próprias linhas).
 
 export function createFakeSupabase() {
-  const db = { site_profiles: [], site_game_saves: [], site_game_results: [], site_events: [] };
+  const db = { site_profiles: [], site_game_saves: [], site_game_results: [], site_events: [], site_ranked: [] };
   // Contagem de gravações e falha simulada (servidor ocupado).
   const stats = { upserts: 0, failNextUpserts: 0 };
   const users = [];
@@ -134,7 +134,7 @@ export function createFakeSupabase() {
       const me = db.site_profiles.find((p) => p.id === uid);
       if (!me) return { data: null, error: { message: 'no_profile' } };
       const outro = me.username.toLowerCase() !== args.name.toLowerCase();
-      if (outro && me.username_changed_at && Date.now() - Date.parse(me.username_changed_at) < 7 * 864e5) {
+      if (outro && me.username_changed_at && Date.now() - Date.parse(me.username_changed_at) < 2 * 864e5) {
         return { data: null, error: { message: 'username_cooldown' } };
       }
       if (outro && db.site_profiles.some((p) => p.id !== uid && p.username.toLowerCase() === args.name.toLowerCase())) {
@@ -158,6 +158,39 @@ export function createFakeSupabase() {
         db[t] = db[t].filter((r) => (r.id ?? r.user_id) !== uid);
       }
       return { data: null, error: null };
+    }
+    // Ranqueada simplificada: as 3 primeiras carreiras de hoje (pela ordem de
+    // chegada) valem; o elo vem de db.site_ranked.
+    if (name === 'site_ranked_meu') {
+      const uid = auth._uid();
+      if (!uid) return { data: null, error: { message: 'not_authenticated' } };
+      const hoje = new Date().toISOString().slice(0, 10);
+      const validas = db.site_game_results.filter((r) => r.user_id === uid && r.game_id === 'carreira-no-rift'
+        && r.score != null && String(r.played_at).slice(0, 10) === hoje).slice(0, 3);
+      const melhor = validas.length ? Math.max(...validas.map((r) => r.score)) : null;
+      const meu = db.site_ranked.find((r) => r.user_id === uid);
+      return {
+        data: {
+          elo: meu?.elo || 'bronze', jogou: Boolean(meu || validas.length), temporada: 1,
+          hoje: { dia: hoje, partidas: validas.length, melhor, validas: validas.map((r) => r.client_id) },
+          ciclo: { numero: 0, inicio: hoje, fim: hoje, atualiza: hoje, dias: [{ dia: hoje, melhor }], media: (melhor || 0) / 3 },
+          proximo: { elo: 'prata', media: 500 }, desafiantes: 0, vagas: 100, historico: [],
+        },
+        error: null,
+      };
+    }
+    if (name === 'site_ranking') {
+      if (!['diario', 'semanal', 'mensal'].includes(args.periodo)) return { data: null, error: { message: 'periodo_invalido' } };
+      const pts = new Map();
+      for (const r of db.site_game_results.filter((x) => x.game_id === 'carreira-no-rift' && x.score != null)) {
+        pts.set(r.user_id, Math.max(pts.get(r.user_id) || 0, r.score));
+      }
+      const lista = [...pts].sort((a, b) => b[1] - a[1]).map(([id, p], i) => ({
+        pos: i + 1, username: db.site_profiles.find((x) => x.id === id)?.username, avatar: null,
+        elo: db.site_ranked.find((x) => x.user_id === id)?.elo || 'bronze', pontos: p, dias: 1, eu: id === auth._uid(),
+      }));
+      const hoje = new Date().toISOString().slice(0, 10);
+      return { data: { periodo: args.periodo, inicio: hoje, fim: hoje, jogadores: lista.length, lista, eu: lista.find((x) => x.eu) || null }, error: null };
     }
     if (name === 'site_is_admin') return { data: auth._uid() === 'user-admin', error: null };
     if (name === 'site_admin_stats') {

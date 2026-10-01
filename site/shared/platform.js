@@ -13,6 +13,7 @@
 //   track(tipo, gameId, dados)      → estatística anônima (início/fim de partida)
 //   isAdmin() / adminStats(dias)    → painel do administrador
 //   changeUsername / setAvatar / changePassword / deleteAccount → página de perfil
+//   rankedStatus() / ranking(periodo) → ranqueada da Carreira no Rift (elo em getUser().elo)
 //
 // Sem conta, tudo fica no localStorage do navegador. Ao entrar, o que foi
 // jogado como visitante é enviado para a conta, e o save mais recente
@@ -202,6 +203,8 @@ async function setUser(sb, authUser) {
       .select('username, avatar, username_changed_at, created_at').eq('id', authUser.id).maybeSingle();
     // Banco ainda sem as colunas do perfil (0005_perfil.sql não aplicado).
     if (error) ({ data: profile } = await sb.from('site_profiles').select('username').eq('id', authUser.id).maybeSingle());
+    // Elo da ranqueada (null = ainda não jogou ou banco sem 0006_ranqueada.sql).
+    const { data: rank } = await sb.from('site_ranked').select('elo').eq('user_id', authUser.id).maybeSingle();
     const meta = authUser.user_metadata || {};
     const app = authUser.app_metadata || {};
     user = {
@@ -211,6 +214,7 @@ async function setUser(sb, authUser) {
       avatar: profile?.avatar || null,
       usernameChangedAt: profile?.username_changed_at || null,
       createdAt: profile?.created_at || authUser.created_at || null,
+      elo: rank?.elo || null,
       // Como a conta entra: 'email' (senha) e/ou 'google'.
       providers: app.providers || (app.provider ? [app.provider] : ['email']),
     };
@@ -257,7 +261,7 @@ const ERRORS = [
   [/invalid_username/i, 'O nome de usuário precisa ter de 3 a 20 letras, números, "_" ou ".".'],
   [/already_has_username/i, 'Sua conta já tem um nome de usuário.'],
   [/username_blocked|database error saving new user/i, 'Esse nome de usuário não é permitido. Escolha outro.'],
-  [/username_cooldown/i, 'Você trocou de nome há pouco. Dá para trocar de novo 7 dias depois da última troca.'],
+  [/username_cooldown/i, 'Você trocou de nome há pouco. Dá para trocar de novo 2 dias depois da última troca.'],
   [/invalid_avatar/i, 'Esse ícone não está disponível.'],
   [/provider is not enabled|unsupported provider/i, 'O login com Google ainda não está disponível.'],
   [/rate limit|too many/i, 'Muitas tentativas seguidas. Espere um pouco e tente de novo.'],
@@ -353,13 +357,17 @@ export async function updatePassword(password) {
 
 // ------------------------------------------------------------------ perfil
 
-// Troca o nome de usuário (no máximo 1 vez a cada 7 dias; o banco confere).
+// Troca o nome de usuário (no máximo 1 vez a cada 2 dias; o banco confere).
 export async function changeUsername(username) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();
   const name = String(username || '').trim();
   const problema = problemaNoNome(name);
   if (problema) throw new Error(problema);
+  const proxima = nextUsernameChange();
+  if (proxima && name.toLowerCase() !== user.username.toLowerCase()) {
+    throw new Error(`Você trocou de nome há pouco. Falta${tempoAte(proxima).startsWith('1 ') ? '' : 'm'} ${tempoAte(proxima)} para poder trocar de novo.`);
+  }
   const { error } = await sb.rpc('site_change_username', { name });
   if (error) throw friendly(error);
   const trocou = name.toLowerCase() !== user.username.toLowerCase();
@@ -371,8 +379,22 @@ export async function changeUsername(username) {
 // Próxima data em que o nome pode ser trocado (null = já pode).
 export function nextUsernameChange() {
   if (!user?.usernameChangedAt) return null;
-  const at = new Date(user.usernameChangedAt).getTime() + 7 * 864e5;
+  const at = new Date(user.usernameChangedAt).getTime() + TROCA_NOME_DIAS * 864e5;
   return at > Date.now() ? new Date(at) : null;
+}
+
+export const TROCA_NOME_DIAS = 2;
+
+// "1 dia e 5 horas", "3 horas e 20 minutos", "12 minutos".
+export function tempoAte(data) {
+  const min = Math.max(1, Math.ceil((data.getTime() - Date.now()) / 60000));
+  const d = Math.floor(min / 1440);
+  const h = Math.floor((min % 1440) / 60);
+  const m = min % 60;
+  const parte = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+  if (d) return h ? `${parte(d, 'dia', 'dias')} e ${parte(h, 'hora', 'horas')}` : parte(d, 'dia', 'dias');
+  if (h) return m ? `${parte(h, 'hora', 'horas')} e ${parte(m, 'minuto', 'minutos')}` : parte(h, 'hora', 'horas');
+  return parte(m, 'minuto', 'minutos');
 }
 
 export async function setAvatar(avatar) {
@@ -411,6 +433,36 @@ export async function deleteAccount() {
   pushTimers.clear();
   await sb.auth.signOut().catch(() => {});
   if (user) handleSignedOut();
+}
+
+// ------------------------------------------------------------------ ranqueada
+
+// Situação da conta na ranqueada (elo, partidas de hoje, ciclo atual).
+// Também fecha os ciclos pendentes no banco.
+export async function rankedStatus() {
+  const sb = await getClient();
+  if (!sb || !user) return null;
+  const { data, error } = await sb.rpc('site_ranked_meu');
+  if (error) {
+    console.warn('Site: ranqueada indisponível:', error.message);
+    return null;
+  }
+  const elo = data.jogou ? data.elo : null;
+  if (user && elo !== user.elo) {
+    user = { ...user, elo };
+    emit({ type: 'auth', user });
+  }
+  return data;
+}
+
+// Ranking público: 'diario', 'semanal' ou 'mensal'.
+export async function ranking(periodo = 'diario') {
+  await init();
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc('site_ranking', { periodo });
+  if (error) throw friendly(error);
+  return data;
 }
 
 export async function signOut() {

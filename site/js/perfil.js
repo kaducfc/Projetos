@@ -6,6 +6,7 @@ import { mountSiteFooter } from '../shared/footer.js';
 import { GAMES, gameById } from '../shared/config.js';
 import { AVATARES, avatarHtml, hydrateAvatars, nomeAvatar } from '../shared/avatar.js';
 import { problemaNoNome } from '../shared/nomes.js';
+import { cardMinhaRanqueada } from './ranqueada-card.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -20,6 +21,7 @@ const hora = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit
 const nomeJogo = (id) => gameById(id)?.name || id;
 
 let resultados = [];
+let status = null; // situação na ranqueada
 let filtro = 'todos';
 let mostrar = 20;
 
@@ -32,50 +34,13 @@ function toast(msg) {
   toastTimer = setTimeout(() => { el.hidden = true; }, 2200);
 }
 
-// ------------------------------------------------------------------ ranqueada
-
-// Elos do modo ranqueado (do Bronze ao Challenger, como no LoL).
-const ELOS = [
-  ['bronze', 'Bronze', '#a8714a'], ['prata', 'Prata', '#aab4be'], ['ouro', 'Ouro', '#e2b33f'],
-  ['platina', 'Platina', '#4fc1b4'], ['esmeralda', 'Esmeralda', '#3fbf6f'], ['diamante', 'Diamante', '#6f8cff'],
-  ['mestre', 'Mestre', '#b26cf0'], ['grao-mestre', 'Grão-Mestre', '#e5534b'], ['challenger', 'Challenger', '#f5cf5a'],
-];
-
-// Quando o ranqueado existir, `rank` virá do perfil:
-// { elo: 'ouro', divisao: 'II', pontos: 45, vitorias: 12, derrotas: 9, temporada: 1 }
-function cardRanqueada(rank) {
-  const escada = ELOS.map(([id, nome, cor]) => `<span class="elo${rank?.elo === id ? ' on' : ''}" style="--cor:${cor}">${nome}</span>`).join('');
-  if (!rank) {
-    return `<section class="pf-card pf-rank">
-      <div class="rank-emblema vazio" aria-hidden="true"><svg viewBox="0 0 64 72"><path d="M32 3 60 14v22c0 17-12 28-28 33C16 64 4 53 4 36V14Z"/></svg><span>?</span></div>
-      <div class="rank-info">
-        <p class="eyebrow">Ranqueada</p>
-        <h2 class="display">Sem ranque</h2>
-        <p class="muted small">O modo ranqueado está chegando. Jogue as partidas de classificação e suba do Bronze ao Challenger.</p>
-        <div class="escada">${escada}</div>
-      </div>
-    </section>`;
-  }
-  const [, nome, cor] = ELOS.find(([id]) => id === rank.elo) || ELOS[0];
-  const jogos = (rank.vitorias || 0) + (rank.derrotas || 0);
-  return `<section class="pf-card pf-rank" style="--cor:${cor}">
-    <div class="rank-emblema" aria-hidden="true"><svg viewBox="0 0 64 72"><path d="M32 3 60 14v22c0 17-12 28-28 33C16 64 4 53 4 36V14Z"/></svg><span>${esc(rank.divisao || '')}</span></div>
-    <div class="rank-info">
-      <p class="eyebrow">Ranqueada · Temporada ${esc(rank.temporada || 1)}</p>
-      <h2 class="display">${esc(nome)} ${esc(rank.divisao || '')}</h2>
-      <p class="muted small">${num(rank.pontos)} pontos · ${num(rank.vitorias)}V ${num(rank.derrotas)}D${jogos ? ` · ${Math.round((rank.vitorias / jogos) * 100)}% de vitórias` : ''}</p>
-      <div class="escada">${escada}</div>
-    </div>
-  </section>`;
-}
-
 // ------------------------------------------------------------------ partes da página
 
 function cabecalho(u) {
   const contas = u.providers.map((p) => (p === 'google' ? 'Google' : 'E-mail e senha')).join(' + ');
   return `<section class="pf-card pf-head">
     <button type="button" class="pf-avatar" data-act="icone" title="Trocar ícone">
-      ${avatarHtml(u.avatar, u.username, 104)}
+      ${avatarHtml(u.avatar, u.username, 104, u.elo ? `elo-${u.elo}` : '')}
       <span class="pf-avatar-edit">Trocar</span>
     </button>
     <div class="pf-who">
@@ -137,7 +102,7 @@ function conta(u) {
     <div class="pf-forms">
       <form class="pf-card pf-form" data-form="nome" novalidate>
         <h3>Nome de usuário</h3>
-        <p class="muted small">Pode ser trocado 1 vez a cada 7 dias.${proxima ? ` Próxima troca liberada em <b>${data(proxima.toISOString())}</b>.` : ''}</p>
+        <p class="muted small">Pode ser trocado 1 vez a cada ${platform.TROCA_NOME_DIAS} dias.${proxima ? ` Próxima troca liberada em <b>${platform.tempoAte(proxima)}</b>.` : ''}</p>
         <input name="nome" maxlength="20" autocomplete="username" value="${esc(u.username)}" aria-label="Nome de usuário" />
         <p class="pf-msg" role="status"></p>
         <button type="submit" class="btn-primary">Salvar nome</button>
@@ -181,13 +146,17 @@ function render() {
     </section>`;
     return;
   }
-  root.innerHTML = `${cabecalho(u)}${cardRanqueada(u.rank || null)}${resumo()}${historico()}${conta(u)}`;
+  root.innerHTML = `${cabecalho(u)}${cardMinhaRanqueada(status)}${resumo()}${historico()}${conta(u)}`;
   hydrateAvatars(root);
 }
 
+let carregando = true;
 async function carregar() {
   await platform.init();
-  if (platform.getUser()) resultados = await platform.listResults({ limit: 500 });
+  if (platform.getUser()) {
+    [resultados, status] = await Promise.all([platform.listResults({ limit: 500 }), platform.rankedStatus()]);
+  }
+  carregando = false;
   render();
   if (location.hash === '#historico') document.getElementById('historico')?.scrollIntoView();
 }
@@ -321,10 +290,11 @@ root.addEventListener('submit', async (e) => {
 });
 
 platform.onChange(async (evt) => {
-  if (evt.type !== 'auth') return;
+  if (evt.type !== 'auth' || carregando) return;
   // Entrou ou saiu: recarrega o histórico da conta. Só trocou nome/ícone: redesenha.
   if (evt.user && !resultados.length) resultados = await platform.listResults({ limit: 500 });
-  if (!evt.user) resultados = [];
+  if (evt.user && !status) status = await platform.rankedStatus();
+  if (!evt.user) { resultados = []; status = null; }
   if (!document.querySelector('.pf-backdrop')) render();
 });
 platform.onChange((evt) => {

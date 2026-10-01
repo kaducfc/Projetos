@@ -10,6 +10,7 @@ import { ROLES } from './data/world.js';
 import { packState, unpackState } from './engine/save.js';
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
+import { avisoInicio, avisoFim } from '../../../shared/aviso-ranked.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 
 const GAME_ID = 'carreira-no-rift';
@@ -84,7 +85,7 @@ function recordIfRetired() {
       },
       clubs: [...new Set(p.history.map((h) => teamOf(state, h.teamId).name))],
     },
-  });
+  }).then((entry) => avisoFim(entry)); // diz se valeu para a ranqueada
 }
 
 function render({ scrollTop = false } = {}) {
@@ -212,3 +213,4 @@ platform.onChange((evt) => {
 
 render();
 platform.init();
+avisoInicio();

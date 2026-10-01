@@ -26,7 +26,7 @@ declare
   ];
   palavras_proibidas text[] := array[
     'cu', 'cus', 'puta', 'puto', 'putas', 'putos', 'fdp', 'vsf', 'vtnc', 'tnc',
-    'pqp', 'krl', 'crl', 'bct', 'pau', 'rola', 'pinto', 'bosta', 'cacete', 'kct',
+    'pqp', 'krl', 'crl', 'bct', 'pau', 'rola', 'bosta', 'cacete', 'kct',
     'pnc', 'gozo', 'gozar', 'anus', 'penis', 'vagina', 'nazi', 'kkk', 'sex', 'sexo',
     'porn', 'porno', 'dick', 'cock', 'fag', 'admin', 'adm', 'mod', 'staff', 'suporte',
     'oficial', 'riot', 'sistema'
@@ -65,7 +65,7 @@ grant execute on function public.site_nome_proibido(text) to anon, authenticated
 -- ---------------------------------------------------------------
 -- Novas colunas do perfil.
 --   avatar: ícone escolhido ('mascote' ou 'champ:<Campeão>').
---   username_changed_at: última troca de nome (limite de 1 troca a cada 7 dias).
+--   username_changed_at: última troca de nome (limite de 1 troca a cada 2 dias).
 -- ---------------------------------------------------------------
 alter table public.site_profiles add column if not exists avatar text
   check (avatar is null or avatar ~ '^(mascote|champ:[A-Za-z]{2,20})$');
@@ -134,7 +134,7 @@ revoke all on function public.site_claim_username(text) from public, anon;
 grant execute on function public.site_claim_username(text) to authenticated;
 
 -- ---------------------------------------------------------------
--- Trocar o nome de usuário (no máximo 1 vez a cada 7 dias).
+-- Trocar o nome de usuário (no máximo 1 vez a cada 2 dias).
 -- ---------------------------------------------------------------
 create or replace function public.site_change_username(name text)
 returns text
@@ -164,7 +164,7 @@ begin
   end if;
   -- Só mudar maiúsculas/minúsculas do próprio nome não conta como troca.
   if lower(atual.username) <> lower(name) then
-    if atual.username_changed_at is not null and atual.username_changed_at > now() - interval '7 days' then
+    if atual.username_changed_at is not null and atual.username_changed_at > now() - interval '2 days' then
       raise exception 'username_cooldown';
     end if;
     if exists (select 1 from site_profiles where lower(username) = lower(name) and id <> uid) then

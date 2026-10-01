@@ -2,12 +2,14 @@
 // eras do CBLOL e simule a campanha.
 import {
   ROTAS, VAGAS, NOME_VAGA, novoJogo, rolar, opcoesBonus, usarBonus, escolher, vagasPossiveis, completo, forca, simular,
+  dadosRestantes, dadosTotal, dadosUsados,
   TITULO_RESULTADO, pontos,
 } from './logic.js';
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
+import { vantagens } from '../../../shared/ranked.js';
 
 const GAME_ID = 'cblol';
 const NAME = gameById(GAME_ID)?.name || 'Lendas do CBLOL';
@@ -111,7 +113,7 @@ function drawnBox() {
     <p class="drawn-team">${esc(t.time)}</p>
     <p class="drawn-ed">${esc(t.edicao)}</p>
     <div class="bonus">
-      <span class="drawn-label">Dado bônus ${jogo.bonusUsado ? '(já usado)' : '(1 por partida)'}</span>
+      <span class="drawn-label">${dadosTotal(jogo) > 1 ? `Dados bônus (${dadosRestantes(jogo)} de ${dadosTotal(jogo)})` : `Dado bônus ${dadosRestantes(jogo) ? '(1 por partida)' : '(já usado)'}`}</span>
       <div class="seg">
         <button data-bonus="org" ${bonus.org.length ? '' : 'disabled'}>🎲 Outro split do ${esc(t.org)}</button>
         <button data-bonus="ano" ${bonus.ano.length ? '' : 'disabled'}>🎲 Outro time de ${t.ano}</button>
@@ -170,7 +172,7 @@ function renderMontagem() {
   app.innerHTML = `
     <header class="dt-head">
       <div><p class="eyebrow">◆ Monte · Simule · CBLOL de todas as eras</p><h1>${esc(NAME)}</h1></div>
-      <span class="meta">Modo ${jogo.modo === 'oculto' ? 'Oculto' : 'Normal'}${jogo.bonusUsado ? ' · dado bônus usado' : ''}</span>
+      <span class="meta">Modo ${jogo.modo === 'oculto' ? 'Oculto' : 'Normal'}${dadosUsados(jogo) ? ` · ${dadosUsados(jogo)} de ${dadosTotal(jogo)} ${dadosTotal(jogo) > 1 ? 'dados bônus usados' : 'dado bônus usado'}` : ''}</span>
     </header>
     <div class="cols">
       <div class="col-left" style="display:flex;flex-direction:column;gap:12px">${left}</div>
@@ -412,6 +414,8 @@ app.addEventListener('click', (e) => {
     if (b.dataset.bonus) { usarBonus(jogo, times, b.dataset.bonus); salvar(); render(); return; }
     const act = b.dataset.act;
     if (act === 'rolar') {
+      // Dados bônus do elo da ranqueada (Ouro: 2; Desafiante: 3), fixos na partida.
+      if (!jogo.dadosTotal) jogo.dadosTotal = vantagens(platform.getUser()?.elo).dadosBonus;
       if (!(jogo.nome || '').trim()) {
         toast('Dê um nome ao seu time primeiro');
         document.getElementById('nome-time')?.focus();

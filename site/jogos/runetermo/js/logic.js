@@ -87,8 +87,8 @@ export function keyboardState(guesses, answer) {
   return out;
 }
 
-export function shareText({ name, number, guesses, answer, won, url }) {
+export function shareText({ name, number, guesses, answer, won, url, max = MAX_TRIES }) {
   const icon = { ok: '🟩', near: '🟨', miss: '⬛' };
   const rows = guesses.map((g) => evaluate(g, answer).map((r) => icon[r]).join(''));
-  return `${name} #${number} ${won ? guesses.length : 'X'}/${MAX_TRIES}\n\n${rows.join('\n')}${url ? `\n\n${url}` : ''}`;
+  return `${name} #${number} ${won ? guesses.length : 'X'}/${max}\n\n${rows.join('\n')}${url ? `\n\n${url}` : ''}`;
 }
