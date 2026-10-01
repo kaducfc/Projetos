@@ -129,6 +129,36 @@ export function createFakeSupabase() {
       db.site_profiles.push({ id: uid, username: args.name });
       return { data: args.name, error: null };
     }
+    if (name === 'site_change_username') {
+      const uid = auth._uid();
+      const me = db.site_profiles.find((p) => p.id === uid);
+      if (!me) return { data: null, error: { message: 'no_profile' } };
+      const outro = me.username.toLowerCase() !== args.name.toLowerCase();
+      if (outro && me.username_changed_at && Date.now() - Date.parse(me.username_changed_at) < 7 * 864e5) {
+        return { data: null, error: { message: 'username_cooldown' } };
+      }
+      if (outro && db.site_profiles.some((p) => p.id !== uid && p.username.toLowerCase() === args.name.toLowerCase())) {
+        return { data: null, error: { message: 'username_taken' } };
+      }
+      me.username = args.name;
+      if (outro) me.username_changed_at = new Date().toISOString();
+      return { data: args.name, error: null };
+    }
+    if (name === 'site_set_avatar') {
+      const me = db.site_profiles.find((p) => p.id === auth._uid());
+      if (args.icone && !/^(mascote|champ:[A-Za-z]{2,20})$/.test(args.icone)) return { data: null, error: { message: 'invalid_avatar' } };
+      me.avatar = args.icone;
+      return { data: args.icone, error: null };
+    }
+    if (name === 'site_delete_account') {
+      const uid = auth._uid();
+      if (!uid) return { data: null, error: { message: 'not_authenticated' } };
+      users.splice(users.findIndex((u) => u.id === uid), 1);
+      for (const t of ['site_profiles', 'site_game_saves', 'site_game_results']) {
+        db[t] = db[t].filter((r) => (r.id ?? r.user_id) !== uid);
+      }
+      return { data: null, error: null };
+    }
     if (name === 'site_is_admin') return { data: auth._uid() === 'user-admin', error: null };
     if (name === 'site_admin_stats') {
       if (auth._uid() !== 'user-admin') return { data: null, error: { message: 'not_admin' } };

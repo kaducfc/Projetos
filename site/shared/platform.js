@@ -12,12 +12,14 @@
 //   signInWithGoogle() / claimUsername(nome) → login com Google + escolha do nome
 //   track(tipo, gameId, dados)      → estatística anônima (início/fim de partida)
 //   isAdmin() / adminStats(dias)    → painel do administrador
+//   changeUsername / setAvatar / changePassword / deleteAccount → página de perfil
 //
 // Sem conta, tudo fica no localStorage do navegador. Ao entrar, o que foi
 // jogado como visitante é enviado para a conta, e o save mais recente
 // (local ou nuvem) vence.
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { NOME_RE, problemaNoNome } from './nomes.js';
 
 const SDK_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const SAVE_PREFIX = 'site.save.';
@@ -196,12 +198,21 @@ function startRecovery() {
 async function setUser(sb, authUser) {
   if (loggingIn) return loggingIn;
   loggingIn = (async () => {
-    const { data: profile } = await sb.from('site_profiles').select('username').eq('id', authUser.id).maybeSingle();
+    let { data: profile, error } = await sb.from('site_profiles')
+      .select('username, avatar, username_changed_at, created_at').eq('id', authUser.id).maybeSingle();
+    // Banco ainda sem as colunas do perfil (0005_perfil.sql não aplicado).
+    if (error) ({ data: profile } = await sb.from('site_profiles').select('username').eq('id', authUser.id).maybeSingle());
     const meta = authUser.user_metadata || {};
+    const app = authUser.app_metadata || {};
     user = {
       id: authUser.id,
       email: authUser.email,
       username: profile?.username || meta.username || (authUser.email || 'jogador').split('@')[0],
+      avatar: profile?.avatar || null,
+      usernameChangedAt: profile?.username_changed_at || null,
+      createdAt: profile?.created_at || authUser.created_at || null,
+      // Como a conta entra: 'email' (senha) e/ou 'google'.
+      providers: app.providers || (app.provider ? [app.provider] : ['email']),
     };
     // Entrou pelo Google (ou outro login sem nome de usuário): falta escolher.
     if (!profile && !meta.username) {
@@ -245,6 +256,9 @@ const ERRORS = [
   [/username_taken/i, 'Esse nome de usuário já está em uso.'],
   [/invalid_username/i, 'O nome de usuário precisa ter de 3 a 20 letras, números, "_" ou ".".'],
   [/already_has_username/i, 'Sua conta já tem um nome de usuário.'],
+  [/username_blocked|database error saving new user/i, 'Esse nome de usuário não é permitido. Escolha outro.'],
+  [/username_cooldown/i, 'Você trocou de nome há pouco. Dá para trocar de novo 7 dias depois da última troca.'],
+  [/invalid_avatar/i, 'Esse ícone não está disponível.'],
   [/provider is not enabled|unsupported provider/i, 'O login com Google ainda não está disponível.'],
   [/rate limit|too many/i, 'Muitas tentativas seguidas. Espere um pouco e tente de novo.'],
   [/invalid.*email|email.*invalid/i, 'Esse e-mail não parece válido.'],
@@ -257,12 +271,13 @@ function friendly(error) {
   return new Error(hit ? hit[1] : `Não foi possível concluir (${msg}).`);
 }
 
-export const USERNAME_RE = /^[A-Za-z0-9_.]{3,20}$/;
+export const USERNAME_RE = NOME_RE;
 
 export async function signUp({ email, password, username }) {
   const sb = await getClient();
   if (!sb) throw unavailable();
-  if (!USERNAME_RE.test(username)) throw new Error('O nome de usuário precisa ter de 3 a 20 letras, números, "_" ou ".".');
+  const problema = problemaNoNome(username);
+  if (problema) throw new Error(problema);
   const { data: free, error: rpcError } = await sb.rpc('site_username_available', { name: username });
   if (rpcError) throw friendly(rpcError);
   if (free === false) throw new Error('Esse nome de usuário já está em uso.');
@@ -302,10 +317,11 @@ export async function claimUsername(username) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();
   const name = String(username || '').trim();
-  if (!USERNAME_RE.test(name)) throw new Error('O nome de usuário precisa ter de 3 a 20 letras, números, "_" ou ".".');
+  const problema = problemaNoNome(name);
+  if (problema) throw new Error(problema);
   const { error } = await sb.rpc('site_claim_username', { name });
   if (error) throw friendly(error);
-  user = { id: user.id, email: user.email, username: name };
+  user = { ...user, username: name, needsUsername: undefined, suggestedUsername: undefined };
   emit({ type: 'auth', user });
   return user;
 }
@@ -333,6 +349,68 @@ export async function updatePassword(password) {
   const { error } = await sb.auth.updateUser({ password });
   if (error) throw friendly(error);
   recovering = false;
+}
+
+// ------------------------------------------------------------------ perfil
+
+// Troca o nome de usuário (no máximo 1 vez a cada 7 dias; o banco confere).
+export async function changeUsername(username) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const name = String(username || '').trim();
+  const problema = problemaNoNome(name);
+  if (problema) throw new Error(problema);
+  const { error } = await sb.rpc('site_change_username', { name });
+  if (error) throw friendly(error);
+  const trocou = name.toLowerCase() !== user.username.toLowerCase();
+  user = { ...user, username: name, usernameChangedAt: trocou ? new Date().toISOString() : user.usernameChangedAt };
+  emit({ type: 'auth', user });
+  return user;
+}
+
+// Próxima data em que o nome pode ser trocado (null = já pode).
+export function nextUsernameChange() {
+  if (!user?.usernameChangedAt) return null;
+  const at = new Date(user.usernameChangedAt).getTime() + 7 * 864e5;
+  return at > Date.now() ? new Date(at) : null;
+}
+
+export async function setAvatar(avatar) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { error } = await sb.rpc('site_set_avatar', { icone: avatar });
+  if (error) throw friendly(error);
+  user = { ...user, avatar };
+  emit({ type: 'auth', user });
+  return user;
+}
+
+// Conta com senha: confere a senha atual antes de trocar. Conta só do
+// Google: cria uma senha (passa a poder entrar também com e-mail e senha).
+export async function changePassword({ current = '', password }) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  if (!password || password.length < 6) throw new Error('A senha nova precisa ter pelo menos 6 caracteres.');
+  if (user.providers.includes('email')) {
+    if (!current) throw new Error('Digite a sua senha atual.');
+    const { error: authError } = await sb.auth.signInWithPassword({ email: user.email, password: current });
+    if (authError) throw new Error('A senha atual está incorreta.');
+  }
+  const { error } = await sb.auth.updateUser({ password });
+  if (error) throw friendly(error);
+  if (!user.providers.includes('email')) user = { ...user, providers: [...user.providers, 'email'] };
+}
+
+// Apaga a conta e tudo dela (perfil, saves e histórico).
+export async function deleteAccount() {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { error } = await sb.rpc('site_delete_account');
+  if (error) throw friendly(error);
+  pushTimers.forEach((t) => clearTimeout(t.id));
+  pushTimers.clear();
+  await sb.auth.signOut().catch(() => {});
+  if (user) handleSignedOut();
 }
 
 export async function signOut() {

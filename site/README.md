@@ -79,6 +79,16 @@ Configuração: rode `supabase/migrations/0003_painel.sql` e depois o `0004_pain
 e-mail do administrador). O link "Painel" aparece no menu da conta para quem
 tem acesso.
 
+## Perfil do jogador
+
+`perfil/` (link "Meu perfil" no menu da conta): ícone (mascote ou campeão),
+troca de nome (1 vez a cada 7 dias), troca/criação de senha, resumo e
+histórico de partidas por jogo, exclusão da conta e o espaço do modo
+ranqueado (ainda "em breve"). Nomes com palavrões ou reservados são barrados
+por `shared/nomes.js` (aviso na hora) e pela função `site_nome_proibido` do
+banco (que decide de verdade). Configuração: rode
+`supabase/migrations/0005_perfil.sql`.
+
 ## Aviso de fã, páginas institucionais e doações
 
 O rodapé (`shared/footer.js`) aparece no hub e em todos os jogos, com o aviso

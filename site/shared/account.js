@@ -2,6 +2,7 @@
 // Usada pelo hub e por todos os jogos: mountSiteBar(el, { hubHref }).
 import * as platform from './platform.js';
 import { SITE_NAME } from './config.js';
+import { avatarHtml, hydrateAvatars } from './avatar.js';
 
 // Logo para fundo escuro, a partir da raiz do domínio (serve em qualquer página).
 const LOGO_URL = '/shared/assets/marca/logo-barra.png?v=2';
@@ -26,11 +27,12 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
       account = `
         <div class="sb-user">
           <button type="button" class="sb-btn" data-sb="menu" aria-haspopup="true">
-            <span class="sb-dot"></span>${esc(u.username)}<span aria-hidden="true">▾</span>
+            ${avatarHtml(u.avatar, u.username, 22, 'sb-avatar')}${esc(u.username)}<span aria-hidden="true">▾</span>
           </button>
           <div class="sb-menu" hidden>
             <div class="sb-menu-email">${esc(u.email || '')}</div>
-            ${hubHref ? `<a href="${hubHref}#historico">Meu histórico</a>` : '<a href="#historico">Meu histórico</a>'}
+            <a href="/perfil/">Meu perfil</a>
+            <a href="/perfil/#historico">Meu histórico</a>
             <a href="/painel/" data-sb-admin hidden>Painel</a>
             <button type="button" data-sb="logout">Sair</button>
           </div>
@@ -40,6 +42,7 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
         <button type="button" class="sb-btn sb-primary" data-sb="login">Entrar</button>`;
     }
     el.innerHTML = `${brand}<div class="sb-right">${account}</div>`;
+    hydrateAvatars(el);
     if (u) revealAdmin(u.id);
   };
   // Link do painel só para administradores (checado uma vez por conta).
