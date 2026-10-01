@@ -2,7 +2,7 @@
 --   * O ciclo de 3 dias passa a valer pela SOMA das notas dos dias (não a
 --     média): Prata 1500, Ouro 1950, Platina 2250, Diamante 2550,
 --     Desafiante 2850 (+ top 100). Dá para bater a meta em 2 dias.
---   * Queda: quem fizer menos de 1/3 da meta do próprio elo no ciclo cai 1
+--   * Queda: quem fizer menos de 1/6 da meta do próprio elo no ciclo cai 1
 --     elo (ficar os 3 dias sem jogar sempre derruba). Bronze não cai.
 --   * Desafiante: entre os Desafiantes que jogaram e os Diamantes que bateram
 --     2850, ficam os 100 com mais pontos. Com 100 ou menos, só cai quem
@@ -34,14 +34,14 @@ as $$
     when 'diamante' then 'platina' when 'desafiante' then 'diamante' else null end;
 $$;
 
--- Mínimo no ciclo para não cair (1/3 da meta do próprio elo). Bronze e
+-- Mínimo no ciclo para não cair (1/6 da meta do próprio elo). Bronze e
 -- Desafiante não usam (Desafiante tem regra própria).
 create or replace function public.site_ranked_minimo(elo text)
 returns int
 language sql
 immutable
 as $$
-  select case when elo in ('prata', 'ouro', 'platina', 'diamante') then site_ranked_limiar(elo) / 3 else 0 end;
+  select case when elo in ('prata', 'ouro', 'platina', 'diamante') then site_ranked_limiar(elo) / 6 else 0 end;
 $$;
 
 create or replace function public.site_ranked_processar()

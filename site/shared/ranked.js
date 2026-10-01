@@ -11,8 +11,8 @@ export const ELOS = [
   { id: 'diamante', nome: 'Diamante', cor: '#6f8cff', pontos: 2550 },
   { id: 'desafiante', nome: 'Desafiante', cor: '#f5cf5a', pontos: 2850 },
 ];
-// Abaixo disto no ciclo, cai 1 elo (1/3 da meta do próprio elo).
-export const minimoParaFicar = (id) => (['prata', 'ouro', 'platina', 'diamante'].includes(id) ? Math.floor(eloInfo(id).pontos / 3) : 0);
+// Abaixo disto no ciclo, cai 1 elo (1/6 da meta do próprio elo).
+export const minimoParaFicar = (id) => (['prata', 'ouro', 'platina', 'diamante'].includes(id) ? Math.floor(eloInfo(id).pontos / 6) : 0);
 export const VAGAS_DESAFIANTE = 100;
 export const PARTIDAS_POR_DIA = 3;
 export const DIAS_POR_CICLO = 3;

@@ -12,7 +12,8 @@ test('ranqueada: médias e vagas do site batem com as do banco (0006_ranqueada.s
   const sql = readFileSync(new URL('../supabase/migrations/0007_ranqueada_pontos.sql', import.meta.url), 'utf8');
   for (const e of ELOS.slice(1)) assert.match(sql, new RegExp(`when '${e.id}' then ${e.pontos}\\b`), e.id);
   assert.match(sql, new RegExp(`vagas constant int := ${VAGAS_DESAFIANTE};`));
-  assert.equal(minimoParaFicar('ouro'), 650);
+  assert.equal(minimoParaFicar('ouro'), 325);
+  assert.match(sql, /site_ranked_limiar\(elo\) \/ 6/);
   assert.equal(minimoParaFicar('bronze'), 0);
   assert.equal(minimoParaFicar('desafiante'), 0);
   assert.deepEqual(ELOS.map((e) => e.id), ['bronze', 'prata', 'ouro', 'platina', 'diamante', 'desafiante']);

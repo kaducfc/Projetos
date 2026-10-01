@@ -181,7 +181,7 @@ export function createFakeSupabase() {
           ciclo: {
             numero: 0, inicio: dia(-1), fim: dia(1), atualiza: dia(2),
             dias: [{ dia: dia(-1), melhor: 640 }, { dia: hoje, melhor }, { dia: dia(1), melhor: null }],
-            total: 640 + (melhor || 0), minimo: i >= 1 && i <= 4 ? pontos[i] / 3 : 0,
+            total: 640 + (melhor || 0), minimo: i >= 1 && i <= 4 ? Math.floor(pontos[i] / 6) : 0,
           },
           proximo: i < 5 ? { elo: elos[i + 1], pontos: pontos[i + 1] } : null,
           desafiantes: 37, vagas: 100,

@@ -95,7 +95,7 @@ Só da Carreira no Rift, para contas conectadas: valem as 3 primeiras carreiras
 do dia (nota do dia = a maior). A cada ciclo de 3 dias somam-se as notas; quem
 chegar aos pontos do próximo elo sobe 1 elo: Bronze → Prata (1500) → Ouro
 (1950) → Platina (2250) → Diamante (2550) → Desafiante (2850, só 100 vagas).
-Quem fizer menos de 1/3 da meta do próprio elo cai 1 elo (3 dias sem jogar
+Quem fizer menos de 1/6 da meta do próprio elo cai 1 elo (3 dias sem jogar
 sempre derruba). Rankings diário, semanal e mensal em `ranking/`. Cada elo dá
 um pequeno benefício nos outros jogos (`shared/ranked.js`). Emblemas em
 `shared/assets/elos/`. As regras valem no banco (`0006_ranqueada.sql` +
