@@ -106,8 +106,9 @@ nova temporada), o painel do administrador tem o botão **Zerar ranqueada**.
 ## Apoio (Mercado Pago)
 
 Página `apoiar/` (links no menu da conta, no perfil e no rodapé). O apoio é
-voluntário e só libera cosméticos: 10 efeitos de nick (`shared/apoio.js` +
-CSS em `shared/account.css`), por valor total apoiado (R$ 5, 10, 25 e 50).
+voluntário e só dá um cosmético: quem apoia (qualquer valor, mínimo R$ 5)
+ganha automaticamente o efeito "Reflexo" no nick (`shared/apoio.js` + CSS em
+`shared/account.css`), no perfil, no ranking e na barra do site.
 Fluxo: o site chama a Edge Function `apoio-criar` (registra a doação pendente
 e cria o pagamento no Checkout Pro do Mercado Pago) → a pessoa paga no Mercado
 Pago (Pix, cartão, boleto) → o Mercado Pago avisa a Edge Function

@@ -1,10 +1,10 @@
 // Página "Apoiar": doação opcional pelo Mercado Pago (Edge Function
-// apoio-criar) e escolha do efeito de nick liberado pelo total apoiado.
+// apoio-criar). Quem apoia ganha automaticamente o efeito Reflexo no nick.
 import * as platform from '../shared/platform.js';
 import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { APOIO_ATIVO } from '../shared/config.js';
-import { EFEITOS, VALORES_SUGERIDOS, VALOR_MINIMO, VALOR_MAXIMO, efeitoLiberado, efeitoInfo, nickHtml } from '../shared/apoio.js';
+import { VALORES_SUGERIDOS, VALOR_MINIMO, VALOR_MAXIMO, nickHtml } from '../shared/apoio.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -35,8 +35,8 @@ function toast(msg) {
 function aviso() {
   if (!voltou) return '';
   const msg = {
-    aprovado: ['ok', 'Obrigado pelo apoio! 💛 O pagamento foi aprovado. Os efeitos liberados aparecem abaixo (pode levar alguns segundos).'],
-    pendente: ['', 'Pagamento em andamento (Pix ou boleto). Assim que o Mercado Pago confirmar, os efeitos são liberados sozinhos.'],
+    aprovado: ['ok', 'Obrigado pelo apoio! 💛 O pagamento foi aprovado. O efeito no seu nick aparece em alguns segundos.'],
+    pendente: ['', 'Pagamento em andamento (Pix ou boleto). Assim que o Mercado Pago confirmar, o efeito no seu nick é liberado sozinho.'],
     falhou: ['err', 'O pagamento não foi concluído. Nada foi cobrado. Se quiser, é só tentar de novo.'],
   }[voltou];
   return msg ? `<div class="ap-aviso ${msg[0]}">${msg[1]}</div>` : '';
@@ -47,7 +47,7 @@ function cartaoValor(u) {
   const outro = !VALORES_SUGERIDOS.includes(valor);
   let acao;
   if (!platform.cloudEnabled()) acao = '<p class="muted small">O apoio precisa de conexão com o servidor do site.</p>';
-  else if (!u) acao = '<button type="button" class="btn-primary ap-pagar" data-act="entrar">Entrar para apoiar</button><p class="muted small">Os efeitos ficam guardados na sua conta, por isso é preciso entrar.</p>';
+  else if (!u) acao = '<button type="button" class="btn-primary ap-pagar" data-act="entrar">Entrar para apoiar</button><p class="muted small">O efeito fica guardado na sua conta, por isso é preciso entrar.</p>';
   else if (!APOIO_ATIVO) acao = '<button type="button" class="btn-primary ap-pagar" disabled>Em breve</button><p class="muted small">O pagamento pelo Mercado Pago está sendo configurado.</p>';
   else acao = `<button type="button" class="btn-primary ap-pagar" data-act="pagar" ${enviando ? 'disabled' : ''}>${enviando ? 'Abrindo o Mercado Pago…' : `Apoiar com ${reais(valor)}`}</button>
     <p class="muted small">Você vai para o Mercado Pago e paga com <b>Pix</b>, <b>cartão</b> ou <b>boleto</b>. O site não vê nem guarda os dados do pagamento.</p>`;
@@ -60,39 +60,18 @@ function cartaoValor(u) {
   </section>`;
 }
 
-function seuApoio(u) {
-  if (!u) return '';
-  const total = u.apoioTotal || 0;
-  const liberados = EFEITOS.filter((e) => efeitoLiberado(e.id, total)).length;
-  const prox = EFEITOS.find((e) => !efeitoLiberado(e.id, total));
-  return `<section class="pf-card ap-seu">
-    <div><p class="eyebrow">Seu apoio</p>
-      <p class="ap-total">${total ? reais(total) : 'Nenhum apoio ainda'}</p>
-      <p class="muted small">${liberados} de ${EFEITOS.length} efeitos liberados${prox ? ` · próximo com ${reais(prox.minimo)} no total` : ' · todos liberados!'}</p></div>
-    <div class="ap-preview"><span class="muted small">Seu nick hoje</span><b>${nickHtml(u.username, u.nickEfeito, total)}</b></div>
-  </section>`;
-}
-
-function galeria(u) {
+// Prévia do efeito Reflexo no próprio nick (e o total, para quem já apoiou).
+function efeito(u) {
   const nome = u?.username || 'Invocador';
-  const total = u?.apoioTotal || 0;
-  const cards = EFEITOS.map((e) => {
-    const livre = u && efeitoLiberado(e.id, total);
-    const usando = u?.nickEfeito === e.id;
-    return `<div class="ap-fx${livre ? ' livre' : ''}${usando ? ' usando' : ''}">
-      <span class="ap-fx-nick">${nickHtml(nome, e.id)}</span>
-      <span class="ap-fx-nome">${esc(e.nome)}</span>
-      <span class="ap-fx-desc">${esc(e.desc)}</span>
-      ${livre
-    ? `<button type="button" class="ap-fx-btn" data-efeito="${e.id}" ${usando ? 'disabled' : ''}>${usando ? 'Em uso' : 'Usar'}</button>`
-    : `<span class="ap-fx-lock">🔒 a partir de ${reais(e.minimo)}</span>`}
-    </div>`;
-  }).join('');
-  return `<section class="pf-sec">
-    <h2 class="section-title">Efeitos de nick</h2>
-    <p class="muted small ap-nota">Aparecem no seu nome no perfil, no ranking e na barra do site. Os valores somam: quem apoia ${reais(5)} hoje e ${reais(5)} outro dia libera os de ${reais(10)}.</p>
-    <div class="ap-grade">${cards}</div>
-    ${u?.nickEfeito ? '<button type="button" class="pf-more" data-efeito="">Usar sem efeito</button>' : ''}
+  const apoiou = u?.apoioTotal > 0;
+  return `<section class="pf-card ap-efeito">
+    <div class="ap-efeito-nick">${nickHtml(nome, true)}</div>
+    <div class="ap-efeito-txt">
+      <p class="eyebrow">Efeito de apoiador · Reflexo</p>
+      <p>${apoiou
+    ? `Obrigado! Você já apoiou com <b>${reais(u.apoioTotal)}</b> e seu nick brilha assim no perfil, no ranking e na barra do site.`
+    : 'Apoiando com qualquer valor, seu nick fica assim, automaticamente, no perfil, no ranking e na barra do site. Não dá nenhuma vantagem nos jogos.'}</p>
+    </div>
   </section>`;
 }
 
@@ -111,11 +90,11 @@ function perguntas() {
   return `<section class="pf-sec">
     <h2 class="section-title">Perguntas</h2>
     <div class="pf-card ap-faq">
-      <p><b>O apoio dá vantagem nos jogos?</b> Não. Só cosméticos (efeitos no nome). Ranking e jogos são iguais para todos.</p>
+      <p><b>O apoio dá vantagem nos jogos?</b> Não. Só o efeito dourado no nome. Ranking e jogos são iguais para todos.</p>
       <p><b>Para onde vai o dinheiro?</b> Para manter o site no ar: servidor, domínio e o tempo de criar jogos novos.</p>
       <p><b>É seguro?</b> O pagamento é feito no site do Mercado Pago. O Rift Arcade recebe só o aviso de que foi aprovado e o valor; nunca vê dados de cartão ou de conta.</p>
-      <p><b>Quanto tempo para liberar?</b> Pix e cartão: na hora. Boleto: quando o banco compensar (até 3 dias úteis).</p>
-      <p><b>Posso pedir o dinheiro de volta?</b> Sim, em até 7 dias, pelo e-mail <a data-contact href="mailto:riftarcadeoficial@gmail.com">riftarcadeoficial@gmail.com</a>. Com o estorno, os efeitos ligados àquele valor deixam de valer.</p>
+      <p><b>Quanto tempo para o efeito aparecer?</b> Pix e cartão: na hora. Boleto: quando o banco compensar (até 3 dias úteis).</p>
+      <p><b>Posso pedir o dinheiro de volta?</b> Sim, em até 7 dias, pelo e-mail <a data-contact href="mailto:riftarcadeoficial@gmail.com">riftarcadeoficial@gmail.com</a>. Se todo o apoio for estornado, o efeito sai do nick.</p>
     </div>
   </section>`;
 }
@@ -126,12 +105,11 @@ function render() {
     <header class="rk-head ap-head">
       <div><p class="eyebrow">◆ Apoie o Rift Arcade</p><h1 class="display">Apoiar</h1>
         <p class="lead">O Rift Arcade é gratuito e feito por fã. Se você curte, pode ajudar a manter o site no ar.
-          Em troca, ganha <b>efeitos especiais no nick</b>, sem nenhuma vantagem nos jogos.</p></div>
+          Em troca, seu nick ganha um <b>efeito dourado especial</b>, sem nenhuma vantagem nos jogos.</p></div>
     </header>
     ${aviso()}
-    ${seuApoio(u)}
+    ${efeito(u)}
     ${cartaoValor(u)}
-    ${galeria(u)}
     ${historico()}
     ${perguntas()}`;
 }
@@ -163,17 +141,6 @@ root.addEventListener('click', async (e) => {
     valor = v.dataset.valor === 'outro' ? (VALORES_SUGERIDOS.includes(valor) ? 15 : valor) : Number(v.dataset.valor);
     render();
     root.querySelector('[data-outro]')?.focus();
-    return;
-  }
-  const f = e.target.closest('[data-efeito]');
-  if (f) {
-    try {
-      await platform.setNickEfeito(f.dataset.efeito || null);
-      render();
-      toast(f.dataset.efeito ? `Efeito ${efeitoInfo(f.dataset.efeito).nome} ativado!` : 'Efeito removido');
-    } catch (err) {
-      toast(err.message);
-    }
     return;
   }
   const act = e.target.closest('[data-act]')?.dataset.act;

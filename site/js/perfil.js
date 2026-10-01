@@ -7,7 +7,7 @@ import { GAMES, gameById } from '../shared/config.js';
 import { AVATARES, avatarHtml, hydrateAvatars, nomeAvatar } from '../shared/avatar.js';
 import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada } from './ranqueada-card.js';
-import { EFEITOS, efeitoLiberado, efeitoInfo, nickHtml } from '../shared/apoio.js';
+import { nickHtml } from '../shared/apoio.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -48,25 +48,23 @@ function cabecalho(u) {
     </button>
     <div class="pf-who">
       <p class="eyebrow">◆ Meu perfil</p>
-      <h1 class="display">${nickHtml(u.username, u.nickEfeito, u.apoioTotal)}</h1>
+      <h1 class="display">${nickHtml(u.username, u.apoioTotal > 0)}</h1>
       <p class="muted small">${u.createdAt ? `No Rift Arcade desde ${data(u.createdAt, { month: 'long', year: 'numeric' })} · ` : ''}Entra com ${contas}</p>
     </div>
   </section>`;
 }
 
-// Apoio ao site: botão para apoiar e, para quem já apoiou, o efeito do nick.
+// Apoio ao site: quem apoiou ganha o efeito Reflexo no nick.
 function cardApoio(u) {
-  const total = u.apoioTotal || 0;
-  const liberados = EFEITOS.filter((e) => efeitoLiberado(e.id, total)).length;
-  const efeito = efeitoLiberado(u.nickEfeito, total) ? efeitoInfo(u.nickEfeito).nome : null;
+  const apoiou = u.apoioTotal > 0;
   return `<section class="pf-card pf-apoio">
     <div>
       <p class="eyebrow">♥ Apoie o Rift Arcade</p>
-      <p class="pf-apoio-txt">${total
-    ? `Obrigado pelo apoio! Você liberou <b>${liberados} de ${EFEITOS.length}</b> efeitos de nick${efeito ? ` e está usando o <b>${esc(efeito)}</b>` : ''}.`
-    : 'O site é gratuito. Apoiando, você ajuda a mantê-lo no ar e ganha <b>efeitos especiais no nick</b>, sem vantagem nos jogos.'}</p>
+      <p class="pf-apoio-txt">${apoiou
+    ? 'Obrigado pelo apoio! Seu nick ganhou o efeito <b>Reflexo</b> no perfil, no ranking e na barra do site.'
+    : 'O site é gratuito. Apoiando com qualquer valor, você ajuda a mantê-lo no ar e seu nick ganha um <b>efeito dourado especial</b>, sem vantagem nos jogos.'}</p>
     </div>
-    <a class="btn-primary pf-apoio-btn" href="/apoiar/">${total ? 'Trocar efeito ou apoiar de novo' : '♥ Apoiar'}</a>
+    <a class="btn-primary pf-apoio-btn" href="/apoiar/">${apoiou ? 'Apoiar de novo' : '♥ Apoiar'}</a>
   </section>`;
 }
 

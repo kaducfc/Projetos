@@ -198,6 +198,7 @@ export function createFakeSupabase() {
       }
       const lista = [...pts].sort((a, b) => b[1] - a[1]).map(([id, p], i) => ({
         pos: i + 1, username: db.site_profiles.find((x) => x.id === id)?.username, avatar: null,
+        apoiador: (db.site_profiles.find((x) => x.id === id)?.apoio_total || 0) > 0,
         elo: db.site_ranked.find((x) => x.user_id === id)?.elo || 'bronze', pontos: p, dias: 1, eu: id === auth._uid(),
       }));
       const hoje = new Date().toISOString().slice(0, 10);
@@ -208,14 +209,6 @@ export function createFakeSupabase() {
       const n = db.site_ranked.length;
       db.site_ranked = [];
       return { data: { partidas_apagadas: n, inicio: new Date().toISOString().slice(0, 10), temporada: args.nova_temporada }, error: null };
-    }
-    if (name === 'site_set_nick_efeito') {
-      const me = db.site_profiles.find((p) => p.id === auth._uid());
-      const minimo = { ouro: 5, neon: 5, gelo: 5, chamas: 10, quimico: 10, hextech: 10, reflexo: 25, vazio: 25, glitch: 25, prisma: 50 };
-      if (args.efeito && !(args.efeito in minimo)) return { data: null, error: { message: 'invalid_effect' } };
-      if (args.efeito && (me.apoio_total || 0) < minimo[args.efeito]) return { data: null, error: { message: 'effect_locked' } };
-      me.nick_efeito = args.efeito;
-      return { data: args.efeito, error: null };
     }
     if (name === 'site_is_admin') return { data: auth._uid() === 'user-admin', error: null };
     if (name === 'site_admin_stats') {

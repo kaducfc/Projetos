@@ -1,14 +1,13 @@
--- Apoio ao site (doação pelo Mercado Pago): só cosméticos.
+-- Apoio ao site (doação pelo Mercado Pago): só cosmético. Quem apoia com
+-- qualquer valor ganha automaticamente o efeito "Reflexo" no nick.
 --   * site_apoios: cada doação (pendente → aprovado/recusado/estornado). Quem
 --     escreve aqui são as Edge Functions apoio-criar e apoio-webhook (com a
 --     chave de serviço); cada conta só lê as próprias.
 --   * site_profiles.apoio_total: soma das doações aprovadas (recalculada
 --     sozinha, inclusive se um pagamento for estornado).
---   * site_profiles.nick_efeito: efeito de nick escolhido; cada efeito pede
---     um total mínimo (mesma tabela de site/shared/apoio.js).
 --   * site_admin_registrar_apoio: o administrador registra um apoio feito por
 --     fora (ex.: Pix direto).
---   * O ranking passa a mandar o efeito do nick.
+--   * O ranking passa a dizer quem é apoiador (efeito no nick).
 --
 -- Como aplicar: cole este arquivo inteiro no SQL Editor do Supabase e clique
 -- em Run (depois do 0007). Rodar de novo é seguro.
@@ -35,21 +34,6 @@ create policy "site_apoios dono le" on public.site_apoios for select using (auth
 
 alter table public.site_profiles add column if not exists apoio_total numeric(10, 2) not null default 0;
 alter table public.site_profiles add column if not exists apoiador_desde timestamptz;
-alter table public.site_profiles add column if not exists nick_efeito text;
-
--- Valor mínimo (total apoiado) de cada efeito.
-create or replace function public.site_efeito_minimo(efeito text)
-returns numeric
-language sql
-immutable
-as $$
-  select case efeito
-    when 'ouro' then 5 when 'neon' then 5 when 'gelo' then 5
-    when 'chamas' then 10 when 'quimico' then 10 when 'hextech' then 10
-    when 'reflexo' then 25 when 'vazio' then 25 when 'glitch' then 25
-    when 'prisma' then 50
-    else null end;
-$$;
 
 -- Recalcula o total apoiado da conta sempre que uma doação muda.
 create or replace function public.site_apoio_recalcular()
@@ -78,36 +62,6 @@ create trigger site_apoios_total
   after insert or update or delete on public.site_apoios
   for each row execute function public.site_apoio_recalcular();
 
--- Escolher o efeito do nick (null = sem efeito).
-create or replace function public.site_set_nick_efeito(efeito text)
-returns text
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  uid uuid := auth.uid();
-  total numeric;
-begin
-  if uid is null then
-    raise exception 'not_authenticated';
-  end if;
-  if efeito is not null then
-    if site_efeito_minimo(efeito) is null then
-      raise exception 'invalid_effect';
-    end if;
-    select apoio_total into total from site_profiles where id = uid;
-    if coalesce(total, 0) < site_efeito_minimo(efeito) then
-      raise exception 'effect_locked';
-    end if;
-  end if;
-  update site_profiles set nick_efeito = efeito where id = uid;
-  return efeito;
-end;
-$$;
-revoke all on function public.site_set_nick_efeito(text) from public, anon;
-grant execute on function public.site_set_nick_efeito(text) to authenticated;
-
 -- Administrador registra um apoio feito por fora do site (ex.: Pix direto).
 create or replace function public.site_admin_registrar_apoio(nome text, quanto numeric)
 returns jsonb
@@ -135,7 +89,7 @@ $$;
 revoke all on function public.site_admin_registrar_apoio(text, numeric) from public, anon;
 grant execute on function public.site_admin_registrar_apoio(text, numeric) to authenticated;
 
--- Ranking com o efeito do nick de quem apoiou.
+-- Ranking dizendo quem é apoiador (efeito no nick).
 create or replace function public.site_ranking(periodo text)
 returns jsonb
 language plpgsql
@@ -174,7 +128,7 @@ begin
 
   select coalesce(jsonb_agg(jsonb_build_object(
            'pos', k.pos, 'username', p.username, 'avatar', p.avatar,
-           'efeito', case when site_efeito_minimo(p.nick_efeito) <= p.apoio_total then p.nick_efeito end,
+           'apoiador', p.apoio_total > 0,
            'elo', coalesce(r.elo, 'bronze'), 'pontos', k.pontos, 'dias', k.dias,
            'eu', k.user_id = uid) order by k.pos, p.username), '[]'::jsonb)
     into lista
