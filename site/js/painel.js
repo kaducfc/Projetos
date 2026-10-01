@@ -174,6 +174,18 @@ function render(st) {
       <button type="button" class="p-btn p-btn-danger" data-zerar disabled>Zerar ranqueada</button>
       <p class="p-note" data-zerar-msg role="status"></p>
     </div>
+  </section>
+
+  <section class="p-section">
+    <h2>Apoio</h2>
+    <div class="card">
+      <h3>Registrar apoio feito por fora</h3>
+      <p class="c-sub">Para quem apoiou sem passar pela página (ex.: Pix direto para você). O valor soma no total da conta e libera os efeitos de nick.</p>
+      <label class="p-label">Nome de usuário: <input data-apoio-nome autocomplete="off" /></label>
+      <label class="p-label">Valor (R$): <input type="number" min="1" step="0.01" data-apoio-valor /></label>
+      <button type="button" class="p-btn" data-apoio-registrar>Registrar apoio</button>
+      <p class="p-note" data-apoio-msg role="status"></p>
+    </div>
   </section>`;
 }
 
@@ -246,6 +258,24 @@ body.addEventListener('click', async (e) => {
     msg.textContent = err.message;
     b.disabled = false;
   }
+});
+
+body.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-apoio-registrar]');
+  if (!b) return;
+  const nome = body.querySelector('[data-apoio-nome]').value.trim();
+  const valor = Number(body.querySelector('[data-apoio-valor]').value);
+  const msg = body.querySelector('[data-apoio-msg]');
+  if (!nome || !(valor > 0)) { msg.textContent = 'Preencha o nome de usuário e o valor.'; return; }
+  if (!window.confirm(`Registrar apoio de R$ ${valor.toFixed(2)} para ${nome}?`)) return;
+  b.disabled = true;
+  try {
+    const r = await platform.adminRegistrarApoio(nome, valor);
+    msg.textContent = `Pronto! ${r.username} agora tem R$ ${Number(r.total).toFixed(2)} de apoio no total.`;
+  } catch (err) {
+    msg.textContent = err.message;
+  }
+  b.disabled = false;
 });
 
 platform.onChange((evt) => { if (evt.type === 'auth') load(); });

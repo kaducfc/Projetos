@@ -145,3 +145,10 @@ button.btn-primary:disabled { opacity: 0.6; cursor: default; }
 .pf-toggle-n { font-size: 13px; color: var(--muted); font-weight: 700; }
 .pf-toggle-seta { color: var(--gold-2); transition: transform 0.2s; transform: rotate(-90deg); }
 .pf-toggle[aria-expanded="true"] .pf-toggle-seta { transform: none; }
+
+/* Cartão de apoio no perfil */
+.pf-apoio { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; border-color: rgba(255, 143, 163, 0.45); background: linear-gradient(90deg, rgba(255, 143, 163, 0.08), transparent 60%), linear-gradient(180deg, var(--panel-2), var(--panel)); }
+.pf-apoio p { margin: 0; }
+.pf-apoio .eyebrow { color: #ff8fa3; }
+.pf-apoio-txt { margin-top: 4px !important; color: #d3ccbc; max-width: 560px; }
+.pf-apoio-btn { margin: 0; white-space: nowrap; }

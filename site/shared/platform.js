@@ -203,6 +203,8 @@ async function setUser(sb, authUser) {
       .select('username, avatar, username_changed_at, created_at').eq('id', authUser.id).maybeSingle();
     // Banco ainda sem as colunas do perfil (0005_perfil.sql não aplicado).
     if (error) ({ data: profile } = await sb.from('site_profiles').select('username').eq('id', authUser.id).maybeSingle());
+    // Apoio ao site (banco sem 0008_apoio.sql: sem apoio).
+    const { data: apoio } = await sb.from('site_profiles').select('apoio_total, nick_efeito').eq('id', authUser.id).maybeSingle();
     // Elo da ranqueada (null = ainda não jogou ou banco sem 0006_ranqueada.sql).
     const { data: rank } = await sb.from('site_ranked').select('elo').eq('user_id', authUser.id).maybeSingle();
     const meta = authUser.user_metadata || {};
@@ -215,6 +217,8 @@ async function setUser(sb, authUser) {
       usernameChangedAt: profile?.username_changed_at || null,
       createdAt: profile?.created_at || authUser.created_at || null,
       elo: rank?.elo || null,
+      apoioTotal: Number(apoio?.apoio_total || 0),
+      nickEfeito: apoio?.nick_efeito || null,
       // Como a conta entra: 'email' (senha) e/ou 'google'.
       providers: app.providers || (app.provider ? [app.provider] : ['email']),
     };
@@ -263,6 +267,8 @@ const ERRORS = [
   [/username_blocked|database error saving new user/i, 'Esse nome de usuário não é permitido. Escolha outro.'],
   [/username_cooldown/i, 'Você trocou de nome há pouco. Dá para trocar de novo 2 dias depois da última troca.'],
   [/invalid_avatar/i, 'Esse ícone não está disponível.'],
+  [/effect_locked/i, 'Esse efeito ainda não foi liberado para a sua conta.'],
+  [/invalid_effect/i, 'Esse efeito não existe.'],
   [/provider is not enabled|unsupported provider/i, 'O login com Google ainda não está disponível.'],
   [/rate limit|too many/i, 'Muitas tentativas seguidas. Espere um pouco e tente de novo.'],
   [/invalid.*email|email.*invalid/i, 'Esse e-mail não parece válido.'],
@@ -433,6 +439,69 @@ export async function deleteAccount() {
   pushTimers.clear();
   await sb.auth.signOut().catch(() => {});
   if (user) handleSignedOut();
+}
+
+// ------------------------------------------------------------------ apoio
+
+// Abre o pagamento do Mercado Pago (Edge Function apoio-criar) e devolve o
+// link para onde mandar a pessoa.
+export async function apoiar(valor) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.functions.invoke('apoio-criar', { body: { valor } });
+  if (error || !data?.url) {
+    let codigo = data?.erro || '';
+    try { codigo = codigo || (await error?.context?.json?.())?.erro || ''; } catch { /* sem corpo */ }
+    throw new Error({
+      valor_invalido: 'Escolha um valor entre R$ 5 e R$ 1.000.',
+      nao_logado: 'Entre na sua conta para apoiar.',
+      mp_nao_configurado: 'O apoio ainda não está disponível.',
+    }[codigo] || 'Não foi possível abrir o pagamento agora. Tente de novo em instantes.');
+  }
+  return data;
+}
+
+// Doações da própria conta (mais recentes primeiro).
+export async function meusApoios() {
+  const sb = await getClient();
+  if (!sb || !user) return [];
+  const { data, error } = await sb.from('site_apoios').select('id, valor, valor_pago, status, criado, atualizado')
+    .eq('user_id', user.id).order('criado', { ascending: false }).limit(20);
+  return error ? [] : data;
+}
+
+// Relê o total apoiado (depois de voltar do Mercado Pago).
+export async function refreshApoio() {
+  const sb = await getClient();
+  if (!sb || !user) return user;
+  const { data } = await sb.from('site_profiles').select('apoio_total, nick_efeito').eq('id', user.id).maybeSingle();
+  if (data) {
+    user = { ...user, apoioTotal: Number(data.apoio_total || 0), nickEfeito: data.nick_efeito || null };
+    emit({ type: 'auth', user });
+  }
+  return user;
+}
+
+export async function setNickEfeito(efeito) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { error } = await sb.rpc('site_set_nick_efeito', { efeito });
+  if (error) throw friendly(error);
+  user = { ...user, nickEfeito: efeito };
+  emit({ type: 'auth', user });
+  return user;
+}
+
+// Administrador: registra um apoio feito por fora (ex.: Pix direto).
+export async function adminRegistrarApoio(nome, valor) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_registrar_apoio', { nome, quanto: valor });
+  if (error) {
+    if (/user_not_found/.test(error.message)) throw new Error('Não existe conta com esse nome de usuário.');
+    throw new Error(/not_admin/.test(error.message) ? 'Esta conta não tem permissão para isso.' : friendly(error).message);
+  }
+  return data;
 }
 
 // ------------------------------------------------------------------ ranqueada

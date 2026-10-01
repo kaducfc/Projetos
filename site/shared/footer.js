@@ -17,7 +17,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
 export function mountSiteFooter(el) {
   el.classList.add('site-footer');
   const donate = DONATION_URL
-    ? `<a class="sf-donate" href="${esc(DONATION_URL)}" target="_blank" rel="noopener">♥ Apoiar o projeto</a>`
+    ? `<a class="sf-donate" href="${esc(DONATION_URL)}">♥ Apoiar o projeto</a>`
     : '';
   const links = globalThis.__SITE_OFFLINE
     ? ''

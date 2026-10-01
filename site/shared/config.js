@@ -13,10 +13,9 @@ export const SUPABASE_ANON_KEY = 'sb_publishable_gA7cL3RGWOnuLqwrlTGL5w_eMigpxdn
 // E-mail de contato mostrado nas páginas de privacidade, termos e "Quem somos".
 export const CONTACT_EMAIL = 'riftarcadeoficial@gmail.com';
 
-// Link de doação (Pix, Ko-fi, Livepix…). Vazio = botão "Apoiar" escondido.
-// As doações são opcionais, só para manter o site no ar, e não dão vantagem
-// nenhuma nos jogos.
-export const DONATION_URL = '';
+// Página de apoio (doação opcional pelo Mercado Pago; só cosméticos, sem
+// vantagem nos jogos).
+export const DONATION_URL = '/apoiar/';
 
 // Logos dos times nos jogos:
 //   'oficiais' → logo oficial em assets/times/<id>.png para todos os times
@@ -31,6 +30,11 @@ export const TEAM_LOGOS = 'oficiais';
 // autorizaram o uso). Use o id do time, como em assets/times/README.md.
 // Exemplo: export const OFFICIAL_LOGOS_ALLOWED = ['loud', 'png'];
 export const OFFICIAL_LOGOS_ALLOWED = [];
+
+// Apoio pelo Mercado Pago: deixe false até configurar o Mercado Pago e as
+// Edge Functions (README → "Apoio"). Com false, a página /apoiar/ mostra
+// os efeitos, mas o botão de pagar fica como "em breve".
+export const APOIO_ATIVO = false;
 
 // Catálogo exibido no hub. `path` é relativo à raiz do site.
 // status: 'live' (jogável) ou 'soon' (em breve).

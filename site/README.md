@@ -103,6 +103,22 @@ um pequeno benefício nos outros jogos (`shared/ranked.js`). Emblemas em
 abre o ranking ou o perfil, sem tarefa agendada. Para o lançamento oficial (ou
 nova temporada), o painel do administrador tem o botão **Zerar ranqueada**.
 
+## Apoio (Mercado Pago)
+
+Página `apoiar/` (links no menu da conta, no perfil e no rodapé). O apoio é
+voluntário e só libera cosméticos: 10 efeitos de nick (`shared/apoio.js` +
+CSS em `shared/account.css`), por valor total apoiado (R$ 5, 10, 25 e 50).
+Fluxo: o site chama a Edge Function `apoio-criar` (registra a doação pendente
+e cria o pagamento no Checkout Pro do Mercado Pago) → a pessoa paga no Mercado
+Pago (Pix, cartão, boleto) → o Mercado Pago avisa a Edge Function
+`apoio-webhook`, que confere o pagamento na API do Mercado Pago e marca a
+doação como aprovada → o banco soma o total da conta (`0008_apoio.sql`).
+Configuração: rode `supabase/migrations/0008_apoio.sql`, crie as duas Edge
+Functions (código em `supabase/functions/`, com "Verify JWT" desligado), guarde
+o Access Token do Mercado Pago no segredo `MP_ACCESS_TOKEN` das Edge Functions
+e mude `APOIO_ATIVO` para `true` em `shared/config.js`. O painel do
+administrador registra apoios feitos por fora (Pix direto).
+
 ## Aviso de fã, páginas institucionais e doações
 
 O rodapé (`shared/footer.js`) aparece no hub e em todos os jogos, com o aviso

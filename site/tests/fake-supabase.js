@@ -2,7 +2,7 @@
 // e as mesmas regras de acesso (cada conta só mexe nas próprias linhas).
 
 export function createFakeSupabase() {
-  const db = { site_profiles: [], site_game_saves: [], site_game_results: [], site_events: [], site_ranked: [] };
+  const db = { site_profiles: [], site_game_saves: [], site_game_results: [], site_events: [], site_ranked: [], site_apoios: [] };
   // Contagem de gravações e falha simulada (servidor ocupado).
   const stats = { upserts: 0, failNextUpserts: 0 };
   const users = [];
@@ -209,6 +209,14 @@ export function createFakeSupabase() {
       db.site_ranked = [];
       return { data: { partidas_apagadas: n, inicio: new Date().toISOString().slice(0, 10), temporada: args.nova_temporada }, error: null };
     }
+    if (name === 'site_set_nick_efeito') {
+      const me = db.site_profiles.find((p) => p.id === auth._uid());
+      const minimo = { ouro: 5, neon: 5, gelo: 5, chamas: 10, quimico: 10, hextech: 10, reflexo: 25, vazio: 25, glitch: 25, prisma: 50 };
+      if (args.efeito && !(args.efeito in minimo)) return { data: null, error: { message: 'invalid_effect' } };
+      if (args.efeito && (me.apoio_total || 0) < minimo[args.efeito]) return { data: null, error: { message: 'effect_locked' } };
+      me.nick_efeito = args.efeito;
+      return { data: args.efeito, error: null };
+    }
     if (name === 'site_is_admin') return { data: auth._uid() === 'user-admin', error: null };
     if (name === 'site_admin_stats') {
       if (auth._uid() !== 'user-admin') return { data: null, error: { message: 'not_admin' } };
@@ -217,7 +225,17 @@ export function createFakeSupabase() {
     return { data: null, error: { message: 'rpc desconhecida' } };
   }
 
-  return { auth, from, rpc, db, stats };
+  // Edge Functions: só a apoio-criar (devolve um link de pagamento falso).
+  const functions = {
+    async invoke(nome, { body } = {}) {
+      if (nome !== 'apoio-criar') return { data: null, error: { message: 'função desconhecida' } };
+      if (!auth._uid()) return { data: { erro: 'nao_logado' }, error: { message: 'non-2xx' } };
+      if (!(body?.valor >= 5 && body?.valor <= 1000)) return { data: { erro: 'valor_invalido' }, error: { message: 'non-2xx' } };
+      return { data: { url: `https://mercadopago.test/checkout?valor=${body.valor}`, apoio: 'a1' }, error: null };
+    },
+  };
+
+  return { auth, from, rpc, db, stats, functions };
 }
 
 // localStorage em memória para rodar no Node.

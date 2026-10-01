@@ -6,6 +6,7 @@ import { mountSiteFooter } from '../shared/footer.js';
 import { avatarHtml, hydrateAvatars } from '../shared/avatar.js';
 import { eloInfo, emblemaHtml } from '../shared/ranked.js';
 import { cardMinhaRanqueada, comoFunciona } from './ranqueada-card.js';
+import { nickHtml } from '../shared/apoio.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -32,7 +33,7 @@ function linha(j) {
   const e = eloInfo(j.elo);
   return `<li class="${j.eu ? 'eu' : ''}${j.pos <= 3 ? ` top${j.pos}` : ''}">
     <span class="rk-pos">${j.pos}</span>
-    <span class="rk-quem">${avatarHtml(j.avatar, j.username, 34, `elo-${e.id}`)}<b>${esc(j.username)}</b></span>
+    <span class="rk-quem">${avatarHtml(j.avatar, j.username, 34, `elo-${e.id}`)}<b>${nickHtml(j.username, j.efeito)}</b></span>
     <span class="rk-elo" style="--cor:${e.cor}">${emblemaHtml(e.id, 18)}<span>${esc(e.nome)}</span></span>
     <span class="rk-pts">${num(j.pontos)}${periodo !== 'diario' ? `<small>${j.dias} ${j.dias === 1 ? 'dia' : 'dias'}</small>` : ''}</span>
   </li>`;
@@ -48,7 +49,7 @@ function tabela() {
     const fora = dados.eu && !dados.lista.some((j) => j.eu);
     const u = platform.getUser();
     corpo = `<ol class="rk-lista">${dados.lista.map(linha).join('')}
-      ${fora ? `<li class="eu sep"><span class="rk-pos">${dados.eu.pos}</span><span class="rk-quem">${avatarHtml(u.avatar, u.username, 34, `elo-${u.elo || 'bronze'}`)}<b>${esc(u.username)}</b></span><span></span><span class="rk-pts">${num(dados.eu.pontos)}</span></li>` : ''}
+      ${fora ? `<li class="eu sep"><span class="rk-pos">${dados.eu.pos}</span><span class="rk-quem">${avatarHtml(u.avatar, u.username, 34, `elo-${u.elo || 'bronze'}`)}<b>${nickHtml(u.username, u.nickEfeito, u.apoioTotal)}</b></span><span></span><span class="rk-pts">${num(dados.eu.pontos)}</span></li>` : ''}
     </ol>`;
   }
   const quando = dados ? (periodo === 'diario' ? `Hoje (${ddmm(dados.fim)})` : `${ddmm(dados.inicio)} a ${ddmm(dados.fim)}`) : '';
