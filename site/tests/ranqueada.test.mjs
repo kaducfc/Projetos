@@ -3,17 +3,20 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createFakeSupabase, installMemoryStorage } from './fake-supabase.js';
 import * as platform from '../shared/platform.js';
-import { ELOS, vantagens, nivelElo, VAGAS_DESAFIANTE } from '../shared/ranked.js';
+import { ELOS, vantagens, nivelElo, VAGAS_DESAFIANTE, minimoParaFicar } from '../shared/ranked.js';
 import { shareText as shareRunetermo } from '../jogos/runetermo/js/logic.js';
 import { shareText as shareCampeao } from '../jogos/campeao/js/logic.js';
 import * as cblol from '../jogos/lendas-do-cblol/js/logic.js';
 
 test('ranqueada: médias e vagas do site batem com as do banco (0006_ranqueada.sql)', () => {
-  const sql = readFileSync(new URL('../supabase/migrations/0006_ranqueada.sql', import.meta.url), 'utf8');
-  for (const e of ELOS.slice(1)) assert.match(sql, new RegExp(`when '${e.id}' then ${e.media}\\b`), e.id);
+  const sql = readFileSync(new URL('../supabase/migrations/0007_ranqueada_pontos.sql', import.meta.url), 'utf8');
+  for (const e of ELOS.slice(1)) assert.match(sql, new RegExp(`when '${e.id}' then ${e.pontos}\\b`), e.id);
   assert.match(sql, new RegExp(`vagas constant int := ${VAGAS_DESAFIANTE};`));
+  assert.equal(minimoParaFicar('ouro'), 650);
+  assert.equal(minimoParaFicar('bronze'), 0);
+  assert.equal(minimoParaFicar('desafiante'), 0);
   assert.deepEqual(ELOS.map((e) => e.id), ['bronze', 'prata', 'ouro', 'platina', 'diamante', 'desafiante']);
-  assert.ok(ELOS.every((e, i) => i === 0 || e.media > ELOS[i - 1].media), 'cada elo pede mais que o anterior');
+  assert.ok(ELOS.every((e, i) => i === 0 || e.pontos > ELOS[i - 1].pontos), 'cada elo pede mais que o anterior');
 });
 
 test('ranqueada: benefícios de cada elo somam com os de baixo', () => {
@@ -71,4 +74,13 @@ test('ranqueada no site: situação do dia, elo da conta e ranking', async () =>
   const r = await platform.ranking('semanal');
   assert.equal(r.lista[0].username, 'Ranqueado');
   await assert.rejects(platform.ranking('anual'));
+});
+
+test('zerar a ranqueada: só administrador', async () => {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await platform.signUp({ email: 'z@example.com', password: 'segredo123', username: 'Comum' });
+  await assert.rejects(platform.adminResetRanked(1), /não tem permissão/);
 });

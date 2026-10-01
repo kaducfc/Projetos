@@ -524,6 +524,15 @@ export async function adminStats(days = 30) {
   return data;
 }
 
+// Zera a ranqueada (só administradores; ver 0007_ranqueada_pontos.sql).
+export async function adminResetRanked(temporada = 1) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_ranked_resetar', { nova_temporada: temporada });
+  if (error) throw new Error(/not_admin/.test(error.message) ? 'Esta conta não tem permissão para isso.' : friendly(error).message);
+  return data;
+}
+
 // ------------------------------------------------------------------ saves
 
 export function loadLocalSave(gameId) {

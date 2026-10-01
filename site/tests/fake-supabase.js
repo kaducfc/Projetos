@@ -169,12 +169,23 @@ export function createFakeSupabase() {
         && r.score != null && String(r.played_at).slice(0, 10) === hoje).slice(0, 3);
       const melhor = validas.length ? Math.max(...validas.map((r) => r.score)) : null;
       const meu = db.site_ranked.find((r) => r.user_id === uid);
+      const elos = ['bronze', 'prata', 'ouro', 'platina', 'diamante', 'desafiante'];
+      const pontos = [0, 1500, 1950, 2250, 2550, 2850];
+      const elo = meu?.elo || 'bronze';
+      const i = elos.indexOf(elo);
+      const dia = (k) => new Date(Date.now() + k * 864e5).toISOString().slice(0, 10);
       return {
         data: {
-          elo: meu?.elo || 'bronze', jogou: Boolean(meu || validas.length), temporada: 1,
+          elo, jogou: Boolean(meu || validas.length), temporada: 1,
           hoje: { dia: hoje, partidas: validas.length, melhor, validas: validas.map((r) => r.client_id) },
-          ciclo: { numero: 0, inicio: hoje, fim: hoje, atualiza: hoje, dias: [{ dia: hoje, melhor }], media: (melhor || 0) / 3 },
-          proximo: { elo: 'prata', media: 500 }, desafiantes: 0, vagas: 100, historico: [],
+          ciclo: {
+            numero: 0, inicio: dia(-1), fim: dia(1), atualiza: dia(2),
+            dias: [{ dia: dia(-1), melhor: 640 }, { dia: hoje, melhor }, { dia: dia(1), melhor: null }],
+            total: 640 + (melhor || 0), minimo: i >= 1 && i <= 4 ? pontos[i] / 3 : 0,
+          },
+          proximo: i < 5 ? { elo: elos[i + 1], pontos: pontos[i + 1] } : null,
+          desafiantes: 37, vagas: 100,
+          historico: i ? [{ ciclo: 0, de: elos[i - 1], para: elo, pontos: pontos[i] + 120 }] : [],
         },
         error: null,
       };
@@ -191,6 +202,12 @@ export function createFakeSupabase() {
       }));
       const hoje = new Date().toISOString().slice(0, 10);
       return { data: { periodo: args.periodo, inicio: hoje, fim: hoje, jogadores: lista.length, lista, eu: lista.find((x) => x.eu) || null }, error: null };
+    }
+    if (name === 'site_ranked_resetar') {
+      if (auth._uid() !== 'user-admin') return { data: null, error: { message: 'not_admin' } };
+      const n = db.site_ranked.length;
+      db.site_ranked = [];
+      return { data: { partidas_apagadas: n, inicio: new Date().toISOString().slice(0, 10), temporada: args.nova_temporada }, error: null };
     }
     if (name === 'site_is_admin') return { data: auth._uid() === 'user-admin', error: null };
     if (name === 'site_admin_stats') {

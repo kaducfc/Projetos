@@ -162,6 +162,18 @@ function render(st) {
         <tbody>${c.top.map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.nick)}${t.conta ? ` <small>@${esc(t.conta)}</small>` : ' <small>visitante</small>'}</td><td>${esc(roleName(t.rota))}</td><td>${esc(t.legado)}</td><td class="n">${num(t.ovr)}</td><td class="n">${num(t.trofeus)}</td><td class="n">${num(t.pontos)}</td></tr>`).join('')}</tbody>
       </table></div>` : '<p class="p-empty">Nenhuma carreira terminada no período.</p>'}
     </div>
+  </section>
+
+  <section class="p-section">
+    <h2>Ranqueada</h2>
+    <div class="card p-danger">
+      <h3>Zerar a ranqueada</h3>
+      <p class="c-sub">Para o lançamento oficial (ou uma nova temporada): todo mundo volta para o zero, sem elo e sem pontos nos rankings. O histórico de partidas de cada conta continua. O primeiro ciclo de 3 dias começa hoje.</p>
+      <label class="p-label">Temporada que começa: <input type="number" min="1" value="1" data-temporada /></label>
+      <label class="p-label">Para confirmar, digite <b>ZERAR</b>: <input data-confirma autocomplete="off" /></label>
+      <button type="button" class="p-btn p-btn-danger" data-zerar disabled>Zerar ranqueada</button>
+      <p class="p-note" data-zerar-msg role="status"></p>
+    </div>
   </section>`;
 }
 
@@ -213,6 +225,28 @@ body.addEventListener('pointermove', (e) => {
   showTip(col, e.clientX, col.getBoundingClientRect().top + 18);
 });
 body.addEventListener('pointerleave', () => { tip.hidden = true; });
+
+// Zerar a ranqueada (pede "ZERAR" digitado e mais uma confirmação).
+body.addEventListener('input', (e) => {
+  if (!e.target.matches('[data-confirma]')) return;
+  body.querySelector('[data-zerar]').disabled = e.target.value.trim() !== 'ZERAR';
+});
+body.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-zerar]');
+  if (!b) return;
+  const temporada = Math.max(1, Number(body.querySelector('[data-temporada]').value) || 1);
+  if (!window.confirm(`Zerar TODA a ranqueada e começar a Temporada ${temporada} hoje? Não dá para desfazer.`)) return;
+  const msg = body.querySelector('[data-zerar-msg]');
+  b.disabled = true;
+  try {
+    const r = await platform.adminResetRanked(temporada);
+    msg.textContent = `Pronto! Ranqueada zerada (${num(r.partidas_apagadas)} partidas ranqueadas apagadas). Temporada ${r.temporada} começou em ${r.inicio}.`;
+    body.querySelector('[data-confirma]').value = '';
+  } catch (err) {
+    msg.textContent = err.message;
+    b.disabled = false;
+  }
+});
 
 platform.onChange((evt) => { if (evt.type === 'auth') load(); });
 load();

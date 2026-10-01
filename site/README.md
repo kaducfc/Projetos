@@ -92,14 +92,16 @@ banco (que decide de verdade). Configuração: rode
 ## Ranqueada
 
 Só da Carreira no Rift, para contas conectadas: valem as 3 primeiras carreiras
-do dia (nota do dia = a maior). A cada ciclo de 3 dias, quem bater a média do
-próximo elo sobe 1 elo: Bronze → Prata (500) → Ouro (650) → Platina (750) →
-Diamante (850) → Desafiante (950, só 100 vagas). Rankings diário, semanal e
-mensal em `ranking/`. Cada elo dá um pequeno benefício nos outros jogos
-(`shared/ranked.js`). As regras valem no banco (`0006_ranqueada.sql`); os
-ciclos pendentes são fechados quando alguém abre o ranking ou o perfil, sem
-tarefa agendada. Configuração: rode `supabase/migrations/0006_ranqueada.sql`
-depois do `0005`.
+do dia (nota do dia = a maior). A cada ciclo de 3 dias somam-se as notas; quem
+chegar aos pontos do próximo elo sobe 1 elo: Bronze → Prata (1500) → Ouro
+(1950) → Platina (2250) → Diamante (2550) → Desafiante (2850, só 100 vagas).
+Quem fizer menos de 1/3 da meta do próprio elo cai 1 elo (3 dias sem jogar
+sempre derruba). Rankings diário, semanal e mensal em `ranking/`. Cada elo dá
+um pequeno benefício nos outros jogos (`shared/ranked.js`). Emblemas em
+`shared/assets/elos/`. As regras valem no banco (`0006_ranqueada.sql` +
+`0007_ranqueada_pontos.sql`); os ciclos pendentes são fechados quando alguém
+abre o ranking ou o perfil, sem tarefa agendada. Para o lançamento oficial (ou
+nova temporada), o painel do administrador tem o botão **Zerar ranqueada**.
 
 ## Aviso de fã, páginas institucionais e doações
 
