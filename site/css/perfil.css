@@ -94,9 +94,12 @@
 .pf-modal h2 { margin: 0; font-size: 38px; color: var(--gold-2); }
 .pf-modal p { margin: 0; color: #d3ccbc; }
 .pf-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 10px; }
-.pf-icone { padding: 2px; border: 2px solid transparent; border-radius: 50%; background: none; cursor: pointer; display: grid; place-items: center; }
-.pf-icone:hover { border-color: rgba(245, 207, 90, 0.6); }
-.pf-icone.on { border-color: var(--gold-2); box-shadow: 0 0 14px rgba(245, 207, 90, 0.45); }
+/* Botão do tamanho exato do ícone (não estica na grade) e a marcação colada
+   na borda do próprio ícone: fica sempre um círculo. */
+.pf-icone { justify-self: center; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; display: block; line-height: 0; }
+.pf-icone .avatar { transition: box-shadow 0.15s; }
+.pf-icone:hover .avatar { box-shadow: 0 0 0 2px rgba(245, 207, 90, 0.6); }
+.pf-icone.on .avatar { box-shadow: 0 0 0 3px var(--gold-2), 0 0 16px rgba(245, 207, 90, 0.5); }
 .pf-modal > .btn-ghost { align-self: flex-end; }
 .pf-label { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: #d3ccbc; }
 .pf-acts { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
