@@ -512,6 +512,9 @@ export async function adminRegistrarApoio(nome, valor) {
 // começadas no dia, e só se terminarem no mesmo dia (ver 0010 e 0011).
 // Sem conta, sem servidor ou com erro: null (a carreira não vale).
 export async function rankedIniciar() {
+  // Espera a sessão carregar: quem cria o jogador logo ao abrir a página não
+  // pode ficar sem ingresso só porque a conta ainda não tinha sido lida.
+  await init();
   const sb = await getClient();
   if (!sb || !user) return null;
   const { data, error } = await sb.rpc('site_ranked_iniciar');

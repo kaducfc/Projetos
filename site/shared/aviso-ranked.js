@@ -42,7 +42,11 @@ export async function avisoInicio() {
 
 // Logo depois de criar o jogador: diz se esta carreira vale para a ranqueada.
 export function avisoComeco(r) {
-  if (!r || !platform.getUser()) return;
+  if (!platform.cloudEnabled() || !platform.getUser()) return;
+  if (!r) {
+    mostrar('Não deu para registrar o começo desta carreira na <b>ranqueada</b> (sem conexão com o servidor). Ela não vai valer; se quiser, recarregue a página e crie o jogador de novo.', 12000);
+    return;
+  }
   if (!r.token) {
     mostrar(`Esta carreira <b>não vale para a ranqueada</b>: as 3 carreiras ranqueadas de hoje já foram começadas. Pode jogar normalmente! ${link}`, 9000);
     return;
