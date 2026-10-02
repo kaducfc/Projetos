@@ -4,6 +4,7 @@
 export function createFakeSupabase() {
   // Contas administradoras (o teste pode incluir outras com admins.add(id)).
   const admins = new Set(['user-admin']);
+  const fakeInicios = new Map(); // carreiras ranqueadas começadas hoje, por conta
   const db = { site_profiles: [], site_game_saves: [], site_game_results: [], site_events: [], site_ranked: [], site_apoios: [] };
   // Contagem de gravações e falha simulada (servidor ocupado).
   const stats = { upserts: 0, failNextUpserts: 0 };
@@ -194,7 +195,11 @@ export function createFakeSupabase() {
     }
     if (name === 'site_ranked_iniciar') {
       if (!auth._uid()) return { data: null, error: { message: 'not_authenticated' } };
-      return { data: { token: `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`, dia: new Date().toISOString().slice(0, 10) }, error: null };
+      fakeInicios.set(auth._uid(), (fakeInicios.get(auth._uid()) || 0) + 1);
+      const n = fakeInicios.get(auth._uid());
+      const dia = new Date().toISOString().slice(0, 10);
+      if (n > 3) return { data: { token: null, dia, numero: null, restantes: 0 }, error: null };
+      return { data: { token: `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`, dia, numero: n, restantes: 3 - n }, error: null };
     }
     if (name === 'site_ranking') {
       if (!['diario', 'semanal', 'mensal'].includes(args.periodo)) return { data: null, error: { message: 'periodo_invalido' } };

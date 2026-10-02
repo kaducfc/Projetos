@@ -18,7 +18,7 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
       <div class="rk-info">
         <p class="eyebrow">Ranqueada · Carreira no Rift</p>
         <h2 class="display">Sem ranque</h2>
-        <p class="muted small">Entre na sua conta e termine carreiras na Carreira no Rift: as 3 primeiras do dia valem para o ranking e para subir de elo.</p>
+        <p class="muted small">Entre na sua conta e jogue a Carreira no Rift: as 3 primeiras carreiras começadas no dia valem para o ranking e para subir de elo.</p>
       </div>
     </section>`;
   }
@@ -62,7 +62,7 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
     <div class="rk-info">
       <p class="eyebrow">Ranqueada · Temporada ${esc(s.temporada)}</p>
       <h2 class="display">${s.jogou ? esc(e.nome) : 'Sem ranque'}</h2>
-      <p class="muted small">Hoje: <b>${s.hoje.partidas} de ${PARTIDAS_POR_DIA}</b> carreiras ranqueadas${s.hoje.melhor != null ? ` · nota do dia: <b>${num(s.hoje.melhor)}</b>` : ''}</p>
+      <p class="muted small">Hoje: <b>${s.hoje.iniciadas ?? s.hoje.partidas} de ${PARTIDAS_POR_DIA}</b> carreiras ranqueadas começadas${s.hoje.iniciadas != null ? ` (${s.hoje.partidas} terminada${s.hoje.partidas === 1 ? '' : 's'})` : ''}${s.hoje.melhor != null ? ` · nota do dia: <b>${num(s.hoje.melhor)}</b>` : ''}</p>
       <div class="rk-dias">${dias}</div>
       ${meta}
       <p class="muted small">Próxima atualização de elo: <b>${ddmm(s.ciclo.atualiza)} à meia-noite</b> (horário de Brasília).</p>
@@ -87,7 +87,7 @@ export function comoFunciona() {
     <div class="pf-card rk-regras">
       <ul>
         <li>Vale só a <b>Carreira no Rift</b>, com a conta conectada.</li>
-        <li>Por dia, contam as <b>3 primeiras carreiras</b> terminadas. Só vale a carreira que <b>começa e termina no mesmo dia</b>. A <b>nota do dia</b> é a maior das 3. Depois disso dá para continuar jogando normalmente, mas não vale mais para o rank. O dia vira à meia-noite (horário de Brasília).</li>
+        <li>Por dia, contam as <b>3 primeiras carreiras começadas</b> (abandonar uma também gasta a vaga). Cada uma tem que <b>terminar no mesmo dia</b> em que começou. A <b>nota do dia</b> é a maior das 3. Depois disso dá para continuar jogando normalmente, mas não vale mais para o rank. O dia vira à meia-noite (horário de Brasília).</li>
         <li>A cada <b>3 dias</b> fecha um ciclo: somam-se as notas dos 3 dias. Quem chegar aos pontos do próximo elo sobe <b>1 elo</b> na atualização da meia-noite (dá para bater a meta em 2 dias e folgar no 3º).</li>
         <li><b>Queda:</b> quem fizer menos de um sexto da meta do próprio elo no ciclo cai <b>1 elo</b>. Ficar os 3 dias sem jogar sempre derruba. Bronze não cai.</li>
         <li><b>Desafiante</b> tem só ${VAGAS_DESAFIANTE} vagas: se houver mais candidatos, ficam os ${VAGAS_DESAFIANTE} com mais pontos no ciclo e os outros voltam para o Diamante. Com vaga sobrando, só cai quem ficar os 3 dias sem jogar.</li>

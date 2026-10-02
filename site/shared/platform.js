@@ -508,18 +508,19 @@ export async function adminRegistrarApoio(nome, valor) {
 // Situação da conta na ranqueada (elo, partidas de hoje, ciclo atual).
 // Também fecha os ciclos pendentes no banco.
 // Começo de uma carreira ranqueável: o servidor anota o dia (horário de
-// Brasília) e devolve um ingresso. Só vale para a ranqueada a carreira que
-// termina no mesmo dia em que começou (ver 0010_ranqueada_inicio.sql).
+// Brasília) e devolve um ingresso. Só valem as 3 primeiras carreiras
+// começadas no dia, e só se terminarem no mesmo dia (ver 0010 e 0011).
 // Sem conta, sem servidor ou com erro: null (a carreira não vale).
 export async function rankedIniciar() {
   const sb = await getClient();
   if (!sb || !user) return null;
   const { data, error } = await sb.rpc('site_ranked_iniciar');
-  if (error || !data?.token) {
+  if (error || !data) {
     if (error) console.warn('Site: não deu para iniciar a ranqueada:', error.message);
     return null;
   }
-  return { token: data.token, dia: String(data.dia).slice(0, 10) };
+  // token null: as 3 carreiras ranqueadas de hoje já foram começadas.
+  return { token: data.token ?? null, dia: String(data.dia).slice(0, 10), numero: data.numero ?? null, restantes: data.restantes ?? null };
 }
 
 export async function rankedStatus() {

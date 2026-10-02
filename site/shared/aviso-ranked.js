@@ -33,11 +33,21 @@ export async function avisoInicio() {
   }
   const s = await platform.rankedStatus();
   if (!s) return;
-  const resta = Math.max(0, PARTIDAS_POR_DIA - s.hoje.partidas);
+  const resta = Math.max(0, PARTIDAS_POR_DIA - (s.hoje.iniciadas ?? s.hoje.partidas));
   const elo = s.jogou ? ` · elo <b style="color:${eloInfo(s.elo).cor}">${esc(eloInfo(s.elo).nome)}</b>` : '';
   mostrar(resta
-    ? `<b>Ranqueada:</b> ${resta === PARTIDAS_POR_DIA ? 'suas 3 carreiras ranqueadas de hoje estão disponíveis (vale a carreira que começa e termina hoje)' : `falta${resta > 1 ? 'm' : ''} ${resta} carreira${resta > 1 ? 's' : ''} ranqueada${resta > 1 ? 's' : ''} hoje`}${elo}. ${link}`
-    : `<b>Ranqueada:</b> as 3 carreiras ranqueadas de hoje já foram usadas (nota do dia: ${s.hoje.melhor}). Pode continuar jogando normalmente. ${link}`, 7000);
+    ? `<b>Ranqueada:</b> ${resta === PARTIDAS_POR_DIA ? 'suas 3 carreiras ranqueadas de hoje estão disponíveis' : `falta${resta > 1 ? 'm' : ''} ${resta} carreira${resta > 1 ? 's' : ''} ranqueada${resta > 1 ? 's' : ''} hoje`}${elo}. Valem as 3 primeiras carreiras <b>começadas</b> no dia (abandonar também gasta a vaga). ${link}`
+    : `<b>Ranqueada:</b> as 3 carreiras ranqueadas de hoje já foram começadas${s.hoje.melhor != null ? ` (nota do dia: ${s.hoje.melhor})` : ''}. Pode continuar jogando normalmente. ${link}`, 9000);
+}
+
+// Logo depois de criar o jogador: diz se esta carreira vale para a ranqueada.
+export function avisoComeco(r) {
+  if (!r || !platform.getUser()) return;
+  if (!r.token) {
+    mostrar(`Esta carreira <b>não vale para a ranqueada</b>: as 3 carreiras ranqueadas de hoje já foram começadas. Pode jogar normalmente! ${link}`, 9000);
+    return;
+  }
+  mostrar(`<b>Carreira ranqueada ${r.numero ?? ''} de ${PARTIDAS_POR_DIA} de hoje.</b> Termine hoje (até meia-noite) para valer. Se abandonar, a vaga é perdida.`, 9000);
 }
 
 const ddmm = (iso) => {
@@ -57,11 +67,13 @@ export async function avisoFim(entry, ranked = null) {
   if (!d) return;
   if ((d.hoje.validas || []).includes(entry?.clientId)) {
     mostrar(`<b>Valeu para a ranqueada!</b> Carreira ${d.hoje.partidas} de ${PARTIDAS_POR_DIA} de hoje · nota do dia (a melhor): <b>${d.hoje.melhor}</b>. ${link}`, 12000);
+  } else if (ranked && !ranked.token) {
+    mostrar(`Essa carreira <b>não entrou na ranqueada</b>: ela começou depois das 3 carreiras ranqueadas do dia. ${link}`, 12000);
   } else if (!ranked) {
     mostrar(`Essa carreira <b>não entrou na ranqueada</b>: o começo dela não foi registrado no servidor (começou sem a conta conectada ou sem internet). Para valer, a carreira precisa começar e terminar com a conta conectada, no mesmo dia. ${link}`, 12000);
   } else if (ranked.dia !== String(d.hoje.dia).slice(0, 10)) {
     mostrar(`Essa carreira <b>não entrou na ranqueada</b>: ela começou em outro dia (${ddmm(ranked.dia)}). Só vale a carreira que começa e termina no mesmo dia. ${link}`, 12000);
   } else {
-    mostrar(`Essa carreira <b>não entrou na ranqueada</b>: as 3 de hoje já foram usadas (nota do dia: ${d.hoje.melhor ?? '—'}). Amanhã tem mais! ${link}`, 12000);
+    mostrar(`Essa carreira <b>não entrou na ranqueada</b>: as 3 vagas de hoje já foram usadas (nota do dia: ${d.hoje.melhor ?? '—'}). Amanhã tem mais! ${link}`, 12000);
   }
 }

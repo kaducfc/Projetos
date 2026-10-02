@@ -96,6 +96,14 @@ test('ranqueada: ingresso do dia em que a carreira começou', async () => {
   const r = await platform.rankedIniciar();
   assert.match(r.token, /^[0-9a-f-]{36}$/);
   assert.equal(r.dia, new Date().toISOString().slice(0, 10));
+  assert.equal(r.numero, 1);
+  await platform.rankedIniciar();
+  assert.equal((await platform.rankedIniciar()).restantes, 0);
+  const quarta = await platform.rankedIniciar(); // 4ª começada: não vale
+  assert.equal(quarta.token, null);
+  const sql11 = readFileSync(new URL('../supabase/migrations/0011_ranqueada_iniciadas.sql', import.meta.url), 'utf8');
+  assert.match(sql11, /if feitas >= 3 then/);
+  assert.match(sql11, /'iniciadas'/);
   const sql = readFileSync(new URL('../supabase/migrations/0010_ranqueada_inicio.sql', import.meta.url), 'utf8');
   assert.match(sql, /where id = tok::uuid and user_id = new\.user_id and dia = hoje and result_id is null/);
   const main = readFileSync(new URL('../jogos/carreira-no-rift/js/main.js', import.meta.url), 'utf8');

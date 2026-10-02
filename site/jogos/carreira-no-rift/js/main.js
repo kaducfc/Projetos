@@ -10,7 +10,7 @@ import { ROLES } from './data/world.js';
 import { packState, unpackState } from './engine/save.js';
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
-import { avisoInicio, avisoFim } from '../../../shared/aviso-ranked.js';
+import { avisoInicio, avisoComeco, avisoFim } from '../../../shared/aviso-ranked.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 
 const GAME_ID = 'carreira-no-rift';
@@ -105,6 +105,7 @@ function render({ scrollTop = false } = {}) {
           state.ranked = r;
           save();
         }
+        avisoComeco(r);
       });
     });
     return;
