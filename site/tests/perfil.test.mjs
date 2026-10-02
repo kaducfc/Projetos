@@ -45,9 +45,16 @@ test('perfil: cadastro barra nome feio, troca de nome com limite, ícone, senha 
   await platform.changeUsername('kadunovo'); // só maiúsculas: pode
   assert.equal(platform.getUser().username, 'kadunovo');
 
-  await platform.setAvatar('champ:Ahri');
-  assert.equal(platform.getUser().avatar, 'champ:Ahri');
-  assert.equal(sb.db.site_profiles.find((p) => p.username === 'kadunovo').avatar, 'champ:Ahri');
+  await platform.setAvatar('icone:raposa-encantada');
+  assert.equal(platform.getUser().avatar, 'icone:raposa-encantada');
+  assert.equal(sb.db.site_profiles.find((p) => p.username === 'kadunovo').avatar, 'icone:raposa-encantada');
+  // Especiais de apoiador: bloqueados até apoiar.
+  assert.deepEqual(await platform.meusSelos(), { apoiador: false, pioneiro: false, posicao: null });
+  await assert.rejects(platform.setAvatar('icone:apoiador'), /especial de apoiador/);
+  await assert.rejects(platform.setAvatar('champ:Ahri'), /não está disponível/);
+  sb.db.site_profiles.find((p) => p.username === 'kadunovo').apoio_total = 5;
+  assert.equal((await platform.meusSelos()).apoiador, true);
+  await platform.setAvatar('icone:pioneiro');
   await assert.rejects(platform.setAvatar('javascript:alert(1)'), /não está disponível/);
 
   await assert.rejects(platform.changePassword({ current: 'errada', password: 'nova12345' }), /atual está incorreta/);
@@ -63,4 +70,20 @@ test('perfil: cadastro barra nome feio, troca de nome com limite, ícone, senha 
   assert.equal(sb.db.site_profiles.some((p) => p.username === 'kadunovo'), false);
   assert.equal(sb.db.site_game_results.length, 0);
   await assert.rejects(platform.signIn({ email: 'kadu@example.com', password: 'nova12345' }));
+});
+
+test('ícones: só as artes do site (sem campeões), com imagem para cada um', async () => {
+  const { existsSync } = await import('node:fs');
+  const { AVATARES, AVATARES_ESPECIAIS, avatarHtml, nomeAvatar } = await import('../shared/avatar.js');
+  assert.equal(AVATARES.length, 14); // mascote + 13
+  assert.deepEqual(AVATARES_ESPECIAIS, ['icone:apoiador', 'icone:pioneiro']);
+  for (const id of [...AVATARES, ...AVATARES_ESPECIAIS].filter((x) => x !== 'mascote')) {
+    assert.ok(existsSync(new URL(`../shared/assets/icones/${id.slice(6)}.webp`, import.meta.url)), id);
+    assert.ok(nomeAvatar(id));
+  }
+  // Ícone antigo de campeão vira a inicial do nome.
+  assert.match(avatarHtml('champ:Ahri', 'kadu'), /avatar-letra[^>]*>K</);
+  const sql = (await import('node:fs')).readFileSync(new URL('../supabase/migrations/0014_icones.sql', import.meta.url), 'utf8');
+  assert.match(sql, /raise exception 'icone_bloqueado'/);
+  assert.match(sql, /pos <= 100/);
 });

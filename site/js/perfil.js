@@ -4,7 +4,7 @@ import * as platform from '../shared/platform.js';
 import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { GAMES, gameById } from '../shared/config.js';
-import { AVATARES, avatarHtml, hydrateAvatars, nomeAvatar } from '../shared/avatar.js';
+import { AVATARES, ESPECIAIS, avatarHtml, nomeAvatar } from '../shared/avatar.js';
 import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
@@ -168,7 +168,6 @@ function render() {
     return;
   }
   root.innerHTML = `${cabecalho(u)}${cardMinhaRanqueada(status)}${cardApoio(u)}${resumo()}${historico()}${conta(u)}`;
-  hydrateAvatars(root);
 }
 
 let carregando = true;
@@ -199,12 +198,20 @@ function janela(html, onClick) {
   return el;
 }
 
-function escolherIcone() {
+async function escolherIcone() {
   const u = platform.getUser();
-  const grade = AVATARES.map((id) => `<button type="button" class="pf-icone${u.avatar === id ? ' on' : ''}" data-icone="${id}" title="${esc(nomeAvatar(id))}" aria-label="${esc(nomeAvatar(id))}">${avatarHtml(id, nomeAvatar(id), 64)}</button>`).join('');
+  const botao = (id, extra = '') => `<button type="button" class="pf-icone${u.avatar === id ? ' on' : ''}${extra}" data-icone="${id}" title="${esc(nomeAvatar(id))}" aria-label="${esc(nomeAvatar(id))}">${avatarHtml(id, nomeAvatar(id), 64)}</button>`;
+  const grade = AVATARES.map((id) => botao(id)).join('');
   const el = janela(`<h2 class="display">Escolha seu ícone</h2>
     <div class="pf-grade">${grade}</div>
+    <h3 class="pf-sub">Especiais de apoiador</h3>
+    <div class="pf-especiais" data-especiais><p class="muted small">Carregando…</p></div>
     <button type="button" class="btn-ghost" data-fechar>Fechar</button>`, async (e, fechar) => {
+    const travado = e.target.closest('[data-travado]');
+    if (travado) {
+      toast(travado.dataset.travado);
+      return;
+    }
     const b = e.target.closest('[data-icone]');
     if (!b) return;
     try {
@@ -216,7 +223,21 @@ function escolherIcone() {
       toast(err.message);
     }
   });
-  hydrateAvatars(el);
+  // Especiais: liberados pelo servidor (apoio e os 100 primeiros apoiadores).
+  const [selos, vagas] = await Promise.all([platform.meusSelos(), platform.pioneirosVagas()]);
+  const caixa = el.querySelector('[data-especiais]');
+  if (!caixa) return;
+  caixa.innerHTML = ESPECIAIS.map((x) => {
+    const id = `icone:${x.id}`;
+    const livre = selos[x.selo];
+    const extra = x.selo === 'pioneiro'
+      ? (livre ? `Você é o apoiador nº ${selos.posicao}.` : vagas != null ? (vagas ? `Restam <b>${vagas}</b> vagas.` : 'As 100 vagas já foram preenchidas.') : '')
+      : '';
+    return `<div class="pf-especial${livre ? '' : ' travado'}">
+      ${livre ? botao(id) : `<button type="button" class="pf-icone" data-travado="${esc(`${x.regra} Apoie em /apoiar para liberar.`)}" aria-label="${esc(`${x.nome} (bloqueado)`)}">${avatarHtml(id, x.nome, 64)}<span class="pf-cadeado" aria-hidden="true">🔒</span></button>`}
+      <div><b>${esc(x.nome)}</b><p class="muted small">${esc(x.regra)} ${extra}</p></div>
+    </div>`;
+  }).join('') + (selos.apoiador ? '' : '<a class="pf-apoiar-link" href="/apoiar/">♥ Apoiar e liberar os ícones especiais</a>');
 }
 
 function confirmarExclusao() {

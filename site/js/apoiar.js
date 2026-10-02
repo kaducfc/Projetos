@@ -5,6 +5,7 @@ import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { APOIO_ATIVO } from '../shared/config.js';
 import { VALORES_SUGERIDOS, VALOR_MINIMO, VALOR_MAXIMO, nickHtml } from '../shared/apoio.js';
+import { ESPECIAIS, avatarHtml } from '../shared/avatar.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -22,6 +23,8 @@ const voltou = params.get('status'); // volta do Mercado Pago: aprovado / penden
 let valor = 10;
 let apoios = [];
 let enviando = false;
+let vagas = null; // vagas restantes entre os 100 primeiros apoiadores
+let selos = null;
 let admin = false; // APOIO_ATIVO = 'admin': só administradores pagam (teste)
 
 let toastTimer = null;
@@ -74,6 +77,24 @@ function efeito(u) {
     ? `Obrigado! Você já apoiou com <b>${reais(u.apoioTotal)}</b> e seu nick brilha assim no perfil, no ranking e na barra do site.`
     : 'Apoiando com qualquer valor, seu nick fica assim, automaticamente, no perfil, no ranking e na barra do site. Não dá nenhuma vantagem nos jogos.'}</p>
     </div>
+  </section>
+  ${icones()}`;
+}
+
+// Ícones especiais de perfil (liberados pelo servidor, ver 0014_icones.sql).
+function icones() {
+  const item = (x) => {
+    const livre = selos?.[x.selo];
+    const extra = x.selo === 'pioneiro'
+      ? (livre ? ` Você é o apoiador nº ${selos.posicao}!` : vagas != null ? (vagas ? ` Restam <b>${vagas}</b> vagas.` : ' As 100 vagas já foram preenchidas.') : '')
+      : '';
+    return `<div class="ap-icone${livre ? ' livre' : ''}">${avatarHtml(`icone:${x.id}`, x.nome, 72)}
+      <div><b>${esc(x.nome)}</b>${livre ? ' <span class="ap-ok">✓ liberado</span>' : ''}<p class="muted small">${esc(x.regra)}${extra}</p></div></div>`;
+  };
+  return `<section class="pf-card ap-icones">
+    <p class="eyebrow">Ícones especiais de perfil</p>
+    ${ESPECIAIS.map(item).join('')}
+    ${selos?.apoiador ? '<p class="muted small">Escolha o ícone em <a href="/perfil/">Meu perfil</a> → Trocar ícone.</p>' : ''}
   </section>`;
 }
 
@@ -92,11 +113,11 @@ function perguntas() {
   return `<section class="pf-sec">
     <h2 class="section-title">Perguntas</h2>
     <div class="pf-card ap-faq">
-      <p><b>O apoio dá vantagem nos jogos?</b> Não. Só o efeito dourado no nome. Ranking e jogos são iguais para todos.</p>
+      <p><b>O apoio dá vantagem nos jogos?</b> Não. Só o efeito dourado no nome e os ícones especiais de perfil. Ranking e jogos são iguais para todos.</p>
       <p><b>Para onde vai o dinheiro?</b> Para manter o site no ar: servidor, domínio e o tempo de criar jogos novos.</p>
       <p><b>É seguro?</b> O pagamento é feito no site do Mercado Pago. O Rift Arcade recebe só o aviso de que foi aprovado e o valor; nunca vê dados de cartão ou de conta.</p>
       <p><b>Quanto tempo para o efeito aparecer?</b> Pix e cartão: na hora. Boleto: quando o banco compensar (até 3 dias úteis).</p>
-      <p><b>Posso pedir o dinheiro de volta?</b> Sim, em até 7 dias, pelo e-mail <a data-contact href="mailto:riftarcadeoficial@gmail.com">riftarcadeoficial@gmail.com</a>. Se todo o apoio for estornado, o efeito sai do nick.</p>
+      <p><b>Posso pedir o dinheiro de volta?</b> Sim, em até 7 dias, pelo e-mail <a data-contact href="mailto:riftarcadeoficial@gmail.com">riftarcadeoficial@gmail.com</a>. Se todo o apoio for estornado, o efeito sai do nick e os ícones especiais deixam de valer.</p>
     </div>
   </section>`;
 }
@@ -107,7 +128,7 @@ function render() {
     <header class="rk-head ap-head">
       <div><p class="eyebrow">◆ Apoie o Rift Arcade</p><h1 class="display">Apoiar</h1>
         <p class="lead">O Rift Arcade é gratuito e feito por fã. Se você curte, pode ajudar a manter o site no ar.
-          Em troca, seu nick ganha um <b>efeito dourado especial</b>, sem nenhuma vantagem nos jogos.</p></div>
+          Em troca, seu nick ganha um <b>efeito dourado especial</b> e você libera <b>ícones de perfil exclusivos</b>, sem nenhuma vantagem nos jogos.</p></div>
     </header>
     ${aviso()}
     ${efeito(u)}
@@ -118,10 +139,11 @@ function render() {
 
 async function carregar() {
   await platform.init();
+  vagas = await platform.pioneirosVagas();
   if (platform.getUser()) {
     if (APOIO_ATIVO === 'admin') admin = await platform.isAdmin();
     await platform.refreshApoio();
-    apoios = await platform.meusApoios();
+    [apoios, selos] = await Promise.all([platform.meusApoios(), platform.meusSelos()]);
   }
   render();
   // Voltou do Mercado Pago com pagamento aprovado: o aviso do Mercado Pago
@@ -132,6 +154,7 @@ async function carregar() {
       apoios = await platform.meusApoios();
       const antes = platform.getUser().apoioTotal;
       await platform.refreshApoio();
+      selos = await platform.meusSelos();
       render();
       if (platform.getUser().apoioTotal > antes || apoios.some((a) => a.id === params.get('apoio') && a.status === 'aprovado')) break;
     }
@@ -174,6 +197,7 @@ root.addEventListener('input', (e) => {
 platform.onChange(async (evt) => {
   if (evt.type !== 'auth') return;
   if (APOIO_ATIVO === 'admin') admin = evt.user ? await platform.isAdmin() : false;
+  selos = evt.user ? await platform.meusSelos() : null;
   render();
 });
 

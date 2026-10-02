@@ -1,70 +1,52 @@
-// Ícones de perfil: o mascote do site ou um campeão (imagem do Data Dragon,
-// a mesma usada no Campeão Oculto). Guardado no perfil como 'mascote' ou
-// 'champ:<Id do campeão>'.
+// Ícones de perfil: o mascote do site ou uma das artes do Rift Arcade
+// (shared/assets/icones). Guardado no perfil como 'mascote' ou 'icone:<id>'.
+// Dois são especiais, de apoiador: só o servidor deixa usar (0014_icones.sql).
 
-const DDRAGON = 'https://ddragon.leagueoflegends.com';
-const VERSION_KEY = 'site.ddragon';
 const MASCOTE = '/shared/assets/marca/mascote-120.png?v=2';
+const PASTA = '/shared/assets/icones';
 
-// Ids do Data Dragon (sem espaço nem apóstrofo).
-export const CAMPEOES = [
-  'Ahri', 'Yasuo', 'Jinx', 'LeeSin', 'Thresh', 'Lux', 'Zed', 'Ezreal', 'Teemo', 'Garen',
-  'Darius', 'Katarina', 'Vayne', 'Kaisa', 'Akali', 'Yone', 'Sett', 'Pyke', 'Leona', 'Annie',
-  'Ashe', 'MissFortune', 'Viego', 'Jhin', 'Lulu', 'Nautilus', 'Riven', 'MasterYi', 'Blitzcrank', 'Ekko',
-  'Caitlyn', 'Vi', 'Draven', 'Sylas', 'Gwen', 'Jayce', 'Senna', 'Rakan', 'Xayah', 'Kayn',
+export const ICONES = [
+  { id: 'arqueira-do-gelo', nome: 'Arqueira do Gelo' },
+  { id: 'espadachim-errante', nome: 'Espadachim Errante' },
+  { id: 'raposa-encantada', nome: 'Raposa Encantada' },
+  { id: 'irmas-rebeldes', nome: 'Irmãs Rebeldes' },
+  { id: 'curandeira-estelar', nome: 'Curandeira Estelar' },
+  { id: 'fera-das-cavernas', nome: 'Fera das Cavernas' },
+  { id: 'canhao-tubarao', nome: 'Canhão Tubarão' },
+  { id: 'chapeu-do-mago', nome: 'Chapéu do Mago' },
+  { id: 'cogumelo-magico', nome: 'Cogumelo Mágico' },
+  { id: 'brasao-sombrio', nome: 'Brasão Sombrio' },
+  { id: 'cidade-subterranea', nome: 'Cidade Subterrânea' },
+  { id: 'ilhas-sombrias', nome: 'Ilhas Sombrias' },
+  { id: 'terras-flutuantes', nome: 'Terras Flutuantes' },
 ];
-export const AVATARES = ['mascote', ...CAMPEOES.map((c) => `champ:${c}`)];
 
-// Nome para mostrar ("MissFortune" → "Miss Fortune", "Kaisa" → "Kai'Sa").
-const NOMES = { Kaisa: "Kai'Sa", LeeSin: 'Lee Sin', MissFortune: 'Miss Fortune', MasterYi: 'Master Yi' };
-export const nomeAvatar = (id) => (id === 'mascote' ? 'Mascote do Rift Arcade' : NOMES[id?.slice(6)] || id?.slice(6) || '');
+// Especiais: `selo` diz o que libera (ver platform.meusSelos()).
+export const ESPECIAIS = [
+  { id: 'apoiador', nome: 'Obrigado!', selo: 'apoiador', regra: 'Para quem apoiou o site com qualquer valor.' },
+  { id: 'pioneiro', nome: '100 primeiros', selo: 'pioneiro', regra: 'Só para os 100 primeiros apoiadores do site.' },
+];
 
-let version = null;
-try {
-  const c = JSON.parse(localStorage.getItem(VERSION_KEY) || 'null');
-  if (c?.v) version = c.v;
-} catch { /* sem armazenamento */ }
-let versionPromise = null;
+export const AVATARES = ['mascote', ...ICONES.map((i) => `icone:${i.id}`)];
+export const AVATARES_ESPECIAIS = ESPECIAIS.map((i) => `icone:${i.id}`);
 
-// Versão atual do Data Dragon (guardada por 1 dia).
-function loadVersion() {
-  if (versionPromise) return versionPromise;
-  versionPromise = (async () => {
-    try {
-      const c = JSON.parse(localStorage.getItem(VERSION_KEY) || 'null');
-      if (c?.v && Date.now() - c.at < 864e5) return (version = c.v);
-    } catch { /* sem armazenamento */ }
-    try {
-      const v = (await (await fetch(`${DDRAGON}/api/versions.json`)).json())[0];
-      try { localStorage.setItem(VERSION_KEY, JSON.stringify({ v, at: Date.now() })); } catch { /* sem armazenamento */ }
-      return (version = v);
-    } catch {
-      return version;
-    }
-  })();
-  return versionPromise;
-}
+const TODOS = new Map([...ICONES, ...ESPECIAIS].map((i) => [`icone:${i.id}`, i]));
 
-const srcDe = (id, v) => (id === 'mascote' || !id?.startsWith('champ:') ? MASCOTE
-  : v ? `${DDRAGON}/cdn/${v}/img/champion/${id.slice(6)}.png` : '');
+export const nomeAvatar = (id) => (id === 'mascote' ? 'Mascote do Rift Arcade' : TODOS.get(id)?.nome || '');
 
-// <img> do ícone. Sem ícone escolhido, mostra a inicial do nome.
+// Endereço da imagem ('' para ícone que não existe mais, ex.: os antigos de campeão).
+const srcDe = (id) => (id === 'mascote' ? MASCOTE : TODOS.has(id) ? `${PASTA}/${id.slice(6)}.webp` : '');
+
+// <img> do ícone. Sem ícone escolhido (ou com um que não existe mais),
+// mostra a inicial do nome.
 export function avatarHtml(avatar, nome = '', size = 32, extra = '') {
   const inicial = (nome || '?').trim().charAt(0).toUpperCase();
   const style = `width:${size}px;height:${size}px;font-size:${Math.round(size * 0.45)}px`;
-  if (!avatar) return `<span class="avatar avatar-letra ${extra}" style="${style}" aria-hidden="true">${inicial}</span>`;
-  const src = srcDe(avatar, version);
+  const src = avatar ? srcDe(avatar) : '';
+  if (!src) return `<span class="avatar avatar-letra ${extra}" style="${style}" aria-hidden="true">${inicial}</span>`;
   return `<span class="avatar ${extra}" style="${style}" aria-hidden="true" data-letra="${inicial}">`
-    + `<img alt="" data-avatar="${avatar}" ${src ? `src="${src}"` : ''} width="${size}" height="${size}" decoding="async" onerror="this.remove()" /></span>`;
+    + `<img alt="" src="${src}" width="${size}" height="${size}" decoding="async" loading="lazy" onerror="this.remove()" /></span>`;
 }
 
-// Completa as imagens de campeão que ainda esperavam a versão do Data Dragon.
-export async function hydrateAvatars(root = document) {
-  const faltando = [...root.querySelectorAll('img[data-avatar]:not([src])')];
-  if (!faltando.length) return;
-  const v = await loadVersion();
-  faltando.forEach((img) => {
-    const src = srcDe(img.dataset.avatar, v);
-    if (src) img.src = src; else img.remove();
-  });
-}
+// Mantida por compatibilidade (as imagens agora são do próprio site).
+export async function hydrateAvatars() {}

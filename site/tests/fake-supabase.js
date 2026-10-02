@@ -147,9 +147,16 @@ export function createFakeSupabase() {
       if (outro) me.username_changed_at = new Date().toISOString();
       return { data: args.name, error: null };
     }
+    if (name === 'site_meus_selos') {
+      const me = db.site_profiles.find((p) => p.id === auth._uid());
+      const apoiador = (me?.apoio_total || 0) > 0;
+      return { data: { apoiador, pioneiro: apoiador, posicao: apoiador ? 1 : null }, error: null };
+    }
+    if (name === 'site_pioneiros_vagas') return { data: 100 - db.site_profiles.filter((p) => p.apoio_total > 0).length, error: null };
     if (name === 'site_set_avatar') {
       const me = db.site_profiles.find((p) => p.id === auth._uid());
-      if (args.icone && !/^(mascote|champ:[A-Za-z]{2,20})$/.test(args.icone)) return { data: null, error: { message: 'invalid_avatar' } };
+      if (args.icone && !/^(mascote|icone:[a-z0-9-]{2,30})$/.test(args.icone)) return { data: null, error: { message: 'invalid_avatar' } };
+      if (['icone:apoiador', 'icone:pioneiro'].includes(args.icone) && !((me.apoio_total || 0) > 0)) return { data: null, error: { message: 'icone_bloqueado' } };
       me.avatar = args.icone;
       return { data: args.icone, error: null };
     }

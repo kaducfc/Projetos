@@ -400,11 +400,36 @@ export function tempoAte(data) {
   return parte(m, 'minuto', 'minutos');
 }
 
+// Selos que liberam os ícones especiais: { apoiador, pioneiro, posicao }.
+// Sem conta ou com o SQL 0014 ainda não aplicado: tudo bloqueado.
+export async function meusSelos() {
+  const sb = await getClient();
+  if (!sb || !user) return { apoiador: false, pioneiro: false, posicao: null };
+  const { data, error } = await sb.rpc('site_meus_selos');
+  if (error) {
+    console.warn('Site: selos indisponíveis:', error.message);
+    return { apoiador: (user.apoioTotal || 0) > 0, pioneiro: false, posicao: null };
+  }
+  return data;
+}
+
+// Vagas que ainda restam entre os 100 primeiros apoiadores (null se não der para saber).
+export async function pioneirosVagas() {
+  const sb = await getClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('site_pioneiros_vagas');
+  return error ? null : data;
+}
+
 export async function setAvatar(avatar) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();
   const { error } = await sb.rpc('site_set_avatar', { icone: avatar });
-  if (error) throw friendly(error);
+  if (error) {
+    if (/icone_bloqueado/.test(error.message)) throw new Error('Esse ícone é especial de apoiador e ainda não foi liberado para a sua conta.');
+    if (/invalid_avatar/.test(error.message)) throw new Error('Esse ícone não está disponível. Recarregue a página e tente de novo.');
+    throw friendly(error);
+  }
   user = { ...user, avatar };
   emit({ type: 'auth', user });
   return user;
