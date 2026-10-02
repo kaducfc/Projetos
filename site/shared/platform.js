@@ -523,7 +523,7 @@ export async function rankedIniciar() {
     return null;
   }
   // token null: as 3 carreiras ranqueadas de hoje já foram começadas.
-  return { token: data.token ?? null, dia: String(data.dia).slice(0, 10), numero: data.numero ?? null, restantes: data.restantes ?? null };
+  return { token: data.token ?? null, dia: String(data.dia).slice(0, 10), numero: data.numero ?? null, restantes: data.restantes ?? null, limite: data.limite ?? null };
 }
 
 export async function rankedStatus() {

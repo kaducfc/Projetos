@@ -62,7 +62,7 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
     <div class="rk-info">
       <p class="eyebrow">Ranqueada · Temporada ${esc(s.temporada)}</p>
       <h2 class="display">${s.jogou ? esc(e.nome) : 'Sem ranque'}</h2>
-      <p class="muted small">Hoje: <b>${s.hoje.iniciadas ?? s.hoje.partidas} de ${PARTIDAS_POR_DIA}</b> carreiras ranqueadas começadas${s.hoje.iniciadas != null ? ` (${s.hoje.partidas} terminada${s.hoje.partidas === 1 ? '' : 's'})` : ''}${s.hoje.melhor != null ? ` · nota do dia: <b>${num(s.hoje.melhor)}</b>` : ''}</p>
+      <p class="muted small">Hoje: <b>${s.hoje.iniciadas ?? s.hoje.partidas} de ${s.hoje.limite ?? PARTIDAS_POR_DIA}</b> carreiras ranqueadas começadas${(s.hoje.limite ?? PARTIDAS_POR_DIA) > PARTIDAS_POR_DIA ? ' <span title="Chances extras de compensação">(+ extras)</span>' : ''}${s.hoje.iniciadas != null ? ` (${s.hoje.partidas} terminada${s.hoje.partidas === 1 ? '' : 's'})` : ''}${s.hoje.melhor != null ? ` · nota do dia: <b>${num(s.hoje.melhor)}</b>` : ''}</p>
       <div class="rk-dias">${dias}</div>
       ${meta}
       <p class="muted small">Próxima atualização de elo: <b>${ddmm(s.ciclo.atualiza)} à meia-noite</b> (horário de Brasília).</p>
