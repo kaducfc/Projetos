@@ -22,6 +22,7 @@ const voltou = params.get('status'); // volta do Mercado Pago: aprovado / penden
 let valor = 10;
 let apoios = [];
 let enviando = false;
+let admin = false; // APOIO_ATIVO = 'admin': só administradores pagam (teste)
 
 let toastTimer = null;
 function toast(msg) {
@@ -48,9 +49,10 @@ function cartaoValor(u) {
   let acao;
   if (!platform.cloudEnabled()) acao = '<p class="muted small">O apoio precisa de conexão com o servidor do site.</p>';
   else if (!u) acao = '<button type="button" class="btn-primary ap-pagar" data-act="entrar">Entrar para apoiar</button><p class="muted small">O efeito fica guardado na sua conta, por isso é preciso entrar.</p>';
-  else if (!APOIO_ATIVO) acao = '<button type="button" class="btn-primary ap-pagar" disabled>Em breve</button><p class="muted small">O pagamento pelo Mercado Pago está sendo configurado.</p>';
+  else if (!(APOIO_ATIVO === true || (APOIO_ATIVO === 'admin' && admin))) acao = '<button type="button" class="btn-primary ap-pagar" disabled>Em breve</button><p class="muted small">O pagamento pelo Mercado Pago está sendo configurado.</p>';
   else acao = `<button type="button" class="btn-primary ap-pagar" data-act="pagar" ${enviando ? 'disabled' : ''}>${enviando ? 'Abrindo o Mercado Pago…' : `Apoiar com ${reais(valor)}`}</button>
-    <p class="muted small">Você vai para o Mercado Pago e paga com <b>Pix</b>, <b>cartão</b> ou <b>boleto</b>. O site não vê nem guarda os dados do pagamento.</p>`;
+    <p class="muted small">Você vai para o Mercado Pago e paga com <b>Pix</b>, <b>cartão</b> ou <b>boleto</b>. O site não vê nem guarda os dados do pagamento.</p>
+    ${APOIO_ATIVO === 'admin' ? '<p class="muted small"><b>Modo de teste:</b> só administradores veem este botão. Para o público, ele aparece como "Em breve".</p>' : ''}`;
   return `<section class="pf-card ap-valor">
     <h2 class="display">Quanto quer apoiar?</h2>
     <div class="pf-chips ap-chips">${chips}<button type="button" data-valor="outro" class="${outro ? 'on' : ''}">Outro valor</button></div>
@@ -117,6 +119,7 @@ function render() {
 async function carregar() {
   await platform.init();
   if (platform.getUser()) {
+    if (APOIO_ATIVO === 'admin') admin = await platform.isAdmin();
     await platform.refreshApoio();
     apoios = await platform.meusApoios();
   }
@@ -168,6 +171,10 @@ root.addEventListener('input', (e) => {
   if (b) b.textContent = `Apoiar com ${reais(valor || 0)}`;
 });
 
-platform.onChange((evt) => { if (evt.type === 'auth') render(); });
+platform.onChange(async (evt) => {
+  if (evt.type !== 'auth') return;
+  if (APOIO_ATIVO === 'admin') admin = evt.user ? await platform.isAdmin() : false;
+  render();
+});
 
 carregar();

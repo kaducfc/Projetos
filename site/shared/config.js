@@ -31,10 +31,11 @@ export const TEAM_LOGOS = 'oficiais';
 // Exemplo: export const OFFICIAL_LOGOS_ALLOWED = ['loud', 'png'];
 export const OFFICIAL_LOGOS_ALLOWED = [];
 
-// Apoio pelo Mercado Pago: deixe false até configurar o Mercado Pago e as
-// Edge Functions (README → "Apoio"). Com false, a página /apoiar/ mostra
-// os efeitos, mas o botão de pagar fica como "em breve".
-export const APOIO_ATIVO = false;
+// Apoio pelo Mercado Pago:
+//   false   → botão de pagar como "Em breve" para todos;
+//   'admin' → só contas de administrador conseguem pagar (fase de teste);
+//   true    → liberado para todos.
+export const APOIO_ATIVO = 'admin';
 
 // Catálogo exibido no hub. `path` é relativo à raiz do site.
 // status: 'live' (jogável) ou 'soon' (em breve).
