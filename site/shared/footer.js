@@ -29,7 +29,7 @@ export function mountSiteFooter(el) {
     <div class="sf-inner">
       <div class="sf-main">
         <p class="sf-title">${mascot}${esc(SITE_NAME)} · feito por fã, para fãs</p>
-        <p>Projeto de fã, <b>gratuito e sem fins lucrativos</b>. Sem vínculo nem aprovação da Riot Games,
+        <p>Projeto de fã independente e gratuito. Sem vínculo nem aprovação da Riot Games,
           das ligas ou dos times citados. League of Legends é marca da Riot Games, Inc.; nomes e logos
           de times e ligas pertencem aos seus donos.</p>
         ${links}
