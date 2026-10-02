@@ -29,6 +29,9 @@ create index if not exists site_apoios_user on public.site_apoios (user_id, cria
 
 alter table public.site_apoios enable row level security;
 grant select on public.site_apoios to authenticated;
+-- As Edge Functions (chave de serviço) gravam e atualizam as doações. Precisa
+-- ser explícito: o projeto não libera tabelas novas automaticamente.
+grant select, insert, update on public.site_apoios to service_role;
 drop policy if exists "site_apoios dono le" on public.site_apoios;
 create policy "site_apoios dono le" on public.site_apoios for select using (auth.uid() = user_id);
 

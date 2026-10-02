@@ -460,7 +460,8 @@ export async function apoiar(valor) {
     banco: 'Erro no banco ao registrar o apoio (o 0008_apoio.sql foi rodado?).',
     mercadopago: `O Mercado Pago recusou criar o pagamento${/invalid.*token|unauthorized|401/i.test(textoMp) ? ' (Access Token inválido)' : ''}.`,
   };
-  if (conhecidos[codigo]) throw new Error(conhecidos[codigo]);
+  if (corpo?.detalhe) console.warn('Apoio: detalhe do erro:', corpo.detalhe);
+  if (conhecidos[codigo]) throw new Error(conhecidos[codigo] + (corpo?.detalhe ? ` Detalhe: ${String(corpo.detalhe).slice(0, 160)}` : ''));
   if (status === 404) throw new Error('A função apoio-criar não foi encontrada no Supabase (o nome está certo?).');
   if (status === 401) throw new Error('O Supabase barrou a chamada: desligue a verificação de JWT ("Verify JWT") da função apoio-criar.');
   if (!status && /fetch|network|cors|failed to send/i.test(String(error?.message))) {
