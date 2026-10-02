@@ -156,13 +156,10 @@ button.btn-primary:disabled { opacity: 0.6; cursor: default; }
 .pf-apoio-txt { margin-top: 4px !important; color: #d3ccbc; max-width: 560px; }
 .pf-apoio-btn { margin: 0; white-space: nowrap; }
 
-/* Ícones especiais de apoiador */
-.pf-sub { margin: 4px 0 0; font-size: 13px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-2); }
-.pf-especiais { display: flex; flex-direction: column; gap: 10px; }
-.pf-especial { display: flex; align-items: center; gap: 12px; }
-.pf-especial p { margin: 2px 0 0; }
-.pf-especial.travado .avatar img { filter: grayscale(0.85) brightness(0.55); }
-.pf-especial .pf-icone { position: relative; flex: none; }
-.pf-cadeado { position: absolute; inset: 0; display: grid; place-items: center; font-size: 22px; }
-.pf-apoiar-link { color: var(--gold-2); font-weight: 700; font-size: 14px; }
+/* Ícones especiais de apoiador: na grade, travados com cadeado */
+.pf-travado { position: relative; }
+.pf-travado .avatar img { filter: grayscale(0.85) brightness(0.55); }
+.pf-cadeado { position: absolute; inset: 0; display: grid; place-items: center; font-size: 22px; line-height: 1; }
+.pf-info { margin: 0; padding: 10px 12px; border: 1px solid rgba(245, 207, 90, 0.35); border-radius: 8px; background: rgba(245, 207, 90, 0.06); font-size: 14px; color: #d3ccbc; }
+.pf-info a { color: var(--gold-2); font-weight: 700; white-space: nowrap; }
 .avatar img { object-fit: cover; }

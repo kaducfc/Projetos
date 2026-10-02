@@ -200,16 +200,25 @@ function janela(html, onClick) {
 
 async function escolherIcone() {
   const u = platform.getUser();
-  const botao = (id, extra = '') => `<button type="button" class="pf-icone${u.avatar === id ? ' on' : ''}${extra}" data-icone="${id}" title="${esc(nomeAvatar(id))}" aria-label="${esc(nomeAvatar(id))}">${avatarHtml(id, nomeAvatar(id), 64)}</button>`;
-  const grade = AVATARES.map((id) => botao(id)).join('');
+  const botao = (id) => `<button type="button" class="pf-icone${u.avatar === id ? ' on' : ''}" data-icone="${id}" title="${esc(nomeAvatar(id))}" aria-label="${esc(nomeAvatar(id))}">${avatarHtml(id, nomeAvatar(id), 64)}</button>`;
+  // Especiais de apoiador ficam na mesma grade: travados (cadeado) até o
+  // servidor liberar; o clique num travado explica como liberar.
+  const travado = (x) => `<button type="button" class="pf-icone pf-travado" data-travado="${x.id}" title="${esc(x.nome)} (bloqueado)" aria-label="${esc(`${x.nome} (bloqueado)`)}">${avatarHtml(`icone:${x.id}`, x.nome, 64)}<span class="pf-cadeado" aria-hidden="true">🔒</span></button>`;
+  const grade = (selos) => [...AVATARES.map(botao),
+    ...ESPECIAIS.map((x) => (selos?.[x.selo] ? botao(`icone:${x.id}`) : travado(x)))].join('');
+  let selos = null;
+  let vagas = null;
   const el = janela(`<h2 class="display">Escolha seu ícone</h2>
-    <div class="pf-grade">${grade}</div>
-    <h3 class="pf-sub">Especiais de apoiador</h3>
-    <div class="pf-especiais" data-especiais><p class="muted small">Carregando…</p></div>
+    <div class="pf-grade" data-grade>${grade(null)}</div>
+    <p class="pf-info" data-info role="status" hidden></p>
     <button type="button" class="btn-ghost" data-fechar>Fechar</button>`, async (e, fechar) => {
-    const travado = e.target.closest('[data-travado]');
-    if (travado) {
-      toast(travado.dataset.travado);
+    const t = e.target.closest('[data-travado]');
+    if (t) {
+      const x = ESPECIAIS.find((k) => k.id === t.dataset.travado);
+      const extra = x.selo === 'pioneiro' && vagas != null ? (vagas ? ` Restam <b>${vagas}</b> vagas.` : ' As 100 vagas já foram preenchidas.') : '';
+      const info = el.querySelector('[data-info]');
+      info.innerHTML = `🔒 <b>${esc(x.nome)}</b> · ${esc(x.regra)}${extra} <a href="/apoiar/">Apoiar e liberar</a>`;
+      info.hidden = false;
       return;
     }
     const b = e.target.closest('[data-icone]');
@@ -223,21 +232,9 @@ async function escolherIcone() {
       toast(err.message);
     }
   });
-  // Especiais: liberados pelo servidor (apoio e os 100 primeiros apoiadores).
-  const [selos, vagas] = await Promise.all([platform.meusSelos(), platform.pioneirosVagas()]);
-  const caixa = el.querySelector('[data-especiais]');
-  if (!caixa) return;
-  caixa.innerHTML = ESPECIAIS.map((x) => {
-    const id = `icone:${x.id}`;
-    const livre = selos[x.selo];
-    const extra = x.selo === 'pioneiro'
-      ? (livre ? `Você é o apoiador nº ${selos.posicao}.` : vagas != null ? (vagas ? `Restam <b>${vagas}</b> vagas.` : 'As 100 vagas já foram preenchidas.') : '')
-      : '';
-    return `<div class="pf-especial${livre ? '' : ' travado'}">
-      ${livre ? botao(id) : `<button type="button" class="pf-icone" data-travado="${esc(`${x.regra} Apoie em /apoiar para liberar.`)}" aria-label="${esc(`${x.nome} (bloqueado)`)}">${avatarHtml(id, x.nome, 64)}<span class="pf-cadeado" aria-hidden="true">🔒</span></button>`}
-      <div><b>${esc(x.nome)}</b><p class="muted small">${esc(x.regra)} ${extra}</p></div>
-    </div>`;
-  }).join('') + (selos.apoiador ? '' : '<a class="pf-apoiar-link" href="/apoiar/">♥ Apoiar e liberar os ícones especiais</a>');
+  [selos, vagas] = await Promise.all([platform.meusSelos(), platform.pioneirosVagas()]);
+  const g = el.querySelector('[data-grade]');
+  if (g) g.innerHTML = grade(selos);
 }
 
 function confirmarExclusao() {
