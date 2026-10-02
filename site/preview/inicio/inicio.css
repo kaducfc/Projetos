@@ -1,0 +1,86 @@
+/* PRÉVIA dos itens 4, 5 e 6 (sobre o hub.css publicado). */
+
+/* ---------------------------------------------- 4) informação viva nos cards */
+.hx-live { margin: 2px 0 0; font-size: 13px; color: #c9c2b2; line-height: 1.5; }
+.hx-live .hx-dot { display: inline-block; margin-right: 6px; vertical-align: 1px; }
+.hx-live b { color: var(--text); }
+.hx-live .emblema { width: 18px; height: 18px; vertical-align: -4px; margin-right: 4px; }
+.hx-live.ok { color: #7fd49a; }
+.hx-live.nao { color: var(--muted); }
+.hx-live.novo { color: var(--gold-2); }
+.hx-live .hx-cd { display: block; color: var(--muted); font-size: 12.5px; }
+.hx-live .hx-cd b { font-variant-numeric: tabular-nums; color: #d3ccbc; }
+.hx-sub { color: var(--muted); font-size: 12.5px; }
+.hx-sub b { color: #d3ccbc; }
+.hx-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold-2); box-shadow: 0 0 0 0 rgba(245, 207, 90, 0.6); flex: none; }
+.hx-live.novo .hx-dot { animation: hx-pulso 1.8s ease-out infinite; }
+.hx-live.meio .hx-dot { background: #7d97ff; }
+.hx-dot.dim { background: var(--muted); }
+
+/* ---------------------------------------------- 5) mini painel da ranqueada */
+.rk-painel { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 22px; padding: 20px 22px;
+  background:
+    radial-gradient(ellipse 60% 120% at 0% 0%, rgba(217, 168, 43, 0.16), transparent 70%),
+    linear-gradient(90deg, rgba(30, 25, 13, 0.97), rgba(16, 18, 30, 0.97)) padding-box,
+    linear-gradient(90deg, rgba(245, 207, 90, 0.8), rgba(125, 151, 255, 0.45)) border-box; }
+.rp-main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.rp-titulo { margin: 0; font-family: var(--display); font-weight: 400; font-size: 34px; line-height: 1; color: var(--gold-2); letter-spacing: 0.5px; }
+.rp-fila { display: flex; align-items: center; gap: 4px; overflow-x: auto; padding: 6px 2px 2px; scrollbar-width: none; }
+.rp-elo { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; min-width: 58px; }
+.rp-elo span { font-size: 10px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+.rp-elo .emblema { width: 52px; height: auto; transition: transform 0.2s; }
+.rp-elo .emblema.vazio { filter: grayscale(1) brightness(0.45); opacity: 0.7; }
+.rp-elo.passou span { color: #b5ad9c; }
+.rp-elo.atual span { color: var(--cor); }
+.rp-elo.atual .emblema { transform: scale(1.18); filter: drop-shadow(0 0 10px var(--cor)); animation: hx-brilho 2.6s ease-in-out infinite; }
+.rp-seta { flex: 1; min-width: 8px; height: 2px; margin-bottom: 18px; background: linear-gradient(90deg, rgba(217, 168, 43, 0.5), rgba(217, 168, 43, 0.12)); }
+.rp-status { margin: 2px 0 0; font-size: 14px; color: #d3ccbc; }
+.rp-status b { color: var(--text); }
+.rp-lado { display: flex; flex-direction: column; gap: 8px; border-left: 1px solid rgba(217, 168, 43, 0.25); padding-left: 20px; }
+.rp-lado-tit { margin: 0; font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+.rp-podio { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.rp-top { display: grid; grid-template-columns: 22px 34px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.03); }
+.rp-top b { font-variant-numeric: tabular-nums; color: var(--gold-2); }
+.rp-pos { font-family: var(--display); font-size: 22px; text-align: center; color: var(--muted); }
+.rp-top.p1 .rp-pos { color: #f5cf5a; }
+.rp-top.p2 .rp-pos { color: #c9d2dc; }
+.rp-top.p3 .rp-pos { color: #d08a5a; }
+.rp-nome { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.rp-vazio { color: var(--muted); font-size: 13px; padding: 6px 0; }
+.rp-cta { margin-top: auto; color: var(--gold-2); font-weight: 800; text-decoration: none; font-size: 14px; }
+.rp-cta:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------- 6) microanimações */
+/* Reflexo passando no botão "Jogar" de vez em quando (cada card numa hora). */
+.hx-play { position: relative; overflow: hidden; }
+.hx-play::after { content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent); animation: hx-reflexo 6s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.hx-btn::after { content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent); animation: hx-reflexo 7s ease-in-out 1s infinite; }
+.hx-btn-ghost::after { background: linear-gradient(90deg, transparent, rgba(245, 207, 90, 0.25), transparent); }
+.hx-hero-in > * { animation: hx-sobe 0.6s ease both; }
+.hx-hero-in > :nth-child(2) { animation-delay: 0.08s; }
+.hx-hero-in > :nth-child(3) { animation-delay: 0.16s; }
+.hx-hero-in > :nth-child(4) { animation-delay: 0.24s; }
+.rk-painel { animation: hx-sobe 0.6s ease 0.2s both; }
+
+@keyframes hx-reflexo { 0%, 70% { left: -60%; } 100% { left: 130%; } }
+@keyframes hx-pulso { 0% { box-shadow: 0 0 0 0 rgba(245, 207, 90, 0.6); } 70%, 100% { box-shadow: 0 0 0 8px rgba(245, 207, 90, 0); } }
+@keyframes hx-brilho { 50% { filter: drop-shadow(0 0 18px var(--cor)); } }
+@keyframes hx-sobe { from { opacity: 0; transform: translateY(12px); } }
+@media (prefers-reduced-motion: reduce) {
+  .hx-play::after, .hx-btn::after, .hx-dot, .rp-elo.atual .emblema, .hx-hero-in > *, .rk-painel { animation: none !important; }
+}
+
+@media (max-width: 760px) {
+  .rk-painel { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .rk-painel { padding: 18px 14px; }
+  .rp-elo { min-width: 0; flex: 1; }
+  .rp-elo .emblema { width: 36px; }
+  .rp-elo span { font-size: 8px; letter-spacing: 0.2px; }
+  .rp-seta { display: none; }
+  .rp-fila { gap: 2px; overflow: visible; }
+  .rp-lado { border-left: 0; padding-left: 0; border-top: 1px solid rgba(217, 168, 43, 0.25); padding-top: 14px; }
+}
