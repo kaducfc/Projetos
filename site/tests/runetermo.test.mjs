@@ -54,3 +54,10 @@ test('teclado e texto para compartilhar', () => {
   const t = shareText({ name: 'Jogo', number: 5, guesses: ['TURMA', 'TERMO'], answer: 'TERMO', won: true });
   assert.equal(t, 'Jogo #5 2/6\n\n🟩⬛🟩🟩⬛\n🟩🟩🟩🟩🟩');
 });
+
+test('runetermo: respostas e dicionário só com 5 a 7 letras, sem mudar os primeiros dias', async () => {
+  const { readFileSync } = await import('node:fs');
+  const dados = JSON.parse(readFileSync(new URL('../jogos/runetermo/dados/palavras.json', import.meta.url), 'utf8'));
+  assert.ok(dados.respostas.every((r) => r.chave.length >= 5 && r.chave.length <= 7));
+  assert.deepEqual(dados.respostas.slice(0, 8).map((r) => r.chave), ['ELISE', 'DARIUS', 'ZHONYA', 'ORIANNA', 'AURORA', 'LIANDRY', 'GROMP', 'XAYAH']);
+});

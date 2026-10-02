@@ -26,7 +26,8 @@ const accents = new Map(); // chave → forma com acento (para mostrar nas peça
 let today = dayIndex();
 let answer = null; // { palavra, chave, categoria }
 let save = { v: 1, day: today, guesses: [], history: {} };
-let input = [];
+let input = []; // letras da linha atual (pode ter buracos: o jogador escolhe o quadrado)
+let cursor = 0; // quadrado selecionado na linha atual
 let busy = false;
 let modal = null;
 let timer = null;
@@ -54,6 +55,7 @@ function loadSave() {
   save = { v: 1, day: today, guesses: [], history: {}, ...(s && s.v === 1 ? s : {}) };
   if (save.day !== today) save = { ...save, day: today, guesses: [], maxTries: undefined };
   input = [];
+  cursor = 0;
 }
 
 const persist = (urgent = false) => platform.writeSave(GAME_ID, save, { urgent });
@@ -88,7 +90,7 @@ function render({ reveal = false, shake = false, win = false } = {}) {
         `<div class="tile ${res[i]}" style="--i:${i}" role="cell" aria-label="${ch}, ${res[i] === 'ok' ? 'lugar certo' : res[i] === 'near' ? 'outro lugar' : 'não tem'}">${ch}</div>`).join('')}</div>`);
     } else if (r === save.guesses.length && !finished()) {
       rows.push(`<div class="row current${shake ? ' shake' : ''}" role="row">${Array.from({ length: n }, (_, i) =>
-        `<div class="tile${input[i] ? ' filled' : ''}${i === input.length ? ' cursor' : ''}" role="cell">${input[i] || ''}</div>`).join('')}</div>`);
+        `<button type="button" class="tile${input[i] ? ' filled' : ''}${i === cursor ? ' cursor' : ''}" data-pos="${i}" role="gridcell" aria-label="Quadrado ${i + 1}${input[i] ? `: ${input[i]}` : ', vazio'}${i === cursor ? ' (selecionado)' : ''}">${input[i] || ''}</button>`).join('')}</div>`);
     } else {
       rows.push(`<div class="row future" role="row">${'<div class="tile" role="cell"></div>'.repeat(n)}</div>`);
     }
@@ -130,27 +132,40 @@ function toast(msg, ms = 1600) {
 
 // ------------------------------------------------------------------ jogadas
 
+// O jogador escreve no quadrado selecionado (clicando num quadrado ou com
+// as setas ele escolhe qual); depois o cursor vai para o próximo vazio.
 function type(ch) {
   if (busy || finished() || modal) return;
-  if (input.length < answer.chave.length) {
-    input.push(ch);
-    render();
-  }
+  const n = answer.chave.length;
+  input[cursor] = ch;
+  const prox = [...Array(n).keys()].map((k) => (cursor + 1 + k) % n).find((k) => !input[k]);
+  cursor = prox ?? Math.min(cursor + 1, n - 1);
+  render();
 }
 
 function erase() {
   if (busy || finished() || modal) return;
-  input.pop();
+  if (input[cursor]) input[cursor] = undefined;
+  else if (cursor > 0) {
+    cursor--;
+    input[cursor] = undefined;
+  }
+  render();
+}
+
+function moveCursor(pos) {
+  if (busy || finished() || modal) return;
+  cursor = Math.max(0, Math.min(answer.chave.length - 1, pos));
   render();
 }
 
 function submit() {
   if (busy || finished() || modal) return;
   const n = answer.chave.length;
-  const guess = input.join('');
+  const guess = Array.from({ length: n }, (_, i) => input[i] || '').join('');
   if (guess.length < n) {
     render({ shake: true });
-    toast(`A palavra tem ${n} letras`);
+    toast(`Preencha os ${n} quadrados`);
     return;
   }
   if (!save.guesses.length) {
@@ -159,6 +174,7 @@ function submit() {
   }
   save.guesses.push(guess);
   input = [];
+  cursor = 0;
   const done = finished();
   if (done) {
     save.history = { ...save.history, [today]: { tries: save.guesses.length, won: won() } };
@@ -227,7 +243,8 @@ function openHelp() {
     <h2>Como jogar</h2>
     <p>Descubra a palavra do dia em ${MAX_TRIES} tentativas. Todas as respostas são nomes do universo de League of Legends:
       campeões, regiões e lugares de Runeterra, itens, monstros do mapa e personagens da lore.</p>
-    <p>A palavra do dia pode ter de 5 a 10 letras. Depois de cada tentativa, as peças mostram o quão perto você está.</p>
+    <p>A palavra do dia pode ter de 5 a 7 letras. Depois de cada tentativa, as peças mostram o quão perto você está.</p>
+    <p>Toque num quadrado para escolher onde escrever: dá para preencher primeiro as letras que você já sabe, em qualquer posição.</p>
     ${exampleRow('NOXUS', 0, 'ok')}
     <p>A letra <b>N</b> está na palavra e no lugar certo.</p>
     ${exampleRow('BRAUM', 2, 'near')}
@@ -308,6 +325,11 @@ function newDay() {
 }
 
 app.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-pos]');
+  if (t) {
+    moveCursor(Number(t.dataset.pos));
+    return;
+  }
   const k = e.target.closest('[data-key]');
   if (k) {
     const v = k.dataset.key;
@@ -332,6 +354,9 @@ document.addEventListener('keydown', (e) => {
   if (!answer) return;
   if (e.key === 'Enter') { e.preventDefault(); submit(); }
   else if (e.key === 'Backspace') erase();
+  else if (e.key === 'Delete') { if (input[cursor]) { input[cursor] = undefined; render(); } }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); moveCursor(cursor - 1); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); moveCursor(cursor + 1); }
   else {
     const ch = norm(e.key);
     if (ch.length === 1 && e.key.length === 1) type(ch);

@@ -5,7 +5,7 @@
   continuam na lista mantêm a ordem; as retiradas saem da fila e as novas
   entram embaralhadas no fim.
 - dados/dicionario.txt: palavras aceitas como tentativa (português comum,
-  5 a 10 letras), além das palavras do jogo.
+  5 a 7 letras), além das palavras do jogo.
 
 Uso: python3 scripts/gerar.py [caminho/words.json do pacote an-array-of-portuguese-words]
 O dicionário só é refeito quando o caminho do words.json é informado
@@ -15,7 +15,7 @@ import json, os, random, sys, unicodedata
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 DADOS = os.path.join(AQUI, '..', 'dados')
-MIN, MAX = 5, 10
+MIN, MAX = 5, 7  # palavras maiores ficam grandes demais na tela
 TOP_FREQUENTES = 110_000  # palavras mais comuns da lista (o fim tem muito ruído)
 
 # Termos do universo aceitos como tentativa, mas que não viram resposta.
@@ -35,7 +35,8 @@ def ler_palavras():
             continue
         nome, cat = [x.strip() for x in linha.split('|')]
         k = chave(nome)
-        assert MIN <= len(k) <= MAX, f'{nome}: {len(k)} letras'
+        if not (MIN <= len(k) <= MAX):
+            continue  # fora do tamanho do jogo (5 a 7 letras): fica de fora das respostas
         out.append({'palavra': nome, 'chave': k, 'categoria': cat})
     chaves = [p['chave'] for p in out]
     dup = {k for k in chaves if chaves.count(k) > 1}
