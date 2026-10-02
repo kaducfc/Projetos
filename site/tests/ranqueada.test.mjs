@@ -109,3 +109,24 @@ test('ranqueada: ingresso do dia em que a carreira começou', async () => {
   const main = readFileSync(new URL('../jogos/carreira-no-rift/js/main.js', import.meta.url), 'utf8');
   assert.match(main, /ranked: state\.ranked\?\.token/);
 });
+
+test('vigilância da ranqueada: só administrador anula partida e tira jogador', async () => {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await platform.signUp({ email: 'v@example.com', password: 'segredo123', username: 'Vigia' });
+  await assert.rejects(platform.adminRanked(7), /não tem permissão/);
+  sb.admins.add(sb.db.site_profiles[0].id);
+  sb.db.site_ranked_partidas = [{ id: 1, username: 'Vigia', score: 2500, criado: new Date().toISOString() }];
+  assert.equal((await platform.adminRanked(7)).partidas.length, 1);
+  await platform.adminAnularPartida(1);
+  assert.equal((await platform.adminRanked(7)).partidas.length, 0);
+  await platform.adminBanirRanked('vigia', { motivo: 'teste' });
+  assert.equal((await platform.adminRanked(7)).banidos[0].username, 'Vigia');
+  await platform.adminBanirRanked('Vigia', { banir: false });
+  assert.equal((await platform.adminRanked(7)).banidos.length, 0);
+  await assert.rejects(platform.adminBanirRanked('ninguem'), /Não existe conta/);
+  const sql = readFileSync(new URL('../supabase/migrations/0013_ranqueada_seguranca.sql', import.meta.url), 'utf8');
+  assert.match(sql, /i\.usado_em is null/); // vaga usada uma vez só, para sempre
+});

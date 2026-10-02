@@ -226,6 +226,25 @@ export function createFakeSupabase() {
       if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };
       return { data: { dias: args.days, eventos: db.site_events.length }, error: null };
     }
+    if (name === 'site_admin_ranked') {
+      if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };
+      return { data: { dias: args.days, partidas: db.site_ranked_partidas || [], banidos: db.site_ranked_banidos || [] }, error: null };
+    }
+    if (name === 'site_admin_ranked_anular' || name === 'site_admin_ranked_banir') {
+      if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };
+      if (name === 'site_admin_ranked_anular') {
+        db.site_ranked_partidas = (db.site_ranked_partidas || []).filter((x) => x.id !== args.partida);
+        return { data: { anuladas: 1 }, error: null };
+      }
+      const p = db.site_profiles.find((x) => x.username.toLowerCase() === args.nome.toLowerCase());
+      if (!p) return { data: null, error: { message: 'user_not_found' } };
+      db.site_ranked_banidos = (db.site_ranked_banidos || []).filter((b) => b.username !== p.username);
+      if (args.banir) {
+        db.site_ranked_banidos.push({ username: p.username, motivo: args.motivo, criado: new Date().toISOString() });
+        db.site_ranked_partidas = (db.site_ranked_partidas || []).filter((x) => x.username !== p.username);
+      }
+      return { data: { username: args.nome, banido: args.banir }, error: null };
+    }
     // Painel de apoio simplificado (mesmo formato do 0009_painel_apoio.sql).
     if (name === 'site_admin_apoios') {
       if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };

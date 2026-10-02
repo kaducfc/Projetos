@@ -523,7 +523,7 @@ export async function rankedIniciar() {
     return null;
   }
   // token null: as 3 carreiras ranqueadas de hoje já foram começadas.
-  return { token: data.token ?? null, dia: String(data.dia).slice(0, 10), numero: data.numero ?? null, restantes: data.restantes ?? null, limite: data.limite ?? null };
+  return { token: data.token ?? null, dia: String(data.dia).slice(0, 10), numero: data.numero ?? null, restantes: data.restantes ?? null, limite: data.limite ?? null, banido: Boolean(data.banido) };
 }
 
 export async function rankedStatus() {
@@ -621,6 +621,36 @@ export async function adminApoios(days = 30) {
     if (/site_admin_apoios/.test(error.message) || error.code === 'PGRST202') throw new Error('Rode o arquivo 0009_painel_apoio.sql no Supabase para ver as doações aqui.');
     throw friendly(error);
   }
+  return data;
+}
+
+// Ranqueada no painel: carreiras com sinais de suspeita, anular partida e
+// tirar/devolver jogador (só administradores; ver 0013_ranqueada_seguranca.sql).
+function erroAdminRanked(error) {
+  if (/not_admin/.test(error.message)) return new Error('Esta conta não tem permissão para isso.');
+  if (/user_not_found/.test(error.message)) return new Error('Não existe conta com esse nome de usuário.');
+  if (/site_admin_ranked/.test(error.message) || error.code === 'PGRST202') return new Error('Rode o arquivo 0013_ranqueada_seguranca.sql no Supabase para ver isto.');
+  return friendly(error);
+}
+export async function adminRanked(days = 7) {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_ranked', { days });
+  if (error) throw erroAdminRanked(error);
+  return data;
+}
+export async function adminAnularPartida(partida) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_ranked_anular', { partida });
+  if (error) throw erroAdminRanked(error);
+  return data;
+}
+export async function adminBanirRanked(nome, { motivo = null, banir = true } = {}) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_ranked_banir', { nome, motivo, banir });
+  if (error) throw erroAdminRanked(error);
   return data;
 }
 

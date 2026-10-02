@@ -48,6 +48,10 @@ export function avisoComeco(r) {
     mostrar('Não deu para registrar o começo desta carreira na <b>ranqueada</b> (sem conexão com o servidor). Ela não vai valer; se quiser, recarregue a página e crie o jogador de novo.', 12000);
     return;
   }
+  if (r.banido) {
+    mostrar('Sua conta está <b>fora da ranqueada</b>. Você pode jogar normalmente, mas as carreiras não valem para o ranking. Dúvidas: riftarcadeoficial@gmail.com', 12000);
+    return;
+  }
   if (!r.token) {
     mostrar(`Esta carreira <b>não vale para a ranqueada</b>: as ${r.limite ?? PARTIDAS_POR_DIA} carreiras ranqueadas de hoje já foram começadas. Pode jogar normalmente! ${link}`, 9000);
     return;

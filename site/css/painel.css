@@ -105,3 +105,17 @@ textarea.p-log { width: 100%; resize: vertical; display: block; }
 @media (max-width: 560px) {
   .ap-filtros .p-label, .ap-filtros .p-label input, .ap-filtros .p-label input[type="number"], .ap-filtros .p-label select { width: 100%; max-width: none; }
 }
+
+/* Ranqueada: vigilância */
+.rk-sinal { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 800; white-space: nowrap; margin: 1px 0; }
+.rk-sinal.rk-rapida { background: rgba(214, 170, 60, 0.18); color: var(--gold-2); }
+.rk-sinal.rk-naobate { background: rgba(184, 69, 60, 0.22); color: #e58a80; }
+.rk-sinal.rk-alta { background: rgba(110, 150, 220, 0.18); color: #9fbbec; }
+.rk-alerta { color: #e58a80; }
+.p-mini { background: transparent; color: var(--gold-2); border: 1px solid var(--line-2); border-radius: 4px; padding: 4px 10px; font: 700 12px var(--sans); cursor: pointer; white-space: nowrap; }
+.p-mini:hover { border-color: var(--gold); }
+.p-mini:disabled { opacity: 0.5; cursor: default; }
+.p-mini-danger { color: #e58a80; }
+.p-mini-danger:hover { border-color: #b8453c; }
+.p-check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #d3ccbc; padding-bottom: 9px; }
+.p-table td.n { white-space: nowrap; }

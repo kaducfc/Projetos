@@ -169,6 +169,7 @@ function render(st) {
 
   <section class="p-section">
     <h2>Ranqueada</h2>
+    ${secaoVigia(st.dias)}
     <div class="card p-danger">
       <h3>Zerar a ranqueada</h3>
       <p class="c-sub">Para o lançamento oficial (ou uma nova temporada): todo mundo volta para o zero, sem elo e sem pontos nos rankings. O histórico de partidas de cada conta continua. O primeiro ciclo de 3 dias começa hoje.</p>
@@ -182,6 +183,123 @@ function render(st) {
   ${secaoApoio(st.dias)}
   </section>`;
 }
+
+// ------------------------------------------------------------ ranqueada: vigia
+
+// Sinais de suspeita numa partida ranqueada (os limites dá para ajustar na tela).
+const NOTA_ALTA = 1400; // ~top 0,5% das carreiras simuladas
+let rk = null; // resposta de platform.adminRanked(days)
+let rkErro = '';
+const rkFiltro = { so: true, min: 3, q: '' };
+
+function sinais(x) {
+  const out = [];
+  if (x.duracao_s != null && x.duracao_s < rkFiltro.min * 60) out.push(['rapida', 'Rápida demais']);
+  if (x.esperado_min != null && (x.score < x.esperado_min || x.score > x.esperado_max)) out.push(['naobate', 'Não bate com os troféus']);
+  if (x.score >= NOTA_ALTA) out.push(['alta', 'Nota muito alta']);
+  return out;
+}
+const duracao = (s) => (s == null ? '—' : `${Math.floor(s / 60)}min ${String(s % 60).padStart(2, '0')}s`);
+
+function rkTabela() {
+  const q = rkFiltro.q.trim().toLowerCase();
+  const lista = (rk?.partidas || []).map((x) => ({ ...x, sinais: sinais(x) }))
+    .filter((x) => (!rkFiltro.so || x.sinais.length) && (!q || (x.username || '').toLowerCase().includes(q)));
+  if (!lista.length) return `<p class="p-empty">${rkFiltro.so ? 'Nenhuma partida com sinais de suspeita no período.' : 'Nenhuma partida ranqueada no período.'}</p>`;
+  return `<div class="table-wrap"><table class="p-table">
+    <thead><tr><th>Quando</th><th>Usuário</th><th class="n">Nota</th><th class="n">Duração</th><th class="n">Faixa possível</th><th>Sinais</th><th></th></tr></thead>
+    <tbody>${lista.slice(0, 300).map((x) => `<tr>
+      <td>${esc(dataHora(x.criado))}</td>
+      <td>${esc(x.username)}${x.ovr != null ? ` <small>OVR ${x.ovr} · ${num(x.temporadas)} temp.</small>` : ' <small>sem detalhes</small>'}</td>
+      <td class="n"><b>${num(x.score)}</b></td>
+      <td class="n">${duracao(x.duracao_s)}</td>
+      <td class="n">${x.esperado_min != null ? `${num(x.esperado_min)}–${num(x.esperado_max)}` : '—'}</td>
+      <td>${x.sinais.map(([c, t]) => `<span class="rk-sinal rk-${c}">${t}</span>`).join(' ') || '<small>—</small>'}</td>
+      <td><button type="button" class="p-mini" data-rk-anular="${x.id}" data-rk-info="${esc(`${x.username} · ${num(x.score)} pontos`)}">Anular</button></td></tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function rkJogadores() {
+  const por = new Map();
+  for (const x of rk?.partidas || []) {
+    const j = por.get(x.username) || { nome: x.username, n: 0, soma: 0, maior: 0, sinais: 0 };
+    j.n++; j.soma += x.score; j.maior = Math.max(j.maior, x.score); j.sinais += sinais(x).length ? 1 : 0;
+    por.set(x.username, j);
+  }
+  const lista = [...por.values()].sort((a, b) => b.sinais - a.sinais || b.soma - a.soma).slice(0, 30);
+  if (!lista.length) return '<p class="p-empty">Ninguém jogou ranqueada no período.</p>';
+  return `<div class="table-wrap"><table class="p-table">
+    <thead><tr><th>Usuário</th><th class="n">Partidas</th><th class="n">Pontos</th><th class="n">Maior nota</th><th class="n">Com sinais</th><th></th></tr></thead>
+    <tbody>${lista.map((j) => `<tr><td>${esc(j.nome)}</td><td class="n">${num(j.n)}</td><td class="n">${num(j.soma)}</td><td class="n">${num(j.maior)}</td>
+      <td class="n">${j.sinais ? `<b class="rk-alerta">${num(j.sinais)}</b>` : '0'}</td>
+      <td><button type="button" class="p-mini p-mini-danger" data-rk-banir="${esc(j.nome)}">Tirar da ranqueada</button></td></tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function secaoVigia(dias) {
+  if (!rk) return `<div class="card"><h3>Vigilância</h3><p class="p-note">${esc(rkErro || 'Carregando…')}</p></div>`;
+  const ps = rk.partidas || [];
+  const suspeitas = ps.filter((x) => sinais(x).length).length;
+  return `<div class="tiles">
+      ${tile('Partidas ranqueadas', num(ps.length), `últimos ${dias} dias`)}
+      ${tile('Jogadores', num(new Set(ps.map((x) => x.username)).size))}
+      ${tile('Com sinais de suspeita', num(suspeitas), ps.length ? `${Math.round((suspeitas / ps.length) * 100)}% das partidas` : '')}
+      ${tile('Fora da ranqueada', num((rk.banidos || []).length), 'jogadores tirados')}
+    </div>
+    <div class="card"><h3>Partidas ranqueadas</h3>
+      <p class="c-sub">Sinais: <b>rápida demais</b> (do começo ao fim da carreira, pelo relógio do servidor), <b>não bate com os troféus</b> (a nota está fora da faixa possível para o OVR, troféus e temporadas informados; nenhuma carreira honesta simulada ficou fora) e <b>nota muito alta</b> (${num(NOTA_ALTA)}+, raro mas possível). Um sinal sozinho não prova trapaça; confira antes de agir.</p>
+      <div class="ap-filtros">
+        <label class="p-check"><input type="checkbox" data-rk-f="so"${rkFiltro.so ? ' checked' : ''} /> Só com sinais</label>
+        <label class="p-label">Rápida se menos de (min) <input type="number" min="1" max="60" step="1" data-rk-f="min" value="${rkFiltro.min}" /></label>
+        <label class="p-label">Usuário <input type="search" data-rk-f="q" value="${esc(rkFiltro.q)}" autocomplete="off" /></label>
+      </div>
+      <div data-rk-lista>${rkTabela()}</div>
+    </div>
+    <div class="card"><h3>Jogadores do período</h3><p class="c-sub">Quem tem mais partidas com sinais aparece primeiro. "Tirar da ranqueada" apaga as partidas ranqueadas e o elo do jogador e as próximas carreiras dele não valem (dá para devolver depois).</p>
+      <div data-rk-jog>${rkJogadores()}</div></div>
+    ${(rk.banidos || []).length ? `<div class="card"><h3>Fora da ranqueada</h3><div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Usuário</th><th>Motivo</th><th>Desde</th><th></th></tr></thead>
+      <tbody>${rk.banidos.map((b) => `<tr><td>${esc(b.username)}</td><td>${esc(b.motivo || '—')}</td><td>${esc(dataCurta(b.criado))}</td>
+        <td><button type="button" class="p-mini" data-rk-devolver="${esc(b.username)}">Devolver</button></td></tr>`).join('')}</tbody>
+    </table></div></div>` : ''}`;
+}
+
+body.addEventListener('input', (e) => {
+  const f = e.target.closest('[data-rk-f]');
+  if (!f) return;
+  const k = f.dataset.rkF;
+  rkFiltro[k] = k === 'so' ? f.checked : k === 'min' ? Math.max(1, Number(f.value) || 3) : f.value;
+  body.querySelector('[data-rk-lista]').innerHTML = rkTabela();
+  body.querySelector('[data-rk-jog]').innerHTML = rkJogadores();
+});
+body.addEventListener('click', async (e) => {
+  const an = e.target.closest('[data-rk-anular]');
+  const ban = e.target.closest('[data-rk-banir]');
+  const dev = e.target.closest('[data-rk-devolver]');
+  try {
+    if (an) {
+      if (!window.confirm(`Anular esta partida ranqueada (${an.dataset.rkInfo})? Ela sai da nota do dia e do ranking.`)) return;
+      an.disabled = true;
+      await platform.adminAnularPartida(Number(an.dataset.rkAnular));
+      await load();
+    } else if (ban) {
+      const nome = ban.dataset.rkBanir;
+      const motivo = window.prompt(`Tirar ${nome} da ranqueada? As partidas ranqueadas e o elo dele serão apagados.\n\nMotivo (opcional, só você vê):`, '');
+      if (motivo === null) return;
+      ban.disabled = true;
+      await platform.adminBanirRanked(nome, { motivo });
+      await load();
+    } else if (dev) {
+      if (!window.confirm(`Devolver ${dev.dataset.rkDevolver} para a ranqueada? As próximas carreiras dele voltam a valer (as partidas apagadas não voltam).`)) return;
+      dev.disabled = true;
+      await platform.adminBanirRanked(dev.dataset.rkDevolver, { banir: false });
+      await load();
+    }
+  } catch (err) {
+    window.alert(err.message);
+    [an, ban, dev].forEach((b) => { if (b) b.disabled = false; });
+  }
+});
 
 // ------------------------------------------------------------------ apoio
 
@@ -334,11 +452,14 @@ async function load() {
   range.querySelectorAll('button').forEach((b) => b.classList.toggle('on', Number(b.dataset.days) === days));
   body.innerHTML = '<p class="muted">Carregando…</p>';
   try {
-    const [st, apoios] = await Promise.all([
-      platform.adminStats(days),
-      platform.adminApoios(days).then((r) => ({ r }), (err) => ({ err })),
+    // Apoio e vigilância podem faltar (SQL ainda não rodado) sem travar o resto.
+    const opcional = (pr) => pr.then((r) => ({ r }), (err) => ({ err }));
+    const [st, apoios, ranked] = await Promise.all([
+      platform.adminStats(days), opcional(platform.adminApoios(days)), opcional(platform.adminRanked(days)),
     ]);
     if (seq !== loadSeq) return;
+    rk = ranked.r || null;
+    rkErro = ranked.err?.message || '';
     ap = apoios.r || null;
     apErro = apoios.err?.message || '';
     render(st);
