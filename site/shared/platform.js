@@ -11,7 +11,7 @@
 //   requestPasswordReset(email) / updatePassword(senha) → "Esqueci minha senha"
 //   signInWithGoogle() / claimUsername(nome) → login com Google + escolha do nome
 //   track(tipo, gameId, dados)      → estatística anônima (início/fim de partida)
-//   isAdmin() / adminStats(dias)    → painel do administrador
+//   isAdmin() / adminStats(dias) / adminApoios(dias) → painel do administrador
 //   changeUsername / setAvatar / changePassword / deleteAccount → página de perfil
 //   rankedStatus() / ranking(periodo) → ranqueada da Carreira no Rift (elo em getUser().elo)
 //
@@ -589,6 +589,19 @@ export async function adminStats(days = 30) {
   if (!sb) throw unavailable();
   const { data, error } = await sb.rpc('site_admin_stats', { days });
   if (error) throw new Error(/not_admin/.test(error.message) ? 'Esta conta não tem acesso ao painel.' : friendly(error).message);
+  return data;
+}
+
+// Doações para o painel (só administradores; ver 0009_painel_apoio.sql).
+export async function adminApoios(days = 30) {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_apoios', { days });
+  if (error) {
+    if (/not_admin/.test(error.message)) throw new Error('Esta conta não tem acesso ao painel.');
+    if (/site_admin_apoios/.test(error.message) || error.code === 'PGRST202') throw new Error('Rode o arquivo 0009_painel_apoio.sql no Supabase para ver as doações aqui.');
+    throw friendly(error);
+  }
   return data;
 }
 

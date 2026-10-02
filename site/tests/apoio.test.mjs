@@ -29,3 +29,28 @@ test('apoio no site: link de pagamento e efeito depois que o pagamento é aprova
   await platform.recordResult('carreira-no-rift', { score: 800 });
   assert.equal((await platform.ranking('diario')).lista[0].apoiador, true);
 });
+
+test('painel de apoio: só administrador vê quem doou, quanto e o total', async () => {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await platform.signUp({ email: 'p@example.com', password: 'segredo123', username: 'Doador' });
+  await assert.rejects(platform.adminApoios(30), /não tem acesso/);
+  const uid = sb.db.site_profiles[0].id;
+  const agora = new Date().toISOString();
+  sb.db.site_apoios.push(
+    { id: 'a1', user_id: uid, valor: 10, valor_pago: 10, status: 'aprovado', origem: 'mercadopago', criado: agora },
+    { id: 'a2', user_id: uid, valor: 50, valor_pago: null, status: 'pendente', origem: 'mercadopago', criado: agora },
+  );
+  sb.admins.add(uid);
+  const st = await platform.adminApoios(7);
+  assert.equal(st.total.arrecadado, 10);
+  assert.equal(st.periodo.status.pendente, 1);
+  assert.equal(st.top[0].username, 'Doador');
+  assert.equal(st.lista.length, 2);
+  assert.equal(st.por_dia.length, 7);
+  const sql = readFileSync(new URL('../supabase/migrations/0009_painel_apoio.sql', import.meta.url), 'utf8');
+  assert.match(sql, /if not coalesce\(site_is_admin\(\), false\) then\s+raise exception 'not_admin'/);
+  assert.match(sql, /revoke all on function public\.site_admin_apoios\(int\) from public, anon/);
+});

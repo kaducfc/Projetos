@@ -89,3 +89,19 @@ textarea.p-log { width: 100%; resize: vertical; display: block; }
 .p-label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #d3ccbc; }
 .p-label input { max-width: 220px; padding: 8px 10px; background: #0c0b09; color: var(--text); border: 1px solid var(--line-2); border-radius: 4px; font: 700 14px var(--sans); }
 .p-btn-danger { background: #b8453c; color: #fff; align-self: flex-start; }
+
+/* Apoio: filtros, situação das doações e botão secundário */
+.p-label select { max-width: 220px; padding: 8px 10px; background: #0c0b09; color: var(--text); border: 1px solid var(--line-2); border-radius: 4px; font: 700 14px var(--sans); }
+.p-btn-ghost { background: transparent; color: var(--gold-2); border: 1px solid var(--line-2); align-self: flex-start; }
+.p-btn-ghost:hover { border-color: var(--gold); }
+.ap-filtros { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
+.ap-filtros .p-label input { width: 180px; }
+.ap-filtros .p-label input[type="number"] { width: 120px; }
+.ap-st { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 800; white-space: nowrap; background: rgba(155, 147, 131, 0.16); color: #d3ccbc; }
+.ap-st.ap-aprovado { background: rgba(76, 175, 106, 0.18); color: #7fd49a; }
+.ap-st.ap-pendente { background: rgba(214, 170, 60, 0.18); color: var(--gold-2); }
+.ap-st.ap-estornado, .ap-st.ap-recusado { background: rgba(184, 69, 60, 0.2); color: #e58a80; }
+.ap-tabela td { white-space: nowrap; }
+@media (max-width: 560px) {
+  .ap-filtros .p-label, .ap-filtros .p-label input, .ap-filtros .p-label input[type="number"], .ap-filtros .p-label select { width: 100%; max-width: none; }
+}

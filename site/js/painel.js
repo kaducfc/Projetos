@@ -1,4 +1,4 @@
-// Painel do administrador: acessos do site e estatísticas dos jogos.
+// Painel do administrador: acessos do site, estatísticas dos jogos e apoios.
 // Os números vêm da função site_admin_stats do Supabase, que só responde
 // para contas cadastradas em site_admins.
 import * as platform from '../shared/platform.js';
@@ -25,6 +25,9 @@ const dia = (iso) => {
   const [y, m, d] = iso.split('-');
   return `${d}/${m}`;
 };
+const reais = (n) => (n == null ? '—' : Number(n).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
+const dataHora = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+const dataCurta = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
 const diaLongo = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
 
 const roleName = (id) => Object.values(ROLES).find((r) => r.id === id || r.short?.toLowerCase() === id)?.name || id;
@@ -36,32 +39,32 @@ function tile(label, value, sub = '') {
 }
 
 // Colunas por dia (uma série só: o título diz o que é, sem legenda).
-function columns(rows, key, unit) {
-  const max = Math.max(1, ...rows.map((r) => r[key]));
-  const total = rows.reduce((s, r) => s + r[key], 0);
+function columns(rows, key, unit, fmt = num) {
+  const max = Math.max(1, ...rows.map((r) => Number(r[key])));
+  const total = rows.reduce((s, r) => s + Number(r[key]), 0);
   const cols = rows.map((r) => {
-    const v = r[key];
+    const v = Number(r[key]);
     const h = v ? Math.max(2, (v / max) * 100) : 0;
-    return `<div class="col${v ? '' : ' zero'}" data-tip="${esc(diaLongo(r.dia))}: <b>${num(v)}</b> ${unit}"><i style="height:${h}%"></i></div>`;
+    return `<div class="col${v ? '' : ' zero'}" data-tip="${esc(diaLongo(r.dia))}: <b>${fmt(v)}</b> ${unit}"><i style="height:${h}%"></i></div>`;
   }).join('');
   const mid = rows[Math.floor(rows.length / 2)];
   return {
     total,
-    html: `<div class="cols" role="img" aria-label="${esc(`${num(total)} ${unit} no período`)}">
-      <span class="max">${num(max)}</span><span class="gridline"></span>${cols}</div>
+    html: `<div class="cols" role="img" aria-label="${esc(`${fmt(total)} ${unit} no período`)}">
+      <span class="max">${fmt(max)}</span><span class="gridline"></span>${cols}</div>
       <div class="cols-x"><span>${dia(rows[0].dia)}</span>${rows.length > 2 ? `<span>${dia(mid.dia)}</span>` : ''}<span>${dia(rows.at(-1).dia)}</span></div>`,
   };
 }
 
 // Distribuição em barras horizontais, da maior para a menor.
-function hbars(entries, nameOf = (x) => x, { sort = true } = {}) {
+function hbars(entries, nameOf = (x) => x, { sort = true, fmt = num } = {}) {
   const list = sort ? entries.slice().sort((a, b) => b[1] - a[1]) : entries;
   const total = list.reduce((s, [, n]) => s + n, 0);
   if (!total) return '<p class="p-empty">Sem dados no período.</p>';
   const max = Math.max(...list.map(([, n]) => n));
   return `<div class="hbars">${list.map(([k, n]) => `
     <div class="hbar"><span class="h-label">${esc(nameOf(k))}</span>
-      <span class="h-val">${num(n)} <small>${Math.round((n / total) * 100)}%</small></span>
+      <span class="h-val">${fmt(n)} <small>${Math.round((n / total) * 100)}%</small></span>
       <span class="h-track"><i class="h-fill" style="width:${(n / max) * 100}%"></i></span></div>`).join('')}</div>`;
 }
 
@@ -176,18 +179,143 @@ function render(st) {
     </div>
   </section>
 
-  <section class="p-section">
-    <h2>Apoio</h2>
-    <div class="card">
+  ${secaoApoio(st.dias)}
+  </section>`;
+}
+
+// ------------------------------------------------------------------ apoio
+
+const AP_STATUS = { aprovado: 'Aprovado', pendente: 'Aguardando', recusado: 'Recusado', cancelado: 'Cancelado', estornado: 'Estornado' };
+const AP_ORIGEM = { mercadopago: 'Mercado Pago', manual: 'Registrado à mão' };
+let ap = null; // resposta de platform.adminApoios(days)
+let apErro = '';
+const apFiltro = { status: '', origem: '', q: '', min: '', limite: 50 };
+
+function apFiltrados() {
+  const q = apFiltro.q.trim().toLowerCase();
+  const min = Number(apFiltro.min) || 0;
+  return (ap?.lista || []).filter((a) => (!apFiltro.status || a.status === apFiltro.status)
+    && (!apFiltro.origem || a.origem === apFiltro.origem)
+    && (!q || (a.username || '').toLowerCase().includes(q) || String(a.mp_payment_id || '').includes(q))
+    && Number(a.valor_pago ?? a.valor) >= min);
+}
+
+function apLista() {
+  const lista = apFiltrados();
+  if (!lista.length) return '<p class="p-empty">Nenhuma doação com esses filtros.</p>';
+  const aprovadas = lista.filter((a) => a.status === 'aprovado');
+  const soma = aprovadas.reduce((t, a) => t + Number(a.valor_pago ?? a.valor), 0);
+  const vis = lista.slice(0, apFiltro.limite);
+  return `<p class="p-note">${num(lista.length)} ${lista.length === 1 ? 'doação' : 'doações'} · ${num(aprovadas.length)} aprovadas somando <b>${reais(soma)}</b></p>
+    <div class="table-wrap"><table class="p-table ap-tabela">
+      <thead><tr><th>Quando</th><th>Usuário</th><th class="n">Valor</th><th>Situação</th><th>Origem</th><th>Pagamento MP</th></tr></thead>
+      <tbody>${vis.map((a) => `<tr>
+        <td>${esc(dataHora(a.criado))}</td>
+        <td>${a.username ? esc(a.username) : '<small>conta apagada</small>'}</td>
+        <td class="n">${reais(a.valor_pago ?? a.valor)}</td>
+        <td><span class="ap-st ap-${esc(a.status)}">${esc(AP_STATUS[a.status] || a.status)}</span></td>
+        <td>${esc(AP_ORIGEM[a.origem] || a.origem)}</td>
+        <td>${a.mp_payment_id ? `<small>${esc(a.mp_payment_id)}</small>` : '<small>—</small>'}</td></tr>`).join('')}</tbody>
+    </table></div>
+    ${lista.length > vis.length ? `<button type="button" class="p-btn p-btn-ghost" data-ap-mais>Mostrar mais (${num(lista.length - vis.length)} restantes)</button>` : ''}`;
+}
+
+function secaoApoio(dias) {
+  const registrar = `<div class="card">
       <h3>Registrar apoio feito por fora</h3>
-      <p class="c-sub">Para quem apoiou sem passar pela página (ex.: Pix direto para você). O valor soma no total da conta e libera os efeitos de nick.</p>
+      <p class="c-sub">Para quem apoiou sem passar pela página (ex.: Pix direto para você). O valor soma no total da conta e libera o efeito no nick.</p>
       <label class="p-label">Nome de usuário: <input data-apoio-nome autocomplete="off" /></label>
       <label class="p-label">Valor (R$): <input type="number" min="1" step="0.01" data-apoio-valor /></label>
       <button type="button" class="p-btn" data-apoio-registrar>Registrar apoio</button>
       <p class="p-note" data-apoio-msg role="status"></p>
+    </div>`;
+  if (!ap) {
+    return `<section class="p-section"><h2>Apoio</h2>
+      <p class="p-note">${esc(apErro || 'Carregando as doações…')}</p>${registrar}</section>`;
+  }
+  const t = ap.total;
+  const p = ap.periodo;
+  const porDia = columns(ap.por_dia || [], 'valor', 'arrecadados', reais);
+  const st = Object.entries(p.status || {}).map(([k, n]) => [k, n]);
+  const opt = (obj, atual) => Object.entries(obj).map(([k, v]) => `<option value="${k}"${atual === k ? ' selected' : ''}>${esc(v)}</option>`).join('');
+  return `<section class="p-section" id="apoio">
+    <h2>Apoio · desde sempre</h2>
+    <div class="tiles">
+      ${tile('Arrecadado', reais(t.arrecadado), 'doações aprovadas')}
+      ${tile('Doações', num(t.doacoes), `${num(t.apoiadores)} ${t.apoiadores === 1 ? 'apoiador' : 'apoiadores'}`)}
+      ${tile('Ticket médio', reais(t.ticket_medio), 'por doação')}
+      ${tile('Maior doação', reais(t.maior))}
+      ${tile('Estornado', reais(t.estornado), 'devolvido')}
     </div>
+  </section>
+  <section class="p-section">
+    <h2>Apoio · últimos ${dias} dias</h2>
+    <div class="tiles">
+      ${tile('Hoje', reais(ap.hoje.arrecadado), `${num(ap.hoje.doacoes)} ${ap.hoje.doacoes === 1 ? 'doação' : 'doações'}`)}
+      ${tile('No período', reais(p.arrecadado), `${num(p.doacoes)} ${p.doacoes === 1 ? 'doação' : 'doações'}`)}
+      ${tile('Apoiadores', num(p.apoiadores), `${num(p.novos)} ${p.novos === 1 ? 'novo' : 'novos'} no período`)}
+      ${tile('Ticket médio', reais(p.ticket_medio), p.maior != null ? `maior: ${reais(p.maior)}` : '')}
+      ${tile('Concluíram o pagamento', p.conversao_pct != null ? `${dec(p.conversao_pct)}%` : '—', `de ${num(p.tentativas)} tentativas`)}
+      ${tile('Aguardando', num(p.status?.pendente || 0), 'Pix/boleto ainda não pago')}
+    </div>
+    <p class="p-note">Valores brutos, antes da taxa do Mercado Pago. Uma doação conta no dia em que foi criada.</p>
+    <div class="cards">
+      <div class="card"><h3>Arrecadado por dia</h3><p class="c-sub">${reais(porDia.total)} no período</p>${porDia.html}</div>
+      <div class="card"><h3>Situação das tentativas</h3><p class="c-sub">Quem clicou em apoiar, no período</p>${hbars(st, (k) => AP_STATUS[k] || k)}</div>
+      <div class="card"><h3>Faixas de valor</h3><p class="c-sub">Doações aprovadas no período</p>${hbars((p.faixas || []).map((f) => [f.faixa, f.n]), undefined, { sort: false })}</div>
+      <div class="card"><h3>Origem</h3><p class="c-sub">Valor aprovado no período</p>${hbars(Object.entries(p.origem || {}), (k) => AP_ORIGEM[k] || k, { fmt: reais })}</div>
+    </div>
+    <div class="card"><h3>Quem mais apoiou</h3><p class="c-sub">Desde sempre, só doações aprovadas</p>
+      ${(ap.top || []).length ? `<div class="table-wrap"><table class="p-table">
+        <thead><tr><th>#</th><th>Usuário</th><th class="n">Total</th><th class="n">Doações</th><th>Desde</th><th>Última</th></tr></thead>
+        <tbody>${ap.top.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.username)}</td><td class="n">${reais(x.total)}</td><td class="n">${num(x.doacoes)}</td><td>${esc(dataCurta(x.desde))}</td><td>${esc(dataCurta(x.ultima))}</td></tr>`).join('')}</tbody>
+      </table></div>` : '<p class="p-empty">Ninguém apoiou ainda.</p>'}
+    </div>
+    <div class="card"><h3>Doações dos últimos ${dias} dias</h3><p class="c-sub">Todas as tentativas, inclusive as não pagas. Filtre e baixe em planilha.</p>
+      <div class="ap-filtros">
+        <label class="p-label">Situação <select data-ap-f="status"><option value="">Todas</option>${opt(AP_STATUS, apFiltro.status)}</select></label>
+        <label class="p-label">Origem <select data-ap-f="origem"><option value="">Todas</option>${opt(AP_ORIGEM, apFiltro.origem)}</select></label>
+        <label class="p-label">Usuário ou nº do pagamento <input type="search" data-ap-f="q" value="${esc(apFiltro.q)}" autocomplete="off" /></label>
+        <label class="p-label">Valor mínimo (R$) <input type="number" min="0" step="1" data-ap-f="min" value="${esc(apFiltro.min)}" /></label>
+        <button type="button" class="p-btn p-btn-ghost" data-ap-csv>Baixar CSV</button>
+      </div>
+      <div data-ap-lista>${apLista()}</div>
+    </div>
+    ${registrar}
   </section>`;
 }
+
+function apCsv() {
+  const linhas = [['quando', 'usuario', 'valor', 'situacao', 'origem', 'pagamento_mp']];
+  for (const a of apFiltrados()) {
+    linhas.push([dataHora(a.criado), a.username || '', Number(a.valor_pago ?? a.valor).toFixed(2).replace('.', ','),
+      AP_STATUS[a.status] || a.status, AP_ORIGEM[a.origem] || a.origem, a.mp_payment_id || '']);
+  }
+  const csv = linhas.map((l) => l.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  const url = URL.createObjectURL(new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `apoios-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+body.addEventListener('input', (e) => {
+  const f = e.target.closest('[data-ap-f]');
+  if (!f) return;
+  apFiltro[f.dataset.apF] = f.value;
+  apFiltro.limite = 50;
+  body.querySelector('[data-ap-lista]').innerHTML = apLista();
+});
+body.addEventListener('click', (e) => {
+  if (e.target.closest('[data-ap-mais]')) {
+    apFiltro.limite += 100;
+    body.querySelector('[data-ap-lista]').innerHTML = apLista();
+  }
+  if (e.target.closest('[data-ap-csv]')) apCsv();
+});
 
 function lock(msg, withLogin) {
   range.hidden = true;
@@ -206,8 +334,14 @@ async function load() {
   range.querySelectorAll('button').forEach((b) => b.classList.toggle('on', Number(b.dataset.days) === days));
   body.innerHTML = '<p class="muted">Carregando…</p>';
   try {
-    const st = await platform.adminStats(days);
-    if (seq === loadSeq) render(st);
+    const [st, apoios] = await Promise.all([
+      platform.adminStats(days),
+      platform.adminApoios(days).then((r) => ({ r }), (err) => ({ err })),
+    ]);
+    if (seq !== loadSeq) return;
+    ap = apoios.r || null;
+    apErro = apoios.err?.message || '';
+    render(st);
   } catch (err) {
     if (seq === loadSeq) lock(err.message, false);
   }
@@ -271,7 +405,11 @@ body.addEventListener('click', async (e) => {
   b.disabled = true;
   try {
     const r = await platform.adminRegistrarApoio(nome, valor);
-    msg.textContent = `Pronto! ${r.username} agora tem R$ ${Number(r.total).toFixed(2)} de apoio no total.`;
+    const pronto = `Pronto! ${r.username} agora tem ${reais(r.total)} de apoio no total.`;
+    await load();
+    const m = body.querySelector('[data-apoio-msg]');
+    if (m) m.textContent = pronto;
+    return;
   } catch (err) {
     msg.textContent = err.message;
   }

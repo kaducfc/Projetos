@@ -2,6 +2,8 @@
 // e as mesmas regras de acesso (cada conta só mexe nas próprias linhas).
 
 export function createFakeSupabase() {
+  // Contas administradoras (o teste pode incluir outras com admins.add(id)).
+  const admins = new Set(['user-admin']);
   const db = { site_profiles: [], site_game_saves: [], site_game_results: [], site_events: [], site_ranked: [], site_apoios: [] };
   // Contagem de gravações e falha simulada (servidor ocupado).
   const stats = { upserts: 0, failNextUpserts: 0 };
@@ -210,10 +212,45 @@ export function createFakeSupabase() {
       db.site_ranked = [];
       return { data: { partidas_apagadas: n, inicio: new Date().toISOString().slice(0, 10), temporada: args.nova_temporada }, error: null };
     }
-    if (name === 'site_is_admin') return { data: auth._uid() === 'user-admin', error: null };
+    if (name === 'site_is_admin') return { data: admins.has(auth._uid()), error: null };
     if (name === 'site_admin_stats') {
-      if (auth._uid() !== 'user-admin') return { data: null, error: { message: 'not_admin' } };
+      if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };
       return { data: { dias: args.days, eventos: db.site_events.length }, error: null };
+    }
+    // Painel de apoio simplificado (mesmo formato do 0009_painel_apoio.sql).
+    if (name === 'site_admin_apoios') {
+      if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };
+      const quanto = (a) => Number(a.valor_pago ?? a.valor);
+      const desde = Date.now() - args.days * 864e5;
+      const nome = (id) => db.site_profiles.find((p) => p.id === id)?.username ?? null;
+      const ok = db.site_apoios.filter((a) => a.status === 'aprovado');
+      const per = db.site_apoios.filter((a) => Date.parse(a.criado) >= desde);
+      const okp = per.filter((a) => a.status === 'aprovado');
+      const soma = (l) => l.reduce((s, a) => s + quanto(a), 0);
+      const resumo = (l) => ({ arrecadado: soma(l), doacoes: l.length, apoiadores: new Set(l.map((a) => a.user_id)).size,
+        ticket_medio: l.length ? soma(l) / l.length : null, maior: l.length ? Math.max(...l.map(quanto)) : null });
+      const status = {};
+      for (const a of per) status[a.status] = (status[a.status] || 0) + 1;
+      const porUser = new Map();
+      for (const a of ok) porUser.set(a.user_id, [...(porUser.get(a.user_id) || []), a]);
+      const dia = (k) => new Date(Date.now() - k * 864e5).toISOString().slice(0, 10);
+      return {
+        data: {
+          dias: args.days,
+          total: { ...resumo(ok), estornado: soma(db.site_apoios.filter((a) => a.status === 'estornado')) },
+          hoje: { arrecadado: soma(ok.filter((a) => a.criado.slice(0, 10) === dia(0))), doacoes: ok.filter((a) => a.criado.slice(0, 10) === dia(0)).length },
+          periodo: { ...resumo(okp), novos: 0, tentativas: per.length, conversao_pct: null, status, origem: {}, faixas: [] },
+          por_dia: Array.from({ length: args.days }, (_, i) => {
+            const d = dia(args.days - 1 - i);
+            const l = ok.filter((a) => a.criado.slice(0, 10) === d);
+            return { dia: d, valor: soma(l), doacoes: l.length };
+          }),
+          top: [...porUser].map(([id, l]) => ({ username: nome(id), avatar: null, total: soma(l), doacoes: l.length,
+            desde: l[0].criado, ultima: l.at(-1).criado })).sort((a, b) => b.total - a.total),
+          lista: per.slice().sort((a, b) => b.criado.localeCompare(a.criado)).map((a) => ({ ...a, username: nome(a.user_id) })),
+        },
+        error: null,
+      };
     }
     return { data: null, error: { message: 'rpc desconhecida' } };
   }
@@ -228,7 +265,7 @@ export function createFakeSupabase() {
     },
   };
 
-  return { auth, from, rpc, db, stats, functions };
+  return { auth, from, rpc, db, stats, functions, admins };
 }
 
 // localStorage em memória para rodar no Node.
