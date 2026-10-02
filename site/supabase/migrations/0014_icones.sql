@@ -12,6 +12,11 @@
 
 update public.site_profiles set avatar = null where avatar like 'champ:%';
 
+-- A coluna tinha uma regra (do 0005) que só aceitava 'mascote' ou 'champ:…'.
+alter table public.site_profiles drop constraint if exists site_profiles_avatar_check;
+alter table public.site_profiles add constraint site_profiles_avatar_check
+  check (avatar is null or avatar ~ '^(mascote|icone:[a-z0-9-]{2,30})$');
+
 -- Posição da conta na fila de apoiadores (1 = primeiro). Null se nunca apoiou.
 create or replace function public.site_apoiador_posicao(uid uuid)
 returns int
