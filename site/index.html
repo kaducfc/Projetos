@@ -27,24 +27,30 @@
 <body>
 <div id="site-bar"></div>
 <main class="hub">
-  <header class="hub-head">
-    <p class="eyebrow">◆ Minigames do cenário de LoL</p>
-    <h1 class="hub-logo"><img src="shared/assets/marca/logo-fundo-escuro.png?v=2" alt="Rift Arcade" width="900" height="339" /></h1>
-    <p class="lead">Jogos rápidos e uma carreira inteira para jogar. Entre com sua conta e cada partida,
-      recorde e progresso fica guardado, em qualquer aparelho.</p>
+  <header class="hx-hero">
+    <div class="hx-hero-bg" aria-hidden="true"></div>
+    <div class="hx-hero-in">
+      <p class="eyebrow">◆ Minigames do universo de LoL</p>
+      <h1 class="hub-logo"><img src="shared/assets/marca/logo-fundo-escuro.png?v=2" alt="Rift Arcade" width="900" height="339" /></h1>
+      <p class="lead">Jogos rápidos e uma carreira inteira para jogar. Entre com sua conta e cada partida,
+        recorde e progresso fica guardado, em qualquer aparelho.</p>
+      <div class="hx-ctas">
+        <a class="hx-btn" href="#jogos">Jogar agora</a>
+        <a class="hx-btn hx-btn-ghost" href="ranking/">Ver ranking</a>
+      </div>
+    </div>
   </header>
 
-  <a class="rk-banner" href="ranking/">
+  <a class="rk-banner hx-frame" href="ranking/">
     <span class="rk-banner-txt"><b>Ranqueada</b> · Carreira no Rift: as 3 primeiras carreiras começadas no dia valem ponto.
       Suba do Bronze ao Desafiante e ganhe benefícios nos outros jogos.</span>
     <span class="rk-banner-cta">Ver ranking →</span>
   </a>
 
-  <section aria-labelledby="jogos-title">
-    <h2 class="section-title" id="jogos-title">Jogos</h2>
-    <div class="games" id="games"></div>
+  <section aria-labelledby="jogos-title" id="jogos">
+    <h2 class="section-title hx-title" id="jogos-title"><span>Jogos</span></h2>
+    <div class="games hx-games" id="games"></div>
   </section>
-
 </main>
 <footer id="site-footer"></footer>
 <script type="module" src="js/hub.js"></script>

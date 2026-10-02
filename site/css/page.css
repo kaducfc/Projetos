@@ -17,3 +17,11 @@
 }
 .page .note p:last-child { margin-bottom: 0; }
 @media (max-width: 560px) { .page { padding: 28px 16px 48px; } }
+
+/* Acabamento "hextech": quadro de aviso com borda em degradê e canto dourado. */
+.page .note { position: relative; border: 1px solid transparent; border-left: 3px solid var(--gold);
+  background: linear-gradient(180deg, #1a1813, #101010) padding-box,
+    linear-gradient(160deg, rgba(245, 207, 90, 0.55), rgba(59, 53, 42, 0.6) 60%, rgba(217, 168, 43, 0.35)) border-box; }
+.page .note::after { content: ''; position: absolute; bottom: -2px; right: -2px; width: 12px; height: 12px; border: 2px solid var(--gold-2); border-left: 0; border-top: 0; border-bottom-right-radius: 4px; }
+.page h2 { display: flex; align-items: center; gap: 12px; }
+.page h2::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(217, 168, 43, 0.45), transparent); }

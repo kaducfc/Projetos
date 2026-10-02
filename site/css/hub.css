@@ -89,3 +89,95 @@ body {
 .rk-banner-txt { font-size: 14px; color: #d3ccbc; }
 .rk-banner-txt b { color: var(--gold-2); font-size: 15px; }
 .rk-banner-cta { font-weight: 800; color: var(--gold-2); white-space: nowrap; }
+
+/* =====================================================================
+   Acabamento "hextech" (todas as páginas): granulado no fundo, molduras
+   com cantos dourados e borda em degradê, títulos de seção com linha.
+   Página inicial: cabeçalho com atmosfera e jogos com capa.
+   ===================================================================== */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: -1; opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+body:has(.hx-hero) { overflow-x: clip; }
+
+/* ------------------------------------------------ 2) cabeçalho com atmosfera */
+.hx-hero { position: relative; width: 100vw; margin: -36px 0 0 calc(50% - 50vw); padding: 64px 20px 54px; overflow: hidden; border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, transparent, rgba(217, 168, 43, 0.55), transparent) 1; }
+.hx-hero-bg { position: absolute; inset: -30px; z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 70% at 30% 45%, rgba(217, 168, 43, 0.18), transparent 70%),
+    linear-gradient(180deg, rgba(9, 9, 10, 0.55), rgba(9, 9, 10, 0.92) 85%, var(--bg)),
+    url(../shared/assets/mapa/summoners-rift-1100.webp) center 40% / cover no-repeat;
+  filter: saturate(0.7) blur(2px); }
+.hx-hero-bg::after { content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(9, 9, 10, 0.85) 100%); }
+.hx-hero-in { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 12px; max-width: 1100px; margin: 0 auto; }
+.hx-hero .hub-logo img { filter: drop-shadow(0 6px 28px rgba(217, 168, 43, 0.28)); }
+.hx-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.hx-btn { position: relative; overflow: hidden; display: inline-flex; align-items: center; padding: 12px 26px; border-radius: 4px; font-weight: 800; text-decoration: none;
+  color: #140f02; background: linear-gradient(180deg, var(--gold-2), var(--gold)); box-shadow: 0 0 0 1px rgba(245, 207, 90, 0.6), 0 8px 24px rgba(217, 168, 43, 0.25); }
+.hx-btn:hover { filter: brightness(1.08); }
+.hx-btn-ghost { color: var(--gold-2); background: rgba(9, 9, 10, 0.55); box-shadow: inset 0 0 0 1px rgba(217, 168, 43, 0.7); backdrop-filter: blur(4px); }
+
+/* ------------------------------------------- 3) acabamento hextech (molduras) */
+/* Cantos dourados finos + borda em degradê. */
+.hx-frame { position: relative; isolation: isolate; border: 1px solid transparent !important; border-radius: 6px;
+  background:
+    linear-gradient(180deg, #1a1813, #101010) padding-box,
+    linear-gradient(160deg, rgba(245, 207, 90, 0.75), rgba(217, 168, 43, 0.12) 35%, rgba(59, 53, 42, 0.6) 70%, rgba(217, 168, 43, 0.5)) border-box; }
+.hx-frame::before, .hx-frame::after { content: ''; position: absolute; width: 14px; height: 14px; z-index: 2; pointer-events: none; border: 2px solid var(--gold-2); }
+.hx-frame::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; border-top-left-radius: 6px; }
+.hx-frame::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; border-bottom-right-radius: 6px; }
+.rk-banner.hx-frame { background:
+    linear-gradient(90deg, rgba(36, 30, 14, 0.96), rgba(18, 20, 34, 0.96)) padding-box,
+    linear-gradient(90deg, rgba(245, 207, 90, 0.8), rgba(125, 151, 255, 0.45)) border-box; }
+
+.hx-title { display: flex; align-items: center; gap: 12px; }
+.hx-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(217, 168, 43, 0.5), transparent); }
+.hx-title span::before { content: '◆ '; color: var(--gold); }
+
+/* -------------------------------------------------- 1) cards com capa */
+.hx-games { gap: 18px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.hx-card { display: flex; flex-direction: column; padding: 0; text-decoration: none; color: inherit; overflow: visible;
+  transition: transform 0.25s ease, box-shadow 0.25s ease; animation: hx-in 0.5s ease both; animation-delay: calc(var(--i) * 70ms); }
+.hx-card:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55), 0 0 24px rgba(217, 168, 43, 0.22); }
+.hx-cover { position: relative; align-self: stretch; height: 150px; overflow: hidden; border-radius: 5px 5px 0 0; }
+.hx-body { align-self: stretch; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding: 16px 20px 20px; flex: 1; }
+.hx-play { margin-top: auto; }
+.hx-card:hover .hx-play { background: var(--gold-2); }
+.hx-selo { position: absolute; top: 10px; right: 10px; z-index: 3; font-size: 10.5px; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase;
+  padding: 4px 9px; border-radius: 3px; color: var(--gold-2); background: rgba(9, 9, 10, 0.78); box-shadow: inset 0 0 0 1px rgba(217, 168, 43, 0.6); }
+.hx-selo.rk { color: #140f02; background: linear-gradient(180deg, var(--gold-2), var(--gold)); }
+.hx-selo.novo { color: #9fe8b4; box-shadow: inset 0 0 0 1px rgba(127, 212, 154, 0.7); }
+
+/* Capas */
+.cv { position: absolute; inset: 0; display: grid; place-items: center; transition: transform 0.6s ease; }
+.hx-card:hover .cv { transform: scale(1.06); }
+.cv::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(16, 16, 16, 0.95)); }
+.cv-mapa { background: radial-gradient(circle at 50% 60%, rgba(217, 168, 43, 0.25), transparent 60%), var(--img) center / cover; }
+.cv-mapa::before { content: ''; position: absolute; inset: 0; background: rgba(9, 9, 10, 0.45); }
+.cv-trofeu { position: relative; z-index: 1; height: 112px; filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 20px rgba(245, 207, 90, 0.35)); }
+.cv-trofeu.grande { height: 128px; }
+.cv-cblol { background: radial-gradient(circle at 50% 55%, rgba(217, 168, 43, 0.35), transparent 62%),
+  repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 14px), linear-gradient(160deg, #1b2a1d, #0f1410 70%); }
+.cv-runas { background: radial-gradient(circle at 50% 50%, rgba(125, 151, 255, 0.18), transparent 65%), linear-gradient(160deg, #141826, #0d0e14); }
+.cv-letras { position: relative; z-index: 1; display: flex; gap: 6px; transform: rotate(-4deg); }
+.cv-letras span { width: 40px; height: 44px; display: grid; place-items: center; font-family: var(--display); font-size: 30px; color: #fff;
+  border-radius: 5px; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35), 0 6px 14px rgba(0, 0, 0, 0.5); }
+.cv-letras .ok { background: #3f9a5a; }
+.cv-letras .quase { background: #c9a227; }
+.cv-letras .nao { background: #3a3a3f; }
+.cv-oculto { background: var(--img) center 30% / cover; }
+.cv-oculto::before { content: ''; position: absolute; inset: 0; backdrop-filter: blur(6px) grayscale(1) brightness(0.35); -webkit-backdrop-filter: blur(6px) grayscale(1) brightness(0.35); }
+.cv-q { position: relative; z-index: 1; font-family: var(--display); font-size: 110px; line-height: 1; color: var(--gold-2); text-shadow: 0 0 28px rgba(245, 207, 90, 0.55); }
+
+@keyframes hx-in { from { opacity: 0; transform: translateY(10px); } }
+@media (prefers-reduced-motion: reduce) {
+  .hx-card, .cv { animation: none; transition: none; }
+}
+@media (max-width: 560px) {
+  .hx-hero { margin-top: -24px; padding: 40px 16px 34px; }
+  .hx-cover { height: 130px; }
+}
+

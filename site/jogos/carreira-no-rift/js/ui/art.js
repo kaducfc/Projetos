@@ -147,9 +147,13 @@ if (typeof window !== 'undefined') {
     const rest = (img.dataset.next || '').split(',').filter(Boolean);
     if (!rest.length) { img.parentElement?.classList.remove('has-img'); img.remove(); return; }
     img.dataset.next = rest.slice(1).join(',');
-    img.src = `${ASSETS}trofeus/${rest[0]}.png`;
+    img.src = trofeuUrl(rest[0]);
   };
 }
+
+// Versão de troféus trocados (faz o navegador baixar a imagem nova).
+const TROFEU_VERSAO = { cblol: 2 };
+const trofeuUrl = (f) => `${ASSETS}trofeus/${f}.png${TROFEU_VERSAO[f] ? `?v=${TROFEU_VERSAO[f]}` : ''}`;
 
 // Troféu de um título/prêmio: imagem quando existir, senão o desenho.
 export function trophyArt(t, size = 120) {
@@ -164,7 +168,7 @@ export function trophyArt(t, size = 120) {
     files = [];
   } else {
     if (!files.length) return svg;
-    src = `${ASSETS}trofeus/${files[0]}.png`;
+    src = trofeuUrl(files[0]);
     files = files.slice(1);
   }
   const h = Math.round(size * 1.15);
@@ -235,7 +239,7 @@ export function preloadArt() {
   window.__artPreloaded = true;
   const logos = [...new Set(Object.values(buildTeams()).map(logoSrc).filter(Boolean))];
   const trophies = [...MAIN_TROPHIES, 'prata', 'ouro', 'platina', 'diamante', 'challenger']
-    .map((f) => `${ASSETS}trofeus/${f}.png`);
+    .map(trofeuUrl);
   const saveData = navigator.connection?.saveData;
   const events = saveData ? [] : EVENTS.map((e) => `img/eventos/${e.id}.jpg`);
   const queue = [...trophies.slice(-5), ...logos, ...trophies, ...events];

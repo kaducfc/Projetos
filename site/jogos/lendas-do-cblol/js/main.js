@@ -271,7 +271,7 @@ function comemorar() {
   el.className = 'modal-backdrop';
   el.innerHTML = `<div class="modal trophy-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-campeao">
       <div class="rays"></div>
-      <div class="trophy-art"><img src="../../shared/assets/trofeus/cblol.png" alt="Troféu do CBLOL" width="150" /></div>
+      <div class="trophy-art"><img src="../../shared/assets/trofeus/cblol.png?v=2" alt="Troféu do CBLOL" width="150" /></div>
       <p class="eyebrow">Campeão do CBLOL · ${esc(NAME)}</p>
       <h2 id="titulo-campeao">${esc(nomeTime())}</h2>
       <p class="parabens">Parabéns! O seu time levantou a taça.</p>
