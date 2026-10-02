@@ -62,7 +62,8 @@ Deno.serve(async (req) => {
     body: JSON.stringify({
       items: [{ id: 'apoio', title: 'Apoio ao Rift Arcade', description: 'Apoio voluntário ao site (cosméticos, sem vantagem nos jogos)', quantity: 1, currency_id: 'BRL', unit_price: valor }],
       external_reference: apoio.id,
-      payer: user.email ? { email: user.email } : undefined,
+      // Sem e-mail do pagador: se for o mesmo e-mail da conta que recebe, o
+      // Mercado Pago entende que a pessoa está pagando para si mesma e recusa.
       back_urls: {
         success: `${SITE}/apoiar/?status=aprovado&apoio=${apoio.id}`,
         pending: `${SITE}/apoiar/?status=pendente&apoio=${apoio.id}`,
