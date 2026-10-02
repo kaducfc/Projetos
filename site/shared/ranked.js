@@ -14,6 +14,12 @@ export const ELOS = [
 // Abaixo disto no ciclo, cai 1 elo (1/6 da meta do próprio elo).
 export const minimoParaFicar = (id) => (['prata', 'ouro', 'platina', 'diamante'].includes(id) ? Math.floor(eloInfo(id).pontos / 6) : 0);
 export const VAGAS_DESAFIANTE = 100;
+// OVR inicial extra na Carreira no Rift por elo: sem elo +0, Bronze +1 …
+// Desafiante +6 (`elo` = getUser().elo, que é null para quem nunca jogou).
+export const bonusCarreira = (elo) => {
+  const i = ELOS.findIndex((e) => e.id === elo);
+  return i < 0 ? 0 : i + 1;
+};
 export const PARTIDAS_POR_DIA = 3;
 export const DIAS_POR_CICLO = 3;
 

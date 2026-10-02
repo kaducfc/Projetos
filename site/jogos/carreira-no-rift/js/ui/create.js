@@ -1,12 +1,14 @@
 // Tela "Crie o seu jogador".
 import { ATTRS, NATIONS, REGIONS, ROLES, STYLES } from '../data/world.js';
-import { calcOvr, rollAttrs } from '../engine/player.js';
+import { calcOvr, rollAttrs, OVR_INICIAL } from '../engine/player.js';
 import { jerseySvg, minimapSvg } from './art.js';
 import { esc } from '../util.js';
 
 const NICK_RE = /^[\p{L}\p{N}_. -]{2,14}$/u;
 
-export function renderCreate(root, onConfirm) {
+// `bonusElo()` → { n, nome } (OVR inicial extra pelo elo da ranqueada). A
+// função devolvida atualiza o bônus (ex.: o jogador entrou na conta agora).
+export function renderCreate(root, onConfirm, { bonusElo = () => ({ n: 0, nome: null }) } = {}) {
   const f = { nick: '', nat: 'BR', role: null, style: 'agressivo', attrs: null, speed: 'normal' };
 
   root.innerHTML = `
@@ -104,8 +106,12 @@ export function renderCreate(root, onConfirm) {
     }
     const r = ROLES[f.role];
     const ovr = calcOvr(f.attrs, f.role);
+    const b = bonusElo();
     $('role-info').innerHTML = `
       <div class="role-head"><b>${r.name}</b><span class="ovr-mini">OVR <b>${ovr}</b></span></div>
+      <p class="elo-bonus">${b.n
+    ? `OVR inicial ${OVR_INICIAL} <b>+${b.n}</b> pelo seu elo (${esc(b.nome)}) na ranqueada.`
+    : `OVR inicial ${OVR_INICIAL}. Cada elo da ranqueada dá +1 (Bronze +1 até Desafiante +6).`}</p>
       <p class="muted">${r.desc}</p>
       ${ATTRS.map((a) => `
         <div class="attr-row">
@@ -125,7 +131,7 @@ export function renderCreate(root, onConfirm) {
   };
 
   const reroll = () => {
-    if (f.role) f.attrs = rollAttrs(f.role, f.style);
+    if (f.role) f.attrs = rollAttrs(f.role, f.style, OVR_INICIAL + bonusElo().n);
   };
 
   $('nick').addEventListener('input', (e) => {
@@ -175,4 +181,8 @@ export function renderCreate(root, onConfirm) {
   paintNations();
   paintRole();
   paintConfirm();
+  return () => {
+    reroll();
+    paintRole();
+  };
 }

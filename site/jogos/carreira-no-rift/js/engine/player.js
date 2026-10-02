@@ -10,13 +10,27 @@ export function calcOvr(attrs, role) {
 
 export const ovrOf = (p) => calcOvr(p.attrs, p.role);
 
+// OVR inicial de toda carreira (antes do bônus de elo da ranqueada).
+export const OVR_INICIAL = 53;
+
 // Atributos iniciais coerentes com a rota: o que pesa mais nela vem mais alto.
-export function rollAttrs(role, style) {
+// Os atributos variam a cada sorteio, mas o OVR sai sempre igual a `alvo`.
+export function rollAttrs(role, style, alvo = OVR_INICIAL) {
   const w = ROLES[role].w;
   const fx = STYLES[style]?.fx || {};
   const attrs = {};
   for (const a of ATTRS) {
     attrs[a.id] = clamp(Math.round(50 + (w[a.id] - 0.2) * 70 + randInt(-3, 3) + (fx[a.id] || 0)), ATTR_MIN, ATTR_DIFICIL);
+  }
+  // Leva o OVR até o alvo: primeiro todos juntos, depois 1 ponto por vez num
+  // atributo sorteado (os pesos somam 1, então +1 em tudo = +1 de OVR).
+  const ids = ATTRS.map((a) => a.id);
+  const diff = alvo - calcOvr(attrs, role);
+  for (const id of ids) attrs[id] = clamp(attrs[id] + diff, ATTR_MIN, ATTR_DIFICIL);
+  for (let i = 0; i < 200 && calcOvr(attrs, role) !== alvo; i++) {
+    const sobe = calcOvr(attrs, role) < alvo;
+    const id = ids[randInt(0, ids.length - 1)];
+    attrs[id] = clamp(attrs[id] + (sobe ? 1 : -1), ATTR_MIN, ATTR_DIFICIL);
   }
   return attrs;
 }

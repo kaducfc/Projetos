@@ -53,3 +53,18 @@ test('carreira: a partir de 93 fica difícil subir (perder continua igual)', () 
   applyFx(p, { mec: -4 }, { garantia: 'mudanca' });
   assert.equal(p.attrs.mec, 92);
 });
+
+test('carreira: OVR inicial fixo (53) com atributos sorteados, mais o bônus de elo', async () => {
+  const { rollAttrs, calcOvr, OVR_INICIAL } = await import('../jogos/carreira-no-rift/js/engine/player.js');
+  const { ROLES, STYLES } = await import('../jogos/carreira-no-rift/js/data/world.js');
+  const { bonusCarreira } = await import('../shared/ranked.js');
+  assert.equal(OVR_INICIAL, 53);
+  assert.deepEqual([null, 'bronze', 'prata', 'ouro', 'platina', 'diamante', 'desafiante'].map(bonusCarreira), [0, 1, 2, 3, 4, 5, 6]);
+  const vistos = new Set();
+  for (const r of Object.keys(ROLES)) for (const s of Object.keys(STYLES)) for (let i = 0; i < 50; i++) {
+    const a = rollAttrs(r, s, OVR_INICIAL + bonusCarreira('ouro'));
+    assert.equal(calcOvr(a, r), 56);
+    vistos.add(JSON.stringify(a));
+  }
+  assert.ok(vistos.size > 100); // atributos mudam a cada sorteio
+});

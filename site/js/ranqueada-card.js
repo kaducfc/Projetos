@@ -93,6 +93,7 @@ export function comoFunciona() {
         <li><b>Desafiante</b> tem só ${VAGAS_DESAFIANTE} vagas: se houver mais candidatos, ficam os ${VAGAS_DESAFIANTE} com mais pontos no ciclo e os outros voltam para o Diamante. Com vaga sobrando, só cai quem ficar os 3 dias sem jogar.</li>
         <li>Rankings: <b>diário</b> (nota de hoje), <b>semanal</b> e <b>mensal</b> (soma das notas dos dias).</li>
         <li>Cada elo libera um pequeno benefício nos outros jogos (e mantém os dos elos abaixo).</li>
+        <li>Na própria Carreira no Rift, cada elo dá <b>+1 de OVR inicial</b>: sem elo começa com 53, Bronze 54 … Desafiante 59.</li>
       </ul>
       <div class="table-wrap"><table class="rk-tabela">
         <thead><tr><th>Elo</th><th class="n">Pontos para subir</th><th class="n">Para não cair</th><th>Benefício</th></tr></thead>

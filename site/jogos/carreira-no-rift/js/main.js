@@ -11,6 +11,7 @@ import { packState, unpackState } from './engine/save.js';
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { avisoInicio, avisoComeco, avisoFim } from '../../../shared/aviso-ranked.js';
+import { bonusCarreira, eloInfo } from '../../../shared/ranked.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 
 const GAME_ID = 'carreira-no-rift';
@@ -89,9 +90,17 @@ function recordIfRetired() {
   }).then((entry) => avisoFim(entry, state?.ranked)); // diz se valeu para a ranqueada
 }
 
+// OVR inicial extra pelo elo da ranqueada (precisa estar na conta).
+const bonusElo = () => {
+  const elo = platform.getUser()?.elo;
+  return { n: bonusCarreira(elo), nome: elo ? eloInfo(elo).nome : null };
+};
+let atualizarBonus = null; // tela de criação aberta: refaz os atributos com o bônus novo
+
 function render({ scrollTop = false } = {}) {
+  atualizarBonus = null;
   if (!state) {
-    renderCreate(app, (form) => {
+    atualizarBonus = renderCreate(app, (form) => {
       state = newCareer(form);
       platform.track('game_start', GAME_ID, {
         nat: form.nat, region: state.player.region, role: form.role, style: form.style, speed: state.speed,
@@ -107,7 +116,7 @@ function render({ scrollTop = false } = {}) {
         }
         avisoComeco(r);
       });
-    });
+    }, { bonusElo });
     return;
   }
   renderGame(app, state);
@@ -215,6 +224,7 @@ platform.onChange((evt) => {
     state = valid(evt.data);
     render({ scrollTop: true });
   }
+  if (evt.type === 'auth' && !state) atualizarBonus?.();
   if (evt.type === 'auth' && evt.cleared) {
     state = null;
     render({ scrollTop: true });
