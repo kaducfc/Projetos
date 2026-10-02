@@ -243,7 +243,9 @@ function fxChips(fx) {
     mec: 'Mecânica', rota: 'Fase de rotas', macro: 'Macro', tf: 'Teamfight', mental: 'Mental',
     morale: 'Confiança do técnico', fame: 'Fama',
   };
-  const chips = Object.entries(fx).filter(([, v]) => v).map(([k, v]) => `<span class="fx ${v > 0 ? 'up' : 'down'}">${names[k]} <b>${signed(v)}</b></span>`);
+  // Mostra o que mudou de verdade (inteiro; fração só se bateu no teto de 100).
+  const fmt = (v) => (Math.abs(v) >= 1 ? signed(Math.round(v)) : `${v > 0 ? '+' : ''}${String(Math.round(v * 10) / 10).replace('.', ',')}`);
+  const chips = Object.entries(fx).filter(([, v]) => v).map(([k, v]) => `<span class="fx ${v > 0 ? 'up' : 'down'}">${names[k]} <b>${fmt(v)}</b></span>`);
   return chips.length ? chips.join('') : '<span class="fx">Nada mudou</span>';
 }
 

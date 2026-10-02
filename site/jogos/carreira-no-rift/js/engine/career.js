@@ -809,6 +809,11 @@ function choicesFor(ev, role) {
 export function rewardMult(chance) {
   return Math.round(clamp(60 / chance, 0.75, 2.5) * 10) / 10;
 }
+const ATTR_IDS = ['mec', 'rota', 'tf', 'macro', 'mental'];
+function withAttr(fx, attr, v) {
+  const tem = Object.entries(fx || {}).some(([k, x]) => ATTR_IDS.includes(k) && x);
+  return tem ? fx : { ...fx, [attr || 'mental']: v };
+}
 function scaleFx(fx, mult) {
   return Object.fromEntries(Object.entries(fx || {}).map(([k, v]) => [k, v > 0 ? Math.max(1, Math.round(v * mult)) : v]));
 }
@@ -895,9 +900,11 @@ export function chooseEvent(state, pos) {
   const ok = roll(opt.chance);
   const before = ovrOf(state.player);
   const mult = opt.mult ?? rewardMult(opt.chance);
-  const fx = outcomeFx(state, ok ? scaleFx(choice.ok.fx, mult) : scaleFail(choice.fail.fx, opt.chance));
-  applyFx(state.player, fx);
-  scr.appliedFx = fx;
+  // Toda decisão mexe em pelo menos um atributo: se o resultado não tiver
+  // nenhum, vale 1 ponto (antes do bônus de risco) no atributo da escolha.
+  const base = withAttr(ok ? choice.ok.fx : choice.fail.fx, choice.attr, ok ? 1 : -1);
+  const fx = outcomeFx(state, ok ? scaleFx(base, mult) : scaleFail(base, opt.chance));
+  scr.appliedFx = applyFx(state.player, fx, { garantia: ok ? 'ganho' : 'mudanca', attrPadrao: choice.attr });
   if (state.season) {
     const weight = isFast(state) ? FAST_FX : 1;
     // Errar uma jogada arriscada pesa menos que errar uma jogada "certa".

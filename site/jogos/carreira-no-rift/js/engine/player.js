@@ -16,7 +16,7 @@ export function rollAttrs(role, style) {
   const fx = STYLES[style]?.fx || {};
   const attrs = {};
   for (const a of ATTRS) {
-    attrs[a.id] = clamp(Math.round(50 + (w[a.id] - 0.2) * 70 + randInt(-3, 3) + (fx[a.id] || 0)), 30, 99);
+    attrs[a.id] = clamp(Math.round(50 + (w[a.id] - 0.2) * 70 + randInt(-3, 3) + (fx[a.id] || 0)), ATTR_MIN, ATTR_DIFICIL);
   }
   return attrs;
 }
@@ -27,7 +27,7 @@ export function createPlayer({ nick, nat, region, role, style, attrs }) {
     attrs: { ...attrs },
     // Teto sorteado (potencial de lenda, 93+, é bem raro). Quem começa na
     // Coreia ou na China cresce no ambiente mais competitivo: +3 de teto.
-    potential: 74 + Math.round(21 * Math.pow(Math.random(), 1.9))
+    potential: 73 + Math.round(21 * Math.pow(Math.random(), 1.9))
       + (REGION_LEVEL[region]?.rank === 3 ? 3 : 0),
     age: 16,
     morale: 55,
@@ -44,20 +44,95 @@ export function createPlayer({ nick, nat, region, role, style, attrs }) {
   };
 }
 
-export function applyFx(p, fx) {
-  // Ganhos rendem menos quando o jogador já está perto do teto (potencial).
+// Limites dos atributos. Até 93 o ganho é normal; daí para cima cada ponto
+// fica cada vez mais difícil (e o 100 é o teto, nunca passa).
+export const ATTR_MIN = 30;
+export const ATTR_MAX = 100;
+export const ATTR_DIFICIL = 93;
+const round1 = (x) => Math.round(x * 10) / 10;
+
+// Quanto de um ganho "entra" estando em `x` (1 até 93, cai até 0 no 100).
+export function fatorGanho(x) {
+  if (x < ATTR_DIFICIL) return 1;
+  return Math.max(0, 0.45 * ((ATTR_MAX - x) / (ATTR_MAX - ATTR_DIFICIL)));
+}
+
+// Ganho de decisão: `pontos` inteiros. Abaixo de 93 cada ponto entra; acima,
+// cada ponto só entra com a chance de fatorGanho (e para no primeiro que falha).
+export function ganharPontos(x, pontos) {
+  let cur = x;
+  for (let i = 0; i < pontos && cur < ATTR_MAX; i++) {
+    if (cur >= ATTR_DIFICIL && Math.random() >= fatorGanho(cur)) break;
+    cur = Math.min(ATTR_MAX, cur + 1);
+  }
+  return cur;
+}
+
+// Ganho contínuo (evolução de fim de temporada): acima de 93 rende cada vez menos.
+export function ganharContinuo(x, g) {
+  let cur = x;
+  let resto = g;
+  while (resto > 1e-9 && cur < ATTR_MAX) {
+    const passo = Math.min(resto, 0.25);
+    cur = Math.min(ATTR_MAX, cur + passo * fatorGanho(cur));
+    resto -= passo;
+  }
+  return cur;
+}
+
+// Aplica os efeitos de uma decisão e devolve o que mudou DE VERDADE (é isso
+// que aparece na tela). `garantia`: 'ganho' (acertou) ou 'mudanca' (errou):
+// se nenhum atributo mudou (efeito sem atributo ou atributo no teto), mexe em
+// 1 ponto de `attrPadrao` ou, no acerto, no atributo mais baixo que ainda dá
+// para subir.
+export function applyFx(p, fx, { garantia = null, attrPadrao = null } = {}) {
+  // Ganhos rendem menos quando o jogador já está perto do teto (potencial),
+  // mas uma decisão certa sempre rende pelo menos 1 ponto.
   const room = clamp((p.potential - ovrOf(p)) / 8, 0.1, 1);
+  const real = {};
+  const mexer = (id, novo) => {
+    const antes = p.attrs[id];
+    p.attrs[id] = round1(clamp(novo, ATTR_MIN, ATTR_MAX));
+    const d = round1(p.attrs[id] - antes);
+    if (d) real[id] = round1((real[id] || 0) + d);
+  };
   for (const a of ATTRS) {
     const v = fx[a.id];
-    if (v) p.attrs[a.id] = clamp(p.attrs[a.id] + (v > 0 ? v * room : v), 30, 99);
+    if (!v) continue;
+    if (v > 0) mexer(a.id, ganharPontos(p.attrs[a.id], Math.max(1, Math.round(v * room))));
+    else mexer(a.id, p.attrs[a.id] + v);
   }
-  if (fx.morale) p.morale = clamp(p.morale + fx.morale, 0, 100);
-  if (fx.fame) p.fame = clamp(p.fame + fx.fame, 0, 100);
+  const subiu = ATTRS.some((a) => real[a.id] > 0);
+  const mudou = ATTRS.some((a) => real[a.id]);
+  if (garantia === 'ganho' && !subiu) {
+    // O atributo da decisão, se ainda dá para subir sem dificuldade; senão o
+    // mais baixo do jogador (que ainda não está no 100).
+    const livres = ATTRS.map((a) => a.id).filter((id) => p.attrs[id] < ATTR_MAX);
+    const alvo = attrPadrao && p.attrs[attrPadrao] < ATTR_DIFICIL ? attrPadrao
+      : livres.sort((x, y) => p.attrs[x] - p.attrs[y])[0];
+    if (alvo) mexer(alvo, Math.min(ATTR_MAX, p.attrs[alvo] + 1));
+  } else if (garantia === 'mudanca' && !mudou) {
+    const alvo = attrPadrao && p.attrs[attrPadrao] > ATTR_MIN ? attrPadrao
+      : ATTRS.map((a) => a.id).sort((x, y) => p.attrs[y] - p.attrs[x])[0];
+    mexer(alvo, p.attrs[alvo] - 1);
+  }
+  for (const k of ['morale', 'fame']) {
+    if (!fx[k]) continue;
+    const antes = p[k];
+    p[k] = clamp(p[k] + fx[k], 0, 100);
+    if (p[k] !== antes) real[k] = p[k] - antes;
+  }
   p.peakOvr = Math.max(p.peakOvr, ovrOf(p));
+  return real;
 }
 
 // Desempenho em jogo leva em conta o momento (confiança do técnico).
 export const effectiveOvr = (p) => ovrOf(p) + (p.morale - 50) / 12;
+
+// Volta ao potencial por temporada (fração do quanto passou dele). Junto com
+// o teto base 73 (era 74), compensa o ponto garantido das decisões certas:
+// a distribuição de OVR máximo ficou igual à de antes (scripts/simulate.mjs).
+const REGRESSAO = 0.5;
 
 // Crescimento extra por idade (soma ≈ diferença do OVR inicial mais baixo).
 const YOUTH_BOOST = { 16: 1.2, 17: 1.6, 18: 1.6, 19: 1.3, 20: 1.0, 21: 0.7 };
@@ -89,16 +164,22 @@ export function seasonGrowth(p, perf) {
   g += (YOUTH_BOOST[p.age] || 0) * clamp(gap / 4, 0, 1);
   // Decisões da temporada: acertos (principalmente os arriscados) ajudam.
   g += perf.decisions || 0;
+  // Quem passou do próprio teto (potencial) com os pontos garantidos das
+  // decisões volta aos poucos para perto dele.
+  if (before > p.potential) g -= (before - p.potential) * REGRESSAO;
 
   // Liga forte = treino e adversários melhores = evolução maior.
   if (g > 0) g *= perf.env ?? 1;
 
   if (g >= 0) {
-    for (const a of ATTRS) p.attrs[a.id] = clamp(p.attrs[a.id] + g * rand(0.7, 1.3), 30, 99);
+    for (const a of ATTRS) p.attrs[a.id] = ganharContinuo(p.attrs[a.id], g * rand(0.7, 1.3));
   } else {
     const loss = -g;
     const mult = { mec: 1.6, rota: 1.2, tf: 0.9, macro: -0.3, mental: -0.2 };
-    for (const a of ATTRS) p.attrs[a.id] = clamp(p.attrs[a.id] - loss * mult[a.id], 30, 99);
+    for (const a of ATTRS) {
+      const d = -loss * mult[a.id]; // macro e mental ainda sobem um pouco com a idade
+      p.attrs[a.id] = d > 0 ? ganharContinuo(p.attrs[a.id], d) : clamp(p.attrs[a.id] + d, ATTR_MIN, ATTR_MAX);
+    }
   }
   for (const a of ATTRS) p.attrs[a.id] = Math.round(p.attrs[a.id] * 10) / 10;
   p.peakOvr = Math.max(p.peakOvr, ovrOf(p));
