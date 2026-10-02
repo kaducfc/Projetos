@@ -36,12 +36,18 @@ export async function avisoInicio() {
   const resta = Math.max(0, PARTIDAS_POR_DIA - s.hoje.partidas);
   const elo = s.jogou ? ` · elo <b style="color:${eloInfo(s.elo).cor}">${esc(eloInfo(s.elo).nome)}</b>` : '';
   mostrar(resta
-    ? `<b>Ranqueada:</b> ${resta === PARTIDAS_POR_DIA ? 'suas 3 carreiras ranqueadas de hoje estão disponíveis' : `falta${resta > 1 ? 'm' : ''} ${resta} carreira${resta > 1 ? 's' : ''} ranqueada${resta > 1 ? 's' : ''} hoje`}${elo}. ${link}`
+    ? `<b>Ranqueada:</b> ${resta === PARTIDAS_POR_DIA ? 'suas 3 carreiras ranqueadas de hoje estão disponíveis (vale a carreira que começa e termina hoje)' : `falta${resta > 1 ? 'm' : ''} ${resta} carreira${resta > 1 ? 's' : ''} ranqueada${resta > 1 ? 's' : ''} hoje`}${elo}. ${link}`
     : `<b>Ranqueada:</b> as 3 carreiras ranqueadas de hoje já foram usadas (nota do dia: ${s.hoje.melhor}). Pode continuar jogando normalmente. ${link}`, 7000);
 }
 
-// Fim de carreira: `entry` é a partida que acabou de ser registrada.
-export async function avisoFim(entry) {
+const ddmm = (iso) => {
+  const [, m, d] = String(iso).slice(0, 10).split('-');
+  return `${d}/${m}`;
+};
+
+// Fim de carreira: `entry` é a partida que acabou de ser registrada e
+// `ranked` o ingresso de quando ela começou ({ token, dia } ou nada).
+export async function avisoFim(entry, ranked = null) {
   if (!platform.cloudEnabled()) return;
   if (!platform.getUser()) {
     mostrar('Essa carreira não entrou na <b>ranqueada</b>: entre na sua conta para as próximas valerem.');
@@ -51,6 +57,10 @@ export async function avisoFim(entry) {
   if (!d) return;
   if ((d.hoje.validas || []).includes(entry?.clientId)) {
     mostrar(`<b>Valeu para a ranqueada!</b> Carreira ${d.hoje.partidas} de ${PARTIDAS_POR_DIA} de hoje · nota do dia (a melhor): <b>${d.hoje.melhor}</b>. ${link}`, 12000);
+  } else if (!ranked) {
+    mostrar(`Essa carreira <b>não entrou na ranqueada</b>: o começo dela não foi registrado no servidor (começou sem a conta conectada ou sem internet). Para valer, a carreira precisa começar e terminar com a conta conectada, no mesmo dia. ${link}`, 12000);
+  } else if (ranked.dia !== String(d.hoje.dia).slice(0, 10)) {
+    mostrar(`Essa carreira <b>não entrou na ranqueada</b>: ela começou em outro dia (${ddmm(ranked.dia)}). Só vale a carreira que começa e termina no mesmo dia. ${link}`, 12000);
   } else {
     mostrar(`Essa carreira <b>não entrou na ranqueada</b>: as 3 de hoje já foram usadas (nota do dia: ${d.hoje.melhor ?? '—'}). Amanhã tem mais! ${link}`, 12000);
   }

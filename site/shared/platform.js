@@ -13,7 +13,7 @@
 //   track(tipo, gameId, dados)      → estatística anônima (início/fim de partida)
 //   isAdmin() / adminStats(dias) / adminApoios(dias) → painel do administrador
 //   changeUsername / setAvatar / changePassword / deleteAccount → página de perfil
-//   rankedStatus() / ranking(periodo) → ranqueada da Carreira no Rift (elo em getUser().elo)
+//   rankedIniciar() / rankedStatus() / ranking(periodo) → ranqueada da Carreira no Rift (elo em getUser().elo)
 //
 // Sem conta, tudo fica no localStorage do navegador. Ao entrar, o que foi
 // jogado como visitante é enviado para a conta, e o save mais recente
@@ -507,6 +507,21 @@ export async function adminRegistrarApoio(nome, valor) {
 
 // Situação da conta na ranqueada (elo, partidas de hoje, ciclo atual).
 // Também fecha os ciclos pendentes no banco.
+// Começo de uma carreira ranqueável: o servidor anota o dia (horário de
+// Brasília) e devolve um ingresso. Só vale para a ranqueada a carreira que
+// termina no mesmo dia em que começou (ver 0010_ranqueada_inicio.sql).
+// Sem conta, sem servidor ou com erro: null (a carreira não vale).
+export async function rankedIniciar() {
+  const sb = await getClient();
+  if (!sb || !user) return null;
+  const { data, error } = await sb.rpc('site_ranked_iniciar');
+  if (error || !data?.token) {
+    if (error) console.warn('Site: não deu para iniciar a ranqueada:', error.message);
+    return null;
+  }
+  return { token: data.token, dia: String(data.dia).slice(0, 10) };
+}
+
 export async function rankedStatus() {
   const sb = await getClient();
   if (!sb || !user) return null;

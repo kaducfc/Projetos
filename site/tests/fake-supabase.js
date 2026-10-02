@@ -192,6 +192,10 @@ export function createFakeSupabase() {
         error: null,
       };
     }
+    if (name === 'site_ranked_iniciar') {
+      if (!auth._uid()) return { data: null, error: { message: 'not_authenticated' } };
+      return { data: { token: `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`, dia: new Date().toISOString().slice(0, 10) }, error: null };
+    }
     if (name === 'site_ranking') {
       if (!['diario', 'semanal', 'mensal'].includes(args.periodo)) return { data: null, error: { message: 'periodo_invalido' } };
       const pts = new Map();

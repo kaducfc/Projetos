@@ -69,6 +69,7 @@ function recordIfRetired() {
   platform.recordResult(GAME_ID, {
     score: legacyScore(p),
     summary: {
+      ranked: state.ranked?.token, // ingresso do dia em que a carreira começou
       text: `${p.nick} · ${ROLES[p.role].name} · ${legacy.title} · OVR máx. ${p.peakOvr}`,
       nick: p.nick,
       role: p.role,
@@ -85,7 +86,7 @@ function recordIfRetired() {
       },
       clubs: [...new Set(p.history.map((h) => teamOf(state, h.teamId).name))],
     },
-  }).then((entry) => avisoFim(entry)); // diz se valeu para a ranqueada
+  }).then((entry) => avisoFim(entry, state?.ranked)); // diz se valeu para a ranqueada
 }
 
 function render({ scrollTop = false } = {}) {
@@ -97,6 +98,14 @@ function render({ scrollTop = false } = {}) {
       });
       save();
       render({ scrollTop: true });
+      // Ranqueada: o servidor anota o dia em que esta carreira começou.
+      const nova = state;
+      platform.rankedIniciar().then((r) => {
+        if (r && state === nova && !state.player.retired) {
+          state.ranked = r;
+          save();
+        }
+      });
     });
     return;
   }

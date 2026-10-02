@@ -85,3 +85,19 @@ test('zerar a ranqueada: só administrador', async () => {
   await platform.signUp({ email: 'z@example.com', password: 'segredo123', username: 'Comum' });
   await assert.rejects(platform.adminResetRanked(1), /não tem permissão/);
 });
+
+test('ranqueada: ingresso do dia em que a carreira começou', async () => {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.init();
+  assert.equal(await platform.rankedIniciar(), null); // sem conta: não vale
+  await platform.signUp({ email: 'i@example.com', password: 'segredo123', username: 'Inicio' });
+  const r = await platform.rankedIniciar();
+  assert.match(r.token, /^[0-9a-f-]{36}$/);
+  assert.equal(r.dia, new Date().toISOString().slice(0, 10));
+  const sql = readFileSync(new URL('../supabase/migrations/0010_ranqueada_inicio.sql', import.meta.url), 'utf8');
+  assert.match(sql, /where id = tok::uuid and user_id = new\.user_id and dia = hoje and result_id is null/);
+  const main = readFileSync(new URL('../jogos/carreira-no-rift/js/main.js', import.meta.url), 'utf8');
+  assert.match(main, /ranked: state\.ranked\?\.token/);
+});
