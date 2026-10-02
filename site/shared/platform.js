@@ -446,16 +446,27 @@ export async function apoiar(valor) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();
   const { data, error } = await sb.functions.invoke('apoio-criar', { body: { valor } });
-  if (error || !data?.url) {
-    let codigo = data?.erro || '';
-    try { codigo = codigo || (await error?.context?.json?.())?.erro || ''; } catch { /* sem corpo */ }
-    throw new Error({
-      valor_invalido: 'Escolha um valor entre R$ 5 e R$ 1.000.',
-      nao_logado: 'Entre na sua conta para apoiar.',
-      mp_nao_configurado: 'O apoio ainda não está disponível.',
-    }[codigo] || 'Não foi possível abrir o pagamento agora. Tente de novo em instantes.');
+  if (!error && data?.url) return data;
+  // Descobre o motivo (ajuda a configurar o Mercado Pago e as Edge Functions).
+  let status = error?.context?.status || 0;
+  let corpo = data || {};
+  try { if (error?.context?.json) corpo = await error.context.json(); } catch { /* sem corpo JSON */ }
+  const codigo = corpo?.erro || '';
+  const textoMp = String(corpo?.detalhe || '');
+  const conhecidos = {
+    valor_invalido: 'Escolha um valor entre R$ 5 e R$ 1.000.',
+    nao_logado: 'Entre na sua conta para apoiar.',
+    mp_nao_configurado: 'O apoio ainda não está disponível (falta o segredo MP_ACCESS_TOKEN nas Edge Functions).',
+    banco: 'Erro no banco ao registrar o apoio (o 0008_apoio.sql foi rodado?).',
+    mercadopago: `O Mercado Pago recusou criar o pagamento${/invalid.*token|unauthorized|401/i.test(textoMp) ? ' (Access Token inválido)' : ''}.`,
+  };
+  if (conhecidos[codigo]) throw new Error(conhecidos[codigo]);
+  if (status === 404) throw new Error('A função apoio-criar não foi encontrada no Supabase (o nome está certo?).');
+  if (status === 401) throw new Error('O Supabase barrou a chamada: desligue a verificação de JWT ("Verify JWT") da função apoio-criar.');
+  if (!status && /fetch|network|cors|failed to send/i.test(String(error?.message))) {
+    throw new Error('Não foi possível falar com a função apoio-criar (ela foi publicada?).');
   }
-  return data;
+  throw new Error(`Não foi possível abrir o pagamento agora (erro ${status || '?'}${codigo ? `, ${codigo}` : ''}). Tente de novo em instantes.`);
 }
 
 // Doações da própria conta (mais recentes primeiro).
