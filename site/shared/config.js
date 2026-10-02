@@ -35,7 +35,7 @@ export const OFFICIAL_LOGOS_ALLOWED = [];
 //   false   → botão de pagar como "Em breve" para todos;
 //   'admin' → só contas de administrador conseguem pagar (fase de teste);
 //   true    → liberado para todos.
-export const APOIO_ATIVO = 'admin';
+export const APOIO_ATIVO = true;
 
 // Catálogo exibido no hub. `path` é relativo à raiz do site.
 // status: 'live' (jogável) ou 'soon' (em breve).

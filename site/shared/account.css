@@ -177,8 +177,9 @@ a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
 /* Efeito "Reflexo" no nick de quem apoiou o site (shared/apoio.js) */
 .nick { font-weight: inherit; }
 .fx { position: relative; display: inline-block; font-weight: 800; }
-.fx-reflexo { background: linear-gradient(110deg, #c9961f 0%, #f5cf5a 40%, #fffbe6 50%, #f5cf5a 60%, #c9961f 100%); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: fx-reflexo 2.8s ease-in-out infinite; }
-@keyframes fx-reflexo { 0% { background-position: 120% 0; } 60%, 100% { background-position: -120% 0; } }
+.fx-reflexo { background: linear-gradient(110deg, #c9961f 0%, #f5cf5a 32%, #fffbe6 50%, #f5cf5a 68%, #c9961f 100%); background-size: 200% 100%; background-repeat: repeat-x; -webkit-background-clip: text; background-clip: text; color: transparent; animation: fx-reflexo 2.6s linear infinite; }
+/* O degradê começa e termina na mesma cor: andar exatamente uma volta (200%) emenda sem salto. */
+@keyframes fx-reflexo { from { background-position: 0 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) {
   .fx { animation: none !important; }
 }
