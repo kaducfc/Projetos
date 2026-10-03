@@ -37,11 +37,12 @@ let livreAtual = null;
 // ------------------------------------------------------------------ dados
 
 async function carregarDados() {
-  const [lista, props] = await Promise.all([
-    fetch('dados/itens.json').then((r) => r.json()),
-    fetch('dados/silhuetas.json').then((r) => r.json()),
+  const [lista, props, versoes] = await Promise.all([
+    fetch('dados/itens.json', { cache: 'no-cache' }).then((r) => r.json()),
+    fetch('dados/silhuetas.json', { cache: 'no-cache' }).then((r) => r.json()),
+    fetch('dados/versoes.json', { cache: 'no-cache' }).then((r) => r.json()).catch(() => ({})),
   ]);
-  itens = lista.filter((i) => props[i.id] && i.altura > 0).map((i) => ({ ...i, prop: props[i.id] }));
+  itens = lista.filter((i) => props[i.id] && i.altura > 0).map((i) => ({ ...i, prop: props[i.id], v: versoes[i.id] || '' }));
   porId = new Map(itens.map((i) => [i.id, i]));
 }
 
@@ -197,7 +198,7 @@ function desenharPalco() {
   const fig = (it, h, cls) => {
     const ph = Math.max(3, h * k);
     const pw = Math.max(2, ph * it.prop);
-    return `<div class="esc-sil ${cls}" style="width:${pw}px;height:${ph}px;--img:url('${SIL}${it.id}.webp')"></div>`;
+    return `<div class="esc-sil ${cls}" style="width:${pw}px;height:${ph}px;--img:url('${SIL}${it.id}.webp?v=${it.v}')"></div>`;
   };
   const colRef = `<div class="esc-col ref"><p class="esc-rot"><b>${esc(ref.nome)}</b><span>${mostrando ? `Altura ${fmtAltura(ref.altura)}` : 'Altura ?'}</span></p>
       <div class="esc-fig"><i class="esc-regua" style="height:${Math.max(3, ref.altura * k)}px"></i>${fig(ref, ref.altura, 'azul')}</div></div>`;

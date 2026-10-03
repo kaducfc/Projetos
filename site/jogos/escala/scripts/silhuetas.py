@@ -4,7 +4,8 @@
 Lê dados/itens.json (a tabela de alturas, editada à mão) e, para cada item,
 baixa o modelo do CommunityDragon (raw.communitydragon.org), desenha a
 silhueta de frente e salva em dados/silhuetas/<id>.webp (branca com fundo
-transparente; a cor entra pelo CSS). Também grava dados/silhuetas.json com a
+transparente; a cor entra pelo CSS). Também grava dados/versoes.json (uma marca por imagem, contra cache) e
+dados/silhuetas.json com a
 proporção (largura / altura) de cada uma.
 
 A silhueta só dá a forma: o tamanho no jogo vem da "altura" da tabela, do pé
@@ -192,6 +193,14 @@ def main():
     ids = {i['id'] for i in itens}
     props = {k: v for k, v in sorted(props.items()) if k in ids}
     json.dump(props, open(caminho, 'w'), indent=1)
+    # Versão de cada imagem (muda quando a silhueta muda): vai no endereço
+    # da imagem para o navegador não mostrar a antiga guardada em cache.
+    import hashlib
+    versoes = {}
+    for k in props:
+        with open(os.path.join(DADOS, 'silhuetas', f'{k}.webp'), 'rb') as f:
+            versoes[k] = hashlib.sha1(f.read()).hexdigest()[:8]
+    json.dump(versoes, open(os.path.join(DADOS, 'versoes.json'), 'w'), indent=1)
     print(f'{len(alvo)} silhuetas geradas')
 
 

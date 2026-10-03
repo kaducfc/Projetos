@@ -5,6 +5,7 @@ import { pontos, rodadasDoDia, sortearRodada, rng, fmtAltura, proporcao, RODADAS
 
 const itens = JSON.parse(readFileSync(new URL('../jogos/escala/dados/itens.json', import.meta.url)));
 const props = JSON.parse(readFileSync(new URL('../jogos/escala/dados/silhuetas.json', import.meta.url)));
+const versoes = JSON.parse(readFileSync(new URL('../jogos/escala/dados/versoes.json', import.meta.url)));
 const porId = new Map(itens.map((i) => [i.id, i]));
 
 test('escala: pontuação pela distância relativa', () => {
@@ -23,6 +24,7 @@ test('escala: cada item da tabela tem silhueta, nome e altura', () => {
     assert.ok(!ids.has(i.id), `id repetido: ${i.id}`);
     ids.add(i.id);
     assert.ok(props[i.id] > 0, `sem proporção: ${i.id}`);
+    assert.match(versoes[i.id] || '', /^[0-9a-f]{8}$/, `sem versão: ${i.id}`);
     assert.ok(existsSync(new URL(`../jogos/escala/dados/silhuetas/${i.id}.webp`, import.meta.url)), `sem imagem: ${i.id}`);
     assert.ok(['comunidade', 'desenvolvedores', 'interpretativo', 'oficial', 'rift'].includes(i.confianca), i.id);
   }
