@@ -4,7 +4,7 @@ import * as platform from '../shared/platform.js';
 import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { APOIO_ATIVO } from '../shared/config.js';
-import { VALORES_SUGERIDOS, VALOR_MINIMO, VALOR_MAXIMO, nickHtml } from '../shared/apoio.js';
+import { VALORES_SUGERIDOS, VALOR_MINIMO, VALOR_MAXIMO, VALOR_CONFIRMAR, nickHtml } from '../shared/apoio.js';
 import { ESPECIAIS, avatarHtml } from '../shared/avatar.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
@@ -59,8 +59,8 @@ function cartaoValor(u) {
   return `<section class="pf-card ap-valor">
     <h2 class="display">Quanto quer apoiar?</h2>
     <div class="pf-chips ap-chips">${chips}<button type="button" data-valor="outro" class="${outro ? 'on' : ''}">Outro valor</button></div>
-    ${outro ? `<label class="pf-label">Valor (de ${reais(VALOR_MINIMO)} a ${reais(VALOR_MAXIMO)}):
-      <input type="number" inputmode="decimal" min="${VALOR_MINIMO}" max="${VALOR_MAXIMO}" step="1" value="${valor}" data-outro /></label>` : ''}
+    ${outro ? `<label class="pf-label">Valor (mínimo ${reais(VALOR_MINIMO)}):
+      <input type="number" inputmode="decimal" min="${VALOR_MINIMO}" step="1" value="${valor}" data-outro /></label>` : ''}
     ${acao}
   </section>`;
 }
@@ -172,7 +172,9 @@ root.addEventListener('click', async (e) => {
   const act = e.target.closest('[data-act]')?.dataset.act;
   if (act === 'entrar') openAuthModal('login');
   if (act === 'pagar' && !enviando) {
-    if (!(valor >= VALOR_MINIMO && valor <= VALOR_MAXIMO)) return toast(`Escolha um valor entre ${reais(VALOR_MINIMO)} e ${reais(VALOR_MAXIMO)}.`);
+    if (!(valor >= VALOR_MINIMO)) return toast(`O valor mínimo é ${reais(VALOR_MINIMO)}.`);
+    if (!(valor <= VALOR_MAXIMO)) return toast('Valor alto demais.');
+    if (valor >= VALOR_CONFIRMAR && !confirm(`Confirma o apoio de ${reais(valor)}?`)) return;
     enviando = true;
     render();
     try {

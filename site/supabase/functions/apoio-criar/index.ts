@@ -8,7 +8,7 @@
 // Na criação da função, DESLIGUE "Verify JWT": a conta é conferida aqui.
 
 const MINIMO = 5;
-const MAXIMO = 1000;
+const MAXIMO = 99999999; // sem limite para cima (só o teto do banco, numeric(10, 2))
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',

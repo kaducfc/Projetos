@@ -5,7 +5,10 @@
 
 export const VALORES_SUGERIDOS = [5, 10, 25, 50];
 export const VALOR_MINIMO = 5;
-export const VALOR_MAXIMO = 1000;
+// Sem limite para cima (só o teto técnico do banco, numeric(10, 2)).
+export const VALOR_MAXIMO = 99999999;
+// A partir deste valor, pede confirmação (evita um zero a mais sem querer).
+export const VALOR_CONFIRMAR = 1000;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
