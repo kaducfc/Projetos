@@ -204,8 +204,11 @@ async function escolherIcone() {
   // Especiais de apoiador ficam na mesma grade: travados (cadeado) até o
   // servidor liberar; o clique num travado explica como liberar.
   const travado = (x) => `<button type="button" class="pf-icone pf-travado" data-travado="${x.id}" title="${esc(x.nome)} (bloqueado)" aria-label="${esc(`${x.nome} (bloqueado)`)}">${avatarHtml(`icone:${x.id}`, x.nome, 64)}<span class="pf-cadeado" aria-hidden="true">🔒</span></button>`;
+  // Especial liberado: o clique mostra o título (com a ordem, no dos 100
+  // primeiros) e um botão para usar.
+  const especial = (x) => `<button type="button" class="pf-icone${u.avatar === `icone:${x.id}` ? ' on' : ''}" data-especial="${x.id}" title="${esc(x.nome)}" aria-label="${esc(x.nome)}">${avatarHtml(`icone:${x.id}`, x.nome, 64)}</button>`;
   const grade = (selos) => [...AVATARES.map(botao),
-    ...ESPECIAIS.map((x) => (selos?.[x.selo] ? botao(`icone:${x.id}`) : travado(x)))].join('');
+    ...ESPECIAIS.map((x) => (selos?.[x.selo] ? especial(x) : travado(x)))].join('');
   let selos = null;
   let vagas = null;
   const el = janela(`<h2 class="display">Escolha seu ícone</h2>
@@ -218,6 +221,18 @@ async function escolherIcone() {
       const extra = x.selo === 'pioneiro' && vagas != null ? (vagas ? ` Restam <b>${vagas}</b> vagas.` : ' As 100 vagas já foram preenchidas.') : '';
       const info = el.querySelector('[data-info]');
       info.innerHTML = `🔒 <b>${esc(x.nome)}</b> · ${esc(x.regra)}${extra} <a href="/apoiar/">Apoiar e liberar</a>`;
+      info.hidden = false;
+      return;
+    }
+    const sp = e.target.closest('[data-especial]');
+    if (sp) {
+      const x = ESPECIAIS.find((k) => k.id === sp.dataset.especial);
+      const ordem = x.selo === 'pioneiro' && selos?.posicao
+        ? `<span class="pf-ordem">${selos.posicao}/100</span> Você foi o apoiador nº ${selos.posicao} do site.`
+        : 'Obrigado por apoiar o site!';
+      const info = el.querySelector('[data-info]');
+      info.innerHTML = `<span class="pf-info-tit">⭐ <b>${esc(x.nome)}</b></span> ${ordem}
+        <button type="button" class="btn-primary pf-usar" data-icone="icone:${x.id}">${u.avatar === `icone:${x.id}` ? 'Em uso' : 'Usar este ícone'}</button>`;
       info.hidden = false;
       return;
     }

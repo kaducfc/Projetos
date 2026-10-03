@@ -86,7 +86,7 @@ function icones() {
   const item = (x) => {
     const livre = selos?.[x.selo];
     const extra = x.selo === 'pioneiro'
-      ? (livre ? ` Você é o apoiador nº ${selos.posicao}!` : vagas != null ? (vagas ? ` Restam <b>${vagas}</b> vagas.` : ' As 100 vagas já foram preenchidas.') : '')
+      ? (livre ? ` Você é o apoiador nº <b>${selos.posicao}/100</b>!` : vagas != null ? (vagas ? ` Restam <b>${vagas}</b> vagas.` : ' As 100 vagas já foram preenchidas.') : '')
       : '';
     return `<div class="ap-icone${livre ? ' livre' : ''}">${avatarHtml(`icone:${x.id}`, x.nome, 72)}
       <div><b>${esc(x.nome)}</b>${livre ? ' <span class="ap-ok">✓ liberado</span>' : ''}<p class="muted small">${esc(x.regra)}${extra}</p></div></div>`;
