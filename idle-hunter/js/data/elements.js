@@ -1,11 +1,11 @@
 // Simple 4-element cycle (Fogo > Planta > Elétrico > Água > Fogo) plus a
 // Neutro element that never has advantage/disadvantage either way.
 export const ELEMENTS = [
-  { id: 'neutro', name: 'Neutro', emoji: '⚪' },
-  { id: 'fogo', name: 'Fogo', emoji: '🔥' },
-  { id: 'planta', name: 'Planta', emoji: '🌿' },
-  { id: 'eletrico', name: 'Elétrico', emoji: '⚡' },
-  { id: 'agua', name: 'Água', emoji: '💧' },
+  { id: 'neutro', name: 'Neutro', emoji: '⚪', image: 'assets/ui/elements/neutro.png' },
+  { id: 'fogo', name: 'Fogo', emoji: '🔥', image: 'assets/ui/elements/fogo.png' },
+  { id: 'planta', name: 'Planta', emoji: '🌿', image: 'assets/ui/elements/planta.png' },
+  { id: 'eletrico', name: 'Elétrico', emoji: '⚡', image: 'assets/ui/elements/eletrico.png' },
+  { id: 'agua', name: 'Água', emoji: '💧', image: 'assets/ui/elements/agua.png' },
 ];
 
 // attackerElement -> the element it has advantage against
