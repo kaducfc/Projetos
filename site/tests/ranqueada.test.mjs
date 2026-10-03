@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createFakeSupabase, installMemoryStorage } from './fake-supabase.js';
 import * as platform from '../shared/platform.js';
-import { ELOS, vantagens, nivelElo, divisaoDe, nomeDivisao, ajustarPdr, REGUA, bonusCarreira } from '../shared/ranked.js';
+import { ELOS, vantagens, nivelElo, divisaoDe, nomeDivisao, ajustarPdr, GANHO_POR_ELO, bonusCarreira } from '../shared/ranked.js';
 import { shareText as shareRunetermo } from '../jogos/runetermo/js/logic.js';
 import { shareText as shareCampeao } from '../jogos/campeao/js/logic.js';
 import * as cblol from '../jogos/lendas-do-cblol/js/logic.js';
@@ -18,19 +18,20 @@ test('ranqueada: 10 elos, divisões de 100 PDR e Mestre depois do Diamante 1', (
   assert.equal(nomeDivisao(divisaoDe(2099)), 'Diamante 1');
   assert.deepEqual(divisaoDe(2440, 'desafiante'), { elo: 'desafiante', divisao: null, pdr: 340 });
   assert.equal(divisaoDe(2440).elo, 'mestre');
-  // Régua igual à do banco.
-  const regua = sql15.match(/select \(array\[([\d, ]+)\]\)\[least\(greatest\(nivel/)[1].split(',').map(Number);
-  assert.deepEqual(REGUA, regua);
-  // Mesma conversão de PDR do banco (site_rk_ajustar): ganhos +5..+38, perdas −2..−25.
+  // Percentual de ganho igual ao do banco.
+  const sql18 = readFileSync(new URL('../supabase/migrations/0018_ranqueada_ganho_por_elo.sql', import.meta.url), 'utf8');
+  const pct = sql18.match(/select \(array\[([\d, ]+)\]\)\[least\(greatest\(nivel/)[1].split(',').map(Number);
+  assert.deepEqual(GANHO_POR_ELO, pct);
+  // Mesma conversão do banco (site_rk_ajustar): ganhos com o % do elo, perdas iguais.
   assert.equal(ajustarPdr(5, 0), 5);
-  assert.equal(ajustarPdr(-2, 0), -2);
   assert.equal(ajustarPdr(38, 0), 38);
-  assert.equal(ajustarPdr(5, 6), -9); // no Diamante, o resultado mínimo vira perda
-  assert.equal(ajustarPdr(38, 6), 30);
-  for (let n = 0; n <= 9; n++) for (let b = -25; b <= 38; b++) {
-    if (b > -2 && b < 5) continue;
-    const v = ajustarPdr(b, n);
-    assert.ok((v >= 5 && v <= 38) || (v <= -2 && v >= -25), `${b} no nível ${n} → ${v}`);
+  assert.equal(ajustarPdr(20, 3), 16); // Ouro: 80%
+  assert.equal(ajustarPdr(38, 4), 27); // Platina: 70%
+  assert.equal(ajustarPdr(38, 6), 23); // Diamante: 60%
+  assert.equal(ajustarPdr(5, 9), 3); // Desafiante: 50%
+  for (let n = 0; n <= 9; n++) {
+    assert.equal(ajustarPdr(-2, n), -2);
+    assert.equal(ajustarPdr(-25, n), -25);
   }
 });
 

@@ -93,7 +93,7 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
   </section>`;
 }
 
-// "Como funciona": regras, elos e benefícios (a régua é interna, não aparece).
+// "Como funciona": regras, elos e benefícios (o % de ganho por elo é interno, não aparece).
 export function comoFunciona() {
   const linhas = ELOS.map((e, i) => {
     const b = BENEFICIOS.filter((x) => x.elo === e.id);

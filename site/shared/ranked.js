@@ -40,15 +40,16 @@ export function divisaoDe(pts = 0, elo = null) {
 // "Ouro 2", "Mestre"…
 export const nomeDivisao = (d) => `${eloInfo(d.elo).nome}${d.divisao ? ` ${d.divisao}` : ''}`;
 
-// Régua: quanto cada elo desconta dos resultados (igual a site_rk_regua).
-export const REGUA = [0, 1, 2, 3, 5, 6, 8, 12, 16, 20];
-// PDR de tabela (+5..+38 ou −2..−25) → PDR com a régua do elo (site_rk_ajustar).
+// Ganhos por elo, em % (igual a site_rk_ganho_pct): Ferro 100; Bronze a Ouro
+// 80; Platina e Esmeralda 70; Diamante 60; Mestre para cima 50. Perdas: 100%.
+export const GANHO_POR_ELO = [100, 80, 80, 80, 70, 70, 60, 50, 50, 50];
+// PDR de tabela (+5..+38 ou −2..−25) → PDR do elo (site_rk_ajustar).
 export function ajustarPdr(base, nivel = 0) {
-  const p = (base > 0 ? base - 5 : base + 1) - REGUA[Math.min(9, Math.max(0, nivel))];
-  return p >= 0 ? Math.min(38, 5 + p) : Math.max(-25, -1 + p);
+  if (base <= 0) return Math.max(-25, base);
+  return Math.max(1, Math.round(Math.min(38, base) * GANHO_POR_ELO[Math.min(9, Math.max(0, nivel))] / 100));
 }
 
-// Tabelas de PDR (antes da régua), para explicar na tela.
+// Tabelas de PDR (antes do % do elo).
 export const PDR_CARREIRA = [[150, -25], [250, -16], [399, -2], [400, 5], [600, 13], [800, 20], [1000, 28], [1100, 32], [1300, 34], [1600, 38]];
 export const PDR_RUNETERMO = [35, 28, 22, 16, 11, 6, 5];
 export const PDR_LENDAS = [
@@ -57,7 +58,7 @@ export const PDR_LENDAS = [
   ['Vice', '+6 a +10'],
   ['Semifinal', '−4 a −6'],
   ['Quartas', '−10 a −14'],
-  ['Fora na fase de pontos', '−18 a −24'],
+  ['Fora na fase de pontos', '−24 (0 vitórias), −20 (1) ou −16 (2)'],
 ];
 
 // Benefícios: cada elo mantém os dos elos abaixo.
