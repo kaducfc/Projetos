@@ -42,6 +42,18 @@ PESOS = {
 AMOSTRA = 6  # jogos: com poucos jogos o desempenho é puxado para a média
 SPLIT_CHEIO = 18  # quem jogou o split inteiro conta como pelo menos isso de jogos
 PESO_CARREIRA = 0.3  # parte do OVR que vem do nível do jogador em toda a carreira
+# Reserva com 0 ou 1 jogo no split não entra no elenco.
+MIN_JOGOS_RESERVA = 2
+# Times que ficam de fora (edições curtas, com poucos jogos): (edição, time).
+FORA = {
+    ('CBLOL 2014 · Final Regional', 'Ban Karma Gaming'),
+    ('CBLOL 2014 · Final Regional', 'LegendsBR'),
+    ('CBLOL 2015 · Pós-temporada', 'Big Gods'),
+    ('CBLOL 2015 · Pós-temporada', 'INTZ Red'),
+    ('CBLOL 2015 · Pós-temporada', 'KaBuM! Black'),
+    ('CBLOL 2015 · Pós-temporada', 'g3nerationX'),
+    ('CBLOL 2018 · Split 2', 'Razer Pichau Gaming'),
+}
 
 def limpa(nome):
     return re.sub(r'\s*\(.*?\)\s*$', '', nome or '').strip()
@@ -331,6 +343,8 @@ def main():
                 j['ovr'] = max(50, ref - 4 - int(estavel(base, team, j['nome']) * 5))
         if len(tit) < 5:
             continue
+        if (rotulo, team) in FORA:
+            continue
         jogos_time = sum(1 for g in d['jogos'] if g['OverviewPage'] in ed and ed[g['OverviewPage']][0] == base and team in (g['Team1'], g['Team2']))
         vit_time = sum(1 for g in d['jogos'] if g['OverviewPage'] in ed and ed[g['OverviewPage']][0] == base and g['WinTeam'] == team)
         wr = vit_time / jogos_time if jogos_time else 0.5
@@ -342,7 +356,8 @@ def main():
         else:
             coach = 72
         coach = max(55, min(95, round(coach + (wr - 0.5) * 10)))
-        pessoas = sorted(jogs.values(), key=lambda j: (list(ROLES.values()).index(j['rota']), -j['jogos']))
+        pessoas = sorted((j for j in jogs.values() if tit.get(j['rota']) is j or j['jogos'] >= MIN_JOGOS_RESERVA),
+                         key=lambda j: (list(ROLES.values()).index(j['rota']), -j['jogos']))
         times.append({
             'id': f"{base}|{team}",
             'time': team, 'org': ORG.get(team, team), 'ano': ano, 'edicao': rotulo, 'ordem': base,
