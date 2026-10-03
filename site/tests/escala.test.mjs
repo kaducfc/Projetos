@@ -59,3 +59,16 @@ test('escala: textos de altura e proporção', () => {
   assert.equal(fmtAltura(103.6), '104 m');
   assert.equal(proporcao({ nome: 'Garen', altura: 1.95 }, { nome: 'Teemo', altura: 0.81 }), 'Garen é 2,41× maior que Teemo');
 });
+
+test('escala: ranqueada no servidor usa a mesma nota e 5 rodadas', () => {
+  const sql = readFileSync(new URL('../supabase/migrations/0022_escala_ranqueada.sql', import.meta.url), 'utf8');
+  assert.equal(RODADAS, 5);
+  assert.match(sql, /ln\(3\) \* \(1 \+ 0\.35 \* ln\(greatest\(1, razao\)\)\)/); // mesma margem do logic.js
+  assert.match(sql, /between 1\.15 and 12/); // mesma faixa de proporção
+  assert.match(sql, /interval '65 seconds'/); // 60 s + folga
+  // As alturas do servidor (0023) batem com a tabela do site.
+  const alt = readFileSync(new URL('../supabase/migrations/0023_escala_alturas.sql', import.meta.url), 'utf8');
+  const noSql = Object.fromEntries([...alt.matchAll(/\('((?:[^']|'')+)', '(?:[^']|'')*', ([\d.]+)\)/g)].map((m) => [m[1].replace(/''/g, "'"), Number(m[2])]));
+  for (const i of itens) assert.equal(noSql[i.id], i.altura, `altura diferente no SQL (gere de novo com scripts/sql_alturas.py): ${i.id}`);
+  assert.equal(Object.keys(noSql).length, itens.length);
+});

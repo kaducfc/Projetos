@@ -4,6 +4,7 @@ import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { msToNextDay, fmtCountdown } from '../../../shared/diario.js';
+import { avisoDiario } from '../../../shared/aviso-ranked.js';
 import {
   RODADAS, dayIndex, pontos, veredito, diferenca, rng, sortearRodada, rodadasDoDia,
   fmtAltura, proporcao, quadrado,
@@ -34,6 +35,11 @@ let save = null; // { v, diario: { dia, rodadas: [...] }, livre: { jogadas, soma
 let modo = 'diario';
 let rodada = null; // { ref, alvo, palpite, pontos? }
 let livreAtual = null;
+// Ranqueada (com conta): o diário é do servidor. `srv` = estado de hoje (null
+// = ainda não começou); `ranq` = está valendo (conta + servidor respondendo).
+let ranq = false;
+let srv = null;
+let enviando = false;
 
 // ------------------------------------------------------------------ dados
 
@@ -50,7 +56,7 @@ async function carregarDados() {
 function carregarSave() {
   const s = platform.loadLocalSave(GAME_ID);
   save = { v: 1, diario: null, livre: { jogadas: 0, soma: 0, melhor: 0 }, ...(s && s.v === 1 ? s : {}) };
-  if (!save.diario || save.diario.dia !== hoje || !Array.isArray(save.diario.rodadas)) {
+  if (!save.diario || save.diario.dia !== hoje || !Array.isArray(save.diario.rodadas) || save.diario.rodadas.length !== RODADAS) {
     save.diario = { dia: hoje, rodadas: rodadasDoDia(itens, hoje).map((r) => ({ ...r, palpite: null, pontos: null })) };
   }
   // Se a tabela mudou e algum item sumiu, refaz o dia.
@@ -60,12 +66,22 @@ function carregarSave() {
 }
 const guardar = (urgente = false) => platform.writeSave(GAME_ID, save, { urgent: urgente });
 
-const feitas = () => save.diario.rodadas.filter((r) => r.pontos != null).length;
-const totalDia = () => save.diario.rodadas.reduce((t, r) => t + (r.pontos || 0), 0);
-const diaFim = () => feitas() >= RODADAS;
+// Rodadas do dia: do servidor (ranqueada) ou deste aparelho (sem conta).
+const rodadasDia = () => (ranq
+  ? Array.from({ length: RODADAS }, (_, i) => ({ ref: null, alvo: null, palpite: null, pontos: null, ...(srv?.rodadas?.[i] || {}) }))
+  : save.diario.rodadas);
+const feitas = () => rodadasDia().filter((r) => r.pontos != null).length;
+const totalDia = () => rodadasDia().reduce((t, r) => t + (r.pontos || 0), 0);
+const diaFim = () => (ranq ? srv?.status === 'terminou' : feitas() >= RODADAS);
 
 // Rodada em jogo (ou a última respondida, mostrando o resultado).
 function rodadaAtual() {
+  if (modo === 'diario' && ranq) {
+    if (!srv || srv.status === 'terminou') return null;
+    const r = srv.rodadas[srv.atual];
+    if (!r || !porId.has(r.ref) || !porId.has(r.alvo)) return null;
+    return { ref: r.ref, alvo: r.alvo, indice: srv.atual, prazo: Date.now() + (srv.restante ?? 60) * 1000 };
+  }
   if (modo === 'diario') {
     const rs = save.diario.rodadas;
     const i = rs.findIndex((r) => r.pontos == null);
@@ -88,22 +104,40 @@ function novaRodada() {
 // ------------------------------------------------------------------ tela
 
 function render() {
-  const fim = modo === 'diario' && diaFim() && !rodada?.mostrando;
+  const inicio = modo === 'diario' && ranq && !srv;
+  const fim = modo === 'diario' && !inicio && (diaFim() || !rodada) && !rodada?.mostrando;
   const status = modo === 'diario'
-    ? `<span>Rodada <b>${Math.min(RODADAS, feitas() + (rodada?.mostrando ? 0 : 1))}/${RODADAS}</b></span><span class="esc-dots">${save.diario.rodadas.map((r, i) => `<i class="${r.pontos != null ? quadradoCls(r.pontos) : i === feitas() ? 'agora' : ''}"></i>`).join('')}</span><span>⭐ <b>${totalDia()}</b></span>`
+    ? `<span>Rodada <b>${Math.min(RODADAS, feitas() + (rodada?.mostrando ? 0 : 1))}/${RODADAS}</b></span><span class="esc-dots">${rodadasDia().map((r, i) => `<i class="${r.pontos != null ? quadradoCls(r.pontos) : i === feitas() ? 'agora' : ''}"></i>`).join('')}</span><span>⭐ <b>${totalDia()}</b></span>`
     : `<span>Rodadas: <b>${save.livre.jogadas}</b></span><span>Média: <b>${save.livre.jogadas ? Math.round(save.livre.soma / save.livre.jogadas) : '—'}</b></span>`;
   app.innerHTML = `
     <header class="esc-head">
       <div class="esc-tabs" role="tablist">
-        <button type="button" role="tab" data-modo="diario" class="${modo === 'diario' ? 'on' : ''}">Diário</button>
+        <button type="button" role="tab" data-modo="diario" class="${modo === 'diario' ? 'on' : ''}">${ranq ? 'Ranqueada' : 'Diário'}</button>
         <button type="button" role="tab" data-modo="livre" class="${modo === 'livre' ? 'on' : ''}">Livre</button>
       </div>
       <h1 class="esc-title display">Escala de Runeterra</h1>
       <div class="esc-status">${status}</div>
       <button type="button" class="esc-ajuda" data-act="ajuda" aria-label="Como jogar">?</button>
     </header>
-    ${fim ? telaFim() : telaRodada()}`;
-  if (!fim) desenharPalco();
+    ${inicio ? telaInicio() : fim ? telaFim() : telaRodada()}`;
+  if (!fim && !inicio) desenharPalco();
+}
+
+// Antes de começar a ranqueada do dia.
+function telaInicio() {
+  return `<section class="esc-fim esc-inicio">
+      <p class="eyebrow">Ranqueada de hoje</p>
+      <h2 class="display">${RODADAS} rodadas · 1 chance por dia</h2>
+      <ul class="esc-regras">
+        <li>Cada rodada tem <b>60 segundos</b>. Acabou o tempo, vale o tamanho em que a figura estiver.</li>
+        <li>No fim, a <b>média</b> das ${RODADAS} rodadas vira PDR: a partir de 45/100 você ganha; abaixo, perde.</li>
+        <li>Depois de começar, não dá para recomeçar. Se não terminar até a meia-noite, o que faltar vale 0.</li>
+      </ul>
+      <div class="esc-fim-acoes">
+        <button type="button" class="esc-confirmar" data-act="comecar" ${enviando ? 'disabled' : ''}>${enviando ? 'Começando…' : 'Começar a ranqueada'}</button>
+        <button type="button" class="esc-sec" data-modo="livre">Treinar no modo Livre</button>
+      </div>
+    </section>`;
 }
 
 const quadradoCls = (p) => (p >= 80 ? 'q-verde' : p >= 50 ? 'q-amarelo' : p >= 25 ? 'q-laranja' : 'q-vermelho');
@@ -134,8 +168,8 @@ function controles(ref) {
       <button type="button" class="esc-btn esc-sobrepor" data-act="sobrepor" aria-label="Sobrepor ou separar as figuras" title="Sobrepor / separar">${rodada.sobre ? '↔' : '⇄'}</button>
     </section>
     <div class="esc-acoes">
-      <span class="esc-chute">Vermelho: <b data-chute>${fmtRazao(rodada.chute / ref.altura)}</b> o azul</span>
-      <button type="button" class="esc-confirmar" data-act="confirmar">✓ Confirmar</button>
+      <span class="esc-chute">Vermelho: <b data-chute>${fmtRazao(rodada.chute / ref.altura)}</b> o azul${rodada.prazo ? ` · <span class="esc-tempo" data-tempo>${tempoRestante()}s</span>` : ''}</span>
+      <button type="button" class="esc-confirmar" data-act="confirmar" ${enviando ? 'disabled' : ''}>${enviando ? 'Conferindo…' : '✓ Confirmar'}</button>
     </div>
     <p class="esc-teclado muted small">Teclado: ← → ou ↑ ↓ para ajustar (Shift para ajuste fino), Enter para confirmar.</p>`;
 }
@@ -147,7 +181,7 @@ function painelResultado(ref, alvo) {
       <button type="button" class="esc-confirmar" data-act="proxima">${ultima ? 'Ver resultado do dia →' : 'Próxima →'}</button></div>
     <section class="esc-res">
       <div class="esc-res-top"><span class="esc-pts ${quadradoCls(p)}">${p}<small>/100</small></span>
-        <div><b>${veredito(p)}</b><p>${diferenca(rodada.palpite, alvo.altura)}</p></div></div>
+        <div><b>${rodada.esgotou ? 'Tempo esgotado' : veredito(p)}</b><p>${rodada.esgotou ? 'A resposta chegou depois dos 60 segundos.' : diferenca(rodada.palpite, alvo.altura)}</p></div></div>
       <ul>
         <li><span>Tamanho real · ${esc(ref.nome)}</span><b>Altura ${fmtAltura(ref.altura)}</b></li>
         <li><span>Tamanho real · ${esc(alvo.nome)}</span><b>Altura ${fmtAltura(alvo.altura)}</b></li>
@@ -160,15 +194,19 @@ function painelResultado(ref, alvo) {
 
 function telaFim() {
   const total = totalDia();
-  const linhas = save.diario.rodadas.map((r, i) => {
+  const rs = rodadasDia();
+  const linhas = rs.map((r, i) => {
     const a = porId.get(r.alvo);
     const b = porId.get(r.ref);
-    return `<li><span class="esc-n">${i + 1}</span><span>${esc(a.nome)} <small class="muted">vs ${esc(b.nome)}</small></span><b class="${quadradoCls(r.pontos)}">${r.pontos}</b></li>`;
+    return `<li><span class="esc-n">${i + 1}</span><span>${esc(a?.nome || '—')} <small class="muted">vs ${esc(b?.nome || '—')}</small></span><b class="${quadradoCls(r.pontos || 0)}">${r.pontos ?? 0}</b></li>`;
   }).join('');
+  const pdr = ranq && srv?.pdr != null
+    ? `<p class="esc-pdr">Média <b>${Number(srv.media).toLocaleString('pt-BR')}</b>/100 · <b class="${srv.pdr > 0 ? 'pdr-mais' : srv.pdr < 0 ? 'pdr-menos' : ''}">${srv.pdr > 0 ? '+' : srv.pdr < 0 ? '−' : '±'}${Math.abs(srv.pdr)} PDR</b></p>` : '';
   return `<section class="esc-fim">
-      <p class="eyebrow">Resultado do dia</p>
+      <p class="eyebrow">${ranq ? 'Ranqueada de hoje' : 'Resultado do dia'}</p>
       <p class="esc-total display">${total}<small>/${RODADAS * 100}</small></p>
-      <p class="esc-quads">${save.diario.rodadas.map((r) => quadrado(r.pontos)).join('')}</p>
+      ${pdr}
+      <p class="esc-quads">${rs.map((r) => quadrado(r.pontos || 0)).join('')}</p>
       <ol class="esc-lista">${linhas}</ol>
       <div class="esc-fim-acoes">
         <button type="button" class="esc-confirmar" data-act="compartilhar">Compartilhar</button>
@@ -271,8 +309,47 @@ function ajustar(fator) {
   desenharPalco();
 }
 
+function tempoRestante() {
+  return Math.max(0, Math.ceil(((rodada?.prazo || 0) - Date.now()) / 1000));
+}
+
+// Ranqueada: o palpite vai para o servidor, que devolve a nota e as alturas.
+async function confirmarServidor() {
+  if (enviando) return;
+  const ref = porId.get(rodada.ref);
+  const indice = rodada.indice;
+  enviando = true;
+  render();
+  try {
+    srv = await platform.escalaPalpite(indice, rodada.chute / ref.altura);
+  } catch (e) {
+    enviando = false;
+    aviso(e.message);
+    // Fora de sincronia (ex.: outra aba): recarrega o estado do servidor.
+    try { srv = await platform.escalaAbrir(false); } catch { /* sem servidor */ }
+    novaRodada();
+    render();
+    return;
+  }
+  enviando = false;
+  const r = srv.rodadas[indice];
+  // As alturas que valem são as do servidor.
+  const a = porId.get(r.alvo);
+  const b = porId.get(r.ref);
+  if (a && r.alvo_altura) a.altura = Number(r.alvo_altura);
+  if (b && r.ref_altura) b.altura = Number(r.ref_altura);
+  Object.assign(rodada, { palpite: Number(r.palpite), pontos: r.pontos, esgotou: r.esgotou, mostrando: true, dx: 0, sobre: false, prazo: null });
+  if (indice === 0) platform.track('game_start', GAME_ID, { day: hoje, modo: 'ranqueada' });
+  if (srv.status === 'terminou') terminarDia();
+  render();
+}
+
 function confirmar() {
   if (!rodada || rodada.mostrando) return;
+  if (modo === 'diario' && ranq) {
+    confirmarServidor();
+    return;
+  }
   const alvo = porId.get(rodada.alvo);
   rodada.palpite = rodada.chute;
   rodada.pontos = pontos(rodada.palpite, alvo.altura, razaoDe(porId.get(rodada.ref), alvo));
@@ -294,13 +371,33 @@ function confirmar() {
   render();
 }
 
+
 function terminarDia() {
   const total = totalDia();
-  platform.track('game_end', GAME_ID, { day: hoje, modo: 'diario', total });
+  const pdr = ranq ? srv?.pdr ?? null : null;
+  platform.track('game_end', GAME_ID, { day: hoje, modo: ranq ? 'ranqueada' : 'diario', total });
   platform.recordResult(GAME_ID, {
     score: total,
-    summary: { text: `Dia ${hoje + 1} · ${total}/${RODADAS * 100} · ${save.diario.rodadas.map((r) => quadrado(r.pontos)).join('')}`, day: hoje + 1, modo: 'diario', total },
+    summary: {
+      text: `Dia ${hoje + 1} · ${total}/${RODADAS * 100} · ${rodadasDia().map((r) => quadrado(r.pontos || 0)).join('')}${pdr != null ? ` · ${pdr > 0 ? '+' : ''}${pdr} PDR` : ''}`,
+      day: hoje + 1, modo: ranq ? 'ranqueada' : 'diario', total, pdr,
+    },
   });
+  if (ranq) avisoDiario(srv);
+}
+
+async function comecar() {
+  if (enviando || srv) return;
+  enviando = true;
+  render();
+  try {
+    srv = await platform.escalaAbrir(true);
+  } catch (e) {
+    aviso(e.message);
+  }
+  enviando = false;
+  novaRodada();
+  render();
 }
 
 function proxima() {
@@ -333,12 +430,12 @@ function ajuda() {
     <p>Arraste para cima ou para baixo, use a barra ou os botões − e +. Depois confirme.</p>
     <p>Nenhuma altura aparece antes de confirmar: só depois você descobre o tamanho das duas.</p>
     <p>Quanto mais perto da proporção real, mais pontos (até 100 por rodada). Errar 20% para mais ou para menos vale o mesmo.</p>
-    <p><b>Diário:</b> ${RODADAS} rodadas por dia, iguais para todo mundo. <b>Livre:</b> rodadas sem fim.</p>
+    <p><b>${ranq ? 'Ranqueada' : 'Diário'}:</b> ${RODADAS} rodadas por dia${ranq ? ', 60 segundos cada, valendo PDR pela média' : ', iguais para todo mundo (com a conta conectada, vale PDR)'}. <b>Livre:</b> rodadas sem fim, para treinar.</p>
     <p class="muted small">As alturas são as de Runeterra (lore), do pé ao ponto mais alto. A Riot quase nunca publica alturas, então a maioria é estimativa da comunidade. As silhuetas vêm dos modelos do jogo.</p>`);
 }
 
 function textoCompartilhar() {
-  return `${NAME} · dia ${hoje + 1}\n${totalDia()}/${RODADAS * 100}\n${save.diario.rodadas.map((r) => quadrado(r.pontos)).join('')}\nriftarcade.com.br/jogos/escala/`;
+  return `${NAME} · dia ${hoje + 1}\n${totalDia()}/${RODADAS * 100}\n${rodadasDia().map((r) => quadrado(r.pontos || 0)).join('')}\nriftarcade.com.br/jogos/escala/`;
 }
 
 async function compartilhar() {
@@ -385,6 +482,7 @@ app.addEventListener('click', (e) => {
   else if (act === 'sobrepor') sobrepor();
   else if (act === 'ajuda') ajuda();
   else if (act === 'compartilhar') compartilhar();
+  else if (act === 'comecar') comecar();
 });
 
 app.addEventListener('input', (e) => {
@@ -450,11 +548,24 @@ document.addEventListener('keydown', (e) => {
 });
 
 addEventListener('resize', () => { if (rodada) desenharPalco(); });
-setInterval(() => {
+setInterval(async () => {
   app.querySelectorAll('[data-cd]').forEach((el) => { el.textContent = fmtCountdown(msToNextDay()); });
-  if (dayIndex() !== hoje && !rodada?.mostrando) {
+  // Ranqueada: cronômetro da rodada; no zero, vale o tamanho em que estiver.
+  if (rodada?.prazo && !rodada.mostrando) {
+    const t = tempoRestante();
+    const el = app.querySelector('[data-tempo]');
+    if (el) {
+      el.textContent = `${t}s`;
+      el.classList.toggle('pouco', t <= 10);
+    }
+    if (t <= 0 && !enviando) confirmar();
+  }
+  if (dayIndex() !== hoje && !rodada?.mostrando && !enviando) {
     hoje = dayIndex();
     carregarSave();
+    if (ranq) {
+      try { srv = await platform.escalaAbrir(false); } catch { srv = null; }
+    }
     novaRodada();
     render();
   }
@@ -462,10 +573,36 @@ setInterval(() => {
 
 // ------------------------------------------------------------------ início
 
+// Com conta e servidor: o diário vira a ranqueada (conferida no servidor).
+// Se o servidor não responder, joga o diário deste aparelho (sem PDR).
+async function carregarRanqueada() {
+  ranq = false;
+  srv = null;
+  await platform.init();
+  if (!platform.diarioNoServidor()) return;
+  try {
+    srv = await platform.escalaAbrir(false);
+    ranq = true;
+  } catch (e) {
+    console.warn('Escala: ranqueada indisponível, jogando sem PDR.', e.message);
+  }
+}
+
+// Entrou ou saiu da conta.
+platform.onChange(async (evt) => {
+  if (evt.type !== 'auth' || enviando || (rodada && !rodada.mostrando && rodada.prazo)) return;
+  const antes = ranq;
+  await carregarRanqueada();
+  if (antes === ranq && !ranq) return;
+  novaRodada();
+  render();
+});
+
 async function iniciar() {
   app.innerHTML = '<p class="muted">Carregando…</p>';
   await carregarDados();
   carregarSave();
+  await carregarRanqueada();
   // Já terminou o diário hoje: abre direto no resultado.
   novaRodada();
   render();

@@ -20,6 +20,7 @@ export const JOGOS_RANQUEADA = [
   { id: 'cblol', nome: 'Lendas do CBLOL (Oculto)', vagas: true, link: '/jogos/lendas-do-cblol/' },
   { id: 'runetermo', nome: 'Runetermo', link: '/jogos/runetermo/' },
   { id: 'campeao', nome: 'Campeão Oculto', link: '/jogos/campeao/' },
+  { id: 'escala', nome: 'Escala de Runeterra', link: '/jogos/escala/' },
 ];
 const MOTIVO = { partida: '', melhora: 'resultado melhor', nao_terminou: 'começou e não terminou', inatividade: 'inatividade', admin: 'ajuste' };
 const nomeJogo = (id) => JOGOS_RANQUEADA.find((j) => j.id === id)?.nome.replace(' (Oculto)', '') || '';

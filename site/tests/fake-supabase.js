@@ -238,6 +238,46 @@ export function createFakeSupabase() {
       db.site_rk = [];
       return { data: { jogadores_zerados: n, inicio: hojeIso, temporada: args.nova_temporada }, error: null };
     }
+    // Escala na ranqueada: rodadas em db.escalaRodadas ([{ref, alvo}]) e
+    // alturas em db.escalaAlturas ({id: metros}); o teste escolhe.
+    if (name === 'site_escala_abrir' || name === 'site_escala_palpite') {
+      const uid = auth._uid();
+      if (!uid) return { data: null, error: { message: 'not_authenticated' } };
+      db.site_escala = db.site_escala || {};
+      let e = db.site_escala[uid];
+      const json = () => ({
+        dia: hojeIso, status: e.status, atual: e.atual, limite: 60, restante: e.status === 'jogando' ? 60 : null,
+        media: e.media ?? null, base: e.base ?? null, pdr: e.pdr ?? null,
+        rodadas: e.rodadas.filter((_, i) => i <= e.atual).map((r, i) => (i < e.atual
+          ? { ref: r.ref, alvo: r.alvo, ref_altura: db.escalaAlturas[r.ref], alvo_altura: db.escalaAlturas[r.alvo], palpite: r.palpite, pontos: r.pontos, esgotou: false }
+          : { ref: r.ref, alvo: r.alvo })),
+      });
+      if (name === 'site_escala_abrir') {
+        if (!e) {
+          if (!args.comecar) return { data: null, error: null };
+          e = db.site_escala[uid] = { status: 'jogando', atual: 0, rodadas: db.escalaRodadas.map((r) => ({ ...r })) };
+        }
+        return { data: json(), error: null };
+      }
+      if (!e) return { data: null, error: { message: 'sem_partida' } };
+      if (e.status !== 'jogando' || args.rodada !== e.atual) return { data: null, error: { message: 'rodada_encerrada' } };
+      const r = e.rodadas[e.atual];
+      const ref = db.escalaAlturas[r.ref];
+      const alvo = db.escalaAlturas[r.alvo];
+      r.palpite = Math.round(args.razao * ref * 1000) / 1000;
+      const razao = Math.max(ref, alvo) / Math.min(ref, alvo);
+      r.pontos = Math.round(100 * Math.max(0, 1 - Math.abs(Math.log(r.palpite / alvo)) / (Math.log(3) * (1 + 0.35 * Math.log(razao)))));
+      e.atual += 1;
+      if (e.atual >= 5) {
+        e.status = 'terminou';
+        e.media = e.rodadas.reduce((t, x) => t + x.pontos, 0) / 5;
+        e.base = e.media >= 45 ? Math.round(5 + (e.media - 45) * 33 / 55) : -Math.round(2 + (45 - e.media) * 23 / 45);
+        e.pdr = e.base;
+        db.site_rk_dia.push({ user_id: uid, dia: hojeIso, jogo: 'escala', pdr: e.pdr, base: e.base });
+        db.site_rk_lanc.push({ user_id: uid, dia: hojeIso, jogo: 'escala', motivo: 'partida', delta: e.pdr });
+      }
+      return { data: json(), error: null };
+    }
     if (name === 'site_diario_hoje') {
       const uid = auth._uid();
       if (!uid) return { data: null, error: { message: 'not_authenticated' } };

@@ -2,7 +2,7 @@
 import { dayIndex as dayIndexFrom } from '../../../shared/diario.js';
 
 export const FIRST_DAY = '2026-10-01';
-export const RODADAS = 10;
+export const RODADAS = 5;
 // Proporção entre as duas coisas de uma rodada: nem quase iguais, nem absurdas.
 export const RAZAO_MIN = 1.15;
 export const RAZAO_MAX = 12;

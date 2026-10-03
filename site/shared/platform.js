@@ -589,6 +589,8 @@ const ERROS_DIARIO = {
   sem_dica: 'Não há mais dicas disponíveis.',
   sem_partida: 'Recarregue a página para começar a partida de hoje.',
   sem_dados: 'O jogo ainda não está pronto no servidor.',
+  palpite_invalido: 'Palpite fora do limite.',
+  rodada_encerrada: 'Essa rodada já foi respondida.',
 };
 async function rpcDiario(nome, args) {
   const sb = await getClient();
@@ -619,6 +621,11 @@ export async function diarioHoje() {
   }
   return data || {};
 }
+// Escala de Runeterra na ranqueada: 5 rodadas sorteadas no servidor, 60 s
+// cada. comecar=false só consulta (null se ainda não começou hoje).
+export const escalaAbrir = (comecar = false) => rpcDiario('site_escala_abrir', { comecar });
+// razao = altura do vermelho ÷ altura do azul.
+export const escalaPalpite = (rodada, razao) => rpcDiario('site_escala_palpite', { rodada, razao });
 // Com conta e servidor, o jogo diário vale ranqueada (e é conferido lá).
 export const diarioNoServidor = () => Boolean(user) && cloudEnabled();
 
