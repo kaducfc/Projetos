@@ -201,7 +201,12 @@ export function createFakeSupabase() {
       const uid = auth._uid();
       if (!uid) return { data: null, error: { message: 'not_authenticated' } };
       const r = db.site_rk.find((x) => x.user_id === uid);
-      const jogos = Object.fromEntries(db.site_rk_dia.filter((x) => x.user_id === uid && x.dia === hojeIso).map((x) => [x.jogo, { pdr: x.pdr, base: x.base }]));
+      const hoje = db.site_rk_dia.filter((x) => x.user_id === uid && x.dia === hojeIso);
+      const jogos = {};
+      for (const x of hoje) {
+        const j = jogos[x.jogo] || (jogos[x.jogo] = { pdr: 0, base: x.base, partidas: 0 });
+        j.pdr += x.pdr; j.base = Math.max(j.base, x.base); j.partidas++;
+      }
       const vagas = {};
       for (const j of ['carreira-no-rift', 'cblol']) vagas[j] = Math.min(3, fakeInicios.get(`${uid}|${j}`) || 0);
       return {
@@ -212,6 +217,7 @@ export function createFakeSupabase() {
             dia: hojeIso,
             pdr: db.site_rk_lanc.filter((x) => x.user_id === uid && x.dia === hojeIso).reduce((t, x) => t + x.delta, 0),
             jogos, vagas,
+            partidas: hoje.map((x, i) => ({ jogo: x.jogo, n: x.n ?? 1, pdr: x.pdr, base: x.base, client_id: x.client_id ?? null })),
             validas: db.site_game_results.filter((x) => x.user_id === uid && x.summary?.ranked).map((x) => x.client_id),
           },
           cortes: { desafiante: null, grao_mestre: null, desafiantes: 0, grao_mestres: 0 },

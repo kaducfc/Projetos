@@ -498,7 +498,7 @@ body.addEventListener('click', async (e) => {
   const dev = e.target.closest('[data-rk-devolver]');
   try {
     if (an) {
-      if (!window.confirm(`Anular esta partida ranqueada (${an.dataset.rkInfo})? Ela sai da nota do dia e do ranking.`)) return;
+      if (!window.confirm(`Anular esta partida ranqueada (${an.dataset.rkInfo})? Os PDR que ela deu são tirados.`)) return;
       an.disabled = true;
       await platform.adminAnularPartida(Number(an.dataset.rkAnular));
       await load();

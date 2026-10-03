@@ -51,7 +51,7 @@ export async function avisoInicio(jogo = 'carreira-no-rift') {
   const resta = Math.max(0, PARTIDAS_POR_DIA - feitas);
   const dia = s.hoje.jogos?.[jogo];
   mostrar(resta
-    ? `<b>Ranqueada</b> (${eloTexto(s)}): ${resta === PARTIDAS_POR_DIA ? `suas ${PARTIDAS_POR_DIA} ${n.varias} ranqueadas de hoje estão disponíveis` : `falta${resta > 1 ? 'm' : ''} ${resta} ${resta > 1 ? n.varias : n.uma} ranqueada${resta > 1 ? 's' : ''} hoje`}${dia ? ` · hoje: ${pdrHtml(dia.pdr)}` : ''}. Vale a melhor das ${PARTIDAS_POR_DIA} primeiras começadas no dia. ${link}`
+    ? `<b>Ranqueada</b> (${eloTexto(s)}): ${resta === PARTIDAS_POR_DIA ? `suas ${PARTIDAS_POR_DIA} ${n.varias} ranqueadas de hoje estão disponíveis` : `falta${resta > 1 ? 'm' : ''} ${resta} ${resta > 1 ? n.varias : n.uma} ranqueada${resta > 1 ? 's' : ''} hoje`}${dia ? ` · hoje: ${pdrHtml(dia.pdr)}` : ''}. Cada uma vale o seu PDR. ${link}`
     : `<b>Ranqueada</b> (${eloTexto(s)}): as ${PARTIDAS_POR_DIA} ${n.varias} ranqueadas de hoje já foram começadas${dia ? ` (hoje: ${pdrHtml(dia.pdr)})` : ''}. Pode continuar jogando normalmente. ${link}`, 9000);
 }
 
@@ -71,7 +71,7 @@ export function avisoComeco(r, jogo = 'carreira-no-rift') {
     mostrar(`Esta ${n.uma} <b>não vale para a ranqueada</b>: as ${PARTIDAS_POR_DIA} ${n.varias} ranqueadas de hoje já foram começadas. Pode jogar normalmente! ${link}`, 9000);
     return;
   }
-  mostrar(`<b>${n.uma[0].toUpperCase()}${n.uma.slice(1)} ranqueada ${r.numero ?? ''} de ${r.limite ?? PARTIDAS_POR_DIA} de hoje.</b> Termine hoje (até meia-noite): se não terminar nenhuma das que começou, perde ${Math.abs(NAO_TERMINOU)} PDR.`, 10000);
+  mostrar(`<b>${n.uma[0].toUpperCase()}${n.uma.slice(1)} ranqueada ${r.numero ?? ''} de ${r.limite ?? PARTIDAS_POR_DIA} de hoje.</b> Termine hoje (até meia-noite): se não terminar, perde ${Math.abs(NAO_TERMINOU)} PDR.`, 10000);
 }
 
 // Fim de partida: `entry` é a partida registrada e `ranked` o ingresso de
@@ -86,8 +86,10 @@ export async function avisoFim(entry, ranked = null, jogo = 'carreira-no-rift') 
   const d = await platform.rankedStatus();
   if (!d) return;
   const dia = d.hoje.jogos?.[jogo];
+  const esta = (d.hoje.partidas || []).find((x) => x.client_id === entry?.clientId);
   if ((d.hoje.validas || []).includes(entry?.clientId) && dia) {
-    mostrar(`<b>Valeu para a ranqueada!</b> ${n.uma[0].toUpperCase()}${n.uma.slice(1)} de hoje: ${pdrHtml(dia.pdr)} (vale a melhor do dia) · agora: ${eloTexto(d)}. ${link}`, 12000);
+    const hoje = dia.partidas > 1 ? ` (hoje, neste jogo: ${pdrHtml(dia.pdr)})` : '';
+    mostrar(`<b>Valeu para a ranqueada!</b> ${n.uma[0].toUpperCase()}${n.uma.slice(1)} ${esta ? `(${esta.n}ª de hoje)` : 'de hoje'}: ${pdrHtml(esta ? esta.pdr : dia.pdr)}${hoje} · agora: ${eloTexto(d)}. ${link}`, 12000);
   } else if (ranked && !ranked.token) {
     mostrar(`Essa ${n.uma} <b>não valeu PDR</b>: ela começou depois das ${PARTIDAS_POR_DIA} ranqueadas do dia. ${link}`, 12000);
   } else if (!ranked) {

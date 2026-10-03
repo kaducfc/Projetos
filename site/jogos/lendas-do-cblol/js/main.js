@@ -166,7 +166,7 @@ function renderMontagem() {
           <button data-modo="normal" class="${jogo.modo === 'normal' ? 'on' : ''}" ${primeira ? '' : 'disabled'}>Normal</button>
           <button data-modo="oculto" class="${jogo.modo === 'oculto' ? 'on' : ''}" ${primeira ? '' : 'disabled'}>Oculto</button>
         </div>
-        <p class="hint-text">${jogo.modo === 'oculto' ? 'Só os nomes: os OVRs aparecem quando o time estiver completo. <b>Vale PDR na ranqueada</b> (as 3 primeiras do dia; conta a melhor).' : 'Os OVRs aparecem durante a escolha. Modo para treinar: <b>não vale ranqueada</b>.'}</p>
+        <p class="hint-text">${jogo.modo === 'oculto' ? 'Só os nomes: os OVRs aparecem quando o time estiver completo. <b>Vale PDR na ranqueada</b> (as 3 primeiras do dia; cada uma vale o seu PDR).' : 'Os OVRs aparecem durante a escolha. Modo para treinar: <b>não vale ranqueada</b>.'}</p>
       </div>
       ${drawnBox()}
       <button class="btn btn-roll" data-act="rolar" ${jogo.atual ? 'disabled' : ''}>Rolar 🎲</button>`;

@@ -159,3 +159,35 @@ test('vigilância da ranqueada: só administrador anula partida e tira jogador',
   const sql = readFileSync(new URL('../supabase/migrations/0013_ranqueada_seguranca.sql', import.meta.url), 'utf8');
   assert.match(sql, /i\.usado_em is null/); // vaga usada uma vez só, para sempre
 });
+
+test('ranqueada: cada partida da Carreira e do Lendas vale o seu PDR (sem "só a melhor")', async () => {
+  const sql27 = readFileSync(new URL('../supabase/migrations/0027_ranqueada_partidas_individuais.sql', import.meta.url), 'utf8');
+  // Uma linha por vaga (n) e um lançamento por partida; nada de "resultado melhor".
+  assert.match(sql27, /primary key \(user_id, dia, jogo, n\)/);
+  assert.match(sql27, /insert into site_rk_dia \(user_id, dia, jogo, n, base, nivel, pdr, score, result_id\)/);
+  assert.match(sql27, /site_rk_lancar\(new\.user_id, hoje, new\.game_id, 'partida', valor\)/);
+  assert.doesNotMatch(sql27, /'melhora'/);
+  assert.doesNotMatch(sql27, /b > atual\.base/);
+  // Vaga começada e não terminada: −15 por vaga (não só uma vez no dia).
+  assert.match(sql27, /q\.usado_em is null/);
+  assert.match(sql27, /'nao_terminou', -15/);
+  // Anular mexe só na linha da partida.
+  assert.match(sql27, /jogo = d\.jogo and n = d\.n/);
+
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await platform.signUp({ email: 'p@example.com', password: 'segredo123', username: 'Tres' });
+  const uid = platform.getUser().id;
+  const hoje = new Date().toISOString().slice(0, 10);
+  sb.db.site_rk_dia.push(
+    { user_id: uid, dia: hoje, jogo: 'cblol', n: 1, base: 27, pdr: 27, client_id: 'a' },
+    { user_id: uid, dia: hoje, jogo: 'cblol', n: 2, base: -16, pdr: -16, client_id: 'b' },
+    { user_id: uid, dia: hoje, jogo: 'cblol', n: 3, base: 10, pdr: 10, client_id: 'c' },
+  );
+  const st = await platform.rankedStatus();
+  assert.equal(st.hoje.jogos.cblol.pdr, 21); // soma das 3
+  assert.equal(st.hoje.jogos.cblol.partidas, 3);
+  assert.deepEqual(st.hoje.partidas.map((x) => [x.n, x.pdr]), [[1, 27], [2, -16], [3, 10]]);
+});

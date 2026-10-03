@@ -113,7 +113,7 @@ export function comoFunciona() {
         <li><b>Elos:</b> Ferro, Bronze, Prata, Ouro, Platina, Esmeralda e Diamante, com 3 divisões cada. Ao alcançar ${PDR_DIVISAO} PDR, você avança para a próxima divisão.</li>
         <li><b>Mestre, Grão-Mestre e Desafiante:</b> depois do Diamante 1 vem o Mestre. Todo dia à meia-noite, pela ordem de PDR, os ${VAGAS_DESAFIANTE} melhores com ${MIN_DESAFIANTE}+ PDR viram Desafiante e os ${VAGAS_GRAO_MESTRE} seguintes com ${MIN_GRAO_MESTRE}+ PDR, Grão-Mestre.</li>
         <li><b>Queda:</b> perdendo PDR, a divisão desce até 0. Perdendo com 0, volta para a divisão anterior com 75 PDR. Ferro 3 não cai.</li>
-        <li><b>Carreira no Rift e Lendas do CBLOL:</b> valem as ${PARTIDAS_POR_DIA} primeiras partidas <b>começadas</b> no dia; conta a melhor. Começou e não terminou nenhuma no dia: <b>${NAO_TERMINOU} PDR</b> à meia-noite.</li>
+        <li><b>Carreira no Rift e Lendas do CBLOL:</b> valem as ${PARTIDAS_POR_DIA} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>
         <li><b>Inatividade:</b> do Ouro para cima, depois de ${INATIVIDADE.dias} dias sem jogar, perde ${Math.abs(INATIVIDADE.pdr)} PDR por dia parado (até no máximo o Ouro 3 com 0 PDR). Qualquer partida de qualquer jogo conta como atividade.</li>
       </ul>
       <div class="table-wrap"><table class="rk-tabela">
