@@ -296,9 +296,7 @@ function openHelp() {
     <p class="help-note">Vale tentar qualquer palavra comum do português ou do universo de LoL com o mesmo número de letras.
       Acentos e apóstrofos são preenchidos sozinhos e não contam nas dicas. As palavras podem ter letras repetidas.</p>
     <p class="help-note">Uma palavra nova aparece todo dia à meia-noite (horário de Brasília).</p>
-    <p class="help-note"><b>Ranqueada:</b> com a conta conectada, a partida vale PDR. Acertar rápido rende mais
-      (+35 na 1ª tentativa … +6 na 6ª). Errar tira de 4 a 25 PDR, menos quanto mais letras certas você tiver
-      descoberto. Começou e não terminou até a meia-noite conta como erro. Quanto mais alto o elo, mais exigente fica.</p>`,
+    <p class="help-note"><b>Ranqueada:</b> com a conta conectada, a partida vale PDR. Começou e não terminou até a meia-noite conta como erro.</p>`,
   { onClose: () => { try { localStorage.setItem(SEEN_HELP, '1'); } catch { /* sem storage */ } } });
 }
 

@@ -2,7 +2,6 @@
 import {
   ELOS, BENEFICIOS, PARTIDAS_POR_DIA, PDR_DIVISAO, NAO_TERMINOU, INATIVIDADE,
   VAGAS_DESAFIANTE, MIN_DESAFIANTE, VAGAS_GRAO_MESTRE, MIN_GRAO_MESTRE,
-  PDR_CARREIRA, PDR_RUNETERMO, PDR_LENDAS, REGUA,
   eloInfo, nivelElo, emblemaHtml, divisaoDe, nomeDivisao, fmtPdr,
 } from '../shared/ranked.js';
 
@@ -94,40 +93,30 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
   </section>`;
 }
 
-// "Como funciona": regras, elos, PDR por jogo e benefícios.
+// "Como funciona": regras, elos e benefícios (a régua é interna, não aparece).
 export function comoFunciona() {
   const linhas = ELOS.map((e, i) => {
     const b = BENEFICIOS.filter((x) => x.elo === e.id);
     const div = i < 7 ? '3 · 2 · 1' : e.id === 'mestre' ? 'sem limite' : e.id === 'grao-mestre' ? `${VAGAS_GRAO_MESTRE} vagas, ${MIN_GRAO_MESTRE}+ PDR` : `${VAGAS_DESAFIANTE} vagas, ${MIN_DESAFIANTE}+ PDR`;
     return `<tr><td><span class="rk-elo" style="--cor:${e.cor}">${emblemaHtml(e.id, 22)}${esc(e.nome)}</span></td>
       <td>${div}</td>
-      <td class="n">${REGUA[i] ? `−${REGUA[i]}` : '—'}</td>
       <td>+${i} OVR inicial na Carreira${b.length ? b.map((x) => `<br><b>${esc(x.jogo)}:</b> ${esc(x.texto)}`).join('') : ''}</td></tr>`;
   }).join('');
-  const carreira = PDR_CARREIRA.map(([l, p]) => `<span>${num(l)}${l === 1600 ? '+' : ''} → <b>${p > 0 ? '+' : ''}${p}</b></span>`).join('');
   return `<section class="pf-sec">
     <h2 class="section-title">Como funciona</h2>
     <div class="pf-card rk-regras">
       <ul>
-        <li>Valem <b>todos os jogos</b>, com a conta conectada: Carreira no Rift, Lendas do CBLOL (só o modo <b>Oculto</b>), Runetermo e Campeão Oculto. Cada jogo dá de <b>+5 a +38 PDR</b> por dia (acima de +32 é raro) ou tira de <b>−2 a −25</b>.</li>
-        <li><b>Elos:</b> Ferro, Bronze, Prata, Ouro, Platina, Esmeralda e Diamante têm 3 divisões (3, 2 e 1). Cada divisão pede <b>${PDR_DIVISAO} PDR</b>: chegou, sobe na hora, e a sobra passa para a próxima. Depois do Diamante 1 vem o <b>Mestre</b> (sem limite de PDR).</li>
-        <li><b>Grão-Mestre e Desafiante:</b> atualizados todo dia à meia-noite pela ordem de PDR: os ${VAGAS_DESAFIANTE} melhores com ${MIN_DESAFIANTE}+ PDR viram Desafiante; os ${VAGAS_GRAO_MESTRE} seguintes com ${MIN_GRAO_MESTRE}+ PDR, Grão-Mestre.</li>
+        <li>Valem para a ranqueada, com a conta conectada: <b>Carreira no Rift</b>, <b>Lendas do CBLOL</b> (só o modo Oculto), <b>Runetermo</b> e <b>Campeão Oculto</b>.</li>
+        <li><b>Elos:</b> Ferro, Bronze, Prata, Ouro, Platina, Esmeralda e Diamante, com 3 divisões cada. Ao alcançar ${PDR_DIVISAO} PDR, você avança para a próxima divisão.</li>
+        <li><b>Mestre, Grão-Mestre e Desafiante:</b> depois do Diamante 1 vem o Mestre. Todo dia à meia-noite, pela ordem de PDR, os ${VAGAS_DESAFIANTE} melhores com ${MIN_DESAFIANTE}+ PDR viram Desafiante e os ${VAGAS_GRAO_MESTRE} seguintes com ${MIN_GRAO_MESTRE}+ PDR, Grão-Mestre.</li>
         <li><b>Queda:</b> perdendo PDR, a divisão desce até 0. Perdendo com 0, volta para a divisão anterior com 75 PDR. Ferro 3 não cai.</li>
-        <li><b>Régua:</b> quanto mais alto o elo, mais exigente: cada elo desconta alguns PDR de todo resultado (coluna "Régua"), então vitórias rendem menos e derrotas tiram mais.</li>
         <li><b>Carreira no Rift e Lendas do CBLOL:</b> valem as ${PARTIDAS_POR_DIA} primeiras partidas <b>começadas</b> no dia; conta a melhor. Começou e não terminou nenhuma no dia: <b>${NAO_TERMINOU} PDR</b> à meia-noite.</li>
-        <li><b>Runetermo e Campeão Oculto:</b> 1 por dia, palavra e campeão diferentes para cada jogador. Acertar rápido rende mais; errar tira menos quanto mais você tiver descoberto. Começou e não terminou até a meia-noite conta como erro.</li>
         <li><b>Inatividade:</b> do Ouro para cima, depois de ${INATIVIDADE.dias} dias sem jogar, perde ${Math.abs(INATIVIDADE.pdr)} PDR por dia parado (até no máximo o Ouro 3 com 0 PDR). Qualquer partida de qualquer jogo conta como atividade.</li>
-        <li>Rankings: <b>geral</b> (pelo elo, com filtro por elo) e <b>diário, semanal e mensal</b> (PDR ganhos no período).</li>
       </ul>
       <div class="table-wrap"><table class="rk-tabela">
-        <thead><tr><th>Elo</th><th>Divisões / vagas</th><th class="n">Régua</th><th>Benefícios</th></tr></thead>
+        <thead><tr><th>Elo</th><th>Divisões / vagas</th><th>Benefícios</th></tr></thead>
         <tbody>${linhas}</tbody>
       </table></div>
-      <h3 class="rk-sub">PDR por jogo (no Ferro; a régua do elo desconta)</h3>
-      <p class="small"><b>Carreira no Rift</b> (pontuação de legado): <span class="rk-escala">${carreira}</span></p>
-      <p class="small"><b>Lendas do CBLOL</b> (Oculto): ${PDR_LENDAS.map(([t, p]) => `${esc(t)} <b>${p}</b>`).join(' · ')}</p>
-      <p class="small"><b>Runetermo</b>: acertou na tentativa 1 a 7 → ${PDR_RUNETERMO.map((p) => `<b>+${p}</b>`).join(' ')} · errou: −4 a −25.</p>
-      <p class="small"><b>Campeão Oculto</b>: acertou na 1ª → <b>+36</b> … na última → <b>+5</b> (−4 por dica) · errou: −4 a −25.</p>
     </div>
   </section>`;
 }

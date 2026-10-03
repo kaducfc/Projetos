@@ -337,9 +337,7 @@ function openHelp() {
     <p class="help-note">Você tem ${maxTries()} tentativas. Só valem nomes de campeões: comece a digitar e escolha
       na lista. Uma vez por dia, a qualquer momento, dá para pedir uma dica, que revela uma característica
       que você ainda não acertou. A dica gasta uma tentativa. Um campeão novo aparece todo dia à meia-noite (horário de Brasília), diferente para cada jogador.</p>
-    <p class="help-note"><b>Ranqueada:</b> com a conta conectada, a partida vale PDR. Acertar rápido rende mais
-      (+36 na 1ª tentativa … +5 na última, −4 por dica). Errar tira de 4 a 25 PDR, menos quanto mais características
-      você tiver confirmado. Começou e não terminou até a meia-noite conta como erro. Quanto mais alto o elo, mais exigente fica.</p>`,
+    <p class="help-note"><b>Ranqueada:</b> com a conta conectada, a partida vale PDR. Começou e não terminou até a meia-noite conta como erro.</p>`,
   { onClose: () => { try { localStorage.setItem(SEEN_HELP, '1'); } catch { /* sem storage */ } } });
 }
 
