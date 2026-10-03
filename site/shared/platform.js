@@ -731,6 +731,27 @@ export async function adminBanirRanked(nome, { motivo = null, banir = true } = {
   return data;
 }
 
+// Resumo da ranqueada para o painel e ajuste manual de PDR (0024).
+function erroPainelRk(error) {
+  if (/site_admin_ranqueada|site_admin_ajustar_pdr/.test(error.message) || error.code === 'PGRST202') return new Error('Rode o arquivo 0024_painel_ranqueada.sql no Supabase para ver isto.');
+  if (/valor_invalido/.test(error.message)) return new Error('Valor inválido (use de −2000 a 2000, sem zero).');
+  return erroAdminRanked(error);
+}
+export async function adminRanqueada(days = 30) {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_ranqueada', { days });
+  if (error) throw erroPainelRk(error);
+  return data;
+}
+export async function adminAjustarPdr(nome, delta) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_ajustar_pdr', { nome, delta });
+  if (error) throw erroPainelRk(error);
+  return data;
+}
+
 // Zera a ranqueada: todo mundo no Ferro 3 com 0 PDR (só administradores; 0015).
 export async function adminResetRanked(temporada = 1) {
   const sb = await getClient();

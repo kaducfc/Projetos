@@ -119,3 +119,30 @@ textarea.p-log { width: 100%; resize: vertical; display: block; }
 .p-mini-danger:hover { border-color: #b8453c; }
 .p-check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #d3ccbc; padding-bottom: 9px; }
 .p-table td.n { white-space: nowrap; }
+
+/* Abas */
+.p-tabs { display: flex; gap: 4px; flex-wrap: wrap; padding: 4px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--panel); position: sticky; top: 8px; z-index: 5; }
+.p-tabs button { flex: 1 1 auto; border: 0; border-radius: 6px; padding: 9px 14px; background: transparent; color: var(--muted); font: 700 14px var(--sans); cursor: pointer; white-space: nowrap; }
+.p-tabs button:hover { color: var(--text); }
+.p-tabs button.on { background: var(--gold); color: #140f02; }
+.p-badge { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 4px; border-radius: 999px; font-size: 11px; line-height: 18px; text-align: center; background: #b8453c; color: #fff; }
+.p-tabs button.on .p-badge { background: #140f02; color: var(--gold-2); }
+
+/* Avisos da visão geral */
+.p-avisos { border: 1px solid rgba(214, 170, 60, 0.5); background: rgba(214, 170, 60, 0.07); border-radius: 6px; padding: 12px 16px; }
+.p-avisos h3 { margin: 0 0 6px; font-size: 13px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-2); }
+.p-avisos ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: #d3ccbc; }
+.p-ok { border: 1px solid rgba(76, 175, 106, 0.4); background: rgba(76, 175, 106, 0.06); border-radius: 6px; padding: 10px 16px; font-size: 14px; color: #7fd49a; }
+.p-link { background: none; border: 0; padding: 0; margin-left: 4px; color: var(--gold-2); font: 700 13px var(--sans); text-decoration: underline; cursor: pointer; }
+
+/* Mini blocos dentro de cartões */
+.mini-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.mini-tiles .tile { padding: 10px 12px; }
+.mini-tiles .t-value { font-size: 22px; }
+
+/* Atalhos */
+a.p-tool { text-decoration: none; color: inherit; transition: border-color 0.15s; }
+a.p-tool:hover { border-color: var(--gold); }
+a.p-tool h3 { color: var(--gold-2); }
+.p-danger-box summary { color: #e58a80; }
+.p-danger-box .p-danger { margin-top: 10px; }

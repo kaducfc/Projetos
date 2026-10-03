@@ -68,18 +68,49 @@ function hbars(entries, nameOf = (x) => x, { sort = true, fmt = num } = {}) {
       <span class="h-track"><i class="h-fill" style="width:${(n / max) * 100}%"></i></span></div>`).join('')}</div>`;
 }
 
+// Abas do painel (a escolhida fica guardada neste navegador).
+const ABAS = [['geral', 'Visão geral'], ['jogos', 'Jogos'], ['ranqueada', 'Ranqueada'], ['apoio', 'Apoio'], ['ferramentas', 'Ferramentas']];
+let aba = 'geral';
+try { aba = localStorage.getItem('site.painel.aba') || 'geral'; } catch { /* sem storage */ }
+if (!ABAS.some(([id]) => id === aba)) aba = 'geral';
+let ultimo = null; // última resposta de adminStats (para trocar de aba sem recarregar)
+let rq = null; // platform.adminRanqueada(days)
+let rqErro = '';
+
+const ELO_NOMES = { ferro: 'Ferro', bronze: 'Bronze', prata: 'Prata', ouro: 'Ouro', platina: 'Platina', esmeralda: 'Esmeralda', diamante: 'Diamante', mestre: 'Mestre', 'grao-mestre': 'Grão-Mestre', desafiante: 'Desafiante' };
+const NOME_JOGO = (id) => gameById(id)?.name || id;
+
+function suspeitasRk() {
+  return (rk?.partidas || []).filter((x) => sinais(x).length).length;
+}
+
 function render(st) {
-  const c = st.carreira || {};
+  ultimo = st;
+  const contador = { ranqueada: suspeitasRk(), apoio: ap?.periodo?.status?.pendente || 0 };
+  const nav = `<nav class="p-tabs" role="tablist">${ABAS.map(([id, nome]) => `<button type="button" role="tab" data-aba="${id}" class="${aba === id ? 'on' : ''}">${nome}${contador[id] ? ` <span class="p-badge">${num(contador[id])}</span>` : ''}</button>`).join('')}</nav>`;
+  const conteudo = { geral: abaGeral, jogos: abaJogos, ranqueada: abaRanqueada, apoio: abaApoio, ferramentas: abaFerramentas }[aba](st);
+  body.innerHTML = nav + conteudo;
+}
+
+// ----------------------------------------------------------- aba: visão geral
+
+function avisos() {
+  const itens = [];
+  const susp = suspeitasRk();
+  if (susp) itens.push(`<b>${num(susp)}</b> ${susp === 1 ? 'partida ranqueada da Carreira' : 'partidas ranqueadas da Carreira'} com sinais de suspeita. <button type="button" class="p-link" data-aba="ranqueada">Ver</button>`);
+  const pend = ap?.periodo?.status?.pendente || 0;
+  if (pend) itens.push(`<b>${num(pend)}</b> ${pend === 1 ? 'doação aguardando' : 'doações aguardando'} pagamento (Pix/boleto). <button type="button" class="p-link" data-aba="apoio">Ver</button>`);
+  for (const e of [rkErro, apErro, rqErro]) if (e) itens.push(esc(e));
+  if (!itens.length) return '<div class="p-ok">✓ Nada pedindo atenção agora.</div>';
+  return `<div class="p-avisos"><h3>Atenção</h3><ul>${itens.map((i) => `<li>${i}</li>`).join('')}</ul></div>`;
+}
+
+function abaGeral(st) {
   const rows = st.por_dia || [];
   const visits = columns(rows, 'visitantes', 'visitantes');
   const games = columns(rows, 'partidas', 'partidas iniciadas');
-  const pw = st.palavra || {};
-  const pwDays = columns(pw.por_dia || rows.map((x) => ({ dia: x.dia, jogadas: 0 })), 'jogadas', 'palavras jogadas');
   const perGame = st.jogos || {};
-  const pwName = gameById('runetermo')?.name || 'Runetermo';
-  const conclusao = c.iniciadas ? Math.round((c.terminadas / c.iniciadas) * 100) : null;
-
-  body.innerHTML = `
+  return `${avisos()}
   <section class="p-section">
     <h2>Hoje</h2>
     <div class="tiles">
@@ -87,43 +118,67 @@ function render(st) {
       ${tile('Partidas iniciadas', num(st.hoje.partidas), 'todos os jogos')}
       ${tile('Partidas terminadas', num(st.hoje.terminadas), 'todos os jogos')}
       ${tile('Contas novas', num(st.hoje.contas))}
+      ${rq ? tile('Na ranqueada hoje', num(rq.ativos_hoje), 'jogadores com PDR hoje') : ''}
+      ${ap ? tile('Apoio hoje', reais(ap.hoje.arrecadado), `${num(ap.hoje.doacoes)} ${ap.hoje.doacoes === 1 ? 'doação' : 'doações'}`) : ''}
     </div>
   </section>
-
   <section class="p-section">
     <h2>Últimos ${st.dias} dias</h2>
     <div class="tiles">
       ${tile('Visitantes', num(st.periodo.visitantes), 'navegadores diferentes')}
       ${tile('Jogadores', num(st.periodo.jogadores), 'começaram ao menos 1 partida')}
-      ${tile('Partidas iniciadas', num(st.periodo.partidas), 'todos os jogos')}
-      ${tile('Partidas terminadas', num(st.periodo.terminadas), 'todos os jogos')}
+      ${tile('Partidas iniciadas', num(st.periodo.partidas), `${num(st.periodo.terminadas)} terminadas`)}
       ${tile('Contas novas', num(st.periodo.contas), `${num(st.total.contas)} no total`)}
     </div>
     <div class="cards">
       <div class="card"><h3>Visitantes por dia</h3><p class="c-sub">${num(visits.total)} visitas diárias somadas</p>${visits.html}</div>
       <div class="card"><h3>Partidas iniciadas por dia</h3><p class="c-sub">${num(games.total)} no período</p>${games.html}</div>
     </div>
+    <div class="card"><h3>Por jogo</h3><div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Jogo</th><th class="n">Jogadores</th><th class="n">Iniciadas</th><th class="n">Terminadas</th><th class="n">Concluem</th></tr></thead>
+      <tbody>${GAMES.filter((g) => g.status === 'live').map((g) => {
+        const x = perGame[g.id] || {};
+        const pct = x.iniciadas ? `${Math.round(((x.terminadas || 0) / x.iniciadas) * 100)}%` : '—';
+        return `<tr><td>${esc(g.name)}</td><td class="n">${num(x.jogadores || 0)}</td><td class="n">${num(x.iniciadas || 0)}</td><td class="n">${num(x.terminadas || 0)}</td><td class="n">${pct}</td></tr>`;
+      }).join('')}</tbody>
+    </table></div></div>
     <details class="p-details"><summary>Ver tabela por dia</summary>
       <div class="table-wrap"><table class="p-table">
         <thead><tr><th>Dia</th><th class="n">Visitantes</th><th class="n">Partidas iniciadas</th><th class="n">Terminadas</th><th class="n">Contas novas</th></tr></thead>
         <tbody>${rows.slice().reverse().map((r) => `<tr><td>${esc(diaLongo(r.dia))}</td><td class="n">${num(r.visitantes)}</td><td class="n">${num(r.partidas)}</td><td class="n">${num(r.terminadas)}</td><td class="n">${num(r.contas)}</td></tr>`).join('')}</tbody>
       </table></div>
     </details>
+  </section>`;
+}
+
+// ------------------------------------------------------------------ aba: jogos
+
+function abaJogos(st) {
+  const c = st.carreira || {};
+  const rows = st.por_dia || [];
+  const pw = st.palavra || {};
+  const pwDays = columns(pw.por_dia || rows.map((x) => ({ dia: x.dia, jogadas: 0 })), 'jogadas', 'palavras jogadas');
+  const conclusao = c.iniciadas ? Math.round((c.terminadas / c.iniciadas) * 100) : null;
+  const d = rq?.diarios || {};
+  const diario = (id, x, extra) => `<div class="card"><h3>${esc(NOME_JOGO(id))}</h3>
+      ${x ? `<div class="mini-tiles">
+        ${tile('Partidas', num(x.jogadas))}
+        ${extra(x)}
+        ${tile('Abandonadas', num(x.abandonos), 'começou e não terminou')}
+      </div>` : `<p class="p-note">${esc(rqErro || (rq ? 'Sem dados ainda.' : 'Carregando…'))}</p>`}</div>`;
+  return `
+  <section class="p-section">
+    <h2>Ranqueada dos jogos diários · últimos ${st.dias} dias</h2>
+    <p class="p-note">Só quem jogou com conta (as partidas conferidas no servidor).</p>
+    <div class="cards">
+      ${diario('runetermo', d.runetermo, (x) => `${tile('Acertaram', `${dec(x.acertos_pct)}%`)}${tile('Tentativas', dec(x.chutes_medio), 'média de quem acertou')}`)}
+      ${diario('campeao', d.campeao, (x) => `${tile('Acertaram', `${dec(x.acertos_pct)}%`)}${tile('Chutes', dec(x.chutes_medio), 'média de quem acertou')}`)}
+      ${diario('escala', d.escala, (x) => `${tile('Média', x.media != null ? `${dec(x.media)}/100` : '—')}${tile('Rodadas recomeçadas', num(x.reinicios), 'internet caiu')}`)}
+    </div>
   </section>
 
   <section class="p-section">
-    <h2>Jogos · últimos ${st.dias} dias</h2>
-    <div class="card"><div class="table-wrap"><table class="p-table">
-      <thead><tr><th>Jogo</th><th class="n">Jogadores</th><th class="n">Iniciadas</th><th class="n">Terminadas</th></tr></thead>
-      <tbody>${GAMES.filter((g) => g.status === 'live').map((g) => {
-        const x = perGame[g.id] || {};
-        return `<tr><td>${esc(g.name)}</td><td class="n">${num(x.jogadores || 0)}</td><td class="n">${num(x.iniciadas || 0)}</td><td class="n">${num(x.terminadas || 0)}</td></tr>`;
-      }).join('')}</tbody>
-    </table></div></div>
-  </section>
-
-  <section class="p-section">
-    <h2>${esc(pwName)} · últimos ${st.dias} dias</h2>
+    <h2>${esc(NOME_JOGO('runetermo'))} · todos (com e sem conta) · últimos ${st.dias} dias</h2>
     <div class="tiles">
       ${tile('Jogaram hoje', num(pw.hoje_jogadas), pw.hoje_vitorias_pct != null ? `${dec(pw.hoje_vitorias_pct)}% acertaram` : '')}
       ${tile('Jogadas no período', num(pw.jogadas), `${num(pw.jogadores)} jogadores`)}
@@ -142,45 +197,127 @@ function render(st) {
     <div class="tiles">
       ${tile('Carreiras iniciadas', num(c.iniciadas))}
       ${tile('Carreiras terminadas', num(c.terminadas), conclusao != null ? `${conclusao}% das iniciadas` : '')}
-    </div>
-    ${c.terminadas ? '' : '<p class="p-note">As médias aparecem quando alguém terminar uma carreira (aposentadoria).</p>'}
-    <div class="tiles">
       ${tile('OVR máximo médio', dec(c.ovr_medio), c.ovr_mediana != null ? `mediana ${dec(c.ovr_mediana)}` : '')}
       ${tile('Temporadas por carreira', dec(c.temporadas_media))}
       ${tile('Troféus e prêmios', dec(c.trofeus_media), 'média por carreira')}
       ${tile('Ganharam Mundial', c.mundial_pct != null ? `${dec(c.mundial_pct)}%` : '—', 'das carreiras terminadas')}
-      ${tile('Pontos de legado', num(c.legado_medio), 'média')}
     </div>
+    ${c.terminadas ? '' : '<p class="p-note">As médias aparecem quando alguém terminar uma carreira (aposentadoria).</p>'}
     <div class="cards">
       <div class="card"><h3>OVR máximo alcançado</h3><p class="c-sub">Carreiras terminadas por faixa</p>
         ${hbars((c.ovr_faixas || []).map((f) => [f.faixa, f.n]), undefined, { sort: false })}</div>
       <div class="card"><h3>Legado</h3><p class="c-sub">Título final das carreiras terminadas</p>${hbars(Object.entries(c.legados || {}))}</div>
-      <div class="card"><h3>Rota escolhida</h3><p class="c-sub">Carreiras iniciadas</p>${hbars(Object.entries(c.rotas || {}), roleName)}</div>
-      <div class="card"><h3>Região inicial</h3><p class="c-sub">Carreiras iniciadas</p>${hbars(Object.entries(c.regioes || {}), regionName)}</div>
-      <div class="card"><h3>Velocidade</h3><p class="c-sub">Carreiras iniciadas</p>${hbars(Object.entries(c.velocidade || {}), speedName)}</div>
     </div>
-    <div class="card"><h3>Melhores carreiras do período</h3>
-      ${(c.top || []).length ? `<div class="table-wrap"><table class="p-table">
-        <thead><tr><th>#</th><th>Jogador</th><th>Rota</th><th>Legado</th><th class="n">OVR máx.</th><th class="n">Troféus</th><th class="n">Pontos</th></tr></thead>
-        <tbody>${c.top.map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.nick)}${t.conta ? ` <small>@${esc(t.conta)}</small>` : ' <small>visitante</small>'}</td><td>${esc(roleName(t.rota))}</td><td>${esc(t.legado)}</td><td class="n">${num(t.ovr)}</td><td class="n">${num(t.trofeus)}</td><td class="n">${num(t.pontos)}</td></tr>`).join('')}</tbody>
-      </table></div>` : '<p class="p-empty">Nenhuma carreira terminada no período.</p>'}
-    </div>
-  </section>
+    <details class="p-details"><summary>Mais detalhes da Carreira (rota, região, velocidade, melhores carreiras)</summary>
+      <div class="cards">
+        <div class="card"><h3>Rota escolhida</h3><p class="c-sub">Carreiras iniciadas</p>${hbars(Object.entries(c.rotas || {}), roleName)}</div>
+        <div class="card"><h3>Região inicial</h3><p class="c-sub">Carreiras iniciadas</p>${hbars(Object.entries(c.regioes || {}), regionName)}</div>
+        <div class="card"><h3>Velocidade</h3><p class="c-sub">Carreiras iniciadas</p>${hbars(Object.entries(c.velocidade || {}), speedName)}</div>
+      </div>
+      <div class="card"><h3>Melhores carreiras do período</h3>
+        ${(c.top || []).length ? `<div class="table-wrap"><table class="p-table">
+          <thead><tr><th>#</th><th>Jogador</th><th>Rota</th><th>Legado</th><th class="n">OVR máx.</th><th class="n">Troféus</th><th class="n">Pontos</th></tr></thead>
+          <tbody>${c.top.map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.nick)}${t.conta ? ` <small>@${esc(t.conta)}</small>` : ' <small>visitante</small>'}</td><td>${esc(roleName(t.rota))}</td><td>${esc(t.legado)}</td><td class="n">${num(t.ovr)}</td><td class="n">${num(t.trofeus)}</td><td class="n">${num(t.pontos)}</td></tr>`).join('')}</tbody>
+        </table></div>` : '<p class="p-empty">Nenhuma carreira terminada no período.</p>'}
+      </div>
+    </details>
+  </section>`;
+}
 
+// -------------------------------------------------------------- aba: ranqueada
+
+function resumoRanqueada(dias) {
+  if (!rq) return `<div class="card"><p class="p-note">${esc(rqErro || 'Carregando…')}</p></div>`;
+  const elos = Object.keys(ELO_NOMES).map((id) => [id, rq.elos?.[id] || 0]);
+  const jogos = Object.entries(rq.por_jogo || {});
+  return `<div class="tiles">
+      ${tile('Jogadores na ranqueada', num(rq.jogadores), `temporada ${num(rq.temporada)}`)}
+      ${tile('Ativos hoje', num(rq.ativos_hoje), 'ganharam ou perderam PDR')}
+      ${tile(`Ativos em ${dias} dias`, num(rq.ativos_periodo))}
+      ${tile('Não terminaram', num(rq.nao_terminou), 'perdas de −15 no período')}
+      ${tile('Inatividade', num(rq.inatividade), 'perdas no período')}
+    </div>
+    <div class="cards">
+      <div class="card"><h3>Jogadores por elo</h3><p class="c-sub">Agora</p>${hbars(elos.filter(([, n]) => n), (k) => ELO_NOMES[k] || k, { sort: false })}</div>
+      <div class="card"><h3>PDR por jogo</h3><p class="c-sub">Partidas que valeram no período</p>
+        ${jogos.length ? `<div class="table-wrap"><table class="p-table">
+          <thead><tr><th>Jogo</th><th class="n">Partidas</th><th class="n">Jogadores</th><th class="n">PDR médio</th><th class="n">Positivas</th></tr></thead>
+          <tbody>${jogos.sort((a, b) => b[1].partidas - a[1].partidas).map(([id, x]) => `<tr><td>${esc(NOME_JOGO(id))}</td><td class="n">${num(x.partidas)}</td><td class="n">${num(x.jogadores)}</td>
+            <td class="n">${x.pdr_medio > 0 ? '+' : ''}${dec(x.pdr_medio)}</td><td class="n">${dec(x.positivas_pct)}%</td></tr>`).join('')}</tbody>
+        </table></div>` : '<p class="p-empty">Nenhuma partida no período.</p>'}</div>
+    </div>
+    <div class="cards">
+      <div class="card"><h3>Top 10 agora</h3>
+        ${(rq.top || []).length ? `<div class="table-wrap"><table class="p-table">
+          <thead><tr><th>#</th><th>Usuário</th><th>Elo</th><th class="n">Pontos</th><th>Última atividade</th></tr></thead>
+          <tbody>${rq.top.map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.username)}</td><td>${esc(ELO_NOMES[t.elo] || t.elo)}</td><td class="n">${num(t.pts)}</td><td>${t.ultima_atividade ? esc(dia(t.ultima_atividade)) : '—'}</td></tr>`).join('')}</tbody>
+        </table></div>` : '<p class="p-empty">Ninguém na ranqueada ainda.</p>'}</div>
+      <div class="card"><h3>Ajustar PDR</h3>
+        <p class="c-sub">Dar ou tirar PDR de alguém (ex.: compensar um erro do site). Use número negativo para tirar. Fica no histórico do jogador como "ajuste" e não entra nos rankings do dia, semana e mês.</p>
+        <div class="ap-filtros">
+          <label class="p-label">Nome de usuário <input data-aj-nome autocomplete="off" /></label>
+          <label class="p-label">PDR <input type="number" step="1" data-aj-valor placeholder="ex.: 25 ou -25" /></label>
+          <button type="button" class="p-btn" data-aj-enviar>Aplicar</button>
+        </div>
+        <p class="p-note" data-aj-msg role="status"></p>
+        ${(rq.ajustes || []).length ? `<details class="p-details"><summary>Últimos ajustes (${num(rq.ajustes.length)})</summary><div class="table-wrap"><table class="p-table">
+          <thead><tr><th>Quando</th><th>Usuário</th><th class="n">PDR</th><th class="n">Antes → depois</th></tr></thead>
+          <tbody>${rq.ajustes.map((x) => `<tr><td>${esc(dataHora(x.criado))}</td><td>${esc(x.username)}</td><td class="n">${x.delta > 0 ? '+' : ''}${num(x.delta)}</td><td class="n">${num(x.antes)} → ${num(x.depois)}</td></tr>`).join('')}</tbody>
+        </table></div></details>` : ''}
+      </div>
+    </div>`;
+}
+
+function abaRanqueada(st) {
+  return `
   <section class="p-section">
-    <h2>Ranqueada</h2>
-    ${secaoVigia(st.dias)}
-    <div class="card p-danger">
-      <h3>Zerar a ranqueada</h3>
-      <p class="c-sub">Para o lançamento oficial (ou uma nova temporada): todo mundo volta para o Ferro 3 com 0 PDR e os rankings recomeçam. O histórico de partidas de cada conta continua.</p>
-      <label class="p-label">Temporada que começa: <input type="number" min="1" value="1" data-temporada /></label>
-      <label class="p-label">Para confirmar, digite <b>ZERAR</b>: <input data-confirma autocomplete="off" /></label>
-      <button type="button" class="p-btn p-btn-danger" data-zerar disabled>Zerar ranqueada</button>
-      <p class="p-note" data-zerar-msg role="status"></p>
-    </div>
+    <h2>Ranqueada · últimos ${st.dias} dias</h2>
+    ${resumoRanqueada(st.dias)}
   </section>
+  <section class="p-section">
+    <h2>Vigilância · Carreira no Rift</h2>
+    ${secaoVigia(st.dias)}
+  </section>
+  <section class="p-section">
+    <h2>Zona de perigo</h2>
+    <details class="p-details p-danger-box"><summary>Zerar a ranqueada (nova temporada)</summary>
+      <div class="card p-danger">
+        <p class="c-sub">Para o lançamento oficial (ou uma nova temporada): todo mundo volta para o Ferro 3 com 0 PDR e os rankings recomeçam. O histórico de partidas de cada conta continua.</p>
+        <label class="p-label">Temporada que começa: <input type="number" min="1" value="${num((rq?.temporada || 0) + 1)}" data-temporada /></label>
+        <label class="p-label">Para confirmar, digite <b>ZERAR</b>: <input data-confirma autocomplete="off" /></label>
+        <button type="button" class="p-btn p-btn-danger" data-zerar disabled>Zerar ranqueada</button>
+        <p class="p-note" data-zerar-msg role="status"></p>
+      </div>
+    </details>
+  </section>`;
+}
 
-  ${secaoApoio(st.dias)}
+// ------------------------------------------------------------------ aba: apoio
+
+function abaApoio(st) {
+  return secaoApoio(st.dias);
+}
+
+// ------------------------------------------------------------ aba: ferramentas
+
+function abaFerramentas() {
+  const link = (href, titulo, texto) => `<a class="card p-tool" href="${href}"><h3>${titulo} →</h3><p class="c-sub">${texto}</p></a>`;
+  return `<section class="p-section">
+    <h2>Ferramentas e atalhos</h2>
+    <div class="cards">
+      ${link('cblol/', 'Dados do CBLOL', 'Baixar de novo os times, jogadores e estatísticas da Leaguepedia (Lendas do CBLOL).')}
+      ${link('../jogos/escala/tabela/', 'Tabela de alturas (Na Medida)', 'Ver todas as alturas e silhuetas lado a lado, por faixa.')}
+      ${link('../ranking/', 'Ranking público', 'Como os jogadores veem o ranking da ranqueada.')}
+      ${link('../apoiar/', 'Página de apoio', 'A página onde os jogadores apoiam o site.')}
+    </div>
+    <div class="card">
+      <h3>Lembretes</h3>
+      <ul class="p-steps">
+        <li>Mudou alguma altura do Na Medida (<code>jogos/escala/dados/itens.json</code>)? Gere e rode o SQL novo de alturas, senão a ranqueada usa as antigas.</li>
+        <li>A Edge Function <code>apoio-criar</code> precisa estar com o valor máximo novo (sem teto) no Supabase.</li>
+        <li>Se um quadro do painel disser "Rode o arquivo 00XX…", é um SQL que ainda falta rodar no Supabase.</li>
+      </ul>
+    </div>
   </section>`;
 }
 
@@ -454,14 +591,17 @@ async function load() {
   try {
     // Apoio e vigilância podem faltar (SQL ainda não rodado) sem travar o resto.
     const opcional = (pr) => pr.then((r) => ({ r }), (err) => ({ err }));
-    const [st, apoios, ranked] = await Promise.all([
+    const [st, apoios, ranked, resumo] = await Promise.all([
       platform.adminStats(days), opcional(platform.adminApoios(days)), opcional(platform.adminRanked(days)),
+      opcional(platform.adminRanqueada(days)),
     ]);
     if (seq !== loadSeq) return;
     rk = ranked.r || null;
     rkErro = ranked.err?.message || '';
     ap = apoios.r || null;
     apErro = apoios.err?.message || '';
+    rq = resumo.r || null;
+    rqErro = resumo.err?.message || '';
     render(st);
   } catch (err) {
     if (seq === loadSeq) lock(err.message, false);
@@ -529,6 +669,38 @@ body.addEventListener('click', async (e) => {
     const pronto = `Pronto! ${r.username} agora tem ${reais(r.total)} de apoio no total.`;
     await load();
     const m = body.querySelector('[data-apoio-msg]');
+    if (m) m.textContent = pronto;
+    return;
+  } catch (err) {
+    msg.textContent = err.message;
+  }
+  b.disabled = false;
+});
+
+body.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-aba]');
+  if (!t || !ultimo) return;
+  aba = t.dataset.aba;
+  try { localStorage.setItem('site.painel.aba', aba); } catch { /* sem storage */ }
+  render(ultimo);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// Ajuste manual de PDR.
+body.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-aj-enviar]');
+  if (!b) return;
+  const nome = body.querySelector('[data-aj-nome]').value.trim();
+  const delta = Math.round(Number(body.querySelector('[data-aj-valor]').value));
+  const msg = body.querySelector('[data-aj-msg]');
+  if (!nome || !delta) { msg.textContent = 'Preencha o nome de usuário e o PDR (diferente de zero).'; return; }
+  if (!window.confirm(`${delta > 0 ? 'Dar' : 'Tirar'} ${Math.abs(delta)} PDR ${delta > 0 ? 'para' : 'de'} ${nome}?`)) return;
+  b.disabled = true;
+  try {
+    const r = await platform.adminAjustarPdr(nome, delta);
+    const pronto = `Pronto! ${r.username}: ${num(r.antes)} → ${num(r.depois)} pontos (${ELO_NOMES[r.elo] || r.elo}).`;
+    await load();
+    const m = body.querySelector('[data-aj-msg]');
     if (m) m.textContent = pronto;
     return;
   } catch (err) {
