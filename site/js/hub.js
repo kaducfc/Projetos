@@ -33,11 +33,12 @@ const CAPAS = {
       <img class="cv-trofeu" src="${A}/trofeus/mundial.png" alt="" loading="lazy" /></div>`,
   runetermo: `<div class="cv cv-runas"><div class="cv-letras">${[['B', 'ok'], ['A', 'quase'], ['R', 'nao'], ['O', 'ok'], ['N', 'ok']]
     .map(([l, c]) => `<span class="${c}">${l}</span>`).join('')}</div></div>`,
-  // Três chutes do Campeão Oculto (ano, gênero, região, posição, classe, espécie, alcance).
+  // Três chutes do Campeão Oculto (ano, gênero, região, posição, classe, espécie,
+  // alcance), o mais recente em cima, como no jogo: o último acertou tudo.
   campeao: `<div class="cv cv-oculto" style="--img:url(${A}/icones/raposa-encantada.webp)"><div class="cv-chutes">${[
-    [['miss', '↑'], 'miss', 'part', 'miss', 'ok', 'miss', 'part'],
-    [['miss', '↓'], 'ok', 'ok', 'part', 'ok', 'miss', 'ok'],
     ['ok', 'ok', 'ok', 'ok', 'ok', 'ok', 'ok'],
+    [['miss', '↓'], 'ok', 'ok', 'part', 'ok', 'miss', 'ok'],
+    [['miss', '↑'], 'miss', 'part', 'miss', 'ok', 'miss', 'part'],
   ].map((linha) => `<div>${linha.map((c) => (Array.isArray(c) ? `<span class="${c[0]}">${c[1]}</span>` : `<span class="${c}"></span>`)).join('')}</div>`).join('')}</div></div>`,
   escala: `<div class="cv cv-escala"><span class="cv-sil azul" style="--img:url(/jogos/escala/dados/silhuetas/garen.webp)"></span>
       <span class="cv-sil verm" style="--img:url(/jogos/escala/dados/silhuetas/teemo.webp)"></span></div>`,
