@@ -188,9 +188,10 @@ function desenharPalco() {
   const util = Math.max(120, palco.clientHeight - 74);
   let k = util / maior; // pixels por metro
   // Também precisa caber na largura (figuras largas, celular).
-  const larguraRed = Math.max(hRed * alvo.prop, mostrando ? rodada.palpite * alvo.prop : 0);
-  const precisa = (ref.altura * ref.prop + larguraRed) * k + 110;
-  if (precisa > palco.clientWidth) k *= Math.max(0.2, (palco.clientWidth - 110) / (precisa - 110));
+  const larguras = ref.altura * ref.prop + hRed * alvo.prop + (mostrando ? rodada.palpite * alvo.prop : 0);
+  const folga = mostrando ? 150 : 110; // réguas, espaços e margens
+  const precisa = larguras * k + folga;
+  if (precisa > palco.clientWidth) k *= Math.max(0.15, (palco.clientWidth - folga) / (precisa - folga));
   const fig = (it, h, cls) => {
     const ph = Math.max(3, h * k);
     const pw = Math.max(2, ph * it.prop);
@@ -200,10 +201,11 @@ function desenharPalco() {
       <div class="esc-fig"><i class="esc-regua" style="height:${Math.max(3, ref.altura * k)}px"></i>${fig(ref, ref.altura, 'azul')}</div></div>`;
   let colAlvo;
   if (mostrando) {
-    const fantasma = fig(alvo, rodada.palpite, 'fantasma');
+    // Resultado: o tamanho real e o palpite lado a lado.
     colAlvo = `<div class="esc-col alvo"><p class="esc-rot"><b>${esc(alvo.nome)}</b><span>Altura ${fmtAltura(alvo.altura)}</span></p>
-      <div class="esc-fig" style="min-width:${Math.max(2, rodada.palpite * k * alvo.prop) + 6}px">${fig(alvo, alvo.altura, 'vermelho')}<i class="esc-regua v" style="height:${Math.max(3, alvo.altura * k)}px"></i>
-        <div class="esc-fantasma" title="Seu palpite">${fantasma}<p class="esc-rot esc-palpite-rot${Math.abs(rodada.palpite - alvo.altura) * k < 56 ? ' perto' : ''}"><b>Seu palpite</b><span>Altura ${fmtAltura(rodada.palpite)}</span></p></div></div></div>`;
+      <div class="esc-fig">${fig(alvo, alvo.altura, 'vermelho')}<i class="esc-regua v" style="height:${Math.max(3, alvo.altura * k)}px"></i></div></div>
+      <div class="esc-col palpite"><p class="esc-rot"><b>Seu palpite</b><span>Altura ${fmtAltura(rodada.palpite)}</span></p>
+      <div class="esc-fig"><div class="esc-fantasma" title="Seu palpite">${fig(alvo, rodada.palpite, 'fantasma')}</div></div></div>`;
   } else {
     colAlvo = `<div class="esc-col alvo"><p class="esc-rot"><b>${esc(alvo.nome)}</b><span>Altura ?</span></p>
       <div class="esc-fig"><div class="esc-caixa">${fig(alvo, hRed, 'vermelho')}<i class="esc-alca" aria-hidden="true">⤢</i></div></div></div>`;

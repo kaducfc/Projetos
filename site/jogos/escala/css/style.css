@@ -82,7 +82,8 @@ button { font-family: var(--sans); }
 .esc-rot b { font-size: 14px; }
 .esc-col.ref .esc-rot b { color: #8fb6ff; }
 .esc-col.alvo .esc-rot b { color: #ff8f8f; }
-.esc-rot span { color: #d3ccbc; font-size: 12px; }
+.esc-col.palpite .esc-rot b { color: var(--gold-2); }
+.esc-rot span { color: #d3ccbc; font-size: 12px; white-space: nowrap; }
 .esc-fig { position: relative; display: flex; align-items: flex-end; gap: 8px; }
 .esc-sil { flex: none; background: var(--c); -webkit-mask: var(--img) center bottom / 100% 100% no-repeat; mask: var(--img) center bottom / 100% 100% no-repeat; }
 .esc-sil.azul { --c: var(--azul); }
@@ -102,12 +103,7 @@ button { font-family: var(--sans); }
 .esc-palco.sobreposto .esc-sil.vermelho { opacity: 0.72; }
 .esc-palco.sobreposto:not(.revelado) .esc-col.alvo > .esc-rot { visibility: hidden; }
 .esc-alca { position: absolute; top: -14px; right: -14px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 12px; color: #fff; background: var(--verm); box-shadow: 0 0 10px rgba(239, 75, 75, 0.6); }
-.esc-fantasma { position: absolute; left: 0; bottom: 0; outline: 2px dashed var(--gold-2); outline-offset: 3px; box-shadow: 0 0 0 3px rgba(245, 207, 90, 0.08), 0 0 18px rgba(245, 207, 90, 0.25); pointer-events: none; }
-.esc-palpite-rot { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); white-space: nowrap; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); }
-.esc-col.alvo .esc-rot.esc-palpite-rot b { color: var(--gold-2); }
-/* Palpite perto do real: a legenda vai para baixo do chão, numa linha só. */
-.esc-palpite-rot.perto { bottom: auto; top: calc(100% + 7px); flex-direction: row; gap: 6px; font-size: 12px; }
-.esc-palpite-rot.perto b { font-size: 12px; }
+.esc-fantasma { position: relative; outline: 2px dashed var(--gold-2); outline-offset: 3px; box-shadow: 0 0 0 3px rgba(245, 207, 90, 0.08), 0 0 18px rgba(245, 207, 90, 0.25); pointer-events: none; }
 .esc-dica { position: absolute; left: 0; right: 0; bottom: 3px; margin: 0; text-align: center; font-size: 12px; color: var(--muted); pointer-events: none; }
 
 /* Controles */
