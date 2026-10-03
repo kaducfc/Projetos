@@ -5,7 +5,7 @@ import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { msToNextDay, fmtCountdown } from '../../../shared/diario.js';
 import {
-  RODADAS, dayIndex, pontos, veredito, diferenca, rng, sortearRodada, rodadasDoDia,
+  RODADAS, dayIndex, pontos, tolerancia, veredito, diferenca, rng, sortearRodada, rodadasDoDia,
   fmtAltura, proporcao, quadrado,
 } from './logic.js';
 
@@ -13,6 +13,7 @@ const GAME_ID = 'escala';
 const NAME = 'Escala de Runeterra';
 // Proporção do palpite em relação à azul (sem revelar nenhuma altura): "1,6×".
 const fmtRazao = (r) => `${r.toLocaleString('pt-BR', { maximumFractionDigits: r < 10 ? 2 : 1, minimumFractionDigits: r < 10 ? 2 : 1 })}×`;
+const razaoDe = (a, b) => Math.max(a.altura, b.altura) / Math.min(a.altura, b.altura);
 const LIMITE = 15; // o palpite vai de 1/15 a 15× a referência
 // Endereço completo: url() dentro de variável CSS resolve a partir do .css.
 const SIL = new URL('dados/silhuetas/', location.href).href;
@@ -146,7 +147,7 @@ function painelResultado(ref, alvo) {
       <button type="button" class="esc-confirmar" data-act="proxima">${ultima ? 'Ver resultado do dia →' : 'Próxima →'}</button></div>
     <section class="esc-res">
       <div class="esc-res-top"><span class="esc-pts ${quadradoCls(p)}">${p}<small>/100</small></span>
-        <div><b>${veredito(p)}</b><p>${diferenca(rodada.palpite, alvo.altura)}</p></div></div>
+        <div><b>${veredito(p)}</b><p>${diferenca(rodada.palpite, alvo.altura)}${tolerancia(razaoDe(ref, alvo)) >= 1.3 ? ` · <span class="esc-margem">comparação difícil (${Math.round(razaoDe(ref, alvo))}×): margem de erro maior</span>` : ''}</p></div></div>
       <ul>
         <li><span>Tamanho real · ${esc(ref.nome)}</span><b>Altura ${fmtAltura(ref.altura)}</b></li>
         <li><span>Tamanho real · ${esc(alvo.nome)}</span><b>Altura ${fmtAltura(alvo.altura)}</b></li>
@@ -274,7 +275,7 @@ function confirmar() {
   if (!rodada || rodada.mostrando) return;
   const alvo = porId.get(rodada.alvo);
   rodada.palpite = rodada.chute;
-  rodada.pontos = pontos(rodada.palpite, alvo.altura);
+  rodada.pontos = pontos(rodada.palpite, alvo.altura, razaoDe(porId.get(rodada.ref), alvo));
   rodada.mostrando = true;
   rodada.dx = 0; // no resultado, as figuras voltam lado a lado
   rodada.sobre = false;

@@ -15,6 +15,11 @@ test('escala: pontuação pela distância relativa', () => {
   assert.equal(pontos(6, 2), 0); // 3× maior
   assert.equal(pontos(0.5, 2), 0);
   assert.equal(pontos(0, 2), 0);
+  // Diferença grande entre as duas coisas: margem maior (Cho'Gath × Jhin, 45% a mais).
+  assert.equal(pontos(2.81, 1.93), 66);
+  assert.ok(pontos(2.81, 1.93, 21.9 / 1.93) >= 80);
+  assert.equal(pontos(2, 2, 12), 100);
+  assert.ok(pontos(2.4, 2, 1.2) - pontos(2.4, 2) <= 2); // parecidas: quase igual a antes
 });
 
 test('escala: cada item da tabela tem silhueta, nome e altura', () => {

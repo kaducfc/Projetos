@@ -6,16 +6,23 @@ export const RODADAS = 10;
 // Proporção entre as duas coisas de uma rodada: nem quase iguais, nem absurdas.
 export const RAZAO_MIN = 1.15;
 export const RAZAO_MAX = 12;
-// Errar por este fator (3× maior ou 3× menor) já vale 0.
+// Errar por este fator (3× maior ou 3× menor) já vale 0, numa comparação
+// entre coisas de tamanho parecido.
 const ERRO_ZERO = Math.log(3);
+// Quanto mais diferentes as duas coisas, mais difícil acertar a proporção
+// (a menor vira poucos pixels perto da maior), então a margem cresce: até
+// quase o dobro numa diferença de 12×.
+const PESO_DIFICULDADE = 0.35;
+export const tolerancia = (razao = 1) => 1 + PESO_DIFICULDADE * Math.log(Math.max(1, razao));
 
 export const dayIndex = (now = new Date()) => dayIndexFrom(FIRST_DAY, now);
 
-// 0 a 100 pela distância relativa: errar 20% para cima ou para baixo vale o mesmo.
-export function pontos(palpite, real) {
+// 0 a 100 pela distância relativa: errar 20% para cima ou para baixo vale o
+// mesmo. `razao` = quantas vezes a maior das duas coisas é maior que a menor.
+export function pontos(palpite, real, razao = 1) {
   if (!(palpite > 0) || !(real > 0)) return 0;
   const erro = Math.abs(Math.log(palpite / real));
-  return Math.round(100 * Math.max(0, 1 - erro / ERRO_ZERO));
+  return Math.round(100 * Math.max(0, 1 - erro / (ERRO_ZERO * tolerancia(razao))));
 }
 
 export function veredito(p) {
