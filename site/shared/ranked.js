@@ -1,58 +1,99 @@
-// Ranqueada (Carreira no Rift): elos, médias para subir e os pequenos
-// benefícios que cada elo dá nos outros jogos. As regras de verdade ficam no
-// banco (0006_ranqueada.sql); os números aqui precisam bater com os de lá.
+// Ranqueada: elos com divisões e PDR (Pontos de Rank) em todos os jogos.
+// As regras de verdade ficam no banco (0015_ranqueada_pdr.sql e
+// 0016_diarios_servidor.sql); os números aqui precisam bater com os de lá.
+//
+// Escada (pts): 0..2099 = Ferro 3 … Diamante 1 (100 PDR por divisão);
+// 2100+ = Mestre (PDR sem limite). Grão-Mestre e Desafiante saem da
+// atualização diária (ordem de PDR).
 
-// pontos = soma das notas do ciclo de 3 dias para subir PARA o elo.
 export const ELOS = [
-  { id: 'bronze', nome: 'Bronze', cor: '#c07a4c', pontos: 0 },
-  { id: 'prata', nome: 'Prata', cor: '#b4bec8', pontos: 1500 },
-  { id: 'ouro', nome: 'Ouro', cor: '#e8b93f', pontos: 1950 },
-  { id: 'platina', nome: 'Platina', cor: '#4fd1b9', pontos: 2250 },
-  { id: 'diamante', nome: 'Diamante', cor: '#6f8cff', pontos: 2550 },
-  { id: 'desafiante', nome: 'Desafiante', cor: '#f5cf5a', pontos: 2850 },
+  { id: 'ferro', nome: 'Ferro', cor: '#8c8580' },
+  { id: 'bronze', nome: 'Bronze', cor: '#c07a4c' },
+  { id: 'prata', nome: 'Prata', cor: '#b4bec8' },
+  { id: 'ouro', nome: 'Ouro', cor: '#e8b93f' },
+  { id: 'platina', nome: 'Platina', cor: '#4fd1b9' },
+  { id: 'esmeralda', nome: 'Esmeralda', cor: '#2fbf71' },
+  { id: 'diamante', nome: 'Diamante', cor: '#6f8cff' },
+  { id: 'mestre', nome: 'Mestre', cor: '#b65cf0' },
+  { id: 'grao-mestre', nome: 'Grão-Mestre', cor: '#ef4f3c' },
+  { id: 'desafiante', nome: 'Desafiante', cor: '#f5cf5a' },
 ];
-// Abaixo disto no ciclo, cai 1 elo (1/6 da meta do próprio elo).
-export const minimoParaFicar = (id) => (['prata', 'ouro', 'platina', 'diamante'].includes(id) ? Math.floor(eloInfo(id).pontos / 6) : 0);
+export const PDR_DIVISAO = 100;
+export const PTS_MESTRE = 2100; // Ferro 3 0 PDR → Mestre
 export const VAGAS_DESAFIANTE = 100;
-// OVR inicial extra na Carreira no Rift por elo: sem elo +0, Bronze +1 …
-// Desafiante +6 (`elo` = getUser().elo, que é null para quem nunca jogou).
-export const bonusCarreira = (elo) => {
-  const i = ELOS.findIndex((e) => e.id === elo);
-  return i < 0 ? 0 : i + 1;
-};
-export const PARTIDAS_POR_DIA = 3;
-export const DIAS_POR_CICLO = 3;
+export const MIN_DESAFIANTE = 500;
+export const VAGAS_GRAO_MESTRE = 200;
+export const MIN_GRAO_MESTRE = 200;
+export const PARTIDAS_POR_DIA = 3; // Carreira e Lendas: as 3 primeiras do dia
+export const NAO_TERMINOU = -15; // Carreira/Lendas começada e não terminada no dia
+export const INATIVIDADE = { aPartir: 'ouro', dias: 3, pdr: -25 };
 
 export const eloInfo = (id) => ELOS.find((e) => e.id === id) || ELOS[0];
 export const nivelElo = (id) => Math.max(0, ELOS.findIndex((e) => e.id === id));
+
+// Posição na escada → { elo, divisao (3..1 ou null), pdr }.
+export function divisaoDe(pts = 0, elo = null) {
+  if (pts >= PTS_MESTRE) return { elo: elo && nivelElo(elo) >= 7 ? elo : 'mestre', divisao: null, pdr: pts - PTS_MESTRE };
+  const n = Math.floor(pts / 300);
+  return { elo: ELOS[n].id, divisao: 3 - Math.floor((pts % 300) / 100), pdr: pts % 100 };
+}
+// "Ouro 2", "Mestre"…
+export const nomeDivisao = (d) => `${eloInfo(d.elo).nome}${d.divisao ? ` ${d.divisao}` : ''}`;
+
+// Régua: quanto cada elo desconta dos resultados (igual a site_rk_regua).
+export const REGUA = [0, 1, 2, 3, 5, 6, 8, 12, 16, 20];
+// PDR de tabela (+5..+38 ou −2..−25) → PDR com a régua do elo (site_rk_ajustar).
+export function ajustarPdr(base, nivel = 0) {
+  const p = (base > 0 ? base - 5 : base + 1) - REGUA[Math.min(9, Math.max(0, nivel))];
+  return p >= 0 ? Math.min(38, 5 + p) : Math.max(-25, -1 + p);
+}
+
+// Tabelas de PDR (antes da régua), para explicar na tela.
+export const PDR_CARREIRA = [[150, -25], [250, -16], [399, -2], [400, 5], [600, 13], [800, 20], [1000, 28], [1100, 32], [1300, 34], [1600, 38]];
+export const PDR_RUNETERMO = [35, 28, 22, 16, 11, 6, 5];
+export const PDR_LENDAS = [
+  ['Campeão invicto (7-0 e sem perder jogo nos playoffs)', '+35'],
+  ['Campeão', '+18 a +26'],
+  ['Vice', '+6 a +10'],
+  ['Semifinal', '−4 a −6'],
+  ['Quartas', '−10 a −14'],
+  ['Fora na fase de pontos', '−18 a −24'],
+];
 
 // Benefícios: cada elo mantém os dos elos abaixo.
 export const BENEFICIOS = [
   { elo: 'prata', jogo: 'Runetermo', texto: 'a categoria da palavra (campeão, item, região…) aparece desde o começo' },
   { elo: 'ouro', jogo: 'Lendas do CBLOL', texto: '+1 dado bônus por partida (2 no total)' },
   { elo: 'platina', jogo: 'Campeão Oculto', texto: '+1 dica por dia (2 no total)' },
+  { elo: 'esmeralda', jogo: 'Campeão Oculto', texto: '+1 dica por dia (3 no total)' },
   { elo: 'diamante', jogo: 'Runetermo', texto: '+1 tentativa (7 no total)' },
   { elo: 'desafiante', jogo: 'Lendas do CBLOL e Campeão Oculto', texto: '+1 dado bônus (3 no total) e +1 tentativa no Campeão Oculto (9 no total)' },
 ];
+
+// OVR inicial na Carreira no Rift: 50 + 1 por elo (Ferro +0 … Desafiante +9).
+export const bonusCarreira = (elo) => (elo ? nivelElo(elo) : 0);
 
 // O que o elo libera em cada jogo (sem conta ou sem elo: nada extra).
 export function vantagens(elo) {
   const n = elo ? nivelElo(elo) : 0;
   return {
-    categoriaRunetermo: n >= 1,
-    dadosBonus: 1 + (n >= 2 ? 1 : 0) + (n >= 5 ? 1 : 0),
-    dicasCampeao: 1 + (n >= 3 ? 1 : 0),
-    tentativasRunetermo: 6 + (n >= 4 ? 1 : 0),
-    tentativasCampeao: 8 + (n >= 5 ? 1 : 0),
+    categoriaRunetermo: n >= 2,
+    dadosBonus: 1 + (n >= 3 ? 1 : 0) + (n >= 9 ? 1 : 0),
+    dicasCampeao: 1 + (n >= 4 ? 1 : 0) + (n >= 5 ? 1 : 0),
+    tentativasRunetermo: 6 + (n >= 6 ? 1 : 0),
+    tentativasCampeao: 8 + (n >= 9 ? 1 : 0),
   };
 }
 
 // Emblema do elo (imagens em shared/assets/elos). Pequeno (até 40 px): o
 // recorte justo; grande: o recorte comum (os elos altos ficam maiores).
-// `vazio` = ainda sem ranque (Bronze apagado).
+// `vazio` = ainda sem ranque (Ferro apagado).
 export function emblemaHtml(elo, size = 64, { vazio = false } = {}) {
   const e = eloInfo(elo);
   const icone = size <= 40;
   const h = icone ? size : Math.round(size * 267 / 256);
   return `<img class="emblema${vazio ? ' vazio' : ''}" src="/shared/assets/elos/${e.id}${icone ? '-icone' : ''}.webp" alt="" width="${size}" height="${h}" decoding="async" />`;
 }
+
+// "+12 PDR" / "−8 PDR".
+export const fmtPdr = (n) => `${n > 0 ? '+' : n < 0 ? '−' : '±'}${Math.abs(Math.round(n || 0))} PDR`;

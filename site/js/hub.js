@@ -24,7 +24,7 @@ const CAPAS = {
   cblol: `<div class="cv cv-cblol"><img class="cv-trofeu grande" src="${A}/trofeus/cblol.png?v=2" alt="" loading="lazy" /></div>`,
 };
 // Etiqueta no canto da capa: [texto, classe].
-const SELOS = { 'carreira-no-rift': ['Ranqueada', 'rk'], runetermo: ['Diário'], campeao: ['Diário'], cblol: ['Novo', 'novo'] };
+const SELOS = { 'carreira-no-rift': ['Ranqueada', 'rk'], runetermo: ['Diário · Ranqueada', 'rk'], campeao: ['Diário · Ranqueada', 'rk'], cblol: ['Ranqueada (Oculto)', 'rk'] };
 
 function renderGames(results) {
   // Jogos em teste (oculto: true) funcionam pelo link, mas ainda não aparecem aqui.

@@ -10,6 +10,7 @@ import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import { vantagens } from '../../../shared/ranked.js';
+import { avisoInicio, avisoComeco, avisoFim } from '../../../shared/aviso-ranked.js';
 
 const GAME_ID = 'cblol';
 const NAME = gameById(GAME_ID)?.name || 'Lendas do CBLOL';
@@ -165,7 +166,7 @@ function renderMontagem() {
           <button data-modo="normal" class="${jogo.modo === 'normal' ? 'on' : ''}" ${primeira ? '' : 'disabled'}>Normal</button>
           <button data-modo="oculto" class="${jogo.modo === 'oculto' ? 'on' : ''}" ${primeira ? '' : 'disabled'}>Oculto</button>
         </div>
-        <p class="hint-text">${jogo.modo === 'oculto' ? 'Só os nomes: os OVRs aparecem quando o time estiver completo.' : 'Os OVRs aparecem durante a escolha.'}</p>
+        <p class="hint-text">${jogo.modo === 'oculto' ? 'Só os nomes: os OVRs aparecem quando o time estiver completo. <b>Vale PDR na ranqueada</b> (as 3 primeiras do dia; conta a melhor).' : 'Os OVRs aparecem durante a escolha. Modo para treinar: <b>não vale ranqueada</b>.'}</p>
       </div>
       ${drawnBox()}
       <button class="btn btn-roll" data-act="rolar" ${jogo.atual ? 'disabled' : ''}>Rolar 🎲</button>`;
@@ -360,16 +361,34 @@ function render(opts) {
   else renderMontagem();
 }
 
-function terminar() {
+// Campeão sem perder nenhum jogo: 7-0 na fase de pontos e todas as séries
+// dos playoffs vencidas sem derrota.
+const invicto = (c) => c.resultado === 'campeao' && c.vitoriasGrupos === 7
+  && c.rodadas.filter((r) => r.fase !== 'Fase de pontos').every((r) => r.placar[1] === 0);
+
+// O resultado vai para o histórico (e para a ranqueada, no modo Oculto)
+// assim que a campanha é simulada: ver a animação até o fim não muda nada.
+let entradaRanqueada = null;
+function registrar() {
   const c = jogo.campanha;
   const time = VAGAS.map((v) => jogo.vagas[v]?.nome).filter(Boolean);
+  entradaRanqueada = platform.recordResult(GAME_ID, {
+    score: pontos(c),
+    summary: {
+      text: `${TITULO_RESULTADO[c.resultado]} · força ${Math.round(c.forca)} · ${time.slice(0, 5).join(', ')}`,
+      resultado: c.resultado, modo: jogo.modo, vitorias: c.vitoriasGrupos, invicto: invicto(c),
+      ranked: jogo.modo === 'oculto' ? jogo.ranked?.token : undefined, // ingresso do dia (Oculto vale PDR)
+    },
+  });
+}
+
+function terminar() {
+  const c = jogo.campanha;
   historico.unshift({ quando: new Date().toISOString(), resultado: c.resultado, pontos: pontos(c), forca: c.forca, modo: jogo.modo });
   historico = historico.slice(0, 50);
   platform.track('game_end', GAME_ID, { resultado: c.resultado, vitorias: c.vitoriasGrupos, forca: c.forca, modo: jogo.modo, bonus: jogo.bonusUsado });
-  platform.recordResult(GAME_ID, {
-    score: pontos(c),
-    summary: { text: `${TITULO_RESULTADO[c.resultado]} · força ${Math.round(c.forca)} · ${time.slice(0, 5).join(', ')}`, resultado: c.resultado, modo: jogo.modo },
-  });
+  // Só no fim da animação conta quantos PDR a campanha deu.
+  if (jogo.modo === 'oculto') Promise.resolve(entradaRanqueada).then((entry) => avisoFim(entry, jogo.ranked, GAME_ID));
 }
 
 async function compartilhar() {
@@ -405,7 +424,17 @@ app.addEventListener('click', (e) => {
     }
     if (b.dataset.modo) { jogo.modo = b.dataset.modo; salvar(); render(); return; }
     if (b.dataset.pick) {
-      if (!Object.values(jogo.vagas).some(Boolean)) platform.track('game_start', GAME_ID, { modo: jogo.modo });
+      if (!Object.values(jogo.vagas).some(Boolean)) {
+        platform.track('game_start', GAME_ID, { modo: jogo.modo });
+        // Modo Oculto vale ranqueada: o servidor anota o começo (3 por dia).
+        if (jogo.modo === 'oculto') {
+          const atual = jogo;
+          platform.rankedIniciar(GAME_ID).then((r) => {
+            if (r && jogo === atual) { jogo.ranked = r; salvar(); }
+            avisoComeco(r, GAME_ID);
+          });
+        }
+      }
       escolher(jogo, times, b.dataset.pick, b.dataset.vaga);
       salvar(); render();
       if (completo(jogo)) toast('Time completo!');
@@ -424,7 +453,7 @@ app.addEventListener('click', (e) => {
       if (!rolar(jogo, times)) toast('Nenhum time com vaga disponível.');
       salvar(); render();
     } else if (act === 'simular') {
-      simular(jogo, times); mostrados = 0; abertos.clear(); salvar(true); render();
+      simular(jogo, times); registrar(); mostrados = 0; abertos.clear(); salvar(true); render();
     } else if (act === 'proximo') {
       avancar();
     } else if (act === 'pular') {
@@ -483,4 +512,5 @@ platform.onChange((evt) => {
   byId = new Map(times.map((t) => [t.id, t]));
   carregar();
   render();
+  avisoInicio(GAME_ID);
 })();

@@ -34,3 +34,13 @@
   .rk-lista .rk-pts { grid-column: 3; }
   .rk-lista li .rk-elo { grid-column: 3; grid-row: 1; justify-self: end; display: none; }
 }
+
+/* Filtro por elo no ranking geral */
+.rk-filtro { margin: 0 0 10px; flex-wrap: wrap; }
+.rk-filtro button { display: inline-flex; align-items: center; gap: 5px; }
+.rk-filtro button.on { border-color: var(--cor, var(--gold)); }
+.rk-lista li { grid-template-columns: 42px 1fr 150px 80px; }
+@media (max-width: 560px) {
+  .rk-lista li { grid-template-columns: 30px 1fr auto; }
+  .rk-lista li .rk-elo span { display: none; }
+}

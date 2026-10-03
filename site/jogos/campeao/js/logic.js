@@ -113,3 +113,13 @@ export function shareText({ name, number, guesses, answer, won, hint = false, ur
   const used = guesses.length + dicas;
   return `${name} #${number} ${won ? used : 'X'}/${max}${dicas ? ` ${'💡'.repeat(dicas)}` : ''}\n\n${rows.join('\n')}${url ? `\n\n${url}` : ''}`;
 }
+
+// Igual ao shareText, mas a partir dos resultados já avaliados (com conta,
+// quem avalia é o servidor): rows = [[{ state, arrow }, …], …].
+export function shareRows({ name, rows, won, dicas = 0, url, max = MAX_TRIES, pdr = null }) {
+  const icon = { ok: '🟩', part: '🟨', miss: '🟥' };
+  const linhas = rows.map((res) => res.map((r) => (r.arrow ? (r.arrow === 'up' ? '⬆️' : '⬇️') : icon[r.state])).join(''));
+  const used = rows.length + dicas;
+  const extra = pdr == null ? '' : ` · ${pdr > 0 ? '+' : ''}${pdr} PDR`;
+  return `${name} ${won ? used : 'X'}/${max}${dicas ? ` ${'💡'.repeat(dicas)}` : ''}${extra}\n\n${linhas.join('\n')}${url ? `\n\n${url}` : ''}`;
+}

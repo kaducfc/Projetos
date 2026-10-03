@@ -13,7 +13,8 @@
 //   track(tipo, gameId, dados)      → estatística anônima (início/fim de partida)
 //   isAdmin() / adminStats(dias) / adminApoios(dias) → painel do administrador
 //   changeUsername / setAvatar / changePassword / deleteAccount → página de perfil
-//   rankedIniciar() / rankedStatus() / ranking(periodo) → ranqueada da Carreira no Rift (elo em getUser().elo)
+//   rankedIniciar(jogo) / rankedStatus() / ranking(periodo, elo) → ranqueada (elo em getUser().elo)
+//   diarioAbrir / diarioChute / diarioDica → Runetermo e Campeão Oculto conferidos no servidor
 //
 // Sem conta, tudo fica no localStorage do navegador. Ao entrar, o que foi
 // jogado como visitante é enviado para a conta, e o save mais recente
@@ -205,8 +206,8 @@ async function setUser(sb, authUser) {
     if (error) ({ data: profile } = await sb.from('site_profiles').select('username').eq('id', authUser.id).maybeSingle());
     // Apoio ao site (banco sem 0008_apoio.sql: sem apoio).
     const { data: apoio } = await sb.from('site_profiles').select('apoio_total').eq('id', authUser.id).maybeSingle();
-    // Elo da ranqueada (null = ainda não jogou ou banco sem 0006_ranqueada.sql).
-    const { data: rank } = await sb.from('site_ranked').select('elo').eq('user_id', authUser.id).maybeSingle();
+    // Elo da ranqueada (null = ainda não jogou ou banco sem 0015_ranqueada_pdr.sql).
+    const { data: rank } = await sb.rpc('site_rk_eu').then((r) => r, () => ({ data: null }));
     const meta = authUser.user_metadata || {};
     const app = authUser.app_metadata || {};
     user = {
@@ -530,31 +531,32 @@ export async function adminRegistrarApoio(nome, valor) {
 
 // ------------------------------------------------------------------ ranqueada
 
-// Situação da conta na ranqueada (elo, partidas de hoje, ciclo atual).
-// Também fecha os ciclos pendentes no banco.
-// Começo de uma carreira ranqueável: o servidor anota o dia (horário de
-// Brasília) e devolve um ingresso. Só valem as 3 primeiras carreiras
-// começadas no dia, e só se terminarem no mesmo dia (ver 0010 e 0011).
-// Sem conta, sem servidor ou com erro: null (a carreira não vale).
-export async function rankedIniciar() {
-  // Espera a sessão carregar: quem cria o jogador logo ao abrir a página não
-  // pode ficar sem ingresso só porque a conta ainda não tinha sido lida.
+// Começo de uma partida ranqueável da Carreira ('carreira-no-rift') ou do
+// Lendas do CBLOL no modo Oculto ('cblol'): o servidor anota o dia e devolve
+// um ingresso. Valem as 3 primeiras partidas começadas no dia (a melhor
+// conta); começou e não terminou nenhuma: −15 PDR à meia-noite.
+// Sem conta, sem servidor ou com erro: null (a partida não vale).
+export async function rankedIniciar(jogo = 'carreira-no-rift') {
+  // Espera a sessão carregar: quem começa logo ao abrir a página não pode
+  // ficar sem ingresso só porque a conta ainda não tinha sido lida.
   await init();
   const sb = await getClient();
   if (!sb || !user) return null;
-  const { data, error } = await sb.rpc('site_ranked_iniciar');
+  const { data, error } = await sb.rpc('site_rk_iniciar', { jogo });
   if (error || !data) {
     if (error) console.warn('Site: não deu para iniciar a ranqueada:', error.message);
     return null;
   }
-  // token null: as 3 carreiras ranqueadas de hoje já foram começadas.
+  // token null: as 3 partidas ranqueadas de hoje já foram começadas.
   return { token: data.token ?? null, dia: String(data.dia).slice(0, 10), numero: data.numero ?? null, restantes: data.restantes ?? null, limite: data.limite ?? null, banido: Boolean(data.banido) };
 }
 
+// Situação da conta na ranqueada (elo, divisão, PDR, hoje, histórico).
+// Também roda a atualização diária pendente no banco.
 export async function rankedStatus() {
   const sb = await getClient();
   if (!sb || !user) return null;
-  const { data, error } = await sb.rpc('site_ranked_meu');
+  const { data, error } = await sb.rpc('site_rk_meu');
   if (error) {
     console.warn('Site: ranqueada indisponível:', error.message);
     return null;
@@ -567,15 +569,46 @@ export async function rankedStatus() {
   return data;
 }
 
-// Ranking público: 'diario', 'semanal' ou 'mensal'.
-export async function ranking(periodo = 'diario') {
+// Ranking público: 'geral' (pela escada; `elo` filtra um elo) ou 'diario',
+// 'semanal', 'mensal' (PDR ganhos no período).
+export async function ranking(periodo = 'geral', elo = null) {
   await init();
   const sb = await getClient();
   if (!sb) throw unavailable();
-  const { data, error } = await sb.rpc('site_ranking', { periodo });
+  const { data, error } = await sb.rpc('site_rk_ranking', { periodo, elo });
   if (error) throw friendly(error);
   return data;
 }
+
+// ------------------------------------------------------------------ jogos diários
+
+const ERROS_DIARIO = {
+  chute_invalido: 'Esse chute não vale.',
+  chute_repetido: 'Você já tentou esse.',
+  partida_encerrada: 'A partida de hoje já terminou.',
+  sem_dica: 'Não há mais dicas disponíveis.',
+  sem_partida: 'Recarregue a página para começar a partida de hoje.',
+  sem_dados: 'O jogo ainda não está pronto no servidor.',
+};
+async function rpcDiario(nome, args) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc(nome, args);
+  if (error) {
+    const k = Object.keys(ERROS_DIARIO).find((x) => error.message.includes(x));
+    const e = new Error(k ? ERROS_DIARIO[k] : friendly(error).message);
+    e.codigo = k || null;
+    throw e;
+  }
+  return data;
+}
+// Partida de hoje do Runetermo ('runetermo') ou do Campeão Oculto ('campeao'),
+// com a resposta sorteada e guardada no servidor (só vem no fim).
+export const diarioAbrir = (jogo) => rpcDiario('site_diario_abrir', { jogo });
+export const diarioChute = (jogo, chute) => rpcDiario('site_diario_chute', { jogo, chute });
+export const diarioDica = () => rpcDiario('site_diario_dica', {});
+// Com conta e servidor, o jogo diário vale ranqueada (e é conferido lá).
+export const diarioNoServidor = () => Boolean(user) && cloudEnabled();
 
 export async function signOut() {
   const sb = await getClient();
@@ -679,11 +712,11 @@ export async function adminBanirRanked(nome, { motivo = null, banir = true } = {
   return data;
 }
 
-// Zera a ranqueada (só administradores; ver 0007_ranqueada_pontos.sql).
+// Zera a ranqueada: todo mundo no Ferro 3 com 0 PDR (só administradores; 0015).
 export async function adminResetRanked(temporada = 1) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();
-  const { data, error } = await sb.rpc('site_ranked_resetar', { nova_temporada: temporada });
+  const { data, error } = await sb.rpc('site_rk_resetar', { nova_temporada: temporada });
   if (error) throw new Error(/not_admin/.test(error.message) ? 'Esta conta não tem permissão para isso.' : friendly(error).message);
   return data;
 }

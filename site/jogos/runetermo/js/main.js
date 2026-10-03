@@ -1,7 +1,10 @@
-// Runetermo: uma palavra do universo de LoL por dia, igual para todos.
+// Runetermo: uma palavra do universo de LoL por dia, diferente para cada
+// jogador. Com conta, a palavra é sorteada e conferida no servidor e vale
+// PDR na ranqueada; sem conta, é sorteada aqui no navegador (sem PDR).
 import {
-  MAX_TRIES, norm, displayLetters, evaluate, dayIndex, answerFor, msToNextDay, computeStats, keyboardState, shareText,
+  MAX_TRIES, norm, displayLetters, evaluate, dayIndex, msToNextDay, computeStats, keyboardFromRows, shareRows,
 } from './logic.js';
+import { avisoDiario } from '../../../shared/aviso-ranked.js';
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
@@ -24,7 +27,8 @@ mountSiteFooter(document.getElementById('site-footer'));
 let answers = [];
 const accents = new Map(); // chave → forma com acento (para mostrar nas peças)
 let today = dayIndex();
-let answer = null; // { palavra, chave, categoria }
+let answer = null; // sem conta: { palavra, chave, categoria } sorteada aqui
+let srv = null; // com conta: estado da partida no servidor (site_diario_abrir)
 let save = { v: 1, day: today, guesses: [], history: {} };
 let input = []; // letras da linha atual (pode ter buracos: o jogador escolhe o quadrado)
 let cursor = 0; // quadrado selecionado na linha atual
@@ -53,9 +57,26 @@ async function loadData() {
 function loadSave() {
   const s = platform.loadLocalSave(GAME_ID);
   save = { v: 1, day: today, guesses: [], history: {}, ...(s && s.v === 1 ? s : {}) };
-  if (save.day !== today) save = { ...save, day: today, guesses: [], maxTries: undefined };
+  if (save.day !== today) save = { ...save, day: today, guesses: [], maxTries: undefined, local: null };
+  // Sem conta: palavra sorteada aqui, fixa no dia.
+  if (!save.local || save.local.day !== today || !answers.some((a) => a.chave === save.local.chave)) {
+    save.local = { day: today, chave: answers[Math.floor(Math.random() * answers.length)].chave };
+  }
+  answer = answers.find((a) => a.chave === save.local.chave);
   input = [];
   cursor = 0;
+}
+
+// Com conta e servidor: busca (ou sorteia) a palavra de hoje no servidor.
+// Se o servidor não responder, joga com a palavra local (sem PDR).
+async function carregarModo() {
+  srv = null;
+  if (!platform.diarioNoServidor()) return;
+  try {
+    srv = await platform.diarioAbrir(GAME_ID);
+  } catch (e) {
+    console.warn('Runetermo: servidor indisponível, jogando sem ranqueada.', e.message);
+  }
 }
 
 const persist = (urgent = false) => platform.writeSave(GAME_ID, save, { urgent });
@@ -63,9 +84,16 @@ const persist = (urgent = false) => platform.writeSave(GAME_ID, save, { urgent }
 // Benefícios do elo da ranqueada (Prata: categoria visível; Diamante: +1
 // tentativa). O número de tentativas fica fixo no dia depois do 1º chute.
 const vant = () => vantagens(platform.getUser()?.elo);
-const maxTries = () => save.maxTries || vant().tentativasRunetermo;
-const finished = () => save.guesses.at(-1) === answer.chave || save.guesses.length >= maxTries();
-const won = () => save.guesses.at(-1) === answer.chave;
+const maxTries = () => (srv ? srv.max_tentativas : save.maxTries || vant().tentativasRunetermo);
+// Linhas já jogadas: [{ chute, resultado }] (do servidor ou avaliadas aqui).
+const linhas = () => (srv ? srv.chutes : save.guesses.map((g) => ({ chute: g, resultado: evaluate(g, answer.chave) })));
+const tamanho = () => (srv ? srv.tamanho : answer.chave.length);
+const won = () => (srv ? srv.status === 'ganhou' : save.guesses.at(-1) === answer.chave);
+const finished = () => (srv ? ['ganhou', 'perdeu'].includes(srv.status) : won() || save.guesses.length >= maxTries());
+const palavraFinal = () => (srv ? srv.resposta?.palavra : answer.palavra) || '';
+const categoriaFinal = () => (srv ? srv.categoria : answer.categoria);
+// Categoria antes do fim: benefício do elo (com conta, o servidor decide).
+const categoriaDica = () => (srv ? srv.categoria : vant().categoriaRunetermo && answer.categoria);
 const shown = (key) => displayLetters(accents.get(key) || key);
 
 // ------------------------------------------------------------------ tela
@@ -76,19 +104,20 @@ const ICON_BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 const KEYS = ['QWERTYUIOP', 'ASDFGHJKL⌫', 'ZXCVBNM↵'];
 
 function render({ reveal = false, shake = false, win = false } = {}) {
-  const n = answer.chave.length;
-  const kb = keyboardState(save.guesses, answer.chave);
+  const n = tamanho();
+  const feitas = linhas();
+  const kb = keyboardFromRows(feitas);
   const rows = [];
   for (let r = 0; r < maxTries(); r++) {
-    const g = save.guesses[r];
+    const g = feitas[r]?.chute;
     if (g) {
-      const res = evaluate(g, answer.chave);
+      const res = feitas[r].resultado;
       const letters = shown(g);
-      const last = r === save.guesses.length - 1;
+      const last = r === feitas.length - 1;
       const cls = `row${last && reveal ? ' just' : ''}${last && win ? ' win' : ''}`;
       rows.push(`<div class="${cls}" role="row" aria-label="Tentativa ${r + 1}: ${esc(letters.join(''))}">${letters.map((ch, i) =>
         `<div class="tile ${res[i]}" style="--i:${i}" role="cell" aria-label="${ch}, ${res[i] === 'ok' ? 'lugar certo' : res[i] === 'near' ? 'outro lugar' : 'não tem'}">${ch}</div>`).join('')}</div>`);
-    } else if (r === save.guesses.length && !finished()) {
+    } else if (r === feitas.length && !finished()) {
       rows.push(`<div class="row current${shake ? ' shake' : ''}" role="row">${Array.from({ length: n }, (_, i) =>
         `<button type="button" class="tile${input[i] ? ' filled' : ''}${i === cursor ? ' cursor' : ''}" data-pos="${i}" role="gridcell" aria-label="Quadrado ${i + 1}${input[i] ? `: ${input[i]}` : ', vazio'}${i === cursor ? ' (selecionado)' : ''}">${input[i] || ''}</button>`).join('')}</div>`);
     } else {
@@ -106,8 +135,8 @@ function render({ reveal = false, shake = false, win = false } = {}) {
       <div class="pal-title">
         <p class="eyebrow">◆ Palavra do dia</p>
         <h1>${esc(NAME)}</h1>
-        <p class="sub">#${today + 1} · ${n} letras${maxTries() > MAX_TRIES ? ` · ${maxTries()} tentativas` : ''}</p>
-        ${vant().categoriaRunetermo && !finished() ? `<p class="cat-elo" title="Benefício do elo ${esc(eloInfo(platform.getUser()?.elo).nome)} na ranqueada">Categoria: <b>${esc(CATEGORIES[answer.categoria] || '')}</b></p>` : ''}
+        <p class="sub">${n} letras${maxTries() > MAX_TRIES ? ` · ${maxTries()} tentativas` : ''} · ${srv ? '<b class="rk-vale">vale ranqueada</b>' : 'sem ranqueada (entre na conta)'}</p>
+        ${categoriaDica() && !finished() ? `<p class="cat-elo" title="Benefício do elo ${esc(eloInfo(platform.getUser()?.elo).nome)} na ranqueada">Categoria: <b>${esc(CATEGORIES[categoriaDica()] || '')}</b></p>` : ''}
       </div>
       <div class="right"><button class="icon-btn" data-act="stats" aria-label="Estatísticas">${ICON_STATS}</button></div>
     </header>
@@ -136,7 +165,7 @@ function toast(msg, ms = 1600) {
 // as setas ele escolhe qual); depois o cursor vai para o próximo vazio.
 function type(ch) {
   if (busy || finished() || modal) return;
-  const n = answer.chave.length;
+  const n = tamanho();
   input[cursor] = ch;
   const prox = [...Array(n).keys()].map((k) => (cursor + 1 + k) % n).find((k) => !input[k]);
   cursor = prox ?? Math.min(cursor + 1, n - 1);
@@ -155,32 +184,43 @@ function erase() {
 
 function moveCursor(pos) {
   if (busy || finished() || modal) return;
-  cursor = Math.max(0, Math.min(answer.chave.length - 1, pos));
+  cursor = Math.max(0, Math.min(tamanho() - 1, pos));
   render();
 }
 
-function submit() {
+async function submit() {
   if (busy || finished() || modal) return;
-  const n = answer.chave.length;
+  const n = tamanho();
   const guess = Array.from({ length: n }, (_, i) => input[i] || '').join('');
   if (guess.length < n) {
     render({ shake: true });
     toast(`Preencha os ${n} quadrados`);
     return;
   }
-  if (!save.guesses.length) {
-    platform.track('game_start', GAME_ID, { day: today, length: n, categoria: answer.categoria });
-    save.maxTries = vant().tentativasRunetermo;
+  if (!linhas().length) {
+    platform.track('game_start', GAME_ID, { day: today, length: n, ranqueada: Boolean(srv) });
+    if (!srv) save.maxTries = vant().tentativasRunetermo;
   }
-  save.guesses.push(guess);
+  busy = true;
+  if (srv) {
+    try {
+      srv = await platform.diarioChute(GAME_ID, guess);
+    } catch (e) {
+      busy = false;
+      render({ shake: true });
+      toast(e.message, 2200);
+      return;
+    }
+  } else {
+    save.guesses.push(guess);
+  }
   input = [];
   cursor = 0;
   const done = finished();
   if (done) {
-    save.history = { ...save.history, [today]: { tries: save.guesses.length, won: won() } };
+    save.history = { ...save.history, [today]: { tries: linhas().length, won: won() } };
   }
   persist(done);
-  busy = true;
   render({ reveal: true });
   const flipTime = 110 * (n - 1) + 520;
   setTimeout(() => {
@@ -188,9 +228,9 @@ function submit() {
     if (!done) return;
     if (won()) {
       render({ win: true });
-      toast(PRAISE[Math.min(save.guesses.length, PRAISE.length) - 1], 1800);
+      toast(PRAISE[Math.min(linhas().length, PRAISE.length) - 1], 1800);
     } else {
-      toast(accents.get(answer.chave) || answer.palavra, 2200);
+      toast(palavraFinal(), 2200);
     }
     finish();
     setTimeout(() => openStats(), won() ? 1500 : 1900);
@@ -198,16 +238,18 @@ function submit() {
 }
 
 function finish() {
-  const tries = save.guesses.length;
+  const tries = linhas().length;
   const ok = won();
-  platform.track('game_end', GAME_ID, { day: today, won: ok, tries, length: answer.chave.length, categoria: answer.categoria });
+  const palavra = palavraFinal();
+  platform.track('game_end', GAME_ID, { day: today, won: ok, tries, length: tamanho(), ranqueada: Boolean(srv) });
   platform.recordResult(GAME_ID, {
     score: ok ? Math.max(1, MAX_TRIES + 1 - tries) : 0,
     summary: {
-      text: `#${today + 1} · ${answer.palavra} · ${ok ? `acertou em ${tries}/${maxTries()}` : `não acertou (X/${maxTries()})`}`,
-      day: today + 1, word: answer.palavra, won: ok, tries,
+      text: `${palavra} · ${ok ? `acertou em ${tries}/${maxTries()}` : `não acertou (X/${maxTries()})`}${srv?.pdr != null ? ` · ${srv.pdr > 0 ? '+' : ''}${srv.pdr} PDR` : ''}`,
+      day: today + 1, word: palavra, won: ok, tries, pdr: srv?.pdr ?? null,
     },
   });
+  if (srv) avisoDiario(srv);
 }
 
 // ------------------------------------------------------------------ janelas
@@ -241,7 +283,7 @@ const exampleRow = (word, idx, cls) => `<div class="example">${[...word].map((ch
 function openHelp() {
   openModal(`
     <h2>Como jogar</h2>
-    <p>Descubra a palavra do dia em ${MAX_TRIES} tentativas. Todas as respostas são nomes do universo de League of Legends:
+    <p>Descubra a sua palavra do dia em ${MAX_TRIES} tentativas (cada jogador tem uma palavra diferente). Todas as respostas são nomes do universo de League of Legends:
       campeões, regiões e lugares de Runeterra, itens, monstros do mapa e personagens da lore.</p>
     <p>A palavra do dia pode ter de 5 a 7 letras. Depois de cada tentativa, as peças mostram o quão perto você está.</p>
     <p>Toque num quadrado para escolher onde escrever: dá para preencher primeiro as letras que você já sabe, em qualquer posição.</p>
@@ -253,7 +295,10 @@ function openHelp() {
     <p>A letra <b>O</b> não está na palavra.</p>
     <p class="help-note">Vale tentar qualquer palavra comum do português ou do universo de LoL com o mesmo número de letras.
       Acentos e apóstrofos são preenchidos sozinhos e não contam nas dicas. As palavras podem ter letras repetidas.</p>
-    <p class="help-note">Uma palavra nova aparece todo dia à meia-noite (horário de Brasília), a mesma para todo mundo.</p>`,
+    <p class="help-note">Uma palavra nova aparece todo dia à meia-noite (horário de Brasília).</p>
+    <p class="help-note"><b>Ranqueada:</b> com a conta conectada, a partida vale PDR. Acertar rápido rende mais
+      (+35 na 1ª tentativa … +6 na 6ª). Errar tira de 4 a 25 PDR, menos quanto mais letras certas você tiver
+      descoberto. Começou e não terminou até a meia-noite conta como erro. Quanto mais alto o elo, mais exigente fica.</p>`,
   { onClose: () => { try { localStorage.setItem(SEEN_HELP, '1'); } catch { /* sem storage */ } } });
 }
 
@@ -266,13 +311,14 @@ function openStats() {
   const st = computeStats(save.history, today);
   const max = Math.max(1, ...st.dist, st.losses);
   const done = finished();
-  const cur = done && won() ? save.guesses.length : null;
+  const cur = done && won() ? linhas().length : null;
   const bar = (label, n, now) => `<div class="dist-row"><span>${label}</span><span><i class="bar${now ? ' now' : ''}" style="width:${Math.max(8, (n / max) * 100)}%">${n}</i></span></div>`;
   openModal(`
     ${done ? `<div class="result">
       <span class="r-label">${won() ? 'Você acertou' : 'A palavra era'}</span>
-      <span class="r-word">${esc(answer.palavra)}</span>
-      <span class="r-cat">${esc(CATEGORIES[answer.categoria] || '')}</span>
+      <span class="r-word">${esc(palavraFinal())}</span>
+      <span class="r-cat">${esc(CATEGORIES[categoriaFinal()] || '')}</span>
+      ${srv?.pdr != null ? `<span class="r-pdr ${srv.pdr >= 0 ? 'mais' : 'menos'}">${srv.pdr > 0 ? '+' : ''}${srv.pdr} PDR na ranqueada</span>` : ''}
     </div>` : ''}
     <h2>Progresso</h2>
     <div class="stats-nums">
@@ -300,8 +346,8 @@ function openStats() {
 }
 
 async function share() {
-  const text = shareText({
-    name: NAME, number: today + 1, guesses: save.guesses, answer: answer.chave, won: won(), max: maxTries(), url: 'riftarcade.com.br/jogos/runetermo',
+  const text = shareRows({
+    name: NAME, rows: linhas(), won: won(), max: maxTries(), pdr: srv?.pdr ?? null, url: 'riftarcade.com.br/jogos/runetermo',
   });
   try {
     if (navigator.share && matchMedia('(pointer: coarse)').matches) await navigator.share({ text });
@@ -316,11 +362,11 @@ async function share() {
 
 // ------------------------------------------------------------------ eventos
 
-function newDay() {
+async function newDay() {
   closeModal();
   today = dayIndex();
-  answer = answerFor(today, answers);
   loadSave();
+  await carregarModo();
   render();
 }
 
@@ -364,8 +410,19 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Progresso vindo da nuvem (entrou na conta em outro aparelho) ou elo novo.
-platform.onChange((evt) => {
-  if (evt.type === 'auth' && answer && !busy && !modal) render();
+// Entrou ou saiu da conta: passa a jogar no servidor (ou na palavra local).
+let comConta = null;
+platform.onChange(async (evt) => {
+  if (evt.type === 'auth' && answer && !busy) {
+    const agora = Boolean(evt.user);
+    if (agora !== comConta) {
+      comConta = agora;
+      await carregarModo();
+      input = [];
+      cursor = 0;
+    }
+    if (!modal) render();
+  }
   if (evt.type === 'save' && evt.gameId === GAME_ID && !busy) {
     loadSave();
     if (answer) render();
@@ -385,11 +442,13 @@ document.addEventListener('visibilitychange', () => {
     app.innerHTML = '<p class="loading">Não foi possível carregar o jogo. Verifique a internet e recarregue a página.</p>';
     return;
   }
-  answer = answerFor(today, answers);
   loadSave();
+  await platform.init();
+  comConta = Boolean(platform.getUser());
+  await carregarModo();
   render();
   let seen = false;
   try { seen = Boolean(localStorage.getItem(SEEN_HELP)); } catch { /* sem storage */ }
-  if (!seen && !save.guesses.length) openHelp();
+  if (!seen && !linhas().length) openHelp();
   else if (finished()) openStats();
 })();

@@ -1,11 +1,21 @@
 // Supabase falso em memória, com o subconjunto usado por shared/platform.js
 // e as mesmas regras de acesso (cada conta só mexe nas próprias linhas).
 
+function avaliarPalavra(chute, resposta) {
+  const g = [...chute];
+  const a = [...resposta];
+  const res = g.map(() => 'miss');
+  const sobra = {};
+  a.forEach((ch, i) => { if (g[i] === ch) res[i] = 'ok'; else sobra[ch] = (sobra[ch] || 0) + 1; });
+  g.forEach((ch, i) => { if (res[i] !== 'ok' && sobra[ch]) { res[i] = 'near'; sobra[ch]--; } });
+  return res;
+}
+
 export function createFakeSupabase() {
   // Contas administradoras (o teste pode incluir outras com admins.add(id)).
   const admins = new Set(['user-admin']);
   const fakeInicios = new Map(); // carreiras ranqueadas começadas hoje, por conta
-  const db = { site_profiles: [], site_game_saves: [], site_game_results: [], site_events: [], site_ranked: [], site_apoios: [] };
+  const db = { site_profiles: [], site_game_saves: [], site_game_results: [], site_events: [], site_ranked: [], site_apoios: [], site_rk: [], site_rk_lanc: [], site_rk_dia: [], site_diario: {}, diarioRespostas: { runetermo: 'GROMP', campeao: 'Ahri' } };
   // Contagem de gravações e falha simulada (servidor ocupado).
   const stats = { upserts: 0, failNextUpserts: 0 };
   const users = [];
@@ -169,64 +179,104 @@ export function createFakeSupabase() {
       }
       return { data: null, error: null };
     }
-    // Ranqueada simplificada: as 3 primeiras carreiras de hoje (pela ordem de
-    // chegada) valem; o elo vem de db.site_ranked.
-    if (name === 'site_ranked_meu') {
+    // Ranqueada (PDR) simplificada: a escada vem de db.site_rk (o teste
+    // monta), os PDR de hoje de db.site_rk_dia e db.site_rk_lanc.
+    const ELO_IDS = ['ferro', 'bronze', 'prata', 'ouro', 'platina', 'esmeralda', 'diamante', 'mestre', 'grao-mestre', 'desafiante'];
+    const eloDe = (r) => (!r ? 'ferro' : r.pts >= 2100 ? (r.topo || 'mestre') : ELO_IDS[Math.floor(r.pts / 300)]);
+    const hojeIso = new Date().toISOString().slice(0, 10);
+    if (name === 'site_rk_eu') {
+      const r = db.site_rk.find((x) => x.user_id === auth._uid());
+      return { data: r ? { elo: eloDe(r), nivel: ELO_IDS.indexOf(eloDe(r)), pts: r.pts } : null, error: null };
+    }
+    if (name === 'site_rk_iniciar') {
       const uid = auth._uid();
       if (!uid) return { data: null, error: { message: 'not_authenticated' } };
-      const hoje = new Date().toISOString().slice(0, 10);
-      const validas = db.site_game_results.filter((r) => r.user_id === uid && r.game_id === 'carreira-no-rift'
-        && r.score != null && String(r.played_at).slice(0, 10) === hoje).slice(0, 3);
-      const melhor = validas.length ? Math.max(...validas.map((r) => r.score)) : null;
-      const meu = db.site_ranked.find((r) => r.user_id === uid);
-      const elos = ['bronze', 'prata', 'ouro', 'platina', 'diamante', 'desafiante'];
-      const pontos = [0, 1500, 1950, 2250, 2550, 2850];
-      const elo = meu?.elo || 'bronze';
-      const i = elos.indexOf(elo);
-      const dia = (k) => new Date(Date.now() + k * 864e5).toISOString().slice(0, 10);
+      const k = `${uid}|${args.jogo}`;
+      fakeInicios.set(k, (fakeInicios.get(k) || 0) + 1);
+      const n = fakeInicios.get(k);
+      if (n > 3) return { data: { token: null, dia: hojeIso, numero: null, restantes: 0, limite: 3 }, error: null };
+      return { data: { token: `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`, dia: hojeIso, numero: n, restantes: 3 - n, limite: 3 }, error: null };
+    }
+    if (name === 'site_rk_meu') {
+      const uid = auth._uid();
+      if (!uid) return { data: null, error: { message: 'not_authenticated' } };
+      const r = db.site_rk.find((x) => x.user_id === uid);
+      const jogos = Object.fromEntries(db.site_rk_dia.filter((x) => x.user_id === uid && x.dia === hojeIso).map((x) => [x.jogo, { pdr: x.pdr, base: x.base }]));
+      const vagas = {};
+      for (const j of ['carreira-no-rift', 'cblol']) vagas[j] = Math.min(3, fakeInicios.get(`${uid}|${j}`) || 0);
       return {
         data: {
-          elo, jogou: Boolean(meu || validas.length), temporada: 1,
-          hoje: { dia: hoje, partidas: validas.length, melhor, validas: validas.map((r) => r.client_id) },
-          ciclo: {
-            numero: 0, inicio: dia(-1), fim: dia(1), atualiza: dia(2),
-            dias: [{ dia: dia(-1), melhor: 640 }, { dia: hoje, melhor }, { dia: dia(1), melhor: null }],
-            total: 640 + (melhor || 0), minimo: i >= 1 && i <= 4 ? Math.floor(pontos[i] / 6) : 0,
+          temporada: 1, jogou: Boolean(r), pts: r?.pts || 0, elo: eloDe(r), nivel: ELO_IDS.indexOf(eloDe(r)),
+          posicao_topo: r && r.pts >= 2100 ? 1 : null, ultima_atividade: r?.ultima_atividade || hojeIso,
+          hoje: {
+            dia: hojeIso,
+            pdr: db.site_rk_lanc.filter((x) => x.user_id === uid && x.dia === hojeIso).reduce((t, x) => t + x.delta, 0),
+            jogos, vagas,
+            validas: db.site_game_results.filter((x) => x.user_id === uid && x.summary?.ranked).map((x) => x.client_id),
           },
-          proximo: i < 5 ? { elo: elos[i + 1], pontos: pontos[i + 1] } : null,
-          desafiantes: 37, vagas: 100,
-          historico: i ? [{ ciclo: 0, de: elos[i - 1], para: elo, pontos: pontos[i] + 120 }] : [],
+          cortes: { desafiante: null, grao_mestre: null, desafiantes: 0, grao_mestres: 0 },
+          historico: db.site_rk_lanc.filter((x) => x.user_id === uid).slice().reverse(),
         },
         error: null,
       };
     }
-    if (name === 'site_ranked_iniciar') {
-      if (!auth._uid()) return { data: null, error: { message: 'not_authenticated' } };
-      fakeInicios.set(auth._uid(), (fakeInicios.get(auth._uid()) || 0) + 1);
-      const n = fakeInicios.get(auth._uid());
-      const dia = new Date().toISOString().slice(0, 10);
-      if (n > 3) return { data: { token: null, dia, numero: null, restantes: 0 }, error: null };
-      return { data: { token: `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`, dia, numero: n, restantes: 3 - n }, error: null };
+    if (name === 'site_rk_ranking') {
+      if (!['geral', 'diario', 'semanal', 'mensal'].includes(args.periodo)) return { data: null, error: { message: 'periodo_invalido' } };
+      let linhas = db.site_rk.map((r) => ({ r, valor: args.periodo === 'geral' ? r.pts
+        : db.site_rk_lanc.filter((x) => x.user_id === r.user_id).reduce((t, x) => t + x.delta, 0) }));
+      if (args.periodo === 'geral' && args.elo) linhas = linhas.filter((x) => eloDe(x.r) === args.elo);
+      linhas.sort((a, b) => b.valor - a.valor);
+      const lista = linhas.map(({ r, valor }, i) => {
+        const p = db.site_profiles.find((x) => x.id === r.user_id);
+        return { pos: i + 1, username: p?.username, avatar: p?.avatar || null, apoiador: (p?.apoio_total || 0) > 0, elo: eloDe(r), pts: r.pts, valor, eu: r.user_id === auth._uid() };
+      });
+      return { data: { periodo: args.periodo, elo: args.elo || null, inicio: hojeIso, fim: hojeIso, jogadores: lista.length, lista, eu: lista.find((x) => x.eu) || null }, error: null };
     }
-    if (name === 'site_ranking') {
-      if (!['diario', 'semanal', 'mensal'].includes(args.periodo)) return { data: null, error: { message: 'periodo_invalido' } };
-      const pts = new Map();
-      for (const r of db.site_game_results.filter((x) => x.game_id === 'carreira-no-rift' && x.score != null)) {
-        pts.set(r.user_id, Math.max(pts.get(r.user_id) || 0, r.score));
+    if (name === 'site_rk_resetar') {
+      if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };
+      const n = db.site_rk.length;
+      db.site_rk = [];
+      return { data: { jogadores_zerados: n, inicio: hojeIso, temporada: args.nova_temporada }, error: null };
+    }
+    // Jogos diários conferidos no "servidor": a resposta vem de
+    // db.diarioRespostas (o teste escolhe) e o PDR é o de tabela.
+    if (name === 'site_diario_abrir' || name === 'site_diario_chute' || name === 'site_diario_dica') {
+      const uid = auth._uid();
+      if (!uid) return { data: null, error: { message: 'not_authenticated' } };
+      const jogo = name === 'site_diario_dica' ? 'campeao' : args.jogo;
+      const k = `${uid}|${jogo}`;
+      let d = db.site_diario[k];
+      if (!d) {
+        if (name !== 'site_diario_abrir') return { data: null, error: { message: 'sem_partida' } };
+        d = db.site_diario[k] = { jogo, resposta: db.diarioRespostas[jogo], chutes: [], dicas: [], status: 'novo', max: jogo === 'runetermo' ? 6 : 8 };
       }
-      const lista = [...pts].sort((a, b) => b[1] - a[1]).map(([id, p], i) => ({
-        pos: i + 1, username: db.site_profiles.find((x) => x.id === id)?.username, avatar: null,
-        apoiador: (db.site_profiles.find((x) => x.id === id)?.apoio_total || 0) > 0,
-        elo: db.site_ranked.find((x) => x.user_id === id)?.elo || 'bronze', pontos: p, dias: 1, eu: id === auth._uid(),
-      }));
-      const hoje = new Date().toISOString().slice(0, 10);
-      return { data: { periodo: args.periodo, inicio: hoje, fim: hoje, jogadores: lista.length, lista, eu: lista.find((x) => x.eu) || null }, error: null };
-    }
-    if (name === 'site_ranked_resetar') {
-      if (auth._uid() !== 'user-admin') return { data: null, error: { message: 'not_admin' } };
-      const n = db.site_ranked.length;
-      db.site_ranked = [];
-      return { data: { partidas_apagadas: n, inicio: new Date().toISOString().slice(0, 10), temporada: args.nova_temporada }, error: null };
+      const fim = () => ['ganhou', 'perdeu'].includes(d.status);
+      if (name === 'site_diario_chute') {
+        if (fim()) return { data: null, error: { message: 'partida_encerrada' } };
+        const c = jogo === 'runetermo' ? String(args.chute).toUpperCase() : args.chute;
+        if (d.chutes.includes(c) && jogo === 'campeao') return { data: null, error: { message: 'chute_repetido' } };
+        d.chutes.push(c);
+        d.status = 'jogando';
+        if (c === d.resposta) d.status = 'ganhou';
+        else if (d.chutes.length + d.dicas.length >= d.max) d.status = 'perdeu';
+        if (fim()) d.pdr = d.status === 'ganhou' ? [35, 28, 22, 16, 11, 6][d.chutes.length - 1] : -20;
+      }
+      if (name === 'site_diario_dica') {
+        if (fim() || d.dicas.length >= 1) return { data: null, error: { message: 'sem_dica' } };
+        d.dicas.push('genero');
+        d.status = 'jogando';
+      }
+      const avaliar = (c) => (jogo === 'runetermo' ? avaliarPalavra(c, d.resposta) : Array.from({ length: 7 }, () => ({ state: c === d.resposta ? 'ok' : 'miss' })));
+      return {
+        data: {
+          jogo, status: d.status, tamanho: jogo === 'runetermo' ? d.resposta.length : undefined, max_tentativas: d.max, max_dicas: 1,
+          pdr: d.pdr ?? null, categoria: null,
+          chutes: d.chutes.map((c) => ({ chute: c, resultado: avaliar(c) })),
+          dicas: d.dicas.map((key) => ({ key, valor: 'F' })),
+          resposta: fim() ? (jogo === 'runetermo' ? { chave: d.resposta, palavra: d.resposta } : { nome: d.resposta }) : null,
+        },
+        error: null,
+      };
     }
     if (name === 'site_is_admin') return { data: admins.has(auth._uid()), error: null };
     if (name === 'site_admin_stats') {

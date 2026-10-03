@@ -92,3 +92,24 @@ export function shareText({ name, number, guesses, answer, won, url, max = MAX_T
   const rows = guesses.map((g) => evaluate(g, answer).map((r) => icon[r]).join(''));
   return `${name} #${number} ${won ? guesses.length : 'X'}/${max}\n\n${rows.join('\n')}${url ? `\n\n${url}` : ''}`;
 }
+
+// Teclado a partir das linhas já avaliadas ([{ chute, resultado }]), sem
+// precisar da resposta (com conta, quem avalia é o servidor).
+export function keyboardFromRows(rows) {
+  const rank = { miss: 1, near: 2, ok: 3 };
+  const out = {};
+  for (const { chute, resultado } of rows) {
+    [...norm(chute)].forEach((ch, i) => {
+      const r = resultado[i];
+      if (!out[ch] || rank[r] > rank[out[ch]]) out[ch] = r;
+    });
+  }
+  return out;
+}
+
+export function shareRows({ name, rows, won, url, max = MAX_TRIES, pdr = null }) {
+  const icon = { ok: '🟩', near: '🟨', miss: '⬛' };
+  const linhas = rows.map((r) => r.resultado.map((x) => icon[x]).join(''));
+  const extra = pdr == null ? '' : ` · ${pdr > 0 ? '+' : ''}${pdr} PDR`;
+  return `${name} ${won ? rows.length : 'X'}/${max}${extra}\n\n${linhas.join('\n')}${url ? `\n\n${url}` : ''}`;
+}

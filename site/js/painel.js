@@ -172,7 +172,7 @@ function render(st) {
     ${secaoVigia(st.dias)}
     <div class="card p-danger">
       <h3>Zerar a ranqueada</h3>
-      <p class="c-sub">Para o lançamento oficial (ou uma nova temporada): todo mundo volta para o zero, sem elo e sem pontos nos rankings. O histórico de partidas de cada conta continua. O primeiro ciclo de 3 dias começa hoje.</p>
+      <p class="c-sub">Para o lançamento oficial (ou uma nova temporada): todo mundo volta para o Ferro 3 com 0 PDR e os rankings recomeçam. O histórico de partidas de cada conta continua.</p>
       <label class="p-label">Temporada que começa: <input type="number" min="1" value="1" data-temporada /></label>
       <label class="p-label">Para confirmar, digite <b>ZERAR</b>: <input data-confirma autocomplete="off" /></label>
       <button type="button" class="p-btn p-btn-danger" data-zerar disabled>Zerar ranqueada</button>
@@ -507,7 +507,7 @@ body.addEventListener('click', async (e) => {
   b.disabled = true;
   try {
     const r = await platform.adminResetRanked(temporada);
-    msg.textContent = `Pronto! Ranqueada zerada (${num(r.partidas_apagadas)} partidas ranqueadas apagadas). Temporada ${r.temporada} começou em ${r.inicio}.`;
+    msg.textContent = `Pronto! Ranqueada zerada (${num(r.jogadores_zerados)} jogadores voltaram ao Ferro 3). Temporada ${r.temporada} começou em ${r.inicio}.`;
     body.querySelector('[data-confirma]').value = '';
   } catch (err) {
     msg.textContent = err.message;

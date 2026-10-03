@@ -26,8 +26,8 @@ test('apoio no site: link de pagamento e efeito depois que o pagamento é aprova
   sb.db.site_profiles[0].apoio_total = 25; // o aviso do Mercado Pago aprovou
   await platform.refreshApoio();
   assert.equal(platform.getUser().apoioTotal, 25);
-  await platform.recordResult('carreira-no-rift', { score: 800 });
-  assert.equal((await platform.ranking('diario')).lista[0].apoiador, true);
+  sb.db.site_rk.push({ user_id: platform.getUser().id, pts: 120 });
+  assert.equal((await platform.ranking('geral')).lista[0].apoiador, true);
 });
 
 test('painel de apoio: só administrador vê quem doou, quanto e o total', async () => {

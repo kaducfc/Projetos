@@ -11,7 +11,7 @@ export function calcOvr(attrs, role) {
 export const ovrOf = (p) => calcOvr(p.attrs, p.role);
 
 // OVR inicial de toda carreira (antes do bônus de elo da ranqueada).
-export const OVR_INICIAL = 53;
+export const OVR_INICIAL = 50;
 
 // Atributos iniciais coerentes com a rota: o que pesa mais nela vem mais alto.
 // Os atributos variam a cada sorteio, mas o OVR sai sempre igual a `alvo`.

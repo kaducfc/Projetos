@@ -3,33 +3,54 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createFakeSupabase, installMemoryStorage } from './fake-supabase.js';
 import * as platform from '../shared/platform.js';
-import { ELOS, vantagens, nivelElo, VAGAS_DESAFIANTE, minimoParaFicar } from '../shared/ranked.js';
+import { ELOS, vantagens, nivelElo, divisaoDe, nomeDivisao, ajustarPdr, REGUA, bonusCarreira } from '../shared/ranked.js';
 import { shareText as shareRunetermo } from '../jogos/runetermo/js/logic.js';
 import { shareText as shareCampeao } from '../jogos/campeao/js/logic.js';
 import * as cblol from '../jogos/lendas-do-cblol/js/logic.js';
 
-test('ranqueada: médias e vagas do site batem com as do banco (0006_ranqueada.sql)', () => {
-  const sql = readFileSync(new URL('../supabase/migrations/0007_ranqueada_pontos.sql', import.meta.url), 'utf8');
-  for (const e of ELOS.slice(1)) assert.match(sql, new RegExp(`when '${e.id}' then ${e.pontos}\\b`), e.id);
-  assert.match(sql, new RegExp(`vagas constant int := ${VAGAS_DESAFIANTE};`));
-  assert.equal(minimoParaFicar('ouro'), 325);
-  assert.match(sql, /site_ranked_limiar\(elo\) \/ 6/);
-  assert.equal(minimoParaFicar('bronze'), 0);
-  assert.equal(minimoParaFicar('desafiante'), 0);
-  assert.deepEqual(ELOS.map((e) => e.id), ['bronze', 'prata', 'ouro', 'platina', 'diamante', 'desafiante']);
-  assert.ok(ELOS.every((e, i) => i === 0 || e.pontos > ELOS[i - 1].pontos), 'cada elo pede mais que o anterior');
+const sql15 = readFileSync(new URL('../supabase/migrations/0015_ranqueada_pdr.sql', import.meta.url), 'utf8');
+
+test('ranqueada: 10 elos, divisões de 100 PDR e Mestre depois do Diamante 1', () => {
+  assert.deepEqual(ELOS.map((e) => e.id), ['ferro', 'bronze', 'prata', 'ouro', 'platina', 'esmeralda', 'diamante', 'mestre', 'grao-mestre', 'desafiante']);
+  assert.deepEqual(divisaoDe(0), { elo: 'ferro', divisao: 3, pdr: 0 });
+  assert.deepEqual(divisaoDe(345), { elo: 'bronze', divisao: 3, pdr: 45 });
+  assert.deepEqual(divisaoDe(445), { elo: 'bronze', divisao: 2, pdr: 45 });
+  assert.equal(nomeDivisao(divisaoDe(2099)), 'Diamante 1');
+  assert.deepEqual(divisaoDe(2440, 'desafiante'), { elo: 'desafiante', divisao: null, pdr: 340 });
+  assert.equal(divisaoDe(2440).elo, 'mestre');
+  // Régua igual à do banco.
+  const regua = sql15.match(/select \(array\[([\d, ]+)\]\)\[least\(greatest\(nivel/)[1].split(',').map(Number);
+  assert.deepEqual(REGUA, regua);
+  // Mesma conversão de PDR do banco (site_rk_ajustar): ganhos +5..+38, perdas −2..−25.
+  assert.equal(ajustarPdr(5, 0), 5);
+  assert.equal(ajustarPdr(-2, 0), -2);
+  assert.equal(ajustarPdr(38, 0), 38);
+  assert.equal(ajustarPdr(5, 6), -9); // no Diamante, o resultado mínimo vira perda
+  assert.equal(ajustarPdr(38, 6), 30);
+  for (let n = 0; n <= 9; n++) for (let b = -25; b <= 38; b++) {
+    if (b > -2 && b < 5) continue;
+    const v = ajustarPdr(b, n);
+    assert.ok((v >= 5 && v <= 38) || (v <= -2 && v >= -25), `${b} no nível ${n} → ${v}`);
+  }
 });
 
 test('ranqueada: benefícios de cada elo somam com os de baixo', () => {
   const base = { categoriaRunetermo: false, dadosBonus: 1, dicasCampeao: 1, tentativasRunetermo: 6, tentativasCampeao: 8 };
   assert.deepEqual(vantagens(null), base);
+  assert.deepEqual(vantagens('ferro'), base);
   assert.deepEqual(vantagens('bronze'), base);
   assert.equal(vantagens('prata').categoriaRunetermo, true);
   assert.equal(vantagens('ouro').dadosBonus, 2);
   assert.equal(vantagens('platina').dicasCampeao, 2);
+  assert.equal(vantagens('esmeralda').dicasCampeao, 3);
   assert.equal(vantagens('diamante').tentativasRunetermo, 7);
-  assert.deepEqual(vantagens('desafiante'), { categoriaRunetermo: true, dadosBonus: 3, dicasCampeao: 2, tentativasRunetermo: 7, tentativasCampeao: 9 });
-  assert.equal(nivelElo('desafiante'), 5);
+  assert.deepEqual(vantagens('desafiante'), { categoriaRunetermo: true, dadosBonus: 3, dicasCampeao: 3, tentativasRunetermo: 7, tentativasCampeao: 9 });
+  assert.equal(nivelElo('desafiante'), 9);
+  assert.deepEqual([null, 'ferro', 'bronze', 'diamante', 'mestre', 'desafiante'].map(bonusCarreira), [0, 0, 1, 6, 7, 9]);
+  // O servidor dá as mesmas tentativas e dicas nos jogos diários.
+  const sql16 = readFileSync(new URL('../supabase/migrations/0016_diarios_servidor.sql', import.meta.url), 'utf8');
+  assert.match(sql16, /then 6 \+ \(niv >= 6\)::int else 8 \+ \(niv >= 9\)::int end/);
+  assert.match(sql16, /then 1 \+ \(niv >= 4\)::int \+ \(niv >= 5\)::int else 0 end/);
 });
 
 test('benefícios nos jogos: tentativas a mais no texto de compartilhar e vários dados no Lendas do CBLOL', () => {
@@ -54,27 +75,35 @@ test('benefícios nos jogos: tentativas a mais no texto de compartilhar e vário
   assert.ok(shareCampeao);
 });
 
-test('ranqueada no site: situação do dia, elo da conta e ranking', async () => {
+test('ranqueada no site: elo da conta, situação do dia, ranking com filtro e jogos diários no servidor', async () => {
   const sb = createFakeSupabase();
   installMemoryStorage();
   platform.__setClientForTests(sb);
   await platform.init();
   await platform.signUp({ email: 'r@example.com', password: 'segredo123', username: 'Ranqueado' });
   assert.equal(platform.getUser().elo, null);
-  const ids = [];
-  for (const s of [400, 900, 650, 1200]) ids.push((await platform.recordResult('carreira-no-rift', { score: s })).clientId);
+  const uid = platform.getUser().id;
+  sb.db.site_rk.push({ user_id: uid, pts: 1045 }); // Ouro 2, 45 PDR
   const st = await platform.rankedStatus();
-  assert.equal(st.hoje.partidas, 3);
-  assert.equal(st.hoje.melhor, 900);
-  assert.ok(st.hoje.validas.includes(ids[2]));
-  assert.ok(!st.hoje.validas.includes(ids[3]), 'a 4ª carreira do dia não vale');
-  assert.equal(platform.getUser().elo, 'bronze');
-  sb.db.site_ranked.push({ user_id: platform.getUser().id, elo: 'ouro' });
-  await platform.rankedStatus();
+  assert.equal(st.elo, 'ouro');
   assert.equal(platform.getUser().elo, 'ouro');
-  const r = await platform.ranking('semanal');
-  assert.equal(r.lista[0].username, 'Ranqueado');
+  assert.equal(nomeDivisao(divisaoDe(st.pts, st.elo)), 'Ouro 2');
+  const geral = await platform.ranking('geral');
+  assert.equal(geral.lista[0].username, 'Ranqueado');
+  assert.equal((await platform.ranking('geral', 'prata')).lista.length, 0);
+  assert.equal((await platform.ranking('geral', 'ouro')).lista.length, 1);
   await assert.rejects(platform.ranking('anual'));
+  // Runetermo no servidor: a resposta só aparece no fim.
+  assert.ok(platform.diarioNoServidor());
+  const e0 = await platform.diarioAbrir('runetermo');
+  assert.equal(e0.tamanho, 5);
+  assert.equal(e0.resposta, null);
+  const e1 = await platform.diarioChute('runetermo', 'grupo');
+  assert.deepEqual(e1.chutes[0].resultado, ['ok', 'ok', 'miss', 'near', 'near']);
+  const e2 = await platform.diarioChute('runetermo', 'GROMP');
+  assert.equal(e2.status, 'ganhou');
+  assert.equal(e2.pdr, 28);
+  await assert.rejects(platform.diarioChute('runetermo', 'TESTE'), /já terminou/);
 });
 
 test('zerar a ranqueada: só administrador', async () => {
@@ -86,7 +115,7 @@ test('zerar a ranqueada: só administrador', async () => {
   await assert.rejects(platform.adminResetRanked(1), /não tem permissão/);
 });
 
-test('ranqueada: ingresso do dia em que a carreira começou', async () => {
+test('ranqueada: ingresso (vaga) da Carreira e do Lendas, 3 por dia em cada', async () => {
   const sb = createFakeSupabase();
   installMemoryStorage();
   platform.__setClientForTests(sb);
@@ -95,19 +124,18 @@ test('ranqueada: ingresso do dia em que a carreira começou', async () => {
   await platform.signUp({ email: 'i@example.com', password: 'segredo123', username: 'Inicio' });
   const r = await platform.rankedIniciar();
   assert.match(r.token, /^[0-9a-f-]{36}$/);
-  assert.equal(r.dia, new Date().toISOString().slice(0, 10));
   assert.equal(r.numero, 1);
   await platform.rankedIniciar();
   assert.equal((await platform.rankedIniciar()).restantes, 0);
-  const quarta = await platform.rankedIniciar(); // 4ª começada: não vale
-  assert.equal(quarta.token, null);
-  const sql11 = readFileSync(new URL('../supabase/migrations/0011_ranqueada_iniciadas.sql', import.meta.url), 'utf8');
-  assert.match(sql11, /if feitas >= 3 then/);
-  assert.match(sql11, /'iniciadas'/);
-  const sql = readFileSync(new URL('../supabase/migrations/0010_ranqueada_inicio.sql', import.meta.url), 'utf8');
-  assert.match(sql, /where id = tok::uuid and user_id = new\.user_id and dia = hoje and result_id is null/);
+  assert.equal((await platform.rankedIniciar()).token, null); // 4ª começada: não vale
+  assert.equal((await platform.rankedIniciar('cblol')).numero, 1); // Lendas tem as suas 3
+  // No banco: vaga da própria conta, do jogo, de hoje e não usada; Lendas só no Oculto.
+  assert.match(sql15, /i\.id = tok::uuid and i\.user_id = new\.user_id and i\.dia = hoje and i\.jogo = new\.game_id and i\.usado_em is null/);
+  assert.match(sql15, /coalesce\(new\.summary->>'modo', ''\) <> 'oculto' then return new/);
   const main = readFileSync(new URL('../jogos/carreira-no-rift/js/main.js', import.meta.url), 'utf8');
   assert.match(main, /ranked: state\.ranked\?\.token/);
+  const lendas = readFileSync(new URL('../jogos/lendas-do-cblol/js/main.js', import.meta.url), 'utf8');
+  assert.match(lendas, /platform\.rankedIniciar\(GAME_ID\)/);
 });
 
 test('vigilância da ranqueada: só administrador anula partida e tira jogador', async () => {

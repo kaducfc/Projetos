@@ -1,8 +1,10 @@
-// Campeão Oculto: um campeão de LoL por dia, igual para todos, descoberto
-// pelas pistas de cada tentativa.
+// Campeão Oculto: um campeão de LoL por dia, diferente para cada jogador,
+// descoberto pelas pistas de cada tentativa. Com conta, o campeão é sorteado
+// e conferido no servidor e vale PDR na ranqueada; sem conta, é sorteado aqui.
 import {
-  COLUMNS, MAX_TRIES, compare, search, exactMatch, pickHint, formatValue, computeStats, championFor, dayIndex, shareText,
+  COLUMNS, MAX_TRIES, compare, search, exactMatch, pickHint, formatValue, computeStats, dayIndex, shareText, shareRows,
 } from './logic.js';
+import { avisoDiario } from '../../../shared/aviso-ranked.js';
 import { msToNextDay, fmtCountdown } from '../../../shared/diario.js';
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
@@ -40,7 +42,8 @@ mountSiteFooter(document.getElementById('site-footer'));
 let data = null;
 let byName = new Map();
 let today = dayIndex();
-let answer = null;
+let answer = null; // sem conta: o campeão sorteado aqui
+let srv = null; // com conta: estado da partida no servidor (site_diario_abrir)
 let save = { v: 1, day: today, guesses: [], history: {} };
 let modal = null;
 let timer = null;
@@ -53,19 +56,41 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
 function loadSave() {
   const s = platform.loadLocalSave(GAME_ID);
   save = { v: 1, day: today, guesses: [], hint: null, history: {}, ...(s && s.v === 1 ? s : {}) };
-  if (save.day !== today) save = { ...save, day: today, guesses: [], hint: null, hint2: null, maxTries: undefined };
+  if (save.day !== today) save = { ...save, day: today, guesses: [], hint: null, hint2: null, maxTries: undefined, local: null };
   save.guesses = save.guesses.filter((n) => byName.has(n));
+  // Sem conta: campeão sorteado aqui, fixo no dia.
+  if (!save.local || save.local.day !== today || !byName.has(save.local.nome)) {
+    save.local = { day: today, nome: data.campeoes[Math.floor(Math.random() * data.campeoes.length)].nome };
+  }
+  answer = byName.get(save.local.nome);
+}
+
+// Com conta e servidor: busca (ou sorteia) o campeão de hoje no servidor.
+async function carregarModo() {
+  srv = null;
+  if (!platform.diarioNoServidor()) return;
+  try {
+    srv = await platform.diarioAbrir(GAME_ID);
+  } catch (e) {
+    console.warn('Campeão Oculto: servidor indisponível, jogando sem ranqueada.', e.message);
+  }
 }
 const persist = (urgent = false) => platform.writeSave(GAME_ID, save, { urgent });
-const won = () => save.guesses.includes(answer.nome);
+const nomes = () => (srv ? srv.chutes.map((c) => c.chute) : save.guesses);
+const resultadoDe = (i) => (srv ? srv.chutes[i].resultado : compare(byName.get(save.guesses[i]), answer));
+const won = () => (srv ? srv.status === 'ganhou' : save.guesses.includes(answer.nome));
+// Campeão para mostrar no fim (com conta, só vem do servidor quando acaba).
+const resposta = () => (srv ? byName.get(srv.resposta?.nome) : answer);
 // Benefícios do elo da ranqueada (Platina: 2 dicas; Desafiante: +1
 // tentativa). O número de tentativas fica fixo no dia depois da 1ª jogada.
 const vant = () => vantagens(platform.getUser()?.elo);
-const maxTries = () => save.maxTries || vant().tentativasCampeao;
-const dicas = () => [save.hint, save.hint2].filter(Boolean);
+const maxTries = () => (srv ? srv.max_tentativas : save.maxTries || vant().tentativasCampeao);
+const maxDicas = () => (srv ? srv.max_dicas : vant().dicasCampeao);
+const dicas = () => (srv ? srv.dicas.map((d) => d.key) : [save.hint, save.hint2].filter(Boolean));
+const valorDica = (k) => (srv ? formatValue(k, { [k]: srv.dicas.find((d) => d.key === k)?.valor }) : formatValue(k, answer));
 // Cada dica gasta uma tentativa.
-const used = () => save.guesses.length + dicas().length;
-const finished = () => won() || used() >= maxTries();
+const used = () => nomes().length + dicas().length;
+const finished = () => (srv ? ['ganhou', 'perdeu'].includes(srv.status) : won() || used() >= maxTries());
 const comecar = () => { if (!used()) save.maxTries = vant().tentativasCampeao; };
 const labelOf = (key) => COLUMNS.find((c) => c.key === key)?.label || key;
 
@@ -96,16 +121,17 @@ function render({ fresh = false } = {}) {
   const done = finished();
   const ok = won();
   const n = used();
-  const rows = save.guesses.slice().reverse().map((name, idx) => {
+  const lista = nomes();
+  const rows = lista.slice().reverse().map((name, idx) => {
     const c = byName.get(name);
-    const res = compare(c, answer);
+    const res = resultadoDe(lista.length - 1 - idx);
     return `<div class="grid-row${fresh && idx === 0 ? ' row-new' : ''}" style="display:contents">
       <div class="cell name" style="--i:0">${champIcon(c)}<span>${esc(c.nome)}</span></div>
       ${COLUMNS.map((col, i) => cellHtml(col, c, res[i], i + 1)).join('')}
     </div>`;
   }).join('');
-  const podeDica = !done && dicas().length < vant().dicasCampeao && maxTries() - n > 1;
-  const hint = dicas().map((k) => `<div class="hint open">Dica: <span>${esc(labelOf(k))}</span> <b>${esc(formatValue(k, answer))}</b></div>`).join('')
+  const podeDica = !done && dicas().length < maxDicas() && maxTries() - n > 1;
+  const hint = dicas().map((k) => `<div class="hint open">Dica: <span>${esc(labelOf(k))}</span> <b>${esc(valorDica(k))}</b></div>`).join('')
     + (podeDica ? `<button type="button" class="hint-btn" data-act="hint">💡 Pedir ${dicas().length ? 'outra dica' : 'dica'} (gasta 1 tentativa)</button>` : '');
   const left = maxTries() - n;
   app.innerHTML = `
@@ -114,14 +140,15 @@ function render({ fresh = false } = {}) {
       <div class="adv-title">
         <p class="eyebrow">◆ Campeão do dia</p>
         <h1>${esc(NAME)}</h1>
-        <p class="sub">#${today + 1} · tentativa ${Math.min(n + (done ? 0 : 1), maxTries())} de ${maxTries()}</p>
+        <p class="sub">tentativa ${Math.min(n + (done ? 0 : 1), maxTries())} de ${maxTries()} · ${srv ? '<b class="rk-vale">vale ranqueada</b>' : 'sem ranqueada (entre na conta)'}</p>
       </div>
       <div class="right"><button class="icon-btn" data-act="stats" aria-label="Estatísticas">${ICON_STATS}</button></div>
     </header>
     ${done ? `<section class="win${ok ? '' : ' lost'}" aria-live="polite">
-        ${champIcon(answer)}
-        <div class="w-text"><p class="w-label">${ok ? 'Você acertou' : 'O campeão era'}</p><p class="w-name">${esc(answer.nome)}</p>
-          <p class="w-sub">${ok ? `em ${n} ${n === 1 ? 'tentativa' : 'tentativas'}` : `As ${maxTries()} tentativas acabaram.`}</p></div>
+        ${resposta() ? champIcon(resposta()) : ''}
+        <div class="w-text"><p class="w-label">${ok ? 'Você acertou' : 'O campeão era'}</p><p class="w-name">${esc(resposta()?.nome || '')}</p>
+          <p class="w-sub">${ok ? `em ${n} ${n === 1 ? 'tentativa' : 'tentativas'}` : `As ${maxTries()} tentativas acabaram.`}</p>
+          ${srv?.pdr != null ? `<p class="w-pdr ${srv.pdr >= 0 ? 'mais' : 'menos'}">${srv.pdr > 0 ? '+' : ''}${srv.pdr} PDR na ranqueada</p>` : ''}</div>
         <div class="w-next"><span>Próximo campeão em</span><b id="next-time">${fmtCountdown(msToNextDay())}</b></div>
         <div class="w-actions"><button class="btn" data-act="share">Compartilhar</button>
           <button class="btn btn-ghost" data-act="stats">Estatísticas</button></div>
@@ -175,7 +202,7 @@ function startTimer() {
 
 function suggestions() {
   const q = document.getElementById('q')?.value || '';
-  return search(q, data.campeoes, new Set(save.guesses));
+  return search(q, data.campeoes, new Set(nomes()));
 }
 
 function renderSuggest() {
@@ -188,16 +215,29 @@ function renderSuggest() {
   fixIcons(list);
 }
 
-function guess(name) {
+let enviando = false;
+async function guess(name) {
   const c = byName.get(name);
-  if (!c || finished()) return;
-  if (save.guesses.includes(c.nome)) {
+  if (!c || finished() || enviando) return;
+  if (nomes().includes(c.nome)) {
     toast('Você já tentou esse campeão');
     return;
   }
-  if (!used()) platform.track('game_start', GAME_ID, { day: today });
-  comecar();
-  save.guesses.push(c.nome);
+  if (!used()) platform.track('game_start', GAME_ID, { day: today, ranqueada: Boolean(srv) });
+  if (srv) {
+    enviando = true;
+    try {
+      srv = await platform.diarioChute(GAME_ID, c.nome);
+    } catch (e) {
+      toast(e.message, 2200);
+      return;
+    } finally {
+      enviando = false;
+    }
+  } else {
+    comecar();
+    save.guesses.push(c.nome);
+  }
   const done = finished();
   if (done) save.history = { ...save.history, [today]: { tries: used(), won: won() } };
   persist(done);
@@ -209,23 +249,37 @@ function guess(name) {
 function finish() {
   const tries = used();
   const ok = won();
-  platform.track('game_end', GAME_ID, { day: today, won: ok, tries, hint: Boolean(save.hint), dicas: dicas().length, campeao: answer.nome });
+  const nome = resposta()?.nome || '';
+  platform.track('game_end', GAME_ID, { day: today, won: ok, tries, dicas: dicas().length, ranqueada: Boolean(srv) });
   platform.recordResult(GAME_ID, {
     score: ok ? Math.max(1, MAX_TRIES + 1 - tries) : 0,
     summary: {
-      text: `#${today + 1} · ${answer.nome} · ${ok ? `acertou em ${tries}/${maxTries()}` : `não acertou (X/${maxTries()})`}`,
-      day: today + 1, champion: answer.nome, won: ok, tries,
+      text: `${nome} · ${ok ? `acertou em ${tries}/${maxTries()}` : `não acertou (X/${maxTries()})`}${srv?.pdr != null ? ` · ${srv.pdr > 0 ? '+' : ''}${srv.pdr} PDR` : ''}`,
+      day: today + 1, champion: nome, won: ok, tries, pdr: srv?.pdr ?? null,
     },
   });
-  setTimeout(() => toast(ok ? (tries === 1 ? 'De primeira! Lendário!' : 'Acertou!') : `Era ${answer.nome}!`, 1800), 1300);
+  setTimeout(() => toast(ok ? (tries === 1 ? 'De primeira! Lendário!' : 'Acertou!') : `Era ${nome}!`, 1800), 1300);
+  if (srv) setTimeout(() => avisoDiario(srv), 2200);
 }
 
-// Dica (uma por dia, a qualquer momento): confirma uma característica que
-// ainda não ficou verde, sorteada entre as que faltam.
-function useHint() {
+// Dica: confirma uma característica que ainda não ficou verde, sorteada
+// entre as que faltam (gasta uma tentativa).
+async function useHint() {
   // Não deixa a dica gastar a última tentativa.
-  if (dicas().length >= vant().dicasCampeao || finished() || maxTries() - used() <= 1) return;
-  // Sorteia entre as características que ainda faltam e não viraram dica.
+  if (dicas().length >= maxDicas() || finished() || maxTries() - used() <= 1 || enviando) return;
+  if (srv) {
+    enviando = true;
+    try {
+      srv = await platform.diarioDica();
+    } catch (e) {
+      toast(e.message, 2200);
+      return;
+    } finally {
+      enviando = false;
+    }
+    render();
+    return;
+  }
   let key = null;
   for (let i = 0; i < 40 && (!key || dicas().includes(key)); i++) key = pickHint(save.guesses.map((n) => byName.get(n)), answer);
   if (dicas().includes(key)) key = null;
@@ -282,7 +336,10 @@ function openHelp() {
       (corpo a corpo ou à distância). Alguns campeões têm mais de uma posição, classe ou espécie.</p>
     <p class="help-note">Você tem ${maxTries()} tentativas. Só valem nomes de campeões: comece a digitar e escolha
       na lista. Uma vez por dia, a qualquer momento, dá para pedir uma dica, que revela uma característica
-      que você ainda não acertou. A dica gasta uma tentativa. Um campeão novo aparece todo dia à meia-noite (horário de Brasília), o mesmo para todo mundo.</p>`,
+      que você ainda não acertou. A dica gasta uma tentativa. Um campeão novo aparece todo dia à meia-noite (horário de Brasília), diferente para cada jogador.</p>
+    <p class="help-note"><b>Ranqueada:</b> com a conta conectada, a partida vale PDR. Acertar rápido rende mais
+      (+36 na 1ª tentativa … +5 na última, −4 por dica). Errar tira de 4 a 25 PDR, menos quanto mais características
+      você tiver confirmado. Começou e não terminou até a meia-noite conta como erro. Quanto mais alto o elo, mais exigente fica.</p>`,
   { onClose: () => { try { localStorage.setItem(SEEN_HELP, '1'); } catch { /* sem storage */ } } });
 }
 
@@ -309,8 +366,8 @@ function openStats() {
 }
 
 async function share() {
-  const text = shareText({
-    name: NAME, number: today + 1, guesses: save.guesses.map((n) => byName.get(n)), answer, won: won(), hint: dicas().length, max: maxTries(), url: 'riftarcade.com.br/jogos/campeao',
+  const text = shareRows({
+    name: NAME, rows: nomes().map((_, i) => resultadoDe(i)), won: won(), dicas: dicas().length, max: maxTries(), pdr: srv?.pdr ?? null, url: 'riftarcade.com.br/jogos/campeao',
   });
   try {
     if (navigator.share && matchMedia('(pointer: coarse)').matches) await navigator.share({ text });
@@ -325,12 +382,12 @@ async function share() {
 
 // ------------------------------------------------------------------ eventos
 
-function newDay() {
+async function newDay() {
   clearInterval(timer);
   closeModal();
   today = dayIndex();
-  answer = championFor(today, data);
   loadSave();
+  await carregarModo();
   render();
 }
 
@@ -369,9 +426,17 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => { if (modal && e.key === 'Escape') closeModal(); });
 
 // Progresso vindo da nuvem (entrou na conta em outro aparelho).
-platform.onChange((evt) => {
-  // Entrou na conta (ou o elo mudou): os benefícios podem mudar a tela.
-  if (evt.type === 'auth' && answer && !modal && !document.activeElement?.matches?.('#q')) render();
+let comConta = null;
+platform.onChange(async (evt) => {
+  // Entrou ou saiu da conta: passa a jogar no servidor (ou no campeão local).
+  if (evt.type === 'auth' && answer) {
+    const agora = Boolean(evt.user);
+    if (agora !== comConta) {
+      comConta = agora;
+      await carregarModo();
+    }
+    if (!modal && !document.activeElement?.matches?.('#q')) render();
+  }
   if (evt.type === 'save' && evt.gameId === GAME_ID && answer) {
     loadSave();
     render();
@@ -390,10 +455,12 @@ document.addEventListener('visibilitychange', () => {
     return;
   }
   byName = new Map(data.campeoes.map((c) => [c.nome, c]));
-  answer = championFor(today, data);
   loadSave();
+  await platform.init();
+  comConta = Boolean(platform.getUser());
+  await carregarModo();
   render();
   let seen = false;
   try { seen = Boolean(localStorage.getItem(SEEN_HELP)); } catch { /* sem storage */ }
-  if (!seen && !save.guesses.length) openHelp();
+  if (!seen && !used()) openHelp();
 })();
