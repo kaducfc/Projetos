@@ -194,7 +194,7 @@ function desenharPalco() {
     const fantasma = fig(alvo, rodada.palpite, 'fantasma');
     colAlvo = `<div class="esc-col alvo"><p class="esc-rot"><b>${esc(alvo.nome)}</b><span>Altura ${fmtAltura(alvo.altura)}</span></p>
       <div class="esc-fig">${fig(alvo, alvo.altura, 'vermelho')}<i class="esc-regua v" style="height:${Math.max(3, alvo.altura * k)}px"></i>
-        <div class="esc-fantasma" title="Seu palpite">${fantasma}</div></div></div>`;
+        <div class="esc-fantasma" title="Seu palpite">${fantasma}<span class="esc-palpite-rot">Seu palpite · ${fmtAltura(rodada.palpite)}</span></div></div></div>`;
   } else {
     colAlvo = `<div class="esc-col alvo"><p class="esc-rot"><b>${esc(alvo.nome)}</b><span>Altura ?</span></p>
       <div class="esc-fig"><div class="esc-caixa">${fig(alvo, hRed, 'vermelho')}<i class="esc-alca" aria-hidden="true">⤢</i></div></div></div>`;
