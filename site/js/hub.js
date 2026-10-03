@@ -61,7 +61,7 @@ const CAPAS = {
 const SELOS = { 'carreira-no-rift': ['Ranqueada', 'rk'], runetermo: ['Diário · Ranqueada', 'rk'], campeao: ['Diário · Ranqueada', 'rk'], escala: ['Diário · Ranqueada', 'rk'], cblol: ['Ranqueada (Oculto)', 'rk'] };
 // Largura ÷ altura de cada emblema recortado (shared/assets/elos/*-recorte.webp).
 const PROPORCAO_EMBLEMA = { ferro: 1.06, bronze: 0.96, prata: 0.98, ouro: 0.97, platina: 0.97, esmeralda: 0.99, diamante: 0.92, mestre: 0.91, 'grao-mestre': 1.02, desafiante: 1 };
-const TAMANHO_FILA = [36, 37, 38, 39, 40, 41, 42, 46, 49, 52];
+const TAMANHO_FILA = [32.4, 37, 38, 39, 40, 41, 42, 46, 49, 52];
 const JOGOS_DO_DIA = ['carreira-no-rift', 'runetermo', 'campeao', 'escala', 'cblol'];
 
 let resultados = [];

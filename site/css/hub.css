@@ -253,7 +253,8 @@ body:has(.hx-hero) { overflow-x: clip; }
 .rp-elo .emblema { height: calc(var(--h) * 1px); width: auto; transition: transform 0.2s; }
 .rp-elo .emblema.vazio { filter: grayscale(1) brightness(0.45); opacity: 0.7; }
 .rp-fila.apagada .emblema.vazio { opacity: 0.55; }
-.rp-elo.passou span { color: #b5ad9c; }
+.rp-elo.passou .emblema { opacity: 0.45; filter: saturate(0.55); }
+.rp-elo.passou span { color: #8a8273; }
 .rp-elo.atual span { color: var(--cor); }
 .rp-elo.atual .emblema { transform: scale(1.22); filter: drop-shadow(0 0 10px var(--cor)); animation: hx-brilho 2.6s ease-in-out infinite; }
 .rp-status { margin: 4px 0 0; font-size: 14px; color: #d3ccbc; }
