@@ -11,6 +11,8 @@ import {
 
 const GAME_ID = 'escala';
 const NAME = 'Escala de Runeterra';
+// Proporção do palpite em relação à azul (sem revelar nenhuma altura): "1,6×".
+const fmtRazao = (r) => `${r.toLocaleString('pt-BR', { maximumFractionDigits: r < 10 ? 2 : 1, minimumFractionDigits: r < 10 ? 2 : 1 })}×`;
 const LIMITE = 15; // o palpite vai de 1/15 a 15× a referência
 // Endereço completo: url() dentro de variável CSS resolve a partir do .css.
 const SIL = new URL('dados/silhuetas/', location.href).href;
@@ -110,7 +112,7 @@ function telaRodada() {
   const mostrando = rodada.mostrando;
   return `
     <section class="esc-cards">
-      <div class="esc-card ref"><small>Referência</small><b>${esc(ref.nome)}</b><span>Altura ${fmtAltura(ref.altura)}</span></div>
+      <div class="esc-card ref"><small>Referência</small><b>${esc(ref.nome)}</b><span>${mostrando ? `Altura ${fmtAltura(ref.altura)}` : 'Altura ?'}</span></div>
       <div class="esc-card alvo"><small>Ajuste o tamanho</small><b>${esc(alvo.nome)}</b><span>${mostrando ? `Altura ${fmtAltura(alvo.altura)}` : 'Altura ?'}</span></div>
     </section>
     <section class="esc-palco${mostrando ? ' revelado' : ''}" data-palco aria-label="Comparação de tamanhos">
@@ -130,7 +132,7 @@ function controles(ref) {
       <button type="button" class="esc-btn esc-sobrepor" data-act="sobrepor" aria-label="Sobrepor ou separar as figuras" title="Sobrepor / separar">${rodada.sobre ? '↔' : '⇄'}</button>
     </section>
     <div class="esc-acoes">
-      <span class="esc-chute">Seu palpite: <b data-chute>${fmtAltura(rodada.chute)}</b></span>
+      <span class="esc-chute">Vermelho: <b data-chute>${fmtRazao(rodada.chute / ref.altura)}</b> o azul</span>
       <button type="button" class="esc-confirmar" data-act="confirmar">✓ Confirmar</button>
     </div>
     <p class="esc-teclado muted small">Teclado: ← → ou ↑ ↓ para ajustar (Shift para ajuste fino), Enter para confirmar.</p>`;
@@ -197,7 +199,7 @@ function desenharPalco() {
     const pw = Math.max(2, ph * it.prop);
     return `<div class="esc-sil ${cls}" style="width:${pw}px;height:${ph}px;--img:url('${SIL}${it.id}.webp')"></div>`;
   };
-  const colRef = `<div class="esc-col ref"><p class="esc-rot"><b>${esc(ref.nome)}</b><span>Altura ${fmtAltura(ref.altura)}</span></p>
+  const colRef = `<div class="esc-col ref"><p class="esc-rot"><b>${esc(ref.nome)}</b><span>${mostrando ? `Altura ${fmtAltura(ref.altura)}` : 'Altura ?'}</span></p>
       <div class="esc-fig"><i class="esc-regua" style="height:${Math.max(3, ref.altura * k)}px"></i>${fig(ref, ref.altura, 'azul')}</div></div>`;
   let colAlvo;
   if (mostrando) {
@@ -263,7 +265,7 @@ function ajustar(fator) {
   const s = app.querySelector('[data-slider]');
   if (s) s.value = Math.round((Math.log(rodada.chute / ref.altura) / Math.log(LIMITE)) * 1000);
   const c = app.querySelector('[data-chute]');
-  if (c) c.textContent = fmtAltura(rodada.chute);
+  if (c) c.textContent = fmtRazao(rodada.chute / ref.altura);
   desenharPalco();
 }
 
@@ -325,8 +327,9 @@ function fecharModal() {
 
 function ajuda() {
   abrirModal(`<h2 class="display">Como jogar</h2>
-    <p>A figura <b class="azul-txt">azul</b> é a referência e tem a altura real dela. Ajuste a figura <b class="verm-txt">vermelha</b> até ela ficar no tamanho que você acha certo <b>em relação à azul</b>.</p>
+    <p>A figura <b class="azul-txt">azul</b> é a referência e está no tamanho real dela. Ajuste a figura <b class="verm-txt">vermelha</b> até ela ficar no tamanho que você acha certo <b>em relação à azul</b>.</p>
     <p>Arraste para cima ou para baixo, use a barra ou os botões − e +. Depois confirme.</p>
+    <p>Nenhuma altura aparece antes de confirmar: só depois você descobre o tamanho das duas.</p>
     <p>Quanto mais perto da proporção real, mais pontos (até 100 por rodada). Errar 20% para mais ou para menos vale o mesmo.</p>
     <p><b>Diário:</b> ${RODADAS} rodadas por dia, iguais para todo mundo. <b>Livre:</b> rodadas sem fim.</p>
     <p class="muted small">As alturas são as de Runeterra (lore), do pé ao ponto mais alto. A Riot quase nunca publica alturas, então a maioria é estimativa da comunidade. As silhuetas vêm dos modelos do jogo.</p>`);
