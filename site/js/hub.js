@@ -49,7 +49,13 @@ const CAPAS = {
   ].map((linha) => `<div>${linha.map((c) => (Array.isArray(c) ? `<span class="${c[0]}">${c[1]}</span>` : `<span class="${c}"></span>`)).join('')}</div>`).join('')}</div></div>`,
   escala: `<div class="cv cv-escala"><span class="cv-sil azul" style="--img:url(/jogos/escala/dados/silhuetas/garen.webp)"></span>
       <span class="cv-sil verm" style="--img:url(/jogos/escala/dados/silhuetas/teemo.webp)"></span></div>`,
-  cblol: `<div class="cv cv-cblol"><img class="cv-trofeu grande" src="${A}/trofeus/cblol.png?v=2" alt="" loading="lazy" /></div>`,
+  // O time dos sonhos, como na tela do Lendas (melhor OVR de cada um no jogo).
+  cblol: `<div class="cv cv-cblol cv-dream">
+      <div class="cv-dream-esq"><div class="cv-dream-ovr"><img src="${A}/trofeus/challenger.png" alt="" loading="lazy" /><small>OVR</small><b>96</b></div>
+        <b class="cv-dream-nome">Dream Team</b></div>
+      <div class="cv-dream-lista">
+        ${[['Top', 'Mylon', 97], ['Jungle', 'Revolta', 96], ['Mid', 'Kami', 96], ['ADC', 'brTT', 96], ['Suporte', 'Loop', 95], ['Reserva', 'Rakin', 88], ['Técnico', 'Abaxial', 94]]
+          .map(([r, n, o]) => `<span><i>${r}</i>${n}<b>${o}</b></span>`).join('')}</div></div>`,
 };
 // Etiqueta no canto da capa: [texto, classe].
 const SELOS = { 'carreira-no-rift': ['Ranqueada', 'rk'], runetermo: ['Diário · Ranqueada', 'rk'], campeao: ['Diário · Ranqueada', 'rk'], escala: ['Diário · Ranqueada', 'rk'], cblol: ['Ranqueada (Oculto)', 'rk'] };
