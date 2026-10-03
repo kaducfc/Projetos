@@ -71,7 +71,7 @@ test('montagem completa e simulação da campanha', () => {
   assert.ok(completo(jogo));
   const c = simular(jogo, times, rnd);
   assert.equal(c.rodadas.filter((r) => r.fase === 'Fase de pontos').length, 7);
-  assert.equal(c.rodadas.length > 7, c.vitoriasGrupos >= 3);
+  assert.equal(c.rodadas.length > 7, c.vitoriasGrupos >= 4);
   for (const r of c.rodadas.slice(7)) assert.ok(r.jogos.length >= 2 && r.jogos.length <= 5);
 });
 

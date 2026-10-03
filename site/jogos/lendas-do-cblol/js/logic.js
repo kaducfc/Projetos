@@ -5,7 +5,7 @@ export const ROTAS = ['top', 'jungle', 'mid', 'adc', 'sup'];
 export const VAGAS = [...ROTAS, 'reserva', 'tecnico'];
 export const NOME_VAGA = { top: 'Top', jungle: 'Jungle', mid: 'Mid', adc: 'ADC', sup: 'Suporte', reserva: 'Reserva', tecnico: 'Técnico' };
 export const FASE_GRUPOS = 7;
-export const VITORIAS_PARA_PASSAR = 3;
+export const VITORIAS_PARA_PASSAR = 4;
 
 const pick = (list, rnd) => list[Math.floor(rnd() * list.length)];
 
@@ -131,7 +131,7 @@ export const BONUS_SONHO = { normal: 3.8, oculto: 3.7 };
 
 // Adversário das quartas (entre times que jogaram playoffs): quanto mais
 // vitórias na fase de pontos, mais fraco.
-const FAIXA_QUARTAS = { 3: [0, 0.15], 4: [0.15, 0.35], 5: [0.35, 0.6], 6: [0.6, 0.8], 7: [0.8, 1] };
+const FAIXA_QUARTAS = { 4: [0, 0.25], 5: [0.25, 0.5], 6: [0.5, 0.75], 7: [0.75, 1] };
 
 // Peso de cada rota para abates, mortes e assistências.
 const PESO_ABATE = { top: 1, jungle: 0.9, mid: 1.25, adc: 1.45, sup: 0.3 };

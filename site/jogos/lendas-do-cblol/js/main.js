@@ -245,7 +245,7 @@ function renderCampanha({ nova = false } = {}) {
       <span class="meta">Força ${Math.round(c.forca)} · Modo ${jogo.modo === 'oculto' ? 'Oculto' : 'Normal'}</span>
     </header>
     <div class="camp">
-      <div class="camp-top"><span class="muted small">Fase de pontos: 7 jogos (3 vitórias classificam) · Quartas MD3 · Semi e final MD5</span>
+      <div class="camp-top"><span class="muted small">Fase de pontos: 7 jogos (4 vitórias classificam) · Quartas MD3 · Semi e final MD5</span>
         ${mostrados >= total ? '' : controlesHtml()}</div>
       ${rs}
       ${fim ? `<div class="final${bom ? '' : ' bad'}">

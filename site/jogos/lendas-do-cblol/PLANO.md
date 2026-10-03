@@ -57,10 +57,10 @@ contra times históricos.
 ## Simulação
 
 - Fase de pontos: 7 jogos (MD1) contra 7 times históricos sorteados.
-  3 vitórias ou mais → playoffs.
+  4 vitórias ou mais → playoffs.
 - Quartas (MD3): só times que jogaram os playoffs de algum split (1º a 8º no
   mata-mata). O adversário depende das vitórias na fase de pontos:
-  3 vitórias → adversário com OVR alto; 7 vitórias → adversário com OVR baixo.
+  4 vitórias → adversário com OVR alto; 7 vitórias → adversário com OVR baixo.
 - Semifinal (MD5): sorteio entre times que jogaram uma semifinal (1º a 4º).
 - Final (MD5): sorteio entre os finalistas de algum split (1º e 2º).
 - Nenhum adversário tem alguém do seu elenco.
