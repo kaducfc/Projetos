@@ -182,15 +182,9 @@ function caixaPdr() {
   if (!ranq || srv?.status !== 'terminou' || srv.pdr == null) return '';
   const v = srv.pdr;
   const d = eloAgora ? divisaoDe(eloAgora.pts, eloAgora.elo) : null;
-  return `<section class="esc-rk ${v > 0 ? 'ganhou' : v < 0 ? 'perdeu' : ''}">
-      <p class="esc-rk-pdr">${v > 0 ? '+' : v < 0 ? '−' : '±'}${Math.abs(v)}<small>PDR</small></p>
-      <div class="esc-rk-txt">
-        <b>Ranqueada de hoje</b>
-        <span>Média ${Number(srv.media).toLocaleString('pt-BR')}/100 nas ${RODADAS} rodadas</span>
-        ${d ? `<span class="esc-rk-elo">${emblemaHtml(d.elo, 22)} Agora: ${eloTexto(eloAgora)}</span>` : ''}
-      </div>
-      <a class="esc-rk-link" href="/ranking/">Ver ranking →</a>
-    </section>`;
+  return `<p class="esc-rk">Ranqueada: <b class="${v > 0 ? 'pdr-mais' : v < 0 ? 'pdr-menos' : ''}">${v > 0 ? '+' : v < 0 ? '−' : '±'}${Math.abs(v)} PDR</b>
+      <span class="esc-rk-sep">·</span> média ${Number(srv.media).toLocaleString('pt-BR')}/100
+      ${d ? `<span class="esc-rk-sep">·</span> <span class="esc-rk-elo">${emblemaHtml(d.elo, 18)}${eloTexto(eloAgora)}</span>` : ''}</p>`;
 }
 
 function painelResultado(ref, alvo) {
