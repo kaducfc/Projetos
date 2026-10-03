@@ -59,6 +59,9 @@ const CAPAS = {
 };
 // Etiqueta no canto da capa: [texto, classe].
 const SELOS = { 'carreira-no-rift': ['Ranqueada', 'rk'], runetermo: ['Diário · Ranqueada', 'rk'], campeao: ['Diário · Ranqueada', 'rk'], escala: ['Diário · Ranqueada', 'rk'], cblol: ['Ranqueada (Oculto)', 'rk'] };
+// Largura ÷ altura de cada emblema recortado (shared/assets/elos/*-recorte.webp).
+const PROPORCAO_EMBLEMA = { ferro: 1.06, bronze: 0.96, prata: 0.98, ouro: 0.97, platina: 0.97, esmeralda: 0.99, diamante: 0.92, mestre: 0.91, 'grao-mestre': 1.02, desafiante: 1 };
+const TAMANHO_FILA = [36, 37, 38, 39, 40, 41, 42, 46, 49, 52];
 const JOGOS_DO_DIA = ['carreira-no-rift', 'runetermo', 'campeao', 'escala', 'cblol'];
 
 let resultados = [];
@@ -201,8 +204,14 @@ function renderPainel() {
   const jogou = Boolean(u && rk?.jogou);
   const d = rk ? divisaoDe(rk.pts, rk.elo) : null;
   const nivel = jogou ? nivelElo(d.elo) : -1;
-  const fila = ELOS.map((e, i) => `<div class="rp-elo${i === nivel ? ' atual' : ''}${i < nivel ? ' passou' : ''}" title="${esc(e.nome)}" style="--cor:${e.cor}">
-      ${emblemaHtml(e.id, 44, { vazio: i > nivel })}<span>${esc(e.nome)}</span></div>`).join('');
+  // Emblemas recortados (sem sobra), do mesmo "tamanho visual" (área) e
+  // crescendo de leve do Ferro ao Diamante; do Mestre para cima, um pouco mais.
+  const fila = ELOS.map((e, i) => {
+    const lado = TAMANHO_FILA[i] / Math.sqrt(PROPORCAO_EMBLEMA[e.id] || 1);
+    return `<div class="rp-elo${i === nivel ? ' atual' : ''}${i < nivel ? ' passou' : ''}" title="${esc(e.nome)}" style="--cor:${e.cor}">
+      <div class="rp-emb"><img class="emblema${i > nivel ? ' vazio' : ''}" src="/shared/assets/elos/${e.id}-recorte.webp" alt="" style="--h:${lado.toFixed(1)}" decoding="async" /></div>
+      <span>${esc(e.nome)}</span></div>`;
+  }).join('');
 
   let status = '';
   if (!platform.cloudEnabled()) {

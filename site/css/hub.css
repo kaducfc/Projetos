@@ -245,11 +245,12 @@ body:has(.hx-hero) { overflow-x: clip; }
 .rp-main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .rp-titulo { margin: 0; font-family: var(--display); font-weight: 400; font-size: 34px; line-height: 1; color: var(--gold-2); letter-spacing: 0.5px; }
 .rp-fila { position: relative; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 2px; padding: 8px 0 2px; }
-.rp-fila::before { content: ''; position: absolute; left: 5%; right: 5%; top: 30px; height: 2px; z-index: 0;
+.rp-fila::before { content: ''; position: absolute; left: 5%; right: 5%; top: 36px; height: 2px; z-index: 0;
   background: linear-gradient(90deg, rgba(217, 168, 43, 0.55), rgba(217, 168, 43, 0.1)); }
 .rp-elo { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
 .rp-elo span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; font-weight: 700; letter-spacing: -0.2px; color: var(--muted); }
-.rp-elo .emblema { width: 44px; height: auto; transition: transform 0.2s; }
+.rp-emb { height: 58px; display: flex; align-items: center; justify-content: center; }
+.rp-elo .emblema { height: calc(var(--h) * 1px); width: auto; transition: transform 0.2s; }
 .rp-elo .emblema.vazio { filter: grayscale(1) brightness(0.45); opacity: 0.7; }
 .rp-fila.apagada .emblema.vazio { opacity: 0.55; }
 .rp-elo.passou span { color: #b5ad9c; }
@@ -319,6 +320,7 @@ body:has(.hx-hero) { overflow-x: clip; }
   .rk-painel { padding: 18px 14px; gap: 16px; }
   .rp-titulo { font-size: 28px; }
   .rp-elo span { display: none; }
-  .rp-elo .emblema { width: 28px; }
-  .rp-fila::before { top: 22px; }
+  .rp-emb { height: 36px; }
+  .rp-elo .emblema { height: calc(var(--h) * 0.62px); }
+  .rp-fila::before { top: 25px; }
 }
