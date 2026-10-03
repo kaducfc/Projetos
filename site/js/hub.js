@@ -29,8 +29,14 @@ mountSiteFooter(document.getElementById('site-footer'));
 // Capas dos jogos, montadas com as imagens do site.
 const A = '/shared/assets';
 const CAPAS = {
-  'carreira-no-rift': `<div class="cv cv-mapa" style="--img:url(${A}/mapa/summoners-rift-640.webp)">
-      <img class="cv-trofeu" src="${A}/trofeus/mundial.png" alt="" loading="lazy" /></div>`,
+  // Um pedaço da tela da carreira: escudo do OVR (diamante, 91) e o resumo.
+  'carreira-no-rift': `<div class="cv cv-mapa cv-car" style="--img:url(${A}/mapa/summoners-rift-640.webp)">
+      <div class="cv-car-ovr"><img src="${A}/trofeus/diamante.png" alt="" loading="lazy" /><small>OVR</small><b>91</b></div>
+      <div class="cv-car-info">
+        <b class="cv-car-nick">Kadu</b>
+        <span class="cv-car-chips"><i>🇧🇷 BR</i><i>MID</i><i class="tit">Titular</i></span>
+        <span class="cv-car-fato"><img src="${A}/trofeus/mundial.png" alt="" loading="lazy" /><span>Campeão mundial<br>MVP da final</span></span>
+      </div></div>`,
   runetermo: `<div class="cv cv-runas"><div class="cv-letras">${[['B', 'ok'], ['A', 'quase'], ['R', 'nao'], ['O', 'ok'], ['N', 'ok']]
     .map(([l, c]) => `<span class="${c}">${l}</span>`).join('')}</div></div>`,
   // Três chutes do Campeão Oculto (ano, gênero, região, posição, classe, espécie,
