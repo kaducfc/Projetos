@@ -74,7 +74,11 @@ function rodadaAtual() {
 
 function novaRodada() {
   rodada = rodadaAtual();
-  if (rodada) rodada.chute = porId.get(rodada.ref).altura; // começa do tamanho da referência
+  if (rodada) {
+    rodada.chute = porId.get(rodada.ref).altura; // começa do tamanho da referência
+    rodada.dx = 0; // deslocamento da figura vermelha (arrastada para os lados)
+    rodada.sobre = false; // vermelha centralizada em cima da azul
+  }
 }
 
 // ------------------------------------------------------------------ tela
@@ -112,7 +116,7 @@ function telaRodada() {
     <section class="esc-palco${mostrando ? ' revelado' : ''}" data-palco aria-label="Comparação de tamanhos">
       <div class="esc-chao"></div>
       <div class="esc-figs" data-figs></div>
-      ${mostrando ? '' : '<p class="esc-dica">Arraste para cima ou para baixo</p>'}
+      ${mostrando ? '' : '<p class="esc-dica"><span class="longa">Arraste o vermelho para mover · arraste fora dele para mudar o tamanho</span><span class="curta">Arraste o vermelho para mover · fora dele, o tamanho</span></p>'}
     </section>
     ${mostrando ? painelResultado(ref, alvo) : controles(ref)}`;
 }
@@ -123,6 +127,7 @@ function controles(ref) {
       <button type="button" class="esc-btn" data-act="menos" aria-label="Diminuir">−</button>
       <input type="range" min="-1000" max="1000" step="1" value="${v}" data-slider aria-label="Tamanho" />
       <button type="button" class="esc-btn" data-act="mais" aria-label="Aumentar">+</button>
+      <button type="button" class="esc-btn esc-sobrepor" data-act="sobrepor" aria-label="Sobrepor ou separar as figuras" title="Sobrepor / separar">${rodada.sobre ? '↔' : '⇄'}</button>
     </section>
     <div class="esc-acoes">
       <span class="esc-chute">Seu palpite: <b data-chute>${fmtAltura(rodada.chute)}</b></span>
@@ -181,7 +186,11 @@ function desenharPalco() {
   const hRed = mostrando ? alvo.altura : rodada.chute;
   const maior = Math.max(ref.altura, hRed, mostrando ? rodada.palpite : 0);
   const util = Math.max(120, palco.clientHeight - 74);
-  const k = util / maior; // pixels por metro
+  let k = util / maior; // pixels por metro
+  // Também precisa caber na largura (figuras largas, celular).
+  const larguraRed = Math.max(hRed * alvo.prop, mostrando ? rodada.palpite * alvo.prop : 0);
+  const precisa = (ref.altura * ref.prop + larguraRed) * k + 110;
+  if (precisa > palco.clientWidth) k *= Math.max(0.2, (palco.clientWidth - 110) / (precisa - 110));
   const fig = (it, h, cls) => {
     const ph = Math.max(3, h * k);
     const pw = Math.max(2, ph * it.prop);
@@ -193,13 +202,53 @@ function desenharPalco() {
   if (mostrando) {
     const fantasma = fig(alvo, rodada.palpite, 'fantasma');
     colAlvo = `<div class="esc-col alvo"><p class="esc-rot"><b>${esc(alvo.nome)}</b><span>Altura ${fmtAltura(alvo.altura)}</span></p>
-      <div class="esc-fig">${fig(alvo, alvo.altura, 'vermelho')}<i class="esc-regua v" style="height:${Math.max(3, alvo.altura * k)}px"></i>
+      <div class="esc-fig" style="min-width:${Math.max(2, rodada.palpite * k * alvo.prop) + 6}px">${fig(alvo, alvo.altura, 'vermelho')}<i class="esc-regua v" style="height:${Math.max(3, alvo.altura * k)}px"></i>
         <div class="esc-fantasma" title="Seu palpite">${fantasma}<p class="esc-rot esc-palpite-rot${Math.abs(rodada.palpite - alvo.altura) * k < 56 ? ' perto' : ''}"><b>Seu palpite</b><span>Altura ${fmtAltura(rodada.palpite)}</span></p></div></div></div>`;
   } else {
     colAlvo = `<div class="esc-col alvo"><p class="esc-rot"><b>${esc(alvo.nome)}</b><span>Altura ?</span></p>
       <div class="esc-fig"><div class="esc-caixa">${fig(alvo, hRed, 'vermelho')}<i class="esc-alca" aria-hidden="true">⤢</i></div></div></div>`;
   }
   figs.innerHTML = colRef + colAlvo;
+  posicionar();
+}
+
+// Aplica o deslocamento da figura vermelha, sem deixar sair do palco, e
+// marca quando ela está por cima da azul.
+function posicionar() {
+  const palco = app.querySelector('[data-palco]');
+  const col = app.querySelector('.esc-col.alvo');
+  if (!palco || !col || !rodada) return;
+  if (rodada.sobre) {  // mantém centralizada em cima da azul, mesmo mudando o tamanho
+    col.style.transform = '';
+    const az = app.querySelector('.esc-sil.azul')?.getBoundingClientRect();
+    const vm = col.querySelector('.esc-sil.vermelho')?.getBoundingClientRect();
+    if (az && vm) rodada.dx = (az.left + az.width / 2) - (vm.left + vm.width / 2);
+  }
+  const dx = rodada.dx || 0;
+  col.style.transform = dx ? `translateX(${dx}px)` : '';
+  const p = palco.getBoundingClientRect();
+  const c = col.querySelector('.esc-sil.vermelho')?.getBoundingClientRect() || col.getBoundingClientRect();
+  let ajuste = 0;
+  if (c.left < p.left + 4) ajuste = p.left + 4 - c.left;
+  else if (c.right > p.right - 4) ajuste = p.right - 4 - c.right;
+  if (ajuste && c.width < p.width - 8) {
+    rodada.dx = dx + ajuste;
+    col.style.transform = `translateX(${rodada.dx}px)`;
+  }
+  const azul = app.querySelector('.esc-sil.azul')?.getBoundingClientRect();
+  const verm = col.querySelector('.esc-sil.vermelho')?.getBoundingClientRect();
+  const sobre = Boolean(azul && verm && verm.left < azul.right && verm.right > azul.left);
+  palco.classList.toggle('sobreposto', sobre);
+}
+
+// Centro da vermelha em cima do centro da azul (ou volta para o lado).
+function sobrepor() {
+  if (!rodada || rodada.mostrando) return;
+  rodada.sobre = !rodada.sobre;
+  if (!rodada.sobre) rodada.dx = 0;
+  const b = app.querySelector('[data-act="sobrepor"]');
+  if (b) b.textContent = rodada.sobre ? '↔' : '⇄';
+  posicionar();
 }
 
 // ------------------------------------------------------------------ ajuste
@@ -222,6 +271,8 @@ function confirmar() {
   rodada.palpite = rodada.chute;
   rodada.pontos = pontos(rodada.palpite, alvo.altura);
   rodada.mostrando = true;
+  rodada.dx = 0; // no resultado, as figuras voltam lado a lado
+  rodada.sobre = false;
   if (modo === 'diario') {
     const r = save.diario.rodadas[rodada.indice];
     r.palpite = Math.round(rodada.palpite * 1000) / 1000;
@@ -324,6 +375,7 @@ app.addEventListener('click', (e) => {
   else if (act === 'mais') ajustar(e.shiftKey ? 1.01 : 1.06);
   else if (act === 'confirmar') confirmar();
   else if (act === 'proxima') proxima();
+  else if (act === 'sobrepor') sobrepor();
   else if (act === 'ajuda') ajuda();
   else if (act === 'compartilhar') compartilhar();
 });
@@ -340,12 +392,22 @@ let arrasto = null;
 app.addEventListener('pointerdown', (e) => {
   const palco = e.target.closest('[data-palco]');
   if (!palco || !rodada || rodada.mostrando) return;
-  arrasto = { y: e.clientY, chute: rodada.chute, id: e.pointerId };
+  // Em cima da figura vermelha (fora da bolinha): move para os lados.
+  const mover = Boolean(e.target.closest('.esc-caixa')) && !e.target.closest('.esc-alca');
+  arrasto = { x: e.clientX, y: e.clientY, chute: rodada.chute, dx: rodada.dx || 0, mover, id: e.pointerId };
   palco.setPointerCapture(e.pointerId);
   palco.classList.add('arrastando');
 });
 app.addEventListener('pointermove', (e) => {
   if (!arrasto || e.pointerId !== arrasto.id) return;
+  if (arrasto.mover) {
+    rodada.sobre = false;
+    rodada.dx = arrasto.dx + (e.clientX - arrasto.x);
+    posicionar();
+    const b = app.querySelector('[data-act="sobrepor"]');
+    if (b) b.textContent = '⇄';
+    return;
+  }
   const ref = porId.get(rodada.ref);
   const fator = Math.exp((arrasto.y - e.clientY) * 0.006);
   rodada.chute = arrasto.chute;

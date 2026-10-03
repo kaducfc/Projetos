@@ -73,6 +73,7 @@ button { font-family: var(--sans); }
     linear-gradient(180deg, #0d0d14, #12121c);
   border: 1px solid var(--line); }
 .esc-palco.revelado { cursor: default; }
+.esc-dica .curta { display: none; }
 .esc-palco.arrastando { cursor: grabbing; }
 .esc-chao { position: absolute; left: 0; right: 0; bottom: 24px; height: 1px; background: linear-gradient(90deg, transparent, rgba(217, 168, 43, 0.45), transparent); }
 .esc-figs { position: absolute; inset: 0 0 24px; display: flex; justify-content: center; align-items: flex-end; gap: clamp(24px, 8vw, 90px); padding: 0 16px; }
@@ -92,7 +93,14 @@ button { font-family: var(--sans); }
 .esc-regua::before, .esc-regua::after { content: ''; position: absolute; left: -4px; width: 10px; height: 2px; background: inherit; }
 .esc-regua::before { top: 0; }
 .esc-regua::after { bottom: 0; }
-.esc-caixa { position: relative; outline: 1px dashed rgba(255, 143, 143, 0.55); outline-offset: 4px; }
+.esc-caixa { position: relative; outline: 1px dashed rgba(255, 143, 143, 0.55); outline-offset: 4px; cursor: grab; }
+.esc-palco.arrastando .esc-caixa { cursor: grabbing; }
+.esc-alca { cursor: ns-resize; }
+.esc-col.alvo { position: relative; z-index: 1; }
+.esc-col.ref .esc-rot { position: relative; z-index: 2; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
+/* Vermelha por cima da azul: fica translúcida e a legenda dela some. */
+.esc-palco.sobreposto .esc-sil.vermelho { opacity: 0.72; }
+.esc-palco.sobreposto:not(.revelado) .esc-col.alvo > .esc-rot { visibility: hidden; }
 .esc-alca { position: absolute; top: -14px; right: -14px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 12px; color: #fff; background: var(--verm); box-shadow: 0 0 10px rgba(239, 75, 75, 0.6); }
 .esc-fantasma { position: absolute; left: 0; bottom: 0; outline: 2px dashed var(--gold-2); outline-offset: 3px; box-shadow: 0 0 0 3px rgba(245, 207, 90, 0.08), 0 0 18px rgba(245, 207, 90, 0.25); pointer-events: none; }
 .esc-palpite-rot { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); white-space: nowrap; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); }
@@ -107,6 +115,7 @@ button { font-family: var(--sans); }
 .esc-ctrl input[type=range] { flex: 1; accent-color: var(--verm); height: 28px; }
 .esc-btn { width: 48px; height: 48px; flex: none; border-radius: 10px; border: 1px solid rgba(239, 75, 75, 0.5); background: rgba(239, 75, 75, 0.1); color: var(--text); font-size: 24px; font-weight: 700; cursor: pointer; }
 .esc-btn:active { transform: scale(0.96); }
+.esc-sobrepor { border-color: var(--line-2); background: var(--panel-2); font-size: 22px; }
 .esc-acoes { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .esc-chute { font-size: 15px; color: #d3ccbc; }
 .esc-chute b { color: #ff8f8f; font-variant-numeric: tabular-nums; }
@@ -165,4 +174,6 @@ button { font-family: var(--sans); }
   .esc-confirmar { width: 100%; }
   .esc-teclado { display: none; }
   .esc-rot { font-size: 12px; }
+  .esc-dica .longa { display: none; }
+  .esc-dica .curta { display: inline; }
 }
