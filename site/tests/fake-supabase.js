@@ -261,6 +261,13 @@ export function createFakeSupabase() {
       }
       if (!e) return { data: null, error: { message: 'sem_partida' } };
       if (e.status !== 'jogando' || args.rodada !== e.atual) return { data: null, error: { message: 'rodada_encerrada' } };
+      // db.escalaAtrasar = true simula a resposta chegando atrasada (1ª vez: recomeça).
+      if (db.escalaAtrasar && !e.reinicios) {
+        db.escalaAtrasar = false;
+        e.reinicios = 1;
+        e.rodadas[e.atual] = { ref: 'garen', alvo: 'braum' };
+        return { data: { ...json(), reiniciada: true }, error: null };
+      }
       const r = e.rodadas[e.atual];
       const ref = db.escalaAlturas[r.ref];
       const alvo = db.escalaAlturas[r.alvo];

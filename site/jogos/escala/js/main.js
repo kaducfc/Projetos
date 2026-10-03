@@ -132,7 +132,8 @@ function telaInicio() {
       <ul class="esc-regras">
         <li>Cada rodada tem <b>30 segundos</b>. Acabou o tempo, vale o tamanho em que a figura estiver.</li>
         <li>No fim, a <b>média</b> das ${RODADAS} rodadas vira PDR: a partir de 45/100 você ganha; abaixo, perde.</li>
-        <li>Depois de começar, não dá para recomeçar. Se não terminar até a meia-noite, o que faltar vale 0.</li>
+        <li>Depois de começar, não dá para recomeçar. Se a internet cair no meio de uma rodada, ela recomeça com outra comparação, mas só 1 vez por partida; da segunda vez em diante, a rodada vale 0.</li>
+        <li>Se não terminar até a meia-noite, o que faltar vale 0.</li>
       </ul>
       <div class="esc-fim-acoes">
         <button type="button" class="esc-confirmar" data-act="comecar" ${enviando ? 'disabled' : ''}>${enviando ? 'Começando…' : 'Começar a ranqueada'}</button>
@@ -333,6 +334,12 @@ async function confirmarServidor() {
     return;
   }
   enviando = false;
+  if (srv.reiniciada) {
+    aviso('A conexão demorou e a rodada recomeçou do zero, com outra comparação. Isso só vale 1 vez por partida: na próxima, a rodada vale 0.', 7000);
+    novaRodada();
+    render();
+    return;
+  }
   const r = srv.rodadas[indice];
   // As alturas que valem são as do servidor.
   const a = porId.get(r.alvo);
@@ -451,7 +458,7 @@ async function compartilhar() {
 }
 
 let avisoTimer = null;
-function aviso(msg) {
+function aviso(msg, ms = 1800) {
   let el = document.querySelector('.esc-aviso');
   if (!el) {
     el = document.createElement('div');
@@ -462,7 +469,7 @@ function aviso(msg) {
   el.textContent = msg;
   el.hidden = false;
   clearTimeout(avisoTimer);
-  avisoTimer = setTimeout(() => { el.hidden = true; }, 1800);
+  avisoTimer = setTimeout(() => { el.hidden = true; }, ms);
 }
 
 // ------------------------------------------------------------------ eventos
@@ -607,6 +614,7 @@ async function iniciar() {
   // Já terminou o diário hoje: abre direto no resultado.
   novaRodada();
   render();
+  if (ranq && srv?.reiniciada) aviso('A conexão demorou e a rodada recomeçou do zero, com outra comparação. Isso só vale 1 vez por partida: na próxima, a rodada vale 0.', 7000);
   if (!platform.loadLocalSave(GAME_ID)) ajuda();
   guardar();
 }

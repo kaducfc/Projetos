@@ -7,7 +7,9 @@
 --     consegue passar as respostas para outro), e a próxima só aparece depois
 --     de responder a atual.
 --   * Cada rodada tem 30 segundos (com 5 de folga para a internet). Passou
---     disso, a rodada vale 0.
+--     disso, a rodada vale 0 — menos na primeira vez da partida: aí a rodada
+--     recomeça do zero com outra comparação (internet caiu, aba fechou...).
+--     Uma vez só por partida; da segunda em diante, vale 0.
 --   * O palpite chega como proporção (vermelho ÷ azul); a nota é calculada
 --     aqui, com as alturas guardadas aqui.
 --   * Começou e não terminou até a meia-noite: o que faltou vale 0.
@@ -28,6 +30,7 @@ create table if not exists public.site_escala (
   atual int not null default 0,     -- rodada em jogo (0 a 4); 5 = terminou
   mostrada_em timestamptz not null default now(),
   status text not null default 'jogando' check (status in ('jogando', 'terminou')),
+  reinicios int not null default 0, -- rodadas recomeçadas (internet caiu); só 1 por partida
   media numeric,
   base int,
   pdr int,
@@ -35,6 +38,7 @@ create table if not exists public.site_escala (
   terminado timestamptz,
   primary key (user_id, dia)
 );
+alter table public.site_escala add column if not exists reinicios int not null default 0;
 alter table public.site_escala enable row level security;
 -- Ninguém lê nem grava direto: só pelas funções abaixo.
 
@@ -52,6 +56,65 @@ returns int language sql immutable as $$
               else -round(2 + (45 - greatest(media, 0)) * 23 / 45.0)::int end;
 $$;
 
+-- Uma comparação nova: alvo fora de `usados` e proporção entre 1,15× e 12×.
+create or replace function public.site_escala_par(usados text[])
+returns jsonb
+language plpgsql
+volatile
+set search_path = public
+as $$
+declare
+  a site_escala_itens;
+  r site_escala_itens;
+begin
+  for tentativa in 1..60 loop
+    select * into a from site_escala_itens where id <> all(usados) order by random() limit 1;
+    exit when a.id is null;
+    select * into r from site_escala_itens x
+     where x.id <> a.id
+       and greatest(x.altura, a.altura) / least(x.altura, a.altura) between 1.15 and 12
+     order by random() limit 1;
+    if r.id is not null then
+      return jsonb_build_object('ref', r.id, 'alvo', a.id,
+        'razao', greatest(r.altura, a.altura) / least(r.altura, a.altura),
+        'palpite', null, 'pontos', null, 'esgotou', false);
+    end if;
+  end loop;
+  return null;
+end;
+$$;
+revoke all on function public.site_escala_par(text[]) from public, anon, authenticated;
+
+-- Primeira vez na partida que o tempo de uma rodada estoura: a rodada
+-- recomeça do zero, com outra comparação (para não dar tempo de pesquisar a
+-- mesma). Devolve true se recomeçou; false se já tinha usado a chance.
+create or replace function public.site_escala_reiniciar(uid uuid, d date)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  e site_escala;
+  novo jsonb;
+begin
+  select * into e from site_escala where user_id = uid and dia = d for update;
+  if e.status <> 'jogando' or e.reinicios >= 1 then
+    return false;
+  end if;
+  novo := site_escala_par(array(select x->>'alvo' from jsonb_array_elements(e.rodadas) x));
+  if novo is null then
+    return false;
+  end if;
+  update site_escala
+     set rodadas = jsonb_set(rodadas, array[e.atual::text], novo || '{"reiniciada": true}'::jsonb),
+         mostrada_em = now(), reinicios = e.reinicios + 1
+   where user_id = uid and dia = d;
+  return true;
+end;
+$$;
+revoke all on function public.site_escala_reiniciar(uuid, date) from public, anon, authenticated;
+
 -- Sorteia as 5 rodadas: alvos diferentes e proporção entre 1,15× e 12×.
 create or replace function public.site_escala_sortear()
 returns jsonb
@@ -61,29 +124,15 @@ set search_path = public
 as $$
 declare
   out jsonb := '[]'::jsonb;
-  usados text[] := '{}';
-  a site_escala_itens;
-  r site_escala_itens;
-  tentativas int := 0;
+  par jsonb;
 begin
-  while jsonb_array_length(out) < 5 and tentativas < 200 loop
-    tentativas := tentativas + 1;
-    select * into a from site_escala_itens where id <> all(usados) order by random() limit 1;
-    exit when a.id is null;
-    select * into r from site_escala_itens x
-     where x.id <> a.id
-       and greatest(x.altura, a.altura) / least(x.altura, a.altura) between 1.15 and 12
-     order by random() limit 1;
-    continue when r.id is null;
-    usados := usados || a.id;
-    out := out || jsonb_build_array(jsonb_build_object(
-      'ref', r.id, 'alvo', a.id,
-      'razao', greatest(r.altura, a.altura) / least(r.altura, a.altura),
-      'palpite', null, 'pontos', null, 'esgotou', false));
+  for i in 1..5 loop
+    par := site_escala_par(array(select x->>'alvo' from jsonb_array_elements(out) x));
+    if par is null then
+      raise exception 'sem_dados';
+    end if;
+    out := out || jsonb_build_array(par);
   end loop;
-  if jsonb_array_length(out) < 5 then
-    raise exception 'sem_dados';
-  end if;
   return out;
 end;
 $$;
@@ -98,7 +147,7 @@ stable
 set search_path = public
 as $$
   select jsonb_build_object(
-    'dia', e.dia, 'status', e.status, 'atual', e.atual, 'limite', 30,
+    'dia', e.dia, 'status', e.status, 'atual', e.atual, 'limite', 30, 'reinicios', e.reinicios,
     'restante', case when e.status = 'jogando'
                      then greatest(0, 30 - extract(epoch from now() - e.mostrada_em))::int end,
     'media', e.media, 'base', e.base, 'pdr', e.pdr,
@@ -152,10 +201,13 @@ end;
 $$;
 revoke all on function public.site_escala_fechar(uuid, date) from public, anon, authenticated;
 
--- Rodada mostrada há mais de 35 s sem resposta: vale 0 e passa para a
--- próxima (que começa a contar agora, porque é agora que ela aparece).
+-- Rodada mostrada há mais de 35 s sem resposta (fechou a aba, caiu a
+-- internet): na primeira vez da partida, recomeça do zero com outra
+-- comparação; depois, vale 0 e passa para a próxima (que começa a contar
+-- agora, porque é agora que ela aparece). Devolve true se recomeçou.
+drop function if exists public.site_escala_vencer(uuid, date);
 create or replace function public.site_escala_vencer(uid uuid, d date)
-returns void
+returns boolean
 language plpgsql
 security definer
 set search_path = public
@@ -165,6 +217,9 @@ declare
 begin
   select * into e from site_escala where user_id = uid and dia = d for update;
   if e.status = 'jogando' and now() - e.mostrada_em > interval '35 seconds' then
+    if site_escala_reiniciar(uid, d) then
+      return true;
+    end if;
     update site_escala
        set rodadas = jsonb_set(rodadas, array[e.atual::text], (rodadas -> e.atual) || '{"pontos": 0, "esgotou": true}'::jsonb),
            atual = e.atual + 1, mostrada_em = now()
@@ -173,6 +228,7 @@ begin
       perform site_escala_fechar(uid, d);
     end if;
   end if;
+  return false;
 end;
 $$;
 revoke all on function public.site_escala_vencer(uuid, date) from public, anon, authenticated;
@@ -190,6 +246,7 @@ declare
   uid uuid := auth.uid();
   hoje date := site_hoje_br();
   e site_escala;
+  reiniciou boolean;
 begin
   if uid is null then
     raise exception 'not_authenticated';
@@ -205,9 +262,9 @@ begin
     perform site_rk_ativo(uid, hoje);
     return site_escala_json(e);
   end if;
-  perform site_escala_vencer(uid, hoje);
+  reiniciou := site_escala_vencer(uid, hoje);
   select * into e from site_escala where user_id = uid and dia = hoje;
-  return site_escala_json(e);
+  return site_escala_json(e) || jsonb_build_object('reiniciada', reiniciou);
 end;
 $$;
 revoke all on function public.site_escala_abrir(boolean) from public, anon;
@@ -250,6 +307,12 @@ begin
   select altura into alvo_alt from site_escala_itens where id = r->>'alvo';
   palpite := round(razao * ref_alt, 3);
   esgotou := now() - e.mostrada_em > interval '35 seconds';
+  -- Chegou atrasado: na primeira vez da partida, a rodada recomeça com outra
+  -- comparação em vez de valer 0.
+  if esgotou and site_escala_reiniciar(uid, hoje) then
+    select * into e from site_escala where user_id = uid and dia = hoje;
+    return site_escala_json(e) || '{"reiniciada": true}'::jsonb;
+  end if;
   pts := case when esgotou then 0 else site_escala_pontos(palpite, alvo_alt, (r->>'razao')::numeric) end;
   update site_escala
      set rodadas = jsonb_set(rodadas, array[e.atual::text],
