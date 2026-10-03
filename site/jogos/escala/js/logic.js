@@ -71,9 +71,10 @@ export function sortearRodada(itens, rand, usados = new Set()) {
   throw new Error('sem_par');
 }
 
-// As 10 rodadas do dia: iguais para todo mundo no mesmo dia.
-export function rodadasDoDia(itens, dia) {
-  const rand = rng(0x5ca1a + dia * 7919);
+// As rodadas do dia sem conta: sorteadas para cada aparelho (`semente`),
+// fixas durante o dia (recarregar a página não troca).
+export function rodadasDoDia(itens, dia, semente = 0) {
+  const rand = rng(0x5ca1a + dia * 7919 + semente * 104729);
   const usados = new Set();
   return Array.from({ length: RODADAS }, () => sortearRodada(itens, rand, usados));
 }

@@ -56,12 +56,13 @@ async function carregarDados() {
 function carregarSave() {
   const s = platform.loadLocalSave(GAME_ID);
   save = { v: 1, diario: null, livre: { jogadas: 0, soma: 0, melhor: 0 }, ...(s && s.v === 1 ? s : {}) };
+  if (!save.semente) save.semente = 1 + Math.floor(Math.random() * 1e6); // sorteio próprio deste aparelho
   if (!save.diario || save.diario.dia !== hoje || !Array.isArray(save.diario.rodadas) || save.diario.rodadas.length !== RODADAS) {
-    save.diario = { dia: hoje, rodadas: rodadasDoDia(itens, hoje).map((r) => ({ ...r, palpite: null, pontos: null })) };
+    save.diario = { dia: hoje, rodadas: rodadasDoDia(itens, hoje, save.semente).map((r) => ({ ...r, palpite: null, pontos: null })) };
   }
   // Se a tabela mudou e algum item sumiu, refaz o dia.
   if (save.diario.rodadas.some((r) => !porId.has(r.ref) || !porId.has(r.alvo))) {
-    save.diario = { dia: hoje, rodadas: rodadasDoDia(itens, hoje).map((r) => ({ ...r, palpite: null, pontos: null })) };
+    save.diario = { dia: hoje, rodadas: rodadasDoDia(itens, hoje, save.semente).map((r) => ({ ...r, palpite: null, pontos: null })) };
   }
 }
 const guardar = (urgente = false) => platform.writeSave(GAME_ID, save, { urgent: urgente });
@@ -80,7 +81,7 @@ function rodadaAtual() {
     if (!srv || srv.status === 'terminou') return null;
     const r = srv.rodadas[srv.atual];
     if (!r || !porId.has(r.ref) || !porId.has(r.alvo)) return null;
-    return { ref: r.ref, alvo: r.alvo, indice: srv.atual, prazo: Date.now() + (srv.restante ?? 60) * 1000 };
+    return { ref: r.ref, alvo: r.alvo, indice: srv.atual, prazo: Date.now() + (srv.restante ?? 30) * 1000 };
   }
   if (modo === 'diario') {
     const rs = save.diario.rodadas;
@@ -129,7 +130,7 @@ function telaInicio() {
       <p class="eyebrow">Ranqueada de hoje</p>
       <h2 class="display">${RODADAS} rodadas · 1 chance por dia</h2>
       <ul class="esc-regras">
-        <li>Cada rodada tem <b>60 segundos</b>. Acabou o tempo, vale o tamanho em que a figura estiver.</li>
+        <li>Cada rodada tem <b>30 segundos</b>. Acabou o tempo, vale o tamanho em que a figura estiver.</li>
         <li>No fim, a <b>média</b> das ${RODADAS} rodadas vira PDR: a partir de 45/100 você ganha; abaixo, perde.</li>
         <li>Depois de começar, não dá para recomeçar. Se não terminar até a meia-noite, o que faltar vale 0.</li>
       </ul>
@@ -181,7 +182,7 @@ function painelResultado(ref, alvo) {
       <button type="button" class="esc-confirmar" data-act="proxima">${ultima ? 'Ver resultado do dia →' : 'Próxima →'}</button></div>
     <section class="esc-res">
       <div class="esc-res-top"><span class="esc-pts ${quadradoCls(p)}">${p}<small>/100</small></span>
-        <div><b>${rodada.esgotou ? 'Tempo esgotado' : veredito(p)}</b><p>${rodada.esgotou ? 'A resposta chegou depois dos 60 segundos.' : diferenca(rodada.palpite, alvo.altura)}</p></div></div>
+        <div><b>${rodada.esgotou ? 'Tempo esgotado' : veredito(p)}</b><p>${rodada.esgotou ? 'A resposta chegou depois dos 30 segundos.' : diferenca(rodada.palpite, alvo.altura)}</p></div></div>
       <ul>
         <li><span>Tamanho real · ${esc(ref.nome)}</span><b>Altura ${fmtAltura(ref.altura)}</b></li>
         <li><span>Tamanho real · ${esc(alvo.nome)}</span><b>Altura ${fmtAltura(alvo.altura)}</b></li>
@@ -430,7 +431,7 @@ function ajuda() {
     <p>Arraste para cima ou para baixo, use a barra ou os botões − e +. Depois confirme.</p>
     <p>Nenhuma altura aparece antes de confirmar: só depois você descobre o tamanho das duas.</p>
     <p>Quanto mais perto da proporção real, mais pontos (até 100 por rodada). Errar 20% para mais ou para menos vale o mesmo.</p>
-    <p><b>${ranq ? 'Ranqueada' : 'Diário'}:</b> ${RODADAS} rodadas por dia${ranq ? ', 60 segundos cada, valendo PDR pela média' : ', iguais para todo mundo (com a conta conectada, vale PDR)'}. <b>Livre:</b> rodadas sem fim, para treinar.</p>
+    <p><b>${ranq ? 'Ranqueada' : 'Diário'}:</b> ${RODADAS} rodadas por dia${ranq ? ', 30 segundos cada, valendo PDR pela média' : ', sorteadas para você (com a conta conectada, vale PDR)'}. <b>Livre:</b> rodadas sem fim, para treinar.</p>
     <p class="muted small">As alturas são as de Runeterra (lore), do pé ao ponto mais alto. A Riot quase nunca publica alturas, então a maioria é estimativa da comunidade. As silhuetas vêm dos modelos do jogo.</p>`);
 }
 

@@ -6,7 +6,7 @@
 --   * As rodadas são sorteadas aqui no servidor, para cada jogador (ninguém
 --     consegue passar as respostas para outro), e a próxima só aparece depois
 --     de responder a atual.
---   * Cada rodada tem 60 segundos (com 5 de folga para a internet). Passou
+--   * Cada rodada tem 30 segundos (com 5 de folga para a internet). Passou
 --     disso, a rodada vale 0.
 --   * O palpite chega como proporção (vermelho ÷ azul); a nota é calculada
 --     aqui, com as alturas guardadas aqui.
@@ -98,9 +98,9 @@ stable
 set search_path = public
 as $$
   select jsonb_build_object(
-    'dia', e.dia, 'status', e.status, 'atual', e.atual, 'limite', 60,
+    'dia', e.dia, 'status', e.status, 'atual', e.atual, 'limite', 30,
     'restante', case when e.status = 'jogando'
-                     then greatest(0, 60 - extract(epoch from now() - e.mostrada_em))::int end,
+                     then greatest(0, 30 - extract(epoch from now() - e.mostrada_em))::int end,
     'media', e.media, 'base', e.base, 'pdr', e.pdr,
     'rodadas', coalesce((
       select jsonb_agg(case
@@ -152,7 +152,7 @@ end;
 $$;
 revoke all on function public.site_escala_fechar(uuid, date) from public, anon, authenticated;
 
--- Rodada mostrada há mais de 65 s sem resposta: vale 0 e passa para a
+-- Rodada mostrada há mais de 35 s sem resposta: vale 0 e passa para a
 -- próxima (que começa a contar agora, porque é agora que ela aparece).
 create or replace function public.site_escala_vencer(uid uuid, d date)
 returns void
@@ -164,7 +164,7 @@ declare
   e site_escala;
 begin
   select * into e from site_escala where user_id = uid and dia = d for update;
-  if e.status = 'jogando' and now() - e.mostrada_em > interval '65 seconds' then
+  if e.status = 'jogando' and now() - e.mostrada_em > interval '35 seconds' then
     update site_escala
        set rodadas = jsonb_set(rodadas, array[e.atual::text], (rodadas -> e.atual) || '{"pontos": 0, "esgotou": true}'::jsonb),
            atual = e.atual + 1, mostrada_em = now()
@@ -249,7 +249,7 @@ begin
   select altura into ref_alt from site_escala_itens where id = r->>'ref';
   select altura into alvo_alt from site_escala_itens where id = r->>'alvo';
   palpite := round(razao * ref_alt, 3);
-  esgotou := now() - e.mostrada_em > interval '65 seconds';
+  esgotou := now() - e.mostrada_em > interval '35 seconds';
   pts := case when esgotou then 0 else site_escala_pontos(palpite, alvo_alt, (r->>'razao')::numeric) end;
   update site_escala
      set rodadas = jsonb_set(rodadas, array[e.atual::text],

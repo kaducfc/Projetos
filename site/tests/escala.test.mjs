@@ -49,6 +49,8 @@ test('escala: o dia tem 10 rodadas iguais para todos, sem alvo repetido e com pr
     }
   }
   assert.notDeepEqual(rodadasDoDia(itens, 1), rodadasDoDia(itens, 2));
+  assert.notDeepEqual(rodadasDoDia(itens, 1, 11), rodadasDoDia(itens, 1, 22)); // cada aparelho, um sorteio
+  assert.deepEqual(rodadasDoDia(itens, 1, 11), rodadasDoDia(itens, 1, 11));
   assert.ok(sortearRodada(itens, rng(7)).ref);
 });
 
@@ -65,7 +67,8 @@ test('escala: ranqueada no servidor usa a mesma nota e 5 rodadas', () => {
   assert.equal(RODADAS, 5);
   assert.match(sql, /ln\(3\) \* \(1 \+ 0\.35 \* ln\(greatest\(1, razao\)\)\)/); // mesma margem do logic.js
   assert.match(sql, /between 1\.15 and 12/); // mesma faixa de proporção
-  assert.match(sql, /interval '65 seconds'/); // 60 s + folga
+  assert.match(sql, /interval '35 seconds'/); // 30 s + folga
+  assert.doesNotMatch(sql, /interval '65 seconds'/);
   // As alturas do servidor (0023) batem com a tabela do site.
   const alt = readFileSync(new URL('../supabase/migrations/0023_escala_alturas.sql', import.meta.url), 'utf8');
   const noSql = Object.fromEntries([...alt.matchAll(/\('((?:[^']|'')+)', '(?:[^']|'')*', ([\d.]+)\)/g)].map((m) => [m[1].replace(/''/g, "'"), Number(m[2])]));

@@ -246,7 +246,7 @@ export function createFakeSupabase() {
       db.site_escala = db.site_escala || {};
       let e = db.site_escala[uid];
       const json = () => ({
-        dia: hojeIso, status: e.status, atual: e.atual, limite: 60, restante: e.status === 'jogando' ? 60 : null,
+        dia: hojeIso, status: e.status, atual: e.atual, limite: 60, restante: e.status === 'jogando' ? 30 : null,
         media: e.media ?? null, base: e.base ?? null, pdr: e.pdr ?? null,
         rodadas: e.rodadas.filter((_, i) => i <= e.atual).map((r, i) => (i < e.atual
           ? { ref: r.ref, alvo: r.alvo, ref_altura: db.escalaAlturas[r.ref], alvo_altura: db.escalaAlturas[r.alvo], palpite: r.palpite, pontos: r.pontos, esgotou: false }
