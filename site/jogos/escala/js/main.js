@@ -5,7 +5,7 @@ import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { msToNextDay, fmtCountdown } from '../../../shared/diario.js';
 import {
-  RODADAS, dayIndex, pontos, tolerancia, veredito, diferenca, rng, sortearRodada, rodadasDoDia,
+  RODADAS, dayIndex, pontos, veredito, diferenca, rng, sortearRodada, rodadasDoDia,
   fmtAltura, proporcao, quadrado,
 } from './logic.js';
 
@@ -147,7 +147,7 @@ function painelResultado(ref, alvo) {
       <button type="button" class="esc-confirmar" data-act="proxima">${ultima ? 'Ver resultado do dia →' : 'Próxima →'}</button></div>
     <section class="esc-res">
       <div class="esc-res-top"><span class="esc-pts ${quadradoCls(p)}">${p}<small>/100</small></span>
-        <div><b>${veredito(p)}</b><p>${diferenca(rodada.palpite, alvo.altura)}${tolerancia(razaoDe(ref, alvo)) >= 1.3 ? ` · <span class="esc-margem">comparação difícil (${Math.round(razaoDe(ref, alvo))}×): margem de erro maior</span>` : ''}</p></div></div>
+        <div><b>${veredito(p)}</b><p>${diferenca(rodada.palpite, alvo.altura)}</p></div></div>
       <ul>
         <li><span>Tamanho real · ${esc(ref.nome)}</span><b>Altura ${fmtAltura(ref.altura)}</b></li>
         <li><span>Tamanho real · ${esc(alvo.nome)}</span><b>Altura ${fmtAltura(alvo.altura)}</b></li>
