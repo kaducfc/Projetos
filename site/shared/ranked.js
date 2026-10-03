@@ -54,7 +54,7 @@ export const PDR_CARREIRA = [[150, -25], [250, -16], [399, -2], [400, 5], [600, 
 export const PDR_RUNETERMO = [35, 28, 22, 16, 11, 6, 5];
 export const PDR_LENDAS = [
   ['Campeão invicto (7-0 e sem perder jogo nos playoffs)', '+35'],
-  ['Campeão', '+20 a +26'],
+  ['Campeão', '+25 a +31'],
   ['Vice', '+14 a +17'],
   ['Semifinal', '+9 a +12'],
   ['Quartas', '+5 a +8'],
