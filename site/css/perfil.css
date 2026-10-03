@@ -192,7 +192,13 @@ button.btn-primary:disabled { opacity: 0.6; cursor: default; }
 .rk-jogo:hover { border-color: var(--cor); }
 .rk-jogo > span:first-child { font-weight: 700; color: #d3ccbc; }
 .rk-jogo small { color: var(--muted); font-size: 11.5px; }
-.rk-hist-tit { margin-top: 4px !important; }
+.rk-hist-box { margin-top: 2px; }
+.rk-hist-tit { margin-top: 4px !important; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; user-select: none; }
+.rk-hist-tit::-webkit-details-marker { display: none; }
+.rk-hist-tit::after { content: '▸'; font-size: 11px; transition: transform 0.15s; }
+.rk-hist-box[open] .rk-hist-tit::after { transform: rotate(90deg); }
+.rk-hist-box[open] .rk-hist { margin-top: 8px; }
+.rk-hist-tit:hover { color: var(--gold-2); }
 .rk-hist { list-style: none; padding-left: 0 !important; }
 .rk-sub { margin: 14px 0 6px; font-size: 14px; color: var(--gold-2); }
 .rk-escala { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; }

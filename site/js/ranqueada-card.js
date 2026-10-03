@@ -88,7 +88,7 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
       <div class="rk-jogos">${jogos}</div>
       ${inativo}
       ${liberados.length ? `<ul class="rk-benef">${liberados.map((b) => `<li><b>${esc(b.jogo)}:</b> ${esc(b.texto)}</li>`).join('')}</ul>` : ''}
-      ${hist ? `<p class="eyebrow rk-hist-tit">Últimos PDR</p><ul class="rk-hist">${hist}</ul>` : ''}
+      ${hist ? `<details class="rk-hist-box"><summary class="eyebrow rk-hist-tit">Últimos PDR</summary><ul class="rk-hist">${hist}</ul></details>` : ''}
       ${link ? '<a class="rk-link" href="/ranking/">Ver ranking →</a>' : ''}
     </div>
   </section>`;
