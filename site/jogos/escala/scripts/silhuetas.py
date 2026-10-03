@@ -123,13 +123,28 @@ def de_imagem(caminho):
     """Silhueta a partir de um PNG: o que não é fundo vira figura."""
     im = Image.open(caminho).convert('RGBA')
     a = np.array(im)
-    if (a[:, :, 3] < 250).mean() > 0.02:  # tem transparência: usa ela
-        m = a[:, :, 3] > 100
-    else:  # fundo de uma cor: a cor dos cantos, ligada às bordas
+    alfa = a[:, :, 3]
+    cantos_alfa = [alfa[0, 0], alfa[0, -1], alfa[-1, 0], alfa[-1, -1]]
+    m = None
+    if (alfa < 250).mean() > 0.02 and min(cantos_alfa) < 100:  # fundo transparente: usa ele
+        m = alfa > 100
+        # Às vezes a parte opaca é um quadro com fundo liso (ex.: figura num
+        # quadrado branco): aí recorta o quadro e tira o fundo pela cor.
+        y0, y1 = np.where(m.any(axis=1))[0][[0, -1]]
+        x0, x1 = np.where(m.any(axis=0))[0][[0, -1]]
+        quadro = a[y0:y1 + 1, x0:x1 + 1]
+        borda = np.concatenate([quadro[0, :, 3], quadro[-1, :, 3], quadro[:, 0, 3], quadro[:, -1, 3]])
+        if (borda > 200).mean() > 0.6:
+            a = quadro
+            m = None
+    if m is None:  # fundo liso (pode ter degradê): a cor dos cantos, ligada às bordas
         rgb = a[:, :, :3].astype(int)
-        cantos = np.array([rgb[0, 0], rgb[0, -1], rgb[-1, 0], rgb[-1, -1]])
-        fundo = np.median(cantos, axis=0)
-        parecido = np.abs(rgb - fundo).sum(axis=2) < 60
+        borda = np.concatenate([rgb[0], rgb[-1], rgb[:, 0], rgb[:, -1]])
+        opaca = np.concatenate([a[0, :, 3], a[-1, :, 3], a[:, 0, 3], a[:, -1, 3]]) > 200
+        fundo = np.median(borda[opaca] if opaca.any() else borda, axis=0)
+        dist = np.abs(rgb - fundo).sum(axis=2)
+        limite = max(60, 0.35 * np.percentile(dist, 99.5))
+        parecido = (dist < limite) | (a[:, :, 3] < 100)
         lab, _ = ndimage.label(parecido)
         borda = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
         m = ~np.isin(lab, list(borda))
