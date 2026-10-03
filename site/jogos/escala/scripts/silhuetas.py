@@ -11,6 +11,8 @@ A silhueta só dá a forma: o tamanho no jogo vem da "altura" da tabela, do pé
 ao ponto mais alto.
 
 Opções por item na tabela:
+  imagem  usa um PNG em vez do modelo 3D (ex.: "originais/teemo.png"). O
+          fundo pode ser transparente ou de uma cor só (sai sozinho).
   modelo  pasta do personagem no jogo (ex.: "garen")
   yaw     ângulo da câmera em graus (0 = de frente)
   fora    peças do modelo que não entram (ex.: ["Book_Cover"])
@@ -117,7 +119,39 @@ def desenhar(V, F, yaw=0.0, comp=1):
     return out
 
 
+def de_imagem(caminho):
+    """Silhueta a partir de um PNG: o que não é fundo vira figura."""
+    im = Image.open(caminho).convert('RGBA')
+    a = np.array(im)
+    if (a[:, :, 3] < 250).mean() > 0.02:  # tem transparência: usa ela
+        m = a[:, :, 3] > 100
+    else:  # fundo de uma cor: a cor dos cantos, ligada às bordas
+        rgb = a[:, :, :3].astype(int)
+        cantos = np.array([rgb[0, 0], rgb[0, -1], rgb[-1, 0], rgb[-1, -1]])
+        fundo = np.median(cantos, axis=0)
+        parecido = np.abs(rgb - fundo).sum(axis=2) < 60
+        lab, _ = ndimage.label(parecido)
+        borda = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
+        m = ~np.isin(lab, list(borda))
+    m = ndimage.binary_opening(m, iterations=2)
+    lab, n = ndimage.label(m)
+    if n > 1:  # só a figura principal
+        tam = ndimage.sum(m, lab, range(1, n + 1))
+        m = lab == (1 + int(np.argmax(tam)))
+    mask = Image.fromarray((m * 255).astype('uint8'))
+    mask = mask.crop(mask.getbbox())
+    larg = max(1, round(mask.width * ALTURA_PX / mask.height))
+    mask = mask.resize((larg, ALTURA_PX), Image.LANCZOS)
+    out = Image.new('RGBA', mask.size, (255, 255, 255, 0))
+    out.putalpha(mask)
+    return out
+
+
 def gerar(item):
+    if item.get('imagem'):
+        im = de_imagem(os.path.join(DADOS, item['imagem']))
+        im.save(os.path.join(DADOS, 'silhuetas', f"{item['id']}.webp"), 'WEBP', quality=90)
+        return item['id'], round(im.width / im.height, 4)
     objs, escondidas = pecas(item.get('modelo', item['id']))
     fora = {p.lower() for p in item.get('fora', [])}
     mais = {p.lower() for p in item.get('mais', [])}

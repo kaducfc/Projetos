@@ -24,7 +24,7 @@ test('escala: cada item da tabela tem silhueta, nome e altura', () => {
     ids.add(i.id);
     assert.ok(props[i.id] > 0, `sem proporção: ${i.id}`);
     assert.ok(existsSync(new URL(`../jogos/escala/dados/silhuetas/${i.id}.webp`, import.meta.url)), `sem imagem: ${i.id}`);
-    assert.ok(['comunidade', 'desenvolvedores', 'interpretativo', 'oficial'].includes(i.confianca), i.id);
+    assert.ok(['comunidade', 'desenvolvedores', 'interpretativo', 'oficial', 'rift'].includes(i.confianca), i.id);
   }
 });
 

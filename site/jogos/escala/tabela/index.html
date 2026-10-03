@@ -23,6 +23,7 @@
   .conf { font-size: 12px; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
   .conf.comunidade { background: rgba(79, 141, 255, 0.15); color: #8fb6ff; }
   .conf.desenvolvedores { background: rgba(47, 191, 113, 0.15); color: #7fd49a; }
+  .conf.rift { background: rgba(217, 168, 43, 0.15); color: var(--gold-2); }
   .conf.interpretativo { background: rgba(240, 138, 60, 0.15); color: #f0a35c; }
 </style>
 </head>
@@ -39,14 +40,14 @@ import { fmtAltura } from '../js/logic.js';
 const SIL = new URL('../dados/silhuetas/', location.href).href;
 const [itens, props] = await Promise.all([fetch('../dados/itens.json').then((r) => r.json()), fetch('../dados/silhuetas.json').then((r) => r.json())]);
 itens.sort((a, b) => a.altura - b.altura);
-const FAIXAS = [['Até 1 m', 0, 1], ['1 a 2 m', 1, 2], ['2 a 5 m', 2, 5], ['5 a 20 m', 5, 20], ['20 m ou mais', 20, 1e9], ['Todos (escala log)', 0, 1e9]];
+const FAIXAS = [['Até 1 m', 0, 1], ['1 a 2 m', 1, 2], ['2 a 5 m', 2, 5], ['5 a 20 m', 5, 20], ['20 m ou mais', 20, 1e9], ['Coisas do Rift', -1, -1], ['Todos (escala log)', 0, 1e9]];
 let faixa = 1;
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const sil = (it, h) => `<div class="esc-sil" title="${esc(it.nome)} · ${fmtAltura(it.altura)}" style="height:${h}px;width:${Math.max(2, h * (props[it.id] || 0.5))}px;--img:url('${SIL}${it.id}.webp')"></div>`;
 function fila() {
   const [, lo, hi] = FAIXAS[faixa];
   const log = faixa === FAIXAS.length - 1;
-  const lista = itens.filter((i) => i.altura >= lo && i.altura < hi);
+  const lista = lo < 0 ? itens.filter((i) => i.confianca === 'rift') : itens.filter((i) => i.altura >= lo && i.altura < hi);
   const max = Math.max(...lista.map((i) => i.altura));
   const min = Math.min(...lista.map((i) => i.altura));
   const h = (a) => (log ? 20 + 220 * Math.log(a / min) / Math.log(max / min || 2) : 240 * a / max);

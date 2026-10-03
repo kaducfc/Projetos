@@ -22,7 +22,7 @@ const app = document.getElementById('app');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[c]));
-const CONF = { comunidade: 'estimativa da comunidade', desenvolvedores: 'informada pela Riot', interpretativo: 'tamanho discutível ou variável' };
+const CONF = { comunidade: 'estimativa da comunidade', desenvolvedores: 'informada pela Riot', interpretativo: 'tamanho discutível ou variável', rift: 'proporção no Rift (Garen = 1,95 m)' };
 
 let itens = [];
 let porId = new Map();
