@@ -435,10 +435,9 @@ function ajuda() {
   abrirModal(`<h2 class="display">Como jogar</h2>
     <p>A figura <b class="azul-txt">azul</b> é a referência e está no tamanho real dela. Ajuste a figura <b class="verm-txt">vermelha</b> até ela ficar no tamanho que você acha certo <b>em relação à azul</b>.</p>
     <p>Arraste para cima ou para baixo, use a barra ou os botões − e +. Depois confirme.</p>
-    <p>Nenhuma altura aparece antes de confirmar: só depois você descobre o tamanho das duas.</p>
-    <p>Quanto mais perto da proporção real, mais pontos (até 100 por rodada). Errar 20% para mais ou para menos vale o mesmo.</p>
-    <p><b>${ranq ? 'Ranqueada' : 'Diário'}:</b> ${RODADAS} rodadas por dia${ranq ? ', 30 segundos cada, valendo PDR pela média' : ', sorteadas para você (com a conta conectada, vale PDR)'}. <b>Livre:</b> rodadas sem fim, para treinar.</p>
-    <p class="muted small">As alturas são as de Runeterra (lore), do pé ao ponto mais alto. A Riot quase nunca publica alturas, então a maioria é estimativa da comunidade. As silhuetas vêm dos modelos do jogo.</p>`);
+    <p>Quanto mais perto da proporção real, mais pontos ganhará.</p>
+    <p>${ranq ? '<b>Ranqueada:</b> uma partida com 5 rodadas por dia, 30 segundos cada, valendo PDR.' : '<b>Diário:</b> uma partida com 5 rodadas por dia. Com a conta conectada, ela vira a Ranqueada e vale PDR.'}</p>
+    <p class="muted small">As alturas são baseadas em alguns dados públicos da lore do universo de Runeterra e especulações da comunidade.</p>`);
 }
 
 function textoCompartilhar() {
