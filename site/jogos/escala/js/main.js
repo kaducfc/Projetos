@@ -131,13 +131,12 @@ function telaInicio() {
       <h2 class="display">${RODADAS} rodadas · 1 chance por dia</h2>
       <ul class="esc-regras">
         <li>Cada rodada tem <b>30 segundos</b>. Acabou o tempo, vale o tamanho em que a figura estiver.</li>
-        <li>No fim, a <b>média</b> das ${RODADAS} rodadas vira PDR: a partir de 45/100 você ganha; abaixo, perde.</li>
-        <li>Depois de começar, não dá para recomeçar. Se a internet cair no meio de uma rodada, ela recomeça com outra comparação, mas só 1 vez por partida; da segunda vez em diante, a rodada vale 0.</li>
+        <li>No fim, a <b>média</b> das ${RODADAS} rodadas vira PDR.</li>
         <li>Se não terminar até a meia-noite, o que faltar vale 0.</li>
       </ul>
       <div class="esc-fim-acoes">
-        <button type="button" class="esc-confirmar" data-act="comecar" ${enviando ? 'disabled' : ''}>${enviando ? 'Começando…' : 'Começar a ranqueada'}</button>
-        <button type="button" class="esc-sec" data-modo="livre">Treinar no modo Livre</button>
+        <button type="button" class="esc-confirmar" data-act="comecar" ${enviando ? 'disabled' : ''}>${enviando ? 'Começando…' : 'Ranqueada'}</button>
+        <button type="button" class="esc-sec" data-modo="livre">Modo Livre</button>
       </div>
     </section>`;
 }
@@ -335,7 +334,7 @@ async function confirmarServidor() {
   }
   enviando = false;
   if (srv.reiniciada) {
-    aviso('A conexão demorou e a rodada recomeçou do zero, com outra comparação. Isso só vale 1 vez por partida: na próxima, a rodada vale 0.', 7000);
+    aviso('A conexão demorou: a rodada recomeçou com outra comparação.', 7000);
     novaRodada();
     render();
     return;
@@ -614,7 +613,7 @@ async function iniciar() {
   // Já terminou o diário hoje: abre direto no resultado.
   novaRodada();
   render();
-  if (ranq && srv?.reiniciada) aviso('A conexão demorou e a rodada recomeçou do zero, com outra comparação. Isso só vale 1 vez por partida: na próxima, a rodada vale 0.', 7000);
+  if (ranq && srv?.reiniciada) aviso('A conexão demorou: a rodada recomeçou com outra comparação.', 7000);
   if (!platform.loadLocalSave(GAME_ID)) ajuda();
   guardar();
 }
