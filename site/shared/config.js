@@ -76,6 +76,16 @@ export const GAMES = [
     status: 'live',
     scoreLabel: 'Pontos',
   },
+  {
+    id: 'escala',
+    name: 'Escala de Runeterra',
+    tagline: 'Quão grande é o Nasus perto da Poppy? Ajuste o tamanho e acerte a escala.',
+    kind: 'Tamanho do dia',
+    path: 'jogos/escala/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+    oculto: true, // em revisão: funciona pelo link, ainda não aparece no início
+  },
 ];
 
 export const gameById = (id) => GAMES.find((g) => g.id === id);
