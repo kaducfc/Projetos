@@ -62,7 +62,9 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
     if (r) txt = pdrHtml(r.pdr);
     else if (vagas) txt = `<span class="muted">em andamento</span>`;
     else txt = '<span class="muted">disponível</span>';
-    return `<a class="rk-jogo" href="${j.link}"><span>${esc(j.nome)}</span>${txt}${j.vagas ? `<small>${vagas} de ${PARTIDAS_POR_DIA} ${j.id === 'cblol' ? 'partidas' : 'carreiras'}</small>` : ''}</a>`;
+    const curto = j.nome.replace(' (Oculto)', '');
+    const sub = j.vagas ? `${j.id === 'cblol' ? 'Oculto · ' : ''}${vagas} de ${PARTIDAS_POR_DIA}` : '1 por dia';
+    return `<a class="rk-jogo" href="${j.link}" title="${esc(j.nome)}"><span>${esc(curto)}</span>${txt}<small>${sub}</small></a>`;
   }).join('');
   // Inatividade (Ouro para cima).
   let inativo = '';
