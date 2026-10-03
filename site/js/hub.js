@@ -33,7 +33,12 @@ const CAPAS = {
       <img class="cv-trofeu" src="${A}/trofeus/mundial.png" alt="" loading="lazy" /></div>`,
   runetermo: `<div class="cv cv-runas"><div class="cv-letras">${[['B', 'ok'], ['A', 'quase'], ['R', 'nao'], ['O', 'ok'], ['N', 'ok']]
     .map(([l, c]) => `<span class="${c}">${l}</span>`).join('')}</div></div>`,
-  campeao: `<div class="cv cv-oculto" style="--img:url(${A}/icones/raposa-encantada.webp)"><span class="cv-q">?</span></div>`,
+  // Três chutes do Campeão Oculto (ano, gênero, região, posição, classe, espécie, alcance).
+  campeao: `<div class="cv cv-oculto" style="--img:url(${A}/icones/raposa-encantada.webp)"><div class="cv-chutes">${[
+    [['miss', '↑'], 'miss', 'part', 'miss', 'ok', 'miss', 'part'],
+    [['miss', '↓'], 'ok', 'ok', 'part', 'ok', 'miss', 'ok'],
+    ['ok', 'ok', 'ok', 'ok', 'ok', 'ok', 'ok'],
+  ].map((linha) => `<div>${linha.map((c) => (Array.isArray(c) ? `<span class="${c[0]}">${c[1]}</span>` : `<span class="${c}"></span>`)).join('')}</div>`).join('')}</div></div>`,
   escala: `<div class="cv cv-escala"><span class="cv-sil azul" style="--img:url(/jogos/escala/dados/silhuetas/garen.webp)"></span>
       <span class="cv-sil verm" style="--img:url(/jogos/escala/dados/silhuetas/teemo.webp)"></span></div>`,
   cblol: `<div class="cv cv-cblol"><img class="cv-trofeu grande" src="${A}/trofeus/cblol.png?v=2" alt="" loading="lazy" /></div>`,
