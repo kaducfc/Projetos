@@ -745,6 +745,17 @@ export async function adminRanqueada(days = 30) {
   if (error) throw erroPainelRk(error);
   return data;
 }
+// Vigilância dos outros jogos da ranqueada (0026).
+export async function adminVigia(days = 7) {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_vigia', { days });
+  if (error) {
+    if (/site_admin_vigia/.test(error.message) || error.code === 'PGRST202') throw new Error('Rode o arquivo 0026_vigilancia_jogos.sql no Supabase para ver isto.');
+    throw erroAdminRanked(error);
+  }
+  return data;
+}
 export async function adminAjustarPdr(nome, delta) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();

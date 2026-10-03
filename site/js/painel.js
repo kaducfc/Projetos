@@ -6,6 +6,7 @@ import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { ROLES, REGIONS } from '../jogos/carreira-no-rift/js/data/world.js';
 import { GAMES, gameById } from '../shared/config.js';
+import { sinaisVigia, resumoJogadores } from '../shared/vigia.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -76,6 +77,9 @@ if (!ABAS.some(([id]) => id === aba)) aba = 'geral';
 let ultimo = null; // última resposta de adminStats (para trocar de aba sem recarregar)
 let rq = null; // platform.adminRanqueada(days)
 let rqErro = '';
+let vg = null; // platform.adminVigia(days): partidas dos outros jogos
+let vgErro = '';
+const vgFiltro = { so: true, q: '' };
 
 const ELO_NOMES = { ferro: 'Ferro', bronze: 'Bronze', prata: 'Prata', ouro: 'Ouro', platina: 'Platina', esmeralda: 'Esmeralda', diamante: 'Diamante', mestre: 'Mestre', 'grao-mestre': 'Grão-Mestre', desafiante: 'Desafiante' };
 const NOME_JOGO = (id) => gameById(id)?.name || id;
@@ -83,10 +87,13 @@ const NOME_JOGO = (id) => gameById(id)?.name || id;
 function suspeitasRk() {
   return (rk?.partidas || []).filter((x) => sinais(x).length).length;
 }
+function suspeitasVg() {
+  return (vg?.partidas || []).filter((x) => sinaisVigia(x).length).length;
+}
 
 function render(st) {
   ultimo = st;
-  const contador = { ranqueada: suspeitasRk(), apoio: ap?.periodo?.status?.pendente || 0 };
+  const contador = { ranqueada: suspeitasRk() + suspeitasVg(), apoio: ap?.periodo?.status?.pendente || 0 };
   const nav = `<nav class="p-tabs" role="tablist">${ABAS.map(([id, nome]) => `<button type="button" role="tab" data-aba="${id}" class="${aba === id ? 'on' : ''}">${nome}${contador[id] ? ` <span class="p-badge">${num(contador[id])}</span>` : ''}</button>`).join('')}</nav>`;
   const conteudo = { geral: abaGeral, jogos: abaJogos, ranqueada: abaRanqueada, apoio: abaApoio, ferramentas: abaFerramentas }[aba](st);
   body.innerHTML = nav + conteudo;
@@ -98,9 +105,11 @@ function avisos() {
   const itens = [];
   const susp = suspeitasRk();
   if (susp) itens.push(`<b>${num(susp)}</b> ${susp === 1 ? 'partida ranqueada da Carreira' : 'partidas ranqueadas da Carreira'} com sinais de suspeita. <button type="button" class="p-link" data-aba="ranqueada">Ver</button>`);
+  const sv = suspeitasVg();
+  if (sv) itens.push(`<b>${num(sv)}</b> ${sv === 1 ? 'partida' : 'partidas'} com sinais de suspeita nos outros jogos da ranqueada. <button type="button" class="p-link" data-aba="ranqueada">Ver</button>`);
   const pend = ap?.periodo?.status?.pendente || 0;
   if (pend) itens.push(`<b>${num(pend)}</b> ${pend === 1 ? 'doação aguardando' : 'doações aguardando'} pagamento (Pix/boleto). <button type="button" class="p-link" data-aba="apoio">Ver</button>`);
-  for (const e of [rkErro, apErro, rqErro]) if (e) itens.push(esc(e));
+  for (const e of [rkErro, vgErro, apErro, rqErro]) if (e) itens.push(esc(e));
   if (!itens.length) return '<div class="p-ok">✓ Nada pedindo atenção agora.</div>';
   return `<div class="p-avisos"><h3>Atenção</h3><ul>${itens.map((i) => `<li>${i}</li>`).join('')}</ul></div>`;
 }
@@ -279,6 +288,10 @@ function abaRanqueada(st) {
     ${secaoVigia(st.dias)}
   </section>
   <section class="p-section">
+    <h2>Vigilância · Lendas, Runetermo, Campeão Oculto e Na Medida</h2>
+    ${secaoVigiaJogos(st.dias)}
+  </section>
+  <section class="p-section">
     <h2>Zona de perigo</h2>
     <details class="p-details p-danger-box"><summary>Zerar a ranqueada (nova temporada)</summary>
       <div class="card p-danger">
@@ -400,6 +413,76 @@ function secaoVigia(dias) {
         <td><button type="button" class="p-mini" data-rk-devolver="${esc(b.username)}">Devolver</button></td></tr>`).join('')}</tbody>
     </table></div></div>` : ''}`;
 }
+
+// ------------------------------------------------ vigilância dos outros jogos
+
+const VG_TEXTO = {
+  cblol: 'Lendas: campeão invicto (raro) ou campanha concluída em menos de 30 s.',
+  runetermo: 'Runetermo e Campeão Oculto: acertou de primeira (raro) ou resolveu em menos de 5 s.',
+  escala: 'Na Medida: média 95 ou mais (raro) ou as 5 rodadas em menos de 15 s.',
+};
+
+const VG_RESULTADO = { campeao: 'Campeão', vice: 'Vice', final: 'Vice', semi: 'Semifinal', quartas: 'Quartas', fase: 'Fase de pontos' };
+function vgDetalhe(x) {
+  if (x.jogo === 'cblol') return `${esc(VG_RESULTADO[x.resultado] || x.resultado || '—')} · ${num(x.vitorias)} ${x.vitorias === 1 ? 'vitória' : 'vitórias'}`;
+  if (x.jogo === 'escala') return `média ${num(x.media)} · pior rodada ${num(x.pior_rodada)}${x.reinicios ? ` · ${num(x.reinicios)} reinício` : ''}`;
+  return `${x.status === 'ganhou' ? 'Acertou' : x.status === 'perdeu' ? 'Errou' : esc(x.status || '—')} · ${num(x.chutes)} ${x.chutes === 1 ? 'chute' : 'chutes'}${x.dicas ? ` · ${num(x.dicas)} ${x.dicas === 1 ? 'dica' : 'dicas'}` : ''}`;
+}
+
+function vgTabela() {
+  const q = vgFiltro.q.trim().toLowerCase();
+  const lista = (vg?.partidas || []).map((x) => ({ ...x, sinais: sinaisVigia(x) }))
+    .filter((x) => (!vgFiltro.so || x.sinais.length) && (!q || (x.username || '').toLowerCase().includes(q)));
+  if (!lista.length) return `<p class="p-empty">${vgFiltro.so ? 'Nenhuma partida com sinais de suspeita no período.' : 'Nenhuma partida no período.'}</p>`;
+  return `<div class="table-wrap"><table class="p-table">
+    <thead><tr><th>Quando</th><th>Usuário</th><th>Jogo</th><th>Resultado</th><th class="n">PDR</th><th class="n">Duração</th><th>Sinais</th></tr></thead>
+    <tbody>${lista.slice(0, 300).map((x) => `<tr>
+      <td>${esc(dataHora(x.criado))}</td><td>${esc(x.username)}</td><td>${esc(NOME_JOGO(x.jogo))}</td>
+      <td>${vgDetalhe(x)}</td><td class="n">${x.pdr > 0 ? '+' : ''}${num(x.pdr)}</td><td class="n">${duracao(x.duracao_s)}</td>
+      <td>${x.sinais.map(([c, t]) => `<span class="rk-sinal rk-${c}">${t}</span>`).join(' ') || '<small>—</small>'}</td></tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function vgJogadores() {
+  const lista = resumoJogadores(vg?.partidas || []).filter((j) => j.comSinais).slice(0, 30);
+  if (!lista.length) return '<p class="p-empty">Ninguém com sinais no período.</p>';
+  return `<div class="table-wrap"><table class="p-table">
+    <thead><tr><th>Usuário</th><th class="n">Dias com sinais</th><th class="n">Partidas com sinais</th><th class="n">Partidas</th><th>Onde</th><th></th></tr></thead>
+    <tbody>${lista.map((j) => `<tr><td>${esc(j.nome)}</td><td class="n">${j.dias >= 3 ? `<b class="rk-alerta">${num(j.dias)}</b>` : num(j.dias)}</td>
+      <td class="n">${num(j.comSinais)}</td><td class="n">${num(j.partidas)}</td>
+      <td>${Object.entries(j.jogos).map(([g, n]) => `${esc(NOME_JOGO(g))} ×${n}`).join(', ')}</td>
+      <td><button type="button" class="p-mini p-mini-danger" data-rk-banir="${esc(j.nome)}">Tirar da ranqueada</button></td></tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function secaoVigiaJogos(dias) {
+  if (!vg) return `<div class="card"><p class="p-note">${esc(vgErro || 'Carregando…')}</p></div>`;
+  const ps = vg.partidas || [];
+  const susp = ps.filter((x) => sinaisVigia(x).length).length;
+  return `<div class="tiles">
+      ${tile('Partidas', num(ps.length), `últimos ${dias} dias`)}
+      ${tile('Jogadores', num(new Set(ps.map((x) => x.username)).size))}
+      ${tile('Com sinais de suspeita', num(susp), ps.length ? `${Math.round((susp / ps.length) * 100)}% das partidas` : '')}
+    </div>
+    <div class="card"><h3>Partidas</h3>
+      <p class="c-sub">${Object.values(VG_TEXTO).join(' ')} Um sinal sozinho não prova nada: o que importa é <b>repetir em vários dias</b> (veja a tabela de jogadores abaixo).</p>
+      <div class="ap-filtros">
+        <label class="p-check"><input type="checkbox" data-vg-f="so"${vgFiltro.so ? ' checked' : ''} /> Só com sinais</label>
+        <label class="p-label">Usuário <input type="search" data-vg-f="q" value="${esc(vgFiltro.q)}" autocomplete="off" /></label>
+      </div>
+      <div data-vg-lista>${vgTabela()}</div>
+    </div>
+    <div class="card"><h3>Jogadores com sinais</h3><p class="c-sub">Em dias diferentes, do que mais se repete para o que menos. Três dias ou mais ficam destacados.</p>
+      <div data-vg-jog>${vgJogadores()}</div></div>`;
+}
+
+body.addEventListener('input', (e) => {
+  const f = e.target.closest('[data-vg-f]');
+  if (!f) return;
+  const k = f.dataset.vgF;
+  vgFiltro[k] = k === 'so' ? f.checked : f.value;
+  body.querySelector('[data-vg-lista]').innerHTML = vgTabela();
+});
 
 body.addEventListener('input', (e) => {
   const f = e.target.closest('[data-rk-f]');
@@ -591,9 +674,9 @@ async function load() {
   try {
     // Apoio e vigilância podem faltar (SQL ainda não rodado) sem travar o resto.
     const opcional = (pr) => pr.then((r) => ({ r }), (err) => ({ err }));
-    const [st, apoios, ranked, resumo] = await Promise.all([
+    const [st, apoios, ranked, resumo, vigia] = await Promise.all([
       platform.adminStats(days), opcional(platform.adminApoios(days)), opcional(platform.adminRanked(days)),
-      opcional(platform.adminRanqueada(days)),
+      opcional(platform.adminRanqueada(days)), opcional(platform.adminVigia(Math.min(days, 90))),
     ]);
     if (seq !== loadSeq) return;
     rk = ranked.r || null;
@@ -602,6 +685,8 @@ async function load() {
     apErro = apoios.err?.message || '';
     rq = resumo.r || null;
     rqErro = resumo.err?.message || '';
+    vg = vigia.r || null;
+    vgErro = vigia.err?.message || '';
     render(st);
   } catch (err) {
     if (seq === loadSeq) lock(err.message, false);
