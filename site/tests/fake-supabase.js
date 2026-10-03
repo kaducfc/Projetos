@@ -238,6 +238,16 @@ export function createFakeSupabase() {
       db.site_rk = [];
       return { data: { jogadores_zerados: n, inicio: hojeIso, temporada: args.nova_temporada }, error: null };
     }
+    if (name === 'site_diario_hoje') {
+      const uid = auth._uid();
+      if (!uid) return { data: null, error: { message: 'not_authenticated' } };
+      const out = {};
+      for (const [k, d] of Object.entries(db.site_diario)) {
+        if (!k.startsWith(`${uid}|`)) continue;
+        out[d.jogo] = { status: d.status, chutes: d.chutes.length, tentativas: d.chutes.length + (d.jogo === 'campeao' ? d.dicas.length : 0), pdr: d.pdr ?? null };
+      }
+      return { data: out, error: null };
+    }
     // Jogos diários conferidos no "servidor": a resposta vem de
     // db.diarioRespostas (o teste escolhe) e o PDR é o de tabela.
     if (name === 'site_diario_abrir' || name === 'site_diario_chute' || name === 'site_diario_dica') {

@@ -607,6 +607,18 @@ async function rpcDiario(nome, args) {
 export const diarioAbrir = (jogo) => rpcDiario('site_diario_abrir', { jogo });
 export const diarioChute = (jogo, chute) => rpcDiario('site_diario_chute', { jogo, chute });
 export const diarioDica = () => rpcDiario('site_diario_dica', {});
+// Situação de hoje nos dois jogos diários, só leitura (página inicial):
+// { runetermo: { status, chutes, tentativas, pdr }, campeao: {...} } ou null.
+export async function diarioHoje() {
+  const sb = await getClient();
+  if (!sb || !user) return null;
+  const { data, error } = await sb.rpc('site_diario_hoje');
+  if (error) {
+    console.warn('Site: situação dos diários indisponível:', error.message);
+    return null;
+  }
+  return data || {};
+}
 // Com conta e servidor, o jogo diário vale ranqueada (e é conferido lá).
 export const diarioNoServidor = () => Boolean(user) && cloudEnabled();
 
