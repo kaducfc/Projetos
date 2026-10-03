@@ -14,7 +14,7 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 itens = json.load(open(os.path.join(AQUI, '..', 'dados', 'itens.json'), encoding='utf-8'))
 q = lambda s: "'" + str(s).replace("'", "''") + "'"
 linhas = ',\n'.join(f"  ({q(i['id'])}, {q(i['nome'])}, {i['altura']})" for i in itens)
-sql = f"""-- Alturas da Escala de Runeterra (gerado por jogos/escala/scripts/sql_alturas.py
+sql = f"""-- Alturas do Na Medida (gerado por jogos/escala/scripts/sql_alturas.py
 -- a partir de jogos/escala/dados/itens.json). Pode rodar de novo sem problema.
 begin;
 delete from public.site_escala_itens;

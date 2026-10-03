@@ -1,4 +1,4 @@
-// Escala de Runeterra: regras puras (sem tela), testadas em tests/escala.test.mjs.
+// Na Medida: regras puras (sem tela), testadas em tests/escala.test.mjs.
 import { dayIndex as dayIndexFrom } from '../../../shared/diario.js';
 
 export const FIRST_DAY = '2026-10-01';

@@ -1,4 +1,4 @@
-// Escala de Runeterra: a figura azul tem tamanho fixo; o jogador ajusta o
+// Na Medida: a figura azul tem tamanho fixo; o jogador ajusta o
 // tamanho da vermelha até achar que está na proporção certa.
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
@@ -12,7 +12,7 @@ import {
 } from './logic.js';
 
 const GAME_ID = 'escala';
-const NAME = 'Escala de Runeterra';
+const NAME = 'Na Medida';
 // Proporção do palpite em relação à azul (sem revelar nenhuma altura): "1,6×".
 const fmtRazao = (r) => `${r.toLocaleString('pt-BR', { maximumFractionDigits: r < 10 ? 2 : 1, minimumFractionDigits: r < 10 ? 2 : 1 })}×`;
 const razaoDe = (a, b) => Math.max(a.altura, b.altura) / Math.min(a.altura, b.altura);
@@ -118,7 +118,7 @@ function render() {
         <button type="button" role="tab" data-modo="diario" class="${modo === 'diario' ? 'on' : ''}">${ranq ? 'Ranqueada' : 'Diário'}</button>
         <button type="button" role="tab" data-modo="livre" class="${modo === 'livre' ? 'on' : ''}">Livre</button>
       </div>
-      <h1 class="esc-title display">Escala de Runeterra</h1>
+      <h1 class="esc-title display">Na Medida</h1>
       <div class="esc-status">${status}</div>
       <button type="button" class="esc-ajuda" data-act="ajuda" aria-label="Como jogar">?</button>
     </header>

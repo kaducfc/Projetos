@@ -159,6 +159,12 @@ body:has(.hx-hero) { overflow-x: clip; }
 .cv-letras .quase { background: #c9a227; }
 .cv-letras .nao { background: #3a3a3f; }
 .cv-oculto { background: var(--img) center 30% / cover; }
+.cv-escala { display: flex; align-items: flex-end; justify-content: center; gap: 26px; padding: 22px 0 14px 40px;
+  background: radial-gradient(ellipse 70% 55% at 55% 100%, rgba(217, 168, 43, 0.2), transparent 70%), linear-gradient(180deg, #0f1020, #141420); }
+.cv-escala::after { background: none; }
+.cv-sil { position: relative; z-index: 1; display: block; background: var(--c); -webkit-mask: var(--img) center bottom / contain no-repeat; mask: var(--img) center bottom / contain no-repeat; }
+.cv-sil.azul { --c: #4f8dff; height: 72%; aspect-ratio: 0.83; filter: drop-shadow(0 0 14px rgba(79, 141, 255, 0.35)); }
+.cv-sil.verm { --c: #ef4b4b; height: 40%; aspect-ratio: 0.93; filter: drop-shadow(0 0 12px rgba(239, 75, 75, 0.35)); }
 .cv-oculto::before { content: ''; position: absolute; inset: 0; backdrop-filter: blur(6px) grayscale(1) brightness(0.35); -webkit-backdrop-filter: blur(6px) grayscale(1) brightness(0.35); }
 .cv-q { position: relative; z-index: 1; font-family: var(--display); font-size: 110px; line-height: 1; color: var(--gold-2); text-shadow: 0 0 28px rgba(245, 207, 90, 0.55); }
 

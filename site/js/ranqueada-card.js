@@ -20,7 +20,7 @@ export const JOGOS_RANQUEADA = [
   { id: 'cblol', nome: 'Lendas do CBLOL (Oculto)', vagas: true, link: '/jogos/lendas-do-cblol/' },
   { id: 'runetermo', nome: 'Runetermo', link: '/jogos/runetermo/' },
   { id: 'campeao', nome: 'Campeão Oculto', link: '/jogos/campeao/' },
-  { id: 'escala', nome: 'Escala de Runeterra', link: '/jogos/escala/' },
+  { id: 'escala', nome: 'Na Medida', link: '/jogos/escala/' },
 ];
 const MOTIVO = { partida: '', melhora: 'resultado melhor', nao_terminou: 'começou e não terminou', inatividade: 'inatividade', admin: 'ajuste' };
 const nomeJogo = (id) => JOGOS_RANQUEADA.find((j) => j.id === id)?.nome.replace(' (Oculto)', '') || '';
@@ -33,7 +33,7 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
       <div class="rk-info">
         <p class="eyebrow">Ranqueada</p>
         <h2 class="display">Sem ranque</h2>
-        <p class="muted small">Entre na sua conta: Carreira no Rift, Lendas do CBLOL (modo Oculto), Runetermo e Campeão Oculto valem PDR para subir do Ferro ao Desafiante.</p>
+        <p class="muted small">Entre na sua conta: Carreira no Rift, Lendas do CBLOL (modo Oculto), Runetermo, Campeão Oculto e Na Medida valem PDR para subir do Ferro ao Desafiante.</p>
       </div>
     </section>`;
   }
@@ -107,7 +107,7 @@ export function comoFunciona() {
     <h2 class="section-title">Como funciona</h2>
     <div class="pf-card rk-regras">
       <ul>
-        <li>Valem para a ranqueada, com a conta conectada: <b>Carreira no Rift</b>, <b>Lendas do CBLOL</b> (só o modo Oculto), <b>Runetermo</b> e <b>Campeão Oculto</b>.</li>
+        <li>Valem para a ranqueada, com a conta conectada: <b>Carreira no Rift</b>, <b>Lendas do CBLOL</b> (só o modo Oculto), <b>Runetermo</b>, <b>Campeão Oculto</b> e <b>Na Medida</b>.</li>
         <li><b>Elos:</b> Ferro, Bronze, Prata, Ouro, Platina, Esmeralda e Diamante, com 3 divisões cada. Ao alcançar ${PDR_DIVISAO} PDR, você avança para a próxima divisão.</li>
         <li><b>Mestre, Grão-Mestre e Desafiante:</b> depois do Diamante 1 vem o Mestre. Todo dia à meia-noite, pela ordem de PDR, os ${VAGAS_DESAFIANTE} melhores com ${MIN_DESAFIANTE}+ PDR viram Desafiante e os ${VAGAS_GRAO_MESTRE} seguintes com ${MIN_GRAO_MESTRE}+ PDR, Grão-Mestre.</li>
         <li><b>Queda:</b> perdendo PDR, a divisão desce até 0. Perdendo com 0, volta para a divisão anterior com 75 PDR. Ferro 3 não cai.</li>

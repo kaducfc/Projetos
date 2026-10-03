@@ -34,11 +34,13 @@ const CAPAS = {
   runetermo: `<div class="cv cv-runas"><div class="cv-letras">${[['B', 'ok'], ['A', 'quase'], ['R', 'nao'], ['O', 'ok'], ['N', 'ok']]
     .map(([l, c]) => `<span class="${c}">${l}</span>`).join('')}</div></div>`,
   campeao: `<div class="cv cv-oculto" style="--img:url(${A}/icones/raposa-encantada.webp)"><span class="cv-q">?</span></div>`,
+  escala: `<div class="cv cv-escala"><span class="cv-sil azul" style="--img:url(/jogos/escala/dados/silhuetas/garen.webp)"></span>
+      <span class="cv-sil verm" style="--img:url(/jogos/escala/dados/silhuetas/teemo.webp)"></span></div>`,
   cblol: `<div class="cv cv-cblol"><img class="cv-trofeu grande" src="${A}/trofeus/cblol.png?v=2" alt="" loading="lazy" /></div>`,
 };
 // Etiqueta no canto da capa: [texto, classe].
-const SELOS = { 'carreira-no-rift': ['Ranqueada', 'rk'], runetermo: ['Diário · Ranqueada', 'rk'], campeao: ['Diário · Ranqueada', 'rk'], cblol: ['Ranqueada (Oculto)', 'rk'] };
-const JOGOS_DO_DIA = ['carreira-no-rift', 'runetermo', 'campeao', 'cblol'];
+const SELOS = { 'carreira-no-rift': ['Ranqueada', 'rk'], runetermo: ['Diário · Ranqueada', 'rk'], campeao: ['Diário · Ranqueada', 'rk'], escala: ['Diário · Ranqueada', 'rk'], cblol: ['Ranqueada (Oculto)', 'rk'] };
+const JOGOS_DO_DIA = ['carreira-no-rift', 'runetermo', 'campeao', 'escala', 'cblol'];
 
 let resultados = [];
 let rk = null; // platform.rankedStatus()
@@ -65,8 +67,37 @@ function estadoDiario(id) {
   return n ? { estado: 'jogando', tentativas: n } : { estado: 'novo' };
 }
 
+// Na Medida: { estado: 'novo' | 'jogando' | 'terminou', rodadas, media, pdr, total }.
+function estadoEscala() {
+  if (diarios) {
+    const e = diarios.escala;
+    return e ? { estado: e.status, rodadas: e.rodadas, media: e.media, pdr: e.pdr } : { estado: 'novo' };
+  }
+  const d = platform.loadLocalSave('escala')?.diario;
+  if (!d || d.dia !== dayIndex('2026-10-01') || !Array.isArray(d.rodadas)) return { estado: 'novo' };
+  const feitas = d.rodadas.filter((r) => r.pontos != null);
+  const total = feitas.reduce((t, r) => t + r.pontos, 0);
+  if (!feitas.length) return { estado: 'novo' };
+  return { estado: feitas.length >= d.rodadas.length ? 'terminou' : 'jogando', rodadas: feitas.length, total, de: d.rodadas.length };
+}
+
+function vivoEscala() {
+  const e = estadoEscala();
+  if (e.estado === 'terminou') {
+    const txt = e.media != null
+      ? `✓ Média ${Number(e.media).toLocaleString('pt-BR')}/100${e.pdr != null ? ` · ${pdrTxt(e.pdr)}` : ''}`
+      : `✓ ${conta(e.total)}/${e.de * 100} hoje`;
+    return `<p class="hx-live ok">${txt}<span class="hx-cd">Próxima em <b data-cd>${fmtCountdown(msToNextDay())}</b></span></p>`;
+  }
+  if (e.estado === 'jogando') {
+    return `<p class="hx-live meio"><i class="hx-dot"></i>Em andamento · rodada ${Math.min(5, (e.rodadas || 0) + 1)} de 5</p>`;
+  }
+  return `<p class="hx-live novo"><i class="hx-dot"></i>${diarios ? 'Ranqueada de hoje disponível' : 'Novas comparações disponíveis'}</p>`;
+}
+
 // Feito hoje (para o contador do painel e a marca no card).
 function feitoHoje(id) {
+  if (id === 'escala') return estadoEscala().estado === 'terminou';
   if (id === 'runetermo' || id === 'campeao') return ['ganhou', 'perdeu'].includes(estadoDiario(id).estado);
   return Boolean(rk?.hoje?.jogos?.[id]);
 }
@@ -112,6 +143,7 @@ const VIVO = {
   cblol: () => vivoVagas('cblol'),
   runetermo: () => vivoDiario('runetermo'),
   campeao: () => vivoDiario('campeao'),
+  escala: vivoEscala,
 };
 
 function renderGames() {
@@ -125,7 +157,7 @@ function renderGames() {
       : '';
     const live = g.status === 'live';
     const selo = SELOS[g.id];
-    const feito = (logado || g.id === 'runetermo' || g.id === 'campeao') && feitoHoje(g.id);
+    const feito = (logado || ['runetermo', 'campeao', 'escala'].includes(g.id)) && feitoHoje(g.id);
     const capa = `<div class="hx-cover">${CAPAS[g.id] || ''}${selo ? `<span class="hx-selo ${selo[1] || ''}">${selo[0]}</span>` : ''}
       ${feito ? '<span class="hx-feito" title="Já jogou hoje">✓ Hoje</span>' : ''}</div>`;
     const corpo = `<div class="hx-body">

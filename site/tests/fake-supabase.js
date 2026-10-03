@@ -293,6 +293,8 @@ export function createFakeSupabase() {
         if (!k.startsWith(`${uid}|`)) continue;
         out[d.jogo] = { status: d.status, chutes: d.chutes.length, tentativas: d.chutes.length + (d.jogo === 'campeao' ? d.dicas.length : 0), pdr: d.pdr ?? null };
       }
+      const e = db.site_escala?.[uid];
+      if (e) out.escala = { status: e.status, rodadas: e.atual, media: e.media ?? null, pdr: e.pdr ?? null };
       return { data: out, error: null };
     }
     // Jogos diários conferidos no "servidor": a resposta vem de

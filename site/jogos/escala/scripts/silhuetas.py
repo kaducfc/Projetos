@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gera as silhuetas da Escala de Runeterra a partir dos modelos 3D do jogo.
+"""Gera as silhuetas do Na Medida a partir dos modelos 3D do jogo.
 
 Lê dados/itens.json (a tabela de alturas, editada à mão) e, para cada item,
 baixa o modelo do CommunityDragon (raw.communitydragon.org), desenha a

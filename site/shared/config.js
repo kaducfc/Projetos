@@ -78,13 +78,12 @@ export const GAMES = [
   },
   {
     id: 'escala',
-    name: 'Escala de Runeterra',
-    tagline: 'Quão grande é o Nasus perto da Poppy? Ajuste o tamanho e acerte a escala.',
+    name: 'Na Medida',
+    tagline: 'Quão grande é o Nasus perto da Poppy? Ajuste o tamanho e acerte na medida.',
     kind: 'Tamanho do dia',
     path: 'jogos/escala/',
     status: 'live',
     scoreLabel: 'Pontos',
-    oculto: true, // em revisão: funciona pelo link, ainda não aparece no início
   },
 ];
 
