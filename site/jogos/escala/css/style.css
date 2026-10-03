@@ -183,3 +183,24 @@ button { font-family: var(--sans); }
 .pdr-mais { color: #7fd49a; }
 .pdr-menos { color: #ef7a6a; }
 .esc-confirmar:disabled { opacity: 0.6; cursor: default; }
+
+/* PDR da ranqueada no resultado */
+.esc-rk { display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 12px; text-align: left;
+  background: linear-gradient(90deg, rgba(217, 168, 43, 0.12), rgba(18, 18, 18, 0.9)); border: 1px solid rgba(217, 168, 43, 0.45); }
+.esc-rk.ganhou { background: linear-gradient(90deg, rgba(47, 191, 113, 0.16), rgba(18, 18, 18, 0.9)); border-color: rgba(47, 191, 113, 0.5); }
+.esc-rk.perdeu { background: linear-gradient(90deg, rgba(239, 75, 75, 0.14), rgba(18, 18, 18, 0.9)); border-color: rgba(239, 75, 75, 0.45); }
+.esc-rk-pdr { margin: 0; font-family: var(--display); font-size: 48px; line-height: 1; color: var(--gold-2); white-space: nowrap; }
+.esc-rk.ganhou .esc-rk-pdr { color: #7fd49a; }
+.esc-rk.perdeu .esc-rk-pdr { color: #ef7a6a; }
+.esc-rk-pdr small { margin-left: 4px; font-size: 18px; color: var(--muted); }
+.esc-rk-txt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.esc-rk-txt b { font-size: 16px; }
+.esc-rk-txt span { color: #d3ccbc; font-size: 14px; }
+.esc-rk-elo .emblema { width: 22px; height: 22px; vertical-align: -6px; margin-right: 2px; }
+.esc-rk-link { color: var(--gold-2); font-weight: 800; text-decoration: none; white-space: nowrap; }
+.esc-rk-link:hover { text-decoration: underline; }
+.esc-fim .esc-rk { width: 100%; max-width: 520px; }
+@media (max-width: 560px) {
+  .esc-rk { flex-wrap: wrap; gap: 8px 14px; }
+  .esc-rk-link { width: 100%; }
+}

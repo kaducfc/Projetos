@@ -4,7 +4,8 @@ import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { msToNextDay, fmtCountdown } from '../../../shared/diario.js';
-import { avisoDiario } from '../../../shared/aviso-ranked.js';
+import { avisoDiario, eloTexto } from '../../../shared/aviso-ranked.js';
+import { emblemaHtml, divisaoDe } from '../../../shared/ranked.js';
 import {
   RODADAS, dayIndex, pontos, veredito, diferenca, rng, sortearRodada, rodadasDoDia,
   fmtAltura, proporcao, quadrado,
@@ -40,6 +41,7 @@ let livreAtual = null;
 let ranq = false;
 let srv = null;
 let enviando = false;
+let eloAgora = null; // platform.rankedStatus() depois de fechar a ranqueada
 
 // ------------------------------------------------------------------ dados
 
@@ -175,11 +177,28 @@ function controles(ref) {
     <p class="esc-teclado muted small">Teclado: ← → ou ↑ ↓ para ajustar (Shift para ajuste fino), Enter para confirmar.</p>`;
 }
 
+// Ranqueada encerrada: PDR do dia, fixo na tela (o aviso some sozinho).
+function caixaPdr() {
+  if (!ranq || srv?.status !== 'terminou' || srv.pdr == null) return '';
+  const v = srv.pdr;
+  const d = eloAgora ? divisaoDe(eloAgora.pts, eloAgora.elo) : null;
+  return `<section class="esc-rk ${v > 0 ? 'ganhou' : v < 0 ? 'perdeu' : ''}">
+      <p class="esc-rk-pdr">${v > 0 ? '+' : v < 0 ? '−' : '±'}${Math.abs(v)}<small>PDR</small></p>
+      <div class="esc-rk-txt">
+        <b>Ranqueada de hoje</b>
+        <span>Média ${Number(srv.media).toLocaleString('pt-BR')}/100 nas ${RODADAS} rodadas</span>
+        ${d ? `<span class="esc-rk-elo">${emblemaHtml(d.elo, 22)} Agora: ${eloTexto(eloAgora)}</span>` : ''}
+      </div>
+      <a class="esc-rk-link" href="/ranking/">Ver ranking →</a>
+    </section>`;
+}
+
 function painelResultado(ref, alvo) {
   const p = rodada.pontos;
   const ultima = modo === 'diario' && feitas() >= RODADAS;
   return `<div class="esc-acoes"><span></span>
       <button type="button" class="esc-confirmar" data-act="proxima">${ultima ? 'Ver resultado do dia →' : 'Próxima →'}</button></div>
+    ${caixaPdr()}
     <section class="esc-res">
       <div class="esc-res-top"><span class="esc-pts ${quadradoCls(p)}">${p}<small>/100</small></span>
         <div><b>${rodada.esgotou ? 'Tempo esgotado' : veredito(p)}</b><p>${rodada.esgotou ? 'A resposta chegou depois dos 30 segundos.' : diferenca(rodada.palpite, alvo.altura)}</p></div></div>
@@ -201,12 +220,10 @@ function telaFim() {
     const b = porId.get(r.ref);
     return `<li><span class="esc-n">${i + 1}</span><span>${esc(a?.nome || '—')} <small class="muted">vs ${esc(b?.nome || '—')}</small></span><b class="${quadradoCls(r.pontos || 0)}">${r.pontos ?? 0}</b></li>`;
   }).join('');
-  const pdr = ranq && srv?.pdr != null
-    ? `<p class="esc-pdr">Média <b>${Number(srv.media).toLocaleString('pt-BR')}</b>/100 · <b class="${srv.pdr > 0 ? 'pdr-mais' : srv.pdr < 0 ? 'pdr-menos' : ''}">${srv.pdr > 0 ? '+' : srv.pdr < 0 ? '−' : '±'}${Math.abs(srv.pdr)} PDR</b></p>` : '';
   return `<section class="esc-fim">
       <p class="eyebrow">${ranq ? 'Ranqueada de hoje' : 'Resultado do dia'}</p>
       <p class="esc-total display">${total}<small>/${RODADAS * 100}</small></p>
-      ${pdr}
+      ${caixaPdr()}
       <p class="esc-quads">${rs.map((r) => quadrado(r.pontos || 0)).join('')}</p>
       <ol class="esc-lista">${linhas}</ol>
       <div class="esc-fim-acoes">
@@ -390,7 +407,13 @@ function terminarDia() {
       day: hoje + 1, modo: ranq ? 'ranqueada' : 'diario', total, pdr,
     },
   });
-  if (ranq) avisoDiario(srv);
+  if (ranq) {
+    avisoDiario(srv);
+    platform.rankedStatus().then((d) => {
+      eloAgora = d;
+      if (rodada?.mostrando || diaFim()) render();
+    }).catch(() => {});
+  }
 }
 
 async function comecar() {
@@ -589,6 +612,7 @@ async function carregarRanqueada() {
   try {
     srv = await platform.escalaAbrir(false);
     ranq = true;
+    if (srv?.status === 'terminou') eloAgora = await platform.rankedStatus().catch(() => null);
   } catch (e) {
     console.warn('Escala: ranqueada indisponível, jogando sem PDR.', e.message);
   }
