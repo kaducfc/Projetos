@@ -497,7 +497,10 @@ function retiredPanel(state) {
   });
   return `
   <div class="panel retired">
-    <div class="eyebrow">Relatório da aposentadoria</div>
+    <div class="retired-top">
+      <div class="eyebrow">Relatório da aposentadoria</div>
+      <button class="btn-primary" data-act="new-career">Nova carreira</button>
+    </div>
     <div class="legacy tone-${legacy.tone}">
       ${trophySvg(legacy.tone === 'gold' ? 'intl' : legacy.tone === 'plain' ? 'award' : 'league', 70)}
       <div><small>Legado</small><h1 class="display">${legacy.title}</h1>
