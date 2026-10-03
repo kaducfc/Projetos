@@ -50,9 +50,17 @@ Deno.serve(async (req) => {
     headers: { apikey: SERVICO, Authorization: `Bearer ${SERVICO}`, 'Content-Type': 'application/json', Prefer: 'return=representation', ...(init.headers || {}) },
   });
 
+  // Contra robô: no máximo 10 pagamentos abertos por conta a cada hora.
+  const umaHora = new Date(Date.now() - 3600_000).toISOString();
+  const recentes = await rest(`site_apoios?select=id&user_id=eq.${user.id}&criado=gte.${umaHora}&limit=10`);
+  if (recentes.ok && (await recentes.json()).length >= 10) return resposta({ erro: 'muitos_pedidos' }, 429);
+
   // 1) Registra a doação pendente.
   const novo = await rest('site_apoios', { method: 'POST', body: JSON.stringify({ user_id: user.id, valor }) });
-  if (!novo.ok) return resposta({ erro: 'banco', detalhe: await novo.text() }, 500);
+  if (!novo.ok) {
+    console.error('apoio-criar: banco', await novo.text()); // detalhe só no log do Supabase
+    return resposta({ erro: 'banco' }, 500);
+  }
   const [apoio] = await novo.json();
 
   // 2) Cria o pagamento no Mercado Pago.
@@ -76,7 +84,9 @@ Deno.serve(async (req) => {
   });
   if (!pref.ok) {
     await rest(`site_apoios?id=eq.${apoio.id}`, { method: 'PATCH', body: JSON.stringify({ status: 'cancelado', atualizado: new Date().toISOString() }) });
-    return resposta({ erro: 'mercadopago', detalhe: await pref.text() }, 502);
+    const texto = await pref.text();
+    console.error('apoio-criar: mercadopago', texto); // detalhe só no log do Supabase
+    return resposta({ erro: 'mercadopago', token_invalido: /invalid.*token|unauthorized|401/i.test(texto) }, 502);
   }
   const p = await pref.json();
   await rest(`site_apoios?id=eq.${apoio.id}`, { method: 'PATCH', body: JSON.stringify({ mp_preference_id: p.id }) });

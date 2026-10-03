@@ -6,3 +6,14 @@
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 /jogos/*/dados/*
   Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+# Segurança: o site não pode ser aberto dentro de outro site (contra
+# "clickjacking"), e o navegador só carrega scripts e só se conecta aos
+# endereços que o site usa (Supabase, CDN do supabase-js, Data Dragon e a
+# wiki do CBLOL no painel).
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://ddragon.leagueoflegends.com; connect-src 'self' https://ixmtnizxirmmcpwdzoeu.supabase.co wss://ixmtnizxirmmcpwdzoeu.supabase.co https://cdn.jsdelivr.net https://ddragon.leagueoflegends.com https://lol.fandom.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'

@@ -480,11 +480,12 @@ export async function apoiar(valor) {
   const codigo = corpo?.erro || '';
   const textoMp = String(corpo?.detalhe || '');
   const conhecidos = {
-    valor_invalido: 'Escolha um valor entre R$ 5 e R$ 1.000.',
+    valor_invalido: 'O valor mínimo é R$ 5.',
+    muitos_pedidos: 'Muitas tentativas seguidas. Espere um pouco e tente de novo.',
     nao_logado: 'Entre na sua conta para apoiar.',
     mp_nao_configurado: 'O apoio ainda não está disponível (falta o segredo MP_ACCESS_TOKEN nas Edge Functions).',
     banco: 'Erro no banco ao registrar o apoio (o 0008_apoio.sql foi rodado?).',
-    mercadopago: `O Mercado Pago recusou criar o pagamento${/invalid.*token|unauthorized|401/i.test(textoMp) ? ' (Access Token inválido)' : ''}.`,
+    mercadopago: `O Mercado Pago recusou criar o pagamento${corpo?.token_invalido || /invalid.*token|unauthorized|401/i.test(textoMp) ? ' (Access Token inválido)' : ''}.`,
   };
   if (corpo?.detalhe) console.warn('Apoio: detalhe do erro:', corpo.detalhe);
   if (conhecidos[codigo]) throw new Error(conhecidos[codigo] + (corpo?.detalhe ? ` Detalhe: ${String(corpo.detalhe).slice(0, 160)}` : ''));

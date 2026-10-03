@@ -20,7 +20,7 @@ test('apoio no site: link de pagamento e efeito depois que o pagamento é aprova
   await platform.init();
   await platform.signUp({ email: 'a@example.com', password: 'segredo123', username: 'Apoiador' });
   assert.equal(platform.getUser().apoioTotal, 0);
-  await assert.rejects(platform.apoiar(2), /entre R\$ 5 e R\$ 1\.000/);
+  await assert.rejects(platform.apoiar(2), /mínimo é R\$ 5/);
   const { url } = await platform.apoiar(25);
   assert.match(url, /valor=25/);
   sb.db.site_profiles[0].apoio_total = 25; // o aviso do Mercado Pago aprovou
