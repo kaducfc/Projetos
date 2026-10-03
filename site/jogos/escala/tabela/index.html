@@ -47,7 +47,7 @@ const sil = (it, h) => `<div class="esc-sil" title="${esc(it.nome)} · ${fmtAltu
 function fila() {
   const [, lo, hi] = FAIXAS[faixa];
   const log = faixa === FAIXAS.length - 1;
-  const lista = lo < 0 ? itens.filter((i) => i.confianca === 'rift') : itens.filter((i) => i.altura >= lo && i.altura < hi);
+  const lista = lo < 0 ? itens.filter((i) => i.rift) : itens.filter((i) => i.altura >= lo && i.altura < hi);
   const max = Math.max(...lista.map((i) => i.altura));
   const min = Math.min(...lista.map((i) => i.altura));
   const h = (a) => (log ? 20 + 220 * Math.log(a / min) / Math.log(max / min || 2) : 240 * a / max);
