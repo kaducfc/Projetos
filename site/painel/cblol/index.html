@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Dados do CBLOL · Rift Arcade</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#09090a" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" />
+<link rel="icon" type="image/png" sizes="32x32" href="../../shared/assets/marca/favicon-32.png?v=2" />
+<link rel="icon" type="image/png" sizes="48x48" href="../../shared/assets/marca/favicon-48.png?v=2" />
+<link rel="apple-touch-icon" href="../../shared/assets/marca/apple-touch-icon.png?v=2" />
+<link rel="stylesheet" href="../../shared/account.css" />
+<link rel="stylesheet" href="../../css/hub.css" />
+<link rel="stylesheet" href="../../css/painel.css" />
+</head>
+<body>
+<div id="site-bar"></div>
+<main class="panel">
+  <header class="panel-head">
+    <div>
+      <p class="eyebrow">◆ Administração</p>
+      <h1 class="display">Dados do CBLOL</h1>
+    </div>
+  </header>
+  <section class="p-section">
+    <div class="card">
+      <h3>Jeito 1 (recomendado): pelo Console da Leaguepedia</h3>
+      <p class="c-sub">Roda dentro da própria Leaguepedia, que devolve milhares de linhas por pedido. Leva poucos minutos.</p>
+      <ol class="p-steps">
+        <li>Clique em <b>Copiar script</b> abaixo.</li>
+        <li>Abra <a href="https://lol.fandom.com/wiki/CBLOL" target="_blank" rel="noopener">lol.fandom.com/wiki/CBLOL</a> numa aba nova.</li>
+        <li>Nessa aba, aperte <b>F12</b> e clique na guia <b>Console</b>.</li>
+        <li>Cole o script (Ctrl+V) e aperte <b>Enter</b>. Se o Chrome pedir, digite <code>allow pasting</code>, aperte Enter e cole de novo.</li>
+        <li>Acompanhe as mensagens em amarelo. No fim, o arquivo <b>cblol-leaguepedia.json</b> é baixado.</li>
+      </ol>
+      <p><button type="button" class="p-btn" id="copy">Copiar script</button> <span class="c-sub" id="copied"></span></p>
+      <textarea id="script" class="p-log" rows="6" readonly spellcheck="false"></textarea>
+    </div>
+    <div class="card">
+      <h3>Jeito 2: direto por esta página</h3>
+      <p class="c-sub">Busca todos os splits do CBLOL, mais a LTA Sul de 2025 (times, jogadores, reservas, técnicos, estatísticas por jogo e
+        colocações) na Leaguepedia e gera um arquivo <b>cblol-leaguepedia.json</b>. Pode levar de 15 a 40 minutos (a Leaguepedia limita pedidos por minuto e a página espera sozinha). Deixe a aba aberta.</p>
+      <p><button type="button" class="p-btn" id="go">Baixar dados</button></p>
+      <pre id="log" class="p-log"></pre>
+    </div>
+  </section>
+</main>
+<footer id="site-footer"></footer>
+<script type="module" src="../../js/cblol-dados.js"></script>
+</body>
+</html>

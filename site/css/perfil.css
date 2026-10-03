@@ -1,0 +1,198 @@
+/* Página "Meu perfil", sobre o hub.css. */
+.perfil { max-width: 1000px; margin: 0 auto; padding: 32px 20px 56px; display: flex; flex-direction: column; gap: 28px; }
+.pf-card { background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--line-2); border-radius: 6px; padding: 20px; }
+.pf-sec { display: flex; flex-direction: column; }
+
+/* Cabeçalho */
+.pf-head { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.pf-head h1 { margin: 6px 0 4px; font-size: clamp(42px, 7vw, 60px); color: var(--gold-2); overflow-wrap: anywhere; }
+.pf-head p { margin: 0; }
+.pf-who { min-width: 0; flex: 1; }
+.pf-avatar { position: relative; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 50%; }
+.pf-avatar .avatar { border: 3px solid var(--gold); box-shadow: 0 0 0 4px rgba(217, 168, 43, 0.15), 0 10px 26px rgba(0, 0, 0, 0.5); }
+/* Com elo: a borda é a do elo (account.css), mais grossa aqui. */
+.pf-avatar .avatar.elo-ferro { border: 4px solid #8c8580; }
+.pf-avatar .avatar.elo-bronze { border: 4px solid #b0784f; }
+.pf-avatar .avatar.elo-prata { border: 4px solid #b4bec8; }
+.pf-avatar .avatar.elo-ouro { border: 4px solid #e8b93f; }
+.pf-avatar .avatar.elo-platina { border: 4px solid #4fc8b9; }
+.pf-avatar .avatar.elo-esmeralda { border: 4px solid #2fbf71; }
+.pf-avatar .avatar.elo-diamante { border: 4px solid #7d97ff; }
+.pf-avatar .avatar.elo-mestre { border: 4px solid #b65cf0; box-shadow: 0 0 16px rgba(182, 92, 240, 0.55); }
+.pf-avatar .avatar.elo-grao-mestre { border: 4px solid #ef4f3c; box-shadow: 0 0 18px rgba(239, 79, 60, 0.6); }
+.pf-avatar .avatar.elo-desafiante { border: 4px solid #f5cf5a; box-shadow: 0 0 0 4px rgba(125, 151, 255, 0.5), 0 0 22px rgba(245, 207, 90, 0.6); }
+.pf-avatar-edit { position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); background: var(--gold); color: #140f02; font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 10px; }
+.pf-avatar:hover .avatar { border-color: var(--gold-2); }
+
+/* Ranqueada */
+.pf-rank { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; --cor: #6b6455; }
+.pf-rank h2 { margin: 4px 0; font-size: 40px; color: var(--cor); }
+.pf-rank .rank-info { flex: 1; min-width: 240px; }
+.pf-rank p { margin: 0; }
+.rank-emblema { position: relative; width: 92px; height: 104px; flex: none; display: grid; place-items: center; }
+.rank-emblema svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: color-mix(in srgb, var(--cor) 22%, #111); stroke: var(--cor); stroke-width: 3; }
+.rank-emblema span { position: relative; font-family: var(--display); font-size: 34px; color: var(--cor); }
+.rank-emblema.vazio svg { stroke-dasharray: 6 5; }
+.escada { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.elo { font-size: 11px; font-weight: 800; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 3px; color: var(--cor); border: 1px solid color-mix(in srgb, var(--cor) 45%, transparent); background: color-mix(in srgb, var(--cor) 8%, transparent); opacity: 0.75; }
+.elo.on { opacity: 1; background: var(--cor); color: #140f02; }
+
+/* Resumo */
+.pf-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.pf-tile { background: var(--panel); border: 1px solid var(--line-2); border-radius: 4px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.pf-tile span { font-size: 12px; font-weight: 700; color: var(--muted); }
+.pf-tile b { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.pf-tile b small { font-size: 14px; color: var(--muted); font-weight: 600; }
+.pf-games { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin-top: 10px; }
+.pf-game { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: 4px; background: var(--panel); color: var(--text); text-decoration: none; }
+.pf-game:hover { border-color: var(--gold); }
+.pf-game-kind { font-size: 10.5px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); }
+.pf-game b { font-family: var(--display); font-weight: 400; font-size: 26px; line-height: 1; }
+.pf-game-nums { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--muted); }
+.pf-game-nums em { font-style: normal; font-weight: 800; color: var(--text); }
+
+/* Histórico */
+.pf-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.pf-chips button { background: transparent; color: var(--muted); border: 1px solid var(--line-2); border-radius: 20px; padding: 6px 12px; font: 700 12.5px var(--sans); cursor: pointer; }
+.pf-chips button.on { background: var(--gold); border-color: var(--gold); color: #140f02; }
+.pf-hist { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line-2); border-radius: 4px; background: var(--panel); }
+.pf-hist li { display: grid; grid-template-columns: 66px 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); }
+.pf-hist li:first-child { border-top: 0; }
+.h-when { font-size: 13px; font-weight: 700; display: flex; flex-direction: column; }
+.h-when small, .h-score small { color: var(--muted); font-weight: 600; font-size: 11px; }
+.h-what { min-width: 0; display: flex; flex-direction: column; font-size: 13.5px; }
+.h-what b { font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); }
+.h-what span { color: #d3ccbc; overflow-wrap: anywhere; }
+.h-score { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.h-score small { margin-left: 3px; }
+.pf-more { margin-top: 10px; align-self: center; background: transparent; color: var(--text); border: 1px solid var(--line-2); border-radius: 4px; padding: 9px 16px; font: 700 13px var(--sans); cursor: pointer; }
+.pf-more:hover { border-color: var(--gold); }
+
+/* Conta */
+.pf-forms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.pf-form { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.pf-form h3 { margin: 0; font-size: 15px; font-weight: 800; }
+.pf-form p { margin: 0; }
+.pf-form input, .pf-label input { width: 100%; box-sizing: border-box; padding: 10px 12px; background: var(--panel); color: var(--text); border: 1px solid var(--line-2); border-radius: 4px; font: 600 15px var(--sans); }
+.pf-form input:focus, .pf-label input:focus { outline: none; border-color: var(--gold); }
+.pf-form .btn-primary, .pf-form .btn-ghost, .pf-form .btn-danger { margin-top: auto; align-self: flex-start; }
+.pf-email { font-weight: 700; overflow-wrap: anywhere; }
+.pf-msg { min-height: 0; font-size: 13px; }
+.pf-msg:empty { display: none; }
+.pf-msg.err { color: #f0948e; }
+.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line-2); border-radius: 4px; padding: 10px 16px; font: 800 14px var(--sans); cursor: pointer; }
+.btn-ghost:hover { border-color: var(--gold); }
+.btn-danger { background: #b8453c; color: #fff; border: 0; border-radius: 4px; padding: 10px 16px; font: 800 14px var(--sans); cursor: pointer; }
+.btn-danger:hover:not(:disabled) { background: #cf5148; }
+.btn-danger:disabled { opacity: 0.45; cursor: default; }
+.pf-danger { border-color: rgba(184, 69, 60, 0.55); }
+
+/* Sem conta */
+.pf-lock { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.pf-lock h1 { margin: 0; font-size: 52px; color: var(--gold-2); }
+.pf-lock p { margin: 0; color: #d3ccbc; }
+
+/* Janelas (ícone e exclusão) */
+.pf-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: rgba(3, 6, 9, 0.8); backdrop-filter: blur(4px); }
+.pf-modal { width: min(560px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: linear-gradient(180deg, #1c1810, #0d0c09); border: 1px solid var(--gold); border-radius: 12px; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+.pf-modal h2 { margin: 0; font-size: 38px; color: var(--gold-2); }
+.pf-modal p { margin: 0; color: #d3ccbc; }
+.pf-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 10px; }
+/* Botão do tamanho exato do ícone (não estica na grade) e a marcação colada
+   na borda do próprio ícone: fica sempre um círculo. */
+.pf-icone { justify-self: center; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; display: block; line-height: 0; }
+.pf-icone .avatar { transition: box-shadow 0.15s; }
+.pf-icone:hover .avatar { box-shadow: 0 0 0 2px rgba(245, 207, 90, 0.6); }
+.pf-icone.on .avatar { box-shadow: 0 0 0 3px var(--gold-2), 0 0 16px rgba(245, 207, 90, 0.5); }
+.pf-modal > .btn-ghost { align-self: flex-end; }
+.pf-label { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: #d3ccbc; }
+.pf-acts { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+.pf-toast { position: fixed; left: 50%; top: 84px; transform: translateX(-50%); z-index: 110; background: var(--text); color: #140f02; font-weight: 800; font-size: 14px; padding: 10px 16px; border-radius: 4px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); pointer-events: none; }
+.pf-toast[hidden] { display: none; }
+
+@media (max-width: 720px) {
+  .pf-tiles { grid-template-columns: repeat(2, 1fr); }
+  .pf-forms { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .perfil { padding: 22px 14px 44px; }
+  .pf-head { gap: 14px; }
+  .pf-hist li { grid-template-columns: 58px 1fr auto; gap: 8px; padding: 9px 10px; }
+}
+button.btn-primary { border: 0; cursor: pointer; font: 800 14px var(--sans); }
+button.btn-primary:disabled { opacity: 0.6; cursor: default; }
+
+/* Cartão "Minha ranqueada" (perfil e ranking) */
+.rk-card { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; --cor: #6b6455; }
+.rk-emb { flex: none; padding-top: 6px; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5)); }
+.rk-info { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 8px; }
+.rk-info p { margin: 0; }
+.rk-info h2 { margin: 0; font-size: 44px; color: var(--cor); }
+.rk-dias { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 380px; }
+.rk-dia { border: 1px solid var(--line-2); border-radius: 4px; padding: 6px 10px; display: flex; flex-direction: column; background: var(--panel); }
+.rk-dia span { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.rk-dia b { font-size: 20px; font-variant-numeric: tabular-nums; }
+.rk-dia.hoje { border-color: var(--cor); }
+.rk-dia.futuro { opacity: 0.5; }
+.rk-meta { max-width: 460px; display: flex; flex-direction: column; gap: 5px; }
+.rk-meta-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: #d3ccbc; flex-wrap: wrap; }
+.rk-barra { height: 8px; border-radius: 4px; background: #2a261d; overflow: hidden; }
+.rk-barra i { display: block; height: 100%; border-radius: 4px; }
+.rk-benef, .rk-hist { margin: 0; padding-left: 18px; font-size: 13px; color: #d3ccbc; display: flex; flex-direction: column; gap: 2px; }
+.rk-link { color: var(--gold-2); font-weight: 800; font-size: 13.5px; text-decoration: none; }
+.rk-link:hover { text-decoration: underline; }
+.rk-queda b { color: var(--text); }
+.rk-queda.perigo { color: #f0948e; }
+
+/* Histórico recolhível */
+.pf-toggle { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 14px; margin-bottom: 10px; background: var(--panel); border: 1px solid var(--line-2); border-radius: 4px; color: var(--text); cursor: pointer; text-align: left; font: inherit; }
+.pf-toggle:hover { border-color: var(--gold); }
+.pf-toggle .section-title { margin: 0; flex: 1; }
+.pf-toggle-n { font-size: 13px; color: var(--muted); font-weight: 700; }
+.pf-toggle-seta { color: var(--gold-2); transition: transform 0.2s; transform: rotate(-90deg); }
+.pf-toggle[aria-expanded="true"] .pf-toggle-seta { transform: none; }
+
+/* Cartão de apoio no perfil */
+.pf-apoio { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; border-color: rgba(255, 143, 163, 0.45); background: linear-gradient(90deg, rgba(255, 143, 163, 0.08), transparent 60%), linear-gradient(180deg, var(--panel-2), var(--panel)); }
+.pf-apoio p { margin: 0; }
+.pf-apoio .eyebrow { color: #ff8fa3; }
+.pf-apoio-txt { margin-top: 4px !important; color: #d3ccbc; max-width: 560px; }
+.pf-apoio-btn { margin: 0; white-space: nowrap; }
+
+/* Ícones especiais de apoiador: na grade, travados com cadeado */
+.pf-travado { position: relative; }
+.pf-travado .avatar img { filter: grayscale(0.85) brightness(0.55); }
+.pf-cadeado { position: absolute; inset: 0; display: grid; place-items: center; font-size: 22px; line-height: 1; }
+.pf-info { margin: 0; padding: 10px 12px; border: 1px solid rgba(245, 207, 90, 0.35); border-radius: 8px; background: rgba(245, 207, 90, 0.06); font-size: 14px; color: #d3ccbc; }
+.pf-info a { color: var(--gold-2); font-weight: 700; white-space: nowrap; }
+.pf-info-tit { display: block; margin-bottom: 4px; color: var(--text); }
+.pf-ordem { display: inline-block; margin-right: 6px; padding: 1px 9px; border-radius: 999px; font-weight: 800; font-variant-numeric: tabular-nums; color: #140f02; background: linear-gradient(180deg, var(--gold-2), var(--gold)); }
+.pf-usar { display: block; margin-top: 10px; padding: 8px 16px; font-size: 14px; cursor: pointer; }
+.avatar img { object-fit: cover; }
+
+/* Acabamento "hextech" (o mesmo da página inicial): borda em degradê e
+   cantos dourados nos cartões; títulos de seção com linha dourada. */
+.pf-card {
+  position: relative; border: 1px solid transparent;
+  background:
+    linear-gradient(180deg, #1a1813, #101010) padding-box,
+    linear-gradient(160deg, rgba(245, 207, 90, 0.6), rgba(217, 168, 43, 0.1) 35%, rgba(59, 53, 42, 0.6) 70%, rgba(217, 168, 43, 0.4)) border-box;
+}
+.pf-card::before, .pf-card::after { content: ''; position: absolute; width: 12px; height: 12px; pointer-events: none; border: 2px solid var(--gold-2); opacity: 0.85; }
+.pf-card::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; border-top-left-radius: 6px; }
+.pf-card::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; border-bottom-right-radius: 6px; }
+.pf-sec > .section-title { display: flex; align-items: center; gap: 12px; }
+.pf-sec > .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(217, 168, 43, 0.5), transparent); }
+.pf-sec > .section-title::before { content: '◆'; color: var(--gold); }
+
+/* Ranqueada (PDR): jogos de hoje, histórico e tabelas */
+.rk-jogos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; max-width: 640px; }
+.rk-jogo { display: flex; flex-direction: column; gap: 2px; padding: 7px 10px; border: 1px solid var(--line-2); border-radius: 6px; background: rgba(255, 255, 255, 0.02); text-decoration: none; color: inherit; font-size: 13px; }
+.rk-jogo:hover { border-color: var(--cor); }
+.rk-jogo > span:first-child { font-weight: 700; color: #d3ccbc; }
+.rk-jogo small { color: var(--muted); font-size: 11.5px; }
+.rk-hist-tit { margin-top: 4px !important; }
+.rk-hist { list-style: none; padding-left: 0 !important; }
+.rk-sub { margin: 14px 0 6px; font-size: 14px; color: var(--gold-2); }
+.rk-escala { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; }

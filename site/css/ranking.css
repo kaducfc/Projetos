@@ -1,0 +1,46 @@
+/* Página de ranking, sobre o hub.css e o perfil.css. */
+.rk-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+.rk-head h1 { margin: 6px 0 0; font-size: clamp(46px, 7vw, 64px); color: var(--gold-2); }
+.rk-head .btn-primary { margin: 0; }
+.rk-topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.rk-topo .pf-chips { margin: 0; }
+.rk-lista { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line-2); border-radius: 4px; background: var(--panel); }
+.rk-lista li { display: grid; grid-template-columns: 42px 1fr 130px 90px; gap: 10px; align-items: center; padding: 8px 14px; border-top: 1px solid var(--line); }
+.rk-lista li:first-child { border-top: 0; }
+.rk-lista li.eu { background: rgba(217, 168, 43, 0.1); }
+.rk-lista li.sep { border-top: 2px dashed var(--line-2); }
+.rk-pos { font-family: var(--display); font-size: 24px; color: var(--muted); text-align: center; }
+.top1 .rk-pos { color: #f5cf5a; }
+.top2 .rk-pos { color: #c9d1d9; }
+.top3 .rk-pos { color: #c98a5a; }
+.rk-quem { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rk-quem b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-elo { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 800; color: var(--cor); }
+.rk-pts { text-align: right; font-weight: 800; font-size: 17px; font-variant-numeric: tabular-nums; display: flex; flex-direction: column; line-height: 1.15; }
+.rk-pts small { font-size: 11px; font-weight: 600; color: var(--muted); }
+.rk-regras ul { margin: 0 0 16px; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; color: #d3ccbc; font-size: 14px; }
+.rk-tabela { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.rk-tabela th, .rk-tabela td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.rk-tabela th { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.rk-tabela .n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.table-wrap { overflow-x: auto; }
+@media (max-width: 560px) {
+  .rk-tabela thead { display: none; }
+  .rk-tabela tr { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+  .rk-tabela td { border: 0; padding: 0; }
+  .rk-tabela td:last-child { grid-column: 1 / -1; color: #d3ccbc; }
+  .rk-lista li { grid-template-columns: 30px 1fr auto; padding: 8px 10px; }
+  .rk-lista .rk-elo span { display: none; }
+  .rk-lista .rk-pts { grid-column: 3; }
+  .rk-lista li .rk-elo { grid-column: 3; grid-row: 1; justify-self: end; display: none; }
+}
+
+/* Filtro por elo no ranking geral */
+.rk-filtro { margin: 0 0 10px; flex-wrap: wrap; }
+.rk-filtro button { display: inline-flex; align-items: center; gap: 5px; }
+.rk-filtro button.on { border-color: var(--cor, var(--gold)); }
+.rk-lista li { grid-template-columns: 42px 1fr 150px 80px; }
+@media (max-width: 560px) {
+  .rk-lista li { grid-template-columns: 30px 1fr auto; }
+  .rk-lista li .rk-elo span { display: none; }
+}
