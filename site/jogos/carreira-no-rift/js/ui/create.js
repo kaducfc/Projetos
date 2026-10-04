@@ -111,7 +111,7 @@ export function renderCreate(root, onConfirm, { bonusElo = () => ({ n: 0, nome: 
       <div class="role-head"><b>${r.name}</b><span class="ovr-mini">OVR <b>${ovr}</b></span></div>
       <p class="elo-bonus">${b.n
     ? `OVR inicial ${OVR_INICIAL} <b>+${b.n}</b> pelo seu elo (${esc(b.nome)}) na ranqueada.`
-    : `OVR inicial ${OVR_INICIAL}. Cada elo da ranqueada dá +1 (Bronze +1 até Desafiante +9).`}</p>
+    : `OVR inicial ${OVR_INICIAL}. Cada elo da ranqueada dá +1 (Ferro +1 até Desafiante +10).`}</p>
       <p class="muted">${r.desc}</p>
       ${ATTRS.map((a) => `
         <div class="attr-row">

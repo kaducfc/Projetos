@@ -71,8 +71,10 @@ export const BENEFICIOS = [
   { elo: 'desafiante', jogo: 'Lendas do CBLOL e Campeão Oculto', texto: '+1 dado bônus (3 no total) e +1 tentativa no Campeão Oculto (9 no total)' },
 ];
 
-// OVR inicial na Carreira no Rift: 50 + 1 por elo (Ferro +0 … Desafiante +9).
-export const bonusCarreira = (elo) => (elo ? nivelElo(elo) : 0);
+// OVR inicial na Carreira no Rift: 53 sem conta ou sem elo; com elo, 54 no Ferro
+// e +1 por elo (Bronze 55 … Desafiante 63). `bonusCarreira` é o extra sobre os 53.
+export const OVR_CARREIRA_BASE = 53;
+export const bonusCarreira = (elo) => (elo ? nivelElo(elo) + 1 : 0);
 
 // O que o elo libera em cada jogo (sem conta ou sem elo: nada extra).
 export function vantagens(elo) {

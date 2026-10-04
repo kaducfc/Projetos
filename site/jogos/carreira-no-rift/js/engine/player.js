@@ -10,8 +10,9 @@ export function calcOvr(attrs, role) {
 
 export const ovrOf = (p) => calcOvr(p.attrs, p.role);
 
-// OVR inicial de toda carreira (antes do bônus de elo da ranqueada).
-export const OVR_INICIAL = 50;
+// OVR inicial de toda carreira (antes do bônus de elo da ranqueada). Igual a
+// OVR_CARREIRA_BASE em shared/ranked.js (que o card da ranqueada mostra).
+export const OVR_INICIAL = 53;
 
 // Atributos iniciais coerentes com a rota: o que pesa mais nela vem mais alto.
 // Os atributos variam a cada sorteio, mas o OVR sai sempre igual a `alvo`.

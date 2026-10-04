@@ -54,16 +54,17 @@ test('carreira: a partir de 93 fica difícil subir (perder continua igual)', () 
   assert.equal(p.attrs.mec, 92);
 });
 
-test('carreira: OVR inicial fixo (50) com atributos sorteados, mais o bônus de elo', async () => {
+test('carreira: OVR inicial fixo (53) com atributos sorteados, mais o bônus de elo', async () => {
   const { rollAttrs, calcOvr, OVR_INICIAL } = await import('../jogos/carreira-no-rift/js/engine/player.js');
   const { ROLES, STYLES } = await import('../jogos/carreira-no-rift/js/data/world.js');
-  const { bonusCarreira } = await import('../shared/ranked.js');
-  assert.equal(OVR_INICIAL, 50);
-  assert.deepEqual([null, 'ferro', 'bronze', 'prata', 'ouro', 'platina', 'esmeralda', 'diamante', 'mestre', 'grao-mestre', 'desafiante'].map(bonusCarreira), [0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  const { bonusCarreira, OVR_CARREIRA_BASE } = await import('../shared/ranked.js');
+  assert.equal(OVR_INICIAL, 53);
+  assert.equal(OVR_CARREIRA_BASE, OVR_INICIAL); // o card da ranqueada mostra o mesmo número
+  assert.deepEqual([null, 'ferro', 'bronze', 'prata', 'ouro', 'platina', 'esmeralda', 'diamante', 'mestre', 'grao-mestre', 'desafiante'].map(bonusCarreira), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   const vistos = new Set();
   for (const r of Object.keys(ROLES)) for (const s of Object.keys(STYLES)) for (let i = 0; i < 50; i++) {
     const a = rollAttrs(r, s, OVR_INICIAL + bonusCarreira('ouro'));
-    assert.equal(calcOvr(a, r), 53);
+    assert.equal(calcOvr(a, r), 57); // 53 + 4 (Ouro: 54 Ferro, 55 Bronze, 56 Prata, 57 Ouro)
     vistos.add(JSON.stringify(a));
   }
   assert.ok(vistos.size > 100); // atributos mudam a cada sorteio

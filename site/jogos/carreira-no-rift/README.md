@@ -31,7 +31,8 @@ node scripts/build-bundle.mjs > bundle.html
 
 **Criação:** nick, estilo de jogo (agressivo ou controlado), nacionalidade
 (define a região inicial) e rota. Os atributos iniciais são sorteados
-de acordo com a rota, com OVR inicial entre 50 e 55.
+de acordo com a rota, com OVR inicial 53 (sem conta ou sem elo na ranqueada); com elo, 54 no Ferro
+e +1 por elo, até 63 no Desafiante.
 
 **Atributos → OVR:** Mecânica, Fase de rotas, Macro, Teamfight e Mental.
 O OVR é a média ponderada desses atributos com pesos diferentes por rota (o

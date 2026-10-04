@@ -1,6 +1,6 @@
 // Cartão "Minha ranqueada" (perfil e página de ranking) e o "Como funciona".
 import {
-  ELOS, BENEFICIOS, PARTIDAS_POR_DIA, PDR_DIVISAO, NAO_TERMINOU, INATIVIDADE,
+  ELOS, BENEFICIOS, OVR_CARREIRA_BASE, PARTIDAS_POR_DIA, PDR_DIVISAO, NAO_TERMINOU, INATIVIDADE,
   VAGAS_DESAFIANTE, MIN_DESAFIANTE, VAGAS_GRAO_MESTRE, MIN_GRAO_MESTRE,
   eloInfo, nivelElo, emblemaHtml, divisaoDe, nomeDivisao, fmtPdr,
 } from '../shared/ranked.js';
@@ -103,7 +103,7 @@ export function comoFunciona() {
     const div = i < 7 ? '3 · 2 · 1' : e.id === 'mestre' ? 'sem limite' : e.id === 'grao-mestre' ? `${VAGAS_GRAO_MESTRE} vagas, ${MIN_GRAO_MESTRE}+ PDR` : `${VAGAS_DESAFIANTE} vagas, ${MIN_DESAFIANTE}+ PDR`;
     return `<tr><td><span class="rk-elo" style="--cor:${e.cor}">${emblemaHtml(e.id, 22)}${esc(e.nome)}</span></td>
       <td>${div}</td>
-      <td>+${i} OVR inicial na Carreira${b.length ? b.map((x) => `<br><b>${esc(x.jogo)}:</b> ${esc(x.texto)}`).join('') : ''}</td></tr>`;
+      <td>OVR inicial ${OVR_CARREIRA_BASE + i + 1} na Carreira${b.length ? b.map((x) => `<br><b>${esc(x.jogo)}:</b> ${esc(x.texto)}`).join('') : ''}</td></tr>`;
   }).join('');
   return `<section class="pf-sec">
     <h2 class="section-title">Como funciona</h2>

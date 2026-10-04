@@ -47,7 +47,7 @@ test('ranqueada: benefícios de cada elo somam com os de baixo', () => {
   assert.equal(vantagens('diamante').tentativasRunetermo, 7);
   assert.deepEqual(vantagens('desafiante'), { categoriaRunetermo: true, dadosBonus: 3, dicasCampeao: 3, tentativasRunetermo: 7, tentativasCampeao: 9 });
   assert.equal(nivelElo('desafiante'), 9);
-  assert.deepEqual([null, 'ferro', 'bronze', 'diamante', 'mestre', 'desafiante'].map(bonusCarreira), [0, 0, 1, 6, 7, 9]);
+  assert.deepEqual([null, 'ferro', 'bronze', 'diamante', 'mestre', 'desafiante'].map(bonusCarreira), [0, 1, 2, 7, 8, 10]);
   // O servidor dá as mesmas tentativas e dicas nos jogos diários.
   const sql16 = readFileSync(new URL('../supabase/migrations/0016_diarios_servidor.sql', import.meta.url), 'utf8');
   assert.match(sql16, /then 6 \+ \(niv >= 6\)::int else 8 \+ \(niv >= 9\)::int end/);
