@@ -76,3 +76,10 @@ test('ícone exclusivo Streamer: lançado, com arte, só vale para quem ganhou',
   await entrar();
   await assert.rejects(platform.setAvatar('icone:exc-streamer'), /não foi liberado/);
 });
+
+test('nome da recompensa de efeito/ícone usa o nome do site (Streamer), não o id', async () => {
+  const { nomeRecompensa } = await import('../shared/recompensas.js');
+  assert.equal(nomeRecompensa('efeito', 'st-nebulosa'), 'Streamer');
+  assert.equal(nomeRecompensa('efeito', 'st-neon'), 'Neon violeta'); // em teste (painel)
+  assert.equal(nomeRecompensa('icone', 'exc-streamer'), 'Streamer');
+});
