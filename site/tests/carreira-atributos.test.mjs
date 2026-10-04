@@ -73,7 +73,7 @@ test('carreira: OVR inicial fixo (53) com atributos sorteados, mais o bônus de 
 
 test('carreira: teto de OVR igual para todos (75–100), não sorteado, sobe com a carreira e fica difícil depois do 96', async () => {
   const { createPlayer, capRange, updateCap, fatorTeto, rollAttrs, OVR_INICIAL } = await import('../jogos/carreira-no-rift/js/engine/player.js');
-  const { capGain } = await import('../jogos/carreira-no-rift/js/engine/career.js');
+  const { capGain, CAP_TAXA_ELO } = await import('../jogos/carreira-no-rift/js/engine/career.js');
   const { bonusCarreira } = await import('../shared/ranked.js');
   // Mesma faixa para todos os elos: o bônus de elo só muda o OVR inicial.
   assert.deepEqual(capRange(), { min: 75, max: 100 });
@@ -118,6 +118,12 @@ test('carreira: teto de OVR igual para todos (75–100), não sorteado, sobe com
   assert.ok(capGain({ ...base, decisionScore: -1.5 }, p, ctx) < 0);
   assert.ok(capGain({ ...base, decisionScore: 1.5 }, p, ctx) > 0);
   assert.equal(capGain({ ...campea, age: 27 }, p, ctx), 0); // depois dos 26 não muda
-  // Sem "limitador por elo": o ganho de teto é o mesmo para qualquer elo.
-  assert.equal(capGain(campea, novo(10), ctx), capGain(campea, novo(0), ctx));
+  // Sem faixa por elo: o teto é 75–100 para todos. O que muda por elo é só o ritmo
+  // do ganho de teto (calibrado para ~3% de 96+ sem elo, 10% Ferro, 20% Ouro,
+  // 30% Diamante, 45% Mestre em diante): quem tem elo ganha um pouco mais.
+  assert.equal(CAP_TAXA_ELO.length, 11);
+  assert.ok(CAP_TAXA_ELO.every((x) => x > 0.5 && x < 1.5));
+  assert.ok(capGain(campea, novo(1), ctx) > capGain(campea, novo(0), ctx)); // Ferro > sem elo
+  assert.ok(CAP_TAXA_ELO[8] >= CAP_TAXA_ELO[7]); // Mestre em diante sobe mais que o Diamante
+  assert.equal(capGain(campea, novo(7), ctx), capGain(campea, novo(7), ctx));
 });

@@ -975,7 +975,12 @@ function driftWorld(state) {
 // fez: títulos, prêmios, decisões certas ou erradas, nível da liga e
 // desempenho. Depois dos 26 anos o teto não muda mais. Pesos calibrados com
 // scripts/simulate.mjs (ver README).
-const CAPW = { liga1: 2.4, liga2: 0.4, liga3: 0.1, mundial: 7, msi: 4.8, fs: 3.4, premio: 1.4, mvpFinal: 2.8, decisao: 1, vitoria: 0.3, jogou: 0.2, regiao: 0.5, taxa: 0.7 };
+const CAPW = { liga1: 2.4, liga2: 0.4, liga3: 0.1, mundial: 7, msi: 4.8, fs: 3.4, premio: 1.4, mvpFinal: 2.8, decisao: 1, vitoria: 0.3, jogou: 0.2, regiao: 0.5 };
+// Multiplicador do ganho de teto por elo (bônus 0 = sem elo … 10 = Desafiante).
+// Calibrado para que a parcela de carreiras com OVR máximo 96+ seja cerca de
+// 3% sem elo, 10% no Ferro, 20% no Ouro, 30% no Diamante e 45% do Mestre em
+// diante (scripts/simulate.mjs, ver README).
+export const CAP_TAXA_ELO = [0.85, 1.06, 1.07, 1.06, 1.08, 1.06, 1.05, 1.045, 1.2, 1.12, 1.07];
 export function capGain(s, p, { level, winRate, playedRatio }) {
   if (s.age > 26) return 0;
   let pts = (level?.potential || 0) * CAPW.regiao;
@@ -985,7 +990,7 @@ export function capGain(s, p, { level, winRate, playedRatio }) {
   for (const a of s.awards) pts += a.name === 'MVP da Final do Mundial' ? CAPW.mvpFinal : CAPW.premio;
   pts += clamp(s.decisionScore || 0, -1.5, 1.5) * CAPW.decisao;
   pts += (winRate - 0.5) * CAPW.vitoria + (playedRatio - 0.6) * CAPW.jogou;
-  return pts * CAPW.taxa;
+  return pts * CAP_TAXA_ELO[clamp(Math.round(p.capBonus || 0), 0, CAP_TAXA_ELO.length - 1)];
 }
 
 function endSeason(state) {

@@ -135,9 +135,12 @@ SOLID, 7REX, RMD e Ei Nerd).
 | Jogar uma liga forte (LCK, LPL +0,25; LEC, LCS +0,1; ×0,5) | pequeno bônus |
 | Vencer e jogar bastante | pequeno bônus |
 
-Tudo isso é multiplicado por 0,7. A subida do teto fica mais lenta perto do
+Tudo isso é multiplicado por um fator que depende do elo (`CAP_TAXA_ELO` em
+`js/engine/career.js`: 0,85 sem elo, cerca de 1,05 a 1,08 do Ferro ao
+Diamante e de 1,07 a 1,2 do Mestre em diante), calibrado para a parcela de
+carreiras que chegam a OVR 96+. A subida do teto fica mais lenta perto do
 topo: pleno até 88, 60% aos 94 e, a partir do 96, bem difícil (35% a 30% do
-ganho) até o 100, que é possível mas muito raro. O atributo também fica mais
+ganho) até o 100, que é possível mas raro. O atributo também fica mais
 difícil de subir a partir do 96 (60% no 96, 40% no 100). Decisões erradas e
 temporadas ruins podem tirar teto, mas nunca abaixo de 75.
 
@@ -145,12 +148,27 @@ temporadas ruins podem tirar teto, mas nunca abaixo de 75.
 OVR crescer mais (evolução +20% na LCK, +18% na LPL, +10% na LEC, +6% na
 LCS) e dá um pequeno bônus de teto. A divisão de acesso dá 60% disso.
 
-**Distribuição esperada** (1.000 carreiras simuladas por linha, Brasil,
-`node scripts/simulate.mjs 1000 BR ambicioso normal <bônus>`): OVR máximo
-mediano ~83 sem elo (p90 ~90, 96+ ~1%); com Platina (bônus 5) ~85 e com
-Desafiante (bônus 10) ~88, p90 ~96, 96+ ~12% e 100 em ~0,3% das carreiras.
-Chegar a 80 já é uma boa carreira; 90+ é para poucos; do 96 em diante é
-raríssimo. Cerca de 58% das carreiras passam pela LCK/LPL.
+**Distribuição esperada** (2.500 carreiras simuladas por elo, Brasil,
+escolhendo sempre o time mais forte; `node scripts/simulate.mjs 2500 BR
+ambicioso normal <bônus>`, com bônus 0 sem elo, 1 Ferro … 10 Desafiante):
+
+| Elo | OVR máximo 96+ | 98+ | 100 | Mediana |
+|---|---|---|---|---|
+| Sem elo | 2,5% | 0,6% | ~0% | 85 |
+| Ferro | 9,5% | 2,2% | 0,1% | 88 |
+| Bronze | 13% | 4% | 0,4% | 89 |
+| Prata | 16% | 6% | 0,3% | 90 |
+| Ouro | 18% | 7% | 0,6% | 91 |
+| Platina | 24% | 11% | 0,7% | 91 |
+| Esmeralda | 28% | 12% | 0,9% | 92 |
+| Diamante | 30% | 15% | 1,8% | 93 |
+| Mestre | 44% | 26% | 3,3% | 95 |
+| Grão-Mestre | 44% | 26% | 4,1% | 95 |
+| Desafiante | 46% | 27% | 5,2% | 95 |
+
+Quem escolhe sem critério (propostas ao acaso) fica abaixo: 96+ em ~1% sem
+elo, ~12% no Ouro e ~32% no Desafiante. Chegar a 80 já é uma boa carreira;
+do 96 em diante é raro. Cerca de 58% das carreiras passam pela LCK/LPL.
 
 **Zebras:** a forma de cada time numa etapa ou torneio oscila um pouco, e
 em 10% das vezes o time vive uma "fase iluminada" (+5 a +13 de força). Assim

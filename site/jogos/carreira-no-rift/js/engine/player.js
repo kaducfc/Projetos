@@ -75,7 +75,7 @@ export function updateCap(p, ganho) {
   return p.potential - antes;
 }
 
-export function createPlayer({ nick, nat, region, role, style, attrs }) {
+export function createPlayer({ nick, nat, region, role, style, attrs, bonus = 0 }) {
   const cap = capRange();
   return {
     nick, nat, role, style, region,
@@ -84,6 +84,7 @@ export function createPlayer({ nick, nat, region, role, style, attrs }) {
     potential: cap.min,
     capMin: cap.min,
     capMax: cap.max,
+    capBonus: bonus, // bônus de elo da ranqueada na hora da criação (0 a 10)
     capProgress: 0,
     age: 16,
     morale: 55,
