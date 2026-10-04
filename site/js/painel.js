@@ -8,6 +8,7 @@ import { ROLES, REGIONS } from '../jogos/carreira-no-rift/js/data/world.js';
 import { GAMES, gameById } from '../shared/config.js';
 import { sinaisVigia, resumoJogadores } from '../shared/vigia.js';
 import { nomeRecompensa, tipoTexto, codigoBonito } from '../shared/recompensas.js';
+import { EFEITOS, EFEITOS_TESTE } from '../shared/efeitos.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -71,7 +72,7 @@ function hbars(entries, nameOf = (x) => x, { sort = true, fmt = num } = {}) {
 }
 
 // Abas do painel (a escolhida fica guardada neste navegador).
-const ABAS = [['geral', 'Visão geral'], ['jogos', 'Jogos'], ['ranqueada', 'Ranqueada'], ['jogador', 'Jogador'], ['apoio', 'Apoio'], ['ferramentas', 'Ferramentas']];
+const ABAS = [['geral', 'Visão geral'], ['jogos', 'Jogos'], ['ranqueada', 'Ranqueada'], ['jogador', 'Jogador'], ['apoio', 'Apoio'], ['ferramentas', 'Ferramentas'], ['teste', 'Teste']];
 let aba = 'geral';
 try { aba = localStorage.getItem('site.painel.aba') || 'geral'; } catch { /* sem storage */ }
 if (!ABAS.some(([id]) => id === aba)) aba = 'geral';
@@ -100,7 +101,7 @@ function render(st) {
   ultimo = st;
   const contador = { ranqueada: suspeitasRk() + suspeitasVg(), apoio: ap?.periodo?.status?.pendente || 0 };
   const nav = `<nav class="p-tabs" role="tablist">${ABAS.map(([id, nome]) => `<button type="button" role="tab" data-aba="${id}" class="${aba === id ? 'on' : ''}">${nome}${contador[id] ? ` <span class="p-badge">${num(contador[id])}</span>` : ''}</button>`).join('')}</nav>`;
-  const conteudo = { geral: abaGeral, jogos: abaJogos, ranqueada: abaRanqueada, jogador: abaJogador, apoio: abaApoio, ferramentas: abaFerramentas }[aba](st);
+  const conteudo = { geral: abaGeral, jogos: abaJogos, ranqueada: abaRanqueada, jogador: abaJogador, apoio: abaApoio, ferramentas: abaFerramentas, teste: abaTeste }[aba](st);
   body.innerHTML = nav + conteudo;
 }
 
@@ -339,6 +340,55 @@ function abaFerramentas() {
     </div>
   </section>`;
 }
+
+// ------------------------------------------------------------------ aba: teste
+// Coisas que ainda não foram para o público: o administrador vê e aprova aqui.
+// Para lançar um efeito: mover de EFEITOS_TESTE para EFEITOS (shared/efeitos.js).
+
+let testeNick = '';
+
+function testeCartoes(nick) {
+  const nome = esc(nick || 'NomeDoJogador');
+  const grupo = (lista, rotulo) => lista.map((e) => `<article class="card t-efeito">
+      <div class="t-ef-cab"><h3>${esc(e.nome)}</h3><span class="p-badge">${esc(e.tema || rotulo)}</span></div>
+      <div class="t-ef-grande"><span class="nick fx ${e.classe}">${nome}</span></div>
+      <div class="t-ef-linha"><span class="t-ef-mini"><span class="nick fx ${e.classe}">${nome}</span></span>
+        <span class="t-ef-rk"><b>7</b> <span class="nick fx ${e.classe}">${nome}</span> <small>Ouro 2 · 1.250 PDR</small></span></div>
+      <p class="c-sub">Id para o código: <code>${esc(e.id)}</code> <button type="button" class="p-link" data-t-copiar="${esc(e.id)}">copiar</button></p>
+    </article>`).join('');
+  return `<h3 class="t-tit">Em teste (só você vê)</h3><div class="cards t-grade">${grupo(EFEITOS_TESTE, 'Teste')}</div>
+    <h3 class="t-tit">Já no ar, para comparar</h3><div class="cards t-grade">${grupo(EFEITOS, 'Público')}</div>`;
+}
+
+function abaTeste() {
+  const eu = platform.getUser();
+  if (!testeNick && eu) testeNick = eu.username;
+  return `<section class="p-section">
+    <h2>Teste</h2>
+    <div class="card">
+      <p class="c-sub">Aqui ficam as novidades antes de irem para todo mundo. Os efeitos abaixo (para streamers) <b>não aparecem para os jogadores</b>: nem no perfil, nem no ranking. Para ver o efeito no seu nome de verdade, é só esperar o lançamento.</p>
+      <label class="p-label">Nick de exemplo <input type="text" data-t-nick value="${esc(testeNick)}" maxlength="24" autocomplete="off" spellcheck="false" /></label>
+      <ul class="p-steps">
+        <li>Para dar um destes efeitos a um streamer: <b>Ferramentas → Códigos de recompensa</b>, recompensa tipo efeito, com o <b>id</b> do cartão (ex.: <code>st-nebulosa</code>).</li>
+        <li>Depois de aprovar, me diga quais ficam e eu os movo para a lista pública (o jogador que tiver o código já passa a poder selecionar).</li>
+      </ul>
+    </div>
+    <div data-t-previas>${testeCartoes(testeNick)}</div>
+  </section>`;
+}
+
+body.addEventListener('input', (e) => {
+  const i = e.target.closest('[data-t-nick]');
+  if (!i) return;
+  testeNick = i.value.trim().slice(0, 24);
+  const el = body.querySelector('[data-t-previas]');
+  if (el) el.innerHTML = testeCartoes(testeNick);
+});
+body.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-t-copiar]');
+  if (!b) return;
+  navigator.clipboard?.writeText(b.dataset.tCopiar).then(() => { b.textContent = 'copiado!'; }, () => {});
+});
 
 // ------------------------------------------------------------ ranqueada: vigia
 

@@ -45,7 +45,7 @@ function linha(j) {
     : `<span class="${j.valor > 0 ? 'pdr-mais' : j.valor < 0 ? 'pdr-menos' : ''}">${fmtPdr(j.valor).replace(' PDR', '')}</span><small>PDR</small>`;
   return `<li class="${j.eu ? 'eu' : ''}${j.pos <= 3 ? ` top${j.pos}` : ''}">
     <span class="rk-pos">${j.pos}</span>
-    <span class="rk-quem">${avatarHtml(j.avatar, j.username, 34, `elo-${e.id}`)}<b>${nickHtml(j.username, j.apoiador)}</b></span>
+    <span class="rk-quem">${avatarHtml(j.avatar, j.username, 34, `elo-${e.id}`)}<b>${nickHtml(j.username, j.apoiador, j.efeito)}</b></span>
     <span class="rk-elo" style="--cor:${e.cor}">${emblemaHtml(e.id, 18)}<span>${esc(nomeDivisao(d))}</span></span>
     <span class="rk-pts">${valor}</span>
   </li>`;
@@ -67,7 +67,7 @@ function tabela() {
     const fora = dados.eu && !dados.lista.some((j) => j.eu);
     const u = platform.getUser();
     corpo = `<ol class="rk-lista">${dados.lista.map(linha).join('')}
-      ${fora ? linha({ ...dados.eu, eu: true, username: u.username, avatar: u.avatar, apoiador: u.apoioTotal > 0 }).replace('class="eu', 'class="eu sep') : ''}
+      ${fora ? linha({ ...dados.eu, eu: true, username: u.username, avatar: u.avatar, apoiador: u.apoioTotal > 0, efeito: u.efeito }).replace('class="eu', 'class="eu sep') : ''}
     </ol>`;
   }
   const quando = !dados ? '' : periodo === 'geral' ? 'Pelo elo e PDR'

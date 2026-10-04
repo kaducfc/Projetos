@@ -206,6 +206,8 @@ async function setUser(sb, authUser) {
     if (error) ({ data: profile } = await sb.from('site_profiles').select('username').eq('id', authUser.id).maybeSingle());
     // Apoio ao site (banco sem 0008_apoio.sql: sem apoio).
     const { data: apoio } = await sb.from('site_profiles').select('apoio_total').eq('id', authUser.id).maybeSingle();
+    // Efeito escolhido no nome (banco sem 0035_efeito_nome.sql: automático).
+    const { data: fx } = await sb.from('site_profiles').select('efeito').eq('id', authUser.id).maybeSingle().then((r) => r, () => ({ data: null }));
     // Elo da ranqueada (null = ainda não jogou ou banco sem 0015_ranqueada_pdr.sql).
     const { data: rank } = await sb.rpc('site_rk_eu').then((r) => r, () => ({ data: null }));
     const meta = authUser.user_metadata || {};
@@ -219,6 +221,7 @@ async function setUser(sb, authUser) {
       createdAt: profile?.created_at || authUser.created_at || null,
       elo: rank?.elo || null,
       apoioTotal: Number(apoio?.apoio_total || 0),
+      efeito: fx?.efeito || null,
       // Como a conta entra: 'email' (senha) e/ou 'google'.
       providers: app.providers || (app.provider ? [app.provider] : ['email']),
     };
@@ -432,6 +435,22 @@ export async function setAvatar(avatar) {
     throw friendly(error);
   }
   user = { ...user, avatar };
+  emit({ type: 'auth', user });
+  return user;
+}
+
+// Efeito no nome: null (automático), 'nenhum' ou o id de um efeito liberado.
+export async function setEfeito(efeito) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { error } = await sb.rpc('site_set_efeito', { efeito });
+  if (error) {
+    if (/efeito_bloqueado/.test(error.message)) throw new Error('Esse efeito ainda não foi liberado para a sua conta.');
+    if (/invalid_efeito/.test(error.message)) throw new Error('Esse efeito não está disponível. Recarregue a página e tente de novo.');
+    if (/site_set_efeito|schema cache/.test(error.message)) throw new Error('Os efeitos ainda não estão ativos no servidor.');
+    throw friendly(error);
+  }
+  user = { ...user, efeito };
   emit({ type: 'auth', user });
   return user;
 }

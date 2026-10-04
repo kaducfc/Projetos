@@ -212,3 +212,21 @@ button.btn-primary:disabled { opacity: 0.6; cursor: default; }
 .pf-rec-lista li { padding: 8px 10px; border: 1px solid var(--line-2); border-radius: 4px; background: var(--panel-2); }
 .pf-rec-tipo { display: inline-block; margin-right: 6px; font-size: 10.5px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); }
 .pf-modal form { display: flex; flex-direction: column; gap: 12px; }
+
+/* Efeito no nome */
+.pf-efeito .eyebrow { color: var(--gold-2); }
+.pf-efeito p { margin: 0; }
+.pf-ef-topo { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.pf-ef-topo .pf-apoio-txt { font-size: 18px; }
+.pf-ef-abrir { margin: 0; min-width: 96px; }
+.pf-ef-lista { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.pf-ef { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 10px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; background: rgba(255, 255, 255, 0.03); text-align: center; }
+.pf-ef.on { border-color: var(--gold-2); box-shadow: 0 0 0 1px rgba(245, 207, 90, 0.35) inset; }
+.pf-ef-previa { background: none; border: 0; padding: 6px 4px; cursor: pointer; font: inherit; font-size: 24px; font-weight: 800; color: #e8e2d2; max-width: 100%; overflow-wrap: anywhere; }
+.pf-ef-nome { font-size: 13px; color: #b9b2a0; }
+.pf-ef-btn { margin: 0; width: 100%; }
+.pf-ef.trava .pf-ef-previa, .pf-ef.trava .pf-ef-nome { opacity: 0.45; }
+.pf-ef.trava .pf-ef-btn { opacity: 0.5; cursor: not-allowed; background: #3a3630; color: #bdb6a4; box-shadow: none; }
+.pf-ef-como { margin: 2px 0 0; font-size: 13px; line-height: 1.4; color: #e8e2d2; }
+.pf-ef-como a { color: var(--gold-2); font-weight: 700; white-space: nowrap; }
+.pf-ef-nota { margin-top: 12px !important; }

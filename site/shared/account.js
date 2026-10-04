@@ -28,7 +28,7 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
       account = `
         <div class="sb-user">
           <button type="button" class="sb-btn" data-sb="menu" aria-haspopup="true">
-            ${avatarHtml(u.avatar, u.username, 22, `sb-avatar${u.elo ? ` elo-${u.elo}` : ''}`)}${nickHtml(u.username, u.apoioTotal > 0)}<span aria-hidden="true">▾</span>
+            ${avatarHtml(u.avatar, u.username, 22, `sb-avatar${u.elo ? ` elo-${u.elo}` : ''}`)}${nickHtml(u.username, u.apoioTotal > 0, u.efeito)}<span aria-hidden="true">▾</span>
           </button>
           <div class="sb-menu" hidden>
             <div class="sb-menu-email">${esc(u.email || '')}</div>

@@ -368,6 +368,16 @@ export function createFakeSupabase() {
       if (!uid) return { data: null, error: { message: 'not_authenticated' } };
       return { data: (db.recompensas || []).filter((x) => x.user_id === uid).map((x) => ({ tipo: x.tipo, chave: x.chave, origem: 'codigo', criado: new Date().toISOString() })), error: null };
     }
+    if (name === 'site_set_efeito') {
+      const uid = auth._uid();
+      const me = db.site_profiles.find((p) => p.id === uid);
+      if (!me) return { data: null, error: { message: 'not_authenticated' } };
+      if (args.efeito != null && !/^[a-z0-9-]{2,30}$/.test(args.efeito)) return { data: null, error: { message: 'invalid_efeito' } };
+      if (args.efeito === 'reflexo' && !((me.apoio_total || 0) > 0)) return { data: null, error: { message: 'efeito_bloqueado' } };
+      if (args.efeito && !['reflexo', 'nenhum'].includes(args.efeito) && !(db.recompensas || []).some((x) => x.user_id === uid && x.tipo === 'efeito' && x.chave === args.efeito)) return { data: null, error: { message: 'efeito_bloqueado' } };
+      me.efeito = args.efeito;
+      return { data: args.efeito, error: null };
+    }
     if (name === 'site_is_admin') return { data: admins.has(auth._uid()), error: null };
     if (name === 'site_admin_stats') {
       if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };

@@ -184,6 +184,17 @@ a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
 .fx-reflexo { background: linear-gradient(110deg, #c9961f 0%, #f5cf5a 32%, #fffbe6 50%, #f5cf5a 68%, #c9961f 100%); background-size: 200% 100%; background-repeat: repeat-x; -webkit-background-clip: text; background-clip: text; color: transparent; animation: fx-reflexo 2.6s linear infinite; }
 /* O degradê começa e termina na mesma cor: andar exatamente uma volta (200%) emenda sem salto. */
 @keyframes fx-reflexo { from { background-position: 0 0; } to { background-position: -200% 0; } }
+/* Efeitos de streamer (em teste no painel; shared/efeitos.js). Cada degradê
+   começa e termina na mesma cor, e a animação anda uma volta inteira: sem salto. */
+.fx-st-nebulosa { background: linear-gradient(100deg, #7c3aed 0%, #a78bfa 28%, #f3e8ff 50%, #a78bfa 72%, #7c3aed 100%); background-size: 200% 100%; background-repeat: repeat-x; -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.75)); animation: fx-reflexo 4.2s linear infinite; }
+.fx-st-neon { color: #f5ecff; text-shadow: 0 0 3px #f3e8ff, 0 0 9px #a855f7, 0 0 18px #9333ea, 0 0 32px #7e22ce; animation: fx-neon 2.6s ease-in-out infinite alternate; }
+@keyframes fx-neon { from { text-shadow: 0 0 2px #f3e8ff, 0 0 6px #a855f7, 0 0 12px #9333ea, 0 0 20px #7e22ce; } to { text-shadow: 0 0 4px #fff, 0 0 12px #c084fc, 0 0 24px #a855f7, 0 0 42px #9333ea; } }
+.fx-st-galaxia { background: radial-gradient(circle at 20% 30%, #fff 0 1.2px, transparent 2px), radial-gradient(circle at 72% 62%, #fff 0 1.2px, transparent 2px), radial-gradient(circle at 46% 82%, #fde68a 0 1.1px, transparent 2px), linear-gradient(100deg, #6366f1 0%, #a855f7 30%, #f472b6 50%, #a855f7 70%, #6366f1 100%); background-size: 34px 100%, 47px 100%, 27px 100%, 200% 100%; background-repeat: repeat-x; -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.7)); animation: fx-galaxia 5s linear infinite; }
+@keyframes fx-galaxia { from { background-position: 0 0, 0 0, 0 0, 0 0; } to { background-position: -34px 0, -47px 0, -27px 0, -200% 0; } }
+.fx-st-brasa { background: linear-gradient(0deg, #ef4444 0%, #f97316 22%, #fbbf24 42%, #fff1a8 50%, #fbbf24 58%, #f97316 78%, #ef4444 100%); background-size: 100% 300%; background-repeat: repeat-y; -webkit-background-clip: text; background-clip: text; color: transparent; animation: fx-brasa 2.2s linear infinite, fx-brasa-brilho 0.9s ease-in-out infinite alternate; }
+@keyframes fx-brasa { from { background-position: 0 0; } to { background-position: 0 -300%; } }
+@keyframes fx-brasa-brilho { from { filter: drop-shadow(0 0 3px rgba(249, 115, 22, 0.7)); } to { filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.95)); } }
+.fx-st-aurora { background: linear-gradient(100deg, #34d399 0%, #22d3ee 25%, #60a5fa 50%, #a78bfa 75%, #34d399 100%); background-size: 200% 100%; background-repeat: repeat-x; -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(45, 212, 191, 0.5)); animation: fx-reflexo 5.5s linear infinite; }
 @media (prefers-reduced-motion: reduce) {
   .fx { animation: none !important; }
 }

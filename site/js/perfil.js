@@ -9,6 +9,7 @@ import { nomeRecompensa, tipoTexto } from '../shared/recompensas.js';
 import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
+import { EFEITOS, efeitoAtivo } from '../shared/efeitos.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -49,9 +50,45 @@ function cabecalho(u) {
     </button>
     <div class="pf-who">
       <p class="eyebrow">◆ Meu perfil</p>
-      <h1 class="display">${nickHtml(u.username, u.apoioTotal > 0)}</h1>
+      <h1 class="display">${nickHtml(u.username, u.apoioTotal > 0, u.efeito)}</h1>
       <p class="muted small">${u.createdAt ? `No Rift Arcade desde ${data(u.createdAt, { month: 'long', year: 'numeric' })} · ` : ''}Entra com ${contas}</p>
     </div>
+  </section>`;
+}
+
+// Efeito no nome: menu que abre e mostra uma prévia de cada efeito. Os que o
+// jogador ainda não tem ficam apagados e, ao tocar, explicam como conseguir.
+const EFEITOS_NENHUM = { id: 'nenhum' };
+let efeitoAberto = false;
+let efeitoInfo = null; // id do efeito travado que está mostrando o requisito
+let efeitosGanhos = new Set(); // efeitos ganhos por código
+
+const possuiEfeito = (u, id) => (id === 'reflexo' ? u.apoioTotal > 0 : efeitosGanhos.has(id));
+
+function cardEfeito(u) {
+  const atual = efeitoAtivo(u.efeito, u.apoioTotal > 0);
+  const escolhido = atual?.id || 'nenhum';
+  const opcao = ({ id, nome, classe, como, link }) => {
+    const livre = id === 'nenhum' || possuiEfeito(u, id);
+    const previa = id === 'nenhum' ? `<span class="nick">${esc(u.username)}</span>` : `<span class="nick fx ${classe}">${esc(u.username)}</span>`;
+    const requisito = !livre && efeitoInfo === id
+      ? `<p class="pf-ef-como" role="status">🔒 ${esc(como)}${link ? ` <a href="${link.href}">${esc(link.texto)}</a>` : ''}</p>` : '';
+    return `<li class="pf-ef${livre ? '' : ' trava'}${escolhido === id ? ' on' : ''}" data-ef="${id}">
+      <button type="button" class="pf-ef-previa" data-act="efeito-ver" data-ef="${id}" aria-label="Efeito ${esc(nome)}">${previa}</button>
+      <span class="pf-ef-nome">${esc(nome)}</span>
+      <button type="button" class="${escolhido === id ? 'btn-ghost' : 'btn-primary'} pf-ef-btn" data-act="efeito-escolher" data-ef="${id}"${livre ? '' : ' aria-disabled="true"'}${escolhido === id ? ' disabled' : ''}>${escolhido === id ? 'Selecionado' : livre ? 'Selecionar' : '🔒 Bloqueado'}</button>
+      ${requisito}</li>`;
+  };
+  return `<section class="pf-card pf-efeito">
+    <div class="pf-ef-topo">
+      <div>
+        <p class="eyebrow">✦ Efeito</p>
+        <p class="pf-apoio-txt">Seu nome agora: ${nickHtml(u.username, u.apoioTotal > 0, u.efeito)}</p>
+      </div>
+      <button type="button" class="btn-ghost pf-ef-abrir" data-act="efeito-abrir" aria-expanded="${efeitoAberto}">${efeitoAberto ? 'Fechar' : 'Abrir'}</button>
+    </div>
+    ${efeitoAberto ? `<ul class="pf-ef-lista">${opcao({ id: 'nenhum', nome: 'Sem efeito' })}${EFEITOS.map(opcao).join('')}</ul>
+    <p class="muted small pf-ef-nota">Novos efeitos chegam por doação e por códigos de recompensa. Só muda a aparência do seu nome.</p>` : ''}
   </section>`;
 }
 
@@ -179,14 +216,16 @@ function render() {
     </section>`;
     return;
   }
-  root.innerHTML = `${cabecalho(u)}${cardMinhaRanqueada(status)}${cardApoio(u)}${cardCodigo()}${resumo()}${historico()}${conta(u)}`;
+  root.innerHTML = `${cabecalho(u)}${cardEfeito(u)}${cardMinhaRanqueada(status)}${cardApoio(u)}${cardCodigo()}${resumo()}${historico()}${conta(u)}`;
 }
 
 let carregando = true;
 async function carregar() {
   await platform.init();
   if (platform.getUser()) {
-    [resultados, status] = await Promise.all([platform.listResults({ limit: 500 }), platform.rankedStatus()]);
+    let recs;
+    [resultados, status, recs] = await Promise.all([platform.listResults({ limit: 500 }), platform.rankedStatus(), platform.minhasRecompensas()]);
+    efeitosGanhos = new Set(recs.filter((r) => r.tipo === 'efeito').map((r) => r.chave));
   }
   carregando = false;
   render();
@@ -265,6 +304,7 @@ async function escolherIcone() {
   let recompensas;
   [selos, vagas, recompensas] = await Promise.all([platform.meusSelos(), platform.pioneirosVagas(), platform.minhasRecompensas()]);
   ganhos = new Set(recompensas.filter((r) => r.tipo === 'icone').map((r) => r.chave));
+  efeitosGanhos = new Set(recompensas.filter((r) => r.tipo === 'efeito').map((r) => r.chave));
   const g = el.querySelector('[data-grade]');
   if (g) g.innerHTML = grade(selos, ganhos);
 }
@@ -294,6 +334,7 @@ function resgatarCodigo() {
       const novaChave = new Set(novas.map((r) => `${r.tipo}:${r.chave}`));
       const linhas = recompensas.map((r) => `<li><span class="pf-rec-tipo">${esc(tipoTexto(r.tipo))}</span> <b>${esc(nomeRecompensa(r.tipo, r.chave))}</b>${novaChave.has(`${r.tipo}:${r.chave}`) ? '' : ' <small>(você já tinha)</small>'}</li>`).join('');
       const temIcone = recompensas.some((r) => r.tipo === 'icone');
+      recompensas.filter((r) => r.tipo === 'efeito').forEach((r) => efeitosGanhos.add(r.chave));
       el.querySelector('.muted.small')?.remove();
       form.outerHTML = `<div class="pf-resgate-ok" role="status">
         <p class="pf-info-tit">🎉 <b>Código resgatado!</b></p>
@@ -360,6 +401,24 @@ root.addEventListener('click', async (e) => {
   if (act === 'entrar') openAuthModal('login');
   if (act === 'icone') escolherIcone();
   if (act === 'codigo') resgatarCodigo();
+  if (act === 'efeito-abrir') { efeitoAberto = !efeitoAberto; efeitoInfo = null; render(); }
+  if (act === 'efeito-ver' || act === 'efeito-escolher') {
+    const id = b.dataset.ef;
+    const u = platform.getUser();
+    const efeito = id === 'nenhum' ? EFEITOS_NENHUM : EFEITOS.find((x) => x.id === id);
+    if (!efeito) return;
+    if (id !== 'nenhum' && !possuiEfeito(u, id)) { efeitoInfo = efeitoInfo === id ? null : id; render(); return; }
+    if (act === 'efeito-ver') return;
+    efeitoInfo = null;
+    b.disabled = true;
+    try {
+      await platform.setEfeito(id);
+      toast('Efeito atualizado!');
+    } catch (err) {
+      toast(err.message);
+      render();
+    }
+  }
   if (act === 'mais') { mostrar += 30; render(); }
   if (act === 'historico') { histAberto = !histAberto; render(); }
   if (act === 'excluir') confirmarExclusao();
