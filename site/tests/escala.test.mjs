@@ -67,8 +67,10 @@ test('escala: ranqueada no servidor usa a mesma nota e 5 rodadas', () => {
   assert.equal(RODADAS, 5);
   assert.match(sql, /ln\(3\) \* \(1 \+ 0\.35 \* ln\(greatest\(1, razao\)\)\)/); // mesma margem do logic.js
   assert.match(sql, /between 1\.15 and 12/); // mesma faixa de proporção
-  assert.match(sql, /interval '35 seconds'/); // 30 s + folga
-  assert.doesNotMatch(sql, /interval '65 seconds'/);
+  assert.match(sql, /interval '35 seconds'/); // 30 s + folga (a 0029 muda para 1 min)
+  const sql29 = readFileSync(new URL('../supabase/migrations/0029_escala_1_minuto.sql', import.meta.url), 'utf8');
+  assert.match(sql29, /interval ''65 seconds''/); // 1 min + 5 s de folga
+  assert.match(sql29, /''limite'', 60/);
   // As alturas do servidor (0023) batem com a tabela do site.
   const alt = readFileSync(new URL('../supabase/migrations/0023_escala_alturas.sql', import.meta.url), 'utf8');
   const noSql = Object.fromEntries([...alt.matchAll(/\('((?:[^']|'')+)', '(?:[^']|'')*', ([\d.]+)\)/g)].map((m) => [m[1].replace(/''/g, "'"), Number(m[2])]));

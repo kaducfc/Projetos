@@ -83,7 +83,7 @@ function rodadaAtual() {
     if (!srv || srv.status === 'terminou') return null;
     const r = srv.rodadas[srv.atual];
     if (!r || !porId.has(r.ref) || !porId.has(r.alvo)) return null;
-    return { ref: r.ref, alvo: r.alvo, indice: srv.atual, prazo: Date.now() + (srv.restante ?? 30) * 1000 };
+    return { ref: r.ref, alvo: r.alvo, indice: srv.atual, prazo: Date.now() + (srv.restante ?? 60) * 1000 };
   }
   if (modo === 'diario') {
     const rs = save.diario.rodadas;
@@ -132,7 +132,7 @@ function telaInicio() {
       <p class="eyebrow">Ranqueada de hoje</p>
       <h2 class="display">${RODADAS} rodadas · 1 chance por dia</h2>
       <ul class="esc-regras">
-        <li>Cada rodada tem <b>30 segundos</b>. Acabou o tempo, vale o tamanho em que a figura estiver.</li>
+        <li>Cada rodada tem <b>1 minuto</b>. Acabou o tempo, vale o tamanho em que a figura estiver.</li>
         <li>No fim, a <b>média</b> das ${RODADAS} rodadas vira PDR.</li>
         <li>Se não terminar até a meia-noite, o que faltar vale 0.</li>
       </ul>
@@ -201,7 +201,7 @@ function painelResultado(ref, alvo) {
     ${caixaPdr()}
     <section class="esc-res">
       <div class="esc-res-top"><span class="esc-pts ${quadradoCls(p)}">${p}<small>/100</small></span>
-        <div><b>${rodada.esgotou ? 'Tempo esgotado' : veredito(p)}</b><p>${rodada.esgotou ? 'A resposta chegou depois dos 30 segundos.' : diferenca(rodada.palpite, alvo.altura)}</p></div></div>
+        <div><b>${rodada.esgotou ? 'Tempo esgotado' : veredito(p)}</b><p>${rodada.esgotou ? 'A resposta chegou depois de 1 minuto.' : diferenca(rodada.palpite, alvo.altura)}</p></div></div>
       <ul>
         <li><span>Tamanho real · ${esc(ref.nome)}</span><b>Altura ${fmtAltura(ref.altura)}</b></li>
         <li><span>Tamanho real · ${esc(alvo.nome)}</span><b>Altura ${fmtAltura(alvo.altura)}</b></li>
@@ -459,7 +459,7 @@ function ajuda() {
     <p>A figura <b class="azul-txt">azul</b> é a referência e está no tamanho real dela. Ajuste a figura <b class="verm-txt">vermelha</b> até ela ficar no tamanho que você acha certo <b>em relação à azul</b>.</p>
     <p>Arraste para cima ou para baixo, use a barra ou os botões − e +. Depois confirme.</p>
     <p>Quanto mais perto da proporção real, mais pontos ganhará.</p>
-    <p>${ranq ? '<b>Ranqueada:</b> uma partida com 5 rodadas por dia, 30 segundos cada, valendo PDR.' : '<b>Diário:</b> uma partida com 5 rodadas por dia. Com a conta conectada, ela vira a Ranqueada e vale PDR.'}</p>
+    <p>${ranq ? '<b>Ranqueada:</b> uma partida com 5 rodadas por dia, 1 minuto cada, valendo PDR.' : '<b>Diário:</b> uma partida com 5 rodadas por dia. Com a conta conectada, ela vira a Ranqueada e vale PDR.'}</p>
     <p class="muted small">As alturas são baseadas em alguns dados públicos da lore do universo de Runeterra e especulações da comunidade.</p>`);
 }
 

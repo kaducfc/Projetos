@@ -622,7 +622,7 @@ export async function diarioHoje() {
   }
   return data || {};
 }
-// Na Medida (jogo "escala") na ranqueada: 5 rodadas sorteadas no servidor, 30 s
+// Na Medida (jogo "escala") na ranqueada: 5 rodadas sorteadas no servidor, 1 min
 // cada. comecar=false só consulta (null se ainda não começou hoje).
 export const escalaAbrir = (comecar = false) => rpcDiario('site_escala_abrir', { comecar });
 // razao = altura do vermelho ÷ altura do azul.
