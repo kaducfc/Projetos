@@ -1082,12 +1082,12 @@ export function legacyBreakdown(p) {
     { label: 'Títulos de liga principal', n: count((t) => t.kind === 'league' && t.tier === 1), each: 20 },
     { label: 'Títulos de divisão de acesso', n: count((t) => t.kind === 'league' && t.tier === 2), each: 8 },
     { label: 'Títulos de liga amadora', n: count((t) => t.kind === 'league' && t.tier === 3), each: 4 }, // só em saves antigos
-    { label: 'MVP da Final do Mundial', n: count((t) => t.name === 'MVP da Final do Mundial'), each: 25 },
-    { label: 'Outros prêmios individuais', n: count((t) => t.kind === 'award' && t.name !== 'MVP da Final do Mundial'), each: 10 },
+    { label: 'MVP da Final do Mundial', n: count((t) => t.name === 'MVP da Final do Mundial'), each: 30 },
+    { label: 'Outros prêmios individuais', n: count((t) => t.kind === 'award' && t.name !== 'MVP da Final do Mundial'), each: 15 },
   ].map((x) => (x.points != null ? x : { label: x.n ? `${x.label} (${x.n} × ${x.each})` : x.label, points: x.n * x.each }));
-  // Dinheiro conta pouco: +10 por US$ 100 mil, +20 por US$ 1 milhão, +30 por US$ 10 milhões.
+  // Dinheiro: 18 pontos por US$ 1 milhão arrecadado (proporcional).
   const money = careerEarnings(p);
-  parts.push({ label: 'Dinheiro arrecadado', points: money > 10000 ? Math.round(10 * Math.log10(money / 10000)) : 0 });
+  parts.push({ label: 'Dinheiro arrecadado', points: Math.round((18 * money) / 1e6) });
   return parts.filter((x) => x.points > 0);
 }
 

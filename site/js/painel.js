@@ -337,7 +337,7 @@ function abaFerramentas() {
 // ------------------------------------------------------------ ranqueada: vigia
 
 // Sinais de suspeita numa partida ranqueada (os limites dá para ajustar na tela).
-const NOTA_ALTA = 1400; // ~top 0,5% das carreiras simuladas
+const NOTA_ALTA = 1600; // ~top 0,5% das carreiras simuladas (legado novo)
 let rk = null; // resposta de platform.adminRanked(days)
 let rkErro = '';
 const rkFiltro = { so: true, min: 3, q: '' };

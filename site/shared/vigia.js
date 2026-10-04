@@ -17,7 +17,7 @@ export function sinaisVigia(p) {
     if (ganhou && rapido(5)) out.push(['rapida', 'Rápida demais']);
   } else if (p.jogo === 'carreira-no-rift') {
     if (rapido(180)) out.push(['rapida', 'Rápida demais']);
-    if (Number(p.score) >= 1400) out.push(['rara', 'Nota muito alta']);
+    if (Number(p.score) >= 1600) out.push(['rara', 'Nota muito alta']);
   } else if (p.jogo === 'escala') {
     if (Number(p.media) >= 95) out.push(['rara', 'Média quase perfeita']);
     if (rapido(15)) out.push(['rapida', 'Rápida demais']);

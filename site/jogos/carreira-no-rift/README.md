@@ -193,9 +193,8 @@ salários e premiações); durante a carreira o foco fica no jogo.
 
 **Pontos de legado:** OVR máximo × 2, títulos (Mundial 120, MSI 60, First
 Stand 35, liga principal 20, divisão de acesso 8), prêmios (MVP da Final
-do Mundial 25, outros 10) e o dinheiro arrecadado, que conta pouco: +10 por
-US$ 100 mil, +20 por US$ 1 milhão, +30 por US$ 10 milhões. O relatório final
-mostra a conta.
+do Mundial 30, outros 15) e o dinheiro arrecadado: 18 pontos por US$ 1
+milhão. O relatório final mostra a conta.
 
 **Aposentadoria:** pode ser anunciada a partir dos 27 anos e é obrigatória
 aos 35. O relatório final mostra o legado, os clubes, os títulos e um resumo
