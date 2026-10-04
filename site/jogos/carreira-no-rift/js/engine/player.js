@@ -36,14 +36,41 @@ export function rollAttrs(role, style, alvo = OVR_INICIAL) {
   return attrs;
 }
 
-export function createPlayer({ nick, nat, region, role, style, attrs }) {
+// Teto de OVR (potencial): não é sorteado. Começa no mínimo (73, mais o bônus de
+// elo da ranqueada) e sobe com a carreira (títulos, prêmios, decisões certas,
+// região e desempenho) até o máximo (94 + bônus). Nunca passa de 100.
+export const CAP_MIN = 73;
+export const CAP_MAX = 94;
+export const OVR_LIMITE = 100;
+export const capRange = (bonus = 0) => ({
+  min: Math.min(OVR_LIMITE, CAP_MIN + bonus),
+  max: Math.min(OVR_LIMITE, CAP_MAX + bonus),
+});
+
+// Aplica o ganho (ou perda) de teto da temporada. Só mexe em jogador que tem a
+// faixa (capMin/capMax); saves antigos, com potencial sorteado, ficam como eram.
+export function updateCap(p, ganho) {
+  if (p.capMin == null) return 0;
+  const antes = p.potential;
+  // Perto do topo o teto sobe mais devagar.
+  const g = ganho > 0 && p.potential >= p.capMax - 6 ? ganho * 0.6 : ganho;
+  const faixa = p.capMax - p.capMin;
+  p.capProgress = clamp((p.capProgress || 0) + g, 0, faixa);
+  p.potential = round1(p.capMin + p.capProgress);
+  return p.potential - antes;
+}
+
+export function createPlayer({ nick, nat, region, role, style, attrs, bonus = 0 }) {
+  const cap = capRange(bonus);
   return {
     nick, nat, role, style, region,
     attrs: { ...attrs },
-    // Teto sorteado (potencial de lenda, 93+, é bem raro). Quem começa na
-    // Coreia ou na China cresce no ambiente mais competitivo: +3 de teto.
-    potential: 73 + Math.round(21 * Math.pow(Math.random(), 1.9))
-      + (REGION_LEVEL[region]?.rank === 3 ? 3 : 0),
+    // Teto de OVR: começa no mínimo e sobe com o progresso (ver updateCap).
+    potential: cap.min,
+    capMin: cap.min,
+    capMax: cap.max,
+    capBonus: bonus, // bônus de elo da ranqueada na hora da criação
+    capProgress: 0,
     age: 16,
     morale: 55,
     fame: 5,

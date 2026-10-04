@@ -40,7 +40,11 @@ Jungle depende mais de Macro, o ADC de Mecânica/Teamfight etc.). Além deles:
 
 - **Confiança do técnico:** aumenta a chance de jogar e o rendimento em partida.
 - **Fama:** melhora as propostas recebidas.
-- **Potencial (oculto):** o teto de evolução do jogador.
+- **Teto de OVR (potencial, oculto):** não é sorteado. Começa em 73 (mais o
+  bônus de elo) e sobe com a carreira até 94 (mais o bônus), nunca passando
+  de 100. Sem elo, o jogador começa com OVR 53 e pode chegar a 73–94; Ferro
+  54 e 74–95; Bronze 55 e 75–96, e assim por diante até o Desafiante, que
+  começa com 63 e chega a 83–100.
 
 **Temporada** (1 por ano), seguindo o calendário de 2026 do LoL:
 
@@ -120,30 +124,32 @@ SOLID, 7REX, RMD e Ei Nerd).
   fim, ele volta ao clube de origem (se ainda houver contrato) ou recebe
   outras propostas.
 
+**Como o teto sobe** (a cada temporada, até os 26 anos; depois fica parado):
+
+| O que o jogador fez | Teto |
+|---|---|
+| Mundial / MSI / First Stand | +7 / +4,8 / +3,4 |
+| Título da liga principal / da divisão de acesso | +2,4 / +0,4 |
+| MVP da Final do Mundial / outro prêmio individual | +2,8 / +1,4 |
+| Decisões (eventos) certas ou erradas | até ±1,5 por temporada |
+| Jogar uma liga forte (LCK, LPL +0,25; LEC, LCS +0,1; ×0,5) | pequeno bônus |
+| Vencer e jogar bastante | pequeno bônus |
+
+Tudo isso é multiplicado por 0,85, e por mais 6% a menos para cada ponto de
+bônus de elo (quem já começa mais forte ganha mais títulos sozinho). Perto
+do topo da faixa o teto sobe 40% mais devagar. Decisões erradas e
+temporadas ruins podem tirar teto, mas nunca abaixo do mínimo da faixa.
+
 **Nível das regiões:** jogar na liga principal de uma região forte faz o
-OVR crescer mais e aumenta o teto (potencial) do jogador.
+OVR crescer mais (evolução +20% na LCK, +18% na LPL, +10% na LEC, +6% na
+LCS) e dá um pequeno bônus de teto. A divisão de acesso dá 60% disso.
 
-| Região | Evolução | Teto por temporada |
-|---|---|---|
-| LCK (Coreia) | +20% | +0,25 |
-| LPL (China) | +18% | +0,25 |
-| LEC (Europa) | +10% | +0,1 |
-| LCS (Am. do Norte) | +6% | +0,1 |
-| CBLOL (Brasil) | base | — |
-
-Títulos internacionais e prêmios de MVP também aumentam o teto em +0,5.
-Quem já tem potencial 88+ ganha só 60% desses aumentos (teto máximo 96).
-A divisão de acesso de cada região dá 60% desse bônus (LCK Challengers e LDL
-também desenvolvem mais).
-
-**Começar na Coreia ou na China** é mais fácil: além do ambiente, o jogador
-nasce com +3 de teto. Resultado (2.500 carreiras): OVR máximo mediano ~83,
-90+ ~25% e quase ninguém abaixo de 75 (no Brasil: mediana ~80, 90+ ~14%).
-
-**Distribuição esperada** (3.000 carreiras simuladas no Brasil): OVR máximo
-mediano ~80; <75 ~14%, 75–79 ~35%, 80–84 ~20%, 85–89 ~17% e 90+ ~15%.
-Chegar a 80 já é uma boa carreira; 90+ é para poucos. Cerca de 58% das
-carreiras passam pela LCK/LPL.
+**Distribuição esperada** (800 carreiras simuladas por linha, Brasil,
+`node scripts/simulate.mjs 800 BR ambicioso normal <bônus>`): OVR máximo
+mediano ~82 sem elo; <75 ~3%, 75–79 ~28%, 80–84 ~40%, 85–89 ~23% e 90+ ~7%.
+Com elo a mediana sobe cerca de 1 ponto por ponto de bônus (Ferro ~83,
+Platina ~89, Desafiante ~92, com 73% de 90+). Chegar a 80 já é uma boa
+carreira; 90+ é para poucos. Cerca de 58% das carreiras passam pela LCK/LPL.
 
 **Zebras:** a forma de cada time numa etapa ou torneio oscila um pouco, e
 em 10% das vezes o time vive uma "fase iluminada" (+5 a +13 de força). Assim

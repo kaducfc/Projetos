@@ -6,7 +6,7 @@
 import { buildTeams, REGIONS, REGION_LEVEL, TIER_RANGE, WILDCARD_SLOTS, nationById, ofLeague, inLeague, lowestTier } from '../data/world.js';
 import { EVENTS, eventById, roleAllows } from '../data/events.js';
 import {
-  createPlayer, ovrOf, effectiveOvr, applyFx, seasonGrowth, salaryFor, statusFor, STATUS,
+  createPlayer, updateCap, ovrOf, effectiveOvr, applyFx, seasonGrowth, salaryFor, statusFor, STATUS,
 } from './player.js';
 import { simGame, simSeries, roundRobin, gameStats, formRoll } from './sim.js';
 import { clamp, pick, rand, randInt, roll, shuffle, weightedPick } from '../util.js';
@@ -971,6 +971,32 @@ function driftWorld(state) {
   }
 }
 
+// Quanto o teto de OVR sobe (ou desce) numa temporada. Vem do que o jogador
+// fez: títulos, prêmios, decisões certas ou erradas, nível da liga e
+// desempenho. Depois dos 26 anos o teto não muda mais. Pesos calibrados com
+// scripts/simulate.mjs (sem elo: OVR máximo mediano ~82, 90+ em ~8–10%).
+const CAP_TITULO = { Mundial: 7, MSI: 4.8, 'First Stand': 3.4 };
+const CAP_LIGA = { 1: 2.4, 2: 0.4, 3: 0.1 };
+const CAP_PREMIO = 1.4;
+const CAP_MVP_FINAL = 2.8;
+const CAP_DECISAO = 1; // por ponto de decisão (±1,5 por temporada)
+const CAP_TAXA = 0.85;
+// Quem começa com bônus de elo já tem OVR e teto mais altos e ganha mais
+// títulos sozinho: o ganho de teto cai 6% por ponto de bônus, para a faixa
+// subir junto com o elo sem virar passeio.
+const CAP_AMORTECE = 0.06;
+export function capGain(s, p, { level, winRate, playedRatio }) {
+  if (s.age > 26) return 0;
+  let pts = (level?.potential || 0) * 0.5;
+  for (const t of s.titles) {
+    pts += t.kind === 'intl' ? (CAP_TITULO[t.name] ?? 3.4) : (CAP_LIGA[t.tier] ?? 0.3);
+  }
+  for (const a of s.awards) pts += a.name === 'MVP da Final do Mundial' ? CAP_MVP_FINAL : CAP_PREMIO;
+  pts += clamp(s.decisionScore || 0, -1.5, 1.5) * CAP_DECISAO;
+  pts += (winRate - 0.5) * 0.3 + (playedRatio - 0.6) * 0.2;
+  return pts * CAP_TAXA * (1 - CAP_AMORTECE * clamp(p.capBonus || 0, 0, 10));
+}
+
 function endSeason(state) {
   const s = state.season;
   const p = state.player;
@@ -992,7 +1018,11 @@ function endSeason(state) {
   const tierFactor = { 1: 1, 2: 0.9, 3: 0.8 }[s.tier];
   const intlTitle = s.titles.some((t) => t.kind === 'intl');
   const mvp = s.awards.some((a) => a.name.startsWith('MVP'));
-  p.potential = Math.min(96, p.potential + ((level?.potential || 0) + (intlTitle ? 0.5 : 0) + (mvp ? 0.5 : 0)) * (p.potential >= 88 ? 0.6 : 1));
+  if (p.capMin == null) { // save antigo: potencial sorteado, como era
+    p.potential = Math.min(96, p.potential + ((level?.potential || 0) + (intlTitle ? 0.5 : 0) + (mvp ? 0.5 : 0)) * (p.potential >= 88 ? 0.6 : 1));
+  } else {
+    updateCap(p, capGain(s, p, { level, winRate, playedRatio }));
+  }
   const decisionBonus = clamp(s.decisionScore || 0, -1.5, 1.5) * DECISION_GROWTH;
   const growth = seasonGrowth(p, { playedRatio, winRate, env: (level?.growth ?? 1) * tierFactor, decisions: decisionBonus });
   const ovrEnd = ovrOf(p);

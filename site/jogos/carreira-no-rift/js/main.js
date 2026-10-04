@@ -101,7 +101,7 @@ function render({ scrollTop = false } = {}) {
   atualizarBonus = null;
   if (!state) {
     atualizarBonus = renderCreate(app, (form) => {
-      state = newCareer(form);
+      state = newCareer({ ...form, bonus: bonusElo().n }); // o bônus de elo também define a faixa de teto do OVR
       platform.track('game_start', GAME_ID, {
         nat: form.nat, region: state.player.region, role: form.role, style: form.style, speed: state.speed,
       });

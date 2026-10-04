@@ -1,6 +1,6 @@
 // Tela "Crie o seu jogador".
 import { ATTRS, NATIONS, REGIONS, ROLES, STYLES } from '../data/world.js';
-import { calcOvr, rollAttrs, OVR_INICIAL } from '../engine/player.js';
+import { calcOvr, rollAttrs, capRange, OVR_INICIAL } from '../engine/player.js';
 import { jerseySvg, minimapSvg } from './art.js';
 import { esc } from '../util.js';
 
@@ -111,7 +111,8 @@ export function renderCreate(root, onConfirm, { bonusElo = () => ({ n: 0, nome: 
       <div class="role-head"><b>${r.name}</b><span class="ovr-mini">OVR <b>${ovr}</b></span></div>
       <p class="elo-bonus">${b.n
     ? `OVR inicial ${OVR_INICIAL} <b>+${b.n}</b> pelo seu elo (${esc(b.nome)}) na ranqueada.`
-    : `OVR inicial ${OVR_INICIAL}. Cada elo da ranqueada dá +1 (Ferro +1 até Desafiante +10).`}</p>
+    : `OVR inicial ${OVR_INICIAL}. Cada elo da ranqueada dá +1 (Ferro +1 até Desafiante +10).`}
+        Você pode chegar a OVR <b>${capRange(b.n).min}–${capRange(b.n).max}</b>: o teto sobe com títulos, prêmios e decisões certas.</p>
       <p class="muted">${r.desc}</p>
       ${ATTRS.map((a) => `
         <div class="attr-row">

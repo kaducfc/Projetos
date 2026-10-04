@@ -1,8 +1,8 @@
 // Simula carreiras inteiras escolhendo opções ao acaso, pra calibrar o
 // balanceamento (OVR de pico, títulos, idade de aposentadoria…).
-// Uso: node scripts/simulate.mjs [quantidade] [região]
+// Uso: node scripts/simulate.mjs [quantidade] [região] [estratégia] [velocidade] [bônus de elo]
 import { newCareer, chooseOffer, chooseEvent, advance, continueAfterSeason, legacyLabel, teamOf } from '../js/engine/career.js';
-import { rollAttrs, ovrOf } from '../js/engine/player.js';
+import { rollAttrs, ovrOf, OVR_INICIAL } from '../js/engine/player.js';
 import { ROLES } from '../js/data/world.js';
 
 const N = Number(process.argv[2] || 500);
@@ -11,11 +11,12 @@ const roles = Object.keys(ROLES);
 const agg = { peak: [], seasons: [], worlds: 0, msi: 0, t1: 0, legacy: {}, t1Players: 0, abroad: 0, games: [], windows: 0, maxOptions: 0, optionHist: {}, bets: 0, betTaken: 0, loans: 0, entries: 0, entryTaken: 0, climbed: 0, strong: 0, peakStrong: [], peakHome: [], intlBy: {}, totals: [], awardsN: [], leaguesN: [], worldsN: [] };
 const STRATEGY = process.argv[4] || 'ambicioso';
 const SPEED = process.argv[5] || 'normal'; // 'normal' ou 'rapido'
+const BONUS = Number(process.argv[6] || 0); // OVR inicial extra pelo elo (0 sem elo, 1 Ferro … 10 Desafiante)
 
 for (let i = 0; i < N; i++) {
   const role = roles[i % roles.length];
   const style = i % 2 ? 'agressivo' : 'controlado';
-  const state = newCareer({ nick: 'sim', nat: NAT, role, style, attrs: rollAttrs(role, style), speed: SPEED });
+  const state = newCareer({ nick: 'sim', nat: NAT, role, style, attrs: rollAttrs(role, style, OVR_INICIAL + BONUS), speed: SPEED, bonus: BONUS });
   let guard = 0;
   while (!state.player.retired && guard++ < 2000) {
     const s = state.screen;

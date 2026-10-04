@@ -69,3 +69,48 @@ test('carreira: OVR inicial fixo (53) com atributos sorteados, mais o bônus de 
   }
   assert.ok(vistos.size > 100); // atributos mudam a cada sorteio
 });
+
+test('carreira: teto de OVR não é sorteado — começa no mínimo da faixa do elo e sobe com a carreira', async () => {
+  const { createPlayer, capRange, updateCap, rollAttrs, OVR_INICIAL } = await import('../jogos/carreira-no-rift/js/engine/player.js');
+  const { capGain } = await import('../jogos/carreira-no-rift/js/engine/career.js');
+  const { bonusCarreira } = await import('../shared/ranked.js');
+  // Faixas: sem elo 73–94, Ferro 74–95, Bronze 75–96 … Desafiante 83–100 (nunca passa de 100).
+  assert.deepEqual(capRange(0), { min: 73, max: 94 });
+  assert.deepEqual(capRange(bonusCarreira('ferro')), { min: 74, max: 95 });
+  assert.deepEqual(capRange(bonusCarreira('bronze')), { min: 75, max: 96 });
+  assert.deepEqual(capRange(bonusCarreira('desafiante')), { min: 83, max: 100 });
+  // Todo jogador do mesmo elo começa com o mesmo teto (nada de sorteio).
+  const tetos = new Set();
+  for (let i = 0; i < 40; i++) {
+    const p = createPlayer({ nick: 'a', nat: 'BR', region: 'br', role: 'mid', style: 'agressivo', attrs: rollAttrs('mid', 'agressivo'), bonus: 0 });
+    tetos.add(p.potential);
+    assert.equal(p.capMin, 73);
+    assert.equal(p.capMax, 94);
+  }
+  assert.deepEqual([...tetos], [73]);
+  assert.equal(OVR_INICIAL, 53);
+  // Sobe com o progresso, até o máximo da faixa, e perde com resultados ruins, nunca abaixo do mínimo.
+  const p = createPlayer({ nick: 'a', nat: 'BR', region: 'br', role: 'mid', style: 'agressivo', attrs: rollAttrs('mid', 'agressivo'), bonus: 2 }); // 75–96
+  updateCap(p, 5);
+  assert.equal(p.potential, 80);
+  updateCap(p, -100);
+  assert.equal(p.potential, 75);
+  updateCap(p, 500);
+  assert.equal(p.potential, 96);
+  // Saves antigos (potencial sorteado, sem faixa) não mudam.
+  const antigo = { potential: 88 };
+  assert.equal(updateCap(antigo, 10), 0);
+  assert.equal(antigo.potential, 88);
+  // O que o jogador faz decide o ganho de teto: título e MVP ajudam, decisões erradas e temporada fraca pesam.
+  const base = { age: 20, titles: [], awards: [], decisionScore: 0 };
+  const ctx = { level: null, winRate: 0.5, playedRatio: 0.6 };
+  assert.ok(Math.abs(capGain(base, p, ctx)) < 0.01);
+  const campea = { ...base, titles: [{ kind: 'intl', name: 'Mundial' }, { kind: 'league', tier: 1 }], awards: [{ name: 'MVP da Final do Mundial' }] };
+  assert.ok(capGain(campea, p, ctx) > capGain({ ...base, titles: [{ kind: 'league', tier: 1 }] }, p, ctx));
+  assert.ok(capGain({ ...base, decisionScore: -1.5 }, p, ctx) < 0);
+  assert.ok(capGain({ ...base, decisionScore: 1.5 }, p, ctx) > 0);
+  assert.equal(capGain({ ...campea, age: 27 }, p, ctx), 0); // depois dos 26 não muda
+  // Quem tem bônus de elo ganha menos teto por conquista (a faixa já é mais alta).
+  const alto = createPlayer({ nick: 'a', nat: 'BR', region: 'br', role: 'mid', style: 'agressivo', attrs: rollAttrs('mid', 'agressivo'), bonus: 10 });
+  assert.ok(capGain(campea, alto, ctx) < capGain(campea, createPlayer({ nick: 'a', nat: 'BR', region: 'br', role: 'mid', style: 'agressivo', attrs: rollAttrs('mid', 'agressivo'), bonus: 0 }), ctx));
+});
