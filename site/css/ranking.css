@@ -29,10 +29,6 @@
   .rk-tabela tr { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 10px 4px; border-bottom: 1px solid var(--line); }
   .rk-tabela td { border: 0; padding: 0; }
   .rk-tabela td:last-child { grid-column: 1 / -1; color: #d3ccbc; }
-  .rk-lista li { grid-template-columns: 30px 1fr auto; padding: 8px 10px; }
-  .rk-lista .rk-elo span { display: none; }
-  .rk-lista .rk-pts { grid-column: 3; }
-  .rk-lista li .rk-elo { grid-column: 3; grid-row: 1; justify-self: end; display: none; }
 }
 
 /* Filtro por elo no ranking geral */
@@ -40,7 +36,16 @@
 .rk-filtro button { display: inline-flex; align-items: center; gap: 5px; }
 .rk-filtro button.on { border-color: var(--cor, var(--gold)); }
 .rk-lista li { grid-template-columns: 42px 1fr 150px 80px; }
+/* Celular: o elo e a divisão ficam numa segunda linha, embaixo do nick. */
 @media (max-width: 560px) {
-  .rk-lista li { grid-template-columns: 30px 1fr auto; }
-  .rk-lista li .rk-elo span { display: none; }
+  .rk-lista li {
+    grid-template-columns: 30px 1fr auto;
+    grid-template-areas: "pos quem pts" "pos elo pts";
+    row-gap: 1px;
+    padding: 8px 10px;
+  }
+  .rk-lista li .rk-pos { grid-area: pos; align-self: center; }
+  .rk-lista li .rk-quem { grid-area: quem; }
+  .rk-lista li .rk-elo { grid-area: elo; justify-self: start; padding-left: 44px; font-size: 12px; }
+  .rk-lista li .rk-pts { grid-area: pts; align-self: center; }
 }
