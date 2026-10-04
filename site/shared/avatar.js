@@ -31,12 +31,12 @@ export const ESPECIAIS = [
 // (0034_codigos_recompensa.sql). O id sempre começa com 'exc-' e a arte fica em
 // shared/assets/icones/<id>.webp. Para criar um: coloque a arte, acrescente aqui
 // { id: 'exc-nome', nome: 'Nome' } e crie um código com essa recompensa no painel.
-export const EXCLUSIVOS = [];
-
-// Em teste: só o painel (aba Teste) mostra. Para lançar, mover para EXCLUSIVOS.
-export const EXCLUSIVOS_TESTE = [
+export const EXCLUSIVOS = [
   { id: 'exc-streamer', nome: 'Streamer' },
 ];
+
+// Em teste: só o painel (aba Teste) mostra. Para lançar, mover para EXCLUSIVOS.
+export const EXCLUSIVOS_TESTE = [];
 
 export const AVATARES = ['mascote', ...ICONES.map((i) => `icone:${i.id}`)];
 export const AVATARES_ESPECIAIS = ESPECIAIS.map((i) => `icone:${i.id}`);

@@ -363,6 +363,7 @@ function testeCartoes(nick) {
 
 // Ícones exclusivos em teste, nos tamanhos em que aparecem no site.
 function testeIcones() {
+  if (!EXCLUSIVOS_TESTE.length) return '';
   const id = (i) => `icone:${i.id}`;
   return `<h3 class="t-tit">Ícones em teste (só você vê)</h3><div class="cards t-grade">${EXCLUSIVOS_TESTE.map((i) => `<article class="card t-efeito">
       <div class="t-ef-cab"><h3>${esc(i.nome)}</h3><span class="p-badge">Ícone exclusivo</span></div>

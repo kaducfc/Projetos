@@ -65,3 +65,14 @@ test('efeitos: SQL 0035 valida a posse e atualiza o ranking', () => {
   assert.match(sql, /''efeito'', p\.efeito/);
   assert.match(sql, /revoke all on function public\.site_set_efeito\(text\) from public, anon/);
 });
+
+test('ícone exclusivo Streamer: lançado, com arte, só vale para quem ganhou', async () => {
+  const { EXCLUSIVOS, EXCLUSIVOS_TESTE, nomeAvatar } = await import('../shared/avatar.js');
+  const { existsSync } = await import('node:fs');
+  assert.ok(EXCLUSIVOS.some((i) => i.id === 'exc-streamer'));
+  assert.ok(!EXCLUSIVOS_TESTE.some((i) => i.id === 'exc-streamer'));
+  assert.ok(existsSync(new URL('../shared/assets/icones/exc-streamer.webp', import.meta.url)));
+  assert.equal(nomeAvatar('icone:exc-streamer'), 'Streamer');
+  await entrar();
+  await assert.rejects(platform.setAvatar('icone:exc-streamer'), /não foi liberado/);
+});

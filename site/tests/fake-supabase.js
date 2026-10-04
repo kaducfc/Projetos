@@ -167,6 +167,7 @@ export function createFakeSupabase() {
       const me = db.site_profiles.find((p) => p.id === auth._uid());
       if (args.icone && !/^(mascote|icone:[a-z0-9-]{2,30})$/.test(args.icone)) return { data: null, error: { message: 'invalid_avatar' } };
       if (['icone:apoiador', 'icone:pioneiro'].includes(args.icone) && !((me.apoio_total || 0) > 0)) return { data: null, error: { message: 'icone_bloqueado' } };
+      if (args.icone?.startsWith('icone:exc-') && !(db.recompensas || []).some((x) => x.user_id === me.id && x.tipo === 'icone' && x.chave === args.icone.slice(6))) return { data: null, error: { message: 'icone_bloqueado' } };
       me.avatar = args.icone;
       return { data: args.icone, error: null };
     }
