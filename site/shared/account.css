@@ -195,6 +195,19 @@ a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
 @keyframes fx-brasa { from { background-position: 0 0; } to { background-position: 0 -300%; } }
 @keyframes fx-brasa-brilho { from { filter: drop-shadow(0 0 3px rgba(249, 115, 22, 0.7)); } to { filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.95)); } }
 .fx-st-aurora { background: linear-gradient(100deg, #34d399 0%, #22d3ee 25%, #60a5fa 50%, #a78bfa 75%, #34d399 100%); background-size: 200% 100%; background-repeat: repeat-x; -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(45, 212, 191, 0.5)); animation: fx-reflexo 5.5s linear infinite; }
+/* Streamer · Twitch: roxo oficial #9146ff */
+.fx-st-contorno { color: #fff; -webkit-text-stroke: 2px #9146ff; paint-order: stroke fill; text-shadow: 0 0 8px rgba(145, 70, 255, 0.75), 0 0 18px rgba(119, 44, 232, 0.55); animation: fx-contorno 3s ease-in-out infinite alternate; }
+@keyframes fx-contorno { from { text-shadow: 0 0 5px rgba(145, 70, 255, 0.6), 0 0 12px rgba(119, 44, 232, 0.4); } to { text-shadow: 0 0 10px rgba(169, 112, 255, 0.95), 0 0 24px rgba(145, 70, 255, 0.7); } }
+.fx-st-glitch { color: #bf94ff; text-shadow: -1px 0 #00e5ff, 1px 0 #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); animation: fx-glitch 3.2s steps(1, end) infinite; }
+@keyframes fx-glitch {
+  0%, 86%, 100% { text-shadow: -1px 0 #00e5ff, 1px 0 #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); transform: none; }
+  88% { text-shadow: -3px 0 #00e5ff, 3px 0 #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); transform: translateX(1px); }
+  91% { text-shadow: 3px 0 #00e5ff, -3px 0 #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); transform: translateX(-1px); }
+  94% { text-shadow: -2px 1px #00e5ff, 2px -1px #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); transform: none; }
+}
+.fx-st-aovivo { color: #d3b3ff; text-shadow: 0 0 8px rgba(145, 70, 255, 0.85), 0 0 18px rgba(119, 44, 232, 0.6); }
+.fx-st-aovivo::before { content: ''; display: inline-block; width: 0.34em; height: 0.34em; margin-right: 0.3em; vertical-align: 0.12em; border-radius: 50%; background: #ff2f4f; box-shadow: 0 0 6px 1px rgba(255, 47, 79, 0.85); animation: fx-aovivo 1.4s ease-in-out infinite; }
+@keyframes fx-aovivo { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.75); } }
 @media (prefers-reduced-motion: reduce) {
   .fx { animation: none !important; }
 }

@@ -15,6 +15,9 @@ export const EFEITOS_TESTE = [
   { id: 'st-galaxia', nome: 'Galáxia', classe: 'fx-st-galaxia', tema: 'Streamer · roxo' },
   { id: 'st-brasa', nome: 'Brasa', classe: 'fx-st-brasa', tema: 'Streamer · cor livre' },
   { id: 'st-aurora', nome: 'Aurora', classe: 'fx-st-aurora', tema: 'Streamer · cor livre' },
+  { id: 'st-contorno', nome: 'Contorno Twitch', classe: 'fx-st-contorno', tema: 'Streamer · Twitch' },
+  { id: 'st-glitch', nome: 'Glitch', classe: 'fx-st-glitch', tema: 'Streamer · Twitch' },
+  { id: 'st-aovivo', nome: 'Ao vivo', classe: 'fx-st-aovivo', tema: 'Streamer · Twitch' },
 ];
 
 export const efeitoPorId = (id) => EFEITOS.find((e) => e.id === id) || null;

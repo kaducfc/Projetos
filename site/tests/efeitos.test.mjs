@@ -30,9 +30,10 @@ test('efeitos: automático dá o reflexo ao apoiador, "nenhum" tira, id desconhe
   assert.match(nickHtml('<b>', true), /&lt;b&gt;/);
 });
 
-test('efeitos: os 5 de teste têm CSS e não estão na lista pública', () => {
-  assert.equal(EFEITOS_TESTE.length, 5);
+test('efeitos: os de teste têm CSS e não estão na lista pública', () => {
+  assert.equal(EFEITOS_TESTE.length, 8);
   assert.equal(EFEITOS_TESTE.filter((e) => /roxo/.test(e.tema)).length, 3);
+  assert.equal(EFEITOS_TESTE.filter((e) => /Twitch/.test(e.tema)).length, 3);
   for (const e of EFEITOS_TESTE) {
     assert.match(e.id, /^[a-z0-9-]{2,30}$/);
     assert.ok(css.includes(`.${e.classe}`), `falta CSS de ${e.classe}`);
