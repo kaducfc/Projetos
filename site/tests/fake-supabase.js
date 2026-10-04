@@ -194,8 +194,8 @@ export function createFakeSupabase() {
       const k = `${uid}|${args.jogo}`;
       fakeInicios.set(k, (fakeInicios.get(k) || 0) + 1);
       const n = fakeInicios.get(k);
-      if (n > 3) return { data: { token: null, dia: hojeIso, numero: null, restantes: 0, limite: 3 }, error: null };
-      return { data: { token: `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`, dia: hojeIso, numero: n, restantes: 3 - n, limite: 3 }, error: null };
+      if (n > 5) return { data: { token: null, dia: hojeIso, numero: null, restantes: 0, limite: 5 }, error: null };
+      return { data: { token: `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`, dia: hojeIso, numero: n, restantes: 5 - n, limite: 5 }, error: null };
     }
     if (name === 'site_rk_meu') {
       const uid = auth._uid();
@@ -208,7 +208,7 @@ export function createFakeSupabase() {
         j.pdr += x.pdr; j.base = Math.max(j.base, x.base); j.partidas++;
       }
       const vagas = {};
-      for (const j of ['carreira-no-rift', 'cblol']) vagas[j] = Math.min(3, fakeInicios.get(`${uid}|${j}`) || 0);
+      for (const j of ['carreira-no-rift', 'cblol']) vagas[j] = Math.min(5, fakeInicios.get(`${uid}|${j}`) || 0);
       return {
         data: {
           temporada: 1, jogou: Boolean(r), pts: r?.pts || 0, elo: eloDe(r), nivel: ELO_IDS.indexOf(eloDe(r)),
