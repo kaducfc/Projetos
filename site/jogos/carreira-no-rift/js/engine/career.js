@@ -1078,16 +1078,16 @@ export function legacyBreakdown(p) {
     { label: `OVR máximo (${p.peakOvr} × 2)`, points: p.peakOvr * 2 },
     { label: 'Mundiais', n: count((t) => t.name === 'Mundial'), each: 120 },
     { label: 'MSI', n: count((t) => t.name === 'MSI'), each: 60 },
-    { label: 'First Stand', n: count((t) => t.name === 'First Stand'), each: 35 },
+    { label: 'First Stand', n: count((t) => t.name === 'First Stand'), each: 40 },
     { label: 'Títulos de liga principal', n: count((t) => t.kind === 'league' && t.tier === 1), each: 20 },
-    { label: 'Títulos de divisão de acesso', n: count((t) => t.kind === 'league' && t.tier === 2), each: 8 },
+    { label: 'Títulos de divisão de acesso', n: count((t) => t.kind === 'league' && t.tier === 2), each: 10 },
     { label: 'Títulos de liga amadora', n: count((t) => t.kind === 'league' && t.tier === 3), each: 4 }, // só em saves antigos
     { label: 'MVP da Final do Mundial', n: count((t) => t.name === 'MVP da Final do Mundial'), each: 30 },
     { label: 'Outros prêmios individuais', n: count((t) => t.kind === 'award' && t.name !== 'MVP da Final do Mundial'), each: 15 },
   ].map((x) => (x.points != null ? x : { label: x.n ? `${x.label} (${x.n} × ${x.each})` : x.label, points: x.n * x.each }));
-  // Dinheiro: 18 pontos por US$ 1 milhão arrecadado (proporcional).
+  // Dinheiro: 25 pontos por US$ 1 milhão arrecadado (proporcional).
   const money = careerEarnings(p);
-  parts.push({ label: 'Dinheiro arrecadado', points: Math.round((18 * money) / 1e6) });
+  parts.push({ label: 'Dinheiro arrecadado', points: Math.round((25 * money) / 1e6) });
   return parts.filter((x) => x.points > 0);
 }
 

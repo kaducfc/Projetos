@@ -192,8 +192,8 @@ O dinheiro só aparece no relatório final da aposentadoria (total arrecadado,
 salários e premiações); durante a carreira o foco fica no jogo.
 
 **Pontos de legado:** OVR máximo × 2, títulos (Mundial 120, MSI 60, First
-Stand 35, liga principal 20, divisão de acesso 8), prêmios (MVP da Final
-do Mundial 30, outros 15) e o dinheiro arrecadado: 18 pontos por US$ 1
+Stand 40, liga principal 20, divisão de acesso 10), prêmios (MVP da Final
+do Mundial 30, outros 15) e o dinheiro arrecadado: 25 pontos por US$ 1
 milhão. O relatório final mostra a conta.
 
 **Aposentadoria:** pode ser anunciada a partir dos 27 anos e é obrigatória
