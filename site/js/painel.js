@@ -9,6 +9,7 @@ import { GAMES, gameById } from '../shared/config.js';
 import { sinaisVigia, resumoJogadores } from '../shared/vigia.js';
 import { nomeRecompensa, tipoTexto, codigoBonito } from '../shared/recompensas.js';
 import { EFEITOS, EFEITOS_TESTE } from '../shared/efeitos.js';
+import { EXCLUSIVOS_TESTE, avatarHtml } from '../shared/avatar.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -360,6 +361,17 @@ function testeCartoes(nick) {
     <h3 class="t-tit">Já no ar, para comparar</h3><div class="cards t-grade">${grupo(EFEITOS, 'Público')}</div>`;
 }
 
+// Ícones exclusivos em teste, nos tamanhos em que aparecem no site.
+function testeIcones() {
+  const id = (i) => `icone:${i.id}`;
+  return `<h3 class="t-tit">Ícones em teste (só você vê)</h3><div class="cards t-grade">${EXCLUSIVOS_TESTE.map((i) => `<article class="card t-efeito">
+      <div class="t-ef-cab"><h3>${esc(i.nome)}</h3><span class="p-badge">Ícone exclusivo</span></div>
+      <div class="t-ic-linha">${avatarHtml(id(i), i.nome, 104, 'elo-ouro')}${avatarHtml(id(i), i.nome, 64)}${avatarHtml(id(i), i.nome, 34, 'elo-diamante')}${avatarHtml(id(i), i.nome, 22)}</div>
+      <p class="c-sub">Perfil (com borda de elo), seletor de ícones, ranking e barra do site.</p>
+      <p class="c-sub">Id para o código: <code>${esc(i.id)}</code> <button type="button" class="p-link" data-t-copiar="${esc(i.id)}">copiar</button></p>
+    </article>`).join('')}</div>`;
+}
+
 function abaTeste() {
   const eu = platform.getUser();
   if (!testeNick && eu) testeNick = eu.username;
@@ -373,6 +385,7 @@ function abaTeste() {
         <li>Depois de aprovar, me diga quais ficam e eu os movo para a lista pública (o jogador que tiver o código já passa a poder selecionar).</li>
       </ul>
     </div>
+    ${testeIcones()}
     <div data-t-previas>${testeCartoes(testeNick)}</div>
   </section>`;
 }

@@ -33,10 +33,15 @@ export const ESPECIAIS = [
 // { id: 'exc-nome', nome: 'Nome' } e crie um código com essa recompensa no painel.
 export const EXCLUSIVOS = [];
 
+// Em teste: só o painel (aba Teste) mostra. Para lançar, mover para EXCLUSIVOS.
+export const EXCLUSIVOS_TESTE = [
+  { id: 'exc-streamer', nome: 'Streamer' },
+];
+
 export const AVATARES = ['mascote', ...ICONES.map((i) => `icone:${i.id}`)];
 export const AVATARES_ESPECIAIS = ESPECIAIS.map((i) => `icone:${i.id}`);
 
-const TODOS = new Map([...ICONES, ...ESPECIAIS, ...EXCLUSIVOS].map((i) => [`icone:${i.id}`, i]));
+const TODOS = new Map([...ICONES, ...ESPECIAIS, ...EXCLUSIVOS, ...EXCLUSIVOS_TESTE].map((i) => [`icone:${i.id}`, i]));
 
 export const nomeAvatar = (id) => (id === 'mascote' ? 'Mascote do Rift Arcade' : TODOS.get(id)?.nome || '');
 
