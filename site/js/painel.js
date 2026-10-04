@@ -70,7 +70,7 @@ function hbars(entries, nameOf = (x) => x, { sort = true, fmt = num } = {}) {
 }
 
 // Abas do painel (a escolhida fica guardada neste navegador).
-const ABAS = [['geral', 'Visão geral'], ['jogos', 'Jogos'], ['ranqueada', 'Ranqueada'], ['apoio', 'Apoio'], ['ferramentas', 'Ferramentas']];
+const ABAS = [['geral', 'Visão geral'], ['jogos', 'Jogos'], ['ranqueada', 'Ranqueada'], ['jogador', 'Jogador'], ['apoio', 'Apoio'], ['ferramentas', 'Ferramentas']];
 let aba = 'geral';
 try { aba = localStorage.getItem('site.painel.aba') || 'geral'; } catch { /* sem storage */ }
 if (!ABAS.some(([id]) => id === aba)) aba = 'geral';
@@ -95,7 +95,7 @@ function render(st) {
   ultimo = st;
   const contador = { ranqueada: suspeitasRk() + suspeitasVg(), apoio: ap?.periodo?.status?.pendente || 0 };
   const nav = `<nav class="p-tabs" role="tablist">${ABAS.map(([id, nome]) => `<button type="button" role="tab" data-aba="${id}" class="${aba === id ? 'on' : ''}">${nome}${contador[id] ? ` <span class="p-badge">${num(contador[id])}</span>` : ''}</button>`).join('')}</nav>`;
-  const conteudo = { geral: abaGeral, jogos: abaJogos, ranqueada: abaRanqueada, apoio: abaApoio, ferramentas: abaFerramentas }[aba](st);
+  const conteudo = { geral: abaGeral, jogos: abaJogos, ranqueada: abaRanqueada, jogador: abaJogador, apoio: abaApoio, ferramentas: abaFerramentas }[aba](st);
   body.innerHTML = nav + conteudo;
 }
 
@@ -259,7 +259,7 @@ function resumoRanqueada(dias) {
       <div class="card"><h3>Top 10 agora</h3>
         ${(rq.top || []).length ? `<div class="table-wrap"><table class="p-table">
           <thead><tr><th>#</th><th>Usuário</th><th>Elo</th><th class="n">Pontos</th><th>Última atividade</th></tr></thead>
-          <tbody>${rq.top.map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.username)}</td><td>${esc(ELO_NOMES[t.elo] || t.elo)}</td><td class="n">${num(t.pts)}</td><td>${t.ultima_atividade ? esc(dia(t.ultima_atividade)) : '—'}</td></tr>`).join('')}</tbody>
+          <tbody>${rq.top.map((t, i) => `<tr><td>${i + 1}</td><td>${nickLink(t.username)}</td><td>${esc(ELO_NOMES[t.elo] || t.elo)}</td><td class="n">${num(t.pts)}</td><td>${t.ultima_atividade ? esc(dia(t.ultima_atividade)) : '—'}</td></tr>`).join('')}</tbody>
         </table></div>` : '<p class="p-empty">Ninguém na ranqueada ainda.</p>'}</div>
       <div class="card"><h3>Ajustar PDR</h3>
         <p class="c-sub">Dar ou tirar PDR de alguém (ex.: compensar um erro do site). Use número negativo para tirar. Fica no histórico do jogador como "ajuste" e não entra nos rankings do dia, semana e mês.</p>
@@ -271,7 +271,7 @@ function resumoRanqueada(dias) {
         <p class="p-note" data-aj-msg role="status"></p>
         ${(rq.ajustes || []).length ? `<details class="p-details"><summary>Últimos ajustes (${num(rq.ajustes.length)})</summary><div class="table-wrap"><table class="p-table">
           <thead><tr><th>Quando</th><th>Usuário</th><th class="n">PDR</th><th class="n">Antes → depois</th></tr></thead>
-          <tbody>${rq.ajustes.map((x) => `<tr><td>${esc(dataHora(x.criado))}</td><td>${esc(x.username)}</td><td class="n">${x.delta > 0 ? '+' : ''}${num(x.delta)}</td><td class="n">${num(x.antes)} → ${num(x.depois)}</td></tr>`).join('')}</tbody>
+          <tbody>${rq.ajustes.map((x) => `<tr><td>${esc(dataHora(x.criado))}</td><td>${nickLink(x.username)}</td><td class="n">${x.delta > 0 ? '+' : ''}${num(x.delta)}</td><td class="n">${num(x.antes)} → ${num(x.depois)}</td></tr>`).join('')}</tbody>
         </table></div></details>` : ''}
       </div>
     </div>`;
@@ -360,7 +360,7 @@ function rkTabela() {
     <thead><tr><th>Quando</th><th>Usuário</th><th class="n">Nota</th><th class="n">Duração</th><th class="n">Faixa possível</th><th>Sinais</th><th></th></tr></thead>
     <tbody>${lista.slice(0, 300).map((x) => `<tr>
       <td>${esc(dataHora(x.criado))}</td>
-      <td>${esc(x.username)}${x.ovr != null ? ` <small>OVR ${x.ovr} · ${num(x.temporadas)} temp.</small>` : ' <small>sem detalhes</small>'}</td>
+      <td>${nickLink(x.username)}${x.ovr != null ? ` <small>OVR ${x.ovr} · ${num(x.temporadas)} temp.</small>` : ' <small>sem detalhes</small>'}</td>
       <td class="n"><b>${num(x.score)}</b></td>
       <td class="n">${duracao(x.duracao_s)}</td>
       <td class="n">${x.esperado_min != null ? `${num(x.esperado_min)}–${num(x.esperado_max)}` : '—'}</td>
@@ -380,7 +380,7 @@ function rkJogadores() {
   if (!lista.length) return '<p class="p-empty">Ninguém jogou ranqueada no período.</p>';
   return `<div class="table-wrap"><table class="p-table">
     <thead><tr><th>Usuário</th><th class="n">Partidas</th><th class="n">Pontos</th><th class="n">Maior nota</th><th class="n">Com sinais</th><th></th></tr></thead>
-    <tbody>${lista.map((j) => `<tr><td>${esc(j.nome)}</td><td class="n">${num(j.n)}</td><td class="n">${num(j.soma)}</td><td class="n">${num(j.maior)}</td>
+    <tbody>${lista.map((j) => `<tr><td>${nickLink(j.nome)}</td><td class="n">${num(j.n)}</td><td class="n">${num(j.soma)}</td><td class="n">${num(j.maior)}</td>
       <td class="n">${j.sinais ? `<b class="rk-alerta">${num(j.sinais)}</b>` : '0'}</td>
       <td><button type="button" class="p-mini p-mini-danger" data-rk-banir="${esc(j.nome)}">Tirar da ranqueada</button></td></tr>`).join('')}</tbody>
   </table></div>`;
@@ -437,7 +437,7 @@ function vgTabela() {
   return `<div class="table-wrap"><table class="p-table">
     <thead><tr><th>Quando</th><th>Usuário</th><th>Jogo</th><th>Resultado</th><th class="n">PDR</th><th class="n">Duração</th><th>Sinais</th></tr></thead>
     <tbody>${lista.slice(0, 300).map((x) => `<tr>
-      <td>${esc(dataHora(x.criado))}</td><td>${esc(x.username)}</td><td>${esc(NOME_JOGO(x.jogo))}</td>
+      <td>${esc(dataHora(x.criado))}</td><td>${nickLink(x.username)}</td><td>${esc(NOME_JOGO(x.jogo))}</td>
       <td>${vgDetalhe(x)}</td><td class="n">${x.pdr > 0 ? '+' : ''}${num(x.pdr)}</td><td class="n">${duracao(x.duracao_s)}</td>
       <td>${x.sinais.map(([c, t]) => `<span class="rk-sinal rk-${c}">${t}</span>`).join(' ') || '<small>—</small>'}</td></tr>`).join('')}</tbody>
   </table></div>`;
@@ -448,7 +448,7 @@ function vgJogadores() {
   if (!lista.length) return '<p class="p-empty">Ninguém com sinais no período.</p>';
   return `<div class="table-wrap"><table class="p-table">
     <thead><tr><th>Usuário</th><th class="n">Dias com sinais</th><th class="n">Partidas com sinais</th><th class="n">Partidas</th><th>Onde</th><th></th></tr></thead>
-    <tbody>${lista.map((j) => `<tr><td>${esc(j.nome)}</td><td class="n">${j.dias >= 3 ? `<b class="rk-alerta">${num(j.dias)}</b>` : num(j.dias)}</td>
+    <tbody>${lista.map((j) => `<tr><td>${nickLink(j.nome)}</td><td class="n">${j.dias >= 3 ? `<b class="rk-alerta">${num(j.dias)}</b>` : num(j.dias)}</td>
       <td class="n">${num(j.comSinais)}</td><td class="n">${num(j.partidas)}</td>
       <td>${Object.entries(j.jogos).map(([g, n]) => `${esc(NOME_JOGO(g))} ×${n}`).join(', ')}</td>
       <td><button type="button" class="p-mini p-mini-danger" data-rk-banir="${esc(j.nome)}">Tirar da ranqueada</button></td></tr>`).join('')}</tbody>
@@ -549,7 +549,7 @@ function apLista() {
       <thead><tr><th>Quando</th><th>Usuário</th><th class="n">Valor</th><th>Situação</th><th>Origem</th><th>Pagamento MP</th></tr></thead>
       <tbody>${vis.map((a) => `<tr>
         <td>${esc(dataHora(a.criado))}</td>
-        <td>${a.username ? esc(a.username) : '<small>conta apagada</small>'}</td>
+        <td>${a.username ? nickLink(a.username) : '<small>conta apagada</small>'}</td>
         <td class="n">${reais(a.valor_pago ?? a.valor)}</td>
         <td><span class="ap-st ap-${esc(a.status)}">${esc(AP_STATUS[a.status] || a.status)}</span></td>
         <td>${esc(AP_ORIGEM[a.origem] || a.origem)}</td>
@@ -606,7 +606,7 @@ function secaoApoio(dias) {
     <div class="card"><h3>Quem mais apoiou</h3><p class="c-sub">Desde sempre, só doações aprovadas</p>
       ${(ap.top || []).length ? `<div class="table-wrap"><table class="p-table">
         <thead><tr><th>#</th><th>Usuário</th><th class="n">Total</th><th class="n">Doações</th><th>Desde</th><th>Última</th></tr></thead>
-        <tbody>${ap.top.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.username)}</td><td class="n">${reais(x.total)}</td><td class="n">${num(x.doacoes)}</td><td>${esc(dataCurta(x.desde))}</td><td>${esc(dataCurta(x.ultima))}</td></tr>`).join('')}</tbody>
+        <tbody>${ap.top.map((x, i) => `<tr><td>${i + 1}</td><td>${nickLink(x.username)}</td><td class="n">${reais(x.total)}</td><td class="n">${num(x.doacoes)}</td><td>${esc(dataCurta(x.desde))}</td><td>${esc(dataCurta(x.ultima))}</td></tr>`).join('')}</tbody>
       </table></div>` : '<p class="p-empty">Ninguém apoiou ainda.</p>'}
     </div>
     <div class="card"><h3>Doações dos últimos ${dias} dias</h3><p class="c-sub">Todas as tentativas, inclusive as não pagas. Filtre e baixe em planilha.</p>
@@ -787,6 +787,178 @@ body.addEventListener('click', async (e) => {
     await load();
     const m = body.querySelector('[data-aj-msg]');
     if (m) m.textContent = pronto;
+    return;
+  } catch (err) {
+    msg.textContent = err.message;
+  }
+  b.disabled = false;
+});
+
+// -------------------------------------------------------- aba: ficha do jogador
+
+let jg = null; // platform.adminJogador(nome): ficha ou { encontrado: false, sugestoes }
+let jgErro = '';
+let jgBusca = '';
+let jgCarregando = false;
+
+const nickLink = (n) => `<button type="button" class="p-link" data-jogador="${esc(n)}">${esc(n)}</button>`;
+const MOTIVOS = { partida: 'partida', melhora: 'resultado melhor', nao_terminou: 'começou e não terminou', inatividade: 'inatividade', admin: 'ajuste do administrador' };
+const quando = (iso) => (iso ? esc(dataHora(iso)) : '—');
+const vazio = (txt) => `<p class="p-empty">${txt}</p>`;
+
+async function buscarJogador(nome) {
+  jgBusca = nome;
+  jgErro = '';
+  jgCarregando = true;
+  if (aba === 'jogador' && ultimo) render(ultimo);
+  try {
+    jg = await platform.adminJogador(nome);
+  } catch (err) {
+    jg = null;
+    jgErro = err.message;
+  }
+  jgCarregando = false;
+  if (aba === 'jogador' && ultimo) render(ultimo);
+}
+
+function jgPartidas(j) {
+  const ps = (j.partidas || []).map((x) => ({ ...x, sinais: sinaisVigia(x) }));
+  if (!ps.length) return vazio('Nenhuma partida ranqueada nos últimos 30 dias.');
+  const detalhe = (x) => (x.jogo === 'carreira-no-rift' ? `nota ${num(x.score)}${x.ovr != null ? ` · OVR ${num(x.ovr)}` : ''}` : vgDetalhe(x));
+  return `<div class="table-wrap"><table class="p-table">
+    <thead><tr><th>Quando</th><th>Jogo</th><th>Resultado</th><th class="n">PDR</th><th class="n">Duração</th><th>Sinais</th></tr></thead>
+    <tbody>${ps.map((x) => `<tr><td>${quando(x.criado)}</td><td>${esc(NOME_JOGO(x.jogo))}${x.n > 1 || x.jogo === 'carreira-no-rift' || x.jogo === 'cblol' ? ` <small>#${num(x.n)}</small>` : ''}</td>
+      <td>${detalhe(x)}</td><td class="n">${x.pdr > 0 ? '+' : ''}${num(x.pdr)}</td><td class="n">${duracao(x.duracao_s)}</td>
+      <td>${x.sinais.map(([c, t]) => `<span class="rk-sinal rk-${c}">${t}</span>`).join(' ') || '<small>—</small>'}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function jgFicha(j) {
+  const c = j.conta;
+  const r = j.ranqueada;
+  const sinaisN = (j.partidas || []).filter((x) => sinaisVigia(x).length).length;
+  const jogadas = Object.values(j.jogos || {}).reduce((t, x) => t + (x.partidas || 0), 0);
+  const doado = (j.apoios || []).filter((a) => a.status === 'aprovado').reduce((t, a) => t + Number(a.valor_pago ?? a.valor), 0);
+  const etiquetas = [
+    c.admin ? '<span class="p-badge">Administrador</span>' : '',
+    c.apoio_total > 0 ? `<span class="p-badge">Apoiador · ${reais(c.apoio_total)}</span>` : '',
+    j.banido ? `<span class="rk-sinal rk-naobate">Fora da ranqueada${j.banido.motivo ? `: ${esc(j.banido.motivo)}` : ''}</span>` : '',
+  ].filter(Boolean).join(' ');
+  const entrada = (c.login || []).filter(Boolean).map((x) => ({ google: 'Google', email: 'E-mail e senha' }[x] || x)).join(', ') || '—';
+  return `
+  <section class="p-section">
+    <h2>${esc(c.username)} ${etiquetas}</h2>
+    <div class="tiles">
+      ${tile('Ranqueada', r ? esc(ELO_NOMES[r.elo] || r.elo) : 'Sem partidas', r ? `${num(r.pts)} pontos` : 'nunca jogou a ranqueada')}
+      ${tile('Partidas jogadas', num(jogadas), 'todos os jogos, desde sempre')}
+      ${tile('Ranqueadas (30 dias)', num((j.partidas || []).length), `${num(sinaisN)} com sinais de suspeita`)}
+      ${tile('Apoio', reais(doado), `${num((j.apoios || []).length)} ${(j.apoios || []).length === 1 ? 'doação' : 'doações'}`)}
+    </div>
+    <div class="card"><h3>Conta</h3>
+      <div class="table-wrap"><table class="p-table"><tbody>
+        <tr><th>E-mail</th><td>${esc(c.email || '—')}</td></tr>
+        <tr><th>Entra com</th><td>${esc(entrada)}</td></tr>
+        <tr><th>Conta criada</th><td>${quando(c.criada)}</td></tr>
+        <tr><th>Último acesso</th><td>${quando(c.ultimo_acesso)}</td></tr>
+        <tr><th>Último nick trocado</th><td>${quando(c.nick_trocado_em)}</td></tr>
+        <tr><th>Ícone</th><td>${esc(c.avatar || 'padrão')}</td></tr>
+        <tr><th>Atividade</th><td>${num(j.atividade?.eventos)} eventos em ${num(j.atividade?.aparelhos)} ${j.atividade?.aparelhos === 1 ? 'aparelho' : 'aparelhos'}${j.atividade?.primeiro ? ` · de ${quando(j.atividade.primeiro)} até ${quando(j.atividade.ultimo)}` : ''}</td></tr>
+      </tbody></table></div>
+    </div>
+  </section>
+  <section class="p-section"><h2>Ranqueada</h2>
+    <div class="card">
+      <p class="c-sub">${r ? `${esc(ELO_NOMES[r.elo] || r.elo)} · ${num(r.pts)} pontos · última atividade ${r.ultima_atividade ? esc(dia(r.ultima_atividade)) : '—'} · começou em ${quando(r.desde)}` : 'Ainda não jogou a ranqueada.'}
+        Vagas de hoje: Carreira <b>${num(j.vagas_hoje?.['carreira-no-rift'] || 0)}</b> · Lendas <b>${num(j.vagas_hoje?.cblol || 0)}</b>.</p>
+      <div class="ap-filtros">
+        <label class="p-label">Dar ou tirar PDR <input type="number" step="1" data-jg-delta placeholder="25 ou -25" style="width: 140px" /></label>
+        <button type="button" class="p-mini" data-jg-ajustar="${esc(c.username)}">Aplicar</button>
+        ${j.banido
+    ? `<button type="button" class="p-mini" data-rk-devolver="${esc(c.username)}">Devolver à ranqueada</button>`
+    : `<button type="button" class="p-mini p-mini-danger" data-rk-banir="${esc(c.username)}">Tirar da ranqueada</button>`}
+      </div>
+      <p class="p-note" data-jg-msg role="status"></p>
+    </div>
+    <div class="card"><h3>Partidas ranqueadas · últimos 30 dias</h3>${jgPartidas(j)}</div>
+    <div class="card"><h3>Histórico de PDR</h3>${(j.historico || []).length ? `<div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Quando</th><th>Jogo</th><th>Motivo</th><th class="n">PDR</th><th class="n">Pontos</th></tr></thead>
+      <tbody>${j.historico.map((h) => `<tr><td>${quando(h.criado)}</td><td>${h.jogo ? esc(NOME_JOGO(h.jogo)) : '—'}</td><td>${esc(MOTIVOS[h.motivo] || h.motivo)}</td>
+        <td class="n">${h.delta > 0 ? '+' : ''}${num(h.delta)}</td><td class="n">${num(h.antes)} → ${num(h.depois)}</td></tr>`).join('')}</tbody></table></div>` : vazio('Sem movimentos de PDR.')}</div>
+  </section>
+  <section class="p-section"><h2>Partidas e jogos</h2>
+    <div class="card"><h3>Por jogo</h3>${Object.keys(j.jogos || {}).length ? `<div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Jogo</th><th class="n">Partidas</th><th class="n">Melhor nota</th><th>Última</th></tr></thead>
+      <tbody>${Object.entries(j.jogos).map(([g, x]) => `<tr><td>${esc(NOME_JOGO(g))}</td><td class="n">${num(x.partidas)}</td><td class="n">${num(x.melhor)}</td><td>${quando(x.ultima)}</td></tr>`).join('')}</tbody></table></div>` : vazio('Nenhuma partida registrada.')}</div>
+    <div class="card"><h3>Últimas partidas</h3>${(j.ultimas || []).length ? `<div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Quando</th><th>Jogo</th><th class="n">Nota</th><th>Resumo</th><th></th></tr></thead>
+      <tbody>${j.ultimas.map((x) => `<tr><td>${quando(x.quando)}</td><td>${esc(NOME_JOGO(x.jogo))}</td><td class="n">${num(x.nota)}</td><td>${esc(x.texto || '—')}</td><td>${x.ranqueada ? '<small>ranqueada</small>' : ''}</td></tr>`).join('')}</tbody></table></div>` : vazio('Sem partidas.')}</div>
+    <div class="card"><h3>Runetermo, Campeão Oculto e Na Medida · 14 dias</h3>${(j.diarios || []).length || (j.escala || []).length ? `<div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Dia</th><th>Jogo</th><th>Resultado</th><th class="n">PDR</th></tr></thead>
+      <tbody>${[...(j.diarios || []).map((x) => ({ dia: x.dia, jogo: x.jogo, txt: `${x.status === 'ganhou' ? 'Acertou' : x.status === 'perdeu' ? 'Errou' : esc(x.status)} · ${num(x.chutes)} ${x.chutes === 1 ? 'chute' : 'chutes'}${x.dicas ? ` · ${num(x.dicas)} ${x.dicas === 1 ? 'dica' : 'dicas'}` : ''}`, pdr: x.pdr })),
+        ...(j.escala || []).map((x) => ({ dia: x.dia, jogo: 'escala', txt: `${x.status === 'terminou' ? `média ${num(x.media)}` : 'em andamento'}${x.reinicios ? ` · ${num(x.reinicios)} reinício` : ''}`, pdr: x.pdr }))]
+    .sort((a, b) => String(b.dia).localeCompare(String(a.dia)))
+    .map((x) => `<tr><td>${esc(dia(x.dia))}</td><td>${esc(NOME_JOGO(x.jogo))}</td><td>${x.txt}</td><td class="n">${x.pdr == null ? '—' : `${x.pdr > 0 ? '+' : ''}${num(x.pdr)}`}</td></tr>`).join('')}</tbody></table></div>` : vazio('Nada nos últimos 14 dias.')}</div>
+  </section>
+  <section class="p-section"><h2>Doações, atividade e progresso salvo</h2>
+    <div class="card"><h3>Doações</h3>${(j.apoios || []).length ? `<div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Quando</th><th class="n">Valor</th><th>Situação</th><th>Origem</th></tr></thead>
+      <tbody>${j.apoios.map((a) => `<tr><td>${quando(a.criado)}</td><td class="n">${reais(a.valor_pago ?? a.valor)}</td><td>${esc(AP_STATUS[a.status] || a.status)}</td><td>${esc(AP_ORIGEM[a.origem] || a.origem)}</td></tr>`).join('')}</tbody></table></div>` : vazio('Nenhuma doação.')}</div>
+    <div class="card"><h3>Atividade recente</h3>${(j.atividade?.recentes || []).length ? `<div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Quando</th><th>O que</th><th>Jogo</th></tr></thead>
+      <tbody>${j.atividade.recentes.map((v) => `<tr><td>${quando(v.quando)}</td><td>${esc({ visit: 'visitou o site', game_start: 'começou uma partida', game_end: 'terminou uma partida' }[v.tipo] || v.tipo)}</td><td>${v.jogo ? esc(NOME_JOGO(v.jogo)) : '—'}</td></tr>`).join('')}</tbody></table></div>` : vazio('Sem atividade registrada.')}</div>
+    <div class="card"><h3>Progresso salvo na nuvem</h3>${(j.saves || []).length ? `<div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Jogo</th><th>Atualizado</th><th class="n">Tamanho</th></tr></thead>
+      <tbody>${j.saves.map((s) => `<tr><td>${esc(NOME_JOGO(s.jogo))}</td><td>${quando(s.atualizado)}</td><td class="n">${num(Math.round(s.bytes / 100) / 10)} KB</td></tr>`).join('')}</tbody></table></div>` : vazio('Nenhum jogo salvo na nuvem.')}</div>
+  </section>`;
+}
+
+function abaJogador() {
+  const sug = jg && jg.encontrado === false ? `<div class="card"><p class="c-sub">Nenhum jogador com o nick <b>${esc(jgBusca)}</b>.${(jg.sugestoes || []).length ? ' Quem sabe um destes:' : ''}</p>
+    ${(jg.sugestoes || []).length ? `<p>${jg.sugestoes.map(nickLink).join(' · ')}</p>` : ''}</div>` : '';
+  return `<section class="p-section">
+    <h2>Ficha do jogador</h2>
+    <div class="card">
+      <p class="c-sub">Digite o nick (não precisa ser exato nas maiúsculas) para ver tudo sobre a conta: ranqueada, partidas, doações, atividade e progresso salvo. Também dá para clicar num nick nas tabelas de vigilância.</p>
+      <form class="ap-filtros" data-jg-form>
+        <label class="p-label">Nick <input type="search" data-jg-nome value="${esc(jgBusca)}" autocomplete="off" /></label>
+        <button type="submit" class="p-btn"${jgCarregando ? ' disabled' : ''}>${jgCarregando ? 'Buscando…' : 'Buscar'}</button>
+      </form>
+      ${jgErro ? `<p class="p-note">${esc(jgErro)}</p>` : ''}
+    </div>
+    ${sug}
+  </section>${jg?.encontrado ? jgFicha(jg) : ''}`;
+}
+
+body.addEventListener('submit', (e) => {
+  const f = e.target.closest('[data-jg-form]');
+  if (!f) return;
+  e.preventDefault();
+  const nome = f.querySelector('[data-jg-nome]').value.trim();
+  if (nome) buscarJogador(nome);
+});
+// Clicar num nick em qualquer tabela abre a ficha.
+body.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-jogador]');
+  if (!b || !ultimo) return;
+  aba = 'jogador';
+  try { localStorage.setItem('site.painel.aba', aba); } catch { /* sem storage */ }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  buscarJogador(b.dataset.jogador);
+});
+// Dar ou tirar PDR pela ficha.
+body.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-jg-ajustar]');
+  if (!b) return;
+  const nome = b.dataset.jgAjustar;
+  const delta = Math.round(Number(body.querySelector('[data-jg-delta]').value));
+  const msg = body.querySelector('[data-jg-msg]');
+  if (!delta) { msg.textContent = 'Digite um PDR diferente de zero (positivo dá, negativo tira).'; return; }
+  if (!window.confirm(`${delta > 0 ? 'Dar' : 'Tirar'} ${Math.abs(delta)} PDR ${delta > 0 ? 'para' : 'de'} ${nome}?`)) return;
+  b.disabled = true;
+  try {
+    const r = await platform.adminAjustarPdr(nome, delta);
+    await buscarJogador(nome);
+    const m = body.querySelector('[data-jg-msg]');
+    if (m) m.textContent = `Pronto! ${r.username}: ${num(r.antes)} → ${num(r.depois)} pontos (${ELO_NOMES[r.elo] || r.elo}).`;
     return;
   } catch (err) {
     msg.textContent = err.message;

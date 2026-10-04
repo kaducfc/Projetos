@@ -2,7 +2,7 @@
 // Medida): sinais de partida suspeita, para o painel. Só sugerem onde olhar;
 // um sinal sozinho não prova trapaça (acaso e bom jogo também acontecem).
 
-export const JOGOS_VIGIA = ['cblol', 'runetermo', 'campeao', 'escala'];
+export const JOGOS_VIGIA = ['cblol', 'runetermo', 'campeao', 'escala']; // lista de vigilância; a ficha do jogador também mostra a Carreira
 
 // Cada sinal: [código, texto curto]. `p` é uma linha de site_admin_vigia.
 export function sinaisVigia(p) {
@@ -15,6 +15,9 @@ export function sinaisVigia(p) {
     const ganhou = p.status === 'ganhou';
     if (ganhou && p.chutes === 1) out.push(['rara', 'Acertou de primeira']);
     if (ganhou && rapido(5)) out.push(['rapida', 'Rápida demais']);
+  } else if (p.jogo === 'carreira-no-rift') {
+    if (rapido(180)) out.push(['rapida', 'Rápida demais']);
+    if (Number(p.score) >= 1400) out.push(['rara', 'Nota muito alta']);
   } else if (p.jogo === 'escala') {
     if (Number(p.media) >= 95) out.push(['rara', 'Média quase perfeita']);
     if (rapido(15)) out.push(['rapida', 'Rápida demais']);

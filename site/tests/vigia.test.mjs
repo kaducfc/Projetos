@@ -40,3 +40,9 @@ test('vigia: resumo por jogador conta dias diferentes, não só partidas', () =>
   assert.deepEqual(r[0].jogos, { cblol: 2, escala: 1 });
   assert.equal(r.find((j) => j.nome === 'bia').comSinais, 0);
 });
+
+test('vigia: Carreira (ficha do jogador) — rápida demais e nota muito alta', () => {
+  assert.deepEqual(cod({ jogo: 'carreira-no-rift', score: 900, duracao_s: 120 }), ['rapida']);
+  assert.deepEqual(cod({ jogo: 'carreira-no-rift', score: 1450, duracao_s: 1800 }), ['rara']);
+  assert.deepEqual(cod({ jogo: 'carreira-no-rift', score: 900, duracao_s: 1800 }), []);
+});

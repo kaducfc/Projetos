@@ -756,6 +756,18 @@ export async function adminVigia(days = 7) {
   }
   return data;
 }
+// Ficha completa de um jogador pelo nick (0030).
+export async function adminJogador(nome) {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_jogador', { nome });
+  if (error) {
+    if (/site_admin_jogador/.test(error.message) || error.code === 'PGRST202') throw new Error('Rode o arquivo 0030_painel_jogador.sql no Supabase para usar isto.');
+    if (/nome_curto/.test(error.message)) throw new Error('Digite pelo menos 2 letras do nick.');
+    throw erroAdminRanked(error);
+  }
+  return data;
+}
 export async function adminAjustarPdr(nome, delta) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();
