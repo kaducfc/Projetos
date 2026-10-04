@@ -22,8 +22,10 @@ test('efeitos: automático dá o reflexo ao apoiador, "nenhum" tira, id desconhe
   assert.equal(efeitoAtivo(null, true).id, 'reflexo');
   assert.equal(efeitoAtivo(null, false), null);
   assert.equal(efeitoAtivo('nenhum', true), null);
-  assert.equal(efeitoAtivo('st-nebulosa', true).id, 'reflexo'); // ainda em teste: não vale para o público
-  assert.equal(efeitoAtivo('st-nebulosa', false), null);
+  assert.equal(efeitoAtivo('st-neon', true).id, 'reflexo'); // ainda em teste: não vale para o público
+  assert.equal(efeitoAtivo('st-neon', false), null);
+  assert.equal(efeitoAtivo('st-nebulosa', false).nome, 'Streamer'); // lançado: vale para quem escolheu
+  assert.match(nickHtml('Ana', false, 'st-nebulosa'), /fx-st-nebulosa/);
   assert.match(nickHtml('Ana', true), /fx-reflexo/);
   assert.doesNotMatch(nickHtml('Ana', true, 'nenhum'), /fx-/);
   assert.doesNotMatch(nickHtml('Ana', false, 'st-neon'), /fx-/);
@@ -31,8 +33,8 @@ test('efeitos: automático dá o reflexo ao apoiador, "nenhum" tira, id desconhe
 });
 
 test('efeitos: os de teste têm CSS e não estão na lista pública', () => {
-  assert.equal(EFEITOS_TESTE.length, 8);
-  assert.equal(EFEITOS_TESTE.filter((e) => /roxo/.test(e.tema)).length, 3);
+  assert.equal(EFEITOS_TESTE.length, 7);
+  assert.equal(EFEITOS_TESTE.filter((e) => /roxo/.test(e.tema)).length, 2);
   assert.equal(EFEITOS_TESTE.filter((e) => /Twitch/.test(e.tema)).length, 3);
   for (const e of EFEITOS_TESTE) {
     assert.match(e.id, /^[a-z0-9-]{2,30}$/);
