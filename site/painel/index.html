@@ -34,6 +34,17 @@
 </main>
 <footer id="site-footer"></footer>
 <div class="chart-tip" id="chart-tip" role="tooltip" hidden></div>
+<script>
+/* Se a página não sair do "Carregando…" em 15 s (cache antigo ou internet lenta), mostra uma saída. */
+setTimeout(function () {
+  var el = document.getElementById('panel-body');
+  if (!el || !/^\s*Carregando/.test(el.textContent)) return;
+  el.innerHTML = '<p class="muted">Está demorando mais que o normal. <button type="button" id="rl-forca" style="font:inherit;cursor:pointer">Recarregar</button></p>';
+  document.getElementById('rl-forca').onclick = function () {
+    var u = new URL(location.href); u.searchParams.set('r', Date.now()); location.replace(u.toString());
+  };
+}, 15000);
+</script>
 <script type="module" src="../js/painel.js"></script>
 </body>
 </html>
