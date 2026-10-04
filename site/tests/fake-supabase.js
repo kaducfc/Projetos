@@ -343,6 +343,31 @@ export function createFakeSupabase() {
         error: null,
       };
     }
+    // Códigos de recompensa (simplificado; as regras de verdade estão na 0034).
+    if (name === 'site_resgatar_codigo') {
+      const uid = auth._uid();
+      if (!uid) return { data: null, error: { message: 'not_authenticated' } };
+      db.site_codigos = db.site_codigos || []; db.recompensas = db.recompensas || []; db.codigoResgates = db.codigoResgates || new Set();
+      const norm = String(args.codigo || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const c = db.site_codigos.find((x) => x.codigo === norm);
+      const erro = (e) => ({ data: { ok: false, erro: e }, error: null });
+      if (!c) return erro('codigo_invalido');
+      if (db.codigoResgates.has(`${c.codigo}|${uid}`)) return erro('ja_resgatado');
+      if (!c.ativo || (c.expira_em && Date.parse(c.expira_em) <= Date.now())) return erro('codigo_encerrado');
+      if (c.usos_max != null && (c.usos || 0) >= c.usos_max) return erro('codigo_esgotado');
+      db.codigoResgates.add(`${c.codigo}|${uid}`);
+      c.usos = (c.usos || 0) + 1;
+      const novas = [];
+      for (const r of c.recompensas) {
+        if (!db.recompensas.some((x) => x.user_id === uid && x.tipo === r.tipo && x.chave === r.chave)) { db.recompensas.push({ user_id: uid, ...r }); novas.push(r); }
+      }
+      return { data: { ok: true, recompensas: c.recompensas, novas }, error: null };
+    }
+    if (name === 'site_minhas_recompensas') {
+      const uid = auth._uid();
+      if (!uid) return { data: null, error: { message: 'not_authenticated' } };
+      return { data: (db.recompensas || []).filter((x) => x.user_id === uid).map((x) => ({ tipo: x.tipo, chave: x.chave, origem: 'codigo', criado: new Date().toISOString() })), error: null };
+    }
     if (name === 'site_is_admin') return { data: admins.has(auth._uid()), error: null };
     if (name === 'site_admin_stats') {
       if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };

@@ -427,13 +427,105 @@ export async function setAvatar(avatar) {
   if (!sb || !user) throw unavailable();
   const { error } = await sb.rpc('site_set_avatar', { icone: avatar });
   if (error) {
-    if (/icone_bloqueado/.test(error.message)) throw new Error('Esse ícone é especial de apoiador e ainda não foi liberado para a sua conta.');
+    if (/icone_bloqueado/.test(error.message)) throw new Error('Esse ícone ainda não foi liberado para a sua conta (apoiador ou código de recompensa).');
     if (/invalid_avatar/.test(error.message)) throw new Error('Esse ícone não está disponível. Recarregue a página e tente de novo.');
     throw friendly(error);
   }
   user = { ...user, avatar };
   emit({ type: 'auth', user });
   return user;
+}
+
+// ---------------------------------------------------- códigos de recompensa
+
+const ERROS_CODIGO = {
+  codigo_invalido: 'Código inválido. Confira e tente de novo.',
+  ja_resgatado: 'Você já resgatou este código.',
+  codigo_encerrado: 'Este código não está mais disponível.',
+  codigo_esgotado: 'Este código já atingiu o limite de usos.',
+  muitas_tentativas: 'Muitas tentativas erradas. Espere alguns minutos e tente de novo.',
+};
+
+// Resgata um código no servidor. Devolve { recompensas, novas } ou lança o motivo
+// em português (a conta precisa estar conectada).
+export async function resgatarCodigo(codigo) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const texto = String(codigo || '').trim();
+  if (!texto) throw new Error('Digite o código.');
+  const { data, error } = await sb.rpc('site_resgatar_codigo', { codigo: texto });
+  if (error) {
+    if (/site_resgatar_codigo/.test(error.message) || error.code === 'PGRST202') throw new Error('Os códigos ainda não estão disponíveis (falta rodar o 0034 no Supabase).');
+    throw friendly(error);
+  }
+  if (!data?.ok) throw new Error(ERROS_CODIGO[data?.erro] || 'Não foi possível resgatar o código agora.');
+  emit({ type: 'recompensas', recompensas: data.recompensas });
+  return { recompensas: data.recompensas || [], novas: data.novas || [] };
+}
+
+// O que a conta já ganhou: [{ tipo: 'icone' | 'efeito', chave, origem, criado }].
+export async function minhasRecompensas() {
+  const sb = await getClient();
+  if (!sb || !user) return [];
+  const { data, error } = await sb.rpc('site_minhas_recompensas');
+  if (error) {
+    console.warn('Site: recompensas indisponíveis:', error.message);
+    return [];
+  }
+  return data || [];
+}
+
+// Painel do administrador: criar, listar e desativar códigos (0034).
+function erroCodigos(error) {
+  if (/site_admin_codigo|site_admin_recompensa/.test(error.message) || error.code === 'PGRST202') return new Error('Rode o arquivo 0034_codigos_recompensa.sql no Supabase para usar os códigos.');
+  if (/icone_precisa_comecar_com_exc/.test(error.message)) return new Error('O id do ícone exclusivo precisa começar com "exc-" (ex.: exc-lenda).');
+  if (/recompensas_invalidas/.test(error.message)) return new Error('Recompensa inválida: use tipo ícone ou efeito e um id com letras minúsculas, números e hífens (2 a 30).');
+  if (/codigo_ja_existe/.test(error.message)) return new Error('Já existe um código com esse texto.');
+  if (/codigo_invalido/.test(error.message)) return new Error('O código precisa ter de 4 a 32 letras ou números.');
+  if (/usos_invalidos/.test(error.message)) return new Error('O número de usos precisa ser 1 ou mais (ou vazio para ilimitado).');
+  if (/user_not_found/.test(error.message)) return new Error('Não existe conta com esse nome de usuário.');
+  return erroAdminRanked(error);
+}
+export async function adminCodigoCriar({ recompensas, codigo = null, usosMax = null, expiraEm = null, nota = null }) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_codigo_criar', { recompensas, codigo: codigo || null, usos_max: usosMax || null, expira_em: expiraEm || null, nota: nota || null });
+  if (error) throw erroCodigos(error);
+  return data;
+}
+export async function adminCodigos() {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_codigos');
+  if (error) throw erroCodigos(error);
+  return data || [];
+}
+export async function adminCodigoAtivar(id, ativo) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { error } = await sb.rpc('site_admin_codigo_ativar', { id, ativo });
+  if (error) throw erroCodigos(error);
+}
+export async function adminCodigoResgates(id) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_codigo_resgates', { id });
+  if (error) throw erroCodigos(error);
+  return data || [];
+}
+export async function adminRecompensasJogador(nome) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_recompensas_jogador', { nome });
+  if (error) throw erroCodigos(error);
+  return data;
+}
+export async function adminRecompensa(nome, tipo, chave, dar = true) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_recompensa', { nome, tipo, chave, dar });
+  if (error) throw erroCodigos(error);
+  return data;
 }
 
 // Conta com senha: confere a senha atual antes de trocar. Conta só do

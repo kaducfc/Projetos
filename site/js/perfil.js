@@ -4,7 +4,8 @@ import * as platform from '../shared/platform.js';
 import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { GAMES, gameById } from '../shared/config.js';
-import { AVATARES, ESPECIAIS, avatarHtml, nomeAvatar } from '../shared/avatar.js';
+import { AVATARES, ESPECIAIS, EXCLUSIVOS, avatarHtml, nomeAvatar } from '../shared/avatar.js';
+import { nomeRecompensa, tipoTexto } from '../shared/recompensas.js';
 import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
@@ -65,6 +66,17 @@ function cardApoio(u) {
     : 'O site é gratuito. Apoiando com qualquer valor, você ajuda a mantê-lo no ar e seu nick ganha um <b>efeito dourado especial</b>, sem vantagem nos jogos.'}</p>
     </div>
     <a class="btn-primary pf-apoio-btn" href="/apoiar/">${apoiou ? 'Apoiar de novo' : '♥ Apoiar'}</a>
+  </section>`;
+}
+
+// Código de recompensa: ícones exclusivos, efeitos no nome etc.
+function cardCodigo() {
+  return `<section class="pf-card pf-apoio pf-codigo">
+    <div>
+      <p class="eyebrow">🎁 Código de recompensa</p>
+      <p class="pf-apoio-txt">Tem um código? Resgate para ganhar ícones exclusivos, efeitos no nome e outras surpresas.</p>
+    </div>
+    <button type="button" class="btn-primary pf-apoio-btn" data-act="codigo">Resgatar código</button>
   </section>`;
 }
 
@@ -167,7 +179,7 @@ function render() {
     </section>`;
     return;
   }
-  root.innerHTML = `${cabecalho(u)}${cardMinhaRanqueada(status)}${cardApoio(u)}${resumo()}${historico()}${conta(u)}`;
+  root.innerHTML = `${cabecalho(u)}${cardMinhaRanqueada(status)}${cardApoio(u)}${cardCodigo()}${resumo()}${historico()}${conta(u)}`;
 }
 
 let carregando = true;
@@ -207,9 +219,12 @@ async function escolherIcone() {
   // Especial liberado: o clique mostra o título (com a ordem, no dos 100
   // primeiros) e um botão para usar.
   const especial = (x) => `<button type="button" class="pf-icone${u.avatar === `icone:${x.id}` ? ' on' : ''}" data-especial="${x.id}" title="${esc(x.nome)}" aria-label="${esc(x.nome)}">${avatarHtml(`icone:${x.id}`, x.nome, 64)}</button>`;
-  const grade = (selos) => [...AVATARES.map(botao),
+  // Exclusivos (de código de recompensa) só aparecem para quem ganhou.
+  const grade = (selos, ganhos = new Set()) => [...AVATARES.map(botao),
+    ...EXCLUSIVOS.filter((x) => ganhos.has(x.id)).map((x) => botao(`icone:${x.id}`)),
     ...ESPECIAIS.map((x) => (selos?.[x.selo] ? especial(x) : travado(x)))].join('');
   let selos = null;
+  let ganhos = new Set();
   let vagas = null;
   const el = janela(`<h2 class="display">Escolha seu ícone</h2>
     <div class="pf-grade" data-grade>${grade(null)}</div>
@@ -247,9 +262,52 @@ async function escolherIcone() {
       toast(err.message);
     }
   });
-  [selos, vagas] = await Promise.all([platform.meusSelos(), platform.pioneirosVagas()]);
+  let recompensas;
+  [selos, vagas, recompensas] = await Promise.all([platform.meusSelos(), platform.pioneirosVagas(), platform.minhasRecompensas()]);
+  ganhos = new Set(recompensas.filter((r) => r.tipo === 'icone').map((r) => r.chave));
   const g = el.querySelector('[data-grade]');
-  if (g) g.innerHTML = grade(selos);
+  if (g) g.innerHTML = grade(selos, ganhos);
+}
+
+// Janela "Resgatar código": digita, o servidor confere e mostra o que ganhou.
+function resgatarCodigo() {
+  const el = janela(`<h2 class="display">Resgatar código</h2>
+    <p class="muted small">Digite o código que você recebeu. Cada código vale uma vez por conta.</p>
+    <form data-form-codigo novalidate>
+      <input name="codigo" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="XXXX-XXXX-XXXX-XXXX" aria-label="Código" />
+      <p class="pf-msg" role="status"></p>
+      <div class="pf-acts"><button type="button" class="btn-ghost" data-fechar>Fechar</button>
+        <button type="submit" class="btn-primary">Resgatar</button></div>
+    </form>`, (e, fechar) => {
+    if (e.target.closest('[data-escolher-icone]')) { fechar(); escolherIcone(); }
+  });
+  const form = el.querySelector('[data-form-codigo]');
+  const msg = form.querySelector('.pf-msg');
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const botao = form.querySelector('button[type="submit"]');
+    msg.textContent = '';
+    msg.className = 'pf-msg';
+    botao.disabled = true;
+    try {
+      const { recompensas, novas } = await platform.resgatarCodigo(form.codigo.value);
+      const novaChave = new Set(novas.map((r) => `${r.tipo}:${r.chave}`));
+      const linhas = recompensas.map((r) => `<li><span class="pf-rec-tipo">${esc(tipoTexto(r.tipo))}</span> <b>${esc(nomeRecompensa(r.tipo, r.chave))}</b>${novaChave.has(`${r.tipo}:${r.chave}`) ? '' : ' <small>(você já tinha)</small>'}</li>`).join('');
+      const temIcone = recompensas.some((r) => r.tipo === 'icone');
+      el.querySelector('.muted.small')?.remove();
+      form.outerHTML = `<div class="pf-resgate-ok" role="status">
+        <p class="pf-info-tit">🎉 <b>Código resgatado!</b></p>
+        <ul class="pf-rec-lista">${linhas}</ul>
+        <div class="pf-acts"><button type="button" class="btn-ghost" data-fechar>Fechar</button>
+          ${temIcone ? '<button type="button" class="btn-primary" data-escolher-icone>Escolher ícone</button>' : ''}</div>
+      </div>`;
+    } catch (err) {
+      msg.textContent = err.message;
+      msg.className = 'pf-msg err';
+      botao.disabled = false;
+    }
+  });
+  form.codigo.focus();
 }
 
 function confirmarExclusao() {
@@ -301,6 +359,7 @@ root.addEventListener('click', async (e) => {
   const act = b.dataset.act;
   if (act === 'entrar') openAuthModal('login');
   if (act === 'icone') escolherIcone();
+  if (act === 'codigo') resgatarCodigo();
   if (act === 'mais') { mostrar += 30; render(); }
   if (act === 'historico') { histAberto = !histAberto; render(); }
   if (act === 'excluir') confirmarExclusao();

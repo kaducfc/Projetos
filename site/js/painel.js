@@ -7,6 +7,7 @@ import { mountSiteFooter } from '../shared/footer.js';
 import { ROLES, REGIONS } from '../jogos/carreira-no-rift/js/data/world.js';
 import { GAMES, gameById } from '../shared/config.js';
 import { sinaisVigia, resumoJogadores } from '../shared/vigia.js';
+import { nomeRecompensa, tipoTexto, codigoBonito } from '../shared/recompensas.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -77,6 +78,10 @@ if (!ABAS.some(([id]) => id === aba)) aba = 'geral';
 let ultimo = null; // última resposta de adminStats (para trocar de aba sem recarregar)
 let rq = null; // platform.adminRanqueada(days)
 let rqErro = '';
+let cd = null; // platform.adminCodigos(): códigos de recompensa
+let cdErro = '';
+let cdNovo = null; // último código criado (para mostrar e copiar)
+const cdAbertos = new Map(); // id do código → quem resgatou (lista) quando aberto
 let vg = null; // platform.adminVigia(days): partidas dos outros jogos
 let vgErro = '';
 const vgFiltro = { so: true, q: '' };
@@ -323,6 +328,7 @@ function abaFerramentas() {
       ${link('../ranking/', 'Ranking público', 'Como os jogadores veem o ranking da ranqueada.')}
       ${link('../apoiar/', 'Página de apoio', 'A página onde os jogadores apoiam o site.')}
     </div>
+    ${secaoCodigos()}
     <div class="card">
       <h3>Lembretes</h3>
       <ul class="p-steps">
@@ -674,9 +680,9 @@ async function load() {
   try {
     // Apoio e vigilância podem faltar (SQL ainda não rodado) sem travar o resto.
     const opcional = (pr) => pr.then((r) => ({ r }), (err) => ({ err }));
-    const [st, apoios, ranked, resumo, vigia] = await Promise.all([
+    const [st, apoios, ranked, resumo, vigia, codigos] = await Promise.all([
       platform.adminStats(days), opcional(platform.adminApoios(days)), opcional(platform.adminRanked(days)),
-      opcional(platform.adminRanqueada(days)), opcional(platform.adminVigia(Math.min(days, 90))),
+      opcional(platform.adminRanqueada(days)), opcional(platform.adminVigia(Math.min(days, 90))), opcional(platform.adminCodigos()),
     ]);
     if (seq !== loadSeq) return;
     rk = ranked.r || null;
@@ -687,6 +693,8 @@ async function load() {
     rqErro = resumo.err?.message || '';
     vg = vigia.r || null;
     vgErro = vigia.err?.message || '';
+    cd = codigos.r || null;
+    cdErro = codigos.err?.message || '';
     render(st);
   } catch (err) {
     if (seq === loadSeq) lock(err.message, false);
@@ -794,12 +802,118 @@ body.addEventListener('click', async (e) => {
   b.disabled = false;
 });
 
+// ------------------------------------------------- códigos de recompensa (admin)
+
+const CD_STATUS = { ativo: 'Ativo', esgotado: 'Esgotado', expirado: 'Expirado', desativado: 'Desativado' };
+const recTxt = (r) => `${tipoTexto(r.tipo)}: ${nomeRecompensa(r.tipo, r.chave)}`;
+
+function cdTabela() {
+  if (!cd) return `<p class="p-note">${esc(cdErro || 'Carregando…')}</p>`;
+  if (!cd.length) return '<p class="p-empty">Nenhum código criado ainda.</p>';
+  return `<div class="table-wrap"><table class="p-table">
+    <thead><tr><th>Código</th><th>Recompensas</th><th class="n">Usos</th><th>Validade</th><th>Situação</th><th>Nota</th><th></th></tr></thead>
+    <tbody>${cd.map((c) => `<tr>
+      <td><b class="cd-codigo-mini">${esc(codigoBonito(c.codigo))}</b></td>
+      <td>${c.recompensas.map((r) => esc(recTxt(r))).join('<br>')}</td>
+      <td class="n">${num(c.usos)} / ${c.usos_max == null ? '∞' : num(c.usos_max)}</td>
+      <td>${c.expira_em ? esc(dataHora(c.expira_em)) : 'sem validade'}</td>
+      <td><span class="ap-st ap-${c.status === 'ativo' ? 'aprovado' : 'cancelado'}">${esc(CD_STATUS[c.status] || c.status)}</span></td>
+      <td><small>${esc(c.nota || '')}</small></td>
+      <td><button type="button" class="p-mini" data-cd-copiar="${esc(c.codigo)}">Copiar</button>
+        <button type="button" class="p-mini" data-cd-resgates="${esc(c.id)}">Quem resgatou</button>
+        <button type="button" class="p-mini ${c.ativo ? 'p-mini-danger' : ''}" data-cd-ativar="${esc(c.id)}" data-valor="${c.ativo ? '0' : '1'}">${c.ativo ? 'Desativar' : 'Reativar'}</button></td>
+      </tr>${cdAbertos.has(c.id) ? `<tr><td colspan="7"><small>${cdAbertos.get(c.id).length
+    ? cdAbertos.get(c.id).map((x) => `${nickLink(x.username)} (${esc(dataHora(x.resgatado))})`).join(' · ')
+    : 'Ninguém resgatou ainda.'}</small></td></tr>` : ''}`).join('')}</tbody>
+  </table></div>`;
+}
+
+function secaoCodigos() {
+  const linha = (i) => `<div class="cd-rec"><select data-cd-tipo="${i}" aria-label="Tipo da recompensa ${i + 1}"><option value="icone">Ícone</option><option value="efeito">Efeito no nome</option></select>
+    <input data-cd-chave="${i}" placeholder="${i === 0 ? 'ex.: exc-lenda' : 'outra recompensa (opcional)'}" autocomplete="off" spellcheck="false" aria-label="Id da recompensa ${i + 1}" /></div>`;
+  return `<div class="card"><h3>Códigos de recompensa</h3>
+    <p class="c-sub">O jogador resgata em <b>Meu perfil</b> → "Resgatar código". Cada conta usa o mesmo código uma vez. O id de ícone precisa começar com <code>exc-</code> (a arte entra no site). Para recompensa valiosa, deixe o código ser <b>gerado</b>: os escolhidos à mão são fáceis de adivinhar.</p>
+    <form data-cd-form class="cd-form" novalidate>
+      ${[0, 1, 2].map(linha).join('')}
+      <div class="ap-filtros">
+        <label class="p-label">Código (vazio = gerar) <input data-cd-codigo autocomplete="off" spellcheck="false" maxlength="40" /></label>
+        <label class="p-label">Usos máximos (vazio = ilimitado) <input type="number" min="1" step="1" data-cd-usos /></label>
+        <label class="p-label">Vale até (vazio = sem validade) <input type="date" data-cd-validade /></label>
+        <label class="p-label">Nota (só você vê) <input data-cd-nota maxlength="200" autocomplete="off" /></label>
+        <button type="submit" class="p-btn">Criar código</button>
+      </div>
+      <p class="p-note" data-cd-msg role="status"></p>
+    </form>
+    ${cdNovo ? `<div class="cd-novo" role="status">Código criado: <b class="cd-codigo">${esc(codigoBonito(cdNovo.codigo))}</b>
+      <button type="button" class="p-mini" data-cd-copiar="${esc(cdNovo.codigo)}">Copiar</button></div>` : ''}
+    <div data-cd-lista>${cdTabela()}</div>
+  </div>`;
+}
+
+async function cdAtualizar() {
+  try { cd = await platform.adminCodigos(); cdErro = ''; } catch (err) { cdErro = err.message; }
+  if (ultimo) render(ultimo);
+}
+
+body.addEventListener('submit', async (e) => {
+  const f = e.target.closest('[data-cd-form]');
+  if (!f) return;
+  e.preventDefault();
+  const msg = f.querySelector('[data-cd-msg]');
+  const recompensas = [0, 1, 2].map((i) => ({ tipo: f.querySelector(`[data-cd-tipo="${i}"]`).value, chave: f.querySelector(`[data-cd-chave="${i}"]`).value.trim().toLowerCase() }))
+    .filter((r) => r.chave);
+  if (!recompensas.length) { msg.textContent = 'Escreva pelo menos uma recompensa.'; return; }
+  const validade = f.querySelector('[data-cd-validade]').value;
+  const botao = f.querySelector('button[type="submit"]');
+  botao.disabled = true;
+  try {
+    cdNovo = await platform.adminCodigoCriar({
+      recompensas,
+      codigo: f.querySelector('[data-cd-codigo]').value.trim() || null,
+      usosMax: Number(f.querySelector('[data-cd-usos]').value) || null,
+      expiraEm: validade ? new Date(`${validade}T23:59:59`).toISOString() : null,
+      nota: f.querySelector('[data-cd-nota]').value.trim() || null,
+    });
+    await cdAtualizar();
+  } catch (err) {
+    msg.textContent = err.message;
+    botao.disabled = false;
+  }
+});
+body.addEventListener('click', async (e) => {
+  const copiar = e.target.closest('[data-cd-copiar]');
+  const ativar = e.target.closest('[data-cd-ativar]');
+  const quem = e.target.closest('[data-cd-resgates]');
+  try {
+    if (copiar) {
+      await navigator.clipboard.writeText(codigoBonito(copiar.dataset.cdCopiar));
+      copiar.textContent = 'Copiado!';
+    } else if (ativar) {
+      const desativar = ativar.dataset.valor === '0';
+      if (desativar && !window.confirm('Desativar este código? Ninguém mais consegue resgatar (quem já resgatou continua com a recompensa).')) return;
+      ativar.disabled = true;
+      await platform.adminCodigoAtivar(ativar.dataset.cdAtivar, !desativar);
+      await cdAtualizar();
+    } else if (quem) {
+      const id = quem.dataset.cdResgates;
+      if (cdAbertos.has(id)) cdAbertos.delete(id);
+      else cdAbertos.set(id, await platform.adminCodigoResgates(id));
+      if (ultimo) render(ultimo);
+    }
+  } catch (err) {
+    window.alert(err.message);
+    ativar && (ativar.disabled = false);
+  }
+});
+
 // -------------------------------------------------------- aba: ficha do jogador
 
 let jg = null; // platform.adminJogador(nome): ficha ou { encontrado: false, sugestoes }
 let jgErro = '';
 let jgBusca = '';
 let jgCarregando = false;
+let jgRec = null; // recompensas e códigos resgatados do jogador da ficha
+let jgRecErro = '';
 
 const nickLink = (n) => `<button type="button" class="p-link" data-jogador="${esc(n)}">${esc(n)}</button>`;
 const MOTIVOS = { partida: 'partida', melhora: 'resultado melhor', nao_terminou: 'começou e não terminou', inatividade: 'inatividade', admin: 'ajuste do administrador' };
@@ -813,6 +927,11 @@ async function buscarJogador(nome) {
   if (aba === 'jogador' && ultimo) render(ultimo);
   try {
     jg = await platform.adminJogador(nome);
+    jgRec = null;
+    jgRecErro = '';
+    if (jg?.encontrado) {
+      try { jgRec = await platform.adminRecompensasJogador(jg.conta.username); } catch (err) { jgRecErro = err.message; }
+    }
   } catch (err) {
     jg = null;
     jgErro = err.message;
@@ -830,6 +949,20 @@ function jgPartidas(j) {
     <tbody>${ps.map((x) => `<tr><td>${quando(x.criado)}</td><td>${esc(NOME_JOGO(x.jogo))}${x.n > 1 || x.jogo === 'carreira-no-rift' || x.jogo === 'cblol' ? ` <small>#${num(x.n)}</small>` : ''}</td>
       <td>${detalhe(x)}</td><td class="n">${x.pdr > 0 ? '+' : ''}${num(x.pdr)}</td><td class="n">${duracao(x.duracao_s)}</td>
       <td>${x.sinais.map(([c, t]) => `<span class="rk-sinal rk-${c}">${t}</span>`).join(' ') || '<small>—</small>'}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function jgRecHtml(nome) {
+  if (jgRecErro) return `<p class="p-note">${esc(jgRecErro)}</p>`;
+  if (!jgRec) return '<p class="p-note">Carregando…</p>';
+  const rec = jgRec.recompensas.length ? `<ul class="cd-lista">${jgRec.recompensas.map((r) => `<li>${esc(recTxt(r))} <small>(${r.origem === 'admin' ? 'dada por você' : 'código'} · ${esc(dataHora(r.criado))})</small>
+      <button type="button" class="p-mini p-mini-danger" data-jg-rec-tirar="${esc(r.tipo)}|${esc(r.chave)}" data-nome="${esc(nome)}">Tirar</button></li>`).join('')}</ul>` : '<p class="p-empty">Nenhuma recompensa ainda.</p>';
+  const cods = jgRec.codigos.length ? `<p class="c-sub">Códigos resgatados: ${jgRec.codigos.map((x) => `<b>${esc(codigoBonito(x.codigo))}</b> (${esc(dataHora(x.resgatado))}${x.nota ? ` · ${esc(x.nota)}` : ''})`).join(' · ')}</p>` : '';
+  return `${rec}${cods}
+    <form class="ap-filtros" data-jg-rec-dar data-nome="${esc(nome)}" novalidate>
+      <label class="p-label">Dar uma recompensa <select data-jg-rec-tipo><option value="icone">Ícone</option><option value="efeito">Efeito no nome</option></select></label>
+      <label class="p-label">Id <input data-jg-rec-chave placeholder="exc-lenda" autocomplete="off" spellcheck="false" /></label>
+      <button type="submit" class="p-mini">Dar</button>
+    </form><p class="p-note" data-jg-rec-msg role="status"></p>`;
 }
 
 function jgFicha(j) {
@@ -905,6 +1038,7 @@ function jgFicha(j) {
     <div class="card"><h3>Atividade recente</h3>${(j.atividade?.recentes || []).length ? `<div class="table-wrap"><table class="p-table">
       <thead><tr><th>Quando</th><th>O que</th><th>Jogo</th></tr></thead>
       <tbody>${j.atividade.recentes.map((v) => `<tr><td>${quando(v.quando)}</td><td>${esc({ visit: 'visitou o site', game_start: 'começou uma partida', game_end: 'terminou uma partida' }[v.tipo] || v.tipo)}</td><td>${v.jogo ? esc(NOME_JOGO(v.jogo)) : '—'}</td></tr>`).join('')}</tbody></table></div>` : vazio('Sem atividade registrada.')}</div>
+    <div class="card"><h3>Recompensas e códigos</h3>${jgRecHtml(c.username)}</div>
     <div class="card"><h3>Progresso salvo na nuvem</h3>${(j.saves || []).length ? `<div class="table-wrap"><table class="p-table">
       <thead><tr><th>Jogo</th><th>Atualizado</th><th class="n">Tamanho</th></tr></thead>
       <tbody>${j.saves.map((s) => `<tr><td>${esc(NOME_JOGO(s.jogo))}</td><td>${quando(s.atualizado)}</td><td class="n">${num(Math.round(s.bytes / 100) / 10)} KB</td></tr>`).join('')}</tbody></table></div>` : vazio('Nenhum jogo salvo na nuvem.')}</div>
@@ -944,6 +1078,36 @@ body.addEventListener('click', (e) => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   buscarJogador(b.dataset.jogador);
 });
+// Dar ou tirar recompensa pela ficha.
+body.addEventListener('submit', async (e) => {
+  const f = e.target.closest('[data-jg-rec-dar]');
+  if (!f) return;
+  e.preventDefault();
+  const msg = body.querySelector('[data-jg-rec-msg]');
+  const chave = f.querySelector('[data-jg-rec-chave]').value.trim().toLowerCase();
+  if (!chave) { msg.textContent = 'Digite o id da recompensa.'; return; }
+  try {
+    await platform.adminRecompensa(f.dataset.nome, f.querySelector('[data-jg-rec-tipo]').value, chave, true);
+    await buscarJogador(f.dataset.nome);
+  } catch (err) {
+    msg.textContent = err.message;
+  }
+});
+body.addEventListener('click', async (e) => {
+  const t = e.target.closest('[data-jg-rec-tirar]');
+  if (!t) return;
+  const [tipo, chave] = t.dataset.jgRecTirar.split('|');
+  if (!window.confirm(`Tirar "${nomeRecompensa(tipo, chave)}" de ${t.dataset.nome}? Se for o ícone em uso, ele volta para a inicial do nome.`)) return;
+  t.disabled = true;
+  try {
+    await platform.adminRecompensa(t.dataset.nome, tipo, chave, false);
+    await buscarJogador(t.dataset.nome);
+  } catch (err) {
+    window.alert(err.message);
+    t.disabled = false;
+  }
+});
+
 // Dar ou tirar PDR pela ficha.
 body.addEventListener('click', async (e) => {
   const b = e.target.closest('[data-jg-ajustar]');

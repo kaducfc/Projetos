@@ -50,7 +50,7 @@ test('perfil: cadastro barra nome feio, troca de nome com limite, ícone, senha 
   assert.equal(sb.db.site_profiles.find((p) => p.username === 'kadunovo').avatar, 'icone:raposa-encantada');
   // Especiais de apoiador: bloqueados até apoiar.
   assert.deepEqual(await platform.meusSelos(), { apoiador: false, pioneiro: false, posicao: null });
-  await assert.rejects(platform.setAvatar('icone:apoiador'), /especial de apoiador/);
+  await assert.rejects(platform.setAvatar('icone:apoiador'), /ainda não foi liberado/);
   await assert.rejects(platform.setAvatar('champ:Ahri'), /não está disponível/);
   sb.db.site_profiles.find((p) => p.username === 'kadunovo').apoio_total = 5;
   assert.equal((await platform.meusSelos()).apoiador, true);

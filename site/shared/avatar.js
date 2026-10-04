@@ -27,10 +27,16 @@ export const ESPECIAIS = [
   { id: 'pioneiro', nome: '100 primeiros', selo: 'pioneiro', regra: 'Só para os 100 primeiros apoiadores do site.' },
 ];
 
+// Exclusivos: só quem ganhou (resgatando um código) vê e usa; o servidor confere
+// (0034_codigos_recompensa.sql). O id sempre começa com 'exc-' e a arte fica em
+// shared/assets/icones/<id>.webp. Para criar um: coloque a arte, acrescente aqui
+// { id: 'exc-nome', nome: 'Nome' } e crie um código com essa recompensa no painel.
+export const EXCLUSIVOS = [];
+
 export const AVATARES = ['mascote', ...ICONES.map((i) => `icone:${i.id}`)];
 export const AVATARES_ESPECIAIS = ESPECIAIS.map((i) => `icone:${i.id}`);
 
-const TODOS = new Map([...ICONES, ...ESPECIAIS].map((i) => [`icone:${i.id}`, i]));
+const TODOS = new Map([...ICONES, ...ESPECIAIS, ...EXCLUSIVOS].map((i) => [`icone:${i.id}`, i]));
 
 export const nomeAvatar = (id) => (id === 'mascote' ? 'Mascote do Rift Arcade' : TODOS.get(id)?.nome || '');
 
