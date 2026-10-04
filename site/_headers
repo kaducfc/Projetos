@@ -7,6 +7,14 @@
 /jogos/*/dados/*
   Cache-Control: public, max-age=3600, stale-while-revalidate=86400
 
+# Código do site (CSS e JavaScript): o navegador confere com o servidor a cada
+# visita (resposta curta "não mudou", sem baixar de novo). Antes ficava 4 horas
+# em cache e quem já tinha visitado via a versão antiga depois de cada atualização.
+/*.css
+  Cache-Control: public, max-age=0, must-revalidate
+/*.js
+  Cache-Control: public, max-age=0, must-revalidate
+
 # Segurança: o site não pode ser aberto dentro de outro site (contra
 # "clickjacking"), e o navegador só carrega scripts e só se conecta aos
 # endereços que o site usa (Supabase, CDN do supabase-js, Data Dragon e a
