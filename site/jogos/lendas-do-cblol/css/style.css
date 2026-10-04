@@ -63,9 +63,25 @@ button { font-family: var(--sans); }
 .person .acts { display: flex; gap: 6px; }
 .person .ovr { min-width: 30px; text-align: right; font-family: var(--display); font-size: 24px; line-height: 1; color: var(--gold-2); }
 .person .ovr.hidden { color: var(--muted); }
-.pick { padding: 5px 8px; border: 1px solid var(--gold); background: transparent; color: var(--gold-2); border-radius: 3px; font-size: 11px; font-weight: 800; cursor: pointer; }
+.pick { --pulse: 217, 168, 43; padding: 5.5px 8.8px; border: 1px solid var(--gold); background: transparent; color: var(--gold-2); border-radius: 3px; font-size: 12.1px; font-weight: 800; cursor: pointer; animation: pick-pulse 1.8s ease-in-out infinite; }
 .pick:hover { background: rgba(217, 168, 43, 0.14); }
-.pick.res { border-color: var(--line-2); color: var(--text); }
+.pick.res { --pulse: 244, 239, 228; border-color: var(--line-2); color: var(--text); }
+.pick.res:hover { background: rgba(244, 239, 228, 0.1); }
+
+/* Pulsa para mostrar onde clicar (como no jogo da Carreira): os botões de
+   escolher o jogador (cada um na sua cor) e o Rolar quando está disponível. */
+@keyframes pick-pulse {
+  0%, 100% { border-color: rgba(var(--pulse), 0.55); box-shadow: 0 0 0 0 rgba(var(--pulse), 0); }
+  50% { border-color: rgb(var(--pulse)); box-shadow: 0 0 12px 1px rgba(var(--pulse), 0.55); background-color: rgba(var(--pulse), 0.14); }
+}
+.btn-roll[data-act="rolar"]:not(:disabled) { --pulse: 179, 51, 42; animation: roll-pulse 1.8s ease-in-out infinite; }
+@keyframes roll-pulse {
+  0%, 100% { box-shadow: 4px 4px 0 #3a1612, 0 0 0 0 rgba(var(--pulse), 0); }
+  50% { box-shadow: 4px 4px 0 #3a1612, 0 0 24px 4px rgba(var(--pulse), 0.75); filter: brightness(1.12); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pick, .btn-roll[data-act="rolar"]:not(:disabled) { animation: none; }
+}
 
 /* Mapa do Rift com as 5 rotas (imagem com as marcações; cada vaga fica
    centrada sobre a marcação da sua rota). */
