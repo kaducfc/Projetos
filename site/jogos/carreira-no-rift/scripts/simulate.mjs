@@ -8,7 +8,7 @@ import { ROLES } from '../js/data/world.js';
 const N = Number(process.argv[2] || 500);
 const NAT = process.argv[3] || 'BR';
 const roles = Object.keys(ROLES);
-const agg = { peak: [], seasons: [], worlds: 0, msi: 0, t1: 0, legacy: {}, t1Players: 0, abroad: 0, games: [], windows: 0, maxOptions: 0, optionHist: {}, bets: 0, betTaken: 0, loans: 0, entries: 0, entryTaken: 0, climbed: 0, strong: 0, peakStrong: [], peakHome: [], intlBy: {}, totals: [], awardsN: [], leaguesN: [], worldsN: [] };
+const agg = { pots: [], peak: [], seasons: [], worlds: 0, msi: 0, t1: 0, legacy: {}, t1Players: 0, abroad: 0, games: [], windows: 0, maxOptions: 0, optionHist: {}, bets: 0, betTaken: 0, loans: 0, entries: 0, entryTaken: 0, climbed: 0, strong: 0, peakStrong: [], peakHome: [], intlBy: {}, totals: [], awardsN: [], leaguesN: [], worldsN: [] };
 const STRATEGY = process.argv[4] || 'ambicioso';
 const SPEED = process.argv[5] || 'normal'; // 'normal' ou 'rapido'
 const BONUS = Number(process.argv[6] || 0); // OVR inicial extra pelo elo (0 sem elo, 1 Ferro … 10 Desafiante)
@@ -45,6 +45,7 @@ for (let i = 0; i < N; i++) {
   }
   const p = state.player;
   agg.peak.push(p.peakOvr);
+  agg.pots.push(p.potential);
   agg.seasons.push(p.history.length);
   agg.games.push(p.stats.games / Math.max(1, p.history.length));
   agg.worlds += p.trophies.filter((t) => t.name === 'Mundial').length;
@@ -93,5 +94,7 @@ console.log(`janelas com aposta: ${(agg.bets / agg.windows * 100).toFixed(1)}% �
 console.log(`jogou na LCK/LPL: ${(agg.strong / N * 100).toFixed(0)}% · OVR pico de quem foi: ${agg.peakStrong.length ? avg(agg.peakStrong) : '—'} · de quem não foi: ${agg.peakHome.length ? avg(agg.peakHome) : '—'}`);
 console.log(`janelas com proposta de entrada no exterior: ${(agg.entries / agg.windows * 100).toFixed(1)}% · aceitas: ${agg.entryTaken} · subiu de time dentro da liga estrangeira: ${(agg.climbed / N * 100).toFixed(0)}% das carreiras`);
 const bucket = (lo, hi) => (agg.peak.filter((x) => x >= lo && x < hi).length / N * 100).toFixed(0) + '%';
-console.log(`OVR máximo: <75 ${bucket(0, 75)} · 75-79 ${bucket(75, 80)} · 80-84 ${bucket(80, 85)} · 85-89 ${bucket(85, 90)} · 90+ ${bucket(90, 100)}`);
+console.log(`OVR máximo: <75 ${bucket(0, 75)} · 75-79 ${bucket(75, 80)} · 80-84 ${bucket(80, 85)} · 85-89 ${bucket(85, 90)} · 90+ ${bucket(90, 101)}`);
+console.log(`teto de OVR (potencial) no fim: p10 ${pct(agg.pots, 0.1).toFixed(1)} · p50 ${pct(agg.pots, 0.5).toFixed(1)} · p90 ${pct(agg.pots, 0.9).toFixed(1)} · 96+ ${(agg.pots.filter((x) => x >= 96).length / N * 100).toFixed(0)}% · 100 ${(agg.pots.filter((x) => x >= 99.95).length / N * 100).toFixed(1)}%`);
+console.log(`OVR máximo no topo: 96+ ${bucket(96, 101)} · 98+ ${bucket(98, 101)} · 100 ${bucket(100, 101)} (${(agg.peak.filter((x) => x >= 100).length / N * 100).toFixed(1)}%)`);
 console.log('legado:', agg.legacy);

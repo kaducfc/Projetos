@@ -49,16 +49,34 @@ export function ajustarPdr(base, nivel = 0) {
   return Math.max(1, Math.round(Math.min(38, base) * GANHO_POR_ELO[Math.min(9, Math.max(0, nivel))] / 100));
 }
 
-// Tabelas de PDR (antes do % do elo).
-export const PDR_CARREIRA = [[150, -25], [250, -16], [399, -2], [400, 5], [600, 13], [800, 20], [1000, 28], [1100, 32], [1300, 34], [1600, 38]];
+// Tabelas de PDR (antes do % do elo). Iguais às do banco (0033).
+// Carreira: a nota de legado em que o PDR vira positivo é 300 no Ferro, Bronze e
+// Prata e 400 do Ouro para cima. De 1.100 para cima é igual para todos.
+export const PONTO_ZERO_CARREIRA = (nivel) => (nivel <= 2 ? 300 : 400);
+export function baseCarreira(legado, nivel = 3) {
+  const ponto = PONTO_ZERO_CARREIRA(nivel);
+  if (legado >= 1100) return Math.round(32 + Math.min(6, ((legado - 1100) * 6) / 500));
+  if (legado >= ponto) return Math.round(5 + ((legado - ponto) * 27) / (1100 - ponto));
+  return -Math.round(2 + Math.min(23, ((ponto - legado) * 23) / 250));
+}
+// Lendas do CBLOL (modo Oculto): fase de pontos e playoffs. `vitorias` são as da
+// fase de pontos (os playoffs começam com 4).
+export function baseLendas(resultado, vitorias, invicto = false) {
+  const extra = Math.min(3, Math.max(0, vitorias - 4));
+  if (resultado === 'campeao') return invicto ? 38 : 28 + 2 * extra;
+  if (resultado === 'vice' || resultado === 'final') return 17 + extra;
+  if (resultado === 'semi') return 12 + extra;
+  if (resultado === 'quartas') return 8 + extra;
+  return { 0: -20, 1: -10, 2: -5, 3: 5 }[Math.min(3, Math.max(0, vitorias))];
+}
 export const PDR_RUNETERMO = [35, 28, 22, 16, 11, 6, 5];
 export const PDR_LENDAS = [
-  ['Campeão invicto (7-0 e sem perder jogo nos playoffs)', '+35'],
-  ['Campeão', '+25 a +31'],
-  ['Vice', '+14 a +17'],
-  ['Semifinal', '+9 a +12'],
-  ['Quartas', '+5 a +8'],
-  ['Fora na fase de pontos', '−24 (0 vitórias), −20 (1), −16 (2) ou −12 (3)'],
+  ['Campeão invicto (7-0 e sem perder jogo nos playoffs)', '+38'],
+  ['Campeão', '+28 a +34'],
+  ['Vice', '+17 a +20'],
+  ['Semifinal', '+12 a +15'],
+  ['Quartas', '+8 a +11'],
+  ['Fora na fase de pontos', '−20 (0 vitórias), −10 (1), −5 (2) ou +5 (3)'],
 ];
 
 // Benefícios: cada elo mantém os dos elos abaixo.

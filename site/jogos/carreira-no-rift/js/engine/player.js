@@ -36,32 +36,47 @@ export function rollAttrs(role, style, alvo = OVR_INICIAL) {
   return attrs;
 }
 
-// Teto de OVR (potencial): não é sorteado. Começa no mínimo (73, mais o bônus de
-// elo da ranqueada) e sobe com a carreira (títulos, prêmios, decisões certas,
-// região e desempenho) até o máximo (94 + bônus). Nunca passa de 100.
-export const CAP_MIN = 73;
-export const CAP_MAX = 94;
+// Teto de OVR (potencial): não é sorteado. É igual para todo mundo (todos os
+// elos): começa em 75 e sobe com a carreira (títulos, prêmios, decisões certas,
+// região e desempenho) até 100. O bônus de elo só muda o OVR inicial; quem
+// começa mais forte tem mais chance de chegar lá porque ganha mais títulos.
+export const CAP_MIN = 75;
+export const CAP_MAX = 100;
 export const OVR_LIMITE = 100;
-export const capRange = (bonus = 0) => ({
-  min: Math.min(OVR_LIMITE, CAP_MIN + bonus),
-  max: Math.min(OVR_LIMITE, CAP_MAX + bonus),
-});
+export const capRange = () => ({ min: CAP_MIN, max: CAP_MAX });
+
+// Quanto de um ganho de teto "entra" estando o teto em `x`: pleno até 88, cai
+// aos poucos e a partir do 96 chegar ao 100 é bem difícil (mas possível).
+const FATOR_TETO = [[88, 1], [94, 0.6], [96, 0.35], [100, 0.3]];
+export function fatorTeto(x) {
+  if (x <= FATOR_TETO[0][0]) return FATOR_TETO[0][1];
+  for (let i = 1; i < FATOR_TETO.length; i++) {
+    const [x1, f1] = FATOR_TETO[i];
+    const [x0, f0] = FATOR_TETO[i - 1];
+    if (x <= x1) return f0 + ((f1 - f0) * (x - x0)) / (x1 - x0);
+  }
+  return FATOR_TETO.at(-1)[1];
+}
 
 // Aplica o ganho (ou perda) de teto da temporada. Só mexe em jogador que tem a
 // faixa (capMin/capMax); saves antigos, com potencial sorteado, ficam como eram.
 export function updateCap(p, ganho) {
   if (p.capMin == null) return 0;
+  if (p.capMin !== CAP_MIN || p.capMax !== CAP_MAX) {
+    // Carreira criada quando a faixa dependia do elo: passa para a faixa única.
+    p.capMin = CAP_MIN;
+    p.capMax = CAP_MAX;
+    p.capProgress = Math.max(0, (p.potential || CAP_MIN) - CAP_MIN);
+  }
   const antes = p.potential;
-  // Perto do topo o teto sobe mais devagar.
-  const g = ganho > 0 && p.potential >= p.capMax - 6 ? ganho * 0.6 : ganho;
-  const faixa = p.capMax - p.capMin;
-  p.capProgress = clamp((p.capProgress || 0) + g, 0, faixa);
-  p.potential = round1(p.capMin + p.capProgress);
+  const g = ganho > 0 ? ganho * fatorTeto(p.potential) : ganho;
+  p.capProgress = clamp((p.capProgress || 0) + g, 0, CAP_MAX - CAP_MIN);
+  p.potential = round1(CAP_MIN + p.capProgress);
   return p.potential - antes;
 }
 
-export function createPlayer({ nick, nat, region, role, style, attrs, bonus = 0 }) {
-  const cap = capRange(bonus);
+export function createPlayer({ nick, nat, region, role, style, attrs }) {
+  const cap = capRange();
   return {
     nick, nat, role, style, region,
     attrs: { ...attrs },
@@ -69,7 +84,6 @@ export function createPlayer({ nick, nat, region, role, style, attrs, bonus = 0 
     potential: cap.min,
     capMin: cap.min,
     capMax: cap.max,
-    capBonus: bonus, // bônus de elo da ranqueada na hora da criação
     capProgress: 0,
     age: 16,
     morale: 55,
@@ -86,20 +100,21 @@ export function createPlayer({ nick, nat, region, role, style, attrs, bonus = 0 
   };
 }
 
-// Limites dos atributos. Até 93 o ganho é normal; daí para cima cada ponto
+// Limites dos atributos. Até 96 o ganho é normal; daí para cima cada ponto
 // fica cada vez mais difícil (e o 100 é o teto, nunca passa).
 export const ATTR_MIN = 30;
 export const ATTR_MAX = 100;
-export const ATTR_DIFICIL = 93;
+export const ATTR_DIFICIL = 96;
 const round1 = (x) => Math.round(x * 10) / 10;
 
-// Quanto de um ganho "entra" estando em `x` (1 até 93, cai até 0 no 100).
+// Quanto de um ganho "entra" estando em `x` (1 até 96, depois 60% caindo a 40% no 100).
 export function fatorGanho(x) {
   if (x < ATTR_DIFICIL) return 1;
-  return Math.max(0, 0.45 * ((ATTR_MAX - x) / (ATTR_MAX - ATTR_DIFICIL)));
+  // 60% no 96 e 40% no 100: bem difícil, mas o 100 continua possível.
+  return 0.6 - 0.2 * ((x - ATTR_DIFICIL) / (ATTR_MAX - ATTR_DIFICIL));
 }
 
-// Ganho de decisão: `pontos` inteiros. Abaixo de 93 cada ponto entra; acima,
+// Ganho de decisão: `pontos` inteiros. Abaixo de 96 cada ponto entra; acima,
 // cada ponto só entra com a chance de fatorGanho (e para no primeiro que falha).
 export function ganharPontos(x, pontos) {
   let cur = x;
@@ -110,7 +125,7 @@ export function ganharPontos(x, pontos) {
   return cur;
 }
 
-// Ganho contínuo (evolução de fim de temporada): acima de 93 rende cada vez menos.
+// Ganho contínuo (evolução de fim de temporada): acima de 96 rende cada vez menos.
 export function ganharContinuo(x, g) {
   let cur = x;
   let resto = g;
@@ -183,7 +198,11 @@ const YOUTH_BOOST = { 16: 1.2, 17: 1.6, 18: 1.6, 19: 1.3, 20: 1.0, 21: 0.7 };
 // veteranos perdem mecânica mas ganham leitura de jogo.
 export function seasonGrowth(p, perf) {
   const before = ovrOf(p);
-  const gap = Math.max(0, p.potential - before);
+  // Perto do teto máximo o jogador ainda "puxa" um pouco mais (alvo acima do
+  // próprio teto), senão o 100 ficaria impossível: ele só chega lá com muitas
+  // temporadas boas e as decisões certas.
+  const alvo = p.potential + Math.max(0, p.potential - 96) * 0.5;
+  const gap = Math.max(0, alvo - before);
   let g;
   // Curva de carreira (auge do LoL é cedo): começa devagar aos 16-17, cresce
   // forte dos 18 aos 22, chega ao auge entre 19 e 24, depois mantém ou

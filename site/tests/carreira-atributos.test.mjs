@@ -37,21 +37,22 @@ test('carreira: atributo nunca passa de 100 e o que aparece é o ganho real', ()
   for (let i = 0; i < 50; i++) assert.ok(ganharContinuo(99, 5) <= ATTR_MAX);
 });
 
-test('carreira: a partir de 93 fica difícil subir (perder continua igual)', () => {
-  assert.equal(fatorGanho(92.9), 1);
-  assert.ok(fatorGanho(93) < 0.5 && fatorGanho(97) < fatorGanho(93));
-  assert.equal(fatorGanho(100), 0);
-  // Abaixo de 93: sempre entra tudo.
-  for (let i = 0; i < 100; i++) assert.equal(ganharPontos(85, 3), 88);
-  // Acima: em média entra bem menos de 1 ponto a cada 3 tentados no 96.
+test('carreira: a partir de 96 fica bem difícil subir, mas o 100 continua possível (perder continua igual)', () => {
+  assert.equal(fatorGanho(95.9), 1);
+  assert.equal(fatorGanho(96), 0.6);
+  assert.ok(fatorGanho(98) < fatorGanho(96));
+  assert.ok(fatorGanho(100) > 0); // o 100 é possível
+  // Abaixo de 96: sempre entra tudo.
+  for (let i = 0; i < 100; i++) assert.equal(ganharPontos(90, 3), 93);
+  // Acima: em média entra pouco mais de metade dos pontos tentados no 96.
   let soma = 0;
   for (let i = 0; i < 4000; i++) soma += ganharPontos(96, 3) - 96;
-  assert.ok(soma / 4000 < 0.4, `média ${soma / 4000}`);
+  assert.ok(soma / 4000 < 1.5, `média ${soma / 4000}`);
   // Ganho contínuo: 10 pontos a partir de 90 não chegam nem perto de 100.
-  assert.ok(ganharContinuo(90, 10) < 96);
-  const p = jogador({ mec: 96 });
+  assert.ok(ganharContinuo(90, 10) < 99);
+  const p = jogador({ mec: 98 });
   applyFx(p, { mec: -4 }, { garantia: 'mudanca' });
-  assert.equal(p.attrs.mec, 92);
+  assert.equal(p.attrs.mec, 94);
 });
 
 test('carreira: OVR inicial fixo (53) com atributos sorteados, mais o bônus de elo', async () => {
@@ -70,33 +71,40 @@ test('carreira: OVR inicial fixo (53) com atributos sorteados, mais o bônus de 
   assert.ok(vistos.size > 100); // atributos mudam a cada sorteio
 });
 
-test('carreira: teto de OVR não é sorteado — começa no mínimo da faixa do elo e sobe com a carreira', async () => {
-  const { createPlayer, capRange, updateCap, rollAttrs, OVR_INICIAL } = await import('../jogos/carreira-no-rift/js/engine/player.js');
+test('carreira: teto de OVR igual para todos (75–100), não sorteado, sobe com a carreira e fica difícil depois do 96', async () => {
+  const { createPlayer, capRange, updateCap, fatorTeto, rollAttrs, OVR_INICIAL } = await import('../jogos/carreira-no-rift/js/engine/player.js');
   const { capGain } = await import('../jogos/carreira-no-rift/js/engine/career.js');
   const { bonusCarreira } = await import('../shared/ranked.js');
-  // Faixas: sem elo 73–94, Ferro 74–95, Bronze 75–96 … Desafiante 83–100 (nunca passa de 100).
-  assert.deepEqual(capRange(0), { min: 73, max: 94 });
-  assert.deepEqual(capRange(bonusCarreira('ferro')), { min: 74, max: 95 });
-  assert.deepEqual(capRange(bonusCarreira('bronze')), { min: 75, max: 96 });
-  assert.deepEqual(capRange(bonusCarreira('desafiante')), { min: 83, max: 100 });
-  // Todo jogador do mesmo elo começa com o mesmo teto (nada de sorteio).
+  // Mesma faixa para todos os elos: o bônus de elo só muda o OVR inicial.
+  assert.deepEqual(capRange(), { min: 75, max: 100 });
+  const novo = (bonus) => createPlayer({ nick: 'a', nat: 'BR', region: 'br', role: 'mid', style: 'agressivo', attrs: rollAttrs('mid', 'agressivo', OVR_INICIAL + bonus), bonus });
   const tetos = new Set();
-  for (let i = 0; i < 40; i++) {
-    const p = createPlayer({ nick: 'a', nat: 'BR', region: 'br', role: 'mid', style: 'agressivo', attrs: rollAttrs('mid', 'agressivo'), bonus: 0 });
-    tetos.add(p.potential);
-    assert.equal(p.capMin, 73);
-    assert.equal(p.capMax, 94);
+  for (const elo of [null, 'ferro', 'bronze', 'ouro', 'desafiante']) {
+    const p = novo(bonusCarreira(elo));
+    tetos.add(`${p.potential}/${p.capMin}/${p.capMax}`);
   }
-  assert.deepEqual([...tetos], [73]);
+  assert.deepEqual([...tetos], ['75/75/100']);
   assert.equal(OVR_INICIAL, 53);
-  // Sobe com o progresso, até o máximo da faixa, e perde com resultados ruins, nunca abaixo do mínimo.
-  const p = createPlayer({ nick: 'a', nat: 'BR', region: 'br', role: 'mid', style: 'agressivo', attrs: rollAttrs('mid', 'agressivo'), bonus: 2 }); // 75–96
+  // Sobe com o progresso, até 100, e perde com resultados ruins, nunca abaixo de 75.
+  const p = novo(0);
   updateCap(p, 5);
   assert.equal(p.potential, 80);
   updateCap(p, -100);
   assert.equal(p.potential, 75);
-  updateCap(p, 500);
-  assert.equal(p.potential, 96);
+  updateCap(p, 5000);
+  assert.equal(p.potential, 100); // nunca passa de 100
+  // Depois do 96 cada ponto de progresso rende bem menos (mas o 100 é possível).
+  assert.equal(fatorTeto(80), 1);
+  assert.ok(fatorTeto(96) < fatorTeto(90) && fatorTeto(98) <= fatorTeto(96) && fatorTeto(100) > 0);
+  const q = novo(0);
+  updateCap(q, 21); // 75 + 21 chegaria a 96
+  const antes = q.potential;
+  updateCap(q, 4);
+  assert.ok(q.potential - antes < 2, `subiu ${q.potential - antes}`);
+  // Carreira criada com a faixa antiga (por elo) passa para a faixa única.
+  const velha = { potential: 79, capMin: 77, capMax: 98, capProgress: 2 };
+  updateCap(velha, 0);
+  assert.deepEqual([velha.capMin, velha.capMax, velha.potential], [75, 100, 79]);
   // Saves antigos (potencial sorteado, sem faixa) não mudam.
   const antigo = { potential: 88 };
   assert.equal(updateCap(antigo, 10), 0);
@@ -110,7 +118,6 @@ test('carreira: teto de OVR não é sorteado — começa no mínimo da faixa do 
   assert.ok(capGain({ ...base, decisionScore: -1.5 }, p, ctx) < 0);
   assert.ok(capGain({ ...base, decisionScore: 1.5 }, p, ctx) > 0);
   assert.equal(capGain({ ...campea, age: 27 }, p, ctx), 0); // depois dos 26 não muda
-  // Quem tem bônus de elo ganha menos teto por conquista (a faixa já é mais alta).
-  const alto = createPlayer({ nick: 'a', nat: 'BR', region: 'br', role: 'mid', style: 'agressivo', attrs: rollAttrs('mid', 'agressivo'), bonus: 10 });
-  assert.ok(capGain(campea, alto, ctx) < capGain(campea, createPlayer({ nick: 'a', nat: 'BR', region: 'br', role: 'mid', style: 'agressivo', attrs: rollAttrs('mid', 'agressivo'), bonus: 0 }), ctx));
+  // Sem "limitador por elo": o ganho de teto é o mesmo para qualquer elo.
+  assert.equal(capGain(campea, novo(10), ctx), capGain(campea, novo(0), ctx));
 });

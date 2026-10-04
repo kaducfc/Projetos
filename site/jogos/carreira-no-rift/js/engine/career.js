@@ -974,27 +974,18 @@ function driftWorld(state) {
 // Quanto o teto de OVR sobe (ou desce) numa temporada. Vem do que o jogador
 // fez: títulos, prêmios, decisões certas ou erradas, nível da liga e
 // desempenho. Depois dos 26 anos o teto não muda mais. Pesos calibrados com
-// scripts/simulate.mjs (sem elo: OVR máximo mediano ~82, 90+ em ~8–10%).
-const CAP_TITULO = { Mundial: 7, MSI: 4.8, 'First Stand': 3.4 };
-const CAP_LIGA = { 1: 2.4, 2: 0.4, 3: 0.1 };
-const CAP_PREMIO = 1.4;
-const CAP_MVP_FINAL = 2.8;
-const CAP_DECISAO = 1; // por ponto de decisão (±1,5 por temporada)
-const CAP_TAXA = 0.85;
-// Quem começa com bônus de elo já tem OVR e teto mais altos e ganha mais
-// títulos sozinho: o ganho de teto cai 6% por ponto de bônus, para a faixa
-// subir junto com o elo sem virar passeio.
-const CAP_AMORTECE = 0.06;
+// scripts/simulate.mjs (ver README).
+const CAPW = { liga1: 2.4, liga2: 0.4, liga3: 0.1, mundial: 7, msi: 4.8, fs: 3.4, premio: 1.4, mvpFinal: 2.8, decisao: 1, vitoria: 0.3, jogou: 0.2, regiao: 0.5, taxa: 0.7 };
 export function capGain(s, p, { level, winRate, playedRatio }) {
   if (s.age > 26) return 0;
-  let pts = (level?.potential || 0) * 0.5;
+  let pts = (level?.potential || 0) * CAPW.regiao;
   for (const t of s.titles) {
-    pts += t.kind === 'intl' ? (CAP_TITULO[t.name] ?? 3.4) : (CAP_LIGA[t.tier] ?? 0.3);
+    pts += t.kind === 'intl' ? ({ Mundial: CAPW.mundial, MSI: CAPW.msi, 'First Stand': CAPW.fs }[t.name] ?? CAPW.fs) : ({ 1: CAPW.liga1, 2: CAPW.liga2, 3: CAPW.liga3 }[t.tier] ?? 0.3);
   }
-  for (const a of s.awards) pts += a.name === 'MVP da Final do Mundial' ? CAP_MVP_FINAL : CAP_PREMIO;
-  pts += clamp(s.decisionScore || 0, -1.5, 1.5) * CAP_DECISAO;
-  pts += (winRate - 0.5) * 0.3 + (playedRatio - 0.6) * 0.2;
-  return pts * CAP_TAXA * (1 - CAP_AMORTECE * clamp(p.capBonus || 0, 0, 10));
+  for (const a of s.awards) pts += a.name === 'MVP da Final do Mundial' ? CAPW.mvpFinal : CAPW.premio;
+  pts += clamp(s.decisionScore || 0, -1.5, 1.5) * CAPW.decisao;
+  pts += (winRate - 0.5) * CAPW.vitoria + (playedRatio - 0.6) * CAPW.jogou;
+  return pts * CAPW.taxa;
 }
 
 function endSeason(state) {

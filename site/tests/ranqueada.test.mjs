@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createFakeSupabase, installMemoryStorage } from './fake-supabase.js';
 import * as platform from '../shared/platform.js';
-import { ELOS, vantagens, nivelElo, divisaoDe, nomeDivisao, ajustarPdr, GANHO_POR_ELO, bonusCarreira, PARTIDAS_POR_DIA } from '../shared/ranked.js';
+import { ELOS, vantagens, nivelElo, divisaoDe, nomeDivisao, ajustarPdr, GANHO_POR_ELO, bonusCarreira, PARTIDAS_POR_DIA, baseCarreira, baseLendas } from '../shared/ranked.js';
 import { shareText as shareRunetermo } from '../jogos/runetermo/js/logic.js';
 import { shareText as shareCampeao } from '../jogos/campeao/js/logic.js';
 import * as cblol from '../jogos/lendas-do-cblol/js/logic.js';
@@ -197,4 +197,31 @@ test('ranqueada: limite de 5 partidas por dia no banco (0028) e no site', () => 
   assert.match(sql28, /limite constant int := 5/);
   assert.match(sql28, /if feitas >= limite then/);
   assert.equal(PARTIDAS_POR_DIA, 5);
+});
+
+test('PDR: Lendas (3 vitórias na fase já dão +5; playoffs recalculados) e Carreira (ponto zero 300 até a Prata, 400 do Ouro)', () => {
+  // Lendas: fora na fase de pontos.
+  assert.deepEqual([0, 1, 2, 3].map((v) => baseLendas('fase', v)), [-20, -10, -5, 5]);
+  // Playoffs (a partir de 4 vitórias na fase): sempre acima do +5 da fase.
+  assert.deepEqual([4, 5, 6, 7].map((v) => baseLendas('quartas', v)), [8, 9, 10, 11]);
+  assert.deepEqual([4, 7].map((v) => baseLendas('semi', v)), [12, 15]);
+  assert.deepEqual([4, 7].map((v) => baseLendas('vice', v)), [17, 20]);
+  assert.deepEqual([4, 5, 6, 7].map((v) => baseLendas('campeao', v)), [28, 30, 32, 34]);
+  assert.equal(baseLendas('campeao', 7, true), 38);
+  // Carreira: ponto zero 300 (Ferro, Bronze, Prata) e 400 (Ouro para cima).
+  assert.deepEqual([0, 1, 2].map((n) => baseCarreira(300, n)), [5, 5, 5]);
+  assert.deepEqual([3, 6, 9].map((n) => baseCarreira(300, n)), [-11, -11, -11]);
+  assert.equal(baseCarreira(400, 3), 5);
+  assert.equal(baseCarreira(399, 2), 5 + Math.round(99 * 27 / 800 - 0)); // acima do ponto: já positivo
+  assert.equal(baseCarreira(1100, 0), 32);
+  assert.equal(baseCarreira(1600, 9), 38);
+  assert.equal(baseCarreira(50, 1), -25);
+  assert.equal(baseCarreira(150, 3), -25);
+  // O banco usa os mesmos números (0033).
+  const sql33 = readFileSync(new URL('../supabase/migrations/0033_lendas_carreira_pdr.sql', import.meta.url), 'utf8');
+  assert.match(sql33, /when 0 then -20 when 1 then -10 when 2 then -5 else 5 end/);
+  assert.match(sql33, /28 \+ 2 \* least\(3/);
+  assert.match(sql33, /resultado = 'campeao' and invicto then 38/);
+  assert.match(sql33, /case when nivel <= 2 then 300 else 400 end/);
+  assert.match(sql33, /b := site_rk_base_carreira\(new\.score, niv\)/);
 });
