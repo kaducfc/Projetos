@@ -379,6 +379,31 @@ export function createFakeSupabase() {
       me.efeito = args.efeito;
       return { data: args.efeito, error: null };
     }
+    if (name === 'site_admin_codigo_criar') {
+      if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };
+      db.site_codigos = db.site_codigos || [];
+      const codigo = String(args.codigo || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase() || `GERADO${db.site_codigos.length + 1}ABCD`;
+      if (db.site_codigos.some((c) => c.codigo === codigo)) return { data: null, error: { message: 'codigo_ja_existe' } };
+      const c = { id: `c${db.site_codigos.length + 1}`, codigo, recompensas: args.recompensas, usos_max: args.usos_max, usos: 0, ativo: true, expira_em: args.expira_em, nota: args.nota };
+      db.site_codigos.push(c);
+      return { data: { id: c.id, codigo }, error: null };
+    }
+    if (name === 'site_admin_codigos') {
+      if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };
+      return { data: (db.site_codigos || []).map((c) => ({ ...c, resgates: c.usos })), error: null };
+    }
+    if (name === 'site_admin_modelos' || name === 'site_admin_modelo_salvar' || name === 'site_admin_modelo_apagar') {
+      if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };
+      db.modelos = db.modelos || [];
+      if (name === 'site_admin_modelos') return { data: [...db.modelos].sort((a, b) => a.nome.localeCompare(b.nome)), error: null };
+      if (name === 'site_admin_modelo_apagar') { db.modelos = db.modelos.filter((m) => m.id !== args.id); return { data: null, error: null }; }
+      const nome = String(args.nome || '').trim();
+      if (!nome || nome.length > 60) return { data: null, error: { message: 'nome_invalido' } };
+      let m = db.modelos.find((x) => x.nome === nome);
+      if (m) m.recompensas = args.recompensas;
+      else db.modelos.push(m = { id: `m${db.modelos.length + 1}`, nome, recompensas: args.recompensas });
+      return { data: m, error: null };
+    }
     if (name === 'site_is_admin') return { data: admins.has(auth._uid()), error: null };
     if (name === 'site_admin_stats') {
       if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };

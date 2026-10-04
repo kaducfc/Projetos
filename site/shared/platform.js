@@ -519,6 +519,31 @@ export async function adminCodigos() {
   if (error) throw erroCodigos(error);
   return data || [];
 }
+export async function adminModelos() {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_modelos');
+  if (error) throw erroModelos(error);
+  return data || [];
+}
+export async function adminModeloSalvar(nome, recompensas) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_modelo_salvar', { nome, recompensas });
+  if (error) throw erroModelos(error);
+  return data;
+}
+export async function adminModeloApagar(id) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { error } = await sb.rpc('site_admin_modelo_apagar', { id });
+  if (error) throw erroModelos(error);
+}
+function erroModelos(error) {
+  if (/nome_invalido/.test(error.message)) return new Error('Dê um nome ao modelo (até 60 letras).');
+  if (/site_admin_modelo|site_codigo_modelos|schema cache/.test(error.message)) return new Error('Rode o arquivo 0036_codigo_modelos.sql no Supabase para salvar modelos.');
+  return erroCodigos(error);
+}
 export async function adminCodigoAtivar(id, ativo) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();

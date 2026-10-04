@@ -85,3 +85,25 @@ test('códigos: o banco confere tudo (0034)', () => {
   assert.match(sql, /icone like 'icone:exc-%' and not exists/);
   assert.match(sql, /chave_ !~ '\^exc-'/);
 });
+
+test('modelos de código: salvar, atualizar pelo nome, listar e apagar (só administrador)', async () => {
+  const sb = await entrar();
+  await assert.rejects(platform.adminModeloSalvar('Streamer', [{ tipo: 'icone', chave: 'exc-streamer' }]), /não tem permissão/);
+  sb.admins.add(sb.db.site_profiles[0].id);
+  const a = await platform.adminModeloSalvar('Streamer', [{ tipo: 'icone', chave: 'exc-streamer' }, { tipo: 'efeito', chave: 'st-nebulosa' }]);
+  assert.equal(a.recompensas.length, 2);
+  await platform.adminModeloSalvar('Streamer', [{ tipo: 'efeito', chave: 'st-nebulosa' }]); // mesmo nome: atualiza
+  const lista = await platform.adminModelos();
+  assert.equal(lista.length, 1);
+  assert.equal(lista[0].recompensas.length, 1);
+  await assert.rejects(platform.adminModeloSalvar('  ', [{ tipo: 'icone', chave: 'exc-x' }]), /nome ao modelo/);
+  await platform.adminModeloApagar(a.id);
+  assert.equal((await platform.adminModelos()).length, 0);
+});
+test('modelos de código: SQL 0036 só para administrador e já traz o modelo Streamer', () => {
+  const s = readFileSync(new URL('../supabase/migrations/0036_codigo_modelos.sql', import.meta.url), 'utf8');
+  assert.equal((s.match(/not coalesce\(site_is_admin\(\), false\)/g) || []).length, 3);
+  assert.match(s, /exc-streamer/);
+  assert.match(s, /st-nebulosa/);
+  assert.match(s, /revoke all on public\.site_codigo_modelos from anon, authenticated/);
+});

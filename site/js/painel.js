@@ -80,6 +80,7 @@ if (!ABAS.some(([id]) => id === aba)) aba = 'geral';
 let ultimo = null; // última resposta de adminStats (para trocar de aba sem recarregar)
 let rq = null; // platform.adminRanqueada(days)
 let rqErro = '';
+let cdModelos = []; // modelos salvos de recompensas
 let cd = null; // platform.adminCodigos(): códigos de recompensa
 let cdErro = '';
 let cdNovo = null; // último código criado (para mostrar e copiar)
@@ -744,9 +745,9 @@ async function load() {
   try {
     // Apoio e vigilância podem faltar (SQL ainda não rodado) sem travar o resto.
     const opcional = (pr) => pr.then((r) => ({ r }), (err) => ({ err }));
-    const [st, apoios, ranked, resumo, vigia, codigos] = await Promise.all([
+    const [st, apoios, ranked, resumo, vigia, codigos, modelos] = await Promise.all([
       platform.adminStats(days), opcional(platform.adminApoios(days)), opcional(platform.adminRanked(days)),
-      opcional(platform.adminRanqueada(days)), opcional(platform.adminVigia(Math.min(days, 90))), opcional(platform.adminCodigos()),
+      opcional(platform.adminRanqueada(days)), opcional(platform.adminVigia(Math.min(days, 90))), opcional(platform.adminCodigos()), opcional(platform.adminModelos()),
     ]);
     if (seq !== loadSeq) return;
     rk = ranked.r || null;
@@ -759,6 +760,7 @@ async function load() {
     vgErro = vigia.err?.message || '';
     cd = codigos.r || null;
     cdErro = codigos.err?.message || '';
+    cdModelos = modelos.r || [];
     render(st);
   } catch (err) {
     if (seq === loadSeq) lock(err.message, false);
@@ -892,13 +894,21 @@ function cdTabela() {
   </table></div>`;
 }
 
+const CD_LINHAS = 5;
+const cdModeloOpcoes = (sel = '') => `<option value="">— escolher para preencher —</option>${cdModelos.map((m) => `<option value="${esc(m.id)}"${m.id === sel ? ' selected' : ''}>${esc(m.nome)} (${m.recompensas.length} ${m.recompensas.length === 1 ? 'item' : 'itens'})</option>`).join('')}`;
+
 function secaoCodigos() {
   const linha = (i) => `<div class="cd-rec"><select data-cd-tipo="${i}" aria-label="Tipo da recompensa ${i + 1}"><option value="icone">Ícone</option><option value="efeito">Efeito no nome</option></select>
     <input data-cd-chave="${i}" placeholder="${i === 0 ? 'ex.: exc-lenda' : 'outra recompensa (opcional)'}" autocomplete="off" spellcheck="false" aria-label="Id da recompensa ${i + 1}" /></div>`;
   return `<div class="card"><h3>Códigos de recompensa</h3>
     <p class="c-sub">O jogador resgata em <b>Meu perfil</b> → "Resgatar código". Cada conta usa o mesmo código uma vez. O id de ícone precisa começar com <code>exc-</code> (a arte entra no site). Para recompensa valiosa, deixe o código ser <b>gerado</b>: os escolhidos à mão são fáceis de adivinhar.</p>
     <form data-cd-form class="cd-form" novalidate>
-      ${[0, 1, 2].map(linha).join('')}
+      <div class="cd-modelos">
+        <label class="p-label">Modelo salvo <select data-cd-modelo>${cdModeloOpcoes()}</select></label>
+        <button type="button" class="p-mini" data-cd-modelo-salvar>Salvar como modelo</button>
+        <button type="button" class="p-mini p-mini-danger" data-cd-modelo-apagar>Apagar modelo</button>
+      </div>
+      ${Array.from({ length: CD_LINHAS }, (_, i) => linha(i)).join('')}
       <div class="ap-filtros">
         <label class="p-label">Código (vazio = gerar) <input data-cd-codigo autocomplete="off" spellcheck="false" maxlength="40" /></label>
         <label class="p-label">Usos máximos (vazio = ilimitado) <input type="number" min="1" step="1" data-cd-usos /></label>
@@ -924,7 +934,7 @@ body.addEventListener('submit', async (e) => {
   if (!f) return;
   e.preventDefault();
   const msg = f.querySelector('[data-cd-msg]');
-  const recompensas = [0, 1, 2].map((i) => ({ tipo: f.querySelector(`[data-cd-tipo="${i}"]`).value, chave: f.querySelector(`[data-cd-chave="${i}"]`).value.trim().toLowerCase() }))
+  const recompensas = Array.from({ length: CD_LINHAS }, (_, i) => i).map((i) => ({ tipo: f.querySelector(`[data-cd-tipo="${i}"]`).value, chave: f.querySelector(`[data-cd-chave="${i}"]`).value.trim().toLowerCase() }))
     .filter((r) => r.chave);
   if (!recompensas.length) { msg.textContent = 'Escreva pelo menos uma recompensa.'; return; }
   const validade = f.querySelector('[data-cd-validade]').value;
@@ -942,6 +952,55 @@ body.addEventListener('submit', async (e) => {
   } catch (err) {
     msg.textContent = err.message;
     botao.disabled = false;
+  }
+});
+// Lê as linhas de recompensa do formulário.
+function cdLinhas(f) {
+  return Array.from({ length: CD_LINHAS }, (_, i) => ({ tipo: f.querySelector(`[data-cd-tipo="${i}"]`).value, chave: f.querySelector(`[data-cd-chave="${i}"]`).value.trim().toLowerCase() }))
+    .filter((r) => r.chave);
+}
+// Escolher um modelo preenche as linhas.
+body.addEventListener('change', (e) => {
+  const sel = e.target.closest('[data-cd-modelo]');
+  if (!sel) return;
+  const f = sel.closest('[data-cd-form]');
+  const m = cdModelos.find((x) => x.id === sel.value);
+  for (let i = 0; i < CD_LINHAS; i += 1) {
+    const r = m?.recompensas[i];
+    f.querySelector(`[data-cd-tipo="${i}"]`).value = r?.tipo || 'icone';
+    f.querySelector(`[data-cd-chave="${i}"]`).value = r?.chave || '';
+  }
+  f.querySelector('[data-cd-msg]').textContent = '';
+});
+body.addEventListener('click', async (e) => {
+  const salvar = e.target.closest('[data-cd-modelo-salvar]');
+  const apagar = e.target.closest('[data-cd-modelo-apagar]');
+  if (!salvar && !apagar) return;
+  const f = e.target.closest('[data-cd-form]');
+  const sel = f.querySelector('[data-cd-modelo]');
+  const msg = f.querySelector('[data-cd-msg]');
+  try {
+    if (salvar) {
+      const recompensas = cdLinhas(f);
+      if (!recompensas.length) { msg.textContent = 'Preencha as recompensas que o modelo deve ter.'; return; }
+      const atual = cdModelos.find((x) => x.id === sel.value);
+      const nome = window.prompt('Nome do modelo (se já existir, é atualizado):', atual?.nome || '');
+      if (!nome || !nome.trim()) return;
+      const m = await platform.adminModeloSalvar(nome.trim(), recompensas);
+      cdModelos = await platform.adminModelos();
+      sel.innerHTML = cdModeloOpcoes(m.id);
+      msg.textContent = `Modelo "${m.nome}" salvo.`;
+    } else {
+      const m = cdModelos.find((x) => x.id === sel.value);
+      if (!m) { msg.textContent = 'Escolha primeiro o modelo que quer apagar.'; return; }
+      if (!window.confirm(`Apagar o modelo "${m.nome}"? Os códigos já criados não mudam.`)) return;
+      await platform.adminModeloApagar(m.id);
+      cdModelos = await platform.adminModelos();
+      sel.innerHTML = cdModeloOpcoes();
+      msg.textContent = `Modelo "${m.nome}" apagado.`;
+    }
+  } catch (err) {
+    msg.textContent = err.message;
   }
 });
 body.addEventListener('click', async (e) => {
