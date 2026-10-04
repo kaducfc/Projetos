@@ -4,7 +4,7 @@
 // por `como` (o texto que explica como conseguir).
 
 export const EFEITOS = [
-  { id: 'reflexo', nome: 'Reflexo', classe: 'fx-reflexo', titulo: 'Apoiador do Rift Arcade',
+  { id: 'reflexo', nome: 'Apoiador', classe: 'fx-reflexo', titulo: 'Apoiador do Rift Arcade',
     como: 'Apoie o Rift Arcade com qualquer valor e o efeito dourado fica liberado.', link: { href: '/apoiar/', texto: '♥ Apoiar o site' } },
 ];
 

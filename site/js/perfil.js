@@ -83,7 +83,7 @@ function cardEfeito(u) {
     <div class="pf-ef-topo">
       <div>
         <p class="eyebrow">✦ Efeito</p>
-        <p class="pf-apoio-txt">Seu nome agora: ${nickHtml(u.username, u.apoioTotal > 0, u.efeito)}</p>
+        <p class="pf-apoio-txt pf-ef-atual"><span class="pf-ef-rotulo">${esc(atual ? atual.nome : 'Sem efeito')}</span> : ${nickHtml(u.username, u.apoioTotal > 0, u.efeito)}</p>
       </div>
       <button type="button" class="btn-ghost pf-ef-abrir" data-act="efeito-abrir" aria-expanded="${efeitoAberto}">${efeitoAberto ? 'Fechar' : 'Abrir'}</button>
     </div>
@@ -99,7 +99,7 @@ function cardApoio(u) {
     <div>
       <p class="eyebrow">♥ Apoie o Rift Arcade</p>
       <p class="pf-apoio-txt">${apoiou
-    ? 'Obrigado pelo apoio! Seu nick ganhou o efeito <b>Reflexo</b> no perfil, no ranking e na barra do site.'
+    ? 'Obrigado pelo apoio! Seu nick ganhou o efeito <b>Apoiador</b> no perfil, no ranking e na barra do site.'
     : 'O site é gratuito. Apoiando com qualquer valor, você ajuda a mantê-lo no ar e seu nick ganha um <b>efeito dourado especial</b>, sem vantagem nos jogos.'}</p>
     </div>
     <a class="btn-primary pf-apoio-btn" href="/apoiar/">${apoiou ? 'Apoiar de novo' : '♥ Apoiar'}</a>

@@ -72,7 +72,7 @@ function efeito(u) {
   return `<section class="pf-card ap-efeito">
     <div class="ap-efeito-nick">${nickHtml(nome, true)}</div>
     <div class="ap-efeito-txt">
-      <p class="eyebrow">Efeito de apoiador · Reflexo</p>
+      <p class="eyebrow">Efeito de apoiador</p>
       <p>${apoiou
     ? `Obrigado! Você já apoiou com <b>${reais(u.apoioTotal)}</b> e seu nick brilha assim no perfil, no ranking e na barra do site.`
     : 'Apoiando com qualquer valor, seu nick fica assim, automaticamente, no perfil, no ranking e na barra do site. Não dá nenhuma vantagem nos jogos.'}</p>
