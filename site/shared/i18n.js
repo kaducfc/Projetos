@@ -94,7 +94,7 @@ export function t(pt, vars = null) {
 }
 
 // Só para testes: usa um dicionário direto e traduz um texto solto.
-export const __usarDicionario = (d) => montar(d);
+export const __usarDicionario = (d, id = 'en') => { lang = id; montar(d); };
 export const traduzirTexto = (pt) => buscar(norm(String(pt)));
 
 export const getLang = () => lang;

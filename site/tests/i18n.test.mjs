@@ -5,11 +5,11 @@ import { LANGS, __usarDicionario, traduzirTexto, t } from '../shared/i18n.js';
 
 const IDS = LANGS.map((l) => l.id).filter((id) => id !== 'pt-BR');
 const inventario = JSON.parse(readFileSync(new URL('./i18n-inventario.json', import.meta.url), 'utf8'));
-const carregar = async (id) => { __usarDicionario((await import(`../shared/i18n/${id}.js`)).default); };
+const carregar = async (id) => { __usarDicionario((await import(`../shared/i18n/${id}.js`)).default, id); };
 
 test('i18n: 6 idiomas, português é o padrão e os outros têm arquivo', () => {
   assert.deepEqual(LANGS.map((l) => l.id), ['pt-BR', 'en', 'de', 'es', 'it', 'fr']);
-  assert.equal(t('Entrar'), 'Entrar'); // sem idioma carregado, devolve o português
+  assert.equal(t('Entrar'), 'Entrar'); // padrão: devolve o português
 });
 
 test('i18n: todo texto da primeira etapa (site, hub, ranking, perfil, apoio) está traduzido nos 5 idiomas', async () => {
