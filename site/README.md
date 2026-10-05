@@ -167,3 +167,21 @@ platform.recordResult('meu-jogo', {
 ```
 
 4. Adicione o jogo em `GAMES` no `shared/config.js` (com `status: 'live'`).
+
+## Idiomas
+
+O site está em português (padrão) e tem um seletor de idioma na barra do topo
+(English, Deutsch, Español, Italiano, Français). Como funciona:
+
+- `shared/i18n.js` traduz o que aparece na tela (textos, `title`, `placeholder`,
+  `aria-label`, `alt`), inclusive o que os jogos desenham depois. O texto em
+  português é a "chave"; o que não tiver tradução continua em português.
+- As traduções ficam em `shared/i18n/src/*.mjs`, em linhas
+  `[português, en, de, es, it, fr]`. Depois de editar, rode
+  `node scripts/i18n-build.mjs` (gera `shared/i18n/<idioma>.js`).
+- Texto com valor no meio usa `{nome}`: `['Hoje: {pts} PDR', 'Today: {pts} RP', …]`.
+- Nomes de jogadores, apelidos e avatares nunca são traduzidos (`.nick`, `.avatar`,
+  `data-no-i18n`, `translate="no"`).
+- A escolha fica salva no navegador (`localStorage`, chave `rift-lang`).
+- `tests/i18n.test.mjs` confere que todo texto do inventário (`tests/i18n-inventario.json`)
+  tem tradução nos 5 idiomas.

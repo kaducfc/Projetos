@@ -4,6 +4,7 @@ import * as platform from './platform.js';
 import { SITE_NAME } from './config.js';
 import { avatarHtml, hydrateAvatars } from './avatar.js';
 import { nickHtml } from './apoio.js';
+import { LANGS, getLang, langInfo, setLang, onLangChange } from './i18n.js';
 
 // Logo para fundo escuro, a partir da raiz do domínio (serve em qualquer página).
 const LOGO_URL = '/shared/assets/marca/logo-barra.png?v=2';
@@ -44,7 +45,11 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
       account = `<span class="sb-note">Visitante: o progresso fica neste navegador</span>
         <button type="button" class="sb-btn sb-primary" data-sb="login">Entrar</button>`;
     }
-    el.innerHTML = `${brand}<div class="sb-right">${account}</div>`;
+    const idiomas = `<div class="sb-lang">
+        <button type="button" class="sb-btn sb-langbtn" data-sb="lang" aria-haspopup="true" aria-label="Idioma" title="Idioma"><span aria-hidden="true">🌐</span> <span data-no-i18n>${langInfo().curto}</span></button>
+        <div class="sb-langmenu" hidden>${LANGS.map((l) => `<button type="button" data-sb-lang="${l.id}" data-no-i18n translate="no" lang="${l.id}"${l.id === getLang() ? ' class="on" aria-current="true"' : ''}>${l.nome}</button>`).join('')}</div>
+      </div>`;
+    el.innerHTML = `${brand}<div class="sb-right">${idiomas}${account}</div>`;
     hydrateAvatars(el);
     if (u) revealAdmin(u.id);
   };
@@ -58,10 +63,16 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
     platform.isAdmin().then((ok) => { admin = ok; show(); });
   };
 
+  el.addEventListener('click', (e) => {
+    const l = e.target.closest('[data-sb-lang]');
+    if (l) setLang(l.dataset.sbLang);
+  });
+  onLangChange(() => paint());
   el.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-sb]');
     if (!b) return;
     if (b.dataset.sb === 'login') openAuthModal('login');
+    if (b.dataset.sb === 'lang') el.querySelector('.sb-langmenu').hidden = !el.querySelector('.sb-langmenu').hidden;
     if (b.dataset.sb === 'menu') {
       const menu = el.querySelector('.sb-menu');
       menu.hidden = !menu.hidden;
@@ -73,7 +84,10 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
     }
   });
   document.addEventListener('click', (e) => {
-    if (!el.contains(e.target)) el.querySelector('.sb-menu')?.setAttribute('hidden', '');
+    if (!el.contains(e.target)) {
+      el.querySelector('.sb-menu')?.setAttribute('hidden', '');
+      el.querySelector('.sb-langmenu')?.setAttribute('hidden', '');
+    }
   });
 
   const askUsername = () => {
