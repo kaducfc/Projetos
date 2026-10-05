@@ -9,7 +9,7 @@ import { nomeRecompensa, tipoTexto } from '../shared/recompensas.js';
 import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
-import { EFEITOS, efeitoAtivo } from '../shared/efeitos.js';
+import { EFEITOS, EFEITOS_TESTE, EQUIPAVEIS_TESTE, efeitoAtivo } from '../shared/efeitos.js';
 import { localeAtual } from '../shared/i18n.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
@@ -88,7 +88,7 @@ function cardEfeito(u) {
       </div>
       <button type="button" class="btn-ghost pf-ef-abrir" data-act="efeito-abrir" aria-expanded="${efeitoAberto}">${efeitoAberto ? 'Fechar' : 'Abrir'}</button>
     </div>
-    ${efeitoAberto ? `<ul class="pf-ef-lista">${opcao({ id: 'nenhum', nome: 'Sem efeito' })}${EFEITOS.map(opcao).join('')}</ul>
+    ${efeitoAberto ? `<ul class="pf-ef-lista">${opcao({ id: 'nenhum', nome: 'Sem efeito' })}${[...EFEITOS, ...EFEITOS_TESTE.filter((e) => EQUIPAVEIS_TESTE.includes(e.id) && efeitosGanhos.has(e.id)).map((e) => ({ ...e, nome: `${e.nome} (teste)`, como: 'Efeito em teste.' }))].map(opcao).join('')}</ul>
     <p class="muted small pf-ef-nota">Novos efeitos chegam por doação e por códigos de recompensa. Só muda a aparência do seu nome.</p>` : ''}
   </section>`;
 }

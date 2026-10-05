@@ -27,7 +27,11 @@ export const EFEITOS_TESTE = [
   { id: 'hw-eclipse', nome: 'Eclipse Sangrento', classe: 'fx-hw-eclipse', tema: 'Halloween · caveiras e brasas' },
 ];
 
-export const efeitoPorId = (id) => EFEITOS.find((e) => e.id === id) || null;
+// De EFEITOS_TESTE, só estes dá para equipar (o servidor só os libera para o
+// administrador, via site_recompensas); os demais continuam só na aba Teste.
+export const EQUIPAVEIS_TESTE = ['hw-teia'];
+export const efeitoPorId = (id) => EFEITOS.find((e) => e.id === id)
+  || (EQUIPAVEIS_TESTE.includes(id) ? EFEITOS_TESTE.find((e) => e.id === id) : null) || null;
 
 // Qual efeito aparece no nick. `escolha`: null = automático, 'nenhum' = sem
 // efeito, ou o id. Um id que o site não conhece (ainda em teste) cai no automático.
