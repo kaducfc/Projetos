@@ -177,24 +177,18 @@ function traduzirTitulo() {
 let observador = null;
 function observar() {
   if (observador || typeof MutationObserver === 'undefined' || !document.body) return;
-  const fila = new Set();
-  let agendado = false;
-  const processar = () => {
-    agendado = false;
-    const itens = [...fila];
-    fila.clear();
-    aplicando = true;
-    try { itens.forEach((n) => { if (n.isConnected) percorrer(n); }); } finally { aplicando = false; }
-    observador.takeRecords();
-  };
+  // O que a página desenhar depois é traduzido na hora (dentro do próprio aviso do
+  // observador, sem esperar), para não perder alterações de outros scripts.
   observador = new MutationObserver((muts) => {
     if (aplicando || lang === IDIOMA_PADRAO) return;
+    const fila = new Set();
     for (const m of muts) {
       if (m.type === 'childList') m.addedNodes.forEach((n) => fila.add(n));
-      else if (m.type === 'characterData') fila.add(m.target);
-      else if (m.type === 'attributes') fila.add(m.target);
+      else fila.add(m.target); // characterData e atributos
     }
-    if (!agendado && fila.size) { agendado = true; queueMicrotask(processar); }
+    aplicando = true;
+    try { fila.forEach((n) => { if (n.isConnected) percorrer(n); }); } finally { aplicando = false; }
+    observador.takeRecords(); // só o que a própria tradução mexeu (nada de outros scripts roda aqui)
   });
   observador.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATRIBUTOS });
 }
