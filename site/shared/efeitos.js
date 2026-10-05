@@ -19,11 +19,11 @@ export const EFEITOS_TESTE = [
   { id: 'st-contorno', nome: 'Contorno Twitch', classe: 'fx-st-contorno', tema: 'Streamer · Twitch' },
   { id: 'st-glitch', nome: 'Glitch', classe: 'fx-st-glitch', tema: 'Streamer · Twitch' },
   { id: 'st-aovivo', nome: 'Ao vivo', classe: 'fx-st-aovivo', tema: 'Streamer · Twitch' },
-  { id: 'hw-abobora', nome: 'Abóbora', classe: 'fx-hw-abobora', tema: 'Halloween · vela tremulando' },
-  { id: 'hw-fantasma', nome: 'Fantasma', classe: 'fx-hw-fantasma', tema: 'Halloween · espectral' },
-  { id: 'hw-sangue', nome: 'Sangue', classe: 'fx-hw-sangue', tema: 'Halloween · gotejando' },
-  { id: 'hw-pocao', nome: 'Poção', classe: 'fx-hw-pocao', tema: 'Halloween · borbulhando' },
-  { id: 'hw-noite', nome: 'Noite de morcegos', classe: 'fx-hw-noite', tema: 'Halloween · lua e morcegos' },
+  { id: 'hw-bruxas', nome: 'Galáxia das Bruxas', classe: 'fx-hw-bruxas', tema: 'Halloween · morcegos e chapéus' },
+  { id: 'hw-nebulosa', nome: 'Nebulosa Abóbora', classe: 'fx-hw-nebulosa', tema: 'Halloween · abóboras' },
+  { id: 'hw-assombrada', nome: 'Noite Assombrada', classe: 'fx-hw-assombrada', tema: 'Halloween · fantasmas' },
+  { id: 'hw-teia', nome: 'Teia Cósmica', classe: 'fx-hw-teia', tema: 'Halloween · teia e aranhas' },
+  { id: 'hw-eclipse', nome: 'Eclipse Sangrento', classe: 'fx-hw-eclipse', tema: 'Halloween · caveiras e brasas' },
 ];
 
 export const efeitoPorId = (id) => EFEITOS.find((e) => e.id === id) || null;
