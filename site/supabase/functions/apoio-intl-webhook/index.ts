@@ -12,14 +12,16 @@ const env = (k) => Deno.env.get(k) || '';
 const hex = (b: ArrayBuffer) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
 
 async function assinaturaStripeOk(corpo: string, cab: string) {
-  const segredo = env('STRIPE_WEBHOOK_SECRET');
-  if (!segredo || !cab) return false;
+  const segredo = env('STRIPE_WEBHOOK_SECRET').trim().replace(/^["']|["']$/g, '');
+  if (!segredo || !cab) { console.error('apoio-intl-webhook: falta STRIPE_WEBHOOK_SECRET ou o cabeçalho stripe-signature'); return false; }
   const partes = Object.fromEntries(cab.split(',').map((p) => p.split('=') as [string, string]));
   const t = Number(partes.t);
-  if (!t || Math.abs(Date.now() / 1000 - t) > 600) return false;
+  if (!t || Math.abs(Date.now() / 1000 - t) > 600) { console.error('apoio-intl-webhook: assinatura fora do prazo'); return false; }
   const chave = await crypto.subtle.importKey('raw', new TextEncoder().encode(segredo), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const esperado = hex(await crypto.subtle.sign('HMAC', chave, new TextEncoder().encode(`${t}.${corpo}`)));
-  return cab.split(',').some((p) => p.startsWith('v1=') && p.slice(3) === esperado);
+  const ok = cab.split(',').some((p) => p.startsWith('v1=') && p.slice(3) === esperado);
+  if (!ok) console.error('apoio-intl-webhook: assinatura não confere (STRIPE_WEBHOOK_SECRET é o whsec_ deste destino?)');
+  return ok;
 }
 
 Deno.serve(async (req) => {
