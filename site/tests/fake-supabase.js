@@ -469,6 +469,12 @@ export function createFakeSupabase() {
   // Edge Functions: só a apoio-criar (devolve um link de pagamento falso).
   const functions = {
     async invoke(nome, { body } = {}) {
+      if (nome === 'apoio-intl-criar') {
+        if (!auth._uid()) return { data: { erro: 'nao_logado' }, error: { message: 'non-2xx' } };
+        if (body?.acao === 'capturar') return { data: { status: 'aprovado' }, error: null };
+        if (!['stripe', 'paypal'].includes(body?.provedor) || !['USD', 'EUR'].includes(body?.moeda) || !(body?.valor >= 3)) return { data: { erro: 'valor_invalido' }, error: { message: 'non-2xx' } };
+        return { data: { url: `https://${body.provedor}.test/checkout?valor=${body.valor}&moeda=${body.moeda}`, apoio: 'a2' }, error: null };
+      }
       if (nome !== 'apoio-criar') return { data: null, error: { message: 'função desconhecida' } };
       if (!auth._uid()) return { data: { erro: 'nao_logado' }, error: { message: 'non-2xx' } };
       if (!(body?.valor >= 5 && body?.valor <= 1000)) return { data: { erro: 'valor_invalido' }, error: { message: 'non-2xx' } };

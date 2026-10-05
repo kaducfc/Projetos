@@ -37,6 +37,12 @@ export const OFFICIAL_LOGOS_ALLOWED = [];
 //   true    → liberado para todos.
 export const APOIO_ATIVO = true;
 
+// Apoio internacional (Stripe e PayPal, em dólar ou euro). Só aparece quando o
+// site NÃO está em português. Mesmos valores de APOIO_ATIVO:
+//   false → "Em breve"; 'admin' → só administradores conseguem pagar (teste);
+//   true → liberado para todos.
+export const APOIO_INTL_ATIVO = 'admin';
+
 // Catálogo exibido no hub. `path` é relativo à raiz do site.
 // status: 'live' (jogável) ou 'soon' (em breve).
 export const GAMES = [
