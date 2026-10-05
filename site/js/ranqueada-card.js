@@ -4,6 +4,7 @@ import {
   VAGAS_DESAFIANTE, MIN_DESAFIANTE, VAGAS_GRAO_MESTRE, MIN_GRAO_MESTRE,
   eloInfo, nivelElo, emblemaHtml, divisaoDe, nomeDivisao, fmtPdr,
 } from '../shared/ranked.js';
+import { localeAtual } from '../shared/i18n.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -12,7 +13,7 @@ const ddmm = (iso) => {
   const [, m, d] = String(iso).slice(0, 10).split('-');
   return `${d}/${m}`;
 };
-const num = (n) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('pt-BR'));
+const num = (n) => (n == null ? '—' : Math.round(Number(n)).toLocaleString(localeAtual()));
 const pdrHtml = (n) => `<b class="${n > 0 ? 'pdr-mais' : n < 0 ? 'pdr-menos' : ''}">${fmtPdr(n)}</b>`;
 
 export const JOGOS_RANQUEADA = [

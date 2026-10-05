@@ -62,4 +62,8 @@ export default [
   ['Campeão Oculto', 'Hidden Champion', 'Versteckter Champion', 'Campeón Oculto', 'Campione Nascosto', 'Champion Caché'],
   ['Na Medida', 'To Scale', 'Maßstabsgetreu', 'A Escala', 'In Scala', 'À l’échelle'],
   ['Nova senha', 'New password', 'Neues Passwort', 'Nueva contraseña', 'Nuova password', 'Nouveau mot de passe'],
+  // Pares genéricos: só valem quando algum lado tem tradução (ex.: "Circuito Desafiante · Split 1").
+  ['{a} · {b}', '{a} · {b}', '{a} · {b}', '{a} · {b}', '{a} · {b}', '{a} · {b}'],
+  ['{a} ({b})', '{a} ({b})', '{a} ({b})', '{a} ({b})', '{a} ({b})', '{a} ({b})'],
+  ['{a} / {b}', '{a} / {b}', '{a} / {b}', '{a} / {b}', '{a} / {b}', '{a} / {b}'],
 ];

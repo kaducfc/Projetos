@@ -1,4 +1,8 @@
 // Helpers genéricos de aleatoriedade e formatação.
+import { localeAtual } from '../../../shared/i18n.js';
+
+// Número com 1 casa decimal no idioma escolhido (vírgula em português, ponto em inglês).
+const um = (n) => Number(n).toLocaleString(localeAtual(), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 export const rand = (a, b) => a + Math.random() * (b - a);
 export const randInt = (a, b) => Math.floor(rand(a, b + 1));
@@ -37,18 +41,18 @@ export function poisson(lambda) {
 }
 
 export function fmtMoney(usd) {
-  if (usd >= 1e6) return `US$ ${(usd / 1e6).toFixed(1).replace('.', ',')} M`;
+  if (usd >= 1e6) return `US$ ${um(usd / 1e6)} M`;
   if (usd >= 1e3) return `US$ ${Math.round(usd / 1e3)} mil`;
   return `US$ ${Math.round(usd)}`;
 }
 
 export function fmtSalary(usdMonth) {
   const k = usdMonth / 1000;
-  return `US$ ${k >= 10 ? Math.round(k) : k.toFixed(1).replace('.', ',')}k/mês`;
+  return `US$ ${k >= 10 ? Math.round(k) : um(k)}k/mês`;
 }
 
 export function fmtKda(k, d, a) {
-  return ((k + a) / Math.max(1, d)).toFixed(1).replace('.', ',');
+  return um((k + a) / Math.max(1, d));
 }
 
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };

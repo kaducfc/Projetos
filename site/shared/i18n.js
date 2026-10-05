@@ -22,7 +22,7 @@ export const LANGS = [
 export const IDIOMA_PADRAO = 'pt-BR';
 const CHAVE = 'rift-lang';
 
-const ATRIBUTOS = ['title', 'placeholder', 'aria-label', 'alt'];
+const ATRIBUTOS = ['title', 'placeholder', 'aria-label', 'alt', 'data-tip'];
 const PULAR = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'NOSCRIPT', 'SVG', 'CODE', 'PRE']);
 const PULAR_SEL = '.nick, .avatar, [data-no-i18n], [translate="no"]';
 
@@ -50,8 +50,10 @@ function montar(d) {
     const nomes = [];
     const re = new RegExp(`^${esc(norm(k)).replace(/\\?\{(\w+)\\?\}/g, (_, n) => { nomes.push(n); return '(.+?)'; })}$`);
     // Modelos só de {valores} e pontuação ('{c}: {v}') só valem se algum valor for traduzido.
-    modelos.push({ re, nomes, saida: v, soVars: !/[A-Za-zÀ-ÿ]/.test(k.replace(/\{\w+\}/g, '')) });
+    modelos.push({ re, nomes, lit: k.replace(/\{\w+\}/g, '').length, pre: norm(k).split('{')[0], saida: v, soVars: !/[A-Za-zÀ-ÿ]/.test(k.replace(/\{\w+\}/g, '')) });
   }
+  // Os modelos mais específicos (mais texto fixo) valem antes dos genéricos.
+  modelos.sort((x, y) => y.lit - x.lit);
 }
 
 // Valor no meio de um modelo: traduz o texto inteiro ou, se for uma lista
@@ -69,6 +71,7 @@ function buscar(texto) {
   const direto = dict.get(texto);
   if (direto != null) return direto;
   for (const m of modelos) {
+    if (m.pre && !texto.startsWith(m.pre)) continue;
     const r = m.re.exec(texto);
     if (!r) continue;
     // Os valores do meio também são traduzidos, se existirem no dicionário (ex.: "Ferro 2").

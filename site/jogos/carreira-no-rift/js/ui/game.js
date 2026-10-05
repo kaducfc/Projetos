@@ -8,6 +8,7 @@ import {
 } from '../engine/career.js';
 import { teamBadge, trophySvg, trophyArt, eventScene, ovrShield, stars } from './art.js';
 import { esc, fmtKda, fmtMoney, fmtSalary } from '../util.js';
+import { localeAtual } from '../../../../shared/i18n.js';
 
 // Texto de evento: escolhe a variação da rota e troca os placeholders.
 const fill = (text, state) => {
@@ -244,7 +245,7 @@ function fxChips(fx) {
     morale: 'Confiança do técnico', fame: 'Fama',
   };
   // Mostra o que mudou de verdade (inteiro; fração só se bateu no teto de 100).
-  const fmt = (v) => (Math.abs(v) >= 1 ? signed(Math.round(v)) : `${v > 0 ? '+' : ''}${String(Math.round(v * 10) / 10).replace('.', ',')}`);
+  const fmt = (v) => (Math.abs(v) >= 1 ? signed(Math.round(v)) : `${v > 0 ? '+' : ''}${(Math.round(v * 10) / 10).toLocaleString(localeAtual(), { maximumFractionDigits: 1 })}`);
   const chips = Object.entries(fx).filter(([, v]) => v).map(([k, v]) => `<span class="fx ${v > 0 ? 'up' : 'down'}">${names[k]} <b>${fmt(v)}</b></span>`);
   return chips.length ? chips.join('') : '<span class="fx">Nada mudou</span>';
 }
