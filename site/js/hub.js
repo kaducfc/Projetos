@@ -172,7 +172,7 @@ const VIVO = {
 function renderGames() {
   const logado = Boolean(platform.getUser() && rk);
   // Jogos em teste (oculto: true) funcionam pelo link, mas ainda não aparecem aqui.
-  document.getElementById('games').innerHTML = GAMES.filter((g) => !g.oculto).map((g, i) => {
+  setHtml(document.getElementById('games'), GAMES.filter((g) => !g.oculto).map((g, i) => {
     const mine = resultados.filter((r) => r.gameId === g.id);
     const best = mine.reduce((m, r) => (r.score != null && (m == null || r.score > m) ? r.score : m), null);
     const stats = mine.length
@@ -194,7 +194,15 @@ function renderGames() {
     return live
       ? `<a class="game hx-card hx-frame" href="${g.path}" style="--i:${i}">${capa}${corpo}</a>`
       : `<article class="game hx-card hx-frame soon" style="--i:${i}">${capa}${corpo}</article>`;
-  }).join('');
+  }).join(''));
+}
+
+// Só troca o HTML quando mudou de verdade: reescrever o mesmo conteúdo reinicia as
+// animações (brilhos, reflexos) do começo, e a página parecia "apagada" por instantes.
+function setHtml(el, html) {
+  if (el.__html === html) return;
+  el.__html = html;
+  el.innerHTML = html;
 }
 
 // ------------------------------------------------------ painel da ranqueada
@@ -253,7 +261,7 @@ function renderPainel() {
         <span class="rp-nome">${nickHtml(j.username, j.apoiador, j.efeito)}</span><span class="rp-pts">${conta(j.valor, true)}<small>PDR</small></span></li>`).join('')
     : `<li class="rp-vazio">${top ? 'Ninguém ganhou PDR hoje ainda. Seja o primeiro!' : platform.cloudEnabled() ? 'Carregando…' : 'O ranking aparece aqui.'}</li>`;
 
-  el.innerHTML = `
+  setHtml(el, `
     <div class="rp-main">
       <p class="eyebrow">◆ Ranqueada · todos os jogos</p>
       <h2 class="rp-titulo">Do Ferro ao Desafiante</h2>
@@ -264,7 +272,7 @@ function renderPainel() {
       <p class="rp-lado-tit">Top 3 de hoje</p>
       <ol class="rp-podio">${podio}</ol>
       <a class="rp-cta" href="ranking/">Ver ranking completo →</a>
-    </div>`;
+    </div>`);
 }
 
 // ------------------------------------------------------------ microanimações
