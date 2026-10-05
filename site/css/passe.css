@@ -14,7 +14,10 @@
 .ps-numeros span { font-size: 12px; color: #a29a89; }
 .ps-barra { height: 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
 .ps-barra i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #d9480f, #ff8a1f, #ffe66d); box-shadow: 0 0 10px rgba(255, 138, 31, 0.6); transition: width 0.5s ease; }
-.ps-legenda { margin: 0; font-size: 13px; color: #a29a89; }
+.ps-progresso { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
+.ps-lv { font-size: 13px; font-weight: 800; color: #fff; white-space: nowrap; }
+.ps-lv-prox { color: #a29a89; }
+.ps-barra { height: 16px; }
 .ps-trilha-niveis { list-style: none; margin: 8px 0 0; padding: 6px 2px 4px; display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 18px 10px; }
 .ps-nivel { position: relative; display: grid; justify-items: center; align-content: start; gap: 8px; padding: 12px 8px 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.03); text-align: center; min-height: 170px; }
 .ps-nivel.ps-premium { border-color: rgba(245, 207, 90, 0.45); background: linear-gradient(180deg, rgba(245, 207, 90, 0.12), rgba(245, 207, 90, 0.03)); }

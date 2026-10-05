@@ -25,13 +25,13 @@ function recompensaHtml(r) {
 
 function cartaoNivel(n, e) {
   const premium = n.trilha === 'premium';
-  const atingido = e.abobora >= n.exige;
+  const atingido = e.nivel >= n.nivel; // as recompensas abrem pelo NÍVEL do passe
   let estado;
   let acao;
   if (n.resgatado) { estado = 'feito'; acao = '<span class="ps-ok">✓ Resgatado</span>'; }
   else if (atingido && premium && !e.premium) { estado = 'sem-premium'; acao = '<span class="ps-trava">🔒 Só premium</span>'; }
   else if (atingido) { estado = 'pronto'; acao = `<button type="button" class="ps-resgatar" data-ps-resgatar="${n.nivel}">Resgatar</button>`; }
-  else { estado = 'bloqueado'; acao = `<span class="ps-falta">${aboboraImg(13)} ${fmt(n.exige - e.abobora)}</span>`; }
+  else { estado = 'bloqueado'; acao = '<span class="ps-falta" title="Suba de nível para liberar">🔒</span>'; }
   return `<li class="ps-nivel ps-${premium ? 'premium' : 'gratis'} ps-${estado}">
     <span class="ps-num">${n.nivel}</span>
     <span class="ps-trilha">${premium ? '★ Premium' : 'Grátis'}</span>
@@ -45,8 +45,7 @@ export function passeHtml(e, { extra = '' } = {}) {
   if (!e) return '<p class="ps-aviso">Entre na sua conta para participar do passe de batalha.</p>';
   const por = e.passe.abobora_por_nivel;
   const completo = e.nivel >= e.passe.niveis;
-  const dentro = completo ? por : e.abobora - e.nivel * por;
-  const pct = Math.min(100, Math.round((dentro / por) * 100));
+  const pct = completo ? 100 : Math.min(100, Math.round((e.progresso / por) * 100));
   return `<div class="ps">
     <div class="ps-topo">
       <div class="ps-titulo">
@@ -55,15 +54,16 @@ export function passeHtml(e, { extra = '' } = {}) {
         <p class="ps-sub">${e.premium ? '<span class="ps-tag ps-tag-premium">★ Passe premium</span>' : '<span class="ps-tag">Passe grátis</span>'}${e.passe.publico ? '' : ' <span class="ps-tag ps-tag-teste">Em teste: só administradores</span>'}</p>
       </div>
       <div class="ps-numeros">
-        <div><b>${fmt(e.abobora)}</b><span>${aboboraImg(13)} abóboras</span></div>
-        <div><b>${e.nivel}<small>/${e.passe.niveis}</small></b><span>nível</span></div>
-        <div><b>${fmt(e.hoje)}<small>/${fmt(e.passe.limite_dia)}</small></b><span>hoje</span></div>
+        <div><b>${e.nivel}<small>/${e.passe.niveis}</small></b><span>nível do passe</span></div>
       </div>
     </div>
-    <div class="ps-barra" role="progressbar" aria-valuemin="0" aria-valuemax="${por}" aria-valuenow="${dentro}"><i style="width:${pct}%"></i></div>
-    <p class="ps-legenda">${completo ? 'Passe completo! Resgate as recompensas que faltam.' : `${fmt(dentro)} de ${fmt(por)} abóboras para o nível ${e.nivel + 1}`}</p>
+    <div class="ps-progresso">
+      <span class="ps-lv">${aboboraImg(15)} Nível ${e.nivel}</span>
+      <div class="ps-barra" role="progressbar" aria-label="Progresso para o próximo nível" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
+      <span class="ps-lv ps-lv-prox">${completo ? '✓ Completo' : `Nível ${e.nivel + 1}`}</span>
+    </div>
     ${extra}
     <ol class="ps-trilha-niveis">${e.niveis.map((n) => cartaoNivel(n, e)).join('')}</ol>
-    <p class="ps-nota">Cada partida concluída (ranqueada ou não, ganhando ou perdendo) dá <b>${e.passe.abobora_por_partida}</b> abóboras, até <b>${fmt(e.passe.limite_dia)}</b> por dia. O limite zera à meia-noite (horário de Brasília). Cada nível pede ${fmt(por)} abóboras.</p>
+    <p class="ps-nota">Termine partidas para ganhar abóboras e encher a barra: ao completá-la, você sobe de nível e libera a recompensa dele. Cada partida concluída, ranqueada ou não, rende abóboras (há um limite por dia, que zera à meia-noite, horário de Brasília).</p>
   </div>`;
 }

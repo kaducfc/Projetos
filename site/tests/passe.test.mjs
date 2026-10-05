@@ -45,7 +45,7 @@ test('passe: 15 níveis alternando premium/grátis, 500 RC e o efeito no último
   assert.ok(e.niveis.slice(0, 14).every((n) => n.tipo === 'moeda' && n.chave === '500'));
   assert.deepEqual([e.niveis[14].tipo, e.niveis[14].chave], ['efeito', 'hw-neon']);
   assert.equal(EFEITOS_TESTE.find((x) => x.id === 'hw-neon').nome, 'Halloween 2026');
-  await assert.rejects(platform.passeResgatar(1), /abóboras suficientes/);
+  await assert.rejects(platform.passeResgatar(1), /ainda não chegou a este nível/);
   await platform.adminPasse('Mestre', 'aboboras', 250);
   await assert.rejects(platform.passeResgatar(1), /trilha premium/);
   assert.equal((await platform.passeResgatar(2)).tipo, 'moeda'); // grátis, nível 2 = 200 abóboras
@@ -60,10 +60,34 @@ test('passe: 15 níveis alternando premium/grátis, 500 RC e o efeito no último
   assert.ok((await platform.minhasRecompensas()).some((r) => r.tipo === 'efeito' && r.chave === 'hw-neon'));
   e = await platform.passeEstado();
   assert.equal(e.nivel, 15);
+  assert.equal(e.progresso, 100);
   const html = passeHtml(e);
   assert.match(html, /Halloween 2026/);
   assert.equal((html.match(/ps-feito/g) || []).length, 3);
   assert.match(html, /ps-pronto/);
+});
+
+test('passe: a tela mostra só o nível e a barra do nível atual, sem totais de abóboras', async () => {
+  const sb = createFakeSupabase();
+  const adm = await conta(sb, 'Mestre');
+  sb.admins.add(adm.id);
+  await platform.adminPasse('Mestre', 'aboboras', 455); // nível 4, 55 na barra
+  const e = await platform.passeEstado();
+  assert.deepEqual([e.nivel, e.progresso], [4, 55]);
+  assert.equal('abobora' in e, false);
+  const html = passeHtml(e);
+  assert.match(html, /aria-valuenow="55"/);
+  assert.match(html, /style="width:55%"/);
+  assert.match(html, /Nível 4/);
+  assert.match(html, /Nível 5/);
+  assert.doesNotMatch(html, /455|abóboras<\/span>/); // nada de total acumulado
+  // Recompensas abrem pelo nível: níveis 1 a 4 liberados, 5 em diante bloqueados.
+  assert.equal((html.match(/ps-bloqueado/g) || []).length, 11);
+  // Subiu de nível: a barra recomeça.
+  await platform.adminPasse('Mestre', 'aboboras', 45);
+  const e2 = await platform.passeEstado();
+  assert.deepEqual([e2.nivel, e2.progresso], [5, 0]);
+  assert.match(passeHtml(e2), /style="width:0%"/);
 });
 
 test('passe: regras no SQL (5 por partida, 150 por dia, 100 por nível, gatilho nas partidas)', () => {

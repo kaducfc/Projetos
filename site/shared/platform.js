@@ -548,7 +548,7 @@ function erroMoedas(error) {
 // passe não é público, só administradores (fase de teste).
 const ERROS_PASSE = {
   passe_indisponivel: 'O passe de batalha não está disponível.',
-  nivel_bloqueado: 'Você ainda não tem abóboras suficientes para este nível.',
+  nivel_bloqueado: 'Você ainda não chegou a este nível do passe.',
   precisa_premium: 'Esta recompensa é da trilha premium.',
   ja_resgatado: 'Você já resgatou esta recompensa.',
   nivel_invalido: 'Nível inválido.',

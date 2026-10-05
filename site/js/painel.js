@@ -399,7 +399,7 @@ function passeCard() {
   if (!eu) return '<div class="card"><h3>Passe de Batalha</h3><p class="p-note">Entre na sua conta para ver o passe.</p></div>';
   if (psErro) return `<div class="card"><h3>Passe de Batalha</h3><p class="p-note">${esc(psErro)}</p><button type="button" class="p-mini" data-ps-recarregar>Tentar de novo</button></div>`;
   if (!ps) return '<div class="card"><h3>Passe de Batalha</h3><p class="p-note">Carregando…</p></div>';
-  const controles = `<div class="ps-testebox"><span>Controles de teste (sua conta)</span>
+  const controles = `<div class="ps-testebox"><span>Controles de teste (sua conta) · barra ${ps.progresso}/${ps.passe.abobora_por_nivel} · hoje ${ps.hoje}/${ps.passe.limite_dia} abóboras</span>
       <button type="button" class="p-mini" data-ps-acao="aboboras" data-valor="100">+100 abóboras</button>
       <button type="button" class="p-mini" data-ps-acao="aboboras" data-valor="-100">−100 abóboras</button>
       <button type="button" class="p-mini" data-ps-acao="premium" data-valor="${ps.premium ? 0 : 1}">${ps.premium ? 'Tirar o passe premium' : 'Ativar o passe premium'}</button>

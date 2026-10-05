@@ -397,8 +397,8 @@ export function createFakeSupabase() {
       const x = me(uid);
       if (name === 'site_passe_estado') {
         return { data: { passe: { id: 'halloween-2026', nome: 'Halloween 2026', niveis: 15, abobora_por_nivel: 100, abobora_por_partida: 5, limite_dia: 150, publico: P.publico },
-          abobora: x.abobora, nivel: Math.min(15, Math.floor(x.abobora / 100)), premium: x.premium, hoje: x.hoje,
-          niveis: P.niveis.map((n) => ({ ...n, exige: n.nivel * 100, resgatado: x.resgates.has(n.nivel) })) }, error: null };
+          nivel: Math.min(15, Math.floor(x.abobora / 100)), progresso: x.abobora >= 1500 ? 100 : x.abobora % 100, premium: x.premium, hoje: x.hoje,
+          niveis: P.niveis.map((n) => ({ ...n, resgatado: x.resgates.has(n.nivel) })) }, error: null };
       }
       const n = P.niveis.find((q) => q.nivel === args.nivel_);
       if (!n) return { data: null, error: { message: 'nivel_invalido' } };

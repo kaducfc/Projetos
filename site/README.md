@@ -177,7 +177,7 @@ no nível 15. Para mudar a recompensa de um nível, edite a linha em
   administrador liga; a compra, com RC ou dinheiro, entra depois).
 - Para o efeito do nível 15 poder ser escolhido no perfil, ele precisa sair de
   `EFEITOS_TESTE` para `EFEITOS` em `shared/efeitos.js` (junto da publicação).
-Configuração: rode `supabase/migrations/0039_passe_batalha.sql` (depois da 0038).
+Configuração: rode `supabase/migrations/0039_passe_batalha.sql` e depois a `0040_passe_nivel.sql`.
 
 ## Aviso de fã, páginas institucionais e doações
 
