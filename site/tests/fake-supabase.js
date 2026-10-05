@@ -379,7 +379,7 @@ export function createFakeSupabase() {
     if (name === 'site_passe_estado' || name === 'site_passe_resgatar' || name === 'site_admin_passe' || name === 'site_admin_passe_publicar') {
       const uid = auth._uid();
       if (!uid) return { data: null, error: { message: 'not_authenticated' } };
-      const P = db.passe = db.passe || { publico: false, por: {}, niveis: Array.from({ length: 15 }, (_, i) => ({ nivel: i + 1, trilha: (i + 1) % 2 ? 'premium' : 'gratis', tipo: i === 14 ? 'efeito' : 'moeda', chave: i === 14 ? 'hw-neon' : '500' })) };
+      const P = db.passe = db.passe || { publico: false, por: {}, niveis: Array.from({ length: 16 }, (_, i) => ({ nivel: i, trilha: i % 2 ? 'premium' : 'gratis', tipo: i === 15 ? 'efeito' : 'moeda', chave: i === 15 ? 'hw-neon' : '500' })) };
       const me = (id) => (P.por[id] = P.por[id] || { abobora: 0, premium: false, hoje: 0, resgates: new Set() });
       const adm = admins.has(uid);
       if (name === 'site_admin_passe_publicar') { if (!adm) return { data: null, error: { message: 'not_admin' } }; P.publico = args.publico_; return { data: null, error: null }; }

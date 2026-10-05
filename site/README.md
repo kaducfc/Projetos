@@ -158,8 +158,8 @@ na barra some e o resto do site continua igual.
 
 ## Passe de Batalha (em teste)
 
-Primeira temporada: **Halloween 2026** (`0039_passe_batalha.sql`). 15 níveis, cada
-um com uma recompensa; as trilhas se alternam (nível 1 premium, 2 grátis, 3 premium…
+Primeira temporada: **Halloween 2026** (`0039_passe_batalha.sql`). Nível 0 (grátis,
+libera na hora) + 15 níveis, cada um com uma recompensa (16 no total); as trilhas se alternam (0 grátis, 1 premium, 2 grátis…
 até o 15, premium). Quem não tem o passe premium resgata só os níveis grátis.
 Por enquanto: 500 RC em todos os níveis, e o efeito **Halloween 2026** (`hw-neon`)
 no nível 15. Para mudar a recompensa de um nível, edite a linha em
@@ -177,7 +177,7 @@ no nível 15. Para mudar a recompensa de um nível, edite a linha em
   administrador liga; a compra, com RC ou dinheiro, entra depois).
 - Para o efeito do nível 15 poder ser escolhido no perfil, ele precisa sair de
   `EFEITOS_TESTE` para `EFEITOS` em `shared/efeitos.js` (junto da publicação).
-Configuração: rode `supabase/migrations/0039_passe_batalha.sql` e depois a `0040_passe_nivel.sql`.
+Configuração: rode `supabase/migrations/0039_passe_batalha.sql` e depois a `0040_passe_nivel.sql` e a `0041_passe_nivel0.sql`.
 
 ## Aviso de fã, páginas institucionais e doações
 
