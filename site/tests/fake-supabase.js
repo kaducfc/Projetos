@@ -551,6 +551,11 @@ export function createFakeSupabase() {
         if (!['USD', 'EUR'].includes(body?.moeda) || !(body?.valor >= 3)) return { data: { erro: 'valor_invalido' }, error: { message: 'non-2xx' } };
         return { data: { url: `https://stripe.test/checkout?valor=${body.valor}&moeda=${body.moeda}`, apoio: 'a2' }, error: null };
       }
+      if (nome === 'passe-premium-criar') {
+        if (!auth._uid()) return { data: { erro: 'nao_logado' }, error: { message: 'non-2xx' } };
+        if (!['mercadopago', 'stripe'].includes(body?.provedor)) return { data: { erro: 'provedor' }, error: { message: 'non-2xx' } };
+        return { data: { url: `https://${body.provedor}.test/passe` }, error: null };
+      }
       if (nome !== 'apoio-criar') return { data: null, error: { message: 'função desconhecida' } };
       if (!auth._uid()) return { data: { erro: 'nao_logado' }, error: { message: 'non-2xx' } };
       if (!(body?.valor >= 5 && body?.valor <= 1000)) return { data: { erro: 'valor_invalido' }, error: { message: 'non-2xx' } };

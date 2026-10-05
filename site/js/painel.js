@@ -9,6 +9,7 @@ import { GAMES, gameById } from '../shared/config.js';
 import { sinaisVigia, resumoJogadores } from '../shared/vigia.js';
 import { nomeRecompensa, tipoTexto, codigoBonito } from '../shared/recompensas.js';
 import { passeHtml } from '../shared/passe.js';
+import { ligarCompraPremium } from '../shared/passe-compra.js';
 import { EFEITOS, EFEITOS_TESTE } from '../shared/efeitos.js';
 import { EXCLUSIVOS_TESTE, avatarHtml } from '../shared/avatar.js';
 
@@ -1261,6 +1262,8 @@ body.addEventListener('click', (e) => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   buscarJogador(b.dataset.jogador);
 });
+ligarCompraPremium(body); // botões "Premium" do passe abrem a compra
+
 // Passe de batalha: resgatar, controles de teste e publicar.
 body.addEventListener('click', async (e) => {
   const r = e.target.closest('[data-ps-resgatar]');

@@ -4,6 +4,7 @@ import * as platform from '../shared/platform.js';
 import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { passeHtml } from '../shared/passe.js';
+import { ligarCompraPremium } from '../shared/passe-compra.js';
 import { nomeRecompensa } from '../shared/recompensas.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
@@ -13,6 +14,14 @@ const root = document.getElementById('passe');
 let estado = null;
 let erro = '';
 let msg = '';
+// Volta do pagamento do Passe Premium: ?compra=aprovado | pendente | falhou
+const voltou = new URLSearchParams(location.search).get('compra');
+const AVISO_COMPRA = {
+  aprovado: 'Obrigado! 💛 Pagamento aprovado. O Passe Premium é liberado em instantes.',
+  pendente: 'Pagamento em andamento. Assim que for confirmado, o Passe Premium é liberado sozinho.',
+  falhou: 'O pagamento não foi concluído. Nada foi cobrado. Se quiser, é só tentar de novo.',
+};
+if (AVISO_COMPRA[voltou]) msg = AVISO_COMPRA[voltou];
 
 function render() {
   const u = platform.getUser();
@@ -52,6 +61,8 @@ async function carregar() {
   render();
 }
 
+ligarCompraPremium(root);
+
 root.addEventListener('click', async (e) => {
   if (e.target.closest('[data-act="entrar"]')) { openAuthModal('login'); return; }
   const b = e.target.closest('[data-ps-resgatar]');
@@ -68,7 +79,15 @@ root.addEventListener('click', async (e) => {
 });
 
 platform.onChange((evt) => {
-  if (evt.type === 'auth') carregar();
+  if (evt.type === 'auth') carregar().then(async () => {
+  // Pagamento aprovado: o aviso do Mercado Pago/Stripe pode demorar alguns segundos; confere algumas vezes.
+  if (voltou !== 'aprovado' || !platform.getUser()) return;
+  for (let i = 0; i < 6 && estado && !estado.premium; i++) {
+    await new Promise((ok) => { setTimeout(ok, 4000); });
+    try { estado = await platform.passeEstado(); } catch { break; }
+    render();
+  }
+});
 });
 
 carregar();

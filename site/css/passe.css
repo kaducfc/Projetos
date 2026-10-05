@@ -52,3 +52,22 @@
 .ps-barra-wrap { position: relative; }
 .ps-ponta { position: absolute; top: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); pointer-events: none; filter: drop-shadow(0 0 6px rgba(80, 220, 255, 0.75)); transition: left 0.5s ease; }
 .ps-abobora { filter: drop-shadow(0 0 3px rgba(80, 220, 255, 0.6)); }
+
+/* Premium: botão no cartão, no cabeçalho e janela de compra */
+.ps-premium-btn { cursor: pointer; padding: 5px 9px; border-radius: 6px; border: 1px solid rgba(245, 207, 90, 0.75); background: rgba(245, 207, 90, 0.12); color: var(--ps-ouro); font-weight: 800; font-size: 12px; }
+.ps-premium-btn:hover { background: rgba(245, 207, 90, 0.25); }
+.ps-sem-premium .ps-rec { opacity: 0.85; filter: none; }
+.ps-obter { cursor: pointer; padding: 2px 11px; border-radius: 999px; border: 1px solid rgba(245, 207, 90, 0.75); background: linear-gradient(180deg, #ffd76b, #d9a82b); color: #1a1405; font-weight: 800; font-size: 12px; }
+.ps-obter:hover { filter: brightness(1.1); }
+.ps-backdrop { position: fixed; inset: 0; z-index: 140; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, 0.7); }
+.ps-modal { position: relative; width: min(400px, 100%); display: grid; gap: 10px; padding: 24px 22px 20px; border-radius: 12px; border: 1px solid #d9a82b; background: #17140e; color: #f4efe4; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); font: 14px/1.45 Inter, system-ui, sans-serif; }
+.ps-modal-x { position: absolute; top: 8px; right: 12px; background: none; border: 0; color: #9b9383; font-size: 24px; line-height: 1; cursor: pointer; }
+.ps-modal-x:hover { color: #fff; }
+.ps-modal-tit { margin: 0; font-family: 'Bebas Neue', Inter, sans-serif; font-size: 30px; letter-spacing: 0.04em; color: #f5cf5a; }
+.ps-modal-txt { margin: 0; color: #cfc8b8; }
+.ps-modal-preco { margin: 4px 0 0; font-size: 34px; color: #fff; text-align: center; }
+.ps-comprar { cursor: pointer; padding: 11px 16px; border-radius: 8px; border: 0; font-weight: 800; font-size: 15px; background: linear-gradient(180deg, #ffd76b, #d9a82b); color: #1a1405; }
+.ps-comprar:hover { filter: brightness(1.08); }
+.ps-comprar:disabled { opacity: 0.6; cursor: wait; }
+.ps-modal-nota { margin: 0; text-align: center; font-size: 12.5px; color: #8f8979; }
+.ps-modal-msg { margin: 0; min-height: 1px; text-align: center; font-size: 13px; color: #ff9b9b; }

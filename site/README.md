@@ -182,8 +182,19 @@ no nível 15. Para mudar a recompensa de um nível, edite a linha em
   abóboras e resgatam. A aba **Teste** do painel mostra o passe (`shared/passe.js`,
   `css/passe.css`) com controles para dar/tirar abóboras, ligar o premium e zerar o
   progresso da própria conta, e o botão **Publicar para todos os jogadores**.
-- **Passe premium:** a coluna `premium` de `site_passe_progresso` (por enquanto o
-  administrador liga; a compra, com RC ou dinheiro, entra depois).
+- **Passe premium (só com dinheiro):** R$ 15 no **Mercado Pago** para quem usa o site em
+  português do Brasil; US$ 10 no **Stripe** nos outros idiomas (`shared/passe-compra.js`:
+  o botão "★ Premium" do cartão e o "★ Obter Premium" do cabeçalho abrem a janela de compra).
+  O preço é decidido no servidor (Edge Function `passe-premium-criar`); a compra fica em
+  `site_passe_compras` (`0042_passe_premium.sql`) e os webhooks que já existem
+  (`apoio-webhook` do Mercado Pago e `apoio-intl-webhook` do Stripe) chamam
+  `site_passe_confirmar_compra`, que liga a coluna `premium` (estorno desliga; as
+  recompensas já resgatadas ficam). O administrador ainda pode ligar na aba Teste.
+  Depois do pagamento a pessoa volta para `/passe/?compra=aprovado` e a página confere o
+  premium por alguns segundos.
+  Para publicar: rode a 0042; crie a função `passe-premium-criar` (Verify JWT desligado,
+  mesmos segredos `MP_ACCESS_TOKEN` e `STRIPE_SECRET_KEY`); **republique** `apoio-webhook`
+  e `apoio-intl-webhook` (código novo que reconhece as compras do passe).
 - Para o efeito do nível 15 poder ser escolhido no perfil, ele precisa sair de
   `EFEITOS_TESTE` para `EFEITOS` em `shared/efeitos.js` (junto da publicação).
 Configuração: rode `supabase/migrations/0039_passe_batalha.sql` e depois a `0040_passe_nivel.sql` e a `0041_passe_nivel0.sql`.

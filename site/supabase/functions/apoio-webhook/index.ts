@@ -38,6 +38,16 @@ Deno.serve(async (req) => {
   if (!r.ok) return new Response('pagamento nao encontrado', { status: 502 }); // o Mercado Pago tenta de novo
   const pg = await r.json();
   const apoioId = String(pg.external_reference || '');
+  // Compra do Passe Premium: external_reference "passe_<id da compra>".
+  const compra = /^passe_([0-9a-f-]{36})$/i.exec(apoioId);
+  if (compra) {
+    const r2 = await fetch(`${SUPABASE_URL}/rest/v1/rpc/site_passe_confirmar_compra`, {
+      method: 'POST',
+      headers: { apikey: SERVICO, Authorization: `Bearer ${SERVICO}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cid: compra[1], novo_status: STATUS[pg.status] || 'pendente', pag: `mp_${pg.id}` }),
+    });
+    return r2.ok ? ok() : new Response('erro no banco', { status: 500 });
+  }
   if (!/^[0-9a-f-]{36}$/i.test(apoioId)) return ok();
 
   const status = STATUS[pg.status] || 'pendente';

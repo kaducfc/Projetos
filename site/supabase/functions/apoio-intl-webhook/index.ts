@@ -5,7 +5,7 @@
 //   https://<projeto>.supabase.co/functions/v1/apoio-intl-webhook
 // com os eventos: checkout.session.completed, checkout.session.async_payment_succeeded,
 //                 checkout.session.async_payment_failed, charge.refunded
-// Segredos: STRIPE_WEBHOOK_SECRET (whsec_...), USD_BRL, EUR_BRL.
+// Segredos: STRIPE_WEBHOOK_SECRET (whsec_...), USD_BRL, EUR_BRL. Também confirma a compra do Passe Premium (passe-premium-criar).
 // Na criação da função, DESLIGUE "Verify JWT" (o Stripe não manda token).
 
 const env = (k) => Deno.env.get(k) || '';
@@ -35,6 +35,16 @@ Deno.serve(async (req) => {
   let ev: any;
   try { ev = JSON.parse(bruto); } catch { return new Response('corpo invalido', { status: 400 }); }
 
+  // Compra do Passe Premium (client_reference_id "passe_<id>"): liga/desliga o premium no banco.
+  const passe = async (cid: string | null, status: string, pag: string) => {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/site_passe_confirmar_compra`, {
+      method: 'POST',
+      headers: { apikey: SERVICO, Authorization: `Bearer ${SERVICO}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cid, novo_status: status, pag }),
+    });
+    return r.ok ? ok() : new Response('erro no banco', { status: 500 });
+  };
+
   const atualizar = async (filtro: string, status: string, extra: Record<string, unknown>) => {
     // Avisos chegam fora de ordem: "recusado"/"pendente" não desfaz uma aprovação;
     // estorno só vale para o pagamento que foi aprovado.
@@ -52,6 +62,8 @@ Deno.serve(async (req) => {
   if (/^checkout\.session\.(completed|async_payment_succeeded)$/.test(ev.type)) {
     if (o.payment_status !== 'paid') return ok(); // ainda pendente (ex.: débito bancário)
     const apoio = String(o.client_reference_id || '');
+    const compra = /^passe_([0-9a-f-]{36})$/i.exec(apoio);
+    if (compra) return passe(compra[1], 'aprovado', `st_${o.payment_intent}`);
     if (!/^[0-9a-f-]{36}$/i.test(apoio)) return ok();
     return atualizar(`id=eq.${apoio}&origem=eq.stripe`, 'aprovado', {
       mp_payment_id: `st_${o.payment_intent}`, valor_pago: brl(Number(o.amount_total) / 100, String(o.currency).toUpperCase()),
@@ -59,9 +71,12 @@ Deno.serve(async (req) => {
   }
   if (ev.type === 'checkout.session.async_payment_failed') {
     const apoio = String(o.client_reference_id || '');
+    const compra = /^passe_([0-9a-f-]{36})$/i.exec(apoio);
+    if (compra) return passe(compra[1], 'recusado', '');
     return /^[0-9a-f-]{36}$/i.test(apoio) ? atualizar(`id=eq.${apoio}&origem=eq.stripe`, 'recusado', {}) : ok();
   }
   if (ev.type === 'charge.refunded' && o.refunded === true) {
+    await passe(null, 'estornado', `st_${o.payment_intent}`); // se for compra do passe
     return atualizar(`mp_payment_id=eq.st_${o.payment_intent}&origem=eq.stripe`, 'estornado', {});
   }
   return ok();

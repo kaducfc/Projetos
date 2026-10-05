@@ -145,3 +145,36 @@ test('passe: jogador comum (passe em teste) e visitante não recebem aviso de ab
   assert.equal(avisos.length, 0);
   off();
 });
+
+test('passe: cartões — "Nível N" no que ainda não chegou e botão Premium no que já chegou sem o passe premium', async () => {
+  const sb = createFakeSupabase();
+  const adm = await conta(sb, 'Mestre');
+  sb.admins.add(adm.id);
+  await platform.adminPasse('Mestre', 'aboboras', 350); // nível 3
+  let html = passeHtml(await platform.passeEstado());
+  assert.doesNotMatch(html, /🔒/);
+  assert.match(html, /<span class="ps-falta">Nível 5<\/span>/);
+  assert.match(html, /<span class="ps-falta">Nível 15<\/span>/);
+  // Níveis 1 e 3 são premium e já foram alcançados: botão Premium (não resgata).
+  assert.equal((html.match(/class="ps-premium-btn" data-ps-premium/g) || []).length, 2);
+  assert.match(html, /class="ps-obter" data-ps-premium/); // atalho no cabeçalho
+  await platform.adminPasse('Mestre', 'premium', 1);
+  html = passeHtml(await platform.passeEstado());
+  assert.doesNotMatch(html, /ps-premium-btn|ps-obter/);
+  assert.equal((html.match(/data-ps-resgatar=/g) || []).length, 4); // níveis 0 a 3 prontos
+});
+
+test('passe: compra do Premium só com dinheiro (Mercado Pago ou Stripe); o preço é do servidor', async () => {
+  const sb = createFakeSupabase();
+  await conta(sb, 'Comprador');
+  assert.match((await platform.passeComprar('mercadopago')).url, /mercadopago\.test/);
+  assert.match((await platform.passeComprar('stripe')).url, /stripe\.test/);
+  await assert.rejects(platform.passeComprar('paypal'), /Não foi possível abrir o pagamento/);
+  const fn = readFileSync(new URL('../supabase/functions/passe-premium-criar/index.ts', import.meta.url), 'utf8');
+  assert.match(fn, /mercadopago: \{ moeda: 'BRL', valor: 15 \}/);
+  assert.match(fn, /stripe: \{ moeda: 'USD', valor: 10 \}/);
+  assert.doesNotMatch(fn, /body\.valor|corpo\.valor/); // o valor nunca vem do navegador
+  const sql = readFileSync(new URL('../supabase/migrations/0042_passe_premium.sql', import.meta.url), 'utf8');
+  assert.match(sql, /grant execute on function public\.site_passe_confirmar_compra\(uuid, text, text\) to service_role/);
+  assert.match(sql, /revoke all on function public\.site_passe_confirmar_compra\(uuid, text, text\) from public, anon, authenticated/);
+});

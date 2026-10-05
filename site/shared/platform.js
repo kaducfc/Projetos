@@ -581,6 +581,28 @@ export async function passeResgatar(nivel, passe = 'halloween-2026') {
   return data;
 }
 
+// Compra do Passe Premium (só com dinheiro): o servidor decide o preço pelo provedor
+// ('mercadopago' = R$ 15; 'stripe' = US$ 10) e devolve o endereço de pagamento.
+const ERROS_COMPRA = {
+  ja_premium: 'Você já tem o Passe Premium.',
+  passe_indisponivel: 'O passe de batalha não está disponível.',
+  muitos_pedidos: 'Muitas tentativas seguidas. Espere um pouco e tente de novo.',
+  nao_logado: 'Entre na sua conta para comprar o passe.',
+  mp_nao_configurado: 'O pagamento pelo Mercado Pago ainda não está disponível.',
+  stripe_nao_configurado: 'O pagamento por cartão ainda não está disponível.',
+};
+export async function passeComprar(provedor, passe = 'halloween-2026') {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.functions.invoke('passe-premium-criar', { body: { provedor, passe } });
+  if (!error && data?.url) return data;
+  let corpo = data || {};
+  try { if (error?.context?.json) corpo = await error.context.json(); } catch { /* sem corpo JSON */ }
+  if (ERROS_COMPRA[corpo?.erro]) throw new Error(ERROS_COMPRA[corpo.erro]);
+  if (error?.context?.status === 404) throw new Error('A função passe-premium-criar não foi encontrada no Supabase (ela foi publicada?).');
+  throw new Error('Não foi possível abrir o pagamento agora. Tente de novo em instantes.');
+}
+
 // Administrador: abóboras (+/-), premium (1/0) ou zerar o progresso de um jogador.
 export async function adminPasse(nome, acao, valor = 0, passe = 'halloween-2026') {
   const sb = await getClient();

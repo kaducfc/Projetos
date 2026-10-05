@@ -29,9 +29,9 @@ function cartaoNivel(n, e) {
   let estado;
   let acao;
   if (n.resgatado) { estado = 'feito'; acao = '<span class="ps-ok">✓ Resgatado</span>'; }
-  else if (atingido && premium && !e.premium) { estado = 'sem-premium'; acao = '<span class="ps-trava">🔒 Só premium</span>'; }
+  else if (atingido && premium && !e.premium) { estado = 'sem-premium'; acao = '<button type="button" class="ps-premium-btn" data-ps-premium>★ Premium</button>'; }
   else if (atingido) { estado = 'pronto'; acao = `<button type="button" class="ps-resgatar" data-ps-resgatar="${n.nivel}">Resgatar</button>`; }
-  else { estado = 'bloqueado'; acao = '<span class="ps-falta" title="Suba de nível para liberar">🔒</span>'; }
+  else { estado = 'bloqueado'; acao = `<span class="ps-falta">Nível ${n.nivel}</span>`; }
   return `<li class="ps-nivel ps-${premium ? 'premium' : 'gratis'} ps-${estado}">
     <span class="ps-num">${n.nivel}</span>
     <span class="ps-trilha">${premium ? '★ Premium' : 'Grátis'}</span>
@@ -51,7 +51,7 @@ export function passeHtml(e, { extra = '' } = {}) {
       <div class="ps-titulo">
         <p class="eyebrow">${aboboraImg(16)} Passe de Batalha</p>
         <h3 class="ps-nome">${esc(e.passe.nome)}</h3>
-        <p class="ps-sub">${e.premium ? '<span class="ps-tag ps-tag-premium">★ Passe premium</span>' : '<span class="ps-tag">Passe grátis</span>'}${e.passe.publico ? '' : ' <span class="ps-tag ps-tag-teste">Em teste: só administradores</span>'}</p>
+        <p class="ps-sub">${e.premium ? '<span class="ps-tag ps-tag-premium">★ Passe premium</span>' : '<span class="ps-tag">Passe grátis</span> <button type="button" class="ps-obter" data-ps-premium>★ Obter Premium</button>'}${e.passe.publico ? '' : ' <span class="ps-tag ps-tag-teste">Em teste: só administradores</span>'}</p>
       </div>
       <div class="ps-numeros">
         <div><b>${e.nivel}<small>/${e.passe.niveis}</small></b><span>nível do passe</span></div>
