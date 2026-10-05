@@ -549,7 +549,8 @@ function vgTabela() {
     <tbody>${lista.slice(0, 300).map((x) => `<tr>
       <td>${esc(dataHora(x.criado))}</td><td>${nickLink(x.username)}</td><td>${esc(NOME_JOGO(x.jogo))}</td>
       <td>${vgDetalhe(x)}</td><td class="n">${x.pdr > 0 ? '+' : ''}${num(x.pdr)}</td><td class="n">${duracao(x.duracao_s)}</td>
-      <td>${x.sinais.map(([c, t]) => `<span class="rk-sinal rk-${c}">${t}</span>`).join(' ') || '<small>—</small>'}</td></tr>`).join('')}</tbody>
+      <td>${x.sinais.map(([c, t]) => `<span class="rk-sinal rk-${c}">${t}</span>`).join(' ') || '<small>—</small>'}</td>
+        <td>${['pendente', 'recusado', 'cancelado'].includes(a.status) ? `<button type="button" class="p-btn p-btn-ghost" data-ap-del="${esc(a.tipo || 'doacao')}:${esc(a.id)}">Excluir</button>` : ''}</td></tr>`).join('')}</tbody>
   </table></div>`;
 }
 
@@ -658,7 +659,7 @@ function apLista() {
   const vis = lista.slice(0, apFiltro.limite);
   return `<p class="p-note">${num(lista.length)} ${lista.length === 1 ? 'pagamento' : 'pagamentos'} · ${num(aprovadas.length)} aprovados somando <b>${reais(soma)}</b></p>
     <div class="table-wrap"><table class="p-table ap-tabela">
-      <thead><tr><th>Quando</th><th>Usuário</th><th>Tipo</th><th class="n">Valor</th><th>Situação</th><th>Origem</th><th>Pagamento MP</th></tr></thead>
+      <thead><tr><th>Quando</th><th>Usuário</th><th>Tipo</th><th class="n">Valor</th><th>Situação</th><th>Origem</th><th>Pagamento MP</th><th></th></tr></thead>
       <tbody>${vis.map((a) => `<tr>
         <td>${esc(dataHora(a.criado))}</td>
         <td>${a.username ? nickLink(a.username) : '<small>conta apagada</small>'}</td>
@@ -777,6 +778,13 @@ body.addEventListener('click', (e) => {
     body.querySelector('[data-ap-lista]').innerHTML = apLista();
   }
   if (e.target.closest('[data-ap-csv]')) apCsv();
+  const del = e.target.closest('[data-ap-del]');
+  if (del) {
+    const [tipo, id] = del.dataset.apDel.split(':');
+    if (!window.confirm('Excluir este pagamento não concluído? Não dá para desfazer.')) return;
+    del.disabled = true;
+    platform.adminApoioExcluir(tipo, id).then(load, (err) => { del.disabled = false; window.alert(err.message); });
+  }
 });
 
 function lock(msg, withLogin) {

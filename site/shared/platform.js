@@ -971,6 +971,17 @@ export async function adminStats(days = 30) {
 }
 
 // Doações para o painel (só administradores; ver 0009_painel_apoio.sql).
+export async function adminApoioExcluir(tipo, id) {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { error } = await sb.rpc('site_admin_apoio_excluir', { p_tipo: tipo, p_id: id });
+  if (error) {
+    if (/not_admin/.test(error.message)) throw new Error('Esta conta não tem acesso ao painel.');
+    if (/nao_excluivel/.test(error.message)) throw new Error('Só dá para excluir pagamentos aguardando, recusados ou cancelados.');
+    if (/site_admin_apoio_excluir/.test(error.message) || error.code === 'PGRST202') throw new Error('Rode o arquivo 0044_painel_apoio_excluir.sql no Supabase.');
+    throw friendly(error);
+  }
+}
 export async function adminApoios(days = 30, tipo = null) {
   const sb = await getClient();
   if (!sb) throw unavailable();
