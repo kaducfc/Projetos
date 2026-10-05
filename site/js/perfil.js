@@ -94,31 +94,6 @@ function cardEfeito(u) {
 }
 
 // Apoio ao site: quem apoiou ganha o efeito Reflexo no nick.
-// Rift Coins: saldo da conta e extrato (0038_moedas.sql).
-let extrato = [];
-const MOTIVO_MOEDA = { codigo: 'Código de recompensa', admin: 'Ajuste do administrador', passe: 'Passe de batalha', compra: 'Compra na loja' };
-function cardMoedas(u) {
-  if (u.moedas == null) return '';
-  const linhas = extrato.slice(0, 10).map((l) => `<li>
-      <span class="h-when">${data(l.criado, { day: '2-digit', month: '2-digit', year: '2-digit' })}<small>${hora(l.criado)}</small></span>
-      <span class="h-what"><b>${esc(MOTIVO_MOEDA[l.motivo] || l.motivo)}</b></span>
-      <span class="h-score ${l.delta > 0 ? 'pf-mais' : 'pf-menos'}">${l.delta > 0 ? '+' : ''}${num(l.delta)}<small>RC</small></span></li>`).join('');
-  return `<section class="pf-card pf-moedas" id="moedas">
-    <img class="pf-moedas-img" src="/shared/assets/moeda/rc-96.webp" srcset="/shared/assets/moeda/rc-192.webp 2x" width="64" height="64" alt="" />
-    <div class="pf-moedas-txt">
-      <p class="eyebrow">Rift Coins</p>
-      <p class="pf-moedas-saldo"><b>${num(u.moedas)}</b> <small>RC</small></p>
-      <p class="muted small">A moeda do Rift Arcade. Você ganha moedas com códigos de recompensa e, no futuro, poderá usá-las para trocar por efeitos, ícones e outras novidades.</p>
-      ${linhas ? `<details class="pf-moedas-ext"><summary>Extrato</summary><ul class="pf-hist">${linhas}</ul></details>` : ''}
-    </div>
-  </section>`;
-}
-
-async function atualizarMoedas() {
-  if (platform.getUser()?.moedas == null) return;
-  extrato = await platform.moedasExtrato(10);
-}
-
 function cardApoio(u) {
   const apoiou = u.apoioTotal > 0;
   return `<section class="pf-card pf-apoio">
@@ -242,7 +217,7 @@ function render() {
     </section>`;
     return;
   }
-  root.innerHTML = `${cabecalho(u)}${cardMoedas(u)}${cardEfeito(u)}${cardMinhaRanqueada(status)}${cardApoio(u)}${cardCodigo()}${resumo()}${historico()}${conta(u)}`;
+  root.innerHTML = `${cabecalho(u)}${cardEfeito(u)}${cardMinhaRanqueada(status)}${cardApoio(u)}${cardCodigo()}${resumo()}${historico()}${conta(u)}`;
 }
 
 let carregando = true;
@@ -250,13 +225,12 @@ async function carregar() {
   await platform.init();
   if (platform.getUser()) {
     let recs;
-    [resultados, status, recs] = await Promise.all([platform.listResults({ limit: 500 }), platform.rankedStatus(), platform.minhasRecompensas(), atualizarMoedas()]);
+    [resultados, status, recs] = await Promise.all([platform.listResults({ limit: 500 }), platform.rankedStatus(), platform.minhasRecompensas()]);
     efeitosGanhos = new Set(recs.filter((r) => r.tipo === 'efeito').map((r) => r.chave));
   }
   carregando = false;
   render();
   if (location.hash === '#historico') document.getElementById('historico')?.scrollIntoView();
-  if (location.hash === '#moedas') document.getElementById('moedas')?.scrollIntoView();
 }
 
 // ------------------------------------------------------------------ janelas
@@ -361,7 +335,6 @@ function resgatarCodigo() {
       const novaChave = new Set(novas.map((r) => `${r.tipo}:${r.chave}`));
       const linhas = recompensas.map((r) => `<li><span class="pf-rec-tipo">${esc(tipoTexto(r.tipo))}</span> <b>${esc(nomeRecompensa(r.tipo, r.chave))}</b>${novaChave.has(`${r.tipo}:${r.chave}`) ? '' : ' <small>(você já tinha)</small>'}</li>`).join('');
       const temIcone = recompensas.some((r) => r.tipo === 'icone');
-      if (novas.some((r) => r.tipo === 'moeda')) atualizarMoedas().then(render);
       recompensas.filter((r) => r.tipo === 'efeito').forEach((r) => efeitosGanhos.add(r.chave));
       el.querySelector('.muted.small')?.remove();
       form.outerHTML = `<div class="pf-resgate-ok" role="status">

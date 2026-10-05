@@ -139,7 +139,7 @@ Configuração: rode a 0037; crie as duas funções (código em `supabase/functi
 ## Rift Coins (moeda do site)
 
 Cada conta tem uma carteira de **Rift Coins (RC)**, mostrada na barra do site
-(entre o idioma e o nome) e no **Meu perfil** (cartão "Rift Coins", com extrato).
+(entre o idioma e o nome); por enquanto não há outra tela da moeda.
 O saldo é privado: só a própria conta enxerga (`site_carteira`, separado do perfil
 público) e tudo que entra ou sai fica no extrato (`site_moedas_lanc`). Ninguém
 escreve direto nas tabelas; só as funções do servidor (`0038_moedas.sql`).
@@ -151,8 +151,7 @@ Por enquanto as moedas vêm de:
   tirar, com nota; o saldo nunca fica negativo).
 Para o passe de batalha e a loja: o servidor já tem a função interna
 `site_moedas_mexer(uid, delta, motivo, ref)` (soma ou tira e registra no extrato).
-Nova origem = nova função de servidor que chame essa, com um `motivo` novo (o
-perfil já traduz `passe` e `compra`). A arte da moeda está em
+Nova origem = nova função de servidor que chame essa, com um `motivo` novo (`passe` e `compra` já têm texto traduzido). A arte da moeda está em
 `shared/assets/moeda/` (o original enviado fica em `rc-original.png`).
 Configuração: rode `supabase/migrations/0038_moedas.sql`. Sem ela, o indicador
 na barra some e o resto do site continua igual.

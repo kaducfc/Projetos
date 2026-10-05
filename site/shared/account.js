@@ -30,7 +30,7 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
     if (!platform.cloudEnabled()) {
       account = '<span class="sb-note" title="Nesta versão o progresso fica só neste navegador.">Modo visitante</span>';
     } else if (u) {
-      const moedas = u.moedas == null ? '' : `<a class="sb-coins" href="/perfil/#moedas" title="Suas Rift Coins" aria-label="Suas Rift Coins"><img src="${MOEDA_IMG}" srcset="/shared/assets/moeda/rc-96.webp 2x" width="22" height="22" alt="" /><b data-no-i18n>${moedasTxt(u.moedas)}</b></a>`;
+      const moedas = u.moedas == null ? '' : `<span class="sb-coins" title="Suas Rift Coins" aria-label="Suas Rift Coins" role="img"><img src="${MOEDA_IMG}" srcset="/shared/assets/moeda/rc-96.webp 2x" width="22" height="22" alt="" /><b data-no-i18n>${moedasTxt(u.moedas)}</b></span>`;
       account = `${moedas}
         <div class="sb-user">
           <button type="button" class="sb-btn" data-sb="menu" aria-haspopup="true">
