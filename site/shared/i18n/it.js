@@ -51,6 +51,8 @@ export default {
   "O pagamento é feito no site do Stripe. O Rift Arcade recebe só o aviso de que foi aprovado e o valor; nunca vê dados de cartão ou de conta.": "Il pagamento avviene sul sito di Stripe. Rift Arcade riceve solo l’avviso che è stato approvato e l’importo; non vede mai dati di carta o di conto.",
   "Cartão: na hora.": "Carta: subito.",
   "Pagamento em andamento. Assim que for confirmado, o efeito no seu nick é liberado sozinho.": "Pagamento in corso. Appena confermato, l’effetto sul tuo nick si sblocca da solo.",
+  "Obrigado pelo apoio! 💛 O pagamento foi aprovado. O efeito no seu nick aparece em alguns segundos.": "Grazie per il sostegno! 💛 Il pagamento è stato approvato. L’effetto sul tuo nick compare tra pochi secondi.",
+  "O pagamento não foi concluído. Nada foi cobrado. Se quiser, é só tentar de novo.": "Il pagamento non è stato completato. Non è stato addebitato nulla. Se vuoi, riprova.",
   "carreira": "carriera",
   "carreiras": "carriere",
   "partida no modo Oculto": "partita in modalità Nascosto",

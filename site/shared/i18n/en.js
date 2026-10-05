@@ -51,6 +51,8 @@ export default {
   "O pagamento é feito no site do Stripe. O Rift Arcade recebe só o aviso de que foi aprovado e o valor; nunca vê dados de cartão ou de conta.": "Payment is made on the Stripe site. Rift Arcade only receives the notice that it was approved and the amount; it never sees card or account data.",
   "Cartão: na hora.": "Card: instantly.",
   "Pagamento em andamento. Assim que for confirmado, o efeito no seu nick é liberado sozinho.": "Payment in progress. As soon as it is confirmed, the effect on your nickname is unlocked automatically.",
+  "Obrigado pelo apoio! 💛 O pagamento foi aprovado. O efeito no seu nick aparece em alguns segundos.": "Thank you for your support! 💛 The payment was approved. The effect on your nickname shows up in a few seconds.",
+  "O pagamento não foi concluído. Nada foi cobrado. Se quiser, é só tentar de novo.": "The payment was not completed. You were not charged. If you want, just try again.",
   "carreira": "career",
   "carreiras": "careers",
   "partida no modo Oculto": "Hidden-mode match",
