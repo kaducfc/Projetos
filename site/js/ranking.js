@@ -8,6 +8,7 @@ import { avatarHtml } from '../shared/avatar.js';
 import { ELOS, eloInfo, emblemaHtml, divisaoDe, nomeDivisao, fmtPdr } from '../shared/ranked.js';
 import { cardMinhaRanqueada, comoFunciona } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
+import { localeAtual } from '../shared/i18n.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -16,7 +17,7 @@ const root = document.getElementById('ranking');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[c]));
-const num = (n) => (n == null ? '—' : Number(n).toLocaleString('pt-BR'));
+const num = (n) => (n == null ? '—' : Number(n).toLocaleString(localeAtual()));
 const ddmm = (iso) => {
   const [, m, d] = String(iso).slice(0, 10).split('-');
   return `${d}/${m}`;

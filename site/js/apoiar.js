@@ -6,6 +6,7 @@ import { mountSiteFooter } from '../shared/footer.js';
 import { APOIO_ATIVO } from '../shared/config.js';
 import { VALORES_SUGERIDOS, VALOR_MINIMO, VALOR_MAXIMO, VALOR_CONFIRMAR, nickHtml } from '../shared/apoio.js';
 import { ESPECIAIS, avatarHtml } from '../shared/avatar.js';
+import { localeAtual } from '../shared/i18n.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -15,7 +16,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[c]));
 const reais = (n) => Number(n).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: Number(n) % 1 ? 2 : 0 });
-const dataCurta = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+const dataCurta = (iso) => new Date(iso).toLocaleDateString(localeAtual(), { day: '2-digit', month: '2-digit', year: '2-digit' });
 const STATUS = { pendente: 'Aguardando pagamento', aprovado: 'Aprovado', recusado: 'Recusado', cancelado: 'Cancelado', estornado: 'Estornado' };
 
 const params = new URLSearchParams(location.search);

@@ -41,3 +41,15 @@ test('i18n: dicionários gerados batem com as fontes (rode scripts/i18n-build.mj
     for (const l of fonteShell) assert.equal(d[l[0]], l[i], `${id}: ${l[0]}`);
   }
 });
+
+test('i18n: avisos da ranqueada montados com t() e nomes de jogo no idioma certo', async () => {
+  await carregar('en');
+  assert.equal(t('carreiras'), 'careers');
+  assert.equal(t('faltam {resta} {varias} ranqueadas hoje', { resta: 3, varias: t('carreiras') }), '3 ranked careers left today');
+  assert.equal(t('Essa {uma} <b>não valeu PDR</b>.', { uma: t('partida no modo Oculto') }), 'That Hidden-mode match <b>did not earn RP</b>.');
+  await carregar('fr');
+  assert.equal(t('Essa {uma} <b>não valeu PDR</b>.', { uma: t('carreira') }), 'Cette carrière <b>n’a pas rapporté de PDR</b>.');
+  // Pares "campo: valor" só mudam quando algum lado é traduzido; listas são traduzidas item a item.
+  assert.equal(traduzirTexto('Classe: Mago, Assassino (certo)'), 'Classe : Mage, Assassin (correct)');
+  assert.equal(traduzirTexto('Nome do jogador: Fulano'), null);
+});

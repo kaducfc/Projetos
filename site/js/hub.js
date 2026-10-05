@@ -11,11 +11,12 @@ import {
 import { avatarHtml } from '../shared/avatar.js';
 import { nickHtml } from '../shared/apoio.js';
 import { dayIndex, msToNextDay, fmtCountdown } from '../shared/diario.js';
+import { localeAtual } from '../shared/i18n.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[c]));
-const fmtNum = (n) => (n == null ? '—' : Number(n).toLocaleString('pt-BR'));
+const fmtNum = (n) => (n == null ? '—' : Number(n).toLocaleString(localeAtual()));
 const fmtSinal = (n) => `${n > 0 ? '+' : n < 0 ? '−' : '±'}${fmtNum(Math.abs(Math.round(n || 0)))}`;
 const reduzido = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Número que conta do zero quando a página abre (data-conta; data-sinal = com +/−).
@@ -107,7 +108,7 @@ function vivoEscala() {
   const e = estadoEscala();
   if (e.estado === 'terminou') {
     const txt = e.media != null
-      ? `✓ Média ${Number(e.media).toLocaleString('pt-BR')}/100${e.pdr != null ? ` · ${pdrTxt(e.pdr)}` : ''}`
+      ? `✓ Média ${Number(e.media).toLocaleString(localeAtual())}/100${e.pdr != null ? ` · ${pdrTxt(e.pdr)}` : ''}`
       : `✓ ${conta(e.total)}/${e.de * 100} hoje`;
     return `<p class="hx-live ok">${txt}<span class="hx-cd">Próxima em <b data-cd>${fmtCountdown(msToNextDay())}</b></span></p>`;
   }

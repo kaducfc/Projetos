@@ -49,8 +49,18 @@ function montar(d) {
     if (!/\{\w+\}/.test(k)) { dict.set(norm(k), v); continue; }
     const nomes = [];
     const re = new RegExp(`^${esc(norm(k)).replace(/\\?\{(\w+)\\?\}/g, (_, n) => { nomes.push(n); return '(.+?)'; })}$`);
-    modelos.push({ re, nomes, saida: v });
+    // Modelos só de {valores} e pontuação ('{c}: {v}') só valem se algum valor for traduzido.
+    modelos.push({ re, nomes, saida: v, soVars: !/[A-Za-zÀ-ÿ]/.test(k.replace(/\{\w+\}/g, '')) });
   }
+}
+
+// Valor no meio de um modelo: traduz o texto inteiro ou, se for uma lista
+// ("Mago, Assassino"), cada item.
+function valor(v) {
+  const direto = buscar(norm(v));
+  if (direto != null) return direto;
+  if (/, /.test(v)) return v.split(', ').map((x) => buscar(norm(x)) ?? x).join(', ');
+  return v;
 }
 
 // Traduz um texto (já sem espaços sobrando). Devolve null se não houver tradução.
@@ -60,8 +70,18 @@ function buscar(texto) {
   if (direto != null) return direto;
   for (const m of modelos) {
     const r = m.re.exec(texto);
+    if (!r) continue;
     // Os valores do meio também são traduzidos, se existirem no dicionário (ex.: "Ferro 2").
-    if (r) return m.saida.replace(/\{(\w+)\}/g, (_, n) => { const i = m.nomes.indexOf(n); if (i < 0) return `{${n}}`; const v = r[i + 1]; return dict.get(norm(v)) ?? buscar(norm(v)) ?? v; });
+    let mudou = false;
+    const out = m.saida.replace(/\{(\w+)\}/g, (_, n) => {
+      const i = m.nomes.indexOf(n);
+      if (i < 0) return `{${n}}`;
+      const v = valor(r[i + 1]);
+      if (v !== r[i + 1]) mudou = true;
+      return v;
+    });
+    if (m.soVars && !mudou) continue;
+    return out;
   }
   return null;
 }

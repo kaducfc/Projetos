@@ -1,5 +1,6 @@
 // Na Medida: regras puras (sem tela), testadas em tests/escala.test.mjs.
 import { dayIndex as dayIndexFrom } from '../../../shared/diario.js';
+import { localeAtual } from '../../../shared/i18n.js';
 
 export const FIRST_DAY = '2026-10-01';
 export const RODADAS = 5;
@@ -82,14 +83,14 @@ export function rodadasDoDia(itens, dia, semente = 0) {
 // Altura em metros para a tela: "0,73 m", "1,95 m", "12 m", "103,6 m".
 export function fmtAltura(m) {
   const casas = m < 10 ? 2 : m < 100 ? 1 : 0;
-  return `${Number(m.toFixed(casas)).toLocaleString('pt-BR', { maximumFractionDigits: casas })} m`;
+  return `${Number(m.toFixed(casas)).toLocaleString(localeAtual(), { maximumFractionDigits: casas })} m`;
 }
 
 // "Garen é 2,6× maior que Teemo".
 export function proporcao(a, b) {
   const [maior, menor] = a.altura >= b.altura ? [a, b] : [b, a];
   const r = maior.altura / menor.altura;
-  return `${maior.nome} é ${r.toLocaleString('pt-BR', { maximumFractionDigits: r < 10 ? 2 : 1 })}× maior que ${menor.nome}`;
+  return `${maior.nome} é ${r.toLocaleString(localeAtual(), { maximumFractionDigits: r < 10 ? 2 : 1 })}× maior que ${menor.nome}`;
 }
 
 // Quadradinhos para compartilhar: 🟩 80+, 🟨 50+, 🟧 25+, 🟥 abaixo.

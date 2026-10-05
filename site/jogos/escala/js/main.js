@@ -10,11 +10,12 @@ import {
   RODADAS, dayIndex, pontos, veredito, diferenca, rng, sortearRodada, rodadasDoDia,
   fmtAltura, proporcao, quadrado,
 } from './logic.js';
+import { localeAtual } from '../../../shared/i18n.js';
 
 const GAME_ID = 'escala';
 const NAME = 'Na Medida';
 // Proporção do palpite em relação à azul (sem revelar nenhuma altura): "1,6×".
-const fmtRazao = (r) => `${r.toLocaleString('pt-BR', { maximumFractionDigits: r < 10 ? 2 : 1, minimumFractionDigits: r < 10 ? 2 : 1 })}×`;
+const fmtRazao = (r) => `${r.toLocaleString(localeAtual(), { maximumFractionDigits: r < 10 ? 2 : 1, minimumFractionDigits: r < 10 ? 2 : 1 })}×`;
 const razaoDe = (a, b) => Math.max(a.altura, b.altura) / Math.min(a.altura, b.altura);
 const LIMITE = 15; // o palpite vai de 1/15 a 15× a referência
 // Endereço completo: url() dentro de variável CSS resolve a partir do .css.
@@ -186,7 +187,7 @@ function caixaPdr() {
       <p class="esc-rk-pdr">${v > 0 ? '+' : v < 0 ? '−' : '±'}${Math.abs(v)}<small>PDR</small></p>
       <div class="esc-rk-txt">
         <b>Ranqueada de hoje</b>
-        <span>Média ${Number(srv.media).toLocaleString('pt-BR')}/100 nas ${RODADAS} rodadas</span>
+        <span>Média ${Number(srv.media).toLocaleString(localeAtual())}/100 nas ${RODADAS} rodadas</span>
         ${d ? `<span class="esc-rk-elo">${emblemaHtml(d.elo, 22)} Agora: ${eloTexto(eloAgora)}</span>` : ''}
       </div>
       <a class="esc-rk-link" href="/ranking/">Ver ranking →</a>

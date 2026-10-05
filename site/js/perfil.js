@@ -10,6 +10,7 @@ import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
 import { EFEITOS, efeitoAtivo } from '../shared/efeitos.js';
+import { localeAtual } from '../shared/i18n.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -18,9 +19,9 @@ const root = document.getElementById('perfil');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[c]));
-const num = (n) => (n == null ? '—' : Number(n).toLocaleString('pt-BR'));
-const data = (iso, opts = { day: '2-digit', month: 'short', year: 'numeric' }) => new Date(iso).toLocaleDateString('pt-BR', opts);
-const hora = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+const num = (n) => (n == null ? '—' : Number(n).toLocaleString(localeAtual()));
+const data = (iso, opts = { day: '2-digit', month: 'short', year: 'numeric' }) => new Date(iso).toLocaleDateString(localeAtual(), opts);
+const hora = (iso) => new Date(iso).toLocaleTimeString(localeAtual(), { hour: '2-digit', minute: '2-digit' });
 const nomeJogo = (id) => gameById(id)?.name || id;
 
 let resultados = [];
