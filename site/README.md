@@ -171,9 +171,13 @@ no nível 15. Para mudar a recompensa de um nível, edite a linha em
   não geram resultado no servidor e não têm passe.
 - **Aviso ao terminar a partida:** `platform.recordResult` compara o "hoje" do passe
   antes e depois (sem travar o jogo) e emite o evento `passe`; `shared/passe-aviso.js`
-  (montado pela barra do site, então vale em todos os jogos) mostra um cartão que sobe
-  do rodapé com a abóbora, "+5 abóboras" e a barra do nível enchendo (dourado quando sobe
-  de nível). Só aparece quando o passe está disponível para a conta.
+  guarda o ganho e só mostra quando o jogo chama `liberarAbobora()`, ou seja, **no fim da
+  partida, junto do aviso de PDR** (os avisos de fim de `shared/aviso-ranked.js` já
+  chamam; a Lendas modo livre chama no `terminar()`). O cartão fica parado, acima do aviso
+  de PDR, com a abóbora, "+5 abóboras", a barra do nível e o botão "Ir para o passe";
+  só fecha no ×. Só aparece quando o passe está disponível para a conta.
+- **Página do passe:** `/passe/` (`passe/index.html`, `js/passe.js`): nível, barra e
+  recompensas com o botão Resgatar. Está com `noindex` enquanto o passe é teste.
 - **Teste:** enquanto `site_passes.publico = false`, só administradores acumulam
   abóboras e resgatam. A aba **Teste** do painel mostra o passe (`shared/passe.js`,
   `css/passe.css`) com controles para dar/tirar abóboras, ligar o premium e zerar o

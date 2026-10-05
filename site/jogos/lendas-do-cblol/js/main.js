@@ -11,6 +11,7 @@ import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import { vantagens } from '../../../shared/ranked.js';
 import { avisoInicio, avisoComeco, avisoFim } from '../../../shared/aviso-ranked.js';
+import { liberarAbobora } from '../../../shared/passe-aviso.js';
 
 const GAME_ID = 'cblol';
 const NAME = gameById(GAME_ID)?.name || 'Lendas do CBLOL';
@@ -389,6 +390,7 @@ function terminar() {
   platform.track('game_end', GAME_ID, { resultado: c.resultado, vitorias: c.vitoriasGrupos, forca: c.forca, modo: jogo.modo, bonus: jogo.bonusUsado });
   // Só no fim da animação conta quantos PDR a campanha deu.
   if (jogo.modo === 'oculto') Promise.resolve(entradaRanqueada).then((entry) => avisoFim(entry, jogo.ranked, GAME_ID));
+  else liberarAbobora(); // modo livre: sem aviso de PDR, só as abóboras do passe
 }
 
 async function compartilhar() {

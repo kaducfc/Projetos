@@ -113,4 +113,5 @@ export default [
   ['Subiu para o nível {num}!', 'Level up! You reached level {num}!', 'Aufgestiegen auf Stufe {num}!', '¡Subiste al nivel {num}!', 'Sei salito al livello {num}!', 'Tu passes au niveau {num} !'],
   ['Passe completo!', 'Pass complete!', 'Pass abgeschlossen!', '¡Pase completo!', 'Pass completato!', 'Passe terminé !'],
   ['Passe de Batalha · nível {num}', 'Battle Pass · level {num}', 'Battle Pass · Stufe {num}', 'Pase de batalla · nivel {num}', 'Pass battaglia · livello {num}', 'Passe de combat · niveau {num}'],
+  ['Ir para o passe', 'Go to the pass', 'Zum Pass', 'Ir al pase', 'Vai al pass', 'Aller au passe'],
 ];

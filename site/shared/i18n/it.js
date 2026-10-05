@@ -694,6 +694,7 @@ export default {
   "Subiu para o nível {num}!": "Sei salito al livello {num}!",
   "Passe completo!": "Pass completato!",
   "Passe de Batalha · nível {num}": "Pass battaglia · livello {num}",
+  "Ir para o passe": "Vai al pass",
   "◆ Minigames do universo de LoL": "◆ Minigiochi dell’universo di LoL",
   "Jogos rápidos e uma carreira inteira para jogar. Entre com sua conta e cada partida, recorde e progresso fica guardado, em qualquer aparelho.": "Giochi veloci e un’intera carriera da giocare. Accedi con il tuo account e ogni partita, record e progresso viene salvato, su qualsiasi dispositivo.",
   "Jogar agora": "Gioca ora",

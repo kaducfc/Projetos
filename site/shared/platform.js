@@ -1154,6 +1154,8 @@ async function syncSaves(sb) {
 // Sem passe disponível (visitante, passe ainda em teste, banco sem 0039): fica quieto.
 let passeCache = null; // { uid, e }
 let passeDesligado = false;
+let passePromessa = null; // anúncio em andamento da última partida
+export const passeAguardar = () => passePromessa || Promise.resolve();
 async function lerPasse(sb) {
   if (passeDesligado || !user) return null;
   try {
@@ -1192,7 +1194,7 @@ export async function recordResult(gameId, { score = null, summary = {} } = {}) 
   const sb = await getClient();
   if (sb && user) await pushResults(sb);
   emit({ type: 'results', gameId });
-  if (sb && user) anunciarPasse(sb); // sem await: não atrasa o jogo
+  if (sb && user) passePromessa = anunciarPasse(sb).catch(() => {}); // sem await: não atrasa o jogo
   return entry;
 }
 

@@ -444,7 +444,7 @@ a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
 }
 
 /* Aviso de abóboras do passe de batalha (shared/passe-aviso.js) */
-.ps-aviso-abobora { position: fixed; left: 50%; bottom: 84px; z-index: 130; transform: translateX(-50%); width: min(340px, calc(100% - 24px)); display: flex; gap: 14px; align-items: center; padding: 12px 18px 12px 12px; cursor: pointer;
+.ps-aviso-abobora { position: fixed; left: 50%; bottom: 20px; z-index: 130; transform: translateX(-50%); width: min(340px, calc(100% - 24px)); display: flex; gap: 14px; align-items: center; padding: 12px 30px 12px 12px;
   background: linear-gradient(180deg, #1b1a24, #121119); border: 1px solid rgba(80, 220, 255, 0.55); border-radius: 12px; color: #f4efe4; font: 14px/1.35 Inter, system-ui, sans-serif;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6), 0 0 22px rgba(60, 200, 255, 0.28); animation: pa-sobe 0.55s cubic-bezier(0.2, 1.1, 0.3, 1) both; }
 .ps-aviso-abobora.pa-sai { animation: pa-desce 0.4s ease-in both; }
@@ -460,4 +460,8 @@ a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
 @keyframes pa-desce { to { opacity: 0; transform: translate(-50%, 30px) scale(0.96); } }
 @keyframes pa-pula { 0% { transform: scale(0.4) rotate(-12deg); } 55% { transform: scale(1.28) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
 @media (prefers-reduced-motion: reduce) { .ps-aviso-abobora, .ps-aviso-abobora.pa-sai, .pa-img { animation: none; } .pa-barra i { transition: none; } }
-@media (max-width: 480px) { .ps-aviso-abobora { bottom: 76px; } }
+
+.pa-x { position: absolute; top: 4px; right: 6px; background: none; border: 0; color: #9b9383; font-size: 20px; line-height: 1; cursor: pointer; padding: 2px 4px; }
+.pa-x:hover { color: #fff; }
+.pa-ir { justify-self: start; margin-top: 6px; padding: 4px 11px; border-radius: 6px; border: 1px solid rgba(80, 220, 255, 0.55); background: rgba(60, 200, 255, 0.1); color: #7be7ff; font-size: 12px; font-weight: 800; text-decoration: none; }
+.pa-ir:hover { background: rgba(60, 200, 255, 0.22); }

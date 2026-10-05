@@ -2,6 +2,7 @@
 // partida que terminou valeu e quantos PDR ela deu (ou tirou).
 import * as platform from './platform.js';
 import { t } from './i18n.js';
+import { liberarAbobora } from './passe-aviso.js';
 import { PARTIDAS_POR_DIA, NAO_TERMINOU, eloInfo, divisaoDe, nomeDivisao, fmtPdr } from './ranked.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
@@ -86,6 +87,9 @@ export function avisoComeco(r, jogo = 'carreira-no-rift') {
 // Fim de partida: `entry` é a partida registrada e `ranked` o ingresso de
 // quando ela começou ({ token, dia } ou nada).
 export async function avisoFim(entry, ranked = null, jogo = 'carreira-no-rift') {
+  try { await avisoFimBase(entry, ranked, jogo); } finally { liberarAbobora(); } // as abóboras do passe sobem junto do PDR
+}
+async function avisoFimBase(entry, ranked, jogo) {
   if (!platform.cloudEnabled()) return;
   const n = nomes(jogo);
   if (!platform.getUser()) {
@@ -113,6 +117,9 @@ export async function avisoFim(entry, ranked = null, jogo = 'carreira-no-rift') 
 
 // Jogos diários (Runetermo e Campeão Oculto): resultado do dia.
 export async function avisoDiario(estado) {
+  try { await avisoDiarioBase(estado); } finally { liberarAbobora(); }
+}
+async function avisoDiarioBase(estado) {
   if (!estado || estado.pdr == null) return;
   const d = await platform.rankedStatus();
   mostrar(`<b>${t('Ranqueada:')}</b> ${t('{pdr} hoje', { pdr: pdrHtml(estado.pdr) })}${d ? ` · ${t('agora: {elo}', { elo: eloTexto(d) })}` : ''}. ${link()}`, 12000);
