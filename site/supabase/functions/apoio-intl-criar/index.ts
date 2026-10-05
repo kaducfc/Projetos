@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
     'line_items[0][price_data][currency]': moeda.toLowerCase(),
     'line_items[0][price_data][unit_amount]': String(Math.round(valor * 100)),
     'line_items[0][price_data][product_data][name]': 'Rift Arcade support',
-    'line_items[0][price_data][product_data][description]': 'Voluntary support (cosmetics only, no advantage in the games)',
+    'line_items[0][price_data][product_data][description]': 'Voluntary support to the site',
     client_reference_id: apoio.id,
     'metadata[apoio]': apoio.id,
     'payment_intent_data[metadata][apoio]': apoio.id,

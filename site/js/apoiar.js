@@ -110,7 +110,7 @@ function efeito(u) {
       <p class="eyebrow">Efeito de apoiador</p>
       <p>${apoiou
     ? `Obrigado! Você já apoiou com <b>${reais(u.apoioTotal)}</b> e seu nick brilha assim no perfil, no ranking e na barra do site.`
-    : 'Apoiando com qualquer valor, seu nick fica assim, automaticamente, no perfil, no ranking e na barra do site. Não dá nenhuma vantagem nos jogos.'}</p>
+    : 'Apoiando com qualquer valor, seu nick fica assim, automaticamente, no perfil, no ranking e na barra do site.'}</p>
     </div>
   </section>
   ${icones()}`;
@@ -148,7 +148,6 @@ function perguntas() {
   return `<section class="pf-sec">
     <h2 class="section-title">Perguntas</h2>
     <div class="pf-card ap-faq">
-      <p><b>O apoio dá vantagem nos jogos?</b> Não. Só o efeito dourado no nome e os ícones especiais de perfil. Ranking e jogos são iguais para todos.</p>
       <p><b>Para onde vai o dinheiro?</b> Para manter o site no ar: servidor, domínio e o tempo de criar jogos novos.</p>
       ${intl() ? `<p><b>É seguro?</b> O pagamento é feito no site do Stripe. O Rift Arcade recebe só o aviso de que foi aprovado e o valor; nunca vê dados de cartão ou de conta.</p>
       <p><b>Quanto tempo para o efeito aparecer?</b> Cartão: na hora.</p>`
@@ -164,8 +163,8 @@ function render() {
   root.innerHTML = `
     <header class="rk-head ap-head">
       <div><p class="eyebrow">◆ Apoie o Rift Arcade</p><h1 class="display">Apoiar</h1>
-        <p class="lead">O Rift Arcade é gratuito e feito por fã. Se você curte, pode ajudar a manter o site no ar.
-          Em troca, seu nick ganha um <b>efeito dourado especial</b> e você libera <b>ícones de perfil exclusivos</b>, sem nenhuma vantagem nos jogos.</p></div>
+        <p class="lead">O Rift Arcade é feito por fã. Se você curte, pode ajudar a manter o site no ar.
+          Em troca, seu nick ganha um <b>efeito dourado especial</b> e você libera <b>ícones de perfil exclusivos</b>.</p></div>
     </header>
     ${aviso()}
     ${efeito(u)}

@@ -101,7 +101,7 @@ function cardApoio(u) {
       <p class="eyebrow">♥ Apoie o Rift Arcade</p>
       <p class="pf-apoio-txt">${apoiou
     ? 'Obrigado pelo apoio! Seu nick ganhou o efeito <b>Apoiador</b> no perfil, no ranking e na barra do site.'
-    : 'O site é gratuito. Apoiando com qualquer valor, você ajuda a mantê-lo no ar e seu nick ganha um <b>efeito dourado especial</b>, sem vantagem nos jogos.'}</p>
+    : 'Apoiando com qualquer valor, você ajuda a mantê-lo no ar e seu nick ganha um <b>efeito dourado especial</b>.'}</p>
     </div>
     <a class="btn-primary pf-apoio-btn" href="/apoiar/">${apoiou ? 'Apoiar de novo' : '♥ Apoiar'}</a>
   </section>`;
