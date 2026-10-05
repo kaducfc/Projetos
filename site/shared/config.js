@@ -37,7 +37,7 @@ export const OFFICIAL_LOGOS_ALLOWED = [];
 //   true    → liberado para todos.
 export const APOIO_ATIVO = true;
 
-// Apoio internacional (Stripe e PayPal, em dólar ou euro). Só aparece quando o
+// Apoio internacional (Stripe, em dólar ou euro). Só aparece quando o
 // site NÃO está em português. Mesmos valores de APOIO_ATIVO:
 //   false → "Em breve"; 'admin' → só administradores conseguem pagar (teste);
 //   true → liberado para todos.

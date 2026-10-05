@@ -17,7 +17,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
 }[c]));
 const reais = (n) => Number(n).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: Number(n) % 1 ? 2 : 0 });
 const dataCurta = (iso) => new Date(iso).toLocaleDateString(localeAtual(), { day: '2-digit', month: '2-digit', year: '2-digit' });
-// Fora do português (idioma do site): apoio internacional (Stripe e PayPal, USD ou EUR).
+// Fora do português (idioma do site): apoio internacional (Stripe, USD ou EUR).
 const intl = () => localeAtual() !== IDIOMA_PADRAO;
 const VALORES_INTL = [5, 10, 25, 50];
 const MINIMO_INTL = 3;
@@ -25,7 +25,7 @@ const dinheiro = (n, moeda) => Number(n).toLocaleString(localeAtual(), { style: 
 const STATUS = { pendente: 'Aguardando pagamento', aprovado: 'Aprovado', recusado: 'Recusado', cancelado: 'Cancelado', estornado: 'Estornado' };
 
 const params = new URLSearchParams(location.search);
-const voltou = params.get('status'); // volta do Mercado Pago, Stripe ou PayPal: aprovado / pendente / falhou
+const voltou = params.get('status'); // volta do Mercado Pago ou Stripe: aprovado / pendente / falhou
 let valor = 10;
 let moeda = localeAtual() === 'en' ? 'USD' : 'EUR'; // moeda do apoio internacional
 let vindoDe = null; // provedor internacional que está abrindo o pagamento
@@ -66,9 +66,8 @@ function cartaoIntl(u) {
     const rotulo = (txt) => (vindoDe ? 'Abrindo o pagamento…' : txt);
     acao = `<div class="ap-pagar-intl">
       <button type="button" class="btn-primary ap-pagar" data-act="pagar-stripe" ${vindoDe ? 'disabled' : ''}>${rotulo(`Pagar ${dinheiro(valor, moeda)} com cartão`)}</button>
-      <button type="button" class="btn-primary ap-pagar ap-paypal" data-act="pagar-paypal" ${vindoDe ? 'disabled' : ''}>${rotulo(`Pagar ${dinheiro(valor, moeda)} com PayPal`)}</button>
     </div>
-    <p class="muted small">Você será levado ao Stripe (cartão, Apple Pay, Google Pay) ou ao PayPal para pagar. O site não vê nem guarda os dados do pagamento.</p>
+    <p class="muted small">Você será levado ao Stripe (cartão, Apple Pay, Google Pay) para pagar. O site não vê nem guarda os dados do pagamento.</p>
     ${APOIO_INTL_ATIVO === 'admin' ? '<p class="muted small"><b>Modo de teste:</b> só administradores veem estes botões. Para o público, aparece "Em breve".</p>' : ''}`;
   }
   return `<section class="pf-card ap-valor">
@@ -151,8 +150,8 @@ function perguntas() {
     <div class="pf-card ap-faq">
       <p><b>O apoio dá vantagem nos jogos?</b> Não. Só o efeito dourado no nome e os ícones especiais de perfil. Ranking e jogos são iguais para todos.</p>
       <p><b>Para onde vai o dinheiro?</b> Para manter o site no ar: servidor, domínio e o tempo de criar jogos novos.</p>
-      ${intl() ? `<p><b>É seguro?</b> O pagamento é feito no site do Stripe ou do PayPal. O Rift Arcade recebe só o aviso de que foi aprovado e o valor; nunca vê dados de cartão ou de conta.</p>
-      <p><b>Quanto tempo para o efeito aparecer?</b> Cartão e PayPal: na hora.</p>`
+      ${intl() ? `<p><b>É seguro?</b> O pagamento é feito no site do Stripe. O Rift Arcade recebe só o aviso de que foi aprovado e o valor; nunca vê dados de cartão ou de conta.</p>
+      <p><b>Quanto tempo para o efeito aparecer?</b> Cartão: na hora.</p>`
     : `<p><b>É seguro?</b> O pagamento é feito no site do Mercado Pago. O Rift Arcade recebe só o aviso de que foi aprovado e o valor; nunca vê dados de cartão ou de conta.</p>
       <p><b>Quanto tempo para o efeito aparecer?</b> Pix e cartão: na hora. Boleto: quando o banco compensar (até 3 dias úteis).</p>`}
       <p><b>Posso pedir o dinheiro de volta?</b> Sim, em até 7 dias, pelo e-mail <a data-contact href="mailto:riftarcadeoficial@gmail.com">riftarcadeoficial@gmail.com</a>. Se todo o apoio for estornado, o efeito sai do nick e os ícones especiais deixam de valer.</p>
@@ -177,11 +176,6 @@ function render() {
 
 async function carregar() {
   await platform.init();
-  // Voltou do PayPal: o pedido só vale depois de confirmado (capturado) aqui.
-  const pedido = params.get('token');
-  if (params.get('via') === 'paypal' && voltou === 'aprovado' && pedido && platform.getUser()) {
-    await platform.apoioCapturar(pedido);
-  }
   vagas = await platform.pioneirosVagas();
   if (platform.getUser()) {
     if (APOIO_ATIVO === 'admin' || APOIO_INTL_ATIVO === 'admin') admin = await platform.isAdmin();
@@ -217,14 +211,14 @@ root.addEventListener('click', async (e) => {
   }
   const act = e.target.closest('[data-act]')?.dataset.act;
   if (act === 'entrar') openAuthModal('login');
-  if ((act === 'pagar-stripe' || act === 'pagar-paypal') && !vindoDe) {
+  if (act === 'pagar-stripe' && !vindoDe) {
     if (!(valor >= MINIMO_INTL)) return toast(`O valor mínimo é ${dinheiro(MINIMO_INTL, moeda)}.`);
     if (!(valor <= 10000)) return toast('Valor alto demais.');
     if (valor >= VALOR_CONFIRMAR && !confirm(`Confirma o apoio de ${dinheiro(valor, moeda)}?`)) return;
-    vindoDe = act === 'pagar-stripe' ? 'stripe' : 'paypal';
+    vindoDe = true;
     render();
     try {
-      const { url } = await platform.apoiarIntl(vindoDe, valor, moeda);
+      const { url } = await platform.apoiarIntl(valor, moeda);
       location.href = url;
     } catch (err) {
       vindoDe = null;
@@ -258,8 +252,6 @@ root.addEventListener('input', (e) => {
   if (b) b.textContent = `Apoiar com ${reais(valor || 0)}`;
   const bs = root.querySelector('[data-act="pagar-stripe"]');
   if (bs) bs.textContent = `Pagar ${dinheiro(valor || 0, moeda)} com cartão`;
-  const bp = root.querySelector('[data-act="pagar-paypal"]');
-  if (bp) bp.textContent = `Pagar ${dinheiro(valor || 0, moeda)} com PayPal`;
 });
 
 onLangChange(() => {

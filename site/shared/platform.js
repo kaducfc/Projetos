@@ -642,11 +642,11 @@ export async function meusApoios() {
   return error ? [] : data;
 }
 
-// Apoio internacional: Stripe ou PayPal, em USD ou EUR (Edge Function apoio-intl-criar).
-export async function apoiarIntl(provedor, valor, moeda) {
+// Apoio internacional: Stripe (cartão, Apple Pay, Google Pay), em USD ou EUR (Edge Function apoio-intl-criar).
+export async function apoiarIntl(valor, moeda) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();
-  const { data, error } = await sb.functions.invoke('apoio-intl-criar', { body: { provedor, valor, moeda } });
+  const { data, error } = await sb.functions.invoke('apoio-intl-criar', { body: { valor, moeda } });
   if (!error && data?.url) return data;
   let corpo = data || {};
   try { if (error?.context?.json) corpo = await error.context.json(); } catch { /* sem corpo JSON */ }
@@ -656,19 +656,11 @@ export async function apoiarIntl(provedor, valor, moeda) {
     muitos_pedidos: 'Muitas tentativas seguidas. Espere um pouco e tente de novo.',
     nao_logado: 'Entre na sua conta para apoiar.',
     stripe_nao_configurado: 'O pagamento por cartão ainda não está disponível.',
-    paypal_nao_configurado: 'O pagamento pelo PayPal ainda não está disponível.',
   };
   if (conhecidos[codigo]) throw new Error(conhecidos[codigo]);
   throw new Error('Não foi possível abrir o pagamento agora. Tente de novo em instantes.');
 }
 
-// PayPal: ao voltar ao site, confirma (captura) o pedido.
-export async function apoioCapturar(order) {
-  const sb = await getClient();
-  if (!sb || !user) return null;
-  const { data, error } = await sb.functions.invoke('apoio-intl-criar', { body: { acao: 'capturar', order } });
-  return error ? null : data?.status || null;
-}
 
 // Relê o total apoiado (depois de voltar do Mercado Pago).
 export async function refreshApoio() {

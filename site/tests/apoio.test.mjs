@@ -55,16 +55,15 @@ test('painel de apoio: só administrador vê quem doou, quanto e o total', async
   assert.match(sql, /revoke all on function public\.site_admin_apoios\(int\) from public, anon/);
 });
 
-test('apoio internacional: Stripe e PayPal em USD/EUR', async () => {
+test('apoio internacional: Stripe em USD/EUR', async () => {
   const sb = createFakeSupabase();
   installMemoryStorage();
   platform.__setClientForTests(sb);
   await platform.init();
   await platform.signUp({ email: 'i@example.com', password: 'segredo123', username: 'Gringo' });
-  await assert.rejects(platform.apoiarIntl('stripe', 1, 'USD'), /Valor inválido|Não foi possível/);
-  const st = await platform.apoiarIntl('stripe', 10, 'USD');
+  await assert.rejects(platform.apoiarIntl(1, 'USD'), /Valor inválido|Não foi possível/);
+  const st = await platform.apoiarIntl(10, 'USD');
   assert.match(st.url, /stripe\.test.*moeda=USD/);
-  const pp = await platform.apoiarIntl('paypal', 5, 'EUR');
-  assert.match(pp.url, /paypal\.test.*moeda=EUR/);
-  assert.equal(await platform.apoioCapturar('ABC12345XYZ'), 'aprovado');
+  const eur = await platform.apoiarIntl(5, 'EUR');
+  assert.match(eur.url, /stripe\.test.*moeda=EUR/);
 });

@@ -120,21 +120,19 @@ o Access Token do Mercado Pago no segredo `MP_ACCESS_TOKEN` das Edge Functions
 e mude `APOIO_ATIVO` para `true` em `shared/config.js`. O painel do
 administrador registra apoios feitos por fora (Pix direto).
 
-### Apoio internacional (Stripe e PayPal)
+### Apoio internacional (Stripe)
 
 Quando o site **não** está em português, a página `apoiar/` mostra, no lugar do
-Mercado Pago, os botões de **cartão (Stripe)** e **PayPal**, em dólar ou euro
-(`js/apoiar.js`). Fluxo: o site chama a Edge Function `apoio-intl-criar` (cria a
-doação pendente e a sessão do Stripe ou o pedido do PayPal) → a pessoa paga no
-Stripe/PayPal → `apoio-intl-webhook` recebe o aviso (assinatura conferida) e marca
-a doação como aprovada; no PayPal o site também confirma o pedido ao voltar
-(`acao: 'capturar'`). O valor vai para o banco em reais (cotação em `USD_BRL` e
-`EUR_BRL`, só para somar o total e o painel) e o valor real fica em
-`valor_original` + `moeda` (`0037_apoio_internacional.sql`).
+Mercado Pago, o botão de pagar com o **Stripe** (cartão, Apple Pay, Google Pay), em
+dólar ou euro (`js/apoiar.js`). Fluxo: o site chama a Edge Function
+`apoio-intl-criar` (cria a doação pendente e a sessão do Stripe Checkout) → a
+pessoa paga no Stripe → `apoio-intl-webhook` recebe o aviso (assinatura
+conferida) e marca a doação como aprovada. O valor vai para o banco em reais
+(cotação em `USD_BRL` e `EUR_BRL`, só para somar o total e o painel) e o valor
+real fica em `valor_original` + `moeda` (`0037_apoio_internacional.sql`).
 Configuração: rode a 0037; crie as duas funções (código em `supabase/functions/`,
-"Verify JWT" desligado); segredos: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
-`PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `PAYPAL_WEBHOOK_ID` (opcionais: `PAYPAL_AMBIENTE=sandbox`,
-`USD_BRL`, `EUR_BRL`); cadastre os webhooks (endereços no topo de
+"Verify JWT" desligado); segredos: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+(opcionais: `USD_BRL`, `EUR_BRL`); cadastre o webhook (endereço e eventos no topo de
 `apoio-intl-webhook/index.ts`). `APOIO_INTL_ATIVO` em `shared/config.js`:
 `'admin'` (teste, só administradores) → `true` (público).
 
