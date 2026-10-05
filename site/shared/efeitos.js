@@ -19,6 +19,11 @@ export const EFEITOS_TESTE = [
   { id: 'st-contorno', nome: 'Contorno Twitch', classe: 'fx-st-contorno', tema: 'Streamer · Twitch' },
   { id: 'st-glitch', nome: 'Glitch', classe: 'fx-st-glitch', tema: 'Streamer · Twitch' },
   { id: 'st-aovivo', nome: 'Ao vivo', classe: 'fx-st-aovivo', tema: 'Streamer · Twitch' },
+  { id: 'hw-abobora', nome: 'Abóbora', classe: 'fx-hw-abobora', tema: 'Halloween · vela tremulando' },
+  { id: 'hw-fantasma', nome: 'Fantasma', classe: 'fx-hw-fantasma', tema: 'Halloween · espectral' },
+  { id: 'hw-sangue', nome: 'Sangue', classe: 'fx-hw-sangue', tema: 'Halloween · gotejando' },
+  { id: 'hw-pocao', nome: 'Poção', classe: 'fx-hw-pocao', tema: 'Halloween · borbulhando' },
+  { id: 'hw-noite', nome: 'Noite de morcegos', classe: 'fx-hw-noite', tema: 'Halloween · lua e morcegos' },
 ];
 
 export const efeitoPorId = (id) => EFEITOS.find((e) => e.id === id) || null;
