@@ -48,7 +48,7 @@ function montar(d) {
   for (const [k, v] of Object.entries(d || {})) {
     if (!/\{\w+\}/.test(k)) { dict.set(norm(k), v); continue; }
     const nomes = [];
-    const re = new RegExp(`^${esc(norm(k)).replace(/\\?\{(\w+)\\?\}/g, (_, n) => { nomes.push(n); return '(.+?)'; })}$`);
+    const re = new RegExp(`^${esc(norm(k)).replace(/\\?\{(\w+)\\?\}/g, (_, n) => { nomes.push(n); return /^num\d*$/.test(n) ? '(\\d[\\d.,]*)' : '(.+?)'; })}$`);
     // Modelos só de {valores} e pontuação ('{c}: {v}') só valem se algum valor for traduzido.
     modelos.push({ re, nomes, lit: k.replace(/\{\w+\}/g, '').length, pre: norm(k).split('{')[0], saida: v, soVars: !/[A-Za-zÀ-ÿ]/.test(k.replace(/\{\w+\}/g, '')) });
   }
@@ -199,7 +199,7 @@ function observar() {
 // ------------------------------------------------------------------ troca de idioma
 
 // Atualizado por scripts/i18n-build.mjs: força o navegador a baixar o dicionário novo.
-const VERSAO_DICIONARIOS = '78f0f07773';
+const VERSAO_DICIONARIOS = 'a127e30812';
 
 async function carregar(id) {
   if (id === IDIOMA_PADRAO) { montar({}); return; }
