@@ -45,3 +45,8 @@
 /* Telas menores: 16 recompensas em 4 ou 2 colunas */
 @media (max-width: 980px) { .ps-trilha-niveis { grid-template-columns: repeat(4, minmax(0, 1fr)); } .ps-rec b { font-size: 13px; } }
 @media (max-width: 480px) { .ps-trilha-niveis { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 6px; } .ps-rec b { font-size: 11.5px; } .ps-trilha { font-size: 9px; } .ps-progresso { gap: 8px; } }
+
+/* A abóbora acompanha a ponta da barra */
+.ps-barra-wrap { position: relative; }
+.ps-ponta { position: absolute; top: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); pointer-events: none; filter: drop-shadow(0 0 6px rgba(80, 220, 255, 0.75)); transition: left 0.5s ease; }
+.ps-abobora { filter: drop-shadow(0 0 3px rgba(80, 220, 255, 0.6)); }

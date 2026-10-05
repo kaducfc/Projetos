@@ -8,8 +8,8 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[c]));
 const fmt = (n) => Number(n).toLocaleString('pt-BR');
-export const ABOBORA_IMG = '/shared/assets/passe/abobora.svg';
-const aboboraImg = (tam = 18) => `<img class="ps-abobora" src="${ABOBORA_IMG}" width="${tam}" height="${tam}" alt="" />`;
+export const ABOBORA_IMG = '/shared/assets/passe/abobora-64.webp';
+const aboboraImg = (tam = 18) => `<img class="ps-abobora" src="${ABOBORA_IMG}" srcset="/shared/assets/passe/abobora-128.webp 2x" width="${tam}" height="${tam}" alt="" />`;
 
 // Como cada recompensa aparece no cartão do nível.
 function recompensaHtml(r) {
@@ -59,7 +59,10 @@ export function passeHtml(e, { extra = '' } = {}) {
     </div>
     <div class="ps-progresso">
       <span class="ps-lv">${aboboraImg(15)} Nível ${e.nivel}</span>
-      <div class="ps-barra" role="progressbar" aria-label="Progresso para o próximo nível" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
+      <div class="ps-barra-wrap">
+        <div class="ps-barra" role="progressbar" aria-label="Progresso para o próximo nível" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
+        <img class="ps-ponta" style="left:${pct}%" src="${ABOBORA_IMG}" srcset="/shared/assets/passe/abobora-128.webp 2x" width="30" height="30" alt="" />
+      </div>
       <span class="ps-lv ps-lv-prox">${completo ? '✓ Completo' : `Nível ${e.nivel + 1}`}</span>
     </div>
     ${extra}
