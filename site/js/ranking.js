@@ -72,7 +72,7 @@ function tabela() {
     </ol>`;
   }
   const quando = !dados ? '' : periodo === 'geral' ? 'Pelo elo e PDR'
-    : periodo === 'diario' ? `Hoje (${ddmm(dados.fim)})` : `${ddmm(dados.inicio)} a ${ddmm(dados.fim)}`;
+    : periodo === 'diario' ? `Hoje (${ddmm(dados.fim)})` : `${ddmm(dados.inicio)} – ${ddmm(dados.fim)}`;
   return `<section class="pf-sec">
     <h2 class="section-title">Ranking</h2>
     <div class="rk-topo"><div class="pf-chips" role="group" aria-label="Período">${tabs}</div>
