@@ -107,4 +107,10 @@ export default [
   ['Ajuste do administrador', 'Administrator adjustment', 'Anpassung durch den Administrator', 'Ajuste del administrador', 'Rettifica dell’amministratore', 'Ajustement de l’administrateur'],
   ['Passe de batalha', 'Battle pass', 'Battle Pass', 'Pase de batalla', 'Pass battaglia', 'Passe de combat'],
   ['Compra na loja', 'Store purchase', 'Kauf im Shop', 'Compra en la tienda', 'Acquisto nel negozio', 'Achat en boutique'],
+  // Passe de batalha: aviso de abóboras
+  ['+{num} abóboras', '+{num} pumpkins', '+{num} Kürbisse', '+{num} calabazas', '+{num} zucche', '+{num} citrouilles'],
+  ['+{num} abóbora', '+{num} pumpkin', '+{num} Kürbis', '+{num} calabaza', '+{num} zucca', '+{num} citrouille'],
+  ['Subiu para o nível {num}!', 'Level up! You reached level {num}!', 'Aufgestiegen auf Stufe {num}!', '¡Subiste al nivel {num}!', 'Sei salito al livello {num}!', 'Tu passes au niveau {num} !'],
+  ['Passe completo!', 'Pass complete!', 'Pass abgeschlossen!', '¡Pase completo!', 'Pass completato!', 'Passe terminé !'],
+  ['Passe de Batalha · nível {num}', 'Battle Pass · level {num}', 'Battle Pass · Stufe {num}', 'Pase de batalla · nivel {num}', 'Pass battaglia · livello {num}', 'Passe de combat · niveau {num}'],
 ];

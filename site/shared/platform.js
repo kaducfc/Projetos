@@ -235,6 +235,8 @@ async function setUser(sb, authUser) {
     }
     await syncAll(sb);
     emit({ type: 'auth', user });
+    passeDesligado = false;
+    guardarPasse(sb); // baseline para saber quantas abóboras a próxima partida rende
     return user;
   })();
   try {
@@ -1147,6 +1149,39 @@ async function syncSaves(sb) {
 
 // ------------------------------------------------------------------ resultados
 
+// Abóboras do passe de batalha: o servidor soma quando a partida é registrada. Aqui a
+// gente só compara o "hoje" antes e depois para avisar a tela (evento 'passe').
+// Sem passe disponível (visitante, passe ainda em teste, banco sem 0039): fica quieto.
+let passeCache = null; // { uid, e }
+let passeDesligado = false;
+async function lerPasse(sb) {
+  if (passeDesligado || !user) return null;
+  try {
+    const { data, error } = await sb.rpc('site_passe_estado', { pid: 'halloween-2026' });
+    if (error) { passeDesligado = true; return null; }
+    return data;
+  } catch {
+    return null;
+  }
+}
+async function guardarPasse(sb) {
+  const uid = user?.id;
+  const e = await lerPasse(sb);
+  if (e && uid && user?.id === uid) passeCache = { uid, e };
+}
+async function anunciarPasse(sb) {
+  const antes = passeCache?.uid === user?.id ? passeCache.e : null;
+  const uid = user?.id;
+  const e = await lerPasse(sb);
+  if (!e || !uid || user?.id !== uid) return;
+  passeCache = { uid, e };
+  if (!antes) return;
+  const ganhou = e.hoje >= antes.hoje ? e.hoje - antes.hoje : e.hoje;
+  if (ganhou > 0 && antes.nivel < e.passe.niveis) {
+    emit({ type: 'passe', ganhou, nivelAntes: antes.nivel, nivel: e.nivel, progresso: e.progresso, por: e.passe.abobora_por_nivel, niveis: e.passe.niveis });
+  }
+}
+
 export async function recordResult(gameId, { score = null, summary = {} } = {}) {
   const entry = {
     clientId: newId(), gameId, score, summary, playedAt: new Date().toISOString(), synced: false,
@@ -1157,6 +1192,7 @@ export async function recordResult(gameId, { score = null, summary = {} } = {}) 
   const sb = await getClient();
   if (sb && user) await pushResults(sb);
   emit({ type: 'results', gameId });
+  if (sb && user) anunciarPasse(sb); // sem await: não atrasa o jogo
   return entry;
 }
 

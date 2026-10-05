@@ -98,7 +98,7 @@ export function createFakeSupabase() {
         const k = keys[table];
         for (const r of list) {
           const i = db[table].findIndex((x) => k.every((c) => x[c] === r[c]));
-          if (i >= 0) { if (!q.opts.ignoreDuplicates) db[table][i] = { ...db[table][i], ...r }; } else db[table].push({ ...r });
+          if (i >= 0) { if (!q.opts.ignoreDuplicates) db[table][i] = { ...db[table][i], ...r }; } else { db[table].push({ ...r }); if (table === 'site_game_results') passeAoConcluir(r.user_id); }
         }
         return { data: null, error: null };
       }
@@ -126,6 +126,18 @@ export function createFakeSupabase() {
       then(res, rej) { return exec().then(res, rej); },
     };
     return b;
+  }
+
+  // Passe de batalha: dados em memória (como o gatilho da 0039: 5 abóboras por partida, até 150 por dia).
+  function passeDb() {
+    return db.passe = db.passe || { publico: false, por: {}, niveis: Array.from({ length: 16 }, (_, i) => ({ nivel: i, trilha: i % 2 ? 'premium' : 'gratis', tipo: i === 15 ? 'efeito' : 'moeda', chave: i === 15 ? 'hw-neon' : '500' })) };
+  }
+  function passeAoConcluir(uid) {
+    const P = passeDb();
+    if (!(P.publico || admins.has(uid))) return;
+    const x = (P.por[uid] = P.por[uid] || { abobora: 0, premium: false, hoje: 0, resgates: new Set() });
+    const dar = Math.min(5, 150 - x.hoje);
+    if (dar > 0) { x.abobora += dar; x.hoje += dar; }
   }
 
   // Carteira de Rift Coins: saldo por conta + extrato.
@@ -379,7 +391,7 @@ export function createFakeSupabase() {
     if (name === 'site_passe_estado' || name === 'site_passe_resgatar' || name === 'site_admin_passe' || name === 'site_admin_passe_publicar') {
       const uid = auth._uid();
       if (!uid) return { data: null, error: { message: 'not_authenticated' } };
-      const P = db.passe = db.passe || { publico: false, por: {}, niveis: Array.from({ length: 16 }, (_, i) => ({ nivel: i, trilha: i % 2 ? 'premium' : 'gratis', tipo: i === 15 ? 'efeito' : 'moeda', chave: i === 15 ? 'hw-neon' : '500' })) };
+      const P = passeDb();
       const me = (id) => (P.por[id] = P.por[id] || { abobora: 0, premium: false, hoje: 0, resgates: new Set() });
       const adm = admins.has(uid);
       if (name === 'site_admin_passe_publicar') { if (!adm) return { data: null, error: { message: 'not_admin' } }; P.publico = args.publico_; return { data: null, error: null }; }

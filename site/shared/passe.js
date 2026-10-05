@@ -62,6 +62,7 @@ export function passeHtml(e, { extra = '' } = {}) {
       <div class="ps-barra-wrap">
         <div class="ps-barra" role="progressbar" aria-label="Progresso para o próximo nível" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
         <img class="ps-ponta" style="left:${pct}%" src="${ABOBORA_IMG}" srcset="/shared/assets/passe/abobora-128.webp 2x" width="30" height="30" alt="" />
+        <span class="ps-contagem">${completo ? '✓' : `${fmt(e.progresso)}/${fmt(por)}`}</span>
       </div>
       <span class="ps-lv ps-lv-prox">${completo ? '✓ Completo' : `Nível ${e.nivel + 1}`}</span>
     </div>

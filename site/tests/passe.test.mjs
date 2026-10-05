@@ -109,3 +109,39 @@ test('passe: regras no SQL (5 por partida, 150 por dia, 100 por nível, gatilho 
   assert.match(sql, /after insert on public\.site_game_results/);
   assert.match(sql, /revoke all on public\.site_passes, public\.site_passe_niveis, public\.site_passe_progresso, public\.site_passe_dia, public\.site_passe_resgates from anon, authenticated/);
 });
+
+test('passe: ao terminar a partida, o site avisa quantas abóboras entraram (e quando sobe de nível)', async () => {
+  const sb = createFakeSupabase();
+  const adm = await conta(sb, 'Mestre');
+  sb.admins.add(adm.id);
+  // Entra de novo já como administrador (o passe só existe para quem pode ver).
+  await platform.signOut();
+  await platform.signIn({ email: 'mestre@example.com', password: 'segredo123' });
+  await new Promise((ok) => { setTimeout(ok, 30); });
+  const avisos = [];
+  const off = platform.onChange((evt) => { if (evt.type === 'passe') avisos.push(evt); });
+  const espera = () => new Promise((ok) => { setTimeout(ok, 30); });
+  await platform.recordResult('runetermo', { score: 100 });
+  await espera();
+  assert.equal(avisos.length, 1);
+  assert.deepEqual([avisos[0].ganhou, avisos[0].nivel, avisos[0].progresso, avisos[0].por], [5, 0, 5, 100]);
+  // Falta pouco para o nível 1: a próxima partida sobe de nível.
+  await platform.adminPasse('Mestre', 'aboboras', 95); // 5 + 95 = 100 → já é nível 1 (barra 0)
+  await platform.adminPasse('Mestre', 'aboboras', -3); // 97 → nível 0, barra 97
+  await platform.recordResult('campeao', { score: 1 });
+  await espera();
+  assert.equal(avisos.length, 2);
+  assert.deepEqual([avisos[1].ganhou, avisos[1].nivelAntes, avisos[1].nivel, avisos[1].progresso], [5, 0, 1, 2]);
+  off();
+});
+
+test('passe: jogador comum (passe em teste) e visitante não recebem aviso de abóboras', async () => {
+  const sb = createFakeSupabase();
+  await conta(sb, 'Comum');
+  const avisos = [];
+  const off = platform.onChange((evt) => { if (evt.type === 'passe') avisos.push(evt); });
+  await platform.recordResult('runetermo', { score: 100 });
+  await new Promise((ok) => { setTimeout(ok, 30); });
+  assert.equal(avisos.length, 0);
+  off();
+});

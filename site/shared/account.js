@@ -4,6 +4,7 @@ import * as platform from './platform.js';
 import { SITE_NAME } from './config.js';
 import { avatarHtml, hydrateAvatars } from './avatar.js';
 import { nickHtml } from './apoio.js';
+import { montarAvisoAbobora } from './passe-aviso.js';
 import { LANGS, getLang, langInfo, setLang, onLangChange, localeAtual } from './i18n.js';
 
 // Logo para fundo escuro, a partir da raiz do domínio (serve em qualquer página).
@@ -17,8 +18,11 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
 const MOEDA_IMG = '/shared/assets/moeda/rc-48.webp';
 const moedasTxt = (n) => Number(n).toLocaleString(localeAtual(), n >= 100000 ? { notation: 'compact', maximumFractionDigits: 1 } : {});
 
+let avisoAboboraMontado = false;
+
 export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
   el.classList.add('site-bar');
+  if (!avisoAboboraMontado) { avisoAboboraMontado = true; montarAvisoAbobora(); }
   const paint = () => {
     const u = platform.getUser();
     const logo = `<img class="sb-logo" src="${LOGO_URL}" alt="${esc(SITE_NAME)}" width="96" height="36" />`;

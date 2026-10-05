@@ -169,6 +169,11 @@ no nível 15. Para mudar a recompensa de um nível, edite a linha em
   Brasília); cada nível pede 100 abóboras. É um gatilho em `site_game_results`
   (`site_passe_ao_concluir`), então vale só para quem está conectado; visitantes
   não geram resultado no servidor e não têm passe.
+- **Aviso ao terminar a partida:** `platform.recordResult` compara o "hoje" do passe
+  antes e depois (sem travar o jogo) e emite o evento `passe`; `shared/passe-aviso.js`
+  (montado pela barra do site, então vale em todos os jogos) mostra um cartão que sobe
+  do rodapé com a abóbora, "+5 abóboras" e a barra do nível enchendo (dourado quando sobe
+  de nível). Só aparece quando o passe está disponível para a conta.
 - **Teste:** enquanto `site_passes.publico = false`, só administradores acumulam
   abóboras e resgatam. A aba **Teste** do painel mostra o passe (`shared/passe.js`,
   `css/passe.css`) com controles para dar/tirar abóboras, ligar o premium e zerar o
