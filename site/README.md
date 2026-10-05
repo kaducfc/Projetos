@@ -156,6 +156,29 @@ Nova origem = nova função de servidor que chame essa, com um `motivo` novo (`p
 Configuração: rode `supabase/migrations/0038_moedas.sql`. Sem ela, o indicador
 na barra some e o resto do site continua igual.
 
+## Passe de Batalha (em teste)
+
+Primeira temporada: **Halloween 2026** (`0039_passe_batalha.sql`). 15 níveis, cada
+um com uma recompensa; as trilhas se alternam (nível 1 premium, 2 grátis, 3 premium…
+até o 15, premium). Quem não tem o passe premium resgata só os níveis grátis.
+Por enquanto: 500 RC em todos os níveis, e o efeito **Halloween 2026** (`hw-neon`)
+no nível 15. Para mudar a recompensa de um nível, edite a linha em
+`site_passe_niveis` (tipo `moeda` com a quantidade em `chave`, `efeito` ou `icone`).
+- **Abóboras (progresso):** cada partida concluída, em qualquer jogo (ranqueada ou
+  não, ganhando ou perdendo), dá 5 abóboras, até 150 por dia (zera à meia-noite de
+  Brasília); cada nível pede 100 abóboras. É um gatilho em `site_game_results`
+  (`site_passe_ao_concluir`), então vale só para quem está conectado; visitantes
+  não geram resultado no servidor e não têm passe.
+- **Teste:** enquanto `site_passes.publico = false`, só administradores acumulam
+  abóboras e resgatam. A aba **Teste** do painel mostra o passe (`shared/passe.js`,
+  `css/passe.css`) com controles para dar/tirar abóboras, ligar o premium e zerar o
+  progresso da própria conta, e o botão **Publicar para todos os jogadores**.
+- **Passe premium:** a coluna `premium` de `site_passe_progresso` (por enquanto o
+  administrador liga; a compra, com RC ou dinheiro, entra depois).
+- Para o efeito do nível 15 poder ser escolhido no perfil, ele precisa sair de
+  `EFEITOS_TESTE` para `EFEITOS` em `shared/efeitos.js` (junto da publicação).
+Configuração: rode `supabase/migrations/0039_passe_batalha.sql` (depois da 0038).
+
 ## Aviso de fã, páginas institucionais e doações
 
 O rodapé (`shared/footer.js`) aparece no hub e em todos os jogos, com o aviso

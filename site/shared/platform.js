@@ -544,6 +544,56 @@ function erroMoedas(error) {
   return friendly(error);
 }
 
+// Passe de Batalha (0039_passe_batalha.sql). Só para contas conectadas; enquanto o
+// passe não é público, só administradores (fase de teste).
+const ERROS_PASSE = {
+  passe_indisponivel: 'O passe de batalha não está disponível.',
+  nivel_bloqueado: 'Você ainda não tem abóboras suficientes para este nível.',
+  precisa_premium: 'Esta recompensa é da trilha premium.',
+  ja_resgatado: 'Você já resgatou esta recompensa.',
+  nivel_invalido: 'Nível inválido.',
+};
+function erroPasse(error) {
+  if (error.code === 'PGRST202' || /Could not find the function/.test(error.message)) return new Error('Rode o arquivo 0039_passe_batalha.sql no Supabase para usar o passe de batalha.');
+  const k = Object.keys(ERROS_PASSE).find((c) => error.message.includes(c));
+  if (k) return new Error(ERROS_PASSE[k]);
+  return friendly(error);
+}
+
+// Situação do passe: { passe, abobora, nivel, premium, hoje, niveis: [...] }. Visitante: null.
+export async function passeEstado(passe = 'halloween-2026') {
+  const sb = await getClient();
+  if (!sb || !user) return null;
+  const { data, error } = await sb.rpc('site_passe_estado', { pid: passe });
+  if (error) throw erroPasse(error);
+  return data;
+}
+
+export async function passeResgatar(nivel, passe = 'halloween-2026') {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_passe_resgatar', { pid: passe, nivel_: nivel });
+  if (error) throw erroPasse(error);
+  if (data?.tipo === 'moeda') await refreshMoedas();
+  if (data?.tipo === 'efeito') emit({ type: 'recompensas' });
+  return data;
+}
+
+// Administrador: abóboras (+/-), premium (1/0) ou zerar o progresso de um jogador.
+export async function adminPasse(nome, acao, valor = 0, passe = 'halloween-2026') {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_passe', { nome, acao, valor, pid: passe });
+  if (error) throw erroPasse(error);
+  return data;
+}
+export async function adminPassePublicar(publico, passe = 'halloween-2026') {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { error } = await sb.rpc('site_admin_passe_publicar', { pid: passe, publico_: publico });
+  if (error) throw erroPasse(error);
+}
+
 // Painel do administrador: criar, listar e desativar códigos (0034).
 function erroCodigos(error) {
   if (/site_admin_codigo|site_admin_recompensa/.test(error.message) || error.code === 'PGRST202') return new Error('Rode o arquivo 0034_codigos_recompensa.sql no Supabase para usar os códigos.');

@@ -23,7 +23,7 @@ export const EFEITOS_TESTE = [
   { id: 'hw-nebulosa', nome: 'Nebulosa Abóbora', classe: 'fx-hw-nebulosa', tema: 'Halloween · abóboras' },
   { id: 'hw-assombrada', nome: 'Noite Assombrada', classe: 'fx-hw-assombrada', tema: 'Halloween · fantasmas' },
   { id: 'hw-teia', nome: 'Teia Cósmica', classe: 'fx-hw-teia', tema: 'Halloween · teia e aranhas' },
-  { id: 'hw-neon', nome: 'Neon Sombrio', classe: 'fx-hw-neon', tema: 'Halloween · contorno neon' },
+  { id: 'hw-neon', nome: 'Halloween 2026', classe: 'fx-hw-neon', tema: 'Halloween · contorno neon' },
   { id: 'hw-eclipse', nome: 'Eclipse Sangrento', classe: 'fx-hw-eclipse', tema: 'Halloween · caveiras e brasas' },
 ];
 

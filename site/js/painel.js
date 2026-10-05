@@ -8,6 +8,7 @@ import { ROLES, REGIONS } from '../jogos/carreira-no-rift/js/data/world.js';
 import { GAMES, gameById } from '../shared/config.js';
 import { sinaisVigia, resumoJogadores } from '../shared/vigia.js';
 import { nomeRecompensa, tipoTexto, codigoBonito } from '../shared/recompensas.js';
+import { passeHtml } from '../shared/passe.js';
 import { EFEITOS, EFEITOS_TESTE } from '../shared/efeitos.js';
 import { EXCLUSIVOS_TESTE, avatarHtml } from '../shared/avatar.js';
 
@@ -105,6 +106,7 @@ function render(st) {
   const nav = `<nav class="p-tabs" role="tablist">${ABAS.map(([id, nome]) => `<button type="button" role="tab" data-aba="${id}" class="${aba === id ? 'on' : ''}">${nome}${contador[id] ? ` <span class="p-badge">${num(contador[id])}</span>` : ''}</button>`).join('')}</nav>`;
   const conteudo = { geral: abaGeral, jogos: abaJogos, ranqueada: abaRanqueada, jogador: abaJogador, apoio: abaApoio, ferramentas: abaFerramentas, teste: abaTeste }[aba](st);
   body.innerHTML = nav + conteudo;
+  if (aba === 'teste' && ps === null && !psErro && !psCarregando && platform.getUser()) carregarPasse();
 }
 
 // ----------------------------------------------------------- aba: visão geral
@@ -374,11 +376,47 @@ function testeIcones() {
     </article>`).join('')}</div>`;
 }
 
+// Passe de Batalha (em teste): o administrador joga o passe com a própria conta.
+let ps = null; // platform.passeEstado()
+let psErro = '';
+let psCarregando = false;
+
+async function carregarPasse() {
+  psCarregando = true;
+  try {
+    ps = await platform.passeEstado();
+    psErro = '';
+  } catch (err) {
+    ps = null;
+    psErro = err.message;
+  }
+  psCarregando = false;
+  if (aba === 'teste' && ultimo) render(ultimo);
+}
+
+function passeCard() {
+  const eu = platform.getUser();
+  if (!eu) return '<div class="card"><h3>Passe de Batalha</h3><p class="p-note">Entre na sua conta para ver o passe.</p></div>';
+  if (psErro) return `<div class="card"><h3>Passe de Batalha</h3><p class="p-note">${esc(psErro)}</p><button type="button" class="p-mini" data-ps-recarregar>Tentar de novo</button></div>`;
+  if (!ps) return '<div class="card"><h3>Passe de Batalha</h3><p class="p-note">Carregando…</p></div>';
+  const controles = `<div class="ps-testebox"><span>Controles de teste (sua conta)</span>
+      <button type="button" class="p-mini" data-ps-acao="aboboras" data-valor="100">+100 abóboras</button>
+      <button type="button" class="p-mini" data-ps-acao="aboboras" data-valor="-100">−100 abóboras</button>
+      <button type="button" class="p-mini" data-ps-acao="premium" data-valor="${ps.premium ? 0 : 1}">${ps.premium ? 'Tirar o passe premium' : 'Ativar o passe premium'}</button>
+      <button type="button" class="p-mini p-mini-danger" data-ps-acao="zerar" data-valor="0">Zerar meu progresso</button>
+      <button type="button" class="p-mini" data-ps-publicar="${ps.passe.publico ? 0 : 1}">${ps.passe.publico ? 'Voltar para teste (esconder dos jogadores)' : 'Publicar para todos os jogadores'}</button>
+    </div><p class="p-note" data-ps-msg role="status"></p>`;
+  return `<div class="card"><h3>Passe de Batalha</h3>
+    <p class="c-sub">Só você vê. Jogue qualquer jogo logado para ganhar abóboras de verdade; os botões de teste mexem só na sua conta. Os níveis ímpares são <b>premium</b> e os pares são <b>grátis</b>; as recompensas ficam na tabela <code>site_passe_niveis</code> (por enquanto, 500 RC em todos, e o efeito <b>Halloween 2026</b> no nível 15).</p>
+    ${passeHtml(ps, { extra: controles })}</div>`;
+}
+
 function abaTeste() {
   const eu = platform.getUser();
   if (!testeNick && eu) testeNick = eu.username;
   return `<section class="p-section">
     <h2>Teste</h2>
+    ${passeCard()}
     <div class="card">
       <p class="c-sub">Aqui ficam as novidades antes de irem para todo mundo. Os efeitos abaixo (para streamers) <b>não aparecem para os jogadores</b>: nem no perfil, nem no ranking. Para ver o efeito no seu nome de verdade, é só esperar o lançamento.</p>
       <label class="p-label">Nick de exemplo <input type="text" data-t-nick value="${esc(testeNick)}" maxlength="24" autocomplete="off" spellcheck="false" /></label>
@@ -840,6 +878,7 @@ body.addEventListener('click', (e) => {
   const t = e.target.closest('[data-aba]');
   if (!t || !ultimo) return;
   aba = t.dataset.aba;
+  if (aba === 'teste') { ps = null; psErro = ''; } // relê o passe ao abrir a aba
   try { localStorage.setItem('site.painel.aba', aba); } catch { /* sem storage */ }
   render(ultimo);
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1222,6 +1261,39 @@ body.addEventListener('click', (e) => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   buscarJogador(b.dataset.jogador);
 });
+// Passe de batalha: resgatar, controles de teste e publicar.
+body.addEventListener('click', async (e) => {
+  const r = e.target.closest('[data-ps-resgatar]');
+  const a = e.target.closest('[data-ps-acao]');
+  const pub = e.target.closest('[data-ps-publicar]');
+  if (e.target.closest('[data-ps-recarregar]')) { psErro = ''; carregarPasse(); return; }
+  if (!r && !a && !pub) return;
+  const msg = () => body.querySelector('[data-ps-msg]');
+  const btn = r || a || pub;
+  btn.disabled = true;
+  try {
+    if (r) {
+      const x = await platform.passeResgatar(Number(r.dataset.psResgatar));
+      await carregarPasse();
+      const m = msg();
+      if (m) m.textContent = x.tipo === 'moeda' ? `Nível ${x.nivel}: +${Number(x.chave).toLocaleString('pt-BR')} Rift Coins!` : `Nível ${x.nivel}: ${nomeRecompensa(x.tipo, x.chave)} resgatado!`;
+      return;
+    }
+    if (a) {
+      if (a.dataset.psAcao === 'zerar' && !window.confirm('Zerar o seu progresso no passe (abóboras, limite do dia e recompensas resgatadas)? As moedas e efeitos já recebidos continuam com você.')) { btn.disabled = false; return; }
+      await platform.adminPasse(platform.getUser().username, a.dataset.psAcao, Number(a.dataset.valor));
+    } else {
+      if (pub.dataset.psPublicar === '1' && !window.confirm('Publicar o passe? A partir de agora todos os jogadores conectados ganham abóboras e podem resgatar.')) { btn.disabled = false; return; }
+      await platform.adminPassePublicar(pub.dataset.psPublicar === '1');
+    }
+    await carregarPasse();
+  } catch (err) {
+    const m = msg();
+    if (m) m.textContent = err.message;
+    btn.disabled = false;
+  }
+});
+
 // Dar ou tirar Rift Coins pela ficha.
 body.addEventListener('submit', async (e) => {
   const f = e.target.closest('[data-jg-moedas]');

@@ -375,6 +375,41 @@ export function createFakeSupabase() {
       }
       return { data: { ok: true, recompensas: c.recompensas, novas }, error: null };
     }
+    // Passe de Batalha (simplificado; as regras de verdade estão na 0039).
+    if (name === 'site_passe_estado' || name === 'site_passe_resgatar' || name === 'site_admin_passe' || name === 'site_admin_passe_publicar') {
+      const uid = auth._uid();
+      if (!uid) return { data: null, error: { message: 'not_authenticated' } };
+      const P = db.passe = db.passe || { publico: false, por: {}, niveis: Array.from({ length: 15 }, (_, i) => ({ nivel: i + 1, trilha: (i + 1) % 2 ? 'premium' : 'gratis', tipo: i === 14 ? 'efeito' : 'moeda', chave: i === 14 ? 'hw-neon' : '500' })) };
+      const me = (id) => (P.por[id] = P.por[id] || { abobora: 0, premium: false, hoje: 0, resgates: new Set() });
+      const adm = admins.has(uid);
+      if (name === 'site_admin_passe_publicar') { if (!adm) return { data: null, error: { message: 'not_admin' } }; P.publico = args.publico_; return { data: null, error: null }; }
+      if (name === 'site_admin_passe') {
+        if (!adm) return { data: null, error: { message: 'not_admin' } };
+        const alvo = db.site_profiles.find((p) => p.username.toLowerCase() === String(args.nome).toLowerCase());
+        if (!alvo) return { data: null, error: { message: 'user_not_found' } };
+        const x = me(alvo.id);
+        if (args.acao === 'aboboras') x.abobora = Math.max(0, x.abobora + args.valor);
+        else if (args.acao === 'premium') x.premium = args.valor !== 0;
+        else if (args.acao === 'zerar') { x.abobora = 0; x.hoje = 0; x.resgates.clear(); } else return { data: null, error: { message: 'acao_invalida' } };
+        return { data: { abobora: x.abobora, premium: x.premium }, error: null };
+      }
+      if (!P.publico && !adm) return { data: null, error: { message: 'passe_indisponivel' } };
+      const x = me(uid);
+      if (name === 'site_passe_estado') {
+        return { data: { passe: { id: 'halloween-2026', nome: 'Halloween 2026', niveis: 15, abobora_por_nivel: 100, abobora_por_partida: 5, limite_dia: 150, publico: P.publico },
+          abobora: x.abobora, nivel: Math.min(15, Math.floor(x.abobora / 100)), premium: x.premium, hoje: x.hoje,
+          niveis: P.niveis.map((n) => ({ ...n, exige: n.nivel * 100, resgatado: x.resgates.has(n.nivel) })) }, error: null };
+      }
+      const n = P.niveis.find((q) => q.nivel === args.nivel_);
+      if (!n) return { data: null, error: { message: 'nivel_invalido' } };
+      if (x.abobora < n.nivel * 100) return { data: null, error: { message: 'nivel_bloqueado' } };
+      if (n.trilha === 'premium' && !x.premium) return { data: null, error: { message: 'precisa_premium' } };
+      if (x.resgates.has(n.nivel)) return { data: null, error: { message: 'ja_resgatado' } };
+      x.resgates.add(n.nivel);
+      if (n.tipo === 'moeda') mexerMoedas(uid, Number(n.chave), 'passe', `halloween-2026:${n.nivel}`);
+      else { db.recompensas = db.recompensas || []; db.recompensas.push({ user_id: uid, tipo: n.tipo, chave: n.chave }); }
+      return { data: { nivel: n.nivel, tipo: n.tipo, chave: n.chave }, error: null };
+    }
     // Rift Coins (simplificado; as regras de verdade estão na 0038).
     if (name === 'site_minha_carteira') {
       const uid = auth._uid();

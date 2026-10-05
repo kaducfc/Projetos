@@ -1,0 +1,39 @@
+/* Passe de Batalha (shared/passe.js) */
+.ps { --ps-ouro: #f5cf5a; --ps-laranja: #ff8a1f; display: grid; gap: 12px; }
+.ps-abobora { display: inline-block; vertical-align: -0.2em; }
+.ps-topo { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-end; justify-content: space-between; }
+.ps-nome { margin: 2px 0 6px; font-size: 26px; font-family: 'Bebas Neue', Inter, sans-serif; letter-spacing: 0.04em; color: var(--ps-laranja); }
+.ps-sub { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.ps-tag { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; border: 1px solid rgba(255, 255, 255, 0.18); color: #cfc8b8; }
+.ps-tag-premium { border-color: rgba(245, 207, 90, 0.6); color: var(--ps-ouro); background: rgba(245, 207, 90, 0.1); }
+.ps-tag-teste { border-color: rgba(167, 139, 250, 0.55); color: #c4b5fd; }
+.ps-numeros { display: flex; gap: 22px; }
+.ps-numeros > div { display: grid; text-align: center; }
+.ps-numeros b { font-size: 24px; line-height: 1.1; color: #fff; font-variant-numeric: tabular-nums; }
+.ps-numeros small { font-size: 13px; color: #8f8979; font-weight: 700; }
+.ps-numeros span { font-size: 12px; color: #a29a89; }
+.ps-barra { height: 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.ps-barra i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #d9480f, #ff8a1f, #ffe66d); box-shadow: 0 0 10px rgba(255, 138, 31, 0.6); transition: width 0.5s ease; }
+.ps-legenda { margin: 0; font-size: 13px; color: #a29a89; }
+.ps-trilha-niveis { list-style: none; margin: 8px 0 0; padding: 6px 2px 4px; display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 18px 10px; }
+.ps-nivel { position: relative; display: grid; justify-items: center; align-content: start; gap: 8px; padding: 12px 8px 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.03); text-align: center; min-height: 170px; }
+.ps-nivel.ps-premium { border-color: rgba(245, 207, 90, 0.45); background: linear-gradient(180deg, rgba(245, 207, 90, 0.12), rgba(245, 207, 90, 0.03)); }
+.ps-num { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); min-width: 26px; padding: 1px 7px; border-radius: 999px; background: #1d1a14; border: 1px solid rgba(255, 255, 255, 0.25); font-weight: 800; font-size: 13px; }
+.ps-trilha { margin-top: 6px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 800; color: #9aa59a; }
+.ps-premium .ps-trilha { color: var(--ps-ouro); }
+.ps-rec { display: grid; justify-items: center; gap: 4px; min-height: 58px; align-content: center; }
+.ps-rec b { font-size: 14px; color: #fff; }
+.ps-rec small { font-size: 11px; color: #8f8979; }
+.ps-rec-efeito .nick { font-size: 15px; }
+.ps-bloqueado .ps-rec, .ps-sem-premium .ps-rec { opacity: 0.55; filter: grayscale(0.4); }
+.ps-pronto { border-color: var(--ps-ouro); box-shadow: 0 0 0 1px rgba(245, 207, 90, 0.5), 0 0 16px rgba(245, 207, 90, 0.25); }
+.ps-feito { opacity: 0.8; }
+.ps-resgatar { cursor: pointer; padding: 6px 14px; border-radius: 6px; border: 0; font-weight: 800; font-size: 13px; background: linear-gradient(180deg, #ffd76b, #d9a82b); color: #1a1405; }
+.ps-resgatar:hover { filter: brightness(1.1); }
+.ps-resgatar:disabled { opacity: 0.6; cursor: wait; }
+.ps-ok { color: #7fd49a; font-weight: 800; font-size: 13px; }
+.ps-trava { color: var(--ps-ouro); font-size: 12.5px; font-weight: 700; }
+.ps-falta { font-size: 12.5px; color: #a29a89; }
+.ps-nota, .ps-aviso { margin: 0; font-size: 12.5px; color: #8f8979; }
+.ps-testebox { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border: 1px dashed rgba(167, 139, 250, 0.5); border-radius: 8px; }
+.ps-testebox > span { font-size: 12.5px; color: #c4b5fd; font-weight: 700; margin-right: 4px; }
