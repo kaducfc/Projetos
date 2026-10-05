@@ -634,7 +634,9 @@ body.addEventListener('click', async (e) => {
 // ------------------------------------------------------------------ apoio
 
 const AP_STATUS = { aprovado: 'Aprovado', pendente: 'Aguardando', recusado: 'Recusado', cancelado: 'Cancelado', estornado: 'Estornado' };
-const AP_ORIGEM = { mercadopago: 'Mercado Pago', manual: 'Registrado à mão' };
+const AP_ORIGEM = { mercadopago: 'Mercado Pago', stripe: 'Stripe', manual: 'Registrado à mão' };
+const AP_TIPO = { doacao: 'Doação', passe: 'Passe Premium' };
+let apTipo = ''; // '' = tudo junto; 'doacao' ou 'passe' isola
 let ap = null; // resposta de platform.adminApoios(days)
 let apErro = '';
 const apFiltro = { status: '', origem: '', q: '', min: '', limite: 50 };
@@ -650,16 +652,17 @@ function apFiltrados() {
 
 function apLista() {
   const lista = apFiltrados();
-  if (!lista.length) return '<p class="p-empty">Nenhuma doação com esses filtros.</p>';
+  if (!lista.length) return '<p class="p-empty">Nenhum pagamento com esses filtros.</p>';
   const aprovadas = lista.filter((a) => a.status === 'aprovado');
   const soma = aprovadas.reduce((t, a) => t + Number(a.valor_pago ?? a.valor), 0);
   const vis = lista.slice(0, apFiltro.limite);
-  return `<p class="p-note">${num(lista.length)} ${lista.length === 1 ? 'doação' : 'doações'} · ${num(aprovadas.length)} aprovadas somando <b>${reais(soma)}</b></p>
+  return `<p class="p-note">${num(lista.length)} ${lista.length === 1 ? 'pagamento' : 'pagamentos'} · ${num(aprovadas.length)} aprovados somando <b>${reais(soma)}</b></p>
     <div class="table-wrap"><table class="p-table ap-tabela">
-      <thead><tr><th>Quando</th><th>Usuário</th><th class="n">Valor</th><th>Situação</th><th>Origem</th><th>Pagamento MP</th></tr></thead>
+      <thead><tr><th>Quando</th><th>Usuário</th><th>Tipo</th><th class="n">Valor</th><th>Situação</th><th>Origem</th><th>Pagamento MP</th></tr></thead>
       <tbody>${vis.map((a) => `<tr>
         <td>${esc(dataHora(a.criado))}</td>
         <td>${a.username ? nickLink(a.username) : '<small>conta apagada</small>'}</td>
+        <td>${esc(AP_TIPO[a.tipo] || 'Doação')}</td>
         <td class="n">${reais(a.valor_pago ?? a.valor)}</td>
         <td><span class="ap-st ap-${esc(a.status)}">${esc(AP_STATUS[a.status] || a.status)}</span></td>
         <td>${esc(AP_ORIGEM[a.origem] || a.origem)}</td>
@@ -679,20 +682,25 @@ function secaoApoio(dias) {
     </div>`;
   if (!ap) {
     return `<section class="p-section"><h2>Apoio</h2>
-      <p class="p-note">${esc(apErro || 'Carregando as doações…')}</p>${registrar}</section>`;
+      <p class="p-note">${esc(apErro || 'Carregando os pagamentos…')}</p>${registrar}</section>`;
   }
   const t = ap.total;
   const p = ap.periodo;
   const porDia = columns(ap.por_dia || [], 'valor', 'arrecadados', reais);
   const st = Object.entries(p.status || {}).map(([k, n]) => [k, n]);
   const opt = (obj, atual) => Object.entries(obj).map(([k, v]) => `<option value="${k}"${atual === k ? ' selected' : ''}>${esc(v)}</option>`).join('');
+  const pt = ap.por_tipo?.total || {};
+  const resumoTipos = ['doacao', 'passe'].map((k) => `${AP_TIPO[k]}: <b>${reais(pt[k]?.arrecadado || 0)}</b> (${num(pt[k]?.n || 0)})`).join(' · ');
+  const filtroTipo = `<div class="ap-filtros"><label class="p-label">Mostrar <select data-ap-tipo><option value="">Tudo junto</option>${opt(AP_TIPO, apTipo)}</select></label></div>
+    <p class="p-note">Desde sempre — ${resumoTipos}. Doações e Passe Premium entram no mesmo total; use o filtro para ver um só.</p>`;
   return `<section class="p-section" id="apoio">
     <h2>Apoio · desde sempre</h2>
+    ${filtroTipo}
     <div class="tiles">
-      ${tile('Arrecadado', reais(t.arrecadado), 'doações aprovadas')}
-      ${tile('Doações', num(t.doacoes), `${num(t.apoiadores)} ${t.apoiadores === 1 ? 'apoiador' : 'apoiadores'}`)}
-      ${tile('Ticket médio', reais(t.ticket_medio), 'por doação')}
-      ${tile('Maior doação', reais(t.maior))}
+      ${tile('Arrecadado', reais(t.arrecadado), 'pagamentos aprovados')}
+      ${tile(apTipo === 'passe' ? 'Compras' : apTipo === 'doacao' ? 'Doações' : 'Pagamentos', num(t.doacoes), `${num(t.apoiadores)} ${t.apoiadores === 1 ? 'apoiador' : 'apoiadores'}`)}
+      ${tile('Ticket médio', reais(t.ticket_medio), 'por pagamento')}
+      ${tile('Maior pagamento', reais(t.maior))}
       ${tile('Estornado', reais(t.estornado), 'devolvido')}
     </div>
   </section>
@@ -706,11 +714,11 @@ function secaoApoio(dias) {
       ${tile('Concluíram o pagamento', p.conversao_pct != null ? `${dec(p.conversao_pct)}%` : '—', `de ${num(p.tentativas)} tentativas`)}
       ${tile('Aguardando', num(p.status?.pendente || 0), 'Pix/boleto ainda não pago')}
     </div>
-    <p class="p-note">Valores brutos, antes da taxa do Mercado Pago. Uma doação conta no dia em que foi criada.</p>
+    <p class="p-note">Valores brutos, antes das taxas (Stripe em dólar entra convertido para reais). Um pagamento conta no dia em que foi criada.</p>
     <div class="cards">
       <div class="card"><h3>Arrecadado por dia</h3><p class="c-sub">${reais(porDia.total)} no período</p>${porDia.html}</div>
       <div class="card"><h3>Situação das tentativas</h3><p class="c-sub">Quem clicou em apoiar, no período</p>${hbars(st, (k) => AP_STATUS[k] || k)}</div>
-      <div class="card"><h3>Faixas de valor</h3><p class="c-sub">Doações aprovadas no período</p>${hbars((p.faixas || []).map((f) => [f.faixa, f.n]), undefined, { sort: false })}</div>
+      <div class="card"><h3>Faixas de valor</h3><p class="c-sub">Pagamentos aprovados no período</p>${hbars((p.faixas || []).map((f) => [f.faixa, f.n]), undefined, { sort: false })}</div>
       <div class="card"><h3>Origem</h3><p class="c-sub">Valor aprovado no período</p>${hbars(Object.entries(p.origem || {}), (k) => AP_ORIGEM[k] || k, { fmt: reais })}</div>
     </div>
     <div class="card"><h3>Quem mais apoiou</h3><p class="c-sub">Desde sempre, só doações aprovadas</p>
@@ -719,7 +727,7 @@ function secaoApoio(dias) {
         <tbody>${ap.top.map((x, i) => `<tr><td>${i + 1}</td><td>${nickLink(x.username)}</td><td class="n">${reais(x.total)}</td><td class="n">${num(x.doacoes)}</td><td>${esc(dataCurta(x.desde))}</td><td>${esc(dataCurta(x.ultima))}</td></tr>`).join('')}</tbody>
       </table></div>` : '<p class="p-empty">Ninguém apoiou ainda.</p>'}
     </div>
-    <div class="card"><h3>Doações dos últimos ${dias} dias</h3><p class="c-sub">Todas as tentativas, inclusive as não pagas. Filtre e baixe em planilha.</p>
+    <div class="card"><h3>Pagamentos dos últimos ${dias} dias</h3><p class="c-sub">Todas as tentativas, inclusive as não pagas. Filtre e baixe em planilha.</p>
       <div class="ap-filtros">
         <label class="p-label">Situação <select data-ap-f="status"><option value="">Todas</option>${opt(AP_STATUS, apFiltro.status)}</select></label>
         <label class="p-label">Origem <select data-ap-f="origem"><option value="">Todas</option>${opt(AP_ORIGEM, apFiltro.origem)}</select></label>
@@ -734,9 +742,9 @@ function secaoApoio(dias) {
 }
 
 function apCsv() {
-  const linhas = [['quando', 'usuario', 'valor', 'situacao', 'origem', 'pagamento_mp']];
+  const linhas = [['quando', 'usuario', 'tipo', 'valor', 'situacao', 'origem', 'pagamento_mp']];
   for (const a of apFiltrados()) {
-    linhas.push([dataHora(a.criado), a.username || '', Number(a.valor_pago ?? a.valor).toFixed(2).replace('.', ','),
+    linhas.push([dataHora(a.criado), a.username || '', AP_TIPO[a.tipo] || 'Doação', Number(a.valor_pago ?? a.valor).toFixed(2).replace('.', ','),
       AP_STATUS[a.status] || a.status, AP_ORIGEM[a.origem] || a.origem, a.mp_payment_id || '']);
   }
   const csv = linhas.map((l) => l.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\r\n');
@@ -750,6 +758,12 @@ function apCsv() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+body.addEventListener('change', (e) => {
+  const t = e.target.closest('[data-ap-tipo]');
+  if (!t) return;
+  apTipo = t.value;
+  load();
+});
 body.addEventListener('input', (e) => {
   const f = e.target.closest('[data-ap-f]');
   if (!f) return;
@@ -785,7 +799,7 @@ async function load() {
     // Apoio e vigilância podem faltar (SQL ainda não rodado) sem travar o resto.
     const opcional = (pr) => pr.then((r) => ({ r }), (err) => ({ err }));
     const [st, apoios, ranked, resumo, vigia, codigos, modelos] = await Promise.all([
-      platform.adminStats(days), opcional(platform.adminApoios(days)), opcional(platform.adminRanked(days)),
+      platform.adminStats(days), opcional(platform.adminApoios(days, apTipo || null)), opcional(platform.adminRanked(days)),
       opcional(platform.adminRanqueada(days)), opcional(platform.adminVigia(Math.min(days, 90))), opcional(platform.adminCodigos()), opcional(platform.adminModelos()),
     ]);
     if (seq !== loadSeq) return;

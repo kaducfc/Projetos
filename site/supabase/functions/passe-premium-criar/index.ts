@@ -60,9 +60,11 @@ Deno.serve(async (req) => {
   const recentes = await rest(`site_passe_compras?select=id&user_id=eq.${user.id}&criado=gte.${umaHora}&limit=10`);
   if (recentes.ok && (await recentes.json()).length >= 10) return resposta({ erro: 'muitos_pedidos' }, 429);
 
+  // Valor em reais só para somar no painel (Stripe em dólar usa a cotação USD_BRL).
+  const valorBrl = preco.moeda === 'BRL' ? preco.valor : Math.round(preco.valor * (Number(Deno.env.get('USD_BRL')) || 5.5) * 100) / 100;
   const novo = await rest('site_passe_compras', {
     method: 'POST',
-    body: JSON.stringify({ user_id: user.id, passe: PASSE, provedor, moeda: preco.moeda, valor: preco.valor }),
+    body: JSON.stringify({ user_id: user.id, passe: PASSE, provedor, moeda: preco.moeda, valor: preco.valor, valor_brl: valorBrl }),
   });
   if (!novo.ok) { console.error('passe-premium-criar: banco', await novo.text()); return resposta({ erro: 'banco' }, 500); }
   const [compra] = await novo.json();

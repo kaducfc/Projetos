@@ -50,9 +50,9 @@ test('painel de apoio: só administrador vê quem doou, quanto e o total', async
   assert.equal(st.top[0].username, 'Doador');
   assert.equal(st.lista.length, 2);
   assert.equal(st.por_dia.length, 7);
-  const sql = readFileSync(new URL('../supabase/migrations/0009_painel_apoio.sql', import.meta.url), 'utf8');
+  const sql = readFileSync(new URL('../supabase/migrations/0043_painel_apoio_passe.sql', import.meta.url), 'utf8');
   assert.match(sql, /if not coalesce\(site_is_admin\(\), false\) then\s+raise exception 'not_admin'/);
-  assert.match(sql, /revoke all on function public\.site_admin_apoios\(int\) from public, anon/);
+  assert.match(sql, /revoke all on function public\.site_admin_apoios\(int, text\) from public, anon/);
 });
 
 test('apoio internacional: Stripe em USD/EUR', async () => {

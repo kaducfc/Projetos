@@ -264,3 +264,7 @@ O site está em português (padrão) e tem um seletor de idioma na barra do topo
 - A escolha fica salva no navegador (`localStorage`, chave `rift-lang`).
 - `tests/i18n.test.mjs` confere que todo texto do inventário (`tests/i18n-inventario.json`)
   tem tradução nos 5 idiomas.
+
+### Passe Premium no painel de Apoio
+
+Rode `supabase/migrations/0043_painel_apoio_passe.sql` e republique a Edge Function `passe-premium-criar` (agora grava `valor_brl`). Na aba **Apoio** do painel, doações e compras do Passe Premium entram no mesmo total (Stripe em dólar convertido pela cotação `USD_BRL`); o seletor **Mostrar** isola só doações ou só Passe Premium. Quem compra o passe não vira "apoiador" (sem efeito dourado).

@@ -971,13 +971,13 @@ export async function adminStats(days = 30) {
 }
 
 // Doações para o painel (só administradores; ver 0009_painel_apoio.sql).
-export async function adminApoios(days = 30) {
+export async function adminApoios(days = 30, tipo = null) {
   const sb = await getClient();
   if (!sb) throw unavailable();
-  const { data, error } = await sb.rpc('site_admin_apoios', { days });
+  const { data, error } = await sb.rpc('site_admin_apoios', { days, so_tipo: tipo });
   if (error) {
     if (/not_admin/.test(error.message)) throw new Error('Esta conta não tem acesso ao painel.');
-    if (/site_admin_apoios/.test(error.message) || error.code === 'PGRST202') throw new Error('Rode o arquivo 0009_painel_apoio.sql no Supabase para ver as doações aqui.');
+    if (/site_admin_apoios/.test(error.message) || error.code === 'PGRST202') throw new Error('Rode o arquivo 0043_painel_apoio_passe.sql no Supabase para ver os pagamentos aqui.');
     throw friendly(error);
   }
   return data;
