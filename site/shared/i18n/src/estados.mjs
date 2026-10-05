@@ -99,4 +99,12 @@ export default [
   ['Esta conta não tem permissão para isso.', 'This account does not have permission to do that.', 'Dieses Konto hat dafür keine Berechtigung.', 'Esta cuenta no tiene permiso para eso.', 'Questo account non ha il permesso per farlo.', 'Ce compte n’a pas la permission de faire cela.'],
   ['· {x}', '· {x}', '· {x}', '· {x}', '· {x}', '· {x}'],
   ['Só para os 100 primeiros apoiadores do site. As 100 vagas já foram preenchidas.', 'Only for the site’s first 100 supporters. All 100 spots have been filled.', 'Nur für die ersten 100 Unterstützer der Seite. Alle 100 Plätze sind vergeben.', 'Solo para los 100 primeros apoyadores del sitio. Las 100 plazas ya se llenaron.', 'Solo per i primi 100 sostenitori del sito. Tutti i 100 posti sono stati occupati.', 'Uniquement pour les 100 premiers soutiens du site. Les 100 places sont déjà prises.'],
+  // Rift Coins
+  ['Suas Rift Coins', 'Your Rift Coins', 'Deine Rift Coins', 'Tus Rift Coins', 'Le tue Rift Coins', 'Tes Rift Coins'],
+  ['A moeda do Rift Arcade. Você ganha moedas com códigos de recompensa e, no futuro, poderá usá-las para trocar por efeitos, ícones e outras novidades.', 'The Rift Arcade currency. You earn coins with reward codes and, in the future, you will be able to trade them for effects, icons and other new things.', 'Die Währung von Rift Arcade. Du bekommst Münzen mit Belohnungscodes und kannst sie in Zukunft gegen Effekte, Symbole und andere Neuigkeiten eintauschen.', 'La moneda de Rift Arcade. Ganas monedas con códigos de recompensa y, en el futuro, podrás usarlas para canjear efectos, iconos y otras novedades.', 'La valuta di Rift Arcade. Ottieni monete con i codici ricompensa e, in futuro, potrai usarle per ottenere effetti, icone e altre novità.', 'La monnaie de Rift Arcade. Tu gagnes des pièces avec des codes de récompense et, à l’avenir, tu pourras les échanger contre des effets, des icônes et d’autres nouveautés.'],
+  ['Extrato', 'Statement', 'Kontoauszug', 'Extracto', 'Estratto', 'Relevé'],
+  ['Código de recompensa', 'Reward code', 'Belohnungscode', 'Código de recompensa', 'Codice ricompensa', 'Code de récompense'],
+  ['Ajuste do administrador', 'Administrator adjustment', 'Anpassung durch den Administrator', 'Ajuste del administrador', 'Rettifica dell’amministratore', 'Ajustement de l’administrateur'],
+  ['Passe de batalha', 'Battle pass', 'Battle Pass', 'Pase de batalla', 'Pass battaglia', 'Passe de combat'],
+  ['Compra na loja', 'Store purchase', 'Kauf im Shop', 'Compra en la tienda', 'Acquisto nel negozio', 'Achat en boutique'],
 ];

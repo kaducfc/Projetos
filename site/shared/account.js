@@ -4,7 +4,7 @@ import * as platform from './platform.js';
 import { SITE_NAME } from './config.js';
 import { avatarHtml, hydrateAvatars } from './avatar.js';
 import { nickHtml } from './apoio.js';
-import { LANGS, getLang, langInfo, setLang, onLangChange } from './i18n.js';
+import { LANGS, getLang, langInfo, setLang, onLangChange, localeAtual } from './i18n.js';
 
 // Logo para fundo escuro, a partir da raiz do domínio (serve em qualquer página).
 const LOGO_URL = '/shared/assets/marca/logo-barra.png?v=2';
@@ -12,6 +12,10 @@ const LOGO_URL = '/shared/assets/marca/logo-barra.png?v=2';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[c]));
+
+// Rift Coins no formato do idioma (de 100 mil para cima, abreviado: 1,2 mi).
+const MOEDA_IMG = '/shared/assets/moeda/rc-48.webp';
+const moedasTxt = (n) => Number(n).toLocaleString(localeAtual(), n >= 100000 ? { notation: 'compact', maximumFractionDigits: 1 } : {});
 
 export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
   el.classList.add('site-bar');
@@ -26,7 +30,8 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
     if (!platform.cloudEnabled()) {
       account = '<span class="sb-note" title="Nesta versão o progresso fica só neste navegador.">Modo visitante</span>';
     } else if (u) {
-      account = `
+      const moedas = u.moedas == null ? '' : `<a class="sb-coins" href="/perfil/#moedas" title="Suas Rift Coins" aria-label="Suas Rift Coins"><img src="${MOEDA_IMG}" srcset="/shared/assets/moeda/rc-96.webp 2x" width="22" height="22" alt="" /><b data-no-i18n>${moedasTxt(u.moedas)}</b></a>`;
+      account = `${moedas}
         <div class="sb-user">
           <button type="button" class="sb-btn" data-sb="menu" aria-haspopup="true">
             ${avatarHtml(u.avatar, u.username, 22, `sb-avatar${u.elo ? ` elo-${u.elo}` : ''}`)}${nickHtml(u.username, u.apoioTotal > 0, u.efeito)}<span aria-hidden="true">▾</span>
@@ -52,7 +57,18 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
     el.innerHTML = `${brand}<div class="sb-right">${idiomas}${account}</div>`;
     hydrateAvatars(el);
     if (u) revealAdmin(u.id);
+    // Ganhou moedas: o indicador dá uma piscadinha.
+    if (u?.moedas != null) {
+      if (coinsFor === u.id && lastCoins != null && u.moedas > lastCoins) {
+        const c = el.querySelector('.sb-coins');
+        if (c) { c.classList.add('sb-coins-up'); setTimeout(() => c.classList.remove('sb-coins-up'), 1600); }
+      }
+      coinsFor = u.id;
+      lastCoins = u.moedas;
+    }
   };
+  let lastCoins = null;
+  let coinsFor = null;
   // Link do painel só para administradores (checado uma vez por conta).
   let adminFor = null;
   let admin = false;

@@ -898,10 +898,10 @@ const CD_LINHAS = 5;
 const cdModeloOpcoes = (sel = '') => `<option value="">— escolher para preencher —</option>${cdModelos.map((m) => `<option value="${esc(m.id)}"${m.id === sel ? ' selected' : ''}>${esc(m.nome)} (${m.recompensas.length} ${m.recompensas.length === 1 ? 'item' : 'itens'})</option>`).join('')}`;
 
 function secaoCodigos() {
-  const linha = (i) => `<div class="cd-rec"><select data-cd-tipo="${i}" aria-label="Tipo da recompensa ${i + 1}"><option value="icone">Ícone</option><option value="efeito">Efeito no nome</option></select>
-    <input data-cd-chave="${i}" placeholder="${i === 0 ? 'ex.: exc-lenda' : 'outra recompensa (opcional)'}" autocomplete="off" spellcheck="false" aria-label="Id da recompensa ${i + 1}" /></div>`;
+  const linha = (i) => `<div class="cd-rec"><select data-cd-tipo="${i}" aria-label="Tipo da recompensa ${i + 1}"><option value="icone">Ícone</option><option value="efeito">Efeito no nome</option><option value="moeda">Rift Coins</option></select>
+    <input data-cd-chave="${i}" placeholder="${i === 0 ? 'ex.: exc-lenda (ou 250 para Rift Coins)' : 'outra recompensa (opcional)'}" autocomplete="off" spellcheck="false" aria-label="Id da recompensa ${i + 1}" /></div>`;
   return `<div class="card"><h3>Códigos de recompensa</h3>
-    <p class="c-sub">O jogador resgata em <b>Meu perfil</b> → "Resgatar código". Cada conta usa o mesmo código uma vez. O id de ícone precisa começar com <code>exc-</code> (a arte entra no site). Para recompensa valiosa, deixe o código ser <b>gerado</b>: os escolhidos à mão são fáceis de adivinhar.</p>
+    <p class="c-sub">O jogador resgata em <b>Meu perfil</b> → "Resgatar código". Cada conta usa o mesmo código uma vez. O id de ícone precisa começar com <code>exc-</code> (a arte entra no site). Em <b>Rift Coins</b>, escreva a quantidade (ex.: <code>250</code>). Para recompensa valiosa, deixe o código ser <b>gerado</b>: os escolhidos à mão são fáceis de adivinhar.</p>
     <form data-cd-form class="cd-form" novalidate>
       <div class="cd-modelos">
         <label class="p-label">Modelo salvo <select data-cd-modelo>${cdModeloOpcoes()}</select></label>
@@ -1037,6 +1037,8 @@ let jgBusca = '';
 let jgCarregando = false;
 let jgRec = null; // recompensas e códigos resgatados do jogador da ficha
 let jgRecErro = '';
+let jgMoedas = null; // saldo e extrato de Rift Coins do jogador da ficha
+let jgMoedasErro = '';
 
 const nickLink = (n) => `<button type="button" class="p-link" data-jogador="${esc(n)}">${esc(n)}</button>`;
 const MOTIVOS = { partida: 'partida', melhora: 'resultado melhor', nao_terminou: 'começou e não terminou', inatividade: 'inatividade', admin: 'ajuste do administrador' };
@@ -1052,7 +1054,10 @@ async function buscarJogador(nome) {
     jg = await platform.adminJogador(nome);
     jgRec = null;
     jgRecErro = '';
+    jgMoedas = null;
+    jgMoedasErro = '';
     if (jg?.encontrado) {
+      try { jgMoedas = await platform.adminMoedasJogador(jg.conta.username); } catch (err) { jgMoedasErro = err.message; }
       try { jgRec = await platform.adminRecompensasJogador(jg.conta.username); } catch (err) { jgRecErro = err.message; }
     }
   } catch (err) {
@@ -1072,6 +1077,21 @@ function jgPartidas(j) {
     <tbody>${ps.map((x) => `<tr><td>${quando(x.criado)}</td><td>${esc(NOME_JOGO(x.jogo))}${x.n > 1 || x.jogo === 'carreira-no-rift' || x.jogo === 'cblol' ? ` <small>#${num(x.n)}</small>` : ''}</td>
       <td>${detalhe(x)}</td><td class="n">${x.pdr > 0 ? '+' : ''}${num(x.pdr)}</td><td class="n">${duracao(x.duracao_s)}</td>
       <td>${x.sinais.map(([c, t]) => `<span class="rk-sinal rk-${c}">${t}</span>`).join(' ') || '<small>—</small>'}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+const MOTIVO_MOEDA = { codigo: 'código', admin: 'ajuste do administrador', passe: 'passe de batalha', compra: 'compra na loja' };
+function jgMoedasHtml(nome) {
+  if (jgMoedasErro) return `<p class="p-note">${esc(jgMoedasErro)}</p>`;
+  if (!jgMoedas) return '<p class="p-note">Carregando…</p>';
+  const ext = jgMoedas.extrato.length ? `<div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Quando</th><th>Motivo</th><th class="n">Mudança</th><th class="n">Saldo</th></tr></thead>
+      <tbody>${jgMoedas.extrato.map((l) => `<tr><td>${quando(l.criado)}</td><td>${esc(MOTIVO_MOEDA[l.motivo] || l.motivo)}${l.ref ? ` <small>(${esc(l.ref)})</small>` : ''}</td><td class="n">${l.delta > 0 ? '+' : ''}${num(l.delta)}</td><td class="n">${num(l.saldo)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="p-empty">Nenhuma movimentação ainda.</p>';
+  return `<p class="c-sub">Saldo: <b>${num(jgMoedas.saldo)} RC</b></p>
+    <form class="ap-filtros" data-jg-moedas data-nome="${esc(nome)}" novalidate>
+      <label class="p-label">Quantidade (use negativo para tirar) <input type="number" step="1" data-jg-moedas-qtd placeholder="ex.: 100 ou -50" /></label>
+      <label class="p-label">Nota (opcional) <input data-jg-moedas-nota maxlength="200" autocomplete="off" placeholder="ex.: prêmio do torneio" /></label>
+      <button type="submit" class="p-mini">Aplicar</button>
+    </form><p class="p-note" data-jg-moedas-msg role="status"></p>${ext}`;
 }
 
 function jgRecHtml(nome) {
@@ -1161,6 +1181,7 @@ function jgFicha(j) {
     <div class="card"><h3>Atividade recente</h3>${(j.atividade?.recentes || []).length ? `<div class="table-wrap"><table class="p-table">
       <thead><tr><th>Quando</th><th>O que</th><th>Jogo</th></tr></thead>
       <tbody>${j.atividade.recentes.map((v) => `<tr><td>${quando(v.quando)}</td><td>${esc({ visit: 'visitou o site', game_start: 'começou uma partida', game_end: 'terminou uma partida' }[v.tipo] || v.tipo)}</td><td>${v.jogo ? esc(NOME_JOGO(v.jogo)) : '—'}</td></tr>`).join('')}</tbody></table></div>` : vazio('Sem atividade registrada.')}</div>
+    <div class="card"><h3>Rift Coins</h3>${jgMoedasHtml(c.username)}</div>
     <div class="card"><h3>Recompensas e códigos</h3>${jgRecHtml(c.username)}</div>
     <div class="card"><h3>Progresso salvo na nuvem</h3>${(j.saves || []).length ? `<div class="table-wrap"><table class="p-table">
       <thead><tr><th>Jogo</th><th>Atualizado</th><th class="n">Tamanho</th></tr></thead>
@@ -1200,6 +1221,23 @@ body.addEventListener('click', (e) => {
   try { localStorage.setItem('site.painel.aba', aba); } catch { /* sem storage */ }
   window.scrollTo({ top: 0, behavior: 'smooth' });
   buscarJogador(b.dataset.jogador);
+});
+// Dar ou tirar Rift Coins pela ficha.
+body.addEventListener('submit', async (e) => {
+  const f = e.target.closest('[data-jg-moedas]');
+  if (!f) return;
+  e.preventDefault();
+  const msg = body.querySelector('[data-jg-moedas-msg]');
+  const qtd = Number(f.querySelector('[data-jg-moedas-qtd]').value);
+  if (!Number.isInteger(qtd) || qtd === 0) { msg.textContent = 'Digite uma quantidade inteira, diferente de zero.'; return; }
+  const nota = f.querySelector('[data-jg-moedas-nota]').value.trim();
+  if (!window.confirm(`${qtd > 0 ? 'Dar' : 'Tirar'} ${num(Math.abs(qtd))} Rift Coins ${qtd > 0 ? 'para' : 'de'} ${f.dataset.nome}?`)) return;
+  try {
+    await platform.adminMoedas(f.dataset.nome, qtd, nota || null);
+    await buscarJogador(f.dataset.nome);
+  } catch (err) {
+    msg.textContent = err.message;
+  }
 });
 // Dar ou tirar recompensa pela ficha.
 body.addEventListener('submit', async (e) => {

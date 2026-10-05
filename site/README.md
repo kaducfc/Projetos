@@ -136,6 +136,27 @@ Configuração: rode a 0037; crie as duas funções (código em `supabase/functi
 `apoio-intl-webhook/index.ts`). `APOIO_INTL_ATIVO` em `shared/config.js`:
 `'admin'` (teste, só administradores) → `true` (público).
 
+## Rift Coins (moeda do site)
+
+Cada conta tem uma carteira de **Rift Coins (RC)**, mostrada na barra do site
+(entre o idioma e o nome) e no **Meu perfil** (cartão "Rift Coins", com extrato).
+O saldo é privado: só a própria conta enxerga (`site_carteira`, separado do perfil
+público) e tudo que entra ou sai fica no extrato (`site_moedas_lanc`). Ninguém
+escreve direto nas tabelas; só as funções do servidor (`0038_moedas.sql`).
+Por enquanto as moedas vêm de:
+- **Códigos de recompensa:** recompensa tipo "Rift Coins" com a quantidade
+  (ex.: 250), uma vez por conta (painel → Ferramentas → Códigos de recompensa; dá
+  para salvar em modelos, junto com ícones e efeitos);
+- **Ajuste do administrador:** painel → Jogador → cartão "Rift Coins" (dar ou
+  tirar, com nota; o saldo nunca fica negativo).
+Para o passe de batalha e a loja: o servidor já tem a função interna
+`site_moedas_mexer(uid, delta, motivo, ref)` (soma ou tira e registra no extrato).
+Nova origem = nova função de servidor que chame essa, com um `motivo` novo (o
+perfil já traduz `passe` e `compra`). A arte da moeda está em
+`shared/assets/moeda/` (o original enviado fica em `rc-original.png`).
+Configuração: rode `supabase/migrations/0038_moedas.sql`. Sem ela, o indicador
+na barra some e o resto do site continua igual.
+
 ## Aviso de fã, páginas institucionais e doações
 
 O rodapé (`shared/footer.js`) aparece no hub e em todos os jogos, com o aviso

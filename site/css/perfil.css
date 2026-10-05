@@ -231,3 +231,15 @@ button.btn-primary:disabled { opacity: 0.6; cursor: default; }
 .pf-ef-como a { color: var(--gold-2); font-weight: 700; white-space: nowrap; }
 .pf-ef-nota { margin-top: 12px !important; }
 .pf-ef-rotulo { color: #b9b2a0; font-size: 16px; font-weight: 600; }
+
+/* Rift Coins no perfil */
+.pf-moedas { display: flex; gap: 18px; align-items: center; border-color: rgba(245, 207, 90, 0.4); background: linear-gradient(135deg, rgba(245, 207, 90, 0.08), transparent 60%); }
+.pf-moedas-img { flex: none; width: 64px; height: 64px; filter: drop-shadow(0 0 10px rgba(245, 207, 90, 0.5)); }
+.pf-moedas-txt { min-width: 0; flex: 1; }
+.pf-moedas-saldo { margin: 2px 0 6px; font-size: 34px; line-height: 1.05; color: var(--gold-2, #f5cf5a); font-variant-numeric: tabular-nums; }
+.pf-moedas-saldo small { font-size: 15px; color: var(--muted, #a29a89); font-weight: 700; }
+.pf-moedas-ext { margin-top: 10px; }
+.pf-moedas-ext summary { cursor: pointer; color: var(--gold-2, #f5cf5a); font-weight: 700; font-size: 13.5px; }
+.pf-mais { color: #7fd49a; }
+.pf-menos { color: #ff8b8b; }
+@media (max-width: 480px) { .pf-moedas { align-items: flex-start; } .pf-moedas-img { width: 48px; height: 48px; } .pf-moedas-saldo { font-size: 28px; } }

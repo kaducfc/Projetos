@@ -424,3 +424,23 @@ a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
 .sb-langmenu button:hover { background: rgba(217, 168, 43, 0.12); }
 .sb-langmenu button.on { color: var(--sb-gold-2); font-weight: 800; }
 @media (max-width: 560px) { .sb-right { gap: 8px; } }
+
+/* Rift Coins na barra do site, entre o idioma e o nome */
+.sb-coins { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px 4px 6px; border: 1px solid rgba(245, 207, 90, 0.35); border-radius: 999px;
+  background: linear-gradient(180deg, rgba(245, 207, 90, 0.12), rgba(245, 207, 90, 0.04)); color: var(--gold-2, #f5cf5a); font-weight: 800; font-size: 13.5px; line-height: 1; text-decoration: none;
+  font-variant-numeric: tabular-nums; transition: border-color 0.2s, background 0.2s, transform 0.2s; }
+.sb-coins img { display: block; width: 22px; height: 22px; filter: drop-shadow(0 0 4px rgba(245, 207, 90, 0.45)); }
+.sb-coins:hover { border-color: rgba(245, 207, 90, 0.7); background: linear-gradient(180deg, rgba(245, 207, 90, 0.2), rgba(245, 207, 90, 0.07)); }
+.sb-coins-up { animation: sb-coins-up 1.5s ease-out; }
+.sb-coins-up img { animation: sb-coin-gira 0.9s ease-in-out; }
+@keyframes sb-coins-up { 0% { box-shadow: 0 0 0 0 rgba(245, 207, 90, 0.7); transform: scale(1.12); } 60% { box-shadow: 0 0 0 10px rgba(245, 207, 90, 0); transform: scale(1); } 100% { box-shadow: 0 0 0 0 rgba(245, 207, 90, 0); } }
+@keyframes sb-coin-gira { 0% { transform: rotateY(0); } 100% { transform: rotateY(360deg); } }
+@media (max-width: 520px) { .sb-coins { padding: 3px 8px 3px 4px; font-size: 12.5px; gap: 4px; } .sb-coins img { width: 18px; height: 18px; } }
+@media (prefers-reduced-motion: reduce) { .sb-coins-up, .sb-coins-up img { animation: none; } }
+/* Celular: com as Rift Coins na barra, o idioma e o nome ficam mais compactos */
+@media (max-width: 480px) {
+  .sb-right { gap: 6px; }
+  .sb-langbtn > span[aria-hidden] { display: none; }
+  .sb-btn { padding-left: 8px; padding-right: 8px; gap: 5px; }
+  .sb-user .sb-btn .nick { max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
+}

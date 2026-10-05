@@ -210,6 +210,8 @@ async function setUser(sb, authUser) {
     const { data: fx } = await sb.from('site_profiles').select('efeito').eq('id', authUser.id).maybeSingle().then((r) => r, () => ({ data: null }));
     // Elo da ranqueada (null = ainda não jogou ou banco sem 0015_ranqueada_pdr.sql).
     const { data: rank } = await sb.rpc('site_rk_eu').then((r) => r, () => ({ data: null }));
+    // Rift Coins (null = banco sem 0038_moedas.sql: o indicador some).
+    const { data: carteira } = await sb.rpc('site_minha_carteira').then((r) => r, () => ({ data: null }));
     const meta = authUser.user_metadata || {};
     const app = authUser.app_metadata || {};
     user = {
@@ -222,6 +224,7 @@ async function setUser(sb, authUser) {
       elo: rank?.elo || null,
       apoioTotal: Number(apoio?.apoio_total || 0),
       efeito: fx?.efeito || null,
+      moedas: carteira && carteira.saldo != null ? Number(carteira.saldo) : null,
       // Como a conta entra: 'email' (senha) e/ou 'google'.
       providers: app.providers || (app.provider ? [app.provider] : ['email']),
     };
@@ -479,6 +482,7 @@ export async function resgatarCodigo(codigo) {
   }
   if (!data?.ok) throw new Error(ERROS_CODIGO[data?.erro] || 'Não foi possível resgatar o código agora.');
   emit({ type: 'recompensas', recompensas: data.recompensas });
+  if ((data.novas || []).some((r) => r.tipo === 'moeda')) await refreshMoedas();
   return { recompensas: data.recompensas || [], novas: data.novas || [] };
 }
 
@@ -494,9 +498,56 @@ export async function minhasRecompensas() {
   return data || [];
 }
 
+// Rift Coins: saldo da conta (0038_moedas.sql). Relê do servidor e avisa a barra do site.
+export async function refreshMoedas() {
+  const sb = await getClient();
+  if (!sb || !user) return user;
+  const { data, error } = await sb.rpc('site_minha_carteira');
+  if (!error && data && data.saldo != null) {
+    user = { ...user, moedas: Number(data.saldo) };
+    emit({ type: 'auth', user });
+  }
+  return user;
+}
+
+// Extrato da carteira: [{ delta, saldo, motivo, ref, criado }], do mais novo para o mais antigo.
+export async function moedasExtrato(limite = 20) {
+  const sb = await getClient();
+  if (!sb || !user) return [];
+  const { data, error } = await sb.rpc('site_moedas_extrato', { limite });
+  if (error) {
+    console.warn('Site: extrato de moedas indisponível:', error.message);
+    return [];
+  }
+  return data || [];
+}
+
+// Administrador: saldo e extrato de um jogador, e dar/tirar moedas.
+export async function adminMoedasJogador(nome) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_moedas_jogador', { nome });
+  if (error) throw erroMoedas(error);
+  return data;
+}
+export async function adminMoedas(nome, qtd, nota = null) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_moedas', { nome, qtd, nota });
+  if (error) throw erroMoedas(error);
+  return data;
+}
+function erroMoedas(error) {
+  if (/site_admin_moedas|site_minha_carteira/.test(error.message) || error.code === 'PGRST202') return new Error('Rode o arquivo 0038_moedas.sql no Supabase para usar as moedas.');
+  if (/saldo_insuficiente/.test(error.message)) return new Error('O jogador não tem moedas suficientes para tirar essa quantidade.');
+  if (/quantidade_invalida/.test(error.message)) return new Error('Quantidade inválida (use um número inteiro diferente de zero).');
+  return friendly(error);
+}
+
 // Painel do administrador: criar, listar e desativar códigos (0034).
 function erroCodigos(error) {
   if (/site_admin_codigo|site_admin_recompensa/.test(error.message) || error.code === 'PGRST202') return new Error('Rode o arquivo 0034_codigos_recompensa.sql no Supabase para usar os códigos.');
+  if (/moedas_invalidas/.test(error.message)) return new Error('Rift Coins: escreva a quantidade, um número de 1 a 1.000.000.');
   if (/icone_precisa_comecar_com_exc/.test(error.message)) return new Error('O id do ícone exclusivo precisa começar com "exc-" (ex.: exc-lenda).');
   if (/recompensas_invalidas/.test(error.message)) return new Error('Recompensa inválida: use tipo ícone ou efeito e um id com letras minúsculas, números e hífens (2 a 30).');
   if (/codigo_ja_existe/.test(error.message)) return new Error('Já existe um código com esse texto.');

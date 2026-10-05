@@ -128,6 +128,16 @@ export function createFakeSupabase() {
     return b;
   }
 
+  // Carteira de Rift Coins: saldo por conta + extrato.
+  function mexerMoedas(uid, delta, motivo, ref = null) {
+    db.carteira = db.carteira || {}; db.moedasLanc = db.moedasLanc || [];
+    const novo = (db.carteira[uid] || 0) + delta;
+    if (novo < 0) throw new Error('saldo_insuficiente');
+    db.carteira[uid] = novo;
+    db.moedasLanc.push({ user_id: uid, delta, saldo: novo, motivo, ref, criado: new Date().toISOString() });
+    return novo;
+  }
+
   async function rpc(name, args) {
     if (name === 'site_username_available') {
       return { data: !db.site_profiles.some((p) => p.username.toLowerCase() === args.name.toLowerCase()), error: null };
@@ -360,9 +370,29 @@ export function createFakeSupabase() {
       c.usos = (c.usos || 0) + 1;
       const novas = [];
       for (const r of c.recompensas) {
+        if (r.tipo === 'moeda') { mexerMoedas(uid, Number(r.chave), 'codigo', c.codigo); novas.push(r); continue; }
         if (!db.recompensas.some((x) => x.user_id === uid && x.tipo === r.tipo && x.chave === r.chave)) { db.recompensas.push({ user_id: uid, ...r }); novas.push(r); }
       }
       return { data: { ok: true, recompensas: c.recompensas, novas }, error: null };
+    }
+    // Rift Coins (simplificado; as regras de verdade estão na 0038).
+    if (name === 'site_minha_carteira') {
+      const uid = auth._uid();
+      if (!uid) return { data: null, error: { message: 'not_authenticated' } };
+      return { data: { saldo: (db.carteira || {})[uid] || 0 }, error: null };
+    }
+    if (name === 'site_moedas_extrato') {
+      const uid = auth._uid();
+      if (!uid) return { data: null, error: { message: 'not_authenticated' } };
+      return { data: (db.moedasLanc || []).filter((l) => l.user_id === uid).slice().reverse().slice(0, args.limite || 20).map(({ user_id, ...l }) => l), error: null };
+    }
+    if (name === 'site_admin_moedas' || name === 'site_admin_moedas_jogador') {
+      if (!admins.has(auth._uid())) return { data: null, error: { message: 'not_admin' } };
+      const alvo = db.site_profiles.find((p) => p.username.toLowerCase() === String(args.nome || '').trim().toLowerCase());
+      if (!alvo) return { data: null, error: { message: 'user_not_found' } };
+      if (name === 'site_admin_moedas_jogador') return { data: { saldo: (db.carteira || {})[alvo.id] || 0, extrato: (db.moedasLanc || []).filter((l) => l.user_id === alvo.id).slice().reverse().map(({ user_id, ...l }) => l) }, error: null };
+      if (!args.qtd || Math.abs(args.qtd) > 1e9) return { data: null, error: { message: 'quantidade_invalida' } };
+      try { return { data: { username: alvo.username, saldo: mexerMoedas(alvo.id, args.qtd, 'admin', args.nota) }, error: null }; } catch (e) { return { data: null, error: { message: e.message } }; }
     }
     if (name === 'site_minhas_recompensas') {
       const uid = auth._uid();
