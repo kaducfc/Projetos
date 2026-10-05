@@ -41,7 +41,7 @@ export const APOIO_ATIVO = true;
 // site NÃO está em português. Mesmos valores de APOIO_ATIVO:
 //   false → "Em breve"; 'admin' → só administradores conseguem pagar (teste);
 //   true → liberado para todos.
-export const APOIO_INTL_ATIVO = 'admin';
+export const APOIO_INTL_ATIVO = true;
 
 // Catálogo exibido no hub. `path` é relativo à raiz do site.
 // status: 'live' (jogável) ou 'soon' (em breve).
