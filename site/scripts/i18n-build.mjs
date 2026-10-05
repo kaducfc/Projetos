@@ -58,3 +58,12 @@ for (const id of IDIOMAS) {
 }
 console.log(`${Object.keys(dic.en).length} textos em ${IDIOMAS.length} idiomas${problemas ? `, ${problemas} problema(s)` : ''}`);
 process.exitCode = problemas ? 1 : 0;
+
+// Versão dos dicionários (hash do conteúdo) gravada em shared/i18n.js
+{
+  const { createHash } = await import('node:crypto');
+  const h = createHash('sha1');
+  for (const id of ['en', 'de', 'es', 'it', 'fr']) h.update(readFileSync(fileURLToPath(new URL(`${id}.js`, pasta))));
+  const arq = fileURLToPath(new URL('../shared/i18n.js', import.meta.url));
+  writeFileSync(arq, readFileSync(arq, 'utf8').replace(/const VERSAO_DICIONARIOS = '[^']*';/, `const VERSAO_DICIONARIOS = '${h.digest('hex').slice(0, 10)}';`));
+}

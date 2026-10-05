@@ -198,10 +198,13 @@ function observar() {
 
 // ------------------------------------------------------------------ troca de idioma
 
+// Atualizado por scripts/i18n-build.mjs: força o navegador a baixar o dicionário novo.
+const VERSAO_DICIONARIOS = '423948474d';
+
 async function carregar(id) {
   if (id === IDIOMA_PADRAO) { montar({}); return; }
   try {
-    const mod = await import(`./i18n/${id}.js`);
+    const mod = await import(`./i18n/${id}.js?v=${VERSAO_DICIONARIOS}`);
     montar(mod.default);
   } catch (err) {
     console.warn('Site: não foi possível carregar o idioma', id, err);
