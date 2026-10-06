@@ -392,7 +392,7 @@ function confirmar() {
     save.livre.jogadas += 1;
     save.livre.soma += rodada.pontos;
     save.livre.melhor = Math.max(save.livre.melhor, rodada.pontos);
-    if (save.livre.jogadas % 5 === 0) platform.passeRodadaLivre(GAME_ID).then(() => liberarAbobora()); // 5 abóboras do passe a cada 5 rodadas
+    if (save.livre.jogadas % 5 === 0) platform.passeRodadaLivre(GAME_ID).then(() => liberarAbobora()); // abóboras do passe a cada 5 rodadas
   }
   guardar(modo === 'diario' && diaFim());
   render();

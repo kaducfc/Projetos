@@ -165,7 +165,7 @@ Por enquanto: 500 RC em todos os níveis, e o efeito **Halloween 2026** (`hw-neo
 no nível 15. Para mudar a recompensa de um nível, edite a linha em
 `site_passe_niveis` (tipo `moeda` com a quantidade em `chave`, `efeito` ou `icone`).
 - **Abóboras (progresso):** cada partida concluída, em qualquer jogo (ranqueada ou
-  não, ganhando ou perdendo), dá 5 abóboras, até 150 por dia (zera à meia-noite de
+  não, ganhando ou perdendo), dá abóboras sorteadas (7 a 10; Passe Premium 9 a 15 — só interno, o site não escreve esses valores; 0062_passe_aboboras_sorteio.sql), até 150 por dia (zera à meia-noite de
   Brasília); cada nível pede 100 abóboras. É um gatilho em `site_game_results`
   (`site_passe_ao_concluir`), então vale só para quem está conectado; visitantes
   não geram resultado no servidor e não têm passe.
@@ -174,7 +174,7 @@ no nível 15. Para mudar a recompensa de um nível, edite a linha em
   guarda o ganho e só mostra quando o jogo chama `liberarAbobora()`, ou seja, **no fim da
   partida, junto do aviso de PDR** (os avisos de fim de `shared/aviso-ranked.js` já
   chamam; a Lendas modo livre chama no `terminar()`). O cartão fica parado, acima do aviso
-  de PDR, com a abóbora, "+5 abóboras", a barra do nível e o botão "Ir para o passe";
+  de PDR, com a abóbora, "+N abóboras" (o valor que ganhou), a barra do nível e o botão "Ir para o passe";
   só fecha no ×. Só aparece quando o passe está disponível para a conta.
 - **Página do passe:** `/passe/` (`passe/index.html`, `js/passe.js`): nível, barra e
   recompensas com o botão Resgatar. Está com `noindex` enquanto o passe é teste.

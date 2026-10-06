@@ -66,8 +66,6 @@ function cartaoNivel(n, e) {
 export function passeHtml(e, { extra = '' } = {}) {
   if (!e) return '<p class="ps-aviso">Entre na sua conta para participar do passe de batalha.</p>';
   const por = e.passe.abobora_por_nivel;
-  const por_partida = e.passe.abobora_por_partida;
-  const por_partida2 = por_partida;
   const completo = e.nivel >= e.passe.niveis;
   const pct = completo ? 100 : Math.min(100, Math.round((e.progresso / por) * 100));
   return `<div class="ps">
@@ -96,8 +94,8 @@ export function passeHtml(e, { extra = '' } = {}) {
     <div class="ps-regras">
       <h4>Como ganhar abóboras</h4>
       <ul>
-        <li>Cada partida concluída, em qualquer jogo, rende ${por_partida} abóboras.</li>
-        <li>No Na Medida, o Diário e a Ranqueada rendem ${por_partida} abóboras pelo dia completo (as 5 rodadas); no modo Livre, a cada 5 rodadas você ganha ${por_partida2} abóboras.</li>
+        <li>Você ganha abóboras jogando: cada partida concluída, em qualquer jogo, rende abóboras.</li>
+        <li>No Na Medida, o Diário e a Ranqueada rendem abóboras pelo dia completo (as 5 rodadas); no modo Livre, a cada 5 rodadas.</li>
         <li>Dá para ganhar até ${e.passe.limite_dia} abóboras por dia. O limite zera à meia-noite (horário de Brasília).</li>
         <li>A cada ${por} abóboras você sobe um nível e libera a recompensa dele.</li>
       </ul>
