@@ -304,11 +304,6 @@ body:has(.hx-hero) { overflow-x: clip; }
 @keyframes hx-sobe { from { opacity: 0; transform: translateY(12px); } }
 
 /* Quem desliga animações no sistema não vê nenhuma. */
-@media (prefers-reduced-motion: reduce) {
-  .hx-card, .cv, .rp-barra i { animation: none !important; transition: none !important; }
-  .hx-play::after, .hx-btn::after { display: none; }
-  .hx-dot, .rp-elo.atual .emblema, .hx-hero-in > *, .rk-painel { animation: none !important; }
-}
 
 @media (max-width: 820px) {
   .rk-painel { grid-template-columns: 1fr; }

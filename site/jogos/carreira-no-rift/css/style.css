@@ -507,9 +507,6 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .result .tap { animation: tap-pulse 2.4s ease-in-out 0.5s infinite; }
 @keyframes tap-pulse { 0%, 100% { color: var(--muted); } 50% { color: rgb(var(--pulse)); } }
 .result:hover { border-color: rgba(var(--pulse), 1); }
-@media (prefers-reduced-motion: reduce) {
-  .result, .result .dot, .result .tap { animation: none; }
-}
 
 /* liga */
 .two-col { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
@@ -675,9 +672,6 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
   .create-foot { flex-direction: column; align-items: stretch; text-align: center; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-}
 
 /* ----------------------------------------------------------- estilo Ouro Clássico */
 

@@ -6,7 +6,7 @@
 import * as platform from './platform.js';
 import { ABOBORA_IMG } from './passe.js';
 
-const reduzido = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduzido = false; // sempre com as animações (sem versão "reduzida")
 let atual = null;
 let pendente = null; // ganho já calculado, esperando o fim da partida
 let reserva = null;

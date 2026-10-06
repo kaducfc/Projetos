@@ -407,10 +407,6 @@ a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
   100% { background-position: calc(100% + 0.75em) 56%, calc(100% + 0.75em) 24%; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .fx, .fx::before, .fx::after { animation: none !important; }
-  .fx-reflexo, .fx-st-nebulosa, .fx-st-aurora { background-position: 50% 0 !important; }
-}
 
 /* Botão "Apoiar" no menu da conta */
 .sb-menu a.sb-apoiar { color: #ff8fa3; font-weight: 800; }
@@ -446,7 +442,6 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
 @keyframes sb-coins-up { 0% { box-shadow: 0 0 0 0 rgba(245, 207, 90, 0.7); transform: scale(1.12); } 60% { box-shadow: 0 0 0 10px rgba(245, 207, 90, 0); transform: scale(1); } 100% { box-shadow: 0 0 0 0 rgba(245, 207, 90, 0); } }
 @keyframes sb-coin-gira { 0% { transform: rotateY(0); } 100% { transform: rotateY(360deg); } }
 @media (max-width: 520px) { .sb-coins { padding: 3px 8px 3px 4px; font-size: 12.5px; gap: 4px; } .sb-coins img { width: 18px; height: 18px; } }
-@media (prefers-reduced-motion: reduce) { .sb-coins-up, .sb-coins-up img { animation: none; } }
 /* Celular: com as Rift Coins na barra, o idioma e o nome ficam mais compactos */
 @media (max-width: 480px) {
   .sb-right { gap: 6px; }
@@ -472,7 +467,6 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
 @keyframes pa-sobe { from { opacity: 0; transform: translate(-50%, 46px) scale(0.92); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
 @keyframes pa-desce { to { opacity: 0; transform: translate(-50%, 30px) scale(0.96); } }
 @keyframes pa-pula { 0% { transform: scale(0.4) rotate(-12deg); } 55% { transform: scale(1.28) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
-@media (prefers-reduced-motion: reduce) { .ps-aviso-abobora, .ps-aviso-abobora.pa-sai, .pa-img { animation: none; } .pa-barra i { transition: none; } }
 
 .pa-x { position: absolute; top: 4px; right: 6px; background: none; border: 0; color: #9b9383; font-size: 20px; line-height: 1; cursor: pointer; padding: 2px 4px; }
 .pa-x:hover { color: #fff; }

@@ -18,7 +18,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
 }[c]));
 const fmtNum = (n) => (n == null ? '—' : Number(n).toLocaleString(localeAtual()));
 const fmtSinal = (n) => `${n > 0 ? '+' : n < 0 ? '−' : '±'}${fmtNum(Math.abs(Math.round(n || 0)))}`;
-const reduzido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduzido = false; // sempre com as animações (sem versão "reduzida")
 // Número que conta do zero quando a página abre (data-conta; data-sinal = com +/−).
 const conta = (n, sinal = false) => `<b data-conta="${Number(n) || 0}"${sinal ? ' data-sinal' : ''}>${sinal ? fmtSinal(n) : fmtNum(n)}</b>`;
 const pdrTxt = (n) => `<span class="${n > 0 ? 'pdr-mais' : n < 0 ? 'pdr-menos' : ''}">${conta(n, true)} PDR</span>`;

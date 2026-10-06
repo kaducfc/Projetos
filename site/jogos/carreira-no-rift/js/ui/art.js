@@ -210,7 +210,6 @@ export function ovrShield(ovr, extraClass = '') {
 export function startShieldShine() {
   if (typeof window === 'undefined' || window.__shieldShine) return;
   window.__shieldShine = true;
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
   const style = document.createElement('style');
   style.textContent = ['prata', 'ouro', 'platina', 'diamante', 'challenger'].map((tier) => {
     const src = EMBEDDED ? EMBEDDED[`trofeus/${tier}.png`] : `${ASSETS}trofeus/${tier}.png`;

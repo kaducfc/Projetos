@@ -18,7 +18,7 @@ const wait = (ms) => new Promise((r) => { setTimeout(r, ms); });
 export async function rollChoice(button, ok) {
   const odds = button?.querySelector('.odds');
   if (!odds) return;
-  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const reduced = false; // sempre com as animações
   const list = button.closest('.choices');
   list?.classList.add('rolling');
   button.classList.add('rolling-pick');
