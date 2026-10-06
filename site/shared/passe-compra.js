@@ -19,7 +19,7 @@ export function abrirCompraPremium() {
     <button type="button" class="ps-modal-x" data-fechar aria-label="Fechar">×</button>
     <p class="eyebrow">★ Passe Premium</p>
     <h3 class="ps-modal-tit">Halloween 2026</h3>
-    <p class="ps-modal-txt">Libera as recompensas da trilha premium (níveis 1, 3, 5… até o 15), incluindo o efeito Halloween 2026. Pagamento único, só para esta temporada.</p>
+    <p class="ps-modal-txt">Libera as recompensas do Passe Premium.</p>
     <p class="ps-modal-preco"><b>${preco}</b></p>
     <button type="button" class="ps-comprar" data-comprar>${pt ? `Pagar ${preco} pelo Mercado Pago` : `Pagar ${preco} com cartão`}</button>
     <p class="ps-modal-nota">${pt ? 'Você paga pelo Mercado Pago: Pix, cartão ou boleto.' : 'Você paga pelo Stripe: cartão, Apple Pay ou Google Pay.'}</p>

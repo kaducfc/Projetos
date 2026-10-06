@@ -699,7 +699,7 @@ export default {
   "Nível {num}": "Nivel {num}",
   "Passe Premium": "Pase Premium",
   "★ Passe Premium": "★ Pase Premium",
-  "Libera as recompensas da trilha premium (níveis 1, 3, 5… até o 15), incluindo o efeito Halloween 2026. Pagamento único, só para esta temporada.": "Desbloquea las recompensas de la vía premium (niveles 1, 3, 5… hasta el 15), incluido el efecto Halloween 2026. Pago único, solo para esta temporada.",
+  "Libera as recompensas do Passe Premium.": "Desbloquea las recompensas del Pase Premium.",
   "Pagar {v} pelo Mercado Pago": "Pagar {v} con Mercado Pago",
   "Você paga pelo Stripe: cartão, Apple Pay ou Google Pay.": "Pagas con Stripe: tarjeta, Apple Pay o Google Pay.",
   "Você ainda não chegou a este nível do passe.": "Aún no llegaste a este nivel del pase.",
