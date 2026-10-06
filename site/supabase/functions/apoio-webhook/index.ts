@@ -48,6 +48,16 @@ Deno.serve(async (req) => {
     });
     return r2.ok ? ok() : new Response('erro no banco', { status: 500 });
   }
+  // Compra de Rift Coins: external_reference "rc_<id da compra>".
+  const rcc = /^rc_([0-9a-f-]{36})$/i.exec(apoioId);
+  if (rcc) {
+    const r3 = await fetch(`${SUPABASE_URL}/rest/v1/rpc/site_rc_confirmar_compra`, {
+      method: 'POST',
+      headers: { apikey: SERVICO, Authorization: `Bearer ${SERVICO}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cid: rcc[1], novo_status: STATUS[pg.status] || 'pendente', pag: `mp_${pg.id}` }),
+    });
+    return r3.ok ? ok() : new Response('erro no banco', { status: 500 });
+  }
   if (!/^[0-9a-f-]{36}$/i.test(apoioId)) return ok();
 
   const status = STATUS[pg.status] || 'pendente';

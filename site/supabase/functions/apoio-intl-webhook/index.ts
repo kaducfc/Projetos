@@ -36,14 +36,17 @@ Deno.serve(async (req) => {
   try { ev = JSON.parse(bruto); } catch { return new Response('corpo invalido', { status: 400 }); }
 
   // Compra do Passe Premium (client_reference_id "passe_<id>"): liga/desliga o premium no banco.
-  const passe = async (cid: string | null, status: string, pag: string) => {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/site_passe_confirmar_compra`, {
+  // Compra de Rift Coins ("rc_<id>") usa site_rc_confirmar_compra; mesma forma.
+  const confirmar = async (rpc: string, cid: string | null, status: string, pag: string) => {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${rpc}`, {
       method: 'POST',
       headers: { apikey: SERVICO, Authorization: `Bearer ${SERVICO}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ cid, novo_status: status, pag }),
     });
     return r.ok ? ok() : new Response('erro no banco', { status: 500 });
   };
+  const passe = (cid: string | null, status: string, pag: string) => confirmar('site_passe_confirmar_compra', cid, status, pag);
+  const rcCompra = (cid: string | null, status: string, pag: string) => confirmar('site_rc_confirmar_compra', cid, status, pag);
 
   const atualizar = async (filtro: string, status: string, extra: Record<string, unknown>) => {
     // Avisos chegam fora de ordem: "recusado"/"pendente" não desfaz uma aprovação;
@@ -64,6 +67,8 @@ Deno.serve(async (req) => {
     const apoio = String(o.client_reference_id || '');
     const compra = /^passe_([0-9a-f-]{36})$/i.exec(apoio);
     if (compra) return passe(compra[1], 'aprovado', `st_${o.payment_intent}`);
+    const rcc = /^rc_([0-9a-f-]{36})$/i.exec(apoio);
+    if (rcc) return rcCompra(rcc[1], 'aprovado', `st_${o.payment_intent}`);
     if (!/^[0-9a-f-]{36}$/i.test(apoio)) return ok();
     return atualizar(`id=eq.${apoio}&origem=eq.stripe`, 'aprovado', {
       mp_payment_id: `st_${o.payment_intent}`, valor_pago: brl(Number(o.amount_total) / 100, String(o.currency).toUpperCase()),
@@ -73,10 +78,13 @@ Deno.serve(async (req) => {
     const apoio = String(o.client_reference_id || '');
     const compra = /^passe_([0-9a-f-]{36})$/i.exec(apoio);
     if (compra) return passe(compra[1], 'recusado', '');
+    const rcc = /^rc_([0-9a-f-]{36})$/i.exec(apoio);
+    if (rcc) return rcCompra(rcc[1], 'recusado', '');
     return /^[0-9a-f-]{36}$/i.test(apoio) ? atualizar(`id=eq.${apoio}&origem=eq.stripe`, 'recusado', {}) : ok();
   }
   if (ev.type === 'charge.refunded' && o.refunded === true) {
     await passe(null, 'estornado', `st_${o.payment_intent}`); // se for compra do passe
+    await rcCompra(null, 'estornado', `st_${o.payment_intent}`); // ou de Rift Coins
     return atualizar(`mp_payment_id=eq.st_${o.payment_intent}&origem=eq.stripe`, 'estornado', {});
   }
   return ok();

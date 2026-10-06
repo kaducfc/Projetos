@@ -438,6 +438,8 @@ a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
 /* Rift Coins na barra do site, entre o idioma e o nome */
 .sb-coins { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px 4px 6px; border: 1px solid rgba(245, 207, 90, 0.35); border-radius: 999px;
   background: linear-gradient(180deg, rgba(245, 207, 90, 0.12), rgba(245, 207, 90, 0.04)); color: var(--gold-2, #f5cf5a); font-weight: 800; font-size: 13.5px; line-height: 1; font-variant-numeric: tabular-nums; transition: border-color 0.2s, background 0.2s, transform 0.2s; }
+button.sb-coins { cursor: pointer; font-family: inherit; }
+button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba(245, 207, 90, 0.2); }
 .sb-coins img { display: block; width: 22px; height: 22px; filter: drop-shadow(0 0 4px rgba(245, 207, 90, 0.45)); }
 .sb-coins-up { animation: sb-coins-up 1.5s ease-out; }
 .sb-coins-up img { animation: sb-coin-gira 0.9s ease-in-out; }
@@ -476,3 +478,20 @@ a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
 .pa-x:hover { color: #fff; }
 .pa-ir { justify-self: start; margin-top: 6px; padding: 4px 11px; border-radius: 6px; border: 1px solid rgba(217, 168, 43, 0.7); background: rgba(217, 168, 43, 0.1); color: #f5cf5a; font-size: 12px; font-weight: 800; text-decoration: none; }
 .pa-ir:hover { background: rgba(217, 168, 43, 0.22); }
+
+/* Comprar Rift Coins */
+.rc-backdrop { position: fixed; inset: 0; z-index: 160; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, 0.7); }
+.rc-modal { position: relative; width: min(440px, 100%); display: grid; gap: 12px; padding: 24px 22px 20px; border-radius: 12px; border: 1px solid #d9a82b; background: #17140e; color: #f4efe4; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); }
+.rc-x { position: absolute; top: 8px; right: 12px; background: none; border: 0; color: #9b9383; font-size: 24px; line-height: 1; cursor: pointer; }
+.rc-x:hover { color: #fff; }
+.rc-tit { margin: 0; font-family: 'Bebas Neue', Inter, sans-serif; font-size: 30px; letter-spacing: 0.04em; color: #f5cf5a; }
+.rc-lista { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rc-pacote { display: grid; justify-items: center; gap: 2px; padding: 14px 8px 12px; border-radius: 10px; border: 1px solid rgba(245, 207, 90, 0.4); background: linear-gradient(180deg, rgba(245, 207, 90, 0.14), rgba(245, 207, 90, 0.04)); color: #fff; cursor: pointer; font-family: inherit; transition: border-color 0.15s, transform 0.15s; }
+.rc-pacote:hover:not(:disabled) { border-color: #f5cf5a; transform: translateY(-2px); }
+.rc-pacote:disabled { opacity: 0.55; cursor: default; }
+.rc-pacote b { font-size: 24px; line-height: 1.1; color: #f5cf5a; font-variant-numeric: tabular-nums; }
+.rc-un { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: #b9b3a3; }
+.rc-pacote em { margin-top: 6px; font-style: normal; font-weight: 800; font-size: 16px; }
+.rc-nota { margin: 0; text-align: center; font-size: 12.5px; color: #8f8979; }
+.rc-msg { margin: 0; min-height: 1px; text-align: center; font-size: 13px; color: #ff9b9b; }
+.rc-aviso { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 170; max-width: calc(100vw - 32px); padding: 12px 18px; border-radius: 10px; border: 1px solid #d9a82b; background: #17140e; color: #f4efe4; font-size: 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }

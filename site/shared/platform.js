@@ -464,6 +464,31 @@ export async function comprarItem(tipo, chave) {
   return data;
 }
 
+// Venda de Rift Coins (Edge Function rc-comprar-criar). O servidor decide os preços.
+const ERROS_RC = {
+  muitos_pedidos: 'Muitas tentativas seguidas. Espere um pouco e tente de novo.',
+  nao_logado: 'Entre na sua conta para comprar Rift Coins.',
+  mp_nao_configurado: 'O pagamento pelo Mercado Pago ainda não está disponível.',
+  stripe_nao_configurado: 'O pagamento por cartão ainda não está disponível.',
+};
+export async function rcPrecos() {
+  const sb = await getClient();
+  if (!sb) return null;
+  const { data } = await sb.functions.invoke('rc-comprar-criar', { body: { acao: 'precos' } });
+  return data?.precos || null;
+}
+export async function rcComprar(pacote, provedor, moeda) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.functions.invoke('rc-comprar-criar', { body: { pacote, provedor, moeda } });
+  if (!error && data?.url) return data;
+  let corpo = data || {};
+  try { if (error?.context?.json) corpo = await error.context.json(); } catch { /* sem corpo JSON */ }
+  if (ERROS_RC[corpo?.erro]) throw new Error(ERROS_RC[corpo.erro]);
+  if (error?.context?.status === 404) throw new Error('A função rc-comprar-criar não foi encontrada no Supabase (ela foi publicada?).');
+  throw new Error('Não foi possível abrir o pagamento agora. Tente de novo em instantes.');
+}
+
 // Moldura do ícone: null (sem moldura) ou o id de uma moldura liberada.
 export async function setMoldura(moldura) {
   const sb = await getClient();

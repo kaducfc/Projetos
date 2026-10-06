@@ -278,3 +278,9 @@ Imagem que envolve o ícone do jogador. Rode `supabase/migrations/0049_molduras.
 **Passe encurtado (`0054_passe_10_niveis.sql`):** o passe Halloween 2026 passou a ter 10 níveis. Começa no nível 0 (sem recompensa); níveis ímpares são grátis e pares são premium (1 ícone Poro Assombrado, 2 500 RC, 3 300 RC, 4 moldura Abóboras e Espinhos, 5 ícone Halloween 2026, 6 efeito Teia de Aranha, 7 moldura Correntes e Caveiras, 8 moldura Vampito, 9 ícone Abóbora Sombria, 10 efeito Halloween 2026). Vale este arquivo no lugar dos 0045 a 0053 para as recompensas dos níveis.
 
 **Loja de Rift Coins (`0055_loja_efeitos.sql`):** os efeitos **Brasa** e **Galáxia** são públicos e só se conseguem comprando por 2.000 RC cada, em Meu perfil → Efeito (botão "Comprar por 2.000 RC"). O preço fica na tabela `site_loja`; a compra (`site_loja_comprar`) desconta as moedas e libera o efeito na conta.
+
+## Comprar Rift Coins (RC)
+
+Clique no indicador de moedas da barra do site para abrir a janela de compra. Pacotes: 1.000 RC (R$ 10 / US$ 7), 3.000 RC (R$ 25 / US$ 17), 5.000 RC (R$ 40 / US$ 27) e 10.000 RC (R$ 70 / US$ 47). Português do Brasil paga em reais pelo Mercado Pago; inglês paga em dólar e os outros idiomas em euro (o dólar convertido pelas cotações `USD_BRL` e `EUR_BRL`), ambos pelo Stripe.
+
+Para ativar: rode `supabase/migrations/0059_rc_compra.sql`, crie a Edge Function `rc-comprar-criar` (com "Verify JWT" desligado, mesmos segredos do passe premium) e republique `apoio-webhook` e `apoio-intl-webhook`. A confirmação chega pelos webhooks (`rc_<id>`), credita as moedas uma só vez e o estorno tira de volta o que ainda houver no saldo. As compras aparecem na aba Apoio do painel (tipo "Rift Coins").

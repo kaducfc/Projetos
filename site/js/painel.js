@@ -647,7 +647,7 @@ body.addEventListener('click', async (e) => {
 
 const AP_STATUS = { aprovado: 'Aprovado', pendente: 'Aguardando', recusado: 'Recusado', cancelado: 'Cancelado', estornado: 'Estornado' };
 const AP_ORIGEM = { mercadopago: 'Mercado Pago', stripe: 'Stripe', manual: 'Registrado à mão' };
-const AP_TIPO = { doacao: 'Doação', passe: 'Passe Premium' };
+const AP_TIPO = { doacao: 'Doação', passe: 'Passe Premium', rc: 'Rift Coins' };
 let apTipo = ''; // '' = tudo junto; 'doacao' ou 'passe' isola
 let ap = null; // resposta de platform.adminApoios(days)
 let apErro = '';
@@ -711,9 +711,9 @@ function secaoApoio(dias) {
   const st = Object.entries(p.status || {}).map(([k, n]) => [k, n]);
   const opt = (obj, atual) => Object.entries(obj).map(([k, v]) => `<option value="${k}"${atual === k ? ' selected' : ''}>${esc(v)}</option>`).join('');
   const pt = ap.por_tipo?.total || {};
-  const resumoTipos = ['doacao', 'passe'].map((k) => `${AP_TIPO[k]}: <b>${reais(pt[k]?.arrecadado || 0)}</b> (${num(pt[k]?.n || 0)})`).join(' · ');
+  const resumoTipos = ['doacao', 'passe', 'rc'].map((k) => `${AP_TIPO[k]}: <b>${reais(pt[k]?.arrecadado || 0)}</b> (${num(pt[k]?.n || 0)})`).join(' · ');
   const filtroTipo = `<div class="ap-filtros"><label class="p-label">Mostrar <select data-ap-tipo><option value="">Tudo junto</option>${opt(AP_TIPO, apTipo)}</select></label></div>
-    <p class="p-note">Desde sempre — ${resumoTipos}. Doações e Passe Premium entram no mesmo total; use o filtro para ver um só.</p>`;
+    <p class="p-note">Desde sempre — ${resumoTipos}. Doações, Passe Premium e Rift Coins entram no mesmo total; use o filtro para ver um só.</p>`;
   return `<section class="p-section" id="apoio">
     <h2>Apoio · desde sempre</h2>
     ${filtroTipo}

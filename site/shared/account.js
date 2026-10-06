@@ -5,6 +5,7 @@ import { SITE_NAME } from './config.js';
 import { avatarHtml, hydrateAvatars } from './avatar.js';
 import { nickHtml } from './apoio.js';
 import { montarAvisoAbobora } from './passe-aviso.js';
+import { abrirCompraRc, avisoRetornoRc } from './rc-compra.js';
 import { LANGS, getLang, langInfo, setLang, onLangChange, localeAtual } from './i18n.js';
 
 // Logo para fundo escuro, a partir da raiz do domínio (serve em qualquer página).
@@ -22,7 +23,7 @@ let avisoAboboraMontado = false;
 
 export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
   el.classList.add('site-bar');
-  if (!avisoAboboraMontado) { avisoAboboraMontado = true; montarAvisoAbobora(); }
+  if (!avisoAboboraMontado) { avisoAboboraMontado = true; montarAvisoAbobora(); avisoRetornoRc(); }
   const paint = () => {
     const u = platform.getUser();
     const logo = `<img class="sb-logo" src="${LOGO_URL}" alt="${esc(SITE_NAME)}" width="96" height="36" />`;
@@ -34,7 +35,7 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
     if (!platform.cloudEnabled()) {
       account = '<span class="sb-note" title="Nesta versão o progresso fica só neste navegador.">Modo visitante</span>';
     } else if (u) {
-      const moedas = u.moedas == null ? '' : `<span class="sb-coins" title="Suas Rift Coins" aria-label="Suas Rift Coins" role="img"><img src="${MOEDA_IMG}" srcset="/shared/assets/moeda/rc-96.webp 2x" width="22" height="22" alt="" /><b data-no-i18n>${moedasTxt(u.moedas)}</b></span>`;
+      const moedas = u.moedas == null ? '' : `<button type="button" class="sb-coins" data-sb="coins" title="Comprar Rift Coins" aria-label="Rift Coins: comprar"><img src="${MOEDA_IMG}" srcset="/shared/assets/moeda/rc-96.webp 2x" width="22" height="22" alt="" /><b data-no-i18n>${moedasTxt(u.moedas)}</b></button>`;
       account = `${moedas}
         <div class="sb-user">
           <button type="button" class="sb-btn" data-sb="menu" aria-haspopup="true">
@@ -93,6 +94,7 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
     const b = e.target.closest('[data-sb]');
     if (!b) return;
     if (b.dataset.sb === 'login') openAuthModal('login');
+    if (b.dataset.sb === 'coins') abrirCompraRc();
     if (b.dataset.sb === 'lang') el.querySelector('.sb-langmenu').hidden = !el.querySelector('.sb-langmenu').hidden;
     if (b.dataset.sb === 'menu') {
       const menu = el.querySelector('.sb-menu');
