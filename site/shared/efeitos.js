@@ -29,7 +29,7 @@ export const EFEITOS_TESTE = [
 
 // De EFEITOS_TESTE, só estes dá para equipar (o servidor só os libera para o
 // administrador, via site_recompensas); os demais continuam só na aba Teste.
-export const EQUIPAVEIS_TESTE = ['hw-teia'];
+export const EQUIPAVEIS_TESTE = ['hw-teia', 'hw-neon'];
 export const efeitoPorId = (id) => EFEITOS.find((e) => e.id === id)
   || (EQUIPAVEIS_TESTE.includes(id) ? EFEITOS_TESTE.find((e) => e.id === id) : null) || null;
 
