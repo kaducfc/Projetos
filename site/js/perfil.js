@@ -97,7 +97,7 @@ function cardEfeito(u) {
   const escolhido = atual?.id || 'nenhum';
   const opcao = ({ id, nome, classe, como, link, preco }) => {
     const livre = id === 'nenhum' || possuiEfeito(u, id);
-    const previa = id === 'nenhum' ? `<span class="nick">${esc(u.username)}</span>` : `<span class="nick fx ${classe}">${esc(u.username)}</span>`;
+    const previa = id === 'nenhum' ? `<span class="nick">${esc(u.username)}</span>` : `<span class="nick fx ${classe}" data-text="${esc(u.username)}">${esc(u.username)}</span>`;
     const requisito = !livre && efeitoInfo === id
       ? `<p class="pf-ef-como" role="status">🔒 ${esc(como)}${link ? ` <a href="${link.href}">${esc(link.texto)}</a>` : ''}</p>` : '';
     return `<li class="pf-ef${livre ? '' : ' trava'}${escolhido === id ? ' on' : ''}" data-ef="${id}">

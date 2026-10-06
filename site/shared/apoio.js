@@ -21,6 +21,6 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
 export function nickHtml(nome, apoiador = false, escolha = null) {
   const fx = efeitoAtivo(escolha, apoiador);
   return fx
-    ? `<span class="nick fx ${fx.classe}" title="${esc(fx.titulo || `Efeito ${fx.nome}`)}">${esc(nome)}</span>`
+    ? `<span class="nick fx ${fx.classe}" data-text="${esc(nome)}" title="${esc(fx.titulo || `Efeito ${fx.nome}`)}">${esc(nome)}</span>`
     : `<span class="nick">${esc(nome)}</span>`;
 }

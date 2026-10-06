@@ -358,9 +358,9 @@ function testeCartoes(nick) {
   const nome = esc(nick || 'NomeDoJogador');
   const grupo = (lista, rotulo) => lista.map((e) => `<article class="card t-efeito">
       <div class="t-ef-cab"><h3>${esc(e.nome)}</h3><span class="p-badge">${esc(e.tema || rotulo)}</span></div>
-      <div class="t-ef-grande"><span class="nick fx ${e.classe}">${nome}</span></div>
-      <div class="t-ef-linha"><span class="t-ef-mini"><span class="nick fx ${e.classe}">${nome}</span></span>
-        <span class="t-ef-rk"><b>7</b> <span class="nick fx ${e.classe}">${nome}</span> <small>Ouro 2 · 1.250 PDR</small></span></div>
+      <div class="t-ef-grande"><span class="nick fx ${e.classe}" data-text="${nome}">${nome}</span></div>
+      <div class="t-ef-linha"><span class="t-ef-mini"><span class="nick fx ${e.classe}" data-text="${nome}">${nome}</span></span>
+        <span class="t-ef-rk"><b>7</b> <span class="nick fx ${e.classe}" data-text="${nome}">${nome}</span> <small>Ouro 2 · 1.250 PDR</small></span></div>
       <p class="c-sub">Id para o código: <code>${esc(e.id)}</code> <button type="button" class="p-link" data-t-copiar="${esc(e.id)}">copiar</button></p>
     </article>`).join('');
   return `<h3 class="t-tit">Em teste (só você vê)</h3><div class="cards t-grade">${grupo(EFEITOS_TESTE, 'Teste')}</div>

@@ -34,7 +34,7 @@ function recompensaHtml(r) {
   }
   if (r.tipo === 'efeito') {
     const fx = [...EFEITOS, ...EFEITOS_TESTE].find((e) => e.id === r.chave);
-    return `<span class="ps-rec ps-rec-efeito"><span class="nick fx ${esc(fx?.classe || '')}">${esc(fx?.nome || nomeRecompensa('efeito', r.chave))}</span><small>Efeito no nome</small></span>`;
+    return `<span class="ps-rec ps-rec-efeito"><span class="nick fx ${esc(fx?.classe || '')}" data-text="${esc(fx?.nome || nomeRecompensa('efeito', r.chave))}">${esc(fx?.nome || nomeRecompensa('efeito', r.chave))}</span><small>Efeito no nome</small></span>`;
   }
   if (r.tipo === 'icone') {
     return `<span class="ps-rec ps-rec-icone">${avatarHtml(`icone:${r.chave}`, '', 84)}<b>${esc(nomeRecompensa(r.tipo, r.chave))}</b><small>Ícone</small></span>`;
