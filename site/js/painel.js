@@ -381,7 +381,7 @@ function testeIcones() {
 
 // Molduras em teste, em volta de um ícone de exemplo, nos tamanhos do site.
 function testeMolduras() {
-  const ranks = `<h3 class="t-tit">Molduras de Rank · uma por elo (só você vê)</h3>
+  const ranks = `<h3 class="t-tit">Molduras de Rank · uma por elo</h3>
     <p class="c-sub">No perfil, "Rank" é uma moldura só: mostra sempre a do elo atual do jogador e troca sozinha quando ele sobe ou desce de elo. Aqui estão as dez, cada uma em volta de um ícone de exemplo.</p>
     <div class="cards t-grade">${ELOS_MOLDURAS.map((m) => `<article class="card t-efeito">
       <div class="t-ef-cab"><h3>${esc(m.nome)}</h3><span class="p-badge">Rank</span></div>

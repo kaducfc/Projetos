@@ -20,6 +20,7 @@ export default [
   ['Dado Corrompido', 'Corrupted Data', 'Beschädigte Daten', 'Dato corrupto', 'Dato corrotto', 'Donnée corrompue'],
   ['Compre por 10.000 RC.', 'Buy for 10,000 RC.', 'Kaufe für 10.000 RC.', 'Cómpralo por 10.000 RC.', 'Acquistalo per 10.000 RC.', 'Achète-le pour 10 000 RC.'],
   ['Comprar por 10.000 RC', 'Buy for 10,000 RC', 'Für 10.000 RC kaufen', 'Comprar por 10.000 RC', 'Acquista per 10.000 RC', 'Acheter pour 10 000 RC'],
+  ['Rank', 'Rank', 'Rang', 'Rango', 'Rango', 'Rang'],
   ['Brasa', 'Ember', 'Glut', 'Brasa', 'Brace', 'Braise'],
   ['Galáxia', 'Galaxy', 'Galaxie', 'Galaxia', 'Galassia', 'Galaxie'],
   ['Compre por 2.000 RC.', 'Buy for 2,000 RC.', 'Kaufe für 2.000 RC.', 'Cómpralo por 2.000 RC.', 'Acquistalo per 2.000 RC.', 'Achète-le pour 2 000 RC.'],

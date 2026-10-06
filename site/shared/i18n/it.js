@@ -964,6 +964,7 @@ export default {
   "Dado Corrompido": "Dato corrotto",
   "Compre por 10.000 RC.": "Acquistalo per 10.000 RC.",
   "Comprar por 10.000 RC": "Acquista per 10.000 RC",
+  "Rank": "Rango",
   "Brasa": "Brace",
   "Galáxia": "Galassia",
   "Compre por 2.000 RC.": "Acquistalo per 2.000 RC.",

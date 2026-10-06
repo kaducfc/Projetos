@@ -964,6 +964,7 @@ export default {
   "Dado Corrompido": "Beschädigte Daten",
   "Compre por 10.000 RC.": "Kaufe für 10.000 RC.",
   "Comprar por 10.000 RC": "Für 10.000 RC kaufen",
+  "Rank": "Rang",
   "Brasa": "Glut",
   "Galáxia": "Galaxie",
   "Compre por 2.000 RC.": "Kaufe für 2.000 RC.",

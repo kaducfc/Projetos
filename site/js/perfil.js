@@ -72,22 +72,23 @@ let molduraAberta = false;
 let molduras = new Set(); // molduras que a conta ganhou
 
 // "Rank" é uma moldura só, que mostra sempre a do elo atual do jogador.
-const nomeMoldura = (m, u) => (m.id === 'rank' ? `Rank · ${ELOS_MOLDURAS.find((x) => x.elo === (u.elo || 'ferro'))?.nome || 'Ferro'}` : m.nome);
+const eloNome = (u) => ELOS_MOLDURAS.find((x) => x.elo === (u.elo || 'ferro'))?.nome || 'Ferro';
+const nomeMoldura = (m, u) => (m.id === 'rank' ? `Rank <small>${esc(eloNome(u))}</small>` : esc(m.nome));
 
 function cardMoldura(u) {
-  const minhas = [...MOLDURAS, ...MOLDURAS_TESTE].filter((m) => molduras.has(m.id));
+  const minhas = [...MOLDURAS, ...MOLDURAS_TESTE].filter((m) => m.publica || molduras.has(m.id));
   if (!minhas.length) return '';
   const escolhida = u.moldura || 'nenhuma';
   const opcao = (m) => `<li class="pf-ef${escolhida === m.id ? ' on' : ''}">
       <span class="pf-mold-previa">${m.id === 'nenhuma' ? '<span class="pf-mold-nada" aria-hidden="true">∅</span>' : molduraHtml(m.id, 96, u.elo)}</span>
-      <span class="pf-ef-nome">${esc(nomeMoldura(m, u))}</span>
+      <span class="pf-ef-nome">${nomeMoldura(m, u)}</span>
       <button type="button" class="${escolhida === m.id ? 'btn-ghost' : 'btn-primary'} pf-ef-btn" data-act="moldura-escolher" data-mol="${m.id}"${escolhida === m.id ? ' disabled' : ''}>${escolhida === m.id ? 'Selecionado' : 'Selecionar'}</button></li>`;
   const atual = minhas.find((m) => m.id === u.moldura);
   return `<section class="pf-card pf-efeito">
     <div class="pf-ef-topo">
       <div>
         <p class="eyebrow">✦ Moldura</p>
-        <p class="pf-apoio-txt pf-ef-atual"><span class="pf-ef-rotulo">${esc(atual ? nomeMoldura(atual, u) : 'Sem moldura')}</span></p>
+        <p class="pf-apoio-txt pf-ef-atual"><span class="pf-ef-rotulo">${atual ? nomeMoldura(atual, u) : 'Sem moldura'}</span></p>
       </div>
       <button type="button" class="btn-ghost pf-ef-abrir" data-act="moldura-abrir" aria-expanded="${molduraAberta}">${molduraAberta ? 'Fechar' : 'Abrir'}</button>
     </div>

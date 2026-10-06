@@ -7,16 +7,16 @@
 // por `como` (o texto que explica como conseguir).
 
 export const MOLDURAS = [
+  // "Rank" é uma moldura só, de todos os jogadores: mostra a arte do elo atual e muda sozinha
+  // quando o jogador sobe ou desce de elo (ver ELOS_MOLDURAS).
+  { id: 'rank', nome: 'Rank', virtual: true, publica: true },
   { id: 'hw-moldura-1', nome: 'Vampito', k: 0.5879, como: 'Recompensa do nível 8 do Passe de Batalha.' },
   { id: 'hw-moldura-2', nome: 'Abóboras e Espinhos', k: 0.5962, como: 'Recompensa do nível 4 do Passe de Batalha.' },
   { id: 'hw-moldura-3', nome: 'Correntes e Caveiras', k: 0.591, como: 'Recompensa do nível 7 do Passe de Batalha.' },
 ];
 
 // Só o administrador recebe (aba Teste do painel).
-export const MOLDURAS_TESTE = [
-  // "Rank" é uma moldura só, que muda sozinha com o elo do jogador (ver ELOS_MOLDURAS).
-  { id: 'rank', nome: 'Rank', virtual: true, tema: 'Muda sozinha com o elo atual' },
-];
+export const MOLDURAS_TESTE = [];
 
 // Uma moldura por elo (a arte vem em shared/assets/molduras/elo-<elo>.webp). Elas não são
 // escolhidas uma a uma: quem equipa "Rank" mostra sempre a do elo atual.
