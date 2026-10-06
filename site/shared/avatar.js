@@ -38,6 +38,7 @@ export const EXCLUSIVOS = [
 // Em teste: só o painel (aba Teste) mostra. Para lançar, mover para EXCLUSIVOS.
 export const EXCLUSIVOS_TESTE = [
   { id: 'exc-halloween-2026', nome: 'Halloween 2026' },
+  { id: 'exc-poro-assombrado', nome: 'Poro Assombrado' },
 ];
 
 export const AVATARES = ['mascote', ...ICONES.map((i) => `icone:${i.id}`)];
