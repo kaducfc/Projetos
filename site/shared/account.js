@@ -44,6 +44,7 @@ export function mountSiteBar(el, { hubHref = null, showBrand = true } = {}) {
             <div class="sb-menu-email">${esc(u.email || '')}</div>
             <a href="/perfil/">Meu perfil</a>
             <a href="/ranking/">Ranking</a>
+            <a href="/passe/">Passe de Batalha</a>
             <a href="/apoiar/" class="sb-apoiar">♥ Apoiar o site</a>
             <a href="/perfil/#historico">Meu histórico</a>
             <a href="/painel/" data-sb-admin hidden>Painel</a>

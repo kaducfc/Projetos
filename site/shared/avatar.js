@@ -35,14 +35,14 @@ export const ESPECIAIS = [
 // { id: 'exc-nome', nome: 'Nome' } e crie um código com essa recompensa no painel.
 export const EXCLUSIVOS = [
   { id: 'exc-streamer', nome: 'Streamer' },
+  // Recompensas do Passe de Batalha Halloween 2026.
+  { id: 'exc-poro-assombrado', nome: 'Poro Assombrado' },
+  { id: 'exc-halloween-2026', nome: 'Halloween 2026' },
+  { id: 'exc-abobora-sombria', nome: 'Abóbora Sombria' },
 ];
 
 // Em teste: só o painel (aba Teste) mostra. Para lançar, mover para EXCLUSIVOS.
-export const EXCLUSIVOS_TESTE = [
-  { id: 'exc-halloween-2026', nome: 'Halloween 2026' },
-  { id: 'exc-poro-assombrado', nome: 'Poro Assombrado' },
-  { id: 'exc-abobora-sombria', nome: 'Abóbora Sombria' },
-];
+export const EXCLUSIVOS_TESTE = [];
 
 export const AVATARES = ['mascote', ...ICONES.map((i) => `icone:${i.id}`)];
 export const AVATARES_ESPECIAIS = ESPECIAIS.map((i) => `icone:${i.id}`);

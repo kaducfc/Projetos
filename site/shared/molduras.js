@@ -6,14 +6,14 @@
 // 'moldura'). Para lançar uma moldura de teste: mover para MOLDURAS e trocar `tema`
 // por `como` (o texto que explica como conseguir).
 
-export const MOLDURAS = [];
+export const MOLDURAS = [
+  { id: 'hw-moldura-1', nome: 'Vampito', k: 0.5879, como: 'Recompensa do nível 8 do Passe de Batalha.' },
+  { id: 'hw-moldura-2', nome: 'Abóboras e Espinhos', k: 0.5962, como: 'Recompensa do nível 4 do Passe de Batalha.' },
+  { id: 'hw-moldura-3', nome: 'Correntes e Caveiras', k: 0.591, como: 'Recompensa do nível 7 do Passe de Batalha.' },
+];
 
 // Só o administrador recebe (aba Teste do painel).
-export const MOLDURAS_TESTE = [
-  { id: 'hw-moldura-1', nome: 'Vampito', k: 0.5879, tema: 'Halloween · asas de morcego' },
-  { id: 'hw-moldura-2', nome: 'Abóboras e Espinhos', k: 0.5962, tema: 'Halloween · abóboras' },
-  { id: 'hw-moldura-3', nome: 'Correntes e Caveiras', k: 0.591, tema: 'Halloween · correntes e caveiras' },
-];
+export const MOLDURAS_TESTE = [];
 
 const TODAS = new Map([...MOLDURAS, ...MOLDURAS_TESTE].map((m) => [m.id, m]));
 export const molduraPorId = (id) => TODAS.get(id) || null;

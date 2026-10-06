@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createFakeSupabase, installMemoryStorage } from './fake-supabase.js';
 import * as platform from '../shared/platform.js';
 import { passeHtml } from '../shared/passe.js';
-import { EFEITOS_TESTE } from '../shared/efeitos.js';
+import { EFEITOS } from '../shared/efeitos.js';
 
 async function conta(sb, username) {
   installMemoryStorage();
@@ -49,7 +49,7 @@ test('passe: nível 0 grátis + 15 níveis alternando, 500 RC e o efeito no últ
   // Nível 0: resgata sem nenhuma abóbora.
   assert.equal((await platform.passeResgatar(0)).tipo, 'moeda');
   assert.equal(platform.getUser().moedas, 500);
-  assert.equal(EFEITOS_TESTE.find((x) => x.id === 'hw-neon').nome, 'Halloween 2026');
+  assert.equal(EFEITOS.find((x) => x.id === 'hw-neon').nome, 'Halloween 2026');
   await assert.rejects(platform.passeResgatar(1), /ainda não chegou a este nível/);
   await platform.adminPasse('Mestre', 'aboboras', 250);
   await assert.rejects(platform.passeResgatar(1), /trilha premium/);

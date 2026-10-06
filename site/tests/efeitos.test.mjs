@@ -33,8 +33,8 @@ test('efeitos: automático dá o reflexo ao apoiador, "nenhum" tira, id desconhe
 });
 
 test('efeitos: os de teste têm CSS e não estão na lista pública', () => {
-  assert.equal(EFEITOS_TESTE.length, 11);
-  assert.equal(EFEITOS_TESTE.filter((e) => /Halloween/.test(e.tema)).length, 6);
+  assert.equal(EFEITOS_TESTE.length, 9);
+  assert.equal(EFEITOS_TESTE.filter((e) => /Halloween/.test(e.tema)).length, 4);
   assert.equal(EFEITOS_TESTE.filter((e) => /roxo/.test(e.tema)).length, 1);
   assert.equal(EFEITOS_TESTE.filter((e) => /Twitch/.test(e.tema)).length, 3);
   for (const e of EFEITOS_TESTE) {
