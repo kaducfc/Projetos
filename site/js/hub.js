@@ -257,7 +257,7 @@ function renderPainel() {
 
   const lista = top?.lista?.filter((j) => j.valor > 0).slice(0, 3) || [];
   const podio = lista.length
-    ? lista.map((j) => `<li class="rp-top p${j.pos}${j.eu ? ' eu' : ''}"><span class="rp-pos">${j.pos}</span>${avatarHtml(j.avatar, j.username, 34, `elo-${j.elo}`)}
+    ? lista.map((j) => `<li class="rp-top p${j.pos}${j.eu ? ' eu' : ''}"><span class="rp-pos">${j.pos}</span>${avatarHtml(j.avatar, j.username, 34, `elo-${j.elo}`, j.moldura)}
         <span class="rp-nome">${nickHtml(j.username, j.apoiador, j.efeito)}</span><span class="rp-pts">${conta(j.valor, true)}<small>PDR</small></span></li>`).join('')
     : `<li class="rp-vazio">${top ? 'Ninguém ganhou PDR hoje ainda. Seja o primeiro!' : platform.cloudEnabled() ? 'Carregando…' : 'O ranking aparece aqui.'}</li>`;
 

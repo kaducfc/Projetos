@@ -208,6 +208,8 @@ async function setUser(sb, authUser) {
     const { data: apoio } = await sb.from('site_profiles').select('apoio_total').eq('id', authUser.id).maybeSingle();
     // Efeito escolhido no nome (banco sem 0035_efeito_nome.sql: automático).
     const { data: fx } = await sb.from('site_profiles').select('efeito').eq('id', authUser.id).maybeSingle().then((r) => r, () => ({ data: null }));
+    // Moldura do ícone (banco sem 0049_molduras.sql: sem moldura).
+    const { data: md } = await sb.from('site_profiles').select('moldura').eq('id', authUser.id).maybeSingle().then((r) => r, () => ({ data: null }));
     // Elo da ranqueada (null = ainda não jogou ou banco sem 0015_ranqueada_pdr.sql).
     const { data: rank } = await sb.rpc('site_rk_eu').then((r) => r, () => ({ data: null }));
     // Rift Coins (null = banco sem 0038_moedas.sql: o indicador some).
@@ -224,6 +226,7 @@ async function setUser(sb, authUser) {
       elo: rank?.elo || null,
       apoioTotal: Number(apoio?.apoio_total || 0),
       efeito: fx?.efeito || null,
+      moldura: md?.moldura || null,
       moedas: carteira && carteira.saldo != null ? Number(carteira.saldo) : null,
       // Como a conta entra: 'email' (senha) e/ou 'google'.
       providers: app.providers || (app.provider ? [app.provider] : ['email']),
@@ -440,6 +443,22 @@ export async function setAvatar(avatar) {
     throw friendly(error);
   }
   user = { ...user, avatar };
+  emit({ type: 'auth', user });
+  return user;
+}
+
+// Moldura do ícone: null (sem moldura) ou o id de uma moldura liberada.
+export async function setMoldura(moldura) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { error } = await sb.rpc('site_set_moldura', { moldura });
+  if (error) {
+    if (/moldura_bloqueada/.test(error.message)) throw new Error('Essa moldura ainda não foi liberada para a sua conta.');
+    if (/invalid_moldura/.test(error.message)) throw new Error('Essa moldura não está disponível. Recarregue a página e tente de novo.');
+    if (/site_set_moldura|schema cache/.test(error.message)) throw new Error('As molduras ainda não estão ativas no servidor.');
+    throw friendly(error);
+  }
+  user = { ...user, moldura };
   emit({ type: 'auth', user });
   return user;
 }

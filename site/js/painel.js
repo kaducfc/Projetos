@@ -11,6 +11,7 @@ import { nomeRecompensa, tipoTexto, codigoBonito } from '../shared/recompensas.j
 import { passeHtml } from '../shared/passe.js';
 import { ligarCompraPremium } from '../shared/passe-compra.js';
 import { EFEITOS, EFEITOS_TESTE } from '../shared/efeitos.js';
+import { MOLDURAS_TESTE } from '../shared/molduras.js';
 import { EXCLUSIVOS_TESTE, avatarHtml } from '../shared/avatar.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
@@ -377,6 +378,17 @@ function testeIcones() {
     </article>`).join('')}</div>`;
 }
 
+// Molduras em teste, em volta de um ícone de exemplo, nos tamanhos do site.
+function testeMolduras() {
+  if (!MOLDURAS_TESTE.length) return '';
+  return `<h3 class="t-tit">Molduras em teste (só você vê)</h3><div class="cards t-grade">${MOLDURAS_TESTE.map((m) => `<article class="card t-efeito">
+      <div class="t-ef-cab"><h3>${esc(m.nome)}</h3><span class="p-badge">Moldura</span></div>
+      <div class="t-ic-linha" style="padding:22px 26px;gap:34px">${avatarHtml('mascote', m.nome, 104, 'elo-ouro', m.id)}${avatarHtml('mascote', m.nome, 64, '', m.id)}${avatarHtml('mascote', m.nome, 34, 'elo-diamante', m.id)}${avatarHtml('mascote', m.nome, 22, '', m.id)}</div>
+      <p class="c-sub">A imagem é desenhada 40% maior que o ícone (buraco central de ~71%). Aparece no perfil, ranking e barra do site.</p>
+      <p class="c-sub">Id: <code>${esc(m.id)}</code> <button type="button" class="p-link" data-t-copiar="${esc(m.id)}">copiar</button></p>
+    </article>`).join('')}</div>`;
+}
+
 // Passe de Batalha (em teste): o administrador joga o passe com a própria conta.
 let ps = null; // platform.passeEstado()
 let psErro = '';
@@ -426,7 +438,7 @@ function abaTeste() {
         <li>Depois de aprovar, me diga quais ficam e eu os movo para a lista pública (o jogador que tiver o código já passa a poder selecionar).</li>
       </ul>
     </div>
-    ${testeIcones()}
+    ${testeIcones()}${testeMolduras()}
     <div data-t-previas>${testeCartoes(testeNick)}</div>
   </section>`;
 }

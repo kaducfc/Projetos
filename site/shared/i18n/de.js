@@ -934,6 +934,8 @@ export default {
   "Entra com E-mail e senha": "Meldet sich mit E-Mail und Passwort an",
   "Entra com Google": "Meldet sich mit Google an",
   "✦ Efeito": "✦ Effekt",
+  "✦ Moldura": "✦ Rahmen",
+  "Sem moldura": "Kein Rahmen",
   "Sem efeito": "Kein Effekt",
   "Apoiador": "Unterstützer",
   "Streamer": "Streamer",

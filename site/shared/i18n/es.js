@@ -934,6 +934,8 @@ export default {
   "Entra com E-mail e senha": "Entra con correo y contraseña",
   "Entra com Google": "Entra con Google",
   "✦ Efeito": "✦ Efecto",
+  "✦ Moldura": "✦ Marco",
+  "Sem moldura": "Sin marco",
   "Sem efeito": "Sin efecto",
   "Apoiador": "Apoyo",
   "Streamer": "Streamer",

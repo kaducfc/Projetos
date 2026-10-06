@@ -270,3 +270,7 @@ O site está em português (padrão) e tem um seletor de idioma na barra do topo
 Rode `supabase/migrations/0043_painel_apoio_passe.sql` e republique a Edge Function `passe-premium-criar` (agora grava `valor_brl`). Na aba **Apoio** do painel, doações e compras do Passe Premium entram no mesmo total (Stripe em dólar convertido pela cotação `USD_BRL`); o seletor **Mostrar** isola só doações ou só Passe Premium. Quem compra o passe não vira "apoiador" (sem efeito dourado).
 
 Para excluir um pagamento não concluído (aguardando, recusado ou cancelado) direto na lista da aba Apoio, rode `0044_painel_apoio_excluir.sql`. Aprovados e estornados não podem ser excluídos.
+
+## Molduras (cosmético)
+
+Imagem que envolve o ícone do jogador. Rode `supabase/migrations/0049_molduras.sql`. A arte fica em `shared/assets/molduras/<id>.webp` (quadrada, fundo transparente, buraco central de ~71% da largura; é desenhada 40% maior que o ícone) e cada moldura é declarada em `shared/molduras.js` (`MOLDURAS_TESTE` = só administrador, aba Teste). Quem pode equipar é decidido no servidor (`site_recompensas`, tipo `moldura`); a escolha fica em Meu perfil → Moldura e aparece no perfil, ranking e barra do site. Também pode ser recompensa de nível do passe (`tipo = 'moldura'`).

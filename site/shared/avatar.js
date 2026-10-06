@@ -2,6 +2,8 @@
 // (shared/assets/icones). Guardado no perfil como 'mascote' ou 'icone:<id>'.
 // Dois são especiais, de apoiador: só o servidor deixa usar (0014_icones.sql).
 
+import { srcMoldura } from './molduras.js';
+
 const MASCOTE = '/shared/assets/marca/mascote-120.png?v=2';
 const PASTA = '/shared/assets/icones';
 
@@ -53,7 +55,14 @@ const srcDe = (id) => (id === 'mascote' ? MASCOTE : TODOS.has(id) ? `${PASTA}/${
 
 // <img> do ícone. Sem ícone escolhido (ou com um que não existe mais),
 // mostra a inicial do nome.
-export function avatarHtml(avatar, nome = '', size = 32, extra = '') {
+export function avatarHtml(avatar, nome = '', size = 32, extra = '', moldura = '') {
+  const miolo = avatarMiolo(avatar, nome, size, extra);
+  const src = srcMoldura(moldura);
+  if (!src) return miolo;
+  return `<span class="av-wrap" style="width:${size}px;height:${size}px">${miolo}<img class="av-moldura" src="${src}" alt="" decoding="async" onerror="this.remove()" /></span>`;
+}
+
+function avatarMiolo(avatar, nome, size, extra) {
   const inicial = (nome || '?').trim().charAt(0).toUpperCase();
   const style = `width:${size}px;height:${size}px;font-size:${Math.round(size * 0.45)}px`;
   const src = avatar ? srcDe(avatar) : '';

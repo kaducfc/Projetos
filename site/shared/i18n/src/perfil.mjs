@@ -6,6 +6,8 @@ export default [
   ['Entra com E-mail e senha', 'Signs in with email and password', 'Meldet sich mit E-Mail und Passwort an', 'Entra con correo y contraseña', 'Accede con e-mail e password', 'Se connecte avec e-mail et mot de passe'],
   ['Entra com Google', 'Signs in with Google', 'Meldet sich mit Google an', 'Entra con Google', 'Accede con Google', 'Se connecte avec Google'],
   ['✦ Efeito', '✦ Effect', '✦ Effekt', '✦ Efecto', '✦ Effetto', '✦ Effet'],
+  ['✦ Moldura', '✦ Frame', '✦ Rahmen', '✦ Marco', '✦ Cornice', '✦ Cadre'],
+  ['Sem moldura', 'No frame', 'Kein Rahmen', 'Sin marco', 'Nessuna cornice', 'Aucun cadre'],
   ['Sem efeito', 'No effect', 'Kein Effekt', 'Sin efecto', 'Nessun effetto', 'Aucun effet'],
   ['Apoiador', 'Supporter', 'Unterstützer', 'Apoyo', 'Sostenitore', 'Soutien'],
   ['Streamer', 'Streamer', 'Streamer', 'Streamer', 'Streamer', 'Streamer'],

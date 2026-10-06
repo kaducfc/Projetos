@@ -10,6 +10,7 @@ import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
 import { EFEITOS, EFEITOS_TESTE, EQUIPAVEIS_TESTE, efeitoAtivo, efeitoPorId } from '../shared/efeitos.js';
+import { MOLDURAS, MOLDURAS_TESTE } from '../shared/molduras.js';
 import { localeAtual } from '../shared/i18n.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
@@ -46,7 +47,7 @@ function cabecalho(u) {
   const contas = u.providers.map((p) => (p === 'google' ? 'Google' : 'E-mail e senha')).join(' + ');
   return `<section class="pf-card pf-head">
     <button type="button" class="pf-avatar" data-act="icone" title="Trocar ícone">
-      ${avatarHtml(u.avatar, u.username, 104, u.elo ? `elo-${u.elo}` : '')}
+      ${avatarHtml(u.avatar, u.username, 104, u.elo ? `elo-${u.elo}` : '', u.moldura)}
       <span class="pf-avatar-edit">Trocar</span>
     </button>
     <div class="pf-who">
@@ -65,6 +66,31 @@ let efeitoInfo = null; // id do efeito travado que está mostrando o requisito
 let efeitosGanhos = new Set(); // efeitos ganhos por código
 
 const possuiEfeito = (u, id) => (id === 'reflexo' ? u.apoioTotal > 0 : efeitosGanhos.has(id));
+
+// Moldura do ícone: só aparece quando a conta tem alguma moldura liberada.
+let molduraAberta = false;
+let molduras = new Set(); // molduras que a conta ganhou
+
+function cardMoldura(u) {
+  const minhas = [...MOLDURAS, ...MOLDURAS_TESTE].filter((m) => molduras.has(m.id));
+  if (!minhas.length) return '';
+  const escolhida = u.moldura || 'nenhuma';
+  const opcao = (m) => `<li class="pf-ef${escolhida === m.id ? ' on' : ''}">
+      <span class="pf-mold-previa">${m.id === 'nenhuma' ? avatarHtml(u.avatar, u.username, 64, u.elo ? `elo-${u.elo}` : '') : avatarHtml(u.avatar, u.username, 64, u.elo ? `elo-${u.elo}` : '', m.id)}</span>
+      <span class="pf-ef-nome">${esc(m.nome)}</span>
+      <button type="button" class="${escolhida === m.id ? 'btn-ghost' : 'btn-primary'} pf-ef-btn" data-act="moldura-escolher" data-mol="${m.id}"${escolhida === m.id ? ' disabled' : ''}>${escolhida === m.id ? 'Selecionado' : 'Selecionar'}</button></li>`;
+  const atual = minhas.find((m) => m.id === u.moldura);
+  return `<section class="pf-card pf-efeito">
+    <div class="pf-ef-topo">
+      <div>
+        <p class="eyebrow">✦ Moldura</p>
+        <p class="pf-apoio-txt pf-ef-atual"><span class="pf-ef-rotulo">${esc(atual ? atual.nome : 'Sem moldura')}</span></p>
+      </div>
+      <button type="button" class="btn-ghost pf-ef-abrir" data-act="moldura-abrir" aria-expanded="${molduraAberta}">${molduraAberta ? 'Fechar' : 'Abrir'}</button>
+    </div>
+    ${molduraAberta ? `<ul class="pf-ef-lista">${opcao({ id: 'nenhuma', nome: 'Sem moldura' })}${minhas.map(opcao).join('')}</ul>` : ''}
+  </section>`;
+}
 
 function cardEfeito(u) {
   const atual = efeitoAtivo(u.efeito, u.apoioTotal > 0);
@@ -217,7 +243,7 @@ function render() {
     </section>`;
     return;
   }
-  root.innerHTML = `${cabecalho(u)}${cardEfeito(u)}${cardMinhaRanqueada(status)}${cardApoio(u)}${cardCodigo()}${resumo()}${historico()}${conta(u)}`;
+  root.innerHTML = `${cabecalho(u)}${cardMoldura(u)}${cardEfeito(u)}${cardMinhaRanqueada(status)}${cardApoio(u)}${cardCodigo()}${resumo()}${historico()}${conta(u)}`;
 }
 
 let carregando = true;
@@ -227,6 +253,7 @@ async function carregar() {
     let recs;
     [resultados, status, recs] = await Promise.all([platform.listResults({ limit: 500 }), platform.rankedStatus(), platform.minhasRecompensas()]);
     efeitosGanhos = new Set(recs.filter((r) => r.tipo === 'efeito').map((r) => r.chave));
+    molduras = new Set(recs.filter((r) => r.tipo === 'moldura').map((r) => r.chave));
   }
   carregando = false;
   render();
@@ -306,6 +333,7 @@ async function escolherIcone() {
   [selos, vagas, recompensas] = await Promise.all([platform.meusSelos(), platform.pioneirosVagas(), platform.minhasRecompensas()]);
   ganhos = new Set(recompensas.filter((r) => r.tipo === 'icone').map((r) => r.chave));
   efeitosGanhos = new Set(recompensas.filter((r) => r.tipo === 'efeito').map((r) => r.chave));
+  molduras = new Set(recompensas.filter((r) => r.tipo === 'moldura').map((r) => r.chave));
   const g = el.querySelector('[data-grade]');
   if (g) g.innerHTML = grade(selos, ganhos);
 }
@@ -336,6 +364,7 @@ function resgatarCodigo() {
       const linhas = recompensas.map((r) => `<li><span class="pf-rec-tipo">${esc(tipoTexto(r.tipo))}</span> <b>${esc(nomeRecompensa(r.tipo, r.chave))}</b>${novaChave.has(`${r.tipo}:${r.chave}`) ? '' : ' <small>(você já tinha)</small>'}</li>`).join('');
       const temIcone = recompensas.some((r) => r.tipo === 'icone');
       recompensas.filter((r) => r.tipo === 'efeito').forEach((r) => efeitosGanhos.add(r.chave));
+      recompensas.filter((r) => r.tipo === 'moldura').forEach((r) => molduras.add(r.chave));
       el.querySelector('.muted.small')?.remove();
       form.outerHTML = `<div class="pf-resgate-ok" role="status">
         <p class="pf-info-tit">🎉 <b>Código resgatado!</b></p>
@@ -402,6 +431,17 @@ root.addEventListener('click', async (e) => {
   if (act === 'entrar') openAuthModal('login');
   if (act === 'icone') escolherIcone();
   if (act === 'codigo') resgatarCodigo();
+  if (act === 'moldura-abrir') { molduraAberta = !molduraAberta; render(); }
+  if (act === 'moldura-escolher') {
+    b.disabled = true;
+    try {
+      await platform.setMoldura(b.dataset.mol === 'nenhuma' ? null : b.dataset.mol);
+      toast('Moldura atualizada!');
+    } catch (err) {
+      toast(err.message);
+      render();
+    }
+  }
   if (act === 'efeito-abrir') { efeitoAberto = !efeitoAberto; efeitoInfo = null; render(); }
   if (act === 'efeito-ver' || act === 'efeito-escolher') {
     const id = b.dataset.ef;
