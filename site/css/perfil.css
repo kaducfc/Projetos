@@ -236,3 +236,7 @@ button.btn-primary:disabled { opacity: 0.6; cursor: default; }
 .pf-mold-nada { display: grid; place-items: center; width: 96px; height: 96px; font-size: 34px; color: #6d6755; }
 .pf-ef .pf-ef-comprar { cursor: pointer; }
 .pf-ef .pf-ef-comprar.sem-saldo { opacity: 0.5; background: #3a3630; color: #bdb6a4; box-shadow: none; }
+
+/* Com moldura, a imagem passa da borda do ícone: reserva espaço para ela não cobrir o texto. */
+.pf-avatar:has(.av-moldura) { margin: 12px 44px 12px 16px; }
+@media (max-width: 560px) { .pf-avatar:has(.av-moldura) { margin: 10px 38px 10px 14px; } }
