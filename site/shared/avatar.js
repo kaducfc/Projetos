@@ -41,6 +41,7 @@ export const EXCLUSIVOS = [
 export const EXCLUSIVOS_TESTE = [
   { id: 'exc-halloween-2026', nome: 'Halloween 2026' },
   { id: 'exc-poro-assombrado', nome: 'Poro Assombrado' },
+  { id: 'exc-abobora-sombria', nome: 'Abóbora Sombria' },
 ];
 
 export const AVATARES = ['mascote', ...ICONES.map((i) => `icone:${i.id}`)];
