@@ -12,6 +12,7 @@ export const MOLDURAS = [];
 export const MOLDURAS_TESTE = [
   { id: 'hw-moldura-1', nome: 'Vampito', k: 0.5879, tema: 'Halloween · asas de morcego' },
   { id: 'hw-moldura-2', nome: 'Abóboras e Espinhos', k: 0.5962, tema: 'Halloween · abóboras' },
+  { id: 'hw-moldura-3', nome: 'Correntes e Caveiras', k: 0.591, tema: 'Halloween · correntes e caveiras' },
 ];
 
 const TODAS = new Map([...MOLDURAS, ...MOLDURAS_TESTE].map((m) => [m.id, m]));
@@ -21,6 +22,6 @@ export const srcMoldura = (id) => (TODAS.has(id) ? `/shared/assets/molduras/${id
 // Largura da imagem (em % do ícone) e deslocamento para centralizar.
 export function geometriaMoldura(id) {
   const k = TODAS.get(id)?.k || 0.714;
-  const w = 100 / (k * 1.07);
+  const w = 100 / (k * (TODAS.get(id)?.sobra || 1.07));
   return { w, off: -(w - 100) / 2 };
 }
