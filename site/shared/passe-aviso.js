@@ -16,7 +16,7 @@ function juntar(a, b) {
   return { ...b, ganhou: a.ganhou + b.ganhou, nivelAntes: a.nivelAntes, progressoAntes: a.progressoAntes ?? (a.progresso - a.ganhou) };
 }
 
-export function mostrarAbobora({ ganhou, nivelAntes, nivel, progresso, por, niveis }) {
+export function mostrarAbobora({ ganhou, nivelAntes, nivel, progresso, por, niveis, hoje, limite }) {
   atual?.remove();
   const subiu = nivel > nivelAntes;
   const completo = nivel >= niveis;
@@ -31,6 +31,7 @@ export function mostrarAbobora({ ganhou, nivelAntes, nivel, progresso, por, nive
     <div class="pa-txt">
       <b class="pa-qtd">+${ganhou} ${ganhou === 1 ? 'abóbora' : 'abóboras'}</b>
       <span class="pa-sub">${subiu ? `Subiu para o nível ${nivel}!` : completo ? 'Passe completo!' : `Passe de Batalha · nível ${nivel}`}</span>
+      ${hoje != null && limite ? `<span class="pa-dia">Hoje: ${hoje}/${limite}</span>` : ''}
       <div class="pa-barra"><i style="width:${reduzido ? pctFim : pctIni}%"></i></div>
       <a class="pa-ir" href="/passe/">Ir para o passe</a>
     </div>`;

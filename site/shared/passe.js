@@ -63,6 +63,7 @@ export function passeHtml(e, { extra = '' } = {}) {
       </div>
       <div class="ps-numeros">
         <div><b>${e.nivel}<small>/${e.passe.niveis}</small></b><span>nível do passe</span></div>
+        <div class="ps-dia"><b>${fmt(e.hoje)}<small>/${fmt(e.passe.limite_dia)}</small></b><span>abóboras hoje (limite diário)</span></div>
       </div>
     </div>
     <div class="ps-progresso">

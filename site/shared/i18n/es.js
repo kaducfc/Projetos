@@ -710,6 +710,8 @@ export default {
   "Passe de Batalha": "Pase de batalla",
   "Passe grátis": "Pase gratis",
   "★ Passe premium": "★ Pase Premium",
+  "abóboras hoje (limite diário)": "calabazas hoy (límite diario)",
+  "Hoje: {num}/{num2}": "Hoy: {num}/{num2}",
   "nível do passe": "nivel del pase",
   "✓ Completo": "✓ Completo",
   "★ Premium": "★ Premium",

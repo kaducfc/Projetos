@@ -710,6 +710,8 @@ export default {
   "Passe de Batalha": "Battle Pass",
   "Passe grátis": "Kostenloser Pass",
   "★ Passe premium": "★ Premium-Pass",
+  "abóboras hoje (limite diário)": "Kürbisse heute (Tageslimit)",
+  "Hoje: {num}/{num2}": "Heute: {num}/{num2}",
   "nível do passe": "Stufe des Passes",
   "✓ Completo": "✓ Abgeschlossen",
   "★ Premium": "★ Premium",

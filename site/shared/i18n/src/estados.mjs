@@ -131,6 +131,8 @@ export default [
   ['Passe de Batalha', 'Battle Pass', 'Battle Pass', 'Pase de batalla', 'Pass battaglia', 'Passe de combat'],
   ['Passe grátis', 'Free pass', 'Kostenloser Pass', 'Pase gratis', 'Pass gratuito', 'Passe gratuit'],
   ['★ Passe premium', '★ Premium Pass', '★ Premium-Pass', '★ Pase Premium', '★ Pass Premium', '★ Passe Premium'],
+  ['abóboras hoje (limite diário)', 'pumpkins today (daily limit)', 'Kürbisse heute (Tageslimit)', 'calabazas hoy (límite diario)', 'zucche oggi (limite giornaliero)', 'citrouilles aujourd’hui (limite quotidienne)'],
+  ['Hoje: {num}/{num2}', 'Today: {num}/{num2}', 'Heute: {num}/{num2}', 'Hoy: {num}/{num2}', 'Oggi: {num}/{num2}', 'Aujourd’hui : {num}/{num2}'],
   ['nível do passe', 'pass level', 'Stufe des Passes', 'nivel del pase', 'livello del pass', 'niveau du passe'],
   ['✓ Completo', '✓ Complete', '✓ Abgeschlossen', '✓ Completo', '✓ Completato', '✓ Terminé'],
   ['★ Premium', '★ Premium', '★ Premium', '★ Premium', '★ Premium', '★ Premium'],

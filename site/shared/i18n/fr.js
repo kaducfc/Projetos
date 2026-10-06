@@ -710,6 +710,8 @@ export default {
   "Passe de Batalha": "Passe de combat",
   "Passe grátis": "Passe gratuit",
   "★ Passe premium": "★ Passe Premium",
+  "abóboras hoje (limite diário)": "citrouilles aujourd’hui (limite quotidienne)",
+  "Hoje: {num}/{num2}": "Aujourd’hui : {num}/{num2}",
   "nível do passe": "niveau du passe",
   "✓ Completo": "✓ Terminé",
   "★ Premium": "★ Premium",

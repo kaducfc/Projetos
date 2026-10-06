@@ -11,6 +11,7 @@ import {
   fmtAltura, proporcao, quadrado,
 } from './logic.js';
 import { localeAtual } from '../../../shared/i18n.js';
+import { liberarAbobora } from '../../../shared/passe-aviso.js';
 
 const GAME_ID = 'escala';
 const NAME = 'Na Medida';
@@ -391,6 +392,7 @@ function confirmar() {
     save.livre.jogadas += 1;
     save.livre.soma += rodada.pontos;
     save.livre.melhor = Math.max(save.livre.melhor, rodada.pontos);
+    platform.passeRodadaLivre(GAME_ID).then(() => liberarAbobora()); // 5 abóboras do passe por rodada
   }
   guardar(modo === 'diario' && diaFim());
   render();

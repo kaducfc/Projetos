@@ -710,6 +710,8 @@ export default {
   "Passe de Batalha": "Battle Pass",
   "Passe grátis": "Free pass",
   "★ Passe premium": "★ Premium Pass",
+  "abóboras hoje (limite diário)": "pumpkins today (daily limit)",
+  "Hoje: {num}/{num2}": "Today: {num}/{num2}",
   "nível do passe": "pass level",
   "✓ Completo": "✓ Complete",
   "★ Premium": "★ Premium",

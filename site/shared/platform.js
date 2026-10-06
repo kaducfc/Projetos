@@ -1249,8 +1249,23 @@ async function anunciarPasse(sb) {
   if (!antes) return;
   const ganhou = e.hoje >= antes.hoje ? e.hoje - antes.hoje : e.hoje;
   if (ganhou > 0 && antes.nivel < e.passe.niveis) {
-    emit({ type: 'passe', ganhou, nivelAntes: antes.nivel, nivel: e.nivel, progresso: e.progresso, por: e.passe.abobora_por_nivel, niveis: e.passe.niveis });
+    emit({ type: 'passe', ganhou, nivelAntes: antes.nivel, nivel: e.nivel, progresso: e.progresso, por: e.passe.abobora_por_nivel, niveis: e.passe.niveis, hoje: e.hoje, limite: e.passe.limite_dia });
   }
+}
+
+// Modo Livre do jogo dos Tamanhos: cada rodada dá as abóboras de uma partida (o servidor
+// confere o limite diário). Anuncia o ganho como as demais partidas.
+export async function passeRodadaLivre(gameId) {
+  const sb = await getClient();
+  if (!sb || !user) return;
+  passePromessa = (async () => {
+    try {
+      const { error } = await sb.rpc('site_passe_livre', { jogo: gameId });
+      if (error) return;
+      await anunciarPasse(sb);
+    } catch { /* sem passe: o jogo segue normal */ }
+  })();
+  return passePromessa;
 }
 
 export async function recordResult(gameId, { score = null, summary = {} } = {}) {
