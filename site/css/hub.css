@@ -332,8 +332,10 @@ body:has(.hx-hero) { overflow-x: clip; }
 .hp-link:hover { border-color: rgba(255, 138, 31, 0.6); background: rgba(255, 138, 31, 0.1); }
 .hp-nome { font-size: 12px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; color: #ffa95a; white-space: nowrap; }
 .hp-nivel { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; }
-.hp-barra { flex: 1; height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; min-width: 60px; }
+.hp-barra-wrap { position: relative; flex: 1; min-width: 60px; }
+.hp-barra { display: block; height: 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.hp-ponta { position: absolute; top: 50%; width: 26px; height: 26px; transform: translate(-50%, -50%); pointer-events: none; filter: drop-shadow(0 0 5px rgba(80, 220, 255, 0.75)); transition: left 0.5s ease; }
 .hp-barra i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #e8541a, #ffd45a); }
 .hp-prox { font-size: 12px; color: #a29a89; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .hp-ir { font-size: 12.5px; font-weight: 800; color: #f5cf5a; white-space: nowrap; }
-@media (max-width: 560px) { .hp-link { flex-wrap: wrap; gap: 6px 12px; } .hp-barra { order: 5; flex-basis: 100%; } .hp-ir { margin-left: auto; } }
+@media (max-width: 560px) { .hp-link { flex-wrap: wrap; gap: 6px 12px; } .hp-barra-wrap { order: 5; flex-basis: 100%; } .hp-ir { margin-left: auto; } }

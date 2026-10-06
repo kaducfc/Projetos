@@ -367,7 +367,7 @@ async function renderFaixaPasse() {
   setHtml(faixaPasse, `<a class="hp-link" href="passe/">
       <span class="hp-nome">Passe de Batalha</span>
       <span class="hp-nivel">Nível ${e.nivel}</span>
-      <span class="hp-barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span>
+      <span class="hp-barra-wrap"><span class="hp-barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><img class="hp-ponta" style="left:${pct}%" src="/shared/assets/passe/abobora-64.webp" srcset="/shared/assets/passe/abobora-128.webp 2x" width="26" height="26" alt="" /></span>
       <span class="hp-prox">${completo ? '✓ Completo' : `${e.progresso}/${e.passe.abobora_por_nivel}`}</span>
       <span class="hp-ir">Ir para o passe →</span>
     </a>`);
