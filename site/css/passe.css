@@ -20,19 +20,19 @@
 .ps-lv { font-size: 13px; font-weight: 800; color: #fff; white-space: nowrap; }
 .ps-lv-prox { color: #a29a89; }
 .ps-barra { height: 16px; }
-.ps-trilha-niveis { list-style: none; margin: 8px 0 0; padding: 8px 0 4px; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 20px 8px; }
-.ps-nivel { position: relative; display: grid; justify-items: center; align-content: start; gap: 8px; padding: 12px 4px 10px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.03); text-align: center; min-height: 138px; min-width: 0; }
+.ps-trilha-niveis { list-style: none; margin: 8px 0 0; padding: 8px 0 4px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 30px 14px; }
+.ps-nivel { position: relative; display: grid; justify-items: center; align-content: start; gap: 8px; padding: 12px 4px 10px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.03); text-align: center; min-height: 200px; min-width: 0; }
 .ps-nivel.ps-premium { border-color: rgba(245, 207, 90, 0.45); background: linear-gradient(180deg, rgba(245, 207, 90, 0.12), rgba(245, 207, 90, 0.03)); }
 .ps-num { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); min-width: 24px; padding: 1px 6px; text-align: center; border-radius: 999px; background: #1d1a14; border: 1px solid rgba(255, 255, 255, 0.25); font-weight: 800; font-size: 13px; }
 .ps-trilha { margin-top: 6px; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 800; color: #9aa59a; }
 .ps-premium .ps-trilha { color: var(--ps-ouro); }
-.ps-rec { display: grid; justify-items: center; gap: 3px; min-height: 52px; align-content: center; max-width: 100%; }
-.ps-rec img { width: 30px; height: 30px; }
+.ps-rec { display: grid; justify-items: center; gap: 5px; min-height: 96px; align-content: center; max-width: 100%; }
+.ps-rec img { width: 48px; height: 48px; }
 .ps-rec-icone .avatar img { width: 100%; height: 100%; }
-.ps-rec .av-moldura-sozinha { width: 62px; height: 62px; }
-.ps-rec b { font-size: 12.5px; color: #fff; }
-.ps-rec small { font-size: 10px; color: #8f8979; }
-.ps-rec-efeito .nick { font-size: 12.5px; text-align: center; line-height: 1.15; }
+.ps-rec .av-moldura-sozinha { width: 100px; height: 100px; }
+.ps-rec b { font-size: 15px; color: #fff; }
+.ps-rec small { font-size: 12px; color: #8f8979; }
+.ps-rec-efeito .nick { font-size: 16px; text-align: center; line-height: 1.15; }
 .ps-bloqueado .ps-rec, .ps-sem-premium .ps-rec { opacity: 0.55; filter: grayscale(0.4); }
 .ps-pronto { border-color: var(--ps-ouro); box-shadow: 0 0 0 1px rgba(245, 207, 90, 0.5), 0 0 16px rgba(245, 207, 90, 0.25); }
 .ps-feito { opacity: 0.8; }
@@ -47,8 +47,9 @@
 .ps-testebox > span { font-size: 12.5px; color: #c4b5fd; font-weight: 700; margin-right: 4px; }
 
 /* Telas menores: 16 recompensas em 4 ou 2 colunas */
-@media (max-width: 980px) { .ps-trilha-niveis { grid-template-columns: repeat(4, minmax(0, 1fr)); } .ps-rec b { font-size: 13px; } }
-@media (max-width: 480px) { .ps-trilha-niveis { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 6px; } .ps-rec b { font-size: 11.5px; } .ps-trilha { font-size: 9px; } .ps-progresso { gap: 8px; } }
+@media (max-width: 980px) { .ps-trilha-niveis { gap: 26px 8px; } .ps-rec b { font-size: 13px; } .ps-rec img { width: 38px; height: 38px; } .ps-rec .av-moldura-sozinha { width: 80px; height: 80px; } }
+@media (max-width: 700px) { .ps-trilha-niveis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 10px; } }
+@media (max-width: 480px) { .ps-trilha-niveis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 6px; } .ps-rec b { font-size: 11.5px; } .ps-trilha { font-size: 9px; } .ps-progresso { gap: 8px; } }
 
 /* A abóbora acompanha a ponta da barra */
 .ps-barra-wrap { position: relative; }

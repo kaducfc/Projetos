@@ -16,17 +16,17 @@ const aboboraImg = (tam = 18) => `<img class="ps-abobora" src="${ABOBORA_IMG}" s
 // Como cada recompensa aparece no cartão do nível.
 function recompensaHtml(r) {
   if (r.tipo === 'moeda') {
-    return `<span class="ps-rec ps-rec-moeda"><img src="/shared/assets/moeda/rc-48.webp" width="34" height="34" alt="" /><b>${fmt(r.chave)} RC</b></span>`;
+    return `<span class="ps-rec ps-rec-moeda"><img src="/shared/assets/moeda/rc-48.webp" width="48" height="48" alt="" /><b>${fmt(r.chave)} RC</b></span>`;
   }
   if (r.tipo === 'efeito') {
     const fx = [...EFEITOS, ...EFEITOS_TESTE].find((e) => e.id === r.chave);
     return `<span class="ps-rec ps-rec-efeito"><span class="nick fx ${esc(fx?.classe || '')}">${esc(fx?.nome || nomeRecompensa('efeito', r.chave))}</span><small>Efeito no nome</small></span>`;
   }
   if (r.tipo === 'icone') {
-    return `<span class="ps-rec ps-rec-icone">${avatarHtml(`icone:${r.chave}`, '', 52)}<b>${esc(nomeRecompensa(r.tipo, r.chave))}</b><small>Ícone</small></span>`;
+    return `<span class="ps-rec ps-rec-icone">${avatarHtml(`icone:${r.chave}`, '', 84)}<b>${esc(nomeRecompensa(r.tipo, r.chave))}</b><small>Ícone</small></span>`;
   }
   if (r.tipo === 'moldura') {
-    return `<span class="ps-rec ps-rec-icone">${molduraHtml(r.chave, 62)}<b>${esc(nomeRecompensa(r.tipo, r.chave))}</b><small>Moldura</small></span>`;
+    return `<span class="ps-rec ps-rec-icone">${molduraHtml(r.chave, 100)}<b>${esc(nomeRecompensa(r.tipo, r.chave))}</b><small>Moldura</small></span>`;
   }
   return `<span class="ps-rec"><b>${esc(nomeRecompensa(r.tipo, r.chave))}</b><small>${r.tipo === 'icone' ? 'Ícone' : 'Recompensa'}</small></span>`;
 }
