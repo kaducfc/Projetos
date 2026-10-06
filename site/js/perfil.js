@@ -10,7 +10,7 @@ import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
 import { EFEITOS, EFEITOS_TESTE, EQUIPAVEIS_TESTE, efeitoAtivo, efeitoPorId } from '../shared/efeitos.js';
-import { MOLDURAS, MOLDURAS_TESTE } from '../shared/molduras.js';
+import { MOLDURAS, MOLDURAS_TESTE, ELOS_MOLDURAS } from '../shared/molduras.js';
 import { localeAtual } from '../shared/i18n.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
@@ -71,20 +71,23 @@ const possuiEfeito = (u, id) => (id === 'reflexo' ? u.apoioTotal > 0 : efeitosGa
 let molduraAberta = false;
 let molduras = new Set(); // molduras que a conta ganhou
 
+// "Rank" é uma moldura só, que mostra sempre a do elo atual do jogador.
+const nomeMoldura = (m, u) => (m.id === 'rank' ? `Rank · ${ELOS_MOLDURAS.find((x) => x.elo === (u.elo || 'ferro'))?.nome || 'Ferro'}` : m.nome);
+
 function cardMoldura(u) {
   const minhas = [...MOLDURAS, ...MOLDURAS_TESTE].filter((m) => molduras.has(m.id));
   if (!minhas.length) return '';
   const escolhida = u.moldura || 'nenhuma';
   const opcao = (m) => `<li class="pf-ef${escolhida === m.id ? ' on' : ''}">
-      <span class="pf-mold-previa">${m.id === 'nenhuma' ? '<span class="pf-mold-nada" aria-hidden="true">∅</span>' : molduraHtml(m.id, 96)}</span>
-      <span class="pf-ef-nome">${esc(m.nome)}</span>
+      <span class="pf-mold-previa">${m.id === 'nenhuma' ? '<span class="pf-mold-nada" aria-hidden="true">∅</span>' : molduraHtml(m.id, 96, u.elo)}</span>
+      <span class="pf-ef-nome">${esc(nomeMoldura(m, u))}</span>
       <button type="button" class="${escolhida === m.id ? 'btn-ghost' : 'btn-primary'} pf-ef-btn" data-act="moldura-escolher" data-mol="${m.id}"${escolhida === m.id ? ' disabled' : ''}>${escolhida === m.id ? 'Selecionado' : 'Selecionar'}</button></li>`;
   const atual = minhas.find((m) => m.id === u.moldura);
   return `<section class="pf-card pf-efeito">
     <div class="pf-ef-topo">
       <div>
         <p class="eyebrow">✦ Moldura</p>
-        <p class="pf-apoio-txt pf-ef-atual"><span class="pf-ef-rotulo">${esc(atual ? atual.nome : 'Sem moldura')}</span></p>
+        <p class="pf-apoio-txt pf-ef-atual"><span class="pf-ef-rotulo">${esc(atual ? nomeMoldura(atual, u) : 'Sem moldura')}</span></p>
       </div>
       <button type="button" class="btn-ghost pf-ef-abrir" data-act="moldura-abrir" aria-expanded="${molduraAberta}">${molduraAberta ? 'Fechar' : 'Abrir'}</button>
     </div>

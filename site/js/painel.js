@@ -11,7 +11,7 @@ import { nomeRecompensa, tipoTexto, codigoBonito } from '../shared/recompensas.j
 import { passeHtml } from '../shared/passe.js';
 import { ligarCompraPremium } from '../shared/passe-compra.js';
 import { EFEITOS, EFEITOS_TESTE } from '../shared/efeitos.js';
-import { MOLDURAS_TESTE } from '../shared/molduras.js';
+import { MOLDURAS_TESTE, ELOS_MOLDURAS } from '../shared/molduras.js';
 import { EXCLUSIVOS_TESTE, avatarHtml } from '../shared/avatar.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
@@ -381,8 +381,19 @@ function testeIcones() {
 
 // Molduras em teste, em volta de um ícone de exemplo, nos tamanhos do site.
 function testeMolduras() {
-  if (!MOLDURAS_TESTE.length) return '';
-  return `<h3 class="t-tit">Molduras em teste (só você vê)</h3><div class="cards t-grade">${MOLDURAS_TESTE.map((m) => `<article class="card t-efeito">
+  const ranks = `<h3 class="t-tit">Molduras de Rank · uma por elo (só você vê)</h3>
+    <p class="c-sub">No perfil, "Rank" é uma moldura só: mostra sempre a do elo atual do jogador e troca sozinha quando ele sobe ou desce de elo. Aqui estão as dez, cada uma em volta de um ícone de exemplo.</p>
+    <div class="cards t-grade">${ELOS_MOLDURAS.map((m) => `<article class="card t-efeito">
+      <div class="t-ef-cab"><h3>${esc(m.nome)}</h3><span class="p-badge">Rank</span></div>
+      <div class="t-ic-linha" style="padding:22px 26px;gap:34px">${avatarHtml('mascote', m.nome, 104, `elo-${m.elo}`, 'rank')}${avatarHtml('mascote', m.nome, 64, `elo-${m.elo}`, 'rank')}${avatarHtml('mascote', m.nome, 34, `elo-${m.elo}`, 'rank')}${avatarHtml('mascote', m.nome, 22, `elo-${m.elo}`, 'rank')}</div>
+      <p class="c-sub">Id da arte: <code>${esc(m.id)}</code></p>
+    </article>`).join('')}</div>`;
+  const outras = MOLDURAS_TESTE.filter((m) => !m.virtual);
+  return ranks + (outras.length ? testeMolduras2(outras) : '');
+}
+
+function testeMolduras2(lista) {
+  return `<h3 class="t-tit">Molduras em teste (só você vê)</h3><div class="cards t-grade">${lista.map((m) => `<article class="card t-efeito">
       <div class="t-ef-cab"><h3>${esc(m.nome)}</h3><span class="p-badge">Moldura</span></div>
       <div class="t-ic-linha" style="padding:22px 26px;gap:34px">${avatarHtml('mascote', m.nome, 104, 'elo-ouro', m.id)}${avatarHtml('mascote', m.nome, 64, '', m.id)}${avatarHtml('mascote', m.nome, 34, 'elo-diamante', m.id)}${avatarHtml('mascote', m.nome, 22, '', m.id)}</div>
       <p class="c-sub">O tamanho é calculado pelo buraco central da imagem. Aparece no perfil, ranking e barra do site.</p>

@@ -2,7 +2,7 @@
 // (shared/assets/icones). Guardado no perfil como 'mascote' ou 'icone:<id>'.
 // Dois são especiais, de apoiador: só o servidor deixa usar (0014_icones.sql).
 
-import { srcMoldura, geometriaMoldura } from './molduras.js';
+import { srcMoldura, geometriaMoldura, resolverMoldura } from './molduras.js';
 
 const MASCOTE = '/shared/assets/marca/mascote-120.png?v=2';
 const PASTA = '/shared/assets/icones';
@@ -56,8 +56,12 @@ const srcDe = (id) => (id === 'mascote' ? MASCOTE : TODOS.has(id) ? `${PASTA}/${
 
 // <img> do ícone. Sem ícone escolhido (ou com um que não existe mais),
 // mostra a inicial do nome.
+// O elo vem da classe `elo-<id>` que os chamadores já passam em `extra`.
+const eloDe = (extra) => (/(?:^|\s)elo-([a-z-]+)/.exec(extra || '') || [])[1] || null;
+
 export function avatarHtml(avatar, nome = '', size = 32, extra = '', moldura = '') {
   const miolo = avatarMiolo(avatar, nome, size, extra);
+  moldura = resolverMoldura(moldura, eloDe(extra));
   const src = srcMoldura(moldura);
   if (!src) return miolo;
   const g = geometriaMoldura(moldura);
@@ -65,7 +69,8 @@ export function avatarHtml(avatar, nome = '', size = 32, extra = '', moldura = '
 }
 
 // Só a moldura, sem ícone no meio (vitrine: seletor do perfil e cartões do passe).
-export function molduraHtml(moldura, size = 64) {
+export function molduraHtml(moldura, size = 64, elo = null) {
+  moldura = resolverMoldura(moldura, elo);
   const src = srcMoldura(moldura);
   if (!src) return '';
   return `<img class="av-moldura-sozinha" src="${src}" width="${size}" height="${size}" alt="" decoding="async" loading="lazy" onerror="this.remove()" />`;
