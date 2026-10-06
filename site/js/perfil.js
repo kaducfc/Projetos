@@ -104,7 +104,7 @@ function cardEfeito(u) {
       <button type="button" class="pf-ef-previa" data-act="efeito-ver" data-ef="${id}" aria-label="Efeito ${esc(nome)}">${previa}</button>
       <span class="pf-ef-nome">${esc(nome)}</span>
       <button type="button" class="${escolhido === id ? 'btn-ghost' : 'btn-primary'} pf-ef-btn" data-act="efeito-escolher" data-ef="${id}"${livre ? '' : ' aria-disabled="true"'}${escolhido === id ? ' disabled' : ''}>${escolhido === id ? 'Selecionado' : livre ? 'Selecionar' : '🔒 Bloqueado'}</button>
-      ${!livre && preco ? `<button type="button" class="btn-primary pf-ef-btn pf-ef-comprar" data-act="efeito-comprar" data-ef="${id}"${u.moedas != null && u.moedas < preco ? ' title="Rift Coins insuficientes"' : ''}>Comprar por ${preco.toLocaleString('pt-BR')} RC</button>` : ''}
+      ${!livre && preco ? `<button type="button" class="btn-primary pf-ef-btn pf-ef-comprar${u.moedas != null && u.moedas < preco ? ' sem-saldo' : ''}" data-act="efeito-comprar" data-ef="${id}">Comprar por ${preco.toLocaleString('pt-BR')} RC</button>` : ''}
       ${requisito}</li>`;
   };
   return `<section class="pf-card pf-efeito">

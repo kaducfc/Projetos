@@ -226,7 +226,7 @@ button.btn-primary:disabled { opacity: 0.6; cursor: default; }
 .pf-ef-nome { font-size: 13px; color: #b9b2a0; }
 .pf-ef-btn { margin: 0; width: 100%; }
 .pf-ef.trava .pf-ef-previa, .pf-ef.trava .pf-ef-nome { opacity: 0.45; }
-.pf-ef.trava .pf-ef-btn { opacity: 0.5; cursor: not-allowed; background: #3a3630; color: #bdb6a4; box-shadow: none; }
+.pf-ef.trava .pf-ef-btn:not(.pf-ef-comprar) { opacity: 0.5; cursor: not-allowed; background: #3a3630; color: #bdb6a4; box-shadow: none; }
 .pf-ef-como { margin: 2px 0 0; font-size: 13px; line-height: 1.4; color: #e8e2d2; }
 .pf-ef-como a { color: var(--gold-2); font-weight: 700; white-space: nowrap; }
 .pf-ef-nota { margin-top: 12px !important; }
@@ -234,3 +234,5 @@ button.btn-primary:disabled { opacity: 0.6; cursor: default; }
 
 .pf-mold-previa { display: grid; place-items: center; min-height: 96px; }
 .pf-mold-nada { display: grid; place-items: center; width: 96px; height: 96px; font-size: 34px; color: #6d6755; }
+.pf-ef .pf-ef-comprar { cursor: pointer; }
+.pf-ef .pf-ef-comprar.sem-saldo { opacity: 0.5; background: #3a3630; color: #bdb6a4; box-shadow: none; }
