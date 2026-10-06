@@ -10,7 +10,7 @@ export const MOLDURAS = [];
 
 // Só o administrador recebe (aba Teste do painel).
 export const MOLDURAS_TESTE = [
-  { id: 'hw-moldura-1', nome: 'Morcegos e Rubi', k: 0.5879, tema: 'Halloween · asas de morcego' },
+  { id: 'hw-moldura-1', nome: 'Vampito', k: 0.5879, tema: 'Halloween · asas de morcego' },
   { id: 'hw-moldura-2', nome: 'Abóboras e Espinhos', k: 0.5962, tema: 'Halloween · abóboras' },
 ];
 
