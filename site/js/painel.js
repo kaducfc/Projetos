@@ -737,6 +737,15 @@ function secaoApoio(dias) {
       <button type="button" class="p-btn" data-premium-dar="1">Conceder Premium</button>
       <button type="button" class="p-btn p-btn-ghost" data-premium-dar="0">Remover Premium</button>
       <p class="p-note" data-premium-msg role="status"></p>
+    </div>
+    <div class="card">
+      <h3>Dar Rift Coins a um jogador</h3>
+      <p class="c-sub">Soma moedas ao saldo do jogador (use um número negativo para tirar). Fica registrado no extrato dele, com a nota.</p>
+      <label class="p-label">Nome de usuário: <input data-rc-nome autocomplete="off" /></label>
+      <label class="p-label">Quantidade de RC: <input type="number" step="1" data-rc-qtd placeholder="ex.: 500" /></label>
+      <label class="p-label">Nota (opcional): <input data-rc-nota maxlength="200" autocomplete="off" placeholder="ex.: compensação, prêmio de evento" /></label>
+      <button type="button" class="p-btn" data-rc-dar>Dar Rift Coins</button>
+      <p class="p-note" data-rc-msg role="status"></p>
     </div>`;
   if (!ap) {
     return `${cardEstornos()}<section class="p-section"><h2>Apoio</h2>
@@ -941,6 +950,24 @@ body.addEventListener('click', async (e) => {
 });
 
 body.addEventListener('click', async (e) => {
+  const rb = e.target.closest('[data-rc-dar]');
+  if (rb) {
+    const nome = body.querySelector('[data-rc-nome]').value.trim();
+    const qtd = Math.trunc(Number(body.querySelector('[data-rc-qtd]').value));
+    const nota = body.querySelector('[data-rc-nota]').value.trim();
+    const msg = body.querySelector('[data-rc-msg]');
+    if (!nome || !qtd) { msg.textContent = 'Digite o nome de usuário e a quantidade (diferente de zero).'; return; }
+    if (!window.confirm(`${qtd > 0 ? 'Dar' : 'Tirar'} ${num(Math.abs(qtd))} RC ${qtd > 0 ? 'para' : 'de'} ${nome}?`)) return;
+    rb.disabled = true;
+    try {
+      const r = await platform.adminMoedas(nome, qtd, nota || null);
+      msg.textContent = `Pronto! ${r.username} agora tem ${num(r.saldo)} RC.`;
+    } catch (err) {
+      msg.textContent = err.message;
+    }
+    rb.disabled = false;
+    return;
+  }
   const pb = e.target.closest('[data-premium-dar]');
   if (pb) {
     const nome = body.querySelector('[data-premium-nome]').value.trim();
