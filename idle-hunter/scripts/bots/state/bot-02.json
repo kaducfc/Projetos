@@ -2,9 +2,9 @@
   "index": 2,
   "name": "Sakura Haruno",
   "gameState": {
-    "gold": 1414428942,
-    "hunterLevel": 279,
-    "hunterXp": 68461,
+    "gold": 1456506806,
+    "hunterLevel": 280,
+    "hunterXp": 81919.5,
     "selectedMonsters": [
       {
         "zoneIndex": 9,
@@ -30,9 +30,9 @@
     "currentMonster": {
       "zoneIndex": 9,
       "kind": "weak",
-      "monsterId": "aurelion"
+      "monsterId": "morvanthal"
     },
-    "monsterHp": 2395165,
+    "monsterHp": 2240638,
     "lastMonsterRef": null,
     "materials": {
       "mystic_die": 5394,
@@ -47,11 +47,11 @@
       "lavasalam_drop": 776,
       "fornitus_core": 731,
       "grommuk_fang": 220,
-      "draxorian_chest": 28742,
-      "aurelion_spear": 27810,
-      "grommash_crown": 28734,
-      "morvanthal_scepter": 29171,
-      "bahamorth_scale": 7878
+      "draxorian_chest": 29484,
+      "aurelion_spear": 28618,
+      "grommash_crown": 29486,
+      "morvanthal_scepter": 29941,
+      "bahamorth_scale": 8014
     },
     "cards": {
       "guardiao_druida_card": 1,
@@ -66,7 +66,7 @@
       "solkaiser_card": 0,
       "sabion_card": 4,
       "colhedor_carmesim_card": 1,
-      "musgorn_card": 0,
+      "musgorn_card": 1,
       "thornviel_card": 2,
       "hydrakon_card": 1,
       "ignivoran_card": 1,
@@ -84,7 +84,7 @@
       "thalassok_card": 1,
       "draxorian_card": 1,
       "granvorok_card": 1,
-      "bahamorth_card": 1,
+      "bahamorth_card": 0,
       "gaiatron_card": 1
     },
     "cardsDiscovered": {
@@ -650,35 +650,35 @@
         ]
       },
       {
-        "uid": 4948,
+        "uid": 5088,
         "itemId": "bahamorth_ring_destreza",
         "rarityId": "raro",
         "baseStats": {
           "destreza": 50,
-          "armorFlat": 29
+          "armorFlat": 28
         },
         "additionalStats": [
           {
-            "stat": "attackSpeedPercent",
-            "value": 6.1
-          },
-          {
-            "stat": "destreza",
-            "value": 50
-          },
-          {
             "stat": "hpFlat",
-            "value": 56
+            "value": 40
+          },
+          {
+            "stat": "critDamagePercent",
+            "value": 10
+          },
+          {
+            "stat": "dodgePercent",
+            "value": 8.3
           }
         ],
         "enhanceLevel": 0,
         "isMaster": false,
         "cardIds": [
-          "musgorn_card"
+          "bahamorth_card"
         ]
       }
     ],
-    "nextUid": 5005,
+    "nextUid": 5093,
     "equipped": {
       "weapon1": 1,
       "weapon2": 10,
@@ -692,8 +692,8 @@
       "necklace": 9
     },
     "upgrades": {},
-    "totalKills": 124766,
-    "lastSaveTime": 1791292377603,
+    "totalKills": 128110,
+    "lastSaveTime": 1791317311301,
     "transcendUnlocked": false,
     "transcendCount": 25,
     "awakeningShards": 15,
@@ -708,11 +708,11 @@
       "cards_collected": 3,
       "transcend_count": 6
     },
-    "lifetimeHunterLevel": 279,
-    "lifetimeTotalKills": 313630,
-    "lifetimeGoldEarned": 1576296896,
+    "lifetimeHunterLevel": 280,
+    "lifetimeTotalKills": 316974,
+    "lifetimeGoldEarned": 1618360960,
     "lifetimeEggsHatched": 2918,
-    "lifetimeRankMasterCount": 531,
+    "lifetimeRankMasterCount": 532,
     "pvpHighestTierIndex": 0,
     "pvpWinsTotal": 0,
     "playerName": "Caçador",
@@ -728,8 +728,8 @@
     },
     "dpsBoostExpiresAt": null,
     "offlineBonusSeconds": 0,
-    "eventCurrency": 301,
-    "expeditionReadyAt": 1791295422373,
+    "eventCurrency": 141,
+    "expeditionReadyAt": 1791346111305,
     "expeditionLastTierId": "8h",
     "arenaRunActive": false,
     "arenaDamageDealt": 0,
@@ -2388,7 +2388,7 @@
       3,
       4
     ],
-    "eggCount": 326,
+    "eggCount": 400,
     "petFragments": 4770,
     "petHatchesSinceMythic": 19,
     "petHatchesSinceLegendary": 2,
@@ -2431,13 +2431,14 @@
       "resetAt": 1791331200000,
       "counts": {
         "cartas": 3,
-        "mascote": 3
+        "mascote": 3,
+        "evento": 1
       }
     }
   },
   "session": {
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3ZTE2NjExMC0yNGUyLTQ3ZmUtODZhNi0wNTVmNzJkNDg5ZDAiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzkxMjk1OTc3LCJpYXQiOjE3OTEyOTIzNzcsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUyNDB9XSwic2Vzc2lvbl9pZCI6IjI0MGNiMGFjLTU5MzEtNDQ5Ni1iMDQ3LTA1ZTkyY2Y1MjBhNCIsImlzX2Fub255bW91cyI6dHJ1ZX0.ANvuPoncdvEY1BrpLrzovLl8V0VlAq7xW1f7pDd-rrh7mzAXHUaEYY3NrNjtfPODGc_kiU6-BPrMpw_uU9WnVg",
-    "refresh_token": "nbibbudicqtp"
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjRmMzhkYWVhLTJmNjItNDE1Ni1iYTFmLTFjOTBkMmM0MGIwZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3hrY3Z2Y3Z5em9ibm9qZ2trbmd5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3ZTE2NjExMC0yNGUyLTQ3ZmUtODZhNi0wNTVmNzJkNDg5ZDAiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzkxMzIwOTExLCJpYXQiOjE3OTEzMTczMTEsImVtYWlsIjoiIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnt9LCJ1c2VyX21ldGFkYXRhIjp7fSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJhbm9ueW1vdXMiLCJ0aW1lc3RhbXAiOjE3ODg1MTUyNDB9XSwic2Vzc2lvbl9pZCI6IjI0MGNiMGFjLTU5MzEtNDQ5Ni1iMDQ3LTA1ZTkyY2Y1MjBhNCIsImlzX2Fub255bW91cyI6dHJ1ZX0.OD5NcSnOW-bYqjto1-tVmKzjJpaB8BO9jVqWZcmy0CWDS9CaUOiP3r9HRTG2RuEGhHBlRbRtc5RIouVCxzpDXA",
+    "refresh_token": "o7jumcfwy32p"
   },
   "nickClaimed": true,
   "userId": "7e166110-24e2-47fe-86a6-055f72d489d0"
