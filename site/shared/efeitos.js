@@ -11,6 +11,7 @@ export const EFEITOS = [
   // À venda por Rift Coins (site_loja, 0055_loja_efeitos.sql): `preco` só serve para mostrar.
   { id: 'st-galaxia', nome: 'Galáxia', classe: 'fx-st-galaxia', preco: 2000, como: 'Compre por 2.000 RC.' },
   { id: 'st-brasa', nome: 'Brasa', classe: 'fx-st-brasa', preco: 2000, como: 'Compre por 2.000 RC.' },
+  { id: 'gl-corrompido', nome: 'Dado Corrompido', classe: 'fx-gl-corrompido', preco: 10000, como: 'Compre por 10.000 RC.' },
   // Recompensas do Passe de Batalha Halloween 2026.
   { id: 'hw-teia', nome: 'Teia de Aranha', classe: 'fx-hw-teia', titulo: 'Passe de Batalha Halloween 2026',
     como: 'Recompensa do nível 6 do Passe de Batalha.', link: { href: '/passe/', texto: 'Ver o passe' } },
@@ -28,7 +29,6 @@ export const EFEITOS_TESTE = [
   { id: 'gl-fatiado', nome: 'Fatiado', classe: 'fx-gl-fatiado', tema: 'Glitch · intenso · faixas que escorregam' },
   { id: 'gl-matrix', nome: 'Código Verde', classe: 'fx-gl-matrix', tema: 'Glitch · médio · terminal verde' },
   { id: 'gl-vhs', nome: 'Fita VHS', classe: 'fx-gl-vhs', tema: 'Glitch · médio · fita velha quente' },
-  { id: 'gl-corrompido', nome: 'Dado Corrompido', classe: 'fx-gl-corrompido', tema: 'Glitch · violento · vermelho e preto' },
   { id: 'st-aovivo', nome: 'Ao vivo', classe: 'fx-st-aovivo', tema: 'Streamer · Twitch' },
   { id: 'hw-bruxas', nome: 'Galáxia das Bruxas', classe: 'fx-hw-bruxas', tema: 'Halloween · morcegos e chapéus' },
   { id: 'hw-nebulosa', nome: 'Nebulosa Abóbora', classe: 'fx-hw-nebulosa', tema: 'Halloween · abóboras' },
