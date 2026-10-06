@@ -384,7 +384,7 @@ function testeMolduras() {
   return `<h3 class="t-tit">Molduras em teste (só você vê)</h3><div class="cards t-grade">${MOLDURAS_TESTE.map((m) => `<article class="card t-efeito">
       <div class="t-ef-cab"><h3>${esc(m.nome)}</h3><span class="p-badge">Moldura</span></div>
       <div class="t-ic-linha" style="padding:22px 26px;gap:34px">${avatarHtml('mascote', m.nome, 104, 'elo-ouro', m.id)}${avatarHtml('mascote', m.nome, 64, '', m.id)}${avatarHtml('mascote', m.nome, 34, 'elo-diamante', m.id)}${avatarHtml('mascote', m.nome, 22, '', m.id)}</div>
-      <p class="c-sub">A imagem é desenhada 40% maior que o ícone (buraco central de ~71%). Aparece no perfil, ranking e barra do site.</p>
+      <p class="c-sub">O tamanho é calculado pelo buraco central da imagem. Aparece no perfil, ranking e barra do site.</p>
       <p class="c-sub">Id: <code>${esc(m.id)}</code> <button type="button" class="p-link" data-t-copiar="${esc(m.id)}">copiar</button></p>
     </article>`).join('')}</div>`;
 }

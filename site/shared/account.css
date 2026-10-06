@@ -157,10 +157,10 @@ a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
 .avatar:not(:has(img))::before { content: attr(data-letra); }
 .sb-avatar { margin-right: 2px; }
 
-/* Moldura: imagem 40% maior que o ícone, por cima, sem ocupar espaço no layout. */
+/* Moldura: imagem por cima do ícone (tamanho e posição vêm do `k` em shared/molduras.js), sem ocupar espaço. */
 .av-wrap { position: relative; display: inline-block; flex: none; }
 .av-wrap > .avatar { width: 100%; height: 100%; }
-.av-moldura { position: absolute; left: -20%; top: -20%; width: 140%; height: 140%; max-width: none; pointer-events: none; z-index: 2; }
+.av-moldura { position: absolute; max-width: none; pointer-events: none; z-index: 2; }
 
 /* Aviso da ranqueada (Carreira no Rift) */
 .rk-aviso { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 95; width: min(560px, calc(100% - 24px)); display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; background: #17140e; color: #f4efe4; border: 1px solid #d9a82b; border-radius: 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55); font: 14px/1.45 Inter, system-ui, sans-serif; animation: rk-entra 0.25s ease-out; }

@@ -2,7 +2,7 @@
 // (shared/assets/icones). Guardado no perfil como 'mascote' ou 'icone:<id>'.
 // Dois são especiais, de apoiador: só o servidor deixa usar (0014_icones.sql).
 
-import { srcMoldura } from './molduras.js';
+import { srcMoldura, geometriaMoldura } from './molduras.js';
 
 const MASCOTE = '/shared/assets/marca/mascote-120.png?v=2';
 const PASTA = '/shared/assets/icones';
@@ -59,7 +59,8 @@ export function avatarHtml(avatar, nome = '', size = 32, extra = '', moldura = '
   const miolo = avatarMiolo(avatar, nome, size, extra);
   const src = srcMoldura(moldura);
   if (!src) return miolo;
-  return `<span class="av-wrap" style="width:${size}px;height:${size}px">${miolo}<img class="av-moldura" src="${src}" alt="" decoding="async" onerror="this.remove()" /></span>`;
+  const g = geometriaMoldura(moldura);
+  return `<span class="av-wrap" style="width:${size}px;height:${size}px">${miolo}<img class="av-moldura" style="left:${g.off.toFixed(2)}%;top:${g.off.toFixed(2)}%;width:${g.w.toFixed(2)}%;height:${g.w.toFixed(2)}%" src="${src}" alt="" decoding="async" onerror="this.remove()" /></span>`;
 }
 
 function avatarMiolo(avatar, nome, size, extra) {
