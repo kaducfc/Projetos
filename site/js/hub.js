@@ -350,7 +350,31 @@ async function refresh() {
 document.getElementById('rk-painel').addEventListener('click', (e) => {
   if (e.target.closest('[data-act="entrar"]')) openAuthModal('login');
 });
+// Faixa discreta do Passe de Batalha (só para quem está conectado e com o passe aberto).
+const faixaPasse = document.getElementById('passe-faixa');
+let faixaSeq = 0;
+async function renderFaixaPasse() {
+  const seq = ++faixaSeq;
+  let e = null;
+  if (platform.getUser()) {
+    try { e = await platform.passeEstado(); } catch { e = null; }
+  }
+  if (seq !== faixaSeq) return;
+  if (!e || !e.passe) { faixaPasse.hidden = true; return; }
+  const completo = e.nivel >= e.passe.niveis;
+  const pct = completo ? 100 : Math.min(100, Math.round((e.progresso / e.passe.abobora_por_nivel) * 100));
+  faixaPasse.hidden = false;
+  setHtml(faixaPasse, `<a class="hp-link" href="passe/">
+      <span class="hp-nome">Passe de Batalha</span>
+      <span class="hp-nivel">Nível ${e.nivel}</span>
+      <span class="hp-barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span>
+      <span class="hp-prox">${completo ? '✓ Completo' : `${e.progresso}/${e.passe.abobora_por_nivel}`}</span>
+      <span class="hp-ir">Ir para o passe →</span>
+    </a>`);
+}
+
 platform.onChange((evt) => {
+  if (evt.type === 'auth' || evt.type === 'results' || evt.type === 'passe') renderFaixaPasse();
   if (evt.type === 'auth' && !evt.user) {
     rk = null;
     diarios = null;
@@ -362,3 +386,4 @@ addEventListener('pageshow', (e) => { if (e.persisted) refresh(); });
 
 render();
 refresh();
+renderFaixaPasse();
