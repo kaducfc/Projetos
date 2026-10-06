@@ -13,6 +13,20 @@ const fmt = (n) => Number(n).toLocaleString('pt-BR');
 export const ABOBORA_IMG = '/shared/assets/passe/abobora-64.webp';
 const aboboraImg = (tam = 18) => `<img class="ps-abobora" src="${ABOBORA_IMG}" srcset="/shared/assets/passe/abobora-128.webp 2x" width="${tam}" height="${tam}" alt="" />`;
 
+// Fim de cada passe (meia-noite de Brasília, UTC−3, ao fim do último dia). O servidor
+// também confere (site_passes.fim, 0058_passe_fim.sql).
+const FIM_PASSE = { 'halloween-2026': '2026-11-01T03:00:00Z' };
+
+function fimTexto(id) {
+  const fim = FIM_PASSE[id] ? Date.parse(FIM_PASSE[id]) : NaN;
+  if (Number.isNaN(fim)) return '';
+  const ms = fim - Date.now();
+  if (ms <= 0) return '<span class="ps-tag ps-tag-fim">Passe encerrado</span>';
+  const dias = Math.ceil(ms / 86400000);
+  if (ms < 86400000) return '<span class="ps-tag ps-tag-fim">Termina hoje à meia-noite</span>';
+  return `<span class="ps-tag ps-tag-fim">Termina em ${dias} ${dias === 1 ? 'dia' : 'dias'}</span>`;
+}
+
 // Como cada recompensa aparece no cartão do nível.
 function recompensaHtml(r) {
   if (r.tipo === 'moeda') {
@@ -61,7 +75,7 @@ export function passeHtml(e, { extra = '' } = {}) {
       <div class="ps-titulo">
         <p class="eyebrow">${aboboraImg(16)} Passe de Batalha</p>
         <h3 class="ps-nome">${esc(e.passe.nome)}</h3>
-        <p class="ps-sub">${e.premium ? '<span class="ps-tag ps-tag-premium">★ Passe premium</span>' : '<span class="ps-tag">Passe grátis</span> <button type="button" class="ps-obter" data-ps-premium>★ Obter Premium</button>'}${e.passe.publico ? '' : ' <span class="ps-tag ps-tag-teste">Em teste: só administradores</span>'}</p>
+        <p class="ps-sub">${e.premium ? '<span class="ps-tag ps-tag-premium">★ Passe premium</span>' : '<span class="ps-tag">Passe grátis</span> <button type="button" class="ps-obter" data-ps-premium>★ Obter Premium</button>'}${e.passe.publico ? '' : ' <span class="ps-tag ps-tag-teste">Em teste: só administradores</span>'} ${fimTexto(e.passe.id)}</p>
       </div>
       <div class="ps-numeros">
         <div><b>${e.nivel}<small>/${e.passe.niveis}</small></b><span>nível do passe</span></div>
