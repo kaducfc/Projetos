@@ -9,7 +9,7 @@ import { nomeRecompensa, tipoTexto } from '../shared/recompensas.js';
 import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
-import { EFEITOS, EFEITOS_TESTE, EQUIPAVEIS_TESTE, efeitoAtivo } from '../shared/efeitos.js';
+import { EFEITOS, EFEITOS_TESTE, EQUIPAVEIS_TESTE, efeitoAtivo, efeitoPorId } from '../shared/efeitos.js';
 import { localeAtual } from '../shared/i18n.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
@@ -406,7 +406,7 @@ root.addEventListener('click', async (e) => {
   if (act === 'efeito-ver' || act === 'efeito-escolher') {
     const id = b.dataset.ef;
     const u = platform.getUser();
-    const efeito = id === 'nenhum' ? EFEITOS_NENHUM : EFEITOS.find((x) => x.id === id);
+    const efeito = id === 'nenhum' ? EFEITOS_NENHUM : efeitoPorId(id);
     if (!efeito) return;
     if (id !== 'nenhum' && !possuiEfeito(u, id)) { efeitoInfo = efeitoInfo === id ? null : id; render(); return; }
     if (act === 'efeito-ver') return;
