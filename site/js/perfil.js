@@ -46,9 +46,8 @@ function toast(msg) {
 function cabecalho(u) {
   const contas = u.providers.map((p) => (p === 'google' ? 'Google' : 'E-mail e senha')).join(' + ');
   return `<section class="pf-card pf-head">
-    <button type="button" class="pf-avatar" data-act="icone" title="Trocar ícone">
+    <button type="button" class="pf-avatar" data-act="icone" title="Trocar ícone" aria-label="Trocar ícone">
       ${avatarHtml(u.avatar, u.username, 104, u.elo ? `elo-${u.elo}` : '', u.moldura)}
-      <span class="pf-avatar-edit">Trocar</span>
     </button>
     <div class="pf-who">
       <p class="eyebrow">◆ Meu perfil</p>
