@@ -3,7 +3,7 @@
 // conectado não vê o passe.
 import { EFEITOS, EFEITOS_TESTE } from './efeitos.js';
 import { nomeRecompensa } from './recompensas.js';
-import { avatarHtml } from './avatar.js';
+import { avatarHtml, molduraHtml } from './avatar.js';
 import { srcMoldura } from './molduras.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
@@ -26,7 +26,7 @@ function recompensaHtml(r) {
     return `<span class="ps-rec ps-rec-icone">${avatarHtml(`icone:${r.chave}`, '', 52)}<b>${esc(nomeRecompensa(r.tipo, r.chave))}</b><small>Ícone</small></span>`;
   }
   if (r.tipo === 'moldura') {
-    return `<span class="ps-rec ps-rec-icone">${avatarHtml('mascote', '', 44, '', r.chave)}<b>${esc(nomeRecompensa(r.tipo, r.chave))}</b><small>Moldura</small></span>`;
+    return `<span class="ps-rec ps-rec-icone">${molduraHtml(r.chave, 62)}<b>${esc(nomeRecompensa(r.tipo, r.chave))}</b><small>Moldura</small></span>`;
   }
   return `<span class="ps-rec"><b>${esc(nomeRecompensa(r.tipo, r.chave))}</b><small>${r.tipo === 'icone' ? 'Ícone' : 'Recompensa'}</small></span>`;
 }

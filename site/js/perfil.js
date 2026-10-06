@@ -4,7 +4,7 @@ import * as platform from '../shared/platform.js';
 import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { GAMES, gameById } from '../shared/config.js';
-import { AVATARES, ESPECIAIS, EXCLUSIVOS, avatarHtml, nomeAvatar } from '../shared/avatar.js';
+import { AVATARES, ESPECIAIS, EXCLUSIVOS, avatarHtml, molduraHtml, nomeAvatar } from '../shared/avatar.js';
 import { nomeRecompensa, tipoTexto } from '../shared/recompensas.js';
 import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada } from './ranqueada-card.js';
@@ -76,7 +76,7 @@ function cardMoldura(u) {
   if (!minhas.length) return '';
   const escolhida = u.moldura || 'nenhuma';
   const opcao = (m) => `<li class="pf-ef${escolhida === m.id ? ' on' : ''}">
-      <span class="pf-mold-previa">${m.id === 'nenhuma' ? avatarHtml(u.avatar, u.username, 64, u.elo ? `elo-${u.elo}` : '') : avatarHtml(u.avatar, u.username, 64, u.elo ? `elo-${u.elo}` : '', m.id)}</span>
+      <span class="pf-mold-previa">${m.id === 'nenhuma' ? '<span class="pf-mold-nada" aria-hidden="true">∅</span>' : molduraHtml(m.id, 96)}</span>
       <span class="pf-ef-nome">${esc(m.nome)}</span>
       <button type="button" class="${escolhida === m.id ? 'btn-ghost' : 'btn-primary'} pf-ef-btn" data-act="moldura-escolher" data-mol="${m.id}"${escolhida === m.id ? ' disabled' : ''}>${escolhida === m.id ? 'Selecionado' : 'Selecionar'}</button></li>`;
   const atual = minhas.find((m) => m.id === u.moldura);

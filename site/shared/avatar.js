@@ -63,6 +63,13 @@ export function avatarHtml(avatar, nome = '', size = 32, extra = '', moldura = '
   return `<span class="av-wrap" style="width:${size}px;height:${size}px">${miolo}<img class="av-moldura" style="left:${g.off.toFixed(2)}%;top:${g.off.toFixed(2)}%;width:${g.w.toFixed(2)}%;height:${g.w.toFixed(2)}%" src="${src}" alt="" decoding="async" onerror="this.remove()" /></span>`;
 }
 
+// Só a moldura, sem ícone no meio (vitrine: seletor do perfil e cartões do passe).
+export function molduraHtml(moldura, size = 64) {
+  const src = srcMoldura(moldura);
+  if (!src) return '';
+  return `<img class="av-moldura-sozinha" src="${src}" width="${size}" height="${size}" alt="" decoding="async" loading="lazy" onerror="this.remove()" />`;
+}
+
 function avatarMiolo(avatar, nome, size, extra) {
   const inicial = (nome || '?').trim().charAt(0).toUpperCase();
   const style = `width:${size}px;height:${size}px;font-size:${Math.round(size * 0.45)}px`;
