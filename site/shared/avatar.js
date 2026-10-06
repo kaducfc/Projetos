@@ -39,6 +39,8 @@ export const EXCLUSIVOS = [
   { id: 'exc-poro-assombrado', nome: 'Poro Assombrado' },
   { id: 'exc-halloween-2026', nome: 'Halloween 2026' },
   { id: 'exc-abobora-sombria', nome: 'Abóbora Sombria' },
+  // Exclusivo do cartão de visita (código no verso). Arte provisória: troque o arquivo exc-cartao-rift.webp.
+  { id: 'exc-cartao-rift', nome: 'Cartão Rift Arcade' },
 ];
 
 // Em teste: só o painel (aba Teste) mostra. Para lançar, mover para EXCLUSIVOS.

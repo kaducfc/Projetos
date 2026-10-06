@@ -12,6 +12,10 @@ export const EFEITOS = [
   { id: 'st-galaxia', nome: 'Galáxia', classe: 'fx-st-galaxia', preco: 2000, como: 'Compre por 2.000 RC.' },
   { id: 'st-brasa', nome: 'Brasa', classe: 'fx-st-brasa', preco: 2000, como: 'Compre por 2.000 RC.' },
   { id: 'gl-corrompido', nome: 'Dado Corrompido', classe: 'fx-gl-corrompido', preco: 10000, como: 'Compre por 10.000 RC.' },
+  // Exclusivo do cartão de visita (código no verso). Visual provisório (o do Apoiador): troque `classe`
+  // quando o efeito próprio estiver pronto.
+  { id: 'ev-cartao', nome: 'Cartão Rift Arcade', classe: 'fx-reflexo', titulo: 'Exclusivo do cartão de visita do Rift Arcade',
+    como: 'Exclusivo de quem recebeu o cartão de visita do Rift Arcade. Resgate o código em Meu perfil.' },
   // Recompensas do Passe de Batalha Halloween 2026.
   { id: 'hw-teia', nome: 'Teia de Aranha', classe: 'fx-hw-teia', titulo: 'Passe de Batalha Halloween 2026',
     como: 'Recompensa do nível 6 do Passe de Batalha.', link: { href: '/passe/', texto: 'Ver o passe' } },
