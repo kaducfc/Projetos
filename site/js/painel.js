@@ -561,8 +561,7 @@ function vgTabela() {
     <tbody>${lista.slice(0, 300).map((x) => `<tr>
       <td>${esc(dataHora(x.criado))}</td><td>${nickLink(x.username)}</td><td>${esc(NOME_JOGO(x.jogo))}</td>
       <td>${vgDetalhe(x)}</td><td class="n">${x.pdr > 0 ? '+' : ''}${num(x.pdr)}</td><td class="n">${duracao(x.duracao_s)}</td>
-      <td>${x.sinais.map(([c, t]) => `<span class="rk-sinal rk-${c}">${t}</span>`).join(' ') || '<small>—</small>'}</td>
-        <td>${['pendente', 'recusado', 'cancelado'].includes(a.status) ? `<button type="button" class="p-btn p-btn-ghost" data-ap-del="${esc(a.tipo || 'doacao')}:${esc(a.id)}">Excluir</button>` : ''}</td></tr>`).join('')}</tbody>
+      <td>${x.sinais.map(([c, t]) => `<span class="rk-sinal rk-${c}">${t}</span>`).join(' ') || '<small>—</small>'}</td></tr>`).join('')}</tbody>
   </table></div>`;
 }
 
@@ -679,7 +678,8 @@ function apLista() {
         <td class="n">${reais(a.valor_pago ?? a.valor)}</td>
         <td><span class="ap-st ap-${esc(a.status)}">${esc(AP_STATUS[a.status] || a.status)}</span></td>
         <td>${esc(AP_ORIGEM[a.origem] || a.origem)}</td>
-        <td>${a.mp_payment_id ? `<small>${esc(a.mp_payment_id)}</small>` : '<small>—</small>'}</td></tr>`).join('')}</tbody>
+        <td>${a.mp_payment_id ? `<small>${esc(a.mp_payment_id)}</small>` : '<small>—</small>'}</td>
+        <td>${['pendente', 'recusado', 'cancelado'].includes(a.status) ? `<button type="button" class="p-btn p-btn-ghost" data-ap-del="${esc(a.tipo || 'doacao')}:${esc(a.id)}">Excluir</button>` : ''}</td></tr>`).join('')}</tbody>
     </table></div>
     ${lista.length > vis.length ? `<button type="button" class="p-btn p-btn-ghost" data-ap-mais>Mostrar mais (${num(lista.length - vis.length)} restantes)</button>` : ''}`;
 }
