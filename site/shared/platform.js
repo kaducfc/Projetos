@@ -1032,6 +1032,25 @@ export async function adminStats(days = 30) {
 }
 
 // Doações para o painel (só administradores; ver 0009_painel_apoio.sql).
+// Estornos ainda não verificados (doação, Passe Premium, compra de RC) e marcar como verificado.
+export async function adminEstornos() {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc('site_admin_estornos');
+  if (error) {
+    if (/not_admin/.test(error.message)) throw new Error('Esta conta não tem acesso ao painel.');
+    if (/site_admin_estornos/.test(error.message) || error.code === 'PGRST202') throw new Error('Rode o arquivo 0060_estornos.sql no Supabase para ver os estornos aqui.');
+    throw friendly(error);
+  }
+  return data || [];
+}
+export async function adminEstornoVisto(tipo, id) {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { error } = await sb.rpc('site_admin_estorno_visto', { p_tipo: tipo, p_id: id });
+  if (error) throw friendly(error);
+}
+
 export async function adminApoioExcluir(tipo, id) {
   const sb = await getClient();
   if (!sb) throw unavailable();

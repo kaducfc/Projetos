@@ -121,7 +121,8 @@ function avisos() {
   if (sv) itens.push(`<b>${num(sv)}</b> ${sv === 1 ? 'partida' : 'partidas'} com sinais de suspeita nos outros jogos da ranqueada. <button type="button" class="p-link" data-aba="ranqueada">Ver</button>`);
   const pend = ap?.periodo?.status?.pendente || 0;
   if (pend) itens.push(`<b>${num(pend)}</b> ${pend === 1 ? 'doação aguardando' : 'doações aguardando'} pagamento (Pix/boleto). <button type="button" class="p-link" data-aba="apoio">Ver</button>`);
-  for (const e of [rkErro, vgErro, apErro, rqErro]) if (e) itens.push(esc(e));
+  if (es.length) itens.push(`<b>${num(es.length)}</b> ${es.length === 1 ? 'estorno' : 'estornos'} para verificar (jogador pode ter usufruído da compra). <button type="button" class="p-link" data-aba="apoio">Ver</button>`);
+  for (const e of [rkErro, vgErro, apErro, rqErro, esErro]) if (e) itens.push(esc(e));
   if (!itens.length) return '<div class="p-ok">✓ Nada pedindo atenção agora.</div>';
   return `<div class="p-avisos"><h3>Atenção</h3><ul>${itens.map((i) => `<li>${i}</li>`).join('')}</ul></div>`;
 }
@@ -648,6 +649,8 @@ body.addEventListener('click', async (e) => {
 const AP_STATUS = { aprovado: 'Aprovado', pendente: 'Aguardando', recusado: 'Recusado', cancelado: 'Cancelado', estornado: 'Estornado' };
 const AP_ORIGEM = { mercadopago: 'Mercado Pago', stripe: 'Stripe', manual: 'Registrado à mão' };
 const AP_TIPO = { doacao: 'Doação', passe: 'Passe Premium', rc: 'Rift Coins' };
+let es = []; // estornos ainda não verificados (platform.adminEstornos)
+let esErro = '';
 let apTipo = ''; // '' = tudo junto; 'doacao' ou 'passe' isola
 let ap = null; // resposta de platform.adminApoios(days)
 let apErro = '';
@@ -684,6 +687,40 @@ function apLista() {
     ${lista.length > vis.length ? `<button type="button" class="p-btn p-btn-ghost" data-ap-mais>Mostrar mais (${num(lista.length - vis.length)} restantes)</button>` : ''}`;
 }
 
+// Aviso de estornos: o que a pessoa já aproveitou, para decidir entre banir ou cobrar de volta.
+function detalheEstorno(x) {
+  if (x.tipo === 'rc') {
+    const gasto = Math.max(0, x.rc - Number(x.rc_retiradas || 0));
+    return gasto > 0
+      ? `Comprou ${num(x.rc)} RC; só ${num(x.rc_retiradas)} voltaram, então <b>${num(gasto)} RC já foram gastos</b> (saldo atual: ${num(x.saldo)} RC).`
+      : `Comprou ${num(x.rc)} RC e todas voltaram ao ser estornado (saldo atual: ${num(x.saldo)} RC).`;
+  }
+  if (x.tipo === 'passe') {
+    return x.resgates_premium > 0
+      ? `<b>Já resgatou ${num(x.resgates_premium)} ${x.resgates_premium === 1 ? 'recompensa premium' : 'recompensas premium'}</b>; o Premium foi desligado, mas o que resgatou continua na conta.`
+      : 'Ainda não tinha resgatado recompensa premium; o Premium foi desligado.';
+  }
+  return 'Doação estornada (o valor foi devolvido ao doador).';
+}
+
+function cardEstornos() {
+  if (!es.length) return '';
+  return `<section class="p-section p-estornos" id="estornos">
+    <h2>⚠ Estornos para verificar</h2>
+    <p class="p-note">Alguém pediu o dinheiro de volta. Veja se já usufruiu da compra e decida: banir o jogador ou pedir o valor de volta. Clique no nome para abrir a ficha (lá dá para banir). Depois, marque como verificado.</p>
+    <div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Quando</th><th>Usuário</th><th>Tipo</th><th class="n">Valor</th><th>Situação</th><th></th></tr></thead>
+      <tbody>${es.map((x) => `<tr>
+        <td>${esc(dataHora(x.quando))}</td>
+        <td>${x.username ? nickLink(x.username) : '<small>conta apagada</small>'}</td>
+        <td>${esc(AP_TIPO[x.tipo] || x.tipo)} <small>${esc(AP_ORIGEM[x.provedor] || x.provedor || '')}</small></td>
+        <td class="n">${reais(x.valor)}</td>
+        <td>${detalheEstorno(x)}</td>
+        <td><button type="button" class="p-btn p-btn-ghost" data-es-visto="${esc(x.tipo)}:${esc(x.id)}">Marcar como verificado</button></td></tr>`).join('')}</tbody>
+    </table></div>
+  </section>`;
+}
+
 function secaoApoio(dias) {
   const registrar = `<div class="card">
       <h3>Registrar apoio feito por fora</h3>
@@ -702,7 +739,7 @@ function secaoApoio(dias) {
       <p class="p-note" data-premium-msg role="status"></p>
     </div>`;
   if (!ap) {
-    return `<section class="p-section"><h2>Apoio</h2>
+    return `${cardEstornos()}<section class="p-section"><h2>Apoio</h2>
       <p class="p-note">${esc(apErro || 'Carregando os pagamentos…')}</p>${registrar}</section>`;
   }
   const t = ap.total;
@@ -714,7 +751,7 @@ function secaoApoio(dias) {
   const resumoTipos = ['doacao', 'passe', 'rc'].map((k) => `${AP_TIPO[k]}: <b>${reais(pt[k]?.arrecadado || 0)}</b> (${num(pt[k]?.n || 0)})`).join(' · ');
   const filtroTipo = `<div class="ap-filtros"><label class="p-label">Mostrar <select data-ap-tipo><option value="">Tudo junto</option>${opt(AP_TIPO, apTipo)}</select></label></div>
     <p class="p-note">Desde sempre — ${resumoTipos}. Doações, Passe Premium e Rift Coins entram no mesmo total; use o filtro para ver um só.</p>`;
-  return `<section class="p-section" id="apoio">
+  return `${cardEstornos()}<section class="p-section" id="apoio">
     <h2>Apoio · desde sempre</h2>
     ${filtroTipo}
     <div class="tiles">
@@ -798,6 +835,12 @@ body.addEventListener('click', (e) => {
     body.querySelector('[data-ap-lista]').innerHTML = apLista();
   }
   if (e.target.closest('[data-ap-csv]')) apCsv();
+  const visto = e.target.closest('[data-es-visto]');
+  if (visto) {
+    const [tipo, id] = visto.dataset.esVisto.split(':');
+    visto.disabled = true;
+    platform.adminEstornoVisto(tipo, id).then(load, (err) => { visto.disabled = false; window.alert(err.message); });
+  }
   const del = e.target.closest('[data-ap-del]');
   if (del) {
     const [tipo, id] = del.dataset.apDel.split(':');
@@ -826,14 +869,16 @@ async function load() {
   try {
     // Apoio e vigilância podem faltar (SQL ainda não rodado) sem travar o resto.
     const opcional = (pr) => pr.then((r) => ({ r }), (err) => ({ err }));
-    const [st, apoios, ranked, resumo, vigia, codigos, modelos] = await Promise.all([
-      platform.adminStats(days), opcional(platform.adminApoios(days, apTipo || null)), opcional(platform.adminRanked(days)),
+    const [st, apoios, ranked, estornos, resumo, vigia, codigos, modelos] = await Promise.all([
+      platform.adminStats(days), opcional(platform.adminApoios(days, apTipo || null)), opcional(platform.adminRanked(days)), opcional(platform.adminEstornos()),
       opcional(platform.adminRanqueada(days)), opcional(platform.adminVigia(Math.min(days, 90))), opcional(platform.adminCodigos()), opcional(platform.adminModelos()),
     ]);
     if (seq !== loadSeq) return;
     rk = ranked.r || null;
     rkErro = ranked.err?.message || '';
     ap = apoios.r || null;
+    es = estornos.r || [];
+    esErro = estornos.err?.message || '';
     apErro = apoios.err?.message || '';
     rq = resumo.r || null;
     rqErro = resumo.err?.message || '';
