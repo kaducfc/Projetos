@@ -692,6 +692,14 @@ function secaoApoio(dias) {
       <label class="p-label">Valor (R$): <input type="number" min="1" step="0.01" data-apoio-valor /></label>
       <button type="button" class="p-btn" data-apoio-registrar>Registrar apoio</button>
       <p class="p-note" data-apoio-msg role="status"></p>
+    </div>
+    <div class="card">
+      <h3>Conceder Passe de Batalha Premium</h3>
+      <p class="c-sub">Libera o Passe Premium (Halloween 2026) para um jogador, sem cobrança: não entra nos totais de arrecadação. Dá para remover depois.</p>
+      <label class="p-label">Nome de usuário: <input data-premium-nome autocomplete="off" /></label>
+      <button type="button" class="p-btn" data-premium-dar="1">Conceder Premium</button>
+      <button type="button" class="p-btn p-btn-ghost" data-premium-dar="0">Remover Premium</button>
+      <p class="p-note" data-premium-msg role="status"></p>
     </div>`;
   if (!ap) {
     return `<section class="p-section"><h2>Apoio</h2>
@@ -888,6 +896,23 @@ body.addEventListener('click', async (e) => {
 });
 
 body.addEventListener('click', async (e) => {
+  const pb = e.target.closest('[data-premium-dar]');
+  if (pb) {
+    const nome = body.querySelector('[data-premium-nome]').value.trim();
+    const msg = body.querySelector('[data-premium-msg]');
+    const dar = pb.dataset.premiumDar === '1';
+    if (!nome) { msg.textContent = 'Digite o nome de usuário.'; return; }
+    if (!window.confirm(`${dar ? 'Conceder' : 'Remover'} o Passe Premium ${dar ? 'para' : 'de'} ${nome}?`)) return;
+    pb.disabled = true;
+    try {
+      const r = await platform.adminPasse(nome, 'premium', dar ? 1 : 0);
+      msg.textContent = `Pronto! ${nome} ${r.premium ? 'agora tem' : 'não tem mais'} o Passe Premium.`;
+    } catch (err) {
+      msg.textContent = err.message;
+    }
+    pb.disabled = false;
+    return;
+  }
   const b = e.target.closest('[data-apoio-registrar]');
   if (!b) return;
   const nome = body.querySelector('[data-apoio-nome]').value.trim();
