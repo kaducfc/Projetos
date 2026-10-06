@@ -83,7 +83,7 @@ export function passeHtml(e, { extra = '' } = {}) {
       <h4>Como ganhar abóboras</h4>
       <ul>
         <li>Cada partida concluída, em qualquer jogo, rende ${por_partida} abóboras.</li>
-        <li>No Na Medida, o Diário e a Ranqueada rendem ${por_partida} abóboras pelo dia completo (as 5 rodadas); no modo Livre, cada rodada rende ${por_partida2} abóboras.</li>
+        <li>No Na Medida, o Diário e a Ranqueada rendem ${por_partida} abóboras pelo dia completo (as 5 rodadas); no modo Livre, a cada 5 rodadas você ganha ${por_partida2} abóboras.</li>
         <li>Dá para ganhar até ${e.passe.limite_dia} abóboras por dia. O limite zera à meia-noite (horário de Brasília).</li>
         <li>A cada ${por} abóboras você sobe um nível e libera a recompensa dele.</li>
       </ul>

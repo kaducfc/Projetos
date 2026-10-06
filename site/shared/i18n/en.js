@@ -714,7 +714,7 @@ export default {
   "Hoje: {num}/{num2}": "Today: {num}/{num2}",
   "Como ganhar abóboras": "How to earn pumpkins",
   "Cada partida concluída, em qualquer jogo, rende {num} abóboras.": "Each finished game, in any game, earns {num} pumpkins.",
-  "No Na Medida, o Diário e a Ranqueada rendem {num} abóboras pelo dia completo (as 5 rodadas); no modo Livre, cada rodada rende {num2} abóboras.": "In Na Medida, Daily and Ranked earn {num} pumpkins for the whole day (the 5 rounds); in Free mode, each round earns {num2} pumpkins.",
+  "No Na Medida, o Diário e a Ranqueada rendem {num} abóboras pelo dia completo (as 5 rodadas); no modo Livre, a cada 5 rodadas você ganha {num2} abóboras.": "In Na Medida, Daily and Ranked earn {num} pumpkins for the whole day (the 5 rounds); in Free mode, every 5 rounds you earn {num2} pumpkins.",
   "Dá para ganhar até {num} abóboras por dia. O limite zera à meia-noite (horário de Brasília).": "You can earn up to {num} pumpkins per day. The limit resets at midnight (Brasília time).",
   "A cada {num} abóboras você sobe um nível e libera a recompensa dele.": "Every {num} pumpkins you level up and unlock that level’s reward.",
   "nível do passe": "pass level",

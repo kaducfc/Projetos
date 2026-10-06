@@ -714,7 +714,7 @@ export default {
   "Hoje: {num}/{num2}": "Oggi: {num}/{num2}",
   "Como ganhar abóboras": "Come guadagnare zucche",
   "Cada partida concluída, em qualquer jogo, rende {num} abóboras.": "Ogni partita conclusa, in qualsiasi gioco, vale {num} zucche.",
-  "No Na Medida, o Diário e a Ranqueada rendem {num} abóboras pelo dia completo (as 5 rodadas); no modo Livre, cada rodada rende {num2} abóboras.": "In Na Medida, il Giornaliero e la Classificata valgono {num} zucche per l’intera giornata (i 5 round); nella modalità Libera, ogni round vale {num2} zucche.",
+  "No Na Medida, o Diário e a Ranqueada rendem {num} abóboras pelo dia completo (as 5 rodadas); no modo Livre, a cada 5 rodadas você ganha {num2} abóboras.": "In Na Medida, il Giornaliero e la Classificata valgono {num} zucche per l’intera giornata (i 5 round); nella modalità Libera, ogni 5 round guadagni {num2} zucche.",
   "Dá para ganhar até {num} abóboras por dia. O limite zera à meia-noite (horário de Brasília).": "Puoi guadagnare fino a {num} zucche al giorno. Il limite si azzera a mezzanotte (ora di Brasília).",
   "A cada {num} abóboras você sobe um nível e libera a recompensa dele.": "Ogni {num} zucche sali di livello e sblocchi la sua ricompensa.",
   "nível do passe": "livello del pass",
