@@ -95,7 +95,7 @@ function cardMoldura(u) {
 function cardEfeito(u) {
   const atual = efeitoAtivo(u.efeito, u.apoioTotal > 0);
   const escolhido = atual?.id || 'nenhum';
-  const opcao = ({ id, nome, classe, como, link }) => {
+  const opcao = ({ id, nome, classe, como, link, preco }) => {
     const livre = id === 'nenhum' || possuiEfeito(u, id);
     const previa = id === 'nenhum' ? `<span class="nick">${esc(u.username)}</span>` : `<span class="nick fx ${classe}">${esc(u.username)}</span>`;
     const requisito = !livre && efeitoInfo === id
@@ -104,6 +104,7 @@ function cardEfeito(u) {
       <button type="button" class="pf-ef-previa" data-act="efeito-ver" data-ef="${id}" aria-label="Efeito ${esc(nome)}">${previa}</button>
       <span class="pf-ef-nome">${esc(nome)}</span>
       <button type="button" class="${escolhido === id ? 'btn-ghost' : 'btn-primary'} pf-ef-btn" data-act="efeito-escolher" data-ef="${id}"${livre ? '' : ' aria-disabled="true"'}${escolhido === id ? ' disabled' : ''}>${escolhido === id ? 'Selecionado' : livre ? 'Selecionar' : '🔒 Bloqueado'}</button>
+      ${!livre && preco ? `<button type="button" class="btn-primary pf-ef-btn pf-ef-comprar" data-act="efeito-comprar" data-ef="${id}"${u.moedas != null && u.moedas < preco ? ' title="Rift Coins insuficientes"' : ''}>Comprar por ${preco.toLocaleString('pt-BR')} RC</button>` : ''}
       ${requisito}</li>`;
   };
   return `<section class="pf-card pf-efeito">
@@ -441,6 +442,21 @@ root.addEventListener('click', async (e) => {
       toast(err.message);
       render();
     }
+  }
+  if (act === 'efeito-comprar') {
+    const ef = efeitoPorId(b.dataset.ef);
+    if (!ef?.preco) return;
+    if (!window.confirm(`Comprar o efeito ${ef.nome} por ${ef.preco.toLocaleString('pt-BR')} Rift Coins?`)) return;
+    b.disabled = true;
+    try {
+      await platform.comprarItem('efeito', ef.id);
+      efeitosGanhos.add(ef.id);
+      toast('Efeito comprado! Agora é só selecionar.');
+    } catch (err) {
+      toast(err.message);
+    }
+    render();
+    return;
   }
   if (act === 'efeito-abrir') { efeitoAberto = !efeitoAberto; efeitoInfo = null; render(); }
   if (act === 'efeito-ver' || act === 'efeito-escolher') {

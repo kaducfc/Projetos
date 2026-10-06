@@ -8,13 +8,14 @@ export const EFEITOS = [
     como: 'Apoie o Rift Arcade com qualquer valor e o efeito dourado fica liberado.', link: { href: '/apoiar/', texto: '♥ Apoiar o site' } },
   { id: 'st-nebulosa', nome: 'Streamer', classe: 'fx-st-nebulosa', titulo: 'Streamer parceiro do Rift Arcade',
     como: 'Efeito exclusivo para Streamers parceiros.' },
+  // À venda por Rift Coins (site_loja, 0055_loja_efeitos.sql): `preco` só serve para mostrar.
+  { id: 'st-galaxia', nome: 'Galáxia', classe: 'fx-st-galaxia', preco: 2000, como: 'Compre por 2.000 RC.' },
+  { id: 'st-brasa', nome: 'Brasa', classe: 'fx-st-brasa', preco: 2000, como: 'Compre por 2.000 RC.' },
 ];
 
 // Só aparecem no painel do administrador (aba Teste) até serem aprovados.
 export const EFEITOS_TESTE = [
   { id: 'st-neon', nome: 'Neon violeta', classe: 'fx-st-neon', tema: 'Streamer · roxo' },
-  { id: 'st-galaxia', nome: 'Galáxia', classe: 'fx-st-galaxia', tema: 'Streamer · roxo' },
-  { id: 'st-brasa', nome: 'Brasa', classe: 'fx-st-brasa', tema: 'Streamer · cor livre' },
   { id: 'st-aurora', nome: 'Aurora', classe: 'fx-st-aurora', tema: 'Streamer · cor livre' },
   { id: 'st-contorno', nome: 'Contorno Twitch', classe: 'fx-st-contorno', tema: 'Streamer · Twitch' },
   { id: 'st-glitch', nome: 'Glitch', classe: 'fx-st-glitch', tema: 'Streamer · Twitch' },

@@ -447,6 +447,23 @@ export async function setAvatar(avatar) {
   return user;
 }
 
+// Loja de Rift Coins: compra um item (por ora, efeitos no nome) com as moedas da conta.
+export async function comprarItem(tipo, chave) {
+  const sb = await getClient();
+  if (!sb || !user) throw unavailable();
+  const { data, error } = await sb.rpc('site_loja_comprar', { p_tipo: tipo, p_chave: chave });
+  if (error) {
+    if (/saldo_insuficiente/.test(error.message)) throw new Error('Você não tem Rift Coins suficientes.');
+    if (/ja_possui/.test(error.message)) throw new Error('Você já tem este item.');
+    if (/item_indisponivel/.test(error.message)) throw new Error('Este item não está à venda.');
+    if (/site_loja_comprar|schema cache/.test(error.message)) throw new Error('A loja ainda não está ativa no servidor.');
+    throw friendly(error);
+  }
+  await refreshMoedas();
+  emit({ type: 'recompensas' });
+  return data;
+}
+
 // Moldura do ícone: null (sem moldura) ou o id de uma moldura liberada.
 export async function setMoldura(moldura) {
   const sb = await getClient();
