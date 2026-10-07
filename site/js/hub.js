@@ -62,7 +62,7 @@ const CAPAS = {
           .map(([r, n, o]) => `<span><i>${r}</i>${n}<b>${o}</b></span>`).join('')}</div></div>`,
 };
 // Etiqueta no canto da capa: [texto, classe].
-const SELOS = { barao: ['Só você · em teste', ''], 'carreira-no-rift': ['Ranqueada', 'rk'], runetermo: ['Diário · Ranqueada', 'rk'], campeao: ['Diário · Ranqueada', 'rk'], escala: ['Diário · Ranqueada', 'rk'], cblol: ['Ranqueada (Oculto)', 'rk'] };
+const SELOS = { barao: ['Ranqueada', 'rk'], 'carreira-no-rift': ['Ranqueada', 'rk'], runetermo: ['Diário · Ranqueada', 'rk'], campeao: ['Diário · Ranqueada', 'rk'], escala: ['Diário · Ranqueada', 'rk'], cblol: ['Ranqueada (Oculto)', 'rk'] };
 // Largura ÷ altura de cada emblema recortado (shared/assets/elos/*-recorte.webp).
 const PROPORCAO_EMBLEMA = { ferro: 1.06, bronze: 0.96, prata: 0.98, ouro: 0.97, platina: 0.97, esmeralda: 0.99, diamante: 0.92, mestre: 0.91, 'grao-mestre': 1.02, desafiante: 1 };
 const TAMANHO_FILA = [27.5, 37, 38, 39, 40, 41, 42, 46, 49, 52];

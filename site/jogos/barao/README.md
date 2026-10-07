@@ -8,8 +8,7 @@ Quiz de LoL no estilo Show do Milhão: **11 perguntas** (3 fáceis, 3 médias, 4
 - Arquivos: `js/logic.js` (constantes/helpers), `js/main.js` (UI/áudio, conversa com o servidor), `css/style.css`, `img/apresentador.webp`. O banco de perguntas NÃO fica em `site/`: está em `../barao-banco/perguntas.mjs` (FACIL, MEDIA, DIFICIL, IMPOSSIVEL; resposta certa SEMPRE primeiro).
   `js/main.js` (UI/áudio), `css/style.css`, `img/apresentador.webp` (mascote apresentador).
 - Editar/reclassificar pergunta: mexer em `barao-banco/perguntas.mjs`, rodar `node barao-banco/gerar-sql.mjs` e rodar `barao-banco/perguntas.sql` no SQL Editor do Supabase.
-- Acesso: só admin (`soAdmin: true` em `shared/config.js`). Fora do localhost, visitantes veem tela bloqueada.
-- Lançar: remover `soAdmin` do GAMES em `shared/config.js` e adicionar traduções i18n da página.
+- Acesso: público (lançado; o `soAdmin` foi removido de `shared/config.js`).
 - Servidor: a partida roda toda no Supabase (`supabase/migrations/0066_barao_servidor.sql`); a resposta certa só sai depois do fim da partida/da pergunta. Rodar no SQL Editor: 0065, 0066 e depois `barao-banco/perguntas.sql`.
 - Testes: `node --test tests/barao.test.mjs`
 - A dificuldade é só interna: o jogador não vê "fácil/difícil". Na 10ª pergunta nenhuma ajuda (pulo, Vazio, carta) é permitida. Pular troca a pergunta e mantém a mesma etapa/prêmio.

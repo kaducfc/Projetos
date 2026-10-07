@@ -101,7 +101,6 @@ export const GAMES = [
     path: 'jogos/barao/',
     status: 'live',
     scoreLabel: 'Pontos',
-    soAdmin: true,
   },
 ];
 
