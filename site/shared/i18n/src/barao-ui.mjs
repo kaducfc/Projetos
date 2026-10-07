@@ -1,6 +1,12 @@
 // Show do Barão: telas, botões e avisos. O nome é "Show do Barão" em português e "Baron Show" nos outros idiomas.
 // As perguntas e respostas estão em barao-perguntas-*.mjs.
 export default [
+  ['Sem conexão', 'No connection', 'Keine Verbindung', 'Sin conexión', 'Nessuna connessione', 'Pas de connexion'],
+  ['Este jogo precisa de conexão com o servidor. Tente de novo em instantes.', 'This game needs a connection to the server. Please try again in a moment.', 'Dieses Spiel braucht eine Verbindung zum Server. Versuch es gleich noch einmal.', 'Este juego necesita conexión con el servidor. Inténtalo de nuevo en unos instantes.', 'Questo gioco richiede una connessione al server. Riprova tra qualche istante.', 'Ce jeu a besoin d’une connexion au serveur. Réessaie dans un instant.'],
+  ['Essa partida não existe mais. Comece uma nova.', 'This match no longer exists. Start a new one.', 'Diese Partie gibt es nicht mehr. Starte eine neue.', 'Esta partida ya no existe. Empieza una nueva.', 'Questa partita non esiste più. Iniziane una nuova.', 'Cette partie n’existe plus. Commence-en une nouvelle.'],
+  ['Essa ação não está disponível agora.', 'That action isn’t available right now.', 'Diese Aktion ist gerade nicht verfügbar.', 'Esa acción no está disponible ahora.', 'Questa azione non è disponibile ora.', 'Cette action n’est pas disponible pour le moment.'],
+  ['Escolha uma alternativa que ainda esteja disponível.', 'Pick an option that is still available.', 'Wähle eine Antwort, die noch verfügbar ist.', 'Elige una opción que siga disponible.', 'Scegli un’opzione ancora disponibile.', 'Choisis une réponse encore disponible.'],
+  ['Essa ajuda não está mais disponível.', 'That lifeline is no longer available.', 'Dieser Joker ist nicht mehr verfügbar.', 'Esa ayuda ya no está disponible.', 'Questo aiuto non è più disponibile.', 'Cette aide n’est plus disponible.'],
   ['partida', 'match', 'Partie', 'partida', 'partita', 'partie'],
   ['ACERTAR', 'CORRECT', 'RICHTIG', 'ACERTAR', 'GIUSTA', 'JUSTE'],
   ['PARAR', 'STOP', 'AUFHÖREN', 'PLANTARSE', 'FERMATI', 'S’ARRÊTER'],

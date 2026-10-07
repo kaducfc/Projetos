@@ -5,15 +5,14 @@ import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
-import { avisoInicio, avisoComeco, avisoFim } from '../../../shared/aviso-ranked.js';
+import { avisoInicio, avisoComeco, avisoFimServidor, mostrar } from '../../../shared/aviso-ranked.js';
 import { t, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import {
-  NIVEIS, PREMIOS, PULOS, CARTAS, MONSTROS, letra, semAjuda,
-  novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoParar, premioAoErrar,
+  NIVEIS, PREMIOS, PULOS, CARTAS, MONSTROS, letra, semAjuda, premioAoParar, premioAoErrar,
 } from './logic.js';
 
 const GAME_ID = 'barao';
-const CHAVE_JOGO = 'barao.jogo';
+const CHAVE_PARTIDA = 'barao.partida'; // { id, ranked }: a partida em andamento (o jogo roda no servidor)
 const CHAVE_MELHOR = 'barao.melhor';
 const CHAVE_MUDO = 'barao.mudo';
 const app = document.getElementById('app');
@@ -77,7 +76,14 @@ const ICO = {
 };
 
 // --------------------------------------------------------------------------- estado
-let jogo = null;
+// Antes de começar a partida, a tela mostra um tabuleiro vazio por trás do cartão inicial.
+const INICIAL = {
+  id: null, nivel: 1, status: 'inicio', pulos: PULOS, vazio: false, cartaUsada: null, cartaOrdem: null,
+  pergunta: { q: '', opcoes: ['', '', '', ''], eliminadas: [], votos: null }, premio: null, resultado: null,
+};
+let jogo = null; // estado que o servidor devolve (+ `ranked`, o ingresso do dia)
+let pendente = null; // partida em andamento encontrada ao abrir (para o botão Continuar)
+let ocupadoServidor = false;
 let ddVersion = null;
 let sel = null; // opção selecionada, ainda sem travar
 let ocupado = false; // revelando resposta
@@ -172,16 +178,18 @@ function desenharCartas(jogando) {
   const usada = jogo.cartaUsada;
   document.querySelectorAll('.bz-carta').forEach((b) => {
     const slot = Number(b.dataset.slot);
-    const id = jogo.cartaOrdem[slot];
-    const c = CARTAS.find((x) => x.id === id);
-    b.dataset.cor = id;
-    b.querySelector('.frente img').src = `img/carta-${id}.webp?v=1`;
-    b.querySelector('.frente b').textContent = `−${c.tira}`;
+    const id = jogo.cartaOrdem?.[slot] || null; // a cor só é conhecida depois de uma carta ser virada
+    const c = id ? CARTAS.find((x) => x.id === id) : null;
+    if (id) {
+      b.dataset.cor = id;
+      b.querySelector('.frente img').src = `img/carta-${id}.webp?v=1`;
+      b.querySelector('.frente b').textContent = `−${c.tira}`;
+    }
     b.classList.toggle('virada', Boolean(usada));
     b.classList.toggle('escolhida', usada?.slot === slot);
     b.classList.toggle('descartada', Boolean(usada) && usada.slot !== slot);
     b.disabled = Boolean(usada) || !jogando || ocupado || cartaRevelando || semAjuda(jogo.nivel);
-    b.title = !usada ? t('Carta do Twisted Fate: escolha uma, só vale uma vez por partida')
+    b.title = !usada || !c ? t('Carta do Twisted Fate: escolha uma, só vale uma vez por partida')
       : usada.slot === slot ? t(c.tira === 1 ? '{carta}: tirou 1 opção errada' : '{carta}: tirou {n} opções erradas', { carta: t(c.nome), n: c.tira }) : t('Era a {carta} (tira {n})', { carta: t(c.nome), n: c.tira });
   });
 }
@@ -192,8 +200,7 @@ function tela(html, refazer = null) { const el = $('bz-tela'); el.innerHTML = ht
 function telaInicio() {
   pararDrone();
   const melhor = lerLS(CHAVE_MELHOR, 0);
-  const salvo = lerLS(CHAVE_JOGO);
-  const retomar = salvo && salvo.v === 2 && (salvo.status === 'jogando' || salvo.status === 'acertou');
+  const retomar = Boolean(pendente);
   tela(`<div class="bz-cartao">
     <span class="sup">Quiz de League of Legends</span>
     <h2>Show do Barão</h2>
@@ -218,6 +225,11 @@ function telaFim() {
     <div class="bz-melhor">Seu recorde: <b>${fmt(Math.max(melhor, j.premio))} pontos</b>${j.premio > melhor && j.premio > 0 ? ' · novo recorde!' : ''}</div>
     <div class="bz-acoes"><button type="button" class="bz-go" id="bz-novo">JOGAR DE NOVO</button><a class="bz-go sec" href="../../">Voltar ao início</a></div></div>`, telaFim);
 }
+function telaSemServidor() {
+  tela(`<div class="bz-cartao"><span class="sup">Sem conexão</span><h2>Show do Barão</h2>
+    <p>Este jogo precisa de conexão com o servidor. Tente de novo em instantes.</p>
+    <div class="bz-acoes"><a class="bz-go" href="../../">VOLTAR AO INÍCIO</a></div></div>`, telaSemServidor);
+}
 function telaBloqueada() {
   app.innerHTML = `<div class="bz" style="display:grid;place-items:center"><div class="bz-bg"><div class="bz-feixes"></div></div><div class="bz-cartao" style="position:relative;z-index:2">
     <span class="sup">Em desenvolvimento</span><h2>Show do Barão</h2>
@@ -226,21 +238,40 @@ function telaBloqueada() {
 }
 
 // --------------------------------------------------------------------------- fluxo
-function salvar() { gravarLS(CHAVE_JOGO, jogo); }
-function comecar() {
-  jogo = novoJogo(); sel = null; ocupado = false;
-  jogo.pid = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  salvar();
+// Chama o servidor; se der erro, avisa na tela e devolve null.
+async function chamar(fn) {
+  try { return await fn(); } catch (e) { mostrar(esc(e.message), 7000); return null; }
+}
+// Guarda o estado novo que o servidor devolveu (mantendo o ingresso da ranqueada).
+function aplicar(estado) {
+  const ranked = jogo?.ranked ?? null;
+  jogo = estado;
+  jogo.ranked = ranked;
+  gravarLS(CHAVE_PARTIDA, { id: jogo.id, ranked });
+}
+async function comecar() {
+  if (ocupadoServidor) return;
+  ocupadoServidor = true;
+  const r = await chamar(() => platform.baraoComecar());
+  ocupadoServidor = false;
+  if (!r) return;
+  jogo = r.estado; jogo.ranked = r.ranked; pendente = null; sel = null; ocupado = false;
+  gravarLS(CHAVE_PARTIDA, { id: jogo.id, ranked: r.ranked });
   platform.track('game_start', GAME_ID, {});
-  // Ranqueada: o servidor anota o começo desta partida (valem as 5 primeiras do dia).
-  const pid = jogo.pid;
-  platform.rankedIniciar(GAME_ID).then((r) => {
-    if (r && jogo?.pid === pid) { jogo.ranked = r; salvar(); }
-    avisoComeco(r, GAME_ID);
-  });
+  tela(''); desenhar(); iniciarDrone();
+  avisoComeco(r.ranked, GAME_ID); // diz se esta partida vale para a ranqueada (só com conta)
+}
+async function continuar() {
+  if (!pendente || ocupadoServidor) return;
+  ocupadoServidor = true;
+  jogo = pendente.estado; jogo.ranked = pendente.ranked; pendente = null; sel = null; ocupado = false;
+  if (jogo.status === 'acertou') { // tinha acertado e fechou antes da próxima pergunta
+    const n = await chamar(() => platform.baraoProxima(jogo.id));
+    if (n) aplicar(n.estado);
+  }
+  ocupadoServidor = false;
   tela(''); desenhar(); iniciarDrone();
 }
-function continuar() { tela(''); desenhar(); iniciarDrone(); }
 function escolher(i) {
   if (ocupado || jogo.status !== 'jogando' || jogo.pergunta.eliminadas.includes(i)) return;
   sel = i; SOM.clique(); desenhar();
@@ -252,34 +283,38 @@ async function travar() {
   const botoes = [...document.querySelectorAll('.bz-op')];
   desenhar(); botoes[escolhida].classList.add('travada'); botoes.forEach((b) => { b.disabled = true; });
   SOM.travar();
-  await esperar(2200);
-  jogo = responder(jogo, escolhida);
-  botoes.forEach((b, i) => b.classList.remove('travada', 'sel'));
+  // O servidor confere a resposta enquanto a tela faz o suspense.
+  const [resp] = await Promise.all([chamar(() => platform.baraoResponder(jogo.id, escolhida)), esperar(2200)]);
+  botoes.forEach((b) => b.classList.remove('travada', 'sel'));
+  if (!resp) { ocupado = false; desenhar(); return; }
+  aplicar(resp.estado);
   botoes[jogo.pergunta.certa].classList.add('certa');
   if (escolhida !== jogo.pergunta.certa) botoes[escolhida].classList.add('errada');
-  salvar();
   if (jogo.status === 'acertou') {
     SOM.acertou();
     await esperar(1800);
-    jogo = proxima(jogo); sel = null; ocupado = false; salvar(); desenhar();
+    const n = await chamar(() => platform.baraoProxima(jogo.id));
+    if (n) aplicar(n.estado);
+    sel = null; ocupado = false; desenhar();
     return;
   }
   (jogo.resultado === 'ganhou' ? SOM.venceu : SOM.errou)();
   await esperar(jogo.resultado === 'ganhou' ? 1800 : 2400);
-  ocupado = false; fim();
+  ocupado = false; fim(resp.ranqueada);
 }
-function fim() {
+// `ranq`: o que o servidor decidiu sobre a ranqueada ({ valeu, pdr, numero } ou null).
+function fim(ranq) {
   pararDrone();
   const j = jogo;
   const melhor = lerLS(CHAVE_MELHOR, 0);
   telaFim();
   if (j.premio > melhor) gravarLS(CHAVE_MELHOR, j.premio);
-  gravarLS(CHAVE_JOGO, { ...j, status: 'fim' });
+  gravarLS(CHAVE_PARTIDA, null);
   platform.track('game_end', GAME_ID, { nivel: j.nivel, resultado: j.resultado, premio: j.premio });
   platform.recordResult(GAME_ID, {
     score: j.premio,
-    summary: { ranked: j.ranked?.token, text: `${fmtPt(j.premio)} pontos`, nivel: j.nivel, resultado: j.resultado, premio: j.premio },
-  }).then((entry) => avisoFim(entry, j.ranked, GAME_ID)); // diz se valeu para a ranqueada (e libera as abóboras)
+    summary: { text: `${fmtPt(j.premio)} pontos`, nivel: j.nivel, resultado: j.resultado, premio: j.premio },
+  }).then(() => avisoFimServidor(ranq, j.ranked, GAME_ID)); // diz se valeu para a ranqueada (e libera as abóboras)
 }
 function pararJogo() {
   if (ocupado || jogo.status !== 'jogando' || jogo.nivel <= 1) return;
@@ -292,26 +327,48 @@ function telaParar() {
     <p>Você leva esse prêmio e encerra a partida.</p>
     <div class="bz-acoes"><button type="button" class="bz-go" id="bz-parar-sim">SIM, PARAR</button><button type="button" class="bz-go sec" id="bz-parar-nao">CONTINUAR JOGANDO</button></div></div>`, telaParar);
 }
+async function confirmarParar() {
+  tela('');
+  ocupado = true; desenhar();
+  const r = await chamar(() => platform.baraoParar(jogo.id));
+  ocupado = false;
+  if (!r) { desenhar(); return; }
+  aplicar(r.estado);
+  fim(r.ranqueada);
+}
+// Ajudas: o servidor decide o que muda (pergunta nova, opções que somem, votos).
+async function ajuda(nome, chamada, depois) {
+  if (ocupado || jogo.status !== 'jogando' || semAjuda(jogo.nivel)) return;
+  ocupado = true; desenhar();
+  const r = await chamar(chamada);
+  ocupado = false;
+  if (!r) { desenhar(); return; }
+  aplicar(r.estado);
+  await depois();
+}
 function ajudaPular() {
-  if (ocupado || jogo.status !== 'jogando' || jogo.pulos <= 0 || semAjuda(jogo.nivel)) return;
-  jogo = pular(jogo); sel = null; salvar(); SOM.ajuda(); avisar(t('Pinstouro! Pergunta trocada.')); desenhar();
+  if (jogo.pulos <= 0) return;
+  ajuda('pular', () => platform.baraoPular(jogo.id), async () => {
+    sel = null; SOM.ajuda(); avisar(t('Pinstouro! Pergunta trocada.')); desenhar();
+  });
 }
 function ajudaVazio() {
-  if (ocupado || jogo.status !== 'jogando' || jogo.vazio || semAjuda(jogo.nivel)) return;
-  jogo = usarVazio(jogo); salvar(); SOM.vazio(); avisar(t('Os monstros do Vazio apontam suas respostas…'), 2800); desenhar();
+  if (jogo.vazio) return;
+  ajuda('vazio', () => platform.baraoVazio(jogo.id), async () => {
+    SOM.vazio(); avisar(t('Os monstros do Vazio apontam suas respostas…'), 2800); desenhar();
+  });
 }
-async function ajudaCarta(slot) {
-  if (ocupado || cartaRevelando || jogo.status !== 'jogando' || jogo.cartaUsada) return;
-  const antes = jogo;
-  jogo = usarCarta(jogo, slot);
-  if (!jogo.cartaUsada) { jogo = antes; return; }
-  salvar(); SOM.carta();
-  cartaRevelando = true; desenhar(); // a carta vira e mostra a cor
-  const c = CARTAS.find((x) => x.id === jogo.cartaUsada.id);
-  await esperar(900);
-  cartaRevelando = false;
-  if (sel != null && jogo.pergunta.eliminadas.includes(sel)) sel = null;
-  avisar(t(c.tira === 1 ? '{carta}: 1 opção errada eliminada!' : '{carta}: {n} opções erradas eliminadas!', { carta: t(c.nome), n: c.tira }), 2600); desenhar();
+function ajudaCarta(slot) {
+  if (cartaRevelando || jogo.cartaUsada) return;
+  ajuda('carta', () => platform.baraoCarta(jogo.id, slot), async () => {
+    SOM.carta();
+    cartaRevelando = true; desenhar(); // a carta vira e mostra a cor
+    const c = CARTAS.find((x) => x.id === jogo.cartaUsada.id);
+    await esperar(900);
+    cartaRevelando = false;
+    if (sel != null && jogo.pergunta.eliminadas.includes(sel)) sel = null;
+    avisar(t(c.tira === 1 ? '{carta}: 1 opção errada eliminada!' : '{carta}: {n} opções erradas eliminadas!', { carta: t(c.nome), n: c.tira }), 2600); desenhar();
+  });
 }
 
 // --------------------------------------------------------------------------- eventos
@@ -323,7 +380,7 @@ app.addEventListener('click', (e) => {
   else if (id === 'bz-vazio') ajudaVazio();
   else if (id === 'bz-pular') ajudaPular();
   else if (id === 'bz-parar') pararJogo();
-  else if (id === 'bz-parar-sim') { tela(''); jogo = parar(jogo); salvar(); fim(); }
+  else if (id === 'bz-parar-sim') confirmarParar();
   else if (id === 'bz-parar-nao') tela('');
   else if (id === 'bz-novo') comecar();
   else if (id === 'bz-continuar') continuar();
@@ -348,9 +405,16 @@ onLangChange(() => { if (!jogo) return; atualizarEscada(); atualizarSom(); desen
   if (!souAdmin && !teste && !aberto) { telaBloqueada(); return; }
   montar();
   versaoDD().then((v) => { ddVersion = v; if (!ocupado) desenhar(); });
-  const salvo = lerLS(CHAVE_JOGO);
-  jogo = salvo && salvo.v === 2 && (salvo.status === 'jogando' || salvo.status === 'acertou') ? (salvo.status === 'acertou' ? proxima(salvo) : salvo) : novoJogo();
+  jogo = { ...INICIAL, pergunta: { ...INICIAL.pergunta } };
   desenhar();
+  if (!platform.cloudEnabled()) { telaSemServidor(); return; }
+  // Tem uma partida em andamento neste navegador? O servidor diz se ela ainda existe.
+  const salva = lerLS(CHAVE_PARTIDA);
+  if (salva?.id) {
+    const estado = await chamar(() => platform.baraoEstado(salva.id));
+    if (estado && estado.status !== 'fim') pendente = { estado, ranked: salva.ranked || null };
+    else gravarLS(CHAVE_PARTIDA, null);
+  }
   telaInicio();
   avisoInicio(GAME_ID);
 }());

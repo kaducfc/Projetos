@@ -969,6 +969,44 @@ export async function diarioHoje() {
 export const escalaAbrir = (comecar = false) => rpcDiario('site_escala_abrir', { comecar });
 // razao = altura do vermelho ÷ altura do azul.
 export const escalaPalpite = (rodada, razao) => rpcDiario('site_escala_palpite', { rodada, razao });
+// Show do Barão: as perguntas e as respostas certas ficam no servidor; visitantes (sem conta)
+// também jogam, só que a partida deles não vale PDR.
+const ERROS_BARAO = {
+  sem_partida: 'Essa partida não existe mais. Comece uma nova.',
+  estado_invalido: 'Essa ação não está disponível agora.',
+  opcao_invalida: 'Escolha uma alternativa que ainda esteja disponível.',
+  ajuda_indisponivel: 'Essa ajuda não está mais disponível.',
+  sem_perguntas: 'O jogo ainda não está pronto no servidor.',
+};
+async function rpcBarao(nome, args) {
+  await init();
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc(nome, args);
+  if (error) {
+    const k = Object.keys(ERROS_BARAO).find((x) => error.message.includes(x));
+    const e = new Error(k ? ERROS_BARAO[k] : friendly(error).message);
+    e.codigo = k || null;
+    throw e;
+  }
+  return data;
+}
+// Começa uma partida: { estado, ranked } (ranked: o ingresso do dia, só para quem tem conta).
+export async function baraoComecar() {
+  const d = await rpcBarao('site_barao_comecar', {});
+  const r = d.ranked;
+  return {
+    estado: d.estado,
+    ranked: r ? { token: r.token ?? null, dia: String(r.dia).slice(0, 10), numero: r.numero ?? null, restantes: r.restantes ?? null, limite: r.limite ?? null, banido: Boolean(r.banido) } : null,
+  };
+}
+export const baraoEstado = (id) => rpcBarao('site_barao_estado', { pid: id }); // null se a partida não existe mais
+export const baraoResponder = (id, indice) => rpcBarao('site_barao_responder', { pid: id, indice });
+export const baraoProxima = (id) => rpcBarao('site_barao_proxima', { pid: id });
+export const baraoParar = (id) => rpcBarao('site_barao_parar', { pid: id });
+export const baraoPular = (id) => rpcBarao('site_barao_pular', { pid: id });
+export const baraoCarta = (id, slot) => rpcBarao('site_barao_carta', { pid: id, slot });
+export const baraoVazio = (id) => rpcBarao('site_barao_vazio', { pid: id });
 // Com conta e servidor, o jogo diário vale ranqueada (e é conferido lá).
 export const diarioNoServidor = () => Boolean(user) && cloudEnabled();
 

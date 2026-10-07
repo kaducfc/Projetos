@@ -116,6 +116,28 @@ async function avisoFimBase(entry, ranked, jogo) {
   }
 }
 
+// Fim de partida de um jogo em que o servidor mesmo decide o resultado e lança o PDR (Show do
+// Barão): `ranq` = { valeu, pdr, numero } que o servidor devolveu, ou null se não valeu.
+export async function avisoFimServidor(ranq, ranked = null, jogo = 'carreira-no-rift') {
+  try { await avisoFimServidorBase(ranq, ranked, jogo); } finally { liberarAbobora(); }
+}
+async function avisoFimServidorBase(ranq, ranked, jogo) {
+  if (!platform.cloudEnabled()) return;
+  const n = nomes(jogo);
+  if (!platform.getUser()) {
+    mostrar(t('Essa {uma} não valeu PDR: entre na sua conta para as próximas valerem.', { uma: n.uma }));
+    return;
+  }
+  if (!ranq?.valeu) {
+    mostrar(`${ranked && !ranked.token && !ranked.banido
+      ? t('Essa {uma} <b>não valeu PDR</b>: ela começou depois das {max} ranqueadas do dia.', { uma: n.uma, max: PARTIDAS_POR_DIA })
+      : t('Essa {uma} <b>não valeu PDR</b>.', { uma: n.uma })} ${link()}`, 12000);
+    return;
+  }
+  const d = await platform.rankedStatus();
+  mostrar(`<b>${t('Valeu para a ranqueada!')}</b> ${n.Uma} ${t('({n}ª de hoje)', { n: ranq.numero })}: ${pdrHtml(ranq.pdr)}${d ? ` · ${t('agora: {elo}', { elo: eloTexto(d) })}` : ''}. ${link()}`, 12000);
+}
+
 // Jogos diários (Runetermo e Campeão Oculto): resultado do dia.
 export async function avisoDiario(estado) {
   try { await avisoDiarioBase(estado); } finally { liberarAbobora(); }

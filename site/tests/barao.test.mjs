@@ -1,13 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { baseBarao, ajustarPdr, PDR_BARAO } from '../shared/ranked.js';
-import { FACIL, MEDIA, DIFICIL, IMPOSSIVEL, BANCO } from '../jogos/barao/js/perguntas.js';
+import { existsSync, readFileSync } from 'node:fs';
+import { FACIL, MEDIA, DIFICIL, IMPOSSIVEL, BANCO } from '../../barao-banco/perguntas.mjs';
 import {
-  semAjuda, NIVEIS, PREMIOS, CARTAS, novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoErrar, premioAoParar, faixa,
+  semAjuda, NIVEIS, PREMIOS, PULOS, premioAoErrar, premioAoParar,
 } from '../jogos/barao/js/logic.js';
 
-// Gerador pseudoaleatório fixo para os testes.
-function semente(n = 1) { let s = n; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+const sql = (nome) => readFileSync(new URL(`../supabase/migrations/${nome}`, import.meta.url), 'utf8');
+const faixa = (n) => (n <= 3 ? 1 : n <= 6 ? 2 : n <= 10 ? 3 : 4);
 
 test('barão: banco com 250+ perguntas válidas (4 opções distintas, sem repetição)', () => {
   const todas = [...FACIL, ...MEDIA, ...DIFICIL, ...IMPOSSIVEL];
@@ -43,133 +44,37 @@ test('barão: 11 perguntas (3 fáceis, 3 médias, 4 difíceis, 1 quase impossív
   for (let n = 3; n <= 11; n += 1) assert.ok(premioAoErrar(n) < premioAoParar(n));
 });
 
-test('barão: cada pergunta sai da faixa certa', () => {
-  const r = semente(21);
-  let j = novoJogo(r);
-  for (let n = 1; n <= NIVEIS; n += 1) {
-    const banco = BANCO[faixa(n)].map((p) => p.q);
-    assert.ok(banco.includes(j.pergunta.q), `pergunta ${n} fora da faixa ${faixa(n)}`);
-    j = responder(j, j.pergunta.certa, r);
-    if (n < NIVEIS) j = proxima(j, r);
-  }
+test('barão: o banco de perguntas NÃO fica no site (só no servidor)', () => {
+  assert.ok(!existsSync(new URL('../jogos/barao/js/perguntas.js', import.meta.url)), 'perguntas.js não pode ficar em site/');
+  const main = readFileSync(new URL('../jogos/barao/js/main.js', import.meta.url), 'utf8');
+  assert.ok(!/perguntas/.test(main.replace(/Pergunta|pergunta/g, '')), 'main.js não pode importar o banco');
+  const logic = readFileSync(new URL('../jogos/barao/js/logic.js', import.meta.url), 'utf8');
+  assert.ok(!/BANCO|import .*perguntas/.test(logic));
 });
 
-test('barão: partida completa — acertando tudo ganha 1.000.000', () => {
-  const r = semente(7);
-  let j = novoJogo(r);
-  for (let n = 1; n <= NIVEIS; n += 1) {
-    assert.equal(j.nivel, n);
-    j = responder(j, j.pergunta.certa, r);
-    if (n < NIVEIS) { assert.equal(j.status, 'acertou'); j = proxima(j, r); }
-  }
-  assert.equal(j.status, 'fim');
-  assert.equal(j.resultado, 'ganhou');
-  assert.equal(j.premio, 1000000);
-  assert.equal(new Set(j.usadas).size, j.usadas.length, 'não repete pergunta');
-});
-
-test('barão: errar perde um degrau; parar leva o prêmio atual', () => {
-  const r = semente(3);
-  let j = novoJogo(r);
-  for (let n = 1; n <= 7; n += 1) { j = responder(j, j.pergunta.certa, r); j = proxima(j, r); }
-  assert.equal(j.nivel, 8);
-  const errada = [0, 1, 2, 3].find((i) => i !== j.pergunta.certa);
-  const perdeu = responder(j, errada, r);
-  assert.equal(perdeu.resultado, 'errou');
-  assert.equal(perdeu.premio, PREMIOS[5]); // errou na 8ª (tinha 50.000): perde um degrau
-  const saiu = parar(j);
-  assert.equal(saiu.resultado, 'parou');
-  assert.equal(saiu.premio, PREMIOS[6]); // 50.000 (acertou até a 7ª)
-});
-
-test('barão: Pinstouro troca a pergunta sem avançar e acaba depois de 2 usos', () => {
-  const r = semente(11);
-  let j = novoJogo(r);
-  const antes = j.pergunta.q;
-  j = pular(j, r);
-  assert.equal(j.nivel, 1);
-  assert.equal(j.pulos, 1);
-  assert.notEqual(j.pergunta.q, antes);
-  j = pular(j, r);
-  assert.equal(j.pulos, 0);
-  const igual = pular(j, r);
-  assert.equal(igual.pulos, 0);
-  assert.equal(igual.pergunta.q, j.pergunta.q);
-});
-
-test('barão: cartas do TF — viradas, só uma escolha na partida inteira, revela e tira 1, 2 ou 3', () => {
-  const r = semente(5);
-  let j = novoJogo(r);
-  assert.deepEqual([...j.cartaOrdem].sort(), CARTAS.map((c) => c.id).sort(), 'as três cores estão nas três posições');
-  assert.equal(j.cartaUsada, null);
-  for (let slot = 0; slot < 3; slot += 1) {
-    const n = novoJogo(r);
-    const id = n.cartaOrdem[slot];
-    const tira = CARTAS.find((c) => c.id === id).tira;
-    const u = usarCarta(n, slot, r);
-    assert.deepEqual(u.cartaUsada, { slot, id });
-    assert.equal(u.pergunta.eliminadas.length, tira);
-    assert.ok(!u.pergunta.eliminadas.includes(u.pergunta.certa));
-    // não dá para escolher outra carta
-    const outra = usarCarta(u, (slot + 1) % 3, r);
-    assert.equal(outra.pergunta.eliminadas.length, tira);
-    assert.deepEqual(outra.cartaUsada, u.cartaUsada);
-  }
-  // nem nas perguntas seguintes
-  j = usarCarta(j, 0, r);
-  j = proxima(responder(j, j.pergunta.certa, r), r);
-  assert.equal(usarCarta(j, 1, r).pergunta.eliminadas.length, 0);
-  assert.equal(usarCarta(j, 1, r).cartaUsada.slot, 0);
-  // posições inválidas não fazem nada
-  assert.equal(usarCarta(novoJogo(r), 7, r).cartaUsada, null);
-});
-
-test('barão: a ordem das cartas varia de partida para partida', () => {
-  const r = semente(2);
-  const ordens = new Set(Array.from({ length: 40 }, () => novoJogo(r).cartaOrdem.join()));
-  assert.ok(ordens.size >= 4);
-});
-
-test('barão: Monstros do Vazio votam em opções que ainda existem e acertam mais nas fáceis', () => {
-  const r = semente(9);
-  let acertosFacil = 0; let acertosDificil = 0; const N = 400;
-  for (let i = 0; i < N; i += 1) {
-    const f = usarVazio(novoJogo(r), r);
-    assert.equal(f.pergunta.votos.length, 3);
-    acertosFacil += f.pergunta.votos.filter((v) => v.voto === f.pergunta.certa).length;
-    let d = novoJogo(r); d.nivel = 9; d = usarVazio(d, r);
-    acertosDificil += d.pergunta.votos.filter((v) => v.voto === d.pergunta.certa).length;
-  }
-  assert.ok(acertosFacil > acertosDificil, `${acertosFacil} vs ${acertosDificil}`);
-  const n = novoJogo(r);
-  const c = usarVazio(usarCarta(n, n.cartaOrdem.indexOf('dourada'), r), r);
-  assert.ok(c.pergunta.votos.every((v) => v.voto === c.pergunta.certa)); // só sobrou a certa
-  assert.equal(usarVazio(c, r).vazio, true);
-});
-
-test('barão: na última pergunta nenhuma ajuda funciona', () => {
-  const r = semente(4);
-  let j = novoJogo(r);
-  j.nivel = NIVEIS;
-  assert.ok(semAjuda(j.nivel));
-  assert.equal(pular(j, r).pulos, j.pulos);
-  assert.equal(pular(j, r).pergunta.q, j.pergunta.q);
-  assert.equal(usarCarta(j, 0, r).cartaUsada, null);
-  assert.equal(usarVazio(j, r).vazio, false);
-});
-
-test('barão: pular mantém a etapa e o prêmio, só troca a pergunta da mesma faixa', () => {
-  const r = semente(13);
-  let j = novoJogo(r);
-  for (let n = 1; n <= 2; n += 1) j = proxima(responder(j, j.pergunta.certa, r), r);
-  assert.equal(j.nivel, 3);
-  const q = j.pergunta.q;
-  const p = pular(j, r);
-  assert.equal(p.nivel, 3);
-  assert.equal(p.status, 'jogando');
-  assert.notEqual(p.pergunta.q, q);
-  assert.ok(BANCO[faixa(3)].some((x) => x.q === p.pergunta.q));
-  assert.equal(parar(p).premio, PREMIOS[1]); // o prêmio segue o mesmo
+test('barão: regras de prêmio do site e do servidor (0066) batem', () => {
+  const s = sql('0066_barao_servidor.sql');
+  assert.ok(s.includes(`array[${PREMIOS.join(', ')}]`), 'prêmios');
+  assert.equal(PULOS, 2);
+  assert.ok(s.includes('pulos int not null default 2'));
+  assert.ok(s.includes('when n <= 3 then 1 when n <= 6 then 2 when n <= 10 then 3 else 4'));
+  // errar: degrau abaixo do que o jogador tinha (PREMIOS[n-3] no site = prem[n-2] no SQL, base 1)
+  assert.ok(s.includes('case when p.nivel >= 3 then prem[p.nivel - 2] else 0 end'));
+  // parar: o prêmio da pergunta anterior
+  assert.ok(s.includes('premio = prem[p.nivel - 1]'));
+  assert.equal(premioAoParar(5), PREMIOS[3]);
+  assert.equal(premioAoErrar(5), PREMIOS[2]);
+  // ajudas nunca na última pergunta
+  assert.ok(semAjuda(NIVEIS));
+  assert.equal((s.match(/p\.nivel >= 11/g) || []).length >= 3, true);
+  // visitantes e contas podem jogar; ninguém lê as tabelas direto
+  assert.ok(s.includes('grant execute on function public.site_barao_comecar() to anon, authenticated'));
+  assert.ok(s.includes('revoke all on table public.site_barao_perguntas from anon, authenticated'));
+  assert.ok(s.includes('revoke all on table public.site_barao_partidas from anon, authenticated'));
+  // a resposta certa só sai depois de respondida
+  assert.ok(s.includes("'certa', case when p.status <> 'jogando' then p.certa end"));
+  // limpeza das partidas abandonadas
+  assert.ok(s.includes("interval '6 hours'") && s.includes("interval '3 days'"));
 });
 
 test('barão: tradução completa — telas, perguntas e alternativas nos 5 idiomas', async () => {
@@ -211,10 +116,8 @@ test('barão: PDR da ranqueada pelo prêmio final e % por elo', () => {
 });
 
 test('barão: o SQL da ranqueada (0065) usa a mesma tabela e as mesmas regras', async () => {
-  const { readFileSync } = await import('node:fs');
   const sql = readFileSync(new URL('../supabase/migrations/0065_barao_ranqueada.sql', import.meta.url), 'utf8');
   for (const [min, pdr] of PDR_BARAO.slice(0, -1)) assert.ok(sql.includes(`when premio >= ${min} then ${pdr}`), `${min} → ${pdr}`);
   assert.ok(sql.includes('else -20 end'));
-  assert.ok(sql.includes("array[500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000]"));
   assert.ok(sql.includes("('carreira-no-rift', 'cblol', 'barao')"));
 });
