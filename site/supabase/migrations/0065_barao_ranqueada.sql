@@ -1,7 +1,7 @@
 -- Show do Barão na ranqueada. Rodar depois da 0064. Rodar de novo é seguro.
 --
 -- Regras (iguais às da Carreira e do Lendas):
---   * Valem as 5 primeiras partidas COMEÇADAS no dia (cada uma vale o seu PDR).
+--   * Valem as 3 primeiras partidas COMEÇADAS no dia (cada uma vale o seu PDR).
 --   * Começou e não terminou até a meia-noite: −15 PDR por partida.
 --   * Quem lança o PDR é o servidor do jogo (0066_barao_servidor.sql), no fim da partida.
 --   * PDR pelo prêmio final (a tabela abaixo, antes do % do elo): o ganho passa
@@ -30,7 +30,7 @@ returns int language sql immutable as $$
     else -20 end;
 $$;
 
--- 1. Começo da partida: o Barão também ganha ingresso do dia (5 por dia).
+-- 1. Começo da partida: o Barão também ganha ingresso do dia (3 por dia).
 create or replace function public.site_rk_iniciar(jogo text)
 returns jsonb
 language plpgsql
@@ -40,7 +40,7 @@ as $$
 declare
   uid uuid := auth.uid();
   hoje date := site_hoje_br();
-  limite constant int := 5;
+  limite constant int := 3;
   feitas int;
   novo uuid;
 begin

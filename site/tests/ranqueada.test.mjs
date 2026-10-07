@@ -116,7 +116,7 @@ test('zerar a ranqueada: só administrador', async () => {
   await assert.rejects(platform.adminResetRanked(1), /não tem permissão/);
 });
 
-test('ranqueada: ingresso (vaga) da Carreira e do Lendas, 5 por dia em cada', async () => {
+test('ranqueada: ingresso (vaga) da Carreira e do Lendas, 3 por dia em cada', async () => {
   const sb = createFakeSupabase();
   installMemoryStorage();
   platform.__setClientForTests(sb);
@@ -126,10 +126,10 @@ test('ranqueada: ingresso (vaga) da Carreira e do Lendas, 5 por dia em cada', as
   const r = await platform.rankedIniciar();
   assert.match(r.token, /^[0-9a-f-]{36}$/);
   assert.equal(r.numero, 1);
-  for (let i = 2; i <= 4; i++) await platform.rankedIniciar();
-  assert.equal((await platform.rankedIniciar()).restantes, 0); // 5ª: a última
-  assert.equal((await platform.rankedIniciar()).token, null); // 6ª começada: não vale
-  assert.equal((await platform.rankedIniciar('cblol')).numero, 1); // Lendas tem as suas 5
+  for (let i = 2; i <= 2; i++) await platform.rankedIniciar();
+  assert.equal((await platform.rankedIniciar()).restantes, 0); // 3ª: a última
+  assert.equal((await platform.rankedIniciar()).token, null); // 4ª começada: não vale
+  assert.equal((await platform.rankedIniciar('cblol')).numero, 1); // Lendas tem as suas 3
   // No banco: vaga da própria conta, do jogo, de hoje e não usada; Lendas só no Oculto.
   assert.match(sql15, /i\.id = tok::uuid and i\.user_id = new\.user_id and i\.dia = hoje and i\.jogo = new\.game_id and i\.usado_em is null/);
   assert.match(sql15, /coalesce\(new\.summary->>'modo', ''\) <> 'oculto' then return new/);
@@ -192,11 +192,13 @@ test('ranqueada: cada partida da Carreira e do Lendas vale o seu PDR (sem "só a
   assert.deepEqual(st.hoje.partidas.map((x) => [x.n, x.pdr]), [[1, 27], [2, -16], [3, 10]]);
 });
 
-test('ranqueada: limite de 5 partidas por dia no banco (0028) e no site', () => {
-  const sql28 = readFileSync(new URL('../supabase/migrations/0028_ranqueada_5_partidas.sql', import.meta.url), 'utf8');
-  assert.match(sql28, /limite constant int := 5/);
-  assert.match(sql28, /if feitas >= limite then/);
-  assert.equal(PARTIDAS_POR_DIA, 5);
+test('ranqueada: limite de 3 partidas por dia no banco (0065 e 0067) e no site', () => {
+  for (const f of ['0065_barao_ranqueada', '0067_ranqueada_3_partidas']) {
+    const sql = readFileSync(new URL(`../supabase/migrations/${f}.sql`, import.meta.url), 'utf8');
+    assert.match(sql, /limite constant int := 3/);
+    assert.match(sql, /if feitas >= limite then/);
+  }
+  assert.equal(PARTIDAS_POR_DIA, 3);
 });
 
 test('PDR: Lendas (3 vitórias na fase já dão +5; playoffs recalculados) e Carreira (ponto zero 300 até a Prata, 400 do Ouro)', () => {

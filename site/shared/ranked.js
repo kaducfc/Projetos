@@ -24,7 +24,7 @@ export const VAGAS_DESAFIANTE = 100;
 export const MIN_DESAFIANTE = 500;
 export const VAGAS_GRAO_MESTRE = 200;
 export const MIN_GRAO_MESTRE = 200;
-export const PARTIDAS_POR_DIA = 5; // Carreira e Lendas: as 5 primeiras do dia (igual a 0028_ranqueada_5_partidas.sql)
+export const PARTIDAS_POR_DIA = 3; // Carreira, Lendas e Barão: as 3 primeiras do dia (igual a 0067_ranqueada_3_partidas.sql)
 export const NAO_TERMINOU = -15; // Carreira/Lendas começada e não terminada no dia
 export const INATIVIDADE = { aPartir: 'ouro', dias: 3, pdr: -25 };
 

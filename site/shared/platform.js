@@ -876,7 +876,7 @@ export async function adminRegistrarApoio(nome, valor) {
 
 // Começo de uma partida ranqueável da Carreira ('carreira-no-rift') ou do
 // Lendas do CBLOL no modo Oculto ('cblol'): o servidor anota o dia e devolve
-// um ingresso. Valem as 5 primeiras partidas começadas no dia (cada uma
+// um ingresso. Valem as 3 primeiras partidas começadas no dia (cada uma
 // vale o seu PDR); começou e não terminou: −15 PDR por partida à meia-noite.
 // Sem conta, sem servidor ou com erro: null (a partida não vale).
 export async function rankedIniciar(jogo = 'carreira-no-rift') {
@@ -890,7 +890,7 @@ export async function rankedIniciar(jogo = 'carreira-no-rift') {
     if (error) console.warn('Site: não deu para iniciar a ranqueada:', error.message);
     return null;
   }
-  // token null: as 5 partidas ranqueadas de hoje já foram começadas.
+  // token null: as 3 partidas ranqueadas de hoje já foram começadas.
   return { token: data.token ?? null, dia: String(data.dia).slice(0, 10), numero: data.numero ?? null, restantes: data.restantes ?? null, limite: data.limite ?? null, banido: Boolean(data.banido) };
 }
 
