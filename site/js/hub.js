@@ -52,7 +52,7 @@ const CAPAS = {
       <span class="cv-sil verm" style="--img:url(/jogos/escala/dados/silhuetas/teemo.webp)"></span></div>`,
   // Quiz oculto (só administradores): título dourado e as quatro alternativas.
   barao: `<div class="cv cv-barao"><span class="cv-bz-t">SHOW DO<b>BARÃO</b></span>
-      <span class="cv-bz-ops">${['A', 'B', 'C', 'D'].map((l) => `<i><em>${l}</em></i>`).join('')}</span></div>`,
+      <img class="cv-bz-ap" src="/jogos/barao/img/apresentador.webp" alt="" loading="lazy" /></div>`,
   // O time dos sonhos, como na tela do Lendas (melhor OVR de cada um no jogo).
   cblol: `<div class="cv cv-cblol cv-dream">
       <div class="cv-dream-esq"><div class="cv-dream-ovr"><img src="${A}/trofeus/challenger.png" alt="" loading="lazy" /><small>OVR</small><b>96</b></div>
