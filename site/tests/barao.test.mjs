@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FACIL, MEDIA, DIFICIL, IMPOSSIVEL, BANCO } from '../jogos/barao/js/perguntas.js';
 import {
-  NIVEIS, PREMIOS, SEGUROS, CARTAS, novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoErrar, premioAoParar, faixa,
+  semAjuda, NIVEIS, PREMIOS, SEGUROS, CARTAS, novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoErrar, premioAoParar, faixa,
 } from '../jogos/barao/js/logic.js';
 
 // Gerador pseudoaleatório fixo para os testes.
@@ -78,15 +78,15 @@ test('barão: errar volta ao prêmio garantido; parar leva o prêmio atual', () 
   assert.equal(saiu.premio, PREMIOS[6]); // 50.000 (acertou até a 7ª)
 });
 
-test('barão: Pinstouro troca a pergunta sem avançar e acaba depois de 3 usos', () => {
+test('barão: Pinstouro troca a pergunta sem avançar e acaba depois de 2 usos', () => {
   const r = semente(11);
   let j = novoJogo(r);
   const antes = j.pergunta.q;
   j = pular(j, r);
   assert.equal(j.nivel, 1);
-  assert.equal(j.pulos, 2);
+  assert.equal(j.pulos, 1);
   assert.notEqual(j.pergunta.q, antes);
-  j = pular(pular(j, r), r);
+  j = pular(j, r);
   assert.equal(j.pulos, 0);
   const igual = pular(j, r);
   assert.equal(igual.pulos, 0);
@@ -133,7 +133,7 @@ test('barão: Monstros do Vazio votam em opções que ainda existem e acertam ma
     const f = usarVazio(novoJogo(r), r);
     assert.equal(f.pergunta.votos.length, 3);
     acertosFacil += f.pergunta.votos.filter((v) => v.voto === f.pergunta.certa).length;
-    let d = novoJogo(r); d.nivel = 10; d = usarVazio(d, r);
+    let d = novoJogo(r); d.nivel = 9; d = usarVazio(d, r);
     acertosDificil += d.pergunta.votos.filter((v) => v.voto === d.pergunta.certa).length;
   }
   assert.ok(acertosFacil > acertosDificil, `${acertosFacil} vs ${acertosDificil}`);
@@ -141,4 +141,29 @@ test('barão: Monstros do Vazio votam em opções que ainda existem e acertam ma
   const c = usarVazio(usarCarta(n, n.cartaOrdem.indexOf('dourada'), r), r);
   assert.ok(c.pergunta.votos.every((v) => v.voto === c.pergunta.certa)); // só sobrou a certa
   assert.equal(usarVazio(c, r).vazio, true);
+});
+
+test('barão: na última pergunta nenhuma ajuda funciona', () => {
+  const r = semente(4);
+  let j = novoJogo(r);
+  j.nivel = NIVEIS;
+  assert.ok(semAjuda(j.nivel));
+  assert.equal(pular(j, r).pulos, j.pulos);
+  assert.equal(pular(j, r).pergunta.q, j.pergunta.q);
+  assert.equal(usarCarta(j, 0, r).cartaUsada, null);
+  assert.equal(usarVazio(j, r).vazio, false);
+});
+
+test('barão: pular mantém a etapa e o prêmio, só troca a pergunta da mesma faixa', () => {
+  const r = semente(13);
+  let j = novoJogo(r);
+  for (let n = 1; n <= 2; n += 1) j = proxima(responder(j, j.pergunta.certa, r), r);
+  assert.equal(j.nivel, 3);
+  const q = j.pergunta.q;
+  const p = pular(j, r);
+  assert.equal(p.nivel, 3);
+  assert.equal(p.status, 'jogando');
+  assert.notEqual(p.pergunta.q, q);
+  assert.ok(BANCO[faixa(3)].some((x) => x.q === p.pergunta.q));
+  assert.equal(parar(p).premio, PREMIOS[1]); // o prêmio segue o mesmo
 });

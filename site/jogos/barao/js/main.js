@@ -7,7 +7,7 @@ import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import { liberarAbobora } from '../../../shared/passe-aviso.js';
 import {
-  NIVEIS, PREMIOS, SEGUROS, PULOS, CARTAS, MONSTROS, letra, faixa,
+  NIVEIS, PREMIOS, SEGUROS, PULOS, CARTAS, MONSTROS, letra, semAjuda,
   novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoParar, premioAoErrar,
 } from './logic.js';
 
@@ -21,7 +21,6 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const lerLS = (k, d = null) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const gravarLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* sem storage */ } };
 const CAT = { jogo: 'Mecânicas', lore: 'Universo', comp: 'Competitivo' };
-const DIF = { 1: 'Fácil', 2: 'Média', 3: 'Difícil', 4: 'Quase impossível' };
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -105,7 +104,7 @@ async function versaoDD() {
 
 // --------------------------------------------------------------------------- montagem (uma vez)
 function montar() {
-  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="f${faixa(n)}${SEGUROS.includes(n) ? ' seguro' : ''}"><span class="n">${n}</span><span class="v">${fmt(PREMIOS[n - 1])} pts</span></li>`).join('');
+  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="${SEGUROS.includes(n) ? 'seguro' : ''}"><span class="n">${n}</span><span class="v">${fmt(PREMIOS[n - 1])} pts</span></li>`).join('');
   app.innerHTML = `<div class="bz" id="bz">
     <div class="bz-bg" aria-hidden="true"><div class="bz-feixes"></div><div class="bz-arquibancada"></div><div class="bz-plateia"></div><div class="bz-faixas"></div><div class="bz-chao"></div><div class="bz-anel-chao"></div></div>
     <div class="bz-banner e2" aria-hidden="true">${ICO.banner('#6f8dff', 2)}</div><div class="bz-banner esq" aria-hidden="true">${ICO.banner('#6f8dff', 0)}</div>
@@ -118,7 +117,7 @@ function montar() {
       <h1 class="bz-titulo"><span>SHOW DO</span><b>BARÃO</b></h1>
       <img class="bz-host" src="img/apresentador.webp?v=1" alt="" /></div>
     <aside class="bz-escada"><ol id="bz-escada">${escada}</ol><button type="button" class="bz-parar" id="bz-parar">Parar<small id="bz-parar-v"></small></button></aside>
-    <aside class="bz-ajudas">
+    <aside class="bz-ajudas" id="bz-ajudas">
       <button type="button" class="bz-aj vazio" id="bz-vazio" title="Monstros do Vazio: três monstros apontam o que acham que é a resposta"><span class="ic">${ICO.vazio}</span><small>Vazio</small></button>
       <div><div class="bz-cartas" id="bz-cartas">${[0, 1, 2].map((i) => `<button type="button" class="bz-carta" data-slot="${i}" title="Carta do Twisted Fate: escolha uma, só vale uma vez por partida"><span class="miolo"><span class="verso">${VERSO}</span><span class="frente"><i></i><b></b></span></span></button>`).join('')}</div><div class="bz-aj-rot">Cartas do TF</div></div>
     </aside>
@@ -143,8 +142,7 @@ function desenhar() {
   const jogando = jogo.status === 'jogando';
   $('bz-n').textContent = jogo.nivel;
   $('bz-q').textContent = p.q;
-  $('bz-cat').textContent = `${CAT[p.cat] || ''} · ${DIF[faixa(jogo.nivel)]}`;
-  $('bz-cat').dataset.faixa = faixa(jogo.nivel);
+  $('bz-cat').textContent = CAT[p.cat] || '';
   document.querySelectorAll('#bz-escada li').forEach((li) => {
     const n = Number(li.dataset.n);
     li.classList.toggle('atual', n === jogo.nivel);
@@ -162,10 +160,12 @@ function desenhar() {
     b.querySelector('.vt').innerHTML = votos.map((v) => { const m = MONSTROS.find((x) => x.id === v.id); return ddVersion ? `<img src="${iconeMonstro(m)}" alt="${esc(m.nome)}" title="${esc(m.nome)}" onerror="this.outerHTML='<span class=&quot;vf&quot;>${esc(m.nome[0])}</span>'" />` : `<span class="vf" title="${esc(m.nome)}">${esc(m.nome[0])}</span>`; }).join('');
   });
   $('bz-confirmar').hidden = !(jogando && sel != null && !ocupado);
-  $('bz-vazio').disabled = !jogando || jogo.vazio || ocupado;
+  const livre = !semAjuda(jogo.nivel); // na última pergunta não há ajudas
+  document.getElementById('bz-ajudas')?.classList.toggle('travadas', !livre);
+  $('bz-vazio').disabled = !jogando || jogo.vazio || ocupado || !livre;
   desenharCartas(jogando);
   $('bz-pulos').textContent = `×${jogo.pulos}`;
-  $('bz-pular').disabled = !jogando || jogo.pulos <= 0 || ocupado;
+  $('bz-pular').disabled = !jogando || jogo.pulos <= 0 || ocupado || !livre;
   const pv = premioAoParar(jogo.nivel);
   $('bz-parar').disabled = !jogando || jogo.nivel <= 1 || ocupado;
   $('bz-parar-v').textContent = jogo.nivel > 1 ? `levar ${fmt(pv)} pts` : 'responda a 1ª pergunta';
@@ -183,7 +183,7 @@ function desenharCartas(jogando) {
     b.classList.toggle('virada', Boolean(usada));
     b.classList.toggle('escolhida', usada?.slot === slot);
     b.classList.toggle('descartada', Boolean(usada) && usada.slot !== slot);
-    b.disabled = Boolean(usada) || !jogando || ocupado || cartaRevelando;
+    b.disabled = Boolean(usada) || !jogando || ocupado || cartaRevelando || semAjuda(jogo.nivel);
     b.title = !usada ? 'Carta do Twisted Fate: escolha uma, só vale uma vez por partida'
       : usada.slot === slot ? `${c.nome}: tirou ${c.tira} ${c.tira === 1 ? 'opção errada' : 'opções erradas'}` : `Era a ${c.nome} (tira ${c.tira})`;
   });
@@ -199,13 +199,13 @@ function telaInicio() {
   tela(`<div class="bz-cartao">
     <span class="sup">Quiz de League of Legends</span>
     <h2>Show do Barão</h2>
-    <p>${NIVEIS} perguntas sobre o universo e o competitivo de LoL: 3 fáceis, 3 médias, 3 difíceis e a última, quase impossível. Chegue ao prêmio máximo sem errar!</p>
+    <p>${NIVEIS} perguntas sobre o universo e o competitivo de LoL: a dificuldade sobe a cada pergunta, e a última não aceita nenhuma ajuda. Chegue ao prêmio máximo sem errar!</p>
     <div class="bz-regras">
-      <div><b>Pinstouro</b>Pule a pergunta ${PULOS} vezes: ela é trocada por outra do mesmo nível.</div>
+      <div><b>Pinstouro</b>Pule ${PULOS} vezes: a pergunta é trocada por outra, mas você continua na mesma etapa e no mesmo prêmio.</div>
       <div class="v"><b>Monstros do Vazio</b>Cho'Gath, Kha'Zix e Vel'Koz apontam a resposta que acham certa.</div>
       <div><b>Cartas do TF</b>Três cartas viradas: escolha uma, uma única vez na partida. Ela revela se tira 1, 2 ou 3 opções erradas.</div>
     </div>
-    <p>Pontos seguros nas perguntas ${SEGUROS.join(' e ')} (★): se errar depois, você leva o prêmio já garantido. Quer sair antes? É só parar e levar o que ganhou.</p>
+    <p>Na última pergunta nenhuma ajuda é permitida. Pontos seguros nas perguntas ${SEGUROS.join(' e ')} (★): se errar depois, você leva o prêmio já garantido. Quer sair antes? É só parar e levar o que ganhou.</p>
     ${melhor ? `<div class="bz-melhor">Seu recorde: <b>${fmt(melhor)} pts</b></div>` : ''}
     <div class="bz-acoes">
       ${retomar ? '<button type="button" class="bz-go" id="bz-continuar">CONTINUAR</button><button type="button" class="bz-go sec" id="bz-novo">Novo jogo</button>' : '<button type="button" class="bz-go" id="bz-novo">COMEÇAR</button>'}
@@ -284,11 +284,11 @@ function pararJogo() {
   jogo = parar(jogo); salvar(); fim();
 }
 function ajudaPular() {
-  if (ocupado || jogo.status !== 'jogando' || jogo.pulos <= 0) return;
+  if (ocupado || jogo.status !== 'jogando' || jogo.pulos <= 0 || semAjuda(jogo.nivel)) return;
   jogo = pular(jogo); sel = null; salvar(); SOM.ajuda(); avisar('Pinstouro! Pergunta trocada.'); desenhar();
 }
 function ajudaVazio() {
-  if (ocupado || jogo.status !== 'jogando' || jogo.vazio) return;
+  if (ocupado || jogo.status !== 'jogando' || jogo.vazio || semAjuda(jogo.nivel)) return;
   jogo = usarVazio(jogo); salvar(); SOM.vazio(); avisar('Os monstros do Vazio apontam suas respostas…', 2800); desenhar();
 }
 async function ajudaCarta(slot) {

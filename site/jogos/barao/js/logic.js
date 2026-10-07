@@ -5,7 +5,9 @@ import { BANCO } from './perguntas.js';
 export const NIVEIS = 10;
 export const PREMIOS = [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 1000000];
 export const SEGUROS = [3, 6]; // ao acertar essas perguntas, o prêmio fica garantido
-export const PULOS = 3;
+export const PULOS = 2;
+// Na última pergunta nenhuma ajuda é permitida (Pinstouro, Monstros do Vazio ou cartas).
+export const semAjuda = (nivel) => nivel >= NIVEIS;
 // As três cartas começam viradas para baixo; ao escolher uma (só uma vez por partida), revela-se qual era.
 export const CARTAS = [
   { id: 'azul', nome: 'Carta Azul', tira: 1 },
@@ -105,7 +107,7 @@ export function parar(jogo) {
 // Pinstouro: troca a pergunta por outra do mesmo nível (não avança).
 export function pular(jogo, rnd = Math.random) {
   const j = structuredClone(jogo);
-  if (j.status !== 'jogando' || j.pulos <= 0) return j;
+  if (j.status !== 'jogando' || j.pulos <= 0 || semAjuda(j.nivel)) return j;
   j.pulos -= 1;
   j.pergunta = sortearPergunta(j.nivel, j.usadas, rnd);
   j.usadas.push(j.pergunta.q);
@@ -117,7 +119,7 @@ export function pular(jogo, rnd = Math.random) {
 // Só dá para usar UMA carta durante a partida inteira.
 export function usarCarta(jogo, slot, rnd = Math.random) {
   const j = structuredClone(jogo);
-  if (j.status !== 'jogando' || j.cartaUsada || !(slot >= 0 && slot < j.cartaOrdem.length)) return j;
+  if (j.status !== 'jogando' || j.cartaUsada || semAjuda(j.nivel) || !(slot >= 0 && slot < j.cartaOrdem.length)) return j;
   const id = j.cartaOrdem[slot];
   const carta = CARTAS.find((c) => c.id === id);
   const erradas = [0, 1, 2, 3].filter((i) => i !== j.pergunta.certa && !j.pergunta.eliminadas.includes(i));
@@ -130,7 +132,7 @@ export function usarCarta(jogo, slot, rnd = Math.random) {
 // Monstros do Vazio: cada um aponta uma opção (a certa com chance maior nas perguntas fáceis).
 export function usarVazio(jogo, rnd = Math.random) {
   const j = structuredClone(jogo);
-  if (j.status !== 'jogando' || j.vazio) return j;
+  if (j.status !== 'jogando' || j.vazio || semAjuda(j.nivel)) return j;
   const p = ACERTO_MONSTRO[faixa(j.nivel)];
   const vivas = [0, 1, 2, 3].filter((i) => !j.pergunta.eliminadas.includes(i));
   const erradas = vivas.filter((i) => i !== j.pergunta.certa);
