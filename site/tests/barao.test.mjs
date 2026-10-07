@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FACIL, MEDIA, DIFICIL, IMPOSSIVEL, BANCO } from '../jogos/barao/js/perguntas.js';
 import {
-  semAjuda, NIVEIS, PREMIOS, SEGUROS, CARTAS, novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoErrar, premioAoParar, faixa,
+  semAjuda, NIVEIS, PREMIOS, CARTAS, novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoErrar, premioAoParar, faixa,
 } from '../jogos/barao/js/logic.js';
 
 // Gerador pseudoaleatório fixo para os testes.
@@ -31,13 +31,15 @@ test('barão: 11 perguntas (3 fáceis, 3 médias, 4 difíceis, 1 quase impossív
   assert.equal(PREMIOS[9], 500000);
   assert.ok(PREMIOS.every((v, i) => i === 0 || v > PREMIOS[i - 1]));
   assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(faixa), [1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4]);
-  assert.deepEqual(SEGUROS, [3, 6]);
   assert.equal(premioAoParar(1), 0);
   assert.equal(premioAoParar(8), PREMIOS[6]);
-  assert.equal(premioAoErrar(3), 0);
-  assert.equal(premioAoErrar(4), PREMIOS[2]); // passou da 3: garantiu 2.000
-  assert.equal(premioAoErrar(7), PREMIOS[5]); // passou da 6: garantiu 20.000
-  assert.equal(premioAoErrar(11), PREMIOS[5]);
+  // errar custa um degrau abaixo do que o jogador já tem (o "parar")
+  assert.equal(premioAoErrar(1), 0);
+  assert.equal(premioAoErrar(2), 0);
+  assert.equal(premioAoErrar(3), PREMIOS[0]);
+  assert.equal(premioAoErrar(7), PREMIOS[4]);
+  assert.equal(premioAoErrar(11), PREMIOS[8]); // com 500.000 no bolso, errar vale 250.000
+  for (let n = 3; n <= 11; n += 1) assert.ok(premioAoErrar(n) < premioAoParar(n));
 });
 
 test('barão: cada pergunta sai da faixa certa', () => {
@@ -65,7 +67,7 @@ test('barão: partida completa — acertando tudo ganha 1.000.000', () => {
   assert.equal(new Set(j.usadas).size, j.usadas.length, 'não repete pergunta');
 });
 
-test('barão: errar volta ao prêmio garantido; parar leva o prêmio atual', () => {
+test('barão: errar perde um degrau; parar leva o prêmio atual', () => {
   const r = semente(3);
   let j = novoJogo(r);
   for (let n = 1; n <= 7; n += 1) { j = responder(j, j.pergunta.certa, r); j = proxima(j, r); }
@@ -73,7 +75,7 @@ test('barão: errar volta ao prêmio garantido; parar leva o prêmio atual', () 
   const errada = [0, 1, 2, 3].find((i) => i !== j.pergunta.certa);
   const perdeu = responder(j, errada, r);
   assert.equal(perdeu.resultado, 'errou');
-  assert.equal(perdeu.premio, PREMIOS[5]); // garantiu 20.000 na 6ª
+  assert.equal(perdeu.premio, PREMIOS[5]); // errou na 8ª (tinha 50.000): perde um degrau
   const saiu = parar(j);
   assert.equal(saiu.resultado, 'parou');
   assert.equal(saiu.premio, PREMIOS[6]); // 50.000 (acertou até a 7ª)
@@ -189,6 +191,6 @@ test('barão: tradução completa — telas, perguntas e alternativas nos 5 idio
   assert.deepEqual(semTraducao, [], 'alternativas em português sem tradução');
   // valores dentro do texto continuam funcionando
   __usarDicionario((await import('../shared/i18n/en.js')).default, 'en');
-  assert.equal(t('Prêmio garantido: {valor}!', { valor: '1,000' }), 'Prize secured: 1,000!');
+  assert.equal(t('{carta}: {n} opções erradas eliminadas!', { carta: 'Blue Card', n: 2 }), 'Blue Card: 2 wrong options removed!');
   assert.equal(traduzirTexto('A resposta certa era B: Dragão Infernal.'), 'The correct answer was B: Infernal Drake.');
 });

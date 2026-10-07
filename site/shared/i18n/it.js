@@ -731,7 +731,6 @@ export default {
   "Era a {carta} (tira {n})": "Era la {carta} (toglie {n})",
   "{carta}: 1 opção errada eliminada!": "{carta}: 1 opzione sbagliata eliminata!",
   "{carta}: {n} opções erradas eliminadas!": "{carta}: {n} opzioni sbagliate eliminate!",
-  "Prêmio garantido: {valor}!": "Premio assicurato: {valor}!",
   "Pinstouro! Pergunta trocada.": "Pinstouro! Domanda sostituita.",
   "Os monstros do Vazio apontam suas respostas…": "I mostri del Vuoto indicano le loro risposte…",
   "Quiz": "Quiz",

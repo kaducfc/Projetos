@@ -8,7 +8,7 @@ import { gameById } from '../../../shared/config.js';
 import { liberarAbobora } from '../../../shared/passe-aviso.js';
 import { t, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import {
-  NIVEIS, PREMIOS, SEGUROS, PULOS, CARTAS, MONSTROS, letra, semAjuda,
+  NIVEIS, PREMIOS, PULOS, CARTAS, MONSTROS, letra, semAjuda,
   novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoParar, premioAoErrar,
 } from './logic.js';
 
@@ -97,7 +97,7 @@ async function versaoDD() {
 
 // --------------------------------------------------------------------------- montagem (uma vez)
 function montar() {
-  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="${SEGUROS.includes(n) ? 'seguro' : ''}"><span class="n"></span><span class="v" data-p="${n}">${fmt(PREMIOS[n - 1])}</span></li>`).join('');
+  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" ><span class="n"></span><span class="v" data-p="${n}">${fmt(PREMIOS[n - 1])}</span></li>`).join('');
   app.innerHTML = `<div class="bz" id="bz">
     <div class="bz-bg" aria-hidden="true"><div class="bz-feixes"></div><div class="bz-arquibancada"></div><div class="bz-plateia"></div><div class="bz-faixas"></div><div class="bz-chao"></div><div class="bz-anel-chao"></div></div>
     <div class="bz-banner e2" aria-hidden="true">${ICO.banner('#6f8dff', 2, 'ionia')}</div><div class="bz-banner esq" aria-hidden="true">${ICO.banner('#6f8dff', 0, 'demacia')}</div>
@@ -254,7 +254,6 @@ async function travar() {
     SOM.acertou();
     await esperar(1800);
     jogo = proxima(jogo); sel = null; ocupado = false; salvar(); desenhar();
-    if (SEGUROS.includes(jogo.nivel - 1)) avisar(t('Prêmio garantido: {valor}!', { valor: fmt(PREMIOS[jogo.nivel - 2]) }), 2400);
     return;
   }
   (jogo.resultado === 'ganhou' ? SOM.venceu : SOM.errou)();

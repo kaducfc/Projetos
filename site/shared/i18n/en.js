@@ -731,7 +731,6 @@ export default {
   "Era a {carta} (tira {n})": "It was the {carta} (removes {n})",
   "{carta}: 1 opção errada eliminada!": "{carta}: 1 wrong option removed!",
   "{carta}: {n} opções erradas eliminadas!": "{carta}: {n} wrong options removed!",
-  "Prêmio garantido: {valor}!": "Prize secured: {valor}!",
   "Pinstouro! Pergunta trocada.": "Pinstouro! Question swapped.",
   "Os monstros do Vazio apontam suas respostas…": "The Void monsters are pointing to their answers…",
   "Quiz": "Quiz",

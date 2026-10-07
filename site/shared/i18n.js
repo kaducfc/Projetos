@@ -199,7 +199,7 @@ function observar() {
 // ------------------------------------------------------------------ troca de idioma
 
 // Atualizado por scripts/i18n-build.mjs: força o navegador a baixar o dicionário novo.
-const VERSAO_DICIONARIOS = 'aa9149fe92';
+const VERSAO_DICIONARIOS = '8525120c24';
 
 async function carregar(id) {
   if (id === IDIOMA_PADRAO) { montar({}); return; }

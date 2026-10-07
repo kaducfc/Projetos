@@ -1,10 +1,9 @@
 // Show do Barão: regras do jogo, sem tela (testável). 11 perguntas (3 fáceis, 3 médias, 4 difíceis e 1
-// quase impossível), três ajudas (Pinstouro = pular, Monstros do Vazio e Cartas do Twisted Fate) e dois pontos seguros.
+// quase impossível), três ajudas (Pinstouro = pular, Monstros do Vazio e Cartas do Twisted Fate) e sem pontos seguros: errar vale o degrau abaixo do que o jogador já tem.
 import { BANCO } from './perguntas.js';
 
 export const NIVEIS = 11;
 export const PREMIOS = [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000];
-export const SEGUROS = [3, 6]; // ao acertar essas perguntas, o prêmio fica garantido
 export const PULOS = 2;
 // Na última pergunta nenhuma ajuda é permitida (Pinstouro, Monstros do Vazio ou cartas).
 export const semAjuda = (nivel) => nivel >= NIVEIS;
@@ -64,8 +63,8 @@ export function novoJogo(rnd = Math.random) {
 export const premioAoParar = (nivel) => (nivel > 1 ? PREMIOS[nivel - 2] : 0);
 // Prêmio garantido ao errar a pergunta `nivel`.
 export function premioAoErrar(nivel) {
-  const seguro = SEGUROS.filter((s) => s < nivel).pop();
-  return seguro ? PREMIOS[seguro - 1] : 0;
+  // Quem erra perde um degrau: na pergunta 11 (já com 500.000 no bolso) leva 250.000.
+  return nivel > 2 ? PREMIOS[nivel - 3] : 0;
 }
 
 // Responde a pergunta atual. Devolve o estado novo (sem alterar o antigo).

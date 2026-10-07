@@ -58,7 +58,6 @@ export default [
   ['Era a {carta} (tira {n})', 'It was the {carta} (removes {n})', 'Das war die {carta} (entfernt {n})', 'Era la {carta} (elimina {n})', 'Era la {carta} (toglie {n})', 'C’était la {carta} (retire {n})'],
   ['{carta}: 1 opção errada eliminada!', '{carta}: 1 wrong option removed!', '{carta}: 1 falsche Antwort entfernt!', '{carta}: ¡1 opción incorrecta eliminada!', '{carta}: 1 opzione sbagliata eliminata!', '{carta} : 1 mauvaise réponse retirée !'],
   ['{carta}: {n} opções erradas eliminadas!', '{carta}: {n} wrong options removed!', '{carta}: {n} falsche Antworten entfernt!', '{carta}: ¡{n} opciones incorrectas eliminadas!', '{carta}: {n} opzioni sbagliate eliminate!', '{carta} : {n} mauvaises réponses retirées !'],
-  ['Prêmio garantido: {valor}!', 'Prize secured: {valor}!', 'Gewinn gesichert: {valor}!', '¡Premio asegurado: {valor}!', 'Premio assicurato: {valor}!', 'Gain acquis : {valor} !'],
   ['Pinstouro! Pergunta trocada.', 'Pinstouro! Question swapped.', 'Pinstouro! Frage ausgetauscht.', '¡Pinstouro! Pregunta cambiada.', 'Pinstouro! Domanda sostituita.', 'Pinstouro ! Question remplacée.'],
   ['Os monstros do Vazio apontam suas respostas…', 'The Void monsters are pointing to their answers…', 'Die Monster der Leere zeigen auf ihre Antworten…', 'Los monstruos del Vacío señalan sus respuestas…', 'I mostri del Vuoto indicano le loro risposte…', 'Les monstres du Néant désignent leurs réponses…'],
   ['Quiz', 'Quiz', 'Quiz', 'Quiz', 'Quiz', 'Quiz'],
