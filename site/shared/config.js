@@ -96,7 +96,7 @@ export const GAMES = [
   {
     id: 'barao',
     name: 'Show do Barão',
-    tagline: 'Quiz de LoL no estilo Show do Milhão: 15 perguntas, ajudas e prêmios crescentes.',
+    tagline: 'Quiz de LoL no estilo Show do Milhão: 11 perguntas, ajudas e prêmios crescentes.',
     kind: 'Quiz',
     path: 'jogos/barao/',
     status: 'live',

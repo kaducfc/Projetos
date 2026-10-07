@@ -6,6 +6,7 @@ import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import { liberarAbobora } from '../../../shared/passe-aviso.js';
+import { t, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import {
   NIVEIS, PREMIOS, SEGUROS, PULOS, CARTAS, MONSTROS, letra, semAjuda,
   novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoParar, premioAoErrar,
@@ -16,7 +17,8 @@ const CHAVE_JOGO = 'barao.jogo';
 const CHAVE_MELHOR = 'barao.melhor';
 const CHAVE_MUDO = 'barao.mudo';
 const app = document.getElementById('app');
-const fmt = (n) => Number(n).toLocaleString('pt-BR');
+const fmt = (n) => Number(n).toLocaleString(localeAtual()); // números no idioma da tela
+const fmtPt = (n) => Number(n).toLocaleString('pt-BR'); // o que vai para o servidor fica em português
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const lerLS = (k, d = null) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const gravarLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* sem storage */ } };
@@ -95,7 +97,7 @@ async function versaoDD() {
 
 // --------------------------------------------------------------------------- montagem (uma vez)
 function montar() {
-  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="${SEGUROS.includes(n) ? 'seguro' : ''}"><span class="n"></span><span class="v">${fmt(PREMIOS[n - 1])} pts</span></li>`).join('');
+  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="${SEGUROS.includes(n) ? 'seguro' : ''}"><span class="n"></span><span class="v" data-p="${n}">${fmt(PREMIOS[n - 1])} pts</span></li>`).join('');
   app.innerHTML = `<div class="bz" id="bz">
     <div class="bz-bg" aria-hidden="true"><div class="bz-feixes"></div><div class="bz-arquibancada"></div><div class="bz-plateia"></div><div class="bz-faixas"></div><div class="bz-chao"></div><div class="bz-anel-chao"></div></div>
     <div class="bz-banner e2" aria-hidden="true">${ICO.banner('#6f8dff', 2, 'ionia')}</div><div class="bz-banner esq" aria-hidden="true">${ICO.banner('#6f8dff', 0, 'demacia')}</div>
@@ -124,7 +126,8 @@ function montar() {
 // --------------------------------------------------------------------------- atualização da tela
 const $ = (id) => document.getElementById(id);
 function avisar(txt, ms = 2200) { const el = $('bz-aviso'); el.textContent = txt; el.classList.add('on'); clearTimeout(avisar.t); avisar.t = setTimeout(() => el.classList.remove('on'), ms); }
-function atualizarSom() { const b = $('bz-som'); if (b) { b.textContent = mudo ? '🔇' : '🔊'; b.title = mudo ? 'Ligar o som' : 'Desligar o som'; } }
+function atualizarSom() { const b = $('bz-som'); if (b) { b.textContent = mudo ? '🔇' : '🔊'; b.title = mudo ? t('Ligar o som') : t('Desligar o som'); } }
+function atualizarEscada() { document.querySelectorAll('#bz-escada [data-p]').forEach((el) => { el.textContent = `${fmt(PREMIOS[Number(el.dataset.p) - 1])} pts`; }); }
 
 function desenhar() {
   if (!jogo) return;
@@ -156,7 +159,7 @@ function desenhar() {
   $('bz-pular').disabled = !jogando || jogo.pulos <= 0 || ocupado || !livre;
   const pv = premioAoParar(jogo.nivel);
   $('bz-parar').disabled = !jogando || jogo.nivel <= 1 || ocupado;
-  $('bz-parar-v').textContent = jogo.nivel > 1 ? `levar ${fmt(pv)} pts` : 'responda a 1ª pergunta';
+  $('bz-parar-v').textContent = jogo.nivel > 1 ? t('levar {valor} pts', { valor: fmt(pv) }) : 'responda a 1ª pergunta';
 }
 
 function desenharCartas(jogando) {
@@ -172,13 +175,14 @@ function desenharCartas(jogando) {
     b.classList.toggle('escolhida', usada?.slot === slot);
     b.classList.toggle('descartada', Boolean(usada) && usada.slot !== slot);
     b.disabled = Boolean(usada) || !jogando || ocupado || cartaRevelando || semAjuda(jogo.nivel);
-    b.title = !usada ? 'Carta do Twisted Fate: escolha uma, só vale uma vez por partida'
-      : usada.slot === slot ? `${c.nome}: tirou ${c.tira} ${c.tira === 1 ? 'opção errada' : 'opções erradas'}` : `Era a ${c.nome} (tira ${c.tira})`;
+    b.title = !usada ? t('Carta do Twisted Fate: escolha uma, só vale uma vez por partida')
+      : usada.slot === slot ? t(c.tira === 1 ? '{carta}: tirou 1 opção errada' : '{carta}: tirou {n} opções erradas', { carta: t(c.nome), n: c.tira }) : t('Era a {carta} (tira {n})', { carta: t(c.nome), n: c.tira });
   });
 }
 
 // --------------------------------------------------------------------------- telas
-function tela(html) { const t = $('bz-tela'); t.innerHTML = html; t.hidden = !html; }
+let telaAtual = null; // para redesenhar a tela aberta quando o idioma muda
+function tela(html, refazer = null) { const el = $('bz-tela'); el.innerHTML = html; el.hidden = !html; telaAtual = html ? refazer : null; }
 function telaInicio() {
   pararDrone();
   const melhor = lerLS(CHAVE_MELHOR, 0);
@@ -196,7 +200,7 @@ function telaInicio() {
     ${melhor ? `<div class="bz-melhor">Seu recorde: <b>${fmt(melhor)} pts</b></div>` : ''}
     <div class="bz-acoes">
       ${retomar ? '<button type="button" class="bz-go" id="bz-continuar">CONTINUAR</button><button type="button" class="bz-go sec" id="bz-novo">Novo jogo</button>' : '<button type="button" class="bz-go" id="bz-novo">COMEÇAR</button>'}
-    </div></div>`);
+    </div></div>`, telaInicio);
 }
 function telaFim() {
   const j = jogo;
@@ -206,7 +210,7 @@ function telaFim() {
   tela(`<div class="bz-cartao"><span class="sup">Fim de jogo</span><h2>${h}</h2><p>${txt}</p>
     <div class="premio">${fmt(j.premio)}<small>pts</small></div>
     <div class="bz-melhor">Seu recorde: <b>${fmt(Math.max(melhor, j.premio))} pts</b>${j.premio > melhor && j.premio > 0 ? ' · novo recorde!' : ''}</div>
-    <div class="bz-acoes"><button type="button" class="bz-go" id="bz-novo">JOGAR DE NOVO</button><a class="bz-go sec" href="../../">Voltar ao início</a></div></div>`);
+    <div class="bz-acoes"><button type="button" class="bz-go" id="bz-novo">JOGAR DE NOVO</button><a class="bz-go sec" href="../../">Voltar ao início</a></div></div>`, telaFim);
 }
 function telaBloqueada() {
   app.innerHTML = `<div class="bz" style="display:grid;place-items:center"><div class="bz-bg"><div class="bz-feixes"></div></div><div class="bz-cartao" style="position:relative;z-index:2">
@@ -244,7 +248,7 @@ async function travar() {
     SOM.acertou();
     await esperar(1800);
     jogo = proxima(jogo); sel = null; ocupado = false; salvar(); desenhar();
-    if (SEGUROS.includes(jogo.nivel - 1)) avisar(`Prêmio garantido: ${fmt(PREMIOS[jogo.nivel - 2])} pts!`, 2400);
+    if (SEGUROS.includes(jogo.nivel - 1)) avisar(t('Prêmio garantido: {valor} pts!', { valor: fmt(PREMIOS[jogo.nivel - 2]) }), 2400);
     return;
   }
   (jogo.resultado === 'ganhou' ? SOM.venceu : SOM.errou)();
@@ -261,22 +265,22 @@ function fim() {
   platform.track('game_end', GAME_ID, { nivel: j.nivel, resultado: j.resultado, premio: j.premio });
   platform.recordResult(GAME_ID, {
     score: j.premio,
-    summary: { text: `${fmt(j.premio)} pts`, nivel: j.nivel, resultado: j.resultado, premio: j.premio },
+    summary: { text: `${fmtPt(j.premio)} pts`, nivel: j.nivel, resultado: j.resultado, premio: j.premio },
   });
   liberarAbobora(); // as abóboras do passe aparecem junto do resultado
 }
 function pararJogo() {
   if (ocupado || jogo.status !== 'jogando' || jogo.nivel <= 1) return;
-  if (!window.confirm(`Parar e levar ${fmt(premioAoParar(jogo.nivel))} pts?`)) return;
+  if (!window.confirm(t('Parar e levar {valor} pts?', { valor: fmt(premioAoParar(jogo.nivel)) }))) return;
   jogo = parar(jogo); salvar(); fim();
 }
 function ajudaPular() {
   if (ocupado || jogo.status !== 'jogando' || jogo.pulos <= 0 || semAjuda(jogo.nivel)) return;
-  jogo = pular(jogo); sel = null; salvar(); SOM.ajuda(); avisar('Pinstouro! Pergunta trocada.'); desenhar();
+  jogo = pular(jogo); sel = null; salvar(); SOM.ajuda(); avisar(t('Pinstouro! Pergunta trocada.')); desenhar();
 }
 function ajudaVazio() {
   if (ocupado || jogo.status !== 'jogando' || jogo.vazio || semAjuda(jogo.nivel)) return;
-  jogo = usarVazio(jogo); salvar(); SOM.vazio(); avisar('Os monstros do Vazio apontam suas respostas…', 2800); desenhar();
+  jogo = usarVazio(jogo); salvar(); SOM.vazio(); avisar(t('Os monstros do Vazio apontam suas respostas…'), 2800); desenhar();
 }
 async function ajudaCarta(slot) {
   if (ocupado || cartaRevelando || jogo.status !== 'jogando' || jogo.cartaUsada) return;
@@ -289,7 +293,7 @@ async function ajudaCarta(slot) {
   await esperar(900);
   cartaRevelando = false;
   if (sel != null && jogo.pergunta.eliminadas.includes(sel)) sel = null;
-  avisar(`${c.nome}: ${c.tira === 1 ? '1 opção errada eliminada' : `${c.tira} opções erradas eliminadas`}!`, 2600); desenhar();
+  avisar(t(c.tira === 1 ? '{carta}: 1 opção errada eliminada!' : '{carta}: {n} opções erradas eliminadas!', { carta: t(c.nome), n: c.tira }), 2600); desenhar();
 }
 
 // --------------------------------------------------------------------------- eventos
@@ -312,6 +316,8 @@ document.addEventListener('keydown', (e) => {
   if (i >= 0 && e.key.length === 1) escolher(i);
   else if (e.key === 'Enter') travar();
 });
+
+onLangChange(() => { if (!jogo) return; atualizarEscada(); atualizarSom(); desenhar(); telaAtual?.(); });
 
 // --------------------------------------------------------------------------- início
 (async function iniciar() {

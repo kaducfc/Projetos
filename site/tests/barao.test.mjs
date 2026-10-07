@@ -168,3 +168,28 @@ test('barão: pular mantém a etapa e o prêmio, só troca a pergunta da mesma f
   assert.ok(BANCO[faixa(3)].some((x) => x.q === p.pergunta.q));
   assert.equal(parar(p).premio, PREMIOS[1]); // o prêmio segue o mesmo
 });
+
+test('barão: tradução completa — telas, perguntas e alternativas nos 5 idiomas', async () => {
+  const { __usarDicionario, traduzirTexto, t, LANGS } = await import('../shared/i18n.js');
+  const { default: ui } = await import('../shared/i18n/src/barao-ui.mjs');
+  const ids = LANGS.map((l) => l.id).filter((id) => id !== 'pt-BR');
+  const todas = Object.values(BANCO).flat();
+  // alternativas que ficam iguais em todos os idiomas (nomes de campeões, times, lugares, números…)
+  const opcoesTraduzidas = new Set((await import('../shared/i18n/src/barao-opcoes.mjs')).default.map((l) => l[0]));
+  for (const id of ids) {
+    __usarDicionario((await import(`../shared/i18n/${id}.js`)).default, id);
+    const faltam = todas.filter((p) => traduzirTexto(p.q) == null).map((p) => p.q);
+    assert.deepEqual(faltam.slice(0, 5), [], `${id}: ${faltam.length} perguntas sem tradução`);
+    for (const l of ui) if (!/^\{\w+\} pts$/.test(l[0])) assert.ok(traduzirTexto(l[0]) != null || l[0] === 'Quiz', `${id}: ${l[0]}`);
+    for (const o of opcoesTraduzidas) assert.ok(traduzirTexto(o) != null, `${id}: ${o}`);
+  }
+  // as alternativas com palavras em português estão todas cobertas (o resto é nome próprio)
+  const palavras = /\b(de|do|da|dos|das|e|o|a|os|as|um|uma|em|no|na|fase|dano|time|guerra|rei|ilhas?)\b/i;
+  const semTraducao = [...new Set(todas.flatMap((p) => p.a))].filter((o) => palavras.test(o) && !opcoesTraduzidas.has(o) && !/^[A-Z][\w'’.\-\/ ]+$/.test(o));
+  assert.deepEqual(semTraducao, [], 'alternativas em português sem tradução');
+  // valores dentro do texto continuam funcionando
+  __usarDicionario((await import('../shared/i18n/en.js')).default, 'en');
+  assert.equal(t('levar {valor} pts', { valor: '1,000' }), 'take 1,000 pts');
+  assert.equal(traduzirTexto('A resposta certa era B: Dragão Infernal.'), 'The correct answer was B: Infernal Drake.');
+  assert.equal(traduzirTexto('11 perguntas sobre o universo e o competitivo de LoL: a dificuldade sobe a cada pergunta, e a última não aceita nenhuma ajuda. Chegue ao prêmio máximo sem errar!').startsWith('11 questions'), true);
+});

@@ -13,3 +13,4 @@ Quiz de LoL no estilo Show do Milhão: **11 perguntas** (3 fáceis, 3 médias, 4
 - Pendente: ranking/PDR, i18n.
 - Testes: `node --test tests/barao.test.mjs`
 - A dificuldade é só interna: o jogador não vê "fácil/difícil". Na 10ª pergunta nenhuma ajuda (pulo, Vazio, carta) é permitida. Pular troca a pergunta e mantém a mesma etapa/prêmio.
+- Idiomas: o jogo está traduzido para EN, DE, ES, IT e FR. Textos de tela em `shared/i18n/src/barao-ui.mjs`, perguntas em `barao-perguntas-*.mjs` e alternativas em `barao-opcoes.mjs`. Ao adicionar/editar uma pergunta, inclua a linha de tradução (o teste avisa se faltar) e rode `node scripts/i18n-build.mjs`. O nome "Show do Barão" fica igual em todos os idiomas.
