@@ -743,7 +743,7 @@ export default {
   "Quiz": "Quiz",
   "Pontos": "Punkte",
   "Só você · em teste": "Nur du · im Test",
-  "Quiz de LoL no estilo Show do Milhão: 11 perguntas, ajudas e prêmios crescentes.": "LoL-Quiz im Stil von „Wer wird Millionär?“: 11 Fragen, Joker und steigende Gewinne.",
+  "Acerte as perguntas, use suas ajudas e descubra até onde consegue chegar.": "Beantworte die Fragen, nutze deine Joker und finde heraus, wie weit du kommst.",
   "◆ Campeão do dia": "◆ Champion des Tages",
   "tentativa {n} de {m} ·": "Versuch {n} von {m} ·",
   "Digite o nome de um campeão…": "Gib den Namen eines Champions ein …",

@@ -743,7 +743,7 @@ export default {
   "Quiz": "Quiz",
   "Pontos": "Points",
   "Só você · em teste": "Only you · testing",
-  "Quiz de LoL no estilo Show do Milhão: 11 perguntas, ajudas e prêmios crescentes.": "LoL quiz in the Who Wants to Be a Millionaire style: 11 questions, lifelines and growing prizes.",
+  "Acerte as perguntas, use suas ajudas e descubra até onde consegue chegar.": "Answer the questions, use your lifelines and see how far you can go.",
   "◆ Campeão do dia": "◆ Champion of the day",
   "tentativa {n} de {m} ·": "attempt {n} of {m} ·",
   "Digite o nome de um campeão…": "Type a champion name…",

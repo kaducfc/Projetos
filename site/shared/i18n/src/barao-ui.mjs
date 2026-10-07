@@ -70,5 +70,5 @@ export default [
   ['Quiz', 'Quiz', 'Quiz', 'Quiz', 'Quiz', 'Quiz'],
   ['Pontos', 'Points', 'Punkte', 'Puntos', 'Punti', 'Points'],
   ['Só você · em teste', 'Only you · testing', 'Nur du · im Test', 'Solo tú · en pruebas', 'Solo tu · in test', 'Toi seul · en test'],
-  ['Quiz de LoL no estilo Show do Milhão: 11 perguntas, ajudas e prêmios crescentes.', 'LoL quiz in the Who Wants to Be a Millionaire style: 11 questions, lifelines and growing prizes.', 'LoL-Quiz im Stil von „Wer wird Millionär?“: 11 Fragen, Joker und steigende Gewinne.', 'Quiz de LoL al estilo ¿Quién quiere ser millonario?: 11 preguntas, ayudas y premios crecientes.', 'Quiz di LoL in stile Chi vuol essere milionario?: 11 domande, aiuti e premi crescenti.', 'Quiz LoL façon Qui veut gagner des millions ? : 11 questions, jokers et gains croissants.'],
+  ['Acerte as perguntas, use suas ajudas e descubra até onde consegue chegar.', 'Answer the questions, use your lifelines and see how far you can go.', 'Beantworte die Fragen, nutze deine Joker und finde heraus, wie weit du kommst.', 'Acierta las preguntas, usa tus ayudas y descubre hasta dónde puedes llegar.', 'Rispondi alle domande, usa i tuoi aiuti e scopri fin dove riesci ad arrivare.', 'Réponds aux questions, utilise tes jokers et découvre jusqu’où tu peux aller.'],
 ];
