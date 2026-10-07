@@ -143,7 +143,7 @@ function vivoDiario(id) {
   return `<p class="hx-live novo"><i class="hx-dot"></i>${campeao ? 'Novo campeão' : 'Nova palavra'} disponível</p>`;
 }
 
-// Carreira no Rift e Lendas do CBLOL: vagas ranqueadas do dia.
+// Carreira no Rift, Lendas do CBLOL e Show do Barão: vagas ranqueadas do dia.
 function vivoVagas(id) {
   const u = platform.getUser();
   let andamento = '';
@@ -159,7 +159,7 @@ function vivoVagas(id) {
     const r = rk.hoje?.jogos?.[id];
     const d = divisaoDe(rk.pts, rk.elo);
     const rotulo = id === 'cblol' ? 'Oculto hoje' : 'Ranqueadas hoje';
-    linha = `<span class="${vagas >= PARTIDAS_POR_DIA ? 'nao' : 'novo'}">${id === 'carreira-no-rift' ? emblemaHtml(rk.jogou ? d.elo : 'ferro', 18, { vazio: !rk.jogou }) : ''}${rotulo}: <b>${vagas} de ${PARTIDAS_POR_DIA}</b>${r ? ` · ${pdrTxt(r.pdr)}` : ''}</span>`;
+    linha = `<span class="${vagas >= PARTIDAS_POR_DIA ? 'nao' : 'novo'}">${id === 'carreira-no-rift' ? emblemaHtml(rk.jogou ? d.elo : 'ferro', 18, { vazio: !rk.jogou }) : ''}${rotulo}: <b>${vagas} de ${PARTIDAS_POR_DIA}</b>${r ? ` · ${pdrTxt(r.pdr)}` : ''}</span><span class="hx-cd">Zera em <b data-cd>${fmtCountdown(msToNextDay())}</b></span>`;
   }
   const partes = [linha, andamento].filter(Boolean);
   return partes.length ? `<p class="hx-live">${partes.join('<br>')}</p>` : '';
@@ -168,6 +168,7 @@ function vivoVagas(id) {
 const VIVO = {
   'carreira-no-rift': () => vivoVagas('carreira-no-rift'),
   cblol: () => vivoVagas('cblol'),
+  barao: () => vivoVagas('barao'),
   runetermo: () => vivoDiario('runetermo'),
   campeao: () => vivoDiario('campeao'),
   escala: vivoEscala,

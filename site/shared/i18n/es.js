@@ -1234,6 +1234,7 @@ export default {
   "✓ Acertou em {num}": "✓ Acertaste en {num}",
   "✗ Não foi hoje": "✗ Hoy no fue",
   "Próxima em": "Próxima en",
+  "Zera em": "Se reinicia en",
   "Próximo em": "Próximo en",
   "✓ Média {x}/100": "✓ Media {x}/100",
   "Carreira em andamento:": "Carrera en curso:",

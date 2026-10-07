@@ -1234,6 +1234,7 @@ export default {
   "✓ Acertou em {num}": "✓ Gelöst in {num}",
   "✗ Não foi hoje": "✗ Heute nicht",
   "Próxima em": "Nächste in",
+  "Zera em": "Setzt zurück in",
   "Próximo em": "Nächster in",
   "✓ Média {x}/100": "✓ Durchschnitt {x}/100",
   "Carreira em andamento:": "Karriere läuft:",

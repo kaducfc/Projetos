@@ -7,6 +7,7 @@ export default [
   ['✓ Acertou em {num}', '✓ Solved in {num}', '✓ Gelöst in {num}', '✓ Acertaste en {num}', '✓ Indovinato in {num}', '✓ Trouvé en {num}'],
   ['✗ Não foi hoje', '✗ Not today', '✗ Heute nicht', '✗ Hoy no fue', '✗ Oggi no', '✗ Pas aujourd’hui'],
   ['Próxima em', 'Next in', 'Nächste in', 'Próxima en', 'Prossima tra', 'Prochaine dans'],
+  ['Zera em', 'Resets in', 'Setzt zurück in', 'Se reinicia en', 'Si azzera tra', 'Remise à zéro dans'],
   ['Próximo em', 'Next in', 'Nächster in', 'Próximo en', 'Prossimo tra', 'Prochain dans'],
   ['✓ Média {x}/100', '✓ Average {x}/100', '✓ Durchschnitt {x}/100', '✓ Media {x}/100', '✓ Media {x}/100', '✓ Moyenne {x}/100'],
   ['Carreira em andamento:', 'Career in progress:', 'Karriere läuft:', 'Carrera en curso:', 'Carriera in corso:', 'Carrière en cours :'],

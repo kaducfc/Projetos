@@ -1234,6 +1234,7 @@ export default {
   "✓ Acertou em {num}": "✓ Solved in {num}",
   "✗ Não foi hoje": "✗ Not today",
   "Próxima em": "Next in",
+  "Zera em": "Resets in",
   "Próximo em": "Next in",
   "✓ Média {x}/100": "✓ Average {x}/100",
   "Carreira em andamento:": "Career in progress:",
