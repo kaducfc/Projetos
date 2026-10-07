@@ -25,19 +25,14 @@ export const EFEITOS = [
 
 // Só aparecem no painel do administrador (aba Teste) até serem aprovados.
 export const EFEITOS_TESTE = [
-  { id: 'st-neon', nome: 'Neon violeta', classe: 'fx-st-neon', tema: 'Streamer · roxo' },
-  { id: 'st-aurora', nome: 'Aurora', classe: 'fx-st-aurora', tema: 'Streamer · cor livre' },
   { id: 'st-contorno', nome: 'Contorno Twitch', classe: 'fx-st-contorno', tema: 'Streamer · Twitch' },
-  { id: 'st-glitch', nome: 'Glitch', classe: 'fx-st-glitch', tema: 'Streamer · Twitch' },
-  { id: 'gl-sinal', nome: 'Sinal Perdido', classe: 'fx-gl-sinal', tema: 'Glitch · leve · ciano e magenta' },
   { id: 'gl-fatiado', nome: 'Fatiado', classe: 'fx-gl-fatiado', tema: 'Glitch · intenso · faixas que escorregam' },
   { id: 'gl-matrix', nome: 'Código Verde', classe: 'fx-gl-matrix', tema: 'Glitch · médio · terminal verde' },
-  { id: 'gl-vhs', nome: 'Fita VHS', classe: 'fx-gl-vhs', tema: 'Glitch · médio · fita velha quente' },
-  { id: 'st-aovivo', nome: 'Ao vivo', classe: 'fx-st-aovivo', tema: 'Streamer · Twitch' },
-  { id: 'hw-bruxas', nome: 'Galáxia das Bruxas', classe: 'fx-hw-bruxas', tema: 'Halloween · morcegos e chapéus' },
-  { id: 'hw-nebulosa', nome: 'Nebulosa Abóbora', classe: 'fx-hw-nebulosa', tema: 'Halloween · abóboras' },
-  { id: 'hw-assombrada', nome: 'Noite Assombrada', classe: 'fx-hw-assombrada', tema: 'Halloween · fantasmas' },
-  { id: 'hw-eclipse', nome: 'Eclipse Sangrento', classe: 'fx-hw-eclipse', tema: 'Halloween · caveiras e brasas' },
+  { id: 'nv-magma', nome: 'Magma', classe: 'fx-nv-magma', tema: 'Laranja e preto · lava e brasas' },
+  { id: 'nv-cristal', nome: 'Cristal de Gelo', classe: 'fx-nv-cristal', tema: 'Azul gelo · faceta e brilhos em estrela' },
+  { id: 'nv-synth', nome: 'Noite Retrô', classe: 'fx-nv-synth', tema: 'Rosa, amarelo e ciano · listras anos 80' },
+  { id: 'nv-raio', nome: 'Tempestade', classe: 'fx-nv-raio', tema: 'Azul elétrico · relâmpago' },
+  { id: 'nv-sakura', nome: 'Sakura', classe: 'fx-nv-sakura', tema: 'Rosa · pétalas caindo' },
 ];
 
 // De EFEITOS_TESTE, só estes dá para equipar (o servidor só os libera para o

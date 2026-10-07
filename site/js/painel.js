@@ -436,12 +436,21 @@ function passeCard() {
     ${passeHtml(ps, { extra: controles })}</div>`;
 }
 
+// Seções da aba Teste que abrem e fecham (começam fechadas; a aba é redesenhada ao carregar o passe,
+// então o que está aberto fica guardado aqui).
+const testeAberto = new Set();
+function secaoTeste(id, titulo, html) {
+  return `<details class="t-sec" data-t-sec="${id}"${testeAberto.has(id) ? ' open' : ''}>
+    <summary><span class="t-sec-tit">${titulo}</span><span class="t-sec-btn" aria-hidden="true"></span></summary>
+    <div class="t-sec-corpo">${html}</div></details>`;
+}
+
 function abaTeste() {
   const eu = platform.getUser();
   if (!testeNick && eu) testeNick = eu.username;
   return `<section class="p-section">
     <h2>Teste</h2>
-    ${passeCard()}
+    ${secaoTeste('passe', 'Passe de Batalha', passeCard())}
     <div class="card">
       <p class="c-sub">Aqui ficam as novidades antes de irem para todo mundo. Os efeitos abaixo (para streamers) <b>não aparecem para os jogadores</b>: nem no perfil, nem no ranking. Para ver o efeito no seu nome de verdade, é só esperar o lançamento.</p>
       <label class="p-label">Nick de exemplo <input type="text" data-t-nick value="${esc(testeNick)}" maxlength="24" autocomplete="off" spellcheck="false" /></label>
@@ -450,11 +459,16 @@ function abaTeste() {
         <li>Depois de aprovar, me diga quais ficam e eu os movo para a lista pública (o jogador que tiver o código já passa a poder selecionar).</li>
       </ul>
     </div>
-    ${testeIcones()}${testeMolduras()}
-    <div data-t-previas>${testeCartoes(testeNick)}</div>
+    ${secaoTeste('molduras', 'Ícones e molduras', testeIcones() + testeMolduras())}
+    ${secaoTeste('efeitos', 'Efeitos de nome', `<div data-t-previas>${testeCartoes(testeNick)}</div>`)}
   </section>`;
 }
 
+body.addEventListener('toggle', (e) => {
+  const d = e.target.closest?.('[data-t-sec]');
+  if (!d) return;
+  if (d.open) testeAberto.add(d.dataset.tSec); else testeAberto.delete(d.dataset.tSec);
+}, true);
 body.addEventListener('input', (e) => {
   const i = e.target.closest('[data-t-nick]');
   if (!i) return;

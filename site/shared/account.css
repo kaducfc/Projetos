@@ -196,111 +196,48 @@ a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
 /* Efeitos de streamer (em teste no painel; shared/efeitos.js). Cada degradê
    começa e termina na mesma cor, e a animação anda uma volta inteira: sem salto. */
 .fx-st-nebulosa { background: linear-gradient(100deg, #7c3aed 0%, #a78bfa 28%, #f3e8ff 50%, #a78bfa 72%, #7c3aed 100%); background-size: 200% 100%; background-repeat: repeat-x; -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.75)); animation: fx-reflexo 4.2s linear infinite; }
-.fx-st-neon { color: #c9a4ff; text-shadow: 0 0 2px #e4d0ff, 0 0 8px #9146ff, 0 0 18px #9146ff, 0 0 32px #772ce8; animation: fx-neon 2.6s ease-in-out infinite alternate; }
+
 @keyframes fx-neon { from { color: #bb92ff; text-shadow: 0 0 2px #dcc5ff, 0 0 6px #9146ff, 0 0 12px #772ce8, 0 0 22px #772ce8; } to { color: #d3b3ff; text-shadow: 0 0 3px #eadbff, 0 0 12px #a970ff, 0 0 24px #9146ff, 0 0 42px #772ce8; } }
 .fx-st-galaxia { background: radial-gradient(circle at 20% 30%, #fff 0 1.2px, transparent 2px), radial-gradient(circle at 72% 62%, #fff 0 1.2px, transparent 2px), radial-gradient(circle at 46% 82%, #fde68a 0 1.1px, transparent 2px), linear-gradient(100deg, #6366f1 0%, #a855f7 30%, #f472b6 50%, #a855f7 70%, #6366f1 100%); background-size: 34px 100%, 47px 100%, 27px 100%, 200% 100%; background-repeat: repeat-x; -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.7)); animation: fx-galaxia 5s linear infinite; }
 @keyframes fx-galaxia { from { background-position: 0 0, 0 0, 0 0, 0 0; } to { background-position: -34px 0, -47px 0, -27px 0, -200% 0; } }
 .fx-st-brasa { background: linear-gradient(0deg, #ef4444 0%, #f97316 22%, #fbbf24 42%, #fff1a8 50%, #fbbf24 58%, #f97316 78%, #ef4444 100%); background-size: 100% 300%; background-repeat: repeat-y; -webkit-background-clip: text; background-clip: text; color: transparent; animation: fx-brasa 2.2s linear infinite, fx-brasa-brilho 0.9s ease-in-out infinite alternate; }
 @keyframes fx-brasa { from { background-position: 0 0; } to { background-position: 0 -300%; } }
 @keyframes fx-brasa-brilho { from { filter: drop-shadow(0 0 3px rgba(249, 115, 22, 0.7)); } to { filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.95)); } }
-.fx-st-aurora { background: linear-gradient(100deg, #34d399 0%, #22d3ee 25%, #60a5fa 50%, #a78bfa 75%, #34d399 100%); background-size: 200% 100%; background-repeat: repeat-x; -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(45, 212, 191, 0.5)); animation: fx-reflexo 5.5s linear infinite; }
+
 /* Streamer · Twitch: roxo oficial #9146ff */
 .fx-st-contorno { color: #fff; -webkit-text-stroke: 2px #9146ff; paint-order: stroke fill; text-shadow: 0 0 8px rgba(145, 70, 255, 0.75), 0 0 18px rgba(119, 44, 232, 0.55); animation: fx-contorno 3s ease-in-out infinite alternate; }
 @keyframes fx-contorno { from { text-shadow: 0 0 5px rgba(145, 70, 255, 0.6), 0 0 12px rgba(119, 44, 232, 0.4); } to { text-shadow: 0 0 10px rgba(169, 112, 255, 0.95), 0 0 24px rgba(145, 70, 255, 0.7); } }
-.fx-st-glitch { color: #bf94ff; text-shadow: -1px 0 #00e5ff, 1px 0 #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); animation: fx-glitch 3.2s steps(1, end) infinite; }
+
 @keyframes fx-glitch {
   0%, 86%, 100% { text-shadow: -1px 0 #00e5ff, 1px 0 #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); transform: none; }
   88% { text-shadow: -3px 0 #00e5ff, 3px 0 #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); transform: translateX(1px); }
   91% { text-shadow: 3px 0 #00e5ff, -3px 0 #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); transform: translateX(-1px); }
   94% { text-shadow: -2px 1px #00e5ff, 2px -1px #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); transform: none; }
 }
-.fx-st-aovivo { color: #d3b3ff; text-shadow: 0 0 8px rgba(145, 70, 255, 0.85), 0 0 18px rgba(119, 44, 232, 0.6); }
-.fx-st-aovivo::before { content: ''; display: inline-block; width: 0.34em; height: 0.34em; margin-right: 0.3em; vertical-align: 0.12em; border-radius: 50%; background: #ff2f4f; box-shadow: 0 0 6px 1px rgba(255, 47, 79, 0.85); animation: fx-aovivo 1.4s ease-in-out infinite; }
+
+
 @keyframes fx-aovivo { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.75); } }
 /* Streamer · Halloween: nick com céu estrelado (como a Galáxia) em cores de Halloween,
    mais objetos que passam pelo nome (::before/::after em SVG/gradiente, sem imagem externa). */
-.fx-hw-bruxas, .fx-hw-nebulosa, .fx-hw-assombrada, .fx-hw-teia, .fx-hw-eclipse, .fx-hw-neon { font-weight: 800; }
+
 @keyframes fx-hw-cintila { from { filter: drop-shadow(0 0 4px rgba(var(--hw-glow), 0.5)) brightness(0.96); } to { filter: drop-shadow(0 0 9px rgba(var(--hw-glow), 0.95)) brightness(1.16); } }
-.fx-hw-bruxas { --hw-glow: 200, 80, 255; background:
-    radial-gradient(circle at 20% 30%, #fff 0 1.6px, transparent 2.4000000000000004px) 0 0 / 34px 100% repeat-x,
-    radial-gradient(circle at 72% 64%, #d9f99d 0 1.6px, transparent 2.4000000000000004px) 0 0 / 47px 100% repeat-x,
-    radial-gradient(circle at 46% 82%, #f5d0fe 0 1.3px, transparent 2.1px) 0 0 / 27px 100% repeat-x,
-    radial-gradient(circle at 88% 18%, #fff 0 1.2px, transparent 2.0px) 0 0 / 61px 100% repeat-x,
-    radial-gradient(circle at 58% 40%, #d9f99d 0 1.0px, transparent 1.8px) 0 0 / 23px 100% repeat-x,
-    radial-gradient(ellipse at 30% 50%, rgba(255,70,220,.55), transparent 62%) 0 0 / 150px 100% repeat-x,
-    radial-gradient(ellipse at 75% 60%, rgba(163,230,53,.5), transparent 62%) 0 0 / 210px 100% repeat-x,
-    linear-gradient(100deg, #6d28d9 0%, #c026d3 28%, #b5f23d 50%, #c026d3 72%, #6d28d9 100%) 0 0 / 300px 100% repeat-x;
-  -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(200, 80, 255, 0.65));
-  animation: fx-hw-bruxas 8s linear infinite, fx-hw-cintila 3.6s ease-in-out infinite alternate; }
-@keyframes fx-hw-bruxas { from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; } to { background-position: -34px 0, -47px 0, -27px 0, -61px 0, -23px 0, -150px 0, -210px 0, -300px 0; } }
 
-.fx-hw-bruxas::after { content: ''; position: absolute; top: -0.8em; bottom: -0.5em; left: -0.5em; right: -0.5em; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 20'%3E%3Cpath d='M16 5.5c-1.2-2-3.4-2.6-6-2.4C6.5 3.4 3.6 5.4 1 9.4c2.6-.6 3.8.6 4.5 2.4 1.2-1.4 2.8-1.6 4-.6 1.2.8 1.9 2.4 2.2 4.4.8-2.4 2-4 4.3-4.2 2.3.2 3.5 1.8 4.3 4.2.3-2 1-3.6 2.2-4.4 1.2-1 2.8-.8 4 .6.7-1.8 1.9-3 4.5-2.4-2.6-4-5.5-6-9-6.3-2.6-.2-4.8.4-6 2.4z' fill='%238a67e6' stroke='%23efe6ff' stroke-width='.9' stroke-linejoin='round'/%3E%3Cpath d='M14.3 5.2 14.8 1.6 16 4 17.2 1.6 17.7 5.2z' fill='%238a67e6' stroke='%23efe6ff' stroke-width='.8' stroke-linejoin='round'/%3E%3Ccircle cx='15' cy='6.4' r='.7' fill='%23ff5d73'/%3E%3Ccircle cx='17' cy='6.4' r='.7' fill='%23ff5d73'/%3E%3C/svg%3E") -0.95em 18% / 0.8em 0.5em no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2C17 8 21 15 24 21L30 24C30 27 24 29 16 29 8 29 2 27 2 24L8 21C11 15 15 8 16 2Z' fill='%235b2a9e' stroke='%23dcc2ff' stroke-width='1' stroke-linejoin='round'/%3E%3Cpath d='M8.6 19.6C13 21.4 19 21.4 23.4 19.6L24.4 21.6C19.6 23.8 12.4 23.8 7.6 21.6Z' fill='%23a3e635'/%3E%3Crect x='14' y='20' width='4' height='3.4' rx='.6' fill='%23fbbf24'/%3E%3C/svg%3E") -0.77em 62% / 0.62em 0.62em no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 20'%3E%3Cpath d='M16 5.5c-1.2-2-3.4-2.6-6-2.4C6.5 3.4 3.6 5.4 1 9.4c2.6-.6 3.8.6 4.5 2.4 1.2-1.4 2.8-1.6 4-.6 1.2.8 1.9 2.4 2.2 4.4.8-2.4 2-4 4.3-4.2 2.3.2 3.5 1.8 4.3 4.2.3-2 1-3.6 2.2-4.4 1.2-1 2.8-.8 4 .6.7-1.8 1.9-3 4.5-2.4-2.6-4-5.5-6-9-6.3-2.6-.2-4.8.4-6 2.4z' fill='%238a67e6' stroke='%23efe6ff' stroke-width='.9' stroke-linejoin='round'/%3E%3Cpath d='M14.3 5.2 14.8 1.6 16 4 17.2 1.6 17.7 5.2z' fill='%238a67e6' stroke='%23efe6ff' stroke-width='.8' stroke-linejoin='round'/%3E%3Ccircle cx='15' cy='6.4' r='.7' fill='%23ff5d73'/%3E%3Ccircle cx='17' cy='6.4' r='.7' fill='%23ff5d73'/%3E%3C/svg%3E") -0.7em 40% / 0.55em 0.35em no-repeat;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%);
-  filter: drop-shadow(0 0 3px rgba(var(--hw-glow), 0.8)); animation: fx-hw-bruxas-after 11s linear infinite; }
-@keyframes fx-hw-bruxas-after {
-  0% { background-position: -0.95em 18%, -0.77em 62%, -0.7em 40%; }
-  3% { background-position: -0.95em 18%, -0.77em 62%, -0.7em 40%; }
-  22% { background-position: calc(-0.95em + (100% + 1.90em) * 0.514) 35.5%, -0.77em 62%, -0.7em 40%; }
-  40% { background-position: calc(100% + 0.95em) 52%, calc(-0.77em + (100% + 1.54em) * 0.450) 44.0%, -0.7em 40%; }
-  48% { background-position: calc(100% + 0.95em) 52%, calc(-0.77em + (100% + 1.54em) * 0.650) 36.0%, -0.7em 40%; }
-  62% { background-position: calc(100% + 0.95em) 52%, calc(100% + 0.77em) 22%, calc(-0.7em + (100% + 1.40em) * 0.333) 29.3%; }
-  90% { background-position: calc(100% + 0.95em) 52%, calc(100% + 0.77em) 22%, calc(100% + 0.7em) 8%; }
-  100% { background-position: calc(100% + 0.95em) 52%, calc(100% + 0.77em) 22%, calc(100% + 0.7em) 8%; }
-}
 
-.fx-hw-nebulosa { --hw-glow: 255, 120, 20; background:
-    radial-gradient(circle at 20% 30%, #fff 0 1.6px, transparent 2.4000000000000004px) 0 0 / 34px 100% repeat-x,
-    radial-gradient(circle at 72% 64%, #fde68a 0 1.6px, transparent 2.4000000000000004px) 0 0 / 47px 100% repeat-x,
-    radial-gradient(circle at 46% 82%, #fed7aa 0 1.3px, transparent 2.1px) 0 0 / 27px 100% repeat-x,
-    radial-gradient(circle at 88% 18%, #fff 0 1.2px, transparent 2.0px) 0 0 / 61px 100% repeat-x,
-    radial-gradient(circle at 58% 40%, #fde68a 0 1.0px, transparent 1.8px) 0 0 / 23px 100% repeat-x,
-    radial-gradient(ellipse at 25% 55%, rgba(139,92,246,.55), transparent 62%) 0 0 / 160px 100% repeat-x,
-    radial-gradient(ellipse at 78% 45%, rgba(251,191,36,.55), transparent 62%) 0 0 / 220px 100% repeat-x,
-    linear-gradient(100deg, #b91c1c 0%, #ea580c 28%, #fde047 50%, #ea580c 72%, #b91c1c 100%) 0 0 / 300px 100% repeat-x;
-  -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(255, 120, 20, 0.65));
-  animation: fx-hw-nebulosa 7.5s linear infinite, fx-hw-cintila 3.6s ease-in-out infinite alternate; }
-@keyframes fx-hw-nebulosa { from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; } to { background-position: -34px 0, -47px 0, -27px 0, -61px 0, -23px 0, -160px 0, -220px 0, -300px 0; } }
 
-.fx-hw-nebulosa::after { content: ''; position: absolute; top: -0.8em; bottom: -0.5em; left: -0.5em; right: -0.5em; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 8c.4-3 2.2-5 5-5.6' stroke='%235fa02a' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='9.5' cy='19' rx='7.6' ry='10.6' fill='%23d9480f'/%3E%3Cellipse cx='22.5' cy='19' rx='7.6' ry='10.6' fill='%23d9480f'/%3E%3Cellipse cx='16' cy='19' rx='6.4' ry='11.4' fill='%23ff8a1f'/%3E%3Cpolygon points='9,16 13.4,16 11.2,11.6' fill='%23ffe66d'/%3E%3Cpolygon points='18.6,16 23,16 20.8,11.6' fill='%23ffe66d'/%3E%3Cpolygon points='14.8,19 17.2,19 16,16.8' fill='%23ffe66d'/%3E%3Cpath d='M9 21.4Q16 29 23 21.4L21 23.4 19 22.2 16 25.4 13 22.2 11 23.4Z' fill='%23ffe66d'/%3E%3C/svg%3E") -0.93em 55% / 0.78em 0.78em no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 20'%3E%3Cpath d='M16 5.5c-1.2-2-3.4-2.6-6-2.4C6.5 3.4 3.6 5.4 1 9.4c2.6-.6 3.8.6 4.5 2.4 1.2-1.4 2.8-1.6 4-.6 1.2.8 1.9 2.4 2.2 4.4.8-2.4 2-4 4.3-4.2 2.3.2 3.5 1.8 4.3 4.2.3-2 1-3.6 2.2-4.4 1.2-1 2.8-.8 4 .6.7-1.8 1.9-3 4.5-2.4-2.6-4-5.5-6-9-6.3-2.6-.2-4.8.4-6 2.4z' fill='%238a67e6' stroke='%23efe6ff' stroke-width='.9' stroke-linejoin='round'/%3E%3Cpath d='M14.3 5.2 14.8 1.6 16 4 17.2 1.6 17.7 5.2z' fill='%238a67e6' stroke='%23efe6ff' stroke-width='.8' stroke-linejoin='round'/%3E%3Ccircle cx='15' cy='6.4' r='.7' fill='%23ff5d73'/%3E%3Ccircle cx='17' cy='6.4' r='.7' fill='%23ff5d73'/%3E%3C/svg%3E") -0.7em 12% / 0.55em 0.35em no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 8c.4-3 2.2-5 5-5.6' stroke='%235fa02a' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='9.5' cy='19' rx='7.6' ry='10.6' fill='%23d9480f'/%3E%3Cellipse cx='22.5' cy='19' rx='7.6' ry='10.6' fill='%23d9480f'/%3E%3Cellipse cx='16' cy='19' rx='6.4' ry='11.4' fill='%23ff8a1f'/%3E%3Cpolygon points='9,16 13.4,16 11.2,11.6' fill='%23ffe66d'/%3E%3Cpolygon points='18.6,16 23,16 20.8,11.6' fill='%23ffe66d'/%3E%3Cpolygon points='14.8,19 17.2,19 16,16.8' fill='%23ffe66d'/%3E%3Cpath d='M9 21.4Q16 29 23 21.4L21 23.4 19 22.2 16 25.4 13 22.2 11 23.4Z' fill='%23ffe66d'/%3E%3C/svg%3E") -0.7em 30% / 0.55em 0.55em no-repeat;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%);
-  filter: drop-shadow(0 0 3px rgba(var(--hw-glow), 0.8)); animation: fx-hw-nebulosa-after 12s linear infinite; }
-@keyframes fx-hw-nebulosa-after {
-  0% { background-position: -0.93em 55%, -0.7em 12%, -0.7em 30%; }
-  2% { background-position: -0.93em 55%, -0.7em 12%, -0.7em 30%; }
-  28% { background-position: calc(-0.93em + (100% + 1.86em) * 0.619) 34.6%, -0.7em 12%, -0.7em 30%; }
-  44% { background-position: calc(100% + 0.93em) 22%, calc(-0.7em + (100% + 1.40em) * 0.421) 24.6%, -0.7em 30%; }
-  50% { background-position: calc(100% + 0.93em) 22%, calc(-0.7em + (100% + 1.40em) * 0.579) 29.4%, -0.7em 30%; }
-  66% { background-position: calc(100% + 0.93em) 22%, calc(100% + 0.7em) 42%, calc(-0.7em + (100% + 1.40em) * 0.364) 41.6%; }
-  94% { background-position: calc(100% + 0.93em) 22%, calc(100% + 0.7em) 42%, calc(100% + 0.7em) 62%; }
-  100% { background-position: calc(100% + 0.93em) 22%, calc(100% + 0.7em) 42%, calc(100% + 0.7em) 62%; }
-}
 
-.fx-hw-assombrada { --hw-glow: 120, 150, 255; background:
-    radial-gradient(circle at 20% 30%, #fff 0 1.6px, transparent 2.4000000000000004px) 0 0 / 34px 100% repeat-x,
-    radial-gradient(circle at 72% 64%, #e0f2fe 0 1.6px, transparent 2.4000000000000004px) 0 0 / 47px 100% repeat-x,
-    radial-gradient(circle at 46% 82%, #c7d2fe 0 1.3px, transparent 2.1px) 0 0 / 27px 100% repeat-x,
-    radial-gradient(circle at 88% 18%, #fff 0 1.2px, transparent 2.0px) 0 0 / 61px 100% repeat-x,
-    radial-gradient(circle at 58% 40%, #e0f2fe 0 1.0px, transparent 1.8px) 0 0 / 23px 100% repeat-x,
-    radial-gradient(ellipse at 28% 52%, rgba(56,189,248,.5), transparent 62%) 0 0 / 170px 100% repeat-x,
-    radial-gradient(ellipse at 76% 58%, rgba(129,140,248,.55), transparent 62%) 0 0 / 230px 100% repeat-x,
-    linear-gradient(100deg, #4338ca 0%, #8b5cf6 28%, #e0f2fe 50%, #8b5cf6 72%, #4338ca 100%) 0 0 / 300px 100% repeat-x;
-  -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(120, 150, 255, 0.65));
-  animation: fx-hw-assombrada 9s linear infinite, fx-hw-cintila 3.6s ease-in-out infinite alternate; }
-@keyframes fx-hw-assombrada { from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; } to { background-position: -34px 0, -47px 0, -27px 0, -61px 0, -23px 0, -170px 0, -230px 0, -300px 0; } }
 
-.fx-hw-assombrada::after { content: ''; position: absolute; top: -0.8em; bottom: -0.5em; left: -0.5em; right: -0.5em; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M5 29V14a11 11 0 0 1 22 0v15l-3.7-3.2-3.6 3.2-3.7-3.2-3.7 3.2-3.6-3.2z' fill='%23eaf6ff' fill-opacity='.92'/%3E%3Cellipse cx='12' cy='14' rx='2' ry='2.9' fill='%23182a4d'/%3E%3Cellipse cx='20' cy='14' rx='2' ry='2.9' fill='%23182a4d'/%3E%3Cellipse cx='16' cy='21' rx='2.3' ry='3' fill='%23182a4d'/%3E%3C/svg%3E") -0.95em 40% / 0.8em 0.8em no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M5 29V14a11 11 0 0 1 22 0v15l-3.7-3.2-3.6 3.2-3.7-3.2-3.7 3.2-3.6-3.2z' fill='%23eaf6ff' fill-opacity='.92'/%3E%3Cellipse cx='12' cy='14' rx='2' ry='2.9' fill='%23182a4d'/%3E%3Cellipse cx='20' cy='14' rx='2' ry='2.9' fill='%23182a4d'/%3E%3Cellipse cx='16' cy='21' rx='2.3' ry='3' fill='%23182a4d'/%3E%3C/svg%3E") -0.7em 62% / 0.55em 0.55em no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 20'%3E%3Cpath d='M16 5.5c-1.2-2-3.4-2.6-6-2.4C6.5 3.4 3.6 5.4 1 9.4c2.6-.6 3.8.6 4.5 2.4 1.2-1.4 2.8-1.6 4-.6 1.2.8 1.9 2.4 2.2 4.4.8-2.4 2-4 4.3-4.2 2.3.2 3.5 1.8 4.3 4.2.3-2 1-3.6 2.2-4.4 1.2-1 2.8-.8 4 .6.7-1.8 1.9-3 4.5-2.4-2.6-4-5.5-6-9-6.3-2.6-.2-4.8.4-6 2.4z' fill='%238a67e6' stroke='%23efe6ff' stroke-width='.9' stroke-linejoin='round'/%3E%3Cpath d='M14.3 5.2 14.8 1.6 16 4 17.2 1.6 17.7 5.2z' fill='%238a67e6' stroke='%23efe6ff' stroke-width='.8' stroke-linejoin='round'/%3E%3Ccircle cx='15' cy='6.4' r='.7' fill='%23ff5d73'/%3E%3Ccircle cx='17' cy='6.4' r='.7' fill='%23ff5d73'/%3E%3C/svg%3E") -0.75em 8% / 0.6em 0.38em no-repeat;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%);
-  filter: drop-shadow(0 0 3px rgba(var(--hw-glow), 0.8)); animation: fx-hw-assombrada-after 13s linear infinite; }
-@keyframes fx-hw-assombrada-after {
-  0% { background-position: -0.95em 40%, -0.7em 62%, -0.75em 8%; }
-  2% { background-position: -0.95em 40%, -0.7em 62%, -0.75em 8%; }
-  34% { background-position: calc(-0.95em + (100% + 1.90em) * 0.727) 24.0%, -0.7em 62%, -0.75em 8%; }
-  46% { background-position: calc(100% + 0.95em) 18%, calc(-0.7em + (100% + 1.40em) * 0.286) 52.9%, -0.75em 8%; }
-  58% { background-position: calc(100% + 0.95em) 18%, calc(-0.7em + (100% + 1.40em) * 0.571) 43.7%, -0.75em 8%; }
-  76% { background-position: calc(100% + 0.95em) 18%, calc(100% + 0.7em) 30%, calc(-0.75em + (100% + 1.50em) * 0.474) 23.2%; }
-  96% { background-position: calc(100% + 0.95em) 18%, calc(100% + 0.7em) 30%, calc(100% + 0.75em) 40%; }
-  100% { background-position: calc(100% + 0.95em) 18%, calc(100% + 0.7em) 30%, calc(100% + 0.75em) 40%; }
-}
+
+
+
+
+
+
+
+
+
+
+
+
 
 .fx-hw-teia { --hw-glow: 190, 170, 255; background:
     radial-gradient(circle at 20% 30%, #fff 0 1.6px, transparent 2.4000000000000004px) 0 0 / 34px 100% repeat-x,
@@ -332,41 +269,13 @@ a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
   100% { background-size: 1px 0em, 1px 0em, .56em .56em, .56em .56em; background-position: 28% 0, 74% 0, calc(28% - .28em) -0.30em, calc(74% - .28em) -0.30em; }
 }
 
-.fx-hw-eclipse { --hw-glow: 255, 50, 50; background:
-    radial-gradient(circle at 20% 30%, #fff 0 1.6px, transparent 2.4000000000000004px) 0 0 / 34px 100% repeat-x,
-    radial-gradient(circle at 72% 64%, #fed7aa 0 1.6px, transparent 2.4000000000000004px) 0 0 / 47px 100% repeat-x,
-    radial-gradient(circle at 46% 82%, #fecaca 0 1.3px, transparent 2.1px) 0 0 / 27px 100% repeat-x,
-    radial-gradient(circle at 88% 18%, #fff 0 1.2px, transparent 2.0px) 0 0 / 61px 100% repeat-x,
-    radial-gradient(circle at 58% 40%, #fed7aa 0 1.0px, transparent 1.8px) 0 0 / 23px 100% repeat-x,
-    radial-gradient(ellipse at 30% 50%, rgba(255,90,20,.6), transparent 62%) 0 0 / 150px 100% repeat-x,
-    radial-gradient(ellipse at 74% 58%, rgba(190,18,60,.6), transparent 62%) 0 0 / 210px 100% repeat-x,
-    linear-gradient(100deg, #991b1b 0%, #ef4444 28%, #fdba74 50%, #ef4444 72%, #991b1b 100%) 0 0 / 300px 100% repeat-x;
-  -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(255, 50, 50, 0.65));
-  animation: fx-hw-eclipse 7s linear infinite, fx-hw-cintila 3.6s ease-in-out infinite alternate; }
-@keyframes fx-hw-eclipse { from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; } to { background-position: -34px 0, -47px 0, -27px 0, -61px 0, -23px 0, -150px 0, -210px 0, -300px 0; } }
 
-.fx-hw-eclipse::after { content: ''; position: absolute; top: -0.8em; bottom: -0.5em; left: -0.5em; right: -0.5em; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3C9 3 5 8 5 14c0 4 2 6 4 7.5V27h14v-5.5c2-1.5 4-3.5 4-7.5C27 8 23 3 16 3z' fill='%23f1e7d0' stroke='%23b9a98a' stroke-width='1'/%3E%3Cellipse cx='11.4' cy='14' rx='3.2' ry='3.7' fill='%231a0f12'/%3E%3Cellipse cx='20.6' cy='14' rx='3.2' ry='3.7' fill='%231a0f12'/%3E%3Cpath d='M16 17.6l-1.6 3h3.2z' fill='%231a0f12'/%3E%3Cpath d='M12 27v-4M16 27v-4M20 27v-4' stroke='%231a0f12' stroke-width='1.2'/%3E%3C/svg%3E") -0.77em 25% / 0.62em 0.62em no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3C9 3 5 8 5 14c0 4 2 6 4 7.5V27h14v-5.5c2-1.5 4-3.5 4-7.5C27 8 23 3 16 3z' fill='%23f1e7d0' stroke='%23b9a98a' stroke-width='1'/%3E%3Cellipse cx='11.4' cy='14' rx='3.2' ry='3.7' fill='%231a0f12'/%3E%3Cellipse cx='20.6' cy='14' rx='3.2' ry='3.7' fill='%231a0f12'/%3E%3Cpath d='M16 17.6l-1.6 3h3.2z' fill='%231a0f12'/%3E%3Cpath d='M12 27v-4M16 27v-4M20 27v-4' stroke='%231a0f12' stroke-width='1.2'/%3E%3C/svg%3E") -0.6em 62% / 0.45em 0.45em no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 20'%3E%3Cpath d='M16 5.5c-1.2-2-3.4-2.6-6-2.4C6.5 3.4 3.6 5.4 1 9.4c2.6-.6 3.8.6 4.5 2.4 1.2-1.4 2.8-1.6 4-.6 1.2.8 1.9 2.4 2.2 4.4.8-2.4 2-4 4.3-4.2 2.3.2 3.5 1.8 4.3 4.2.3-2 1-3.6 2.2-4.4 1.2-1 2.8-.8 4 .6.7-1.8 1.9-3 4.5-2.4-2.6-4-5.5-6-9-6.3-2.6-.2-4.8.4-6 2.4z' fill='%238a67e6' stroke='%23efe6ff' stroke-width='.9' stroke-linejoin='round'/%3E%3Cpath d='M14.3 5.2 14.8 1.6 16 4 17.2 1.6 17.7 5.2z' fill='%238a67e6' stroke='%23efe6ff' stroke-width='.8' stroke-linejoin='round'/%3E%3Ccircle cx='15' cy='6.4' r='.7' fill='%23ff5d73'/%3E%3Ccircle cx='17' cy='6.4' r='.7' fill='%23ff5d73'/%3E%3C/svg%3E") -0.75em 10% / 0.6em 0.38em no-repeat;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%);
-  filter: drop-shadow(0 0 3px rgba(var(--hw-glow), 0.8)); animation: fx-hw-eclipse-after 12s linear infinite; }
-@keyframes fx-hw-eclipse-after {
-  0% { background-position: -0.77em 25%, -0.6em 62%, -0.75em 10%; }
-  4% { background-position: -0.77em 25%, -0.6em 62%, -0.75em 10%; }
-  40% { background-position: calc(-0.77em + (100% + 1.54em) * 0.857) 50.7%, -0.6em 62%, -0.75em 10%; }
-  46% { background-position: calc(100% + 0.77em) 55%, calc(-0.6em + (100% + 1.20em) * 0.150) 56.9%, -0.75em 10%; }
-  56% { background-position: calc(100% + 0.77em) 55%, calc(-0.6em + (100% + 1.20em) * 0.400) 48.4%, -0.75em 10%; }
-  80% { background-position: calc(100% + 0.77em) 55%, calc(100% + 0.6em) 28%, calc(-0.75em + (100% + 1.50em) * 0.600) 31.6%; }
-  96% { background-position: calc(100% + 0.77em) 55%, calc(100% + 0.6em) 28%, calc(100% + 0.75em) 46%; }
-  100% { background-position: calc(100% + 0.77em) 55%, calc(100% + 0.6em) 28%, calc(100% + 0.75em) 46%; }
-}
 
-.fx-hw-eclipse::before { content: ''; position: absolute; left: 0; right: 0; bottom: 70%; height: 1.5em; pointer-events: none;
-  background:
-    radial-gradient(circle, rgba(255, 190, 90, 1) 0 0.025em, rgba(255, 120, 30, 0.6) 0.04em, transparent 0.07em) 10% 100% / 0.9em 1.2em no-repeat,
-    radial-gradient(circle, rgba(255, 220, 140, 1) 0 0.02em, rgba(255, 140, 40, 0.6) 0.035em, transparent 0.06em) 34% 100% / 0.7em 1em no-repeat,
-    radial-gradient(circle, rgba(255, 190, 90, 1) 0 0.03em, rgba(255, 90, 20, 0.6) 0.045em, transparent 0.08em) 58% 100% / 1em 1.4em no-repeat,
-    radial-gradient(circle, rgba(255, 220, 140, 1) 0 0.02em, rgba(255, 130, 30, 0.6) 0.035em, transparent 0.06em) 84% 100% / 0.8em 1.1em no-repeat;
-  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 100%); mask-image: linear-gradient(to top, #000 0%, transparent 100%);
-  animation: fx-hw-brasas 3.4s linear infinite; }
+
+
+
+
+
 @keyframes fx-hw-brasas { from { background-position: 10% 100%, 34% 100%, 58% 100%, 84% 100%; } to { background-position: 10% -40%, 34% -30%, 58% -45%, 84% -35%; } }
 
 .fx-hw-neon { --hw-glow: 150, 60, 255; color: #000; -webkit-text-stroke: 0.11em transparent; paint-order: stroke fill; padding: 0 0.06em; margin: 0 -0.06em;
@@ -492,20 +401,14 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
 .rc-aviso { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 170; max-width: calc(100vw - 32px); padding: 12px 18px; border-radius: 10px; border: 1px solid #d9a82b; background: #17140e; color: #f4efe4; font-size: 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
 
 /* ---------------------------------------------------------------- Glitch (em teste)
-   Cinco variações de "defeito de sinal", da mais discreta à mais violenta. As que usam
+   Variações de "defeito de sinal". As que usam
    ::before/::after copiam o nick pelo atributo data-text. */
-.fx-gl-sinal, .fx-gl-fatiado, .fx-gl-matrix, .fx-gl-vhs, .fx-gl-corrompido { font-weight: 800; }
 
-/* 1 · Sinal Perdido (leve): branco com separação de cores ciano/magenta que treme de leve */
-.fx-gl-sinal { color: #f4fbff; text-shadow: -1.5px 0 rgba(0, 229, 255, 0.85), 1.5px 0 rgba(255, 45, 150, 0.85); animation: fx-gl-sinal 4.2s steps(1, end) infinite; }
-@keyframes fx-gl-sinal {
-  0%, 62%, 100% { text-shadow: -1.5px 0 rgba(0, 229, 255, 0.85), 1.5px 0 rgba(255, 45, 150, 0.85); transform: none; }
-  63% { text-shadow: -4px 0 rgba(0, 229, 255, 0.9), 4px 0 rgba(255, 45, 150, 0.9); transform: translateX(1px) skewX(-6deg); }
-  65% { text-shadow: 3px 0 rgba(0, 229, 255, 0.9), -3px 0 rgba(255, 45, 150, 0.9); transform: translateX(-1px); }
-  67% { text-shadow: -1.5px 0 rgba(0, 229, 255, 0.85), 1.5px 0 rgba(255, 45, 150, 0.85); transform: none; }
-  90% { text-shadow: -2px 1px rgba(0, 229, 255, 0.9), 2px -1px rgba(255, 45, 150, 0.9); }
-  92% { text-shadow: -1.5px 0 rgba(0, 229, 255, 0.85), 1.5px 0 rgba(255, 45, 150, 0.85); }
-}
+
+
+
+
+.fx-gl-fatiado, .fx-gl-matrix, .fx-gl-corrompido { font-weight: 800; }
 
 /* 2 · Fatiado (intenso): o nome é cortado em faixas que escorregam para os lados */
 .fx-gl-fatiado { color: #ffffff; text-shadow: 0 0 8px rgba(255, 255, 255, 0.35); }
@@ -544,21 +447,10 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
 .fx-gl-matrix::after { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; color: #b9ffcf; -webkit-text-fill-color: #b9ffcf; clip-path: inset(0 0 100% 0); pointer-events: none; animation: fx-gl-matrix-fatia 3.4s steps(1, end) infinite; }
 @keyframes fx-gl-matrix-fatia { 0%, 40%, 100% { clip-path: inset(0 0 100% 0); } 41% { clip-path: inset(30% 0 40% 0); transform: translateX(3px); } 44% { clip-path: inset(0 0 100% 0); transform: none; } }
 
-/* 4 · Fita VHS (médio): tons quentes, linha de ruído que sobe e tremor ondulado */
-.fx-gl-vhs { color: transparent; background: linear-gradient(180deg, #ffe7a3 0 38%, #ff9b3d 38% 62%, #ff4d6a 62% 100%) 0 0 / 100% 100%; -webkit-background-clip: text; background-clip: text;
-  filter: drop-shadow(-1.5px 0 rgba(255, 40, 80, 0.7)) drop-shadow(1.5px 0 rgba(40, 190, 255, 0.55)); animation: fx-gl-vhs 2.8s linear infinite; }
-@keyframes fx-gl-vhs {
-  0%, 100% { transform: none; }
-  20% { transform: skewX(0deg); }
-  22% { transform: skewX(-9deg) translateX(2px); }
-  24% { transform: skewX(6deg) translateX(-2px); }
-  26% { transform: none; }
-  70% { transform: translateY(0.5px); }
-  72% { transform: translateY(-1px) skewX(4deg); }
-  74% { transform: none; }
-}
-.fx-gl-vhs::after { content: ''; position: absolute; left: -6%; right: -6%; height: 0.08em; top: 0; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent); mix-blend-mode: screen; opacity: 0.8; animation: fx-gl-vhs-linha 2.2s linear infinite; }
-@keyframes fx-gl-vhs-linha { from { top: 110%; } to { top: -20%; } }
+
+
+
+
 
 /* 5 · Dado Corrompido (violento): vermelho e preto, quadros que quebram, tarja cortando o nome */
 .fx-gl-corrompido { color: #ff3b3b; text-shadow: 2px 0 #1a0000, -2px 0 rgba(255, 255, 255, 0.55), 0 0 12px rgba(255, 30, 30, 0.8); animation: fx-gl-corrompido 1.9s steps(1, end) infinite; }
@@ -577,3 +469,66 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
 .fx-gl-corrompido::after { content: ''; position: absolute; left: -4%; right: -4%; top: 46%; height: 0.14em; background: #ff2a2a; pointer-events: none; transform: scaleX(0); transform-origin: left; animation: fx-gl-corrompido-b 1.9s steps(1, end) infinite; }
 @keyframes fx-gl-corrompido-a { 0%, 28%, 100% { clip-path: inset(0 0 100% 0); } 29% { clip-path: inset(18% 0 52% 0); transform: translateX(7px); } 34% { clip-path: inset(60% 0 8% 0); transform: translateX(-8px); } 36% { clip-path: inset(0 0 100% 0); transform: none; } 61% { clip-path: inset(40% 0 30% 0); transform: translateX(-6px); } 65% { clip-path: inset(0 0 100% 0); transform: none; } }
 @keyframes fx-gl-corrompido-b { 0%, 30%, 100% { transform: scaleX(0); } 31% { transform: scaleX(1); top: 30%; } 33% { transform: scaleX(0.6); top: 62%; } 35% { transform: scaleX(0); } 63% { transform: scaleX(1); top: 52%; } 65% { transform: scaleX(0); } }
+
+/* ---------------------------------------------------------------- Novos (em teste)
+   Cada um com outro formato: lava, cristal, listras retrô, relâmpago e pétalas. */
+.fx-nv-magma, .fx-nv-cristal, .fx-nv-synth, .fx-nv-raio, .fx-nv-sakura { font-weight: 800; }
+
+/* Magma (laranja e preto): letras pretas de rocha com contorno em brasa e um fio de lava que corre por dentro */
+.fx-nv-magma { color: transparent; -webkit-text-stroke: 0.045em #ff8a1f; paint-order: stroke fill;
+  background: linear-gradient(100deg, #0d0502 0%, #0d0502 30%, #ff4d00 42%, #ffb347 48%, #fff0b8 50%, #ffb347 52%, #ff4d00 58%, #0d0502 70%, #0d0502 100%) 0 0 / 250% 100% repeat-x;
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 0 4px rgba(255, 110, 0, 0.85)); animation: fx-nv-magma 3.8s linear infinite; }
+@keyframes fx-nv-magma { from { background-position: 0 0; } to { background-position: -250% 0; } }
+.fx-nv-magma::after { content: ''; position: absolute; left: 0; right: 0; top: -0.5em; bottom: 0; pointer-events: none;
+  background: radial-gradient(circle, #ffd27a 0 1.3px, transparent 2.2px) 0 0 / 23px 28px, radial-gradient(circle, #ff6a00 0 1.1px, transparent 2px) 11px 14px / 31px 37px;
+  -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent); mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent);
+  animation: fx-nv-brasas 2.4s linear infinite; }
+@keyframes fx-nv-brasas { from { background-position: 0 0, 11px 14px; } to { background-position: 6px -28px, 5px -23px; } }
+
+/* Cristal de Gelo (azul): faceta branca que atravessa o nome e brilhos em estrela */
+.fx-nv-cristal { color: transparent;
+  background: linear-gradient(112deg, #5db9ff 0%, #9fdcff 28%, #ffffff 36%, #a6e2ff 44%, #3f9bff 70%, #7fd0ff 100%) 0 0 / 260% 100% repeat-x;
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 0 4px rgba(110, 200, 255, 0.75)); animation: fx-nv-cristal 3.6s ease-in-out infinite; }
+@keyframes fx-nv-cristal { from { background-position: 0 0; } to { background-position: -260% 0; } }
+.fx-nv-cristal::before, .fx-nv-cristal::after { content: ''; position: absolute; width: 0.42em; height: 0.42em; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0 12 8 20 10 12 12 10 20 8 12 0 10 8 8z' fill='%23ffffff'/%3E%3C/svg%3E") center / contain no-repeat;
+  filter: drop-shadow(0 0 3px #bfe9ff); opacity: 0; animation: fx-nv-estrela 2.8s ease-in-out infinite; }
+.fx-nv-cristal::before { left: 18%; top: -0.2em; }
+.fx-nv-cristal::after { right: 8%; bottom: -0.05em; width: 0.3em; height: 0.3em; animation-delay: 1.3s; }
+@keyframes fx-nv-estrela { 0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); } 45% { opacity: 1; transform: scale(1) rotate(45deg); } 70% { opacity: 0; transform: scale(0.3) rotate(90deg); } }
+
+/* Noite Retrô (rosa, amarelo e ciano): letras com o "pôr do sol" listrado dos anos 80, cores que escorregam */
+.fx-nv-synth { color: transparent;
+  background: linear-gradient(90deg, #ff2bd6, #ffb300, #22e0ff, #ff2bd6) 0 0 / 300% 100% repeat-x;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-mask-image: linear-gradient(180deg, #000 0 44%, transparent 44% 51%, #000 51% 62%, transparent 62% 70%, #000 70% 80%, transparent 80% 89%, #000 89%);
+  mask-image: linear-gradient(180deg, #000 0 44%, transparent 44% 51%, #000 51% 62%, transparent 62% 70%, #000 70% 80%, transparent 80% 89%, #000 89%);
+  filter: drop-shadow(0 0 5px rgba(255, 60, 200, 0.7)); animation: fx-nv-synth 5s linear infinite; }
+@keyframes fx-nv-synth { from { background-position: 0 0; } to { background-position: -300% 0; } }
+
+/* Tempestade (azul elétrico): nome de céu carregado, com relâmpago que racha por trás de vez em quando */
+.fx-nv-raio { isolation: isolate; color: #dbe7ff; text-shadow: 0 0 5px #5b8cff, 0 0 14px #2f55ff; animation: fx-nv-raio 5s steps(1, end) infinite; }
+@keyframes fx-nv-raio {
+  0%, 58%, 63%, 100% { color: #dbe7ff; text-shadow: 0 0 5px #5b8cff, 0 0 14px #2f55ff; transform: none; }
+  59% { color: #ffffff; text-shadow: 0 0 4px #ffffff, 0 0 18px #a8c8ff, 0 0 38px #5b8cff; transform: translateX(1px); }
+  61% { color: #bcd2ff; text-shadow: 0 0 5px #5b8cff, 0 0 14px #2f55ff; transform: translateX(-1px); }
+  62% { color: #ffffff; text-shadow: 0 0 4px #ffffff, 0 0 24px #a8c8ff, 0 0 46px #5b8cff; }
+}
+.fx-nv-raio::before { content: ''; position: absolute; left: 22%; width: 0.9em; top: -0.5em; bottom: -0.35em; pointer-events: none; z-index: -1; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40' preserveAspectRatio='none'%3E%3Cpath d='M30 0 22 16 32 17 20 40 41 15 31 14 38 0Z' fill='%23fff7c2' stroke='%23ffd84a' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 0 5px #ffe97a); opacity: 0; animation: fx-nv-raio-b 5s steps(1, end) infinite; }
+@keyframes fx-nv-raio-b { 0%, 58%, 63%, 100% { opacity: 0; } 59% { opacity: 1; } 60% { opacity: 0.2; } 61% { opacity: 1; left: 58%; } 62% { opacity: 0.6; left: 58%; } }
+
+/* Sakura (rosa): nome em degradê de pétala, com pétalas caindo */
+.fx-nv-sakura { color: transparent;
+  background: linear-gradient(100deg, #ff8fbc 0%, #ffd3e6 34%, #ffffff 50%, #ffc2dc 66%, #ff7eb0 100%) 0 0 / 250% 100% repeat-x;
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 0 4px rgba(255, 130, 180, 0.6)); animation: fx-nv-sakura 6s linear infinite; }
+@keyframes fx-nv-sakura { from { background-position: 0 0; } to { background-position: -250% 0; } }
+.fx-nv-sakura::after { content: ''; position: absolute; left: 0; right: 0; top: -0.7em; bottom: -0.5em; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffb7d5' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/svg%3E") 12% -0.6em / 0.42em 0.42em no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffb7d5' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/svg%3E") 48% -0.9em / 0.34em 0.34em no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffb7d5' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/svg%3E") 84% -0.5em / 0.4em 0.4em no-repeat;
+  animation: fx-nv-petalas 5.5s linear infinite; }
+@keyframes fx-nv-petalas {
+  0% { background-position: 12% -0.6em, 48% -1.2em, 84% -0.5em; }
+  100% { background-position: 22% 1.9em, 40% 2.1em, 74% 1.8em; }
+}

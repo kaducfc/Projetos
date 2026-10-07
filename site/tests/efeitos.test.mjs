@@ -22,21 +22,20 @@ test('efeitos: automático dá o reflexo ao apoiador, "nenhum" tira, id desconhe
   assert.equal(efeitoAtivo(null, true).id, 'reflexo');
   assert.equal(efeitoAtivo(null, false), null);
   assert.equal(efeitoAtivo('nenhum', true), null);
-  assert.equal(efeitoAtivo('st-neon', true).id, 'reflexo'); // ainda em teste: não vale para o público
-  assert.equal(efeitoAtivo('st-neon', false), null);
+  assert.equal(efeitoAtivo('st-contorno', true).id, 'reflexo'); // ainda em teste: não vale para o público
+  assert.equal(efeitoAtivo('st-contorno', false), null);
   assert.equal(efeitoAtivo('st-nebulosa', false).nome, 'Streamer'); // lançado: vale para quem escolheu
   assert.match(nickHtml('Ana', false, 'st-nebulosa'), /fx-st-nebulosa/);
   assert.match(nickHtml('Ana', true), /fx-reflexo/);
   assert.doesNotMatch(nickHtml('Ana', true, 'nenhum'), /fx-/);
-  assert.doesNotMatch(nickHtml('Ana', false, 'st-neon'), /fx-/);
+  assert.doesNotMatch(nickHtml('Ana', false, 'st-contorno'), /fx-/);
   assert.match(nickHtml('<b>', true), /&lt;b&gt;/);
 });
 
 test('efeitos: os de teste têm CSS e não estão na lista pública', () => {
-  assert.equal(EFEITOS_TESTE.length, 13);
-  assert.equal(EFEITOS_TESTE.filter((e) => /Halloween/.test(e.tema)).length, 4);
-  assert.equal(EFEITOS_TESTE.filter((e) => /roxo/.test(e.tema)).length, 1);
-  assert.equal(EFEITOS_TESTE.filter((e) => /Twitch/.test(e.tema)).length, 3);
+  assert.equal(EFEITOS_TESTE.length, 8);
+  assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('nv-')).length, 5);
+  assert.ok(EFEITOS_TESTE.some((e) => /Laranja e preto/.test(e.tema)));
   for (const e of EFEITOS_TESTE) {
     assert.match(e.id, /^[a-z0-9-]{2,30}$/);
     assert.ok(css.includes(`.${e.classe}`), `falta CSS de ${e.classe}`);
@@ -81,6 +80,6 @@ test('ícone exclusivo Streamer: lançado, com arte, só vale para quem ganhou',
 test('nome da recompensa de efeito/ícone usa o nome do site (Streamer), não o id', async () => {
   const { nomeRecompensa } = await import('../shared/recompensas.js');
   assert.equal(nomeRecompensa('efeito', 'st-nebulosa'), 'Streamer');
-  assert.equal(nomeRecompensa('efeito', 'st-neon'), 'Neon violeta'); // em teste (painel)
+  assert.equal(nomeRecompensa('efeito', 'st-contorno'), 'Contorno Twitch'); // em teste (painel)
   assert.equal(nomeRecompensa('icone', 'exc-streamer'), 'Streamer');
 });

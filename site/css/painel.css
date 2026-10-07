@@ -170,3 +170,15 @@ a.p-tool h3 { color: var(--gold-2); }
 .t-ic-linha { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 0; }
 .cd-modelos { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; padding-bottom: 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
 .cd-modelos select { min-width: 220px; }
+
+/* Aba Teste: seções que abrem e fecham (começam fechadas) */
+.t-sec { margin: 14px 0; border: 1px solid var(--line, #2a2a2a); border-radius: 10px; background: rgba(255, 255, 255, 0.02); }
+.t-sec > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; cursor: pointer; list-style: none; }
+.t-sec > summary::-webkit-details-marker { display: none; }
+.t-sec-tit { font-size: 16px; font-weight: 800; letter-spacing: 0.4px; }
+.t-sec-btn { font-size: 12.5px; font-weight: 700; padding: 5px 12px; border: 1px solid var(--gold, #d9a82b); border-radius: 999px; color: var(--gold, #d9a82b); }
+.t-sec:not([open]) .t-sec-btn::after { content: 'Expandir ▾'; }
+.t-sec[open] .t-sec-btn::after { content: 'Recolher ▴'; }
+.t-sec > summary:hover .t-sec-btn { background: rgba(217, 168, 43, 0.12); }
+.t-sec-corpo { padding: 0 16px 16px; }
+.t-sec-corpo > .card:first-child, .t-sec-corpo > h3:first-child { margin-top: 0; }
