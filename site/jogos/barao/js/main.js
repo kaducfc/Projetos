@@ -72,15 +72,8 @@ const ICO = {
   vazio: '<svg viewBox="0 0 48 48" fill="none"><path d="M3 24C10 11 38 11 45 24 38 37 10 37 3 24Z" fill="#2a0f55" stroke="#c995ff" stroke-width="2.4"/><ellipse cx="24" cy="24" rx="7" ry="10" fill="#c995ff"/><ellipse cx="24" cy="24" rx="2.4" ry="9" fill="#12062a"/><path d="M24 4v6M14 7l3 5M34 7l-3 5" stroke="#c995ff" stroke-width="2" stroke-linecap="round"/></svg>',
   pular: '<svg viewBox="0 0 40 32" fill="none"><path d="M3 24C3 13 12 8 24 8h8" stroke="#f5cf5a" stroke-width="4" stroke-linecap="round"/><path d="M26 1l10 7-10 7z" fill="#f5cf5a"/></svg>',
   coroa: '<svg viewBox="0 0 64 40"><path d="M4 34 L10 8 L22 22 L32 4 L42 22 L54 8 L60 34 Z" fill="url(#gc)" stroke="#8a6417" stroke-width="2" stroke-linejoin="round"/><defs><linearGradient id="gc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1b3"/><stop offset="1" stop-color="#d9a82b"/></linearGradient></defs><circle cx="10" cy="8" r="3" fill="#fff1b3"/><circle cx="32" cy="4" r="3.4" fill="#fff1b3"/><circle cx="54" cy="8" r="3" fill="#fff1b3"/><rect x="6" y="34" width="52" height="4" rx="2" fill="#a87414"/></svg>',
-  banner: (cor, forma) => `<svg viewBox="0 0 110 220"><defs><linearGradient id="bn${forma}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2f70"/><stop offset="1" stop-color="#0a1233"/></linearGradient></defs><path d="M6 0h98v176l-49 38-49-38Z" fill="url(#bn${forma})" stroke="#d9a82b" stroke-width="3"/><path d="M14 8h82v164l-41 32-41-32Z" fill="none" stroke="${cor}" stroke-opacity=".5" stroke-width="1.5"/>${[
-    '<path d="M55 40l22 40-22 30-22-30z" fill="none" stroke="#c9d3ff" stroke-width="3"/><path d="M55 58v32M43 74h24" stroke="#c9d3ff" stroke-width="3"/>',
-    '<path d="M55 36c18 8 24 26 8 50-4 6-12 6-16 0-16-24-10-42 8-50z" fill="none" stroke="#c9d3ff" stroke-width="3"/><circle cx="55" cy="68" r="6" fill="#c9d3ff"/>',
-    '<path d="M32 90c0-26 10-44 23-52 13 8 23 26 23 52-8-10-16-14-23-14s-15 4-23 14z" fill="none" stroke="#c9d3ff" stroke-width="3"/>',
-    '<path d="M55 36l8 22 24 2-18 16 6 24-20-13-20 13 6-24-18-16 24-2z" fill="none" stroke="#c9d3ff" stroke-width="3"/>',
-  ][forma]}</svg>`,
+  banner: (cor, forma, emblema) => `<svg viewBox="0 0 110 220"><defs><linearGradient id="bn${forma}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2f70"/><stop offset="1" stop-color="#0a1233"/></linearGradient></defs><path d="M6 0h98v176l-49 38-49-38Z" fill="url(#bn${forma})" stroke="#d9a82b" stroke-width="3"/><path d="M14 8h82v164l-41 32-41-32Z" fill="none" stroke="${cor}" stroke-opacity=".5" stroke-width="1.5"/></svg><img class="bz-emb" src="img/${emblema}.webp?v=1" alt="" />`,
 };
-const imgCarta = { azul: '♦', vermelha: '♥', dourada: '♠' };
-const VERSO = '<svg viewBox="0 0 60 84" fill="none"><rect x="5" y="5" width="50" height="74" rx="5" stroke="#d9a82b" stroke-width="1.6"/><path d="M30 16l11 26-11 26-11-26z" stroke="#d9a82b" stroke-width="1.6"/><path d="M30 30l4 12-4 12-4-12z" fill="#d9a82b"/><circle cx="30" cy="42" r="2" fill="#0b1a44"/></svg>';
 
 // --------------------------------------------------------------------------- estado
 let jogo = null;
@@ -106,8 +99,8 @@ function montar() {
   const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="${SEGUROS.includes(n) ? 'seguro' : ''}"><span class="n"></span><span class="v">${fmt(PREMIOS[n - 1])} pts</span></li>`).join('');
   app.innerHTML = `<div class="bz" id="bz">
     <div class="bz-bg" aria-hidden="true"><div class="bz-feixes"></div><div class="bz-arquibancada"></div><div class="bz-plateia"></div><div class="bz-faixas"></div><div class="bz-chao"></div><div class="bz-anel-chao"></div></div>
-    <div class="bz-banner e2" aria-hidden="true">${ICO.banner('#6f8dff', 2)}</div><div class="bz-banner esq" aria-hidden="true">${ICO.banner('#6f8dff', 0)}</div>
-    <div class="bz-banner d2" aria-hidden="true">${ICO.banner('#6f8dff', 3)}</div><div class="bz-banner dir" aria-hidden="true">${ICO.banner('#6f8dff', 1)}</div>
+    <div class="bz-banner e2" aria-hidden="true">${ICO.banner('#6f8dff', 2, 'ionia')}</div><div class="bz-banner esq" aria-hidden="true">${ICO.banner('#6f8dff', 0, 'demacia')}</div>
+    <div class="bz-banner d2" aria-hidden="true">${ICO.banner('#6f8dff', 3, 'freljord')}</div><div class="bz-banner dir" aria-hidden="true">${ICO.banner('#6f8dff', 1, 'noxus')}</div>
     <header class="bz-top">
       <button type="button" class="bz-btn-som" id="bz-som" aria-label="Som"></button>
     </header>
@@ -116,8 +109,8 @@ function montar() {
       <img class="bz-host" src="img/apresentador.webp?v=1" alt="" /></div>
     <aside class="bz-escada"><ol id="bz-escada">${escada}</ol><button type="button" class="bz-parar" id="bz-parar">Parar<small id="bz-parar-v"></small></button></aside>
     <aside class="bz-ajudas" id="bz-ajudas">
-      <button type="button" class="bz-aj vazio" id="bz-vazio" title="Monstros do Vazio: três monstros apontam o que acham que é a resposta"><span class="ic">${ICO.vazio}</span><small>Vazio</small></button>
-      <div><div class="bz-cartas" id="bz-cartas">${[0, 1, 2].map((i) => `<button type="button" class="bz-carta" data-slot="${i}" title="Carta do Twisted Fate: escolha uma, só vale uma vez por partida"><span class="miolo"><span class="verso">${VERSO}</span><span class="frente"><i></i><b></b></span></span></button>`).join('')}</div><div class="bz-aj-rot">Cartas do TF</div></div>
+      <button type="button" class="bz-aj vazio" id="bz-vazio" title="Monstros do Vazio: três monstros apontam o que acham que é a resposta"><span class="ic"><img src="img/vazio.webp?v=1" alt="" /></span><small>Vazio</small></button>
+      <div><div class="bz-cartas" id="bz-cartas">${[0, 1, 2].map((i) => `<button type="button" class="bz-carta" data-slot="${i}" title="Carta do Twisted Fate: escolha uma, só vale uma vez por partida"><span class="miolo"><span class="verso"><img src="img/carta-verso.webp?v=1" alt="" /></span><span class="frente"><img data-f alt="" /><b></b></span></span></button>`).join('')}</div><div class="bz-aj-rot">Cartas do TF</div></div>
     </aside>
     <section class="bz-pergunta"><div class="bz-hex bz-pq"><p id="bz-q"></p></div></section>
     <div class="bz-opcoes" id="bz-opc">${[0, 1, 2, 3].map((i) => `<button type="button" class="bz-op bz-hex" data-i="${i}"><span class="in"><b class="l">${letra(i)}</b><span class="t"></span><span class="vt"></span></span></button>`).join('')}</div>
@@ -174,7 +167,7 @@ function desenharCartas(jogando) {
     const id = jogo.cartaOrdem[slot];
     const c = CARTAS.find((x) => x.id === id);
     b.dataset.cor = id;
-    b.querySelector('.frente i').textContent = imgCarta[id];
+    b.querySelector('.frente img').src = `img/carta-${id}.webp?v=1`;
     b.querySelector('.frente b').textContent = `−${c.tira}`;
     b.classList.toggle('virada', Boolean(usada));
     b.classList.toggle('escolhida', usada?.slot === slot);
