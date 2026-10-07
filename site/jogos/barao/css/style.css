@@ -194,7 +194,12 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
   .bz { aspect-ratio: auto; container-type: normal; width: 100%; border-radius: 0; border-left: 0; border-right: 0; display: flex; flex-direction: column; gap: 10px; padding: 12px 12px 18px; min-height: calc(100svh - 70px); }
   .bz > * { position: relative !important; left: auto !important; right: auto !important; top: auto !important; bottom: auto !important; width: auto; }
   .bz-bg { position: absolute !important; inset: 0; }
-  .bz-banner { display: none; }
+  .bz > .bz-banner { position: absolute !important; top: 60px !important; bottom: auto !important; z-index: 1; opacity: 1; }
+  .bz > .bz-banner.esq { left: 4px !important; width: 58px !important; height: 116px !important; }
+  .bz > .bz-banner.dir { right: 4px !important; left: auto !important; width: 58px !important; height: 116px !important; }
+  .bz > .bz-banner.e2 { left: 66px !important; width: 46px !important; height: 92px !important; opacity: 0.85; }
+  .bz > .bz-banner.d2 { right: 66px !important; left: auto !important; width: 46px !important; height: 92px !important; opacity: 0.85; }
+  .bz-emb { filter: brightness(1.55) saturate(1.5) drop-shadow(0 0 3px rgba(255, 224, 120, 1)) drop-shadow(0 0 8px rgba(245, 207, 90, 0.8)); }
   .bz-top { order: 1; }
   .bz-btn-som { width: 34px; height: 34px; font-size: 15px; }
   .bz-nq { height: 40px; padding-right: 16px; } .bz-nq b { width: 34px; height: 34px; font-size: 24px; } .bz-nq span { font-size: 9px; }
