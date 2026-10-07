@@ -283,6 +283,8 @@ body:has(.hx-hero) { overflow-x: clip; }
 .rp-top.p2 .rp-pos { color: #c9d2dc; }
 .rp-top.p3 .rp-pos { color: #d08a5a; }
 .rp-nome { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+/* Com efeito no nome, cortar o texto escondia o brilho (e os enfeites): deixa visível. */
+.rp-nome:has(.fx) { overflow: visible; }
 .rp-vazio { color: var(--muted); font-size: 13px; padding: 6px 0; }
 .rp-cta { margin-top: auto; color: var(--gold-2); font-weight: 800; text-decoration: none; font-size: 14px; }
 .rp-cta:hover { text-decoration: underline; }
