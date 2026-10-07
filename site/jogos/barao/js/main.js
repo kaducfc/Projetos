@@ -47,7 +47,7 @@ function nota(freq, t0, dur, { tipo = 'triangle', vol = 0.12, fim = null } = {})
 }
 const SOM = {
   clique: () => nota(660, 0, 0.08, { tipo: 'square', vol: 0.05 }),
-  travar: () => { nota(220, 0, 0.5, { tipo: 'sawtooth', vol: 0.07, fim: 160 }); nota(110, 0, 0.6, { tipo: 'sine', vol: 0.12 }); },
+  travar: () => { nota(70, 0, 0.18, { tipo: 'sine', vol: 0.2 }); nota(70, 0.32, 0.18, { tipo: 'sine', vol: 0.16 }); nota(494, 0.05, 0.3, { tipo: 'sine', vol: 0.05 }); },
   acertou: () => [523, 659, 784, 1047].forEach((f, i) => nota(f, i * 0.11, 0.35, { vol: 0.13 })),
   errou: () => { nota(300, 0, 0.5, { tipo: 'sawtooth', vol: 0.1, fim: 90 }); nota(150, 0.15, 0.7, { tipo: 'square', vol: 0.07, fim: 60 }); },
   ajuda: () => nota(300, 0, 0.35, { tipo: 'sine', vol: 0.12, fim: 900 }),
