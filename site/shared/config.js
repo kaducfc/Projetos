@@ -91,6 +91,18 @@ export const GAMES = [
     status: 'live',
     scoreLabel: 'Pontos',
   },
+  // Em desenvolvimento: `soAdmin` esconde o jogo do hub e do perfil e bloqueia a página
+  // para quem não é administrador. Para lançar, apague a linha `soAdmin`.
+  {
+    id: 'barao',
+    name: 'Show do Barão',
+    tagline: 'Quiz de LoL no estilo Show do Milhão: 15 perguntas, ajudas e prêmios crescentes.',
+    kind: 'Quiz',
+    path: 'jogos/barao/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+    soAdmin: true,
+  },
 ];
 
 export const gameById = (id) => GAMES.find((g) => g.id === id);

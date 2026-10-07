@@ -1,0 +1,320 @@
+// Show do Barão: quiz de 15 perguntas sobre o universo e o competitivo de League of Legends,
+// no estilo "Show do Milhão". Ajudas: Pinstouro (pular), Monstros do Vazio e Cartas do Twisted Fate.
+// Enquanto o jogo é "oculto" (gameById('barao').soAdmin), só administradores conseguem jogar.
+import * as platform from '../../../shared/platform.js';
+import { mountSiteBar } from '../../../shared/account.js';
+import { mountSiteFooter } from '../../../shared/footer.js';
+import { gameById } from '../../../shared/config.js';
+import { liberarAbobora } from '../../../shared/passe-aviso.js';
+import {
+  NIVEIS, PREMIOS, SEGUROS, PULOS, CARTAS, MONSTROS, letra,
+  novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoParar, premioAoErrar,
+} from './logic.js';
+
+const GAME_ID = 'barao';
+const CHAVE_JOGO = 'barao.jogo';
+const CHAVE_MELHOR = 'barao.melhor';
+const CHAVE_MUDO = 'barao.mudo';
+const app = document.getElementById('app');
+const fmt = (n) => Number(n).toLocaleString('pt-BR');
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const lerLS = (k, d = null) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
+const gravarLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* sem storage */ } };
+const A = '../../shared/assets';
+const CAT = { jogo: 'Mecânicas', lore: 'Universo', comp: 'Competitivo' };
+
+mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
+mountSiteFooter(document.getElementById('site-footer'));
+
+// --------------------------------------------------------------------------- áudio (WebAudio, sem arquivos)
+let ctx = null;
+let mudo = Boolean(lerLS(CHAVE_MUDO, false));
+let drone = null;
+function audio() {
+  if (mudo) return null;
+  if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+function nota(freq, t0, dur, { tipo = 'triangle', vol = 0.12, fim = null } = {}) {
+  const c = audio(); if (!c) return;
+  const o = c.createOscillator(); const g = c.createGain();
+  o.type = tipo; o.frequency.setValueAtTime(freq, c.currentTime + t0);
+  if (fim) o.frequency.exponentialRampToValueAtTime(fim, c.currentTime + t0 + dur);
+  g.gain.setValueAtTime(0.0001, c.currentTime + t0);
+  g.gain.exponentialRampToValueAtTime(vol, c.currentTime + t0 + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + t0 + dur);
+  o.connect(g).connect(c.destination); o.start(c.currentTime + t0); o.stop(c.currentTime + t0 + dur + 0.05);
+}
+const SOM = {
+  clique: () => nota(660, 0, 0.08, { tipo: 'square', vol: 0.05 }),
+  travar: () => { nota(220, 0, 0.5, { tipo: 'sawtooth', vol: 0.07, fim: 160 }); nota(110, 0, 0.6, { tipo: 'sine', vol: 0.12 }); },
+  acertou: () => [523, 659, 784, 1047].forEach((f, i) => nota(f, i * 0.11, 0.35, { vol: 0.13 })),
+  errou: () => { nota(300, 0, 0.5, { tipo: 'sawtooth', vol: 0.1, fim: 90 }); nota(150, 0.15, 0.7, { tipo: 'square', vol: 0.07, fim: 60 }); },
+  ajuda: () => nota(300, 0, 0.35, { tipo: 'sine', vol: 0.12, fim: 900 }),
+  carta: () => { nota(900, 0, 0.1, { tipo: 'square', vol: 0.05 }); nota(1200, 0.06, 0.12, { tipo: 'square', vol: 0.05 }); },
+  vazio: () => { nota(90, 0, 0.9, { tipo: 'sawtooth', vol: 0.09, fim: 55 }); nota(180, 0.1, 0.6, { tipo: 'sine', vol: 0.08, fim: 360 }); },
+  venceu: () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => nota(f, i * 0.14, 0.5, { vol: 0.14 })),
+};
+function iniciarDrone() {
+  const c = audio(); if (!c || drone) return;
+  const g = c.createGain(); g.gain.value = 0.0001; g.gain.exponentialRampToValueAtTime(0.03, c.currentTime + 2);
+  const o1 = c.createOscillator(); o1.type = 'sine'; o1.frequency.value = 55;
+  const o2 = c.createOscillator(); o2.type = 'triangle'; o2.frequency.value = 82.5;
+  const lfo = c.createOscillator(); lfo.frequency.value = 0.25; const lg = c.createGain(); lg.gain.value = 0.012;
+  lfo.connect(lg).connect(g.gain);
+  o1.connect(g); o2.connect(g); g.connect(c.destination);
+  o1.start(); o2.start(); lfo.start();
+  drone = { g, parar() { g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.5); setTimeout(() => { o1.stop(); o2.stop(); lfo.stop(); }, 600); } };
+}
+function pararDrone() { drone?.parar(); drone = null; }
+
+// --------------------------------------------------------------------------- peças visuais (SVG)
+const ICO = {
+  vazio: '<svg viewBox="0 0 48 48" fill="none"><path d="M3 24C10 11 38 11 45 24 38 37 10 37 3 24Z" fill="#2a0f55" stroke="#c995ff" stroke-width="2.4"/><ellipse cx="24" cy="24" rx="7" ry="10" fill="#c995ff"/><ellipse cx="24" cy="24" rx="2.4" ry="9" fill="#12062a"/><path d="M24 4v6M14 7l3 5M34 7l-3 5" stroke="#c995ff" stroke-width="2" stroke-linecap="round"/></svg>',
+  pular: '<svg viewBox="0 0 40 32" fill="none"><path d="M3 24C3 13 12 8 24 8h8" stroke="#f5cf5a" stroke-width="4" stroke-linecap="round"/><path d="M26 1l10 7-10 7z" fill="#f5cf5a"/></svg>',
+  coroa: '<svg viewBox="0 0 64 40"><path d="M4 34 L10 8 L22 22 L32 4 L42 22 L54 8 L60 34 Z" fill="url(#gc)" stroke="#8a6417" stroke-width="2" stroke-linejoin="round"/><defs><linearGradient id="gc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1b3"/><stop offset="1" stop-color="#d9a82b"/></linearGradient></defs><circle cx="10" cy="8" r="3" fill="#fff1b3"/><circle cx="32" cy="4" r="3.4" fill="#fff1b3"/><circle cx="54" cy="8" r="3" fill="#fff1b3"/><rect x="6" y="34" width="52" height="4" rx="2" fill="#a87414"/></svg>',
+  banner: (cor, forma) => `<svg viewBox="0 0 110 220"><defs><linearGradient id="bn${forma}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2f70"/><stop offset="1" stop-color="#0a1233"/></linearGradient></defs><path d="M6 0h98v176l-49 38-49-38Z" fill="url(#bn${forma})" stroke="#d9a82b" stroke-width="3"/><path d="M14 8h82v164l-41 32-41-32Z" fill="none" stroke="${cor}" stroke-opacity=".5" stroke-width="1.5"/>${[
+    '<path d="M55 40l22 40-22 30-22-30z" fill="none" stroke="#c9d3ff" stroke-width="3"/><path d="M55 58v32M43 74h24" stroke="#c9d3ff" stroke-width="3"/>',
+    '<path d="M55 36c18 8 24 26 8 50-4 6-12 6-16 0-16-24-10-42 8-50z" fill="none" stroke="#c9d3ff" stroke-width="3"/><circle cx="55" cy="68" r="6" fill="#c9d3ff"/>',
+    '<path d="M32 90c0-26 10-44 23-52 13 8 23 26 23 52-8-10-16-14-23-14s-15 4-23 14z" fill="none" stroke="#c9d3ff" stroke-width="3"/>',
+    '<path d="M55 36l8 22 24 2-18 16 6 24-20-13-20 13 6-24-18-16 24-2z" fill="none" stroke="#c9d3ff" stroke-width="3"/>',
+  ][forma]}</svg>`,
+};
+const imgCarta = { azul: '♦', vermelha: '♥', dourada: '♠' };
+
+// --------------------------------------------------------------------------- estado
+let jogo = null;
+let ddVersion = null;
+let sel = null; // opção selecionada, ainda sem travar
+let ocupado = false; // revelando resposta
+let souAdmin = false;
+
+const iconeMonstro = (m) => (ddVersion ? `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${m.img}.png` : '');
+async function versaoDD() {
+  const c = lerLS('barao.ddragon');
+  if (c && Date.now() - c.at < 864e5) return c.v;
+  try {
+    const v = (await (await fetch('https://ddragon.leagueoflegends.com/api/versions.json')).json())[0];
+    gravarLS('barao.ddragon', { v, at: Date.now() });
+    return v;
+  } catch { return null; }
+}
+
+// --------------------------------------------------------------------------- montagem (uma vez)
+function montar() {
+  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="${SEGUROS.includes(n) ? 'seguro' : ''}"><span class="n">${n}</span><span class="v">${fmt(PREMIOS[n - 1])} pts</span></li>`).join('');
+  app.innerHTML = `<div class="bz" id="bz">
+    <div class="bz-bg" aria-hidden="true"><div class="bz-feixes"></div><div class="bz-arquibancada"></div><div class="bz-plateia"></div><div class="bz-faixas"></div><div class="bz-chao"></div><div class="bz-anel-chao"></div></div>
+    <div class="bz-banner e2" aria-hidden="true">${ICO.banner('#6f8dff', 2)}</div><div class="bz-banner esq" aria-hidden="true">${ICO.banner('#6f8dff', 0)}</div>
+    <div class="bz-banner d2" aria-hidden="true">${ICO.banner('#6f8dff', 3)}</div><div class="bz-banner dir" aria-hidden="true">${ICO.banner('#6f8dff', 1)}</div>
+    <header class="bz-top">
+      <div class="bz-rc" title="Suas Rift Coins"><img src="${A}/moeda/rc-96.webp" alt="" /><b id="bz-saldo">0</b></div>
+      <div class="bz-top-dir"><button type="button" class="bz-btn-som" id="bz-som" aria-label="Som"></button>
+        <div class="bz-nq"><b id="bz-n">1</b><span>PERGUNTA<br>/ ${NIVEIS}</span></div></div>
+    </header>
+    <div class="bz-palco" aria-hidden="true"><div class="bz-aneis"></div><div class="bz-coroa">${ICO.coroa}</div>
+      <h1 class="bz-titulo"><span>SHOW DO</span><b>BARÃO</b></h1>
+      <img class="bz-mascote" src="${A}/marca/mascote.png" alt="" /><div class="bz-pedestal"></div></div>
+    <aside class="bz-escada"><ol id="bz-escada">${escada}</ol><button type="button" class="bz-parar" id="bz-parar">Parar<small id="bz-parar-v"></small></button></aside>
+    <aside class="bz-ajudas">
+      <button type="button" class="bz-aj vazio" id="bz-vazio" title="Monstros do Vazio: três monstros apontam o que acham que é a resposta"><span class="ic">${ICO.vazio}</span><small>Vazio</small></button>
+      <div><div class="bz-cartas" id="bz-cartas">${CARTAS.map((c) => `<button type="button" class="bz-carta ${c.id}" data-carta="${c.id}" title="${c.nome}: tira ${c.tira} ${c.tira === 1 ? 'opção errada' : 'opções erradas'}"><span class="face"><i>${imgCarta[c.id]}</i><b>−${c.tira}</b></span></button>`).join('')}</div><div class="bz-aj-rot">Cartas do TF</div></div>
+    </aside>
+    <section class="bz-pergunta"><div class="bz-hex bz-pq"><p id="bz-q"></p></div><span class="bz-cat" id="bz-cat"></span></section>
+    <div class="bz-opcoes" id="bz-opc">${[0, 1, 2, 3].map((i) => `<button type="button" class="bz-op bz-hex" data-i="${i}"><span class="in"><b class="l">${letra(i)}</b><span class="t"></span><span class="vt"></span></span></button>`).join('')}</div>
+    <button type="button" class="bz-confirmar" id="bz-confirmar" hidden>TRAVAR RESPOSTA</button>
+    <button type="button" class="bz-pular" id="bz-pular"><span class="rom"></span><span class="cont">${ICO.pular}<b>PULAR</b><small>ESPAÇO</small></span><span class="num" id="bz-pulos"></span></button>
+    <div class="bz-aviso" id="bz-aviso" role="status"></div>
+    <div class="bz-tela" id="bz-tela"></div>
+  </div>`;
+  atualizarSom();
+}
+
+// --------------------------------------------------------------------------- atualização da tela
+const $ = (id) => document.getElementById(id);
+function avisar(txt, ms = 2200) { const el = $('bz-aviso'); el.textContent = txt; el.classList.add('on'); clearTimeout(avisar.t); avisar.t = setTimeout(() => el.classList.remove('on'), ms); }
+function atualizarSom() { const b = $('bz-som'); if (b) { b.textContent = mudo ? '🔇' : '🔊'; b.title = mudo ? 'Ligar o som' : 'Desligar o som'; } }
+function atualizarSaldo() { const u = platform.getUser(); const el = $('bz-saldo'); if (el) el.textContent = u?.moedas != null ? fmt(u.moedas) : '—'; }
+
+function desenhar() {
+  if (!jogo) return;
+  const p = jogo.pergunta;
+  const jogando = jogo.status === 'jogando';
+  $('bz-n').textContent = jogo.nivel;
+  $('bz-q').textContent = p.q;
+  $('bz-cat').textContent = CAT[p.cat] || '';
+  document.querySelectorAll('#bz-escada li').forEach((li) => {
+    const n = Number(li.dataset.n);
+    li.classList.toggle('atual', n === jogo.nivel);
+    li.classList.toggle('feito', n < jogo.nivel);
+  });
+  const ativo = document.querySelector('#bz-escada li.atual');
+  const ol = $('bz-escada');
+  if (ativo && ol.scrollWidth > ol.clientWidth) ol.scrollLeft = ativo.offsetLeft - ol.clientWidth / 2 + ativo.clientWidth / 2; // celular: centraliza o nível atual
+  document.querySelectorAll('.bz-op').forEach((b, i) => {
+    const fora = p.eliminadas.includes(i);
+    b.querySelector('.t').textContent = p.opcoes[i];
+    b.disabled = !jogando || fora || ocupado;
+    b.className = `bz-op bz-hex${fora ? ' fora' : ''}${sel === i && jogando ? ' sel' : ''}`;
+    const votos = p.votos ? p.votos.filter((v) => v.voto === i) : [];
+    b.querySelector('.vt').innerHTML = votos.map((v) => { const m = MONSTROS.find((x) => x.id === v.id); return ddVersion ? `<img src="${iconeMonstro(m)}" alt="${esc(m.nome)}" title="${esc(m.nome)}" onerror="this.outerHTML='<span class=&quot;vf&quot;>${esc(m.nome[0])}</span>'" />` : `<span class="vf" title="${esc(m.nome)}">${esc(m.nome[0])}</span>`; }).join('');
+  });
+  $('bz-confirmar').hidden = !(jogando && sel != null && !ocupado);
+  $('bz-vazio').disabled = !jogando || jogo.vazio || ocupado;
+  document.querySelectorAll('.bz-carta').forEach((b) => { b.disabled = !jogando || jogo.cartas[b.dataset.carta] || jogo.cartaNaPergunta || ocupado; });
+  $('bz-pulos').textContent = `×${jogo.pulos}`;
+  $('bz-pular').disabled = !jogando || jogo.pulos <= 0 || ocupado;
+  const pv = premioAoParar(jogo.nivel);
+  $('bz-parar').disabled = !jogando || jogo.nivel <= 1 || ocupado;
+  $('bz-parar-v').textContent = jogo.nivel > 1 ? `levar ${fmt(pv)} pts` : 'responda a 1ª pergunta';
+}
+
+// --------------------------------------------------------------------------- telas
+function tela(html) { const t = $('bz-tela'); t.innerHTML = html; t.hidden = !html; }
+function telaInicio() {
+  pararDrone();
+  const melhor = lerLS(CHAVE_MELHOR, 0);
+  const salvo = lerLS(CHAVE_JOGO);
+  const retomar = salvo && (salvo.status === 'jogando' || salvo.status === 'acertou');
+  tela(`<div class="bz-cartao">
+    <span class="sup">Quiz de League of Legends</span>
+    <h2>Show do Barão</h2>
+    <p>${NIVEIS} perguntas sobre o universo e o competitivo de LoL, cada uma valendo mais que a anterior. Chegue até o prêmio máximo sem errar!</p>
+    <div class="bz-regras">
+      <div><b>Pinstouro</b>Pule a pergunta ${PULOS} vezes: ela é trocada por outra do mesmo nível.</div>
+      <div class="v"><b>Monstros do Vazio</b>Cho'Gath, Kha'Zix e Vel'Koz apontam a resposta que acham certa.</div>
+      <div><b>Cartas do TF</b>Azul tira 1 opção errada, vermelha tira 2 e dourada tira 3. Uma por pergunta.</div>
+    </div>
+    <p>Pontos seguros nas perguntas ${SEGUROS.join(' e ')} (★): se errar depois, você leva o prêmio já garantido. Quer sair antes? É só parar e levar o que ganhou.</p>
+    ${melhor ? `<div class="bz-melhor">Seu recorde: <b>${fmt(melhor)} pts</b></div>` : ''}
+    <div class="bz-acoes">
+      ${retomar ? '<button type="button" class="bz-go" id="bz-continuar">CONTINUAR</button><button type="button" class="bz-go sec" id="bz-novo">Novo jogo</button>' : '<button type="button" class="bz-go" id="bz-novo">COMEÇAR</button>'}
+    </div></div>`);
+}
+function telaFim() {
+  const j = jogo;
+  const titulos = { ganhou: ['Você é o Barão!', 'Todas as 15 respostas certas. Lenda do Rift!'], parou: ['Você parou!', 'Decisão sábia: ficou com o prêmio garantido.'], errou: ['Resposta errada!', `A resposta certa era ${letra(j.pergunta.certa)}: ${esc(j.pergunta.opcoes[j.pergunta.certa])}.`] };
+  const [h, txt] = titulos[j.resultado];
+  const melhor = lerLS(CHAVE_MELHOR, 0);
+  tela(`<div class="bz-cartao"><span class="sup">Fim de jogo · pergunta ${j.nivel} de ${NIVEIS}</span><h2>${h}</h2><p>${txt}</p>
+    <div class="premio">${fmt(j.premio)}<small>pts</small></div>
+    <div class="bz-melhor">Seu recorde: <b>${fmt(Math.max(melhor, j.premio))} pts</b>${j.premio > melhor && j.premio > 0 ? ' · novo recorde!' : ''}</div>
+    <div class="bz-acoes"><button type="button" class="bz-go" id="bz-novo">JOGAR DE NOVO</button><a class="bz-go sec" href="../../">Voltar ao início</a></div></div>`);
+}
+function telaBloqueada() {
+  app.innerHTML = `<div class="bz" style="display:grid;place-items:center"><div class="bz-bg"><div class="bz-feixes"></div></div><div class="bz-cartao" style="position:relative;z-index:2">
+    <span class="sup">Em desenvolvimento</span><h2>Show do Barão</h2>
+    <p>Este jogo ainda está sendo construído e chega em breve. Enquanto isso, o resto do Rift Arcade está aberto!</p>
+    <div class="bz-acoes"><a class="bz-go" href="../../">VOLTAR AO INÍCIO</a></div></div></div>`;
+}
+
+// --------------------------------------------------------------------------- fluxo
+function salvar() { gravarLS(CHAVE_JOGO, jogo); }
+function comecar() {
+  jogo = novoJogo(); sel = null; ocupado = false; salvar();
+  platform.track('game_start', GAME_ID, {});
+  tela(''); desenhar(); iniciarDrone();
+}
+function continuar() { tela(''); desenhar(); iniciarDrone(); }
+function escolher(i) {
+  if (ocupado || jogo.status !== 'jogando' || jogo.pergunta.eliminadas.includes(i)) return;
+  sel = i; SOM.clique(); desenhar();
+}
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+async function travar() {
+  if (ocupado || sel == null || jogo.status !== 'jogando') return;
+  ocupado = true; const escolhida = sel;
+  const botoes = [...document.querySelectorAll('.bz-op')];
+  desenhar(); botoes[escolhida].classList.add('travada'); botoes.forEach((b) => { b.disabled = true; });
+  SOM.travar();
+  await esperar(2200);
+  jogo = responder(jogo, escolhida);
+  botoes.forEach((b, i) => b.classList.remove('travada', 'sel'));
+  botoes[jogo.pergunta.certa].classList.add('certa');
+  if (escolhida !== jogo.pergunta.certa) botoes[escolhida].classList.add('errada');
+  salvar();
+  if (jogo.status === 'acertou') {
+    SOM.acertou();
+    await esperar(1800);
+    jogo = proxima(jogo); sel = null; ocupado = false; salvar(); desenhar();
+    if (SEGUROS.includes(jogo.nivel - 1)) avisar(`Prêmio garantido: ${fmt(PREMIOS[jogo.nivel - 2])} pts!`, 2400);
+    return;
+  }
+  (jogo.resultado === 'ganhou' ? SOM.venceu : SOM.errou)();
+  await esperar(jogo.resultado === 'ganhou' ? 1800 : 2400);
+  ocupado = false; fim();
+}
+function fim() {
+  pararDrone();
+  const j = jogo;
+  const melhor = lerLS(CHAVE_MELHOR, 0);
+  telaFim();
+  if (j.premio > melhor) gravarLS(CHAVE_MELHOR, j.premio);
+  gravarLS(CHAVE_JOGO, { ...j, status: 'fim' });
+  platform.track('game_end', GAME_ID, { nivel: j.nivel, resultado: j.resultado, premio: j.premio });
+  platform.recordResult(GAME_ID, {
+    score: j.premio,
+    summary: { text: `Pergunta ${j.nivel}/${NIVEIS} · ${fmt(j.premio)} pts`, nivel: j.nivel, resultado: j.resultado, premio: j.premio },
+  });
+  liberarAbobora(); // as abóboras do passe aparecem junto do resultado
+}
+function pararJogo() {
+  if (ocupado || jogo.status !== 'jogando' || jogo.nivel <= 1) return;
+  if (!window.confirm(`Parar e levar ${fmt(premioAoParar(jogo.nivel))} pts?`)) return;
+  jogo = parar(jogo); salvar(); fim();
+}
+function ajudaPular() {
+  if (ocupado || jogo.status !== 'jogando' || jogo.pulos <= 0) return;
+  jogo = pular(jogo); sel = null; salvar(); SOM.ajuda(); avisar('Pinstouro! Pergunta trocada.'); desenhar();
+}
+function ajudaVazio() {
+  if (ocupado || jogo.status !== 'jogando' || jogo.vazio) return;
+  jogo = usarVazio(jogo); salvar(); SOM.vazio(); avisar('Os monstros do Vazio apontam suas respostas…', 2800); desenhar();
+}
+function ajudaCarta(id) {
+  if (ocupado) return;
+  const antes = jogo;
+  jogo = usarCarta(jogo, id);
+  if (jogo === antes || jogo.cartas[id] === antes.cartas[id]) return;
+  if (sel != null && jogo.pergunta.eliminadas.includes(sel)) sel = null;
+  salvar(); SOM.carta(); avisar(`${CARTAS.find((c) => c.id === id).nome}: opções eliminadas!`); desenhar();
+}
+
+// --------------------------------------------------------------------------- eventos
+app.addEventListener('click', (e) => {
+  const op = e.target.closest('.bz-op'); if (op && jogo) return escolher(Number(op.dataset.i));
+  const carta = e.target.closest('[data-carta]'); if (carta && jogo) return ajudaCarta(carta.dataset.carta);
+  const id = e.target.closest('button')?.id;
+  if (id === 'bz-confirmar') travar();
+  else if (id === 'bz-vazio') ajudaVazio();
+  else if (id === 'bz-pular') ajudaPular();
+  else if (id === 'bz-parar') pararJogo();
+  else if (id === 'bz-novo') comecar();
+  else if (id === 'bz-continuar') continuar();
+  else if (id === 'bz-som') { mudo = !mudo; gravarLS(CHAVE_MUDO, mudo); atualizarSom(); if (mudo) pararDrone(); else if (jogo?.status === 'jogando') iniciarDrone(); }
+});
+document.addEventListener('keydown', (e) => {
+  if (!jogo || !$('bz-tela')?.hidden) return;
+  if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); ajudaPular(); return; }
+  const i = 'abcd'.indexOf(e.key.toLowerCase());
+  if (i >= 0 && e.key.length === 1) escolher(i);
+  else if (e.key === 'Enter') travar();
+});
+
+// --------------------------------------------------------------------------- início
+(async function iniciar() {
+  await platform.init();
+  const teste = ['localhost', '127.0.0.1'].includes(location.hostname) && /[?&]teste=1/.test(location.search);
+  souAdmin = await platform.isAdmin();
+  const aberto = !gameById(GAME_ID)?.soAdmin;
+  if (!souAdmin && !teste && !aberto) { telaBloqueada(); return; }
+  montar();
+  versaoDD().then((v) => { ddVersion = v; if (!ocupado) desenhar(); });
+  platform.onChange?.((evt) => { if (evt.type === 'auth') atualizarSaldo(); });
+  atualizarSaldo();
+  const salvo = lerLS(CHAVE_JOGO);
+  jogo = salvo && (salvo.status === 'jogando' || salvo.status === 'acertou') ? (salvo.status === 'acertou' ? proxima(salvo) : salvo) : novoJogo();
+  desenhar();
+  telaInicio();
+}());

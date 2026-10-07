@@ -151,14 +151,15 @@ function cardCodigo() {
 function resumo() {
   const total = resultados.length;
   const jogos = new Set(resultados.map((r) => r.gameId));
+  const visiveis = GAMES.filter((g) => !g.soAdmin || jogos.has(g.id)); // jogo oculto só aparece a quem já jogou
   const dias = new Set(resultados.map((r) => r.playedAt.slice(0, 10)));
   const tiles = [
     ['Partidas', num(total)],
-    ['Jogos diferentes', `${jogos.size}<small>/${GAMES.length}</small>`],
+    ['Jogos diferentes', `${jogos.size}<small>/${visiveis.length}</small>`],
     ['Dias jogando', num(dias.size)],
     ['Última partida', total ? data(resultados[0].playedAt, { day: '2-digit', month: '2-digit' }) : '—'],
   ];
-  const porJogo = GAMES.map((g) => {
+  const porJogo = visiveis.map((g) => {
     const rs = resultados.filter((r) => r.gameId === g.id);
     const best = rs.reduce((m, r) => (r.score != null && (m == null || r.score > m) ? r.score : m), null);
     return `<a class="pf-game" href="../${g.path}">
@@ -176,7 +177,8 @@ function resumo() {
 
 function historico() {
   const lista = filtro === 'todos' ? resultados : resultados.filter((r) => r.gameId === filtro);
-  const chips = [['todos', 'Todos'], ...GAMES.map((g) => [g.id, g.name])]
+  const jogadosIds = new Set(resultados.map((r) => r.gameId));
+  const chips = [['todos', 'Todos'], ...GAMES.filter((g) => !g.soAdmin || jogadosIds.has(g.id)).map((g) => [g.id, g.name])]
     .map(([id, nome]) => `<button type="button" data-filtro="${id}" class="${filtro === id ? 'on' : ''}">${esc(nome)}</button>`).join('');
   const linhas = lista.slice(0, mostrar).map((r) => `<li>
       <span class="h-when">${data(r.playedAt, { day: '2-digit', month: '2-digit', year: '2-digit' })}<small>${hora(r.playedAt)}</small></span>
