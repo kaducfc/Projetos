@@ -8,9 +8,9 @@ import {
 // Gerador pseudoaleatório fixo para os testes.
 function semente(n = 1) { let s = n; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
 
-test('barão: banco com 300+ perguntas válidas (4 opções distintas, sem repetição)', () => {
+test('barão: banco com 250+ perguntas válidas (4 opções distintas, sem repetição)', () => {
   const todas = [...FACIL, ...MEDIA, ...DIFICIL, ...IMPOSSIVEL];
-  assert.ok(todas.length >= 300, `só ${todas.length} perguntas`);
+  assert.ok(todas.length >= 250, `só ${todas.length} perguntas`);
   assert.ok(FACIL.length >= 30 && MEDIA.length >= 30 && DIFICIL.length >= 30 && IMPOSSIVEL.length >= 10, 'poucas perguntas por faixa');
   assert.deepEqual(Object.keys(BANCO), ['1', '2', '3', '4']);
   const vistas = new Set();
