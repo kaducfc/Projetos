@@ -180,7 +180,7 @@ test('barão: tradução completa — telas, perguntas e alternativas nos 5 idio
     __usarDicionario((await import(`../shared/i18n/${id}.js`)).default, id);
     const faltam = todas.filter((p) => traduzirTexto(p.q) == null).map((p) => p.q);
     assert.deepEqual(faltam.slice(0, 5), [], `${id}: ${faltam.length} perguntas sem tradução`);
-    for (const l of ui) if (!/^\{\w+\} pts$/.test(l[0])) assert.ok(traduzirTexto(l[0]) != null || l[0] === 'Quiz', `${id}: ${l[0]}`);
+    for (const l of ui) if (!/^\{\w+\} pontos$/.test(l[0])) assert.ok(traduzirTexto(l[0]) != null || l[0] === 'Quiz', `${id}: ${l[0]}`);
     for (const o of opcoesTraduzidas) assert.ok(traduzirTexto(o) != null, `${id}: ${o}`);
   }
   // as alternativas com palavras em português estão todas cobertas (o resto é nome próprio)
@@ -189,6 +189,6 @@ test('barão: tradução completa — telas, perguntas e alternativas nos 5 idio
   assert.deepEqual(semTraducao, [], 'alternativas em português sem tradução');
   // valores dentro do texto continuam funcionando
   __usarDicionario((await import('../shared/i18n/en.js')).default, 'en');
-  assert.equal(t('Prêmio garantido: {valor} pts!', { valor: '1,000' }), 'Prize secured: 1,000 pts!');
+  assert.equal(t('Prêmio garantido: {valor}!', { valor: '1,000' }), 'Prize secured: 1,000!');
   assert.equal(traduzirTexto('A resposta certa era B: Dragão Infernal.'), 'The correct answer was B: Infernal Drake.');
 });

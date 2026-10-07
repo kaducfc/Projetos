@@ -97,7 +97,7 @@ async function versaoDD() {
 
 // --------------------------------------------------------------------------- montagem (uma vez)
 function montar() {
-  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="${SEGUROS.includes(n) ? 'seguro' : ''}"><span class="n"></span><span class="v" data-p="${n}">${fmt(PREMIOS[n - 1])} pts</span></li>`).join('');
+  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="${SEGUROS.includes(n) ? 'seguro' : ''}"><span class="n"></span><span class="v" data-p="${n}">${fmt(PREMIOS[n - 1])}</span></li>`).join('');
   app.innerHTML = `<div class="bz" id="bz">
     <div class="bz-bg" aria-hidden="true"><div class="bz-feixes"></div><div class="bz-arquibancada"></div><div class="bz-plateia"></div><div class="bz-faixas"></div><div class="bz-chao"></div><div class="bz-anel-chao"></div></div>
     <div class="bz-banner e2" aria-hidden="true">${ICO.banner('#6f8dff', 2, 'ionia')}</div><div class="bz-banner esq" aria-hidden="true">${ICO.banner('#6f8dff', 0, 'demacia')}</div>
@@ -131,7 +131,7 @@ function montar() {
 const $ = (id) => document.getElementById(id);
 function avisar(txt, ms = 2200) { const el = $('bz-aviso'); el.textContent = txt; el.classList.add('on'); clearTimeout(avisar.t); avisar.t = setTimeout(() => el.classList.remove('on'), ms); }
 function atualizarSom() { const b = $('bz-som'); if (b) { b.textContent = mudo ? '🔇' : '🔊'; b.title = mudo ? t('Ligar o som') : t('Desligar o som'); } }
-function atualizarEscada() { document.querySelectorAll('#bz-escada [data-p]').forEach((el) => { el.textContent = `${fmt(PREMIOS[Number(el.dataset.p) - 1])} pts`; }); }
+function atualizarEscada() { document.querySelectorAll('#bz-escada [data-p]').forEach((el) => { el.textContent = fmt(PREMIOS[Number(el.dataset.p) - 1]); }); }
 
 function desenhar() {
   if (!jogo) return;
@@ -163,9 +163,9 @@ function desenhar() {
   $('bz-pular').disabled = !jogando || jogo.pulos <= 0 || ocupado || !livre;
   const pv = premioAoParar(jogo.nivel);
   $('bz-parar').disabled = !jogando || jogo.nivel <= 1 || ocupado;
-  $('bz-v-acertar').textContent = `${fmt(PREMIOS[jogo.nivel - 1])} pts`;
-  $('bz-v-parar').textContent = `${fmt(pv)} pts`;
-  $('bz-v-errar').textContent = `${fmt(premioAoErrar(jogo.nivel))} pts`;
+  $('bz-v-acertar').textContent = fmt(PREMIOS[jogo.nivel - 1]);
+  $('bz-v-parar').textContent = fmt(pv);
+  $('bz-v-errar').textContent = fmt(premioAoErrar(jogo.nivel));
 }
 
 function desenharCartas(jogando) {
@@ -203,7 +203,7 @@ function telaInicio() {
       <div class="v"><b>Monstros do Vazio</b>Cho'Gath, Kha'Zix e Vel'Koz apontam a resposta que acham certa.</div>
       <div><b>Cartas do TF</b>Três cartas viradas: escolha uma, uma única vez na partida. Ela revela se tira 1, 2 ou 3 opções erradas.</div>
     </div>
-    ${melhor ? `<div class="bz-melhor">Seu recorde: <b>${fmt(melhor)} pts</b></div>` : ''}
+    ${melhor ? `<div class="bz-melhor">Seu recorde: <b>${fmt(melhor)} pontos</b></div>` : ''}
     <div class="bz-acoes">
       ${retomar ? '<button type="button" class="bz-go" id="bz-continuar">CONTINUAR</button><button type="button" class="bz-go sec" id="bz-novo">Novo jogo</button>' : '<button type="button" class="bz-go" id="bz-novo">COMEÇAR</button>'}
     </div></div>`, telaInicio);
@@ -214,8 +214,8 @@ function telaFim() {
   const [h, txt] = titulos[j.resultado];
   const melhor = lerLS(CHAVE_MELHOR, 0);
   tela(`<div class="bz-cartao"><span class="sup">Fim de jogo</span><h2>${h}</h2><p>${txt}</p>
-    <div class="premio">${fmt(j.premio)}<small>pts</small></div>
-    <div class="bz-melhor">Seu recorde: <b>${fmt(Math.max(melhor, j.premio))} pts</b>${j.premio > melhor && j.premio > 0 ? ' · novo recorde!' : ''}</div>
+    <div class="premio">${fmt(j.premio)}<small>pontos</small></div>
+    <div class="bz-melhor">Seu recorde: <b>${fmt(Math.max(melhor, j.premio))} pontos</b>${j.premio > melhor && j.premio > 0 ? ' · novo recorde!' : ''}</div>
     <div class="bz-acoes"><button type="button" class="bz-go" id="bz-novo">JOGAR DE NOVO</button><a class="bz-go sec" href="../../">Voltar ao início</a></div></div>`, telaFim);
 }
 function telaBloqueada() {
@@ -254,7 +254,7 @@ async function travar() {
     SOM.acertou();
     await esperar(1800);
     jogo = proxima(jogo); sel = null; ocupado = false; salvar(); desenhar();
-    if (SEGUROS.includes(jogo.nivel - 1)) avisar(t('Prêmio garantido: {valor} pts!', { valor: fmt(PREMIOS[jogo.nivel - 2]) }), 2400);
+    if (SEGUROS.includes(jogo.nivel - 1)) avisar(t('Prêmio garantido: {valor}!', { valor: fmt(PREMIOS[jogo.nivel - 2]) }), 2400);
     return;
   }
   (jogo.resultado === 'ganhou' ? SOM.venceu : SOM.errou)();
@@ -271,7 +271,7 @@ function fim() {
   platform.track('game_end', GAME_ID, { nivel: j.nivel, resultado: j.resultado, premio: j.premio });
   platform.recordResult(GAME_ID, {
     score: j.premio,
-    summary: { text: `${fmtPt(j.premio)} pts`, nivel: j.nivel, resultado: j.resultado, premio: j.premio },
+    summary: { text: `${fmtPt(j.premio)} pontos`, nivel: j.nivel, resultado: j.resultado, premio: j.premio },
   });
   liberarAbobora(); // as abóboras do passe aparecem junto do resultado
 }
@@ -282,7 +282,7 @@ function pararJogo() {
 // Confirmação dentro do jogo (nada de janela do navegador).
 function telaParar() {
   tela(`<div class="bz-cartao bz-confirma"><span class="sup">Parar agora?</span>
-    <div class="premio">${fmt(premioAoParar(jogo.nivel))}<small>pts</small></div>
+    <div class="premio">${fmt(premioAoParar(jogo.nivel))}</div>
     <p>Você leva esse prêmio e encerra a partida.</p>
     <div class="bz-acoes"><button type="button" class="bz-go" id="bz-parar-sim">SIM, PARAR</button><button type="button" class="bz-go sec" id="bz-parar-nao">CONTINUAR JOGANDO</button></div></div>`, telaParar);
 }
