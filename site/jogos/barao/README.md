@@ -1,9 +1,13 @@
 # Show do Barão (jogo 6, oculto)
 
-Quiz de LoL no estilo Show do Milhão: 15 perguntas, 3 Pinstouros (pulos), ajuda dos Monstros do Vazio e 3 cartas do TF (tiram 1, 2 ou 3 opções erradas).
+Quiz de LoL no estilo Show do Milhão: **10 perguntas** (3 fáceis, 3 médias, 3 difíceis e a última quase impossível),
+3 Pinstouros (pulos), ajuda dos Monstros do Vazio e as Cartas do Twisted Fate.
 
-- Pontos: 50 → 1.000.000 (pts, não são RC reais). Pontos seguros nas perguntas 5 e 10.
-- Arquivos: `js/perguntas.js` (banco; resposta certa SEMPRE primeiro), `js/logic.js` (regras puras, testadas), `js/main.js` (UI/áudio), `css/style.css`.
+- Pontos (não são RC): 500 → 1.000.000. Pontos seguros ao acertar a 3ª (2.000) e a 6ª (20.000). Parar leva o prêmio atual; errar cai para o seguro.
+- Cartas do TF: três cartas viradas para baixo, escolhe-se UMA, uma única vez na partida; ao virar, revela se tira 1 (azul), 2 (vermelha) ou 3 (dourada) opções erradas. A posição de cada cor é sorteada a cada partida.
+- Arquivos: `js/perguntas.js` (banco: FACIL, MEDIA, DIFICIL, IMPOSSIVEL; resposta certa SEMPRE primeiro), `js/logic.js` (regras puras, testadas),
+  `js/main.js` (UI/áudio), `css/style.css`, `img/apresentador.webp` (mascote apresentador).
+- Reclassificar pergunta: mover a linha dela de uma lista para outra em `perguntas.js` (o teste confere formato e duplicatas).
 - Acesso: só admin (`soAdmin: true` em `shared/config.js`). Fora do localhost, visitantes veem tela bloqueada.
 - Lançar: remover `soAdmin` do GAMES em `shared/config.js` e adicionar traduções i18n da página.
 - Pendente: ranking/PDR, i18n.

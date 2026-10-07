@@ -1,4 +1,4 @@
-// Show do Barão: quiz de 15 perguntas sobre o universo e o competitivo de League of Legends,
+// Show do Barão: quiz de 10 perguntas sobre o universo e o competitivo de League of Legends,
 // no estilo "Show do Milhão". Ajudas: Pinstouro (pular), Monstros do Vazio e Cartas do Twisted Fate.
 // Enquanto o jogo é "oculto" (gameById('barao').soAdmin), só administradores conseguem jogar.
 import * as platform from '../../../shared/platform.js';
@@ -7,7 +7,7 @@ import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import { liberarAbobora } from '../../../shared/passe-aviso.js';
 import {
-  NIVEIS, PREMIOS, SEGUROS, PULOS, CARTAS, MONSTROS, letra,
+  NIVEIS, PREMIOS, SEGUROS, PULOS, CARTAS, MONSTROS, letra, faixa,
   novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoParar, premioAoErrar,
 } from './logic.js';
 
@@ -20,8 +20,8 @@ const fmt = (n) => Number(n).toLocaleString('pt-BR');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const lerLS = (k, d = null) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const gravarLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* sem storage */ } };
-const A = '../../shared/assets';
 const CAT = { jogo: 'Mecânicas', lore: 'Universo', comp: 'Competitivo' };
+const DIF = { 1: 'Fácil', 2: 'Média', 3: 'Difícil', 4: 'Quase impossível' };
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -82,6 +82,7 @@ const ICO = {
   ][forma]}</svg>`,
 };
 const imgCarta = { azul: '♦', vermelha: '♥', dourada: '♠' };
+const VERSO = '<svg viewBox="0 0 60 84" fill="none"><rect x="5" y="5" width="50" height="74" rx="5" stroke="#d9a82b" stroke-width="1.6"/><path d="M30 16l11 26-11 26-11-26z" stroke="#d9a82b" stroke-width="1.6"/><path d="M30 30l4 12-4 12-4-12z" fill="#d9a82b"/><circle cx="30" cy="42" r="2" fill="#0b1a44"/></svg>';
 
 // --------------------------------------------------------------------------- estado
 let jogo = null;
@@ -89,6 +90,7 @@ let ddVersion = null;
 let sel = null; // opção selecionada, ainda sem travar
 let ocupado = false; // revelando resposta
 let souAdmin = false;
+let cartaRevelando = false;
 
 const iconeMonstro = (m) => (ddVersion ? `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${m.img}.png` : '');
 async function versaoDD() {
@@ -103,23 +105,22 @@ async function versaoDD() {
 
 // --------------------------------------------------------------------------- montagem (uma vez)
 function montar() {
-  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="${SEGUROS.includes(n) ? 'seguro' : ''}"><span class="n">${n}</span><span class="v">${fmt(PREMIOS[n - 1])} pts</span></li>`).join('');
+  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="f${faixa(n)}${SEGUROS.includes(n) ? ' seguro' : ''}"><span class="n">${n}</span><span class="v">${fmt(PREMIOS[n - 1])} pts</span></li>`).join('');
   app.innerHTML = `<div class="bz" id="bz">
     <div class="bz-bg" aria-hidden="true"><div class="bz-feixes"></div><div class="bz-arquibancada"></div><div class="bz-plateia"></div><div class="bz-faixas"></div><div class="bz-chao"></div><div class="bz-anel-chao"></div></div>
     <div class="bz-banner e2" aria-hidden="true">${ICO.banner('#6f8dff', 2)}</div><div class="bz-banner esq" aria-hidden="true">${ICO.banner('#6f8dff', 0)}</div>
     <div class="bz-banner d2" aria-hidden="true">${ICO.banner('#6f8dff', 3)}</div><div class="bz-banner dir" aria-hidden="true">${ICO.banner('#6f8dff', 1)}</div>
     <header class="bz-top">
-      <div class="bz-rc" title="Suas Rift Coins"><img src="${A}/moeda/rc-96.webp" alt="" /><b id="bz-saldo">0</b></div>
-      <div class="bz-top-dir"><button type="button" class="bz-btn-som" id="bz-som" aria-label="Som"></button>
-        <div class="bz-nq"><b id="bz-n">1</b><span>PERGUNTA<br>/ ${NIVEIS}</span></div></div>
+      <button type="button" class="bz-btn-som" id="bz-som" aria-label="Som"></button>
+      <div class="bz-nq"><b id="bz-n">1</b><span>PERGUNTA<br>/ ${NIVEIS}</span></div>
     </header>
     <div class="bz-palco" aria-hidden="true"><div class="bz-aneis"></div><div class="bz-coroa">${ICO.coroa}</div>
       <h1 class="bz-titulo"><span>SHOW DO</span><b>BARÃO</b></h1>
-      <img class="bz-mascote" src="${A}/marca/mascote.png" alt="" /><div class="bz-pedestal"></div></div>
+      <img class="bz-host" src="img/apresentador.webp?v=1" alt="" /></div>
     <aside class="bz-escada"><ol id="bz-escada">${escada}</ol><button type="button" class="bz-parar" id="bz-parar">Parar<small id="bz-parar-v"></small></button></aside>
     <aside class="bz-ajudas">
       <button type="button" class="bz-aj vazio" id="bz-vazio" title="Monstros do Vazio: três monstros apontam o que acham que é a resposta"><span class="ic">${ICO.vazio}</span><small>Vazio</small></button>
-      <div><div class="bz-cartas" id="bz-cartas">${CARTAS.map((c) => `<button type="button" class="bz-carta ${c.id}" data-carta="${c.id}" title="${c.nome}: tira ${c.tira} ${c.tira === 1 ? 'opção errada' : 'opções erradas'}"><span class="face"><i>${imgCarta[c.id]}</i><b>−${c.tira}</b></span></button>`).join('')}</div><div class="bz-aj-rot">Cartas do TF</div></div>
+      <div><div class="bz-cartas" id="bz-cartas">${[0, 1, 2].map((i) => `<button type="button" class="bz-carta" data-slot="${i}" title="Carta do Twisted Fate: escolha uma, só vale uma vez por partida"><span class="miolo"><span class="verso">${VERSO}</span><span class="frente"><i></i><b></b></span></span></button>`).join('')}</div><div class="bz-aj-rot">Cartas do TF</div></div>
     </aside>
     <section class="bz-pergunta"><div class="bz-hex bz-pq"><p id="bz-q"></p></div><span class="bz-cat" id="bz-cat"></span></section>
     <div class="bz-opcoes" id="bz-opc">${[0, 1, 2, 3].map((i) => `<button type="button" class="bz-op bz-hex" data-i="${i}"><span class="in"><b class="l">${letra(i)}</b><span class="t"></span><span class="vt"></span></span></button>`).join('')}</div>
@@ -135,7 +136,6 @@ function montar() {
 const $ = (id) => document.getElementById(id);
 function avisar(txt, ms = 2200) { const el = $('bz-aviso'); el.textContent = txt; el.classList.add('on'); clearTimeout(avisar.t); avisar.t = setTimeout(() => el.classList.remove('on'), ms); }
 function atualizarSom() { const b = $('bz-som'); if (b) { b.textContent = mudo ? '🔇' : '🔊'; b.title = mudo ? 'Ligar o som' : 'Desligar o som'; } }
-function atualizarSaldo() { const u = platform.getUser(); const el = $('bz-saldo'); if (el) el.textContent = u?.moedas != null ? fmt(u.moedas) : '—'; }
 
 function desenhar() {
   if (!jogo) return;
@@ -143,7 +143,8 @@ function desenhar() {
   const jogando = jogo.status === 'jogando';
   $('bz-n').textContent = jogo.nivel;
   $('bz-q').textContent = p.q;
-  $('bz-cat').textContent = CAT[p.cat] || '';
+  $('bz-cat').textContent = `${CAT[p.cat] || ''} · ${DIF[faixa(jogo.nivel)]}`;
+  $('bz-cat').dataset.faixa = faixa(jogo.nivel);
   document.querySelectorAll('#bz-escada li').forEach((li) => {
     const n = Number(li.dataset.n);
     li.classList.toggle('atual', n === jogo.nivel);
@@ -162,12 +163,30 @@ function desenhar() {
   });
   $('bz-confirmar').hidden = !(jogando && sel != null && !ocupado);
   $('bz-vazio').disabled = !jogando || jogo.vazio || ocupado;
-  document.querySelectorAll('.bz-carta').forEach((b) => { b.disabled = !jogando || jogo.cartas[b.dataset.carta] || jogo.cartaNaPergunta || ocupado; });
+  desenharCartas(jogando);
   $('bz-pulos').textContent = `×${jogo.pulos}`;
   $('bz-pular').disabled = !jogando || jogo.pulos <= 0 || ocupado;
   const pv = premioAoParar(jogo.nivel);
   $('bz-parar').disabled = !jogando || jogo.nivel <= 1 || ocupado;
   $('bz-parar-v').textContent = jogo.nivel > 1 ? `levar ${fmt(pv)} pts` : 'responda a 1ª pergunta';
+}
+
+function desenharCartas(jogando) {
+  const usada = jogo.cartaUsada;
+  document.querySelectorAll('.bz-carta').forEach((b) => {
+    const slot = Number(b.dataset.slot);
+    const id = jogo.cartaOrdem[slot];
+    const c = CARTAS.find((x) => x.id === id);
+    b.dataset.cor = id;
+    b.querySelector('.frente i').textContent = imgCarta[id];
+    b.querySelector('.frente b').textContent = `−${c.tira}`;
+    b.classList.toggle('virada', Boolean(usada));
+    b.classList.toggle('escolhida', usada?.slot === slot);
+    b.classList.toggle('descartada', Boolean(usada) && usada.slot !== slot);
+    b.disabled = Boolean(usada) || !jogando || ocupado || cartaRevelando;
+    b.title = !usada ? 'Carta do Twisted Fate: escolha uma, só vale uma vez por partida'
+      : usada.slot === slot ? `${c.nome}: tirou ${c.tira} ${c.tira === 1 ? 'opção errada' : 'opções erradas'}` : `Era a ${c.nome} (tira ${c.tira})`;
+  });
 }
 
 // --------------------------------------------------------------------------- telas
@@ -176,15 +195,15 @@ function telaInicio() {
   pararDrone();
   const melhor = lerLS(CHAVE_MELHOR, 0);
   const salvo = lerLS(CHAVE_JOGO);
-  const retomar = salvo && (salvo.status === 'jogando' || salvo.status === 'acertou');
+  const retomar = salvo && salvo.v === 2 && (salvo.status === 'jogando' || salvo.status === 'acertou');
   tela(`<div class="bz-cartao">
     <span class="sup">Quiz de League of Legends</span>
     <h2>Show do Barão</h2>
-    <p>${NIVEIS} perguntas sobre o universo e o competitivo de LoL, cada uma valendo mais que a anterior. Chegue até o prêmio máximo sem errar!</p>
+    <p>${NIVEIS} perguntas sobre o universo e o competitivo de LoL: 3 fáceis, 3 médias, 3 difíceis e a última, quase impossível. Chegue ao prêmio máximo sem errar!</p>
     <div class="bz-regras">
       <div><b>Pinstouro</b>Pule a pergunta ${PULOS} vezes: ela é trocada por outra do mesmo nível.</div>
       <div class="v"><b>Monstros do Vazio</b>Cho'Gath, Kha'Zix e Vel'Koz apontam a resposta que acham certa.</div>
-      <div><b>Cartas do TF</b>Azul tira 1 opção errada, vermelha tira 2 e dourada tira 3. Uma por pergunta.</div>
+      <div><b>Cartas do TF</b>Três cartas viradas: escolha uma, uma única vez na partida. Ela revela se tira 1, 2 ou 3 opções erradas.</div>
     </div>
     <p>Pontos seguros nas perguntas ${SEGUROS.join(' e ')} (★): se errar depois, você leva o prêmio já garantido. Quer sair antes? É só parar e levar o que ganhou.</p>
     ${melhor ? `<div class="bz-melhor">Seu recorde: <b>${fmt(melhor)} pts</b></div>` : ''}
@@ -194,7 +213,7 @@ function telaInicio() {
 }
 function telaFim() {
   const j = jogo;
-  const titulos = { ganhou: ['Você é o Barão!', 'Todas as 15 respostas certas. Lenda do Rift!'], parou: ['Você parou!', 'Decisão sábia: ficou com o prêmio garantido.'], errou: ['Resposta errada!', `A resposta certa era ${letra(j.pergunta.certa)}: ${esc(j.pergunta.opcoes[j.pergunta.certa])}.`] };
+  const titulos = { ganhou: ['Você é o Barão!', `Todas as ${NIVEIS} respostas certas. Lenda do Rift!`], parou: ['Você parou!', 'Decisão sábia: ficou com o prêmio garantido.'], errou: ['Resposta errada!', `A resposta certa era ${letra(j.pergunta.certa)}: ${esc(j.pergunta.opcoes[j.pergunta.certa])}.`] };
   const [h, txt] = titulos[j.resultado];
   const melhor = lerLS(CHAVE_MELHOR, 0);
   tela(`<div class="bz-cartao"><span class="sup">Fim de jogo · pergunta ${j.nivel} de ${NIVEIS}</span><h2>${h}</h2><p>${txt}</p>
@@ -272,19 +291,24 @@ function ajudaVazio() {
   if (ocupado || jogo.status !== 'jogando' || jogo.vazio) return;
   jogo = usarVazio(jogo); salvar(); SOM.vazio(); avisar('Os monstros do Vazio apontam suas respostas…', 2800); desenhar();
 }
-function ajudaCarta(id) {
-  if (ocupado) return;
+async function ajudaCarta(slot) {
+  if (ocupado || cartaRevelando || jogo.status !== 'jogando' || jogo.cartaUsada) return;
   const antes = jogo;
-  jogo = usarCarta(jogo, id);
-  if (jogo === antes || jogo.cartas[id] === antes.cartas[id]) return;
+  jogo = usarCarta(jogo, slot);
+  if (!jogo.cartaUsada) { jogo = antes; return; }
+  salvar(); SOM.carta();
+  cartaRevelando = true; desenhar(); // a carta vira e mostra a cor
+  const c = CARTAS.find((x) => x.id === jogo.cartaUsada.id);
+  await esperar(900);
+  cartaRevelando = false;
   if (sel != null && jogo.pergunta.eliminadas.includes(sel)) sel = null;
-  salvar(); SOM.carta(); avisar(`${CARTAS.find((c) => c.id === id).nome}: opções eliminadas!`); desenhar();
+  avisar(`${c.nome}: ${c.tira === 1 ? '1 opção errada eliminada' : `${c.tira} opções erradas eliminadas`}!`, 2600); desenhar();
 }
 
 // --------------------------------------------------------------------------- eventos
 app.addEventListener('click', (e) => {
   const op = e.target.closest('.bz-op'); if (op && jogo) return escolher(Number(op.dataset.i));
-  const carta = e.target.closest('[data-carta]'); if (carta && jogo) return ajudaCarta(carta.dataset.carta);
+  const carta = e.target.closest('[data-slot]'); if (carta && jogo) return ajudaCarta(Number(carta.dataset.slot));
   const id = e.target.closest('button')?.id;
   if (id === 'bz-confirmar') travar();
   else if (id === 'bz-vazio') ajudaVazio();
@@ -311,10 +335,8 @@ document.addEventListener('keydown', (e) => {
   if (!souAdmin && !teste && !aberto) { telaBloqueada(); return; }
   montar();
   versaoDD().then((v) => { ddVersion = v; if (!ocupado) desenhar(); });
-  platform.onChange?.((evt) => { if (evt.type === 'auth') atualizarSaldo(); });
-  atualizarSaldo();
   const salvo = lerLS(CHAVE_JOGO);
-  jogo = salvo && (salvo.status === 'jogando' || salvo.status === 'acertou') ? (salvo.status === 'acertou' ? proxima(salvo) : salvo) : novoJogo();
+  jogo = salvo && salvo.v === 2 && (salvo.status === 'jogando' || salvo.status === 'acertou') ? (salvo.status === 'acertou' ? proxima(salvo) : salvo) : novoJogo();
   desenhar();
   telaInicio();
 }());

@@ -1,11 +1,12 @@
-// Show do Barão: regras do jogo, sem tela (testável). 15 perguntas, três ajudas
-// (Pinstouro = pular, Monstros do Vazio e Cartas do Twisted Fate) e dois pontos seguros.
+// Show do Barão: regras do jogo, sem tela (testável). 10 perguntas (3 fáceis, 3 médias, 3 difíceis e 1
+// quase impossível), três ajudas (Pinstouro = pular, Monstros do Vazio e Cartas do Twisted Fate) e dois pontos seguros.
 import { BANCO } from './perguntas.js';
 
-export const NIVEIS = 15;
-export const PREMIOS = [50, 100, 250, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 1000000];
-export const SEGUROS = [5, 10]; // ao chegar nessas perguntas, o prêmio está garantido
+export const NIVEIS = 10;
+export const PREMIOS = [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 1000000];
+export const SEGUROS = [3, 6]; // ao acertar essas perguntas, o prêmio fica garantido
 export const PULOS = 3;
+// As três cartas começam viradas para baixo; ao escolher uma (só uma vez por partida), revela-se qual era.
 export const CARTAS = [
   { id: 'azul', nome: 'Carta Azul', tira: 1 },
   { id: 'vermelha', nome: 'Carta Vermelha', tira: 2 },
@@ -18,9 +19,10 @@ export const MONSTROS = [
   { id: 'velkoz', nome: 'Vel\'Koz', img: 'Velkoz' },
 ];
 // Chance de CADA monstro apontar a resposta certa, por faixa de dificuldade.
-const ACERTO_MONSTRO = { 1: 0.88, 2: 0.74, 3: 0.58 };
+const ACERTO_MONSTRO = { 1: 0.9, 2: 0.76, 3: 0.58, 4: 0.4 };
 
-export const faixa = (n) => (n <= 5 ? 1 : n <= 10 ? 2 : 3);
+// Faixa de dificuldade: 1-3 fácil, 4-6 média, 7-9 difícil, 10 quase impossível.
+export const faixa = (n) => (n <= 3 ? 1 : n <= 6 ? 2 : n <= 9 ? 3 : 4);
 export const letra = (i) => 'ABCD'[i];
 
 export function embaralhar(lista, rnd = Math.random) {
@@ -50,8 +52,8 @@ export function sortearPergunta(nivel, usadas = [], rnd = Math.random) {
 export function novoJogo(rnd = Math.random) {
   const p = sortearPergunta(1, [], rnd);
   return {
-    v: 1, nivel: 1, status: 'jogando', pulos: PULOS,
-    cartas: { azul: false, vermelha: false, dourada: false }, cartaNaPergunta: false,
+    v: 2, nivel: 1, status: 'jogando', pulos: PULOS,
+    cartaOrdem: embaralhar(CARTAS.map((c) => c.id), rnd), cartaUsada: null,
     vazio: false, usadas: [p.q], pergunta: p, premio: 0, resultado: null,
   };
 }
@@ -88,7 +90,6 @@ export function proxima(jogo, rnd = Math.random) {
   j.nivel += 1;
   j.pergunta = sortearPergunta(j.nivel, j.usadas, rnd);
   j.usadas.push(j.pergunta.q);
-  j.cartaNaPergunta = false;
   j.status = 'jogando';
   delete j.ultima;
   return j;
@@ -108,20 +109,21 @@ export function pular(jogo, rnd = Math.random) {
   j.pulos -= 1;
   j.pergunta = sortearPergunta(j.nivel, j.usadas, rnd);
   j.usadas.push(j.pergunta.q);
-  j.cartaNaPergunta = false;
   return j;
 }
 
-// Carta do Twisted Fate: tira `tira` opções erradas. Uma carta por pergunta.
-export function usarCarta(jogo, id, rnd = Math.random) {
+// Cartas do Twisted Fate: começam viradas para baixo (`cartaOrdem` guarda a cor de cada posição).
+// O jogador escolhe a posição `slot`, a cor é revelada e some essa quantidade de opções erradas.
+// Só dá para usar UMA carta durante a partida inteira.
+export function usarCarta(jogo, slot, rnd = Math.random) {
   const j = structuredClone(jogo);
+  if (j.status !== 'jogando' || j.cartaUsada || !(slot >= 0 && slot < j.cartaOrdem.length)) return j;
+  const id = j.cartaOrdem[slot];
   const carta = CARTAS.find((c) => c.id === id);
-  if (!carta || j.status !== 'jogando' || j.cartas[id] || j.cartaNaPergunta) return j;
   const erradas = [0, 1, 2, 3].filter((i) => i !== j.pergunta.certa && !j.pergunta.eliminadas.includes(i));
   const tirar = embaralhar(erradas, rnd).slice(0, carta.tira);
   j.pergunta.eliminadas.push(...tirar);
-  j.cartas[id] = true;
-  j.cartaNaPergunta = true;
+  j.cartaUsada = { slot, id };
   return j;
 }
 

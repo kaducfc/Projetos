@@ -1,36 +1,53 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FACIL, MEDIA, DIFICIL } from '../jogos/barao/js/perguntas.js';
+import { FACIL, MEDIA, DIFICIL, IMPOSSIVEL, BANCO } from '../jogos/barao/js/perguntas.js';
 import {
-  NIVEIS, PREMIOS, novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoErrar, premioAoParar, faixa,
+  NIVEIS, PREMIOS, SEGUROS, CARTAS, novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoErrar, premioAoParar, faixa,
 } from '../jogos/barao/js/logic.js';
 
 // Gerador pseudoaleatório fixo para os testes.
 function semente(n = 1) { let s = n; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
 
-test('barão: banco de perguntas válido (4 opções distintas, sem pergunta repetida)', () => {
-  const todas = [...FACIL, ...MEDIA, ...DIFICIL];
-  assert.ok(FACIL.length >= 15 && MEDIA.length >= 15 && DIFICIL.length >= 15, 'poucas perguntas por faixa');
+test('barão: banco com 300+ perguntas válidas (4 opções distintas, sem repetição)', () => {
+  const todas = [...FACIL, ...MEDIA, ...DIFICIL, ...IMPOSSIVEL];
+  assert.ok(todas.length >= 300, `só ${todas.length} perguntas`);
+  assert.ok(FACIL.length >= 30 && MEDIA.length >= 30 && DIFICIL.length >= 30 && IMPOSSIVEL.length >= 10, 'poucas perguntas por faixa');
+  assert.deepEqual(Object.keys(BANCO), ['1', '2', '3', '4']);
   const vistas = new Set();
   for (const p of todas) {
     assert.equal(p.a.length, 4, p.q);
     assert.equal(new Set(p.a.map((x) => x.trim().toLowerCase())).size, 4, `opções repetidas em: ${p.q}`);
     assert.ok(p.q.endsWith('?'), p.q);
     assert.ok(['jogo', 'lore', 'comp'].includes(p.cat), p.q);
-    assert.ok(!vistas.has(p.q), `repetida: ${p.q}`);
-    vistas.add(p.q);
+    assert.ok(!vistas.has(p.q.toLowerCase()), `repetida: ${p.q}`);
+    vistas.add(p.q.toLowerCase());
   }
 });
 
-test('barão: prêmios, faixas e pontos seguros', () => {
+test('barão: 10 perguntas (3 fáceis, 3 médias, 3 difíceis, 1 quase impossível) e prêmios crescentes', () => {
+  assert.equal(NIVEIS, 10);
   assert.equal(PREMIOS.length, NIVEIS);
-  assert.equal(PREMIOS[14], 1000000);
-  assert.deepEqual([1, 5, 6, 10, 11, 15].map(faixa), [1, 1, 2, 2, 3, 3]);
+  assert.equal(PREMIOS[9], 1000000);
+  assert.ok(PREMIOS.every((v, i) => i === 0 || v > PREMIOS[i - 1]));
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(faixa), [1, 1, 1, 2, 2, 2, 3, 3, 3, 4]);
+  assert.deepEqual(SEGUROS, [3, 6]);
   assert.equal(premioAoParar(1), 0);
   assert.equal(premioAoParar(8), PREMIOS[6]);
   assert.equal(premioAoErrar(3), 0);
-  assert.equal(premioAoErrar(6), PREMIOS[4]); // passou da 5: garantiu 1.000
-  assert.equal(premioAoErrar(11), PREMIOS[9]); // passou da 10: garantiu 32.000
+  assert.equal(premioAoErrar(4), PREMIOS[2]); // passou da 3: garantiu 2.000
+  assert.equal(premioAoErrar(7), PREMIOS[5]); // passou da 6: garantiu 20.000
+  assert.equal(premioAoErrar(10), PREMIOS[5]);
+});
+
+test('barão: cada pergunta sai da faixa certa', () => {
+  const r = semente(21);
+  let j = novoJogo(r);
+  for (let n = 1; n <= NIVEIS; n += 1) {
+    const banco = BANCO[faixa(n)].map((p) => p.q);
+    assert.ok(banco.includes(j.pergunta.q), `pergunta ${n} fora da faixa ${faixa(n)}`);
+    j = responder(j, j.pergunta.certa, r);
+    if (n < NIVEIS) j = proxima(j, r);
+  }
 });
 
 test('barão: partida completa — acertando tudo ganha 1.000.000', () => {
@@ -55,10 +72,10 @@ test('barão: errar volta ao prêmio garantido; parar leva o prêmio atual', () 
   const errada = [0, 1, 2, 3].find((i) => i !== j.pergunta.certa);
   const perdeu = responder(j, errada, r);
   assert.equal(perdeu.resultado, 'errou');
-  assert.equal(perdeu.premio, PREMIOS[4]); // garantiu 1.000 na 5ª
+  assert.equal(perdeu.premio, PREMIOS[5]); // garantiu 20.000 na 6ª
   const saiu = parar(j);
   assert.equal(saiu.resultado, 'parou');
-  assert.equal(saiu.premio, PREMIOS[6]); // 4.000 (acertou até a 7ª)
+  assert.equal(saiu.premio, PREMIOS[6]); // 50.000 (acertou até a 7ª)
 });
 
 test('barão: Pinstouro troca a pergunta sem avançar e acaba depois de 3 usos', () => {
@@ -76,25 +93,37 @@ test('barão: Pinstouro troca a pergunta sem avançar e acaba depois de 3 usos',
   assert.equal(igual.pergunta.q, j.pergunta.q);
 });
 
-test('barão: Cartas do Twisted Fate tiram 1, 2 e 3 opções erradas, uma carta por pergunta', () => {
+test('barão: cartas do TF — viradas, só uma escolha na partida inteira, revela e tira 1, 2 ou 3', () => {
   const r = semente(5);
-  for (const [id, tira] of [['azul', 1], ['vermelha', 2], ['dourada', 3]]) {
-    let j = novoJogo(r);
-    j = usarCarta(j, id, r);
-    assert.equal(j.pergunta.eliminadas.length, tira);
-    assert.ok(!j.pergunta.eliminadas.includes(j.pergunta.certa));
-    assert.equal(j.cartas[id], true);
-    const outra = usarCarta(j, id === 'azul' ? 'vermelha' : 'azul', r);
-    assert.equal(outra.pergunta.eliminadas.length, tira, 'só uma carta por pergunta');
-  }
-  // a carta gasta não volta, mas uma nova pergunta libera outra carta
   let j = novoJogo(r);
-  j = usarCarta(j, 'azul', r);
-  j = responder(j, j.pergunta.certa, r);
-  j = proxima(j, r);
-  assert.equal(usarCarta(j, 'azul', r).cartas.azul, true);
-  assert.equal(usarCarta(j, 'azul', r).pergunta.eliminadas.length, 0, 'carta azul já foi usada');
-  assert.equal(usarCarta(j, 'dourada', r).pergunta.eliminadas.length, 3);
+  assert.deepEqual([...j.cartaOrdem].sort(), CARTAS.map((c) => c.id).sort(), 'as três cores estão nas três posições');
+  assert.equal(j.cartaUsada, null);
+  for (let slot = 0; slot < 3; slot += 1) {
+    const n = novoJogo(r);
+    const id = n.cartaOrdem[slot];
+    const tira = CARTAS.find((c) => c.id === id).tira;
+    const u = usarCarta(n, slot, r);
+    assert.deepEqual(u.cartaUsada, { slot, id });
+    assert.equal(u.pergunta.eliminadas.length, tira);
+    assert.ok(!u.pergunta.eliminadas.includes(u.pergunta.certa));
+    // não dá para escolher outra carta
+    const outra = usarCarta(u, (slot + 1) % 3, r);
+    assert.equal(outra.pergunta.eliminadas.length, tira);
+    assert.deepEqual(outra.cartaUsada, u.cartaUsada);
+  }
+  // nem nas perguntas seguintes
+  j = usarCarta(j, 0, r);
+  j = proxima(responder(j, j.pergunta.certa, r), r);
+  assert.equal(usarCarta(j, 1, r).pergunta.eliminadas.length, 0);
+  assert.equal(usarCarta(j, 1, r).cartaUsada.slot, 0);
+  // posições inválidas não fazem nada
+  assert.equal(usarCarta(novoJogo(r), 7, r).cartaUsada, null);
+});
+
+test('barão: a ordem das cartas varia de partida para partida', () => {
+  const r = semente(2);
+  const ordens = new Set(Array.from({ length: 40 }, () => novoJogo(r).cartaOrdem.join()));
+  assert.ok(ordens.size >= 4);
 });
 
 test('barão: Monstros do Vazio votam em opções que ainda existem e acertam mais nas fáceis', () => {
@@ -104,11 +133,12 @@ test('barão: Monstros do Vazio votam em opções que ainda existem e acertam ma
     const f = usarVazio(novoJogo(r), r);
     assert.equal(f.pergunta.votos.length, 3);
     acertosFacil += f.pergunta.votos.filter((v) => v.voto === f.pergunta.certa).length;
-    let d = novoJogo(r); d.nivel = 12; d = usarVazio(d, r);
+    let d = novoJogo(r); d.nivel = 10; d = usarVazio(d, r);
     acertosDificil += d.pergunta.votos.filter((v) => v.voto === d.pergunta.certa).length;
   }
   assert.ok(acertosFacil > acertosDificil, `${acertosFacil} vs ${acertosDificil}`);
-  const c = usarVazio(usarCarta(novoJogo(r), 'dourada', r), r);
+  const n = novoJogo(r);
+  const c = usarVazio(usarCarta(n, n.cartaOrdem.indexOf('dourada'), r), r);
   assert.ok(c.pergunta.votos.every((v) => v.voto === c.pergunta.certa)); // só sobrou a certa
   assert.equal(usarVazio(c, r).vazio, true);
 });
