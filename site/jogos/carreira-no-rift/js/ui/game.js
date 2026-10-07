@@ -43,7 +43,7 @@ function playerCard(state) {
           <span class="chip">${ROLES[p.role].short}</span>
           ${team ? `<span class="chip chip-${p.status}">${STATUS[p.status].name}</span>` : ''}
         </div>
-        <h2 class="nick">${esc(p.nick)}</h2>
+        <h2 class="player-nick">${esc(p.nick)}</h2>
         ${team
           ? `<div class="team-line">${teamBadge(team, 22)}<span>${esc(team.name)}</span></div>`
           : '<div class="muted small">Esperando o primeiro contrato</div>'}
@@ -246,8 +246,8 @@ function fxChips(fx) {
   };
   // Mostra o que mudou de verdade (inteiro; fração só se bateu no teto de 100).
   const fmt = (v) => (Math.abs(v) >= 1 ? signed(Math.round(v)) : `${v > 0 ? '+' : ''}${(Math.round(v * 10) / 10).toLocaleString(localeAtual(), { maximumFractionDigits: 1 })}`);
-  const chips = Object.entries(fx).filter(([, v]) => v).map(([k, v]) => `<span class="fx ${v > 0 ? 'up' : 'down'}">${names[k]} <b>${fmt(v)}</b></span>`);
-  return chips.length ? chips.join('') : '<span class="fx">Nada mudou</span>';
+  const chips = Object.entries(fx).filter(([, v]) => v).map(([k, v]) => `<span class="fx-chip ${v > 0 ? 'up' : 'down'}">${names[k]} <b>${fmt(v)}</b></span>`);
+  return chips.length ? chips.join('') : '<span class="fx-chip">Nada mudou</span>';
 }
 
 function eventPanel(state) {
@@ -274,7 +274,7 @@ function eventPanel(state) {
             <h3>${fill(ev.choices[scr.choice].label, state)} · ${scr.ok ? 'A escolha deu certo' : 'Não saiu como planejado'}</h3>
             <p>${fill(outcome.text, state)}</p>
           </div>
-          <div class="fx-list">${fxChips(scr.appliedFx || outcomeFx(state, outcome.fx))}${scr.ovrDelta ? `<span class="fx ${scr.ovrDelta > 0 ? 'up' : 'down'}">OVR <b>${signed(scr.ovrDelta)}</b></span>` : ''}</div>
+          <div class="fx-list">${fxChips(scr.appliedFx || outcomeFx(state, outcome.fx))}${scr.ovrDelta ? `<span class="fx-chip ${scr.ovrDelta > 0 ? 'up' : 'down'}">OVR <b>${signed(scr.ovrDelta)}</b></span>` : ''}</div>
         </div>
         <div class="tap">Toque para continuar ›</div>
       </button>` : ''}

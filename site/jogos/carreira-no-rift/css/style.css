@@ -232,7 +232,7 @@ input { font: inherit; color: inherit; }
 .chip-titular { color: #7de3a5; border-color: rgba(34, 165, 91, 0.45); }
 .chip-disputa { color: #f3c969; border-color: rgba(243, 201, 105, 0.4); }
 .chip-reserva { color: #f0948e; border-color: rgba(217, 72, 63, 0.45); }
-.nick { margin: 8px 0 4px; font-size: 26px; font-weight: 800; overflow-wrap: anywhere; line-height: 1.1; }
+.player-nick { margin: 8px 0 4px; font-size: 26px; font-weight: 800; overflow-wrap: anywhere; line-height: 1.1; }
 .team-line { display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .badge { flex: none; display: inline-block; position: relative; line-height: 0; }
 .badge-shield { display: block; }
@@ -491,9 +491,9 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .result h3 { font-family: var(--display); font-weight: 400; font-size: 30px; margin: 0 0 4px; line-height: 1; }
 .result p { margin: 0; color: #d4dde4; }
 .fx-list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; align-content: flex-start; max-width: 260px; }
-.fx { font-size: 12px; font-weight: 700; border: 1px solid var(--line-2); border-radius: 8px; padding: 5px 9px; background: rgba(0, 0, 0, 0.25); white-space: nowrap; }
-.fx.up b { color: #7de3a5; }
-.fx.down b { color: #f0948e; }
+.fx-chip { font-size: 12px; font-weight: 700; border: 1px solid var(--line-2); border-radius: 8px; padding: 5px 9px; background: rgba(0, 0, 0, 0.25); white-space: nowrap; }
+.fx-chip.up b { color: #7de3a5; }
+.fx-chip.down b { color: #f0948e; }
 .tap { text-align: right; font-size: 11.5px; letter-spacing: 1.5px; color: var(--muted); margin-top: 8px; text-transform: uppercase; }
 /* Pulsação suave do resultado: mostra que é preciso clicar nele para seguir. */
 .result { --pulse: 34, 165, 91; cursor: pointer; animation: rise 0.3s ease-out, result-pulse 2.4s ease-in-out 0.5s infinite; }
