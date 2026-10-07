@@ -70,7 +70,6 @@ function pararDrone() { drone?.parar(); drone = null; }
 // --------------------------------------------------------------------------- peças visuais (SVG)
 const ICO = {
   vazio: '<svg viewBox="0 0 48 48" fill="none"><path d="M3 24C10 11 38 11 45 24 38 37 10 37 3 24Z" fill="#2a0f55" stroke="#c995ff" stroke-width="2.4"/><ellipse cx="24" cy="24" rx="7" ry="10" fill="#c995ff"/><ellipse cx="24" cy="24" rx="2.4" ry="9" fill="#12062a"/><path d="M24 4v6M14 7l3 5M34 7l-3 5" stroke="#c995ff" stroke-width="2" stroke-linecap="round"/></svg>',
-  pular: '<svg viewBox="0 0 40 32" fill="none"><path d="M3 24C3 13 12 8 24 8h8" stroke="#f5cf5a" stroke-width="4" stroke-linecap="round"/><path d="M26 1l10 7-10 7z" fill="#f5cf5a"/></svg>',
   coroa: '<svg viewBox="0 0 64 40"><path d="M4 34 L10 8 L22 22 L32 4 L42 22 L54 8 L60 34 Z" fill="url(#gc)" stroke="#8a6417" stroke-width="2" stroke-linejoin="round"/><defs><linearGradient id="gc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1b3"/><stop offset="1" stop-color="#d9a82b"/></linearGradient></defs><circle cx="10" cy="8" r="3" fill="#fff1b3"/><circle cx="32" cy="4" r="3.4" fill="#fff1b3"/><circle cx="54" cy="8" r="3" fill="#fff1b3"/><rect x="6" y="34" width="52" height="4" rx="2" fill="#a87414"/></svg>',
   banner: (cor, forma, emblema) => `<svg viewBox="0 0 110 220"><defs><linearGradient id="bn${forma}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2f70"/><stop offset="1" stop-color="#0a1233"/></linearGradient></defs><path d="M6 0h98v176l-49 38-49-38Z" fill="url(#bn${forma})" stroke="#d9a82b" stroke-width="3"/><path d="M14 8h82v164l-41 32-41-32Z" fill="none" stroke="${cor}" stroke-opacity=".5" stroke-width="1.5"/></svg><img class="bz-emb" src="img/${emblema}.webp?v=1" alt="" />`,
 };
@@ -115,7 +114,7 @@ function montar() {
     <section class="bz-pergunta"><div class="bz-hex bz-pq"><p id="bz-q"></p></div></section>
     <div class="bz-opcoes" id="bz-opc">${[0, 1, 2, 3].map((i) => `<button type="button" class="bz-op bz-hex" data-i="${i}"><span class="in"><b class="l">${letra(i)}</b><span class="t"></span><span class="vt"></span></span></button>`).join('')}</div>
     <button type="button" class="bz-confirmar" id="bz-confirmar" hidden>TRAVAR RESPOSTA</button>
-    <button type="button" class="bz-pular" id="bz-pular"><span class="rom"></span><span class="cont">${ICO.pular}<b>PULAR</b><small>ESPAÇO</small></span><span class="num" id="bz-pulos"></span></button>
+    <button type="button" class="bz-pular" id="bz-pular"><span class="ic"><img src="img/pinstouro.webp?v=1" alt="" /><span class="num" id="bz-pulos"></span></span><b>PULAR</b><small>ESPAÇO</small></button>
     <div class="bz-aviso" id="bz-aviso" role="status"></div>
     <div class="bz-tela" id="bz-tela"></div>
   </div>`;

@@ -154,15 +154,14 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
 .bz-parar:disabled { opacity: 0.4; cursor: default; }
 
 /* ----- pular (Pinstouro) ----- */
-.bz-pular { position: absolute; right: 3.2cqw; bottom: 1.2cqw; z-index: 5; width: 9.6cqw; height: 7.8cqw; border: 0; background: none; padding: 0; cursor: pointer; color: #fff; font: inherit; }
-.bz-pular .rom { position: absolute; inset: 0; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); background: linear-gradient(180deg, #f8d96b, #a87414); }
-.bz-pular .rom::before { content: ''; position: absolute; inset: 0.3cqw; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); background: linear-gradient(180deg, #0e2058, #070f2c); }
-.bz-pular .cont { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 0.1cqw; z-index: 1; }
-.bz-pular svg { width: 3cqw; height: 2.4cqw; }
-.bz-pular b { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 2cqw; letter-spacing: 0.06em; color: var(--bz-ouro); line-height: 1; }
-.bz-pular small { font-size: 0.9cqw; font-weight: 800; letter-spacing: 0.12em; color: #fff; padding: 0.15cqw 0.9cqw; border: 0.1cqw solid var(--bz-ouro-2); border-radius: 0.4cqw; background: rgba(0, 0, 0, 0.35); }
-.bz-pular .num { position: absolute; right: 1.4cqw; top: 0.4cqw; z-index: 2; min-width: 2cqw; height: 2cqw; display: grid; place-items: center; border-radius: 1cqw; background: var(--bz-ouro); color: #1a1405; font-size: 1.1cqw; font-weight: 800; }
-.bz-pular:hover:not(:disabled) { filter: brightness(1.2); }
+.bz-pular { position: absolute; right: 3.4cqw; bottom: 1cqw; z-index: 5; display: grid; justify-items: center; gap: 0.3cqw; border: 0; background: none; padding: 0; cursor: pointer; color: #fff; font: inherit; }
+.bz-pular .ic { position: relative; display: block; width: 7.4cqw; height: 7.4cqw; transition: transform 0.15s; }
+.bz-pular .ic img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 0 0.8cqw rgba(179, 107, 255, 0.55)); }
+.bz-pular b { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 1.9cqw; letter-spacing: 0.08em; color: var(--bz-ouro); line-height: 1; }
+.bz-pular small { font-size: 0.85cqw; font-weight: 800; letter-spacing: 0.12em; color: #dfe6ff; line-height: 1; }
+.bz-pular .num { position: absolute; right: -0.4cqw; top: -0.2cqw; z-index: 2; min-width: 2.2cqw; height: 2.2cqw; display: grid; place-items: center; border-radius: 1.1cqw; background: var(--bz-ouro); color: #1a1405; font-size: 1.2cqw; font-weight: 800; }
+.bz-pular:hover:not(:disabled) .ic { transform: scale(1.07); }
+.bz-pular:hover:not(:disabled) .ic img { filter: drop-shadow(0 0 1.4cqw rgba(214, 160, 255, 0.95)); }
 .bz-pular:disabled { filter: grayscale(1) brightness(0.5); cursor: default; }
 
 /* ----- telas (início, fim, bloqueado) ----- */
@@ -218,15 +217,14 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
   .bz-ajudas { order: 7; display: flex; justify-content: center; align-items: flex-start; gap: 18px; }
   .bz-aj { gap: 6px; } .bz-aj .ic { width: 62px; height: 62px; } .bz-aj small, .bz-aj-rot { font-size: 10px; } .bz-aj .n { min-width: 20px; height: 20px; font-size: 11px; right: -4px; }
   .bz-cartas { gap: 8px; margin-top: 6px; } .bz-carta { width: 46px; height: 78px; perspective: 400px; } .bz-carta .frente b { font-size: 17px; padding: 0 5px; border-radius: 4px; }
-  .bz-pular { order: 8; align-self: center; width: 170px; height: 54px; } .bz-pular .rom, .bz-pular .rom::before { clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%); } .bz-pular .rom::before { inset: 2px; }
-  .bz-pular .num { right: 22px !important; top: 4px !important; }
-  .bz-pular .cont { grid-auto-flow: column; gap: 10px; } .bz-pular svg { width: 26px; height: 20px; } .bz-pular b { font-size: 24px; } .bz-pular small { display: none; } .bz-pular .num { right: 14px; top: 6px; min-width: 20px; height: 20px; font-size: 11px; }
   .bz-aviso { position: fixed !important; top: 72px !important; left: 50% !important; font-size: 13px; }
   .bz-tela { position: fixed !important; inset: 0 !important; width: auto !important; padding: 14px; overflow-y: auto; }
   .bz-cartao { width: 100%; padding: 22px 16px; gap: 12px; border-width: 2px; border-radius: 12px; }
   .bz-cartao .sup { font-size: 11px; } .bz-cartao h2 { font-size: 46px; } .bz-cartao p { font-size: 14px; max-width: none; } .bz-cartao .premio { font-size: 56px; } .bz-cartao .premio small { font-size: 20px; }
   .bz-regras { grid-template-columns: 1fr; gap: 8px; } .bz-regras div { font-size: 12.5px; padding: 10px; border-radius: 8px; } .bz-regras b { font-size: 14px; }
   .bz-go { font-size: 26px; padding: 10px 40px; } .bz-go.sec { font-size: 16px; padding: 10px 22px; border-radius: 8px; } .bz-melhor { font-size: 13px; }
+  .bz-pular { order: 8; align-self: center; grid-auto-flow: column; align-items: center; gap: 10px; }
+  .bz-pular .ic { width: 60px; height: 60px; } .bz-pular b { font-size: 26px; } .bz-pular small { display: none; } .bz-pular .num { min-width: 20px; height: 20px; font-size: 11px; right: -6px; top: -4px; border-radius: 10px; }
   .bz-top, .bz-palco, .bz-escada, .bz-pergunta, .bz-opcoes, .bz-ajudas, .bz-pular, .bz-confirmar { z-index: 3; }
 }
 
