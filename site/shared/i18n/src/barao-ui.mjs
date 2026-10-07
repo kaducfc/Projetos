@@ -1,6 +1,14 @@
 // Show do Barão: telas, botões e avisos. O nome é "Show do Barão" em português e "Baron Show" nos outros idiomas.
 // As perguntas e respostas estão em barao-perguntas-*.mjs.
 export default [
+  ['ACERTAR', 'CORRECT', 'RICHTIG', 'ACERTAR', 'GIUSTA', 'JUSTE'],
+  ['PARAR', 'STOP', 'AUFHÖREN', 'PLANTARSE', 'FERMATI', 'S’ARRÊTER'],
+  ['ERRAR', 'WRONG', 'FALSCH', 'FALLAR', 'SBAGLIATA', 'FAUX'],
+  ['Parar e levar este prêmio', 'Stop and take this prize', 'Aufhören und diesen Gewinn mitnehmen', 'Plantarte y llevarte este premio', 'Fermarti e portare a casa questo premio', 'T’arrêter et emporter ce gain'],
+  ['Parar agora?', 'Stop now?', 'Jetzt aufhören?', '¿Plantarte ahora?', 'Fermarti adesso?', 'T’arrêter maintenant ?'],
+  ['Você leva esse prêmio e encerra a partida.', 'You take this prize and end the game.', 'Du nimmst diesen Gewinn mit und beendest die Partie.', 'Te llevas este premio y terminas la partida.', 'Porti a casa questo premio e concludi la partita.', 'Tu emportes ce gain et la partie se termine.'],
+  ['SIM, PARAR', 'YES, STOP', 'JA, AUFHÖREN', 'SÍ, PLANTARME', 'SÌ, FERMATI', 'OUI, M’ARRÊTER'],
+  ['CONTINUAR JOGANDO', 'KEEP PLAYING', 'WEITERSPIELEN', 'SEGUIR JUGANDO', 'CONTINUA A GIOCARE', 'CONTINUER À JOUER'],
   ['Show do Barão', 'Baron Show', 'Baron Show', 'Baron Show', 'Baron Show', 'Baron Show'],
   ['Show do Barão · Rift Arcade', 'Baron Show · Rift Arcade', 'Baron Show · Rift Arcade', 'Baron Show · Rift Arcade', 'Baron Show · Rift Arcade', 'Baron Show · Rift Arcade'],
   ['SHOW DO', 'SHOW', 'SHOW', 'SHOW', 'SHOW', 'SHOW'],
@@ -10,8 +18,6 @@ export default [
   ['Ligar o som', 'Turn sound on', 'Ton einschalten', 'Activar el sonido', 'Attiva l’audio', 'Activer le son'],
   ['Desligar o som', 'Turn sound off', 'Ton ausschalten', 'Desactivar el sonido', 'Disattiva l’audio', 'Couper le son'],
   ['Parar', 'Stop', 'Aufhören', 'Plantarse', 'Fermati', 'S’arrêter'],
-  ['responda a 1ª pergunta', 'answer the 1st question', 'beantworte die 1. Frage', 'responde a la 1.ª pregunta', 'rispondi alla 1ª domanda', 'réponds à la 1re question'],
-  ['levar {valor} pts', 'take {valor} pts', '{valor} Pkt. mitnehmen', 'llevarte {valor} pts', 'porta a casa {valor} pt', 'emporter {valor} pts'],
   ['{valor} pts', '{valor} pts', '{valor} Pkt.', '{valor} pts', '{valor} pt', '{valor} pts'],
   ['pts', 'pts', 'Pkt.', 'pts', 'pt', 'pts'],
   ['Vazio', 'Void', 'Leere', 'Vacío', 'Vuoto', 'Néant'],
@@ -53,7 +59,6 @@ export default [
   ['{carta}: 1 opção errada eliminada!', '{carta}: 1 wrong option removed!', '{carta}: 1 falsche Antwort entfernt!', '{carta}: ¡1 opción incorrecta eliminada!', '{carta}: 1 opzione sbagliata eliminata!', '{carta} : 1 mauvaise réponse retirée !'],
   ['{carta}: {n} opções erradas eliminadas!', '{carta}: {n} wrong options removed!', '{carta}: {n} falsche Antworten entfernt!', '{carta}: ¡{n} opciones incorrectas eliminadas!', '{carta}: {n} opzioni sbagliate eliminate!', '{carta} : {n} mauvaises réponses retirées !'],
   ['Prêmio garantido: {valor} pts!', 'Prize secured: {valor} pts!', 'Gewinn gesichert: {valor} Pkt.!', '¡Premio asegurado: {valor} pts!', 'Premio assicurato: {valor} pt!', 'Gain acquis : {valor} pts !'],
-  ['Parar e levar {valor} pts?', 'Stop and take {valor} pts?', 'Aufhören und {valor} Pkt. mitnehmen?', '¿Plantarte y llevarte {valor} pts?', 'Fermarti e portare a casa {valor} pt?', 'T’arrêter et emporter {valor} pts ?'],
   ['Pinstouro! Pergunta trocada.', 'Pinstouro! Question swapped.', 'Pinstouro! Frage ausgetauscht.', '¡Pinstouro! Pregunta cambiada.', 'Pinstouro! Domanda sostituita.', 'Pinstouro ! Question remplacée.'],
   ['Os monstros do Vazio apontam suas respostas…', 'The Void monsters are pointing to their answers…', 'Die Monster der Leere zeigen auf ihre Antworten…', 'Los monstruos del Vacío señalan sus respuestas…', 'I mostri del Vuoto indicano le loro risposte…', 'Les monstres du Néant désignent leurs réponses…'],
   ['Quiz', 'Quiz', 'Quiz', 'Quiz', 'Quiz', 'Quiz'],

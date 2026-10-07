@@ -189,6 +189,6 @@ test('barão: tradução completa — telas, perguntas e alternativas nos 5 idio
   assert.deepEqual(semTraducao, [], 'alternativas em português sem tradução');
   // valores dentro do texto continuam funcionando
   __usarDicionario((await import('../shared/i18n/en.js')).default, 'en');
-  assert.equal(t('levar {valor} pts', { valor: '1,000' }), 'take 1,000 pts');
+  assert.equal(t('Prêmio garantido: {valor} pts!', { valor: '1,000' }), 'Prize secured: 1,000 pts!');
   assert.equal(traduzirTexto('A resposta certa era B: Dragão Infernal.'), 'The correct answer was B: Infernal Drake.');
 });

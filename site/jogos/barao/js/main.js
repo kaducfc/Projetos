@@ -108,7 +108,11 @@ function montar() {
     <div class="bz-palco" aria-hidden="true"><div class="bz-aneis"></div><div class="bz-coroa">${ICO.coroa}</div>
       <h1 class="bz-titulo"><span>SHOW DO</span><b>BARÃO</b></h1>
       <img class="bz-host" src="img/apresentador.webp?v=1" alt="" /></div>
-    <aside class="bz-escada"><ol id="bz-escada">${escada}</ol><button type="button" class="bz-parar" id="bz-parar">Parar<small id="bz-parar-v"></small></button></aside>
+    <aside class="bz-escada"><ol id="bz-escada">${escada}</ol><div class="bz-risco">
+        <div class="bz-pp acertar"><small>ACERTAR</small><b id="bz-v-acertar"></b></div>
+        <button type="button" class="bz-pp parar bz-parar" id="bz-parar" title="Parar e levar este prêmio"><small>PARAR</small><b id="bz-v-parar"></b></button>
+        <div class="bz-pp errar"><small>ERRAR</small><b id="bz-v-errar"></b></div>
+      </div></aside>
     <aside class="bz-ajudas" id="bz-ajudas">
       <button type="button" class="bz-aj vazio" id="bz-vazio" title="Monstros do Vazio: três monstros apontam o que acham que é a resposta"><span class="ic"><img src="img/vazio.webp?v=1" alt="" /></span><small>Vazio</small></button>
       <div><div class="bz-cartas" id="bz-cartas">${[0, 1, 2].map((i) => `<button type="button" class="bz-carta" data-slot="${i}" title="Carta do Twisted Fate: escolha uma, só vale uma vez por partida"><span class="miolo"><span class="verso"><img src="img/carta-verso.webp?v=1" alt="" /></span><span class="frente"><img data-f alt="" /><b></b></span></span></button>`).join('')}</div><div class="bz-aj-rot">Cartas do TF</div></div>
@@ -159,7 +163,9 @@ function desenhar() {
   $('bz-pular').disabled = !jogando || jogo.pulos <= 0 || ocupado || !livre;
   const pv = premioAoParar(jogo.nivel);
   $('bz-parar').disabled = !jogando || jogo.nivel <= 1 || ocupado;
-  $('bz-parar-v').textContent = jogo.nivel > 1 ? t('levar {valor} pts', { valor: fmt(pv) }) : 'responda a 1ª pergunta';
+  $('bz-v-acertar').textContent = `${fmt(PREMIOS[jogo.nivel - 1])} pts`;
+  $('bz-v-parar').textContent = `${fmt(pv)} pts`;
+  $('bz-v-errar').textContent = `${fmt(premioAoErrar(jogo.nivel))} pts`;
 }
 
 function desenharCartas(jogando) {
@@ -271,8 +277,14 @@ function fim() {
 }
 function pararJogo() {
   if (ocupado || jogo.status !== 'jogando' || jogo.nivel <= 1) return;
-  if (!window.confirm(t('Parar e levar {valor} pts?', { valor: fmt(premioAoParar(jogo.nivel)) }))) return;
-  jogo = parar(jogo); salvar(); fim();
+  telaParar();
+}
+// Confirmação dentro do jogo (nada de janela do navegador).
+function telaParar() {
+  tela(`<div class="bz-cartao bz-confirma"><span class="sup">Parar agora?</span>
+    <div class="premio">${fmt(premioAoParar(jogo.nivel))}<small>pts</small></div>
+    <p>Você leva esse prêmio e encerra a partida.</p>
+    <div class="bz-acoes"><button type="button" class="bz-go" id="bz-parar-sim">SIM, PARAR</button><button type="button" class="bz-go sec" id="bz-parar-nao">CONTINUAR JOGANDO</button></div></div>`, telaParar);
 }
 function ajudaPular() {
   if (ocupado || jogo.status !== 'jogando' || jogo.pulos <= 0 || semAjuda(jogo.nivel)) return;
@@ -305,6 +317,8 @@ app.addEventListener('click', (e) => {
   else if (id === 'bz-vazio') ajudaVazio();
   else if (id === 'bz-pular') ajudaPular();
   else if (id === 'bz-parar') pararJogo();
+  else if (id === 'bz-parar-sim') { tela(''); jogo = parar(jogo); salvar(); fim(); }
+  else if (id === 'bz-parar-nao') tela('');
   else if (id === 'bz-novo') comecar();
   else if (id === 'bz-continuar') continuar();
   else if (id === 'bz-som') { mudo = !mudo; gravarLS(CHAVE_MUDO, mudo); atualizarSom(); if (mudo) pararDrone(); else if (jogo?.status === 'jogando') iniciarDrone(); }

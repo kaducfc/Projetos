@@ -147,10 +147,19 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
 .bz-escada li.feito { opacity: 0.4; }
 .bz-escada li.atual { background: linear-gradient(90deg, #8a6417, #f5cf5a 30%, #f5cf5a 70%, #8a6417); color: #1a1405; box-shadow: 0 0 1.4cqw rgba(245, 207, 90, 0.7); font-weight: 800; }
 .bz-escada li.atual .n, .bz-escada li.atual .v { color: #1a1405; }
-.bz-parar { margin-top: 0.8cqw; width: 100%; padding: 0.5cqw 0; border: 0.14cqw solid var(--bz-ouro-2); border-radius: 0.6cqw; cursor: pointer; background: rgba(6, 13, 38, 0.92); color: var(--bz-ouro); font-size: 1.2cqw; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-.bz-parar small { display: block; margin-top: 0.15cqw; font-size: 0.95cqw; color: #e6dcc0; letter-spacing: 0.02em; text-transform: none; font-weight: 600; }
-.bz-parar:hover:not(:disabled) { background: rgba(245, 207, 90, 0.14); }
-.bz-parar:disabled { opacity: 0.4; cursor: default; }
+/* acertar / parar / errar: o do meio é o botão de parar, os outros dois só informam */
+.bz-risco { display: grid; gap: 0.5cqw; margin-top: 0.9cqw; }
+.bz-pp { display: flex; align-items: center; justify-content: space-between; gap: 1cqw; height: 3.1cqw; padding: 0 1.3cqw; border-radius: 0.5cqw; border: 0.16cqw solid var(--bz-ouro-2); background: linear-gradient(180deg, rgba(14, 32, 88, 0.95), rgba(6, 13, 38, 0.97)); color: #f4efe4; font: inherit; }
+.bz-pp small { font-size: 0.95cqw; font-weight: 800; letter-spacing: 0.1em; color: var(--bz-ouro); }
+.bz-pp b { white-space: nowrap; font-size: 1.3cqw; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bz-pp.acertar { border-color: #2fcf7a; } .bz-pp.acertar small { color: #7be0a8; }
+.bz-pp.errar { border-color: #ef4f4f; } .bz-pp.errar small { color: #ff9b9b; }
+.bz-pp.parar { cursor: pointer; background: linear-gradient(180deg, #f8d96b, #c9961f); border-color: #fff1b3; box-shadow: 0 0 1.4cqw rgba(245, 207, 90, 0.35); }
+.bz-pp.parar small, .bz-pp.parar b { color: #1a1405; }
+.bz-pp.parar:hover:not(:disabled) { filter: brightness(1.1); }
+.bz-pp.parar:disabled { cursor: default; background: linear-gradient(180deg, rgba(14, 32, 88, 0.95), rgba(6, 13, 38, 0.97)); border-color: var(--bz-ouro-2); box-shadow: none; opacity: 0.65; }
+.bz-pp.parar:disabled small { color: var(--bz-ouro); } .bz-pp.parar:disabled b { color: #f4efe4; }
+.bz-confirma { width: min(40cqw, 94%); }
 
 /* ----- pular (Pinstouro) ----- */
 .bz-pular { position: relative; z-index: 5; display: grid; justify-items: center; gap: 0.3cqw; border: 0; background: none; padding: 0; cursor: pointer; color: #fff; font: inherit; }
@@ -218,7 +227,9 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
   .bz-escada ol { flex-direction: row !important; overflow-x: auto; gap: 4px; padding: 6px; scrollbar-width: none; }
   .bz-escada li { flex: none; flex-direction: column; gap: 0; height: auto; padding: 4px 8px; font-size: 11px; min-width: 62px; text-align: center; }
   .bz-escada li .n { display: none; } .bz-escada li .v { text-align: center; }
-  .bz-parar { margin-top: 8px; padding: 10px 0; font-size: 13px; } .bz-parar small { font-size: 11px; }
+  .bz-risco { grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .bz-pp { flex-direction: column; justify-content: center; gap: 2px; height: auto; padding: 8px 4px; border-radius: 8px; border-width: 2px; } .bz-pp small { font-size: 10px; } .bz-pp b { font-size: 13px; }
+  .bz-confirma { width: 100%; }
   .bz-pergunta { order: 4; height: auto; min-height: 84px; margin-top: 6px; display: grid; }
   .bz-pq { position: relative; padding: 16px 0; }
   .bz-pergunta p { font-size: 16px; padding: 0 22px; }   .bz-opcoes { order: 5; grid-template-columns: 1fr; gap: 8px; }
