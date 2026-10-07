@@ -23,7 +23,7 @@ export const JOGOS_RANQUEADA = [
   { id: 'campeao', nome: 'Campeão Oculto', link: '/jogos/campeao/' },
   { id: 'escala', nome: 'Na Medida', link: '/jogos/escala/' },
 ];
-const MOTIVO = { partida: '', melhora: 'resultado melhor', nao_terminou: 'começou e não terminou', inatividade: 'inatividade', admin: 'ajuste' };
+const MOTIVO = { partida: '', melhora: 'resultado melhor', nao_terminou: 'começou e não terminou', inatividade: 'inatividade', admin: 'ajuste', ajuste_dia: 'ajuste' };
 const nomeJogo = (id) => JOGOS_RANQUEADA.find((j) => j.id === id)?.nome.replace(' (Oculto)', '') || '';
 
 // s = resposta de platform.rankedStatus() (ou null sem conta / sem servidor).
