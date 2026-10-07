@@ -1,6 +1,10 @@
-// Show do Barão: telas, botões e avisos. O nome "Show do Barão" fica igual em todos os idiomas
-// (é a marca do jogo, como "Runetermo"). As perguntas e respostas estão em barao-perguntas-*.mjs.
+// Show do Barão: telas, botões e avisos. O nome é "Show do Barão" em português e "Baron Show" nos outros idiomas.
+// As perguntas e respostas estão em barao-perguntas-*.mjs.
 export default [
+  ['Show do Barão', 'Baron Show', 'Baron Show', 'Baron Show', 'Baron Show', 'Baron Show'],
+  ['Show do Barão · Rift Arcade', 'Baron Show · Rift Arcade', 'Baron Show · Rift Arcade', 'Baron Show · Rift Arcade', 'Baron Show · Rift Arcade', 'Baron Show · Rift Arcade'],
+  ['SHOW DO', 'SHOW', 'SHOW', 'SHOW', 'SHOW', 'SHOW'],
+  ['BARÃO', 'BARON', 'BARON', 'BARON', 'BARON', 'BARON'],
   ['Carregando…', 'Loading…', 'Wird geladen…', 'Cargando…', 'Caricamento…', 'Chargement…'],
   ['Som', 'Sound', 'Ton', 'Sonido', 'Audio', 'Son'],
   ['Ligar o som', 'Turn sound on', 'Ton einschalten', 'Activar el sonido', 'Attiva l’audio', 'Activer le son'],

@@ -239,3 +239,7 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
 }
 
 .bz-ajudas.travadas .bz-aj-rot { color: #6d7494; }
+
+/* Fora do português o nome é "Baron Show": BARON em cima (grande) e SHOW embaixo. */
+html:not([lang="pt-BR"]) .bz-titulo { display: flex; flex-direction: column-reverse; }
+html:not([lang="pt-BR"]) .bz-titulo span { margin-top: 0.1em; }
