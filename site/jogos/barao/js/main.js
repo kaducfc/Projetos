@@ -5,7 +5,7 @@ import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
-import { liberarAbobora } from '../../../shared/passe-aviso.js';
+import { avisoInicio, avisoComeco, avisoFim } from '../../../shared/aviso-ranked.js';
 import { t, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import {
   NIVEIS, PREMIOS, PULOS, CARTAS, MONSTROS, letra, semAjuda,
@@ -228,8 +228,16 @@ function telaBloqueada() {
 // --------------------------------------------------------------------------- fluxo
 function salvar() { gravarLS(CHAVE_JOGO, jogo); }
 function comecar() {
-  jogo = novoJogo(); sel = null; ocupado = false; salvar();
+  jogo = novoJogo(); sel = null; ocupado = false;
+  jogo.pid = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  salvar();
   platform.track('game_start', GAME_ID, {});
+  // Ranqueada: o servidor anota o começo desta partida (valem as 5 primeiras do dia).
+  const pid = jogo.pid;
+  platform.rankedIniciar(GAME_ID).then((r) => {
+    if (r && jogo?.pid === pid) { jogo.ranked = r; salvar(); }
+    avisoComeco(r, GAME_ID);
+  });
   tela(''); desenhar(); iniciarDrone();
 }
 function continuar() { tela(''); desenhar(); iniciarDrone(); }
@@ -270,9 +278,8 @@ function fim() {
   platform.track('game_end', GAME_ID, { nivel: j.nivel, resultado: j.resultado, premio: j.premio });
   platform.recordResult(GAME_ID, {
     score: j.premio,
-    summary: { text: `${fmtPt(j.premio)} pontos`, nivel: j.nivel, resultado: j.resultado, premio: j.premio },
-  });
-  liberarAbobora(); // as abóboras do passe aparecem junto do resultado
+    summary: { ranked: j.ranked?.token, text: `${fmtPt(j.premio)} pontos`, nivel: j.nivel, resultado: j.resultado, premio: j.premio },
+  }).then((entry) => avisoFim(entry, j.ranked, GAME_ID)); // diz se valeu para a ranqueada (e libera as abóboras)
 }
 function pararJogo() {
   if (ocupado || jogo.status !== 'jogando' || jogo.nivel <= 1) return;
@@ -345,4 +352,5 @@ onLangChange(() => { if (!jogo) return; atualizarEscada(); atualizarSom(); desen
   jogo = salvo && salvo.v === 2 && (salvo.status === 'jogando' || salvo.status === 'acertou') ? (salvo.status === 'acertou' ? proxima(salvo) : salvo) : novoJogo();
   desenhar();
   telaInicio();
+  avisoInicio(GAME_ID);
 }());

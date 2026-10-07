@@ -1,6 +1,7 @@
 // Show do Barão: telas, botões e avisos. O nome é "Show do Barão" em português e "Baron Show" nos outros idiomas.
 // As perguntas e respostas estão em barao-perguntas-*.mjs.
 export default [
+  ['partida', 'match', 'Partie', 'partida', 'partita', 'partie'],
   ['ACERTAR', 'CORRECT', 'RICHTIG', 'ACERTAR', 'GIUSTA', 'JUSTE'],
   ['PARAR', 'STOP', 'AUFHÖREN', 'PLANTARSE', 'FERMATI', 'S’ARRÊTER'],
   ['ERRAR', 'WRONG', 'FALSCH', 'FALLAR', 'SBAGLIATA', 'FAUX'],

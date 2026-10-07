@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { baseBarao, ajustarPdr, PDR_BARAO } from '../shared/ranked.js';
 import { FACIL, MEDIA, DIFICIL, IMPOSSIVEL, BANCO } from '../jogos/barao/js/perguntas.js';
 import {
   semAjuda, NIVEIS, PREMIOS, CARTAS, novoJogo, responder, proxima, parar, pular, usarCarta, usarVazio, premioAoErrar, premioAoParar, faixa,
@@ -193,4 +194,27 @@ test('barão: tradução completa — telas, perguntas e alternativas nos 5 idio
   __usarDicionario((await import('../shared/i18n/en.js')).default, 'en');
   assert.equal(t('{carta}: {n} opções erradas eliminadas!', { carta: 'Blue Card', n: 2 }), 'Blue Card: 2 wrong options removed!');
   assert.equal(traduzirTexto('A resposta certa era B: Dragão Infernal.'), 'The correct answer was B: Infernal Drake.');
+});
+
+test('barão: PDR da ranqueada pelo prêmio final e % por elo', () => {
+  const esperado = { 0: -20, 500: -20, 1000: -15, 2000: -10, 5000: -5, 10000: 5, 20000: 10, 50000: 15, 100000: 20, 250000: 25, 500000: 30, 1000000: 35 };
+  for (const [premio, pdr] of Object.entries(esperado)) assert.equal(baseBarao(Number(premio)), pdr, `prêmio ${premio}`);
+  // todos os prêmios possíveis do jogo estão na tabela
+  for (const p of [0, ...PREMIOS]) assert.ok(baseBarao(p) != null);
+  assert.equal(PDR_BARAO.length, 11);
+  // ganhos passam pelo % do elo (Ferro 100%, Mestre 50%); perdas ficam iguais
+  assert.equal(ajustarPdr(baseBarao(1000000), 0), 35);
+  assert.equal(ajustarPdr(baseBarao(1000000), 7), 18);
+  assert.equal(ajustarPdr(baseBarao(10000), 4), 4); // 5 × 70%
+  assert.equal(ajustarPdr(baseBarao(0), 9), -20);
+  assert.equal(ajustarPdr(baseBarao(5000), 6), -5);
+});
+
+test('barão: o SQL da ranqueada (0065) usa a mesma tabela e as mesmas regras', async () => {
+  const { readFileSync } = await import('node:fs');
+  const sql = readFileSync(new URL('../supabase/migrations/0065_barao_ranqueada.sql', import.meta.url), 'utf8');
+  for (const [min, pdr] of PDR_BARAO.slice(0, -1)) assert.ok(sql.includes(`when premio >= ${min} then ${pdr}`), `${min} → ${pdr}`);
+  assert.ok(sql.includes('else -20 end'));
+  assert.ok(sql.includes("array[500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000]"));
+  assert.ok(sql.includes("('carreira-no-rift', 'cblol', 'barao')"));
 });

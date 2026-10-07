@@ -674,6 +674,7 @@ export default {
   "Qual é o sobrenome da família real de Demacia?": "Qual è il cognome della famiglia reale di Demacia?",
   "Qual campeão aprisionou a alma de Senna em sua lanterna?": "Quale campione ha imprigionato l’anima di Senna nella sua lanterna?",
   "Qual foi o primeiro single do grupo virtual True Damage, lançado em 2019?": "Qual è stato il primo singolo del gruppo virtuale True Damage, uscito nel 2019?",
+  "partida": "partita",
   "ACERTAR": "GIUSTA",
   "PARAR": "FERMATI",
   "ERRAR": "SBAGLIATA",

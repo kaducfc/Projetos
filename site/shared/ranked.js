@@ -69,6 +69,9 @@ export function baseLendas(resultado, vitorias, invicto = false) {
   if (resultado === 'quartas') return 8 + extra;
   return { 0: -20, 1: -10, 2: -5, 3: 5 }[Math.min(3, Math.max(0, vitorias))];
 }
+// Show do Barão: PDR de tabela pelo prêmio final (antes do % do elo; iguais às do banco, 0065).
+export const PDR_BARAO = [[1000000, 35], [500000, 30], [250000, 25], [100000, 20], [50000, 15], [20000, 10], [10000, 5], [5000, -5], [2000, -10], [1000, -15], [0, -20]];
+export const baseBarao = (premio) => PDR_BARAO.find(([min]) => premio >= min)[1];
 export const PDR_RUNETERMO = [35, 28, 22, 16, 11, 6, 5];
 export const PDR_LENDAS = [
   ['Campeão invicto (7-0 e sem perder jogo nos playoffs)', '+38'],

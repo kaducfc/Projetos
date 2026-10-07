@@ -28,6 +28,7 @@ const link = () => `<a href="/ranking/">${t('Ver ranking')}</a>`;
 const NOMES = {
   'carreira-no-rift': { uma: 'carreira', varias: 'carreiras' },
   cblol: { uma: 'partida no modo Oculto', varias: 'partidas no modo Oculto' },
+  barao: { uma: 'partida', varias: 'partidas' },
 };
 const nomes = (jogo) => {
   const n = NOMES[jogo] || NOMES['carreira-no-rift'];
