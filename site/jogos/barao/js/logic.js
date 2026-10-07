@@ -1,9 +1,9 @@
-// Show do Barão: regras do jogo, sem tela (testável). 10 perguntas (3 fáceis, 3 médias, 3 difíceis e 1
+// Show do Barão: regras do jogo, sem tela (testável). 11 perguntas (3 fáceis, 3 médias, 4 difíceis e 1
 // quase impossível), três ajudas (Pinstouro = pular, Monstros do Vazio e Cartas do Twisted Fate) e dois pontos seguros.
 import { BANCO } from './perguntas.js';
 
-export const NIVEIS = 10;
-export const PREMIOS = [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 1000000];
+export const NIVEIS = 11;
+export const PREMIOS = [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000];
 export const SEGUROS = [3, 6]; // ao acertar essas perguntas, o prêmio fica garantido
 export const PULOS = 2;
 // Na última pergunta nenhuma ajuda é permitida (Pinstouro, Monstros do Vazio ou cartas).
@@ -23,8 +23,8 @@ export const MONSTROS = [
 // Chance de CADA monstro apontar a resposta certa, por faixa de dificuldade.
 const ACERTO_MONSTRO = { 1: 0.9, 2: 0.76, 3: 0.58, 4: 0.4 };
 
-// Faixa de dificuldade: 1-3 fácil, 4-6 média, 7-9 difícil, 10 quase impossível.
-export const faixa = (n) => (n <= 3 ? 1 : n <= 6 ? 2 : n <= 9 ? 3 : 4);
+// Faixa de dificuldade: 1-3 fácil, 4-6 média, 7-10 difícil, 11 quase impossível.
+export const faixa = (n) => (n <= 3 ? 1 : n <= 6 ? 2 : n <= 10 ? 3 : 4);
 export const letra = (i) => 'ABCD'[i];
 
 export function embaralhar(lista, rnd = Math.random) {

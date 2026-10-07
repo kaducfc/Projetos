@@ -24,19 +24,20 @@ test('barão: banco com 300+ perguntas válidas (4 opções distintas, sem repet
   }
 });
 
-test('barão: 10 perguntas (3 fáceis, 3 médias, 3 difíceis, 1 quase impossível) e prêmios crescentes', () => {
-  assert.equal(NIVEIS, 10);
+test('barão: 11 perguntas (3 fáceis, 3 médias, 4 difíceis, 1 quase impossível) e prêmios crescentes', () => {
+  assert.equal(NIVEIS, 11);
   assert.equal(PREMIOS.length, NIVEIS);
-  assert.equal(PREMIOS[9], 1000000);
+  assert.equal(PREMIOS[10], 1000000);
+  assert.equal(PREMIOS[9], 500000);
   assert.ok(PREMIOS.every((v, i) => i === 0 || v > PREMIOS[i - 1]));
-  assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(faixa), [1, 1, 1, 2, 2, 2, 3, 3, 3, 4]);
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(faixa), [1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4]);
   assert.deepEqual(SEGUROS, [3, 6]);
   assert.equal(premioAoParar(1), 0);
   assert.equal(premioAoParar(8), PREMIOS[6]);
   assert.equal(premioAoErrar(3), 0);
   assert.equal(premioAoErrar(4), PREMIOS[2]); // passou da 3: garantiu 2.000
   assert.equal(premioAoErrar(7), PREMIOS[5]); // passou da 6: garantiu 20.000
-  assert.equal(premioAoErrar(10), PREMIOS[5]);
+  assert.equal(premioAoErrar(11), PREMIOS[5]);
 });
 
 test('barão: cada pergunta sai da faixa certa', () => {

@@ -104,14 +104,13 @@ async function versaoDD() {
 
 // --------------------------------------------------------------------------- montagem (uma vez)
 function montar() {
-  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="${SEGUROS.includes(n) ? 'seguro' : ''}"><span class="n">${n}</span><span class="v">${fmt(PREMIOS[n - 1])} pts</span></li>`).join('');
+  const escada = Array.from({ length: NIVEIS }, (_, i) => i + 1).map((n) => `<li data-n="${n}" class="${SEGUROS.includes(n) ? 'seguro' : ''}"><span class="n"></span><span class="v">${fmt(PREMIOS[n - 1])} pts</span></li>`).join('');
   app.innerHTML = `<div class="bz" id="bz">
     <div class="bz-bg" aria-hidden="true"><div class="bz-feixes"></div><div class="bz-arquibancada"></div><div class="bz-plateia"></div><div class="bz-faixas"></div><div class="bz-chao"></div><div class="bz-anel-chao"></div></div>
     <div class="bz-banner e2" aria-hidden="true">${ICO.banner('#6f8dff', 2)}</div><div class="bz-banner esq" aria-hidden="true">${ICO.banner('#6f8dff', 0)}</div>
     <div class="bz-banner d2" aria-hidden="true">${ICO.banner('#6f8dff', 3)}</div><div class="bz-banner dir" aria-hidden="true">${ICO.banner('#6f8dff', 1)}</div>
     <header class="bz-top">
       <button type="button" class="bz-btn-som" id="bz-som" aria-label="Som"></button>
-      <div class="bz-nq"><b id="bz-n">1</b><span>PERGUNTA<br>/ ${NIVEIS}</span></div>
     </header>
     <div class="bz-palco" aria-hidden="true"><div class="bz-aneis"></div><div class="bz-coroa">${ICO.coroa}</div>
       <h1 class="bz-titulo"><span>SHOW DO</span><b>BARÃO</b></h1>
@@ -140,7 +139,6 @@ function desenhar() {
   if (!jogo) return;
   const p = jogo.pergunta;
   const jogando = jogo.status === 'jogando';
-  $('bz-n').textContent = jogo.nivel;
   $('bz-q').textContent = p.q;
   $('bz-cat').textContent = CAT[p.cat] || '';
   document.querySelectorAll('#bz-escada li').forEach((li) => {
@@ -205,7 +203,6 @@ function telaInicio() {
       <div class="v"><b>Monstros do Vazio</b>Cho'Gath, Kha'Zix e Vel'Koz apontam a resposta que acham certa.</div>
       <div><b>Cartas do TF</b>Três cartas viradas: escolha uma, uma única vez na partida. Ela revela se tira 1, 2 ou 3 opções erradas.</div>
     </div>
-    <p>Na última pergunta nenhuma ajuda é permitida. Pontos seguros nas perguntas ${SEGUROS.join(' e ')} (★): se errar depois, você leva o prêmio já garantido. Quer sair antes? É só parar e levar o que ganhou.</p>
     ${melhor ? `<div class="bz-melhor">Seu recorde: <b>${fmt(melhor)} pts</b></div>` : ''}
     <div class="bz-acoes">
       ${retomar ? '<button type="button" class="bz-go" id="bz-continuar">CONTINUAR</button><button type="button" class="bz-go sec" id="bz-novo">Novo jogo</button>' : '<button type="button" class="bz-go" id="bz-novo">COMEÇAR</button>'}
@@ -216,7 +213,7 @@ function telaFim() {
   const titulos = { ganhou: ['Você é o Barão!', `Todas as ${NIVEIS} respostas certas. Lenda do Rift!`], parou: ['Você parou!', 'Decisão sábia: ficou com o prêmio garantido.'], errou: ['Resposta errada!', `A resposta certa era ${letra(j.pergunta.certa)}: ${esc(j.pergunta.opcoes[j.pergunta.certa])}.`] };
   const [h, txt] = titulos[j.resultado];
   const melhor = lerLS(CHAVE_MELHOR, 0);
-  tela(`<div class="bz-cartao"><span class="sup">Fim de jogo · pergunta ${j.nivel} de ${NIVEIS}</span><h2>${h}</h2><p>${txt}</p>
+  tela(`<div class="bz-cartao"><span class="sup">Fim de jogo</span><h2>${h}</h2><p>${txt}</p>
     <div class="premio">${fmt(j.premio)}<small>pts</small></div>
     <div class="bz-melhor">Seu recorde: <b>${fmt(Math.max(melhor, j.premio))} pts</b>${j.premio > melhor && j.premio > 0 ? ' · novo recorde!' : ''}</div>
     <div class="bz-acoes"><button type="button" class="bz-go" id="bz-novo">JOGAR DE NOVO</button><a class="bz-go sec" href="../../">Voltar ao início</a></div></div>`);
@@ -274,7 +271,7 @@ function fim() {
   platform.track('game_end', GAME_ID, { nivel: j.nivel, resultado: j.resultado, premio: j.premio });
   platform.recordResult(GAME_ID, {
     score: j.premio,
-    summary: { text: `Pergunta ${j.nivel}/${NIVEIS} · ${fmt(j.premio)} pts`, nivel: j.nivel, resultado: j.resultado, premio: j.premio },
+    summary: { text: `${fmt(j.premio)} pts`, nivel: j.nivel, resultado: j.resultado, premio: j.premio },
   });
   liberarAbobora(); // as abóboras do passe aparecem junto do resultado
 }
