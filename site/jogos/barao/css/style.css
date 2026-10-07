@@ -44,7 +44,7 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
 .bz-banner.esq { left: 21cqw; } .bz-banner.dir { right: 21cqw; }
 .bz-banner.e2 { left: 33cqw; top: -2cqw; width: 8cqw; height: 18cqw; opacity: 0.8; } .bz-banner.d2 { right: 33cqw; top: -2cqw; width: 8cqw; height: 18cqw; opacity: 0.8; }
 .bz-banner svg { width: 100%; height: 100%; display: block; }
-.bz-emb { position: absolute; left: 50%; top: 16%; width: 62%; height: 56%; transform: translateX(-50%); object-fit: contain; filter: drop-shadow(0 0 0.5cqw rgba(245, 207, 90, 0.55)); }
+.bz-emb { position: absolute; left: 50%; top: 16%; width: 62%; height: 56%; transform: translateX(-50%); object-fit: contain; filter: brightness(1.55) saturate(1.5) drop-shadow(0 0 0.5cqw rgba(255, 224, 120, 1)) drop-shadow(0 0 1.3cqw rgba(245, 207, 90, 0.85)); }
 
 /* ----- topo ----- */
 .bz-top { position: absolute; top: 1.4cqw; left: 1.6cqw; right: 1.6cqw; display: flex; justify-content: space-between; align-items: flex-start; z-index: 5; pointer-events: none; }
@@ -109,8 +109,8 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
 .bz-confirmar[hidden] { display: none; }
 
 /* ----- ajudas (esquerda) ----- */
-.bz-ajudas { position: absolute; left: 1.8cqw; top: 14cqw; z-index: 5; display: grid; gap: 1.2cqw; justify-items: center; }
-.bz-aj { display: grid; justify-items: center; gap: 0.3cqw; border: 0; background: none; color: #f4efe4; cursor: pointer; font: inherit; padding: 0; }
+.bz-ajudas { position: absolute; left: 1.8cqw; top: 11.5cqw; z-index: 5; display: grid; gap: 2.8cqw; justify-items: center; }
+.bz-aj { display: grid; justify-items: center; gap: 0.9cqw; border: 0; background: none; color: #f4efe4; cursor: pointer; font: inherit; padding: 0; }
 .bz-aj .ic { position: relative; display: grid; place-items: center; width: 7cqw; height: 7cqw; transition: transform 0.15s, filter 0.15s; }
 .bz-aj .ic img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 0.8cqw rgba(179, 107, 255, 0.55)); }
 .bz-aj:hover:not(:disabled) .ic { transform: scale(1.07); }
@@ -135,7 +135,7 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
 .bz-carta.escolhida { filter: drop-shadow(0 0 1cqw rgba(245, 207, 90, 0.9)); }
 .bz-carta:disabled { cursor: default; }
 .bz-carta:disabled:not(.virada) { filter: grayscale(1) brightness(0.45); }
-.bz-aj-rot { margin-top: -0.2cqw; font-size: 0.95cqw; font-weight: 800; letter-spacing: 0.08em; color: #dfe6ff; text-transform: uppercase; text-align: center; }
+.bz-aj-rot { margin-top: 0.5cqw; font-size: 0.95cqw; font-weight: 800; letter-spacing: 0.08em; color: #dfe6ff; text-transform: uppercase; text-align: center; }
 
 /* ----- escada de prêmios (direita) ----- */
 .bz-escada { position: absolute; right: 1.6cqw; top: 7.6cqw; width: 17cqw; z-index: 5; }
@@ -216,7 +216,7 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
   .bz-op { height: 52px; } .bz-op .in { gap: 12px; padding: 0 20px; } .bz-op .l { font-size: 24px; min-width: 18px; } .bz-op .t { font-size: 15px; } .bz-op .vt img { width: 26px; height: 26px; } .bz-op .vt { right: 18px; }
   .bz-confirmar { order: 6; align-self: center; transform: none; font-size: 22px; padding: 8px 40px; }
   .bz-ajudas { order: 7; display: flex; justify-content: center; align-items: flex-start; gap: 18px; }
-  .bz-aj .ic { width: 62px; height: 62px; } .bz-aj small, .bz-aj-rot { font-size: 10px; } .bz-aj .n { min-width: 20px; height: 20px; font-size: 11px; right: -4px; }
+  .bz-aj { gap: 6px; } .bz-aj .ic { width: 62px; height: 62px; } .bz-aj small, .bz-aj-rot { font-size: 10px; } .bz-aj .n { min-width: 20px; height: 20px; font-size: 11px; right: -4px; }
   .bz-cartas { gap: 8px; margin-top: 6px; } .bz-carta { width: 46px; height: 78px; perspective: 400px; } .bz-carta .frente b { font-size: 17px; padding: 0 5px; border-radius: 4px; }
   .bz-pular { order: 8; align-self: center; width: 170px; height: 54px; } .bz-pular .rom, .bz-pular .rom::before { clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%); } .bz-pular .rom::before { inset: 2px; }
   .bz-pular .num { right: 22px !important; top: 4px !important; }
