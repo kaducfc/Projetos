@@ -191,5 +191,4 @@ test('barão: tradução completa — telas, perguntas e alternativas nos 5 idio
   __usarDicionario((await import('../shared/i18n/en.js')).default, 'en');
   assert.equal(t('levar {valor} pts', { valor: '1,000' }), 'take 1,000 pts');
   assert.equal(traduzirTexto('A resposta certa era B: Dragão Infernal.'), 'The correct answer was B: Infernal Drake.');
-  assert.equal(traduzirTexto('11 perguntas sobre o universo e o competitivo de LoL: a dificuldade sobe a cada pergunta, e a última não aceita nenhuma ajuda. Chegue ao prêmio máximo sem errar!').startsWith('11 questions'), true);
 });

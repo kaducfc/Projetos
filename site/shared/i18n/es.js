@@ -695,7 +695,7 @@ export default {
   "ESPAÇO": "ESPACIO",
   "TRAVAR RESPOSTA": "BLOQUEAR RESPUESTA",
   "Quiz de League of Legends": "Quiz de League of Legends",
-  "{n} perguntas sobre o universo e o competitivo de LoL: a dificuldade sobe a cada pergunta, e a última não aceita nenhuma ajuda. Chegue ao prêmio máximo sem errar!": "{n} preguntas sobre el universo y el competitivo de LoL: la dificultad sube con cada pregunta y la última no admite ninguna ayuda. ¡Llega al premio máximo sin fallar!",
+  "Avance a cada pergunta, acumule pontos e mostre o quanto você conhece do universo de League of Legends. Será que você chega até o fim e se torna o grande campeão?": "Avanza con cada pregunta, acumula puntos y demuestra cuánto sabes del universo de League of Legends. ¿Llegarás hasta el final y te convertirás en el gran campeón?",
   "Pule {n} vezes: a pergunta é trocada por outra, mas você continua na mesma etapa e no mesmo prêmio.": "Salta {n} veces: la pregunta se cambia por otra, pero sigues en la misma etapa y con el mismo premio.",
   "Monstros do Vazio": "Monstruos del Vacío",
   "Cho'Gath, Kha'Zix e Vel'Koz apontam a resposta que acham certa.": "Cho'Gath, Kha'Zix y Vel'Koz señalan la respuesta que creen correcta.",

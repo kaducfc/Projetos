@@ -191,7 +191,7 @@ function telaInicio() {
   tela(`<div class="bz-cartao">
     <span class="sup">Quiz de League of Legends</span>
     <h2>Show do Barão</h2>
-    <p>${NIVEIS} perguntas sobre o universo e o competitivo de LoL: a dificuldade sobe a cada pergunta, e a última não aceita nenhuma ajuda. Chegue ao prêmio máximo sem errar!</p>
+    <p>Avance a cada pergunta, acumule pontos e mostre o quanto você conhece do universo de League of Legends. Será que você chega até o fim e se torna o grande campeão?</p>
     <div class="bz-regras">
       <div><b>Pinstouro</b>Pule ${PULOS} vezes: a pergunta é trocada por outra, mas você continua na mesma etapa e no mesmo prêmio.</div>
       <div class="v"><b>Monstros do Vazio</b>Cho'Gath, Kha'Zix e Vel'Koz apontam a resposta que acham certa.</div>
