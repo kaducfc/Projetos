@@ -20,7 +20,6 @@ const fmt = (n) => Number(n).toLocaleString('pt-BR');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const lerLS = (k, d = null) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const gravarLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* sem storage */ } };
-const CAT = { jogo: 'Mecânicas', lore: 'Universo', comp: 'Competitivo' };
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
 mountSiteFooter(document.getElementById('site-footer'));
@@ -120,7 +119,7 @@ function montar() {
       <button type="button" class="bz-aj vazio" id="bz-vazio" title="Monstros do Vazio: três monstros apontam o que acham que é a resposta"><span class="ic">${ICO.vazio}</span><small>Vazio</small></button>
       <div><div class="bz-cartas" id="bz-cartas">${[0, 1, 2].map((i) => `<button type="button" class="bz-carta" data-slot="${i}" title="Carta do Twisted Fate: escolha uma, só vale uma vez por partida"><span class="miolo"><span class="verso">${VERSO}</span><span class="frente"><i></i><b></b></span></span></button>`).join('')}</div><div class="bz-aj-rot">Cartas do TF</div></div>
     </aside>
-    <section class="bz-pergunta"><div class="bz-hex bz-pq"><p id="bz-q"></p></div><span class="bz-cat" id="bz-cat"></span></section>
+    <section class="bz-pergunta"><div class="bz-hex bz-pq"><p id="bz-q"></p></div></section>
     <div class="bz-opcoes" id="bz-opc">${[0, 1, 2, 3].map((i) => `<button type="button" class="bz-op bz-hex" data-i="${i}"><span class="in"><b class="l">${letra(i)}</b><span class="t"></span><span class="vt"></span></span></button>`).join('')}</div>
     <button type="button" class="bz-confirmar" id="bz-confirmar" hidden>TRAVAR RESPOSTA</button>
     <button type="button" class="bz-pular" id="bz-pular"><span class="rom"></span><span class="cont">${ICO.pular}<b>PULAR</b><small>ESPAÇO</small></span><span class="num" id="bz-pulos"></span></button>
@@ -140,7 +139,6 @@ function desenhar() {
   const p = jogo.pergunta;
   const jogando = jogo.status === 'jogando';
   $('bz-q').textContent = p.q;
-  $('bz-cat').textContent = CAT[p.cat] || '';
   document.querySelectorAll('#bz-escada li').forEach((li) => {
     const n = Number(li.dataset.n);
     li.classList.toggle('atual', n === jogo.nivel);
