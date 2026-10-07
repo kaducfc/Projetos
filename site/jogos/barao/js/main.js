@@ -110,11 +110,11 @@ function montar() {
     <aside class="bz-ajudas" id="bz-ajudas">
       <button type="button" class="bz-aj vazio" id="bz-vazio" title="Monstros do Vazio: três monstros apontam o que acham que é a resposta"><span class="ic"><img src="img/vazio.webp?v=1" alt="" /></span><small>Vazio</small></button>
       <div><div class="bz-cartas" id="bz-cartas">${[0, 1, 2].map((i) => `<button type="button" class="bz-carta" data-slot="${i}" title="Carta do Twisted Fate: escolha uma, só vale uma vez por partida"><span class="miolo"><span class="verso"><img src="img/carta-verso.webp?v=1" alt="" /></span><span class="frente"><img data-f alt="" /><b></b></span></span></button>`).join('')}</div><div class="bz-aj-rot">Cartas do TF</div></div>
+      <button type="button" class="bz-pular" id="bz-pular"><span class="ic"><img src="img/pinstouro.webp?v=1" alt="" /><span class="num" id="bz-pulos"></span></span><b>PULAR</b><small>ESPAÇO</small></button>
     </aside>
     <section class="bz-pergunta"><div class="bz-hex bz-pq"><p id="bz-q"></p></div></section>
     <div class="bz-opcoes" id="bz-opc">${[0, 1, 2, 3].map((i) => `<button type="button" class="bz-op bz-hex" data-i="${i}"><span class="in"><b class="l">${letra(i)}</b><span class="t"></span><span class="vt"></span></span></button>`).join('')}</div>
     <button type="button" class="bz-confirmar" id="bz-confirmar" hidden>TRAVAR RESPOSTA</button>
-    <button type="button" class="bz-pular" id="bz-pular"><span class="ic"><img src="img/pinstouro.webp?v=1" alt="" /><span class="num" id="bz-pulos"></span></span><b>PULAR</b><small>ESPAÇO</small></button>
     <div class="bz-aviso" id="bz-aviso" role="status"></div>
     <div class="bz-tela" id="bz-tela"></div>
   </div>`;

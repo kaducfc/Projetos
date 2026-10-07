@@ -109,7 +109,7 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
 .bz-confirmar[hidden] { display: none; }
 
 /* ----- ajudas (esquerda) ----- */
-.bz-ajudas { position: absolute; left: 1.8cqw; top: 11.5cqw; z-index: 5; display: grid; gap: 2.8cqw; justify-items: center; }
+.bz-ajudas { position: absolute; left: 1.8cqw; top: 9cqw; z-index: 5; display: grid; gap: 2.2cqw; justify-items: center; }
 .bz-aj { display: grid; justify-items: center; gap: 0.9cqw; border: 0; background: none; color: #f4efe4; cursor: pointer; font: inherit; padding: 0; }
 .bz-aj .ic { position: relative; display: grid; place-items: center; width: 7cqw; height: 7cqw; transition: transform 0.15s, filter 0.15s; }
 .bz-aj .ic img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 0.8cqw rgba(179, 107, 255, 0.55)); }
@@ -154,7 +154,7 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
 .bz-parar:disabled { opacity: 0.4; cursor: default; }
 
 /* ----- pular (Pinstouro) ----- */
-.bz-pular { position: absolute; right: 3.4cqw; bottom: 1cqw; z-index: 5; display: grid; justify-items: center; gap: 0.3cqw; border: 0; background: none; padding: 0; cursor: pointer; color: #fff; font: inherit; }
+.bz-pular { position: relative; z-index: 5; display: grid; justify-items: center; gap: 0.3cqw; border: 0; background: none; padding: 0; cursor: pointer; color: #fff; font: inherit; }
 .bz-pular .ic { position: relative; display: block; width: 7.4cqw; height: 7.4cqw; transition: transform 0.15s; }
 .bz-pular .ic img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 0 0.8cqw rgba(179, 107, 255, 0.55)); }
 .bz-pular b { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 1.9cqw; letter-spacing: 0.08em; color: var(--bz-ouro); line-height: 1; }
@@ -223,8 +223,8 @@ html, body { margin: 0; background: #050a1f; color: #f4efe4; font-family: 'Inter
   .bz-cartao .sup { font-size: 11px; } .bz-cartao h2 { font-size: 46px; } .bz-cartao p { font-size: 14px; max-width: none; } .bz-cartao .premio { font-size: 56px; } .bz-cartao .premio small { font-size: 20px; }
   .bz-regras { grid-template-columns: 1fr; gap: 8px; } .bz-regras div { font-size: 12.5px; padding: 10px; border-radius: 8px; } .bz-regras b { font-size: 14px; }
   .bz-go { font-size: 26px; padding: 10px 40px; } .bz-go.sec { font-size: 16px; padding: 10px 22px; border-radius: 8px; } .bz-melhor { font-size: 13px; }
-  .bz-pular { order: 8; align-self: center; grid-auto-flow: column; align-items: center; gap: 10px; }
-  .bz-pular .ic { width: 60px; height: 60px; } .bz-pular b { font-size: 26px; } .bz-pular small { display: none; } .bz-pular .num { min-width: 20px; height: 20px; font-size: 11px; right: -6px; top: -4px; border-radius: 10px; }
+  .bz-pular { grid-auto-flow: row; gap: 6px; }
+  .bz-pular .ic { width: 62px; height: 62px; } .bz-pular b { font-size: 13px; letter-spacing: 0.08em; } .bz-pular small { display: none; } .bz-pular .num { min-width: 20px; height: 20px; font-size: 11px; right: -6px; top: -4px; border-radius: 10px; }
   .bz-top, .bz-palco, .bz-escada, .bz-pergunta, .bz-opcoes, .bz-ajudas, .bz-pular, .bz-confirmar { z-index: 3; }
 }
 
