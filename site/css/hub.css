@@ -202,6 +202,8 @@ body:has(.hx-hero) { overflow-x: clip; }
 .cv-chutes .part { background: #d1a02a; }
 .cv-chutes .miss { background: #a3352c; }
 
+/* A entrada em fade roda só na 1ª vez: se os cards forem redesenhados (dados novos), não piscam escuros. */
+.hx-games.ja .hx-card { animation: none; }
 @keyframes hx-in { from { opacity: 0; transform: translateY(10px); } }
 @media (max-width: 560px) {
   .cv-dream-lista { display: grid; grid-auto-flow: column; grid-template-rows: repeat(4, auto); column-gap: 12px; width: auto; }

@@ -174,6 +174,7 @@ const VIVO = {
   escala: vivoEscala,
 };
 
+let jogosEntraram = false; // depois da 1ª entrada, redesenhar não repete o fade
 function renderGames() {
   const logado = Boolean(platform.getUser() && rk);
   // Jogos em teste (oculto: true) funcionam pelo link, mas ainda não aparecem aqui.
@@ -200,6 +201,7 @@ function renderGames() {
       ? `<a class="game hx-card hx-frame" href="${g.path}" style="--i:${i}">${capa}${corpo}</a>`
       : `<article class="game hx-card hx-frame soon" style="--i:${i}">${capa}${corpo}</article>`;
   }).join(''));
+  if (!jogosEntraram) { jogosEntraram = true; setTimeout(() => document.getElementById('games')?.classList.add('ja'), 1800); }
 }
 
 // Só troca o HTML quando mudou de verdade: reescrever o mesmo conteúdo reinicia as
