@@ -33,7 +33,7 @@ export const EFEITOS_TESTE = [
   { id: 'nv-synth', nome: 'Noite Retrô', classe: 'fx-nv-synth', tema: 'Rosa, amarelo e ciano · listras anos 80' },
   { id: 'nv-raio', nome: 'Tempestade', classe: 'fx-nv-raio', tema: 'Azul elétrico · relâmpago' },
   { id: 'nv-sakura', nome: 'Sakura', classe: 'fx-nv-sakura', tema: 'Rosa · pétalas caindo' },
-  { id: 'lj-ondas', nome: 'Ondas Sonoras', classe: 'fx-lj-ondas', tema: 'Laranja e branco · onda que divide o nome' },
+  { id: 'lj-ondas', nome: 'Ondas Sonoras', classe: 'fx-lj-ondas', tema: 'Laranja e preto · ondas que dividem o nome' },
   { id: 'lj-alerta', nome: 'Fita de Alerta', classe: 'fx-lj-alerta', tema: 'Preto e laranja · listras de aviso' },
   { id: 'lj-eclipse', nome: 'Eclipse', classe: 'fx-lj-eclipse', tema: 'Preto, laranja e branco · disco de fogo' },
   { id: 'lj-eq', nome: 'Equalizador', classe: 'fx-lj-eq', tema: 'Preto, laranja e branco · barras de som' },
