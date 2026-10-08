@@ -2,7 +2,7 @@
 // ranqueada (elos, minha divisão, top 3 do dia) e microanimações.
 import * as platform from '../shared/platform.js';
 import { mountSiteBar, openAuthModal } from '../shared/account.js';
-import { GAMES, SITE_NAME } from '../shared/config.js';
+import { GAMES, SITE_NAME, gameById } from '../shared/config.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import {
   ELOS, PARTIDAS_POR_DIA, PDR_DIVISAO, INATIVIDADE,
@@ -62,11 +62,11 @@ const CAPAS = {
           .map(([r, n, o]) => `<span><i>${r}</i>${n}<b>${o}</b></span>`).join('')}</div></div>`,
 };
 // Etiqueta no canto da capa: [texto, classe].
-const SELOS = { barao: ['Ranqueada', 'rk'], 'carreira-no-rift': ['Ranqueada', 'rk'], runetermo: ['Diário · Ranqueada', 'rk'], campeao: ['Diário · Ranqueada', 'rk'], escala: ['Diário · Ranqueada', 'rk'], cblol: ['Ranqueada (Oculto)', 'rk'] };
+const SELOS = Object.fromEntries(GAMES.filter((g) => g.ranked).map((g) => [g.id, [g.ranked.selo, 'rk']])); // vem de shared/config.js
 // Largura ÷ altura de cada emblema recortado (shared/assets/elos/*-recorte.webp).
 const PROPORCAO_EMBLEMA = { ferro: 1.06, bronze: 0.96, prata: 0.98, ouro: 0.97, platina: 0.97, esmeralda: 0.99, diamante: 0.92, mestre: 0.91, 'grao-mestre': 1.02, desafiante: 1 };
 const TAMANHO_FILA = [27.5, 37, 38, 39, 40, 41, 42, 46, 49, 52];
-const JOGOS_DO_DIA = ['carreira-no-rift', 'runetermo', 'campeao', 'escala', 'cblol'];
+const jogosDoDia = () => GAMES.filter((g) => g.ranked && g.status === 'live' && (!g.soAdmin || souAdmin)).map((g) => g.id); // vem de shared/config.js
 
 let souAdmin = false; // jogos com soAdmin só aparecem para administradores
 let resultados = [];
@@ -158,21 +158,21 @@ function vivoVagas(id) {
     const vagas = Math.min(PARTIDAS_POR_DIA, rk.hoje?.vagas?.[id] ?? 0);
     const r = rk.hoje?.jogos?.[id];
     const d = divisaoDe(rk.pts, rk.elo);
-    const rotulo = id === 'cblol' ? 'Oculto hoje' : 'Ranqueadas hoje';
+    const rotulo = gameById(id)?.ranked?.rotulo || 'Ranqueadas hoje';
     linha = `<span class="${vagas >= PARTIDAS_POR_DIA ? 'nao' : 'novo'}">${id === 'carreira-no-rift' ? emblemaHtml(rk.jogou ? d.elo : 'ferro', 18, { vazio: !rk.jogou }) : ''}${rotulo}: <b>${vagas} de ${PARTIDAS_POR_DIA}</b>${r ? ` · ${pdrTxt(r.pdr)}` : ''}</span><span class="hx-cd">Zera em <b data-cd>${fmtCountdown(msToNextDay())}</b></span>`;
   }
   const partes = [linha, andamento].filter(Boolean);
   return partes.length ? `<p class="hx-live">${partes.join('<br>')}</p>` : '';
 }
 
+// Linha "ao vivo" do card. Jogo com ranked.modo 'vagas' ganha a linha de vagas sozinho; os diários
+// têm a sua (estado de hoje). Só precisa de entrada aqui quem tem uma linha diferente das duas.
 const VIVO = {
-  'carreira-no-rift': () => vivoVagas('carreira-no-rift'),
-  cblol: () => vivoVagas('cblol'),
-  barao: () => vivoVagas('barao'),
   runetermo: () => vivoDiario('runetermo'),
   campeao: () => vivoDiario('campeao'),
   escala: vivoEscala,
 };
+const vivoDoJogo = (g) => (VIVO[g.id] ? VIVO[g.id]() : g.ranked?.modo === 'vagas' ? vivoVagas(g.id) : '');
 
 let jogosEntraram = false; // depois da 1ª entrada, redesenhar não repete o fade
 function renderGames() {
@@ -193,7 +193,7 @@ function renderGames() {
         <p class="game-kind">${esc(g.kind)}</p>
         <h3>${esc(g.name)}</h3>
         <p class="game-tag">${esc(g.tagline)}</p>
-        ${live ? VIVO[g.id]?.() || '' : ''}
+        ${live ? vivoDoJogo(g) : ''}
         ${stats}
         ${live ? `<span class="btn-primary hx-play" style="--d:${(i * 1.4).toFixed(1)}s">Jogar</span>` : '<span class="badge">Em breve</span>'}
       </div>`;
@@ -248,8 +248,8 @@ function renderPainel() {
       meta = `${conta(d.pdr)} de ${PDR_DIVISAO} PDR para ${esc(prox)}`;
     }
     const hojePdr = rk.hoje?.pdr || 0;
-    const feitos = JOGOS_DO_DIA.filter(feitoHoje).length;
-    const pips = JOGOS_DO_DIA.map((id) => `<i class="${feitoHoje(id) ? 'on' : ''}" title="${esc(GAMES.find((g) => g.id === id)?.name || '')}"></i>`).join('');
+    const feitos = jogosDoDia().filter(feitoHoje).length;
+    const pips = jogosDoDia().map((id) => `<i class="${feitoHoje(id) ? 'on' : ''}" title="${esc(GAMES.find((g) => g.id === id)?.name || '')}"></i>`).join('');
     let inativo = '';
     if (rk.jogou && rk.pts > 900 && rk.ultima_atividade && !hojePdr) {
       const dias = Math.round((Date.parse(rk.hoje.dia) - Date.parse(rk.ultima_atividade)) / 864e5);
@@ -258,7 +258,7 @@ function renderPainel() {
     }
     status = `<p class="rp-status">Você é <b style="color:${e.cor}">${esc(rk.jogou ? nomeDivisao(d) : 'Ferro 3')}</b> · ${meta} · hoje: ${pdrTxt(hojePdr)}</p>
       ${apex ? '' : `<div class="rp-barra"><i style="width:${Math.min(100, d.pdr)}%;background:${e.cor}"></i></div>`}
-      <p class="rp-hoje"><span class="rp-pips">${pips}</span>Hoje: <b>${feitos} de ${JOGOS_DO_DIA.length}</b> jogos feitos</p>
+      <p class="rp-hoje"><span class="rp-pips">${pips}</span>Hoje: <b>${feitos} de ${jogosDoDia().length}</b> jogos feitos</p>
       ${inativo}`;
   }
 

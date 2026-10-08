@@ -5,6 +5,7 @@ import {
   eloInfo, nivelElo, emblemaHtml, divisaoDe, nomeDivisao, fmtPdr,
 } from '../shared/ranked.js';
 import { localeAtual } from '../shared/i18n.js';
+import { GAMES } from '../shared/config.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -16,13 +17,10 @@ const ddmm = (iso) => {
 const num = (n) => (n == null ? '—' : Math.round(Number(n)).toLocaleString(localeAtual()));
 const pdrHtml = (n) => `<b class="${n > 0 ? 'pdr-mais' : n < 0 ? 'pdr-menos' : ''}">${fmtPdr(n)}</b>`;
 
-export const JOGOS_RANQUEADA = [
-  { id: 'carreira-no-rift', nome: 'Carreira no Rift', vagas: true, link: '/jogos/carreira-no-rift/' },
-  { id: 'cblol', nome: 'Lendas do CBLOL (Oculto)', vagas: true, link: '/jogos/lendas-do-cblol/' },
-  { id: 'runetermo', nome: 'Runetermo', link: '/jogos/runetermo/' },
-  { id: 'campeao', nome: 'Campeão Oculto', link: '/jogos/campeao/' },
-  { id: 'escala', nome: 'Na Medida', link: '/jogos/escala/' },
-];
+// Vem do catálogo (shared/config.js): todo jogo com `ranked` aparece aqui sozinho.
+export const JOGOS_RANQUEADA = GAMES.filter((g) => g.ranked && g.status === 'live' && !g.soAdmin).map((g) => ({
+  id: g.id, nome: g.ranked.nome || g.name, vagas: g.ranked.modo === 'vagas', sub: g.ranked.sub || '', link: `/${g.path}`, soAdmin: Boolean(g.soAdmin),
+}));
 const MOTIVO = { partida: '', melhora: 'resultado melhor', nao_terminou: 'começou e não terminou', inatividade: 'inatividade', admin: 'ajuste', ajuste_dia: 'ajuste' };
 const nomeJogo = (id) => JOGOS_RANQUEADA.find((j) => j.id === id)?.nome.replace(' (Oculto)', '') || '';
 
@@ -64,7 +62,7 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
     else if (vagas) txt = `<span class="muted">em andamento</span>`;
     else txt = '<span class="muted">disponível</span>';
     const curto = j.nome.replace(' (Oculto)', '');
-    const sub = j.vagas ? `${j.id === 'cblol' ? 'Oculto · ' : ''}${vagas} de ${PARTIDAS_POR_DIA}` : '1 por dia';
+    const sub = j.vagas ? `${j.sub}${vagas} de ${PARTIDAS_POR_DIA}` : '1 por dia';
     return `<a class="rk-jogo" href="${j.link}" title="${esc(j.nome)}"><span>${esc(curto)}</span>${txt}<small>${sub}</small></a>`;
   }).join('');
   // Inatividade (Ouro para cima).

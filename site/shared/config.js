@@ -44,6 +44,11 @@ export const APOIO_ATIVO = true;
 export const APOIO_INTL_ATIVO = true;
 
 // Catálogo exibido no hub. `path` é relativo à raiz do site.
+// `ranked` (opcional): o jogo vale PDR. Com ele, o jogo entra sozinho no card da ranqueada (perfil e
+// ranking), no painel "hoje" e no selo/linha de vagas do card do hub.
+//   modo: 'vagas' (N partidas por dia, ingresso no servidor) ou 'diario' (1 por dia)
+//   selo: texto da etiqueta na capa; nome/rotulo/sub: só se diferirem do padrão (ver cblol)
+// Passo a passo para um jogo novo: NOVO-JOGO.md (na raiz do repositório).
 // status: 'live' (jogável) ou 'soon' (em breve).
 export const GAMES = [
   {
@@ -54,6 +59,7 @@ export const GAMES = [
     path: 'jogos/carreira-no-rift/',
     status: 'live',
     scoreLabel: 'Pontos de legado',
+    ranked: { modo: 'vagas', selo: 'Ranqueada' },
   },
   {
     id: 'runetermo',
@@ -63,6 +69,7 @@ export const GAMES = [
     path: 'jogos/runetermo/',
     status: 'live',
     scoreLabel: 'Pontos',
+    ranked: { modo: 'diario', selo: 'Diário · Ranqueada' },
   },
   {
     id: 'campeao',
@@ -72,6 +79,7 @@ export const GAMES = [
     path: 'jogos/campeao/',
     status: 'live',
     scoreLabel: 'Pontos',
+    ranked: { modo: 'diario', selo: 'Diário · Ranqueada' },
   },
   {
     id: 'cblol',
@@ -81,6 +89,7 @@ export const GAMES = [
     path: 'jogos/lendas-do-cblol/',
     status: 'live',
     scoreLabel: 'Pontos',
+    ranked: { modo: 'vagas', selo: 'Ranqueada (Oculto)', nome: 'Lendas do CBLOL (Oculto)', rotulo: 'Oculto hoje', sub: 'Oculto · ' },
   },
   {
     id: 'escala',
@@ -90,6 +99,7 @@ export const GAMES = [
     path: 'jogos/escala/',
     status: 'live',
     scoreLabel: 'Pontos',
+    ranked: { modo: 'diario', selo: 'Diário · Ranqueada' },
   },
   // Em desenvolvimento: `soAdmin` esconde o jogo do hub e do perfil e bloqueia a página
   // para quem não é administrador. Para lançar, apague a linha `soAdmin`.
@@ -101,6 +111,7 @@ export const GAMES = [
     path: 'jogos/barao/',
     status: 'live',
     scoreLabel: 'Pontos',
+    ranked: { modo: 'vagas', selo: 'Ranqueada' },
   },
 ];
 

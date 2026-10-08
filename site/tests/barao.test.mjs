@@ -121,3 +121,19 @@ test('barão: o SQL da ranqueada (0065) usa a mesma tabela e as mesmas regras', 
   assert.ok(sql.includes('else -20 end'));
   assert.ok(sql.includes("('carreira-no-rift', 'cblol', 'barao')"));
 });
+
+// ---- Jogo novo = tudo padronizado: o catálogo (shared/config.js) alimenta card, perfil, ranking e hub.
+test('catálogo: todo jogo com `ranked` aparece sozinho no card da ranqueada e tem selo/vagas', async () => {
+  const { GAMES } = await import('../shared/config.js');
+  const { JOGOS_RANQUEADA } = await import('../js/ranqueada-card.js');
+  const ranqueados = GAMES.filter((g) => g.ranked && g.status === 'live' && !g.soAdmin);
+  assert.ok(ranqueados.some((g) => g.id === 'barao'));
+  assert.deepEqual(JOGOS_RANQUEADA.map((j) => j.id), ranqueados.map((g) => g.id));
+  for (const g of ranqueados) {
+    assert.match(g.ranked.modo, /^(vagas|diario)$/);
+    assert.ok(g.ranked.selo, `${g.id}: falta ranked.selo`);
+  }
+  const barao = JOGOS_RANQUEADA.find((j) => j.id === 'barao');
+  assert.equal(barao.vagas, true);
+  assert.equal(barao.link, '/jogos/barao/');
+});
