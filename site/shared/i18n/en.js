@@ -1126,6 +1126,7 @@ export default {
   "Você já resgatou este código.": "You have already redeemed this code.",
   "Este código não está mais disponível.": "This code is no longer available.",
   "Este código já atingiu o limite de usos.": "This code has reached its usage limit.",
+  "Este código ainda não está valendo. Tente de novo quando chegar a hora.": "This code is not active yet. Try again when the time comes.",
   "Muitas tentativas erradas. Espere alguns minutos e tente de novo.": "Too many wrong attempts. Wait a few minutes and try again.",
   "Não foi possível resgatar o código agora.": "Could not redeem the code right now.",
   "Recompensa:": "Reward:",

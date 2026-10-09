@@ -1126,6 +1126,7 @@ export default {
   "Você já resgatou este código.": "Ya canjeaste este código.",
   "Este código não está mais disponível.": "Este código ya no está disponible.",
   "Este código já atingiu o limite de usos.": "Este código ya alcanzó su límite de usos.",
+  "Este código ainda não está valendo. Tente de novo quando chegar a hora.": "Este código aún no está activo. Inténtalo de nuevo cuando llegue la hora.",
   "Muitas tentativas erradas. Espere alguns minutos e tente de novo.": "Demasiados intentos erróneos. Espera unos minutos e inténtalo de nuevo.",
   "Não foi possível resgatar o código agora.": "No se pudo canjear el código ahora.",
   "Recompensa:": "Recompensa:",

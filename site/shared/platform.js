@@ -528,6 +528,7 @@ const ERROS_CODIGO = {
   ja_resgatado: 'Você já resgatou este código.',
   codigo_encerrado: 'Este código não está mais disponível.',
   codigo_esgotado: 'Este código já atingiu o limite de usos.',
+  codigo_nao_comecou: 'Este código ainda não está valendo. Tente de novo quando chegar a hora.',
   muitas_tentativas: 'Muitas tentativas erradas. Espere alguns minutos e tente de novo.',
 };
 

@@ -1126,6 +1126,7 @@ export default {
   "Você já resgatou este código.": "Hai già riscattato questo codice.",
   "Este código não está mais disponível.": "Questo codice non è più disponibile.",
   "Este código já atingiu o limite de usos.": "Questo codice ha raggiunto il limite di utilizzi.",
+  "Este código ainda não está valendo. Tente de novo quando chegar a hora.": "Questo codice non è ancora attivo. Riprova quando sarà il momento.",
   "Muitas tentativas erradas. Espere alguns minutos e tente de novo.": "Troppi tentativi sbagliati. Attendi qualche minuto e riprova.",
   "Não foi possível resgatar o código agora.": "Impossibile riscattare il codice in questo momento.",
   "Recompensa:": "Ricompensa:",
