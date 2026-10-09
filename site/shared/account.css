@@ -697,11 +697,11 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
   filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 6px rgba(255, 255, 255, 0.55)); animation: fx-lj-prata 3.4s linear infinite; }
 @keyframes fx-lj-prata { from { background-position: 0 0; } to { background-position: -250% 0; } }
 
-/* Faíscas Negativo: letras pretas com contorno branco e brilho branco; um clarão branco corre por cima */
+/* Faíscas Negativo: letras pretas com contorno branco e brilho branco; um clarão laranja corre por cima */
 .fx-lj-negativo { color: #070707; -webkit-text-stroke: 0.035em #ffffff; paint-order: stroke fill;
   filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.75)); }
 .fx-lj-negativo::before { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; color: transparent; -webkit-text-stroke: 0;
-  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%) 0 0 / 260% 100% no-repeat;
+  background: linear-gradient(105deg, transparent 36%, rgba(255, 110, 0, 0.9) 46%, #ffb04a 50%, rgba(255, 110, 0, 0.9) 54%, transparent 64%) 0 0 / 260% 100% no-repeat;
   -webkit-background-clip: text; background-clip: text; animation: fx-lj-negativo 3.2s linear infinite; }
 @keyframes fx-lj-negativo { from { background-position: 130% 0; } to { background-position: -130% 0; } }
 
