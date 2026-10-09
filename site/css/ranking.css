@@ -51,3 +51,11 @@
   .rk-lista li .rk-elo { grid-area: elo; justify-self: start; padding-left: 44px; font-size: 12px; }
   .rk-lista li .rk-pts { grid-area: pts; align-self: center; }
 }
+
+/* Sua posição (quando fora da página) e marcador de páginas */
+.rk-meu { margin-top: 16px; border-color: rgba(217, 168, 43, 0.45); }
+.rk-pag { display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap; margin: 18px 0 4px; }
+.rk-pag button { min-width: 36px; height: 36px; padding: 0 10px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--panel); color: var(--text, #f4efe4); font-weight: 700; cursor: pointer; }
+.rk-pag button:hover:not(:disabled):not(.on) { border-color: var(--gold); }
+.rk-pag button.on { background: var(--gold); border-color: var(--gold); color: #140f02; }
+.rk-pag button:disabled { opacity: 0.35; cursor: default; }

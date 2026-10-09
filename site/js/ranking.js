@@ -34,6 +34,8 @@ try {
 } catch { /* sem armazenamento */ }
 if (!PERIODOS.some(([id]) => id === periodo)) periodo = 'geral';
 if (!FILTROS.some(([id]) => id === elo)) elo = '';
+const POR_PAGINA = 10;
+let pagina = 1;
 let status = null;
 let dados = null;
 let erro = '';
@@ -52,6 +54,23 @@ function linha(j) {
   </li>`;
 }
 
+// Marcador de páginas: « ‹ 1 2 [3] 4 5 › » (no máximo 5 números por vez).
+function paginacao(total) {
+  if (total <= 1) return '';
+  let ini = Math.max(1, pagina - 2);
+  const fim = Math.min(total, ini + 4);
+  ini = Math.max(1, fim - 4);
+  const num_ = (n) => `<button type="button" data-pag="${n}" class="${n === pagina ? 'on' : ''}"${n === pagina ? ' aria-current="page"' : ''}>${n}</button>`;
+  const seta = (txt, alvo, rotulo, off) => `<button type="button" data-pag="${alvo}" aria-label="${rotulo}"${off ? ' disabled' : ''}>${txt}</button>`;
+  const nums = [];
+  for (let n = ini; n <= fim; n++) nums.push(num_(n));
+  return `<nav class="rk-pag" aria-label="Páginas do ranking">
+    ${seta('«', 1, 'Primeira página', pagina === 1)}${seta('‹', pagina - 1, 'Página anterior', pagina === 1)}
+    ${nums.join('')}
+    ${seta('›', pagina + 1, 'Próxima página', pagina === total)}${seta('»', total, 'Última página', pagina === total)}
+  </nav>`;
+}
+
 function tabela() {
   const tabs = PERIODOS.map(([id, nome]) => `<button type="button" data-periodo="${id}" class="${periodo === id ? 'on' : ''}">${nome}</button>`).join('');
   const filtros = periodo === 'geral'
@@ -65,11 +84,16 @@ function tabela() {
       ? (elo ? `Ninguém no ${esc(eloInfo(elo).nome)} ainda.` : 'Ninguém na ranqueada ainda. Seja o primeiro!')
       : `Ninguém ganhou PDR ${periodo === 'diario' ? 'hoje' : periodo === 'semanal' ? 'nesta semana' : 'neste mês'} ainda.`}</p>`;
   } else {
-    const fora = dados.eu && !dados.lista.some((j) => j.eu);
+    const total = Math.max(1, Math.ceil(dados.lista.length / POR_PAGINA));
+    pagina = Math.min(Math.max(1, pagina), total);
+    const visiveis = dados.lista.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+    // Fora desta página (ou além do top 100): a própria posição aparece logo abaixo, separada.
+    const fora = dados.eu && !visiveis.some((j) => j.eu);
     const u = platform.getUser();
-    corpo = `<ol class="rk-lista">${dados.lista.map(linha).join('')}
-      ${fora ? linha({ ...dados.eu, eu: true, username: u.username, avatar: u.avatar, apoiador: u.apoioTotal > 0, efeito: u.efeito, moldura: u.moldura }).replace('class="eu', 'class="eu sep') : ''}
-    </ol>`;
+    const meu = fora ? linha({ ...dados.eu, eu: true, username: u.username, avatar: u.avatar, apoiador: u.apoioTotal > 0, efeito: u.efeito, moldura: u.moldura }) : '';
+    corpo = `<ol class="rk-lista">${visiveis.map(linha).join('')}</ol>
+      ${meu ? `<ol class="rk-lista rk-meu" aria-label="Sua posição">${meu}</ol>` : ''}
+      ${paginacao(total)}`;
   }
   const quando = !dados ? '' : periodo === 'geral' ? 'Pelo elo e PDR'
     : periodo === 'diario' ? `Hoje (${ddmm(dados.fim)})` : `${ddmm(dados.inicio)} – ${ddmm(dados.fim)}`;
@@ -128,14 +152,22 @@ root.addEventListener('click', (e) => {
   const p = e.target.closest('[data-periodo]');
   if (p && p.dataset.periodo !== periodo) {
     periodo = p.dataset.periodo;
+    pagina = 1;
     guardar();
     carregarTabela();
   }
   const f = e.target.closest('[data-elo]');
   if (f && f.dataset.elo !== elo) {
     elo = f.dataset.elo;
+    pagina = 1;
     guardar();
     carregarTabela();
+  }
+  const g = e.target.closest('[data-pag]');
+  if (g && !g.disabled) {
+    pagina = Number(g.dataset.pag);
+    render();
+    document.querySelector('.rk-topo')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
   if (e.target.closest('[data-act="entrar"]')) openAuthModal('login');
 });
