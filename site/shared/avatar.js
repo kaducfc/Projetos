@@ -41,12 +41,12 @@ export const EXCLUSIVOS = [
   { id: 'exc-abobora-sombria', nome: 'Abóbora Sombria' },
   // Exclusivo do cartão de visita (código no verso). Arte provisória: troque o arquivo exc-cartao-rift.webp.
   { id: 'exc-cartao-rift', nome: 'Cartão Rift Arcade' },
+  // Só por código de recompensa (RIFTFINALCBLOL2026).
+  { id: 'exc-los-furia', nome: 'Final CBLOL 2026' },
 ];
 
 // Em teste: só o painel (aba Teste) mostra. Para lançar, mover para EXCLUSIVOS.
-export const EXCLUSIVOS_TESTE = [
-  { id: 'exc-los-furia', nome: 'Final CBLOL 2026' },
-];
+export const EXCLUSIVOS_TESTE = [];
 
 export const AVATARES = ['mascote', ...ICONES.map((i) => `icone:${i.id}`)];
 export const AVATARES_ESPECIAIS = ESPECIAIS.map((i) => `icone:${i.id}`);

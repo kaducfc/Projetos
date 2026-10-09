@@ -33,9 +33,9 @@ test('efeitos: automático dá o reflexo ao apoiador, "nenhum" tira, id desconhe
 });
 
 test('efeitos: os de teste têm CSS e não estão na lista pública', () => {
-  assert.equal(EFEITOS_TESTE.length, 16);
+  assert.equal(EFEITOS_TESTE.length, 15);
   assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('nv-')).length, 5);
-  assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('lj-')).length, 8);
+  assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('lj-')).length, 7);
   assert.ok(EFEITOS_TESTE.some((e) => /Laranja e preto/.test(e.tema)));
   for (const e of EFEITOS_TESTE) {
     assert.match(e.id, /^[a-z0-9-]{2,30}$/);
@@ -83,4 +83,15 @@ test('nome da recompensa de efeito/ícone usa o nome do site (Streamer), não o 
   assert.equal(nomeRecompensa('efeito', 'st-nebulosa'), 'Streamer');
   assert.equal(nomeRecompensa('efeito', 'st-contorno'), 'Contorno Twitch'); // em teste (painel)
   assert.equal(nomeRecompensa('icone', 'exc-streamer'), 'Streamer');
+});
+
+test('Final CBLOL 2026: ícone e efeito só por código (oculto para quem não tem)', async () => {
+  const { EXCLUSIVOS, EXCLUSIVOS_TESTE } = await import('../shared/avatar.js');
+  assert.ok(EXCLUSIVOS.some((i) => i.id === 'exc-los-furia' && i.nome === 'Final CBLOL 2026'));
+  assert.ok(!EXCLUSIVOS_TESTE.some((i) => i.id === 'exc-los-furia'));
+  const e = EFEITOS.find((x) => x.id === 'lj-negativo');
+  assert.equal(e.nome, 'Final CBLOL 2026');
+  assert.equal(e.oculto, true);
+  assert.equal(efeitoAtivo('lj-negativo', false).classe, 'fx-lj-negativo'); // aparece no nick de quem escolheu
+  assert.ok(css.includes('.fx-lj-negativo'));
 });

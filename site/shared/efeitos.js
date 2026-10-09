@@ -16,6 +16,9 @@ export const EFEITOS = [
   // quando o efeito próprio estiver pronto.
   { id: 'ev-cartao', nome: 'Cartão Rift Arcade', classe: 'fx-reflexo', titulo: 'Exclusivo do cartão de visita do Rift Arcade',
     como: 'Exclusivo de quem recebeu o cartão de visita do Rift Arcade. Resgate o código em Meu perfil.' },
+  // Só por código de recompensa (RIFTFINALCBLOL2026). `oculto`: só aparece na lista de quem já tem.
+  { id: 'lj-negativo', nome: 'Final CBLOL 2026', classe: 'fx-lj-negativo', titulo: 'Final do CBLOL 2026', oculto: true,
+    como: 'Exclusivo de quem resgatou o código da Final do CBLOL 2026.' },
   // Recompensas do Passe de Batalha Halloween 2026.
   { id: 'hw-teia', nome: 'Teia de Aranha', classe: 'fx-hw-teia', titulo: 'Passe de Batalha Halloween 2026',
     como: 'Recompensa do nível 6 do Passe de Batalha.', link: { href: '/passe/', texto: 'Ver o passe' } },
@@ -39,7 +42,6 @@ export const EFEITOS_TESTE = [
   { id: 'lj-eq', nome: 'Equalizador', classe: 'fx-lj-eq', tema: 'Preto, laranja e branco · barras de som' },
   { id: 'lj-faisca', nome: 'Faíscas', classe: 'fx-lj-faisca', tema: 'Laranja e branco · ferro quente' },
   { id: 'lj-prata', nome: 'Faíscas Prata', classe: 'fx-lj-prata', tema: 'Preto, branco e laranja · metal com reflexo' },
-  { id: 'lj-negativo', nome: 'Final CBLOL 2026', classe: 'fx-lj-negativo', tema: 'Preto, branco e laranja · contorno branco e clarão laranja' },
   { id: 'lj-pulso', nome: 'Faíscas Pulso', classe: 'fx-lj-pulso', tema: 'Preto, branco e laranja · brilho que respira' },
 ];
 
