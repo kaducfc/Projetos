@@ -44,7 +44,9 @@ export const EXCLUSIVOS = [
 ];
 
 // Em teste: só o painel (aba Teste) mostra. Para lançar, mover para EXCLUSIVOS.
-export const EXCLUSIVOS_TESTE = [];
+export const EXCLUSIVOS_TESTE = [
+  { id: 'exc-los-furia', nome: 'LOS x FURIA' },
+];
 
 export const AVATARES = ['mascote', ...ICONES.map((i) => `icone:${i.id}`)];
 export const AVATARES_ESPECIAIS = ESPECIAIS.map((i) => `icone:${i.id}`);
