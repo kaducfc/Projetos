@@ -39,7 +39,7 @@ export const EFEITOS_TESTE = [
   { id: 'lj-eq', nome: 'Equalizador', classe: 'fx-lj-eq', tema: 'Preto, laranja e branco · barras de som' },
   { id: 'lj-faisca', nome: 'Faíscas', classe: 'fx-lj-faisca', tema: 'Laranja e branco · ferro quente' },
   { id: 'lj-prata', nome: 'Faíscas Prata', classe: 'fx-lj-prata', tema: 'Preto, branco e laranja · metal com reflexo' },
-  { id: 'lj-negativo', nome: 'Faíscas Negativo', classe: 'fx-lj-negativo', tema: 'Preto, branco e laranja · contorno branco e clarão laranja' },
+  { id: 'lj-negativo', nome: 'Final CBLOL 2026', classe: 'fx-lj-negativo', tema: 'Preto, branco e laranja · contorno branco e clarão laranja' },
   { id: 'lj-pulso', nome: 'Faíscas Pulso', classe: 'fx-lj-pulso', tema: 'Preto, branco e laranja · brilho que respira' },
 ];
 
