@@ -1642,6 +1642,7 @@ export default {
   "Resgatar código": "Canjear código",
   "Resgatar": "Canjear",
   "Código": "Código",
+  "Digite o código aqui": "Escribe el código aquí",
   "Digite o código que você recebeu. Cada código vale uma vez por conta.": "Escribe el código que recibiste. Cada código vale una vez por cuenta.",
   "Resumo": "Resumen",
   "Partidas": "Partidas",

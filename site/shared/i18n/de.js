@@ -1642,6 +1642,7 @@ export default {
   "Resgatar código": "Code einlösen",
   "Resgatar": "Einlösen",
   "Código": "Code",
+  "Digite o código aqui": "Code hier eingeben",
   "Digite o código que você recebeu. Cada código vale uma vez por conta.": "Gib den Code ein, den du erhalten hast. Jeder Code gilt einmal pro Konto.",
   "Resumo": "Übersicht",
   "Partidas": "Partien",

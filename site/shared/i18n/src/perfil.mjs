@@ -60,6 +60,7 @@ export default [
   ['Resgatar código', 'Redeem code', 'Code einlösen', 'Canjear código', 'Riscatta codice', 'Utiliser un code'],
   ['Resgatar', 'Redeem', 'Einlösen', 'Canjear', 'Riscatta', 'Utiliser'],
   ['Código', 'Code', 'Code', 'Código', 'Codice', 'Code'],
+  ['Digite o código aqui', 'Type the code here', 'Code hier eingeben', 'Escribe el código aquí', 'Scrivi qui il codice', 'Saisis le code ici'],
   ['Digite o código que você recebeu. Cada código vale uma vez por conta.', 'Enter the code you received. Each code can be used once per account.', 'Gib den Code ein, den du erhalten hast. Jeder Code gilt einmal pro Konto.', 'Escribe el código que recibiste. Cada código vale una vez por cuenta.', 'Inserisci il codice che hai ricevuto. Ogni codice vale una volta per account.', 'Saisis le code que tu as reçu. Chaque code est valable une fois par compte.'],
   ['Resumo', 'Summary', 'Übersicht', 'Resumen', 'Riepilogo', 'Résumé'],
   ['Partidas', 'Matches', 'Partien', 'Partidas', 'Partite', 'Parties'],

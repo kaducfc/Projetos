@@ -349,7 +349,7 @@ function resgatarCodigo() {
   const el = janela(`<h2 class="display">Resgatar código</h2>
     <p class="muted small">Digite o código que você recebeu. Cada código vale uma vez por conta.</p>
     <form data-form-codigo novalidate>
-      <input name="codigo" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="XXXX-XXXX-XXXX-XXXX" aria-label="Código" />
+      <input name="codigo" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="Digite o código aqui" aria-label="Código" />
       <p class="pf-msg" role="status"></p>
       <div class="pf-acts"><button type="button" class="btn-ghost" data-fechar>Fechar</button>
         <button type="submit" class="btn-primary">Resgatar</button></div>

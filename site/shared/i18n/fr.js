@@ -1642,6 +1642,7 @@ export default {
   "Resgatar código": "Utiliser un code",
   "Resgatar": "Utiliser",
   "Código": "Code",
+  "Digite o código aqui": "Saisis le code ici",
   "Digite o código que você recebeu. Cada código vale uma vez por conta.": "Saisis le code que tu as reçu. Chaque code est valable une fois par compte.",
   "Resumo": "Résumé",
   "Partidas": "Parties",

@@ -1642,6 +1642,7 @@ export default {
   "Resgatar código": "Redeem code",
   "Resgatar": "Redeem",
   "Código": "Code",
+  "Digite o código aqui": "Type the code here",
   "Digite o código que você recebeu. Cada código vale uma vez por conta.": "Enter the code you received. Each code can be used once per account.",
   "Resumo": "Summary",
   "Partidas": "Matches",

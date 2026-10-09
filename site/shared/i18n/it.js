@@ -1642,6 +1642,7 @@ export default {
   "Resgatar código": "Riscatta codice",
   "Resgatar": "Riscatta",
   "Código": "Codice",
+  "Digite o código aqui": "Scrivi qui il codice",
   "Digite o código que você recebeu. Cada código vale uma vez por conta.": "Inserisci il codice che hai ricevuto. Ogni codice vale una volta per account.",
   "Resumo": "Riepilogo",
   "Partidas": "Partite",
