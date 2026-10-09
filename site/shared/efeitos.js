@@ -38,6 +38,9 @@ export const EFEITOS_TESTE = [
   { id: 'lj-eclipse', nome: 'Eclipse', classe: 'fx-lj-eclipse', tema: 'Preto, laranja e branco · disco de fogo' },
   { id: 'lj-eq', nome: 'Equalizador', classe: 'fx-lj-eq', tema: 'Preto, laranja e branco · barras de som' },
   { id: 'lj-faisca', nome: 'Faíscas', classe: 'fx-lj-faisca', tema: 'Laranja e branco · ferro quente' },
+  { id: 'lj-prata', nome: 'Faíscas Prata', classe: 'fx-lj-prata', tema: 'Preto, branco e laranja · metal com reflexo' },
+  { id: 'lj-negativo', nome: 'Faíscas Negativo', classe: 'fx-lj-negativo', tema: 'Preto, branco e laranja · contorno branco e clarão' },
+  { id: 'lj-pulso', nome: 'Faíscas Pulso', classe: 'fx-lj-pulso', tema: 'Preto, branco e laranja · brilho que respira' },
 ];
 
 // De EFEITOS_TESTE, só estes dá para equipar (o servidor só os libera para o

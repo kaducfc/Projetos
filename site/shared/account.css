@@ -588,7 +588,7 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
 }
 
 /* ---------------------------------------------------------------- Preto e laranja (em teste) */
-.fx-lj-ondas, .fx-lj-alerta, .fx-lj-eclipse, .fx-lj-eq, .fx-lj-faisca { font-weight: 800; }
+.fx-lj-ondas, .fx-lj-alerta, .fx-lj-eclipse, .fx-lj-eq, .fx-lj-faisca, .fx-lj-prata, .fx-lj-negativo, .fx-lj-pulso { font-weight: 800; }
 
 /* Ondas Sonoras: três ondas de tamanhos e velocidades diferentes (uma delas ao contrário) dividem o nome: laranja em cima, preto embaixo */
 .fx-lj-ondas { color: #ff8a1f; -webkit-text-stroke: 0.03em #ff8a1f; text-shadow: 0 0 10px rgba(255, 120, 0, 0.4); }
@@ -640,7 +640,7 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
 /* Faíscas: nome em ferro quente (branco no alto, laranja embaixo) soltando faíscas que sobem e apagam */
 .fx-lj-faisca { color: transparent; background: linear-gradient(180deg, #fff6e0 0%, #ffc15a 38%, #ff7a00 70%, #b83a00 100%);
   -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 5px rgba(255, 110, 0, 0.7)); }
-.fx-lj-faisca::after { content: ''; position: absolute; left: -0.1em; right: -0.1em; top: -0.8em; bottom: -0.1em; pointer-events: none;
+.fx-lj-faisca::after, .fx-lj-prata::after, .fx-lj-negativo::after, .fx-lj-pulso::after { content: ''; position: absolute; left: -0.1em; right: -0.1em; top: -0.8em; bottom: -0.1em; pointer-events: none;
   background-image: radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%); background-repeat: no-repeat; background-size: 0.068em 0.068em, 0.075em 0.075em, 0.103em 0.103em, 0.1em 0.1em, 0.072em 0.072em, 0.112em 0.112em, 0.101em 0.101em, 0.067em 0.067em, 0.078em 0.078em, 0.099em 0.099em, 0.108em 0.108em, 0.102em 0.102em, 0.102em 0.102em, 0.094em 0.094em;
   background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em;
   -webkit-mask-image: linear-gradient(0deg, #000 0, #000 40%, transparent 92%); mask-image: linear-gradient(0deg, #000 0, #000 40%, transparent 92%);
@@ -687,4 +687,27 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
   89.348% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 58.00% -0.500em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
   89.783% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
   100% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+}
+
+/* Variações das Faíscas: as mesmas faíscas laranjas subindo, com o nome em preto e branco */
+/* Faíscas Prata: metal branco e cinza com um reflexo que passa, brilho branco e sombra preta */
+.fx-lj-prata { color: transparent;
+  background: linear-gradient(100deg, #6f6f6f 0%, #e9e9e9 26%, #ffffff 36%, #9c9c9c 52%, #f1f1f1 72%, #6f6f6f 100%) 0 0 / 250% 100% repeat-x;
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 6px rgba(255, 255, 255, 0.55)); animation: fx-lj-prata 3.4s linear infinite; }
+@keyframes fx-lj-prata { from { background-position: 0 0; } to { background-position: -250% 0; } }
+
+/* Faíscas Negativo: letras pretas com contorno branco e brilho branco; um clarão branco corre por cima */
+.fx-lj-negativo { color: #070707; -webkit-text-stroke: 0.035em #ffffff; paint-order: stroke fill;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.75)); }
+.fx-lj-negativo::before { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; color: transparent; -webkit-text-stroke: 0;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%) 0 0 / 260% 100% no-repeat;
+  -webkit-background-clip: text; background-clip: text; animation: fx-lj-negativo 3.2s linear infinite; }
+@keyframes fx-lj-negativo { from { background-position: 130% 0; } to { background-position: -130% 0; } }
+
+/* Faíscas Pulso: o brilho respira entre branco aceso e preto com halo branco */
+.fx-lj-pulso { color: #ffffff; -webkit-text-stroke: 0.02em #000; paint-order: stroke fill; animation: fx-lj-pulso 2.6s ease-in-out infinite alternate; }
+@keyframes fx-lj-pulso {
+  from { color: #ffffff; text-shadow: 0 0 4px #ffffff, 0 0 14px rgba(255, 255, 255, 0.85); }
+  to { color: #070707; text-shadow: 0 0 2px #ffffff, 0 0 8px rgba(255, 255, 255, 0.9), 0 0 18px rgba(255, 255, 255, 0.5); }
 }
