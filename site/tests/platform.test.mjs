@@ -1,0 +1,245 @@
+import { test, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createFakeSupabase, installMemoryStorage } from './fake-supabase.js';
+import * as platform from '../shared/platform.js';
+
+const GAME = 'carreira-no-rift';
+const tick = () => new Promise((r) => setTimeout(r, 5));
+
+test('fluxo completo: visitante → cadastro → sincroniza → sai → entra em outro aparelho', async () => {
+  const sb = createFakeSupabase();
+  const storage = installMemoryStorage();
+  platform.__setClientForTests(sb);
+  const events = [];
+  platform.onChange((e) => events.push(e));
+
+  // Visitante: tudo local.
+  await platform.init();
+  assert.equal(platform.getUser(), null);
+  platform.writeSave(GAME, { v: 2, year: 2027 });
+  await platform.recordResult(GAME, { score: 150, summary: { text: 'carreira como visitante' } });
+  assert.deepEqual(platform.loadLocalSave(GAME), { v: 2, year: 2027 });
+  assert.equal((await platform.listResults()).length, 1);
+  assert.equal(sb.db.site_game_results.length, 0);
+
+  // Cadastro: o que foi jogado como visitante sobe para a conta.
+  const res = await platform.signUp({ email: 'kadu@example.com', password: 'segredo123', username: 'kadu' });
+  assert.equal(res.needsConfirmation, false);
+  assert.equal(platform.getUser().username, 'kadu');
+  assert.equal(sb.db.site_game_saves.length, 1);
+  assert.deepEqual(sb.db.site_game_saves[0].data, { v: 2, year: 2027 });
+  assert.equal(sb.db.site_game_results.length, 1);
+  assert.equal(sb.db.site_game_results[0].score, 150);
+
+  // Jogando logado: save vai para a nuvem e partidas também.
+  platform.writeSave(GAME, { v: 2, year: 2030 });
+  await platform.flushPushes();
+  assert.deepEqual(sb.db.site_game_saves[0].data, { v: 2, year: 2030 });
+  await platform.recordResult(GAME, { score: 400, summary: { text: 'campeão mundial' } });
+  assert.equal(sb.db.site_game_results.length, 2);
+  const cloudList = await platform.listResults({ gameId: GAME });
+  assert.equal(cloudList.length, 2);
+  assert.equal(cloudList[0].score, 400, 'mais recente primeiro');
+
+  // Sair limpa o aparelho e avisa o jogo.
+  await platform.signOut();
+  await tick();
+  assert.equal(platform.getUser(), null);
+  assert.equal(platform.loadLocalSave(GAME), null);
+  assert.equal((await platform.listResults()).length, 0);
+  assert.ok(events.some((e) => e.type === 'auth' && e.cleared));
+
+  // Outro aparelho (storage vazio): ao entrar, a carreira da nuvem desce.
+  storage.clear();
+  platform.__setClientForTests(sb);
+  events.length = 0;
+  await platform.init();
+  await platform.signIn({ email: 'kadu@example.com', password: 'segredo123' });
+  assert.deepEqual(platform.loadLocalSave(GAME), { v: 2, year: 2030 });
+  assert.ok(events.some((e) => e.type === 'save' && e.gameId === GAME && e.data.year === 2030));
+  assert.equal((await platform.listResults()).length, 2);
+});
+
+test('save local mais recente que o da nuvem vence ao entrar', async () => {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.signUp({ email: 'a@example.com', password: 'segredo123', username: 'jogadora' });
+  platform.writeSave(GAME, { v: 2, year: 2026 });
+  await platform.flushPushes();
+  sb.db.site_game_saves[0].updated_at = '2020-01-01T00:00:00.000Z';
+  await platform.signOut();
+  await tick();
+
+  platform.writeSave(GAME, { v: 2, year: 2040 });
+  await platform.signIn({ email: 'a@example.com', password: 'segredo123' });
+  assert.deepEqual(sb.db.site_game_saves[0].data, { v: 2, year: 2040 });
+});
+
+test('partidas não duplicam ao reenviar e erros viram mensagens em português', async () => {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.signUp({ email: 'b@example.com', password: 'segredo123', username: 'Beto' });
+  await platform.recordResult(GAME, { score: 10 });
+  await platform.signOut();
+  await tick();
+
+  await assert.rejects(platform.signUp({ email: 'c@example.com', password: 'segredo123', username: 'beto' }), /já está em uso/);
+  await assert.rejects(platform.signUp({ email: 'c@example.com', password: 'segredo123', username: 'a' }), /3 a 20/);
+  await assert.rejects(platform.signIn({ email: 'b@example.com', password: 'errada' }), /E-mail ou senha incorretos/);
+  await assert.rejects(platform.signUp({ email: 'b@example.com', password: 'segredo123', username: 'outro' }), /Já existe uma conta/);
+
+  await platform.signIn({ email: 'b@example.com', password: 'segredo123' });
+  await platform.recordResult(GAME, { score: 20 });
+  assert.equal(sb.db.site_game_results.length, 2);
+});
+
+test('sem servidor (modo visitante), login falha com mensagem clara', async () => {
+  installMemoryStorage();
+  platform.__setClientForTests(null);
+  globalThis.__SITE_OFFLINE = true;
+  try {
+    await platform.init();
+    await assert.rejects(platform.signIn({ email: 'x@example.com', password: '123456' }), /indisponível/);
+    platform.writeSave(GAME, { v: 2 });
+    assert.deepEqual(platform.loadLocalSave(GAME), { v: 2 });
+  } finally {
+    delete globalThis.__SITE_OFFLINE;
+  }
+});
+
+test('várias jogadas no mesmo minuto viram um envio só, e falhas são tentadas de novo', async () => {
+  mock.timers.enable({ apis: ['setTimeout', 'Date'], now: Date.parse('2026-09-25T12:00:00Z') });
+  try {
+    const sb = createFakeSupabase();
+    installMemoryStorage();
+    platform.__setClientForTests(sb);
+    await platform.signUp({ email: 'd@example.com', password: 'segredo123', username: 'dani' });
+    const base = sb.stats.upserts;
+
+    // Primeira jogada: vai logo (nada foi enviado no último minuto).
+    platform.writeSave(GAME, { v: 2, click: 0 });
+    mock.timers.tick(1_500);
+    await tick0();
+    assert.equal(sb.stats.upserts, base + 1);
+
+    // Mais 29 jogadas seguidas: nada vai para a nuvem antes de fechar 1 minuto.
+    for (let i = 1; i < 30; i++) platform.writeSave(GAME, { v: 2, click: i });
+    mock.timers.tick(57_000);
+    await tick0();
+    assert.equal(sb.stats.upserts, base + 1);
+
+    // Fechou 1 minuto desde o primeiro envio: um único envio, com o save mais recente.
+    mock.timers.tick(3_000);
+    await tick0();
+    assert.equal(sb.stats.upserts, base + 2);
+    assert.deepEqual(sb.db.site_game_saves[0].data, { v: 2, click: 29 });
+
+    // Servidor falha: nova tentativa sozinha depois de alguns segundos.
+    sb.stats.failNextUpserts = 1;
+    platform.writeSave(GAME, { v: 2, click: 30 }, { urgent: true });
+    mock.timers.tick(1_500);
+    await tick0();
+    assert.equal(sb.stats.upserts, base + 3);
+    assert.deepEqual(sb.db.site_game_saves[0].data, { v: 2, click: 29 }, 'falhou, ainda não gravou');
+    mock.timers.tick(5_000);
+    await tick0();
+    assert.equal(sb.stats.upserts, base + 4);
+    assert.deepEqual(sb.db.site_game_saves[0].data, { v: 2, click: 30 });
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+// Deixa as promessas pendentes (timers já disparados) terminarem.
+async function tick0() {
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+}
+
+test('esqueci minha senha: pede o link e troca a senha', async () => {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await platform.signUp({ email: 'senha@example.com', password: 'antiga123', username: 'senha_teste' });
+  await platform.signOut();
+
+  await platform.requestPasswordReset('senha@example.com');
+  assert.equal(sb.auth.resetRequests.length, 1);
+  assert.equal(sb.auth.resetRequests[0].email, 'senha@example.com');
+
+  // O link do e-mail abre uma sessão; aí a senha nova é gravada.
+  await platform.signIn({ email: 'senha@example.com', password: 'antiga123' });
+  await assert.rejects(platform.updatePassword('123'), /pelo menos 6/);
+  await assert.rejects(platform.updatePassword('antiga123'), /diferente da atual/);
+  await platform.updatePassword('nova456');
+  await platform.signOut();
+  await assert.rejects(platform.signIn({ email: 'senha@example.com', password: 'antiga123' }), /incorretos/);
+  await platform.signIn({ email: 'senha@example.com', password: 'nova456' });
+  assert.equal(platform.getUser().username, 'senha_teste');
+  await platform.signOut();
+});
+
+test('login com Google: pede o nome de usuário no primeiro acesso', async () => {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await platform.signUp({ email: 'ocupado@example.com', password: 'segredo123', username: 'Faker' });
+  await platform.signOut();
+
+  await platform.signInWithGoogle();
+  assert.equal(sb.auth.oauthRequests[0].provider, 'google');
+
+  sb.auth.googleReturn({ email: 'joao@gmail.com', full_name: 'João Pé' });
+  await tick(); await tick();
+  const u = platform.getUser();
+  assert.equal(u.needsUsername, true);
+  assert.equal(u.suggestedUsername, 'JoaoPe');
+
+  await assert.rejects(platform.claimUsername('a!'), /3 a 20/);
+  await assert.rejects(platform.claimUsername('faker'), /já está em uso/);
+  await platform.claimUsername('JoaoPe');
+  assert.equal(platform.getUser().username, 'JoaoPe');
+  assert.equal(platform.getUser().needsUsername, undefined);
+
+  // Na próxima vez, já entra com o nome salvo.
+  await platform.signOut();
+  sb.auth.googleReturn({ email: 'joao@gmail.com', full_name: 'João Pé' });
+  await tick(); await tick();
+  assert.equal(platform.getUser().username, 'JoaoPe');
+  assert.equal(platform.getUser().needsUsername, undefined);
+  await platform.signOut();
+});
+
+test('estatísticas: visita 1x por dia, eventos de partida e painel só para admin', async () => {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await tick();
+  const visits = () => sb.db.site_events.filter((e) => e.kind === 'visit').length;
+  assert.equal(visits(), 1);
+  const device = sb.db.site_events[0].device;
+  assert.ok(device.length >= 8);
+
+  // Outra página no mesmo dia: não conta de novo.
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await tick();
+  assert.equal(visits(), 1);
+
+  await platform.track('game_start', GAME, { role: 'mid' });
+  const ev = sb.db.site_events.at(-1);
+  assert.equal(ev.kind, 'game_start');
+  assert.equal(ev.game_id, GAME);
+  assert.equal(ev.device, device);
+  assert.deepEqual(ev.data, { role: 'mid' });
+
+  assert.equal(await platform.isAdmin(), false);
+  await platform.signUp({ email: 'x@example.com', password: 'segredo123', username: 'comum' });
+  assert.equal(await platform.isAdmin(), false);
+  await assert.rejects(platform.adminStats(7), /não tem acesso/);
+  await platform.signOut();
+});

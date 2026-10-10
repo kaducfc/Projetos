@@ -1,0 +1,835 @@
+/* Barra do site e janela de conta, compartilhadas por hub e jogos.
+   Tokens próprios (--sb-*) para não depender do CSS de cada jogo. */
+
+:root {
+  --sb-bg: #0d0d0e;
+  --sb-panel: #151515;
+  --sb-line: #2c281f;
+  --sb-text: #f4efe4;
+  --sb-muted: #9b9383;
+  --sb-gold: #d9a82b;
+  --sb-gold-2: #f5cf5a;
+  --sb-ok: #7fd49a;
+  --sb-err: #f0948e;
+}
+
+.site-bar {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 8px 20px;
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  background: var(--sb-bg);
+  border-bottom: 1px solid var(--sb-line);
+  font: 600 13px/1.3 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--sb-text);
+  position: relative; z-index: 40;
+}
+.sb-brand { color: var(--sb-gold-2); text-decoration: none; letter-spacing: 0.5px; font-weight: 800; white-space: nowrap; }
+a.sb-brand:hover { color: var(--sb-gold); }
+.sb-brand:has(.sb-logo) { display: inline-flex; align-items: center; gap: 8px; line-height: 0; }
+.sb-logo { height: 36px; width: auto; display: block; }
+a.sb-brand:hover .sb-logo { filter: brightness(1.12); }
+.sb-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.sb-note { color: var(--sb-muted); font-weight: 500; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: transparent; color: var(--sb-text);
+  border: 1px solid var(--sb-line); border-radius: 4px;
+  padding: 7px 12px; font: inherit; cursor: pointer;
+}
+.sb-btn:hover { border-color: var(--sb-gold); }
+.sb-primary { background: var(--sb-gold); border-color: var(--sb-gold); color: #140f02; font-weight: 800; }
+.sb-primary:hover { background: var(--sb-gold-2); }
+.sb-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sb-ok); }
+.sb-user { position: relative; }
+.sb-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); min-width: 200px;
+  background: var(--sb-panel); border: 1px solid var(--sb-line); border-radius: 4px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  display: flex; flex-direction: column; padding: 6px;
+}
+.sb-menu[hidden] { display: none; }
+.sb-menu-email { color: var(--sb-muted); font-weight: 500; font-size: 12px; padding: 6px 8px 8px; border-bottom: 1px solid var(--sb-line); margin-bottom: 4px; overflow-wrap: anywhere; }
+.sb-menu a, .sb-menu button {
+  text-align: left; background: transparent; border: 0; color: var(--sb-text);
+  font: inherit; padding: 8px; border-radius: 3px; text-decoration: none; cursor: pointer;
+}
+.sb-menu a:hover, .sb-menu button:hover { background: rgba(217, 168, 43, 0.12); }
+.site-bar :focus-visible, .acc-modal :focus-visible { outline: 2px solid var(--sb-gold); outline-offset: 2px; }
+
+@media (max-width: 560px) {
+  .site-bar { padding-left: 16px; padding-right: 16px; }
+  .sb-note { display: none; }
+}
+
+/* ------------------------------------------------ janela de login */
+
+.acc-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  display: grid; place-items: center; padding: 16px;
+  background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(3px);
+}
+.acc-modal {
+  position: relative; width: min(400px, 100%);
+  background: linear-gradient(180deg, #1a1812, #111110);
+  border: 1px solid var(--sb-line); border-top: 2px solid var(--sb-gold);
+  border-radius: 6px; padding: 22px 22px 24px;
+  color: var(--sb-text);
+  font: 400 14px/1.45 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+.acc-close {
+  position: absolute; top: 8px; right: 10px;
+  background: transparent; border: 0; color: var(--sb-muted); font-size: 24px; cursor: pointer; line-height: 1;
+}
+.acc-close:hover { color: var(--sb-text); }
+.acc-tabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--sb-line); border-radius: 4px; overflow: hidden; margin: 6px 0 18px; }
+.acc-tabs button { background: transparent; border: 0; color: var(--sb-muted); font: 700 13px 'Inter', sans-serif; padding: 9px; cursor: pointer; }
+.acc-tabs button.on { background: var(--sb-gold); color: #140f02; }
+.acc-title { margin: 0 0 4px; font-size: 22px; font-weight: 800; text-wrap: balance; }
+.acc-sub { margin: 0 0 16px; color: var(--sb-muted); font-size: 13px; }
+.acc-form { display: flex; flex-direction: column; gap: 12px; }
+.acc-field { display: flex; flex-direction: column; gap: 5px; }
+.acc-field[hidden] { display: none; }
+.acc-field span { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--sb-muted); }
+.acc-field input {
+  background: #0c0c0c; border: 1px solid var(--sb-line); border-radius: 4px;
+  color: var(--sb-text); font: 500 15px 'Inter', sans-serif; padding: 10px 12px;
+}
+.acc-field input:focus { outline: none; border-color: var(--sb-gold); }
+.acc-tabs[hidden], .acc-link[hidden], .acc-social[hidden] { display: none; }
+.acc-google {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: #fff; color: #1f1f1f; border: 1px solid #dadce0; border-radius: 4px;
+  font: 700 14px 'Inter', sans-serif; padding: 11px; cursor: pointer;
+}
+.acc-google:hover:not(:disabled) { background: #f3f3f3; }
+.acc-google:disabled { opacity: 0.6; cursor: default; }
+.acc-or { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--sb-muted); font-size: 11.5px; }
+.acc-or::before, .acc-or::after { content: ''; flex: 1; border-top: 1px solid var(--sb-line); }
+.acc-link {
+  align-self: flex-start; background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--sb-muted); font: 600 12.5px 'Inter', sans-serif; text-decoration: underline; text-underline-offset: 3px;
+}
+.acc-link:hover { color: var(--sb-gold-2); }
+.acc-forgot { margin-top: -4px; }
+.acc-back { align-self: center; }
+.acc-submit[hidden] { display: none; }
+.acc-msg { margin: 0; min-height: 0; font-size: 13px; }
+.acc-msg:empty { display: none; }
+.acc-msg.err { color: var(--sb-err); }
+.acc-msg.ok { color: var(--sb-ok); }
+.acc-submit {
+  margin-top: 4px; background: var(--sb-gold); color: #140f02; border: 0; border-radius: 4px;
+  padding: 12px; font: 800 14px 'Inter', sans-serif; cursor: pointer;
+}
+.acc-submit:hover:not(:disabled) { background: var(--sb-gold-2); }
+.acc-submit:disabled { opacity: 0.6; cursor: default; }
+
+/* ------------------------------------------------ rodapé do site */
+
+.site-footer {
+  border-top: 1px solid var(--sb-line);
+  background: var(--sb-bg);
+  color: var(--sb-muted);
+  font: 400 12.5px/1.6 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  padding: 22px 20px calc(22px + env(safe-area-inset-bottom, 0px));
+  margin-top: 24px;
+}
+.sf-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 20px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+.sf-main { max-width: 78ch; display: flex; flex-direction: column; gap: 6px; }
+.sf-main p { margin: 0; }
+.sf-main b { color: var(--sb-text); font-weight: 600; }
+.sf-title { color: var(--sb-gold-2); font-weight: 800; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+.sf-mascot { width: 28px; height: 28px; }
+.sf-links { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 4px; }
+.sf-links a { color: var(--sb-text); text-decoration: none; font-weight: 600; }
+.sf-links a:hover { color: var(--sb-gold-2); text-decoration: underline; text-underline-offset: 3px; }
+.sf-donate {
+  flex: none; text-decoration: none; font-weight: 800; font-size: 13px;
+  color: #140f02; background: var(--sb-gold); border-radius: 4px; padding: 9px 14px;
+}
+.sf-donate:hover { background: var(--sb-gold-2); }
+@media (max-width: 560px) { .site-footer { padding-left: 16px; padding-right: 16px; } }
+
+/* Ícone do perfil (mascote ou campeão; sem ícone, a inicial do nome). */
+.avatar { display: inline-grid; place-items: center; flex: none; border-radius: 50%; overflow: hidden; background: #241f15; color: #f5cf5a; font-weight: 800; border: 1px solid rgba(217, 168, 43, 0.55); box-sizing: border-box; position: relative; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar:not(:has(img))::before { content: attr(data-letra); }
+.sb-avatar { margin-right: 2px; }
+
+/* Moldura: imagem por cima do ícone (tamanho e posição vêm do `k` em shared/molduras.js), sem ocupar espaço. */
+.av-wrap { position: relative; display: inline-block; flex: none; }
+.av-wrap > .avatar { width: 100%; height: 100%; }
+/* Com moldura, a borda de elo/dourada some: a moldura faz o papel de borda (e não deixa restos à mostra). */
+.av-wrap > .avatar { border-color: transparent !important; box-shadow: none !important; }
+.av-moldura-sozinha { display: block; max-width: 100%; height: auto; }
+.av-moldura { position: absolute; max-width: none; pointer-events: none; z-index: 2; }
+
+/* Aviso da ranqueada (Carreira no Rift) */
+.rk-aviso { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 95; width: min(560px, calc(100% - 24px)); display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; background: #17140e; color: #f4efe4; border: 1px solid #d9a82b; border-radius: 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55); font: 14px/1.45 Inter, system-ui, sans-serif; animation: rk-entra 0.25s ease-out; }
+.rk-aviso > div { flex: 1; }
+.rk-aviso a { color: #f5cf5a; font-weight: 700; }
+.rk-aviso button { background: none; border: 0; color: #9b9383; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 2px; }
+@keyframes rk-entra { from { opacity: 0; transform: translate(-50%, 10px); } }
+
+/* Borda do ícone pelo elo da ranqueada */
+.avatar.elo-ferro { border: 2px solid #8c8580; }
+.avatar.elo-bronze { border: 2px solid #b0784f; }
+.avatar.elo-prata { border: 2px solid #b4bec8; }
+.avatar.elo-ouro { border: 2px solid #e8b93f; box-shadow: 0 0 0 1px rgba(232, 185, 63, 0.35); }
+.avatar.elo-platina { border: 2px solid #4fc8b9; box-shadow: 0 0 0 1px rgba(79, 200, 185, 0.4); }
+.avatar.elo-esmeralda { border: 2px solid #2fbf71; box-shadow: 0 0 0 1px rgba(47, 191, 113, 0.45); }
+.avatar.elo-diamante { border: 2px solid #7d97ff; box-shadow: 0 0 6px rgba(125, 151, 255, 0.6); }
+.avatar.elo-mestre { border: 2px solid #b65cf0; box-shadow: 0 0 7px rgba(182, 92, 240, 0.65); }
+.avatar.elo-grao-mestre { border: 2px solid #ef4f3c; box-shadow: 0 0 8px rgba(239, 79, 60, 0.7); }
+.avatar.elo-desafiante { border: 2px solid #f5cf5a; box-shadow: 0 0 0 2px rgba(125, 151, 255, 0.55), 0 0 10px rgba(245, 207, 90, 0.7); }
+.emblema { display: inline-block; vertical-align: middle; object-fit: contain; }
+.emblema.vazio { filter: grayscale(1) brightness(0.55); opacity: 0.6; }
+
+/* Efeito "Reflexo" no nick de quem apoiou o site (shared/apoio.js) */
+.nick { font-weight: inherit; }
+/* will-change: camada própria estável; sem isso o Chrome às vezes repinta o texto com clip + filtro animado sem o brilho. */
+.fx { position: relative; display: inline-block; font-weight: 800; will-change: filter; }
+.fx-reflexo { background: linear-gradient(110deg, #c9961f 0%, #f5cf5a 32%, #fffbe6 50%, #f5cf5a 68%, #c9961f 100%); background-size: 200% 100%; background-repeat: repeat-x; -webkit-background-clip: text; background-clip: text; color: transparent; animation: fx-reflexo 2.6s linear infinite; }
+/* O degradê começa e termina na mesma cor: andar exatamente uma volta (200%) emenda sem salto. */
+@keyframes fx-reflexo { from { background-position: 0 0; } to { background-position: -200% 0; } }
+/* Efeitos de streamer (em teste no painel; shared/efeitos.js). Cada degradê
+   começa e termina na mesma cor, e a animação anda uma volta inteira: sem salto. */
+.fx-st-nebulosa { background: linear-gradient(100deg, #7c3aed 0%, #a78bfa 28%, #f3e8ff 50%, #a78bfa 72%, #7c3aed 100%); background-size: 200% 100%; background-repeat: repeat-x; -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.75)); animation: fx-reflexo 4.2s linear infinite; }
+
+@keyframes fx-neon { from { color: #bb92ff; text-shadow: 0 0 2px #dcc5ff, 0 0 6px #9146ff, 0 0 12px #772ce8, 0 0 22px #772ce8; } to { color: #d3b3ff; text-shadow: 0 0 3px #eadbff, 0 0 12px #a970ff, 0 0 24px #9146ff, 0 0 42px #772ce8; } }
+.fx-st-galaxia { background: radial-gradient(circle at 20% 30%, #fff 0 1.2px, transparent 2px), radial-gradient(circle at 72% 62%, #fff 0 1.2px, transparent 2px), radial-gradient(circle at 46% 82%, #fde68a 0 1.1px, transparent 2px), linear-gradient(100deg, #6366f1 0%, #a855f7 30%, #f472b6 50%, #a855f7 70%, #6366f1 100%); background-size: 34px 100%, 47px 100%, 27px 100%, 200% 100%; background-repeat: repeat-x; -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.7)); animation: fx-galaxia 5s linear infinite; }
+@keyframes fx-galaxia { from { background-position: 0 0, 0 0, 0 0, 0 0; } to { background-position: -34px 0, -47px 0, -27px 0, -200% 0; } }
+.fx-st-brasa { background: linear-gradient(0deg, #ef4444 0%, #f97316 22%, #fbbf24 42%, #fff1a8 50%, #fbbf24 58%, #f97316 78%, #ef4444 100%); background-size: 100% 300%; background-repeat: repeat-y; -webkit-background-clip: text; background-clip: text; color: transparent; animation: fx-brasa 2.2s linear infinite, fx-brasa-brilho 0.9s ease-in-out infinite alternate; }
+@keyframes fx-brasa { from { background-position: 0 0; } to { background-position: 0 -300%; } }
+@keyframes fx-brasa-brilho { from { filter: drop-shadow(0 0 3px rgba(249, 115, 22, 0.7)); } to { filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.95)); } }
+
+/* Streamer · Twitch: roxo oficial #9146ff */
+.fx-st-contorno { color: #fff; -webkit-text-stroke: 2px #9146ff; paint-order: stroke fill; text-shadow: 0 0 8px rgba(145, 70, 255, 0.75), 0 0 18px rgba(119, 44, 232, 0.55); animation: fx-contorno 3s ease-in-out infinite alternate; }
+@keyframes fx-contorno { from { text-shadow: 0 0 5px rgba(145, 70, 255, 0.6), 0 0 12px rgba(119, 44, 232, 0.4); } to { text-shadow: 0 0 10px rgba(169, 112, 255, 0.95), 0 0 24px rgba(145, 70, 255, 0.7); } }
+
+@keyframes fx-glitch {
+  0%, 86%, 100% { text-shadow: -1px 0 #00e5ff, 1px 0 #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); transform: none; }
+  88% { text-shadow: -3px 0 #00e5ff, 3px 0 #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); transform: translateX(1px); }
+  91% { text-shadow: 3px 0 #00e5ff, -3px 0 #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); transform: translateX(-1px); }
+  94% { text-shadow: -2px 1px #00e5ff, 2px -1px #ff3bd4, 0 0 10px rgba(145, 70, 255, 0.7); transform: none; }
+}
+
+
+@keyframes fx-aovivo { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.75); } }
+/* Streamer · Halloween: nick com céu estrelado (como a Galáxia) em cores de Halloween,
+   mais objetos que passam pelo nome (::before/::after em SVG/gradiente, sem imagem externa). */
+
+@keyframes fx-hw-cintila { from { filter: drop-shadow(0 0 4px rgba(var(--hw-glow), 0.5)) brightness(0.96); } to { filter: drop-shadow(0 0 9px rgba(var(--hw-glow), 0.95)) brightness(1.16); } }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.fx-hw-teia { --hw-glow: 190, 170, 255; background:
+    radial-gradient(circle at 20% 30%, #fff 0 1.6px, transparent 2.4000000000000004px) 0 0 / 34px 100% repeat-x,
+    radial-gradient(circle at 72% 64%, #f5f3ff 0 1.6px, transparent 2.4000000000000004px) 0 0 / 47px 100% repeat-x,
+    radial-gradient(circle at 46% 82%, #ddd6fe 0 1.3px, transparent 2.1px) 0 0 / 27px 100% repeat-x,
+    radial-gradient(circle at 88% 18%, #fff 0 1.2px, transparent 2.0px) 0 0 / 61px 100% repeat-x,
+    radial-gradient(circle at 58% 40%, #f5f3ff 0 1.0px, transparent 1.8px) 0 0 / 23px 100% repeat-x,
+    radial-gradient(ellipse at 35% 50%, rgba(196,181,253,.6), transparent 62%) 0 0 / 140px 100% repeat-x,
+    radial-gradient(ellipse at 70% 55%, rgba(148,163,184,.5), transparent 62%) 0 0 / 200px 100% repeat-x,
+    linear-gradient(100deg, #a78bfa 0%, #d9ccff 28%, #ffffff 50%, #d9ccff 72%, #a78bfa 100%) 0 0 / 300px 100% repeat-x;
+  -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(190, 170, 255, 0.65));
+  animation: fx-hw-teia 8.5s linear infinite, fx-hw-cintila 3.6s ease-in-out infinite alternate; }
+@keyframes fx-hw-teia { from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; } to { background-position: -34px 0, -47px 0, -27px 0, -61px 0, -23px 0, -140px 0, -200px 0, -300px 0; } }
+
+.fx-hw-teia::before { content: ''; position: absolute; left: -0.3em; top: -0.42em; width: 1.2em; height: 1.2em; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg stroke='%23e6dcff' stroke-opacity='.75' stroke-width='.9' fill='none' stroke-linecap='round'%3E%3Cpath d='M0 0 32 0M0 0 29 11M0 0 21 22M0 0 11 29M0 0 0 32'/%3E%3Cpath d='M6 0Q5 5 0 6M12 0Q10 10 0 12M19 0Q16 16 0 19M26 0Q22 22 0 26'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; animation: fx-hw-teia-vento 4.5s ease-in-out infinite alternate; transform-origin: 0 0; }
+@keyframes fx-hw-teia-vento { from { transform: rotate(-2deg) scale(1); opacity: .8; } to { transform: rotate(3deg) scale(1.05); opacity: 1; } }
+
+.fx-hw-teia::after { content: ''; position: absolute; top: -1.15em; height: 3em; left: 0; right: 0; pointer-events: none; background: linear-gradient(rgba(225,214,255,.8), rgba(225,214,255,.8)) 28% 0 / 1px 0em no-repeat, linear-gradient(rgba(225,214,255,.8), rgba(225,214,255,.8)) 74% 0 / 1px 0em no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg stroke='%23e3d4ff' stroke-width='1.3' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12.5 16 6 9.5 2.5 13'/%3E%3Cpath d='M12 18.5 4 17 1.5 22'/%3E%3Cpath d='M12.5 21 5 26 3.5 30'/%3E%3Cpath d='M13.5 22.5 9 29 8 31'/%3E%3Cpath d='M19.5 16 26 9.5 29.5 13'/%3E%3Cpath d='M20 18.5 28 17 30.5 22'/%3E%3Cpath d='M19.5 21 27 26 28.5 30'/%3E%3Cpath d='M18.5 22.5 23 29 24 31'/%3E%3C/g%3E%3Cellipse cx='16' cy='21' rx='5' ry='6.2' fill='%2334195a' stroke='%23e3d4ff' stroke-width='1'/%3E%3Ccircle cx='16' cy='13.4' r='3.3' fill='%2334195a' stroke='%23e3d4ff' stroke-width='1'/%3E%3Ccircle cx='14.7' cy='12.8' r='.75' fill='%23ff4d6d'/%3E%3Ccircle cx='17.3' cy='12.8' r='.75' fill='%23ff4d6d'/%3E%3Cpath d='M16 17.5v7' stroke='%23ff4d6d' stroke-width='.9'/%3E%3C/svg%3E") calc(28% - .28em) -.4em / .56em .56em no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg stroke='%23e3d4ff' stroke-width='1.3' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12.5 16 6 9.5 2.5 13'/%3E%3Cpath d='M12 18.5 4 17 1.5 22'/%3E%3Cpath d='M12.5 21 5 26 3.5 30'/%3E%3Cpath d='M13.5 22.5 9 29 8 31'/%3E%3Cpath d='M19.5 16 26 9.5 29.5 13'/%3E%3Cpath d='M20 18.5 28 17 30.5 22'/%3E%3Cpath d='M19.5 21 27 26 28.5 30'/%3E%3Cpath d='M18.5 22.5 23 29 24 31'/%3E%3C/g%3E%3Cellipse cx='16' cy='21' rx='5' ry='6.2' fill='%2334195a' stroke='%23e3d4ff' stroke-width='1'/%3E%3Ccircle cx='16' cy='13.4' r='3.3' fill='%2334195a' stroke='%23e3d4ff' stroke-width='1'/%3E%3Ccircle cx='14.7' cy='12.8' r='.75' fill='%23ff4d6d'/%3E%3Ccircle cx='17.3' cy='12.8' r='.75' fill='%23ff4d6d'/%3E%3Cpath d='M16 17.5v7' stroke='%23ff4d6d' stroke-width='.9'/%3E%3C/svg%3E") calc(74% - .28em) -.4em / .56em .56em no-repeat; filter: drop-shadow(0 0 3px rgba(var(--hw-glow), 0.8)); animation: fx-hw-teia-fio 9s ease-in-out infinite;
+  /* Aranhas e fios somem por completo ao subir: só ficam visíveis a partir da altura do nick. */
+  -webkit-mask-image: linear-gradient(transparent 0.7em, #000 1.15em); mask-image: linear-gradient(transparent 0.7em, #000 1.15em); }
+@keyframes fx-hw-teia-fio {
+  0% { background-size: 1px 0em, 1px 0em, .56em .56em, .56em .56em; background-position: 28% 0, 74% 0, calc(28% - .28em) -0.30em, calc(74% - .28em) -0.30em; }
+  14% { background-size: 1px 0em, 1px 0em, .56em .56em, .56em .56em; background-position: 28% 0, 74% 0, calc(28% - .28em) -0.30em, calc(74% - .28em) -0.30em; }
+  34% { background-size: 1px 1.5em, 1px 0em, .56em .56em, .56em .56em; background-position: 28% 0, 74% 0, calc(28% - .28em) 1.2em, calc(74% - .28em) -0.30em; }
+  42% { background-size: 1px 1.5em, 1px 0.1em, .56em .56em, .56em .56em; background-position: 28% 0, 74% 0, calc(28% - .28em) 1.2em, calc(74% - .28em) -0.20em; }
+  60% { background-size: 1px 0.2em, 1px 1.35em, .56em .56em, .56em .56em; background-position: 28% 0, 74% 0, calc(28% - .28em) -0.10em, calc(74% - .28em) 1.05em; }
+  70% { background-size: 1px 0em, 1px 1.35em, .56em .56em, .56em .56em; background-position: 28% 0, 74% 0, calc(28% - .28em) -0.30em, calc(74% - .28em) 1.05em; }
+  88% { background-size: 1px 0em, 1px 0.1em, .56em .56em, .56em .56em; background-position: 28% 0, 74% 0, calc(28% - .28em) -0.30em, calc(74% - .28em) -0.20em; }
+  100% { background-size: 1px 0em, 1px 0em, .56em .56em, .56em .56em; background-position: 28% 0, 74% 0, calc(28% - .28em) -0.30em, calc(74% - .28em) -0.30em; }
+}
+
+
+
+
+
+
+
+
+@keyframes fx-hw-brasas { from { background-position: 10% 100%, 34% 100%, 58% 100%, 84% 100%; } to { background-position: 10% -40%, 34% -30%, 58% -45%, 84% -35%; } }
+
+.fx-hw-neon { --hw-glow: 150, 60, 255; color: #000; -webkit-text-stroke: 0.11em transparent; paint-order: stroke fill; padding: 0 0.06em; margin: 0 -0.06em;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.55), #000 25%) 0 0 / 18px 18px,
+    radial-gradient(circle, rgba(255, 255, 255, 0.6), transparent 25%) 0 0 / 36px 36px,
+    linear-gradient(100deg, #4c1d95 0%, #7e22ce 22%, #b266f5 42%, #7e22ce 62%, #5b21b6 80%, #4c1d95 100%) 0 0 / 320px 100% repeat-x;
+  background-blend-mode: color-dodge, color-dodge, normal; -webkit-background-clip: text; background-clip: text;
+  filter: brightness(1.55) drop-shadow(0 0 6px rgba(var(--hw-glow), 0.85));
+  animation: fx-hw-neon-luz 4.5s linear infinite; }
+@keyframes fx-hw-neon-luz { from { background-position: 0 0, 0 0, 0 0; } to { background-position: 18px 18px, 36px 36px, -320px 0; } }
+
+.fx-hw-neon::after { content: ''; position: absolute; top: -0.8em; bottom: -0.5em; left: -0.5em; right: -0.5em; pointer-events: none; background: url("/shared/assets/efeitos/hw-morcego.webp") -0.95em 14% / 0.84em 0.34em no-repeat, url("/shared/assets/efeitos/hw-abobora.webp") -0.81em 58% / 0.62em 0.62em no-repeat, url("/shared/assets/efeitos/hw-caveira.webp") -0.7em 30% / 0.39em 0.55em no-repeat, url("/shared/assets/efeitos/hw-aranha.webp") -0.7em 66% / 0.5em 0.55em no-repeat, url("/shared/assets/efeitos/hw-morcego.webp") -0.65em 40% / 0.59em 0.24em no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%);
+  filter: brightness(0.66) drop-shadow(0 0 3px rgba(var(--hw-glow), 0.8)); animation: fx-hw-neon-after 15s linear infinite; }
+@keyframes fx-hw-neon-after {
+  0% { background-position: -0.95em 14%, -0.81em 58%, -0.7em 30%, -0.7em 66%, -0.65em 40%; }
+  2% { background-position: -0.95em 14%, -0.81em 58%, -0.7em 30%, -0.7em 66%, -0.65em 40%; }
+  20% { background-position: calc(-0.95em + (100% + 1.90em) * 0.500) 32.0%, -0.81em 58%, -0.7em 30%, -0.7em 66%, -0.65em 40%; }
+  38% { background-position: calc(100% + 0.95em) 50%, calc(-0.81em + (100% + 1.62em) * 0.474) 40.0%, -0.7em 30%, -0.7em 66%, -0.65em 40%; }
+  40% { background-position: calc(100% + 0.95em) 50%, calc(-0.81em + (100% + 1.62em) * 0.526) 38.0%, -0.7em 30%, -0.7em 66%, -0.65em 40%; }
+  56% { background-position: calc(100% + 0.95em) 50%, calc(-0.81em + (100% + 1.62em) * 0.947) 22.0%, calc(-0.7em + (100% + 1.40em) * 0.400) 42.8%, -0.7em 66%, -0.65em 40%; }
+  58% { background-position: calc(100% + 0.95em) 50%, calc(100% + 0.81em) 20%, calc(-0.7em + (100% + 1.40em) * 0.450) 44.4%, calc(-0.7em + (100% + 1.40em) * 0.053) 64.6%, -0.65em 40%; }
+  66% { background-position: calc(100% + 0.95em) 50%, calc(100% + 0.81em) 20%, calc(-0.7em + (100% + 1.40em) * 0.650) 50.8%, calc(-0.7em + (100% + 1.40em) * 0.263) 59.2%, -0.65em 40%; }
+  80% { background-position: calc(100% + 0.95em) 50%, calc(100% + 0.81em) 20%, calc(100% + 0.7em) 62%, calc(-0.7em + (100% + 1.40em) * 0.632) 49.6%, calc(-0.65em + (100% + 1.30em) * 0.412) 26.8%; }
+  94% { background-position: calc(100% + 0.95em) 50%, calc(100% + 0.81em) 20%, calc(100% + 0.7em) 62%, calc(100% + 0.7em) 40%, calc(-0.65em + (100% + 1.30em) * 0.824) 13.6%; }
+  100% { background-position: calc(100% + 0.95em) 50%, calc(100% + 0.81em) 20%, calc(100% + 0.7em) 62%, calc(100% + 0.7em) 40%, calc(100% + 0.65em) 8%; }
+}
+
+.fx-hw-neon::before { content: ''; position: absolute; top: -0.7em; bottom: -0.5em; left: -0.5em; right: -0.5em; pointer-events: none; background: url("/shared/assets/efeitos/hw-fantasma.webp") -0.75em 20% / 0.53em 0.62em no-repeat, url("/shared/assets/efeitos/hw-morcego.webp") -0.75em 66% / 0.74em 0.3em no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%);
+  filter: brightness(0.66) drop-shadow(0 0 3px rgba(var(--hw-glow), 0.8)); animation: fx-hw-neon-before 17s linear infinite; }
+@keyframes fx-hw-neon-before {
+  0% { background-position: -0.75em 20%, -0.75em 66%; }
+  8% { background-position: -0.75em 20%, -0.75em 66%; }
+  30% { background-position: -0.75em 20%, calc(-0.75em + (100% + 1.50em) * 0.579) 41.7%; }
+  46% { background-position: calc(-0.75em + (100% + 1.50em) * 0.421) 35.2%, calc(100% + 0.75em) 24%; }
+  68% { background-position: calc(100% + 0.75em) 56%, calc(100% + 0.75em) 24%; }
+  100% { background-position: calc(100% + 0.75em) 56%, calc(100% + 0.75em) 24%; }
+}
+
+
+/* Botão "Apoiar" no menu da conta */
+.sb-menu a.sb-apoiar { color: #ff8fa3; font-weight: 800; }
+.pdr-mais { color: #7fd49a; }
+.pdr-menos { color: #e58a80; }
+
+/* Seletor de idioma (barra do site) */
+.sb-lang { position: relative; }
+.sb-langbtn { padding: 6px 10px; }
+.sb-langmenu {
+  position: absolute; right: 0; top: calc(100% + 6px); min-width: 150px; z-index: 5;
+  background: var(--sb-panel); border: 1px solid var(--sb-line); border-radius: 4px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  display: flex; flex-direction: column; padding: 6px;
+}
+.sb-langmenu[hidden] { display: none; }
+.sb-langmenu button {
+  text-align: left; background: transparent; border: 0; color: var(--sb-text);
+  font: inherit; padding: 8px; border-radius: 3px; cursor: pointer;
+}
+.sb-langmenu button:hover { background: rgba(217, 168, 43, 0.12); }
+.sb-langmenu button.on { color: var(--sb-gold-2); font-weight: 800; }
+@media (max-width: 560px) { .sb-right { gap: 8px; } }
+
+/* Rift Coins na barra do site, entre o idioma e o nome */
+.sb-coins { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px 4px 6px; border: 1px solid rgba(245, 207, 90, 0.35); border-radius: 999px;
+  background: linear-gradient(180deg, rgba(245, 207, 90, 0.12), rgba(245, 207, 90, 0.04)); color: var(--gold-2, #f5cf5a); font-weight: 800; font-size: 13.5px; line-height: 1; font-variant-numeric: tabular-nums; transition: border-color 0.2s, background 0.2s, transform 0.2s; }
+button.sb-coins { cursor: pointer; font-family: inherit; }
+button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba(245, 207, 90, 0.2); }
+.sb-coins img { display: block; width: 22px; height: 22px; filter: drop-shadow(0 0 4px rgba(245, 207, 90, 0.45)); }
+.sb-coins-up { animation: sb-coins-up 1.5s ease-out; }
+.sb-coins-up img { animation: sb-coin-gira 0.9s ease-in-out; }
+@keyframes sb-coins-up { 0% { box-shadow: 0 0 0 0 rgba(245, 207, 90, 0.7); transform: scale(1.12); } 60% { box-shadow: 0 0 0 10px rgba(245, 207, 90, 0); transform: scale(1); } 100% { box-shadow: 0 0 0 0 rgba(245, 207, 90, 0); } }
+@keyframes sb-coin-gira { 0% { transform: rotateY(0); } 100% { transform: rotateY(360deg); } }
+@media (max-width: 520px) { .sb-coins { padding: 3px 8px 3px 4px; font-size: 12.5px; gap: 4px; } .sb-coins img { width: 18px; height: 18px; } }
+/* Celular: com as Rift Coins na barra, o idioma e o nome ficam mais compactos */
+@media (max-width: 480px) {
+  .sb-right { gap: 6px; }
+  .sb-langbtn > span[aria-hidden] { display: none; }
+  .sb-btn { padding-left: 8px; padding-right: 8px; gap: 5px; }
+  .sb-user .sb-btn .nick { max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
+}
+
+/* Aviso de abóboras do passe de batalha (shared/passe-aviso.js) */
+.ps-aviso-abobora { position: fixed; left: 50%; bottom: 20px; z-index: 130; transform: translateX(-50%); width: min(340px, calc(100% - 24px)); display: flex; gap: 14px; align-items: center; padding: 12px 30px 12px 12px;
+  background: #17140e; border: 1px solid #d9a82b; border-radius: 10px; color: #f4efe4; font: 14px/1.35 Inter, system-ui, sans-serif;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55); animation: pa-sobe 0.55s cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+.ps-aviso-abobora.pa-sai { animation: pa-desce 0.4s ease-in both; }
+.pa-img { flex: none; width: 56px; height: 56px; filter: drop-shadow(0 0 10px rgba(80, 220, 255, 0.85)); animation: pa-pula 0.8s 0.25s ease-out both; }
+.pa-txt { min-width: 0; flex: 1; display: grid; gap: 3px; }
+.pa-qtd { font-size: 20px; font-weight: 800; color: #f5cf5a; letter-spacing: 0.01em; }
+.pa-sub { font-size: 12.5px; color: #b6b2a6; }
+.pa-dia { font-size: 11.5px; color: #f5cf5a; font-weight: 700; }
+.pa-barra { margin-top: 4px; height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.pa-barra i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #1ea6d6, #7be7ff); box-shadow: 0 0 8px rgba(110, 230, 255, 0.8); transition: width 1.1s 0.5s cubic-bezier(0.2, 0.8, 0.3, 1); }
+.pa-sobe-nivel { border-color: #ffd76b; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), 0 0 24px rgba(245, 207, 90, 0.4); }
+.pa-sobe-nivel .pa-qtd { color: #ffe27a; }
+@keyframes pa-sobe { from { opacity: 0; transform: translate(-50%, 46px) scale(0.92); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+@keyframes pa-desce { to { opacity: 0; transform: translate(-50%, 30px) scale(0.96); } }
+@keyframes pa-pula { 0% { transform: scale(0.4) rotate(-12deg); } 55% { transform: scale(1.28) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
+
+.pa-x { position: absolute; top: 4px; right: 6px; background: none; border: 0; color: #9b9383; font-size: 20px; line-height: 1; cursor: pointer; padding: 2px 4px; }
+.pa-x:hover { color: #fff; }
+.pa-ir { justify-self: start; margin-top: 6px; padding: 4px 11px; border-radius: 6px; border: 1px solid rgba(217, 168, 43, 0.7); background: rgba(217, 168, 43, 0.1); color: #f5cf5a; font-size: 12px; font-weight: 800; text-decoration: none; }
+.pa-ir:hover { background: rgba(217, 168, 43, 0.22); }
+
+/* Comprar Rift Coins */
+.rc-backdrop { position: fixed; inset: 0; z-index: 160; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, 0.7); }
+.rc-modal { position: relative; width: min(440px, 100%); display: grid; gap: 12px; padding: 24px 22px 20px; border-radius: 12px; border: 1px solid #d9a82b; background: #17140e; color: #f4efe4; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); }
+.rc-x { position: absolute; top: 8px; right: 12px; background: none; border: 0; color: #9b9383; font-size: 24px; line-height: 1; cursor: pointer; }
+.rc-x:hover { color: #fff; }
+.rc-tit { margin: 0; font-family: 'Bebas Neue', Inter, sans-serif; font-size: 30px; letter-spacing: 0.04em; color: #f5cf5a; }
+.rc-lista { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rc-pacote { display: grid; justify-items: center; gap: 2px; padding: 14px 8px 12px; border-radius: 10px; border: 1px solid rgba(245, 207, 90, 0.4); background: linear-gradient(180deg, rgba(245, 207, 90, 0.14), rgba(245, 207, 90, 0.04)); color: #fff; cursor: pointer; font-family: inherit; transition: border-color 0.15s, transform 0.15s; }
+.rc-pacote:hover:not(:disabled) { border-color: #f5cf5a; transform: translateY(-2px); }
+.rc-pacote:disabled { opacity: 0.55; cursor: default; }
+.rc-pacote b { font-size: 24px; line-height: 1.1; color: #f5cf5a; font-variant-numeric: tabular-nums; }
+.rc-un { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: #b9b3a3; }
+.rc-pacote em { margin-top: 6px; font-style: normal; font-weight: 800; font-size: 16px; }
+.rc-nota { margin: 0; text-align: center; font-size: 12.5px; color: #8f8979; }
+.rc-msg { margin: 0; min-height: 1px; text-align: center; font-size: 13px; color: #ff9b9b; }
+.rc-aviso { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 170; max-width: calc(100vw - 32px); padding: 12px 18px; border-radius: 10px; border: 1px solid #d9a82b; background: #17140e; color: #f4efe4; font-size: 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+
+/* ---------------------------------------------------------------- Glitch (em teste)
+   Variações de "defeito de sinal". As que usam
+   ::before/::after copiam o nick pelo atributo data-text. */
+
+
+
+
+
+.fx-gl-fatiado, .fx-gl-matrix, .fx-gl-corrompido { font-weight: 800; }
+
+/* 2 · Fatiado (intenso): o nome é cortado em faixas que escorregam para os lados */
+.fx-gl-fatiado { color: #ffffff; text-shadow: 0 0 8px rgba(255, 255, 255, 0.35); }
+.fx-gl-fatiado::before, .fx-gl-fatiado::after { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; }
+.fx-gl-fatiado::before { color: #ff2bd6; clip-path: inset(0 0 100% 0); animation: fx-gl-fatiado-a 2.6s steps(1, end) infinite; }
+.fx-gl-fatiado::after { color: #17f2ff; clip-path: inset(100% 0 0 0); animation: fx-gl-fatiado-b 2.1s steps(1, end) infinite; }
+@keyframes fx-gl-fatiado-a {
+  0%, 100% { clip-path: inset(0 0 100% 0); transform: none; }
+  8% { clip-path: inset(10% 0 62% 0); transform: translateX(-5px); }
+  12% { clip-path: inset(48% 0 20% 0); transform: translateX(6px); }
+  16% { clip-path: inset(0 0 100% 0); transform: none; }
+  55% { clip-path: inset(70% 0 6% 0); transform: translateX(4px); }
+  59% { clip-path: inset(22% 0 55% 0); transform: translateX(-7px); }
+  63% { clip-path: inset(0 0 100% 0); transform: none; }
+}
+@keyframes fx-gl-fatiado-b {
+  0%, 100% { clip-path: inset(100% 0 0 0); transform: none; }
+  20% { clip-path: inset(60% 0 12% 0); transform: translateX(6px); }
+  24% { clip-path: inset(5% 0 75% 0); transform: translateX(-5px); }
+  28% { clip-path: inset(100% 0 0 0); transform: none; }
+  72% { clip-path: inset(35% 0 38% 0); transform: translateX(-6px); }
+  76% { clip-path: inset(80% 0 0 0); transform: translateX(5px); }
+  80% { clip-path: inset(100% 0 0 0); transform: none; }
+}
+
+/* 3 · Código Verde (médio): terminal verde com linhas de varredura e piscadas */
+.fx-gl-matrix { color: transparent; background: repeating-linear-gradient(0deg, #3dff7a 0 2px, #0b6b2c 2px 3px) 0 0 / 100% 6px; -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 0 5px rgba(61, 255, 122, 0.75)); animation: fx-gl-matrix-pisca 3.4s steps(1, end) infinite, fx-gl-matrix-varre 0.6s linear infinite; }
+@keyframes fx-gl-matrix-varre { from { background-position: 0 0; } to { background-position: 0 6px; } }
+@keyframes fx-gl-matrix-pisca {
+  0%, 70%, 74%, 100% { opacity: 1; transform: none; }
+  71% { opacity: 0.25; transform: translateX(-2px); }
+  72% { opacity: 1; transform: translateX(2px) scaleY(1.06); }
+  73% { opacity: 0.5; transform: none; }
+}
+.fx-gl-matrix::after { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; color: #b9ffcf; -webkit-text-fill-color: #b9ffcf; clip-path: inset(0 0 100% 0); pointer-events: none; animation: fx-gl-matrix-fatia 3.4s steps(1, end) infinite; }
+@keyframes fx-gl-matrix-fatia { 0%, 40%, 100% { clip-path: inset(0 0 100% 0); } 41% { clip-path: inset(30% 0 40% 0); transform: translateX(3px); } 44% { clip-path: inset(0 0 100% 0); transform: none; } }
+
+
+
+
+
+
+/* 5 · Dado Corrompido (violento): vermelho e preto, quadros que quebram, tarja cortando o nome */
+.fx-gl-corrompido { color: #ff3b3b; text-shadow: 2px 0 #1a0000, -2px 0 rgba(255, 255, 255, 0.55), 0 0 12px rgba(255, 30, 30, 0.8); animation: fx-gl-corrompido 1.9s steps(1, end) infinite; }
+@keyframes fx-gl-corrompido {
+  0%, 30%, 100% { transform: none; color: #ff3b3b; filter: none; }
+  31% { transform: translate(-3px, 1px) skewX(14deg) scaleX(1.06); color: #ffffff; }
+  33% { transform: translate(4px, -1px) skewX(-12deg); color: #ff3b3b; filter: hue-rotate(160deg); }
+  35% { transform: none; filter: none; }
+  62% { transform: scaleY(0.82) translateX(3px); color: #ffd1d1; }
+  64% { transform: translateX(-4px) skewX(10deg); color: #ff3b3b; filter: invert(1); }
+  66% { transform: none; filter: none; }
+  88% { transform: translateX(2px); filter: hue-rotate(-40deg); }
+  90% { transform: none; filter: none; }
+}
+.fx-gl-corrompido::before { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; color: #ffffff; clip-path: inset(0 0 100% 0); pointer-events: none; animation: fx-gl-corrompido-a 1.9s steps(1, end) infinite; mix-blend-mode: difference; }
+.fx-gl-corrompido::after { content: ''; position: absolute; left: -4%; right: -4%; top: 46%; height: 0.14em; background: #ff2a2a; pointer-events: none; transform: scaleX(0); transform-origin: left; animation: fx-gl-corrompido-b 1.9s steps(1, end) infinite; }
+@keyframes fx-gl-corrompido-a { 0%, 28%, 100% { clip-path: inset(0 0 100% 0); } 29% { clip-path: inset(18% 0 52% 0); transform: translateX(7px); } 34% { clip-path: inset(60% 0 8% 0); transform: translateX(-8px); } 36% { clip-path: inset(0 0 100% 0); transform: none; } 61% { clip-path: inset(40% 0 30% 0); transform: translateX(-6px); } 65% { clip-path: inset(0 0 100% 0); transform: none; } }
+@keyframes fx-gl-corrompido-b { 0%, 30%, 100% { transform: scaleX(0); } 31% { transform: scaleX(1); top: 30%; } 33% { transform: scaleX(0.6); top: 62%; } 35% { transform: scaleX(0); } 63% { transform: scaleX(1); top: 52%; } 65% { transform: scaleX(0); } }
+
+/* ---------------------------------------------------------------- Novos (em teste)
+   Cada um com outro formato: lava, cristal, listras retrô, relâmpago e pétalas. */
+.fx-nv-magma, .fx-nv-cristal, .fx-nv-synth, .fx-nv-raio, .fx-nv-sakura { font-weight: 800; }
+
+/* Magma (laranja e preto): letras pretas de rocha com contorno em brasa e um fio de lava que corre por dentro */
+.fx-nv-magma { color: transparent; -webkit-text-stroke: 0.045em #ff8a1f; paint-order: stroke fill;
+  background: linear-gradient(100deg, #0d0502 0%, #0d0502 30%, #ff4d00 42%, #ffb347 48%, #fff0b8 50%, #ffb347 52%, #ff4d00 58%, #0d0502 70%, #0d0502 100%) 0 0 / 250% 100% repeat-x;
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 0 4px rgba(255, 110, 0, 0.85)); animation: fx-nv-magma 3.8s linear infinite; }
+@keyframes fx-nv-magma { from { background-position: 0 0; } to { background-position: -250% 0; } }
+.fx-nv-magma::after { content: ''; position: absolute; left: 0; right: 0; top: -0.5em; bottom: 0; pointer-events: none;
+  background: radial-gradient(circle, #ffd27a 0 1.3px, transparent 2.2px) 0 0 / 23px 28px, radial-gradient(circle, #ff6a00 0 1.1px, transparent 2px) 11px 14px / 31px 37px;
+  -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent); mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent);
+  animation: fx-nv-brasas 2.4s linear infinite; }
+@keyframes fx-nv-brasas { from { background-position: 0 0, 11px 14px; } to { background-position: 6px -28px, 5px -23px; } }
+
+/* Cristal de Gelo (azul): faceta branca que atravessa o nome e brilhos em estrela */
+.fx-nv-cristal { color: transparent;
+  background: linear-gradient(112deg, #5db9ff 0%, #9fdcff 28%, #ffffff 36%, #a6e2ff 44%, #3f9bff 70%, #7fd0ff 100%) 0 0 / 260% 100% repeat-x;
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 0 4px rgba(110, 200, 255, 0.75)); animation: fx-nv-cristal 3.6s ease-in-out infinite; }
+@keyframes fx-nv-cristal { from { background-position: 0 0; } to { background-position: -260% 0; } }
+.fx-nv-cristal::before, .fx-nv-cristal::after { content: ''; position: absolute; width: 0.42em; height: 0.42em; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0 12 8 20 10 12 12 10 20 8 12 0 10 8 8z' fill='%23ffffff'/%3E%3C/svg%3E") center / contain no-repeat;
+  filter: drop-shadow(0 0 3px #bfe9ff); opacity: 0; animation: fx-nv-estrela 2.8s ease-in-out infinite; }
+.fx-nv-cristal::before { left: 18%; top: -0.2em; }
+.fx-nv-cristal::after { right: 8%; bottom: -0.05em; width: 0.3em; height: 0.3em; animation-delay: 1.3s; }
+@keyframes fx-nv-estrela { 0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); } 45% { opacity: 1; transform: scale(1) rotate(45deg); } 70% { opacity: 0; transform: scale(0.3) rotate(90deg); } }
+
+/* Noite Retrô (rosa, amarelo e ciano): letras com o "pôr do sol" listrado dos anos 80, cores que escorregam */
+.fx-nv-synth { color: transparent;
+  background: linear-gradient(90deg, #ff2bd6, #ffb300, #22e0ff, #ff2bd6) 0 0 / 300% 100% repeat-x;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-mask-image: linear-gradient(180deg, #000 0 44%, transparent 44% 51%, #000 51% 62%, transparent 62% 70%, #000 70% 80%, transparent 80% 89%, #000 89%);
+  mask-image: linear-gradient(180deg, #000 0 44%, transparent 44% 51%, #000 51% 62%, transparent 62% 70%, #000 70% 80%, transparent 80% 89%, #000 89%);
+  filter: drop-shadow(0 0 5px rgba(255, 60, 200, 0.7)); animation: fx-nv-synth 5s linear infinite; }
+@keyframes fx-nv-synth { from { background-position: 0 0; } to { background-position: -300% 0; } }
+
+/* Tempestade (azul elétrico): nome de céu carregado; a cada poucos segundos racham relâmpagos em pontos diferentes do nome */
+.fx-nv-raio { isolation: isolate; color: #dbe7ff; text-shadow: 0 0 5px #5b8cff, 0 0 14px #2f55ff; animation: fx-nv-raio 3.6s steps(1, end) infinite; }
+@keyframes fx-nv-raio {
+  0%, 13.9%, 20%, 49.9%, 53%, 79.9%, 85%, 100% { color: #dbe7ff; text-shadow: 0 0 5px #5b8cff, 0 0 14px #2f55ff; transform: none; }
+  14%, 17% { color: #ffffff; text-shadow: 0 0 4px #ffffff, 0 0 22px #a8c8ff, 0 0 44px #5b8cff; transform: translateX(1px); }
+  16%, 18.5% { color: #bcd2ff; text-shadow: 0 0 5px #5b8cff, 0 0 14px #2f55ff; transform: translateX(-1px); }
+  50% { color: #ffffff; text-shadow: 0 0 4px #ffffff, 0 0 22px #a8c8ff, 0 0 44px #5b8cff; }
+  51.5% { color: #bcd2ff; text-shadow: 0 0 5px #5b8cff, 0 0 14px #2f55ff; }
+  80%, 83% { color: #ffffff; text-shadow: 0 0 4px #ffffff, 0 0 22px #a8c8ff, 0 0 44px #5b8cff; transform: translateX(-1px); }
+  82%, 84.5% { color: #bcd2ff; text-shadow: 0 0 5px #5b8cff, 0 0 14px #2f55ff; transform: none; }
+}
+.fx-nv-raio::before { content: ''; position: absolute; left: -0.1em; right: -0.1em; top: -0.55em; bottom: -0.4em; pointer-events: none; z-index: -1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40' preserveAspectRatio='none'%3E%3Cpath d='M30 0 22 16 32 17 20 40 41 15 31 14 38 0Z' fill='%23fff7c2' stroke='%23ffd84a' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40' preserveAspectRatio='none'%3E%3Cpath d='M30 0 22 16 32 17 20 40 41 15 31 14 38 0Z' fill='%23fff7c2' stroke='%23ffd84a' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40' preserveAspectRatio='none'%3E%3Cpath d='M30 0 38 16 28 17 40 40 19 15 29 14 22 0Z' fill='%23fff7c2' stroke='%23ffd84a' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40' preserveAspectRatio='none'%3E%3Cpath d='M30 0 22 16 32 17 20 40 41 15 31 14 38 0Z' fill='%23fff7c2' stroke='%23ffd84a' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: 6% 50%, 36% 50%, 64% 50%, 92% 50%; background-repeat: no-repeat; background-size: 0 0, 0 0, 0 0, 0 0;
+  filter: drop-shadow(0 0 5px #ffe97a); animation: fx-nv-raio-b 3.6s steps(1, end) infinite; }
+@keyframes fx-nv-raio-b {
+  0% { background-size: 0 0, 0 0, 0 0, 0 0; }
+  13.9% { background-size: 0 0, 0 0, 0 0, 0 0; }
+  14% { background-size: 1em 100%, 0 0, 1em 100%, 0 0; }
+  16% { background-size: 0 0, 0 0, 0 0, 0 0; }
+  17% { background-size: 1em 100%, 0 0, 1em 100%, 0 0; }
+  18.5% { background-size: 0 0, 0 0, 0 0, 0 0; }
+  49.9% { background-size: 0 0, 0 0, 0 0, 0 0; }
+  50% { background-size: 0 0, 1em 100%, 0 0, 0 0; }
+  53% { background-size: 0 0, 0 0, 0 0, 0 0; }
+  62% { background-size: 0 0, 0 0, 0 0, 0 0; }
+  62.1% { background-size: 0 0, 0 0, 0 0, 1em 100%; }
+  63.5% { background-size: 0 0, 0 0, 0 0, 0 0; }
+  79.9% { background-size: 0 0, 0 0, 0 0, 0 0; }
+  80% { background-size: 1em 100%, 0 0, 0 0, 1em 100%; }
+  82% { background-size: 0 0, 0 0, 0 0, 0 0; }
+  83% { background-size: 0 0, 0 0, 0 0, 1em 100%; }
+  84.5% { background-size: 0 0, 0 0, 0 0, 0 0; }
+  100% { background-size: 0 0, 0 0, 0 0, 0 0; }
+}
+
+/* Sakura (rosa): nome em degradê de pétala, com dez pétalas que caem uma de cada vez (ordem embaralhada) até sair pelo fim do nome */
+.fx-nv-sakura { color: transparent;
+  background: linear-gradient(100deg, #ff8fbc 0%, #ffd3e6 34%, #ffffff 50%, #ffc2dc 66%, #ff7eb0 100%) 0 0 / 250% 100% repeat-x;
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 0 4px rgba(255, 130, 180, 0.6)); animation: fx-nv-sakura 6s linear infinite; }
+@keyframes fx-nv-sakura { from { background-position: 0 0; } to { background-position: -250% 0; } }
+.fx-nv-sakura::after { content: ''; position: absolute; left: -0.1em; right: -0.1em; top: -0.7em; bottom: -0.5em; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg transform='rotate(0 10 10)'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffb7d5' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg transform='rotate(35 10 10)'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffb7d5' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg transform='rotate(-30 10 10)'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffc9df' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg transform='rotate(0 10 10)'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffb7d5' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg transform='rotate(35 10 10)'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffb7d5' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg transform='rotate(-30 10 10)'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffc9df' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg transform='rotate(0 10 10)'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffb7d5' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg transform='rotate(35 10 10)'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffb7d5' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg transform='rotate(-30 10 10)'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffc9df' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg transform='rotate(0 10 10)'%3E%3Cpath d='M10 1C15 4 18 9 10 19 2 9 5 4 10 1Z' fill='%23ffb7d5' stroke='%23ff7eb0' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-image: linear-gradient(180deg, #000 0, #000 55%, transparent 95%); mask-image: linear-gradient(180deg, #000 0, #000 55%, transparent 95%);
+  background-repeat: no-repeat; background-size: 0.36em 0.36em, 0.3em 0.3em, 0.42em 0.42em, 0.34em 0.34em, 0.4em 0.4em, 0.28em 0.28em, 0.38em 0.38em, 0.32em 0.32em, 0.44em 0.44em, 0.3em 0.3em;
+  background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 44% -0.6em, 73% -0.6em, 5% -0.6em, 93% -0.6em, 63% -0.6em, 25% -0.6em, 53% -0.6em;
+  animation: fx-nv-petalas 10.0s linear infinite; }
+@keyframes fx-nv-petalas {
+  0% { background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 44% -0.6em, 73% -0.6em, 5% -0.6em, 93% -0.6em, 63% -0.6em, 25% -0.6em, 53% -0.6em; }
+  2.0% { background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 44% -0.6em, 73% -0.6em, 5% -0.6em, 93% -0.6em, 63% -0.6em, 25% -0.6em, 53% -0.6em; }
+  9.0% { background-position: 84.17% 0.170em, 34% -0.6em, 15% -0.6em, 44% -0.6em, 73% -0.6em, 5% -0.6em, 93% -0.6em, 63% -0.6em, 25% -0.6em, 53% -0.6em; }
+  14.0% { background-position: 85.00% 0.720em, 34% -0.6em, 15% -0.6em, 44% -0.6em, 73% -0.6em, 5% -0.6em, 93.76% -0.100em, 63% -0.6em, 25% -0.6em, 53% -0.6em; }
+  20.0% { background-position: 86.00% 1.380em, 34% -0.6em, 16.50% 0.107em, 44% -0.6em, 73% -0.6em, 5% -0.6em, 94.67% 0.500em, 63% -0.6em, 25% -0.6em, 53% -0.6em; }
+  26.0% { background-position: 87.00% 2.040em, 34% -0.6em, 18.00% 0.814em, 44% -0.6em, 73% -0.6em, 5% -0.6em, 95.58% 1.100em, 63% -0.6em, 25% -0.6em, 52.12% -0.018em; }
+  32.0% { background-position: 88.00% 2.700em, 34% -0.6em, 19.50% 1.521em, 44% -0.6em, 74.03% -0.034em, 5% -0.6em, 96.48% 1.700em, 63% -0.6em, 25% -0.6em, 51.24% 0.565em; }
+  32.2% { background-position: 83% -0.6em, 34% -0.6em, 19.55% 1.545em, 44% -0.6em, 74.06% -0.015em, 5% -0.6em, 96.52% 1.720em, 63% -0.6em, 25% -0.6em, 51.21% 0.584em; }
+  39.0% { background-position: 83% -0.6em, 34% -0.6em, 21.25% 2.346em, 44% -0.6em, 75.23% 0.626em, 5% -0.6em, 97.55% 2.400em, 63% -0.6em, 25% -0.6em, 50.21% 1.244em; }
+  42.0% { background-position: 83% -0.6em, 33.47% -0.309em, 22.00% 2.700em, 44% -0.6em, 75.74% 0.909em, 5% -0.6em, 98.00% 2.700em, 63% -0.6em, 25% -0.6em, 49.76% 1.535em; }
+  42.2% { background-position: 83% -0.6em, 33.44% -0.289em, 15% -0.6em, 44% -0.6em, 75.78% 0.927em, 5% -0.6em, 93% -0.6em, 63% -0.6em, 25% -0.6em, 49.74% 1.555em; }
+  44.0% { background-position: 83% -0.6em, 33.12% -0.115em, 15% -0.6em, 44% -0.6em, 76.09% 1.097em, 5% -0.6em, 93% -0.6em, 63% -0.6em, 25% -0.6em, 49.47% 1.729em; }
+  50.0% { background-position: 83% -0.6em, 32.06% 0.468em, 15% -0.6em, 44% -0.6em, 77.11% 1.663em, 5% -0.6em, 93% -0.6em, 63% -0.6em, 26.16% 0.039em, 48.59% 2.312em; }
+  54.0% { background-position: 83% -0.6em, 31.35% 0.856em, 15% -0.6em, 44% -0.6em, 77.80% 2.040em, 4.03% -0.145em, 93% -0.6em, 63% -0.6em, 26.94% 0.465em, 48.00% 2.700em; }
+  54.2% { background-position: 83% -0.6em, 31.32% 0.875em, 15% -0.6em, 44% -0.6em, 77.83% 2.059em, 3.99% -0.122em, 93% -0.6em, 63% -0.6em, 26.97% 0.486em, 53% -0.6em; }
+  61.0% { background-position: 83% -0.6em, 30.12% 1.535em, 15% -0.6em, 44% -0.6em, 79.00% 2.700em, 2.34% 0.652em, 93% -0.6em, 63% -0.6em, 28.29% 1.210em, 53% -0.6em; }
+  61.2% { background-position: 83% -0.6em, 30.08% 1.555em, 15% -0.6em, 43.97% -0.579em, 73% -0.6em, 2.30% 0.674em, 93% -0.6em, 63% -0.6em, 28.33% 1.231em, 53% -0.6em; }
+  70.0% { background-position: 83% -0.6em, 28.53% 2.409em, 15% -0.6em, 42.59% 0.328em, 73% -0.6em, 0.17% 1.676em, 93% -0.6em, 63% -0.6em, 30.03% 2.168em, 53% -0.6em; }
+  73.0% { background-position: 83% -0.6em, 28.00% 2.700em, 15% -0.6em, 42.12% 0.638em, 73% -0.6em, -0.55% 2.017em, 93% -0.6em, 62.56% -0.233em, 30.61% 2.487em, 53% -0.6em; }
+  73.2% { background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 42.09% 0.658em, 73% -0.6em, -0.60% 2.040em, 93% -0.6em, 62.53% -0.209em, 30.65% 2.508em, 53% -0.6em; }
+  75.0% { background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 41.81% 0.844em, 73% -0.6em, -1.03% 2.245em, 93% -0.6em, 62.26% 0.011em, 31.00% 2.700em, 53% -0.6em; }
+  75.2% { background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 41.78% 0.864em, 73% -0.6em, -1.08% 2.268em, 93% -0.6em, 62.23% 0.036em, 25% -0.6em, 53% -0.6em; }
+  79.0% { background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 41.19% 1.256em, 73% -0.6em, -2.00% 2.700em, 93% -0.6em, 61.67% 0.500em, 25% -0.6em, 53% -0.6em; }
+  79.2% { background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 41.16% 1.277em, 73% -0.6em, 5% -0.6em, 93% -0.6em, 61.64% 0.524em, 25% -0.6em, 53% -0.6em; }
+  93.0% { background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 39.00% 2.700em, 73% -0.6em, 5% -0.6em, 93% -0.6em, 59.59% 2.211em, 25% -0.6em, 53% -0.6em; }
+  93.2% { background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 44% -0.6em, 73% -0.6em, 5% -0.6em, 93% -0.6em, 59.56% 2.236em, 25% -0.6em, 53% -0.6em; }
+  97.0% { background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 44% -0.6em, 73% -0.6em, 5% -0.6em, 93% -0.6em, 59.00% 2.700em, 25% -0.6em, 53% -0.6em; }
+  97.2% { background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 44% -0.6em, 73% -0.6em, 5% -0.6em, 93% -0.6em, 63% -0.6em, 25% -0.6em, 53% -0.6em; }
+  100% { background-position: 83% -0.6em, 34% -0.6em, 15% -0.6em, 44% -0.6em, 73% -0.6em, 5% -0.6em, 93% -0.6em, 63% -0.6em, 25% -0.6em, 53% -0.6em; }
+}
+
+/* ---------------------------------------------------------------- Preto e laranja (em teste) */
+.fx-lj-ondas, .fx-lj-alerta, .fx-lj-eclipse, .fx-lj-eq, .fx-lj-faisca, .fx-lj-prata, .fx-lj-negativo, .fx-lj-pulso { font-weight: 800; }
+
+/* Ondas Sonoras: três ondas de tamanhos e velocidades diferentes (uma delas ao contrário) dividem o nome: laranja em cima, preto embaixo */
+.fx-lj-ondas { color: #ff8a1f; -webkit-text-stroke: 0.03em #ff8a1f; text-shadow: 0 0 10px rgba(255, 120, 0, 0.4); }
+.fx-lj-ondas::after { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; color: #050302; -webkit-text-stroke: 0.03em #ff8a1f; text-shadow: none; pointer-events: none;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M0 45C8 32 22 63.2 30 49S46 50.2 60 45V100H0Z' fill='%23000'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M0 49C8 40 22 61.6 30 44S46 52.6 60 49V100H0Z' fill='%23000'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M0 41C8 25 22 63.4 30 47S46 47.4 60 41V100H0Z' fill='%23000'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M0 45C8 32 22 63.2 30 49S46 50.2 60 45V100H0Z' fill='%23000'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M0 49C8 40 22 61.6 30 44S46 52.6 60 49V100H0Z' fill='%23000'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M0 41C8 25 22 63.4 30 47S46 47.4 60 41V100H0Z' fill='%23000'/%3E%3C/svg%3E");
+  -webkit-mask-size: 0.9em 100%, 1.7em 100%, 1.3em 100%; mask-size: 0.9em 100%, 1.7em 100%, 1.3em 100%;
+  -webkit-mask-repeat: repeat-x; mask-repeat: repeat-x;
+  animation: fx-lj-ondas 5.2s linear infinite; }
+@keyframes fx-lj-ondas {
+  from { -webkit-mask-position: 0 0, 0 0, 0 0; mask-position: 0 0, 0 0, 0 0; }
+  to { -webkit-mask-position: -3.6em 0, -3.4em 0, 3.9em 0; mask-position: -3.6em 0, -3.4em 0, 3.9em 0; }
+}
+
+/* Fita de Alerta: listras de aviso pretas e laranjas deslizando dentro das letras, com contorno branco */
+.fx-lj-alerta { color: transparent; -webkit-text-stroke: 0.022em #ffffff; paint-order: stroke fill;
+  background: linear-gradient(135deg, #ff7a00 25%, #1a0c00 25% 50%, #ff7a00 50% 75%, #1a0c00 75%) 0 0 / 0.8em 0.8em;
+  -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 0 4px rgba(255, 122, 0, 0.6)); animation: fx-lj-alerta 1.1s linear infinite; }
+@keyframes fx-lj-alerta { from { background-position: 0 0; } to { background-position: 0.8em 0; } }
+
+/* Eclipse: um disco preto com coroa de fogo atravessa o nome por trás das letras brancas */
+.fx-lj-eclipse { isolation: isolate; color: #ffffff; text-shadow: 0 1px 0 #000, 0 0 6px rgba(255, 140, 0, 0.5); }
+.fx-lj-eclipse::before { content: ''; position: absolute; z-index: -1; top: 50%; left: -0.9em; width: 1.7em; height: 1.7em; margin-top: -0.85em; border-radius: 50%; pointer-events: none;
+  background: #000; box-shadow: 0 0 0 0.05em #ffb347, 0 0 0.35em 0.1em rgba(255, 140, 0, 0.95), 0 0 0.9em 0.25em rgba(255, 90, 0, 0.5);
+  animation: fx-lj-eclipse 4.6s ease-in-out infinite alternate; }
+@keyframes fx-lj-eclipse { from { left: -0.9em; } to { left: calc(100% - 0.8em); } }
+
+/* Equalizador: barras de som laranja e brancas pulsando atrás do nome */
+.fx-lj-eq { isolation: isolate; color: #ffffff; text-shadow: 0 1px 0 #000, 0 0 5px rgba(0, 0, 0, 0.9); }
+.fx-lj-eq::before { content: ''; position: absolute; z-index: -1; left: -0.05em; right: -0.05em; top: -0.15em; bottom: -0.1em; pointer-events: none; opacity: 0.85;
+  background-image: linear-gradient(#ff8a1f,#ff5a00), linear-gradient(#ffffff,#ffd9a8), linear-gradient(#ff7a00,#8a3200), linear-gradient(#ff8a1f,#ff5a00), linear-gradient(#ffffff,#ffd9a8), linear-gradient(#ff7a00,#8a3200), linear-gradient(#ff8a1f,#ff5a00), linear-gradient(#ffffff,#ffd9a8), linear-gradient(#ff7a00,#8a3200), linear-gradient(#ff8a1f,#ff5a00), linear-gradient(#ffffff,#ffd9a8), linear-gradient(#ff7a00,#8a3200); background-repeat: no-repeat; background-position: 4.0% 100%, 12.4% 100%, 20.7% 100%, 29.1% 100%, 37.5% 100%, 45.8% 100%, 54.2% 100%, 62.5% 100%, 70.9% 100%, 79.3% 100%, 87.6% 100%, 96.0% 100%;
+  background-size: 0.17em 60%, 0.17em 60%, 0.15em 40%, 0.15em 40%, 0.15em 40%, 0.15em 40%, 0.15em 40%, 0.15em 40%, 0.15em 40%, 0.15em 40%, 0.15em 40%, 0.15em 40%; animation: fx-lj-eq 2.4s ease-in-out infinite; }
+@keyframes fx-lj-eq {
+  0% { background-size: 0.17em 92%, 0.17em 40%, 0.17em 45%, 0.17em 71%, 0.17em 95%, 0.17em 39%, 0.17em 40%, 0.17em 65%, 0.17em 66%, 0.17em 96%, 0.17em 68%, 0.17em 88%; }
+  8% { background-size: 0.17em 83%, 0.17em 43%, 0.17em 39%, 0.17em 57%, 0.17em 95%, 0.17em 46%, 0.17em 76%, 0.17em 51%, 0.17em 42%, 0.17em 71%, 0.17em 92%, 0.17em 48%; }
+  16% { background-size: 0.17em 44%, 0.17em 69%, 0.17em 39%, 0.17em 45%, 0.17em 87%, 0.17em 58%, 0.17em 95%, 0.17em 41%, 0.17em 41%, 0.17em 39%, 0.17em 93%, 0.17em 44%; }
+  24% { background-size: 0.17em 48%, 0.17em 92%, 0.17em 46%, 0.17em 39%, 0.17em 75%, 0.17em 73%, 0.17em 62%, 0.17em 38%, 0.17em 64%, 0.17em 59%, 0.17em 70%, 0.17em 83%; }
+  32% { background-size: 0.17em 87%, 0.17em 92%, 0.17em 59%, 0.17em 39%, 0.17em 61%, 0.17em 86%, 0.17em 38%, 0.17em 42%, 0.17em 90%, 0.17em 94%, 0.17em 44%, 0.17em 92%; }
+  40% { background-size: 0.17em 89%, 0.17em 69%, 0.17em 73%, 0.17em 47%, 0.17em 48%, 0.17em 94%, 0.17em 68%, 0.17em 52%, 0.17em 94%, 0.17em 78%, 0.17em 40%, 0.17em 55%; }
+  48% { background-size: 0.17em 49%, 0.17em 44%, 0.17em 86%, 0.17em 60%, 0.17em 40%, 0.17em 96%, 0.17em 96%, 0.17em 66%, 0.17em 73%, 0.17em 41%, 0.17em 60%, 0.17em 40%; }
+  56% { background-size: 0.17em 43%, 0.17em 40%, 0.17em 94%, 0.17em 74%, 0.17em 38%, 0.17em 90%, 0.17em 69%, 0.17em 80%, 0.17em 47%, 0.17em 52%, 0.17em 87%, 0.17em 76%; }
+  64% { background-size: 0.17em 82%, 0.17em 61%, 0.17em 96%, 0.17em 87%, 0.17em 44%, 0.17em 79%, 0.17em 38%, 0.17em 91%, 0.17em 39%, 0.17em 91%, 0.17em 95%, 0.17em 95%; }
+  72% { background-size: 0.17em 93%, 0.17em 88%, 0.17em 90%, 0.17em 95%, 0.17em 56%, 0.17em 65%, 0.17em 61%, 0.17em 96%, 0.17em 57%, 0.17em 85%, 0.17em 77%, 0.17em 61%; }
+  80% { background-size: 0.17em 56%, 0.17em 95%, 0.17em 79%, 0.17em 96%, 0.17em 70%, 0.17em 51%, 0.17em 95%, 0.17em 94%, 0.17em 85%, 0.17em 45%, 0.17em 49%, 0.17em 38%; }
+  88% { background-size: 0.17em 40%, 0.17em 76%, 0.17em 64%, 0.17em 89%, 0.17em 83%, 0.17em 41%, 0.17em 76%, 0.17em 85%, 0.17em 96%, 0.17em 47%, 0.17em 38%, 0.17em 69%; }
+  96% { background-size: 0.17em 75%, 0.17em 49%, 0.17em 51%, 0.17em 78%, 0.17em 93%, 0.17em 38%, 0.17em 40%, 0.17em 72%, 0.17em 80%, 0.17em 86%, 0.17em 54%, 0.17em 96%; }
+  100% { background-size: 0.17em 92%, 0.17em 40%, 0.17em 45%, 0.17em 71%, 0.17em 95%, 0.17em 39%, 0.17em 40%, 0.17em 65%, 0.17em 66%, 0.17em 96%, 0.17em 68%, 0.17em 88%; }
+}
+
+/* Faíscas: nome em ferro quente (branco no alto, laranja embaixo) soltando faíscas que sobem e apagam */
+.fx-lj-faisca { color: transparent; background: linear-gradient(180deg, #fff6e0 0%, #ffc15a 38%, #ff7a00 70%, #b83a00 100%);
+  -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 5px rgba(255, 110, 0, 0.7)); }
+.fx-lj-faisca::after, .fx-lj-prata::after, .fx-lj-pulso::after { content: ''; position: absolute; left: -0.1em; right: -0.1em; top: -0.8em; bottom: -0.1em; pointer-events: none;
+  background-image: radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%); background-repeat: no-repeat; background-size: 0.068em 0.068em, 0.075em 0.075em, 0.103em 0.103em, 0.1em 0.1em, 0.072em 0.072em, 0.112em 0.112em, 0.101em 0.101em, 0.067em 0.067em, 0.078em 0.078em, 0.099em 0.099em, 0.108em 0.108em, 0.102em 0.102em, 0.102em 0.102em, 0.094em 0.094em;
+  background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em;
+  -webkit-mask-image: linear-gradient(0deg, #000 0, #000 40%, transparent 92%); mask-image: linear-gradient(0deg, #000 0, #000 40%, transparent 92%);
+  animation: fx-lj-faisca 4.6s linear infinite; }
+@keyframes fx-lj-faisca {
+  0% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  0.435% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89.00% 1.350em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  3.043% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 87.97% 1.111em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  6.087% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 86.76% 0.833em, 4% 2.6em, 68% 2.6em, 39.00% 1.350em, 82% 2.6em, 96% 2.6em, 23.51% 1.005em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  10.435% { background-position: 18% 2.6em, 75% 2.6em, 61.00% 1.350em, 54% 2.6em, 85.04% 0.435em, 4% 2.6em, 68% 2.6em, 37.86% 0.998em, 82% 2.6em, 96% 2.6em, 21.37% 0.511em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  19.348% { background-position: 18% 2.6em, 75% 2.6em, 58.47% 0.414em, 54% 2.6em, 81.52% -0.381em, 4% 2.6em, 68% 2.6em, 35.51% 0.275em, 82% 2.6em, 96% 2.6em, 17.00% -0.500em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  19.783% { background-position: 18% 2.6em, 75% 2.6em, 58.35% 0.368em, 54% 2.6em, 81.34% -0.420em, 4% 2.6em, 68% 2.6em, 35.40% 0.240em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  20.652% { background-position: 18% 2.6em, 75% 2.6em, 58.10% 0.277em, 54% 2.6em, 81.00% -0.500em, 4% 2.6em, 68% 2.6em, 35.17% 0.170em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  21.087% { background-position: 18% 2.6em, 75% 2.6em, 57.98% 0.231em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 35.06% 0.134em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  28.043% { background-position: 18% 2.6em, 75% 2.6em, 56.00% -0.500em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 33.23% -0.429em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  28.478% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 33.11% -0.465em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  28.913% { background-position: 18% 2.6em, 75.13% 1.302em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 33.00% -0.500em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  29.348% { background-position: 18% 2.6em, 75.26% 1.254em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 31.81% 1.305em, 11% 2.6em, 46% 2.6em; }
+  34.348% { background-position: 18% 2.6em, 76.75% 0.701em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 29.59% 0.793em, 11% 2.6em, 46.00% 1.350em; }
+  35.217% { background-position: 18% 2.6em, 77.01% 0.605em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 29.20% 0.704em, 11% 2.6em, 45.73% 1.278em; }
+  38.261% { background-position: 19.36% 1.099em, 77.92% 0.269em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4.00% 1.350em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 27.86% 0.392em, 11% 2.6em, 44.78% 1.027em; }
+  42.174% { background-position: 21.11% 0.775em, 79.09% -0.164em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 3.36% 1.053em, 68% 2.6em, 39% 2.6em, 82.00% 1.350em, 96% 2.6em, 25% 2.6em, 26.12% -0.010em, 11% 2.6em, 43.55% 0.703em; }
+  45.217% { background-position: 22.47% 0.524em, 80.00% -0.500em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 2.86% 0.821em, 68% 2.6em, 39% 2.6em, 81.36% 1.052em, 96% 2.6em, 25% 2.6em, 24.77% -0.322em, 11% 2.6em, 42.60% 0.452em; }
+  45.652% { background-position: 22.66% 0.488em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 2.79% 0.788em, 68% 2.6em, 39% 2.6em, 81.26% 1.010em, 96% 2.6em, 25% 2.6em, 24.58% -0.366em, 11% 2.6em, 42.47% 0.416em; }
+  46.957% { background-position: 23.24% 0.380em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 2.57% 0.689em, 68% 2.6em, 39% 2.6em, 80.99% 0.882em, 96.00% 1.350em, 25% 2.6em, 24.00% -0.500em, 11% 2.6em, 42.06% 0.308em; }
+  47.391% { background-position: 23.44% 0.344em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 2.50% 0.656em, 68% 2.6em, 39% 2.6em, 80.90% 0.840em, 95.85% 1.314em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 41.92% 0.272em; }
+  53.478% { background-position: 26.16% -0.159em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 1.50% 0.194em, 68% 2.6em, 39% 2.6em, 79.61% 0.244em, 93.69% 0.816em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 40.02% -0.231em; }
+  56.739% { background-position: 27.61% -0.428em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 0.96% -0.054em, 68% 2.6em, 39% 2.6em, 78.92% -0.075em, 92.54% 0.550em, 25% 2.6em, 32% 2.6em, 12.20% 1.073em, 39.00% -0.500em; }
+  57.174% { background-position: 27.81% -0.464em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 0.89% -0.087em, 68% 2.6em, 39% 2.6em, 78.83% -0.117em, 92.38% 0.514em, 25% 2.6em, 32% 2.6em, 12.36% 1.035em, 46% 2.6em; }
+  57.609% { background-position: 28.00% -0.500em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 0.82% -0.120em, 68% 2.6em, 39% 2.6em, 78.74% -0.160em, 92.23% 0.478em, 25% 2.6em, 32% 2.6em, 12.52% 0.998em, 46% 2.6em; }
+  58.043% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 0.75% -0.153em, 68% 2.6em, 39% 2.6em, 78.64% -0.202em, 92.08% 0.443em, 25% 2.6em, 32% 2.6em, 12.68% 0.962em, 46% 2.6em; }
+  61.087% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 0.25% -0.384em, 68% 2.6em, 39% 2.6em, 78.00% -0.500em, 91.00% 0.194em, 25% 2.6em, 32% 2.6em, 13.80% 0.702em, 46% 2.6em; }
+  61.522% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 0.18% -0.417em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 90.85% 0.158em, 25% 2.6em, 32% 2.6em, 13.96% 0.665em, 46% 2.6em; }
+  62.609% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 0.00% -0.500em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 90.46% 0.069em, 25% 2.6em, 32% 2.6em, 14.36% 0.573em, 46% 2.6em; }
+  63.043% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 90.31% 0.034em, 25% 2.6em, 32% 2.6em, 14.52% 0.536em, 46% 2.6em; }
+  65.87% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54.00% 1.350em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 89.31% -0.198em, 25% 2.6em, 32% 2.6em, 15.56% 0.295em, 46% 2.6em; }
+  68.261% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 55.32% 1.079em, 89% 2.6em, 4% 2.6em, 68.00% 1.350em, 39% 2.6em, 82% 2.6em, 88.46% -0.393em, 25% 2.6em, 32% 2.6em, 16.44% 0.092em, 46% 2.6em; }
+  69.565% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 56.04% 0.931em, 89% 2.6em, 4% 2.6em, 67.38% 1.236em, 39% 2.6em, 82% 2.6em, 88.00% -0.500em, 25% 2.6em, 32% 2.6em, 16.92% -0.019em, 46% 2.6em; }
+  70.0% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 56.28% 0.881em, 89% 2.6em, 4% 2.6em, 67.18% 1.197em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 17.08% -0.056em, 46% 2.6em; }
+  75.217% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 59.16% 0.289em, 89% 2.6em, 4% 2.6em, 64.70% 0.740em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 19.00% -0.500em, 46% 2.6em; }
+  75.652% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 59.40% 0.240em, 89% 2.6em, 4% 2.6em, 64.49% 0.702em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  82.174% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 63.00% -0.500em, 89% 2.6em, 4% 2.6em, 61.40% 0.129em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  82.609% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 61.20% 0.091em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  89.348% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 58.00% -0.500em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  89.783% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+  100% { background-position: 18% 2.6em, 75% 2.6em, 61% 2.6em, 54% 2.6em, 89% 2.6em, 4% 2.6em, 68% 2.6em, 39% 2.6em, 82% 2.6em, 96% 2.6em, 25% 2.6em, 32% 2.6em, 11% 2.6em, 46% 2.6em; }
+}
+
+/* Variações das Faíscas: as mesmas faíscas laranjas subindo, com o nome em preto e branco */
+/* Faíscas Prata: metal branco e cinza com um reflexo que passa, brilho branco e sombra preta */
+.fx-lj-prata { color: transparent;
+  background: linear-gradient(100deg, #6f6f6f 0%, #e9e9e9 26%, #ffffff 36%, #9c9c9c 52%, #f1f1f1 72%, #6f6f6f 100%) 0 0 / 250% 100% repeat-x;
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 6px rgba(255, 255, 255, 0.55)); animation: fx-lj-prata 3.4s linear infinite; }
+@keyframes fx-lj-prata { from { background-position: 0 0; } to { background-position: -250% 0; } }
+
+/* Faíscas Negativo: letras pretas com contorno branco e brilho branco; um clarão laranja corre por cima */
+.fx-lj-negativo { color: #070707; -webkit-text-stroke: 0.035em #ffffff; paint-order: stroke fill;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.75)); }
+.fx-lj-negativo::before { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; color: transparent; -webkit-text-stroke: 0;
+  background: linear-gradient(105deg, transparent 36%, rgba(255, 110, 0, 0.9) 46%, #ffb04a 50%, rgba(255, 110, 0, 0.9) 54%, transparent 64%) 0 0 / 260% 100% no-repeat;
+  -webkit-background-clip: text; background-clip: text; animation: fx-lj-negativo 3.2s linear infinite; }
+@keyframes fx-lj-negativo { from { background-position: 130% 0; } to { background-position: -130% 0; } }
+
+/* Faíscas Pulso: o brilho respira entre branco aceso e preto com halo branco */
+.fx-lj-pulso { color: #ffffff; -webkit-text-stroke: 0.02em #000; paint-order: stroke fill; animation: fx-lj-pulso 2.6s ease-in-out infinite alternate; }
+@keyframes fx-lj-pulso {
+  from { color: #ffffff; text-shadow: 0 0 4px #ffffff, 0 0 14px rgba(255, 255, 255, 0.85); }
+  to { color: #070707; text-shadow: 0 0 2px #ffffff, 0 0 8px rgba(255, 255, 255, 0.9), 0 0 18px rgba(255, 255, 255, 0.5); }
+}
+
+/* Faíscas Negativo: 42 faíscas (o triplo), cada uma com tempo, posição e tamanho próprios, subindo em ordem aleatória */
+.fx-lj-negativo::after { content: ''; position: absolute; left: -0.1em; right: -0.1em; top: -0.8em; bottom: -0.1em; pointer-events: none;
+  background-image: radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%), radial-gradient(circle, #ffffff 0 30%, #ffa63a 55%, rgba(255,110,0,0) 72%); background-repeat: no-repeat; background-size: 0.114em 0.114em, 0.095em 0.095em, 0.109em 0.109em, 0.12em 0.12em, 0.065em 0.065em, 0.103em 0.103em, 0.086em 0.086em, 0.076em 0.076em, 0.106em 0.106em, 0.086em 0.086em, 0.087em 0.087em, 0.1em 0.1em, 0.084em 0.084em, 0.096em 0.096em, 0.089em 0.089em, 0.079em 0.079em, 0.118em 0.118em, 0.114em 0.114em, 0.061em 0.061em, 0.072em 0.072em, 0.098em 0.098em, 0.116em 0.116em, 0.1em 0.1em, 0.083em 0.083em, 0.064em 0.064em, 0.089em 0.089em, 0.094em 0.094em, 0.088em 0.088em, 0.115em 0.115em, 0.098em 0.098em, 0.091em 0.091em, 0.092em 0.092em, 0.09em 0.09em, 0.087em 0.087em, 0.074em 0.074em, 0.11em 0.11em, 0.101em 0.101em, 0.094em 0.094em, 0.076em 0.076em, 0.071em 0.071em, 0.079em 0.079em, 0.061em 0.061em;
+  background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em;
+  -webkit-mask-image: linear-gradient(0deg, #000 0, #000 40%, transparent 92%); mask-image: linear-gradient(0deg, #000 0, #000 40%, transparent 92%);
+  animation: fx-lj-negativo-faiscas 5.0s linear infinite; }
+@keyframes fx-lj-negativo-faiscas {
+  0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  3.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  5.0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 55.3% 1.18em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  7.0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 56.4% 0.94em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 42.3% 1.13em; }
+  11.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 69.4% 1.02em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 58.6% 0.43em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 43.9% 0.66em; }
+  11.4% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 69.5% 1.00em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 58.8% 0.40em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 52.0% 1.33em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 43.9% 0.64em; }
+  12.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 69.7% 0.94em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 59.2% 0.30em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 52.3% 1.27em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.3% 1.29em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 44.2% 0.55em; }
+  13.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 70.0% 0.86em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 59.7% 0.18em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 52.6% 1.18em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.5% 1.21em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 68.1% 1.27em, 28.6% 2.6em, 44.6% 0.44em; }
+  15.0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 70.5% 0.71em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 60.7% -0.04em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 53.3% 1.03em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.9% 1.07em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.1% 1.20em, 61.6% 2.6em, 27.7% 2.6em, 68.7% 1.13em, 28.6% 2.6em, 45.3% 0.24em; }
+  15.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 70.7% 0.65em, 48.0% 2.6em, 83.9% 1.27em, 91.5% 2.6em, 61.2% -0.13em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 53.6% 0.96em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 84.1% 1.01em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 3.9% 1.14em, 61.6% 2.6em, 27.7% 2.6em, 69.0% 1.07em, 28.6% 2.6em, 45.6% 0.15em; }
+  18.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 71.6% 0.41em, 48.0% 2.6em, 82.8% 0.96em, 91.5% 2.6em, 62.8% -0.50em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 54.7% 0.71em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 84.7% 0.77em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 3.2% 0.89em, 62.6% 1.10em, 27.7% 2.6em, 70.2% 0.83em, 28.6% 2.6em, 46.7% -0.19em; }
+  19.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 71.7% 0.38em, 48.0% 2.6em, 82.6% 0.91em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 54.8% 0.68em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 84.8% 0.74em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 3.0% 0.85em, 62.7% 1.06em, 27.7% 2.6em, 70.3% 0.80em, 28.6% 2.6em, 46.9% -0.23em; }
+  21.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 72.4% 0.19em, 48.0% 2.6em, 81.8% 0.66em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 55.7% 0.48em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 85.3% 0.55em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 2.4% 0.66em, 63.6% 0.86em, 27.7% 2.6em, 71.2% 0.61em, 28.6% 2.6em, 47.8% -0.50em; }
+  21.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 72.4% 0.17em, 48.0% 2.6em, 81.7% 0.64em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 55.8% 0.46em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 85.4% 0.53em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 2.4% 0.64em, 63.6% 0.85em, 27.7% 2.6em, 71.3% 0.60em, 28.6% 2.6em, 47.8% -0.50em; }
+  22.0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 1.33em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 72.5% 0.15em, 48.0% 2.6em, 81.6% 0.62em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 55.8% 0.44em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 85.4% 0.52em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 2.3% 0.62em, 63.7% 0.83em, 27.7% 2.6em, 71.4% 0.58em, 28.6% 2.6em, 41.5% 2.6em; }
+  23.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.7% 1.22em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 72.8% 0.06em, 48.0% 2.6em, 81.2% 0.50em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 56.3% 0.34em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 85.7% 0.43em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 2.0% 0.52em, 64.1% 0.73em, 27.7% 2.6em, 71.8% 0.49em, 28.6% 2.6em, 41.5% 2.6em; }
+  24.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 16.0% 1.06em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 73.3% -0.07em, 48.0% 2.6em, 80.6% 0.33em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 56.8% 0.21em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 86.1% 0.30em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 1.6% 0.39em, 64.6% 0.59em, 27.3% 1.17em, 72.4% 0.36em, 28.6% 2.6em, 41.5% 2.6em; }
+  27.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 16.5% 0.78em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 74.1% -0.31em, 48.0% 2.6em, 79.5% 0.02em, 91.5% 2.6em, 54.5% 2.6em, 59.6% 0.99em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 57.9% -0.05em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 86.7% 0.06em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 0.8% 0.14em, 65.6% 0.34em, 26.6% 0.82em, 73.5% 0.13em, 28.6% 2.6em, 41.5% 2.6em; }
+  29.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 16.7% 0.64em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 74.5% -0.42em, 48.0% 2.6em, 78.9% -0.13em, 91.5% 2.6em, 54.5% 2.6em, 60.4% 0.83em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 58.4% -0.16em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 87.0% -0.05em, 19.7% 1.24em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 0.5% 0.03em, 66.1% 0.22em, 26.3% 0.66em, 74.0% 0.02em, 28.6% 2.6em, 41.5% 2.6em; }
+  30.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.1% 1.24em, 16.9% 0.55em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 74.8% -0.50em, 48.0% 2.6em, 78.6% -0.23em, 91.5% 2.6em, 54.5% 2.6em, 60.9% 0.71em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 58.8% -0.25em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 87.2% -0.12em, 19.5% 1.15em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 0.2% -0.05em, 66.4% 0.14em, 26.1% 0.55em, 74.4% -0.06em, 28.6% 2.6em, 41.5% 2.6em; }
+  30.4% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.0% 1.22em, 16.9% 0.53em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 74.8% -0.50em, 48.0% 2.6em, 78.5% -0.25em, 91.5% 2.6em, 54.5% 2.6em, 61.1% 0.69em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 58.9% -0.26em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 87.3% -0.14em, 19.4% 1.14em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 0.1% -0.07em, 66.5% 0.12em, 26.0% 0.53em, 74.5% -0.08em, 28.6% 2.6em, 41.5% 2.6em; }
+  30.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 72.9% 1.20em, 17.0% 0.51em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 78.4% -0.27em, 91.5% 2.6em, 54.5% 2.6em, 61.2% 0.66em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 59.0% -0.28em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 87.3% -0.16em, 19.4% 1.12em, 47.0% 1.33em, 28.3% 2.6em, 64.0% 2.6em, 0.1% -0.09em, 66.6% 0.11em, 26.0% 0.50em, 74.6% -0.09em, 28.6% 2.6em, 41.5% 2.6em; }
+  31.4% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 72.5% 1.12em, 17.1% 0.43em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 78.1% -0.35em, 91.5% 2.6em, 54.5% 2.6em, 61.6% 0.57em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 59.2% -0.35em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 87.5% -0.22em, 19.2% 1.06em, 47.2% 1.27em, 28.3% 2.6em, 64.0% 2.6em, -0.1% -0.15em, 66.8% 0.04em, 25.8% 0.41em, 74.9% -0.16em, 28.6% 2.6em, 41.5% 2.6em; }
+  32.6% { background-position: 51.1% 2.6em, 57.5% 1.24em, 12.6% 2.6em, 22.2% 2.6em, 71.9% 0.99em, 17.3% 0.32em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 77.7% -0.48em, 91.5% 2.6em, 54.5% 2.6em, 62.2% 0.42em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 59.7% -0.45em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 87.8% -0.31em, 18.9% 0.96em, 47.6% 1.16em, 28.3% 2.6em, 64.0% 2.6em, -0.4% -0.25em, 67.3% -0.06em, 25.5% 0.28em, 75.3% -0.25em, 28.6% 2.6em, 41.5% 2.6em; }
+  32.8% { background-position: 51.1% 2.6em, 57.6% 1.22em, 12.6% 2.6em, 22.2% 2.6em, 71.8% 0.97em, 17.3% 0.30em, 40.4% 1.33em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 77.6% -0.50em, 91.5% 2.6em, 54.5% 2.6em, 62.4% 0.40em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 59.8% -0.47em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 87.8% -0.33em, 18.9% 0.94em, 47.7% 1.15em, 28.3% 2.6em, 64.0% 2.6em, -0.5% -0.27em, 67.3% -0.08em, 25.4% 0.25em, 75.4% -0.26em, 28.6% 2.6em, 41.5% 2.6em; }
+  33.2% { background-position: 51.1% 2.6em, 57.8% 1.19em, 12.6% 2.6em, 22.2% 2.6em, 71.6% 0.93em, 17.4% 0.26em, 40.6% 1.29em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 62.6% 0.35em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 59.9% -0.50em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 87.9% -0.36em, 18.8% 0.91em, 47.8% 1.11em, 28.3% 2.6em, 64.0% 2.6em, -0.6% -0.30em, 67.5% -0.11em, 25.4% 0.21em, 75.5% -0.30em, 28.6% 2.6em, 41.5% 2.6em; }
+  33.4% { background-position: 51.1% 2.6em, 57.9% 1.17em, 12.6% 2.6em, 22.2% 2.6em, 71.5% 0.91em, 17.4% 0.24em, 40.8% 1.27em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 62.7% 0.33em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 59.9% -0.50em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 87.9% -0.37em, 18.7% 0.89em, 47.9% 1.10em, 28.3% 2.6em, 64.0% 2.6em, -0.6% -0.32em, 67.5% -0.13em, 25.3% 0.19em, 75.6% -0.31em, 28.6% 2.6em, 41.5% 2.6em; }
+  33.6% { background-position: 51.1% 2.6em, 58.0% 1.15em, 12.6% 2.6em, 22.2% 2.6em, 71.4% 0.89em, 17.4% 0.22em, 40.9% 1.24em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 62.8% 0.31em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.8% 1.33em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 88.0% -0.39em, 18.7% 0.88em, 48.0% 1.08em, 28.3% 2.6em, 64.0% 2.6em, -0.7% -0.33em, 67.6% -0.15em, 25.3% 0.16em, 75.7% -0.33em, 28.6% 2.6em, 41.5% 2.6em; }
+  35.0% { background-position: 51.1% 2.6em, 58.6% 1.02em, 12.6% 2.6em, 22.2% 2.6em, 70.7% 0.74em, 17.7% 0.09em, 41.6% 1.10em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 63.6% 0.14em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 90.5% 1.21em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 88.3% -0.50em, 18.4% 0.76em, 48.4% 0.96em, 28.3% 2.6em, 64.0% 2.6em, -1.0% -0.45em, 68.1% -0.26em, 24.9% 0.00em, 76.2% -0.44em, 28.6% 2.6em, 41.5% 2.6em; }
+  35.4% { background-position: 51.1% 2.6em, 58.8% 0.98em, 12.6% 2.6em, 22.2% 2.6em, 70.5% 0.70em, 17.7% 0.05em, 41.9% 1.06em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 63.8% 0.09em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 90.7% 1.17em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 18.3% 0.73em, 48.6% 0.93em, 28.3% 2.6em, 64.0% 2.6em, -1.1% -0.48em, 68.2% -0.30em, 24.8% -0.04em, 76.4% -0.47em, 28.6% 2.6em, 41.5% 2.6em; }
+  35.6% { background-position: 51.1% 2.6em, 58.9% 0.97em, 12.6% 2.6em, 22.2% 2.6em, 70.4% 0.68em, 17.8% 0.03em, 42.0% 1.03em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 63.9% 0.07em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 90.8% 1.15em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 18.2% 0.71em, 48.6% 0.91em, 28.3% 2.6em, 64.0% 2.6em, -1.2% -0.50em, 68.3% -0.32em, 24.8% -0.07em, 76.4% -0.48em, 28.6% 2.6em, 41.5% 2.6em; }
+  35.8% { background-position: 51.1% 2.6em, 59.0% 0.95em, 12.6% 2.6em, 22.2% 2.6em, 70.3% 0.66em, 17.8% 0.01em, 42.1% 1.01em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 64.0% 0.05em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 90.9% 1.14em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 18.2% 0.70em, 48.7% 0.89em, 28.3% 2.6em, 64.0% 2.6em, -1.2% -0.50em, 68.3% -0.33em, 24.7% -0.09em, 76.5% -0.50em, 28.6% 2.6em, 41.5% 2.6em; }
+  36.0% { background-position: 51.1% 2.6em, 59.0% 0.93em, 12.6% 2.6em, 22.2% 2.6em, 70.2% 0.64em, 17.8% -0.00em, 42.2% 0.99em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 64.1% 0.02em, 14.6% 1.33em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 91.0% 1.12em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 18.1% 0.68em, 48.7% 0.87em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 68.4% -0.35em, 24.7% -0.11em, 76.5% -0.50em, 28.6% 2.6em, 41.5% 2.6em; }
+  36.2% { background-position: 51.1% 2.6em, 59.1% 0.91em, 12.6% 2.6em, 22.2% 2.6em, 70.1% 0.61em, 17.9% -0.02em, 42.3% 0.97em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 64.2% -0.00em, 14.7% 1.31em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 91.1% 1.10em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 18.1% 0.66em, 48.8% 0.86em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 68.5% -0.37em, 24.7% -0.13em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  37.8% { background-position: 51.1% 2.6em, 59.9% 0.76em, 12.6% 2.6em, 22.2% 2.6em, 69.3% 0.45em, 18.1% -0.18em, 43.2% 0.80em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 65.1% -0.19em, 15.0% 1.16em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 91.9% 0.96em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 17.7% 0.53em, 49.3% 0.72em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 69.0% -0.50em, 24.3% -0.32em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  38.2% { background-position: 51.1% 2.6em, 60.0% 0.73em, 12.6% 2.6em, 22.2% 2.6em, 69.1% 0.40em, 18.2% -0.21em, 43.5% 0.76em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 65.3% -0.24em, 15.1% 1.12em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 92.1% 0.92em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 17.7% 0.50em, 49.5% 0.69em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 24.2% -0.36em, 67.7% 2.6em, 28.5% 1.31em, 41.5% 2.6em; }
+  39.4% { background-position: 51.1% 2.6em, 60.6% 0.62em, 12.6% 2.6em, 22.2% 2.6em, 68.5% 0.28em, 18.4% -0.33em, 44.1% 0.64em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 66.0% -0.38em, 15.3% 1.01em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 92.8% 0.82em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 17.4% 0.40em, 49.9% 0.59em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 23.9% -0.50em, 67.7% 2.6em, 28.2% 1.20em, 41.5% 2.6em; }
+  39.8% { background-position: 51.1% 2.6em, 60.7% 0.58em, 12.6% 2.6em, 22.2% 2.6em, 68.3% 0.24em, 18.5% -0.37em, 44.3% 0.59em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 66.2% -0.43em, 15.4% 0.97em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 93.0% 0.78em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 17.3% 0.37em, 50.0% 0.55em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.1% 1.17em, 41.5% 2.6em; }
+  40.0% { background-position: 51.1% 2.6em, 60.8% 0.56em, 12.6% 2.6em, 22.2% 2.6em, 68.2% 0.21em, 18.5% -0.39em, 44.5% 0.57em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 66.3% -0.45em, 15.4% 0.95em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 93.1% 0.76em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 17.2% 0.35em, 50.1% 0.54em, 28.2% 1.33em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.0% 1.15em, 41.5% 2.6em; }
+  40.2% { background-position: 51.1% 2.6em, 60.9% 0.54em, 12.6% 2.6em, 22.2% 2.6em, 68.1% 0.19em, 18.5% -0.40em, 44.6% 0.55em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 48.9% 1.33em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 66.4% -0.48em, 15.4% 0.93em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 93.2% 0.75em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 17.2% 0.33em, 50.1% 0.52em, 28.1% 1.31em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.0% 1.13em, 41.5% 2.6em; }
+  40.4% { background-position: 51.0% 1.33em, 61.0% 0.53em, 12.6% 2.6em, 22.2% 2.6em, 68.0% 0.17em, 18.6% -0.42em, 44.7% 0.53em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 48.9% 1.31em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 66.5% -0.50em, 15.5% 0.91em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 93.3% 0.73em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 17.2% 0.32em, 50.2% 0.50em, 28.0% 1.29em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 27.9% 1.11em, 41.5% 2.6em; }
+  40.8% { background-position: 50.7% 1.28em, 61.2% 0.49em, 12.6% 2.6em, 22.2% 2.6em, 67.8% 0.13em, 18.6% -0.46em, 44.9% 0.49em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 48.8% 1.27em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 15.6% 0.87em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 93.5% 0.69em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 17.1% 0.29em, 50.3% 0.47em, 27.8% 1.25em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 27.8% 1.08em, 41.5% 2.6em; }
+  41.2% { background-position: 50.4% 1.23em, 61.4% 0.45em, 12.6% 2.6em, 22.2% 2.6em, 67.6% 0.09em, 18.7% -0.50em, 45.1% 0.45em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 48.7% 1.23em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 15.6% 0.84em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 93.7% 0.66em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 17.0% 0.25em, 50.5% 0.43em, 27.6% 1.22em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 27.7% 1.04em, 41.5% 2.6em; }
+  41.6% { background-position: 50.2% 1.18em, 61.5% 0.42em, 12.6% 2.6em, 22.2% 2.6em, 67.4% 0.05em, 15.5% 2.6em, 45.4% 0.40em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 48.6% 1.19em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 15.7% 0.80em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 93.9% 0.62em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 16.9% 0.22em, 50.6% 0.40em, 27.4% 1.18em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 27.6% 1.01em, 41.5% 2.6em; }
+  44.0% { background-position: 48.6% 0.89em, 62.6% 0.20em, 12.6% 2.6em, 22.2% 2.6em, 66.2% -0.21em, 15.5% 2.6em, 46.7% 0.15em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 47.9% 0.95em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 16.2% 0.57em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 95.1% 0.41em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 16.3% 0.02em, 51.4% 0.20em, 26.2% 0.95em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 27.0% 0.79em, 41.5% 2.6em; }
+  46.8% { background-position: 46.7% 0.55em, 63.9% -0.06em, 12.6% 2.6em, 22.2% 2.6em, 64.8% -0.50em, 15.5% 2.6em, 48.3% -0.14em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 47.1% 0.67em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 16.7% 0.30em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 96.5% 0.16em, 51.9% 2.6em, 54.5% 2.6em, 84.4% 0.99em, 4.0% 2.6em, 83.1% 2.6em, 15.7% -0.21em, 52.3% -0.04em, 24.7% 0.68em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 26.3% 0.53em, 41.5% 2.6em; }
+  47.0% { background-position: 46.6% 0.52em, 64.0% -0.08em, 12.6% 2.6em, 22.2% 2.6em, 64.8% -0.50em, 15.5% 2.6em, 48.4% -0.16em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 47.1% 0.65em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 16.7% 0.28em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 96.6% 0.14em, 51.9% 2.6em, 54.5% 2.6em, 84.6% 0.96em, 4.0% 2.6em, 83.1% 2.6em, 15.7% -0.22em, 52.4% -0.06em, 24.6% 0.66em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 26.2% 0.52em, 41.5% 2.6em; }
+  47.2% { background-position: 46.4% 0.50em, 64.0% -0.10em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 48.5% -0.18em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 47.0% 0.63em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.4% 1.32em, 54.5% 2.6em, 58.0% 2.6em, 16.8% 0.26em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 1.33em, 96.7% 0.12em, 51.9% 2.6em, 54.5% 2.6em, 84.7% 0.94em, 4.0% 2.6em, 83.1% 2.6em, 15.6% -0.24em, 52.4% -0.08em, 24.5% 0.64em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 26.2% 0.50em, 41.5% 2.6em; }
+  48.2% { background-position: 45.8% 0.38em, 64.5% -0.19em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 49.1% -0.29em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 46.8% 0.53em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 90.8% 1.19em, 54.5% 2.6em, 58.0% 2.6em, 17.0% 0.17em, 89.8% 2.6em, 38.1% 2.6em, 91.5% 1.25em, 97.2% 0.03em, 51.9% 2.6em, 54.5% 2.6em, 85.4% 0.81em, 4.0% 2.6em, 83.1% 2.6em, 15.4% -0.32em, 52.8% -0.16em, 24.0% 0.54em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 25.9% 0.41em, 41.5% 2.6em; }
+  50.2% { background-position: 44.5% 0.13em, 65.4% -0.37em, 11.8% 1.12em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 50.2% -0.50em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 46.2% 0.34em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 89.7% 0.93em, 54.5% 2.6em, 58.0% 2.6em, 17.3% -0.02em, 89.8% 2.6em, 38.1% 2.6em, 91.2% 1.09em, 98.3% -0.14em, 51.9% 2.6em, 54.5% 2.6em, 86.8% 0.55em, 4.0% 2.6em, 83.1% 2.6em, 14.9% -0.48em, 53.4% -0.33em, 23.0% 0.35em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 25.4% 0.23em, 41.5% 2.6em; }
+  50.4% { background-position: 44.3% 0.11em, 65.5% -0.39em, 11.7% 1.10em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 50.2% -0.50em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 46.1% 0.32em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 89.6% 0.90em, 54.5% 2.6em, 58.0% 2.6em, 17.4% -0.04em, 89.8% 2.6em, 38.1% 2.6em, 91.2% 1.07em, 98.4% -0.16em, 51.9% 2.6em, 54.5% 2.6em, 86.9% 0.53em, 4.0% 2.6em, 83.1% 2.6em, 14.9% -0.50em, 53.5% -0.35em, 22.9% 0.33em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 25.3% 0.21em, 41.5% 2.6em; }
+  50.6% { background-position: 44.2% 0.08em, 65.6% -0.41em, 11.6% 1.08em, 22.3% 1.33em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 46.1% 0.30em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 89.5% 0.87em, 54.5% 2.6em, 58.0% 2.6em, 17.4% -0.06em, 89.8% 2.6em, 38.1% 2.6em, 91.2% 1.05em, 98.5% -0.18em, 51.9% 2.6em, 54.5% 2.6em, 87.0% 0.50em, 4.0% 2.6em, 83.1% 2.6em, 14.9% -0.50em, 53.6% -0.36em, 22.8% 0.31em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 25.3% 0.19em, 41.5% 2.6em; }
+  50.8% { background-position: 44.1% 0.06em, 65.6% -0.43em, 11.6% 1.06em, 22.3% 1.31em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 46.0% 0.28em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 89.4% 0.85em, 54.5% 2.6em, 58.0% 2.6em, 17.5% -0.08em, 89.8% 2.6em, 38.1% 2.6em, 91.2% 1.04em, 98.6% -0.20em, 51.9% 2.6em, 54.5% 2.6em, 87.2% 0.48em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 53.6% -0.38em, 22.7% 0.29em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 25.2% 0.17em, 41.5% 2.6em; }
+  51.6% { background-position: 43.5% -0.04em, 66.0% -0.50em, 11.2% 0.97em, 22.5% 1.24em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 45.8% 0.20em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 88.9% 0.74em, 54.5% 2.6em, 58.0% 2.6em, 17.6% -0.16em, 89.8% 2.6em, 38.1% 2.6em, 91.0% 0.97em, 99.0% -0.27em, 51.9% 2.6em, 54.5% 2.6em, 87.7% 0.37em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 53.9% -0.45em, 22.3% 0.21em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 25.0% 0.10em, 41.5% 2.6em; }
+  51.8% { background-position: 43.4% -0.06em, 66.0% -0.50em, 11.2% 0.94em, 22.6% 1.23em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 45.8% 0.18em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 88.8% 0.72em, 54.5% 2.6em, 58.0% 2.6em, 17.7% -0.18em, 89.8% 2.6em, 38.1% 2.6em, 91.0% 0.95em, 99.1% -0.29em, 51.9% 2.6em, 54.5% 2.6em, 87.9% 0.35em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 54.0% -0.47em, 22.2% 0.19em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 25.0% 0.08em, 41.5% 2.6em; }
+  52.0% { background-position: 43.3% -0.09em, 57.0% 2.6em, 11.1% 0.92em, 22.6% 1.21em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 45.7% 0.16em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 88.7% 0.69em, 54.5% 2.6em, 58.0% 2.6em, 17.7% -0.19em, 89.8% 2.6em, 38.1% 2.6em, 91.0% 0.94em, 99.2% -0.30em, 51.9% 2.6em, 54.5% 2.6em, 88.0% 0.32em, 3.9% 1.33em, 83.1% 2.6em, 20.0% 2.6em, 54.0% -0.48em, 22.1% 0.17em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 24.9% 0.06em, 41.5% 2.6em; }
+  52.2% { background-position: 43.1% -0.11em, 57.0% 2.6em, 11.0% 0.90em, 22.7% 1.19em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 45.7% 0.14em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 88.6% 0.66em, 54.5% 2.6em, 58.0% 2.6em, 17.7% -0.21em, 89.8% 2.6em, 38.1% 2.6em, 91.0% 0.92em, 99.3% -0.32em, 51.9% 2.6em, 54.5% 2.6em, 88.1% 0.30em, 3.8% 1.31em, 83.1% 2.6em, 20.0% 2.6em, 54.1% -0.50em, 22.0% 0.16em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 24.9% 0.04em, 41.5% 2.6em; }
+  52.6% { background-position: 42.9% -0.16em, 57.0% 2.6em, 10.8% 0.85em, 22.8% 1.15em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 45.5% 0.10em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 88.3% 0.61em, 54.5% 2.6em, 58.0% 2.6em, 17.8% -0.25em, 89.8% 2.6em, 38.1% 2.6em, 90.9% 0.89em, 99.5% -0.36em, 51.9% 2.6em, 54.5% 2.6em, 88.4% 0.25em, 3.6% 1.27em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 21.8% 0.12em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 24.8% 0.01em, 41.5% 2.6em; }
+  54.2% { background-position: 41.8% -0.35em, 57.0% 2.6em, 10.2% 0.67em, 23.3% 1.01em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 45.1% -0.06em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 87.4% 0.40em, 54.5% 2.6em, 58.0% 2.6em, 18.1% -0.40em, 89.8% 2.6em, 38.1% 2.6em, 90.7% 0.76em, 100.3% -0.50em, 51.9% 2.6em, 54.5% 2.6em, 89.5% 0.04em, 2.8% 1.11em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 20.9% -0.04em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 24.3% -0.14em, 41.5% 2.6em; }
+  54.6% { background-position: 41.5% -0.40em, 57.0% 2.6em, 10.0% 0.63em, 23.4% 0.98em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 45.0% -0.10em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 87.2% 0.35em, 54.5% 2.6em, 58.0% 2.6em, 18.2% -0.44em, 89.8% 2.6em, 38.1% 2.6em, 90.6% 0.72em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 89.8% -0.01em, 2.6% 1.07em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 20.7% -0.08em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 24.2% -0.17em, 41.5% 2.6em; }
+  55.2% { background-position: 41.1% -0.48em, 57.0% 2.6em, 9.8% 0.56em, 23.5% 0.92em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 44.8% -0.16em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 86.9% 0.27em, 54.5% 2.6em, 58.0% 2.6em, 18.3% -0.50em, 89.8% 2.6em, 38.1% 2.6em, 90.5% 0.67em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 90.2% -0.09em, 2.3% 1.02em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 20.4% -0.13em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 24.1% -0.23em, 41.5% 2.6em; }
+  55.4% { background-position: 41.0% -0.50em, 57.0% 2.6em, 9.7% 0.54em, 23.6% 0.91em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 44.8% -0.18em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 86.8% 0.24em, 54.5% 2.6em, 58.0% 2.6em, 18.3% -0.50em, 89.8% 2.6em, 38.1% 2.6em, 90.5% 0.66em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 90.3% -0.11em, 2.2% 1.00em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 20.3% -0.15em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 24.0% -0.25em, 41.5% 2.6em; }
+  55.6% { background-position: 41.0% -0.50em, 57.0% 2.6em, 9.6% 0.52em, 23.7% 0.89em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 44.7% -0.20em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 86.6% 0.21em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 90.5% 0.64em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 90.5% -0.14em, 2.1% 0.98em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 20.2% -0.17em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 24.0% -0.26em, 41.5% 2.6em; }
+  55.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 9.5% 0.49em, 23.7% 0.87em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 44.7% -0.22em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 86.5% 0.19em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 90.4% 0.62em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 90.6% -0.17em, 2.0% 0.96em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 20.1% -0.19em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 23.9% -0.28em, 41.5% 2.6em; }
+  56.0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 9.5% 0.47em, 23.8% 0.85em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 44.6% -0.24em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 86.4% 0.16em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 90.4% 0.61em, 89.7% 2.6em, 51.9% 2.6em, 54.4% 1.33em, 90.8% -0.19em, 1.9% 0.94em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 20.0% -0.21em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 23.9% -0.30em, 41.5% 2.6em; }
+  58.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 8.6% 0.22em, 24.4% 0.66em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 44.0% -0.46em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 85.2% -0.13em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 90.5% 1.18em, 38.1% 2.6em, 90.1% 0.43em, 89.7% 2.6em, 51.9% 2.6em, 53.8% 1.08em, 92.3% -0.47em, 0.8% 0.72em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 18.9% -0.42em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 23.3% -0.50em, 41.5% 2.6em; }
+  58.4% { background-position: 51.1% 2.6em, 57.0% 2.6em, 8.5% 0.20em, 24.4% 0.64em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 44.0% -0.48em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 85.1% -0.16em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 90.5% 1.16em, 38.1% 2.6em, 90.1% 0.41em, 89.7% 2.6em, 51.9% 2.6em, 53.8% 1.06em, 92.4% -0.50em, 0.7% 0.70em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 18.8% -0.44em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 23.3% -0.50em, 41.5% 2.6em; }
+  58.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 8.4% 0.18em, 24.5% 0.62em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 43.9% -0.50em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 85.0% -0.18em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 90.6% 1.14em, 38.1% 2.6em, 90.0% 0.39em, 89.7% 2.6em, 51.9% 2.6em, 53.7% 1.03em, 92.4% -0.50em, 0.6% 0.68em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 18.7% -0.46em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  58.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 8.3% 0.15em, 24.5% 0.60em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 43.9% -0.50em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 84.8% -0.21em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 90.6% 1.13em, 38.1% 2.6em, 90.0% 0.38em, 89.7% 2.6em, 51.9% 2.6em, 53.7% 1.01em, 82.5% 2.6em, 0.5% 0.66em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 18.6% -0.48em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  59.0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 8.3% 0.13em, 24.6% 0.59em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 84.7% -0.24em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 90.7% 1.11em, 38.1% 2.6em, 90.0% 0.36em, 89.7% 2.6em, 51.9% 2.6em, 53.6% 0.99em, 82.5% 2.6em, 0.4% 0.64em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 18.5% -0.50em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  59.4% { background-position: 51.1% 2.6em, 57.0% 2.6em, 8.1% 0.09em, 24.7% 0.55em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 84.5% -0.29em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 90.8% 1.08em, 38.1% 2.6em, 89.9% 0.33em, 89.7% 2.6em, 51.9% 2.6em, 53.5% 0.94em, 82.5% 2.6em, 0.2% 0.60em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  60.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 7.8% -0.00em, 24.9% 0.48em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 84.1% -0.39em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 91.1% 1.02em, 38.1% 2.6em, 89.8% 0.26em, 89.7% 2.6em, 51.9% 2.6em, 53.3% 0.85em, 82.5% 2.6em, -0.2% 0.52em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  61.0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 7.4% -0.09em, 25.2% 0.41em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 47.7% 1.29em, 84.2% 2.6em, 83.6% -0.50em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 91.3% 0.95em, 38.1% 2.6em, 89.7% 0.19em, 89.7% 2.6em, 51.9% 2.6em, 53.0% 0.76em, 82.5% 2.6em, -0.6% 0.44em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  61.4% { background-position: 51.1% 2.6em, 57.0% 2.6em, 7.3% -0.14em, 25.3% 0.37em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 47.6% 1.26em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 91.4% 0.92em, 38.1% 2.6em, 89.6% 0.16em, 89.7% 2.6em, 51.9% 2.6em, 52.9% 0.72em, 82.5% 2.6em, -0.7% 0.41em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  62.4% { background-position: 51.1% 2.6em, 57.0% 2.6em, 6.9% -0.25em, 25.5% 0.28em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 47.2% 1.18em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 91.7% 0.84em, 38.1% 2.6em, 89.5% 0.08em, 89.7% 2.6em, 51.9% 2.6em, 52.6% 0.61em, 82.5% 2.6em, -1.2% 0.31em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  62.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 6.8% -0.27em, 25.6% 0.26em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.3% 1.33em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 47.2% 1.16em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 91.8% 0.83em, 38.1% 2.6em, 89.5% 0.06em, 89.7% 2.6em, 51.9% 2.6em, 52.6% 0.58em, 82.5% 2.6em, -1.3% 0.29em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  62.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 6.7% -0.30em, 25.7% 0.25em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.4% 1.31em, 2.9% 2.6em, 49.0% 2.6em, 79.5% 1.33em, 68.2% 2.6em, 47.1% 1.15em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 91.9% 0.81em, 38.1% 2.6em, 89.4% 0.05em, 89.7% 2.6em, 51.9% 2.6em, 52.5% 0.56em, 82.5% 2.6em, -1.4% 0.27em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  63.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 6.6% -0.34em, 25.8% 0.21em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.6% 1.26em, 2.9% 2.6em, 49.0% 2.6em, 79.3% 1.29em, 68.2% 2.6em, 47.0% 1.11em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 92.0% 0.78em, 38.1% 2.6em, 89.4% 0.01em, 89.7% 2.6em, 51.9% 2.6em, 52.4% 0.52em, 82.5% 2.6em, -1.6% 0.23em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.1% 1.32em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  64.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 6.2% -0.45em, 26.0% 0.12em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.5% 1.27em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 51.2% 1.15em, 2.9% 2.6em, 49.0% 2.6em, 78.8% 1.20em, 68.2% 2.6em, 46.6% 1.04em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 92.3% 0.70em, 38.1% 2.6em, 89.2% -0.07em, 89.7% 2.6em, 51.9% 2.6em, 52.1% 0.40em, 82.5% 2.6em, -2.1% 0.13em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.4% 1.24em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  64.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 6.0% -0.50em, 26.2% 0.09em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.7% 1.23em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 51.4% 1.11em, 2.9% 2.6em, 49.0% 2.6em, 78.6% 1.16em, 68.2% 2.6em, 46.5% 1.01em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 92.4% 0.67em, 37.9% 1.30em, 89.2% -0.10em, 89.7% 2.6em, 51.9% 2.6em, 52.0% 0.36em, 82.5% 2.6em, -2.3% 0.09em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.6% 1.21em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  65.0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 26.3% 0.05em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.8% 1.20em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 51.6% 1.07em, 2.9% 2.6em, 49.0% 2.6em, 78.4% 1.12em, 68.2% 2.6em, 46.3% 0.97em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 92.5% 0.64em, 37.8% 1.25em, 89.1% -0.14em, 89.7% 2.6em, 51.9% 2.6em, 51.9% 0.31em, 82.5% 2.6em, -2.5% 0.05em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.7% 1.18em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  65.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 26.5% -0.02em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 87.2% 1.13em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 52.1% 0.98em, 2.9% 2.6em, 49.0% 2.6em, 78.0% 1.04em, 68.2% 2.6em, 46.1% 0.91em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 92.8% 0.58em, 37.5% 1.16em, 89.0% -0.20em, 89.7% 2.6em, 51.9% 2.6em, 51.7% 0.22em, 82.5% 2.6em, -2.9% -0.03em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.9% 1.11em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  69.4% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 27.5% -0.34em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 88.9% 0.83em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 54.1% 0.59em, 1.1% 0.93em, 49.0% 2.6em, 76.2% 0.69em, 68.2% 2.6em, 44.8% 0.63em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 93.9% 0.29em, 36.0% 0.73em, 88.5% -0.50em, 89.7% 2.6em, 51.9% 2.6em, 50.7% -0.18em, 82.5% 2.6em, -4.7% -0.38em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 66.1% 0.83em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  69.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 27.6% -0.38em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 89.1% 0.80em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 54.3% 0.54em, 0.9% 0.89em, 49.0% 2.6em, 76.0% 0.66em, 68.2% 2.6em, 44.7% 0.60em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 94.0% 0.26em, 35.9% 0.68em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 50.6% -0.23em, 82.5% 2.6em, -4.9% -0.42em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 66.2% 0.80em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  70.0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 27.7% -0.39em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 89.2% 0.78em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 54.4% 0.52em, 0.7% 0.86em, 49.0% 2.6em, 75.9% 0.64em, 68.2% 2.6em, 44.6% 0.58em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 94.0% 0.24em, 35.8% 0.65em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 50.5% -0.25em, 82.5% 2.6em, -5.0% -0.44em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 66.3% 0.79em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  70.4% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 27.8% -0.43em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 89.4% 0.74em, 48.0% 2.6em, 52.0% 1.32em, 83.6% 2.6em, 96.8% 2.6em, 54.6% 0.48em, 0.5% 0.82em, 49.0% 2.6em, 75.7% 0.60em, 68.2% 2.6em, 44.5% 0.55em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 94.2% 0.21em, 35.6% 0.61em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 50.4% -0.30em, 82.5% 2.6em, -5.2% -0.48em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 66.4% 0.75em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  70.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 27.8% -0.45em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 89.5% 0.73em, 48.0% 2.6em, 52.0% 1.30em, 83.5% 1.33em, 96.8% 2.6em, 54.7% 0.46em, 0.4% 0.80em, 49.0% 2.6em, 75.6% 0.58em, 68.2% 2.6em, 44.4% 0.53em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 94.2% 0.20em, 35.6% 0.58em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 50.3% -0.32em, 82.5% 2.6em, -5.3% -0.50em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 66.4% 0.74em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  71.0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 27.9% -0.48em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 89.7% 0.69em, 48.0% 2.6em, 51.8% 1.27em, 83.3% 1.28em, 96.8% 2.6em, 55.0% 0.41em, 0.2% 0.75em, 49.0% 2.6em, 75.4% 0.54em, 68.2% 2.6em, 44.2% 0.50em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 94.4% 0.16em, 35.4% 0.53em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 50.2% -0.36em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 66.6% 0.71em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  71.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 28.0% -0.50em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 89.7% 0.68em, 48.0% 2.6em, 51.7% 1.25em, 83.2% 1.25em, 96.9% 1.33em, 55.1% 0.39em, 0.1% 0.73em, 49.0% 2.6em, 75.3% 0.52em, 68.2% 2.6em, 44.2% 0.49em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 94.4% 0.15em, 35.3% 0.51em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 50.2% -0.39em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 66.6% 0.69em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  71.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 89.9% 0.64em, 47.8% 1.31em, 51.6% 1.22em, 83.0% 1.21em, 97.0% 1.29em, 55.3% 0.35em, -0.1% 0.68em, 49.0% 2.6em, 75.1% 0.48em, 68.2% 2.6em, 44.0% 0.46em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 94.5% 0.12em, 35.2% 0.46em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 50.1% -0.43em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 66.8% 0.66em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  72.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 90.2% 0.59em, 47.6% 1.25em, 51.3% 1.17em, 82.7% 1.13em, 97.3% 1.23em, 55.6% 0.28em, -0.4% 0.61em, 49.0% 2.6em, 74.8% 0.43em, 68.2% 2.6em, 43.8% 0.41em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 94.7% 0.07em, 34.9% 0.39em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 49.9% -0.50em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 66.9% 0.61em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  72.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 90.4% 0.56em, 47.4% 1.21em, 51.2% 1.13em, 82.5% 1.09em, 97.4% 1.19em, 55.8% 0.24em, -0.6% 0.56em, 49.0% 2.6em, 74.5% 0.39em, 68.2% 2.6em, 43.7% 0.38em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 94.8% 0.04em, 34.8% 0.34em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 67.1% 0.58em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  79.4% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 93.6% -0.01em, 44.6% 0.52em, 48.5% 0.57em, 78.9% 0.27em, 100.2% 0.51em, 59.6% -0.50em, -4.1% -0.22em, 49.0% 2.6em, 71.1% -0.27em, 68.2% 2.6em, 41.3% -0.16em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 96.9% -0.50em, 32.1% -0.48em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 69.2% 0.05em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  79.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 93.7% -0.03em, 44.5% 0.50em, 48.4% 0.55em, 78.8% 0.24em, 100.3% 0.49em, 59.6% -0.50em, -4.2% -0.25em, 49.0% 2.6em, 71.0% -0.29em, 68.2% 2.6em, 41.3% -0.17em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 96.9% -0.50em, 32.0% -0.50em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 69.3% 0.03em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  79.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 93.8% -0.05em, 44.4% 0.48em, 48.4% 0.53em, 78.7% 0.22em, 100.3% 0.47em, 50.2% 2.6em, -4.3% -0.27em, 49.0% 2.6em, 70.9% -0.31em, 68.2% 2.6em, 41.2% -0.19em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 32.0% -0.50em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 69.3% 0.02em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  80.0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 93.9% -0.06em, 44.3% 0.46em, 48.3% 0.52em, 78.6% 0.20em, 100.4% 0.45em, 50.2% 2.6em, -4.4% -0.29em, 49.0% 2.6em, 70.8% -0.33em, 68.2% 2.6em, 41.1% -0.20em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 69.4% 0.00em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  81.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 94.7% -0.21em, 43.6% 0.27em, 47.6% 0.37em, 77.7% -0.02em, 101.2% 0.28em, 50.2% 2.6em, -5.3% -0.50em, 49.0% 2.6em, 69.9% -0.50em, 68.2% 2.6em, 40.5% -0.34em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 70.0% -0.14em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  82.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 94.9% -0.25em, 43.4% 0.23em, 47.4% 0.33em, 77.5% -0.07em, 101.3% 0.24em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 40.4% -0.37em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 70.1% -0.17em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  83.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 95.6% -0.38em, 42.7% 0.07em, 46.8% 0.20em, 76.6% -0.26em, 102.0% 0.08em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 39.8% -0.50em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 70.6% -0.30em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  84.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 95.8% -0.42em, 42.6% 0.03em, 46.6% 0.17em, 76.4% -0.31em, 102.1% 0.04em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 70.7% -0.33em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  85.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 96.3% -0.50em, 42.2% -0.07em, 46.2% 0.08em, 75.9% -0.43em, 102.5% -0.06em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 71.0% -0.41em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  85.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 42.0% -0.11em, 46.1% 0.05em, 75.7% -0.48em, 102.7% -0.10em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 71.1% -0.44em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  85.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 41.9% -0.13em, 46.0% 0.03em, 75.6% -0.50em, 102.8% -0.12em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 71.2% -0.45em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  86.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 41.7% -0.17em, 45.9% 0.00em, 83.6% 2.6em, 102.9% -0.16em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 71.3% -0.48em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  86.4% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 41.7% -0.20em, 45.8% -0.02em, 83.6% 2.6em, 103.0% -0.18em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 71.4% -0.50em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  86.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 41.5% -0.24em, 45.6% -0.05em, 83.6% 2.6em, 103.2% -0.22em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  89.4% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 40.4% -0.50em, 44.6% -0.27em, 83.6% 2.6em, 104.2% -0.48em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  89.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 40.4% -0.50em, 44.5% -0.28em, 83.6% 2.6em, 104.3% -0.50em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  89.8% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 44.4% -0.30em, 83.6% 2.6em, 104.3% -0.50em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  90.0% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 44.4% -0.32em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  92.2% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 43.5% -0.50em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  92.6% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+  100% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
+}

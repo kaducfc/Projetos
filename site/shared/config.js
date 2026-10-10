@@ -1,0 +1,118 @@
+// Configuração do site de minigames: nome, Supabase e catálogo de jogos.
+
+export const SITE_NAME = 'Rift Arcade';
+
+// Projeto Supabase próprio do site (separado do Idle Hunter).
+// Preencha com Project Settings → API do projeto novo. Enquanto estiver
+// vazio, o site funciona só em modo visitante (tudo no navegador).
+// A chave "publishable" é pública por natureza: a segurança vem das regras
+// RLS do banco. Nunca coloque aqui a chave service_role.
+export const SUPABASE_URL = 'https://ixmtnizxirmmcpwdzoeu.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_gA7cL3RGWOnuLqwrlTGL5w_eMigpxdn';
+
+// E-mail de contato mostrado nas páginas de privacidade, termos e "Quem somos".
+export const CONTACT_EMAIL = 'riftarcadeoficial@gmail.com';
+
+// Página de apoio (doação opcional pelo Mercado Pago; só cosméticos, sem
+// vantagem nos jogos).
+export const DONATION_URL = '/apoiar/';
+
+// Logos dos times nos jogos:
+//   'oficiais' → logo oficial em assets/times/<id>.png para todos os times
+//                que tiverem o arquivo (padrão atual).
+//   'escudos'  → escudo próprio do site. Usa a arte em
+//                assets/emblemas/<id>.png se existir; senão, o escudo gerado.
+// Se algum time pedir para tirar a logo, troque para 'escudos' e libere só
+// quem autorizou em OFFICIAL_LOGOS_ALLOWED.
+export const TEAM_LOGOS = 'oficiais';
+
+// Times com logo oficial liberada mesmo no modo 'escudos' (ex.: times que
+// autorizaram o uso). Use o id do time, como em assets/times/README.md.
+// Exemplo: export const OFFICIAL_LOGOS_ALLOWED = ['loud', 'png'];
+export const OFFICIAL_LOGOS_ALLOWED = [];
+
+// Apoio pelo Mercado Pago:
+//   false   → botão de pagar como "Em breve" para todos;
+//   'admin' → só contas de administrador conseguem pagar (fase de teste);
+//   true    → liberado para todos.
+export const APOIO_ATIVO = true;
+
+// Apoio internacional (Stripe, em dólar ou euro). Só aparece quando o
+// site NÃO está em português. Mesmos valores de APOIO_ATIVO:
+//   false → "Em breve"; 'admin' → só administradores conseguem pagar (teste);
+//   true → liberado para todos.
+export const APOIO_INTL_ATIVO = true;
+
+// Catálogo exibido no hub. `path` é relativo à raiz do site.
+// `ranked` (opcional): o jogo vale PDR. Com ele, o jogo entra sozinho no card da ranqueada (perfil e
+// ranking), no painel "hoje" e no selo/linha de vagas do card do hub.
+//   modo: 'vagas' (N partidas por dia, ingresso no servidor) ou 'diario' (1 por dia)
+//   selo: texto da etiqueta na capa; nome/rotulo/sub: só se diferirem do padrão (ver cblol)
+// Passo a passo para um jogo novo: NOVO-JOGO.md (na raiz do repositório).
+// status: 'live' (jogável) ou 'soon' (em breve).
+export const GAMES = [
+  {
+    id: 'carreira-no-rift',
+    name: 'Carreira no Rift',
+    tagline: 'Crie seu jogador aos 16 anos e leve a carreira da base ao Mundial.',
+    kind: 'Simulador de carreira',
+    path: 'jogos/carreira-no-rift/',
+    status: 'live',
+    scoreLabel: 'Pontos de legado',
+    ranked: { modo: 'vagas', selo: 'Ranqueada' },
+  },
+  {
+    id: 'runetermo',
+    name: 'Runetermo',
+    tagline: 'Uma palavra do universo de LoL por dia. Descubra em 6 tentativas.',
+    kind: 'Palavra do dia',
+    path: 'jogos/runetermo/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+    ranked: { modo: 'diario', selo: 'Diário · Ranqueada' },
+  },
+  {
+    id: 'campeao',
+    name: 'Campeão Oculto',
+    tagline: 'Um campeão por dia. Descubra pelas pistas: região, posição, classe, espécie e mais.',
+    kind: 'Campeão do dia',
+    path: 'jogos/campeao/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+    ranked: { modo: 'diario', selo: 'Diário · Ranqueada' },
+  },
+  {
+    id: 'cblol',
+    name: 'Lendas do CBLOL',
+    tagline: 'Monte um time com lendas de todas as eras do CBLOL e veja até onde ele chega.',
+    kind: 'Monte e simule',
+    path: 'jogos/lendas-do-cblol/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+    ranked: { modo: 'vagas', selo: 'Ranqueada (Oculto)', nome: 'Lendas do CBLOL (Oculto)', rotulo: 'Oculto hoje', sub: 'Oculto · ' },
+  },
+  {
+    id: 'escala',
+    name: 'Na Medida',
+    tagline: 'Quão grande é o Nasus perto da Poppy? Ajuste o tamanho e acerte na medida.',
+    kind: 'Tamanho do dia',
+    path: 'jogos/escala/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+    ranked: { modo: 'diario', selo: 'Diário · Ranqueada' },
+  },
+  // Em desenvolvimento: `soAdmin` esconde o jogo do hub e do perfil e bloqueia a página
+  // para quem não é administrador. Para lançar, apague a linha `soAdmin`.
+  {
+    id: 'barao',
+    name: 'Show do Barão',
+    tagline: 'Acerte as perguntas, use suas ajudas e descubra até onde consegue chegar.',
+    kind: 'Quiz',
+    path: 'jogos/barao/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+    ranked: { modo: 'vagas', selo: 'Ranqueada' },
+  },
+];
+
+export const gameById = (id) => GAMES.find((g) => g.id === id);

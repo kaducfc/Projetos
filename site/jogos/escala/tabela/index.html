@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Na Medida · tabela de alturas</title>
+<meta name="robots" content="noindex" />
+<link rel="stylesheet" href="../css/style.css" />
+<style>
+  .tb { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 16px; }
+  .tb h1 { margin: 0; font-size: 40px; color: var(--gold-2); }
+  .tb-fila { overflow-x: auto; padding: 10px; border-radius: 12px; border: 1px solid var(--line); background: linear-gradient(180deg, #0d0d14, #12121c); }
+  .tb-fila > div { display: flex; align-items: flex-end; gap: 6px; height: 260px; }
+  .tb-fila .esc-sil { --c: var(--verm); }
+  .tb-faixa { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tb-faixa button { border: 1px solid var(--line-2); background: var(--panel); color: var(--text); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 700; }
+  .tb-faixa button.on { background: var(--gold); color: #140f02; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { color: var(--muted); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+  td.num { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--gold-2); white-space: nowrap; }
+  td .esc-sil { --c: var(--azul); }
+  .conf { font-size: 12px; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+  .conf.comunidade { background: rgba(79, 141, 255, 0.15); color: #8fb6ff; }
+  .conf.desenvolvedores { background: rgba(47, 191, 113, 0.15); color: #7fd49a; }
+  .conf.rift { background: rgba(217, 168, 43, 0.15); color: var(--gold-2); }
+  .conf.interpretativo { background: rgba(240, 138, 60, 0.15); color: #f0a35c; }
+</style>
+</head>
+<body>
+<main class="tb">
+  <h1 class="display">Tabela de alturas</h1>
+  <p class="muted">Página de revisão (não aparece no site). As alturas ficam em <code>jogos/escala/dados/itens.json</code>; as silhuetas são geradas por <code>scripts/silhuetas.py</code>.</p>
+  <div class="tb-faixa" id="faixa"></div>
+  <div class="tb-fila"><div id="fila"></div></div>
+  <table><thead><tr><th>Silhueta</th><th>Nome</th><th>Altura</th><th>Confiança</th><th>Nota</th></tr></thead><tbody id="linhas"></tbody></table>
+</main>
+<script type="module">
+import { fmtAltura } from '../js/logic.js';
+const SIL = new URL('../dados/silhuetas/', location.href).href;
+const opc = { cache: 'no-cache' };
+const [itens, props, versoes] = await Promise.all([fetch('../dados/itens.json', opc).then((r) => r.json()), fetch('../dados/silhuetas.json', opc).then((r) => r.json()), fetch('../dados/versoes.json', opc).then((r) => r.json()).catch(() => ({}))]);
+itens.sort((a, b) => a.altura - b.altura);
+const FAIXAS = [['Até 1 m', 0, 1], ['1 a 2 m', 1, 2], ['2 a 5 m', 2, 5], ['5 a 20 m', 5, 20], ['20 m ou mais', 20, 1e9], ['Coisas do Rift', -1, -1], ['Todos (escala log)', 0, 1e9]];
+let faixa = 1;
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sil = (it, h) => `<div class="esc-sil" title="${esc(it.nome)} · ${fmtAltura(it.altura)}" style="height:${h}px;width:${Math.max(2, h * (props[it.id] || 0.5))}px;--img:url('${SIL}${it.id}.webp?v=${versoes[it.id] || ''}')"></div>`;
+function fila() {
+  const [, lo, hi] = FAIXAS[faixa];
+  const log = faixa === FAIXAS.length - 1;
+  const lista = lo < 0 ? itens.filter((i) => i.rift) : itens.filter((i) => i.altura >= lo && i.altura < hi);
+  const max = Math.max(...lista.map((i) => i.altura));
+  const min = Math.min(...lista.map((i) => i.altura));
+  const h = (a) => (log ? 20 + 220 * Math.log(a / min) / Math.log(max / min || 2) : 240 * a / max);
+  document.getElementById('fila').innerHTML = lista.map((i) => sil(i, h(i.altura))).join('');
+  document.getElementById('faixa').innerHTML = FAIXAS.map(([n], k) => `<button data-k="${k}" class="${k === faixa ? 'on' : ''}">${n}</button>`).join('');
+}
+document.getElementById('faixa').addEventListener('click', (e) => { const b = e.target.closest('[data-k]'); if (b) { faixa = +b.dataset.k; fila(); } });
+document.getElementById('linhas').innerHTML = itens.map((i) => `<tr><td>${sil(i, 44)}</td><td>${esc(i.nome)}</td><td class="num">${fmtAltura(i.altura)}</td>
+  <td><span class="conf ${i.confianca}">${esc(i.confianca)}</span></td><td class="muted">${esc(i.nota)}</td></tr>`).join('');
+fila();
+</script>
+</body>
+</html>

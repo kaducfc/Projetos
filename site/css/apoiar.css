@@ -1,0 +1,41 @@
+/* Página "Apoiar", sobre o hub.css e o perfil.css. */
+.ap-head h1 { margin: 6px 0 8px; font-size: clamp(46px, 7vw, 64px); color: var(--gold-2); }
+.ap-head .lead { margin: 0; max-width: 680px; color: #d3ccbc; font-size: 16px; }
+.ap-aviso { padding: 14px 16px; border-radius: 6px; border: 1px solid var(--line-2); background: var(--panel); color: #d3ccbc; }
+.ap-aviso.ok { border-color: #3c8a4e; background: rgba(60, 138, 78, 0.12); color: #d8f5df; }
+.ap-aviso.err { border-color: #b8453c; background: rgba(184, 69, 60, 0.12); color: #ffd9d6; }
+.ap-efeito { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; border-color: rgba(217, 168, 43, 0.55); }
+.ap-efeito-nick { font-family: var(--display); font-size: clamp(44px, 8vw, 64px); line-height: 1.05; min-width: 0; overflow-wrap: anywhere; }
+.ap-efeito-txt { flex: 1; min-width: 240px; }
+.ap-efeito-txt p { margin: 0; color: #d3ccbc; }
+.ap-efeito-txt .eyebrow { margin-bottom: 4px; }
+.ap-valor { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.ap-valor h2 { margin: 0; font-size: 34px; color: var(--gold-2); }
+.ap-valor p { margin: 0; }
+.ap-chips { margin: 0; }
+.ap-chips button { font-size: 15px; padding: 9px 16px; }
+.ap-valor .pf-label input { max-width: 180px; }
+.ap-pagar { font-size: 16px !important; padding: 13px 26px !important; }
+.ap-pagar:disabled { opacity: 0.55; cursor: default; }
+.ap-faq { display: flex; flex-direction: column; gap: 10px; }
+.ap-faq p { margin: 0; color: #d3ccbc; font-size: 14px; }
+.ap-faq a { color: var(--gold-2); }
+@media (max-width: 560px) {
+  .ap-efeito { gap: 10px; }
+}
+
+/* Ícones especiais */
+.ap-icones { display: flex; flex-direction: column; gap: 12px; }
+.ap-icones .eyebrow { margin: 0; }
+.ap-icone { display: flex; align-items: center; gap: 14px; }
+.ap-icone p { margin: 2px 0 0; }
+.ap-icone .avatar { flex: none; box-shadow: 0 0 0 2px rgba(245, 207, 90, 0.35); }
+.ap-icone.livre .avatar { box-shadow: 0 0 0 2px var(--gold-2), 0 0 16px rgba(245, 207, 90, 0.45); }
+.ap-ok { color: #7fd49a; font-size: 12.5px; font-weight: 800; }
+.avatar img { object-fit: cover; }
+.ap-icones a { color: var(--gold-2); }
+
+/* Apoio internacional (Stripe): botão de pagar */
+.ap-moedas { margin-bottom: 8px; }
+.ap-pagar-intl { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.ap-pagar-intl .ap-pagar { flex: 1 1 220px; margin: 0; }
