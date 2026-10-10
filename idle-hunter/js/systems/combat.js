@@ -1,13 +1,27 @@
-import { isBossStage, getMonsterInfo, getBossForStage, pickRandomWeakMonster, getWeakMonster } from '../data/monsters.js';
+import { getZone } from '../data/monsters.js';
 import { getCardForMonster } from '../data/cards.js';
+import { DROP_CATEGORIES } from '../data/items.js';
+import { WEAK_EGG_DROP_CHANCE, BOSS_EGG_DROP_CHANCE } from '../data/pets.js';
+import { recordCardDiscovered } from './cards.js';
+import { addDroppedItem } from './crafting.js';
+import { xpForZone, grantXp, isZoneUnlocked, isBossUnlocked } from './leveling.js';
+import { getBestEquippedPet } from './pets.js';
 
 const HP_GROWTH = 1.145;
 const HP_BASE = 20;
 const BOSS_HP_MULT = 9;
 
-const GOLD_GROWTH = 1.115;
-const GOLD_BASE = 4;
+// Curva de ouro reequilibrada (pedido do usuário, pra calibrar o preço em
+// ouro de futuros Baús de Gacha): mantém a Zona 1 igual (~820 ouro/hora,
+// numa cadência de referência de ~58,5 kills/hora) e reduz a Zona 10 de
+// ~15M/hora pra ~500K/hora — GOLD_GROWTH/GOLD_BASE recalculados pra bater
+// exatamente nesses 2 pontos (crescimento geométrico único, sem quebra de
+// curva no meio — cada zona rende ~2.14x a anterior, contra ~3x de antes).
+// Era GOLD_GROWTH=1.115, GOLD_BASE=4.
+const GOLD_GROWTH = 1.073856324990486;
+const GOLD_BASE = 5.610714658981961;
 const BOSS_GOLD_MULT = 6;
+const GOLD_DROP_BONUS = 1.15; // +15% gold per kill across the board
 
 // Damage per second the monster deals back to the player, scaling more
 // gently than its own HP so gear (HP/armor) can realistically keep up.
@@ -22,129 +36,395 @@ const ARMOR_CONSTANT = 100;
 
 // Base chance for a "regular" material drop — the weak monster's one
 // material, or each of a boss's two "drop principal" materials. Scaled by
-// dropMult (Drop upgrades/gear), same as before.
-const COMMON_DROP_CHANCE = 0.35;
+// dropMult (Drop upgrades/gear), same as before. Era 0.35, +25% (pedido do
+// usuário) = 0.4375.
+const COMMON_DROP_CHANCE = 0.35 * 1.25;
 
-// Boss-only Crystal and any monster/boss card are both *fixed* rates —
-// explicitly never scaled by dropMult. Drop bonuses only affect the
-// "regular" materials above; the rare stuff always stays this rare.
-export const CRYSTAL_DROP_CHANCE = 0.001; // 0.1%
-export const MONSTER_CARD_DROP_CHANCE = 0.0001; // 0.01%
+// Any monster/boss card is a *fixed* rate — explicitly never scaled by
+// dropMult. Drop bonuses only affect the "regular" materials above; cards
+// always stay this rare.
+export const BOSS_CARD_DROP_CHANCE = 0.0001; // 0.01% (~1 per 10,000 boss kills)
+export const WEAK_CARD_DROP_CHANCE = 0.0001; // 0.01% (~1 per 10,000 kills) — mesma taxa do chefe, pedido do usuário
 
-export function monsterMaxHp(stage) {
-  const base = HP_BASE * Math.pow(HP_GROWTH, stage - 1);
-  return Math.max(1, Math.round(isBossStage(stage) ? base * BOSS_HP_MULT : base));
+// Chance a kill drops a piece of equipment (see rollDroppedItem in
+// data/items.js), independent of materials/cards, scaled by the same
+// dropMult as the "regular" material chance above.
+export const ITEM_DROP_CHANCE = 0.04; // 4%
+
+// Escala de poder "por rank" dentro de uma zona (0-4: os 4 monstros fracos
+// + o chefe, ver powerRank em data/monsters.js WEAK_MONSTER_GROUPS/BOSSES)
+// — cada monstro só um pouco mais forte que o anterior, o chefe (rank 4)
+// só ~6.5% acima do rank 3, bem mais suave que o multiplicador de chefe de
+// sempre (BOSS_HP_MULT etc. abaixo). Opt-in: só usada quando o monstro tem
+// powerRank definido (por ora, só a Zona 1) — sem powerRank, cai no
+// isBoss ? BOSS_*_MULT : 1 de sempre, então nenhuma outra zona muda.
+const RANK_MULT = [1, 1.08, 1.16, 1.24, 1.32];
+
+// A partir do estágio 70 (fim da Zona 7) o crescimento exponencial de HP_GROWTH
+// vinha ficando exagerado — Zona 10 chegava a ~17,5M de HP no chefe, um salto
+// de quase 60x sobre a Zona 7 (301.427 HP). Reequilíbrio original: manter a
+// Zona 7 na curva de sempre e suavizar dali até a Zona 10.
+//
+// Pedido do usuário (nova rodada): as "zonas finais" pra fins de dificuldade
+// são a Zona 7-10 (não só 8-10), então o ponto de junção foi puxado pro fim
+// da Zona 6 (estágio 60) — a Zona 7 inteira passa a usar a curva suave junto
+// das Zonas 8/9/10, em vez de ficar na curva exponencial antiga sozinha.
+// LATE_GAME_HP_GROWTH foi recalculado pra, apesar da junção mais cedo (agora
+// 40 estágios de curva suave em vez de 30), ainda bater na MESMA base no
+// estágio 100 de antes (baseNoEstágio60 * LATE_GAME_HP_GROWTH^40 ≈
+// baseNoEstágio70Antigo * 1.0796^30) — ou seja, o Malgorath (chefe da Zona
+// 10, powerRank 4) continua saindo em ~3.000.000 (RANK_MULT[4]=1.32) ANTES
+// do corte de -15% das Zonas 7-10 abaixo (LATE_ZONE_HP_REDUCTION_MULT).
+// Zonas 1-6 (estágio ≤60) continuam na curva exponencial de sempre, sem
+// nenhuma mudança — a junção mais cedo já resolve sozinha a suavização
+// entre Zona 6 e Zona 7 (não precisou mexer nos números de 1-6: o próprio
+// formato multiplicativo garante que cada zona já fica bem acima da
+// anterior, ver conferência no changelog).
+const LATE_GAME_HP_BREAKPOINT_STAGE = 60;
+const LATE_GAME_HP_GROWTH = 1.0955911831572802;
+
+// Razão entre o crescimento novo (pós-estágio 70) e o antigo — é exatamente
+// o quanto o HP tardio encolheu proporcionalmente em relação à curva
+// exponencial de sempre. Reaproveitada abaixo pro dano que o monstro causa
+// no jogador, pra reduzir na MESMA proporção (pedido explícito do
+// usuário: "reduza proporcionalmente também o dano dos monstros").
+const LATE_GAME_GROWTH_RATIO = LATE_GAME_HP_GROWTH / HP_GROWTH;
+const LATE_GAME_DPS_TAKEN_GROWTH = PLAYER_DPS_TAKEN_GROWTH * LATE_GAME_GROWTH_RATIO;
+
+function baseHpAtStage(canonicalStage) {
+  if (canonicalStage <= LATE_GAME_HP_BREAKPOINT_STAGE) {
+    return HP_BASE * Math.pow(HP_GROWTH, canonicalStage - 1);
+  }
+  const breakpointBase = HP_BASE * Math.pow(HP_GROWTH, LATE_GAME_HP_BREAKPOINT_STAGE - 1);
+  return breakpointBase * Math.pow(LATE_GAME_HP_GROWTH, canonicalStage - LATE_GAME_HP_BREAKPOINT_STAGE);
 }
 
-export function monsterGoldReward(stage) {
-  const base = GOLD_BASE * Math.pow(GOLD_GROWTH, stage - 1);
-  return Math.max(1, Math.round(isBossStage(stage) ? base * BOSS_GOLD_MULT : base));
+// Zonas 7-10 (canonicalStage 70/80/90/100): HP reduzido em 15%, pedido
+// explícito do usuário — além da junção de curva mais cedo acima (que já
+// suaviza o CRESCIMENTO), esse corte reduz o VALOR em si dessas 4 zonas.
+// Malgorath (Zona 10, chefe) cai de ~4.000.000 (valor fixo antigo, removido
+// abaixo — ele volta a seguir a curva normal) pra ~3.000.000 pela curva
+// recalibrada acima, e mais uns -15% em cima disso: ~2.550.000.
+const LATE_ZONE_HP_REDUCTION_START_STAGE = 70;
+const LATE_ZONE_HP_REDUCTION_MULT = 0.85;
+
+export function monsterMaxHp(canonicalStage, isBoss, powerRank) {
+  const base = baseHpAtStage(canonicalStage);
+  const mult = powerRank != null ? RANK_MULT[powerRank] : (isBoss ? BOSS_HP_MULT : 1);
+  const lateZoneReduction = canonicalStage >= LATE_ZONE_HP_REDUCTION_START_STAGE
+    ? LATE_ZONE_HP_REDUCTION_MULT : 1;
+  return Math.max(1, Math.round(base * mult * lateZoneReduction));
 }
 
-export function monsterDamagePerSecond(stage) {
-  const base = PLAYER_DPS_TAKEN_BASE * Math.pow(PLAYER_DPS_TAKEN_GROWTH, stage - 1);
-  return Math.max(0.1, isBossStage(stage) ? base * BOSS_DPS_TAKEN_MULT : base);
+export function monsterGoldReward(canonicalStage, isBoss, powerRank) {
+  const base = GOLD_BASE * Math.pow(GOLD_GROWTH, canonicalStage - 1);
+  const mult = powerRank != null ? RANK_MULT[powerRank] : (isBoss ? BOSS_GOLD_MULT : 1);
+  return Math.max(1, Math.round(base * mult * GOLD_DROP_BONUS));
+}
+
+function dpsTakenBaseAtStage(canonicalStage) {
+  if (canonicalStage <= LATE_GAME_HP_BREAKPOINT_STAGE) {
+    return PLAYER_DPS_TAKEN_BASE * Math.pow(PLAYER_DPS_TAKEN_GROWTH, canonicalStage - 1);
+  }
+  const breakpointBase = PLAYER_DPS_TAKEN_BASE * Math.pow(PLAYER_DPS_TAKEN_GROWTH, LATE_GAME_HP_BREAKPOINT_STAGE - 1);
+  return breakpointBase * Math.pow(LATE_GAME_DPS_TAKEN_GROWTH, canonicalStage - LATE_GAME_HP_BREAKPOINT_STAGE);
+}
+
+// Zonas 7-10 (canonicalStage 70/80/90/100 — cada zona usa 1 estágio fixo,
+// zoneIndex+1 * ZONE_SIZE, ver data/monsters.js): dano de monstros E chefes
+// reduzido em 15% (era 20%, ajustado pra bater com o corte de HP acima).
+// Só o dano que o jogador TOMA (essa função) — Ouro dessas zonas não muda.
+const LATE_ZONE_DPS_TAKEN_REDUCTION_START_STAGE = 70;
+const LATE_ZONE_DPS_TAKEN_REDUCTION_MULT = 0.85;
+
+export function monsterDamagePerSecond(canonicalStage, isBoss, powerRank) {
+  const base = dpsTakenBaseAtStage(canonicalStage);
+  const mult = powerRank != null ? RANK_MULT[powerRank] : (isBoss ? BOSS_DPS_TAKEN_MULT : 1);
+  const lateZoneReduction = canonicalStage >= LATE_ZONE_DPS_TAKEN_REDUCTION_START_STAGE
+    ? LATE_ZONE_DPS_TAKEN_REDUCTION_MULT : 1;
+  return Math.max(0.1, base * mult * lateZoneReduction);
+}
+
+/// Rolled independently for every single hit — so a fast-attack-speed build
+/// gets many small independent chances at a crit rather than one roll "for
+/// the whole second". Multiplier is 1 on a whiff, or 1 + critDamage% on a
+/// crit; caller just multiplies the base damage by it.
+export function rollCrit(stats) {
+  const isCrit = Math.random() * 100 < (stats.critChance || 0);
+  return { isCrit, multiplier: isCrit ? 1 + (stats.critDamage || 0) / 100 : 1 };
+}
+
+/// Esquiva: rolada a cada tick de dano recebido (ver totalIncomingReduction
+/// em main.js) — se acertar, aquele tick inteiro de dano é evitado.
+export function rollDodge(stats) {
+  return Math.random() * 100 < (stats.dodgeChance || 0);
 }
 
 export function armorReduction(armor) {
   return armor / (armor + ARMOR_CONSTANT);
 }
 
-export function getCurrentMonster(stage, weakMonsterId) {
-  const info = getMonsterInfo(stage, weakMonsterId);
-  return { ...info, maxHp: monsterMaxHp(stage), dps: monsterDamagePerSecond(stage) };
+// ---------------------------------------------------------------------
+// Relógio de hit discreto: em vez de aplicar dano fracionado a cada tick de
+// 100ms, cada contexto de combate (Caça, Evento, Torre, Mina de Ouro) mantém
+// seu próprio "nextHitAt" (timestamp) — main.js chama advanceHitClock() a
+// cada tick e só resolve um hit de verdade quando o relógio vence, no ritmo
+// de attackSpeedPerSec (base 1 hit/seg, escalado pelo atributo Velocidade
+// de Ataque). Sem estado de módulo aqui de propósito — cada contexto guarda
+// seu próprio nextHitAt como variável de closure em main.js, exatamente como
+// já faz com bossDeadline/currentHp.
+// ---------------------------------------------------------------------
+export function hitIntervalMs(attackSpeedPerSec) {
+  return 1000 / Math.max(0.05, attackSpeedPerSec);
 }
 
-/// weakMonsterId: the currently-spawned weak monster (see
-/// ensureMonsterSpawned below) — only consulted on non-boss stages.
-///
+export function advanceHitClock(nextHitAt, attackSpeedPerSec, now = Date.now()) {
+  if (nextHitAt == null) return { hit: false, nextHitAt: now + hitIntervalMs(attackSpeedPerSec) };
+  if (now < nextHitAt) return { hit: false, nextHitAt };
+  return { hit: true, nextHitAt: now + hitIntervalMs(attackSpeedPerSec) };
+}
+
+/// Resolves one discrete hit's damage — shared by every combat context (Caça,
+/// Evento, Torre, Mina de Ouro). elementalMultiplier is the caller's
+/// precomputed `1 + elementDamageModifier(...)`.
+export function resolveHit(state, stats, elementalMultiplier) {
+  const crit = rollCrit(stats);
+  return { dealt: stats.dps * elementalMultiplier * crit.multiplier, isCrit: crit.isCrit };
+}
+
+/// Resolve o dano do mascote nesse mesmo hit — o jogo escolhe sozinho, entre
+/// os até 4 pets equipados, qual causaria mais dano contra `monsterElement`
+/// agora (dano base do pet, uma % do DPS do próprio caçador — ver
+/// getPetDamage em data/pets.js — × vantagem/desvantagem elemental, ver
+/// getBestEquippedPet em systems/pets.js). Chamado ao lado de resolveHit()
+/// em cada um dos 4 contextos de combate (main.js) — retorna null se
+/// nenhum pet estiver equipado. Crítico do mascote usa a MESMA chance/dano
+/// crítico do caçador (stats.critChance/critDamage) — rolagem própria,
+/// independente da do hit principal, igual ao Golpe Duplo (ver
+/// resolveDoubleHit abaixo).
+export function resolvePetHit(state, monsterElement, stats) {
+  const best = getBestEquippedPet(state, monsterElement, stats?.dps);
+  if (!best) return null;
+  const crit = rollCrit(stats);
+  return {
+    dealt: best.damage * (stats?.petDamageMult || 1) * crit.multiplier,
+    species: best.species,
+    isCrit: crit.isCrit,
+  };
+}
+
+/// Golpe Duplo (ver stats.doubleHitChance, systems/stats.js — concedido por
+/// carta, ver data/cards.js CARD_EFFECTS): chance de um 2º hit do próprio
+/// caçador acontecer junto do hit principal — totalmente independente
+/// (própria rolagem de crítico, via rollCrit), nunca combinado no mesmo
+/// número exibido (ver spawnDamagePopup chamado uma 2ª vez em cada contexto
+/// de combate, main.js). Retorna null quando não proca ou quando nenhuma
+/// carta socketada concede o stat.
+export function resolveDoubleHit(stats, elementalMultiplier) {
+  if (!stats.doubleHitChance) return null;
+  if (Math.random() * 100 >= stats.doubleHitChance) return null;
+  const crit = rollCrit(stats);
+  return { dealt: stats.dps * elementalMultiplier * crit.multiplier, isCrit: crit.isCrit };
+}
+
+// ---------------------------------------------------------------------
+// Monstro atual: resolvido a partir de state.currentMonster ({ zoneIndex,
+// kind: 'weak'|'boss', monsterId }), que por sua vez é sorteado
+// uniformemente entre state.selectedMonsters a cada respawn (ver
+// ensureMonsterSpawned). O "estágio canônico" da zona (10, 20, ...100)
+// escala HP/Ouro/Dano de TODOS os monstros daquela zona, fraco ou chefe —
+// o chefe normalmente aplica seu próprio multiplicador BOSS_* bem maior
+// por cima (ver monsterMaxHp etc. acima), exceto quando o monstro (fraco
+// ou chefe) tem powerRank definido (só a Zona 1 por ora, ver
+// data/monsters.js) — aí usa a escala suave RANK_MULT em vez disso.
+// ---------------------------------------------------------------------
+
+export function getCurrentMonster(currentMonsterRef) {
+  if (!currentMonsterRef) return null;
+  const { zoneIndex, kind, monsterId } = currentMonsterRef;
+  const zone = getZone(zoneIndex);
+  if (!zone) return null;
+  const isBoss = kind === 'boss';
+  const canonicalStage = zone.canonicalStage;
+
+  if (isBoss) {
+    const b = zone.boss;
+    return {
+      zoneIndex, isBoss: true, isWeak: false,
+      bossId: b.id, weakMonsterId: null,
+      name: b.name, emoji: b.emoji, image: b.image || null,
+      animFrames: b.animFrames || null,
+      spriteScale: b.spriteScale || 1, element: b.element,
+      maxHp: monsterMaxHp(canonicalStage, true, b.powerRank),
+      dps: monsterDamagePerSecond(canonicalStage, true, b.powerRank),
+    };
+  }
+
+  const weak = zone.weakMonsters.find((m) => m.id === monsterId) || zone.weakMonsters[0];
+  return {
+    zoneIndex, isBoss: false, isWeak: true,
+    bossId: null, weakMonsterId: weak.id,
+    name: weak.name, emoji: weak.emoji, image: weak.image || null,
+    animFrames: weak.animFrames || null, element: weak.element,
+    spriteScale: weak.spriteScale || 1,
+    maxHp: monsterMaxHp(canonicalStage, false, weak.powerRank),
+    dps: monsterDamagePerSecond(canonicalStage, false, weak.powerRank),
+  };
+}
+
 /// Boss: rolls each of the two "drop principal" materials independently
-/// (dropMult-scaled), plus the boss's own Crystal and its card, both at a
-/// fixed rate dropMult never touches.
+/// (dropMult-scaled), plus its card at a fixed rate dropMult never touches.
 /// Weak monster: rolls its one material (dropMult-scaled) plus its own
 /// card, also at that same fixed rate.
-export function rollDrops(stage, dropMult, weakMonsterId) {
-  const boss = isBossStage(stage);
+export function rollDrops(zoneIndex, isBoss, dropMult, monsterId) {
+  const zone = getZone(zoneIndex);
   const drops = [];
   const chance = Math.min(0.95, COMMON_DROP_CHANCE * dropMult);
 
-  if (boss) {
-    const b = getBossForStage(stage);
+  if (isBoss) {
+    const b = zone.boss;
     for (const mat of [b.materials.primary1, b.materials.primary2]) {
       if (Math.random() < chance) {
-        drops.push({ id: mat.id, name: mat.name, emoji: mat.emoji, qty: 1 });
+        drops.push({ id: mat.id, name: mat.name, emoji: mat.emoji, image: mat.image || null, qty: 1 });
       }
     }
-    if (Math.random() < CRYSTAL_DROP_CHANCE) {
-      drops.push({ id: b.crystal.id, name: b.crystal.name, emoji: b.crystal.emoji, qty: 1 });
-    }
-    if (Math.random() < MONSTER_CARD_DROP_CHANCE) {
+    if (Math.random() < BOSS_CARD_DROP_CHANCE) {
       const card = getCardForMonster(b.id);
-      drops.push({ id: card.id, name: card.name, emoji: card.emoji, qty: 1, isCard: true });
+      drops.push({ id: card.id, name: card.name, emoji: card.emoji, image: card.image || null, qty: 1, isCard: true });
     }
     return drops;
   }
 
-  const weak = getWeakMonster(weakMonsterId);
+  const weak = zone.weakMonsters.find((m) => m.id === monsterId) || zone.weakMonsters[0];
   if (Math.random() < chance) {
-    drops.push({ id: weak.material.id, name: weak.material.name, emoji: weak.material.emoji, qty: 1 });
+    drops.push({ id: weak.material.id, name: weak.material.name, emoji: weak.material.emoji, image: weak.material.image || null, qty: 1 });
   }
-  if (Math.random() < MONSTER_CARD_DROP_CHANCE) {
+  if (Math.random() < WEAK_CARD_DROP_CHANCE) {
     const card = getCardForMonster(weak.id);
-    drops.push({ id: card.id, name: card.name, emoji: card.emoji, qty: 1, isCard: true });
+    drops.push({ id: card.id, name: card.name, emoji: card.emoji, image: card.image || null, qty: 1, isCard: true });
   }
   return drops;
 }
 
-/// Also rolls which weak monster is showing (persisted on state, since a
-/// weak monster's identity has to stay fixed for the life of that HP pool
-/// — re-rolling on every render would make the sprite flicker between
-/// monsters mid-fight). null on boss stages, where that decade's boss is
-/// always shown instead.
+/// Pausa entre a morte de um monstro (fraco ou chefe) e o próximo aparecer —
+/// só na Caça principal (Torre/Chefe de Evento/Mina de Ouro têm seu próprio
+/// ritmo, sem essa pausa). Também descontada do cálculo de progresso
+/// offline (ver computeOfflineProgress em systems/offline.js), senão o
+/// offline ficaria mais rápido que jogar ao vivo.
+export const MONSTER_RESPAWN_DELAY_MS = 1500;
+
+/// Sorteia um dos state.selectedMonsters (uniforme) e monta o monstro atual
+/// — chamado sempre que monsterHp está null (precisa (re)spawnar). Sem
+/// monstro selecionado, deixa currentMonster null (a UI mostra a tela de
+/// "escolha seus monstros" nesse caso). Respeita state.nextMonsterSpawnAt
+/// (ver applyDamage abaixo): enquanto esse prazo não vencer, não spawna
+/// nada — a Caça fica com o monstro anterior morto no relógio ("esperando").
 export function ensureMonsterSpawned(state) {
-  if (state.monsterHp == null) {
-    state.monsterHp = monsterMaxHp(state.stage);
-    state.weakMonsterId = isBossStage(state.stage) ? null : pickRandomWeakMonster(state.stage).id;
+  if (state.monsterHp != null) return;
+  if (state.nextMonsterSpawnAt && Date.now() < state.nextMonsterSpawnAt) return;
+  state.nextMonsterSpawnAt = null;
+  const pool = state.selectedMonsters || [];
+  if (!pool.length) {
+    state.currentMonster = null;
+    return;
   }
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  state.currentMonster = {
+    zoneIndex: pick.zoneIndex,
+    kind: pick.kind,
+    monsterId: pick.monsterId,
+  };
+  const monster = getCurrentMonster(state.currentMonster);
+  state.monsterHp = monster.maxHp;
 }
 
+
 /// Applies damage to the current monster. Returns a kill event (or null if
-/// the monster survived) describing gold/drops/stage-advance so the UI layer
-/// can react without this module knowing about the DOM.
+/// the monster survived) describing gold/drops/xp/level-up/item-drop so the
+/// UI layer can react without this module knowing about the DOM.
 export function applyDamage(state, amount, stats) {
   ensureMonsterSpawned(state);
+  if (!state.currentMonster) return null;
   state.monsterHp -= amount;
 
   if (state.monsterHp > 0) return null;
 
-  const stage = state.stage;
-  const goldGained = Math.round(monsterGoldReward(stage) * stats.goldMult);
-  const drops = rollDrops(stage, stats.dropMult, state.weakMonsterId);
-  const wasBoss = isBossStage(stage);
+  const ref = state.currentMonster;
+  const zoneIndex = ref.zoneIndex;
+  const zone = getZone(zoneIndex);
+  const wasBoss = ref.kind === 'boss';
+  const powerRank = wasBoss ? zone.boss.powerRank : zone.weakMonsters.find((m) => m.id === ref.monsterId)?.powerRank;
+
+  const goldGained = Math.round(monsterGoldReward(zone.canonicalStage, wasBoss, powerRank) * stats.goldMult);
+  const drops = rollDrops(zoneIndex, wasBoss, stats.dropMult, ref.monsterId);
 
   state.gold += goldGained;
+  state.lifetimeGoldEarned = (state.lifetimeGoldEarned || 0) + goldGained;
   for (const drop of drops) {
     const bucket = drop.isCard ? state.cards : state.materials;
     bucket[drop.id] = (bucket[drop.id] || 0) + drop.qty;
+    if (drop.isCard) recordCardDiscovered(state, drop.id);
   }
   state.totalKills += 1;
+  state.lifetimeTotalKills = (state.lifetimeTotalKills || 0) + 1;
 
-  const advanced = state.stage >= state.maxStage;
-  if (advanced) {
-    state.maxStage = state.stage + 1;
-    state.stage = state.stage + 1;
+  let itemDropResult = null;
+  if (Math.random() < Math.min(0.95, ITEM_DROP_CHANCE * stats.dropMult)) {
+    // 9 categorias de drop (não SLOTS — ring ocupa 2 slots físicos mas é 1
+    // categoria só, ver data/items.js).
+    const category = DROP_CATEGORIES[Math.floor(Math.random() * DROP_CATEGORIES.length)];
+    itemDropResult = addDroppedItem(state, zoneIndex, category);
   }
-  state.monsterHp = null;
-  ensureMonsterSpawned(state);
 
-  return { stage, goldGained, drops, wasBoss, advanced, newStage: state.stage };
+  // Ovo de mascote: chance fixa (não escalada por dropMult, igual
+  // Cristal/carta acima) — bem menor num monstro fraco que num chefe.
+  let eggGained = false;
+  if (Math.random() < (wasBoss ? BOSS_EGG_DROP_CHANCE : WEAK_EGG_DROP_CHANCE)) {
+    state.eggCount = (state.eggCount || 0) + 1;
+    eggGained = true;
+  }
+
+  const xpGained = xpForZone(zoneIndex, wasBoss);
+  const levelsGained = grantXp(state, xpGained);
+
+  // Guarda uma cópia do monstro que acabou de morrer (não a referência viva
+  // de state.currentMonster, que está prestes a virar null) — a UI usa isso
+  // pra continuar mostrando o sprite/nome dele (com a barra de vida
+  // zerada) durante a pausa de respawn, em vez de cair na tela de "?" (ver
+  // renderNoMonsterSelected em ui/render.js e main.js). Puramente
+  // cosmético: não participa de nenhum cálculo de combate — tick()/
+  // applyDamage continuam lendo state.currentMonster (null) normalmente.
+  state.lastMonsterRef = { ...ref };
+  state.monsterHp = null;
+  state.currentMonster = null;
+  state.nextMonsterSpawnAt = Date.now() + MONSTER_RESPAWN_DELAY_MS;
+
+  return { zoneIndex, wasBoss, goldGained, drops, xpGained, levelsGained, itemDropResult, eggGained };
 }
 
-export function setViewedStage(state, stage) {
-  const clamped = Math.max(1, Math.min(stage, state.maxStage));
-  if (clamped === state.stage) return false;
-  state.stage = clamped;
+// ---------------------------------------------------------------------
+// Seleção de monstros (estilo IdleArc): até 4, de qualquer zona liberada,
+// podendo misturar zonas — só esses aparecem sorteados na Caça.
+// ---------------------------------------------------------------------
+export const MAX_SELECTED_MONSTERS = 4;
+
+export function canSelectMonster(state, zoneIndex, kind) {
+  return kind === 'boss' ? isBossUnlocked(state, zoneIndex) : isZoneUnlocked(state, zoneIndex);
+}
+
+/// Substitui a lista inteira de selecionados (a tela de seleção sempre manda
+/// o conjunto completo desejado). Filtra qualquer entrada que não esteja
+/// mais liberada e trunca em MAX_SELECTED_MONSTERS. Força um respawn a partir
+/// do novo conjunto. Retorna false (sem aplicar nada) se a lista filtrada
+/// ficar vazia — sempre precisa sobrar ao menos 1 selecionado.
+export function setSelectedMonsters(state, list) {
+  const filtered = list
+    .filter((m) => canSelectMonster(state, m.zoneIndex, m.kind))
+    .slice(0, MAX_SELECTED_MONSTERS);
+  if (!filtered.length) return false;
+  state.selectedMonsters = filtered;
   state.monsterHp = null;
+  state.nextMonsterSpawnAt = null;
   ensureMonsterSpawned(state);
   return true;
 }
