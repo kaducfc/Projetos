@@ -11,6 +11,7 @@ export const EFEITOS = [
   // À venda por Rift Coins (site_loja, 0055_loja_efeitos.sql): `preco` só serve para mostrar.
   { id: 'st-galaxia', nome: 'Galáxia', classe: 'fx-st-galaxia', preco: 2000, como: 'Compre por 2.000 RC.' },
   { id: 'st-brasa', nome: 'Brasa', classe: 'fx-st-brasa', preco: 2000, como: 'Compre por 2.000 RC.' },
+  { id: 'nv-cristal', nome: 'Cristal de Gelo', classe: 'fx-nv-cristal', preco: 1000, como: 'Compre por 1.000 RC.' },
   { id: 'gl-corrompido', nome: 'Dado Corrompido', classe: 'fx-gl-corrompido', preco: 10000, como: 'Compre por 10.000 RC.' },
   // Exclusivo do cartão de visita (código no verso). Visual provisório (o do Apoiador): troque `classe`
   // quando o efeito próprio estiver pronto.
@@ -32,7 +33,6 @@ export const EFEITOS_TESTE = [
   { id: 'gl-fatiado', nome: 'Fatiado', classe: 'fx-gl-fatiado', tema: 'Glitch · intenso · faixas que escorregam' },
   { id: 'gl-matrix', nome: 'Código Verde', classe: 'fx-gl-matrix', tema: 'Glitch · médio · terminal verde' },
   { id: 'nv-magma', nome: 'Magma', classe: 'fx-nv-magma', tema: 'Laranja e preto · lava e brasas' },
-  { id: 'nv-cristal', nome: 'Cristal de Gelo', classe: 'fx-nv-cristal', tema: 'Azul gelo · faceta e brilhos em estrela' },
   { id: 'nv-synth', nome: 'Noite Retrô', classe: 'fx-nv-synth', tema: 'Rosa, amarelo e ciano · listras anos 80' },
   { id: 'nv-raio', nome: 'Tempestade', classe: 'fx-nv-raio', tema: 'Azul elétrico · relâmpago' },
   { id: 'nv-sakura', nome: 'Sakura', classe: 'fx-nv-sakura', tema: 'Rosa · pétalas caindo' },

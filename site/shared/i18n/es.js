@@ -1609,6 +1609,8 @@ export default {
   "Brasa": "Brasa",
   "Galáxia": "Galaxia",
   "Compre por 2.000 RC.": "Cómpralo por 2.000 RC.",
+  "Cristal de Gelo": "Cristal de Hielo",
+  "Compre por 1.000 RC.": "Cómpralo por 1.000 RC.",
   "Comprar por 2.000 RC": "Comprar por 2.000 RC",
   "Efeito comprado! Agora é só selecionar.": "¡Efecto comprado! Ahora solo selecciónalo.",
   "Teia de Aranha": "Telaraña",

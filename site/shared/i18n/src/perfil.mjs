@@ -27,6 +27,8 @@ export default [
   ['Brasa', 'Ember', 'Glut', 'Brasa', 'Brace', 'Braise'],
   ['Galáxia', 'Galaxy', 'Galaxie', 'Galaxia', 'Galassia', 'Galaxie'],
   ['Compre por 2.000 RC.', 'Buy for 2,000 RC.', 'Kaufe für 2.000 RC.', 'Cómpralo por 2.000 RC.', 'Acquistalo per 2.000 RC.', 'Achète-le pour 2 000 RC.'],
+  ['Cristal de Gelo', 'Ice Crystal', 'Eiskristall', 'Cristal de Hielo', 'Cristallo di Ghiaccio', 'Cristal de glace'],
+  ['Compre por 1.000 RC.', 'Buy for 1,000 RC.', 'Kaufe für 1.000 RC.', 'Cómpralo por 1.000 RC.', 'Acquistalo per 1.000 RC.', 'Achète-le pour 1 000 RC.'],
   ['Comprar por 2.000 RC', 'Buy for 2,000 RC', 'Für 2.000 RC kaufen', 'Comprar por 2.000 RC', 'Acquista per 2.000 RC', 'Acheter pour 2 000 RC'],
   ['Efeito comprado! Agora é só selecionar.', 'Effect bought! Now just select it.', 'Effekt gekauft! Jetzt nur noch auswählen.', '¡Efecto comprado! Ahora solo selecciónalo.', 'Effetto acquistato! Ora basta selezionarlo.', 'Effet acheté ! Il ne reste qu’à le sélectionner.'],
   ['Teia de Aranha', 'Spider Web', 'Spinnennetz', 'Telaraña', 'Ragnatela', 'Toile d’araignée'],

@@ -1609,6 +1609,8 @@ export default {
   "Brasa": "Glut",
   "Galáxia": "Galaxie",
   "Compre por 2.000 RC.": "Kaufe für 2.000 RC.",
+  "Cristal de Gelo": "Eiskristall",
+  "Compre por 1.000 RC.": "Kaufe für 1.000 RC.",
   "Comprar por 2.000 RC": "Für 2.000 RC kaufen",
   "Efeito comprado! Agora é só selecionar.": "Effekt gekauft! Jetzt nur noch auswählen.",
   "Teia de Aranha": "Spinnennetz",

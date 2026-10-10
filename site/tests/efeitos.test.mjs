@@ -33,8 +33,8 @@ test('efeitos: automático dá o reflexo ao apoiador, "nenhum" tira, id desconhe
 });
 
 test('efeitos: os de teste têm CSS e não estão na lista pública', () => {
-  assert.equal(EFEITOS_TESTE.length, 15);
-  assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('nv-')).length, 5);
+  assert.equal(EFEITOS_TESTE.length, 14);
+  assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('nv-')).length, 4);
   assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('lj-')).length, 7);
   assert.ok(EFEITOS_TESTE.some((e) => /Laranja e preto/.test(e.tema)));
   for (const e of EFEITOS_TESTE) {

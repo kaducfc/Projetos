@@ -1609,6 +1609,8 @@ export default {
   "Brasa": "Braise",
   "Galáxia": "Galaxie",
   "Compre por 2.000 RC.": "Achète-le pour 2 000 RC.",
+  "Cristal de Gelo": "Cristal de glace",
+  "Compre por 1.000 RC.": "Achète-le pour 1 000 RC.",
   "Comprar por 2.000 RC": "Acheter pour 2 000 RC",
   "Efeito comprado! Agora é só selecionar.": "Effet acheté ! Il ne reste qu’à le sélectionner.",
   "Teia de Aranha": "Toile d’araignée",
