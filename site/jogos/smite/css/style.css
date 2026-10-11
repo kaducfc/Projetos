@@ -145,6 +145,7 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
 .sm-bt .nome { font-size: 1.15cqw; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; line-height: 1.1; max-width: 11cqw; white-space: nowrap; }
 .sm-bt .recarga { position: absolute; inset: 0; background: rgba(2, 8, 10, 0.78); display: grid; place-items: center; font-family: 'Bebas Neue', sans-serif; font-size: 2.8cqw; z-index: 1; }
 .sm-bt .recarga[hidden] { display: none; }
+.sm-bt .valor { display: none; }
 .sm-bt .recarga.janela, .sm-bt .recarga.armado { background: rgba(255, 150, 30, 0.12); font-size: 1.9cqw; color: #fff1d6; text-shadow: 0 0 0.5cqw #000, 0 0 0.5cqw #000; }
 .sm-bt[data-fase="janela"] .quadro, .sm-bt[data-fase="armado"] .quadro { --cor-bt: #ffa530; animation: sm-pulso 0.5s ease-in-out infinite alternate; }
 .sm-bt .carga { position: absolute; left: 0; right: 0; bottom: 0; height: 22%; background: rgba(2, 8, 10, 0.8); z-index: 1; }
@@ -207,7 +208,9 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
   .sm-hp .barra { height: 6.4cqw; border-width: 0.4cqw; clip-path: polygon(0 0, calc(100% - 3cqw) 0, 100% 50%, calc(100% - 3cqw) 100%, 0 100%); }
   .sm-hp .num { font-size: 3.7cqw; }
   .sm-voce { left: 24%; top: 54%; width: 15cqw; height: 15cqw; }
-  .sm-ficha { width: 8cqw; height: 8cqw; } .sm-ficha .nv, .sm-ficha .hp { display: none; }
+  .sm-ficha { width: 8cqw; height: 8cqw; } .sm-ficha .hp { display: none; }
+  .sm-ficha .nv { left: -1.6cqw; top: -1.6cqw; min-width: 4.2cqw; height: 4.2cqw; font-size: 2.7cqw; border-width: 0.3cqw; border-radius: 1cqw; }
+  .sm-bt .valor { display: grid; place-items: center; position: absolute; left: 0; right: 0; top: 0; height: 30%; z-index: 2; background: rgba(4, 16, 15, 0.82); font-family: 'Bebas Neue', sans-serif; font-size: 6.4cqw; letter-spacing: 0.04em; color: var(--sm-ouro); }
   .sm-num { font-size: 5cqw; } .sm-num.q { font-size: 7cqw; } .sm-num.smite { font-size: 11cqw; }
   .sm-dano { left: 3cqw; right: 3cqw; top: auto; bottom: 40cqw; width: auto; padding: 2cqw 3cqw 2.4cqw; }
   .sm-dano h3 { font-size: 2.8cqw; margin-bottom: 1.6cqw; }
@@ -220,7 +223,8 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
   .sm-hab { left: 3cqw; right: 3cqw; width: auto; bottom: 3cqw; height: 34cqw; }
   .sm-hab .fundo { left: 0; height: 30cqw; bottom: 0; }
   .sm-retrato { width: 24cqw; height: 24cqw; left: 3cqw; bottom: 3cqw; border-width: 0.8cqw; }
-  .sm-nivel, .sm-barras { display: none; }
+  .sm-barras { display: none; }
+  .sm-nivel { left: 21cqw; bottom: 2cqw; width: 7cqw; height: 7cqw; font-size: 4.2cqw; border-width: 0.5cqw; }
   .sm-botoes { left: auto; right: 4cqw; bottom: 2cqw; gap: 6cqw; }
   .sm-bt { width: 24cqw; } .sm-bt .quadro { width: 24cqw; height: 24cqw; border-width: 0.8cqw; border-radius: 2.4cqw; }
   .sm-bt .tecla { min-width: 8cqw; height: 6.4cqw; font-size: 4cqw; border-width: 0.5cqw; } .sm-bt .nome { font-size: 3.2cqw; max-width: 28cqw; }

@@ -113,7 +113,7 @@ function montar() {
       <div class="sm-barras"><div class="v"><i></i><span>1.860 / 2.100</span></div><div class="m"><i></i><span>640 / 890</span></div></div>
       <div class="sm-botoes">
         <button type="button" class="sm-bt q" id="sm-q" aria-label="${t('Habilidade')} (Q)"><span class="quadro"><img id="sm-q-img" alt="" /><span class="recarga" id="sm-q-rec" hidden></span><span class="carga" id="sm-q-carga" hidden><i></i></span><span class="tecla">Q</span></span><span class="nome">${t('Habilidade')}</span></button>
-        <button type="button" class="sm-bt f" id="sm-f" aria-label="${t('Golpear')} (F)"><span class="quadro"><img alt="" src="${imgSmite()}" /><span class="tecla">F</span></span><span class="nome">${t('Golpear')}</span></button>
+        <button type="button" class="sm-bt f" id="sm-f" aria-label="${t('Golpear')} (F)"><span class="quadro"><img alt="" src="${imgSmite()}" /><span class="valor" id="sm-f-valor"></span><span class="tecla">F</span></span><span class="nome">${t('Golpear')}</span></button>
       </div>
     </div>
     <button type="button" class="sm-som" id="sm-som" aria-label="${t('Som')}"></button>
@@ -203,7 +203,7 @@ function painelDano() {
   const total = Object.values(danos).reduce((a, b) => a + b, 0) || 1;
   document.querySelectorAll('#sm-dano li').forEach((li) => {
     const p = Math.round(((danos[li.dataset.p] || 0) / total) * 100);
-    li.querySelector('.pct').textContent = `${p}%`;
+    li.querySelector('.pct').textContent = fmt(Math.round(danos[li.dataset.p] || 0));
     li.querySelector('.barra i').style.width = `${p}%`;
   });
 }
@@ -374,7 +374,7 @@ function prepararHud() {
   $('sm-nome-obj').textContent = nomeObj();
   $('sm-obj-txt').textContent = t('Golpeie o {obj} com o Golpear no momento certo!', { obj: nomeObj() });
   $('sm-numeros').innerHTML = '';
-  $('sm-dano-smite').textContent = fmt(R.smite);
+  $('sm-dano-smite').textContent = fmt(R.smite); $('sm-f-valor').textContent = fmt(R.smite);
   $('sm-nivel').textContent = R.nivel;
   $('sm-marca').style.left = `${(R.smite / R.vidaMax) * 100}%`;
   $('sm-voce-img').src = imgCampeao(c.id); $('sm-retrato').src = imgCampeao(c.id); $('sm-q-img').src = imgQ('q');
@@ -383,7 +383,7 @@ function prepararHud() {
     return `<div class="sm-ficha ${p.lado}" data-p="${p.id}" title="${esc(nomeCampeao(p.champ))}" style="left:${x}%;top:${y}%"><img class="ic" alt="" src="${imgCampeao(p.champ)}" /><span class="nv">${p.nivel}</span><span class="hp"><i></i></span></div>`;
   }).join('');
   const nomeLinha = (p) => (p.id === 'voce' ? t('Você') : `${t(p.lado === 'azul' ? 'Aliado' : 'Adversário')} ${t(ROTA_NOME[p.rota])}`);
-  $('sm-dano').innerHTML = R.participantes.map((p) => `<li data-p="${p.id}" style="--cor:${p.id === 'voce' ? COR.voce : COR[p.lado]}"><img class="ic" alt="" src="${imgCampeao(p.champ)}" /><span class="nome">${esc(nomeLinha(p))}</span><span class="pct">0%</span><span class="barra"><i></i></span></li>`).join('');
+  $('sm-dano').innerHTML = R.participantes.map((p) => `<li data-p="${p.id}" style="--cor:${p.id === 'voce' ? COR.voce : COR[p.lado]}"><img class="ic" alt="" src="${imgCampeao(p.champ)}" /><span class="nome">${esc(nomeLinha(p))}</span><span class="pct">0</span><span class="barra"><i></i></span></li>`).join('');
 }
 
 function prepararRodada() {
