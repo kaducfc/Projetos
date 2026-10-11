@@ -10,7 +10,7 @@ import { gameById } from '../../../shared/config.js';
 import { t, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, RECARGA_HAB, ROTA_NOME,
-  aleatorio, criarRodada, proximoObjetivo, nomeCampeao,
+  aleatorio, criarPartida, criarRodada, nomeCampeao,
   novoEstado, avancar, usarHabilidade, usarGolpear,
 } from './logic.js';
 
@@ -139,7 +139,7 @@ let est = null; // estado da rodada (logic.js): vida, golpes aplicados, Golpear,
 let qPronto = 0; // quando a habilidade volta (s)
 let danos = {}; // quem → dano causado
 let ultimoTxt = ''; let ultimoTempo = ''; let ultimoResta = TEMPO_MAX;
-let objetivoAnterior = null;
+let partida = null; // a partida (5 rodadas): os mesmos campeões do começo ao fim
 
 const vidaAgora = () => (est ? est.vida : 0);
 const tempoAgora = () => (performance.now() - t0) / 1000;
@@ -311,7 +311,7 @@ function telaInicio() {
       <div><b>${t('Cuidado')}</b>${t('O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está na faixa vermelha da barra, de 5% acima a 30% abaixo do dano do Golpear, com mais chance quanto mais baixa a vida.')}</div>
       <div><b>${t('Habilidade')}</b>${t('O botão Q do seu campeão também machuca o objetivo. Use para ajustar a vida (se ela finalizar o objetivo, vale 50 pontos).')}</div>
     </div>
-    <p>${t('{rodadas} rodadas (Dragão Elemental, Dragão Ancião, Barão Nashor e Arauto do Vale), até <b>100 pontos</b> cada. Teclas: <b>F</b> ou <b>Espaço</b> = Golpear · <b>Q</b> = habilidade.', { rodadas: RODADAS })}${melhor ? `<br>${t('Seu recorde: <b>{n}</b> pontos', { n: fmt(melhor) })}` : ''}</p>
+    <p>${t('As {rodadas} rodadas formam uma partida, com os mesmos campeões do começo ao fim: dos objetivos mais fracos (Arauto do Vale e Dragão Elemental, campeões em nível baixo) ao Barão Nashor e ao Dragão Ancião (nível alto). Até <b>100 pontos</b> por rodada. Teclas: <b>F</b> ou <b>Espaço</b> = Golpear · <b>Q</b> = habilidade.', { rodadas: RODADAS })}${melhor ? `<br>${t('Seu recorde: <b>{n}</b> pontos', { n: fmt(melhor) })}` : ''}</p>
     <div class="sm-acoes"><button type="button" class="sm-go" data-a="jogar">${t('JOGAR')}</button></div></div>`, telaInicio);
 }
 
@@ -345,9 +345,7 @@ function prepararRodada() {
   const rand = aleatorio((Date.now() ^ (n * 7919)) >>> 0);
   // `?obj=barao` (ou arauto, dragao-anciao, dragao-elemental) fixa o objetivo, para testar o visual de cada um.
   const fixo = OBJETIVOS.find((o) => o.id === new URLSearchParams(location.search).get('obj'));
-  const objetivo = fixo || proximoObjetivo(rand, objetivoAnterior);
-  objetivoAnterior = objetivo.id;
-  R = criarRodada(rand, n, objetivo);
+  R = criarRodada(rand, n, { partida, objetivo: fixo || undefined });
   fase = 'preparo';
   est = novoEstado(R); qPronto = 0; danos = {}; ultimoTxt = ''; ultimoTempo = '';
   prepararHud(); painelDano(); hud();
@@ -435,7 +433,7 @@ function desenharFim(pts, melhor, recorde, perfeitas) {
 document.addEventListener('click', (e) => {
   const a = e.target.closest('[data-a]')?.dataset.a;
   if (!a) return;
-  if (a === 'jogar') { resultados = []; n = 0; objetivoAnterior = null; prepararRodada(); }
+  if (a === 'jogar') { resultados = []; n = 0; partida = criarPartida(aleatorio((Date.now() ^ 0x9e3779b9) >>> 0)); prepararRodada(); }
   else if (a === 'comecar') contagemEIniciar();
   else if (a === 'proxima') { n += 1; prepararRodada(); }
   else if (a === 'fim') telaFim();

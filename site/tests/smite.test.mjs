@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, DANOS_SMITE, CAMPEOES, ROTAS, POR_ROTA, JANELAS, danoDoSmite, NIVEL_MIN, NIVEL_MAX,
-  novoEstado, avancar, usarHabilidade, usarGolpear, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, FAIXA_ACIMA, FAIXA_ABAIXO,
+  novoEstado, avancar, usarHabilidade, usarGolpear, criarPartida, NIVEIS_RODADA, DANO_3S, RITMO, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, FAIXA_ACIMA, FAIXA_ABAIXO,
   aleatorio, pontosDaMargem, classificar, criarRodada, proximoObjetivo, vidaEm, resolverSmite,
 } from '../jogos/smite/js/logic.js';
 
@@ -388,4 +388,78 @@ test('smite: pontos nunca passam de 100 por rodada, e errar o Golpear com o time
     if (est.fim.resultado === 'time') assert.equal(est.fim.pontos, est.fim.via === 'habilidade' ? 50 : 25);
     if (est.fim.resultado === 'roubado') assert.equal(est.fim.pontos, 0);
   }
+});
+
+// ---- A partida (5 rodadas) é um jogo só: mesmos campeões, do objetivo mais fraco ao mais forte.
+test('smite: a partida segue a ordem dos objetivos (1-2: Arauto e Elemental; 3: Elemental; 4: Elemental ou Barão; 5: Barão ou Ancião)', () => {
+  const ordens = new Set(); const quartos = new Set(); const quintos = new Set();
+  for (let semente = 1; semente <= 500; semente++) {
+    const par = criarPartida(aleatorio(semente * 13));
+    const ids = par.objetivos.map((o) => o.id);
+    assert.equal(ids.length, RODADAS);
+    assert.deepEqual([ids[0], ids[1]].sort(), ['arauto', 'dragao-elemental']);
+    assert.equal(ids[2], 'dragao-elemental');
+    assert.ok(['dragao-elemental', 'barao'].includes(ids[3]));
+    assert.ok(['barao', 'dragao-anciao'].includes(ids[4]));
+    ordens.add(`${ids[0]}>${ids[1]}`); quartos.add(ids[3]); quintos.add(ids[4]);
+  }
+  assert.equal(ordens.size, 2); assert.equal(quartos.size, 2); assert.equal(quintos.size, 2);
+});
+
+test('smite: na partida o nível sobe a cada rodada (e o dano do Golpear com ele) e os campeões são os mesmos', () => {
+  for (let semente = 1; semente <= 300; semente++) {
+    const par = criarPartida(aleatorio(semente * 29));
+    const rodadas = par.objetivos.map((_, n) => criarRodada(aleatorio(semente * 7 + n), n, { partida: par }));
+    rodadas.forEach((r, n) => {
+      assert.ok(r.nivel >= NIVEIS_RODADA[n][0] && r.nivel <= NIVEIS_RODADA[n][1], `rodada ${n + 1}: nível ${r.nivel}`);
+      if (n) { assert.ok(r.nivel >= rodadas[n - 1].nivel, 'o nível nunca cai'); assert.ok(r.smite >= rodadas[n - 1].smite, 'o dano do Golpear nunca cai'); }
+      assert.equal(r.objetivo.id, par.objetivos[n].id);
+      assert.equal(r.campeao.id, par.campeao.id);
+      assert.deepEqual(r.participantes.map((p) => [p.id, p.lado, p.rota, p.champ]), rodadas[0].participantes.map((p) => [p.id, p.lado, p.rota, p.champ]), 'mesmos campeões');
+      for (const p of r.participantes) assert.equal(p.nivel, Math.min(18, Math.max(1, r.nivel + p.desloc)));
+      assert.equal(r.golpes[r.golpes.length - 1].vida, 0); // continua jogável
+    });
+    assert.ok(rodadas[0].smite === 600 || rodadas[0].smite === 900); // começa fraco
+    assert.equal(rodadas[4].smite, 1200); // termina forte
+    assert.equal(new Set(rodadas[0].participantes.map((p) => p.champ)).size, 8);
+  }
+});
+
+test('smite: dano por classe (atirador > meio > selva > topo, na proporção 1000 : 800 : 500 : 200) e ritmos diferentes', () => {
+  assert.deepEqual(DANO_3S, { atirador: 1000, meio: 800, selva: 500, topo: 200 });
+  const soma = { atirador: 0, meio: 0, selva: 0, topo: 0 }; const golpes = { atirador: [], meio: [], selva: [], topo: [] };
+  for (let semente = 1; semente <= 300; semente++) {
+    const par = criarPartida(aleatorio(semente * 3));
+    const r = criarRodada(aleatorio(semente * 5), semente % RODADAS, { partida: par });
+    const rota = Object.fromEntries(r.participantes.map((p) => [p.id, p.rota]));
+    for (const g of r.golpes) { soma[rota[g.quem]] += g.dano; golpes[rota[g.quem]].push(g); }
+  }
+  const jogadores = { atirador: 2, meio: 2, selva: 1, topo: 2 }; // por rodada (o selva do time azul é o jogador)
+  for (const k of Object.keys(soma)) soma[k] /= jogadores[k];
+  const ref = soma.atirador;
+  assert.ok(Math.abs(soma.meio / ref - 0.8) < 0.06, `meio ${(soma.meio / ref).toFixed(2)}`);
+  assert.ok(Math.abs(soma.selva / ref - 0.5) < 0.06, `selva ${(soma.selva / ref).toFixed(2)}`);
+  assert.ok(Math.abs(soma.topo / ref - 0.2) < 0.04, `topo ${(soma.topo / ref).toFixed(2)}`);
+  // quantos golpes por jogador: atirador bate com muito mais frequência que o meio; o golpe do meio é maior
+  const porJogador = (rota) => golpes[rota].length / (300 * jogadores[rota]);
+  assert.ok(porJogador('atirador') > porJogador('meio') * 2, 'atirador bate mais vezes');
+  const media = (rota) => golpes[rota].reduce((a, g) => a + g.dano, 0) / golpes[rota].length;
+  assert.ok(media('meio') > media('atirador') * 1.6, `golpe do meio ${media('meio').toFixed(0)} vs atirador ${media('atirador').toFixed(0)}`);
+  assert.ok(media('topo') < media('atirador'));
+});
+
+test('smite: o atirador é mais constante que o meio (tempo e dano entre golpes variam menos)', () => {
+  const cv = (xs) => { const m = xs.reduce((a, b) => a + b, 0) / xs.length; return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length) / m; };
+  const intervalos = { atirador: [], meio: [] };
+  for (let semente = 1; semente <= 200; semente++) {
+    const r = criarRodada(aleatorio(semente * 17), 0, { partida: criarPartida(aleatorio(semente)) });
+    for (const p of r.participantes.filter((x) => x.rota === 'atirador' || x.rota === 'meio')) {
+      const ts = r.golpes.filter((g) => g.quem === p.id).map((g) => g.t);
+      for (let i = 1; i < ts.length; i++) intervalos[p.rota].push(ts[i] - ts[i - 1]);
+    }
+  }
+  assert.ok(cv(intervalos.atirador) < cv(intervalos.meio), 'tempo entre golpes mais regular');
+  const m = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  assert.ok(Math.abs(m(intervalos.atirador) - RITMO.atirador.periodo) < 0.08);
+  assert.ok(Math.abs(m(intervalos.meio) - RITMO.meio.periodo) < 0.2);
 });

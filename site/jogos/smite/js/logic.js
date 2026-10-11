@@ -28,6 +28,8 @@ export function danoDoSmite(nivel) {
   return 1200;
 }
 // Quanto tempo o objetivo leva para morrer depois de chegar perto do dano do Smite: fica menor a cada rodada.
+// A partida (5 rodadas) é um jogo só, do começo ao fim: o nível dos campeões sobe a cada rodada.
+export const NIVEIS_RODADA = [[6, 8], [8, 10], [10, 12], [13, 15], [16, 18]];
 export const JANELAS = [3.4, 3.0, 2.6, 2.2, 1.8];
 export const MARGEM_ZERO = 600; // a partir daqui (vida ≤ dano − 600) a rodada vale 0
 // O caçador inimigo também pode usar o Smite (o mesmo dano do jogador) quando a vida do objetivo está entre
@@ -43,8 +45,17 @@ export const PONTOS_HABILIDADE = 50;
 // Cada time tem 1 topo, 1 selva, 1 meio e 1 atirador. O jogador é sempre o selva do time azul.
 export const ROTAS = ['topo', 'selva', 'meio', 'atirador'];
 export const ROTA_NOME = { topo: 'Topo', selva: 'Selva', meio: 'Meio', atirador: 'Atirador' };
-// Quanto cada rota costuma bater no objetivo (sorteio entre o mínimo e o máximo).
-const PESO_ROTA = { topo: [0.8, 1.2], selva: [0.7, 1.1], meio: [1.0, 1.4], atirador: [1.1, 1.6] };
+// Quanto cada classe bate no objetivo, sempre nessa proporção (dano em 3 segundos): o atirador bate mais e
+// de forma constante (5 golpes de 200 = 1000); o meio bate um pouco menos, mais pausado (2 golpes de 400 = 800);
+// o selva fica no meio (500); o topo é tanque e bate pouco (200).
+export const DANO_3S = { atirador: 1000, meio: 800, selva: 500, topo: 200 };
+// Ritmo de cada classe: tempo entre golpes (s) e quanto o tempo e o dano de cada golpe variam (fração).
+export const RITMO = {
+  atirador: { periodo: 0.6, variaT: 0.06, variaD: 0.08 },
+  meio: { periodo: 1.5, variaT: 0.18, variaD: 0.15 },
+  selva: { periodo: 1.0, variaT: 0.15, variaD: 0.15 },
+  topo: { periodo: 1.2, variaT: 0.2, variaD: 0.25 },
+};
 
 // Campeões da selva. `hab`: a habilidade que também machuca o objetivo (só o do jogador a usa).
 export const CAMPEOES = [
@@ -97,16 +108,19 @@ export function classificar(margem) {
   return { id: 'longe', rotulo: 'Passou longe' };
 }
 
-// Sorteia o objetivo da rodada (sem repetir o da rodada anterior).
+// Sorteia o objetivo (sem repetir o anterior). Usado quando a rodada é criada sozinha (sem partida).
 export function proximoObjetivo(rand, anteriorId = null) {
   return escolher(rand, OBJETIVOS.filter((o) => o.id !== anteriorId));
 }
 
-// Nível dos outros jogadores: perto do nível do jogador (±1).
-const nivelProximo = (rand, nivel) => Math.min(NIVEL_MAX, Math.max(NIVEL_MIN, nivel + Math.floor(rand() * 3) - 1));
+const objetivoPorId = (id) => OBJETIVOS.find((o) => o.id === id);
 
-// Monta os dois times: 4 aliados (o jogador é o selva) e 4 adversários, sem campeão repetido.
-function montarTimes(rand, campeao, nivel) {
+// Nível dos outros jogadores: perto do nível do jogador.
+const limitarNivel = (n) => Math.min(NIVEL_MAX, Math.max(NIVEL_MIN, n));
+
+// Monta os dois times: 4 aliados (o jogador é o selva) e 4 adversários, sem campeão repetido. `desloc`: quantos
+// níveis o jogador está acima ou abaixo do jogador (-1, 0 ou +1, fixo na partida); `forca`: leve variação de dano.
+function montarTimes(rand, campeao) {
   const usados = new Set([campeao.id]);
   const sortear = (rota) => {
     const livres = POR_ROTA[rota].filter((id) => !usados.has(id));
@@ -114,24 +128,44 @@ function montarTimes(rand, campeao, nivel) {
     usados.add(id);
     return id;
   };
+  const outro = (id, lado, rota) => ({ id, lado, rota, champ: sortear(rota), desloc: Math.floor(rand() * 3) - 1, forca: entre(rand, 0.92, 1.08) });
   const lista = [];
-  for (const rota of ROTAS) {
-    lista.push(rota === 'selva'
-      ? { id: 'voce', lado: 'azul', rota, champ: campeao.id, nivel }
-      : { id: `a-${rota}`, lado: 'azul', rota, champ: sortear(rota), nivel: nivelProximo(rand, nivel) });
-  }
-  for (const rota of ROTAS) lista.push({ id: `e-${rota}`, lado: 'vermelho', rota, champ: sortear(rota), nivel: nivelProximo(rand, nivel) });
+  for (const rota of ROTAS) lista.push(rota === 'selva' ? { id: 'voce', lado: 'azul', rota, champ: campeao.id, desloc: 0, forca: 1 } : outro(`a-${rota}`, 'azul', rota));
+  for (const rota of ROTAS) lista.push(outro(`e-${rota}`, 'vermelho', rota));
   return lista;
+}
+
+// Cria uma partida: um jogo de RODADAS objetivos, com os mesmos campeões do começo ao fim, do objetivo mais fraco
+// (campeões em nível baixo) ao mais forte (nível alto):
+//   rodadas 1 e 2: Arauto do Vale e Dragão Elemental (em qualquer ordem)
+//   rodada 3: Dragão Elemental · rodada 4: Dragão Elemental ou Barão · rodada 5: Barão ou Dragão Ancião
+export function criarPartida(rand) {
+  const campeao = escolher(rand, CAMPEOES);
+  const [arauto, elemental, barao, anciao] = ['arauto', 'dragao-elemental', 'barao', 'dragao-anciao'].map(objetivoPorId);
+  const objetivos = [
+    ...(rand() < 0.5 ? [arauto, elemental] : [elemental, arauto]),
+    elemental,
+    rand() < 0.5 ? elemental : barao,
+    rand() < 0.5 ? barao : anciao,
+  ];
+  const niveis = [];
+  NIVEIS_RODADA.forEach(([a, b], i) => { niveis.push(Math.max(i ? niveis[i - 1] : 0, Math.floor(entre(rand, a, b + 1)))); });
+  return { campeao, equipe: montarTimes(rand, campeao), objetivos, niveis };
 }
 
 // Cria uma rodada: o objetivo, o dano do Smite, o campeão do jogador, os times e a lista de golpes
 // (quem bate, quando e quanto). `n`: 0 a RODADAS - 1. Rodadas mais para a frente têm rajadas e janela menor.
-export function criarRodada(rand, n = 0, objetivo = null) {
-  const alvo = objetivo || proximoObjetivo(rand);
-  const nivel = Math.floor(entre(rand, alvo.niveis[0], alvo.niveis[1] + 1));
+// `opcoes.partida`: usa os campeões, o objetivo e o nível dessa rodada da partida. Sem partida, sorteia tudo
+// (o terceiro argumento também pode ser só um objetivo, como nos testes).
+export function criarRodada(rand, n = 0, opcoes = null) {
+  const op = opcoes && opcoes.vida ? { objetivo: opcoes } : (opcoes || {});
+  const partida = op.partida || null;
+  const alvo = op.objetivo || (partida ? partida.objetivos[n] : proximoObjetivo(rand));
+  const nivel = partida ? partida.niveis[n] : Math.floor(entre(rand, alvo.niveis[0], alvo.niveis[1] + 1));
   const smite = danoDoSmite(nivel);
-  const campeao = escolher(rand, CAMPEOES);
-  const participantes = montarTimes(rand, campeao, nivel);
+  const campeao = partida ? partida.campeao : escolher(rand, CAMPEOES);
+  const equipe = partida ? partida.equipe : montarTimes(rand, campeao);
+  const participantes = equipe.map((p) => ({ ...p, nivel: limitarNivel(nivel + p.desloc) }));
   // Gatilho do Smite inimigo: a vida em que ele golpeia (ou nenhum). x = sqrt(sorteio) deixa a faixa mais
   // provável perto do fim (30% abaixo do dano do Smite) do que no começo (5% acima).
   const usaSmite = rand() < PROB_SMITE_INIMIGO;
@@ -143,18 +177,20 @@ export function criarRodada(rand, n = 0, objetivo = null) {
   const vx = smite + folga;
   const r1 = (alvo.vida - vx) / tx;
   const r2 = vx / janela;
-  // Só os outros jogadores batem sozinhos (o jogador só tem a habilidade e o Smite).
+  // Só os outros jogadores batem sozinhos (o jogador só tem a habilidade e o Smite). Cada classe tem o seu ritmo
+  // (DANO_3S e RITMO): o atirador bate muito e sempre igual, o meio bate pouco e forte, o topo bate pouco.
   const batedores = participantes.filter((p) => p.id !== 'voce');
-  const pesos = batedores.map((p) => entre(rand, ...PESO_ROTA[p.rota]));
+  const pesos = batedores.map((p) => DANO_3S[p.rota] * p.forca);
   const soma = pesos.reduce((a, b) => a + b, 0);
-  const prob = 0.04 + 0.03 * n; // chance de rajada (golpe grande) em cada batida
+  const prob = 0.04 + 0.03 * n; // chance de rajada (golpe grande) em cada batida (o topo, tanque, não dá rajada)
   const eventos = [];
   batedores.forEach((p, i) => {
-    const periodo = entre(rand, 0.55, 1.0);
-    for (let t = entre(rand, 0.2, 0.9); t < TEMPO_MAX; t += periodo * entre(rand, 0.85, 1.15)) {
+    const ritmo = RITMO[p.rota];
+    const periodo = ritmo.periodo * entre(rand, 0.95, 1.05);
+    for (let t = entre(rand, 0.1, periodo); t < TEMPO_MAX; t += periodo * entre(rand, 1 - ritmo.variaT, 1 + ritmo.variaT)) {
       const taxa = t < tx ? r1 : r2;
-      let dano = taxa * (pesos[i] / soma) * periodo * entre(rand, 0.75, 1.25);
-      if (rand() < prob) dano *= entre(rand, 1.6, 2.2);
+      let dano = taxa * (pesos[i] / soma) * periodo * entre(rand, 1 - ritmo.variaD, 1 + ritmo.variaD);
+      if (p.rota !== 'topo' && rand() < prob) dano *= entre(rand, 1.6, 2.2);
       eventos.push({ t: Math.round(t * 1000) / 1000, quem: p.id, dano: Math.max(1, Math.round(dano)) });
     }
   });
@@ -170,7 +206,7 @@ export function criarRodada(rand, n = 0, objetivo = null) {
   }
   const ultimo = golpes[golpes.length - 1];
   return {
-    n, objetivo: alvo, vidaMax: alvo.vida, nivel, smite, campeao, participantes, janela, tx, golpes, gatilhoInimigo,
+    n, objetivo: alvo, vidaMax: alvo.vida, nivel, smite, campeao, participantes, janela, tx, golpes, gatilhoInimigo, partida: Boolean(partida),
     faixaMin: Math.round(smite * (1 - FAIXA_ABAIXO)), faixaMax: Math.round(smite * (1 + FAIXA_ACIMA)),
     morreEm: vida <= 0 ? ultimo.t : null, quemMata: vida <= 0 ? ultimo.quem : null,
   };
