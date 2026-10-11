@@ -81,10 +81,6 @@ const FICHAS = {
 const COR = { azul: '#3fa8ff', vermelho: '#e0352b', voce: '#f5cf5a' };
 
 const AMPULHETA = '<svg viewBox="0 0 32 40" aria-hidden="true"><path d="M5 3h22M5 37h22M8 3c0 10 6 11 8 17-2 6-8 7-8 17M24 3c0 10-6 11-8 17 2 6 8 7 8 17" stroke="#f2d98a" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M11 33c1-4 3-5 5-5s4 1 5 5z" fill="#e0a93a"/></svg>';
-const MIRA = `<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="rgba(4,16,15,0.7)" stroke="#c9961f" stroke-width="3"/>
-  <g class="giro"><circle cx="60" cy="60" r="48" fill="none" stroke="rgba(245,207,90,0.5)" stroke-width="1.5" stroke-dasharray="3 7"/>
-  <path d="M60 4v10M60 106v10M4 60h10M106 60h10" stroke="#f5cf5a" stroke-width="3"/></g>
-</svg>`;
 
 function montar() {
   app.innerHTML = `<div class="sm" id="sm" data-tema="elemental">
@@ -104,8 +100,6 @@ function montar() {
     </div>
     <aside class="sm-painel sm-dano"><h3>${t('Dano no objetivo')}</h3><ul id="sm-dano"></ul></aside>
     <div class="sm-painel sm-obj"><div class="ico" id="sm-ico2"></div><div><b>${t('Objetivo')}</b><span id="sm-obj-txt"></span></div></div>
-    <div class="sm-painel sm-info"><div class="texto"><small>${t('DANO DO')}</small><b>${t('GOLPEAR')}</b></div></div>
-    <div class="sm-mira">${MIRA}<b id="sm-dano-smite">900</b></div>
     <div class="sm-hab">
       <div class="fundo"></div>
       <div class="sm-retrato"><img id="sm-retrato" alt="" /></div><span class="sm-nivel" id="sm-nivel">11</span>
@@ -133,22 +127,6 @@ function montar() {
   $('sm-som').addEventListener('click', () => { mudo = !mudo; gravarLS(CHAVE_MUDO, mudo); atualizarSom(); });
 }
 function atualizarSom() { const b = $('sm-som'); if (b) b.textContent = mudo ? '🔇' : '🔊'; }
-// o nome do Golpear muda de tamanho conforme o idioma: encolhe a letra até caber no painel
-function ajustarGolpear() {
-  const info = document.querySelector('.sm-info'), b = info && info.querySelector('.texto b');
-  if (!b || !info.clientWidth) return;
-  const cs = getComputedStyle(info), livre = info.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-  b.style.fontSize = '';
-  let px = parseFloat(getComputedStyle(b).fontSize);
-  for (let i = 0; i < 30 && b.scrollWidth > livre && px > 6; i++) { px *= 0.94; b.style.fontSize = px + 'px'; }
-}
-{
-  let pend = 0;
-  const agenda = () => { if (!pend) pend = requestAnimationFrame(() => { pend = 0; ajustarGolpear(); }); };
-  new MutationObserver(agenda).observe(app, { childList: true, characterData: true, subtree: true });
-  addEventListener('resize', agenda);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(agenda);
-}
 let refazerTela = null; // desenha de novo a tela que está aberta (ao trocar de idioma)
 function tela(html, refazer = null, leve = false) { const el = $('sm-tela'); el.innerHTML = html; el.hidden = !html; el.classList.toggle('leve', leve); refazerTela = html ? refazer : null; }
 
@@ -389,7 +367,7 @@ function prepararHud() {
   $('sm-nome-obj').textContent = nomeObj();
   $('sm-obj-txt').textContent = t('Golpeie o {obj} com o Golpear no momento certo!', { obj: nomeObj() });
   $('sm-numeros').innerHTML = '';
-  $('sm-dano-smite').textContent = fmt(R.smite); $('sm-f-valor').textContent = fmt(R.smite);
+  $('sm-f-valor').textContent = fmt(R.smite);
   $('sm-nivel').textContent = R.nivel;
   $('sm-voce-img').src = imgCampeao(c.id); $('sm-retrato').src = imgCampeao(c.id); $('sm-q-img').src = imgQ('q');
   $('sm-fichas').innerHTML = R.participantes.filter((p) => p.id !== 'voce').map((p) => {
