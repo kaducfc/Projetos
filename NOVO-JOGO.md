@@ -10,7 +10,7 @@ O catálogo `site/shared/config.js` (`GAMES`) é a fonte única. O que sai dele 
 ## 1. Catálogo
 Nova entrada em `GAMES`. Para valer PDR, inclua `ranked`:
 `ranked: { modo: 'vagas' | 'diario', selo: 'Ranqueada' }` (`nome`, `rotulo` e `sub` só se forem diferentes do padrão).
-Enquanto estiver em teste: `soAdmin: true` (some do hub/perfil e bloqueia a página para quem não é admin). Para lançar, apague essa linha.
+Enquanto estiver em teste: `soAdmin: true` (some do hub/perfil e bloqueia a página para quem não é admin; o card ganha sozinho o selo "Só você · em teste"). Para lançar, apague essa linha. Exemplo de jogo em teste: `jogos/smite/` (Smite Challenge).
 
 ## 2. Capa do hub
 `site/js/hub.js`: uma entrada em `CAPAS` (arte da capa) e, se for diferente das duas linhas padrão (vagas/diário), uma em `VIVO`.

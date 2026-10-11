@@ -113,6 +113,16 @@ export const GAMES = [
     scoreLabel: 'Pontos',
     ranked: { modo: 'vagas', selo: 'Ranqueada' },
   },
+  {
+    id: 'smite',
+    name: 'Smite Challenge',
+    tagline: 'O Dragão está quase morrendo. Golpeie com o Smite na hora certa e garanta o objetivo!',
+    kind: 'Reflexo',
+    path: 'jogos/smite/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+    soAdmin: true,
+  },
 ];
 
 export const gameById = (id) => GAMES.find((g) => g.id === id);
