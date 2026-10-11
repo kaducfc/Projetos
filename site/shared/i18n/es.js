@@ -1418,7 +1418,7 @@ export default {
   "Rodada {n}": "Ronda {n}",
   "Você é o selva do time azul": "Eres el jungla del equipo azul",
   "Q: toque para a Onda Sônica; em até {janela}s toque de novo para o Chute, que bate mais quanto menos vida o objetivo tem. Recarga {seg}s.": "Q: toca para la Onda sónica; en {janela} s toca de nuevo para la Patada, que golpea más fuerte cuanta menos vida tiene el objetivo. Reutilización {seg} s.",
-  "Q: toque rápido para uma estocada ({dano}); segure e solte para um arremesso com mais dano (se segurar mais de {max}s, a recarga é a metade). Recarga {seg}s.": "Q: toque rápido para una estocada ({dano}); mantén y suelta para un lanzamiento con más daño (si mantienes más de {max} s, la reutilización es la mitad). Reutilización {seg} s.",
+  "Q: toque rápido para uma estocada ({dano}); segurando, causa mais dano.": "Q: toque rápido para una estocada ({dano}); manteniendo, causa más daño.",
   "Q: arma o seu próximo ataque (até {janela}s) com +{dano} de dano; cada golpe seu corta 0,5s da recarga. Recarga {seg}s.": "Q: arma tu próximo ataque (hasta {janela} s) con +{dano} de daño; cada golpe tuyo recorta 0,5 s la reutilización. Reutilización {seg} s.",
   "Q: {dano} de dano. Recarga {seg}s.": "Q: {dano} de daño. Reutilización {seg} s.",
   "Ataque armado! O seu próximo golpe causa dano extra.": "¡Ataque armado! Tu próximo golpe causa daño extra.",

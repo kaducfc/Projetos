@@ -400,7 +400,7 @@ function prepararRodada() {
 function descricaoQ(c) {
   const k = postoHab(R.nivel); const seg = String(c.recarga[k]).replace('.', ',');
   if (c.tipo === 'duplo') return t('Q: toque para a Onda Sônica; em até {janela}s toque de novo para o Chute, que bate mais quanto menos vida o objetivo tem. Recarga {seg}s.', { janela: c.janela, seg });
-  if (c.tipo === 'carga') return t('Q: toque rápido para uma estocada ({dano}); segure e solte para um arremesso com mais dano (se segurar mais de {max}s, a recarga é a metade). Recarga {seg}s.', { dano: fmt(c.dano[k]), max: c.segurarMax, seg });
+  if (c.tipo === 'carga') return t('Q: toque rápido para uma estocada ({dano}); segurando, causa mais dano.', { dano: fmt(c.dano[k]) });
   if (c.tipo === 'armar') return t('Q: arma o seu próximo ataque (até {janela}s) com +{dano} de dano; cada golpe seu corta 0,5s da recarga. Recarga {seg}s.', { janela: c.janela, dano: fmt(c.dano[k]), seg });
   return t('Q: {dano} de dano. Recarga {seg}s.', { dano: fmt(c.dano[k]), seg });
 }

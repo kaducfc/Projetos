@@ -1418,7 +1418,7 @@ export default {
   "Rodada {n}": "Round {n}",
   "Você é o selva do time azul": "Sei il cacciatore della squadra blu",
   "Q: toque para a Onda Sônica; em até {janela}s toque de novo para o Chute, que bate mais quanto menos vida o objetivo tem. Recarga {seg}s.": "Q: tocca per l’Onda sonica; entro {janela} s tocca di nuovo per il Calcio, più forte quanto meno vita ha l’obiettivo. Ricarica {seg} s.",
-  "Q: toque rápido para uma estocada ({dano}); segure e solte para um arremesso com mais dano (se segurar mais de {max}s, a recarga é a metade). Recarga {seg}s.": "Q: tocco rapido per un affondo ({dano}); tieni premuto e rilascia per un lancio con più danno (se tieni oltre {max} s, la ricarica è dimezzata). Ricarica {seg} s.",
+  "Q: toque rápido para uma estocada ({dano}); segurando, causa mais dano.": "Q: tocco rapido per un affondo ({dano}); tenendo premuto, fa più danno.",
   "Q: arma o seu próximo ataque (até {janela}s) com +{dano} de dano; cada golpe seu corta 0,5s da recarga. Recarga {seg}s.": "Q: carica il tuo prossimo attacco (fino a {janela} s) con +{dano} di danno; ogni tuo colpo taglia 0,5 s alla ricarica. Ricarica {seg} s.",
   "Q: {dano} de dano. Recarga {seg}s.": "Q: {dano} di danno. Ricarica {seg} s.",
   "Ataque armado! O seu próximo golpe causa dano extra.": "Attacco carico! Il tuo prossimo colpo fa danno extra.",

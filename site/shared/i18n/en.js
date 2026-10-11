@@ -1418,7 +1418,7 @@ export default {
   "Rodada {n}": "Round {n}",
   "Você é o selva do time azul": "You are the blue team’s jungler",
   "Q: toque para a Onda Sônica; em até {janela}s toque de novo para o Chute, que bate mais quanto menos vida o objetivo tem. Recarga {seg}s.": "Q: tap for Sonic Wave; within {janela}s tap again for the Kick, which hits harder the lower the objective’s health. Cooldown {seg}s.",
-  "Q: toque rápido para uma estocada ({dano}); segure e solte para um arremesso com mais dano (se segurar mais de {max}s, a recarga é a metade). Recarga {seg}s.": "Q: quick tap for a thrust ({dano}); hold and release for a hurl with more damage (if you hold longer than {max}s, the cooldown is halved). Cooldown {seg}s.",
+  "Q: toque rápido para uma estocada ({dano}); segurando, causa mais dano.": "Q: quick tap for a thrust ({dano}); holding deals more damage.",
   "Q: arma o seu próximo ataque (até {janela}s) com +{dano} de dano; cada golpe seu corta 0,5s da recarga. Recarga {seg}s.": "Q: arms your next attack (up to {janela}s) with +{dano} damage; each of your hits cuts 0.5s off the cooldown. Cooldown {seg}s.",
   "Q: {dano} de dano. Recarga {seg}s.": "Q: {dano} damage. Cooldown {seg}s.",
   "Ataque armado! O seu próximo golpe causa dano extra.": "Attack armed! Your next hit deals extra damage.",

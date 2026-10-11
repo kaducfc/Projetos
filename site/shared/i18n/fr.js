@@ -1418,7 +1418,7 @@ export default {
   "Rodada {n}": "Manche {n}",
   "Você é o selva do time azul": "Tu es le jungler de l’équipe bleue",
   "Q: toque para a Onda Sônica; em até {janela}s toque de novo para o Chute, que bate mais quanto menos vida o objetivo tem. Recarga {seg}s.": "Q : appuie pour l’Onde sonique ; en {janela} s appuie à nouveau pour le Coup de pied, plus fort quand l’objectif a moins de PV. Récupération {seg} s.",
-  "Q: toque rápido para uma estocada ({dano}); segure e solte para um arremesso com mais dano (se segurar mais de {max}s, a recarga é a metade). Recarga {seg}s.": "Q : appui bref pour une estocade ({dano}) ; maintiens puis relâche pour un lancer plus puissant (si tu maintiens plus de {max} s, la récupération est réduite de moitié). Récupération {seg} s.",
+  "Q: toque rápido para uma estocada ({dano}); segurando, causa mais dano.": "Q : appui bref pour une estocade ({dano}) ; en maintenant, inflige plus de dégâts.",
   "Q: arma o seu próximo ataque (até {janela}s) com +{dano} de dano; cada golpe seu corta 0,5s da recarga. Recarga {seg}s.": "Q : arme ta prochaine attaque (jusqu’à {janela} s) avec +{dano} de dégâts ; chacun de tes coups retire 0,5 s à la récupération. Récupération {seg} s.",
   "Q: {dano} de dano. Recarga {seg}s.": "Q : {dano} de dégâts. Récupération {seg} s.",
   "Ataque armado! O seu próximo golpe causa dano extra.": "Attaque armée ! Ton prochain coup inflige des dégâts supplémentaires.",

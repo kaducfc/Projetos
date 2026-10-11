@@ -1418,7 +1418,7 @@ export default {
   "Rodada {n}": "Runde {n}",
   "Você é o selva do time azul": "Du bist der Dschungler des blauen Teams",
   "Q: toque para a Onda Sônica; em até {janela}s toque de novo para o Chute, que bate mais quanto menos vida o objetivo tem. Recarga {seg}s.": "Q: tippen für Schallwelle; innerhalb von {janela} s erneut tippen für den Tritt, der härter trifft, je weniger Leben das Ziel hat. Abklingzeit {seg} s.",
-  "Q: toque rápido para uma estocada ({dano}); segure e solte para um arremesso com mais dano (se segurar mais de {max}s, a recarga é a metade). Recarga {seg}s.": "Q: kurz tippen für einen Stoß ({dano}); halten und loslassen für einen stärkeren Wurf (hältst du länger als {max} s, ist die Abklingzeit halbiert). Abklingzeit {seg} s.",
+  "Q: toque rápido para uma estocada ({dano}); segurando, causa mais dano.": "Q: kurz tippen für einen Stoß ({dano}); gehalten verursacht er mehr Schaden.",
   "Q: arma o seu próximo ataque (até {janela}s) com +{dano} de dano; cada golpe seu corta 0,5s da recarga. Recarga {seg}s.": "Q: lädt deinen nächsten Angriff (bis zu {janela} s) mit +{dano} Schaden auf; jeder deiner Treffer verkürzt die Abklingzeit um 0,5 s. Abklingzeit {seg} s.",
   "Q: {dano} de dano. Recarga {seg}s.": "Q: {dano} Schaden. Abklingzeit {seg} s.",
   "Ataque armado! O seu próximo golpe causa dano extra.": "Angriff geladen! Dein nächster Treffer verursacht Zusatzschaden.",
