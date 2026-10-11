@@ -59,25 +59,22 @@ export const RITMO = {
   topo: { periodo: 1.2, variaT: 0.2, variaD: 0.25 },
 };
 
-// Campeões da selva. `hab`: a habilidade que também machuca o objetivo (só o do jogador a usa).
+// Campeões que o jogador pode ser (sorteia um por partida). `hab`: a habilidade que também machuca o objetivo (só a do jogador a usa).
 export const CAMPEOES = [
   { id: 'LeeSin', nome: 'Lee Sin', hab: 'Onda Sônica', dano: 380 },
-  { id: 'Warwick', nome: 'Warwick', hab: 'Mandíbulas da Besta', dano: 330 },
-  { id: 'JarvanIV', nome: 'Jarvan IV', hab: 'Golpe do Dragão', dano: 350 },
   { id: 'Nunu', nome: 'Nunu e Willump', hab: 'Consumir', dano: 400 },
-  { id: 'Amumu', nome: 'Amumu', hab: 'Lançar Bandagem', dano: 300 },
   { id: 'Khazix', nome: "Kha'Zix", hab: 'Garras Famintas', dano: 340 },
-  { id: 'Elise', nome: 'Elise', hab: 'Neurotoxina', dano: 310 },
-  { id: 'MasterYi', nome: 'Mestre Yi', hab: 'Golpe Alpha', dano: 360 },
+  { id: 'Pantheon', nome: 'Pantheon', hab: 'Lança Pontiaguda', dano: 350 },
+  { id: 'MonkeyKing', nome: 'Wukong', hab: 'Golpe Devastador', dano: 360 },
 ];
 export const POR_ROTA = {
   topo: ['Garen', 'Darius', 'Malphite', 'Ornn', 'Sion', 'Mordekaiser', 'Camille', 'Renekton', 'Fiora'],
-  selva: CAMPEOES.map((c) => c.id),
+  selva: ['LeeSin', 'Nunu', 'Khazix', 'Pantheon', 'MonkeyKing', 'Warwick', 'JarvanIV', 'Amumu', 'Elise', 'MasterYi'], // o selva inimigo e o do jogador saem daqui (sem repetir)
   meio: ['Ahri', 'Lux', 'Syndra', 'Zed', 'Yasuo', 'Orianna', 'Viktor', 'Veigar', 'Annie'],
   atirador: ['Jinx', 'Caitlyn', 'Ashe', 'Jhin', 'Kaisa', 'Ezreal', 'MissFortune', 'Draven', 'Tristana', 'Vayne'],
 };
 
-const NOMES = { MissFortune: 'Miss Fortune', Kaisa: "Kai'Sa", Khazix: "Kha'Zix", LeeSin: 'Lee Sin', JarvanIV: 'Jarvan IV', MasterYi: 'Mestre Yi', Nunu: 'Nunu e Willump' };
+const NOMES = { MissFortune: 'Miss Fortune', Kaisa: "Kai'Sa", Khazix: "Kha'Zix", LeeSin: 'Lee Sin', JarvanIV: 'Jarvan IV', MasterYi: 'Mestre Yi', MonkeyKing: 'Wukong', Nunu: 'Nunu e Willump' };
 export const nomeCampeao = (id) => NOMES[id] || id;
 
 // Gerador pseudoaleatório com semente (as rodadas ficam reproduzíveis nos testes).

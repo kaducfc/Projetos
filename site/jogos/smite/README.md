@@ -60,7 +60,7 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
 - `img/cenario-barao.webp`: covil roxo, para o Barão Nashor e o Arauto do Vale. Qual imagem cada objetivo usa está em `cenario` (`OBJETIVOS`, `js/logic.js`).
 
 ## Atualização: a partida é um jogo (sequência) e o dano por classe
-- `criarPartida` (`js/logic.js`) sorteia, uma vez por partida: o campeão do jogador, os 7 outros campeões (mesmos nas 5 rodadas, com um deslocamento fixo de
+- `criarPartida` (`js/logic.js`) sorteia, uma vez por partida: o campeão do jogador (um dos 5: Lee Sin, Nunu e Willump, Kha'Zix, Pantheon ou Wukong), os 7 outros campeões (mesmos nas 5 rodadas, com um deslocamento fixo de
   ±1 nível cada) e os objetivos: rodadas 1-2 = Arauto do Vale e Dragão Elemental (em qualquer ordem); 3 = Dragão Elemental; 4 = Dragão Elemental ou Barão;
   5 = Barão ou Dragão Ancião. O nível sobe a cada rodada (`NIVEIS_RODADA`: 6-8, 8-10, 10-12, 13-15, 16-18, nunca cai) e o dano do Golpear com ele (600 → 900 → 1200).
 - Dano por classe (`DANO_3S`, `RITMO`): proporção atirador 1000 : meio 800 : selva 500 : topo 200 (em 3 s). O atirador bate de 0,6 em 0,6 s (5 golpes de ~200, bem
