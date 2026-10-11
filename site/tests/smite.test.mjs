@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, DANOS_SMITE, CAMPEOES, ROTAS, POR_ROTA, JANELAS, danoDoSmite, NIVEL_MIN, NIVEL_MAX,
-  TEMPO_MINIMO, novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, postoHab, usarGolpear, criarPartida, NIVEIS_RODADA, DANO_3S, RITMO, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, FAIXA_ACIMA, FAIXA_ABAIXO,
+  TEMPO_MINIMO, novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, postoHab, usarGolpear, criarPartida, nivelNoTempo, NIVEL_POR_MINUTO, DANO_3S, RITMO, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, FAIXA_ACIMA, FAIXA_ABAIXO,
   aleatorio, pontosDoTempo, classificar, criarRodada, proximoObjetivo, vidaEm, resolverSmite,
 } from '../jogos/smite/js/logic.js';
 
@@ -28,7 +28,7 @@ test('smite: o nível da rodada vem da faixa do objetivo e os outros jogadores f
       assert.equal(r.participantes.find((p) => p.id === 'voce').nivel, r.nivel);
     }
   }
-  assert.deepEqual([...vistos.arauto].sort(), [600, 900]); // o Arauto vem cedo
+  assert.ok([...vistos.arauto].every((d) => d >= 900)); // o Arauto só nasce aos 15 min: já é nível 10 ou mais
   assert.deepEqual([...vistos['dragao-anciao']], [1200]); // o Ancião vem tarde
   assert.ok(vistos['dragao-elemental'].size === 3); // o Dragão Elemental pega os três
   assert.ok(vistos.barao.has(1200));
@@ -417,7 +417,7 @@ test('smite: na partida o nível sobe a cada rodada (e o dano do Golpear com ele
     const par = criarPartida(aleatorio(semente * 29));
     const rodadas = par.objetivos.map((_, n) => criarRodada(aleatorio(semente * 7 + n), n, { partida: par }));
     rodadas.forEach((r, n) => {
-      assert.ok(r.nivel >= NIVEIS_RODADA[n][0] && r.nivel <= NIVEIS_RODADA[n][1], `rodada ${n + 1}: nível ${r.nivel}`);
+      assert.ok(Math.abs(r.nivel - nivelNoTempo(r.tempoInicio)) <= 1, `rodada ${n + 1}: nível ${r.nivel} aos ${r.tempoInicio}s`);
       if (n) { assert.ok(r.nivel >= rodadas[n - 1].nivel, 'o nível nunca cai'); assert.ok(r.smite >= rodadas[n - 1].smite, 'o dano do Golpear nunca cai'); }
       assert.equal(r.objetivo.id, par.objetivos[n].id);
       assert.equal(r.campeao.id, par.campeao.id);
@@ -425,8 +425,8 @@ test('smite: na partida o nível sobe a cada rodada (e o dano do Golpear com ele
       for (const p of r.participantes) assert.equal(p.nivel, Math.min(18, Math.max(1, r.nivel + p.desloc)));
       assert.equal(r.golpes[r.golpes.length - 1].vida, 0); // continua jogável
     });
-    assert.ok(rodadas[0].smite === 600 || rodadas[0].smite === 900); // começa fraco
-    assert.equal(rodadas[4].smite, 1200); // termina forte
+    assert.ok(rodadas[0].smite < rodadas[4].smite || rodadas[0].nivel < rodadas[4].nivel); // começa mais fraco que termina
+    assert.ok(rodadas[4].smite >= 900); // termina forte
     assert.equal(new Set(rodadas[0].participantes.map((p) => p.champ)).size, 8);
   }
 });
@@ -617,4 +617,25 @@ test('smite: o selva inimigo espera 0,2 s depois de a vida entrar na zona do Smi
   const e3 = novoEstado({ ...r, golpes: [], gatilhoInimigo: base.smite * 1.04 });
   e3.vida = Math.round(base.smite * 1.03); e3.t = 7;
   assert.equal(sm(avancar(e3, 7.01)), false);
+});
+
+test('smite: o nível acompanha o relógio da partida (curva média de nível por minuto) e nunca fica irreal', () => {
+  const m = (min) => nivelNoTempo(min * 60);
+  assert.ok(m(5) > 4 && m(5) < 6);
+  assert.ok(m(10) > 8 && m(10) < 10);
+  assert.ok(m(15) > 10.5 && m(15) < 12);
+  assert.ok(m(20) > 13 && m(20) < 14.5);
+  assert.ok(m(30) > 16 && m(30) < 17.5);
+  for (let x = 0; x <= 3000; x += 15) assert.ok(nivelNoTempo(x + 15) >= nivelNoTempo(x));
+  assert.equal(nivelNoTempo(99999), 18);
+  for (let semente = 1; semente <= 300; semente++) {
+    const par = criarPartida(aleatorio(semente * 13));
+    par.tempos.forEach((tp, i) => {
+      const esperado = nivelNoTempo(tp);
+      assert.ok(Math.abs(par.niveis[i] - esperado) <= 1.5, `aos ${tp}s nível ${par.niveis[i]} (curva ${esperado.toFixed(1)})`);
+      // Arauto (a partir dos 15 min) já passa do nível 10; Barão (20 min) do 12; Ancião (30 min) do 15
+      const min = { arauto: 10, barao: 12, 'dragao-anciao': 15 }[par.objetivos[i].id];
+      if (min) assert.ok(par.niveis[i] >= min, `${par.objetivos[i].id} em nível ${par.niveis[i]}`);
+    });
+  }
 });

@@ -7,13 +7,13 @@
 
 // Os objetivos: cada um com a sua vida, a sua arte e o seu cenário (`cenario`: a imagem do covil; os dragões usam o
 // covil verde-água e o Barão e o Arauto usam o covil roxo; `tema`: as cores do resto da tela). `icone`: onde cortar o rosto
-// na arte para o ícone redondo (background-position / background-size). `niveis`: faixa do nível do jogador
-// quando o objetivo aparece (o Arauto vem cedo, o Ancião e o Barão tarde) e, com ele, o dano do Smite.
+// na arte para o ícone redondo (background-position / background-size). `niveis`: faixa possível do nível do jogador
+// quando o objetivo aparece, pelo relógio da partida (Arauto a partir dos 15 min, Barão dos 20, Ancião dos 30) e, com ele, o dano do Smite.
 export const OBJETIVOS = [
-  { id: 'dragao-elemental', nome: 'Dragão Elemental', vida: 8000, tema: 'elemental', arte: 'img/dragao.webp', cenario: 'img/cenario.webp', icone: '3% 99% / 290%', pos: [37, 20, 38], posM: [12, 28.4, 76], niveis: [5, 16] },
-  { id: 'dragao-anciao', nome: 'Dragão Ancião', vida: 11000, tema: 'anciao', arte: 'img/dragao-anciao.webp', cenario: 'img/cenario.webp', icone: '3% 77% / 280%', pos: [36, 19, 40], posM: [8, 31, 84], niveis: [13, 18] },
-  { id: 'barao', nome: 'Barão Nashor', vida: 12000, tema: 'barao', arte: 'img/barao.webp', cenario: 'img/cenario-barao.webp', icone: '37% 10% / 160%', pos: [41.4, 0, 21.7], posM: [27.3, 9.3, 42], niveis: [12, 18] },
-  { id: 'arauto', nome: 'Arauto do Vale', vida: 7000, tema: 'arauto', arte: 'img/arauto.webp', cenario: 'img/cenario-barao.webp', icone: '42% 11% / 190%', pos: [41.5, 36.7, 22.4], posM: [21.1, 26.6, 56], niveis: [7, 11] },
+  { id: 'dragao-elemental', nome: 'Dragão Elemental', vida: 8000, tema: 'elemental', arte: 'img/dragao.webp', cenario: 'img/cenario.webp', icone: '3% 99% / 290%', pos: [37, 20, 38], posM: [12, 28.4, 76], niveis: [4, 17] },
+  { id: 'dragao-anciao', nome: 'Dragão Ancião', vida: 11000, tema: 'anciao', arte: 'img/dragao-anciao.webp', cenario: 'img/cenario.webp', icone: '3% 77% / 280%', pos: [36, 19, 40], posM: [8, 31, 84], niveis: [16, 18] },
+  { id: 'barao', nome: 'Barão Nashor', vida: 12000, tema: 'barao', arte: 'img/barao.webp', cenario: 'img/cenario-barao.webp', icone: '37% 10% / 160%', pos: [41.4, 0, 21.7], posM: [27.3, 9.3, 42], niveis: [13, 18] },
+  { id: 'arauto', nome: 'Arauto do Vale', vida: 7000, tema: 'arauto', arte: 'img/arauto.webp', cenario: 'img/cenario-barao.webp', icone: '42% 11% / 190%', pos: [41.5, 36.7, 22.4], posM: [21.1, 26.6, 56], niveis: [10, 15] },
 ];
 export const RODADAS = 5;
 export const TEMPO_MAX = 50; // segundos de cada rodada
@@ -29,7 +29,19 @@ export function danoDoSmite(nivel) {
 }
 // Quanto tempo o objetivo leva para morrer depois de chegar perto do dano do Smite: fica menor a cada rodada.
 // A partida (5 rodadas) é um jogo só, do começo ao fim: o nível dos campeões sobe a cada rodada.
-export const NIVEIS_RODADA = [[6, 8], [8, 10], [10, 12], [13, 15], [16, 18]];
+// O nível acompanha o relógio da partida: média de nível dos campeões por minuto de jogo (partidas ranqueadas/profissionais).
+// Não deu para baixar as tabelas de 2026 (Oracle's Elixir fora do alcance): a curva vem da tabela de XP do jogo e das médias
+// conhecidas (nível 6 por volta dos 6 min, ~11 aos 15, ~13-14 aos 20, ~16 aos 30). Pares [minuto, nível médio].
+export const NIVEL_POR_MINUTO = [[0, 1], [3, 3], [5, 4.8], [8, 7.2], [10, 8.6], [15, 11.2], [20, 13.4], [25, 15.1], [30, 16.4], [35, 17.2], [40, 17.7], [50, 18]];
+export function nivelNoTempo(seg) {
+  const m = Math.max(0, seg) / 60;
+  const T = NIVEL_POR_MINUTO;
+  if (m >= T[T.length - 1][0]) return T[T.length - 1][1];
+  let i = 1;
+  while (T[i][0] < m) i++;
+  const [m0, n0] = T[i - 1]; const [m1, n1] = T[i];
+  return n0 + ((n1 - n0) * (m - m0)) / (m1 - m0);
+}
 export const JANELAS = [3.4, 3.0, 2.6, 2.2, 1.8];
 // Pontos do Golpear pelo TEMPO: desde que a vida do objetivo entrou na zona do Smite (vida ≤ dano do Smite, por qualquer
 // causa, inclusive o seu Q) até o seu Golpear matar. Rápido = mais pontos; o mínimo, com o objetivo do seu time, é PONTOS_TIME.
@@ -167,10 +179,11 @@ export function criarPartida(rand, campeaoId) {
     rand() < 0.5 ? elemental : barao,
     rand() < 0.5 ? barao : anciao,
   ];
-  const niveis = [];
-  NIVEIS_RODADA.forEach(([a, b], i) => { niveis.push(Math.max(i ? niveis[i - 1] : 0, Math.floor(entre(rand, a, b + 1)))); });
   const tempos = [];
   objetivos.forEach((o, i) => tempos.push(sortearTempo(rand, o, i ? tempos[i - 1] : null)));
+  // nível do jogador em cada rodada: o da curva do relógio, com um pequeno desvio fixo na partida; nunca desce
+  const niveis = [];
+  tempos.forEach((tp, i) => niveis.push(Math.max(i ? niveis[i - 1] : 1, Math.min(NIVEL_MAX, Math.round(nivelNoTempo(tp) + entre(rand, -0.45, 0.45))))));
   return { campeao, equipe: montarTimes(rand, campeao), objetivos, niveis, tempos };
 }
 
@@ -182,7 +195,9 @@ export function criarRodada(rand, n = 0, opcoes = null) {
   const op = opcoes && opcoes.vida ? { objetivo: opcoes } : (opcoes || {});
   const partida = op.partida || null;
   const alvo = op.objetivo || (partida ? partida.objetivos[n] : proximoObjetivo(rand));
-  const nivel = partida ? partida.niveis[n] : Math.floor(entre(rand, alvo.niveis[0], alvo.niveis[1] + 1));
+  const tempoInicio = Math.max(partida && partida.tempos ? partida.tempos[n] : 0, TEMPO_MINIMO[alvo.id] + (partida ? 0 : Math.floor(rand() * (alvo.id === 'dragao-elemental' ? 1500 : 240))));
+  const nivelCurva = Math.min(NIVEL_MAX, Math.round(nivelNoTempo(tempoInicio) + (partida ? 0 : entre(rand, -0.45, 0.45))));
+  const nivel = partida ? Math.max(partida.niveis[n], nivelCurva) : nivelCurva;
   const smite = danoDoSmite(nivel);
   const campeao = partida ? partida.campeao : escolher(rand, CAMPEOES);
   const equipe = partida ? partida.equipe : montarTimes(rand, campeao);
@@ -228,7 +243,7 @@ export function criarRodada(rand, n = 0, opcoes = null) {
   }
   const ultimo = golpes[golpes.length - 1];
   return {
-    n, objetivo: alvo, vidaMax: alvo.vida, nivel, tempoInicio: Math.max(partida && partida.tempos ? partida.tempos[n] : 0, TEMPO_MINIMO[alvo.id] + (partida ? 0 : Math.floor(rand() * 240))), smite, campeao, participantes, janela, tx, golpes, gatilhoInimigo, partida: Boolean(partida),
+    n, objetivo: alvo, vidaMax: alvo.vida, nivel, tempoInicio, smite, campeao, participantes, janela, tx, golpes, gatilhoInimigo, partida: Boolean(partida),
     faixaMin: Math.round(smite * (1 - FAIXA_ABAIXO)), faixaMax: Math.round(smite * (1 + FAIXA_ACIMA)),
     morreEm: vida <= 0 ? ultimo.t : null, quemMata: vida <= 0 ? ultimo.quem : null,
   };

@@ -86,3 +86,6 @@ O relógio da pontuação começa quando a vida do objetivo entra na zona do Smi
 - O selva inimigo nunca golpeia nos primeiros 0,2 s (`ATRASO_INIMIGO`) depois de a vida entrar na zona do Smite: o gatilho espera e dispara em `tZona + 0,2 s`, se a vida ainda estiver na faixa dele.
 
 - Ajuste de equilíbrio das Q: recargas −10% (`RECARGA_Q_MULT` = 0,9) e danos +20% (`DANO_Q_MULT` = 1,2) sobre os valores-base de `CAMPEOES`; os números acima da seção "A Q de cada campeão" são os valores-base. No celular o Pantheon carrega no 1º toque e solta no 2º (mouse e teclado: segurar e soltar); sem soltar em 4 s cancela, com recarga pela metade.
+
+## Nível pelo relógio da partida
+O nível do jogador (e, ±1, dos outros) agora vem do relógio simulado (`nivelNoTempo` em `js/logic.js`, tabela `NIVEL_POR_MINUTO`): ~5 aos 5 min, ~9 aos 10, ~11 aos 15, ~13 aos 20, ~15 aos 25, ~16 aos 30, ~17 aos 35. Não consegui baixar os dados de 2026 do Oracle's Elixir daqui, então a curva é a das médias conhecidas (e da tabela de XP do jogo); dá para trocar os pontos de `NIVEL_POR_MINUTO` quando houver a média real. Consequência: o Arauto (≥ 15 min) já vem em nível 11-13 (Golpear 900 ou 1200), o Barão em 13-17 e o Ancião em 16-18.
