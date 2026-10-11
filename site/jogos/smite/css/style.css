@@ -254,3 +254,13 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
   .sm-pronto .sup { font-size: 2.8cqw; } .sm-pronto .hab { display: none; }
   .sm-pronto .sm-go { font-size: 6cqw; padding: 1.2cqw 8cqw; }
 }
+
+/* "Golpear Inimigo": etiqueta vermelha que sobe como um número de dano */
+.sm-tag { position: absolute; left: 50%; top: 30%; display: flex; align-items: center; gap: 0.7cqw; padding: 0.4cqw 1.2cqw 0.4cqw 0.5cqw; border-radius: 0.8cqw; background: rgba(120, 12, 10, 0.92); border: 0.2cqw solid #ff6b5e; box-shadow: 0 0 2cqw rgba(255, 60, 40, 0.65); color: #fff; font-weight: 800; font-size: 1.6cqw; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; animation: sm-tag 2.1s ease-out forwards; }
+.sm-tag img { width: 3.2cqw; height: 3.2cqw; border-radius: 0.5cqw; border: 0.15cqw solid #ffb0a8; display: block; }
+.sm-tag b { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 2.4cqw; color: #ffd1cc; }
+@keyframes sm-tag { 0% { opacity: 0; transform: translate(-50%, 1.5cqw) scale(0.7); } 12% { opacity: 1; transform: translate(-50%, 0) scale(1.1); } 25% { transform: translate(-50%, -0.6cqw) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -9cqw) scale(1); } }
+@media (max-width: 760px) {
+  .sm-tag { top: 36%; gap: 1.6cqw; padding: 1cqw 3cqw 1cqw 1.2cqw; border-radius: 2cqw; border-width: 0.5cqw; font-size: 4.2cqw; }
+  .sm-tag img { width: 8cqw; height: 8cqw; border-radius: 1.4cqw; } .sm-tag b { font-size: 6.4cqw; }
+}

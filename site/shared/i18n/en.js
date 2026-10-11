@@ -1453,7 +1453,7 @@ export default {
   "A sua habilidade finalizou o {obj} antes do Golpear: o objetivo ficou com o seu time.": "Your ability finished off {obj} before Smite: the objective went to your team.",
   "O selva inimigo ({quem}) usou o Golpear e levou o {obj}.": "The enemy jungler ({quem}) used Smite and took {obj}.",
   "Seu Golpear tinha sido cedo demais: o objetivo ainda tinha <b>{vida}</b> de vida.": "Your Smite had been too early: the objective still had <b>{vida}</b> health.",
-  "O selva inimigo usou o Golpear!": "The enemy jungler used Smite!",
+  "Golpear Inimigo": "Enemy Smite",
   "Cedo demais! Seu Golpear foi desperdiçado, mas a rodada continua.": "Too early! Your Smite was wasted, but the round goes on.",
   "seu time": "your team",
   "◆ Minigames do universo de LoL": "◆ Minigames from the LoL universe",

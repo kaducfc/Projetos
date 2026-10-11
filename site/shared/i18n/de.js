@@ -1453,7 +1453,7 @@ export default {
   "A sua habilidade finalizou o {obj} antes do Golpear: o objetivo ficou com o seu time.": "Deine Fähigkeit hat {obj} vor Zerschmettern erledigt: Das Ziel ging an dein Team.",
   "O selva inimigo ({quem}) usou o Golpear e levou o {obj}.": "Der gegnerische Dschungler ({quem}) hat Zerschmettern genutzt und sich {obj} geholt.",
   "Seu Golpear tinha sido cedo demais: o objetivo ainda tinha <b>{vida}</b> de vida.": "Dein Zerschmettern kam zu früh: Das Ziel hatte noch <b>{vida}</b> Lebenspunkte.",
-  "O selva inimigo usou o Golpear!": "Der gegnerische Dschungler hat Zerschmettern genutzt!",
+  "Golpear Inimigo": "Gegnerisches Zerschmettern",
   "Cedo demais! Seu Golpear foi desperdiçado, mas a rodada continua.": "Zu früh! Dein Zerschmettern ist verpufft, aber die Runde geht weiter.",
   "seu time": "dein Team",
   "◆ Minigames do universo de LoL": "◆ Minispiele aus dem LoL-Universum",

@@ -214,6 +214,14 @@ function numero(txt, classe, x, y) {
   $('sm-numeros').append(el);
   setTimeout(() => el.remove(), 1200);
 }
+// Marca vermelha que sobe pela tela quando o selva inimigo usa o Golpear.
+function etiquetaInimigo(dano) {
+  const el = document.createElement('div');
+  el.className = 'sm-tag';
+  el.innerHTML = `<img alt="" src="${imgSmite()}" /><span>${esc(t('Golpear Inimigo'))}</span><b>-${fmt(dano)}</b>`;
+  $('sm-numeros').append(el);
+  setTimeout(() => el.remove(), 2200);
+}
 function bateu() {
   const d = $('sm-alvo'); d.classList.remove('bate'); void d.offsetWidth; d.classList.add('bate');
 }
@@ -238,12 +246,11 @@ function aplicarEventos(eventos) {
       bateu(); SOM.golpe();
     } else if (e.tipo === 'smite-inimigo') {
       danos[e.quem] = (danos[e.quem] || 0) + e.dano;
-      numero(fmt(e.dano), 'smite inimigo', 50, 24);
+      etiquetaInimigo(e.dano);
       const f = document.querySelector(`.sm-ficha[data-p="e-selva"]`);
       if (f) { f.classList.remove('golpe'); void f.offsetWidth; f.classList.add('golpe'); }
       const fl = $('sm-flash'); fl.classList.add('inimigo'); fl.classList.remove('vai'); void fl.offsetWidth; fl.classList.add('vai');
       bateu(); SOM.smite();
-      aviso(t('O selva inimigo usou o Golpear!'));
     } else if (e.tipo === 'habilidade') {
       danos.voce = (danos.voce || 0) + e.dano;
       SOM.hab(); bateu();

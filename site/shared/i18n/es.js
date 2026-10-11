@@ -1453,7 +1453,7 @@ export default {
   "A sua habilidade finalizou o {obj} antes do Golpear: o objetivo ficou com o seu time.": "Tu habilidad remató a {obj} antes de Aplastar: el objetivo se lo quedó tu equipo.",
   "O selva inimigo ({quem}) usou o Golpear e levou o {obj}.": "El jungla rival ({quem}) usó Aplastar y se llevó a {obj}.",
   "Seu Golpear tinha sido cedo demais: o objetivo ainda tinha <b>{vida}</b> de vida.": "Tu Aplastar fue demasiado pronto: el objetivo aún tenía <b>{vida}</b> de vida.",
-  "O selva inimigo usou o Golpear!": "¡El jungla rival usó Aplastar!",
+  "Golpear Inimigo": "Aplastar enemigo",
   "Cedo demais! Seu Golpear foi desperdiçado, mas a rodada continua.": "¡Demasiado pronto! Tu Aplastar se desperdició, pero la ronda continúa.",
   "seu time": "tu equipo",
   "◆ Minigames do universo de LoL": "◆ Minijuegos del universo de LoL",

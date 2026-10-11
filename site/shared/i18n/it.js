@@ -1453,7 +1453,7 @@ export default {
   "A sua habilidade finalizou o {obj} antes do Golpear: o objetivo ficou com o seu time.": "La tua abilità ha finito {obj} prima di Punizione: l’obiettivo è andato alla tua squadra.",
   "O selva inimigo ({quem}) usou o Golpear e levou o {obj}.": "Il cacciatore avversario ({quem}) ha usato Punizione e ha preso {obj}.",
   "Seu Golpear tinha sido cedo demais: o objetivo ainda tinha <b>{vida}</b> de vida.": "La tua Punizione era stata troppo presto: l’obiettivo aveva ancora <b>{vida}</b> di vita.",
-  "O selva inimigo usou o Golpear!": "Il cacciatore avversario ha usato Punizione!",
+  "Golpear Inimigo": "Punizione nemica",
   "Cedo demais! Seu Golpear foi desperdiçado, mas a rodada continua.": "Troppo presto! La tua Punizione è andata sprecata, ma il round continua.",
   "seu time": "la tua squadra",
   "◆ Minigames do universo de LoL": "◆ Minigiochi dell’universo di LoL",

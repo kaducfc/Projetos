@@ -1453,7 +1453,7 @@ export default {
   "A sua habilidade finalizou o {obj} antes do Golpear: o objetivo ficou com o seu time.": "Ta compétence a achevé {obj} avant Châtiment : l’objectif est revenu à ton équipe.",
   "O selva inimigo ({quem}) usou o Golpear e levou o {obj}.": "Le jungler adverse ({quem}) a utilisé Châtiment et a pris {obj}.",
   "Seu Golpear tinha sido cedo demais: o objetivo ainda tinha <b>{vida}</b> de vida.": "Ton Châtiment était venu trop tôt : l’objectif avait encore <b>{vida}</b> PV.",
-  "O selva inimigo usou o Golpear!": "Le jungler adverse a utilisé Châtiment !",
+  "Golpear Inimigo": "Châtiment ennemi",
   "Cedo demais! Seu Golpear foi desperdiçado, mas a rodada continua.": "Trop tôt ! Ton Châtiment est gaspillé, mais la manche continue.",
   "seu time": "ton équipe",
   "◆ Minigames do universo de LoL": "◆ Mini-jeux de l’univers de LoL",
