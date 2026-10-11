@@ -30,9 +30,8 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
   batem sozinhos no objetivo; o jogador só tem a habilidade (Q) e o Golpear.
 - Objetivos (sorteados por rodada, sem repetir o anterior): Dragão Elemental (8.000 de vida), Dragão Ancião (11.000), Barão Nashor (12.000) e
   Arauto do Vale (7.000). Cada um tem o seu tema de cenário (cores do covil) em `OBJETIVOS` (`js/logic.js`).
-- Arte: o Dragão Elemental e o Dragão Ancião usam a arte do Na Medida. **O Barão e o Arauto ainda são silhuetas coloridas provisórias**
-  (`img/barao.webp` e `img/arauto.webp`, geradas das silhuetas do Na Medida): trocar pelas artes finais mantendo os mesmos nomes de arquivo
-  (o recorte do ícone redondo está em `icone` de cada objetivo).
+- Arte: o Dragão Elemental e o Dragão Ancião usam a arte do Na Medida. O Barão (`img/barao.webp`, o leviatã) e o Arauto (`img/arauto.webp`, o caranguejo) agora usam as artes finais que você enviou. O recorte do
+  ícone redondo está em `icone` e o tamanho/posição na tela em `pos`/`posM` de cada objetivo (`OBJETIVOS`, `js/logic.js`).
 
 ## Atualização: cenário e dano por nível
 - Cenário: `img/cenario.webp` (a imagem do covil que você mandou, 1600 px). Cada objetivo muda o matiz dela por CSS (`--hue`, `--sat`, `--luz`
