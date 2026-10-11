@@ -150,19 +150,19 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
 @keyframes sm-pulso { from { box-shadow: 0 0 1cqw var(--cor-bt); } to { box-shadow: 0 0 2.6cqw var(--cor-bt), 0 0 0.4cqw #fff3c0; } }
 
 /* ------------------------------------------------------------------ telas */
-.sm-tela { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; padding: 2cqw; background: rgba(2, 10, 10, 0.78); backdrop-filter: blur(0.5cqw); }
+.sm-tela { position: absolute; inset: 0; z-index: 20; display: grid; place-items: safe center; overflow-y: auto; padding: 1.4cqw; background: rgba(2, 10, 10, 0.78); backdrop-filter: blur(0.5cqw); }
 .sm-tela[hidden] { display: none; }
-.sm-cartao { width: min(56cqw, 94%); display: grid; gap: 1.3cqw; justify-items: center; text-align: center; padding: 2.8cqw 3.2cqw; border-radius: 1cqw; border: 0.2cqw solid var(--sm-ouro-2);
+.sm-cartao { width: min(56cqw, 94%); display: grid; gap: 0.9cqw; justify-items: center; text-align: center; padding: 1.8cqw 2.6cqw; border-radius: 1cqw; border: 0.2cqw solid var(--sm-ouro-2);
   background: linear-gradient(180deg, rgba(10, 36, 36, 0.97), rgba(4, 16, 15, 0.97)); box-shadow: 0 0 4cqw rgba(0, 0, 0, 0.8), inset 0 0 0 0.12cqw rgba(245, 207, 90, 0.25); animation: sm-entra 0.35s ease-out; }
 @keyframes sm-entra { from { opacity: 0; transform: translateY(1.2cqw) scale(0.97); } }
 .sm-cartao .sup { font-size: 1.1cqw; font-weight: 800; letter-spacing: 0.24em; color: var(--sm-ouro); text-transform: uppercase; }
-.sm-cartao h2 { margin: 0; font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 5cqw; line-height: 0.95; background: linear-gradient(180deg, #fff1b3, #f5cf5a 50%, #b97d12); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.sm-cartao p { margin: 0; font-size: 1.45cqw; line-height: 1.45; color: #d6e6df; max-width: 44cqw; }
+.sm-cartao h2 { margin: 0; font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 4.2cqw; line-height: 0.95; background: linear-gradient(180deg, #fff1b3, #f5cf5a 50%, #b97d12); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sm-cartao p { margin: 0; font-size: 1.25cqw; line-height: 1.4; color: #d6e6df; max-width: 48cqw; }
 .sm-cartao p b { color: var(--sm-ouro); }
 .sm-regras { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1cqw; width: 100%; }
-.sm-regras div { padding: 1cqw 1.1cqw; border: 0.12cqw solid rgba(245, 207, 90, 0.35); border-radius: 0.7cqw; background: rgba(0, 0, 0, 0.3); font-size: 1.2cqw; line-height: 1.4; color: #d6e6df; }
-.sm-regras b { display: block; font-size: 1.15cqw; letter-spacing: 0.08em; color: var(--sm-ouro); text-transform: uppercase; margin-bottom: 0.3cqw; }
-.sm-go { appearance: none; border: 0; cursor: pointer; padding: 0.9cqw 3.2cqw; font-family: 'Bebas Neue', sans-serif; font-size: 2.3cqw; letter-spacing: 0.08em; color: #1d1304;
+.sm-regras div { padding: 0.7cqw 0.9cqw; border: 0.12cqw solid rgba(245, 207, 90, 0.35); border-radius: 0.7cqw; background: rgba(0, 0, 0, 0.3); font-size: 1.02cqw; line-height: 1.35; color: #d6e6df; }
+.sm-regras b { display: block; font-size: 1.05cqw; letter-spacing: 0.08em; color: var(--sm-ouro); text-transform: uppercase; margin-bottom: 0.3cqw; }
+.sm-go { appearance: none; border: 0; cursor: pointer; padding: 0.7cqw 3cqw; font-family: 'Bebas Neue', sans-serif; font-size: 2.1cqw; letter-spacing: 0.08em; color: #1d1304;
   background: linear-gradient(180deg, #ffe58a, #e0a93a 60%, #b97d12); clip-path: polygon(1cqw 0, calc(100% - 1cqw) 0, 100% 50%, calc(100% - 1cqw) 100%, 1cqw 100%, 0 50%); }
 .sm-go:hover { filter: brightness(1.08); }
 .sm-go.sec { color: #f4e9c2; background: linear-gradient(180deg, #1a3836, #0c201f); box-shadow: inset 0 0 0 0.14cqw var(--sm-ouro-2); }
@@ -217,8 +217,9 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
   .sm-bt { width: 24cqw; } .sm-bt .quadro { width: 24cqw; height: 24cqw; border-width: 0.8cqw; border-radius: 2.4cqw; }
   .sm-bt .tecla { min-width: 8cqw; height: 6.4cqw; font-size: 4cqw; border-width: 0.5cqw; } .sm-bt .nome { font-size: 3.2cqw; max-width: 28cqw; }
   .sm-bt .recarga { font-size: 9cqw; }
-  .sm-cartao { width: 92%; padding: 6cqw 5cqw; gap: 3.4cqw; border-width: 0.6cqw; }
-  .sm-cartao .sup { font-size: 3cqw; } .sm-cartao h2 { font-size: 14cqw; } .sm-cartao p { font-size: 3.8cqw; max-width: none; }
+  .sm-cartao { width: 94%; padding: 4cqw 4cqw 0; gap: 2.4cqw; border-width: 0.6cqw; }
+  .sm-acoes { position: sticky; bottom: 0; width: 100%; padding: 3cqw 0 4cqw; background: linear-gradient(180deg, rgba(4, 16, 15, 0), rgba(4, 16, 15, 0.96) 35%); z-index: 2; }
+  .sm-cartao .sup { font-size: 2.6cqw; } .sm-cartao h2 { font-size: 11cqw; } .sm-cartao p { font-size: 3.3cqw; max-width: none; }
   .sm-regras { grid-template-columns: 1fr; gap: 2cqw; }
   .sm-aviso { top: 31cqw; font-size: 3.6cqw; max-width: 90%; padding: 2cqw 4cqw; } .sm-regras div { font-size: 3.4cqw; padding: 2.4cqw 3cqw; } .sm-regras b { font-size: 3.2cqw; }
   .sm-go { font-size: 7cqw; padding: 2.2cqw 9cqw; }
