@@ -353,7 +353,9 @@ html:not([lang="pt-BR"]) .cv-bz-t b { font-size: 19cqw; }
 html:not([lang="pt-BR"]) .cv-bz-ap { bottom: -17%; }
 
 /* Capa do Smite Challenge (em teste). */
-.cv-smite { overflow: hidden; background: radial-gradient(70% 80% at 60% 45%, #14585a, #082322 55%, #030b0b); }
+.cv-smite { overflow: hidden; background: #082322; }
+.cv-sm-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%; }
+.cv-smite::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, rgba(3, 11, 11, 0.82) 0%, rgba(3, 11, 11, 0.45) 38%, transparent 62%); }
 .cv-sm-dr { position: absolute; right: -6%; top: 6%; width: 78%; filter: drop-shadow(0 0 14px rgba(63, 217, 208, 0.55)); animation: cv-sm-voo 5s ease-in-out infinite alternate; }
 @keyframes cv-sm-voo { from { transform: translateY(-3px); } to { transform: translateY(4px); } }
 .cv-sm-t { position: absolute; left: 12px; top: 10px; display: flex; flex-direction: column; font-family: var(--display); line-height: 0.85; color: #f5cf5a; text-shadow: 0 2px 0 #2d1d03, 0 0 8px #000; z-index: 2; }

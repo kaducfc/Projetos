@@ -51,9 +51,9 @@ const CAPAS = {
   escala: `<div class="cv cv-escala"><span class="cv-sil azul" style="--img:url(/jogos/escala/dados/silhuetas/garen.webp)"></span>
       <span class="cv-sil verm" style="--img:url(/jogos/escala/dados/silhuetas/teemo.webp)"></span></div>`,
   // Quiz oculto (só administradores): título dourado e as quatro alternativas.
-  // Em teste (só administradores): o dragão voando sobre a barra de vida que chega perto do golpe.
-  smite: `<div class="cv cv-smite"><img class="cv-sm-dr" src="/jogos/smite/img/dragao.webp" alt="" loading="lazy" />
-      <span class="cv-sm-t"><i>DESAFIO DO</i><b>GOLPEAR</b></span><span class="cv-sm-barra"><i></i><u></u></span></div>`,
+  // Desafio do Golpear: o banner (o dragão no covil) com o nome do jogo por cima (traduzido em cada idioma).
+  smite: `<div class="cv cv-smite"><img class="cv-sm-bg" src="/jogos/smite/img/banner.webp" alt="" loading="lazy" />
+      <span class="cv-sm-t"><i>DESAFIO DO</i><b>GOLPEAR</b></span></div>`,
   barao: `<div class="cv cv-barao"><span class="cv-bz-t">SHOW DO<b>BARÃO</b></span>
       <img class="cv-bz-ap" src="/jogos/barao/img/apresentador.webp" alt="" loading="lazy" /></div>`,
   // O time dos sonhos, como na tela do Lendas (melhor OVR de cada um no jogo).
