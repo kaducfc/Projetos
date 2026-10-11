@@ -1389,7 +1389,7 @@ export default {
   "Tempo restante": "Tempo rimasto",
   "Dano no objetivo": "Danno all’obiettivo",
   "Objetivo": "Obiettivo",
-  "Dano do Golpear:": "Danno di Punizione:",
+  "DANO DO": "DANNO DI",
   "Habilidade": "Abilità",
   "Aliado": "Alleato",
   "Adversário": "Avversario",

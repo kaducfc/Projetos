@@ -10,7 +10,7 @@ export default [
   ['Tempo restante', 'Time left', 'Verbleibende Zeit', 'Tiempo restante', 'Tempo rimasto', 'Temps restant'],
   ['Dano no objetivo', 'Damage to objective', 'Schaden am Ziel', 'Daño al objetivo', 'Danno all’obiettivo', 'Dégâts à l’objectif'],
   ['Objetivo', 'Objective', 'Ziel', 'Objetivo', 'Obiettivo', 'Objectif'],
-  ['Dano do Golpear:', 'Smite damage:', 'Schaden von Zerschmettern:', 'Daño de Aplastar:', 'Danno di Punizione:', 'Dégâts de Châtiment :'],
+  ['DANO DO', 'DAMAGE OF', 'SCHADEN VON', 'DAÑO DE', 'DANNO DI', 'DÉGÂTS DE'],
   ['Habilidade', 'Ability', 'Fähigkeit', 'Habilidad', 'Abilità', 'Compétence'],
   ['Aliado', 'Ally', 'Verbündeter', 'Aliado', 'Alleato', 'Allié'],
   ['Adversário', 'Enemy', 'Gegner', 'Rival', 'Avversario', 'Ennemi'],

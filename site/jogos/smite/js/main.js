@@ -105,7 +105,7 @@ function montar() {
     </div>
     <aside class="sm-painel sm-dano"><h3>${t('Dano no objetivo')}</h3><ul id="sm-dano"></ul></aside>
     <div class="sm-painel sm-obj"><div class="ico" id="sm-ico2"></div><div><b>${t('Objetivo')}</b><span id="sm-obj-txt"></span></div></div>
-    <div class="sm-painel sm-info"><div class="texto">${t('Dano do Golpear:')}</div></div>
+    <div class="sm-painel sm-info"><div class="texto"><small>${t('DANO DO')}</small><b>${t('GOLPEAR')}</b></div></div>
     <div class="sm-mira">${MIRA}<b id="sm-dano-smite">900</b></div>
     <div class="sm-hab">
       <div class="fundo"></div>

@@ -1389,7 +1389,7 @@ export default {
   "Tempo restante": "Time left",
   "Dano no objetivo": "Damage to objective",
   "Objetivo": "Objective",
-  "Dano do Golpear:": "Smite damage:",
+  "DANO DO": "DAMAGE OF",
   "Habilidade": "Ability",
   "Aliado": "Ally",
   "Adversário": "Enemy",

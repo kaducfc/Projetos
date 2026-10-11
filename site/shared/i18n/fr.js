@@ -1389,7 +1389,7 @@ export default {
   "Tempo restante": "Temps restant",
   "Dano no objetivo": "Dégâts à l’objectif",
   "Objetivo": "Objectif",
-  "Dano do Golpear:": "Dégâts de Châtiment :",
+  "DANO DO": "DÉGÂTS DE",
   "Habilidade": "Compétence",
   "Aliado": "Allié",
   "Adversário": "Ennemi",
