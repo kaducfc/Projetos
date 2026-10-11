@@ -5,7 +5,7 @@ import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { GAMES, SITE_NAME, gameById } from '../shared/config.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import {
-  ELOS, PARTIDAS_POR_DIA, PDR_DIVISAO, INATIVIDADE,
+  ELOS, PARTIDAS_POR_DIA, partidasPorDia, PDR_DIVISAO, INATIVIDADE,
   eloInfo, nivelElo, emblemaHtml, divisaoDe, nomeDivisao,
 } from '../shared/ranked.js';
 import { avatarHtml } from '../shared/avatar.js';
@@ -158,11 +158,12 @@ function vivoVagas(id) {
   if (!platform.cloudEnabled()) linha = '';
   else if (!u) linha = '<span class="hx-sub"><i class="hx-dot dim"></i>Entre na conta para jogar a ranqueada</span>';
   else if (rk) {
-    const vagas = Math.min(PARTIDAS_POR_DIA, rk.hoje?.vagas?.[id] ?? 0);
+    const max = partidasPorDia(id);
+    const vagas = Math.min(max, rk.hoje?.vagas?.[id] ?? 0);
     const r = rk.hoje?.jogos?.[id];
     const d = divisaoDe(rk.pts, rk.elo);
     const rotulo = gameById(id)?.ranked?.rotulo || 'Ranqueadas hoje';
-    linha = `<span class="${vagas >= PARTIDAS_POR_DIA ? 'nao' : 'novo'}">${id === 'carreira-no-rift' ? emblemaHtml(rk.jogou ? d.elo : 'ferro', 18, { vazio: !rk.jogou }) : ''}${rotulo}: <b>${vagas} de ${PARTIDAS_POR_DIA}</b>${r ? ` · ${pdrTxt(r.pdr)}` : ''}</span><span class="hx-cd">Zera em <b data-cd>${fmtCountdown(msToNextDay())}</b></span>`;
+    linha = `<span class="${vagas >= max ? 'nao' : 'novo'}">${id === 'carreira-no-rift' ? emblemaHtml(rk.jogou ? d.elo : 'ferro', 18, { vazio: !rk.jogou }) : ''}${rotulo}: <b>${vagas} de ${max}</b>${r ? ` · ${pdrTxt(r.pdr)}` : ''}</span><span class="hx-cd">Zera em <b data-cd>${fmtCountdown(msToNextDay())}</b></span>`;
   }
   const partes = [linha, andamento].filter(Boolean);
   return partes.length ? `<p class="hx-live">${partes.join('<br>')}</p>` : '';

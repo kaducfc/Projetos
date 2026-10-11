@@ -25,6 +25,9 @@ export const MIN_DESAFIANTE = 500;
 export const VAGAS_GRAO_MESTRE = 200;
 export const MIN_GRAO_MESTRE = 200;
 export const PARTIDAS_POR_DIA = 3; // Carreira, Lendas e Barão: as 3 primeiras do dia (igual a 0067_ranqueada_3_partidas.sql)
+// Quantas partidas por dia valem em cada jogo (o Desafio do Golpear: 2, igual a 0071_smite_ranqueada.sql).
+export const PARTIDAS_JOGO = { smite: 2 };
+export const partidasPorDia = (jogo) => PARTIDAS_JOGO[jogo] ?? PARTIDAS_POR_DIA;
 export const NAO_TERMINOU = -15; // Carreira/Lendas começada e não terminada no dia
 export const INATIVIDADE = { aPartir: 'ouro', dias: 3, pdr: -25 };
 
@@ -45,7 +48,7 @@ export const nomeDivisao = (d) => `${eloInfo(d.elo).nome}${d.divisao ? ` ${d.div
 export const GANHO_POR_ELO = [100, 80, 80, 80, 70, 70, 60, 50, 50, 50];
 // PDR de tabela (+5..+38 ou −2..−25) → PDR do elo (site_rk_ajustar).
 export function ajustarPdr(base, nivel = 0) {
-  if (base <= 0) return Math.max(-25, base);
+  if (base <= 0) return Math.max(-30, base);
   return Math.max(1, Math.round(Math.min(38, base) * GANHO_POR_ELO[Math.min(9, Math.max(0, nivel))] / 100));
 }
 
@@ -72,6 +75,13 @@ export function baseLendas(resultado, vitorias, invicto = false) {
 // Show do Barão: PDR de tabela pelo prêmio final (antes do % do elo; iguais às do banco, 0065).
 export const PDR_BARAO = [[1000000, 35], [500000, 30], [250000, 25], [100000, 20], [50000, 15], [20000, 10], [10000, 5], [5000, -5], [2000, -10], [1000, -15], [0, -20]];
 export const baseBarao = (premio) => PDR_BARAO.find(([min]) => premio >= min)[1];
+// Desafio do Golpear: PDR de tabela pela nota da partida (5 rodadas, 0 a 500; antes do % do elo; igual a site_rk_base_smite, 0071).
+// 500 → +35 · 250 → +3 (reta entre os dois) · 249 → −3 · 0 → −30 (reta entre os dois).
+export function baseSmite(pontos) {
+  const p = Math.max(0, Math.min(500, pontos));
+  if (p >= 250) return Math.round(3 + ((p - 250) * 32) / 250);
+  return -Math.round(3 + ((249 - p) * 27) / 249);
+}
 export const PDR_RUNETERMO = [35, 28, 22, 16, 11, 6, 5];
 export const PDR_LENDAS = [
   ['Campeão invicto (7-0 e sem perder jogo nos playoffs)', '+38'],

@@ -3,7 +3,7 @@
 import * as platform from './platform.js';
 import { t } from './i18n.js';
 import { liberarAbobora } from './passe-aviso.js';
-import { PARTIDAS_POR_DIA, NAO_TERMINOU, eloInfo, divisaoDe, nomeDivisao, fmtPdr } from './ranked.js';
+import { partidasPorDia, NAO_TERMINOU, eloInfo, divisaoDe, nomeDivisao, fmtPdr } from './ranked.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -29,6 +29,7 @@ const NOMES = {
   'carreira-no-rift': { uma: 'carreira', varias: 'carreiras' },
   cblol: { uma: 'partida no modo Oculto', varias: 'partidas no modo Oculto' },
   barao: { uma: 'partida', varias: 'partidas' },
+  smite: { uma: 'partida', varias: 'partidas' },
 };
 const nomes = (jogo) => {
   const n = NOMES[jogo] || NOMES['carreira-no-rift'];
@@ -47,29 +48,29 @@ const pdrHtml = (n) => `<b class="${n > 0 ? 'pdr-mais' : n < 0 ? 'pdr-menos' : '
 export async function avisoInicio(jogo = 'carreira-no-rift') {
   await platform.init();
   if (!platform.cloudEnabled()) return;
-  const n = nomes(jogo);
+  const n = nomes(jogo); const max = partidasPorDia(jogo);
   if (!platform.getUser()) {
-    mostrar(t('<b>Ranqueada:</b> entre na sua conta para as suas {max} primeiras {varias} do dia valerem PDR.', { max: PARTIDAS_POR_DIA, varias: n.varias }), 7000);
+    mostrar(t('<b>Ranqueada:</b> entre na sua conta para as suas {max} primeiras {varias} do dia valerem PDR.', { max, varias: n.varias }), 7000);
     return;
   }
   const s = await platform.rankedStatus();
   if (!s) return;
   const feitas = s.hoje.vagas?.[jogo] ?? 0;
-  const resta = Math.max(0, PARTIDAS_POR_DIA - feitas);
+  const resta = Math.max(0, max - feitas);
   const dia = s.hoje.jogos?.[jogo];
   const elo = eloTexto(s);
   const hojeTxt = dia ? ` · ${t('hoje: {pdr}', { pdr: pdrHtml(dia.pdr) })}` : '';
   mostrar(resta
-    ? `${t('<b>Ranqueada</b> ({elo}):', { elo })} ${resta === PARTIDAS_POR_DIA
-      ? t('suas {max} {varias} ranqueadas de hoje estão disponíveis', { max: PARTIDAS_POR_DIA, varias: n.varias })
+    ? `${t('<b>Ranqueada</b> ({elo}):', { elo })} ${resta === max
+      ? t('suas {max} {varias} ranqueadas de hoje estão disponíveis', { max, varias: n.varias })
       : resta > 1 ? t('faltam {resta} {varias} ranqueadas hoje', { resta, varias: n.varias }) : t('falta {resta} {uma} ranqueada hoje', { resta, uma: n.uma })}${hojeTxt}. ${t('Cada uma vale o seu PDR.')} ${link()}`
-    : `${t('<b>Ranqueada</b> ({elo}):', { elo })} ${t('as {max} {varias} ranqueadas de hoje já foram começadas', { max: PARTIDAS_POR_DIA, varias: n.varias })}${dia ? ` (${t('hoje: {pdr}', { pdr: pdrHtml(dia.pdr) })})` : ''}. ${t('Pode continuar jogando normalmente.')} ${link()}`, 9000);
+    : `${t('<b>Ranqueada</b> ({elo}):', { elo })} ${t('as {max} {varias} ranqueadas de hoje já foram começadas', { max, varias: n.varias })}${dia ? ` (${t('hoje: {pdr}', { pdr: pdrHtml(dia.pdr) })})` : ''}. ${t('Pode continuar jogando normalmente.')} ${link()}`, 9000);
 }
 
 // Logo depois de começar: diz se esta partida vale para a ranqueada.
 export function avisoComeco(r, jogo = 'carreira-no-rift') {
   if (!platform.cloudEnabled() || !platform.getUser()) return;
-  const n = nomes(jogo);
+  const n = nomes(jogo); const max = partidasPorDia(jogo);
   if (!r) {
     mostrar(t('Não deu para registrar o começo desta {uma} na <b>ranqueada</b> (sem conexão com o servidor). Ela não vai valer; se quiser, recarregue a página e comece de novo.', { uma: n.uma }), 12000);
     return;
@@ -79,10 +80,10 @@ export function avisoComeco(r, jogo = 'carreira-no-rift') {
     return;
   }
   if (!r.token) {
-    mostrar(`${t('Esta {uma} <b>não vale para a ranqueada</b>: as {max} {varias} ranqueadas de hoje já foram começadas. Pode jogar normalmente!', { uma: n.uma, max: PARTIDAS_POR_DIA, varias: n.varias })} ${link()}`, 9000);
+    mostrar(`${t('Esta {uma} <b>não vale para a ranqueada</b>: as {max} {varias} ranqueadas de hoje já foram começadas. Pode jogar normalmente!', { uma: n.uma, max, varias: n.varias })} ${link()}`, 9000);
     return;
   }
-  mostrar(t('<b>{Uma} ranqueada {numero} de {limite} de hoje.</b> Termine hoje (até meia-noite): se não terminar, perde {perde} PDR.', { Uma: n.Uma, numero: r.numero ?? '', limite: r.limite ?? PARTIDAS_POR_DIA, perde: Math.abs(NAO_TERMINOU) }), 10000);
+  mostrar(t('<b>{Uma} ranqueada {numero} de {limite} de hoje.</b> Termine hoje (até meia-noite): se não terminar, perde {perde} PDR.', { Uma: n.Uma, numero: r.numero ?? '', limite: r.limite ?? max, perde: Math.abs(NAO_TERMINOU) }), 10000);
 }
 
 // Fim de partida: `entry` é a partida registrada e `ranked` o ingresso de
@@ -92,7 +93,7 @@ export async function avisoFim(entry, ranked = null, jogo = 'carreira-no-rift') 
 }
 async function avisoFimBase(entry, ranked, jogo) {
   if (!platform.cloudEnabled()) return;
-  const n = nomes(jogo);
+  const n = nomes(jogo); const max = partidasPorDia(jogo);
   if (!platform.getUser()) {
     mostrar(t('Essa {uma} não valeu PDR: entre na sua conta para as próximas valerem.', { uma: n.uma }));
     return;
@@ -106,7 +107,7 @@ async function avisoFimBase(entry, ranked, jogo) {
     const qual = esta ? t('({n}ª de hoje)', { n: esta.n }) : t('de hoje');
     mostrar(`<b>${t('Valeu para a ranqueada!')}</b> ${n.Uma} ${qual}: ${pdrHtml(esta ? esta.pdr : dia.pdr)}${hoje} · ${t('agora: {elo}', { elo: eloTexto(d) })}. ${link()}`, 12000);
   } else if (ranked && !ranked.token) {
-    mostrar(`${t('Essa {uma} <b>não valeu PDR</b>: ela começou depois das {max} ranqueadas do dia.', { uma: n.uma, max: PARTIDAS_POR_DIA })} ${link()}`, 12000);
+    mostrar(`${t('Essa {uma} <b>não valeu PDR</b>: ela começou depois das {max} ranqueadas do dia.', { uma: n.uma, max })} ${link()}`, 12000);
   } else if (!ranked) {
     mostrar(`${t('Essa {uma} <b>não valeu PDR</b>: o começo dela não foi registrado no servidor (começou sem a conta conectada ou sem internet).', { uma: n.uma })} ${link()}`, 12000);
   } else if (ranked.dia !== String(d.hoje.dia).slice(0, 10)) {
@@ -123,14 +124,14 @@ export async function avisoFimServidor(ranq, ranked = null, jogo = 'carreira-no-
 }
 async function avisoFimServidorBase(ranq, ranked, jogo) {
   if (!platform.cloudEnabled()) return;
-  const n = nomes(jogo);
+  const n = nomes(jogo); const max = partidasPorDia(jogo);
   if (!platform.getUser()) {
     mostrar(t('Essa {uma} não valeu PDR: entre na sua conta para as próximas valerem.', { uma: n.uma }));
     return;
   }
   if (!ranq?.valeu) {
     mostrar(`${ranked && !ranked.token && !ranked.banido
-      ? t('Essa {uma} <b>não valeu PDR</b>: ela começou depois das {max} ranqueadas do dia.', { uma: n.uma, max: PARTIDAS_POR_DIA })
+      ? t('Essa {uma} <b>não valeu PDR</b>: ela começou depois das {max} ranqueadas do dia.', { uma: n.uma, max })
       : t('Essa {uma} <b>não valeu PDR</b>.', { uma: n.uma })} ${link()}`, 12000);
     return;
   }

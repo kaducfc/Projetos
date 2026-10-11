@@ -95,3 +95,10 @@ O nível do jogador (e, ±1, dos outros) agora vem do relógio simulado (`nivelN
 - Ajustes recentes de equilíbrio: Q do Pantheon −30% (`PANTHEON_MULT` = 0,7); os outros campeões (aliados e adversários, não o jogador) batem +35% (`MULT_OUTROS` = 1,35). Sem compensação: com mais dano a janela de acerto do Golpear fica menor de propósito, e o objetivo chega à zona do Smite mais cedo e com golpes maiores.
 
 - Dois Barões seguidos (rodadas 4 e 5) ficam ≥ 6 min de jogo separados (`RENASCE_BARAO`). Os botões Q e F mostram, no topo, o dano atual (Q: Lee Sin Q2 cresce com a vida que falta; Pantheon mostra estocada e, segurando, o arremesso; `danoDaQ`).
+
+## Ranqueada (PDR)
+- Valem as **2 primeiras partidas começadas por dia** (`partidasPorDia('smite')`, ingresso em `site_rk_iniciar`, SQL `supabase/migrations/0071_smite_ranqueada.sql`). Começou e não terminou até a meia-noite: −15 PDR por partida (a atualização diária já cobre qualquer jogo).
+- A nota da partida é a soma das 5 rodadas (0 a 500). PDR de tabela (`baseSmite` em `shared/ranked.js` = `site_rk_base_smite` no SQL): **500 → +35 · 250 → +3** (reta entre os dois) e **249 → −3 · 0 → −30** (reta entre os dois). Ganhos passam pelo % do elo (Ferro 100% … Mestre+ 50%); a perda é igual em todos os elos (a perda máxima do `site_rk_ajustar` subiu de −25 para −30).
+- Fluxo: JOGAR → `platform.rankedIniciar('smite')` (ingresso); fim → `platform.recordResult` com `summary.ranked` (token) e `summary.rodadas` (5 itens com `p`); o gatilho `site_ranked_registrar` confere que a nota = soma das 5 rodadas (cada uma de 0 a 100) e lança o PDR. Avisos de início/fim: `shared/aviso-ranked.js`.
+- Enquanto o catálogo tiver `soAdmin: true` o jogo continua só para administradores (e fora do card da ranqueada). Para liberar: rodar a 0071 no Supabase, testar logado e apagar a linha `soAdmin` em `shared/config.js`.
+- Limite conhecido: o jogo roda no navegador (como a Carreira): o servidor só confere a soma das rodadas e o teto de 500, não consegue provar que os tempos de reação foram reais.

@@ -121,6 +121,7 @@ export const GAMES = [
     path: 'jogos/smite/',
     status: 'live',
     scoreLabel: 'Pontos',
+    ranked: { modo: 'vagas', selo: 'Ranqueada' },
     soAdmin: true,
   },
 ];

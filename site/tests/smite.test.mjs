@@ -660,3 +660,44 @@ test('smite: danoDaQ mostra o dano atual da Q (Lee Sin Q2 com a vida que falta; 
   const meio = danoDaQ(p, 2.2); const cheio = danoDaQ(p, 3.2);
   assert.ok(meio > pan.campeao.dano[kp] && cheio > meio);
 });
+
+// ---- Ranqueada: PDR pela nota da partida (0 a 500).
+import { baseSmite, ajustarPdr, partidasPorDia, PARTIDAS_POR_DIA } from '../shared/ranked.js';
+import { readFileSync } from 'node:fs';
+
+test('smite ranqueada: 500 = +35, 250 = +3, 249 = −3, 0 = −30 e reta entre os pontos', () => {
+  assert.equal(baseSmite(500), 35);
+  assert.equal(baseSmite(250), 3);
+  assert.equal(baseSmite(249), -3);
+  assert.equal(baseSmite(0), -30);
+  assert.equal(baseSmite(375), 19); // meio de 250 a 500: 3 + 16
+  assert.equal(baseSmite(125), -16); // meio de 0 a 249: −(3 + 13,45) arredondado
+  assert.equal(baseSmite(900), 35); // passa de 500: continua +35
+  assert.equal(baseSmite(-5), -30);
+  let ant = -99;
+  for (let p = 0; p <= 500; p++) { const b = baseSmite(p); assert.ok(b >= ant, `${p}`); ant = b; }
+  assert.ok(baseSmite(249) < 0 && baseSmite(250) > 0);
+});
+
+test('smite ranqueada: o ajuste do elo mantém os ganhos por elo e deixa a perda chegar a −30', () => {
+  assert.equal(ajustarPdr(baseSmite(500), 0), 35);
+  assert.equal(ajustarPdr(baseSmite(500), 7), 18); // Mestre: 50%
+  assert.equal(ajustarPdr(baseSmite(250), 4), 2); // 3 × 70%
+  assert.equal(ajustarPdr(baseSmite(0), 9), -30); // a perda é igual em todos os elos
+  assert.equal(ajustarPdr(-99, 0), -30);
+});
+
+test('smite ranqueada: 2 partidas por dia no Golpear e 3 nos outros jogos', () => {
+  assert.equal(partidasPorDia('smite'), 2);
+  assert.equal(partidasPorDia('barao'), 3);
+  assert.equal(partidasPorDia('carreira-no-rift'), PARTIDAS_POR_DIA);
+});
+
+test('smite ranqueada: o SQL (0071) tem as mesmas regras do JS', () => {
+  const sql = readFileSync(new URL('../supabase/migrations/0071_smite_ranqueada.sql', import.meta.url), 'utf8');
+  assert.match(sql, /when pontos >= 250 then round\(3 \+ \(least\(pontos, 500\) - 250\) \* 32 \/ 250\.0\)/);
+  assert.match(sql, /-round\(3 \+ \(249 - greatest\(pontos, 0\)\) \* 27 \/ 249\.0\)/);
+  assert.match(sql, /greatest\(-30, base\)/);
+  assert.match(sql, /case when jogo = 'smite' then 2 else 3 end/);
+  assert.match(sql, /new\.score > 500/);
+});

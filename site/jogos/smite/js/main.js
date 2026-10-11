@@ -7,6 +7,7 @@ import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
+import { avisoInicio, avisoComeco, avisoFim } from '../../../shared/aviso-ranked.js';
 import { t, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, ROTA_NOME, postoHab,
@@ -133,6 +134,7 @@ function tela(html, refazer = null, leve = false) { const el = $('sm-tela'); el.
 // --------------------------------------------------------------------------- estado do jogo
 let R = null; // rodada atual (criarRodada)
 let n = 0; // índice da rodada (0 a RODADAS - 1)
+let ranqueada = null; // ingresso do dia da partida em andamento (ranqueada: 2 por dia); null = não vale PDR
 let resultados = []; // { pontos, resultado, tempo, campeao, objetivo }
 let fase = 'intro'; // intro | preparo | jogando | fim
 let t0 = 0; let raf = 0;
@@ -460,7 +462,11 @@ function telaFim() {
   const perfeitas = resultados.filter((r) => r.resultado === 'garantido' && r.tempo <= 0.1).length;
   desenharFim(pts, melhor, recorde, perfeitas);
   platform.track('game_end', GAME_ID, { pontos: pts, perfeitas });
-  platform.recordResult(GAME_ID, { score: pts, summary: { text: `${pts} ${t('pontos')}`, rodadas: resultados.map((r) => ({ p: r.pontos, r: r.resultado, s: r.tempo, o: r.objetivo })) } }).catch(() => {});
+  // O servidor confere que a nota é a soma das 5 rodadas e lança o PDR (shared/ranked.js: baseSmite; 0071_smite_ranqueada.sql).
+  const ingresso = ranqueada;
+  Promise.resolve(platform.recordResult(GAME_ID, { score: pts, summary: { text: `${pts} ${t('pontos')}`, rodadas: resultados.map((r) => ({ p: r.pontos, r: r.resultado, s: r.tempo, o: r.objetivo })), ranked: ingresso?.token || undefined } }))
+    .then((entry) => avisoFim(entry, ingresso, GAME_ID))
+    .catch(() => {});
 }
 function desenharFim(pts, melhor, recorde, perfeitas) {
   const nome = (r) => (r.resultado === 'garantido' ? t('tempo {n}s', { n: segundos(r.tempo) }) : r.resultado === 'time' ? t('seu time') : t('roubado'));
@@ -478,7 +484,10 @@ function desenharFim(pts, melhor, recorde, perfeitas) {
 document.addEventListener('click', (e) => {
   const a = e.target.closest('[data-a]')?.dataset.a;
   if (!a) return;
-  if (a === 'jogar') { resultados = []; n = 0; partida = criarPartida(aleatorio((Date.now() ^ 0x9e3779b9) >>> 0), new URLSearchParams(location.search).get('camp')); prepararRodada(); } // ?camp=LeeSin fixa o campeão (teste)
+  if (a === 'jogar') {
+    resultados = []; n = 0; ranqueada = null;
+    platform.rankedIniciar(GAME_ID).then((r) => { ranqueada = r; avisoComeco(r, GAME_ID); }); partida = criarPartida(aleatorio((Date.now() ^ 0x9e3779b9) >>> 0), new URLSearchParams(location.search).get('camp')); prepararRodada();
+  } // ?camp=LeeSin fixa o campeão (teste)
   else if (a === 'comecar') contagemEIniciar();
   else if (a === 'proxima') { n += 1; prepararRodada(); }
   else if (a === 'fim') telaFim();
@@ -513,6 +522,7 @@ onLangChange(() => {
   montar();
   hud();
   telaInicio();
+  avisoInicio(GAME_ID);
   versaoDD().then((v) => {
     if (!v || v === ddVersion) return;
     ddVersion = v;
