@@ -5,8 +5,7 @@ jogador (um jungle) golpeia com o **Smite** na hora certa. O Smite mata se a vid
 quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma habilidade do campeão (Q) machucam o objetivo.
 
 - Regras: 5 rodadas, até 100 pontos cada (500 no total). Pontos = `100 · (1 − margem/600)²`, onde margem = dano do Smite − vida
-  do objetivo no golpe (0 → 100; 30 → 90; 150 → 56; 300 → 25; 600+ → 0). Golpe cedo (vida acima do dano do Smite) ou objetivo morto
-  antes do Smite (inclusive por causa da habilidade do jogador) = 0.
+  do objetivo no golpe (0 → 100; 30 → 90; 150 → 56; 300 → 25; 600+ → 0). 
 - Cada rodada sorteia o dano do Smite (600, 900 ou 1200 por nível), o campeão (e a habilidade) e uma sequência de golpes de aliados/adversários
   que faz a vida passar pelo dano do Smite entre 18 e 32 s. A janela entre "chegou na zona" e "morreu" encurta a cada rodada (3,4 s → 1,8 s)
   e as rajadas (golpes grandes) ficam mais frequentes.
@@ -42,3 +41,16 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
   da rodada vem da faixa de cada objetivo (`niveis`): Arauto 7-11, Dragão Elemental 5-16, Barão 12-18, Dragão Ancião 13-18; os outros jogadores
   ficam a ±1 nível. O nível aparece no retrato, nas fichas e no cartão da rodada.
 - Teste visual: `?obj=barao` (ou `arauto`, `dragao-anciao`, `dragao-elemental`) na URL fixa o objetivo.
+
+## Atualização: a rodada continua depois de errar (regra atual de pontuação)
+- Errar o Golpear (usar com a vida acima do dano do Smite) **não encerra a rodada**: o Golpear bate no objetivo (tira o dano do Smite) e é
+  desperdiçado; a rodada segue até o objetivo morrer. Só dá para usar o Golpear uma vez por rodada.
+- Quem fica com o objetivo decide os pontos: Golpear certo (vida ≤ dano) → `100·(1 − margem/600)²` (a rodada acaba na hora); objetivo do seu time sem o
+  Golpear certo (golpe final de um aliado ou da sua habilidade) → **25 pontos**; objetivo do time inimigo → **0**.
+- Smite do selva inimigo (`gatilhoInimigo` em `criarRodada`, `checarInimigo` em `js/logic.js`): em 80% das rodadas o selva inimigo golpeia com o **mesmo
+  dano do seu Smite** quando a vida do objetivo está entre **5% acima e 30% abaixo** do dano do Smite. O ponto exato é sorteado com `x = √sorteio`,
+  então é mais provável perto de 30% abaixo (vida mais baixa). Se a vida passar direto pela faixa (ex.: rajada), ele perde a hora. Se a vida ≤ dano do
+  Smite nessa hora, ele leva o objetivo (0 pontos); se estiver nos 5% de cima, o golpe dele não mata. A faixa aparece na barra de vida (listrada, vermelha).
+- Simulação (1.500 rodadas, golpear quando a margem chegar a X): X=0 → 88 pts em média (97% garantem); X=100 → 49 pts; X=200 → 20 pts (52% garantem).
+  Para deixar mais difícil: aumentar `PROB_SMITE_INIMIGO`, ou o inimigo reagir em vez de ter um gatilho fixo.
+- A lógica da rodada inteira (`novoEstado`, `avancar`, `usarHabilidade`, `usarGolpear`) é pura e está coberta por `tests/smite.test.mjs`.

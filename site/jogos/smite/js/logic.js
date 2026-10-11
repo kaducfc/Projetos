@@ -29,6 +29,13 @@ export function danoDoSmite(nivel) {
 // Quanto tempo o objetivo leva para morrer depois de chegar perto do dano do Smite: fica menor a cada rodada.
 export const JANELAS = [3.4, 3.0, 2.6, 2.2, 1.8];
 export const MARGEM_ZERO = 600; // a partir daqui (vida ≤ dano − 600) a rodada vale 0
+// O caçador inimigo também pode usar o Smite (o mesmo dano do jogador) quando a vida do objetivo está entre
+// 5% acima e 30% abaixo do dano do Smite. Quanto mais baixa a vida dentro dessa faixa, mais provável.
+export const FAIXA_ACIMA = 0.05;
+export const FAIXA_ABAIXO = 0.30;
+export const PROB_SMITE_INIMIGO = 0.8; // em 80% das rodadas o inimigo tem o feitiço pronto
+// Pontos quando o seu time fica com o objetivo sem o seu Golpear ter garantido (errou ou nem usou).
+export const PONTOS_TIME = 25;
 
 // Cada time tem 1 topo, 1 selva, 1 meio e 1 atirador. O jogador é sempre o selva do time azul.
 export const ROTAS = ['topo', 'selva', 'meio', 'atirador'];
@@ -122,6 +129,11 @@ export function criarRodada(rand, n = 0, objetivo = null) {
   const smite = danoDoSmite(nivel);
   const campeao = escolher(rand, CAMPEOES);
   const participantes = montarTimes(rand, campeao, nivel);
+  // Gatilho do Smite inimigo: a vida em que ele golpeia (ou nenhum). x = sqrt(sorteio) deixa a faixa mais
+  // provável perto do fim (30% abaixo do dano do Smite) do que no começo (5% acima).
+  const usaSmite = rand() < PROB_SMITE_INIMIGO;
+  const x = Math.sqrt(rand());
+  const gatilhoInimigo = usaSmite ? Math.round(smite * (1 + FAIXA_ACIMA - (FAIXA_ACIMA + FAIXA_ABAIXO) * x)) : null;
   const janela = JANELAS[Math.min(n, JANELAS.length - 1)] * entre(rand, 0.9, 1.1);
   const tx = entre(rand, 18, 32); // quando a vida chega perto do dano do Smite
   const folga = entre(rand, 60, 360); // quanto a vida ainda passa do dano do Smite nesse momento
@@ -155,7 +167,8 @@ export function criarRodada(rand, n = 0, objetivo = null) {
   }
   const ultimo = golpes[golpes.length - 1];
   return {
-    n, objetivo: alvo, vidaMax: alvo.vida, nivel, smite, campeao, participantes, janela, tx, golpes,
+    n, objetivo: alvo, vidaMax: alvo.vida, nivel, smite, campeao, participantes, janela, tx, golpes, gatilhoInimigo,
+    faixaMin: Math.round(smite * (1 - FAIXA_ABAIXO)), faixaMax: Math.round(smite * (1 + FAIXA_ACIMA)),
     morreEm: vida <= 0 ? ultimo.t : null, quemMata: vida <= 0 ? ultimo.quem : null,
   };
 }
@@ -176,4 +189,82 @@ export function resolverSmite(vida, smite) {
   if (vida > smite) return { resultado: 'cedo', margem: null, pontos: 0, faltou: vida - smite };
   const margem = smite - vida;
   return { resultado: 'garantido', margem, pontos: pontosDaMargem(margem), nota: classificar(margem) };
+}
+
+// ---------------------------------------------------------------------------------------------
+// A rodada em andamento. A rodada só acaba quando o objetivo morre (por qualquer um) ou o tempo
+// acaba; errar o Golpear não encerra nada. Quem dá o último golpe decide de que time é o objetivo:
+//   - seu Golpear com a vida ≤ dano do Smite ........ 'garantido' (pontos pela margem)
+//   - seu time (aliado ou sua habilidade) ........... 'time' (PONTOS_TIME)
+//   - time inimigo (golpe ou Smite do selva) ........ 'roubado' (0)
+export function novoEstado(rodada) {
+  return { R: rodada, vida: rodada.vidaMax, idx: 0, smiteUsado: false, smiteFalhou: null, inimigoUsou: false, fim: null };
+}
+
+const encerrar = (est, fim) => { est.fim = fim; };
+
+function morreu(est, quem, via) {
+  const p = est.R.participantes.find((x) => x.id === quem);
+  if (p && p.lado === 'azul') encerrar(est, { resultado: 'time', pontos: PONTOS_TIME, quem, via, margem: null });
+  else encerrar(est, { resultado: 'roubado', pontos: 0, quem, via, margem: null });
+}
+
+// O selva inimigo golpeia quando a vida chega ao gatilho dele (se ainda estiver dentro da faixa).
+function checarInimigo(est, eventos) {
+  const R = est.R;
+  if (est.fim || est.inimigoUsou || R.gatilhoInimigo == null || est.vida > R.gatilhoInimigo) return;
+  est.inimigoUsou = true;
+  if (est.vida < R.faixaMin) return; // a vida passou direto pela faixa (ex.: rajada): ele perdeu a hora
+  const antes = est.vida;
+  est.vida = Math.max(0, est.vida - R.smite);
+  eventos.push({ tipo: 'smite-inimigo', quem: 'e-selva', dano: R.smite, antes, depois: est.vida });
+  if (est.vida <= 0) morreu(est, 'e-selva', 'smite-inimigo');
+}
+
+// Aplica os golpes dos outros jogadores até o instante t (s). Devolve os eventos para a tela.
+export function avancar(est, t) {
+  const eventos = [];
+  const R = est.R;
+  while (!est.fim && est.idx < R.golpes.length && R.golpes[est.idx].t <= t) {
+    const g = R.golpes[est.idx++];
+    est.vida = Math.max(0, est.vida - g.dano);
+    eventos.push({ tipo: 'golpe', quem: g.quem, dano: g.dano, vida: est.vida });
+    if (est.vida <= 0) morreu(est, g.quem, 'golpe');
+    else checarInimigo(est, eventos);
+  }
+  if (!est.fim && t >= TEMPO_MAX) encerrar(est, { resultado: 'roubado', pontos: 0, quem: null, via: 'tempo', margem: null });
+  return eventos;
+}
+
+// A habilidade do campeão do jogador (Q). Se ela derruba o objetivo, é o seu time que fica com ele.
+export function usarHabilidade(est) {
+  const eventos = [];
+  if (est.fim) return eventos;
+  const dano = est.R.campeao.dano;
+  est.vida = Math.max(0, est.vida - dano);
+  eventos.push({ tipo: 'habilidade', quem: 'voce', dano, vida: est.vida });
+  if (est.vida <= 0) morreu(est, 'voce', 'habilidade');
+  else checarInimigo(est, eventos);
+  return eventos;
+}
+
+// O Golpear do jogador. Com a vida ≤ dano do Smite, garante o objetivo (a rodada acaba). Com a vida acima,
+// o Golpear é desperdiçado (bate no objetivo mas não mata) e a rodada continua.
+export function usarGolpear(est) {
+  const eventos = [];
+  if (est.fim || est.smiteUsado) return eventos;
+  est.smiteUsado = true;
+  const smite = est.R.smite; const vida = est.vida;
+  if (vida <= smite) {
+    est.vida = 0;
+    const margem = smite - vida;
+    eventos.push({ tipo: 'golpear', quem: 'voce', dano: smite, vida: 0, margem });
+    encerrar(est, { resultado: 'garantido', pontos: pontosDaMargem(margem), margem, quem: 'voce', via: 'golpear', nota: classificar(margem), vidaNoGolpe: vida });
+    return eventos;
+  }
+  est.vida = vida - smite;
+  est.smiteFalhou = { vida, faltou: vida - smite };
+  eventos.push({ tipo: 'golpear-cedo', quem: 'voce', dano: smite, vida: est.vida, faltou: vida - smite });
+  checarInimigo(est, eventos);
+  return eventos;
 }

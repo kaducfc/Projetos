@@ -58,11 +58,13 @@ button { font: inherit; }
 .sm-feixe.vai { animation: sm-feixe 0.28s ease-out; }
 @keyframes sm-feixe { 0% { opacity: 1; clip-path: inset(0 100% 0 0); } 60% { opacity: 1; clip-path: inset(0 0 0 0); } 100% { opacity: 0; } }
 .sm-flash { position: absolute; inset: 0; z-index: 6; pointer-events: none; opacity: 0; background: radial-gradient(40cqw 26cqw at 56% 40%, rgba(255, 244, 190, 0.95), rgba(245, 207, 90, 0.35) 45%, transparent 75%); }
+.sm-flash.inimigo { background: radial-gradient(40cqw 26cqw at 56% 40%, rgba(255, 150, 130, 0.9), rgba(224, 53, 43, 0.4) 45%, transparent 75%); }
 .sm-flash.vai { animation: sm-flash 0.7s ease-out; }
 @keyframes sm-flash { 0% { opacity: 1; } 100% { opacity: 0; } }
 .sm-numeros { position: absolute; inset: 0; z-index: 5; pointer-events: none; overflow: hidden; }
 .sm-num { position: absolute; font-family: 'Bebas Neue', sans-serif; font-size: 1.5cqw; opacity: 0.85; letter-spacing: 0.04em; color: #fff; text-shadow: 0 0.1cqw 0.4cqw #000, 0 0 0.8cqw rgba(0, 0, 0, 0.8); animation: sm-num 1.1s ease-out forwards; }
 .sm-num.azul { color: #9ad4ff; } .sm-num.vermelho { color: #ff9a92; }
+.sm-num.smite.inimigo { color: #ff6b5e; }
 .sm-num.q { color: #ffb14a; font-size: 2.8cqw; } .sm-num.smite { color: var(--sm-ouro); font-size: 4.6cqw; }
 @keyframes sm-num { 0% { opacity: 0; transform: translateY(0.8cqw) scale(0.7); } 15% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-3.4cqw) scale(1); } }
 
@@ -86,6 +88,7 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
 .sm-hp .barra { position: relative; flex: 1; height: 2.9cqw; background: rgba(8, 4, 4, 0.9); border: 0.16cqw solid #b88a2a; clip-path: polygon(0 0, calc(100% - 1.4cqw) 0, 100% 50%, calc(100% - 1.4cqw) 100%, 0 100%); box-shadow: 0 0 1cqw rgba(0, 0, 0, 0.8); }
 .sm-hp .cheia { position: absolute; inset: 0 auto 0 0; width: 100%; background: linear-gradient(180deg, #ff6b5e, #d02c22 55%, #8d1812); transition: width 0.15s linear; }
 .sm-hp .cheia.ouro { background: linear-gradient(180deg, #ffe58a, #e0a93a 55%, #a9741a); }
+.sm-hp .perigo { position: absolute; top: 0; bottom: 0; z-index: 1; min-width: 0.7cqw; background: repeating-linear-gradient(135deg, rgba(255, 70, 50, 0.6) 0 0.35cqw, rgba(255, 70, 50, 0.22) 0.35cqw 0.7cqw); border-left: 0.14cqw dashed rgba(255, 120, 100, 0.8); border-right: 0.14cqw dashed rgba(255, 120, 100, 0.8); pointer-events: none; }
 .sm-hp .marca { position: absolute; top: -0.1cqw; bottom: -0.1cqw; width: 0.22cqw; background: #fff; box-shadow: 0 0 0.6cqw #fff; z-index: 2; }
 .sm-hp .num { position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.55cqw; font-weight: 800; letter-spacing: 0.04em; text-shadow: 0 0.1cqw 0.3cqw #000; z-index: 3; font-variant-numeric: tabular-nums; }
 .sm-tempo { position: absolute; right: 2.4cqw; top: 2cqw; width: 15cqw; height: 6.6cqw; display: flex; align-items: center; gap: 1.1cqw; padding: 0 1.4cqw; box-sizing: border-box;
@@ -156,7 +159,7 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
 .sm-cartao h2 { margin: 0; font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 5cqw; line-height: 0.95; background: linear-gradient(180deg, #fff1b3, #f5cf5a 50%, #b97d12); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .sm-cartao p { margin: 0; font-size: 1.45cqw; line-height: 1.45; color: #d6e6df; max-width: 44cqw; }
 .sm-cartao p b { color: var(--sm-ouro); }
-.sm-regras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1cqw; width: 100%; }
+.sm-regras { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1cqw; width: 100%; }
 .sm-regras div { padding: 1cqw 1.1cqw; border: 0.12cqw solid rgba(245, 207, 90, 0.35); border-radius: 0.7cqw; background: rgba(0, 0, 0, 0.3); font-size: 1.2cqw; line-height: 1.4; color: #d6e6df; }
 .sm-regras b { display: block; font-size: 1.15cqw; letter-spacing: 0.08em; color: var(--sm-ouro); text-transform: uppercase; margin-bottom: 0.3cqw; }
 .sm-go { appearance: none; border: 0; cursor: pointer; padding: 0.9cqw 3.2cqw; font-family: 'Bebas Neue', sans-serif; font-size: 2.3cqw; letter-spacing: 0.08em; color: #1d1304;
@@ -173,6 +176,10 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
 .sm-resumo div { display: grid; grid-template-columns: 6cqw 1fr auto; gap: 1cqw; align-items: center; padding: 0.5cqw 1.2cqw; border-radius: 0.5cqw; background: rgba(0, 0, 0, 0.28); font-size: 1.25cqw; text-align: left; }
 .sm-resumo b { font-variant-numeric: tabular-nums; color: var(--sm-ouro); }
 .sm-resumo .ruim b { color: #ff8a80; }
+.sm-aviso { position: absolute; z-index: 12; left: 50%; top: 19%; transform: translateX(-50%); max-width: 56cqw; padding: 0.8cqw 2cqw; text-align: center; font-size: 1.5cqw; font-weight: 800; letter-spacing: 0.03em; color: #fff3c0;
+  background: rgba(40, 10, 8, 0.88); border: 0.16cqw solid #e0a93a; border-radius: 0.8cqw; box-shadow: 0 0 2cqw rgba(0, 0, 0, 0.8); pointer-events: none; animation: sm-aviso 0.3s ease-out; }
+.sm-aviso[hidden] { display: none; }
+@keyframes sm-aviso { from { opacity: 0; transform: translateX(-50%) translateY(-0.8cqw); } }
 .sm-contagem { position: absolute; z-index: 15; left: 50%; top: 42%; transform: translate(-50%, -50%); font-family: 'Bebas Neue', sans-serif; font-size: 12cqw; color: var(--sm-ouro); text-shadow: 0 0 3cqw #000, 0 0 1cqw #000; pointer-events: none; animation: sm-conta 0.9s ease-out forwards; }
 @keyframes sm-conta { 0% { opacity: 0; transform: translate(-50%, -50%) scale(1.6); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); } }
 .sm-som { position: absolute; z-index: 9; left: 1.6cqw; bottom: 0.8cqw; width: 3.2cqw; height: 3.2cqw; border-radius: 50%; border: 0.14cqw solid var(--sm-ouro-2); background: rgba(6, 22, 22, 0.9); color: var(--sm-ouro); font-size: 1.4cqw; cursor: pointer; }
@@ -212,7 +219,8 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
   .sm-bt .recarga { font-size: 9cqw; }
   .sm-cartao { width: 92%; padding: 6cqw 5cqw; gap: 3.4cqw; border-width: 0.6cqw; }
   .sm-cartao .sup { font-size: 3cqw; } .sm-cartao h2 { font-size: 14cqw; } .sm-cartao p { font-size: 3.8cqw; max-width: none; }
-  .sm-regras { grid-template-columns: 1fr; gap: 2cqw; } .sm-regras div { font-size: 3.4cqw; padding: 2.4cqw 3cqw; } .sm-regras b { font-size: 3.2cqw; }
+  .sm-regras { grid-template-columns: 1fr; gap: 2cqw; }
+  .sm-aviso { top: 31cqw; font-size: 3.6cqw; max-width: 90%; padding: 2cqw 4cqw; } .sm-regras div { font-size: 3.4cqw; padding: 2.4cqw 3cqw; } .sm-regras b { font-size: 3.2cqw; }
   .sm-go { font-size: 7cqw; padding: 2.2cqw 9cqw; }
   .sm-campeao img { width: 16cqw; height: 16cqw; } .sm-campeao b { font-size: 4.6cqw; } .sm-campeao span { font-size: 3.4cqw; }
   .sm-pontos { font-size: 18cqw; } .sm-pontos small { font-size: 6cqw; }

@@ -10,7 +10,8 @@ import { gameById } from '../../../shared/config.js';
 import { t, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, RECARGA_HAB, ROTA_NOME,
-  aleatorio, criarRodada, proximoObjetivo, resolverSmite, nomeCampeao,
+  aleatorio, criarRodada, proximoObjetivo, nomeCampeao,
+  novoEstado, avancar, usarHabilidade, usarGolpear,
 } from './logic.js';
 
 const GAME_ID = 'smite';
@@ -99,7 +100,7 @@ function montar() {
     <div class="sm-top">
       <div class="sm-logo">${COROA}<span>${t('DESAFIO DO')}</span><b>${t('GOLPEAR')}</b></div>
       <div class="sm-hp"><div class="nome" id="sm-nome-obj">&nbsp;</div>
-        <div class="linha"><div class="ico" id="sm-ico"></div><div class="barra"><div class="cheia" id="sm-cheia"></div><i class="marca" id="sm-marca"></i><div class="num" id="sm-vida"></div></div></div></div>
+        <div class="linha"><div class="ico" id="sm-ico"></div><div class="barra"><div class="cheia" id="sm-cheia"></div><i class="perigo" id="sm-perigo"></i><i class="marca" id="sm-marca"></i><div class="num" id="sm-vida"></div></div></div></div>
       <div class="sm-tempo" id="sm-tempo">${AMPULHETA}<div><small>${t('Tempo restante')}</small><b id="sm-tempo-n">00:${TEMPO_MAX}</b></div></div>
     </div>
     <aside class="sm-painel sm-dano"><h3>${t('Dano no objetivo')}</h3><ul id="sm-dano"></ul></aside>
@@ -116,6 +117,7 @@ function montar() {
       </div>
     </div>
     <button type="button" class="sm-som" id="sm-som" aria-label="${t('Som')}"></button>
+    <div class="sm-aviso" id="sm-aviso" hidden></div>
     <div class="sm-tela" id="sm-tela" hidden></div>
   </div>`;
   atualizarSom();
@@ -133,14 +135,13 @@ let n = 0; // índice da rodada (0 a RODADAS - 1)
 let resultados = []; // { pontos, resultado, margem, campeao, objetivo }
 let fase = 'intro'; // intro | preparo | jogando | fim
 let t0 = 0; let raf = 0;
-let idx = 0; // próximo golpe a aplicar
-let vidaG = 0; // vida só pelos golpes dos outros
-let qTotal = 0; let qPronto = 0; // dano da habilidade e quando ela volta (s)
+let est = null; // estado da rodada (logic.js): vida, golpes aplicados, Golpear, Smite inimigo e o fim
+let qPronto = 0; // quando a habilidade volta (s)
 let danos = {}; // quem → dano causado
 let ultimoTxt = ''; let ultimoTempo = ''; let ultimoResta = TEMPO_MAX;
 let objetivoAnterior = null;
 
-const vidaAgora = () => Math.max(0, vidaG - qTotal);
+const vidaAgora = () => (est ? est.vida : 0);
 const tempoAgora = () => (performance.now() - t0) / 1000;
 const nomeObj = () => t(R.objetivo.nome);
 
@@ -148,10 +149,10 @@ function hud() {
   const v = vidaAgora(); const cheia = $('sm-cheia');
   const pct = R ? (v / R.vidaMax) * 100 : 100;
   cheia.style.width = `${pct}%`;
-  const dentro = R && v > 0 && v <= R.smite;
+  const dentro = R && est && v > 0 && v <= R.smite;
   cheia.classList.toggle('ouro', Boolean(dentro));
   $('sm-alvo').classList.toggle('zona', Boolean(dentro));
-  $('sm-f').classList.toggle('pronto', Boolean(dentro) && fase === 'jogando');
+  $('sm-f').classList.toggle('pronto', Boolean(dentro) && fase === 'jogando' && !est?.smiteUsado);
   const txt = R ? `${fmt(v)} / ${fmt(R.vidaMax)}` : '';
   if (txt !== ultimoTxt) { $('sm-vida').textContent = txt; ultimoTxt = txt; }
   if (fase === 'jogando') ultimoResta = Math.max(0, Math.ceil(TEMPO_MAX - tempoAgora()));
@@ -161,7 +162,7 @@ function hud() {
   const rec = $('sm-q-rec'); const falta = fase === 'jogando' ? Math.ceil(qPronto - tempoAgora()) : 0;
   rec.hidden = falta <= 0; if (falta > 0) rec.textContent = String(falta);
   $('sm-q').disabled = fase !== 'jogando' || falta > 0;
-  $('sm-f').disabled = fase !== 'jogando';
+  $('sm-f').disabled = fase !== 'jogando' || Boolean(est?.smiteUsado);
 }
 
 function painelDano() {
@@ -184,41 +185,65 @@ function bateu() {
   const d = $('sm-alvo'); d.classList.remove('bate'); void d.offsetWidth; d.classList.add('bate');
 }
 
-function aplicarGolpes(tempo) {
-  while (idx < R.golpes.length && R.golpes[idx].t <= tempo) {
-    const g = R.golpes[idx++];
-    vidaG = g.vida;
-    danos[g.quem] = (danos[g.quem] || 0) + g.dano;
-    const p = R.participantes.find((x) => x.id === g.quem);
-    if (Math.random() < 0.4) numero(fmt(g.dano), p.lado, 50 + Math.random() * 14, 26 + Math.random() * 20);
-    const f = document.querySelector(`.sm-ficha[data-p="${g.quem}"]`);
-    if (f) { f.classList.remove('golpe'); void f.offsetWidth; f.classList.add('golpe'); }
-    bateu(); SOM.golpe();
+// Avisos curtos no meio da tela.
+let avisoTimer = 0;
+function aviso(txt, ms = 2400) {
+  const el = $('sm-aviso'); el.textContent = txt; el.hidden = false;
+  el.classList.remove('vai'); void el.offsetWidth; el.classList.add('vai');
+  clearTimeout(avisoTimer); avisoTimer = setTimeout(() => { el.hidden = true; }, ms);
+}
+
+// Mostra na tela o que a lógica (logic.js) aplicou: golpes, Smite do inimigo, Golpear desperdiçado…
+function aplicarEventos(eventos) {
+  for (const e of eventos) {
+    if (e.tipo === 'golpe') {
+      danos[e.quem] = (danos[e.quem] || 0) + e.dano;
+      const p = R.participantes.find((x) => x.id === e.quem);
+      if (Math.random() < 0.4) numero(fmt(e.dano), p.lado, 50 + Math.random() * 14, 26 + Math.random() * 20);
+      const f = document.querySelector(`.sm-ficha[data-p="${e.quem}"]`);
+      if (f) { f.classList.remove('golpe'); void f.offsetWidth; f.classList.add('golpe'); }
+      bateu(); SOM.golpe();
+    } else if (e.tipo === 'smite-inimigo') {
+      danos[e.quem] = (danos[e.quem] || 0) + e.dano;
+      numero(fmt(e.dano), 'smite inimigo', 50, 24);
+      const f = document.querySelector(`.sm-ficha[data-p="e-selva"]`);
+      if (f) { f.classList.remove('golpe'); void f.offsetWidth; f.classList.add('golpe'); }
+      const fl = $('sm-flash'); fl.classList.add('inimigo'); fl.classList.remove('vai'); void fl.offsetWidth; fl.classList.add('vai');
+      bateu(); SOM.smite();
+      aviso(t('O selva inimigo usou o Golpear!'));
+    } else if (e.tipo === 'golpear-cedo') {
+      danos.voce = (danos.voce || 0) + e.dano;
+      numero(fmt(e.dano), 'smite', 52, 22);
+      const fl = $('sm-flash'); fl.classList.remove('inimigo'); fl.classList.remove('vai'); void fl.offsetWidth; fl.classList.add('vai');
+      feixe(); bateu(); SOM.smite();
+      aviso(t('Cedo demais! Seu Golpear foi desperdiçado, mas a rodada continua.'), 3200);
+    }
   }
   painelDano();
 }
 
 function laco() {
   if (fase !== 'jogando') return;
-  const tempo = tempoAgora();
-  aplicarGolpes(tempo);
+  aplicarEventos(avancar(est, tempoAgora()));
   hud();
-  if (vidaAgora() <= 0) { terminar({ resultado: 'roubado', margem: null, pontos: 0 }, 0, qTotal > 0 && vidaG > 0); return; }
-  if (tempo >= TEMPO_MAX) { terminar({ resultado: 'roubado', margem: null, pontos: 0 }, vidaAgora()); return; }
+  if (est.fim) { terminar(); return; }
   raf = requestAnimationFrame(laco);
 }
 
 function usarHab() {
   if (fase !== 'jogando' || tempoAgora() < qPronto) return;
   const c = R.campeao;
-  qTotal += c.dano; qPronto = tempoAgora() + RECARGA_HAB;
+  aplicarEventos(avancar(est, tempoAgora()));
+  if (est.fim) { hud(); terminar(); return; }
+  qPronto = tempoAgora() + RECARGA_HAB;
+  const eventos = usarHabilidade(est);
   danos.voce = (danos.voce || 0) + c.dano;
   SOM.hab(); bateu();
   const v = $('sm-voce'); v.classList.remove('usa'); void v.offsetWidth; v.classList.add('usa');
   feixe(); numero(fmt(c.dano), 'q', 54 + Math.random() * 6, 24 + Math.random() * 10);
-  aplicarGolpes(tempoAgora());
+  aplicarEventos(eventos);
   hud();
-  if (vidaAgora() <= 0) { cancelAnimationFrame(raf); terminar({ resultado: 'roubado', margem: null, pontos: 0 }, 0, true); }
+  if (est.fim) { cancelAnimationFrame(raf); terminar(); }
 }
 function feixe() {
   const palco = $('sm').getBoundingClientRect();
@@ -234,28 +259,33 @@ function feixe() {
 }
 
 function usarSmite() {
-  if (fase !== 'jogando') return;
-  aplicarGolpes(tempoAgora());
-  const vida = vidaAgora();
-  cancelAnimationFrame(raf);
-  const res = resolverSmite(vida, R.smite);
-  SOM.smite();
-  numero(fmt(R.smite), 'smite', 52, 22);
-  const fl = $('sm-flash'); fl.classList.remove('vai'); void fl.offsetWidth; fl.classList.add('vai');
-  feixe(); bateu();
-  terminar(res, vida);
+  if (fase !== 'jogando' || est.smiteUsado) return;
+  aplicarEventos(avancar(est, tempoAgora()));
+  if (est.fim) { hud(); terminar(); return; }
+  const eventos = usarGolpear(est);
+  const ok = eventos.find((e) => e.tipo === 'golpear'); // com a vida ≤ dano do Smite: garantiu o objetivo
+  if (ok) {
+    danos.voce = (danos.voce || 0) + ok.dano; painelDano();
+    SOM.smite();
+    numero(fmt(R.smite), 'smite', 52, 22);
+    const fl = $('sm-flash'); fl.classList.remove('inimigo'); fl.classList.remove('vai'); void fl.offsetWidth; fl.classList.add('vai');
+    feixe(); bateu();
+  } else aplicarEventos(eventos);
+  hud();
+  if (est.fim) { cancelAnimationFrame(raf); terminar(); }
 }
 
-async function terminar(res, vida, porHabilidade = false) {
+async function terminar() {
+  const fim = est.fim;
   fase = 'fim';
   cancelAnimationFrame(raf);
   hud();
-  if (res.resultado === 'garantido' || res.resultado === 'roubado') $('sm-alvo').classList.add('morto');
-  resultados.push({ pontos: res.pontos, resultado: res.resultado, margem: res.margem, campeao: R.campeao.nome, objetivo: R.objetivo.id });
-  await esperar(res.resultado === 'garantido' ? 1400 : 1100);
-  (res.resultado === 'garantido' ? SOM.ok : SOM.mau)();
-  const quem = R.quemMata;
-  telaResultado(res, vida, porHabilidade, quem);
+  const garantido = fim.resultado === 'garantido';
+  $('sm-alvo').classList.add('morto');
+  resultados.push({ pontos: fim.pontos, resultado: fim.resultado, margem: fim.margem, campeao: R.campeao.nome, objetivo: R.objetivo.id });
+  await esperar(garantido ? 1400 : 1100);
+  (fim.resultado === 'roubado' ? SOM.mau : SOM.ok)();
+  telaResultado(fim);
 }
 
 // --------------------------------------------------------------------------- telas
@@ -277,8 +307,9 @@ function telaInicio() {
     <p>${t('Um objetivo está quase morrendo e o time inimigo está de olho. Use o <b>Golpear</b> na hora certa para <b>garantir o objetivo</b>: quanto mais perto do dano do Golpear (para menos), mais pontos.')}</p>
     <div class="sm-regras">
       <div><b>${t('Observe')}</b>${t('A vida do objetivo cai com o dano dos aliados e dos adversários. Cada time tem topo, selva, meio e atirador, e você é o selva do time azul.')}</div>
-      <div><b>${t('Golpeie')}</b>${t('O Golpear mata se a vida for menor ou igual ao dano dele (600 até o nível 8, 900 do 9 ao 12 e 1200 do 13 em diante). Cedo demais, falha; tarde demais, roubam.')}</div>
-      <div><b>${t('Habilidade')}</b>${t('O botão Q do seu campeão também machuca o objetivo. Use para ajustar a vida (mas se ela matar, o objetivo está perdido).')}</div>
+      <div><b>${t('Golpeie')}</b>${t('O Golpear mata se a vida for menor ou igual ao dano dele (600 até o nível 8, 900 do 9 ao 12 e 1200 do 13 em diante). Se errar, a rodada continua: se o seu time ficar com o objetivo vale 25 pontos; se for o time inimigo, 0.')}</div>
+      <div><b>${t('Cuidado')}</b>${t('O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está na faixa vermelha da barra, de 5% acima a 30% abaixo do dano do Golpear, com mais chance quanto mais baixa a vida.')}</div>
+      <div><b>${t('Habilidade')}</b>${t('O botão Q do seu campeão também machuca o objetivo. Use para ajustar a vida (se ela derrubar o objetivo, seu time fica com ele, mas você ganha só 25 pontos).')}</div>
     </div>
     <p>${t('{rodadas} rodadas (Dragão Elemental, Dragão Ancião, Barão Nashor e Arauto do Vale), até <b>100 pontos</b> cada. Teclas: <b>F</b> ou <b>Espaço</b> = Golpear · <b>Q</b> = habilidade.', { rodadas: RODADAS })}${melhor ? `<br>${t('Seu recorde: <b>{n}</b> pontos', { n: fmt(melhor) })}` : ''}</p>
     <div class="sm-acoes"><button type="button" class="sm-go" data-a="jogar">${t('JOGAR')}</button></div></div>`, telaInicio);
@@ -299,6 +330,7 @@ function prepararHud() {
   $('sm-dano-smite').textContent = fmt(R.smite);
   $('sm-nivel').textContent = R.nivel;
   $('sm-marca').style.left = `${(R.smite / R.vidaMax) * 100}%`;
+  const pg = $('sm-perigo'); pg.style.left = `${(R.faixaMin / R.vidaMax) * 100}%`; pg.style.width = `${((R.faixaMax - R.faixaMin) / R.vidaMax) * 100}%`;
   $('sm-voce-img').src = imgCampeao(c.id); $('sm-retrato').src = imgCampeao(c.id); $('sm-q-img').src = imgCampeao(c.id);
   $('sm-fichas').innerHTML = R.participantes.filter((p) => p.id !== 'voce').map((p) => {
     const [x, y] = FICHAS[p.id][cel ? 1 : 0];
@@ -316,7 +348,7 @@ function prepararRodada() {
   objetivoAnterior = objetivo.id;
   R = criarRodada(rand, n, objetivo);
   fase = 'preparo';
-  idx = 0; vidaG = R.vidaMax; qTotal = 0; qPronto = 0; danos = {}; ultimoTxt = ''; ultimoTempo = '';
+  est = novoEstado(R); qPronto = 0; danos = {}; ultimoTxt = ''; ultimoTempo = '';
   prepararHud(); painelDano(); hud();
   cartaoPreparo();
 }
@@ -343,33 +375,37 @@ async function contagemEIniciar() {
   raf = requestAnimationFrame(laco);
 }
 
-function textoResultado(res, vida, porHabilidade, quem) {
+function textoResultado(fim) {
   const obj = nomeObj();
-  if (res.resultado === 'garantido') {
-    return { sup: t(res.nota.rotulo), titulo: t('Objetivo garantido!'), corpo: t('Você golpeou com <b>{vida}</b> de vida no {obj}: <b>{margem}</b> abaixo do dano do Golpear ({smite}).', { vida: fmt(vida), obj, margem: fmt(res.margem), smite: fmt(R.smite) }) };
+  const p = R.participantes.find((x) => x.id === fim.quem);
+  const quem = p ? nomeCampeao(p.champ) : '';
+  const falhou = est.smiteFalhou;
+  if (fim.resultado === 'garantido') {
+    return { sup: t(fim.nota.rotulo), titulo: t('Objetivo garantido!'), corpo: t('Você golpeou com <b>{vida}</b> de vida no {obj}: <b>{margem}</b> abaixo do dano do Golpear ({smite}).', { vida: fmt(fim.vidaNoGolpe), obj, margem: fmt(fim.margem), smite: fmt(R.smite) }) };
   }
-  if (res.resultado === 'cedo') {
-    return { sup: t('Cedo demais'), titulo: t('O objetivo sobreviveu!'), corpo: t('Ele ainda tinha <b>{vida}</b> de vida, <b>{faltou}</b> acima do dano do Golpear ({smite}). O time inimigo levou o objetivo.', { vida: fmt(vida), faltou: fmt(res.faltou), smite: fmt(R.smite) }) };
+  if (fim.resultado === 'time') {
+    let corpo = t('Seu time derrubou o {obj} antes do seu Golpear (golpe final de {quem}).', { obj, quem });
+    if (falhou) corpo = t('Seu Golpear foi cedo demais (<b>{vida}</b> de vida, <b>{faltou}</b> acima do dano do Golpear), mas seu time ficou com o {obj} (golpe final de {quem}).', { vida: fmt(falhou.vida), faltou: fmt(falhou.faltou), obj, quem });
+    else if (fim.via === 'habilidade') corpo = t('A sua habilidade derrubou o {obj} antes do Golpear, mas o objetivo ficou com o seu time.', { obj });
+    return { sup: t('Seu time levou o objetivo'), titulo: t('Seu time ficou com o objetivo!'), corpo };
   }
-  const p = R.participantes.find((x) => x.id === quem);
-  const nome = p ? nomeCampeao(p.champ) : '';
   let corpo = t('O {obj} morreu antes do seu Golpear.', { obj });
-  if (porHabilidade) corpo = t('A sua habilidade derrubou o {obj} antes do Golpear. Só o Golpear garante o objetivo!', { obj });
-  else if (p?.lado === 'vermelho') corpo = t('O time inimigo levou o {obj}: o golpe final foi de {quem}.', { obj, quem: nome });
-  else if (p) corpo = t('Seu time derrubou o {obj} antes do seu Golpear (golpe final de {quem}).', { obj, quem: nome });
+  if (fim.via === 'smite-inimigo') corpo = t('O selva inimigo ({quem}) usou o Golpear e levou o {obj}.', { quem, obj });
+  else if (p) corpo = t('O time inimigo levou o {obj}: o golpe final foi de {quem}.', { obj, quem });
+  if (falhou) corpo += ` ${t('Seu Golpear tinha sido cedo demais: o objetivo ainda tinha <b>{vida}</b> de vida.', { vida: fmt(falhou.vida) })}`;
   return { sup: t('Tarde demais'), titulo: t('Roubaram o objetivo!'), corpo };
 }
 
-function telaResultado(res, vida, porHabilidade, quem) {
-  const x = textoResultado(res, vida, porHabilidade, quem);
+function telaResultado(fim) {
+  const x = textoResultado(fim);
   const ultima = n >= RODADAS - 1;
   tela(`<div class="sm-cartao">
     <span class="sup">${t('Rodada {n} de {total}', { n: n + 1, total: RODADAS })} · ${x.sup}</span>
     <h2>${x.titulo}</h2>
-    <div class="sm-pontos">+${res.pontos}<small>${t('pontos')}</small></div>
+    <div class="sm-pontos">+${fim.pontos}<small>${t('pontos')}</small></div>
     <p>${x.corpo}</p>
     <p>${t('Total: <b>{n}</b> pontos', { n: total() })}</p>
-    <div class="sm-acoes"><button type="button" class="sm-go" data-a="${ultima ? 'fim' : 'proxima'}">${ultima ? t('VER RESULTADO') : t('PRÓXIMA RODADA')}</button></div></div>`, () => telaResultado(res, vida, porHabilidade, quem));
+    <div class="sm-acoes"><button type="button" class="sm-go" data-a="${ultima ? 'fim' : 'proxima'}">${ultima ? t('VER RESULTADO') : t('PRÓXIMA RODADA')}</button></div></div>`, () => telaResultado(fim));
 }
 
 function telaFim() {
@@ -383,7 +419,7 @@ function telaFim() {
   platform.recordResult(GAME_ID, { score: pts, summary: { text: `${pts} ${t('pontos')}`, rodadas: resultados.map((r) => ({ p: r.pontos, r: r.resultado, m: r.margem, o: r.objetivo })) } }).catch(() => {});
 }
 function desenharFim(pts, melhor, recorde, perfeitas) {
-  const nome = (r) => (r.resultado === 'garantido' ? t('margem {n}', { n: fmt(r.margem) }) : r.resultado === 'cedo' ? t('cedo demais') : t('roubado'));
+  const nome = (r) => (r.resultado === 'garantido' ? t('margem {n}', { n: fmt(r.margem) }) : r.resultado === 'time' ? t('seu time') : t('roubado'));
   const objNome = { 'dragao-elemental': 'Dragão Elemental', 'dragao-anciao': 'Dragão Ancião', barao: 'Barão Nashor', arauto: 'Arauto do Vale' };
   const linhas = resultados.map((r, i) => `<div class="${r.pontos ? '' : 'ruim'}"><span>${t('Rodada {n}', { n: i + 1 })}</span><span>${esc(t(objNome[r.objetivo] || ''))} · ${nome(r)}</span><b>${r.pontos}</b></div>`).join('');
   tela(`<div class="sm-cartao">

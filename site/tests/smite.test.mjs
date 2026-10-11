@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, DANOS_SMITE, CAMPEOES, ROTAS, POR_ROTA, JANELAS, danoDoSmite, NIVEL_MIN, NIVEL_MAX,
+  novoEstado, avancar, usarHabilidade, usarGolpear, PONTOS_TIME, PROB_SMITE_INIMIGO, FAIXA_ACIMA, FAIXA_ABAIXO,
   aleatorio, pontosDaMargem, classificar, criarRodada, proximoObjetivo, vidaEm, resolverSmite,
 } from '../jogos/smite/js/logic.js';
 
@@ -219,5 +220,165 @@ test('smite: todo texto do jogo (t(...), nome, descrição, título) está tradu
       const trad = traduzirTexto(x);
       if (trad != null) assert.equal((trad.match(/\{\w+\}/g) || []).sort().join(), vars, `${id}: ${x}`);
     }
+  }
+});
+
+// ---- A rodada continua depois de errar o Golpear; o selva inimigo também pode golpear.
+
+// Joga uma rodada inteira em passos de 20 ms. `agir(est, t)` pode usar o Golpear e a habilidade.
+function jogar(rodada, agir = null) {
+  const est = novoEstado(rodada);
+  for (let t = 0; t <= TEMPO_MAX + 1 && !est.fim; t += 0.02) {
+    avancar(est, t);
+    if (!est.fim && agir) agir(est, t);
+  }
+  return est;
+}
+
+test('smite: sem fazer nada, quem dá o último golpe decide (aliado = 25 pontos, inimigo = 0)', () => {
+  const cont = { time: 0, roubado: 0 };
+  for (let semente = 1; semente <= 300; semente++) {
+    const r = criarRodada(aleatorio(semente * 11), semente % RODADAS);
+    const est = jogar(r);
+    assert.ok(est.fim, 'a rodada termina');
+    assert.ok(['time', 'roubado'].includes(est.fim.resultado));
+    assert.equal(est.fim.pontos, est.fim.resultado === 'time' ? PONTOS_TIME : 0);
+    assert.equal(est.fim.margem, null);
+    cont[est.fim.resultado]++;
+  }
+  assert.ok(cont.time > 30 && cont.roubado > 30, `os dois acontecem (${JSON.stringify(cont)})`);
+});
+
+test('smite: errar o Golpear (vida acima do dano) não encerra: bate no objetivo e a rodada segue até ele morrer', () => {
+  let testadas = 0;
+  for (let semente = 1; semente <= 200; semente++) {
+    const r = criarRodada(aleatorio(semente * 5), 0);
+    let usou = null;
+    const est = jogar(r, (e, t) => {
+      if (usou || t < 5) return;
+      const vidaAntes = e.vida;
+      const ev = usarGolpear(e);
+      usou = { vidaAntes, ev };
+      assert.equal(e.fim, null, 'não encerra');
+    });
+    assert.ok(usou && usou.vidaAntes > r.smite, 'golpeou cedo');
+    assert.equal(usou.ev[0].tipo, 'golpear-cedo');
+    assert.equal(est.smiteFalhou.vida, usou.vidaAntes);
+    assert.equal(est.smiteFalhou.faltou, usou.vidaAntes - r.smite);
+    assert.ok(est.fim, 'a rodada acaba quando o objetivo morre');
+    assert.ok(['time', 'roubado'].includes(est.fim.resultado));
+    assert.ok(est.fim.pontos === 0 || est.fim.pontos === PONTOS_TIME);
+    testadas++;
+  }
+  assert.equal(testadas, 200);
+  // só dá para usar o Golpear uma vez
+  const e = novoEstado(criarRodada(aleatorio(1), 0));
+  avancar(e, 3);
+  assert.equal(usarGolpear(e)[0].tipo, 'golpear-cedo');
+  assert.deepEqual(usarGolpear(e), []);
+});
+
+test('smite: Golpear com a vida ≤ dano do Smite garante o objetivo (margem exata) e encerra', () => {
+  for (let semente = 1; semente <= 100; semente++) {
+    const r = criarRodada(aleatorio(semente * 3), 2);
+    const est = novoEstado(r);
+    // anda até a vida passar a ficar ≤ dano do Smite, sem o inimigo ter golpeado antes
+    let t = 0;
+    while (!est.fim && est.vida > r.smite && t < TEMPO_MAX) avancar(est, t += 0.02);
+    if (est.fim) continue; // o inimigo golpeou primeiro
+    const vida = est.vida;
+    const ev = usarGolpear(est);
+    assert.equal(ev[0].tipo, 'golpear');
+    assert.equal(est.fim.resultado, 'garantido');
+    assert.equal(est.fim.margem, r.smite - vida);
+    assert.equal(est.fim.pontos, pontosDaMargem(r.smite - vida));
+    assert.equal(est.vida, 0);
+  }
+});
+
+test('smite: a habilidade que derruba o objetivo dá o objetivo ao seu time (25 pontos)', () => {
+  const r = criarRodada(aleatorio(9), 1);
+  const est = novoEstado(r);
+  est.vida = r.campeao.dano - 1; // quase morto
+  const ev = usarHabilidade(est);
+  assert.equal(ev[0].tipo, 'habilidade');
+  assert.equal(est.fim.resultado, 'time');
+  assert.equal(est.fim.pontos, PONTOS_TIME);
+  assert.equal(est.fim.via, 'habilidade');
+  // sem matar, só tira vida
+  const e2 = novoEstado(r);
+  usarHabilidade(e2);
+  assert.equal(e2.vida, r.vidaMax - r.campeao.dano);
+  assert.equal(e2.fim, null);
+});
+
+test('smite: o selva inimigo golpeia com o mesmo dano, só na faixa (5% acima a 30% abaixo) e quase sempre perto do fim dela', () => {
+  let usam = 0; let total = 0; let metadeBaixa = 0;
+  for (let semente = 1; semente <= 2000; semente++) {
+    const r = criarRodada(aleatorio(semente * 17), semente % RODADAS);
+    total++;
+    if (r.gatilhoInimigo == null) continue;
+    usam++;
+    assert.ok(r.gatilhoInimigo >= Math.round(r.smite * (1 - FAIXA_ABAIXO)) - 1 && r.gatilhoInimigo <= Math.round(r.smite * (1 + FAIXA_ACIMA)) + 1);
+    assert.equal(r.faixaMin, Math.round(r.smite * 0.7));
+    assert.equal(r.faixaMax, Math.round(r.smite * 1.05));
+    const meio = r.smite * (1 + FAIXA_ACIMA - (FAIXA_ACIMA + FAIXA_ABAIXO) / 2);
+    if (r.gatilhoInimigo < meio) metadeBaixa++;
+  }
+  assert.ok(Math.abs(usam / total - PROB_SMITE_INIMIGO) < 0.04, `usa em ${(usam / total).toFixed(2)} das rodadas`);
+  assert.ok(metadeBaixa / usam > 0.7, `mais chance na metade de baixo da faixa (${(metadeBaixa / usam).toFixed(2)})`);
+});
+
+test('smite: quando o selva inimigo golpeia, tira o dano do Smite; com a vida ≤ dano, ele leva o objetivo (0 pontos)', () => {
+  let mataram = 0; let naoMataram = 0;
+  for (let semente = 1; semente <= 600; semente++) {
+    const r = criarRodada(aleatorio(semente * 23), semente % RODADAS);
+    if (r.gatilhoInimigo == null) continue;
+    const est = novoEstado(r);
+    let ev = [];
+    for (let t = 0; t <= TEMPO_MAX && !est.fim; t += 0.02) {
+      const e = avancar(est, t);
+      const s = e.find((x) => x.tipo === 'smite-inimigo');
+      if (s) { ev = s; break; }
+    }
+    if (!ev.tipo) continue; // a vida passou direto pela faixa
+    assert.equal(ev.dano, r.smite);
+    assert.equal(ev.quem, 'e-selva');
+    assert.ok(ev.antes >= r.faixaMin && ev.antes <= r.gatilhoInimigo, 'golpeou dentro da faixa');
+    assert.equal(ev.depois, Math.max(0, ev.antes - r.smite));
+    if (ev.antes <= r.smite) {
+      assert.equal(est.fim.resultado, 'roubado'); assert.equal(est.fim.via, 'smite-inimigo'); assert.equal(est.fim.pontos, 0);
+      mataram++;
+    } else { assert.ok(ev.depois > 0); naoMataram++; }
+  }
+  assert.ok(mataram > 100, `mataram ${mataram}`);
+  assert.ok(naoMataram >= 0);
+});
+
+test('smite: o inimigo só golpeia uma vez, e não golpeia se a vida passou da faixa sem ele ver', () => {
+  const r = { ...criarRodada(aleatorio(4), 0) };
+  const est = novoEstado({ ...r, gatilhoInimigo: Math.round(r.smite * 0.9) });
+  est.vida = r.smite * 2; // longe da faixa
+  est.vida = r.faixaMin - 10 + r.campeao.dano; // a habilidade deixa a vida abaixo da faixa (70% do dano)
+  const ev = usarHabilidade(est);
+  assert.equal(ev.some((x) => x.tipo === 'smite-inimigo'), false);
+  assert.equal(est.inimigoUsou, true);
+  assert.equal(est.fim, null);
+  // dentro da faixa: golpeia uma única vez
+  const est2 = novoEstado({ ...r, gatilhoInimigo: Math.round(r.smite * 0.9) });
+  est2.vida = Math.round(r.smite * 0.9) - 5 + r.campeao.dano; // depois da habilidade: dentro da faixa
+  const ev2 = usarHabilidade(est2);
+  assert.equal(ev2.filter((x) => x.tipo === 'smite-inimigo').length, 1);
+  assert.equal(est2.fim.resultado, 'roubado');
+  assert.deepEqual(usarHabilidade(est2), []); // já terminou
+});
+
+test('smite: pontos nunca passam de 100 por rodada, e errar o Golpear com o time ganhando dá 25 (não mais)', () => {
+  for (let semente = 1; semente <= 100; semente++) {
+    const r = criarRodada(aleatorio(semente * 41), 3);
+    const est = jogar(r, (e, t) => { if (t > 6 && !e.smiteUsado) usarGolpear(e); });
+    assert.ok(est.fim.pontos <= 100);
+    if (est.fim.resultado === 'time') assert.equal(est.fim.pontos, 25);
+    if (est.fim.resultado === 'roubado') assert.equal(est.fim.pontos, 0);
   }
 });
