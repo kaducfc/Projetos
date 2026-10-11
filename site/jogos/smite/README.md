@@ -50,7 +50,7 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
 - Smite do selva inimigo (`gatilhoInimigo` em `criarRodada`, `checarInimigo` em `js/logic.js`): em 80% das rodadas o selva inimigo golpeia com o **mesmo
   dano do seu Smite** quando a vida do objetivo está entre **5% acima e 30% abaixo** do dano do Smite. O ponto exato é sorteado com `x = √sorteio`,
   então é mais provável perto de 30% abaixo (vida mais baixa). Se a vida passar direto pela faixa (ex.: rajada), ele perde a hora. Se a vida ≤ dano do
-  Smite nessa hora, ele leva o objetivo (0 pontos); se estiver nos 5% de cima, o golpe dele não mata. A faixa não aparece na barra; só o marcador branco do dano do Smite.
+  Smite nessa hora, ele leva o objetivo (0 pontos); se estiver nos 5% de cima, o golpe dele não mata. A faixa não aparece na barra; nenhum marcador na barra (só o número da vida descendo).
 - Simulação (1.500 rodadas, golpear quando a margem chegar a X): X=0 → 88 pts em média (97% garantem); X=100 → 49 pts; X=200 → 20 pts (52% garantem).
   Para deixar mais difícil: aumentar `PROB_SMITE_INIMIGO`, ou o inimigo reagir em vez de ter um gatilho fixo.
 - A lógica da rodada inteira (`novoEstado`, `avancar`, `usarHabilidade`, `usarGolpear`) é pura e está coberta por `tests/smite.test.mjs`.

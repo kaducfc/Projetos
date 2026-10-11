@@ -1446,7 +1446,7 @@ export default {
   "1 golpe perfeito": "1 perfekter Treffer",
   "{n} golpes perfeitos": "{n} perfekte Treffer",
   "Cuidado": "Vorsicht",
-  "O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está perto do marcador, de 5% acima a 30% abaixo do dano do Golpear, com mais chance quanto mais baixa a vida.": "Der gegnerische Dschungler nutzt ebenfalls Zerschmettern (gleicher Schaden), wenn die Lebenspunkte nahe der Markierung liegen, von 5 % über bis 30 % unter dem Schaden von Zerschmettern, und zwar umso wahrscheinlicher, je niedriger sie sind.",
+  "O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está perto do dano do Golpear, de 5% acima a 30% abaixo dele, com mais chance quanto mais baixa a vida.": "Der gegnerische Dschungler nutzt ebenfalls Zerschmettern (gleicher Schaden), wenn die Lebenspunkte nahe am Schaden von Zerschmettern liegen, von 5 % darüber bis 30 % darunter, und zwar umso wahrscheinlicher, je niedriger sie sind.",
   "Seu time ficou com o objetivo!": "Dein Team hat sich das Ziel geholt!",
   "Seu time levou o objetivo": "Dein Team hat das Ziel geholt",
   "Seu Golpear foi cedo demais (<b>{vida}</b> de vida, <b>{faltou}</b> acima do dano do Golpear), mas seu time ficou com o {obj} (golpe final de {quem}).": "Dein Zerschmettern kam zu früh (<b>{vida}</b> Lebenspunkte, <b>{faltou}</b> über dem Schaden von Zerschmettern), aber dein Team hat sich {obj} geholt (letzter Treffer von {quem}).",

@@ -1446,7 +1446,7 @@ export default {
   "1 golpe perfeito": "1 colpo perfetto",
   "{n} golpes perfeitos": "{n} colpi perfetti",
   "Cuidado": "Attenzione",
-  "O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está perto do marcador, de 5% acima a 30% abaixo do dano do Golpear, com mais chance quanto mais baixa a vida.": "Anche il cacciatore avversario usa Punizione (stesso danno) quando la vita è vicina al segno, da +5% a −30% rispetto al danno di Punizione, con più probabilità quanto più la vita è bassa.",
+  "O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está perto do dano do Golpear, de 5% acima a 30% abaixo dele, com mais chance quanto mais baixa a vida.": "Anche il cacciatore avversario usa Punizione (stesso danno) quando la vita è vicina al danno di Punizione, da +5% a −30%, con più probabilità quanto più la vita è bassa.",
   "Seu time ficou com o objetivo!": "La tua squadra ha preso l’obiettivo!",
   "Seu time levou o objetivo": "La tua squadra ha preso l’obiettivo",
   "Seu Golpear foi cedo demais (<b>{vida}</b> de vida, <b>{faltou}</b> acima do dano do Golpear), mas seu time ficou com o {obj} (golpe final de {quem}).": "La tua Punizione è stata troppo presto (<b>{vida}</b> di vita, <b>{faltou}</b> sopra il danno di Punizione), ma la tua squadra ha preso {obj} (colpo finale di {quem}).",

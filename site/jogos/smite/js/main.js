@@ -99,7 +99,7 @@ function montar() {
     <div class="sm-top">
       <div class="sm-logo"><span>${t('DESAFIO DO')}</span><b>${t('GOLPEAR')}</b></div>
       <div class="sm-hp"><div class="nome" id="sm-nome-obj">&nbsp;</div>
-        <div class="linha"><div class="ico" id="sm-ico"></div><div class="barra"><div class="cheia" id="sm-cheia"></div><i class="marca" id="sm-marca"></i><div class="num" id="sm-vida"></div></div></div></div>
+        <div class="linha"><div class="ico" id="sm-ico"></div><div class="barra"><div class="cheia" id="sm-cheia"></div><div class="num" id="sm-vida"></div></div></div></div>
       <div class="sm-tempo" id="sm-tempo">${AMPULHETA}<div><small>${t('Tempo da Partida')}</small><b id="sm-tempo-n">00:00</b></div></div>
     </div>
     <aside class="sm-painel sm-dano"><h3>${t('Dano no objetivo')}</h3><ul id="sm-dano"></ul></aside>
@@ -369,7 +369,7 @@ function telaInicio() {
     <div class="sm-regras">
       <div><b>${t('Observe')}</b>${t('A vida do objetivo cai com o dano dos aliados e dos adversários, inclusive o seu. Cada time tem topo, selva, meio e atirador, e você é o selva do time azul.')}</div>
       <div><b>${t('Golpeie')}</b>${t('O Golpear mata se a vida for menor ou igual ao dano dele (600 até o nível 8, 900 do 9 ao 12 e 1200 do 13 em diante). Se errar, a rodada continua: se o seu time ficar com o objetivo vale 25 pontos; se for o time inimigo, 0.')}</div>
-      <div><b>${t('Cuidado')}</b>${t('O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está perto do marcador, de 5% acima a 30% abaixo do dano do Golpear, com mais chance quanto mais baixa a vida.')}</div>
+      <div><b>${t('Cuidado')}</b>${t('O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está perto do dano do Golpear, de 5% acima a 30% abaixo dele, com mais chance quanto mais baixa a vida.')}</div>
       <div><b>${t('Habilidade')}</b>${t('O botão Q do seu campeão também machuca o objetivo. Use para ajustar a vida (se ela finalizar o objetivo, vale 50 pontos).')}</div>
     </div>
     <p>${t('As {rodadas} rodadas formam uma partida, com os mesmos campeões do começo ao fim: dos objetivos mais fracos (Arauto do Vale e Dragão Elemental, campeões em nível baixo) ao Barão Nashor e ao Dragão Ancião (nível alto). Até <b>100 pontos</b> por rodada. Teclas: <b>F</b> ou <b>Espaço</b> = Golpear · <b>Q</b> = habilidade.', { rodadas: RODADAS })}${melhor ? `<br>${t('Seu recorde: <b>{n}</b> pontos', { n: fmt(melhor) })}` : ''}</p>
@@ -391,7 +391,6 @@ function prepararHud() {
   $('sm-numeros').innerHTML = '';
   $('sm-dano-smite').textContent = fmt(R.smite); $('sm-f-valor').textContent = fmt(R.smite);
   $('sm-nivel').textContent = R.nivel;
-  $('sm-marca').style.left = `${(R.smite / R.vidaMax) * 100}%`;
   $('sm-voce-img').src = imgCampeao(c.id); $('sm-retrato').src = imgCampeao(c.id); $('sm-q-img').src = imgQ('q');
   $('sm-fichas').innerHTML = R.participantes.filter((p) => p.id !== 'voce').map((p) => {
     const [x, y] = FICHAS[p.id][cel ? 1 : 0];

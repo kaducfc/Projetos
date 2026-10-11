@@ -1446,7 +1446,7 @@ export default {
   "1 golpe perfeito": "1 perfect strike",
   "{n} golpes perfeitos": "{n} perfect strikes",
   "Cuidado": "Careful",
-  "O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está perto do marcador, de 5% acima a 30% abaixo do dano do Golpear, com mais chance quanto mais baixa a vida.": "The enemy jungler also uses Smite (same damage) when the health is near the marker, from 5% above to 30% below Smite’s damage, and the lower the health, the more likely it is.",
+  "O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está perto do dano do Golpear, de 5% acima a 30% abaixo dele, com mais chance quanto mais baixa a vida.": "The enemy jungler also uses Smite (same damage) when the health is near Smite’s damage, from 5% above to 30% below it, and the lower the health, the more likely it is.",
   "Seu time ficou com o objetivo!": "Your team got the objective!",
   "Seu time levou o objetivo": "Your team took the objective",
   "Seu Golpear foi cedo demais (<b>{vida}</b> de vida, <b>{faltou}</b> acima do dano do Golpear), mas seu time ficou com o {obj} (golpe final de {quem}).": "Your Smite was too early (<b>{vida}</b> health, <b>{faltou}</b> above Smite’s damage), but your team got {obj} (final blow by {quem}).",

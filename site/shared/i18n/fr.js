@@ -1446,7 +1446,7 @@ export default {
   "1 golpe perfeito": "1 coup parfait",
   "{n} golpes perfeitos": "{n} coups parfaits",
   "Cuidado": "Attention",
-  "O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está perto do marcador, de 5% acima a 30% abaixo do dano do Golpear, com mais chance quanto mais baixa a vida.": "Le jungler adverse utilise aussi Châtiment (mêmes dégâts) quand les PV sont proches du repère, de 5 % au-dessus à 30 % en dessous des dégâts de Châtiment, avec d’autant plus de chances que les PV sont bas.",
+  "O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está perto do dano do Golpear, de 5% acima a 30% abaixo dele, com mais chance quanto mais baixa a vida.": "Le jungler adverse utilise aussi Châtiment (mêmes dégâts) quand les PV sont proches des dégâts de Châtiment, de 5 % au-dessus à 30 % en dessous, avec d’autant plus de chances que les PV sont bas.",
   "Seu time ficou com o objetivo!": "Ton équipe a pris l’objectif !",
   "Seu time levou o objetivo": "Ton équipe a pris l’objectif",
   "Seu Golpear foi cedo demais (<b>{vida}</b> de vida, <b>{faltou}</b> acima do dano do Golpear), mas seu time ficou com o {obj} (golpe final de {quem}).": "Ton Châtiment est venu trop tôt (<b>{vida}</b> PV, <b>{faltou}</b> au-dessus des dégâts de Châtiment), mais ton équipe a pris {obj} (coup final de {quem}).",

@@ -1446,7 +1446,7 @@ export default {
   "1 golpe perfeito": "1 golpe perfecto",
   "{n} golpes perfeitos": "{n} golpes perfectos",
   "Cuidado": "Cuidado",
-  "O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está perto do marcador, de 5% acima a 30% abaixo do dano do Golpear, com mais chance quanto mais baixa a vida.": "El jungla rival también usa Aplastar (el mismo daño) cuando la vida está cerca de la marca, de un 5 % por encima a un 30 % por debajo del daño de Aplastar, con más probabilidad cuanto más baja es la vida.",
+  "O selva inimigo também usa o Golpear (o mesmo dano) quando a vida está perto do dano do Golpear, de 5% acima a 30% abaixo dele, com mais chance quanto mais baixa a vida.": "El jungla rival también usa Aplastar (el mismo daño) cuando la vida está cerca del daño de Aplastar, de un 5 % por encima a un 30 % por debajo, con más probabilidad cuanto más baja es la vida.",
   "Seu time ficou com o objetivo!": "¡Tu equipo se quedó con el objetivo!",
   "Seu time levou o objetivo": "Tu equipo se llevó el objetivo",
   "Seu Golpear foi cedo demais (<b>{vida}</b> de vida, <b>{faltou}</b> acima do dano do Golpear), mas seu time ficou com o {obj} (golpe final de {quem}).": "Tu Aplastar fue demasiado pronto (<b>{vida}</b> de vida, <b>{faltou}</b> por encima del daño de Aplastar), pero tu equipo se quedó con {obj} (golpe final de {quem}).",
