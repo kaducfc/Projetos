@@ -47,10 +47,9 @@ export const JANELAS = [3.4, 3.0, 2.6, 2.2, 1.8];
 // causa, inclusive o seu Q) até o seu Golpear matar. Rápido = mais pontos; o mínimo, com o objetivo do seu time, é PONTOS_TIME.
 export const TEMPO_PERFEITO = 0.1; // até aqui vale de 100 a 90
 export const TEMPO_MINIMO_PONTOS = 1.5; // daqui em diante vale só o mínimo (PONTOS_TIME)
-// O caçador inimigo também pode usar o Smite (o mesmo dano do jogador) quando a vida do objetivo está entre
-// 5% acima e 30% abaixo do dano do Smite. Quanto mais baixa a vida dentro dessa faixa, mais provável.
-export const FAIXA_ACIMA = 0.05;
-export const FAIXA_ABAIXO = 0.30;
+// O caçador inimigo também pode usar o Smite (o mesmo dano do jogador): em 80% das rodadas ele tem o feitiço e golpeia
+// de 0,2 a 0,5 s depois de a vida do objetivo entrar na zona do Smite (vida ≤ dano do Smite).
+export const REACAO_INIMIGO = [0.2, 0.5]; // o selva inimigo golpeia entre 0,2 e 0,5 s depois de a vida entrar na zona do Smite
 export const PROB_SMITE_INIMIGO = 0.8; // em 80% das rodadas o inimigo tem o feitiço pronto
 // Pontos quando o seu time fica com o objetivo sem o seu Golpear ter garantido (errou ou nem usou).
 export const PONTOS_TIME = 25;
@@ -204,11 +203,10 @@ export function criarRodada(rand, n = 0, opcoes = null) {
   const campeao = partida ? partida.campeao : escolher(rand, CAMPEOES);
   const equipe = partida ? partida.equipe : montarTimes(rand, campeao);
   const participantes = equipe.map((p) => ({ ...p, nivel: limitarNivel(nivel + p.desloc) }));
-  // Gatilho do Smite inimigo: a vida em que ele golpeia (ou nenhum). x = sqrt(sorteio) deixa a faixa mais
-  // provável perto do fim (30% abaixo do dano do Smite) do que no começo (5% acima).
+  // Smite inimigo: em PROB_SMITE_INIMIGO das rodadas ele golpeia, `reacaoInimigo` s depois de a vida entrar na zona do Smite.
   const usaSmite = rand() < PROB_SMITE_INIMIGO;
-  const x = Math.sqrt(rand());
-  const gatilhoInimigo = usaSmite ? Math.round(smite * (1 + FAIXA_ACIMA - (FAIXA_ACIMA + FAIXA_ABAIXO) * x)) : null;
+  const reacaoInimigo = entre(rand, REACAO_INIMIGO[0], REACAO_INIMIGO[1]);
+  const gatilhoInimigo = usaSmite ? smite : null; // só indica que ele tem o feitiço (a hora vem do tempo, não da vida)
   const janela = JANELAS[Math.min(n, JANELAS.length - 1)] * entre(rand, 0.9, 1.1);
   // Quando a vida chega perto do dano do Smite. O dano dos outros campeões escala com o nível: no começo (nível ~5) eles
   // batem mais fraco e o objetivo demora mais (24-40 s); no fim (nível 18) batem mais forte e ele cai mais rápido (16-28 s).
@@ -248,8 +246,7 @@ export function criarRodada(rand, n = 0, opcoes = null) {
   }
   const ultimo = golpes[golpes.length - 1];
   return {
-    n, objetivo: alvo, vidaMax: alvo.vida, nivel, tempoInicio, smite, campeao, participantes, janela, tx, golpes, gatilhoInimigo, partida: Boolean(partida),
-    faixaMin: Math.round(smite * (1 - FAIXA_ABAIXO)), faixaMax: Math.round(smite * (1 + FAIXA_ACIMA)),
+    n, objetivo: alvo, vidaMax: alvo.vida, nivel, tempoInicio, smite, campeao, participantes, janela, tx, golpes, gatilhoInimigo, reacaoInimigo, partida: Boolean(partida),
     morreEm: vida <= 0 ? ultimo.t : null, quemMata: vida <= 0 ? ultimo.quem : null,
   };
 }
@@ -297,30 +294,25 @@ function morreu(est, quem, via) {
   else encerrar(est, { resultado: 'roubado', pontos: 0, quem, via, margem: null });
 }
 
-// O selva inimigo nunca golpeia nos primeiros ATRASO_INIMIGO s depois de a vida entrar na zona do Smite (vida ≤ dano do Smite):
-// o gatilho fica esperando e dispara no instante tZona + ATRASO_INIMIGO (se a vida ainda estiver na faixa dele).
-export const ATRASO_INIMIGO = 0.2;
-
-// O selva inimigo golpeia quando a vida chega ao gatilho dele (se ainda estiver dentro da faixa).
-function checarInimigo(est, eventos) {
+// O selva inimigo golpeia R.reacaoInimigo s (0,2 a 0,5 s) depois de a vida entrar na zona do Smite: quando isso acontece o
+// gatilho fica esperando e dispara no instante tZona + reacaoInimigo (se o objetivo ainda estiver vivo).
+function checarInimigo(est) {
   const R = est.R;
-  if (est.fim || est.inimigoUsou || R.gatilhoInimigo == null || est.vida > R.gatilhoInimigo) return;
-  if (est.tZona != null && est.vida <= R.smite && est.t < est.tZona + ATRASO_INIMIGO) { est.inimigoEspera = true; return; }
-  golpeInimigo(est, eventos);
+  if (est.fim || est.inimigoUsou || R.gatilhoInimigo == null || est.tZona == null) return;
+  est.inimigoEspera = true;
 }
 function golpeInimigo(est, eventos) {
   const R = est.R;
   est.inimigoEspera = false; est.inimigoUsou = true;
-  if (est.vida < R.faixaMin) return; // a vida passou direto pela faixa (ex.: rajada): ele perdeu a hora
   const antes = est.vida;
   tirar(est, R.smite);
   eventos.push({ tipo: 'smite-inimigo', quem: 'e-selva', dano: R.smite, antes, depois: est.vida });
   if (est.vida <= 0) morreu(est, 'e-selva', 'smite-inimigo');
 }
-// Dispara o Golpear inimigo que estava esperando, se o atraso já passou até o instante `ate`.
+// Dispara o Golpear inimigo que estava esperando, se o tempo de reação dele já passou até o instante `ate`.
 function liberarInimigo(est, ate, eventos) {
   if (est.fim || !est.inimigoEspera || est.inimigoUsou) return;
-  const quando = est.tZona + ATRASO_INIMIGO;
+  const quando = est.tZona + (est.R.reacaoInimigo ?? REACAO_INIMIGO[0]);
   if (quando > ate) return;
   est.t = quando;
   golpeInimigo(est, eventos);

@@ -47,10 +47,7 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
   desperdiçado; a rodada segue até o objetivo morrer. Só dá para usar o Golpear uma vez por rodada.
 - Quem fica com o objetivo decide os pontos: Golpear certo (vida ≤ dano) → pontos pelo tempo (`pontosDoTempo`), com mínimo de 25 (o objetivo é do seu time) (a rodada acaba na hora); objetivo do seu time sem o
   Golpear certo → **25 pontos** (golpe final de um aliado) ou **50 pontos** (golpe final da **sua habilidade**, Q); objetivo do time inimigo → **0**.
-- Smite do selva inimigo (`gatilhoInimigo` em `criarRodada`, `checarInimigo` em `js/logic.js`): em 80% das rodadas o selva inimigo golpeia com o **mesmo
-  dano do seu Smite** quando a vida do objetivo está entre **5% acima e 30% abaixo** do dano do Smite. O ponto exato é sorteado com `x = √sorteio`,
-  então é mais provável perto de 30% abaixo (vida mais baixa). Se a vida passar direto pela faixa (ex.: rajada), ele perde a hora. Se a vida ≤ dano do
-  Smite nessa hora, ele leva o objetivo (0 pontos); se estiver nos 5% de cima, o golpe dele não mata. A faixa não aparece na barra; nenhum marcador na barra (só o número da vida descendo).
+- O **selva inimigo** também pode usar o Smite (o mesmo dano). Em **80%** das rodadas ele tem o feitiço e golpeia **entre 0,2 e 0,5 s depois de a vida do objetivo entrar na zona do Smite** (vida ≤ dano do Smite; `REACAO_INIMIGO`, sorteado por rodada em `reacaoInimigo`). Como a vida já está ≤ dano, o golpe dele mata e o objetivo vai para o time inimigo (0 pontos), a não ser que o seu Golpear (ou o objetivo morrendo por golpes de aliados) chegue antes. Nenhum marcador aparece na barra de vida.
 - Simulação (1.500 rodadas, golpear quando a margem chegar a X): X=0 → 88 pts em média (97% garantem); X=100 → 49 pts; X=200 → 20 pts (52% garantem).
   Para deixar mais difícil: aumentar `PROB_SMITE_INIMIGO`, ou o inimigo reagir em vez de ter um gatilho fixo.
 - A lógica da rodada inteira (`novoEstado`, `avancar`, `usarHabilidade`, `usarGolpear`) é pura e está coberta por `tests/smite.test.mjs`.
@@ -83,7 +80,6 @@ O canto superior direito mostra "Tempo da Partida" (relógio simulado, andando 1
 ## Pontuação do Golpear: pelo tempo
 O relógio da pontuação começa quando a vida do objetivo entra na zona do Smite (vida ≤ dano do Smite), por qualquer causa, inclusive o seu próprio Q (`est.tZona`), e para quando o seu Golpear mata. `pontosDoTempo(seg)`: 0 s → 100; 0,1 s → 90 (nessa faixa, de 100 a 90); de 0,1 a 1,5 s cai em linha reta de 90 até 25; 1,5 s ou mais → 25 (o mínimo, pois o objetivo é do seu time). Se morre antes (por aliado, inimigo ou o Smite do selva inimigo) segue a regra de 25/50/0. Assim, combos como Q1 + Q2 + Golpear logo em seguida valem 100.
 
-- O selva inimigo nunca golpeia nos primeiros 0,2 s (`ATRASO_INIMIGO`) depois de a vida entrar na zona do Smite: o gatilho espera e dispara em `tZona + 0,2 s`, se a vida ainda estiver na faixa dele.
 
 - Ajuste de equilíbrio das Q: recargas −10% (`RECARGA_Q_MULT` = 0,9) e danos +20% (`DANO_Q_MULT` = 1,2) sobre os valores-base de `CAMPEOES`; os números acima da seção "A Q de cada campeão" são os valores-base. No celular o Pantheon carrega no 1º toque e solta no 2º (mouse e teclado: segurar e soltar); sem soltar em 4 s cancela, com recarga pela metade.
 
@@ -93,3 +89,5 @@ O nível do jogador (e, ±1, dos outros) agora vem do relógio simulado (`nivelN
 - Ordem da partida: 1ª rodada sempre Dragão Elemental (entre 6 e 14 min, `TEMPO_PRIMEIRO`), 2ª sempre Arauto (≥ 15 min), 3ª Dragão, 4ª Dragão ou Barão, 5ª Barão ou Ancião.
 
 - Dano dos outros campeões escala com o nível: o tempo até a vida chegar perto do dano do Smite vai de 24-40 s (nível ~5, golpes fracos) a 16-28 s (nível 18, golpes fortes, ~2× maiores), e cada nível acima do seu dá +4% no peso daquele campeão.
+
+- Simulação com a regra atual (jogador que golpeia X s depois de a vida entrar na zona): X=0,25 s → garante ~85% das rodadas (71 pts em média); X=0,35 s → ~58% (45 pts); X=0,5 s → ~20% (14 pts). Sem agir, o inimigo leva ~90% das rodadas.
