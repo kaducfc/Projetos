@@ -80,7 +80,6 @@ const FICHAS = {
 };
 const COR = { azul: '#3fa8ff', vermelho: '#e0352b', voce: '#f5cf5a' };
 
-const COROA = '<svg viewBox="0 0 30 24" aria-hidden="true"><path d="M3 20 1 6l7 6 7-10 7 10 7-6-2 14z" fill="#f5cf5a" stroke="#7a5712" stroke-width="1.2" stroke-linejoin="round"/><circle cx="15" cy="3" r="2" fill="#fff1b3"/></svg>';
 const AMPULHETA = '<svg viewBox="0 0 32 40" aria-hidden="true"><path d="M5 3h22M5 37h22M8 3c0 10 6 11 8 17-2 6-8 7-8 17M24 3c0 10-6 11-8 17 2 6 8 7 8 17" stroke="#f2d98a" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M11 33c1-4 3-5 5-5s4 1 5 5z" fill="#e0a93a"/></svg>';
 const MIRA = `<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="rgba(4,16,15,0.7)" stroke="#c9961f" stroke-width="3"/>
   <g class="giro"><circle cx="60" cy="60" r="48" fill="none" stroke="rgba(245,207,90,0.5)" stroke-width="1.5" stroke-dasharray="3 7"/>
@@ -98,7 +97,7 @@ function montar() {
     </div>
     <div class="sm-numeros" id="sm-numeros"></div><div class="sm-flash" id="sm-flash"></div><div class="sm-vinheta"></div>
     <div class="sm-top">
-      <div class="sm-logo">${COROA}<span>${t('DESAFIO DO')}</span><b>${t('GOLPEAR')}</b></div>
+      <div class="sm-logo"><span>${t('DESAFIO DO')}</span><b>${t('GOLPEAR')}</b></div>
       <div class="sm-hp"><div class="nome" id="sm-nome-obj">&nbsp;</div>
         <div class="linha"><div class="ico" id="sm-ico"></div><div class="barra"><div class="cheia" id="sm-cheia"></div><i class="marca" id="sm-marca"></i><div class="num" id="sm-vida"></div></div></div></div>
       <div class="sm-tempo" id="sm-tempo">${AMPULHETA}<div><small>${t('Tempo restante')}</small><b id="sm-tempo-n">00:${TEMPO_MAX}</b></div></div>
