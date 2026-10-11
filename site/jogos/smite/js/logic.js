@@ -47,8 +47,10 @@ export const ROTAS = ['topo', 'selva', 'meio', 'atirador'];
 export const ROTA_NOME = { topo: 'Topo', selva: 'Selva', meio: 'Meio', atirador: 'Atirador' };
 // Quanto cada classe bate no objetivo, sempre nessa proporção (dano em 3 segundos): o atirador bate mais e
 // de forma constante (5 golpes de 200 = 1000); o meio bate um pouco menos, mais pausado (2 golpes de 400 = 800);
-// o selva fica no meio (500); o topo é tanque e bate pouco (200).
+// o selva (o jogador e o selva inimigo) fica no meio termo entre o topo e o meio (500); o topo é tanque e bate pouco (200).
 export const DANO_3S = { atirador: 1000, meio: 800, selva: 500, topo: 200 };
+// Multiplicador de todos os ataques (aliados, adversários e o próprio jogador): +50% de dano em cada golpe.
+export const MULT_DANO = 1.5;
 // Ritmo de cada classe: tempo entre golpes (s) e quanto o tempo e o dano de cada golpe variam (fração).
 export const RITMO = {
   atirador: { periodo: 0.6, variaT: 0.06, variaD: 0.08 },
@@ -177,9 +179,10 @@ export function criarRodada(rand, n = 0, opcoes = null) {
   const vx = smite + folga;
   const r1 = (alvo.vida - vx) / tx;
   const r2 = vx / janela;
-  // Só os outros jogadores batem sozinhos (o jogador só tem a habilidade e o Smite). Cada classe tem o seu ritmo
-  // (DANO_3S e RITMO): o atirador bate muito e sempre igual, o meio bate pouco e forte, o topo bate pouco.
-  const batedores = participantes.filter((p) => p.id !== 'voce');
+  // Todos os 8 jogadores batem sozinhos, cada classe no seu ritmo (DANO_3S e RITMO): o atirador bate muito e sempre
+  // igual, o meio bate pouco e forte, o selva (você e o inimigo) fica no meio termo, o topo bate pouco. Além disso,
+  // o jogador tem a habilidade (Q) e o Golpear.
+  const batedores = participantes;
   const pesos = batedores.map((p) => DANO_3S[p.rota] * p.forca);
   const soma = pesos.reduce((a, b) => a + b, 0);
   const prob = 0.04 + 0.03 * n; // chance de rajada (golpe grande) em cada batida (o topo, tanque, não dá rajada)
@@ -189,7 +192,7 @@ export function criarRodada(rand, n = 0, opcoes = null) {
     const periodo = ritmo.periodo * entre(rand, 0.95, 1.05);
     for (let t = entre(rand, 0.1, periodo); t < TEMPO_MAX; t += periodo * entre(rand, 1 - ritmo.variaT, 1 + ritmo.variaT)) {
       const taxa = t < tx ? r1 : r2;
-      let dano = taxa * (pesos[i] / soma) * periodo * entre(rand, 1 - ritmo.variaD, 1 + ritmo.variaD);
+      let dano = taxa * (pesos[i] / soma) * periodo * entre(rand, 1 - ritmo.variaD, 1 + ritmo.variaD) * MULT_DANO;
       if (p.rota !== 'topo' && rand() < prob) dano *= entre(rand, 1.6, 2.2);
       eventos.push({ t: Math.round(t * 1000) / 1000, quem: p.id, dano: Math.max(1, Math.round(dano)) });
     }

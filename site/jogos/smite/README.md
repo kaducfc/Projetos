@@ -26,8 +26,9 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
 ## Atualização: nome, times e objetivos
 - Nome: "Desafio do Golpear" (PT), "Smite Challenge" (EN), "Zerschmettern-Challenge" (DE), "Desafío de Aplastar" (ES), "Sfida della Punizione" (IT) e
   "Défi du Châtiment" (FR); o feitiço usa o termo de cada idioma (o mesmo do Show do Barão). Traduções em `shared/i18n/src/golpear-ui.mjs`.
-- Times: 4 aliados (o jogador é o selva) e 4 adversários, 1 por rota (topo, selva, meio, atirador), sem campeão repetido. Só os 7 outros jogadores
-  batem sozinhos no objetivo; o jogador só tem a habilidade (Q) e o Golpear.
+- Times: 4 aliados (o jogador é o selva) e 4 adversários, 1 por rota (topo, selva, meio, atirador), sem campeão repetido. Todos os 8 batem sozinhos no objetivo
+  (o jogador também, como selva, ~500 por 3 s, entre topo e meio), além da habilidade (Q) e do Golpear. Todo dano de ataque é multiplicado por
+  `MULT_DANO` = 1.5 (a Q e o Smite não).
 - Objetivos (sorteados por rodada, sem repetir o anterior): Dragão Elemental (8.000 de vida), Dragão Ancião (11.000), Barão Nashor (12.000) e
   Arauto do Vale (7.000). Cada um tem o seu tema de cenário (cores do covil) em `OBJETIVOS` (`js/logic.js`).
 - Arte: o Dragão Elemental e o Dragão Ancião usam a arte do Na Medida. O Barão (`img/barao.webp`, o leviatã) e o Arauto (`img/arauto.webp`, o caranguejo) agora usam as artes finais que você enviou. O recorte do
@@ -49,7 +50,7 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
 - Smite do selva inimigo (`gatilhoInimigo` em `criarRodada`, `checarInimigo` em `js/logic.js`): em 80% das rodadas o selva inimigo golpeia com o **mesmo
   dano do seu Smite** quando a vida do objetivo está entre **5% acima e 30% abaixo** do dano do Smite. O ponto exato é sorteado com `x = √sorteio`,
   então é mais provável perto de 30% abaixo (vida mais baixa). Se a vida passar direto pela faixa (ex.: rajada), ele perde a hora. Se a vida ≤ dano do
-  Smite nessa hora, ele leva o objetivo (0 pontos); se estiver nos 5% de cima, o golpe dele não mata. A faixa aparece na barra de vida (listrada, vermelha).
+  Smite nessa hora, ele leva o objetivo (0 pontos); se estiver nos 5% de cima, o golpe dele não mata. A faixa não aparece na barra; só o marcador branco do dano do Smite.
 - Simulação (1.500 rodadas, golpear quando a margem chegar a X): X=0 → 88 pts em média (97% garantem); X=100 → 49 pts; X=200 → 20 pts (52% garantem).
   Para deixar mais difícil: aumentar `PROB_SMITE_INIMIGO`, ou o inimigo reagir em vez de ter um gatilho fixo.
 - A lógica da rodada inteira (`novoEstado`, `avancar`, `usarHabilidade`, `usarGolpear`) é pura e está coberta por `tests/smite.test.mjs`.

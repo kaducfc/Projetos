@@ -107,10 +107,9 @@ test('smite: cada rodada tem 4 aliados (o jogador é o selva) e 4 adversários, 
     const champs = r.participantes.map((p) => p.champ);
     assert.equal(new Set(champs).size, 8, 'sem campeão repetido');
     // O jogador não bate sozinho: só a habilidade e o Smite machucam por ele.
-    assert.ok(!r.golpes.some((g) => g.quem === 'voce'));
     const quem = new Set(r.golpes.map((g) => g.quem));
     assert.ok(quem.has('e-selva') || r.golpes.length > 0);
-    assert.ok(['a-topo', 'a-meio', 'a-atirador', 'e-topo', 'e-selva', 'e-meio', 'e-atirador'].every((id) => quem.has(id)), 'todos batem');
+    assert.ok(['voce', 'a-topo', 'a-meio', 'a-atirador', 'e-topo', 'e-selva', 'e-meio', 'e-atirador'].every((id) => quem.has(id)), 'todos batem');
   }
 });
 
@@ -434,7 +433,7 @@ test('smite: dano por classe (atirador > meio > selva > topo, na proporção 100
     const rota = Object.fromEntries(r.participantes.map((p) => [p.id, p.rota]));
     for (const g of r.golpes) { soma[rota[g.quem]] += g.dano; golpes[rota[g.quem]].push(g); }
   }
-  const jogadores = { atirador: 2, meio: 2, selva: 1, topo: 2 }; // por rodada (o selva do time azul é o jogador)
+  const jogadores = { atirador: 2, meio: 2, selva: 2, topo: 2 }; // por rodada (os dois selvas, o jogador inclusive, batem)
   for (const k of Object.keys(soma)) soma[k] /= jogadores[k];
   const ref = soma.atirador;
   assert.ok(Math.abs(soma.meio / ref - 0.8) < 0.06, `meio ${(soma.meio / ref).toFixed(2)}`);
