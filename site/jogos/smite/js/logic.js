@@ -168,19 +168,21 @@ function montarTimes(rand, campeao) {
 // Minuto mais cedo (em segundos de jogo) em que cada objetivo pode nascer: Dragão a partir dos 5 min, Arauto dos 15,
 // Barão dos 20 e Dragão Ancião dos 30. A partida simulada só avança no tempo e cada objetivo nasce alguns segundos depois do mínimo.
 export const TEMPO_MINIMO = { 'dragao-elemental': 300, arauto: 900, barao: 1200, 'dragao-anciao': 1800 };
+export const TEMPO_PRIMEIRO = [360, 840]; // o Dragão da primeira rodada: entre 6 e 14 min
 const sortearTempo = (rand, objetivo, anterior) => Math.max(TEMPO_MINIMO[objetivo.id] + Math.floor(rand() * 240), anterior == null ? 0 : anterior + 150 + Math.floor(rand() * 150));
 
 export function criarPartida(rand, campeaoId) {
   const campeao = CAMPEOES.find((c) => c.id === campeaoId) || escolher(rand, CAMPEOES);
   const [arauto, elemental, barao, anciao] = ['arauto', 'dragao-elemental', 'barao', 'dragao-anciao'].map(objetivoPorId);
   const objetivos = [
-    ...(rand() < 0.5 ? [arauto, elemental] : [elemental, arauto]),
+    elemental, // o primeiro objetivo é sempre um Dragão, entre 6 e 14 min
+    arauto, // o segundo é sempre o Arauto (nasce a partir dos 15 min)
     elemental,
     rand() < 0.5 ? elemental : barao,
     rand() < 0.5 ? barao : anciao,
   ];
   const tempos = [];
-  objetivos.forEach((o, i) => tempos.push(sortearTempo(rand, o, i ? tempos[i - 1] : null)));
+  objetivos.forEach((o, i) => tempos.push(i ? sortearTempo(rand, o, tempos[i - 1]) : TEMPO_PRIMEIRO[0] + Math.floor(rand() * (TEMPO_PRIMEIRO[1] - TEMPO_PRIMEIRO[0]))));
   // nível do jogador em cada rodada: o da curva do relógio, com um pequeno desvio fixo na partida; nunca desce
   const niveis = [];
   tempos.forEach((tp, i) => niveis.push(Math.max(i ? niveis[i - 1] : 1, Math.min(NIVEL_MAX, Math.round(nivelNoTempo(tp) + entre(rand, -0.45, 0.45))))));

@@ -397,19 +397,20 @@ test('smite: pontos nunca passam de 100 por rodada, e errar o Golpear com o time
 });
 
 // ---- A partida (5 rodadas) é um jogo só: mesmos campeões, do objetivo mais fraco ao mais forte.
-test('smite: a partida segue a ordem dos objetivos (1-2: Arauto e Elemental; 3: Elemental; 4: Elemental ou Barão; 5: Barão ou Ancião)', () => {
+test('smite: a partida segue a ordem dos objetivos (1: Dragão entre 6 e 14 min; 2: Arauto; 3: Elemental; 4: Elemental ou Barão; 5: Barão ou Ancião)', () => {
   const ordens = new Set(); const quartos = new Set(); const quintos = new Set();
   for (let semente = 1; semente <= 500; semente++) {
     const par = criarPartida(aleatorio(semente * 13));
     const ids = par.objetivos.map((o) => o.id);
     assert.equal(ids.length, RODADAS);
-    assert.deepEqual([ids[0], ids[1]].sort(), ['arauto', 'dragao-elemental']);
+    assert.deepEqual([ids[0], ids[1]], ['dragao-elemental', 'arauto']);
+    assert.ok(par.tempos[0] >= 360 && par.tempos[0] < 840, `primeiro aos ${par.tempos[0]}s`);
     assert.equal(ids[2], 'dragao-elemental');
     assert.ok(['dragao-elemental', 'barao'].includes(ids[3]));
     assert.ok(['barao', 'dragao-anciao'].includes(ids[4]));
     ordens.add(`${ids[0]}>${ids[1]}`); quartos.add(ids[3]); quintos.add(ids[4]);
   }
-  assert.equal(ordens.size, 2); assert.equal(quartos.size, 2); assert.equal(quintos.size, 2);
+  assert.equal(ordens.size, 1); assert.equal(quartos.size, 2); assert.equal(quintos.size, 2);
 });
 
 test('smite: na partida o nível sobe a cada rodada (e o dano do Golpear com ele) e os campeões são os mesmos', () => {
