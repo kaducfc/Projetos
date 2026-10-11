@@ -33,8 +33,8 @@ export const NIVEIS_RODADA = [[6, 8], [8, 10], [10, 12], [13, 15], [16, 18]];
 export const JANELAS = [3.4, 3.0, 2.6, 2.2, 1.8];
 // Pontos do Golpear pelo TEMPO: desde que a vida do objetivo entrou na zona do Smite (vida ≤ dano do Smite, por qualquer
 // causa, inclusive o seu Q) até o seu Golpear matar. Rápido = mais pontos; o mínimo, com o objetivo do seu time, é PONTOS_TIME.
-export const TEMPO_PERFEITO = 0.25; // até aqui vale 100
-export const TEMPO_ZERO = 2.75; // a partir daqui a curva chega a 0 (vale o mínimo de 25)
+export const TEMPO_PERFEITO = 0.1; // até aqui vale de 100 a 90
+export const TEMPO_MINIMO_PONTOS = 1.5; // daqui em diante vale só o mínimo (PONTOS_TIME)
 // O caçador inimigo também pode usar o Smite (o mesmo dano do jogador) quando a vida do objetivo está entre
 // 5% acima e 30% abaixo do dano do Smite. Quanto mais baixa a vida dentro dessa faixa, mais provável.
 export const FAIXA_ACIMA = 0.05;
@@ -102,17 +102,18 @@ const entre = (rand, a, b) => a + rand() * (b - a);
 const escolher = (rand, lista) => lista[Math.floor(rand() * lista.length)];
 
 // Pontos de uma rodada pelo tempo (s) entre a vida entrar na zona do Smite e o Golpear matar.
-// ≤ 0,25 s → 100; 0,5 s → 81; 1 s → 49; 1,5 s → 25; 2,75 s ou mais → 0 (a rodada ainda vale PONTOS_TIME).
+// 0 → 100; 0,1 s → 90 (nessa faixa cai de 100 a 90); de 0,1 a 1,5 s cai em linha reta de 90 até 25; 1,5 s ou mais → 25.
 export function pontosDoTempo(seg) {
   if (!(seg >= 0)) return 0;
-  const x = Math.max(0, 1 - Math.max(0, seg - TEMPO_PERFEITO) / (TEMPO_ZERO - TEMPO_PERFEITO));
-  return Math.round(100 * x * x);
+  if (seg <= TEMPO_PERFEITO) return Math.round(100 - 10 * (seg / TEMPO_PERFEITO));
+  if (seg >= TEMPO_MINIMO_PONTOS) return PONTOS_TIME;
+  return Math.round(90 - (90 - PONTOS_TIME) * ((seg - TEMPO_PERFEITO) / (TEMPO_MINIMO_PONTOS - TEMPO_PERFEITO)));
 }
 
 export function classificar(seg) {
-  if (seg <= 0.4) return { id: 'perfeito', rotulo: 'Perfeito!' };
-  if (seg <= 0.9) return { id: 'otimo', rotulo: 'Ótimo!' };
-  if (seg <= 1.6) return { id: 'bom', rotulo: 'Bom' };
+  if (seg <= 0.1) return { id: 'perfeito', rotulo: 'Perfeito!' };
+  if (seg <= 0.5) return { id: 'otimo', rotulo: 'Ótimo!' };
+  if (seg <= 1.0) return { id: 'bom', rotulo: 'Bom' };
   return { id: 'longe', rotulo: 'Passou longe' };
 }
 

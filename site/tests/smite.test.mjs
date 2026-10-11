@@ -36,23 +36,23 @@ test('smite: o nível da rodada vem da faixa do objetivo e os outros jogadores f
 
 test('smite: pontos pelo tempo desde que a vida entrou na zona do Smite (rápido = mais)', () => {
   assert.equal(pontosDoTempo(0), 100);
-  assert.equal(pontosDoTempo(0.25), 100);
-  assert.equal(pontosDoTempo(0.5), 81);
-  assert.equal(pontosDoTempo(1), 49);
+  assert.equal(pontosDoTempo(0.05), 95);
+  assert.equal(pontosDoTempo(0.1), 90);
+  assert.equal(pontosDoTempo(0.8), 57); // meio do caminho entre 0,1 e 1,5 s (57,5 arredondado)
   assert.equal(pontosDoTempo(1.5), 25);
-  assert.equal(pontosDoTempo(2.75), 0);
-  assert.equal(pontosDoTempo(5), 0);
+  assert.equal(pontosDoTempo(2), 25);
+  assert.equal(pontosDoTempo(9), 25);
   assert.equal(pontosDoTempo(-1), 0);
   let ant = 101;
-  for (let x = 0; x <= 4; x += 0.05) { const p = pontosDoTempo(x); assert.ok(p <= ant); ant = p; }
+  for (let x = 0; x <= 4; x += 0.01) { const p = pontosDoTempo(x); assert.ok(p <= ant); assert.ok(p >= 25); ant = p; }
 });
 
 test('smite: classificação do tempo', () => {
   assert.equal(classificar(0).id, 'perfeito');
-  assert.equal(classificar(0.4).id, 'perfeito');
-  assert.equal(classificar(0.7).id, 'otimo');
-  assert.equal(classificar(1.2).id, 'bom');
-  assert.equal(classificar(2.5).id, 'longe');
+  assert.equal(classificar(0.1).id, 'perfeito');
+  assert.equal(classificar(0.4).id, 'otimo');
+  assert.equal(classificar(0.8).id, 'bom');
+  assert.equal(classificar(1.2).id, 'longe');
 });
 
 test('smite: resolver o golpe (cedo, roubado ou garantido)', () => {
@@ -571,10 +571,11 @@ test('smite: o Golpear vale pelo TEMPO desde a vida entrar na zona (inclusive pe
     usarGolpear(est, 10 + atraso);
     return est.fim;
   };
-  assert.equal(mk(0.1).pontos, 100);
+  assert.equal(mk(0).pontos, 100);
   assert.equal(mk(1).pontos, pontosDoTempo(1));
   assert.equal(mk(1).tempo, 1);
-  assert.equal(mk(3).pontos, 25); // lento demais: ainda vale o mínimo do time
+  assert.equal(mk(3).pontos, 25); // lento demais: vale o mínimo do time
+  assert.equal(mk(0.05).pontos, 95);
   // Golpear que não mata não marca nada e a rodada continua
   const cedo = novoEstado(r); cedo.vida = r.smite * 3;
   usarGolpear(cedo, 5); assert.equal(cedo.fim, null);

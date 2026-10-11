@@ -474,7 +474,7 @@ function telaFim() {
   const melhor = lerLS(CHAVE_MELHOR, 0);
   const recorde = pts > melhor;
   if (recorde) gravarLS(CHAVE_MELHOR, pts);
-  const perfeitas = resultados.filter((r) => r.resultado === 'garantido' && r.tempo <= 0.4).length;
+  const perfeitas = resultados.filter((r) => r.resultado === 'garantido' && r.tempo <= 0.1).length;
   desenharFim(pts, melhor, recorde, perfeitas);
   platform.track('game_end', GAME_ID, { pontos: pts, perfeitas });
   platform.recordResult(GAME_ID, { score: pts, summary: { text: `${pts} ${t('pontos')}`, rodadas: resultados.map((r) => ({ p: r.pontos, r: r.resultado, s: r.tempo, o: r.objetivo })) } }).catch(() => {});
