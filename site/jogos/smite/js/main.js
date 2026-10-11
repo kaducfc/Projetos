@@ -126,6 +126,22 @@ function montar() {
   $('sm-som').addEventListener('click', () => { mudo = !mudo; gravarLS(CHAVE_MUDO, mudo); atualizarSom(); });
 }
 function atualizarSom() { const b = $('sm-som'); if (b) b.textContent = mudo ? '🔇' : '🔊'; }
+// o nome do Golpear muda de tamanho conforme o idioma: encolhe a letra até caber no painel
+function ajustarGolpear() {
+  const info = document.querySelector('.sm-info'), b = info && info.querySelector('.texto b');
+  if (!b || !info.clientWidth) return;
+  const cs = getComputedStyle(info), livre = info.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  b.style.fontSize = '';
+  let px = parseFloat(getComputedStyle(b).fontSize);
+  for (let i = 0; i < 30 && b.scrollWidth > livre && px > 6; i++) { px *= 0.94; b.style.fontSize = px + 'px'; }
+}
+{
+  let pend = 0;
+  const agenda = () => { if (!pend) pend = requestAnimationFrame(() => { pend = 0; ajustarGolpear(); }); };
+  new MutationObserver(agenda).observe(app, { childList: true, characterData: true, subtree: true });
+  addEventListener('resize', agenda);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(agenda);
+}
 let refazerTela = null; // desenha de novo a tela que está aberta (ao trocar de idioma)
 function tela(html, refazer = null) { const el = $('sm-tela'); el.innerHTML = html; el.hidden = !html; refazerTela = html ? refazer : null; }
 
