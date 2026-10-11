@@ -162,6 +162,16 @@ const vidaAgora = () => (est ? est.vida : 0);
 const tempoAgora = () => (performance.now() - t0) / 1000;
 const nomeObj = () => t(R.objetivo.nome);
 
+// Ícone da Q: Lee Sin troca para o Golpe Ressonante durante a janela; o Kha'Zix usa a versão evoluída (laranja) do nível 11 em diante.
+const NIVEL_EVOLUI = 11;
+function imgQ(fase) {
+  const id = R.campeao.id;
+  let nome = { LeeSin: 'leesin-q1', Nunu: 'nunu-q', Khazix: 'khazix-q', Pantheon: 'pantheon-q', MonkeyKing: 'wukong-q' }[id];
+  if (id === 'LeeSin' && fase === 'janela') nome = 'leesin-q2';
+  if (id === 'Khazix' && R.nivel >= NIVEL_EVOLUI) nome = 'khazix-q-evoluida';
+  return `img/skills/${nome}.webp`;
+}
+
 function hud() {
   const v = vidaAgora(); const cheia = $('sm-cheia');
   const pct = R ? (v / R.vidaMax) * 100 : 100;
@@ -184,6 +194,7 @@ function hud() {
   car.hidden = eq.fase !== 'segurando';
   if (!car.hidden) { car.firstElementChild.style.width = `${Math.round(eq.carga * 100)}%`; car.classList.toggle('cheia', eq.carga >= 1); }
   qb.dataset.fase = eq.fase;
+  if (R) { const src = imgQ(eq.fase); const im = $('sm-q-img'); if (!im.src.endsWith(src)) im.src = src; }
   qb.disabled = fase !== 'jogando' || eq.fase === 'recarga' || (eq.fase === 'armado');
   $('sm-f').disabled = fase !== 'jogando' || Boolean(est?.smiteUsado);
 }
@@ -366,7 +377,7 @@ function prepararHud() {
   $('sm-dano-smite').textContent = fmt(R.smite);
   $('sm-nivel').textContent = R.nivel;
   $('sm-marca').style.left = `${(R.smite / R.vidaMax) * 100}%`;
-  $('sm-voce-img').src = imgCampeao(c.id); $('sm-retrato').src = imgCampeao(c.id); $('sm-q-img').src = imgCampeao(c.id);
+  $('sm-voce-img').src = imgCampeao(c.id); $('sm-retrato').src = imgCampeao(c.id); $('sm-q-img').src = imgQ('q');
   $('sm-fichas').innerHTML = R.participantes.filter((p) => p.id !== 'voce').map((p) => {
     const [x, y] = FICHAS[p.id][cel ? 1 : 0];
     return `<div class="sm-ficha ${p.lado}" data-p="${p.id}" title="${esc(nomeCampeao(p.champ))}" style="left:${x}%;top:${y}%"><img class="ic" alt="" src="${imgCampeao(p.champ)}" /><span class="nv">${p.nivel}</span><span class="hp"><i></i></span></div>`;
