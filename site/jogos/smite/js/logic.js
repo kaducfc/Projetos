@@ -170,6 +170,7 @@ function montarTimes(rand, campeao) {
 // Minuto mais cedo (em segundos de jogo) em que cada objetivo pode nascer: Dragão a partir dos 5 min, Arauto dos 15,
 // Barão dos 20 e Dragão Ancião dos 30. A partida simulada só avança no tempo e cada objetivo nasce alguns segundos depois do mínimo.
 export const TEMPO_MINIMO = { 'dragao-elemental': 300, arauto: 900, barao: 1200, 'dragao-anciao': 1800 };
+export const RENASCE_BARAO = 360; // o Barão renasce 6 min depois de morrer
 export const TEMPO_PRIMEIRO = [360, 840]; // o Dragão da primeira rodada: entre 6 e 14 min
 const sortearTempo = (rand, objetivo, anterior) => Math.max(TEMPO_MINIMO[objetivo.id] + Math.floor(rand() * 240), anterior == null ? 0 : anterior + 150 + Math.floor(rand() * 150));
 
@@ -184,7 +185,12 @@ export function criarPartida(rand, campeaoId) {
     rand() < 0.5 ? barao : anciao,
   ];
   const tempos = [];
-  objetivos.forEach((o, i) => tempos.push(i ? sortearTempo(rand, o, tempos[i - 1]) : TEMPO_PRIMEIRO[0] + Math.floor(rand() * (TEMPO_PRIMEIRO[1] - TEMPO_PRIMEIRO[0]))));
+  objetivos.forEach((o, i) => {
+    let tp = i ? sortearTempo(rand, o, tempos[i - 1]) : TEMPO_PRIMEIRO[0] + Math.floor(rand() * (TEMPO_PRIMEIRO[1] - TEMPO_PRIMEIRO[0]));
+    // o Barão só renasce 6 min depois de morrer: dois Barões seguidos têm pelo menos 6 min entre eles
+    if (i && o.id === 'barao' && objetivos[i - 1].id === 'barao') tp = Math.max(tp, tempos[i - 1] + RENASCE_BARAO + Math.floor(rand() * 120));
+    tempos.push(tp);
+  });
   // nível do jogador em cada rodada: o da curva do relógio, com um pequeno desvio fixo na partida; nunca desce
   const niveis = [];
   tempos.forEach((tp, i) => niveis.push(Math.max(i ? niveis[i - 1] : 1, Math.min(NIVEL_MAX, Math.round(nivelNoTempo(tp) + entre(rand, -0.45, 0.45))))));
@@ -381,6 +387,15 @@ function golpeQ(est, eventos, dano, fase) {
   eventos.push({ tipo: 'habilidade', fase, quem: 'voce', dano, vida: est.vida });
   if (est.vida <= 0) morreu(est, 'voce', 'habilidade');
   else checarInimigo(est, eventos);
+}
+
+// Quanto de dano a Q causa agora, para mostrar no botão: Lee Sin mostra o Q2 (cresce com a vida que falta) durante a janela;
+// o Pantheon mostra a estocada e, segurando além do toque, o arremesso com a carga atual.
+export function danoDaQ(est, t) {
+  const c = est.R.campeao; const k = postoHab(est.R.nivel); const e = estadoQ(est, t);
+  if (c.tipo === 'duplo' && e.fase === 'janela') return Math.round(c.dano2[k] * (1 + Math.max(0, Math.min(1, 1 - est.vida / est.R.vidaMax))));
+  if (c.tipo === 'carga' && e.fase === 'segurando' && t - est.q.desde > c.toqueMax) return Math.round(c.dano2[k] * (1 + c.segundo) * (1 + c.bonusCarga * e.carga));
+  return c.dano[k];
 }
 
 // Aperta o Q no instante t. Se a habilidade derruba o objetivo, o seu time fica com ele e vale PONTOS_HABILIDADE.

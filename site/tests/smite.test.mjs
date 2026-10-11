@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, DANOS_SMITE, CAMPEOES, ROTAS, POR_ROTA, JANELAS, danoDoSmite, NIVEL_MIN, NIVEL_MAX,
-  TEMPO_MINIMO, REACAO_INIMIGO, novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, postoHab, usarGolpear, criarPartida, nivelNoTempo, NIVEL_POR_MINUTO, DANO_3S, RITMO, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, MULT_OUTROS, PANTHEON_MULT,
+  TEMPO_MINIMO, REACAO_INIMIGO, RENASCE_BARAO, danoDaQ, novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, postoHab, usarGolpear, criarPartida, nivelNoTempo, NIVEL_POR_MINUTO, DANO_3S, RITMO, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, MULT_OUTROS, PANTHEON_MULT,
   aleatorio, pontosDoTempo, classificar, criarRodada, proximoObjetivo, vidaEm, resolverSmite,
 } from '../jogos/smite/js/logic.js';
 
@@ -629,4 +629,34 @@ test('smite: os outros campeões batem +35% e a Q do Pantheon é 30% menor', () 
   const pan = CAMPEOES.find((c) => c.id === 'Pantheon');
   assert.deepEqual(pan.dano, [110, 140, 170, 200, 230].map((x) => Math.round(x * 1.2 * 0.7)));
   assert.deepEqual(pan.dano2, [160, 210, 260, 310, 360].map((x) => Math.round(x * 1.2 * 0.7)));
+});
+
+test('smite: o Barão só renasce 6 min depois de morrer (dois Barões seguidos ficam ≥ 6 min separados)', () => {
+  assert.equal(RENASCE_BARAO, 360);
+  let dois = 0;
+  for (let semente = 1; semente <= 2000; semente++) {
+    const par = criarPartida(aleatorio(semente * 5));
+    const ids = par.objetivos.map((o) => o.id);
+    if (ids[3] === 'barao' && ids[4] === 'barao') { dois++; assert.ok(par.tempos[4] - par.tempos[3] >= 360, `Barões a ${par.tempos[4] - par.tempos[3]}s`); }
+    par.tempos.forEach((tp, i) => { if (i) assert.ok(tp > par.tempos[i - 1]); });
+  }
+  assert.ok(dois > 100, `aconteceu ${dois} vezes`);
+});
+
+test('smite: danoDaQ mostra o dano atual da Q (Lee Sin Q2 com a vida que falta; Pantheon estocada e arremesso)', () => {
+  const lee = { ...criarRodada(aleatorio(21), 2), golpes: [], gatilhoInimigo: null }; lee.campeao = CAMPEOES.find((c) => c.id === 'LeeSin');
+  const k = postoHab(lee.nivel);
+  const e = novoEstado(lee);
+  assert.equal(danoDaQ(e, 0), lee.campeao.dano[k]);
+  usarHabilidade(e, 1);
+  assert.equal(estadoQ(e, 1.5).fase, 'janela');
+  e.vida = lee.vidaMax * 0.1;
+  assert.ok(danoDaQ(e, 1.5) > lee.campeao.dano2[k] * 1.85);
+  const pan = { ...criarRodada(aleatorio(22), 2), golpes: [], gatilhoInimigo: null }; pan.campeao = CAMPEOES.find((c) => c.id === 'Pantheon');
+  const p = novoEstado(pan); const kp = postoHab(pan.nivel);
+  assert.equal(danoDaQ(p, 0), pan.campeao.dano[kp]);
+  usarHabilidade(p, 1);
+  assert.equal(danoDaQ(p, 1.1), pan.campeao.dano[kp]); // ainda no toque
+  const meio = danoDaQ(p, 2.2); const cheio = danoDaQ(p, 3.2);
+  assert.ok(meio > pan.campeao.dano[kp] && cheio > meio);
 });

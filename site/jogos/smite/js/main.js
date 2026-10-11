@@ -11,7 +11,7 @@ import { t, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, ROTA_NOME, postoHab,
   aleatorio, criarPartida, criarRodada, nomeCampeao,
-  novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, usarGolpear,
+  novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, danoDaQ, usarGolpear,
 } from './logic.js';
 
 const GAME_ID = 'smite';
@@ -111,7 +111,7 @@ function montar() {
       <div class="sm-retrato"><img id="sm-retrato" alt="" /></div><span class="sm-nivel" id="sm-nivel">11</span>
       <div class="sm-barras"><div class="v"><i></i><span>1.860 / 2.100</span></div><div class="m"><i></i><span>640 / 890</span></div></div>
       <div class="sm-botoes">
-        <button type="button" class="sm-bt q" id="sm-q" aria-label="${t('Habilidade')} (Q)"><span class="quadro"><img id="sm-q-img" alt="" /><span class="recarga" id="sm-q-rec" hidden></span><span class="carga" id="sm-q-carga" hidden><i></i></span><span class="tecla">Q</span></span><span class="nome">${t('Habilidade')}</span></button>
+        <button type="button" class="sm-bt q" id="sm-q" aria-label="${t('Habilidade')} (Q)"><span class="quadro"><img id="sm-q-img" alt="" /><span class="recarga" id="sm-q-rec" hidden></span><span class="carga" id="sm-q-carga" hidden><i></i></span><span class="valor" id="sm-q-valor"></span><span class="tecla">Q</span></span><span class="nome">${t('Habilidade')}</span></button>
         <button type="button" class="sm-bt f" id="sm-f" aria-label="${t('Golpear')} (F)"><span class="quadro"><img alt="" src="${imgSmite()}" /><span class="valor" id="sm-f-valor"></span><span class="tecla">F</span></span><span class="nome">${t('Golpear')}</span></button>
       </div>
     </div>
@@ -202,6 +202,7 @@ function hud() {
   car.hidden = eq.fase !== 'segurando';
   if (!car.hidden) { car.firstElementChild.style.width = `${Math.round(eq.carga * 100)}%`; car.classList.toggle('cheia', eq.carga >= 1); }
   qb.dataset.fase = eq.fase;
+  if (R && est) { const dq = fmt(danoDaQ(est, fase === 'jogando' ? tempoAgora() : 0)); const vq = $('sm-q-valor'); if (vq.textContent !== dq) vq.textContent = dq; }
   if (R) { const src = imgQ(eq.fase); const im = $('sm-q-img'); if (!im.src.endsWith(src)) im.src = src; }
   qb.disabled = fase !== 'jogando' || eq.fase === 'recarga' || (eq.fase === 'armado');
   $('sm-f').disabled = fase !== 'jogando' || Boolean(est?.smiteUsado);
