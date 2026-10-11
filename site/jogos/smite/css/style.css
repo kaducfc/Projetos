@@ -237,3 +237,16 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
   .sm-contagem { font-size: 34cqw; }
 }
 .sm-bt[data-fase="armado"]:disabled .quadro { filter: none; }
+
+/* faixa "pronto?" antes da contagem: o palco fica à vista */
+.sm-tela.leve { background: none; backdrop-filter: none; pointer-events: none; place-items: end center; padding: 0 1.4cqw 12.4cqw; }
+.sm-pronto { pointer-events: auto; width: min(46cqw, 94%); display: grid; gap: 0.4cqw; justify-items: center; text-align: center; padding: 0.7cqw 1.6cqw 0.9cqw; border-radius: 1cqw; border: 0.2cqw solid var(--sm-ouro-2); background: rgba(3, 14, 14, 0.82); box-shadow: 0 0 2cqw rgba(0, 0, 0, 0.6); }
+.sm-pronto .sup { font-size: 1cqw; font-weight: 800; letter-spacing: 0.18em; color: var(--sm-ouro); text-transform: uppercase; }
+.sm-pronto .hab { font-size: 0.95cqw; line-height: 1.3; color: #d6e6df; } .sm-pronto .hab b { color: #fff; }
+.sm-pronto .sm-go { font-size: 1.7cqw; padding: 0.4cqw 2.4cqw; }
+@media (max-width: 760px) {
+  .sm-tela.leve { padding: 0 3cqw 46cqw; }
+  .sm-pronto { width: 92%; gap: 1.6cqw; padding: 2.4cqw 3cqw 3cqw; border-width: 0.5cqw; border-radius: 2.4cqw; }
+  .sm-pronto .sup { font-size: 2.8cqw; } .sm-pronto .hab { display: none; }
+  .sm-pronto .sm-go { font-size: 6cqw; padding: 1.2cqw 8cqw; }
+}

@@ -145,7 +145,7 @@ function ajustarGolpear() {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(agenda);
 }
 let refazerTela = null; // desenha de novo a tela que está aberta (ao trocar de idioma)
-function tela(html, refazer = null) { const el = $('sm-tela'); el.innerHTML = html; el.hidden = !html; refazerTela = html ? refazer : null; }
+function tela(html, refazer = null, leve = false) { const el = $('sm-tela'); el.innerHTML = html; el.hidden = !html; el.classList.toggle('leve', leve); refazerTela = html ? refazer : null; }
 
 // --------------------------------------------------------------------------- estado do jogo
 let R = null; // rodada atual (criarRodada)
@@ -404,14 +404,13 @@ function descricaoQ(c) {
   if (c.tipo === 'armar') return t('Q: arma o seu próximo ataque (até {janela}s) com +{dano} de dano; cada golpe seu corta 0,5s da recarga. Recarga {seg}s.', { janela: c.janela, dano: fmt(c.dano[k]), seg });
   return t('Q: {dano} de dano. Recarga {seg}s.', { dano: fmt(c.dano[k]), seg });
 }
+// Antes da contagem a tela fica livre: só uma faixa com o COMEÇAR, para o jogador olhar o palco (campeões, dano do Golpear, a Q).
 function cartaoPreparo() {
   const c = R.campeao;
-  tela(`<div class="sm-cartao">
-    <span class="sup">${t('Rodada {n} de {total}', { n: n + 1, total: RODADAS })}</span>
-    <h2>${esc(nomeObj())}</h2>
-    <div class="sm-campeao"><img alt="" src="${imgCampeao(c.id)}" /><div><b>${esc(c.nome)}</b><span>${t('Você é o selva do time azul')}</span><span class="hab">${descricaoQ(c)}</span></div></div>
-    <p>${t('Você está no nível <b>{nivel}</b>: o dano do seu Golpear é de <b>{smite}</b>. Golpeie quando a vida do {obj} for <b>menor ou igual</b> a esse valor, o mais perto possível.', { nivel: R.nivel, smite: fmt(R.smite), obj: nomeObj() })}</p>
-    <div class="sm-acoes"><button type="button" class="sm-go" data-a="comecar">${t('COMEÇAR')}</button></div></div>`, cartaoPreparo);
+  tela(`<div class="sm-pronto">
+    <span class="sup">${t('Rodada {n} de {total}', { n: n + 1, total: RODADAS })} · ${esc(nomeObj())}</span>
+    <span class="hab"><b>${esc(c.nome)}</b> · ${descricaoQ(c)}</span>
+    <button type="button" class="sm-go" data-a="comecar">${t('COMEÇAR')}</button></div>`, cartaoPreparo, true);
 }
 
 async function contagemEIniciar() {
