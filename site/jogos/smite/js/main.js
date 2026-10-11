@@ -9,7 +9,7 @@ import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import { t, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import {
-  RODADAS, TEMPO_MAX, RECARGA_HAB, ROTA_NOME,
+  OBJETIVOS, RODADAS, TEMPO_MAX, RECARGA_HAB, ROTA_NOME,
   aleatorio, criarRodada, proximoObjetivo, resolverSmite, nomeCampeao,
 } from './logic.js';
 
@@ -73,43 +73,12 @@ const SOM = {
 // --------------------------------------------------------------------------- cenário e HUD
 // Onde cada jogador fica em volta do covil (% do palco): [x, y] no computador e [x, y] no celular.
 const FICHAS = {
-  voce: [[40, 58], [26, 47]],
-  'a-topo': [[31, 26], [12, 36]], 'a-meio': [[27.5, 46], [14, 46]], 'a-atirador': [[50, 70], [38, 53]],
-  'e-topo': [[70, 19], [86, 35]], 'e-selva': [[81, 37], [90, 43]], 'e-meio': [[77, 57], [84, 50]], 'e-atirador': [[61, 71], [62, 53]],
+  voce: [[40, 61], [27, 44]],
+  'a-topo': [[30, 33], [13, 33]], 'a-meio': [[24.5, 55], [11, 42]], 'a-atirador': [[28.5, 69], [34, 49]],
+  'e-topo': [[66, 24], [86, 31]], 'e-selva': [[83, 40], [91, 39]], 'e-meio': [[85, 62], [86, 47]], 'e-atirador': [[73, 71], [64, 50]],
 };
 const COR = { azul: '#3fa8ff', vermelho: '#e0352b', voce: '#f5cf5a' };
 
-function fossoSvg() {
-  // Anel de pedras ao redor de um fosso escuro, com ruído fixo (sempre o mesmo desenho). As cores do
-  // fosso vêm do tema do objetivo (variáveis --g1, --g2 e --glow do palco).
-  const rnd = aleatorio(20261011);
-  const cx = 500; const cy = 300; const N = 34;
-  let pedras = '';
-  for (let i = 0; i < N; i++) {
-    const a0 = (i / N) * Math.PI * 2; const a1 = ((i + 1) / N) * Math.PI * 2 - 0.01;
-    const rIn = 0.80 + rnd() * 0.04; const rOut = 1.02 + rnd() * 0.16;
-    const p = (a, r, dy = 0) => `${(cx + Math.cos(a) * 470 * r).toFixed(1)},${(cy + Math.sin(a) * 270 * r + dy).toFixed(1)}`;
-    const topo = Math.sin((a0 + a1) / 2) > 0 ? 0 : -16;
-    const tom = 18 + Math.floor(rnd() * 14);
-    const frente = Math.sin((a0 + a1) / 2) > 0;
-    pedras += `<polygon points="${p(a0, rIn)} ${p(a0, rOut, topo)} ${p((a0 + a1) / 2, rOut + 0.05, topo - 8)} ${p(a1, rOut, topo)} ${p(a1, rIn)}" fill="hsl(190 ${12 + rnd() * 10}% ${tom}%)" stroke="rgba(150,200,200,${frente ? 0.22 : 0.12})" stroke-width="1.5"/>`;
-  }
-  let musgo = '';
-  for (let i = 0; i < 16; i++) {
-    const a = rnd() * Math.PI * 2; const r = 1.0 + rnd() * 0.18;
-    musgo += `<ellipse cx="${(cx + Math.cos(a) * 470 * r).toFixed(0)}" cy="${(cy + Math.sin(a) * 270 * r).toFixed(0)}" rx="${(26 + rnd() * 40).toFixed(0)}" ry="${(12 + rnd() * 18).toFixed(0)}" fill="hsl(${120 + rnd() * 30} 40% ${12 + rnd() * 8}%)" opacity="0.8"/>`;
-  }
-  return `<svg viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true"><defs>
-      <radialGradient id="smf" cx="50%" cy="48%" r="55%"><stop offset="0" style="stop-color:var(--g1)"/><stop offset="0.45" style="stop-color:var(--g2)"/><stop offset="1" stop-color="#041514"/></radialGradient>
-      <radialGradient id="sma" cx="50%" cy="50%" r="50%"><stop offset="0.5" style="stop-color:var(--glow);stop-opacity:0"/><stop offset="1" style="stop-color:var(--glow);stop-opacity:0.35"/></radialGradient></defs>
-    <ellipse cx="${cx}" cy="${cy}" rx="${470 * 0.98}" ry="${270 * 0.98}" fill="url(#smf)"/>
-    <ellipse cx="${cx}" cy="${cy}" rx="${470 * 0.7}" ry="${270 * 0.7}" fill="url(#sma)"/>
-    <ellipse cx="${cx}" cy="${cy}" rx="${470 * 0.55}" ry="${270 * 0.55}" fill="none" style="stroke:var(--glow);stroke-opacity:0.3" stroke-width="2" stroke-dasharray="6 10"/>
-    ${pedras}${musgo}</svg>`;
-}
-
-const RUNA = `<svg class="sm-runas" viewBox="0 0 62 90" aria-hidden="true"><path d="M31 3 58 18v54L31 87 4 72V18z" fill="rgba(6,40,40,0.8)" style="stroke:var(--glow)" stroke-width="2.5"/>
-  <path d="M31 22 46 31v28L31 68 16 59V31z" fill="none" style="stroke:var(--glow)" stroke-width="2"/><path d="M31 30v30M20 38l11 7 11-7" style="stroke:var(--glow)" stroke-width="2" fill="none"/></svg>`;
 const COROA = '<svg viewBox="0 0 30 24" aria-hidden="true"><path d="M3 20 1 6l7 6 7-10 7 10 7-6-2 14z" fill="#f5cf5a" stroke="#7a5712" stroke-width="1.2" stroke-linejoin="round"/><circle cx="15" cy="3" r="2" fill="#fff1b3"/></svg>';
 const AMPULHETA = '<svg viewBox="0 0 32 40" aria-hidden="true"><path d="M5 3h22M5 37h22M8 3c0 10 6 11 8 17-2 6-8 7-8 17M24 3c0 10-6 11-8 17 2 6 8 7 8 17" stroke="#f2d98a" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M11 33c1-4 3-5 5-5s4 1 5 5z" fill="#e0a93a"/></svg>';
 const MIRA = `<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="rgba(4,16,15,0.7)" stroke="#c9961f" stroke-width="3"/>
@@ -119,7 +88,7 @@ const MIRA = `<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="
 
 function montar() {
   app.innerHTML = `<div class="sm" id="sm" data-tema="elemental">
-    <div class="sm-bg"><div class="sm-nevoa"></div><div class="sm-fosso">${fossoSvg()}</div></div>${RUNA}
+    <div class="sm-bg"><img class="sm-cenario" src="img/cenario.webp" alt="" draggable="false" /><div class="sm-nevoa"></div></div>
     <div class="sm-arena">
       <div class="sm-dragao" id="sm-alvo"><img id="sm-alvo-img" alt="" draggable="false" /></div>
       <div id="sm-fichas"></div>
@@ -139,7 +108,7 @@ function montar() {
     <div class="sm-mira">${MIRA}</div>
     <div class="sm-hab">
       <div class="fundo"></div>
-      <div class="sm-retrato"><img id="sm-retrato" alt="" /></div><span class="sm-nivel">11</span>
+      <div class="sm-retrato"><img id="sm-retrato" alt="" /></div><span class="sm-nivel" id="sm-nivel">11</span>
       <div class="sm-barras"><div class="v"><i></i><span>1.860 / 2.100</span></div><div class="m"><i></i><span>640 / 890</span></div></div>
       <div class="sm-botoes">
         <button type="button" class="sm-bt q" id="sm-q" aria-label="${t('Habilidade')} (Q)"><span class="quadro"><img id="sm-q-img" alt="" /><span class="recarga" id="sm-q-rec" hidden></span><span class="tecla">Q</span></span><span class="nome">${t('Habilidade')}</span></button>
@@ -308,7 +277,7 @@ function telaInicio() {
     <p>${t('Um objetivo está quase morrendo e o time inimigo está de olho. Use o <b>Golpear</b> na hora certa para <b>garantir o objetivo</b>: quanto mais perto do dano do Golpear (para menos), mais pontos.')}</p>
     <div class="sm-regras">
       <div><b>${t('Observe')}</b>${t('A vida do objetivo cai com o dano dos aliados e dos adversários. Cada time tem topo, selva, meio e atirador, e você é o selva do time azul.')}</div>
-      <div><b>${t('Golpeie')}</b>${t('O Golpear mata se a vida for menor ou igual ao dano dele. Cedo demais, falha; tarde demais, roubam.')}</div>
+      <div><b>${t('Golpeie')}</b>${t('O Golpear mata se a vida for menor ou igual ao dano dele (600 até o nível 8, 900 do 9 ao 12 e 1200 do 13 em diante). Cedo demais, falha; tarde demais, roubam.')}</div>
       <div><b>${t('Habilidade')}</b>${t('O botão Q do seu campeão também machuca o objetivo. Use para ajustar a vida (mas se ela matar, o objetivo está perdido).')}</div>
     </div>
     <p>${t('{rodadas} rodadas (Dragão Elemental, Dragão Ancião, Barão Nashor e Arauto do Vale), até <b>100 pontos</b> cada. Teclas: <b>F</b> ou <b>Espaço</b> = Golpear · <b>Q</b> = habilidade.', { rodadas: RODADAS })}${melhor ? `<br>${t('Seu recorde: <b>{n}</b> pontos', { n: fmt(melhor) })}` : ''}</p>
@@ -328,11 +297,12 @@ function prepararHud() {
   $('sm-obj-txt').textContent = t('Golpeie o {obj} com o Golpear no momento certo!', { obj: nomeObj() });
   $('sm-numeros').innerHTML = '';
   $('sm-dano-smite').textContent = fmt(R.smite);
+  $('sm-nivel').textContent = R.nivel;
   $('sm-marca').style.left = `${(R.smite / R.vidaMax) * 100}%`;
   $('sm-voce-img').src = imgCampeao(c.id); $('sm-retrato').src = imgCampeao(c.id); $('sm-q-img').src = imgCampeao(c.id);
   $('sm-fichas').innerHTML = R.participantes.filter((p) => p.id !== 'voce').map((p) => {
     const [x, y] = FICHAS[p.id][cel ? 1 : 0];
-    return `<div class="sm-ficha ${p.lado}" data-p="${p.id}" title="${esc(nomeCampeao(p.champ))}" style="left:${x}%;top:${y}%"><img class="ic" alt="" src="${imgCampeao(p.champ)}" /><span class="nv">11</span><span class="hp"><i></i></span></div>`;
+    return `<div class="sm-ficha ${p.lado}" data-p="${p.id}" title="${esc(nomeCampeao(p.champ))}" style="left:${x}%;top:${y}%"><img class="ic" alt="" src="${imgCampeao(p.champ)}" /><span class="nv">${p.nivel}</span><span class="hp"><i></i></span></div>`;
   }).join('');
   const nomeLinha = (p) => (p.id === 'voce' ? t('Você') : `${t(p.lado === 'azul' ? 'Aliado' : 'Adversário')} ${t(ROTA_NOME[p.rota])}`);
   $('sm-dano').innerHTML = R.participantes.map((p) => `<li data-p="${p.id}" style="--cor:${p.id === 'voce' ? COR.voce : COR[p.lado]}"><img class="ic" alt="" src="${imgCampeao(p.champ)}" /><span class="nome">${esc(nomeLinha(p))}</span><span class="pct">0%</span><span class="barra"><i></i></span></li>`).join('');
@@ -340,7 +310,9 @@ function prepararHud() {
 
 function prepararRodada() {
   const rand = aleatorio((Date.now() ^ (n * 7919)) >>> 0);
-  const objetivo = proximoObjetivo(rand, objetivoAnterior);
+  // `?obj=barao` (ou arauto, dragao-anciao, dragao-elemental) fixa o objetivo, para testar o visual de cada um.
+  const fixo = OBJETIVOS.find((o) => o.id === new URLSearchParams(location.search).get('obj'));
+  const objetivo = fixo || proximoObjetivo(rand, objetivoAnterior);
   objetivoAnterior = objetivo.id;
   R = criarRodada(rand, n, objetivo);
   fase = 'preparo';
@@ -354,7 +326,7 @@ function cartaoPreparo() {
     <span class="sup">${t('Rodada {n} de {total}', { n: n + 1, total: RODADAS })}</span>
     <h2>${esc(nomeObj())}</h2>
     <div class="sm-campeao"><img alt="" src="${imgCampeao(c.id)}" /><div><b>${esc(c.nome)}</b><span>${t('Você é o selva do time azul · Q: {dano} de dano · recarga {seg}s', { dano: fmt(c.dano), seg: RECARGA_HAB })}</span></div></div>
-    <p>${t('O dano do seu Golpear é de <b>{smite}</b>. Golpeie quando a vida do {obj} for <b>menor ou igual</b> a esse valor, o mais perto possível.', { smite: fmt(R.smite), obj: nomeObj() })}</p>
+    <p>${t('Você está no nível <b>{nivel}</b>: o dano do seu Golpear é de <b>{smite}</b>. Golpeie quando a vida do {obj} for <b>menor ou igual</b> a esse valor, o mais perto possível.', { nivel: R.nivel, smite: fmt(R.smite), obj: nomeObj() })}</p>
     <div class="sm-acoes"><button type="button" class="sm-go" data-a="comecar">${t('COMEÇAR')}</button></div></div>`, cartaoPreparo);
 }
 

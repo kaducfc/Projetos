@@ -7,7 +7,7 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
 - Regras: 5 rodadas, até 100 pontos cada (500 no total). Pontos = `100 · (1 − margem/600)²`, onde margem = dano do Smite − vida
   do objetivo no golpe (0 → 100; 30 → 90; 150 → 56; 300 → 25; 600+ → 0). Golpe cedo (vida acima do dano do Smite) ou objetivo morto
   antes do Smite (inclusive por causa da habilidade do jogador) = 0.
-- Cada rodada sorteia o dano do Smite (700 a 1200), o campeão (e a habilidade) e uma sequência de golpes de aliados/adversários
+- Cada rodada sorteia o dano do Smite (600, 900 ou 1200 por nível), o campeão (e a habilidade) e uma sequência de golpes de aliados/adversários
   que faz a vida passar pelo dano do Smite entre 18 e 32 s. A janela entre "chegou na zona" e "morreu" encurta a cada rodada (3,4 s → 1,8 s)
   e as rajadas (golpes grandes) ficam mais frequentes.
 - Arquivos: `js/logic.js` (regras puras, testadas em `tests/smite.test.mjs`), `js/main.js` (tela, laço do jogo, áudio WebAudio),
@@ -34,3 +34,11 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
 - Arte: o Dragão Elemental e o Dragão Ancião usam a arte do Na Medida. **O Barão e o Arauto ainda são silhuetas coloridas provisórias**
   (`img/barao.webp` e `img/arauto.webp`, geradas das silhuetas do Na Medida): trocar pelas artes finais mantendo os mesmos nomes de arquivo
   (o recorte do ícone redondo está em `icone` de cada objetivo).
+
+## Atualização: cenário e dano por nível
+- Cenário: `img/cenario.webp` (a imagem do covil que você mandou, 1600 px). Cada objetivo muda o matiz dela por CSS (`--hue`, `--sat`, `--luz`
+  em `.sm[data-tema=...]`). No celular a imagem é ampliada e centrada no fosso.
+- Dano do Golpear por nível do jogador (`danoDoSmite` em `js/logic.js`): até o nível 8 → 600; do 9 ao 12 → 900; do 13 em diante → 1200. O nível
+  da rodada vem da faixa de cada objetivo (`niveis`): Arauto 7-11, Dragão Elemental 5-16, Barão 12-18, Dragão Ancião 13-18; os outros jogadores
+  ficam a ±1 nível. O nível aparece no retrato, nas fichas e no cartão da rodada.
+- Teste visual: `?obj=barao` (ou `arauto`, `dragao-anciao`, `dragao-elemental`) na URL fixa o objetivo.

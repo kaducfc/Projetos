@@ -1,9 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  OBJETIVOS, RODADAS, TEMPO_MAX, DANOS_SMITE, CAMPEOES, ROTAS, POR_ROTA, JANELAS,
+  OBJETIVOS, RODADAS, TEMPO_MAX, DANOS_SMITE, CAMPEOES, ROTAS, POR_ROTA, JANELAS, danoDoSmite, NIVEL_MIN, NIVEL_MAX,
   aleatorio, pontosDaMargem, classificar, criarRodada, proximoObjetivo, vidaEm, resolverSmite,
 } from '../jogos/smite/js/logic.js';
+
+test('smite: dano do Golpear em 3 níveis (até o 8 → 600; 9 a 12 → 900; 13 em diante → 1200)', () => {
+  for (let n = 1; n <= 8; n++) assert.equal(danoDoSmite(n), 600, `nível ${n}`);
+  for (let n = 9; n <= 12; n++) assert.equal(danoDoSmite(n), 900, `nível ${n}`);
+  for (let n = 13; n <= 18; n++) assert.equal(danoDoSmite(n), 1200, `nível ${n}`);
+  assert.deepEqual(DANOS_SMITE, [600, 900, 1200]);
+});
+
+test('smite: o nível da rodada vem da faixa do objetivo e os outros jogadores ficam perto dele', () => {
+  const vistos = {};
+  for (const o of OBJETIVOS) {
+    assert.ok(o.niveis[0] >= NIVEL_MIN && o.niveis[1] <= NIVEL_MAX && o.niveis[0] <= o.niveis[1]);
+    vistos[o.id] = new Set();
+    for (let semente = 1; semente <= 200; semente++) {
+      const r = criarRodada(aleatorio(semente * 7), 0, o);
+      assert.ok(r.nivel >= o.niveis[0] && r.nivel <= o.niveis[1], `${o.id}: nível ${r.nivel}`);
+      vistos[o.id].add(r.smite);
+      for (const p of r.participantes) {
+        assert.ok(Math.abs(p.nivel - r.nivel) <= 1 && p.nivel >= NIVEL_MIN && p.nivel <= NIVEL_MAX);
+      }
+      assert.equal(r.participantes.find((p) => p.id === 'voce').nivel, r.nivel);
+    }
+  }
+  assert.deepEqual([...vistos.arauto].sort(), [600, 900]); // o Arauto vem cedo
+  assert.deepEqual([...vistos['dragao-anciao']], [1200]); // o Ancião vem tarde
+  assert.ok(vistos['dragao-elemental'].size === 3); // o Dragão Elemental pega os três
+  assert.ok(vistos.barao.has(1200));
+});
 
 test('smite: pontos pela margem (0 = 100; 600 ou mais = 0; sem sobra negativa)', () => {
   assert.equal(pontosDaMargem(0), 100);
@@ -115,7 +143,8 @@ test('smite: toda rodada gerada é jogável (vida cai até zero, passa pelo dano
       const t0 = dentro[0].t; const t1 = r.morreEm;
       assert.ok(t1 - t0 > 0.5, `janela de ${(t1 - t0).toFixed(2)}s`);
       assert.ok(t1 - t0 < 8, 'janela não é longa demais');
-      assert.ok(r.smite >= 700 && r.smite <= 1200);
+      assert.ok([600, 900, 1200].includes(r.smite));
+      assert.equal(r.smite, danoDoSmite(r.nivel));
     }
   }
 });

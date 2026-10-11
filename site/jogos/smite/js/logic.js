@@ -6,17 +6,26 @@
 // dano dele; quanto mais perto do dano do Smite (para menos), melhor.
 
 // Os objetivos: cada um com a sua vida, a sua arte e o seu cenário (`tema`). `icone`: onde cortar o rosto
-// na arte para o ícone redondo (background-position / background-size).
+// na arte para o ícone redondo (background-position / background-size). `niveis`: faixa do nível do jogador
+// quando o objetivo aparece (o Arauto vem cedo, o Ancião e o Barão tarde) e, com ele, o dano do Smite.
 export const OBJETIVOS = [
-  { id: 'dragao-elemental', nome: 'Dragão Elemental', vida: 8000, tema: 'elemental', arte: 'img/dragao.webp', icone: '30% 62% / 320%', pos: [37, 20, 38], posM: [12, 31, 76] },
-  { id: 'dragao-anciao', nome: 'Dragão Ancião', vida: 11000, tema: 'anciao', arte: 'img/dragao-anciao.webp', icone: '17% 72% / 320%', pos: [36, 19, 40], posM: [8, 31, 84] },
-  { id: 'barao', nome: 'Barão Nashor', vida: 12000, tema: 'barao', arte: 'img/barao.webp', icone: '62% 10% / 260%', pos: [46, 14, 17], posM: [30, 28, 40] },
-  { id: 'arauto', nome: 'Arauto do Vale', vida: 7000, tema: 'arauto', arte: 'img/arauto.webp', icone: '72% 28% / 230%', pos: [41, 22, 31], posM: [14, 33, 72] },
+  { id: 'dragao-elemental', nome: 'Dragão Elemental', vida: 8000, tema: 'elemental', arte: 'img/dragao.webp', icone: '30% 62% / 320%', pos: [37, 20, 38], posM: [12, 31, 76], niveis: [5, 16] },
+  { id: 'dragao-anciao', nome: 'Dragão Ancião', vida: 11000, tema: 'anciao', arte: 'img/dragao-anciao.webp', icone: '17% 72% / 320%', pos: [36, 19, 40], posM: [8, 31, 84], niveis: [13, 18] },
+  { id: 'barao', nome: 'Barão Nashor', vida: 12000, tema: 'barao', arte: 'img/barao.webp', icone: '62% 10% / 260%', pos: [46, 14, 17], posM: [30, 28, 40], niveis: [12, 18] },
+  { id: 'arauto', nome: 'Arauto do Vale', vida: 7000, tema: 'arauto', arte: 'img/arauto.webp', icone: '72% 28% / 230%', pos: [41, 22, 31], posM: [14, 33, 72], niveis: [7, 11] },
 ];
 export const RODADAS = 5;
 export const TEMPO_MAX = 50; // segundos de cada rodada
 export const RECARGA_HAB = 6; // segundos de recarga da habilidade
-export const DANOS_SMITE = [700, 800, 900, 1000, 1100, 1200]; // dano do Smite por nível do jogador
+// O dano do Smite (Golpear) depende do nível do jogador: até o 8 → 600; do 9 ao 12 → 900; do 13 em diante → 1200.
+export const DANOS_SMITE = [600, 900, 1200];
+export const NIVEL_MIN = 1;
+export const NIVEL_MAX = 18;
+export function danoDoSmite(nivel) {
+  if (nivel <= 8) return 600;
+  if (nivel <= 12) return 900;
+  return 1200;
+}
 // Quanto tempo o objetivo leva para morrer depois de chegar perto do dano do Smite: fica menor a cada rodada.
 export const JANELAS = [3.4, 3.0, 2.6, 2.2, 1.8];
 export const MARGEM_ZERO = 600; // a partir daqui (vida ≤ dano − 600) a rodada vale 0
@@ -83,8 +92,11 @@ export function proximoObjetivo(rand, anteriorId = null) {
   return escolher(rand, OBJETIVOS.filter((o) => o.id !== anteriorId));
 }
 
+// Nível dos outros jogadores: perto do nível do jogador (±1).
+const nivelProximo = (rand, nivel) => Math.min(NIVEL_MAX, Math.max(NIVEL_MIN, nivel + Math.floor(rand() * 3) - 1));
+
 // Monta os dois times: 4 aliados (o jogador é o selva) e 4 adversários, sem campeão repetido.
-function montarTimes(rand, campeao) {
+function montarTimes(rand, campeao, nivel) {
   const usados = new Set([campeao.id]);
   const sortear = (rota) => {
     const livres = POR_ROTA[rota].filter((id) => !usados.has(id));
@@ -95,10 +107,10 @@ function montarTimes(rand, campeao) {
   const lista = [];
   for (const rota of ROTAS) {
     lista.push(rota === 'selva'
-      ? { id: 'voce', lado: 'azul', rota, champ: campeao.id }
-      : { id: `a-${rota}`, lado: 'azul', rota, champ: sortear(rota) });
+      ? { id: 'voce', lado: 'azul', rota, champ: campeao.id, nivel }
+      : { id: `a-${rota}`, lado: 'azul', rota, champ: sortear(rota), nivel: nivelProximo(rand, nivel) });
   }
-  for (const rota of ROTAS) lista.push({ id: `e-${rota}`, lado: 'vermelho', rota, champ: sortear(rota) });
+  for (const rota of ROTAS) lista.push({ id: `e-${rota}`, lado: 'vermelho', rota, champ: sortear(rota), nivel: nivelProximo(rand, nivel) });
   return lista;
 }
 
@@ -106,9 +118,10 @@ function montarTimes(rand, campeao) {
 // (quem bate, quando e quanto). `n`: 0 a RODADAS - 1. Rodadas mais para a frente têm rajadas e janela menor.
 export function criarRodada(rand, n = 0, objetivo = null) {
   const alvo = objetivo || proximoObjetivo(rand);
-  const smite = escolher(rand, DANOS_SMITE);
+  const nivel = Math.floor(entre(rand, alvo.niveis[0], alvo.niveis[1] + 1));
+  const smite = danoDoSmite(nivel);
   const campeao = escolher(rand, CAMPEOES);
-  const participantes = montarTimes(rand, campeao);
+  const participantes = montarTimes(rand, campeao, nivel);
   const janela = JANELAS[Math.min(n, JANELAS.length - 1)] * entre(rand, 0.9, 1.1);
   const tx = entre(rand, 18, 32); // quando a vida chega perto do dano do Smite
   const folga = entre(rand, 60, 360); // quanto a vida ainda passa do dano do Smite nesse momento
@@ -142,7 +155,7 @@ export function criarRodada(rand, n = 0, objetivo = null) {
   }
   const ultimo = golpes[golpes.length - 1];
   return {
-    n, objetivo: alvo, vidaMax: alvo.vida, smite, campeao, participantes, janela, tx, golpes,
+    n, objetivo: alvo, vidaMax: alvo.vida, nivel, smite, campeao, participantes, janela, tx, golpes,
     morreEm: vida <= 0 ? ultimo.t : null, quemMata: vida <= 0 ? ultimo.quem : null,
   };
 }
