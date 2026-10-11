@@ -85,7 +85,7 @@ const AMPULHETA = '<svg viewBox="0 0 32 40" aria-hidden="true"><path d="M5 3h22M
 const MIRA = `<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="rgba(4,16,15,0.7)" stroke="#c9961f" stroke-width="3"/>
   <g class="giro"><circle cx="60" cy="60" r="48" fill="none" stroke="rgba(245,207,90,0.5)" stroke-width="1.5" stroke-dasharray="3 7"/>
   <path d="M60 4v10M60 106v10M4 60h10M106 60h10" stroke="#f5cf5a" stroke-width="3"/></g>
-  <path d="M60 28 66 54 92 60 66 66 60 92 54 66 28 60 54 54z" fill="rgba(63,217,208,0.28)" style="stroke:var(--glow)" stroke-width="2"/><circle cx="60" cy="60" r="7" fill="none" style="stroke:var(--glow)" stroke-width="2"/></svg>`;
+</svg>`;
 
 function montar() {
   app.innerHTML = `<div class="sm" id="sm" data-tema="elemental">
@@ -105,8 +105,8 @@ function montar() {
     </div>
     <aside class="sm-painel sm-dano"><h3>${t('Dano no objetivo')}</h3><ul id="sm-dano"></ul></aside>
     <div class="sm-painel sm-obj"><div class="ico" id="sm-ico2"></div><div><b>${t('Objetivo')}</b><span id="sm-obj-txt"></span></div></div>
-    <div class="sm-painel sm-info"><div class="texto">${t('O dano do Golpear é de')}<b id="sm-dano-smite">900</b></div></div>
-    <div class="sm-mira">${MIRA}</div>
+    <div class="sm-painel sm-info"><div class="texto">${t('Dano do Golpear:')}</div></div>
+    <div class="sm-mira">${MIRA}<b id="sm-dano-smite">900</b></div>
     <div class="sm-hab">
       <div class="fundo"></div>
       <div class="sm-retrato"><img id="sm-retrato" alt="" /></div><span class="sm-nivel" id="sm-nivel">11</span>

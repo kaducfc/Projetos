@@ -1389,7 +1389,7 @@ export default {
   "Tempo restante": "Verbleibende Zeit",
   "Dano no objetivo": "Schaden am Ziel",
   "Objetivo": "Ziel",
-  "O dano do Golpear é de": "Der Schaden von Zerschmettern beträgt",
+  "Dano do Golpear:": "Schaden von Zerschmettern:",
   "Habilidade": "Fähigkeit",
   "Aliado": "Verbündeter",
   "Adversário": "Gegner",
