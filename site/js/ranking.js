@@ -6,7 +6,7 @@ import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { avatarHtml } from '../shared/avatar.js';
 import { ELOS, eloInfo, emblemaHtml, divisaoDe, nomeDivisao, fmtPdr } from '../shared/ranked.js';
-import { cardMinhaRanqueada, comoFunciona } from './ranqueada-card.js';
+import { cardMinhaRanqueada, comoFunciona, definirAdmin } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
 import { localeAtual } from '../shared/i18n.js';
 
@@ -136,7 +136,7 @@ async function carregarTabela() {
 let carregando = true;
 async function carregar() {
   await platform.init();
-  if (platform.getUser()) status = await platform.rankedStatus();
+  if (platform.getUser()) { status = await platform.rankedStatus(); definirAdmin(await platform.isAdmin().catch(() => false)); }
   carregando = false;
   await carregarTabela();
 }

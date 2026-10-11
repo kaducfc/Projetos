@@ -7,7 +7,7 @@ import { GAMES, gameById } from '../shared/config.js';
 import { AVATARES, ESPECIAIS, EXCLUSIVOS, avatarHtml, molduraHtml, nomeAvatar } from '../shared/avatar.js';
 import { nomeRecompensa, tipoTexto } from '../shared/recompensas.js';
 import { problemaNoNome } from '../shared/nomes.js';
-import { cardMinhaRanqueada } from './ranqueada-card.js';
+import { cardMinhaRanqueada, definirAdmin } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
 import { EFEITOS, EFEITOS_TESTE, EQUIPAVEIS_TESTE, efeitoAtivo, efeitoPorId } from '../shared/efeitos.js';
 import { MOLDURAS, MOLDURAS_TESTE, ELOS_MOLDURAS } from '../shared/molduras.js';
@@ -258,6 +258,7 @@ async function carregar() {
   if (platform.getUser()) {
     let recs;
     [resultados, status, recs] = await Promise.all([platform.listResults({ limit: 500 }), platform.rankedStatus(), platform.minhasRecompensas()]);
+    definirAdmin(await platform.isAdmin().catch(() => false)); // jogos em teste aparecem no card só para administradores
     efeitosGanhos = new Set(recs.filter((r) => r.tipo === 'efeito').map((r) => r.chave));
     molduras = new Set(recs.filter((r) => r.tipo === 'moldura').map((r) => r.chave));
   }
