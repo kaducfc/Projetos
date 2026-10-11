@@ -54,3 +54,7 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
 - Simulação (1.500 rodadas, golpear quando a margem chegar a X): X=0 → 88 pts em média (97% garantem); X=100 → 49 pts; X=200 → 20 pts (52% garantem).
   Para deixar mais difícil: aumentar `PROB_SMITE_INIMIGO`, ou o inimigo reagir em vez de ter um gatilho fixo.
 - A lógica da rodada inteira (`novoEstado`, `avancar`, `usarHabilidade`, `usarGolpear`) é pura e está coberta por `tests/smite.test.mjs`.
+
+## Cenários
+- `img/cenario.webp`: covil verde-água, para o Dragão Elemental e o Dragão Ancião (o Ancião só muda o matiz por CSS).
+- `img/cenario-barao.webp`: covil roxo, para o Barão Nashor e o Arauto do Vale. Qual imagem cada objetivo usa está em `cenario` (`OBJETIVOS`, `js/logic.js`).

@@ -11,14 +11,14 @@ html, body { margin: 0; background: #030b0b; color: #eaf3ef; font-family: 'Inter
 button { font: inherit; }
 
 .sm[data-tema="anciao"] { --glow: #5ab8ff; --hue: 28deg; --luz: 0.92; }
-.sm[data-tema="barao"] { --glow: #c58bff; --hue: 105deg; --luz: 0.95; }
-.sm[data-tema="arauto"] { --glow: #a9d4ff; --hue: 38deg; --sat: 0.85; --luz: 1.1; }
+.sm[data-tema="barao"] { --glow: #c58bff; }
+.sm[data-tema="arauto"] { --glow: #b9a6ff; --luz: 1.06; }
 .sm { position: relative; box-sizing: border-box; width: min(100%, 1400px, calc((100svh - 70px) * 16 / 9)); aspect-ratio: 16 / 9; container-type: inline-size; overflow: hidden;
   border-radius: 1.2cqw; background: var(--sm-fundo); border: 1px solid rgba(245, 207, 90, 0.35); box-shadow: 0 1.4cqw 5cqw rgba(0, 0, 0, 0.7); user-select: none; }
 
 /* ------------------------------------------------------------------ cenário */
 .sm-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #04100f; }
-/* O cenário é uma imagem 16:9; cada objetivo muda o matiz dela (verde-água, azul, roxo, azul claro). */
+/* O cenário é uma imagem 16:9: um covil verde-água para os dragões (o Ancião só muda o matiz) e um roxo para o Barão e o Arauto. */
 .sm-cenario { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: hue-rotate(var(--hue, 0deg)) saturate(var(--sat, 1)) brightness(var(--luz, 1)); }
 .sm-nevoa { position: absolute; inset: -10%; opacity: 0.35; pointer-events: none;
   background:

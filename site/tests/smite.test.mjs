@@ -83,7 +83,12 @@ test('smite: constantes (dano de 900 existe, 5 rodadas, janelas que encurtam) e 
 
 test('smite: os arquivos de arte dos objetivos existem', async () => {
   const { existsSync } = await import('node:fs');
-  for (const o of OBJETIVOS) assert.ok(existsSync(new URL(`../jogos/smite/${o.arte}`, import.meta.url)), o.arte);
+  for (const o of OBJETIVOS) {
+    assert.ok(existsSync(new URL(`../jogos/smite/${o.arte}`, import.meta.url)), o.arte);
+    assert.ok(existsSync(new URL(`../jogos/smite/${o.cenario}`, import.meta.url)), o.cenario);
+  }
+  // dragões no covil verde-água; Barão e Arauto no covil roxo
+  assert.deepEqual(OBJETIVOS.map((o) => o.cenario), ['img/cenario.webp', 'img/cenario.webp', 'img/cenario-barao.webp', 'img/cenario-barao.webp']);
 });
 
 test('smite: cada rodada tem 4 aliados (o jogador é o selva) e 4 adversários, 1 por rota, sem campeão repetido', () => {

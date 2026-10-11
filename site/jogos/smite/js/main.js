@@ -323,6 +323,7 @@ function prepararHud() {
   const [l, tp, w] = cel ? o.posM : o.pos;
   alvo.style.setProperty('--l', `${l}%`); alvo.style.setProperty('--t', `${tp}%`); alvo.style.setProperty('--w', `${w}cqw`);
   const img = $('sm-alvo-img'); img.src = o.arte; img.alt = t(o.nome);
+  const cen = document.querySelector('.sm-cenario'); if (!cen.src.endsWith(o.cenario)) cen.src = o.cenario;
   for (const id of ['sm-ico', 'sm-ico2']) { const e = $(id); e.style.backgroundImage = `url(${o.arte})`; e.style.background = `#06191a url(${o.arte}) ${o.icone} no-repeat`; }
   $('sm-nome-obj').textContent = nomeObj();
   $('sm-obj-txt').textContent = t('Golpeie o {obj} com o Golpear no momento certo!', { obj: nomeObj() });
