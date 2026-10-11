@@ -12,8 +12,8 @@
 export const OBJETIVOS = [
   { id: 'dragao-elemental', nome: 'Dragão Elemental', vida: 8000, tema: 'elemental', arte: 'img/dragao.webp', cenario: 'img/cenario.webp', icone: '30% 62% / 320%', pos: [37, 20, 38], posM: [12, 31, 76], niveis: [5, 16] },
   { id: 'dragao-anciao', nome: 'Dragão Ancião', vida: 11000, tema: 'anciao', arte: 'img/dragao-anciao.webp', cenario: 'img/cenario.webp', icone: '17% 72% / 320%', pos: [36, 19, 40], posM: [8, 31, 84], niveis: [13, 18] },
-  { id: 'barao', nome: 'Barão Nashor', vida: 12000, tema: 'barao', arte: 'img/barao.webp', cenario: 'img/cenario-barao.webp', icone: '31% 24% / 280%', pos: [44.5, 13, 21], posM: [25, 28, 50], niveis: [12, 18] },
-  { id: 'arauto', nome: 'Arauto do Vale', vida: 7000, tema: 'arauto', arte: 'img/arauto.webp', cenario: 'img/cenario-barao.webp', icone: '44% 11% / 220%', pos: [41, 20, 28], posM: [15, 31, 70], niveis: [7, 11] },
+  { id: 'barao', nome: 'Barão Nashor', vida: 12000, tema: 'barao', arte: 'img/barao.webp', cenario: 'img/cenario-barao.webp', icone: '31% 24% / 280%', pos: [42.9, 12.4, 24.15], posM: [21.3, 25.3, 57.5], niveis: [12, 18] },
+  { id: 'arauto', nome: 'Arauto do Vale', vida: 7000, tema: 'arauto', arte: 'img/arauto.webp', cenario: 'img/cenario-barao.webp', icone: '44% 11% / 220%', pos: [43.8, 24.7, 22.4], posM: [22, 34.3, 56], niveis: [7, 11] },
 ];
 export const RODADAS = 5;
 export const TEMPO_MAX = 50; // segundos de cada rodada
