@@ -210,8 +210,7 @@ export function criarRodada(rand, n = 0, opcoes = null) {
   const usaSmite = rand() < PROB_SMITE_INIMIGO;
   const reacaoInimigo = entre(rand, REACAO_INIMIGO[0], REACAO_INIMIGO[1]);
   const gatilhoInimigo = usaSmite ? smite : null; // só indica que ele tem o feitiço (a hora vem do tempo, não da vida)
-  // (o +35% dos outros campeões é compensado aqui para a janela de acerto do Golpear continuar com o mesmo tamanho)
-  const janela = JANELAS[Math.min(n, JANELAS.length - 1)] * entre(rand, 0.9, 1.1) * MULT_OUTROS;
+  const janela = JANELAS[Math.min(n, JANELAS.length - 1)] * entre(rand, 0.9, 1.1);
   // Quando a vida chega perto do dano do Smite. O dano dos outros campeões escala com o nível: no começo (nível ~5) eles
   // batem mais fraco e o objetivo demora mais (24-40 s); no fim (nível 18) batem mais forte e ele cai mais rápido (16-28 s).
   const f = Math.max(0, Math.min(1, (nivel - 5) / 13));
