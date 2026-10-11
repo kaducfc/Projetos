@@ -59,13 +59,19 @@ export const RITMO = {
   topo: { periodo: 1.2, variaT: 0.2, variaD: 0.25 },
 };
 
-// Campeões que o jogador pode ser (sorteia um por partida). `hab`: a habilidade que também machuca o objetivo (só a do jogador a usa).
+// Campeões que o jogador pode ser (sorteia um por partida). Cada um tem a sua habilidade (Q), que também machuca o
+// objetivo, com o próprio jeito de usar (`tipo`) e valores por posto (1 a 5; o posto sobe com o nível, ver `postoHab`):
+//   duplo ... Lee Sin: Q1 (Onda Sônica) abre uma janela; Q2 (Golpe Ressonante) bate mais quanto menos vida o objetivo tem.
+//   simples . Nunu e Kha'Zix: um toque, dano e recarga próprios.
+//   carga ... Pantheon: toque rápido = estocada curta (devolve 60% da recarga); segurar = arremesso, com mais dano
+//             quanto mais tempo segurou; segurar demais sem soltar cancela e a recarga é a metade.
+//   armar ... Wukong: arma o próximo ataque (até 5 s), que ganha dano extra; cada golpe seu corta 0,5 s da recarga.
 export const CAMPEOES = [
-  { id: 'LeeSin', nome: 'Lee Sin', hab: 'Onda Sônica', dano: 380 },
-  { id: 'Nunu', nome: 'Nunu e Willump', hab: 'Consumir', dano: 400 },
-  { id: 'Khazix', nome: "Kha'Zix", hab: 'Garras Famintas', dano: 340 },
-  { id: 'Pantheon', nome: 'Pantheon', hab: 'Lança Pontiaguda', dano: 350 },
-  { id: 'MonkeyKing', nome: 'Wukong', hab: 'Golpe Devastador', dano: 360 },
+  { id: 'LeeSin', nome: 'Lee Sin', hab: 'Onda Sônica', tipo: 'duplo', dano: [90, 115, 140, 165, 190], dano2: [120, 160, 200, 240, 280], recarga: [9, 8, 7, 6, 5], janela: 3 },
+  { id: 'Nunu', nome: 'Nunu e Willump', hab: 'Consumir', tipo: 'simples', dano: [330, 430, 530, 630, 730], recarga: [13, 12, 11, 10, 9] },
+  { id: 'Khazix', nome: "Kha'Zix", hab: 'Garras Famintas', tipo: 'simples', dano: [120, 150, 180, 210, 240], recarga: [3, 3, 3, 3, 3] },
+  { id: 'Pantheon', nome: 'Pantheon', hab: 'Lança Cometa', tipo: 'carga', dano: [110, 140, 170, 200, 230], dano2: [160, 210, 260, 310, 360], recarga: [11, 10.25, 9.5, 8.75, 8], toqueMax: 0.35, cargaCheia: 2, segurarMax: 4, devolve: 0.6, segundo: 0.5, bonusCarga: 0.5 },
+  { id: 'MonkeyKing', nome: 'Wukong', hab: 'Golpe Devastador', tipo: 'armar', dano: [110, 140, 170, 200, 230], recarga: [8, 7.5, 7, 6.5, 6], janela: 5, corta: 0.5 },
 ];
 export const POR_ROTA = {
   topo: ['Garen', 'Darius', 'Malphite', 'Ornn', 'Sion', 'Mordekaiser', 'Camille', 'Renekton', 'Fiora'],
@@ -138,8 +144,8 @@ function montarTimes(rand, campeao) {
 // (campeões em nível baixo) ao mais forte (nível alto):
 //   rodadas 1 e 2: Arauto do Vale e Dragão Elemental (em qualquer ordem)
 //   rodada 3: Dragão Elemental · rodada 4: Dragão Elemental ou Barão · rodada 5: Barão ou Dragão Ancião
-export function criarPartida(rand) {
-  const campeao = escolher(rand, CAMPEOES);
+export function criarPartida(rand, campeaoId) {
+  const campeao = CAMPEOES.find((c) => c.id === campeaoId) || escolher(rand, CAMPEOES);
   const [arauto, elemental, barao, anciao] = ['arauto', 'dragao-elemental', 'barao', 'dragao-anciao'].map(objetivoPorId);
   const objetivos = [
     ...(rand() < 0.5 ? [arauto, elemental] : [elemental, arauto]),
@@ -238,7 +244,8 @@ export function resolverSmite(vida, smite) {
 //   - um aliado finaliza ............................ 'time' (PONTOS_TIME = 25)
 //   - time inimigo (golpe ou Smite do selva) ........ 'roubado' (0)
 export function novoEstado(rodada) {
-  return { R: rodada, vida: rodada.vidaMax, idx: 0, smiteUsado: false, smiteFalhou: null, inimigoUsou: false, fim: null };
+  return { R: rodada, vida: rodada.vidaMax, idx: 0, smiteUsado: false, smiteFalhou: null, inimigoUsou: false, fim: null,
+    q: { prontoEm: 0, janelaAte: null, desde: null, armadoAte: null } };
 }
 
 const encerrar = (est, fim) => { est.fim = fim; };
@@ -267,24 +274,102 @@ export function avancar(est, t) {
   const R = est.R;
   while (!est.fim && est.idx < R.golpes.length && R.golpes[est.idx].t <= t) {
     const g = R.golpes[est.idx++];
-    est.vida = Math.max(0, est.vida - g.dano);
+    atualizarQ(est, g.t, eventos);
+    const c = R.campeao; const q = est.q;
+    let bonus = 0;
+    if (g.quem === 'voce' && c.tipo === 'armar') {
+      if (q.armadoAte != null && g.t <= q.armadoAte) { bonus = c.dano[postoHab(R.nivel)]; q.armadoAte = null; }
+      q.prontoEm = Math.max(0, q.prontoEm - c.corta); // cada golpe do Wukong corta 0,5 s da recarga
+    }
+    est.vida = Math.max(0, est.vida - g.dano - bonus);
     eventos.push({ tipo: 'golpe', quem: g.quem, dano: g.dano, vida: est.vida });
-    if (est.vida <= 0) morreu(est, g.quem, 'golpe');
+    if (bonus) eventos.push({ tipo: 'habilidade', fase: 'bonus', quem: 'voce', dano: bonus, vida: est.vida });
+    if (est.vida <= 0) morreu(est, g.quem, bonus ? 'habilidade' : 'golpe');
     else checarInimigo(est, eventos);
   }
+  if (!est.fim) atualizarQ(est, t, eventos);
   if (!est.fim && t >= TEMPO_MAX) encerrar(est, { resultado: 'roubado', pontos: 0, quem: null, via: 'tempo', margem: null });
   return eventos;
 }
 
-// A habilidade do campeão do jogador (Q). Se ela derruba o objetivo, o seu time fica com ele e vale PONTOS_HABILIDADE.
-export function usarHabilidade(est) {
-  const eventos = [];
-  if (est.fim) return eventos;
-  const dano = est.R.campeao.dano;
+// Posto da habilidade (0 a 4): sobe junto com o nível do campeão (e, portanto, a cada rodada da partida).
+export const postoHab = (nivel) => (nivel <= 7 ? 0 : nivel <= 10 ? 1 : nivel <= 13 ? 2 : nivel <= 16 ? 3 : 4);
+
+// Fecha o que acabou por tempo: a janela do Lee Sin, o segurar longo do Pantheon e o ataque armado do Wukong.
+function atualizarQ(est, t, eventos) {
+  const c = est.R.campeao; const q = est.q; const posto = postoHab(est.R.nivel);
+  if (q.janelaAte != null && t > q.janelaAte) { // perdeu a janela do Q2: a recarga começa agora
+    q.prontoEm = q.janelaAte + c.recarga[posto]; q.janelaAte = null;
+    eventos.push({ tipo: 'habilidade-fim', motivo: 'janela' });
+  }
+  if (q.desde != null && t - q.desde >= c.segurarMax) { // segurou demais: cancela, recarga pela metade
+    q.prontoEm = q.desde + c.segurarMax + c.recarga[posto] / 2; q.desde = null;
+    eventos.push({ tipo: 'habilidade-fim', motivo: 'segurou' });
+  }
+  if (q.armadoAte != null && t > q.armadoAte) { q.armadoAte = null; eventos.push({ tipo: 'habilidade-fim', motivo: 'armado' }); }
+}
+
+// O que o botão Q está fazendo agora: { fase: 'pronto'|'recarga'|'janela'|'segurando'|'armado', falta (s), carga (0 a 1) }.
+export function estadoQ(est, t) {
+  const q = est.q; const c = est.R.campeao;
+  if (q.desde != null) return { fase: 'segurando', falta: Math.max(0, c.segurarMax - (t - q.desde)), carga: Math.max(0, Math.min(1, (t - q.desde - c.toqueMax) / (c.cargaCheia - c.toqueMax))) };
+  if (q.janelaAte != null) return { fase: 'janela', falta: Math.max(0, q.janelaAte - t), carga: 0 };
+  if (q.armadoAte != null) return { fase: 'armado', falta: Math.max(0, q.armadoAte - t), carga: 0 };
+  if (t < q.prontoEm) return { fase: 'recarga', falta: q.prontoEm - t, carga: 0 };
+  return { fase: 'pronto', falta: 0, carga: 0 };
+}
+
+function golpeQ(est, eventos, dano, fase) {
   est.vida = Math.max(0, est.vida - dano);
-  eventos.push({ tipo: 'habilidade', quem: 'voce', dano, vida: est.vida });
+  eventos.push({ tipo: 'habilidade', fase, quem: 'voce', dano, vida: est.vida });
   if (est.vida <= 0) morreu(est, 'voce', 'habilidade');
   else checarInimigo(est, eventos);
+}
+
+// Aperta o Q no instante t. Se a habilidade derruba o objetivo, o seu time fica com ele e vale PONTOS_HABILIDADE.
+export function usarHabilidade(est, t = 0) {
+  const eventos = [];
+  if (est.fim) return eventos;
+  atualizarQ(est, t, eventos);
+  const c = est.R.campeao; const q = est.q; const posto = postoHab(est.R.nivel);
+  const fase = estadoQ(est, t).fase;
+  if (c.tipo === 'duplo') {
+    if (fase === 'pronto') { // Q1: abre a janela para o Q2; a recarga só conta depois
+      q.janelaAte = t + c.janela; q.prontoEm = Infinity;
+      golpeQ(est, eventos, c.dano[posto], 'q1');
+    } else if (fase === 'janela') { // Q2: mais dano quanto menos vida o objetivo tem (até o dobro)
+      const falta = 1 - est.vida / est.R.vidaMax;
+      const dano = Math.round(c.dano2[posto] * (1 + Math.max(0, Math.min(1, falta))));
+      q.janelaAte = null; q.prontoEm = t + c.recarga[posto];
+      golpeQ(est, eventos, dano, 'q2');
+    }
+  } else if (c.tipo === 'simples') {
+    if (fase === 'pronto') { q.prontoEm = t + c.recarga[posto]; golpeQ(est, eventos, c.dano[posto], 'unico'); }
+  } else if (c.tipo === 'carga') {
+    if (fase === 'pronto') { q.desde = t; eventos.push({ tipo: 'habilidade-segurar' }); }
+  } else if (c.tipo === 'armar') {
+    if (fase === 'pronto') { q.prontoEm = t + c.recarga[posto]; q.armadoAte = t + c.janela; eventos.push({ tipo: 'habilidade-armar' }); }
+  }
+  return eventos;
+}
+
+// Solta o Q (só o Pantheon usa): toque rápido = estocada; segurou mais = arremesso com dano crescente.
+export function soltarHabilidade(est, t = 0) {
+  const eventos = [];
+  if (est.fim) return eventos;
+  atualizarQ(est, t, eventos);
+  const c = est.R.campeao; const q = est.q; const posto = postoHab(est.R.nivel);
+  if (c.tipo !== 'carga' || q.desde == null) return eventos;
+  const seg = t - q.desde; q.desde = null;
+  if (seg <= c.toqueMax) {
+    q.prontoEm = t + c.recarga[posto] * (1 - c.devolve);
+    golpeQ(est, eventos, c.dano[posto], 'toque');
+  } else {
+    const carga = Math.max(0, Math.min(1, (seg - c.toqueMax) / (c.cargaCheia - c.toqueMax)));
+    const dano = Math.round(c.dano2[posto] * (1 + c.segundo) * (1 + c.bonusCarga * carga));
+    q.prontoEm = t + c.recarga[posto];
+    golpeQ(est, eventos, dano, 'arremesso');
+  }
   return eventos;
 }
 

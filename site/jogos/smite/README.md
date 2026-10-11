@@ -67,3 +67,12 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
   regular); o meio de 1,5 em 1,5 s (2 golpes de ~400, mais irregular); o selva a cada 1 s; o topo, tanque, bate pouco e não dá rajada. O dano de cada golpe e o tempo
   entre golpes variam pouco no atirador e mais no meio e no topo.
 - Simulação (sem agir): o time inimigo (4 batedores e o Smite do selva) fica com o objetivo em ~84% das rodadas; golpear com margem 0 → 94% garantem (84 pts em média).
+
+## A Q de cada campeão (o jogador sorteia 1 dos 5 por partida)
+O posto da habilidade (1 a 5) sobe com o nível da rodada (`postoHab` em `js/logic.js`: até 7 → 1, 8–10 → 2, 11–13 → 3, 14–16 → 4, 17+ → 5). Sem custo de mana/energia; valores em `CAMPEOES`.
+- **Lee Sin** (duplo): Q1 Onda Sônica abre uma janela de 3 s; Q2 Chute dá mais dano quanto menos vida o objetivo tem (×1 a ×2). A recarga (9 → 5 s) começa depois do Q2 ou quando a janela acaba.
+- **Nunu e Willump** (simples): um toque, dano bem acima dos outros (330 → 730), recarga 13 → 9 s.
+- **Kha'Zix** (simples): dano sem isolamento (120 → 240), recarga fixa de 3 s.
+- **Pantheon** (carga): toque ≤ 0,35 s = estocada (devolve 60% da recarga); segurar = arremesso, com dano crescente até 2 s segurando (mais um segundo golpe de 50%); passar de 4 s segurando cancela, e a recarga é a metade.
+- **Wukong** (armar): o Q arma o próximo ataque por 5 s (+110 → +230 de dano); cada golpe dele corta 0,5 s da recarga (8 → 6 s). Se o golpe armado finaliza, vale como habilidade (50 pontos).
+- Teste: `?camp=LeeSin` (ou Nunu, Khazix, Pantheon, MonkeyKing) fixa o campeão.

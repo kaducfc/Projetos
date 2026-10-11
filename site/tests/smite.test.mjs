@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, DANOS_SMITE, CAMPEOES, ROTAS, POR_ROTA, JANELAS, danoDoSmite, NIVEL_MIN, NIVEL_MAX,
-  novoEstado, avancar, usarHabilidade, usarGolpear, criarPartida, NIVEIS_RODADA, DANO_3S, RITMO, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, FAIXA_ACIMA, FAIXA_ABAIXO,
+  novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, postoHab, usarGolpear, criarPartida, NIVEIS_RODADA, DANO_3S, RITMO, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, FAIXA_ACIMA, FAIXA_ABAIXO,
   aleatorio, pontosDaMargem, classificar, criarRodada, proximoObjetivo, vidaEm, resolverSmite,
 } from '../jogos/smite/js/logic.js';
 
@@ -73,7 +73,8 @@ test('smite: constantes (dano de 900 existe, 5 rodadas, janelas que encurtam) e 
   assert.equal(RODADAS, 5);
   assert.equal(JANELAS.length, RODADAS);
   assert.ok(JANELAS.every((j, i) => i === 0 || j < JANELAS[i - 1])); // cada rodada dá menos tempo
-  assert.ok(CAMPEOES.every((c) => c.id && c.nome && c.hab && c.dano > 0));
+  assert.ok(CAMPEOES.every((c) => c.id && c.nome && c.hab && c.dano.every((d) => d > 0) && c.recarga.length === 5));
+  assert.deepEqual(CAMPEOES.map((c) => c.id), ['LeeSin', 'Nunu', 'Khazix', 'Pantheon', 'MonkeyKing']);
   assert.deepEqual(OBJETIVOS.map((o) => o.id), ['dragao-elemental', 'dragao-anciao', 'barao', 'arauto']);
   assert.deepEqual(OBJETIVOS.map((o) => o.nome), ['Dragão Elemental', 'Dragão Ancião', 'Barão Nashor', 'Arauto do Vale']);
   for (const o of OBJETIVOS) { assert.ok(o.vida >= 5000 && o.vida <= 15000); assert.ok(o.arte.startsWith('img/')); assert.ok(o.tema); }
@@ -300,21 +301,25 @@ test('smite: Golpear com a vida ≤ dano do Smite garante o objetivo (margem exa
   }
 });
 
+// Para os testes de pontos: o Kha'Zix (um toque, dano fixo por posto).
+const dq = (r) => { r.campeao = CAMPEOES.find((c) => c.id === 'Khazix'); return r.campeao.dano[postoHab(r.nivel)]; };
+
 test('smite: a habilidade que finaliza o objetivo dá o objetivo ao seu time (50 pontos, mais que o aliado)', () => {
   assert.equal(PONTOS_HABILIDADE, 50);
   assert.ok(PONTOS_HABILIDADE > PONTOS_TIME);
   const r = criarRodada(aleatorio(9), 1);
+  const D = dq(r);
   const est = novoEstado(r);
-  est.vida = r.campeao.dano - 1; // quase morto
-  const ev = usarHabilidade(est);
+  est.vida = D - 1; // quase morto
+  const ev = usarHabilidade(est, 1);
   assert.equal(ev[0].tipo, 'habilidade');
   assert.equal(est.fim.resultado, 'time');
   assert.equal(est.fim.pontos, 50);
   assert.equal(est.fim.via, 'habilidade');
   // sem matar, só tira vida
   const e2 = novoEstado(r);
-  usarHabilidade(e2);
-  assert.equal(e2.vida, r.vidaMax - r.campeao.dano);
+  usarHabilidade(e2, 1);
+  assert.equal(e2.vida, r.vidaMax - D);
   assert.equal(e2.fim, null);
 });
 
@@ -363,20 +368,21 @@ test('smite: quando o selva inimigo golpeia, tira o dano do Smite; com a vida �
 
 test('smite: o inimigo só golpeia uma vez, e não golpeia se a vida passou da faixa sem ele ver', () => {
   const r = { ...criarRodada(aleatorio(4), 0) };
+  const D4 = dq(r);
   const est = novoEstado({ ...r, gatilhoInimigo: Math.round(r.smite * 0.9) });
   est.vida = r.smite * 2; // longe da faixa
-  est.vida = r.faixaMin - 10 + r.campeao.dano; // a habilidade deixa a vida abaixo da faixa (70% do dano)
-  const ev = usarHabilidade(est);
+  est.vida = r.faixaMin - 10 + D4; // a habilidade deixa a vida abaixo da faixa (70% do dano)
+  const ev = usarHabilidade(est, 1);
   assert.equal(ev.some((x) => x.tipo === 'smite-inimigo'), false);
   assert.equal(est.inimigoUsou, true);
   assert.equal(est.fim, null);
   // dentro da faixa: golpeia uma única vez
   const est2 = novoEstado({ ...r, gatilhoInimigo: Math.round(r.smite * 0.9) });
-  est2.vida = Math.round(r.smite * 0.9) - 5 + r.campeao.dano; // depois da habilidade: dentro da faixa
-  const ev2 = usarHabilidade(est2);
+  est2.vida = Math.round(r.smite * 0.9) - 5 + D4; // depois da habilidade: dentro da faixa
+  const ev2 = usarHabilidade(est2, 1);
   assert.equal(ev2.filter((x) => x.tipo === 'smite-inimigo').length, 1);
   assert.equal(est2.fim.resultado, 'roubado');
-  assert.deepEqual(usarHabilidade(est2), []); // já terminou
+  assert.deepEqual(usarHabilidade(est2, 1), []); // já terminou
 });
 
 test('smite: pontos nunca passam de 100 por rodada, e errar o Golpear com o time ganhando dá 25 (não mais)', () => {
@@ -461,4 +467,94 @@ test('smite: o atirador é mais constante que o meio (tempo e dano entre golpes 
   const m = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
   assert.ok(Math.abs(m(intervalos.atirador) - RITMO.atirador.periodo) < 0.08);
   assert.ok(Math.abs(m(intervalos.meio) - RITMO.meio.periodo) < 0.2);
+});
+
+// ---- A Q de cada campeão (tipo, janela, recarga, posto pelo nível).
+const rodadaCom = (id, n = 2) => { const r = criarRodada(aleatorio(21), n); r.campeao = CAMPEOES.find((c) => c.id === id); return r; };
+const semGolpes = (r) => ({ ...r, golpes: [], gatilhoInimigo: null });
+
+test('smite: o posto da habilidade sobe com o nível (1 a 5)', () => {
+  assert.deepEqual([6, 7, 8, 10, 11, 13, 14, 16, 17, 18].map(postoHab), [0, 0, 1, 1, 2, 2, 3, 3, 4, 4]);
+  for (const c of CAMPEOES) for (const k of ['dano', 'recarga']) assert.ok(c[k].every((v, i) => i === 0 || k === 'recarga' ? v > 0 : v > c[k][i - 1]));
+});
+
+test('smite: Lee Sin: Q1 abre a janela de 3 s; Q2 bate mais com menos vida; perder a janela inicia a recarga', () => {
+  const r = semGolpes(rodadaCom('LeeSin')); const c = r.campeao; const k = postoHab(r.nivel);
+  const est = novoEstado(r);
+  const e1 = usarHabilidade(est, 10);
+  assert.equal(e1[0].fase, 'q1'); assert.equal(e1[0].dano, c.dano[k]);
+  assert.equal(estadoQ(est, 11).fase, 'janela');
+  // Q2 com a vida cheia: dano base; com a vida quase no fim: perto do dobro
+  const cheio = novoEstado(r); usarHabilidade(cheio, 10);
+  const q2 = usarHabilidade(cheio, 12)[0];
+  assert.equal(q2.fase, 'q2'); assert.ok(Math.abs(q2.dano - c.dano2[k] * (1 + (c.dano[k] / r.vidaMax))) < 2);
+  assert.equal(estadoQ(cheio, 12.5).fase, 'recarga');
+  assert.ok(Math.abs(estadoQ(cheio, 12).falta - c.recarga[k]) < 0.01);
+  const baixo = novoEstado(r); usarHabilidade(baixo, 10); baixo.vida = r.vidaMax * 0.1;
+  const q2b = usarHabilidade(baixo, 11)[0];
+  assert.ok(q2b.dano > c.dano2[k] * 1.85);
+  // perdeu a janela: depois de 3 s a recarga começa (do fim da janela)
+  const perdeu = novoEstado(r); usarHabilidade(perdeu, 10);
+  const ev = avancar(perdeu, 13.2);
+  assert.ok(ev.some((x) => x.tipo === 'habilidade-fim' && x.motivo === 'janela'));
+  assert.equal(estadoQ(perdeu, 13.2).fase, 'recarga');
+  assert.ok(Math.abs(estadoQ(perdeu, 13.2).falta - (c.recarga[k] - 0.2)) < 0.01);
+  assert.deepEqual(usarHabilidade(perdeu, 13.5), []); // ainda em recarga
+});
+
+test('smite: Nunu e Kha\'Zix: um toque; recarga própria; Nunu bate bem mais forte; Kha\'Zix recarrega em 3 s', () => {
+  for (const id of ['Nunu', 'Khazix']) {
+    const r = semGolpes(rodadaCom(id)); const c = r.campeao; const k = postoHab(r.nivel);
+    const est = novoEstado(r);
+    assert.equal(usarHabilidade(est, 5)[0].dano, c.dano[k]);
+    assert.equal(estadoQ(est, 5.1).fase, 'recarga');
+    assert.deepEqual(usarHabilidade(est, 5 + c.recarga[k] - 0.1), []);
+    assert.equal(usarHabilidade(est, 5 + c.recarga[k] + 0.01).length, 1);
+  }
+  const nunu = CAMPEOES.find((c) => c.id === 'Nunu'); const outros = CAMPEOES.filter((c) => c.id !== 'Nunu');
+  for (let k = 0; k < 5; k++) assert.ok(nunu.dano[k] > 1.5 * Math.max(...outros.filter((c) => c.tipo === 'simples').map((c) => c.dano[k])));
+  assert.ok(CAMPEOES.find((c) => c.id === 'Khazix').recarga.every((v) => v === 3));
+});
+
+test('smite: Pantheon: toque rápido devolve 60% da recarga; segurar dá arremesso maior; segurar demais = metade da recarga', () => {
+  const r = semGolpes(rodadaCom('Pantheon')); const c = r.campeao; const k = postoHab(r.nivel);
+  const toque = novoEstado(r);
+  usarHabilidade(toque, 10);
+  assert.equal(estadoQ(toque, 10.1).fase, 'segurando');
+  const e = soltarHabilidade(toque, 10.2)[0];
+  assert.equal(e.fase, 'toque'); assert.equal(e.dano, c.dano[k]);
+  assert.ok(Math.abs(estadoQ(toque, 10.2).falta - c.recarga[k] * 0.4) < 0.01);
+  const dano = (seg) => { const x = novoEstado(r); usarHabilidade(x, 10); return soltarHabilidade(x, 10 + seg)[0]; };
+  const curto = dano(0.5); const meio = dano(1.2); const cheio = dano(2); const mais = dano(3.5);
+  assert.equal(curto.fase, 'arremesso');
+  assert.ok(curto.dano > c.dano[k] && meio.dano > curto.dano && cheio.dano > meio.dano);
+  assert.equal(mais.dano, cheio.dano); // passou da carga cheia: não cresce mais
+  const x = novoEstado(r); usarHabilidade(x, 10);
+  assert.equal(estadoQ(x, 12).fase, 'segurando');
+  const ev = avancar(x, 14.1);
+  assert.ok(ev.some((v) => v.tipo === 'habilidade-fim' && v.motivo === 'segurou'));
+  assert.equal(x.vida, r.vidaMax); // não causou dano
+  assert.ok(Math.abs(estadoQ(x, 14.1).falta - (c.recarga[k] / 2 - 0.1)) < 0.01);
+  assert.deepEqual(soltarHabilidade(x, 14.2), []); // já cancelou
+});
+
+test('smite: Wukong: o Q arma o próximo ataque (5 s) com dano extra; cada golpe seu corta 0,5 s da recarga', () => {
+  const base = rodadaCom('MonkeyKing'); const c = base.campeao; const k = postoHab(base.nivel);
+  const r = { ...base, gatilhoInimigo: null, golpes: [{ t: 12, quem: 'voce', dano: 100, vida: 0 }, { t: 13, quem: 'voce', dano: 100, vida: 0 }, { t: 18, quem: 'voce', dano: 100, vida: 0 }] };
+  const est = novoEstado(r);
+  const a = usarHabilidade(est, 10);
+  assert.equal(a[0].tipo, 'habilidade-armar'); assert.equal(est.vida, r.vidaMax);
+  assert.equal(estadoQ(est, 11).fase, 'armado');
+  const ev = avancar(est, 12.5);
+  assert.ok(ev.some((x) => x.tipo === 'habilidade' && x.fase === 'bonus' && x.dano === c.dano[k]));
+  assert.equal(est.vida, r.vidaMax - 100 - c.dano[k]);
+  avancar(est, 13.5); // o segundo golpe não tem bônus
+  assert.equal(est.vida, r.vidaMax - 200 - c.dano[k]);
+  // recarga: 10 + recarga, menos 0,5 s por golpe do Wukong (2 golpes)
+  assert.ok(Math.abs(est.q.prontoEm - (10 + c.recarga[k] - 1)) < 0.01);
+  // sem golpe a tempo, o armado expira
+  const r2 = { ...base, gatilhoInimigo: null, golpes: [{ t: 30, quem: 'voce', dano: 100, vida: 0 }] };
+  const e2 = novoEstado(r2); usarHabilidade(e2, 10);
+  assert.ok(avancar(e2, 15.5).some((x) => x.tipo === 'habilidade-fim' && x.motivo === 'armado'));
+  avancar(e2, 31); assert.equal(e2.vida, r2.vidaMax - 100);
 });

@@ -145,6 +145,13 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
 .sm-bt .nome { font-size: 1.15cqw; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; line-height: 1.1; max-width: 11cqw; white-space: nowrap; }
 .sm-bt .recarga { position: absolute; inset: 0; background: rgba(2, 8, 10, 0.78); display: grid; place-items: center; font-family: 'Bebas Neue', sans-serif; font-size: 2.8cqw; z-index: 1; }
 .sm-bt .recarga[hidden] { display: none; }
+.sm-bt .recarga.janela, .sm-bt .recarga.armado { background: rgba(255, 150, 30, 0.35); font-size: 1.9cqw; color: #ffd9a0; }
+.sm-bt[data-fase="janela"] .quadro, .sm-bt[data-fase="armado"] .quadro { --cor-bt: #ffa530; animation: sm-pulso 0.5s ease-in-out infinite alternate; }
+.sm-bt .carga { position: absolute; left: 0; right: 0; bottom: 0; height: 22%; background: rgba(2, 8, 10, 0.8); z-index: 1; }
+.sm-bt .carga[hidden] { display: none; }
+.sm-bt .carga i { display: block; height: 100%; width: 0; background: #3fa8ff; }
+.sm-bt .carga.cheia i { background: #ffd35a; }
+.sm-bt[data-fase="segurando"] .quadro { --cor-bt: #ffd35a; }
 .sm-bt:disabled { cursor: default; }
 .sm-bt:disabled .quadro { filter: grayscale(0.7); box-shadow: none; }
 .sm-bt.f.pronto .quadro { animation: sm-pulso 1.1s ease-in-out infinite alternate; }
@@ -170,7 +177,7 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
 .sm-acoes { display: flex; gap: 1.2cqw; flex-wrap: wrap; justify-content: center; }
 .sm-campeao { display: flex; align-items: center; gap: 1.2cqw; padding: 0.8cqw 1.4cqw; border-radius: 0.8cqw; background: rgba(0, 0, 0, 0.3); border: 0.12cqw solid rgba(245, 207, 90, 0.3); text-align: left; }
 .sm-campeao img { width: 6cqw; height: 6cqw; border-radius: 50%; border: 0.22cqw solid var(--sm-ouro); object-fit: cover; }
-.sm-campeao b { display: block; font-size: 1.6cqw; } .sm-campeao span { font-size: 1.2cqw; color: #bcd3cb; }
+.sm-campeao b { display: block; font-size: 1.6cqw; } .sm-campeao span { display: block; font-size: 1.2cqw; color: #bcd3cb; }
 .sm-pontos { font-family: 'Bebas Neue', sans-serif; font-size: 6.4cqw; line-height: 1; color: #fff; text-shadow: 0 0 1.6cqw rgba(245, 207, 90, 0.6); }
 .sm-pontos small { font-size: 2.2cqw; color: var(--sm-ouro); letter-spacing: 0.08em; margin-left: 0.4cqw; }
 .sm-resumo { width: 100%; display: grid; gap: 0.5cqw; }
@@ -217,7 +224,7 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
   .sm-botoes { left: auto; right: 4cqw; bottom: 2cqw; gap: 6cqw; }
   .sm-bt { width: 24cqw; } .sm-bt .quadro { width: 24cqw; height: 24cqw; border-width: 0.8cqw; border-radius: 2.4cqw; }
   .sm-bt .tecla { min-width: 8cqw; height: 6.4cqw; font-size: 4cqw; border-width: 0.5cqw; } .sm-bt .nome { font-size: 3.2cqw; max-width: 28cqw; }
-  .sm-bt .recarga { font-size: 9cqw; }
+  .sm-bt .recarga { font-size: 9cqw; } .sm-bt .recarga.janela, .sm-bt .recarga.armado { font-size: 6cqw; }
   .sm-cartao { width: 94%; padding: 4cqw 4cqw 0; gap: 2.4cqw; border-width: 0.6cqw; }
   .sm-acoes { position: sticky; bottom: 0; width: 100%; padding: 3cqw 0 4cqw; background: linear-gradient(180deg, rgba(4, 16, 15, 0), rgba(4, 16, 15, 0.96) 35%); z-index: 2; }
   .sm-cartao .sup { font-size: 2.6cqw; } .sm-cartao h2 { font-size: 11cqw; } .sm-cartao p { font-size: 3.3cqw; max-width: none; }
@@ -229,3 +236,4 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
   .sm-resumo div { font-size: 3.4cqw; grid-template-columns: 16cqw 1fr auto; padding: 1.4cqw 3cqw; }
   .sm-contagem { font-size: 34cqw; }
 }
+.sm-bt[data-fase="armado"]:disabled .quadro { filter: none; }

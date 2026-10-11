@@ -9,9 +9,9 @@ import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import { t, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import {
-  OBJETIVOS, RODADAS, TEMPO_MAX, RECARGA_HAB, ROTA_NOME,
+  OBJETIVOS, RODADAS, TEMPO_MAX, ROTA_NOME, postoHab,
   aleatorio, criarPartida, criarRodada, nomeCampeao,
-  novoEstado, avancar, usarHabilidade, usarGolpear,
+  novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, usarGolpear,
 } from './logic.js';
 
 const GAME_ID = 'smite';
@@ -112,7 +112,7 @@ function montar() {
       <div class="sm-retrato"><img id="sm-retrato" alt="" /></div><span class="sm-nivel" id="sm-nivel">11</span>
       <div class="sm-barras"><div class="v"><i></i><span>1.860 / 2.100</span></div><div class="m"><i></i><span>640 / 890</span></div></div>
       <div class="sm-botoes">
-        <button type="button" class="sm-bt q" id="sm-q" aria-label="${t('Habilidade')} (Q)"><span class="quadro"><img id="sm-q-img" alt="" /><span class="recarga" id="sm-q-rec" hidden></span><span class="tecla">Q</span></span><span class="nome">${t('Habilidade')}</span></button>
+        <button type="button" class="sm-bt q" id="sm-q" aria-label="${t('Habilidade')} (Q)"><span class="quadro"><img id="sm-q-img" alt="" /><span class="recarga" id="sm-q-rec" hidden></span><span class="carga" id="sm-q-carga" hidden><i></i></span><span class="tecla">Q</span></span><span class="nome">${t('Habilidade')}</span></button>
         <button type="button" class="sm-bt f" id="sm-f" aria-label="${t('Golpear')} (F)"><span class="quadro"><img alt="" src="${imgSmite()}" /><span class="tecla">F</span></span><span class="nome">${t('Golpear')}</span></button>
       </div>
     </div>
@@ -121,7 +121,9 @@ function montar() {
     <div class="sm-tela" id="sm-tela" hidden></div>
   </div>`;
   atualizarSom();
-  $('sm-q').addEventListener('click', usarHab);
+  const q = $('sm-q');
+  q.addEventListener('pointerdown', (e) => { e.preventDefault(); usarHab(); });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) q.addEventListener(ev, soltarHab);
   $('sm-f').addEventListener('click', usarSmite);
   $('sm-som').addEventListener('click', () => { mudo = !mudo; gravarLS(CHAVE_MUDO, mudo); atualizarSom(); });
 }
@@ -152,7 +154,6 @@ let resultados = []; // { pontos, resultado, margem, campeao, objetivo }
 let fase = 'intro'; // intro | preparo | jogando | fim
 let t0 = 0; let raf = 0;
 let est = null; // estado da rodada (logic.js): vida, golpes aplicados, Golpear, Smite inimigo e o fim
-let qPronto = 0; // quando a habilidade volta (s)
 let danos = {}; // quem → dano causado
 let ultimoTxt = ''; let ultimoTempo = ''; let ultimoResta = TEMPO_MAX;
 let partida = null; // a partida (5 rodadas): os mesmos campeões do começo ao fim
@@ -175,9 +176,15 @@ function hud() {
   else if (fase !== 'fim') ultimoResta = TEMPO_MAX; // parado no fim da rodada; volta a 50 na próxima
   const tt = `00:${String(ultimoResta).padStart(2, '0')}`;
   if (tt !== ultimoTempo) { $('sm-tempo-n').textContent = tt; ultimoTempo = tt; $('sm-tempo').classList.toggle('fim', ultimoResta <= 8 && fase === 'jogando'); }
-  const rec = $('sm-q-rec'); const falta = fase === 'jogando' ? Math.ceil(qPronto - tempoAgora()) : 0;
-  rec.hidden = falta <= 0; if (falta > 0) rec.textContent = String(falta);
-  $('sm-q').disabled = fase !== 'jogando' || falta > 0;
+  const rec = $('sm-q-rec'); const car = $('sm-q-carga'); const qb = $('sm-q');
+  const eq = fase === 'jogando' && est ? estadoQ(est, tempoAgora()) : { fase: 'pronto', falta: 0, carga: 0 };
+  const mostra = eq.fase === 'recarga' || eq.fase === 'janela' || eq.fase === 'armado';
+  rec.hidden = !mostra; rec.className = `recarga ${eq.fase}`;
+  if (mostra) rec.textContent = eq.fase === 'recarga' ? String(Math.ceil(eq.falta)) : (eq.fase === 'janela' ? `Q2 ${eq.falta.toFixed(1)}` : eq.falta.toFixed(1));
+  car.hidden = eq.fase !== 'segurando';
+  if (!car.hidden) { car.firstElementChild.style.width = `${Math.round(eq.carga * 100)}%`; car.classList.toggle('cheia', eq.carga >= 1); }
+  qb.dataset.fase = eq.fase;
+  qb.disabled = fase !== 'jogando' || eq.fase === 'recarga' || (eq.fase === 'armado');
   $('sm-f').disabled = fase !== 'jogando' || Boolean(est?.smiteUsado);
 }
 
@@ -227,6 +234,17 @@ function aplicarEventos(eventos) {
       const fl = $('sm-flash'); fl.classList.add('inimigo'); fl.classList.remove('vai'); void fl.offsetWidth; fl.classList.add('vai');
       bateu(); SOM.smite();
       aviso(t('O selva inimigo usou o Golpear!'));
+    } else if (e.tipo === 'habilidade') {
+      danos.voce = (danos.voce || 0) + e.dano;
+      SOM.hab(); bateu();
+      const v = $('sm-voce'); v.classList.remove('usa'); void v.offsetWidth; v.classList.add('usa');
+      if (e.fase !== 'bonus') feixe();
+      numero(fmt(e.dano), 'q', 54 + Math.random() * 6, 24 + Math.random() * 10);
+    } else if (e.tipo === 'habilidade-armar') {
+      SOM.hab(); aviso(t('Ataque armado! O seu próximo golpe causa dano extra.'), 1800);
+    } else if (e.tipo === 'habilidade-fim') {
+      if (e.motivo === 'janela') aviso(t('Perdeu a janela do segundo Q: a recarga começou.'), 2200);
+      else if (e.motivo === 'segurou') aviso(t('Segurou demais! A recarga é a metade.'), 2200);
     } else if (e.tipo === 'golpear-cedo') {
       danos.voce = (danos.voce || 0) + e.dano;
       numero(fmt(e.dano), 'smite', 52, 22);
@@ -247,17 +265,18 @@ function laco() {
 }
 
 function usarHab() {
-  if (fase !== 'jogando' || tempoAgora() < qPronto) return;
-  const c = R.campeao;
+  if (fase !== 'jogando' || $('sm-q').disabled) return;
   aplicarEventos(avancar(est, tempoAgora()));
   if (est.fim) { hud(); terminar(); return; }
-  qPronto = tempoAgora() + RECARGA_HAB;
-  const eventos = usarHabilidade(est);
-  danos.voce = (danos.voce || 0) + c.dano;
-  SOM.hab(); bateu();
-  const v = $('sm-voce'); v.classList.remove('usa'); void v.offsetWidth; v.classList.add('usa');
-  feixe(); numero(fmt(c.dano), 'q', 54 + Math.random() * 6, 24 + Math.random() * 10);
-  aplicarEventos(eventos);
+  aplicarEventos(usarHabilidade(est, tempoAgora()));
+  hud();
+  if (est.fim) { cancelAnimationFrame(raf); terminar(); }
+}
+function soltarHab() {
+  if (fase !== 'jogando' || !est || R.campeao.tipo !== 'carga' || est.q.desde == null) return;
+  aplicarEventos(avancar(est, tempoAgora()));
+  if (est.fim) { hud(); terminar(); return; }
+  aplicarEventos(soltarHabilidade(est, tempoAgora()));
   hud();
   if (est.fim) { cancelAnimationFrame(raf); terminar(); }
 }
@@ -362,16 +381,24 @@ function prepararRodada() {
   const fixo = OBJETIVOS.find((o) => o.id === new URLSearchParams(location.search).get('obj'));
   R = criarRodada(rand, n, { partida, objetivo: fixo || undefined });
   fase = 'preparo';
-  est = novoEstado(R); qPronto = 0; danos = {}; ultimoTxt = ''; ultimoTempo = '';
+  est = novoEstado(R); danos = {}; ultimoTxt = ''; ultimoTempo = '';
   prepararHud(); painelDano(); hud();
   cartaoPreparo();
+}
+// Resume a Q do campeão no posto desta rodada (o posto sobe com o nível).
+function descricaoQ(c) {
+  const k = postoHab(R.nivel); const seg = String(c.recarga[k]).replace('.', ',');
+  if (c.tipo === 'duplo') return t('Q: toque para a Onda Sônica; em até {janela}s toque de novo para o Chute, que bate mais quanto menos vida o objetivo tem. Recarga {seg}s.', { janela: c.janela, seg });
+  if (c.tipo === 'carga') return t('Q: toque rápido para uma estocada ({dano}); segure e solte para um arremesso com mais dano (se segurar mais de {max}s, a recarga é a metade). Recarga {seg}s.', { dano: fmt(c.dano[k]), max: c.segurarMax, seg });
+  if (c.tipo === 'armar') return t('Q: arma o seu próximo ataque (até {janela}s) com +{dano} de dano; cada golpe seu corta 0,5s da recarga. Recarga {seg}s.', { janela: c.janela, dano: fmt(c.dano[k]), seg });
+  return t('Q: {dano} de dano. Recarga {seg}s.', { dano: fmt(c.dano[k]), seg });
 }
 function cartaoPreparo() {
   const c = R.campeao;
   tela(`<div class="sm-cartao">
     <span class="sup">${t('Rodada {n} de {total}', { n: n + 1, total: RODADAS })}</span>
     <h2>${esc(nomeObj())}</h2>
-    <div class="sm-campeao"><img alt="" src="${imgCampeao(c.id)}" /><div><b>${esc(c.nome)}</b><span>${t('Você é o selva do time azul · Q: {dano} de dano · recarga {seg}s', { dano: fmt(c.dano), seg: RECARGA_HAB })}</span></div></div>
+    <div class="sm-campeao"><img alt="" src="${imgCampeao(c.id)}" /><div><b>${esc(c.nome)}</b><span>${t('Você é o selva do time azul')}</span><span class="hab">${descricaoQ(c)}</span></div></div>
     <p>${t('Você está no nível <b>{nivel}</b>: o dano do seu Golpear é de <b>{smite}</b>. Golpeie quando a vida do {obj} for <b>menor ou igual</b> a esse valor, o mais perto possível.', { nivel: R.nivel, smite: fmt(R.smite), obj: nomeObj() })}</p>
     <div class="sm-acoes"><button type="button" class="sm-go" data-a="comecar">${t('COMEÇAR')}</button></div></div>`, cartaoPreparo);
 }
@@ -448,7 +475,7 @@ function desenharFim(pts, melhor, recorde, perfeitas) {
 document.addEventListener('click', (e) => {
   const a = e.target.closest('[data-a]')?.dataset.a;
   if (!a) return;
-  if (a === 'jogar') { resultados = []; n = 0; partida = criarPartida(aleatorio((Date.now() ^ 0x9e3779b9) >>> 0)); prepararRodada(); }
+  if (a === 'jogar') { resultados = []; n = 0; partida = criarPartida(aleatorio((Date.now() ^ 0x9e3779b9) >>> 0), new URLSearchParams(location.search).get('camp')); prepararRodada(); } // ?camp=LeeSin fixa o campeão (teste)
   else if (a === 'comecar') contagemEIniciar();
   else if (a === 'proxima') { n += 1; prepararRodada(); }
   else if (a === 'fim') telaFim();
@@ -460,6 +487,8 @@ document.addEventListener('keydown', (e) => {
     if (fase === 'jogando') { e.preventDefault(); usarSmite(); }
   }
 });
+
+document.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'q') soltarHab(); });
 
 // Trocou o idioma: os textos fixos do palco e a tela aberta são refeitos (a partida em andamento continua).
 onLangChange(() => {
