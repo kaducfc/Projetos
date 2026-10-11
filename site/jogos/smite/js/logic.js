@@ -37,6 +37,8 @@ export const FAIXA_ABAIXO = 0.30;
 export const PROB_SMITE_INIMIGO = 0.8; // em 80% das rodadas o inimigo tem o feitiço pronto
 // Pontos quando o seu time fica com o objetivo sem o seu Golpear ter garantido (errou ou nem usou).
 export const PONTOS_TIME = 25;
+// Pontos quando é a habilidade do seu campeão (Q) que finaliza o objetivo (em vez do Golpear).
+export const PONTOS_HABILIDADE = 50;
 
 // Cada time tem 1 topo, 1 selva, 1 meio e 1 atirador. O jogador é sempre o selva do time azul.
 export const ROTAS = ['topo', 'selva', 'meio', 'atirador'];
@@ -196,7 +198,8 @@ export function resolverSmite(vida, smite) {
 // A rodada em andamento. A rodada só acaba quando o objetivo morre (por qualquer um) ou o tempo
 // acaba; errar o Golpear não encerra nada. Quem dá o último golpe decide de que time é o objetivo:
 //   - seu Golpear com a vida ≤ dano do Smite ........ 'garantido' (pontos pela margem)
-//   - seu time (aliado ou sua habilidade) ........... 'time' (PONTOS_TIME)
+//   - sua habilidade (Q) finaliza ................... 'time' via 'habilidade' (PONTOS_HABILIDADE = 50)
+//   - um aliado finaliza ............................ 'time' (PONTOS_TIME = 25)
 //   - time inimigo (golpe ou Smite do selva) ........ 'roubado' (0)
 export function novoEstado(rodada) {
   return { R: rodada, vida: rodada.vidaMax, idx: 0, smiteUsado: false, smiteFalhou: null, inimigoUsou: false, fim: null };
@@ -206,7 +209,7 @@ const encerrar = (est, fim) => { est.fim = fim; };
 
 function morreu(est, quem, via) {
   const p = est.R.participantes.find((x) => x.id === quem);
-  if (p && p.lado === 'azul') encerrar(est, { resultado: 'time', pontos: PONTOS_TIME, quem, via, margem: null });
+  if (p && p.lado === 'azul') encerrar(est, { resultado: 'time', pontos: via === 'habilidade' ? PONTOS_HABILIDADE : PONTOS_TIME, quem, via, margem: null });
   else encerrar(est, { resultado: 'roubado', pontos: 0, quem, via, margem: null });
 }
 
@@ -237,7 +240,7 @@ export function avancar(est, t) {
   return eventos;
 }
 
-// A habilidade do campeão do jogador (Q). Se ela derruba o objetivo, é o seu time que fica com ele.
+// A habilidade do campeão do jogador (Q). Se ela derruba o objetivo, o seu time fica com ele e vale PONTOS_HABILIDADE.
 export function usarHabilidade(est) {
   const eventos = [];
   if (est.fim) return eventos;

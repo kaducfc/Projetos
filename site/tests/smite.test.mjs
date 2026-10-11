@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, DANOS_SMITE, CAMPEOES, ROTAS, POR_ROTA, JANELAS, danoDoSmite, NIVEL_MIN, NIVEL_MAX,
-  novoEstado, avancar, usarHabilidade, usarGolpear, PONTOS_TIME, PROB_SMITE_INIMIGO, FAIXA_ACIMA, FAIXA_ABAIXO,
+  novoEstado, avancar, usarHabilidade, usarGolpear, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, FAIXA_ACIMA, FAIXA_ABAIXO,
   aleatorio, pontosDaMargem, classificar, criarRodada, proximoObjetivo, vidaEm, resolverSmite,
 } from '../jogos/smite/js/logic.js';
 
@@ -301,14 +301,16 @@ test('smite: Golpear com a vida ≤ dano do Smite garante o objetivo (margem exa
   }
 });
 
-test('smite: a habilidade que derruba o objetivo dá o objetivo ao seu time (25 pontos)', () => {
+test('smite: a habilidade que finaliza o objetivo dá o objetivo ao seu time (50 pontos, mais que o aliado)', () => {
+  assert.equal(PONTOS_HABILIDADE, 50);
+  assert.ok(PONTOS_HABILIDADE > PONTOS_TIME);
   const r = criarRodada(aleatorio(9), 1);
   const est = novoEstado(r);
   est.vida = r.campeao.dano - 1; // quase morto
   const ev = usarHabilidade(est);
   assert.equal(ev[0].tipo, 'habilidade');
   assert.equal(est.fim.resultado, 'time');
-  assert.equal(est.fim.pontos, PONTOS_TIME);
+  assert.equal(est.fim.pontos, 50);
   assert.equal(est.fim.via, 'habilidade');
   // sem matar, só tira vida
   const e2 = novoEstado(r);
@@ -383,7 +385,7 @@ test('smite: pontos nunca passam de 100 por rodada, e errar o Golpear com o time
     const r = criarRodada(aleatorio(semente * 41), 3);
     const est = jogar(r, (e, t) => { if (t > 6 && !e.smiteUsado) usarGolpear(e); });
     assert.ok(est.fim.pontos <= 100);
-    if (est.fim.resultado === 'time') assert.equal(est.fim.pontos, 25);
+    if (est.fim.resultado === 'time') assert.equal(est.fim.pontos, est.fim.via === 'habilidade' ? 50 : 25);
     if (est.fim.resultado === 'roubado') assert.equal(est.fim.pontos, 0);
   }
 });
