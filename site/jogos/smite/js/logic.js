@@ -65,6 +65,8 @@ export const ROTA_NOME = { topo: 'Topo', selva: 'Selva', meio: 'Meio', atirador:
 export const DANO_3S = { atirador: 1000, meio: 800, selva: 500, topo: 200 };
 // Multiplicador de todos os ataques (aliados, adversários e o próprio jogador): +50% de dano em cada golpe.
 export const MULT_DANO = 1.5;
+// Os outros campeões (aliados e adversários, não você) batem +35% mais forte e o objetivo cai mais rápido.
+export const MULT_OUTROS = 1.35;
 // Ritmo de cada classe: tempo entre golpes (s) e quanto o tempo e o dano de cada golpe variam (fração).
 export const RITMO = {
   atirador: { periodo: 0.6, variaT: 0.06, variaD: 0.08 },
@@ -84,12 +86,13 @@ export const RITMO = {
 export const RECARGA_Q_MULT = 0.9;
 export const DANO_Q_MULT = 1.2;
 const mr = (v) => v.map((x) => Math.round(x * RECARGA_Q_MULT * 100) / 100);
-const md = (v) => v.map((x) => Math.round(x * DANO_Q_MULT));
+const md = (v, k = 1) => v.map((x) => Math.round(x * DANO_Q_MULT * k));
+export const PANTHEON_MULT = 0.7; // ajuste só do Pantheon: danos da Q −30%
 export const CAMPEOES = [
   { id: 'LeeSin', nome: 'Lee Sin', hab: 'Onda Sônica', tipo: 'duplo', dano: md([90, 115, 140, 165, 190]), dano2: md([120, 160, 200, 240, 280]), recarga: mr([9, 8, 7, 6, 5]), janela: 3 },
   { id: 'Nunu', nome: 'Nunu e Willump', hab: 'Consumir', tipo: 'simples', dano: md([330, 430, 530, 630, 730]), recarga: mr([13, 12, 11, 10, 9]) },
   { id: 'Khazix', nome: "Kha'Zix", hab: 'Garras Famintas', tipo: 'simples', dano: md([120, 150, 180, 210, 240]), recarga: mr([3, 3, 3, 3, 3]) },
-  { id: 'Pantheon', nome: 'Pantheon', hab: 'Lança Cometa', tipo: 'carga', dano: md([110, 140, 170, 200, 230]), dano2: md([160, 210, 260, 310, 360]), recarga: mr([11, 10.25, 9.5, 8.75, 8]), toqueMax: 0.35, cargaCheia: 2, segurarMax: 4, devolve: 0.6, segundo: 0.5, bonusCarga: 0.5 },
+  { id: 'Pantheon', nome: 'Pantheon', hab: 'Lança Cometa', tipo: 'carga', dano: md([110, 140, 170, 200, 230], PANTHEON_MULT), dano2: md([160, 210, 260, 310, 360], PANTHEON_MULT), recarga: mr([11, 10.25, 9.5, 8.75, 8]), toqueMax: 0.35, cargaCheia: 2, segurarMax: 4, devolve: 0.6, segundo: 0.5, bonusCarga: 0.5 },
   { id: 'MonkeyKing', nome: 'Wukong', hab: 'Golpe Devastador', tipo: 'armar', dano: md([110, 140, 170, 200, 230]), recarga: mr([8, 7.5, 7, 6.5, 6]), janela: 5, corta: 0.5 },
 ];
 export const POR_ROTA = {
@@ -207,7 +210,8 @@ export function criarRodada(rand, n = 0, opcoes = null) {
   const usaSmite = rand() < PROB_SMITE_INIMIGO;
   const reacaoInimigo = entre(rand, REACAO_INIMIGO[0], REACAO_INIMIGO[1]);
   const gatilhoInimigo = usaSmite ? smite : null; // só indica que ele tem o feitiço (a hora vem do tempo, não da vida)
-  const janela = JANELAS[Math.min(n, JANELAS.length - 1)] * entre(rand, 0.9, 1.1);
+  // (o +35% dos outros campeões é compensado aqui para a janela de acerto do Golpear continuar com o mesmo tamanho)
+  const janela = JANELAS[Math.min(n, JANELAS.length - 1)] * entre(rand, 0.9, 1.1) * MULT_OUTROS;
   // Quando a vida chega perto do dano do Smite. O dano dos outros campeões escala com o nível: no começo (nível ~5) eles
   // batem mais fraco e o objetivo demora mais (24-40 s); no fim (nível 18) batem mais forte e ele cai mais rápido (16-28 s).
   const f = Math.max(0, Math.min(1, (nivel - 5) / 13));
@@ -229,7 +233,7 @@ export function criarRodada(rand, n = 0, opcoes = null) {
     const periodo = ritmo.periodo * entre(rand, 0.95, 1.05);
     for (let t = entre(rand, 0.1, periodo); t < TEMPO_MAX; t += periodo * entre(rand, 1 - ritmo.variaT, 1 + ritmo.variaT)) {
       const taxa = t < tx ? r1 : r2;
-      let dano = taxa * (pesos[i] / soma) * periodo * entre(rand, 1 - ritmo.variaD, 1 + ritmo.variaD) * MULT_DANO;
+      let dano = taxa * (pesos[i] / soma) * periodo * entre(rand, 1 - ritmo.variaD, 1 + ritmo.variaD) * MULT_DANO * (p.id === 'voce' ? 1 : MULT_OUTROS);
       if (p.rota !== 'topo' && rand() < prob) dano *= entre(rand, 1.6, 2.2);
       eventos.push({ t: Math.round(t * 1000) / 1000, quem: p.id, dano: Math.max(1, Math.round(dano)) });
     }

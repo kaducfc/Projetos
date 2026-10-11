@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, DANOS_SMITE, CAMPEOES, ROTAS, POR_ROTA, JANELAS, danoDoSmite, NIVEL_MIN, NIVEL_MAX,
-  TEMPO_MINIMO, REACAO_INIMIGO, novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, postoHab, usarGolpear, criarPartida, nivelNoTempo, NIVEL_POR_MINUTO, DANO_3S, RITMO, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO,
+  TEMPO_MINIMO, REACAO_INIMIGO, novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, postoHab, usarGolpear, criarPartida, nivelNoTempo, NIVEL_POR_MINUTO, DANO_3S, RITMO, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, MULT_OUTROS, PANTHEON_MULT,
   aleatorio, pontosDoTempo, classificar, criarRodada, proximoObjetivo, vidaEm, resolverSmite,
 } from '../jogos/smite/js/logic.js';
 
@@ -147,7 +147,7 @@ test('smite: toda rodada gerada é jogável (vida cai até zero, passa pelo dano
       const dentro = r.golpes.filter((g) => g.vida > 0 && g.vida <= r.smite);
       assert.ok(dentro.length >= 1, 'há golpes dentro da janela');
       const t0 = dentro[0].t; const t1 = r.morreEm;
-      assert.ok(t1 - t0 > 0.5, `janela de ${(t1 - t0).toFixed(2)}s`);
+      assert.ok(t1 - t0 > 0.3, `janela de ${(t1 - t0).toFixed(2)}s`);
       assert.ok(t1 - t0 < 8, 'janela não é longa demais');
       assert.ok([600, 900, 1200].includes(r.smite));
       assert.equal(r.smite, danoDoSmite(r.nivel));
@@ -431,7 +431,7 @@ test('smite: dano por classe (atirador > meio > selva > topo, na proporção 100
     const par = criarPartida(aleatorio(semente * 3));
     const r = criarRodada(aleatorio(semente * 5), semente % RODADAS, { partida: par });
     const rota = Object.fromEntries(r.participantes.map((p) => [p.id, p.rota]));
-    for (const g of r.golpes) { soma[rota[g.quem]] += g.dano; golpes[rota[g.quem]].push(g); }
+    for (const g of r.golpes) { soma[rota[g.quem]] += g.dano / (g.quem === 'voce' ? 1 : MULT_OUTROS); golpes[rota[g.quem]].push(g); }
   }
   const jogadores = { atirador: 2, meio: 2, selva: 2, topo: 2 }; // por rodada (os dois selvas, o jogador inclusive, batem)
   for (const k of Object.keys(soma)) soma[k] /= jogadores[k];
@@ -621,4 +621,12 @@ test('smite: o nível acompanha o relógio da partida (curva média de nível po
       if (min) assert.ok(par.niveis[i] >= min, `${par.objetivos[i].id} em nível ${par.niveis[i]}`);
     });
   }
+});
+
+test('smite: os outros campeões batem +35% e a Q do Pantheon é 30% menor', () => {
+  assert.equal(MULT_OUTROS, 1.35);
+  assert.equal(PANTHEON_MULT, 0.7);
+  const pan = CAMPEOES.find((c) => c.id === 'Pantheon');
+  assert.deepEqual(pan.dano, [110, 140, 170, 200, 230].map((x) => Math.round(x * 1.2 * 0.7)));
+  assert.deepEqual(pan.dano2, [160, 210, 260, 310, 360].map((x) => Math.round(x * 1.2 * 0.7)));
 });

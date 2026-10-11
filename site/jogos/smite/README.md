@@ -91,3 +91,5 @@ O nível do jogador (e, ±1, dos outros) agora vem do relógio simulado (`nivelN
 - Dano dos outros campeões escala com o nível: o tempo até a vida chegar perto do dano do Smite vai de 24-40 s (nível ~5, golpes fracos) a 16-28 s (nível 18, golpes fortes, ~2× maiores), e cada nível acima do seu dá +4% no peso daquele campeão.
 
 - Simulação com a regra atual (jogador que golpeia X s depois de a vida entrar na zona): X=0,25 s → garante ~85% das rodadas (71 pts em média); X=0,35 s → ~58% (45 pts); X=0,5 s → ~20% (14 pts). Sem agir, o inimigo leva ~90% das rodadas.
+
+- Ajustes recentes de equilíbrio: Q do Pantheon −30% (`PANTHEON_MULT` = 0,7); os outros campeões (aliados e adversários, não o jogador) batem +35% (`MULT_OUTROS` = 1,35). A janela de acerto do Golpear foi compensada (×1,35 em `janela`) para continuar do mesmo tamanho; o objetivo chega à zona do Smite mais cedo e com golpes maiores.
