@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createFakeSupabase, installMemoryStorage } from './fake-supabase.js';
 import * as platform from '../shared/platform.js';
-import { ELOS, vantagens, nivelElo, divisaoDe, nomeDivisao, ajustarPdr, GANHO_POR_ELO, bonusCarreira, PARTIDAS_POR_DIA, baseCarreira, baseLendas } from '../shared/ranked.js';
+import { ELOS, vantagens, nivelElo, divisaoDe, nomeDivisao, ajustarPdr, GANHO_POR_ELO, bonusCarreira, PARTIDAS_POR_DIA, partidasPorDia, baseCarreira, baseLendas } from '../shared/ranked.js';
 import { shareText as shareRunetermo } from '../jogos/runetermo/js/logic.js';
 import { shareText as shareCampeao } from '../jogos/campeao/js/logic.js';
 import * as cblol from '../jogos/lendas-do-cblol/js/logic.js';
@@ -116,7 +116,7 @@ test('zerar a ranqueada: só administrador', async () => {
   await assert.rejects(platform.adminResetRanked(1), /não tem permissão/);
 });
 
-test('ranqueada: ingresso (vaga) da Carreira e do Lendas, 3 por dia em cada', async () => {
+test('ranqueada: ingresso (vaga) da Carreira e do Lendas, 2 por dia em cada', async () => {
   const sb = createFakeSupabase();
   installMemoryStorage();
   platform.__setClientForTests(sb);
@@ -126,10 +126,10 @@ test('ranqueada: ingresso (vaga) da Carreira e do Lendas, 3 por dia em cada', as
   const r = await platform.rankedIniciar();
   assert.match(r.token, /^[0-9a-f-]{36}$/);
   assert.equal(r.numero, 1);
-  for (let i = 2; i <= 2; i++) await platform.rankedIniciar();
-  assert.equal((await platform.rankedIniciar()).restantes, 0); // 3ª: a última
-  assert.equal((await platform.rankedIniciar()).token, null); // 4ª começada: não vale
-  assert.equal((await platform.rankedIniciar('cblol')).numero, 1); // Lendas tem as suas 3
+  assert.equal((await platform.rankedIniciar()).restantes, 0); // 2ª: a última
+  assert.equal((await platform.rankedIniciar()).token, null); // 3ª começada: não vale
+  assert.equal((await platform.rankedIniciar('cblol')).numero, 1); // Lendas tem as suas 2
+  assert.equal((await platform.rankedIniciar('barao')).limite, 3); // o Barão continua com 3
   // No banco: vaga da própria conta, do jogo, de hoje e não usada; Lendas só no Oculto.
   assert.match(sql15, /i\.id = tok::uuid and i\.user_id = new\.user_id and i\.dia = hoje and i\.jogo = new\.game_id and i\.usado_em is null/);
   assert.match(sql15, /coalesce\(new\.summary->>'modo', ''\) <> 'oculto' then return new/);
@@ -192,13 +192,17 @@ test('ranqueada: cada partida da Carreira e do Lendas vale o seu PDR (sem "só a
   assert.deepEqual(st.hoje.partidas.map((x) => [x.n, x.pdr]), [[1, 27], [2, -16], [3, 10]]);
 });
 
-test('ranqueada: limite de 3 partidas por dia no banco (0065 e 0067) e no site', () => {
+test('ranqueada: limite de partidas por dia no banco (0065, 0067 e 0072) e no site: 2 (Carreira, Lendas, Golpear) e 3 (Barão)', () => {
   for (const f of ['0065_barao_ranqueada', '0067_ranqueada_3_partidas']) {
     const sql = readFileSync(new URL(`../supabase/migrations/${f}.sql`, import.meta.url), 'utf8');
     assert.match(sql, /limite constant int := 3/);
     assert.match(sql, /if feitas >= limite then/);
   }
+  const sql72 = readFileSync(new URL('../supabase/migrations/0072_ranqueada_2_partidas.sql', import.meta.url), 'utf8');
+  assert.match(sql72, /case when jogo in \('smite', 'cblol', 'carreira-no-rift'\) then 2 else 3 end/);
+  assert.match(sql72, /if feitas >= limite then/);
   assert.equal(PARTIDAS_POR_DIA, 3);
+  assert.deepEqual([partidasPorDia('carreira-no-rift'), partidasPorDia('cblol'), partidasPorDia('smite'), partidasPorDia('barao')], [2, 2, 2, 3]);
 });
 
 test('PDR: Lendas (3 vitórias na fase já dão +5; playoffs recalculados) e Carreira (ponto zero 300 até a Prata, 400 do Ouro)', () => {

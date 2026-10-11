@@ -217,8 +217,9 @@ export function createFakeSupabase() {
       const k = `${uid}|${args.jogo}`;
       fakeInicios.set(k, (fakeInicios.get(k) || 0) + 1);
       const n = fakeInicios.get(k);
-      if (n > 3) return { data: { token: null, dia: hojeIso, numero: null, restantes: 0, limite: 3 }, error: null };
-      return { data: { token: `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`, dia: hojeIso, numero: n, restantes: 3 - n, limite: 3 }, error: null };
+      const lim = ['smite', 'cblol', 'carreira-no-rift'].includes(args.jogo) ? 2 : 3; // igual a 0072_ranqueada_2_partidas.sql
+      if (n > lim) return { data: { token: null, dia: hojeIso, numero: null, restantes: 0, limite: lim }, error: null };
+      return { data: { token: `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`, dia: hojeIso, numero: n, restantes: lim - n, limite: lim }, error: null };
     }
     if (name === 'site_rk_meu') {
       const uid = auth._uid();

@@ -24,7 +24,7 @@ Enquanto estiver em teste: `soAdmin: true` (some do hub/perfil e bloqueia a pág
 ## 4. Servidor (SQL, rodar no Supabase)
 - `site_rk_iniciar`: incluir o id na lista de jogos aceitos e em `site_rk_meu` ('vagas'). A migração `0065` mostra como.
 - Regra de PDR do jogo: função `site_rk_base_<jogo>` e lançamento por `site_rk_lancar(uid, dia, jogo, 'partida', valor)`.
-- Limite diário: `limite constant int` em `site_rk_iniciar` (hoje 3, migração `0067`).
+- Limite diário: `limite` em `site_rk_iniciar` (hoje 2 para Carreira, Lendas e Golpear e 3 para o Barão, migração `0072`); espelho em `PARTIDAS_JOGO` (`shared/ranked.js`).
 - Jogos com respostas secretas: lógica no servidor (padrão do Barão, `0066`); dados fora de `site/`.
 
 ## 5. Testes e conferência

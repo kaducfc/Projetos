@@ -91,7 +91,7 @@ banco (que decide de verdade). Configuração: rode
 
 ## Ranqueada
 
-Só da Carreira no Rift, para contas conectadas: valem as 3 primeiras carreiras
+Só da Carreira no Rift, para contas conectadas: valem as 2 primeiras carreiras
 do dia (nota do dia = a maior). A cada ciclo de 3 dias somam-se as notas; quem
 chegar aos pontos do próximo elo sobe 1 elo: Bronze → Prata (1500) → Ouro
 (1950) → Platina (2250) → Diamante (2550) → Desafiante (2850, só 100 vagas).
