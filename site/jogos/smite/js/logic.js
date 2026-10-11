@@ -144,6 +144,11 @@ function montarTimes(rand, campeao) {
 // (campeões em nível baixo) ao mais forte (nível alto):
 //   rodadas 1 e 2: Arauto do Vale e Dragão Elemental (em qualquer ordem)
 //   rodada 3: Dragão Elemental · rodada 4: Dragão Elemental ou Barão · rodada 5: Barão ou Dragão Ancião
+// Minuto mais cedo (em segundos de jogo) em que cada objetivo pode nascer: Dragão a partir dos 5 min, Arauto dos 15,
+// Barão dos 20 e Dragão Ancião dos 30. A partida simulada só avança no tempo e cada objetivo nasce alguns segundos depois do mínimo.
+export const TEMPO_MINIMO = { 'dragao-elemental': 300, arauto: 900, barao: 1200, 'dragao-anciao': 1800 };
+const sortearTempo = (rand, objetivo, anterior) => Math.max(TEMPO_MINIMO[objetivo.id] + Math.floor(rand() * 240), anterior == null ? 0 : anterior + 150 + Math.floor(rand() * 150));
+
 export function criarPartida(rand, campeaoId) {
   const campeao = CAMPEOES.find((c) => c.id === campeaoId) || escolher(rand, CAMPEOES);
   const [arauto, elemental, barao, anciao] = ['arauto', 'dragao-elemental', 'barao', 'dragao-anciao'].map(objetivoPorId);
@@ -155,7 +160,9 @@ export function criarPartida(rand, campeaoId) {
   ];
   const niveis = [];
   NIVEIS_RODADA.forEach(([a, b], i) => { niveis.push(Math.max(i ? niveis[i - 1] : 0, Math.floor(entre(rand, a, b + 1)))); });
-  return { campeao, equipe: montarTimes(rand, campeao), objetivos, niveis };
+  const tempos = [];
+  objetivos.forEach((o, i) => tempos.push(sortearTempo(rand, o, i ? tempos[i - 1] : null)));
+  return { campeao, equipe: montarTimes(rand, campeao), objetivos, niveis, tempos };
 }
 
 // Cria uma rodada: o objetivo, o dano do Smite, o campeão do jogador, os times e a lista de golpes
@@ -212,7 +219,7 @@ export function criarRodada(rand, n = 0, opcoes = null) {
   }
   const ultimo = golpes[golpes.length - 1];
   return {
-    n, objetivo: alvo, vidaMax: alvo.vida, nivel, smite, campeao, participantes, janela, tx, golpes, gatilhoInimigo, partida: Boolean(partida),
+    n, objetivo: alvo, vidaMax: alvo.vida, nivel, tempoInicio: Math.max(partida && partida.tempos ? partida.tempos[n] : 0, TEMPO_MINIMO[alvo.id] + (partida ? 0 : Math.floor(rand() * 240))), smite, campeao, participantes, janela, tx, golpes, gatilhoInimigo, partida: Boolean(partida),
     faixaMin: Math.round(smite * (1 - FAIXA_ABAIXO)), faixaMax: Math.round(smite * (1 + FAIXA_ACIMA)),
     morreEm: vida <= 0 ? ultimo.t : null, quemMata: vida <= 0 ? ultimo.quem : null,
   };
@@ -233,7 +240,7 @@ export function resolverSmite(vida, smite) {
   if (vida <= 0) return { resultado: 'roubado', margem: null, pontos: 0 };
   if (vida > smite) return { resultado: 'cedo', margem: null, pontos: 0, faltou: vida - smite };
   const margem = smite - vida;
-  return { resultado: 'garantido', margem, pontos: pontosDaMargem(margem), nota: classificar(margem) };
+  return { resultado: 'garantido', margem, pontos: Math.max(PONTOS_TIME, pontosDaMargem(margem)), nota: classificar(margem) };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -384,7 +391,7 @@ export function usarGolpear(est) {
     est.vida = 0;
     const margem = smite - vida;
     eventos.push({ tipo: 'golpear', quem: 'voce', dano: smite, vida: 0, margem });
-    encerrar(est, { resultado: 'garantido', pontos: pontosDaMargem(margem), margem, quem: 'voce', via: 'golpear', nota: classificar(margem), vidaNoGolpe: vida });
+    encerrar(est, { resultado: 'garantido', pontos: Math.max(PONTOS_TIME, pontosDaMargem(margem)), margem, quem: 'voce', via: 'golpear', nota: classificar(margem), vidaNoGolpe: vida });
     return eventos;
   }
   est.vida = vida - smite;

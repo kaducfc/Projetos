@@ -7,7 +7,7 @@ export default [
   ['GOLPEAR', 'SMITE', 'ZERSCHMETTERN', 'APLASTAR', 'PUNIZIONE', 'CHÂTIMENT'],
   ['O objetivo da rodada, quase morrendo: golpeie na hora certa!', 'The objective is almost dead: strike at exactly the right moment!', 'Das Ziel stirbt fast: Schlage im genau richtigen Moment zu!', 'El objetivo está casi muerto: ¡golpea en el momento justo!', 'L’obiettivo sta per morire: colpisci al momento giusto!', 'L’objectif est presque mort : frappe au bon moment !'],
   ['Acerte o golpe no momento certo e garanta o objetivo: dragões, Barão e Arauto do Vale.', 'Land the strike at just the right time and secure the objective: drakes, Baron and Rift Herald.', 'Triff im richtigen Moment und sichere dir das Ziel: Drachen, Baron und Herold der Schlucht.', 'Golpea en el momento justo y asegura el objetivo: dragones, Barón y Heraldo de la Grieta.', 'Colpisci al momento giusto e assicurati l’obiettivo: draghi, Barone e Araldo della Landa.', 'Frappe au bon moment et sécurise l’objectif : dragons, Baron et Héraut de la Faille.'],
-  ['Tempo restante', 'Time left', 'Verbleibende Zeit', 'Tiempo restante', 'Tempo rimasto', 'Temps restant'],
+  ['Tempo da Partida', 'Game Time', 'Spielzeit', 'Tiempo de partida', 'Tempo di partita', 'Temps de partie'],
   ['Dano no objetivo', 'Damage to objective', 'Schaden am Ziel', 'Daño al objetivo', 'Danno all’obiettivo', 'Dégâts à l’objectif'],
   ['Objetivo', 'Objective', 'Ziel', 'Objetivo', 'Obiettivo', 'Objectif'],
   ['DANO DO', 'DAMAGE OF', 'SCHADEN VON', 'DAÑO DE', 'DANNO DI', 'DÉGÂTS DE'],

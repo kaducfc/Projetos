@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, DANOS_SMITE, CAMPEOES, ROTAS, POR_ROTA, JANELAS, danoDoSmite, NIVEL_MIN, NIVEL_MAX,
-  novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, postoHab, usarGolpear, criarPartida, NIVEIS_RODADA, DANO_3S, RITMO, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, FAIXA_ACIMA, FAIXA_ABAIXO,
+  TEMPO_MINIMO, novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, postoHab, usarGolpear, criarPartida, NIVEIS_RODADA, DANO_3S, RITMO, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, FAIXA_ACIMA, FAIXA_ABAIXO,
   aleatorio, pontosDaMargem, classificar, criarRodada, proximoObjetivo, vidaEm, resolverSmite,
 } from '../jogos/smite/js/logic.js';
 
@@ -557,4 +557,29 @@ test('smite: Wukong: o Q arma o próximo ataque (5 s) com dano extra; cada golpe
   const e2 = novoEstado(r2); usarHabilidade(e2, 10);
   assert.ok(avancar(e2, 15.5).some((x) => x.tipo === 'habilidade-fim' && x.motivo === 'armado'));
   avancar(e2, 31); assert.equal(e2.vida, r2.vidaMax - 100);
+});
+
+test('smite: o Golpear que fica com o objetivo vale no mínimo 25 pontos (o mesmo do time), mesmo com margem enorme', () => {
+  const r = criarRodada(aleatorio(33), 0);
+  const est = novoEstado(r);
+  est.vida = Math.max(1, r.smite - 580); // margem de 580: pela régua valeria ~0
+  usarGolpear(est);
+  assert.equal(est.fim.resultado, 'garantido');
+  assert.equal(est.fim.margem, r.smite - est.fim.vidaNoGolpe);
+  assert.ok(est.fim.pontos >= PONTOS_TIME, `pontos ${est.fim.pontos}`);
+  const perfeito = novoEstado(r); perfeito.vida = r.smite; usarGolpear(perfeito);
+  assert.equal(perfeito.fim.pontos, 100);
+});
+
+test('smite: o relógio da partida respeita o nascimento dos objetivos e só avança', () => {
+  assert.deepEqual(TEMPO_MINIMO, { 'dragao-elemental': 300, arauto: 900, barao: 1200, 'dragao-anciao': 1800 });
+  for (let semente = 1; semente <= 200; semente++) {
+    const par = criarPartida(aleatorio(semente));
+    par.tempos.forEach((tp, i) => {
+      assert.ok(tp >= TEMPO_MINIMO[par.objetivos[i].id], `${par.objetivos[i].id} em ${tp}`);
+      if (i) assert.ok(tp > par.tempos[i - 1]);
+      const r = criarRodada(aleatorio(semente + i), i, { partida: par });
+      assert.equal(r.tempoInicio, tp);
+    });
+  }
 });

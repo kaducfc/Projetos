@@ -45,7 +45,7 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
 ## Atualização: a rodada continua depois de errar (regra atual de pontuação)
 - Errar o Golpear (usar com a vida acima do dano do Smite) **não encerra a rodada**: o Golpear bate no objetivo (tira o dano do Smite) e é
   desperdiçado; a rodada segue até o objetivo morrer. Só dá para usar o Golpear uma vez por rodada.
-- Quem fica com o objetivo decide os pontos: Golpear certo (vida ≤ dano) → `100·(1 − margem/600)²` (a rodada acaba na hora); objetivo do seu time sem o
+- Quem fica com o objetivo decide os pontos: Golpear certo (vida ≤ dano) → `100·(1 − margem/600)²`, com mínimo de 25 (o objetivo é do seu time) (a rodada acaba na hora); objetivo do seu time sem o
   Golpear certo → **25 pontos** (golpe final de um aliado) ou **50 pontos** (golpe final da **sua habilidade**, Q); objetivo do time inimigo → **0**.
 - Smite do selva inimigo (`gatilhoInimigo` em `criarRodada`, `checarInimigo` em `js/logic.js`): em 80% das rodadas o selva inimigo golpeia com o **mesmo
   dano do seu Smite** quando a vida do objetivo está entre **5% acima e 30% abaixo** do dano do Smite. O ponto exato é sorteado com `x = √sorteio`,
@@ -76,3 +76,6 @@ O posto da habilidade (1 a 5) sobe com o nível da rodada (`postoHab` em `js/log
 - **Pantheon** (carga): toque ≤ 0,35 s = estocada (devolve 60% da recarga); segurar = arremesso, com dano crescente até 2 s segurando (mais um segundo golpe de 50%); passar de 4 s segurando cancela, e a recarga é a metade.
 - **Wukong** (armar): o Q arma o próximo ataque por 5 s (+110 → +230 de dano); cada golpe dele corta 0,5 s da recarga (8 → 6 s). Se o golpe armado finaliza, vale como habilidade (50 pontos).
 - Teste: `?camp=LeeSin` (ou Nunu, Khazix, Pantheon, MonkeyKing) fixa o campeão.
+
+## Relógio da partida
+O canto superior direito mostra "Tempo da Partida" (relógio simulado, andando 1 s por segundo durante a rodada). Cada objetivo nasce depois do mínimo (`TEMPO_MINIMO`): Dragão 5 min, Arauto 15, Barão 20, Dragão Ancião 30, mais até 4 min sorteados; o tempo só avança de uma rodada para a outra (`partida.tempos`). O limite de 50 s da rodada continua, sem aparecer na tela.

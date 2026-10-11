@@ -100,7 +100,7 @@ function montar() {
       <div class="sm-logo"><span>${t('DESAFIO DO')}</span><b>${t('GOLPEAR')}</b></div>
       <div class="sm-hp"><div class="nome" id="sm-nome-obj">&nbsp;</div>
         <div class="linha"><div class="ico" id="sm-ico"></div><div class="barra"><div class="cheia" id="sm-cheia"></div><i class="marca" id="sm-marca"></i><div class="num" id="sm-vida"></div></div></div></div>
-      <div class="sm-tempo" id="sm-tempo">${AMPULHETA}<div><small>${t('Tempo restante')}</small><b id="sm-tempo-n">00:${TEMPO_MAX}</b></div></div>
+      <div class="sm-tempo" id="sm-tempo">${AMPULHETA}<div><small>${t('Tempo da Partida')}</small><b id="sm-tempo-n">00:00</b></div></div>
     </div>
     <aside class="sm-painel sm-dano"><h3>${t('Dano no objetivo')}</h3><ul id="sm-dano"></ul></aside>
     <div class="sm-painel sm-obj"><div class="ico" id="sm-ico2"></div><div><b>${t('Objetivo')}</b><span id="sm-obj-txt"></span></div></div>
@@ -154,7 +154,7 @@ let fase = 'intro'; // intro | preparo | jogando | fim
 let t0 = 0; let raf = 0;
 let est = null; // estado da rodada (logic.js): vida, golpes aplicados, Golpear, Smite inimigo e o fim
 let danos = {}; // quem → dano causado
-let ultimoTxt = ''; let ultimoTempo = ''; let ultimoResta = TEMPO_MAX;
+let ultimoTxt = ''; let ultimoTempo = ''; let ultimoResta = 0;
 let partida = null; // a partida (5 rodadas): os mesmos campeões do começo ao fim
 
 const vidaAgora = () => (est ? est.vida : 0);
@@ -181,10 +181,13 @@ function hud() {
   $('sm-f').classList.toggle('pronto', Boolean(dentro) && fase === 'jogando' && !est?.smiteUsado);
   const txt = R ? `${fmt(v)} / ${fmt(R.vidaMax)}` : '';
   if (txt !== ultimoTxt) { $('sm-vida').textContent = txt; ultimoTxt = txt; }
-  if (fase === 'jogando') ultimoResta = Math.max(0, Math.ceil(TEMPO_MAX - tempoAgora()));
-  else if (fase !== 'fim') ultimoResta = TEMPO_MAX; // parado no fim da rodada; volta a 50 na próxima
-  const tt = `00:${String(ultimoResta).padStart(2, '0')}`;
-  if (tt !== ultimoTempo) { $('sm-tempo-n').textContent = tt; ultimoTempo = tt; $('sm-tempo').classList.toggle('fim', ultimoResta <= 8 && fase === 'jogando'); }
+  // relógio da partida simulada: começa no minuto em que o objetivo nasce e anda 1 s por segundo durante a rodada
+  if (fase === 'jogando') ultimoResta = Math.min(TEMPO_MAX, Math.floor(tempoAgora()));
+  else if (fase !== 'fim') ultimoResta = 0;
+  const seg = (R ? R.tempoInicio : 0) + ultimoResta;
+  const tt = `${String(Math.floor(seg / 60)).padStart(2, '0')}:${String(seg % 60).padStart(2, '0')}`;
+  if (tt !== ultimoTempo) { $('sm-tempo-n').textContent = tt; ultimoTempo = tt; }
+  $('sm-tempo').classList.toggle('fim', fase === 'jogando' && TEMPO_MAX - ultimoResta <= 8);
   const rec = $('sm-q-rec'); const car = $('sm-q-carga'); const qb = $('sm-q');
   const eq = fase === 'jogando' && est ? estadoQ(est, tempoAgora()) : { fase: 'pronto', falta: 0, carga: 0 };
   const mostra = eq.fase === 'recarga' || eq.fase === 'janela' || eq.fase === 'armado';

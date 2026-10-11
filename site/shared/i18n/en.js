@@ -1386,7 +1386,7 @@ export default {
   "GOLPEAR": "SMITE",
   "O objetivo da rodada, quase morrendo: golpeie na hora certa!": "The objective is almost dead: strike at exactly the right moment!",
   "Acerte o golpe no momento certo e garanta o objetivo: dragões, Barão e Arauto do Vale.": "Land the strike at just the right time and secure the objective: drakes, Baron and Rift Herald.",
-  "Tempo restante": "Time left",
+  "Tempo da Partida": "Game Time",
   "Dano no objetivo": "Damage to objective",
   "Objetivo": "Objective",
   "DANO DO": "DAMAGE OF",

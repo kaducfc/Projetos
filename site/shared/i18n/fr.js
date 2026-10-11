@@ -1386,7 +1386,7 @@ export default {
   "GOLPEAR": "CHÂTIMENT",
   "O objetivo da rodada, quase morrendo: golpeie na hora certa!": "L’objectif est presque mort : frappe au bon moment !",
   "Acerte o golpe no momento certo e garanta o objetivo: dragões, Barão e Arauto do Vale.": "Frappe au bon moment et sécurise l’objectif : dragons, Baron et Héraut de la Faille.",
-  "Tempo restante": "Temps restant",
+  "Tempo da Partida": "Temps de partie",
   "Dano no objetivo": "Dégâts à l’objectif",
   "Objetivo": "Objectif",
   "DANO DO": "DÉGÂTS DE",

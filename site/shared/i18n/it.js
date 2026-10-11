@@ -1386,7 +1386,7 @@ export default {
   "GOLPEAR": "PUNIZIONE",
   "O objetivo da rodada, quase morrendo: golpeie na hora certa!": "L’obiettivo sta per morire: colpisci al momento giusto!",
   "Acerte o golpe no momento certo e garanta o objetivo: dragões, Barão e Arauto do Vale.": "Colpisci al momento giusto e assicurati l’obiettivo: draghi, Barone e Araldo della Landa.",
-  "Tempo restante": "Tempo rimasto",
+  "Tempo da Partida": "Tempo di partita",
   "Dano no objetivo": "Danno all’obiettivo",
   "Objetivo": "Obiettivo",
   "DANO DO": "DANNO DI",

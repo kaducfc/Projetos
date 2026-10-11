@@ -1386,7 +1386,7 @@ export default {
   "GOLPEAR": "APLASTAR",
   "O objetivo da rodada, quase morrendo: golpeie na hora certa!": "El objetivo está casi muerto: ¡golpea en el momento justo!",
   "Acerte o golpe no momento certo e garanta o objetivo: dragões, Barão e Arauto do Vale.": "Golpea en el momento justo y asegura el objetivo: dragones, Barón y Heraldo de la Grieta.",
-  "Tempo restante": "Tiempo restante",
+  "Tempo da Partida": "Tiempo de partida",
   "Dano no objetivo": "Daño al objetivo",
   "Objetivo": "Objetivo",
   "DANO DO": "DAÑO DE",
