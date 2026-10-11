@@ -23,3 +23,14 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
 - Idiomas: textos do jogo ainda só em português (`shared/i18n/src/`); logo "Smite Challenge" fica igual em todos os idiomas.
 - Arte: cenário, fichas e botões são desenhados em CSS/SVG; dá para trocar por imagens (fosso, fichas de campeões, ícones).
 - Campeões e dano da habilidade são valores de jogo (equilibrar), e o Smite pode virar por nível do campeão.
+
+## Atualização: nome, times e objetivos
+- Nome: "Desafio do Golpear" (PT), "Smite Challenge" (EN), "Zerschmettern-Challenge" (DE), "Desafío de Aplastar" (ES), "Sfida della Punizione" (IT) e
+  "Défi du Châtiment" (FR); o feitiço usa o termo de cada idioma (o mesmo do Show do Barão). Traduções em `shared/i18n/src/golpear-ui.mjs`.
+- Times: 4 aliados (o jogador é o selva) e 4 adversários, 1 por rota (topo, selva, meio, atirador), sem campeão repetido. Só os 7 outros jogadores
+  batem sozinhos no objetivo; o jogador só tem a habilidade (Q) e o Golpear.
+- Objetivos (sorteados por rodada, sem repetir o anterior): Dragão Elemental (8.000 de vida), Dragão Ancião (11.000), Barão Nashor (12.000) e
+  Arauto do Vale (7.000). Cada um tem o seu tema de cenário (cores do covil) em `OBJETIVOS` (`js/logic.js`).
+- Arte: o Dragão Elemental e o Dragão Ancião usam a arte do Na Medida. **O Barão e o Arauto ainda são silhuetas coloridas provisórias**
+  (`img/barao.webp` e `img/arauto.webp`, geradas das silhuetas do Na Medida): trocar pelas artes finais mantendo os mesmos nomes de arquivo
+  (o recorte do ícone redondo está em `icone` de cada objetivo).

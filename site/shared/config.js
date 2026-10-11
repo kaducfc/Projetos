@@ -115,8 +115,8 @@ export const GAMES = [
   },
   {
     id: 'smite',
-    name: 'Smite Challenge',
-    tagline: 'O Dragão está quase morrendo. Golpeie com o Smite na hora certa e garanta o objetivo!',
+    name: 'Desafio do Golpear',
+    tagline: 'Acerte o golpe no momento certo e garanta o objetivo: dragões, Barão e Arauto do Vale.',
     kind: 'Reflexo',
     path: 'jogos/smite/',
     status: 'live',

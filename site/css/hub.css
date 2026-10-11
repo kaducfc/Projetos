@@ -356,8 +356,13 @@ html:not([lang="pt-BR"]) .cv-bz-ap { bottom: -17%; }
 .cv-smite { overflow: hidden; background: radial-gradient(70% 80% at 60% 45%, #14585a, #082322 55%, #030b0b); }
 .cv-sm-dr { position: absolute; right: -6%; top: 6%; width: 78%; filter: drop-shadow(0 0 14px rgba(63, 217, 208, 0.55)); animation: cv-sm-voo 5s ease-in-out infinite alternate; }
 @keyframes cv-sm-voo { from { transform: translateY(-3px); } to { transform: translateY(4px); } }
-.cv-sm-t { position: absolute; left: 12px; top: 12px; font-family: var(--display); font-size: 30px; line-height: 0.82; color: #f5cf5a; text-shadow: 0 2px 0 #2d1d03, 0 0 8px #000; z-index: 2; }
-.cv-sm-t b { display: block; font-weight: 400; font-size: 14px; letter-spacing: 0.22em; color: #f2d98a; margin-top: 3px; }
+.cv-sm-t { position: absolute; left: 12px; top: 10px; display: flex; flex-direction: column; font-family: var(--display); line-height: 0.85; color: #f5cf5a; text-shadow: 0 2px 0 #2d1d03, 0 0 8px #000; z-index: 2; }
+.cv-sm-t i { font-style: normal; font-size: 13px; letter-spacing: 0.22em; color: #f2d98a; }
+.cv-sm-t b { font-weight: 400; font-size: 31px; letter-spacing: 0.02em; }
+/* Português, espanhol, francês e italiano: "DESAFIO DO" em cima; inglês e alemão: "SMITE" grande em cima e "CHALLENGE" embaixo. */
+html[lang="en"] .cv-sm-t, html[lang="de"] .cv-sm-t { flex-direction: column-reverse; }
+html[lang="de"] .cv-sm-t b { font-size: 19px; }
+html[lang="fr"] .cv-sm-t b, html[lang="it"] .cv-sm-t b { font-size: 23px; }
 .cv-sm-barra { position: absolute; left: 12px; right: 12px; bottom: 12px; height: 12px; border: 1.5px solid #b88a2a; background: rgba(8, 4, 4, 0.85); z-index: 2; }
 .cv-sm-barra i { position: absolute; inset: 0 auto 0 0; width: 17%; background: linear-gradient(180deg, #ffe58a, #e0a93a); }
 .cv-sm-barra u { position: absolute; left: 10%; top: -3px; bottom: -3px; width: 2px; background: #fff; box-shadow: 0 0 5px #fff; }
