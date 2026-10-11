@@ -4,7 +4,7 @@ Desafio de timing de League of Legends: o Dragão do Oceano perde vida com o dan
 jogador (um jungle) golpeia com o **Smite** na hora certa. O Smite mata se a vida do objetivo for **menor ou igual** ao dano dele;
 quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma habilidade do campeão (Q) machucam o objetivo.
 
-- Regras: 5 rodadas, até 100 pontos cada (500 no total). Pontos = `100 · (1 − margem/600)²`, onde margem = dano do Smite − vida
+- Regras: 5 rodadas, até 100 pontos cada (500 no total). Pontos pelo TEMPO (ver abaixo), onde antes era a margem = dano do Smite − vida
   do objetivo no golpe (0 → 100; 30 → 90; 150 → 56; 300 → 25; 600+ → 0). 
 - Cada rodada sorteia o dano do Smite (600, 900 ou 1200 por nível), o campeão (e a habilidade) e uma sequência de golpes de aliados/adversários
   que faz a vida passar pelo dano do Smite entre 18 e 32 s. A janela entre "chegou na zona" e "morreu" encurta a cada rodada (3,4 s → 1,8 s)
@@ -45,7 +45,7 @@ quanto mais perto do dano do Smite (para menos), mais pontos. Só o Smite e uma 
 ## Atualização: a rodada continua depois de errar (regra atual de pontuação)
 - Errar o Golpear (usar com a vida acima do dano do Smite) **não encerra a rodada**: o Golpear bate no objetivo (tira o dano do Smite) e é
   desperdiçado; a rodada segue até o objetivo morrer. Só dá para usar o Golpear uma vez por rodada.
-- Quem fica com o objetivo decide os pontos: Golpear certo (vida ≤ dano) → `100·(1 − margem/600)²`, com mínimo de 25 (o objetivo é do seu time) (a rodada acaba na hora); objetivo do seu time sem o
+- Quem fica com o objetivo decide os pontos: Golpear certo (vida ≤ dano) → pontos pelo tempo (`pontosDoTempo`), com mínimo de 25 (o objetivo é do seu time) (a rodada acaba na hora); objetivo do seu time sem o
   Golpear certo → **25 pontos** (golpe final de um aliado) ou **50 pontos** (golpe final da **sua habilidade**, Q); objetivo do time inimigo → **0**.
 - Smite do selva inimigo (`gatilhoInimigo` em `criarRodada`, `checarInimigo` em `js/logic.js`): em 80% das rodadas o selva inimigo golpeia com o **mesmo
   dano do seu Smite** quando a vida do objetivo está entre **5% acima e 30% abaixo** do dano do Smite. O ponto exato é sorteado com `x = √sorteio`,
@@ -79,3 +79,6 @@ O posto da habilidade (1 a 5) sobe com o nível da rodada (`postoHab` em `js/log
 
 ## Relógio da partida
 O canto superior direito mostra "Tempo da Partida" (relógio simulado, andando 1 s por segundo durante a rodada). Cada objetivo nasce depois do mínimo (`TEMPO_MINIMO`): Dragão 5 min, Arauto 15, Barão 20, Dragão Ancião 30, mais até 4 min sorteados; o tempo só avança de uma rodada para a outra (`partida.tempos`). O limite de 50 s da rodada continua, sem aparecer na tela.
+
+## Pontuação do Golpear: pelo tempo
+O relógio da pontuação começa quando a vida do objetivo entra na zona do Smite (vida ≤ dano do Smite), por qualquer causa, inclusive o seu próprio Q (`est.tZona`), e para quando o seu Golpear mata. `pontosDoTempo(seg)`: até 0,25 s → 100; 0,5 s → 81; 1 s → 49; 1,5 s → 25; 2,75 s ou mais → 0. Se o objetivo fica com o seu time, vale no mínimo 25. Se morre antes (por aliado, inimigo ou o Smite do selva inimigo) segue a regra de 25/50/0. Assim, combos como Q1 + Q2 + Golpear logo em seguida valem 100.

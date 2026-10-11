@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, DANOS_SMITE, CAMPEOES, ROTAS, POR_ROTA, JANELAS, danoDoSmite, NIVEL_MIN, NIVEL_MAX,
   TEMPO_MINIMO, novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, postoHab, usarGolpear, criarPartida, NIVEIS_RODADA, DANO_3S, RITMO, PONTOS_TIME, PONTOS_HABILIDADE, PROB_SMITE_INIMIGO, FAIXA_ACIMA, FAIXA_ABAIXO,
-  aleatorio, pontosDaMargem, classificar, criarRodada, proximoObjetivo, vidaEm, resolverSmite,
+  aleatorio, pontosDoTempo, classificar, criarRodada, proximoObjetivo, vidaEm, resolverSmite,
 } from '../jogos/smite/js/logic.js';
 
 test('smite: dano do Golpear em 3 níveis (até o 8 → 600; 9 a 12 → 900; 13 em diante → 1200)', () => {
@@ -34,25 +34,25 @@ test('smite: o nível da rodada vem da faixa do objetivo e os outros jogadores f
   assert.ok(vistos.barao.has(1200));
 });
 
-test('smite: pontos pela margem (0 = 100; 600 ou mais = 0; sem sobra negativa)', () => {
-  assert.equal(pontosDaMargem(0), 100);
-  assert.equal(pontosDaMargem(30), 90);
-  assert.equal(pontosDaMargem(60), 81);
-  assert.equal(pontosDaMargem(150), 56);
-  assert.equal(pontosDaMargem(300), 25);
-  assert.equal(pontosDaMargem(600), 0);
-  assert.equal(pontosDaMargem(900), 0);
-  assert.equal(pontosDaMargem(-1), 0);
+test('smite: pontos pelo tempo desde que a vida entrou na zona do Smite (rápido = mais)', () => {
+  assert.equal(pontosDoTempo(0), 100);
+  assert.equal(pontosDoTempo(0.25), 100);
+  assert.equal(pontosDoTempo(0.5), 81);
+  assert.equal(pontosDoTempo(1), 49);
+  assert.equal(pontosDoTempo(1.5), 25);
+  assert.equal(pontosDoTempo(2.75), 0);
+  assert.equal(pontosDoTempo(5), 0);
+  assert.equal(pontosDoTempo(-1), 0);
   let ant = 101;
-  for (let m = 0; m <= 700; m += 10) { const p = pontosDaMargem(m); assert.ok(p <= ant); ant = p; }
+  for (let x = 0; x <= 4; x += 0.05) { const p = pontosDoTempo(x); assert.ok(p <= ant); ant = p; }
 });
 
-test('smite: classificação da margem', () => {
+test('smite: classificação do tempo', () => {
   assert.equal(classificar(0).id, 'perfeito');
-  assert.equal(classificar(25).id, 'perfeito');
-  assert.equal(classificar(60).id, 'otimo');
-  assert.equal(classificar(200).id, 'bom');
-  assert.equal(classificar(400).id, 'longe');
+  assert.equal(classificar(0.4).id, 'perfeito');
+  assert.equal(classificar(0.7).id, 'otimo');
+  assert.equal(classificar(1.2).id, 'bom');
+  assert.equal(classificar(2.5).id, 'longe');
 });
 
 test('smite: resolver o golpe (cedo, roubado ou garantido)', () => {
@@ -63,7 +63,7 @@ test('smite: resolver o golpe (cedo, roubado ou garantido)', () => {
   assert.equal(cedo.pontos, 0);
   const ok = resolverSmite(895, 900);
   assert.equal(ok.resultado, 'garantido');
-  assert.equal(ok.margem, 5);
+  assert.equal(ok.margem, 5); assert.equal(ok.pontos, 100);
   assert.ok(ok.pontos >= 98);
   assert.equal(resolverSmite(900, 900).margem, 0); // exatamente igual ainda mata
 });
@@ -292,11 +292,12 @@ test('smite: Golpear com a vida ≤ dano do Smite garante o objetivo (margem exa
     while (!est.fim && est.vida > r.smite && t < TEMPO_MAX) avancar(est, t += 0.02);
     if (est.fim) continue; // o inimigo golpeou primeiro
     const vida = est.vida;
-    const ev = usarGolpear(est);
+    const ev = usarGolpear(est, t + 0.5);
     assert.equal(ev[0].tipo, 'golpear');
     assert.equal(est.fim.resultado, 'garantido');
     assert.equal(est.fim.margem, r.smite - vida);
-    assert.equal(est.fim.pontos, pontosDaMargem(r.smite - vida));
+    assert.ok(Math.abs(est.fim.tempo - (t + 0.5 - est.tZona)) < 1e-9 && est.fim.tempo >= 0.5 - 1e-9);
+    assert.equal(est.fim.pontos, Math.max(PONTOS_TIME, pontosDoTempo(est.fim.tempo)));
     assert.equal(est.vida, 0);
   }
 });
@@ -559,16 +560,24 @@ test('smite: Wukong: o Q arma o próximo ataque (5 s) com dano extra; cada golpe
   avancar(e2, 31); assert.equal(e2.vida, r2.vidaMax - 100);
 });
 
-test('smite: o Golpear que fica com o objetivo vale no mínimo 25 pontos (o mesmo do time), mesmo com margem enorme', () => {
-  const r = criarRodada(aleatorio(33), 0);
-  const est = novoEstado(r);
-  est.vida = Math.max(1, r.smite - 580); // margem de 580: pela régua valeria ~0
-  usarGolpear(est);
-  assert.equal(est.fim.resultado, 'garantido');
-  assert.equal(est.fim.margem, r.smite - est.fim.vidaNoGolpe);
-  assert.ok(est.fim.pontos >= PONTOS_TIME, `pontos ${est.fim.pontos}`);
-  const perfeito = novoEstado(r); perfeito.vida = r.smite; usarGolpear(perfeito);
-  assert.equal(perfeito.fim.pontos, 100);
+test('smite: o Golpear vale pelo TEMPO desde a vida entrar na zona (inclusive pelo seu próprio Q) e no mínimo 25', () => {
+  // Lee Sin: a vida está acima do dano do Smite; o Q2 a derruba para dentro da zona e o Golpear vem logo depois
+  const base = criarRodada(aleatorio(33), 2); base.campeao = CAMPEOES.find((c) => c.id === 'LeeSin');
+  const r = { ...base, golpes: [], gatilhoInimigo: null };
+  const mk = (atraso) => {
+    const est = novoEstado(r); est.vida = r.smite + 100;
+    usarHabilidade(est, 10); // Q1: já entra na zona
+    assert.equal(est.tZona, 10);
+    usarGolpear(est, 10 + atraso);
+    return est.fim;
+  };
+  assert.equal(mk(0.1).pontos, 100);
+  assert.equal(mk(1).pontos, pontosDoTempo(1));
+  assert.equal(mk(1).tempo, 1);
+  assert.equal(mk(3).pontos, 25); // lento demais: ainda vale o mínimo do time
+  // Golpear que não mata não marca nada e a rodada continua
+  const cedo = novoEstado(r); cedo.vida = r.smite * 3;
+  usarGolpear(cedo, 5); assert.equal(cedo.fim, null);
 });
 
 test('smite: o relógio da partida respeita o nascimento dos objetivos e só avança', () => {

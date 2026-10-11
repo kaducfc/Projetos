@@ -1,6 +1,6 @@
 // Desafio do Golpear (Smite Challenge): golpeie (Smite) o objetivo no momento certo. A vida do objetivo
 // (Dragão Elemental, Dragão Ancião, Barão Nashor ou Arauto do Vale) cai com o dano dos outros jogadores;
-// o Golpear mata se a vida for menor ou igual ao dano dele, e quanto mais perto (para menos), mais pontos.
+// o Golpear mata se a vida for menor ou igual ao dano dele, e quanto mais rápido depois de a vida entrar no dano dele, mais pontos.
 // Dois times de 4 (topo, selva, meio e atirador); o jogador é o selva do time azul.
 // Enquanto o jogo é "oculto" (gameById('smite').soAdmin), só administradores conseguem jogar.
 import * as platform from '../../../shared/platform.js';
@@ -149,7 +149,7 @@ function tela(html, refazer = null, leve = false) { const el = $('sm-tela'); el.
 // --------------------------------------------------------------------------- estado do jogo
 let R = null; // rodada atual (criarRodada)
 let n = 0; // índice da rodada (0 a RODADAS - 1)
-let resultados = []; // { pontos, resultado, margem, campeao, objetivo }
+let resultados = []; // { pontos, resultado, tempo, campeao, objetivo }
 let fase = 'intro'; // intro | preparo | jogando | fim
 let t0 = 0; let raf = 0;
 let est = null; // estado da rodada (logic.js): vida, golpes aplicados, Golpear, Smite inimigo e o fim
@@ -317,7 +317,7 @@ function usarSmite() {
   if (fase !== 'jogando' || est.smiteUsado) return;
   aplicarEventos(avancar(est, tempoAgora()));
   if (est.fim) { hud(); terminar(); return; }
-  const eventos = usarGolpear(est);
+  const eventos = usarGolpear(est, tempoAgora());
   const ok = eventos.find((e) => e.tipo === 'golpear'); // com a vida ≤ dano do Smite: garantiu o objetivo
   if (ok) {
     danos.voce = (danos.voce || 0) + ok.dano; painelDano();
@@ -337,7 +337,7 @@ async function terminar() {
   hud();
   const garantido = fim.resultado === 'garantido';
   $('sm-alvo').classList.add('morto');
-  resultados.push({ pontos: fim.pontos, resultado: fim.resultado, margem: fim.margem, campeao: R.campeao.nome, objetivo: R.objetivo.id });
+  resultados.push({ pontos: fim.pontos, resultado: fim.resultado, tempo: fim.tempo, campeao: R.campeao.nome, objetivo: R.objetivo.id });
   await esperar(garantido ? 1400 : 1100);
   (fim.resultado === 'roubado' ? SOM.mau : SOM.ok)();
   telaResultado(fim);
@@ -359,7 +359,7 @@ function telaInicio() {
   tela(`<div class="sm-cartao">
     <span class="sup">${t('Desafio de timing · League of Legends')}</span>
     <h2>${t('Desafio do Golpear')}</h2>
-    <p>${t('Um objetivo está quase morrendo e o time inimigo está de olho. Use o <b>Golpear</b> na hora certa para <b>garantir o objetivo</b>: quanto mais perto do dano do Golpear (para menos), mais pontos.')}</p>
+    <p>${t('Um objetivo está quase morrendo e o time inimigo está de olho. Use o <b>Golpear</b> na hora certa para <b>garantir o objetivo</b>: os pontos dependem de quão rápido você golpeia depois que a vida do objetivo entra no dano do Golpear.')}</p>
     <div class="sm-regras">
       <div><b>${t('Observe')}</b>${t('A vida do objetivo cai com o dano dos aliados e dos adversários, inclusive o seu. Cada time tem topo, selva, meio e atirador, e você é o selva do time azul.')}</div>
       <div><b>${t('Golpeie')}</b>${t('O Golpear mata se a vida for menor ou igual ao dano dele (600 até o nível 8, 900 do 9 ao 12 e 1200 do 13 em diante). Se errar, a rodada continua: se o seu time ficar com o objetivo vale 25 pontos; se for o time inimigo, 0.')}</div>
@@ -435,13 +435,14 @@ async function contagemEIniciar() {
   raf = requestAnimationFrame(laco);
 }
 
+const segundos = (x) => Number(x || 0).toLocaleString(localeAtual(), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 function textoResultado(fim) {
   const obj = nomeObj();
   const p = R.participantes.find((x) => x.id === fim.quem);
   const quem = p ? nomeCampeao(p.champ) : '';
   const falhou = est.smiteFalhou;
   if (fim.resultado === 'garantido') {
-    return { sup: t(fim.nota.rotulo), titulo: t('Objetivo garantido!'), corpo: t('Você golpeou com <b>{vida}</b> de vida no {obj}: <b>{margem}</b> abaixo do dano do Golpear ({smite}).', { vida: fmt(fim.vidaNoGolpe), obj, margem: fmt(fim.margem), smite: fmt(R.smite) }) };
+    return { sup: t(fim.nota.rotulo), titulo: t('Objetivo garantido!'), corpo: t('Você golpeou <b>{seg}s</b> depois de a vida do {obj} entrar no dano do Golpear ({smite}).', { seg: segundos(fim.tempo), obj, smite: fmt(R.smite) }) };
   }
   if (fim.resultado === 'time') {
     let corpo = t('Seu time derrubou o {obj} antes do seu Golpear (golpe final de {quem}).', { obj, quem });
@@ -473,13 +474,13 @@ function telaFim() {
   const melhor = lerLS(CHAVE_MELHOR, 0);
   const recorde = pts > melhor;
   if (recorde) gravarLS(CHAVE_MELHOR, pts);
-  const perfeitas = resultados.filter((r) => r.resultado === 'garantido' && r.margem <= 25).length;
+  const perfeitas = resultados.filter((r) => r.resultado === 'garantido' && r.tempo <= 0.4).length;
   desenharFim(pts, melhor, recorde, perfeitas);
   platform.track('game_end', GAME_ID, { pontos: pts, perfeitas });
-  platform.recordResult(GAME_ID, { score: pts, summary: { text: `${pts} ${t('pontos')}`, rodadas: resultados.map((r) => ({ p: r.pontos, r: r.resultado, m: r.margem, o: r.objetivo })) } }).catch(() => {});
+  platform.recordResult(GAME_ID, { score: pts, summary: { text: `${pts} ${t('pontos')}`, rodadas: resultados.map((r) => ({ p: r.pontos, r: r.resultado, s: r.tempo, o: r.objetivo })) } }).catch(() => {});
 }
 function desenharFim(pts, melhor, recorde, perfeitas) {
-  const nome = (r) => (r.resultado === 'garantido' ? t('margem {n}', { n: fmt(r.margem) }) : r.resultado === 'time' ? t('seu time') : t('roubado'));
+  const nome = (r) => (r.resultado === 'garantido' ? t('tempo {n}s', { n: segundos(r.tempo) }) : r.resultado === 'time' ? t('seu time') : t('roubado'));
   const objNome = { 'dragao-elemental': 'Dragão Elemental', 'dragao-anciao': 'Dragão Ancião', barao: 'Barão Nashor', arauto: 'Arauto do Vale' };
   const linhas = resultados.map((r, i) => `<div class="${r.pontos ? '' : 'ruim'}"><span>${t('Rodada {n}', { n: i + 1 })}</span><span>${esc(t(objNome[r.objetivo] || ''))} · ${nome(r)}</span><b>${r.pontos}</b></div>`).join('');
   tela(`<div class="sm-cartao">
