@@ -69,12 +69,17 @@ export const RITMO = {
 //   carga ... Pantheon: toque rápido = estocada curta (devolve 60% da recarga); segurar = arremesso, com mais dano
 //             quanto mais tempo segurou; segurar demais sem soltar cancela e a recarga é a metade.
 //   armar ... Wukong: arma o próximo ataque (até 5 s), que ganha dano extra; cada golpe seu corta 0,5 s da recarga.
+// Ajuste de equilíbrio: todas as recargas das Q -10% e todos os danos das Q +20% (sobre os valores-base abaixo).
+export const RECARGA_Q_MULT = 0.9;
+export const DANO_Q_MULT = 1.2;
+const mr = (v) => v.map((x) => Math.round(x * RECARGA_Q_MULT * 100) / 100);
+const md = (v) => v.map((x) => Math.round(x * DANO_Q_MULT));
 export const CAMPEOES = [
-  { id: 'LeeSin', nome: 'Lee Sin', hab: 'Onda Sônica', tipo: 'duplo', dano: [90, 115, 140, 165, 190], dano2: [120, 160, 200, 240, 280], recarga: [9, 8, 7, 6, 5], janela: 3 },
-  { id: 'Nunu', nome: 'Nunu e Willump', hab: 'Consumir', tipo: 'simples', dano: [330, 430, 530, 630, 730], recarga: [13, 12, 11, 10, 9] },
-  { id: 'Khazix', nome: "Kha'Zix", hab: 'Garras Famintas', tipo: 'simples', dano: [120, 150, 180, 210, 240], recarga: [3, 3, 3, 3, 3] },
-  { id: 'Pantheon', nome: 'Pantheon', hab: 'Lança Cometa', tipo: 'carga', dano: [110, 140, 170, 200, 230], dano2: [160, 210, 260, 310, 360], recarga: [11, 10.25, 9.5, 8.75, 8], toqueMax: 0.35, cargaCheia: 2, segurarMax: 4, devolve: 0.6, segundo: 0.5, bonusCarga: 0.5 },
-  { id: 'MonkeyKing', nome: 'Wukong', hab: 'Golpe Devastador', tipo: 'armar', dano: [110, 140, 170, 200, 230], recarga: [8, 7.5, 7, 6.5, 6], janela: 5, corta: 0.5 },
+  { id: 'LeeSin', nome: 'Lee Sin', hab: 'Onda Sônica', tipo: 'duplo', dano: md([90, 115, 140, 165, 190]), dano2: md([120, 160, 200, 240, 280]), recarga: mr([9, 8, 7, 6, 5]), janela: 3 },
+  { id: 'Nunu', nome: 'Nunu e Willump', hab: 'Consumir', tipo: 'simples', dano: md([330, 430, 530, 630, 730]), recarga: mr([13, 12, 11, 10, 9]) },
+  { id: 'Khazix', nome: "Kha'Zix", hab: 'Garras Famintas', tipo: 'simples', dano: md([120, 150, 180, 210, 240]), recarga: mr([3, 3, 3, 3, 3]) },
+  { id: 'Pantheon', nome: 'Pantheon', hab: 'Lança Cometa', tipo: 'carga', dano: md([110, 140, 170, 200, 230]), dano2: md([160, 210, 260, 310, 360]), recarga: mr([11, 10.25, 9.5, 8.75, 8]), toqueMax: 0.35, cargaCheia: 2, segurarMax: 4, devolve: 0.6, segundo: 0.5, bonusCarga: 0.5 },
+  { id: 'MonkeyKing', nome: 'Wukong', hab: 'Golpe Devastador', tipo: 'armar', dano: md([110, 140, 170, 200, 230]), recarga: mr([8, 7.5, 7, 6.5, 6]), janela: 5, corta: 0.5 },
 ];
 export const POR_ROTA = {
   topo: ['Garen', 'Darius', 'Malphite', 'Ornn', 'Sion', 'Mordekaiser', 'Camille', 'Renekton', 'Fiora'],

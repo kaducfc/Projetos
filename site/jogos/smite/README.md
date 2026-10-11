@@ -84,3 +84,5 @@ O canto superior direito mostra "Tempo da Partida" (relógio simulado, andando 1
 O relógio da pontuação começa quando a vida do objetivo entra na zona do Smite (vida ≤ dano do Smite), por qualquer causa, inclusive o seu próprio Q (`est.tZona`), e para quando o seu Golpear mata. `pontosDoTempo(seg)`: 0 s → 100; 0,1 s → 90 (nessa faixa, de 100 a 90); de 0,1 a 1,5 s cai em linha reta de 90 até 25; 1,5 s ou mais → 25 (o mínimo, pois o objetivo é do seu time). Se morre antes (por aliado, inimigo ou o Smite do selva inimigo) segue a regra de 25/50/0. Assim, combos como Q1 + Q2 + Golpear logo em seguida valem 100.
 
 - O selva inimigo nunca golpeia nos primeiros 0,2 s (`ATRASO_INIMIGO`) depois de a vida entrar na zona do Smite: o gatilho espera e dispara em `tZona + 0,2 s`, se a vida ainda estiver na faixa dele.
+
+- Ajuste de equilíbrio das Q: recargas −10% (`RECARGA_Q_MULT` = 0,9) e danos +20% (`DANO_Q_MULT` = 1,2) sobre os valores-base de `CAMPEOES`; os números acima da seção "A Q de cada campeão" são os valores-base. No celular o Pantheon carrega no 1º toque e solta no 2º (mouse e teclado: segurar e soltar); sem soltar em 4 s cancela, com recarga pela metade.

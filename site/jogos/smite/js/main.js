@@ -121,8 +121,14 @@ function montar() {
   </div>`;
   atualizarSom();
   const q = $('sm-q');
-  q.addEventListener('pointerdown', (e) => { e.preventDefault(); usarHab(); });
-  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) q.addEventListener(ev, soltarHab);
+  // Mouse e teclado: segurar o Q carrega o Pantheon e soltar lança. Toque (celular): não dá para segurar, então o 1º toque
+  // começa a carregar e o 2º toque solta.
+  q.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (e.pointerType !== 'mouse' && fase === 'jogando' && R.campeao.tipo === 'carga' && est.q.desde != null) soltarHab();
+    else usarHab();
+  });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) q.addEventListener(ev, (e) => { if (e.pointerType === 'mouse') soltarHab(); });
   $('sm-f').addEventListener('click', usarSmite);
   $('sm-som').addEventListener('click', () => { mudo = !mudo; gravarLS(CHAVE_MUDO, mudo); atualizarSom(); });
 }
@@ -407,7 +413,7 @@ function prepararRodada() {
 }
 // Resume a Q do campeão no posto desta rodada (o posto sobe com o nível).
 function descricaoQ(c) {
-  const k = postoHab(R.nivel); const seg = String(c.recarga[k]).replace('.', ',');
+  const k = postoHab(R.nivel); const seg = (Math.round(c.recarga[k] * 10) / 10).toLocaleString(localeAtual());
   if (c.tipo === 'duplo') return t('Q: toque para a Onda Sônica; em até {janela}s toque de novo para o Chute, que bate mais quanto menos vida o objetivo tem. Recarga {seg}s.', { janela: c.janela, seg });
   if (c.tipo === 'carga') return t('Q: toque rápido para uma estocada ({dano}); segurando, causa mais dano.', { dano: fmt(c.dano[k]) });
   if (c.tipo === 'armar') return t('Q: arma o seu próximo ataque (até {janela}s) com +{dano} de dano; cada golpe seu corta 0,5s da recarga. Recarga {seg}s.', { janela: c.janela, dano: fmt(c.dano[k]), seg });

@@ -514,7 +514,7 @@ test('smite: Nunu e Kha\'Zix: um toque; recarga própria; Nunu bate bem mais for
   }
   const nunu = CAMPEOES.find((c) => c.id === 'Nunu'); const outros = CAMPEOES.filter((c) => c.id !== 'Nunu');
   for (let k = 0; k < 5; k++) assert.ok(nunu.dano[k] > 1.5 * Math.max(...outros.filter((c) => c.tipo === 'simples').map((c) => c.dano[k])));
-  assert.ok(CAMPEOES.find((c) => c.id === 'Khazix').recarga.every((v) => v === 3));
+  assert.ok(CAMPEOES.find((c) => c.id === 'Khazix').recarga.every((v) => v === 2.7));
 });
 
 test('smite: Pantheon: toque rápido devolve 60% da recarga; segurar dá arremesso maior; segurar demais = metade da recarga', () => {
