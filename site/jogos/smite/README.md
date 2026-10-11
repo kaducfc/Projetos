@@ -91,3 +91,5 @@ O relógio da pontuação começa quando a vida do objetivo entra na zona do Smi
 O nível do jogador (e, ±1, dos outros) agora vem do relógio simulado (`nivelNoTempo` em `js/logic.js`, tabela `NIVEL_POR_MINUTO`): ~5 aos 5 min, ~9 aos 10, ~11 aos 15, ~13 aos 20, ~15 aos 25, ~16 aos 30, ~17 aos 35. Não consegui baixar os dados de 2026 do Oracle's Elixir daqui, então a curva é a das médias conhecidas (e da tabela de XP do jogo); dá para trocar os pontos de `NIVEL_POR_MINUTO` quando houver a média real. Consequência: o Arauto (≥ 15 min) já vem em nível 11-13 (Golpear 900 ou 1200), o Barão em 13-17 e o Ancião em 16-18.
 
 - Ordem da partida: 1ª rodada sempre Dragão Elemental (entre 6 e 14 min, `TEMPO_PRIMEIRO`), 2ª sempre Arauto (≥ 15 min), 3ª Dragão, 4ª Dragão ou Barão, 5ª Barão ou Ancião.
+
+- Dano dos outros campeões escala com o nível: o tempo até a vida chegar perto do dano do Smite vai de 24-40 s (nível ~5, golpes fracos) a 16-28 s (nível 18, golpes fortes, ~2× maiores), e cada nível acima do seu dá +4% no peso daquele campeão.

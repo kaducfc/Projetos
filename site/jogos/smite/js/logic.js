@@ -210,7 +210,10 @@ export function criarRodada(rand, n = 0, opcoes = null) {
   const x = Math.sqrt(rand());
   const gatilhoInimigo = usaSmite ? Math.round(smite * (1 + FAIXA_ACIMA - (FAIXA_ACIMA + FAIXA_ABAIXO) * x)) : null;
   const janela = JANELAS[Math.min(n, JANELAS.length - 1)] * entre(rand, 0.9, 1.1);
-  const tx = entre(rand, 18, 32); // quando a vida chega perto do dano do Smite
+  // Quando a vida chega perto do dano do Smite. O dano dos outros campeões escala com o nível: no começo (nível ~5) eles
+  // batem mais fraco e o objetivo demora mais (24-40 s); no fim (nível 18) batem mais forte e ele cai mais rápido (16-28 s).
+  const f = Math.max(0, Math.min(1, (nivel - 5) / 13));
+  const tx = entre(rand, 24 - 8 * f, 40 - 12 * f);
   const folga = entre(rand, 60, 360); // quanto a vida ainda passa do dano do Smite nesse momento
   const vx = smite + folga;
   const r1 = (alvo.vida - vx) / tx;
@@ -219,7 +222,7 @@ export function criarRodada(rand, n = 0, opcoes = null) {
   // igual, o meio bate pouco e forte, o selva (você e o inimigo) fica no meio termo, o topo bate pouco. Além disso,
   // o jogador tem a habilidade (Q) e o Golpear.
   const batedores = participantes;
-  const pesos = batedores.map((p) => DANO_3S[p.rota] * p.forca);
+  const pesos = batedores.map((p) => DANO_3S[p.rota] * p.forca * (1 + 0.04 * (p.nivel - nivel))); // +4% por nível acima do seu
   const soma = pesos.reduce((a, b) => a + b, 0);
   const prob = 0.04 + 0.03 * n; // chance de rajada (golpe grande) em cada batida (o topo, tanque, não dá rajada)
   const eventos = [];
