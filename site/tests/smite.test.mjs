@@ -370,17 +370,17 @@ test('smite: quando o selva inimigo golpeia, tira o dano do Smite; com a vida �
 test('smite: o inimigo só golpeia uma vez, e não golpeia se a vida passou da faixa sem ele ver', () => {
   const r = { ...criarRodada(aleatorio(4), 0) };
   const D4 = dq(r);
-  const est = novoEstado({ ...r, gatilhoInimigo: Math.round(r.smite * 0.9) });
+  const est = novoEstado({ ...r, golpes: [], gatilhoInimigo: Math.round(r.smite * 0.9) });
   est.vida = r.smite * 2; // longe da faixa
   est.vida = r.faixaMin - 10 + D4; // a habilidade deixa a vida abaixo da faixa (70% do dano)
-  const ev = usarHabilidade(est, 1);
+  const ev = [...usarHabilidade(est, 1), ...avancar(est, 1.3)]; // o inimigo espera 0,2 s depois de a vida entrar na zona
   assert.equal(ev.some((x) => x.tipo === 'smite-inimigo'), false);
   assert.equal(est.inimigoUsou, true);
   assert.equal(est.fim, null);
   // dentro da faixa: golpeia uma única vez
-  const est2 = novoEstado({ ...r, gatilhoInimigo: Math.round(r.smite * 0.9) });
+  const est2 = novoEstado({ ...r, golpes: [], gatilhoInimigo: Math.round(r.smite * 0.9) });
   est2.vida = Math.round(r.smite * 0.9) - 5 + D4; // depois da habilidade: dentro da faixa
-  const ev2 = usarHabilidade(est2, 1);
+  const ev2 = [...usarHabilidade(est2, 1), ...avancar(est2, 1.3)];
   assert.equal(ev2.filter((x) => x.tipo === 'smite-inimigo').length, 1);
   assert.equal(est2.fim.resultado, 'roubado');
   assert.deepEqual(usarHabilidade(est2, 1), []); // já terminou
@@ -592,4 +592,29 @@ test('smite: o relógio da partida respeita o nascimento dos objetivos e só ava
       assert.equal(r.tempoInicio, tp);
     });
   }
+});
+
+test('smite: o selva inimigo espera 0,2 s depois de a vida entrar na zona do Smite para golpear', () => {
+  const base = criarRodada(aleatorio(4), 2);
+  const r = { ...base, golpes: [{ t: 5, quem: 'a-topo', dano: 100, vida: 0 }], gatilhoInimigo: base.smite };
+  const mk = () => { const e = novoEstado(r); e.vida = r.smite + 50; return e; };
+  const e1 = mk();
+  const sm = (ev) => ev.some((x) => x.tipo === 'smite-inimigo');
+  assert.equal(sm(avancar(e1, 4.9)), false);
+  assert.equal(sm(avancar(e1, 5)), false); // entrou na zona em t = 5
+  assert.equal(e1.tZona, 5);
+  assert.equal(sm(avancar(e1, 5.19)), false);
+  const ev = avancar(e1, 5.21);
+  assert.equal(sm(ev), true);
+  assert.equal(e1.inimigoUsou, true);
+  assert.ok(e1.vida <= Math.max(0, r.smite - 50 - r.smite) + 1 || e1.fim); // levou o Golpear inimigo (pode ter morrido)
+  // o seu Golpear dentro dos 0,2 s chega antes e garante o objetivo
+  const e2 = mk(); avancar(e2, 5);
+  usarGolpear(e2, 5.1);
+  assert.equal(e2.fim.resultado, 'garantido');
+  assert.ok(Math.abs(e2.fim.tempo - 0.1) < 1e-9);
+  // sem restrição quando a vida ainda está acima da zona
+  const e3 = novoEstado({ ...r, golpes: [], gatilhoInimigo: base.smite * 1.04 });
+  e3.vida = Math.round(base.smite * 1.03); e3.t = 7;
+  assert.equal(sm(avancar(e3, 7.01)), false);
 });

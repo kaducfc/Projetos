@@ -10,7 +10,7 @@
 // na arte para o ícone redondo (background-position / background-size). `niveis`: faixa do nível do jogador
 // quando o objetivo aparece (o Arauto vem cedo, o Ancião e o Barão tarde) e, com ele, o dano do Smite.
 export const OBJETIVOS = [
-  { id: 'dragao-elemental', nome: 'Dragão Elemental', vida: 8000, tema: 'elemental', arte: 'img/dragao.webp', cenario: 'img/cenario.webp', icone: '3% 99% / 290%', pos: [37, 20, 38], posM: [12, 31, 76], niveis: [5, 16] },
+  { id: 'dragao-elemental', nome: 'Dragão Elemental', vida: 8000, tema: 'elemental', arte: 'img/dragao.webp', cenario: 'img/cenario.webp', icone: '3% 99% / 290%', pos: [37, 20, 38], posM: [12, 28.4, 76], niveis: [5, 16] },
   { id: 'dragao-anciao', nome: 'Dragão Ancião', vida: 11000, tema: 'anciao', arte: 'img/dragao-anciao.webp', cenario: 'img/cenario.webp', icone: '3% 77% / 280%', pos: [36, 19, 40], posM: [8, 31, 84], niveis: [13, 18] },
   { id: 'barao', nome: 'Barão Nashor', vida: 12000, tema: 'barao', arte: 'img/barao.webp', cenario: 'img/cenario-barao.webp', icone: '37% 10% / 160%', pos: [41.4, 0, 21.7], posM: [27.3, 9.3, 42], niveis: [12, 18] },
   { id: 'arauto', nome: 'Arauto do Vale', vida: 7000, tema: 'arauto', arte: 'img/arauto.webp', cenario: 'img/cenario-barao.webp', icone: '42% 11% / 190%', pos: [41.5, 36.7, 22.4], posM: [21.1, 26.6, 56], niveis: [7, 11] },
@@ -254,7 +254,7 @@ export function resolverSmite(vida, smite, seg = 0) {
 //   - um aliado finaliza ............................ 'time' (PONTOS_TIME = 25)
 //   - time inimigo (golpe ou Smite do selva) ........ 'roubado' (0)
 export function novoEstado(rodada) {
-  return { R: rodada, vida: rodada.vidaMax, idx: 0, smiteUsado: false, smiteFalhou: null, inimigoUsou: false, fim: null, t: 0, tZona: null,
+  return { R: rodada, vida: rodada.vidaMax, idx: 0, smiteUsado: false, smiteFalhou: null, inimigoUsou: false, inimigoEspera: false, fim: null, t: 0, tZona: null,
     q: { prontoEm: 0, janelaAte: null, desde: null, armadoAte: null } };
 }
 
@@ -272,16 +272,33 @@ function morreu(est, quem, via) {
   else encerrar(est, { resultado: 'roubado', pontos: 0, quem, via, margem: null });
 }
 
+// O selva inimigo nunca golpeia nos primeiros ATRASO_INIMIGO s depois de a vida entrar na zona do Smite (vida ≤ dano do Smite):
+// o gatilho fica esperando e dispara no instante tZona + ATRASO_INIMIGO (se a vida ainda estiver na faixa dele).
+export const ATRASO_INIMIGO = 0.2;
+
 // O selva inimigo golpeia quando a vida chega ao gatilho dele (se ainda estiver dentro da faixa).
 function checarInimigo(est, eventos) {
   const R = est.R;
   if (est.fim || est.inimigoUsou || R.gatilhoInimigo == null || est.vida > R.gatilhoInimigo) return;
-  est.inimigoUsou = true;
+  if (est.tZona != null && est.vida <= R.smite && est.t < est.tZona + ATRASO_INIMIGO) { est.inimigoEspera = true; return; }
+  golpeInimigo(est, eventos);
+}
+function golpeInimigo(est, eventos) {
+  const R = est.R;
+  est.inimigoEspera = false; est.inimigoUsou = true;
   if (est.vida < R.faixaMin) return; // a vida passou direto pela faixa (ex.: rajada): ele perdeu a hora
   const antes = est.vida;
   tirar(est, R.smite);
   eventos.push({ tipo: 'smite-inimigo', quem: 'e-selva', dano: R.smite, antes, depois: est.vida });
   if (est.vida <= 0) morreu(est, 'e-selva', 'smite-inimigo');
+}
+// Dispara o Golpear inimigo que estava esperando, se o atraso já passou até o instante `ate`.
+function liberarInimigo(est, ate, eventos) {
+  if (est.fim || !est.inimigoEspera || est.inimigoUsou) return;
+  const quando = est.tZona + ATRASO_INIMIGO;
+  if (quando > ate) return;
+  est.t = quando;
+  golpeInimigo(est, eventos);
 }
 
 // Aplica os golpes dos outros jogadores até o instante t (s). Devolve os eventos para a tela.
@@ -290,6 +307,8 @@ export function avancar(est, t) {
   const R = est.R;
   while (!est.fim && est.idx < R.golpes.length && R.golpes[est.idx].t <= t) {
     const g = R.golpes[est.idx++];
+    liberarInimigo(est, g.t, eventos);
+    if (est.fim) break;
     atualizarQ(est, g.t, eventos);
     const c = R.campeao; const q = est.q;
     let bonus = 0;
@@ -304,7 +323,8 @@ export function avancar(est, t) {
     if (est.vida <= 0) morreu(est, g.quem, bonus ? 'habilidade' : 'golpe');
     else checarInimigo(est, eventos);
   }
-  if (!est.fim) atualizarQ(est, t, eventos);
+  liberarInimigo(est, t, eventos);
+  if (!est.fim) { est.t = Math.max(est.t, t); atualizarQ(est, t, eventos); }
   if (!est.fim && t >= TEMPO_MAX) encerrar(est, { resultado: 'roubado', pontos: 0, quem: null, via: 'tempo', margem: null });
   return eventos;
 }
