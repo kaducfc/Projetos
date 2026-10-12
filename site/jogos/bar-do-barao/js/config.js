@@ -39,4 +39,4 @@ export const DESCRICAO_ACAO = {
 // Tempo (ms) que cada bot "pensa" antes de agir, e do intervalo entre eventos na tela.
 export const RITMO = { pensar: 900, evento: 650 };
 // Imagens reais (cenário, logotipo, retratos) entram aqui quando forem enviadas; null usa a arte substituta em CSS/SVG.
-export const ARTE = { cenario: null, logo: null };
+export const ARTE = { cenario: 'img/cenario.webp', logo: null };
