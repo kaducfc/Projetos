@@ -1,4 +1,4 @@
-# Coup: O Bar do Barão
+# O Bar do Barão
 
 Adaptação do Coup (4 jogadores: você + 3 bots) ambientada numa taverna clandestina de Zaun. Em teste: `soAdmin: true` em `shared/config.js` (apague a linha para lançar).
 

@@ -294,7 +294,7 @@ import { readFileSync, existsSync } from 'node:fs';
 test('integração: catálogo (só administrador), capa no hub, arquivos e referências do index.html existem', async () => {
   const { GAMES } = await import('../shared/config.js');
   const cfg = GAMES.find((g) => g.id === 'bar-do-barao');
-  assert.ok(cfg && cfg.name === 'Coup: O Bar do Barão' && cfg.path === 'jogos/bar-do-barao/' && cfg.soAdmin === true);
+  assert.ok(cfg && cfg.name === 'O Bar do Barão' && cfg.path === 'jogos/bar-do-barao/' && cfg.soAdmin === true);
   assert.match(readFileSync(new URL('../js/hub.js', import.meta.url), 'utf8'), /'bar-do-barao': `<div class="cv cv-bb">/);
   const html = readFileSync(new URL('../jogos/bar-do-barao/index.html', import.meta.url), 'utf8');
   for (const m of html.matchAll(/(?:href|src)="((?!https?:)[^"#]+?)(?:\?[^"]*)?"/g)) {
@@ -308,7 +308,7 @@ test('interface do Bar do Barão traduzida nos 5 idiomas', async () => {
   const { __usarDicionario, traduzirTexto, LANGS } = await import('../shared/i18n.js');
   const fonte = readFileSync(new URL('../jogos/bar-do-barao/js/main.js', import.meta.url), 'utf8');
   const textos = new Set([...fonte.matchAll(/\bt\('((?:[^'\\]|\\.)*)'/g)].map((m) => m[1].replace(/\\'/g, "'")));
-  textos.add('Coup: O Bar do Barão'); textos.add('Coup: O Bar do Barão · Rift Arcade'); textos.add('Blefe');
+  textos.add('O Bar do Barão'); textos.add('O Bar do Barão · Rift Arcade'); textos.add('Blefe');
   textos.add('Blefe, intriga e traição numa taverna clandestina de Zaun: sobreviva com ao menos uma influência.');
   for (const id of LANGS.map((l) => l.id).filter((x) => x !== 'pt-BR')) {
     __usarDicionario((await import(`../shared/i18n/${id}.js`)).default, id);

@@ -1,7 +1,7 @@
-// Coup: O Bar do Barão — interface. Nomes de personagens e falas ficam em português (são do cenário); as regras e botões são traduzidos.
+// O Bar do Barão — interface. Nomes de personagens e falas ficam em português (são do cenário); as regras e botões são traduzidos.
 export default [
-  ['Coup: O Bar do Barão', 'Coup: The Baron’s Bar', 'Coup: Die Bar des Barons', 'Coup: El Bar del Barón', 'Coup: Il Bar del Barone', 'Coup : Le Bar du Baron'],
-  ['Coup: O Bar do Barão · Rift Arcade', 'Coup: The Baron’s Bar · Rift Arcade', 'Coup: Die Bar des Barons · Rift Arcade', 'Coup: El Bar del Barón · Rift Arcade', 'Coup: Il Bar del Barone · Rift Arcade', 'Coup : Le Bar du Baron · Rift Arcade'],
+  ['O Bar do Barão', 'The Baron’s Bar', 'Die Bar des Barons', 'El Bar del Barón', 'Il Bar del Barone', 'Le Bar du Baron'],
+  ['O Bar do Barão · Rift Arcade', 'The Baron’s Bar · Rift Arcade', 'Die Bar des Barons · Rift Arcade', 'El Bar del Barón · Rift Arcade', 'Il Bar del Barone · Rift Arcade', 'Le Bar du Baron · Rift Arcade'],
   ['Blefe, intriga e traição numa taverna clandestina de Zaun: sobreviva com ao menos uma influência.', 'Bluff, intrigue and betrayal in a clandestine Zaun tavern: survive with at least one influence.', 'Bluff, Intrigen und Verrat in einer geheimen Taverne in Zaun: Überlebe mit mindestens einem Einfluss.', 'Farol, intriga y traición en una taberna clandestina de Zaun: sobrevive con al menos una influencia.', 'Bluff, intrighi e tradimenti in una taverna clandestina di Zaun: sopravvivi con almeno un’influenza.', 'Bluff, intrigues et trahisons dans une taverne clandestine de Zaun : survis avec au moins une influence.'],
   ['Blefe', 'Bluff', 'Bluff', 'Farol', 'Bluff', 'Bluff'],
   ['Magnata', 'Magnate', 'Magnat', 'Magnate', 'Magnate', 'Magnat'],

@@ -1,4 +1,4 @@
-// Coup: O Bar do Barão — controlador e tela. As regras vivem em motor.js e as decisões dos bots em bots.js;
+// O Bar do Barão — controlador e tela. As regras vivem em motor.js e as decisões dos bots em bots.js;
 // aqui só se desenha o estado e se repassam os cliques do jogador ao motor.
 // Enquanto o jogo é "oculto" (gameById('bar-do-barao').soAdmin), só administradores conseguem jogar.
 import * as platform from '../../../shared/platform.js';
@@ -266,7 +266,7 @@ function desenhar() {
   const eu = jogador(est, EU);
   const vez = est.turno === MESA.indexOf(EU) && !est.vencedor;
   const cenario = ARTE.cenario ? `style="background-image:linear-gradient(180deg,rgba(8,6,4,.1),rgba(8,6,4,.62)),url(${esc(ARTE.cenario)})"` : '';
-  const logo = ARTE.logo ? `<img class="bb-logo-img" src="${esc(ARTE.logo)}" alt="Coup: O Bar do Barão" />` : `<h1 class="bb-logo"><small>COUP</small>${esc('O BAR DO BARÃO')}</h1>`;
+  const logo = ARTE.logo ? `<img class="bb-logo-img" src="${esc(ARTE.logo)}" alt="O Bar do Barão" />` : `<h1 class="bb-logo">${esc('O BAR DO BARÃO')}</h1>`;
   app.innerHTML = `<div class="bb-mesa" ${cenario}>
     <header class="bb-topo">${logo}<div class="bb-ferr"><span class="bb-turno">${esc(t('Turno {n}', { n: est.numTurno }))} · ${esc(t('Baralho: {n}', { n: est.baralho.length }))}</span>
       <button class="bb-bt peq" data-a="ajuda">${esc(t('Como jogar'))}</button></div></header>
