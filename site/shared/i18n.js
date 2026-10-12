@@ -46,6 +46,23 @@ function idiomaDoLink() {
   } catch { return null; }
 }
 
+// Primeira visita: usa o idioma do navegador (en, de, es, it, fr; português e qualquer outro caem no português).
+// Quem já tinha usado o site antes desta mudança (há outros dados salvos neste navegador) fica no português, e robôs
+// de busca também (o site indexado continua em português). O resultado é salvo: depois disso só o seletor ou ?lang= mudam.
+function idiomaDoNavegador() {
+  try {
+    if (typeof navigator === 'undefined' || /bot|crawl|spider|slurp|lighthouse|headless/i.test(navigator.userAgent || '') || navigator.webdriver) return IDIOMA_PADRAO;
+    if (localStorage.length > 0) return IDIOMA_PADRAO; // já visitou antes: não muda sozinho
+    for (const cod of navigator.languages?.length ? navigator.languages : [navigator.language]) {
+      const base = String(cod || '').toLowerCase().split('-')[0];
+      if (base === 'pt') return IDIOMA_PADRAO;
+      const achou = LANGS.find((l) => l.id === base);
+      if (achou) return achou.id;
+    }
+  } catch { /* sem storage ou navegador */ }
+  return IDIOMA_PADRAO;
+}
+
 function lerSalvo() {
   const doLink = idiomaDoLink();
   if (doLink) return doLink;
@@ -53,7 +70,10 @@ function lerSalvo() {
     const v = localStorage.getItem(CHAVE);
     if (LANGS.some((l) => l.id === v)) return v;
   } catch { /* sem storage */ }
-  return IDIOMA_PADRAO;
+  if (typeof document === 'undefined') return IDIOMA_PADRAO; // fora do navegador (testes)
+  const auto = idiomaDoNavegador();
+  try { localStorage.setItem(CHAVE, auto); } catch { /* sem storage */ }
+  return auto;
 }
 
 function montar(d) {
