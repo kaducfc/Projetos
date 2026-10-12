@@ -171,7 +171,7 @@ function bloco(id) {
   const fal = bolha && bolha.id === id ? `<div class="bb-fala" aria-hidden="true">${esc(bolha.txt)}</div>` : '';
   const tag = alvoOk ? 'button' : 'div';
   return `<${tag} class="bb-jog ${vez ? 'vez' : ''} ${j.vivo ? '' : 'fora'} ${alvoOk ? 'alvo' : ''}" style="--cor:${p.cor}" ${alvoOk ? `data-a="alvo" data-id="${id}"` : ''}>
-    ${fal}<div class="bb-ret"><span>${p.simbolo}</span></div>
+    ${fal}<div class="bb-ret">${p.retrato ? `<img src="${esc(p.retrato)}" alt="" />` : `<span>${p.simbolo}</span>`}</div>
     <div class="bb-nm"><b data-no-i18n>${esc(p.nome)}</b><small data-no-i18n>${esc(p.titulo)}</small></div>
     <div class="bb-moedas" title="${esc(t('Moedas'))}"><i></i>${j.moedas}</div>
     <div class="bb-maos">${cartas}</div>

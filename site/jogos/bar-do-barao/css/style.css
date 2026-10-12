@@ -149,3 +149,7 @@ button.bb-jog { cursor: pointer; border-color: var(--ouro-2); box-shadow: 0 0 0 
 .bb-opps .bb-jog:first-child .bb-fala { left: 8px; transform: none; animation: none; } .bb-opps .bb-jog:first-child .bb-fala::after { left: 30px; margin-left: 0; }
 .bb-opps .bb-jog:last-child .bb-fala { left: auto; right: 8px; transform: none; animation: none; } .bb-opps .bb-jog:last-child .bb-fala::after { left: auto; right: 30px; margin-left: 0; }
 @media (max-width: 760px) { .bb-opps .bb-jog:first-child .bb-fala::after { left: 22px; } .bb-opps .bb-jog:last-child .bb-fala::after { right: 22px; } .bb-opps .bb-jog .bb-fala { max-width: 200px; } }
+
+.bb-ret { overflow: hidden; position: relative; }
+.bb-ret img { position: absolute; left: 50%; top: 4%; width: 118%; transform: translateX(-50%); height: auto; }
+@media (min-width: 761px) { .bb-jog { grid-template-columns: 74px 1fr; } .bb-ret { width: 74px; height: 74px; } }

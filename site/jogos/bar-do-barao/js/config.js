@@ -6,11 +6,11 @@
 //   cautela        — quanto protege as próprias cartas (bloqueia/evita arriscar com poucas cartas)
 //   vingança       — foco em quem o atacou ou o contestou antes
 export const PERSONAGENS = {
-  b1: { id: 'b1', nome: 'Brutus', titulo: 'o Cobrador', cor: '#c2410c', simbolo: '⚔', retrato: null,
+  b1: { id: 'b1', nome: 'Brutus', titulo: 'o Cobrador', cor: '#c2410c', simbolo: '⚔', retrato: 'img/b1.webp',
     perfil: { agressividade: 0.85, blefe: 0.35, desconfianca: 0.4, cautela: 0.25, vinganca: 0.8 } },
-  b2: { id: 'b2', nome: 'Sibil', titulo: 'a Informante', cor: '#2f7f9e', simbolo: '◈', retrato: null,
+  b2: { id: 'b2', nome: 'Sibil', titulo: 'a Informante', cor: '#2f7f9e', simbolo: '◈', retrato: 'img/b2.webp',
     perfil: { agressividade: 0.4, blefe: 0.12, desconfianca: 0.7, cautela: 0.75, vinganca: 0.3 } },
-  b3: { id: 'b3', nome: 'Vexel', titulo: 'o Trapaceiro', cor: '#8b5cf6', simbolo: '♠', retrato: null,
+  b3: { id: 'b3', nome: 'Vexel', titulo: 'o Trapaceiro', cor: '#8b5cf6', simbolo: '♠', retrato: 'img/b3.webp',
     perfil: { agressividade: 0.55, blefe: 0.8, desconfianca: 0.5, cautela: 0.35, vinganca: 0.45 } },
 };
 export const JOGADOR_HUMANO = { id: 'eu', nome: 'Você', titulo: 'Forasteiro', cor: '#d9a82b', simbolo: '★' };
