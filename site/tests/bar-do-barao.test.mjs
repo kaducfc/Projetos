@@ -248,3 +248,43 @@ test('simulação aleatória: 300 partidas legais terminam sem travar e conserva
     assert.equal(vivos(est).length, 1);
   }
 });
+
+// ------------------------------------------------------------------ bots
+import { decidir } from '../jogos/bar-do-barao/js/bots.js';
+import { PERSONAGENS } from '../jogos/bar-do-barao/js/config.js';
+import { aleatorio } from '../jogos/bar-do-barao/js/rng.js';
+
+function jogarBots(seed) {
+  const est = novaPartida({ jogadores: JOG.map((j) => ({ ...j, humano: false })), seed });
+  const perfis = { eu: PERSONAGENS.b3.perfil, b1: PERSONAGENS.b1.perfil, b2: PERSONAGENS.b2.perfil, b3: PERSONAGENS.b3.perfil };
+  const rngs = Object.fromEntries(Object.keys(perfis).map((id, k) => [id, aleatorio(seed * 10 + k)]));
+  let passos = 0;
+  while (!est.vencedor) {
+    assert.ok(passos++ < 3000, `bots travaram na semente ${seed}`);
+    const p = pedido(est);
+    const d = decidir(visao(est, p.jogador), p, perfis[p.jogador], rngs[p.jogador]);
+    aplicar(est, p.jogador, d); // qualquer decisão ilegal lança erro
+  }
+  return est;
+}
+
+test('bots: 200 partidas completas só com decisões legais e sem travar', () => {
+  const vit = {};
+  for (let s = 1; s <= 200; s++) { const e = jogarBots(s); vit[e.vencedor] = (vit[e.vencedor] || 0) + 1; }
+  assert.ok(Object.keys(vit).length >= 3, 'mais de um estilo vence: ' + JSON.stringify(vit));
+});
+
+test('bots não leem cartas ocultas: decisão idêntica se as cartas dos outros mudarem', () => {
+  for (let s = 1; s <= 30; s++) {
+    const est = nova(s);
+    const p = pedido(est);
+    const ped = pedido(est);
+    const v1 = visao(est, 'eu');
+    // troca as cartas ocultas dos outros por outras quaisquer
+    const est2 = nova(s);
+    for (const j of est2.jogadores) if (j.id !== 'eu') j.cartas.forEach((c) => { c.inf = 'sentinela'; });
+    const v2 = visao(est2, 'eu');
+    assert.deepEqual(v1.jogadores, v2.jogadores);
+    assert.deepEqual(decidir(v1, ped, PERSONAGENS.b3.perfil, aleatorio(s)), decidir(v2, p, PERSONAGENS.b3.perfil, aleatorio(s)));
+  }
+});
