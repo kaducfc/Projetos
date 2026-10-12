@@ -142,7 +142,7 @@ export const erros = (est) => Math.max(0, est.tentativas - est.resolvidos.length
 export const pontos = (est) => Math.max(0, 100 - 10 * erros(est) - 5 * est.dicas);
 
 // Texto para compartilhar (sem as palavras, para não estragar o desafio dos outros).
-export const QUADRADOS = ['🟧', '🟩', '🟦', '🟪'];
+export const QUADRADOS = ['🟨', '🟩', '🟦', '🟪']; // ouro, platina, diamante e mestre (as cores dos grupos)
 export function textoCompartilhar(est, { titulo = NOME_JOGO, dia = '', link = '' } = {}) {
   const linha = est.historico.map((h) => (h.tipo === 'dica' ? '💡' : h.tipo === 'ok' ? QUADRADOS[h.ordem] : '⬛')).join('');
   return `${titulo}${dia ? ` · ${dia}` : ''}\n${linha}\n${est.tentativas} tentativas · ${est.dicas} dicas${link ? `\n${link}` : ''}`;

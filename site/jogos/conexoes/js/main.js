@@ -8,7 +8,7 @@ import { gameById } from '../../../shared/config.js';
 import { t, onLangChange } from '../../../shared/i18n.js';
 import {
   puzzleDoDia, criarPuzzle, aleatorio, novoJogo, alternar, conferir, dica, podeDica, misturar, palavrasRestantes,
-  erros, pontos, textoCompartilhar, salvar, restaurar, TAMANHO,
+  erros, pontos, textoCompartilhar, salvar, restaurar, TAMANHO, QUADRADOS,
 } from './logic.js';
 
 const GAME_ID = 'conexoes';
@@ -35,6 +35,8 @@ let erroAnim = []; // palavras que tremem no erro
 let ocupado = false;
 let registrado = false; // o resultado do desafio do dia já foi enviado ao histórico
 let ajudaAberta = false;
+let grupoNovo = -1; // grupo recém-achado (só ele anima ao entrar)
+let animar = true; // as peças sobem em sequência só quando o tabuleiro é desenhado do zero
 
 const LAMPADA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>';
 
@@ -54,70 +56,76 @@ const fator = (w) => Math.max(0.62, Math.min(1, 8 / Math.max(...w.split(/\s+/).m
 
 function pecas() {
   const marcadas = new Set(est.marcadas);
-  return palavrasRestantes(est).map((w) => {
+  return palavrasRestantes(est).map((w, i) => {
     const cls = ['cx-pec', est.sel.includes(w) ? 'sel' : '', erroAnim.includes(w) ? 'erro' : ''].filter(Boolean).join(' ');
-    return `<button type="button" class="${cls}" style="--f:${fator(w).toFixed(2)}" data-a="palavra" data-w="${esc(w)}" aria-pressed="${est.sel.includes(w)}">${esc(w)}${marcadas.has(w) ? '<i class="marca" title="' + esc(t('Dica')) + '"></i>' : ''}</button>`;
+    return `<button type="button" class="${cls}" style="--f:${fator(w).toFixed(2)};--i:${animar ? i : 0}" data-a="palavra" data-w="${esc(w)}" aria-pressed="${est.sel.includes(w)}">${esc(w)}${marcadas.has(w) ? '<i class="marca" title="' + esc(t('Dica')) + '"></i>' : ''}</button>`;
   }).join('');
 }
 function resolvidos() {
   return est.resolvidos.map((i) => {
     const g = est.puzzle.grupos[i];
-    return `<div class="cx-grupo o${g.ordem}"><b>${esc(g.tit)}</b><span>${g.palavras.map(esc).join(', ')}</span></div>`;
+    return `<div class="cx-grupo o${g.ordem}${i === grupoNovo ? ' novo' : ''}"><b>${esc(g.tit)}</b><span>${g.palavras.map(esc).join(', ')}</span></div>`;
   }).join('');
 }
 function cartaoFim() {
-  const quad = est.historico.map((h) => (h.tipo === 'dica' ? '💡' : h.tipo === 'ok' ? ['🟧', '🟩', '🟦', '🟪'][h.ordem] : '⬛')).join('');
+  const quad = est.historico.map((h) => (h.tipo === 'dica' ? '💡' : h.tipo === 'ok' ? QUADRADOS[h.ordem] : '⬛')).join('');
   const d = est.dicas === 0 ? t('sem dicas') : est.dicas === 1 ? t('1 dica') : t('{n} dicas', { n: est.dicas });
-  return `<div class="cx-fim"><h2>${t('Parabéns!')}</h2>
+  return `<div class="cx-fim cx-quadro${grupoNovo >= 0 ? ' novo' : ''}"><h2>${t('Parabéns!')}</h2>
     <p>${t('Você acertou em {t} tentativas e {d}.', { t: est.tentativas, d })}</p>
     <div class="quadrados" aria-hidden="true">${quad}</div>
-    <p class="pts">${t('{n} pontos', { n: pontos(est) })}</p>
+    <p class="pts">${pontos(est)}<small>${t('pontos')}</small></p>
     <div class="cx-acoes"><button type="button" class="cx-bt principal" data-a="compartilhar">${t('Compartilhe')}</button>
       <button type="button" class="cx-bt" data-a="${modo === 'dia' ? 'livre' : 'novo'}">${modo === 'dia' ? t('Jogar um quebra-cabeça livre') : t('Outro quebra-cabeça')}</button>
       ${modo === 'livre' ? `<button type="button" class="cx-bt" data-a="dia">${t('Voltar ao desafio do dia')}</button>` : ''}</div></div>`;
 }
 function modalAjuda() {
-  return `<div class="cx-modal" id="cx-ajuda" ${ajudaAberta ? '' : 'hidden'}><div role="dialog" aria-modal="true" aria-label="${esc(t('Como jogar'))}">
+  return `<div class="cx-modal" id="cx-ajuda" ${ajudaAberta ? '' : 'hidden'}><div class="cx-quadro" role="dialog" aria-modal="true" aria-label="${esc(t('Como jogar'))}">
     <h2>${t('Como jogar')}</h2>
-    <p>${t('Forme grupos de 4 palavras que tenham algo em comum.')}</p>
-    <p>${t('Clique em uma palavra para selecioná-la. Se precisar, você pode clicar novamente para desselecionar.')}</p>
-    <p>${t('Assim que você selecionar 4 palavras o jogo irá automaticamente conferir se o grupo está correto.')}</p>
-    <p>${t('Se estiver correto, a categoria será revelada. Senão, tente novamente.')}</p>
-    <p>${t('Descubra os 4 grupos.')}</p>
+    <ol><li><span>${t('Forme grupos de 4 palavras que tenham algo em comum.')}</span></li>
+      <li><span>${t('Clique em uma palavra para selecioná-la. Se precisar, você pode clicar novamente para desselecionar.')}</span></li>
+      <li><span>${t('Assim que você selecionar 4 palavras o jogo irá automaticamente conferir se o grupo está correto.')}</span></li>
+      <li><span>${t('Se estiver correto, a categoria será revelada. Senão, tente novamente.')}</span></li>
+      <li><span>${t('Descubra os 4 grupos.')}</span></li></ol>
     <p class="nota">${t('Tudo vem do universo de League of Legends: campeões, itens, regiões, monstros, eSports e muito mais. As palavras ficam em português.')}</p>
     <div class="cx-acoes"><button type="button" class="cx-bt principal" data-a="fechar">${t('Entendi')}</button></div></div></div>`;
 }
 
 function desenhar() {
   const fim = est.fim;
-  app.innerHTML = `<div class="cx-topo"><h1>${t('Conexões do Rift')}<small>${modo === 'dia' ? t('Desafio do dia') : t('Jogo livre')}</small></h1>
-      <button type="button" class="cx-bt" data-a="ajuda">${t('Como jogar')}</button></div>
-    <div class="cx-info"><span class="dia">${modo === 'dia' ? dataBonita(dia) : ''}</span>
-      <span>${t('TENTATIVAS:')} <b>${est.tentativas}</b></span>
-      ${est.dicas ? `<span>${t('DICAS:')} <b>${est.dicas}</b></span>` : ''}
+  const achados = est.resolvidos.length;
+  app.innerHTML = `<div class="cx-topo"><div><p class="cx-eyebrow">${t('Quebra-cabeça')} · League of Legends</p><h1>${t('Conexões do Rift')}</h1>
+      <span class="cx-modo"><i></i>${modo === 'dia' ? t('Desafio do dia') : t('Jogo livre')}</span></div>
+      <button type="button" class="cx-bt pequeno" data-a="ajuda">${t('Como jogar')}</button></div>
+    <div class="cx-info cx-quadro">
+      ${modo === 'dia' ? `<div class="cx-dado dia"><small>${t('Data')}</small><b>${dataBonita(dia)}</b></div>` : ''}
+      <div class="cx-dado"><small>${t('Tentativas')}</small><b>${est.tentativas}</b></div>
+      <div class="cx-dado"><small>${t('Dicas')}</small><b>${est.dicas}</b></div>
       <span class="esp"></span>
+      <span class="cx-prog" aria-label="${achados}/4">${[0, 1, 2, 3].map((i) => `<i class="${i < achados ? 'on' : ''}"></i>`).join('')}</span>
       <button type="button" class="dica" data-a="dica" ${podeDica(est) && !ocupado ? '' : 'disabled'}>${LAMPADA}${t('Dica')}</button></div>
     ${fim ? cartaoFim() : `<div class="cx-msg" role="status">${esc(msg)}</div>`}
     <div data-no-i18n>
       <div class="cx-resolvidos">${resolvidos()}</div>
-      ${fim ? '' : `<div class="cx-tabuleiro">${pecas()}</div>`}
+      ${fim ? '' : `<div class="cx-tabuleiro${animar ? ' entra' : ''}">${pecas()}</div>`}
     </div>
     ${fim ? '' : `<div class="cx-acoes"><button type="button" class="cx-bt" data-a="misturar">${t('Embaralhar')}</button>
       <button type="button" class="cx-bt" data-a="limpar" ${est.sel.length ? '' : 'disabled'}>${t('Limpar')}</button></div>`}
     ${modalAjuda()}`;
+  animar = false;
 }
 
 // --------------------------------------------------------------------------- ações
 async function clicarPalavra(w) {
   if (ocupado || est.fim) return;
   alternar(est, w);
-  msg = '';
+  msg = ''; grupoNovo = -1;
   desenhar();
   if (est.sel.length === TAMANHO) {
     ocupado = true;
     await esperar(280);
     const antes = [...est.sel];
     const r = conferir(est);
+    if (r.tipo === 'ok') grupoNovo = est.resolvidos[est.resolvidos.length - 1];
     if (r.tipo === 'erro') {
       erroAnim = antes;
       msg = r.quase ? t('Falta só uma palavra!') : t('Não é esse grupo. Tente de novo.');
@@ -132,7 +140,7 @@ async function clicarPalavra(w) {
 
 function pedirDica() {
   if (ocupado || !dica(est)) return;
-  msg = '';
+  msg = ''; grupoNovo = -1;
   guardar();
   desenhar();
 }
@@ -159,13 +167,13 @@ async function compartilhar() {
 }
 
 function novoLivre() {
-  modo = 'livre';
+  modo = 'livre'; grupoNovo = -1;
   est = novoJogo(criarPuzzle(aleatorio((Date.now() ^ 0x9e3779b9) >>> 0)));
-  msg = ''; erroAnim = [];
+  msg = ''; erroAnim = []; animar = true;
   desenhar();
 }
 function voltarDia() {
-  modo = 'dia'; dia = hojeBR(); est = carregarDia(); msg = ''; erroAnim = [];
+  modo = 'dia'; grupoNovo = -1; dia = hojeBR(); est = carregarDia(); msg = ''; erroAnim = []; animar = true;
   desenhar();
 }
 
@@ -175,7 +183,7 @@ app.addEventListener('click', (e) => {
   const a = b.dataset.a;
   if (a === 'palavra') clicarPalavra(b.dataset.w);
   else if (a === 'dica') pedirDica();
-  else if (a === 'misturar') { misturar(est); guardar(); desenhar(); }
+  else if (a === 'misturar') { misturar(est); guardar(); animar = true; desenhar(); }
   else if (a === 'limpar') { est.sel = []; msg = ''; desenhar(); }
   else if (a === 'ajuda') { ajudaAberta = true; desenhar(); }
   else if (a === 'fechar') { ajudaAberta = false; gravarLS(CHAVE_AJUDA, true); desenhar(); }
@@ -199,7 +207,7 @@ onLangChange(() => { if (est) desenhar(); });
   const souAdmin = await platform.isAdmin();
   const aberto = !gameById(GAME_ID)?.soAdmin;
   if (!souAdmin && !teste && !aberto) { telaBloqueada(); return; }
-  est = carregarDia();
+  est = carregarDia(); animar = true;
   ajudaAberta = !lerLS(CHAVE_AJUDA, false) && !est.tentativas && !est.dicas; // 1ª vez: mostra o "Como jogar"
   desenhar();
   platform.track('game_start', GAME_ID, {});

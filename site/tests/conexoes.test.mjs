@@ -162,7 +162,7 @@ test('conexões: texto para compartilhar não revela as palavras', () => {
   selecionar(est, [g0.palavras[0], g1.palavras[0], g2.palavras[0], g3.palavras[0]]); conferir(est);
   for (const g of est.puzzle.grupos) { selecionar(est, g.palavras); conferir(est); }
   const txt = textoCompartilhar(est, { titulo: 'Conexões do Rift', dia: '12/10/2026', link: 'https://exemplo/' });
-  assert.match(txt, /^Conexões do Rift · 12\/10\/2026\n💡💡⬛🟧🟩🟦🟪\n5 tentativas · 2 dicas\nhttps:\/\/exemplo\/$/);
+  assert.match(txt, /^Conexões do Rift · 12\/10\/2026\n💡💡⬛🟨🟩🟦🟪\n5 tentativas · 2 dicas\nhttps:\/\/exemplo\/$/);
   for (const w of est.puzzle.palavras) assert.ok(!txt.includes(w));
 });
 

@@ -6,7 +6,7 @@ Hoje só administradores jogam (`soAdmin: true` em `shared/config.js`); para lib
 
 ## Como se joga
 - Clique para selecionar (até 4; clicar de novo desmarca). Com 4 selecionadas o jogo confere sozinho.
-- Acerto: a categoria é revelada em uma barra colorida (laranja, verde, azul e roxo, do grupo mais fácil ao mais difícil).
+- Acerto: a categoria é revelada em uma barra colorida (ouro, platina, diamante e mestre, as cores dos elos do site, do grupo mais fácil ao mais difícil).
   Erro: as peças tremem e conta uma tentativa ("Falta só uma palavra!" quando 3 das 4 são do mesmo grupo).
 - **Dica**: marca com um canto laranja 2 palavras de um grupo ainda não achado; as próximas dicas marcam mais 1 (até 3 por grupo) e depois passam ao grupo seguinte.
 - **Embaralhar** mistura as peças que restam. Ao terminar: tentativas, dicas, pontos e botão **Compartilhe** (quadradinhos coloridos, sem revelar palavras).
