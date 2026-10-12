@@ -288,3 +288,40 @@ test('bots não leem cartas ocultas: decisão idêntica se as cartas dos outros 
     assert.deepEqual(decidir(v1, ped, PERSONAGENS.b3.perfil, aleatorio(s)), decidir(v2, p, PERSONAGENS.b3.perfil, aleatorio(s)));
   }
 });
+
+// ------------------------------------------------------------------ integração
+import { readFileSync, existsSync } from 'node:fs';
+test('integração: catálogo (só administrador), capa no hub, arquivos e referências do index.html existem', async () => {
+  const { GAMES } = await import('../shared/config.js');
+  const cfg = GAMES.find((g) => g.id === 'bar-do-barao');
+  assert.ok(cfg && cfg.name === 'Coup: O Bar do Barão' && cfg.path === 'jogos/bar-do-barao/' && cfg.soAdmin === true);
+  assert.match(readFileSync(new URL('../js/hub.js', import.meta.url), 'utf8'), /'bar-do-barao': `<div class="cv cv-bb">/);
+  const html = readFileSync(new URL('../jogos/bar-do-barao/index.html', import.meta.url), 'utf8');
+  for (const m of html.matchAll(/(?:href|src)="((?!https?:)[^"#]+?)(?:\?[^"]*)?"/g)) {
+    assert.ok(existsSync(new URL(`../jogos/bar-do-barao/${m[1]}`, import.meta.url)), `referência quebrada: ${m[1]}`);
+  }
+  // os outros jogos continuam no catálogo
+  for (const id of ['barao', 'smite', 'carreira-no-rift', 'cblol', 'campeao', 'runetermo', 'escala', 'conexoes']) assert.ok(GAMES.some((g) => g.id === id), id);
+});
+
+test('interface do Bar do Barão traduzida nos 5 idiomas', async () => {
+  const { __usarDicionario, traduzirTexto, LANGS } = await import('../shared/i18n.js');
+  const fonte = readFileSync(new URL('../jogos/bar-do-barao/js/main.js', import.meta.url), 'utf8');
+  const textos = new Set([...fonte.matchAll(/\bt\('((?:[^'\\]|\\.)*)'/g)].map((m) => m[1].replace(/\\'/g, "'")));
+  textos.add('Coup: O Bar do Barão'); textos.add('Coup: O Bar do Barão · Rift Arcade'); textos.add('Blefe');
+  textos.add('Blefe, intriga e traição numa taverna clandestina de Zaun: sobreviva com ao menos uma influência.');
+  for (const id of LANGS.map((l) => l.id).filter((x) => x !== 'pt-BR')) {
+    __usarDicionario((await import(`../shared/i18n/${id}.js`)).default, id);
+    const faltam = [...textos].filter((x) => /[A-Za-zÀ-ú]{3}/.test(x) && traduzirTexto(x) == null);
+    assert.deepEqual(faltam, [], `${id}: sem tradução`);
+  }
+});
+
+test('o motor e os bots não dependem de tela nem de rede (sem document/window/fetch)', () => {
+  for (const f of ['motor.js', 'bots.js', 'rng.js']) {
+    const src = readFileSync(new URL(`../jogos/bar-do-barao/js/${f}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(src, /\b(document|window|fetch|localStorage)\b/, f);
+  }
+  const bots = readFileSync(new URL('../jogos/bar-do-barao/js/bots.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(bots, /est\.jogadores|est\.baralho|est\.rng/, 'bots só usam a visão');
+});
