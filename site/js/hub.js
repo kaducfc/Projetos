@@ -54,6 +54,9 @@ const CAPAS = {
   // Desafio do Golpear: o banner (o dragão no covil) com o nome do jogo por cima (traduzido em cada idioma).
   smite: `<div class="cv cv-smite"><img class="cv-sm-bg" src="/jogos/smite/img/banner.webp" alt="" loading="lazy" />
       <span class="cv-sm-t"><i>DESAFIO DO</i><b>GOLPEAR</b></span></div>`,
+  // Conexões do Rift (só administradores por enquanto): uma grade 4 x 4 com os quatro grupos coloridos.
+  conexoes: `<div class="cv cv-cx"><span class="cv-cx-t">CONEXÕES<b>DO RIFT</b></span>
+      <span class="cv-cx-g">${['o0','o0','o0','o0','o1','o1','o1','o1','o2','o2','o2','o2','o3','o3','o3','o3'].map((c) => `<i class="${c}"></i>`).join('')}</span></div>`,
   barao: `<div class="cv cv-barao"><span class="cv-bz-t">SHOW DO<b>BARÃO</b></span>
       <img class="cv-bz-ap" src="/jogos/barao/img/apresentador.webp" alt="" loading="lazy" /></div>`,
   // O time dos sonhos, como na tela do Lendas (melhor OVR de cada um no jogo).

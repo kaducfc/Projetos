@@ -122,6 +122,18 @@ export const GAMES = [
     scoreLabel: 'Pontos',
     ranked: { modo: 'diario', selo: 'Diário · Ranqueada' },
   },
+  // Em desenvolvimento: `soAdmin` esconde o jogo do hub e do perfil e bloqueia a página
+  // para quem não é administrador. Para lançar, apague a linha `soAdmin`.
+  {
+    id: 'conexoes',
+    name: 'Conexões do Rift',
+    tagline: 'Dezesseis palavras do universo de League of Legends: junte as de 4 em 4 que têm algo em comum.',
+    kind: 'Quebra-cabeça',
+    path: 'jogos/conexoes/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+    soAdmin: true,
+  },
 ];
 
 export const gameById = (id) => GAMES.find((g) => g.id === id);
