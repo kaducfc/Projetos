@@ -11,7 +11,7 @@
 // quando o objetivo aparece, pelo relógio da partida (Arauto a partir dos 15 min, Barão dos 20, Ancião dos 30) e, com ele, o dano do Smite.
 export const OBJETIVOS = [
   { id: 'dragao-elemental', nome: 'Dragão Elemental', vida: 8000, tema: 'elemental', arte: 'img/dragao.webp', cenario: 'img/cenario.webp', icone: '3% 99% / 290%', pos: [37, 20, 38], posM: [20.4, 18.1, 76], niveis: [4, 17] },
-  { id: 'dragao-anciao', nome: 'Dragão Ancião', vida: 11000, tema: 'anciao', arte: 'img/dragao-anciao.webp', cenario: 'img/cenario.webp', icone: '3% 77% / 280%', pos: [36, 19, 40], posM: [24, 17.5, 78], niveis: [16, 18] },
+  { id: 'dragao-anciao', nome: 'Dragão Ancião', vida: 11000, tema: 'anciao', arte: 'img/dragao-anciao.webp', cenario: 'img/cenario.webp', icone: '3% 77% / 280%', pos: [36, 19, 40], posM: [25.9, 12.9, 93.6], niveis: [16, 18] },
   { id: 'barao', nome: 'Barão Nashor', vida: 12000, tema: 'barao', arte: 'img/barao.webp', cenario: 'img/cenario-barao.webp', icone: '37% 10% / 160%', pos: [41.4, 0, 21.7], posM: [30.8, 16.5, 34], niveis: [13, 18] },
   { id: 'arauto', nome: 'Arauto do Vale', vida: 7000, tema: 'arauto', arte: 'img/arauto.webp', cenario: 'img/cenario-barao.webp', icone: '42% 11% / 190%', pos: [41.5, 36.7, 22.4], posM: [21.1, 26.6, 56], niveis: [10, 15] },
 ];
