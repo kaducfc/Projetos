@@ -18,11 +18,11 @@ export const MESA = ['eu', 'b1', 'b2', 'b3'];
 
 // Cartas: nome, símbolo (SVG simples feito em CSS/emoji-free), cor da moldura e a frase que elas "dizem" ao ser declaradas.
 export const CARTAS = {
-  magnata: { nome: 'Magnata', cor: '#d9a82b', simbolo: '♛', acao: 'Cobrar tributos', original: 'Duque', fala: 'O preço da paz acaba de subir.' },
-  lamina: { nome: 'Lâmina', cor: '#b91c1c', simbolo: '†', acao: 'Assassinato', original: 'Assassino', fala: 'Você não vai sentir nada.' },
-  cobrador: { nome: 'Cobrador', cor: '#c2410c', simbolo: '⛓', acao: 'Roubo', original: 'Capitão', fala: 'Toda dívida chega à minha mesa.' },
-  corretor: { nome: 'Corretor', cor: '#0e7490', simbolo: '⇄', acao: 'Troca de cartas', original: 'Embaixador', fala: 'Identidades são apenas mercadorias.' },
-  sentinela: { nome: 'Sentinela', cor: '#4d7c0f', simbolo: '⛨', acao: 'Bloqueia assassinato', original: 'Condessa', fala: 'Este ataque termina aqui.' },
+  magnata: { nome: 'Magnata', cor: '#4aa3ff', simbolo: '♛', acao: 'Cobrar tributos', original: 'Duque', fala: 'O preço da paz acaba de subir.' },
+  lamina: { nome: 'Lâmina', cor: '#ef4444', simbolo: '†', acao: 'Assassinato', original: 'Assassino', fala: 'Você não vai sentir nada.' },
+  cobrador: { nome: 'Cobrador', cor: '#f5cf5a', simbolo: '⛓', acao: 'Roubo', original: 'Capitão', fala: 'Toda dívida chega à minha mesa.' },
+  corretor: { nome: 'Corretor', cor: '#b57bff', simbolo: '⇄', acao: 'Troca de cartas', original: 'Embaixador', fala: 'Identidades são apenas mercadorias.' },
+  sentinela: { nome: 'Sentinela', cor: '#4ade80', simbolo: '⛨', acao: 'Bloqueia assassinato', original: 'Condessa', fala: 'Este ataque termina aqui.' },
 };
 export const NOME_ACAO = {
   renda: 'Renda', ajuda: 'Ajuda Externa', tributos: 'Cobrar tributos', roubo: 'Roubo', troca: 'Troca de cartas', assassinato: 'Assassinato', golpe: 'Golpe',

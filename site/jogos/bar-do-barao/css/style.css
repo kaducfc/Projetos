@@ -153,3 +153,9 @@ button.bb-jog { cursor: pointer; border-color: var(--ouro-2); box-shadow: 0 0 0 
 .bb-ret { overflow: hidden; position: relative; }
 .bb-ret img { position: absolute; left: 50%; top: 4%; width: 118%; transform: translateX(-50%); height: auto; }
 @media (min-width: 761px) { .bb-jog { grid-template-columns: 74px 1fr; } .bb-ret { width: 74px; height: 74px; } }
+
+/* cores das influências (em todo texto que cita o nome) */
+.inf { font-weight: 800; }
+.i-magnata { color: #4aa3ff; } .i-lamina { color: #ef4444; } .i-cobrador { color: #f5cf5a; } .i-corretor { color: #b57bff; } .i-sentinela { color: #4ade80; }
+.bb-acao em.inf { font-style: normal; }
+.bb-log li .inf, .bb-caixa li b .inf { font-weight: 800; }

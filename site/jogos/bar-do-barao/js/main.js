@@ -46,6 +46,16 @@ const descAcao = (a) => ({
   golpe: t('Paga 7 moedas e o alvo perde uma carta. Não pode ser bloqueado nem contestado.'),
 }[a]);
 const acaoCarta = (inf) => ({ magnata: t('Cobrar tributos'), lamina: t('Assassinato'), cobrador: t('Roubo'), corretor: t('Troca de cartas'), sentinela: t('Bloqueia assassinato') }[inf]);
+const INFS = ['magnata', 'lamina', 'cobrador', 'corretor', 'sentinela'];
+// Texto escapado em que cada nome de influência recebe a sua cor (azul Magnata, vermelha Lâmina, amarelo Cobrador, roxo Corretor, verde Sentinela).
+const ec = (txt) => {
+  let h = esc(txt);
+  for (const inf of INFS) {
+    const nome = esc(nomeCarta(inf)).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    h = h.replace(new RegExp(`(?<![\\p{L}])(${nome})(?![\\p{L}])`, 'gu'), `<span class="inf i-${inf}">$1</span>`);
+  }
+  return h;
+};
 const pers = (id) => (id === EU ? JOGADOR_HUMANO : PERSONAGENS[id]);
 const nomeJ = (id) => (id === EU ? t('Você') : PERSONAGENS[id]?.nome ?? '');
 const motivoPerda = (m) => ({
@@ -202,36 +212,36 @@ function painelPedido() {
     case 'acao': {
       if (ui.acao) {
         const alvos = ui.acao.alvos.map((id) => bt('alvo', esc(nomeJ(id)) + ` <small>${jogador(est, id).moedas}◉</small>`, '', `data-id="${id}"`)).join('');
-        return `<h3>${esc(t('Escolha o alvo: {acao}', { acao: nomeAcao(ui.acao.acao) }))}</h3><div class="bb-op">${alvos}</div><div class="bb-op">${bt('cancelar', esc(t('Voltar')))}</div>`;
+        return `<h3>${ec(t('Escolha o alvo: {acao}', { acao: nomeAcao(ui.acao.acao) }))}</h3><div class="bb-op">${alvos}</div><div class="bb-op">${bt('cancelar', esc(t('Voltar')))}</div>`;
       }
       const obrig = ped.acoes[0].obrigatoria;
       const lista = ped.acoes.map((a) => {
         const inf = ACOES[a.acao].alegacao;
-        const sel = inf ? `<em>${esc(nomeCarta(inf))}</em>` : '';
-        return `<button class="bb-acao" data-a="acao" data-k="${a.acao}"><b>${esc(nomeAcao(a.acao))}</b>${sel}<small>${esc(descAcao(a.acao))}</small></button>`;
+        const sel = inf ? `<em class="inf i-${inf}">${esc(nomeCarta(inf))}</em>` : '';
+        return `<button class="bb-acao" data-a="acao" data-k="${a.acao}"><b>${ec(nomeAcao(a.acao))}</b>${sel}<small>${ec(descAcao(a.acao))}</small></button>`;
       }).join('');
-      return `<h3>${esc(t('Sua vez: escolha uma ação'))}</h3>${obrig ? `<p class="bb-aviso">${esc(t('Com 10 moedas ou mais o Golpe é obrigatório.'))}</p>` : ''}<div class="bb-acoes">${lista}</div>`;
+      return `<h3>${ec(t('Sua vez: escolha uma ação'))}</h3>${obrig ? `<p class="bb-aviso">${ec(t('Com 10 moedas ou mais o Golpe é obrigatório.'))}</p>` : ''}<div class="bb-acoes">${lista}</div>`;
     }
     case 'contestar': {
       const alvoTxt = ped.alvo ? ` ${t('contra {b}', { b: nomeJ(ped.alvo) })}` : '';
-      return `<h3>${esc(t('{a} declara ter {c}', { a: nomeJ(ped.ator), c: nomeCarta(ped.influencia) }))}</h3>
-        <p>${esc(nomeAcao(ped.acao) + alvoTxt)}. ${esc(t('Se você contestar e ele tiver a carta, você perde uma influência. Se estiver blefando, ele perde.'))}</p>
+      return `<h3>${ec(t('{a} declara ter {c}', { a: nomeJ(ped.ator), c: nomeCarta(ped.influencia) }))}</h3>
+        <p>${ec(nomeAcao(ped.acao) + alvoTxt)}. ${ec(t('Se você contestar e ele tiver a carta, você perde uma influência. Se estiver blefando, ele perde.'))}</p>
         <div class="bb-op">${bt('contestar', esc(t('Contestar')), 'perigo')}${bt('passar', esc(t('Deixar passar')))}</div>`;
     }
     case 'bloquear': {
       const botoes = ped.influencias.map((inf) => bt('bloquear', esc(t('Bloquear como {c}', { c: nomeCarta(inf) })), 'ouro', `data-inf="${inf}"`)).join('');
-      return `<h3>${esc(t('{a} tenta {acao}', { a: nomeJ(ped.ator), acao: nomeAcao(ped.acao) }))}${ped.alvo === EU ? ` · ${esc(t('contra você'))}` : ''}</h3>
-        <p>${esc(t('Você pode bloquear. Se não tiver a carta, o bloqueio pode ser contestado.'))}</p>
+      return `<h3>${ec(t('{a} tenta {acao}', { a: nomeJ(ped.ator), acao: nomeAcao(ped.acao) }))}${ped.alvo === EU ? ` · ${ec(t('contra você'))}` : ''}</h3>
+        <p>${ec(t('Você pode bloquear. Se não tiver a carta, o bloqueio pode ser contestado.'))}</p>
         <div class="bb-op">${botoes}${bt('naobloquear', esc(t('Não bloquear')))}</div>`;
     }
     case 'contestar_bloqueio':
-      return `<h3>${esc(t('{a} bloqueia declarando {c}', { a: nomeJ(ped.bloqueador), c: nomeCarta(ped.influencia) }))}</h3>
-        <p>${esc(t('Ação bloqueada: {acao} de {a}.', { acao: nomeAcao(ped.acao), a: nomeJ(ped.ator) }))}</p>
+      return `<h3>${ec(t('{a} bloqueia declarando {c}', { a: nomeJ(ped.bloqueador), c: nomeCarta(ped.influencia) }))}</h3>
+        <p>${ec(t('Ação bloqueada: {acao} de {a}.', { acao: nomeAcao(ped.acao), a: nomeJ(ped.ator) }))}</p>
         <div class="bb-op">${bt('contestar', esc(t('Contestar o bloqueio')), 'perigo')}${bt('passar', esc(t('Aceitar o bloqueio')))}</div>`;
-    case 'perder': return `<h3>${esc(motivoPerda(ped.motivo) || t('Escolha a carta que vai perder.'))}</h3><p>${esc(t('Toque em uma das suas cartas abaixo.'))}</p>`;
+    case 'perder': return `<h3>${ec(motivoPerda(ped.motivo) || t('Escolha a carta que vai perder.'))}</h3><p>${ec(t('Toque em uma das suas cartas abaixo.'))}</p>`;
     case 'trocar': {
       const cartas = ped.cartas.map((inf, i) => cartaFace(inf, `clicavel ${ui.sel.includes(i) ? 'marcada' : ''}`, `data-a="trocar" data-i="${i}" role="button" tabindex="0"`)).join('');
-      return `<h3>${esc(t('Troca de cartas: fique com {n}', { n: ped.manter }))}</h3><p>${esc(t('As demais voltam ao baralho embaralhado.'))}</p>
+      return `<h3>${ec(t('Troca de cartas: fique com {n}', { n: ped.manter }))}</h3><p>${ec(t('As demais voltam ao baralho embaralhado.'))}</p>
         <div class="bb-troca">${cartas}</div><div class="bb-op">${bt('confirmar', esc(t('Confirmar')), 'ouro', ui.sel.length === ped.manter ? '' : 'disabled')}</div>`;
     }
     default: return '';
@@ -247,21 +257,21 @@ function telaFim() {
 }
 
 function ajuda() {
-  const linhas = ['renda', 'ajuda', 'tributos', 'roubo', 'troca', 'assassinato', 'golpe'].map((a) => `<li><b>${esc(nomeAcao(a))}</b> ${esc(descAcao(a))}</li>`).join('');
-  const cartas = Object.keys(CARTAS).map((i) => `<li><b>${esc(nomeCarta(i))}</b> — ${esc(acaoCarta(i))}</li>`).join('');
+  const linhas = ['renda', 'ajuda', 'tributos', 'roubo', 'troca', 'assassinato', 'golpe'].map((a) => `<li><b>${ec(nomeAcao(a))}</b> ${ec(descAcao(a))}</li>`).join('');
+  const cartas = Object.keys(CARTAS).map((i) => `<li><b>${ec(nomeCarta(i))}</b> — ${ec(acaoCarta(i))}</li>`).join('');
   return `<div class="bb-modal" data-a="fechar"><div class="bb-quadro bb-caixa" role="dialog" aria-modal="true">
-    <h2>${esc(t('Como jogar'))}</h2>
-    <p>${esc(t('Cada um começa com 2 cartas (influências) e 2 moedas. Perdeu as duas cartas, está fora. O último de pé vence.'))}</p>
-    <p>${esc(t('Você pode declarar qualquer carta, mesmo sem tê-la (blefar). Os outros podem contestar: quem mentiu perde uma influência; quem contestou errado também perde.'))}</p>
-    <ul>${linhas}</ul><h3>${esc(t('As cinco influências'))}</h3><ul>${cartas}</ul>
-    <p>${esc(t('Com 10 moedas ou mais, o Golpe é obrigatório.'))}</p>
-    <div class="bb-op"><button class="bb-bt ouro" data-a="fechar">${esc(t('Entendi'))}</button></div></div></div>`;
+    <h2>${ec(t('Como jogar'))}</h2>
+    <p>${ec(t('Cada um começa com 2 cartas (influências) e 2 moedas. Perdeu as duas cartas, está fora. O último de pé vence.'))}</p>
+    <p>${ec(t('Você pode declarar qualquer carta, mesmo sem tê-la (blefar). Os outros podem contestar: quem mentiu perde uma influência; quem contestou errado também perde.'))}</p>
+    <ul>${linhas}</ul><h3>${ec(t('As cinco influências'))}</h3><ul>${cartas}</ul>
+    <p>${ec(t('Com 10 moedas ou mais, o Golpe é obrigatório.'))}</p>
+    <div class="bb-op"><button class="bb-bt ouro" data-a="fechar">${ec(t('Entendi'))}</button></div></div></div>`;
 }
 
 function desenhar() {
   if (!est) return;
   const opp = MESA.filter((id) => id !== EU).map(bloco).join('');
-  const logHtml = mensagens.slice(-12).map((m, i, a) => `<li class="${i === a.length - 1 ? 'novo' : ''}">${esc(m)}</li>`).join('');
+  const logHtml = mensagens.slice(-12).map((m, i, a) => `<li class="${i === a.length - 1 ? 'novo' : ''}">${ec(m)}</li>`).join('');
   const eliminado = !jogador(est, EU).vivo && !est.vencedor;
   const eu = jogador(est, EU);
   const vez = est.turno === MESA.indexOf(EU) && !est.vencedor;
