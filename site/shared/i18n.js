@@ -34,7 +34,21 @@ const ouvintes = new Set();
 const norm = (s) => s.replace(/\s+/g, ' ').trim();
 const esc = (s) => String(s).replace(/[.*+?^$()|[\]\\]/g, '\\$&');
 
+// Link com idioma: riftarcade.com.br/?lang=en (também vale em qualquer página: /jogos/smite/?lang=en).
+// Aceita en, de, es, it, fr e pt (ou pt-BR); a escolha fica salva, como se a pessoa tivesse trocado no seletor.
+function idiomaDoLink() {
+  try {
+    const v = new URLSearchParams(location.search).get('lang');
+    if (!v) return null;
+    const id = v.toLowerCase() === 'pt' ? 'pt-BR' : LANGS.find((l) => l.id.toLowerCase() === v.toLowerCase())?.id;
+    if (id) { try { localStorage.setItem(CHAVE, id); } catch { /* sem storage */ } }
+    return id || null;
+  } catch { return null; }
+}
+
 function lerSalvo() {
+  const doLink = idiomaDoLink();
+  if (doLink) return doLink;
   try {
     const v = localStorage.getItem(CHAVE);
     if (LANGS.some((l) => l.id === v)) return v;

@@ -288,3 +288,6 @@ Para ativar: rode `supabase/migrations/0059_rc_compra.sql`, crie a Edge Function
 **Estornos:** doação, Passe Premium ou compra de RC estornados aparecem num aviso "⚠ Estornos para verificar" no topo da aba Apoio (e em "Atenção" na Visão geral), com o que a pessoa já aproveitou (RC gastos, recompensas premium resgatadas). Clique no nome para abrir a ficha e banir, e depois em "Marcar como verificado". Requer `0060_estornos.sql`.
 
 **Molduras de Rank (em teste, `0063_molduras_rank_teste.sql`):** dez artes, uma por elo (`shared/assets/molduras/elo-<elo>.webp`, tamanho calculado pelo buraco de cada uma). "Rank" é uma moldura só (`rank`): quem a equipa mostra sempre a do elo atual e ela troca sozinha quando o jogador sobe ou desce de elo (o elo vem da classe `elo-*` que as telas já passam ao `avatarHtml`). Por enquanto só administradores a recebem; para lançar, dar `rank` a todos (mover o item de `MOLDURAS_TESTE` para `MOLDURAS` em `shared/molduras.js` e liberar a moldura para todas as contas no servidor).
+
+## Link com idioma
+`?lang=en|de|es|it|fr|pt` em qualquer página escolhe o idioma e salva a escolha (como o seletor). Ex.: `https://riftarcade.com.br/?lang=en` ou `https://riftarcade.com.br/jogos/smite/?lang=en`.
