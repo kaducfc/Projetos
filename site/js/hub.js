@@ -57,6 +57,9 @@ const CAPAS = {
   // Conexões do Rift (só administradores por enquanto): uma grade 4 x 4 com os quatro grupos coloridos.
   conexoes: `<div class="cv cv-cx"><span class="cv-cx-t">CONEXÕES<b>DO RIFT</b></span>
       <span class="cv-cx-g">${['o0','o0','o0','o0','o1','o1','o1','o1','o2','o2','o2','o2','o3','o3','o3','o3'].map((c) => `<i class="${c}"></i>`).join('')}</span></div>`,
+  // Coup: O Bar do Barão (só administradores por enquanto): três cartas em leque sobre a taverna.
+  'bar-do-barao': `<div class="cv cv-bb"><span class="cv-bb-t">COUP<b>O BAR DO BARÃO</b></span>
+      <span class="cv-bb-c"><i class="c1">♛</i><i class="c2">†</i><i class="c3">⛨</i></span></div>`,
   barao: `<div class="cv cv-barao"><span class="cv-bz-t">SHOW DO<b>BARÃO</b></span>
       <img class="cv-bz-ap" src="/jogos/barao/img/apresentador.webp" alt="" loading="lazy" /></div>`,
   // O time dos sonhos, como na tela do Lendas (melhor OVR de cada um no jogo).

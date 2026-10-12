@@ -134,6 +134,16 @@ export const GAMES = [
     scoreLabel: 'Pontos',
     soAdmin: true,
   },
+  {
+    id: 'bar-do-barao',
+    name: 'Coup: O Bar do Barão',
+    tagline: 'Blefe, intriga e traição numa taverna clandestina de Zaun: sobreviva com ao menos uma influência.',
+    kind: 'Blefe',
+    path: 'jogos/bar-do-barao/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+    soAdmin: true,
+  },
 ];
 
 export const gameById = (id) => GAMES.find((g) => g.id === id);
