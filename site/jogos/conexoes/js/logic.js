@@ -97,6 +97,9 @@ export function alternar(est, palavra) {
 // Com 4 palavras selecionadas, confere o grupo. Devolve { tipo: 'ok'|'erro'|'nada', grupo?, quase? }.
 export function conferir(est) {
   if (est.fim || est.sel.length !== TAMANHO) return { tipo: 'nada' };
+  // palpite errado repetido: avisa e não conta como erro
+  const chave = [...est.sel].sort().join('|');
+  if ((est.palpites || []).includes(chave)) { est.sel = []; est.quase = false; return { tipo: 'repetido' }; }
   est.tentativas++;
   const alvo = grupoDe(est, est.sel[0]);
   if (alvo && est.sel.every((w) => alvo.palavras.includes(w))) {
@@ -110,6 +113,7 @@ export function conferir(est) {
   // "falta só uma": 3 das 4 palavras são do mesmo grupo ainda não achado
   const quase = est.puzzle.grupos.some((g, i) => !est.resolvidos.includes(i) && est.sel.filter((w) => g.palavras.includes(w)).length === 3);
   est.historico.push({ tipo: 'erro' });
+  (est.palpites ||= []).push(chave);
   est.sel = []; est.quase = quase;
   if (erros(est) > MAX_ERROS) { est.fim = true; est.perdeu = true; est.quase = false; }
   return { tipo: 'erro', quase, perdeu: est.perdeu };
@@ -133,6 +137,21 @@ export function dica(est) {
   return { grupo: g, palavras: novas };
 }
 
+// Partida da ranqueada (vem do servidor): monta o mesmo `est` que a tela já usa. Só os grupos acertados (e, se perdeu, os que
+// faltavam) trazem título e palavras; os outros ficam vazios, porque o navegador nunca recebe a resposta antes da hora.
+export function estDeServidor(s, anterior = null) {
+  const grupos = [0, 1, 2, 3].map((ordem) => ({ id: -1, tit: '', dif: ordem + 1, ordem, palavras: [] }));
+  for (const g of [...(s.resolvidos || []), ...(s.faltam || [])]) grupos[g.ordem] = { id: g.id, tit: g.tit, dif: g.dif, ordem: g.ordem, palavras: g.palavras };
+  const resolvidos = (s.resolvidos || []).map((g) => g.ordem);
+  const ordem = anterior && anterior.ordem.length === s.palavras.length && s.palavras.every((w) => anterior.ordem.includes(w)) ? anterior.ordem : [...s.palavras];
+  const fim = s.status === 'ganhou' || s.status === 'perdeu';
+  return {
+    puzzle: { grupos, palavras: s.palavras }, sel: [], resolvidos, tentativas: resolvidos.length + s.erros, dicas: s.dicas, maxDicas: s.max_dicas,
+    marcadas: s.marcadas || [], historico: s.historico || [], quase: false, fim, perdeu: s.status === 'perdeu', ordem,
+    pontos: s.pontos ?? null, servidor: true,
+  };
+}
+
 // Embaralha as palavras que ainda estão no tabuleiro.
 export function misturar(est, rand = Math.random) {
   const resto = embaralhar(rand, palavrasRestantes(est));
@@ -143,7 +162,7 @@ export function misturar(est, rand = Math.random) {
 
 // Pontos da partida: 100 menos 10 por erro e 5 por dica; quem perde (4º erro) fica com 0.
 export const erros = (est) => Math.max(0, est.tentativas - est.resolvidos.length);
-export const pontos = (est) => (est.perdeu ? 0 : Math.max(0, 100 - 10 * erros(est) - 5 * est.dicas));
+export const pontos = (est) => (est.pontos != null ? est.pontos : est.perdeu ? 0 : Math.max(0, 100 - 10 * erros(est) - 5 * est.dicas));
 
 // Texto para compartilhar (sem as palavras, para não estragar o desafio dos outros).
 export const QUADRADOS = ['🟨', '🟩', '🟦', '🟪']; // ouro, platina, diamante e mestre (as cores dos grupos)
@@ -153,11 +172,11 @@ export function textoCompartilhar(est, { titulo = NOME_JOGO, dia = '', link = ''
 }
 
 // Para guardar o andamento (o desafio do dia continua se a página for recarregada).
-export const salvar = (est) => ({ grupos: est.puzzle.grupos.map((g) => g.id), palavras: est.puzzle.palavras, sel: est.sel, resolvidos: est.resolvidos, tentativas: est.tentativas, dicas: est.dicas, marcadas: est.marcadas, historico: est.historico, ordem: est.ordem, fim: est.fim, perdeu: est.perdeu, maxDicas: est.maxDicas });
+export const salvar = (est) => ({ grupos: est.puzzle.grupos.map((g) => g.id), palavras: est.puzzle.palavras, sel: est.sel, resolvidos: est.resolvidos, tentativas: est.tentativas, dicas: est.dicas, marcadas: est.marcadas, historico: est.historico, ordem: est.ordem, fim: est.fim, perdeu: est.perdeu, maxDicas: est.maxDicas, palpites: est.palpites || [] });
 export function restaurar(dados, puzzle, opcoes = {}) {
   const est = novoJogo(puzzle, opcoes);
   const ok = dados && Array.isArray(dados.resolvidos) && Array.isArray(dados.historico) && JSON.stringify(dados.palavras) === JSON.stringify(puzzle.palavras);
   if (!ok) return est;
-  Object.assign(est, { sel: dados.sel || [], resolvidos: dados.resolvidos, tentativas: dados.tentativas | 0, dicas: dados.dicas | 0, marcadas: dados.marcadas || [], historico: dados.historico, ordem: dados.ordem || est.ordem, fim: Boolean(dados.fim), perdeu: Boolean(dados.perdeu), maxDicas: Number.isInteger(dados.maxDicas) ? dados.maxDicas : est.maxDicas });
+  Object.assign(est, { sel: dados.sel || [], resolvidos: dados.resolvidos, tentativas: dados.tentativas | 0, dicas: dados.dicas | 0, marcadas: dados.marcadas || [], historico: dados.historico, ordem: dados.ordem || est.ordem, fim: Boolean(dados.fim), perdeu: Boolean(dados.perdeu), palpites: Array.isArray(dados.palpites) ? dados.palpites : [], maxDicas: Number.isInteger(dados.maxDicas) ? dados.maxDicas : est.maxDicas });
   return est;
 }

@@ -196,20 +196,19 @@ test('conexões: o jogo está no catálogo (só administrador por enquanto) e a 
 });
 
 import { baseConexoes, vantagens } from '../shared/ranked.js';
-const errar = (est) => { // 4 palavras de grupos diferentes (nunca é um grupo certo)
+const errar = (est, k = 0) => { // 4 palavras de grupos diferentes (nunca é um grupo certo); k varia a escolha
   const restantes = palavrasRestantes(est);
   const porGrupo = est.puzzle.grupos.map((g) => restantes.filter((w) => g.palavras.includes(w)));
-  const escolha = porGrupo.flatMap((p) => p.slice(0, 1)).slice(0, TAMANHO);
-  const extra = restantes.filter((w) => !escolha.includes(w)).slice(0, TAMANHO - escolha.length);
-  est.sel = []; selecionar(est, [...escolha, ...extra]); return conferir(est);
+  const escolha = porGrupo.flatMap((p, gi) => (p.length ? [p[(gi === 0 ? k : 0) % p.length]] : [])).slice(0, TAMANHO);
+  est.sel = []; selecionar(est, escolha); return conferir(est);
 };
 
 test('conexões: no máximo 3 erros; o 4º erro acaba a partida (perde, 0 pontos)', () => {
   const est = jogo(21);
   assert.equal(MAX_ERROS, 3);
-  for (let i = 1; i <= 3; i++) { const r = errar(est); assert.equal(r.tipo, 'erro'); assert.equal(est.fim, false, `erro ${i}`); assert.equal(erros(est), i); }
+  for (let i = 1; i <= 3; i++) { const r = errar(est, i); assert.equal(r.tipo, 'erro'); assert.equal(est.fim, false, `erro ${i}`); assert.equal(erros(est), i); }
   assert.equal(pontos(est), 70);
-  const r4 = errar(est);
+  const r4 = errar(est, 0);
   assert.equal(r4.perdeu, true); assert.equal(est.fim, true); assert.equal(est.perdeu, true); assert.equal(pontos(est), 0);
   assert.equal(conferir(est).tipo, 'nada'); assert.equal(podeDica(est), false);
   assert.match(textoCompartilhar(est, { titulo: 'X' }), /perdeu/);
@@ -252,4 +251,27 @@ test('conexões: os grupos no SQL do servidor (0076) são os mesmos da bibliotec
   assert.match(sql, /if c\.erros \+ 1 > 3 then/); // 4º erro perde
   assert.match(sql, /when pontos >= 95 then round\(22 \+ \(pontos - 95\) \* 8 \/ 5\.0\)/);
   assert.match(sql, /on conflict \(user_id, dia, jogo, n\) do nothing/);
+});
+
+test('conexões: palpite errado repetido não conta como erro (jogo local)', () => {
+  const est = jogo(31);
+  const r1 = errar(est, 1); assert.equal(r1.tipo, 'erro'); assert.equal(erros(est), 1);
+  const r2 = errar(est, 1); assert.equal(r2.tipo, 'repetido'); assert.equal(erros(est), 1); assert.equal(est.sel.length, 0);
+  assert.equal(restaurar(salvar(est), est.puzzle).palpites.length, 1);
+});
+
+import { estDeServidor } from '../jogos/conexoes/js/logic.js';
+test('conexões: o estado do servidor vira o mesmo `est` da tela, sem os grupos que faltam', () => {
+  const g = (ordem, id, tit, palavras) => ({ ordem, id, tit, dif: ordem + 1, palavras });
+  const s = { status: 'jogando', erros: 1, max_erros: 3, max_dicas: 2, dicas: 1, palavras: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p'],
+    marcadas: ['e', 'f'], resolvidos: [g(1, 7, 'Grupo B', ['e', 'f', 'g', 'h'])], faltam: null, historico: [{ tipo: 'erro' }, { tipo: 'dica' }, { tipo: 'ok', ordem: 1 }], pontos: null };
+  const est = estDeServidor(s);
+  assert.deepEqual(est.resolvidos, [1]); assert.equal(est.tentativas, 2); assert.equal(erros(est), 1); assert.equal(est.dicas, 1); assert.equal(est.maxDicas, 2);
+  assert.deepEqual(palavrasRestantes(est), ['a', 'b', 'c', 'd', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p']);
+  assert.deepEqual(est.puzzle.grupos[0].palavras, [], 'grupo que falta não vai para o navegador'); assert.equal(est.fim, false);
+  assert.equal(podeDica(est), true);
+  const ordem = [...est.ordem].reverse(); est.ordem = ordem;
+  assert.deepEqual(estDeServidor(s, est).ordem, ordem, 'mantém a ordem embaralhada na tela');
+  const perdeu = estDeServidor({ ...s, status: 'perdeu', erros: 4, pontos: 0, faltam: [g(0, 1, 'A', ['a', 'b', 'c', 'd'])] });
+  assert.equal(perdeu.perdeu, true); assert.equal(perdeu.fim, true); assert.equal(pontos(perdeu), 0); assert.deepEqual(perdeu.puzzle.grupos[0].palavras, ['a', 'b', 'c', 'd']);
 });

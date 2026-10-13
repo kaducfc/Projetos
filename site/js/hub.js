@@ -131,8 +131,26 @@ function vivoEscala() {
   return `<p class="hx-live novo"><i class="hx-dot"></i>${diarios ? 'Ranqueada de hoje disponível' : 'Novas comparações disponíveis'}</p>`;
 }
 
+// Conexões do League: { estado: 'novo' | 'jogando' | 'ganhou' | 'perdeu', erros, pdr } (só com conta; sem ela fica 'novo').
+function estadoConexoes() {
+  const c = diarios?.conexoes;
+  if (!c) return { estado: 'novo' };
+  return { estado: c.status === 'novo' ? 'novo' : c.status, erros: c.erros, pdr: c.pdr, pontos: c.pontos };
+}
+function vivoConexoes() {
+  const e = estadoConexoes();
+  if (e.estado === 'ganhou' || e.estado === 'perdeu') {
+    const pdr = e.pdr != null ? ` · ${pdrTxt(e.pdr)}` : '';
+    return `<p class="hx-live ${e.estado === 'ganhou' ? 'ok' : 'nao'}">${e.estado === 'ganhou' ? `✓ ${e.pontos} pontos` : '✗ Não foi hoje'}${pdr}
+      <span class="hx-cd">Próximo em <b data-cd>${fmtCountdown(msToNextDay())}</b></span></p>`;
+  }
+  if (e.estado === 'jogando') return `<p class="hx-live meio"><i class="hx-dot"></i>Em andamento · ${e.erros || 0} de 3 erros</p>`;
+  return `<p class="hx-live novo"><i class="hx-dot"></i>${diarios ? 'Ranqueada de hoje disponível' : 'Desafio do dia disponível'}</p>`;
+}
+
 // Feito hoje (para o contador do painel e a marca no card).
 function feitoHoje(id) {
+  if (id === 'conexoes') return ['ganhou', 'perdeu'].includes(estadoConexoes().estado);
   if (id === 'escala') return estadoEscala().estado === 'terminou';
   if (id === 'runetermo' || id === 'campeao') return ['ganhou', 'perdeu'].includes(estadoDiario(id).estado);
   return Boolean(rk?.hoje?.jogos?.[id]);
@@ -181,6 +199,7 @@ const VIVO = {
   runetermo: () => vivoDiario('runetermo'),
   campeao: () => vivoDiario('campeao'),
   escala: vivoEscala,
+  conexoes: vivoConexoes,
 };
 const vivoDoJogo = (g) => (VIVO[g.id] ? VIVO[g.id]() : g.ranked?.modo === 'vagas' ? vivoVagas(g.id) : '');
 

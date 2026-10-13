@@ -5,11 +5,12 @@ import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
-import { vantagens } from '../../../shared/ranked.js';
+import { vantagens, fmtPdr } from '../../../shared/ranked.js';
+import { avisoDiario } from '../../../shared/aviso-ranked.js';
 import { t, onLangChange } from '../../../shared/i18n.js';
 import {
   puzzleDoDia, criarPuzzle, aleatorio, novoJogo, alternar, conferir, dica, podeDica, misturar, palavrasRestantes,
-  erros, pontos, textoCompartilhar, salvar, restaurar, TAMANHO, QUADRADOS, MAX_ERROS,
+  erros, pontos, textoCompartilhar, salvar, restaurar, TAMANHO, QUADRADOS, MAX_ERROS, estDeServidor,
 } from './logic.js';
 
 const GAME_ID = 'conexoes';
@@ -31,6 +32,8 @@ const dataBonita = (iso) => iso.split('-').reverse().join('/');
 let modo = 'dia'; // 'dia' | 'livre'
 let dia = hojeBR();
 let est = null;
+let srv = null; // partida de hoje na ranqueada (vem do servidor); null no jogo livre, sem conta ou sem servidor
+const ranqueada = () => modo === 'dia' && Boolean(srv);
 let msg = '';
 let erroAnim = []; // palavras que tremem no erro
 let ocupado = false;
@@ -51,7 +54,14 @@ function carregarDia() {
   registrado = false;
   return novoJogo(puzzle, { maxDicas: dicasMax() });
 }
-function guardar() { if (modo === 'dia' && est) gravarLS(CHAVE_DIA, { dia, estado: salvar(est), registrado }); }
+// Com conta e servidor, o desafio do dia vale ranqueada: o quebra-cabeça é sorteado e conferido lá (só os grupos acertados voltam).
+// Se o servidor não responder, joga o desafio local (sem PDR).
+async function abrirServidor() {
+  srv = null;
+  if (!platform.diarioNoServidor()) return;
+  try { srv = await platform.conexoesAbrir(); } catch (e) { console.warn('Conexões: servidor indisponível, jogando sem ranqueada.', e.message); }
+}
+function guardar() { if (modo === 'dia' && !srv && est) gravarLS(CHAVE_DIA, { dia, estado: salvar(est), registrado }); }
 
 // --------------------------------------------------------------------------- desenho
 // No celular a peça é estreita: palavras compridas encolhem (fator --f) para caber sem quebrar no meio.
@@ -82,6 +92,7 @@ function cartaoFim() {
     <p>${texto}</p>
     <div class="quadrados" aria-hidden="true">${quad}</div>
     <p class="pts">${pontos(est)}<small>${t('pontos')}</small></p>
+    ${srv && srv.pdr != null ? `<p class="rk-pdr"><b>${t('Ranqueada:')}</b> ${t('{pdr} hoje', { pdr: fmtPdr(srv.pdr) })}</p>` : ''}
     <div class="cx-acoes"><button type="button" class="cx-bt principal" data-a="compartilhar">${t('Compartilhe')}</button>
       <button type="button" class="cx-bt" data-a="${modo === 'dia' ? 'livre' : 'novo'}">${modo === 'dia' ? t('Jogar um quebra-cabeça livre') : t('Outro quebra-cabeça')}</button>
       ${modo === 'livre' ? `<button type="button" class="cx-bt" data-a="dia">${t('Voltar ao desafio do dia')}</button>` : ''}</div></div>`;
@@ -104,7 +115,7 @@ function desenhar() {
   const fim = est.fim;
   const achados = est.resolvidos.length;
   app.innerHTML = `<div class="cx-topo"><div><p class="cx-eyebrow">${t('Quebra-cabeça')} · League of Legends</p><h1>${t('Conexões do League')}</h1>
-      <span class="cx-modo"><i></i>${modo === 'dia' ? t('Desafio do dia') : t('Jogo livre')}</span></div>
+      <span class="cx-modo"><i></i>${modo === 'dia' ? (srv ? t('Desafio do dia · Ranqueada') : t('Desafio do dia')) : t('Jogo livre')}</span></div>
       <button type="button" class="cx-bt pequeno" data-a="ajuda">${t('Como jogar')}</button></div>
     <div class="cx-info cx-quadro">
       ${modo === 'dia' ? `<div class="cx-dado dia"><small>${t('Data')}</small><b>${dataBonita(dia)}</b></div>` : ''}
@@ -134,12 +145,24 @@ async function clicarPalavra(w) {
     ocupado = true;
     await esperar(280);
     const antes = [...est.sel];
-    const r = conferir(est);
+    let r; let falha = '';
+    if (ranqueada()) {
+      try {
+        const resp = await platform.conexoesTentar(antes);
+        srv = resp.estado; est = estDeServidor(srv, est);
+        r = { tipo: resp.tipo, quase: resp.quase, perdeu: srv.status === 'perdeu' };
+      } catch (e) {
+        est.sel = [];
+        r = { tipo: e.codigo === 'chute_repetido' ? 'repetido' : 'falha' };
+        falha = e.message;
+      }
+    } else r = conferir(est);
     if (r.tipo === 'ok') grupoNovo = est.resolvidos[est.resolvidos.length - 1];
     if (r.tipo === 'erro') {
       erroAnim = antes;
       msg = r.perdeu ? '' : r.quase ? t('Falta só uma palavra!') : t('Não é esse grupo. Tente de novo.');
-    }
+    } else if (r.tipo === 'repetido') msg = t('Você já tentou esse grupo.');
+    else if (r.tipo === 'falha') msg = falha || t('Não deu para falar com o servidor. Tente de novo.');
     ocupado = false;
     guardar();
     desenhar();
@@ -148,8 +171,17 @@ async function clicarPalavra(w) {
   }
 }
 
-function pedirDica() {
-  if (ocupado || !dica(est)) return;
+async function pedirDica() {
+  if (ocupado) return;
+  if (ranqueada()) {
+    if (!podeDica(est)) return;
+    ocupado = true; msg = ''; grupoNovo = -1;
+    try { srv = await platform.conexoesDica(); est = estDeServidor(srv, est); } catch (e) { msg = e.message; }
+    ocupado = false;
+    desenhar();
+    return;
+  }
+  if (!dica(est)) return;
   msg = ''; grupoNovo = -1;
   guardar();
   desenhar();
@@ -158,12 +190,13 @@ function pedirDica() {
 function terminar() {
   if (modo !== 'dia' || registrado) return;
   registrado = true;
-  guardar();
+  if (!srv) guardar();
   platform.track('game_end', GAME_ID, { tentativas: est.tentativas, dicas: est.dicas, perdeu: est.perdeu });
   Promise.resolve(platform.recordResult(GAME_ID, {
     score: pontos(est),
-    summary: { text: `${est.tentativas} ${t('tentativas')} · ${est.dicas} ${t('dicas')}`, dia, tentativas: est.tentativas, dicas: est.dicas, erros: erros(est), perdeu: est.perdeu },
+    summary: { text: `${est.tentativas} ${t('tentativas')} · ${est.dicas} ${t('dicas')}`, dia, tentativas: est.tentativas, dicas: est.dicas, erros: erros(est), perdeu: est.perdeu, pdr: srv?.pdr ?? null },
   })).catch(() => {});
+  if (srv) avisoDiario(srv);
 }
 
 async function compartilhar() {
@@ -182,8 +215,10 @@ function novoLivre() {
   msg = ''; erroAnim = []; animar = true;
   desenhar();
 }
-function voltarDia() {
-  modo = 'dia'; grupoNovo = -1; dia = hojeBR(); est = carregarDia(); msg = ''; erroAnim = []; animar = true;
+async function voltarDia() {
+  modo = 'dia'; grupoNovo = -1; dia = hojeBR(); msg = ''; erroAnim = []; animar = true;
+  await abrirServidor();
+  est = srv ? estDeServidor(srv) : carregarDia();
   desenhar();
 }
 
@@ -217,7 +252,8 @@ onLangChange(() => { if (est) desenhar(); });
   const souAdmin = await platform.isAdmin();
   const aberto = !gameById(GAME_ID)?.soAdmin;
   if (!souAdmin && !teste && !aberto) { telaBloqueada(); return; }
-  est = carregarDia(); animar = true;
+  await abrirServidor();
+  est = srv ? estDeServidor(srv) : carregarDia(); animar = true;
   ajudaAberta = !lerLS(CHAVE_AJUDA, false) && !est.tentativas && !est.dicas; // 1ª vez: mostra o "Como jogar"
   desenhar();
   platform.track('game_start', GAME_ID, {});

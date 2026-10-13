@@ -15,6 +15,7 @@
 //   changeUsername / setAvatar / changePassword / deleteAccount → página de perfil
 //   rankedIniciar(jogo) / rankedStatus() / ranking(periodo, elo) → ranqueada (elo em getUser().elo)
 //   diarioAbrir / diarioChute / diarioDica → Runetermo e Campeão Oculto conferidos no servidor
+//   conexoesAbrir / conexoesTentar / conexoesDica → Conexões do League conferido no servidor
 //
 // Sem conta, tudo fica no localStorage do navegador. Ao entrar, o que foi
 // jogado como visitante é enviado para a conta, e o save mais recente
@@ -953,7 +954,11 @@ async function rpcDiario(nome, args) {
 export const diarioAbrir = (jogo) => rpcDiario('site_diario_abrir', { jogo });
 export const diarioChute = (jogo, chute) => rpcDiario('site_diario_chute', { jogo, chute });
 export const diarioDica = () => rpcDiario('site_diario_dica', {});
-// Situação de hoje nos dois jogos diários, só leitura (página inicial):
+// Conexões do League na ranqueada: o quebra-cabeça de hoje é sorteado no servidor e só os grupos acertados voltam.
+export const conexoesAbrir = () => rpcDiario('site_conexoes_abrir', {});
+export const conexoesTentar = (palavras) => rpcDiario('site_conexoes_tentar', { palavras });
+export const conexoesDica = () => rpcDiario('site_conexoes_dica', {});
+// Situação de hoje nos jogos diários, só leitura (página inicial):
 // { runetermo: { status, chutes, tentativas, pdr }, campeao: {...} } ou null.
 export async function diarioHoje() {
   const sb = await getClient();

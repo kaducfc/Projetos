@@ -32,5 +32,11 @@ A interface está traduzida nos 6 idiomas do site (`shared/i18n/src/conexoes-ui.
 os idiomas (são nomes do jogo em português; o tabuleiro tem `data-no-i18n` para o tradutor do site não mexer nelas).
 
 ## Limites conhecidos
-- As respostas estão no código do navegador (como é um jogo casual sem ranqueada, isso não importa); uma ranqueada exigiria o servidor sortear e conferir o quebra-cabeça, como o Show do Barão.
+- No jogo livre e sem conta, as respostas estão no código do navegador (não vale PDR). Na ranqueada o servidor sorteia e confere (veja abaixo).
 - Nomes de itens e runas seguem o cliente em português do Brasil, mas podem divergir de patches novos; revisar de tempos em tempos.
+
+## Ranqueada (pronta, só administrador)
+- O desafio do dia, para quem tem conta, vale PDR (1 por dia): o quebra-cabeça é sorteado no servidor e só os grupos acertados voltam ao navegador. Máximo de 3 erros (o 4º perde), 1 dica por partida (2 do Platina para cima).
+- SQL (rodar nesta ordem no Supabase): `supabase/migrations/0075_conexoes_ranqueada.sql` e depois `0076_conexoes_grupos.sql`. O 0076 é gerado: depois de mexer em `js/curados.js`, rode `node scripts/conexoes-sql.mjs` e rode o arquivo novo no Supabase.
+- PDR (antes do ajuste por elo): perfeito +30 · 1 dica +22 · 1 erro +15 · 2 erros +5 · 3 erros −10 · perdeu −20 (`baseConexoes` em `shared/ranked.js` e `site_conexoes_base` no SQL).
+- Sem conta ou sem servidor, o jogo continua local e não vale PDR. Para liberar ao público: apagar `soAdmin: true` da entrada do jogo em `shared/config.js`.

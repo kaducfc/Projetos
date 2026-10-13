@@ -30,6 +30,7 @@ const regraSmite = () => jogosRanqueada().some((j) => j.id === 'smite') ? `<li><
 const regraSucata = () => jogosRanqueada().some((j) => j.id === 'bar-do-barao') ? `<li><b>Barão da Sucata:</b> valem as ${partidasPorDia('bar-do-barao')} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>, pela pontuação da partida (de 10 a 100): <b>100 = +35</b>, <b>55 = +3</b>, <b>54 = −3</b>, <b>10 = −25</b>. Entre esses pontos o PDR varia proporcionalmente. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>` : '';
 // Benefício de um jogo em teste (`soAdmin`) só aparece para administradores.
 const beneficioVisivel = (b) => !b.id || GAMES.some((g) => g.id === b.id && (!g.soAdmin || ehAdmin));
+const regraConexoes = () => jogosRanqueada().some((j) => j.id === 'conexoes') ? `<li><b>Conexões do League:</b> <span>Vale 1 partida por dia, com o quebra-cabeça sorteado no servidor.</span> <span>No máximo 3 erros: o 4º erro perde a partida (−20 PDR).</span> <span>Pela pontuação: perfeito = +30, 1 dica = +22, 1 erro = +15, 2 erros = +5, 3 erros = −10.</span> <span>Começou e não terminou até a meia-noite: perde.</span></li>` : '';
 const MOTIVO = { partida: '', melhora: 'resultado melhor', nao_terminou: 'começou e não terminou', inatividade: 'inatividade', admin: 'ajuste', ajuste_dia: 'ajuste' };
 const nomeJogo = (id) => jogosRanqueada().find((j) => j.id === id)?.nome.replace(' (Oculto)', '') || '';
 
@@ -125,6 +126,7 @@ export function comoFunciona() {
         <li><b>Show do Barão:</b> valem as ${partidasPorDia('barao')} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>
         ${regraSmite()}
         ${regraSucata()}
+        ${regraConexoes()}
         <li><b>Inatividade:</b> do Ouro para cima, depois de ${INATIVIDADE.dias} dias sem jogar, perde ${Math.abs(INATIVIDADE.pdr)} PDR por dia parado (até no máximo o Ouro 3 com 0 PDR). Qualquer partida de qualquer jogo conta como atividade.</li>
       </ul>
       <div class="table-wrap"><table class="rk-tabela">

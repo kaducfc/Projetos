@@ -132,6 +132,7 @@ export const GAMES = [
     path: 'jogos/conexoes/',
     status: 'live',
     scoreLabel: 'Pontos',
+    ranked: { modo: 'diario', selo: 'Diário · Ranqueada' },
     soAdmin: true,
   },
   {
