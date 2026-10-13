@@ -192,7 +192,6 @@ export default {
   "Sua pontuação": "Tu puntuación",
   "Pontuação": "Puntuación",
   "Cada partida vale de 10 a 100 pontos. Somam: a colocação, terminar com mais cartas, cartas tiradas dos adversários (duvidando certo, com Assassinato ou Golpe), adversários eliminados, blefes que passaram sem ser descobertos, moedas no cofre e o tempo que você ficou na mesa. Duvidar errado ou ter o blefe descoberto tira pontos. Se alguém duvidar de você e errar, a carta perdida não conta para você.": "Cada partida vale de 10 a 100 puntos. Suman: la posición, terminar con más cartas, cartas quitadas a los rivales (desafiando bien, con Asesinato o Golpe), rivales eliminados, faroles que pasaron sin ser descubiertos, monedas en el cofre y el tiempo que estuviste en la mesa. Desafiar mal o que te descubran el farol resta puntos. Si alguien te desafía y se equivoca, la carta que pierde no cuenta para ti.",
-  "Cada partida vale de 10 a 100 pontos, e nas partidas ranqueadas o PDR vem dessa pontuação.": "Cada partida vale de 10 a 100 puntos, y en las partidas clasificatorias tu PDR sale de esa puntuación.",
   "Topo": "Superior",
   "Selva": "Jungla",
   "Suporte": "Soporte",

@@ -192,7 +192,6 @@ export default {
   "Sua pontuação": "Your score",
   "Pontuação": "Scoring",
   "Cada partida vale de 10 a 100 pontos. Somam: a colocação, terminar com mais cartas, cartas tiradas dos adversários (duvidando certo, com Assassinato ou Golpe), adversários eliminados, blefes que passaram sem ser descobertos, moedas no cofre e o tempo que você ficou na mesa. Duvidar errado ou ter o blefe descoberto tira pontos. Se alguém duvidar de você e errar, a carta perdida não conta para você.": "Each match is worth 10 to 100 points. They add up: your placement, finishing with more cards, cards taken from opponents (by challenging correctly, with Assassinate or Takeover), opponents eliminated, bluffs that went undetected, coins in your coffer and how long you stayed at the table. Challenging wrongly or having your bluff caught costs points. If someone challenges you and is wrong, the card they lose does not count for you.",
-  "Cada partida vale de 10 a 100 pontos, e nas partidas ranqueadas o PDR vem dessa pontuação.": "Each match is worth 10 to 100 points, and in ranked matches your PDR comes from that score.",
   "Topo": "Top",
   "Selva": "Jungle",
   "Suporte": "Support",

@@ -192,7 +192,6 @@ export default {
   "Sua pontuação": "Deine Punkte",
   "Pontuação": "Punktewertung",
   "Cada partida vale de 10 a 100 pontos. Somam: a colocação, terminar com mais cartas, cartas tiradas dos adversários (duvidando certo, com Assassinato ou Golpe), adversários eliminados, blefes que passaram sem ser descobertos, moedas no cofre e o tempo que você ficou na mesa. Duvidar errado ou ter o blefe descoberto tira pontos. Se alguém duvidar de você e errar, a carta perdida não conta para você.": "Jede Partie ist 10 bis 100 Punkte wert. Es zählen: die Platzierung, mit mehr Karten zu enden, Gegnern genommene Karten (durch richtiges Anzweifeln, mit Attentat oder Staatsstreich), ausgeschaltete Gegner, unentdeckte Bluffs, Münzen im Tresor und wie lange du am Tisch warst. Falsches Anzweifeln oder ein aufgedeckter Bluff kostet Punkte. Zweifelt jemand dich zu Unrecht an, zählt die Karte, die er verliert, nicht für dich.",
-  "Cada partida vale de 10 a 100 pontos, e nas partidas ranqueadas o PDR vem dessa pontuação.": "Jede Partie ist 10 bis 100 Punkte wert, und in Ranglistenpartien ergibt sich dein PDR aus diesen Punkten.",
   "Topo": "Top",
   "Selva": "Dschungel",
   "Suporte": "Support",

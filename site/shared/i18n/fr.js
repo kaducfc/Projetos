@@ -192,7 +192,6 @@ export default {
   "Sua pontuação": "Ton score",
   "Pontuação": "Score",
   "Cada partida vale de 10 a 100 pontos. Somam: a colocação, terminar com mais cartas, cartas tiradas dos adversários (duvidando certo, com Assassinato ou Golpe), adversários eliminados, blefes que passaram sem ser descobertos, moedas no cofre e o tempo que você ficou na mesa. Duvidar errado ou ter o blefe descoberto tira pontos. Se alguém duvidar de você e errar, a carta perdida não conta para você.": "Chaque partie vaut de 10 à 100 points. S’additionnent : le classement, finir avec plus de cartes, les cartes prises aux adversaires (en contestant à raison, avec Assassinat ou Prise de pouvoir), les adversaires éliminés, les bluffs non découverts, les pièces du coffre et le temps passé à la table. Contester à tort ou se faire découvrir un bluff fait perdre des points. Si quelqu’un te conteste à tort, la carte qu’il perd ne compte pas pour toi.",
-  "Cada partida vale de 10 a 100 pontos, e nas partidas ranqueadas o PDR vem dessa pontuação.": "Chaque partie vaut de 10 à 100 points, et dans les parties classées ton PDR dépend de ce score.",
   "Topo": "Top",
   "Selva": "Jungle",
   "Suporte": "Support",

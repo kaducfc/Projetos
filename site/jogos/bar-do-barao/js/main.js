@@ -295,9 +295,8 @@ function telaInicio() {
   naAbertura = true;
   const cenario = ARTE.cenario ? `style="background-image:linear-gradient(180deg,rgba(8,6,4,.1),rgba(8,6,4,.62)),url(${esc(ARTE.cenario)})"` : '';
   app.innerHTML = `<div class="bb-mesa bb-abertura" ${cenario}>
-    <h1 class="bb-logo">${esc('BARÃO DA SUCATA')}</h1>
-    <div class="bb-quadro bb-cartao"><p>${esc(t('Blefe, intriga e traição numa taverna clandestina de Zaun: sobreviva com ao menos uma influência.'))}</p>
-      <p class="bb-pequeno">${esc(t('Cada partida vale de 10 a 100 pontos, e nas partidas ranqueadas o PDR vem dessa pontuação.'))}</p>
+    <div class="bb-quadro bb-cartao"><h1 class="bb-logo">${esc('BARÃO DA SUCATA')}</h1>
+      <p>${esc(t('Blefe, intriga e traição numa taverna clandestina de Zaun: sobreviva com ao menos uma influência.'))}</p>
       <div class="bb-op"><button class="bb-bt ouro" data-a="novo">${esc(t('JOGAR'))}</button><button class="bb-bt" data-a="ajuda">${esc(t('Como jogar'))}</button></div></div>
     </div>${ui.ajuda ? ajuda() : ''}`;
 }
