@@ -19,6 +19,12 @@ export const MOLDURAS = [
 // Molduras animadas em CSS (sem imagem): `fx` é a classe em shared/account.css (.mfx-*). O anel fica
 // por fora do ícone (sobra de 14% de cada lado), então `sobra`/`k` não se aplicam a elas.
 export const MOLDURAS_TESTE = [
+  // Molduras de arte (imagem): em teste, só administradores equipam (0078_molduras_teste_novas.sql).
+  { id: 'mn-zaun', nome: 'Canos de Zaun', k: 0.5525, tema: 'Zaun · canos, válvulas e líquido verde' },
+  { id: 'mn-poro', nome: 'Poro da Floresta', k: 0.5794, tema: 'Cipós, flores e um Poro' },
+  { id: 'mn-hextech', nome: 'Neon Hextech', k: 0.6213, tema: 'Tecnologia · neon ciano e magenta' },
+  { id: 'mn-robo', nome: 'Robô de Batalha', k: 0.5721, tema: 'Robô branco e laranja' },
+  { id: 'mn-pirata', nome: 'Capitão Pirata', k: 0.5306, tema: 'Pirata · corda, lampião e timão' },
   { id: 'fx-brasa', nome: 'Anel de Brasa', fx: 'mfx-brasa', tema: 'Laranja · fogo girando e brasas' },
   { id: 'fx-gelo', nome: 'Anel de Gelo', fx: 'mfx-gelo', tema: 'Azul claro · cristais que brilham' },
   { id: 'fx-galaxia', nome: 'Anel da Galáxia', fx: 'mfx-galaxia', tema: 'Roxo e azul · estrelas piscando' },
