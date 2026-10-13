@@ -35,6 +35,7 @@ function deCampeoes() {
 
 // Famílias cujas palavras são nomes de campeões (um quebra-cabeça tem no máximo duas delas).
 // As famílias 'membro' (K/DA, True Damage) também usam nomes de campeões.
-export const FAMILIAS_CAMPEAO = new Set(['regiao', 'rota', 'classe', 'letra', 'nome', 'membro']);
+export const FAMILIAS_CAMPEAO = new Set(['regiao', 'rota', 'classe', 'letra', 'nome', 'membro',
+  'arcaneC', 'morto', 'alados', 'irmaos', 'forma', 'ultGlobal', 'invoca', 'armaFogo', 'lanca', 'segundaVida', 'escudoAliado', 'curaAliado', 'furtivos', 'pentakill', 'heartsteel']);
 
 export const GRUPOS = [...deCampeoes(), ...CURADOS].map((g, i) => ({ ...g, id: i, chaves: new Set(g.p.map(norm)) }));
