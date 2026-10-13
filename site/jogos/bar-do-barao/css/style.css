@@ -173,3 +173,8 @@ button.bb-jog { cursor: pointer; border-color: var(--ouro-2); box-shadow: 0 0 0 
 @media (max-width: 760px) { .bb-carta { width: 92px; } .bb-carta.mini { width: 28px; } .bb-maos.eu .bb-carta { width: 128px; } .bb-troca .bb-carta { width: 84px; } }
 .bb-carta.mini { height: auto; box-shadow: 0 0 0 1px #8a6a1e, 0 2px 5px #000a; filter: brightness(1.35); }
 .bb-carta.mini.perdida { filter: grayscale(1) brightness(1.1); }
+
+/* cor de cada jogador: nome no bloco, na mesa e no histórico */
+.jg { font-weight: 800; }
+.bb-nm b { color: var(--cor); }
+.bb-eu-info b { color: var(--cor, var(--ouro-2)); }
