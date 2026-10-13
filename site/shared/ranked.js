@@ -89,11 +89,21 @@ export function baseSucata(pontos) {
   if (p >= 55) return Math.round(3 + ((p - 55) * 32) / 45);
   return -Math.round(3 + ((54 - p) * 22) / 44);
 }
-// Conexões do League: PDR de tabela pela partida (antes do % do elo). Perdeu (4º erro): −20, o mínimo.
-// Vitória: 100 pontos → +30, 90 → +19, 80 → +8, 70 → −3 (a reta cai 1,1 PDR por ponto), sem passar de −10.
+// Conexões do League: PDR de tabela pela partida (antes do % do elo). Pontos = 100 − 10 por erro − 5 por dica.
+// Perdeu (4º erro): −20, o mínimo. Vitória, pelos pontos (entre eles o PDR varia em reta):
+//   100 (perfeito, sem dica) → +30 · 95 (1 dica, sem erro) → +22 · 90 (1 erro) → +15 · 80 (2 erros) → +5 · 70 (3 erros) → −10;
+//   abaixo de 70 vale −10 (uma vitória nunca perde mais que isso).
+export const PONTOS_PDR_CONEXOES = [[70, -10], [80, 5], [90, 15], [95, 22], [100, 30]];
 export function baseConexoes(pontos, perdeu = false) {
   if (perdeu) return -20;
-  const v = Math.max(-10, Math.min(30, 30 - 1.1 * (100 - pontos)));
+  const t = PONTOS_PDR_CONEXOES;
+  let v = t[0][1];
+  if (pontos >= t[t.length - 1][0]) v = t[t.length - 1][1];
+  else if (pontos > t[0][0]) {
+    for (let i = 1; i < t.length; i++) {
+      if (pontos <= t[i][0]) { v = t[i - 1][1] + ((pontos - t[i - 1][0]) * (t[i][1] - t[i - 1][1])) / (t[i][0] - t[i - 1][0]); break; }
+    }
+  }
   return Math.sign(v) * Math.round(Math.abs(v)); // metade arredonda para longe do zero (igual ao round() do banco)
 }
 export const PDR_RUNETERMO = [35, 28, 22, 16, 11, 6, 5];

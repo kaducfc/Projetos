@@ -233,10 +233,12 @@ test('conexões: 1 dica por partida (2 do Platina para cima) e a pontuação des
   assert.equal(restaurar(salvar(certo), certo.puzzle).maxDicas, 1);
 });
 
-test('conexões: PDR de tabela (perdeu −20; 100 → +30; 90 → +19; 80 → +8; 70 → −3; vitória nunca abaixo de −10)', () => {
+test('conexões: PDR de tabela (perfeito +30; 1 dica +22; 1 erro +15; 2 erros +5; 3 erros −10; perdeu −20)', () => {
   assert.equal(baseConexoes(0, true), -20);
-  assert.deepEqual([100, 95, 90, 80, 70, 65].map((p) => baseConexoes(p)), [30, 25, 19, 8, -3, -9]);
-  assert.equal(baseConexoes(30), -10);
-  for (let p = 30; p < 100; p++) assert.ok(baseConexoes(p + 1) >= baseConexoes(p));
+  assert.deepEqual([100, 95, 90, 80, 70].map((p) => baseConexoes(p)), [30, 22, 15, 5, -10]);
+  assert.deepEqual([85, 75, 65, 30].map((p) => baseConexoes(p)), [10, -3, -10, -10]); // 1 erro + 1 dica, 2 erros + 1 dica, abaixo de 70
+  for (let p = 30; p < 100; p++) assert.ok(baseConexoes(p + 1) >= baseConexoes(p), `crescente em ${p}`);
   assert.ok(baseConexoes(30) > baseConexoes(0, true), 'vencer sempre rende mais que perder');
+  // as pontuações reais da partida batem com a tabela: perfeito 100, 1 dica 95, 1 erro 90, 2 erros 80, 3 erros 70
+  for (const [erros_, dicas_, esperado] of [[0, 0, 100], [0, 1, 95], [1, 0, 90], [2, 0, 80], [3, 0, 70]]) assert.equal(100 - 10 * erros_ - 5 * dicas_, esperado);
 });
