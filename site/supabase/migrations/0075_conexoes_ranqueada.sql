@@ -67,8 +67,17 @@ $$;
 
 -- ----------------------------------------------------------- sorteio do quebra-cabeça
 -- Mesma ideia de criarPuzzle() no jogo: 4 grupos de famílias diferentes (no máximo 2 só de campeões) e 4 palavras de cada
--- que não pertencem aos outros 3 grupos escolhidos. `recentes` (títulos dos últimos dias) é evitado enquanto der.
-create or replace function public.site_conexoes_sortear(recentes text[])
+-- que não pertencem aos outros 3 grupos escolhidos.
+--   * `recentes`: títulos dos grupos dos últimos 14 dias do jogador, evitados enquanto der (depois de muitas tentativas relaxa).
+--   * `usados`: marca (md5) das 16 palavras de cada quebra-cabeça que o jogador já teve; um quebra-cabeça igual a um antigo
+--     NUNCA é sorteado de novo.
+-- Marca de um quebra-cabeça: md5 das 16 palavras em ordem alfabética (independe da ordem em que aparecem).
+create or replace function public.site_conexoes_marca(palavras jsonb)
+returns text language sql immutable as $$
+  select md5(array_to_string(array(select x from jsonb_array_elements_text(palavras) x order by x), '|'));
+$$;
+drop function if exists public.site_conexoes_sortear(text[]);
+create or replace function public.site_conexoes_sortear(recentes text[], usados text[])
 returns jsonb
 language plpgsql
 set search_path = public
@@ -89,6 +98,7 @@ declare
   sel jsonb;
   ids int[];
   todas_k text[];
+  todas_w text[];
   ws text[];
   ks text[];
   lista jsonb;
@@ -119,7 +129,7 @@ begin
     end loop;
     if not ok then continue; end if;
     -- 4 palavras de cada grupo que não estão em nenhum dos outros 3
-    lista := '[]'::jsonb; todas_k := '{}';
+    lista := '[]'::jsonb; todas_k := '{}'; todas_w := '{}';
     for idx in 1..4 loop
       select * into g from site_conexoes_grupos where id = escolhidos[idx];
       select array_agg(x.palavra), array_agg(x.chave) into ws, ks
@@ -130,10 +140,13 @@ begin
                order by random() limit 4) x;
       if coalesce(array_length(ws, 1), 0) < 4 then ok := false; exit; end if;
       todas_k := todas_k || ks;
+      todas_w := todas_w || ws;
       lista := lista || jsonb_build_object('id', g.id, 'tit', g.tit, 'dif', g.dif, 'ordem', idx - 1, 'palavras', to_jsonb(ws));
     end loop;
     if not ok then continue; end if;
     if (select count(distinct kk.chave) from unnest(todas_k) as kk(chave)) <> 16 then continue; end if;
+    -- igual a um quebra-cabeça que o jogador já teve? (mesmas 16 palavras, em qualquer ordem)
+    if md5(array_to_string(array(select x from unnest(todas_w) x order by x), '|')) = any (coalesce(usados, '{}')) then continue; end if;
     return jsonb_build_object(
       'grupos', lista,
       'palavras', (select jsonb_agg(w order by random()) from jsonb_array_elements_text(
@@ -142,7 +155,7 @@ begin
   raise exception 'sem_dados';
 end;
 $$;
-revoke all on function public.site_conexoes_sortear(text[]) from public, anon, authenticated;
+revoke all on function public.site_conexoes_sortear(text[], text[]) from public, anon, authenticated;
 
 -- ----------------------------------------------------------- estado (o que a tela recebe)
 -- Os grupos que ainda não foram achados NÃO vão para o navegador (só quando a partida acaba, se perdeu).
@@ -224,6 +237,7 @@ declare
   c site_conexoes;
   puz jsonb;
   rec text[];
+  usadas text[];
 begin
   if uid is null then
     raise exception 'not_authenticated';
@@ -234,8 +248,9 @@ begin
   if c.user_id is null then
     select coalesce(array_agg(g->>'tit'), '{}') into rec
       from site_conexoes x, jsonb_array_elements(x.grupos) g
-     where x.user_id = uid and x.dia >= hoje - 6;
-    puz := site_conexoes_sortear(rec);
+     where x.user_id = uid and x.dia >= hoje - 13;
+    select coalesce(array_agg(site_conexoes_marca(x.palavras)), '{}') into usadas from site_conexoes x where x.user_id = uid;
+    puz := site_conexoes_sortear(rec, usadas);
     insert into site_conexoes (user_id, dia, grupos, palavras, max_dicas)
     values (uid, hoje, puz->'grupos', puz->'palavras', 1 + (site_rk_nivel_de(uid) >= 4)::int)
     on conflict (user_id, dia) do nothing;

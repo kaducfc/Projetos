@@ -249,6 +249,8 @@ test('conexões: os grupos no SQL do servidor (0076) são os mesmos da bibliotec
   const sql = readFileSync(new URL('../supabase/migrations/0075_conexoes_ranqueada.sql', import.meta.url), 'utf8');
   assert.match(sql, /1 \+ \(site_rk_nivel_de\(uid\) >= 4\)::int/); // 2 dicas do Platina para cima (índice 4 = Platina)
   assert.match(sql, /if c\.erros \+ 1 > 3 then/); // 4º erro perde
+  assert.match(sql, /md5\(array_to_string\(array\(select x from unnest\(todas_w\) x order by x\), '\|'\)\) = any \(coalesce\(usados/); // nunca repete um quebra-cabeça
+  assert.match(sql, /x\.dia >= hoje - 13/); // evita os grupos dos últimos 14 dias
   assert.match(sql, /when pontos >= 95 then round\(22 \+ \(pontos - 95\) \* 8 \/ 5\.0\)/);
   assert.match(sql, /on conflict \(user_id, dia, jogo, n\) do nothing/);
 });
