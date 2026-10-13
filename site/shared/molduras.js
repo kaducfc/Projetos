@@ -16,7 +16,16 @@ export const MOLDURAS = [
 ];
 
 // Só o administrador recebe (aba Teste do painel).
-export const MOLDURAS_TESTE = [];
+// Molduras animadas em CSS (sem imagem): `fx` é a classe em shared/account.css (.mfx-*). O anel fica
+// por fora do ícone (sobra de 14% de cada lado), então `sobra`/`k` não se aplicam a elas.
+export const MOLDURAS_TESTE = [
+  { id: 'fx-brasa', nome: 'Anel de Brasa', fx: 'mfx-brasa', tema: 'Laranja · fogo girando e brasas' },
+  { id: 'fx-gelo', nome: 'Anel de Gelo', fx: 'mfx-gelo', tema: 'Azul claro · cristais que brilham' },
+  { id: 'fx-galaxia', nome: 'Anel da Galáxia', fx: 'mfx-galaxia', tema: 'Roxo e azul · estrelas piscando' },
+  { id: 'fx-tempestade', nome: 'Anel da Tempestade', fx: 'mfx-tempestade', tema: 'Azul elétrico · relâmpagos' },
+  { id: 'fx-sakura', nome: 'Anel Sakura', fx: 'mfx-sakura', tema: 'Rosa · pétalas girando' },
+  { id: 'fx-magma', nome: 'Anel de Magma', fx: 'mfx-magma', tema: 'Vermelho e preto · lava pulsando' },
+];
 
 // Uma moldura por elo (a arte vem em shared/assets/molduras/elo-<elo>.webp). Elas não são
 // escolhidas uma a uma: quem equipa "Rank" mostra sempre a do elo atual.
