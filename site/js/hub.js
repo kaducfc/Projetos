@@ -59,7 +59,7 @@ const CAPAS = {
       <span class="cv-cx-g">${['o0','o0','o0','o0','o1','o1','o1','o1','o2','o2','o2','o2','o3','o3','o3','o3'].map((c) => `<i class="${c}"></i>`).join('')}</span></div>`,
   // Barão da Sucata (só administradores por enquanto): três cartas em leque sobre a taverna.
   'bar-do-barao': `<div class="cv cv-bb"><img class="cv-bb-bg" src="/jogos/bar-do-barao/img/capa.webp" alt="" loading="lazy" />
-      <span class="cv-bb-t"><b>BARÃO DA SUCATA</b></span></div>`,
+      <span class="cv-bb-t">BARÃO DA<b>SUCATA</b></span></div>`,
   barao: `<div class="cv cv-barao"><span class="cv-bz-t">SHOW DO<b>BARÃO</b></span>
       <img class="cv-bz-ap" src="/jogos/barao/img/apresentador.webp" alt="" loading="lazy" /></div>`,
   // O time dos sonhos, como na tela do Lendas (melhor OVR de cada um no jogo).

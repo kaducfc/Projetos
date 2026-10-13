@@ -1,7 +1,8 @@
 // O Bar do Barão — interface. Nomes de personagens e falas ficam em português (são do cenário); as regras e botões são traduzidos.
 export default [
   ['Barão da Sucata', 'Scrap Baron', 'Schrott-Baron', 'Barón de la Chatarra', 'Barone dei Rottami', 'Baron de la Ferraille'],
-  ['BARÃO DA SUCATA', 'SCRAP BARON', 'SCHROTT-BARON', 'BARÓN DE LA CHATARRA', 'BARONE DEI ROTTAMI', 'BARON DE LA FERRAILLE'],
+  ['BARÃO DA', 'SCRAP', 'SCHROTT-', 'BARÓN DE LA', 'BARONE DEI', 'BARON DE LA'],
+  ['SUCATA', 'BARON', 'BARON', 'CHATARRA', 'ROTTAMI', 'FERRAILLE'],
   ['Barão da Sucata · Rift Arcade', 'Scrap Baron · Rift Arcade', 'Schrott-Baron · Rift Arcade', 'Barón de la Chatarra · Rift Arcade', 'Barone dei Rottami · Rift Arcade', 'Baron de la Ferraille · Rift Arcade'],
   ['Blefe, intriga e traição numa taverna clandestina de Zaun: sobreviva com ao menos uma influência.', 'Bluff, intrigue and betrayal in a clandestine Zaun tavern: survive with at least one influence.', 'Bluff, Intrigen und Verrat in einer geheimen Taverne in Zaun: Überlebe mit mindestens einem Einfluss.', 'Farol, intriga y traición en una taberna clandestina de Zaun: sobrevive con al menos una influencia.', 'Bluff, intrighi e tradimenti in una taverna clandestina di Zaun: sopravvivi con almeno un’influenza.', 'Bluff, intrigues et trahisons dans une taverne clandestine de Zaun : survis avec au moins une influence.'],
   ['Blefe', 'Bluff', 'Bluff', 'Farol', 'Bluff', 'Bluff'],
