@@ -325,3 +325,38 @@ test('o motor e os bots não dependem de tela nem de rede (sem document/window/f
   const bots = readFileSync(new URL('../jogos/bar-do-barao/js/bots.js', import.meta.url), 'utf8');
   assert.doesNotMatch(bots, /est\.jogadores|est\.baralho|est\.rng/, 'bots só usam a visão');
 });
+
+// ------------------------------------------------------------------ falas
+import { criarFalador } from '../jogos/bar-do-barao/js/falas.js';
+function simularFalas(seed) {
+  const est = novaPartida({ jogadores: JOG, seed });
+  const rr = aleatorio(seed * 3 + 1);
+  const fal = criarFalador(aleatorio(seed * 5 + 2));
+  const perfis = { eu: PERSONAGENS.b2.perfil, b1: PERSONAGENS.b1.perfil, b2: PERSONAGENS.b2.perfil, b3: PERSONAGENS.b3.perfil };
+  const falas = []; let eventos = 0;
+  while (!est.vencedor) {
+    const p = pedido(est); const n0 = est.historico.length;
+    aplicar(est, p.jogador, decidir(visao(est, p.jogador), p, perfis[p.jogador], rr));
+    for (const e of est.historico.slice(n0)) { eventos++; const f = fal.comentar(e, 'eu'); falas.push(f ? { ...f, i: eventos } : null); }
+  }
+  return { falas, eventos };
+}
+test('falas: ninguém fala a cada lance, nem repete a mesma frase em sequência (300 partidas)', () => {
+  let totalEventos = 0; let totalFalas = 0; let repetidas = 0; let maiorSequencia = 0; const porBot = { b1: 0, b2: 0, b3: 0 };
+  for (let s = 1; s <= 300; s++) {
+    const { falas, eventos } = simularFalas(s);
+    totalEventos += eventos;
+    const ult = { b1: [], b2: [], b3: [] }; let seq = 0;
+    for (const f of falas) {
+      if (!f) { seq = 0; continue; }
+      totalFalas++; porBot[f.id]++; seq++; maiorSequencia = Math.max(maiorSequencia, seq);
+      if (ult[f.id].includes(f.txt)) repetidas++;
+      ult[f.id].push(f.txt); if (ult[f.id].length > 4) ult[f.id].shift();
+    }
+  }
+  const taxa = totalFalas / totalEventos;
+  assert.equal(repetidas, 0, 'frase repetida entre as últimas 4 do mesmo personagem');
+  assert.ok(taxa > 0.05 && taxa < 0.35, `taxa de falas por evento: ${taxa.toFixed(2)}`);
+  assert.ok(porBot.b3 > porBot.b2, 'o Vexel fala mais que a Sibil');
+  assert.ok(maiorSequencia <= 4, `sequência de falas seguidas: ${maiorSequencia}`);
+});

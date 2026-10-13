@@ -10,7 +10,7 @@ import { novaPartida, aplicar, pedido, visao, jogador, ativas, colocacao, PONTOS
 import { decidir } from './bots.js';
 import { aleatorio } from './rng.js';
 import { PERSONAGENS, JOGADOR_HUMANO, MESA, CARTAS, RITMO, ARTE } from './config.js';
-import { fala } from './falas.js';
+import { criarFalador } from './falas.js';
 
 const GAME_ID = 'bar-do-barao';
 const EU = 'eu';
@@ -32,6 +32,8 @@ let bolha = null; // { id, txt } última fala de um personagem
 let registrado = false;
 let rapido = false;
 let contadorFala = 0;
+let timerBolha = 0;
+let falador = criarFalador();
 
 // ------------------------------------------------------------------ nomes (traduzidos quando possível)
 const nomeCarta = (inf) => ({ magnata: t('Magnata'), lamina: t('Lâmina'), cobrador: t('Ladrão'), corretor: t('Reciclador'), sentinela: t('Sentinela') }[inf]);
@@ -108,22 +110,12 @@ function narrar(e) {
     default: return null;
   }
 }
-function falaDoEvento(e) {
-  let id; let cat; let inf = null;
-  switch (e.tipo) {
-    case 'acao': id = e.quem; inf = ACOES[e.acao].alegacao; cat = ['renda', 'ajuda'].includes(e.acao) ? 'renda' : ['assassinato', 'golpe'].includes(e.acao) ? 'ataque' : 'acao'; break;
-    case 'bloqueio': id = e.quem; cat = 'bloqueia'; inf = e.inf; break;
-    case 'desafio': id = e.desafiante; cat = 'contesta'; break;
-    case 'prova': id = e.quem; cat = 'provaOk'; break;
-    case 'blefe': id = e.quem; cat = 'blefePego'; break;
-    case 'perdeu': id = e.quem; cat = 'perdeu'; break;
-    case 'eliminado': id = e.quem; cat = 'eliminado'; break;
-    case 'vitoria': id = e.quem; cat = 'venceu'; break;
-    default: return;
-  }
-  if (id === EU) return;
-  const txt = fala(id, cat, contadorFala++, inf);
-  if (txt) bolha = { id, txt };
+const BOLHA_MS = 4200; // a fala some sozinha depois de alguns segundos
+function mostrarFala(f) {
+  bolha = { id: f.id, txt: f.txt, n: ++contadorFala };
+  const n = bolha.n;
+  clearTimeout(timerBolha);
+  timerBolha = setTimeout(() => { if (bolha && bolha.n === n) { bolha = null; desenhar(); } }, BOLHA_MS);
 }
 
 // ------------------------------------------------------------------ andamento
@@ -132,7 +124,7 @@ function executar(quem, d) {
   aplicar(est, quem, d);
   for (const e of est.historico.slice(n0)) {
     const m = narrar(e); if (m) mensagens.push(m);
-    falaDoEvento(e);
+    const f = falador.comentar(e, EU); if (f) mostrarFala(f);
   }
   if (mensagens.length > 60) mensagens = mensagens.slice(-60);
 }
@@ -152,7 +144,7 @@ async function rodar(meu) {
 }
 
 function novaRodada() {
-  token++; rapido = false; registrado = false; bolha = null; mensagens = []; ui = { ped: null, acao: null, sel: [], ajuda: ui.ajuda };
+  token++; rapido = false; registrado = false; bolha = null; falador = criarFalador(); clearTimeout(timerBolha); mensagens = []; ui = { ped: null, acao: null, sel: [], ajuda: ui.ajuda };
   const seed = (Date.now() ^ 0x5bd1e995) >>> 0;
   est = novaPartida({ jogadores: MESA.map((id) => ({ id, nome: nomeJ(id), humano: id === EU })), seed });
   rngBots = Object.fromEntries(Object.keys(PERSONAGENS).map((id, k) => [id, aleatorio(seed + 101 * (k + 1))]));
