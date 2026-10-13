@@ -1850,7 +1850,7 @@ export default {
   "Efeito comprado! Agora é só selecionar.": "Effekt gekauft! Jetzt nur noch auswählen.",
   "Teia de Aranha": "Spinnennetz",
   "Halloween 2026": "Halloween 2026",
-  "Vampito": "Vampito",
+  "Vampiro": "Vampir",
   "Abóboras e Espinhos": "Kürbisse und Dornen",
   "Correntes e Caveiras": "Ketten und Schädel",
   "Poro Assombrado": "Verfluchter Poro",

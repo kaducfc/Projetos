@@ -33,7 +33,7 @@ export default [
   ['Efeito comprado! Agora é só selecionar.', 'Effect bought! Now just select it.', 'Effekt gekauft! Jetzt nur noch auswählen.', '¡Efecto comprado! Ahora solo selecciónalo.', 'Effetto acquistato! Ora basta selezionarlo.', 'Effet acheté ! Il ne reste qu’à le sélectionner.'],
   ['Teia de Aranha', 'Spider Web', 'Spinnennetz', 'Telaraña', 'Ragnatela', 'Toile d’araignée'],
   ['Halloween 2026', 'Halloween 2026', 'Halloween 2026', 'Halloween 2026', 'Halloween 2026', 'Halloween 2026'],
-  ['Vampito', 'Vampito', 'Vampito', 'Vampito', 'Vampito', 'Vampito'],
+  ['Vampiro', 'Vampire', 'Vampir', 'Vampiro', 'Vampiro', 'Vampire'],
   ['Abóboras e Espinhos', 'Pumpkins and Thorns', 'Kürbisse und Dornen', 'Calabazas y espinas', 'Zucche e spine', 'Citrouilles et épines'],
   ['Correntes e Caveiras', 'Chains and Skulls', 'Ketten und Schädel', 'Cadenas y calaveras', 'Catene e teschi', 'Chaînes et crânes'],
   ['Poro Assombrado', 'Haunted Poro', 'Verfluchter Poro', 'Poro embrujado', 'Poro infestato', 'Poro hanté'],

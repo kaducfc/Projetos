@@ -10,7 +10,7 @@ export const MOLDURAS = [
   // "Rank" é uma moldura só, de todos os jogadores: mostra a arte do elo atual e muda sozinha
   // quando o jogador sobe ou desce de elo (ver ELOS_MOLDURAS).
   { id: 'rank', nome: 'Rank', virtual: true, publica: true },
-  { id: 'hw-moldura-1', nome: 'Vampito', k: 0.5879, como: 'Recompensa do nível 8 do Passe de Batalha.' },
+  { id: 'hw-moldura-1', nome: 'Vampiro', k: 0.5879, como: 'Recompensa do nível 8 do Passe de Batalha.' },
   { id: 'hw-moldura-2', nome: 'Abóboras e Espinhos', k: 0.5962, como: 'Recompensa do nível 4 do Passe de Batalha.' },
   { id: 'hw-moldura-3', nome: 'Correntes e Caveiras', k: 0.591, como: 'Recompensa do nível 7 do Passe de Batalha.' },
   // À venda por Rift Coins (site_loja, 0081_loja_molduras.sql): `preco` só serve para mostrar.
@@ -21,6 +21,9 @@ export const MOLDURAS = [
 
 // Só o administrador recebe (aba Teste do painel).
 export const MOLDURAS_TESTE = [
+  // Versões animadas das molduras do passe (mesma arte, com `arte`): só para ver no painel e na conta dos administradores (0082).
+  { id: 'hw-moldura-1-fx', arte: 'hw-moldura-1', nome: 'Vampiro (animada)', k: 0.5879, anim: 'mfb-vampiro', camadas: ['lua', 'asas', 'rubi', 'onix', 'voo'], mascaras: ['rubi', 'onix', 'asas'], tema: 'Vampiro · rubi que pulsa como coração e luar no metal' },
+  { id: 'hw-moldura-2-fx', arte: 'hw-moldura-2', nome: 'Abóboras e Espinhos (animada)', k: 0.5962, anim: 'mfb-abobora', camadas: ['luzes', 'vinhas', 'fa', 'fb', 'fc', 'chispa'], mascaras: ['face-a', 'face-b', 'face-c', 'vinhas'], tema: 'Halloween · abóboras tremulando e espinhos roxos' },
   // Molduras de arte (imagem) em teste: só administradores equipam (0078_molduras_teste_novas.sql).
   { id: 'mn-zaun', nome: 'Canos de Zaun', k: 0.5525, anim: 'mfb-zaun', camadas: ['verde', 'bolhas', 'ambar', 'roda', 'mano', 'vapor v1', 'vapor v2', 'vapor v3'], mascaras: ['verde', 'ambar', 'roda'], tema: 'Zaun · canos, válvulas e líquido verde' },
   { id: 'mn-pirata', nome: 'Capitão Pirata', k: 0.5306, anim: 'mfb-pirata', camadas: ['luz', 'chama', 'lenco', 'ouro', 'leme', 'olho o1', 'olho o2', 'brasa b1', 'brasa b2', 'brasa b3'], mascaras: ['chama', 'lenco', 'ouro', 'leme'], tema: 'Pirata · corda, lampião e timão' },
@@ -49,10 +52,11 @@ export function resolverMoldura(id, elo = null) {
 
 const TODAS = new Map([...MOLDURAS, ...MOLDURAS_TESTE, ...ELOS_MOLDURAS].map((m) => [m.id, m]));
 export const molduraPorId = (id) => TODAS.get(id) || null;
-export const srcMoldura = (id) => (TODAS.has(id) ? `/shared/assets/molduras/${id}.webp` : '');
+// `arte`: usa a imagem de outra moldura (versão animada em teste da mesma arte).
+export const srcMoldura = (id) => (TODAS.has(id) ? `/shared/assets/molduras/${TODAS.get(id).arte || id}.webp` : '');
 
 // Pasta das camadas de efeito (máscaras): shared/assets/molduras/<id>-<camada>.webp, mesma tela da arte.
-export const srcMascara = (id, nome) => `/shared/assets/molduras/${id}-${nome}.webp`;
+export const srcMascara = (id, nome) => `/shared/assets/molduras/${TODAS.get(id)?.arte || id}-${nome}.webp`;
 
 // Largura da imagem (em % do ícone) e deslocamento para centralizar.
 export function geometriaMoldura(id) {

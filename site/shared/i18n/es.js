@@ -1850,7 +1850,7 @@ export default {
   "Efeito comprado! Agora é só selecionar.": "¡Efecto comprado! Ahora solo selecciónalo.",
   "Teia de Aranha": "Telaraña",
   "Halloween 2026": "Halloween 2026",
-  "Vampito": "Vampito",
+  "Vampiro": "Vampiro",
   "Abóboras e Espinhos": "Calabazas y espinas",
   "Correntes e Caveiras": "Cadenas y calaveras",
   "Poro Assombrado": "Poro embrujado",
