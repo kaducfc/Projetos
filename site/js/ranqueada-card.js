@@ -28,6 +28,8 @@ export const JOGOS_RANQUEADA = jogosRanqueada();
 // Regra do Desafio do Golpear: aparece quando o jogo está liberado (sem `soAdmin` no catálogo) ou para administradores.
 const regraSmite = () => jogosRanqueada().some((j) => j.id === 'smite') ? `<li><b>Desafio do Golpear:</b> valem as ${partidasPorDia('smite')} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>, pela nota da partida (soma das 5 rodadas, de 0 a 500): <b>500 = +35</b>, <b>250 = +3</b>, <b>249 = −3</b>, <b>0 = −30</b>. Entre esses pontos o PDR varia proporcionalmente. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>` : '';
 const regraSucata = () => jogosRanqueada().some((j) => j.id === 'bar-do-barao') ? `<li><b>Barão da Sucata:</b> valem as ${partidasPorDia('bar-do-barao')} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>, pela pontuação da partida (de 10 a 100): <b>100 = +35</b>, <b>55 = +3</b>, <b>54 = −3</b>, <b>10 = −25</b>. Entre esses pontos o PDR varia proporcionalmente. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>` : '';
+// Benefício de um jogo em teste (`soAdmin`) só aparece para administradores.
+const beneficioVisivel = (b) => !b.id || GAMES.some((g) => g.id === b.id && (!g.soAdmin || ehAdmin));
 const MOTIVO = { partida: '', melhora: 'resultado melhor', nao_terminou: 'começou e não terminou', inatividade: 'inatividade', admin: 'ajuste', ajuste_dia: 'ajuste' };
 const nomeJogo = (id) => jogosRanqueada().find((j) => j.id === id)?.nome.replace(' (Oculto)', '') || '';
 
@@ -79,7 +81,7 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
     if (dias >= 2) inativo = `<p class="small rk-queda perigo">${dias} dias sem jogar: do Ouro para cima, a partir do ${INATIVIDADE.dias + 1}º dia parado perde ${Math.abs(INATIVIDADE.pdr)} PDR por dia. Jogue qualquer jogo hoje para evitar.</p>`;
   }
   const n = s.jogou ? nivelElo(d.elo) : -1;
-  const liberados = BENEFICIOS.filter((b) => nivelElo(b.elo) <= n);
+  const liberados = BENEFICIOS.filter((b) => nivelElo(b.elo) <= n && beneficioVisivel(b));
   const hist = (s.historico || []).slice(0, 6).map((h) => {
     const a = divisaoDe(h.antes);
     const b = divisaoDe(h.depois);
@@ -105,7 +107,7 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
 // "Como funciona": regras, elos e benefícios (o % de ganho por elo é interno, não aparece).
 export function comoFunciona() {
   const linhas = ELOS.map((e, i) => {
-    const b = BENEFICIOS.filter((x) => x.elo === e.id);
+    const b = BENEFICIOS.filter((x) => x.elo === e.id && beneficioVisivel(x));
     const div = i < 7 ? '3 · 2 · 1' : e.id === 'mestre' ? 'sem limite' : e.id === 'grao-mestre' ? `${VAGAS_GRAO_MESTRE} vagas, ${MIN_GRAO_MESTRE}+ PDR` : `${VAGAS_DESAFIANTE} vagas, ${MIN_DESAFIANTE}+ PDR`;
     return `<tr><td><span class="rk-elo" style="--cor:${e.cor}">${emblemaHtml(e.id, 22)}${esc(e.nome)}</span></td>
       <td>${div}</td>

@@ -36,22 +36,25 @@ test('ranqueada: 10 elos, divisões de 100 PDR e Mestre depois do Diamante 1', (
 });
 
 test('ranqueada: benefícios de cada elo somam com os de baixo', () => {
-  const base = { categoriaRunetermo: false, dadosBonus: 1, dicasCampeao: 1, tentativasRunetermo: 6, tentativasCampeao: 8 };
+  const base = { categoriaRunetermo: false, dadosBonus: 1, dicasCampeao: 1, dicasConexoes: 1, tentativasRunetermo: 6, tentativasCampeao: 8 };
   assert.deepEqual(vantagens(null), base);
   assert.deepEqual(vantagens('ferro'), base);
   assert.deepEqual(vantagens('bronze'), base);
   assert.equal(vantagens('prata').categoriaRunetermo, true);
   assert.equal(vantagens('ouro').dadosBonus, 2);
-  assert.equal(vantagens('platina').dicasCampeao, 2);
-  assert.equal(vantagens('esmeralda').dicasCampeao, 3);
+  assert.equal(vantagens('platina').dicasCampeao, 1, 'o Platina não dá mais dica no Campeão Oculto');
+  assert.equal(vantagens('platina').dicasConexoes, 2);
+  assert.equal(vantagens('esmeralda').dicasCampeao, 2);
   assert.equal(vantagens('diamante').tentativasRunetermo, 7);
-  assert.deepEqual(vantagens('desafiante'), { categoriaRunetermo: true, dadosBonus: 3, dicasCampeao: 3, tentativasRunetermo: 7, tentativasCampeao: 9 });
+  assert.deepEqual(vantagens('desafiante'), { categoriaRunetermo: true, dadosBonus: 3, dicasCampeao: 2, dicasConexoes: 2, tentativasRunetermo: 7, tentativasCampeao: 9 });
   assert.equal(nivelElo('desafiante'), 9);
   assert.deepEqual([null, 'ferro', 'bronze', 'diamante', 'mestre', 'desafiante'].map(bonusCarreira), [0, 1, 2, 7, 8, 10]);
   // O servidor dá as mesmas tentativas e dicas nos jogos diários.
   const sql16 = readFileSync(new URL('../supabase/migrations/0016_diarios_servidor.sql', import.meta.url), 'utf8');
   assert.match(sql16, /then 6 \+ \(niv >= 6\)::int else 8 \+ \(niv >= 9\)::int end/);
-  assert.match(sql16, /then 1 \+ \(niv >= 4\)::int \+ \(niv >= 5\)::int else 0 end/);
+  const sql74 = readFileSync(new URL('../supabase/migrations/0074_campeao_dica_esmeralda.sql', import.meta.url), 'utf8');
+  assert.match(sql74, /then 1 \+ \(niv >= 5\)::int else 0 end/);
+  assert.match(sql74, /then 6 \+ \(niv >= 6\)::int else 8 \+ \(niv >= 9\)::int end/);
 });
 
 test('benefícios nos jogos: tentativas a mais no texto de compartilhar e vários dados no Lendas do CBLOL', () => {
