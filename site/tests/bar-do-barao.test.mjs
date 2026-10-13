@@ -291,10 +291,10 @@ test('bots não leem cartas ocultas: decisão idêntica se as cartas dos outros 
 
 // ------------------------------------------------------------------ integração
 import { readFileSync, existsSync } from 'node:fs';
-test('integração: catálogo (só administrador), capa no hub, arquivos e referências do index.html existem', async () => {
+test('integração: catálogo (liberado), capa no hub, arquivos e referências do index.html existem', async () => {
   const { GAMES } = await import('../shared/config.js');
   const cfg = GAMES.find((g) => g.id === 'bar-do-barao');
-  assert.ok(cfg && cfg.name === 'Barão da Sucata' && cfg.path === 'jogos/bar-do-barao/' && cfg.soAdmin === true);
+  assert.ok(cfg && cfg.name === 'Barão da Sucata' && cfg.path === 'jogos/bar-do-barao/' && !cfg.soAdmin, 'liberado para o público');
   assert.match(readFileSync(new URL('../js/hub.js', import.meta.url), 'utf8'), /'bar-do-barao': `<div class="cv cv-bb">/);
   const html = readFileSync(new URL('../jogos/bar-do-barao/index.html', import.meta.url), 'utf8');
   for (const m of html.matchAll(/(?:href|src)="((?!https?:)[^"#]+?)(?:\?[^"]*)?"/g)) {
@@ -433,7 +433,7 @@ test('pontuação: sempre entre 10 e 100 e o registro privado do motor não vai 
 // ------------------------------------------------------------------ ranqueada (PDR pela pontuação)
 import { baseSucata, partidasPorDia, PARTIDAS_JOGO } from '../shared/ranked.js';
 import * as PT from '../jogos/bar-do-barao/js/pontuacao.js';
-test('ranqueada: PDR pela pontuação (100 → +35, 55 → +3, 54 → −3, 10 → −25), 2 partidas por dia, só administrador', async () => {
+test('ranqueada: PDR pela pontuação (100 → +35, 55 → +3, 54 → −3, 10 → −25), 2 partidas por dia, liberado', async () => {
   assert.deepEqual([100, 55, 54, 10].map(baseSucata), [35, 3, -3, -25]);
   for (let p = 10; p < 100; p++) assert.ok(baseSucata(p + 1) >= baseSucata(p), 'tabela crescente');
   assert.equal(baseSucata(5), -25); assert.equal(baseSucata(150), 35);
@@ -441,7 +441,7 @@ test('ranqueada: PDR pela pontuação (100 → +35, 55 → +3, 54 → −3, 10 �
   const { GAMES } = await import('../shared/config.js');
   const g = GAMES.find((x) => x.id === 'bar-do-barao');
   assert.deepEqual(g.ranked, { modo: 'vagas', selo: 'Ranqueada' });
-  assert.equal(g.soAdmin, true, 'continua só para administrador até a liberação');
+  assert.ok(!g.soAdmin, 'liberado para o público');
 });
 
 test('ranqueada: o SQL (0073) usa os mesmos números do jogo e valida o detalhe da pontuação', () => {

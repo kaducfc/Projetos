@@ -122,7 +122,7 @@ export const GAMES = [
     scoreLabel: 'Pontos',
     ranked: { modo: 'diario', selo: 'Diário · Ranqueada' },
   },
-  // Em desenvolvimento: `soAdmin` esconde o jogo do hub e do perfil e bloqueia a página
+  // Para um jogo novo em teste: `soAdmin: true` esconde o jogo do hub e do perfil e bloqueia a página
   // para quem não é administrador. Para lançar, apague a linha `soAdmin`.
   {
     id: 'conexoes',
@@ -133,7 +133,6 @@ export const GAMES = [
     status: 'live',
     scoreLabel: 'Pontos',
     ranked: { modo: 'diario', selo: 'Diário · Ranqueada' },
-    soAdmin: true,
   },
   {
     id: 'bar-do-barao',
@@ -144,7 +143,6 @@ export const GAMES = [
     status: 'live',
     scoreLabel: 'Pontos',
     ranked: { modo: 'vagas', selo: 'Ranqueada' },
-    soAdmin: true,
   },
 ];
 
