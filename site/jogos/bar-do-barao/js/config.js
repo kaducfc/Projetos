@@ -21,7 +21,7 @@ export const CARTAS = {
   magnata: { nome: 'Magnata', cor: '#4aa3ff', simbolo: '♛', acao: 'Cobrar tributos', original: 'Duque', fala: 'O preço da paz acaba de subir.' },
   lamina: { nome: 'Lâmina', cor: '#ef4444', simbolo: '†', acao: 'Assassinato', original: 'Assassino', fala: 'Você não vai sentir nada.' },
   cobrador: { nome: 'Ladrão', cor: '#f5cf5a', simbolo: '⛓', acao: 'Roubo', original: 'Capitão', fala: 'Toda dívida chega à minha mesa.' },
-  corretor: { nome: 'Corretor', cor: '#b57bff', simbolo: '⇄', acao: 'Troca de cartas', original: 'Embaixador', fala: 'Identidades são apenas mercadorias.' },
+  corretor: { nome: 'Reciclador', cor: '#b57bff', simbolo: '⇄', acao: 'Troca de cartas', original: 'Embaixador', fala: 'Identidades são apenas mercadorias.' },
   sentinela: { nome: 'Sentinela', cor: '#4ade80', simbolo: '⛨', acao: 'Bloqueia assassinato', original: 'Condessa', fala: 'Este ataque termina aqui.' },
 };
 export const NOME_ACAO = {
@@ -31,8 +31,8 @@ export const DESCRICAO_ACAO = {
   renda: 'Pega 1 moeda. Não pode ser contestada nem bloqueada.',
   ajuda: 'Pega 2 moedas. Qualquer um pode bloquear dizendo ser o Magnata.',
   tributos: 'Pega 3 moedas. Exige o Magnata e pode ser contestada.',
-  roubo: 'Rouba até 2 moedas de alguém. Exige o Ladrão; o alvo bloqueia com Ladrão ou Corretor.',
-  troca: 'Compra 2 cartas e devolve as que sobrarem. Exige o Corretor.',
+  roubo: 'Rouba até 2 moedas de alguém. Exige o Ladrão; o alvo bloqueia com Ladrão ou Reciclador.',
+  troca: 'Compra 2 cartas e devolve as que sobrarem. Exige o Reciclador.',
   assassinato: 'Paga 3 moedas e o alvo perde uma carta. Exige a Lâmina; o alvo bloqueia com a Sentinela.',
   golpe: 'Paga 7 moedas e o alvo perde uma carta. Não pode ser bloqueado nem contestado.',
 };
