@@ -242,3 +242,14 @@ test('conexões: PDR de tabela (perfeito +30; 1 dica +22; 1 erro +15; 2 erros +5
   // as pontuações reais da partida batem com a tabela: perfeito 100, 1 dica 95, 1 erro 90, 2 erros 80, 3 erros 70
   for (const [erros_, dicas_, esperado] of [[0, 0, 100], [0, 1, 95], [1, 0, 90], [2, 0, 80], [3, 0, 70]]) assert.equal(100 - 10 * erros_ - 5 * dicas_, esperado);
 });
+
+import { gerarSql } from '../scripts/conexoes-sql.mjs';
+test('conexões: os grupos no SQL do servidor (0076) são os mesmos da biblioteca do jogo (rode node scripts/conexoes-sql.mjs se falhar)', () => {
+  const arquivo = readFileSync(new URL('../supabase/migrations/0076_conexoes_grupos.sql', import.meta.url), 'utf8');
+  assert.equal(arquivo, gerarSql());
+  const sql = readFileSync(new URL('../supabase/migrations/0075_conexoes_ranqueada.sql', import.meta.url), 'utf8');
+  assert.match(sql, /1 \+ \(site_rk_nivel_de\(uid\) >= 4\)::int/); // 2 dicas do Platina para cima (índice 4 = Platina)
+  assert.match(sql, /if c\.erros \+ 1 > 3 then/); // 4º erro perde
+  assert.match(sql, /when pontos >= 95 then round\(22 \+ \(pontos - 95\) \* 8 \/ 5\.0\)/);
+  assert.match(sql, /on conflict \(user_id, dia, jogo, n\) do nothing/);
+});
