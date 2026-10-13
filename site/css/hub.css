@@ -388,3 +388,42 @@ html[lang="de"] .cv-cx-t b, html[lang="fr"] .cv-cx-t b { font-size: 22px; }
 .cv-bb-c .c1 { transform: rotate(-12deg); } .cv-bb-c .c2 { transform: translateY(-4px); border-color: #ef6b5b; color: #ef6b5b; } .cv-bb-c .c3 { transform: rotate(12deg); border-color: #3fb98f; color: #3fb98f; }
 .cv-bb-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .cv-bb::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,.75), transparent 60%); }
+
+/* Título do jogo no banner: sempre no canto superior esquerdo, em duas linhas (a pequena em cima, a grande embaixo).
+   O tamanho acompanha a largura do banner e, se a palavra for grande (outros idiomas), a linha quebra. */
+.hx-cover { container-type: inline-size; }
+.cv-t { position: absolute; left: 12px; top: 10px; z-index: 4; max-width: 58%; display: flex; flex-direction: column; font-family: var(--display); line-height: 0.88; color: #f5cf5a; text-shadow: 0 2px 0 #2d1d03, 0 0 8px #000; pointer-events: none; text-wrap: balance; }
+.cv-t i { font-style: normal; font-size: min(13px, 4.2cqw); letter-spacing: 0.22em; color: #f2d98a; }
+.cv-t b { font-weight: 400; font-size: min(31px, 9.6cqw); letter-spacing: 0.02em; }
+/* conteúdo de cada capa sai de baixo do título */
+.cv-car { justify-content: flex-end; padding: 52px 12px 6px 10px; }
+.cv-car-ovr { width: 60px; height: 82px; } .cv-car-ovr b { font-size: 34px; }
+.cv-dream { justify-content: flex-end; padding: 0 12px 6px; }
+.cv-dream-ovr { width: 54px; height: 74px; } .cv-dream-ovr b { font-size: 30px; }
+.cv-runas .cv-letras { margin-top: 30px; }
+.cv-chutes { margin-top: 52px; }
+.cv-cx-g { left: 70%; top: 56%; }
+.cv-bb::after { background: linear-gradient(160deg, rgba(0,0,0,.78), transparent 55%); }
+.cv-t.s b { font-size: min(25px, 7.4cqw); }
+.cv-dream-nome { display: none; }
+.cv-dream-ovr { width: 46px; height: 64px; padding-bottom: 4px; } .cv-dream-ovr b { font-size: 25px; } .cv-dream-ovr small { font-size: 7px; }
+.cv-cx-g { top: 64%; }
+/* banners estreitos (colunas de ~250 px): o selo e o título encolhem juntos para não se encostarem */
+@container (max-width: 300px) {
+  .hx-selo { font-size: min(10.5px, 3.3cqw); letter-spacing: 0.9px; padding: 3px 7px; }
+  .cv-t { max-width: 52%; }
+  .cv-t b { font-size: min(31px, 8cqw); }
+  .cv-t.s b { font-size: min(25px, 6.4cqw); }
+  .cv-t i { font-size: min(13px, 3.6cqw); letter-spacing: 0.14em; }
+}
+@container (max-width: 300px) {
+  .cv-sm-t { max-width: 52%; }
+  .cv-sm-t i { font-size: min(13px, 3.6cqw); letter-spacing: 0.14em; }
+  .cv-sm-t b { font-size: min(31px, 8cqw); }
+}
+/* idiomas com palavras mais longas */
+html:not([lang="pt-BR"]) .cv-t b { font-size: min(27px, 8.4cqw); }
+html[lang="de"] .cv-t b { font-size: min(22px, 6.8cqw); }
+html[lang="de"] .cv-t.s b { font-size: min(19px, 5.4cqw); }
+html:not([lang="pt-BR"]) .cv-t.s b { font-size: min(23px, 6.8cqw); }
+html[lang="de"] .cv-cx-g { left: 76%; }

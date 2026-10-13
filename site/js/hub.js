@@ -31,7 +31,7 @@ mountSiteFooter(document.getElementById('site-footer'));
 const A = '/shared/assets';
 const CAPAS = {
   // Um pedaço da tela da carreira: escudo do OVR (diamante, 91) e o resumo.
-  'carreira-no-rift': `<div class="cv cv-mapa cv-car" style="--img:url(${A}/mapa/summoners-rift-640.webp)">
+  'carreira-no-rift': `<div class="cv cv-mapa cv-car" style="--img:url(${A}/mapa/summoners-rift-640.webp)"><span class="cv-t"><i>CARREIRA</i><b>NO RIFT</b></span>
       <div class="cv-car-ovr"><img src="${A}/trofeus/diamante.png" alt="" loading="lazy" /><small>OVR</small><b>91</b></div>
       <div class="cv-car-info">
         <b class="cv-car-nick">GOAT</b>
@@ -39,31 +39,31 @@ const CAPAS = {
         <span class="cv-car-trofeus">${['circuito-desafiante', 'cblol', 'first-stand', 'mvp', 'msi', 'lck', 'mundial']
           .map((t) => `<img src="${A}/trofeus/${t}.png${t === 'cblol' ? '?v=2' : ''}" alt="" loading="lazy" />`).join('')}</span>
       </div></div>`,
-  runetermo: `<div class="cv cv-runas"><div class="cv-letras">${[['B', 'ok'], ['A', 'quase'], ['R', 'nao'], ['O', 'ok'], ['N', 'ok']]
+  runetermo: `<div class="cv cv-runas"><span class="cv-t s"><b>RUNETERMO</b></span><div class="cv-letras">${[['B', 'ok'], ['A', 'quase'], ['R', 'nao'], ['O', 'ok'], ['N', 'ok']]
     .map(([l, c]) => `<span class="${c}">${l}</span>`).join('')}</div></div>`,
   // Três chutes do Campeão Oculto (ano, gênero, região, posição, classe, espécie,
   // alcance), o mais recente em cima, como no jogo: o último acertou tudo.
-  campeao: `<div class="cv cv-oculto" style="--img:url(${A}/icones/raposa-encantada.webp)"><div class="cv-chutes">${[
+  campeao: `<div class="cv cv-oculto" style="--img:url(${A}/icones/raposa-encantada.webp)"><span class="cv-t"><i>CAMPEÃO</i><b>OCULTO</b></span><div class="cv-chutes">${[
     ['ok', 'ok', 'ok', 'ok', 'ok', 'ok', 'ok'],
     [['miss', '↓'], 'ok', 'ok', 'part', 'ok', 'miss', 'ok'],
     [['miss', '↑'], 'miss', 'part', 'miss', 'ok', 'miss', 'part'],
   ].map((linha) => `<div>${linha.map((c) => (Array.isArray(c) ? `<span class="${c[0]}">${c[1]}</span>` : `<span class="${c}"></span>`)).join('')}</div>`).join('')}</div></div>`,
-  escala: `<div class="cv cv-escala"><span class="cv-sil azul" style="--img:url(/jogos/escala/dados/silhuetas/garen.webp)"></span>
+  escala: `<div class="cv cv-escala"><span class="cv-t s"><b>NA MEDIDA</b></span><span class="cv-sil azul" style="--img:url(/jogos/escala/dados/silhuetas/garen.webp)"></span>
       <span class="cv-sil verm" style="--img:url(/jogos/escala/dados/silhuetas/teemo.webp)"></span></div>`,
   // Quiz oculto (só administradores): título dourado e as quatro alternativas.
   // Desafio do Golpear: o banner (o dragão no covil) com o nome do jogo por cima (traduzido em cada idioma).
   smite: `<div class="cv cv-smite"><img class="cv-sm-bg" src="/jogos/smite/img/banner.webp" alt="" loading="lazy" />
       <span class="cv-sm-t"><i>DESAFIO DO</i><b>GOLPEAR</b></span></div>`,
   // Conexões do League (só administradores por enquanto): uma grade 4 x 4 com os quatro grupos coloridos.
-  conexoes: `<div class="cv cv-cx"><span class="cv-cx-t">CONEXÕES<b>DO LEAGUE</b></span>
+  conexoes: `<div class="cv cv-cx"><span class="cv-t"><i>CONEXÕES</i><b>DO LEAGUE</b></span>
       <span class="cv-cx-g">${['o0','o0','o0','o0','o1','o1','o1','o1','o2','o2','o2','o2','o3','o3','o3','o3'].map((c) => `<i class="${c}"></i>`).join('')}</span></div>`,
   // Barão da Sucata (só administradores por enquanto): três cartas em leque sobre a taverna.
   'bar-do-barao': `<div class="cv cv-bb"><img class="cv-bb-bg" src="/jogos/bar-do-barao/img/capa.webp" alt="" loading="lazy" />
-      <span class="cv-bb-t">BARÃO DA<b>SUCATA</b></span></div>`,
-  barao: `<div class="cv cv-barao"><span class="cv-bz-t">SHOW DO<b>BARÃO</b></span>
+      <span class="cv-t"><i>BARÃO DA</i><b>SUCATA</b></span></div>`,
+  barao: `<div class="cv cv-barao"><span class="cv-t"><i>SHOW DO</i><b>BARÃO</b></span>
       <img class="cv-bz-ap" src="/jogos/barao/img/apresentador.webp" alt="" loading="lazy" /></div>`,
   // O time dos sonhos, como na tela do Lendas (melhor OVR de cada um no jogo).
-  cblol: `<div class="cv cv-cblol cv-dream">
+  cblol: `<div class="cv cv-cblol cv-dream"><span class="cv-t"><i>LENDAS DO</i><b>CBLOL</b></span>
       <div class="cv-dream-esq"><div class="cv-dream-ovr"><img src="${A}/trofeus/challenger.png" alt="" loading="lazy" /><small>OVR</small><b>96</b></div>
         <b class="cv-dream-nome">Dream Team</b></div>
       <div class="cv-dream-lista">

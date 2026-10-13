@@ -43,4 +43,10 @@ export default [
   ['Rift Arcade · Minigames de League of Legends: Carreira, CBLOL e jogos diários', 'Rift Arcade · League of Legends minigames: Career, CBLOL and daily games', 'Rift Arcade · League-of-Legends-Minispiele: Karriere, CBLOL und Tagesspiele', 'Rift Arcade · Minijuegos de League of Legends: Carrera, CBLOL y juegos diarios', 'Rift Arcade · Minigiochi di League of Legends: Carriera, CBLOL e giochi giornalieri', 'Rift Arcade · Mini-jeux League of Legends : Carrière, CBLOL et jeux quotidiens'],
   ['Rift Arcade: minigames de League of Legends. Jogue Carreira no Rift, Lendas do CBLOL, Runetermo, Campeão Oculto e Na Medida e suba no ranking.', 'Rift Arcade: League of Legends minigames. Play Career in the Rift, CBLOL Legends, Runetermo, Hidden Champion and To Scale, and climb the ranking.', 'Rift Arcade: League-of-Legends-Minispiele. Spiele Karriere im Rift, CBLOL-Legenden, Runetermo, Versteckter Champion und Maßstabsgetreu und steige in der Rangliste auf.', 'Rift Arcade: minijuegos de League of Legends. Juega Carrera en la Grieta, Leyendas del CBLOL, Runetermo, Campeón Oculto y A Escala, y sube en la clasificación.', 'Rift Arcade: minigiochi di League of Legends. Gioca Carriera nel Rift, Leggende del CBLOL, Runetermo, Campione Nascosto e In Scala e scala la classifica.', 'Rift Arcade : mini-jeux de League of Legends. Joue à Carrière dans la Faille, Légendes du CBLOL, Runetermo, Champion Caché et À l’échelle, et grimpe au classement.'],
   ['Desafio do dia disponível', 'Daily challenge available', 'Tagesaufgabe verfügbar', 'Desafío del día disponible', 'Sfida del giorno disponibile', 'Défi du jour disponible'],
+  ['CARREIRA', 'CAREER', 'KARRIERE', 'CARRERA', 'CARRIERA', 'CARRIÈRE'],
+  ['NO RIFT', 'IN THE RIFT', 'IM RIFT', 'EN LA GRIETA', 'NEL RIFT', 'DANS LA FAILLE'],
+  ['CAMPEÃO', 'HIDDEN', 'VERSTECKTER', 'CAMPEÓN', 'CAMPIONE', 'CHAMPION'],
+  ['OCULTO', 'CHAMPION', 'CHAMPION', 'OCULTO', 'NASCOSTO', 'CACHÉ'],
+  ['NA MEDIDA', 'TO SCALE', 'MASSSTABS­GETREU', 'A ESCALA', 'IN SCALA', 'À L’ÉCHELLE'],
+  ['LENDAS DO', 'LEGENDS OF', 'LEGENDEN DER', 'LEYENDAS DEL', 'LEGGENDE DEL', 'LÉGENDES DU'],
 ];
