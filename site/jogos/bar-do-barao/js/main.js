@@ -34,20 +34,20 @@ let rapido = false;
 let contadorFala = 0;
 
 // ------------------------------------------------------------------ nomes (traduzidos quando possível)
-const nomeCarta = (inf) => ({ magnata: t('Magnata'), lamina: t('Lâmina'), cobrador: t('Cobrador'), corretor: t('Corretor'), sentinela: t('Sentinela') }[inf]);
+const nomeCarta = (inf) => ({ magnata: t('Magnata'), lamina: t('Lâmina'), cobrador: t('Ladrão'), corretor: t('Corretor'), sentinela: t('Sentinela') }[inf]);
 const nomeAcao = (a) => ({ renda: t('Renda'), ajuda: t('Ajuda Externa'), tributos: t('Cobrar tributos'), roubo: t('Roubo'), troca: t('Troca de cartas'), assassinato: t('Assassinato'), golpe: t('Golpe') }[a]);
 const descAcao = (a) => ({
   renda: t('Pega 1 moeda. Não pode ser contestada nem bloqueada.'),
   ajuda: t('Pega 2 moedas. Qualquer um pode bloquear dizendo ser o Magnata.'),
   tributos: t('Pega 3 moedas. Exige o Magnata e pode ser contestada.'),
-  roubo: t('Rouba até 2 moedas de alguém. Exige o Cobrador; o alvo bloqueia com Cobrador ou Corretor.'),
+  roubo: t('Rouba até 2 moedas de alguém. Exige o Ladrão; o alvo bloqueia com Ladrão ou Corretor.'),
   troca: t('Compra 2 cartas e devolve as que sobrarem. Exige o Corretor.'),
   assassinato: t('Paga 3 moedas e o alvo perde uma carta. Exige a Lâmina; o alvo bloqueia com a Sentinela.'),
   golpe: t('Paga 7 moedas e o alvo perde uma carta. Não pode ser bloqueado nem contestado.'),
 }[a]);
 const acaoCarta = (inf) => ({ magnata: t('Cobrar tributos'), lamina: t('Assassinato'), cobrador: t('Roubo'), corretor: t('Troca de cartas'), sentinela: t('Bloqueia assassinato') }[inf]);
 const INFS = ['magnata', 'lamina', 'cobrador', 'corretor', 'sentinela'];
-// Texto escapado em que cada nome de influência recebe a sua cor (azul Magnata, vermelha Lâmina, amarelo Cobrador, roxo Corretor, verde Sentinela).
+// Texto escapado em que cada nome de influência recebe a sua cor (azul Magnata, vermelha Lâmina, amarelo Ladrão, roxo Corretor, verde Sentinela).
 const ec = (txt) => {
   let h = esc(txt);
   for (const inf of INFS) {
@@ -74,7 +74,7 @@ function narrar(e) {
       const v = { a, b: e.alvo ? nomeJ(e.alvo) : '' };
       return ({
         renda: t('{a} pega Renda (+1 moeda).', v), ajuda: t('{a} tenta a Ajuda Externa (+2 moedas).', v),
-        tributos: t('{a} declara o Magnata e cobra tributos (+3).', v), roubo: t('{a} declara o Cobrador e tenta roubar {b}.', v),
+        tributos: t('{a} declara o Magnata e cobra tributos (+3).', v), roubo: t('{a} declara o Ladrão e tenta roubar {b}.', v),
         troca: t('{a} declara o Corretor e quer trocar cartas.', v), assassinato: t('{a} paga 3 moedas e declara a Lâmina contra {b}.', v),
         golpe: t('{a} paga 7 moedas e dá um Golpe em {b}.', v),
       })[e.acao];
