@@ -2,7 +2,7 @@
 // (shared/assets/icones). Guardado no perfil como 'mascote' ou 'icone:<id>'.
 // Dois são especiais, de apoiador: só o servidor deixa usar (0014_icones.sql).
 
-import { srcMoldura, geometriaMoldura, resolverMoldura, molduraPorId } from './molduras.js';
+import { srcMoldura, srcMascara, geometriaMoldura, resolverMoldura, molduraPorId } from './molduras.js';
 
 const MASCOTE = '/shared/assets/marca/mascote-120.png?v=2';
 const PASTA = '/shared/assets/icones';
@@ -72,7 +72,7 @@ export function avatarHtml(avatar, nome = '', size = 32, extra = '', moldura = '
   if (!src) return miolo;
   const g = geometriaMoldura(moldura);
   const anim = molduraPorId(moldura)?.anim;
-  if (anim) return `<span class="av-wrap" style="width:${size}px;height:${size}px">${miolo}${imgAnimada(anim, src, `left:${g.off.toFixed(2)}%;top:${g.off.toFixed(2)}%;width:${g.w.toFixed(2)}%;height:${g.w.toFixed(2)}%`)}</span>`;
+  if (anim) return `<span class="av-wrap" style="width:${size}px;height:${size}px">${miolo}${imgAnimada(moldura, src, `left:${g.off.toFixed(2)}%;top:${g.off.toFixed(2)}%;width:${g.w.toFixed(2)}%;height:${g.w.toFixed(2)}%`)}</span>`;
   return `<span class="av-wrap" style="width:${size}px;height:${size}px">${miolo}<img class="av-moldura" style="left:${g.off.toFixed(2)}%;top:${g.off.toFixed(2)}%;width:${g.w.toFixed(2)}%;height:${g.w.toFixed(2)}%" src="${src}" alt="" decoding="async" onerror="this.remove()" /></span>`;
 }
 
@@ -81,12 +81,17 @@ export function avatarHtml(avatar, nome = '', size = 32, extra = '', moldura = '
 const anelHtml = (fx) => `<span class="av-moldura mfx ${fx}" aria-hidden="true"><i class="r"></i><i class="o"></i></span>`;
 
 // Moldura de imagem com efeitos por cima (brilho que corre, pulso, cintilar): a arte vira máscara das camadas .s e .p.
-const imgAnimada = (anim, src, pos) => `<span class="av-moldura mfa ${anim}" style="${pos};--src:url('${src}')" aria-hidden="true"><img src="${src}" alt="" decoding="async" onerror="this.parentNode.remove()" /><i class="s"></i><i class="s2"></i><i class="p"></i></span>`;
+const imgAnimada = (id, src, pos) => {
+  const m = molduraPorId(id);
+  const vars = (m.mascaras || []).map((n) => `--m-${n}:url('${srcMascara(id, n)}')`).join(';');
+  const camadas = (m.camadas || ['s', 's2', 'p']).map((c) => `<i class="${c}"></i>`).join('');
+  return `<span class="av-moldura ${m.anim.startsWith('mfb') ? 'mfb' : 'mfa'} ${m.anim}" style="${pos};--src:url('${src}');${vars}" aria-hidden="true"><img src="${src}" alt="" decoding="async" onerror="this.parentNode.remove()" />${camadas}</span>`;
+};
 
 export function molduraHtml(moldura, size = 64, elo = null) {
   moldura = resolverMoldura(moldura, elo);
   const anim = molduraPorId(moldura)?.anim;
-  if (anim && srcMoldura(moldura)) return `<span class="av-moldura-sozinha av-anim-sozinha" style="width:${size}px;height:${size}px">${imgAnimada(anim, srcMoldura(moldura), 'left:0;top:0;width:100%;height:100%').replace('av-moldura mfa', 'mfa')}</span>`;
+  if (anim && srcMoldura(moldura)) return `<span class="av-moldura-sozinha av-anim-sozinha" style="width:${size}px;height:${size}px">${imgAnimada(moldura, srcMoldura(moldura), 'left:0;top:0;width:100%;height:100%').replace('av-moldura ', '')}</span>`;
   const fx = molduraPorId(moldura)?.fx;
   if (fx) return `<span class="av-moldura-sozinha av-fx-sozinha" style="width:${size}px;height:${size}px"><span class="av-wrap" style="width:${Math.round(size * 0.72)}px;height:${Math.round(size * 0.72)}px">${anelHtml(fx)}</span></span>`;
   const src = srcMoldura(moldura);

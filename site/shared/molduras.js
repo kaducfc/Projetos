@@ -20,11 +20,11 @@ export const MOLDURAS = [
 // por fora do ícone (sobra de 14% de cada lado), então `sobra`/`k` não se aplicam a elas.
 export const MOLDURAS_TESTE = [
   // Molduras de arte (imagem): em teste, só administradores equipam (0078_molduras_teste_novas.sql).
-  { id: 'mn-zaun', nome: 'Canos de Zaun', k: 0.5525, tema: 'Zaun · canos, válvulas e líquido verde' },
+  { id: 'mn-zaun', nome: 'Canos de Zaun', k: 0.5525, anim: 'mfb-zaun', camadas: ['verde', 'bolhas', 'ambar', 'roda', 'mano', 'vapor v1', 'vapor v2', 'vapor v3'], mascaras: ['verde', 'ambar', 'roda'], tema: 'Zaun · canos, válvulas e líquido verde' },
   { id: 'mn-poro', nome: 'Poro da Floresta', k: 0.5794, tema: 'Cipós, flores e um Poro' },
   { id: 'mn-hextech', nome: 'Neon Hextech', k: 0.6213, anim: 'mfa-hextech', tema: 'Tecnologia · neon ciano e magenta' },
-  { id: 'mn-robo', nome: 'Robô de Batalha', k: 0.5721, tema: 'Robô branco e laranja' },
-  { id: 'mn-pirata', nome: 'Capitão Pirata', k: 0.5306, tema: 'Pirata · corda, lampião e timão' },
+  { id: 'mn-robo', nome: 'Robô de Batalha', k: 0.5721, anim: 'mfb-robo', camadas: ['lar', 'lar2', 'scan', 'ant ant1', 'ant ant2', 'tampa', 'ol e1', 'ol e2'], mascaras: ['laranja'], tema: 'Robô branco e laranja' },
+  { id: 'mn-pirata', nome: 'Capitão Pirata', k: 0.5306, anim: 'mfb-pirata', camadas: ['luz', 'chama', 'lenco', 'ouro', 'leme', 'olho o1', 'olho o2', 'brasa b1', 'brasa b2', 'brasa b3'], mascaras: ['chama', 'lenco', 'ouro', 'leme'], tema: 'Pirata · corda, lampião e timão' },
   { id: 'fx-brasa', nome: 'Anel de Brasa', fx: 'mfx-brasa', tema: 'Laranja · fogo girando e brasas' },
 ];
 
@@ -52,6 +52,9 @@ export function resolverMoldura(id, elo = null) {
 const TODAS = new Map([...MOLDURAS, ...MOLDURAS_TESTE, ...ELOS_MOLDURAS].map((m) => [m.id, m]));
 export const molduraPorId = (id) => TODAS.get(id) || null;
 export const srcMoldura = (id) => (TODAS.has(id) ? `/shared/assets/molduras/${id}.webp` : '');
+
+// Pasta das camadas de efeito (máscaras): shared/assets/molduras/<id>-<camada>.webp, mesma tela da arte.
+export const srcMascara = (id, nome) => `/shared/assets/molduras/${id}-${nome}.webp`;
 
 // Largura da imagem (em % do ícone) e deslocamento para centralizar.
 export function geometriaMoldura(id) {

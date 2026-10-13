@@ -874,3 +874,65 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
 .mfa .p { -webkit-mask: none; mask: none; mix-blend-mode: normal; border-radius: 50%; inset: 8%; border: 2px solid rgba(90, 240, 255, 0.9); opacity: 0; animation: mfa-pulso 3.6s ease-out infinite; }
 @keyframes mfa-pulso { 0%, 55% { transform: scale(0.8); opacity: 0; } 62% { opacity: 0.8; } 100% { transform: scale(1.32); opacity: 0; border-color: rgba(255, 70, 230, 0.2); } }
 @media (prefers-reduced-motion: reduce) { .mfa, .mfa img, .mfa i { animation: none !important; } .mfa .s, .mfa .s2 { display: none; } }
+
+/* ---- Molduras de arte animadas por camadas (.mfb-*): cada camada usa uma máscara tirada da própria arte
+   (shared/assets/molduras/<id>-<camada>.webp), então o brilho só acende nas peças certas. ---- */
+.mfb { position: absolute; max-width: none; pointer-events: none; z-index: 2; }
+.mfb img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mfb i { position: absolute; display: block; }
+.mfb i.lar, .mfb i.lar2, .mfb i.scan, .mfb i.verde, .mfb i.bolhas, .mfb i.ambar, .mfb i.roda, .mfb i.chama, .mfb i.lenco, .mfb i.ouro, .mfb i.leme { inset: 0; mix-blend-mode: plus-lighter; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; }
+.mfb i.luz, .mfb i.vapor, .mfb i.ant, .mfb i.olho, .mfb i.brasa { mix-blend-mode: plus-lighter; }
+@media (prefers-reduced-motion: reduce) { .mfb i { animation: none !important; } .mfb i.vapor, .mfb i.brasa, .mfb i.scan { display: none; } }
+
+/* Robô de Batalha: LEDs laranja em corrida, antenas piscando, varredura de scanner e olhos que olham em volta */
+.mfb-robo .lar { -webkit-mask-image: var(--m-laranja); mask-image: var(--m-laranja); background: conic-gradient(from var(--ang), transparent 0 68%, rgba(255, 170, 60, 0) 70%, rgba(255, 175, 70, 0.95) 88%, #fff1c4 93%, rgba(255, 175, 70, 0) 97%, transparent 100%); animation: mfa-gira 2.6s linear infinite; }
+.mfb-robo .lar2 { -webkit-mask-image: var(--m-laranja); mask-image: var(--m-laranja); background: #ff8f14; opacity: 0.05; animation: robo-respira 2.6s ease-in-out infinite; }
+@keyframes robo-respira { 50% { opacity: 0.42; } }
+.mfb-robo .scan { -webkit-mask-image: var(--src); mask-image: var(--src); background: linear-gradient(180deg, transparent 0 46%, rgba(120, 240, 255, 0.0) 47%, rgba(150, 248, 255, 0.9) 50%, rgba(120, 240, 255, 0) 53%, transparent 54%) 0 0 / 100% 300%; animation: robo-scan 6s linear infinite; }
+@keyframes robo-scan { 0% { background-position: 0 77.5%; } 40%, 100% { background-position: 0 22.5%; } }
+.mfb-robo .ant { width: 7%; height: 7%; top: 1%; background: radial-gradient(circle, rgba(255, 200, 90, 0.95), rgba(255, 120, 0, 0) 68%); animation: robo-ant 1.6s ease-in-out infinite; }
+.mfb-robo .ant1 { left: 24%; } .mfb-robo .ant2 { left: 71%; animation-delay: -0.8s; }
+@keyframes robo-ant { 0%, 100% { opacity: 0.05; scale: 0.7; } 50% { opacity: 1; scale: 1.3; } }
+.mfb-robo .tampa { left: 42.4%; top: 9.6%; width: 17.4%; height: 8.8%; background: #06080b; border-radius: 42%; }
+.mfb-robo .ol { top: 10.2%; width: 4.2%; height: 6.8%; border-radius: 50%; background: radial-gradient(ellipse at 50% 38%, #eaffff 0, #82e6ff 34%, #22b7ef 76%); box-shadow: 0 0 5px 1px rgba(60, 200, 255, 0.85); mix-blend-mode: normal; animation: robo-olhar 9s ease-in-out infinite, robo-pisca 4.6s linear infinite; }
+.mfb-robo .e1 { left: 44%; } .mfb-robo .e2 { left: 54%; }
+@keyframes robo-olhar { 0%, 12%, 100% { translate: 0 0; } 22%, 34% { translate: -38% 4%; } 46%, 56% { translate: 38% -4%; } 66%, 78% { translate: 0 8%; } 88% { translate: 0 0; } }
+@keyframes robo-pisca { 0%, 90%, 100% { scale: 1 1; } 93% { scale: 1.08 0.06; } 96% { scale: 1 1; } }
+
+/* Canos de Zaun: líquido que corre e borbulha nos tubos, âmbar pulsando, manômetro vivo, roda com brilho e vapor */
+.mfb-zaun .verde { -webkit-mask-image: var(--m-verde); mask-image: var(--m-verde); background: linear-gradient(115deg, transparent 0 34%, rgba(205, 255, 130, 0.9) 50%, transparent 66%) 0 0 / 300% 100%; animation: zaun-corre 2.4s linear infinite, zaun-pulsa 1.7s ease-in-out infinite alternate; }
+@keyframes zaun-corre { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes zaun-pulsa { from { opacity: 0.45; } to { opacity: 1; } }
+.mfb-zaun .bolhas { -webkit-mask-image: var(--m-verde); mask-image: var(--m-verde); background:
+  radial-gradient(ellipse 1.3% 1.3% at 62% 82%, #f4ffd8 0 60%, transparent 70%), radial-gradient(ellipse 1.1% 1.1% at 66% 41%, #dfffaa 0 60%, transparent 70%),
+  radial-gradient(ellipse 1.5% 1.5% at 70% 63%, #f4ffd8 0 60%, transparent 70%), radial-gradient(ellipse 1% 1% at 73% 12%, #dfffaa 0 60%, transparent 70%),
+  radial-gradient(ellipse 1.2% 1.2% at 76% 90%, #f4ffd8 0 60%, transparent 70%), radial-gradient(ellipse 1.2% 1.2% at 64% 27%, #f4ffd8 0 60%, transparent 70%),
+  radial-gradient(ellipse 1% 1% at 68% 72%, #dfffaa 0 60%, transparent 70%), radial-gradient(ellipse 1.4% 1.4% at 72% 50%, #f4ffd8 0 60%, transparent 70%);
+  background-size: 100% 100%; animation: zaun-sobe 4.2s linear infinite; }
+@keyframes zaun-sobe { from { background-position: 0 0; } to { background-position: 0 -100%; } }
+.mfb-zaun .ambar { -webkit-mask-image: var(--m-ambar); mask-image: var(--m-ambar); background: linear-gradient(0deg, transparent 15%, rgba(255, 225, 130, 0.95) 50%, transparent 85%) 0 0 / 100% 300%; animation: zaun-ambar 3s ease-in-out infinite; }
+@keyframes zaun-ambar { from { background-position: 0 100%; } to { background-position: 0 0; } }
+.mfb-zaun .roda { -webkit-mask-image: var(--m-roda); mask-image: var(--m-roda); background: conic-gradient(from var(--ang) at 25.1% 75.9%, transparent 0 78%, rgba(255, 140, 120, 0.9) 91%, #ffe3d8 95%, transparent 100%); animation: mfa-gira 3.4s linear infinite; }
+.mfb-zaun .mano { left: 22.7%; top: 8.1%; width: 12.4%; height: 12.4%; border-radius: 50%; mix-blend-mode: normal; background: linear-gradient(140deg, rgba(255, 255, 255, 0.6) 0 22%, transparent 23%), radial-gradient(circle at 50% 50%, #5a2418 0 6%, transparent 7%), radial-gradient(circle at 50% 46%, #fcfdfd 0 58%, #cdd3d4 100%); box-shadow: inset 0 0 0 1px rgba(60, 30, 10, 0.5); animation: zaun-perigo 5s ease-in-out infinite; }
+.mfb-zaun .mano::before { content: ''; position: absolute; inset: 7%; border-radius: 50%; background: repeating-conic-gradient(from -2deg, #8e2c1e 0 3deg, transparent 3deg 20deg); -webkit-mask: radial-gradient(circle, transparent 66%, #000 68% 94%, transparent 96%); mask: radial-gradient(circle, transparent 66%, #000 68% 94%, transparent 96%); }
+.mfb-zaun .mano::after { content: ''; position: absolute; left: 47.5%; top: 11%; width: 5%; height: 39%; background: linear-gradient(#e0422a, #8a1c10); clip-path: polygon(50% 0, 100% 100%, 0 100%); transform-origin: 50% 100%; animation: zaun-agulha 5s cubic-bezier(.4, 0, .2, 1) infinite; }
+@keyframes zaun-agulha { 0%, 100% { rotate: -75deg; } 28% { rotate: 25deg; } 32% { rotate: 17deg; } 55% { rotate: 78deg; } 58% { rotate: 70deg; } 62% { rotate: 76deg; } 80% { rotate: -20deg; } }
+@keyframes zaun-perigo { 0%, 52%, 100% { box-shadow: inset 0 0 0 1px rgba(60, 30, 10, 0.5), 0 0 0 rgba(255, 40, 20, 0); } 60%, 70% { box-shadow: inset 0 0 0 1px rgba(60, 30, 10, 0.5), 0 0 6px 2px rgba(255, 40, 20, 0.85); } }
+.mfb-zaun .vapor { width: 10%; height: 10%; left: 50%; top: -2%; border-radius: 50%; background: radial-gradient(circle, rgba(236, 242, 242, 0.8), rgba(236, 242, 242, 0) 70%); opacity: 0; animation: zaun-vapor 4.2s ease-out infinite; }
+.mfb-zaun .v2 { animation-delay: -1.4s; } .mfb-zaun .v3 { animation-delay: -2.8s; }
+@keyframes zaun-vapor { 0% { translate: 0 0; scale: 0.4; opacity: 0; } 12% { opacity: 0.85; } 100% { translate: 40% -230%; scale: 1.9; opacity: 0; } }
+
+/* Capitão Pirata: lampião tremulando com brasas, lenço e ouro com brilho, leme faiscando e olhos da caveira */
+@keyframes pir-fogo { 0% { opacity: 0.3; } 8% { opacity: 0.85; } 16% { opacity: 0.45; } 30% { opacity: 0.95; } 41% { opacity: 0.35; } 55% { opacity: 0.8; } 64% { opacity: 0.5; } 78% { opacity: 1; } 90% { opacity: 0.4; } 100% { opacity: 0.3; } }
+.mfb-pirata .chama { -webkit-mask-image: var(--m-chama); mask-image: var(--m-chama); background: radial-gradient(circle at 50% 62%, #fff0b0, #ffa030 58%, #ff6a00); animation: pir-fogo 2.3s linear infinite; }
+.mfb-pirata .luz { left: -2%; top: 50%; width: 32%; height: 32%; background: radial-gradient(circle, rgba(255, 150, 40, 0.6), rgba(255, 120, 0, 0) 68%); animation: pir-fogo 2.3s linear infinite; }
+.mfb-pirata .lenco { -webkit-mask-image: var(--m-lenco); mask-image: var(--m-lenco); background: linear-gradient(105deg, transparent 30%, rgba(255, 110, 90, 0.42) 50%, transparent 70%) 0 0 / 300% 100%; animation: pir-brilho 4.6s ease-in-out infinite; }
+.mfb-pirata .ouro { -webkit-mask-image: var(--m-ouro); mask-image: var(--m-ouro); background: linear-gradient(100deg, transparent 35%, rgba(255, 246, 200, 0.95) 50%, transparent 65%) 0 0 / 300% 100%; animation: pir-brilho 5s ease-in-out infinite -1.8s; }
+@keyframes pir-brilho { 0% { background-position: 100% 0; } 55%, 100% { background-position: 0 0; } }
+.mfb-pirata .leme { -webkit-mask-image: var(--m-leme); mask-image: var(--m-leme); background: conic-gradient(from var(--ang) at 50.1% 81.2%, transparent 0 80%, rgba(255, 226, 150, 0.9) 92%, transparent 100%); animation: mfa-gira 3.6s linear infinite; }
+.mfb-pirata .olho { top: 9.3%; width: 3.8%; height: 4.8%; background: radial-gradient(ellipse, rgba(255, 60, 30, 0.95), rgba(255, 0, 0, 0) 70%); animation: pir-olho 3.4s ease-in-out infinite; }
+.mfb-pirata .o1 { left: 46.7%; } .mfb-pirata .o2 { left: 50%; animation-delay: -0.4s; }
+@keyframes pir-olho { 0%, 100% { opacity: 0.05; scale: 0.7; } 45%, 60% { opacity: 1; scale: 1.25; } }
+.mfb-pirata .brasa { width: 1.7%; height: 1.7%; border-radius: 50%; background: #ffd070; box-shadow: 0 0 4px 1px #ff8a00; left: 14.5%; top: 58%; opacity: 0; animation: pir-brasa 3s linear infinite; }
+.mfb-pirata .b2 { left: 17%; animation-delay: -1s; } .mfb-pirata .b3 { left: 12%; animation-delay: -2s; }
+@keyframes pir-brasa { 0% { translate: 0 0; opacity: 0; scale: 1; } 10% { opacity: 1; } 100% { translate: 350% -1300%; opacity: 0; scale: 0.3; } }
