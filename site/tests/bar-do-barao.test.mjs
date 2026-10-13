@@ -415,7 +415,7 @@ test('pontuação: Golpe e Assassinato creditam o autor; eliminar dá bônus; te
   for (const id of ['b1', 'b2', 'b3']) cartas(e2, id, 'lamina');
   for (const alvo of ['b1', 'b2', 'b3']) { jogador(e2, 'eu').moedas = 7; e2.turno = 0; e2.fase = 'acao'; e2.pendente = null; aplicar(e2, 'eu', { acao: 'golpe', alvo }); }
   assert.equal(item(pontuar(e2, 'eu'), 'cartas_finais').valor, 10, 'com 1 carta rende menos');
-  assert.ok(pontuar(est, 'eu').total > pontuar(e2, 'eu').total);
+  assert.ok(pontuar(est, 'eu').bruto > pontuar(e2, 'eu').bruto);
 });
 
 test('pontuação: sempre entre 10 e 100 e o registro privado do motor não vai para a visão dos bots', () => {
