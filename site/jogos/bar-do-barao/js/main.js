@@ -29,7 +29,9 @@ let est = null;
 let rngBots = {};
 let token = 0; // muda a cada partida nova para cancelar o laço da anterior
 let ui = { ped: null, acao: null, sel: [], ajuda: false };
-let mensagens = []; // narração em texto
+let mensagens = []; // narração: { txt, turno }
+const LINHAS_LOG = 30; // quantas mensagens o histórico mostra
+const GUARDA_LOG = 120; // quantas ficam guardadas na partida
 let bolha = null; // { id, txt } última fala de um personagem
 let registrado = false;
 let rapido = false;
@@ -127,10 +129,10 @@ function executar(quem, d) {
   const n0 = est.historico.length;
   aplicar(est, quem, d);
   for (const e of est.historico.slice(n0)) {
-    const m = narrar(e); if (m) mensagens.push(m);
+    const m = narrar(e); if (m) mensagens.push({ txt: m, turno: e.turno });
     const f = falador.comentar(e, EU); if (f) mostrarFala(f);
   }
-  if (mensagens.length > 60) mensagens = mensagens.slice(-60);
+  if (mensagens.length > GUARDA_LOG) mensagens = mensagens.slice(-GUARDA_LOG);
 }
 
 async function rodar(meu) {
@@ -154,7 +156,7 @@ function novaRodada() {
   const seed = (Date.now() ^ 0x5bd1e995) >>> 0;
   est = novaPartida({ jogadores: MESA.map((id) => ({ id, nome: nomeJ(id), humano: id === EU })), seed });
   rngBots = Object.fromEntries(Object.keys(PERSONAGENS).map((id, k) => [id, aleatorio(seed + 101 * (k + 1))]));
-  mensagens.push(narrar(est.historico[0]));
+  mensagens.push({ txt: narrar(est.historico[0]), turno: est.historico[0].turno });
   platform.track('game_start', GAME_ID, {});
   desenhar();
   rodar(token);
@@ -302,7 +304,8 @@ function telaInicio() {
 function desenhar() {
   if (!est) { if (naAbertura) telaInicio(); return; }
   const opp = MESA.filter((id) => id !== EU).map(bloco).join('');
-  const logHtml = mensagens.slice(-12).map((m, i, a) => `<li class="${i === a.length - 1 ? 'novo' : ''}">${ej(m)}</li>`).join('');
+  // uma linha separadora marca o começo de cada turno (rodada) no histórico
+  const logHtml = mensagens.slice(-LINHAS_LOG).map((m, i, a) => `${i === 0 || a[i - 1].turno !== m.turno ? `<li class="sep" aria-hidden="true">${esc(t('Turno {n}', { n: m.turno }))}</li>` : ''}<li class="${i === a.length - 1 ? 'novo' : ''}">${ej(m.txt)}</li>`).join('');
   const eliminado = !jogador(est, EU).vivo && !est.vencedor;
   const eu = jogador(est, EU);
   const vez = est.turno === MESA.indexOf(EU) && !est.vencedor;
