@@ -43,7 +43,7 @@ function embaralhar(est, lista) {
 // `jogadores`: [{ id, nome, humano }] na ordem da mesa (sentido do jogo). `seed` deixa a partida reproduzível.
 export function novaPartida({ jogadores, seed = Date.now(), primeiro = null } = {}) {
   if (!jogadores || jogadores.length !== 4) throw new Error('são 4 participantes');
-  const est = { rng: aleatorio(seed), seed, jogadores: [], baralho: [], turno: 0, numTurno: 1, fase: 'acao', pendente: null, historico: [], vencedor: null, eliminados: [] };
+  const est = { rng: aleatorio(seed), seed, jogadores: [], baralho: [], turno: 0, numTurno: 1, fase: 'acao', pendente: null, historico: [], registro: [], vencedor: null, eliminados: [] };
   est.baralho = embaralhar(est, criarBaralho());
   est.jogadores = jogadores.map((j) => ({ id: j.id, nome: j.nome, humano: Boolean(j.humano), moedas: MOEDAS_INICIAIS, vivo: true,
     cartas: Array.from({ length: CARTAS_POR_JOGADOR }, () => ({ inf: est.baralho.pop(), revelada: false })) }));
@@ -53,6 +53,9 @@ export function novaPartida({ jogadores, seed = Date.now(), primeiro = null } = 
 }
 
 const log = (est, e) => est.historico.push({ n: est.historico.length, turno: est.numTurno, ...e });
+// `registro` guarda o que só o motor sabe (se uma alegação sem contestação era verdadeira). Serve para a pontuação e NUNCA vai para a `visao` dos bots.
+const registrar = (est, e) => est.registro.push({ turno: est.numTurno, ...e });
+const temAtiva = (est, id, inf) => jogador(est, id).cartas.some((c) => !c.revelada && c.inf === inf);
 export const jogador = (est, id) => est.jogadores.find((j) => j.id === id);
 export const vivos = (est) => est.jogadores.filter((j) => j.vivo);
 export const ativas = (j) => j.cartas.filter((c) => !c.revelada);
@@ -106,7 +109,9 @@ export function aplicar(est, quem, d = {}) {
     case 'contestar':
       if (d.contestar) return resolverDesafio(est, { claimante: p.ator, desafiante: quem, inf: ped.influencia, ctx: 'acao' });
       p.idx++;
-      return p.idx >= p.fila.length ? depoisAlegacao(est) : null;
+      if (p.idx < p.fila.length) return null;
+      registrar(est, { tipo: 'alegacao_passou', quem: p.ator, inf: ped.influencia, verdadeira: temAtiva(est, p.ator, ped.influencia) });
+      return depoisAlegacao(est);
     case 'bloquear':
       if (d.influencia == null) { p.idx++; return p.idx >= p.fila.length ? resolver(est) : null; }
       if (!ped.influencias.includes(d.influencia)) throw new Error('bloqueio_invalido');
@@ -116,7 +121,7 @@ export function aplicar(est, quem, d = {}) {
     case 'contestar_bloqueio':
       if (d.contestar) return resolverDesafio(est, { claimante: p.bloqueador, desafiante: quem, inf: p.bloqueioInf, ctx: 'bloqueio' });
       p.idx++;
-      if (p.idx >= p.fila.length) { log(est, { tipo: 'acao_bloqueada', ator: p.ator, acao: p.acao, bloqueador: p.bloqueador }); return fimAcao(est); }
+      if (p.idx >= p.fila.length) { registrar(est, { tipo: 'bloqueio_passou', quem: p.bloqueador, inf: p.bloqueioInf, verdadeira: temAtiva(est, p.bloqueador, p.bloqueioInf) }); log(est, { tipo: 'acao_bloqueada', ator: p.ator, acao: p.acao, bloqueador: p.bloqueador }); return fimAcao(est); }
       return null;
     case 'perder': {
       if (!ped.cartas.includes(d.indice)) throw new Error('carta_invalida');
@@ -294,10 +299,8 @@ export function visao(est, id) {
   };
 }
 
-// Pontos da partida: vitória 100; 2º lugar 50; 3º 25; 4º 10.
 export function colocacao(est, id) {
   if (est.vencedor === id) return 1;
   const k = est.eliminados.indexOf(id);
   return k < 0 ? null : 4 - k; // o primeiro eliminado é o 4º lugar
 }
-export const PONTOS_COLOCACAO = { 1: 100, 2: 50, 3: 25, 4: 10 };

@@ -6,7 +6,8 @@ import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import { t, onLangChange } from '../../../shared/i18n.js';
-import { novaPartida, aplicar, pedido, visao, jogador, ativas, colocacao, PONTOS_COLOCACAO, ACOES } from './motor.js';
+import { novaPartida, aplicar, pedido, visao, jogador, ativas, colocacao, ACOES } from './motor.js';
+import { pontuar, PONTOS_MIN, PONTOS_MAX } from './pontuacao.js';
 import { decidir } from './bots.js';
 import { aleatorio } from './rng.js';
 import { PERSONAGENS, JOGADOR_HUMANO, MESA, CARTAS, RITMO, ARTE } from './config.js';
@@ -157,12 +158,11 @@ function novaRodada() {
 function terminar() {
   if (registrado) return;
   registrado = true;
-  const col = colocacao(est, EU);
-  const pontos = PONTOS_COLOCACAO[col] ?? 0;
-  platform.track('game_end', GAME_ID, { colocacao: col, turnos: est.numTurno });
+  const r = pontuar(est, EU); const col = r.colocacao;
+  platform.track('game_end', GAME_ID, { colocacao: col, turnos: est.numTurno, pontos: r.total });
   Promise.resolve(platform.recordResult(GAME_ID, {
-    score: pontos,
-    summary: { text: `${col}º ${t('lugar')} · ${est.numTurno} ${t('turnos')}`, colocacao: col, turnos: est.numTurno },
+    score: r.total,
+    summary: { text: `${col}º ${t('lugar')} · ${est.numTurno} ${t('turnos')}`, colocacao: col, turnos: est.numTurno, detalhe: r.itens },
   })).catch(() => {});
 }
 
@@ -249,11 +249,25 @@ function painelPedido() {
   }
 }
 
+const ROTULO_PONTO = {
+  colocacao: (n) => t('Colocação: {n}º lugar', { n }),
+  cartas_finais: (n) => t('Terminou com {n} carta(s)', { n }),
+  cartas_tiradas: (n) => t('{n} carta(s) tirada(s) dos adversários', { n }),
+  eliminacoes: (n) => t('{n} adversário(s) eliminado(s)', { n }),
+  blefes: (n) => t('{n} blefe(s) que passaram', { n }),
+  cofre: (n) => t('Cofre: {n} moedas', { n }),
+  sobrevivencia: () => t('Tempo na mesa'),
+  duvida_errada: (n) => t('{n} dúvida(s) errada(s)', { n }),
+  blefe_descoberto: (n) => t('{n} blefe(s) descoberto(s)', { n }),
+};
 function telaFim() {
-  const col = colocacao(est, EU); const pts = PONTOS_COLOCACAO[col] ?? 0;
+  const r = pontuar(est, EU); const col = r.colocacao;
+  const linhas = r.itens.map((x) => `<li class="${x.valor < 0 ? 'neg' : ''}"><span>${esc(ROTULO_PONTO[x.chave](x.qtd))}</span><b>${x.valor > 0 ? '+' : ''}${x.valor}</b></li>`).join('');
+  const ajuste = r.total !== r.bruto ? `<li class="aj"><span>${esc(r.total > r.bruto ? t('Mínimo da partida') : t('Máximo da partida'))}</span><b>${r.total}</b></li>` : '';
   const ganhou = est.vencedor === EU;
   return `<div class="bb-fim"><h2>${esc(ganhou ? t('Você dominou o Barão da Sucata!') : t('{a} venceu o Barão da Sucata', { a: nomeJ(est.vencedor) }))}</h2>
-    <p class="bb-col">${esc(t('Sua colocação'))}: <b>${col}º</b> · +${pts} ${esc(t('pontos'))}</p>
+    <p class="bb-col">${esc(t('Sua colocação'))}: <b>${col}º</b> · <b>${r.total}</b> ${esc(t('pontos'))}</p>
+    <ul class="bb-pts" aria-label="${esc(t('Sua pontuação'))}">${linhas}${ajuste}<li class="tot"><span>${esc(t('Total'))} (${PONTOS_MIN}–${PONTOS_MAX})</span><b>${r.total}</b></li></ul>
     <div class="bb-op"><button class="bb-bt ouro" data-a="novo">${esc(t('JOGAR NOVAMENTE'))}</button><a class="bb-bt" href="../../">${esc(t('VOLTAR AO INÍCIO'))}</a></div></div>`;
 }
 
@@ -266,6 +280,8 @@ function ajuda() {
     <p>${ec(t('Você pode declarar qualquer carta, mesmo sem tê-la (blefar). Os outros podem contestar: quem mentiu perde uma influência; quem contestou errado também perde.'))}</p>
     <ul>${linhas}</ul><h3>${ej(t('As cinco influências'))}</h3><ul>${cartas}</ul>
     <p>${ec(t('Com 10 moedas ou mais, o Golpe é obrigatório.'))}</p>
+    <h3>${esc(t('Pontuação'))}</h3>
+    <p>${esc(t('Cada partida vale de 10 a 100 pontos. Somam: a colocação, terminar com mais cartas, cartas tiradas dos adversários (duvidando certo, com Assassinato ou Golpe), adversários eliminados, blefes que passaram sem ser descobertos, moedas no cofre e o tempo que você ficou na mesa. Duvidar errado ou ter o blefe descoberto tira pontos. Se alguém duvidar de você e errar, a carta perdida não conta para você.'))}</p>
     <div class="bb-op"><button class="bb-bt ouro" data-a="fechar">${ec(t('Entendi'))}</button></div></div></div>`;
 }
 

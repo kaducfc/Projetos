@@ -383,3 +383,49 @@ test('nível dos bots: um jogador aleatório ganha bem menos que os 25% do acaso
   assert.ok(v / N < 0.14, `o jogador aleatório ganhou ${(100 * v / N).toFixed(0)}%`);
   assert.ok(v / N > 0.01, 'os bots ainda erram: não são imbatíveis');
 });
+
+// ------------------------------------------------------------------ pontuação
+import { pontuar, cartasTiradas, PONTOS_MIN, PONTOS_MAX } from '../jogos/bar-do-barao/js/pontuacao.js';
+const item = (r, chave) => r.itens.find((x) => x.chave === chave);
+
+test('pontuação: duvidar certo credita cartas e eliminação; duvidar errado NÃO credita ao autor da ação', () => {
+  const est = nova(); cartas(est, 'eu', 'lamina', 'lamina'); cartas(est, 'b1', 'magnata');
+  aplicar(est, 'eu', { acao: 'tributos' });  // blefe de tributos de quem tem lâminas
+  aplicar(est, 'b1', { contestar: true });   // b1 duvida e acerta: eu perde carta
+  aplicar(est, 'eu', { indice: 0 });
+  const r1 = pontuar(est, 'b1');
+  assert.equal(item(r1, 'cartas_tiradas')?.valor, 5, 'b1 tirou 1 carta ao duvidar certo');
+  assert.equal(item(pontuar(est, 'eu'), 'blefe_descoberto')?.valor, -2);
+  // agora o inverso: b1 tem o magnata de verdade, eu duvido e erro
+  const e2 = nova(); cartas(e2, 'b1', 'magnata', 'lamina'); cartas(e2, 'eu', 'lamina', 'lamina');
+  e2.turno = 1; aplicar(e2, 'b1', { acao: 'tributos' });
+  aplicar(e2, 'b2', { contestar: true }); aplicar(e2, 'b2', { indice: 0 });
+  assert.equal(cartasTiradas(e2).length, 0, 'quem duvidou e errou não gera crédito para o autor da ação');
+  assert.equal(item(pontuar(e2, 'b1'), 'cartas_tiradas'), undefined);
+  assert.equal(item(pontuar(e2, 'b2'), 'duvida_errada')?.valor, -3);
+});
+
+test('pontuação: Golpe e Assassinato creditam o autor; eliminar dá bônus; terminar com 2 cartas rende mais', () => {
+  const est = nova(); for (const id of ['b1', 'b2', 'b3']) cartas(est, id, 'lamina');
+  for (const alvo of ['b1', 'b2', 'b3']) { jogador(est, 'eu').moedas = 7; est.turno = 0; est.fase = 'acao'; est.pendente = null; aplicar(est, 'eu', { acao: 'golpe', alvo }); }
+  const r = pontuar(est, 'eu');
+  assert.equal(item(r, 'cartas_tiradas').qtd, 3); assert.equal(item(r, 'eliminacoes').qtd, 3);
+  assert.equal(item(r, 'cartas_finais').valor, 14, 'terminou com 2 cartas');
+  const e2 = nova(); cartas(e2, 'eu', 'lamina'); e2.jogadores[0].cartas.push({ inf: 'magnata', revelada: true });
+  for (const id of ['b1', 'b2', 'b3']) cartas(e2, id, 'lamina');
+  for (const alvo of ['b1', 'b2', 'b3']) { jogador(e2, 'eu').moedas = 7; e2.turno = 0; e2.fase = 'acao'; e2.pendente = null; aplicar(e2, 'eu', { acao: 'golpe', alvo }); }
+  assert.equal(item(pontuar(e2, 'eu'), 'cartas_finais').valor, 6, 'com 1 carta rende menos');
+  assert.ok(pontuar(est, 'eu').total > pontuar(e2, 'eu').total);
+});
+
+test('pontuação: sempre entre 10 e 100 e o registro privado do motor não vai para a visão dos bots', () => {
+  for (let s = 1; s <= 120; s++) {
+    const est = novaPartida({ jogadores: JOG, seed: s });
+    const rng = Object.fromEntries(JOG.map((j, k) => [j.id, aleatorio(s * 10 + k)]));
+    while (!est.vencedor) { const p = pedido(est); aplicar(est, p.jogador, decidir(visao(est, p.jogador), p, PERSONAGENS.b1.perfil, rng[p.jogador])); }
+    for (const j of JOG) { const r = pontuar(est, j.id); assert.ok(r.total >= PONTOS_MIN && r.total <= PONTOS_MAX, `${r.total}`); }
+    const col = Object.fromEntries(JOG.map((j) => [j.id, pontuar(est, j.id).colocacao]));
+    assert.equal(Object.values(col).filter((c) => c === 1).length, 1);
+    assert.equal(JSON.stringify(visao(est, 'eu')).includes('verdadeira'), false, 'visão não mostra o registro privado');
+  }
+});

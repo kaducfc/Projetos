@@ -183,3 +183,13 @@ button.bb-jog { cursor: pointer; border-color: var(--ouro-2); box-shadow: 0 0 0 
 .bb-moedas i { width: 26px; height: 26px; border-radius: 0; background: url(../img/moeda.webp) center / contain no-repeat; box-shadow: none; filter: drop-shadow(0 1px 2px #000a); }
 .bb-moedas { gap: 4px; }
 @media (max-width: 760px) { .bb-moedas i { width: 22px; height: 22px; } }
+
+/* detalhe da pontuação no fim da partida */
+.bb-pts { list-style: none; margin: 4px 0 6px; padding: 0; width: min(380px, 100%); display: flex; flex-direction: column; gap: 3px; text-align: left; }
+.bb-pts li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 10px; border-radius: 4px; background: rgba(255, 255, 255, 0.04); font-size: 13px; color: #cfc6b0; }
+.bb-pts li b { color: #7ddc8f; font-variant-numeric: tabular-nums; }
+.bb-pts li.neg b { color: #ef6b5b; }
+.bb-pts li.aj { font-style: italic; }
+.bb-pts li.aj b { color: var(--mudo); }
+.bb-pts li.tot { margin-top: 4px; background: rgba(217, 168, 43, 0.14); border: 1px solid rgba(217, 168, 43, 0.5); font-weight: 800; color: var(--texto); }
+.bb-pts li.tot b { color: var(--ouro-2); font-size: 18px; }
