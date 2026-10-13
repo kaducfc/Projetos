@@ -26,11 +26,6 @@ export const MOLDURAS_TESTE = [
   { id: 'mn-robo', nome: 'Robô de Batalha', k: 0.5721, tema: 'Robô branco e laranja' },
   { id: 'mn-pirata', nome: 'Capitão Pirata', k: 0.5306, tema: 'Pirata · corda, lampião e timão' },
   { id: 'fx-brasa', nome: 'Anel de Brasa', fx: 'mfx-brasa', tema: 'Laranja · fogo girando e brasas' },
-  { id: 'fx-gelo', nome: 'Anel de Gelo', fx: 'mfx-gelo', tema: 'Azul claro · cristais que brilham' },
-  { id: 'fx-galaxia', nome: 'Anel da Galáxia', fx: 'mfx-galaxia', tema: 'Roxo e azul · estrelas piscando' },
-  { id: 'fx-tempestade', nome: 'Anel da Tempestade', fx: 'mfx-tempestade', tema: 'Azul elétrico · relâmpagos' },
-  { id: 'fx-sakura', nome: 'Anel Sakura', fx: 'mfx-sakura', tema: 'Rosa · pétalas girando' },
-  { id: 'fx-magma', nome: 'Anel de Magma', fx: 'mfx-magma', tema: 'Vermelho e preto · lava pulsando' },
 ];
 
 // Uma moldura por elo (a arte vem em shared/assets/molduras/elo-<elo>.webp). Elas não são

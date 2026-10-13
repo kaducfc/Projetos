@@ -850,24 +850,11 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
 .mfx-brasa { --luz: rgba(255, 110, 0, 0.9); --gira: 2.2s; --orb: 4s;
   --cores: #5a1400, #ff5a00, #ffb300, #fff1a8, #ff7a00, #7a1d00, #ff5a00, #ffd24d, #5a1400;
   --pontos: radial-gradient(circle at 50% 3%, #fff1a8 0 2.5%, transparent 3.5%), radial-gradient(circle at 92% 30%, #ffb300 0 2%, transparent 3%), radial-gradient(circle at 78% 90%, #ff7a00 0 2.5%, transparent 3.5%), radial-gradient(circle at 12% 72%, #ffd24d 0 2%, transparent 3%), radial-gradient(circle at 20% 14%, #ff5a00 0 2%, transparent 3%); }
-.mfx-gelo { --luz: rgba(150, 215, 255, 0.9); --gira: 6s; --orb: 9s;
-  --cores: #8fd0ff, #f2fcff, #4fa3e6, #d4f2ff, #8fd0ff, #ffffff, #5ab0ee, #bfe8ff, #8fd0ff;
-  --pontos: radial-gradient(circle at 50% 2%, #fff 0 3%, transparent 4%), radial-gradient(circle at 96% 55%, #d4f2ff 0 2.5%, transparent 3.5%), radial-gradient(circle at 30% 96%, #fff 0 2.5%, transparent 3.5%), radial-gradient(circle at 5% 40%, #bfe8ff 0 2%, transparent 3%); }
-.mfx-galaxia { --luz: rgba(150, 90, 255, 0.9); --gira: 5s; --orb: 12s;
-  --cores: #1d0a4a, #6a2cff, #2fa8ff, #ff5cd6, #6a2cff, #1d0a4a, #2fa8ff, #b46cff, #1d0a4a;
-  --pontos: radial-gradient(circle at 50% 1%, #fff 0 2%, transparent 3%), radial-gradient(circle at 99% 45%, #fff 0 1.6%, transparent 2.6%), radial-gradient(circle at 70% 98%, #fff 0 2%, transparent 3%), radial-gradient(circle at 15% 85%, #fff 0 1.6%, transparent 2.6%), radial-gradient(circle at 3% 35%, #fff 0 2%, transparent 3%), radial-gradient(circle at 24% 8%, #cfc3ff 0 1.6%, transparent 2.6%); }
-.mfx-tempestade { --luz: rgba(80, 150, 255, 0.95); --gira: 1.5s; --orb: 3.2s; --e: 12%;
-  --cores: #08164f, #2b6cff, #d8eeff, #2b6cff, #08164f, #1c4fd6, #ffffff, #1c4fd6, #08164f;
-  --pontos: radial-gradient(ellipse 4% 9% at 50% 1%, #fff 0 60%, transparent 70%), radial-gradient(ellipse 9% 4% at 99% 50%, #bfe3ff 0 60%, transparent 70%), radial-gradient(ellipse 4% 9% at 50% 99%, #fff 0 60%, transparent 70%), radial-gradient(ellipse 9% 4% at 1% 50%, #bfe3ff 0 60%, transparent 70%);
-  animation: mfx-raio 2.6s steps(1) infinite; }
-@keyframes mfx-raio { 0%, 86%, 92%, 100% { filter: drop-shadow(0 0 2px rgba(80, 150, 255, 0.7)); } 88%, 94% { filter: drop-shadow(0 0 10px rgba(200, 230, 255, 1)) brightness(1.5); } }
-.mfx-sakura { --luz: rgba(255, 130, 180, 0.85); --gira: 9s; --orb: 7s; --e: 11%;
-  --cores: #ff8fbd, #ffe0ee, #ff6fa3, #fff4f9, #ffa6c9, #ffe0ee, #ff7fae, #fff4f9, #ff8fbd;
-  --pontos: radial-gradient(ellipse 5% 3.4% at 50% 2%, #ffd0e3 0 65%, transparent 75%), radial-gradient(ellipse 3.4% 5% at 97% 42%, #fff 0 65%, transparent 75%), radial-gradient(ellipse 5% 3.4% at 66% 97%, #ffc2da 0 65%, transparent 75%), radial-gradient(ellipse 3.4% 5% at 6% 62%, #fff 0 65%, transparent 75%), radial-gradient(ellipse 5% 3.4% at 18% 14%, #ffd0e3 0 65%, transparent 75%); }
-.mfx-magma { --luz: rgba(255, 60, 0, 0.9); --gira: 7s; --orb: 5s; --e: 14%;
-  --cores: #160300, #ff3d00, #160300, #ff8a00, #160300, #d92b00, #160300, #ffb300, #160300;
-  --pontos: radial-gradient(circle at 50% 2%, #ff8a00 0 3%, transparent 4%), radial-gradient(circle at 97% 62%, #ff3d00 0 3%, transparent 4%), radial-gradient(circle at 35% 97%, #ffb300 0 2.5%, transparent 3.5%), radial-gradient(circle at 3% 30%, #ff5a00 0 2.5%, transparent 3.5%); animation: mfx-pulsa 2s ease-in-out infinite alternate; }
-@keyframes mfx-pulsa { from { filter: drop-shadow(0 0 2px rgba(255, 60, 0, 0.6)); } to { filter: drop-shadow(0 0 10px rgba(255, 110, 0, 1)); } }
+
+
+
+
+
 
 /* Moldura de arte com efeitos (Neon Hextech): o brilho que corre e o pulso usam a própria arte como máscara. */
 @property --ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
