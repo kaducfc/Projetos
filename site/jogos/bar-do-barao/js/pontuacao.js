@@ -4,7 +4,7 @@ import { jogador, ativas, colocacao } from './motor.js';
 
 export const PONTOS_MIN = 10;
 export const PONTOS_MAX = 100;
-export const BASE_COLOCACAO = { 1: 50, 2: 30, 3: 20, 4: 10 };
+export const BASE_COLOCACAO = { 1: 52, 2: 50, 3: 38, 4: 20 };
 export const BONUS_CARTAS_FINAIS = { 2: 16, 1: 10 }; // só quem termina vivo (o vencedor)
 export const POR_CARTA_TIRADA = 6; // tirou uma influência de um adversário (duvidando certo ou com Assassinato/Golpe)
 export const MAX_CARTAS_TIRADAS = 6;
