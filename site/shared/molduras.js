@@ -13,15 +13,16 @@ export const MOLDURAS = [
   { id: 'hw-moldura-1', nome: 'Vampito', k: 0.5879, como: 'Recompensa do nível 8 do Passe de Batalha.' },
   { id: 'hw-moldura-2', nome: 'Abóboras e Espinhos', k: 0.5962, como: 'Recompensa do nível 4 do Passe de Batalha.' },
   { id: 'hw-moldura-3', nome: 'Correntes e Caveiras', k: 0.591, como: 'Recompensa do nível 7 do Passe de Batalha.' },
+  // À venda por Rift Coins (site_loja, 0081_loja_molduras.sql): `preco` só serve para mostrar.
+  { id: 'mn-poro', nome: 'Poro da Floresta', k: 0.5794, preco: 2000, como: 'Compre por 2.000 RC.' },
+  { id: 'mn-hextech', nome: 'Neon Hextech', k: 0.6213, anim: 'mfa-hextech', preco: 6000, como: 'Compre por 6.000 RC.' },
+  { id: 'mn-robo', nome: 'Robô de Batalha', k: 0.5721, anim: 'mfb-robo', camadas: ['lar', 'lar2', 'scan', 'ant ant1', 'ant ant2', 'tampa', 'ol e1', 'ol e2'], mascaras: ['laranja'], preco: 10000, como: 'Compre por 10.000 RC.' },
 ];
 
 // Só o administrador recebe (aba Teste do painel).
 export const MOLDURAS_TESTE = [
-  // Molduras de arte (imagem): em teste, só administradores equipam (0078_molduras_teste_novas.sql).
+  // Molduras de arte (imagem) em teste: só administradores equipam (0078_molduras_teste_novas.sql).
   { id: 'mn-zaun', nome: 'Canos de Zaun', k: 0.5525, anim: 'mfb-zaun', camadas: ['verde', 'bolhas', 'ambar', 'roda', 'mano', 'vapor v1', 'vapor v2', 'vapor v3'], mascaras: ['verde', 'ambar', 'roda'], tema: 'Zaun · canos, válvulas e líquido verde' },
-  { id: 'mn-poro', nome: 'Poro da Floresta', k: 0.5794, tema: 'Cipós, flores e um Poro' },
-  { id: 'mn-hextech', nome: 'Neon Hextech', k: 0.6213, anim: 'mfa-hextech', tema: 'Tecnologia · neon ciano e magenta' },
-  { id: 'mn-robo', nome: 'Robô de Batalha', k: 0.5721, anim: 'mfb-robo', camadas: ['lar', 'lar2', 'scan', 'ant ant1', 'ant ant2', 'tampa', 'ol e1', 'ol e2'], mascaras: ['laranja'], tema: 'Robô branco e laranja' },
   { id: 'mn-pirata', nome: 'Capitão Pirata', k: 0.5306, anim: 'mfb-pirata', camadas: ['luz', 'chama', 'lenco', 'ouro', 'leme', 'olho o1', 'olho o2', 'brasa b1', 'brasa b2', 'brasa b3'], mascaras: ['chama', 'lenco', 'ouro', 'leme'], tema: 'Pirata · corda, lampião e timão' },
 ];
 

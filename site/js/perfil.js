@@ -10,7 +10,7 @@ import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada, definirAdmin } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
 import { EFEITOS, EFEITOS_TESTE, EQUIPAVEIS_TESTE, efeitoAtivo, efeitoPorId } from '../shared/efeitos.js';
-import { MOLDURAS, MOLDURAS_TESTE, ELOS_MOLDURAS } from '../shared/molduras.js';
+import { MOLDURAS, MOLDURAS_TESTE, ELOS_MOLDURAS, molduraPorId } from '../shared/molduras.js';
 import { localeAtual } from '../shared/i18n.js';
 
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
@@ -75,13 +75,18 @@ const eloNome = (u) => ELOS_MOLDURAS.find((x) => x.elo === (u.elo || 'ferro'))?.
 const nomeMoldura = (m, u) => (m.id === 'rank' ? `Rank <small>${esc(eloNome(u))}</small>` : esc(m.nome));
 
 function cardMoldura(u) {
-  const minhas = [...MOLDURAS, ...MOLDURAS_TESTE].filter((m) => m.publica || molduras.has(m.id));
+  const minhas = [...MOLDURAS, ...MOLDURAS_TESTE].filter((m) => m.publica || m.preco || molduras.has(m.id));
   if (!minhas.length) return '';
   const escolhida = u.moldura || 'nenhuma';
-  const opcao = (m) => `<li class="pf-ef${escolhida === m.id ? ' on' : ''}">
+  const opcao = (m) => {
+    const livre = m.id === 'nenhuma' || m.publica || molduras.has(m.id);
+    return `<li class="pf-ef${livre ? '' : ' trava'}${escolhida === m.id ? ' on' : ''}">
       <span class="pf-mold-previa">${m.id === 'nenhuma' ? '<span class="pf-mold-nada" aria-hidden="true">∅</span>' : molduraHtml(m.id, 96, u.elo)}</span>
       <span class="pf-ef-nome">${nomeMoldura(m, u)}</span>
-      <button type="button" class="${escolhida === m.id ? 'btn-ghost' : 'btn-primary'} pf-ef-btn" data-act="moldura-escolher" data-mol="${m.id}"${escolhida === m.id ? ' disabled' : ''}>${escolhida === m.id ? 'Selecionado' : 'Selecionar'}</button></li>`;
+      ${livre
+    ? `<button type="button" class="${escolhida === m.id ? 'btn-ghost' : 'btn-primary'} pf-ef-btn" data-act="moldura-escolher" data-mol="${m.id}"${escolhida === m.id ? ' disabled' : ''}>${escolhida === m.id ? 'Selecionado' : 'Selecionar'}</button>`
+    : `<button type="button" class="btn-primary pf-ef-btn pf-ef-comprar${u.moedas != null && u.moedas < m.preco ? ' sem-saldo' : ''}" data-act="moldura-comprar" data-mol="${m.id}">Comprar por ${m.preco.toLocaleString('pt-BR')} RC</button>`}</li>`;
+  };
   const atual = minhas.find((m) => m.id === u.moldura);
   return `<section class="pf-card pf-efeito">
     <div class="pf-ef-topo">
@@ -448,6 +453,21 @@ root.addEventListener('click', async (e) => {
       toast(err.message);
       render();
     }
+  }
+  if (act === 'moldura-comprar') {
+    const m = molduraPorId(b.dataset.mol);
+    if (!m?.preco) return;
+    if (!window.confirm(`Comprar a moldura ${m.nome} por ${m.preco.toLocaleString('pt-BR')} Rift Coins?`)) return;
+    b.disabled = true;
+    try {
+      await platform.comprarItem('moldura', m.id);
+      molduras.add(m.id);
+      toast('Moldura comprada! Agora é só selecionar.');
+    } catch (err) {
+      toast(err.message);
+    }
+    render();
+    return;
   }
   if (act === 'efeito-comprar') {
     const ef = efeitoPorId(b.dataset.ef);
