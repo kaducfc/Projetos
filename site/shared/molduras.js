@@ -22,7 +22,7 @@ export const MOLDURAS_TESTE = [
   // Molduras de arte (imagem): em teste, só administradores equipam (0078_molduras_teste_novas.sql).
   { id: 'mn-zaun', nome: 'Canos de Zaun', k: 0.5525, tema: 'Zaun · canos, válvulas e líquido verde' },
   { id: 'mn-poro', nome: 'Poro da Floresta', k: 0.5794, tema: 'Cipós, flores e um Poro' },
-  { id: 'mn-hextech', nome: 'Neon Hextech', k: 0.6213, tema: 'Tecnologia · neon ciano e magenta' },
+  { id: 'mn-hextech', nome: 'Neon Hextech', k: 0.6213, anim: 'mfa-hextech', tema: 'Tecnologia · neon ciano e magenta' },
   { id: 'mn-robo', nome: 'Robô de Batalha', k: 0.5721, tema: 'Robô branco e laranja' },
   { id: 'mn-pirata', nome: 'Capitão Pirata', k: 0.5306, tema: 'Pirata · corda, lampião e timão' },
   { id: 'fx-brasa', nome: 'Anel de Brasa', fx: 'mfx-brasa', tema: 'Laranja · fogo girando e brasas' },
