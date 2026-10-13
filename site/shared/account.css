@@ -834,29 +834,6 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
   100% { background-position: 51.1% 2.6em, 57.0% 2.6em, 12.6% 2.6em, 22.2% 2.6em, 73.6% 2.6em, 15.5% 2.6em, 40.3% 2.6em, 86.0% 2.6em, 48.0% 2.6em, 52.2% 2.6em, 83.6% 2.6em, 96.8% 2.6em, 50.2% 2.6em, 2.9% 2.6em, 49.0% 2.6em, 79.6% 2.6em, 68.2% 2.6em, 48.0% 2.6em, 84.2% 2.6em, 91.5% 2.6em, 54.5% 2.6em, 58.0% 2.6em, 14.6% 2.6em, 89.8% 2.6em, 38.1% 2.6em, 91.7% 2.6em, 89.7% 2.6em, 51.9% 2.6em, 54.5% 2.6em, 82.5% 2.6em, 4.0% 2.6em, 83.1% 2.6em, 20.0% 2.6em, 46.9% 2.6em, 28.3% 2.6em, 64.0% 2.6em, 4.6% 2.6em, 61.6% 2.6em, 27.7% 2.6em, 67.7% 2.6em, 28.6% 2.6em, 41.5% 2.6em; }
 }
 
-/* Molduras animadas (CSS puro, sem imagem): anel .r que gira + partículas .o por fora do ícone.
-   Cada tema só troca as cores e as velocidades. */
-.mfx { inset: -14%; border-radius: 50%; --e: 13%; --gira: 3s; --orb: 7s; --luz: rgba(255, 140, 0, 0.8); animation: mfx-brilho 2.4s ease-in-out infinite alternate; }
-.mfx i { position: absolute; inset: 0; border-radius: 50%; }
-.mfx .r { background: conic-gradient(var(--cores)); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--e)), #000 calc(100% - var(--e) + 1px)); mask: radial-gradient(farthest-side, transparent calc(100% - var(--e)), #000 calc(100% - var(--e) + 1px)); animation: mfx-gira var(--gira) linear infinite; }
-.mfx .o { background: var(--pontos); animation: mfx-gira var(--orb) linear infinite reverse, mfx-cintila 1.3s ease-in-out infinite alternate; }
-@keyframes mfx-gira { to { transform: rotate(360deg); } }
-@keyframes mfx-cintila { from { opacity: 0.45; } to { opacity: 1; } }
-@keyframes mfx-brilho { from { filter: drop-shadow(0 0 2px var(--luz)); } to { filter: drop-shadow(0 0 7px var(--luz)); } }
-.av-fx-sozinha { display: inline-grid; place-items: center; }
-.av-fx-sozinha > .av-wrap { display: block; border-radius: 50%; background: #241f15; }
-@media (prefers-reduced-motion: reduce) { .mfx, .mfx i { animation: none !important; } }
-
-.mfx-brasa { --luz: rgba(255, 110, 0, 0.9); --gira: 2.2s; --orb: 4s;
-  --cores: #5a1400, #ff5a00, #ffb300, #fff1a8, #ff7a00, #7a1d00, #ff5a00, #ffd24d, #5a1400;
-  --pontos: radial-gradient(circle at 50% 3%, #fff1a8 0 2.5%, transparent 3.5%), radial-gradient(circle at 92% 30%, #ffb300 0 2%, transparent 3%), radial-gradient(circle at 78% 90%, #ff7a00 0 2.5%, transparent 3.5%), radial-gradient(circle at 12% 72%, #ffd24d 0 2%, transparent 3%), radial-gradient(circle at 20% 14%, #ff5a00 0 2%, transparent 3%); }
-
-
-
-
-
-
-/* Moldura de arte com efeitos (Neon Hextech): o brilho que corre e o pulso usam a própria arte como máscara. */
 @property --ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 .mfa { position: absolute; max-width: none; pointer-events: none; z-index: 2; animation: mfa-hex-halo 4s ease-in-out infinite; }
 .av-anim-sozinha { position: relative; display: block; }

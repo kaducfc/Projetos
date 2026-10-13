@@ -66,8 +66,6 @@ const eloDe = (extra) => (/(?:^|\s)elo-([a-z-]+)/.exec(extra || '') || [])[1] ||
 export function avatarHtml(avatar, nome = '', size = 32, extra = '', moldura = '') {
   const miolo = avatarMiolo(avatar, nome, size, extra);
   moldura = resolverMoldura(moldura, eloDe(extra));
-  const fx = molduraPorId(moldura)?.fx;
-  if (fx) return `<span class="av-wrap" style="width:${size}px;height:${size}px">${miolo}${anelHtml(fx)}</span>`;
   const src = srcMoldura(moldura);
   if (!src) return miolo;
   const g = geometriaMoldura(moldura);
@@ -77,9 +75,6 @@ export function avatarHtml(avatar, nome = '', size = 32, extra = '', moldura = '
 }
 
 // Só a moldura, sem ícone no meio (vitrine: seletor do perfil e cartões do passe).
-// Moldura animada em CSS: um anel girando (.r) e partículas (.o) por fora do ícone.
-const anelHtml = (fx) => `<span class="av-moldura mfx ${fx}" aria-hidden="true"><i class="r"></i><i class="o"></i></span>`;
-
 // Moldura de imagem com efeitos por cima (brilho que corre, pulso, cintilar): a arte vira máscara das camadas .s e .p.
 const imgAnimada = (id, src, pos) => {
   const m = molduraPorId(id);
@@ -92,8 +87,6 @@ export function molduraHtml(moldura, size = 64, elo = null) {
   moldura = resolverMoldura(moldura, elo);
   const anim = molduraPorId(moldura)?.anim;
   if (anim && srcMoldura(moldura)) return `<span class="av-moldura-sozinha av-anim-sozinha" style="width:${size}px;height:${size}px">${imgAnimada(moldura, srcMoldura(moldura), 'left:0;top:0;width:100%;height:100%').replace('av-moldura ', '')}</span>`;
-  const fx = molduraPorId(moldura)?.fx;
-  if (fx) return `<span class="av-moldura-sozinha av-fx-sozinha" style="width:${size}px;height:${size}px"><span class="av-wrap" style="width:${Math.round(size * 0.72)}px;height:${Math.round(size * 0.72)}px">${anelHtml(fx)}</span></span>`;
   const src = srcMoldura(moldura);
   if (!src) return '';
   return `<img class="av-moldura-sozinha" src="${src}" width="${size}" height="${size}" alt="" decoding="async" loading="lazy" onerror="this.remove()" />`;

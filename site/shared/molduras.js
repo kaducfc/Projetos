@@ -16,8 +16,6 @@ export const MOLDURAS = [
 ];
 
 // Só o administrador recebe (aba Teste do painel).
-// Molduras animadas em CSS (sem imagem): `fx` é a classe em shared/account.css (.mfx-*). O anel fica
-// por fora do ícone (sobra de 14% de cada lado), então `sobra`/`k` não se aplicam a elas.
 export const MOLDURAS_TESTE = [
   // Molduras de arte (imagem): em teste, só administradores equipam (0078_molduras_teste_novas.sql).
   { id: 'mn-zaun', nome: 'Canos de Zaun', k: 0.5525, anim: 'mfb-zaun', camadas: ['verde', 'bolhas', 'ambar', 'roda', 'mano', 'vapor v1', 'vapor v2', 'vapor v3'], mascaras: ['verde', 'ambar', 'roda'], tema: 'Zaun · canos, válvulas e líquido verde' },
@@ -25,7 +23,6 @@ export const MOLDURAS_TESTE = [
   { id: 'mn-hextech', nome: 'Neon Hextech', k: 0.6213, anim: 'mfa-hextech', tema: 'Tecnologia · neon ciano e magenta' },
   { id: 'mn-robo', nome: 'Robô de Batalha', k: 0.5721, anim: 'mfb-robo', camadas: ['lar', 'lar2', 'scan', 'ant ant1', 'ant ant2', 'tampa', 'ol e1', 'ol e2'], mascaras: ['laranja'], tema: 'Robô branco e laranja' },
   { id: 'mn-pirata', nome: 'Capitão Pirata', k: 0.5306, anim: 'mfb-pirata', camadas: ['luz', 'chama', 'lenco', 'ouro', 'leme', 'olho o1', 'olho o2', 'brasa b1', 'brasa b2', 'brasa b3'], mascaras: ['chama', 'lenco', 'ouro', 'leme'], tema: 'Pirata · corda, lampião e timão' },
-  { id: 'fx-brasa', nome: 'Anel de Brasa', fx: 'mfx-brasa', tema: 'Laranja · fogo girando e brasas' },
 ];
 
 // Uma moldura por elo (a arte vem em shared/assets/molduras/elo-<elo>.webp). Elas não são
