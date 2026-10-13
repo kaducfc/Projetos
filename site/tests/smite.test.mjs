@@ -691,7 +691,7 @@ test('smite ranqueada: 2 partidas por dia no Golpear (e na Carreira e no Lendas)
   assert.equal(partidasPorDia('smite'), 2);
   assert.equal(partidasPorDia('carreira-no-rift'), 2);
   assert.equal(partidasPorDia('cblol'), 2);
-  assert.equal(partidasPorDia('barao'), PARTIDAS_POR_DIA);
+  assert.equal(partidasPorDia('barao'), 2); // o Barão passou de 3 para 2 (0077)
 });
 
 test('smite ranqueada: o SQL (0071) tem as mesmas regras do JS', () => {

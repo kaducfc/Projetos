@@ -132,7 +132,7 @@ test('ranqueada: ingresso (vaga) da Carreira e do Lendas, 2 por dia em cada', as
   assert.equal((await platform.rankedIniciar()).restantes, 0); // 2ª: a última
   assert.equal((await platform.rankedIniciar()).token, null); // 3ª começada: não vale
   assert.equal((await platform.rankedIniciar('cblol')).numero, 1); // Lendas tem as suas 2
-  assert.equal((await platform.rankedIniciar('barao')).limite, 3); // o Barão continua com 3
+  assert.equal((await platform.rankedIniciar('barao')).limite, 2); // o Barão também passou a valer 2 (0077)
   // No banco: vaga da própria conta, do jogo, de hoje e não usada; Lendas só no Oculto.
   assert.match(sql15, /i\.id = tok::uuid and i\.user_id = new\.user_id and i\.dia = hoje and i\.jogo = new\.game_id and i\.usado_em is null/);
   assert.match(sql15, /coalesce\(new\.summary->>'modo', ''\) <> 'oculto' then return new/);
@@ -195,7 +195,7 @@ test('ranqueada: cada partida da Carreira e do Lendas vale o seu PDR (sem "só a
   assert.deepEqual(st.hoje.partidas.map((x) => [x.n, x.pdr]), [[1, 27], [2, -16], [3, 10]]);
 });
 
-test('ranqueada: limite de partidas por dia no banco (0065, 0067 e 0072) e no site: 2 (Carreira, Lendas, Golpear) e 3 (Barão)', () => {
+test('ranqueada: limite de partidas por dia no banco (0065, 0067 e 0072) e no site: 2 (Carreira, Lendas, Golpear) e também 2 (Barão, 0077)', () => {
   for (const f of ['0065_barao_ranqueada', '0067_ranqueada_3_partidas']) {
     const sql = readFileSync(new URL(`../supabase/migrations/${f}.sql`, import.meta.url), 'utf8');
     assert.match(sql, /limite constant int := 3/);
@@ -205,7 +205,7 @@ test('ranqueada: limite de partidas por dia no banco (0065, 0067 e 0072) e no si
   assert.match(sql72, /case when jogo in \('smite', 'cblol', 'carreira-no-rift'\) then 2 else 3 end/);
   assert.match(sql72, /if feitas >= limite then/);
   assert.equal(PARTIDAS_POR_DIA, 3);
-  assert.deepEqual([partidasPorDia('carreira-no-rift'), partidasPorDia('cblol'), partidasPorDia('smite'), partidasPorDia('barao')], [2, 2, 2, 3]);
+  assert.deepEqual([partidasPorDia('carreira-no-rift'), partidasPorDia('cblol'), partidasPorDia('smite'), partidasPorDia('barao')], [2, 2, 2, 2]);
 });
 
 test('PDR: Lendas (3 vitórias na fase já dão +5; playoffs recalculados) e Carreira (ponto zero 300 até a Prata, 400 do Ouro)', () => {

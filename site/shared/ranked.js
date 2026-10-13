@@ -24,9 +24,9 @@ export const VAGAS_DESAFIANTE = 100;
 export const MIN_DESAFIANTE = 500;
 export const VAGAS_GRAO_MESTRE = 200;
 export const MIN_GRAO_MESTRE = 200;
-export const PARTIDAS_POR_DIA = 3; // padrão (Show do Barão): as 3 primeiras do dia (igual a 0067_ranqueada_3_partidas.sql)
+export const PARTIDAS_POR_DIA = 3; // padrão antigo (3); hoje todos os jogos por vagas valem 2 (0077)
 // Quantas partidas por dia valem em cada jogo: Carreira, Lendas e Desafio do Golpear 2 (0071 e 0072); os outros, 3.
-export const PARTIDAS_JOGO = { smite: 2, cblol: 2, 'carreira-no-rift': 2, 'bar-do-barao': 2 };
+export const PARTIDAS_JOGO = { smite: 2, cblol: 2, 'carreira-no-rift': 2, 'bar-do-barao': 2, barao: 2 };
 export const partidasPorDia = (jogo) => PARTIDAS_JOGO[jogo] ?? PARTIDAS_POR_DIA;
 export const NAO_TERMINOU = -15; // Carreira/Lendas começada e não terminada no dia
 export const INATIVIDADE = { aPartir: 'ouro', dias: 3, pdr: -25 };
