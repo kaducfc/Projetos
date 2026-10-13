@@ -5,10 +5,11 @@ import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
+import { vantagens } from '../../../shared/ranked.js';
 import { t, onLangChange } from '../../../shared/i18n.js';
 import {
   puzzleDoDia, criarPuzzle, aleatorio, novoJogo, alternar, conferir, dica, podeDica, misturar, palavrasRestantes,
-  erros, pontos, textoCompartilhar, salvar, restaurar, TAMANHO, QUADRADOS,
+  erros, pontos, textoCompartilhar, salvar, restaurar, TAMANHO, QUADRADOS, MAX_ERROS,
 } from './logic.js';
 
 const GAME_ID = 'conexoes';
@@ -41,12 +42,14 @@ let animar = true; // as peças sobem em sequência só quando o tabuleiro é de
 const LAMPADA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>';
 
 // --------------------------------------------------------------------------- andamento do dia
+// Dicas da partida: 1, e 2 do Platina para cima (o número fica fixo depois da 1ª jogada, como no Campeão Oculto).
+const dicasMax = () => vantagens(platform.getUser()?.elo).dicasConexoes;
 function carregarDia() {
   const puzzle = puzzleDoDia(dia);
   const salvo = lerLS(CHAVE_DIA);
-  if (salvo && salvo.dia === dia) { registrado = Boolean(salvo.registrado); return restaurar(salvo.estado, puzzle); }
+  if (salvo && salvo.dia === dia) { registrado = Boolean(salvo.registrado); return restaurar(salvo.estado, puzzle, { maxDicas: dicasMax() }); }
   registrado = false;
-  return novoJogo(puzzle);
+  return novoJogo(puzzle, { maxDicas: dicasMax() });
 }
 function guardar() { if (modo === 'dia' && est) gravarLS(CHAVE_DIA, { dia, estado: salvar(est), registrado }); }
 
@@ -62,16 +65,21 @@ function pecas() {
   }).join('');
 }
 function resolvidos() {
-  return est.resolvidos.map((i) => {
+  const html = (i, extra = '') => {
     const g = est.puzzle.grupos[i];
-    return `<div class="cx-grupo o${g.ordem}${i === grupoNovo ? ' novo' : ''}"><b>${esc(g.tit)}</b><span>${g.palavras.map(esc).join(', ')}</span></div>`;
-  }).join('');
+    return `<div class="cx-grupo o${g.ordem}${i === grupoNovo ? ' novo' : ''}${extra}"><b>${esc(g.tit)}</b><span>${g.palavras.map(esc).join(', ')}</span></div>`;
+  };
+  // ao perder, mostra os grupos que faltavam (esmaecidos)
+  const faltam = est.perdeu ? est.puzzle.grupos.map((_, i) => i).filter((i) => !est.resolvidos.includes(i)) : [];
+  return est.resolvidos.map((i) => html(i)).join('') + faltam.map((i) => html(i, ' perdido')).join('');
 }
 function cartaoFim() {
   const quad = est.historico.map((h) => (h.tipo === 'dica' ? '💡' : h.tipo === 'ok' ? QUADRADOS[h.ordem] : '⬛')).join('');
   const d = est.dicas === 0 ? t('sem dicas') : est.dicas === 1 ? t('1 dica') : t('{n} dicas', { n: est.dicas });
-  return `<div class="cx-fim cx-quadro${grupoNovo >= 0 ? ' novo' : ''}"><h2>${t('Parabéns!')}</h2>
-    <p>${t('Você acertou em {t} tentativas e {d}.', { t: est.tentativas, d })}</p>
+  const titulo = est.perdeu ? t('Não foi dessa vez') : t('Parabéns!');
+  const texto = est.perdeu ? t('Você usou os {n} erros. Os grupos que faltavam aparecem abaixo.', { n: MAX_ERROS }) : t('Você acertou em {t} tentativas e {d}.', { t: est.tentativas, d });
+  return `<div class="cx-fim cx-quadro${grupoNovo >= 0 ? ' novo' : ''}${est.perdeu ? ' perdeu' : ''}"><h2>${titulo}</h2>
+    <p>${texto}</p>
     <div class="quadrados" aria-hidden="true">${quad}</div>
     <p class="pts">${pontos(est)}<small>${t('pontos')}</small></p>
     <div class="cx-acoes"><button type="button" class="cx-bt principal" data-a="compartilhar">${t('Compartilhe')}</button>
@@ -85,7 +93,9 @@ function modalAjuda() {
       <li><span>${t('Clique em uma palavra para selecioná-la. Se precisar, você pode clicar novamente para desselecionar.')}</span></li>
       <li><span>${t('Assim que você selecionar 4 palavras o jogo irá automaticamente conferir se o grupo está correto.')}</span></li>
       <li><span>${t('Se estiver correto, a categoria será revelada. Senão, tente novamente.')}</span></li>
-      <li><span>${t('Descubra os 4 grupos.')}</span></li></ol>
+      <li><span>${t('Descubra os 4 grupos.')}</span></li>
+      <li><span>${t('Você pode errar até {n} vezes: no erro seguinte a partida acaba.', { n: MAX_ERROS })}</span></li>
+      <li><span>${t('Você tem {n} dica(s) por partida; o elo Platina dá uma a mais.', { n: vantagens(platform.getUser()?.elo).dicasConexoes })}</span></li></ol>
     <p class="nota">${t('Tudo vem do universo de League of Legends: campeões, itens, regiões, monstros, eSports e muito mais. As palavras ficam em português.')}</p>
     <div class="cx-acoes"><button type="button" class="cx-bt principal" data-a="fechar">${t('Entendi')}</button></div></div></div>`;
 }
@@ -98,8 +108,8 @@ function desenhar() {
       <button type="button" class="cx-bt pequeno" data-a="ajuda">${t('Como jogar')}</button></div>
     <div class="cx-info cx-quadro">
       ${modo === 'dia' ? `<div class="cx-dado dia"><small>${t('Data')}</small><b>${dataBonita(dia)}</b></div>` : ''}
-      <div class="cx-dado"><small>${t('Tentativas')}</small><b>${est.tentativas}</b></div>
-      <div class="cx-dado"><small>${t('Dicas')}</small><b>${est.dicas}</b></div>
+      <div class="cx-dado"><small>${t('Erros')}</small><b>${erros(est)} / ${MAX_ERROS}</b></div>
+      <div class="cx-dado"><small>${t('Dicas')}</small><b>${est.dicas} / ${est.maxDicas}</b></div>
       <span class="esp"></span>
       <span class="cx-prog" aria-label="${achados}/4">${[0, 1, 2, 3].map((i) => `<i class="${i < achados ? 'on' : ''}"></i>`).join('')}</span>
       <button type="button" class="dica" data-a="dica" ${podeDica(est) && !ocupado ? '' : 'disabled'}>${LAMPADA}${t('Dica')}</button></div>
@@ -128,7 +138,7 @@ async function clicarPalavra(w) {
     if (r.tipo === 'ok') grupoNovo = est.resolvidos[est.resolvidos.length - 1];
     if (r.tipo === 'erro') {
       erroAnim = antes;
-      msg = r.quase ? t('Falta só uma palavra!') : t('Não é esse grupo. Tente de novo.');
+      msg = r.perdeu ? '' : r.quase ? t('Falta só uma palavra!') : t('Não é esse grupo. Tente de novo.');
     }
     ocupado = false;
     guardar();
@@ -149,10 +159,10 @@ function terminar() {
   if (modo !== 'dia' || registrado) return;
   registrado = true;
   guardar();
-  platform.track('game_end', GAME_ID, { tentativas: est.tentativas, dicas: est.dicas });
+  platform.track('game_end', GAME_ID, { tentativas: est.tentativas, dicas: est.dicas, perdeu: est.perdeu });
   Promise.resolve(platform.recordResult(GAME_ID, {
     score: pontos(est),
-    summary: { text: `${est.tentativas} ${t('tentativas')} · ${est.dicas} ${t('dicas')}`, dia, tentativas: est.tentativas, dicas: est.dicas, erros: erros(est) },
+    summary: { text: `${est.tentativas} ${t('tentativas')} · ${est.dicas} ${t('dicas')}`, dia, tentativas: est.tentativas, dicas: est.dicas, erros: erros(est), perdeu: est.perdeu },
   })).catch(() => {});
 }
 
@@ -168,7 +178,7 @@ async function compartilhar() {
 
 function novoLivre() {
   modo = 'livre'; grupoNovo = -1;
-  est = novoJogo(criarPuzzle(aleatorio((Date.now() ^ 0x9e3779b9) >>> 0)));
+  est = novoJogo(criarPuzzle(aleatorio((Date.now() ^ 0x9e3779b9) >>> 0)), { maxDicas: dicasMax() });
   msg = ''; erroAnim = []; animar = true;
   desenhar();
 }

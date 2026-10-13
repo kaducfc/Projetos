@@ -89,6 +89,13 @@ export function baseSucata(pontos) {
   if (p >= 55) return Math.round(3 + ((p - 55) * 32) / 45);
   return -Math.round(3 + ((54 - p) * 22) / 44);
 }
+// Conexões do League: PDR de tabela pela partida (antes do % do elo). Perdeu (4º erro): −20, o mínimo.
+// Vitória: 100 pontos → +30, 90 → +19, 80 → +8, 70 → −3 (a reta cai 1,1 PDR por ponto), sem passar de −10.
+export function baseConexoes(pontos, perdeu = false) {
+  if (perdeu) return -20;
+  const v = Math.max(-10, Math.min(30, 30 - 1.1 * (100 - pontos)));
+  return Math.sign(v) * Math.round(Math.abs(v)); // metade arredonda para longe do zero (igual ao round() do banco)
+}
 export const PDR_RUNETERMO = [35, 28, 22, 16, 11, 6, 5];
 export const PDR_LENDAS = [
   ['Campeão invicto (7-0 e sem perder jogo nos playoffs)', '+38'],

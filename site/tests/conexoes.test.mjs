@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   GRUPOS, FAMILIAS_CAMPEAO, norm, aleatorio, criarPuzzle, puzzleDoDia, novoJogo, alternar, conferir, dica, podeDica, misturar,
-  palavrasRestantes, erros, pontos, textoCompartilhar, salvar, restaurar, TAMANHO, MAX_MARCADAS, PADROES,
+  palavrasRestantes, erros, pontos, textoCompartilhar, salvar, restaurar, TAMANHO, MAX_MARCADAS, PADROES, MAX_ERROS,
 } from '../jogos/conexoes/js/logic.js';
 import { CAMPEOES } from '../jogos/conexoes/js/campeoes.js';
 
@@ -74,7 +74,7 @@ test('conexões: o desafio do dia é igual para todos no mesmo dia e muda de um 
   assert.equal(dias.size, 60);
 });
 
-const jogo = (s = 7) => novoJogo(criarPuzzle(aleatorio(s)));
+const jogo = (s = 7, maxDicas = 8) => novoJogo(criarPuzzle(aleatorio(s)), { maxDicas });
 const selecionar = (est, palavras) => { for (const w of palavras) alternar(est, w); };
 
 test('conexões: selecionar (até 4, clicar de novo desmarca) e acertar um grupo', () => {
@@ -193,4 +193,50 @@ test('conexões: o jogo está no catálogo (só administrador por enquanto) e a 
   __usarDicionario((await import('../shared/i18n/en.js')).default, 'en');
   assert.equal(t('Conexões do League'), 'League Connections');
   assert.equal(t('Você acertou em {t} tentativas e {d}.', { t: 5, d: t('2 dicas'.replace('2', '{n}'), { n: 2 }) }), 'You got it in 5 attempts and 2 hints.');
+});
+
+import { baseConexoes, vantagens } from '../shared/ranked.js';
+const errar = (est) => { // 4 palavras de grupos diferentes (nunca é um grupo certo)
+  const restantes = palavrasRestantes(est);
+  const porGrupo = est.puzzle.grupos.map((g) => restantes.filter((w) => g.palavras.includes(w)));
+  const escolha = porGrupo.flatMap((p) => p.slice(0, 1)).slice(0, TAMANHO);
+  const extra = restantes.filter((w) => !escolha.includes(w)).slice(0, TAMANHO - escolha.length);
+  est.sel = []; selecionar(est, [...escolha, ...extra]); return conferir(est);
+};
+
+test('conexões: no máximo 3 erros; o 4º erro acaba a partida (perde, 0 pontos)', () => {
+  const est = jogo(21);
+  assert.equal(MAX_ERROS, 3);
+  for (let i = 1; i <= 3; i++) { const r = errar(est); assert.equal(r.tipo, 'erro'); assert.equal(est.fim, false, `erro ${i}`); assert.equal(erros(est), i); }
+  assert.equal(pontos(est), 70);
+  const r4 = errar(est);
+  assert.equal(r4.perdeu, true); assert.equal(est.fim, true); assert.equal(est.perdeu, true); assert.equal(pontos(est), 0);
+  assert.equal(conferir(est).tipo, 'nada'); assert.equal(podeDica(est), false);
+  assert.match(textoCompartilhar(est, { titulo: 'X' }), /perdeu/);
+  const salvo = restaurar(salvar(est), est.puzzle);
+  assert.equal(salvo.perdeu, true); assert.equal(salvo.fim, true);
+});
+
+test('conexões: 1 dica por partida (2 do Platina para cima) e a pontuação desconta 5 por dica', () => {
+  assert.equal(vantagens('ouro').dicasConexoes, 1); assert.equal(vantagens(null).dicasConexoes, 1);
+  assert.equal(vantagens('platina').dicasConexoes, 2); assert.equal(vantagens('desafiante').dicasConexoes, 2);
+  const um = jogo(5, 1);
+  assert.ok(dica(um)); assert.equal(podeDica(um), false); assert.equal(dica(um), null); assert.equal(um.dicas, 1);
+  const dois = jogo(5, 2);
+  dica(dois); assert.equal(podeDica(dois), true); dica(dois); assert.equal(podeDica(dois), false);
+  for (const g of dois.puzzle.grupos) { selecionar(dois, g.palavras); conferir(dois); }
+  assert.equal(dois.fim, true); assert.equal(dois.perdeu, false); assert.equal(pontos(dois), 90);
+  const certo = jogo(9, 1);
+  for (const g of certo.puzzle.grupos) { selecionar(certo, g.palavras); conferir(certo); }
+  assert.equal(pontos(certo), 100);
+  // partida salva sem o campo mantém o padrão de 1 dica
+  assert.equal(restaurar(salvar(certo), certo.puzzle).maxDicas, 1);
+});
+
+test('conexões: PDR de tabela (perdeu −20; 100 → +30; 90 → +19; 80 → +8; 70 → −3; vitória nunca abaixo de −10)', () => {
+  assert.equal(baseConexoes(0, true), -20);
+  assert.deepEqual([100, 95, 90, 80, 70, 65].map((p) => baseConexoes(p)), [30, 25, 19, 8, -3, -9]);
+  assert.equal(baseConexoes(30), -10);
+  for (let p = 30; p < 100; p++) assert.ok(baseConexoes(p + 1) >= baseConexoes(p));
+  assert.ok(baseConexoes(30) > baseConexoes(0, true), 'vencer sempre rende mais que perder');
 });

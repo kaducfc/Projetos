@@ -41,4 +41,9 @@ export default [
   ['Voltar ao desafio do dia', 'Back to the daily challenge', 'Zurück zur täglichen Herausforderung', 'Volver al desafío del día', 'Torna alla sfida del giorno', 'Retour au défi du jour'],
   ['tentativas', 'attempts', 'Versuche', 'intentos', 'tentativi', 'essais'],
   ['dicas', 'hints', 'Hinweise', 'pistas', 'indizi', 'indices'],
+  ['Erros', 'Mistakes', 'Fehler', 'Errores', 'Errori', 'Erreurs'],
+  ['Não foi dessa vez', 'Not this time', 'Diesmal nicht', 'Esta vez no', 'Non stavolta', 'Pas cette fois'],
+  ['Você usou os {n} erros. Os grupos que faltavam aparecem abaixo.', 'You used all {n} mistakes. The groups you missed are shown below.', 'Du hast alle {n} Fehler verbraucht. Die fehlenden Gruppen siehst du unten.', 'Usaste los {n} errores. Los grupos que faltaban aparecen abajo.', 'Hai usato tutti i {n} errori. I gruppi mancanti sono qui sotto.', 'Tu as utilisé les {n} erreurs. Les groupes manquants sont affichés ci-dessous.'],
+  ['Você pode errar até {n} vezes: no erro seguinte a partida acaba.', 'You can make up to {n} mistakes: the next one ends the game.', 'Du darfst bis zu {n} Fehler machen: beim nächsten ist die Partie vorbei.', 'Puedes equivocarte hasta {n} veces: con el siguiente error la partida termina.', 'Puoi sbagliare fino a {n} volte: con l’errore successivo la partita finisce.', 'Tu peux te tromper jusqu’à {n} fois : à l’erreur suivante, la partie est terminée.'],
+  ['Você tem {n} dica(s) por partida; o elo Platina dá uma a mais.', 'You get {n} hint(s) per game; the Platinum rank gives one more.', 'Du hast {n} Hinweis(e) pro Partie; der Platin-Rang gibt einen weiteren.', 'Tienes {n} pista(s) por partida; el rango Platino da una más.', 'Hai {n} indizio/i per partita; il grado Platino ne dà uno in più.', 'Tu as {n} indice(s) par partie ; le rang Platine en donne un de plus.'],
 ];

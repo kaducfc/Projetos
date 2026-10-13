@@ -106,3 +106,7 @@ body { background: radial-gradient(900px 520px at 50% -200px, rgba(217, 168, 43,
   .cx-fim h2 { font-size: 38px; }
 }
 @media (prefers-reduced-motion: reduce) { .cx-tabuleiro.entra .cx-pec, .cx-grupo.novo, .cx-fim.novo, .cx-modal > div { animation: none; } .cx-grupo::after { display: none; } }
+
+/* grupos que faltavam ao perder */
+.cx-grupo.perdido { opacity: 0.55; filter: saturate(0.6); }
+.cx-fim.perdeu h2 { color: #ef6b5b; }

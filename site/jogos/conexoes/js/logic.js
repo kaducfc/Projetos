@@ -75,8 +75,11 @@ export function criarPuzzle(rand) {
 export const puzzleDoDia = (dia) => criarPuzzle(aleatorio(semente(`conexoes:${dia}`)));
 
 // ------------------------------------------------------------------ partida
-export function novoJogo(puzzle) {
-  return { puzzle, sel: [], resolvidos: [], tentativas: 0, dicas: 0, marcadas: [], historico: [], quase: false, fim: false, ordem: [...puzzle.palavras] };
+// No 4º erro a partida acaba e o jogador perde. Dicas por partida: 1 (2 do Platina para cima; ver `vantagens` em shared/ranked.js).
+export const MAX_ERROS = 3;
+export const MAX_DICAS_PADRAO = 1;
+export function novoJogo(puzzle, { maxDicas = MAX_DICAS_PADRAO } = {}) {
+  return { puzzle, sel: [], resolvidos: [], tentativas: 0, dicas: 0, maxDicas, marcadas: [], historico: [], quase: false, fim: false, perdeu: false, ordem: [...puzzle.palavras] };
 }
 const grupoDe = (est, palavra) => est.puzzle.grupos.find((g) => g.palavras.includes(palavra));
 export const palavrasRestantes = (est) => est.ordem.filter((w) => !est.resolvidos.some((i) => est.puzzle.grupos[i].palavras.includes(w)));
@@ -108,13 +111,14 @@ export function conferir(est) {
   const quase = est.puzzle.grupos.some((g, i) => !est.resolvidos.includes(i) && est.sel.filter((w) => g.palavras.includes(w)).length === 3);
   est.historico.push({ tipo: 'erro' });
   est.sel = []; est.quase = quase;
-  return { tipo: 'erro', quase };
+  if (erros(est) > MAX_ERROS) { est.fim = true; est.perdeu = true; est.quase = false; }
+  return { tipo: 'erro', quase, perdeu: est.perdeu };
 }
 
 // Dica: marca palavras de um grupo ainda não achado (2 na primeira dica daquele grupo, depois mais 1, até 3).
 export const MAX_MARCADAS = 3;
 export function podeDica(est) {
-  return !est.fim && est.puzzle.grupos.some((g, i) => !est.resolvidos.includes(i) && g.palavras.filter((w) => est.marcadas.includes(w)).length < MAX_MARCADAS);
+  return !est.fim && est.dicas < (est.maxDicas ?? MAX_DICAS_PADRAO) && est.puzzle.grupos.some((g, i) => !est.resolvidos.includes(i) && g.palavras.filter((w) => est.marcadas.includes(w)).length < MAX_MARCADAS);
 }
 export function dica(est) {
   if (!podeDica(est)) return null;
@@ -137,23 +141,23 @@ export function misturar(est, rand = Math.random) {
   return est;
 }
 
-// Pontos da partida: 100 menos 10 por erro e 5 por dica (mínimo 0).
+// Pontos da partida: 100 menos 10 por erro e 5 por dica; quem perde (4º erro) fica com 0.
 export const erros = (est) => Math.max(0, est.tentativas - est.resolvidos.length);
-export const pontos = (est) => Math.max(0, 100 - 10 * erros(est) - 5 * est.dicas);
+export const pontos = (est) => (est.perdeu ? 0 : Math.max(0, 100 - 10 * erros(est) - 5 * est.dicas));
 
 // Texto para compartilhar (sem as palavras, para não estragar o desafio dos outros).
 export const QUADRADOS = ['🟨', '🟩', '🟦', '🟪']; // ouro, platina, diamante e mestre (as cores dos grupos)
 export function textoCompartilhar(est, { titulo = NOME_JOGO, dia = '', link = '' } = {}) {
   const linha = est.historico.map((h) => (h.tipo === 'dica' ? '💡' : h.tipo === 'ok' ? QUADRADOS[h.ordem] : '⬛')).join('');
-  return `${titulo}${dia ? ` · ${dia}` : ''}\n${linha}\n${est.tentativas} tentativas · ${est.dicas} dicas${link ? `\n${link}` : ''}`;
+  return `${titulo}${dia ? ` · ${dia}` : ''}\n${linha}\n${est.tentativas} tentativas · ${est.dicas} dicas${est.perdeu ? ' · perdeu' : ''}${link ? `\n${link}` : ''}`;
 }
 
 // Para guardar o andamento (o desafio do dia continua se a página for recarregada).
-export const salvar = (est) => ({ grupos: est.puzzle.grupos.map((g) => g.id), palavras: est.puzzle.palavras, sel: est.sel, resolvidos: est.resolvidos, tentativas: est.tentativas, dicas: est.dicas, marcadas: est.marcadas, historico: est.historico, ordem: est.ordem, fim: est.fim });
-export function restaurar(dados, puzzle) {
-  const est = novoJogo(puzzle);
+export const salvar = (est) => ({ grupos: est.puzzle.grupos.map((g) => g.id), palavras: est.puzzle.palavras, sel: est.sel, resolvidos: est.resolvidos, tentativas: est.tentativas, dicas: est.dicas, marcadas: est.marcadas, historico: est.historico, ordem: est.ordem, fim: est.fim, perdeu: est.perdeu, maxDicas: est.maxDicas });
+export function restaurar(dados, puzzle, opcoes = {}) {
+  const est = novoJogo(puzzle, opcoes);
   const ok = dados && Array.isArray(dados.resolvidos) && Array.isArray(dados.historico) && JSON.stringify(dados.palavras) === JSON.stringify(puzzle.palavras);
   if (!ok) return est;
-  Object.assign(est, { sel: dados.sel || [], resolvidos: dados.resolvidos, tentativas: dados.tentativas | 0, dicas: dados.dicas | 0, marcadas: dados.marcadas || [], historico: dados.historico, ordem: dados.ordem || est.ordem, fim: Boolean(dados.fim) });
+  Object.assign(est, { sel: dados.sel || [], resolvidos: dados.resolvidos, tentativas: dados.tentativas | 0, dicas: dados.dicas | 0, marcadas: dados.marcadas || [], historico: dados.historico, ordem: dados.ordem || est.ordem, fim: Boolean(dados.fim), perdeu: Boolean(dados.perdeu), maxDicas: Number.isInteger(dados.maxDicas) ? dados.maxDicas : est.maxDicas });
   return est;
 }
