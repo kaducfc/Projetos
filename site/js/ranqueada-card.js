@@ -27,6 +27,7 @@ const jogosRanqueada = () => GAMES.filter((g) => g.ranked && g.status === 'live'
 export const JOGOS_RANQUEADA = jogosRanqueada();
 // Regra do Desafio do Golpear: aparece quando o jogo está liberado (sem `soAdmin` no catálogo) ou para administradores.
 const regraSmite = () => jogosRanqueada().some((j) => j.id === 'smite') ? `<li><b>Desafio do Golpear:</b> valem as ${partidasPorDia('smite')} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>, pela nota da partida (soma das 5 rodadas, de 0 a 500): <b>500 = +35</b>, <b>250 = +3</b>, <b>249 = −3</b>, <b>0 = −30</b>. Entre esses pontos o PDR varia proporcionalmente. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>` : '';
+const regraSucata = () => jogosRanqueada().some((j) => j.id === 'bar-do-barao') ? `<li><b>Barão da Sucata:</b> valem as ${partidasPorDia('bar-do-barao')} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>, pela pontuação da partida (de 10 a 100): <b>100 = +35</b>, <b>55 = +3</b>, <b>54 = −3</b>, <b>10 = −25</b>. Entre esses pontos o PDR varia proporcionalmente. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>` : '';
 const MOTIVO = { partida: '', melhora: 'resultado melhor', nao_terminou: 'começou e não terminou', inatividade: 'inatividade', admin: 'ajuste', ajuste_dia: 'ajuste' };
 const nomeJogo = (id) => jogosRanqueada().find((j) => j.id === id)?.nome.replace(' (Oculto)', '') || '';
 
@@ -121,6 +122,7 @@ export function comoFunciona() {
         <li><b>Carreira no Rift e Lendas do CBLOL:</b> valem as ${partidasPorDia('cblol')} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>
         <li><b>Show do Barão:</b> valem as ${partidasPorDia('barao')} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>
         ${regraSmite()}
+        ${regraSucata()}
         <li><b>Inatividade:</b> do Ouro para cima, depois de ${INATIVIDADE.dias} dias sem jogar, perde ${Math.abs(INATIVIDADE.pdr)} PDR por dia parado (até no máximo o Ouro 3 com 0 PDR). Qualquer partida de qualquer jogo conta como atividade.</li>
       </ul>
       <div class="table-wrap"><table class="rk-tabela">

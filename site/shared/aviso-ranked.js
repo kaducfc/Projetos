@@ -30,6 +30,7 @@ const NOMES = {
   cblol: { uma: 'partida no modo Oculto', varias: 'partidas no modo Oculto' },
   barao: { uma: 'partida', varias: 'partidas' },
   smite: { uma: 'partida', varias: 'partidas' },
+  'bar-do-barao': { uma: 'partida', varias: 'partidas' },
 };
 const nomes = (jogo) => {
   const n = NOMES[jogo] || NOMES['carreira-no-rift'];

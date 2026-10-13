@@ -26,7 +26,7 @@ export const VAGAS_GRAO_MESTRE = 200;
 export const MIN_GRAO_MESTRE = 200;
 export const PARTIDAS_POR_DIA = 3; // padrão (Show do Barão): as 3 primeiras do dia (igual a 0067_ranqueada_3_partidas.sql)
 // Quantas partidas por dia valem em cada jogo: Carreira, Lendas e Desafio do Golpear 2 (0071 e 0072); os outros, 3.
-export const PARTIDAS_JOGO = { smite: 2, cblol: 2, 'carreira-no-rift': 2 };
+export const PARTIDAS_JOGO = { smite: 2, cblol: 2, 'carreira-no-rift': 2, 'bar-do-barao': 2 };
 export const partidasPorDia = (jogo) => PARTIDAS_JOGO[jogo] ?? PARTIDAS_POR_DIA;
 export const NAO_TERMINOU = -15; // Carreira/Lendas começada e não terminada no dia
 export const INATIVIDADE = { aPartir: 'ouro', dias: 3, pdr: -25 };
@@ -81,6 +81,13 @@ export function baseSmite(pontos) {
   const p = Math.max(0, Math.min(500, pontos));
   if (p >= 250) return Math.round(3 + ((p - 250) * 32) / 250);
   return -Math.round(3 + ((249 - p) * 27) / 249);
+}
+// Barão da Sucata: PDR de tabela pela pontuação da partida (10 a 100; antes do % do elo; igual a site_rk_base_sucata, 0073).
+// 100 → +35 · 55 → +3 (reta entre os dois) · 54 → −3 · 10 → −25 (reta entre os dois). 55 é a pontuação de quem joga no nível dos bots.
+export function baseSucata(pontos) {
+  const p = Math.max(10, Math.min(100, pontos));
+  if (p >= 55) return Math.round(3 + ((p - 55) * 32) / 45);
+  return -Math.round(3 + ((54 - p) * 22) / 44);
 }
 export const PDR_RUNETERMO = [35, 28, 22, 16, 11, 6, 5];
 export const PDR_LENDAS = [

@@ -429,3 +429,42 @@ test('pontuação: sempre entre 10 e 100 e o registro privado do motor não vai 
     assert.equal(JSON.stringify(visao(est, 'eu')).includes('verdadeira'), false, 'visão não mostra o registro privado');
   }
 });
+
+// ------------------------------------------------------------------ ranqueada (PDR pela pontuação)
+import { baseSucata, partidasPorDia, PARTIDAS_JOGO } from '../shared/ranked.js';
+import * as PT from '../jogos/bar-do-barao/js/pontuacao.js';
+test('ranqueada: PDR pela pontuação (100 → +35, 55 → +3, 54 → −3, 10 → −25), 2 partidas por dia, só administrador', async () => {
+  assert.deepEqual([100, 55, 54, 10].map(baseSucata), [35, 3, -3, -25]);
+  for (let p = 10; p < 100; p++) assert.ok(baseSucata(p + 1) >= baseSucata(p), 'tabela crescente');
+  assert.equal(baseSucata(5), -25); assert.equal(baseSucata(150), 35);
+  assert.equal(partidasPorDia('bar-do-barao'), 2); assert.equal(PARTIDAS_JOGO['bar-do-barao'], 2);
+  const { GAMES } = await import('../shared/config.js');
+  const g = GAMES.find((x) => x.id === 'bar-do-barao');
+  assert.deepEqual(g.ranked, { modo: 'vagas', selo: 'Ranqueada' });
+  assert.equal(g.soAdmin, true, 'continua só para administrador até a liberação');
+});
+
+test('ranqueada: o SQL (0073) usa os mesmos números do jogo e valida o detalhe da pontuação', () => {
+  const sql = readFileSync(new URL('../supabase/migrations/0073_sucata_ranqueada.sql', import.meta.url), 'utf8');
+  assert.match(sql, /case when jogo in \('smite', 'cblol', 'carreira-no-rift', 'bar-do-barao'\) then 2 else 3 end/);
+  assert.match(sql, new RegExp(`when 1 then ${PT.BASE_COLOCACAO[1]} when 2 then ${PT.BASE_COLOCACAO[2]} when 3 then ${PT.BASE_COLOCACAO[3]} else ${PT.BASE_COLOCACAO[4]}`));
+  assert.match(sql, new RegExp(`when 2 then ${PT.BONUS_CARTAS_FINAIS[2]} else ${PT.BONUS_CARTAS_FINAIS[1]}`));
+  assert.match(sql, new RegExp(`q not between 1 and ${PT.MAX_CARTAS_TIRADAS} or v <> q \\* ${PT.POR_CARTA_TIRADA}`));
+  assert.match(sql, new RegExp(`q not between 1 and ${PT.MAX_ELIMINACOES} or v <> q \\* ${PT.POR_ELIMINACAO}`));
+  assert.match(sql, new RegExp(`q not between 1 and ${PT.MAX_BLEFES} or v <> q \\* ${PT.POR_BLEFE_PASSOU}`));
+  assert.match(sql, new RegExp(`v not between 1 and ${PT.SOBREVIVENCIA_MAX}`));
+  assert.match(sql, new RegExp(`v <> -${PT.PENA_DUVIDA_ERRADA} \\* q`));
+  assert.match(sql, new RegExp(`v <> -${PT.PENA_BLEFE_DESCOBERTO} \\* q`));
+  assert.match(sql, new RegExp(`v <> least\\(${PT.MAX_COFRE}, q / ${PT.MOEDAS_POR_PONTO}\\)`));
+  assert.match(sql, /site_rk_valida_sucata\(new\.score, new\.summary->'detalhe'\)/);
+  assert.match(sql, /b := site_rk_base_sucata\(new\.score\)/);
+  assert.match(sql, /round\(3 \+ \(least\(pontos, 100\) - 55\) \* 32 \/ 45\.0\)/);
+});
+
+test('ranqueada: o jogo envia o ingresso e o detalhe da pontuação ao terminar', () => {
+  const fonte = readFileSync(new URL('../jogos/bar-do-barao/js/main.js', import.meta.url), 'utf8');
+  assert.match(fonte, /platform\.rankedIniciar\(GAME_ID\)/);
+  assert.match(fonte, /detalhe: r\.itens, ranked: ingresso\?\.token/);
+  assert.match(fonte, /avisoFim\(entry, ingresso, GAME_ID\)/);
+  assert.match(fonte, /avisoInicio\(GAME_ID\)/);
+});

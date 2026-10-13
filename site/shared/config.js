@@ -142,6 +142,7 @@ export const GAMES = [
     path: 'jogos/bar-do-barao/',
     status: 'live',
     scoreLabel: 'Pontos',
+    ranked: { modo: 'vagas', selo: 'Ranqueada' },
     soAdmin: true,
   },
 ];

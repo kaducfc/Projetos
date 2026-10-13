@@ -12,6 +12,7 @@ import { decidir } from './bots.js';
 import { aleatorio } from './rng.js';
 import { PERSONAGENS, JOGADOR_HUMANO, MESA, CARTAS, RITMO, ARTE } from './config.js';
 import { criarFalador } from './falas.js';
+import { avisoInicio, avisoComeco, avisoFim } from '../../../shared/aviso-ranked.js';
 
 const GAME_ID = 'bar-do-barao';
 const EU = 'eu';
@@ -34,6 +35,8 @@ let registrado = false;
 let rapido = false;
 let contadorFala = 0;
 let timerBolha = 0;
+let ranqueada = null; // ingresso da partida ranqueada (vale PDR nas 2 primeiras do dia; o servidor confere o resultado)
+let naAbertura = false; // tela de abertura: a partida só começa (e só gasta ingresso) ao clicar em JOGAR
 let falador = criarFalador();
 
 // ------------------------------------------------------------------ nomes (traduzidos quando possível)
@@ -145,6 +148,8 @@ async function rodar(meu) {
 }
 
 function novaRodada() {
+  naAbertura = false; ranqueada = null;
+  platform.rankedIniciar(GAME_ID).then((r) => { ranqueada = r; avisoComeco(r, GAME_ID); }).catch(() => {});
   token++; rapido = false; registrado = false; bolha = null; falador = criarFalador(); clearTimeout(timerBolha); mensagens = []; ui = { ped: null, acao: null, sel: [], ajuda: ui.ajuda };
   const seed = (Date.now() ^ 0x5bd1e995) >>> 0;
   est = novaPartida({ jogadores: MESA.map((id) => ({ id, nome: nomeJ(id), humano: id === EU })), seed });
@@ -159,11 +164,12 @@ function terminar() {
   if (registrado) return;
   registrado = true;
   const r = pontuar(est, EU); const col = r.colocacao;
+  const ingresso = ranqueada;
   platform.track('game_end', GAME_ID, { colocacao: col, turnos: est.numTurno, pontos: r.total });
   Promise.resolve(platform.recordResult(GAME_ID, {
     score: r.total,
-    summary: { text: `${col}º ${t('lugar')} · ${est.numTurno} ${t('turnos')}`, colocacao: col, turnos: est.numTurno, detalhe: r.itens },
-  })).catch(() => {});
+    summary: { text: `${col}º ${t('lugar')} · ${est.numTurno} ${t('turnos')}`, colocacao: col, turnos: est.numTurno, detalhe: r.itens, ranked: ingresso?.token || undefined },
+  })).then((entry) => avisoFim(entry, ingresso, GAME_ID)).catch(() => {});
 }
 
 // ------------------------------------------------------------------ desenho
@@ -285,8 +291,19 @@ function ajuda() {
     <div class="bb-op"><button class="bb-bt ouro" data-a="fechar">${ec(t('Entendi'))}</button></div></div></div>`;
 }
 
+function telaInicio() {
+  naAbertura = true;
+  const cenario = ARTE.cenario ? `style="background-image:linear-gradient(180deg,rgba(8,6,4,.1),rgba(8,6,4,.62)),url(${esc(ARTE.cenario)})"` : '';
+  app.innerHTML = `<div class="bb-mesa bb-abertura" ${cenario}>
+    <h1 class="bb-logo">${esc('BARÃO DA SUCATA')}</h1>
+    <div class="bb-quadro bb-cartao"><p>${esc(t('Blefe, intriga e traição numa taverna clandestina de Zaun: sobreviva com ao menos uma influência.'))}</p>
+      <p class="bb-pequeno">${esc(t('Cada partida vale de 10 a 100 pontos, e nas partidas ranqueadas o PDR vem dessa pontuação.'))}</p>
+      <div class="bb-op"><button class="bb-bt ouro" data-a="novo">${esc(t('JOGAR'))}</button><button class="bb-bt" data-a="ajuda">${esc(t('Como jogar'))}</button></div></div>
+    </div>${ui.ajuda ? ajuda() : ''}`;
+}
+
 function desenhar() {
-  if (!est) return;
+  if (!est) { if (naAbertura) telaInicio(); return; }
   const opp = MESA.filter((id) => id !== EU).map(bloco).join('');
   const logHtml = mensagens.slice(-12).map((m, i, a) => `<li class="${i === a.length - 1 ? 'novo' : ''}">${ej(m)}</li>`).join('');
   const eliminado = !jogador(est, EU).vivo && !est.vencedor;
@@ -346,7 +363,7 @@ function telaBloqueada() {
     <div class="bb-op"><a class="bb-bt ouro" href="../../">${t('VOLTAR AO INÍCIO')}</a></div></div>`;
 }
 
-onLangChange(() => { if (est) desenhar(); });
+onLangChange(() => { desenhar(); });
 
 (async function iniciar() {
   await platform.init();
@@ -355,5 +372,6 @@ onLangChange(() => { if (est) desenhar(); });
   const aberto = !gameById(GAME_ID)?.soAdmin;
   if (!souAdmin && !teste && !aberto) { telaBloqueada(); return; }
   ui.ajuda = !lerLS('bar-do-barao.ajuda', false);
-  novaRodada();
+  telaInicio();
+  avisoInicio(GAME_ID);
 })();
