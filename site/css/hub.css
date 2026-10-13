@@ -359,8 +359,8 @@ html:not([lang="pt-BR"]) .cv-bz-ap { bottom: -17%; }
 .cv-sm-dr { position: absolute; right: -6%; top: 6%; width: 78%; filter: drop-shadow(0 0 14px rgba(63, 217, 208, 0.55)); animation: cv-sm-voo 5s ease-in-out infinite alternate; }
 @keyframes cv-sm-voo { from { transform: translateY(-3px); } to { transform: translateY(4px); } }
 .cv-sm-t { position: absolute; left: 12px; top: 10px; display: flex; flex-direction: column; font-family: var(--display); line-height: 0.85; color: #f5cf5a; text-shadow: 0 2px 0 #2d1d03, 0 0 8px #000; z-index: 2; }
-.cv-sm-t i { font-style: normal; font-size: 13px; letter-spacing: 0.22em; color: #f2d98a; }
-.cv-sm-t b { font-weight: 400; font-size: 31px; letter-spacing: 0.02em; }
+.cv-sm-t i { font-style: normal; font-size: 16px; letter-spacing: 0.22em; color: #f2d98a; }
+.cv-sm-t b { font-weight: 400; font-size: 39px; letter-spacing: 0.02em; }
 /* Português, espanhol, francês e italiano: "DESAFIO DO" em cima; inglês e alemão: "SMITE" grande em cima e "CHALLENGE" embaixo. */
 html[lang="en"] .cv-sm-t, html[lang="de"] .cv-sm-t { flex-direction: column-reverse; }
 html[lang="de"] .cv-sm-t b { font-size: 19px; }
@@ -393,8 +393,8 @@ html[lang="de"] .cv-cx-t b, html[lang="fr"] .cv-cx-t b { font-size: 22px; }
    O tamanho acompanha a largura do banner e, se a palavra for grande (outros idiomas), a linha quebra. */
 .hx-cover { container-type: inline-size; }
 .cv-t { position: absolute; left: 12px; top: 10px; z-index: 4; max-width: 58%; display: flex; flex-direction: column; font-family: var(--display); line-height: 0.88; color: #f5cf5a; text-shadow: 0 2px 0 #2d1d03, 0 0 8px #000; pointer-events: none; text-wrap: balance; }
-.cv-t i { font-style: normal; font-size: min(13px, 4.2cqw); letter-spacing: 0.22em; color: #f2d98a; }
-.cv-t b { font-weight: 400; font-size: min(31px, 9.6cqw); letter-spacing: 0.02em; }
+.cv-t i { font-style: normal; font-size: min(16px, 5.1cqw); letter-spacing: 0.22em; color: #f2d98a; }
+.cv-t b { font-weight: 400; font-size: min(39px, 12cqw); letter-spacing: 0.02em; }
 /* conteúdo de cada capa sai de baixo do título */
 .cv-car { justify-content: flex-end; padding: 52px 12px 6px 10px; }
 .cv-car-ovr { width: 60px; height: 82px; } .cv-car-ovr b { font-size: 34px; }
@@ -404,7 +404,7 @@ html[lang="de"] .cv-cx-t b, html[lang="fr"] .cv-cx-t b { font-size: 22px; }
 .cv-chutes { margin-top: 52px; }
 .cv-cx-g { left: 70%; top: 56%; }
 .cv-bb::after { background: linear-gradient(160deg, rgba(0,0,0,.78), transparent 55%); }
-.cv-t.s b { font-size: min(25px, 7.4cqw); }
+.cv-t.s b { font-size: min(32px, 9.4cqw); }
 .cv-dream-nome { display: none; }
 .cv-dream-ovr { width: 46px; height: 64px; padding-bottom: 4px; } .cv-dream-ovr b { font-size: 25px; } .cv-dream-ovr small { font-size: 7px; }
 .cv-cx-g { top: 64%; }
@@ -412,18 +412,26 @@ html[lang="de"] .cv-cx-t b, html[lang="fr"] .cv-cx-t b { font-size: 22px; }
 @container (max-width: 300px) {
   .hx-selo { font-size: min(10.5px, 3.3cqw); letter-spacing: 0.9px; padding: 3px 7px; }
   .cv-t { max-width: 52%; }
-  .cv-t b { font-size: min(31px, 8cqw); }
-  .cv-t.s b { font-size: min(25px, 6.4cqw); }
-  .cv-t i { font-size: min(13px, 3.6cqw); letter-spacing: 0.14em; }
+  .cv-t b { font-size: min(39px, 10cqw); }
+  .cv-t.s b { font-size: min(32px, 8cqw); }
+  .cv-t i { font-size: min(16px, 4.5cqw); letter-spacing: 0.14em; }
 }
 @container (max-width: 300px) {
   .cv-sm-t { max-width: 52%; }
-  .cv-sm-t i { font-size: min(13px, 3.6cqw); letter-spacing: 0.14em; }
-  .cv-sm-t b { font-size: min(31px, 8cqw); }
+  .cv-sm-t i { font-size: min(16px, 4.5cqw); letter-spacing: 0.14em; }
+  .cv-sm-t b { font-size: min(39px, 10cqw); }
 }
 /* idiomas com palavras mais longas */
-html:not([lang="pt-BR"]) .cv-t b { font-size: min(27px, 8.4cqw); }
-html[lang="de"] .cv-t b { font-size: min(22px, 6.8cqw); }
-html[lang="de"] .cv-t.s b { font-size: min(19px, 5.4cqw); }
-html:not([lang="pt-BR"]) .cv-t.s b { font-size: min(23px, 6.8cqw); }
+html:not([lang="pt-BR"]) .cv-t b { font-size: min(34px, 10.4cqw); }
+html[lang="de"] .cv-t b { font-size: min(28px, 8.4cqw); }
+html[lang="de"] .cv-t.s b { font-size: min(24px, 6.8cqw); }
+html:not([lang="pt-BR"]) .cv-t.s b { font-size: min(29px, 8.4cqw); }
 html[lang="de"] .cv-cx-g { left: 76%; }
+/* ajustes finos com o título maior */
+@container (max-width: 300px) {
+  .cv-t.s b { font-size: min(32px, 6.8cqw); }
+  .cv-dream-lista { transform: scale(0.9); transform-origin: right bottom; }
+  .cv-chutes { margin-top: 66px; }
+  .cv-runas .cv-letras { margin-top: 44px; }
+}
+html:not([lang="pt-BR"]) .cv-chutes { margin-top: 56px; }
