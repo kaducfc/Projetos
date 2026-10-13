@@ -1,4 +1,4 @@
-// O Bar do Barão — controlador e tela. As regras vivem em motor.js e as decisões dos bots em bots.js;
+// Barão da Sucata — controlador e tela. As regras vivem em motor.js e as decisões dos bots em bots.js;
 // aqui só se desenha o estado e se repassam os cliques do jogador ao motor.
 // Enquanto o jogo é "oculto" (gameById('bar-do-barao').soAdmin), só administradores conseguem jogar.
 import * as platform from '../../../shared/platform.js';
@@ -260,7 +260,7 @@ function painelPedido() {
 function telaFim() {
   const col = colocacao(est, EU); const pts = PONTOS_COLOCACAO[col] ?? 0;
   const ganhou = est.vencedor === EU;
-  return `<div class="bb-fim"><h2>${esc(ganhou ? t('Você dominou o Bar do Barão!') : t('{a} venceu o Bar do Barão', { a: nomeJ(est.vencedor) }))}</h2>
+  return `<div class="bb-fim"><h2>${esc(ganhou ? t('Você dominou o Barão da Sucata!') : t('{a} venceu o Barão da Sucata', { a: nomeJ(est.vencedor) }))}</h2>
     <p class="bb-col">${esc(t('Sua colocação'))}: <b>${col}º</b> · +${pts} ${esc(t('pontos'))}</p>
     <div class="bb-op"><button class="bb-bt ouro" data-a="novo">${esc(t('JOGAR NOVAMENTE'))}</button><a class="bb-bt" href="../../">${esc(t('VOLTAR AO INÍCIO'))}</a></div></div>`;
 }
@@ -285,7 +285,7 @@ function desenhar() {
   const eu = jogador(est, EU);
   const vez = est.turno === MESA.indexOf(EU) && !est.vencedor;
   const cenario = ARTE.cenario ? `style="background-image:linear-gradient(180deg,rgba(8,6,4,.1),rgba(8,6,4,.62)),url(${esc(ARTE.cenario)})"` : '';
-  const logo = ARTE.logo ? `<img class="bb-logo-img" src="${esc(ARTE.logo)}" alt="O Bar do Barão" />` : `<h1 class="bb-logo">${esc('O BAR DO BARÃO')}</h1>`;
+  const logo = ARTE.logo ? `<img class="bb-logo-img" src="${esc(ARTE.logo)}" alt="Barão da Sucata" />` : `<h1 class="bb-logo">${esc('BARÃO DA SUCATA')}</h1>`;
   app.innerHTML = `<div class="bb-mesa" ${cenario}>
     <header class="bb-topo">${logo}<div class="bb-ferr"><span class="bb-turno">${esc(t('Turno {n}', { n: est.numTurno }))} · ${esc(t('Baralho: {n}', { n: est.baralho.length }))}</span>
       <button class="bb-bt peq" data-a="ajuda">${esc(t('Como jogar'))}</button></div></header>

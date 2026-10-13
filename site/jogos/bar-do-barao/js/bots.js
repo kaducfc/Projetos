@@ -1,4 +1,4 @@
-// Bots do Bar do Barão. Recebem SOMENTE a `visao` (cartas próprias + informação pública) e o `pedido` atual,
+// Bots do Barão da Sucata. Recebem SOMENTE a `visao` (cartas próprias + informação pública) e o `pedido` atual,
 // e devolvem uma decisão no mesmo formato aceito por `aplicar`. Não conhecem as cartas ocultas dos outros nem o baralho.
 import { ACOES, INFLUENCIAS, COPIAS } from './motor.js';
 

@@ -1,4 +1,4 @@
-// Coup: O Bar do Barão — motor de regras (sem tela e sem bots). Tudo que muda o estado da partida passa por `aplicar`,
+// Barão da Sucata — motor de regras (sem tela e sem bots). Tudo que muda o estado da partida passa por `aplicar`,
 // que valida a decisão contra o `pedido` atual: a interface e os bots só pedem, nunca alteram o estado por conta própria.
 //
 // As regras são as do Coup original (4 jogadores, 15 cartas: 3 de cada influência):

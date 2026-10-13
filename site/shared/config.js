@@ -136,7 +136,7 @@ export const GAMES = [
   },
   {
     id: 'bar-do-barao',
-    name: 'O Bar do Barão',
+    name: 'Barão da Sucata',
     tagline: 'Blefe, intriga e traição numa taverna clandestina de Zaun: sobreviva com ao menos uma influência.',
     kind: 'Blefe',
     path: 'jogos/bar-do-barao/',

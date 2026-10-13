@@ -1,7 +1,8 @@
 // O Bar do Barão — interface. Nomes de personagens e falas ficam em português (são do cenário); as regras e botões são traduzidos.
 export default [
-  ['O Bar do Barão', 'The Baron’s Bar', 'Die Bar des Barons', 'El Bar del Barón', 'Il Bar del Barone', 'Le Bar du Baron'],
-  ['O Bar do Barão · Rift Arcade', 'The Baron’s Bar · Rift Arcade', 'Die Bar des Barons · Rift Arcade', 'El Bar del Barón · Rift Arcade', 'Il Bar del Barone · Rift Arcade', 'Le Bar du Baron · Rift Arcade'],
+  ['Barão da Sucata', 'Scrap Baron', 'Schrott-Baron', 'Barón de la Chatarra', 'Barone dei Rottami', 'Baron de la Ferraille'],
+  ['BARÃO DA SUCATA', 'SCRAP BARON', 'SCHROTT-BARON', 'BARÓN DE LA CHATARRA', 'BARONE DEI ROTTAMI', 'BARON DE LA FERRAILLE'],
+  ['Barão da Sucata · Rift Arcade', 'Scrap Baron · Rift Arcade', 'Schrott-Baron · Rift Arcade', 'Barón de la Chatarra · Rift Arcade', 'Barone dei Rottami · Rift Arcade', 'Baron de la Ferraille · Rift Arcade'],
   ['Blefe, intriga e traição numa taverna clandestina de Zaun: sobreviva com ao menos uma influência.', 'Bluff, intrigue and betrayal in a clandestine Zaun tavern: survive with at least one influence.', 'Bluff, Intrigen und Verrat in einer geheimen Taverne in Zaun: Überlebe mit mindestens einem Einfluss.', 'Farol, intriga y traición en una taberna clandestina de Zaun: sobrevive con al menos una influencia.', 'Bluff, intrighi e tradimenti in una taverna clandestina di Zaun: sopravvivi con almeno un’influenza.', 'Bluff, intrigues et trahisons dans une taverne clandestine de Zaun : survis avec au moins une influence.'],
   ['Blefe', 'Bluff', 'Bluff', 'Farol', 'Bluff', 'Bluff'],
   ['Magnata', 'Magnate', 'Magnat', 'Magnate', 'Magnate', 'Magnat'],
@@ -79,8 +80,8 @@ export default [
   ['Troca de cartas: fique com {n}', 'Exchange: keep {n}', 'Kartentausch: Behalte {n}', 'Cambio de cartas: quédate con {n}', 'Scambio di carte: tienine {n}', 'Échange : garde {n}'],
   ['As demais voltam ao baralho embaralhado.', 'The rest go back into the shuffled deck.', 'Die übrigen kommen gemischt zurück ins Deck.', 'Las demás vuelven al mazo barajado.', 'Le altre tornano nel mazzo mescolato.', 'Les autres retournent dans la pioche mélangée.'],
   ['Confirmar', 'Confirm', 'Bestätigen', 'Confirmar', 'Conferma', 'Confirmer'],
-  ['Você dominou o Bar do Barão!', 'You took over the Baron’s Bar!', 'Du hast die Bar des Barons erobert!', '¡Dominaste el Bar del Barón!', 'Hai conquistato il Bar del Barone!', 'Tu as pris le contrôle du Bar du Baron !'],
-  ['{a} venceu o Bar do Barão', '{a} won the Baron’s Bar', '{a} hat die Bar des Barons gewonnen', '{a} ganó el Bar del Barón', '{a} ha vinto il Bar del Barone', '{a} a remporté le Bar du Baron'],
+  ['Você dominou o Barão da Sucata!', 'You took over the Scrap Baron!', 'Du hast den Schrott-Baron erobert!', '¡Dominaste al Barón de la Chatarra!', 'Hai conquistato il Barone dei Rottami!', 'Tu as dominé le Baron de la Ferraille !'],
+  ['{a} venceu o Barão da Sucata', '{a} won the Scrap Baron', '{a} hat den Schrott-Baron besiegt', '{a} ganó al Barón de la Chatarra', '{a} ha vinto contro il Barone dei Rottami', '{a} a battu le Baron de la Ferraille'],
   ['Sua colocação', 'Your placement', 'Deine Platzierung', 'Tu posición', 'Il tuo piazzamento', 'Ton classement'],
   ['JOGAR NOVAMENTE', 'PLAY AGAIN', 'NOCHMAL SPIELEN', 'JUGAR DE NUEVO', 'GIOCA ANCORA', 'REJOUER'],
   ['Cada um começa com 2 cartas (influências) e 2 moedas. Perdeu as duas cartas, está fora. O último de pé vence.', 'Everyone starts with 2 cards (influences) and 2 coins. Lose both cards and you’re out. The last one standing wins.', 'Jeder startet mit 2 Karten (Einflüssen) und 2 Münzen. Wer beide Karten verliert, scheidet aus. Wer zuletzt übrig bleibt, gewinnt.', 'Cada uno empieza con 2 cartas (influencias) y 2 monedas. Si pierdes las dos, quedas fuera. Gana el último en pie.', 'Ognuno inizia con 2 carte (influenze) e 2 monete. Perse entrambe, sei fuori. Vince l’ultimo rimasto.', 'Chacun commence avec 2 cartes (influences) et 2 pièces. Qui perd les deux est éliminé. Le dernier debout gagne.'],

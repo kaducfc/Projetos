@@ -1,4 +1,4 @@
-// Coup: O Bar do Barão — textos e parâmetros ajustáveis (nada aqui altera as regras, que ficam em motor.js).
+// Barão da Sucata — textos e parâmetros ajustáveis (nada aqui altera as regras, que ficam em motor.js).
 // Personalidades dos bots: cada número vai de 0 a 1.
 //   agressividade  — chance de atacar/roubar em vez de juntar moedas
 //   blefe          — vontade de declarar uma carta que não tem
