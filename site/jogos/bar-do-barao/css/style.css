@@ -159,3 +159,17 @@ button.bb-jog { cursor: pointer; border-color: var(--ouro-2); box-shadow: 0 0 0 
 .i-magnata { color: #4aa3ff; } .i-lamina { color: #ef4444; } .i-cobrador { color: #f5cf5a; } .i-corretor { color: #b57bff; } .i-sentinela { color: #4ade80; }
 .bb-acao em.inf { font-style: normal; }
 .bb-log li .inf, .bb-caixa li b .inf { font-weight: 800; }
+
+/* cartas ilustradas: a arte já traz a moldura e duas plaquetas em branco; nome e efeito entram por cima (traduzíveis) */
+.bb-carta { container-type: inline-size; width: 112px; height: auto; aspect-ratio: 336 / 466; padding: 0; display: block; border: 0; border-radius: 6px; background: transparent center / 100% 100% no-repeat; box-shadow: 0 6px 14px #000b; }
+.bb-carta b, .bb-carta small { position: absolute; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+.bb-carta b { left: 19%; right: 19%; top: 5.2%; height: 8.6%; font-family: 'Bebas Neue', Impact, sans-serif; font-size: 10.5cqw; letter-spacing: 0.06em; color: var(--cor); text-shadow: 0 1px 2px #000; white-space: nowrap; }
+.bb-carta small { left: 14%; right: 12%; top: 84.6%; height: 10.4%; font-size: 6.1cqw; font-weight: 700; line-height: 1.1; color: #e9dfc6; text-shadow: 0 1px 2px #000; min-height: 0; }
+.bb-carta.verso { background-image: url(../img/carta-verso.webp); }
+.bb-carta.mini { width: 34px; padding: 0; border-radius: 3px; box-shadow: 0 2px 5px #000a; }
+.bb-carta.mini b, .bb-carta.mini small { display: none; }
+.bb-carta.perdida::after { border-radius: 6px; background: rgba(0, 0, 0, 0.35); }
+.bb-maos.eu .bb-carta, .bb-troca .bb-carta { width: 150px; }
+@media (max-width: 760px) { .bb-carta { width: 92px; } .bb-carta.mini { width: 28px; } .bb-maos.eu .bb-carta { width: 128px; } .bb-troca .bb-carta { width: 84px; } }
+.bb-carta.mini { height: auto; box-shadow: 0 0 0 1px #8a6a1e, 0 2px 5px #000a; filter: brightness(1.35); }
+.bb-carta.mini.perdida { filter: grayscale(1) brightness(1.1); }

@@ -168,9 +168,9 @@ function terminar() {
 // ------------------------------------------------------------------ desenho
 function cartaFace(inf, extra = '', attrs = '') {
   const c = CARTAS[inf];
-  return `<div class="bb-carta ${extra}" style="--cor:${c.cor}" ${attrs}><span class="bb-cs">${c.simbolo}</span><b>${esc(nomeCarta(inf))}</b><small>${esc(acaoCarta(inf))}</small></div>`;
+  return `<div class="bb-carta ${extra}" style="--cor:${c.cor};background-image:url(img/carta-${inf}.webp)" ${attrs} aria-label="${esc(nomeCarta(inf))}"><b>${esc(nomeCarta(inf))}</b><small>${esc(acaoCarta(inf))}</small></div>`;
 }
-const cartaVerso = (extra = '') => `<div class="bb-carta verso ${extra}"><span class="bb-cs">♦</span></div>`;
+const cartaVerso = (extra = '') => `<div class="bb-carta verso ${extra}"></div>`;
 
 function bloco(id) {
   const j = jogador(est, id); const p = pers(id);
