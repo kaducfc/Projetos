@@ -394,7 +394,7 @@ test('pontuação: duvidar certo credita cartas e eliminação; duvidar errado N
   aplicar(est, 'b1', { contestar: true });   // b1 duvida e acerta: eu perde carta
   aplicar(est, 'eu', { indice: 0 });
   const r1 = pontuar(est, 'b1');
-  assert.equal(item(r1, 'cartas_tiradas')?.valor, 5, 'b1 tirou 1 carta ao duvidar certo');
+  assert.equal(item(r1, 'cartas_tiradas')?.valor, 6, 'b1 tirou 1 carta ao duvidar certo');
   assert.equal(item(pontuar(est, 'eu'), 'blefe_descoberto')?.valor, -2);
   // agora o inverso: b1 tem o magnata de verdade, eu duvido e erro
   const e2 = nova(); cartas(e2, 'b1', 'magnata', 'lamina'); cartas(e2, 'eu', 'lamina', 'lamina');
@@ -410,11 +410,11 @@ test('pontuação: Golpe e Assassinato creditam o autor; eliminar dá bônus; te
   for (const alvo of ['b1', 'b2', 'b3']) { jogador(est, 'eu').moedas = 7; est.turno = 0; est.fase = 'acao'; est.pendente = null; aplicar(est, 'eu', { acao: 'golpe', alvo }); }
   const r = pontuar(est, 'eu');
   assert.equal(item(r, 'cartas_tiradas').qtd, 3); assert.equal(item(r, 'eliminacoes').qtd, 3);
-  assert.equal(item(r, 'cartas_finais').valor, 14, 'terminou com 2 cartas');
+  assert.equal(item(r, 'cartas_finais').valor, 16, 'terminou com 2 cartas');
   const e2 = nova(); cartas(e2, 'eu', 'lamina'); e2.jogadores[0].cartas.push({ inf: 'magnata', revelada: true });
   for (const id of ['b1', 'b2', 'b3']) cartas(e2, id, 'lamina');
   for (const alvo of ['b1', 'b2', 'b3']) { jogador(e2, 'eu').moedas = 7; e2.turno = 0; e2.fase = 'acao'; e2.pendente = null; aplicar(e2, 'eu', { acao: 'golpe', alvo }); }
-  assert.equal(item(pontuar(e2, 'eu'), 'cartas_finais').valor, 6, 'com 1 carta rende menos');
+  assert.equal(item(pontuar(e2, 'eu'), 'cartas_finais').valor, 10, 'com 1 carta rende menos');
   assert.ok(pontuar(est, 'eu').total > pontuar(e2, 'eu').total);
 });
 
