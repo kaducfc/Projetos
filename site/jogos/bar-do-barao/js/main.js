@@ -286,8 +286,6 @@ function ajuda() {
     <p>${ec(t('Você pode declarar qualquer carta, mesmo sem tê-la (blefar). Os outros podem contestar: quem mentiu perde uma influência; quem contestou errado também perde.'))}</p>
     <ul>${linhas}</ul><h3>${ej(t('As cinco influências'))}</h3><ul>${cartas}</ul>
     <p>${ec(t('Com 10 moedas ou mais, o Golpe é obrigatório.'))}</p>
-    <h3>${esc(t('Pontuação'))}</h3>
-    <p>${esc(t('Cada partida vale de 10 a 100 pontos. Somam: a colocação, terminar com mais cartas, cartas tiradas dos adversários (duvidando certo, com Assassinato ou Golpe), adversários eliminados, blefes que passaram sem ser descobertos, moedas no cofre e o tempo que você ficou na mesa. Duvidar errado ou ter o blefe descoberto tira pontos. Se alguém duvidar de você e errar, a carta perdida não conta para você.'))}</p>
     <div class="bb-op"><button class="bb-bt ouro" data-a="fechar">${ec(t('Entendi'))}</button></div></div></div>`;
 }
 
