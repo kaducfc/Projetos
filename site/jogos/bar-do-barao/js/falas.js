@@ -83,9 +83,8 @@ export function criarFalador(rng = Math.random) {
       const lista = [...(FALAS[s.id]?.[s.cat] ?? [])];
       if (s.inf && (s.cat === 'acao' || s.cat === 'bloqueia')) lista.push(POR_CARTA[s.inf]);
       const hist = recentes[s.id] ?? (recentes[s.id] = []);
-      let livres = lista.filter((x) => !hist.includes(x));
-      if (!livres.length) livres = lista;
-      if (!livres.length) return null;
+      const livres = lista.filter((x) => !hist.includes(x));
+      if (!livres.length) return null; // já disse todas há pouco: fica quieto em vez de repetir
       const txt = livres[Math.floor(rng() * livres.length)];
       hist.push(txt); if (hist.length > MEMORIA) hist.shift();
       desdeUltima = 0;

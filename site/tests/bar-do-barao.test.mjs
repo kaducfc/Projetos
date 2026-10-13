@@ -360,3 +360,26 @@ test('falas: ninguém fala a cada lance, nem repete a mesma frase em sequência 
   assert.ok(porBot.b3 > porBot.b2, 'o Vexel fala mais que a Sibil');
   assert.ok(maiorSequencia <= 4, `sequência de falas seguidas: ${maiorSequencia}`);
 });
+
+test('nível dos bots: um jogador aleatório ganha bem menos que os 25% do acaso contra eles', () => {
+  const rr = aleatorio(99); let v = 0; const N = 300;
+  const k = (n) => Math.floor(rr() * n);
+  for (let s = 1; s <= N; s++) {
+    const est = novaPartida({ jogadores: JOG, seed: s });
+    const rng = { b1: aleatorio(s + 1), b2: aleatorio(s + 2), b3: aleatorio(s + 3) };
+    while (!est.vencedor) {
+      const p = pedido(est); let d;
+      if (p.jogador === 'eu') {
+        if (p.tipo === 'acao') { const a = p.acoes[k(p.acoes.length)]; d = { acao: a.acao, alvo: a.alvos ? a.alvos[k(a.alvos.length)] : null }; }
+        else if (p.tipo === 'contestar' || p.tipo === 'contestar_bloqueio') d = { contestar: rr() < 0.3 };
+        else if (p.tipo === 'bloquear') d = { influencia: rr() < 0.3 ? p.influencias[k(p.influencias.length)] : null };
+        else if (p.tipo === 'perder') d = { indice: p.cartas[k(p.cartas.length)] };
+        else d = { manter: [...p.cartas.keys()].slice(0, p.manter) };
+      } else d = decidir(visao(est, p.jogador), p, PERSONAGENS[p.jogador].perfil, rng[p.jogador]);
+      aplicar(est, p.jogador, d);
+    }
+    if (est.vencedor === 'eu') v++;
+  }
+  assert.ok(v / N < 0.14, `o jogador aleatório ganhou ${(100 * v / N).toFixed(0)}%`);
+  assert.ok(v / N > 0.01, 'os bots ainda erram: não são imbatíveis');
+});
