@@ -1,4 +1,4 @@
-# Conexões do Rift
+# Conexões do League
 
 Jogo no estilo "Conexo": 16 palavras do universo de League of Legends em uma grade 4 x 4; o jogador junta as de 4 em 4 que têm algo
 em comum (campeões de uma região, itens, feitiços, runas, monstros, eSports, gírias…). Acaba quando os 4 grupos são encontrados.

@@ -1,10 +1,10 @@
-// Conexões do Rift (Rift Connections): telas, botões e avisos. As palavras e as categorias dos quebra-cabeças ficam em
+// Conexões do League (League Connections): telas, botões e avisos. As palavras e as categorias dos quebra-cabeças ficam em
 // português em todos os idiomas (são nomes do jogo em português); só a interface é traduzida.
 export default [
-  ['Conexões do Rift', 'Rift Connections', 'Rift-Verbindungen', 'Conexiones del Rift', 'Connessioni del Rift', 'Connexions du Rift'],
-  ['Conexões do Rift · Rift Arcade', 'Rift Connections · Rift Arcade', 'Rift-Verbindungen · Rift Arcade', 'Conexiones del Rift · Rift Arcade', 'Connessioni del Rift · Rift Arcade', 'Connexions du Rift · Rift Arcade'],
-  ['CONEXÕES', 'RIFT', 'RIFT', 'CONEXIONES', 'CONNESSIONI', 'CONNEXIONS'],
-  ['DO RIFT', 'CONNECTIONS', 'VERBINDUNGEN', 'DEL RIFT', 'DEL RIFT', 'DU RIFT'],
+  ['Conexões do League', 'League Connections', 'League-Verbindungen', 'Conexiones del League', 'Connessioni del League', 'Connexions du League'],
+  ['Conexões do League · Rift Arcade', 'League Connections · Rift Arcade', 'League-Verbindungen · Rift Arcade', 'Conexiones del League · Rift Arcade', 'Connessioni del League · Rift Arcade', 'Connexions du League · Rift Arcade'],
+  ['CONEXÕES', 'LEAGUE', 'LEAGUE-', 'CONEXIONES', 'CONNESSIONI', 'CONNEXIONS'],
+  ['DO LEAGUE', 'CONNECTIONS', 'VERBINDUNGEN', 'DEL LEAGUE', 'DEL LEAGUE', 'DU LEAGUE'],
   ['Quebra-cabeça', 'Puzzle', 'Rätsel', 'Rompecabezas', 'Puzzle', 'Casse-tête'],
   ['Dezesseis palavras do universo de League of Legends: junte as de 4 em 4 que têm algo em comum.', 'Sixteen words from the League of Legends universe: group them in fours that have something in common.', 'Sechzehn Wörter aus dem League-of-Legends-Universum: Finde je vier, die etwas gemeinsam haben.', 'Dieciséis palabras del universo de League of Legends: agrúpalas de 4 en 4 según lo que tengan en común.', 'Sedici parole dell’universo di League of Legends: raggruppale a quattro a quattro in base a ciò che hanno in comune.', 'Seize mots de l’univers de League of Legends : regroupe-les par quatre selon ce qu’ils ont en commun.'],
   ['Como jogar', 'How to play', 'Spielanleitung', 'Cómo jugar', 'Come si gioca', 'Comment jouer'],

@@ -126,7 +126,7 @@ export const GAMES = [
   // para quem não é administrador. Para lançar, apague a linha `soAdmin`.
   {
     id: 'conexoes',
-    name: 'Conexões do Rift',
+    name: 'Conexões do League',
     tagline: 'Dezesseis palavras do universo de League of Legends: junte as de 4 em 4 que têm algo em comum.',
     kind: 'Quebra-cabeça',
     path: 'jogos/conexoes/',

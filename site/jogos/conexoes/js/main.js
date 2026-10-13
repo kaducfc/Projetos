@@ -1,4 +1,4 @@
-// Conexões do Rift: 16 palavras do universo de League of Legends em 4 x 4; junte 4 que tenham algo em comum.
+// Conexões do League: 16 palavras do universo de League of Legends em 4 x 4; junte 4 que tenham algo em comum.
 // Desafio do dia (igual para todos, o andamento fica salvo) e jogo livre (quebra-cabeças aleatórios).
 // Enquanto o jogo é "oculto" (gameById('conexoes').soAdmin), só administradores conseguem jogar.
 import * as platform from '../../../shared/platform.js';
@@ -93,7 +93,7 @@ function modalAjuda() {
 function desenhar() {
   const fim = est.fim;
   const achados = est.resolvidos.length;
-  app.innerHTML = `<div class="cx-topo"><div><p class="cx-eyebrow">${t('Quebra-cabeça')} · League of Legends</p><h1>${t('Conexões do Rift')}</h1>
+  app.innerHTML = `<div class="cx-topo"><div><p class="cx-eyebrow">${t('Quebra-cabeça')} · League of Legends</p><h1>${t('Conexões do League')}</h1>
       <span class="cx-modo"><i></i>${modo === 'dia' ? t('Desafio do dia') : t('Jogo livre')}</span></div>
       <button type="button" class="cx-bt pequeno" data-a="ajuda">${t('Como jogar')}</button></div>
     <div class="cx-info cx-quadro">
@@ -157,7 +157,7 @@ function terminar() {
 }
 
 async function compartilhar() {
-  const texto = textoCompartilhar(est, { titulo: t('Conexões do Rift'), dia: modo === 'dia' ? dataBonita(dia) : t('Jogo livre'), link: `${location.origin}${location.pathname}` });
+  const texto = textoCompartilhar(est, { titulo: t('Conexões do League'), dia: modo === 'dia' ? dataBonita(dia) : t('Jogo livre'), link: `${location.origin}${location.pathname}` });
   try {
     if (navigator.share) { await navigator.share({ text: texto }); return; }
   } catch { /* cancelou */ }

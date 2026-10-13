@@ -1,9 +1,9 @@
-// Conexões do Rift: regras puras (sem tela). Um quebra-cabeça tem 16 palavras e 4 grupos de 4; o jogador junta
+// Conexões do League: regras puras (sem tela). Um quebra-cabeça tem 16 palavras e 4 grupos de 4; o jogador junta
 // as palavras que têm algo em comum e o jogo acaba quando os 4 grupos são encontrados.
 import { GRUPOS, FAMILIAS_CAMPEAO, norm } from './grupos.js';
 
 export const TAMANHO = 4;
-export const NOME_JOGO = 'Conexões do Rift';
+export const NOME_JOGO = 'Conexões do League';
 export { GRUPOS, FAMILIAS_CAMPEAO, norm };
 
 // Gerador pseudoaleatório com semente (o desafio do dia é igual para todo mundo; os testes são reproduzíveis).

@@ -54,8 +54,8 @@ const CAPAS = {
   // Desafio do Golpear: o banner (o dragão no covil) com o nome do jogo por cima (traduzido em cada idioma).
   smite: `<div class="cv cv-smite"><img class="cv-sm-bg" src="/jogos/smite/img/banner.webp" alt="" loading="lazy" />
       <span class="cv-sm-t"><i>DESAFIO DO</i><b>GOLPEAR</b></span></div>`,
-  // Conexões do Rift (só administradores por enquanto): uma grade 4 x 4 com os quatro grupos coloridos.
-  conexoes: `<div class="cv cv-cx"><span class="cv-cx-t">CONEXÕES<b>DO RIFT</b></span>
+  // Conexões do League (só administradores por enquanto): uma grade 4 x 4 com os quatro grupos coloridos.
+  conexoes: `<div class="cv cv-cx"><span class="cv-cx-t">CONEXÕES<b>DO LEAGUE</b></span>
       <span class="cv-cx-g">${['o0','o0','o0','o0','o1','o1','o1','o1','o2','o2','o2','o2','o3','o3','o3','o3'].map((c) => `<i class="${c}"></i>`).join('')}</span></div>`,
   // Barão da Sucata (só administradores por enquanto): três cartas em leque sobre a taverna.
   'bar-do-barao': `<div class="cv cv-bb"><img class="cv-bb-bg" src="/jogos/bar-do-barao/img/capa.webp" alt="" loading="lazy" />

@@ -161,8 +161,8 @@ test('conexões: texto para compartilhar não revela as palavras', () => {
   const [g0, g1, g2, g3] = est.puzzle.grupos;
   selecionar(est, [g0.palavras[0], g1.palavras[0], g2.palavras[0], g3.palavras[0]]); conferir(est);
   for (const g of est.puzzle.grupos) { selecionar(est, g.palavras); conferir(est); }
-  const txt = textoCompartilhar(est, { titulo: 'Conexões do Rift', dia: '12/10/2026', link: 'https://exemplo/' });
-  assert.match(txt, /^Conexões do Rift · 12\/10\/2026\n💡💡⬛🟨🟩🟦🟪\n5 tentativas · 2 dicas\nhttps:\/\/exemplo\/$/);
+  const txt = textoCompartilhar(est, { titulo: 'Conexões do League', dia: '12/10/2026', link: 'https://exemplo/' });
+  assert.match(txt, /^Conexões do League · 12\/10\/2026\n💡💡⬛🟨🟩🟦🟪\n5 tentativas · 2 dicas\nhttps:\/\/exemplo\/$/);
   for (const w of est.puzzle.palavras) assert.ok(!txt.includes(w));
 });
 
@@ -176,7 +176,7 @@ test('conexões: o jogo está no catálogo (só administrador por enquanto) e a 
   const fonte = readFileSync(new URL('../jogos/conexoes/js/main.js', import.meta.url), 'utf8');
   const textos = new Set([...fonte.matchAll(/\bt\('((?:[^'\\]|\\.)*)'/g)].map((m) => m[1].replace(/\\'/g, "'")));
   textos.add(jogoCfg.name); textos.add(jogoCfg.tagline); textos.add(jogoCfg.kind);
-  textos.add('Conexões do Rift · Rift Arcade'); textos.add('CONEXÕES'); textos.add('DO RIFT');
+  textos.add('Conexões do League · Rift Arcade'); textos.add('CONEXÕES'); textos.add('DO LEAGUE');
   assert.ok(textos.size >= 25);
   const ids = LANGS.map((l) => l.id).filter((id) => id !== 'pt-BR');
   for (const id of ids) {
@@ -191,6 +191,6 @@ test('conexões: o jogo está no catálogo (só administrador por enquanto) e a 
     }
   }
   __usarDicionario((await import('../shared/i18n/en.js')).default, 'en');
-  assert.equal(t('Conexões do Rift'), 'Rift Connections');
+  assert.equal(t('Conexões do League'), 'League Connections');
   assert.equal(t('Você acertou em {t} tentativas e {d}.', { t: 5, d: t('2 dicas'.replace('2', '{n}'), { n: 2 }) }), 'You got it in 5 attempts and 2 hints.');
 });
