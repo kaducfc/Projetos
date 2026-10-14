@@ -22,7 +22,7 @@ export const MOLDURAS = [
 // Só o administrador recebe (aba Teste do painel).
 export const MOLDURAS_TESTE = [
   // Versões animadas das molduras do passe (mesma arte, com `arte`): só para ver no painel e na conta dos administradores (0082).
-  { id: 'hw-moldura-1-fx', arte: 'hw-moldura-1', nome: 'Vampiro (animada)', k: 0.5879, anim: 'mfb-vampiro', camadas: ['lua', 'asas', 'rubi', 'onix', 'voo'], mascaras: ['rubi', 'onix', 'asas'], tema: 'Vampiro · rubi que pulsa como coração e luar no metal' },
+  { id: 'hw-moldura-1-fx', arte: 'hw-moldura-1', nome: 'Vampiro (animada)', k: 0.5879, anim: 'mfb-vampiro', camadas: ['lua', 'asas', 'rubi', 'onix', 'voo'], mascaras: ['rubi', 'onix', 'asas', 'filigrana'], tema: 'Vampiro · rubi que pulsa como coração e sangue correndo pelos arabescos' },
   { id: 'hw-moldura-2-fx', arte: 'hw-moldura-2', nome: 'Abóboras e Espinhos (animada)', k: 0.5962, anim: 'mfb-abobora', camadas: ['luzes', 'vinhas', 'fa', 'fb', 'fc', 'chispa'], mascaras: ['face-a', 'face-b', 'face-c', 'vinhas'], tema: 'Halloween · abóboras tremulando e espinhos roxos' },
   // Molduras de arte (imagem) em teste: só administradores equipam (0078_molduras_teste_novas.sql).
   { id: 'mn-zaun', nome: 'Canos de Zaun', k: 0.5525, anim: 'mfb-zaun', camadas: ['verde', 'bolhas', 'ambar', 'roda', 'mano', 'vapor v1', 'vapor v2', 'vapor v3'], mascaras: ['verde', 'ambar', 'roda'], tema: 'Zaun · canos, válvulas e líquido verde' },
