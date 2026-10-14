@@ -13,7 +13,7 @@
 .top1 .rk-pos { color: #f5cf5a; }
 .top2 .rk-pos { color: #c9d1d9; }
 .top3 .rk-pos { color: #c98a5a; }
-.rk-quem { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rk-quem { display: flex; align-items: center; gap: 18px; min-width: 0; padding-left: 4px; }
 .rk-quem b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Efeitos com enfeites fora do nick (teia, aranhas) não podem ser cortados. */
 .rk-quem b:has(.fx) { overflow: visible; }
@@ -38,17 +38,22 @@
 .rk-filtro button { display: inline-flex; align-items: center; gap: 5px; }
 .rk-filtro button.on { border-color: var(--cor, var(--gold)); }
 .rk-lista li { grid-template-columns: 42px 1fr 150px 80px; }
-/* Celular: o elo e a divisão ficam numa segunda linha, embaixo do nick. */
+/* Celular: o ícone (com a moldura, que passa dos 34 px) ocupa as duas linhas; o nick fica em cima e o elo embaixo. */
+.rk-lista li { padding-top: 12px; padding-bottom: 12px; }
 @media (max-width: 560px) {
   .rk-lista li {
-    grid-template-columns: 30px 1fr auto;
-    grid-template-areas: "pos quem pts" "pos elo pts";
-    row-gap: 1px;
-    padding: 8px 10px;
+    grid-template-columns: 28px 52px 1fr auto;
+    grid-template-areas: "pos av nome pts" "pos av elo pts";
+    column-gap: 6px;
+    row-gap: 2px;
+    padding: 12px 10px;
+    min-height: 62px;
   }
   .rk-lista li .rk-pos { grid-area: pos; align-self: center; }
-  .rk-lista li .rk-quem { grid-area: quem; }
-  .rk-lista li .rk-elo { grid-area: elo; justify-self: start; padding-left: 44px; font-size: 12px; }
+  .rk-lista li .rk-quem { display: contents; }
+  .rk-lista li .rk-quem > :first-child { grid-area: av; place-self: center; }
+  .rk-lista li .rk-quem > b { grid-area: nome; align-self: end; min-width: 0; }
+  .rk-lista li .rk-elo { grid-area: elo; justify-self: start; align-self: start; padding-left: 0; font-size: 12px; }
   .rk-lista li .rk-pts { grid-area: pts; align-self: center; }
 }
 
