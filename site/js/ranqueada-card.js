@@ -1,6 +1,6 @@
 // Cartão "Minha ranqueada" (perfil e página de ranking) e o "Como funciona".
 import {
-  ELOS, BENEFICIOS, OVR_CARREIRA_BASE, PARTIDAS_POR_DIA, partidasPorDia, PDR_DIVISAO, NAO_TERMINOU, INATIVIDADE,
+  ELOS, BENEFICIOS, OVR_CARREIRA_BASE, PARTIDAS_POR_DIA, partidasPorDia, PDR_DIVISAO, INATIVIDADE,
   VAGAS_DESAFIANTE, MIN_DESAFIANTE, VAGAS_GRAO_MESTRE, MIN_GRAO_MESTRE,
   eloInfo, nivelElo, emblemaHtml, divisaoDe, nomeDivisao, fmtPdr,
 } from '../shared/ranked.js';
@@ -26,11 +26,8 @@ const jogosRanqueada = () => GAMES.filter((g) => g.ranked && g.status === 'live'
 }));
 export const JOGOS_RANQUEADA = jogosRanqueada();
 // Regra do Desafio do Golpear: aparece quando o jogo está liberado (sem `soAdmin` no catálogo) ou para administradores.
-const regraSmite = () => jogosRanqueada().some((j) => j.id === 'smite') ? `<li><b>Desafio do Golpear:</b> valem as ${partidasPorDia('smite')} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>, pela nota da partida (soma das 5 rodadas, de 0 a 500): <b>500 = +35</b>, <b>250 = +3</b>, <b>249 = −3</b>, <b>0 = −30</b>. Entre esses pontos o PDR varia proporcionalmente. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>` : '';
-const regraSucata = () => jogosRanqueada().some((j) => j.id === 'bar-do-barao') ? `<li><b>Barão da Sucata:</b> valem as ${partidasPorDia('bar-do-barao')} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>, pela pontuação da partida (de 10 a 100): <b>100 = +35</b>, <b>55 = +3</b>, <b>54 = −3</b>, <b>10 = −25</b>. Entre esses pontos o PDR varia proporcionalmente. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>` : '';
 // Benefício de um jogo em teste (`soAdmin`) só aparece para administradores.
 const beneficioVisivel = (b) => !b.id || GAMES.some((g) => g.id === b.id && (!g.soAdmin || ehAdmin));
-const regraConexoes = () => jogosRanqueada().some((j) => j.id === 'conexoes') ? `<li><b>Conexões do League:</b> <span>Vale 1 partida por dia, com o quebra-cabeça sorteado no servidor.</span> <span>No máximo 3 erros: o 4º erro perde a partida (−20 PDR).</span> <span>Pela pontuação: perfeito = +30, 1 dica = +22, 1 erro = +15, 2 erros = +5, 3 erros = −10.</span> <span>Começou e não terminou até a meia-noite: perde.</span></li>` : '';
 const MOTIVO = { partida: '', melhora: 'resultado melhor', nao_terminou: 'começou e não terminou', inatividade: 'inatividade', admin: 'ajuste', ajuste_dia: 'ajuste' };
 const nomeJogo = (id) => jogosRanqueada().find((j) => j.id === id)?.nome.replace(' (Oculto)', '') || '';
 
@@ -118,15 +115,10 @@ export function comoFunciona() {
     <h2 class="section-title">Como funciona</h2>
     <div class="pf-card rk-regras">
       <ul>
-        <li>Valem para a ranqueada, com a conta conectada: <b>Carreira no Rift</b>, <b>Lendas do CBLOL</b> (só o modo Oculto), <b>Runetermo</b>, <b>Campeão Oculto</b> e <b>Na Medida</b>.</li>
+        <li><b>Partidas do dia:</b> as primeiras partidas do dia valem PDR, com a conta conectada. Em alguns jogos vale só a primeira, em outros as 2 primeiras.</li>
         <li><b>Elos:</b> Ferro, Bronze, Prata, Ouro, Platina, Esmeralda e Diamante, com 3 divisões cada. Ao alcançar ${PDR_DIVISAO} PDR, você avança para a próxima divisão.</li>
         <li><b>Mestre, Grão-Mestre e Desafiante:</b> depois do Diamante 1 vem o Mestre. Todo dia à meia-noite, pela ordem de PDR, os ${VAGAS_DESAFIANTE} melhores com ${MIN_DESAFIANTE}+ PDR viram Desafiante e os ${VAGAS_GRAO_MESTRE} seguintes com ${MIN_GRAO_MESTRE}+ PDR, Grão-Mestre.</li>
         <li><b>Queda:</b> perdendo PDR, a divisão desce até 0. Perdendo com 0, volta para a divisão anterior com 75 PDR. Ferro 3 não cai.</li>
-        <li><b>Carreira no Rift e Lendas do CBLOL:</b> valem as ${partidasPorDia('cblol')} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>
-        <li><b>Show do Barão:</b> valem as ${partidasPorDia('barao')} primeiras partidas <b>começadas</b> no dia, e <b>cada uma vale o seu PDR</b>. Começou e não terminou até a meia-noite: <b>${NAO_TERMINOU} PDR</b> por partida.</li>
-        ${regraSmite()}
-        ${regraSucata()}
-        ${regraConexoes()}
         <li><b>Inatividade:</b> do Ouro para cima, depois de ${INATIVIDADE.dias} dias sem jogar, perde ${Math.abs(INATIVIDADE.pdr)} PDR por dia parado (até no máximo o Ouro 3 com 0 PDR). Qualquer partida de qualquer jogo conta como atividade.</li>
       </ul>
       <div class="table-wrap"><table class="rk-tabela">

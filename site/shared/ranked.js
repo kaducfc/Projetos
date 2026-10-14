@@ -118,11 +118,13 @@ export const PDR_LENDAS = [
 
 // Benefícios: cada elo mantém os dos elos abaixo.
 export const BENEFICIOS = [
+  { elo: 'bronze', jogo: 'Show do Barão', id: 'barao', texto: '+1 Pinstouro (pulo) por partida (3 no total)' },
   { elo: 'prata', jogo: 'Runetermo', texto: 'a categoria da palavra (campeão, item, região…) aparece desde o começo' },
   { elo: 'ouro', jogo: 'Lendas do CBLOL', texto: '+1 dado bônus por partida (2 no total)' },
   { elo: 'platina', jogo: 'Conexões do League', id: 'conexoes', texto: '+1 dica por partida (2 no total)' },
   { elo: 'esmeralda', jogo: 'Campeão Oculto', texto: '+1 dica por dia (2 no total)' },
   { elo: 'diamante', jogo: 'Runetermo', texto: '+1 tentativa (7 no total)' },
+  { elo: 'mestre', jogo: 'Desafio do Golpear', id: 'smite', texto: 'você pode escolher o caçador' },
   { elo: 'desafiante', jogo: 'Lendas do CBLOL e Campeão Oculto', texto: '+1 dado bônus (3 no total) e +1 tentativa no Campeão Oculto (9 no total)' },
 ];
 
@@ -141,6 +143,8 @@ export function vantagens(elo) {
     dicasConexoes: 1 + (n >= 4 ? 1 : 0),
     tentativasRunetermo: 6 + (n >= 6 ? 1 : 0),
     tentativasCampeao: 8 + (n >= 9 ? 1 : 0),
+    pulosBarao: 2 + (n >= 1 ? 1 : 0),
+    escolheCacador: n >= 7,
   };
 }
 

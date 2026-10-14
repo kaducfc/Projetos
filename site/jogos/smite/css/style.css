@@ -256,3 +256,12 @@ html[lang="fr"] .sm-logo b, html[lang="it"] .sm-logo b { font-size: 4.2cqw; }
   .sm-tag img { width: 8cqw; height: 8cqw; border-radius: 1.4cqw; } .sm-tag b { font-size: 6.4cqw; }
 }
 .sm-regras > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+/* Escolha do caçador (elo Mestre) */
+.sm-cacadores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1cqw; width: 100%; }
+.sm-cac { appearance: none; cursor: pointer; display: grid; justify-items: center; gap: 0.3cqw; padding: 0.8cqw 0.6cqw; border: 0.14cqw solid rgba(245, 207, 90, 0.4); border-radius: 0.8cqw; background: rgba(0, 0, 0, 0.35); color: #f4e9c2; font: inherit; }
+.sm-cac:hover, .sm-cac:focus-visible { border-color: var(--sm-ouro); background: rgba(245, 207, 90, 0.12); transform: translateY(-0.2cqw); }
+.sm-cac img, .sm-cac .dado { width: 5.4cqw; height: 5.4cqw; border-radius: 50%; border: 0.2cqw solid var(--sm-ouro); object-fit: cover; display: grid; place-items: center; font-size: 3cqw; background: #0c201f; }
+.sm-cac b { font-size: 1.25cqw; letter-spacing: 0.04em; }
+.sm-cac small { font-size: 0.95cqw; color: #b9d0c8; }
+@media (max-width: 760px) { .sm-cacadores { grid-template-columns: repeat(2, 1fr); gap: 2.4vw; } .sm-cac img, .sm-cac .dado { width: 15vw; height: 15vw; font-size: 8vw; } .sm-cac b { font-size: 3.6vw; } .sm-cac small { font-size: 2.8vw; } }

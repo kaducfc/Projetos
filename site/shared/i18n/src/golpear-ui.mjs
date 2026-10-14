@@ -1,6 +1,12 @@
 // Desafio do Golpear (Smite Challenge): telas, botões e avisos. O nome é "Desafio do Golpear" em português e,
 // nos outros idiomas, usa o termo de cada língua para o feitiço (Smite, Zerschmettern, Aplastar, Punizione, Châtiment).
 export default [
+  ['Benefício do elo Mestre', 'Master rank perk', 'Vorteil des Meister-Rangs', 'Beneficio del rango Maestro', 'Vantaggio del rango Maestro', 'Avantage du rang Maître'],
+  ['Escolha o seu caçador', 'Choose your jungler', 'Wähle deinen Jungler', 'Elige a tu jungla', 'Scegli il tuo cacciatore', 'Choisis ton jungler'],
+  ['Ele joga as 5 rodadas da partida. Cada um tem uma habilidade (Q) diferente.', 'He plays all 5 rounds of the match. Each one has a different ability (Q).', 'Er spielt alle 5 Runden der Partie. Jeder hat eine andere Fähigkeit (Q).', 'Juega las 5 rondas de la partida. Cada uno tiene una habilidad (Q) distinta.', 'Gioca tutti e 5 i round della partita. Ognuno ha un’abilità (Q) diversa.', 'Il joue les 5 manches de la partie. Chacun a une compétence (Q) différente.'],
+  ['Sorteio', 'Random', 'Zufall', 'Sorteo', 'Casuale', 'Aléatoire'],
+  ['Surpresa', 'Surprise', 'Überraschung', 'Sorpresa', 'Sorpresa', 'Surprise'],
+  ['VOLTAR', 'BACK', 'ZURÜCK', 'VOLVER', 'INDIETRO', 'RETOUR'],
   ['Desafio do Golpear', 'Smite Challenge', 'Zerschmettern-Challenge', 'Desafío de Aplastar', 'Sfida della Punizione', 'Défi du Châtiment'],
   ['Desafio do Golpear · Rift Arcade', 'Smite Challenge · Rift Arcade', 'Zerschmettern-Challenge · Rift Arcade', 'Desafío de Aplastar · Rift Arcade', 'Sfida della Punizione · Rift Arcade', 'Défi du Châtiment · Rift Arcade'],
   ['DESAFIO DO', 'CHALLENGE', 'CHALLENGE', 'DESAFÍO DE', 'SFIDA DELLA', 'DÉFI DU'],

@@ -5,6 +5,7 @@ import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
+import { vantagens } from '../../../shared/ranked.js';
 import { avisoInicio, avisoComeco, avisoFimServidor, mostrar } from '../../../shared/aviso-ranked.js';
 import { t, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import {
@@ -15,6 +16,7 @@ const GAME_ID = 'barao';
 const CHAVE_PARTIDA = 'barao.partida'; // { id, ranked }: a partida em andamento (o jogo roda no servidor)
 const CHAVE_MELHOR = 'barao.melhor';
 const CHAVE_MUDO = 'barao.mudo';
+const pulosDoJogador = () => vantagens(platform.getUser()?.elo).pulosBarao; // Bronze ou mais: +1 Pinstouro (o servidor aplica o mesmo)
 const app = document.getElementById('app');
 const fmt = (n) => Number(n).toLocaleString(localeAtual()); // números no idioma da tela
 const fmtPt = (n) => Number(n).toLocaleString('pt-BR'); // o que vai para o servidor fica em português
@@ -206,7 +208,7 @@ function telaInicio() {
     <h2>Show do Barão</h2>
     <p>Avance a cada pergunta, acumule pontos e mostre o quanto você conhece do universo de League of Legends. Será que você chega até o fim e se torna o grande campeão?</p>
     <div class="bz-regras">
-      <div><b>Pinstouro</b>Pule ${PULOS} vezes: a pergunta é trocada por outra, mas você continua na mesma etapa e no mesmo prêmio.</div>
+      <div><b>Pinstouro</b>Pule ${pulosDoJogador()} vezes: a pergunta é trocada por outra, mas você continua na mesma etapa e no mesmo prêmio.</div>
       <div class="v"><b>Monstros do Vazio</b>Cho'Gath, Kha'Zix e Vel'Koz apontam a resposta que acham certa.</div>
       <div><b>Cartas do TF</b>Três cartas viradas: escolha uma, uma única vez na partida. Ela revela se tira 1, 2 ou 3 opções erradas.</div>
     </div>

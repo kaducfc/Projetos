@@ -8,10 +8,11 @@ import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import { avisoInicio, avisoComeco, avisoFim } from '../../../shared/aviso-ranked.js';
+import { vantagens } from '../../../shared/ranked.js';
 import { t, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import {
   OBJETIVOS, RODADAS, TEMPO_MAX, ROTA_NOME, postoHab,
-  aleatorio, criarPartida, criarRodada, nomeCampeao,
+  CAMPEOES, aleatorio, criarPartida, criarRodada, nomeCampeao,
   novoEstado, avancar, usarHabilidade, soltarHabilidade, estadoQ, danoDaQ, usarGolpear,
 } from './logic.js';
 
@@ -481,13 +482,35 @@ function desenharFim(pts, melhor, recorde, perfeitas) {
 }
 
 // --------------------------------------------------------------------------- entradas
+// Começa a partida (e a ranqueada do dia): `campeao` fixa o caçador; sem ele, é sorteado.
+function comecarPartida(campeao) {
+  resultados = []; n = 0; ranqueada = null;
+  platform.rankedIniciar(GAME_ID).then((r) => { ranqueada = r; avisoComeco(r, GAME_ID); });
+  partida = criarPartida(aleatorio((Date.now() ^ 0x9e3779b9) >>> 0), campeao);
+  prepararRodada();
+}
+
+// Benefício do Mestre: escolher o caçador da partida (as 5 rodadas usam o mesmo).
+function telaCacador() {
+  fase = 'intro';
+  tela(`<div class="sm-cartao">
+    <span class="sup">${t('Benefício do elo Mestre')}</span>
+    <h2>${t('Escolha o seu caçador')}</h2>
+    <p>${t('Ele joga as 5 rodadas da partida. Cada um tem uma habilidade (Q) diferente.')}</p>
+    <div class="sm-cacadores">${CAMPEOES.map((c) => `<button type="button" class="sm-cac" data-a="cacador" data-c="${c.id}"><img alt="" src="${imgCampeao(c.id)}" /><b>${esc(nomeCampeao(c.id))}</b><small>${esc(t(c.hab))}</small></button>`).join('')}
+      <button type="button" class="sm-cac sorteio" data-a="cacador"><span class="dado" aria-hidden="true">🎲</span><b>${t('Sorteio')}</b><small>${t('Surpresa')}</small></button></div>
+    <div class="sm-acoes"><button type="button" class="sm-go sec" data-a="voltar">${t('VOLTAR')}</button></div></div>`, telaCacador);
+}
+
 document.addEventListener('click', (e) => {
   const a = e.target.closest('[data-a]')?.dataset.a;
   if (!a) return;
   if (a === 'jogar') {
-    resultados = []; n = 0; ranqueada = null;
-    platform.rankedIniciar(GAME_ID).then((r) => { ranqueada = r; avisoComeco(r, GAME_ID); }); partida = criarPartida(aleatorio((Date.now() ^ 0x9e3779b9) >>> 0), new URLSearchParams(location.search).get('camp')); prepararRodada();
-  } // ?camp=LeeSin fixa o campeão (teste)
+    // Mestre ou acima escolhe o caçador (?camp=LeeSin continua fixando o campeão, para teste).
+    if (vantagens(platform.getUser()?.elo).escolheCacador && !new URLSearchParams(location.search).get('camp')) telaCacador();
+    else comecarPartida(new URLSearchParams(location.search).get('camp'));
+  } else if (a === 'cacador') comecarPartida(e.target.closest('[data-c]')?.dataset.c || null);
+  else if (a === 'voltar') telaInicio();
   else if (a === 'comecar') contagemEIniciar();
   else if (a === 'proxima') { n += 1; prepararRodada(); }
   else if (a === 'fim') telaFim();
