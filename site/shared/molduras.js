@@ -10,8 +10,8 @@ export const MOLDURAS = [
   // "Rank" é uma moldura só, de todos os jogadores: mostra a arte do elo atual e muda sozinha
   // quando o jogador sobe ou desce de elo (ver ELOS_MOLDURAS).
   { id: 'rank', nome: 'Rank', virtual: true, publica: true },
-  { id: 'hw-moldura-1', nome: 'Vampiro', k: 0.5879, como: 'Recompensa do nível 8 do Passe de Batalha.' },
-  { id: 'hw-moldura-2', nome: 'Abóboras e Espinhos', k: 0.5962, como: 'Recompensa do nível 4 do Passe de Batalha.' },
+  { id: 'hw-moldura-1', nome: 'Vampiro', k: 0.5879, anim: 'mfb-vampiro', camadas: ['lua', 'asas', 'rubi', 'onix', 'voo'], mascaras: ['rubi', 'onix', 'asas', 'filigrana'], como: 'Recompensa do nível 8 do Passe de Batalha.' },
+  { id: 'hw-moldura-2', nome: 'Abóboras e Espinhos', k: 0.5962, anim: 'mfb-abobora', camadas: ['luzes', 'vinhas', 'fa', 'fb', 'fc', 'chispa'], mascaras: ['face-a', 'face-b', 'face-c', 'vinhas'], como: 'Recompensa do nível 4 do Passe de Batalha.' },
   { id: 'hw-moldura-3', nome: 'Correntes e Caveiras', k: 0.591, como: 'Recompensa do nível 7 do Passe de Batalha.' },
   // À venda por Rift Coins (site_loja, 0081_loja_molduras.sql): `preco` só serve para mostrar.
   { id: 'mn-poro', nome: 'Poro da Floresta', k: 0.5794, preco: 2000, como: 'Compre por 2.000 RC.' },
@@ -21,9 +21,6 @@ export const MOLDURAS = [
 
 // Só o administrador recebe (aba Teste do painel).
 export const MOLDURAS_TESTE = [
-  // Versões animadas das molduras do passe (mesma arte, com `arte`): só para ver no painel e na conta dos administradores (0082).
-  { id: 'hw-moldura-1-fx', arte: 'hw-moldura-1', nome: 'Vampiro (animada)', k: 0.5879, anim: 'mfb-vampiro', camadas: ['lua', 'asas', 'rubi', 'onix', 'voo'], mascaras: ['rubi', 'onix', 'asas', 'filigrana'], tema: 'Vampiro · rubi que pulsa como coração e sangue correndo pelos arabescos' },
-  { id: 'hw-moldura-2-fx', arte: 'hw-moldura-2', nome: 'Abóboras e Espinhos (animada)', k: 0.5962, anim: 'mfb-abobora', camadas: ['luzes', 'vinhas', 'fa', 'fb', 'fc', 'chispa'], mascaras: ['face-a', 'face-b', 'face-c', 'vinhas'], tema: 'Halloween · abóboras tremulando e espinhos roxos' },
   // Molduras de arte (imagem) em teste: só administradores equipam (0078_molduras_teste_novas.sql).
   { id: 'mn-zaun', nome: 'Canos de Zaun', k: 0.5525, anim: 'mfb-zaun', camadas: ['verde', 'bolhas', 'ambar', 'roda', 'mano', 'vapor v1', 'vapor v2', 'vapor v3'], mascaras: ['verde', 'ambar', 'roda'], tema: 'Zaun · canos, válvulas e líquido verde' },
   { id: 'mn-pirata', nome: 'Capitão Pirata', k: 0.5306, anim: 'mfb-pirata', camadas: ['luz', 'chama', 'lenco', 'ouro', 'leme', 'olho o1', 'olho o2', 'brasa b1', 'brasa b2', 'brasa b3'], mascaras: ['chama', 'lenco', 'ouro', 'leme'], tema: 'Pirata · corda, lampião e timão' },
