@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -229,6 +229,47 @@ t('compra simultânea do mesmo anúncio: só uma passa e o RC bate', async () =>
   assert.equal(Number(V(`select count(*) from tc_transf where jogador_id = ${j} and tipo = 'compra_usuario'`)), compras0 + 1);
   assert.equal(Number(V('select sum(saldo) from site_carteira')), antes - 40, 'só a taxa de 5% sai de circulação');
   assert.ok(V(`select 1 from tc_jogadores jg join tc_orgs o on o.id = jg.org_id where jg.id = ${j} and o.user_id in ('${U(3)}', '${U(4)}')`) === '1', 'o jogador foi para um dos compradores');
+});
+
+t('campeões: 173 no catálogo, sem repetição, e só administrador (jogo fechado) enxerga a lista', () => {
+  assert.equal(V('select count(*) from tc_campeoes'), '173');
+  assert.equal(V('select count(distinct nome) from tc_campeoes'), '173');
+  assert.equal(V("select count(*) from tc_campeoes where cardinality(posicoes) = 0"), '0');
+  const lista = J('select tc_campeoes_lista()', 1);
+  assert.equal(lista.campeoes.length, 173);
+  assert.equal(lista.maestria.favoritos_max, 5);
+});
+
+t('maestria: todo jogador nasce com até 5 favoritos da própria posição e com o mínimo de pontos', () => {
+  assert.equal(V('select count(*) from tc_jogadores j where not exists (select 1 from tc_maestria m where m.jogador_id = j.id)'), '0');
+  assert.ok(Number(V('select coalesce(max(n), 0) from (select count(*) n from tc_maestria where favorito group by jogador_id) x')) <= 5);
+  assert.equal(V("select count(*) from tc_maestria where favorito and pontos < 150"), '0');
+  assert.equal(V(`select count(*) from tc_maestria m join tc_jogadores j on j.id = m.jogador_id join tc_campeoes c on c.id = m.campeao_id
+                   where not (j.pos = any(c.posicoes) or c.posicoes && j.pos2)`), '0');
+});
+
+t('maestria: jogar com um campeão soma pontos, vira favorito e dá bônus; nunca passa de 5 favoritos', () => {
+  const j = V("select id from tc_jogadores where org_id = 1 and slot = 'top'");
+  V(`delete from tc_maestria where jogador_id = ${j}`);
+  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '0');
+  for (let i = 0; i < 5; i++) V(`select tc_maestria_registrar(${j}, 'garen', true)`); // 150 pontos
+  assert.equal(V(`select favorito from tc_maestria where jogador_id = ${j} and campeao_id = 'garen'`), 't');
+  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '2');
+  for (let i = 0; i < 20; i++) V(`select tc_maestria_registrar(${j}, 'garen', true)`); // 750 pontos
+  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '4');
+  for (const c of ['darius', 'sett', 'teemo', 'nasus', 'malphite', 'ornn', 'renekton']) for (let i = 0; i < 10; i++) V(`select tc_maestria_registrar(${j}, '${c}', false)`); // 150 pontos cada
+  assert.equal(V(`select count(*) from tc_maestria where jogador_id = ${j} and favorito`), '5');
+  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '4', 'o mais jogado continua favorito');
+  assert.equal(falha(`update tc_maestria set favorito = true where jogador_id = ${j} and campeao_id = 'teemo' and not favorito returning 1`, 1) !== '', true);
+});
+
+t('maestria: a ficha do jogador traz os campeões e ninguém acessa as tabelas direto', () => {
+  const j = V("select id from tc_jogadores where org_id = 1 and slot = 'top'");
+  const f = J(`select tc_ficha_jogador(${j})`, 1);
+  assert.ok(f.campeoes.length >= 1 && f.campeoes[0].nivel >= 1);
+  assert.equal(V("select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relname in ('tc_campeoes', 'tc_maestria') and c.relrowsecurity"), '2');
+  assert.equal(V("select has_table_privilege('authenticated', 'tc_maestria', 'select')"), 'f');
+  assert.equal(V("select has_table_privilege('authenticated', 'tc_campeoes', 'select')"), 'f');
 });
 
 t('vender titular: a vaga é preenchida e a sinergia cai', () => {

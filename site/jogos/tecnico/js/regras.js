@@ -19,6 +19,8 @@ export const ELENCO_MAX = 10;
 export const CONTRATO_MIN = 4;
 export const CONTRATO_MAX = 26;
 export const TAXA_MERCADO_PCT = 5;
+export const FAVORITOS_MAX = 5;
+export const NOME_NIVEL = ['Iniciante', 'Praticante', 'Experiente', 'Especialista', 'Mestre'];
 export const PRECO_RC = { min: 10, max: 100000 };
 
 export function poder(j, pesos = PESOS) {

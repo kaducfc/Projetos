@@ -6,7 +6,7 @@ import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import {
-  VAGAS, NOME_VAGA, ATRIBUTOS, ELENCO_MAX, CONTRATO_MIN, CONTRATO_MAX, PRECO_RC, TAXA_MERCADO_PCT,
+  VAGAS, NOME_VAGA, SIGLA_VAGA, FAVORITOS_MAX, NOME_NIVEL, ATRIBUTOS, ELENCO_MAX, CONTRATO_MIN, CONTRATO_MAX, PRECO_RC, TAXA_MERCADO_PCT,
   fmt, esc, corPoder, taxaDe, salarioDe,
 } from './regras.js';
 import { ESCUDOS, escudoSvg, escudoOrg, retratoSvg, iconeVaga } from './art.js';
@@ -27,6 +27,8 @@ const S = {
   camp: null,
   ligaSel: null,
   hist: null,
+  campeoes: null,
+  fc: { busca: '', pos: '', classe: '', regiao: '' },
   mercado: { aba: 'oficial', f: { ordem: 'poder' }, oficial: null, usuarios: null, meus: null },
   modal: null,
   ocupado: false,
@@ -83,6 +85,7 @@ async function carregarAba() {
   try {
     if ((S.aba === 'camp' || S.aba === 'class') && !S.camp) S.camp = await api.campeonatos();
     if (S.aba === 'hist' && !S.hist) S.hist = await api.historico();
+    if (S.aba === 'campeoes' && !S.campeoes) S.campeoes = await api.campeoes();
     if (S.aba === 'contratar') await carregarMercado();
   } catch (e) { toast(e.message, true); }
 }
@@ -134,7 +137,7 @@ function topo() {
 }
 
 const ABAS = [
-  ['visao', 'Início', 'i-home'], ['elenco', 'Meu elenco', 'i-time'], ['contratar', 'Mercado', 'i-mercado'],
+  ['visao', 'Início', 'i-home'], ['elenco', 'Meu elenco', 'i-time'], ['contratar', 'Mercado', 'i-mercado'], ['campeoes', 'Campeões', 'i-plantel'],
   ['camp', 'Campeonatos', 'i-trofeu'], ['class', 'Classificação', 'i-stats'], ['hist', 'Histórico', 'i-financas'], ['pers', 'Personalização', 'i-engrenagem'],
 ];
 function nav() {
@@ -323,6 +326,22 @@ function viewHist() {
     <section class="tc-card"><h3>Partidas</h3>${h.partidas.length ? `<div class="tc-lista">${h.partidas.map((p) => partidaLinha(p)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Nenhuma partida disputada.</p>'}</section>`;
 }
 
+// ------------------------------------------------------------------ campeões
+function viewCampeoes() {
+  const d = S.campeoes; if (!d) return '<p class="tc-carregando">Carregando…</p>';
+  const f = S.fc; const q = f.busca.trim().toLowerCase();
+  const todos = d.campeoes;
+  const lista = todos.filter((c) => (!q || c.nome.toLowerCase().includes(q)) && (!f.pos || c.posicoes.includes(f.pos)) && (!f.classe || c.classes.includes(f.classe)) && (!f.regiao || c.regioes.includes(f.regiao)));
+  const uniq = (k) => [...new Set(todos.flatMap((c) => c[k]))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const sel = (nome, rot, ops, todosRot) => `<label>${rot}<select name="${nome}" data-fc>${`<option value="">${todosRot}</option>` + ops.map(([v, t]) => `<option value="${esc(v)}" ${f[nome] === v ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>`;
+  const m = d.maestria || {};
+  return `<section class="tc-card"><h3>${IMG('i-plantel')}Campeões<span class="dir">${lista.length} de ${todos.length}</span></h3>
+    <div class="tc-filtros" style="margin-bottom:0"><label>Buscar<input name="busca" data-fc value="${esc(f.busca)}" placeholder="Nome do campeão" autocomplete="off" /></label>
+      ${sel('pos', 'Posição', VAGAS.map((v) => [v, NOME_VAGA[v]]), 'Todas')}${sel('classe', 'Classe', uniq('classes').map((v) => [v, v]), 'Todas')}${sel('regiao', 'Região', uniq('regioes').map((v) => [v, v]), 'Todas')}</div>
+    <p class="tc-mudo tc-peq" style="margin:10px 0 0">Cada jogador pode ter até <b>${m.favoritos_max || FAVORITOS_MAX} campeões favoritos</b>. Quanto mais ele joga com um campeão, mais maestria ganha: a cada mapa são ${m.pontos_vitoria || 30} pontos na vitória e ${m.pontos_derrota || 15} na derrota. Com ${m.limiar || 150} pontos ele entra na lista de favoritos e, ao jogar com o campeão, ganha um bônus de Poder que cresce com o nível (${(m.bonus_pct || []).slice(1).map((b) => `+${b}%`).join(', ')}). Fotos dos campeões virão depois.</p></section>
+  <div class="tc-camps">${lista.map((c) => `<div class="tc-camp"><b>${esc(c.nome)}</b><span class="pp">${c.posicoes.map((p) => `<i class="tc-vaga-ic v-${p}">${SIGLA_VAGA[p]}</i>`).join('')}</span><small>${esc(c.classes.join(' · '))}</small><small class="tc-mudo">${esc(c.regioes.join(', '))} · ${c.ano}</small></div>`).join('') || '<p class="tc-mudo">Nenhum campeão com esses filtros.</p>'}</div>`;
+}
+
 // ------------------------------------------------------------------ personalização
 function viewPers() {
   const o = S.meu.org; const f = S.form.pers || (S.form.pers = { escudo: o.escudo, cor1: o.cor1, cor2: o.cor2, estilo: o.estilo });
@@ -361,6 +380,7 @@ function fichaHtml(m) {
       <div class="tc-poder" style="margin-bottom:10px"><div class="grande" style="color:${corPoder(j.poder)}">${j.poder}</div><span class="tc-mudo tc-peq">Poder individual<br>Forma ${j.forma} · Experiência ${j.exp}${j.potencial != null ? `<br>Potencial ${j.potencial}` : ''}</span></div>
       ${barras(j)}</div></div>
     <div class="tc-resumo"><div class="l"><span>Salário${j.org_id ? '' : ' (se contratado)'}</span><b>${fmt(j.org_id ? j.salario : salarioDe(j.preco))} cr./semana</b></div>${j.org_id ? `<div class="l"><span>Contrato</span><b>${resta == null ? '—' : resta <= 0 ? 'vence nesta semana' : `${resta} semana(s)`}</b></div><div class="l"><span>Organização</span><b>${esc(j.org?.nome || '')}</b></div>` : `<div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div>`}${m.anuncio ? `<div class="l"><span>Anúncio</span><b class="tc-preco rc">${fmt(m.anuncio.preco_rc)}</b></div><div class="l"><span>Vendedor</span><b>${esc(m.anuncio.vendedor.nome)}</b></div><div class="l"><span>Publicado em</span><b>${new Date(m.anuncio.criado).toLocaleDateString('pt-BR')}</b></div>` : ''}</div>
+    ${(j.campeoes || []).length ? `<h4 class="tc-eyebrow">Campeões</h4><div class="tc-maes">${j.campeoes.map((c) => `<div class="${c.favorito ? 'fav' : ''}"><b>${esc(c.nome)}</b><span>${c.favorito ? '★ ' : ''}${NOME_NIVEL[c.nivel - 1] || ''}${c.favorito && c.bonus_pct ? ` · +${c.bonus_pct}% de Poder` : ''}</span><small>${fmt(c.pontos)} pts · ${c.jogos} jogo(s)</small></div>`).join('')}</div>` : ''}
     ${hist.length ? `<h4 class="tc-eyebrow">Histórico</h4><ul class="tc-avisos">${hist.map((h) => `<li>${new Date(h.criado).toLocaleDateString('pt-BR')} · ${{ inicial: 'Elenco inicial', contratacao: 'Contratado', compra_usuario: 'Vendido entre usuários', renovacao: 'Renovou', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' }[h.tipo] || h.tipo}${h.para ? ` · ${esc(h.para)}` : ''}${h.valor ? ` · ${fmt(h.valor)} ${h.moeda === 'rc' ? 'RC' : 'cr.'}` : ''}</li>`).join('')}</ul>` : ''}
     <div class="tc-acoes">${acoes}</div>`;
 }
@@ -423,6 +443,7 @@ function conteudo() {
     case 'camp': return viewCamp();
     case 'class': return viewClass();
     case 'hist': return viewHist();
+    case 'campeoes': return viewCampeoes();
     case 'pers': return viewPers();
     default: return viewVisao();
   }
@@ -530,12 +551,14 @@ document.addEventListener('input', (e) => {
     S.modal.semanas = Math.min(CONTRATO_MAX, Math.max(CONTRATO_MIN, Number(t.value) || CONTRATO_MIN)); render(); return;
   }
   if (t.matches('[data-act="preco-anuncio"]')) { S.modal.preco = t.value; render(); return; }
+  if (t.matches('[data-fc]')) { S.fc[t.name] = t.value; render(); return; }
   const form = t.closest('form[data-form="criar"]');
   if (form) { S.form[t.name] = t.name === 'sigla' ? t.value.toUpperCase() : t.value; render(); return; }
   const pf = t.closest('form[data-form="pers"]');
   if (pf) { S.form.pers[t.name] = t.value; render(); }
 });
 document.addEventListener('change', (e) => {
+  if (e.target.matches('[data-fc]')) { S.fc[e.target.name] = e.target.value; render(); return; }
   if (e.target.matches('[data-act="liga-sel"]')) { S.ligaSel = Number(e.target.value); render(); }
 });
 document.addEventListener('submit', async (e) => {
