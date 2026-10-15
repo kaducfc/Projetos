@@ -123,6 +123,10 @@ begin
         update tc_orgs set ativa = false where id = fora;
       end if;
     end if;
+    -- Liga da divisão ainda sem nenhuma partida jogada: refaz com o técnico novo incluído (o tc_sincronizar recria).
+    delete from tc_ligas l
+     where l.divisao = new.divisao and l.tipo = 'divisao' and l.status = 'aberta'
+       and not exists (select 1 from tc_partidas p where p.liga_id = l.id and p.status = 'concluida');
   end if;
   return null;
 end;

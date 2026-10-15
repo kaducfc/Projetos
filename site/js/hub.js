@@ -30,6 +30,7 @@ mountSiteFooter(document.getElementById('site-footer'));
 // Capas dos jogos, montadas com as imagens do site.
 const A = '/shared/assets';
 const CAPAS = {
+  tecnico: `<div class="cv cv-tec"><span class="cv-t"><i>SIMULADOR DE</i><b>TÉCNICO</b></span><svg class="cv-tec-esc" viewBox="0 0 100 120" aria-hidden="true"><path d="M50 4 L92 16 V58 C92 86 70 104 50 116 C30 104 8 86 8 58 V16 Z" fill="#12305c" stroke="#d9a82b" stroke-width="5"/><text x="50" y="72" text-anchor="middle" font-family="Bebas Neue, Impact, sans-serif" font-size="34" fill="#d9a82b">SIG</text></svg><span class="cv-tec-poder"><small>PODER</small><b>74</b></span></div>`,
   // Um pedaço da tela da carreira: escudo do OVR (diamante, 91) e o resumo.
   'carreira-no-rift': `<div class="cv cv-mapa cv-car" style="--img:url(${A}/mapa/summoners-rift-640.webp)"><span class="cv-t"><i>CARREIRA</i><b>NO RIFT</b></span>
       <div class="cv-car-ovr"><img src="${A}/trofeus/diamante.png" alt="" loading="lazy" /><small>OVR</small><b>91</b></div>

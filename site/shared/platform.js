@@ -1013,6 +1013,81 @@ export const baraoParar = (id) => rpcBarao('site_barao_parar', { pid: id });
 export const baraoPular = (id) => rpcBarao('site_barao_pular', { pid: id });
 export const baraoCarta = (id, slot) => rpcBarao('site_barao_carta', { pid: id, slot });
 export const baraoVazio = (id) => rpcBarao('site_barao_vazio', { pid: id });
+// Simulador de técnico (jogo "tecnico"): tudo é decidido no servidor (SQL 0085 a 0089); o navegador só chama funções.
+const ERROS_TECNICO = {
+  jogo_fechado: 'Este jogo ainda está em teste e só administradores podem jogar.',
+  not_authenticated: 'Entre na sua conta para jogar.',
+  nome_invalido: 'Use de 3 a 24 caracteres (letras, números, espaço, ponto, hífen ou sublinhado).',
+  sigla_invalida: 'A sigla precisa ter de 2 a 4 letras ou números.',
+  escudo_invalido: 'Escolha um escudo da lista.',
+  estilo_invalido: 'Escolha um estilo da lista.',
+  ja_tem_org: 'Você já tem uma organização.',
+  nome_em_uso: 'Já existe uma organização com esse nome.',
+  sigla_em_uso: 'Já existe uma organização com essa sigla.',
+  nome_ou_sigla_em_uso: 'Esse nome ou essa sigla já está em uso.',
+  divisao_cheia: 'A divisão de acesso está cheia por enquanto. Tente mais tarde.',
+  sem_org: 'Crie a sua organização primeiro.',
+  chave_invalida: 'Pedido inválido. Tente de novo.',
+  contrato_invalido: 'Escolha um contrato entre 4 e 26 semanas.',
+  jogador_inexistente: 'Esse jogador não existe.',
+  jogador_indisponivel: 'Esse jogador já tem time.',
+  jogador_nao_e_seu: 'Esse jogador não é do seu elenco.',
+  jogador_titular: 'Tire o jogador da escalação antes de liberá-lo.',
+  elenco_cheio: 'Seu elenco está cheio (máximo de 10 jogadores). Libere alguém antes.',
+  creditos_insuficientes: 'Você não tem créditos suficientes.',
+  saldo_insuficiente: 'Você não tem Rift Coins suficientes.',
+  vaga_invalida: 'Posição inválida.',
+  preco_invalido: 'Preço fora do limite permitido.',
+  contrato_acabando: 'O contrato desse jogador está acabando. Renove antes de anunciar.',
+  ja_anunciado: 'Esse jogador já está anunciado.',
+  muitos_anuncios: 'Você já tem 5 anúncios abertos.',
+  anuncio_nao_e_seu: 'Esse anúncio não é seu.',
+  anuncio_encerrado: 'Esse anúncio já foi encerrado.',
+  anuncio_inexistente: 'Esse anúncio não existe mais.',
+  compra_propria: 'Você não pode comprar o seu próprio jogador.',
+  vendedor_invalido: 'Esse anúncio não pode ser comprado.',
+  partida_inexistente: 'Partida não encontrada.',
+  dados_invalidos: 'Dados inválidos.',
+};
+async function rpcTecnico(nome, args = {}) {
+  await init();
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc(nome, args);
+  if (error) {
+    const k = Object.keys(ERROS_TECNICO).find((x) => error.message.includes(x));
+    const e = new Error(k ? ERROS_TECNICO[k] : (/schema cache|does not exist|Could not find/.test(error.message) ? 'O servidor ainda não tem o simulador de técnico instalado (rodar os SQL 0085 a 0089).' : friendly(error).message));
+    e.codigo = k || null;
+    throw e;
+  }
+  return data;
+}
+export const tecnico = {
+  sincronizar: () => rpcTecnico('tc_sincronizar'),
+  meu: () => rpcTecnico('tc_meu'),
+  painel: () => rpcTecnico('tc_painel'),
+  campeonatos: () => rpcTecnico('tc_campeonatos'),
+  historico: () => rpcTecnico('tc_historico'),
+  partida: (pid) => rpcTecnico('tc_partida', { pid }),
+  ficha: (jid) => rpcTecnico('tc_ficha_jogador', { jid }),
+  criarOrg: (a) => rpcTecnico('tc_criar_org', { nome_: a.nome, sigla_: a.sigla, escudo_: a.escudo, cor1_: a.cor1, cor2_: a.cor2, estilo_: a.estilo }),
+  personalizar: (a) => rpcTecnico('tc_personalizar_org', { escudo_: a.escudo, cor1_: a.cor1, cor2_: a.cor2, estilo_: a.estilo }),
+  mercadoOficial: (f) => rpcTecnico('tc_mercado_oficial', { f }),
+  contratar: (jogador, semanas, chave) => rpcTecnico('tc_contratar', { jogador, semanas, chave_: chave }),
+  escalar: (vaga, jogador) => rpcTecnico('tc_escalar', { vaga, jogador }),
+  renovar: (jogador, semanas, chave) => rpcTecnico('tc_renovar', { jogador, semanas, chave_: chave }),
+  liberar: (jogador) => rpcTecnico('tc_liberar', { jogador }),
+  mercadoUsuarios: (f) => rpcTecnico('tc_mercado_usuarios', { f }),
+  meusAnuncios: () => rpcTecnico('tc_meus_anuncios'),
+  anunciar: (jogador, preco) => rpcTecnico('tc_anunciar', { jogador, preco }),
+  cancelarAnuncio: (anuncio) => rpcTecnico('tc_cancelar_anuncio', { anuncio }),
+  comprarAnuncio: async (anuncio, chave) => {
+    const r = await rpcTecnico('tc_comprar_anuncio', { anuncio, chave_: chave });
+    await refreshMoedas(); // o saldo de RC mudou
+    return r;
+  },
+};
+
 // Com conta e servidor, o jogo diário vale ranqueada (e é conferido lá).
 export const diarioNoServidor = () => Boolean(user) && cloudEnabled();
 

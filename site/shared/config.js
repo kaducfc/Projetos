@@ -144,6 +144,16 @@ export const GAMES = [
     scoreLabel: 'Pontos',
     ranked: { modo: 'vagas', selo: 'Ranqueada' },
   },
+  {
+    id: 'tecnico',
+    name: 'Simulador de Técnico (provisório)',
+    tagline: 'Funde sua organização, contrate jogadores, dispute ligas semanais e chegue ao Mundial.',
+    kind: 'Simulação',
+    path: 'jogos/tecnico/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+    soAdmin: true,
+  },
 ];
 
 export const gameById = (id) => GAMES.find((g) => g.id === id);
