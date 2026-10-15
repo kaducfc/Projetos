@@ -125,7 +125,7 @@ function topo() {
   return `<header class="tc-topo">
     <div class="tc-org"><span class="logo">${escudoOrg(o, 54)}</span><div><div class="nome">${esc(o.nome)}</div><div class="sub">${o.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)}</div><div class="xp"><i style="width:${Math.min(100, S.meu.poder)}%"></i><span>Poder ${S.meu.poder}</span></div></div></div>
     <div class="tc-moedas">
-      <div class="tc-moeda rc"><img src="img/moeda.webp" alt="" width="34" height="34" /><div><b>${fmt(S.meu.rc)}</b><small>Rift Coins</small></div></div>
+      <div class="tc-moeda rc"><img src="../../shared/assets/moeda/rc-96.webp" alt="" width="34" height="34" /><div><b>${fmt(S.meu.rc)}</b><small>Rift Coins</small></div></div>
       <div class="tc-moeda cred"><img src="img/gema.webp" alt="" width="26" height="34" /><div><b>${fmt(o.creditos)}</b><small>Créditos de equipe</small></div></div>
     </div>
     <div class="tc-atalhos">
@@ -189,7 +189,7 @@ function viewVisao() {
     <section class="tc-card tc-prox"><h3>${IMG('i-agenda')}Próxima partida</h3>${prox && prox.id ? vsCard(prox) : '<p class="tc-mudo" style="margin:0">Sem partidas agendadas. As próximas rodadas aparecem quando a semana começar.</p>'}
       ${minha ? `<p class="tc-peq tc-mudo" style="margin:10px 0 0;text-align:center">Posição na divisão: <b style="color:var(--ouro2)">${minha.pos}º</b> · ${minha.pontos} pts · ${minha.vitorias}V ${minha.derrotas}D</p>` : ''}</section>
     <section class="tc-card tc-eco"><h3>${IMG('i-bau')}Sua economia</h3>
-      <div class="duo"><div class="bx ouro"><img src="img/moeda.webp" alt="" width="40" height="40" /><small>Rift Coins</small><b>${fmt(m.rc)}</b></div>
+      <div class="duo"><div class="bx ouro"><img src="../../shared/assets/moeda/rc-96.webp" srcset="../../shared/assets/moeda/rc-192.webp 2x" alt="" width="44" height="44" /><small>Rift Coins</small><b>${fmt(m.rc)}</b></div>
       <div class="bx azul"><img src="img/gema.webp" alt="" width="30" height="40" /><small>Créditos de equipe</small><b>${fmt(m.org.creditos)}</b></div></div>
       <p class="tc-mudo tc-peq" style="margin:10px 0 0;text-align:center">Salários: ${fmt(m.salarios_semana)} créditos por semana</p></section>
   </div>
