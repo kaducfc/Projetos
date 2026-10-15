@@ -74,8 +74,6 @@ $$;
 revoke all on function public.tc_u(text, int) from public, anon, authenticated;
 
 -- Semana global (0 = a semana do início do calendário) e dia dentro da semana (1 a 7).
-create or replace function public.tc_hoje()
-returns date language sql stable as $$ select site_hoje_br(); $$;
 create or replace function public.tc_semana_global(d date default null)
 returns int language sql stable security definer set search_path = public as $$
   select floor((coalesce(d, site_hoje_br()) - ((tc_cfg('calendario'))->>'inicio')::date) / 7.0)::int;
@@ -426,7 +424,7 @@ begin
   if s !~ '^[A-Z0-9]{2,4}$' then
     raise exception 'sigla_invalida';
   end if;
-  if escudo_ !~ '^escudo-[0-9]{1,2}$' then
+  if escudo_ !~ '^escudo-[1-6]$' then
     raise exception 'escudo_invalido';
   end if;
   if estilo_ not in ('classico', 'moderno', 'tecnologico') then
@@ -465,7 +463,7 @@ declare
   uid uuid := auth.uid();
 begin
   perform tc_exigir(uid);
-  if escudo_ !~ '^escudo-[0-9]{1,2}$' or estilo_ not in ('classico', 'moderno', 'tecnologico') then
+  if escudo_ !~ '^escudo-[1-6]$' or estilo_ not in ('classico', 'moderno', 'tecnologico') then
     raise exception 'dados_invalidos';
   end if;
   update tc_orgs set escudo = escudo_, cor1 = cor1_, cor2 = cor2_, estilo = estilo_ where user_id = uid;

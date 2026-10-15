@@ -218,8 +218,8 @@ begin
     m := m + 1;
     s := semente || ':m' || m::text;
     for i in 1..3 loop
-      xa[i] := ca[i + 1] + (tc_u(s || 'a', i) - 0.5) * 50;
-      xb[i] := cb[i + 1] + (tc_u(s || 'b', i) - 0.5) * 50;
+      xa[i] := ca[i + 1] + (tc_u(s || 'a', i) - 0.5) * 80;
+      xb[i] := cb[i + 1] + (tc_u(s || 'b', i) - 0.5) * 80;
     end loop;
     sa := xa[1] + xa[2] + xa[3];
     sb := xb[1] + xb[2] + xb[3];
