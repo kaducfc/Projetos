@@ -9,6 +9,7 @@ import {
   VAGAS, NOME_VAGA, SIGLA_VAGA, FAVORITOS_MAX, NOME_NIVEL, ATRIBUTOS, ELENCO_MAX, CONTRATO_MIN, CONTRATO_MAX, PRECO_RC, TAXA_MERCADO_PCT,
   fmt, esc, corPoder, taxaDe, salarioDe,
 } from './regras.js';
+import { prepararImagens, campIcone } from './campeoes-img.js';
 import { ESCUDOS, escudoSvg, escudoOrg, retratoSvg, iconeVaga } from './art.js';
 
 const GAME_ID = 'tecnico';
@@ -85,7 +86,7 @@ async function carregarAba() {
   try {
     if ((S.aba === 'camp' || S.aba === 'class') && !S.camp) S.camp = await api.campeonatos();
     if (S.aba === 'hist' && !S.hist) S.hist = await api.historico();
-    if (S.aba === 'campeoes' && !S.campeoes) S.campeoes = await api.campeoes();
+    if (S.aba === 'campeoes' && !S.campeoes) [S.campeoes] = await Promise.all([api.campeoes(), prepararImagens()]);
     if (S.aba === 'contratar') await carregarMercado();
   } catch (e) { toast(e.message, true); }
 }
@@ -338,8 +339,8 @@ function viewCampeoes() {
   return `<section class="tc-card"><h3>${IMG('i-plantel')}Campeões<span class="dir">${lista.length} de ${todos.length}</span></h3>
     <div class="tc-filtros" style="margin-bottom:0"><label>Buscar<input name="busca" data-fc value="${esc(f.busca)}" placeholder="Nome do campeão" autocomplete="off" /></label>
       ${sel('pos', 'Posição', VAGAS.map((v) => [v, NOME_VAGA[v]]), 'Todas')}${sel('classe', 'Classe', uniq('classes').map((v) => [v, v]), 'Todas')}${sel('regiao', 'Região', uniq('regioes').map((v) => [v, v]), 'Todas')}</div>
-    <p class="tc-mudo tc-peq" style="margin:10px 0 0">Cada jogador pode ter até <b>${m.favoritos_max || FAVORITOS_MAX} campeões favoritos</b>. Quanto mais ele joga com um campeão, mais maestria ganha: a cada mapa são ${m.pontos_vitoria || 30} pontos na vitória e ${m.pontos_derrota || 15} na derrota. Com ${m.limiar || 150} pontos ele entra na lista de favoritos e, ao jogar com o campeão, ganha um bônus de Poder que cresce com o nível (${(m.bonus_pct || []).slice(1).map((b) => `+${b}%`).join(', ')}). Fotos dos campeões virão depois.</p></section>
-  <div class="tc-camps">${lista.map((c) => `<div class="tc-camp"><b>${esc(c.nome)}</b><span class="pp">${c.posicoes.map((p) => `<i class="tc-vaga-ic v-${p}">${SIGLA_VAGA[p]}</i>`).join('')}</span><small>${esc(c.classes.join(' · '))}</small><small class="tc-mudo">${esc(c.regioes.join(', '))} · ${c.ano}</small></div>`).join('') || '<p class="tc-mudo">Nenhum campeão com esses filtros.</p>'}</div>`;
+    <p class="tc-mudo tc-peq" style="margin:10px 0 0">Cada jogador pode ter até <b>${m.favoritos_max || FAVORITOS_MAX} campeões favoritos</b>. Quanto mais ele joga com um campeão, mais maestria ganha: a cada mapa são ${m.pontos_vitoria || 30} pontos na vitória e ${m.pontos_derrota || 15} na derrota. Com ${m.limiar || 150} pontos ele entra na lista de favoritos e, ao jogar com o campeão, ganha um bônus de Poder que cresce com o nível (${(m.bonus_pct || []).slice(1).map((b) => `+${b}%`).join(', ')}).</p></section>
+  <div class="tc-camps">${lista.map((c) => `<div class="tc-camp">${campIcone(c.nome, 56)}<div class="tx"><b>${esc(c.nome)}</b><span class="pp">${c.posicoes.map((p) => `<i class="tc-vaga-ic v-${p}">${SIGLA_VAGA[p]}</i>`).join('')}</span><small>${esc(c.classes.join(' · '))}</small><small class="tc-mudo">${esc(c.regioes.join(', '))} · ${c.ano}</small></div></div>`).join('') || '<p class="tc-mudo">Nenhum campeão com esses filtros.</p>'}</div>`;
 }
 
 // ------------------------------------------------------------------ personalização
@@ -380,7 +381,7 @@ function fichaHtml(m) {
       <div class="tc-poder" style="margin-bottom:10px"><div class="grande" style="color:${corPoder(j.poder)}">${j.poder}</div><span class="tc-mudo tc-peq">Poder individual<br>Forma ${j.forma} · Experiência ${j.exp}${j.potencial != null ? `<br>Potencial ${j.potencial}` : ''}</span></div>
       ${barras(j)}</div></div>
     <div class="tc-resumo"><div class="l"><span>Salário${j.org_id ? '' : ' (se contratado)'}</span><b>${fmt(j.org_id ? j.salario : salarioDe(j.preco))} cr./semana</b></div>${j.org_id ? `<div class="l"><span>Contrato</span><b>${resta == null ? '—' : resta <= 0 ? 'vence nesta semana' : `${resta} semana(s)`}</b></div><div class="l"><span>Organização</span><b>${esc(j.org?.nome || '')}</b></div>` : `<div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div>`}${m.anuncio ? `<div class="l"><span>Anúncio</span><b class="tc-preco rc">${fmt(m.anuncio.preco_rc)}</b></div><div class="l"><span>Vendedor</span><b>${esc(m.anuncio.vendedor.nome)}</b></div><div class="l"><span>Publicado em</span><b>${new Date(m.anuncio.criado).toLocaleDateString('pt-BR')}</b></div>` : ''}</div>
-    ${(j.campeoes || []).length ? `<h4 class="tc-eyebrow">Campeões</h4><div class="tc-maes">${j.campeoes.map((c) => `<div class="${c.favorito ? 'fav' : ''}"><b>${esc(c.nome)}</b><span>${c.favorito ? '★ ' : ''}${NOME_NIVEL[c.nivel - 1] || ''}${c.favorito && c.bonus_pct ? ` · +${c.bonus_pct}% de Poder` : ''}</span><small>${fmt(c.pontos)} pts · ${c.jogos} jogo(s)</small></div>`).join('')}</div>` : ''}
+    ${(j.campeoes || []).length ? `<h4 class="tc-eyebrow">Campeões</h4><div class="tc-maes">${j.campeoes.map((c) => `<div class="${c.favorito ? 'fav' : ''}">${campIcone(c.nome, 38)}<b>${esc(c.nome)}</b><span>${c.favorito ? '★ ' : ''}${NOME_NIVEL[c.nivel - 1] || ''}${c.favorito && c.bonus_pct ? ` · +${c.bonus_pct}% de Poder` : ''}</span><small>${fmt(c.pontos)} pts · ${c.jogos} jogo(s)</small></div>`).join('')}</div>` : ''}
     ${hist.length ? `<h4 class="tc-eyebrow">Histórico</h4><ul class="tc-avisos">${hist.map((h) => `<li>${new Date(h.criado).toLocaleDateString('pt-BR')} · ${{ inicial: 'Elenco inicial', contratacao: 'Contratado', compra_usuario: 'Vendido entre usuários', renovacao: 'Renovou', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' }[h.tipo] || h.tipo}${h.para ? ` · ${esc(h.para)}` : ''}${h.valor ? ` · ${fmt(h.valor)} ${h.moeda === 'rc' ? 'RC' : 'cr.'}` : ''}</li>`).join('')}</ul>` : ''}
     <div class="tc-acoes">${acoes}</div>`;
 }
@@ -471,7 +472,7 @@ function telaMensagem(titulo, texto, link) {
 const porId = (id) => (S.meu.elenco || []).find((j) => j.id === Number(id));
 async function abrirFicha(id, anuncio = null) {
   const r = await agir(async () => {
-    const j = await api.ficha(Number(id));
+    const [j] = await Promise.all([api.ficha(Number(id)), prepararImagens()]);
     S.modal = { t: 'ficha', j, anuncio };
     return true;
   }, { recarregar: false });
