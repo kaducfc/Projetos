@@ -228,7 +228,7 @@ t('compra simultânea do mesmo anúncio: só uma passa e o RC bate', async () =>
   assert.equal(res.filter((r) => r.c === 0).length, 1, JSON.stringify(res));
   assert.equal(Number(V(`select count(*) from tc_transf where jogador_id = ${j} and tipo = 'compra_usuario'`)), compras0 + 1);
   assert.equal(Number(V('select sum(saldo) from site_carteira')), antes - 40, 'só a taxa de 5% sai de circulação');
-  assert.match(V(`select org_id from tc_jogadores where id = ${j}`), /^[34]$/);
+  assert.ok(V(`select 1 from tc_jogadores jg join tc_orgs o on o.id = jg.org_id where jg.id = ${j} and o.user_id in ('${U(3)}', '${U(4)}')`) === '1', 'o jogador foi para um dos compradores');
 });
 
 t('vender titular: a vaga é preenchida e a sinergia cai', () => {

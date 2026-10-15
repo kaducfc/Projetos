@@ -101,7 +101,7 @@ function cartao(j, { tit = false, extra = '', acao = 'ficha', dados = '' } = {})
   return `<button type="button" class="tc-jog" data-act="${acao}" data-id="${j.id}" ${dados} style="--c:${c}">
     <div class="foto">${retratoSvg(j, 160)}<span class="vg">${iconeVaga(j.pos)}</span><span class="pw">${j.poder}</span></div>
     <div class="inf">
-      <span class="nm">${esc(j.nome)}</span>
+      <span class="nm">${esc(j.nome)}</span><span class="pos">${esc(NOME_VAGA[j.pos])}</span>
       <div class="ln"><span>${j.idade} anos</span><span>Fama <b>${j.fama}</b></span></div>
       ${j.potencial != null ? `<div class="ln"><span>Potencial</span><b>${j.potencial}</b></div>` : ''}
       ${resta != null && j.org_id ? `<div class="ln"><span>Contrato</span><b>${resta <= 0 ? 'vence já' : `${resta} sem.`}</b></div>` : ''}
@@ -113,23 +113,35 @@ function barras(j) {
   return `<div class="tc-attrs">${ATRIBUTOS.map((a) => `<div class="tc-attr"><span>${a.nome}</span><div class="tc-barra"><i style="width:${j[a.id]}%"></i></div><b>${j[a.id]}</b></div>`).join('')}</div>`;
 }
 
+const IMG = (n, c = '') => `<img class="ic ${c}" src="img/${n}.webp" alt="" width="28" height="28" loading="lazy" />`;
 function topo() {
   const o = S.meu.org;
+  const novos = (S.meu.avisos || []).filter((a) => !a.lido).length;
+  const sem = ((S.meu.semana % 4) + 4) % 4 + 1;
   return `<header class="tc-topo">
-    <div class="tc-org">${escudoOrg(o, 46)}<div><div class="nome">${esc(o.nome)}</div><div class="sub">${o.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)} · Poder ${S.meu.poder}</div></div></div>
+    <div class="tc-org"><span class="logo">${escudoOrg(o, 54)}</span><div><div class="nome">${esc(o.nome)}</div><div class="sub">${o.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)}</div><div class="xp"><i style="width:${Math.min(100, S.meu.poder)}%"></i><span>Poder ${S.meu.poder}</span></div></div></div>
     <div class="tc-moedas">
-      <div class="tc-moeda cred"><i></i><div><b>${fmt(o.creditos)}</b><small>Créditos de equipe</small></div></div>
-      <div class="tc-moeda rc"><i></i><div><b>${fmt(S.meu.rc)}</b><small>Rift Coins</small></div></div>
-    </div></header>`;
+      <div class="tc-moeda rc"><img src="img/moeda.webp" alt="" width="34" height="34" /><div><b>${fmt(S.meu.rc)}</b><small>Rift Coins</small></div></div>
+      <div class="tc-moeda cred"><img src="img/gema.webp" alt="" width="26" height="34" /><div><b>${fmt(o.creditos)}</b><small>Créditos de equipe</small></div></div>
+    </div>
+    <div class="tc-atalhos">
+      <button type="button" data-act="aba" data-aba="visao">${IMG('i-sino')}${novos ? `<em>${Math.min(novos, 9)}</em>` : ''}<span>Avisos</span></button>
+      <button type="button" data-act="aba" data-aba="hist">${IMG('i-msg')}<span>Histórico</span></button>
+      <button type="button" data-act="aba" data-aba="camp">${IMG('i-agenda')}<span>Calendário</span></button>
+      <button type="button" data-act="aba" data-aba="pers">${IMG('i-conf')}<span>Ajustes</span></button>
+    </div>
+    <div class="tc-usuario"><span class="av">${escudoOrg(o, 38)}</span><div><b>${esc(platform.getUser()?.username || 'Técnico')}</b><small>Semana ${sem} · Poder ${S.meu.poder}</small></div></div></header>`;
 }
 
 const ABAS = [
-  ['visao', 'Visão geral'], ['elenco', 'Meu elenco'], ['contratar', 'Contratações'],
-  ['camp', 'Campeonatos'], ['class', 'Classificação'], ['hist', 'Histórico'], ['pers', 'Personalização'],
+  ['visao', 'Início', 'i-home'], ['elenco', 'Meu elenco', 'i-time'], ['contratar', 'Mercado', 'i-mercado'],
+  ['camp', 'Campeonatos', 'i-trofeu'], ['class', 'Classificação', 'i-stats'], ['hist', 'Histórico', 'i-financas'], ['pers', 'Personalização', 'i-engrenagem'],
 ];
 function nav() {
   const novos = (S.meu.avisos || []).filter((a) => !a.lido).length;
-  return `<nav class="tc-nav" aria-label="Seções">${ABAS.map(([id, nome]) => `<button type="button" data-act="aba" data-aba="${id}" class="${S.aba === id ? 'on' : ''}">${nome}${id === 'visao' && novos ? `<span class="n">${Math.min(novos, 9)}</span>` : ''}</button>`).join('')}</nav>`;
+  const sem = ((S.meu.semana % 4) + 4) % 4 + 1;
+  return `<nav class="tc-nav" aria-label="Seções">${ABAS.map(([id, nome, ic]) => `<button type="button" data-act="aba" data-aba="${id}" class="${S.aba === id ? 'on' : ''}">${IMG(ic)}<span>${nome}</span>${id === 'visao' && novos ? `<span class="n">${Math.min(novos, 9)}</span>` : ''}</button>`).join('')}
+    <div class="tc-temp"><span class="tc-eyebrow">Temporada atual</span><b>Semana ${sem} de 4</b><small>${S.meu.org.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)}</small></div></nav>`;
 }
 
 // ------------------------------------------------------------------ criar organização
@@ -169,13 +181,17 @@ function viewVisao() {
   const minha = liga?.tabela?.find((t) => t.org.id === m.org.id);
   const prox = p.proxima;
   return `
-  <div class="tc-grade2">
-    <section class="tc-card"><h3>Poder da equipe<span class="dir">Semana ${((m.semana % 4) + 4) % 4 + 1}</span></h3>
+  <div class="tc-hero">
+    <section class="tc-card tc-prox"><h3>${IMG('i-agenda')}Próxima partida</h3>${prox && prox.id ? vsCard(prox) : '<p class="tc-mudo" style="margin:0">Sem partidas agendadas. As próximas rodadas aparecem quando a semana começar.</p>'}
+      ${minha ? `<p class="tc-peq tc-mudo" style="margin:10px 0 0;text-align:center">Posição na divisão: <b style="color:var(--ouro2)">${minha.pos}º</b> · ${minha.pontos} pts · ${minha.vitorias}V ${minha.derrotas}D</p>` : ''}</section>
+    <section class="tc-card tc-eco"><h3>${IMG('i-bau')}Sua economia</h3>
+      <div class="duo"><div class="bx ouro"><img src="img/moeda.webp" alt="" width="40" height="40" /><small>Rift Coins</small><b>${fmt(m.rc)}</b></div>
+      <div class="bx azul"><img src="img/gema.webp" alt="" width="30" height="40" /><small>Créditos de equipe</small><b>${fmt(m.org.creditos)}</b></div></div>
+      <p class="tc-mudo tc-peq" style="margin:10px 0 0;text-align:center">Salários: ${fmt(m.salarios_semana)} créditos por semana</p></section>
+  </div>
+  <section class="tc-card"><h3>Poder da equipe<span class="dir">Semana ${((m.semana % 4) + 4) % 4 + 1}</span></h3>
       <div class="tc-poder"><div class="grande">${m.poder}</div><div style="flex:1"><div class="tc-barra"><i style="width:${m.poder}%"></i></div>
         <p class="tc-mudo tc-peq" style="margin:8px 0 0">Média do Poder dos titulares na posição em que jogam, mais a sinergia (${m.org.sinergia}/100). ${m.completo ? '' : '<b style="color:#fbbf24">Faltam titulares.</b>'}</p></div></div></section>
-    <section class="tc-card"><h3>Próxima partida</h3>${prox && prox.id ? partidaLinha(prox, true) : '<p class="tc-mudo" style="margin:0">Sem partidas agendadas. As próximas rodadas aparecem quando a semana começar.</p>'}
-      ${minha ? `<p class="tc-peq tc-mudo" style="margin:10px 0 0">Posição na divisão: <b style="color:var(--ouro2)">${minha.pos}º</b> · ${minha.pontos} pts · ${minha.vitorias}V ${minha.derrotas}D</p>` : ''}</section>
-  </div>
   <section class="tc-card"><h3>Escalação titular<span class="dir">${fmt(m.salarios_semana)} créditos de salários por semana</span></h3>
     <div class="tc-escala">${VAGAS.map((v) => `<div class="vaga"><span class="rot">${NOME_VAGA[v]}</span>${tit[v] ? cartao(tit[v], { tit: false }) : `<div class="tc-vazio">Vaga livre<br><button type="button" class="tc-btn peq" data-act="aba" data-aba="elenco" style="margin-top:8px">Escalar</button></div>`}</div>`).join('')}</div></section>
   <div class="tc-grade2">
@@ -202,6 +218,10 @@ function tabelaHtml(tab, meuId, compacta = false) {
 }
 
 function dataCurta(d) { const [, m, dd] = String(d).split('-'); return `${dd}/${m}`; }
+function vsCard(p) {
+  return `<div class="tc-vs"><div class="lado">${escudoOrg(p.a, 84)}<b>${esc(p.a.nome)}</b></div><div class="x">VS</div><div class="lado">${escudoOrg(p.b, 84)}<b>${esc(p.b.nome)}</b></div></div>
+    <p class="tc-vs-info">${dataCurta(p.dia)} · ${p.fase === 'rodada' ? `rodada ${p.rodada}` : FASES[p.fase] || ''} · melhor de ${p.formato}</p>`;
+}
 function partidaLinha(p, proxima = false) {
   const feita = p.status === 'concluida';
   const meu = S.meu?.org?.id;
