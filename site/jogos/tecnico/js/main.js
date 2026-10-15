@@ -197,7 +197,7 @@ function financasHtml(f) {
 
 function tabelaHtml(tab, meuId, compacta = false) {
   return `<div class="tc-tabela-rolagem"><table class="tc-tabela"><thead><tr><th>#</th><th>Equipe</th>${compacta ? '' : '<th class="n">J</th>'}<th class="n">V</th><th class="n">D</th>${compacta ? '' : '<th class="n">Mapas</th><th class="n">Saldo</th>'}<th class="n">Pts</th>${compacta ? '' : '<th>Situação</th>'}</tr></thead><tbody>
-    ${tab.map((t) => `<tr class="${t.org.id === meuId ? 'eu' : ''}"><td>${t.pos}</td><td><div class="org">${escudoOrg(t.org, 24)}<span>${esc(t.org.nome)}${t.org.usuario ? ' <span title="Técnico real">★</span>' : ''}</span></div></td>${compacta ? '' : `<td class="n">${t.partidas}</td>`}<td class="n">${t.vitorias}</td><td class="n">${t.derrotas}</td>${compacta ? '' : `<td class="n">${t.mapas_pro}-${t.mapas_contra}</td><td class="n">${t.saldo > 0 ? '+' : ''}${t.saldo}</td>`}<td class="n"><b>${t.pontos}</b></td>${compacta ? '' : `<td>${t.situacao ? `<span class="tc-sit ${t.situacao}">${{ promocao: 'Promoção', rebaixamento: 'Rebaixamento', permanece: '—' }[t.situacao] || ''}</span>` : ''}</td>`}</tr>`).join('')}
+    ${tab.map((t) => `<tr class="${t.org.id === meuId ? 'eu' : ''}"><td>${t.pos}</td><td><div class="org">${escudoOrg(t.org, 24)}<span>${esc(t.org.nome)}${t.org.usuario ? ' <span title="Técnico real">★</span>' : ''}</span></div></td>${compacta ? '' : `<td class="n">${t.partidas}</td>`}<td class="n">${t.vitorias}</td><td class="n">${t.derrotas}</td>${compacta ? '' : `<td class="n">${t.mapas_pro}-${t.mapas_contra}</td><td class="n">${t.saldo > 0 ? '+' : ''}${t.saldo}</td>`}<td class="n"><b>${t.pontos}</b></td>${compacta ? '' : `<td>${t.situacao ? `<span class="tc-sit ${t.situacao}">${{ promocao: 'Promoção', rebaixamento: 'Rebaixamento', copa: 'Vaga na Copa', permanece: '—' }[t.situacao] || ''}</span>` : ''}</td>`}</tr>`).join('')}
   </tbody></table></div>`;
 }
 
@@ -207,7 +207,7 @@ function partidaLinha(p, proxima = false) {
   const meu = S.meu?.org?.id;
   return `<button type="button" class="tc-partida" data-act="partida" data-id="${p.id}" ${feita ? '' : 'disabled'}>
     <span class="time">${escudoOrg(p.a, 30)}<span>${esc(p.a.nome)}</span></span>
-    <span class="meio">${feita ? `<span class="placar"><span class="${p.vencedor === p.a.id ? 'v' : ''}">${p.placar_a}</span> - <span class="${p.vencedor === p.b.id ? 'v' : ''}">${p.placar_b}</span></span>` : '<span class="placar">VS</span>'}<span class="qd">${dataCurta(p.dia)} · rodada ${p.rodada} · MD${p.formato}${feita && meu && (p.a.id === meu || p.b.id === meu) ? (p.vencedor === meu ? ' · <b style="color:var(--bom)">vitória</b>' : ' · <b style="color:var(--ruim)">derrota</b>') : ''}</span></span>
+    <span class="meio">${feita ? `<span class="placar"><span class="${p.vencedor === p.a.id ? 'v' : ''}">${p.placar_a}</span> - <span class="${p.vencedor === p.b.id ? 'v' : ''}">${p.placar_b}</span></span>` : '<span class="placar">VS</span>'}<span class="qd">${dataCurta(p.dia)} · ${p.fase === 'rodada' ? `rodada ${p.rodada}` : FASES[p.fase] || ''} · MD${p.formato}${feita && meu && (p.a.id === meu || p.b.id === meu) ? (p.vencedor === meu ? ' · <b style="color:var(--bom)">vitória</b>' : ' · <b style="color:var(--ruim)">derrota</b>') : ''}</span></span>
     <span class="time dir"><span>${esc(p.b.nome)}</span>${escudoOrg(p.b, 30)}</span></button>`;
 }
 
@@ -268,8 +268,18 @@ function viewCamp() {
   l.partidas.forEach((p) => { (dias[p.dia] ||= []).push(p); });
   return `<section class="tc-card"><h3>Campeonatos<span class="dir">Temporada ${l.temporada} · semana ${l.semana}</span></h3>
       <label class="campo" style="max-width:420px"><span class="tc-mudo tc-peq">Competição</span><select class="tc-input" data-act="liga-sel">${ligas.map((x) => `<option value="${x.id}" ${x.id === l.id ? 'selected' : ''}>${esc(x.nome)}${x.status === 'aberta' ? ' (em andamento)' : ''}</option>`).join('')}</select></label>
-      <p class="tc-peq tc-mudo" style="margin:10px 0 0">Todos contra todos, uma rodada por dia, melhor de três mapas. Os dois primeiros da ${esc(nomeLiga().acesso)} sobem; os dois últimos da ${esc(nomeLiga().principal)} descem.</p></section>
-    <section class="tc-card"><h3>Calendário e resultados</h3>${Object.keys(dias).sort().map((d) => `<h4 class="tc-eyebrow" style="margin:12px 0 6px">${dataCurta(d)} · rodada ${dias[d][0].rodada}</h4><div class="tc-lista">${dias[d].map((p) => partidaLinha(p)).join('')}</div>`).join('')}</section>`;
+      <p class="tc-peq tc-mudo" style="margin:10px 0 0">${regrasLiga(l)}</p></section>
+    ${l.tipo !== 'divisao' ? `<section class="tc-card"><h3>Classificados</h3>${tabelaClassificados(l)}</section>` : ''}
+    <section class="tc-card"><h3>Calendário e resultados</h3>${Object.keys(dias).sort().map((d) => `<h4 class="tc-eyebrow" style="margin:12px 0 6px">${dataCurta(d)} · ${FASES[dias[d][0].fase] || ''}${dias[d][0].fase === 'rodada' ? ` ${dias[d][0].rodada}` : ''}</h4><div class="tc-lista">${dias[d].map((p) => partidaLinha(p)).join('')}</div>`).join('')}</section>`;
+}
+const FASES = { rodada: 'Rodada', quartas: 'Quartas de final', semi: 'Semifinal', final: 'Final' };
+function regrasLiga(l) {
+  if (l.tipo === 'copa') return `Os 4 primeiros da ${esc(nomeLiga().principal)} na semana 1 disputam semifinais e final, sempre em melhor de cinco mapas.`;
+  if (l.tipo === 'mundial') return `Os 6 melhores da ${esc(nomeLiga().principal)} por pontos nas semanas 1 a 3, mais o campeão da ${esc(nomeLiga().copa)}, disputam quartas, semifinais e final em melhor de cinco. A vaga é conquistada no campo: não dá para comprar com RC.`;
+  return `Todos contra todos, uma rodada por dia, melhor de três mapas. Os dois primeiros da ${esc(nomeLiga().acesso)} sobem; os dois últimos da ${esc(nomeLiga().principal)} descem; os 4 primeiros da ${esc(nomeLiga().principal)} na semana 1 vão para a ${esc(nomeLiga().copa)}.`;
+}
+function tabelaClassificados(l) {
+  return `<table class="tc-tabela"><thead><tr><th>Semente</th><th>Equipe</th><th class="n">Poder</th></tr></thead><tbody>${l.tabela.map((t) => `<tr class="${t.org.id === S.meu.org.id ? 'eu' : ''}"><td>${t.pos}</td><td><div class="org">${escudoOrg(t.org, 24)}<span>${esc(t.org.nome)}${t.org.usuario ? ' ★' : ''}</span></div></td><td class="n">${t.poder}</td></tr>`).join('')}</tbody></table>`;
 }
 function viewClass() {
   if (!S.camp) return '<p class="tc-carregando">Carregando…</p>';
@@ -378,7 +388,7 @@ function escalarHtml(m) {
 }
 function partidaHtml(m) {
   const p = m.p; const r = p.resumo || { mapas: [] };
-  return `<h2>${esc(p.a.nome)} ${p.placar_a} × ${p.placar_b} ${esc(p.b.nome)}</h2><p class="tc-mudo tc-peq">${dataCurta(p.dia)} · rodada ${p.rodada} · melhor de ${p.formato} · Poder ${p.poder_a} × ${p.poder_b}</p>
+  return `<h2>${esc(p.a.nome)} ${p.placar_a} × ${p.placar_b} ${esc(p.b.nome)}</h2><p class="tc-mudo tc-peq">${dataCurta(p.dia)} · ${p.fase === 'rodada' ? `rodada ${p.rodada}` : FASES[p.fase] || ''} · melhor de ${p.formato} · Poder ${p.poder_a} × ${p.poder_b}</p>
     ${(r.mapas || []).map((x) => `<div class="tc-resumo"><div class="l"><b>Mapa ${x.mapa}</b><span>${x.duracao} min · vitória ${esc(x.vencedor === 'a' ? p.a.nome : p.b.nome)}</span></div>
       ${[['Rotas', x.rotas], ['Controle de objetivos', x.objetivos], ['Teamfights', x.teamfight]].map(([n, v]) => { const a = Math.max(1, v[0]); const bb = Math.max(1, v[1]); const pa = Math.round((a / (a + bb)) * 100); return `<div class="l"><span>${n}</span><span style="display:flex;gap:8px;align-items:center;min-width:55%"><b>${pa}%</b><div class="tc-barra" style="flex:1"><i style="width:${pa}%"></i></div><b>${100 - pa}%</b></span></div>`; }).join('')}
       <div class="l"><span>Destaque do mapa</span><b>${esc(x.mvp || '')}</b></div></div>`).join('')}
