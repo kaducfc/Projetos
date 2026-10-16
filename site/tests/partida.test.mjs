@@ -392,3 +392,16 @@ test('o caçador que começou a bater num acampamento só sai dele por vida baix
     assert.equal(saidas, 0, `seed ${seed}: o caçador largou o acampamento ${saidas} vez(es)`);
   }
 });
+
+test('posições ajustadas à mão: a escolha de campeões da partida respeita a lista e ela bate com o SQL 0093', async () => {
+  const { POSICOES } = await import('../jogos/tecnico/partida/config/posicoes.js');
+  const { posicoesDe } = await import('../jogos/tecnico/partida/dados/campeoes-sim.js');
+  const nafiri = catalogo.find((c) => c.nome === 'Naafiri');
+  assert.deepEqual(posicoesDe(nafiri), ['Jungle']); assert.ok(posicoesDe(catalogo.find((c) => c.nome === 'Ahri')).includes('Mid'));
+  const MAPA_POS = { Top: 'top', Jungle: 'selva', Mid: 'meio', ADC: 'atirador', Suporte: 'suporte' };
+  const sql = readFileSync(new URL('../supabase/migrations/0093_tecnico_posicoes.sql', import.meta.url), 'utf8');
+  const bloco = JSON.parse(sql.match(/ajustes constant jsonb := '(\{[\s\S]*?\})'::jsonb/)[1]);
+  const idDe = (n) => catalogo.find((c) => c.nome === n).id.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const js = Object.fromEntries(Object.entries(POSICOES).map(([n, p]) => [idDe(n), p.map((x) => MAPA_POS[x])]));
+  assert.deepEqual(js, bloco, 'config/posicoes.js e 0093_tecnico_posicoes.sql têm que listar os mesmos campeões e posições');
+});

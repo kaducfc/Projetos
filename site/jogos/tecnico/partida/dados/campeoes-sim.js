@@ -2,8 +2,10 @@
 import { ARQUETIPOS, CLASSE_PARA_ARQUETIPO } from './arquetipos.js';
 import { BUILDS } from './itens.js';
 import { hashTexto } from '../nucleo/rng.js';
+import { POSICOES } from '../config/posicoes.js';
 
 const POS = { top: 'Top', selva: 'Jungle', meio: 'Mid', atirador: 'ADC', suporte: 'Suporte' };
+export const posicoesDe = (c) => POSICOES[c.nome] || c.posicoes || [];
 const var01 = (nome, chave) => (hashTexto(nome + ':' + chave) % 1000) / 1000; // 0..0.999 estável
 
 export function perfilDoCampeao(c) {
@@ -24,7 +26,7 @@ export function perfilDoCampeao(c) {
     id: c.id || c.nome, nome: c.nome, classe: principal, classes, corpoACorpo,
     base, habilidades: hab.map((h) => ({ ...h })), funcao: arq.funcao, danoMagico: !!ap,
     build: BUILDS[principal],
-    posicoes: c.posicoes || [],
+    posicoes: posicoesDe(c),
   };
 }
 
@@ -33,7 +35,7 @@ export function escolherCampeao(jogador, catalogo, usados, rng) {
   const pos = POS[jogador.pos];
   const porId = new Map(catalogo.map((c) => [c.id || c.nome, c]));
   for (const f of jogador.favoritos || []) { const c = porId.get(f.id) || porId.get(f.nome); if (c && !usados.has(c.nome)) return c; }
-  const pool = catalogo.filter((c) => !usados.has(c.nome) && (c.posicoes || []).includes(pos));
+  const pool = catalogo.filter((c) => !usados.has(c.nome) && posicoesDe(c).includes(pos));
   const base = pool.length ? pool : catalogo.filter((c) => !usados.has(c.nome));
   return base[Math.floor(rng() * base.length)];
 }
