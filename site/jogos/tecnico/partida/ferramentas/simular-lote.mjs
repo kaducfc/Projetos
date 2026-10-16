@@ -1,27 +1,49 @@
-// Simula partidas completas em lote (sem interface) e imprime estatísticas de equilíbrio.
-// Uso: node simular-lote.mjs [n=10] [poderAzul=60] [poderVermelho=60] [semente0=1]
-import { Partida } from '../motor/partida.js';
+// Simula partidas completas em lote (sem interface), em paralelo, e imprime estatísticas de equilíbrio.
+// Uso: node simular-lote.mjs [n=12] [poderAzul=60] [poderVermelho=60] [semente0=1] [trabalhadores=4] [--json]
+import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { elencoTeste } from '../dados/elencos-teste.js';
+
 const aqui = new URL('.', import.meta.url);
-const catalogo = JSON.parse(readFileSync(new URL('../../../campeao/dados/campeoes.json', aqui), 'utf8')).campeoes.map((c) => ({ ...c, id: c.nome }));
-export const POS = ['top', 'selva', 'meio', 'atirador', 'suporte'];
-export const time = (eq, p, variacao = 0) => POS.map((pos, i) => { const b = Math.max(1, Math.min(100, p + (((i * 7 + eq.charCodeAt(0)) % 5) - 2) * variacao)); return { id: `${eq}${i}`, nome: `${eq}-${pos}`, pos, poder: b, atributos: { mec: b, rotas: b, macro: b, tf: b, mental: b, fama: 50 } }; });
-export function jogar(semente, pa, pv, regras) {
-  const P = new Partida({ azul: time('A', pa, 3), vermelho: time('V', pv, 3), semente, catalogo, regras });
+const catalogo = () => JSON.parse(readFileSync(new URL('../../../campeao/dados/campeoes.json', aqui), 'utf8')).campeoes.map((c) => ({ ...c, id: c.nome }));
+
+export async function jogar(semente, pa, pv, regras, catalogoMem) {
+  const { Partida } = await import('../motor/partida.js');
+  const P = new Partida({ azul: elencoTeste('A', pa, semente), vermelho: elencoTeste('V', pv, semente), semente, catalogo: catalogoMem || catalogo(), regras });
   const t0 = performance.now();
   const r = P.executarAteFim();
-  return { P, r, ms: performance.now() - t0 };
+  const cs = P.campeoes.reduce((s, c) => s + c.estat.cs + c.estat.csSelva, 0) / 10 / (r.duracao / 60);
+  const gk = P.eventos.filter((e) => e.tipo === 'gank_resultado');
+  return { semente, vencedor: r.vencedor, motivo: r.motivo, duracao: r.duracao, azul: r.equipes.azul, vermelho: r.equipes.vermelho, cs, ms: performance.now() - t0,
+    presos: r.diagnostico.presosGraves, ganks: gk.length, ganksAbate: gk.filter((e) => e.resultado === 'abate').length, objetivos: P.eventos.filter((e) => e.tipo === 'objetivo_abatido').length,
+    minionsOciosos: P.diag.minionsOciosos || 0, primeiraTorre: (P.eventos.find((e) => e.tipo === 'torre_destruida') || {}).t || null, erros: r.diagnostico.erros };
 }
-if (process.argv[1] && process.argv[1].endsWith('simular-lote.mjs')) {
-  const n = Number(process.argv[2] || 10), pa = Number(process.argv[3] || 60), pv = Number(process.argv[4] || 60), s0 = Number(process.argv[5] || 1);
-  const L = [];
-  for (let i = 0; i < n; i++) {
-    const { P, r, ms } = jogar(s0 + i, pa, pv);
-    const cs = P.campeoes.reduce((s, c) => s + c.estat.cs + c.estat.csSelva, 0) / 10 / (r.duracao / 60);
-    L.push({ r, ms, cs });
-    console.log(`#${s0 + i} ${r.vencedor || 'SEM VENCEDOR'} ${Math.floor(r.duracao / 60)}:${String(r.duracao % 60).padStart(2, '0')} abates ${r.equipes.azul.abates}-${r.equipes.vermelho.abates} torres ${r.equipes.vermelho.torresPerdidas}-${r.equipes.azul.torresPerdidas} inib ${r.equipes.vermelho.inibidoresPerdidos}-${r.equipes.azul.inibidoresPerdidos} dragoes ${r.equipes.azul.dragoes}-${r.equipes.vermelho.dragoes} baroes ${r.equipes.azul.baroes}-${r.equipes.vermelho.baroes} cs/min ${cs.toFixed(1)} presos ${r.diagnostico.presosGraves} ${r.motivo} (${(ms / 1000).toFixed(1)}s)`);
-  }
-  const med = (f) => (L.reduce((s, x) => s + f(x), 0) / L.length).toFixed(1);
-  const vit = L.filter((x) => x.r.vencedor === 'azul').length;
-  console.log(`--- média: duração ${med((x) => x.r.duracao / 60)} min | abates ${med((x) => x.r.equipes.azul.abates + x.r.equipes.vermelho.abates)} | torres ${med((x) => x.r.equipes.azul.torresPerdidas + x.r.equipes.vermelho.torresPerdidas)} | cs/min ${med((x) => x.cs)} | azul venceu ${vit}/${n} | sem vencedor ${L.filter((x) => !x.r.vencedor).length} | ${med((x) => x.ms / 1000)} s de CPU por partida`);
+
+if (!isMainThread) {
+  const cat = catalogo();
+  (async () => { for (const s of workerData.sementes) parentPort.postMessage(await jogar(s, workerData.pa, workerData.pv, workerData.regras, cat)); parentPort.postMessage({ fim: true }); })();
+} else if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+  const n = Number(args[0] || 12), pa = Number(args[1] || 60), pv = Number(args[2] || 60), s0 = Number(args[3] || 1), W = Number(args[4] || 4);
+  const sementes = Array.from({ length: n }, (_, i) => s0 + i);
+  const L = []; let vivos = 0;
+  await new Promise((ok) => {
+    for (let w = 0; w < W; w++) {
+      const mine = sementes.filter((_, i) => i % W === w); if (!mine.length) continue; vivos++;
+      const wk = new Worker(fileURLToPath(import.meta.url), { workerData: { sementes: mine, pa, pv } });
+      wk.on('message', (m) => { if (m.fim) { if (--vivos === 0) ok(); } else L.push(m); });
+      wk.on('error', (e) => { console.error(e); if (--vivos === 0) ok(); });
+    }
+  });
+  L.sort((a, b) => a.semente - b.semente);
+  const mm = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  if (!process.argv.includes('--json')) for (const x of L) console.log(`#${x.semente} ${x.vencedor || 'SEM VENCEDOR'} ${mm(x.duracao)} abates ${x.azul.abates}-${x.vermelho.abates} torres ${x.vermelho.torresPerdidas}-${x.azul.torresPerdidas} inib ${x.vermelho.inibidoresPerdidos}-${x.azul.inibidoresPerdidos} dragoes ${x.azul.dragoes}-${x.vermelho.dragoes} baroes ${x.azul.baroes}-${x.vermelho.baroes} cs/min ${x.cs.toFixed(1)} ganks ${x.ganksAbate}/${x.ganks} presos ${x.presos} (${(x.ms / 1000).toFixed(1)}s)`);
+  const med = (f) => (L.reduce((s, x) => s + f(x), 0) / L.length);
+  const vit = L.filter((x) => x.vencedor === 'azul').length;
+  const dur = L.map((x) => x.duracao).sort((a, b) => a - b);
+  const resumo = { partidas: L.length, duracaoMediaMin: +(med((x) => x.duracao) / 60).toFixed(1), duracaoMinMax: [mm(dur[0]), mm(dur[dur.length - 1])], abates: +med((x) => x.azul.abates + x.vermelho.abates).toFixed(1), torresDerrubadas: +med((x) => x.azul.torresPerdidas + x.vermelho.torresPerdidas).toFixed(1),
+    inibidores: +med((x) => x.azul.inibidoresPerdidos + x.vermelho.inibidoresPerdidos).toFixed(1), objetivos: +med((x) => x.objetivos).toFixed(1), csPorMin: +med((x) => x.cs).toFixed(1), ganksPorJogo: +med((x) => x.ganks).toFixed(1), ganksComAbate: +med((x) => x.ganksAbate).toFixed(1),
+    azulVenceu: `${vit}/${L.length}`, semVencedor: L.filter((x) => !x.vencedor).length, motivos: Object.fromEntries([...new Set(L.map((x) => x.motivo))].map((m) => [m, L.filter((x) => x.motivo === m).length])), primeiraTorreMin: +(med((x) => x.primeiraTorre || x.duracao) / 60).toFixed(1), presosGraves: L.reduce((s, x) => s + x.presos, 0), minionsOciosos: L.reduce((s, x) => s + x.minionsOciosos, 0), erros: L.reduce((s, x) => s + x.erros, 0), cpuPorPartidaS: +(med((x) => x.ms) / 1000).toFixed(1) };
+  console.log(process.argv.includes('--json') ? JSON.stringify(resumo) : '--- ' + JSON.stringify(resumo, null, 1));
 }

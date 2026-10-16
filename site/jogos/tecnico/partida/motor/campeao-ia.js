@@ -250,7 +250,7 @@ function decidirSelva(P, u, ctx) {
   }
   if (u.estado === 'gank') {
     const gi = u.gankInfo; const alvo = gi && porId(P, gi.alvoId);
-    const conhecido = alvo && ctx.ini.find((k) => k.u.id === alvo.id);
+    const conhecido = alvo && conhecidos(P, u.equipe, 9).find((k) => k.u.id === alvo.id);
     const fim = !gi || P.t - gi.inicio > R.duracaoMax || !alvo || alvo.morto || !conhecido || ctx.hp < 0.35;
     if (fim) { terminarGank(P, u, gi, alvo && alvo.morto ? 'abate' : (ctx.hp < 0.35 ? 'recuou' : 'falhou')); mudar(P, u, 'selva', 'gank acabou'); }
     return;
@@ -594,7 +594,8 @@ function agirGank(P, u) {
   const alvo = porId(P, gi.alvoId);
   if (!alvo || alvo.morto) { u.forcarDecisao = true; return; }
   // vai até o inimigo pelo caminho mais curto da selva; a luta começa quando a avaliação de luta aprovar
-  const k = (u.ctx?.ini || []).find((x) => x.u.id === alvo.id);
-  const px = k ? k.x : alvo.x, py = k ? k.y : alvo.y;
+  const k = conhecidos(P, u.equipe, 9).find((x) => x.u.id === alvo.id);
+  if (!k) { u.forcarDecisao = true; return; }
+  const px = k.x, py = k.y;
   irPara(P, u, px, py, { tol: Math.max(300, u.alcance * 0.6) });
 }

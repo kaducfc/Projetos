@@ -32,8 +32,8 @@ export function gerarOndas(P) {
       const seq = ['corpo', 'corpo', 'corpo', 'conjurador', 'conjurador', 'conjurador'];
       if (cerco) seq.push('cerco');
       // superminions: inibidor inimigo derrubado nesta rota (ou todas = duas por onda)
-      const inimigoEq = P.equipes[outro(eq)];
-      const supers = inimigoEq.inibidoresCaidos[rota] ? (Object.values(inimigoEq.inibidoresCaidos).filter(Boolean).length >= 3 ? 2 : 1) : 0;
+      const derrubados = P.equipes[eq].inibidoresCaidos; // inibidores inimigos que esta equipe derrubou (e ainda não renasceram)
+      const supers = derrubados[rota] ? (Object.values(derrubados).filter(Boolean).length >= 3 ? 2 : 1) : 0;
       for (let i = 0; i < supers; i++) seq.push('super');
       seq.forEach((st, i) => P.filaSpawn.push({ t: S.proxOnda + i * R.espacamentoSpawn, subtipo: st, equipe: eq, rota, s: s0 }));
     }

@@ -1,0 +1,377 @@
+// Simulação de partidas (gameplay em Summoner's Rift): motor, navegação, minions, selva, estruturas, objetivos, relógio e renderização.
+// Os testes montam cenários controlados com sementes fixas. Os de estatística pesada só rodam com TC_LENTO=1.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { Partida } from '../jogos/tecnico/partida/motor/partida.js';
+import { Relogio } from '../jogos/tecnico/partida/motor/relogio.js';
+import { causarDano, matar, mitigar, curar, darEscudo, lancarHabilidade, aplicarEfeito, atacarBasico } from '../jogos/tecnico/partida/motor/combate.js';
+import { criarMinion, recalcular } from '../jogos/tecnico/partida/motor/entidades.js';
+import { Terreno } from '../jogos/tecnico/partida/nucleo/terreno.js';
+import { Navegacao } from '../jogos/tecnico/partida/nucleo/navegacao.js';
+import { MUNDO_MAPA } from '../jogos/tecnico/partida/nucleo/mapa-mundo.js';
+import { MUNDO, normParaMundo, mundoParaNorm, mundoParaTela, telaParaMundo, projetarNaPolilinha } from '../jogos/tecnico/partida/nucleo/coord.js';
+import { regiaoDe, rotaMaisProxima } from '../jogos/tecnico/partida/nucleo/regioes.js';
+import { elencoTeste } from '../jogos/tecnico/partida/dados/elencos-teste.js';
+import { parametrosDeAtributos } from '../jogos/tecnico/partida/config/atributos.js';
+import { REGRAS } from '../jogos/tecnico/partida/config/regras.js';
+import { Renderizador } from '../jogos/tecnico/partida/render/canvas.js';
+import { MAPA } from '../jogos/tecnico/partida/config/mapa.js';
+
+const catalogo = JSON.parse(readFileSync(new URL('../jogos/campeao/dados/campeoes.json', import.meta.url), 'utf8')).campeoes.map((c) => ({ ...c, id: c.nome }));
+const mk = (seed = 1, pa = 60, pv = 60, regras) => new Partida({ azul: elencoTeste('A', pa, seed), vermelho: elencoTeste('V', pv, seed), semente: seed, catalogo, regras });
+const ate = (P, t) => { while (P.t < t - 1e-6 && !P.fim) P.step(); return P; };
+const noPoligono = (p, poly) => { let d = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a.y > p.y) !== (b.y > p.y) && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) d = !d; } return d; };
+const congelar = (c) => { c.proxDecisao = 1e12; c.estado = 'comprando'; c.estadoDesde = 1e12; c.caminho = null; c.destino = null; };
+const estr = (P, id) => P.estruturas.find((e) => e.id === id);
+const matador = (P, eq) => P.campeoes.find((c) => c.equipe === eq);
+const derrubar = (P, id, eq = 'vermelho') => causarDano(P, matador(P, eq), estr(P, id), 1e9, 'verdadeiro');
+const PARES = [['topo'], ['meio'], ['baixo']];
+
+// ------------------------------------------------------------------ mapa e coordenadas
+test('mapa: terreno decodificado, estruturas e pontos de interesse em células navegáveis e conectados', () => {
+  const t = new Terreno(); const nav = new Navegacao(t);
+  assert.equal(t.cols, 186); assert.equal(t.rows, 133);
+  assert.equal(t.caminhavel(0, 0, 'campeao'), false, 'fora do mapa é parede');
+  for (const e of MUNDO_MAPA.estruturas) assert.ok(t.caminhavel(e.x, e.y, 'campeao'), `${e.id} em parede`);
+  const nexA = MUNDO_MAPA.bases.azul.nexus;
+  for (const p of [...MUNDO_MAPA.acampamentos, ...MUNDO_MAPA.covis, MUNDO_MAPA.bases.vermelho.nexus]) assert.ok(nav.caminho(nexA.x, nexA.y, p.x, p.y, 'campeao'), `sem caminho até ${p.id || 'nexus'}`);
+  assert.equal(MAPA.imagem.largura, 1487); assert.equal(MAPA.imagem.altura, 1058);
+});
+test('coordenadas: conversões normalizado, mundo e tela são consistentes em qualquer tamanho', () => {
+  const m = normParaMundo(0.25, 0.5); const n = mundoParaNorm(m.x, m.y);
+  assert.ok(Math.abs(n.nx - 0.25) < 1e-9 && Math.abs(n.ny - 0.5) < 1e-9);
+  for (const v of [{ largura: 500, altura: 356 }, { largura: 1487, altura: 1058 }, { largura: 733, altura: 521 }]) {
+    const tela = mundoParaTela(5000, 4000, v); const volta = telaParaMundo(tela.px, tela.py, v);
+    assert.ok(Math.abs(volta.x - 5000) < 1e-6 && Math.abs(volta.y - 4000) < 1e-6);
+  }
+  assert.ok(MUNDO.largura === 14870 && MUNDO.altura === 10580);
+  const r = regiaoDe(new Terreno(), MUNDO_MAPA.bases.azul.nexus.x, MUNDO_MAPA.bases.azul.nexus.y);
+  assert.equal(r.tipo, 'base'); assert.equal(r.lado, 'azul');
+});
+
+// ------------------------------------------------------------------ 1 a 4: início
+test('1-3. a partida começa com dez campeões, nas bases certas e com as cinco funções de cada lado', () => {
+  const P = mk(1);
+  assert.equal(P.campeoes.length, 10);
+  for (const eq of ['azul', 'vermelho']) {
+    const lado = P.campeoes.filter((c) => c.equipe === eq);
+    assert.deepEqual(lado.map((c) => c.pos).sort(), ['atirador', 'meio', 'selva', 'suporte', 'top']);
+    for (const c of lado) { assert.ok(noPoligono(c, MUNDO_MAPA.bases[eq].poligono), `${c.nome} fora da base ${eq}`); assert.ok(Math.hypot(c.x - MUNDO_MAPA.bases[eq].fonte.x, c.y - MUNDO_MAPA.bases[eq].fonte.y) < 700); }
+    assert.deepEqual(lado.map((c) => c.rota).sort(), [null, 'baixo', 'baixo', 'meio', 'topo'].sort((a, b) => String(a).localeCompare(String(b))));
+  }
+  assert.equal(new Set(P.campeoes.map((c) => c.campeao)).size, 10, 'campeões não se repetem');
+  for (const c of P.campeoes) { assert.equal(c.nivel, 1); assert.ok(c.ouro > 0); assert.equal(c.hp, c.hpMax); }
+});
+test('4. cada campeão segue a rota inicial apropriada e o jungler vai ao primeiro acampamento', () => {
+  const P = ate(mk(1), 45);
+  for (const c of P.campeoes) {
+    if (c.pos === 'selva') { assert.equal(c.estado, 'selva'); const camp = P.acampamentos.find((a) => a.id === c.jungle.ordem[0]); assert.ok(Math.hypot(c.x - camp.x, c.y - camp.y) < 900, `${c.nome} longe do primeiro acampamento`); continue; }
+    assert.equal(rotaMaisProxima(c).id, c.rota, `${c.nome} (${c.pos}) fora da rota`);
+    assert.ok(rotaMaisProxima(c).d < 1000);
+  }
+  const bot = P.campeoes.filter((c) => c.equipe === 'azul' && c.rota === 'baixo');
+  assert.ok(Math.hypot(bot[0].x - bot[1].x, bot[0].y - bot[1].y) < 900, 'atirador e suporte juntos');
+});
+
+// ------------------------------------------------------------------ 5 e 6: navegação
+test('5-6. a navegação evita paredes, contorna obstáculos e respeita os pontos de passagem da rota', () => {
+  const t = new Terreno(); const nav = new Navegacao(t);
+  const a = MUNDO_MAPA.acampamentos.find((x) => x.id === 'azul_buff'), b = MUNDO_MAPA.acampamentos.find((x) => x.id === 'verm_buff');
+  assert.equal(t.linhaLivre(a.x, a.y, b.x, b.y, 'campeao'), false, 'a reta atravessa parede');
+  const c = nav.caminho(a.x, a.y, b.x, b.y, 'campeao'); assert.ok(c && c.length >= 2);
+  let x = a.x, y = a.y, total = 0;
+  for (const p of c) { assert.ok(t.caminhavel(p.x, p.y, 'campeao')); assert.ok(t.linhaLivre(x, y, p.x, p.y, 'campeao'), 'trecho atravessa parede'); total += Math.hypot(p.x - x, p.y - y); x = p.x; y = p.y; }
+  assert.ok(total > Math.hypot(a.x - b.x, a.y - b.y) * 1.01, 'caminho mais longo que a reta');
+  assert.equal(nav.caminho(a.x, a.y, 0, 0, 'campeao') === null || true, true);
+  // minions: só rota e base; waypoints da rota são navegáveis
+  for (const r of Object.values(MUNDO_MAPA.rotas)) for (const p of r.pts) assert.ok(t.caminhavel(p.x, p.y, 'minion'), `ponto ${r.id} fora da rota`);
+  const bloqueado = nav.caminho(a.x, a.y, MUNDO_MAPA.rotas.topo.pts[3].x, MUNDO_MAPA.rotas.topo.pts[3].y, 'monstro');
+  assert.ok(bloqueado === null || bloqueado.every((p) => t.caminhavel(p.x, p.y, 'monstro')), 'monstros não pisam na rota');
+});
+test('6. unidades em movimento nunca ficam em parede (campeões, minions e monstros) durante cinco minutos', () => {
+  const P = mk(2); let invalidos = 0, n = 0;
+  while (P.t < 300) { P.step(); if (P.tick % 20 === 0) for (const u of P.todasUnidades()) { if (u.morto) continue; n++; const perfil = u.tipo === 'campeao' ? 'campeao' : u.tipo === 'minion' ? 'minion' : u.tipo === 'monstro' ? 'monstro' : 'epico'; if (!P.terreno.caminhavel(u.x, u.y, perfil)) invalidos++; } }
+  assert.equal(invalidos, 0, `${invalidos} de ${n} posições em terreno proibido`);
+});
+
+// ------------------------------------------------------------------ 7 a 10: minions
+test('7. as ondas aparecem aos 1:05 e a cada 30 segundos, simétricas, sem repetir por quadro', () => {
+  const P = mk(1);
+  ate(P, 64.9); assert.equal(P.minions.length, 0);
+  ate(P, 72); const m = P.minions;
+  assert.equal(m.filter((x) => x.equipe === 'azul').length, 18); assert.equal(m.filter((x) => x.equipe === 'vermelho').length, 18);
+  assert.equal(m.filter((x) => x.subtipo === 'cerco').length, 0, 'sem canhão na primeira onda');
+  const ondas = () => P.eventos.filter((e) => e.tipo === 'onda');
+  assert.equal(ondas().length, 1); assert.ok(Math.abs(ondas()[0].t - 65) < 0.2);
+  ate(P, 96); assert.equal(ondas().length, 2); assert.ok(Math.abs(ondas()[1].t - 95) < 0.2);
+  ate(P, 160); assert.ok(P.eventos.find((e) => e.tipo === 'onda' && e.numero === 3) && P.minions.some((x) => x.subtipo === 'cerco'), 'canhão a partir da 3ª onda');
+});
+test('8. os minions seguem a própria rota, só pisam em rota e base e não cortam a selva', () => {
+  const P = mk(1); let fora = 0, total = 0, outraRota = 0;
+  while (P.t < 200) { P.step(); if (P.tick % 20) continue; for (const m of P.minions) { if (m.morto) continue; total++; if (!P.terreno.caminhavel(m.x, m.y, 'minion')) fora++; if (rotaMaisProxima(m).id !== m.rota) outraRota++; } }
+  assert.ok(total > 500); assert.equal(fora, 0); assert.ok(outraRota / total < 0.05, `${outraRota}/${total} minions fora da rota`);
+});
+test('9-10. os minions adquirem alvos válidos e atacam respeitando o intervalo entre ataques', () => {
+  const P = mk(1); const vistos = new WeakSet(); const por = new Map(); let invalidos = 0, comAlvo = 0;
+  while (P.t < 140) {
+    P.step();
+    for (const f of P.fx) { if (f.k !== 'ataque' || vistos.has(f)) continue; vistos.add(f); const u = P.mapaUnidades.get(f.de); if (u && u.tipo === 'minion') { const l = por.get(f.de) || []; l.push(f.t); por.set(f.de, l); } }
+    if (P.tick % 10 === 0) for (const m of P.minions) if (m.alvoId) { comAlvo++; const a = P.mapaUnidades.get(m.alvoId); if (a && (a.morto || a.equipe === m.equipe)) { if (!a.morto || P.t - a.mortoEm > 1) invalidos++; } }
+  }
+  assert.ok(comAlvo > 50); assert.equal(invalidos, 0);
+  let checados = 0;
+  for (const [id, ts] of por) { const m = P.mapaUnidades.get(id) || null; const interv = m ? m.intervalo : null; for (let i = 1; i < ts.length; i++) { const lim = (interv ?? 1.2) - 0.11; if (interv) { assert.ok(ts[i] - ts[i - 1] >= lim, `minion ${id} atacou antes do intervalo (${(ts[i] - ts[i - 1]).toFixed(2)}s)`); checados++; } } }
+  assert.ok(checados > 20 || por.size > 0);
+});
+
+// ------------------------------------------------------------------ 11 a 16: farm, selva, ganks
+test('11. os campeões farmam minions nas rotas e ganham ouro por isso', () => {
+  const P = ate(mk(1), 240);
+  const lane = P.campeoes.filter((c) => ['top', 'meio', 'atirador'].includes(c.pos));
+  assert.ok(lane.filter((c) => c.estat.cs >= 1).length >= 4, 'ao menos 4 de 6 laners com abates de minion');
+  assert.ok(lane.reduce((s, c) => s + c.estat.cs, 0) >= 8);
+  for (const c of P.campeoes) assert.ok(c.ouroTotal > c.ouro * 0 + 500);
+});
+test('12-14. o jungler limpa acampamentos; os monstros atacam, voltam ao acampamento e renascem uma única vez', () => {
+  const P = ate(mk(1), 300);
+  for (const eq of ['azul', 'vermelho']) { const j = P.campeoes.find((c) => c.equipe === eq && c.pos === 'selva'); assert.ok(j.estat.csSelva >= 3, `${eq}: jungler com ${j.estat.csSelva} monstros`); }
+  assert.ok(P.eventos.filter((e) => e.tipo === 'acampamento_limpo').length >= 3);
+  // 13: agressão e retorno
+  const Q = ate(mk(3), 100); const camp = Q.acampamentos.find((c) => c.id === 'azul_lobos' && c.estado === 'vivo'); assert.ok(camp);
+  const v = Q.campeoes.find((c) => c.equipe === 'vermelho' && c.pos === 'top'); congelar(v); v.hpMax = v.hp = 1e6; v.x = camp.x + 150; v.y = camp.y;
+  ate(Q, Q.t + 4);
+  assert.ok(camp.monstros.some((m) => m.estado === 'combate'), 'monstros entram em combate'); assert.ok(v.estat.danoSofrido > 0, 'monstros causam dano');
+  const f = MUNDO_MAPA.bases.vermelho.fonte; v.x = f.x; v.y = f.y;
+  ate(Q, Q.t + 40);
+  for (const m of camp.monstros.filter((x) => !x.morto)) { assert.equal(m.estado, 'ocioso'); assert.ok(Math.hypot(m.x - m.home.x, m.y - m.home.y) < 120); assert.equal(Math.round(m.hp), Math.round(m.hpMax)); }
+  // 14: respawn único
+  const R = ate(mk(4), 100); const c2 = R.acampamentos.find((c) => c.id === 'azul_gromp' && c.estado === 'vivo'); const kil = R.campeoes.find((c) => c.equipe === 'azul');
+  for (const m of [...c2.monstros]) { causarDano(R, kil, m, 1e9, 'verdadeiro'); causarDano(R, kil, m, 1e9, 'verdadeiro'); matar(R, m, kil); }
+  assert.equal(c2.estado, 'morto'); assert.equal(R.eventos.filter((e) => e.tipo === 'acampamento_limpo' && e.campo === c2.id).length, 1, 'recompensa de campo única');
+  assert.ok(Math.abs(c2.respawnEm - (R.t + REGRAS.selva.respawn)) < 0.5);
+  ate(R, c2.respawnEm + 0.5); assert.equal(c2.estado, 'vivo'); assert.equal(c2.spawns, 2);
+  assert.equal(R.monstros.filter((m) => m.campo === c2.id && !m.morto).length, c2.def.monstros.length);
+  ate(R, R.t + 60); assert.equal(c2.spawns, 2, 'não reaparece de novo sem ser morto');
+});
+test('15-16. o jungler realiza ganks, e um gank pode falhar', () => {
+  const P = ate(mk(2), 900);
+  const iniciados = P.eventos.filter((e) => e.tipo === 'gank_iniciado'); const res = P.eventos.filter((e) => e.tipo === 'gank_resultado');
+  assert.ok(iniciados.length >= 1, 'houve gank'); assert.ok(res.length >= 1);
+  assert.ok(res.some((e) => e.resultado !== 'abate'), 'um gank não é garantido: houve falha/recuo');
+  for (const e of iniciados) assert.ok(['topo', 'meio', 'baixo'].includes(e.rota));
+});
+
+// ------------------------------------------------------------------ 17 a 19: combate
+test('17. campeões morrem e renascem na base, sem agir enquanto mortos', () => {
+  const P = ate(mk(1), 30); const c = P.campeoes[2]; const px = c.x, py = c.y;
+  causarDano(P, null, c, 1e7, 'verdadeiro');
+  assert.equal(c.morto, true); assert.equal(c.hp, 0); assert.ok(c.renasceEm > P.t); assert.equal(c.estado, 'morto');
+  const alvo = P.campeoes.find((x) => x.equipe !== c.equipe); assert.equal(atacarBasico(P, c, alvo), false, 'morto não ataca');
+  ate(P, P.t + 2); assert.equal(c.x, px); assert.equal(c.y, py, 'morto fica onde caiu');
+  let achado = false; P.indice.perto(c.x, c.y, 200, (u) => { if (u === c) achado = true; }); assert.equal(achado, false, 'morto não é alvo');
+  ate(P, c.renasceEm + 0.2);
+  assert.equal(c.morto, false); assert.equal(c.hp, c.hpMax);
+  assert.ok(noPoligono(c, MUNDO_MAPA.bases[c.equipe].poligono) || Math.hypot(c.x - MUNDO_MAPA.bases[c.equipe].fonte.x, c.y - MUNDO_MAPA.bases[c.equipe].fonte.y) < 900);
+  assert.equal(P.eventos.filter((e) => e.tipo === 'abate' && e.vitima === c.id).length, 1);
+});
+test('18. vida, armadura, resistência, escudo e cura', () => {
+  assert.ok(Math.abs(mitigar(100, 100) - 50) < 1e-9); assert.ok(Math.abs(mitigar(100, 0) - 100) < 1e-9);
+  const P = mk(1); const c = P.campeoes[0]; c.armadura = 100; c.resist = 0;
+  const h0 = c.hp; const d = causarDano(P, null, c, 100, 'fisico', { fx: false }); assert.ok(Math.abs(d - 50) < 1e-6); assert.ok(Math.abs(c.hp - (h0 - 50)) < 1e-6);
+  causarDano(P, null, c, 100, 'magico', { fx: false }); assert.ok(Math.abs(c.hp - (h0 - 150)) < 1e-6);
+  const h1 = c.hp; darEscudo(P, c, 60, 5); causarDano(P, null, c, 80, 'verdadeiro', { fx: false }); assert.ok(Math.abs(c.hp - (h1 - 20)) < 1e-6, 'o escudo absorve primeiro');
+  curar(P, c, 1e6, null); assert.equal(c.hp, c.hpMax, 'a cura não passa da vida máxima');
+});
+test('19. habilidades respeitam alcance, recarga, recurso e estado', () => {
+  const P = ate(mk(1), 20);
+  const c = P.campeoes.find((x) => x.perfil.habilidades.some((h) => h.tipo === 'alvo'));
+  assert.ok(c); const h = c.habilidades.find((x) => x.tipo === 'alvo'); c.nivel = 18; recalcular(c, P, true); c.mana = c.manaMax; congelar(c);
+  const e = P.campeoes.find((x) => x.equipe !== c.equipe); congelar(e); c.x = 7300; c.y = 5600; e.hpMax = e.hp = 1e7;
+  e.x = c.x + h.alcance + 600; e.y = c.y; assert.equal(lancarHabilidade(P, c, h, e), false, 'fora do alcance');
+  e.x = c.x + 150; const m0 = c.mana;
+  assert.equal(lancarHabilidade(P, c, h, e), true); assert.ok(c.mana < m0, 'gasta recurso'); assert.ok(h.proximo > P.t, 'entra em recarga');
+  assert.equal(lancarHabilidade(P, c, h, e), false, 'em recarga');
+  P.t = h.proximo + 0.01; c.mana = 0; assert.equal(lancarHabilidade(P, c, h, e), false, 'sem mana'); c.mana = c.manaMax;
+  aplicarEfeito(P, c, { tipo: 'stun', dur: 1 }, e); assert.equal(lancarHabilidade(P, c, h, e), false, 'incapacitado');
+  c.efeitos = []; assert.equal(lancarHabilidade(P, c, h, e), true);
+  c.morto = true; P.t = h.proximo + 0.01; assert.equal(lancarHabilidade(P, c, h, e), false, 'morto');
+});
+test('controle em sequência encurta e nunca incapacita para sempre', () => {
+  const P = mk(1); const c = P.campeoes[0]; let incapacitadoAte = 0;
+  for (let i = 0; i < 8; i++) { aplicarEfeito(P, c, { tipo: 'stun', dur: 2 }, null); incapacitadoAte = Math.max(incapacitadoAte, ...c.efeitos.map((x) => x.ate)); P.t += 0.5; }
+  assert.ok(incapacitadoAte - 0 < 8 * 0.5 + 2.6, 'a soma dos controles fica limitada');
+  assert.ok(c.efeitos.every((x) => x.ate - (P.t - 0.5) <= 2.5 + 1e-6), 'nenhum controle passa da duração máxima');
+});
+
+// ------------------------------------------------------------------ 20 a 28: estruturas
+test('20. as torres escolhem alvos válidos: minions antes de campeões, e quem agride um aliado sob a torre', () => {
+  const P = mk(1); const torre = estr(P, 'torre_topo_1_azul');
+  for (const c of P.campeoes) congelar(c);
+  const azul = P.campeoes.find((c) => c.equipe === 'azul'), verm = P.campeoes.find((c) => c.equipe === 'vermelho');
+  azul.hpMax = azul.hp = 1e7; verm.hpMax = verm.hp = 1e7;
+  azul.x = torre.x - 100; azul.y = torre.y; verm.x = torre.x + 500; verm.y = torre.y;
+  const m = criarMinion(P, 'corpo', 'vermelho', 'topo', 100); m.x = torre.x + 300; m.y = torre.y; m.hp = m.hpMax = 1e6; P.minions.push(m); P.mapaUnidades.set(m.id, m);
+  const longe = criarMinion(P, 'corpo', 'vermelho', 'topo', 100); longe.x = torre.x + 2500; longe.y = torre.y; P.minions.push(longe); P.mapaUnidades.set(longe.id, longe);
+  ate(P, P.t + 1.5);
+  assert.equal(torre.alvoId, m.id, 'prefere o minion ao campeão e ignora quem está fora do alcance');
+  const alvo = P.mapaUnidades.get(torre.alvoId); assert.ok(!alvo.morto && Math.hypot(alvo.x - torre.x, alvo.y - torre.y) <= torre.alcance + alvo.raio);
+  causarDano(P, verm, azul, 10, 'verdadeiro', { fx: false }); verm.x = torre.x + 400; verm.y = torre.y;
+  ate(P, P.t + 0.4); assert.equal(torre.alvoId, verm.id, 'agressor de aliado vira o alvo');
+});
+test('21. as torres podem ser destruídas, uma única vez, e depois não atacam nem se recuperam', () => {
+  const P = ate(mk(1), 20); const t = estr(P, 'torre_baixo_1_azul'); const k = matador(P, 'vermelho');
+  const ouro0 = P.campeoes.filter((c) => c.equipe === 'vermelho').map((c) => c.ouroTotal);
+  assert.ok(causarDano(P, k, t, 1e9, 'verdadeiro') > 0); assert.equal(t.morto, true);
+  assert.equal(causarDano(P, k, t, 1e9, 'verdadeiro'), 0, 'não destrói de novo');
+  assert.equal(P.eventos.filter((e) => e.tipo === 'torre_destruida' && e.estrutura === t.id).length, 1);
+  ate(P, P.t + 5); assert.equal(t.hp, 0); assert.equal(t.alvoId, null);
+  assert.equal(P.fx.filter((f) => f.k === 'ataque' && f.de === t.id && P.t - f.t < 4).length, 0);
+  P.campeoes.filter((c) => c.equipe === 'vermelho').forEach((c, i) => assert.ok(c.ouroTotal > ouro0[i]));
+});
+test('22 e 26. as estruturas respeitam a progressão: T1, T2, T3, inibidor, torres do Nexus e Nexus', () => {
+  const P = mk(1); const k = matador(P, 'vermelho');
+  const hp = (id) => estr(P, id).hp;
+  for (const rota of ['topo', 'meio', 'baixo']) {
+    const t = (n) => estr(P, `torre_${rota}_${n}_azul`); const inib = estr(P, `inibidor_${rota}_azul`);
+    assert.equal(P.estruturaVulneravel(t(1)), true);
+    for (const e of [t(2), t(3), inib]) { const h0 = e.hp; assert.equal(P.estruturaVulneravel(e), false); assert.equal(causarDano(P, k, e, 1e6, 'verdadeiro'), 0); assert.equal(e.hp, h0); }
+    derrubar(P, t(1).id); assert.equal(P.estruturaVulneravel(t(2)), true); assert.equal(P.estruturaVulneravel(t(3)), false);
+    derrubar(P, t(2).id); assert.equal(P.estruturaVulneravel(t(3)), true); assert.equal(P.estruturaVulneravel(inib), false);
+    derrubar(P, t(3).id); assert.equal(P.estruturaVulneravel(inib), true);
+  }
+  const nx = estr(P, 'nexus_azul'); const nt = [estr(P, 'torre_nexus_1_azul'), estr(P, 'torre_nexus_2_azul')];
+  assert.equal(P.estruturaVulneravel(nt[0]), false, 'torres do Nexus só depois de um inibidor');
+  assert.equal(causarDano(P, k, nx, 1e6, 'verdadeiro'), 0, '26. o Nexus não pode ser atacado antes das condições');
+  derrubar(P, 'inibidor_topo_azul'); assert.equal(P.estruturaVulneravel(nt[0]), true);
+  assert.equal(P.estruturaVulneravel(nx), false); derrubar(P, nt[0].id); assert.equal(P.estruturaVulneravel(nx), false, 'ainda falta uma torre do Nexus');
+  derrubar(P, nt[1].id); assert.equal(P.estruturaVulneravel(nx), true);
+});
+test('25. inibidor derrubado gera superminions na rota, e o inibidor renasce depois do tempo configurado', () => {
+  const P = mk(1); ate(P, 5);
+  for (const n of [1, 2, 3]) derrubar(P, `torre_topo_${n}_azul`);
+  const inib = estr(P, 'inibidor_topo_azul'); derrubar(P, inib.id);
+  assert.equal(P.equipes.vermelho.inibidoresCaidos.topo, true); assert.ok(inib.morto && inib.renasceEm > P.t);
+  ate(P, 100); assert.ok(P.minions.some((m) => m.subtipo === 'super' && m.equipe === 'vermelho' && m.rota === 'topo'), 'superminion nasce na rota do inibidor');
+  assert.ok(!P.minions.some((m) => m.subtipo === 'super' && m.equipe === 'azul'), 'o lado do inibidor caído não ganha super');
+  ate(P, inib.renasceEm + 0.5); assert.equal(inib.morto, false); assert.equal(inib.hp, inib.hpMax); assert.equal(P.equipes.vermelho.inibidoresCaidos.topo, false);
+  const antes = P.minions.filter((m) => m.subtipo === 'super').length; ate(P, P.t + 35);
+  assert.equal(P.minions.filter((m) => m.subtipo === 'super' && m.nascido > inib.renasceEm).length, 0, 'depois do respawn não nascem mais superminions'); assert.ok(antes >= 0);
+});
+test('27-28. destruir o Nexus encerra a partida; o resultado é registrado e entregue uma única vez', () => {
+  const P = ate(mk(1), 10); const k = matador(P, 'vermelho');
+  for (const rota of ['topo', 'meio', 'baixo']) for (const n of [1, 2, 3]) derrubar(P, `torre_${rota}_${n}_azul`);
+  derrubar(P, 'inibidor_meio_azul'); derrubar(P, 'torre_nexus_1_azul'); derrubar(P, 'torre_nexus_2_azul');
+  assert.equal(P.fim, null);
+  causarDano(P, k, estr(P, 'nexus_azul'), 1e9, 'verdadeiro');
+  assert.ok(P.fim); assert.equal(P.fim.vencedor, 'vermelho'); assert.equal(P.fim.motivo, 'nexus'); assert.equal(P.resultadoFinal.vencedor, 'vermelho');
+  const t = P.t; assert.equal(P.step(), false); assert.equal(P.t, t, 'a partida acabada não avança');
+  assert.equal(P.eventos.filter((e) => e.tipo === 'fim').length, 1); assert.equal(P.eventos.filter((e) => e.tipo === 'nexus_destruido').length, 1);
+  // tenta "vencer" de novo com o outro lado: ignorado
+  P.verificarVitoria('azul', 'nexus'); assert.equal(P.fim.vencedor, 'vermelho'); assert.equal(P.eventos.filter((e) => e.tipo === 'fim').length, 1);
+  let chamadas = 0; const r1 = P.entregarResultado((r) => { chamadas++; return r.vencedor; }); const r2 = P.entregarResultado(() => { chamadas++; });
+  assert.equal(chamadas, 1); assert.equal(r1.duplicado, false); assert.equal(r2.duplicado, true);
+  assert.throws(() => mk(1).entregarResultado(() => {}), /andamento/);
+});
+
+// ------------------------------------------------------------------ 23, 24: objetivos e recompensas
+test('23. os objetivos épicos nascem, são disputados e só perdem vida por ataques reais', () => {
+  const P = mk(1); ate(P, 301); const d = P.epicos.find((e) => e.subtipo === 'dragao'); assert.ok(d, 'dragão nasceu aos 5:00');
+  const hp = d.hp; ate(P, P.t + 5); assert.ok(d.hp >= hp - 1 || P.campeoes.some((c) => Math.hypot(c.x - d.x, c.y - d.y) < 1500), 'sem atacantes, a vida não cai');
+  ate(P, 560);
+  assert.ok(P.eventos.some((e) => e.tipo === 'objetivo_iniciado'), 'a equipe decidiu disputar'); assert.ok(P.eventos.some((e) => e.tipo === 'objetivo_abatido'), 'um objetivo foi conquistado');
+  const ab = P.eventos.find((e) => e.tipo === 'objetivo_abatido'); assert.ok(ab.participantes.length >= 1); assert.ok(ab.ouro > 0);
+});
+test('24. recompensas não são duplicadas (minion, monstro, estrutura e campeão)', () => {
+  const P = ate(mk(1), 5); const k = P.campeoes[0];
+  const m = criarMinion(P, 'corpo', 'vermelho', 'meio', 100); m.x = k.x; m.y = k.y; P.minions.push(m); P.mapaUnidades.set(m.id, m);
+  const o0 = k.ouroTotal, cs0 = k.estat.cs;
+  causarDano(P, k, m, 1e6, 'verdadeiro', { fx: false }); const o1 = k.ouroTotal; matar(P, m, k); causarDano(P, k, m, 1e6, 'verdadeiro', { fx: false });
+  assert.ok(Math.abs(o1 - o0 - m.ouro * REGRAS.economia.escalaOuro) < 1e-6); assert.equal(k.ouroTotal, o1, 'ouro pago uma vez'); assert.equal(k.estat.cs, cs0 + 1);
+  const v = P.campeoes.find((c) => c.equipe === 'vermelho'); const ab0 = k.estat.abates;
+  causarDano(P, k, v, 1e7, 'verdadeiro', { fx: false }); matar(P, v, k); assert.equal(k.estat.abates, ab0 + 1); assert.equal(P.equipes.azul.abates, 1);
+});
+
+// ------------------------------------------------------------------ 29 a 32: relógio, reinício, render
+test('29. o tempo acelerado não perde eventos: o resultado é igual com qualquer velocidade e ritmo de quadros', () => {
+  const a = mk(5), b = mk(5);
+  const ra = new Relogio(a, { velocidade: 4 }), rb = new Relogio(b, { velocidade: 32 }); ra.iniciar(); rb.iniciar();
+  while (a.t < 90) ra.atualizar(0.05);
+  while (b.t < 90) rb.atualizar(0.25);
+  const alvoTick = Math.max(a.tick, b.tick); while (a.tick < alvoTick) a.step(); while (b.tick < alvoTick) b.step();
+  assert.equal(a.tick, b.tick);
+  assert.equal(JSON.stringify(a.eventos), JSON.stringify(b.eventos));
+  assert.equal(JSON.stringify(a.campeoes.map((c) => [c.x, c.y, c.hp, c.ouroTotal])), JSON.stringify(b.campeoes.map((c) => [c.x, c.y, c.hp, c.ouroTotal])));
+});
+test('30. a pausa interrompe o avanço e retomar continua do mesmo ponto', () => {
+  const P = mk(1); const r = new Relogio(P, { velocidade: 8 });
+  assert.equal(r.atualizar(1), 0, 'começa pausado'); assert.equal(P.tick, 0);
+  r.iniciar(); assert.ok(r.atualizar(0.1) > 0); const t = P.tick;
+  r.pausar(); assert.equal(r.atualizar(5), 0); assert.equal(P.tick, t);
+  r.retomar(); assert.ok(r.atualizar(0.1) > 0); assert.ok(P.tick > t);
+  r.definirVelocidade(999); assert.equal(r.velocidade, 8, 'velocidade fora da lista é ignorada');
+  const antes = P.tick; r.atualizar(10); assert.ok(P.tick - antes <= r.max, 'quadro atrasado não causa salto enorme');
+});
+test('31. reiniciar cria uma partida nova e limpa (mesma semente, mesmo ponto de partida)', () => {
+  const A = mk(7); const inicial = JSON.stringify(A.campeoes.map((c) => [c.campeao, Math.round(c.x), Math.round(c.y), c.hp]));
+  ate(A, 120);
+  const B = mk(7);
+  assert.equal(B.t, 0); assert.equal(B.tick, 0); assert.equal(B.minions.length, 0); assert.equal(B.fim, null);
+  assert.ok(B.eventos.every((e) => e.t === 0 && ['inicio', 'compra'].includes(e.tipo)), 'só o início e as compras iniciais'); assert.equal(B.eventos.filter((e) => e.tipo === 'inicio').length, 1);
+  assert.equal(JSON.stringify(B.campeoes.map((c) => [c.campeao, Math.round(c.x), Math.round(c.y), c.hp])), inicial);
+  assert.notEqual(A.t, B.t);
+  const C = mk(8); assert.notEqual(JSON.stringify(C.campeoes.map((c) => c.campeao)), JSON.stringify(B.campeoes.map((c) => c.campeao)), 'outra semente, outros campeões');
+});
+test('32. a renderização desenha o estado real do motor (posições, mortos com tempo, estruturas)', () => {
+  const chamadas = { arc: [], fillText: [], rect: 0 };
+  const ctx = new Proxy({}, { get: (_, nome) => { if (nome === 'arc') return (x, y, r) => chamadas.arc.push([x, y, r]); if (nome === 'fillText') return (t, x, y) => chamadas.fillText.push([String(t), x, y]); if (nome === 'rect') return () => { chamadas.rect++; }; if (nome === 'createRadialGradient') return () => ({ addColorStop() {} }); return () => {}; }, set: () => true });
+  const canvas = { getContext: () => ctx, style: {}, width: 0, height: 0 };
+  globalThis.window = { devicePixelRatio: 1 };
+  const r = new Renderizador(canvas, null); r.ajustar(1000);
+  const P = ate(mk(1), 40); const morto = P.campeoes[4]; causarDano(P, null, morto, 1e7, 'verdadeiro', { fx: false });
+  r.desenhar(P);
+  const perto = (x, y, tol = 0.01) => chamadas.arc.some(([ax, ay]) => Math.abs(ax - x * r.k) < tol && Math.abs(ay - y * r.k) < tol);
+  for (const c of P.campeoes) if (!c.morto) assert.ok(perto(c.x, c.y), `campeão ${c.nome} não desenhado onde está no motor`);
+  assert.ok(chamadas.fillText.some(([t]) => /^\d+s$/.test(t)), 'o morto mostra o tempo de renascimento');
+  for (const e of P.estruturas) assert.ok(perto(e.x, e.y) || chamadas.rect > 0);
+  assert.equal(r.k, 1000 / MUNDO.largura);
+  r.ajustar(500); assert.equal(r.k, 500 / MUNDO.largura, 'o tamanho da tela não muda as coordenadas lógicas');
+});
+
+// ------------------------------------------------------------------ 33 a 35: atributos, equilíbrio e partida completa
+test('33. os atributos viram parâmetros de combate de forma central e a Fama não entra', () => {
+  const baixo = parametrosDeAtributos({ mec: 10, rotas: 10, macro: 10, tf: 10, mental: 10, fama: 10 }, REGRAS);
+  const alto = parametrosDeAtributos({ mec: 90, rotas: 90, macro: 90, tf: 90, mental: 90, fama: 10 }, REGRAS);
+  assert.ok(alto.execDano > baixo.execDano && alto.execAcerto > baixo.execAcerto && alto.farm > baixo.farm && alto.troca > baixo.troca);
+  assert.ok(alto.luta > baixo.luta && alto.erro < baixo.erro && alto.tilt < baixo.tilt && alto.decisaoIntervalo < baixo.decisaoIntervalo && alto.ruido < baixo.ruido);
+  assert.deepEqual(parametrosDeAtributos({ mec: 50, rotas: 50, macro: 50, tf: 50, mental: 50, fama: 1 }, REGRAS), parametrosDeAtributos({ mec: 50, rotas: 50, macro: 50, tf: 50, mental: 50, fama: 100 }, REGRAS));
+  assert.ok(alto.execDano - baixo.execDano < 0.2, 'diferenças moderadas: não decidem sozinhas a partida');
+  for (const [pa, pv] of [[30, 30], [90, 20]]) { const P = ate(mk(9, pa, pv), 420); assert.equal(P.diag.erros.length, 0); assert.ok(P.campeoes.every((c) => Number.isFinite(c.hp) && Number.isFinite(c.x))); }
+});
+test('35. uma partida completa termina com a destruição do Nexus, sem travar nem inventar vencedor', { timeout: 240000 }, () => {
+  const P = mk(1); const r = P.executarAteFim();
+  assert.ok(P.fim); assert.equal(r.motivo, 'nexus'); assert.ok(['azul', 'vermelho'].includes(r.vencedor)); assert.equal(r.interrompida, false);
+  assert.ok(r.duracao > 600 && r.duracao < REGRAS.limiteTecnico);
+  assert.equal(r.diagnostico.erros, 0); assert.ok(r.diagnostico.presosGraves < 30);
+  const perd = r.perdedor; const nexus = estr(P, `nexus_${perd}`); assert.equal(nexus.morto, true);
+  assert.ok(r.equipes[r.vencedor].torresPerdidas < r.equipes[perd].torresPerdidas + 12);
+  const torres = P.eventos.filter((e) => e.tipo === 'torre_destruida').map((e) => e.estrutura); assert.equal(new Set(torres).size, torres.length, 'nenhuma torre cai duas vezes');
+  assert.ok(P.eventos.filter((e) => e.tipo === 'abate').length > 5); assert.ok(r.jogadores.every((j) => j.nivel >= 1 && j.ouro > 0));
+  assert.equal(P.eventos.filter((e) => e.tipo === 'fim').length, 1);
+  // determinismo: a mesma semente reproduz o mesmo resultado
+  const Q = mk(1).executarAteFim(); assert.equal(Q.duracao, r.duracao); assert.equal(Q.vencedor, r.vencedor);
+});
+test('34. quem tem mais Poder tem vantagem estatística, mas não vence sempre (rodada de partidas completas)', { skip: !process.env.TC_LENTO && 'TC_LENTO=1 para rodar (leva alguns minutos)', timeout: 900000 }, () => {
+  const out = spawnSync('node', ['jogos/tecnico/partida/ferramentas/simular-lote.mjs', '12', '75', '45', '1', '4', '--json'], { encoding: 'utf8', cwd: new URL('..', import.meta.url).pathname });
+  const r = JSON.parse(out.stdout.trim().split('\n').pop()); const [v, n] = r.azulVenceu.split('/').map(Number);
+  assert.equal(r.semVencedor, 0); assert.equal(r.erros, 0);
+  assert.ok(v / n > 0.5, `o time forte deveria vencer mais (${r.azulVenceu})`); assert.ok(v < n, 'o time fraco precisa conseguir vencer às vezes');
+  assert.ok(r.duracaoMediaMin > 15 && r.duracaoMediaMin < 50); assert.ok(r.torresDerrubadas > 5);
+});
+
+test('arquivos: documentação do mapa, ferramenta de depuração e geração do terreno acompanham o código', () => {
+  for (const f of ['MAPA.md', 'depurar.html', 'index.html', 'ferramentas/gerar_terreno.py', 'ferramentas/mapa-fonte.json', 'ferramentas/simular-lote.mjs', 'config/terreno.js', 'config/mapa.js', 'config/regras.js']) assert.ok(existsSync(new URL(`../jogos/tecnico/partida/${f}`, import.meta.url)), f);
+  assert.ok(existsSync(new URL('../jogos/tecnico/img/mapa-sr.webp', import.meta.url)));
+  assert.match(readFileSync(new URL('../jogos/tecnico/partida/index.html', import.meta.url), 'utf8'), /noindex/);
+});

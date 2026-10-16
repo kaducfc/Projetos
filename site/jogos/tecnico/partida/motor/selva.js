@@ -29,7 +29,7 @@ function nascer(P, c) {
     c.monstros.push(m); P.monstros.push(m); P.mapaUnidades.set(m.id, m);
   }
   c.vivos = c.monstros.length;
-  registrar(P, 'acampamento_nasceu', { campo: c.id, tipo: c.tipo, lado: c.lado, n: c.spawns });
+  registrar(P, 'acampamento_nasceu', { campo: c.id, grupo: c.tipo, lado: c.lado, n: c.spawns });
 }
 
 export function atualizarSelva(P, dt) {
@@ -90,7 +90,7 @@ export function aoMorrer(P, m, fonte) {
       if (bf === 'azul') { k.buffs.push({ cdr: 0.1, ate: P.t + P.regras.selva.buffs.azul.dur, mana: 1 }); k.mana = k.manaMax; recalcular(k, P); }
       else if (bf === 'vermelho') { k.buffs.push({ adPct: P.regras.selva.buffs.vermelho.ad, ate: P.t + P.regras.selva.buffs.vermelho.dur }); recalcular(k, P); }
     }
-    registrar(P, 'acampamento_limpo', { campo: c.id, tipo: c.tipo, lado: c.lado, equipe: k ? k.equipe : null, campeao: k ? k.id : null, n: c.spawns });
+    registrar(P, 'acampamento_limpo', { campo: c.id, grupo: c.tipo, lado: c.lado, equipe: k ? k.equipe : null, campeao: k ? k.id : null, n: c.spawns });
   }
   P.fx.push({ k: 'morte_mon', id: m.id, t: P.t, x: m.x, y: m.y });
 }

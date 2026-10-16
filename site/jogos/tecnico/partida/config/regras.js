@@ -22,6 +22,7 @@ export const REGRAS = {
   economia: {
     ouroInicial: 500, ouroPassivo: 2.0, ouroPassivoInicio: 110,   // ouro/s; começa aos 1:50
     abate: 300, assistenciaPct: 0.5, bonusPrimeiroAbate: 100,
+    escalaOuro: 1.35, escalaXp: 1.3,   // ajuste global de ritmo: a partida é uma versão resumida de um jogo de minimapa
     nivelMax: 18,
     xpNivel: [0, 280, 660, 1140, 1720, 2400, 3180, 4060, 5040, 6120, 7300, 8580, 9960, 11440, 13020, 14700, 16480, 18360],
     xpAbate: [42, 42, 66, 90, 114, 138, 162, 186, 210, 234, 258, 282, 306, 330, 354, 378, 402, 426],

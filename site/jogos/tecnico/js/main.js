@@ -29,6 +29,7 @@ const S = {
   ligaSel: null,
   hist: null,
   campeoes: null,
+  gp: null,
   fc: { busca: '', pos: '', classe: '', regiao: '' },
   mercado: { aba: 'oficial', f: { ordem: 'poder' }, oficial: null, usuarios: null, meus: null },
   modal: null,
@@ -74,7 +75,7 @@ async function agir(fn, { ok, recarregar = true } = {}) {
 
 async function atualizar() {
   S.meu = await api.meu();
-  if (S.meu.org) S.painel = await api.painel();
+  if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); }
   S.camp = null; S.hist = null;
   S.mercado.oficial = null; S.mercado.usuarios = null; S.mercado.meus = null;
   await carregarAba();
@@ -187,6 +188,7 @@ function viewVisao() {
   return `
   <div class="tc-hero">
     <section class="tc-card tc-prox"><h3>${IMG('i-agenda')}Próxima partida</h3>${prox && prox.id ? vsCard(prox) : '<p class="tc-mudo" style="margin:0">Sem partidas agendadas. As próximas rodadas aparecem quando a semana começar.</p>'}
+      ${S.gp?.ativo && S.gp.partida ? `<p style="text-align:center;margin:12px 0 0"><a class="tc-btn ouro" style="display:inline-block;text-decoration:none" href="partida/?id=${S.gp.partida.id}">Jogar a partida · mapa ${S.gp.proximo?.mapa || 1}</a></p>` : ''}
       ${minha ? `<p class="tc-peq tc-mudo" style="margin:10px 0 0;text-align:center">Posição na divisão: <b style="color:var(--ouro2)">${minha.pos}º</b> · ${minha.pontos} pts · ${minha.vitorias}V ${minha.derrotas}D</p>` : ''}</section>
     <section class="tc-card tc-eco"><h3>${IMG('i-bau')}Sua economia</h3>
       <div class="duo"><div class="bx ouro"><img src="../../shared/assets/moeda/rc-96.webp" srcset="../../shared/assets/moeda/rc-192.webp 2x" alt="" width="44" height="44" /><small>Rift Coins</small><b>${fmt(m.rc)}</b></div>
@@ -429,8 +431,9 @@ function escalarHtml(m) {
 }
 function partidaHtml(m) {
   const p = m.p; const r = p.resumo || { mapas: [] };
-  return `<h2>${esc(p.a.nome)} ${p.placar_a} × ${p.placar_b} ${esc(p.b.nome)}</h2><p class="tc-mudo tc-peq">${dataCurta(p.dia)} · ${p.fase === 'rodada' ? `rodada ${p.rodada}` : FASES[p.fase] || ''} · melhor de ${p.formato} · Poder ${p.poder_a} × ${p.poder_b}</p>
-    ${(r.mapas || []).map((x) => `<div class="tc-resumo"><div class="l"><b>Mapa ${x.mapa}</b><span>${x.duracao} min · vitória ${esc(x.vencedor === 'a' ? p.a.nome : p.b.nome)}</span></div>
+  return `<h2>${esc(p.a.nome)} ${p.placar_a} × ${p.placar_b} ${esc(p.b.nome)}</h2><p class="tc-mudo tc-peq">${dataCurta(p.dia)} · ${p.fase === 'rodada' ? `rodada ${p.rodada}` : FASES[p.fase] || ''} · melhor de ${p.formato} · Poder ${p.poder_a} × ${p.poder_b}${r.origem === 'gameplay' ? ' · partida jogada' : ''}</p>
+    ${(r.mapas || []).map((x) => x.gameplay ? `<div class="tc-resumo"><div class="l"><b>Mapa ${x.mapa}</b><span>${x.duracao} min · vitória ${esc(x.vencedor === 'a' ? p.a.nome : p.b.nome)}</span></div>
+      <div class="l"><span>Abates</span><b>${x.abates[0]} × ${x.abates[1]}</b></div><div class="l"><span>Torres derrubadas</span><b>${x.torres[0]} × ${x.torres[1]}</b></div><div class="l"><span>Dragões</span><b>${x.dragoes[0]} × ${x.dragoes[1]}</b></div>${x.mvp ? `<div class="l"><span>Destaque do mapa</span><b>${esc(x.mvp)}</b></div>` : ''}</div>` : `<div class="tc-resumo"><div class="l"><b>Mapa ${x.mapa}</b><span>${x.duracao} min · vitória ${esc(x.vencedor === 'a' ? p.a.nome : p.b.nome)}</span></div>
       ${[['Rotas', x.rotas], ['Controle de objetivos', x.objetivos], ['Teamfights', x.teamfight]].map(([n, v]) => { const a = Math.max(1, v[0]); const bb = Math.max(1, v[1]); const pa = Math.round((a / (a + bb)) * 100); return `<div class="l"><span>${n}</span><span style="display:flex;gap:8px;align-items:center;min-width:55%"><b>${pa}%</b><div class="tc-barra" style="flex:1"><i style="width:${pa}%"></i></div><b>${100 - pa}%</b></span></div>`; }).join('')}
       <div class="l"><span>Destaque do mapa</span><b>${esc(x.mvp || '')}</b></div></div>`).join('')}
     <div class="tc-acoes"><button type="button" class="tc-btn" data-act="fechar">Fechar</button></div>`;
@@ -593,7 +596,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.modal)
   try {
     await api.sincronizar();
     S.meu = await api.meu();
-    if (S.meu.org) S.painel = await api.painel();
+    if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); }
     render();
   } catch (e) {
     telaMensagem('Não foi possível abrir o jogo', e.message, ['../../', 'Voltar ao início']);

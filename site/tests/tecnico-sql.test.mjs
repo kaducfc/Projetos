@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -436,4 +436,56 @@ t('persistência: uma conexão nova enxerga o mesmo estado (nada fica no navegad
   assert.ok(painel.liga && Array.isArray(painel.ultimos));
   const camp = J('select tc_campeonatos()', 1, '2026-11-08');
   assert.ok(camp.ligas.length > 0);
+});
+
+// ---------------------------------------------------------------- gameplay (SQL 0091)
+t('gameplay: a partida do técnico espera o jogo no navegador, o resultado de cada mapa é gravado uma única vez e a série fecha na maioria', () => {
+  assert.equal(falha("select tc_partida_elencos(1)", 1, '2026-11-09'), 'gameplay_desligado');
+  V("update tc_config set valor = '{\"ativo\": true, \"prazo_dias\": 1, \"versao\": 1}'::jsonb where chave = 'gameplay'");
+  J('select tc_sincronizar()', 1, '2026-11-09');
+  const pid = V("select id from tc_partidas where status = 'agendada' and dia <= '2026-11-09' and exists (select 1 from tc_orgs o where o.user_id is not null and o.id in (org_a, org_b)) order by id limit 1");
+  assert.ok(pid, 'há partida de técnico real esperando o gameplay');
+  assert.equal(V(`select count(*) from tc_partidas where id = ${pid} and status = 'agendada'`), '1', 'o sistema não simulou sozinho dentro do prazo');
+  const dono = V(`select o.user_id from tc_orgs o join tc_partidas p on o.id in (p.org_a, p.org_b) where p.id = ${pid} and o.user_id is not null limit 1`);
+  const n = Number(dono.slice(-1));
+  const aberto = V("select valor::text from tc_config where chave = 'aberto'");
+  V("update tc_config set valor = 'true'::jsonb where chave = 'aberto'"); // abre para uma conta que não é a dona (não admin)
+  assert.equal(falha(`select tc_partida_elencos(${pid})`, 6, '2026-11-09'), 'partida_nao_e_sua');
+  const pend = J('select tc_gameplay_pendente()', n, '2026-11-09'); assert.equal(pend.ativo, true); assert.ok(pend.partida);
+  const el = J(`select tc_partida_elencos(${pid})`, n, '2026-11-09');
+  assert.equal(el.mapa, 1); assert.equal(el.azul.jogadores.length, 5); assert.equal(el.vermelho.jogadores.length, 5);
+  assert.deepEqual(el.azul.jogadores.map((j) => j.pos), ['top', 'selva', 'meio', 'atirador', 'suporte']);
+  assert.ok(el.azul.jogadores[0].atributos.mec >= 1);
+  assert.equal(String(el.semente), V(`select tc_gameplay_semente(${pid}, 1)`));
+  const res = (mapa, vencedor, extra = {}) => JSON.stringify({ semente: Number(V(`select tc_gameplay_semente(${pid}, ${mapa})`)), versaoRegras: 1, vencedor, duracao: 1800, motivo: 'nexus', interrompida: false,
+    equipes: { azul: { abates: 20, torresPerdidas: 3, dragoes: 1 }, vermelho: { abates: 15, torresPerdidas: 8, dragoes: 2 } }, mvp: { nome: 'Teste' }, jogadores: [], ...extra }).replace(/'/g, "''");
+  const reg = (mapa, vencedor, extra) => J(`select tc_gameplay_registrar(${pid}, ${mapa}, '${res(mapa, vencedor, extra)}'::jsonb)`, n, '2026-11-09');
+  assert.equal(falha(`select tc_gameplay_registrar(${pid}, 2, '${res(2, 'azul')}'::jsonb)`, n, '2026-11-09'), 'mapa_fora_de_ordem');
+  assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul', { semente: 123 })}'::jsonb)`, n, '2026-11-09'), 'semente_invalida');
+  assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul', { versaoRegras: 9 })}'::jsonb)`, n, '2026-11-09'), 'versao_invalida');
+  assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul', { interrompida: true })}'::jsonb)`, n, '2026-11-09'), 'resultado_invalido');
+  assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul', { duracao: 10 })}'::jsonb)`, n, '2026-11-09'), 'duracao_invalida');
+  assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul')}'::jsonb)`, 6, '2026-11-09'), 'partida_nao_e_sua');
+  V(`update tc_config set valor = '${aberto}'::jsonb where chave = 'aberto'`);
+  const r1 = reg(1, 'azul'); assert.equal(r1.concluida, false); assert.equal(r1.placar_a + r1.placar_b, 1);
+  assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul')}'::jsonb)`, n, '2026-11-09'), 'mapa_fora_de_ordem', 'o mesmo mapa não é gravado duas vezes');
+  const r2 = reg(2, 'azul'); assert.equal(r2.concluida, false); assert.equal(r2.placar_a, 1); assert.equal(r2.placar_b, 1); // lados trocados: venceu a outra equipe
+  const r3 = reg(3, 'azul'); assert.equal(r3.concluida, true);
+  assert.equal(V(`select status from tc_partidas where id = ${pid}`), 'concluida');
+  assert.equal(V(`select placar_a + placar_b from tc_partidas where id = ${pid}`), '3');
+  assert.equal(V(`select resumo->>'origem' from tc_partidas where id = ${pid}`), 'gameplay');
+  assert.equal(V(`select jsonb_array_length(resumo->'mapas') from tc_partidas where id = ${pid}`), '3');
+  assert.equal(falha(`select tc_gameplay_registrar(${pid}, 4, '${res(4, 'azul')}'::jsonb)`, n, '2026-11-09'), 'partida_ja_concluida');
+  assert.equal(falha(`select tc_partida_elencos(${pid})`, n, '2026-11-09'), 'partida_ja_concluida');
+  assert.equal(V(`select count(*) from tc_gameplay_mapas where partida_id = ${pid}`), '3');
+});
+
+t('gameplay: passado o prazo, o sistema simula as partidas que ninguém jogou e a semana fecha normalmente', () => {
+  const antes = Number(V("select count(*) from tc_partidas where status = 'agendada' and dia <= '2026-11-09' and exists (select 1 from tc_orgs o where o.user_id is not null and o.id in (org_a, org_b))"));
+  J('select tc_sincronizar()', 1, '2026-11-09');
+  assert.equal(Number(V("select count(*) from tc_partidas where status = 'agendada' and dia <= '2026-11-09' and exists (select 1 from tc_orgs o where o.user_id is not null and o.id in (org_a, org_b))")), antes, 'dentro do prazo, continuam esperando');
+  J('select tc_sincronizar()', 1, '2026-11-11');
+  assert.equal(V("select count(*) from tc_partidas where status = 'agendada' and dia <= '2026-11-09' and exists (select 1 from tc_orgs o where o.user_id is not null and o.id in (org_a, org_b))"), '0');
+  V("update tc_config set valor = jsonb_set(valor, '{ativo}', 'false') where chave = 'gameplay'");
+  assert.equal(J('select tc_gameplay_pendente()', 1, '2026-11-11').ativo, false);
 });

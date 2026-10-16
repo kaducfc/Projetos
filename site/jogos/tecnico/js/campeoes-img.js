@@ -6,7 +6,7 @@ const arquivo = new Map(); // nome do campeão -> nome do arquivo no Data Dragon
 
 async function lerVersao() {
   try {
-    const c = JSON.parse(localStorage.getItem('campeao.ddragon') || 'null'); // mesma chave do jogo Campeão
+    const c = JSON.parse(globalThis.localStorage?.getItem('campeao.ddragon') || 'null'); // mesma chave do jogo Campeão
     if (c && Date.now() - c.at < 864e5) return c.v;
   } catch { /* sem storage */ }
   try {
@@ -34,4 +34,4 @@ export function campIcone(nome, tam = 44) {
   return `<span class="tc-ci" style="--t:${tam}px"><span class="ini">${ini}</span>${u ? `<img src="${u}" alt="" loading="lazy" width="${tam}" height="${tam}" />` : ''}</span>`;
 }
 // Imagem que falha (sem rede ou campeão novo demais) some e deixa a inicial à mostra.
-document.addEventListener('error', (e) => { if (e.target?.tagName === 'IMG' && e.target.closest('.tc-ci')) e.target.remove(); }, true);
+if (typeof document !== 'undefined') document.addEventListener('error', (e) => { if (e.target?.tagName === 'IMG' && e.target.closest('.tc-ci')) e.target.remove(); }, true);

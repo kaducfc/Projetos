@@ -60,7 +60,8 @@ export class Partida {
         if (!c) { c = escolherCampeao(j, catalogo, usados, this.rng); }
         usados.add(c.nome);
         const perfil = perfilDoCampeao(c);
-        const u = criarCampeao(this, j, eq, perfil);
+        const bonus = (j.favoritos || []).find((f) => f.nome === c.nome || f.id === c.id)?.bonus_pct || 0; // maestria: bônus só com campeão favorito
+        const u = criarCampeao(this, { ...j, bonusMaestriaPct: j.bonusMaestriaPct ?? bonus }, eq, perfil);
         this.campeoes.push(u); this.mapaUnidades.set(u.id, u);
         iniciarCampeao(this, u, i);
       });

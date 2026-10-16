@@ -12,6 +12,8 @@ import { prepararImagens, campIcone } from '../../js/campeoes-img.js';
 import { tempoTexto } from '../motor/eventos.js';
 import { REGRAS } from '../config/regras.js';
 
+const api = platform.tecnico;
+
 const app = document.getElementById('app');
 mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../../' });
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -34,6 +36,32 @@ function carregarImagemMapa() {
 function configTeste() {
   const q = (k, d) => Number(consulta.get(k) ?? d);
   return { modo: 'teste', pa: q('pa', 60), pv: q('pv', 60), semente: q('seed', 1), veloc: q('v', REGRAS.velocidadePadrao) };
+}
+async function configOficial(id) {
+  const el = await api.partidaElencos(id);
+  const jogs = (l) => l.map((j) => ({ id: j.id, nome: j.nome, pos: j.pos, atributos: j.atributos, poder: j.poder, favoritos: j.favoritos }));
+  const f = el.partida.formato;
+  return {
+    modo: 'oficial', id, mapa: el.mapa, semente: el.semente, versao: el.versao, azul: jogs(el.azul.jogadores), vermelho: jogs(el.vermelho.jogadores),
+    nomeAzul: el.azul.org.nome, nomeVermelho: el.vermelho.org.nome, veloc: REGRAS.velocidadePadrao,
+    aviso: `Partida oficial · mapa ${el.mapa} de uma série melhor de ${f} · ${el.azul.org.nome} (azul) × ${el.vermelho.org.nome} (vermelho). O resultado não pode ser refeito.`,
+    aoFim: (r, acoes) => botaoRegistrar(el, r, acoes),
+  };
+}
+function botaoRegistrar(el, r, acoes) {
+  const aqui = E.config;
+  if (!r.vencedor) { acoes.insertAdjacentHTML('afterbegin', '<p style="color:#fca5a5;flex-basis:100%">A partida foi interrompida pela proteção técnica e não pode ser registrada.</p>'); return; }
+  const b = document.createElement('button'); b.className = 'pt-btn ouro'; b.textContent = 'Registrar resultado'; acoes.prepend(b);
+  const aviso = document.createElement('p'); aviso.style.cssText = 'flex-basis:100%;margin:0;color:#8fa3bf;font-size:13px'; acoes.append(aviso);
+  b.onclick = async () => {
+    b.disabled = true; aviso.textContent = 'Registrando…';
+    const { eventos, ...enviar } = r;
+    try {
+      const rr = await api.gameplayRegistrar(aqui.id, aqui.mapa, enviar);
+      if (rr.concluida) { aviso.innerHTML = `Partida concluída: ${rr.placar_a} × ${rr.placar_b}. <a style="color:#f5cf5a" href="../">Voltar ao simulador</a>`; }
+      else { aviso.innerHTML = `Mapa registrado (${rr.placar_a} × ${rr.placar_b}). A série continua. <a style="color:#f5cf5a" href="" onclick="location.reload();return false">Jogar o próximo mapa</a>`; }
+    } catch (e) { aviso.textContent = e.message || 'Não foi possível registrar o resultado.'; b.disabled = false; }
+  };
 }
 function novaPartida(cfg) {
   const opc = { azul: cfg.azul || elencoTeste('A', cfg.pa, cfg.semente), vermelho: cfg.vermelho || elencoTeste('V', cfg.pv, cfg.semente), semente: cfg.semente, catalogo: E.catalogo };
@@ -69,12 +97,12 @@ function montar() {
   });
   // controles
   const ctl = document.getElementById('ctl');
-  ctl.innerHTML = `<button class="pt-btn ouro" id="b-play">▶ Iniciar</button><span class="pt-sep"></span>${REGRAS.velocidades.map((v) => `<button class="pt-btn" data-v="${v}">${v}x</button>`).join('')}<span class="pt-sep"></span><button class="pt-btn" id="b-fim">⏭ Ir até o fim</button><button class="pt-btn" id="b-reiniciar">↻ Reiniciar</button>`;
+  ctl.innerHTML = `<button class="pt-btn ouro" id="b-play">▶ Iniciar</button><span class="pt-sep"></span>${REGRAS.velocidades.map((v) => `<button class="pt-btn" data-v="${v}">${v}x</button>`).join('')}<span class="pt-sep"></span><button class="pt-btn" id="b-fim">⏭ Ir até o fim</button>${E.config.modo === 'oficial' ? '' : '<button class="pt-btn" id="b-reiniciar">↻ Reiniciar</button>'}`;
   ctl.addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.id === 'b-play') { if (E.partida.fim) return; const rodando = E.relogio.alternar(); b.textContent = rodando ? '⏸ Pausar' : '▶ Retomar'; }
     else if (b.dataset.v) { E.relogio.definirVelocidade(Number(b.dataset.v)); marcarVelocidade(); }
-    else if (b.id === 'b-reiniciar') reiniciar();
+    else if (b.id === 'b-reiniciar') { if (E.config.modo !== 'oficial') reiniciar(); }
     else if (b.id === 'b-fim') irAteOFim();
   });
   const dep = document.getElementById('depur');
@@ -90,6 +118,7 @@ function marcarVelocidade() {
 function selecionar(id) { E.selecionado = id; E.rend.selecionado = id; E.ultPlacar = 0; }
 
 function reiniciar() {
+  if (E.config.modo === 'oficial') return; // partida oficial: o resultado não pode ser refeito
   if (E.config.modo === 'teste') {
     const g = (id, d) => Number(document.getElementById(id)?.value ?? d);
     E.config.pa = g('pa', 60); E.config.pv = g('pv', 60); E.config.semente = g('seed', 1);
@@ -181,7 +210,7 @@ function mostrarResultado() {
     <div id="res-acoes" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="pt-btn" id="r-fechar">Fechar</button><button class="pt-btn ouro" id="r-novo">Jogar de novo</button></div></div>`;
   document.body.appendChild(d);
   d.querySelector('#r-fechar').onclick = () => d.remove();
-  d.querySelector('#r-novo').onclick = () => { d.remove(); if (E.config.aoNovo) E.config.aoNovo(); else reiniciar(); };
+  if (E.config.modo === 'oficial') d.querySelector('#r-novo').remove(); else d.querySelector('#r-novo').onclick = () => { d.remove(); reiniciar(); };
   if (E.config.aoFim) E.config.aoFim(r, d.querySelector('#res-acoes'), d);
   const play = document.getElementById('b-play'); if (play) { play.textContent = '▶ Iniciar'; play.disabled = true; }
 }
@@ -203,15 +232,16 @@ function quadro(ts) {
 
 (async function iniciar() {
   await platform.init();
-  const teste = LOCAL && consulta.get('teste') === '1';
+  const teste = LOCAL && consulta.get('teste') === '1' && !consulta.get('id');
   const user = platform.getUser();
   const souAdmin = await platform.isAdmin();
   const aberto = !gameById('tecnico')?.soAdmin;
   if (!teste && !user) return msg('Entre na sua conta para ver a partida.');
   if (!teste && !souAdmin && !aberto) return msg('Esta área ainda está em desenvolvimento e só administradores têm acesso.');
   await Promise.all([carregarCatalogo(), prepararImagens(), carregarImagemMapa().then((i) => { E.imagem = i; })]);
-  E.config = configTeste();
-  E.config.aviso = 'Sala de testes da simulação: times sintéticos com o Poder escolhido. Só administradores veem esta área.';
+  const id = Number(consulta.get('id') || 0);
+  if (id) E.config = await configOficial(id);
+  else { E.config = configTeste(); E.config.aviso = 'Sala de testes da simulação: times sintéticos com o Poder escolhido. Só administradores veem esta área.'; }
   E.partida = novaPartida(E.config);
   E.relogio = new Relogio(E.partida, { velocidade: E.config.veloc });
   montar();

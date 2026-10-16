@@ -3,13 +3,13 @@ import { ITENS } from '../dados/itens.js';
 import { recalcular } from './entidades.js';
 import { registrar } from './eventos.js';
 
-export function darOuro(P, u, v) { if (!u || u.tipo !== 'campeao' || v <= 0) return; u.ouro += v; u.ouroTotal += v; }
+export function darOuro(P, u, v) { if (!u || u.tipo !== 'campeao' || v <= 0) return; v *= P.regras.economia.escalaOuro; u.ouro += v; u.ouroTotal += v; }
 
 export function darXp(P, u, v) {
   if (u.morto || v <= 0) return;
   const E = P.regras.economia;
   if (u.nivel >= E.nivelMax) return;
-  u.xp += v;
+  u.xp += v * E.escalaXp;
   while (u.nivel < E.nivelMax && u.xp >= E.xpNivel[u.nivel]) {
     u.nivel++;
     recalcular(u, P);
