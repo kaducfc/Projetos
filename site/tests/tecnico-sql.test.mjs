@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -254,12 +254,12 @@ t('maestria: jogar com um campeão soma pontos, vira favorito e dá bônus; nunc
   assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '0');
   for (let i = 0; i < 5; i++) V(`select tc_maestria_registrar(${j}, 'garen', true)`); // 150 pontos
   assert.equal(V(`select favorito from tc_maestria where jogador_id = ${j} and campeao_id = 'garen'`), 't');
-  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '2');
+  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '6'); // Maestria 2: +6%
   for (let i = 0; i < 20; i++) V(`select tc_maestria_registrar(${j}, 'garen', true)`); // 750 pontos
-  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '4');
+  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '9');
   for (const c of ['darius', 'sett', 'teemo', 'nasus', 'malphite', 'ornn', 'renekton']) for (let i = 0; i < 10; i++) V(`select tc_maestria_registrar(${j}, '${c}', false)`); // 150 pontos cada
   assert.equal(V(`select count(*) from tc_maestria where jogador_id = ${j} and favorito`), '5');
-  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '4', 'o mais jogado continua favorito');
+  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '9', 'o mais jogado continua favorito');
   assert.equal(falha(`update tc_maestria set favorito = true where jogador_id = ${j} and campeao_id = 'teemo' and not favorito returning 1`, 1) !== '', true);
 });
 

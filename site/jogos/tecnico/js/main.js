@@ -6,7 +6,7 @@ import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import {
-  VAGAS, NOME_VAGA, SIGLA_VAGA, FAVORITOS_MAX, NOME_NIVEL, ATRIBUTOS, ELENCO_MAX, CONTRATO_MIN, CONTRATO_MAX, PRECO_RC, TAXA_MERCADO_PCT,
+  VAGAS, NOME_VAGA, SIGLA_VAGA, FAVORITOS_MAX, nomeMaestria, ATRIBUTOS, ELENCO_MAX, CONTRATO_MIN, CONTRATO_MAX, PRECO_RC, TAXA_MERCADO_PCT,
   fmt, esc, corPoder, escudoPoder, taxaDe, salarioDe, FORA_POSICAO,
 } from './regras.js';
 import { prepararImagens, campIcone } from './campeoes-img.js';
@@ -421,7 +421,7 @@ function fichaHtml(m) {
       ${barras(j)}</div></div>
     ${j.org_id ? `<div class="tc-resumo"><div class="l"><span>Estrelas</span><b>${estrelasHtml(j)} <small>+${j.bonus_estrelas_pct || 0}% de eficiência</small></b></div>${j.legado ? `<div class="l"><span>Cópias repetidas</span><b>${j.copias}</b></div>` : `<div class="l"><span>Seus fragmentos</span><b>${fmt(S.meu.org.fragmentos || 0)}</b></div>`}</div>` : ''}
     <div class="tc-resumo"><div class="l"><span>Salário${j.org_id ? '' : ' (se contratado)'}</span><b>${fmt(j.org_id ? j.salario : salarioDe(j.preco))} cr./semana</b></div>${j.org_id ? `<div class="l"><span>Contrato</span><b>${resta == null ? '—' : resta <= 0 ? 'vence nesta semana' : `${resta} semana(s)`}</b></div><div class="l"><span>Organização</span><b>${esc(j.org?.nome || '')}</b></div>` : j.legado ? '<div class="l"><span>Obtenção</span><b>Baús de Recrutar</b></div>' : `<div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div>`}${m.anuncio ? `<div class="l"><span>Anúncio</span><b class="tc-preco rc">${fmt(m.anuncio.preco_rc)}</b></div><div class="l"><span>Vendedor</span><b>${esc(m.anuncio.vendedor.nome)}</b></div><div class="l"><span>Publicado em</span><b>${new Date(m.anuncio.criado).toLocaleDateString('pt-BR')}</b></div>` : ''}</div>
-    ${(j.campeoes || []).length ? `<h4 class="tc-eyebrow">Campeões</h4><div class="tc-maes">${j.campeoes.map((c) => `<div class="${c.favorito ? 'fav' : ''}">${campIcone(c.nome, 38)}<b>${esc(c.nome)}</b><span>${c.favorito ? '★ ' : ''}${NOME_NIVEL[c.nivel - 1] || ''}${c.favorito && c.bonus_pct ? ` · +${c.bonus_pct}% de Poder` : ''}</span><small>${fmt(c.pontos)} pts · ${c.jogos} jogo(s)</small></div>`).join('')}</div>` : ''}
+    ${(j.campeoes || []).length ? `<h4 class="tc-eyebrow">Campeões</h4><div class="tc-maes">${j.campeoes.map((c) => `<div class="${c.favorito ? 'fav' : ''}">${campIcone(c.nome, 38)}<b>${esc(c.nome)}</b><span>${c.favorito ? '★ ' : ''}${nomeMaestria(c.nivel)}${c.favorito && c.bonus_pct ? ` · +${c.bonus_pct}% de Poder` : ''}</span><small>${fmt(c.pontos)} pts · ${c.jogos} jogo(s)</small></div>`).join('')}</div>` : ''}
     ${hist.length ? `<h4 class="tc-eyebrow">Histórico</h4><ul class="tc-avisos">${hist.map((h) => `<li>${new Date(h.criado).toLocaleDateString('pt-BR')} · ${{ inicial: 'Elenco inicial', contratacao: 'Contratado', compra_usuario: 'Vendido entre usuários', renovacao: 'Renovou', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' }[h.tipo] || h.tipo}${h.para ? ` · ${esc(h.para)}` : ''}${h.valor ? ` · ${fmt(h.valor)} ${h.moeda === 'rc' ? 'RC' : 'cr.'}` : ''}</li>`).join('')}</ul>` : ''}
     <div class="tc-acoes">${acoes}</div>`;
 }
