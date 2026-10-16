@@ -148,6 +148,8 @@ function escolherObjetivo(P, eq, conh, aliados) {
   const tryObj = (nome, epico, proximo, covilId, cedo = false) => {
     const c = MUNDO_MAPA.covis.find((x) => x.id === covilId);
     const aVivo = epico && !epico.morto;
+    const FR = P.regras.ia.faseDeRotas; // fase de rotas: laners farmando antes de ir aos primeiros objetivos
+    if (P.t < FR.ate && ((nome === 'dragao' && P.t < FR.dragaoDesde) || (nome === 'arauto' && P.t < FR.arautoDesde))) return;
     const faltam = aVivo ? 0 : (proximo - P.t);
     if (!aVivo) {
       // sai com antecedência só o suficiente para chegar ao ponto de reunião (os que estão longe saem antes)

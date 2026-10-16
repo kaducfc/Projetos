@@ -29,7 +29,7 @@ export function gerarOndas(P) {
       const lane = MUNDO_MAPA.rotas[rota];
       const ib = MUNDO_MAPA.estruturas.find((e) => e.tipo === 'inibidor' && e.rota === rota && e.equipe === eq);
       const s0 = projetar(lane, ib); // distância ao longo da rota até o inibidor da própria equipe (vermelho: perto do fim da linha)
-      const seq = ['corpo', 'corpo', 'corpo', 'conjurador', 'conjurador', 'conjurador'];
+      const seq = [...R.onda];
       if (cerco) seq.push('cerco');
       // superminions: inibidor inimigo derrubado nesta rota (ou todas = duas por onda)
       const derrubados = P.equipes[eq].inibidoresCaidos; // inibidores inimigos que esta equipe derrubou (e ainda não renasceram)

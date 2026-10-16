@@ -176,6 +176,11 @@ export function matar(P, alvo, fonte) {
     const mm = (P.diag.minionsMortos ||= { campeao: 0, minion: 0, estrutura: 0, outro: 0 }); mm[k ? 'campeao' : fonte?.tipo === 'minion' ? 'minion' : fonte?.tipo === 'estrutura' ? 'estrutura' : 'outro']++;
     if (k) { darOuro(P, k, alvo.ouro); k.estat.cs++; }
     xpDeUnidade(P, eqVenc, alvo.x, alvo.y, alvo.xp, k);
+    // minion abatido pelo suporte: ouro, XP e contagem de farm também vão para o atirador da dupla
+    if (k && k.pos === 'suporte') {
+      const adc = P.campeoes.find((c) => c.equipe === k.equipe && c.pos === 'atirador' && !c.morto && dist(c, alvo) <= P.regras.economia.raioXp);
+      if (adc) { darOuro(P, adc, alvo.ouro); adc.estat.cs++; } // o XP já é dividido entre os aliados perto, o atirador incluído
+    }
     P.fx.push({ k: 'morte_min', id: alvo.id, t: P.t, x: alvo.x, y: alvo.y });
   } else if (alvo.tipo === 'monstro') {
     P.selva.aoMorrer(P, alvo, fonte);
@@ -196,6 +201,7 @@ function ultimoGolpeDeRota(P, minion, fonte) {
   const candidatos = [];
   for (const c of P.campeoes) {
     if (c.morto || c.equipe === minion.equipe || c.pos === 'selva' || ESTADOS_SEM_FARM.has(c.estado) || !podeAgir(P, c)) continue;
+    if (c.pos === 'suporte' && P.campeoes.some((x) => x.equipe === c.equipe && x.pos === 'atirador' && !x.morto)) continue; // o suporte não disputa minions com o atirador vivo
     if (P.t < c.proximoAtaque - F.tolerancia) continue; // ainda no intervalo do ataque anterior
     const d = dist(c, minion), alc = c.alcance + minion.raio * 0.5;
     // perto: o campeão acompanha o minion e acerta; na janela de farm da rota (só quem está farmando) o acerto é mais difícil

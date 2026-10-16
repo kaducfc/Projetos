@@ -101,7 +101,7 @@ test('7. as ondas aparecem aos 1:05 e a cada 30 segundos, simétricas, sem repet
   const P = mk(1);
   ate(P, 64.9); assert.equal(P.minions.length, 0);
   ate(P, 72); const m = P.minions;
-  assert.equal(m.filter((x) => x.equipe === 'azul').length, 18); assert.equal(m.filter((x) => x.equipe === 'vermelho').length, 18);
+  assert.equal(m.filter((x) => x.equipe === 'azul').length, 21); assert.equal(m.filter((x) => x.equipe === 'vermelho').length, 21);
   assert.equal(m.filter((x) => x.subtipo === 'cerco').length, 0, 'sem canhão na primeira onda');
   const ondas = () => P.eventos.filter((e) => e.tipo === 'onda');
   assert.equal(ondas().length, 1); assert.ok(Math.abs(ondas()[0].t - 65) < 0.2);
@@ -279,7 +279,7 @@ test('27-28. destruir o Nexus encerra a partida; o resultado é registrado e ent
 test('23. os objetivos épicos nascem, são disputados e só perdem vida por ataques reais', () => {
   const P = mk(1); ate(P, 301); const d = P.epicos.find((e) => e.subtipo === 'dragao'); assert.ok(d, 'dragão nasceu aos 5:00');
   const hp = d.hp; ate(P, P.t + 5); assert.ok(d.hp >= hp - 1 || P.campeoes.some((c) => Math.hypot(c.x - d.x, c.y - d.y) < 1500), 'sem atacantes, a vida não cai');
-  ate(P, 560);
+  ate(P, 900);
   assert.ok(P.eventos.some((e) => e.tipo === 'objetivo_iniciado'), 'a equipe decidiu disputar'); assert.ok(P.eventos.some((e) => e.tipo === 'objetivo_abatido'), 'um objetivo foi conquistado');
   const ab = P.eventos.find((e) => e.tipo === 'objetivo_abatido'); assert.ok(ab.participantes.length >= 1); assert.ok(ab.ouro > 0);
 });
@@ -420,4 +420,21 @@ test('farm: a Mecânica define o último golpe nos minions (quem tem mais Mecân
   assert.ok(forte > fraco * 1.2, `mais Mecânica, mais farm: ${fraco.toFixed(0)} contra ${forte.toFixed(0)} CS aos 10 min`);
   assert.ok(forte >= 50 && forte <= 105, `CS aos 10 min do jogador forte fora do esperado: ${forte.toFixed(0)}`);
   assert.ok(fraco >= 25, `CS aos 10 min do jogador fraco muito baixo: ${fraco.toFixed(0)}`);
+});
+
+test('onda com 7 minions + canhão; abate do suporte conta também para o atirador (ouro e farm) e o suporte não disputa minions', () => {
+  const P = ate(mk(1), 66);
+  const doLado = P.minions.filter((m) => m.equipe === 'azul' && m.rota === 'meio' && m.subtipo !== 'super');
+  const spawns = P.filaSpawn.filter((f) => f.equipe === 'azul' && f.rota === 'meio').length + doLado.length;
+  assert.equal(REGRAS.minions.onda.length, 7); assert.equal(REGRAS.minions.onda.filter((t) => t === 'corpo').length, 4);
+  assert.ok(spawns >= 7, `a primeira onda deveria ter 7 minions por rota (viu ${spawns})`);
+  const Q = ate(mk(2), 200);
+  const sup = Q.campeoes.find((c) => c.equipe === 'azul' && c.pos === 'suporte'), adc = Q.campeoes.find((c) => c.equipe === 'azul' && c.pos === 'atirador');
+  congelar(adc); congelar(sup); adc.morto = false; sup.morto = false; adc.hp = adc.hpMax; sup.hp = sup.hpMax;
+  const inim = Q.minions.find((m) => m.equipe === 'vermelho' && !m.morto);
+  adc.x = sup.x = inim.x; adc.y = sup.y = inim.y;
+  const cs0 = adc.estat.cs, ouro0 = adc.ouro, csS = sup.estat.cs;
+  causarDano(Q, sup, inim, 1e9, 'fisico', { basico: true });
+  assert.equal(sup.estat.cs, csS + 1, 'o suporte conta o minion'); assert.equal(adc.estat.cs, cs0 + 1, 'o atirador também conta o minion do suporte');
+  assert.ok(adc.ouro - ouro0 >= inim.ouro - 1, 'o atirador recebe o ouro do minion');
 });

@@ -171,7 +171,7 @@ function precisaBase(P, u, ctx) {
   const perigo = ctx.iniPerto.some((k) => k.visivel);
   if (ctx.hp < R.recall.vidaBaixa) return 'vida baixa';
   if (u.pos === 'selva' && ctx.hp < (u.jungle.emCombate ? 0.3 : 0.45)) return 'vida baixa (selva)';
-  if (u.ouro >= Math.max(R.ouroCompraMin, custoProximo(u)) && u.ouro >= 1100 && !perigo && !(ctx.plano && ['objetivo', 'defender_base', 'finalizar'].includes(ctx.plano.tipo)) && P.t - (u.ultimaBase || 0) > 60) return 'ouro para comprar';
+  if (u.ouro >= Math.max(R.ouroCompraMin, custoProximo(u)) && u.ouro >= 1100 && !perigo && !(ctx.plano && ['objetivo', 'defender_base', 'finalizar'].includes(ctx.plano.tipo)) && P.t - (u.ultimaBase || 0) > P.regras.ia.recallIntervaloMin) return 'ouro para comprar';
   if (u.mana < u.manaMax * 0.12 && u.pos !== 'selva' && !perigo && u.mana < 60) return 'sem mana';
   return null;
 }

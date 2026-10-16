@@ -54,6 +54,7 @@ export const REGRAS = {
     cercoCadaOnda: [[0, 3], [900, 2], [1500, 1]],   // a partir de X segundos, um canhão a cada N ondas
     crescimentoCada: 90, crescimento: { hp: 0.06, dano: 0.04 },
     aquisicao: 800, persistencia: 2.5, ociosoMax: 90,   // segundos parado e sem alvo antes de o minion ser retirado (e contado nos diagnósticos)
+    onda: ['corpo', 'corpo', 'corpo', 'corpo', 'conjurador', 'conjurador', 'conjurador'], // composição de cada onda (mais o canhão a cada N ondas)
     tipos: {
       corpo:     { hp: 477, dano: 12,  armadura: 0,  resist: 0,  vel: 325, alcance: 110, intervalo: 1.25, ouro: 21, xp: 60,  raio: 45, proj: 0 },
       conjurador:{ hp: 296, dano: 23,  armadura: 0,  resist: 0,  vel: 325, alcance: 550, intervalo: 1.6,  ouro: 14, xp: 30,  raio: 40, proj: 1000 },
@@ -121,6 +122,8 @@ export const REGRAS = {
   ia: {
     intervaloDecisao: 0.6, intervaloEstrategia: 2.0,
     perigo: { vidaBaixa: 0.32, vidaCritica: 0.2, margemLuta: 1.12 },
+    recallIntervaloMin: 150,                                       // segundos mínimos entre duas idas à base só por ouro (a vida baixa ainda volta antes)
+    faseDeRotas: { ate: 840, dragaoDesde: 420, arautoDesde: 600 }, // até `ate`, os laners ficam farmando: o primeiro Dragão só depois de `dragaoDesde` e o Arauto depois de `arautoDesde` (s)
     gank: { intervalo: 5, pontuacaoMin: 55, duracaoMax: 22, vidaMin: 0.55, tempoMin: 190, esfriamento: 45 },
     rotacao: { tempoMin: 840, intervalo: 8 },
     objetivoMargem: 1.25,
