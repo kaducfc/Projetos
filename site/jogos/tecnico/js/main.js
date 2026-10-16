@@ -395,7 +395,7 @@ function fichaHtml(m) {
   let acoes = '';
   if (!j.org_id && j.legado) acoes = '<span class="tc-mudo tc-peq">Jogador Legado: só sai dos baús de Recrutar.</span>';
   else if (!j.org_id) acoes = `<button type="button" class="tc-btn ouro" data-act="abrir-contratar" data-id="${j.id}">Contratar</button>`;
-  else if (meu) acoes = `<button type="button" class="tc-btn ciano" data-act="abrir-escalar" data-id="${j.id}">Escalar</button>${j.legado ? '' : `<button type="button" class="tc-btn" data-act="abrir-renovar" data-id="${j.id}">Renovar contrato</button><button type="button" class="tc-btn" data-act="abrir-anunciar" data-id="${j.id}">Anunciar por RC</button>`}${j.estrelas < j.estrela_max ? `<button type="button" class="tc-btn ouro" data-act="subir-estrela" data-id="${j.id}" ${S.ocupado ? 'disabled' : ''}>Evoluir ★ (${j.legado ? `${j.estrela_custo} cópia(s)` : `${fmt(j.estrela_custo)} fragmentos`})</button>` : ''}${j.legado || j.slot ? '' : `<button type="button" class="tc-btn perigo" data-act="demitir" data-id="${j.id}">Demitir</button>`}`;
+  else if (meu) acoes = `<button type="button" class="tc-btn ciano" data-act="abrir-escalar" data-id="${j.id}">Escalar</button>${j.legado ? '' : `<button type="button" class="tc-btn" data-act="abrir-renovar" data-id="${j.id}">Renovar contrato</button><button type="button" class="tc-btn" data-act="abrir-anunciar" data-id="${j.id}">Anunciar por RC</button>`}${j.estrelas < j.estrela_max ? `<button type="button" class="tc-btn ouro" data-act="subir-estrela" data-id="${j.id}" ${S.ocupado ? 'disabled' : ''}>Evoluir ★ (${j.legado ? `${j.estrela_custo} cópia(s)` : `${fmt(j.estrela_custo)} fragmentos`})</button>` : ''}${j.slot ? '' : `<button type="button" class="tc-btn perigo" data-act="demitir" data-id="${j.id}">Demitir</button>`}`;
   else if (m.anuncio) acoes = `<button type="button" class="tc-btn ouro" data-act="abrir-comprar" data-anuncio="${m.anuncio.id}">Comprar por ${fmt(m.anuncio.preco_rc)} RC</button>`;
   return `<h2>${esc(j.nome)}${j.ficticio === false ? ' <span class="tc-estrela-selo">◆ Legado</span>' : ''}</h2><p class="tc-mudo tc-peq" style="margin:2px 0">${iconeVaga(j.pos)} ${NOME_VAGA[j.pos]}${(j.pos2 || []).length ? ` · também ${j.pos2.map((p) => NOME_VAGA[p]).join(', ')}` : ''} · ${j.idade} anos${j.regiao ? ` · ${esc(j.regiao)}` : ''}${j.ficticio ? '' : ' · jogador legado'}</p>
     <div class="tc-ficha"><div class="foto">${retratoSvg(j, 200)}</div><div>
@@ -570,7 +570,7 @@ document.addEventListener('click', async (e) => {
   }
   if (act === 'demitir') {
     const j = S.modal.j;
-    if (!window.confirm(`Demitir ${j.nome}? Ele sai do seu elenco, as estrelas dele se perdem e você recebe fragmentos de jogador (usados para evoluir as estrelas de outros jogadores comuns).`)) return;
+    if (!window.confirm(`Demitir ${j.nome}? Ele sai do seu elenco, as estrelas e cópias dele se perdem e você recebe fragmentos de jogador (usados para evoluir as estrelas de outros jogadores comuns).`)) return;
     const r = await agir(() => api.demitir(j.id), { ok: (x) => `${j.nome} foi demitido: +${fmt(x.fragmentos_ganhos)} fragmentos de jogador.` });
     if (r) { S.modal = null; render(); }
     return;

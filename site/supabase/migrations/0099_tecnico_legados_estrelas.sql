@@ -12,8 +12,9 @@
 -- ---------------------------------------------------------------- configuração
 update public.tc_config set valor = '0.75'::jsonb where chave = 'fora_posicao' and valor = '0.9'::jsonb;
 insert into public.tc_config (chave, valor) values
-  ('estrelas_jogador', '{"bonus_pct": 5, "max": 5, "fragmentos": [30, 60, 90, 120, 150], "devolucao_pct": 50, "frag_base": 60}'::jsonb)
+  ('estrelas_jogador', '{"bonus_pct": 5, "max": 5, "fragmentos": [30, 60, 90, 120, 150], "devolucao_pct": 50, "frag_base": 60, "bonus_legado_pct": 25}'::jsonb)
 on conflict (chave) do nothing;
+update public.tc_config set valor = valor || '{"bonus_legado_pct": 25}'::jsonb where chave = 'estrelas_jogador' and not (valor ? 'bonus_legado_pct');
 
 -- ---------------------------------------------------------------- colunas
 alter table public.tc_jogadores add column if not exists estrelas int not null default 0 check (estrelas between 0 and 5);
@@ -252,7 +253,7 @@ begin
   if o.id is null then raise exception 'sem_org'; end if;
   select * into j from tc_jogadores where id = jogador for update;
   if j.id is null or j.org_id is distinct from o.id then raise exception 'jogador_nao_e_seu'; end if;
-  if not j.ficticio then raise exception 'legado_nao_demite'; end if;
+  if not j.ficticio then raise exception 'legado_nao_libera'; end if;
   if j.slot is not null then raise exception 'jogador_titular'; end if;
   update tc_jogadores set org_id = null, slot = null, salario = 0, contrato_fim = null where id = j.id;
   insert into tc_transf (jogador_id, de_org, tipo) values (j.id, o.id, 'liberado');
@@ -342,7 +343,6 @@ begin
   if o.id is null then raise exception 'sem_org'; end if;
   select * into j from tc_jogadores where id = jogador for update;
   if j.id is null or j.org_id is distinct from o.id then raise exception 'jogador_nao_e_seu'; end if;
-  if not j.ficticio then raise exception 'legado_nao_demite'; end if;
   if j.slot is not null then raise exception 'jogador_titular'; end if;
   if exists (select 1 from tc_treinos where jogador_id = j.id and status = 'andamento') then raise exception 'jogador_treinando'; end if;
   -- fragmentos: por Poder (jogador melhor rende mais) + parte do que foi gasto nas Estrelas dele
@@ -351,9 +351,14 @@ begin
     devolvido := devolvido + round((cfg->'fragmentos'->>i)::numeric * (cfg->>'devolucao_pct')::numeric / 100)::int;
   end loop;
   total := base + devolvido;
-  update tc_jogadores set org_id = null, slot = null, salario = 0, contrato_fim = null where id = j.id; -- o gatilho zera as Estrelas
+  if not j.ficticio then total := round(total * (1 + coalesce((cfg->>'bonus_legado_pct')::numeric, 0) / 100))::int; end if; -- Legado rende mais (regra interna)
+  if j.ficticio then
+    update tc_jogadores set org_id = null, slot = null, salario = 0, contrato_fim = null where id = j.id; -- o gatilho zera as estrelas
+    insert into tc_transf (jogador_id, de_org, tipo) values (j.id, o.id, 'liberado');
+  else
+    delete from tc_jogadores where id = j.id; -- a cópia do técnico some; o Legado continua no catálogo dos baús
+  end if;
   update tc_orgs set fragmentos = fragmentos + total where id = o.id;
-  insert into tc_transf (jogador_id, de_org, tipo) values (j.id, o.id, 'liberado');
   perform tc_avisar(o.id, j.nome || ' foi demitido e rendeu ' || total::text || ' fragmentos de jogador.');
   return jsonb_build_object('ok', true, 'fragmentos_ganhos', total, 'fragmentos', (select fragmentos from tc_orgs where id = o.id));
 end;

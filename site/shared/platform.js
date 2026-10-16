@@ -1032,7 +1032,7 @@ const ERROS_TECNICO = {
   copias_insuficientes: 'Você ainda não tem cópias repetidas suficientes para subir esta estrela.',
   fragmentos_insuficientes: 'Fragmentos de jogador insuficientes. Demita jogadores comuns para ganhar mais.',
   estrelas_no_maximo: 'Este jogador já está com 5 estrelas.',
-  legado_nao_demite: 'Jogadores Legado não podem ser demitidos.',
+  legado_nao_libera: 'Jogadores Legado não podem ser dispensados sem demitir.',
   legado_nao_vende: 'Jogadores Legado não podem ser anunciados no mercado.',
   legado_sem_contrato: 'Jogadores Legado não têm contrato: não precisam ser renovados.',
   mercado_conta_nova: 'Contas criadas há menos de 7 dias ainda não podem negociar no mercado entre técnicos.',

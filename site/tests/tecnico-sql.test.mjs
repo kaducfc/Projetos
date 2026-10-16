@@ -748,9 +748,16 @@ t('estrelas de evolução: legado gasta cópias (1, 2, 3...), +5% de eficiência
   // máximo de 5 estrelas
   V(`update tc_jogadores set estrelas = 5, copias = 9 where id = ${inst}`);
   assert.equal(falha(`select tc_subir_estrela(${inst})`, 1), 'estrelas_no_maximo');
-  // legado não é demitido, liberado nem anunciado
-  assert.equal(falha(`select tc_demitir(${inst})`, 1), 'legado_nao_demite');
-  V(`delete from tc_jogadores where id = ${inst}`);
+  // demitir Legado rende 25% a mais que um comum de mesma conta; a cópia some e o modelo continua no catálogo
+  V("update tc_orgs set fragmentos = 0 where id = 1"); V(`update tc_jogadores set slot = null where id = ${inst}`);
+  const cfgF = J("select tc_cfg('estrelas_jogador')");
+  const base = Math.max(1, Math.round(Math.pow(Number(V(`select tc_poder(j) from tc_jogadores j where id = ${inst}`)) / 100, 2.5) * cfgF.frag_base));
+  const dev = cfgF.fragmentos.slice(0, 5).reduce((a, c) => a + Math.round(c * cfgF.devolucao_pct / 100), 0);
+  const dl = J(`select tc_demitir(${inst})`, 1);
+  assert.equal(dl.fragmentos_ganhos, Math.round((base + dev) * 1.25));
+  assert.equal(V(`select count(*) from tc_jogadores where id in (${inst}, ${modelo})`), '1', 'a cópia some, o modelo fica');
+  assert.equal(JSON.stringify(J(`select tc_jogador_json(j) from tc_jogadores j where id = ${modelo}`).legado), 'true');
+  assert.ok(!('bonus_legado_pct' in J(`select tc_jogador_json(j) from tc_jogadores j where id = ${modelo}`)), 'o bônus é interno');
 });
 t('comum: sobe estrela com fragmentos; demitir (só reserva comum) rende fragmentos e zera as estrelas', () => {
   const j = reserva(1, 1);
