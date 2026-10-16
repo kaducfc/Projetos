@@ -342,7 +342,7 @@ function viewCampeoes() {
     <div class="tc-filtros" style="margin-bottom:0"><label>Buscar<input name="busca" data-fc value="${esc(f.busca)}" placeholder="Nome do campeão" autocomplete="off" /></label>
       ${sel('pos', 'Posição', VAGAS.map((v) => [v, NOME_VAGA[v]]), 'Todas')}${sel('classe', 'Classe', uniq('classes').map((v) => [v, v]), 'Todas')}${sel('regiao', 'Região', uniq('regioes').map((v) => [v, v]), 'Todas')}</div>
     <p class="tc-mudo tc-peq" style="margin:10px 0 0">Cada jogador pode ter até <b>${m.favoritos_max || FAVORITOS_MAX} campeões favoritos</b>. Quanto mais ele joga com um campeão, mais maestria ganha: a cada mapa são ${m.pontos_vitoria || 30} pontos na vitória e ${m.pontos_derrota || 15} na derrota. Com ${m.limiar || 150} pontos ele entra na lista de favoritos e, ao jogar com o campeão, ganha um bônus de Poder que cresce com o nível (${(m.bonus_pct || []).slice(1).map((b) => `+${b}%`).join(', ')}).</p></section>
-  <div class="tc-camps">${lista.map((c) => `<div class="tc-camp">${campIcone(c.nome, 56)}<div class="tx"><b>${esc(c.nome)}</b><span class="pp">${c.posicoes.map((p) => `<i class="tc-vaga-ic v-${p}">${SIGLA_VAGA[p]}</i>`).join('')}</span><small>${esc(c.classes.join(' · '))}</small><small class="tc-mudo">${esc(c.regioes.join(', '))} · ${c.ano}</small></div></div>`).join('') || '<p class="tc-mudo">Nenhum campeão com esses filtros.</p>'}</div>`;
+  <div class="tc-camps">${lista.map((c) => `<div class="tc-camp">${campIcone(c.nome, 56)}<div class="tx"><b>${esc(c.nome)}</b><span class="pp">${c.posicoes.map((p) => `<i class="tc-vaga-ic v-${p}">${SIGLA_VAGA[p]}</i>`).join('')}</span>${S.ehAdmin ? `<span class="pp tc-pos-edit" title="Só administradores: clique para incluir ou tirar uma posição">${VAGAS.map((v) => `<button type="button" class="tc-vaga-ic v-${v} ${c.posicoes.includes(v) ? 'on' : ''}" data-act="camp-pos" data-id="${esc(c.id)}" data-p="${v}" title="${esc(NOME_VAGA[v])}">${SIGLA_VAGA[v]}</button>`).join('')}</span>` : ''}<small>${esc(c.classes.join(' · '))}</small><small class="tc-mudo">${esc(c.regioes.join(', '))} · ${c.ano}</small></div></div>`).join('') || '<p class="tc-mudo">Nenhum campeão com esses filtros.</p>'}</div>`;
 }
 
 // ------------------------------------------------------------------ personalização
@@ -493,6 +493,13 @@ document.addEventListener('click', async (e) => {
   if (act === 'fechar-fundo') { if (e.target === b) { S.modal = null; render(); } return; }
   if (act === 'semanas' || act === 'liga-sel' || act === 'preco-anuncio') return;
   if (act === 'aba') { S.aba = b.dataset.aba; render(); await carregarAba(); render(); window.scrollTo({ top: 0 }); return; }
+  if (act === 'camp-pos') { // administrador: inclui/tira uma posição do campeão (fica salvo no servidor)
+    const c = S.campeoes?.campeoes.find((x) => x.id === b.dataset.id); if (!c || !S.ehAdmin) return;
+    const p = b.dataset.p; const novas = c.posicoes.includes(p) ? c.posicoes.filter((x) => x !== p) : [...c.posicoes, p];
+    if (!novas.length) { toast('O campeão precisa ter ao menos uma posição.', true); return; }
+    try { const r = await api.campeaoPosicoes(c.id, novas); c.posicoes = r.posicoes; toast(`${c.nome}: ${c.posicoes.map((v) => NOME_VAGA[v]).join(', ')}`); } catch (err) { toast(err.message, true); }
+    render(); return;
+  }
   if (act === 'fechar') { S.modal = null; render(); return; }
   if (act === 'escudo') { S.form.escudo = b.dataset.v; render(); return; }
   if (act === 'pers-escudo') { S.form.pers.escudo = b.dataset.v; render(); return; }
@@ -590,6 +597,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.modal)
   const teste = ['localhost', '127.0.0.1'].includes(location.hostname) && /[?&]teste=1/.test(location.search);
   const user = platform.getUser();
   const souAdmin = await platform.podeJogosEmTeste();
+  S.ehAdmin = await platform.isAdmin().catch(() => false);
   const aberto = !gameById(GAME_ID)?.soAdmin;
   if (!user && !teste) { telaMensagem('Entre na sua conta', 'O simulador de técnico precisa de uma conta para guardar a sua organização.', null); return; }
   if (!souAdmin && !teste && !aberto) { telaMensagem('Em desenvolvimento', 'Este jogo ainda está em teste e só administradores e convidados conseguem jogar por enquanto.', ['../../', 'Voltar ao início']); return; }

@@ -513,3 +513,20 @@ t('convidados: com o jogo fechado, só administrador e convidado têm acesso; re
     assert.equal(V('select tc_tenho_acesso()', 3), 'f');
   } finally { V(`update tc_config set valor = '${antes}'::jsonb where chave = 'aberto'`); V(`insert into site_admins values ('${U(3)}'), ('${U(4)}') on conflict do nothing`); }
 });
+t('posições pelo jogo: só administrador troca, valida as posições, guarda a ordem e a troca sobrevive a reaplicar o 0093', () => {
+  const sql = readFileSync(new URL('../supabase/migrations/0093_tecnico_posicoes.sql', import.meta.url), 'utf8');
+  V("update tc_config set valor = 'true'::jsonb where chave = 'aberto'");
+  V(`delete from site_admins where user_id = '${U(4)}'`);
+  try {
+    assert.equal(falha("select tc_campeao_posicoes('ahri', array['meio','top'])", 4), 'not_admin');
+    assert.equal(falha("select tc_campeao_posicoes('ahri', array['meio','top'])"), 'not_authenticated');
+    assert.equal(falha("select tc_campeao_posicoes('ahri', array['jungle'])", 1), 'posicoes_invalidas');
+    assert.equal(falha("select tc_campeao_posicoes('ahri', array[]::text[])", 1), 'posicoes_invalidas');
+    assert.equal(falha("select tc_campeao_posicoes('naoexiste', array['top'])", 1), 'campeao_inexistente');
+    assert.deepEqual(J("select tc_campeao_posicoes('ahri', array['top','meio','top'])", 1).posicoes, ['top', 'meio']);
+    assert.equal(V("select posicoes from tc_campeoes where id = 'ahri'"), '{top,meio}');
+    V("update tc_campeoes set posicoes = array['suporte'] where id = 'ahri'"); // simula reexecutar o 0090
+    V(sql); assert.equal(V("select posicoes from tc_campeoes where id = 'ahri'"), '{top,meio}', 'a troca feita no jogo volta ao reaplicar o 0093');
+    assert.equal(J("select tc_campeoes_lista()", 1).campeoes.find((c) => c.id === 'ahri').posicoes.join(), 'top,meio');
+  } finally { V("delete from tc_posicoes_manual where id = 'ahri'; update tc_campeoes set posicoes = array['meio'] where id = 'ahri'"); V(`insert into site_admins values ('${U(4)}') on conflict do nothing`); }
+});

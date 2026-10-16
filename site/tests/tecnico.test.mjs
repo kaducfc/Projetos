@@ -11,7 +11,7 @@ import {
 import { escudoSvg, retratoSvg, ESCUDOS } from '../jogos/tecnico/js/art.js';
 
 const ler = (f) => readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8');
-const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql'].map(ler).join('\n');
+const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql'].map(ler).join('\n');
 const j = (o = {}) => ({ id: 1, nome: 'Teste', pos: 'meio', pos2: [], mec: 60, rotas: 60, macro: 60, tf: 60, mental: 60, fama: 50, forma: 50, idade: 22, potencial: 70, ...o });
 
 test('Poder individual: média ponderada dos cinco atributos, sem a Fama, entre 1 e 100', () => {
@@ -82,7 +82,7 @@ test('só as funções de uso do jogo são liberadas para contas logadas (nunca 
   for (const f of liberadas) {
     const corpo = new RegExp(`function public\\.${f}\\([^)]*\\)[\\s\\S]*?\\$\\$;`, 'g');
     const blocos = sql.match(corpo) || [];
-    assert.ok(blocos.some((b) => /tc_exigir\(/.test(b)), `${f} não confere o acesso`);
+    assert.ok(blocos.some((b) => /tc_exigir\(|from site_admins where user_id = uid/.test(b)), `${f} não confere o acesso`); // portão do jogo ou checagem de administrador
   }
 });
 

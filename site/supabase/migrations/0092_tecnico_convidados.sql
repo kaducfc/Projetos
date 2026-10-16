@@ -7,7 +7,7 @@ create table if not exists public.tc_convidados (
   criado_em timestamptz not null default now()
 );
 alter table public.tc_convidados enable row level security;
-revoke all on public.tc_convidados from public, anon, authenticated;
+revoke all on public.tc_convidados from anon, authenticated;
 
 create or replace function public.tc_exigir(uid uuid)
 returns void language plpgsql stable security definer set search_path = public as $$

@@ -1015,6 +1015,9 @@ export const baraoCarta = (id, slot) => rpcBarao('site_barao_carta', { pid: id, 
 export const baraoVazio = (id) => rpcBarao('site_barao_vazio', { pid: id });
 // Simulador de técnico (jogo "tecnico"): tudo é decidido no servidor (SQL 0085 a 0089); o navegador só chama funções.
 const ERROS_TECNICO = {
+  not_admin: 'Só administradores podem fazer essa alteração.',
+  posicoes_invalidas: 'Escolha de 1 a 5 posições válidas.',
+  campeao_inexistente: 'Campeão não encontrado no catálogo.',
   jogo_fechado: 'Este jogo ainda está em teste e só administradores podem jogar.',
   not_authenticated: 'Entre na sua conta para jogar.',
   nome_invalido: 'Use de 3 a 24 caracteres (letras, números, espaço, ponto, hífen ou sublinhado).',
@@ -1082,6 +1085,7 @@ export const tecnico = {
   partida: (pid) => rpcTecnico('tc_partida', { pid }),
   ficha: (jid) => rpcTecnico('tc_ficha_jogador', { jid }),
   campeoes: () => rpcTecnico('tc_campeoes_lista', {}),
+  campeaoPosicoes: (id, posicoes) => rpcTecnico('tc_campeao_posicoes', { cid: id, pos: posicoes }), // só administradores
   gameplayPendente: () => rpcTecnico('tc_gameplay_pendente', {}),
   partidaElencos: (pid) => rpcTecnico('tc_partida_elencos', { pid }),
   gameplayRegistrar: (pid, mapa, resultado) => rpcTecnico('tc_gameplay_registrar', { pid, mapa_: mapa, resultado }),

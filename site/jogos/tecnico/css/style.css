@@ -323,3 +323,9 @@ form.tc-card[data-form="filtros"] { padding: 16px 0 14px; }
 .tc-camp .tx { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .tc-maes > div { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; align-items: center; }
 .tc-maes > div > .tc-ci { grid-row: 1 / span 3; }
+
+/* edição de posições dos campeões (só administradores) */
+.tc-pos-edit { margin-top: 2px; }
+.tc-pos-edit button.tc-vaga-ic { cursor: pointer; opacity: 0.45; font-family: inherit; background: #04101f80; }
+.tc-pos-edit button.tc-vaga-ic.on { opacity: 1; background: #17406e; color: #fff; }
+.tc-pos-edit button.tc-vaga-ic:hover { opacity: 0.9; }
