@@ -1,0 +1,168 @@
+// Treinamento, Amistoso e Recrutar (baús de Estrelas). Telas e ações do menu lateral.
+// Recebe de main.js (iniciarExtras) o estado e os ajudantes; tudo que vale (custos, sorteio, EXP) vem do servidor.
+import * as platform from '../../../shared/platform.js';
+import { escudoPoder } from './regras.js';
+import { retratoSvg, escudoOrg } from './art.js';
+
+const api = platform.tecnico;
+let C = null; // contexto de main.js: { S, esc, fmt, IMG, agir, toast, render, novaChave, escudoHtml }
+export const iniciarExtras = (ctx) => { C = ctx; };
+
+const ATRIBUTOS = [['mec', 'Mecânica'], ['rotas', 'Fase de rotas'], ['macro', 'Macro'], ['tf', 'Teamfight'], ['mental', 'Mental']];
+export const RARIDADES = {
+  comum: { nome: 'Comum', cor: '#a3a3b8' }, raro: { nome: 'Raro', cor: '#60a5fa' }, epico: { nome: 'Épico', cor: '#c084fc' },
+  lendario: { nome: 'Lendário', cor: '#f5cf5a' }, mitico: { nome: 'Mítico', cor: '#fb7185' },
+};
+const ORDEM_RAR = ['comum', 'raro', 'epico', 'lendario', 'mitico'];
+
+const X = {
+  treino: null, // { ...estado do servidor }
+  amistoso: { oponentes: null, hist: null },
+  recrutar: null,
+  timer: null,
+};
+
+// ------------------------------------------------------------------ carga
+export async function carregarExtras(aba) {
+  if (aba === 'treino') X.treino = await api.treinoEstado();
+  if (aba === 'amistoso') [X.amistoso.oponentes, X.amistoso.hist] = await Promise.all([api.amistosoOponentes(), api.amistosoHistorico()]);
+  if (aba === 'recrutar') X.recrutar = await api.recrutarInfo();
+  ligarRelogio();
+}
+export const limparExtras = () => { clearInterval(X.timer); X.treino = null; X.amistoso = { oponentes: null, hist: null }; X.recrutar = null; };
+
+const fmtTempo = (ms) => {
+  const s = Math.max(0, Math.ceil(ms / 1000)); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const r = s % 60;
+  return h ? `${h}h ${String(m).padStart(2, '0')}min` : m ? `${m}min ${String(r).padStart(2, '0')}s` : `${r}s`;
+};
+// Contagem regressiva dos treinos: atualiza só o texto e recarrega a aba quando um termina.
+function ligarRelogio() {
+  clearInterval(X.timer);
+  if (C.S.aba !== 'treino' || !X.treino) return;
+  const desvio = X.treino.agora ? Date.now() - new Date(X.treino.agora).getTime() : 0; // relógio do aparelho x servidor
+  X.timer = setInterval(async () => {
+    if (C.S.aba !== 'treino' || !X.treino) { clearInterval(X.timer); return; }
+    let acabou = false;
+    document.querySelectorAll('[data-fim]').forEach((el) => {
+      const resta = new Date(el.dataset.fim).getTime() - (Date.now() - desvio);
+      if (resta <= 0) acabou = true; else el.textContent = fmtTempo(resta);
+    });
+    if (acabou) { clearInterval(X.timer); try { X.treino = await api.treinoEstado(); await C.atualizarMeu(); } catch { /* tenta no próximo clique */ } C.render(); ligarRelogio(); }
+  }, 1000);
+  X.timer.unref?.(); // em Node (testes) o relógio não segura o processo
+}
+
+// ------------------------------------------------------------------ peças
+const poderBarra = (j) => {
+  const lim = j.limite; const ini = j.poder_inicial; const pct = lim > ini ? Math.round(((j.poder - ini) / (lim - ini)) * 100) : 100;
+  return `<div class="tc-treino-poder"><span>Poder <b>${j.poder}</b> <small>/ limite ${lim}</small></span><div class="tc-barra"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></div><small class="tc-mudo">Início ${ini} · até +${lim - ini}</small></div>`;
+};
+const rar = (j) => (j.raridade && RARIDADES[j.raridade] ? j.raridade : '');
+const miniCartao = (j, extra = '') => `<div class="tc-mini ${rar(j) ? `r-${rar(j)}` : ''}"><div class="foto">${retratoSvg(j, 110)}${C.escudoHtml(j.poder)}</div><div class="inf"><b>${C.esc(j.nome)}${j.estrela ? ' <i class="tc-estrela">★</i>' : ''}</b><small>${C.esc(C.nomeVaga(j.pos))}${rar(j) ? ` · ${RARIDADES[j.raridade].nome}` : ''}</small>${extra}</div></div>`;
+
+// ------------------------------------------------------------------ Treinamento
+export function viewTreino() {
+  const t = X.treino; if (!t) return '<p class="tc-carregando">Carregando…</p>';
+  const cfg = t.config;
+  const cards = t.jogadores.map((j) => {
+    const tr = j.treino; const noLimite = j.poder >= j.limite;
+    const linhas = ATRIBUTOS.map(([id, nome]) => {
+      const v = j[id]; const custo = j.custos[id]; const falta = t.creditos < custo;
+      const bloq = tr || noLimite || v >= 100 || falta || t.em_andamento >= cfg.simultaneos || C.S.ocupado;
+      const ativo = tr && tr.atributo === id;
+      return `<div class="tc-attr${ativo ? ' ativo' : ''}"><span class="nm">${nome}</span><b>${v}</b><div class="tc-barra"><i style="width:${v}%"></i></div>
+        ${ativo ? `<span class="tc-treinando">+${tr.pontos} em <b data-fim="${C.esc(tr.fim)}">…</b></span>`
+          : `<button type="button" class="tc-btn peq" data-act="treinar" data-id="${j.id}" data-attr="${id}" ${bloq ? 'disabled' : ''} title="${falta ? 'Créditos insuficientes' : ''}">+${cfg.pontos} · ${C.fmt(custo)}</button>`}</div>`;
+    }).join('');
+    return `<section class="tc-card tc-treino-jog ${rar(j) ? `r-${rar(j)}` : ''}">
+      ${miniCartao(j)}
+      <div class="tc-treino-corpo">${poderBarra(j)}${noLimite ? '<p class="tc-peq" style="color:var(--ouro2);margin:6px 0 0">Limite de treino atingido.</p>' : ''}${linhas}
+      <small class="tc-mudo" style="margin-top:4px">Cada sessão dura ${j.horas}h${j.exp ? ` (a experiência de ${j.exp} EXP já encurtou)` : ''}.</small></div></section>`;
+  }).join('');
+  return `<section class="tc-card"><h3>${C.IMG('i-treino')}Treinamento<span class="dir">${t.em_andamento}/${cfg.simultaneos} treinos</span></h3>
+    <p class="tc-mudo tc-peq" style="margin:0">Cada sessão sobe um atributo em <b>+${cfg.pontos}</b> depois de algumas horas e custa créditos. O Poder do jogador sobe com o tempo até o limite: <b>+${cfg.bonus_comum}</b> para jogadores comuns e <b>+${cfg.bonus_estrela}</b> para Estrelas (nunca passa de 100). Jogadores com mais EXP treinam mais rápido (EXP vem de amistosos e partidas). Seus créditos: <b>${C.fmt(t.creditos)}</b>.</p></section>
+    <div class="tc-treino-lista">${cards || '<p class="tc-mudo">Seu elenco está vazio.</p>'}</div>`;
+}
+
+// ------------------------------------------------------------------ Amistoso
+export function viewAmistoso() {
+  const a = X.amistoso; if (!a.oponentes || !a.hist) return '<p class="tc-carregando">Carregando…</p>';
+  const h = a.hist; const meu = C.S.meu.poder;
+  const ops = a.oponentes.map((o) => {
+    const dif = Math.round((o.poder - meu) * 10) / 10;
+    return `<div class="tc-oponente"><span class="esc">${escudoOrg(o, 44)}</span><div class="inf"><b>${C.esc(o.nome)}</b><small class="tc-mudo">${C.esc(o.sigla)} · ${o.tecnico ? 'técnico' : 'time do sistema'} · ${o.divisao === 'principal' ? C.esc(C.nomeLiga().principal || 'Liga principal') : C.esc(C.nomeLiga().acesso || 'Liga de acesso')}</small></div>
+      <div class="pw-dif"><b>${o.poder}</b><small style="color:${dif > 3 ? 'var(--ruim)' : dif < -3 ? 'var(--bom)' : 'var(--mudo)'}">${dif > 0 ? '+' : ''}${dif}</small></div>
+      <button type="button" class="tc-btn ouro peq" data-act="amistoso" data-id="${o.id}" ${C.S.ocupado ? 'disabled' : ''}>Desafiar</button></div>`;
+  }).join('');
+  const hist = h.lista.map((x) => `<tr><td>${C.dataCurta ? C.dataCurta(x.dia) : C.esc(x.dia)}</td><td>${C.esc(x.oponente.nome)}</td><td class="n"><b style="color:${x.a > x.b ? 'var(--bom)' : 'var(--ruim)'}">${x.a} × ${x.b}</b></td><td class="n">${x.exp ? `<span class="tc-exp">+${h.exp_ganho} EXP</span>` : '<span class="tc-mudo">sem EXP</span>'}</td></tr>`).join('');
+  return `<section class="tc-card"><h3>${C.IMG('i-agenda')}Amistoso<span class="dir">hoje: ${h.feitos_hoje}</span></h3>
+    <p class="tc-mudo tc-peq" style="margin:0">Desafie outro time para um treino de equipe (scrim, melhor de 3). Não vale pontos de campeonato. Você pode jogar quantos quiser por dia, mas só os <b>${h.exp_por_dia} primeiros</b> dão <b>+${h.exp_ganho} EXP</b> para os seus titulares; os demais não contam para nada.</p>
+    <div class="tc-exp-dia">${Array.from({ length: h.exp_por_dia }, (_, i) => `<i class="${i < h.feitos_hoje ? 'on' : ''}"></i>`).join('')}<span>${h.com_exp_restantes > 0 ? `${h.com_exp_restantes} amistoso(s) com EXP restante(s) hoje` : 'EXP de hoje já foi toda ganha'}</span></div></section>
+    <section class="tc-card"><h3>Adversários</h3><div class="tc-oponentes">${ops || '<p class="tc-mudo">Nenhum time disponível.</p>'}</div></section>
+    <section class="tc-card"><h3>Seus últimos amistosos</h3>${hist ? `<table class="tc-tabela"><tbody>${hist}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Você ainda não jogou nenhum amistoso.</p>'}</section>`;
+}
+export function modalAmistoso(m) {
+  const r = m.r; const res = r.resultado || {};
+  const ganhou = res.a > res.b;
+  return `<h2>${ganhou ? 'Vitória no amistoso!' : 'Derrota no amistoso'}</h2><p class="tc-mudo tc-peq">${C.esc(C.S.meu.org.nome)} × ${C.esc(r.oponente.nome)} · Poder ${res.poder_a} × ${res.poder_b}</p>
+    <div class="tc-placar"><b style="color:${ganhou ? 'var(--bom)' : 'var(--ruim)'}">${res.a}</b><span>×</span><b>${res.b}</b></div>
+    ${(res.mapas || []).map((x) => `<div class="tc-resumo"><div class="l"><b>Mapa ${x.mapa}</b><span>${x.duracao} min · vitória ${x.vencedor === 'a' ? C.esc(C.S.meu.org.nome) : C.esc(r.oponente.nome)}</span></div><div class="l"><span>Destaque</span><b>${C.esc(x.mvp || '')}</b></div></div>`).join('')}
+    <p class="${r.exp ? 'tc-exp' : 'tc-mudo'}" style="margin:8px 0">${r.exp ? `+${r.exp_ganho} EXP para os seus titulares. Restam ${r.com_exp_restantes} amistoso(s) com EXP hoje.` : 'Este amistoso não deu EXP (só os primeiros do dia contam).'}</p>
+    <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="fechar">Fechar</button></div>`;
+}
+
+// ------------------------------------------------------------------ Recrutar
+export function viewRecrutar() {
+  const r = X.recrutar; if (!r) return '<p class="tc-carregando">Carregando…</p>';
+  const cfg = r.config; const cheio = r.elenco >= r.elenco_max;
+  const preco5 = (b) => Math.round(b.rc * 5 * (1 - cfg.desconto_5));
+  const baus = Object.entries(cfg.baus).map(([id, b]) => {
+    const odds = ORDEM_RAR.map((k) => `<li class="r-${k}"><span>${RARIDADES[k].nome}</span><b>${(b.odds[k] ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</b></li>`).join('');
+    const garantia = r.garantia?.[id] ?? 0;
+    const bloq1 = r.saldo_rc < b.rc || cheio || C.S.ocupado; const bloq5 = r.saldo_rc < preco5(b) || r.elenco + 5 > r.elenco_max || C.S.ocupado;
+    return `<section class="tc-card tc-bau bau-${id}"><div class="arte">${C.IMG('i-bau', 'grande')}</div><h3>${C.esc(b.nome)}</h3>
+      <ul class="tc-odds">${odds}</ul>
+      <small class="tc-mudo">Garantia: a cada ${cfg.pity_a_cada} baús sem Épico ou melhor, o próximo vem Épico ou melhor (faltam ${Math.max(0, cfg.pity_a_cada - garantia)}).</small>
+      <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="recrutar" data-bau="${id}" data-qtd="1" ${bloq1 ? 'disabled' : ''}>Abrir 1 · <span class="tc-preco rc">${C.fmt(b.rc)} RC</span></button>
+      <button type="button" class="tc-btn ciano" data-act="recrutar" data-bau="${id}" data-qtd="5" ${bloq5 ? 'disabled' : ''}>Abrir 5 · <span class="tc-preco rc">${C.fmt(preco5(b))} RC</span> <i class="tc-desc">-${Math.round(cfg.desconto_5 * 100)}%</i></button></div></section>`;
+  }).join('');
+  const livres = r.estrelas.por_raridade || {};
+  return `<section class="tc-card"><h3>${C.IMG('i-bau')}Recrutar<span class="dir">${C.fmt(r.saldo_rc)} RC</span></h3>
+    <p class="tc-mudo tc-peq" style="margin:0">Os baús sorteiam <b>jogadores Estrela</b> (reais, com retrato próprio e Poder mais alto). Quanto melhor o baú, maiores as chances de raridades altas. O pagamento é em Rift Coins da sua carteira oficial e os jogadores entram direto no seu elenco (${r.elenco}/${r.elenco_max}).${cheio ? ' <b style="color:var(--ruim)">Elenco cheio: libere alguém antes.</b>' : ''}</p>
+    <div class="tc-raras">${ORDEM_RAR.map((k) => `<span class="r-${k}">${RARIDADES[k].nome}: ${livres[k] ?? 0} livre(s)</span>`).join('')}</div></section>
+    <div class="tc-baus">${baus}</div>
+    ${r.minhas_estrelas.length ? `<section class="tc-card"><h3>Suas Estrelas</h3><div class="tc-minis">${r.minhas_estrelas.map((j) => miniCartao(j)).join('')}</div></section>` : ''}`;
+}
+export function modalRecrutar(m) {
+  const itens = m.r.itens || [];
+  return `<h2>${itens.length > 1 ? 'Você recrutou!' : 'Novo jogador Estrela!'}</h2><p class="tc-mudo tc-peq">Pagamento: ${C.fmt(m.r.preco_rc)} RC. Os jogadores já estão no seu elenco (contrato de ${m.contrato} semanas).</p>
+    <div class="tc-revelar">${itens.map((x, i) => `<div class="tc-carta r-${x.raridade}" style="animation-delay:${i * 0.18}s"><div class="faixa">${RARIDADES[x.raridade]?.nome || ''}</div>${miniCartao(x.jogador)}</div>`).join('')}</div>
+    <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="fechar">Fechar</button></div>`;
+}
+
+// ------------------------------------------------------------------ ações dos botões
+export async function tratarAcao(act, b) {
+  if (act === 'treinar') {
+    const r = await C.agir(() => api.treinar(Number(b.dataset.id), b.dataset.attr, C.novaChave()), { ok: 'Treino iniciado!', recarregar: false });
+    if (r) { await C.agir(async () => { X.treino = await api.treinoEstado(); await C.atualizarMeu(); }, { recarregar: false }); ligarRelogio(); }
+    return true;
+  }
+  if (act === 'amistoso') {
+    const r = await C.agir(() => api.amistoso(Number(b.dataset.id), C.novaChave()), { recarregar: false });
+    if (r && r !== true) {
+      C.S.modal = { t: 'amistoso', r };
+      await C.agir(async () => { await C.atualizarMeu(); X.amistoso.hist = await api.amistosoHistorico(); }, { recarregar: false });
+    }
+    return true;
+  }
+  if (act === 'recrutar') {
+    const qtd = Number(b.dataset.qtd);
+    const r = await C.agir(() => api.recrutar(b.dataset.bau, qtd, C.novaChave()), { recarregar: false });
+    if (r && r !== true) {
+      C.S.modal = { t: 'recrutar', r, contrato: X.recrutar?.config?.contrato_semanas ?? 12 };
+      await C.agir(async () => { await C.atualizarMeu(); X.recrutar = await api.recrutarInfo(); }, { recarregar: false });
+    }
+    return true;
+  }
+  return false;
+}

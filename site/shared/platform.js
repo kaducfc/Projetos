@@ -1016,6 +1016,18 @@ export const baraoVazio = (id) => rpcBarao('site_barao_vazio', { pid: id });
 // Simulador de técnico (jogo "tecnico"): tudo é decidido no servidor (SQL 0085 a 0089); o navegador só chama funções.
 const ERROS_TECNICO = {
   not_admin: 'Só administradores podem fazer essa alteração.',
+  atributo_invalido: 'Atributo inválido.',
+  jogador_treinando: 'Esse jogador já está em treinamento.',
+  treinos_demais: 'Você já tem o máximo de treinos ao mesmo tempo. Espere algum terminar.',
+  atributo_no_maximo: 'Esse atributo já está no máximo (100).',
+  treino_limite_atingido: 'Esse jogador já chegou ao limite de Poder que o treino consegue dar.',
+  oponente_invalido: 'Escolha outro time para o amistoso.',
+  elenco_incompleto: 'Você precisa de cinco titulares escalados para jogar um amistoso.',
+  oponente_sem_elenco: 'Esse time não está com o elenco completo agora. Escolha outro.',
+  amistoso_limite_dia: 'Limite de amistosos de hoje atingido. Volte amanhã.',
+  bau_invalido: 'Baú inválido.',
+  quantidade_invalida: 'Quantidade inválida.',
+  sem_estrelas: 'Não há jogadores Estrela livres para sortear agora.',
   estrela_so_rc: 'Jogadores Estrela não são contratados com créditos: use Rift Coins.',
   estrela_venda_fechada: 'A venda de jogadores Estrela por RC está fechada no momento.',
   nao_e_estrela: 'Este jogador não é uma Estrela.',
@@ -1108,6 +1120,17 @@ export const tecnico = {
   meusAnuncios: () => rpcTecnico('tc_meus_anuncios'),
   anunciar: (jogador, preco) => rpcTecnico('tc_anunciar', { jogador, preco }),
   cancelarAnuncio: (anuncio) => rpcTecnico('tc_cancelar_anuncio', { anuncio }),
+  treinoEstado: () => rpcTecnico('tc_treino_estado'),
+  treinar: (jogador, atributo, chave) => rpcTecnico('tc_treinar', { jogador, atributo_: atributo, chave_: chave }),
+  amistosoOponentes: () => rpcTecnico('tc_amistoso_oponentes'),
+  amistosoHistorico: () => rpcTecnico('tc_amistosos_historico'),
+  amistoso: (oponente, chave) => rpcTecnico('tc_amistoso', { oponente, chave_: chave }),
+  recrutarInfo: () => rpcTecnico('tc_recrutar_info'),
+  recrutar: async (bau, qtd, chave) => {
+    const r = await rpcTecnico('tc_recrutar', { bau_: bau, qtd_: qtd, chave_: chave });
+    await refreshMoedas(); // o saldo de RC mudou
+    return r;
+  },
   comprarAnuncio: async (anuncio, chave) => {
     const r = await rpcTecnico('tc_comprar_anuncio', { anuncio, chave_: chave });
     await refreshMoedas(); // o saldo de RC mudou

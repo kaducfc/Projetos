@@ -11,6 +11,7 @@ import {
 } from './regras.js';
 import { prepararImagens, campIcone } from './campeoes-img.js';
 import { ESCUDOS, escudoSvg, escudoOrg, retratoSvg, iconeVaga } from './art.js';
+import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalAmistoso, modalRecrutar, tratarAcao } from './extras.js';
 
 const GAME_ID = 'tecnico';
 const app = document.getElementById('app');
@@ -76,7 +77,7 @@ async function agir(fn, { ok, recarregar = true } = {}) {
 async function atualizar() {
   S.meu = await api.meu();
   if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); }
-  S.camp = null; S.hist = null;
+  S.camp = null; S.hist = null; limparExtras();
   S.mercado.oficial = null; S.mercado.usuarios = null; S.mercado.meus = null;
   await carregarAba();
 }
@@ -89,6 +90,7 @@ async function carregarAba() {
     if (S.aba === 'hist' && !S.hist) S.hist = await api.historico();
     if (S.aba === 'campeoes' && !S.campeoes) [S.campeoes] = await Promise.all([api.campeoes(), prepararImagens()]);
     if (S.aba === 'contratar') await carregarMercado();
+    if (['treino', 'amistoso', 'recrutar'].includes(S.aba)) await carregarExtras(S.aba);
   } catch (e) { toast(e.message, true); }
 }
 async function carregarMercado() {
@@ -109,7 +111,7 @@ function escudoHtml(poder, grande = false) {
 function cartao(j, { tit = false, extra = '', acao = 'ficha', dados = '' } = {}) {
   const c = corPoder(j.poder);
   const resta = semanasRestantes(j);
-  return `<button type="button" class="tc-jog" data-act="${acao}" data-id="${j.id}" ${dados} style="--c:${c}">
+  return `<button type="button" class="tc-jog${j.raridade ? ` r-${j.raridade}` : ''}" data-act="${acao}" data-id="${j.id}" ${dados} style="--c:${c}">
     <div class="foto">${retratoSvg(j, 160)}<span class="vg">${iconeVaga(j.pos)}</span>${escudoHtml(j.poder)}</div>
     <div class="inf">
       <span class="nm">${esc(j.nome)}${j.ficticio === false ? ' <i class="tc-estrela" title="Jogador Estrela">★</i>' : ''}</span><span class="pos">${esc(NOME_VAGA[j.pos])}</span>
@@ -145,7 +147,7 @@ function topo() {
 }
 
 const ABAS = [
-  ['visao', 'Início', 'i-home'], ['elenco', 'Meu elenco', 'i-time'], ['contratar', 'Mercado', 'i-mercado'], ['campeoes', 'Campeões', 'i-plantel'],
+  ['visao', 'Início', 'i-home'], ['elenco', 'Meu elenco', 'i-time'], ['treino', 'Treinamento', 'i-treino'], ['amistoso', 'Amistoso', 'i-agenda'], ['contratar', 'Mercado', 'i-mercado'], ['recrutar', 'Recrutar', 'i-bau'], ['campeoes', 'Campeões', 'i-plantel'],
   ['camp', 'Campeonatos', 'i-trofeu'], ['class', 'Classificação', 'i-stats'], ['hist', 'Histórico', 'i-financas'], ['pers', 'Personalização', 'i-engrenagem'],
 ];
 function nav() {
@@ -374,6 +376,8 @@ function modalHtml() {
   else if (m.t === 'renovar') corpo = renovarHtml(m);
   else if (m.t === 'escalar') corpo = escalarHtml(m);
   else if (m.t === 'partida') corpo = partidaHtml(m);
+  else if (m.t === 'amistoso') corpo = modalAmistoso(m);
+  else if (m.t === 'recrutar') corpo = modalRecrutar(m);
   return `<div class="tc-fundo" data-act="fechar-fundo"><div class="tc-modal" role="dialog" aria-modal="true"><button type="button" class="x" data-act="fechar" aria-label="Fechar">×</button>${corpo}</div></div>`;
 }
 function fichaHtml(m) {
@@ -462,6 +466,9 @@ function conteudo() {
     case 'camp': return viewCamp();
     case 'class': return viewClass();
     case 'hist': return viewHist();
+    case 'treino': return viewTreino();
+    case 'amistoso': return viewAmistoso();
+    case 'recrutar': return viewRecrutar();
     case 'campeoes': return viewCampeoes();
     case 'pers': return viewPers();
     default: return viewVisao();
@@ -515,6 +522,7 @@ document.addEventListener('click', async (e) => {
     try { const r = await api.campeaoPosicoes(c.id, novas); c.posicoes = r.posicoes; toast(`${c.nome}: ${c.posicoes.map((v) => NOME_VAGA[v]).join(', ')}`); } catch (err) { toast(err.message, true); }
     render(); return;
   }
+  if (act === 'treinar' || act === 'amistoso' || act === 'recrutar') { await tratarAcao(act, b); render(); return; }
   if (act === 'fechar') { S.modal = null; render(); return; }
   if (act === 'escudo') { S.form.escudo = b.dataset.v; render(); return; }
   if (act === 'pers-escudo') { S.form.pers.escudo = b.dataset.v; render(); return; }
@@ -605,6 +613,12 @@ document.addEventListener('submit', async (e) => {
   }
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.modal) { S.modal = null; render(); } });
+
+iniciarExtras({
+  S, esc, fmt, IMG, agir, toast, render, novaChave, escudoHtml, nomeLiga, dataCurta,
+  nomeVaga: (v) => NOME_VAGA[v] || v,
+  atualizarMeu: async () => { S.meu = await api.meu(); if (S.meu.org) S.painel = await api.painel(); },
+});
 
 // ------------------------------------------------------------------ início
 (async function iniciar() {
