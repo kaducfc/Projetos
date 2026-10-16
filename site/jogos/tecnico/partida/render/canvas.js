@@ -8,7 +8,7 @@ const COR_MON = { sentinela: '#5aa9ff', brambleback: '#ff6a5a', gromp: '#7bd36b'
 export class Renderizador {
   constructor(canvas, imagemMapa) {
     this.cv = canvas; this.ctx = canvas.getContext('2d'); this.img = imagemMapa;
-    this.icones = new Map(); this.interp = { a: 1, prev: new Map() };
+    this.icones = new Map(); this.sprites = new Map(); this.interp = { a: 1, prev: new Map() };
     this.camadas = {}; this.fxDano = []; this.selecionado = null;
     this.estruturasCaidas = new Map();
   }
@@ -27,6 +27,22 @@ export class Renderizador {
     const u = campUrl(nome); e = { img: null, ok: false };
     if (u) { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => { e.ok = true; }; im.src = u; e.img = im; }
     this.icones.set(nome, e); return e;
+  }
+  // Miniaturas das estruturas e monstros (img/*.webp). Sem imagem carregada, volta ao desenho geométrico.
+  sprite(nome) {
+    let e = this.sprites.get(nome); if (e) return e;
+    e = { img: typeof Image === 'function' ? new Image() : null, ok: false };
+    if (!e.img) { this.sprites.set(nome, e); return e; } // sem DOM (testes em Node)
+    e.img.onload = () => { e.ok = true; }; e.img.src = new URL(`../img/${nome}.webp`, import.meta.url).href;
+    this.sprites.set(nome, e); return e;
+  }
+  desenharSprite(c, nome, x, y, larg, ancora = 0.5, alpha = 1) {
+    const e = this.sprite(nome); if (!e.ok) return false;
+    const h = larg * e.img.naturalHeight / e.img.naturalWidth;
+    if (alpha < 1) c.globalAlpha = alpha;
+    c.drawImage(e.img, x - larg / 2, y - h * ancora, larg, h);
+    if (alpha < 1) c.globalAlpha = 1;
+    return true;
   }
   pos(u) {
     const p = this.interp.prev.get(u.id); const a = this.interp.a;
@@ -63,6 +79,14 @@ export class Renderizador {
         continue;
       }
       const vuln = P.estruturaVulneravel(e);
+      const larg = (e.subtipo === 'nexus' ? 66 : e.subtipo === 'inibidor' ? 38 : 34) * U;
+      if (this.sprite(`${e.subtipo}_${e.equipe}`).ok) { // miniatura na cor do time
+        c.fillStyle = cor; c.globalAlpha = 0.28; c.beginPath(); c.ellipse(x, y + larg * 0.12, larg * 0.5, larg * 0.2, 0, 0, 7); c.fill(); c.globalAlpha = 1;
+        this.desenharSprite(c, `${e.subtipo}_${e.equipe}`, x, y + larg * 0.3, larg, e.subtipo === 'torre' ? 0.82 : 0.7, vuln ? 1 : 0.8);
+        if (!vuln) { c.strokeStyle = 'rgba(255,255,255,0.45)'; c.lineWidth = 1; c.beginPath(); c.ellipse(x, y + larg * 0.12, larg * 0.55, larg * 0.24, 0, 0, 7); c.stroke(); }
+        if (e.hp < e.hpMax || e.subtipo === 'nexus') this.barra(c, x - larg * 0.4, y - larg * 0.62 - 4 * U, larg * 0.8, 3 * U, e.hp / e.hpMax, e.hp / e.hpMax > 0.5 ? '#6adf7a' : '#e8b34a');
+        continue;
+      }
       c.save(); c.translate(x, y);
       c.fillStyle = 'rgba(8,16,36,0.85)'; c.strokeStyle = cor; c.lineWidth = 2.2 * U;
       c.beginPath();
@@ -81,6 +105,7 @@ export class Renderizador {
     for (const m of P.monstros) {
       if (m.morto) continue; const x = m.x * this.k, y = m.y * this.k; const camp = P.acampamentos.find((a) => a.id === m.campo);
       const grande = m.raio >= 70; const r = (grande ? 6.5 : 4) * U;
+      if (camp && this.sprite(camp.tipo).ok) { const l = (camp.tipo === 'caranguejo' ? 22 : m.raio >= 80 ? 40 : m.raio >= 60 ? 32 : m.raio >= 45 ? 24 : 18) * U; this.desenharSprite(c, camp.tipo, x, y + l * 0.25, l, 0.6); if (m.hp < m.hpMax) this.barra(c, x - l * 0.4, y - l * 0.5 - 3 * U, l * 0.8, 2.5 * U, m.hp / m.hpMax, '#d36b4a'); continue; }
       c.fillStyle = COR_MON[camp?.tipo] || '#d8c27a'; c.strokeStyle = 'rgba(0,0,0,0.7)'; c.lineWidth = 1.2;
       c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke();
       if (m.hp < m.hpMax) this.barra(c, x - r, y - r - 5 * U, r * 2, 2.5 * U, m.hp / m.hpMax, '#d36b4a');
@@ -89,6 +114,8 @@ export class Renderizador {
       if (e.morto) continue; const x = e.x * this.k, y = e.y * this.k; const r = (e.subtipo === 'barao' ? 15 : 12) * U;
       const grd = c.createRadialGradient(x, y, 2, x, y, r * 2); grd.addColorStop(0, e.subtipo === 'barao' ? 'rgba(170,90,255,0.9)' : e.subtipo === 'arauto' ? 'rgba(90,200,255,0.9)' : 'rgba(255,150,70,0.9)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
       c.fillStyle = grd; c.beginPath(); c.arc(x, y, r * 2, 0, 7); c.fill();
+      const sp = e.subtipo === 'anciao' ? 'dragao' : e.subtipo;
+      if (this.sprite(sp).ok) { const l = r * (e.subtipo === 'barao' ? 3.4 : 3.1); this.desenharSprite(c, sp, x, y + l * 0.1, l, 0.55); this.barra(c, x - r * 1.4, y - l * 0.55 - 6 * U, r * 2.8, 4 * U, e.hp / e.hpMax, '#e07040'); continue; }
       c.fillStyle = '#1a1030'; c.strokeStyle = '#f0cf72'; c.lineWidth = 2; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke();
       c.fillStyle = '#f0cf72'; c.font = `bold ${Math.round(10 * U)}px Inter, sans-serif`; c.textAlign = 'center'; c.fillText(e.subtipo === 'barao' ? 'B' : e.subtipo === 'arauto' ? 'A' : e.subtipo === 'anciao' ? 'DA' : 'D', x, y + 3.5 * U);
       this.barra(c, x - r * 1.4, y - r - 8 * U, r * 2.8, 4 * U, e.hp / e.hpMax, '#e07040');
