@@ -11,7 +11,7 @@ import {
 import { escudoSvg, retratoSvg, ESCUDOS } from '../jogos/tecnico/js/art.js';
 
 const ler = (f) => readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8');
-const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql'].map(ler).join('\n');
+const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql'].map(ler).join('\n');
 const j = (o = {}) => ({ id: 1, nome: 'Teste', pos: 'meio', pos2: [], mec: 60, rotas: 60, macro: 60, tf: 60, mental: 60, fama: 50, forma: 50, idade: 22, potencial: 70, ...o });
 
 test('Poder individual: média ponderada dos cinco atributos, sem a Fama, entre 1 e 100', () => {
@@ -28,6 +28,7 @@ test('Poder em campo: penalidade fora da posição e forma limitada', () => {
   assert.equal(poderEmCampo(j(), 'meio'), 60);
   assert.ok(Math.abs(poderEmCampo(j(), 'top') - 60 * FORA_POSICAO) < 1e-9);
   assert.equal(poderEmCampo(j({ pos2: ['top'] }), 'top'), 60, 'posição secundária não penaliza');
+  assert.ok(Math.abs(poderEmCampo(j({ estrelas: 2 }), 'meio') - 66) < 1e-9, 'cada estrela soma 5% de eficiência'); assert.equal(FORA_POSICAO, 0.75);
   assert.ok(poderEmCampo(j({ forma: 100 }), 'meio') - 60 <= 2.0001, 'a forma pesa pouco');
 });
 
@@ -42,7 +43,7 @@ test('Preço, salário e taxa do mercado', () => {
 test('constantes do navegador batem com a configuração do SQL', () => {
   const pesos = JSON.parse(/\('pesos', '(\{.*?\})'::jsonb\)/.exec(sql)[1]).global;
   assert.deepEqual(pesos, PESOS);
-  assert.equal(Number(/\('fora_posicao', '([0-9.]+)'::jsonb\)/.exec(sql)[1]), FORA_POSICAO);
+  assert.equal(Number(/set valor = '([0-9.]+)'::jsonb where chave = 'fora_posicao'/.exec(sql)[1]), FORA_POSICAO);
   const el = JSON.parse(/\('elenco', '(\{.*?\})'::jsonb\)/.exec(sql)[1]);
   assert.equal(el.max, ELENCO_MAX);
   assert.equal(el.contrato_min, CONTRATO_MIN);
@@ -132,10 +133,10 @@ test('menu lateral tem Treinamento, Amistoso e Recrutar; cada tela só chama fun
   api.treinoEstado = async () => ({ config: { horas: 6, pontos: 3, simultaneos: 3, bonus_comum: 10, bonus_estrela: 15 }, creditos: 100, agora: new Date().toISOString(), jogadores: [jog(1), jog(2, { poder: 78, limite: 78 })], em_andamento: 0 });
   api.amistosoOponentes = async () => [{ id: 9, nome: 'Rivais', sigla: 'RIV', escudo: 'escudo-1', cor1: '#112233', cor2: '#aabbcc', divisao: 'acesso', tecnico: false, poder: 66 }];
   api.amistosoHistorico = async () => ({ feitos_hoje: 1, exp_por_dia: 5, exp_ganho: 2, com_exp_restantes: 4, lista: [] });
-  api.recrutarInfo = async () => ({ config: { desconto_5: 0.15, pity_a_cada: 10, contrato_semanas: 12, baus: { basico: { nome: 'Baú Básico', rc: 300, odds: { comum: 55, raro: 30, epico: 12, lendario: 2.7, mitico: 0.3 } }, premium: { nome: 'Baú Premium', rc: 900, odds: { comum: 20, raro: 38, epico: 28, lendario: 11, mitico: 3 } } } }, saldo_rc: 5000, elenco: 5, elenco_max: 10, estrelas: { por_raridade: {} }, garantia: {}, minhas_estrelas: [] });
+  api.recrutarInfo = async () => ({ config: { desconto_5: 0.15, pity_a_cada: 10, contrato_semanas: 12, baus: { basico: { nome: 'Baú Básico', rc: 300, odds: { comum: 55, raro: 30, epico: 12, lendario: 2.7, mitico: 0.3 } }, premium: { nome: 'Baú Premium', rc: 900, odds: { comum: 20, raro: 38, epico: 28, lendario: 11, mitico: 3 } } } }, saldo_rc: 5000, elenco: 5, elenco_max: 10, legados: { total: 15, por_raridade: {} }, garantia: {}, meus_legados: [] });
   const S = { aba: 'treino', ocupado: false, meu: { poder: 70, org: { nome: 'Eu' } } };
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, '');
-  E.iniciarExtras({ S, esc, fmt: (n) => String(n), IMG: () => '', agir: async () => null, toast() {}, render() {}, novaChave: () => 'k', escudoHtml: (p) => `<b>${p}</b>`, nomeLiga: () => ({}), dataCurta: (d) => d, nomeVaga: (v) => v, atualizarMeu: async () => {} });
+  E.iniciarExtras({ S, esc, fmt: (n) => String(n), IMG: () => '', agir: async () => null, toast() {}, render() {}, novaChave: () => 'k', escudoHtml: (p) => `<b>${p}</b>`, estrelasHtml: () => '', nomeLiga: () => ({}), dataCurta: (d) => d, nomeVaga: (v) => v, atualizarMeu: async () => {} });
   await E.carregarExtras('treino'); const t = E.viewTreino();
   assert.match(t, /Treinamento/); assert.match(t, /data-act="treinar"/); assert.match(t, /Limite de treino atingido/);
   assert.equal((t.match(/data-act="treinar"/g) || []).length, 10, '5 atributos por jogador');
@@ -143,6 +144,6 @@ test('menu lateral tem Treinamento, Amistoso e Recrutar; cada tela só chama fun
   S.aba = 'amistoso'; await E.carregarExtras('amistoso'); assert.match(E.viewAmistoso(), /Desafiar[\s\S]*Rivais|Rivais[\s\S]*Desafiar/);
   S.aba = 'recrutar'; await E.carregarExtras('recrutar'); const r = E.viewRecrutar();
   assert.match(r, /Baú Básico/); assert.match(r, /Baú Premium/); assert.match(r, /1275/); assert.match(r, /3825/); assert.match(r, /-15%/);
-  assert.match(E.modalRecrutar({ contrato: 12, r: { preco_rc: 300, itens: [{ raridade: 'epico', jogador: jog(5, { estrela: true, raridade: 'epico' }) }] } }), /Novo jogador Estrela/);
+  assert.match(E.modalRecrutar({ contrato: 12, r: { preco_rc: 300, itens: [{ raridade: 'epico', repetida: true, jogador: jog(5, { legado: true, copias: 2, raridade: 'epico' }) }] } }), /Novo jogador Legado[\s\S]*repetido[\s\S]*\+1 cópia/);
   E.limparExtras();
 });

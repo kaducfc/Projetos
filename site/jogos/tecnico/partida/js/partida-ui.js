@@ -39,7 +39,7 @@ function configTeste() {
 }
 async function configOficial(id) {
   const el = await api.partidaElencos(id);
-  const jogs = (l) => l.map((j) => ({ id: j.id, nome: j.nome, pos: j.pos, atributos: j.atributos, poder: j.poder, favoritos: j.favoritos }));
+  const jogs = (l) => l.map((j) => ({ id: j.id, nome: j.nome, pos: j.pos, atributos: j.atributos, poder: j.poder, eficiencia: j.eficiencia, favoritos: j.favoritos }));
   const f = el.partida.formato;
   return {
     modo: 'oficial', id, mapa: el.mapa, semente: el.semente, versao: el.versao, azul: jogs(el.azul.jogadores), vermelho: jogs(el.vermelho.jogadores),

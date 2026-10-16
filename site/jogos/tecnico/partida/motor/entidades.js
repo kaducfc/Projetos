@@ -25,6 +25,9 @@ export function criarCampeao(P, jog, equipe, perfil) {
     estat: { abates: 0, mortes: 0, assist: 0, cs: 0, csSelva: 0, dano: 0, danoSofrido: 0, torres: 0, objetivos: 0, ouroGasto: 0, curado: 0 },
     jungle: { campoAtual: null, ordem: [], idx: 0 },
   };
+  // eficiência do jogador (posição x estrelas de evolução): vale como multiplicador do desempenho geral
+  u.eficiencia = jog.eficiencia ?? 1;
+  u.m.forca *= u.eficiencia;
   recalcular(u, P, true);
   u.hp = u.hpMax; u.mana = u.manaMax;
   return u;

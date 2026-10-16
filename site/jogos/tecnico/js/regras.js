@@ -14,7 +14,7 @@ export const ATRIBUTOS = [
 ];
 // Pesos do Poder (soma 100). Fama não entra no Poder.
 export const PESOS = { mec: 25, rotas: 20, macro: 20, tf: 20, mental: 15 };
-export const FORA_POSICAO = 0.9;
+export const FORA_POSICAO = 0.75;
 export const ELENCO_MAX = 10;
 export const CONTRATO_MIN = 4;
 export const CONTRATO_MAX = 26;
@@ -32,7 +32,8 @@ export function poderEmCampo(j, vaga) {
   let p = poder(j);
   if (vaga !== j.pos && !(j.pos2 || []).includes(vaga)) p *= FORA_POSICAO;
   p += (j.forma - 50) * 0.04;
-  return Math.min(100, Math.max(1, p));
+  p *= 1 + (j.estrelas || 0) * 0.05; // cada estrela de evolução: +5% de eficiência em jogo
+  return Math.min(125, Math.max(1, p));
 }
 // Preço em créditos (mesma conta do servidor, tc_preco).
 export function preco(p, potencial, fama, idade) {

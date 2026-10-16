@@ -7,7 +7,7 @@ import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import {
   VAGAS, NOME_VAGA, SIGLA_VAGA, FAVORITOS_MAX, NOME_NIVEL, ATRIBUTOS, ELENCO_MAX, CONTRATO_MIN, CONTRATO_MAX, PRECO_RC, TAXA_MERCADO_PCT,
-  fmt, esc, corPoder, escudoPoder, taxaDe, salarioDe,
+  fmt, esc, corPoder, escudoPoder, taxaDe, salarioDe, FORA_POSICAO,
 } from './regras.js';
 import { prepararImagens, campIcone } from './campeoes-img.js';
 import { ESCUDOS, escudoSvg, escudoOrg, retratoSvg, iconeVaga } from './art.js';
@@ -108,15 +108,22 @@ function escudoHtml(poder, grande = false) {
   return `<span class="pw${grande ? ' pw-grande' : ''} tier-${t}" title="Poder ${poder}"><img src="../../shared/assets/trofeus/${t}.png" alt="" onerror="this.parentElement.classList.add('sem-img'); this.remove()" /><b>${poder}</b></span>`;
 }
 
+// Estrelas de evolução (0 a 5): cada uma dá +5% de eficiência dentro do jogo, sem mudar o Poder.
+function estrelasHtml(j) {
+  const n = j.estrelas || 0; const max = j.estrela_max || 5;
+  return `<span class="tc-stars" title="${n} de ${max} estrelas (+${n * 5}% de eficiência)">${'★'.repeat(n)}<i>${'★'.repeat(max - n)}</i></span>`;
+}
+
 function cartao(j, { tit = false, extra = '', acao = 'ficha', dados = '' } = {}) {
   const c = corPoder(j.poder);
   const resta = semanasRestantes(j);
   return `<button type="button" class="tc-jog${j.raridade ? ` r-${j.raridade}` : ''}" data-act="${acao}" data-id="${j.id}" ${dados} style="--c:${c}">
     <div class="foto">${retratoSvg(j, 160)}<span class="vg">${iconeVaga(j.pos)}</span>${escudoHtml(j.poder)}</div>
     <div class="inf">
-      <span class="nm">${esc(j.nome)}${j.ficticio === false ? ' <i class="tc-estrela" title="Jogador Estrela">★</i>' : ''}</span><span class="pos">${esc(NOME_VAGA[j.pos])}</span>
+      <span class="nm">${esc(j.nome)}${j.ficticio === false ? ' <i class="tc-estrela" title="Jogador Legado">◆</i>' : ''}</span><span class="pos">${esc(NOME_VAGA[j.pos])}</span>
       <div class="ln"><span>${j.idade} anos</span><span>Fama <b>${j.fama}</b></span></div>
       ${j.potencial != null ? `<div class="ln"><span>Potencial</span><b>${j.potencial}</b></div>` : ''}
+      ${j.org_id ? `<div class="ln"><span>Estrelas</span>${estrelasHtml(j)}</div>` : ''}
       ${resta != null && j.org_id ? `<div class="ln"><span>Contrato</span><b>${resta <= 0 ? 'vence já' : `${resta} sem.`}</b></div>` : ''}
       ${extra}
     </div>${tit ? `<span class="tit">TITULAR · ${esc(NOME_VAGA[j.slot])}</span>` : ''}</button>`;
@@ -136,6 +143,7 @@ function topo() {
     <div class="tc-moedas">
       <div class="tc-moeda rc"><img src="../../shared/assets/moeda/rc-96.webp" alt="" width="34" height="34" /><div><b>${fmt(S.meu.rc)}</b><small>Rift Coins</small></div></div>
       <div class="tc-moeda cred"><img src="img/gema.webp" alt="" width="26" height="34" /><div><b>${fmt(o.creditos)}</b><small>Créditos de equipe</small></div></div>
+      <div class="tc-moeda frag"><span class="ic-frag" aria-hidden="true">◈</span><div><b>${fmt(o.fragmentos || 0)}</b><small>Fragmentos de jogador</small></div></div>
     </div>
     <div class="tc-atalhos">
       <button type="button" data-act="aba" data-aba="visao">${IMG('i-sino')}${novos ? `<em>${Math.min(novos, 9)}</em>` : ''}<span>Avisos</span></button>
@@ -201,7 +209,7 @@ function viewVisao() {
     <section class="tc-card tc-eco"><h3>${IMG('i-bau')}Sua economia</h3>
       <div class="duo"><div class="bx ouro"><img src="../../shared/assets/moeda/rc-96.webp" srcset="../../shared/assets/moeda/rc-192.webp 2x" alt="" width="44" height="44" /><small>Rift Coins</small><b>${fmt(m.rc)}</b></div>
       <div class="bx azul"><img src="img/gema.webp" alt="" width="30" height="40" /><small>Créditos de equipe</small><b>${fmt(m.org.creditos)}</b></div></div>
-      <p class="tc-mudo tc-peq" style="margin:10px 0 0;text-align:center">Salários: ${fmt(m.salarios_semana)} créditos por semana</p></section>
+      <p class="tc-mudo tc-peq" style="margin:10px 0 0;text-align:center">Salários: ${fmt(m.salarios_semana)} créditos por semana · Fragmentos de jogador: ${fmt(S.meu.org.fragmentos || 0)}</p></section>
   </div>
   <section class="tc-card"><h3>Poder da equipe<span class="dir">Semana ${((m.semana % 4) + 4) % 4 + 1}</span></h3>
       <div class="tc-poder"><div class="grande">${m.poder}</div><div style="flex:1"><div class="tc-barra"><i style="width:${m.poder}%"></i></div>
@@ -278,7 +286,7 @@ function viewContratar() {
   return `<div class="tc-abas"><button type="button" data-act="mercado-aba" data-v="oficial" class="${m.aba === 'oficial' ? 'on' : ''}">Mercado oficial</button><button type="button" data-act="mercado-aba" data-v="usuarios" class="${m.aba === 'usuarios' ? 'on' : ''}">Mercado de usuários</button></div>
     <p class="tc-mudo tc-peq" style="margin:0">${m.aba === 'oficial' ? 'Jogadores do próprio jogo, pagos com créditos de equipe. Os preços são definidos pelo sistema.' : `Anúncios de outros técnicos, pagos com Rift Coins (taxa de ${TAXA_MERCADO_PCT}% descontada do vendedor). Preço fixo.`}</p>
     ${filtrosHtml(m.aba === 'oficial')}
-    ${lista == null ? '<p class="tc-carregando">Carregando…</p>' : lista.length ? `<div class="tc-jogs">${lista.map((x) => m.aba === 'oficial' ? cartao(x, { extra: x.estrela ? `<div class="ln"><span>Preço</span><span class="tc-preco rc">${x.venda_rc && x.preco_rc ? fmt(x.preco_rc) : 'em breve'}</span></div>` : `<div class="ln"><span>Preço</span><span class="tc-preco cr">${fmt(x.preco)}</span></div>` })
+    ${lista == null ? '<p class="tc-carregando">Carregando…</p>' : lista.length ? `<div class="tc-jogs">${lista.map((x) => m.aba === 'oficial' ? cartao(x, { extra: `<div class="ln"><span>Preço</span><span class="tc-preco cr">${fmt(x.preco)}</span></div>` })
       : cartao(x.jogador, { acao: 'ficha-anuncio', dados: `data-anuncio="${x.id}"`, extra: `<div class="ln"><span>${esc(x.vendedor.sigla)}</span><span class="tc-preco rc">${fmt(x.preco_rc)}</span></div>` })).join('')}</div>` : '<div class="tc-vazio">Nenhum jogador encontrado com esses filtros.</div>'}
     ${m.aba === 'usuarios' ? meusAnunciosHtml() : ''}`;
 }
@@ -385,15 +393,16 @@ function fichaHtml(m) {
   const resta = semanasRestantes(j);
   const hist = (j.historico || []).slice(0, 5);
   let acoes = '';
-  if (!j.org_id && j.estrela) acoes = j.venda_rc && j.preco_rc ? `<button type="button" class="tc-btn ouro" data-act="abrir-contratar" data-id="${j.id}">Contratar por ${fmt(j.preco_rc)} RC</button>` : '<span class="tc-mudo tc-peq">Jogador Estrela: disponível em breve.</span>';
+  if (!j.org_id && j.legado) acoes = '<span class="tc-mudo tc-peq">Jogador Legado: só sai dos baús de Recrutar.</span>';
   else if (!j.org_id) acoes = `<button type="button" class="tc-btn ouro" data-act="abrir-contratar" data-id="${j.id}">Contratar</button>`;
-  else if (meu) acoes = `<button type="button" class="tc-btn ciano" data-act="abrir-escalar" data-id="${j.id}">Escalar</button><button type="button" class="tc-btn" data-act="abrir-renovar" data-id="${j.id}">Renovar contrato</button><button type="button" class="tc-btn" data-act="abrir-anunciar" data-id="${j.id}">Anunciar por RC</button>${j.slot ? '' : `<button type="button" class="tc-btn perigo" data-act="liberar" data-id="${j.id}">Liberar</button>`}`;
+  else if (meu) acoes = `<button type="button" class="tc-btn ciano" data-act="abrir-escalar" data-id="${j.id}">Escalar</button>${j.legado ? '' : `<button type="button" class="tc-btn" data-act="abrir-renovar" data-id="${j.id}">Renovar contrato</button><button type="button" class="tc-btn" data-act="abrir-anunciar" data-id="${j.id}">Anunciar por RC</button>`}${j.estrelas < j.estrela_max ? `<button type="button" class="tc-btn ouro" data-act="subir-estrela" data-id="${j.id}" ${S.ocupado ? 'disabled' : ''}>Evoluir ★ (${j.legado ? `${j.estrela_custo} cópia(s)` : `${fmt(j.estrela_custo)} fragmentos`})</button>` : ''}${j.legado || j.slot ? '' : `<button type="button" class="tc-btn perigo" data-act="demitir" data-id="${j.id}">Demitir</button>`}`;
   else if (m.anuncio) acoes = `<button type="button" class="tc-btn ouro" data-act="abrir-comprar" data-anuncio="${m.anuncio.id}">Comprar por ${fmt(m.anuncio.preco_rc)} RC</button>`;
-  return `<h2>${esc(j.nome)}${j.ficticio === false ? ' <span class="tc-estrela-selo">★ Estrela</span>' : ''}</h2><p class="tc-mudo tc-peq" style="margin:2px 0">${iconeVaga(j.pos)} ${NOME_VAGA[j.pos]}${(j.pos2 || []).length ? ` · também ${j.pos2.map((p) => NOME_VAGA[p]).join(', ')}` : ''} · ${j.idade} anos${j.regiao ? ` · ${esc(j.regiao)}` : ''}${j.ficticio ? ' · jogador fictício' : ''}</p>
+  return `<h2>${esc(j.nome)}${j.ficticio === false ? ' <span class="tc-estrela-selo">◆ Legado</span>' : ''}</h2><p class="tc-mudo tc-peq" style="margin:2px 0">${iconeVaga(j.pos)} ${NOME_VAGA[j.pos]}${(j.pos2 || []).length ? ` · também ${j.pos2.map((p) => NOME_VAGA[p]).join(', ')}` : ''} · ${j.idade} anos${j.regiao ? ` · ${esc(j.regiao)}` : ''}${j.ficticio ? '' : ' · jogador legado'}</p>
     <div class="tc-ficha"><div class="foto">${retratoSvg(j, 200)}</div><div>
       <div class="tc-poder" style="margin-bottom:10px">${escudoHtml(j.poder, true)}<span class="tc-mudo tc-peq">Poder individual<br>Forma ${j.forma} · Experiência ${j.exp}${j.potencial != null ? `<br>Potencial ${j.potencial}` : ''}</span></div>
       ${barras(j)}</div></div>
-    <div class="tc-resumo"><div class="l"><span>Salário${j.org_id ? '' : ' (se contratado)'}</span><b>${fmt(j.org_id ? j.salario : salarioDe(j.preco))} cr./semana</b></div>${j.org_id ? `<div class="l"><span>Contrato</span><b>${resta == null ? '—' : resta <= 0 ? 'vence nesta semana' : `${resta} semana(s)`}</b></div><div class="l"><span>Organização</span><b>${esc(j.org?.nome || '')}</b></div>` : j.estrela ? `<div class="l"><span>Preço (Estrela)</span><b class="tc-preco rc">${j.venda_rc && j.preco_rc ? `${fmt(j.preco_rc)} RC` : 'em breve'}</b></div>` : `<div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div>`}${m.anuncio ? `<div class="l"><span>Anúncio</span><b class="tc-preco rc">${fmt(m.anuncio.preco_rc)}</b></div><div class="l"><span>Vendedor</span><b>${esc(m.anuncio.vendedor.nome)}</b></div><div class="l"><span>Publicado em</span><b>${new Date(m.anuncio.criado).toLocaleDateString('pt-BR')}</b></div>` : ''}</div>
+    ${j.org_id ? `<div class="tc-resumo"><div class="l"><span>Estrelas</span><b>${estrelasHtml(j)} <small>+${j.bonus_estrelas_pct || 0}% de eficiência</small></b></div>${j.legado ? `<div class="l"><span>Cópias repetidas</span><b>${j.copias}</b></div>` : `<div class="l"><span>Seus fragmentos</span><b>${fmt(S.meu.org.fragmentos || 0)}</b></div>`}</div>` : ''}
+    <div class="tc-resumo"><div class="l"><span>Salário${j.org_id ? '' : ' (se contratado)'}</span><b>${fmt(j.org_id ? j.salario : salarioDe(j.preco))} cr./semana</b></div>${j.org_id ? `<div class="l"><span>Contrato</span><b>${resta == null ? '—' : resta <= 0 ? 'vence nesta semana' : `${resta} semana(s)`}</b></div><div class="l"><span>Organização</span><b>${esc(j.org?.nome || '')}</b></div>` : j.legado ? '<div class="l"><span>Obtenção</span><b>Baús de Recrutar</b></div>' : `<div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div>`}${m.anuncio ? `<div class="l"><span>Anúncio</span><b class="tc-preco rc">${fmt(m.anuncio.preco_rc)}</b></div><div class="l"><span>Vendedor</span><b>${esc(m.anuncio.vendedor.nome)}</b></div><div class="l"><span>Publicado em</span><b>${new Date(m.anuncio.criado).toLocaleDateString('pt-BR')}</b></div>` : ''}</div>
     ${(j.campeoes || []).length ? `<h4 class="tc-eyebrow">Campeões</h4><div class="tc-maes">${j.campeoes.map((c) => `<div class="${c.favorito ? 'fav' : ''}">${campIcone(c.nome, 38)}<b>${esc(c.nome)}</b><span>${c.favorito ? '★ ' : ''}${NOME_NIVEL[c.nivel - 1] || ''}${c.favorito && c.bonus_pct ? ` · +${c.bonus_pct}% de Poder` : ''}</span><small>${fmt(c.pontos)} pts · ${c.jogos} jogo(s)</small></div>`).join('')}</div>` : ''}
     ${hist.length ? `<h4 class="tc-eyebrow">Histórico</h4><ul class="tc-avisos">${hist.map((h) => `<li>${new Date(h.criado).toLocaleDateString('pt-BR')} · ${{ inicial: 'Elenco inicial', contratacao: 'Contratado', compra_usuario: 'Vendido entre usuários', renovacao: 'Renovou', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' }[h.tipo] || h.tipo}${h.para ? ` · ${esc(h.para)}` : ''}${h.valor ? ` · ${fmt(h.valor)} ${h.moeda === 'rc' ? 'RC' : 'cr.'}` : ''}</li>`).join('')}</ul>` : ''}
     <div class="tc-acoes">${acoes}</div>`;
@@ -402,19 +411,12 @@ const seletorSemanas = (v, nome = 'semanas') => `<label class="campo"><span clas
 function contratarHtml(m) {
   const j = m.j; const o = S.meu.org; const sal = m.salario; const total = sal * m.semanas;
   const cheio = (S.meu.elenco || []).length >= ELENCO_MAX;
-  if (j.estrela) {
-    return `<h2>Contratar ${esc(j.nome)} <span class="tc-estrela-selo">★ Estrela</span></h2><p class="tc-mudo tc-peq">Jogadores Estrela são contratados com Rift Coins da sua carteira oficial. A compra é definitiva; o salário semanal segue em créditos.</p>
-    ${seletorSemanas(m.semanas)}
-    <div class="tc-resumo"><div class="l"><span>Preço</span><b class="tc-preco rc">${fmt(j.preco_rc)} RC</b></div><div class="l"><span>Salário</span><b>${fmt(sal)} cr./semana</b></div><div class="l"><span>Custo de salários no contrato</span><b>${fmt(total)} cr.</b></div><div class="l"><span>Elenco</span><b>${(S.meu.elenco || []).length + 1}/${ELENCO_MAX}</b></div></div>
-    ${cheio ? '<p style="color:var(--ruim)">Elenco cheio: libere um jogador antes.</p>' : ''}
-    <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-contratar" ${cheio || S.ocupado ? 'disabled' : ''}>Pagar ${fmt(j.preco_rc)} RC e contratar</button><button type="button" class="tc-btn" data-act="fechar">Cancelar</button></div>`;
-  }
   const falta = o.creditos < j.preco;
   return `<h2>Contratar ${esc(j.nome)}</h2><p class="tc-mudo tc-peq">Confirme os valores antes de fechar.</p>
     ${seletorSemanas(m.semanas)}
     <div class="tc-resumo"><div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div><div class="l"><span>Salário</span><b>${fmt(sal)} cr./semana</b></div><div class="l"><span>Custo de salários no contrato</span><b>${fmt(total)} cr.</b></div>
       <div class="l"><span>Seus créditos agora</span><b>${fmt(o.creditos)}</b></div><div class="l tot"><span>Créditos depois da contratação</span><b style="color:${falta ? 'var(--ruim)' : 'var(--bom)'}">${fmt(o.creditos - j.preco)}</b></div><div class="l"><span>Elenco</span><b>${(S.meu.elenco || []).length + 1}/${ELENCO_MAX}</b></div></div>
-    ${falta ? '<p style="color:var(--ruim)">Créditos insuficientes.</p>' : ''}${cheio ? '<p style="color:var(--ruim)">Elenco cheio: libere um jogador antes.</p>' : ''}
+    ${falta ? '<p style="color:var(--ruim)">Créditos insuficientes.</p>' : ''}${cheio ? '<p style="color:var(--ruim)">Elenco cheio: demita um jogador antes.</p>' : ''}
     <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-contratar" ${falta || cheio || S.ocupado ? 'disabled' : ''}>Confirmar contratação</button><button type="button" class="tc-btn" data-act="fechar">Cancelar</button></div>`;
 }
 function comprarHtml(m) {
@@ -423,7 +425,7 @@ function comprarHtml(m) {
   return `<h2>Comprar ${esc(j.nome)}</h2><p class="tc-mudo tc-peq">Vendedor: ${esc(a.vendedor.nome)} (${esc(a.vendedor.sigla)}). A compra usa a sua carteira oficial de Rift Coins e é definitiva.</p>
     <div class="tc-resumo"><div class="l"><span>Preço</span><b class="tc-preco rc">${fmt(a.preco_rc)}</b></div><div class="l"><span>Taxa do mercado (paga pelo vendedor)</span><b>${taxaDe(a.preco_rc)} RC</b></div><div class="l"><span>Salário que passa a ser seu</span><b>${fmt(j.salario)} cr./semana</b></div><div class="l"><span>Contrato restante</span><b>${semanasRestantes(j) ?? '—'} semana(s)</b></div>
       <div class="l"><span>Seus Rift Coins agora</span><b>${fmt(rc)}</b></div><div class="l tot"><span>Depois da compra</span><b style="color:${falta ? 'var(--ruim)' : 'var(--bom)'}">${fmt(rc - a.preco_rc)}</b></div></div>
-    ${falta ? '<p style="color:var(--ruim)">Rift Coins insuficientes.</p>' : ''}${cheio ? '<p style="color:var(--ruim)">Elenco cheio: libere um jogador antes.</p>' : ''}
+    ${falta ? '<p style="color:var(--ruim)">Rift Coins insuficientes.</p>' : ''}${cheio ? '<p style="color:var(--ruim)">Elenco cheio: demita um jogador antes.</p>' : ''}
     <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-comprar" ${falta || cheio || S.ocupado ? 'disabled' : ''}>Confirmar compra</button><button type="button" class="tc-btn" data-act="fechar">Cancelar</button></div>`;
 }
 function anunciarHtml(m) {
@@ -443,7 +445,7 @@ function renovarHtml(m) {
 function escalarHtml(m) {
   const j = m.j;
   const ocup = titulares();
-  return `<h2>Escalar ${esc(j.nome)}</h2><p class="tc-mudo tc-peq">Escolha a vaga. Quem estiver nela vai para a reserva. Jogar fora da posição principal reduz o Poder em ${Math.round((1 - 0.9) * 100)}% e trocar titulares reduz a sinergia.</p>
+  return `<h2>Escalar ${esc(j.nome)}</h2><p class="tc-mudo tc-peq">Escolha a vaga. Quem estiver nela vai para a reserva. Jogar fora da posição principal reduz a eficiência do jogador em ${Math.round((1 - FORA_POSICAO) * 100)}% e trocar titulares reduz a sinergia.</p>
     <div class="tc-lista">${VAGAS.map((v) => { const ok = v === j.pos || (j.pos2 || []).includes(v); return `<button type="button" class="tc-partida" style="grid-template-columns:1fr auto" data-act="confirmar-escalar" data-vaga="${v}"><span class="time">${iconeVaga(v)} ${NOME_VAGA[v]}${ocup[v] ? ` · hoje: ${esc(ocup[v].nome)}` : ' · livre'}</span><span class="tc-peq" style="color:${ok ? 'var(--bom)' : '#fbbf24'}">${ok ? 'na posição' : 'fora da posição'}</span></button>`; }).join('')}</div>
     <div class="tc-acoes"><button type="button" class="tc-btn" data-act="fechar">Fechar</button></div>`;
 }
@@ -538,7 +540,7 @@ document.addEventListener('click', async (e) => {
   if (act === 'abrir-comprar') { S.modal = { t: 'comprar', anuncio: S.modal.anuncio, chave: novaChave() }; render(); return; }
   if (act === 'confirmar-contratar') {
     const m = S.modal;
-    const r = await agir(() => (m.j.estrela ? api.contratarEstrela(m.j.id, m.semanas, m.chave) : api.contratar(m.j.id, m.semanas, m.chave)), { ok: `${m.j.nome} contratado!` });
+    const r = await agir(() => api.contratar(m.j.id, m.semanas, m.chave), { ok: `${m.j.nome} contratado!` });
     if (r) { S.modal = null; render(); }
     return;
   }
@@ -566,11 +568,17 @@ document.addEventListener('click', async (e) => {
     if (r) { S.modal = null; render(); }
     return;
   }
-  if (act === 'liberar') {
+  if (act === 'demitir') {
     const j = S.modal.j;
-    if (!window.confirm(`Liberar ${j.nome}? Ele volta ao mercado oficial e você não recebe nada em troca.`)) return;
-    const r = await agir(() => api.liberar(j.id), { ok: `${j.nome} foi liberado.` });
+    if (!window.confirm(`Demitir ${j.nome}? Ele sai do seu elenco, as estrelas dele se perdem e você recebe fragmentos de jogador (usados para evoluir as estrelas de outros jogadores comuns).`)) return;
+    const r = await agir(() => api.demitir(j.id), { ok: (x) => `${j.nome} foi demitido: +${fmt(x.fragmentos_ganhos)} fragmentos de jogador.` });
     if (r) { S.modal = null; render(); }
+    return;
+  }
+  if (act === 'subir-estrela') {
+    const j = S.modal.j;
+    const r = await agir(() => api.subirEstrela(j.id), { ok: `${j.nome} agora tem mais uma estrela!` });
+    if (r) { S.modal = { ...S.modal, j: { ...j, ...r.jogador } }; render(); }
     return;
   }
   if (act === 'cancelar-anuncio') {
@@ -615,7 +623,7 @@ document.addEventListener('submit', async (e) => {
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.modal) { S.modal = null; render(); } });
 
 iniciarExtras({
-  S, esc, fmt, IMG, agir, toast, render, novaChave, escudoHtml, nomeLiga, dataCurta,
+  S, esc, fmt, IMG, agir, toast, render, novaChave, escudoHtml, estrelasHtml, nomeLiga, dataCurta,
   nomeVaga: (v) => NOME_VAGA[v] || v,
   atualizarMeu: async () => { S.meu = await api.meu(); if (S.meu.org) S.painel = await api.painel(); },
 });

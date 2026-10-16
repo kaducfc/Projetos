@@ -1,4 +1,4 @@
-// Treinamento, Amistoso e Recrutar (baús de Estrelas). Telas e ações do menu lateral.
+// Treinamento, Amistoso e Recrutar (baús de Legados). Telas e ações do menu lateral.
 // Recebe de main.js (iniciarExtras) o estado e os ajudantes; tudo que vale (custos, sorteio, EXP) vem do servidor.
 import * as platform from '../../../shared/platform.js';
 import { escudoPoder } from './regras.js';
@@ -58,7 +58,7 @@ const poderBarra = (j) => {
   return `<div class="tc-treino-poder"><span>Poder <b>${j.poder}</b> <small>/ limite ${lim}</small></span><div class="tc-barra"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></div><small class="tc-mudo">Início ${ini} · até +${lim - ini}</small></div>`;
 };
 const rar = (j) => (j.raridade && RARIDADES[j.raridade] ? j.raridade : '');
-const miniCartao = (j, extra = '') => `<div class="tc-mini ${rar(j) ? `r-${rar(j)}` : ''}"><div class="foto">${retratoSvg(j, 110)}${C.escudoHtml(j.poder)}</div><div class="inf"><b>${C.esc(j.nome)}${j.estrela ? ' <i class="tc-estrela">★</i>' : ''}</b><small>${C.esc(C.nomeVaga(j.pos))}${rar(j) ? ` · ${RARIDADES[j.raridade].nome}` : ''}</small>${extra}</div></div>`;
+const miniCartao = (j, extra = '') => `<div class="tc-mini ${rar(j) ? `r-${rar(j)}` : ''}"><div class="foto">${retratoSvg(j, 110)}${C.escudoHtml(j.poder)}</div><div class="inf"><b>${C.esc(j.nome)}${j.legado ? ' <i class="tc-estrela">◆</i>' : ''}</b><small>${C.esc(C.nomeVaga(j.pos))}${rar(j) ? ` · ${RARIDADES[j.raridade].nome}` : ''}</small>${j.org_id ? C.estrelasHtml(j) : ''}${extra}</div></div>`;
 
 // ------------------------------------------------------------------ Treinamento
 export function viewTreino() {
@@ -80,7 +80,7 @@ export function viewTreino() {
       <small class="tc-mudo" style="margin-top:4px">Cada sessão dura ${j.horas}h${j.exp ? ` (a experiência de ${j.exp} EXP já encurtou)` : ''}.</small></div></section>`;
   }).join('');
   return `<section class="tc-card"><h3>${C.IMG('i-treino')}Treinamento<span class="dir">${t.em_andamento}/${cfg.simultaneos} treinos</span></h3>
-    <p class="tc-mudo tc-peq" style="margin:0">Cada sessão sobe um atributo em <b>+${cfg.pontos}</b> depois de algumas horas e custa créditos. O Poder do jogador sobe com o tempo até o limite: <b>+${cfg.bonus_comum}</b> para jogadores comuns e <b>+${cfg.bonus_estrela}</b> para Estrelas (nunca passa de 100). Jogadores com mais EXP treinam mais rápido (EXP vem de amistosos e partidas). Seus créditos: <b>${C.fmt(t.creditos)}</b>.</p></section>
+    <p class="tc-mudo tc-peq" style="margin:0">Cada sessão sobe um atributo em <b>+${cfg.pontos}</b> depois de algumas horas e custa créditos. O Poder do jogador sobe com o tempo até o limite: <b>+${cfg.bonus_comum}</b> para jogadores comuns e <b>+${cfg.bonus_estrela}</b> para Legados (nunca passa de 100). Jogadores com mais EXP treinam mais rápido (EXP vem de amistosos e partidas). Seus créditos: <b>${C.fmt(t.creditos)}</b>.</p></section>
     <div class="tc-treino-lista">${cards || '<p class="tc-mudo">Seu elenco está vazio.</p>'}</div>`;
 }
 
@@ -126,17 +126,17 @@ export function viewRecrutar() {
       <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="recrutar" data-bau="${id}" data-qtd="1" ${bloq1 ? 'disabled' : ''}>Abrir 1 · <span class="tc-preco rc">${C.fmt(b.rc)} RC</span></button>
       <button type="button" class="tc-btn ciano" data-act="recrutar" data-bau="${id}" data-qtd="5" ${bloq5 ? 'disabled' : ''}>Abrir 5 · <span class="tc-preco rc">${C.fmt(preco5(b))} RC</span> <i class="tc-desc">-${Math.round(cfg.desconto_5 * 100)}%</i></button></div></section>`;
   }).join('');
-  const livres = r.estrelas.por_raridade || {};
+  const livres = r.legados.por_raridade || {};
   return `<section class="tc-card"><h3>${C.IMG('i-bau')}Recrutar<span class="dir">${C.fmt(r.saldo_rc)} RC</span></h3>
-    <p class="tc-mudo tc-peq" style="margin:0">Os baús sorteiam <b>jogadores Estrela</b> (reais, com retrato próprio e Poder mais alto). Quanto melhor o baú, maiores as chances de raridades altas. O pagamento é em Rift Coins da sua carteira oficial e os jogadores entram direto no seu elenco (${r.elenco}/${r.elenco_max}).${cheio ? ' <b style="color:var(--ruim)">Elenco cheio: libere alguém antes.</b>' : ''}</p>
-    <div class="tc-raras">${ORDEM_RAR.map((k) => `<span class="r-${k}">${RARIDADES[k].nome}: ${livres[k] ?? 0} livre(s)</span>`).join('')}</div></section>
+    <p class="tc-mudo tc-peq" style="margin:0">Os baús sorteiam <b>jogadores Legado</b> (reais, com retrato próprio e Poder mais alto). Quanto melhor o baú, maiores as chances de raridades altas. Se vier um Legado que você já tem, ele vira uma <b>cópia repetida</b>: gaste cópias para subir as estrelas dele (1 cópia para a 1ª estrela, 2 para a 2ª, até a 5ª). O pagamento é em Rift Coins da sua carteira oficial e os jogadores entram direto no seu elenco (${r.elenco}/${r.elenco_max}).${cheio ? ' <b style="color:var(--ruim)">Elenco cheio: demita alguém antes.</b>' : ''}</p>
+    <div class="tc-raras">${ORDEM_RAR.map((k) => `<span class="r-${k}">${RARIDADES[k].nome}: ${livres[k] ?? 0} no catálogo</span>`).join('')}</div></section>
     <div class="tc-baus">${baus}</div>
-    ${r.minhas_estrelas.length ? `<section class="tc-card"><h3>Suas Estrelas</h3><div class="tc-minis">${r.minhas_estrelas.map((j) => miniCartao(j)).join('')}</div></section>` : ''}`;
+    ${r.meus_legados.length ? `<section class="tc-card"><h3>Seus Legados</h3><div class="tc-minis">${r.meus_legados.map((j) => miniCartao(j)).join('')}</div></section>` : ''}`;
 }
 export function modalRecrutar(m) {
   const itens = m.r.itens || [];
-  return `<h2>${itens.length > 1 ? 'Você recrutou!' : 'Novo jogador Estrela!'}</h2><p class="tc-mudo tc-peq">Pagamento: ${C.fmt(m.r.preco_rc)} RC. Os jogadores já estão no seu elenco (contrato de ${m.contrato} semanas).</p>
-    <div class="tc-revelar">${itens.map((x, i) => `<div class="tc-carta r-${x.raridade}" style="animation-delay:${i * 0.18}s"><div class="faixa">${RARIDADES[x.raridade]?.nome || ''}</div>${miniCartao(x.jogador)}</div>`).join('')}</div>
+  return `<h2>${itens.length > 1 ? 'Você recrutou!' : 'Novo jogador Legado!'}</h2><p class="tc-mudo tc-peq">Pagamento: ${C.fmt(m.r.preco_rc)} RC. Os jogadores já estão no seu elenco (Legados não têm contrato). Repetidos viram cópias para subir estrelas.</p>
+    <div class="tc-revelar">${itens.map((x, i) => `<div class="tc-carta r-${x.raridade}" style="animation-delay:${i * 0.18}s"><div class="faixa">${RARIDADES[x.raridade]?.nome || ''}${x.repetida ? ' · repetido' : ''}</div>${miniCartao(x.jogador)}${x.repetida ? `<small class="tc-mudo">+1 cópia (você tem ${x.jogador.copias})</small>` : ''}</div>`).join('')}</div>
     <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="fechar">Fechar</button></div>`;
 }
 
