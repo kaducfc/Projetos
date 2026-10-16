@@ -114,8 +114,11 @@ function decidir(P, u) {
     if (!ctx.iniPerto.length || ctx.bal.razao > 1.2) { if (precisaBase(P, u, ctx)) mudar(P, u, 'voltando_base', 'seguro'); else mudar(P, u, u.pos === 'selva' ? 'selva' : 'indo_rota', 'seguro'); }
     return;
   }
+  // compromisso do caçador: começou a bater num monstro, fica até terminar o acampamento; só sai por vida baixa (recall) ou perigo (acima)
+  const preso = prisaoDeSelva(P, u);
   // 2) voltar à base para curar/comprar
-  const pb = u.estado !== 'voltando_base' ? precisaBase(P, u, ctx) : null;
+  let pb = u.estado !== 'voltando_base' ? precisaBase(P, u, ctx) : null;
+  if (preso && pb && !/^vida/.test(pb)) pb = null; // ouro/mana esperam o acampamento acabar
   if (pb && !(ctx.plano && ctx.plano.tipo === 'defender_base')) { mudar(P, u, 'voltando_base', pb); return; }
   if (u.estado === 'voltando_base') {
     if (ctx.naBase) {
@@ -125,6 +128,7 @@ function decidir(P, u) {
     }
     return;
   }
+  if (preso) return; // segue limpando o acampamento: sem lutas, ganks ou planos até acabar
   // 3) lutas contra campeões
   const luta = avaliarLuta(P, u, ctx);
   if (luta) {
@@ -140,6 +144,12 @@ function decidir(P, u) {
   // 5) função padrão
   if (u.pos === 'selva') return decidirSelva(P, u, ctx);
   decidirLaner(P, u, ctx);
+}
+
+// Caçador em pleno combate com monstros de um acampamento (algum monstro já está atacando ele).
+function prisaoDeSelva(P, u) {
+  if (u.pos !== 'selva' || u.estado !== 'selva' || !u.jungle) return false;
+  return P.monstros.some((m) => !m.morto && m.estado === 'combate' && m.alvoId === u.id);
 }
 
 function precisaRecuar(P, u, ctx) {
@@ -159,7 +169,7 @@ function precisaBase(P, u, ctx) {
   if (u.estado === 'morto') return null;
   const perigo = ctx.iniPerto.some((k) => k.visivel);
   if (ctx.hp < R.recall.vidaBaixa) return 'vida baixa';
-  if (u.pos === 'selva' && ctx.hp < 0.45 && !u.jungle.emCombate) return 'vida baixa (selva)';
+  if (u.pos === 'selva' && ctx.hp < (u.jungle.emCombate ? 0.3 : 0.45)) return 'vida baixa (selva)';
   if (u.ouro >= Math.max(R.ouroCompraMin, custoProximo(u)) && u.ouro >= 1100 && !perigo && !(ctx.plano && ['objetivo', 'defender_base', 'finalizar'].includes(ctx.plano.tipo)) && P.t - (u.ultimaBase || 0) > 60) return 'ouro para comprar';
   if (u.mana < u.manaMax * 0.12 && u.pos !== 'selva' && !perigo && u.mana < 60) return 'sem mana';
   return null;

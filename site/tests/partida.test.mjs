@@ -376,3 +376,19 @@ test('arquivos: documentação do mapa, ferramenta de depuração e geração do
   assert.ok(existsSync(new URL('../jogos/tecnico/img/mapa-sr.webp', import.meta.url)));
   assert.match(readFileSync(new URL('../jogos/tecnico/partida/index.html', import.meta.url), 'utf8'), /noindex/);
 });
+
+test('o caçador que começou a bater num acampamento só sai dele por vida baixa ou perigo (não por plano, gank ou ouro)', () => {
+  for (const seed of [1, 2]) {
+    const P = mk(seed); const js = P.campeoes.filter((c) => c.pos === 'selva'); const antes = new Map(); let saidas = 0;
+    while (P.t < 480 && !P.fim) {
+      P.step();
+      for (const j of js) {
+        const ant = antes.get(j.id);
+        const perigo = P.campeoes.some((c) => c.equipe !== j.equipe && !c.morto && Math.hypot(c.x - j.x, c.y - j.y) < 1500);
+        if (ant && !j.morto && j.estado !== 'selva' && j.hp / j.hpMax > 0.5 && !perigo && P.monstros.some((m) => !m.morto && m.alvoId === j.id)) saidas++;
+        antes.set(j.id, j.estado === 'selva' && P.monstros.some((m) => !m.morto && m.estado === 'combate' && m.alvoId === j.id));
+      }
+    }
+    assert.equal(saidas, 0, `seed ${seed}: o caçador largou o acampamento ${saidas} vez(es)`);
+  }
+});
