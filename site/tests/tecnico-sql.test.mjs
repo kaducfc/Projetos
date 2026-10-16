@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -623,6 +623,7 @@ t('retratos: todo jogador comum tem gênero e retrato existente (≈40% jogadora
   V(readFileSync(new URL('../supabase/migrations/0100_tecnico_amistoso_real.sql', import.meta.url), 'utf8'));
   V(readFileSync(new URL('../supabase/migrations/0101_tecnico_inventario.sql', import.meta.url), 'utf8'));
   V(readFileSync(new URL('../supabase/migrations/0103_tecnico_demissao_previa.sql', import.meta.url), 'utf8'));
+  V(readFileSync(new URL('../supabase/migrations/0104_tecnico_baus_creditos.sql', import.meta.url), 'utf8'));
   assert.equal(V("select string_agg(id || retrato, ',' order by id) from tc_jogadores"), antes);
   const novos = J("select to_jsonb(tc_gerar_jogadores(30))"); assert.equal(novos.length, 30);
   const g = J(`select jsonb_agg(retrato || genero) from tc_jogadores where id in (${novos.join(',')})`);
@@ -711,8 +712,9 @@ t('amistoso de verdade: abre, devolve escalações e semente, registra o resulta
   V("update tc_config set valor = jsonb_set(valor, '{ativo}', 'false') where chave = 'gameplay'");
 });
 t('recrutar: baús sorteiam Estrelas, 5 tem desconto, sem saldo nada muda e a garantia entrega épico ou melhor', () => {
+  V("update tc_config set valor = jsonb_set(valor, '{moeda}', '\"rc\"') where chave = 'gacha'"); // este teste cobre o caminho em Rift Coins
   const info = J("select tc_recrutar_info()", 1);
-  assert.equal(info.config.baus.basico.rc, 300); assert.ok(info.legados.total >= 15);
+  assert.equal(info.config.baus.basico.rc, 300); assert.equal(info.moeda, 'rc'); assert.ok(info.legados.total >= 15);
   V("update site_carteira set saldo = 100 where user_id = '" + U(1) + "'");
   assert.equal(falha("select tc_recrutar('basico', 1, 'chave-bau-0')", 1), 'saldo_insuficiente');
   assert.equal(V("select count(*) from tc_jogadores where not ficticio and org_id = 1"), '0');
@@ -747,6 +749,7 @@ t('recrutar: baús sorteiam Estrelas, 5 tem desconto, sem saldo nada muda e a ga
   const g = J("select tc_recrutar('basico', 1, 'chave-bau-4')", 2);
   assert.ok(['epico', 'lendario', 'mitico'].includes(g.itens[0].raridade), `garantia: ${g.itens[0].raridade}`); assert.equal(g.garantia, 0);
   // sorteio respeita as probabilidades do baú (muitas aberturas simuladas na função de sorteio)
+  V("update tc_config set valor = jsonb_set(valor, '{moeda}', '\"creditos\"') where chave = 'gacha'");
   const cont = J("select jsonb_object_agg(r, n) from (select tc_gacha_raridade(tc_cfg('gacha')->'baus'->'premium'->'odds', false) r, count(*) n from generate_series(1, 4000) group by 1) q");
   assert.ok(cont.comum > 600 && cont.comum < 1000 && cont.raro > 1300 && cont.epico > 900, JSON.stringify(cont));
   const basico = J("select jsonb_object_agg(r, n) from (select tc_gacha_raridade(tc_cfg('gacha')->'baus'->'basico'->'odds', false) r, count(*) n from generate_series(1, 4000) group by 1) q");
@@ -839,4 +842,25 @@ t('inventário: até 50 jogadores; só titulares e as 5 melhores reservas recebe
   V(`update tc_config set valor = jsonb_set(valor, '{max}', '${n}') where chave = 'elenco'`);
   assert.equal(falha("select tc_recrutar('basico', 1, 'chave-inv-4')", 1), 'elenco_cheio');
   V("update tc_config set valor = jsonb_set(valor, '{max}', '50') where chave = 'elenco'");
+});
+
+t('baús em créditos de equipe (período de testes): Básico 5, Premium 10, pacote de 5 com 15% de desconto; sem saldo nada muda', () => {
+  const info = J("select tc_recrutar_info()", 1);
+  assert.equal(info.moeda, 'creditos'); assert.equal(info.config.baus.basico.creditos, 5); assert.equal(info.config.baus.premium.creditos, 10);
+  V("delete from tc_jogadores where org_id = 1 and not ficticio");
+  V("update tc_orgs set creditos = 100000 where id = 1");
+  const rc0 = V("select saldo from site_carteira where user_id = '" + U(1) + "'");
+  const c0 = Number(V("select creditos from tc_orgs where id = 1"));
+  const um = J("select tc_recrutar('basico', 1, 'chave-cred-1')", 1); assert.equal(um.preco, 5); assert.equal(um.moeda, 'creditos');
+  assert.equal(Number(V("select creditos from tc_orgs where id = 1")), c0 - 5);
+  const cinco = J("select tc_recrutar('premium', 5, 'chave-cred-2')", 1); assert.equal(cinco.preco, 43, '10 x 5 com 15% de desconto');
+  const cinco2 = J("select tc_recrutar('basico', 5, 'chave-cred-3')", 1); assert.equal(cinco2.preco, 21);
+  assert.equal(Number(V("select creditos from tc_orgs where id = 1")), c0 - 5 - 43 - 21);
+  assert.equal(V("select saldo from site_carteira where user_id = '" + U(1) + "'"), rc0, 'não mexe nos Rift Coins');
+  assert.equal(J("select tc_recrutar('premium', 5, 'chave-cred-2')", 1).ja_feito, true);
+  assert.equal(Number(V("select creditos from tc_orgs where id = 1")), c0 - 5 - 43 - 21, 'repetir não cobra');
+  V("update tc_orgs set creditos = 4 where id = 1");
+  assert.equal(falha("select tc_recrutar('basico', 1, 'chave-cred-4')", 1), 'creditos_insuficientes');
+  assert.equal(V("select creditos from tc_orgs where id = 1"), '4'); assert.equal(V("select count(*) from tc_gacha where chave = 'chave-cred-4'"), '0');
+  V("delete from tc_jogadores where org_id = 1 and not ficticio"); V("update tc_orgs set creditos = 50000000 where id = 1");
 });
