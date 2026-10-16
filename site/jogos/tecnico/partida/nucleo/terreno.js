@@ -2,6 +2,7 @@
 // pode ser atravessado: a simulação, a IA e a renderização perguntam sempre a esta classe.
 import { TERRENO } from '../config/terreno.js';
 import { MUNDO } from './coord.js';
+import { AJUSTES } from '../config/ajustes.js';
 
 export const T = { PAREDE: 0, ROTA: 1, SELVA: 2, RIO: 3, BASE: 4, ACAMP: 5, COVIL: 6 };
 export const NOME_TIPO = ['parede', 'rota', 'selva', 'rio', 'base', 'acampamento', 'covil'];
@@ -28,7 +29,12 @@ export class Terreno {
       }
       if (x !== this.cols) throw new Error(`terreno: linha ${y} com ${x} colunas (esperado ${this.cols})`);
     });
-    // Células vizinhas de parede: o planejador de caminhos as evita quando há alternativa.
+    this.original = this.grade.slice(); // terreno gerado, antes dos ajustes manuais
+    for (const [k, t] of Object.entries(AJUSTES.celulas || {})) { const [cx, cy] = k.split(',').map(Number); if (this.dentro(cx, cy)) this.grade[cy * this.cols + cx] = t; }
+    this.recalcularPerto();
+  }
+  // Células vizinhas de parede: o planejador de caminhos as evita quando há alternativa.
+  recalcularPerto() {
     this.perto = new Uint8Array(this.cols * this.rows);
     for (let y = 0; y < this.rows; y++) for (let x = 0; x < this.cols; x++) {
       if (!this.grade[y * this.cols + x]) continue;

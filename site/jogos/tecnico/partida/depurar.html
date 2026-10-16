@@ -16,6 +16,15 @@
 <aside><h1>Depuração do mapa</h1>
 <p class="mudo">Confere se rotas, estruturas, acampamentos e paredes estão no lugar certo da imagem. A imagem não é alterada: as camadas são desenhadas por cima. Clique em dois pontos para calcular um caminho (A*).</p>
 <div id="camadas"></div>
+<h1 style="margin-top:14px">Editar o mapa</h1>
+<p class="mudo">Ajuste à mão torres, inibidores, Nexus, acampamentos e covis (arrastando) e o terreno (pintando). Depois copie o resultado e envie para ser aplicado em <code>config/ajustes.js</code>.</p>
+<label><input type="radio" name="modo" value="ver" checked /> Só ver / medir caminho</label>
+<label><input type="radio" name="modo" value="mover" /> Mover marcadores (arraste)</label>
+<label><input type="radio" name="modo" value="pintar" /> Pintar terreno</label>
+<label>Pincel <select id="tipo"><option value="0">Parede (bloqueia)</option><option value="1">Rota</option><option value="2">Selva</option><option value="3">Rio</option><option value="4">Base</option><option value="5">Acampamento</option><option value="6">Covil</option></select></label>
+<label>Tamanho <select id="tam"><option>1</option><option selected>2</option><option>3</option><option>4</option></select> células</label>
+<button id="desfazer">Desfazer</button> <button id="descartar">Descartar tudo</button> <button id="exportar">Exportar ajustes</button>
+<textarea id="saida" rows="7" style="width:100%;margin-top:6px;background:#04101f;color:#cfe3ff;border:1px solid #1d3a63;font:11px ui-monospace,monospace" readonly placeholder="Os ajustes exportados aparecem aqui."></textarea>
 <label>Perfil do caminho <select id="perfil"><option>campeao</option><option>minion</option><option>monstro</option></select></label>
 <button id="limpar">Limpar caminho</button>
 <div id="info">Passe o mouse no mapa.</div></aside>
