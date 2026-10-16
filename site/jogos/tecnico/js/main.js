@@ -106,7 +106,7 @@ function cartao(j, { tit = false, extra = '', acao = 'ficha', dados = '' } = {})
   return `<button type="button" class="tc-jog" data-act="${acao}" data-id="${j.id}" ${dados} style="--c:${c}">
     <div class="foto">${retratoSvg(j, 160)}<span class="vg">${iconeVaga(j.pos)}</span><span class="pw">${j.poder}</span></div>
     <div class="inf">
-      <span class="nm">${esc(j.nome)}</span><span class="pos">${esc(NOME_VAGA[j.pos])}</span>
+      <span class="nm">${esc(j.nome)}${j.ficticio === false ? ' <i class="tc-estrela" title="Jogador Estrela">★</i>' : ''}</span><span class="pos">${esc(NOME_VAGA[j.pos])}</span>
       <div class="ln"><span>${j.idade} anos</span><span>Fama <b>${j.fama}</b></span></div>
       ${j.potencial != null ? `<div class="ln"><span>Potencial</span><b>${j.potencial}</b></div>` : ''}
       ${resta != null && j.org_id ? `<div class="ln"><span>Contrato</span><b>${resta <= 0 ? 'vence já' : `${resta} sem.`}</b></div>` : ''}
@@ -378,7 +378,7 @@ function fichaHtml(m) {
   if (!j.org_id) acoes = `<button type="button" class="tc-btn ouro" data-act="abrir-contratar" data-id="${j.id}">Contratar</button>`;
   else if (meu) acoes = `<button type="button" class="tc-btn ciano" data-act="abrir-escalar" data-id="${j.id}">Escalar</button><button type="button" class="tc-btn" data-act="abrir-renovar" data-id="${j.id}">Renovar contrato</button><button type="button" class="tc-btn" data-act="abrir-anunciar" data-id="${j.id}">Anunciar por RC</button>${j.slot ? '' : `<button type="button" class="tc-btn perigo" data-act="liberar" data-id="${j.id}">Liberar</button>`}`;
   else if (m.anuncio) acoes = `<button type="button" class="tc-btn ouro" data-act="abrir-comprar" data-anuncio="${m.anuncio.id}">Comprar por ${fmt(m.anuncio.preco_rc)} RC</button>`;
-  return `<h2>${esc(j.nome)}</h2><p class="tc-mudo tc-peq" style="margin:2px 0">${iconeVaga(j.pos)} ${NOME_VAGA[j.pos]}${(j.pos2 || []).length ? ` · também ${j.pos2.map((p) => NOME_VAGA[p]).join(', ')}` : ''} · ${j.idade} anos${j.regiao ? ` · ${esc(j.regiao)}` : ''}${j.ficticio ? ' · jogador fictício' : ''}</p>
+  return `<h2>${esc(j.nome)}${j.ficticio === false ? ' <span class="tc-estrela-selo">★ Estrela</span>' : ''}</h2><p class="tc-mudo tc-peq" style="margin:2px 0">${iconeVaga(j.pos)} ${NOME_VAGA[j.pos]}${(j.pos2 || []).length ? ` · também ${j.pos2.map((p) => NOME_VAGA[p]).join(', ')}` : ''} · ${j.idade} anos${j.regiao ? ` · ${esc(j.regiao)}` : ''}${j.ficticio ? ' · jogador fictício' : ''}</p>
     <div class="tc-ficha"><div class="foto">${retratoSvg(j, 200)}</div><div>
       <div class="tc-poder" style="margin-bottom:10px"><div class="grande" style="color:${corPoder(j.poder)}">${j.poder}</div><span class="tc-mudo tc-peq">Poder individual<br>Forma ${j.forma} · Experiência ${j.exp}${j.potencial != null ? `<br>Potencial ${j.potencial}` : ''}</span></div>
       ${barras(j)}</div></div>

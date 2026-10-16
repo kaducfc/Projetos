@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -583,4 +583,17 @@ t('antifraude do mercado: conta nova, muitas vendas entre o mesmo par, recompra 
   const a2 = J(`select tc_anunciar(${v1.j}, 300)`, 2).id;
   assert.equal(Q(`select tc_comprar_anuncio(${a2}, 'chave-rec-2')`, 1).err, 'mercado_recompra');
   V("delete from tc_anuncios where status <> 'aberto'"); V("update tc_anuncios set status = 'cancelado' where status = 'aberto'");
+});
+t('estrelas: 15 jogadores reais com retrato no mercado oficial; rodar o SQL de novo não mexe em quem já foi contratado', () => {
+  const est = J("select jsonb_agg(jsonb_build_object('nome', nome, 'pos', pos, 'retrato', retrato, 'org', org_id) order by id) from tc_jogadores where not ficticio");
+  assert.equal(est.length, 15);
+  for (const e of est) assert.ok(existsSync(new URL(`..${e.retrato}`, import.meta.url)), `retrato de ${e.nome}`);
+  assert.deepEqual(est.filter((e) => ['Faker', 'Chovy', 'Zeka'].includes(e.nome)).map((e) => e.pos), ['meio', 'meio', 'meio']);
+  const faker = V("select id from tc_jogadores where nome = 'Faker'");
+  assert.ok(Number(V(`select tc_preco_jogador(j) from tc_jogadores j where id = ${faker}`)) > 600000, 'Estrela custa mais que o crédito inicial');
+  V(`update tc_jogadores set org_id = 1, contrato_fim = 99, salario = 1234, forma = 70 where id = ${faker}`);
+  V(readFileSync(new URL('../supabase/migrations/0095_tecnico_estrelas.sql', import.meta.url), 'utf8'));
+  assert.equal(V(`select org_id || ':' || salario || ':' || forma from tc_jogadores where id = ${faker}`), '1:1234:70');
+  assert.equal(V("select count(*) from tc_jogadores where not ficticio"), '15');
+  V(`update tc_jogadores set org_id = null, contrato_fim = null, salario = 0, forma = 50 where id = ${faker}`);
 });
