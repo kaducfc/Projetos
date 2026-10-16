@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -622,6 +622,7 @@ t('retratos: todo jogador comum tem gênero e retrato existente (≈40% jogadora
   V(readFileSync(new URL('../supabase/migrations/0099_tecnico_legados_estrelas.sql', import.meta.url), 'utf8'));
   V(readFileSync(new URL('../supabase/migrations/0100_tecnico_amistoso_real.sql', import.meta.url), 'utf8'));
   V(readFileSync(new URL('../supabase/migrations/0101_tecnico_inventario.sql', import.meta.url), 'utf8'));
+  V(readFileSync(new URL('../supabase/migrations/0103_tecnico_demissao_previa.sql', import.meta.url), 'utf8'));
   assert.equal(V("select string_agg(id || retrato, ',' order by id) from tc_jogadores"), antes);
   const novos = J("select to_jsonb(tc_gerar_jogadores(30))"); assert.equal(novos.length, 30);
   const g = J(`select jsonb_agg(retrato || genero) from tc_jogadores where id in (${novos.join(',')})`);
@@ -780,7 +781,9 @@ t('estrelas de evolução: legado gasta cópias (1, 2, 3...), +5% de eficiência
   const cfgF = J("select tc_cfg('estrelas_jogador')");
   const base = Math.max(1, Math.round(Math.pow(Number(V(`select tc_poder(j) from tc_jogadores j where id = ${inst}`)) / 100, 2.5) * cfgF.frag_base));
   const dev = cfgF.fragmentos.slice(0, 5).reduce((a, c) => a + Math.round(c * cfgF.devolucao_pct / 100), 0);
+  const previa = Number(V(`select (tc_jogador_json(j)->>'frag_demissao') from tc_jogadores j where id = ${inst}`));
   const dl = J(`select tc_demitir(${inst})`, 1);
+  assert.equal(dl.fragmentos_ganhos, previa, 'a prévia da ficha é o valor pago');
   assert.equal(dl.fragmentos_ganhos, Math.round((base + dev) * 1.25));
   assert.equal(V(`select count(*) from tc_jogadores where id in (${inst}, ${modelo})`), '1', 'a cópia some, o modelo fica');
   assert.equal(JSON.stringify(J(`select tc_jogador_json(j) from tc_jogadores j where id = ${modelo}`).legado), 'true');
@@ -796,7 +799,8 @@ t('comum: sobe estrela com fragmentos; demitir (só reserva comum) rende fragmen
   const titular = V("select id from tc_jogadores where org_id = 1 and slot = 'top'");
   assert.equal(falha(`select tc_demitir(${titular})`, 1), 'jogador_titular');
   assert.equal(falha(`select tc_demitir(${j})`, 2), 'jogador_nao_e_seu');
-  const d = J(`select tc_demitir(${j})`, 1);
+  const previaC = Number(V(`select (tc_jogador_json(x)->>'frag_demissao') from tc_jogadores x where id = ${j}`));
+  const d = J(`select tc_demitir(${j})`, 1); assert.equal(d.fragmentos_ganhos, previaC);
   assert.ok(d.fragmentos_ganhos >= 15 + 1, JSON.stringify(d)); // metade do gasto na 1ª estrela + base
   assert.equal(V("select fragmentos from tc_orgs where id = 1"), String(50 + d.fragmentos_ganhos));
   assert.equal(V(`select org_id is null and estrelas = 0 from tc_jogadores where id = ${j}`), 't');

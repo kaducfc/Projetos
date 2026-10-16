@@ -389,7 +389,22 @@ function modalHtml() {
   else if (m.t === 'escalar') corpo = escalarHtml(m);
   else if (m.t === 'partida') corpo = partidaHtml(m);
   else if (m.t === 'recrutar') corpo = modalRecrutar(m);
+  else if (m.t === 'demitir') corpo = demitirHtml(m);
   return `<div class="tc-fundo" data-act="fechar-fundo"><div class="tc-modal" role="dialog" aria-modal="true"><button type="button" class="x" data-act="fechar" aria-label="Fechar">×</button>${corpo}</div></div>`;
+}
+function demitirHtml(m) {
+  const j = m.j; const ganho = j.frag_demissao || 0; const atual = S.meu.org.fragmentos || 0;
+  const perdas = [`${esc(j.nome)} sai do seu elenco e volta ao mercado${j.legado ? ' (o Legado continua disponível nos baús)' : ''}.`];
+  if (j.estrelas > 0) perdas.push(`As ${j.estrelas} estrela(s) de evolução dele se perdem${j.legado && j.copias ? ' e as cópias repetidas também' : ''}.`);
+  else if (j.legado && j.copias) perdas.push(`As ${j.copias} cópia(s) repetida(s) dele se perdem.`);
+  perdas.push('Esta ação não pode ser desfeita.');
+  return `<h2>Demitir ${esc(j.nome)}</h2>
+    <div class="tc-ficha" style="grid-template-columns:110px 1fr;align-items:center"><div class="foto">${retratoSvg(j, 110)}</div><div>
+      <p class="tc-mudo tc-peq" style="margin:0 0 6px">O que acontece ao demitir:</p><ul class="tc-lista-ul">${perdas.map((x) => `<li>${x}</li>`).join('')}</ul></div></div>
+    <div class="tc-resumo"><div class="l"><span>Você recebe</span><b class="tc-frag">◈ +${fmt(ganho)} fragmentos de jogador</b></div>
+      <div class="l"><span>Seus fragmentos</span><b>${fmt(atual)} → ${fmt(atual + ganho)}</b></div></div>
+    <p class="tc-mudo tc-peq">Fragmentos servem para evoluir as estrelas dos seus jogadores comuns.</p>
+    <div class="tc-acoes"><button type="button" class="tc-btn perigo" data-act="confirmar-demitir" ${S.ocupado ? 'disabled' : ''}>Demitir e receber ${fmt(ganho)} ◈</button><button type="button" class="tc-btn" data-act="voltar-ficha">Cancelar</button></div>`;
 }
 function fichaHtml(m) {
   const j = m.j; const meu = j.org_id && j.org_id === S.meu.org.id;
@@ -571,9 +586,10 @@ document.addEventListener('click', async (e) => {
     if (r) { S.modal = null; render(); }
     return;
   }
-  if (act === 'demitir') {
+  if (act === 'demitir') { S.modal = { t: 'demitir', j: S.modal.j }; render(); return; }
+  if (act === 'voltar-ficha') { S.modal = { t: 'ficha', j: S.modal.j }; render(); return; }
+  if (act === 'confirmar-demitir') {
     const j = S.modal.j;
-    if (!window.confirm(`Demitir ${j.nome}? Ele sai do seu elenco, as estrelas e cópias dele se perdem e você recebe fragmentos de jogador (usados para evoluir as estrelas de outros jogadores comuns).`)) return;
     const r = await agir(() => api.demitir(j.id), { ok: (x) => `${j.nome} foi demitido: +${fmt(x.fragmentos_ganhos)} fragmentos de jogador.` });
     if (r) { S.modal = null; render(); }
     return;
