@@ -1,0 +1,125 @@
+// Objetivos épicos: Dragão (e Ancião), Arauto e Barão. Entidades com vida, dano e comportamento próprios; só perdem vida por ataques reais.
+import { MUNDO_MAPA, outro } from '../nucleo/mapa-mundo.js';
+import { causarDano, atacarBasico, podeAtacar, porId, aplicarEfeito } from './combate.js';
+import { darOuro, xpDeUnidade } from './economia.js';
+import { recalcular, novaId, criarMinion } from './entidades.js';
+import { irPara, parar } from './movimento.js';
+import { registrar } from './eventos.js';
+import { dist } from '../nucleo/coord.js';
+
+const ELEMENTOS = ['infernal', 'oceano', 'montanha', 'nuvem', 'hextec', 'quimtec'];
+
+export function criarObjetivos(P) {
+  const R = P.regras.epicos;
+  P.objetivosEstado = {
+    dragao: { vivo: null, proximo: R.dragao.spawn, mortes: 0, almaAlcancada: false },
+    arauto: { vivo: null, proximo: R.arauto.spawn, mortes: 0, aposentado: false },
+    barao: { vivo: null, proximo: R.barao.spawn, mortes: 0 },
+  };
+  P.objetivos = { aoMorrer };
+}
+const covil = (id) => MUNDO_MAPA.covis.find((c) => c.id === id);
+
+function nascerEpico(P, tipo, cfgChave, covilId, extra = {}) {
+  const R = P.regras.epicos[cfgChave]; const c = covil(covilId);
+  const e = {
+    id: novaId(P), tipo: 'epico', subtipo: tipo, nome: extra.nome || tipo, equipe: 'neutro', x: c.x, y: c.y, home: { x: c.x, y: c.y },
+    hp: R.hp, hpMax: R.hp, dano: R.dano, armadura: R.armadura, resist: R.resist, alcance: R.alcance, intervalo: R.intervalo, raio: R.raio, vel: 400, aquisicao: R.aquisicao, leash: R.leash,
+    ouro: R.ouro, xp: R.xp, estado: 'ocioso', alvoId: null, morto: false, proximoAtaque: 0, ultimosAtacantes: {}, efeitos: [], escudo: 0, ultimoCombate: -99, nascido: P.t, ultimoAlvoVisto: 0,
+    elemento: extra.elemento || null, cfg: cfgChave,
+  };
+  P.epicos.push(e); P.mapaUnidades.set(e.id, e);
+  registrar(P, 'objetivo_nasceu', { objetivo: tipo, elemento: e.elemento, id: e.id });
+  return e;
+}
+
+export function atualizarObjetivos(P, dt) {
+  const R = P.regras.epicos; const O = P.objetivosEstado;
+  // Dragão / Dragão Ancião
+  if (!O.dragao.vivo && P.t >= O.dragao.proximo) {
+    const anciao = O.dragao.almaAlcancada;
+    O.dragao.vivo = nascerEpico(P, anciao ? 'anciao' : 'dragao', anciao ? 'anciao' : 'dragao', 'dragao', { elemento: anciao ? 'anciao' : ELEMENTOS[Math.floor(P.rng() * ELEMENTOS.length)], nome: anciao ? 'Dragão Ancião' : 'Dragão' });
+  }
+  // Arauto: nasce no covil do Barão e some se não for derrubado
+  if (!O.arauto.vivo && !O.arauto.aposentado && P.t >= O.arauto.proximo && P.t < R.arauto.desaparece) O.arauto.vivo = nascerEpico(P, 'arauto', 'arauto', 'barao', { nome: 'Arauto do Vale' });
+  if (O.arauto.vivo && !O.arauto.vivo.morto && P.t >= R.arauto.desaparece) { const a = O.arauto.vivo; a.morto = true; a.hp = 0; O.arauto.vivo = null; O.arauto.aposentado = true; registrar(P, 'arauto_sumiu', {}); }
+  if (!O.arauto.vivo && P.t >= R.arauto.desaparece) O.arauto.aposentado = true;
+  // Barão: nasce depois que o Arauto saiu de cena
+  if (!O.barao.vivo && P.t >= O.barao.proximo && !(O.arauto.vivo && !O.arauto.vivo.morto)) O.barao.vivo = nascerEpico(P, 'barao', 'barao', 'barao', { nome: 'Barão Na\'Shor' });
+
+  for (const e of P.epicos) {
+    if (e.morto) continue;
+    if (e.estado === 'ocioso') {
+      let alvo = null, md = Infinity;
+      P.indice.perto(e.home.x, e.home.y, e.aquisicao, (u) => { if (u.tipo === 'campeao' && !u.morto && dist(u, e.home) < md) { md = dist(u, e.home); alvo = u; } });
+      const agr = e.ultimoCombate > P.t - 3 && e.ultimoAgressor ? porId(P, e.ultimoAgressor) : null;
+      const a2 = agr && !agr.morto ? agr : (alvo && P.t - e.nascido > 1 && e.hp < e.hpMax ? alvo : null);
+      if (a2) { e.estado = 'combate'; e.alvoId = a2.id; e.ultimoAlvoVisto = P.t; }
+      else if (e.hp < e.hpMax) e.hp = Math.min(e.hpMax, e.hp + e.hpMax * 0.01 * dt);
+    }
+    if (e.estado === 'combate') {
+      // alvo = o campeão mais próximo que esteja atacando
+      let alvo = e.alvoId ? porId(P, e.alvoId) : null;
+      if (!alvo || alvo.morto || dist(alvo, e.home) > e.leash) {
+        alvo = null; let md = Infinity;
+        P.indice.perto(e.x, e.y, e.aquisicao * 1.4, (u) => { if (u.tipo === 'campeao' && !u.morto && dist(u, e.home) <= e.leash && dist(u, e) < md) { md = dist(u, e); alvo = u; } });
+      }
+      if (alvo) { e.alvoId = alvo.id; e.ultimoAlvoVisto = P.t; }
+      if (!alvo || P.t - e.ultimoAlvoVisto > 5 || dist(e, e.home) > e.leash) { e.estado = 'retornando'; e.alvoId = null; parar(e); continue; }
+      if (podeAtacar(P, e, alvo)) { parar(e); atacarBasico(P, e, alvo); } else if (!irPara(P, e, alvo.x, alvo.y, { tol: e.alcance * 0.7, perfil: 'epico' })) { e.estado = 'retornando'; e.alvoId = null; parar(e); }
+    } else if (e.estado === 'retornando') {
+      e.hp = Math.min(e.hpMax, e.hp + e.hpMax * 0.08 * dt); e.ultimosAtacantes = {};
+      if (dist(e, e.home) < 60) { e.estado = 'ocioso'; parar(e); } else irPara(P, e, e.home.x, e.home.y, { tol: 40, perfil: 'epico' });
+    }
+  }
+}
+
+export function aoMorrer(P, e, fonte) {
+  const R = P.regras.epicos; const O = P.objetivosEstado;
+  const k = fonte && fonte.tipo === 'campeao' ? fonte : (e.ultimoAgressor ? porId(P, e.ultimoAgressor) : null);
+  const eq = k && k.tipo === 'campeao' ? k.equipe : null;
+  if (!eq) { registrar(P, 'objetivo_sem_dono', { objetivo: e.subtipo }); return; }
+  const E = P.equipes[eq];
+  const cfg = R[e.cfg];
+  const part = P.campeoes.filter((c) => c.equipe === eq && !c.morto && dist(c, e) < 1800);
+  if (!part.includes(k)) part.push(k);
+  const bonus = cfg.bonusEquipe?.ouro || 0;
+  for (const c of P.campeoes) if (c.equipe === eq) darOuro(P, c, bonus);
+  for (const c of part) { darOuro(P, c, e.ouro / part.length); c.estat.objetivos++; }
+  xpDeUnidade(P, eq, e.x, e.y, e.xp, k);
+  let efeito = null;
+  if (e.subtipo === 'dragao') {
+    E.pilhasDragao++; E.dragoes.push(e.elemento);
+    O.dragao.mortes++; O.dragao.vivo = null; O.dragao.proximo = P.t + R.dragao.respawn;
+    if (E.pilhasDragao >= R.dragao.almaPilhas) { O.dragao.almaAlcancada = true; E.alma = true; registrar(P, 'alma_dragao', { equipe: eq }); }
+    for (const c of P.campeoes) if (c.equipe === eq) recalcular(c, P);
+    efeito = { pilhas: E.pilhasDragao };
+  } else if (e.subtipo === 'anciao') {
+    O.dragao.vivo = null; O.dragao.proximo = P.t + R.anciao.respawn; O.dragao.mortes++;
+    E.buffAnciao = { ate: P.t + R.anciao.efeito.duracao };
+    for (const c of P.campeoes) if (c.equipe === eq) { c.buffs.push({ danoPct: R.anciao.efeito.dano, ate: P.t + R.anciao.efeito.duracao }); recalcular(c, P); }
+    efeito = { duracao: R.anciao.efeito.duracao };
+  } else if (e.subtipo === 'arauto') {
+    O.arauto.vivo = null; O.arauto.mortes++; O.arauto.aposentado = true;
+    // o Arauto vira uma unidade de cerco que marcha pela rota mais próxima do ponto de abate
+    const rota = k.rota || 'meio';
+    P.cargaArauto = P.cargaArauto || [];
+    const m = criarMinion(P, 'corpo', eq, rota, 0);
+    const cg = R.arauto.carga; m.subtipo = 'arauto'; m.hp = m.hpMax = cg.hp; m.dano = cg.danoEstrutura; m.intervalo = cg.intervalo; m.vel = cg.vel; m.alcance = 220; m.raio = 90; m.ouro = 0; m.xp = 0; m.expira = P.t + cg.duracao; m.armadura = 40; m.resist = 40; m.danoEstruturaMult = 1;
+    const pos = k.rota && P.rotaAtual ? null : null; // posiciona na rota perto do ponto do abate
+    const lane = MUNDO_MAPA.rotas[m.rota]; let melhor = 0, md = Infinity, ac = 0;
+    for (let i = 0; i < lane.pts.length - 1; i++) { const a = lane.pts[i], b = lane.pts[i + 1]; const seg = Math.hypot(b.x - a.x, b.y - a.y); for (let t = 0; t <= 1; t += 0.1) { const px = a.x + (b.x - a.x) * t, py = a.y + (b.y - a.y) * t; const d = Math.hypot(px - e.x, py - e.y); if (d < md) { md = d; melhor = i; m.x = px; m.y = py; } } ac += seg; }
+    m.idxWp = eq === 'azul' ? melhor + 1 : melhor;
+    P.minions.push(m); P.mapaUnidades.set(m.id, m);
+    efeito = { rota };
+  } else if (e.subtipo === 'barao') {
+    O.barao.vivo = null; O.barao.mortes++; O.barao.proximo = P.t + R.barao.respawn;
+    E.buffBarao = { ate: P.t + R.barao.efeito.duracao };
+    const ef = R.barao.efeito;
+    for (const c of P.campeoes) if (c.equipe === eq) { c.buffs.push({ adPct: ef.ad, apPct: ef.ap, vel: ef.vel * 335, ate: P.t + ef.duracao }); recalcular(c, P); }
+    efeito = { duracao: ef.duracao };
+  }
+  registrar(P, 'objetivo_abatido', { equipe: eq, objetivo: e.subtipo, elemento: e.elemento, abatedor: k.id, participantes: part.map((c) => c.id), ouro: Math.round(e.ouro + bonus), xp: e.xp, efeito });
+  P.fx.push({ k: 'destruicao', id: e.id, t: P.t, x: e.x, y: e.y, tipo: e.subtipo });
+  P.estrategiaMudou = true;
+}

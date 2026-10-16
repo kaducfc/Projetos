@@ -405,8 +405,8 @@ export const MAPA = {
    "rota": "topo",
    "equipe": "azul",
    "pos": [
-    0.17036,
-    0.43532
+    0.16961,
+    0.48257
    ]
   },
   {
@@ -416,8 +416,8 @@ export const MAPA = {
    "rota": "topo",
    "equipe": "vermelho",
    "pos": [
-    0.46126,
-    0.13655
+    0.49486,
+    0.13498
    ]
   },
   {
@@ -427,8 +427,8 @@ export const MAPA = {
    "rota": "topo",
    "equipe": "azul",
    "pos": [
-    0.18983,
-    0.19474
+    0.16948,
+    0.32193
    ]
   },
   {
@@ -438,8 +438,8 @@ export const MAPA = {
    "rota": "topo",
    "equipe": "vermelho",
    "pos": [
-    0.28645,
-    0.14166
+    0.38058,
+    0.13916
    ]
   },
   {
@@ -577,8 +577,8 @@ export const MAPA = {
    "rota": "baixo",
    "equipe": "azul",
    "pos": [
-    0.56213,
-    0.93573
+    0.52851,
+    0.93546
    ]
   },
   {
@@ -589,7 +589,7 @@ export const MAPA = {
    "equipe": "vermelho",
    "pos": [
     0.8729,
-    0.63784
+    0.59058
    ]
   },
   {
@@ -599,8 +599,8 @@ export const MAPA = {
    "rota": "baixo",
    "equipe": "azul",
    "pos": [
-    0.73672,
-    0.92473
+    0.6428,
+    0.93362
    ]
   },
   {
@@ -610,8 +610,8 @@ export const MAPA = {
    "rota": "baixo",
    "equipe": "vermelho",
    "pos": [
-    0.83788,
-    0.87164
+    0.87099,
+    0.75122
    ]
   },
   {

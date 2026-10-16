@@ -65,7 +65,7 @@ export class Navegacao {
         if (this.visto[ni] !== stamp || custo < this.g[ni]) {
           this.visto[ni] = stamp; this.g[ni] = custo; this.pai[ni] = cur;
           const h = Math.hypot(gc - nx, gl - ny);
-          fila.empurrar(custo + h, ni);
+          fila.empurrar(custo + h * 1.35, ni); // A* ponderado: caminhos quase ótimos, muito menos células exploradas
         }
       }
     }

@@ -60,6 +60,18 @@ export class Terreno {
     }
     return true;
   }
+  // Linha de ataque: paredes finas (menos de `espessuraMax` unidades de terreno bloqueado seguido) não impedem um ataque à distância;
+  // um muro ou maciço de árvores mais grosso impede. Usada pelo combate; o movimento usa `linhaLivre`.
+  linhaDeAtaque(ax, ay, bx, by, espessuraMax = this.cel * 2) {
+    const dx = bx - ax, dy = by - ay; const d = Math.hypot(dx, dy);
+    if (d < 1e-6) return true;
+    const passo = this.cel * 0.4; const n = Math.max(1, Math.ceil(d / passo)); let seguido = 0;
+    for (let i = 0; i <= n; i++) {
+      const t = i / n; const x = ax + dx * t, y = ay + dy * t;
+      if (this.tipoEm(x, y) === 0) { seguido += d / n; if (seguido >= espessuraMax) return false; } else seguido = 0;
+    }
+    return true;
+  }
   // Posição navegável mais próxima (busca em anéis de células).
   maisProximo(x, y, perfil = 'campeao') {
     const cx = this.col(x), cy = this.lin(y);
