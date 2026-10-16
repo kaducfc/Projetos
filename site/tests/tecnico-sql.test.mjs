@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -623,4 +623,23 @@ t('estrelas só por RC: créditos recusados, RC cobra uma vez, sem saldo nada mu
   const js = J(`select tc_jogador_json(j) from tc_jogadores j where id = ${faker}`); assert.equal(js.estrela, true); assert.equal(js.preco_rc, 5000);
   V(`update tc_jogadores set org_id = null, slot = null, salario = 0, contrato_fim = null where id = ${faker}`);
   assert.equal(falha(`select tc_contratar(${faker}, 8, 'chave-estrela-4')`, 1), 'estrela_so_rc', 'depois de liberada, volta a só sair por RC');
+});
+t('retratos: todo jogador comum tem gênero e retrato existente (≈40% jogadoras); novos jogadores ganham sozinhos e rodar o SQL de novo não troca ninguém', () => {
+  const r = J("select jsonb_agg(jsonb_build_object('g', genero, 'r', retrato, 'n', ficticio)) from tc_jogadores");
+  const comuns = r.filter((x) => x.n);
+  assert.ok(comuns.length >= 50, 'há jogadores comuns');
+  for (const x of comuns) {
+    assert.ok(x.r && existsSync(new URL(`..${x.r}`, import.meta.url)), `retrato ${x.r}`);
+    assert.match(x.r, x.g === 'F' ? /\/f\d\d\.webp$/ : /\/m\d\d\.webp$/);
+  }
+  const fem = comuns.filter((x) => x.g === 'F').length / comuns.length;
+  assert.ok(fem > 0.28 && fem < 0.52, `proporção de jogadoras: ${fem.toFixed(2)}`);
+  const antes = V("select string_agg(id || retrato, ',' order by id) from tc_jogadores");
+  V(readFileSync(new URL('../supabase/migrations/0097_tecnico_retratos.sql', import.meta.url), 'utf8'));
+  assert.equal(V("select string_agg(id || retrato, ',' order by id) from tc_jogadores"), antes);
+  const novos = J("select to_jsonb(tc_gerar_jogadores(30))"); assert.equal(novos.length, 30);
+  const g = J(`select jsonb_agg(retrato || genero) from tc_jogadores where id in (${novos.join(',')})`);
+  assert.ok(g.every((s) => /(f\d\dF|m\d\dM)$/.test(s.replace('.webp', ''))), 'retrato combina com o gênero');
+  assert.equal(new Set(J(`select jsonb_agg(retrato) from tc_jogadores where id in (${novos.join(',')})`)).size > 12, true, 'rostos variados');
+  const star = J("select tc_jogador_json(j) from tc_jogadores j where nome = 'Faker'"); assert.equal(star.genero, 'M'); assert.match(star.retrato, /faker\.webp$/);
 });
