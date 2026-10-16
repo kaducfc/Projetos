@@ -8,7 +8,7 @@ const COR_MON = { sentinela: '#5aa9ff', brambleback: '#ff6a5a', gromp: '#7bd36b'
 export class Renderizador {
   constructor(canvas, imagemMapa) {
     this.cv = canvas; this.ctx = canvas.getContext('2d'); this.img = imagemMapa;
-    this.icones = new Map(); this.sprites = new Map(); this.interp = { a: 1, prev: new Map() };
+    this.icones = new Map(); this.sprites = new Map(); this.rumo = new Map(); this.interp = { a: 1, prev: new Map() };
     this.camadas = {}; this.fxDano = []; this.selecionado = null;
     this.estruturasCaidas = new Map();
   }
@@ -127,6 +127,17 @@ export class Renderizador {
   minions(P, c, U) {
     for (const m of P.minions) {
       if (m.morto) continue; const p = this.pos(m); const cor = COR[m.equipe];
+      if (m.subtipo !== 'arauto') { // miniatura na cor do time; de costas quando sobe no mapa, de frente quando desce
+        const ant = this.interp.prev.get(m.id); if (ant && Math.abs(m.y - ant.y) > 0.5) this.rumo.set(m.id, m.y < ant.y ? 'costas' : 'frente');
+        const lado = this.rumo.get(m.id) || (m.equipe === 'azul' ? 'costas' : 'frente');
+        const l = (m.subtipo === 'cerco' ? 22 : m.subtipo === 'super' ? 28 : m.subtipo === 'conjurador' ? 16 : 18) * U;
+        if (this.sprite(`minion_${m.equipe}_${lado}`).ok) {
+          c.fillStyle = cor; c.globalAlpha = 0.3; c.beginPath(); c.ellipse(p.x, p.y + l * 0.05, l * 0.38, l * 0.14, 0, 0, 7); c.fill(); c.globalAlpha = 1;
+          this.desenharSprite(c, `minion_${m.equipe}_${lado}`, p.x, p.y + l * 0.3, l, 0.85);
+          if (m.hp < m.hpMax * 0.98) this.barra(c, p.x - l * 0.35, p.y - l * 0.6 - 2 * U, l * 0.7, 1.8 * U, m.hp / m.hpMax, '#6adf7a');
+          continue;
+        }
+      }
       const r = (m.subtipo === 'cerco' ? 4.6 : m.subtipo === 'super' ? 5.5 : m.subtipo === 'arauto' ? 8 : 3.4) * U;
       c.fillStyle = cor; c.strokeStyle = 'rgba(0,0,0,0.65)'; c.lineWidth = 1;
       c.beginPath();
