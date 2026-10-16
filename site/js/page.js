@@ -4,7 +4,7 @@ import { mountSiteBar } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { CONTACT_EMAIL, DONATION_URL } from '../shared/config.js';
 
-mountSiteBar(document.getElementById('site-bar'), { hubHref: '../' });
+mountSiteBar(document.getElementById('site-bar'), { hubHref: document.body.dataset.inicio || '../' }); // a página 404 aparece em qualquer pasta e usa '/'
 mountSiteFooter(document.getElementById('site-footer'));
 
 document.querySelectorAll('[data-contact]').forEach((el) => {
