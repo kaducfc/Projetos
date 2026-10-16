@@ -362,12 +362,13 @@ test('35. uma partida completa termina com a destruição do Nexus, sem travar n
   // determinismo: a mesma semente reproduz o mesmo resultado
   const Q = mk(1).executarAteFim(); assert.equal(Q.duracao, r.duracao); assert.equal(Q.vencedor, r.vencedor);
 });
-test('34. quem tem mais Poder tem vantagem estatística, mas não vence sempre (rodada de partidas completas)', { skip: !process.env.TC_LENTO && 'TC_LENTO=1 para rodar (leva alguns minutos)', timeout: 900000 }, () => {
-  const out = spawnSync('node', ['jogos/tecnico/partida/ferramentas/simular-lote.mjs', '12', '75', '45', '1', '4', '--json'], { encoding: 'utf8', cwd: new URL('..', import.meta.url).pathname });
-  const r = JSON.parse(out.stdout.trim().split('\n').pop()); const [v, n] = r.azulVenceu.split('/').map(Number);
-  assert.equal(r.semVencedor, 0); assert.equal(r.erros, 0);
-  assert.ok(v / n > 0.5, `o time forte deveria vencer mais (${r.azulVenceu})`); assert.ok(v < n, 'o time fraco precisa conseguir vencer às vezes');
-  assert.ok(r.duracaoMediaMin > 15 && r.duracaoMediaMin < 50); assert.ok(r.torresDerrubadas > 5);
+test('34. quem tem mais Poder tem vantagem estatística, mas não vence sempre (partidas completas nos dois lados do mapa)', { skip: !process.env.TC_LENTO && 'TC_LENTO=1 para rodar (leva alguns minutos)', timeout: 1800000 }, () => {
+  const lote = (pa, pv) => JSON.parse(spawnSync('node', ['jogos/tecnico/partida/ferramentas/simular-lote.mjs', '12', String(pa), String(pv), '100', '4', '--json'], { encoding: 'utf8', cwd: new URL('..', import.meta.url).pathname }).stdout.trim().split('\n').pop());
+  const a = lote(75, 45), b = lote(45, 75); // o time forte joga uma vez de cada lado (o mapa tem uma leve vantagem para o lado vermelho)
+  const fortes = Number(a.azulVenceu.split('/')[0]) + (12 - Number(b.azulVenceu.split('/')[0]));
+  assert.equal(a.semVencedor + b.semVencedor, 0); assert.equal(a.erros + b.erros, 0);
+  assert.ok(fortes / 24 > 0.6, `o time forte deveria vencer bem mais (${fortes}/24)`); assert.ok(fortes < 24, 'o time fraco precisa conseguir vencer às vezes');
+  for (const r of [a, b]) { assert.ok(r.duracaoMediaMin > 15 && r.duracaoMediaMin < 50); assert.ok(r.torresDerrubadas > 5); }
 });
 
 test('arquivos: documentação do mapa, ferramenta de depuração e geração do terreno acompanham o código', () => {

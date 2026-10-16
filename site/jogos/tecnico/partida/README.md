@@ -46,6 +46,18 @@ Ondas (3 corpo + 3 conjuradores, canhão com frequência crescente, superminions
 
 **Limitação importante**: o resultado vem do navegador. Enquanto o jogo é só para administradores isso basta; antes de abrir ao público, a simulação oficial deve rodar no servidor. `ferramentas/auditar.mjs` reexecuta um mapa (mesma semente, escalações e versão) para conferir resultados.
 
+## Resultados de equilíbrio medidos (versão 1 das regras)
+
+Lotes de partidas completas (`simular-lote.mjs`): duração média 30–37 min (mín. 22, máx. 56), 50–58 abates, 13–16 torres derrubadas, primeira torre aos 10–12 min, 7–9 objetivos épicos, 100% terminam por destruição do Nexus, nenhum erro interno. Poder 75 contra 45: o time forte venceu 75% das partidas (média dos dois lados do mapa) e o fraco venceu 25%. Com times iguais, o lado vermelho venceu cerca de 60%: a geometria da imagem favorece levemente esse lado (o Dragão fica mais perto da base vermelha). Em séries melhor de 3/5 os lados alternam a cada mapa, o que compensa o viés.
+
+## Limitações conhecidas
+
+- CS por minuto baixo (≈2 por campeão contando a selva; o jogo real faz 6–8): a economia é compensada por multiplicadores (`escalaOuro`, `escalaXp`).
+- Habilidades são arquétipos configuráveis (12 variantes), não as habilidades reais de cada campeão; não há wards/neblina de guerra renderizada (a visão limita só a IA); itens são 22 genéricos.
+- Pick and Ban ainda não existe: os campeões saem dos favoritos do jogador ou do catálogo por posição.
+- Posições dos acampamentos e dos covis são estimativas (marcadas com ⚠ na ferramenta de depuração); torres e inibidores foram posicionados por proporção das rotas, pois a imagem não tem estruturas.
+- Viés leve a favor do lado vermelho; unidades presas ainda ocorrem esporadicamente (registradas em `diag`).
+
 ## Testes e ferramentas
 
 ```
