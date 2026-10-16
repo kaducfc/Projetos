@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -488,4 +488,28 @@ t('gameplay: passado o prazo, o sistema simula as partidas que ninguém jogou e 
   assert.equal(V("select count(*) from tc_partidas where status = 'agendada' and dia <= '2026-11-09' and exists (select 1 from tc_orgs o where o.user_id is not null and o.id in (org_a, org_b))"), '0');
   V("update tc_config set valor = jsonb_set(valor, '{ativo}', 'false') where chave = 'gameplay'");
   assert.equal(J('select tc_gameplay_pendente()', 1, '2026-11-11').ativo, false);
+});
+
+// ---------------------------------------------------------------- posições ajustadas (SQL 0093) e convidados (0092)
+t('posições: o ajuste manual corrige o campeão, reaplicar é seguro e id/posição inválidos são recusados', () => {
+  assert.equal(V("select posicoes from tc_campeoes where id = 'naafiri'"), '{selva}');
+  V("update tc_campeoes set posicoes = array['meio'] where id = 'naafiri'");
+  const sql = readFileSync(new URL('../supabase/migrations/0093_tecnico_posicoes.sql', import.meta.url), 'utf8');
+  V(sql); assert.equal(V("select posicoes from tc_campeoes where id = 'naafiri'"), '{selva}');
+  assert.match(falha(sql.replace('"naafiri": ["selva"]', '"naoexiste": ["selva"]')), /./);
+  assert.match(falha(sql.replace('"naafiri": ["selva"]', '"naafiri": ["jungle"]')), /./);
+});
+t('convidados: com o jogo fechado, só administrador e convidado têm acesso; retirar o convite fecha de novo', () => {
+  const antes = V("select valor from tc_config where chave = 'aberto'");
+  V("update tc_config set valor = 'false'::jsonb where chave = 'aberto'");
+  V(`delete from site_admins where user_id in ('${U(3)}', '${U(4)}')`); // 3 e 4 viram jogadores comuns neste teste
+  try {
+    V("delete from tc_convidados");
+    assert.equal(V('select tc_tenho_acesso()', 3), 'f');
+    V(`insert into tc_convidados (user_id) values ('${U(3)}')`);
+    assert.equal(V('select tc_tenho_acesso()', 3), 't');
+    assert.equal(V('select tc_tenho_acesso()', 4), 'f');
+    V('delete from tc_convidados');
+    assert.equal(V('select tc_tenho_acesso()', 3), 'f');
+  } finally { V(`update tc_config set valor = '${antes}'::jsonb where chave = 'aberto'`); V(`insert into site_admins values ('${U(3)}'), ('${U(4)}') on conflict do nothing`); }
 });
