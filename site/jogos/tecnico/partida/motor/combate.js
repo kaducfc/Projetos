@@ -72,7 +72,7 @@ export function causarDano(P, fonte, alvo, bruto, tipo = 'fisico', o = {}) {
   let d = bruto;
   const fc = fonte && fonte.tipo === 'campeao';
   if (fc) {
-    d *= fonte.danoMult || 1;
+    d *= (fonte.danoMult || 1) * (fonte.m.forca || 1);
     if (alvo.tipo === 'campeao') {
       // trocas na rota: vantagem do atributo "fase de rotas" só no começo da partida
       const f = R.atributos.rotas.fim; if (P.t < f) d *= 1 + (fonte.m.troca - 1) * (1 - P.t / f);

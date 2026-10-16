@@ -11,10 +11,11 @@ export const REGRAS = {
 
   // ---- atributos do simulador -> parâmetros de combate (função central em config/atributos.js)
   atributos: {
-    mec:    { dano: [0.92, 1.08], acerto: [0.58, 0.92] },   // multiplicador de dano de habilidades; chance de acertar projéteis
+    forca:  [0.88, 1.12],                                   // desempenho geral derivado dos cinco atributos (peso do Poder)
+    mec:    { dano: [0.90, 1.10], acerto: [0.58, 0.92] },   // multiplicador de dano de habilidades; chance de acertar projéteis
     rotas:  { farm: [0.72, 0.97], troca: [0.95, 1.06], fim: 840 }, // eficiência de último golpe; qualidade das trocas; as vantagens somem após `fim` segundos
     macro:  { decisao: [1.25, 0.8], ruido: [0.35, 0.08] },  // multiplicador do intervalo de decisão; ruído nas avaliações de risco
-    tf:     { luta: [0.95, 1.07] },                         // multiplicador de dano e resistência em lutas com 3+ campeões
+    tf:     { luta: [0.93, 1.10] },                         // multiplicador de dano e resistência em lutas com 3+ campeões
     mental: { erro: [0.12, 0.02], tilt: 0.06 },             // chance de decisão ruim; perda de desempenho máxima quando atrás e com mental baixo
   },
 

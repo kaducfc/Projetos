@@ -5,7 +5,9 @@ const lerp = (par, t) => par[0] + (par[1] - par[0]) * Math.min(1, Math.max(0, t)
 export function parametrosDeAtributos(atr, regras) {
   const c = regras.atributos;
   const n = (v) => Math.min(1, Math.max(0, ((v ?? 50) - 1) / 99));
+  const geral = (n(atr.mec) * 25 + n(atr.rotas) * 20 + n(atr.macro) * 20 + n(atr.tf) * 20 + n(atr.mental) * 15) / 100; // mesmo peso do Poder do técnico (sem Fama)
   return {
+    forca: lerp(c.forca, geral),                  // desempenho geral: multiplicador do dano causado por campeões
     execDano: lerp(c.mec.dano, n(atr.mec)),       // multiplicador do dano das habilidades
     execAcerto: lerp(c.mec.acerto, n(atr.mec)),   // chance de acertar habilidades de projétil
     farm: lerp(c.rotas.farm, n(atr.rotas)),       // chance de conseguir o último golpe
