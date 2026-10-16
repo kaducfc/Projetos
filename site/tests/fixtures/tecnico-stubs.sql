@@ -1,5 +1,6 @@
 create schema if not exists auth;
 create table if not exists auth.users (id uuid primary key);
+alter table auth.users add column if not exists created_at timestamptz not null default now() - interval '30 days';
 create or replace function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('app.uid', true), '')::uuid $$;
 create or replace function public.site_hoje_br() returns date language sql stable as $$ select coalesce(nullif(current_setting('app.hoje', true), ''), '2026-10-14')::date $$;
 create table if not exists public.site_admins (user_id uuid primary key references auth.users(id));

@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -529,4 +529,58 @@ t('posições pelo jogo: só administrador troca, valida as posições, guarda a
     V(sql); assert.equal(V("select posicoes from tc_campeoes where id = 'ahri'"), '{top,meio}', 'a troca feita no jogo volta ao reaplicar o 0093');
     assert.equal(J("select tc_campeoes_lista()", 1).campeoes.find((c) => c.id === 'ahri').posicoes.join(), 'top,meio');
   } finally { V("delete from tc_posicoes_manual where id = 'ahri'; update tc_campeoes set posicoes = array['meio'] where id = 'ahri'"); V(`insert into site_admins values ('${U(4)}') on conflict do nothing`); }
+});
+
+// ---------------------------------------------------------------- segurança (SQL 0094)
+t('segurança: cor do escudo só aceita #rrggbb (regressão: nada de código no SVG dos outros técnicos)', () => {
+  const r = psql(['-d', 't', '-c', `set app.uid='${U(1)}'`, '-c', `select tc_personalizar_org('escudo-1', '"><img src=x onerror=alert(1)>', '#ffffff', 'classico')`]);
+  assert.notEqual(r.status, 0); assert.match(r.stderr, /tc_orgs_cor1_check/);
+  V(`select tc_personalizar_org('escudo-2', '#112233', '#AABBCC', 'moderno')`, 1);
+  assert.equal(V("select cor1 || cor2 from tc_orgs where id = 1"), '#112233#AABBCC');
+});
+t('segurança: o resumo do gameplay é reconstruído no servidor (só números limitados e jogadores das duas equipes)', () => {
+  const pid = V("select id from tc_partidas order by id limit 1");
+  const org = V(`select org_a from tc_partidas where id = ${pid}`);
+  const jog = V(`select id from tc_jogadores where org_id = ${org} limit 1`);
+  const nomeReal = V(`select nome from tc_jogadores where id = ${jog}`);
+  V(`insert into tc_gameplay_mapas (partida_id, mapa, org_azul, vencedor_org, semente, duracao, resumo) values (${pid}, 5, ${org}, ${org}, 1, 1800,
+     '{"vencedor":"azul","motivo":"<b>x</b>","equipes":{"azul":{"abates":"<img src=x onerror=alert(1)>","torresPerdidas":99,"dragoes":3},"vermelho":{"abates":12}},
+       "mvp":{"id":${jog},"nome":"<script>alert(1)</script>","campeao":"Ahri"},"jogadores":[{"id":${jog},"nome":"hack","abates":5,"pos":"<x>"},{"id":999999,"nome":"intruso"}],"lixo":"${'x'.repeat(50)}"}')`);
+  const r = J(`select resumo from tc_gameplay_mapas where partida_id = ${pid} and mapa = 5`);
+  assert.equal(r.equipes.azul.abates, 0, 'texto no lugar de número vira 0');
+  assert.equal(r.equipes.azul.torresPerdidas, 11, 'número fora da faixa é limitado');
+  assert.equal(r.equipes.vermelho.abates, 12);
+  assert.equal(r.motivo, 'nexus'); assert.equal(r.lixo, undefined);
+  assert.equal(r.mvp.nome, nomeReal, 'o nome do destaque vem do banco'); assert.equal(r.mvp.campeao, 'Ahri');
+  assert.equal(r.jogadores.length, 1, 'jogador de fora das equipes é descartado'); assert.equal(r.jogadores[0].nome, nomeReal); assert.equal(r.jogadores[0].pos, null);
+  V(`delete from tc_gameplay_mapas where partida_id = ${pid} and mapa = 5`);
+});
+t('segurança: anúncio é cancelado quando o jogador sai da organização', () => {
+  const res = reserva(1, 1);
+  const an = J(`select tc_anunciar(${res}, 700)`, 1).id;
+  V(`select tc_liberar(${res})`, 1);
+  assert.equal(V(`select status from tc_anuncios where id = ${an}`), 'cancelado');
+});
+t('antifraude do mercado: conta nova, muitas vendas entre o mesmo par, recompra e limite diário', () => {
+  V("update site_carteira set saldo = 1000000 where user_id in ('" + U(1) + "', '" + U(2) + "')");
+  V("delete from tc_anuncios where status = 'vendido'"); // começa sem histórico de vendas
+  // conta nova não anuncia
+  V(`update auth.users set created_at = now() where id = '${U(1)}'`);
+  const r1 = reserva(1, 1);
+  assert.equal(falha(`select tc_anunciar(${r1}, 500)`, 1), 'mercado_conta_nova');
+  V(`update auth.users set created_at = now() - interval '30 days' where id = '${U(1)}'`);
+  // duas vendas entre o mesmo par na semana passam; a terceira não (e o RC volta)
+  const vender = (uidV, orgV, uidC, preco, chave) => { V("update tc_anuncios set status = 'cancelado' where status = 'aberto'"); const j = reserva(uidV, orgV); const a = J(`select tc_anunciar(${j}, ${preco})`, uidV).id; return { j, a, r: Q(`select tc_comprar_anuncio(${a}, '${chave}')`, uidC) }; };
+  { const x = vender(1, 1, 2, 300, 'chave-par-1'); assert.ok(x.r.ok, x.r.err); } assert.ok(vender(1, 1, 2, 300, 'chave-par-2').r.ok);
+  const saldo = V("select saldo from site_carteira where user_id = '" + U(2) + "'");
+  const t3 = vender(1, 1, 2, 300, 'chave-par-3');
+  assert.equal(t3.r.err, 'mercado_limite_par');
+  assert.equal(V("select saldo from site_carteira where user_id = '" + U(2) + "'"), saldo, 'a compra recusada não cobra');
+  assert.equal(V(`select org_id from tc_jogadores where id = ${t3.j}`), '1', 'o jogador fica com o vendedor');
+  V("delete from tc_anuncios where status = 'vendido'");
+  // recompra: quem vendeu não compra o mesmo jogador de volta em 14 dias
+  const v1 = vender(1, 1, 2, 300, 'chave-rec-1'); assert.ok(v1.r.ok);
+  const a2 = J(`select tc_anunciar(${v1.j}, 300)`, 2).id;
+  assert.equal(Q(`select tc_comprar_anuncio(${a2}, 'chave-rec-2')`, 1).err, 'mercado_recompra');
+  V("delete from tc_anuncios where status <> 'aberto'"); V("update tc_anuncios set status = 'cancelado' where status = 'aberto'");
 });

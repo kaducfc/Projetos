@@ -1016,6 +1016,10 @@ export const baraoVazio = (id) => rpcBarao('site_barao_vazio', { pid: id });
 // Simulador de técnico (jogo "tecnico"): tudo é decidido no servidor (SQL 0085 a 0089); o navegador só chama funções.
 const ERROS_TECNICO = {
   not_admin: 'Só administradores podem fazer essa alteração.',
+  mercado_conta_nova: 'Contas criadas há menos de 7 dias ainda não podem negociar no mercado entre técnicos.',
+  mercado_limite_par: 'Limite de negócios entre as mesmas duas organizações nesta semana atingido.',
+  mercado_recompra: 'Você vendeu este jogador há pouco tempo e ainda não pode comprá-lo de volta.',
+  mercado_limite_dia: 'Limite de compras no mercado entre técnicos por dia atingido.',
   posicoes_invalidas: 'Escolha de 1 a 5 posições válidas.',
   campeao_inexistente: 'Campeão não encontrado no catálogo.',
   jogo_fechado: 'Este jogo ainda está em teste e só administradores podem jogar.',
