@@ -140,7 +140,7 @@ test('12-14. o jungler limpa acampamentos; os monstros atacam, voltam ao acampam
   assert.ok(P.eventos.filter((e) => e.tipo === 'acampamento_limpo').length >= 3);
   // 13: agressão e retorno
   const Q = ate(mk(3), 100); const camp = Q.acampamentos.find((c) => c.id === 'azul_lobos' && c.estado === 'vivo'); assert.ok(camp);
-  const v = Q.campeoes.find((c) => c.equipe === 'vermelho' && c.pos === 'top'); congelar(v); v.hpMax = v.hp = 1e6; v.x = camp.x + 150; v.y = camp.y;
+  const v = Q.campeoes.find((c) => c.equipe === 'vermelho' && c.pos === 'top'); congelar(v); v.morto = false; v.estado = 'comprando'; v.hpMax = v.hp = 1e6; const lugar = Q.terreno.maisProximo(camp.x + 150, camp.y, 'campeao'); v.x = lugar.x; v.y = lugar.y;
   ate(Q, Q.t + 4);
   assert.ok(camp.monstros.some((m) => m.estado === 'combate'), 'monstros entram em combate'); assert.ok(v.estat.danoSofrido > 0, 'monstros causam dano');
   const f = MUNDO_MAPA.bases.vermelho.fonte; v.x = f.x; v.y = f.y;
@@ -255,7 +255,7 @@ test('25. inibidor derrubado gera superminions na rota, e o inibidor renasce dep
   assert.equal(P.equipes.vermelho.inibidoresCaidos.topo, true); assert.ok(inib.morto && inib.renasceEm > P.t);
   ate(P, 100); assert.ok(P.minions.some((m) => m.subtipo === 'super' && m.equipe === 'vermelho' && m.rota === 'topo'), 'superminion nasce na rota do inibidor');
   assert.ok(!P.minions.some((m) => m.subtipo === 'super' && m.equipe === 'azul'), 'o lado do inibidor caído não ganha super');
-  ate(P, inib.renasceEm + 0.5); assert.equal(inib.morto, false); assert.equal(inib.hp, inib.hpMax); assert.equal(P.equipes.vermelho.inibidoresCaidos.topo, false);
+  ate(P, inib.renasceEm + 0.5); assert.equal(inib.morto, false); assert.ok(inib.hp > inib.hpMax * 0.9, 'renasce com a vida cheia (os superminions inimigos já podem estar batendo nele)'); assert.equal(P.equipes.vermelho.inibidoresCaidos.topo, false);
   const antes = P.minions.filter((m) => m.subtipo === 'super').length; ate(P, P.t + 35);
   assert.equal(P.minions.filter((m) => m.subtipo === 'super' && m.nascido > inib.renasceEm).length, 0, 'depois do respawn não nascem mais superminions'); assert.ok(antes >= 0);
 });

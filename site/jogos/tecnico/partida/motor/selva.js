@@ -21,8 +21,9 @@ function nascer(P, c) {
   const R = P.regras.selva;
   c.estado = 'vivo'; c.spawns++; c.monstros = []; c.respawnEm = null;
   for (const d of c.def.monstros) {
+    const lugar = P.terreno.maisProximo(c.x + d.off[0], c.y + d.off[1], 'monstro') || { x: c.x, y: c.y }; // acampamento ajustado à mão pode deixar o deslocamento em parede
     const m = {
-      id: novaId(P), tipo: 'monstro', campo: c.id, nome: d.n, equipe: 'neutro', x: c.x + d.off[0], y: c.y + d.off[1], home: { x: c.x + d.off[0], y: c.y + d.off[1] },
+      id: novaId(P), tipo: 'monstro', campo: c.id, nome: d.n, equipe: 'neutro', x: lugar.x, y: lugar.y, home: { x: lugar.x, y: lugar.y },
       hp: d.hp * R.escalaVida, hpMax: d.hp * R.escalaVida, dano: d.dano * R.escalaDano, intervalo: d.intervalo, alcance: d.alcance, raio: d.raio, armadura: 15, resist: 15, vel: 345, ouro: d.ouro, xp: d.xp, passivo: !!d.passivo,
       proximoAtaque: 0, estado: 'ocioso', alvoId: null, morto: false, ultimosAtacantes: {}, efeitos: [], escudo: 0, aquisicao: P.regras.selva.aquisicao, desde: P.t, ultimoCombate: -99,
     };
