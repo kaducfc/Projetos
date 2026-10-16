@@ -1,0 +1,179 @@
+// Renderização: só desenha o estado oficial do motor (posições, vida, mortes, efeitos). Nunca decide acertos, quedas ou mortes.
+import { MUNDO } from '../nucleo/coord.js';
+import { campIcone, campUrl } from '../../js/campeoes-img.js';
+
+const COR = { azul: '#4aa3ff', vermelho: '#ff5a5a', neutro: '#d8c27a' };
+const COR_MON = { sentinela: '#5aa9ff', brambleback: '#ff6a5a', gromp: '#7bd36b', lobos: '#b0b7c6', raptores: '#f08a4b', krugs: '#b79a6a', caranguejo: '#7fe0d0' };
+
+export class Renderizador {
+  constructor(canvas, imagemMapa) {
+    this.cv = canvas; this.ctx = canvas.getContext('2d'); this.img = imagemMapa;
+    this.icones = new Map(); this.interp = { a: 1, prev: new Map() };
+    this.camadas = {}; this.fxDano = []; this.selecionado = null;
+    this.estruturasCaidas = new Map();
+  }
+  ajustar(largura) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const altura = Math.round(largura * MUNDO.altura / MUNDO.largura);
+    this.cv.style.width = largura + 'px'; this.cv.style.height = altura + 'px';
+    this.cv.width = Math.round(largura * dpr); this.cv.height = Math.round(altura * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.w = largura; this.h = altura; this.k = largura / MUNDO.largura;
+    this.u = Math.max(0.55, Math.min(1.25, largura / 1000)); // fator de tamanho dos ícones
+  }
+  vista() { return { largura: this.w, altura: this.h }; }
+  icone(nome) {
+    let e = this.icones.get(nome); if (e) return e;
+    const u = campUrl(nome); e = { img: null, ok: false };
+    if (u) { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => { e.ok = true; }; im.src = u; e.img = im; }
+    this.icones.set(nome, e); return e;
+  }
+  pos(u) {
+    const p = this.interp.prev.get(u.id); const a = this.interp.a;
+    if (!p || a >= 1) return { x: u.x * this.k, y: u.y * this.k };
+    const dx = u.x - p.x, dy = u.y - p.y; if (dx * dx + dy * dy > 1500 * 1500) return { x: u.x * this.k, y: u.y * this.k }; // teleporte/recall: sem interpolar
+    return { x: (p.x + dx * a) * this.k, y: (p.y + dy * a) * this.k };
+  }
+  desenhar(P, depur) {
+    const c = this.ctx, k = this.k, U = this.u;
+    c.clearRect(0, 0, this.w, this.h);
+    if (this.img && this.img.complete) c.drawImage(this.img, 0, 0, this.w, this.h);
+    c.fillStyle = 'rgba(4,10,24,0.22)'; c.fillRect(0, 0, this.w, this.h); // leve escurecimento para destacar as unidades
+    if (depur) depur(c);
+    this.estruturas(P, c, U);
+    this.selva(P, c, U);
+    this.minions(P, c, U);
+    this.efeitosChao(P, c, U);
+    this.campeoes(P, c, U);
+    this.projeteis(P, c, U);
+    this.efeitosAcima(P, c, U);
+    if (P.fim) this.fimDeJogo(P, c);
+  }
+  barra(c, x, y, w, h, f, cor) {
+    c.fillStyle = 'rgba(0,0,0,0.65)'; c.fillRect(x - 1, y - 1, w + 2, h + 2);
+    c.fillStyle = cor; c.fillRect(x, y, Math.max(0, w * Math.min(1, f)), h);
+  }
+  estruturas(P, c, U) {
+    for (const e of P.estruturas) {
+      const x = e.x * this.k, y = e.y * this.k; const cor = COR[e.equipe];
+      const r = (e.subtipo === 'nexus' ? 15 : e.subtipo === 'inibidor' ? 9 : 8) * U;
+      if (e.morto) {
+        c.strokeStyle = 'rgba(180,180,180,0.55)'; c.lineWidth = 2; c.beginPath(); c.moveTo(x - r * 0.7, y - r * 0.7); c.lineTo(x + r * 0.7, y + r * 0.7); c.moveTo(x + r * 0.7, y - r * 0.7); c.lineTo(x - r * 0.7, y + r * 0.7); c.stroke();
+        c.fillStyle = 'rgba(60,60,60,0.55)'; c.beginPath(); c.arc(x, y, r * 0.55, 0, 7); c.fill();
+        continue;
+      }
+      const vuln = P.estruturaVulneravel(e);
+      c.save(); c.translate(x, y);
+      c.fillStyle = 'rgba(8,16,36,0.85)'; c.strokeStyle = cor; c.lineWidth = 2.2 * U;
+      c.beginPath();
+      if (e.subtipo === 'torre') { c.rect(-r * 0.75, -r * 0.75, r * 1.5, r * 1.5); }
+      else if (e.subtipo === 'inibidor') { c.moveTo(0, -r); c.lineTo(r, 0); c.lineTo(0, r); c.lineTo(-r, 0); c.closePath(); }
+      else { c.arc(0, 0, r, 0, 7); }
+      c.fill(); c.stroke();
+      if (e.subtipo === 'torre') { c.fillStyle = cor; c.beginPath(); c.arc(0, 0, r * 0.3, 0, 7); c.fill(); }
+      if (e.subtipo === 'nexus') { c.fillStyle = cor; c.beginPath(); c.arc(0, 0, r * 0.45, 0, 7); c.fill(); }
+      if (!vuln) { c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 1; c.beginPath(); c.arc(0, 0, r + 3 * U, 0, 7); c.stroke(); }
+      c.restore();
+      if (e.hp < e.hpMax || e.subtipo === 'nexus') this.barra(c, x - r, y - r - 6 * U, r * 2, 3 * U, e.hp / e.hpMax, e.hp / e.hpMax > 0.5 ? '#6adf7a' : '#e8b34a');
+    }
+  }
+  selva(P, c, U) {
+    for (const m of P.monstros) {
+      if (m.morto) continue; const x = m.x * this.k, y = m.y * this.k; const camp = P.acampamentos.find((a) => a.id === m.campo);
+      const grande = m.raio >= 70; const r = (grande ? 6.5 : 4) * U;
+      c.fillStyle = COR_MON[camp?.tipo] || '#d8c27a'; c.strokeStyle = 'rgba(0,0,0,0.7)'; c.lineWidth = 1.2;
+      c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke();
+      if (m.hp < m.hpMax) this.barra(c, x - r, y - r - 5 * U, r * 2, 2.5 * U, m.hp / m.hpMax, '#d36b4a');
+    }
+    for (const e of P.epicos) {
+      if (e.morto) continue; const x = e.x * this.k, y = e.y * this.k; const r = (e.subtipo === 'barao' ? 15 : 12) * U;
+      const grd = c.createRadialGradient(x, y, 2, x, y, r * 2); grd.addColorStop(0, e.subtipo === 'barao' ? 'rgba(170,90,255,0.9)' : e.subtipo === 'arauto' ? 'rgba(90,200,255,0.9)' : 'rgba(255,150,70,0.9)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = grd; c.beginPath(); c.arc(x, y, r * 2, 0, 7); c.fill();
+      c.fillStyle = '#1a1030'; c.strokeStyle = '#f0cf72'; c.lineWidth = 2; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke();
+      c.fillStyle = '#f0cf72'; c.font = `bold ${Math.round(10 * U)}px Inter, sans-serif`; c.textAlign = 'center'; c.fillText(e.subtipo === 'barao' ? 'B' : e.subtipo === 'arauto' ? 'A' : e.subtipo === 'anciao' ? 'DA' : 'D', x, y + 3.5 * U);
+      this.barra(c, x - r * 1.4, y - r - 8 * U, r * 2.8, 4 * U, e.hp / e.hpMax, '#e07040');
+    }
+    // temporizadores dos covis e acampamentos que renascem
+    c.font = `${Math.round(9 * U)}px Inter, sans-serif`; c.textAlign = 'center';
+    for (const a of P.acampamentos) if (a.estado === 'morto' && a.respawnEm) { const s = Math.ceil(a.respawnEm - P.t); if (s > 0 && s < 100) { c.fillStyle = 'rgba(255,255,255,0.75)'; c.fillText(s + 's', a.x * this.k, a.y * this.k + 3 * U); } }
+  }
+  minions(P, c, U) {
+    for (const m of P.minions) {
+      if (m.morto) continue; const p = this.pos(m); const cor = COR[m.equipe];
+      const r = (m.subtipo === 'cerco' ? 4.6 : m.subtipo === 'super' ? 5.5 : m.subtipo === 'arauto' ? 8 : 3.4) * U;
+      c.fillStyle = cor; c.strokeStyle = 'rgba(0,0,0,0.65)'; c.lineWidth = 1;
+      c.beginPath();
+      if (m.subtipo === 'conjurador') { c.moveTo(p.x, p.y - r); c.lineTo(p.x + r, p.y + r * 0.8); c.lineTo(p.x - r, p.y + r * 0.8); c.closePath(); }
+      else if (m.subtipo === 'cerco' || m.subtipo === 'super') c.rect(p.x - r, p.y - r, r * 2, r * 2);
+      else c.arc(p.x, p.y, r, 0, 7);
+      c.fill(); c.stroke();
+      if (m.hp < m.hpMax * 0.98) this.barra(c, p.x - r, p.y - r - 3.5 * U, r * 2, 1.8 * U, m.hp / m.hpMax, '#6adf7a');
+    }
+  }
+  campeoes(P, c, U) {
+    const D = Math.max(22, Math.min(40, this.w * 0.027)); const r = D / 2;
+    for (const u of P.campeoes) {
+      const p = this.pos(u); const cor = COR[u.equipe];
+      if (u.morto) {
+        c.globalAlpha = 0.5; this.desenharIcone(c, u, p.x, p.y, r * 0.8, '#777', true); c.globalAlpha = 1;
+        c.fillStyle = '#fff'; c.font = `bold ${Math.round(11 * U)}px Inter, sans-serif`; c.textAlign = 'center'; c.fillText(Math.ceil(Math.max(0, u.renasceEm - P.t)) + 's', p.x, p.y + 4 * U);
+        continue;
+      }
+      // anel de vida/estado
+      if (u.recallAte && u.recallAte > P.t) { c.strokeStyle = 'rgba(120,200,255,0.9)'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, r + 7, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - (u.recallAte - P.t) / P.regras.campeao.recall.canal)); c.stroke(); }
+      if (u.estado === 'lutando' || u.estado === 'gank') { c.strokeStyle = 'rgba(255,90,70,0.8)'; c.lineWidth = 1.5; c.beginPath(); c.arc(p.x, p.y, r + 4, 0, 7); c.stroke(); }
+      this.desenharIcone(c, u, p.x, p.y, r, cor, false);
+      if (u.escudo > 0 && u.escudoAte > P.t) { c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, r + 2, 0, 7); c.stroke(); }
+      if (u.efeitos.some((e) => e.tipo === 'stun' && e.ate > P.t)) { c.fillStyle = '#ffe14a'; c.font = `bold ${Math.round(13 * U)}px Inter, sans-serif`; c.textAlign = 'center'; c.fillText('✦', p.x, p.y - r - 12 * U); }
+      // barra de vida + recurso e nível
+      this.barra(c, p.x - r, p.y + r + 2, r * 2, 4 * U, u.hp / u.hpMax, u.equipe === 'azul' ? '#4aa3ff' : '#ff6a6a');
+      this.barra(c, p.x - r, p.y + r + 2 + 4.6 * U, r * 2, 2 * U, u.mana / Math.max(1, u.manaMax), '#7aa0ff');
+      c.fillStyle = 'rgba(8,16,36,0.92)'; c.strokeStyle = cor; c.lineWidth = 1.5; c.beginPath(); c.arc(p.x - r + 2, p.y - r + 2, 7 * U, 0, 7); c.fill(); c.stroke();
+      c.fillStyle = '#fff'; c.font = `bold ${Math.round(9 * U)}px Inter, sans-serif`; c.textAlign = 'center'; c.fillText(u.nivel, p.x - r + 2, p.y - r + 2 + 3 * U);
+      if (this.selecionado === u.id) { c.strokeStyle = '#f0cf72'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, r + 9, 0, 7); c.stroke(); }
+    }
+  }
+  desenharIcone(c, u, x, y, r, cor, cinza) {
+    c.save(); c.beginPath(); c.arc(x, y, r, 0, 7); c.clip();
+    const ic = this.icone(u.campeao);
+    if (ic.ok) { c.drawImage(ic.img, x - r, y - r, r * 2, r * 2); if (cinza) { c.fillStyle = 'rgba(40,40,40,0.55)'; c.fillRect(x - r, y - r, r * 2, r * 2); } }
+    else { c.fillStyle = cinza ? '#444' : '#10203d'; c.fillRect(x - r, y - r, r * 2, r * 2); c.fillStyle = '#e6edf7'; c.font = `bold ${Math.round(r * 1.1)}px Inter, sans-serif`; c.textAlign = 'center'; c.fillText((u.campeao || '?')[0], x, y + r * 0.38); }
+    c.restore();
+    c.strokeStyle = cor; c.lineWidth = 2.5; c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke();
+  }
+  projeteis(P, c, U) {
+    for (const p of P.projeteis) { c.fillStyle = p.equipe === 'azul' ? '#9cd0ff' : '#ffb0b0'; c.beginPath(); c.arc(p.x * this.k, p.y * this.k, 3.2 * U, 0, 7); c.fill(); }
+  }
+  efeitosChao(P, c, U) {
+    for (const f of P.fx) {
+      const idade = P.t - f.t;
+      if (f.k === 'hab' && f.tipo === 'area' && idade < f.atraso + 0.4) {
+        const x = f.x * this.k, y = f.y * this.k; const prog = Math.min(1, idade / f.atraso);
+        c.strokeStyle = 'rgba(255,210,90,0.85)'; c.fillStyle = `rgba(255,170,60,${0.10 + 0.14 * prog})`; c.lineWidth = 1.5;
+        c.beginPath(); c.arc(x, y, f.raio * this.k, 0, 7); c.fill(); c.stroke();
+      }
+    }
+  }
+  efeitosAcima(P, c, U) {
+    for (const f of P.fx) {
+      const idade = P.t - f.t;
+      if (f.k === 'ataque' && idade < 0.22 && !f.proj) { const de = P.mapaUnidades.get(f.de), pa = P.mapaUnidades.get(f.para); if (de && pa) { c.strokeStyle = 'rgba(255,255,255,0.85)'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(de.x * this.k, de.y * this.k); c.lineTo(pa.x * this.k, pa.y * this.k); c.stroke(); } }
+      else if (f.k === 'ataque' && f.proj && idade < 0.3) { const de = f.x0 !== undefined ? { x: f.x0, y: f.y0 } : null, pa = P.mapaUnidades.get(f.para); if (de && pa) { const t = Math.min(1, idade / 0.3); const x = (de.x + (pa.x - de.x) * t) * this.k, y = (de.y + (pa.y - de.y) * t) * this.k; c.fillStyle = f.torre ? '#ffd9a0' : '#fff'; c.beginPath(); c.arc(x, y, (f.torre ? 3.2 : 2.2) * U, 0, 7); c.fill(); } }
+      else if (f.k === 'hab' && idade < 0.35 && f.tipo !== 'area') { c.strokeStyle = 'rgba(255,230,140,0.9)'; c.lineWidth = 2; c.beginPath(); c.arc(f.x * this.k, f.y * this.k, (6 + idade * 40) * U, 0, 7); c.stroke(); }
+      else if (f.k === 'dano' && idade < 0.9 && (f.champ || f.v >= 150)) { c.globalAlpha = 1 - idade / 0.9; c.fillStyle = f.hab ? '#ffd24a' : '#ffffff'; c.font = `bold ${Math.round(10 * U)}px Inter, sans-serif`; c.textAlign = 'center'; c.fillText(f.v, f.x * this.k, f.y * this.k - (14 + idade * 26) * U); c.globalAlpha = 1; }
+      else if (f.k === 'destruicao' && idade < 1.4) { const x = f.x * this.k, y = f.y * this.k; c.strokeStyle = `rgba(255,200,90,${1 - idade / 1.4})`; c.lineWidth = 3; c.beginPath(); c.arc(x, y, (10 + idade * 60) * U, 0, 7); c.stroke(); }
+      else if (f.k === 'morte' && idade < 1.2) { const x = f.x * this.k, y = f.y * this.k; c.strokeStyle = `rgba(255,255,255,${1 - idade / 1.2})`; c.lineWidth = 2; c.beginPath(); c.arc(x, y, (8 + idade * 40) * U, 0, 7); c.stroke(); }
+      else if (f.k === 'renasce' && idade < 1.2) { const x = f.x * this.k, y = f.y * this.k; c.strokeStyle = `rgba(120,255,200,${1 - idade / 1.2})`; c.lineWidth = 2; c.beginPath(); c.arc(x, y, (20 - idade * 12) * U, 0, 7); c.stroke(); }
+      else if (f.k === 'cura' && idade < 0.7) { const u2 = P.mapaUnidades.get(f.id); if (u2) { c.globalAlpha = 1 - idade / 0.7; c.fillStyle = '#7dffa0'; c.font = `bold ${Math.round(10 * U)}px Inter, sans-serif`; c.textAlign = 'center'; c.fillText('+' + f.v, u2.x * this.k, u2.y * this.k - (14 + idade * 20) * U); c.globalAlpha = 1; } }
+    }
+  }
+  fimDeJogo(P, c) {
+    c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 0, this.w, this.h);
+  }
+  // Clique no mapa: devolve o campeão mais próximo (para seguir/destacar).
+  campeaoEm(P, px, py) {
+    let melhor = null, md = 28 * this.u;
+    for (const u of P.campeoes) { const p = this.pos(u); const d = Math.hypot(p.x - px, p.y - py); if (d < md) { md = d; melhor = u; } }
+    return melhor;
+  }
+}
