@@ -97,16 +97,16 @@ test('6. unidades em movimento nunca ficam em parede (campeões, minions e monst
 });
 
 // ------------------------------------------------------------------ 7 a 10: minions
-test('7. as ondas aparecem aos 1:05 e a cada 30 segundos, simétricas, sem repetir por quadro', () => {
+test('7. as ondas aparecem aos 0:32 e a cada 30 segundos, simétricas, sem repetir por quadro', () => {
   const P = mk(1);
-  ate(P, 64.9); assert.equal(P.minions.length, 0);
-  ate(P, 72); const m = P.minions;
+  ate(P, 32.4); assert.equal(P.minions.length, 0);
+  ate(P, 40); const m = P.minions;
   assert.equal(m.filter((x) => x.equipe === 'azul').length, 21); assert.equal(m.filter((x) => x.equipe === 'vermelho').length, 21);
   assert.equal(m.filter((x) => x.subtipo === 'cerco').length, 0, 'sem canhão na primeira onda');
   const ondas = () => P.eventos.filter((e) => e.tipo === 'onda');
-  assert.equal(ondas().length, 1); assert.ok(Math.abs(ondas()[0].t - 65) < 0.2);
-  ate(P, 96); assert.equal(ondas().length, 2); assert.ok(Math.abs(ondas()[1].t - 95) < 0.2);
-  ate(P, 160); assert.ok(P.eventos.find((e) => e.tipo === 'onda' && e.numero === 3) && P.minions.some((x) => x.subtipo === 'cerco'), 'canhão a partir da 3ª onda');
+  assert.equal(ondas().length, 1); assert.ok(Math.abs(ondas()[0].t - 32.5) < 0.2);
+  ate(P, 64); assert.equal(ondas().length, 2); assert.ok(Math.abs(ondas()[1].t - 62.5) < 0.2);
+  ate(P, 125); assert.ok(P.eventos.find((e) => e.tipo === 'onda' && e.numero === 3) && P.minions.some((x) => x.subtipo === 'cerco'), 'canhão a partir da 3ª onda');
 });
 test('8. os minions seguem a própria rota, só pisam em rota e base e não cortam a selva', () => {
   const P = mk(1); let fora = 0, total = 0, outraRota = 0;
@@ -437,4 +437,13 @@ test('onda com 7 minions + canhão; abate do suporte conta também para o atirad
   causarDano(Q, sup, inim, 1e9, 'fisico', { basico: true });
   assert.equal(sup.estat.cs, csS + 1, 'o suporte conta o minion'); assert.equal(adc.estat.cs, cs0 + 1, 'o atirador também conta o minion do suporte');
   assert.ok(adc.ouro - ouro0 >= inim.ouro - 1, 'o atirador recebe o ouro do minion');
+});
+
+test('o canhão vale 4 minions na contagem de farm (e para o atirador quando o suporte o abate)', () => {
+  const P = ate(mk(1), 5); const k = P.campeoes.find((c) => c.equipe === 'azul' && c.pos === 'meio');
+  const canhao = criarMinion(P, 'cerco', 'vermelho', 'meio', 100); canhao.x = k.x; canhao.y = k.y; P.minions.push(canhao); P.mapaUnidades.set(canhao.id, canhao);
+  const cs0 = k.estat.cs; causarDano(P, k, canhao, 1e6, 'verdadeiro', { fx: false });
+  assert.equal(k.estat.cs, cs0 + REGRAS.minions.csCanhao); assert.equal(REGRAS.minions.csCanhao, 4);
+  const comum = criarMinion(P, 'corpo', 'vermelho', 'meio', 100); comum.x = k.x; comum.y = k.y; P.minions.push(comum); P.mapaUnidades.set(comum.id, comum);
+  const cs1 = k.estat.cs; causarDano(P, k, comum, 1e6, 'verdadeiro', { fx: false }); assert.equal(k.estat.cs, cs1 + 1);
 });

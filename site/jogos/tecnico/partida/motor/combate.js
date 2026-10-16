@@ -174,12 +174,13 @@ export function matar(P, alvo, fonte) {
     const eqVenc = alvo.equipe === 'azul' ? 'vermelho' : 'azul';
     const k = quemAbateu(fonte) || ultimoGolpeDeRota(P, alvo, fonte);
     const mm = (P.diag.minionsMortos ||= { campeao: 0, minion: 0, estrutura: 0, outro: 0 }); mm[k ? 'campeao' : fonte?.tipo === 'minion' ? 'minion' : fonte?.tipo === 'estrutura' ? 'estrutura' : 'outro']++;
-    if (k) { darOuro(P, k, alvo.ouro); k.estat.cs++; }
+    const pesoCs = alvo.subtipo === 'cerco' ? P.regras.minions.csCanhao : 1; // o canhão vale vários minions na contagem de farm
+    if (k) { darOuro(P, k, alvo.ouro); k.estat.cs += pesoCs; }
     xpDeUnidade(P, eqVenc, alvo.x, alvo.y, alvo.xp, k);
     // minion abatido pelo suporte: ouro, XP e contagem de farm também vão para o atirador da dupla
     if (k && k.pos === 'suporte') {
       const adc = P.campeoes.find((c) => c.equipe === k.equipe && c.pos === 'atirador' && !c.morto && dist(c, alvo) <= P.regras.economia.raioXp);
-      if (adc) { darOuro(P, adc, alvo.ouro); adc.estat.cs++; } // o XP já é dividido entre os aliados perto, o atirador incluído
+      if (adc) { darOuro(P, adc, alvo.ouro); adc.estat.cs += pesoCs; } // o XP já é dividido entre os aliados perto, o atirador incluído
     }
     P.fx.push({ k: 'morte_min', id: alvo.id, t: P.t, x: alvo.x, y: alvo.y });
   } else if (alvo.tipo === 'monstro') {

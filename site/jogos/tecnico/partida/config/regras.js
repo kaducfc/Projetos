@@ -50,7 +50,7 @@ export const REGRAS = {
     // Último golpe de campeão em rota (a chance vem da Mecânica: atributos.mec.farm): tolerância do intervalo de ataque (s), alcance extra
     // e janela de farm na rota (u.), fator de acerto na janela, fator do suporte e fração do intervalo de ataque gasta ao garantir o golpe.
     farm: { tolerancia: 2, raioExtra: 450, raioJanela: 3500, fatorJanela: 0.95, suporte: 0.12, cadencia: 0.45 },
-    primeiraOnda: 65, intervaloOnda: 30, espacamentoSpawn: 0.8,
+    primeiraOnda: 32.5, intervaloOnda: 30, csCanhao: 4, espacamentoSpawn: 0.8, // 1ª onda aos 0:32 (metade da espera original); o canhão conta como 4 minions no farm
     cercoCadaOnda: [[0, 3], [900, 2], [1500, 1]],   // a partir de X segundos, um canhão a cada N ondas
     crescimentoCada: 90, crescimento: { hp: 0.06, dano: 0.04 },
     aquisicao: 800, persistencia: 2.5, ociosoMax: 90,   // segundos parado e sem alvo antes de o minion ser retirado (e contado nos diagnósticos)
