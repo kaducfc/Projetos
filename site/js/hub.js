@@ -365,7 +365,7 @@ async function refresh() {
   carregando = (async () => {
     await platform.init();
     const logado = Boolean(platform.getUser());
-    souAdmin = logado ? await platform.isAdmin().catch(() => false) : false;
+    souAdmin = logado ? await platform.podeJogosEmTeste().catch(() => false) : false;
     const [res, status, dh, rank] = await Promise.all([
       platform.listResults({ limit: 100 }),
       logado ? platform.rankedStatus() : null,

@@ -234,10 +234,11 @@ function quadro(ts) {
   await platform.init();
   const user = platform.getUser();
   const souAdmin = await platform.isAdmin();
+  const convidado = souAdmin || await platform.podeJogosEmTeste();
   const teste = consulta.get('teste') === '1' && (LOCAL || souAdmin); // sala de testes: local ou administrador (não registra nada)
   const aberto = !gameById('tecnico')?.soAdmin;
   if (!teste && !user) return msg('Entre na sua conta para ver a partida.');
-  if (!teste && !souAdmin && !aberto) return msg('Esta área ainda está em desenvolvimento e só administradores têm acesso.');
+  if (!teste && !convidado && !aberto) return msg('Esta área ainda está em desenvolvimento e só administradores têm acesso.');
   await Promise.all([carregarCatalogo(), prepararImagens(), carregarImagemMapa().then((i) => { E.imagem = i; })]);
   const id = Number(consulta.get('id') || 0);
   if (id) E.config = await configOficial(id);

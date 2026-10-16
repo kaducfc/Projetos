@@ -589,10 +589,10 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.modal)
   await platform.init();
   const teste = ['localhost', '127.0.0.1'].includes(location.hostname) && /[?&]teste=1/.test(location.search);
   const user = platform.getUser();
-  const souAdmin = await platform.isAdmin();
+  const souAdmin = await platform.podeJogosEmTeste();
   const aberto = !gameById(GAME_ID)?.soAdmin;
   if (!user && !teste) { telaMensagem('Entre na sua conta', 'O simulador de técnico precisa de uma conta para guardar a sua organização.', null); return; }
-  if (!souAdmin && !teste && !aberto) { telaMensagem('Em desenvolvimento', 'Este jogo ainda está em teste e só administradores conseguem jogar por enquanto.', ['../../', 'Voltar ao início']); return; }
+  if (!souAdmin && !teste && !aberto) { telaMensagem('Em desenvolvimento', 'Este jogo ainda está em teste e só administradores e convidados conseguem jogar por enquanto.', ['../../', 'Voltar ao início']); return; }
   try {
     await api.sincronizar();
     S.meu = await api.meu();

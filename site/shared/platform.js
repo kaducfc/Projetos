@@ -1157,6 +1157,15 @@ export async function isAdmin() {
   return !error && data === true;
 }
 
+// Jogos em teste (`soAdmin`): administradores e contas convidadas (tc_convidados, 0092).
+export async function podeJogosEmTeste() {
+  if (await isAdmin()) return true;
+  const sb = await getClient();
+  if (!sb || !user) return false;
+  const { data, error } = await sb.rpc('tc_tenho_acesso');
+  return !error && data === true;
+}
+
 export async function adminStats(days = 30) {
   const sb = await getClient();
   if (!sb) throw unavailable();
