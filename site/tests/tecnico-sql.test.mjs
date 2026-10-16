@@ -254,12 +254,12 @@ t('maestria: jogar com um campeão soma pontos, vira favorito e dá bônus; nunc
   assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '0');
   for (let i = 0; i < 5; i++) V(`select tc_maestria_registrar(${j}, 'garen', true)`); // 150 pontos
   assert.equal(V(`select favorito from tc_maestria where jogador_id = ${j} and campeao_id = 'garen'`), 't');
-  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '6'); // Maestria 2: +6%
+  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '3'); // Maestria 2: +3%
   for (let i = 0; i < 20; i++) V(`select tc_maestria_registrar(${j}, 'garen', true)`); // 750 pontos
-  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '9');
+  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '6');
   for (const c of ['darius', 'sett', 'teemo', 'nasus', 'malphite', 'ornn', 'renekton']) for (let i = 0; i < 10; i++) V(`select tc_maestria_registrar(${j}, '${c}', false)`); // 150 pontos cada
   assert.equal(V(`select count(*) from tc_maestria where jogador_id = ${j} and favorito`), '5');
-  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '9', 'o mais jogado continua favorito');
+  assert.equal(V(`select tc_bonus_campeao(${j}, 'garen')`), '6', 'o mais jogado continua favorito');
   assert.equal(falha(`update tc_maestria set favorito = true where jogador_id = ${j} and campeao_id = 'teemo' and not favorito returning 1`, 1) !== '', true);
 });
 
