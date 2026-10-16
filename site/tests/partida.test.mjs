@@ -447,3 +447,27 @@ test('o canhão vale 4 minions na contagem de farm (e para o atirador quando o s
   const comum = criarMinion(P, 'corpo', 'vermelho', 'meio', 100); comum.x = k.x; comum.y = k.y; P.minions.push(comum); P.mapaUnidades.set(comum.id, comum);
   const cs1 = k.estat.cs; causarDano(P, k, comum, 1e6, 'verdadeiro', { fx: false }); assert.equal(k.estat.cs, cs1 + 1);
 });
+
+test('picks e bans do amistoso: 10 bans, 10 picks na ordem certa, só campeões da posição, sem repetir; a partida roda com os escolhidos', async () => {
+  const D = await import('../jogos/tecnico/partida/dados/draft.js');
+  assert.equal(D.ORDEM.filter((p) => p.tipo === 'ban').length, 10); assert.equal(D.ORDEM.filter((p) => p.tipo === 'pick').length, 10);
+  const azul = elencoTeste('A', 60, 3), verm = elencoTeste('V', 60, 3);
+  const d = D.novoDraft(catalogo, azul, verm, 3);
+  assert.equal(D.banir(d, 'Zed'), true); assert.equal(D.banir(d, 'Zed'), false, 'não bane duas vezes'); // o 1º passo é do azul; o 2º é do vermelho
+  assert.equal(D.escolher(d, 'Ahri', 'meio'), false, 'ainda é fase de bans');
+  while (!D.terminou(d)) {
+    const p = D.passoAtual(d);
+    if (p.lado === 'azul') { // jogador humano simulado: primeiro campeão válido
+      if (p.tipo === 'ban') D.banir(d, catalogo.find((c) => !D.indisponiveis(d).has(c.nome)).nome);
+      else { const v = D.vagasLivres(d, 'azul')[0]; assert.equal(D.escolher(d, catalogo.find((c) => D.serve(c, v) && !D.indisponiveis(d).has(c.nome)).nome, v), true); }
+    } else D.jogadaIA(d);
+  }
+  const r = D.resultadoDraft(d);
+  assert.equal(r.bans.azul.length, 5); assert.equal(r.bans.vermelho.length, 5);
+  const nomes = [...r.azul, ...r.vermelho].map((j) => j.campeao.nome);
+  assert.equal(new Set([...nomes, ...r.bans.azul, ...r.bans.vermelho]).size, 20, 'ninguém repete e ban não é pick');
+  for (const j of [...r.azul, ...r.vermelho]) assert.ok(D.serve(j.campeao, j.pos), `${j.campeao.nome} em ${j.pos}`);
+  const P = new Partida({ azul: r.azul, vermelho: r.vermelho, semente: 3, catalogo });
+  ate(P, 30);
+  assert.deepEqual(P.campeoes.filter((c) => c.equipe === 'azul').map((c) => c.campeao), r.azul.map((j) => j.campeao.nome));
+});

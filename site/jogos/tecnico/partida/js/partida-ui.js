@@ -11,6 +11,7 @@ import { elencoTeste } from '../dados/elencos-teste.js';
 import { prepararImagens, campIcone } from '../../js/campeoes-img.js';
 import { tempoTexto } from '../motor/eventos.js';
 import { REGRAS } from '../config/regras.js';
+import { abrirDraft } from './draft-ui.js';
 
 const api = platform.tecnico;
 
@@ -46,6 +47,29 @@ async function configOficial(id) {
     nomeAzul: el.azul.org.nome, nomeVermelho: el.vermelho.org.nome, veloc: REGRAS.velocidadePadrao,
     aviso: `Partida oficial · mapa ${el.mapa} de uma série melhor de ${f} · ${el.azul.org.nome} (azul) × ${el.vermelho.org.nome} (vermelho). O resultado não pode ser refeito.`,
     aoFim: (r, acoes) => botaoRegistrar(el, r, acoes),
+  };
+}
+async function configAmistoso(id) {
+  const el = await api.amistosoElencos(id);
+  const jogs = (l) => l.map((j) => ({ id: j.id, nome: j.nome, pos: j.pos, atributos: j.atributos, poder: j.poder, eficiencia: j.eficiencia, favoritos: j.favoritos }));
+  return {
+    modo: 'amistoso', id, mapa: 1, semente: el.semente, versao: el.versao, azul: jogs(el.azul.jogadores), vermelho: jogs(el.vermelho.jogadores),
+    nomeAzul: el.azul.org.nome, nomeVermelho: el.vermelho.org.nome, veloc: REGRAS.velocidadePadrao,
+    aviso: `Amistoso (scrim) · ${el.azul.org.nome} (azul) × ${el.vermelho.org.nome} (vermelho). Não vale pontos de campeonato.`,
+    aoFim: (r, acoes) => botaoRegistrarAmistoso(id, r, acoes),
+  };
+}
+function botaoRegistrarAmistoso(id, r, acoes) {
+  if (!r.vencedor) { acoes.insertAdjacentHTML('afterbegin', '<p style="color:#fca5a5;flex-basis:100%">A partida foi interrompida pela proteção técnica e não pode ser registrada.</p>'); return; }
+  const b = document.createElement('button'); b.className = 'pt-btn ouro'; b.textContent = 'Encerrar amistoso'; acoes.prepend(b);
+  const aviso = document.createElement('p'); aviso.style.cssText = 'flex-basis:100%;margin:0;color:#8fa3bf;font-size:13px'; acoes.append(aviso);
+  b.onclick = async () => {
+    b.disabled = true; aviso.textContent = 'Registrando…';
+    const { eventos, ...enviar } = r;
+    try {
+      const rr = await api.amistosoRegistrar(id, { ...enviar, bans: E.config.bans });
+      aviso.innerHTML = `${rr.exp ? `+${rr.exp_ganho} EXP para os seus titulares. ` : 'Sem EXP neste amistoso (só os primeiros do dia contam). '}<a style="color:#f5cf5a" href="../">Voltar ao simulador</a>`;
+    } catch (e) { aviso.textContent = e.message || 'Não foi possível registrar o amistoso.'; b.disabled = false; }
   };
 }
 function botaoRegistrar(el, r, acoes) {
@@ -102,7 +126,7 @@ function montar() {
     const b = e.target.closest('button'); if (!b) return;
     if (b.id === 'b-play') { if (E.partida.fim) return; const rodando = E.relogio.alternar(); b.textContent = rodando ? '⏸ Pausar' : '▶ Retomar'; }
     else if (b.dataset.v) { E.relogio.definirVelocidade(Number(b.dataset.v)); marcarVelocidade(); }
-    else if (b.id === 'b-reiniciar') { if (E.config.modo !== 'oficial') reiniciar(); }
+    else if (b.id === 'b-reiniciar') { if (E.config.modo === 'teste') reiniciar(); }
     else if (b.id === 'b-fim') irAteOFim();
   });
   const dep = document.getElementById('depur');
@@ -118,7 +142,7 @@ function marcarVelocidade() {
 function selecionar(id) { E.selecionado = id; E.rend.selecionado = id; E.ultPlacar = 0; }
 
 function reiniciar() {
-  if (E.config.modo === 'oficial') return; // partida oficial: o resultado não pode ser refeito
+  if (E.config.modo !== 'teste') return; // partida oficial ou amistoso: o resultado não pode ser refeito
   if (E.config.modo === 'teste') {
     const g = (id, d) => Number(document.getElementById(id)?.value ?? d);
     E.config.pa = g('pa', 60); E.config.pv = g('pv', 60); E.config.semente = g('seed', 1);
@@ -210,7 +234,7 @@ function mostrarResultado() {
     <div id="res-acoes" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="pt-btn" id="r-fechar">Fechar</button><button class="pt-btn ouro" id="r-novo">Jogar de novo</button></div></div>`;
   document.body.appendChild(d);
   d.querySelector('#r-fechar').onclick = () => d.remove();
-  if (E.config.modo === 'oficial') d.querySelector('#r-novo').remove(); else d.querySelector('#r-novo').onclick = () => { d.remove(); reiniciar(); };
+  if (E.config.modo !== 'teste') d.querySelector('#r-novo').remove(); else d.querySelector('#r-novo').onclick = () => { d.remove(); reiniciar(); };
   if (E.config.aoFim) E.config.aoFim(r, d.querySelector('#res-acoes'), d);
   const play = document.getElementById('b-play'); if (play) { play.textContent = '▶ Iniciar'; play.disabled = true; }
 }
@@ -241,7 +265,13 @@ function quadro(ts) {
   if (!teste && !convidado && !aberto) return msg('Esta área ainda está em desenvolvimento e só administradores têm acesso.');
   await Promise.all([carregarCatalogo(), prepararImagens(), carregarImagemMapa().then((i) => { E.imagem = i; })]);
   const id = Number(consulta.get('id') || 0);
-  if (id) E.config = await configOficial(id);
+  const aid = Number(consulta.get('amistoso') || 0);
+  if (aid) {
+    E.config = await configAmistoso(aid);
+    const dr = await abrirDraft({ catalogo: E.catalogo, azul: E.config.azul, vermelho: E.config.vermelho, semente: E.config.semente, nomeAzul: E.config.nomeAzul, nomeVermelho: E.config.nomeVermelho });
+    E.config.azul = dr.azul; E.config.vermelho = dr.vermelho; E.config.bans = dr.bans;
+    E.config.aviso += ` Bans: ${dr.bans.azul.join(', ')} | ${dr.bans.vermelho.join(', ')}.`;
+  } else if (id) E.config = await configOficial(id);
   else { E.config = configTeste(); E.config.aviso = 'Sala de testes da simulação: times sintéticos com o Poder escolhido. Só administradores veem esta área.'; }
   E.partida = novaPartida(E.config);
   E.relogio = new Relogio(E.partida, { velocidade: E.config.veloc });

@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -669,22 +669,41 @@ t('treinamento: poucos simultâneos e experiência encurta a sessão', () => {
   V(`update tc_jogadores set exp = 200 where id = ${js[3]}`); const h1 = Number(V(`select tc_treino_horas(j) from tc_jogadores j where id = ${js[3]}`));
   assert.ok(h1 < h0 && Math.abs(h1 - h0 * 0.7) < 0.01, `${h0} → ${h1}`);
 });
-t('amistoso: não vale campeonato, só os 5 primeiros do dia dão EXP e dá para jogar mais', () => {
+t('amistoso de verdade: abre, devolve escalações e semente, registra o resultado jogado; só os 5 primeiros do dia dão EXP', () => {
   const ops = J("select tc_amistoso_oponentes()", 1); assert.ok(ops.length >= 1 && ops.every((o) => o.id !== 1));
   const op = ops[0].id; const partidas0 = V("select count(*) from tc_partidas");
   V("update tc_jogadores set exp = 0 where org_id = 1");
+  V("update tc_config set valor = jsonb_set(valor, '{ativo}', 'true') where chave = 'gameplay'");
+  const res = (id, venc = 'azul') => JSON.stringify({ semente: Number(V(`select tc_gameplay_semente(${id}, -1)`)), versaoRegras: 1, vencedor: venc, duracao: 1500, equipes: {}, bans: { azul: ['Ahri'], vermelho: ['Zed'] } });
+  const registrar = (id, venc, uid = 1) => J(`select tc_amistoso_registrar(${id}, '${res(id, venc)}'::jsonb)`, uid);
   assert.equal(falha(`select tc_amistoso(${1}, 'chave-ami-x')`, 1), 'oponente_invalido');
   for (let i = 1; i <= 7; i++) {
-    const r = J(`select tc_amistoso(${op}, 'chave-ami-${i}')`, 1);
+    const a = J(`select tc_amistoso(${op}, 'chave-ami-${i}')`, 1); assert.ok(a.id);
+    const el = J(`select tc_amistoso_elencos(${a.id})`, 1);
+    assert.equal(el.azul.jogadores.length, 5); assert.equal(el.vermelho.jogadores.length, 5); assert.equal(el.mapa, 1);
+    assert.equal(falha(`select tc_amistoso_elencos(${a.id})`, 2), 'amistoso_inexistente');
+    if (i === 1) {
+      assert.equal(falha(`select tc_amistoso_registrar(${a.id}, '${res(a.id)}'::jsonb)`, 1), 'amistoso_cedo', 'partida instantânea é recusada');
+      V(`update tc_amistosos set criado = now() - interval '2 minutes' where id = ${a.id}`);
+      assert.equal(falha(`select tc_amistoso_registrar(${a.id}, '${res(a.id).replace(/"semente":\d+/, '"semente":1')}'::jsonb)`, 1), 'semente_invalida');
+      assert.equal(falha(`select tc_amistoso_registrar(${a.id}, '${res(a.id)}'::jsonb)`, 2), 'amistoso_inexistente');
+    }
+    V(`update tc_amistosos set criado = now() - interval '2 minutes' where id = ${a.id}`);
+    const r = registrar(a.id, i % 2 ? 'azul' : 'vermelho');
     assert.equal(r.exp, i <= 5, `amistoso ${i}`); assert.equal(r.feitos_hoje, i);
+    assert.equal(falha(`select tc_amistoso_registrar(${a.id}, '${res(a.id)}'::jsonb)`, 1), 'amistoso_ja_jogado');
   }
   assert.equal(V("select count(*) from tc_partidas"), partidas0, 'amistoso não entra em campeonato');
   assert.equal(V("select max(exp) from tc_jogadores where org_id = 1 and slot is not null"), '10', '5 amistosos x 2 de EXP');
   assert.equal(J(`select tc_amistoso(${op}, 'chave-ami-3')`, 1).ja_feito, true);
-  assert.equal(V("select max(exp) from tc_jogadores where org_id = 1 and slot is not null"), '10', 'repetir o pedido não dá EXP de novo');
   const h = J("select tc_amistosos_historico()", 1); assert.equal(h.feitos_hoje, 7); assert.equal(h.com_exp_restantes, 0);
-  assert.equal(h.lista.filter((x) => x.exp).length, 5);
+  assert.equal(h.lista.filter((x) => x.exp).length, 5); assert.equal(h.lista[0].a, 1); assert.equal(h.lista[1].a, 0);
+  // abrir outro descarta o aberto anterior; só um por vez
+  const x1 = J(`select tc_amistoso(${op}, 'chave-ami-a1')`, 1).id; const x2 = J(`select tc_amistoso(${op}, 'chave-ami-a2')`, 1).id;
+  assert.equal(V(`select count(*) from tc_amistosos where id = ${x1}`), '0'); assert.equal(V(`select estado from tc_amistosos where id = ${x2}`), 'aberto');
+  assert.equal(J("select tc_amistosos_historico()", 1).feitos_hoje, 7, 'aberto não conta');
   V("delete from tc_amistosos");
+  V("update tc_config set valor = jsonb_set(valor, '{ativo}', 'false') where chave = 'gameplay'");
 });
 t('recrutar: baús sorteiam Estrelas, 5 tem desconto, sem saldo nada muda e a garantia entrega épico ou melhor', () => {
   const info = J("select tc_recrutar_info()", 1);

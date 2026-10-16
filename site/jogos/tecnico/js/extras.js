@@ -96,21 +96,11 @@ export function viewAmistoso() {
   }).join('');
   const hist = h.lista.map((x) => `<tr><td>${C.dataCurta ? C.dataCurta(x.dia) : C.esc(x.dia)}</td><td>${C.esc(x.oponente.nome)}</td><td class="n"><b style="color:${x.a > x.b ? 'var(--bom)' : 'var(--ruim)'}">${x.a} × ${x.b}</b></td><td class="n">${x.exp ? `<span class="tc-exp">+${h.exp_ganho} EXP</span>` : '<span class="tc-mudo">sem EXP</span>'}</td></tr>`).join('');
   return `<section class="tc-card"><h3>${C.IMG('i-agenda')}Amistoso<span class="dir">hoje: ${h.feitos_hoje}</span></h3>
-    <p class="tc-mudo tc-peq" style="margin:0">Desafie outro time para um treino de equipe (scrim, melhor de 3). Não vale pontos de campeonato. Você pode jogar quantos quiser por dia, mas só os <b>${h.exp_por_dia} primeiros</b> dão <b>+${h.exp_ganho} EXP</b> para os seus titulares; os demais não contam para nada.</p>
+    <p class="tc-mudo tc-peq" style="margin:0">Desafie outro time para uma partida de treino (scrim) de verdade: picks e bans, depois a simulação com os campeões. Não vale pontos de campeonato. Você pode jogar quantos quiser por dia, mas só os <b>${h.exp_por_dia} primeiros</b> dão <b>+${h.exp_ganho} EXP</b> para os seus titulares; os demais não contam para nada.</p>
     <div class="tc-exp-dia">${Array.from({ length: h.exp_por_dia }, (_, i) => `<i class="${i < h.feitos_hoje ? 'on' : ''}"></i>`).join('')}<span>${h.com_exp_restantes > 0 ? `${h.com_exp_restantes} amistoso(s) com EXP restante(s) hoje` : 'EXP de hoje já foi toda ganha'}</span></div></section>
     <section class="tc-card"><h3>Adversários</h3><div class="tc-oponentes">${ops || '<p class="tc-mudo">Nenhum time disponível.</p>'}</div></section>
     <section class="tc-card"><h3>Seus últimos amistosos</h3>${hist ? `<table class="tc-tabela"><tbody>${hist}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Você ainda não jogou nenhum amistoso.</p>'}</section>`;
 }
-export function modalAmistoso(m) {
-  const r = m.r; const res = r.resultado || {};
-  const ganhou = res.a > res.b;
-  return `<h2>${ganhou ? 'Vitória no amistoso!' : 'Derrota no amistoso'}</h2><p class="tc-mudo tc-peq">${C.esc(C.S.meu.org.nome)} × ${C.esc(r.oponente.nome)} · Poder ${res.poder_a} × ${res.poder_b}</p>
-    <div class="tc-placar"><b style="color:${ganhou ? 'var(--bom)' : 'var(--ruim)'}">${res.a}</b><span>×</span><b>${res.b}</b></div>
-    ${(res.mapas || []).map((x) => `<div class="tc-resumo"><div class="l"><b>Mapa ${x.mapa}</b><span>${x.duracao} min · vitória ${x.vencedor === 'a' ? C.esc(C.S.meu.org.nome) : C.esc(r.oponente.nome)}</span></div><div class="l"><span>Destaque</span><b>${C.esc(x.mvp || '')}</b></div></div>`).join('')}
-    <p class="${r.exp ? 'tc-exp' : 'tc-mudo'}" style="margin:8px 0">${r.exp ? `+${r.exp_ganho} EXP para os seus titulares. Restam ${r.com_exp_restantes} amistoso(s) com EXP hoje.` : 'Este amistoso não deu EXP (só os primeiros do dia contam).'}</p>
-    <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="fechar">Fechar</button></div>`;
-}
-
 // ------------------------------------------------------------------ Recrutar
 export function viewRecrutar() {
   const r = X.recrutar; if (!r) return '<p class="tc-carregando">Carregando…</p>';
@@ -149,10 +139,7 @@ export async function tratarAcao(act, b) {
   }
   if (act === 'amistoso') {
     const r = await C.agir(() => api.amistoso(Number(b.dataset.id), C.novaChave()), { recarregar: false });
-    if (r && r !== true) {
-      C.S.modal = { t: 'amistoso', r };
-      await C.agir(async () => { await C.atualizarMeu(); X.amistoso.hist = await api.amistosoHistorico(); }, { recarregar: false });
-    }
+    if (r && r !== true && r.id) location.href = `partida/?amistoso=${r.id}`; // a partida roda na tela da simulação, depois dos picks e bans
     return true;
   }
   if (act === 'recrutar') {

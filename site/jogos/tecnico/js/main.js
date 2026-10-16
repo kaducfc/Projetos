@@ -11,7 +11,7 @@ import {
 } from './regras.js';
 import { prepararImagens, campIcone } from './campeoes-img.js';
 import { ESCUDOS, escudoSvg, escudoOrg, retratoSvg, iconeVaga } from './art.js';
-import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalAmistoso, modalRecrutar, tratarAcao } from './extras.js';
+import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js';
 
 const GAME_ID = 'tecnico';
 const app = document.getElementById('app');
@@ -384,7 +384,6 @@ function modalHtml() {
   else if (m.t === 'renovar') corpo = renovarHtml(m);
   else if (m.t === 'escalar') corpo = escalarHtml(m);
   else if (m.t === 'partida') corpo = partidaHtml(m);
-  else if (m.t === 'amistoso') corpo = modalAmistoso(m);
   else if (m.t === 'recrutar') corpo = modalRecrutar(m);
   return `<div class="tc-fundo" data-act="fechar-fundo"><div class="tc-modal" role="dialog" aria-modal="true"><button type="button" class="x" data-act="fechar" aria-label="Fechar">×</button>${corpo}</div></div>`;
 }

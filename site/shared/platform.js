@@ -1024,6 +1024,9 @@ const ERROS_TECNICO = {
   oponente_invalido: 'Escolha outro time para o amistoso.',
   elenco_incompleto: 'Você precisa de cinco titulares escalados para jogar um amistoso.',
   oponente_sem_elenco: 'Esse time não está com o elenco completo agora. Escolha outro.',
+  amistoso_inexistente: 'Este amistoso não existe ou não é seu.',
+  amistoso_ja_jogado: 'Este amistoso já foi jogado.',
+  amistoso_cedo: 'Partida encerrada rápido demais para ser registrada. Jogue a partida até o fim.',
   amistoso_limite_dia: 'Limite de amistosos de hoje atingido. Volte amanhã.',
   bau_invalido: 'Baú inválido.',
   quantidade_invalida: 'Quantidade inválida.',
@@ -1129,6 +1132,8 @@ export const tecnico = {
   amistosoOponentes: () => rpcTecnico('tc_amistoso_oponentes'),
   amistosoHistorico: () => rpcTecnico('tc_amistosos_historico'),
   amistoso: (oponente, chave) => rpcTecnico('tc_amistoso', { oponente, chave_: chave }),
+  amistosoElencos: (id) => rpcTecnico('tc_amistoso_elencos', { aid: id }),
+  amistosoRegistrar: (id, resultado) => rpcTecnico('tc_amistoso_registrar', { aid: id, res_: resultado }),
   recrutarInfo: () => rpcTecnico('tc_recrutar_info'),
   recrutar: async (bau, qtd, chave) => {
     const r = await rpcTecnico('tc_recrutar', { bau_: bau, qtd_: qtd, chave_: chave });
