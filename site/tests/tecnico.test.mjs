@@ -11,7 +11,7 @@ import {
 import { escudoSvg, retratoSvg, ESCUDOS } from '../jogos/tecnico/js/art.js';
 
 const ler = (f) => readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8');
-const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql'].map(ler).join('\n');
+const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql'].map(ler).join('\n');
 const j = (o = {}) => ({ id: 1, nome: 'Teste', pos: 'meio', pos2: [], mec: 60, rotas: 60, macro: 60, tf: 60, mental: 60, fama: 50, forma: 50, idade: 22, potencial: 70, ...o });
 
 test('Poder individual: média ponderada dos cinco atributos, sem a Fama, entre 1 e 100', () => {
@@ -45,7 +45,7 @@ test('constantes do navegador batem com a configuração do SQL', () => {
   assert.deepEqual(pesos, PESOS);
   assert.equal(Number(/set valor = '([0-9.]+)'::jsonb where chave = 'fora_posicao'/.exec(sql)[1]), FORA_POSICAO);
   const el = JSON.parse(/\('elenco', '(\{.*?\})'::jsonb\)/.exec(sql)[1]);
-  assert.equal(el.max, ELENCO_MAX);
+  assert.equal(JSON.parse(/chave = 'elenco';/.test(sql) ? /valor \|\| '(\{"max": \d+[^']*\})'::jsonb where chave = 'elenco'/.exec(sql)[1] : '{}').max, ELENCO_MAX);
   assert.equal(el.contrato_min, CONTRATO_MIN);
   assert.equal(el.contrato_max, CONTRATO_MAX);
   assert.equal(Number(/\('taxa_mercado_pct', '(\d+)'::jsonb\)/.exec(sql)[1]), TAXA_MERCADO_PCT);

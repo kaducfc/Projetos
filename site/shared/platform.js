@@ -1073,7 +1073,7 @@ const ERROS_TECNICO = {
   jogador_indisponivel: 'Esse jogador já tem time.',
   jogador_nao_e_seu: 'Esse jogador não é do seu elenco.',
   jogador_titular: 'Tire o jogador da escalação antes de liberá-lo.',
-  elenco_cheio: 'Seu elenco está cheio (máximo de 10 jogadores). Libere alguém antes.',
+  elenco_cheio: 'Seu inventário está cheio (máximo de 50 jogadores). Demita ou venda alguém antes.',
   creditos_insuficientes: 'Você não tem créditos suficientes.',
   saldo_insuficiente: 'Você não tem Rift Coins suficientes.',
   vaga_invalida: 'Posição inválida.',

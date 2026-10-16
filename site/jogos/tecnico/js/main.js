@@ -257,10 +257,14 @@ function partidaLinha(p, proxima = false) {
 function viewElenco() {
   const el = S.meu.elenco || [];
   const tit = el.filter((j) => j.slot); const res = el.filter((j) => !j.slot);
+  const ativos = new Set(S.meu.ativos || []); const reservas = res.filter((j) => ativos.has(j.id)); const guardados = res.filter((j) => !ativos.has(j.id));
   return `<section class="tc-card"><h3>Titulares<span class="dir">${tit.length}/5</span></h3>
       <div class="tc-escala">${VAGAS.map((v) => { const j = tit.find((x) => x.slot === v); return `<div class="vaga"><span class="rot">${NOME_VAGA[v]}</span>${j ? cartao(j, { tit: false }) : '<div class="tc-vazio">Vaga livre</div>'}</div>`; }).join('')}</div></section>
-    <section class="tc-card"><h3>Reserva<span class="dir">${el.length}/${ELENCO_MAX} no elenco</span></h3>
-      ${res.length ? `<div class="tc-jogs">${res.map((j) => cartao(j)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Sem reservas. Contrate jogadores na aba Contratações.</p>'}</section>`;
+    <section class="tc-card"><h3>Reservas<span class="dir">${reservas.length}/${S.meu.reservas_max || 5} · recebem salário</span></h3>
+      ${reservas.length ? `<div class="tc-jogs">${reservas.map((j) => cartao(j)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Sem reservas. Contrate jogadores no Mercado.</p>'}</section>
+    <section class="tc-card"><h3>Inventário<span class="dir">${el.length}/${ELENCO_MAX} jogadores</span></h3>
+      <p class="tc-mudo tc-peq" style="margin:0 0 8px">Guardados sem salário e sem contrato vencendo. As 5 melhores reservas (por Poder) ficam ativas; o resto fica aqui até você precisar. Repetidos de Legado viram cópia e não ocupam espaço.</p>
+      ${guardados.length ? `<div class="tc-jogs">${guardados.map((j) => cartao(j)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Nenhum jogador guardado.</p>'}</section>`;
 }
 
 // ------------------------------------------------------------------ contratações
@@ -415,7 +419,7 @@ function contratarHtml(m) {
     ${seletorSemanas(m.semanas)}
     <div class="tc-resumo"><div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div><div class="l"><span>Salário</span><b>${fmt(sal)} cr./semana</b></div><div class="l"><span>Custo de salários no contrato</span><b>${fmt(total)} cr.</b></div>
       <div class="l"><span>Seus créditos agora</span><b>${fmt(o.creditos)}</b></div><div class="l tot"><span>Créditos depois da contratação</span><b style="color:${falta ? 'var(--ruim)' : 'var(--bom)'}">${fmt(o.creditos - j.preco)}</b></div><div class="l"><span>Elenco</span><b>${(S.meu.elenco || []).length + 1}/${ELENCO_MAX}</b></div></div>
-    ${falta ? '<p style="color:var(--ruim)">Créditos insuficientes.</p>' : ''}${cheio ? '<p style="color:var(--ruim)">Elenco cheio: demita um jogador antes.</p>' : ''}
+    ${falta ? '<p style="color:var(--ruim)">Créditos insuficientes.</p>' : ''}${cheio ? '<p style="color:var(--ruim)">Inventário cheio: demita ou venda um jogador antes.</p>' : ''}
     <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-contratar" ${falta || cheio || S.ocupado ? 'disabled' : ''}>Confirmar contratação</button><button type="button" class="tc-btn" data-act="fechar">Cancelar</button></div>`;
 }
 function comprarHtml(m) {
@@ -424,7 +428,7 @@ function comprarHtml(m) {
   return `<h2>Comprar ${esc(j.nome)}</h2><p class="tc-mudo tc-peq">Vendedor: ${esc(a.vendedor.nome)} (${esc(a.vendedor.sigla)}). A compra usa a sua carteira oficial de Rift Coins e é definitiva.</p>
     <div class="tc-resumo"><div class="l"><span>Preço</span><b class="tc-preco rc">${fmt(a.preco_rc)}</b></div><div class="l"><span>Taxa do mercado (paga pelo vendedor)</span><b>${taxaDe(a.preco_rc)} RC</b></div><div class="l"><span>Salário que passa a ser seu</span><b>${fmt(j.salario)} cr./semana</b></div><div class="l"><span>Contrato restante</span><b>${semanasRestantes(j) ?? '—'} semana(s)</b></div>
       <div class="l"><span>Seus Rift Coins agora</span><b>${fmt(rc)}</b></div><div class="l tot"><span>Depois da compra</span><b style="color:${falta ? 'var(--ruim)' : 'var(--bom)'}">${fmt(rc - a.preco_rc)}</b></div></div>
-    ${falta ? '<p style="color:var(--ruim)">Rift Coins insuficientes.</p>' : ''}${cheio ? '<p style="color:var(--ruim)">Elenco cheio: demita um jogador antes.</p>' : ''}
+    ${falta ? '<p style="color:var(--ruim)">Rift Coins insuficientes.</p>' : ''}${cheio ? '<p style="color:var(--ruim)">Inventário cheio: demita ou venda um jogador antes.</p>' : ''}
     <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-comprar" ${falta || cheio || S.ocupado ? 'disabled' : ''}>Confirmar compra</button><button type="button" class="tc-btn" data-act="fechar">Cancelar</button></div>`;
 }
 function anunciarHtml(m) {

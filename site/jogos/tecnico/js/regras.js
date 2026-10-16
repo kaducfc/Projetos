@@ -15,7 +15,7 @@ export const ATRIBUTOS = [
 // Pesos do Poder (soma 100). Fama não entra no Poder.
 export const PESOS = { mec: 25, rotas: 20, macro: 20, tf: 20, mental: 15 };
 export const FORA_POSICAO = 0.75;
-export const ELENCO_MAX = 10;
+export const ELENCO_MAX = 50;
 export const CONTRATO_MIN = 4;
 export const CONTRATO_MAX = 26;
 export const TAXA_MERCADO_PCT = 5;

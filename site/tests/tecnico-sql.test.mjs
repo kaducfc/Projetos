@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -618,6 +618,8 @@ t('retratos: todo jogador comum tem gênero e retrato existente (≈40% jogadora
   const antes = V("select string_agg(id || retrato, ',' order by id) from tc_jogadores");
   V(readFileSync(new URL('../supabase/migrations/0097_tecnico_retratos.sql', import.meta.url), 'utf8'));
   V(readFileSync(new URL('../supabase/migrations/0099_tecnico_legados_estrelas.sql', import.meta.url), 'utf8'));
+  V(readFileSync(new URL('../supabase/migrations/0100_tecnico_amistoso_real.sql', import.meta.url), 'utf8'));
+  V(readFileSync(new URL('../supabase/migrations/0101_tecnico_inventario.sql', import.meta.url), 'utf8'));
   assert.equal(V("select string_agg(id || retrato, ',' order by id) from tc_jogadores"), antes);
   const novos = J("select to_jsonb(tc_gerar_jogadores(30))"); assert.equal(novos.length, 30);
   const g = J(`select jsonb_agg(retrato || genero) from tc_jogadores where id in (${novos.join(',')})`);
@@ -724,9 +726,13 @@ t('recrutar: baús sorteiam Estrelas, 5 tem desconto, sem saldo nada muda e a ga
   assert.equal(V("select sum(1 + copias) from tc_jogadores where not ficticio and org_id = 1"), '5', 'cada sorteio vira jogador novo ou cópia');
   assert.equal(Number(V("select count(*) from tc_transf where tipo = 'contratacao' and moeda = 'rc' and para_org = 1")), transf0 + Number(V("select count(*) from tc_jogadores where not ficticio and org_id = 1")));
   V("update tc_config set valor = jsonb_set(valor, '{max}', to_jsonb((select count(*) from tc_jogadores where org_id = 1))) where chave = 'elenco'"); // elenco no limite
+  V("create temp table if not exists _rar as select id, raridade from tc_jogadores where false"); // tira do sorteio os Legados que já são seus: o sorteio só pode trazer um novo
+  const donos = V("select string_agg(legado_base::text, ',') from tc_jogadores where org_id = 1 and legado_base is not null");
+  V(`update tc_jogadores set raridade = null where id in (${donos})`);
   assert.equal(falha("select tc_recrutar('basico', 1, 'chave-bau-3')", 1), 'elenco_cheio');
+  V(`update tc_jogadores set raridade = (select raridade from tc_jogadores c where c.legado_base = tc_jogadores.id limit 1) where id in (${donos})`);
   assert.equal(V("select saldo from site_carteira where user_id = '" + U(1) + "'"), '96175', 'elenco cheio: não cobra');
-  V("update tc_config set valor = jsonb_set(valor, '{max}', '10') where chave = 'elenco'");
+  V("update tc_config set valor = jsonb_set(valor, '{max}', '50') where chave = 'elenco'");
   V("delete from tc_jogadores where org_id = 1 and not ficticio"); // devolve os Legados ao catálogo
   const um = J("select tc_recrutar('basico', 1, 'chave-bau-1')", 1);
   assert.equal(um.preco_rc, 300); assert.equal(um.itens.length, 1); assert.equal(um.itens[0].jogador.legado, true);
@@ -794,4 +800,35 @@ t('comum: sobe estrela com fragmentos; demitir (só reserva comum) rende fragmen
   assert.equal(V(`select org_id is null and estrelas = 0 from tc_jogadores where id = ${j}`), 't');
   assert.equal(falha(`select tc_demitir(${j})`, 1), 'jogador_nao_e_seu', 'não demite duas vezes');
   assert.equal(J("select tc_meu()", 1).org.fragmentos, 50 + d.fragmentos_ganhos);
+});
+
+// ---------------------------------------------------------------- inventário (SQL 0101)
+t('inventário: até 50 jogadores; só titulares e as 5 melhores reservas recebem salário; Legado repetido não ocupa espaço', () => {
+  assert.equal(J("select tc_cfg('elenco')->'max'"), 50);
+  V("delete from tc_jogadores where org_id = 1 and slot is null");
+  V("select tc_gerar_jogadores(8, 60, null, 1)");
+  const ativos = J("select jsonb_agg(x) from tc_ativos(1) x");
+  assert.equal(ativos.length, 10, '5 titulares + 5 reservas');
+  const meu = J("select tc_meu()", 1); assert.equal(meu.elenco_max, 50); assert.equal(meu.ativos.length, 10);
+  const salAtivos = Number(V("select coalesce(sum(salario), 0) from tc_jogadores where org_id = 1 and id in (select tc_ativos(1))"));
+  assert.equal(meu.salarios_semana, salAtivos);
+  V("update tc_jogadores set salario = 700 where org_id = 1 and slot is null"); // todas as reservas têm salário
+  const antes = Number(V("select creditos from tc_orgs where id = 1"));
+  V("select tc_fechar_semana_org(1, 1)");
+  const pago = antes - Number(V("select creditos from tc_orgs where id = 1"));
+  assert.equal(pago, Number(V("select coalesce(sum(salario), 0) from tc_jogadores where org_id = 1 and id in (select tc_ativos(1))")), 'inventário não paga salário');
+  // Legado repetido com o inventário cheio: vira cópia; Legado novo é recusado
+  V("update tc_config set valor = jsonb_set(valor, '{max}', to_jsonb((select count(*) from tc_jogadores where org_id = 1))) where chave = 'elenco'");
+  V("update tc_orgs set creditos = creditos where id = 1");
+  V("update site_carteira set saldo = 100000 where user_id = '" + U(1) + "'");
+  assert.equal(falha("select tc_recrutar('basico', 1, 'chave-inv-1')", 1), 'elenco_cheio');
+  V("update tc_config set valor = jsonb_set(valor, '{max}', '50') where chave = 'elenco'");
+  const r = J("select tc_recrutar('basico', 1, 'chave-inv-2')", 1); assert.equal(r.itens[0].repetida, false);
+  V("update tc_config set valor = jsonb_set(valor, '{max}', to_jsonb((select count(*) from tc_jogadores where org_id = 1))) where chave = 'elenco'");
+  // com o inventário cheio, um Legado repetido vira cópia (não ocupa espaço)
+  const base = V("select legado_base from tc_jogadores where org_id = 1 and legado_base is not null limit 1");
+  V(`delete from tc_jogadores where not ficticio and legado_base is null and id <> ${base}`);
+  const rep = J("select tc_recrutar('basico', 1, 'chave-inv-3')", 1);
+  assert.equal(rep.itens[0].repetida, true); assert.equal(rep.itens[0].jogador.copias, 1);
+  V("update tc_config set valor = jsonb_set(valor, '{max}', '50') where chave = 'elenco'");
 });
