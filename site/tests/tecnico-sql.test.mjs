@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -121,13 +121,14 @@ t('Poder: SQL e navegador calculam igual (individual e da equipe)', () => {
 
 t('mercado oficial: reabastece, filtra e nunca devolve atleta com dono', () => {
   const lista = J("select tc_mercado_oficial('{\"pos\":\"meio\",\"poder_min\":40}')", 1);
-  assert.ok(lista.length > 5 && lista.length <= 24);
+  assert.ok(lista.length >= 1 && lista.length <= 24, 'o mercado fica limitado pelos retratos livres');
   assert.ok(lista.every((x) => x.pos === 'meio' || x.pos2.includes('meio')));
   assert.ok(lista.every((x) => x.poder >= 40 && x.org_id === null));
   assert.ok(lista.every((x) => x.potencial != null), 'no mercado oficial o potencial é visível');
   const barato = J("select tc_mercado_oficial('{\"ordem\":\"preco\",\"preco_max\":120000}')", 1);
   assert.ok(barato.every((x) => x.preco <= 120000));
-  assert.ok(Number(V('select count(*) from tc_jogadores where org_id is null')) >= 36 * 5);
+  assert.ok(Number(V("select count(*) from tc_jogadores where org_id is null and ficticio")) >= 5, 'sobrou mercado para jogar');
+  assert.equal(V("select count(*) from tc_jogadores where org_id is null and ficticio and retrato is null"), '0', 'ninguém no mercado sem foto');
 });
 
 t('contratação: com saldo, sem saldo, elenco cheio, contrato inválido e pedido repetido', () => {
@@ -637,30 +638,31 @@ t('legados só pelo baú: créditos recusados, tc_contratar_estrela não existe 
   assert.equal(V("select count(*) from pg_proc where proname = 'tc_contratar_estrela'"), '0');
   const js = J(`select tc_jogador_json(j) from tc_jogadores j where id = ${faker}`); assert.equal(js.legado, true); assert.equal(js.estrelas, 0);
 });
-t('retratos: todo jogador comum tem gênero e retrato existente (≈40% jogadoras); novos jogadores ganham sozinhos e rodar o SQL de novo não troca ninguém', () => {
-  const r = J("select jsonb_agg(jsonb_build_object('g', genero, 'r', retrato, 'n', ficticio)) from tc_jogadores");
+t('retratos: cada foto é de um único jogador fictício; sem foto livre, o mercado encolhe e o sistema usa o avatar; rodar o SQL de novo não troca ninguém', () => {
+  const r = J("select jsonb_agg(jsonb_build_object('g', genero, 'r', retrato, 'n', ficticio, 'sis', (select user_id is null from tc_orgs o where o.id = org_id))) from tc_jogadores");
   const comuns = r.filter((x) => x.n);
-  assert.ok(comuns.length >= 50, 'há jogadores comuns');
-  for (const x of comuns) {
-    assert.ok(x.r && existsSync(new URL(`..${x.r}`, import.meta.url)), `retrato ${x.r}`);
+  assert.ok(comuns.length >= 20, 'há jogadores comuns');
+  const fotos = comuns.filter((x) => x.r);
+  for (const x of fotos) {
+    assert.ok(existsSync(new URL(`..${x.r}`, import.meta.url)), `retrato ${x.r}`);
     assert.match(x.r, x.g === 'F' ? /\/f\d\d\.webp$/ : /\/m\d\d\.webp$/);
   }
-  const fem = comuns.filter((x) => x.g === 'F').length / comuns.length;
-  assert.ok(fem > 0.28 && fem < 0.52, `proporção de jogadoras: ${fem.toFixed(2)}`);
-  const antes = V("select string_agg(id || retrato, ',' order by id) from tc_jogadores");
-  V(readFileSync(new URL('../supabase/migrations/0097_tecnico_retratos.sql', import.meta.url), 'utf8'));
-  V(readFileSync(new URL('../supabase/migrations/0099_tecnico_legados_estrelas.sql', import.meta.url), 'utf8'));
-  V(readFileSync(new URL('../supabase/migrations/0100_tecnico_amistoso_real.sql', import.meta.url), 'utf8'));
-  V(readFileSync(new URL('../supabase/migrations/0101_tecnico_inventario.sql', import.meta.url), 'utf8'));
-  V(readFileSync(new URL('../supabase/migrations/0103_tecnico_demissao_previa.sql', import.meta.url), 'utf8'));
-  V(readFileSync(new URL('../supabase/migrations/0104_tecnico_baus_creditos.sql', import.meta.url), 'utf8'));
-  V(readFileSync(new URL('../supabase/migrations/0105_tecnico_maestria_7.sql', import.meta.url), 'utf8'));
-  V(readFileSync(new URL('../supabase/migrations/0106_tecnico_contratos.sql', import.meta.url), 'utf8'));
-  assert.equal(V("select string_agg(id || retrato, ',' order by id) from tc_jogadores"), antes);
-  const novos = J("select to_jsonb(tc_gerar_jogadores(30))"); assert.equal(novos.length, 30);
-  const g = J(`select jsonb_agg(retrato || genero) from tc_jogadores where id in (${novos.join(',')})`);
-  assert.ok(g.every((s) => /(f\d\dF|m\d\dM)$/.test(s.replace('.webp', ''))), 'retrato combina com o gênero');
-  assert.equal(new Set(J(`select jsonb_agg(retrato) from tc_jogadores where id in (${novos.join(',')})`)).size > 12, true, 'rostos variados');
+  assert.equal(new Set(fotos.map((x) => x.r)).size, fotos.length, 'nenhuma foto repetida');
+  assert.ok(fotos.length <= 60, 'no máximo 60 fotos');
+  assert.ok(fotos.filter((x) => x.g === 'F').length > 0 && fotos.filter((x) => x.g === 'M').length > 0, 'há jogadoras e jogadores');
+  const antes = V("select string_agg(id || coalesce(retrato, '-'), ',' order by id) from tc_jogadores");
+  V(readFileSync(new URL('../supabase/migrations/0107_tecnico_retratos_unicos.sql', import.meta.url), 'utf8'));
+  assert.equal(V("select string_agg(id || coalesce(retrato, '-'), ',' order by id) from tc_jogadores"), antes);
+  // tentar repetir uma foto é recusado pelo banco
+  const dup = Q("update tc_jogadores set retrato = (select retrato from tc_jogadores where ficticio and retrato is not null order by id limit 1) where id = (select id from tc_jogadores where ficticio and retrato is not null order by id desc limit 1)");
+  assert.equal(dup.ok, false);
+  // jogadores novos pegam foto livre, sem repetir, até acabar; depois ficam sem (e o mercado os descarta)
+  const livres = 60 - Number(V("select count(*) from tc_jogadores where ficticio and retrato is not null"));
+  const novos = J("select to_jsonb(tc_gerar_jogadores(70))"); assert.equal(novos.length, 70);
+  const com = J(`select coalesce(jsonb_agg(retrato), '[]'::jsonb) from tc_jogadores where id in (${novos.join(',')}) and retrato is not null`);
+  assert.ok(com.length <= livres && new Set(com).size === com.length, 'sem repetir');
+  V("select tc_reabastecer()");
+  assert.equal(V("select count(*) from tc_jogadores where org_id is null and ficticio and retrato is null"), '0');
   const star = J("select tc_jogador_json(j) from tc_jogadores j where nome = 'Faker'"); assert.equal(star.genero, 'M'); assert.match(star.retrato, /faker\.webp$/);
 });
 
