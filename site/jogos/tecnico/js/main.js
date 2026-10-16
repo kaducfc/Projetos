@@ -270,7 +270,7 @@ function viewContratar() {
   return `<div class="tc-abas"><button type="button" data-act="mercado-aba" data-v="oficial" class="${m.aba === 'oficial' ? 'on' : ''}">Mercado oficial</button><button type="button" data-act="mercado-aba" data-v="usuarios" class="${m.aba === 'usuarios' ? 'on' : ''}">Mercado de usuários</button></div>
     <p class="tc-mudo tc-peq" style="margin:0">${m.aba === 'oficial' ? 'Jogadores do próprio jogo, pagos com créditos de equipe. Os preços são definidos pelo sistema.' : `Anúncios de outros técnicos, pagos com Rift Coins (taxa de ${TAXA_MERCADO_PCT}% descontada do vendedor). Preço fixo.`}</p>
     ${filtrosHtml(m.aba === 'oficial')}
-    ${lista == null ? '<p class="tc-carregando">Carregando…</p>' : lista.length ? `<div class="tc-jogs">${lista.map((x) => m.aba === 'oficial' ? cartao(x, { extra: `<div class="ln"><span>Preço</span><span class="tc-preco cr">${fmt(x.preco)}</span></div>` })
+    ${lista == null ? '<p class="tc-carregando">Carregando…</p>' : lista.length ? `<div class="tc-jogs">${lista.map((x) => m.aba === 'oficial' ? cartao(x, { extra: x.estrela ? `<div class="ln"><span>Preço</span><span class="tc-preco rc">${x.venda_rc && x.preco_rc ? fmt(x.preco_rc) : 'em breve'}</span></div>` : `<div class="ln"><span>Preço</span><span class="tc-preco cr">${fmt(x.preco)}</span></div>` })
       : cartao(x.jogador, { acao: 'ficha-anuncio', dados: `data-anuncio="${x.id}"`, extra: `<div class="ln"><span>${esc(x.vendedor.sigla)}</span><span class="tc-preco rc">${fmt(x.preco_rc)}</span></div>` })).join('')}</div>` : '<div class="tc-vazio">Nenhum jogador encontrado com esses filtros.</div>'}
     ${m.aba === 'usuarios' ? meusAnunciosHtml() : ''}`;
 }
@@ -375,14 +375,15 @@ function fichaHtml(m) {
   const resta = semanasRestantes(j);
   const hist = (j.historico || []).slice(0, 5);
   let acoes = '';
-  if (!j.org_id) acoes = `<button type="button" class="tc-btn ouro" data-act="abrir-contratar" data-id="${j.id}">Contratar</button>`;
+  if (!j.org_id && j.estrela) acoes = j.venda_rc && j.preco_rc ? `<button type="button" class="tc-btn ouro" data-act="abrir-contratar" data-id="${j.id}">Contratar por ${fmt(j.preco_rc)} RC</button>` : '<span class="tc-mudo tc-peq">Jogador Estrela: disponível em breve.</span>';
+  else if (!j.org_id) acoes = `<button type="button" class="tc-btn ouro" data-act="abrir-contratar" data-id="${j.id}">Contratar</button>`;
   else if (meu) acoes = `<button type="button" class="tc-btn ciano" data-act="abrir-escalar" data-id="${j.id}">Escalar</button><button type="button" class="tc-btn" data-act="abrir-renovar" data-id="${j.id}">Renovar contrato</button><button type="button" class="tc-btn" data-act="abrir-anunciar" data-id="${j.id}">Anunciar por RC</button>${j.slot ? '' : `<button type="button" class="tc-btn perigo" data-act="liberar" data-id="${j.id}">Liberar</button>`}`;
   else if (m.anuncio) acoes = `<button type="button" class="tc-btn ouro" data-act="abrir-comprar" data-anuncio="${m.anuncio.id}">Comprar por ${fmt(m.anuncio.preco_rc)} RC</button>`;
   return `<h2>${esc(j.nome)}${j.ficticio === false ? ' <span class="tc-estrela-selo">★ Estrela</span>' : ''}</h2><p class="tc-mudo tc-peq" style="margin:2px 0">${iconeVaga(j.pos)} ${NOME_VAGA[j.pos]}${(j.pos2 || []).length ? ` · também ${j.pos2.map((p) => NOME_VAGA[p]).join(', ')}` : ''} · ${j.idade} anos${j.regiao ? ` · ${esc(j.regiao)}` : ''}${j.ficticio ? ' · jogador fictício' : ''}</p>
     <div class="tc-ficha"><div class="foto">${retratoSvg(j, 200)}</div><div>
       <div class="tc-poder" style="margin-bottom:10px"><div class="grande" style="color:${corPoder(j.poder)}">${j.poder}</div><span class="tc-mudo tc-peq">Poder individual<br>Forma ${j.forma} · Experiência ${j.exp}${j.potencial != null ? `<br>Potencial ${j.potencial}` : ''}</span></div>
       ${barras(j)}</div></div>
-    <div class="tc-resumo"><div class="l"><span>Salário${j.org_id ? '' : ' (se contratado)'}</span><b>${fmt(j.org_id ? j.salario : salarioDe(j.preco))} cr./semana</b></div>${j.org_id ? `<div class="l"><span>Contrato</span><b>${resta == null ? '—' : resta <= 0 ? 'vence nesta semana' : `${resta} semana(s)`}</b></div><div class="l"><span>Organização</span><b>${esc(j.org?.nome || '')}</b></div>` : `<div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div>`}${m.anuncio ? `<div class="l"><span>Anúncio</span><b class="tc-preco rc">${fmt(m.anuncio.preco_rc)}</b></div><div class="l"><span>Vendedor</span><b>${esc(m.anuncio.vendedor.nome)}</b></div><div class="l"><span>Publicado em</span><b>${new Date(m.anuncio.criado).toLocaleDateString('pt-BR')}</b></div>` : ''}</div>
+    <div class="tc-resumo"><div class="l"><span>Salário${j.org_id ? '' : ' (se contratado)'}</span><b>${fmt(j.org_id ? j.salario : salarioDe(j.preco))} cr./semana</b></div>${j.org_id ? `<div class="l"><span>Contrato</span><b>${resta == null ? '—' : resta <= 0 ? 'vence nesta semana' : `${resta} semana(s)`}</b></div><div class="l"><span>Organização</span><b>${esc(j.org?.nome || '')}</b></div>` : j.estrela ? `<div class="l"><span>Preço (Estrela)</span><b class="tc-preco rc">${j.venda_rc && j.preco_rc ? `${fmt(j.preco_rc)} RC` : 'em breve'}</b></div>` : `<div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div>`}${m.anuncio ? `<div class="l"><span>Anúncio</span><b class="tc-preco rc">${fmt(m.anuncio.preco_rc)}</b></div><div class="l"><span>Vendedor</span><b>${esc(m.anuncio.vendedor.nome)}</b></div><div class="l"><span>Publicado em</span><b>${new Date(m.anuncio.criado).toLocaleDateString('pt-BR')}</b></div>` : ''}</div>
     ${(j.campeoes || []).length ? `<h4 class="tc-eyebrow">Campeões</h4><div class="tc-maes">${j.campeoes.map((c) => `<div class="${c.favorito ? 'fav' : ''}">${campIcone(c.nome, 38)}<b>${esc(c.nome)}</b><span>${c.favorito ? '★ ' : ''}${NOME_NIVEL[c.nivel - 1] || ''}${c.favorito && c.bonus_pct ? ` · +${c.bonus_pct}% de Poder` : ''}</span><small>${fmt(c.pontos)} pts · ${c.jogos} jogo(s)</small></div>`).join('')}</div>` : ''}
     ${hist.length ? `<h4 class="tc-eyebrow">Histórico</h4><ul class="tc-avisos">${hist.map((h) => `<li>${new Date(h.criado).toLocaleDateString('pt-BR')} · ${{ inicial: 'Elenco inicial', contratacao: 'Contratado', compra_usuario: 'Vendido entre usuários', renovacao: 'Renovou', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' }[h.tipo] || h.tipo}${h.para ? ` · ${esc(h.para)}` : ''}${h.valor ? ` · ${fmt(h.valor)} ${h.moeda === 'rc' ? 'RC' : 'cr.'}` : ''}</li>`).join('')}</ul>` : ''}
     <div class="tc-acoes">${acoes}</div>`;
@@ -391,6 +392,13 @@ const seletorSemanas = (v, nome = 'semanas') => `<label class="campo"><span clas
 function contratarHtml(m) {
   const j = m.j; const o = S.meu.org; const sal = m.salario; const total = sal * m.semanas;
   const cheio = (S.meu.elenco || []).length >= ELENCO_MAX;
+  if (j.estrela) {
+    return `<h2>Contratar ${esc(j.nome)} <span class="tc-estrela-selo">★ Estrela</span></h2><p class="tc-mudo tc-peq">Jogadores Estrela são contratados com Rift Coins da sua carteira oficial. A compra é definitiva; o salário semanal segue em créditos.</p>
+    ${seletorSemanas(m.semanas)}
+    <div class="tc-resumo"><div class="l"><span>Preço</span><b class="tc-preco rc">${fmt(j.preco_rc)} RC</b></div><div class="l"><span>Salário</span><b>${fmt(sal)} cr./semana</b></div><div class="l"><span>Custo de salários no contrato</span><b>${fmt(total)} cr.</b></div><div class="l"><span>Elenco</span><b>${(S.meu.elenco || []).length + 1}/${ELENCO_MAX}</b></div></div>
+    ${cheio ? '<p style="color:var(--ruim)">Elenco cheio: libere um jogador antes.</p>' : ''}
+    <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-contratar" ${cheio || S.ocupado ? 'disabled' : ''}>Pagar ${fmt(j.preco_rc)} RC e contratar</button><button type="button" class="tc-btn" data-act="fechar">Cancelar</button></div>`;
+  }
   const falta = o.creditos < j.preco;
   return `<h2>Contratar ${esc(j.nome)}</h2><p class="tc-mudo tc-peq">Confirme os valores antes de fechar.</p>
     ${seletorSemanas(m.semanas)}
@@ -516,7 +524,7 @@ document.addEventListener('click', async (e) => {
   if (act === 'abrir-comprar') { S.modal = { t: 'comprar', anuncio: S.modal.anuncio, chave: novaChave() }; render(); return; }
   if (act === 'confirmar-contratar') {
     const m = S.modal;
-    const r = await agir(() => api.contratar(m.j.id, m.semanas, m.chave), { ok: `${m.j.nome} contratado!` });
+    const r = await agir(() => (m.j.estrela ? api.contratarEstrela(m.j.id, m.semanas, m.chave) : api.contratar(m.j.id, m.semanas, m.chave)), { ok: `${m.j.nome} contratado!` });
     if (r) { S.modal = null; render(); }
     return;
   }

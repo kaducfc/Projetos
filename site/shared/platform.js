@@ -1016,6 +1016,9 @@ export const baraoVazio = (id) => rpcBarao('site_barao_vazio', { pid: id });
 // Simulador de técnico (jogo "tecnico"): tudo é decidido no servidor (SQL 0085 a 0089); o navegador só chama funções.
 const ERROS_TECNICO = {
   not_admin: 'Só administradores podem fazer essa alteração.',
+  estrela_so_rc: 'Jogadores Estrela não são contratados com créditos: use Rift Coins.',
+  estrela_venda_fechada: 'A venda de jogadores Estrela por RC está fechada no momento.',
+  nao_e_estrela: 'Este jogador não é uma Estrela.',
   mercado_conta_nova: 'Contas criadas há menos de 7 dias ainda não podem negociar no mercado entre técnicos.',
   mercado_limite_par: 'Limite de negócios entre as mesmas duas organizações nesta semana atingido.',
   mercado_recompra: 'Você vendeu este jogador há pouco tempo e ainda não pode comprá-lo de volta.',
@@ -1097,6 +1100,7 @@ export const tecnico = {
   personalizar: (a) => rpcTecnico('tc_personalizar_org', { escudo_: a.escudo, cor1_: a.cor1, cor2_: a.cor2, estilo_: a.estilo }),
   mercadoOficial: (f) => rpcTecnico('tc_mercado_oficial', { f }),
   contratar: (jogador, semanas, chave) => rpcTecnico('tc_contratar', { jogador, semanas, chave_: chave }),
+  contratarEstrela: (jogador, semanas, chave) => rpcTecnico('tc_contratar_estrela', { jogador, semanas, chave_: chave }), // paga em RC
   escalar: (vaga, jogador) => rpcTecnico('tc_escalar', { vaga, jogador }),
   renovar: (jogador, semanas, chave) => rpcTecnico('tc_renovar', { jogador, semanas, chave_: chave }),
   liberar: (jogador) => rpcTecnico('tc_liberar', { jogador }),

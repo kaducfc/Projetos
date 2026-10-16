@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -591,9 +591,36 @@ t('estrelas: 15 jogadores reais com retrato no mercado oficial; rodar o SQL de n
   assert.deepEqual(est.filter((e) => ['Faker', 'Chovy', 'Zeka'].includes(e.nome)).map((e) => e.pos), ['meio', 'meio', 'meio']);
   const faker = V("select id from tc_jogadores where nome = 'Faker'");
   assert.ok(Number(V(`select tc_preco_jogador(j) from tc_jogadores j where id = ${faker}`)) > 600000, 'Estrela custa mais que o crédito inicial');
-  V(`update tc_jogadores set org_id = 1, contrato_fim = 99, salario = 1234, forma = 70 where id = ${faker}`);
+  V(`select set_config('tc.estrela_liberada', '${faker}', true); update tc_jogadores set org_id = 1, contrato_fim = 99, salario = 1234, forma = 70 where id = ${faker}`);
   V(readFileSync(new URL('../supabase/migrations/0095_tecnico_estrelas.sql', import.meta.url), 'utf8'));
   assert.equal(V(`select org_id || ':' || salario || ':' || forma from tc_jogadores where id = ${faker}`), '1:1234:70');
   assert.equal(V("select count(*) from tc_jogadores where not ficticio"), '15');
   V(`update tc_jogadores set org_id = null, contrato_fim = null, salario = 0, forma = 50 where id = ${faker}`);
+});
+t('estrelas só por RC: créditos recusados, RC cobra uma vez, sem saldo nada muda e a venda pode ser fechada', () => {
+  const faker = V("select id from tc_jogadores where nome = 'Faker'");
+  V("update tc_orgs set creditos = 50000000 where id = 1");
+  assert.equal(falha(`select tc_contratar(${faker}, 8, 'chave-estrela-cr')`, 1), 'estrela_so_rc');
+  assert.equal(V(`select org_id is null from tc_jogadores where id = ${faker}`), 't');
+  // sem RC suficiente
+  V("update site_carteira set saldo = 100 where user_id = '" + U(1) + "'");
+  assert.equal(falha(`select tc_contratar_estrela(${faker}, 8, 'chave-estrela-0')`, 1), 'saldo_insuficiente');
+  assert.equal(V(`select org_id is null from tc_jogadores where id = ${faker}`), 't');
+  // venda fechada
+  V("update tc_config set valor = jsonb_set(valor, '{venda_rc}', 'false') where chave = 'estrelas'");
+  V("update site_carteira set saldo = 20000 where user_id = '" + U(1) + "'");
+  assert.equal(falha(`select tc_contratar_estrela(${faker}, 8, 'chave-estrela-1')`, 1), 'estrela_venda_fechada');
+  V("update tc_config set valor = jsonb_set(valor, '{venda_rc}', 'true') where chave = 'estrelas'");
+  // elenco com vaga
+  V("update tc_jogadores set org_id = null, slot = null, salario = 0, contrato_fim = null where org_id = 1 and slot is null and ficticio");
+  const r = J(`select tc_contratar_estrela(${faker}, 8, 'chave-estrela-2')`, 1);
+  assert.equal(r.preco_rc, 5000);
+  assert.equal(V(`select org_id from tc_jogadores where id = ${faker}`), '1');
+  assert.equal(V("select saldo from site_carteira where user_id = '" + U(1) + "'"), '15000');
+  assert.equal(J(`select tc_contratar_estrela(${faker}, 8, 'chave-estrela-2')`, 1).ja_feito, true);
+  assert.equal(V("select saldo from site_carteira where user_id = '" + U(1) + "'"), '15000', 'repetir o pedido não cobra de novo');
+  assert.equal(falha(`select tc_contratar_estrela((select id from tc_jogadores where ficticio and org_id is null limit 1), 8, 'chave-estrela-3')`, 1), 'nao_e_estrela');
+  const js = J(`select tc_jogador_json(j) from tc_jogadores j where id = ${faker}`); assert.equal(js.estrela, true); assert.equal(js.preco_rc, 5000);
+  V(`update tc_jogadores set org_id = null, slot = null, salario = 0, contrato_fim = null where id = ${faker}`);
+  assert.equal(falha(`select tc_contratar(${faker}, 8, 'chave-estrela-4')`, 1), 'estrela_so_rc', 'depois de liberada, volta a só sair por RC');
 });
