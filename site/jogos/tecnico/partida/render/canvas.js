@@ -22,10 +22,13 @@ export class Renderizador {
     this.u = Math.max(0.55, Math.min(1.25, largura / 1000)); // fator de tamanho dos ícones
   }
   vista() { return { largura: this.w, altura: this.h }; }
+  // Ícone do campeão (Data Dragon). Só desenha a imagem de um quadro em que ela já carregou; se o endereço ainda
+  // não existe ou a imagem falhou, tenta de novo depois de alguns segundos em vez de ficar para sempre com a inicial.
   icone(nome) {
-    let e = this.icones.get(nome); if (e) return e;
-    const u = campUrl(nome); e = { img: null, ok: false };
-    if (u) { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => { e.ok = true; }; im.src = u; e.img = im; }
+    let e = this.icones.get(nome); const agora = Date.now();
+    if (e && (e.ok || (e.img && !e.falhou) || agora - e.tentou < 5000)) return e;
+    const u = campUrl(nome); e = { img: null, ok: false, falhou: false, tentou: agora };
+    if (u && typeof Image === 'function') { const im = new Image(); im.onload = () => { e.ok = true; }; im.onerror = () => { e.falhou = true; }; im.src = u; e.img = im; }
     this.icones.set(nome, e); return e;
   }
   // Miniaturas das estruturas e monstros (img/*.webp). Sem imagem carregada, volta ao desenho geométrico.

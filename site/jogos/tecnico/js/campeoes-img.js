@@ -19,7 +19,7 @@ async function lerVersao() {
 export async function prepararImagens() {
   if (versao && arquivo.size) return;
   try {
-    const [v, d] = await Promise.all([lerVersao(), fetch('../campeao/dados/campeoes.json').then((r) => r.json())]);
+    const [v, d] = await Promise.all([lerVersao(), fetch(new URL('../../campeao/dados/campeoes.json', import.meta.url)).then((r) => r.json())]);
     versao = v;
     d.campeoes.forEach((c) => arquivo.set(c.nome, c.img));
   } catch { /* fica com a inicial */ }
