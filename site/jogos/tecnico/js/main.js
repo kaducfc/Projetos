@@ -6,7 +6,7 @@ import { mountSiteBar } from '../../../shared/account.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import {
-  VAGAS, NOME_VAGA, SIGLA_VAGA, FAVORITOS_MAX, nomeMaestria, ATRIBUTOS, ELENCO_MAX, CONTRATO_MIN, CONTRATO_MAX, PRECO_RC, TAXA_MERCADO_PCT,
+  VAGAS, NOME_VAGA, SIGLA_VAGA, FAVORITOS_MAX, nomeMaestria, ATRIBUTOS, ELENCO_MAX, PRECO_RC, TAXA_MERCADO_PCT,
   fmt, esc, corPoder, escudoPoder, taxaDe, salarioDe, FORA_POSICAO,
 } from './regras.js';
 import { prepararImagens, campIcone } from './campeoes-img.js';
@@ -209,12 +209,12 @@ function viewVisao() {
     <section class="tc-card tc-eco"><h3>${IMG('i-bau')}Sua economia</h3>
       <div class="duo"><div class="bx ouro"><img src="../../shared/assets/moeda/rc-96.webp" srcset="../../shared/assets/moeda/rc-192.webp 2x" alt="" width="44" height="44" /><small>Rift Coins</small><b>${fmt(m.rc)}</b></div>
       <div class="bx azul"><img src="img/gema.webp" alt="" width="30" height="40" /><small>Créditos de equipe</small><b>${fmt(m.org.creditos)}</b></div></div>
-      <p class="tc-mudo tc-peq" style="margin:10px 0 0;text-align:center">Salários: ${fmt(m.salarios_semana)} créditos por semana · Fragmentos de jogador: ${fmt(S.meu.org.fragmentos || 0)}</p></section>
+      <p class="tc-mudo tc-peq" style="margin:10px 0 0;text-align:center">Contratos em vigor: ${fmt(m.salarios_semana)} cr./semana (já pagos) · Fragmentos de jogador: ${fmt(S.meu.org.fragmentos || 0)}</p></section>
   </div>
   <section class="tc-card"><h3>Poder da equipe<span class="dir">Semana ${((m.semana % 4) + 4) % 4 + 1}</span></h3>
       <div class="tc-poder"><div class="grande">${m.poder}</div><div style="flex:1"><div class="tc-barra"><i style="width:${m.poder}%"></i></div>
         <p class="tc-mudo tc-peq" style="margin:8px 0 0">Média do Poder dos titulares na posição em que jogam, mais a sinergia (${m.org.sinergia}/100). ${m.completo ? '' : '<b style="color:#fbbf24">Faltam titulares.</b>'}</p></div></div></section>
-  <section class="tc-card"><h3>Escalação titular<span class="dir">${fmt(m.salarios_semana)} créditos de salários por semana</span></h3>
+  <section class="tc-card"><h3>Escalação titular<span class="dir">${fmt(m.salarios_semana)} cr./semana em contratos (pagos adiantado)</span></h3>
     <div class="tc-escala">${VAGAS.map((v) => `<div class="vaga"><span class="rot">${NOME_VAGA[v]}</span>${tit[v] ? cartao(tit[v], { tit: false }) : `<div class="tc-vazio">Vaga livre<br><button type="button" class="tc-btn peq" data-act="aba" data-aba="elenco" style="margin-top:8px">Escalar</button></div>`}</div>`).join('')}</div></section>
   <div class="tc-grade2">
     <section class="tc-card"><h3>Classificação${liga ? ` · ${esc(liga.nome)}` : ''}</h3>${liga ? tabelaHtml(liga.tabela, m.org.id, true) : '<p class="tc-mudo">Sua equipe entra na liga da próxima semana. Enquanto isso, monte o elenco e use o mercado.</p>'}</section>
@@ -229,7 +229,7 @@ function viewVisao() {
 
 function financasHtml(f) {
   if (!f || !f.length) return '<p class="tc-mudo" style="margin:0">Sem movimentações ainda.</p>';
-  const nomes = { inicial: 'Créditos iniciais', contratacao: 'Contratação', renovacao: 'Renovação', salarios: 'Salários da semana', premiacao: 'Premiação' };
+  const nomes = { inicial: 'Créditos iniciais', contratacao: 'Contratação', renovacao: 'Contrato', salarios: 'Salários da semana', premiacao: 'Premiação' };
   return `<table class="tc-tabela"><tbody>${f.map((x) => `<tr><td>${nomes[x.motivo] || esc(x.motivo)}</td><td class="n" style="color:${x.delta >= 0 ? 'var(--bom)' : 'var(--ruim)'}">${x.delta >= 0 ? '+' : '−'}${fmt(Math.abs(x.delta))}</td></tr>`).join('')}</tbody></table>`;
 }
 
@@ -260,10 +260,10 @@ function viewElenco() {
   const ativos = new Set(S.meu.ativos || []); const reservas = res.filter((j) => ativos.has(j.id)); const guardados = res.filter((j) => !ativos.has(j.id));
   return `<section class="tc-card"><h3>Titulares<span class="dir">${tit.length}/5</span></h3>
       <div class="tc-escala">${VAGAS.map((v) => { const j = tit.find((x) => x.slot === v); return `<div class="vaga"><span class="rot">${NOME_VAGA[v]}</span>${j ? cartao(j, { tit: false }) : '<div class="tc-vazio">Vaga livre</div>'}</div>`; }).join('')}</div></section>
-    <section class="tc-card"><h3>Reservas<span class="dir">${reservas.length}/${S.meu.reservas_max || 5} · recebem salário</span></h3>
+    <section class="tc-card"><h3>Reservas<span class="dir">${reservas.length}/${S.meu.reservas_max || 5} </span></h3>
       ${reservas.length ? `<div class="tc-jogs">${reservas.map((j) => cartao(j)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Sem reservas. Contrate jogadores no Mercado.</p>'}</section>
     <section class="tc-card"><h3>Inventário<span class="dir">${el.length}/${ELENCO_MAX} jogadores</span></h3>
-      <p class="tc-mudo tc-peq" style="margin:0 0 8px">Guardados sem salário e sem contrato vencendo. As 5 melhores reservas (por Poder) ficam ativas; o resto fica aqui até você precisar. Repetidos de Legado viram cópia e não ocupam espaço.</p>
+      <p class="tc-mudo tc-peq" style="margin:0 0 8px">Jogadores guardados para quando você precisar. As 5 melhores reservas (por Poder) ficam à mostra; o resto fica aqui. Repetidos de Legado viram cópia e não ocupam espaço.</p>
       ${guardados.length ? `<div class="tc-jogs">${guardados.map((j) => cartao(j)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Nenhum jogador guardado.</p>'}</section>`;
 }
 
@@ -385,7 +385,8 @@ function modalHtml() {
   else if (m.t === 'contratar') corpo = contratarHtml(m);
   else if (m.t === 'comprar') corpo = comprarHtml(m);
   else if (m.t === 'anunciar') corpo = anunciarHtml(m);
-  else if (m.t === 'renovar') corpo = renovarHtml(m);
+  else if (m.t === 'contrato') corpo = contratoHtml(m);
+  else if (m.t === 'encerrar') corpo = encerrarHtml(m);
   else if (m.t === 'escalar') corpo = escalarHtml(m);
   else if (m.t === 'partida') corpo = partidaHtml(m);
   else if (m.t === 'recrutar') corpo = modalRecrutar(m);
@@ -402,7 +403,7 @@ function demitirHtml(m) {
     <div class="tc-ficha" style="grid-template-columns:110px 1fr;align-items:center"><div class="foto">${retratoSvg(j, 110)}</div><div>
       <p class="tc-mudo tc-peq" style="margin:0 0 6px">O que acontece ao demitir:</p><ul class="tc-lista-ul">${perdas.map((x) => `<li>${x}</li>`).join('')}</ul></div></div>
     <div class="tc-resumo"><div class="l"><span>Você recebe</span><b class="tc-frag">◈ +${fmt(ganho)} fragmentos de jogador</b></div>
-      <div class="l"><span>Seus fragmentos</span><b>${fmt(atual)} → ${fmt(atual + ganho)}</b></div></div>
+      <div class="l"><span>Seus fragmentos</span><b>${fmt(atual)} → ${fmt(atual + ganho)}</b></div>${j.reembolso_contrato > 0 ? `<div class="l"><span>Contrato não usado (50%)</span><b class="tc-preco cr">+${fmt(j.reembolso_contrato)} cr.</b></div>` : ''}</div>
     <p class="tc-mudo tc-peq">Fragmentos servem para evoluir as estrelas dos seus jogadores comuns.</p>
     <div class="tc-acoes"><button type="button" class="tc-btn perigo" data-act="confirmar-demitir" ${S.ocupado ? 'disabled' : ''}>Demitir e receber ${fmt(ganho)} ◈</button><button type="button" class="tc-btn" data-act="voltar-ficha">Cancelar</button></div>`;
 }
@@ -413,29 +414,29 @@ function fichaHtml(m) {
   let acoes = '';
   if (!j.org_id && j.legado) acoes = '<span class="tc-mudo tc-peq">Jogador Legado: só sai dos baús de Recrutar.</span>';
   else if (!j.org_id) acoes = (S.meu.elenco || []).length >= ELENCO_MAX ? '<span class="tc-mudo tc-peq">Inventário cheio: demita ou venda alguém para contratar.</span>' : `<button type="button" class="tc-btn ouro" data-act="abrir-contratar" data-id="${j.id}">Contratar</button>`;
-  else if (meu) acoes = `<button type="button" class="tc-btn ciano" data-act="abrir-escalar" data-id="${j.id}">Escalar</button>${j.legado ? '' : `<button type="button" class="tc-btn" data-act="abrir-renovar" data-id="${j.id}">Renovar contrato</button><button type="button" class="tc-btn" data-act="abrir-anunciar" data-id="${j.id}">Anunciar por RC</button>`}${j.estrelas < j.estrela_max ? `<button type="button" class="tc-btn ouro" data-act="subir-estrela" data-id="${j.id}" ${S.ocupado ? 'disabled' : ''}>Evoluir ★ (${j.legado ? `${j.estrela_custo} cópia(s)` : `${fmt(j.estrela_custo)} fragmentos`})</button>` : ''}${j.slot ? '' : `<button type="button" class="tc-btn perigo" data-act="demitir" data-id="${j.id}">Demitir</button>`}`;
+  else if (meu) {
+    const cheioContrato = !j.contrato_ativo || (j.contrato_restante || 0) <= 1;
+    acoes = `<button type="button" class="tc-btn ciano" data-act="abrir-escalar" data-id="${j.id}">Escalar</button>${cheioContrato ? `<button type="button" class="tc-btn" data-act="abrir-contrato" data-id="${j.id}">${j.contrato_ativo ? 'Renovar contrato' : 'Efetivar contrato'}</button>` : ''}${j.contrato_ativo ? `<button type="button" class="tc-btn" data-act="abrir-encerrar" data-id="${j.id}">Encerrar contrato</button>` : ''}${j.legado || j.contrato_ativo ? '' : `<button type="button" class="tc-btn" data-act="abrir-anunciar" data-id="${j.id}">Anunciar por RC</button>`}${j.estrelas < j.estrela_max ? `<button type="button" class="tc-btn ouro" data-act="subir-estrela" data-id="${j.id}" ${S.ocupado ? 'disabled' : ''}>Evoluir ★ (${j.legado ? `${j.estrela_custo} cópia(s)` : `${fmt(j.estrela_custo)} fragmentos`})</button>` : ''}${j.slot ? '' : `<button type="button" class="tc-btn perigo" data-act="demitir" data-id="${j.id}">Demitir</button>`}`;
+  }
   else if (m.anuncio) acoes = (S.meu.elenco || []).length >= ELENCO_MAX ? '<span class="tc-mudo tc-peq">Inventário cheio: demita ou venda alguém para comprar.</span>' : `<button type="button" class="tc-btn ouro" data-act="abrir-comprar" data-anuncio="${m.anuncio.id}">Comprar por ${fmt(m.anuncio.preco_rc)} RC</button>`;
   return `<h2>${esc(j.nome)}${j.ficticio === false ? ' <span class="tc-estrela-selo">◆ Legado</span>' : ''}</h2><p class="tc-mudo tc-peq" style="margin:2px 0">${iconeVaga(j.pos)} ${NOME_VAGA[j.pos]}${(j.pos2 || []).length ? ` · também ${j.pos2.map((p) => NOME_VAGA[p]).join(', ')}` : ''} · ${j.idade} anos${j.regiao ? ` · ${esc(j.regiao)}` : ''}${j.ficticio ? '' : ' · jogador legado'}</p>
     <div class="tc-ficha"><div class="foto">${retratoSvg(j, 200)}</div><div>
       <div class="tc-poder" style="margin-bottom:10px">${escudoHtml(j.poder, true)}<span class="tc-mudo tc-peq">Poder individual<br>Forma ${j.forma} · Experiência ${j.exp}${j.potencial != null ? `<br>Potencial ${j.potencial}` : ''}</span></div>
       ${barras(j)}</div></div>
     ${j.org_id ? `<div class="tc-resumo"><div class="l"><span>Estrelas</span><b>${estrelasHtml(j)} <small>+${j.bonus_estrelas_pct || 0}% de eficiência</small></b></div>${j.legado ? `<div class="l"><span>Cópias repetidas</span><b>${j.copias}</b></div>` : `<div class="l"><span>Seus fragmentos</span><b>${fmt(S.meu.org.fragmentos || 0)}</b></div>`}</div>` : ''}
-    <div class="tc-resumo"><div class="l"><span>Salário${j.org_id ? '' : ' (se contratado)'}</span><b>${fmt(j.org_id ? j.salario : salarioDe(j.preco))} cr./semana</b></div>${j.org_id ? `<div class="l"><span>Contrato</span><b>${resta == null ? '—' : resta <= 0 ? 'vence nesta semana' : `${resta} semana(s)`}</b></div><div class="l"><span>Organização</span><b>${esc(j.org?.nome || '')}</b></div>` : j.legado ? '<div class="l"><span>Obtenção</span><b>Baús de Recrutar</b></div>' : `<div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div>`}${m.anuncio ? `<div class="l"><span>Anúncio</span><b class="tc-preco rc">${fmt(m.anuncio.preco_rc)}</b></div><div class="l"><span>Vendedor</span><b>${esc(m.anuncio.vendedor.nome)}</b></div><div class="l"><span>Publicado em</span><b>${new Date(m.anuncio.criado).toLocaleDateString('pt-BR')}</b></div>` : ''}</div>
+    <div class="tc-resumo"><div class="l"><span>Salário${j.org_id ? '' : ' (se contratado)'}</span><b>${fmt(j.org_id ? j.salario : salarioDe(j.preco))} cr./semana</b></div>${j.org_id ? `<div class="l"><span>Contrato</span><b>${j.contrato_ativo ? `${j.contrato_restante} semana(s) · já pago` : 'Sem contrato'}</b></div><div class="l"><span>Organização</span><b>${esc(j.org?.nome || '')}</b></div>` : j.legado ? '<div class="l"><span>Obtenção</span><b>Baús de Recrutar</b></div>' : `<div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div>`}${m.anuncio ? `<div class="l"><span>Anúncio</span><b class="tc-preco rc">${fmt(m.anuncio.preco_rc)}</b></div><div class="l"><span>Vendedor</span><b>${esc(m.anuncio.vendedor.nome)}</b></div><div class="l"><span>Publicado em</span><b>${new Date(m.anuncio.criado).toLocaleDateString('pt-BR')}</b></div>` : ''}</div>
     ${(j.campeoes || []).length ? `<h4 class="tc-eyebrow">Campeões</h4><div class="tc-maes">${j.campeoes.map((c) => `<div class="${c.favorito ? 'fav' : ''}">${campIcone(c.nome, 38)}<b>${esc(c.nome)}</b><span>${c.favorito ? '★ ' : ''}${nomeMaestria(c.nivel)}${c.favorito && c.bonus_pct ? ` · +${c.bonus_pct}% de Poder` : ''}</span><small>${fmt(c.pontos)} pts · ${c.jogos} jogo(s)</small></div>`).join('')}</div>` : ''}
-    ${hist.length ? `<h4 class="tc-eyebrow">Histórico</h4><ul class="tc-avisos">${hist.map((h) => `<li>${new Date(h.criado).toLocaleDateString('pt-BR')} · ${{ inicial: 'Elenco inicial', contratacao: 'Contratado', compra_usuario: 'Vendido entre usuários', renovacao: 'Renovou', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' }[h.tipo] || h.tipo}${h.para ? ` · ${esc(h.para)}` : ''}${h.valor ? ` · ${fmt(h.valor)} ${h.moeda === 'rc' ? 'RC' : 'cr.'}` : ''}</li>`).join('')}</ul>` : ''}
+    ${hist.length ? `<h4 class="tc-eyebrow">Histórico</h4><ul class="tc-avisos">${hist.map((h) => `<li>${new Date(h.criado).toLocaleDateString('pt-BR')} · ${{ inicial: 'Elenco inicial', contratacao: 'Contratado', compra_usuario: 'Vendido entre usuários', renovacao: 'Contrato efetivado', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' }[h.tipo] || h.tipo}${h.para ? ` · ${esc(h.para)}` : ''}${h.valor ? ` · ${fmt(h.valor)} ${h.moeda === 'rc' ? 'RC' : 'cr.'}` : ''}</li>`).join('')}</ul>` : ''}
     <div class="tc-acoes">${acoes}</div>`;
 }
-const seletorSemanas = (v, nome = 'semanas') => `<label class="campo"><span class="tc-mudo tc-peq">Duração do contrato (semanas)</span><input class="tc-input" type="number" name="${nome}" min="${CONTRATO_MIN}" max="${CONTRATO_MAX}" value="${v}" data-act="semanas" /></label>`;
 function contratarHtml(m) {
-  const j = m.j; const o = S.meu.org; const sal = m.salario; const total = sal * m.semanas;
+  const j = m.j; const o = S.meu.org;
   const cheio = (S.meu.elenco || []).length >= ELENCO_MAX;
   const falta = o.creditos < j.preco;
-  return `<h2>Contratar ${esc(j.nome)}</h2><p class="tc-mudo tc-peq">Confirme os valores antes de fechar.</p>
-    ${seletorSemanas(m.semanas)}
-    <div class="tc-resumo"><div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div><div class="l"><span>Salário</span><b>${fmt(sal)} cr./semana</b></div><div class="l"><span>Custo de salários no contrato</span><b>${fmt(total)} cr.</b></div>
-      <div class="l"><span>Seus créditos agora</span><b>${fmt(o.creditos)}</b></div><div class="l tot"><span>Créditos depois da contratação</span><b style="color:${falta ? 'var(--ruim)' : 'var(--bom)'}">${fmt(o.creditos - j.preco)}</b></div><div class="l"><span>Elenco</span><b>${(S.meu.elenco || []).length + 1}/${ELENCO_MAX}</b></div></div>
+  return `<h2>Contratar ${esc(j.nome)}</h2><p class="tc-mudo tc-peq">Ele vai para o seu inventário. Para escalá-lo como titular você efetiva um contrato (1 semana ou 1 temporada) com salário em créditos.</p>
+    <div class="tc-resumo"><div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div><div class="l"><span>Salário base</span><b>${fmt(salarioDe(j.preco))} cr./semana de contrato</b></div><div class="l"><span>Seus créditos agora</span><b>${fmt(o.creditos)}</b></div><div class="l tot"><span>Créditos depois da contratação</span><b style="color:${falta ? 'var(--ruim)' : 'var(--bom)'}">${fmt(o.creditos - j.preco)}</b></div></div>
     ${falta ? '<p style="color:var(--ruim)">Créditos insuficientes.</p>' : ''}${cheio ? '<p style="color:var(--ruim)">Inventário cheio: demita ou venda um jogador antes.</p>' : ''}
-    <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-contratar" ${falta || cheio || S.ocupado ? 'disabled' : ''}>Confirmar contratação</button><button type="button" class="tc-btn" data-act="fechar">Cancelar</button></div>`;
+    <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-contratar" ${falta || cheio || S.ocupado ? 'disabled' : ''}>Contratar</button><button type="button" class="tc-btn" data-act="fechar">Cancelar</button></div>`;
 }
 function comprarHtml(m) {
   const a = m.anuncio; const j = a.jogador; const rc = S.meu.rc; const falta = rc < a.preco_rc;
@@ -454,11 +455,25 @@ function anunciarHtml(m) {
     ${j.slot ? '<p style="color:#fbbf24" class="tc-peq">Esse jogador é titular. Se ele for vendido, a vaga é preenchida por um reserva ou por um substituto fraco.</p>' : ''}
     <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-anunciar" ${preco < PRECO_RC.min || preco > PRECO_RC.max || S.ocupado ? 'disabled' : ''}>Publicar anúncio</button><button type="button" class="tc-btn" data-act="fechar">Cancelar</button></div>`;
 }
-function renovarHtml(m) {
-  const j = m.j; const custo = Math.floor((m.salario * m.semanas) / 2); const falta = S.meu.org.creditos < custo;
-  return `<h2>Renovar ${esc(j.nome)}</h2><p class="tc-mudo tc-peq">O contrato novo soma à duração atual. O custo é metade dos salários do período.</p>${seletorSemanas(m.semanas)}
-    <div class="tc-resumo"><div class="l"><span>Salário</span><b>${fmt(m.salario)} cr./semana</b></div><div class="l"><span>Custo da renovação</span><b class="tc-preco cr">${fmt(custo)}</b></div><div class="l tot"><span>Créditos depois</span><b style="color:${falta ? 'var(--ruim)' : 'var(--bom)'}">${fmt(S.meu.org.creditos - custo)}</b></div></div>
-    <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-renovar" ${falta || S.ocupado ? 'disabled' : ''}>Renovar</button><button type="button" class="tc-btn" data-act="fechar">Cancelar</button></div>`;
+const NOME_CONTRATO = (n) => (n === 1 ? '1 semana' : n === 4 ? '1 temporada (4 semanas)' : `${n} semanas`);
+function contratoHtml(m) {
+  const j = m.j; const o = S.meu.org; const op = (j.contrato_opcoes || []).find((x) => x.semanas === m.semanas) || (j.contrato_opcoes || [])[0];
+  if (!op) return '<p>Contrato indisponível.</p>';
+  const falta = o.creditos < op.preco;
+  return `<h2>Efetivar contrato · ${esc(j.nome)}</h2>
+    <p class="tc-mudo tc-peq">${m.vaga ? `Para escalar ${esc(j.nome)} como titular (${NOME_VAGA[m.vaga]}) é preciso um contrato.` : 'Escolha a duração do contrato.'} O valor é pago adiantado, em créditos. Se encerrar antes do fim, você recebe de volta 50% do que ainda não foi jogado.</p>
+    <div class="tc-lista">${j.contrato_opcoes.map((x) => `<button type="button" class="tc-partida tc-contrato-op ${x.semanas === op.semanas ? 'on' : ''}" style="grid-template-columns:1fr auto" data-act="contrato-opcao" data-sem="${x.semanas}"><span class="time">${NOME_CONTRATO(x.semanas)}${x.desconto_pct ? ` <i class="tc-desc">-${x.desconto_pct}%</i>` : ''}</span><span class="tc-preco cr">${fmt(x.preco)} cr.</span></button>`).join('')}</div>
+    <div class="tc-resumo"><div class="l"><span>Salário base</span><b>${fmt(j.salario)} cr./semana</b></div><div class="l"><span>Você paga agora</span><b class="tc-preco cr">${fmt(op.preco)} cr.</b></div><div class="l tot"><span>Créditos depois</span><b style="color:${falta ? 'var(--ruim)' : 'var(--bom)'}">${fmt(o.creditos - op.preco)}</b></div></div>
+    ${falta ? '<p style="color:var(--ruim)">Créditos insuficientes.</p>' : ''}
+    <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-contrato" ${falta || S.ocupado ? 'disabled' : ''}>${m.vaga ? 'Efetivar contrato e escalar' : 'Efetivar contrato'}</button><button type="button" class="tc-btn" data-act="voltar-ficha">Cancelar</button></div>`;
+}
+function encerrarHtml(m) {
+  const j = m.j; const o = S.meu.org; const titular = !!j.slot;
+  return `<h2>Encerrar contrato · ${esc(j.nome)}</h2>
+    <p class="tc-mudo tc-peq">O contrato dele ainda tem ${j.contrato_restante} semana(s) já pagas.</p>
+    <ul class="tc-lista-ul"><li>Você recebe de volta <b>50%</b> do salário que ele ainda não jogou.</li>${titular ? '<li>Ele sai da escalação titular e a vaga é completada automaticamente.</li>' : ''}<li>Para escalá-lo de novo será preciso efetivar um contrato novo.</li></ul>
+    <div class="tc-resumo"><div class="l"><span>Você recebe</span><b class="tc-preco cr">+${fmt(j.reembolso_contrato)} cr.</b></div><div class="l"><span>Créditos depois</span><b>${fmt(o.creditos + j.reembolso_contrato)}</b></div></div>
+    <div class="tc-acoes"><button type="button" class="tc-btn perigo" data-act="confirmar-encerrar" ${S.ocupado ? 'disabled' : ''}>Encerrar e receber ${fmt(j.reembolso_contrato)} cr.</button><button type="button" class="tc-btn" data-act="voltar-ficha">Cancelar</button></div>`;
 }
 function escalarHtml(m) {
   const j = m.j;
@@ -551,8 +566,10 @@ document.addEventListener('click', async (e) => {
   if (act === 'ficha') { await abrirFicha(b.dataset.id); return; }
   if (act === 'ficha-anuncio') { const a = (S.mercado.usuarios || []).find((x) => x.id === Number(b.dataset.anuncio)); await abrirFicha(b.dataset.id, a || null); return; }
   if (act === 'partida') { await agir(async () => { S.modal = { t: 'partida', p: await api.partida(Number(b.dataset.id)) }; }, { recarregar: false }); return; }
-  if (act === 'abrir-contratar') { const j = S.modal.j; S.modal = { t: 'contratar', j, semanas: 12, salario: Math.max(300, Math.round((j.preco * 0.015) / 100) * 100), chave: novaChave() }; render(); return; }
-  if (act === 'abrir-renovar') { const j = S.modal.j; S.modal = { t: 'renovar', j, semanas: 12, salario: Math.max(300, Math.round((j.preco * 0.015) / 100) * 100), chave: novaChave() }; render(); return; }
+  if (act === 'abrir-contratar') { const j = S.modal.j; S.modal = { t: 'contratar', j, semanas: 1, chave: novaChave() }; render(); return; }
+  if (act === 'abrir-contrato') { const j = S.modal.j; S.modal = { t: 'contrato', j, vaga: null, semanas: 4 }; render(); return; }
+  if (act === 'abrir-encerrar') { S.modal = { t: 'encerrar', j: S.modal.j }; render(); return; }
+  if (act === 'contrato-opcao') { S.modal.semanas = Number(b.dataset.sem); render(); return; }
   if (act === 'abrir-anunciar') { S.modal = { t: 'anunciar', j: S.modal.j, preco: 500 }; render(); return; }
   if (act === 'abrir-escalar') { S.modal = { t: 'escalar', j: S.modal.j }; render(); return; }
   if (act === 'abrir-comprar') { S.modal = { t: 'comprar', anuncio: S.modal.anuncio, chave: novaChave() }; render(); return; }
@@ -562,9 +579,15 @@ document.addEventListener('click', async (e) => {
     if (r) { S.modal = null; render(); }
     return;
   }
-  if (act === 'confirmar-renovar') {
+  if (act === 'confirmar-contrato') {
     const m = S.modal;
-    const r = await agir(() => api.renovar(m.j.id, m.semanas, m.chave), { ok: 'Contrato renovado!' });
+    const r = await agir(() => (m.vaga ? api.escalar(m.vaga, m.j.id, m.semanas) : api.assinarContrato(m.j.id, m.semanas)), { ok: m.vaga ? `${m.j.nome} contratado e escalado!` : 'Contrato efetivado!' });
+    if (r) { S.modal = null; render(); }
+    return;
+  }
+  if (act === 'confirmar-encerrar') {
+    const m = S.modal;
+    const r = await agir(() => api.encerrarContrato(m.j.id), { ok: (x) => `Contrato encerrado: +${fmt(x.reembolso)} créditos de volta.` });
     if (r) { S.modal = null; render(); }
     return;
   }
@@ -582,6 +605,7 @@ document.addEventListener('click', async (e) => {
   }
   if (act === 'confirmar-escalar') {
     const m = S.modal;
+    if (!m.j.contrato_ativo) { S.modal = { t: 'contrato', j: m.j, vaga: b.dataset.vaga, semanas: 4 }; render(); return; } // sem contrato: efetiva antes de escalar
     const r = await agir(() => api.escalar(b.dataset.vaga, m.j.id), { ok: 'Escalação atualizada!' });
     if (r) { S.modal = null; render(); }
     return;
@@ -608,9 +632,6 @@ document.addEventListener('click', async (e) => {
 
 document.addEventListener('input', (e) => {
   const t = e.target;
-  if (t.matches('[data-act="semanas"]')) {
-    S.modal.semanas = Math.min(CONTRATO_MAX, Math.max(CONTRATO_MIN, Number(t.value) || CONTRATO_MIN)); render(); return;
-  }
   if (t.matches('[data-act="preco-anuncio"]')) { S.modal.preco = t.value; render(); return; }
   if (t.matches('[data-fc]')) { S.fc[t.name] = t.value; render(); return; }
   const form = t.closest('form[data-form="criar"]');

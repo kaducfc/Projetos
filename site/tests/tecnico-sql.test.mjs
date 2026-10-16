@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -142,7 +142,6 @@ t('contratação: com saldo, sem saldo, elenco cheio, contrato inválido e pedid
   assert.equal(Number(V('select creditos from tc_orgs where id = 1')), antes - alvo.preco);
   // já tem dono, contrato inválido, inexistente
   assert.equal(falha(`select tc_contratar(${alvo.id}, 12, 'chave-contrato-2')`, 2), 'jogador_indisponivel');
-  assert.equal(falha(`select tc_contratar(${alvo.id}, 99, 'chave-contrato-3')`, 1), 'contrato_invalido');
   assert.equal(falha("select tc_contratar(99999999, 12, 'chave-contrato-4')", 1), 'jogador_inexistente');
   // sem saldo: nada muda
   V(`update tc_orgs set creditos = 10 where id = ${O2}`);
@@ -156,34 +155,64 @@ t('contratação: com saldo, sem saldo, elenco cheio, contrato inválido e pedid
 t('escalação: troca titulares, reduz a sinergia e só mexe em jogador do próprio elenco', () => {
   V('update tc_orgs set sinergia = 50 where id = 1');
   const res = V("select id from tc_jogadores where org_id = 1 and slot is null order by id limit 1");
-  V(`select tc_escalar('meio', ${res})`, 1);
+  assert.equal(falha(`select tc_escalar('meio', ${res})`, 1), 'contrato_necessario', 'sem contrato não escala');
+  V(`select tc_escalar('meio', ${res}, 4)`, 1); // efetiva 1 temporada junto
   assert.equal(V("select id from tc_jogadores where org_id = 1 and slot = 'meio'"), res);
   assert.equal(V('select count(*) from tc_jogadores where org_id = 1 and slot is not null'), '5');
   assert.equal(V('select sinergia from tc_orgs where id = 1'), '30');
   assert.equal(falha(`select tc_escalar('meio', ${res})`, 2), 'jogador_nao_e_seu');
   assert.equal(falha(`select tc_liberar(${res})`, 2), 'jogador_nao_e_seu');
-  assert.equal(falha(`select tc_renovar(${res}, 8, 'chave-renova-x')`, 2), 'jogador_nao_e_seu');
+  assert.equal(falha(`select tc_assinar_contrato(${res}, 1)`, 2), 'jogador_nao_e_seu');
   assert.equal(falha(`select tc_anunciar(${res}, 500)`, 2), 'jogador_nao_e_seu');
   assert.equal(falha(`select tc_escalar('meio', ${V("select id from tc_jogadores where org_id = 1 and slot = 'top'")})`, 2), 'jogador_nao_e_seu');
   assert.equal(falha("select tc_escalar('rei', 1)", 1), 'vaga_invalida');
 });
 
-t('renovação desconta créditos, estende o contrato e não repete; liberar só reserva', () => {
+t('contratos: 1 semana ou 1 temporada (20% mais barata), pagos adiantado; encerrar antes devolve 50% do que sobrou; liberar só reserva', () => {
   const j = V("select id from tc_jogadores where org_id = 1 and slot is null order by id limit 1");
-  const fimAntes = Number(V(`select contrato_fim from tc_jogadores where id = ${j}`));
+  V(`update tc_jogadores set contrato_fim = null, contrato_valor_semana = 0 where id = ${j}`);
+  const sal = Number(V(`select tc_salario_base(x) from tc_jogadores x where id = ${j}`));
   const cred = Number(V('select creditos from tc_orgs where id = 1'));
-  const r = J(`select tc_renovar(${j}, 8, 'chave-renova-1')`, 1);
-  assert.equal(r.contrato_fim, fimAntes + 8);
-  assert.equal(Number(V('select creditos from tc_orgs where id = 1')), cred - r.custo);
-  assert.equal(J(`select tc_renovar(${j}, 8, 'chave-renova-1')`, 1).ja_feito, true);
-  assert.equal(Number(V(`select contrato_fim from tc_jogadores where id = ${j}`)), fimAntes + 8);
+  const op = J(`select tc_jogador_json(x)->'contrato_opcoes' from tc_jogadores x where id = ${j}`);
+  assert.deepEqual(op.map((o) => [o.semanas, o.preco]), [[1, sal], [4, Math.round(sal * 4 * 0.8)]]);
+  assert.equal(falha(`select tc_assinar_contrato(${j}, 3)`, 1), 'contrato_invalido');
+  const r = J(`select tc_assinar_contrato(${j}, 4)`, 1);
+  assert.equal(r.custo, Math.round(sal * 4 * 0.8));
+  assert.equal(Number(V('select creditos from tc_orgs where id = 1')), cred - r.custo, 'pago adiantado');
+  assert.equal(Number(V(`select contrato_fim - tc_semana_global() from tc_jogadores where id = ${j}`)), 4);
+  assert.equal(falha(`select tc_assinar_contrato(${j}, 1)`, 1), 'contrato_vigente');
+  // anunciar com contrato vigente não pode; encerrar devolve 50% do restante pago (4 semanas restantes)
+  assert.equal(falha(`select tc_anunciar(${j}, 500)`, 1), 'contrato_vigente');
+  const antes = Number(V('select creditos from tc_orgs where id = 1'));
+  const e = J(`select tc_encerrar_contrato(${j})`, 1);
+  assert.equal(e.reembolso, Math.floor(Math.round(r.custo / 4) * 4 * 0.5));
+  assert.equal(Number(V('select creditos from tc_orgs where id = 1')), antes + e.reembolso);
+  assert.equal(V(`select contrato_fim is null from tc_jogadores where id = ${j}`), 't');
+  assert.equal(falha(`select tc_encerrar_contrato(${j})`, 1), 'sem_contrato');
   const tit = V("select id from tc_jogadores where org_id = 1 and slot = 'top'");
   assert.equal(falha(`select tc_liberar(${tit})`, 1), 'jogador_titular');
   V(`select tc_liberar(${j})`, 1);
   assert.equal(V(`select coalesce(org_id::text, 'livre') from tc_jogadores where id = ${j}`), 'livre');
 });
+t('encerrar contrato de titular: a vaga é completada, sinergia cai; demitir com contrato também devolve 50%', () => {
+  const tit = V("select id from tc_jogadores where org_id = 1 and slot = 'selva'");
+  V(`update tc_jogadores set contrato_fim = tc_semana_global() + 4, contrato_valor_semana = 1000 where id = ${tit}`);
+  const sin = Number(V('select sinergia from tc_orgs where id = 1'));
+  const e = J(`select tc_encerrar_contrato(${tit})`, 1);
+  assert.equal(e.reembolso, 2000);
+  assert.equal(V("select count(*) from tc_jogadores where org_id = 1 and slot is not null"), '5', 'a vaga foi completada');
+  assert.ok(Number(V('select sinergia from tc_orgs where id = 1')) <= sin);
+  const novo = V("select id from tc_jogadores where org_id = 1 and slot = 'selva'");
+  assert.notEqual(novo, tit);
+  // o interino não é o titular que saiu e a reserva sem contrato nunca é escalada sozinha
+  assert.equal(V(`select slot is null from tc_jogadores where id = ${tit}`), 't');
+  // demitir comum reserva com contrato vigente devolve 50%
+  V(`update tc_jogadores set contrato_fim = tc_semana_global() + 2, contrato_valor_semana = 800 where id = ${tit}`);
+  const d = J(`select tc_demitir(${tit})`, 1); assert.equal(d.reembolso, 800);
+});
 
 t('mercado de usuários: só o dono anuncia; compra por RC é atômica, cobra taxa e não repete', () => {
+  V(`update tc_jogadores set contrato_fim = null, contrato_valor_semana = 0 where slot is null and org_id in (1, ${O2})`); // anunciar exige contrato encerrado
   const res = reserva(1, 1);
   assert.equal(falha(`select tc_anunciar(${res}, 1000)`, 2), 'jogador_nao_e_seu');
   assert.equal(falha(`select tc_anunciar(${res}, 1)`, 1), 'preco_invalido');
@@ -241,7 +270,8 @@ t('campeões: 173 no catálogo, sem repetição, e só administrador (jogo fecha
 });
 
 t('maestria: todo jogador nasce com até 5 favoritos da própria posição e com o mínimo de pontos', () => {
-  assert.equal(V('select count(*) from tc_jogadores j where not exists (select 1 from tc_maestria m where m.jogador_id = j.id)'), '0');
+  assert.equal(V('select count(*) from tc_jogadores j where j.ficticio and not exists (select 1 from tc_maestria m where m.jogador_id = j.id)'), '0');
+  assert.equal(V('select count(*) from tc_maestria m join tc_jogadores j on j.id = m.jogador_id where not j.ficticio'), '0', 'Legados começam sem maestria');
   assert.ok(Number(V('select coalesce(max(n), 0) from (select count(*) n from tc_maestria where favorito group by jogador_id) x')) <= 5);
   assert.equal(V("select count(*) from tc_maestria where favorito and pontos < 150"), '0');
   assert.equal(V(`select count(*) from tc_maestria m join tc_jogadores j on j.id = m.jogador_id join tc_campeoes c on c.id = m.campeao_id
@@ -274,6 +304,7 @@ t('maestria: a ficha do jogador traz os campeões e ninguém acessa as tabelas d
 
 t('vender titular: a vaga é preenchida e a sinergia cai', () => {
   const tit = V("select id from tc_jogadores where org_id = 1 and slot = 'selva'");
+  V(`update tc_jogadores set contrato_fim = null where id = ${tit}`); // anunciar exige contrato encerrado
   const an = J(`select tc_anunciar(${tit}, 700)`, 1).id;
   V(`select tc_comprar_anuncio(${an}, 'chave-tit-1')`, 2);
   assert.equal(V('select count(*) from tc_jogadores where org_id = 1 and slot is not null'), '5');
@@ -355,7 +386,7 @@ t('semana completa: premiação, Rank, promoção/rebaixamento e salários, uma 
   assert.equal(V("select count(*) from tc_orgs where ativa and divisao = 'acesso'"), '8');
   // premiação e salários registrados uma vez
   assert.equal(V("select count(*) from tc_premios where liga_id in (1, 2)"), '16');
-  assert.equal(V('select count(*) from tc_fin where org_id = 1 and motivo = \'salarios\''), '1');
+  assert.equal(V('select count(*) from tc_fin where org_id = 1 and motivo = \'salarios\''), '0', 'salário é pago adiantado no contrato');
   assert.equal(V('select count(*) from tc_fin where org_id = 1 and motivo = \'premiacao\''), '1');
   // Rank: um lançamento por técnico e por liga; repetir a sincronização não duplica
   const rk = Number(V('select count(*) from site_rk_lanc_stub'));
@@ -398,15 +429,14 @@ t('temporada inteira: Copa (semana 2) e Mundial (semana 4) só com a divisão pr
   assert.equal(V("select valor from tc_config where chave = 'semana_proc'"), '4');
 });
 
-t('contratos vencem de forma explícita: voltam ao mercado, viram aviso e a vaga é completada', () => {
+t('contratos vencem de forma explícita: o titular sai da escalação, vira aviso e a vaga é completada', () => {
   assert.ok(Number(V("select count(*) from tc_jogadores where org_id = 1")) >= 5);
   V("update tc_jogadores set contrato_fim = 0 where org_id = 1 and slot = 'top'");
   V("update tc_config set valor = '3' where chave = 'semana_proc'");
   V("update tc_config set valor = '{\"inicio\": \"2026-10-12\", \"semanas\": 4}'::jsonb where chave = 'calendario'");
   const j = V("select id from tc_jogadores where org_id = 1 and slot = 'top'");
   V("select tc_fechar_semana_org(1, 5)");
-  assert.equal(V(`select coalesce(org_id::text, 'livre') from tc_jogadores where id = ${j}`), 'livre');
-  assert.equal(V(`select count(*) from tc_transf where jogador_id = ${j} and tipo = 'expirou'`), '1');
+  assert.equal(V(`select org_id || ':' || coalesce(slot, 'reserva') from tc_jogadores where id = ${j}`), '1:reserva', 'fica no inventário, fora da escalação');
   assert.ok(Number(V("select count(*) from tc_avisos where org_id = 1 and texto like '%terminou%'")) >= 1);
   assert.equal(V('select count(*) from tc_jogadores where org_id = 1 and slot is not null'), '5');
 });
@@ -624,6 +654,8 @@ t('retratos: todo jogador comum tem gênero e retrato existente (≈40% jogadora
   V(readFileSync(new URL('../supabase/migrations/0101_tecnico_inventario.sql', import.meta.url), 'utf8'));
   V(readFileSync(new URL('../supabase/migrations/0103_tecnico_demissao_previa.sql', import.meta.url), 'utf8'));
   V(readFileSync(new URL('../supabase/migrations/0104_tecnico_baus_creditos.sql', import.meta.url), 'utf8'));
+  V(readFileSync(new URL('../supabase/migrations/0105_tecnico_maestria_7.sql', import.meta.url), 'utf8'));
+  V(readFileSync(new URL('../supabase/migrations/0106_tecnico_contratos.sql', import.meta.url), 'utf8'));
   assert.equal(V("select string_agg(id || retrato, ',' order by id) from tc_jogadores"), antes);
   const novos = J("select to_jsonb(tc_gerar_jogadores(30))"); assert.equal(novos.length, 30);
   const g = J(`select jsonb_agg(retrato || genero) from tc_jogadores where id in (${novos.join(',')})`);
@@ -812,20 +844,16 @@ t('comum: sobe estrela com fragmentos; demitir (só reserva comum) rende fragmen
 });
 
 // ---------------------------------------------------------------- inventário (SQL 0101)
-t('inventário: até 50 jogadores; só titulares e as 5 melhores reservas recebem salário; Legado repetido não ocupa espaço', () => {
+t('inventário: até 50 jogadores; 5 titulares e as 5 melhores reservas ficam à mostra; Legado repetido não ocupa espaço', () => {
   assert.equal(J("select tc_cfg('elenco')->'max'"), 50);
   V("delete from tc_jogadores where org_id = 1 and slot is null");
   V("select tc_gerar_jogadores(8, 60, null, 1)");
   const ativos = J("select jsonb_agg(x) from tc_ativos(1) x");
   assert.equal(ativos.length, 10, '5 titulares + 5 reservas');
   const meu = J("select tc_meu()", 1); assert.equal(meu.elenco_max, 50); assert.equal(meu.ativos.length, 10);
-  const salAtivos = Number(V("select coalesce(sum(salario), 0) from tc_jogadores where org_id = 1 and id in (select tc_ativos(1))"));
-  assert.equal(meu.salarios_semana, salAtivos);
-  V("update tc_jogadores set salario = 700 where org_id = 1 and slot is null"); // todas as reservas têm salário
   const antes = Number(V("select creditos from tc_orgs where id = 1"));
   V("select tc_fechar_semana_org(1, 1)");
-  const pago = antes - Number(V("select creditos from tc_orgs where id = 1"));
-  assert.equal(pago, Number(V("select coalesce(sum(salario), 0) from tc_jogadores where org_id = 1 and id in (select tc_ativos(1))")), 'inventário não paga salário');
+  assert.equal(Number(V("select creditos from tc_orgs where id = 1")), antes, 'sem cobrança semanal: o contrato é pago adiantado');
   // Legado repetido com o inventário cheio: vira cópia; Legado novo é recusado
   V("update tc_config set valor = jsonb_set(valor, '{max}', to_jsonb((select count(*) from tc_jogadores where org_id = 1))) where chave = 'elenco'");
   V("update tc_orgs set creditos = creditos where id = 1");
