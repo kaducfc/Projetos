@@ -1,8 +1,9 @@
 /* Tela da partida: mapa em canvas, placar, controles e resultado. Mesmo tema do simulador (azul-marinho, ciano e dourado). */
-.pt { --fundo: #050d1c; --painel: #0a1830; --linha: #1c3556; --ouro: #d9a82b; --ouro2: #f5cf5a; --txt: #e6edf7; --mudo: #8fa3bf; --azul: #4aa3ff; --verm: #ff5a5a;
-  min-height: 100vh; background: radial-gradient(1000px 500px at 70% -10%, #12305c55, transparent), linear-gradient(180deg, #06122a, #040a16); color: var(--txt); font-family: Inter, system-ui, sans-serif; padding: 10px 12px 40px; }
-.pt * { box-sizing: border-box; }
-.pt button, .pt select, .pt input { font: inherit; color: inherit; }
+.pt, .pt-fundo { --fundo: #050d1c; --painel: #0a1830; --linha: #1c3556; --ouro: #d9a82b; --ouro2: #f5cf5a; --txt: #e6edf7; --mudo: #8fa3bf; --azul: #4aa3ff; --verm: #ff5a5a;
+  color: var(--txt); font-family: Inter, system-ui, sans-serif; }
+.pt { min-height: 100vh; background: radial-gradient(1000px 500px at 70% -10%, #12305c55, transparent), linear-gradient(180deg, #06122a, #040a16); padding: 10px 12px 40px; }
+.pt *, .pt-fundo * { box-sizing: border-box; }
+.pt button, .pt select, .pt input, .pt-fundo button { font: inherit; color: inherit; }
 .pt-msg { padding: 60px 20px; text-align: center; color: var(--mudo); }
 .pt-aviso { background: #3b2a08; color: #fde68a; border: 1px solid #7a5a12; text-align: center; font-size: 12.5px; padding: 6px 12px; margin-bottom: 8px; }
 .pt-topo { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; max-width: 1500px; margin: 0 auto 8px; padding: 8px 14px; background: linear-gradient(180deg, #0c1f3e, #071429); border: 1px solid var(--linha); border-bottom: 2px solid #8b6a1f; }

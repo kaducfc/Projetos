@@ -17,6 +17,7 @@ export const ESTADOS = ['nascendo', 'saindo_base', 'indo_rota', 'farmando', 'lut
 
 function mudar(P, u, novo, motivo = '') {
   if (u.estado === novo) { if (motivo) u.motivo = motivo; return; }
+  if (u.estado === 'gank' && novo !== 'gank' && u.gankInfo) terminarGank(P, u, u.gankInfo, u.morto ? 'jungler_morreu' : 'interrompido');
   u.estadoAnt = u.estado; u.estado = novo; u.estadoDesde = P.t; u.motivo = motivo;
   u.hist.push([Math.round(P.t), novo, motivo]); if (u.hist.length > 12) u.hist.shift();
   if (novo !== 'lutando' && novo !== 'gank') u.alvoId = null;

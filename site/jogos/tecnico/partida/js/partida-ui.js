@@ -232,7 +232,7 @@ function quadro(ts) {
 
 (async function iniciar() {
   await platform.init();
-  const teste = LOCAL && consulta.get('teste') === '1' && !consulta.get('id');
+  const teste = LOCAL && consulta.get('teste') === '1';
   const user = platform.getUser();
   const souAdmin = await platform.isAdmin();
   const aberto = !gameById('tecnico')?.soAdmin;
