@@ -3,6 +3,7 @@
 import * as platform from '../../../shared/platform.js';
 import { escudoPoder } from './regras.js';
 import { retratoSvg, escudoOrg } from './art.js';
+import { abrirBau } from './bau-anim.js';
 
 const api = platform.tecnico;
 let C = null; // contexto de main.js: { S, esc, fmt, IMG, agir, toast, render, novaChave, escudoHtml }
@@ -111,7 +112,7 @@ export function viewRecrutar() {
     const odds = ORDEM_RAR.map((k) => `<li class="r-${k}"><span>${RARIDADES[k].nome}</span><b>${(b.odds[k] ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</b></li>`).join('');
     const garantia = r.garantia?.[id] ?? 0;
     const bloq1 = r.saldo_rc < b.rc || livresN < 1 || C.S.ocupado; const bloq5 = r.saldo_rc < preco5(b) || livresN < 5 || C.S.ocupado;
-    return `<section class="tc-card tc-bau bau-${id}"><div class="arte">${C.IMG('i-bau', 'grande')}</div><h3>${C.esc(b.nome)}</h3>
+    return `<section class="tc-card tc-bau bau-${id}"><div class="arte"><img class="bau-img" src="img/baus/${id}-fechado.webp" alt="" /></div><h3>${C.esc(b.nome)}</h3>
       <ul class="tc-odds">${odds}</ul>
       <small class="tc-mudo">Garantia: a cada ${cfg.pity_a_cada} baús sem Épico ou melhor, o próximo vem Épico ou melhor (faltam ${Math.max(0, cfg.pity_a_cada - garantia)}).</small>
       <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="recrutar" data-bau="${id}" data-qtd="1" ${bloq1 ? 'disabled' : ''}>Abrir 1 · <span class="tc-preco rc">${C.fmt(b.rc)} RC</span></button>
@@ -144,12 +145,23 @@ export async function tratarAcao(act, b) {
     return true;
   }
   if (act === 'recrutar') {
-    const qtd = Number(b.dataset.qtd);
-    const r = await C.agir(() => api.recrutar(b.dataset.bau, qtd, C.novaChave()), { recarregar: false });
-    if (r && r !== true) {
-      C.S.modal = { t: 'recrutar', r, contrato: X.recrutar?.config?.contrato_semanas ?? 12 };
-      await C.agir(async () => { await C.atualizarMeu(); X.recrutar = await api.recrutarInfo(); }, { recarregar: false });
+    const qtd = Number(b.dataset.qtd); const bau = b.dataset.bau;
+    const reduzido = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const pedido = C.agir(() => api.recrutar(bau, qtd, C.novaChave()), { recarregar: false });
+    const atualizar = () => C.agir(async () => { await C.atualizarMeu(); X.recrutar = await api.recrutarInfo(); }, { recarregar: false });
+    if (reduzido) {
+      const r = await pedido;
+      if (r && r !== true) { C.S.modal = { t: 'recrutar', r, contrato: 0 }; await atualizar(); }
+      return true;
     }
+    // abertura em tela cheia: o servidor já sorteou; a animação só apresenta o resultado
+    await abrirBau({
+      bau, qtd, resultado: pedido,
+      renderCarta: (it) => `<div class="faixa">${RARIDADES[it.raridade]?.nome || ''}${it.repetida ? ' · repetido' : ''}</div>${miniCartao(it.jogador)}${it.repetida ? `<small class="tc-mudo">+1 cópia (você tem ${it.jogador.copias})</small>` : ''}`,
+      titulo: (itens) => (itens.length > 1 ? 'Você recrutou!' : 'Novo jogador Legado!'),
+      final: (itens) => { const rep = itens.filter((i) => i.repetida).length; return `${itens.length > 1 ? `${itens.length} jogadores` : 'Jogador'} no seu inventário${rep ? ` · ${rep} repetido(s) viraram cópia` : ''}`; },
+    });
+    await atualizar();
     return true;
   }
   return false;
