@@ -12,8 +12,8 @@ export const REGRAS = {
   // ---- atributos do simulador -> parâmetros de combate (função central em config/atributos.js)
   atributos: {
     forca:  [0.88, 1.12],                                   // desempenho geral derivado dos cinco atributos (peso do Poder)
-    mec:    { dano: [0.90, 1.10], acerto: [0.58, 0.92] },   // multiplicador de dano de habilidades; chance de acertar projéteis
-    rotas:  { farm: [0.72, 0.97], troca: [0.95, 1.06], fim: 840 }, // eficiência de último golpe; qualidade das trocas; as vantagens somem após `fim` segundos
+    mec:    { dano: [0.90, 1.10], acerto: [0.58, 0.92], farm: [0.35, 1.0] }, // multiplicador de dano de habilidades; chance de acertar projéteis; chance de garantir o último golpe (farm)
+    rotas:  { troca: [0.95, 1.06], fim: 840 },              // qualidade das trocas de dano na rota; as vantagens somem após `fim` segundos
     macro:  { decisao: [1.25, 0.8], ruido: [0.35, 0.08] },  // multiplicador do intervalo de decisão; ruído nas avaliações de risco
     tf:     { luta: [0.93, 1.10] },                         // multiplicador de dano e resistência em lutas com 3+ campeões
     mental: { erro: [0.12, 0.02], tilt: 0.06 },             // chance de decisão ruim; perda de desempenho máxima quando atrás e com mental baixo
@@ -47,6 +47,9 @@ export const REGRAS = {
 
   // ---- minions
   minions: {
+    // Último golpe de campeão em rota (a chance vem da Mecânica: atributos.mec.farm): tolerância do intervalo de ataque (s), alcance extra
+    // e janela de farm na rota (u.), fator de acerto na janela, fator do suporte e fração do intervalo de ataque gasta ao garantir o golpe.
+    farm: { tolerancia: 2, raioExtra: 450, raioJanela: 3500, fatorJanela: 0.95, suporte: 0.12, cadencia: 0.45 },
     primeiraOnda: 65, intervaloOnda: 30, espacamentoSpawn: 0.8,
     cercoCadaOnda: [[0, 3], [900, 2], [1500, 1]],   // a partir de X segundos, um canhão a cada N ondas
     crescimentoCada: 90, crescimento: { hp: 0.06, dano: 0.04 },

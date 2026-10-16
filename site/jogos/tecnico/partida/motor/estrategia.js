@@ -157,7 +157,7 @@ function escolherObjetivo(P, eq, conh, aliados) {
     }
     // quem participa depende do objetivo e da fase: no início, só selva + rota de baixo (+ meio) no Dragão, e selva + topo + meio no Arauto
     let papeis = null, minimo = 4;
-    if (nome === 'dragao' && P.t < 840) { papeis = ['selva', 'atirador', 'suporte', 'meio']; minimo = 3; }
+    if (nome === 'dragao' && P.t < 840) { papeis = ['selva', 'atirador', 'suporte']; minimo = 3; } // fase de rotas: o meio e o topo ficam farmando
     else if (nome === 'arauto') { papeis = ['selva', 'top', 'meio']; minimo = 3; }
     candidatos.push({ nome, epico: aVivo ? epico : null, covil: c, staging: stagingObjetivo(P, eq, c), cedo, minimo, participam: (x) => !papeis || papeis.includes(x.pos) });
   };

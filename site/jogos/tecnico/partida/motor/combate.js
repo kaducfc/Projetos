@@ -172,7 +172,7 @@ export function matar(P, alvo, fonte) {
     P.fx.push({ k: 'morte', id: alvo.id, t: P.t, x: alvo.x, y: alvo.y });
   } else if (alvo.tipo === 'minion') {
     const eqVenc = alvo.equipe === 'azul' ? 'vermelho' : 'azul';
-    const k = quemAbateu(fonte);
+    const k = quemAbateu(fonte) || ultimoGolpeDeRota(P, alvo, fonte);
     const mm = (P.diag.minionsMortos ||= { campeao: 0, minion: 0, estrutura: 0, outro: 0 }); mm[k ? 'campeao' : fonte?.tipo === 'minion' ? 'minion' : fonte?.tipo === 'estrutura' ? 'estrutura' : 'outro']++;
     if (k) { darOuro(P, k, alvo.ouro); k.estat.cs++; }
     xpDeUnidade(P, eqVenc, alvo.x, alvo.y, alvo.xp, k);
@@ -188,6 +188,33 @@ export function matar(P, alvo, fonte) {
 
 // ------------------------------------------------------------------ ataque básico
 export function podeAgir(P, u) { return !u.morto && !incapacitado(u, P.t) && !(u.dashAte && u.dashAte > P.t); }
+// Último golpe de rota: quando um minion inimigo morre para minions/torre perto de um campeão em rota, a Mecânica dele
+// (u.m.farm) define se ele garantiu o golpe a tempo. Quem acerta leva o ouro e o XP e gasta o tempo do ataque.
+const ESTADOS_SEM_FARM = new Set(['morto', 'comprando', 'voltando_base', 'recuando', 'objetivo', 'selva', 'gank', 'ajudando', 'nascendo', 'saindo_base']);
+function ultimoGolpeDeRota(P, minion, fonte) {
+  const F = P.regras.minions.farm; if (!F || minion.subtipo === 'arauto') return null;
+  const candidatos = [];
+  for (const c of P.campeoes) {
+    if (c.morto || c.equipe === minion.equipe || c.pos === 'selva' || ESTADOS_SEM_FARM.has(c.estado) || !podeAgir(P, c)) continue;
+    if (P.t < c.proximoAtaque - F.tolerancia) continue; // ainda no intervalo do ataque anterior
+    const d = dist(c, minion), alc = c.alcance + minion.raio * 0.5;
+    // perto: o campeão acompanha o minion e acerta; na janela de farm da rota (só quem está farmando) o acerto é mais difícil
+    const fator = d <= alc + F.raioExtra ? 1 : (c.rota === minion.rota && d <= alc + F.raioJanela ? (c.estado === 'farmando' ? F.fatorJanela : F.fatorJanela * 0.5) : 0);
+    if (fator > 0) candidatos.push({ c, fator });
+  }
+  if (!candidatos.length) return null;
+  for (let i = candidatos.length - 1; i > 0; i--) { const j = Math.floor(P.rng() * (i + 1)); [candidatos[i], candidatos[j]] = [candidatos[j], candidatos[i]]; }
+  for (const { c, fator } of candidatos) {
+    const chance = c.m.farm * fator * (c.pos === 'suporte' ? F.suporte : 1);
+    if (P.rng() >= chance) continue;
+    c.proximoAtaque = Math.max(c.proximoAtaque, P.t) + c.intervalo * F.cadencia;
+    c.recallAte = 0;
+    P.fx.push({ k: 'ataque', de: c.id, para: minion.id, t: P.t, proj: false, x0: c.x, y0: c.y });
+    return c;
+  }
+  return null;
+}
+
 export function atacarBasico(P, u, alvo) {
   if (!podeAgir(P, u) || P.t < u.proximoAtaque || alvo.morto || !atacavel(P, alvo)) return false;
   if (!podeAtacar(P, u, alvo)) return false;

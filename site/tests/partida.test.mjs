@@ -405,3 +405,19 @@ test('posições ajustadas à mão: a escolha de campeões da partida respeita a
   const js = Object.fromEntries(Object.entries(POSICOES).map(([n, p]) => [idDe(n), p.map((x) => MAPA_POS[x])]));
   assert.deepEqual(js, bloco, 'config/posicoes.js e 0093_tecnico_posicoes.sql têm que listar os mesmos campeões e posições');
 });
+
+test('farm: a Mecânica define o último golpe nos minions (quem tem mais Mecânica faz mais CS) e o farm é próximo do real', () => {
+  const cs10 = (poder) => {
+    let soma = 0, n = 0;
+    for (const seed of [1, 2, 3]) {
+      const P = new Partida({ azul: elencoTeste('A', poder, seed), vermelho: elencoTeste('V', poder, seed), semente: seed, catalogo });
+      ate(P, 600);
+      for (const c of P.campeoes) if (['top', 'meio', 'atirador'].includes(c.pos)) { soma += c.estat.cs; n++; }
+    }
+    return soma / n;
+  };
+  const fraco = cs10(25), forte = cs10(95);
+  assert.ok(forte > fraco * 1.2, `mais Mecânica, mais farm: ${fraco.toFixed(0)} contra ${forte.toFixed(0)} CS aos 10 min`);
+  assert.ok(forte >= 50 && forte <= 105, `CS aos 10 min do jogador forte fora do esperado: ${forte.toFixed(0)}`);
+  assert.ok(fraco >= 25, `CS aos 10 min do jogador fraco muito baixo: ${fraco.toFixed(0)}`);
+});

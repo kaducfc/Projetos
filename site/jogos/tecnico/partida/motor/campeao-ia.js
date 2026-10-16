@@ -110,8 +110,9 @@ function decidir(P, u) {
   const rec = precisaRecuar(P, u, ctx);
   if (rec) { if (u.estado !== 'recuando' && u.estado !== 'voltando_base') mudar(P, u, 'recuando', rec); else if (u.estado === 'recuando') u.motivo = rec; if (u.estado === 'recuando') return; }
   if (u.estado === 'recuando') {
-    // saiu do perigo: volta à base (se precisa) ou à rota
-    if (!ctx.iniPerto.length || ctx.bal.razao > 1.2) { if (precisaBase(P, u, ctx)) mudar(P, u, 'voltando_base', 'seguro'); else mudar(P, u, u.pos === 'selva' ? 'selva' : 'indo_rota', 'seguro'); }
+    // saiu do perigo: volta à base (se precisa) ou à rota; recuo mínimo de 3 s e depois 8 s sem recuar por "desvantagem" (evita ir e voltar a cada segundo e perder o farm)
+    if (P.t - u.estadoDesde < 3) return;
+    if (!ctx.iniPerto.length || ctx.bal.razao > 1.2) { u.recuoLivreAte = P.t + 8; if (precisaBase(P, u, ctx)) mudar(P, u, 'voltando_base', 'seguro'); else mudar(P, u, u.pos === 'selva' ? 'selva' : 'indo_rota', 'seguro'); }
     return;
   }
   // compromisso do caçador: começou a bater num monstro, fica até terminar o acampamento; só sai por vida baixa (recall) ou perigo (acima)
@@ -160,7 +161,7 @@ function precisaRecuar(P, u, ctx) {
   const erra = P.rng() < u.m.erro * (hp > R.vidaCritica ? 1 : 0.3);
   if (hp < R.vidaCritica && ctx.iniPerto.some((k) => k.visivel)) return erra ? null : 'vida crítica';
   if (hp < R.vidaBaixa && bal.razao < 1.1 && ctx.iniPerto.some((k) => k.visivel)) return erra ? null : 'vida baixa';
-  if (ctx.iniPerto.length >= 2 && ruido(P, u, bal.razao) < 0.62) return erra ? null : 'em desvantagem';
+  if (ctx.iniPerto.length >= 2 && ruido(P, u, bal.razao) < 0.62 && !(P.t < (u.recuoLivreAte || 0) && hp > 0.5)) return erra ? null : 'em desvantagem';
   if (ctx.torreIni && !ctx.minAli && u.estado !== 'estrutura' && hp < 0.85 && !(ctx.plano && ctx.plano.tipo === 'finalizar')) return 'sob torre';
   return null;
 }
@@ -207,7 +208,7 @@ function avaliarLuta(P, u, ctx) {
   // trocas na rota exigem vantagem real (vida, nível, ondas); lutas de equipe e abates iminentes são mais permissivos
   const lane = !equipe && ctx.minAli + ctx.minIni > 2 && P.t < 1200;
   const vantagemLane = (meuHp - hpAlvo) * 0.6 + (u.nivel - alvo.nivel) * 0.08 + (ctx.minAli > ctx.minIni ? 0.06 : 0);
-  if (lane && !exec) { if (meuHp > 0.65 && razao >= 1.2 && vantagemLane > 0.08) return { alvo, motivo: 'troca' }; return null; }
+  if (lane && !exec) { if (meuHp > 0.7 && razao >= 1.35 && vantagemLane > 0.12) return { alvo, motivo: 'troca' }; return null; }
   if (exec) return { alvo, motivo: 'finalizar' };
   if (razao >= R.perigo.margemLuta * 1.08 && meuHp > 0.5) return { alvo, motivo: equipe ? 'luta de equipe' : 'luta favorável' };
   return null;
@@ -410,7 +411,7 @@ function atacarOportunidade(P, u) {
   if (alvo) atacarBasico(P, u, alvo);
 }
 
-// ---- farm na rota: último golpe com probabilidade dada pelo atributo Fase de rotas; poke e troca quando vantajoso
+// ---- farm na rota: último golpe com probabilidade dada pelo atributo Mecânica; poke e troca quando vantajoso
 function agirFarm(P, u) {
   const ctx = u.ctx || {};
   const p = posFarm(P, u);
@@ -434,7 +435,7 @@ function agirFarm(P, u) {
     for (const h of u.habilidades) if (h.uso === 'poke' && habPronta(P, u, h) && dist(u, k) <= h.alcance) { lancarHabilidade(P, u, h, k); break; }
   }
   if (alvo && P.t >= u.proximoAtaque) {
-    // último golpe: bate quando o minion morre com este ataque (ou quase); o atributo "Fase de rotas" define a chance de acertar o tempo certo
+    // último golpe: bate quando o minion morre com este ataque (ou quase); o atributo "Mecânica" define a chance de acertar o tempo certo
     // antecipa o dano que o minion vai receber enquanto o ataque chega (taxa medida nos últimos instantes)
     const mk = alvo.marca; let taxa = 0;
     if (!mk || P.t - mk.t > 0.9) alvo.marca = { t: P.t, hp: alvo.hp };

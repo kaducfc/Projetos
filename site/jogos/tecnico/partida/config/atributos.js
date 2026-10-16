@@ -10,7 +10,7 @@ export function parametrosDeAtributos(atr, regras) {
     forca: lerp(c.forca, geral),                  // desempenho geral: multiplicador do dano causado por campeões
     execDano: lerp(c.mec.dano, n(atr.mec)),       // multiplicador do dano das habilidades
     execAcerto: lerp(c.mec.acerto, n(atr.mec)),   // chance de acertar habilidades de projétil
-    farm: lerp(c.rotas.farm, n(atr.rotas)),       // chance de conseguir o último golpe
+    farm: lerp(c.mec.farm, n(atr.mec)),           // Mecânica: chance de conseguir o último golpe nos minions
     troca: lerp(c.rotas.troca, n(atr.rotas)),     // qualidade das trocas de dano na rota (só no começo)
     decisaoIntervalo: lerp(c.macro.decisao, n(atr.macro)),
     ruido: lerp(c.macro.ruido, n(atr.macro)),
