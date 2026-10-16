@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex, nofollow" />
+<title>Depuração do mapa · Simulador de Técnico</title>
+<style>
+ body { margin: 0; background: #060d1b; color: #e6edf7; font: 14px Inter, system-ui, sans-serif; display: flex; min-height: 100vh; }
+ aside { width: 280px; padding: 14px; border-right: 1px solid #1d3a63; background: #0a1830; flex: none; overflow-y: auto; }
+ main { flex: 1; min-width: 0; padding: 10px; }
+ canvas { width: 100%; display: block; border: 1px solid #1d3a63; cursor: crosshair; }
+ label { display: flex; gap: 8px; margin: 6px 0; align-items: center; }
+ h1 { font-size: 16px; margin: 0 0 8px; color: #f0cf72; } .mudo { color: #8fa3bf; font-size: 12.5px; }
+ #info { font-family: ui-monospace, monospace; font-size: 12px; background: #04101f; padding: 8px; margin-top: 10px; white-space: pre-wrap; min-height: 90px; }
+ button { background: #14305a; color: #fff; border: 1px solid #3a6aa8; padding: 6px 10px; cursor: pointer; margin-top: 6px; }
+ @media (max-width: 800px) { body { flex-direction: column; } aside { width: auto; border-right: 0; border-bottom: 1px solid #1d3a63; } }
+</style></head>
+<body>
+<aside><h1>Depuração do mapa</h1>
+<p class="mudo">Confere se rotas, estruturas, acampamentos e paredes estão no lugar certo da imagem. A imagem não é alterada: as camadas são desenhadas por cima. Clique em dois pontos para calcular um caminho (A*).</p>
+<div id="camadas"></div>
+<label>Perfil do caminho <select id="perfil"><option>campeao</option><option>minion</option><option>monstro</option></select></label>
+<button id="limpar">Limpar caminho</button>
+<div id="info">Passe o mouse no mapa.</div></aside>
+<main><canvas id="c"></canvas></main>
+<script type="module" src="js/depurar.js"></script>
+</body></html>
