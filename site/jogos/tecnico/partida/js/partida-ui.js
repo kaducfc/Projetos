@@ -24,6 +24,9 @@ const LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
 
 const E = { partida: null, relogio: null, rend: null, catalogo: [], camadas: {}, config: null, modo: 'teste', fimMostrado: false, turbo: false, selecionado: null, ultFeed: 0, ultPlacar: 0 };
 
+// Nick do jogador com a sigla do time (ex.: FNX Zeka); na sala de testes não há sigla.
+const nick = (eq, nome) => esc([eq === 'azul' ? E.config.siglaAzul : E.config.siglaVermelho, nome].filter(Boolean).join(' '));
+
 function msg(t) { app.innerHTML = `<p class="pt-msg">${esc(t)}</p>`; }
 
 async function carregarCatalogo() {
@@ -44,7 +47,7 @@ async function configOficial(id) {
   const f = el.partida.formato;
   return {
     modo: 'oficial', id, mapa: el.mapa, semente: el.semente, versao: el.versao, azul: jogs(el.azul.jogadores), vermelho: jogs(el.vermelho.jogadores),
-    nomeAzul: el.azul.org.nome, nomeVermelho: el.vermelho.org.nome, veloc: REGRAS.velocidadePadrao,
+    nomeAzul: el.azul.org.nome, nomeVermelho: el.vermelho.org.nome, siglaAzul: el.azul.org.sigla, siglaVermelho: el.vermelho.org.sigla, veloc: REGRAS.velocidadePadrao,
     aviso: `Partida oficial · mapa ${el.mapa} de uma série melhor de ${f} · ${el.azul.org.nome} (azul) × ${el.vermelho.org.nome} (vermelho). O resultado não pode ser refeito.`,
     aoFim: (r, acoes) => botaoRegistrar(el, r, acoes),
   };
@@ -54,7 +57,7 @@ async function configAmistoso(id) {
   const jogs = (l) => l.map((j) => ({ id: j.id, nome: j.nome, pos: j.pos, atributos: j.atributos, poder: j.poder, eficiencia: j.eficiencia, favoritos: j.favoritos }));
   return {
     modo: 'amistoso', id, mapa: 1, semente: el.semente, versao: el.versao, azul: jogs(el.azul.jogadores), vermelho: jogs(el.vermelho.jogadores),
-    nomeAzul: el.azul.org.nome, nomeVermelho: el.vermelho.org.nome, veloc: REGRAS.velocidadePadrao,
+    nomeAzul: el.azul.org.nome, nomeVermelho: el.vermelho.org.nome, siglaAzul: el.azul.org.sigla, siglaVermelho: el.vermelho.org.sigla, veloc: REGRAS.velocidadePadrao,
     aviso: `Amistoso (scrim) · ${el.azul.org.nome} (azul) × ${el.vermelho.org.nome} (vermelho). Não vale pontos de campeonato.`,
     aoFim: (r, acoes) => botaoRegistrarAmistoso(id, r, acoes),
   };
@@ -180,7 +183,7 @@ function atualizarPlacar(forcar = false) {
   const gA = P.campeoes.filter((c) => c.equipe === 'azul').reduce((s, c) => s + c.ouroTotal, 0), gV = P.campeoes.filter((c) => c.equipe === 'vermelho').reduce((s, c) => s + c.ouroTotal, 0);
   set('ka', P.equipes.azul.abates); set('kv', P.equipes.vermelho.abates); set('ga', fmt(gA)); set('gv', fmt(gV));
   set('ta', torresCaidas(P, 'azul')); set('tv', torresCaidas(P, 'vermelho')); set('da', dragoes(P, 'azul')); set('dv', dragoes(P, 'vermelho'));
-  const linha = (c) => `<tr data-id="${c.id}" class="${c.morto ? 'morto' : ''} ${E.selecionado === c.id ? 'sel' : ''}"><td>${campIcone(c.campeao, 26)}</td><td class="nm">${esc(c.campeao)}<small>${esc(c.nome)}</small></td><td class="n">${c.nivel}</td><td class="n">${c.estat.abates}/${c.estat.mortes}/${c.estat.assist}</td><td class="n">${c.estat.cs + c.estat.csSelva}</td><td class="n">${fmt(c.ouro)}</td><td><div class="vida"><i style="width:${Math.round(c.hp / c.hpMax * 100)}%;background:${c.equipe === 'azul' ? '#4aa3ff' : '#ff6a6a'}"></i></div></td></tr>`;
+  const linha = (c) => `<tr data-id="${c.id}" class="${c.morto ? 'morto' : ''} ${E.selecionado === c.id ? 'sel' : ''}"><td>${campIcone(c.campeao, 26)}</td><td class="nm">${esc(c.campeao)}<small>${nick(c.equipe, c.nome)}</small></td><td class="n">${c.nivel}</td><td class="n">${c.estat.abates}/${c.estat.mortes}/${c.estat.assist}</td><td class="n">${c.estat.cs + c.estat.csSelva}</td><td class="n">${fmt(c.ouro)}</td><td><div class="vida"><i style="width:${Math.round(c.hp / c.hpMax * 100)}%;background:${c.equipe === 'azul' ? '#4aa3ff' : '#ff6a6a'}"></i></div></td></tr>`;
   document.getElementById('placar').innerHTML = `<tr><th></th><th></th><th class="n">N</th><th class="n">K/D/A</th><th class="n">CS</th><th class="n">Ouro</th><th></th></tr>` + P.campeoes.map(linha).join('');
   // objetivos
   const O = P.objetivosEstado; const obj = [];
@@ -222,7 +225,7 @@ function mostrarResultado() {
   const P = E.partida; const r = P.resultadoFinal; E.fimMostrado = true;
   const nome = (eq) => (eq === 'azul' ? E.config.nomeAzul || 'Equipe Azul' : E.config.nomeVermelho || 'Equipe Vermelha');
   const titulo = r.vencedor ? `${esc(nome(r.vencedor))} venceu` : 'Partida interrompida';
-  const linhas = r.jogadores.map((j) => `<tr class="${j.equipe === 'azul' ? 'a' : 'v'}"><td>${esc(j.campeao)} <small>${esc(j.nome)}</small></td><td>${esc(j.pos)}</td><td class="n">${j.nivel}</td><td class="n">${j.abates}/${j.mortes}/${j.assistencias}</td><td class="n">${j.cs}</td><td class="n">${fmt(j.dano)}</td><td class="n">${fmt(j.ouro)}</td><td class="n">${j.ganks}</td></tr>`).join('');
+  const linhas = r.jogadores.map((j) => `<tr class="${j.equipe === 'azul' ? 'a' : 'v'}"><td>${esc(j.campeao)} <small>${nick(j.equipe, j.nome)}</small></td><td>${esc(j.pos)}</td><td class="n">${j.nivel}</td><td class="n">${j.abates}/${j.mortes}/${j.assistencias}</td><td class="n">${j.cs}</td><td class="n">${fmt(j.dano)}</td><td class="n">${fmt(j.ouro)}</td><td class="n">${j.ganks}</td></tr>`).join('');
   const eqa = r.equipes.azul, eqv = r.equipes.vermelho;
   const d = document.createElement('div'); d.className = 'pt-fundo';
   d.innerHTML = `<div class="pt-modal"><h2 class="${r.vencedor === 'azul' ? 'a' : 'v'}">${titulo}</h2>
