@@ -45,4 +45,7 @@ export const fmt = (n) => Number(n || 0).toLocaleString('pt-BR');
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const taxaDe = (precoRc) => Math.floor((precoRc * TAXA_MERCADO_PCT) / 100);
 // Cor do Poder (faixas), para os selos e barras.
+// Escudo do Poder, com as mesmas faixas do OVR da Carreira no Rift e de Lendas do CBLOL: prata (<70), ouro (70–79),
+// platina (80–89), diamante (90–94) e challenger (95+). Imagens em shared/assets/trofeus.
+export const escudoPoder = (p) => (p >= 95 ? 'challenger' : p >= 90 ? 'diamante' : p >= 80 ? 'platina' : p >= 70 ? 'ouro' : 'prata');
 export const corPoder = (p) => (p >= 80 ? '#f5cf5a' : p >= 65 ? '#5eead4' : p >= 50 ? '#60a5fa' : p >= 35 ? '#a3a3b8' : '#8b7355');

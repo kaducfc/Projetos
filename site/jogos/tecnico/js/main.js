@@ -7,7 +7,7 @@ import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import {
   VAGAS, NOME_VAGA, SIGLA_VAGA, FAVORITOS_MAX, NOME_NIVEL, ATRIBUTOS, ELENCO_MAX, CONTRATO_MIN, CONTRATO_MAX, PRECO_RC, TAXA_MERCADO_PCT,
-  fmt, esc, corPoder, taxaDe, salarioDe,
+  fmt, esc, corPoder, escudoPoder, taxaDe, salarioDe,
 } from './regras.js';
 import { prepararImagens, campIcone } from './campeoes-img.js';
 import { ESCUDOS, escudoSvg, escudoOrg, retratoSvg, iconeVaga } from './art.js';
@@ -100,11 +100,17 @@ async function carregarMercado() {
 // ------------------------------------------------------------------ peças visuais
 const semanasRestantes = (j) => (j.contrato_fim == null ? null : j.contrato_fim - (S.meu?.semana ?? 0));
 
+// Escudo do Poder (prata a challenger): a imagem fica atrás do número; sem imagem, sobra o escudo desenhado em CSS.
+function escudoHtml(poder, grande = false) {
+  const t = escudoPoder(poder);
+  return `<span class="pw${grande ? ' pw-grande' : ''} tier-${t}" title="Poder ${poder}"><img src="../../shared/assets/trofeus/${t}.png" alt="" onerror="this.parentElement.classList.add('sem-img'); this.remove()" /><b>${poder}</b></span>`;
+}
+
 function cartao(j, { tit = false, extra = '', acao = 'ficha', dados = '' } = {}) {
   const c = corPoder(j.poder);
   const resta = semanasRestantes(j);
   return `<button type="button" class="tc-jog" data-act="${acao}" data-id="${j.id}" ${dados} style="--c:${c}">
-    <div class="foto">${retratoSvg(j, 160)}<span class="vg">${iconeVaga(j.pos)}</span><span class="pw">${j.poder}</span></div>
+    <div class="foto">${retratoSvg(j, 160)}<span class="vg">${iconeVaga(j.pos)}</span>${escudoHtml(j.poder)}</div>
     <div class="inf">
       <span class="nm">${esc(j.nome)}${j.ficticio === false ? ' <i class="tc-estrela" title="Jogador Estrela">★</i>' : ''}</span><span class="pos">${esc(NOME_VAGA[j.pos])}</span>
       <div class="ln"><span>${j.idade} anos</span><span>Fama <b>${j.fama}</b></span></div>
@@ -381,7 +387,7 @@ function fichaHtml(m) {
   else if (m.anuncio) acoes = `<button type="button" class="tc-btn ouro" data-act="abrir-comprar" data-anuncio="${m.anuncio.id}">Comprar por ${fmt(m.anuncio.preco_rc)} RC</button>`;
   return `<h2>${esc(j.nome)}${j.ficticio === false ? ' <span class="tc-estrela-selo">★ Estrela</span>' : ''}</h2><p class="tc-mudo tc-peq" style="margin:2px 0">${iconeVaga(j.pos)} ${NOME_VAGA[j.pos]}${(j.pos2 || []).length ? ` · também ${j.pos2.map((p) => NOME_VAGA[p]).join(', ')}` : ''} · ${j.idade} anos${j.regiao ? ` · ${esc(j.regiao)}` : ''}${j.ficticio ? ' · jogador fictício' : ''}</p>
     <div class="tc-ficha"><div class="foto">${retratoSvg(j, 200)}</div><div>
-      <div class="tc-poder" style="margin-bottom:10px"><div class="grande" style="color:${corPoder(j.poder)}">${j.poder}</div><span class="tc-mudo tc-peq">Poder individual<br>Forma ${j.forma} · Experiência ${j.exp}${j.potencial != null ? `<br>Potencial ${j.potencial}` : ''}</span></div>
+      <div class="tc-poder" style="margin-bottom:10px">${escudoHtml(j.poder, true)}<span class="tc-mudo tc-peq">Poder individual<br>Forma ${j.forma} · Experiência ${j.exp}${j.potencial != null ? `<br>Potencial ${j.potencial}` : ''}</span></div>
       ${barras(j)}</div></div>
     <div class="tc-resumo"><div class="l"><span>Salário${j.org_id ? '' : ' (se contratado)'}</span><b>${fmt(j.org_id ? j.salario : salarioDe(j.preco))} cr./semana</b></div>${j.org_id ? `<div class="l"><span>Contrato</span><b>${resta == null ? '—' : resta <= 0 ? 'vence nesta semana' : `${resta} semana(s)`}</b></div><div class="l"><span>Organização</span><b>${esc(j.org?.nome || '')}</b></div>` : j.estrela ? `<div class="l"><span>Preço (Estrela)</span><b class="tc-preco rc">${j.venda_rc && j.preco_rc ? `${fmt(j.preco_rc)} RC` : 'em breve'}</b></div>` : `<div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div>`}${m.anuncio ? `<div class="l"><span>Anúncio</span><b class="tc-preco rc">${fmt(m.anuncio.preco_rc)}</b></div><div class="l"><span>Vendedor</span><b>${esc(m.anuncio.vendedor.nome)}</b></div><div class="l"><span>Publicado em</span><b>${new Date(m.anuncio.criado).toLocaleDateString('pt-BR')}</b></div>` : ''}</div>
     ${(j.campeoes || []).length ? `<h4 class="tc-eyebrow">Campeões</h4><div class="tc-maes">${j.campeoes.map((c) => `<div class="${c.favorito ? 'fav' : ''}">${campIcone(c.nome, 38)}<b>${esc(c.nome)}</b><span>${c.favorito ? '★ ' : ''}${NOME_NIVEL[c.nivel - 1] || ''}${c.favorito && c.bonus_pct ? ` · +${c.bonus_pct}% de Poder` : ''}</span><small>${fmt(c.pontos)} pts · ${c.jogos} jogo(s)</small></div>`).join('')}</div>` : ''}

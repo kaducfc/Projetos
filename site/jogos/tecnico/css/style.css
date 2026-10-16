@@ -334,3 +334,18 @@ form.tc-card[data-form="filtros"] { padding: 16px 0 14px; }
 .tc-jog .foto img.tc-retrato, .tc-ficha .foto img.tc-retrato { object-position: center top; }
 .tc-estrela { font-style: normal; color: #f5cf5a; text-shadow: 0 0 6px #f5cf5a88; }
 .tc-estrela-selo { display: inline-block; vertical-align: middle; font: 800 11px/1 Inter, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: #140f02; background: linear-gradient(180deg, #f8dc7a, #d9a82b); padding: 4px 8px; border-radius: 6px; margin-left: 6px; }
+
+/* escudo do Poder (prata, ouro, platina, diamante e challenger) */
+.tc-jog .pw { position: absolute; top: 4px; left: 4px; right: auto; width: 40px; height: 55px; min-width: 0; padding: 0; border: 0; border-radius: 0; background: none; display: block; color: #fff; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.55)); }
+.tc-jog .pw img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.tc-jog .pw b { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-46%); text-align: center; font: 400 21px/1 'Bebas Neue', sans-serif; color: #fff; text-shadow: 0 1px 3px #000, 0 0 2px #000; }
+.tc-jog .pw.tier-challenger b { color: #fff6dc; }
+.tc-jog .pw.sem-img { border-radius: 50%; width: 34px; height: 34px; background: #04101fe6; border: 2px solid var(--c); }
+.tc-jog .pw.sem-img b { top: 50%; font-size: 15px; color: var(--c); }
+
+/* escudo grande na ficha do jogador */
+.tc-poder .pw-grande { position: relative; flex: none; display: block; width: 62px; height: 85px; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55)); }
+.tc-poder .pw-grande img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.tc-poder .pw-grande b { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-46%); text-align: center; font: 400 34px/1 'Bebas Neue', sans-serif; color: #fff; text-shadow: 0 2px 4px #000, 0 0 2px #000; }
+.tc-poder .pw-grande.tier-challenger b { color: #fff6dc; }
+.tc-poder .pw-grande.sem-img { border-radius: 50%; width: 64px; height: 64px; background: #04101fe6; border: 3px solid var(--ouro2); }
