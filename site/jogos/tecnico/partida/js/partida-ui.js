@@ -232,9 +232,9 @@ function quadro(ts) {
 
 (async function iniciar() {
   await platform.init();
-  const teste = LOCAL && consulta.get('teste') === '1';
   const user = platform.getUser();
   const souAdmin = await platform.isAdmin();
+  const teste = consulta.get('teste') === '1' && (LOCAL || souAdmin); // sala de testes: local ou administrador (não registra nada)
   const aberto = !gameById('tecnico')?.soAdmin;
   if (!teste && !user) return msg('Entre na sua conta para ver a partida.');
   if (!teste && !souAdmin && !aberto) return msg('Esta área ainda está em desenvolvimento e só administradores têm acesso.');

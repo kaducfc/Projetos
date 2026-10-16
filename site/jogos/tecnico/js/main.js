@@ -146,7 +146,7 @@ function nav() {
   const novos = (S.meu.avisos || []).filter((a) => !a.lido).length;
   const sem = ((S.meu.semana % 4) + 4) % 4 + 1;
   return `<nav class="tc-nav" aria-label="Seções">${ABAS.map(([id, nome, ic]) => `<button type="button" data-act="aba" data-aba="${id}" class="${S.aba === id ? 'on' : ''}">${IMG(ic)}<span>${nome}</span>${id === 'visao' && novos ? `<span class="n">${Math.min(novos, 9)}</span>` : ''}</button>`).join('')}
-    <div class="tc-temp"><span class="tc-eyebrow">Temporada atual</span><b>Semana ${sem} de 4</b><small>${S.meu.org.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)}</small></div></nav>`;
+    <div class="tc-temp"><span class="tc-eyebrow">Temporada atual</span><b>Semana ${sem} de 4</b><small>${S.meu.org.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)}</small></div>${FECHADO ? '<a class="tc-peq" style="color:var(--ouro2);padding:8px 4px;text-align:center" href="partida/?teste=1">Sala de testes da partida (admin)</a>' : ''}</nav>`;
 }
 
 // ------------------------------------------------------------------ criar organização
