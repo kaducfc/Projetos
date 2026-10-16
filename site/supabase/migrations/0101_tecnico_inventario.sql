@@ -3,7 +3,7 @@
 --  * O elenco passa a ter até 50 jogadores (inventário). Para encher, só demitindo ou vendendo.
 --  * "Ativos" = 5 titulares + as 5 melhores reservas (por Poder): só eles recebem salário e têm o contrato vencendo.
 --    Os demais ficam guardados no inventário, sem custo e sem vencer.
---  * Legado repetido vira cópia e não ocupa espaço: o baú só exige vaga quando sai um Legado novo.
+--  * Baú e contratação exigem espaço livre no inventário: abrir 5 baús precisa de 5 vagas. Legado repetido vira cópia (não ocupa espaço depois de sorteado).
 
 update public.tc_config set valor = valor || '{"max": 50, "reservas": 5}'::jsonb where chave = 'elenco';
 
@@ -106,6 +106,7 @@ begin
   if o.id is null then raise exception 'sem_org'; end if;
   select * into g from tc_gacha where user_id = uid and chave = chave_;
   if g.id is not null then return jsonb_build_object('ja_feito', true, 'itens', g.resultado, 'preco_rc', g.custo_rc); end if;
+  if (select count(*) from tc_jogadores where org_id = o.id) + qtd_ > ((tc_cfg('elenco'))->>'max')::int then raise exception 'elenco_cheio'; end if; -- inventário: precisa de espaço para a quantidade pedida
   if not exists (select 1 from tc_jogadores where not ficticio and legado_base is null) then raise exception 'sem_legados'; end if;
   perform pg_advisory_xact_lock(85098);
   preco := case when qtd_ = 5 then round((b->>'rc')::numeric * 5 * (1 - (cfg->>'desconto_5')::numeric)) else (b->>'rc')::bigint end;
@@ -132,7 +133,6 @@ begin
       update tc_jogadores set copias = copias + 1 where id = j.id returning * into j; -- repetido: vira cópia para subir Estrelas
     else
       repetida := false;
-      if (select count(*) from tc_jogadores where org_id = o.id) >= ((tc_cfg('elenco'))->>'max')::int then raise exception 'elenco_cheio'; end if; -- só Legado novo ocupa espaço
       sal := tc_salario(tc_preco_jogador(t));
       insert into tc_jogadores (nome, ficticio, genero, pos, pos2, idade, regiao, retrato, potencial, mec, rotas, macro, tf, mental, fama, forma, exp, raridade, org_id, slot, salario, contrato_fim, legado_base)
       values (t.nome, false, t.genero, t.pos, t.pos2, t.idade, t.regiao, t.retrato, t.potencial, t.mec, t.rotas, t.macro, t.tf, t.mental, t.fama, 50, 0, t.raridade, o.id, null, sal, null, t.id)

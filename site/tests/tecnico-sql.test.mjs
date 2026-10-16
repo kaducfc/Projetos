@@ -825,10 +825,12 @@ t('inventário: até 50 jogadores; só titulares e as 5 melhores reservas recebe
   V("update tc_config set valor = jsonb_set(valor, '{max}', '50') where chave = 'elenco'");
   const r = J("select tc_recrutar('basico', 1, 'chave-inv-2')", 1); assert.equal(r.itens[0].repetida, false);
   V("update tc_config set valor = jsonb_set(valor, '{max}', to_jsonb((select count(*) from tc_jogadores where org_id = 1))) where chave = 'elenco'");
-  // com o inventário cheio, um Legado repetido vira cópia (não ocupa espaço)
-  const base = V("select legado_base from tc_jogadores where org_id = 1 and legado_base is not null limit 1");
-  V(`delete from tc_jogadores where not ficticio and legado_base is null and id <> ${base}`);
-  const rep = J("select tc_recrutar('basico', 1, 'chave-inv-3')", 1);
-  assert.equal(rep.itens[0].repetida, true); assert.equal(rep.itens[0].jogador.copias, 1);
+  // inventário cheio: nada de baú; com 3 vagas só o de 1 passa (o de 5 exige 5)
+  const n = Number(V("select count(*) from tc_jogadores where org_id = 1"));
+  V(`update tc_config set valor = jsonb_set(valor, '{max}', '${n + 3}') where chave = 'elenco'`);
+  assert.equal(falha("select tc_recrutar('basico', 5, 'chave-inv-3')", 1), 'elenco_cheio');
+  assert.equal(J("select tc_recrutar_info()", 1).elenco_max - J("select tc_recrutar_info()", 1).elenco, 3);
+  V(`update tc_config set valor = jsonb_set(valor, '{max}', '${n}') where chave = 'elenco'`);
+  assert.equal(falha("select tc_recrutar('basico', 1, 'chave-inv-4')", 1), 'elenco_cheio');
   V("update tc_config set valor = jsonb_set(valor, '{max}', '50') where chave = 'elenco'");
 });

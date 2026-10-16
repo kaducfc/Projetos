@@ -104,12 +104,13 @@ export function viewAmistoso() {
 // ------------------------------------------------------------------ Recrutar
 export function viewRecrutar() {
   const r = X.recrutar; if (!r) return '<p class="tc-carregando">Carregando…</p>';
-  const cfg = r.config; const cheio = r.elenco >= r.elenco_max;
+  const cfg = r.config; const livresN = r.elenco_max - r.elenco;
+  const livresTxt = livresN <= 0 ? ' <b style="color:var(--ruim)">Inventário cheio: demita ou venda alguém para abrir espaço.</b>' : livresN < 5 ? ` <b style="color:#fbbf24">Espaço livre no inventário: ${livresN}. Abrir 5 baús exige 5 vagas.</b>` : '';
   const preco5 = (b) => Math.round(b.rc * 5 * (1 - cfg.desconto_5));
   const baus = Object.entries(cfg.baus).map(([id, b]) => {
     const odds = ORDEM_RAR.map((k) => `<li class="r-${k}"><span>${RARIDADES[k].nome}</span><b>${(b.odds[k] ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</b></li>`).join('');
     const garantia = r.garantia?.[id] ?? 0;
-    const bloq1 = r.saldo_rc < b.rc || C.S.ocupado; const bloq5 = r.saldo_rc < preco5(b) || C.S.ocupado;
+    const bloq1 = r.saldo_rc < b.rc || livresN < 1 || C.S.ocupado; const bloq5 = r.saldo_rc < preco5(b) || livresN < 5 || C.S.ocupado;
     return `<section class="tc-card tc-bau bau-${id}"><div class="arte">${C.IMG('i-bau', 'grande')}</div><h3>${C.esc(b.nome)}</h3>
       <ul class="tc-odds">${odds}</ul>
       <small class="tc-mudo">Garantia: a cada ${cfg.pity_a_cada} baús sem Épico ou melhor, o próximo vem Épico ou melhor (faltam ${Math.max(0, cfg.pity_a_cada - garantia)}).</small>
@@ -118,7 +119,7 @@ export function viewRecrutar() {
   }).join('');
   const livres = r.legados.por_raridade || {};
   return `<section class="tc-card"><h3>${C.IMG('i-bau')}Recrutar<span class="dir">${C.fmt(r.saldo_rc)} RC</span></h3>
-    <p class="tc-mudo tc-peq" style="margin:0">Recrute jogadores Legado, ídolos reais do cenário competitivo, e leve a sua equipe ao topo do mundo.${cheio ? ' <b style="color:var(--ruim)">Inventário cheio: demita ou venda alguém para abrir espaço.</b>' : ''}</p>
+    <p class="tc-mudo tc-peq" style="margin:0">Recrute jogadores Legado, ídolos reais do cenário competitivo, e leve a sua equipe ao topo do mundo.${livresTxt}</p>
     <div class="tc-raras">${ORDEM_RAR.map((k) => `<span class="r-${k}">${RARIDADES[k].nome}: ${livres[k] ?? 0} no catálogo</span>`).join('')}</div></section>
     <div class="tc-baus">${baus}</div>
     ${r.meus_legados.length ? `<section class="tc-card"><h3>Seus Legados</h3><div class="tc-minis">${r.meus_legados.map((j) => miniCartao(j)).join('')}</div></section>` : ''}`;
