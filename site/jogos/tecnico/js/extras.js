@@ -2,7 +2,7 @@
 // Recebe de main.js (iniciarExtras) o estado e os ajudantes; tudo que vale (custos, sorteio, EXP) vem do servidor.
 import * as platform from '../../../shared/platform.js';
 import { escudoPoder } from './regras.js';
-import { retratoSvg, escudoOrg } from './art.js';
+import { retratoSvg, escudoOrg, iconeVaga } from './art.js';
 import { abrirBau } from './bau-anim.js';
 
 const api = platform.tecnico;
@@ -59,7 +59,7 @@ const poderBarra = (j) => {
   return `<div class="tc-treino-poder"><span>Poder <b>${j.poder}</b> <small>/ limite ${lim}</small></span><div class="tc-barra"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></div><small class="tc-mudo">Início ${ini} · até +${lim - ini}</small></div>`;
 };
 const rar = (j) => (j.raridade && RARIDADES[j.raridade] ? j.raridade : '');
-const miniCartao = (j, extra = '') => `<div class="tc-mini ${rar(j) ? `r-${rar(j)}` : ''}"><div class="foto">${retratoSvg(j, 110)}${C.escudoHtml(j.poder)}</div><div class="inf"><b>${C.esc(j.nome)}${j.legado ? ' <i class="tc-estrela">◆</i>' : ''}</b><small>${C.esc(C.nomeVaga(j.pos))}${rar(j) ? ` · ${RARIDADES[j.raridade].nome}` : ''}</small>${j.org_id ? C.estrelasHtml(j) : ''}${extra}</div></div>`;
+const miniCartao = (j, extra = '') => `<div class="tc-mini ${rar(j) ? `r-${rar(j)}` : ''}"><div class="foto">${retratoSvg(j, 110)}${C.escudoHtml(j.poder)}</div><div class="inf"><b>${C.esc(j.nome)}${j.legado ? ' <i class="tc-estrela">◆</i>' : ''}</b><small class="pos-rar">${iconeVaga(j.pos)} ${C.esc(C.nomeVaga(j.pos))}${rar(j) ? ` · <b class="rar-txt rt-${j.raridade}">${RARIDADES[j.raridade].nome}</b>` : ''}</small>${j.org_id ? C.estrelasHtml(j) : ''}${extra}</div></div>`;
 
 // ------------------------------------------------------------------ Treinamento
 export function viewTreino() {

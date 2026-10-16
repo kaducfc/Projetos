@@ -412,3 +412,10 @@ form.tc-card[data-form="filtros"] { padding: 16px 0 14px; }
   .tc-attr { grid-template-columns: 70px 24px minmax(20px, 1fr) 96px; gap: 6px; }
 }
 .tc-moeda .ic-frag { width: 22px; text-align: center; font-size: 22px; line-height: 1; color: #c4b5fd; text-shadow: 0 0 8px #8b5cf6aa; }
+
+/* informação do jogador: tag da posição e raridade colorida */
+.tc-mini .inf small.pos-rar { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.rar-txt { font-weight: 800; letter-spacing: 0.02em; }
+.rar-txt.rt-comum { color: #b4b4c8; } .rar-txt.rt-raro { color: #60a5fa; } .rar-txt.rt-epico { color: #c084fc; }
+.rar-txt.rt-lendario { color: #f5cf5a; text-shadow: 0 0 8px #f5cf5a66; }
+.rar-txt.rt-mitico { color: #fb4b64; text-shadow: 0 0 10px #fb4b6499; text-transform: uppercase; letter-spacing: 0.06em; }
