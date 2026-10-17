@@ -11,7 +11,7 @@ import { elencoTeste } from '../dados/elencos-teste.js';
 import { prepararImagens, campIcone } from '../../js/campeoes-img.js';
 import { tempoTexto } from '../motor/eventos.js';
 import { REGRAS } from '../config/regras.js';
-import { abrirDraft } from './draft-ui.js';
+import { abrirDraft } from './draft-ui.js?v=2';
 
 const api = platform.tecnico;
 
@@ -272,6 +272,7 @@ function quadro(ts) {
   if (aid) {
     E.config = await configAmistoso(aid);
     const dr = await abrirDraft({ catalogo: E.catalogo, azul: E.config.azul, vermelho: E.config.vermelho, semente: E.config.semente, nomeAzul: E.config.nomeAzul, nomeVermelho: E.config.nomeVermelho });
+    E.config.veloc = 4; // depois do draft a simulação já começa sozinha, em 4x
     E.config.azul = dr.azul; E.config.vermelho = dr.vermelho; E.config.bans = dr.bans;
     E.config.aviso += ` Bans: ${dr.bans.azul.join(', ')} | ${dr.bans.vermelho.join(', ')}.`;
   } else if (id) E.config = await configOficial(id);
@@ -279,6 +280,7 @@ function quadro(ts) {
   E.partida = novaPartida(E.config);
   E.relogio = new Relogio(E.partida, { velocidade: E.config.veloc });
   montar();
+  if (aid) { E.relogio.retomar(); const bp = document.getElementById('b-play'); if (bp) bp.textContent = '⏸ Pausar'; }
   atualizarPlacar(true);
   window.__partida = E; // facilita a depuração no console
   window.addEventListener('resize', () => { E.rend.ajustar(Math.floor(document.getElementById('mapa').clientWidth)); });
