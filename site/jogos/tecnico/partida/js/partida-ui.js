@@ -11,7 +11,7 @@ import { elencoTeste } from '../dados/elencos-teste.js';
 import { prepararImagens, campIcone } from '../../js/campeoes-img.js';
 import { tempoTexto } from '../motor/eventos.js';
 import { REGRAS } from '../config/regras.js';
-import { abrirDraft } from './draft-ui.js?v=11';
+import { abrirDraft } from './draft-ui.js?v=12';
 
 const api = platform.tecnico;
 

@@ -94,7 +94,7 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
     function finalizar() {
       clearInterval(S.relogio);
       const r = resultadoDraft(d);
-      fundo.innerHTML = `<div class="pt-modal pt-draft-box"><h2>Draft completo</h2><div class="palco fim">${colunaHtml('azul', nomeAzul)}<div class="meio"><p class="pt-mudo">Os campeões estão escolhidos. Boa partida!</p><button type="button" class="pt-btn ouro grande" id="d-ir">Começar a partida</button></div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
+      fundo.innerHTML = `<div class="pt-modal pt-draft-box intro"><h2>Draft completo</h2><div class="palco fim">${colunaHtml('azul', nomeAzul)}<div class="meio"><button type="button" class="pt-btn ouro grande" id="d-ir">Começar a partida</button></div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
       fundo.querySelector('#d-ir').onclick = () => { fundo.remove(); resolver(r); };
     }
     function intro() {
