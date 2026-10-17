@@ -171,7 +171,7 @@ function viewCriar() {
   return `<div class="tc-criar">
     <p class="tc-eyebrow">◆ Simulador de técnico · em teste</p>
     <h1 style="font-family:'Bebas Neue',sans-serif;font-size:46px;margin:4px 0 6px">Crie a sua organização</h1>
-    <p class="tc-mudo">Dê nome ao seu time, escolha a sigla, o escudo e as cores. Você recebe créditos e cinco jogadores de base para começar na ${esc(nomeLiga().acesso || 'divisão de acesso')}. A aparência não dá vantagem na competição.</p>
+    <p class="tc-mudo">Dê nome ao seu time, escolha a sigla, o escudo e as cores. Você recebe créditos e 15 jogadores de base (3 por posição) para começar na ${esc(nomeLiga().acesso || 'divisão de acesso')}. A aparência não dá vantagem na competição.</p>
     <form class="tc-card tc-form" data-form="criar" novalidate style="margin-top:16px">
       <div class="duas">
         <label class="campo"><span>Nome do time</span><input class="tc-input" name="nome" maxlength="24" autocomplete="off" value="${esc(f.nome)}" placeholder="Ex.: Aurora Esports" /></label>

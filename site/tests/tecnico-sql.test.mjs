@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -99,7 +99,8 @@ t('elenco inicial: cinco titulares, um por posição, e atributos entre 1 e 100'
 });
 
 t('Poder: SQL e navegador calculam igual (individual e da equipe)', () => {
-  const jog = J("select jsonb_agg(to_jsonb(j) order by id) from tc_jogadores j where org_id = 1", 1);
+  const jog = J("select jsonb_agg(to_jsonb(j) order by id) from tc_jogadores j where org_id = 1 and slot is not null", 1);
+  assert.equal(jog.length, 5);
   for (const x of jog) {
     const esperado = poder(x);
     const sql = Number(V(`select tc_poder(j) from tc_jogadores j where id = ${x.id}`));
@@ -156,6 +157,7 @@ t('contratação: com saldo, sem saldo, elenco cheio, contrato inválido e pedid
 t('escalação: troca titulares, reduz a sinergia e só mexe em jogador do próprio elenco', () => {
   V('update tc_orgs set sinergia = 50 where id = 1');
   const res = V("select id from tc_jogadores where org_id = 1 and slot is null order by id limit 1");
+  V(`update tc_jogadores set contrato_fim = null, contrato_valor_semana = 0 where id = ${res}`);
   assert.equal(falha(`select tc_escalar('meio', ${res})`, 1), 'contrato_necessario', 'sem contrato não escala');
   V(`select tc_escalar('meio', ${res}, 4)`, 1); // efetiva 1 temporada junto
   assert.equal(V("select id from tc_jogadores where org_id = 1 and slot = 'meio'"), res);
@@ -651,7 +653,7 @@ t('retratos: cada foto é de um único jogador fictício; sem foto livre, o merc
   assert.ok(fotos.length <= 60, 'no máximo 60 fotos');
   assert.ok(fotos.filter((x) => x.g === 'F').length > 0 && fotos.filter((x) => x.g === 'M').length > 0, 'há jogadoras e jogadores');
   const antes = V("select string_agg(id || coalesce(retrato, '-'), ',' order by id) from tc_jogadores");
-  V(readFileSync(new URL('../supabase/migrations/0107_tecnico_retratos_unicos.sql', import.meta.url), 'utf8'));
+  V(readFileSync(new URL('../supabase/migrations/0108_tecnico_elenco_inicial_15.sql', import.meta.url), 'utf8')); // idempotente: não mexe em ninguém
   assert.equal(V("select string_agg(id || coalesce(retrato, '-'), ',' order by id) from tc_jogadores"), antes);
   // tentar repetir uma foto é recusado pelo banco
   const dup = Q("update tc_jogadores set retrato = (select retrato from tc_jogadores where ficticio and retrato is not null order by id limit 1) where id = (select id from tc_jogadores where ficticio and retrato is not null order by id desc limit 1)");
@@ -893,4 +895,17 @@ t('baús em créditos de equipe (período de testes): Básico 5, Premium 10, pac
   assert.equal(falha("select tc_recrutar('basico', 1, 'chave-cred-4')", 1), 'creditos_insuficientes');
   assert.equal(V("select creditos from tc_orgs where id = 1"), '4'); assert.equal(V("select count(*) from tc_gacha where chave = 'chave-cred-4'"), '0');
   V("delete from tc_jogadores where org_id = 1 and not ficticio"); V("update tc_orgs set creditos = 50000000 where id = 1");
+});
+
+t('time novo: 15 jogadores fictícios (3 por posição), o melhor de cada posição titular, contrato de cortesia e fotos sem repetir', () => {
+  const r = Q("select tc_criar_org('Novo Time', 'NVT')", 6);
+  assert.ok(r.ok, r.err);
+  const oid = V("select id from tc_orgs where user_id = '" + U(6) + "'");
+  assert.equal(V(`select count(*) from tc_jogadores where org_id = ${oid}`), '15');
+  for (const pos of ['top', 'selva', 'meio', 'atirador', 'suporte']) assert.equal(V(`select count(*) from tc_jogadores where org_id = ${oid} and pos = '${pos}'`), '3', pos);
+  assert.equal(V(`select count(*) from tc_jogadores where org_id = ${oid} and slot is not null`), '5');
+  // o titular é o melhor da posição
+  assert.equal(V(`select count(*) from tc_jogadores t where org_id = ${oid} and slot is not null and exists (select 1 from tc_jogadores o where o.org_id = ${oid} and o.pos = t.pos and o.slot is null and (o.mec + o.rotas + o.macro + o.tf + o.mental) > (t.mec + t.rotas + t.macro + t.tf + t.mental))`), '0');
+  assert.equal(V(`select count(*) from tc_jogadores where org_id = ${oid} and not (contrato_fim > tc_semana_global())`), '0', 'contrato de cortesia');
+  assert.equal(V("select count(*) - count(distinct retrato) from tc_jogadores where ficticio and retrato is not null"), '0');
 });
