@@ -86,7 +86,6 @@ export class Renderizador {
       if (this.sprite(`${e.subtipo}_${e.equipe}`).ok) { // miniatura na cor do time
         c.fillStyle = cor; c.globalAlpha = 0.28; c.beginPath(); c.ellipse(x, y + larg * 0.12, larg * 0.5, larg * 0.2, 0, 0, 7); c.fill(); c.globalAlpha = 1;
         this.desenharSprite(c, `${e.subtipo}_${e.equipe}`, x, y + larg * 0.3, larg, e.subtipo === 'torre' ? 0.82 : 0.7, vuln ? 1 : 0.8);
-        if (!vuln) { c.strokeStyle = 'rgba(255,255,255,0.45)'; c.lineWidth = 1; c.beginPath(); c.ellipse(x, y + larg * 0.12, larg * 0.55, larg * 0.24, 0, 0, 7); c.stroke(); }
         if (e.hp < e.hpMax || e.subtipo === 'nexus') this.barra(c, x - larg * 0.4, y - larg * 0.62 - 4 * U, larg * 0.8, 3 * U, e.hp / e.hpMax, e.hp / e.hpMax > 0.5 ? '#6adf7a' : '#e8b34a');
         continue;
       }
