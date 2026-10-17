@@ -1,0 +1,19 @@
+/* Ícone da organização: camadas coloridas recortadas por máscaras (veja js/icone.js). */
+.tc-ic { position: relative; display: inline-block; width: var(--s, 56px); height: var(--s, 56px); flex: none; vertical-align: middle; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .55)); }
+.tc-ic i, .tc-emb i { position: absolute; inset: 0; background-color: var(--c, #fff); -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.tc-ic i.f { background-size: 100% 100%; background-blend-mode: hard-light; } /* o sombreado da imagem original dá o relevo ao metal e ao tecido */
+.tc-emb { position: absolute; display: block; }
+.tc-ic > .tc-emb { }
+/* editor */
+.tc-ic-edit { display: grid; gap: 14px; }
+.tc-ic-edit .previa { display: flex; align-items: center; gap: 16px; }
+.tc-ic-edit h4 { margin: 0 0 6px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ouro2, #f5cf5a); }
+.tc-ic-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; max-height: 232px; overflow-y: auto; padding: 4px; background: #06101f; border: 1px solid var(--linha, #1c3556); border-radius: 8px; }
+.tc-ic-grade button { background: #0a1a33; border: 1px solid var(--linha, #1c3556); border-radius: 8px; padding: 4px; cursor: pointer; display: grid; place-items: center; }
+.tc-ic-grade button.on { border-color: var(--ouro2, #f5cf5a); box-shadow: 0 0 0 1px var(--ouro2, #f5cf5a); }
+.tc-ic-cores { display: grid; gap: 8px; }
+.tc-ic-cor { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tc-ic-cor > span { min-width: 120px; font-size: 13px; color: #cfe0fa; }
+.tc-ic-cor input[type=color] { width: 40px; height: 30px; padding: 0; border: 1px solid var(--linha, #1c3556); background: none; cursor: pointer; }
+.tc-ic-cor .sw { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #ffffff55; cursor: pointer; padding: 0; }
+.tc-ic-edit label.usa { display: flex; align-items: center; gap: 8px; cursor: pointer; }
