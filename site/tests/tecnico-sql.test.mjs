@@ -87,7 +87,11 @@ t('criação da organização: validações, unicidade e uma por conta', () => {
   assert.equal(V("select count(*) from tc_jogadores where org_id = 1 and slot is not null"), '0');
   const meu1 = J("select tc_meu()", 1);
   assert.equal(meu1.org.elenco_pendente, true); assert.equal(meu1.elenco.length, 0); assert.equal(meu1.ofertas.length, 15);
-  for (const pos of ['top', 'selva', 'meio', 'atirador', 'suporte']) assert.equal(meu1.ofertas.filter((x) => x.pos === pos).length, 3, pos);
+  for (const pos of ['top', 'selva', 'meio', 'atirador', 'suporte']) {
+    const tres = meu1.ofertas.filter((x) => x.pos === pos); assert.equal(tres.length, 3, pos);
+    const m = tres.filter((x) => x.genero === 'M').length; assert.ok(m === 1 || m === 2, `${pos}: sempre os dois gêneros (${m} masculinos)`);
+    for (const x of tres) assert.match(x.retrato, x.genero === 'F' ? /\/f\d\d\.webp$/ : /\/m\d\d\.webp$/, 'foto combina com o gênero');
+  }
   const of1 = meu1.ofertas;
   assert.equal(falha("select tc_escolher_elenco_inicial('{1,2,3}')", 1), 'escolha_5');
   assert.equal(falha(`select tc_escolher_elenco_inicial('{${of1.filter((x) => x.pos === 'top').slice(0, 2).map((x) => x.id).join(',')},${of1.filter((x) => x.pos === 'selva').slice(0, 3).map((x) => x.id).join(',')}}')`, 1), 'uma_por_posicao');

@@ -21,6 +21,8 @@ declare
   i int;
   ids bigint[];
   faltam int;
+  maj text;
+  raro int;
 begin
   perform set_config('tc.oferta', '1', true); -- os candidatos sempre recebem foto, mesmo sobrando poucas
   -- garante 15 fotos livres: se faltar, jogadores do mercado oficial (sem dono e sem anúncio) cedem as deles
@@ -31,7 +33,11 @@ begin
          and not exists (select 1 from tc_anuncios a where a.jogador_id = j.id) order by id desc limit faltam);
   end if;
   foreach v in array array['top', 'selva', 'meio', 'atirador', 'suporte'] loop
+    -- 3 candidatos por posição: sempre os dois gêneros (2 de um e 1 do outro, sorteado)
+    maj := case when random() < 0.5 then 'M' else 'F' end;
+    raro := 1 + floor(random() * 3)::int;
     for i in 1..3 loop
+      perform set_config('tc.genero', case when i = raro then (case when maj = 'M' then 'F' else 'M' end) else maj end, true);
       ids := tc_gerar_jogadores(1, 42, v, oid);
       update tc_jogadores set salario = tc_salario(tc_preco_jogador(tc_jogadores)), contrato_fim = null, contrato_valor_semana = 0,
              forma = 50, fama = least(fama, 25), slot = null
@@ -40,6 +46,7 @@ begin
     end loop;
   end loop;
   perform set_config('tc.oferta', '', true);
+  perform set_config('tc.genero', '', true);
   update tc_orgs set elenco_pendente = true where id = oid;
 end;
 $$;
@@ -52,7 +59,7 @@ declare
   livres int;
 begin
   if new.ficticio and new.retrato is null then
-    new.genero := tc_genero_do_jogador(new.id);
+    new.genero := case when coalesce(current_setting('tc.oferta', true), '') = '1' and coalesce(current_setting('tc.genero', true), '') in ('M', 'F') then current_setting('tc.genero', true) else tc_genero_do_jogador(new.id) end;
     if new.org_id is null or not exists (select 1 from tc_orgs where id = new.org_id and user_id is null) then
       perform pg_advisory_xact_lock(85107);
       if new.org_id is not null and coalesce(current_setting('tc.oferta', true), '') <> '1' then
