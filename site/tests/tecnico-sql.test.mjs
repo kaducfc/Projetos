@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -205,8 +205,8 @@ t('contratos: 1 semana ou 1 temporada (20% mais barata), pagos adiantado; encerr
   assert.equal(Number(V('select creditos from tc_orgs where id = 1')), cred - r.custo, 'pago adiantado');
   assert.equal(Number(V(`select contrato_fim - tc_semana_global() from tc_jogadores where id = ${j}`)), 4);
   assert.equal(falha(`select tc_assinar_contrato(${j}, 1)`, 1), 'contrato_vigente');
-  // anunciar com contrato vigente não pode; encerrar devolve 50% do restante pago (4 semanas restantes)
-  assert.equal(falha(`select tc_anunciar(${j}, 500)`, 1), 'contrato_vigente');
+  // anunciar com contrato vigente pode; encerrar devolve 50% do restante pago (4 semanas restantes)
+  const anCt = J(`select tc_anunciar(${j}, 500)`, 1); assert.ok(anCt.id, 'contrato vigente não impede o anúncio'); V(`select tc_cancelar_anuncio(${anCt.id})`, 1);
   const antes = Number(V('select creditos from tc_orgs where id = 1'));
   const e = J(`select tc_encerrar_contrato(${j})`, 1);
   assert.equal(e.reembolso, Math.floor(Math.round(r.custo / 4) * 4 * 0.5));
@@ -929,4 +929,38 @@ t('ícone do time: emblema (1 a 30) e bandeira opcional (1 a 20) com cores; form
   }
   V("select tc_personalizar_org('escudo-3', '#d9a82b', '#ffffff', 'classico')", 1);
   assert.equal(V("select escudo from tc_orgs where id = 1"), 'escudo-3');
+});
+
+t('vender com contrato vigente: ao comprar, o contrato acaba, o vendedor recebe 50% do restante e o comprador recebe o jogador sem contrato; Legado também vende', () => {
+  V("update tc_orgs set creditos = 50000000 where id in (1, " + O2 + ")");
+  V("update site_carteira set saldo = 1000000 where user_id in ('" + U(1) + "', '" + U(2) + "')");
+  V("delete from tc_anuncios"); V("update auth.users set created_at = now() - interval '60 days'");
+  const res = V("select id from tc_jogadores where org_id = 1 and slot is null and ficticio order by id limit 1");
+  V(`update tc_jogadores set contrato_fim = tc_semana_global() + 4, contrato_valor_semana = 1000, slot = null where id = ${res}`);
+  const an = J(`select tc_anunciar(${res}, 600)`, 1).id;
+  const cred = Number(V("select creditos from tc_orgs where id = 1"));
+  V(`select tc_comprar_anuncio(${an}, 'chave-venda-ct-1')`, 2);
+  assert.equal(V(`select org_id from tc_jogadores where id = ${res}`), String(O2));
+  assert.equal(Number(V("select creditos from tc_orgs where id = 1")), cred + 2000, 'vendedor recebe 50% do restante (4 x 1000 x 50%)');
+  assert.equal(V(`select contrato_fim is null and contrato_valor_semana = 0 from tc_jogadores where id = ${res}`), 't', 'comprador recebe sem contrato');
+  assert.equal(falha(`select tc_escalar('meio', ${res})`, 2), 'contrato_necessario');
+  // Legado: anuncia e vende levando estrelas e cópias; quem já tem o mesmo Legado não compra outro
+  V("delete from tc_anuncios");
+  const modelo = V("select id from tc_jogadores where nome = 'Doran' and legado_base is null");
+  const sal = V("select tc_salario(tc_preco_jogador(j)) from tc_jogadores j where id = " + modelo);
+  V("delete from tc_jogadores where nome = 'Doran' and legado_base is not null");
+  const leg = V(`insert into tc_jogadores (nome, ficticio, genero, pos, pos2, idade, regiao, retrato, potencial, mec, rotas, macro, tf, mental, fama, forma, exp, raridade, org_id, salario, legado_base, estrelas, copias, contrato_fim, contrato_valor_semana)
+    select nome, false, genero, pos, pos2, idade, regiao, retrato, potencial, mec, rotas, macro, tf, mental, fama, 50, 0, raridade, 1, ${sal}, id, 2, 3, tc_semana_global() + 2, 500 from tc_jogadores where id = ${modelo} returning id`).split('\n')[0];
+  const anL = J(`select tc_anunciar(${leg}, 900)`, 1).id;
+  const credL = Number(V("select creditos from tc_orgs where id = 1"));
+  V(`select tc_comprar_anuncio(${anL}, 'chave-venda-leg-1')`, 2);
+  assert.equal(V(`select org_id || ':' || estrelas || ':' || copias || ':' || coalesce(contrato_fim::text, 'sem')  from tc_jogadores where id = ${leg}`), `${O2}:2:3:sem`, 'leva estrelas e cópias, sem contrato');
+  assert.equal(Number(V("select creditos from tc_orgs where id = 1")), credL + 500, '50% de 2 semanas x 500');
+  // o comprador (org 2) já tem o Legado: não compra outro igual
+  V(`update tc_jogadores set org_id = 1 where id = ${leg}`);
+  const outro = V(`insert into tc_jogadores (nome, ficticio, genero, pos, pos2, idade, regiao, retrato, potencial, mec, rotas, macro, tf, mental, fama, forma, exp, raridade, org_id, salario, legado_base)
+    select nome, false, genero, pos, pos2, idade, regiao, retrato, potencial, mec, rotas, macro, tf, mental, fama, 50, 0, raridade, ${O2}, ${sal}, id from tc_jogadores where id = ${modelo} returning id`).split('\n')[0];
+  const anL2 = J(`select tc_anunciar(${leg}, 900)`, 1).id;
+  assert.equal(falha(`select tc_comprar_anuncio(${anL2}, 'chave-venda-leg-2')`, 2), 'legado_ja_possui');
+  V(`delete from tc_jogadores where id in (${leg}, ${outro})`);
 });
