@@ -7,6 +7,7 @@ import { Relogio } from '../motor/relogio.js';
 import { Renderizador } from '../render/canvas.js';
 import { CAMADAS, desenharDepuracao } from '../render/depuracao.js';
 import { MAPA } from '../config/mapa.js';
+import { MUNDO } from '../nucleo/coord.js';
 import { elencoTeste } from '../dados/elencos-teste.js';
 import { prepararImagens, campIcone } from '../../js/campeoes-img.js';
 import { tempoTexto } from '../motor/eventos.js';
@@ -117,26 +118,48 @@ function montar() {
     ${E.config.modo === 'teste' ? `<div class="pt-teste"><label>Poder azul <input type="number" id="pa" min="1" max="100" value="${E.config.pa}"></label><label>Poder vermelho <input type="number" id="pv" min="1" max="100" value="${E.config.pv}"></label><label>Semente <input type="number" id="seed" value="${E.config.semente}"></label><span>A mesma semente reproduz a mesma partida.</span></div>` : ''}`;
   E.rend = new Renderizador(document.getElementById('cv'), E.imagem);
   const mapa = document.getElementById('mapa');
-  E.rend.ajustar(Math.floor(mapa.clientWidth));
+  encaixar();
   document.getElementById('cv').addEventListener('click', (e) => {
     const r = e.target.getBoundingClientRect(); const u = E.rend.campeaoEm(E.partida, e.clientX - r.left, e.clientY - r.top);
     selecionar(u ? u.id : null);
   });
   // controles
   const ctl = document.getElementById('ctl');
-  ctl.innerHTML = `<button class="pt-btn ouro" id="b-play">▶ Iniciar</button><span class="pt-sep"></span>${REGRAS.velocidades.map((v) => `<button class="pt-btn" data-v="${v}">${v}x</button>`).join('')}<span class="pt-sep"></span><button class="pt-btn" id="b-fim">⏭ Ir até o fim</button>${E.config.modo === 'oficial' ? '' : '<button class="pt-btn" id="b-reiniciar">↻ Reiniciar</button>'}`;
+  ctl.innerHTML = `<button class="pt-btn ouro" id="b-play">▶ Iniciar</button><span class="pt-sep"></span>${REGRAS.velocidades.map((v) => `<button class="pt-btn" data-v="${v}">${v}x</button>`).join('')}<span class="pt-sep"></span><button class="pt-btn" id="b-tela">⛶ Tela cheia</button><button class="pt-btn" id="b-fim">⏭ Ir até o fim</button>${E.config.modo === 'oficial' ? '' : '<button class="pt-btn" id="b-reiniciar">↻ Reiniciar</button>'}`;
   ctl.addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.id === 'b-play') { if (E.partida.fim) return; const rodando = E.relogio.alternar(); b.textContent = rodando ? '⏸ Pausar' : '▶ Retomar'; }
     else if (b.dataset.v) { E.relogio.definirVelocidade(Number(b.dataset.v)); marcarVelocidade(); }
     else if (b.id === 'b-reiniciar') { if (E.config.modo === 'teste') reiniciar(); }
     else if (b.id === 'b-fim') irAteOFim();
+    else if (b.id === 'b-tela') telaCheia();
   });
   const dep = document.getElementById('depur');
   dep.innerHTML = '<span>Depuração:</span>' + CAMADAS.map(([k, n]) => `<label><input type="checkbox" data-k="${k}"/>${n}</label>`).join('');
   dep.addEventListener('change', (e) => { E.camadas[e.target.dataset.k] = e.target.checked; });
   document.getElementById('placar').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-id]'); if (tr) selecionar(Number(tr.dataset.id)); });
   marcarVelocidade();
+  encaixar(); requestAnimationFrame(encaixar);
+}
+// Faz a partida inteira caber na janela, sem rolar a página: o mapa ocupa o maior tamanho possível ao lado do placar.
+function encaixar() {
+  const app = document.getElementById('app'); const mapa = document.getElementById('mapa'); const corpo = document.querySelector('.pt-corpo');
+  if (!app || !mapa || !corpo || !E.rend) return;
+  app.classList.add('ao-vivo'); app.dataset.modo = E.config.modo;
+  const topo = app.getBoundingClientRect().top + window.scrollY;
+  const mb = parseFloat(getComputedStyle(document.body).marginBottom) || 0;
+  app.style.height = `${Math.max(320, window.innerHeight - topo - mb)}px`;
+  const estreito = window.matchMedia('(max-width: 1000px)').matches;
+  const lado = estreito ? 0 : (document.querySelector('.pt-lado')?.offsetWidth || 340) + 12;
+  const largDisp = corpo.clientWidth - lado;
+  const altDisp = estreito ? Infinity : corpo.clientHeight;
+  const w = Math.max(280, Math.floor(Math.min(largDisp, altDisp * MUNDO.largura / MUNDO.altura)));
+  E.rend.ajustar(w);
+  mapa.style.width = `${w}px`; mapa.style.height = `${E.rend.h}px`;
+}
+function telaCheia() {
+  const app = document.getElementById('app');
+  if (document.fullscreenElement) document.exitFullscreen?.(); else app.requestFullscreen?.().catch(() => {});
 }
 function marcarVelocidade() {
   document.querySelectorAll('#ctl [data-v]').forEach((b) => b.classList.toggle('on', Number(b.dataset.v) === E.relogio.velocidade));
@@ -283,6 +306,6 @@ function quadro(ts) {
   if (aid) { E.relogio.retomar(); const bp = document.getElementById('b-play'); if (bp) bp.textContent = '⏸ Pausar'; }
   atualizarPlacar(true);
   window.__partida = E; // facilita a depuração no console
-  window.addEventListener('resize', () => { E.rend.ajustar(Math.floor(document.getElementById('mapa').clientWidth)); });
+  window.addEventListener('resize', encaixar); document.addEventListener('fullscreenchange', () => { encaixar(); const f = document.getElementById('b-tela'); if (f) f.textContent = document.fullscreenElement ? '⤢ Sair da tela cheia' : '⛶ Tela cheia'; });
   requestAnimationFrame(quadro);
 })().catch((e) => { console.error(e); msg('Não foi possível abrir a partida: ' + (e.message || e)); });

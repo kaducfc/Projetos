@@ -205,3 +205,17 @@
 .pt-draft-box .rodape .ban svg { width: 24px; height: 24px; }
 .pt-draft-box.intro .meio { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .pt-draft-box.intro .pt-btn.grande { width: auto; align-self: center; }
+
+/* partida que cabe na janela: sem rolagem da página; o placar rola por dentro se faltar altura */
+.pt.ao-vivo { min-height: 0; padding-bottom: 8px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+.pt.ao-vivo > * { flex: none; }
+.pt.ao-vivo .pt-corpo { flex: 1 1 0; min-height: 0; width: 100%; align-items: start; }
+.pt.ao-vivo .pt-mapa { justify-self: start; }
+.pt.ao-vivo .pt-lado { max-height: 100%; overflow-y: auto; min-height: 0; }
+.pt.ao-vivo .pt-feed { max-height: 140px; }
+.pt.ao-vivo .pt-topo { margin-bottom: 6px; padding: 4px 14px; width: 100%; }
+.pt.ao-vivo .pt-controles { margin-top: 6px; width: 100%; }
+.pt.ao-vivo .pt-btn { padding: 6px 12px; }
+.pt.ao-vivo:not([data-modo="teste"]) .pt-depur, .pt.ao-vivo:not([data-modo="teste"]) .pt-teste { display: none; }
+.pt:fullscreen { background: #040a16; }
+@media (max-width: 1000px) { .pt.ao-vivo { height: auto !important; overflow: visible; } }
