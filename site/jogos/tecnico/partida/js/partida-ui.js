@@ -216,6 +216,9 @@ function atualizarPlacar(forcar = false) {
   const arautoFora = O.arauto.aposentado || O.arauto.mortes > 0;
   lista.push(O.dragao.almaAlcancada ? ['anciao', O.dragao] : ['dragao', O.dragao]);
   lista.push(arautoFora ? ['barao', O.barao] : ['arauto', O.arauto]);
+  const segs = (o) => Math.max(0, Math.ceil(o.proximo - P.t));
+  const visiveis = lista.filter(([, o]) => viva(o) || segs(o) <= 180); // só aparece quando faltam 3 min para nascer (ou enquanto vivo)
+  lista.length = 0; lista.push(...visiveis);
   const chave = lista.map((x) => x[0]).join();
   const caixa = document.getElementById('obj');
   if (caixa.dataset.k !== chave) { caixa.dataset.k = chave; caixa.innerHTML = lista.map(([id]) => `<div class="ep-b ep-${id}" data-ep="${id}"><img src="img/epicos/${id}.webp" alt="${id}" /><span class="tx"></span></div>`).join(''); }
@@ -223,7 +226,7 @@ function atualizarPlacar(forcar = false) {
     const el = caixa.querySelector(`[data-ep="${id}"]`); if (!el) continue;
     const v = viva(o); const seg = Math.max(0, Math.ceil(o.proximo - P.t));
     el.classList.toggle('on', !!v);
-    el.querySelector('.tx').textContent = v ? 'EM JOGO' : `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`;
+    el.querySelector('.tx').textContent = v ? 'VIVO' : `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`;
   }
   // foco
   const f = E.selecionado ? P.mapaUnidades.get(E.selecionado) : null;
