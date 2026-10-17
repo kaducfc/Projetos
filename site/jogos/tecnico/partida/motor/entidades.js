@@ -64,11 +64,11 @@ export function recalcular(u, P, cheio = false) {
   u.rank = { q: Math.min(5, Math.ceil(u.nivel / 2)), w: Math.min(5, Math.max(1, Math.ceil((u.nivel - 1) / 2))), e: Math.min(5, Math.max(1, Math.ceil((u.nivel - 1) / 2))), r: u.nivel >= 16 ? 3 : u.nivel >= 11 ? 2 : u.nivel >= 6 ? 1 : 0 };
 }
 
-export function criarMinion(P, subtipo, equipe, rota, s) {
+export function criarMinion(P, subtipo, equipe, rota, s, origem = null) {
   const R = P.regras.minions; const d = R.tipos[subtipo];
   const lane = MUNDO_MAPA.rotas[rota];
-  const idx = equipe === 'azul' ? 1 : lane.pts.length - 2; // próximo ponto de passagem
-  const pos = pontoDaRota(lane, s);
+  const idx = origem ? (equipe === 'azul' ? 0 : lane.pts.length - 1) : (equipe === 'azul' ? 1 : lane.pts.length - 2); // próximo ponto de passagem (nascendo no Nexus, o primeiro é o início da rota)
+  const pos = origem || pontoDaRota(lane, s);
   const k = Math.floor(P.t / R.crescimentoCada);
   const f = (sub) => 1 + k * R.crescimento[sub];
   const buffB = null; // o buff do Barão agora é uma aura que depende da distância do campeão (atualizarAuraMinion)

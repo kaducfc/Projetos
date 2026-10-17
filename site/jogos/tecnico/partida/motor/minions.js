@@ -36,13 +36,15 @@ export function gerarOndas(P) {
       const derrubados = P.equipes[eq].inibidoresCaidos; // inibidores inimigos que esta equipe derrubou (e ainda não renasceram)
       const supers = derrubados[rota] ? (Object.values(derrubados).filter(Boolean).length >= 3 ? 2 : 1) : 0;
       for (let i = 0; i < supers; i++) seq.push('super');
-      seq.forEach((st, i) => P.filaSpawn.push({ t: S.proxOnda + i * R.espacamentoSpawn, subtipo: st, equipe: eq, rota, s: s0 }));
+      const nx = MUNDO_MAPA.bases[eq].nexus; const deslocRota = (ROTAS.indexOf(rota) - 1) * 90; // as 3 ondas saem do Nexus, um pouco afastadas entre si
+      const origem = { x: nx.x + deslocRota, y: nx.y - deslocRota * (eq === 'azul' ? 1 : -1) };
+      seq.forEach((st, i) => P.filaSpawn.push({ t: S.proxOnda + i * R.espacamentoSpawn, subtipo: st, equipe: eq, rota, s: s0, origem }));
     }
     S.proxOnda += R.intervaloOnda;
   }
   while (P.filaSpawn.length && P.filaSpawn[0].t <= P.t) {
     const f = P.filaSpawn.shift();
-    const m = criarMinion(P, f.subtipo, f.equipe, f.rota, f.s);
+    const m = criarMinion(P, f.subtipo, f.equipe, f.rota, f.s, f.origem);
     P.minions.push(m); P.mapaUnidades.set(m.id, m);
   }
   P.filaSpawn.sort((a, b) => a.t - b.t);
