@@ -364,9 +364,9 @@ function viewCamp() {
 }
 const FASES = { rodada: 'Rodada', quartas: 'Quartas de final', semi: 'Semifinal', final: 'Final' };
 function regrasLiga(l) {
-  if (l.tipo === 'copa') return `Os 4 primeiros da ${esc(nomeLiga().principal)} na semana 1 disputam semifinais e final, sempre em melhor de cinco mapas.`;
-  if (l.tipo === 'mundial') return `Os 6 melhores da ${esc(nomeLiga().principal)} por pontos nas semanas 1 a 3, mais o campeão da ${esc(nomeLiga().copa)}, disputam quartas, semifinais e final em melhor de cinco. A vaga é conquistada no campo: não dá para comprar com RC.`;
-  return `De segunda a sexta, 2 jogos por dia contra adversários diferentes (todos MD1). No sábado, semifinais com os 4 primeiros; no domingo, a final. Os dois primeiros da ${esc(nomeLiga().acesso)} sobem para a ${esc(nomeLiga().principal)}; os dois últimos da ${esc(nomeLiga().principal)} descem; os 4 primeiros da fase de pontos da ${esc(nomeLiga().principal)} na semana 1 vão para a ${esc(nomeLiga().copa)}. Na segunda-feira começa tudo de novo.`;
+  if (l.tipo === 'copa') return `Reúne os técnicos que ficaram entre os 2 primeiros da ${esc(nomeLiga().principal)} na semana 1 (as vagas que sobrarem são de equipes do sistema). Semifinais e final, sempre em melhor de cinco mapas.`;
+  if (l.tipo === 'mundial') return `Reúne os técnicos que foram finalistas (2 primeiros) da ${esc(nomeLiga().principal)} nas semanas 1 a 3, mais o campeão da ${esc(nomeLiga().copa)} se for técnico. Quartas, semifinais e final em melhor de cinco mapas.`;
+  return `Você joga o seu campeonato contra 7 equipes do sistema. De segunda a sexta, 2 jogos por dia contra adversários diferentes (MD1); sábado, semifinais (MD3) com os 4 primeiros; domingo, final (MD5). Quem não jogar até a meia-noite perde por W.O. Os dois primeiros da ${esc(nomeLiga().acesso)} sobem para a ${esc(nomeLiga().principal)}; os dois últimos da ${esc(nomeLiga().principal)} descem; os 2 primeiros da ${esc(nomeLiga().principal)} se classificam para a ${esc(nomeLiga().copa)} e para o ${esc(nomeLiga().mundial)}. Na segunda-feira começa tudo de novo.`;
 }
 function tabelaClassificados(l) {
   return `<table class="tc-tabela"><thead><tr><th>Semente</th><th>Equipe</th><th class="n">Poder</th></tr></thead><tbody>${l.tabela.map((t) => `<tr class="${t.org.id === S.meu.org.id ? 'eu' : ''}"><td>${t.pos}</td><td><div class="org">${escudoOrg(t.org, 24)}<span>${esc(t.org.nome)}${t.org.usuario ? ' ★' : ''}</span></div></td><td class="n">${t.poder}</td></tr>`).join('')}</tbody></table>`;
