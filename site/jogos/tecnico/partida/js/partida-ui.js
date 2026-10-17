@@ -128,8 +128,12 @@ function montar() {
   ctl.innerHTML = `<button class="pt-btn ouro" id="b-play">▶ Iniciar</button><span class="pt-sep"></span>${REGRAS.velocidades.map((v) => `<button class="pt-btn" data-v="${v}">${v}x</button>`).join('')}<span class="pt-sep"></span><button class="pt-btn" id="b-tela">⛶ Tela cheia</button><button class="pt-btn" id="b-fim">⏭ Ir até o fim</button>${E.config.modo === 'oficial' ? '' : '<button class="pt-btn" id="b-reiniciar">↻ Reiniciar</button>'}`;
   ctl.addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
-    if (b.id === 'b-play') { if (E.partida.fim) return; const rodando = E.relogio.alternar(); b.textContent = rodando ? '⏸ Pausar' : '▶ Retomar'; }
-    else if (b.dataset.v) { E.relogio.definirVelocidade(Number(b.dataset.v)); marcarVelocidade(); }
+    if (b.id === 'b-play') {
+      if (E.partida.fim) return;
+      if (E.turbo) E.pararTurbo?.();
+      if (E.relogio.pausado) { E.relogio.definirVelocidade(1); E.relogio.retomar(); } else E.relogio.pausar(); // iniciar/retomar sempre volta ao 1x
+      marcarVelocidade();
+    } else if (b.dataset.v) { if (E.turbo) E.pararTurbo?.(); E.relogio.definirVelocidade(Number(b.dataset.v)); E.relogio.retomar(); marcarVelocidade(); }
     else if (b.id === 'b-reiniciar') { if (E.config.modo === 'teste') reiniciar(); }
     else if (b.id === 'b-fim') irAteOFim();
     else if (b.id === 'b-tela') telaCheia();
@@ -161,8 +165,12 @@ function telaCheia() {
   const app = document.getElementById('app');
   if (document.fullscreenElement) document.exitFullscreen?.(); else app.requestFullscreen?.().catch(() => {});
 }
+// Pausado: nenhuma velocidade fica marcada e o botão de pausa fica marcado; rodando: só a velocidade atual fica marcada.
 function marcarVelocidade() {
-  document.querySelectorAll('#ctl [data-v]').forEach((b) => b.classList.toggle('on', Number(b.dataset.v) === E.relogio.velocidade));
+  const pausado = E.relogio.pausado;
+  document.querySelectorAll('#ctl [data-v]').forEach((b) => b.classList.toggle('on', !pausado && Number(b.dataset.v) === E.relogio.velocidade));
+  const play = document.getElementById('b-play');
+  if (play && !E.partida.fim) { const iniciou = E.partida.t > 0; play.textContent = !pausado ? '⏸ Pausar' : iniciou ? '▶ Retomar' : '▶ Iniciar'; play.classList.toggle('on', pausado && iniciou); }
   const v = document.getElementById('vel'); if (v) v.textContent = E.relogio.velocidade + 'x';
 }
 function selecionar(id) { E.selecionado = id; E.rend.selecionado = id; E.ultPlacar = 0; }
@@ -174,10 +182,9 @@ function reiniciar() {
     E.config.pa = g('pa', 60); E.config.pv = g('pv', 60); E.config.semente = g('seed', 1);
   }
   E.partida = novaPartida(E.config);
-  E.relogio.trocarPartida(E.partida);
+  E.relogio.trocarPartida(E.partida); E.relogio.definirVelocidade(1);
   E.fimMostrado = false; E.turbo = false; E.selecionado = null; E.rend.selecionado = null; E.ultFeed = 0;
-  document.getElementById('b-play').textContent = '▶ Iniciar';
-  document.getElementById('b-play').disabled = false;
+  document.getElementById('b-play').disabled = false; marcarVelocidade();
   document.querySelectorAll('.pt-fundo').forEach((x) => x.remove());
   atualizarPlacar(true);
 }
@@ -185,13 +192,13 @@ function reiniciar() {
 function irAteOFim() {
   const botao = document.getElementById('b-fim'); const play = document.getElementById('b-play');
   const parar = () => { E.turbo = false; botao.classList.remove('on'); botao.textContent = '⏭ Ir até o fim'; };
+  E.pararTurbo = () => { parar(); marcarVelocidade(); };
   if (E.turbo) { // segundo clique desmarca: volta ao tempo normal
-    parar(); if (!E.partida.fim) { E.relogio.retomar(); if (play) play.textContent = '⏸ Pausar'; }
+    parar(); if (!E.partida.fim) E.relogio.retomar(); marcarVelocidade();
     return;
   }
   if (E.partida.fim) return;
-  E.turbo = true; E.relogio.pausar(); botao.classList.add('on');
-  if (play) play.textContent = '▶ Retomar';
+  E.turbo = true; E.relogio.pausar(); botao.classList.add('on'); marcarVelocidade();
   const bloco = () => {
     if (!E.turbo) return;
     const t0 = performance.now();
@@ -324,7 +331,7 @@ function quadro(ts) {
   E.partida = novaPartida(E.config);
   E.relogio = new Relogio(E.partida, { velocidade: E.config.veloc });
   montar();
-  if (aid) { E.relogio.retomar(); const bp = document.getElementById('b-play'); if (bp) bp.textContent = '⏸ Pausar'; }
+  if (aid) { E.relogio.retomar(); marcarVelocidade(); }
   atualizarPlacar(true);
   window.__partida = E; // facilita a depuração no console
   window.addEventListener('resize', encaixar); document.addEventListener('fullscreenchange', () => { encaixar(); const f = document.getElementById('b-tela'); if (f) f.textContent = document.fullscreenElement ? '⤢ Sair da tela cheia' : '⛶ Tela cheia'; });
