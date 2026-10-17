@@ -129,9 +129,13 @@ export class Renderizador {
   minions(P, c, U) {
     for (const m of P.minions) {
       if (m.morto) continue; const p = this.pos(m); const cor = COR[m.equipe];
-      if (m.auraBarao) { // aura roxa do buff do Barão
-        const ra = 15 * U; const g = c.createRadialGradient(p.x, p.y, 1, p.x, p.y, ra); g.addColorStop(0, 'rgba(190,110,255,0.55)'); g.addColorStop(1, 'rgba(150,60,255,0)');
+      if (m.auraBarao) { // aura roxa do buff do Barão: brilho forte + contorno bem visível
+        const lm = (m.subtipo === 'cerco' ? 22 : m.subtipo === 'super' ? 28 : m.subtipo === 'conjurador' ? 16 : 18) * U; const ra = lm * 0.95;
+        const g = c.createRadialGradient(p.x, p.y, 1, p.x, p.y, ra); g.addColorStop(0, 'rgba(200,120,255,0.75)'); g.addColorStop(0.6, 'rgba(170,80,255,0.45)'); g.addColorStop(1, 'rgba(150,60,255,0)');
         c.fillStyle = g; c.beginPath(); c.arc(p.x, p.y, ra, 0, 7); c.fill();
+        c.save(); c.strokeStyle = '#d27bff'; c.lineWidth = Math.max(2, 2.2 * U); c.shadowColor = '#b04dff'; c.shadowBlur = 8 * U;
+        c.beginPath(); c.ellipse(p.x, p.y + lm * 0.1, lm * 0.62, lm * 0.3, 0, 0, 7); c.stroke();
+        c.beginPath(); c.arc(p.x, p.y - lm * 0.05, lm * 0.55, 0, 7); c.globalAlpha = 0.7; c.stroke(); c.restore();
       }
       if (m.subtipo !== 'arauto') { // miniatura na cor do time; de costas quando sobe no mapa, de frente quando desce
         const ant = this.interp.prev.get(m.id); if (ant && Math.abs(m.y - ant.y) > 0.5) this.rumo.set(m.id, m.y < ant.y ? 'costas' : 'frente');
