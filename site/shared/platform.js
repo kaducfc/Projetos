@@ -1015,6 +1015,15 @@ export const baraoCarta = (id, slot) => rpcBarao('site_barao_carta', { pid: id, 
 export const baraoVazio = (id) => rpcBarao('site_barao_vazio', { pid: id });
 // Simulador de técnico (jogo "tecnico"): tudo é decidido no servidor (SQL 0085 a 0089); o navegador só chama funções.
 const ERROS_TECNICO = {
+  patrocinador_invalido: 'Esse patrocinador não existe.',
+  patrocinio_ja_ativo: 'Esse patrocínio já está ativo. Espere o contrato terminar para renovar.',
+  limite_patrocinios: 'Você já usa todos os contratos que o seu nível de marketing permite. Melhore o marketing ou espere um contrato acabar.',
+  requisito_nao_cumprido: 'O clube ainda não cumpre os requisitos (fama, nível de marketing, divisão ou titulares).',
+  marketing_no_maximo: 'O marketing já está no nível máximo.',
+  campanha_ativa: 'Já existe uma campanha em andamento. Espere ela terminar.',
+  campanha_em_recarga: 'Essa campanha está em recarga. Tente de novo mais tarde.',
+  campanha_invalida: 'Essa campanha não existe.',
+  contrato_inexistente: 'Esse contrato de patrocínio não existe.',
   not_admin: 'Só administradores podem fazer essa alteração.',
   atributo_invalido: 'Atributo inválido.',
   jogador_treinando: 'Esse jogador já está em treinamento.',
@@ -1111,6 +1120,13 @@ async function rpcTecnico(nome, args = {}) {
   return data;
 }
 export const tecnico = {
+  marketingEstado: () => rpcTecnico('tc_marketing_estado'),
+  marketingHistorico: () => rpcTecnico('tc_marketing_historico'),
+  marketingMelhorar: () => rpcTecnico('tc_marketing_melhorar'),
+  patrocinioContratar: (marca, renovarAuto = false) => rpcTecnico('tc_patrocinio_contratar', { marca, renovar_auto: renovarAuto }),
+  patrocinioAuto: (contrato, ligado) => rpcTecnico('tc_patrocinio_auto', { contrato, ligado }),
+  campanhaIniciar: (campanha) => rpcTecnico('tc_campanha_iniciar', { campanha_: campanha }),
+  marketingResumoVisto: () => rpcTecnico('tc_marketing_resumo_visto'),
   sincronizar: () => rpcTecnico('tc_sincronizar'),
   meu: () => rpcTecnico('tc_meu'),
   painel: () => rpcTecnico('tc_painel'),

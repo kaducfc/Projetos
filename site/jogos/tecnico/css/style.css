@@ -436,3 +436,30 @@ form.tc-card[data-form="filtros"] { padding: 16px 0 14px; }
 .tc-treino-xp { margin-bottom: 6px; } .tc-treino-xp span { font-size: 13px; color: #cfe0fa; }
 .tc-treino-xp .tc-barra i { background: linear-gradient(90deg, #7c3aed, #c4b5fd); }
 .tc-treino-xp.cheia .tc-barra i { background: linear-gradient(90deg, #f5cf5a, #fde68a); box-shadow: 0 0 10px #f5cf5a88; }
+
+/* Central de Marketing e Patrocínios */
+.mkt-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.mkt-grade > div { background: #061326; border: 1px solid var(--linha); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; }
+.mkt-grade small { color: var(--mudo); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.mkt-grade b { font-size: 17px; font-variant-numeric: tabular-nums; }
+.mkt-abas { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0; }
+.mkt-abas button { flex: none; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--linha); background: #061326; color: var(--mudo); font: inherit; font-size: 13px; cursor: pointer; }
+.mkt-abas button.on { color: var(--ouro2); border-color: var(--ouro2); }
+.mkt-fama { position: relative; padding: 4px 2px 0; }
+.mkt-fama .tc-barra { height: 12px; }
+.mkt-fama .marcos { position: relative; height: 0; }
+.mkt-fama .marcos i { position: absolute; top: -12px; width: 2px; height: 12px; background: #fff6; }
+.mkt-fama-l { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+.mkt-fama-l small { flex: 1; }
+.mkt-niveis { display: grid; gap: 6px; }
+.mkt-niveis > div { padding: 8px 10px; border: 1px solid var(--linha); border-radius: 8px; display: grid; opacity: 0.55; }
+.mkt-niveis > div.on { opacity: 1; border-color: var(--ouro2); }
+.mkt-niveis small, .mkt-pat small, .mkt-camp small, .mkt-prox small { display: block; color: var(--mudo); font-size: 12px; }
+.mkt-prox, .mkt-pat, .mkt-camp { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px; border: 1px solid var(--linha); border-radius: 8px; margin-top: 8px; flex-wrap: wrap; }
+.mkt-pat.on, .mkt-camp.on { border-color: var(--bom); background: #0a2a1a55; }
+.mkt-pat.indisponivel { opacity: 0.6; }
+.mkt-acoes { display: flex; align-items: center; gap: 8px; }
+.mkt-estado { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mudo); }
+.mkt-tag { font-style: normal; font-size: 10px; padding: 1px 6px; border: 1px solid var(--linha); border-radius: 99px; color: var(--ouro2); }
+.mkt-auto { font-size: 12px; color: var(--mudo); display: flex; gap: 6px; align-items: center; }
+.mkt-fora { opacity: 0.45; }

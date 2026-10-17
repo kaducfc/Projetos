@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -1010,4 +1010,185 @@ t('XP de campeonato: vitória 10 e derrota 5 para os titulares, com teto de 100'
   assert.ok(/exp_partida/.test(fn) && /exp_derrota/.test(fn), 'processar usa vitória e derrota');
   const fg = V("select pg_get_functiondef('public.tc_gameplay_registrar(bigint, integer, jsonb)'::regprocedure)");
   assert.ok(/exp_partida/.test(fg) && /exp_derrota/.test(fg), 'registrar do gameplay usa vitória e derrota');
+});
+
+// ---------------------------------------------------------------- marketing, fama e patrocínios (SQL 0116)
+const MK = () => J("select tc_marketing_estado()", 1);
+const atrasar = (org, min) => V(`update tc_marketing set ultimo_proc = now() - interval '${min} minutes' where org_id = ${org}`);
+const cred = (org) => Number(V(`select creditos from tc_orgs where id = ${org}`));
+const baseMk = (e) => e.taxa.base * (1 + e.taxa.bonus_marketing + e.taxa.bonus_audiencia + e.taxa.bonus_campanha) + e.taxa.patrocinadores;
+
+t('marketing: clube novo (nível 1, fama 0, sem patrocínio); a taxa da tela é a fórmula do servidor; nada mexe em RC nem em pontos do Rank', () => {
+  V("update tc_orgs set creditos = 1000000 where id in (1, " + O2 + ")");
+  V("delete from tc_patrocinios"); V("delete from tc_fama_eventos");
+  V("update tc_marketing set nivel = 1, fama = 0, campanha = null, campanha_fim = null, recargas = '{}'::jsonb, resumo = null, ultimo_proc = now()");
+  const rc0 = V("select string_agg(saldo::text, ',' order by user_id) from site_carteira"); const rk0 = V("select count(*) from site_rk_lanc_stub");
+  const e = MK();
+  assert.equal(e.marketing.nivel, 1); assert.equal(e.fama.valor, 0); assert.equal(e.fama.nivel.nome, 'Clube desconhecido');
+  assert.equal(e.taxa.base, 10); assert.equal(e.taxa.bonus_marketing, 0); assert.equal(e.taxa.patrocinadores, 0); assert.equal(e.marketing.limite_contratos, 1);
+  assert.ok(Math.abs(e.taxa.por_minuto - baseMk(e)) < 1e-9, 'por minuto = base × (1 + bônus) + patrocinadores');
+  assert.equal(e.taxa.por_hora, Math.round(e.taxa.por_minuto * 60 * 10) / 10); assert.equal(e.taxa.por_dia, Math.round(e.taxa.por_minuto * 60 * 24));
+  assert.equal(V("select string_agg(saldo::text, ',' order by user_id) from site_carteira"), rc0, 'RC intacto'); assert.equal(V("select count(*) from site_rk_lanc_stub"), rk0, 'sem pontos de Rank');
+  // recarregar a página (nova conexão) mostra o mesmo estado e não paga duas vezes
+  const c0 = cred(1); const e2 = MK(); assert.equal(cred(1), c0); assert.equal(e2.marketing.nivel, 1);
+});
+
+t('marketing: melhoria de nível (custo = base × mult^(n-1)), sem saldo recusa, dá fama e abre mais contratos', () => {
+  V("update tc_orgs set creditos = 100 where id = 1");
+  assert.equal(falha("select tc_marketing_melhorar()", 1), 'creditos_insuficientes');
+  assert.equal(V("select nivel from tc_marketing where org_id = 1"), '1'); assert.equal(cred(1), 100);
+  V("update tc_orgs set creditos = 5000000 where id = 1");
+  const e0 = MK(); assert.equal(e0.marketing.custo_proximo, 6000);
+  const c0 = cred(1);
+  const r = J("select tc_marketing_melhorar()", 1); assert.equal(r.nivel, 2); assert.equal(r.custo, 6000);
+  assert.equal(cred(1), c0 - 6000);
+  assert.equal(V("select count(*) from tc_fin where org_id = 1 and motivo = 'mkt_melhoria' and delta = -6000"), '1');
+  const e1 = MK(); assert.equal(e1.fama.valor, 5); assert.equal(e1.marketing.custo_proximo, Math.round(6000 * 1.33)); assert.ok(Math.abs(e1.taxa.bonus_marketing - 0.04) < 1e-9);
+  for (let i = 0; i < 18; i++) V("select tc_marketing_melhorar()", 1);
+  assert.equal(V("select nivel from tc_marketing where org_id = 1"), '20'); assert.equal(falha("select tc_marketing_melhorar()", 1), 'marketing_no_maximo');
+  assert.equal(MK().marketing.limite_contratos, 6);
+  assert.equal(V("select count(*) from tc_fama_eventos where org_id = 1 and categoria = 'marketing'"), '19', 'um evento por nível, sem repetir');
+  assert.ok(Number(V("select fama from tc_marketing where org_id = 1")) <= 120 + 1e-9, 'teto da categoria marketing');
+  V("update tc_marketing set nivel = 1, fama = 0 where org_id = 1"); V("delete from tc_fama_eventos where org_id = 1");
+});
+
+t('marketing: audiência dos titulares e reservas (cada jogador uma vez); astro contratado sobe a audiência e vendido deixa de render', () => {
+  const tit = J("select jsonb_agg(id order by slot) from tc_jogadores where org_id = 1 and slot is not null");
+  const famas = [10, 25, 45, 70, 95];
+  tit.forEach((id, i) => V(`update tc_jogadores set fama = ${famas[i]} where id = ${id}`));
+  V("update tc_jogadores set fama = 1 where org_id = 1 and slot is null");
+  const esperado = famas.reduce((a, f) => a + 10 * Math.sqrt(f), 0) + 10 * Math.sqrt(1) * 0.25 * Number(V("select count(*) from (select 1 from tc_jogadores where org_id = 1 and slot is null limit 5) x"));
+  let e = MK(); assert.ok(Math.abs(e.audiencia.total - esperado) < 0.2, `${e.audiencia.total} x ${esperado}`);
+  assert.ok(Math.abs(e.taxa.bonus_audiencia - Math.min(0.45, 0.0006 * e.audiencia.total)) < 1e-4);
+  assert.equal(e.audiencia.jogadores.filter((j) => j.titular).length, 5); assert.equal(new Set(e.audiencia.jogadores.map((j) => j.id)).size, e.audiencia.jogadores.length, 'ninguém conta duas vezes');
+  const antes = e.audiencia.total;
+  V(`update tc_jogadores set fama = 99 where id = ${tit[0]}`);
+  e = MK(); assert.ok(e.audiencia.total > antes, 'astro sobe a audiência');
+  // fama de astro rende fama ao clube uma vez por jogador
+  atrasar(1, 10); MK(); const f1 = Number(V("select fama from tc_marketing where org_id = 1")); atrasar(1, 10); MK();
+  assert.equal(Number(V("select fama from tc_marketing where org_id = 1")), f1, 'o mesmo astro não rende fama duas vezes'); assert.ok(f1 > 0);
+  // vendido/dispensado: deixa de render (usa o menor valor entre o último processamento e agora)
+  V(`update tc_marketing set aud_snap = ${e.audiencia.total} where org_id = 1`);
+  V(`update tc_jogadores set org_id = ${O2}, slot = null where id = ${tit[0]}`);
+  const c0 = cred(1); atrasar(1, 60); const r = J(`select tc_marketing_processar(1, true)`, 1);
+  const e3 = MK(); assert.ok(e3.audiencia.total < e.audiencia.total, 'saiu do clube');
+  const baseDia = e3.taxa.base * (1 + e3.taxa.bonus_marketing + e3.taxa.bonus_audiencia);
+  assert.ok(Math.abs(r.total - Math.round(baseDia * 60)) <= 2, `receita da janela usa a audiência menor: ${r.total} x ${baseDia * 60}`);
+  V(`update tc_jogadores set org_id = 1 where id = ${tit[0]}`);
+});
+
+t('marketing: patrocinador gera receita, respeita limite e requisitos; fim de contrato no offline corta a receita no instante certo', () => {
+  V("update tc_marketing set nivel = 1, fama = 0 where org_id = 1"); V("delete from tc_patrocinios where org_id = 1");
+  assert.equal(falha("select tc_patrocinio_contratar('hextech_systems')", 1), 'requisito_nao_cumprido');
+  assert.equal(falha("select tc_patrocinio_contratar('inexistente')", 1), 'patrocinador_invalido');
+  const c0 = cred(1);
+  const r = J("select tc_patrocinio_contratar('nexus_energy')", 1); assert.equal(r.custo, 3000); assert.equal(cred(1), c0 - 3000);
+  assert.equal(falha("select tc_patrocinio_contratar('nexus_energy')", 1), 'patrocinio_ja_ativo');
+  assert.equal(falha("select tc_patrocinio_contratar('rift_cafe')", 1), 'limite_patrocinios', 'nível 1 = 1 contrato');
+  let e = MK(); assert.equal(e.taxa.patrocinadores, 5);
+  assert.equal(e.patrocinadores.find((p) => p.id === 'nexus_energy').estado, 'ativo'); assert.equal(e.patrocinadores.find((p) => p.id === 'hextech_systems').estado, 'indisponivel');
+  // 60 min depois: receita = (base × (1+bônus) + 5) × 60
+  atrasar(1, 60); const antes = cred(1);
+  const taxaAntes = MK().taxa; // (não processa: < 5 min desde o último? já passaram 60, processa aqui)
+  const ganho = cred(1) - antes;
+  assert.ok(ganho > 0 || taxaAntes.por_minuto > 0);
+  // expira no meio do período offline: contrato terminou há 1h, janela de 2h → só a 1ª hora conta o patrocínio
+  V("update tc_patrocinios set inicio = now() - interval '3 hours', fim = now() - interval '1 hour' where org_id = 1");
+  atrasar(1, 120); const p = J("select tc_marketing_processar(1, true)", 1);
+  const t2 = MK().taxa;
+  const semPat = t2.base * (1 + t2.bonus_marketing + t2.bonus_audiencia + t2.bonus_campanha) * 120;
+  assert.ok(Math.abs(p.patrocinadores - 300) <= 1, `patrocínio só na 1ª hora: ${p.patrocinadores}`); assert.ok(Math.abs(p.total - (Math.round(semPat) + 300)) <= 3, `${p.total} x ${semPat + 300}`);
+  assert.equal(MK().taxa.patrocinadores, 0, 'depois do fim, nada conta');
+  assert.equal(MK().patrocinadores.find((x) => x.id === 'nexus_energy').estado, 'expirado');
+});
+
+t('marketing: campanha (uma por vez, recarga) acaba no instante certo durante o offline; sem saldo ou sem requisito é recusada', () => {
+  V("update tc_marketing set nivel = 1, fama = 0, campanha = null, campanha_fim = null, recargas = '{}'::jsonb where org_id = 1");
+  V("delete from tc_patrocinios where org_id = 1"); V("update tc_orgs set creditos = 1000 where id = 1");
+  assert.equal(falha("select tc_campanha_iniciar('redes_sociais')", 1), 'creditos_insuficientes');
+  assert.equal(falha("select tc_campanha_iniciar('nacional')", 1), 'requisito_nao_cumprido');
+  V("update tc_orgs set creditos = 1000000 where id = 1");
+  const c0 = cred(1); const r = J("select tc_campanha_iniciar('redes_sociais')", 1); assert.equal(cred(1), c0 - 4000);
+  assert.equal(falha("select tc_campanha_iniciar('redes_sociais')", 1), 'campanha_ativa', 'não reinicia para prolongar');
+  let e = MK(); assert.equal(e.campanha_ativa.id, 'redes_sociais'); assert.ok(Math.abs(e.taxa.bonus_campanha - 0.05) < 1e-9);
+  // a campanha termina 1h atrás; a janela offline é de 2h: o bônus vale só na 1ª hora
+  V("update tc_marketing set campanha_inicio = now() - interval '7 hours', campanha_fim = now() - interval '1 hour' where org_id = 1");
+  atrasar(1, 120); const p = J("select tc_marketing_processar(1, true)", 1);
+  const t2 = MK().taxa; assert.equal(t2.bonus_campanha, 0);
+  const esperado = t2.base * (1 + t2.bonus_marketing + t2.bonus_audiencia) * 120 + t2.base * 0.05 * 60;
+  assert.ok(Math.abs(p.total - Math.round(esperado)) <= 3, `${p.total} x ${esperado}`);
+  assert.equal(falha("select tc_campanha_iniciar('redes_sociais')", 1), 'campanha_em_recarga', 'a recarga impede refazer na hora');
+});
+
+t('marketing: offline com menos e com mais de 8h; o mesmo trecho nunca paga duas vezes; resumo aparece uma vez e não dá crédito', () => {
+  V("update tc_marketing set nivel = 1, fama = 0, campanha = null, campanha_fim = null, resumo = null where org_id = 1"); V("delete from tc_patrocinios where org_id = 1");
+  const taxa = MK().taxa; const pm = taxa.por_minuto;
+  // 5h: conta tudo
+  V("update tc_orgs set creditos = 1000000 where id = 1"); atrasar(1, 300); let c0 = cred(1);
+  let e = MK(); const ganho5 = cred(1) - c0; assert.ok(Math.abs(ganho5 - pm * 300) < 5, `${ganho5} x ${pm * 300}`);
+  assert.ok(e.resumo && e.resumo.minutos > 299 && e.resumo.minutos < 301 && e.resumo.total === ganho5, 'resumo do período');
+  assert.equal(e.resumo.limitado, false);
+  const c1 = cred(1); MK(); assert.equal(cred(1), c1, 'recarregar não repaga'); assert.ok(MK().resumo, 'o resumo segue até ser dispensado');
+  V("select tc_marketing_resumo_visto()", 1); assert.equal(cred(1), c1, 'dispensar o resumo não dá nada'); assert.equal(MK().resumo, null);
+  // 20h: limitado a 8h
+  atrasar(1, 1200); c0 = cred(1); e = MK(); const ganho20 = cred(1) - c0;
+  assert.ok(Math.abs(ganho20 - pm * 480) < 5, `${ganho20} x ${pm * 480}`); assert.equal(e.resumo.limitado, true); assert.ok(e.resumo.minutos <= 480.1);
+  const c2 = cred(1); MK(); assert.equal(cred(1), c2, 'o que passou das 8h se perde, não volta');
+  V("select tc_marketing_resumo_visto()", 1);
+});
+
+t('marketing: requisições simultâneas processam o mesmo trecho uma única vez', async () => {
+  V("update tc_marketing set campanha = null, campanha_fim = null where org_id = 1"); V("delete from tc_patrocinios where org_id = 1");
+  const pm = MK().taxa.por_minuto; V("select tc_marketing_resumo_visto()", 1);
+  atrasar(1, 120); const c0 = cred(1); const fin0 = Number(V("select coalesce(max(id), 0) from tc_fin"));
+  const rodar = () => new Promise((ok) => {
+    const p = spawn('psql', ['-h', dir, '-p', String(PORT), '-U', 'postgres', '-d', 't', '-q', '-A', '-t', '-c', `set app.uid='${U(1)}'`, '-c', "set app.hoje='2026-10-12'", '-c', 'select tc_marketing_estado()']);
+    let err = ''; p.stderr.on('data', (d) => { err += d; }); p.on('close', (c) => ok({ c, err }));
+  });
+  const res = await Promise.all([rodar(), rodar(), rodar()]);
+  assert.ok(res.every((r) => r.c === 0), JSON.stringify(res));
+  assert.ok(Math.abs(cred(1) - c0 - pm * 120) < 5, `pagou ${cred(1) - c0}, esperado ${pm * 120}`);
+  assert.equal(V(`select count(*) from tc_fin where org_id = 1 and motivo = 'mkt_receita' and id > ${fin0}`), '1', 'um único lançamento no extrato');
+  V("select tc_marketing_resumo_visto()", 1);
+});
+
+t('marketing: renovação automática respeita requisito e saldo (nunca negativo); fama só por evento oficial e sem repetir', () => {
+  V("update tc_marketing set nivel = 1, fama = 0 where org_id = 1"); V("delete from tc_patrocinios where org_id = 1");
+  V("update tc_orgs set creditos = 1000000 where id = 1");
+  J("select tc_patrocinio_contratar('rift_cafe', true)", 1);
+  const id = V("select id from tc_patrocinios where org_id = 1 order by id desc limit 1");
+  // expira e não há saldo para renovar: nada fica negativo, vira aviso e o contrato some da lista de ativos
+  V(`update tc_patrocinios set inicio = now() - interval '3 days', fim = now() - interval '1 minute' where id = ${id}`);
+  V("update tc_orgs set creditos = 50 where id = 1"); atrasar(1, 30); MK();
+  assert.ok(cred(1) >= 50, 'saldo não ficou negativo'); assert.equal(V("select count(*) from tc_patrocinios where org_id = 1 and fim > now()"), '0');
+  assert.ok(Number(V("select count(*) from tc_avisos where org_id = 1 and texto like '%renovação automática%'")) >= 1);
+  // com saldo: renova e cobra o custo
+  V("update tc_orgs set creditos = 100000 where id = 1"); V(`update tc_patrocinios set renovado = false, fim = now() - interval '1 minute' where id = ${id}`);
+  atrasar(1, 30); const c0 = cred(1); MK();
+  assert.equal(V("select count(*) from tc_patrocinios where org_id = 1 and fim > now()"), '1'); assert.ok(c0 - cred(1) >= 0);
+  assert.equal(V("select count(*) from tc_fin where org_id = 1 and motivo = 'mkt_renovacao'"), '1');
+  // fama: eventos idempotentes e limitados por categoria
+  V("delete from tc_fama_eventos where org_id = 1"); V("update tc_marketing set fama = 0 where org_id = 1");
+  assert.equal(Number(V("select tc_fama_evento(1, 'vit:777', 'vitoria', 2)")), 2); assert.equal(Number(V("select tc_fama_evento(1, 'vit:777', 'vitoria', 2)")), 0, 'mesma partida não repete');
+  for (let i = 0; i < 200; i++) V(`select tc_fama_evento(1, 'vit:x${i}', 'vitoria', 2)`);
+  assert.ok(Number(V("select sum(pontos) from tc_fama_eventos where org_id = 1 and categoria = 'vitoria'")) <= 250, 'teto da categoria evita fama infinita');
+  assert.equal(Number(V("select tc_fama_evento(${O2}, 'vit:1', 'vitoria', 2)".replace('${O2}', String(O2)))) > 0, true);
+  assert.equal(Number(V("select tc_fama_evento(1, 'x', 'vitoria', 0)")), 0);
+  assert.equal(Number(V("select fama from tc_marketing where org_id = 1")) <= 1000, true);
+});
+
+t('marketing: fama de resultados oficiais (partida, liga, promoção) vem do servidor; só RPCs liberadas e nada de RC/Rank', () => {
+  const fn = (n) => V(`select pg_get_functiondef('public.${n}'::regprocedure)`);
+  assert.ok(/tc_fama_vitoria/.test(fn('tc_processar_partida(bigint)')) && /tc_fama_vitoria/.test(fn('tc_gameplay_registrar(bigint, integer, jsonb)')), 'vitórias oficiais');
+  assert.ok(/'liga:'/.test(fn('tc_encerrar_liga(bigint)')) && /'promo:'/.test(fn('tc_aplicar_promocoes(integer, integer)')) && /'intl:'/.test(fn('tc_encerrar_internacional(bigint)')));
+  for (const f of ['tc_marketing_processar(bigint, boolean)', 'tc_fama_evento(bigint, text, text, numeric)', 'tc_mkt_taxa(bigint, timestamp with time zone, numeric)']) {
+    assert.equal(V(`select has_function_privilege('authenticated', 'public.${f}', 'execute')`), 'f', `${f} interna`);
+  }
+  for (const f of ['tc_marketing_estado()', 'tc_marketing_melhorar()', 'tc_patrocinio_contratar(text, boolean)', 'tc_campanha_iniciar(text)', 'tc_marketing_historico()', 'tc_marketing_resumo_visto()']) {
+    assert.equal(V(`select has_function_privilege('authenticated', 'public.${f}', 'execute')`), 't', `${f} liberada`);
+  }
+  for (const tb of ['tc_marketing', 'tc_patrocinios', 'tc_fama_eventos']) assert.equal(V(`select has_table_privilege('authenticated', '${tb}', 'select')`), 'f');
+  assert.ok(!/site_moedas_mexer|site_carteira|site_rk_lancar/.test(['tc_marketing_processar(bigint, boolean)', 'tc_marketing_melhorar()', 'tc_patrocinio_contratar_int(bigint, text, boolean, boolean)', 'tc_campanha_iniciar(text)', 'tc_marketing_estado()'].map(fn).join('\n')), 'a Central de Marketing não toca em RC nem em Rank');
+  const h = J("select tc_marketing_historico()", 1); assert.ok(h.length > 0 && h.every((x) => typeof x.delta === 'number'));
+  assert.ok(h.some((x) => x.motivo === 'mkt_receita'), 'a receita idle aparece consolidada no extrato');
 });

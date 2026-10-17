@@ -13,6 +13,7 @@ import { prepararImagens, campIcone } from './campeoes-img.js';
 import { escudoOrg, retratoSvg, iconeVaga } from './art.js';
 import { N_EMBLEMAS, N_BANDEIRAS, PARTES_EMBLEMA, PARTES_BANDEIRA, PALETA, ICONE_PADRAO, icClone, icCodificar, icDecodificar, icHtml, emblemaHtml } from './icone.js';
 import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js';
+import { iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js';
 
 const GAME_ID = 'tecnico';
 const app = document.getElementById('app');
@@ -78,7 +79,7 @@ async function agir(fn, { ok, recarregar = true } = {}) {
 async function atualizar() {
   S.meu = await api.meu();
   if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); }
-  S.camp = null; S.hist = null; limparExtras();
+  S.camp = null; S.hist = null; limparExtras(); limparMarketing();
   S.mercado.oficial = null; S.mercado.usuarios = null; S.mercado.meus = null;
   await carregarAba();
 }
@@ -92,6 +93,7 @@ async function carregarAba() {
     if (S.aba === 'campeoes' && !S.campeoes) [S.campeoes] = await Promise.all([api.campeoes(), prepararImagens()]);
     if (S.aba === 'contratar') await carregarMercado();
     if (['treino', 'amistoso', 'recrutar'].includes(S.aba)) await carregarExtras(S.aba);
+    if (S.aba === 'marketing') await carregarMarketing();
   } catch (e) { toast(e.message, true); }
 }
 async function carregarMercado() {
@@ -156,7 +158,7 @@ function topo() {
 }
 
 const ABAS = [
-  ['visao', 'Início', 'i-home'], ['elenco', 'Meu elenco', 'i-time'], ['treino', 'Treinamento', 'i-treino'], ['amistoso', 'Amistoso', 'i-agenda'], ['contratar', 'Mercado', 'i-mercado'], ['recrutar', 'Recrutar', 'i-bau'], ['campeoes', 'Campeões', 'i-plantel'],
+  ['visao', 'Início', 'i-home'], ['elenco', 'Meu elenco', 'i-time'], ['treino', 'Treinamento', 'i-treino'], ['amistoso', 'Amistoso', 'i-agenda'], ['contratar', 'Mercado', 'i-mercado'], ['recrutar', 'Recrutar', 'i-bau'], ['marketing', 'Marketing', 'i-financas'], ['campeoes', 'Campeões', 'i-plantel'],
   ['camp', 'Campeonatos', 'i-trofeu'], ['class', 'Classificação', 'i-stats'], ['hist', 'Histórico', 'i-financas'], ['pers', 'Personalização', 'i-engrenagem'],
 ];
 function nav() {
@@ -425,6 +427,7 @@ function modalHtml() {
   else if (m.t === 'escalar') corpo = escalarHtml(m);
   else if (m.t === 'partida') corpo = partidaHtml(m);
   else if (m.t === 'recrutar') corpo = modalRecrutar(m);
+  else if (m.t === 'mkt_resumo') corpo = modalMktResumo(m);
   else if (m.t === 'demitir') corpo = demitirHtml(m);
   return `<div class="tc-fundo" data-act="fechar-fundo"><div class="tc-modal" role="dialog" aria-modal="true"><button type="button" class="x" data-act="fechar" aria-label="Fechar">×</button>${corpo}</div></div>`;
 }
@@ -541,6 +544,7 @@ function conteudo() {
     case 'treino': return viewTreino();
     case 'amistoso': return viewAmistoso();
     case 'recrutar': return viewRecrutar();
+    case 'marketing': return viewMarketingCentral();
     case 'campeoes': return viewCampeoes();
     case 'pers': return viewPers();
     default: return viewVisao();
@@ -596,6 +600,7 @@ document.addEventListener('click', async (e) => {
     try { const r = await api.campeaoPosicoes(c.id, novas); c.posicoes = r.posicoes; toast(`${c.nome}: ${c.posicoes.map((v) => NOME_VAGA[v]).join(', ')}`); } catch (err) { toast(err.message, true); }
     render(); return;
   }
+  if (act.startsWith('mkt-')) { await tratarMkt(act, b); render(); return; }
   if (act === 'treinar' || act === 'amistoso' || act === 'recrutar') { await tratarAcao(act, b); render(); return; }
   if (act === 'fechar') { S.modal = null; render(); return; }
   if (act === 'ic-emb') { const f = formDe(b.dataset.alvo); f.ic.e = Number(b.dataset.v); aplicarIc(b.dataset.alvo); render(); return; }
@@ -717,6 +722,7 @@ document.addEventListener('submit', async (e) => {
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.modal) { S.modal = null; render(); } });
 
+iniciarMarketing({ S, esc, fmt, IMG, agir, render, nomeVaga: (v) => NOME_VAGA[v] || v, atualizarMeu: async () => { S.meu = await api.meu(); if (S.meu.org) S.painel = await api.painel(); } });
 iniciarExtras({
   S, esc, fmt, IMG, agir, toast, render, novaChave, escudoHtml, estrelasHtml, nomeLiga, dataCurta,
   nomeVaga: (v) => NOME_VAGA[v] || v,
@@ -736,6 +742,7 @@ iniciarExtras({
   try {
     await api.sincronizar();
     S.meu = await api.meu();
+    if (S.meu.org && !S.meu.org.elenco_pendente) { await abrirComResumo(); S.meu = await api.meu(); }
     if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); }
     render();
   } catch (e) {

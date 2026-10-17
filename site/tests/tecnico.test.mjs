@@ -11,7 +11,7 @@ import {
 import { escudoSvg, retratoSvg, ESCUDOS } from '../jogos/tecnico/js/art.js';
 
 const ler = (f) => readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8');
-const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql'].map(ler).join('\n');
+const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql'].map(ler).join('\n');
 const j = (o = {}) => ({ id: 1, nome: 'Teste', pos: 'meio', pos2: [], mec: 60, rotas: 60, macro: 60, tf: 60, mental: 60, fama: 50, forma: 50, idade: 22, potencial: 70, ...o });
 
 test('Poder individual: média ponderada dos cinco atributos, sem a Fama, entre 1 e 100', () => {
@@ -147,6 +147,61 @@ test('menu lateral tem Treinamento, Amistoso e Recrutar; cada tela só chama fun
   assert.match(r, /Baú Básico/); assert.match(r, /Baú Premium/); assert.match(r, /1275/); assert.match(r, /3825/); assert.match(r, /-15%/);
   assert.match(E.modalRecrutar({ contrato: 12, r: { preco_rc: 300, itens: [{ raridade: 'epico', repetida: true, jogador: jog(5, { legado: true, copias: 2, raridade: 'epico' }) }] } }), /Novo jogador Legado[\s\S]*repetido[\s\S]*\+1 cópia/);
   E.limparExtras();
+});
+
+test('Central de Marketing: o menu existe, o cliente só chama funções do SQL, as telas montam e a taxa exibida é a do servidor', async () => {
+  const main = readFileSync(new URL('../jogos/tecnico/js/main.js', import.meta.url), 'utf8');
+  assert.ok(main.includes("['marketing', 'Marketing'"), 'aba no menu');
+  const plat = readFileSync(new URL('../shared/platform.js', import.meta.url), 'utf8');
+  for (const c of ['tc_marketing_estado', 'tc_marketing_historico', 'tc_marketing_melhorar', 'tc_patrocinio_contratar', 'tc_patrocinio_auto', 'tc_campanha_iniciar', 'tc_marketing_resumo_visto']) {
+    assert.ok(plat.includes(`'${c}'`), `${c} no cliente`); assert.match(sql, new RegExp(`function public\\.${c}\\(`), `${c} no SQL`);
+  }
+  for (const k of ['patrocinador_invalido', 'patrocinio_ja_ativo', 'limite_patrocinios', 'requisito_nao_cumprido', 'marketing_no_maximo', 'campanha_ativa', 'campanha_em_recarga', 'campanha_invalida', 'contrato_inexistente']) {
+    assert.ok(plat.includes(`${k}:`), `mensagem de ${k}`); assert.ok(sql.includes(`'${k}'`), `${k} existe no SQL`);
+  }
+  const M = await import('../jogos/tecnico/js/marketing.js');
+  const api = platform.tecnico;
+  const taxa = { base: 12, base_inicial: 10, base_fama: 2, base_divisao: 0, bonus_marketing: 0.08, bonus_audiencia: 0.05, bonus_campanha: 0.05, patrocinadores: 5 };
+  taxa.por_minuto = taxa.base * (1 + taxa.bonus_marketing + taxa.bonus_audiencia + taxa.bonus_campanha) + taxa.patrocinadores;
+  const fim = new Date(Date.now() + 3 * 3600e3).toISOString();
+  const niveis = [{ min: 0, nome: 'Clube desconhecido', beneficio: 'Patrocinadores locais' }, { min: 100, nome: 'Clube regional', beneficio: 'Patrocinadores regionais' }];
+  const estado = {
+    creditos: 5000, taxa: { ...taxa, por_hora: taxa.por_minuto * 60, por_dia: taxa.por_minuto * 1440 }, pendente: { segundos: 0, valor: 0, limite_h: 8 },
+    fama: { valor: 60, max: 1000, nivel: { nome: 'Clube desconhecido', proximo_min: 100, proximo_nome: 'Clube regional' }, niveis },
+    marketing: { nivel: 3, max: 20, nome: 'Produção regular de conteúdo', bonus: 0.08, custo_proximo: 9000, proximo_nome: 'Parcerias locais', proximo_bonus: 0.12, limite_contratos: 2, limites: [{ nivel: 1, max: 1 }, { nivel: 3, max: 2 }] },
+    contratos: [{ id: 7, marca: 'rift_cafe', nome: 'Rift Café', categoria: 'local', inicio: fim, fim, receita_min: 5, renovar_auto: true, ativo: true }],
+    patrocinadores: [
+      { id: 'rift_cafe', nome: 'Rift Café', ramo: 'Cafeteria', categoria: 'local', receita_min: 4, duracao_h: 48, custo: 1800, req: { fama: 0, nivel: 1 }, estado: 'ativo' },
+      { id: 'nexus_energy', nome: 'Nexus Energy', ramo: 'Bebidas', categoria: 'local', receita_min: 5, duracao_h: 72, custo: 3000, req: { fama: 0, nivel: 1 }, estado: 'disponivel' },
+      { id: 'celestial_air', nome: 'Celestial Air', ramo: 'Aviação', categoria: 'premium', receita_min: 165, duracao_h: 336, custo: 300000, req: { fama: 700, nivel: 15, divisao: 'principal', titulares: 5 }, estado: 'indisponivel', motivo: 'Fama mínima: 700' },
+    ],
+    campanha_ativa: { id: 'redes_sociais', inicio: fim, fim, bonus: 0.05 },
+    campanhas: [{ id: 'redes_sociais', nome: 'Campanha nas redes sociais', custo: 4000, duracao_h: 6, recarga_h: 12, bonus: 0.05, efeito: '+5% por 6h', recarga_ate: null, requisito: null }],
+    audiencia: { total: 120, bonus: 0.05, cap: 0.45, peso_reserva: 0.25, jogadores: [{ id: 1, nome: 'Astro', pos: 'meio', titular: true, fama: 90, audiencia: 94.8, conta: true }, { id: 2, nome: 'Reserva', pos: 'top', titular: false, fama: 30, audiencia: 13.7, conta: true }] },
+    resumo: { minutos: 480, receita_clube: 3000, bonus_comercial: 500, patrocinadores: 1200, total: 4700, limitado: true },
+  };
+  api.marketingEstado = async () => estado;
+  api.marketingHistorico = async () => [{ id: 1, delta: 800, saldo: 5800, motivo: 'mkt_receita', criado: new Date().toISOString() }];
+  const S = { aba: 'marketing', ocupado: false, modal: null, meu: { org: { creditos: 0 } } };
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, '');
+  M.iniciarMarketing({ S, esc, fmt: (n) => String(Math.round(n)), IMG: () => '', agir: async () => null, render() {}, nomeVaga: (v) => v, atualizarMeu: async () => {} });
+  await M.carregarMarketing();
+  assert.equal(S.meu.org.creditos, 5000, 'saldo vem do servidor');
+  const v = M.viewMarketingCentral();
+  assert.match(v, /Central de Marketing/); assert.match(v, /Visão geral/); assert.match(v, /Histórico financeiro/); assert.match(v, /Audiência e jogadores/);
+  assert.match(v, new RegExp(String(Math.round(taxa.por_minuto * 10) / 10).replace('.', '[.,]')), 'receita por minuto da tela = a do servidor');
+  assert.match(v, /Clube desconhecido/);
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'marketing' } }); const mk = M.viewMarketingCentral();
+  assert.match(mk, /data-act="mkt-melhorar"/); assert.match(mk, /Campanha nas redes sociais/); assert.match(mk, /Em andamento/);
+  assert.equal((mk.match(/data-act="mkt-campanha"[^>]*disabled/g) || []).length, 1, 'uma campanha por vez');
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'patro' } }); const pt = M.viewMarketingCentral();
+  assert.match(pt, /Fama mínima: 700/); assert.match(pt, /data-act="mkt-auto"[^>]*checked/);
+  assert.equal((pt.match(/data-act="mkt-contratar"[^>]*disabled/g) || []).length, 2, 'ativo e indisponível travados');
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'aud' } }); assert.match(M.viewMarketingCentral(), /Astro/);
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'fin' } }); assert.match(M.viewMarketingCentral(), /Receita do marketing/);
+  const r = M.modalMktResumo({ r: estado.resumo });
+  assert.match(r, /continuou trabalhando enquanto você estava fora/); assert.match(r, /\+4700 cr\./); assert.match(r, /Receita dos patrocinadores/); assert.match(r, /Bônus comercial/);
+  M.limparMarketing();
 });
 
 test('ícone do time: codifica e decodifica, os 30 emblemas e 20 bandeiras têm as imagens e o HTML sai com as camadas certas', async () => {
