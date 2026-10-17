@@ -209,11 +209,22 @@ function atualizarPlacar(forcar = false) {
   const linha = (c) => `<tr data-id="${c.id}" class="${c.morto ? 'morto' : ''} ${E.selecionado === c.id ? 'sel' : ''}"><td>${campIcone(c.campeao, 26)}</td><td class="nm">${esc(c.campeao)}<small>${nick(c.equipe, c.nome)}</small></td><td class="n">${c.nivel}</td><td class="n">${c.estat.abates}/${c.estat.mortes}/${c.estat.assist}</td><td class="n">${c.estat.cs + c.estat.csSelva}</td><td class="n">${fmt(c.ouro)}</td><td><div class="vida"><i style="width:${Math.round(c.hp / c.hpMax * 100)}%;background:${c.equipe === 'azul' ? '#4aa3ff' : '#ff6a6a'}"></i></div></td></tr>`;
   document.getElementById('placar').innerHTML = `<tr><th></th><th></th><th class="n">N</th><th class="n">K/D/A</th><th class="n">CS</th><th class="n">Ouro</th><th></th></tr>` + P.campeoes.map(linha).join('');
   // objetivos
-  const O = P.objetivosEstado; const obj = [];
-  const d = O.dragao; obj.push(d.vivo && !d.vivo.morto ? `<span class="on">Dragão vivo · ${Math.round(d.vivo.hp)}</span>` : `<span>Dragão em ${Math.max(0, Math.ceil(d.proximo - P.t))}s</span>`);
-  if (!O.arauto.aposentado) obj.push(O.arauto.vivo && !O.arauto.vivo.morto ? `<span class="on">Arauto vivo</span>` : `<span>Arauto em ${Math.max(0, Math.ceil(O.arauto.proximo - P.t))}s</span>`);
-  const b = O.barao; obj.push(b.vivo && !b.vivo.morto ? `<span class="on">Barão vivo · ${Math.round(b.vivo.hp)}</span>` : `<span>Barão em ${Math.max(0, Math.ceil(b.proximo - P.t))}s</span>`);
-  document.getElementById('obj').innerHTML = obj.join('');
+  const O = P.objetivosEstado;
+  // contadores dos épicos: no começo Arauto e Dragão; sem o Arauto, Barão e Dragão; com a Alma de um time (4 dragões), Dragão Ancião
+  const viva = (o) => o.vivo && !o.vivo.morto;
+  const lista = [];
+  const arautoFora = O.arauto.aposentado || O.arauto.mortes > 0;
+  lista.push(O.dragao.almaAlcancada ? ['anciao', O.dragao] : ['dragao', O.dragao]);
+  lista.push(arautoFora ? ['barao', O.barao] : ['arauto', O.arauto]);
+  const chave = lista.map((x) => x[0]).join();
+  const caixa = document.getElementById('obj');
+  if (caixa.dataset.k !== chave) { caixa.dataset.k = chave; caixa.innerHTML = lista.map(([id]) => `<div class="ep-b ep-${id}" data-ep="${id}"><img src="img/epicos/${id}.webp" alt="${id}" /><span class="tx"></span></div>`).join(''); }
+  for (const [id, o] of lista) {
+    const el = caixa.querySelector(`[data-ep="${id}"]`); if (!el) continue;
+    const v = viva(o); const seg = Math.max(0, Math.ceil(o.proximo - P.t));
+    el.classList.toggle('on', !!v);
+    el.querySelector('.tx').textContent = v ? 'EM JOGO' : `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`;
+  }
   // foco
   const f = E.selecionado ? P.mapaUnidades.get(E.selecionado) : null;
   const foco = document.getElementById('foco');

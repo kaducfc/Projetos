@@ -19,7 +19,7 @@
 .pt-corpo { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 12px; max-width: 1500px; margin: 0 auto; align-items: start; }
 .pt-mapa { position: relative; border: 1.5px solid #8b6a1f; background: #000; line-height: 0; overflow: hidden; }
 .pt-mapa canvas { display: block; }
-.pt-obj { position: absolute; left: 8px; top: 8px; display: flex; flex-direction: column; gap: 4px; line-height: 1.2; pointer-events: none; }
+.pt-obj { position: absolute; left: 6px; top: 6px; display: flex; flex-direction: column; gap: 2px; line-height: 1; pointer-events: none; }
 .pt-obj span { background: rgba(5,13,28,0.82); border: 1px solid var(--linha); padding: 3px 8px; font-size: 11.5px; }
 .pt-obj .on { border-color: var(--ouro); color: var(--ouro2); }
 .pt-lado { display: flex; flex-direction: column; gap: 10px; }
@@ -234,3 +234,14 @@
 .pt-menu .pt-sep { width: auto; height: 1px; margin: 2px 0; }
 @media (min-width: 1001px) { .pt.ao-vivo .pt-corpo { grid-template-columns: auto 128px 340px; justify-content: start; } .pt-corpo { grid-template-columns: minmax(0, 1fr) 128px 340px; } }
 @media (max-width: 1000px) { .pt-menu .pt-controles { flex-direction: row; flex-wrap: wrap; } }
+
+/* contadores dos épicos (banners) */
+.ep-b { --w: clamp(150px, 17vw, 230px); position: relative; width: var(--w); font-size: var(--w); filter: drop-shadow(0 2px 6px #000a); }
+.ep-b img { display: block; width: 100%; height: auto; }
+.ep-b .tx { position: absolute; left: var(--l); top: var(--t); width: var(--bw); height: var(--bh); display: grid; place-items: center; font-family: 'Bebas Neue', sans-serif; font-size: 0.12em; letter-spacing: 0.08em; color: var(--c); text-shadow: 0 0 8px var(--c2), 0 1px 2px #000; font-variant-numeric: tabular-nums; }
+.ep-b.on .tx { font-size: 0.085em; animation: ep-vivo 1.1s ease-in-out infinite; }
+@keyframes ep-vivo { 50% { text-shadow: 0 0 14px var(--c), 0 0 22px var(--c2); } }
+.ep-barao { --l: 58.5%; --t: 41.6%; --bw: 31%; --bh: 37.7%; --c: #f0d2ff; --c2: #a14dff; }
+.ep-arauto { --l: 59%; --t: 36.8%; --bw: 31%; --bh: 39%; --c: #f0d2ff; --c2: #a14dff; }
+.ep-dragao { --l: 59%; --t: 47.4%; --bw: 31%; --bh: 35.4%; --c: #d6f1ff; --c2: #4dc4ff; }
+.ep-anciao { --l: 59%; --t: 44.8%; --bw: 30%; --bh: 37%; --c: #d6f1ff; --c2: #4dc4ff; }
