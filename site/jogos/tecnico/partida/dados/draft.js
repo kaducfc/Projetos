@@ -20,7 +20,8 @@ export const passoAtual = (d) => ORDEM[d.passo] || null;
 export const terminou = (d) => d.passo >= ORDEM.length;
 export const jogadorDaVaga = (d, lado, vaga) => d.jogadores[lado].find((j) => j.pos === vaga);
 export const indisponiveis = (d) => new Set([...d.bans.azul, ...d.bans.vermelho, ...Object.values(d.picks.azul).map((c) => c.nome), ...Object.values(d.picks.vermelho).map((c) => c.nome)]);
-export const serve = (c, vaga) => posicoesDe(c).includes(POS[vaga]);
+export const serve = (c, vaga) => posicoesDe(c).includes(POS[vaga]); // campeão nativo da vaga
+export const EFIC_FORA_POSICAO = 0.92; // campeão fora da posição nativa: -8% de eficiência (maestria continua valendo)
 export const vagasLivres = (d, lado) => VAGAS.filter((v) => !d.picks[lado][v] && jogadorDaVaga(d, lado, v));
 const favorito = (d, lado, vaga, c) => (jogadorDaVaga(d, lado, vaga)?.favoritos || []).some((f) => f.nome === c.nome || f.id === c.id);
 
@@ -37,7 +38,7 @@ export function escolher(d, nome, vaga) {
   const p = passoAtual(d);
   if (!p || p.tipo !== 'pick') return false;
   const c = d.catalogo.find((x) => x.nome === nome);
-  if (!c || indisponiveis(d).has(nome) || !vagasLivres(d, p.lado).includes(vaga) || !serve(c, vaga)) return false;
+  if (!c || indisponiveis(d).has(nome) || !vagasLivres(d, p.lado).includes(vaga)) return false; // qualquer campeão serve em qualquer vaga; fora da posição nativa há penalidade de eficiência
   d.picks[p.lado][vaga] = c; d.passo++;
   return true;
 }
@@ -46,7 +47,7 @@ export function escolher(d, nome, vaga) {
 export function jogadaIA(d) {
   const p = passoAtual(d); if (!p) return;
   const usados = indisponiveis(d);
-  const livres = (vaga) => d.catalogo.filter((c) => !usados.has(c.nome) && serve(c, vaga));
+  const livres = (vaga) => { const n = d.catalogo.filter((c) => !usados.has(c.nome) && serve(c, vaga)); return n.length ? n : d.catalogo.filter((c) => !usados.has(c.nome)); };
   if (p.tipo === 'ban') {
     const alvo = p.lado === A ? V : A; // bane o que o adversário mais gostaria de jogar
     const cobiçados = [];
@@ -70,6 +71,6 @@ export function jogadaIA(d) {
 
 // Resultado final: jogadores com o campeão escolhido (formato esperado pelo motor da partida) e os bans.
 export function resultadoDraft(d) {
-  const com = (lado) => d.jogadores[lado].map((j) => ({ ...j, campeao: d.picks[lado][j.pos] }));
+  const com = (lado) => d.jogadores[lado].map((j) => { const campeao = d.picks[lado][j.pos]; return { ...j, campeao, eficiencia: (j.eficiencia ?? 1) * (campeao && !serve(campeao, j.pos) ? EFIC_FORA_POSICAO : 1) }; });
   return { azul: com(A), vermelho: com(V), bans: { azul: [...d.bans.azul], vermelho: [...d.bans.vermelho] } };
 }

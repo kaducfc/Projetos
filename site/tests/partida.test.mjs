@@ -471,3 +471,17 @@ test('picks e bans do amistoso: 10 bans, 10 picks na ordem certa, só campeões 
   ate(P, 30);
   assert.deepEqual(P.campeoes.filter((c) => c.equipe === 'azul').map((c) => c.campeao), r.azul.map((j) => j.campeao.nome));
 });
+
+test('draft: qualquer campeão serve em qualquer vaga, e fora da posição nativa a eficiência cai', async () => {
+  const D = await import('../jogos/tecnico/partida/dados/draft.js');
+  const cat = Array.from({ length: 30 }, (_, i) => ({ id: `c${i}`, nome: `c${i}`, posicoes: i < 3 ? ['Suporte'] : ['Top'] }));
+  const vagas = ['top', 'selva', 'meio', 'atirador', 'suporte'];
+  const el = vagas.map((p) => ({ id: p, nome: p, pos: p, favoritos: [] }));
+  const d = D.novoDraft(cat, el, el, 1);
+  for (let i = 0; i < 6; i++) D.jogadaIA(d); // bans
+  assert.ok(D.escolher(d, 'c0', 'top'), 'um suporte nativo pode ser escolhido no topo');
+  for (let i = 0; i < 30 && D.passoAtual(d); i++) D.jogadaIA(d);
+  const r = D.resultadoDraft(d);
+  for (const j of r.azul.concat(r.vermelho)) assert.equal(j.eficiencia, D.serve(j.campeao, j.pos) ? 1 : D.EFIC_FORA_POSICAO, `${j.pos} ${j.campeao.nome}`);
+  assert.ok(D.EFIC_FORA_POSICAO < 1);
+});

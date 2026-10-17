@@ -1,7 +1,7 @@
 // Tela de picks e bans do amistoso. Você é o lado azul; o computador escolhe pelo vermelho.
 import { iconeVaga } from '../../js/art.js';
 import { prepararImagens, campIcone } from '../../js/campeoes-img.js';
-import { novoDraft, passoAtual, terminou, banir, escolher, jogadaIA, vagasLivres, indisponiveis, serve, jogadorDaVaga, resultadoDraft, ORDEM, VAGAS } from '../dados/draft.js';
+import { novoDraft, passoAtual, terminou, banir, escolher, jogadaIA, EFIC_FORA_POSICAO, vagasLivres, indisponiveis, serve, jogadorDaVaga, resultadoDraft, ORDEM, VAGAS } from '../dados/draft.js';
 
 const NOME = { top: 'Topo', selva: 'Selva', meio: 'Meio', atirador: 'Atirador', suporte: 'Suporte' };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -12,8 +12,12 @@ const IA_MIN = 3; const IA_MAX = 6; // o computador escolhe entre 3 e 6 segundos
 const CAPACETE = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6c-12 0-21 8-21 20v14c0 3 1 5 4 6l6 2v9h22v-9l6-2c3-1 4-3 4-6V26C53 14 44 6 32 6zm-9 24h18l-3 12h-12z" fill="currentColor"/></svg>';
 
 // Palavra em SVG: contorno fino fixo com brilho e um traço de luz que corre pela borda das letras (efeito neon).
-const palavraNeon = (txt) => `<svg class="neon" viewBox="0 0 ${txt.length * 58 + 70} 90" role="img" aria-label="${txt}"><defs><filter id="neon-b" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-  <text x="50%" y="70" text-anchor="middle" class="t0">${txt}</text><text x="50%" y="70" text-anchor="middle" class="t1" filter="url(#neon-b)">${txt}</text><text x="50%" y="70" text-anchor="middle" class="t2">${txt}</text></svg>`;
+const palavraNeon = (txt) => `<svg class="neon" viewBox="0 0 ${txt.length * 50 + 70} 80" role="img" aria-label="${txt}"><defs>
+  <linearGradient id="neon-sw" x1="0" y1="0" x2="1" y2="0.25"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.38" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.95"/><stop offset="0.62" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    <animateTransform attributeName="gradientTransform" type="translate" from="-1" to="1" dur="2.8s" repeatCount="indefinite"/></linearGradient>
+  <filter id="neon-b" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="4"/></filter></defs>
+  <text x="50%" y="62" text-anchor="middle" class="tg" filter="url(#neon-b)">${txt}</text><text x="50%" y="62" text-anchor="middle" class="t0">${txt}</text>
+  <text x="50%" y="62" text-anchor="middle" class="t2">${txt}</text></svg>`;
 
 // Tempo esgotado: o campeão de maior maestria do jogador da vaga; sem favorito livre, um aleatório que joga na posição.
 function jogadaAutomatica(d, p, vaga) {
@@ -21,8 +25,9 @@ function jogadaAutomatica(d, p, vaga) {
   if (p.tipo === 'pick') {
     const v = vaga && !d.picks.azul[vaga] ? vaga : vagasLivres(d, 'azul')[0];
     const favs = [...(jogadorDaVaga(d, 'azul', v)?.favoritos || [])].sort((a, b) => (b.bonus_pct || 0) - (a.bonus_pct || 0));
-    for (const f of favs) { const c = d.catalogo.find((x) => x.nome === f.nome || x.id === f.id); if (c && !usados.has(c.nome) && serve(c, v) && escolher(d, c.nome, v)) return; }
-    const pool = d.catalogo.filter((c) => !usados.has(c.nome) && serve(c, v));
+    for (const f of favs) { const c = d.catalogo.find((x) => x.nome === f.nome || x.id === f.id); if (c && !usados.has(c.nome) && escolher(d, c.nome, v)) return; }
+    const nativos = d.catalogo.filter((c) => !usados.has(c.nome) && serve(c, v));
+    const pool = nativos.length ? nativos : d.catalogo.filter((c) => !usados.has(c.nome));
     if (pool.length && escolher(d, pool[Math.floor(Math.random() * pool.length)].nome, v)) return;
   }
   jogadaIA(d);
@@ -54,7 +59,8 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       const fv = S.filtro === 'todos' ? null : S.filtro || (p.tipo === 'pick' && minha ? S.vaga : null);
       if (fv) lista = lista.filter((c) => serve(c, fv));
       const fav = (c) => p.tipo === 'pick' && minha && (jogadorDaVaga(d, 'azul', S.vaga)?.favoritos || []).find((f) => f.nome === c.nome || f.id === c.id);
-      const grade = lista.map((c) => { const off = usados.has(c.nome); const f = fav(c); return `<button type="button" class="ch ${off ? 'off' : ''} ${f ? 'fav' : ''}" data-nome="${esc(c.nome)}" ${off || !minha ? 'disabled' : ''} title="${esc(c.nome)}${f ? ` · favorito (+${f.bonus_pct}%)` : ''}">${campIcone(c.nome, 58)}</button>`; }).join('');
+      const grade = lista.map((c) => { const off = usados.has(c.nome); const f = fav(c); const fora = p.tipo === 'pick' && minha && S.vaga && !serve(c, S.vaga);
+        return `<button type="button" class="ch ${off ? 'off' : ''} ${f ? 'fav' : ''} ${fora ? 'fora' : ''}" data-nome="${esc(c.nome)}" ${off || !minha ? 'disabled' : ''} title="${esc(c.nome)}${f ? ` · favorito (+${f.bonus_pct}%)` : ''}${fora ? ` · fora da posição: -${Math.round((1 - EFIC_FORA_POSICAO) * 100)}% de eficiência` : ''}">${campIcone(c.nome, 58)}</button>`; }).join('');
       const titulo = !minha ? `${esc(nomeVermelho)} está ${p.tipo === 'ban' ? 'banindo' : 'escolhendo'}…` : p.tipo === 'ban' ? 'Sua vez: <b>banir</b> um campeão' : `Sua vez: <b>escolher</b> o campeão de ${NOME[S.vaga]} (${esc(jogadorDaVaga(d, 'azul', S.vaga)?.nome || '')})`;
       if (S.passoT !== d.passo) { // vez nova: zera o cronômetro e sorteia quando o computador joga
         S.passoT = d.passo; S.fim = Date.now() + TEMPO_ACAO * 1000; S.iaEm = Date.now() + (IA_MIN + Math.random() * (IA_MAX - IA_MIN)) * 1000;
