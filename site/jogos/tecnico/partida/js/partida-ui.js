@@ -183,14 +183,21 @@ function reiniciar() {
 }
 // Simula o restante da partida em blocos para não travar a tela (e sem pular nada: são os mesmos passos fixos).
 function irAteOFim() {
-  if (E.partida.fim || E.turbo) return;
-  E.turbo = true; E.relogio.pausar();
-  const botao = document.getElementById('b-fim'); botao.disabled = true;
+  const botao = document.getElementById('b-fim'); const play = document.getElementById('b-play');
+  const parar = () => { E.turbo = false; botao.classList.remove('on'); botao.textContent = '⏭ Ir até o fim'; };
+  if (E.turbo) { // segundo clique desmarca: volta ao tempo normal
+    parar(); if (!E.partida.fim) { E.relogio.retomar(); if (play) play.textContent = '⏸ Pausar'; }
+    return;
+  }
+  if (E.partida.fim) return;
+  E.turbo = true; E.relogio.pausar(); botao.classList.add('on');
+  if (play) play.textContent = '▶ Retomar';
   const bloco = () => {
+    if (!E.turbo) return;
     const t0 = performance.now();
     while (!E.partida.fim && performance.now() - t0 < 25) E.partida.step();
-    botao.textContent = `⏭ ${tempoTexto(E.partida.t)}…`;
-    if (!E.partida.fim) setTimeout(bloco, 0); else { E.turbo = false; botao.disabled = false; botao.textContent = '⏭ Ir até o fim'; }
+    botao.textContent = `⏭ ${tempoTexto(E.partida.t)}… (parar)`;
+    if (!E.partida.fim) setTimeout(bloco, 0); else parar();
   };
   bloco();
 }
