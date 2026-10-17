@@ -20,8 +20,16 @@ declare
   v text;
   i int;
   ids bigint[];
+  faltam int;
 begin
   perform set_config('tc.oferta', '1', true); -- os candidatos sempre recebem foto, mesmo sobrando poucas
+  -- garante 15 fotos livres: se faltar, jogadores do mercado oficial (sem dono e sem anúncio) cedem as deles
+  select 15 - (tc_retratos_total('M') + tc_retratos_total('F') - count(*)) into faltam from tc_jogadores where ficticio and retrato is not null;
+  if faltam > 0 then
+    delete from tc_jogadores where id in (
+      select id from tc_jogadores j where org_id is null and ficticio and retrato is not null
+         and not exists (select 1 from tc_anuncios a where a.jogador_id = j.id) order by id desc limit faltam);
+  end if;
   foreach v in array array['top', 'selva', 'meio', 'atirador', 'suporte'] loop
     for i in 1..3 loop
       ids := tc_gerar_jogadores(1, 42, v, oid);
@@ -52,6 +60,10 @@ begin
         if livres <= coalesce(((tc_cfg('retratos'))->>'reserva_mercado')::int, 30) then return new; end if;
       end if;
       new.retrato := tc_retrato_livre(new.id, new.genero);
+      if new.retrato is null and coalesce(current_setting('tc.oferta', true), '') = '1' then -- acabou o gênero sorteado: o candidato muda de gênero para ter foto
+        new.genero := case when new.genero = 'F' then 'M' else 'F' end;
+        new.retrato := tc_retrato_livre(new.id, new.genero);
+      end if;
     end if;
   end if;
   return new;

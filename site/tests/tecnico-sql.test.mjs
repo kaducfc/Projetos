@@ -972,3 +972,17 @@ t('vender com contrato vigente: ao comprar, o contrato acaba, o vendedor recebe 
   V("update tc_config set valor = jsonb_set(valor, '{max}', '50') where chave = 'elenco'");
   V(`delete from tc_jogadores where id in (${leg}, ${outro})`);
 });
+
+t('time novo com as fotos esgotadas: os 15 candidatos ainda vêm com foto (o mercado cede as dele) e ficam 5 depois da escolha', () => {
+  V("select tc_gerar_jogadores(120, 50)"); // enche o mercado de jogadores fictícios para gastar as fotos
+  V("select tc_reabastecer()");
+  const r = Q("select tc_criar_org('Novo Time', 'NVT')", 6); assert.ok(r.ok, r.err);
+  const of = J("select tc_meu()", 6).ofertas;
+  assert.equal(of.length, 15); assert.ok(of.every((x) => x.retrato), 'todos com foto');
+  assert.equal(new Set(of.map((x) => x.retrato)).size, 15);
+  const ids = ['top', 'selva', 'meio', 'atirador', 'suporte'].map((p) => of.find((x) => x.pos === p).id);
+  assert.equal(J(`select tc_escolher_elenco_inicial('{${ids.join(',')}}')`, 6).ok, true);
+  const meu = J("select tc_meu()", 6).elenco;
+  assert.equal(meu.length, 5); assert.ok(meu.every((x) => x.retrato && x.slot));
+  assert.equal(V("select count(*) - count(distinct retrato) from tc_jogadores where ficticio and retrato is not null"), '0');
+});
