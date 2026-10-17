@@ -475,11 +475,12 @@ function contratarHtml(m) {
 }
 function comprarHtml(m) {
   const a = m.anuncio; const j = a.jogador; const rc = S.meu.rc; const falta = rc < a.preco_rc;
-  const cheio = (S.meu.elenco || []).length >= ELENCO_MAX;
+  const repetido = j.ficticio === false && (S.meu.elenco || []).some((x) => x.ficticio === false && x.nome === j.nome); // Legado que você já tem vira cópia
+  const cheio = !repetido && (S.meu.elenco || []).length >= ELENCO_MAX;
   return `<h2>Comprar ${esc(j.nome)}</h2><p class="tc-mudo tc-peq">Vendedor: ${esc(a.vendedor.nome)} (${esc(a.vendedor.sigla)}). A compra usa a sua carteira oficial de Rift Coins e é definitiva.</p>
     <div class="tc-resumo"><div class="l"><span>Preço</span><b class="tc-preco rc">${fmt(a.preco_rc)}</b></div><div class="l"><span>Taxa do mercado (paga pelo vendedor)</span><b>${taxaDe(a.preco_rc)} RC</b></div><div class="l"><span>Salário que passa a ser seu</span><b>${fmt(j.salario)} cr./semana</b></div><div class="l"><span>Contrato restante</span><b>${semanasRestantes(j) ?? '—'} semana(s)</b></div>
       <div class="l"><span>Seus Rift Coins agora</span><b>${fmt(rc)}</b></div><div class="l tot"><span>Depois da compra</span><b style="color:${falta ? 'var(--ruim)' : 'var(--bom)'}">${fmt(rc - a.preco_rc)}</b></div></div>
-    ${falta ? '<p style="color:var(--ruim)">Rift Coins insuficientes.</p>' : ''}${cheio ? '<p style="color:var(--ruim)">Inventário cheio: demita ou venda um jogador antes.</p>' : ''}
+    ${repetido ? `<p class="tc-peq" style="color:var(--bom)">Você já tem este Legado: ao comprar, ele vira <b>+${1 + (j.copias || 0)} cópia(s)</b> do seu (não ocupa vaga no inventário).</p>` : ''}${falta ? '<p style="color:var(--ruim)">Rift Coins insuficientes.</p>' : ''}${cheio ? '<p style="color:var(--ruim)">Inventário cheio: demita ou venda um jogador antes.</p>' : ''}
     <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-comprar" ${falta || cheio || S.ocupado ? 'disabled' : ''}>Confirmar compra</button><button type="button" class="tc-btn" data-act="fechar">Cancelar</button></div>`;
 }
 function anunciarHtml(m) {
@@ -487,7 +488,7 @@ function anunciarHtml(m) {
   return `<h2>Anunciar ${esc(j.nome)}</h2><p class="tc-mudo tc-peq">Preço fixo em Rift Coins. O jogador continua no seu elenco até alguém comprar, e você pode cancelar quando quiser.</p>
     <label class="campo"><span class="tc-mudo tc-peq">Preço em RC (${PRECO_RC.min} a ${fmt(PRECO_RC.max)})</span><input class="tc-input" type="number" name="preco" min="${PRECO_RC.min}" max="${PRECO_RC.max}" value="${m.preco}" data-act="preco-anuncio" /></label>
     <div class="tc-resumo"><div class="l"><span>Taxa do mercado (${TAXA_MERCADO_PCT}%)</span><b>${taxa} RC</b></div><div class="l tot"><span>Você recebe</span><b>${fmt(Math.max(0, preco - taxa))} RC</b></div></div>
-    ${j.contrato_ativo ? `<p class="tc-peq tc-mudo">O contrato dele (${j.contrato_restante} semana(s) já pagas) só acaba quando alguém comprar: você recebe de volta <b>${fmt(j.reembolso_contrato)} cr.</b> (50% do que sobrou) e o comprador recebe o jogador sem contrato.</p>` : ''}${j.legado && (j.estrelas || j.copias) ? '<p class="tc-peq tc-mudo">As estrelas e as cópias repetidas dele vão junto com a venda.</p>' : ''}
+    ${j.contrato_ativo ? `<p class="tc-peq tc-mudo">O contrato dele (${j.contrato_restante} semana(s) já pagas) só acaba quando alguém comprar: você recebe de volta <b>${fmt(j.reembolso_contrato)} cr.</b> (50% do que sobrou) e o comprador recebe o jogador sem contrato.</p>` : ''}${j.legado ? '<p class="tc-peq tc-mudo">As estrelas e as cópias repetidas dele vão junto com a venda. Se o comprador já tiver este Legado, o jogador vira cópia para ele.</p>' : ''}
     ${j.slot ? '<p style="color:#fbbf24" class="tc-peq">Esse jogador é titular. Se ele for vendido, a vaga é preenchida por um reserva ou por um substituto fraco.</p>' : ''}
     <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="confirmar-anunciar" ${preco < PRECO_RC.min || preco > PRECO_RC.max || S.ocupado ? 'disabled' : ''}>Publicar anúncio</button><button type="button" class="tc-btn" data-act="fechar">Cancelar</button></div>`;
 }

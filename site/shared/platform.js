@@ -1043,7 +1043,6 @@ const ERROS_TECNICO = {
   contrato_vigente: 'Este jogador já tem um contrato vigente.',
   sem_contrato: 'Este jogador não tem contrato ativo.',
   legado_nao_libera: 'Jogadores Legado não podem ser dispensados sem demitir.',
-  legado_ja_possui: 'Você já tem esse Legado: não dá para comprar outra cópia dele.',
   legado_nao_vende: 'Jogadores Legado não podem ser anunciados no mercado.',
   legado_sem_contrato: 'Jogadores Legado não têm contrato: não precisam ser renovados.',
   mercado_conta_nova: 'Contas criadas há menos de 7 dias ainda não podem negociar no mercado entre técnicos.',

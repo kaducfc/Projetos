@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -961,6 +961,14 @@ t('vender com contrato vigente: ao comprar, o contrato acaba, o vendedor recebe 
   const outro = V(`insert into tc_jogadores (nome, ficticio, genero, pos, pos2, idade, regiao, retrato, potencial, mec, rotas, macro, tf, mental, fama, forma, exp, raridade, org_id, salario, legado_base)
     select nome, false, genero, pos, pos2, idade, regiao, retrato, potencial, mec, rotas, macro, tf, mental, fama, 50, 0, raridade, ${O2}, ${sal}, id from tc_jogadores where id = ${modelo} returning id`).split('\n')[0];
   const anL2 = J(`select tc_anunciar(${leg}, 900)`, 1).id;
-  assert.equal(falha(`select tc_comprar_anuncio(${anL2}, 'chave-venda-leg-2')`, 2), 'legado_ja_possui');
+  V(`update tc_jogadores set copias = 1, estrelas = 1 where id = ${outro}`);
+  V("update tc_config set valor = jsonb_set(valor, '{max}', to_jsonb((select count(*) from tc_jogadores where org_id = " + O2 + "))) where chave = 'elenco'"); // inventário cheio: cópia não ocupa vaga
+  const antesN = V(`select count(*) from tc_jogadores where org_id = ${O2}`);
+  V(`select tc_comprar_anuncio(${anL2}, 'chave-venda-leg-2')`, 2);
+  assert.equal(V(`select estrelas || ':' || copias from tc_jogadores where id = ${outro}`), '1:5', 'cópia (+1) mais as 3 do vendido; estrelas do comprador intactas');
+  assert.equal(V(`select count(*) from tc_jogadores where org_id = ${O2}`), antesN, 'não ocupou vaga');
+  assert.equal(V(`select coalesce(org_id::text, 'livre') || ':' || estrelas || ':' || copias from tc_jogadores where id = ${leg}`), 'livre:0:0');
+  assert.equal(V(`select status from tc_anuncios where id = ${anL2}`), 'vendido');
+  V("update tc_config set valor = jsonb_set(valor, '{max}', '50') where chave = 'elenco'");
   V(`delete from tc_jogadores where id in (${leg}, ${outro})`);
 });
