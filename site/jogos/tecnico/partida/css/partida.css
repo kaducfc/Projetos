@@ -106,11 +106,11 @@
 .pt-draft-box .bans { grid-template-columns: 1fr minmax(180px, auto) 1fr; margin: 6px 0 14px; }
 .pt-draft-box .bans > .palavra { display: grid; flex-direction: column; justify-items: center; gap: 4px; }
 .pt-draft-box .neon { width: min(230px, 50vw); height: auto; overflow: visible; }
-.pt-draft-box .neon text { font-family: 'Bebas Neue', sans-serif; font-size: 84px; letter-spacing: 8px; }
-.pt-draft-box .neon .t0 { fill: color-mix(in srgb, var(--cn) 10%, #050d1c); stroke: var(--cn); stroke-width: 1.2; stroke-opacity: 0.45; }
-.pt-draft-box .neon .t1 { fill: none; stroke: var(--cn); stroke-width: 2.2; stroke-linejoin: round; opacity: 0.55; animation: pt-neon-resp 2.4s ease-in-out infinite; }
-.pt-draft-box .neon .t2 { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 70 520; animation: pt-neon-corre 2.6s linear infinite; filter: drop-shadow(0 0 5px var(--cn)) drop-shadow(0 0 10px var(--cn)); }
-@keyframes pt-neon-corre { to { stroke-dashoffset: -590; } }
+.pt-draft-box .neon text { font-family: 'Inter', 'Arial Black', sans-serif; font-weight: 800; font-size: 76px; letter-spacing: 3px; stroke-linejoin: round; }
+.pt-draft-box .neon .t0 { fill: var(--cn); stroke: var(--cn); stroke-width: 6; }
+.pt-draft-box .neon .t1 { fill: none; stroke: var(--cn); stroke-width: 6; opacity: 0.8; animation: pt-neon-resp 2.4s ease-in-out infinite; }
+.pt-draft-box .neon .t2 { fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 90 430; animation: pt-neon-corre 2.2s linear infinite; filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 9px var(--cn)); }
+@keyframes pt-neon-corre { to { stroke-dashoffset: -520; } }
 @keyframes pt-neon-resp { 50% { opacity: 0.95; } }
 .pt-draft-box .palavra.p-ban { --cn: #ff4b4b; } .pt-draft-box .palavra.p-pick { --cn: #4aa3ff; }
 .pt-draft-box .tempo { display: grid; justify-items: center; gap: 4px; width: 150px; }
@@ -177,7 +177,7 @@
 .pt-draft-box .rodape .ban.on { filter: grayscale(0.9); opacity: 0.85; border-color: #5a2a2f; }
 .pt-draft-box .rodape .ban.agora { border: 0; background: #4a1218; box-shadow: none; animation: pt-ban-pulso 0.9s ease-in-out infinite; }
 .pt-draft-box .rodape .palavra { min-width: 220px; }
-.pt-draft-box .neon { width: 170px; }
+.pt-draft-box .neon { width: 190px; }
 .pt-draft-box .tempo { width: 130px; }
 @media (max-width: 900px) {
   .pt-draft-box .palco, .pt-draft-box .palco.fim { grid-template-columns: 1fr; }

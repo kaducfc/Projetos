@@ -12,8 +12,8 @@ const IA_MIN = 3; const IA_MAX = 6; // o computador escolhe entre 3 e 6 segundos
 const CAPACETE = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6c-12 0-21 8-21 20v14c0 3 1 5 4 6l6 2v9h22v-9l6-2c3-1 4-3 4-6V26C53 14 44 6 32 6zm-9 24h18l-3 12h-12z" fill="currentColor"/></svg>';
 
 // Palavra em SVG: contorno fino fixo com brilho e um traço de luz que corre pela borda das letras (efeito neon).
-const palavraNeon = (txt) => `<svg class="neon" viewBox="0 0 ${txt.length * 62 + 24} 78" role="img" aria-label="${txt}"><defs><filter id="neon-b" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-  <text x="50%" y="62" text-anchor="middle" class="t0">${txt}</text><text x="50%" y="62" text-anchor="middle" class="t1" filter="url(#neon-b)">${txt}</text><text x="50%" y="62" text-anchor="middle" class="t2">${txt}</text></svg>`;
+const palavraNeon = (txt) => `<svg class="neon" viewBox="0 0 ${txt.length * 58 + 70} 90" role="img" aria-label="${txt}"><defs><filter id="neon-b" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <text x="50%" y="70" text-anchor="middle" class="t0">${txt}</text><text x="50%" y="70" text-anchor="middle" class="t1" filter="url(#neon-b)">${txt}</text><text x="50%" y="70" text-anchor="middle" class="t2">${txt}</text></svg>`;
 
 // Tempo esgotado: o campeão de maior maestria do jogador da vaga; sem favorito livre, um aleatório que joga na posição.
 function jogadaAutomatica(d, p, vaga) {
