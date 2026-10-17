@@ -9,7 +9,6 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const TEMPO_ACAO = 60; // segundos por pick ou ban, para os dois lados
 const IA_MIN = 3; const IA_MAX = 6; // o computador escolhe entre 3 e 6 segundos depois que a vez dele começa
 
-const CAPACETE = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6c-12 0-21 8-21 20v14c0 3 1 5 4 6l6 2v9h22v-9l6-2c3-1 4-3 4-6V26C53 14 44 6 32 6zm-9 24h18l-3 12h-12z" fill="currentColor"/></svg>';
 
 const PROIBIDO = '<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="22" fill="none" stroke="currentColor" stroke-width="6"/><path d="M16 48L48 16" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></svg>';
 
@@ -39,7 +38,7 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       const c = d.picks[lado][v]; const j = jogadorDaVaga(d, lado, v);
       const sel = lado === 'azul' && S.vaga === v;
       const vezAqui = vez && vez.tipo === 'pick' && vez.lado === lado && !c && (lado === 'azul' ? sel : v === vez.vagaIA);
-      return `<div class="slot ${c ? 'ok' : ''} ${sel ? 'sel' : ''} ${vezAqui ? 'agora' : ''}" ${lado === 'azul' && !c ? `data-vaga="${v}"` : ''}>${c ? campIcone(c.nome, 66) : `<span class="vazio">${CAPACETE}</span>`}<div class="inf"><b>${c ? esc(c.nome) : esc(j?.nome || NOME[v])}</b><small>${c ? `${esc(j?.nome || '')} · ` : ''}${NOME[v]}</small></div></div>`;
+      return `<div class="slot ${c ? 'ok' : ''} ${sel ? 'sel' : ''} ${vezAqui ? 'agora' : ''}" ${lado === 'azul' && !c ? `data-vaga="${v}"` : ''}>${c ? campIcone(c.nome, 66) : `<span class="vazio">${PROIBIDO}</span>`}<div class="inf"><b>${c ? esc(c.nome) : esc(j?.nome || NOME[v])}</b><small>${c ? `${esc(j?.nome || '')} · ` : ''}${NOME[v]}</small></div></div>`;
     }).join('')}</div>`;
     function desenhar() {
       const p = passoAtual(d);
