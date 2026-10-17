@@ -253,6 +253,8 @@ function atualizarPlacar(forcar = false) {
 const TEXTOS = {
   abate: (e, P) => { const v = P.mapaUnidades.get(e.vitima); const a = e.abatedor ? P.mapaUnidades.get(e.abatedor) : null; return `${a ? esc(a.campeao) : 'Estrutura/monstro'} eliminou ${v ? esc(v.campeao) : '?'}`; },
   torre_destruida: (e) => `Torre derrubada (${e.rota || 'base'})`, inibidor_destruido: (e) => `Inibidor derrubado (${e.rota})`,
+  arauto_usado: (e) => `Arauto liberado na rota ${e.rota}`,
+  arauto_impacto: (e) => `Arauto avançou contra uma estrutura (-${e.dano})`,
   objetivo_abatido: (e) => `${{ dragao: 'Dragão', anciao: 'Dragão Ancião', arauto: 'Arauto', barao: 'Barão' }[e.objetivo] || e.objetivo} conquistado`,
   nexus_destruido: () => 'NEXUS DESTRUÍDO', alma_dragao: () => 'Alma do dragão', primeiro_abate: () => 'Primeiro abate',
   gank_iniciado: (e, P) => { const c = P.mapaUnidades.get(e.campeao); return `${c ? esc(c.campeao) : 'Jungler'} inicia um gank (${e.rota})`; },

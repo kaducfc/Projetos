@@ -6,7 +6,7 @@ import { irPara, parar } from './movimento.js';
 import { atacarBasico, podeAtacar, causarDano, porId, atacavel } from './combate.js';
 import { dist } from '../nucleo/coord.js';
 import { registrar } from './eventos.js';
-import { atualizarAuraMinion } from './objetivos.js';
+import { atualizarAuraMinion, atualizarArautoCarga } from './objetivos.js';
 
 const ORDEM_ALVO = { cerco: 0, super: 1, corpo: 2, conjurador: 3 };
 
@@ -91,6 +91,7 @@ function escolherAlvo(P, m) {
 
 export function atualizarMinion(P, m, dt) {
   atualizarAuraMinion(P, m);
+  if (m.subtipo === 'arauto' && atualizarArautoCarga(P, m)) return; // avançando contra uma estrutura
   const R = P.regras.minions; const lane = MUNDO_MAPA.rotas[m.rota];
   // validade do alvo atual
   let alvo = m.alvoId ? porId(P, m.alvoId) : null;

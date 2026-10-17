@@ -518,3 +518,29 @@ test('Barão: buff dos campeões vira aura roxa nos minions próximos (+50% vida
   c.x = m.x + 10; O.atualizarAuraMinion(P, m); assert.equal(m.auraBarao, true);
   matar(P, c, null); assert.equal(c.buffBarao, null, 'morrer tira o buff'); O.atualizarAuraMinion(P, m); assert.equal(m.auraBarao, false, 'sem campeão com buff, sem aura');
 });
+
+test('Arauto: nasce aos 15:00, some aos 20:00 para o Barão; o abatedor o conquista e, ao usá-lo, ele avança em até 2 estruturas (70% da vida delas e 70% da própria)', async () => {
+  const O = await import('../jogos/tecnico/partida/motor/objetivos.js');
+  assert.equal(REGRAS.epicos.arauto.spawn, 900); assert.equal(REGRAS.epicos.arauto.desaparece, 1200); assert.equal(REGRAS.epicos.barao.spawn, 1200);
+  // conquista
+  const P = mk(11); ate(P, 901);
+  const ar = P.objetivosEstado.arauto.vivo; assert.ok(ar && !ar.morto, 'Arauto vivo aos 15:00');
+  const k = P.campeoes.find((x) => x.equipe === 'azul');
+  matar(P, ar, k);
+  assert.ok(k.arautoDisp && Math.abs(k.arautoDisp.ate - (P.t + 240)) < 1, 'quem deu o último golpe tem 4 min para usar');
+  // uso: nasce onde foi usado e avança contra a estrutura inimiga mais próxima
+  const torre = P.estruturas.find((e) => e.subtipo === 'torre' && e.equipe === 'vermelho' && e.rota === 'meio' && e.nivel === 1 && !e.morto);
+  k.x = torre.x - 700; k.y = torre.y + 700; k.morto = false;
+  P.estruturaVulneravel = () => true; // as estruturas da frente ficam à mostra neste cenário isolado
+  const m = O.usarArauto(P, k);
+  assert.equal(m.subtipo, 'arauto'); assert.ok(Math.hypot(m.x - k.x, m.y - k.y) < 5, 'nasce onde foi usado'); assert.equal(k.arautoDisp, null);
+  const hpTorre = torre.hpMax; const hp0 = m.hpMax;
+  const t0 = P.t; let impactos = 0;
+  while (P.t < t0 + 40 && !m.morto) { P.step(); impactos = P.eventos.filter((e) => e.tipo === 'arauto_impacto').length; if (impactos >= 1) break; }
+  assert.ok(impactos >= 1, 'avançou contra uma estrutura');
+  const ev = P.eventos.filter((e) => e.tipo === 'arauto_impacto')[0];
+  const alvo = P.mapaUnidades.get(P.estruturas.find((e) => e.id === ev.estrutura).id);
+  assert.ok(Math.abs(ev.dano - Math.round(alvo.hpMax * 0.7)) <= 1, 'tira 70% da vida máxima da estrutura');
+  assert.ok(m.morto || (m.hp <= hp0 * 0.3 + 1 && m.hp > hp0 * 0.3 - hp0 * 0.1), 'perde 70% da própria vida máxima (mais algum dano do caminho)');
+  assert.ok(m.carga.avancos <= 2);
+});

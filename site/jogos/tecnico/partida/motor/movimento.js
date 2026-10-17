@@ -3,7 +3,7 @@ import { dist } from '../nucleo/coord.js';
 import { lentidao, incapacitado } from './combate.js';
 import { registrar } from './eventos.js';
 
-export const perfilNav = (u) => (u.tipo === 'campeao' ? 'campeao' : u.tipo === 'minion' ? 'minion' : u.tipo === 'monstro' ? 'monstro' : u.tipo === 'epico' ? 'epico' : 'campeao');
+export const perfilNav = (u) => (u.tipo === 'campeao' || u.subtipo === 'arauto' ? 'campeao' : u.tipo === 'minion' ? 'minion' : u.tipo === 'monstro' ? 'monstro' : u.tipo === 'epico' ? 'epico' : 'campeao');
 
 export function velocidadeEfetiva(P, u) {
   if (u.morto || incapacitado(u, P.t) || (u.dashAte && u.dashAte > P.t) || (u.recallAte && u.recallAte > P.t)) return 0;

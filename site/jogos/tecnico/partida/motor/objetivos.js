@@ -1,6 +1,7 @@
 // Objetivos épicos: Dragão (e Ancião), Arauto e Barão. Entidades com vida, dano e comportamento próprios; só perdem vida por ataques reais.
 import { MUNDO_MAPA, outro } from '../nucleo/mapa-mundo.js';
-import { causarDano, atacarBasico, podeAtacar, porId, aplicarEfeito } from './combate.js';
+import { causarDano, atacarBasico, podeAtacar, porId, aplicarEfeito, matar } from './combate.js';
+import { rotaMaisProxima } from '../nucleo/regioes.js';
 import { darOuro, xpDeUnidade } from './economia.js';
 import { recalcular, novaId, criarMinion } from './entidades.js';
 import { irPara, parar } from './movimento.js';
@@ -48,6 +49,7 @@ export function atualizarObjetivos(P, dt) {
   // Barão: nasce depois que o Arauto saiu de cena
   if (!O.barao.vivo && P.t >= O.barao.proximo && !(O.arauto.vivo && !O.arauto.vivo.morto)) O.barao.vivo = nascerEpico(P, 'barao', 'barao', 'barao', { nome: 'Barão Na\'Shor' });
 
+  atualizarArautos(P);
   for (const e of P.epicos) {
     if (e.morto) continue;
     recuperarSemCombate(P, e, dt);
@@ -103,17 +105,9 @@ export function aoMorrer(P, e, fonte) {
     efeito = { duracao: R.anciao.efeito.duracao };
   } else if (e.subtipo === 'arauto') {
     O.arauto.vivo = null; O.arauto.mortes++; O.arauto.aposentado = true;
-    // o Arauto vira uma unidade de cerco que marcha pela rota mais próxima do ponto de abate
-    const rota = k.rota || 'meio';
-    P.cargaArauto = P.cargaArauto || [];
-    const m = criarMinion(P, 'corpo', eq, rota, 0);
-    const cg = R.arauto.carga; m.subtipo = 'arauto'; m.hp = m.hpMax = cg.hp; m.dano = cg.danoEstrutura; m.intervalo = cg.intervalo; m.vel = cg.vel; m.alcance = 220; m.raio = 90; m.ouro = 0; m.xp = 0; m.expira = P.t + cg.duracao; m.armadura = 40; m.resist = 40; m.danoEstruturaMult = 1;
-    const pos = k.rota && P.rotaAtual ? null : null; // posiciona na rota perto do ponto do abate
-    const lane = MUNDO_MAPA.rotas[m.rota]; let melhor = 0, md = Infinity, ac = 0;
-    for (let i = 0; i < lane.pts.length - 1; i++) { const a = lane.pts[i], b = lane.pts[i + 1]; const seg = Math.hypot(b.x - a.x, b.y - a.y); for (let t = 0; t <= 1; t += 0.1) { const px = a.x + (b.x - a.x) * t, py = a.y + (b.y - a.y) * t; const d = Math.hypot(px - e.x, py - e.y); if (d < md) { md = d; melhor = i; m.x = px; m.y = py; } } ac += seg; }
-    m.idxWp = eq === 'azul' ? melhor + 1 : melhor;
-    P.minions.push(m); P.mapaUnidades.set(m.id, m);
-    efeito = { rota };
+    // quem deu o último golpe conquista o Arauto: tem alguns minutos para usá-lo (decidido em atualizarArautos)
+    const cg = R.arauto.carga;
+    if (k && k.tipo === 'campeao') { k.arautoDisp = { ate: P.t + cg.usoAte, desde: P.t }; efeito = { dono: k.id, usoAte: cg.usoAte }; }
   } else if (e.subtipo === 'barao') {
     O.barao.vivo = null; O.barao.mortes++; O.barao.proximo = P.t + R.barao.respawn;
     E.buffBarao = { ate: P.t + R.barao.efeito.duracao };
@@ -153,4 +147,64 @@ export function atualizarAuraMinion(P, m) {
   if (m.hpBase == null) { m.hpBase = m.hpMax; m.danoBase = m.dano; }
   m.auraBarao = com;
   m.hpMax = m.hpBase * (com ? 1 + cfg.hp : 1); m.hp = Math.max(1, pct * m.hpMax); m.dano = m.danoBase * (com ? 1 + cfg.dano : 1);
+}
+
+// ---- Arauto conquistado: o campeão pode usá-lo; ele nasce onde foi usado, segue a rota mais próxima como um minion e avança em até 2 estruturas.
+// Decisão do campeão (computador): usa quando está perto de uma rota (e já passou alguns segundos da conquista) ou quando o tempo de uso está acabando.
+export function atualizarArautos(P) {
+  const cg = P.regras.epicos.arauto.carga;
+  for (const c of P.campeoes) {
+    const d = c.arautoDisp; if (!d) continue;
+    if (P.t >= d.ate) { c.arautoDisp = null; continue; }
+    if (c.morto) { c.arautoDisp = null; continue; } // quem morre com o Arauto na mão o perde
+    if (P.t - d.desde < 8) continue;
+    const rt = rotaMaisProxima(c);
+    const perto = rt && rt.d < 600;
+    const acabando = d.ate - P.t < 45;
+    if (perto || acabando) usarArauto(P, c);
+  }
+}
+export function usarArauto(P, c) {
+  const cg = P.regras.epicos.arauto.carga;
+  const rt = rotaMaisProxima(c); const rota = rt.id; const lane = MUNDO_MAPA.rotas[rota];
+  const m = criarMinion(P, 'corpo', c.equipe, rota, 0, { x: c.x, y: c.y });
+  m.subtipo = 'arauto'; m.hp = m.hpMax = cg.hp; m.dano = cg.dano; m.intervalo = cg.intervalo; m.vel = cg.vel; m.velBase = cg.vel; m.alcance = 220; m.raio = 90; m.ouro = 0; m.xp = 0; m.armadura = 40; m.resist = 40; m.danoEstruturaMult = 1;
+  m.expira = P.t + cg.duracao; m.carga = { avancos: 0, alvoId: null, ultimo: null };
+  // próximo ponto de passagem da rota mais próxima, no sentido do Nexus inimigo
+  let melhor = 0, md = Infinity;
+  for (let i = 0; i < lane.pts.length - 1; i++) { const a = lane.pts[i], b = lane.pts[i + 1]; const vx = b.x - a.x, vy = b.y - a.y; const t = Math.max(0, Math.min(1, ((c.x - a.x) * vx + (c.y - a.y) * vy) / ((vx * vx + vy * vy) || 1))); const d = Math.hypot(c.x - (a.x + vx * t), c.y - (a.y + vy * t)); if (d < md) { md = d; melhor = i; } }
+  m.idxWp = c.equipe === 'azul' ? Math.min(lane.pts.length - 1, melhor + 1) : melhor;
+  P.minions.push(m); P.mapaUnidades.set(m.id, m);
+  c.arautoDisp = null;
+  registrar(P, 'arauto_usado', { equipe: c.equipe, jogador: c.id, rota });
+  P.fx.push({ k: 'hab', de: c.id, tecla: 'R', x: c.x, y: c.y, t: P.t, tipo: 'buff', x0: c.x, y0: c.y });
+  return m;
+}
+// Avanço do Arauto: perto de uma estrutura inimiga vulnerável (alcance do Barão), ele investe nela: tira 70% da vida máxima da estrutura
+// e perde 70% da própria. No máximo 2 avanços, sempre em estruturas diferentes. Devolve true quando o Arauto está avançando neste quadro.
+export function atualizarArautoCarga(P, m) {
+  const cg = P.regras.epicos.arauto.carga; const av = cg.avanco; const c = m.carga;
+  if (!c || m.morto) return false;
+  if (c.alvoId) {
+    const alvo = porId(P, c.alvoId);
+    if (!alvo || alvo.morto || !P.estruturaVulneravel(alvo)) { c.alvoId = null; m.vel = m.velBase; return false; }
+    irPara(P, m, alvo.x, alvo.y, { tol: 40 });
+    if (dist(m, alvo) <= (alvo.raio || 100) + m.alcance * 0.6) { // impacto
+      c.alvoId = null; c.ultimo = alvo.id; c.avancos++; m.vel = m.velBase; parar(m);
+      const dano = alvo.hpMax * av.danoEstrutura;
+      alvo.hp = Math.max(0, alvo.hp - dano); alvo.ultimoDano = P.t; alvo.ultimoDanoTorre = P.t;
+      P.fx.push({ k: 'destruicao', id: alvo.id, t: P.t, x: alvo.x, y: alvo.y, tipo: 'arauto_impacto' });
+      registrar(P, 'arauto_impacto', { equipe: m.equipe, estrutura: alvo.id, dano: Math.round(dano) });
+      if (alvo.hp <= 0) matar(P, alvo, m);
+      m.hp -= m.hpMax * av.danoProprio;
+      if (m.hp <= 0) matar(P, m, alvo);
+    }
+    return true;
+  }
+  if (c.avancos >= av.maximo) return false;
+  const R = raioAuraBarao();
+  let alvo = null, md = Infinity;
+  for (const e of P.estruturas) { if (e.equipe === m.equipe || e.morto || e.id === c.ultimo || !P.estruturaVulneravel(e)) continue; const d = dist(m, e); if (d <= R && d < md) { md = d; alvo = e; } }
+  if (alvo) { c.alvoId = alvo.id; m.vel = m.velBase * av.velMult; }
+  return false;
 }

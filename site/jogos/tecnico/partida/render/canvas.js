@@ -137,6 +137,13 @@ export class Renderizador {
         c.beginPath(); c.ellipse(p.x, p.y + lm * 0.1, lm * 0.62, lm * 0.3, 0, 0, 7); c.stroke();
         c.beginPath(); c.arc(p.x, p.y - lm * 0.05, lm * 0.55, 0, 7); c.globalAlpha = 0.7; c.stroke(); c.restore();
       }
+      if (m.subtipo === 'arauto' && this.sprite('arauto').ok) { // o Arauto conquistado usa a mesma imagem do Arauto do rio
+        const l = 40 * U;
+        c.fillStyle = cor; c.globalAlpha = 0.35; c.beginPath(); c.ellipse(p.x, p.y + l * 0.2, l * 0.4, l * 0.15, 0, 0, 7); c.fill(); c.globalAlpha = 1;
+        this.desenharSprite(c, 'arauto', p.x, p.y + l * 0.1, l, 0.7);
+        this.barra(c, p.x - l * 0.35, p.y - l * 0.5, l * 0.7, 3 * U, m.hp / m.hpMax, '#6adf7a');
+        continue;
+      }
       if (m.subtipo !== 'arauto') { // miniatura na cor do time; de costas quando sobe no mapa, de frente quando desce
         const ant = this.interp.prev.get(m.id); if (ant && Math.abs(m.y - ant.y) > 0.5) this.rumo.set(m.id, m.y < ant.y ? 'costas' : 'frente');
         const lado = this.rumo.get(m.id) || (m.equipe === 'azul' ? 'costas' : 'frente');
