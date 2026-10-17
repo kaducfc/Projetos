@@ -99,7 +99,7 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       fundo.querySelector('#d-ir').onclick = () => { fundo.remove(); resolver(r); };
     }
     function intro() {
-      fundo.innerHTML = `<div class="pt-modal pt-draft-box intro"><h2>Picks e bans</h2><div class="palco fim">${colunaHtml('azul', nomeAzul)}<div class="meio"><p class="pt-mudo">Cada banimento ou escolha tem <b>${TEMPO_ACAO} segundos</b>. Se o tempo acabar, o jogo escolhe por você (o campeão de maior maestria do jogador).</p><button type="button" class="pt-btn ouro grande" id="d-comecar">Começar Picks e Bans</button></div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
+      fundo.innerHTML = `<div class="pt-modal pt-draft-box intro"><h2>Picks e bans</h2><div class="palco fim">${colunaHtml('azul', nomeAzul)}<div class="meio"><button type="button" class="pt-btn ouro grande" id="d-comecar">Começar</button></div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
       fundo.querySelector('#d-comecar').onclick = () => { S.relogio = setInterval(atualizarTempo, 250); desenhar(); };
     }
     prepararImagens().finally(intro);
