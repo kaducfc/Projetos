@@ -226,3 +226,11 @@
 .pt-lado .pt-controles #b-play { flex: 1 1 100%; }
 .pt-lado .pt-controles [data-v] { flex: 1 1 28%; }
 @media (min-width: 1001px) { .pt.ao-vivo .pt-corpo { grid-template-columns: auto 340px; justify-content: center; } }
+
+/* controles em menu vertical entre o mapa e o placar */
+.pt-menu { align-self: start; }
+.pt-menu .pt-controles { margin: 0; max-width: none; flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 6px; background: linear-gradient(180deg, #0c1d3a, #07122a); border: 1px solid var(--linha); border-top: 2px solid #8b6a1f; }
+.pt-menu .pt-btn { padding: 8px 6px; font-size: 12.5px; text-align: center; white-space: nowrap; }
+.pt-menu .pt-sep { width: auto; height: 1px; margin: 2px 0; }
+@media (min-width: 1001px) { .pt.ao-vivo .pt-corpo { grid-template-columns: auto 128px 340px; justify-content: start; } .pt-corpo { grid-template-columns: minmax(0, 1fr) 128px 340px; } }
+@media (max-width: 1000px) { .pt-menu .pt-controles { flex-direction: row; flex-wrap: wrap; } }

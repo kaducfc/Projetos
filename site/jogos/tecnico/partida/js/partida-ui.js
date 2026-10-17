@@ -107,8 +107,8 @@ function montar() {
     </div>
     <div class="pt-corpo">
       <div class="pt-mapa" id="mapa"><canvas id="cv" aria-label="Mapa da partida"></canvas><div class="pt-obj" id="obj"></div></div>
+      <nav class="pt-menu" aria-label="Controles da partida"><div class="pt-controles" id="ctl"></div></nav>
       <aside class="pt-lado">
-        <div class="pt-card"><h3>Controles</h3><div class="pt-controles" id="ctl"></div></div>
         <div class="pt-card"><h3>Placar <span id="vel"></span></h3><table class="pt-placar" id="placar"></table></div>
         <div class="pt-card"><h3>Foco</h3><div class="pt-foco" id="foco">Clique em um campeão no mapa ou no placar.</div></div>
         <div class="pt-card"><h3>Eventos</h3><div class="pt-feed" id="feed"></div></div>
@@ -150,7 +150,7 @@ function encaixar() {
   const mb = parseFloat(getComputedStyle(document.body).marginBottom) || 0;
   app.style.height = `${Math.max(320, window.innerHeight - topo - mb)}px`;
   const estreito = window.matchMedia('(max-width: 1000px)').matches;
-  const lado = estreito ? 0 : (document.querySelector('.pt-lado')?.offsetWidth || 340) + 12;
+  const lado = estreito ? 0 : (document.querySelector('.pt-lado')?.offsetWidth || 340) + (document.querySelector('.pt-menu')?.offsetWidth || 90) + 24;
   const largDisp = corpo.clientWidth - lado;
   const altDisp = estreito ? Infinity : corpo.clientHeight;
   const w = Math.max(280, Math.floor(Math.min(largDisp, altDisp * MUNDO.largura / MUNDO.altura)));
