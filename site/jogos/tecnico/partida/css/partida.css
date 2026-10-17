@@ -192,8 +192,8 @@
 .pt-draft-box .ch { position: relative; }
 
 /* palavra BAN / PICK: brilho simples que pulsa de leve */
-.pt-draft-box .palavra strong { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 60px; line-height: 1; letter-spacing: 0.16em; padding-left: 0.16em; }
-.pt-draft-box .palavra.p-ban strong { color: #ff4b4b; animation: pt-ban-glow 1.8s ease-in-out infinite; }
-.pt-draft-box .palavra.p-pick strong { color: #4aa3ff; animation: pt-pick-glow 1.8s ease-in-out infinite; }
-@keyframes pt-ban-glow { 0%, 100% { text-shadow: 0 0 10px #ff2b2b88, 0 0 24px #ff2b2b44; } 50% { text-shadow: 0 0 16px #ff5252, 0 0 38px #ff2b2b88; } }
-@keyframes pt-pick-glow { 0%, 100% { text-shadow: 0 0 10px #3b8bff88, 0 0 24px #3b8bff44; } 50% { text-shadow: 0 0 16px #6db4ff, 0 0 38px #3b8bff88; } }
+.pt-draft-box .palavra strong { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 54px; line-height: 1; letter-spacing: 0.14em; padding-left: 0.14em; }
+.pt-draft-box .palavra.p-ban strong { color: #ff4b4b; animation: pt-ban-glow 1.3s ease-in-out infinite; }
+.pt-draft-box .palavra.p-pick strong { color: #4aa3ff; animation: pt-pick-glow 1.3s ease-in-out infinite; }
+@keyframes pt-ban-glow { 0%, 100% { text-shadow: 0 0 8px #ff2b2b66, 0 0 22px #ff2b2b33; transform: scale(1); } 50% { text-shadow: 0 0 18px #ff5252, 0 0 44px #ff2b2b99; transform: scale(1.06); } }
+@keyframes pt-pick-glow { 0%, 100% { text-shadow: 0 0 8px #3b8bff66, 0 0 22px #3b8bff33; transform: scale(1); } 50% { text-shadow: 0 0 18px #6db4ff, 0 0 44px #3b8bff99; transform: scale(1.06); } }
