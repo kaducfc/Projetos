@@ -118,10 +118,39 @@ export function aoMorrer(P, e, fonte) {
     O.barao.vivo = null; O.barao.mortes++; O.barao.proximo = P.t + R.barao.respawn;
     E.buffBarao = { ate: P.t + R.barao.efeito.duracao };
     const ef = R.barao.efeito;
-    for (const c of P.campeoes) if (c.equipe === eq) { c.buffs.push({ adPct: ef.ad, apPct: ef.ap, vel: ef.vel * 335, ate: P.t + ef.duracao }); recalcular(c, P); }
+    for (const c of P.campeoes) if (c.equipe === eq && !c.morto) { // quem estava vivo ganha o buff (quem morrer perde; quem renascer depois não recebe)
+      c.buffBarao = { ate: P.t + ef.duracao };
+      if (ef.ad || ef.ap || ef.vel) { c.buffs.push({ adPct: ef.ad, apPct: ef.ap, vel: ef.vel * 335, ate: P.t + ef.duracao }); recalcular(c, P); }
+    }
     efeito = { duracao: ef.duracao };
   }
   registrar(P, 'objetivo_abatido', { equipe: eq, objetivo: e.subtipo, elemento: e.elemento, abatedor: k.id, participantes: part.map((c) => c.id), ouro: Math.round(e.ouro + bonus), xp: e.xp, efeito });
   P.fx.push({ k: 'destruicao', id: e.id, t: P.t, x: e.x, y: e.y, tipo: e.subtipo });
   P.estrategiaMudou = true;
+}
+
+// Alcance da aura do Barão: distância entre a torre 1 e a torre 2 do meio (média dos dois times), calculada do mapa.
+let _raioAura = null;
+export function raioAuraBarao() {
+  if (_raioAura) return _raioAura;
+  const ds = ['azul', 'vermelho'].map((eq) => {
+    const t = (n) => MUNDO_MAPA.estruturas.find((e) => e.tipo === 'torre' && e.rota === 'meio' && e.nivel === n && e.equipe === eq);
+    const a = t(1), b = t(2); return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 1200;
+  });
+  return (_raioAura = (ds[0] + ds[1]) / 2);
+}
+// Minion do time com o buff: se há um campeão vivo com o buff do Barão dentro do alcance, o minion fica roxo (+vida, +dano); fora do alcance volta ao normal.
+export function atualizarAuraMinion(P, m) {
+  const cfg = P.regras.epicos.barao.efeito.minion;
+  const buff = P.equipes[m.equipe].buffBarao;
+  let com = false;
+  if (buff && P.t < buff.ate) {
+    const r = raioAuraBarao();
+    com = P.campeoes.some((c) => c.equipe === m.equipe && !c.morto && c.buffBarao && P.t < c.buffBarao.ate && dist(c, m) <= r);
+  }
+  if (com === !!m.auraBarao) return;
+  const pct = m.hpMax > 0 ? m.hp / m.hpMax : 1;
+  if (m.hpBase == null) { m.hpBase = m.hpMax; m.danoBase = m.dano; }
+  m.auraBarao = com;
+  m.hpMax = m.hpBase * (com ? 1 + cfg.hp : 1); m.hp = Math.max(1, pct * m.hpMax); m.dano = m.danoBase * (com ? 1 + cfg.dano : 1);
 }

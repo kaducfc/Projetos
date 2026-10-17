@@ -144,6 +144,7 @@ export function temMinionAliado(P, e) {
 export function matar(P, alvo, fonte) {
   if (alvo.morto) return;
   alvo.morto = true; alvo.hp = 0; alvo.mortoEm = P.t;
+  if (alvo.tipo === 'campeao') alvo.buffBarao = null; // morrer tira o buff do Barão
   alvo.caminho = null; alvo.destino = null; alvo.alvoId = null;
   const E = P.regras.economia;
   // quem recebe o crédito: o último atacante que for campeão (para torres/minions que dão o golpe final)

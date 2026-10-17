@@ -129,6 +129,10 @@ export class Renderizador {
   minions(P, c, U) {
     for (const m of P.minions) {
       if (m.morto) continue; const p = this.pos(m); const cor = COR[m.equipe];
+      if (m.auraBarao) { // aura roxa do buff do Barão
+        const ra = 15 * U; const g = c.createRadialGradient(p.x, p.y, 1, p.x, p.y, ra); g.addColorStop(0, 'rgba(190,110,255,0.55)'); g.addColorStop(1, 'rgba(150,60,255,0)');
+        c.fillStyle = g; c.beginPath(); c.arc(p.x, p.y, ra, 0, 7); c.fill();
+      }
       if (m.subtipo !== 'arauto') { // miniatura na cor do time; de costas quando sobe no mapa, de frente quando desce
         const ant = this.interp.prev.get(m.id); if (ant && Math.abs(m.y - ant.y) > 0.5) this.rumo.set(m.id, m.y < ant.y ? 'costas' : 'frente');
         const lado = this.rumo.get(m.id) || (m.equipe === 'azul' ? 'costas' : 'frente');

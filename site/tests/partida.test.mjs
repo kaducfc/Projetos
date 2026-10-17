@@ -498,3 +498,22 @@ test('selva: monstro e épico sem tomar dano por 4 s recuperam toda a vida em 2 
   avancar(2.0); assert.equal(m.hp, m.hpMax, 'cheia depois de 2 s');
   m.hp = m.hpMax * 0.3; m.ultimoCombate = P.t; avancar(2); m.ultimoCombate = P.t; avancar(3.9); assert.ok(m.hp < m.hpMax * 0.31, 'dano recente reinicia a contagem');
 });
+
+test('Barão: buff dos campeões vira aura roxa nos minions próximos (+50% vida, +20% dano); sai do alcance ou morre o campeão e volta ao normal', async () => {
+  const O = await import('../jogos/tecnico/partida/motor/objetivos.js');
+  const { matar } = await import('../jogos/tecnico/partida/motor/combate.js');
+  const r = O.raioAuraBarao();
+  assert.ok(r > 1150 && r < 1300, `alcance = distância T1–T2 do meio (${Math.round(r)})`);
+  const P = mk(7); ate(P, 40);
+  const eq = 'azul';
+  const c = P.campeoes.find((x) => x.equipe === eq && !x.morto);
+  const m = P.minions.find((x) => x.equipe === eq && !x.morto); assert.ok(m, 'há minion azul');
+  P.equipes[eq].buffBarao = { ate: P.t + 180 }; c.buffBarao = { ate: P.t + 180 };
+  const base = { hp: m.hpMax, dano: m.dano };
+  c.x = m.x + r * 0.5; c.y = m.y; O.atualizarAuraMinion(P, m);
+  assert.equal(m.auraBarao, true); assert.ok(Math.abs(m.hpMax - base.hp * 1.5) < 1e-6 && Math.abs(m.dano - base.dano * 1.2) < 1e-6, 'vida +50% e dano +20%');
+  m.hp = m.hpMax * 0.5; c.x = m.x + r * 1.2; O.atualizarAuraMinion(P, m);
+  assert.equal(m.auraBarao, false, 'fora do alcance volta ao normal'); assert.ok(Math.abs(m.hpMax - base.hp) < 1e-6 && Math.abs(m.hp - base.hp * 0.5) < 1e-6 && Math.abs(m.dano - base.dano) < 1e-6, 'proporção de vida preservada');
+  c.x = m.x + 10; O.atualizarAuraMinion(P, m); assert.equal(m.auraBarao, true);
+  matar(P, c, null); assert.equal(c.buffBarao, null, 'morrer tira o buff'); O.atualizarAuraMinion(P, m); assert.equal(m.auraBarao, false, 'sem campeão com buff, sem aura');
+});

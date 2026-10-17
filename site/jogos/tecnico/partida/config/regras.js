@@ -105,7 +105,7 @@ export const REGRAS = {
     dragao:  { hp: 4200, dano: 80, armadura: 25, resist: 25, alcance: 400, intervalo: 1.6, spawn: 300, respawn: 300, aquisicao: 800, ouro: 100, xp: 400, raio: 150, leash: 1200, bonusEquipe: { ouro: 25 }, pilha: { dano: 0.03, resist: 0.02 }, almaPilhas: 4, alma: { dano: 0.07, duracao: 0 } },
     anciao:  { hp: 8000, dano: 160, armadura: 40, resist: 40, alcance: 450, intervalo: 1.4, spawn: 420, respawn: 360, aquisicao: 900, ouro: 150, xp: 700, raio: 170, leash: 1300, efeito: { duracao: 150, dano: 0.15 }, aposAlma: true },
     arauto:  { hp: 5500, dano: 90, armadura: 30, resist: 30, alcance: 400, intervalo: 1.6, spawn: 480, desaparece: 1185, aquisicao: 800, ouro: 100, xp: 250, raio: 160, leash: 1200, carga: { hp: 2500, danoEstrutura: 700, intervalo: 1.0, vel: 280, duracao: 100 } },
-    barao:   { hp: 9000, dano: 190, armadura: 60, resist: 60, alcance: 480, intervalo: 1.3, spawn: 1200, respawn: 360, aquisicao: 900, ouro: 300, xp: 900, raio: 190, leash: 1300, efeito: { duracao: 180, ad: 0.12, ap: 0.12, vel: 0.05, minion: { hp: 0.3, dano: 0.3 } } },
+    barao:   { hp: 9000, dano: 190, armadura: 60, resist: 60, alcance: 480, intervalo: 1.3, spawn: 1200, respawn: 360, aquisicao: 900, ouro: 300, xp: 900, raio: 190, leash: 1300, efeito: { duracao: 180, ad: 0, ap: 0, vel: 0, minion: { hp: 0.5, dano: 0.2 } } }, // buff do Barão: aura roxa nos minions perto de um campeão com o buff (alcance = distância entre a T1 e a T2 do meio, calculada do mapa)
     avaliacao: { margemRisco: 0.15, tempoAjuda: 12 },
   },
 

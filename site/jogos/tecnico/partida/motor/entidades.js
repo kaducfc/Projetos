@@ -71,7 +71,7 @@ export function criarMinion(P, subtipo, equipe, rota, s) {
   const pos = pontoDaRota(lane, s);
   const k = Math.floor(P.t / R.crescimentoCada);
   const f = (sub) => 1 + k * R.crescimento[sub];
-  const buffB = P.equipes[equipe].buffBarao && P.t < P.equipes[equipe].buffBarao.ate ? P.regras.epicos.barao.efeito.minion : null;
+  const buffB = null; // o buff do Barão agora é uma aura que depende da distância do campeão (atualizarAuraMinion)
   const u = {
     id: novaId(P), tipo: 'minion', subtipo, equipe, rota, x: pos.x, y: pos.y,
     hp: d.hp * f('hp') * (buffB ? 1 + buffB.hp : 1), hpMax: 0, dano: d.dano * f('dano') * (buffB ? 1 + buffB.dano : 1), armadura: d.armadura, resist: d.resist, vel: d.vel, alcance: d.alcance, intervalo: d.intervalo,
