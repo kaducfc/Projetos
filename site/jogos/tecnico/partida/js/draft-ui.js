@@ -11,6 +11,8 @@ const IA_MIN = 3; const IA_MAX = 6; // o computador escolhe entre 3 e 6 segundos
 
 const CAPACETE = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6c-12 0-21 8-21 20v14c0 3 1 5 4 6l6 2v9h22v-9l6-2c3-1 4-3 4-6V26C53 14 44 6 32 6zm-9 24h18l-3 12h-12z" fill="currentColor"/></svg>';
 
+const PROIBIDO = '<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="22" fill="none" stroke="currentColor" stroke-width="6"/><path d="M16 48L48 16" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></svg>';
+
 // Tempo esgotado: o campeão de maior maestria do jogador da vaga; sem favorito livre, um aleatório que joga na posição.
 function jogadaAutomatica(d, p, vaga) {
   const usados = indisponiveis(d);
@@ -32,7 +34,7 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
     const S = { vaga: null, busca: '', trocando: false, filtro: null, passoT: -1, fim: 0, iaEm: 0, relogio: null };
     const fundo = document.createElement('div'); fundo.className = 'pt-fundo pt-draft';
     document.body.appendChild(fundo);
-    const bansHtml = (lado, agora) => Array.from({ length: 5 }, (_, i) => { const n = d.bans[lado][i]; return `${i === 3 ? '<i class="esp"></i>' : ''}<span class="ban ${n ? 'on' : ''} ${agora === lado && i === d.bans[lado].length ? 'agora' : ''}">${n ? campIcone(n, 38) : CAPACETE}</span>`; }).join('');
+    const bansHtml = (lado, agora) => Array.from({ length: 5 }, (_, i) => { const n = d.bans[lado][i]; return `${i === 3 ? '<i class="esp"></i>' : ''}<span class="ban ${n ? 'on' : ''} ${agora === lado && i === d.bans[lado].length ? 'agora' : ''}">${n ? campIcone(n, 38) : PROIBIDO}</span>`; }).join('');
     const colunaHtml = (lado, nome, vez) => `<div class="col ${lado === 'azul' ? 'a' : 'v'}">${VAGAS.map((v) => {
       const c = d.picks[lado][v]; const j = jogadorDaVaga(d, lado, v);
       const sel = lado === 'azul' && S.vaga === v;
