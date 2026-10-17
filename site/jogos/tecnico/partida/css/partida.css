@@ -219,3 +219,10 @@
 .pt.ao-vivo:not([data-modo="teste"]) .pt-depur, .pt.ao-vivo:not([data-modo="teste"]) .pt-teste { display: none; }
 .pt:fullscreen { background: #040a16; }
 @media (max-width: 1000px) { .pt.ao-vivo { height: auto !important; overflow: visible; } }
+
+.pt-lado .pt-controles { margin: 0; max-width: none; gap: 6px; }
+.pt-lado .pt-controles .pt-btn { padding: 6px 10px; font-size: 13px; }
+.pt-lado .pt-controles .pt-sep { display: none; }
+.pt-lado .pt-controles #b-play { flex: 1 1 100%; }
+.pt-lado .pt-controles [data-v] { flex: 1 1 28%; }
+@media (min-width: 1001px) { .pt.ao-vivo .pt-corpo { grid-template-columns: auto 340px; justify-content: center; } }

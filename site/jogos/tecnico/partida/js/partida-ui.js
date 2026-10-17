@@ -108,12 +108,12 @@ function montar() {
     <div class="pt-corpo">
       <div class="pt-mapa" id="mapa"><canvas id="cv" aria-label="Mapa da partida"></canvas><div class="pt-obj" id="obj"></div></div>
       <aside class="pt-lado">
+        <div class="pt-card"><h3>Controles</h3><div class="pt-controles" id="ctl"></div></div>
         <div class="pt-card"><h3>Placar <span id="vel"></span></h3><table class="pt-placar" id="placar"></table></div>
         <div class="pt-card"><h3>Foco</h3><div class="pt-foco" id="foco">Clique em um campeão no mapa ou no placar.</div></div>
         <div class="pt-card"><h3>Eventos</h3><div class="pt-feed" id="feed"></div></div>
       </aside>
     </div>
-    <div class="pt-controles" id="ctl"></div>
     <div class="pt-depur" id="depur"></div>
     ${E.config.modo === 'teste' ? `<div class="pt-teste"><label>Poder azul <input type="number" id="pa" min="1" max="100" value="${E.config.pa}"></label><label>Poder vermelho <input type="number" id="pv" min="1" max="100" value="${E.config.pv}"></label><label>Semente <input type="number" id="seed" value="${E.config.semente}"></label><span>A mesma semente reproduz a mesma partida.</span></div>` : ''}`;
   E.rend = new Renderizador(document.getElementById('cv'), E.imagem);
