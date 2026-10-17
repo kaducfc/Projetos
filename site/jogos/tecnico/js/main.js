@@ -165,13 +165,26 @@ function nav() {
     <div class="tc-temp"><span class="tc-eyebrow">Temporada atual</span><b>Semana ${sem} de 4</b><small>${S.meu.org.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)}</small></div>${FECHADO ? '<a class="tc-peq" style="color:var(--ouro2);padding:8px 4px;text-align:center" href="partida/?teste=1">Sala de testes da partida (admin)</a>' : ''}</nav>`;
 }
 
+// ------------------------------------------------------------------ etapa 2: contratar os 5 primeiros jogadores
+function viewEscolha() {
+  const o = S.meu.org; const ofertas = S.meu.ofertas || []; const sel = S.escolha || (S.escolha = {});
+  const n = VAGAS.filter((v) => sel[v]).length;
+  const linhas = VAGAS.map((v) => `<section class="tc-card"><h3>${iconeVaga(v)} ${NOME_VAGA[v]}<span class="dir">${sel[v] ? 'escolhido' : 'escolha 1'}</span></h3>
+    <div class="tc-jogs tc-ofertas">${ofertas.filter((j) => j.pos === v).map((j) => `<div class="tc-oferta ${sel[v] === j.id ? 'sel' : ''}">${cartao(j, { acao: 'escolher-inicial', dados: `data-pos="${v}"` })}</div>`).join('')}</div></section>`).join('');
+  return `<div class="tc-criar tc-escolha"><p class="tc-eyebrow">◆ ${esc(o.nome)} · etapa 2 de 2</p>
+    <h1 style="font-family:'Bebas Neue',sans-serif;font-size:42px;margin:4px 0">Contrate seus primeiros jogadores</h1>
+    <p class="tc-mudo">Você começa sem jogadores. Escolha <b>1 de cada posição</b> entre as 15 opções: eles formam o seu time inicial (contrato de cortesia de 12 semanas). Depois você contrata mais no Mercado e nos baús.</p>
+    ${linhas}
+    <div class="tc-acoes" style="position:sticky;bottom:10px"><button type="button" class="tc-btn ouro" data-act="confirmar-inicial" ${n === 5 && !S.ocupado ? '' : 'disabled'}>Fechar contratos (${n}/5)</button></div></div>`;
+}
+
 // ------------------------------------------------------------------ criar organização
 function viewCriar() {
   const f = S.form;
   return `<div class="tc-criar">
     <p class="tc-eyebrow">◆ Simulador de técnico · em teste</p>
     <h1 style="font-family:'Bebas Neue',sans-serif;font-size:46px;margin:4px 0 6px">Crie a sua organização</h1>
-    <p class="tc-mudo">Dê nome ao seu time, escolha a sigla, o escudo e as cores. Você recebe créditos e 15 jogadores de base (3 por posição) para começar na ${esc(nomeLiga().acesso || 'divisão de acesso')}. A aparência não dá vantagem na competição.</p>
+    <p class="tc-mudo">Dê nome ao seu time, escolha a sigla, o escudo e as cores. Você recebe créditos e, na próxima etapa, escolhe seus 5 primeiros jogadores entre 15 opções para começar na ${esc(nomeLiga().acesso || 'divisão de acesso')}. A aparência não dá vantagem na competição.</p>
     <form class="tc-card tc-form" data-form="criar" novalidate style="margin-top:16px">
       <div class="duas">
         <label class="campo"><span>Nome do time</span><input class="tc-input" name="nome" maxlength="24" autocomplete="off" value="${esc(f.nome)}" placeholder="Ex.: Aurora Esports" /></label>
@@ -513,7 +526,9 @@ function render() {
   const foco = document.activeElement;
   const nomeFoco = foco?.name; const posFoco = foco?.selectionStart;
   if (!S.meu) return;
-  if (S.meu.org) {
+  if (S.meu.org?.elenco_pendente) {
+    app.innerHTML = `${FECHADO ? '<div class="tc-aviso-teste">Jogo em teste: só administradores veem esta área.</div>' : ''}${viewEscolha()}`;
+  } else if (S.meu.org) {
     app.innerHTML = `${FECHADO ? '<div class="tc-aviso-teste">Jogo em teste: só administradores veem esta área.</div>' : ''}${topo()}<div class="tc-corpo">${nav()}<div class="tc-main">${conteudo()}</div></div>${modalHtml()}`;
   } else {
     app.innerHTML = `<div class="tc-aviso-teste">Jogo em teste: só administradores veem esta área.</div>${viewCriar()}`;
@@ -608,6 +623,13 @@ document.addEventListener('click', async (e) => {
     if (!m.j.contrato_ativo) { S.modal = { t: 'contrato', j: m.j, vaga: b.dataset.vaga, semanas: 4 }; render(); return; } // sem contrato: efetiva antes de escalar
     const r = await agir(() => api.escalar(b.dataset.vaga, m.j.id), { ok: 'Escalação atualizada!' });
     if (r) { S.modal = null; render(); }
+    return;
+  }
+  if (act === 'escolher-inicial') { const pos = b.dataset.pos; const id = Number(b.dataset.id); S.escolha = S.escolha || {}; S.escolha[pos] = S.escolha[pos] === id ? null : id; render(); return; }
+  if (act === 'confirmar-inicial') {
+    const ids = VAGAS.map((v) => (S.escolha || {})[v]).filter(Boolean);
+    const r = await agir(() => api.escolherElencoInicial(ids), { ok: 'Time montado! Boa sorte, técnico.', recarregar: false });
+    if (r) { S.escolha = null; await agir(atualizar, { recarregar: false }); S.aba = 'visao'; render(); }
     return;
   }
   if (act === 'demitir') { S.modal = { t: 'demitir', j: S.modal.j }; render(); return; }

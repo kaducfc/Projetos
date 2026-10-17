@@ -428,3 +428,8 @@ form.tc-card[data-form="filtros"] { padding: 16px 0 14px; }
 .tc-desc { font-style: normal; font-size: 11px; font-weight: 800; color: #86efac; background: #14532d66; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
 /* foto do jogador na ficha: mantém o formato original (quadrado), sem esticar */
 .tc-ficha .foto img.tc-retrato, .tc-ficha .foto svg.tc-retrato { width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: cover; }
+/* etapa 2: escolher os 5 primeiros */
+.tc-escolha { max-width: 1100px; }
+.tc-ofertas { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.tc-oferta { border-radius: 10px; border: 2px solid transparent; }
+.tc-oferta.sel { border-color: var(--ouro2, #f5cf5a); box-shadow: 0 0 22px rgba(245, 207, 90, .35); }

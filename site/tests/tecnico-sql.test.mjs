@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -83,6 +83,27 @@ t('criação da organização: validações, unicidade e uma por conta', () => {
   V("select tc_criar_org('Time Gama','gam')", 3);
   V("select tc_criar_org('Time Delta','del')", 4);
   assert.equal(V('select count(*) from tc_orgs where user_id is not null'), '4');
+  // começam sem jogadores: 15 candidatos (3 por posição) e a escolha de 5, um por posição
+  assert.equal(V("select count(*) from tc_jogadores where org_id = 1 and slot is not null"), '0');
+  const meu1 = J("select tc_meu()", 1);
+  assert.equal(meu1.org.elenco_pendente, true); assert.equal(meu1.elenco.length, 0); assert.equal(meu1.ofertas.length, 15);
+  for (const pos of ['top', 'selva', 'meio', 'atirador', 'suporte']) assert.equal(meu1.ofertas.filter((x) => x.pos === pos).length, 3, pos);
+  const of1 = meu1.ofertas;
+  assert.equal(falha("select tc_escolher_elenco_inicial('{1,2,3}')", 1), 'escolha_5');
+  assert.equal(falha(`select tc_escolher_elenco_inicial('{${of1.filter((x) => x.pos === 'top').slice(0, 2).map((x) => x.id).join(',')},${of1.filter((x) => x.pos === 'selva').slice(0, 3).map((x) => x.id).join(',')}}')`, 1), 'uma_por_posicao');
+  assert.equal(falha(`select tc_escolher_elenco_inicial('{${of1.slice(0, 4).map((x) => x.id).join(',')},999999}')`, 1), 'jogador_nao_ofertado');
+  const outra = J("select tc_meu()", 2).ofertas;
+  assert.equal(falha(`select tc_escolher_elenco_inicial('{${outra.filter((x, i) => i % 3 === 0).map((x) => x.id).join(',')}}')`, 1), 'jogador_nao_ofertado', 'oferta de outro time');
+  // escolhe o melhor de cada posição, para todos os técnicos de teste
+  for (const u of [1, 2, 3, 4]) {
+    const of = J("select tc_meu()", u).ofertas;
+    const ids = ['top', 'selva', 'meio', 'atirador', 'suporte'].map((p) => of.filter((x) => x.pos === p).sort((a, b) => b.poder - a.poder)[0].id);
+    assert.equal(J(`select tc_escolher_elenco_inicial('{${ids.join(',')}}')`, u).ok, true);
+    assert.equal(falha(`select tc_escolher_elenco_inicial('{${ids.join(',')}}')`, u), 'elenco_ja_escolhido');
+  }
+  assert.equal(V("select count(*) from tc_jogadores where org_id = 1"), '5', 'os 10 não escolhidos saem');
+  assert.equal(V("select count(*) from tc_ofertas"), '0');
+  assert.equal(J("select tc_meu()", 1).org.elenco_pendente, false);
   O2 = V("select id from tc_orgs where sigla = 'BET'");
 });
 
@@ -654,6 +675,7 @@ t('retratos: cada foto é de um único jogador fictício; sem foto livre, o merc
   assert.ok(fotos.filter((x) => x.g === 'F').length > 0 && fotos.filter((x) => x.g === 'M').length > 0, 'há jogadoras e jogadores');
   const antes = V("select string_agg(id || coalesce(retrato, '-'), ',' order by id) from tc_jogadores");
   V(readFileSync(new URL('../supabase/migrations/0108_tecnico_elenco_inicial_15.sql', import.meta.url), 'utf8')); // idempotente: não mexe em ninguém
+  V(readFileSync(new URL('../supabase/migrations/0109_tecnico_escolher_elenco.sql', import.meta.url), 'utf8'));
   assert.equal(V("select string_agg(id || coalesce(retrato, '-'), ',' order by id) from tc_jogadores"), antes);
   // tentar repetir uma foto é recusado pelo banco
   const dup = Q("update tc_jogadores set retrato = (select retrato from tc_jogadores where ficticio and retrato is not null order by id limit 1) where id = (select id from tc_jogadores where ficticio and retrato is not null order by id desc limit 1)");
@@ -895,17 +917,4 @@ t('baús em créditos de equipe (período de testes): Básico 5, Premium 10, pac
   assert.equal(falha("select tc_recrutar('basico', 1, 'chave-cred-4')", 1), 'creditos_insuficientes');
   assert.equal(V("select creditos from tc_orgs where id = 1"), '4'); assert.equal(V("select count(*) from tc_gacha where chave = 'chave-cred-4'"), '0');
   V("delete from tc_jogadores where org_id = 1 and not ficticio"); V("update tc_orgs set creditos = 50000000 where id = 1");
-});
-
-t('time novo: 15 jogadores fictícios (3 por posição), o melhor de cada posição titular, contrato de cortesia e fotos sem repetir', () => {
-  const r = Q("select tc_criar_org('Novo Time', 'NVT')", 6);
-  assert.ok(r.ok, r.err);
-  const oid = V("select id from tc_orgs where user_id = '" + U(6) + "'");
-  assert.equal(V(`select count(*) from tc_jogadores where org_id = ${oid}`), '15');
-  for (const pos of ['top', 'selva', 'meio', 'atirador', 'suporte']) assert.equal(V(`select count(*) from tc_jogadores where org_id = ${oid} and pos = '${pos}'`), '3', pos);
-  assert.equal(V(`select count(*) from tc_jogadores where org_id = ${oid} and slot is not null`), '5');
-  // o titular é o melhor da posição
-  assert.equal(V(`select count(*) from tc_jogadores t where org_id = ${oid} and slot is not null and exists (select 1 from tc_jogadores o where o.org_id = ${oid} and o.pos = t.pos and o.slot is null and (o.mec + o.rotas + o.macro + o.tf + o.mental) > (t.mec + t.rotas + t.macro + t.tf + t.mental))`), '0');
-  assert.equal(V(`select count(*) from tc_jogadores where org_id = ${oid} and not (contrato_fim > tc_semana_global())`), '0', 'contrato de cortesia');
-  assert.equal(V("select count(*) - count(distinct retrato) from tc_jogadores where ficticio and retrato is not null"), '0');
 });
