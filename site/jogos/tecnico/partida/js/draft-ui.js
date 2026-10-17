@@ -11,14 +11,6 @@ const IA_MIN = 3; const IA_MAX = 6; // o computador escolhe entre 3 e 6 segundos
 
 const CAPACETE = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6c-12 0-21 8-21 20v14c0 3 1 5 4 6l6 2v9h22v-9l6-2c3-1 4-3 4-6V26C53 14 44 6 32 6zm-9 24h18l-3 12h-12z" fill="currentColor"/></svg>';
 
-// Palavra em SVG: contorno fino fixo com brilho e um traço de luz que corre pela borda das letras (efeito neon).
-const palavraNeon = (txt) => `<svg class="neon" viewBox="0 0 ${txt.length * 50 + 70} 80" role="img" aria-label="${txt}"><defs>
-  <linearGradient id="neon-sw" x1="0" y1="0" x2="1" y2="0.25"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.38" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.95"/><stop offset="0.62" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
-    <animateTransform attributeName="gradientTransform" type="translate" from="-1" to="1" dur="2.8s" repeatCount="indefinite"/></linearGradient>
-  <filter id="neon-b" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="4"/></filter></defs>
-  <text x="50%" y="62" text-anchor="middle" class="tg" filter="url(#neon-b)">${txt}</text><text x="50%" y="62" text-anchor="middle" class="t0">${txt}</text>
-  <text x="50%" y="62" text-anchor="middle" class="t2">${txt}</text></svg>`;
-
 // Tempo esgotado: o campeão de maior maestria do jogador da vaga; sem favorito livre, um aleatório que joga na posição.
 function jogadaAutomatica(d, p, vaga) {
   const usados = indisponiveis(d);
@@ -75,7 +67,7 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
             <div class="grade">${grade || '<p class="pt-mudo">Nenhum campeão disponível para este filtro.</p>'}</div></div>
           ${colunaHtml('vermelho', nomeVermelho, vez)}</div>
         <div class="rodape"><div class="gr">${bansHtml('azul', ban ? p.lado : null)}</div>
-          <div class="palavra ${ban ? 'p-ban' : 'p-pick'}">${palavraNeon(ban ? 'BAN' : 'PICK')}<div class="tempo"><span class="num">1:00</span><i class="tbar"><b></b></i></div></div>
+          <div class="palavra ${ban ? 'p-ban' : 'p-pick'}"><strong>${ban ? 'BAN' : 'PICK'}</strong><div class="tempo"><span class="num">1:00</span><i class="tbar"><b></b></i></div></div>
           <div class="gr">${bansHtml('vermelho', ban ? p.lado : null)}</div></div></div>`;
       fundo.querySelectorAll('[data-fl]').forEach((el) => el.addEventListener('click', () => { S.filtro = S.filtro === el.dataset.fl ? null : el.dataset.fl; desenhar(); }));
       const busca = fundo.querySelector('.busca');

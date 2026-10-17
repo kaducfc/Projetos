@@ -190,3 +190,10 @@
 .pt-draft-box.intro .pt-btn.grande { width: auto; min-width: 180px; padding: 14px 40px; }
 .pt-draft-box .ch.fora::after { content: "!"; position: absolute; top: 2px; right: 3px; font-size: 11px; font-weight: 800; color: #ffb454; text-shadow: 0 0 4px #000; }
 .pt-draft-box .ch { position: relative; }
+
+/* palavra BAN / PICK: brilho simples que pulsa de leve */
+.pt-draft-box .palavra strong { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 60px; line-height: 1; letter-spacing: 0.16em; padding-left: 0.16em; }
+.pt-draft-box .palavra.p-ban strong { color: #ff4b4b; animation: pt-ban-glow 1.8s ease-in-out infinite; }
+.pt-draft-box .palavra.p-pick strong { color: #4aa3ff; animation: pt-pick-glow 1.8s ease-in-out infinite; }
+@keyframes pt-ban-glow { 0%, 100% { text-shadow: 0 0 10px #ff2b2b88, 0 0 24px #ff2b2b44; } 50% { text-shadow: 0 0 16px #ff5252, 0 0 38px #ff2b2b88; } }
+@keyframes pt-pick-glow { 0%, 100% { text-shadow: 0 0 10px #3b8bff88, 0 0 24px #3b8bff44; } 50% { text-shadow: 0 0 16px #6db4ff, 0 0 38px #3b8bff88; } }
