@@ -11,7 +11,7 @@ import {
 import { escudoSvg, retratoSvg, ESCUDOS } from '../jogos/tecnico/js/art.js';
 
 const ler = (f) => readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8');
-const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql'].map(ler).join('\n');
+const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql'].map(ler).join('\n');
 const j = (o = {}) => ({ id: 1, nome: 'Teste', pos: 'meio', pos2: [], mec: 60, rotas: 60, macro: 60, tf: 60, mental: 60, fama: 50, forma: 50, idade: 22, potencial: 70, ...o });
 
 test('Poder individual: média ponderada dos cinco atributos, sem a Fama, entre 1 e 100', () => {
@@ -222,4 +222,11 @@ test('ícone do time: codifica e decodifica, os 30 emblemas e 20 bandeiras têm 
   const A = await import('../jogos/tecnico/js/art.js');
   assert.match(A.escudoOrg({ escudo: 'v2:12:112233:445566:778899:0:aabbcc:ddeeff', sigla: 'ABC' }, 40), /class="tc-ic"/);
   assert.match(A.escudoOrg({ escudo: 'escudo-2', cor1: '#111111', cor2: '#222222', sigla: 'ABC' }, 40), /<svg/, 'escudo antigo continua');
+});
+
+test('mercado oficial com rotação: o cliente chama a função do SQL e conhece o erro de oferta', () => {
+  const plat = readFileSync(new URL('../shared/platform.js', import.meta.url), 'utf8');
+  assert.ok(plat.includes("'tc_mercado_rotacao'")); assert.match(sql, /function public\.tc_mercado_rotacao\(/);
+  assert.ok(plat.includes('fora_da_oferta:')); assert.ok(sql.includes("'fora_da_oferta'"));
+  assert.match(sql, /"min": 7, "max": 10, "abaixo": 5, "acima": 8/, 'configuração: 7 a 10 jogadores, de -5 a +8');
 });

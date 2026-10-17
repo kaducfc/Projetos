@@ -96,9 +96,16 @@ async function carregarAba() {
     if (S.aba === 'marketing') await carregarMarketing();
   } catch (e) { toast(e.message, true); }
 }
+// Texto da rotação do mercado oficial: quando a oferta troca e a faixa de Poder dos jogadores (relativa ao time).
+function rotacaoTexto(m) {
+  const r = m.rotacao; if (!r) return '';
+  const restante = Math.max(0, r.restante_s - Math.round((Date.now() - (m.rotacaoEm || Date.now())) / 1000));
+  const h = Math.floor(restante / 3600); const min = Math.floor((restante % 3600) / 60);
+  return `<br>Novos jogadores em <b>${h}h ${String(min).padStart(2, '0')}min</b> (a oferta troca a cada ${r.horas} horas). Poder dos jogadores entre <b>${Math.round(r.min)}</b> e <b>${Math.round(r.max)}</b>, de acordo com o seu time titular (média ${Math.round(r.ref)}).`;
+}
 async function carregarMercado() {
   const m = S.mercado;
-  if (m.aba === 'oficial' && !m.oficial) m.oficial = await api.mercadoOficial(m.f);
+  if (m.aba === 'oficial' && !m.oficial) { [m.oficial, m.rotacao] = await Promise.all([api.mercadoOficial(m.f), api.mercadoRotacao().catch(() => null)]); m.rotacaoEm = Date.now(); }
   if (m.aba === 'usuarios' && !m.usuarios) { [m.usuarios, m.meus] = await Promise.all([api.mercadoUsuarios(m.f), api.meusAnuncios()]); }
 }
 
@@ -325,7 +332,7 @@ function viewContratar() {
   const m = S.mercado;
   const lista = m.aba === 'oficial' ? m.oficial : m.usuarios;
   return `<div class="tc-abas"><button type="button" data-act="mercado-aba" data-v="oficial" class="${m.aba === 'oficial' ? 'on' : ''}">Mercado oficial</button><button type="button" data-act="mercado-aba" data-v="usuarios" class="${m.aba === 'usuarios' ? 'on' : ''}">Mercado de usuários</button></div>
-    <p class="tc-mudo tc-peq" style="margin:0">${m.aba === 'oficial' ? 'Jogadores do próprio jogo, pagos com créditos de equipe. Os preços são definidos pelo sistema.' : `Anúncios de outros técnicos, pagos com Rift Coins (taxa de ${TAXA_MERCADO_PCT}% descontada do vendedor). Preço fixo.`}</p>
+    <p class="tc-mudo tc-peq" style="margin:0">${m.aba === 'oficial' ? `Jogadores do próprio jogo, pagos com créditos de equipe. Os preços são definidos pelo sistema. ${rotacaoTexto(m)}` : `Anúncios de outros técnicos, pagos com Rift Coins (taxa de ${TAXA_MERCADO_PCT}% descontada do vendedor). Preço fixo.`}</p>
     ${filtrosHtml(m.aba === 'oficial')}
     ${lista == null ? '<p class="tc-carregando">Carregando…</p>' : lista.length ? `<div class="tc-jogs">${lista.map((x) => m.aba === 'oficial' ? cartao(x, { extra: `<div class="ln"><span>Preço</span><span class="tc-preco cr">${fmt(x.preco)}</span></div>` })
       : cartao(x.jogador, { acao: 'ficha-anuncio', dados: `data-anuncio="${x.id}"`, extra: `<div class="ln"><span>${esc(x.vendedor.sigla)}</span><span class="tc-preco rc">${fmt(x.preco_rc)}</span></div>` })).join('')}</div>` : '<div class="tc-vazio">Nenhum jogador encontrado com esses filtros.</div>'}

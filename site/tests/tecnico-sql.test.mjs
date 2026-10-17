@@ -11,7 +11,9 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql'];
+const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
+const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 8, poder_padrao: 50 };
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -53,6 +55,8 @@ before(() => {
   for (const f of MIG) { r = psql(['-d', 't'], readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8')); assert.equal(r.status, 0, `${f}: ${r.stderr}`); }
   r = psql(['-d', 't', '-c', "insert into auth.users select ('00000000-0000-0000-0000-00000000000' || g)::uuid from generate_series(1, 6) g; insert into site_carteira select ('00000000-0000-0000-0000-00000000000' || g)::uuid, 5000 from generate_series(1, 6) g;"]);
   assert.equal(r.status, 0, r.stderr);
+  // os testes antigos olham o mercado inteiro: a rotação (poucos jogadores por janela) é testada à parte, com a configuração real
+  r = psql(['-d', 't', '-c', `update tc_config set valor = '${JSON.stringify(CFG_MERCADO_TESTES)}'::jsonb where chave = 'mercado_oficial'`]); assert.equal(r.status, 0, r.stderr);
 });
 after(() => {
   if (!TEM || !dir) return;
@@ -660,7 +664,7 @@ t('estrelas: 15 jogadores reais com retrato no mercado oficial; rodar o SQL de n
 t('legados só pelo baú: créditos recusados, tc_contratar_estrela não existe mais e o modelo antigo de venda direta foi removido', () => {
   const faker = V("select id from tc_jogadores where nome = 'Faker' and legado_base is null");
   V("update tc_orgs set creditos = 50000000 where id = 1");
-  assert.equal(falha(`select tc_contratar(${faker}, 8, 'chave-estrela-cr')`, 1), 'estrela_so_rc');
+  assert.match(falha(`select tc_contratar(${faker}, 8, 'chave-estrela-cr')`, 1), /estrela_so_rc|fora_da_oferta/); // recusado: ou pela regra das estrelas ou por não estar na oferta rotativa
   assert.equal(V(`select org_id is null from tc_jogadores where id = ${faker}`), 't');
   assert.equal(V("select count(*) from pg_proc where proname = 'tc_contratar_estrela'"), '0');
   const js = J(`select tc_jogador_json(j) from tc_jogadores j where id = ${faker}`); assert.equal(js.legado, true); assert.equal(js.estrelas, 0);
@@ -1191,4 +1195,33 @@ t('marketing: fama de resultados oficiais (partida, liga, promoção) vem do ser
   assert.ok(!/site_moedas_mexer|site_carteira|site_rk_lancar/.test(['tc_marketing_processar(bigint, boolean)', 'tc_marketing_melhorar()', 'tc_patrocinio_contratar_int(bigint, text, boolean, boolean)', 'tc_campanha_iniciar(text)', 'tc_marketing_estado()'].map(fn).join('\n')), 'a Central de Marketing não toca em RC nem em Rank');
   const h = J("select tc_marketing_historico()", 1); assert.ok(h.length > 0 && h.every((x) => typeof x.delta === 'number'));
   assert.ok(h.some((x) => x.motivo === 'mkt_receita'), 'a receita idle aparece consolidada no extrato');
+});
+
+// ---------------------------------------------------------------- mercado oficial com rotação (SQL 0117)
+t('mercado oficial: 7 a 10 jogadores, Poder entre -5 e +8 da média dos titulares, igual dentro da janela de 12 h e trocado na seguinte; só se contrata quem está à venda', () => {
+  const cfg = (c) => V(`update tc_config set valor = '${JSON.stringify(c)}'::jsonb where chave = 'mercado_oficial'`);
+  cfg(CFG_MERCADO_REAL);
+  try {
+    V("delete from tc_mercado_rot");
+    const ref = Number(V("select tc_mercado_ref(1)"));
+    const lista = () => J("select tc_mercado_oficial('{}')", 1);
+    const l1 = lista();
+    assert.ok(l1.length >= 7 && l1.length <= 10, `7 a 10 à venda (${l1.length})`);
+    const poder = (x) => Number(x.poder);
+    for (const x of l1) assert.ok(poder(x) >= ref - 5 - 0.6 && poder(x) <= ref + 8 + 0.6, `Poder ${poder(x)} fora de ${ref - 5}..${ref + 8}`);
+    assert.deepEqual(lista().map((x) => x.id), l1.map((x) => x.id), 'a oferta não muda dentro da janela');
+    const rot = J("select tc_mercado_rotacao()", 1);
+    assert.ok(rot.restante_s > 0 && rot.restante_s <= 12 * 3600, 'tempo até a próxima troca'); assert.equal(Number(rot.ref), ref); assert.equal(Number(rot.min), ref - 5); assert.equal(Number(rot.max), ref + 8);
+    // contratar quem NÃO está à venda é recusado; quem está, funciona
+    const fora = V(`select id from tc_jogadores where org_id is null and ficticio and id <> all (select unnest(ids) from tc_mercado_rot where org_id = 1) limit 1`);
+    assert.equal(falha(`select tc_contratar(${fora}, 4, 'ch-rot-fora-1')`, 1), 'fora_da_oferta');
+    // a janela seguinte troca a oferta (simula o relógio: move a janela guardada para trás)
+    V("update tc_mercado_rot set janela = janela - 1 where org_id = 1");
+    const l2 = lista();
+    assert.ok(l2.length >= 7 && l2.length <= 10);
+    assert.equal(Number(V("select count(*) from tc_mercado_rot where org_id = 1")), 2, 'a oferta antiga fica guardada e a da janela nova é gerada à parte');
+    // duas contas com times de Poder diferente recebem faixas diferentes
+    V("update tc_jogadores set mec = least(100, mec + 15), rotas = least(100, rotas + 15), macro = least(100, macro + 15), tf = least(100, tf + 15), mental = least(100, mental + 15) where org_id = 1 and slot is not null");
+    const ref2 = Number(V("select tc_mercado_ref(1)")); assert.ok(ref2 > ref + 5, `a referência acompanha o time (${ref} -> ${ref2})`);
+  } finally { cfg(CFG_MERCADO_TESTES); }
 });
