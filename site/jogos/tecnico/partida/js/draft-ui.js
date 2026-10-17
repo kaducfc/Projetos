@@ -6,7 +6,24 @@ const NOME = { top: 'Topo', selva: 'Selva', meio: 'Meio', atirador: 'Atirador', 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const TEMPO_ACAO = 60; // segundos por pick ou ban, para os dois lados
-const IA_MIN = 5; const IA_MAX = 10; // o computador escolhe entre 5 e 10 segundos depois que a vez dele começa
+const IA_MIN = 3; const IA_MAX = 6; // o computador escolhe entre 3 e 6 segundos depois que a vez dele começa
+
+// Palavra em SVG: contorno fino fixo com brilho e um traço de luz que corre pela borda das letras (efeito neon).
+const palavraNeon = (txt) => `<svg class="neon" viewBox="0 0 ${txt.length * 62 + 24} 78" role="img" aria-label="${txt}"><defs><filter id="neon-b" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <text x="50%" y="62" text-anchor="middle" class="t0">${txt}</text><text x="50%" y="62" text-anchor="middle" class="t1" filter="url(#neon-b)">${txt}</text><text x="50%" y="62" text-anchor="middle" class="t2">${txt}</text></svg>`;
+
+// Tempo esgotado: o campeão de maior maestria do jogador da vaga; sem favorito livre, um aleatório que joga na posição.
+function jogadaAutomatica(d, p, vaga) {
+  const usados = indisponiveis(d);
+  if (p.tipo === 'pick') {
+    const v = vaga && !d.picks.azul[vaga] ? vaga : vagasLivres(d, 'azul')[0];
+    const favs = [...(jogadorDaVaga(d, 'azul', v)?.favoritos || [])].sort((a, b) => (b.bonus_pct || 0) - (a.bonus_pct || 0));
+    for (const f of favs) { const c = d.catalogo.find((x) => x.nome === f.nome || x.id === f.id); if (c && !usados.has(c.nome) && serve(c, v) && escolher(d, c.nome, v)) return; }
+    const pool = d.catalogo.filter((c) => !usados.has(c.nome) && serve(c, v));
+    if (pool.length && escolher(d, pool[Math.floor(Math.random() * pool.length)].nome, v)) return;
+  }
+  jogadaIA(d);
+}
 
 // Mostra o draft e devolve { azul, vermelho, bans } quando termina.
 export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVermelho }) {
@@ -43,7 +60,7 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       fundo.innerHTML = `<div class="pt-modal pt-draft-box ${ban ? 'v-ban' : 'v-pick'} ${minha ? 'minha' : ''}"><h2>Picks e bans</h2>
         <p class="pt-mudo vez">${titulo}</p>
         <div class="fase"><div class="bans"><div>${bansHtml('azul', ban ? p.lado : null)}</div>
-          <div class="palavra ${ban ? 'p-ban' : 'p-pick'}"><strong>${ban ? 'BANS' : 'ESCOLHAS'}</strong><div class="tempo"><span class="num">1:00</span><i class="tbar"><b></b></i></div></div>
+          <div class="palavra ${ban ? 'p-ban' : 'p-pick'}">${palavraNeon(ban ? 'BAN' : 'PICK')}<div class="tempo"><span class="num">1:00</span><i class="tbar"><b></b></i></div></div>
           <div>${bansHtml('vermelho', ban ? p.lado : null)}</div></div></div>
         <div class="corpo">${colunaHtml('azul', nomeAzul, vez)}
           <div class="meio"><input type="search" class="busca" placeholder="Buscar campeão" value="${esc(S.busca)}" ${minha ? '' : 'disabled'} />
@@ -68,7 +85,7 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       const n = fundo.querySelector('.tempo .num'); if (n) { const sg = Math.ceil(resta / 1000); n.textContent = `${Math.floor(sg / 60)}:${String(sg % 60).padStart(2, '0')}`; }
       const b = fundo.querySelector('.tempo .tbar b'); if (b) b.style.width = `${resta / (TEMPO_ACAO * 10)}%`;
       fundo.querySelector('.tempo')?.classList.toggle('fim', resta <= 10000);
-      if (p.lado !== 'azul' && Date.now() >= S.iaEm) { jogadaIA(d); S.busca = ''; desenhar(); } else if (resta <= 0) { jogadaIA(d); S.busca = ''; desenhar(); }
+      if (p.lado !== 'azul' && Date.now() >= S.iaEm) { jogadaIA(d); S.busca = ''; desenhar(); } else if (resta <= 0) { jogadaAutomatica(d, p, S.vaga); S.busca = ''; desenhar(); }
     }
     function finalizar() {
       clearInterval(S.relogio);
@@ -77,7 +94,7 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       fundo.querySelector('#d-ir').onclick = () => { fundo.remove(); resolver(r); };
     }
     function intro() {
-      fundo.innerHTML = `<div class="pt-modal pt-draft-box intro"><h2>Picks e bans</h2><div class="corpo fim">${colunaHtml('azul', nomeAzul)}<div class="meio"><p class="pt-mudo">Cada banimento ou escolha tem <b>${TEMPO_ACAO} segundos</b>. Se o tempo acabar, o jogo decide por você.</p><button type="button" class="pt-btn ouro grande" id="d-comecar">Começar Picks e Bans</button></div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
+      fundo.innerHTML = `<div class="pt-modal pt-draft-box intro"><h2>Picks e bans</h2><div class="corpo fim">${colunaHtml('azul', nomeAzul)}<div class="meio"><p class="pt-mudo">Cada banimento ou escolha tem <b>${TEMPO_ACAO} segundos</b>. Se o tempo acabar, o jogo escolhe por você (o campeão de maior maestria do jogador).</p><button type="button" class="pt-btn ouro grande" id="d-comecar">Começar Picks e Bans</button></div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
       fundo.querySelector('#d-comecar').onclick = () => { S.relogio = setInterval(atualizarTempo, 250); desenhar(); };
     }
     prepararImagens().finally(intro);
