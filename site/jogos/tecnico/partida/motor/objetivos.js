@@ -135,6 +135,7 @@ export function raioAuraBarao() {
 }
 // Minion do time com o buff: se há um campeão vivo com o buff do Barão dentro do alcance, o minion fica roxo (+vida, +dano); fora do alcance volta ao normal.
 export function atualizarAuraMinion(P, m) {
+  if (m.subtipo === 'arauto') return; // o Arauto conquistado nunca recebe o buff do Barão (a aura roxa dele no mapa é só visual)
   const cfg = P.regras.epicos.barao.efeito.minion;
   const buff = P.equipes[m.equipe].buffBarao;
   let com = false;

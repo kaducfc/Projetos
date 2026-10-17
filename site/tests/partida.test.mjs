@@ -544,3 +544,14 @@ test('Arauto: nasce aos 15:00, some aos 20:00 para o Barão; o abatedor o conqui
   assert.ok(m.morto || (m.hp <= hp0 * 0.3 + 1 && m.hp > hp0 * 0.3 - hp0 * 0.1), 'perde 70% da própria vida máxima (mais algum dano do caminho)');
   assert.ok(m.carga.avancos <= 2);
 });
+
+test('Arauto conquistado nunca recebe o buff do Barão, mesmo com o time com o buff e um campeão com o buff por perto', async () => {
+  const O = await import('../jogos/tecnico/partida/motor/objetivos.js');
+  const P = mk(13); ate(P, 40);
+  const c = P.campeoes.find((x) => x.equipe === 'azul');
+  P.equipes.azul.buffBarao = { ate: P.t + 180 }; c.buffBarao = { ate: P.t + 180 };
+  const m = O.usarArauto(P, c);
+  const base = { hp: m.hpMax, dano: m.dano };
+  O.atualizarAuraMinion(P, m); O.atualizarAuraMinion(P, m);
+  assert.ok(!m.auraBarao, 'sem aura de bônus'); assert.equal(m.hpMax, base.hp); assert.equal(m.dano, base.dano);
+});

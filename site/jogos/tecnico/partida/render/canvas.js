@@ -129,8 +129,8 @@ export class Renderizador {
   minions(P, c, U) {
     for (const m of P.minions) {
       if (m.morto) continue; const p = this.pos(m); const cor = COR[m.equipe];
-      if (m.auraBarao) { // aura roxa do buff do Barão: brilho forte + contorno bem visível
-        const lm = (m.subtipo === 'cerco' ? 22 : m.subtipo === 'super' ? 28 : m.subtipo === 'conjurador' ? 16 : 18) * U; const ra = lm * 0.95;
+      if (m.auraBarao || m.subtipo === 'arauto') { // aura roxa: no minion com o buff do Barão e, só para destacar no mapa, no Arauto conquistado (que não recebe bônus)
+        const lm = (m.subtipo === 'arauto' ? 40 : m.subtipo === 'cerco' ? 22 : m.subtipo === 'super' ? 28 : m.subtipo === 'conjurador' ? 16 : 18) * U; const ra = lm * 0.95;
         const g = c.createRadialGradient(p.x, p.y, 1, p.x, p.y, ra); g.addColorStop(0, 'rgba(200,120,255,0.75)'); g.addColorStop(0.6, 'rgba(170,80,255,0.45)'); g.addColorStop(1, 'rgba(150,60,255,0)');
         c.fillStyle = g; c.beginPath(); c.arc(p.x, p.y, ra, 0, 7); c.fill();
         c.save(); c.strokeStyle = '#d27bff'; c.lineWidth = Math.max(2, 2.2 * U); c.shadowColor = '#b04dff'; c.shadowBlur = 8 * U;
