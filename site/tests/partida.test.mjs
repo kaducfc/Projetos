@@ -110,7 +110,8 @@ test('7. as ondas aparecem aos 0:32 e a cada 30 segundos, simétricas, sem repet
 });
 test('8. os minions seguem a própria rota, só pisam em rota e base e não cortam a selva', () => {
   const P = mk(1); let fora = 0, total = 0, outraRota = 0;
-  while (P.t < 200) { P.step(); if (P.tick % 20) continue; for (const m of P.minions) { if (m.morto) continue; total++; if (!P.terreno.caminhavel(m.x, m.y, 'minion')) fora++; if (rotaMaisProxima(m).id !== m.rota) outraRota++; } }
+  while (P.t < 200) { P.step(); if (P.tick % 20) continue; for (const m of P.minions) { if (m.morto) continue; total++; if (!P.terreno.caminhavel(m.x, m.y, 'minion')) fora++; const saindoDoNexus = m.idxWp === (m.equipe === 'azul' ? 0 : MUNDO_MAPA.rotas[m.rota].pts.length - 1); // ainda a caminho do início da rota, saindo da base
+    if (!saindoDoNexus && rotaMaisProxima(m).id !== m.rota) outraRota++; } }
   assert.ok(total > 500); assert.equal(fora, 0); assert.ok(outraRota / total < 0.05, `${outraRota}/${total} minions fora da rota`);
 });
 test('9-10. os minions adquirem alvos válidos e atacam respeitando o intervalo entre ataques', () => {
