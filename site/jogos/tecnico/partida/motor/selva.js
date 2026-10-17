@@ -33,6 +33,12 @@ function nascer(P, c) {
   registrar(P, 'acampamento_nasceu', { campo: c.id, grupo: c.tipo, lado: c.lado, n: c.spawns });
 }
 
+// Monstro (ou épico) que passa alguns segundos sem tomar dano recupera a vida toda rápido: quem larga o monstro perde o progresso.
+export function recuperarSemCombate(P, m, dt) {
+  const R = P.regras.selva;
+  if (m.hp >= m.hpMax || P.t - m.ultimoCombate < R.resetSemCombateS) return;
+  m.hp = Math.min(m.hpMax, m.hp + m.hpMax * dt / R.resetRecuperaS);
+}
 export function atualizarSelva(P, dt) {
   const R = P.regras.selva;
   for (const c of P.acampamentos) {
@@ -40,6 +46,7 @@ export function atualizarSelva(P, dt) {
   }
   for (const m of P.monstros) {
     if (m.morto) continue;
+    recuperarSemCombate(P, m, dt);
     const c = P.acampamentos.find((x) => x.id === m.campo);
     // aquisição: campeão inimigo que entre na área ou que tenha agredido o monstro
     if (m.estado === 'ocioso') {

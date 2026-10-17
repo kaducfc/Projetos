@@ -6,6 +6,7 @@ import { recalcular, novaId, criarMinion } from './entidades.js';
 import { irPara, parar } from './movimento.js';
 import { registrar } from './eventos.js';
 import { dist } from '../nucleo/coord.js';
+import { recuperarSemCombate } from './selva.js';
 
 const ELEMENTOS = ['infernal', 'oceano', 'montanha', 'nuvem', 'hextec', 'quimtec'];
 
@@ -49,6 +50,7 @@ export function atualizarObjetivos(P, dt) {
 
   for (const e of P.epicos) {
     if (e.morto) continue;
+    recuperarSemCombate(P, e, dt);
     if (e.estado === 'ocioso') {
       let alvo = null, md = Infinity;
       P.indice.perto(e.home.x, e.home.y, e.aquisicao, (u) => { if (u.tipo === 'campeao' && !u.morto && dist(u, e.home) < md) { md = dist(u, e.home); alvo = u; } });

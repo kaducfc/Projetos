@@ -85,6 +85,7 @@ export const REGRAS = {
   selva: {
     primeiroSpawn: 90, respawn: 135, respawnBuff: 300, primeiroSpawnCaranguejo: 210, respawnCaranguejo: 150,
     aquisicao: 650, leash: 1600, regenFora: 0.35,
+    resetSemCombateS: 4, resetRecuperaS: 2, // monstros e épicos sem tomar dano por 4 s recuperam toda a vida em 2 s
     escalaVida: 0.55, escalaDano: 0.45, // ajuste de equilíbrio global dos monstros (a selva tem de ser limpável por um campeão com sustentação)
     sustentoAtaque: 0.35,                // fração do dano de ataque que o jungler recupera ao bater em monstros
     campos: {

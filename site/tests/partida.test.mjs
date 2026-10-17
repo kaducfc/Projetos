@@ -485,3 +485,16 @@ test('draft: qualquer campeão serve em qualquer vaga, e fora da posição nativ
   for (const j of r.azul.concat(r.vermelho)) assert.equal(j.eficiencia, D.serve(j.campeao, j.pos) ? 1 : D.EFIC_FORA_POSICAO, `${j.pos} ${j.campeao.nome}`);
   assert.ok(D.EFIC_FORA_POSICAO < 1);
 });
+
+test('selva: monstro e épico sem tomar dano por 4 s recuperam toda a vida em 2 s; antes disso não', async () => {
+  const { recuperarSemCombate } = await import('../jogos/tecnico/partida/motor/selva.js');
+  assert.equal(REGRAS.selva.resetSemCombateS, 4); assert.equal(REGRAS.selva.resetRecuperaS, 2);
+  const P = mk(5); ate(P, 92);
+  const m = P.monstros.find((x) => !x.morto); assert.ok(m, 'há monstro vivo');
+  const avancar = (seg) => { for (let i = 0; i < seg * 20; i++) { P.t += 0.05; recuperarSemCombate(P, m, 0.05); } };
+  m.hp = m.hpMax * 0.3; m.ultimoCombate = P.t;
+  avancar(3.8); assert.ok(Math.abs(m.hp - m.hpMax * 0.3) < 1, `antes de 4 s a vida não muda (${m.hp / m.hpMax})`);
+  avancar(1.0); assert.ok(m.hp > m.hpMax * 0.3 && m.hp < m.hpMax, 'começou a recuperar');
+  avancar(2.0); assert.equal(m.hp, m.hpMax, 'cheia depois de 2 s');
+  m.hp = m.hpMax * 0.3; m.ultimoCombate = P.t; avancar(2); m.ultimoCombate = P.t; avancar(3.9); assert.ok(m.hp < m.hpMax * 0.31, 'dano recente reinicia a contagem');
+});

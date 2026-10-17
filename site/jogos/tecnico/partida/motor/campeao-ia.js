@@ -149,8 +149,20 @@ function decidir(P, u) {
 
 // Caçador em pleno combate com monstros de um acampamento (algum monstro já está atacando ele).
 function prisaoDeSelva(P, u) {
-  if (u.pos !== 'selva' || u.estado !== 'selva' || !u.jungle) return false;
-  return P.monstros.some((m) => !m.morto && m.estado === 'combate' && m.alvoId === u.id);
+  // caçador num acampamento: só larga o monstro por perigo ou vida baixa (decididos antes, em precisaRecuar / precisaBase)
+  if (u.pos === 'selva' && u.estado === 'selva' && u.jungle) {
+    if (P.monstros.some((m) => !m.morto && m.estado === 'combate' && m.alvoId === u.id)) return true;
+    if (P.monstros.some((m) => !m.morto && m.hp < m.hpMax && m.ultimoAgressor === u.id && P.t - m.ultimoCombate < 3.5)) return true; // monstro já machucado por ele: termina antes de sair (senão ele recupera a vida)
+  }
+  // objetivo épico já na metade da vida: a equipe que o ataca termina em vez de largar
+  if (u.estado === 'objetivo') {
+    return P.epicos.some((e) => {
+      if (e.morto || e.hp >= e.hpMax * 0.5 || P.t - e.ultimoCombate >= 3.5 || dist(u, e) > e.alcance + 800) return false;
+      const ag = e.ultimoAgressor ? porId(P, e.ultimoAgressor) : null;
+      return !!ag && ag.equipe === u.equipe;
+    });
+  }
+  return false;
 }
 
 function precisaRecuar(P, u, ctx) {
