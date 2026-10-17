@@ -1,6 +1,7 @@
 // Arte do jogo gerada em SVG: escudos das organizações e retratos provisórios dos jogadores.
 // Quando um jogador tiver `retrato` (arquivo de imagem), o retrato real substitui o desenho.
 import { esc, SIGLA_VAGA } from './regras.js';
+import { icDecodificar, icHtml } from './icone.js';
 
 const hash = (s) => { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 
@@ -21,7 +22,11 @@ export function escudoSvg(escudo, cor1, cor2, sigla = '', size = 56) {
   const txt = sigla ? `<text x="50" y="72" text-anchor="middle" font-family="Bebas Neue, Impact, sans-serif" font-size="${sigla.length > 3 ? 30 : 36}" fill="${cor2 || '#d9a82b'}" stroke="#000" stroke-width="1" paint-order="stroke" letter-spacing="1">${esc(sigla)}</text>` : '';
   return `<svg class="tc-escudo" viewBox="0 0 100 120" width="${size}" height="${Math.round(size * 1.2)}" role="img" aria-label="Escudo ${esc(sigla)}">${forma}${txt}</svg>`;
 }
-export const escudoOrg = (o, size = 44) => escudoSvg(o?.escudo, o?.cor1, o?.cor2, o?.sigla, size);
+// Ícone novo (emblema + bandeira) quando a organização tem; senão o escudo desenhado das contas antigas e dos times do sistema.
+export function escudoOrg(o, size = 44) {
+  const ic = icDecodificar(o?.escudo);
+  return ic ? icHtml(ic, Math.round(size * 1.1), o?.sigla || '') : escudoSvg(o?.escudo, o?.cor1, o?.cor2, o?.sigla, size);
+}
 
 const COR_VAGA = { top: ['#7c2d12', '#f97316'], selva: ['#14532d', '#4ade80'], meio: ['#1e3a8a', '#60a5fa'], atirador: ['#7f1d1d', '#f87171'], suporte: ['#581c87', '#c084fc'] };
 

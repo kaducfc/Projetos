@@ -1,7 +1,7 @@
 // Simulador de técnico: regras de exibição (JS), conferência com o SQL e integração com o catálogo do site.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { GAMES, gameById } from '../shared/config.js';
 import * as platform from '../shared/platform.js';
 import {
@@ -11,7 +11,7 @@ import {
 import { escudoSvg, retratoSvg, ESCUDOS } from '../jogos/tecnico/js/art.js';
 
 const ler = (f) => readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8');
-const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql'].map(ler).join('\n');
+const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql'].map(ler).join('\n');
 const j = (o = {}) => ({ id: 1, nome: 'Teste', pos: 'meio', pos2: [], mec: 60, rotas: 60, macro: 60, tf: 60, mental: 60, fama: 50, forma: 50, idade: 22, potencial: 70, ...o });
 
 test('Poder individual: média ponderada dos cinco atributos, sem a Fama, entre 1 e 100', () => {
@@ -146,4 +146,24 @@ test('menu lateral tem Treinamento, Amistoso e Recrutar; cada tela só chama fun
   assert.match(r, /Baú Básico/); assert.match(r, /Baú Premium/); assert.match(r, /1275/); assert.match(r, /3825/); assert.match(r, /-15%/);
   assert.match(E.modalRecrutar({ contrato: 12, r: { preco_rc: 300, itens: [{ raridade: 'epico', repetida: true, jogador: jog(5, { legado: true, copias: 2, raridade: 'epico' }) }] } }), /Novo jogador Legado[\s\S]*repetido[\s\S]*\+1 cópia/);
   E.limparExtras();
+});
+
+test('ícone do time: codifica e decodifica, os 30 emblemas e 20 bandeiras têm as imagens e o HTML sai com as camadas certas', async () => {
+  const I = await import('../jogos/tecnico/js/icone.js');
+  const ic = { e: 12, ec: ['#112233', '#445566', '#778899'], b: 7, bc: ['#aabbcc', '#ddeeff'] };
+  assert.equal(I.icCodificar(ic), 'v2:12:112233:445566:778899:7:aabbcc:ddeeff');
+  assert.deepEqual(I.icDecodificar(I.icCodificar(ic)), ic);
+  assert.equal(I.icDecodificar('escudo-2'), null); assert.equal(I.icDecodificar('v2:31:112233:445566:778899:0:aabbcc:ddeeff'), null);
+  assert.equal(I.icCodificar({ ...ic, b: 0 }).split(':')[5], '0');
+  const dir = new URL('../jogos/tecnico/img/icones/', import.meta.url);
+  for (let n = 1; n <= I.N_EMBLEMAS; n++) for (let p = 1; p <= 3; p++) assert.ok(existsSync(new URL(`emb/e${String(n).padStart(2, '0')}-${p}.webp`, dir)), `emblema ${n} parte ${p}`);
+  for (let n = 1; n <= I.N_BANDEIRAS; n++) for (const suf of ['s', '1', '2']) assert.ok(existsSync(new URL(`flag/f${String(n).padStart(2, '0')}-${suf}.webp`, dir)), `bandeira ${n} ${suf}`);
+  assert.equal(I.BANDEIRAS.length, I.N_BANDEIRAS);
+  for (const f of I.BANDEIRAS) assert.ok(f.cx > 0.2 && f.cx < 0.8 && f.cy > 0.15 && f.cy < 0.85 && f.s > 0.25 && f.s < 0.7, `posição ${f.id}`);
+  const com = I.icHtml(ic, 80); const sem = I.icHtml({ ...ic, b: 0 }, 80);
+  assert.equal((com.match(/<i /g) || []).length, 5); assert.equal((sem.match(/<i /g) || []).length, 3, 'sem bandeira: só as 3 camadas do emblema');
+  assert.match(com, /--c:#aabbcc/); assert.match(com, /e12-3\.webp/); assert.match(com, /f07-2\.webp/);
+  const A = await import('../jogos/tecnico/js/art.js');
+  assert.match(A.escudoOrg({ escudo: 'v2:12:112233:445566:778899:0:aabbcc:ddeeff', sigla: 'ABC' }, 40), /class="tc-ic"/);
+  assert.match(A.escudoOrg({ escudo: 'escudo-2', cor1: '#111111', cor2: '#222222', sigla: 'ABC' }, 40), /<svg/, 'escudo antigo continua');
 });

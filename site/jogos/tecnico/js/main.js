@@ -10,7 +10,8 @@ import {
   fmt, esc, corPoder, escudoPoder, taxaDe, salarioDe, FORA_POSICAO,
 } from './regras.js';
 import { prepararImagens, campIcone } from './campeoes-img.js';
-import { ESCUDOS, escudoSvg, escudoOrg, retratoSvg, iconeVaga } from './art.js';
+import { escudoOrg, retratoSvg, iconeVaga } from './art.js';
+import { N_EMBLEMAS, N_BANDEIRAS, PARTES_EMBLEMA, PARTES_BANDEIRA, PALETA, ICONE_PADRAO, icClone, icCodificar, icDecodificar, icHtml, emblemaHtml } from './icone.js';
 import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js';
 
 const GAME_ID = 'tecnico';
@@ -35,7 +36,7 @@ const S = {
   mercado: { aba: 'oficial', f: { ordem: 'poder' }, oficial: null, usuarios: null, meus: null },
   modal: null,
   ocupado: false,
-  form: { nome: '', sigla: '', escudo: 'escudo-1', cor1: '#1b3a6b', cor2: '#d9a82b', estilo: 'classico' },
+  form: { nome: '', sigla: '', escudo: icCodificar(ICONE_PADRAO), cor1: ICONE_PADRAO.ec[0], cor2: ICONE_PADRAO.ec[1], estilo: 'classico', ic: icClone(ICONE_PADRAO) },
   erro: '',
 };
 
@@ -178,25 +179,46 @@ function viewEscolha() {
     <div class="tc-acoes" style="position:sticky;bottom:10px"><button type="button" class="tc-btn ouro" data-act="confirmar-inicial" ${n === 5 && !S.ocupado ? '' : 'disabled'}>Fechar contratos (${n}/5)</button></div></div>`;
 }
 
+// ------------------------------------------------------------------ editor do ícone (emblema + bandeira)
+// alvo: 'criar' (S.form) ou 'pers' (S.form.pers). O ícone vira texto no campo `escudo` e as cores principais alimentam cor1/cor2.
+const formDe = (alvo) => (alvo === 'pers' ? S.form.pers : S.form);
+function aplicarIc(alvo) {
+  const f = formDe(alvo);
+  f.escudo = icCodificar(f.ic); f.cor1 = f.ic.ec[0]; f.cor2 = f.ic.ec[1];
+}
+function seletorCor(alvo, grupo, i, nome) {
+  const f = formDe(alvo); const v = f.ic[grupo][i];
+  return `<div class="tc-ic-cor"><span>${nome}</span><input type="color" value="${v}" data-ic="${alvo}:${grupo}:${i}" aria-label="${nome}" />${PALETA.map((c) => `<button type="button" class="sw" style="background:${c}" data-act="ic-cor" data-alvo="${alvo}" data-g="${grupo}" data-i="${i}" data-v="${c}" aria-label="${c}"></button>`).join('')}</div>`;
+}
+function editorIcone(alvo, sigla) {
+  const f = formDe(alvo); const ic = f.ic;
+  const embs = Array.from({ length: N_EMBLEMAS }, (_, k) => k + 1).map((n) => `<button type="button" data-act="ic-emb" data-alvo="${alvo}" data-v="${n}" class="${ic.e === n ? 'on' : ''}" aria-label="Emblema ${n}">${icHtml({ ...ic, e: n, b: 0 }, 46)}</button>`).join('');
+  const flags = Array.from({ length: N_BANDEIRAS }, (_, k) => k + 1).map((n) => `<button type="button" data-act="ic-ban" data-alvo="${alvo}" data-v="${n}" class="${ic.b === n ? 'on' : ''}" aria-label="Bandeira ${n}">${icHtml({ ...ic, b: n, e: ic.e }, 46)}</button>`).join('');
+  return `<div class="tc-ic-edit">
+    <div class="previa">${icHtml(ic, 120, 'Ícone do time')}<div class="tc-mudo tc-peq">O emblema é obrigatório. A bandeira é opcional: sem ela, só o emblema aparece. A aparência não dá vantagem na competição.</div></div>
+    <div><h4>Emblema (${N_EMBLEMAS})</h4><div class="tc-ic-grade">${embs}</div></div>
+    <div class="tc-ic-cores"><h4>Cores do emblema</h4>${PARTES_EMBLEMA.map((n, i) => seletorCor(alvo, 'ec', i, n)).join('')}</div>
+    <label class="usa"><input type="checkbox" data-ic-usa="${alvo}" ${ic.b ? 'checked' : ''} /> Usar bandeira</label>
+    ${ic.b ? `<div><h4>Bandeira (${N_BANDEIRAS})</h4><div class="tc-ic-grade">${flags}</div></div>
+    <div class="tc-ic-cores"><h4>Cores da bandeira</h4>${PARTES_BANDEIRA.map((n, i) => seletorCor(alvo, 'bc', i, n)).join('')}</div>` : ''}
+  </div>`;
+}
+
 // ------------------------------------------------------------------ criar organização
 function viewCriar() {
   const f = S.form;
   return `<div class="tc-criar">
     <p class="tc-eyebrow">◆ Simulador de técnico · em teste</p>
     <h1 style="font-family:'Bebas Neue',sans-serif;font-size:46px;margin:4px 0 6px">Crie a sua organização</h1>
-    <p class="tc-mudo">Dê nome ao seu time, escolha a sigla, o escudo e as cores. Você recebe créditos e, na próxima etapa, escolhe seus 5 primeiros jogadores entre 15 opções para começar na ${esc(nomeLiga().acesso || 'divisão de acesso')}. A aparência não dá vantagem na competição.</p>
+    <p class="tc-mudo">Dê nome ao seu time, escolha a sigla e monte o ícone (emblema, bandeira e cores). Você recebe créditos e, na próxima etapa, escolhe seus 5 primeiros jogadores entre 15 opções para começar na ${esc(nomeLiga().acesso || 'divisão de acesso')}. A aparência não dá vantagem na competição.</p>
     <form class="tc-card tc-form" data-form="criar" novalidate style="margin-top:16px">
       <div class="duas">
         <label class="campo"><span>Nome do time</span><input class="tc-input" name="nome" maxlength="24" autocomplete="off" value="${esc(f.nome)}" placeholder="Ex.: Aurora Esports" /></label>
         <label class="campo"><span>Sigla (2 a 4)</span><input class="tc-input" name="sigla" maxlength="4" autocomplete="off" value="${esc(f.sigla)}" placeholder="AUR" style="text-transform:uppercase" /></label>
       </div>
-      <div class="campo"><span>Escudo</span><div class="tc-escudos">${ESCUDOS.map((e) => `<button type="button" data-act="escudo" data-v="${e}" class="${f.escudo === e ? 'on' : ''}" aria-label="${e}">${escudoSvg(e, f.cor1, f.cor2, '', 54)}</button>`).join('')}</div></div>
-      <div class="duas">
-        <label class="campo"><span>Cor principal</span><input class="tc-cor" type="color" name="cor1" value="${f.cor1}" /></label>
-        <label class="campo"><span>Cor secundária</span><input class="tc-cor" type="color" name="cor2" value="${f.cor2}" /></label>
-      </div>
+      <div class="campo"><span>Ícone do time</span>${editorIcone('criar', f.sigla)}</div>
       <label class="campo"><span>Estilo visual</span><select class="tc-input" name="estilo">${[['classico', 'Clássico'], ['moderno', 'Moderno'], ['tecnologico', 'Tecnológico']].map(([v, n]) => `<option value="${v}" ${f.estilo === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-      <div class="tc-previa">${escudoSvg(f.escudo, f.cor1, f.cor2, (f.sigla || 'SIG').toUpperCase(), 76)}<div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px">${esc(f.nome || 'Nome do time')}</div><div class="tc-mudo tc-peq">Divisão de acesso · técnico ${esc(platform.getUser()?.username || '')}</div></div></div>
+      <div class="tc-previa">${icHtml(f.ic, 76, f.nome)}<div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px">${esc(f.nome || 'Nome do time')}</div><div class="tc-mudo tc-peq">Divisão de acesso · técnico ${esc(platform.getUser()?.username || '')}</div></div></div>
       ${S.erro ? `<p style="color:var(--ruim);margin:0" role="alert">${esc(S.erro)}</p>` : ''}
       <button type="submit" class="tc-btn ouro" ${S.ocupado ? 'disabled' : ''}>Criar organização</button>
     </form></div>`;
@@ -380,13 +402,13 @@ function viewCampeoes() {
 
 // ------------------------------------------------------------------ personalização
 function viewPers() {
-  const o = S.meu.org; const f = S.form.pers || (S.form.pers = { escudo: o.escudo, cor1: o.cor1, cor2: o.cor2, estilo: o.estilo });
+  const o = S.meu.org; const f = S.form.pers || (S.form.pers = { escudo: o.escudo, cor1: o.cor1, cor2: o.cor2, estilo: o.estilo, ic: icClone(icDecodificar(o.escudo) || ICONE_PADRAO) });
+  if (!f.ic) f.ic = icClone(icDecodificar(o.escudo) || ICONE_PADRAO);
   return `<form class="tc-card tc-form" data-form="pers" style="max-width:720px"><h3>Personalizar a organização</h3>
     <p class="tc-mudo tc-peq" style="margin:0">Só a aparência muda. O nome e a sigla não podem ser alterados e nada aqui dá vantagem na competição.</p>
-    <div class="campo"><span>Escudo</span><div class="tc-escudos">${ESCUDOS.map((e) => `<button type="button" data-act="pers-escudo" data-v="${e}" class="${f.escudo === e ? 'on' : ''}">${escudoSvg(e, f.cor1, f.cor2, '', 54)}</button>`).join('')}</div></div>
-    <div class="duas"><label class="campo"><span>Cor principal</span><input class="tc-cor" type="color" name="cor1" value="${f.cor1}" /></label><label class="campo"><span>Cor secundária</span><input class="tc-cor" type="color" name="cor2" value="${f.cor2}" /></label></div>
+    <div class="campo"><span>Ícone do time</span>${editorIcone('pers', o.sigla)}</div>
     <label class="campo"><span>Estilo visual</span><select class="tc-input" name="estilo">${[['classico', 'Clássico'], ['moderno', 'Moderno'], ['tecnologico', 'Tecnológico']].map(([v, n]) => `<option value="${v}" ${f.estilo === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-    <div class="tc-previa">${escudoSvg(f.escudo, f.cor1, f.cor2, o.sigla, 76)}<div style="font-family:'Bebas Neue',sans-serif;font-size:32px">${esc(o.nome)}</div></div>
+    <div class="tc-previa">${icHtml(f.ic, 76, o.nome)}<div style="font-family:'Bebas Neue',sans-serif;font-size:32px">${esc(o.nome)}</div></div>
     <button type="submit" class="tc-btn ouro" ${S.ocupado ? 'disabled' : ''}>Salvar</button></form>`;
 }
 
@@ -574,8 +596,9 @@ document.addEventListener('click', async (e) => {
   }
   if (act === 'treinar' || act === 'amistoso' || act === 'recrutar') { await tratarAcao(act, b); render(); return; }
   if (act === 'fechar') { S.modal = null; render(); return; }
-  if (act === 'escudo') { S.form.escudo = b.dataset.v; render(); return; }
-  if (act === 'pers-escudo') { S.form.pers.escudo = b.dataset.v; render(); return; }
+  if (act === 'ic-emb') { const f = formDe(b.dataset.alvo); f.ic.e = Number(b.dataset.v); aplicarIc(b.dataset.alvo); render(); return; }
+  if (act === 'ic-ban') { const f = formDe(b.dataset.alvo); f.ic.b = Number(b.dataset.v); aplicarIc(b.dataset.alvo); render(); return; }
+  if (act === 'ic-cor') { const f = formDe(b.dataset.alvo); f.ic[b.dataset.g][Number(b.dataset.i)] = b.dataset.v; aplicarIc(b.dataset.alvo); render(); return; }
   if (act === 'mercado-aba') { S.mercado.aba = b.dataset.v; S.mercado.f = { ordem: b.dataset.v === 'oficial' ? 'poder' : 'recente' }; render(); await agir(carregarMercado, { recarregar: false }); return; }
   if (act === 'limpar-filtros') { S.mercado.f = { ordem: S.mercado.aba === 'oficial' ? 'poder' : 'recente' }; S.mercado.oficial = null; S.mercado.usuarios = null; render(); await agir(carregarMercado, { recarregar: false }); return; }
   if (act === 'ficha') { await abrirFicha(b.dataset.id); return; }
@@ -654,6 +677,12 @@ document.addEventListener('click', async (e) => {
 
 document.addEventListener('input', (e) => {
   const t = e.target;
+  if (t.matches('[data-ic]')) { // seletor de cor nativo: atualiza só a prévia (renderizar de novo fecharia o seletor)
+    const [alvo, grupo, i] = t.dataset.ic.split(':'); const f = formDe(alvo); f.ic[grupo][Number(i)] = t.value; aplicarIc(alvo);
+    const camadas = t.closest('.tc-ic-edit')?.querySelectorAll('.previa .tc-ic i'); const idx = (grupo === 'bc' ? 0 : (f.ic.b ? 2 : 0)) + Number(i);
+    if (camadas?.[idx]) camadas[idx].style.setProperty('--c', t.value);
+    return;
+  }
   if (t.matches('[data-act="preco-anuncio"]')) { S.modal.preco = t.value; render(); return; }
   if (t.matches('[data-fc]')) { S.fc[t.name] = t.value; render(); return; }
   const form = t.closest('form[data-form="criar"]');
@@ -662,6 +691,8 @@ document.addEventListener('input', (e) => {
   if (pf) { S.form.pers[t.name] = t.value; render(); }
 });
 document.addEventListener('change', (e) => {
+  if (e.target.matches('[data-ic]')) { render(); return; } // seletor de cor fechado: atualiza as miniaturas
+  if (e.target.matches('[data-ic-usa]')) { const alvo = e.target.dataset.icUsa; const f = formDe(alvo); f.ic.b = e.target.checked ? (f.ic.b || 1) : 0; aplicarIc(alvo); render(); return; }
   if (e.target.matches('[data-fc]')) { S.fc[e.target.name] = e.target.value; render(); return; }
   if (e.target.matches('[data-act="liga-sel"]')) { S.ligaSel = Number(e.target.value); render(); }
 });

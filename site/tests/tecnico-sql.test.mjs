@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -917,4 +917,16 @@ t('baús em créditos de equipe (período de testes): Básico 5, Premium 10, pac
   assert.equal(falha("select tc_recrutar('basico', 1, 'chave-cred-4')", 1), 'creditos_insuficientes');
   assert.equal(V("select creditos from tc_orgs where id = 1"), '4'); assert.equal(V("select count(*) from tc_gacha where chave = 'chave-cred-4'"), '0');
   V("delete from tc_jogadores where org_id = 1 and not ficticio"); V("update tc_orgs set creditos = 50000000 where id = 1");
+});
+
+t('ícone do time: emblema (1 a 30) e bandeira opcional (1 a 20) com cores; formatos inválidos são recusados e o escudo antigo ainda vale', () => {
+  V("select tc_personalizar_org('v2:30:d9a82b:ffffff:1b3a6b:20:d9a82b:1b3a6b', '#d9a82b', '#ffffff', 'classico')", 1);
+  assert.equal(V("select escudo from tc_orgs where id = 1"), 'v2:30:d9a82b:ffffff:1b3a6b:20:d9a82b:1b3a6b');
+  V("select tc_personalizar_org('v2:1:ff0000:00ff00:0000ff:0:000000:ffffff', '#ff0000', '#00ff00', 'classico')", 1); // sem bandeira
+  assert.equal(V("select escudo from tc_orgs where id = 1"), 'v2:1:ff0000:00ff00:0000ff:0:000000:ffffff');
+  for (const ruim of ['v2:31:d9a82b:ffffff:1b3a6b:1:d9a82b:1b3a6b', 'v2:0:d9a82b:ffffff:1b3a6b:1:d9a82b:1b3a6b', 'v2:5:d9a82b:ffffff:1b3a6b:21:d9a82b:1b3a6b', 'v2:5:zzzzzz:ffffff:1b3a6b:1:d9a82b:1b3a6b', 'v2:5:d9a82b:ffffff:1b3a6b', "v2:5:d9a82b:ffffff:1b3a6b:1:d9a82b:1b3a6b'); drop table tc_orgs; --"]) {
+    assert.ok(!Q(`select tc_personalizar_org($x$${ruim}$x$, '#d9a82b', '#ffffff', 'classico')`, 1).ok, ruim);
+  }
+  V("select tc_personalizar_org('escudo-3', '#d9a82b', '#ffffff', 'classico')", 1);
+  assert.equal(V("select escudo from tc_orgs where id = 1"), 'escudo-3');
 });
