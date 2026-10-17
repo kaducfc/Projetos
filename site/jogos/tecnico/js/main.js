@@ -366,7 +366,7 @@ const FASES = { rodada: 'Rodada', quartas: 'Quartas de final', semi: 'Semifinal'
 function regrasLiga(l) {
   if (l.tipo === 'copa') return `Os 4 primeiros da ${esc(nomeLiga().principal)} na semana 1 disputam semifinais e final, sempre em melhor de cinco mapas.`;
   if (l.tipo === 'mundial') return `Os 6 melhores da ${esc(nomeLiga().principal)} por pontos nas semanas 1 a 3, mais o campeão da ${esc(nomeLiga().copa)}, disputam quartas, semifinais e final em melhor de cinco. A vaga é conquistada no campo: não dá para comprar com RC.`;
-  return `Todos contra todos, uma rodada por dia, melhor de três mapas. Os dois primeiros da ${esc(nomeLiga().acesso)} sobem; os dois últimos da ${esc(nomeLiga().principal)} descem; os 4 primeiros da ${esc(nomeLiga().principal)} na semana 1 vão para a ${esc(nomeLiga().copa)}.`;
+  return `De segunda a sexta, 2 jogos por dia contra adversários diferentes (todos MD1). No sábado, semifinais com os 4 primeiros; no domingo, a final. Os dois primeiros da ${esc(nomeLiga().acesso)} sobem para a ${esc(nomeLiga().principal)}; os dois últimos da ${esc(nomeLiga().principal)} descem; os 4 primeiros da fase de pontos da ${esc(nomeLiga().principal)} na semana 1 vão para a ${esc(nomeLiga().copa)}. Na segunda-feira começa tudo de novo.`;
 }
 function tabelaClassificados(l) {
   return `<table class="tc-tabela"><thead><tr><th>Semente</th><th>Equipe</th><th class="n">Poder</th></tr></thead><tbody>${l.tabela.map((t) => `<tr class="${t.org.id === S.meu.org.id ? 'eu' : ''}"><td>${t.pos}</td><td><div class="org">${escudoOrg(t.org, 24)}<span>${esc(t.org.nome)}${t.org.usuario ? ' ★' : ''}</span></div></td><td class="n">${t.poder}</td></tr>`).join('')}</tbody></table>`;

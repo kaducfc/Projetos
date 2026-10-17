@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 8, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -381,15 +381,22 @@ t('campeonatos: calendário, processamento único, tabela e fechamento da semana
   assert.equal(V("select count(*) from tc_liga_times t join tc_ligas l on l.id = t.liga_id where l.divisao = 'acesso' and t.org_id in (select id from tc_orgs where user_id is not null)"), '4', 'os técnicos entram na divisão de acesso');
   // cada partida processa uma única vez
   const feitas = Number(V("select count(*) from tc_partidas where status = 'concluida'"));
-  assert.equal(feitas, 8);
+  assert.equal(feitas, 16, 'primeiro dia: 2 jogos por equipe (8 partidas por divisão por dia... 2 rodadas x 4 partidas x 2 ligas)');
+  assert.equal(V("select count(*) from tc_partidas where formato <> 1"), '0', 'tudo MD1');
+  for (const liga of V("select string_agg(id::text, ' ') from tc_ligas").split(' ')) {
+    assert.equal(V(`select count(*) from tc_partidas where liga_id = ${liga} and fase = 'rodada'`), '40', '10 rodadas de 4 partidas');
+    assert.equal(V(`select count(distinct dia) from tc_partidas where liga_id = ${liga} and fase = 'rodada'`), '5', 'de segunda a sexta');
+    // cada equipe joga 2 vezes por dia, contra adversários diferentes
+    assert.equal(V(`select count(*) from (select dia, o, count(*) c, count(distinct adv) d from (select dia, org_a o, org_b adv from tc_partidas where liga_id = ${liga} and fase = 'rodada' union all select dia, org_b, org_a from tc_partidas where liga_id = ${liga} and fase = 'rodada') z group by dia, o) y where c <> 2 or d <> 2`), '0');
+  }
   const marcas = V("select string_agg(processada::text, ',' order by id) from tc_partidas where status = 'concluida'");
   assert.equal(J('select tc_sincronizar()', 1, '2026-10-12').processadas, 0);
   assert.equal(V("select string_agg(processada::text, ',' order by id) from tc_partidas where status = 'concluida'"), marcas);
   assert.equal(V("select tc_processar_partida(id) from tc_partidas where status = 'concluida' limit 1"), 'f');
   // chamar de novo no mesmo dia não duplica; o dia seguinte processa a rodada 2
-  assert.equal(J('select tc_sincronizar()', 1, '2026-10-13').processadas, 8);
-  // placar nunca é empate e respeita o melhor de 3
-  assert.equal(V("select count(*) from tc_partidas where status = 'concluida' and (placar_a = placar_b or greatest(placar_a, placar_b) <> 2 or least(placar_a, placar_b) > 1)"), '0');
+  assert.equal(J('select tc_sincronizar()', 1, '2026-10-13').processadas, 16);
+  // placar nunca é empate e é MD1 (1 a 0)
+  assert.equal(V("select count(*) from tc_partidas where status = 'concluida' and (placar_a = placar_b or greatest(placar_a, placar_b) <> 1 or least(placar_a, placar_b) <> 0)"), '0');
 });
 
 t('semana completa: premiação, Rank, promoção/rebaixamento e salários, uma vez só', () => {
@@ -402,16 +409,22 @@ t('semana completa: premiação, Rank, promoção/rebaixamento e salários, uma 
   // tabela: pontos conferem com os placares (3 / 2 / 1 / 0)
   const tab = J("select jsonb_agg(to_jsonb(t) order by pos) from tc_tabela(1) t");
   for (const x of tab) {
-    const v = J(`select jsonb_agg(jsonb_build_object('pro', pro, 'contra', contra)) from (select placar_a pro, placar_b contra from tc_partidas where liga_id = 1 and org_a = ${x.org_id} union all select placar_b, placar_a from tc_partidas where liga_id = 1 and org_b = ${x.org_id}) q`);
+    const v = J(`select jsonb_agg(jsonb_build_object('pro', pro, 'contra', contra)) from (select placar_a pro, placar_b contra from tc_partidas where liga_id = 1 and fase = 'rodada' and org_a = ${x.org_id} union all select placar_b, placar_a from tc_partidas where liga_id = 1 and fase = 'rodada' and org_b = ${x.org_id}) q`);
     const pontos = v.reduce((a, m) => a + (m.pro > m.contra ? (m.contra === 0 ? 3 : 2) : (m.pro === 1 ? 1 : 0)), 0);
     assert.equal(x.pontos, pontos);
-    assert.equal(x.partidas, 7);
+    assert.equal(x.partidas, 10);
   }
   const ord = tab.map((x) => [x.pontos, x.mapas_pro - x.mapas_contra, x.mapas_pro, -x.org_id]);
   for (let i = 1; i < ord.length; i++) assert.ok(ord[i - 1][0] > ord[i][0] || (ord[i - 1][0] === ord[i][0] && (ord[i - 1][1] > ord[i][1] || (ord[i - 1][1] === ord[i][1] && (ord[i - 1][2] > ord[i][2] || (ord[i - 1][2] === ord[i][2] && ord[i - 1][3] > ord[i][3]))))), 'desempate determinístico');
   // promoção e rebaixamento: os dois primeiros do acesso sobem; os dois últimos da principal descem; 8 por divisão
-  const subiram = J("select jsonb_agg(org_id order by pos) from tc_tabela(1) where pos <= 2");
-  const desceram = J("select jsonb_agg(org_id order by pos desc) from (select * from tc_tabela(2) order by pos desc limit 2) x");
+  // posição final = campeão, vice, semifinalistas eliminados e o resto da tabela
+  const fin = J("select jsonb_agg(f.org_id order by f.pos) from tc_tabela_final(1) f");
+  const finalP = J("select jsonb_build_object('w', vencedor, 'l', case when org_a = vencedor then org_b else org_a end) from tc_partidas where liga_id = 1 and fase = 'final'");
+  assert.equal(fin[0], finalP.w); assert.equal(fin[1], finalP.l);
+  assert.equal(V("select count(*) from tc_partidas where liga_id = 1 and fase = 'semi'"), '2'); assert.equal(V("select count(*) from tc_partidas where liga_id = 1 and fase = 'final'"), '1');
+  assert.equal(V("select min(dia)::text from tc_partidas where liga_id = 1 and fase = 'semi'"), '2026-10-17', 'semifinais no sábado'); assert.equal(V("select min(dia)::text from tc_partidas where liga_id = 1 and fase = 'final'"), '2026-10-18', 'final no domingo');
+  const subiram = J("select jsonb_agg(org_id order by pos) from tc_tabela_final(1) where pos <= 2");
+  const desceram = J("select jsonb_agg(org_id order by pos desc) from (select * from tc_tabela_final(2) order by pos desc limit 2) x");
   for (const o of subiram) assert.equal(V(`select divisao from tc_orgs where id = ${o}`), 'principal');
   for (const o of desceram) assert.equal(V(`select divisao from tc_orgs where id = ${o}`), 'acesso');
   assert.equal(V("select count(*) from tc_orgs where ativa and divisao = 'principal'"), '8');
@@ -529,17 +542,16 @@ t('gameplay: a partida do técnico espera o jogo no navegador, o resultado de ca
   assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul', { duracao: 10 })}'::jsonb)`, n, '2026-11-09'), 'duracao_invalida');
   assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul')}'::jsonb)`, 6, '2026-11-09'), 'partida_nao_e_sua');
   V(`update tc_config set valor = '${aberto}'::jsonb where chave = 'aberto'`);
-  const r1 = reg(1, 'azul'); assert.equal(r1.concluida, false); assert.equal(r1.placar_a + r1.placar_b, 1);
-  assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul')}'::jsonb)`, n, '2026-11-09'), 'mapa_fora_de_ordem', 'o mesmo mapa não é gravado duas vezes');
-  const r2 = reg(2, 'azul'); assert.equal(r2.concluida, false); assert.equal(r2.placar_a, 1); assert.equal(r2.placar_b, 1); // lados trocados: venceu a outra equipe
-  const r3 = reg(3, 'azul'); assert.equal(r3.concluida, true);
+  assert.equal(V(`select formato from tc_partidas where id = ${pid}`), '1', 'campeonato MD1: um mapa decide');
+  const r1 = reg(1, 'azul'); assert.equal(r1.concluida, true); assert.equal(r1.placar_a + r1.placar_b, 1);
+  assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul')}'::jsonb)`, n, '2026-11-09'), 'partida_ja_concluida', 'o mesmo mapa não é gravado duas vezes');
   assert.equal(V(`select status from tc_partidas where id = ${pid}`), 'concluida');
-  assert.equal(V(`select placar_a + placar_b from tc_partidas where id = ${pid}`), '3');
+  assert.equal(V(`select placar_a + placar_b from tc_partidas where id = ${pid}`), '1');
   assert.equal(V(`select resumo->>'origem' from tc_partidas where id = ${pid}`), 'gameplay');
-  assert.equal(V(`select jsonb_array_length(resumo->'mapas') from tc_partidas where id = ${pid}`), '3');
-  assert.equal(falha(`select tc_gameplay_registrar(${pid}, 4, '${res(4, 'azul')}'::jsonb)`, n, '2026-11-09'), 'partida_ja_concluida');
+  assert.equal(V(`select jsonb_array_length(resumo->'mapas') from tc_partidas where id = ${pid}`), '1');
+  assert.equal(falha(`select tc_gameplay_registrar(${pid}, 2, '${res(2, 'azul')}'::jsonb)`, n, '2026-11-09'), 'partida_ja_concluida');
   assert.equal(falha(`select tc_partida_elencos(${pid})`, n, '2026-11-09'), 'partida_ja_concluida');
-  assert.equal(V(`select count(*) from tc_gameplay_mapas where partida_id = ${pid}`), '3');
+  assert.equal(V(`select count(*) from tc_gameplay_mapas where partida_id = ${pid}`), '1');
 });
 
 t('gameplay: passado o prazo, o sistema simula as partidas que ninguém jogou e a semana fecha normalmente', () => {
