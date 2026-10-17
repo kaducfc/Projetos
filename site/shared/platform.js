@@ -1039,6 +1039,7 @@ const ERROS_TECNICO = {
   uma_por_posicao: 'Escolha um jogador de cada posição.',
   jogador_nao_ofertado: 'Esse jogador não está entre as suas opções.',
   elenco_ja_escolhido: 'Você já escolheu seus jogadores iniciais.',
+  xp_insuficiente: 'A barra de XP do jogador ainda não está cheia (100/100).',
   contrato_necessario: 'Para escalar este jogador é preciso efetivar um contrato.',
   contrato_vigente: 'Este jogador já tem um contrato vigente.',
   sem_contrato: 'Este jogador não tem contrato ativo.',

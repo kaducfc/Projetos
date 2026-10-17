@@ -1,5 +1,5 @@
 // Treinamento, Amistoso e Recrutar (baús de Legados). Telas e ações do menu lateral.
-// Recebe de main.js (iniciarExtras) o estado e os ajudantes; tudo que vale (custos, sorteio, EXP) vem do servidor.
+// Recebe de main.js (iniciarExtras) o estado e os ajudantes; tudo que vale (custos, sorteio, XP) vem do servidor.
 import * as platform from '../../../shared/platform.js';
 import { escudoPoder } from './regras.js';
 import { retratoSvg, escudoOrg, iconeVaga } from './art.js';
@@ -54,6 +54,8 @@ function ligarRelogio() {
 }
 
 // ------------------------------------------------------------------ peças
+// Barra de XP (0 a 100): cheia, o jogador pode treinar um atributo.
+const xpBarra = (j) => { const xp = Math.min(100, j.exp || 0); return `<div class="tc-treino-xp${xp >= 100 ? ' cheia' : ''}"><span>XP <b>${xp}/100</b>${xp >= 100 ? ' · pronto para treinar' : ''}</span><div class="tc-barra"><i style="width:${xp}%"></i></div></div>`; };
 const poderBarra = (j) => {
   const lim = j.limite; const ini = j.poder_inicial; const pct = lim > ini ? Math.round(((j.poder - ini) / (lim - ini)) * 100) : 100;
   return `<div class="tc-treino-poder"><span>Poder <b>${j.poder}</b> <small>/ limite ${lim}</small></span><div class="tc-barra"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></div><small class="tc-mudo">Início ${ini} · até +${lim - ini}</small></div>`;
@@ -69,19 +71,19 @@ export function viewTreino() {
     const tr = j.treino; const noLimite = j.poder >= j.limite;
     const linhas = ATRIBUTOS.map(([id, nome]) => {
       const v = j[id]; const custo = j.custos[id]; const falta = t.creditos < custo;
-      const bloq = tr || noLimite || v >= 100 || falta || t.em_andamento >= cfg.simultaneos || C.S.ocupado;
+      const semXp = (j.exp || 0) < 100; const bloq = tr || noLimite || v >= 100 || falta || semXp || t.em_andamento >= cfg.simultaneos || C.S.ocupado;
       const ativo = tr && tr.atributo === id;
       return `<div class="tc-attr${ativo ? ' ativo' : ''}"><span class="nm">${nome}</span><b>${v}</b><div class="tc-barra"><i style="width:${v}%"></i></div>
         ${ativo ? `<span class="tc-treinando">+${tr.pontos} em <b data-fim="${C.esc(tr.fim)}">…</b></span>`
-          : `<button type="button" class="tc-btn peq" data-act="treinar" data-id="${j.id}" data-attr="${id}" ${bloq ? 'disabled' : ''} title="${falta ? 'Créditos insuficientes' : ''}">+${cfg.pontos} · ${C.fmt(custo)}</button>`}</div>`;
+          : `<button type="button" class="tc-btn peq" data-act="treinar" data-id="${j.id}" data-attr="${id}" ${bloq ? 'disabled' : ''} title="${semXp ? 'Barra de XP ainda não está cheia' : falta ? 'Créditos insuficientes' : ''}">+${cfg.pontos} · ${C.fmt(custo)}</button>`}</div>`;
     }).join('');
     return `<section class="tc-card tc-treino-jog ${rar(j) ? `r-${rar(j)}` : ''}">
       ${miniCartao(j)}
-      <div class="tc-treino-corpo">${poderBarra(j)}${noLimite ? '<p class="tc-peq" style="color:var(--ouro2);margin:6px 0 0">Limite de treino atingido.</p>' : ''}${linhas}
-      <small class="tc-mudo" style="margin-top:4px">Cada sessão dura ${j.horas}h${j.exp ? ` (a experiência de ${j.exp} EXP já encurtou)` : ''}.</small></div></section>`;
+      <div class="tc-treino-corpo">${xpBarra(j)}${poderBarra(j)}${noLimite ? '<p class="tc-peq" style="color:var(--ouro2);margin:6px 0 0">Limite de treino atingido.</p>' : ''}${linhas}
+      <small class="tc-mudo" style="margin-top:4px">Cada sessão dura ${j.horas}h, custa créditos, gasta o XP (volta a 0/100) e sobe 1 atributo.</small></div></section>`;
   }).join('');
   return `<section class="tc-card"><h3>${C.IMG('i-treino')}Treinamento<span class="dir">${t.em_andamento}/${cfg.simultaneos} treinos</span></h3>
-    <p class="tc-mudo tc-peq" style="margin:0">Cada sessão sobe um atributo em <b>+${cfg.pontos}</b> depois de algumas horas e custa créditos. O Poder do jogador sobe com o tempo até o limite: <b>+${cfg.bonus_comum}</b> para jogadores comuns e <b>+${cfg.bonus_estrela}</b> para Legados (nunca passa de 100). Jogadores com mais EXP treinam mais rápido (EXP vem de amistosos e partidas). Seus créditos: <b>${C.fmt(t.creditos)}</b>.</p></section>
+    <p class="tc-mudo tc-peq" style="margin:0">O jogador treina quando a barra de <b>XP chega a 100/100</b>. A sessão custa créditos, leva algumas horas, volta o XP para 0 e sobe <b>1 atributo (+${cfg.pontos})</b>. O XP vem das partidas e dos amistosos (só os titulares ganham). O Poder do jogador sobe até o limite: <b>+${cfg.bonus_comum}</b> para jogadores comuns e <b>+${cfg.bonus_estrela}</b> para Legados (nunca passa de 100). Seus créditos: <b>${C.fmt(t.creditos)}</b>.</p></section>
     <div class="tc-treino-lista">${cards || '<p class="tc-mudo">Seu elenco está vazio.</p>'}</div>`;
 }
 
@@ -95,10 +97,10 @@ export function viewAmistoso() {
       <div class="pw-dif"><b>${o.poder}</b><small style="color:${dif > 3 ? 'var(--ruim)' : dif < -3 ? 'var(--bom)' : 'var(--mudo)'}">${dif > 0 ? '+' : ''}${dif}</small></div>
       <button type="button" class="tc-btn ouro peq" data-act="amistoso" data-id="${o.id}" ${C.S.ocupado ? 'disabled' : ''}>Desafiar</button></div>`;
   }).join('');
-  const hist = h.lista.map((x) => `<tr><td>${C.dataCurta ? C.dataCurta(x.dia) : C.esc(x.dia)}</td><td>${C.esc(x.oponente.nome)}</td><td class="n"><b style="color:${x.a > x.b ? 'var(--bom)' : 'var(--ruim)'}">${x.a} × ${x.b}</b></td><td class="n">${x.exp ? `<span class="tc-exp">+${h.exp_ganho} EXP</span>` : '<span class="tc-mudo">sem EXP</span>'}</td></tr>`).join('');
+  const hist = h.lista.map((x) => `<tr><td>${C.dataCurta ? C.dataCurta(x.dia) : C.esc(x.dia)}</td><td>${C.esc(x.oponente.nome)}</td><td class="n"><b style="color:${x.a > x.b ? 'var(--bom)' : 'var(--ruim)'}">${x.a} × ${x.b}</b></td><td class="n">${x.exp ? `<span class="tc-exp">+${h.exp_ganho} XP</span>` : '<span class="tc-mudo">sem XP</span>'}</td></tr>`).join('');
   return `<section class="tc-card"><h3>${C.IMG('i-agenda')}Amistoso<span class="dir">hoje: ${h.feitos_hoje}</span></h3>
-    <p class="tc-mudo tc-peq" style="margin:0">Desafie outro time para uma partida de treino (scrim) de verdade: picks e bans, depois a simulação com os campeões. Não vale pontos de campeonato. Você pode jogar quantos quiser por dia, mas só os <b>${h.exp_por_dia} primeiros</b> dão <b>+${h.exp_ganho} EXP</b> para os seus titulares; os demais não contam para nada.</p>
-    <div class="tc-exp-dia">${Array.from({ length: h.exp_por_dia }, (_, i) => `<i class="${i < h.feitos_hoje ? 'on' : ''}"></i>`).join('')}<span>${h.com_exp_restantes > 0 ? `${h.com_exp_restantes} amistoso(s) com EXP restante(s) hoje` : 'EXP de hoje já foi toda ganha'}</span></div></section>
+    <p class="tc-mudo tc-peq" style="margin:0">Desafie outro time para uma partida de treino (scrim) de verdade: picks e bans, depois a simulação com os campeões. Não vale pontos de campeonato. Você pode jogar quantos quiser por dia, mas só os <b>${h.exp_por_dia} primeiros</b> dão <b>+${h.exp_ganho} XP</b> para os seus titulares; os demais não contam para nada.</p>
+    <div class="tc-exp-dia">${Array.from({ length: h.exp_por_dia }, (_, i) => `<i class="${i < h.feitos_hoje ? 'on' : ''}"></i>`).join('')}<span>${h.com_exp_restantes > 0 ? `${h.com_exp_restantes} amistoso(s) com XP restante(s) hoje` : 'XP de hoje já foi todo ganho'}</span></div></section>
     <section class="tc-card"><h3>Adversários</h3><div class="tc-oponentes">${ops || '<p class="tc-mudo">Nenhum time disponível.</p>'}</div></section>
     <section class="tc-card"><h3>Seus últimos amistosos</h3>${hist ? `<table class="tc-tabela"><tbody>${hist}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Você ainda não jogou nenhum amistoso.</p>'}</section>`;
 }

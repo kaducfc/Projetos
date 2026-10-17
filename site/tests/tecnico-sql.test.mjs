@@ -11,7 +11,7 @@ import { poder, poderEmCampo } from '../jogos/tecnico/js/regras.js';
 const BIN = process.env.TC_PGBIN || '/usr/lib/postgresql/16/bin';
 const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -707,7 +707,11 @@ t('treinamento: sessão cobra créditos, termina com o tempo, sobe o atributo e 
   const cred0 = Number(V("select creditos from tc_orgs where id = 1"));
   assert.equal(falha(`select tc_treinar(${j}, 'forca', 'chave-treino-0')`, 1), 'atributo_invalido');
   assert.equal(falha(`select tc_treinar(${j}, 'mec', 'chave-treino-0')`, 2), 'jogador_nao_e_seu');
-  const r = J(`select tc_treinar(${j}, 'mec', 'chave-treino-1')`, 1); assert.equal(r.ok, true);
+  V(`update tc_jogadores set exp = 99 where id = ${j}`);
+  assert.equal(falha(`select tc_treinar(${j}, 'mec', 'chave-treino-x')`, 1), 'xp_insuficiente', 'só treina com a barra de XP cheia (100/100)');
+  V(`update tc_jogadores set exp = 100 where id = ${j}`);
+  const r = J(`select tc_treinar(${j}, 'mec', 'chave-treino-1')`, 1); assert.equal(r.ok, true); assert.equal(r.pontos, 1);
+  assert.equal(V(`select exp from tc_jogadores where id = ${j}`), '0', 'a sessão zera a barra');
   assert.equal(Number(V("select creditos from tc_orgs where id = 1")), cred0 - r.custo);
   assert.equal(J(`select tc_treinar(${j}, 'mec', 'chave-treino-1')`, 1).ja_feito, true);
   assert.equal(Number(V("select creditos from tc_orgs where id = 1")), cred0 - r.custo, 'repetir não cobra de novo');
@@ -715,7 +719,7 @@ t('treinamento: sessão cobra créditos, termina com o tempo, sobe o atributo e 
   const mec0 = Number(V(`select mec from tc_jogadores where id = ${j}`));
   V(`update tc_treinos set fim = now() - interval '1 minute' where jogador_id = ${j}`);
   const est1 = J("select tc_treino_estado()", 1); assert.equal(est1.em_andamento, 0);
-  assert.equal(Number(V(`select mec from tc_jogadores where id = ${j}`)), Math.min(100, mec0 + 3));
+  assert.equal(Number(V(`select mec from tc_jogadores where id = ${j}`)), Math.min(100, mec0 + 1), 'sobe só +1');
   // limite: encosta o Poder no teto do jogador e o treino para de render
   V(`update tc_jogadores set mec = least(100, mec + 30), rotas = least(100, rotas + 30), macro = least(100, macro + 30), tf = least(100, tf + 30), mental = least(100, mental + 30) where id = ${j}`);
   const chave = ['chave-treino-3', 'chave-treino-4', 'chave-treino-5', 'chave-treino-6'];
@@ -727,15 +731,17 @@ t('treinamento: sessão cobra créditos, termina com o tempo, sobe o atributo e 
   assert.equal(lim.e, Math.min(100, Math.round(Number(V("select (0.0 + mec * 0.25 + rotas * 0.2 + macro * 0.2 + tf * 0.2 + mental * 0.15) from tc_jogadores where nome = 'Duro'"))) + 15) >= 0 ? lim.e : -1);
   assert.ok(lim.e >= 85, 'Estrela passa dos 85 com o bônus');
 });
-t('treinamento: poucos simultâneos e experiência encurta a sessão', () => {
+t('treinamento: poucos simultâneos; o tempo da sessão é fixo e o XP tem teto de 100', () => {
   V(`update tc_orgs set creditos = 50000000 where id = ${O2}`);
   const js = V(`select string_agg(id::text, ',' order by id) from tc_jogadores where org_id = ${O2} and slot is not null`).split(',');
+  V(`update tc_jogadores set exp = 100 where id in (${js.join(',')})`);
   for (let i = 0; i < 3; i++) J(`select tc_treinar(${js[i]}, 'mental', 'chave-sim-${i}')`, 2);
   assert.equal(falha(`select tc_treinar(${js[3]}, 'mental', 'chave-sim-3')`, 2), 'treinos_demais');
   V(`update tc_treinos set status = 'concluido' where org_id = ${O2}`);
   V(`update tc_jogadores set exp = 0 where id = ${js[3]}`); const h0 = Number(V(`select tc_treino_horas(j) from tc_jogadores j where id = ${js[3]}`));
   V(`update tc_jogadores set exp = 200 where id = ${js[3]}`); const h1 = Number(V(`select tc_treino_horas(j) from tc_jogadores j where id = ${js[3]}`));
-  assert.ok(h1 < h0 && Math.abs(h1 - h0 * 0.7) < 0.01, `${h0} → ${h1}`);
+  assert.equal(h1, h0, 'o tempo da sessão não depende mais do XP'); assert.equal(h0, 6);
+  V("update tc_jogadores set exp = 500 where id = 1"); assert.equal(V("select exp from tc_jogadores where id = 1"), '100', 'a barra nunca passa de 100');
 });
 t('amistoso de verdade: abre, devolve escalações e semente, registra o resultado jogado; só os 5 primeiros do dia dão EXP', () => {
   const ops = J("select tc_amistoso_oponentes()", 1); assert.ok(ops.length >= 1 && ops.every((o) => o.id !== 1));
@@ -762,7 +768,7 @@ t('amistoso de verdade: abre, devolve escalações e semente, registra o resulta
     assert.equal(falha(`select tc_amistoso_registrar(${a.id}, '${res(a.id)}'::jsonb)`, 1), 'amistoso_ja_jogado');
   }
   assert.equal(V("select count(*) from tc_partidas"), partidas0, 'amistoso não entra em campeonato');
-  assert.equal(V("select max(exp) from tc_jogadores where org_id = 1 and slot is not null"), '10', '5 amistosos x 2 de EXP');
+  assert.equal(V("select max(exp) from tc_jogadores where org_id = 1 and slot is not null"), '50', '5 amistosos x 10 de XP');
   assert.equal(J(`select tc_amistoso(${op}, 'chave-ami-3')`, 1).ja_feito, true);
   const h = J("select tc_amistosos_historico()", 1); assert.equal(h.feitos_hoje, 7); assert.equal(h.com_exp_restantes, 0);
   assert.equal(h.lista.filter((x) => x.exp).length, 5); assert.equal(h.lista[0].a, 1); assert.equal(h.lista[1].a, 0);
