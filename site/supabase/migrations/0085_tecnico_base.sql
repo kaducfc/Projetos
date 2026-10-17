@@ -42,7 +42,7 @@ insert into public.tc_config (chave, valor) values
   -- Início do calendário (uma segunda-feira) e duração da temporada em semanas.
   ('calendario', '{"inicio": "2026-10-12", "semanas": 4}'::jsonb),
   -- Nomes editáveis dos campeonatos.
-  ('nomes', '{"acesso": "Liga Ascensão", "principal": "Liga Apex Nacional", "copa": "Copa dos Convergentes", "mundial": "Campeonato Mundial das Lendas"}'::jsonb)
+  ('nomes', '{"acesso": "Liga Academy", "principal": "Liga Nacional", "copa": "Copa Internacional", "mundial": "Campeonato Mundial"}'::jsonb)
 on conflict (chave) do nothing;
 
 create or replace function public.tc_cfg(k text)

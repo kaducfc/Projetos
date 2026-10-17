@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 8, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -1245,4 +1245,11 @@ t('0118: coloca o administrador na Série B e refaz a liga da semana para inclu�
   const ligaAntes = liga();
   r = psql(['-d', 't'], `set app.hoje='${HJ}';\n${sqlScript}`); assert.equal(r.status, 0, r.stderr);
   assert.equal(liga(), ligaAntes, 'rodar de novo não refaz a liga');
+});
+
+t('0119: nomes oficiais dos campeonatos na configuração e nas ligas criadas', () => {
+  const n = J("select tc_cfg('nomes')");
+  assert.deepEqual(n, { acesso: 'Liga Academy', principal: 'Liga Nacional', copa: 'Copa Internacional', mundial: 'Campeonato Mundial' });
+  const nomes = V("select string_agg(distinct split_part(nome, ' · ', 1), '|' order by split_part(nome, ' · ', 1)) from tc_ligas");
+  for (const antigo of ['Ascensão', 'Apex', 'Convergentes', 'das Lendas']) assert.ok(!nomes.includes(antigo), `nome antigo "${antigo}" sumiu das ligas (${nomes})`);
 });
