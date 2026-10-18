@@ -12,7 +12,7 @@ import { elencoTeste } from '../dados/elencos-teste.js';
 import { prepararImagens, campIcone } from '../../js/campeoes-img.js';
 import { tempoTexto } from '../motor/eventos.js';
 import { REGRAS } from '../config/regras.js';
-import { abrirDraft } from './draft-ui.js?v=12';
+import { abrirDraft } from './draft-ui.js?v=14';
 
 const api = platform.tecnico;
 
@@ -47,7 +47,7 @@ async function configOficial(id) {
   const jogs = (l) => l.map((j) => ({ id: j.id, nome: j.nome, pos: j.pos, atributos: j.atributos, poder: j.poder, eficiencia: j.eficiencia, favoritos: j.favoritos }));
   const f = el.partida.formato;
   return {
-    modo: 'oficial', id, mapa: el.mapa, semente: el.semente, versao: el.versao, azul: jogs(el.azul.jogadores), vermelho: jogs(el.vermelho.jogadores),
+    modo: 'oficial', id, idAzul: el.azul.org.id, idVermelho: el.vermelho.org.id, mapa: el.mapa, semente: el.semente, versao: el.versao, azul: jogs(el.azul.jogadores), vermelho: jogs(el.vermelho.jogadores),
     nomeAzul: el.azul.org.nome, nomeVermelho: el.vermelho.org.nome, siglaAzul: el.azul.org.sigla, siglaVermelho: el.vermelho.org.sigla, veloc: REGRAS.velocidadePadrao,
     aviso: `Partida oficial · mapa ${el.mapa} de uma série melhor de ${f} · ${el.azul.org.nome} (azul) × ${el.vermelho.org.nome} (vermelho). O resultado não pode ser refeito.`,
     aoFim: (r, acoes) => botaoRegistrar(el, r, acoes),
@@ -322,18 +322,32 @@ function quadro(ts) {
   await Promise.all([carregarCatalogo(), prepararImagens(), carregarImagemMapa().then((i) => { E.imagem = i; })]);
   const id = Number(consulta.get('id') || 0);
   const aid = Number(consulta.get('amistoso') || 0);
+  let comDraft = false;
   if (aid) {
     E.config = await configAmistoso(aid);
     const dr = await abrirDraft({ catalogo: E.catalogo, azul: E.config.azul, vermelho: E.config.vermelho, semente: E.config.semente, nomeAzul: E.config.nomeAzul, nomeVermelho: E.config.nomeVermelho });
     E.config.veloc = 4; // depois do draft a simulação já começa sozinha, em 4x
     E.config.azul = dr.azul; E.config.vermelho = dr.vermelho; E.config.bans = dr.bans;
     E.config.aviso += ` Bans: ${dr.bans.azul.join(', ')} | ${dr.bans.vermelho.join(', ')}.`;
-  } else if (id) E.config = await configOficial(id);
+  } else if (id) {
+    E.config = await configOficial(id);
+    // picks e bans de cada mapa da partida oficial. Quem joga é o lado da sua organização (pode ser o vermelho): ele escolhe na ordem certa.
+    const meuId = (await api.meu().catch(() => null))?.org?.id;
+    const euVerm = !!meuId && E.config.idVermelho === meuId && E.config.idAzul !== meuId;
+    const C = E.config;
+    const dr = await abrirDraft({ catalogo: E.catalogo, azul: euVerm ? C.vermelho : C.azul, vermelho: euVerm ? C.azul : C.vermelho, semente: C.semente,
+      nomeAzul: euVerm ? C.nomeVermelho : C.nomeAzul, nomeVermelho: euVerm ? C.nomeAzul : C.nomeVermelho, invertida: euVerm });
+    C.veloc = 4; // depois do draft a simulação já começa sozinha, em 4x
+    C.azul = euVerm ? dr.vermelho : dr.azul; C.vermelho = euVerm ? dr.azul : dr.vermelho;
+    C.bans = euVerm ? { azul: dr.bans.vermelho, vermelho: dr.bans.azul } : dr.bans;
+    C.aviso += ` Bans: ${C.bans.azul.join(', ')} | ${C.bans.vermelho.join(', ')}.`;
+    comDraft = true;
+  }
   else { E.config = configTeste(); E.config.aviso = 'Sala de testes da simulação: times sintéticos com o Poder escolhido. Só administradores veem esta área.'; }
   E.partida = novaPartida(E.config);
   E.relogio = new Relogio(E.partida, { velocidade: E.config.veloc });
   montar();
-  if (aid) { E.relogio.retomar(); marcarVelocidade(); }
+  if (aid || comDraft) { E.relogio.retomar(); marcarVelocidade(); }
   atualizarPlacar(true);
   window.__partida = E; // facilita a depuração no console
   window.addEventListener('resize', encaixar); document.addEventListener('fullscreenchange', () => { encaixar(); const f = document.getElementById('b-tela'); if (f) f.textContent = document.fullscreenElement ? '⤢ Sair da tela cheia' : '⛶ Tela cheia'; });

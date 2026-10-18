@@ -13,11 +13,13 @@ export const ORDEM = [
   ...[V, A, A, V].map((lado) => ({ tipo: 'pick', lado })),
 ];
 
-export function novoDraft(catalogo, azul, vermelho, semente) {
-  return { catalogo, jogadores: { azul, vermelho }, passo: 0, bans: { azul: [], vermelho: [] }, picks: { azul: {}, vermelho: {} }, rng: criarRng((Number(semente) || 1) ^ 0x5bd1e995 ) };
+// opc.invertida: quem joga na tela (o time "azul" do draft) é, na verdade, o lado vermelho da partida, então escolhe depois.
+export function novoDraft(catalogo, azul, vermelho, semente, opc = {}) {
+  const ordem = opc.invertida ? ORDEM.map((p) => ({ ...p, lado: p.lado === A ? V : A })) : ORDEM;
+  return { ordem, catalogo, jogadores: { azul, vermelho }, passo: 0, bans: { azul: [], vermelho: [] }, picks: { azul: {}, vermelho: {} }, rng: criarRng((Number(semente) || 1) ^ 0x5bd1e995 ) };
 }
-export const passoAtual = (d) => ORDEM[d.passo] || null;
-export const terminou = (d) => d.passo >= ORDEM.length;
+export const passoAtual = (d) => (d.ordem || ORDEM)[d.passo] || null;
+export const terminou = (d) => d.passo >= (d.ordem || ORDEM).length;
 export const jogadorDaVaga = (d, lado, vaga) => d.jogadores[lado].find((j) => j.pos === vaga);
 export const indisponiveis = (d) => new Set([...d.bans.azul, ...d.bans.vermelho, ...Object.values(d.picks.azul).map((c) => c.nome), ...Object.values(d.picks.vermelho).map((c) => c.nome)]);
 export const serve = (c, vaga) => posicoesDe(c).includes(POS[vaga]); // campeão nativo da vaga

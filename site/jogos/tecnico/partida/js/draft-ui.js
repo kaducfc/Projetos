@@ -27,9 +27,9 @@ function jogadaAutomatica(d, p, vaga) {
 }
 
 // Mostra o draft e devolve { azul, vermelho, bans } quando termina.
-export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVermelho }) {
+export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVermelho, invertida = false }) {
   return new Promise((resolver) => {
-    const d = novoDraft(catalogo, azul, vermelho, semente);
+    const d = novoDraft(catalogo, azul, vermelho, semente, { invertida });
     const S = { vaga: null, busca: '', trocando: false, filtro: null, passoT: -1, fim: 0, iaEm: 0, relogio: null };
     const fundo = document.createElement('div'); fundo.className = 'pt-fundo pt-draft';
     document.body.appendChild(fundo);

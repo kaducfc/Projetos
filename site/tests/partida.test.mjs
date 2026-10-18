@@ -555,3 +555,14 @@ test('Arauto conquistado nunca recebe o buff do Barão, mesmo com o time com o b
   O.atualizarAuraMinion(P, m); O.atualizarAuraMinion(P, m);
   assert.ok(!m.auraBarao, 'sem aura de bônus'); assert.equal(m.hpMax, base.hp); assert.equal(m.dano, base.dano);
 });
+
+test('draft invertido: quem joga no lado vermelho da partida escolhe depois, com as mesmas regras', async () => {
+  const D = await import('../jogos/tecnico/partida/dados/draft.js');
+  const cat = Array.from({ length: 40 }, (_, i) => ({ id: `c${i}`, nome: `c${i}`, posicoes: ['Top', 'Jungle', 'Mid', 'ADC', 'Suporte'] }));
+  const el = ['top', 'selva', 'meio', 'atirador', 'suporte'].map((p) => ({ id: p, nome: p, pos: p, favoritos: [] }));
+  const normal = D.novoDraft(cat, el, el, 1); const inv = D.novoDraft(cat, el, el, 1, { invertida: true });
+  assert.equal(D.passoAtual(normal).lado, 'azul'); assert.equal(D.passoAtual(inv).lado, 'vermelho', 'o time da tela abre em segundo');
+  assert.equal(inv.ordem.length, D.ORDEM.length); assert.equal(inv.ordem.filter((p) => p.lado === 'azul').length, D.ORDEM.filter((p) => p.lado === 'vermelho').length);
+  let n = 0; while (D.passoAtual(inv) && n++ < 40) D.jogadaIA(inv);
+  assert.ok(D.terminou(inv));
+});
