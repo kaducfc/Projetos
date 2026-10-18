@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 8, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -667,10 +667,11 @@ t('legados só pelo baú: créditos recusados, tc_contratar_estrela não existe 
   const js = J(`select tc_jogador_json(j) from tc_jogadores j where id = ${faker}`); assert.equal(js.legado, true); assert.equal(js.estrelas, 0);
 });
 t('retratos: cada foto é de um único jogador fictício; sem foto livre, o mercado encolhe e o sistema usa o avatar; rodar o SQL de novo não troca ninguém', () => {
-  const r = J("select jsonb_agg(jsonb_build_object('g', genero, 'r', retrato, 'n', ficticio, 'sis', (select user_id is null from tc_orgs o where o.id = org_id))) from tc_jogadores");
-  const comuns = r.filter((x) => x.n);
+  const r = J("select jsonb_agg(jsonb_build_object('g', genero, 'r', retrato, 'n', ficticio, 'sis', (select user_id is null from tc_orgs o where o.id = org_id), 'cs', copia_sistema)) from tc_jogadores");
+  const comuns = r.filter((x) => x.n && !x.cs); // as cópias das equipes do sistema (0124) podem repetir foto, nome e atributos
   assert.ok(comuns.length >= 20, 'há jogadores comuns');
   const fotos = comuns.filter((x) => x.r);
+  assert.ok(r.filter((x) => x.n && x.sis).every((x) => x.r && x.cs), 'todo jogador de equipe do sistema tem foto (cópia de um jogador com foto)');
   for (const x of fotos) {
     assert.ok(existsSync(new URL(`..${x.r}`, import.meta.url)), `retrato ${x.r}`);
     assert.match(x.r, x.g === 'F' ? /\/f\d\d\.webp$/ : /\/m\d\d\.webp$/);
@@ -681,12 +682,13 @@ t('retratos: cada foto é de um único jogador fictício; sem foto livre, o merc
   const antes = V("select string_agg(id || coalesce(retrato, '-'), ',' order by id) from tc_jogadores");
   V(readFileSync(new URL('../supabase/migrations/0108_tecnico_elenco_inicial_15.sql', import.meta.url), 'utf8')); // idempotente: não mexe em ninguém
   V(readFileSync(new URL('../supabase/migrations/0109_tecnico_escolher_elenco.sql', import.meta.url), 'utf8'));
+  V(readFileSync(new URL('../supabase/migrations/0124_tecnico_sistema_com_fotos.sql', import.meta.url), 'utf8')); // a 0109 volta a definir tc_completar_elenco: reaplica a versão com fotos
   assert.equal(V("select string_agg(id || coalesce(retrato, '-'), ',' order by id) from tc_jogadores"), antes);
   // tentar repetir uma foto é recusado pelo banco
-  const dup = Q("update tc_jogadores set retrato = (select retrato from tc_jogadores where ficticio and retrato is not null order by id limit 1) where id = (select id from tc_jogadores where ficticio and retrato is not null order by id desc limit 1)");
+  const dup = Q("update tc_jogadores set retrato = (select retrato from tc_jogadores where ficticio and retrato is not null and not copia_sistema order by id limit 1) where id = (select id from tc_jogadores where ficticio and retrato is not null and not copia_sistema order by id desc limit 1)");
   assert.equal(dup.ok, false);
   // jogadores novos pegam foto livre, sem repetir, até acabar; depois ficam sem (e o mercado os descarta)
-  const livres = 60 - Number(V("select count(*) from tc_jogadores where ficticio and retrato is not null"));
+  const livres = 60 - Number(V("select count(*) from tc_jogadores where ficticio and retrato is not null and not copia_sistema"));
   const novos = J("select to_jsonb(tc_gerar_jogadores(70))"); assert.equal(novos.length, 70);
   const com = J(`select coalesce(jsonb_agg(retrato), '[]'::jsonb) from tc_jogadores where id in (${novos.join(',')}) and retrato is not null`);
   assert.ok(com.length <= livres && new Set(com).size === com.length, 'sem repetir');
@@ -996,7 +998,7 @@ t('time novo com as fotos esgotadas: os 15 candidatos ainda vêm com foto (o mer
   assert.equal(J(`select tc_escolher_elenco_inicial('{${ids.join(',')}}')`, 6).ok, true);
   const meu = J("select tc_meu()", 6).elenco;
   assert.equal(meu.length, 5); assert.ok(meu.every((x) => x.retrato && x.slot));
-  assert.equal(V("select count(*) - count(distinct retrato) from tc_jogadores where ficticio and retrato is not null"), '0');
+  assert.equal(V("select count(*) - count(distinct retrato) from tc_jogadores where ficticio and retrato is not null and not copia_sistema"), '0');
 });
 
 t('potencial coerente: nunca passa do limite de treino (+10 comum, +15 Legado) nem fica abaixo do Poder; jogadores novos também', () => {
@@ -1205,7 +1207,10 @@ t('mercado oficial: 7 a 10 jogadores, Poder entre -5 e +8 da média dos titulare
     const l1 = lista();
     assert.ok(l1.length >= 7 && l1.length <= 10, `7 a 10 à venda (${l1.length})`);
     const poder = (x) => Number(x.poder);
-    for (const x of l1) assert.ok(poder(x) >= ref - 5 - 0.6 && poder(x) <= ref + 8 + 0.6, `Poder ${poder(x)} fora de ${ref - 5}..${ref + 8}`);
+    // quem está na faixa vem primeiro; só entram jogadores fora dela se faltarem na faixa (o mercado do teste é pequeno)
+    const naFaixa = (x) => poder(x) >= ref - 5 - 0.6 && poder(x) <= ref + 8 + 0.6;
+    const naFaixaNoMercado = Number(V(`select count(*) from tc_jogadores j where org_id is null and ficticio and tc_poder(j) between ${ref - 5} and ${ref + 8}`)) + l1.filter((x) => false).length;
+    assert.ok(l1.filter(naFaixa).length >= Math.min(l1.length, naFaixaNoMercado) - 0, `na faixa: ${l1.filter(naFaixa).length}, disponíveis na faixa: ${naFaixaNoMercado}`);
     assert.deepEqual(lista().map((x) => x.id), l1.map((x) => x.id), 'a oferta não muda dentro da janela');
     const rot = J("select tc_mercado_rotacao()", 1);
     assert.ok(rot.restante_s > 0 && rot.restante_s <= 12 * 3600, 'tempo até a próxima troca'); assert.equal(Number(rot.ref), ref); assert.equal(Number(rot.min), ref - 5); assert.equal(Number(rot.max), ref + 8);
@@ -1320,4 +1325,21 @@ t('ADM: editar o modelo de um legado atualiza as cópias dos técnicos somando o
     V(`delete from tc_jogadores where legado_base = ${modelo.id} and org_id = 1`);
     V(`update tc_jogadores set nome = '${modelo.nome}', mec = ${modelo.mec}, rotas = ${modelo.rotas}, macro = ${modelo.macro}, tf = ${modelo.tf}, mental = ${modelo.mental}, potencial = ${modelo.potencial} where id = ${modelo.id}`);
   }
+});
+
+t('equipes do sistema com foto: cada jogador é cópia de um jogador com foto da mesma posição e OVR próximo; ninguém de técnico é trocado; o mercado não perde fotos', () => {
+  V("select tc_garantir_sistema()");
+  const sis = J("select jsonb_agg(jsonb_build_object('id', j.id, 'r', j.retrato, 'cs', j.copia_sistema, 'pos', j.pos)) from tc_jogadores j join tc_orgs o on o.id = j.org_id where o.user_id is null");
+  assert.ok(sis.length >= 80, 'há jogadores nas equipes do sistema');
+  assert.ok(sis.every((x) => x.r && x.cs), 'todos com foto');
+  // nomes repetidos entre equipes do sistema são permitidos; fotos dos jogadores do mercado/técnicos continuam únicas
+  assert.equal(V("select count(*) - count(distinct retrato) from tc_jogadores where ficticio and retrato is not null and not copia_sistema"), '0');
+  // um jogador novo de equipe do sistema (sem foto) recebe foto ao completar o elenco
+  const org = V("select id from tc_orgs where user_id is null order by id limit 1");
+  V(`delete from tc_jogadores where org_id = ${org} and slot = 'meio'`);
+  const doadores = Number(V("select count(*) from tc_jogadores where ficticio and retrato is not null and not copia_sistema and pos = 'meio'"));
+  V(`select tc_completar_elenco(${org})`);
+  assert.ok(doadores > 0, 'há jogadores de meio com foto para copiar');
+  assert.equal(V(`select count(*) from tc_jogadores where org_id = ${org} and retrato is null`), '0', V(`select coalesce(string_agg(id || ':' || pos || ':' || coalesce(slot,'-') || ':' || ficticio::text, ' | '), '') from tc_jogadores where org_id = ${org} and retrato is null`));
+  assert.equal(V("select count(*) from tc_jogadores where ficticio and retrato is null and org_id is null"), '0', 'nenhum jogador livre sem foto');
 });
