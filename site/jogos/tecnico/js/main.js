@@ -373,12 +373,12 @@ function vsCard(p) {
   return `<div class="tc-vs"><div class="lado">${escudoOrg(p.a, 84)}<b>${esc(p.a.nome)}</b></div><div class="x">VS</div><div class="lado">${escudoOrg(p.b, 84)}<b>${esc(p.b.nome)}</b></div></div>
     <p class="tc-vs-info">${dataCurta(p.dia)} · ${p.fase === 'rodada' ? `rodada ${p.rodada}` : FASES[p.fase] || ''} · melhor de ${p.formato}</p>`;
 }
-function partidaLinha(p, proxima = false) {
+function partidaLinha(p, proxima = false, comLiga = false) {
   const feita = p.status === 'concluida';
   const meu = S.meu?.org?.id;
   return `<button type="button" class="tc-partida" data-act="partida" data-id="${p.id}" ${feita ? '' : 'disabled'}>
     <span class="time">${escudoOrg(p.a, 30)}<span>${esc(p.a.nome)}</span></span>
-    <span class="meio">${feita ? `<span class="placar"><span class="${p.vencedor === p.a.id ? 'v' : ''}">${p.placar_a}</span> - <span class="${p.vencedor === p.b.id ? 'v' : ''}">${p.placar_b}</span></span>` : '<span class="placar">VS</span>'}<span class="qd">${dataCurta(p.dia)} · ${p.fase === 'rodada' ? `rodada ${p.rodada}` : FASES[p.fase] || ''} · MD${p.formato}${feita && meu && (p.a.id === meu || p.b.id === meu) ? (p.vencedor === meu ? ' · <b style="color:var(--bom)">vitória</b>' : ' · <b style="color:var(--ruim)">derrota</b>') : ''}</span></span>
+    <span class="meio">${feita ? `<span class="placar"><span class="${p.vencedor === p.a.id ? 'v' : ''}">${p.placar_a}</span> - <span class="${p.vencedor === p.b.id ? 'v' : ''}">${p.placar_b}</span></span>` : '<span class="placar">VS</span>'}<span class="qd">${comLiga && p.liga_nome ? `${esc(String(p.liga_nome).split(' · ')[0])} · ` : ''}${dataCurta(p.dia)} · ${p.fase === 'rodada' ? `rodada ${p.rodada}` : FASES[p.fase] || ''} · MD${p.formato}${feita && meu && (p.a.id === meu || p.b.id === meu) ? (p.vencedor === meu ? ' · <b style="color:var(--bom)">vitória</b>' : ' · <b style="color:var(--ruim)">derrota</b>') : ''}</span></span>
     <span class="time dir"><span>${esc(p.b.nome)}</span>${escudoOrg(p.b, 30)}</span></button>`;
 }
 
@@ -513,14 +513,14 @@ function viewClass() {
 // ------------------------------------------------------------------ histórico
 function viewHist() {
   const h = S.hist; if (!h) return '<p class="tc-carregando">Carregando…</p>';
-  const tipos = { inicial: 'Elenco inicial', contratacao: 'Contratação', compra_usuario: 'Compra entre usuários', renovacao: 'Renovação', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' };
+  const tipos = { inicial: 'Elenco inicial', bau: 'Baú de Recrutamento', contratacao: 'Contratação', compra_usuario: 'Compra entre usuários', renovacao: 'Renovação', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' };
   return `<div class="tc-grade2">
     <section class="tc-card"><h3>Transferências e contratos</h3>${h.transferencias.length ? `<table class="tc-tabela"><tbody>${h.transferencias.slice(0, 20).map((t) => `<tr><td><b>${esc(t.jogador)}</b><br><span class="tc-mudo tc-peq">${tipos[t.tipo] || t.tipo}${t.de ? ` · de ${esc(t.de)}` : ''}${t.para ? ` · para ${esc(t.para)}` : ''}</span></td><td class="n">${t.valor ? `<span class="tc-preco ${t.moeda === 'rc' ? 'rc' : 'cr'}">${fmt(t.valor)}</span>` : '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Nada ainda.</p>'}</section>
     <div style="display:flex;flex-direction:column;gap:16px">
       <section class="tc-card"><h3>Premiações</h3>${h.premios.length ? `<table class="tc-tabela"><tbody>${h.premios.map((p) => `<tr><td>${esc(p.liga)}<br><span class="tc-mudo tc-peq">${p.posicao}º lugar${p.pdr != null ? ` · ${p.pdr > 0 ? '+' : ''}${p.pdr} PDR` : ''}</span></td><td class="n"><span class="tc-preco cr">${fmt(p.creditos)}</span></td></tr>`).join('')}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Sem premiações ainda.</p>'}</section>
       <section class="tc-card"><h3>Troféus</h3>${h.trofeus.length ? `${trofeusLista(h.trofeus)}` : '<p class="tc-mudo" style="margin:0">Nenhum troféu ainda.</p>'}</section>
       <section class="tc-card"><h3>Finanças</h3>${financasHtml(h.financas)}</section></div></div>
-    <section class="tc-card"><h3>Partidas</h3>${h.partidas.length ? `<div class="tc-lista">${h.partidas.map((p) => partidaLinha(p)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Nenhuma partida disputada.</p>'}</section>`;
+    <section class="tc-card"><h3>Partidas</h3>${h.partidas.length ? `<div class="tc-lista">${h.partidas.slice(0, 10).map((p) => partidaLinha(p, false, true)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Nenhuma partida disputada.</p>'}</section>`;
 }
 
 // ------------------------------------------------------------------ ADM (só administradores): campeões e jogadores

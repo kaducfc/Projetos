@@ -12,7 +12,7 @@ const CAT = { local: 'Local', regional: 'Regional', nacional: 'Nacional', intern
 // Nomes das movimentações de créditos (Finanças e Histórico financeiro).
 export const MOTIVOS = {
   inicial: 'Créditos iniciais', contratacao: 'Contratação de jogador', contrato: 'Contrato de jogador', renovacao: 'Renovação de contrato', rescisao: 'Rescisão de contrato',
-  salarios: 'Salários da semana', premiacao: 'Premiação de campeonato', treino: 'Treinamento', bau: 'Baú de recrutamento',
+  salarios: 'Salários da semana', premiacao: 'Premiação de campeonato', treino: 'Treinamento', bau: 'Baú de Recrutamento',
   mkt_receita: 'Marketing', mkt_melhoria: 'Marketing · Melhoria', mkt_contrato: 'Marketing · Patrocínio', mkt_renovacao: 'Marketing · Renovação de patrocínio', mkt_campanha: 'Marketing · Campanha',
 };
 

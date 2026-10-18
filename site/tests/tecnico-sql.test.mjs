@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 8, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -847,14 +847,14 @@ t('recrutar: baús sorteiam Estrelas, 5 tem desconto, sem saldo nada muda e a ga
   assert.equal(falha("select tc_recrutar('basico', 3, 'chave-bau-0')", 1), 'quantidade_invalida');
   V("update site_carteira set saldo = 100000 where user_id = '" + U(1) + "'");
   V("delete from tc_jogadores where org_id = 1 and slot is null"); // elenco só com os 5 titulares
-  const transf0 = Number(V("select count(*) from tc_transf where tipo = 'contratacao' and moeda = 'rc' and para_org = 1"));
+  const transf0 = Number(V("select count(*) from tc_transf where tipo = 'bau' and moeda = 'rc' and para_org = 1"));
   const cinco = J("select tc_recrutar('premium', 5, 'chave-bau-2')", 1);
   assert.equal(cinco.preco_rc, 3825, '900 x 5 com 15% de desconto'); assert.equal(cinco.itens.length, 5);
   assert.equal(V("select saldo from site_carteira where user_id = '" + U(1) + "'"), '96175');
   assert.equal(J("select tc_recrutar('premium', 5, 'chave-bau-2')", 1).ja_feito, true);
   assert.equal(V("select saldo from site_carteira where user_id = '" + U(1) + "'"), '96175', 'repetir não cobra');
   assert.equal(V("select sum(1 + copias) from tc_jogadores where not ficticio and org_id = 1"), '5', 'cada sorteio vira jogador novo ou cópia');
-  assert.equal(Number(V("select count(*) from tc_transf where tipo = 'contratacao' and moeda = 'rc' and para_org = 1")), transf0 + Number(V("select count(*) from tc_jogadores where not ficticio and org_id = 1")));
+  assert.equal(Number(V("select count(*) from tc_transf where tipo = 'bau' and moeda = 'rc' and para_org = 1")), transf0 + Number(V("select count(*) from tc_jogadores where not ficticio and org_id = 1")));
   V("update tc_config set valor = jsonb_set(valor, '{max}', to_jsonb((select count(*) from tc_jogadores where org_id = 1))) where chave = 'elenco'"); // elenco no limite
   V("create temp table if not exists _rar as select id, raridade from tc_jogadores where false"); // tira do sorteio os Legados que já são seus: o sorteio só pode trazer um novo
   const donos = V("select string_agg(legado_base::text, ',') from tc_jogadores where org_id = 1 and legado_base is not null");
@@ -882,6 +882,52 @@ t('recrutar: baús sorteiam Estrelas, 5 tem desconto, sem saldo nada muda e a ga
 });
 
 // ---------------------------------------------------------------- legados, estrelas e demissão (SQL 0099)
+t('recrutar: jogador repetido (inclusive o modelo do catálogo que já é seu) vira só uma cópia: sem segundo jogador, sem contrato e sem custo extra', () => {
+  V("update tc_config set valor = jsonb_set(valor, '{moeda}', '\"rc\"') where chave = 'gacha'");
+  V("update tc_config set valor = jsonb_set(valor, '{max}', '50') where chave = 'elenco'");
+  V("update site_carteira set saldo = 100000 where user_id = '" + U(1) + "'");
+  const rars = J("select jsonb_agg(jsonb_build_array(id, raridade)) from tc_jogadores where not ficticio and legado_base is null");
+  const m = V("select id from tc_jogadores where not ficticio and legado_base is null and org_id is null order by id limit 1");
+  try {
+    V(`select set_config('tc.estrela_liberada', '${m}', true); update tc_jogadores set org_id = 1, slot = null, copias = 0 where id = ${m}`); // o Legado do catálogo já é dele (como o elenco do administrador)
+    V(`update tc_jogadores set raridade = null where not ficticio and legado_base is null and id <> ${m}`); // só ele pode sair no sorteio
+    const linhas = () => Number(V("select count(*) from tc_jogadores where not ficticio and org_id = 1"));
+    const transf = () => Number(V("select count(*) from tc_transf where para_org = 1 and tipo in ('bau', 'contratacao')"));
+    const l0 = linhas(), t0 = transf(), fin0 = Number(V("select count(*) from tc_fin where org_id = 1"));
+    const r = J("select tc_recrutar('basico', 1, 'chave-bau-rep1')", 1);
+    assert.equal(r.itens[0].repetida, true);
+    assert.equal(linhas(), l0, 'não cria um segundo jogador');
+    assert.equal(V(`select copias from tc_jogadores where id = ${m}`), '1', 'vira +1 cópia');
+    assert.equal(transf(), t0, 'repetido não gera contratação');
+    assert.equal(Number(V("select count(*) from tc_fin where org_id = 1")), fin0, 'nenhum gasto de créditos de equipe');
+    assert.equal(V("select count(*) from tc_transf where tipo = 'renovacao' and para_org = 1 and jogador_id = " + m), '0', 'nenhuma renovação');
+  } finally {
+    for (const [id, rar] of rars) V(`update tc_jogadores set raridade = ${rar ? `'${rar}'` : 'null'} where id = ${id}`);
+    V(`update tc_jogadores set org_id = null, slot = null, copias = 0 where id = ${m}`);
+    V("delete from tc_jogadores where org_id = 1 and not ficticio");
+    V("update tc_config set valor = jsonb_set(valor, '{moeda}', '\"creditos\"') where chave = 'gacha'");
+  }
+});
+
+t('recrutar: a limpeza funde a duplicata criada pelo baú numa cópia e devolve o contrato pago nela', () => {
+  const m = V("select id from tc_jogadores where not ficticio and legado_base is null and org_id is null order by id limit 1");
+  const cols = 'nome, ficticio, genero, pos, pos2, idade, regiao, retrato, potencial, fama, forma, exp, raridade, mec, rotas, macro, tf, mental';
+  try {
+    V(`select set_config('tc.estrela_liberada', '${m}', true); update tc_jogadores set org_id = 1, slot = null, copias = 0 where id = ${m}`);
+    V(`insert into tc_jogadores (${cols}, org_id, legado_base, copias) select ${cols}, 1, id, 0 from tc_jogadores where id = ${m}`);
+    const dup = V(`select id from tc_jogadores where legado_base = ${m} and org_id = 1`);
+    V(`insert into tc_transf (jogador_id, de_org, para_org, tipo, valor, moeda) values (${dup}, 1, 1, 'renovacao', 13700, 'creditos')`);
+    const cred0 = Number(V("select creditos from tc_orgs where id = 1"));
+    V(readFileSync(new URL('../supabase/migrations/0134_tecnico_bau_repetido_sem_custo.sql', import.meta.url), 'utf8'));
+    assert.equal(V(`select count(*) from tc_jogadores where org_id = 1 and not ficticio and nome = (select nome from tc_jogadores where id = ${m})`), '1', 'a duplicata some');
+    assert.equal(V(`select copias from tc_jogadores where id = ${m}`), '1', 'e vira +1 cópia');
+    assert.equal(Number(V("select creditos from tc_orgs where id = 1")), cred0 + 13700, 'o contrato pago na duplicata é devolvido');
+  } finally {
+    V(`update tc_jogadores set org_id = null, slot = null, copias = 0 where id = ${m}`); // primeiro devolve o modelo ao catálogo
+    V("delete from tc_jogadores where org_id = 1 and not ficticio");
+  }
+});
+
 t('estrelas de evolução: legado gasta cópias (1, 2, 3...), +5% de eficiência por estrela, Poder base não muda e fora de posição perde 25%', () => {
   assert.equal(J("select tc_cfg('fora_posicao')"), 0.75);
   V("delete from tc_jogadores where org_id = 1 and not ficticio");
