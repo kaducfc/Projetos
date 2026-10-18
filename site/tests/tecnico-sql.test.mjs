@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 8, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -547,7 +547,14 @@ t('gameplay: a partida do técnico espera o jogo no navegador, o resultado de ca
   const trocado = jogs.map((j, i) => (i === 0 ? { ...j, campeao: camp[19] } : j));
   assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul', { jogadores: trocado })}'::jsonb)`, n, '2026-11-09'), 'draft_diferente_da_partida');
   assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul', { jogadores: jogs.slice(1) })}'::jsonb)`, n, '2026-11-09'), 'draft_diferente_da_partida', 'faltou jogador');
-  const r1 = reg(1, 'azul'); assert.equal(r1.concluida, true); assert.equal(r1.placar_a + r1.placar_b, 1);
+  const minha = V(`select id from tc_orgs where user_id::text = '${dono}'`);
+  const venceu = el.azul.org.id === Number(minha); // azul vence no resultado enviado
+  const expAntes = V(`select string_agg(exp::text, ',' order by id) from tc_jogadores where org_id = ${minha} and slot is not null`).split(',').map(Number);
+  const maeAntes = Number(V(`select coalesce(sum(pontos), 0) from tc_maestria where jogador_id in (select id from tc_jogadores where org_id = ${minha} and slot is not null)`));
+  const r1 = reg(1, 'azul');
+  const expDepois = V(`select string_agg(exp::text, ',' order by id) from tc_jogadores where org_id = ${minha} and slot is not null`).split(',').map(Number);
+  expDepois.forEach((e, i) => assert.equal(e, Math.min(100, expAntes[i] + (venceu ? 10 : 5)), 'XP do mapa: vitória 10, derrota 5'));
+  assert.equal(Number(V(`select coalesce(sum(pontos), 0) from tc_maestria where jogador_id in (select id from tc_jogadores where org_id = ${minha} and slot is not null)`)) - maeAntes, 5 * (venceu ? 30 : 15), 'maestria do mapa: 30 na vitória, 15 na derrota'); assert.equal(r1.concluida, true); assert.equal(r1.placar_a + r1.placar_b, 1);
   assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${res(1, 'azul')}'::jsonb)`, n, '2026-11-09'), 'partida_ja_concluida', 'o mesmo mapa não é gravado duas vezes');
   assert.equal(V(`select status from tc_partidas where id = ${pid}`), 'concluida');
   assert.equal(V(`select placar_a + placar_b from tc_partidas where id = ${pid}`), '1');
@@ -785,7 +792,11 @@ t('amistoso de verdade: abre, devolve escalações e semente, registra o resulta
   const op = ops[0].id; const partidas0 = V("select count(*) from tc_partidas");
   V("update tc_jogadores set exp = 0 where org_id = 1");
   V("update tc_config set valor = jsonb_set(valor, '{ativo}', 'true') where chave = 'gameplay'");
-  const res = (id, venc = 'azul') => JSON.stringify({ semente: Number(V(`select tc_gameplay_semente(${id}, -1)`)), versaoRegras: 1, vencedor: venc, duracao: 1500, equipes: {}, bans: { azul: ['Ahri'], vermelho: ['Zed'] } });
+  const tit = V("select string_agg(id::text, ',' order by id) from tc_jogadores where org_id = 1 and slot is not null").split(',').map(Number);
+  const mae = () => J(`select jsonb_build_object('jogos', coalesce(sum(jogos), 0), 'pontos', coalesce(sum(pontos), 0)) from tc_maestria where campeao_id = 'ahri' and jogador_id in (${tit.join(',')})`);
+  const mae0 = mae();
+  const res = (id, venc = 'azul') => JSON.stringify({ semente: Number(V(`select tc_gameplay_semente(${id}, -1)`)), versaoRegras: 1, vencedor: venc, duracao: 1500, equipes: {}, bans: { azul: ['Ahri'], vermelho: ['Zed'] },
+    jogadores: [...tit.map((id) => ({ id, equipe: 'azul', campeao: 'Ahri' })), { id: 999999, equipe: 'azul', campeao: 'Ahri' }] });
   const registrar = (id, venc, uid = 1) => J(`select tc_amistoso_registrar(${id}, '${res(id, venc)}'::jsonb)`, uid);
   assert.equal(falha(`select tc_amistoso(${1}, 'chave-ami-x')`, 1), 'oponente_invalido');
   for (let i = 1; i <= 7; i++) {
@@ -805,6 +816,9 @@ t('amistoso de verdade: abre, devolve escalações e semente, registra o resulta
     if (i <= 5) assert.equal(r.exp_ganho, i % 2 ? 10 : 5, 'vitória 10, derrota 5'); else assert.equal(r.exp_ganho, 0);
     assert.equal(falha(`select tc_amistoso_registrar(${a.id}, '${res(a.id)}'::jsonb)`, 1), 'amistoso_ja_jogado');
   }
+  const mae1 = mae();
+  assert.equal(mae1.jogos - mae0.jogos, 5 * tit.length, 'só os 5 primeiros amistosos do dia dão maestria (um jogo por titular em cada)');
+  assert.equal(mae1.pontos - mae0.pontos, tit.length * (3 * 30 + 2 * 15), '3 vitórias x 30 e 2 derrotas x 15 pontos de maestria por titular');
   assert.equal(V("select count(*) from tc_partidas"), partidas0, 'amistoso não entra em campeonato');
   assert.equal(V("select max(exp) from tc_jogadores where org_id = 1 and slot is not null"), '40', '3 vitórias x 10 + 2 derrotas x 5 de XP');
   assert.equal(J(`select tc_amistoso(${op}, 'chave-ami-3')`, 1).ja_feito, true);
@@ -1046,7 +1060,9 @@ t('XP de campeonato: vitória 10 e derrota 5 para os titulares, com teto de 100'
   const fn = V("select pg_get_functiondef('public.tc_processar_partida(bigint)'::regprocedure)");
   assert.ok(/exp_partida/.test(fn) && /exp_derrota/.test(fn), 'processar usa vitória e derrota');
   const fg = V("select pg_get_functiondef('public.tc_gameplay_registrar(bigint, integer, jsonb)'::regprocedure)");
-  assert.ok(/exp_partida/.test(fg) && /exp_derrota/.test(fg), 'registrar do gameplay usa vitória e derrota');
+  assert.ok(!/exp_partida/.test(fg), 'o XP do oficial sai de cada mapa, não do fechamento da série');
+  const fm = V("select pg_get_functiondef('public.tc_gameplay_mapa_premios()'::regprocedure)");
+  assert.ok(/exp_partida/.test(fm) && /exp_derrota/.test(fm) && /tc_maestria_registrar/.test(fm), 'cada mapa oficial dá XP e maestria de vitória e derrota');
 });
 
 // ---------------------------------------------------------------- marketing, fama e patrocínios (SQL 0116)

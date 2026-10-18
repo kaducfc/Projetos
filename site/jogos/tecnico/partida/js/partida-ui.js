@@ -73,7 +73,7 @@ function botaoRegistrarAmistoso(id, r, acoes) {
     const { eventos, ...enviar } = r;
     try {
       const rr = await api.amistosoRegistrar(id, { ...enviar, bans: E.config.bans });
-      aviso.innerHTML = `${rr.exp ? `+${rr.exp_ganho} EXP para os seus titulares. ` : 'Sem EXP neste amistoso (só os primeiros do dia contam). '}<a style="color:#f5cf5a" href="../">Voltar ao simulador</a>`;
+      aviso.innerHTML = `${rr.exp ? `+${rr.exp_ganho} EXP e maestria nos campeões usados pelos seus titulares. ` : 'Sem EXP nem maestria neste amistoso (só os 5 primeiros do dia contam). '}<a style="color:#f5cf5a" href="../">Voltar ao simulador</a>`;
     } catch (e) { aviso.textContent = e.message || 'Não foi possível registrar o amistoso.'; b.disabled = false; }
   };
 }
