@@ -247,7 +247,7 @@ function titulares() {
 const trofeuChave = (t) => (/mundial/i.test(t) ? 'mundial' : /copa/i.test(t) ? 'copa' : /nacional|principal/i.test(t) ? 'nacional' : 'academy');
 const trofeuImg = (t, h = 56) => `<img class="tc-trofeu" src="img/trofeus/${trofeuChave(t)}.webp" alt="" height="${h}" loading="lazy" />`;
 // Campeonatos que já têm banner de comemoração (img/banners/campeao-<chave>.webp, e a versão -800 para telas pequenas).
-const BANNER_CAMPEAO = new Set(['academy', 'nacional', 'copa']);
+const BANNER_CAMPEAO = new Set(['academy', 'nacional', 'copa', 'mundial']);
 const trofeusLista = (l) => `<ul class="tc-trofeus">${l.map((t) => `<li>${trofeuImg(t.titulo)}<span>${esc(t.titulo)}<small class="tc-mudo">Temporada ${esc(t.temporada)}</small></span></li>`).join('')}</ul>`;
 
 // Notícias do Início: a partida do dia enquanto ela não foi jogada; depois, o que aconteceu (vitória, final, campeão...) até o dia virar.

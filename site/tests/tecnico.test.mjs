@@ -255,7 +255,7 @@ test('Início: as notícias mostram a partida do dia e, depois de jogar, o resul
   const trecho = main.slice(main.indexOf('function hojeIso()'), main.indexOf('function viewVisao()'));
   const org = (id, nome) => ({ id, nome });
   const eu = org(1, 'Fenix'), adv = org(2, 'Rival');
-  const mk = (S) => new Function('S', 'esc', 'IMG', 'vsCard', 'escudoOrg', 'dataCurta', 'FASES', 'trofeuImg', 'trofeuChave', 'BANNER_CAMPEAO', `${trecho}; return viewNoticias;`)(S, (x) => String(x ?? ''), () => '', () => '<vs/>', () => '', (d) => d, { rodada: 'Rodada', quartas: 'Quartas', semi: 'Semifinal', final: 'Final' }, (t) => `<img src="trofeu-${/academy/i.test(t) ? 'academy' : 'outro'}">`, (t) => (/academy/i.test(t) ? 'academy' : /copa/i.test(t) ? 'copa' : /mundial/i.test(t) ? 'mundial' : 'nacional'), new Set(['academy', 'nacional', 'copa']));
+  const mk = (S) => new Function('S', 'esc', 'IMG', 'vsCard', 'escudoOrg', 'dataCurta', 'FASES', 'trofeuImg', 'trofeuChave', 'BANNER_CAMPEAO', `${trecho}; return viewNoticias;`)(S, (x) => String(x ?? ''), () => '', () => '<vs/>', () => '', (d) => d, { rodada: 'Rodada', quartas: 'Quartas', semi: 'Semifinal', final: 'Final' }, (t) => `<img src="trofeu-${/academy/i.test(t) ? 'academy' : 'outro'}">`, (t) => (/academy/i.test(t) ? 'academy' : /copa/i.test(t) ? 'copa' : /mundial/i.test(t) ? 'mundial' : 'nacional'), new Set(['academy', 'nacional', 'copa', 'mundial']));
   const cal = { antes: false, inicio_semana: '2026-11-02', dia: 7 }; // domingo 08/11
   const jogo = (o) => ({ id: 1, fase: 'final', dia: '2026-11-08', formato: 5, a: eu, b: adv, status: 'concluida', placar_a: 3, placar_b: 1, vencedor: 1, ...o });
   const base = (partidas, extra = {}) => ({ meu: { org: { id: 1 } }, gp: { ativo: true, partida: null }, painel: { calendario: cal, liga: { nome: 'Liga Academy', status: 'encerrada', partidas }, proxima: null, ...extra } });
@@ -264,7 +264,8 @@ test('Início: as notícias mostram a partida do dia e, depois de jogar, o resul
   assert.match(h, /campe[aã]o/i); assert.match(h, /final da Liga Academy/); assert.match(h, /tc-noti-banner/); assert.match(h, /campeao-academy\.webp/); assert.doesNotMatch(h, /Jogar a partida/);
   // Nacional também tem banner; campeonato sem banner usa o troféu
   const sN = base([jogo({})]); sN.painel.liga.nome = 'Liga Nacional'; h = mk(sN)({ pos_final: 1 }); assert.match(h, /campeao-nacional\.webp/);
-  const sC = base([jogo({})]); sC.painel.liga.nome = 'Campeonato Mundial'; h = mk(sC)({ pos_final: 1 }); assert.match(h, /trofeu-outro/); assert.doesNotMatch(h, /tc-noti-banner/);
+  const sC = base([jogo({})]); sC.painel.liga.nome = 'Campeonato Mundial'; h = mk(sC)({ pos_final: 1 }); assert.match(h, /campeao-mundial\.webp/);
+  const sV = base([jogo({})]); sV.painel.liga.nome = 'Outra Liga'; h = mk(sV)({ pos_final: 1 }); assert.match(h, /tc-noti-banner|trofeu-outro/);
   // final da Copa vinda de "últimos jogos" enquanto a liga da divisão é a da semana anterior
   const sCopa = base([jogo({ id: 1, liga_id: 10, dia: '2026-11-01' })]); sCopa.painel.liga.id = 10;
   sCopa.painel.ultimos = [jogo({ id: 30, liga_id: 11, liga_nome: 'Copa Internacional · S1', dia: '2026-11-08' })];
