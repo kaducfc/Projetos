@@ -352,8 +352,6 @@ function viewVisao() {
     <section class="tc-card"><h3>Classificação${liga ? ` · ${esc(liga.nome)}` : ''}</h3>${liga ? tabelaHtml(liga.tabela, m.org.id, true) : '<p class="tc-mudo">Sua equipe entra na liga da próxima semana. Enquanto isso, monte o elenco e use o mercado.</p>'}</section>
     <div style="display:flex;flex-direction:column;gap:16px">
       <section class="tc-card"><h3>Avisos</h3>${(m.avisos || []).length ? `<ul class="tc-avisos">${m.avisos.slice(0, 6).map((a) => `<li>${esc(a.texto)}</li>`).join('')}</ul>` : '<p class="tc-mudo" style="margin:0">Nada por aqui. Contratos próximos do fim e vendas aparecem nesta lista.</p>'}</section>
-      <section class="tc-card"><h3>Finanças</h3>${financasHtml(p.financas)}</section>
-      ${(p.trofeus || []).length ? `<section class="tc-card"><h3>Troféus</h3>${trofeusLista(p.trofeus)}</section>` : ''}
     </div>
   </div>
   ${(p.ultimos || []).length ? `<section class="tc-card"><h3>Últimos resultados</h3><div class="tc-lista">${p.ultimos.map((x) => partidaLinha(x)).join('')}</div></section>` : ''}`;
