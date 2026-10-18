@@ -35,10 +35,12 @@ export async function carregarAdm() { X.dados = await api.admJogadores(X.f); }
 const linha = (j) => `<tr data-adm="${j.id}" data-pesos="${j.pesos.join(',')}">
   <td class="n">${j.id}</td>
   <td class="adm-foto">${retratoSvg(j, 48)}</td>
-  <td><input class="tc-input adm-nome" value="${C.esc(j.nome)}" maxlength="24" /><small class="tc-mudo">${POS[j.pos]} · ${j.ficticio ? 'comum' : 'legado'} · ${j.time ? C.esc(j.time.sigla) + (j.time.tecnico ? ' ★' : '') : 'livre'}</small></td>
+  <td><input class="tc-input adm-nome" value="${C.esc(j.nome)}" maxlength="24" /><small class="tc-mudo">${POS[j.pos]} · ${j.ficticio ? 'comum' : 'legado'} · ${j.time ? C.esc(j.time.sigla) + (j.time.tecnico ? ' ★' : '') : 'livre'}</small>${j.ficticio ? '' : `<select class="tc-input adm-rar" data-orig="${j.raridade || ''}" title="Raridade do legado (muda também as cópias dos técnicos)">${!j.raridade ? '<option value="" selected>Sem raridade</option>' : ''}${Object.entries(RAR_NOME).map(([v, n]) => `<option value="${v}" ${j.raridade === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`}</td>
   <td><input class="tc-input adm-ovr" type="number" min="1" max="100" value="${Math.round(j.ovr)}" title="OVR (Poder): mudar aqui reescala os atributos" /></td>
   ${ATR.map(([k, n]) => `<td><div class="adm-atr"><button type="button" data-act="adm-menos" data-k="${k}" aria-label="diminuir ${n}">−</button><input class="tc-input adm-a" data-k="${k}" type="number" min="1" max="100" value="${j[k]}" /><button type="button" data-act="adm-mais" data-k="${k}" aria-label="aumentar ${n}">+</button></div></td>`).join('')}
   <td><button type="button" class="tc-btn ouro" data-act="adm-salvar" data-id="${j.id}">Salvar</button></td></tr>`;
+
+const RAR_NOME = { comum: 'Comum', raro: 'Raro', epico: 'Épico', lendario: 'Lendário', mitico: 'Mítico' };
 
 export function viewAdmJogadores() {
   const d = X.dados;
@@ -70,7 +72,7 @@ export function aoDigitar(e) {
     const n = atributosParaOvr(a, w, e.target.value);
     tr.querySelectorAll('.adm-a').forEach((i) => { i.value = n[i.dataset.k]; }); marcarSujo(tr); return true;
   }
-  if (e.target.classList.contains('adm-nome')) { marcarSujo(tr); return true; }
+  if (e.target.classList.contains('adm-nome') || e.target.classList.contains('adm-rar')) { marcarSujo(tr); return true; }
   return false;
 }
 
@@ -82,7 +84,13 @@ export async function tratarAdm(act, b) {
   }
   if (act === 'adm-salvar') {
     const tr = b.closest('tr[data-adm]'); const { a } = lerLinha(tr);
-    const r = await C.agir(() => api.admJogadorEditar(Number(b.dataset.id), tr.querySelector('.adm-nome').value, a), { ok: (r) => (r && r.copias_atualizadas ? `Jogador salvo! ${r.copias_atualizadas} cópia(s) dos técnicos atualizada(s).` : 'Jogador salvo!'), recarregar: false });
+    const rarEl = tr.querySelector('.adm-rar');
+    const r = await C.agir(async () => {
+      const id = Number(b.dataset.id);
+      const salvo = await api.admJogadorEditar(id, tr.querySelector('.adm-nome').value, a);
+      if (rarEl && rarEl.value && rarEl.value !== rarEl.dataset.orig) { const rr = await api.admJogadorRaridade(id, rarEl.value); rarEl.dataset.orig = rarEl.value; return { ...salvo, ...rr, copias_atualizadas: salvo.copias_atualizadas }; }
+      return salvo;
+    }, { ok: (r) => (r && r.copias_atualizadas ? `Jogador salvo! ${r.copias_atualizadas} cópia(s) dos técnicos atualizada(s).` : 'Jogador salvo!'), recarregar: false });
     if (r && r !== true) { // atualiza só esta linha (as outras podem ter edições ainda não salvas)
       const it = X.dados.itens.find((x) => x.id === r.id); if (it) Object.assign(it, r);
       tr.querySelector('.adm-nome').value = r.nome; tr.querySelector('.adm-ovr').value = Math.round(r.ovr);

@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 8, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -1379,6 +1379,27 @@ t('ADM: editar o modelo de um legado atualiza as cópias dos técnicos somando o
   } finally {
     V(`delete from tc_jogadores where legado_base = ${modelo.id} and org_id = 1`);
     V(`update tc_jogadores set nome = '${modelo.nome}', mec = ${modelo.mec}, rotas = ${modelo.rotas}, macro = ${modelo.macro}, tf = ${modelo.tf}, mental = ${modelo.mental}, potencial = ${modelo.potencial} where id = ${modelo.id}`);
+  }
+});
+
+t('ADM: alterar a raridade de um legado muda o modelo e as cópias; comum fictício e raridade inválida são recusados', () => {
+  const modelo = J("select to_jsonb(j) from tc_jogadores j where not j.ficticio and j.legado_base is null order by id limit 1");
+  const cols = 'nome, ficticio, genero, pos, pos2, idade, regiao, retrato, potencial, fama, forma, exp, raridade, mec, rotas, macro, tf, mental';
+  V(`insert into tc_jogadores (${cols}, org_id, legado_base) select ${cols}, 1, id from tc_jogadores where id = ${modelo.id}`);
+  try {
+    assert.equal(falha(`select tc_adm_jogador_raridade(${modelo.id}, 'mitico')`, 5), 'not_admin');
+    assert.equal(falha(`select tc_adm_jogador_raridade(${modelo.id}, 'divino')`, 1), 'raridade_invalida');
+    const fic = V("select id from tc_jogadores where ficticio limit 1");
+    assert.equal(falha(`select tc_adm_jogador_raridade(${fic}, 'raro')`, 1), 'so_legado');
+    const nova = modelo.raridade === 'epico' ? 'raro' : 'epico';
+    const r = J(`select tc_adm_jogador_raridade(${modelo.id}, '${nova}')`, 1);
+    assert.equal(r.raridade, nova); assert.equal(r.modelo, true);
+    assert.equal(V(`select raridade from tc_jogadores where legado_base = ${modelo.id} and org_id = 1`), nova, 'a cópia do técnico acompanha');
+    assert.equal(J(`select tc_adm_jogador_raridade((select id from tc_jogadores where legado_base = ${modelo.id} and org_id = 1), 'comum')`, 1).raridade, 'comum');
+    assert.equal(V(`select raridade from tc_jogadores where id = ${modelo.id}`), 'comum', 'pela cópia também muda o modelo');
+  } finally {
+    V(`delete from tc_jogadores where legado_base = ${modelo.id} and org_id = 1`);
+    V(`update tc_jogadores set raridade = ${modelo.raridade ? `'${modelo.raridade}'` : 'null'} where id = ${modelo.id}`);
   }
 });
 

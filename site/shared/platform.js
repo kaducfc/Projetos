@@ -1029,6 +1029,8 @@ const ERROS_TECNICO = {
   campanha_invalida: 'Essa campanha não existe.',
   contrato_inexistente: 'Esse contrato de patrocínio não existe.',
   not_admin: 'Só administradores podem fazer essa alteração.',
+  raridade_invalida: 'Raridade inválida.',
+  so_legado: 'Só jogadores legados têm raridade.',
   atributo_invalido: 'Atributo inválido.',
   jogador_treinando: 'Esse jogador já está em treinamento.',
   treinos_demais: 'Você já tem o máximo de treinos ao mesmo tempo. Espere algum terminar.',
@@ -1157,6 +1159,7 @@ export const tecnico = {
   mercadoOficial: (f) => rpcTecnico('tc_mercado_oficial', { f }),
   mercadoRotacao: () => rpcTecnico('tc_mercado_rotacao'),
   admJogadores: (f) => rpcTecnico('tc_adm_jogadores', { f }), // só administradores
+  admJogadorRaridade: (jid, rar) => rpcTecnico('tc_adm_jogador_raridade', { jid, rar }),
   admJogadorEditar: (jid, nome, a) => rpcTecnico('tc_adm_jogador_editar', { jid, nome_: nome, mec_: a.mec, rotas_: a.rotas, macro_: a.macro, tf_: a.tf, mental_: a.mental }),
   contratar: (jogador, semanas, chave) => rpcTecnico('tc_contratar', { jogador, semanas, chave_: chave }),
   escalar: (vaga, jogador, semanas = null) => rpcTecnico('tc_escalar', { vaga, jogador, semanas }),
