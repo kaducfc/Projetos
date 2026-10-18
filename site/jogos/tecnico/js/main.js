@@ -243,6 +243,11 @@ function titulares() {
   (S.meu.elenco || []).filter((j) => j.slot).forEach((j) => { por[j.slot] = j; });
   return por;
 }
+// Troféu de cada campeonato (arte em img/trofeus): Mundial, Copa, Nacional e Academy.
+const trofeuChave = (t) => (/mundial/i.test(t) ? 'mundial' : /copa/i.test(t) ? 'copa' : /nacional|principal/i.test(t) ? 'nacional' : 'academy');
+const trofeuImg = (t, h = 56) => `<img class="tc-trofeu" src="img/trofeus/${trofeuChave(t)}.webp" alt="" height="${h}" loading="lazy" />`;
+const trofeusLista = (l) => `<ul class="tc-trofeus">${l.map((t) => `<li>${trofeuImg(t.titulo)}<span>${esc(t.titulo)}<small class="tc-mudo">Temporada ${esc(t.temporada)}</small></span></li>`).join('')}</ul>`;
+
 // Notícias do Início: a partida do dia enquanto ela não foi jogada; depois, o que aconteceu (vitória, final, campeão...) até o dia virar.
 function hojeIso() {
   const c = S.painel?.calendario;
@@ -263,7 +268,7 @@ function noticiaDestaque(minhas, hoje, minha) {
   const encerrada = liga?.status === 'encerrada';
   if (ult.fase === 'final') {
     return venci(ult)
-      ? { cls: 'campeao', selo: '🏆', titulo: 'Você é campeão!', texto: `Venceu a final da ${esc(liga.nome)} contra ${adv(ult)} (${placar(ult)}).`, pos: 1 }
+      ? { cls: 'campeao', selo: trofeuImg(liga.nome, 84), titulo: 'Você é campeão!', texto: `Venceu a final da ${esc(liga.nome)} contra ${adv(ult)} (${placar(ult)}).`, pos: 1 }
       : { cls: 'vice', selo: '🥈', titulo: 'Vice-campeão', texto: `Perdeu a final da ${esc(liga.nome)} para ${adv(ult)} (${placar(ult)}).`, pos: 2 };
   }
   if (ult.fase === 'semi' || ult.fase === 'quartas') {
@@ -324,7 +329,7 @@ function viewVisao() {
     <div style="display:flex;flex-direction:column;gap:16px">
       <section class="tc-card"><h3>Avisos</h3>${(m.avisos || []).length ? `<ul class="tc-avisos">${m.avisos.slice(0, 6).map((a) => `<li>${esc(a.texto)}</li>`).join('')}</ul>` : '<p class="tc-mudo" style="margin:0">Nada por aqui. Contratos próximos do fim e vendas aparecem nesta lista.</p>'}</section>
       <section class="tc-card"><h3>Finanças</h3>${financasHtml(p.financas)}</section>
-      ${(p.trofeus || []).length ? `<section class="tc-card"><h3>Troféus</h3><ul class="tc-avisos">${p.trofeus.map((t) => `<li>🏆 ${esc(t.titulo)}</li>`).join('')}</ul></section>` : ''}
+      ${(p.trofeus || []).length ? `<section class="tc-card"><h3>Troféus</h3>${trofeusLista(p.trofeus)}</section>` : ''}
     </div>
   </div>
   ${(p.ultimos || []).length ? `<section class="tc-card"><h3>Últimos resultados</h3><div class="tc-lista">${p.ultimos.map((x) => partidaLinha(x)).join('')}</div></section>` : ''}`;
@@ -492,7 +497,7 @@ function viewHist() {
     <section class="tc-card"><h3>Transferências e contratos</h3>${h.transferencias.length ? `<table class="tc-tabela"><tbody>${h.transferencias.map((t) => `<tr><td><b>${esc(t.jogador)}</b><br><span class="tc-mudo tc-peq">${tipos[t.tipo] || t.tipo}${t.de ? ` · de ${esc(t.de)}` : ''}${t.para ? ` · para ${esc(t.para)}` : ''}</span></td><td class="n">${t.valor ? `<span class="tc-preco ${t.moeda === 'rc' ? 'rc' : 'cr'}">${fmt(t.valor)}</span>` : '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Nada ainda.</p>'}</section>
     <div style="display:flex;flex-direction:column;gap:16px">
       <section class="tc-card"><h3>Premiações</h3>${h.premios.length ? `<table class="tc-tabela"><tbody>${h.premios.map((p) => `<tr><td>${esc(p.liga)}<br><span class="tc-mudo tc-peq">${p.posicao}º lugar${p.pdr != null ? ` · ${p.pdr > 0 ? '+' : ''}${p.pdr} PDR` : ''}</span></td><td class="n"><span class="tc-preco cr">${fmt(p.creditos)}</span></td></tr>`).join('')}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Sem premiações ainda.</p>'}</section>
-      <section class="tc-card"><h3>Troféus</h3>${h.trofeus.length ? `<ul class="tc-avisos">${h.trofeus.map((t) => `<li>🏆 ${esc(t.titulo)}</li>`).join('')}</ul>` : '<p class="tc-mudo" style="margin:0">Nenhum troféu ainda.</p>'}</section>
+      <section class="tc-card"><h3>Troféus</h3>${h.trofeus.length ? `${trofeusLista(h.trofeus)}` : '<p class="tc-mudo" style="margin:0">Nenhum troféu ainda.</p>'}</section>
       <section class="tc-card"><h3>Finanças</h3>${financasHtml(h.financas)}</section></div></div>
     <section class="tc-card"><h3>Partidas</h3>${h.partidas.length ? `<div class="tc-lista">${h.partidas.map((p) => partidaLinha(p)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Nenhuma partida disputada.</p>'}</section>`;
 }

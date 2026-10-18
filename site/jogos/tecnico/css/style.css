@@ -537,3 +537,11 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .chip.v { background: #11452f; border-color: #2fbf7a; color: #6af0aa; }
 .chip.d { background: #4a1820; border-color: #e0525f; color: #ff8a94; }
 .chip.a { background: #2d2410; border-color: #d6a62b; color: #f5cf5a; }
+
+/* troféus dos campeonatos */
+.tc-trofeus { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.tc-trofeus li { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border: 1px solid var(--linha); background: rgba(5, 13, 28, .6); }
+.tc-trofeus li span { display: flex; flex-direction: column; font-size: 14px; }
+.tc-trofeu { display: block; width: auto; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .55)); }
+.tc-noti .selo .tc-trofeu { filter: drop-shadow(0 0 12px rgba(245, 207, 90, .55)); }
+.tc-noti .selo:has(.tc-trofeu) { width: auto; }
