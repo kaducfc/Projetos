@@ -9,9 +9,11 @@ export const iniciarMarketing = (ctx) => { C = ctx; };
 const ABAS_MKT = [['visao', 'Visão geral'], ['marketing', 'Marketing'], ['patro', 'Patrocinadores'], ['aud', 'Audiência e jogadores'], ['fin', 'Histórico financeiro']];
 const X = { e: null, aba: 'visao', fin: null, timer: null, t0: 0 };
 const CAT = { local: 'Local', regional: 'Regional', nacional: 'Nacional', internacional: 'Internacional', premium: 'Premium' };
-const MOTIVOS = {
-  mkt_receita: 'Receita do marketing', mkt_melhoria: 'Melhoria de marketing', mkt_contrato: 'Contrato de patrocínio', mkt_renovacao: 'Renovação automática',
-  mkt_campanha: 'Campanha de marketing',
+// Nomes das movimentações de créditos (Finanças e Histórico financeiro).
+export const MOTIVOS = {
+  inicial: 'Créditos iniciais', contratacao: 'Contratação de jogador', contrato: 'Contrato de jogador', renovacao: 'Renovação de contrato', rescisao: 'Rescisão de contrato',
+  salarios: 'Salários da semana', premiacao: 'Premiação de campeonato', treino: 'Treinamento', bau: 'Baú de recrutamento',
+  mkt_receita: 'Marketing', mkt_melhoria: 'Marketing · Melhoria', mkt_contrato: 'Marketing · Patrocínio', mkt_renovacao: 'Marketing · Renovação de patrocínio', mkt_campanha: 'Marketing · Campanha',
 };
 
 const pct = (v) => `${(v * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`;

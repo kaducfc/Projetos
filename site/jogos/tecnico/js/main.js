@@ -14,7 +14,7 @@ import { escudoOrg, retratoSvg, iconeVaga } from './art.js';
 import { N_EMBLEMAS, N_BANDEIRAS, PARTES_EMBLEMA, PARTES_BANDEIRA, PALETA, ICONE_PADRAO, icClone, icCodificar, icDecodificar, icHtml, emblemaHtml } from './icone.js';
 import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js';
 import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
-import { iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js';
+import { MOTIVOS as NOMES_FIN, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js';
 
 const GAME_ID = 'tecnico';
 const app = document.getElementById('app');
@@ -359,8 +359,7 @@ function viewVisao() {
 
 function financasHtml(f) {
   if (!f || !f.length) return '<p class="tc-mudo" style="margin:0">Sem movimentações ainda.</p>';
-  const nomes = { inicial: 'Créditos iniciais', contratacao: 'Contratação', renovacao: 'Contrato', salarios: 'Salários da semana', premiacao: 'Premiação' };
-  return `<table class="tc-tabela"><tbody>${f.map((x) => `<tr><td>${nomes[x.motivo] || esc(x.motivo)}</td><td class="n" style="color:${x.delta >= 0 ? 'var(--bom)' : 'var(--ruim)'}">${x.delta >= 0 ? '+' : '−'}${fmt(Math.abs(x.delta))}</td></tr>`).join('')}</tbody></table>`;
+  return `<table class="tc-tabela"><tbody>${f.slice(0, 20).map((x) => `<tr><td>${NOMES_FIN[x.motivo] || esc(x.motivo)}</td><td class="n" style="color:${x.delta >= 0 ? 'var(--bom)' : 'var(--ruim)'}">${x.delta >= 0 ? '+' : '−'}${fmt(Math.abs(x.delta))}</td></tr>`).join('')}</tbody></table>`;
 }
 
 function tabelaHtml(tab, meuId, compacta = false) {
@@ -516,7 +515,7 @@ function viewHist() {
   const h = S.hist; if (!h) return '<p class="tc-carregando">Carregando…</p>';
   const tipos = { inicial: 'Elenco inicial', contratacao: 'Contratação', compra_usuario: 'Compra entre usuários', renovacao: 'Renovação', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' };
   return `<div class="tc-grade2">
-    <section class="tc-card"><h3>Transferências e contratos</h3>${h.transferencias.length ? `<table class="tc-tabela"><tbody>${h.transferencias.map((t) => `<tr><td><b>${esc(t.jogador)}</b><br><span class="tc-mudo tc-peq">${tipos[t.tipo] || t.tipo}${t.de ? ` · de ${esc(t.de)}` : ''}${t.para ? ` · para ${esc(t.para)}` : ''}</span></td><td class="n">${t.valor ? `<span class="tc-preco ${t.moeda === 'rc' ? 'rc' : 'cr'}">${fmt(t.valor)}</span>` : '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Nada ainda.</p>'}</section>
+    <section class="tc-card"><h3>Transferências e contratos</h3>${h.transferencias.length ? `<table class="tc-tabela"><tbody>${h.transferencias.slice(0, 20).map((t) => `<tr><td><b>${esc(t.jogador)}</b><br><span class="tc-mudo tc-peq">${tipos[t.tipo] || t.tipo}${t.de ? ` · de ${esc(t.de)}` : ''}${t.para ? ` · para ${esc(t.para)}` : ''}</span></td><td class="n">${t.valor ? `<span class="tc-preco ${t.moeda === 'rc' ? 'rc' : 'cr'}">${fmt(t.valor)}</span>` : '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Nada ainda.</p>'}</section>
     <div style="display:flex;flex-direction:column;gap:16px">
       <section class="tc-card"><h3>Premiações</h3>${h.premios.length ? `<table class="tc-tabela"><tbody>${h.premios.map((p) => `<tr><td>${esc(p.liga)}<br><span class="tc-mudo tc-peq">${p.posicao}º lugar${p.pdr != null ? ` · ${p.pdr > 0 ? '+' : ''}${p.pdr} PDR` : ''}</span></td><td class="n"><span class="tc-preco cr">${fmt(p.creditos)}</span></td></tr>`).join('')}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Sem premiações ainda.</p>'}</section>
       <section class="tc-card"><h3>Troféus</h3>${h.trofeus.length ? `${trofeusLista(h.trofeus)}` : '<p class="tc-mudo" style="margin:0">Nenhum troféu ainda.</p>'}</section>
