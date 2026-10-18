@@ -255,7 +255,7 @@ test('Início: as notícias mostram a partida do dia e, depois de jogar, o resul
   const trecho = main.slice(main.indexOf('function hojeIso()'), main.indexOf('function viewVisao()'));
   const org = (id, nome) => ({ id, nome });
   const eu = org(1, 'Fenix'), adv = org(2, 'Rival');
-  const mk = (S) => new Function('S', 'esc', 'IMG', 'vsCard', 'escudoOrg', 'dataCurta', 'FASES', 'trofeuImg', 'trofeuChave', 'BANNERS', 'temBanner', `${trecho}; return viewNoticias;`)(S, (x) => String(x ?? ''), () => '', () => '<vs/>', () => '', (d) => d, { rodada: 'Rodada', quartas: 'Quartas', semi: 'Semifinal', final: 'Final' }, (t) => `<img src="trofeu-${/academy/i.test(t) ? 'academy' : 'outro'}">`, (t) => (/academy/i.test(t) ? 'academy' : /copa/i.test(t) ? 'copa' : /mundial/i.test(t) ? 'mundial' : 'nacional'), new Set(['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice', 'final', 'eliminado', 'vitoria', 'derrota', 'misto']), (k) => (['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice', 'final', 'eliminado', 'vitoria', 'derrota', 'misto'].includes(k) ? k : null));
+  const mk = (S) => new Function('S', 'esc', 'IMG', 'vsCard', 'escudoOrg', 'dataCurta', 'FASES', 'trofeuImg', 'trofeuChave', 'BANNERS', 'temBanner', `${trecho}; return viewNoticias;`)(S, (x) => String(x ?? ''), () => '', () => '<vs/>', () => '', (d) => d, { rodada: 'Rodada', quartas: 'Quartas', semi: 'Semifinal', final: 'Final' }, (t) => `<img src="trofeu-${/academy/i.test(t) ? 'academy' : 'outro'}">`, (t) => (/academy/i.test(t) ? 'academy' : /copa/i.test(t) ? 'copa' : /mundial/i.test(t) ? 'mundial' : 'nacional'), new Set(['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice', 'final', 'eliminado', 'vitoria', 'derrota', 'misto', 'emdia']), (k) => (['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice', 'final', 'eliminado', 'vitoria', 'derrota', 'misto', 'emdia'].includes(k) ? k : null));
   const cal = { antes: false, inicio_semana: '2026-11-02', dia: 7 }; // domingo 08/11
   const jogo = (o) => ({ id: 1, fase: 'final', dia: '2026-11-08', formato: 5, a: eu, b: adv, status: 'concluida', placar_a: 3, placar_b: 1, vencedor: 1, ...o });
   const base = (partidas, extra = {}) => ({ meu: { org: { id: 1 } }, gp: { ativo: true, partida: null }, painel: { calendario: cal, liga: { nome: 'Liga Academy', status: 'encerrada', partidas }, proxima: null, ...extra } });
@@ -297,6 +297,8 @@ test('Início: as notícias mostram a partida do dia e, depois de jogar, o resul
   const prox = jogo({ id: 8, fase: 'rodada', rodada: 5, status: 'agendada', dia: '2026-11-09', placar_a: null, placar_b: null, vencedor: null, formato: 1 });
   const S3 = base([r1, r2, prox], { proxima: prox }); S3.painel.liga.status = 'aberta';
   h = mk(S3)({ pos: 2, pontos: 4 }); assert.match(h, /Duas vit/); assert.match(h, /img\/banners\/vitoria\.webp/); assert.match(h, /2º lugar/); assert.match(h, /Próxima partida/);
-  // outro dia sem partidas agendadas e sem resultados: mensagem simples, sem quebrar
-  const S4 = base([]); S4.painel.liga.status = 'aberta'; assert.match(mk(S4)(null), /Tudo em dia|Sem partidas/);
+  // dia sem partidas suas (resultado de dias antes): "tudo em dia" com banner; sem nenhum jogo: também
+  const velho = jogo({ id: 12, fase: 'semi', formato: 3, dia: '2026-11-07', vencedor: 2, placar_a: 1, placar_b: 2 });
+  const S5 = base([velho]); S5.painel.liga.status = 'aberta'; h = mk(S5)(null); assert.match(h, /Tudo em dia/); assert.match(h, /img\/banners\/emdia\.webp/); assert.doesNotMatch(h, /Eliminado/);
+  const S4 = base([]); S4.painel.liga.status = 'aberta'; assert.match(mk(S4)(null), /Tudo em dia/);
 });

@@ -248,7 +248,7 @@ const trofeuChave = (t) => (/mundial/i.test(t) ? 'mundial' : /copa/i.test(t) ? '
 const trofeuImg = (t, h = 56) => `<img class="tc-trofeu" src="img/trofeus/${trofeuChave(t)}.webp" alt="" height="${h}" loading="lazy" />`;
 // Notícias que já têm banner (img/banners/<chave>.webp, e a versão -800 para telas pequenas): campeao-<campeonato> e vice.
 // Para uma notícia nova ganhar banner: salvar as duas imagens e incluir a chave em BANNERS.
-const BANNERS = new Set(['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice', 'final', 'eliminado', 'vitoria', 'derrota', 'misto']);
+const BANNERS = new Set(['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice', 'final', 'eliminado', 'vitoria', 'derrota', 'misto', 'emdia']);
 const temBanner = (k) => (BANNERS.has(k) ? k : null);
 const trofeusLista = (l) => `<ul class="tc-trofeus">${l.map((t) => `<li>${trofeuImg(t.titulo)}<span>${esc(t.titulo)}<small class="tc-mudo">Temporada ${esc(t.temporada)}</small></span></li>`).join('')}</ul>`;
 
@@ -260,12 +260,15 @@ function hojeIso() {
   return new Date(Date.UTC(y, m - 1, d + c.dia - 1)).toISOString().slice(0, 10);
 }
 const ORD = (n) => `${n}º`;
+// Dia sem partidas suas (por exemplo, já eliminado): o técnico assiste ao campeonato de casa.
+const noticiaEmDia = () => ({ cls: 'neutro', selo: '•', banner: temBanner('emdia'), estiloBanner: 'azul', titulo: 'Tudo em dia', texto: 'Você não tem partidas hoje. Acompanhe o campeonato de casa e prepare o elenco.' });
 function noticiaDestaque(minhas, hoje, minha) {
   const meu = S.meu.org.id;
   const liga = S.painel?.liga;
   const feitas = minhas.filter((x) => x.status === 'concluida');
   const ult = feitas[feitas.length - 1];
   if (!ult) return null;
+  if (hoje && ult.dia < hoje) return noticiaEmDia(); // o resultado só vale como notícia no próprio dia
   const venci = (x) => x.vencedor === meu;
   const placar = (x) => (x.a.id === meu ? `${x.placar_a} × ${x.placar_b}` : `${x.placar_b} × ${x.placar_a}`);
   const adv = (x) => esc((x.a.id === meu ? x.b : x.a).nome);
@@ -312,7 +315,7 @@ function viewNoticias(minha) {
     const lista = (doDia.length ? doDia : [prox]).map((x) => confrontoBanner(x, meu)).join('');
     return `<section class="tc-card tc-prox"><h3>${IMG('i-msg')}Notícias<span class="dir">${doDia.length > 1 ? 'confrontos do dia' : 'partida do dia'}</span></h3><div class="tc-confrontos">${lista}</div>${jogar}</section>`;
   }
-  const d = noticiaDestaque(minhas, hoje, minha);
+  const d = noticiaDestaque(minhas, hoje, minha) || noticiaEmDia();
   const campEnc = p.liga?.status === 'encerrada';
   let rodape = '';
   if (prox && prox.id) rodape = `<div class="tc-noti-prox"><small>Próxima partida · ${dataCurta(prox.dia)}</small><div class="tc-noti-vs">${escudoOrg(prox.a, 30)}<b>${esc(prox.a.nome)}</b><span>×</span><b>${esc(prox.b.nome)}</b>${escudoOrg(prox.b, 30)}</div></div>`;
@@ -322,7 +325,7 @@ function viewNoticias(minha) {
     ? `<div class="tc-noti-banner${d.textoTopo ? ' topo' : ''}${d.estiloBanner ? ` ${d.estiloBanner}` : ''}"><img src="img/banners/${d.banner}.webp" srcset="img/banners/${d.banner}-800.webp 800w, img/banners/${d.banner}.webp 1400w" sizes="(max-width: 900px) 100vw, 860px" alt="" /><div class="tc-noti-banner-txt"><b class="tit">${d.titulo}</b><p>${d.texto}</p></div></div>`
     : d
     ? `<div class="tc-noti ${d.cls}"><div class="selo" aria-hidden="true">${d.selo}</div><div><b class="tit">${d.titulo}</b><p>${d.texto}</p></div></div>`
-    : '<div class="tc-noti neutro"><div class="selo" aria-hidden="true">•</div><div><b class="tit">Tudo em dia</b><p>Você já jogou o que tinha para hoje.</p></div></div>';
+    : '';
   return `<section class="tc-card tc-prox"><h3>${IMG('i-msg')}Notícias</h3>${corpo}${rodape}</section>`;
 }
 
