@@ -2,6 +2,7 @@
 // O OVR (Poder) é a média ponderada dos 5 atributos com os pesos da posição que o servidor manda: mudar um atributo recalcula o OVR e
 // mudar o OVR reescala os atributos para chegar nele.
 import * as platform from '../../../shared/platform.js';
+import { retratoSvg } from './art.js';
 
 const api = platform.tecnico;
 let C = null; // contexto de main.js: { S, esc, agir, toast, render }
@@ -33,6 +34,7 @@ export async function carregarAdm() { X.dados = await api.admJogadores(X.f); }
 
 const linha = (j) => `<tr data-adm="${j.id}" data-pesos="${j.pesos.join(',')}">
   <td class="n">${j.id}</td>
+  <td class="adm-foto">${retratoSvg(j, 48)}</td>
   <td><input class="tc-input adm-nome" value="${C.esc(j.nome)}" maxlength="24" /><small class="tc-mudo">${POS[j.pos]} · ${j.ficticio ? 'comum' : 'legado'} · ${j.time ? C.esc(j.time.sigla) + (j.time.tecnico ? ' ★' : '') : 'livre'}</small></td>
   <td><input class="tc-input adm-ovr" type="number" min="1" max="100" value="${Math.round(j.ovr)}" title="OVR (Poder): mudar aqui reescala os atributos" /></td>
   ${ATR.map(([k, n]) => `<td><div class="adm-atr"><button type="button" data-act="adm-menos" data-k="${k}" aria-label="diminuir ${n}">−</button><input class="tc-input adm-a" data-k="${k}" type="number" min="1" max="100" value="${j[k]}" /><button type="button" data-act="adm-mais" data-k="${k}" aria-label="aumentar ${n}">+</button></div></td>`).join('')}
@@ -48,7 +50,7 @@ export function viewAdmJogadores() {
       <label>Posição<select name="pos"><option value="">Todas</option>${Object.entries(POS).map(([v, n]) => `<option value="${v}" ${f.pos === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
       <label>De quem<select name="dono">${[['', 'Todos'], ['livre', 'Livres (mercado)'], ['sistema', 'Equipes do sistema'], ['tecnico', 'Técnicos'], ['legado', 'Legados']].map(([v, n]) => `<option value="${v}" ${f.dono === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
       <div class="tc-acoes" style="align-self:end"><button class="tc-btn ciano" type="submit">Filtrar</button></div></form>
-    ${d ? `<div class="tc-tabela-rolagem"><table class="tc-tabela adm-tab"><thead><tr><th class="n">ID</th><th>Nome</th><th>OVR</th>${ATR.map(([, n]) => `<th>${n}</th>`).join('')}<th></th></tr></thead><tbody>${d.itens.map(linha).join('')}</tbody></table></div>
+    ${d ? `<div class="tc-tabela-rolagem"><table class="tc-tabela adm-tab"><thead><tr><th class="n">ID</th><th></th><th>Nome</th><th>OVR</th>${ATR.map(([, n]) => `<th>${n}</th>`).join('')}<th></th></tr></thead><tbody>${d.itens.map(linha).join('')}</tbody></table></div>
     <div class="tc-acoes" style="justify-content:space-between;margin-top:8px"><button class="tc-btn" type="button" data-act="adm-pag" data-d="-1" ${f.pagina <= 0 ? 'disabled' : ''}>← Anterior</button><span class="tc-mudo">Página ${f.pagina + 1} de ${paginas}</span><button class="tc-btn" type="button" data-act="adm-pag" data-d="1" ${f.pagina + 1 >= paginas ? 'disabled' : ''}>Próxima →</button></div>` : '<p class="tc-carregando">Carregando…</p>'}</section>`;
 }
 

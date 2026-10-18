@@ -19,7 +19,7 @@ declare
   o tc_orgs;
 begin
   select * into o from tc_orgs where id = j.org_id;
-  return jsonb_build_object('id', j.id, 'nome', j.nome, 'pos', j.pos, 'ficticio', j.ficticio, 'idade', j.idade, 'potencial', j.potencial, 'fama', j.fama,
+  return jsonb_build_object('id', j.id, 'nome', j.nome, 'pos', j.pos, 'ficticio', j.ficticio, 'idade', j.idade, 'potencial', j.potencial, 'fama', j.fama, 'retrato', j.retrato,
     'mec', j.mec, 'rotas', j.rotas, 'macro', j.macro, 'tf', j.tf, 'mental', j.mental,
     'ovr', round(tc_poder(j)::numeric, 1), 'pesos', to_jsonb(w),
     'time', case when o.id is null then null else jsonb_build_object('id', o.id, 'nome', o.nome, 'sigla', o.sigla, 'tecnico', o.user_id is not null) end);

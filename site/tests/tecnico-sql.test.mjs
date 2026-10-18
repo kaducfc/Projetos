@@ -1286,7 +1286,7 @@ t('ADM: só administrador lista e edita jogadores; o OVR vem dos atributos (peso
   const l = J("select tc_adm_jogadores('{\"pos\":\"meio\"}')", 1);
   assert.ok(l.total > 0 && l.itens.length <= 40 && l.itens.every((x) => x.pos === 'meio'));
   const j = l.itens[0];
-  assert.equal(j.pesos.length, 5); const soma = j.pesos.reduce((a, b) => a + b, 0); assert.ok(Math.abs(soma - 1) < 1e-6);
+  assert.ok('retrato' in j, 'o painel recebe o retrato'); assert.equal(j.pesos.length, 5); const soma = j.pesos.reduce((a, b) => a + b, 0); assert.ok(Math.abs(soma - 1) < 1e-6);
   const calc = j.pesos[0] * j.mec + j.pesos[1] * j.rotas + j.pesos[2] * j.macro + j.pesos[3] * j.tf + j.pesos[4] * j.mental;
   assert.ok(Math.abs(calc - j.ovr) < 0.06, 'o OVR mostrado bate com os pesos');
   const e = J(`select tc_adm_jogador_editar(${j.id}, 'Nome Editado', 90, 90, 90, 90, 90)`, 1);
