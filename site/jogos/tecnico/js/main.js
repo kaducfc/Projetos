@@ -289,9 +289,12 @@ function noticiaDestaque(minhas, hoje, minha) {
 }
 // Banner do confronto do dia: time azul à esquerda, vermelho à direita (as faixas livres do fundo), VS no centro e a data na base.
 function confrontoBanner(p, meu) {
-  const lado = (o, cls) => `<div class="tc-conf-time ${cls}">${escudoOrg(o, 96)}<b class="nome">${esc(o.nome)}</b>${o.id === meu ? '<small class="voce">Seu time</small>' : ''}</div>`;
+  // os dois nomes usam o mesmo tamanho de letra: o do maior nome, para caber numa linha só
+  const maior = Math.max(String(p.a.nome).length, String(p.b.nome).length, 1);
+  const nf = Math.min(3.8, 21 / (maior * 0.46)).toFixed(2);
+  const lado = (o, cls) => `<div class="tc-conf-time ${cls}"><div class="emb">${escudoOrg(o, 96)}</div><b class="nome">${esc(o.nome)}</b>${o.id === meu ? '<small class="voce">Seu time</small>' : ''}</div>`;
   const info = [dataCurta(p.dia), p.fase === 'rodada' ? `rodada ${p.rodada}` : FASES[p.fase] || '', `melhor de ${p.formato}`].filter(Boolean).join(' · ');
-  return `<div class="tc-confronto"><img src="img/banners/confronto.webp" srcset="img/banners/confronto-800.webp 800w, img/banners/confronto.webp 1400w" sizes="(max-width: 900px) 100vw, 860px" alt="" />
+  return `<div class="tc-confronto" style="--nf:${nf}cqw"><img src="img/banners/confronto.webp" srcset="img/banners/confronto-800.webp 800w, img/banners/confronto.webp 1400w" sizes="(max-width: 900px) 100vw, 860px" alt="" />
     <span class="tc-conf-topo">Partida do dia</span>${lado(p.a, 'a')}<b class="tc-conf-vs">VS</b>${lado(p.b, 'b')}<span class="tc-conf-info">${esc(info)}</span></div>`;
 }
 function viewNoticias(minha) {
