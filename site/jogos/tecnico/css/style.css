@@ -605,10 +605,11 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 @keyframes tc-circuito { to { --tc-ang: 360deg; } }
 @media (prefers-reduced-motion: reduce) { .tc-card::before { animation: none; display: none; } }
 
-/* ---- Molduras dos cartões de jogador por raridade (cada nível mais imponente que o anterior) ----
-   Sem raridade / Comum: azul simples, parado.   Raro: ciano com uma luz lenta na borda.
-   Épico: roxo, luz na borda e brilho interno que pulsa.   Lendário: dourado, duas luzes, brilho e reflexo que cruza o cartão.
-   Mítico: vermelho em chamas — borda de fogo girando, faísca branca, brasas subindo, brilho que pulsa e reflexo. */
+/* ---- Molduras dos cartões de jogador por raridade: o efeito fica SÓ na borda (o miolo do cartão não muda) ----
+   Sem raridade / Comum: azul simples, parado.   Raro: ciano, uma luz lenta percorrendo a borda.
+   Épico: roxo, luz mais rápida e comprida.   Lendário: dourado, duas luzes opostas.
+   Mítico: borda de fogo girando, faísca branca em sentido contrário e pequenos raios saindo da moldura. */
+@property --tc-ang2 { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 .tc-jog { padding: 2px; background: linear-gradient(180deg, #5b9dff, #1d3f8f); }
 .tc-jog::before, .tc-jog::after { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; display: none; }
 .tc-jog.r-raro::before, .tc-jog.r-epico::before, .tc-jog.r-lendario::before, .tc-jog.r-mitico::before {
@@ -616,10 +617,8 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
 @keyframes tc-gira { to { --tc-ang: 360deg; } }
-@keyframes tc-gira-volta { from { --tc-ang: 360deg; } to { --tc-ang: 0deg; } }
-@keyframes tc-pulso-brilho { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
-@keyframes tc-reflexo { 0% { background-position: 160% 0; } 55%, 100% { background-position: -60% 0; } }
-@keyframes tc-brasas { to { background-position: 6px -70px, 20px -90px, 30px -56px, 0 0; } }
+@keyframes tc-gira2 { to { --tc-ang2: -360deg; } }
+@keyframes tc-raios { 0%, 100% { background-position: 0 0; opacity: 0; } 6% { opacity: 1; } 30% { background-position: 0 0; opacity: .95; } 34% { background-position: 100% 0; opacity: 0; } 50% { background-position: 100% 0; opacity: 0; } 54% { background-position: 100% 0; opacity: 1; } 78% { background-position: 100% 0; opacity: .9; } 82% { background-position: 0 0; opacity: 0; } }
 
 /* raro */
 .tc-jog.r-raro { background: linear-gradient(180deg, #4ee3f5, #0e6f86); }
@@ -627,28 +626,22 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 
 /* épico */
 .tc-jog.r-epico { background: linear-gradient(180deg, #d9a8ff, #5b21b6); }
-.tc-jog.r-epico::before { background: conic-gradient(from var(--tc-ang), transparent 0 270deg, rgba(240, 214, 255, .95) 350deg, transparent 360deg); animation: tc-gira 5.5s linear infinite; }
-.tc-jog.r-epico::after { display: block; box-shadow: inset 0 0 18px 1px rgba(192, 132, 252, .45); animation: tc-pulso-brilho 3s ease-in-out infinite; }
+.tc-jog.r-epico::before { background: conic-gradient(from var(--tc-ang), transparent 0 250deg, rgba(240, 214, 255, .95) 350deg, transparent 360deg); animation: tc-gira 5.5s linear infinite; }
 
 /* lendário */
 .tc-jog.r-lendario { background: linear-gradient(180deg, #ffe38a, #a8730c); }
-.tc-jog.r-lendario::before { background: conic-gradient(from var(--tc-ang), transparent 0 140deg, rgba(255, 232, 140, .85) 172deg, #fffbe0 180deg, transparent 182deg 320deg, rgba(255, 232, 140, .85) 352deg, #fffbe0 360deg); animation: tc-gira 4.2s linear infinite; }
-.tc-jog.r-lendario::after { display: block; box-shadow: inset 0 0 20px 2px rgba(245, 207, 90, .5);
-  background: linear-gradient(115deg, transparent 42%, rgba(255, 244, 190, .30) 50%, transparent 58%) 160% 0 / 260% 100% no-repeat;
-  animation: tc-pulso-brilho 2.6s ease-in-out infinite, tc-reflexo 5s ease-in-out infinite; }
+.tc-jog.r-lendario::before { background: conic-gradient(from var(--tc-ang), transparent 0 130deg, rgba(255, 232, 140, .85) 168deg, #fffbe0 180deg, transparent 182deg 310deg, rgba(255, 232, 140, .85) 348deg, #fffbe0 360deg); animation: tc-gira 4.2s linear infinite; }
 
-/* mítico: o próprio fundo da moldura é o fogo que gira */
-.tc-jog.r-mitico { background: conic-gradient(from var(--tc-ang), #ff1744, #6e000f 22%, #ff7a2e 40%, #fff0c8 48%, #ff3b4e 56%, #4d000a 78%, #ff1744); animation: tc-gira 3.2s linear infinite; }
-.tc-jog.r-mitico { padding: 3px; }
-.tc-jog.r-mitico::before { padding: 3px; background: conic-gradient(from var(--tc-ang), transparent 0 150deg, rgba(255, 255, 255, .85) 176deg, transparent 182deg 330deg, #fff 354deg, transparent 360deg); animation: tc-gira-volta 2.2s linear infinite; filter: drop-shadow(0 0 4px #ff3b4e); }
-.tc-jog.r-mitico::after { display: block; mix-blend-mode: screen; box-shadow: inset 0 0 34px 6px rgba(255, 30, 56, .7);
-  background-image: radial-gradient(circle, #ffb27a 0 1.2px, transparent 2px), radial-gradient(circle, #ff6a4a 0 1px, transparent 1.8px), radial-gradient(circle, #ffd9a0 0 1px, transparent 1.6px),
-                    linear-gradient(115deg, transparent 42%, rgba(255, 190, 170, .28) 50%, transparent 58%);
-  background-size: 46px 70px, 62px 90px, 38px 56px, 260% 100%; background-position: 6px 0, 20px 10px, 30px 4px, 160% 0; background-repeat: repeat, repeat, repeat, no-repeat;
-  animation: tc-pulso-brilho 1.7s ease-in-out infinite, tc-brasas 2.8s linear infinite; }
-.tc-jog.r-mitico { box-shadow: none; }
+/* mítico: a moldura inteira é o fogo; sem recorte do botão, para os raios poderem sair para fora da borda */
+.tc-jog.r-mitico { padding: 3px; background: none; clip-path: none; overflow: visible; box-shadow: none; }
+.tc-jog.r-mitico .foto { clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%); }
+.tc-jog.r-mitico::before { padding: 3px; clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+  background: conic-gradient(from var(--tc-ang2), transparent 0 150deg, rgba(255, 255, 255, .9) 176deg, transparent 182deg 330deg, #fff 354deg, transparent 360deg),
+              conic-gradient(from var(--tc-ang), #ff1744, #6e000f 22%, #ff7a2e 40%, #fff0c8 48%, #ff3b4e 56%, #4d000a 78%, #ff1744);
+  animation: tc-gira 3.2s linear infinite, tc-gira2 2.2s linear infinite; }
+.tc-jog.r-mitico::after { display: block; inset: -11px; z-index: 4; background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 100%22 preserveAspectRatio=%22none%22%3E%3Cg fill=%22none%22 stroke=%22%23ff2a44%22 stroke-width=%223.4%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 %3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M20,3.1 l1.6,-1.4 l-2.2,-1 l2,-1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M52,3.1 l1.2000000000000002,-1.4 l-2.2,-1 l2,-1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M77,3.1 l1.6,-1.4 l-2.2,-1 l2,-1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M14,96.9 l1.6,1.4 l-2.2,1 l2,1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M60,96.9 l1.6,1.4 l-2.2,1 l2,1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M3.2,24 l-1.4,1.6 l1.8,.9 l-1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M3.2,63 l-1.4,1.6 l1.8,.9 l-1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M3.2,86 l-1.4,1.6 l1.8,.9 l-1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M96.8,33 l1.4,1.6 l-1.8,.9 l1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M96.8,72 l1.4,1.6 l-1.8,.9 l1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M34,3.1 l1.6,-1.4 l-2.2,-1 l2,-1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M66,3.1 l1.9000000000000001,-1.4 l-2.2,-1 l2,-1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M88,3.1 l1.6,-1.4 l-2.2,-1 l2,-1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M30,96.9 l1.6,1.4 l-2.2,1 l2,1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M82,96.9 l1.6,1.4 l-2.2,1 l2,1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M3.2,14 l-1.4,1.6 l1.8,.9 l-1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M3.2,45 l-1.4,1.6 l1.8,.9 l-1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M3.2,76 l-1.4,1.6 l1.8,.9 l-1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M96.8,18 l1.4,1.6 l-1.8,.9 l1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M96.8,52 l1.4,1.6 l-1.8,.9 l1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M96.8,88 l1.4,1.6 l-1.8,.9 l1.6,1.4%22/%3E%3C/g%3E%3Cg fill=%22none%22 stroke=%22%23fff4f0%22 stroke-width=%221.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 vector-effect=%22non-scaling-stroke%22%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M20,3.1 l1.6,-1.4 l-2.2,-1 l2,-1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M52,3.1 l1.2000000000000002,-1.4 l-2.2,-1 l2,-1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M77,3.1 l1.6,-1.4 l-2.2,-1 l2,-1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M14,96.9 l1.6,1.4 l-2.2,1 l2,1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M60,96.9 l1.6,1.4 l-2.2,1 l2,1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M3.2,24 l-1.4,1.6 l1.8,.9 l-1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M3.2,63 l-1.4,1.6 l1.8,.9 l-1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M3.2,86 l-1.4,1.6 l1.8,.9 l-1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M96.8,33 l1.4,1.6 l-1.8,.9 l1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(0 0)%22 d=%22M96.8,72 l1.4,1.6 l-1.8,.9 l1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M34,3.1 l1.6,-1.4 l-2.2,-1 l2,-1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M66,3.1 l1.9000000000000001,-1.4 l-2.2,-1 l2,-1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M88,3.1 l1.6,-1.4 l-2.2,-1 l2,-1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M30,96.9 l1.6,1.4 l-2.2,1 l2,1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M82,96.9 l1.6,1.4 l-2.2,1 l2,1%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M3.2,14 l-1.4,1.6 l1.8,.9 l-1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M3.2,45 l-1.4,1.6 l1.8,.9 l-1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M3.2,76 l-1.4,1.6 l1.8,.9 l-1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M96.8,18 l1.4,1.6 l-1.8,.9 l1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M96.8,52 l1.4,1.6 l-1.8,.9 l1.6,1.4%22/%3E%3Cpath vector-effect=%22non-scaling-stroke%22 transform=%22translate(100 0)%22 d=%22M96.8,88 l1.4,1.6 l-1.8,.9 l1.6,1.4%22/%3E%3C/g%3E%3C/svg%3E") 0 0 / 200% 100% no-repeat; filter: drop-shadow(0 0 3px #ff2a44); animation: tc-raios 2.4s steps(1, end) infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .tc-jog::before, .tc-jog::after, .tc-jog.r-mitico { animation: none !important; }
-  .tc-jog.r-mitico { background: linear-gradient(180deg, #ff4a5c, #7a0010); }
+  .tc-jog::before, .tc-jog::after { animation: none !important; }
+  .tc-jog.r-mitico::after { display: none; }
 }
