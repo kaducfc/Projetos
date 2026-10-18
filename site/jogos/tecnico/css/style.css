@@ -481,3 +481,30 @@ form.tc-card[data-form="filtros"] { padding: 16px 0 14px; }
 .adm-tab tr.sujo .tc-btn { box-shadow: 0 0 10px #f5cf5a88; }
 
 .adm-foto img, .adm-foto svg { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid var(--linha); display: block; }
+
+/* campeonatos: dias minimizados e chaveamento */
+.tc-dia { border: 1px solid var(--linha); border-radius: 10px; margin-top: 8px; background: #08172e; overflow: hidden; }
+.tc-dia-cab { width: 100%; display: grid; grid-template-columns: 18px auto 1fr; align-items: center; gap: 10px; padding: 10px 12px; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: var(--txt); }
+.tc-dia-cab:hover { background: #0c2040; }
+.tc-dia-cab .seta { color: var(--ouro2); }
+.tc-dia-cab .res { text-align: right; color: var(--mudo); font-size: 13px; }
+.tc-dia.aberto .tc-lista { padding: 6px 10px 10px; border-top: 1px solid var(--linha); }
+.ch { display: flex; gap: 34px; align-items: stretch; overflow-x: auto; padding: 6px 2px 10px; }
+.ch-col { display: flex; flex-direction: column; gap: 10px; min-width: 210px; position: relative; flex: 1; }
+.ch-cards { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 14px; }
+.ch-col h5 { margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ouro2); text-align: center; }
+.ch-c { display: grid; gap: 2px; padding: 6px; border: 1px solid var(--linha); border-radius: 10px; background: #08172e; text-align: left; position: relative; font: inherit; color: var(--txt); }
+.ch-c small { color: var(--mudo); font-size: 11px; text-align: center; margin-top: 2px; }
+button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover { border-color: var(--ciano); }
+.ch-c.pend { opacity: 0.85; }
+.ch-col:not(:last-child) .ch-c::after { content: ''; position: absolute; right: -35px; top: 50%; width: 34px; border-top: 2px solid #2b5a8f; }
+.ch-t { display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; background: #0b2140; }
+.ch-t span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 13.5px; }
+.ch-t b { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--mudo); min-width: 14px; text-align: right; }
+.ch-t.v { background: #123a2a; box-shadow: inset 3px 0 var(--bom); } .ch-t.v b { color: var(--ouro2); }
+.ch-t.p { opacity: 0.55; }
+.ch-t.eu span { color: var(--ouro2); }
+.ch-t.vazio span { color: var(--mudo); font-weight: 500; font-style: italic; }
+.ch-camp { display: grid; place-items: center; gap: 6px; padding: 18px 10px; border: 1px dashed var(--linha); border-radius: 12px; text-align: center; min-height: 150px; align-content: center; }
+.ch-camp.tem { border: 1px solid var(--ouro2); background: radial-gradient(circle at 50% 30%, #3a2c08, #08172e 70%); box-shadow: 0 0 18px #f5cf5a33; }
+.ch-camp b { font-size: 16px; } .ch-camp span { color: var(--ouro2); font-size: 12px; letter-spacing: 0.1em; }

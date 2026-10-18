@@ -358,15 +358,57 @@ function viewCamp() {
   if (S.camp.antes) return `<section class="tc-card"><p class="tc-mudo" style="margin:0">A primeira temporada começa em ${esc(dataCurta(S.camp.inicio))}.</p></section>`;
   const ligas = S.camp.ligas; const l = ligaAtual();
   if (!l) return '<section class="tc-card"><p class="tc-mudo" style="margin:0">Ainda não há campeonatos em andamento.</p></section>';
-  const dias = {};
-  l.partidas.forEach((p) => { (dias[p.dia] ||= []).push(p); });
   return `<section class="tc-card"><h3>Campeonatos<span class="dir">Temporada ${l.temporada} · semana ${l.semana}</span></h3>
       <label class="campo" style="max-width:420px"><span class="tc-mudo tc-peq">Competição</span><select class="tc-input" data-act="liga-sel">${ligas.map((x) => `<option value="${x.id}" ${x.id === l.id ? 'selected' : ''}>${esc(x.nome)}${x.status === 'aberta' ? ' (em andamento)' : ''}</option>`).join('')}</select></label>
       <p class="tc-peq tc-mudo" style="margin:10px 0 0">${regrasLiga(l)}</p></section>
     ${l.tipo !== 'divisao' ? `<section class="tc-card"><h3>Classificados</h3>${tabelaClassificados(l)}</section>` : ''}
-    <section class="tc-card"><h3>Calendário e resultados</h3>${Object.keys(dias).sort().map((d) => `<h4 class="tc-eyebrow" style="margin:12px 0 6px">${dataCurta(d)} · ${FASES[dias[d][0].fase] || ''}${dias[d][0].fase === 'rodada' ? ` ${dias[d][0].rodada}` : ''}</h4><div class="tc-lista">${dias[d].map((p) => partidaLinha(p)).join('')}</div>`).join('')}</section>`;
+    ${chaveamento(l)}
+    <section class="tc-card"><h3>Calendário e resultados</h3>${diasHtml(l)}</section>`;
 }
 const FASES = { rodada: 'Rodada', quartas: 'Quartas de final', semi: 'Semifinal', final: 'Final' };
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+// Rodadas minimizadas: um bloco por dia (2 rodadas) com resumo dos seus resultados; clicar abre os confrontos.
+function resumoDia(ps) {
+  const meu = S.meu?.org?.id; const meus = ps.filter((p) => p.a.id === meu || p.b.id === meu);
+  if (!meus.length) return plural(ps.length, 'partida', 'partidas');
+  const feitas = meus.filter((p) => p.status === 'concluida'); const v = feitas.filter((p) => p.vencedor === meu).length; const d = feitas.length - v;
+  const partes = [];
+  if (v) partes.push(plural(v, 'vitória', 'vitórias')); if (d) partes.push(plural(d, 'derrota', 'derrotas'));
+  if (meus.length - feitas.length) partes.push(`${meus.length - feitas.length} a jogar`);
+  return partes.join(' · ');
+}
+function diasHtml(l) {
+  const dias = {};
+  l.partidas.filter((p) => p.fase === 'rodada' || !['semi', 'final'].includes(p.fase)).forEach((p) => { (dias[p.dia] ||= []).push(p); });
+  const abertos = S.campAbertos || (S.campAbertos = {});
+  return Object.keys(dias).sort().map((d) => {
+    const ps = dias[d]; const chave = `${l.id}:${d}`; const aberto = !!abertos[chave];
+    const rods = [...new Set(ps.map((p) => p.rodada))].sort((x, y) => x - y);
+    const titulo = ps[0].fase === 'rodada' ? `${dataCurta(d)} · ${rods.length > 1 ? `Rodadas ${rods.join(' e ')}` : `Rodada ${rods[0]}`}` : `${dataCurta(d)} · ${FASES[ps[0].fase] || ''}`;
+    return `<div class="tc-dia ${aberto ? 'aberto' : ''}"><button type="button" class="tc-dia-cab" data-act="camp-dia" data-k="${chave}" aria-expanded="${aberto}"><span class="seta">${aberto ? '▾' : '▸'}</span><b>${titulo}</b><span class="res">${esc(resumoDia(ps))}</span></button>
+      ${aberto ? `<div class="tc-lista">${ps.map((p) => partidaLinha(p)).join('')}</div>` : ''}</div>`;
+  }).join('');
+}
+// Chaveamento (semifinais -> final -> campeão); os times aparecem avançando conforme os resultados.
+function chaveamento(l) {
+  const sem = l.partidas.filter((p) => p.fase === 'semi'); if (!sem.length && !l.partidas.some((p) => p.fase === 'final')) return '';
+  const meu = S.meu?.org?.id;
+  const time = (org, placar, venceu, perdeu) => (org ? `<div class="ch-t ${venceu ? 'v' : ''} ${perdeu ? 'p' : ''} ${org.id === meu ? 'eu' : ''}">${escudoOrg(org, 24)}<span>${esc(org.nome)}</span><b>${placar ?? ''}</b></div>` : '<div class="ch-t vazio"><span>A definir</span><b></b></div>');
+  const cartao = (p, slots) => {
+    if (!p) return `<div class="ch-c pend">${time(slots[0], null)}${time(slots[1], null)}</div>`;
+    const feita = p.status === 'concluida';
+    return `<button type="button" class="ch-c ${feita ? '' : 'pend'}" ${feita ? `data-act="partida" data-id="${p.id}"` : 'disabled'}>${time(p.a, feita ? p.placar_a : null, feita && p.vencedor === p.a.id, feita && p.vencedor !== p.a.id)}${time(p.b, feita ? p.placar_b : null, feita && p.vencedor === p.b.id, feita && p.vencedor !== p.b.id)}<small>${dataCurta(p.dia)} · MD${p.formato}</small></button>`;
+  };
+  const final = l.partidas.find((p) => p.fase === 'final');
+  const venc = (p) => (p && p.status === 'concluida' ? (p.vencedor === p.a.id ? p.a : p.b) : null);
+  const colunas = [];
+  const quartas = l.partidas.filter((p) => p.fase === 'quartas'); if (quartas.length) colunas.push(['Quartas de final', quartas.map((p) => cartao(p)).join('')]);
+  colunas.push(['Semifinais', sem.map((p) => cartao(p)).join('')]);
+  colunas.push(['Final', cartao(final, [venc(sem[0]), venc(sem[1])])]);
+  const campeao = venc(final);
+  colunas.push(['Campeão', `<div class="ch-camp ${campeao ? 'tem' : ''}">${campeao ? `${escudoOrg(campeao, 56)}<b>${esc(campeao.nome)}</b><span>🏆 Campeão</span>` : '<span class="tc-mudo">A definir</span>'}</div>`]);
+  return `<section class="tc-card"><h3>Chaveamento</h3><div class="ch">${colunas.map(([t, h]) => `<div class="ch-col"><h5>${t}</h5><div class="ch-cards">${h}</div></div>`).join('')}</div></section>`;
+}
 function regrasLiga(l) {
   if (l.tipo === 'copa') return `Reúne os técnicos que ficaram entre os 2 primeiros da ${esc(nomeLiga().principal)} na semana 1 (as vagas que sobrarem são de equipes do sistema). Semifinais e final, sempre em melhor de cinco mapas.`;
   if (l.tipo === 'mundial') return `Reúne os técnicos que foram finalistas (2 primeiros) da ${esc(nomeLiga().principal)} nas semanas 1 a 3, mais o campeão da ${esc(nomeLiga().copa)} se for técnico. Quartas, semifinais e final em melhor de cinco mapas.`;
@@ -609,6 +651,7 @@ document.addEventListener('click', async (e) => {
   if (act === 'fechar-fundo') { if (e.target === b) { S.modal = null; render(); } return; }
   if (act === 'semanas' || act === 'liga-sel' || act === 'preco-anuncio') return;
   if (act === 'aba') { S.aba = b.dataset.aba; render(); await carregarAba(); render(); window.scrollTo({ top: 0 }); return; }
+  if (act === 'camp-dia') { const ab = S.campAbertos || (S.campAbertos = {}); ab[b.dataset.k] = !ab[b.dataset.k]; render(); return; }
   if (act === 'adm-aba') { S.admAba = b.dataset.v; render(); await carregarAba(); render(); return; }
   if (act.startsWith('adm-') && S.ehAdmin) { if (await tratarAdm(act, b)) render(); return; }
   if (act === 'camp-pos') { // administrador: inclui/tira uma posição do campeão (fica salvo no servidor)
