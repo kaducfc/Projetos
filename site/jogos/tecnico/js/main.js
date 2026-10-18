@@ -14,7 +14,7 @@ import { escudoOrg, retratoSvg, iconeVaga } from './art.js';
 import { N_EMBLEMAS, N_BANDEIRAS, PARTES_EMBLEMA, PARTES_BANDEIRA, PALETA, ICONE_PADRAO, icClone, icCodificar, icDecodificar, icHtml, emblemaHtml } from './icone.js';
 import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js';
 import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
-import { MOTIVOS as NOMES_FIN, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js';
+import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js';
 
 const GAME_ID = 'tecnico';
 const app = document.getElementById('app');
@@ -360,7 +360,7 @@ function viewVisao() {
 
 function financasHtml(f) {
   if (!f || !f.length) return '<p class="tc-mudo" style="margin:0">Sem movimentações ainda.</p>';
-  return `<table class="tc-tabela"><tbody>${f.slice(0, 20).map((x) => `<tr><td>${NOMES_FIN[x.motivo] || esc(x.motivo)}</td><td class="n" style="color:${x.delta >= 0 ? 'var(--bom)' : 'var(--ruim)'}">${x.delta >= 0 ? '+' : '−'}${fmt(Math.abs(x.delta))}</td></tr>`).join('')}</tbody></table>`;
+  return `<table class="tc-tabela"><tbody>${f.slice(0, 20).map((x) => `<tr><td>${nomeMovimento(x)}</td><td class="n" style="color:${x.delta >= 0 ? 'var(--bom)' : 'var(--ruim)'}">${x.delta >= 0 ? '+' : '−'}${fmt(Math.abs(x.delta))}</td></tr>`).join('')}</tbody></table>`;
 }
 
 function tabelaHtml(tab, meuId, compacta = false) {

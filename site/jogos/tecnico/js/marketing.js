@@ -10,6 +10,11 @@ const ABAS_MKT = [['visao', 'Visão geral'], ['marketing', 'Marketing'], ['patro
 const X = { e: null, aba: 'visao', fin: null, timer: null, t0: 0 };
 const CAT = { local: 'Local', regional: 'Regional', nacional: 'Nacional', internacional: 'Internacional', premium: 'Premium' };
 // Nomes das movimentações de créditos (Finanças e Histórico financeiro).
+// Nome de uma movimentação de créditos; a receita do marketing é um lançamento por dia ("Marketing · Ganhos 18/10").
+export const nomeMovimento = (x) => {
+  const d = x.motivo === 'mkt_receita' && /^dia:\d{4}-\d{2}-\d{2}$/.test(x.ref || '') ? x.ref.slice(4).split('-') : null;
+  return d ? `Marketing · Ganhos ${d[2]}/${d[1]}` : MOTIVOS[x.motivo] || C.esc(x.motivo);
+};
 export const MOTIVOS = {
   inicial: 'Créditos iniciais', contratacao: 'Contratação de jogador', contrato: 'Contrato de jogador', renovacao: 'Renovação de contrato', rescisao: 'Rescisão de contrato',
   salarios: 'Salários da semana', premiacao: 'Premiação de campeonato', treino: 'Treinamento', bau: 'Baú de Recrutamento',
@@ -130,7 +135,7 @@ function viewAud(e) {
 }
 function viewFin() {
   if (!X.fin) return '<p class="tc-carregando">Carregando…</p>';
-  const lin = X.fin.slice(0, 30).map((x) => `<tr><td>${quando(x.criado)}</td><td>${MOTIVOS[x.motivo] || C.esc(x.motivo)}</td><td class="n" style="color:${x.delta >= 0 ? 'var(--bom)' : 'var(--ruim)'}">${x.delta >= 0 ? '+' : '−'}${C.fmt(Math.abs(x.delta))}</td><td class="n">${C.fmt(x.saldo)}</td></tr>`).join('');
+  const lin = X.fin.slice(0, 30).map((x) => `<tr><td>${quando(x.criado)}</td><td>${nomeMovimento(x)}</td><td class="n" style="color:${x.delta >= 0 ? 'var(--bom)' : 'var(--ruim)'}">${x.delta >= 0 ? '+' : '−'}${C.fmt(Math.abs(x.delta))}</td><td class="n">${C.fmt(x.saldo)}</td></tr>`).join('');
   return `<section class="tc-card"><h3>Histórico financeiro<span class="dir">últimos ${Math.min(30, X.fin.length)}</span></h3><p class="tc-mudo tc-peq" style="margin:0 0 8px">A receita passiva é lançada de forma consolidada (um lançamento por processamento), não segundo a segundo.</p>
     <table class="tc-tabela"><thead><tr><th>Quando</th><th>O quê</th><th class="n">Valor</th><th class="n">Saldo</th></tr></thead><tbody>${lin || '<tr><td colspan="4" class="tc-mudo">Sem lançamentos.</td></tr>'}</tbody></table></section>`;
 }
