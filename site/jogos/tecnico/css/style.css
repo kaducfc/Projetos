@@ -545,3 +545,11 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-trofeu { display: block; width: auto; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .55)); }
 .tc-noti .selo .tc-trofeu { filter: drop-shadow(0 0 12px rgba(245, 207, 90, .55)); }
 .tc-noti .selo:has(.tc-trofeu) { width: auto; }
+
+/* banner de comemoração (campeão): imagem em 21:9 com o texto sobre um degradê escuro na base */
+.tc-noti-banner { position: relative; overflow: hidden; border: 1px solid #d9a82b; box-shadow: 0 0 22px rgba(245, 207, 90, .28); aspect-ratio: 21 / 9; background: #050d1c; clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); }
+.tc-noti-banner img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
+.tc-noti-banner-txt { position: absolute; left: 0; right: 0; bottom: 0; padding: 48px 18px 14px; background: linear-gradient(to top, rgba(3, 8, 20, .92), rgba(3, 8, 20, .55) 55%, transparent); text-align: center; }
+.tc-noti-banner-txt .tit { display: block; font-family: 'Bebas Neue', sans-serif; font-size: 44px; line-height: 1; letter-spacing: .05em; color: #f5cf5a; text-shadow: 0 0 16px rgba(245, 207, 90, .65), 0 2px 6px rgba(0, 0, 0, .8); }
+.tc-noti-banner-txt p { margin: 4px 0 0; font-size: 14px; color: #e8eefc; text-shadow: 0 1px 4px rgba(0, 0, 0, .8); }
+@media (max-width: 600px) { .tc-noti-banner { aspect-ratio: 16 / 10; } .tc-noti-banner-txt .tit { font-size: 32px; } }

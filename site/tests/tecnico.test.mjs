@@ -255,13 +255,15 @@ test('Início: as notícias mostram a partida do dia e, depois de jogar, o resul
   const trecho = main.slice(main.indexOf('function hojeIso()'), main.indexOf('function viewVisao()'));
   const org = (id, nome) => ({ id, nome });
   const eu = org(1, 'Fenix'), adv = org(2, 'Rival');
-  const mk = (S) => new Function('S', 'esc', 'IMG', 'vsCard', 'escudoOrg', 'dataCurta', 'FASES', 'trofeuImg', `${trecho}; return viewNoticias;`)(S, (x) => String(x ?? ''), () => '', () => '<vs/>', () => '', (d) => d, { rodada: 'Rodada', quartas: 'Quartas', semi: 'Semifinal', final: 'Final' }, (t) => `<img src="trofeu-${/academy/i.test(t) ? 'academy' : 'outro'}">`);
+  const mk = (S) => new Function('S', 'esc', 'IMG', 'vsCard', 'escudoOrg', 'dataCurta', 'FASES', 'trofeuImg', 'trofeuChave', 'BANNER_CAMPEAO', `${trecho}; return viewNoticias;`)(S, (x) => String(x ?? ''), () => '', () => '<vs/>', () => '', (d) => d, { rodada: 'Rodada', quartas: 'Quartas', semi: 'Semifinal', final: 'Final' }, (t) => `<img src="trofeu-${/academy/i.test(t) ? 'academy' : 'outro'}">`, (t) => (/academy/i.test(t) ? 'academy' : 'nacional'), new Set(['academy']));
   const cal = { antes: false, inicio_semana: '2026-11-02', dia: 7 }; // domingo 08/11
   const jogo = (o) => ({ id: 1, fase: 'final', dia: '2026-11-08', formato: 5, a: eu, b: adv, status: 'concluida', placar_a: 3, placar_b: 1, vencedor: 1, ...o });
   const base = (partidas, extra = {}) => ({ meu: { org: { id: 1 } }, gp: { ativo: true, partida: null }, painel: { calendario: cal, liga: { nome: 'Liga Academy', status: 'encerrada', partidas }, proxima: null, ...extra } });
   // campeão: depois de jogar a final
   let h = mk(base([jogo({})]))({ pos_final: 1, pos: 1, pontos: 6 });
-  assert.match(h, /campe[aã]o/i); assert.match(h, /final da Liga Academy/); assert.match(h, /trofeu-academy/); assert.doesNotMatch(h, /Jogar a partida/);
+  assert.match(h, /campe[aã]o/i); assert.match(h, /final da Liga Academy/); assert.match(h, /tc-noti-banner/); assert.match(h, /campeao-academy\.webp/); assert.doesNotMatch(h, /Jogar a partida/);
+  // campeão de outro campeonato sem banner: usa o troféu
+  const sN = base([jogo({})]); sN.painel.liga.nome = 'Liga Nacional'; h = mk(sN)({ pos_final: 1 }); assert.match(h, /trofeu-outro/); assert.doesNotMatch(h, /tc-noti-banner/);
   // vice
   h = mk(base([jogo({ vencedor: 2, placar_a: 1, placar_b: 3 })]))({ pos_final: 2 }); assert.match(h, /Vice-campe/);
   // partida do dia pendente: mostra o confronto e o botão de jogar
