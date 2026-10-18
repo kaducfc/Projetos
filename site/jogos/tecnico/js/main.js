@@ -368,14 +368,16 @@ function viewCamp() {
 const FASES = { rodada: 'Rodada', quartas: 'Quartas de final', semi: 'Semifinal', final: 'Final' };
 const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 // Rodadas minimizadas: um bloco por dia (2 rodadas) com resumo dos seus resultados; clicar abre os confrontos.
-function resumoDia(ps) {
+function resumoDia(ps) { // devolve { html, cls }: vitórias em verde, derrotas em vermelho, jogos pendentes em dourado
   const meu = S.meu?.org?.id; const meus = ps.filter((p) => p.a.id === meu || p.b.id === meu);
-  if (!meus.length) return plural(ps.length, 'partida', 'partidas');
+  if (!meus.length) return { html: `<span class="chip">${plural(ps.length, 'partida', 'partidas')}</span>`, cls: '' };
   const feitas = meus.filter((p) => p.status === 'concluida'); const v = feitas.filter((p) => p.vencedor === meu).length; const d = feitas.length - v;
-  const partes = [];
-  if (v) partes.push(plural(v, 'vitória', 'vitórias')); if (d) partes.push(plural(d, 'derrota', 'derrotas'));
-  if (meus.length - feitas.length) partes.push(`${meus.length - feitas.length} a jogar`);
-  return partes.join(' · ');
+  const pend = meus.length - feitas.length;
+  const chips = [];
+  if (v) chips.push(`<span class="chip v">${plural(v, 'vitória', 'vitórias')}</span>`);
+  if (d) chips.push(`<span class="chip d">${plural(d, 'derrota', 'derrotas')}</span>`);
+  if (pend) chips.push(`<span class="chip a">${pend} a jogar</span>`);
+  return { html: chips.join(''), cls: pend ? 'a' : v && !d ? 'v' : d && !v ? 'd' : 'm' };
 }
 function diasHtml(l) {
   const dias = {};
@@ -385,7 +387,8 @@ function diasHtml(l) {
     const ps = dias[d]; const chave = `${l.id}:${d}`; const aberto = !!abertos[chave];
     const rods = [...new Set(ps.map((p) => p.rodada))].sort((x, y) => x - y);
     const titulo = ps[0].fase === 'rodada' ? `${dataCurta(d)} · ${rods.length > 1 ? `Rodadas ${rods.join(' e ')}` : `Rodada ${rods[0]}`}` : `${dataCurta(d)} · ${FASES[ps[0].fase] || ''}`;
-    return `<div class="tc-dia ${aberto ? 'aberto' : ''}"><button type="button" class="tc-dia-cab" data-act="camp-dia" data-k="${chave}" aria-expanded="${aberto}"><span class="seta">${aberto ? '▾' : '▸'}</span><b>${titulo}</b><span class="res">${esc(resumoDia(ps))}</span></button>
+    const r = resumoDia(ps);
+    return `<div class="tc-dia r-${r.cls} ${aberto ? 'aberto' : ''}"><button type="button" class="tc-dia-cab" data-act="camp-dia" data-k="${chave}" aria-expanded="${aberto}"><span class="seta">${aberto ? '▾' : '▸'}</span><b>${titulo}</b><span class="res">${r.html}</span></button>
       ${aberto ? `<div class="tc-lista">${ps.map((p) => partidaLinha(p)).join('')}</div>` : ''}</div>`;
   }).join('');
 }

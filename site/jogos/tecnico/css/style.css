@@ -508,3 +508,15 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .ch-camp { display: grid; place-items: center; gap: 6px; padding: 18px 10px; border: 1px dashed var(--linha); border-radius: 12px; text-align: center; min-height: 150px; align-content: center; }
 .ch-camp.tem { border: 1px solid var(--ouro2); background: radial-gradient(circle at 50% 30%, #3a2c08, #08172e 70%); box-shadow: 0 0 18px #f5cf5a33; }
 .ch-camp b { font-size: 16px; } .ch-camp span { color: var(--ouro2); font-size: 12px; letter-spacing: 0.1em; }
+
+/* resumo colorido dos dias */
+.tc-dia { border-left: 4px solid var(--linha); }
+.tc-dia.r-v { border-left-color: var(--bom); background: linear-gradient(90deg, #0f2d22 0%, #08172e 45%); }
+.tc-dia.r-d { border-left-color: var(--ruim); background: linear-gradient(90deg, #35141a 0%, #08172e 45%); }
+.tc-dia.r-m { border-left-color: #d6a62b; background: linear-gradient(90deg, #2d2410 0%, #08172e 45%); }
+.tc-dia.r-a { border-left-color: var(--ciano); }
+.tc-dia-cab .res { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+.chip { padding: 3px 11px; border-radius: 99px; font-size: 12.5px; font-weight: 800; letter-spacing: 0.03em; border: 1px solid #3a4a66; background: #12223e; color: var(--mudo); }
+.chip.v { background: #11452f; border-color: #2fbf7a; color: #6af0aa; }
+.chip.d { background: #4a1820; border-color: #e0525f; color: #ff8a94; }
+.chip.a { background: #2d2410; border-color: #d6a62b; color: #f5cf5a; }
