@@ -86,6 +86,8 @@ function botaoRegistrar(el, r, acoes) {
     b.disabled = true; aviso.textContent = 'Registrando…';
     const { eventos, ...enviar } = r;
     try {
+      const picks = (l) => Object.fromEntries(l.map((j) => [j.pos, j.campeao]));
+      await api.gameplayDraft(aqui.id, aqui.mapa, { picks: { azul: picks(aqui.azul), vermelho: picks(aqui.vermelho) }, bans: aqui.bans });
       const rr = await api.gameplayRegistrar(aqui.id, aqui.mapa, enviar);
       if (rr.concluida) { aviso.innerHTML = `Partida concluída: ${rr.placar_a} × ${rr.placar_b}. <a style="color:#f5cf5a" href="../">Voltar ao simulador</a>`; }
       else { aviso.innerHTML = `Mapa registrado (${rr.placar_a} × ${rr.placar_b}). A série continua. <a style="color:#f5cf5a" href="" onclick="location.reload();return false">Jogar o próximo mapa</a>`; }

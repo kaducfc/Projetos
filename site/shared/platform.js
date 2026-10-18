@@ -1083,6 +1083,9 @@ const ERROS_TECNICO = {
   favoritos_demais: 'Um jogador pode ter no máximo 5 campeões favoritos.',
   gameplay_desligado: 'As partidas jogadas ainda não estão liberadas.',
   partida_nao_e_sua: 'Essa partida não é da sua equipe.',
+  draft_invalido: 'O draft enviado não é válido.',
+  draft_nao_enviado: 'O draft deste mapa não foi enviado.',
+  draft_diferente_da_partida: 'Os campeões da partida não batem com o draft.',
   lado_invalido: 'Lado inválido.',
   lado_ja_escolhido: 'O lado deste mapa já foi escolhido.',
   nao_e_sua_escolha: 'Quem escolhe o lado deste mapa é o adversário.',
@@ -1146,6 +1149,7 @@ export const tecnico = {
   campeaoPosicoes: (id, posicoes) => rpcTecnico('tc_campeao_posicoes', { cid: id, pos: posicoes }), // só administradores
   gameplayPendente: () => rpcTecnico('tc_gameplay_pendente', {}),
   partidaElencos: (pid) => rpcTecnico('tc_partida_elencos', { pid }),
+  gameplayDraft: (pid, mapa, draft) => rpcTecnico('tc_gameplay_draft', { pid, mapa_: mapa, draft }),
   gameplayEscolherLado: (pid, lado) => rpcTecnico('tc_gameplay_escolher_lado', { pid, lado }),
   gameplayRegistrar: (pid, mapa, resultado) => rpcTecnico('tc_gameplay_registrar', { pid, mapa_: mapa, resultado }),
   criarOrg: (a) => rpcTecnico('tc_criar_org', { nome_: a.nome, sigla_: a.sigla, escudo_: a.escudo, cor1_: a.cor1, cor2_: a.cor2, estilo_: a.estilo }),
