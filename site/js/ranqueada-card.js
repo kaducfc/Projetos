@@ -78,8 +78,6 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
     const dias = Math.round((Date.parse(s.hoje.dia) - Date.parse(s.ultima_atividade)) / 864e5);
     if (dias >= 2) inativo = `<p class="small rk-queda perigo">${dias} dias sem jogar: do Ouro para cima, a partir do ${INATIVIDADE.dias + 1}º dia parado perde ${Math.abs(INATIVIDADE.pdr)} PDR por dia. Jogue qualquer jogo hoje para evitar.</p>`;
   }
-  const n = s.jogou ? nivelElo(d.elo) : -1;
-  const liberados = BENEFICIOS.filter((b) => nivelElo(b.elo) <= n && beneficioVisivel(b));
   const hist = (s.historico || []).slice(0, 6).map((h) => {
     const a = divisaoDe(h.antes);
     const b = divisaoDe(h.depois);
@@ -95,7 +93,6 @@ export function cardMinhaRanqueada(s, { link = true } = {}) {
       <p class="muted small">Hoje: ${pdrHtml(s.hoje.pdr || 0)}</p>
       <div class="rk-jogos">${jogos}</div>
       ${inativo}
-      ${liberados.length ? `<ul class="rk-benef">${liberados.map((b) => `<li><b>${esc(b.jogo)}:</b> ${esc(b.texto)}</li>`).join('')}</ul>` : ''}
       ${hist ? `<details class="rk-hist-box"><summary class="eyebrow rk-hist-tit">Últimos PDR</summary><ul class="rk-hist">${hist}</ul></details>` : ''}
       ${link ? '<a class="rk-link" href="/ranking/">Ver ranking →</a>' : ''}
     </div>
