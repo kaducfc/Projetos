@@ -248,7 +248,7 @@ const trofeuChave = (t) => (/mundial/i.test(t) ? 'mundial' : /copa/i.test(t) ? '
 const trofeuImg = (t, h = 56) => `<img class="tc-trofeu" src="img/trofeus/${trofeuChave(t)}.webp" alt="" height="${h}" loading="lazy" />`;
 // Notícias que já têm banner (img/banners/<chave>.webp, e a versão -800 para telas pequenas): campeao-<campeonato> e vice.
 // Para uma notícia nova ganhar banner: salvar as duas imagens e incluir a chave em BANNERS.
-const BANNERS = new Set(['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice', 'final']);
+const BANNERS = new Set(['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice', 'final', 'eliminado']);
 const temBanner = (k) => (BANNERS.has(k) ? k : null);
 const trofeusLista = (l) => `<ul class="tc-trofeus">${l.map((t) => `<li>${trofeuImg(t.titulo)}<span>${esc(t.titulo)}<small class="tc-mudo">Temporada ${esc(t.temporada)}</small></span></li>`).join('')}</ul>`;
 
@@ -281,7 +281,7 @@ function noticiaDestaque(minhas, hoje, minha) {
     const nome = FASES[ult.fase].toLowerCase();
     if (venci(ult)) { const fin = minhas.find((x) => x.fase === 'final' && x.status === 'agendada' && x.liga_id === ult.liga_id); return { cls: 'bom', selo: '⚔', banner: ult.fase === 'semi' ? temBanner('final') : null, estiloBanner: 'azul', titulo: ult.fase === 'semi' ? 'Você está na final!' : 'Você avançou!', texto: `Venceu a ${nome} contra ${adv(ult)} (${placar(ult)}).${fin ? ` A final é em ${dataCurta(fin.dia)}.` : ''}` }; }
     const posF = mesmaLiga ? minha?.pos_final : null;
-    return { cls: 'ruim', selo: '✖', titulo: `Eliminado na ${nome}`, texto: `Perdeu para ${adv(ult)} (${placar(ult)}).${encerrada && posF ? ` Terminou o campeonato em ${ORD(posF)}.` : ' Você termina entre os 4 primeiros.'}` };
+    return { cls: 'ruim', selo: '✖', banner: temBanner('eliminado'), estiloBanner: 'vermelho', titulo: `Eliminado na ${nome}`, texto: `Perdeu para ${adv(ult)} (${placar(ult)}).${encerrada && posF ? ` Terminou o campeonato em ${ORD(posF)}.` : ' Você termina entre os 4 primeiros.'}` };
   }
   const deHoje = hoje ? feitas.filter((x) => x.dia === ult.dia) : [ult];
   const vit = deHoje.filter(venci).length; const der = deHoje.length - vit;
