@@ -128,8 +128,8 @@ function viewAud(e) {
 }
 function viewFin() {
   if (!X.fin) return '<p class="tc-carregando">Carregando…</p>';
-  const lin = X.fin.map((x) => `<tr><td>${quando(x.criado)}</td><td>${MOTIVOS[x.motivo] || C.esc(x.motivo)}</td><td class="n" style="color:${x.delta >= 0 ? 'var(--bom)' : 'var(--ruim)'}">${x.delta >= 0 ? '+' : '−'}${C.fmt(Math.abs(x.delta))}</td><td class="n">${C.fmt(x.saldo)}</td></tr>`).join('');
-  return `<section class="tc-card"><h3>Histórico financeiro<span class="dir">últimos ${X.fin.length}</span></h3><p class="tc-mudo tc-peq" style="margin:0 0 8px">A receita passiva é lançada de forma consolidada (um lançamento por processamento), não segundo a segundo.</p>
+  const lin = X.fin.slice(0, 30).map((x) => `<tr><td>${quando(x.criado)}</td><td>${MOTIVOS[x.motivo] || C.esc(x.motivo)}</td><td class="n" style="color:${x.delta >= 0 ? 'var(--bom)' : 'var(--ruim)'}">${x.delta >= 0 ? '+' : '−'}${C.fmt(Math.abs(x.delta))}</td><td class="n">${C.fmt(x.saldo)}</td></tr>`).join('');
+  return `<section class="tc-card"><h3>Histórico financeiro<span class="dir">últimos ${Math.min(30, X.fin.length)}</span></h3><p class="tc-mudo tc-peq" style="margin:0 0 8px">A receita passiva é lançada de forma consolidada (um lançamento por processamento), não segundo a segundo.</p>
     <table class="tc-tabela"><thead><tr><th>Quando</th><th>O quê</th><th class="n">Valor</th><th class="n">Saldo</th></tr></thead><tbody>${lin || '<tr><td colspan="4" class="tc-mudo">Sem lançamentos.</td></tr>'}</tbody></table></section>`;
 }
 export function viewMarketingCentral() {
