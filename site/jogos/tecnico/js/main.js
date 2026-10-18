@@ -247,7 +247,7 @@ function titulares() {
 const trofeuChave = (t) => (/mundial/i.test(t) ? 'mundial' : /copa/i.test(t) ? 'copa' : /nacional|principal/i.test(t) ? 'nacional' : 'academy');
 const trofeuImg = (t, h = 56) => `<img class="tc-trofeu" src="img/trofeus/${trofeuChave(t)}.webp" alt="" height="${h}" loading="lazy" />`;
 // Campeonatos que já têm banner de comemoração (img/banners/campeao-<chave>.webp, e a versão -800 para telas pequenas).
-const BANNER_CAMPEAO = new Set(['academy', 'nacional']);
+const BANNER_CAMPEAO = new Set(['academy', 'nacional', 'copa']);
 const trofeusLista = (l) => `<ul class="tc-trofeus">${l.map((t) => `<li>${trofeuImg(t.titulo)}<span>${esc(t.titulo)}<small class="tc-mudo">Temporada ${esc(t.temporada)}</small></span></li>`).join('')}</ul>`;
 
 // Notícias do Início: a partida do dia enquanto ela não foi jogada; depois, o que aconteceu (vitória, final, campeão...) até o dia virar.
@@ -267,16 +267,18 @@ function noticiaDestaque(minhas, hoje, minha) {
   const venci = (x) => x.vencedor === meu;
   const placar = (x) => (x.a.id === meu ? `${x.placar_a} × ${x.placar_b}` : `${x.placar_b} × ${x.placar_a}`);
   const adv = (x) => esc((x.a.id === meu ? x.b : x.a).nome);
-  const encerrada = liga?.status === 'encerrada';
+  const ligaNome = ult.liga_nome || liga?.nome || '';
+  const mesmaLiga = !!liga && ult.liga_id === liga.id; // a posição final só existe na tabela da liga da divisão
+  const encerrada = mesmaLiga && liga.status === 'encerrada';
   if (ult.fase === 'final') {
     return venci(ult)
-      ? { cls: 'campeao', selo: trofeuImg(liga.nome, 84), banner: BANNER_CAMPEAO.has(trofeuChave(liga.nome)) ? trofeuChave(liga.nome) : null, titulo: 'Você é campeão!', texto: `Venceu a final da ${esc(liga.nome)} contra ${adv(ult)} (${placar(ult)}).`, pos: 1 }
-      : { cls: 'vice', selo: '🥈', titulo: 'Vice-campeão', texto: `Perdeu a final da ${esc(liga.nome)} para ${adv(ult)} (${placar(ult)}).`, pos: 2 };
+      ? { cls: 'campeao', selo: trofeuImg(ligaNome, 84), banner: BANNER_CAMPEAO.has(trofeuChave(ligaNome)) ? trofeuChave(ligaNome) : null, titulo: 'Você é campeão!', texto: `Venceu a final da ${esc(ligaNome)} contra ${adv(ult)} (${placar(ult)}).`, pos: 1 }
+      : { cls: 'vice', selo: '🥈', titulo: 'Vice-campeão', texto: `Perdeu a final da ${esc(ligaNome)} para ${adv(ult)} (${placar(ult)}).`, pos: 2 };
   }
   if (ult.fase === 'semi' || ult.fase === 'quartas') {
     const nome = FASES[ult.fase].toLowerCase();
-    if (venci(ult)) { const fin = minhas.find((x) => x.fase === 'final' && x.status === 'agendada'); return { cls: 'bom', selo: '⚔', titulo: ult.fase === 'semi' ? 'Você está na final!' : 'Você avançou!', texto: `Venceu a ${nome} contra ${adv(ult)} (${placar(ult)}).${fin ? ` A final é em ${dataCurta(fin.dia)}.` : ''}` }; }
-    const posF = minha?.pos_final;
+    if (venci(ult)) { const fin = minhas.find((x) => x.fase === 'final' && x.status === 'agendada' && x.liga_id === ult.liga_id); return { cls: 'bom', selo: '⚔', titulo: ult.fase === 'semi' ? 'Você está na final!' : 'Você avançou!', texto: `Venceu a ${nome} contra ${adv(ult)} (${placar(ult)}).${fin ? ` A final é em ${dataCurta(fin.dia)}.` : ''}` }; }
+    const posF = mesmaLiga ? minha?.pos_final : null;
     return { cls: 'ruim', selo: '✖', titulo: `Eliminado na ${nome}`, texto: `Perdeu para ${adv(ult)} (${placar(ult)}).${encerrada && posF ? ` Terminou o campeonato em ${ORD(posF)}.` : ' Você termina entre os 4 primeiros.'}` };
   }
   const deHoje = hoje ? feitas.filter((x) => x.dia === ult.dia) : [ult];
@@ -288,7 +290,8 @@ function noticiaDestaque(minhas, hoje, minha) {
 function viewNoticias(minha) {
   const p = S.painel || {}; const meu = S.meu.org.id;
   const hoje = hojeIso();
-  const minhas = (p.liga?.partidas || []).filter((x) => x.a.id === meu || x.b.id === meu).sort((a, b) => (a.dia < b.dia ? -1 : a.dia > b.dia ? 1 : a.id - b.id));
+  const todas = new Map(); [...(p.liga?.partidas || []), ...(p.ultimos || []), ...(p.proxima && p.proxima.id ? [p.proxima] : [])].forEach((x) => todas.set(x.id, x)); // inclui Copa e Mundial
+  const minhas = [...todas.values()].filter((x) => x.a.id === meu || x.b.id === meu).sort((a, b) => (a.dia < b.dia ? -1 : a.dia > b.dia ? 1 : a.id - b.id));
   const jogar = S.gp?.ativo && S.gp.partida ? `<p style="text-align:center;margin:12px 0 0"><a class="tc-btn ouro" style="display:inline-block;text-decoration:none" href="partida/?id=${S.gp.partida.id}">Jogar a partida · mapa ${S.gp.proximo?.mapa || 1}</a></p>` : '';
   const pendenteHoje = hoje && minhas.some((x) => x.dia <= hoje && x.status === 'agendada');
   const prox = p.proxima;
