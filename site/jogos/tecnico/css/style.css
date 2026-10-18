@@ -242,6 +242,23 @@ input[type=color].tc-cor { width: 100%; height: 40px; padding: 2px; background: 
 .tc-vs .lado { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 0.05em; }
 .tc-vs .x { font-family: 'Bebas Neue', sans-serif; font-size: 52px; color: #6f86ad; font-style: italic; }
 .tc-vs-info { margin: 4px 0 0; text-align: center; color: var(--mudo); font-size: 13px; }
+.tc-noti { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; padding: 18px 16px; border: 1px solid #2b4a78; background: rgba(5, 13, 28, .78); clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); }
+.tc-noti .selo { font-size: 46px; line-height: 1; width: 70px; text-align: center; }
+.tc-noti .tit { display: block; font-family: 'Bebas Neue', sans-serif; font-size: 38px; letter-spacing: .04em; line-height: 1; margin-bottom: 4px; }
+.tc-noti p { margin: 0; color: var(--txt); font-size: 14px; }
+.tc-noti.campeao { border-color: #d9a82b; background: linear-gradient(120deg, rgba(120, 84, 10, .55), rgba(5, 13, 28, .85)); box-shadow: 0 0 22px rgba(245, 207, 90, .28); animation: tc-noti-brilho 2.4s ease-in-out infinite; }
+.tc-noti.campeao .tit { color: #f5cf5a; text-shadow: 0 0 14px rgba(245, 207, 90, .6); }
+.tc-noti.vice { border-color: #9fb3cf; }
+.tc-noti.vice .tit { color: #d7e2f3; }
+.tc-noti.bom { border-color: #166534; }
+.tc-noti.bom .tit { color: var(--bom); }
+.tc-noti.ruim { border-color: #7f1d1d; }
+.tc-noti.ruim .tit, .tc-noti.ruim .selo { color: var(--ruim); }
+@keyframes tc-noti-brilho { 50% { box-shadow: 0 0 34px rgba(245, 207, 90, .5); } }
+.tc-noti-prox { margin-top: 12px; text-align: center; }
+.tc-noti-prox small { color: var(--mudo); letter-spacing: .08em; text-transform: uppercase; font-size: 11px; }
+.tc-noti-vs { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+.tc-noti-vs span { color: #6f86ad; font-weight: 700; }
 .tc-eco .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .tc-eco .bx { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; border: 1px solid #1d3a63; background: #08162c; text-align: center; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
 .tc-eco .bx small { color: var(--mudo); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; }

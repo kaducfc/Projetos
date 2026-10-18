@@ -249,3 +249,30 @@ test('painel ADM: a aba só aparece para administradores, o cliente chama funç�
   }
   assert.ok(A.atributosParaOvr(a, w, 80).tf > A.atributosParaOvr(a, w, 80).macro, 'mantém as proporções entre os atributos');
 });
+
+test('Início: as notícias mostram a partida do dia e, depois de jogar, o resultado (vitória, final, campeão) até o dia virar', () => {
+  const main = readFileSync(new URL('../jogos/tecnico/js/main.js', import.meta.url), 'utf8');
+  const trecho = main.slice(main.indexOf('function hojeIso()'), main.indexOf('function viewVisao()'));
+  const org = (id, nome) => ({ id, nome });
+  const eu = org(1, 'Fenix'), adv = org(2, 'Rival');
+  const mk = (S) => new Function('S', 'esc', 'IMG', 'vsCard', 'escudoOrg', 'dataCurta', 'FASES', `${trecho}; return viewNoticias;`)(S, (x) => String(x ?? ''), () => '', () => '<vs/>', () => '', (d) => d, { rodada: 'Rodada', quartas: 'Quartas', semi: 'Semifinal', final: 'Final' });
+  const cal = { antes: false, inicio_semana: '2026-11-02', dia: 7 }; // domingo 08/11
+  const jogo = (o) => ({ id: 1, fase: 'final', dia: '2026-11-08', formato: 5, a: eu, b: adv, status: 'concluida', placar_a: 3, placar_b: 1, vencedor: 1, ...o });
+  const base = (partidas, extra = {}) => ({ meu: { org: { id: 1 } }, gp: { ativo: true, partida: null }, painel: { calendario: cal, liga: { nome: 'Liga Academy', status: 'encerrada', partidas }, proxima: null, ...extra } });
+  // campeão: depois de jogar a final
+  let h = mk(base([jogo({})]))({ pos_final: 1, pos: 1, pontos: 6 });
+  assert.match(h, /campe[aã]o/i); assert.match(h, /final da Liga Academy/); assert.doesNotMatch(h, /Jogar a partida/);
+  // vice
+  h = mk(base([jogo({ vencedor: 2, placar_a: 1, placar_b: 3 })]))({ pos_final: 2 }); assert.match(h, /Vice-campe/);
+  // partida do dia pendente: mostra o confronto e o botão de jogar
+  const pend = jogo({ id: 5, fase: 'rodada', rodada: 3, status: 'agendada', formato: 1, placar_a: null, placar_b: null, vencedor: null, dia: '2026-11-08' });
+  const S2 = base([pend], { proxima: pend }); S2.gp = { ativo: true, partida: { id: 5 }, proximo: { mapa: 1 } };
+  h = mk(S2)(null); assert.match(h, /partida do dia/); assert.match(h, /Jogar a partida/); assert.match(h, /<vs\/>/);
+  // depois de jogar as duas do dia: resumo do dia e a próxima partida
+  const r1 = jogo({ id: 6, fase: 'rodada', rodada: 3, formato: 1, placar_a: 1, placar_b: 0 }), r2 = jogo({ id: 7, fase: 'rodada', rodada: 4, formato: 1, placar_a: 1, placar_b: 0 });
+  const prox = jogo({ id: 8, fase: 'rodada', rodada: 5, status: 'agendada', dia: '2026-11-09', placar_a: null, placar_b: null, vencedor: null, formato: 1 });
+  const S3 = base([r1, r2, prox], { proxima: prox }); S3.painel.liga.status = 'aberta';
+  h = mk(S3)({ pos: 2, pontos: 4 }); assert.match(h, /Duas vit/); assert.match(h, /2º lugar/); assert.match(h, /Próxima partida/);
+  // outro dia sem partidas agendadas e sem resultados: mensagem simples, sem quebrar
+  const S4 = base([]); S4.painel.liga.status = 'aberta'; assert.match(mk(S4)(null), /Tudo em dia|Sem partidas/);
+});

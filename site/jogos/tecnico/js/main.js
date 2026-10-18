@@ -243,6 +243,63 @@ function titulares() {
   (S.meu.elenco || []).filter((j) => j.slot).forEach((j) => { por[j.slot] = j; });
   return por;
 }
+// Notícias do Início: a partida do dia enquanto ela não foi jogada; depois, o que aconteceu (vitória, final, campeão...) até o dia virar.
+function hojeIso() {
+  const c = S.painel?.calendario;
+  if (!c || c.antes || !c.inicio_semana) return null;
+  const [y, m, d] = c.inicio_semana.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + c.dia - 1)).toISOString().slice(0, 10);
+}
+const ORD = (n) => `${n}º`;
+function noticiaDestaque(minhas, hoje, minha) {
+  const meu = S.meu.org.id;
+  const liga = S.painel?.liga;
+  const feitas = minhas.filter((x) => x.status === 'concluida');
+  const ult = feitas[feitas.length - 1];
+  if (!ult) return null;
+  const venci = (x) => x.vencedor === meu;
+  const placar = (x) => (x.a.id === meu ? `${x.placar_a} × ${x.placar_b}` : `${x.placar_b} × ${x.placar_a}`);
+  const adv = (x) => esc((x.a.id === meu ? x.b : x.a).nome);
+  const encerrada = liga?.status === 'encerrada';
+  if (ult.fase === 'final') {
+    return venci(ult)
+      ? { cls: 'campeao', selo: '🏆', titulo: 'Você é campeão!', texto: `Venceu a final da ${esc(liga.nome)} contra ${adv(ult)} (${placar(ult)}).`, pos: 1 }
+      : { cls: 'vice', selo: '🥈', titulo: 'Vice-campeão', texto: `Perdeu a final da ${esc(liga.nome)} para ${adv(ult)} (${placar(ult)}).`, pos: 2 };
+  }
+  if (ult.fase === 'semi' || ult.fase === 'quartas') {
+    const nome = FASES[ult.fase].toLowerCase();
+    if (venci(ult)) { const fin = minhas.find((x) => x.fase === 'final' && x.status === 'agendada'); return { cls: 'bom', selo: '⚔', titulo: ult.fase === 'semi' ? 'Você está na final!' : 'Você avançou!', texto: `Venceu a ${nome} contra ${adv(ult)} (${placar(ult)}).${fin ? ` A final é em ${dataCurta(fin.dia)}.` : ''}` }; }
+    const posF = minha?.pos_final;
+    return { cls: 'ruim', selo: '✖', titulo: `Eliminado na ${nome}`, texto: `Perdeu para ${adv(ult)} (${placar(ult)}).${encerrada && posF ? ` Terminou o campeonato em ${ORD(posF)}.` : ' Você termina entre os 4 primeiros.'}` };
+  }
+  const deHoje = hoje ? feitas.filter((x) => x.dia === ult.dia) : [ult];
+  const vit = deHoje.filter(venci).length; const der = deHoje.length - vit;
+  const titulo = deHoje.length > 1 ? (vit === deHoje.length ? 'Duas vitórias hoje!' : der === deHoje.length ? 'Dia difícil' : 'Uma vitória e uma derrota') : (vit ? 'Vitória!' : 'Derrota');
+  const linhas = deHoje.map((x) => `${venci(x) ? 'Venceu' : 'Perdeu'} ${venci(x) ? 'de' : 'para'} ${adv(x)} (${placar(x)})`).join(' · ');
+  return { cls: der === 0 ? 'bom' : vit === 0 ? 'ruim' : 'neutro', selo: der === 0 ? '✔' : vit === 0 ? '✖' : '•', titulo, texto: `${linhas}.${minha ? ` Você está em ${ORD(minha.pos)} lugar, com ${minha.pontos} pt${minha.pontos === 1 ? '' : 's'}.` : ''}` };
+}
+function viewNoticias(minha) {
+  const p = S.painel || {}; const meu = S.meu.org.id;
+  const hoje = hojeIso();
+  const minhas = (p.liga?.partidas || []).filter((x) => x.a.id === meu || x.b.id === meu).sort((a, b) => (a.dia < b.dia ? -1 : a.dia > b.dia ? 1 : a.id - b.id));
+  const jogar = S.gp?.ativo && S.gp.partida ? `<p style="text-align:center;margin:12px 0 0"><a class="tc-btn ouro" style="display:inline-block;text-decoration:none" href="partida/?id=${S.gp.partida.id}">Jogar a partida · mapa ${S.gp.proximo?.mapa || 1}</a></p>` : '';
+  const pendenteHoje = hoje && minhas.some((x) => x.dia <= hoje && x.status === 'agendada');
+  const prox = p.proxima;
+  if ((pendenteHoje || S.gp?.partida) && prox && prox.id) {
+    return `<section class="tc-card tc-prox"><h3>${IMG('i-msg')}Notícias<span class="dir">partida do dia</span></h3>${vsCard(prox)}${jogar}</section>`;
+  }
+  const d = noticiaDestaque(minhas, hoje, minha);
+  const campEnc = p.liga?.status === 'encerrada';
+  let rodape = '';
+  if (prox && prox.id) rodape = `<div class="tc-noti-prox"><small>Próxima partida · ${dataCurta(prox.dia)}</small><div class="tc-noti-vs">${escudoOrg(prox.a, 30)}<b>${esc(prox.a.nome)}</b><span>×</span><b>${esc(prox.b.nome)}</b>${escudoOrg(prox.b, 30)}</div></div>`;
+  else if (campEnc) rodape = '<p class="tc-mudo tc-peq" style="margin:10px 0 0;text-align:center">O campeonato terminou. As partidas do próximo começam quando a nova semana abrir.</p>';
+  else rodape = '<p class="tc-mudo tc-peq" style="margin:10px 0 0;text-align:center">Sem partidas por agora. As próximas rodadas aparecem quando a semana começar.</p>';
+  const corpo = d
+    ? `<div class="tc-noti ${d.cls}"><div class="selo" aria-hidden="true">${d.selo}</div><div><b class="tit">${d.titulo}</b><p>${d.texto}</p></div></div>`
+    : '<div class="tc-noti neutro"><div class="selo" aria-hidden="true">•</div><div><b class="tit">Tudo em dia</b><p>Você já jogou o que tinha para hoje.</p></div></div>';
+  return `<section class="tc-card tc-prox"><h3>${IMG('i-msg')}Notícias</h3>${corpo}${rodape}</section>`;
+}
+
 function viewVisao() {
   const m = S.meu; const p = S.painel || {};
   const tit = titulares();
@@ -251,9 +308,7 @@ function viewVisao() {
   const prox = p.proxima;
   return `
   <div class="tc-hero">
-    <section class="tc-card tc-prox"><h3>${IMG('i-agenda')}Próxima partida</h3>${prox && prox.id ? vsCard(prox) : '<p class="tc-mudo" style="margin:0">Sem partidas agendadas. As próximas rodadas aparecem quando a semana começar.</p>'}
-      ${S.gp?.ativo && S.gp.partida ? `<p style="text-align:center;margin:12px 0 0"><a class="tc-btn ouro" style="display:inline-block;text-decoration:none" href="partida/?id=${S.gp.partida.id}">Jogar a partida · mapa ${S.gp.proximo?.mapa || 1}</a></p>` : ''}
-      ${minha ? `<p class="tc-peq tc-mudo" style="margin:10px 0 0;text-align:center">Posição na divisão: <b style="color:var(--ouro2)">${minha.pos}º</b> · ${minha.pontos} pts · ${minha.vitorias}V ${minha.derrotas}D</p>` : ''}</section>
+    ${viewNoticias(minha)}
     <section class="tc-card tc-eco"><h3>${IMG('i-bau')}Sua economia</h3>
       <div class="duo"><div class="bx ouro"><img src="../../shared/assets/moeda/rc-96.webp" srcset="../../shared/assets/moeda/rc-192.webp 2x" alt="" width="44" height="44" /><small>Rift Coins</small><b>${fmt(m.rc)}</b></div>
       <div class="bx azul"><img src="img/gema.webp" alt="" width="30" height="40" /><small>Créditos de equipe</small><b>${fmt(m.org.creditos)}</b></div></div>
