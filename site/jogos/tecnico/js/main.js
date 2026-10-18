@@ -360,7 +360,7 @@ function viewCamp() {
   if (!l) return '<section class="tc-card"><p class="tc-mudo" style="margin:0">Ainda não há campeonatos em andamento.</p></section>';
   return `<section class="tc-card"><h3>Campeonatos<span class="dir">Temporada ${l.temporada} · semana ${l.semana}</span></h3>
       <label class="campo" style="max-width:420px"><span class="tc-mudo tc-peq">Competição</span><select class="tc-input" data-act="liga-sel">${ligas.map((x) => `<option value="${x.id}" ${x.id === l.id ? 'selected' : ''}>${esc(x.nome)}${x.status === 'aberta' ? ' (em andamento)' : ''}</option>`).join('')}</select></label>
-      <p class="tc-peq tc-mudo" style="margin:10px 0 0">${regrasLiga(l)}</p></section>
+      ${regrasLiga(l) ? `<p class="tc-peq tc-mudo" style="margin:10px 0 0">${regrasLiga(l)}</p>` : ''}</section>
     ${l.tipo !== 'divisao' ? `<section class="tc-card"><h3>Classificados</h3>${tabelaClassificados(l)}</section>` : ''}
     ${chaveamento(l)}
     <section class="tc-card"><h3>Calendário e resultados</h3>${diasHtml(l)}</section>`;
@@ -415,7 +415,7 @@ function chaveamento(l) {
 function regrasLiga(l) {
   if (l.tipo === 'copa') return `Reúne os técnicos que ficaram entre os 2 primeiros da ${esc(nomeLiga().principal)} na semana 1 (as vagas que sobrarem são de equipes do sistema). Semifinais e final, sempre em melhor de cinco mapas.`;
   if (l.tipo === 'mundial') return `Reúne os técnicos que foram finalistas (2 primeiros) da ${esc(nomeLiga().principal)} nas semanas 1 a 3, mais o campeão da ${esc(nomeLiga().copa)} se for técnico. Quartas, semifinais e final em melhor de cinco mapas.`;
-  return `Você joga o seu campeonato contra 7 equipes do sistema. De segunda a sexta, 2 jogos por dia contra adversários diferentes (MD1); sábado, semifinais (MD3) com os 4 primeiros; domingo, final (MD5). Quem não jogar até a meia-noite perde por W.O. Os dois primeiros da ${esc(nomeLiga().acesso)} sobem para a ${esc(nomeLiga().principal)}; os dois últimos da ${esc(nomeLiga().principal)} descem; os 2 primeiros da ${esc(nomeLiga().principal)} se classificam para a ${esc(nomeLiga().copa)} e para o ${esc(nomeLiga().mundial)}. Na segunda-feira começa tudo de novo.`;
+  return ''; // a liga individual não precisa de explicação na tela
 }
 function tabelaClassificados(l) {
   return `<table class="tc-tabela"><thead><tr><th>Semente</th><th>Equipe</th><th class="n">Poder</th></tr></thead><tbody>${l.tabela.map((t) => `<tr class="${t.org.id === S.meu.org.id ? 'eu' : ''}"><td>${t.pos}</td><td><div class="org">${escudoOrg(t.org, 24)}<span>${esc(t.org.nome)}${t.org.usuario ? ' ★' : ''}</span></div></td><td class="n">${t.poder}</td></tr>`).join('')}</tbody></table>`;
