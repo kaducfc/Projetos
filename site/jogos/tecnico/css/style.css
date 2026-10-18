@@ -588,3 +588,19 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 /* banner verde (vitória na rodada) */
 .tc-noti-banner.verde { border-color: #2dd4bf; box-shadow: 0 0 22px rgba(45, 212, 191, .25); }
 .tc-noti-banner.verde .tit { color: #b8ffe6; text-shadow: 0 0 16px rgba(45, 212, 191, .85), 0 2px 6px rgba(0, 0, 0, .8); }
+
+/* Luz de circuito percorrendo a borda das caixas (só na moldura de 1,5px: o miolo da caixa cobre o resto).
+   Cada caixa começa num ponto diferente, para não girarem todas juntas. */
+@property --tc-ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.tc-card::before {
+  display: block; content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  width: auto; height: auto; border: 0; border-radius: 0;
+  background: conic-gradient(from var(--tc-ang), transparent 0deg, transparent 292deg, rgba(34, 211, 238, .55) 328deg, #aef3ff 352deg, #fff3c4 358deg, transparent 360deg);
+  animation: tc-circuito 7s linear infinite;
+  animation-delay: var(--tc-atraso, 0s);
+}
+.tc-card:nth-of-type(2n)::before { --tc-atraso: -2.3s; animation-duration: 8.5s; }
+.tc-card:nth-of-type(3n)::before { --tc-atraso: -4.6s; animation-duration: 6.5s; }
+.tc-card:nth-of-type(5n)::before { --tc-atraso: -1.1s; animation-duration: 9s; }
+@keyframes tc-circuito { to { --tc-ang: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .tc-card::before { animation: none; display: none; } }
