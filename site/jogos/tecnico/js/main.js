@@ -248,7 +248,7 @@ const trofeuChave = (t) => (/mundial/i.test(t) ? 'mundial' : /copa/i.test(t) ? '
 const trofeuImg = (t, h = 56) => `<img class="tc-trofeu" src="img/trofeus/${trofeuChave(t)}.webp" alt="" height="${h}" loading="lazy" />`;
 // Notícias que já têm banner (img/banners/<chave>.webp, e a versão -800 para telas pequenas): campeao-<campeonato> e vice.
 // Para uma notícia nova ganhar banner: salvar as duas imagens e incluir a chave em BANNERS.
-const BANNERS = new Set(['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice', 'final', 'eliminado']);
+const BANNERS = new Set(['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice', 'final', 'eliminado', 'vitoria']);
 const temBanner = (k) => (BANNERS.has(k) ? k : null);
 const trofeusLista = (l) => `<ul class="tc-trofeus">${l.map((t) => `<li>${trofeuImg(t.titulo)}<span>${esc(t.titulo)}<small class="tc-mudo">Temporada ${esc(t.temporada)}</small></span></li>`).join('')}</ul>`;
 
@@ -287,7 +287,7 @@ function noticiaDestaque(minhas, hoje, minha) {
   const vit = deHoje.filter(venci).length; const der = deHoje.length - vit;
   const titulo = deHoje.length > 1 ? (vit === deHoje.length ? 'Duas vitórias hoje!' : der === deHoje.length ? 'Dia difícil' : 'Uma vitória e uma derrota') : (vit ? 'Vitória!' : 'Derrota');
   const linhas = deHoje.map((x) => `${venci(x) ? 'Venceu' : 'Perdeu'} ${venci(x) ? 'de' : 'para'} ${adv(x)} (${placar(x)})`).join(' · ');
-  return { cls: der === 0 ? 'bom' : vit === 0 ? 'ruim' : 'neutro', selo: der === 0 ? '✔' : vit === 0 ? '✖' : '•', titulo, texto: `${linhas}.${minha ? ` Você está em ${ORD(minha.pos)} lugar, com ${minha.pontos} pt${minha.pontos === 1 ? '' : 's'}.` : ''}` };
+  return { cls: der === 0 ? 'bom' : vit === 0 ? 'ruim' : 'neutro', banner: der === 0 ? temBanner('vitoria') : null, estiloBanner: 'verde', selo: der === 0 ? '✔' : vit === 0 ? '✖' : '•', titulo, texto: `${linhas}.${minha ? ` Você está em ${ORD(minha.pos)} lugar, com ${minha.pontos} pt${minha.pontos === 1 ? '' : 's'}.` : ''}` };
 }
 // Banner do confronto do dia: time azul à esquerda, vermelho à direita (as faixas livres do fundo), VS no centro e a data na base.
 function confrontoBanner(p, meu) {
