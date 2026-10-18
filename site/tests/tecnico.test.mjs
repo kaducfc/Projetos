@@ -302,3 +302,9 @@ test('Início: as notícias mostram a partida do dia e, depois de jogar, o resul
   const S5 = base([velho]); S5.painel.liga.status = 'aberta'; h = mk(S5)(null); assert.match(h, /Tudo em dia/); assert.match(h, /img\/banners\/emdia\.webp/); assert.doesNotMatch(h, /Eliminado/);
   const S4 = base([]); S4.painel.liga.status = 'aberta'; assert.match(mk(S4)(null), /Tudo em dia/);
 });
+
+test('Histórico: qualquer ação do jogador invalida o histórico guardado, então ele aparece atualizado ao abrir a aba (sem recarregar a página)', () => {
+  const main = readFileSync(new URL('../jogos/tecnico/js/main.js', import.meta.url), 'utf8');
+  const agir = main.slice(main.indexOf('async function agir('), main.indexOf('async function atualizar('));
+  assert.match(agir, /const r = await fn\(\);\s*S\.hist = null;/, 'agir zera o histórico em cache logo após a ação');
+});

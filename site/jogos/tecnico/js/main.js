@@ -64,6 +64,7 @@ async function agir(fn, { ok, recarregar = true } = {}) {
   document.body.style.cursor = 'progress';
   try {
     const r = await fn();
+    S.hist = null; // qualquer ação (baú, contrato, treino, mercado...) pode mexer no histórico: ele é recarregado na próxima vez que for aberto
     if (ok) toast(typeof ok === 'function' ? ok(r) : ok);
     if (recarregar) await atualizar();
     return r ?? true;
