@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 8, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -1119,10 +1119,12 @@ t('XP de campeonato: vitória 10 e derrota 5 para os titulares, com teto de 100'
 
 // ---------------------------------------------------------------- marketing, fama e patrocínios (SQL 0116)
 const MK = () => J("select tc_marketing_estado()", 1);
+const MK_CRED = () => { V("update tc_config set valor = jsonb_set(valor, '{proc_min_s}', '300') where chave = 'marketing'"); }; // os testes antigos de processamento usam trechos de 5 min; o jogo usa 15 min (0138)
 const atrasar = (org, min) => V(`update tc_marketing set ultimo_proc = now() - interval '${min} minutes' where org_id = ${org}`);
 const cred = (org) => Number(V(`select creditos from tc_orgs where id = ${org}`));
 const baseMk = (e) => e.taxa.base * (1 + e.taxa.bonus_marketing + e.taxa.bonus_audiencia + e.taxa.bonus_campanha) + e.taxa.patrocinadores;
 
+MK_CRED();
 t('marketing: clube novo (nível 1, fama 0, sem patrocínio); a taxa da tela é a fórmula do servidor; nada mexe em RC nem em pontos do Rank', () => {
   V("update tc_orgs set creditos = 1000000 where id in (1, " + O2 + ")");
   V("delete from tc_patrocinios"); V("delete from tc_fama_eventos");
@@ -1290,11 +1292,11 @@ t('marketing: fama de resultados oficiais (partida, liga, promoção) vem do ser
   for (const f of ['tc_marketing_processar(bigint, boolean)', 'tc_fama_evento(bigint, text, text, numeric)', 'tc_mkt_taxa(bigint, timestamp with time zone, numeric)']) {
     assert.equal(V(`select has_function_privilege('authenticated', 'public.${f}', 'execute')`), 'f', `${f} interna`);
   }
-  for (const f of ['tc_marketing_estado()', 'tc_marketing_melhorar()', 'tc_patrocinio_contratar(text, boolean)', 'tc_campanha_iniciar(text)', 'tc_marketing_historico()', 'tc_marketing_resumo_visto()']) {
+  for (const f of ['tc_marketing_estado(boolean)', 'tc_marketing_resgatar()', 'tc_marketing_melhorar()', 'tc_patrocinio_contratar(text, boolean)', 'tc_campanha_iniciar(text)', 'tc_marketing_historico()', 'tc_marketing_resumo_visto()']) {
     assert.equal(V(`select has_function_privilege('authenticated', 'public.${f}', 'execute')`), 't', `${f} liberada`);
   }
   for (const tb of ['tc_marketing', 'tc_patrocinios', 'tc_fama_eventos']) assert.equal(V(`select has_table_privilege('authenticated', '${tb}', 'select')`), 'f');
-  assert.ok(!/site_moedas_mexer|site_carteira|site_rk_lancar/.test(['tc_marketing_processar(bigint, boolean)', 'tc_marketing_melhorar()', 'tc_patrocinio_contratar_int(bigint, text, boolean, boolean)', 'tc_campanha_iniciar(text)', 'tc_marketing_estado()'].map(fn).join('\n')), 'a Central de Marketing não toca em RC nem em Rank');
+  assert.ok(!/site_moedas_mexer|site_carteira|site_rk_lancar/.test(['tc_marketing_processar(bigint, boolean)', 'tc_marketing_melhorar()', 'tc_patrocinio_contratar_int(bigint, text, boolean, boolean)', 'tc_campanha_iniciar(text)', 'tc_marketing_estado(boolean)', 'tc_marketing_resgatar()'].map(fn).join('\n')), 'a Central de Marketing não toca em RC nem em Rank');
   const h = J("select tc_marketing_historico()", 1); assert.ok(h.length > 0 && h.length <= 30 && h.every((x) => typeof x.delta === 'number'));
   assert.ok(h.some((x) => x.motivo === 'mkt_receita'), 'a receita idle aparece consolidada no extrato');
 });
@@ -1484,4 +1486,27 @@ t('finanças: a receita do marketing vira um lançamento por dia que vai acumula
   V("select tc_creditos_mexer(1, -10, 'treino', 'a')"); V("select tc_creditos_mexer(1, -10, 'treino', 'b')");
   assert.equal(Number(V("select count(*) from tc_fin where org_id = 1 and motivo = 'treino'")), b0 + 2);
   assert.ok(J("select tc_historico()", 1).financas.every((x) => 'ref' in x), 'o histórico devolve o ref');
+});
+
+t('marketing: abrir a tela não credita; resgatar credita na hora; ao entrar só credita depois de 15 minutos', () => {
+  V("update tc_config set valor = jsonb_set(valor, '{proc_min_s}', '900') where chave = 'marketing'");
+  try {
+    const cred = () => Number(V("select creditos from tc_orgs where id = 1"));
+    J("select tc_marketing_processar(1, true)", 1); // zera o acumulado
+    atrasar(1, 10);
+    const c0 = cred();
+    const tela = J("select tc_marketing_estado(false)", 1); // abrir a tela do marketing
+    assert.equal(cred(), c0, 'abrir a tela não credita'); assert.ok(tela.pendente.valor > 0, 'e o acumulado continua pendente');
+    const entrou = J("select tc_marketing_estado(true)", 1); // entrar no jogo com 10 min: ainda não passou de 15
+    assert.equal(cred(), c0, 'entrar com menos de 15 min não credita'); assert.ok(entrou.pendente.valor > 0);
+    const r = J("select tc_marketing_resgatar()", 1);
+    assert.ok(r.total > 0 && cred() === c0 + r.total, 'resgatar credita o acumulado'); assert.equal(J("select tc_marketing_estado(false)", 1).resumo, null, 'resgatar não gera resumo de ausência');
+    assert.equal(J("select tc_marketing_resgatar()", 1).total <= 1, true, 'resgatar de novo logo em seguida não paga duas vezes');
+    atrasar(1, 20);
+    const c1 = cred();
+    J("select tc_marketing_estado(true)", 1); // entrar com 20 min: credita sozinho
+    assert.ok(cred() > c1, 'entrar depois de 15 minutos credita o acumulado');
+  } finally {
+    MK_CRED();
+  }
 });

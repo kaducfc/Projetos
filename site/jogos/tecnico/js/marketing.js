@@ -30,8 +30,8 @@ const dur = (ms) => {
 const quando = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
 // ------------------------------------------------------------------ carga
-export async function carregarMarketing() {
-  X.e = await api.marketingEstado(); X.t0 = Date.now();
+export async function carregarMarketing(entrada = false) {
+  X.e = await api.marketingEstado(entrada); X.t0 = Date.now(); // `entrada` só no início do jogo: abrir a tela não credita
   if (C.S.meu?.org) C.S.meu.org.creditos = X.e.creditos;
   if (X.aba === 'fin') X.fin = await api.marketingHistorico();
   ligarRelogio();
@@ -40,7 +40,7 @@ export const limparMarketing = () => { clearInterval(X.timer); X.e = null; X.fin
 // Ao abrir o jogo: credita o que foi acumulado enquanto o jogador estava fora e mostra o resumo uma única vez.
 export async function abrirComResumo() {
   try {
-    await carregarMarketing();
+    await carregarMarketing(true);
     const r = X.e.resumo;
     if (r && r.total > 0) { C.S.modal = { t: 'mkt_resumo', r }; api.marketingResumoVisto().catch(() => {}); }
   } catch { /* sem marketing instalado ainda: o resto do jogo segue normal */ }
@@ -50,10 +50,13 @@ function ligarRelogio() {
   X.timer = setInterval(() => {
     if (!X.e || C.S.aba !== 'marketing') { clearInterval(X.timer); return; }
     const s = (Date.now() - X.t0) / 1000;
-    const el = document.querySelector('[data-mkt-acum]'); if (el) el.textContent = C.fmt(Math.floor(X.e.taxa.por_minuto * s / 60));
+    const el = document.querySelector('[data-mkt-acum]'); if (el) el.textContent = C.fmt(acumulado(s));
     if (s >= 60) { carregarMarketing().then(() => C.render()).catch(() => {}); }
   }, 1000);
 }
+
+// Acumulado ainda não resgatado: o que o servidor já contava + o que sobe desde que a tela carregou (até o limite de horas offline).
+const acumulado = (s) => { const p = X.e.pendente; const max = X.e.taxa.por_minuto * p.limite_h * 60; return Math.floor(Math.min(max, p.valor + X.e.taxa.por_minuto * s / 60)); };
 
 // ------------------------------------------------------------------ telas
 function barraFama(f) {
@@ -72,7 +75,7 @@ function topoCentral(e) {
       <div><small>Em 24 horas</small><b>${C.fmt(t.por_dia)} cr.</b></div>
       <div><small>Fama</small><b>${num1(e.fama.valor)}</b></div>
       <div><small>Nível de marketing</small><b>${e.marketing.nivel} / ${e.marketing.max}</b></div>
-      <div><small>Acumulando agora</small><b data-mkt-acum>0</b></div>
+      <div><small>Acumulando agora</small><b data-mkt-acum>${C.fmt(acumulado(0))}</b><button type="button" class="tc-btn peq ouro" data-act="mkt-resgatar" ${C.S.ocupado ? 'disabled' : ''}>Resgatar</button></div>
     </div></section>`;
 }
 function viewVisao(e) {
@@ -161,6 +164,7 @@ export function modalMktResumo(m) {
 export async function tratarMkt(act, b) {
   const recarregar = async () => { await carregarMarketing(); await C.atualizarMeu(); };
   if (act === 'mkt-aba') { X.aba = b.dataset.aba; if (X.aba === 'fin') X.fin = await api.marketingHistorico().catch(() => []); return true; }
+  if (act === 'mkt-resgatar') { const r = await C.agir(() => api.marketingResgatar(), { ok: (x) => (x.total > 0 ? `+${C.fmt(x.total)} créditos resgatados!` : 'Nada para resgatar ainda.'), recarregar: false }); if (r) await C.agir(recarregar, { recarregar: false }); return true; }
   if (act === 'mkt-melhorar') { if (await C.agir(() => api.marketingMelhorar(), { ok: 'Marketing melhorado!', recarregar: false })) await C.agir(recarregar, { recarregar: false }); return true; }
   if (act === 'mkt-campanha') { if (await C.agir(() => api.campanhaIniciar(b.dataset.id), { ok: 'Campanha iniciada!', recarregar: false })) await C.agir(recarregar, { recarregar: false }); return true; }
   if (act === 'mkt-contratar') { if (await C.agir(() => api.patrocinioContratar(b.dataset.id, false), { ok: 'Patrocínio contratado!', recarregar: false })) await C.agir(recarregar, { recarregar: false }); return true; }

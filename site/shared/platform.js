@@ -1133,7 +1133,8 @@ async function rpcTecnico(nome, args = {}) {
   return data;
 }
 export const tecnico = {
-  marketingEstado: () => rpcTecnico('tc_marketing_estado'),
+  marketingEstado: (entrada = false) => rpcTecnico('tc_marketing_estado', { entrada }),
+  marketingResgatar: () => rpcTecnico('tc_marketing_resgatar'),
   marketingHistorico: () => rpcTecnico('tc_marketing_historico'),
   marketingMelhorar: () => rpcTecnico('tc_marketing_melhorar'),
   patrocinioContratar: (marca, renovarAuto = false) => rpcTecnico('tc_patrocinio_contratar', { marca, renovar_auto: renovarAuto }),
