@@ -275,7 +275,7 @@ test('Início: as notícias mostram a partida do dia e, depois de jogar, o resul
   // partida do dia pendente: mostra o confronto e o botão de jogar
   const pend = jogo({ id: 5, fase: 'rodada', rodada: 3, status: 'agendada', formato: 1, placar_a: null, placar_b: null, vencedor: null, dia: '2026-11-08' });
   const S2 = base([pend], { proxima: pend }); S2.gp = { ativo: true, partida: { id: 5 }, proximo: { mapa: 1 } };
-  h = mk(S2)(null); assert.match(h, /partida do dia/); assert.match(h, /Jogar a partida/); assert.match(h, /<vs\/>/);
+  h = mk(S2)(null); assert.match(h, /partida do dia/); assert.match(h, /Jogar a partida/); assert.match(h, /tc-confronto/); assert.match(h, /Seu time/);
   // depois de jogar as duas do dia: resumo do dia e a próxima partida
   const r1 = jogo({ id: 6, fase: 'rodada', rodada: 3, formato: 1, placar_a: 1, placar_b: 0 }), r2 = jogo({ id: 7, fase: 'rodada', rodada: 4, formato: 1, placar_a: 1, placar_b: 0 });
   const prox = jogo({ id: 8, fase: 'rodada', rodada: 5, status: 'agendada', dia: '2026-11-09', placar_a: null, placar_b: null, vencedor: null, formato: 1 });

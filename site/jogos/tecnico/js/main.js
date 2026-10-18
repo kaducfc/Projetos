@@ -287,6 +287,13 @@ function noticiaDestaque(minhas, hoje, minha) {
   const linhas = deHoje.map((x) => `${venci(x) ? 'Venceu' : 'Perdeu'} ${venci(x) ? 'de' : 'para'} ${adv(x)} (${placar(x)})`).join(' · ');
   return { cls: der === 0 ? 'bom' : vit === 0 ? 'ruim' : 'neutro', selo: der === 0 ? '✔' : vit === 0 ? '✖' : '•', titulo, texto: `${linhas}.${minha ? ` Você está em ${ORD(minha.pos)} lugar, com ${minha.pontos} pt${minha.pontos === 1 ? '' : 's'}.` : ''}` };
 }
+// Banner do confronto do dia: time azul à esquerda, vermelho à direita (as faixas livres do fundo), VS no centro e a data na base.
+function confrontoBanner(p, meu) {
+  const lado = (o, cls) => `<div class="tc-conf-time ${cls}">${escudoOrg(o, 96)}<b class="nome">${esc(o.nome)}</b>${o.id === meu ? '<small class="voce">Seu time</small>' : ''}</div>`;
+  const info = [dataCurta(p.dia), p.fase === 'rodada' ? `rodada ${p.rodada}` : FASES[p.fase] || '', `melhor de ${p.formato}`].filter(Boolean).join(' · ');
+  return `<div class="tc-confronto"><img src="img/banners/confronto.webp" srcset="img/banners/confronto-800.webp 800w, img/banners/confronto.webp 1400w" sizes="(max-width: 900px) 100vw, 860px" alt="" />
+    <span class="tc-conf-topo">Partida do dia</span>${lado(p.a, 'a')}<b class="tc-conf-vs">VS</b>${lado(p.b, 'b')}<span class="tc-conf-info">${esc(info)}</span></div>`;
+}
 function viewNoticias(minha) {
   const p = S.painel || {}; const meu = S.meu.org.id;
   const hoje = hojeIso();
@@ -296,7 +303,9 @@ function viewNoticias(minha) {
   const pendenteHoje = hoje && minhas.some((x) => x.dia <= hoje && x.status === 'agendada');
   const prox = p.proxima;
   if ((pendenteHoje || S.gp?.partida) && prox && prox.id) {
-    return `<section class="tc-card tc-prox"><h3>${IMG('i-msg')}Notícias<span class="dir">partida do dia</span></h3>${vsCard(prox)}${jogar}</section>`;
+    const doDia = minhas.filter((x) => x.status === 'agendada' && (!hoje || x.dia <= hoje)).slice(0, 3);
+    const lista = (doDia.length ? doDia : [prox]).map((x) => confrontoBanner(x, meu)).join('');
+    return `<section class="tc-card tc-prox"><h3>${IMG('i-msg')}Notícias<span class="dir">${doDia.length > 1 ? 'confrontos do dia' : 'partida do dia'}</span></h3><div class="tc-confrontos">${lista}</div>${jogar}</section>`;
   }
   const d = noticiaDestaque(minhas, hoje, minha);
   const campEnc = p.liga?.status === 'encerrada';

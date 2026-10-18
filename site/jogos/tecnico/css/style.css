@@ -553,3 +553,20 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-noti-banner-txt .tit { display: block; font-family: 'Bebas Neue', sans-serif; font-size: 44px; line-height: 1; letter-spacing: .05em; color: #f5cf5a; text-shadow: 0 0 16px rgba(245, 207, 90, .65), 0 2px 6px rgba(0, 0, 0, .8); }
 .tc-noti-banner-txt p { margin: 4px 0 0; font-size: 14px; color: #e8eefc; text-shadow: 0 1px 4px rgba(0, 0, 0, .8); }
 @media (max-width: 600px) { .tc-noti-banner { aspect-ratio: 16 / 10; } .tc-noti-banner-txt .tit { font-size: 32px; } }
+
+/* banner do confronto do dia (tamanhos em cqw: tudo escala com a largura do banner) */
+.tc-confrontos { display: grid; gap: 10px; }
+.tc-confronto { position: relative; container-type: inline-size; aspect-ratio: 21 / 9; overflow: hidden; border: 1px solid #2b4a78; background: #050d1c; clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); }
+.tc-confronto > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tc-conf-time { position: absolute; top: 50%; width: 24cqw; transform: translate(-50%, -52%); display: flex; flex-direction: column; align-items: center; gap: 1cqw; text-align: center; }
+.tc-conf-time.a { left: 39%; }
+.tc-conf-time.b { left: 61%; }
+.tc-conf-time .tc-ic { --s: 15cqw !important; filter: drop-shadow(0 .4cqw 1.2cqw rgba(0, 0, 0, .75)); }
+.tc-conf-time .nome { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: max(15px, 3.8cqw); line-height: 1; letter-spacing: .05em; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, .9); }
+.tc-conf-time.a .nome { text-shadow: 0 0 10px rgba(74, 163, 255, .8), 0 2px 6px rgba(0, 0, 0, .9); }
+.tc-conf-time.b .nome { text-shadow: 0 0 10px rgba(255, 106, 106, .8), 0 2px 6px rgba(0, 0, 0, .9); }
+.tc-conf-time .voce { font-size: max(10px, 1.5cqw); letter-spacing: .1em; text-transform: uppercase; color: #f5cf5a; background: rgba(5, 13, 28, .7); border: 1px solid rgba(245, 207, 90, .6); padding: .2cqw 1.2cqw; }
+.tc-conf-vs { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-family: 'Bebas Neue', sans-serif; font-size: max(22px, 6.5cqw); font-style: italic; line-height: 1; color: #f5cf5a; text-shadow: 0 0 14px rgba(245, 207, 90, .7), 0 2px 6px rgba(0, 0, 0, .9); }
+.tc-conf-topo { position: absolute; top: 2cqw; left: 50%; transform: translateX(-50%); font-size: max(10px, 1.5cqw); letter-spacing: .18em; text-transform: uppercase; color: #e8eefc; background: rgba(5, 13, 28, .65); border: 1px solid rgba(245, 207, 90, .5); padding: .5cqw 2cqw; white-space: nowrap; }
+.tc-conf-info { position: absolute; left: 0; right: 0; bottom: 0; padding: 4cqw 2cqw 1.6cqw; text-align: center; font-size: max(11px, 1.7cqw); color: #e8eefc; background: linear-gradient(to top, rgba(3, 8, 20, .85), transparent); }
+.tc-conf-time > svg { width: 15cqw; height: 15cqw; filter: drop-shadow(0 .4cqw 1.2cqw rgba(0, 0, 0, .75)); }
