@@ -246,8 +246,10 @@ function titulares() {
 // Troféu de cada campeonato (arte em img/trofeus): Mundial, Copa, Nacional e Academy.
 const trofeuChave = (t) => (/mundial/i.test(t) ? 'mundial' : /copa/i.test(t) ? 'copa' : /nacional|principal/i.test(t) ? 'nacional' : 'academy');
 const trofeuImg = (t, h = 56) => `<img class="tc-trofeu" src="img/trofeus/${trofeuChave(t)}.webp" alt="" height="${h}" loading="lazy" />`;
-// Campeonatos que já têm banner de comemoração (img/banners/campeao-<chave>.webp, e a versão -800 para telas pequenas).
-const BANNER_CAMPEAO = new Set(['academy', 'nacional', 'copa', 'mundial']);
+// Notícias que já têm banner (img/banners/<chave>.webp, e a versão -800 para telas pequenas): campeao-<campeonato> e vice.
+// Para uma notícia nova ganhar banner: salvar as duas imagens e incluir a chave em BANNERS.
+const BANNERS = new Set(['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice']);
+const temBanner = (k) => (BANNERS.has(k) ? k : null);
 const trofeusLista = (l) => `<ul class="tc-trofeus">${l.map((t) => `<li>${trofeuImg(t.titulo)}<span>${esc(t.titulo)}<small class="tc-mudo">Temporada ${esc(t.temporada)}</small></span></li>`).join('')}</ul>`;
 
 // Notícias do Início: a partida do dia enquanto ela não foi jogada; depois, o que aconteceu (vitória, final, campeão...) até o dia virar.
@@ -272,8 +274,8 @@ function noticiaDestaque(minhas, hoje, minha) {
   const encerrada = mesmaLiga && liga.status === 'encerrada';
   if (ult.fase === 'final') {
     return venci(ult)
-      ? { cls: 'campeao', selo: trofeuImg(ligaNome, 84), banner: BANNER_CAMPEAO.has(trofeuChave(ligaNome)) ? trofeuChave(ligaNome) : null, titulo: 'Você é campeão!', texto: `Venceu a final da ${esc(ligaNome)} contra ${adv(ult)} (${placar(ult)}).`, pos: 1 }
-      : { cls: 'vice', selo: '🥈', titulo: 'Vice-campeão', texto: `Perdeu a final da ${esc(ligaNome)} para ${adv(ult)} (${placar(ult)}).`, pos: 2 };
+      ? { cls: 'campeao', selo: trofeuImg(ligaNome, 84), banner: temBanner(`campeao-${trofeuChave(ligaNome)}`), titulo: 'Você é campeão!', texto: `Venceu a final da ${esc(ligaNome)} contra ${adv(ult)} (${placar(ult)}).`, pos: 1 }
+      : { cls: 'vice', selo: '🥈', banner: temBanner('vice'), textoTopo: true, titulo: 'Vice-campeão', texto: `Perdeu a final da ${esc(ligaNome)} para ${adv(ult)} (${placar(ult)}).`, pos: 2 };
   }
   if (ult.fase === 'semi' || ult.fase === 'quartas') {
     const nome = FASES[ult.fase].toLowerCase();
@@ -317,7 +319,7 @@ function viewNoticias(minha) {
   else if (campEnc) rodape = '<p class="tc-mudo tc-peq" style="margin:10px 0 0;text-align:center">O campeonato terminou. As partidas do próximo começam quando a nova semana abrir.</p>';
   else rodape = '<p class="tc-mudo tc-peq" style="margin:10px 0 0;text-align:center">Sem partidas por agora. As próximas rodadas aparecem quando a semana começar.</p>';
   const corpo = d && d.banner
-    ? `<div class="tc-noti-banner"><img src="img/banners/campeao-${d.banner}.webp" srcset="img/banners/campeao-${d.banner}-800.webp 800w, img/banners/campeao-${d.banner}.webp 1400w" sizes="(max-width: 900px) 100vw, 860px" alt="" /><div class="tc-noti-banner-txt"><b class="tit">${d.titulo}</b><p>${d.texto}</p></div></div>`
+    ? `<div class="tc-noti-banner${d.textoTopo ? ' topo' : ''}"><img src="img/banners/${d.banner}.webp" srcset="img/banners/${d.banner}-800.webp 800w, img/banners/${d.banner}.webp 1400w" sizes="(max-width: 900px) 100vw, 860px" alt="" /><div class="tc-noti-banner-txt"><b class="tit">${d.titulo}</b><p>${d.texto}</p></div></div>`
     : d
     ? `<div class="tc-noti ${d.cls}"><div class="selo" aria-hidden="true">${d.selo}</div><div><b class="tit">${d.titulo}</b><p>${d.texto}</p></div></div>`
     : '<div class="tc-noti neutro"><div class="selo" aria-hidden="true">•</div><div><b class="tit">Tudo em dia</b><p>Você já jogou o que tinha para hoje.</p></div></div>';
