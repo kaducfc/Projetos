@@ -1238,3 +1238,10 @@ t('campeonatos individuais: técnico novo recebe a liga da semana e não perde p
   const gw = J("select tc_calendario('2026-11-11')").gw; const temp = Math.floor(gw / 4) + 1; const sem = (gw % 4) + 1;
   assert.equal(V(`select count(*) from tc_orgs o where o.user_id is not null and o.ativa and not exists (select 1 from tc_ligas l where l.dono_org = o.id and l.temporada = ${temp} and l.semana = ${sem})`), '0');
 });
+
+t('campeonato individual: mesmo com equipes do sistema desativadas (modelo antigo) a liga da semana é criada', () => {
+  V("update tc_orgs set ativa = false where user_id is null and divisao = 'acesso' and id in (select id from tc_orgs where user_id is null and divisao = 'acesso' order by id limit 6)");
+  V("delete from tc_ligas where tipo = 'divisao' and status = 'aberta'"); V("update tc_config set valor = to_jsonb(tc_semana_global()) where chave = 'semana_proc'", null, '2026-11-11');
+  J("select tc_sincronizar()", 1, '2026-11-11');
+  assert.equal(V("select count(*) from tc_orgs where user_id is null and not ativa"), '0', 'as equipes do sistema voltam a ficar ativas');
+});

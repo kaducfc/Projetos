@@ -62,16 +62,17 @@ revoke all on function public.tc_criar_org(text, text, text, text, text, text) f
 grant execute on function public.tc_criar_org(text, text, text, text, text, text) to authenticated;
 
 
--- Equipes do sistema: pelo menos 14 ativas por divisão (7 por liga, com variação entre as ligas).
+-- Equipes do sistema: pelo menos 8 ativas por divisão (cada liga usa 7). As que foram desativadas pelo modelo antigo voltam a ficar ativas.
 create or replace function public.tc_garantir_sistema()
 returns void language plpgsql security definer set search_path = public as $$
 declare
   n int;
 begin
+  update tc_orgs set ativa = true where user_id is null and not ativa;
   select count(*) into n from tc_orgs where user_id is null and ativa and divisao = 'principal';
-  if n < 14 then perform tc_criar_equipes_sistema('principal', 14 - n, 64); end if;
+  if n < 8 then perform tc_criar_equipes_sistema('principal', 8 - n, 64); end if;
   select count(*) into n from tc_orgs where user_id is null and ativa and divisao = 'acesso';
-  if n < 14 then perform tc_criar_equipes_sistema('acesso', 14 - n, 48); end if;
+  if n < 8 then perform tc_criar_equipes_sistema('acesso', 8 - n, 48); end if;
 end;
 $$;
 revoke all on function public.tc_garantir_sistema() from public, anon, authenticated;
@@ -97,8 +98,8 @@ begin
   select id into lid from tc_ligas where temporada = temp and semana = sem and tipo = 'divisao' and divisao = o.divisao and dono_org = dono;
   if lid is not null then return lid; end if;
   select array[dono] || coalesce(array_agg(x.id), '{}') into times from (
-    select id from tc_orgs where user_id is null and ativa and divisao = o.divisao
-     order by md5(id::text || ':' || dono::text || ':' || temp::text || ':' || sem::text) limit 7) x;
+    select id from tc_orgs where user_id is null and ativa
+     order by (divisao = o.divisao) desc, md5(id::text || ':' || dono::text || ':' || temp::text || ':' || sem::text) limit 7) x; -- da própria divisão; se faltar, completa com as da outra
   n := coalesce(array_length(times, 1), 0);
   if n <> 8 then raise exception 'times_insuficientes'; end if;
   insert into tc_ligas (temporada, semana, divisao, tipo, nome, dono_org)
