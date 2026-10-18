@@ -67,12 +67,14 @@ async function configAmistoso(id) {
 function botaoRegistrarAmistoso(id, r, acoes) {
   if (!r.vencedor) { acoes.insertAdjacentHTML('afterbegin', '<p style="color:#fca5a5;flex-basis:100%">A partida foi interrompida pela proteção técnica e não pode ser registrada.</p>'); return; }
   const b = document.createElement('button'); b.className = 'pt-btn ouro'; b.textContent = 'Encerrar amistoso'; acoes.prepend(b);
+  const fechar = acoes.querySelector('#r-fechar'); if (fechar) fechar.disabled = true; // só fecha depois de encerrar (senão o amistoso não conta)
   const aviso = document.createElement('p'); aviso.style.cssText = 'flex-basis:100%;margin:0;color:#8fa3bf;font-size:13px'; acoes.append(aviso);
   b.onclick = async () => {
     b.disabled = true; aviso.textContent = 'Registrando…';
     const { eventos, ...enviar } = r;
     try {
       const rr = await api.amistosoRegistrar(id, { ...enviar, bans: E.config.bans });
+      if (fechar) fechar.disabled = false;
       aviso.innerHTML = `${rr.exp ? `+${rr.exp_ganho} EXP e maestria nos campeões usados pelos seus titulares. ` : 'Sem EXP nem maestria neste amistoso (só os 5 primeiros do dia contam). '}<a style="color:#f5cf5a" href="../">Voltar ao simulador</a>`;
     } catch (e) { aviso.textContent = e.message || 'Não foi possível registrar o amistoso.'; b.disabled = false; }
   };
@@ -81,6 +83,7 @@ function botaoRegistrar(el, r, acoes) {
   const aqui = E.config;
   if (!r.vencedor) { acoes.insertAdjacentHTML('afterbegin', '<p style="color:#fca5a5;flex-basis:100%">A partida foi interrompida pela proteção técnica e não pode ser registrada.</p>'); return; }
   const b = document.createElement('button'); b.className = 'pt-btn ouro'; b.textContent = 'Registrar resultado'; acoes.prepend(b);
+  const fechar = acoes.querySelector('#r-fechar'); if (fechar) fechar.disabled = true; // só fecha depois de registrar
   const aviso = document.createElement('p'); aviso.style.cssText = 'flex-basis:100%;margin:0;color:#8fa3bf;font-size:13px'; acoes.append(aviso);
   b.onclick = async () => {
     b.disabled = true; aviso.textContent = 'Registrando…';
@@ -89,6 +92,7 @@ function botaoRegistrar(el, r, acoes) {
       const picks = (l) => Object.fromEntries(l.map((j) => [j.pos, typeof j.campeao === 'string' ? j.campeao : j.campeao?.nome]));
       await api.gameplayDraft(aqui.id, aqui.mapa, { picks: { azul: picks(aqui.azul), vermelho: picks(aqui.vermelho) }, bans: aqui.bans });
       const rr = await api.gameplayRegistrar(aqui.id, aqui.mapa, enviar);
+      if (fechar) fechar.disabled = false;
       if (rr.concluida) { aviso.innerHTML = `Partida concluída: ${rr.placar_a} × ${rr.placar_b}. <a style="color:#f5cf5a" href="../">Voltar ao simulador</a>`; }
       else { aviso.innerHTML = `Mapa registrado (${rr.placar_a} × ${rr.placar_b}). A série continua. <a style="color:#f5cf5a" href="" onclick="location.reload();return false">Jogar o próximo mapa</a>`; }
     } catch (e) { aviso.textContent = e.message || 'Não foi possível registrar o resultado.'; b.disabled = false; }
