@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 8, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -1277,4 +1277,22 @@ t('tabela: vitória vale 1 ponto; desempate por confronto direto e depois por te
     // tabela do JSON: a posição mostrada é a final
     assert.equal(Number(V(`select tc_liga_json(${lid})->'tabela'->0->'org'->>'id'`)), A);
   } finally { V(`delete from tc_ligas where id = ${lid}`); }
+});
+
+// ---------------------------------------------------------------- painel ADM: jogadores (SQL 0123)
+t('ADM: só administrador lista e edita jogadores; o OVR vem dos atributos (pesos da posição)', () => {
+  assert.equal(falha("select tc_adm_jogadores('{}')", 5), 'not_admin'); // conta 5 não é administradora
+  assert.equal(falha("select tc_adm_jogador_editar(1, 'Teste', 50, 50, 50, 50, 50)", 5), 'not_admin');
+  const l = J("select tc_adm_jogadores('{\"pos\":\"meio\"}')", 1);
+  assert.ok(l.total > 0 && l.itens.length <= 40 && l.itens.every((x) => x.pos === 'meio'));
+  const j = l.itens[0];
+  assert.equal(j.pesos.length, 5); const soma = j.pesos.reduce((a, b) => a + b, 0); assert.ok(Math.abs(soma - 1) < 1e-6);
+  const calc = j.pesos[0] * j.mec + j.pesos[1] * j.rotas + j.pesos[2] * j.macro + j.pesos[3] * j.tf + j.pesos[4] * j.mental;
+  assert.ok(Math.abs(calc - j.ovr) < 0.06, 'o OVR mostrado bate com os pesos');
+  const e = J(`select tc_adm_jogador_editar(${j.id}, 'Nome Editado', 90, 90, 90, 90, 90)`, 1);
+  assert.equal(e.nome, 'Nome Editado'); assert.equal(e.mec, 90); assert.equal(e.ovr, 90); assert.ok(e.potencial >= 90, 'potencial acompanha o OVR');
+  assert.equal(falha(`select tc_adm_jogador_editar(${j.id}, 'Nome Editado', 101, 90, 90, 90, 90)`, 1), 'atributo_invalido');
+  assert.equal(falha(`select tc_adm_jogador_editar(${j.id}, 'x', 50, 50, 50, 50, 50)`, 1), 'jogador_nome_invalido');
+  const outro = l.itens[1];
+  assert.equal(falha(`select tc_adm_jogador_editar(${outro.id}, 'Nome Editado', 50, 50, 50, 50, 50)`, 1), 'jogador_nome_em_uso');
 });

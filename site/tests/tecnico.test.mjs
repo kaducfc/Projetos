@@ -11,7 +11,7 @@ import {
 import { escudoSvg, retratoSvg, ESCUDOS } from '../jogos/tecnico/js/art.js';
 
 const ler = (f) => readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8');
-const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql'].map(ler).join('\n');
+const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql'].map(ler).join('\n');
 const j = (o = {}) => ({ id: 1, nome: 'Teste', pos: 'meio', pos2: [], mec: 60, rotas: 60, macro: 60, tf: 60, mental: 60, fama: 50, forma: 50, idade: 22, potencial: 70, ...o });
 
 test('Poder individual: média ponderada dos cinco atributos, sem a Fama, entre 1 e 100', () => {
@@ -83,7 +83,7 @@ test('só as funções de uso do jogo são liberadas para contas logadas (nunca 
   for (const f of liberadas) {
     const corpo = new RegExp(`function public\\.${f}\\([^)]*\\)[\\s\\S]*?\\$\\$;`, 'g');
     const blocos = sql.match(corpo) || [];
-    assert.ok(blocos.some((b) => /tc_exigir\(|from site_admins where user_id = uid/.test(b)), `${f} não confere o acesso`); // portão do jogo ou checagem de administrador
+    assert.ok(blocos.some((b) => /tc_exigir\(|tc_adm_exigir\(|from site_admins where user_id = uid/.test(b)), `${f} não confere o acesso`); // portão do jogo ou checagem de administrador
   }
 });
 
@@ -229,4 +229,23 @@ test('mercado oficial com rotação: o cliente chama a função do SQL e conhece
   assert.ok(plat.includes("'tc_mercado_rotacao'")); assert.match(sql, /function public\.tc_mercado_rotacao\(/);
   assert.ok(plat.includes('fora_da_oferta:')); assert.ok(sql.includes("'fora_da_oferta'"));
   assert.match(sql, /"min": 7, "max": 10, "abaixo": 5, "acima": 8/, 'configuração: 7 a 10 jogadores, de -5 a +8');
+});
+
+test('painel ADM: a aba só aparece para administradores, o cliente chama funções do SQL e o OVR dos atributos é o do servidor', async () => {
+  const main = readFileSync(new URL('../jogos/tecnico/js/main.js', import.meta.url), 'utf8');
+  assert.ok(main.includes("['adm', 'ADM'"), 'aba ADM'); assert.ok(!main.includes("['campeoes', 'Campeões'"), 'a aba pública de Campeões saiu do menu');
+  assert.match(main, /filter\(\(\[id\]\) => id !== 'adm' \|\| S\.ehAdmin\)/, 'ADM só para administradores');
+  const plat = readFileSync(new URL('../shared/platform.js', import.meta.url), 'utf8');
+  for (const c of ['tc_adm_jogadores', 'tc_adm_jogador_editar']) { assert.ok(plat.includes(`'${c}'`)); assert.match(sql, new RegExp(`function public\\.${c}\\(`)); }
+  for (const k of ['jogador_nome_invalido', 'jogador_nome_em_uso', 'atributo_invalido']) { assert.ok(plat.includes(`${k}:`)); assert.ok(sql.includes(`'${k}'`)); }
+  const A = await import('../jogos/tecnico/js/adm.js');
+  const w = [0.25, 0.2, 0.2, 0.2, 0.15];
+  const a = { mec: 60, rotas: 50, macro: 40, tf: 70, mental: 55 };
+  const ovr = A.ovrDe(a, w); assert.ok(Math.abs(ovr - (0.25 * 60 + 0.2 * 50 + 0.2 * 40 + 0.2 * 70 + 0.15 * 55)) < 1e-9);
+  for (const alvo of [30, 55, 80, 95, 100, 1]) {
+    const n = A.atributosParaOvr(a, w, alvo);
+    assert.ok(Math.abs(A.ovrDe(n, w) - alvo) <= 0.51, `OVR ${alvo}: ${A.ovrDe(n, w)}`);
+    for (const k of Object.keys(n)) assert.ok(n[k] >= 1 && n[k] <= 100);
+  }
+  assert.ok(A.atributosParaOvr(a, w, 80).tf > A.atributosParaOvr(a, w, 80).macro, 'mantém as proporções entre os atributos');
 });

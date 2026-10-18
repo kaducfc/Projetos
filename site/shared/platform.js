@@ -1015,6 +1015,9 @@ export const baraoCarta = (id, slot) => rpcBarao('site_barao_carta', { pid: id, 
 export const baraoVazio = (id) => rpcBarao('site_barao_vazio', { pid: id });
 // Simulador de técnico (jogo "tecnico"): tudo é decidido no servidor (SQL 0085 a 0089); o navegador só chama funções.
 const ERROS_TECNICO = {
+  jogador_nome_invalido: 'O nome do jogador precisa ter de 2 a 24 caracteres.',
+  jogador_nome_em_uso: 'Já existe um jogador com esse nome.',
+  atributo_invalido: 'Os atributos precisam ficar entre 1 e 100.',
   fora_da_oferta: 'Esse jogador não está mais à venda. A oferta do mercado oficial troca a cada 12 horas.',
   patrocinador_invalido: 'Esse patrocinador não existe.',
   patrocinio_ja_ativo: 'Esse patrocínio já está ativo. Espere o contrato terminar para renovar.',
@@ -1144,6 +1147,8 @@ export const tecnico = {
   personalizar: (a) => rpcTecnico('tc_personalizar_org', { escudo_: a.escudo, cor1_: a.cor1, cor2_: a.cor2, estilo_: a.estilo }),
   mercadoOficial: (f) => rpcTecnico('tc_mercado_oficial', { f }),
   mercadoRotacao: () => rpcTecnico('tc_mercado_rotacao'),
+  admJogadores: (f) => rpcTecnico('tc_adm_jogadores', { f }), // só administradores
+  admJogadorEditar: (jid, nome, a) => rpcTecnico('tc_adm_jogador_editar', { jid, nome_: nome, mec_: a.mec, rotas_: a.rotas, macro_: a.macro, tf_: a.tf, mental_: a.mental }),
   contratar: (jogador, semanas, chave) => rpcTecnico('tc_contratar', { jogador, semanas, chave_: chave }),
   escalar: (vaga, jogador, semanas = null) => rpcTecnico('tc_escalar', { vaga, jogador, semanas }),
   escolherElencoInicial: (ids) => rpcTecnico('tc_escolher_elenco_inicial', { ids }),

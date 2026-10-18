@@ -13,6 +13,7 @@ import { prepararImagens, campIcone } from './campeoes-img.js';
 import { escudoOrg, retratoSvg, iconeVaga } from './art.js';
 import { N_EMBLEMAS, N_BANDEIRAS, PARTES_EMBLEMA, PARTES_BANDEIRA, PALETA, ICONE_PADRAO, icClone, icCodificar, icDecodificar, icHtml, emblemaHtml } from './icone.js';
 import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js';
+import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
 import { iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js';
 
 const GAME_ID = 'tecnico';
@@ -90,7 +91,10 @@ async function carregarAba() {
   try {
     if ((S.aba === 'camp' || S.aba === 'class') && !S.camp) S.camp = await api.campeonatos();
     if (S.aba === 'hist' && !S.hist) S.hist = await api.historico();
-    if (S.aba === 'campeoes' && !S.campeoes) [S.campeoes] = await Promise.all([api.campeoes(), prepararImagens()]);
+    if (S.aba === 'adm' && S.ehAdmin) {
+      if ((S.admAba || 'campeoes') === 'campeoes' && !S.campeoes) [S.campeoes] = await Promise.all([api.campeoes(), prepararImagens()]);
+      if (S.admAba === 'jogadores') await carregarAdm();
+    }
     if (S.aba === 'contratar') await carregarMercado();
     if (['treino', 'amistoso', 'recrutar'].includes(S.aba)) await carregarExtras(S.aba);
     if (S.aba === 'marketing') await carregarMarketing();
@@ -165,13 +169,13 @@ function topo() {
 }
 
 const ABAS = [
-  ['visao', 'Início', 'i-home'], ['elenco', 'Meu elenco', 'i-time'], ['treino', 'Treinamento', 'i-treino'], ['amistoso', 'Amistoso', 'i-agenda'], ['contratar', 'Mercado', 'i-mercado'], ['recrutar', 'Recrutar', 'i-bau'], ['marketing', 'Marketing', 'i-financas'], ['campeoes', 'Campeões', 'i-plantel'],
+  ['visao', 'Início', 'i-home'], ['elenco', 'Meu elenco', 'i-time'], ['treino', 'Treinamento', 'i-treino'], ['amistoso', 'Amistoso', 'i-agenda'], ['contratar', 'Mercado', 'i-mercado'], ['recrutar', 'Recrutar', 'i-bau'], ['marketing', 'Marketing', 'i-financas'], ['adm', 'ADM', 'i-conf'],
   ['camp', 'Campeonatos', 'i-trofeu'], ['class', 'Classificação', 'i-stats'], ['hist', 'Histórico', 'i-financas'], ['pers', 'Personalização', 'i-engrenagem'],
 ];
 function nav() {
   const novos = (S.meu.avisos || []).filter((a) => !a.lido).length;
   const sem = ((S.meu.semana % 4) + 4) % 4 + 1;
-  return `<nav class="tc-nav" aria-label="Seções">${ABAS.map(([id, nome, ic]) => `<button type="button" data-act="aba" data-aba="${id}" class="${S.aba === id ? 'on' : ''}">${IMG(ic)}<span>${nome}</span>${id === 'visao' && novos ? `<span class="n">${Math.min(novos, 9)}</span>` : ''}</button>`).join('')}
+  return `<nav class="tc-nav" aria-label="Seções">${ABAS.filter(([id]) => id !== 'adm' || S.ehAdmin).map(([id, nome, ic]) => `<button type="button" data-act="aba" data-aba="${id}" class="${S.aba === id ? 'on' : ''}">${IMG(ic)}<span>${nome}</span>${id === 'visao' && novos ? `<span class="n">${Math.min(novos, 9)}</span>` : ''}</button>`).join('')}
     <div class="tc-temp"><span class="tc-eyebrow">Temporada atual</span><b>Semana ${sem} de 4</b><small>${S.meu.org.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)}</small></div>${FECHADO ? '<a class="tc-peq" style="color:var(--ouro2);padding:8px 4px;text-align:center" href="partida/?teste=1">Sala de testes da partida (admin)</a>' : ''}</nav>`;
 }
 
@@ -393,7 +397,12 @@ function viewHist() {
     <section class="tc-card"><h3>Partidas</h3>${h.partidas.length ? `<div class="tc-lista">${h.partidas.map((p) => partidaLinha(p)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Nenhuma partida disputada.</p>'}</section>`;
 }
 
-// ------------------------------------------------------------------ campeões
+// ------------------------------------------------------------------ ADM (só administradores): campeões e jogadores
+function viewAdm() {
+  const a = S.admAba || 'campeoes';
+  return `<div class="tc-abas"><button type="button" data-act="adm-aba" data-v="campeoes" class="${a === 'campeoes' ? 'on' : ''}">Campeões</button><button type="button" data-act="adm-aba" data-v="jogadores" class="${a === 'jogadores' ? 'on' : ''}">Jogadores</button></div>
+    ${a === 'campeoes' ? viewCampeoes() : viewAdmJogadores()}`;
+}
 function viewCampeoes() {
   const d = S.campeoes; if (!d) return '<p class="tc-carregando">Carregando…</p>';
   const f = S.fc; const q = f.busca.trim().toLowerCase();
@@ -552,7 +561,7 @@ function conteudo() {
     case 'amistoso': return viewAmistoso();
     case 'recrutar': return viewRecrutar();
     case 'marketing': return viewMarketingCentral();
-    case 'campeoes': return viewCampeoes();
+    case 'adm': return S.ehAdmin ? viewAdm() : viewVisao();
     case 'pers': return viewPers();
     default: return viewVisao();
   }
@@ -600,6 +609,8 @@ document.addEventListener('click', async (e) => {
   if (act === 'fechar-fundo') { if (e.target === b) { S.modal = null; render(); } return; }
   if (act === 'semanas' || act === 'liga-sel' || act === 'preco-anuncio') return;
   if (act === 'aba') { S.aba = b.dataset.aba; render(); await carregarAba(); render(); window.scrollTo({ top: 0 }); return; }
+  if (act === 'adm-aba') { S.admAba = b.dataset.v; render(); await carregarAba(); render(); return; }
+  if (act.startsWith('adm-') && S.ehAdmin) { if (await tratarAdm(act, b)) render(); return; }
   if (act === 'camp-pos') { // administrador: inclui/tira uma posição do campeão (fica salvo no servidor)
     const c = S.campeoes?.campeoes.find((x) => x.id === b.dataset.id); if (!c || !S.ehAdmin) return;
     const p = b.dataset.p; const novas = c.posicoes.includes(p) ? c.posicoes.filter((x) => x !== p) : [...c.posicoes, p];
@@ -690,6 +701,7 @@ document.addEventListener('click', async (e) => {
 });
 
 document.addEventListener('input', (e) => {
+  if (S.ehAdmin && S.aba === 'adm' && admDigitar(e)) return;
   const t = e.target;
   if (t.matches('[data-ic]')) { // seletor de cor nativo: atualiza só a prévia (renderizar de novo fecharia o seletor)
     const [alvo, grupo, i] = t.dataset.ic.split(':'); const f = formDe(alvo); f.ic[grupo][Number(i)] = t.value; aplicarIc(alvo);
@@ -714,6 +726,7 @@ document.addEventListener('submit', async (e) => {
   const form = e.target.closest('form[data-form]'); if (!form) return;
   e.preventDefault();
   const tipo = form.dataset.form;
+  if (tipo === 'adm-jog') { if (S.ehAdmin) await filtrarAdm(form); return; }
   if (tipo === 'criar') {
     S.erro = '';
     const f = S.form;
@@ -729,6 +742,7 @@ document.addEventListener('submit', async (e) => {
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.modal) { S.modal = null; render(); } });
 
+iniciarAdm({ S, esc, agir, toast, render });
 iniciarMarketing({ S, esc, fmt, IMG, agir, render, nomeVaga: (v) => NOME_VAGA[v] || v, atualizarMeu: async () => { S.meu = await api.meu(); if (S.meu.org) S.painel = await api.painel(); } });
 iniciarExtras({
   S, esc, fmt, IMG, agir, toast, render, novaChave, escudoHtml, estrelasHtml, nomeLiga, dataCurta,
