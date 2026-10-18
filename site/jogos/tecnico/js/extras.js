@@ -83,7 +83,7 @@ export function viewTreino() {
       <small class="tc-mudo" style="margin-top:4px">${(j.exp || 0) < 100 ? 'Encha a barra de experiência (XP) para treinar.' : `Pronto para treinar! A sessão dura ${j.horas}h.`}</small></div></section>`;
   }).join('');
   return `<section class="tc-card"><h3>${C.IMG('i-treino')}Treinamento<span class="dir">${t.em_andamento}/${cfg.simultaneos} treinos</span></h3>
-    <p class="tc-mudo tc-peq" style="margin:0">O jogador treina quando a barra de <b>XP chega a 100/100</b>. A sessão custa créditos, leva algumas horas, volta o XP para 0 e sobe <b>1 atributo (+${cfg.pontos})</b>. O XP vem das partidas e dos amistosos (só os titulares ganham). O Poder do jogador sobe até o limite: <b>+${cfg.bonus_comum}</b> para jogadores comuns e <b>+${cfg.bonus_estrela}</b> para Legados (nunca passa de 100). Seus créditos: <b>${C.fmt(t.creditos)}</b>.</p></section>
+    <p class="tc-mudo tc-peq" style="margin:0">Participe de amistosos e campeonatos para ganhar XP, treine seus jogadores e alcance seus limites.</p></section>
     <div class="tc-treino-lista">${cards || '<p class="tc-mudo">Seu elenco está vazio.</p>'}</div>`;
 }
 
