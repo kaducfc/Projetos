@@ -82,7 +82,7 @@ export async function tratarAdm(act, b) {
   }
   if (act === 'adm-salvar') {
     const tr = b.closest('tr[data-adm]'); const { a } = lerLinha(tr);
-    const r = await C.agir(() => api.admJogadorEditar(Number(b.dataset.id), tr.querySelector('.adm-nome').value, a), { ok: 'Jogador salvo!', recarregar: false });
+    const r = await C.agir(() => api.admJogadorEditar(Number(b.dataset.id), tr.querySelector('.adm-nome').value, a), { ok: (r) => (r && r.copias_atualizadas ? `Jogador salvo! ${r.copias_atualizadas} cópia(s) dos técnicos atualizada(s).` : 'Jogador salvo!'), recarregar: false });
     if (r && r !== true) { // atualiza só esta linha (as outras podem ter edições ainda não salvas)
       const it = X.dados.itens.find((x) => x.id === r.id); if (it) Object.assign(it, r);
       tr.querySelector('.adm-nome').value = r.nome; tr.querySelector('.adm-ovr').value = Math.round(r.ovr);

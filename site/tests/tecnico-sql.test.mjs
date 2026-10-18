@@ -1285,7 +1285,8 @@ t('ADM: só administrador lista e edita jogadores; o OVR vem dos atributos (peso
   assert.equal(falha("select tc_adm_jogador_editar(1, 'Teste', 50, 50, 50, 50, 50)", 5), 'not_admin');
   const l = J("select tc_adm_jogadores('{\"pos\":\"meio\"}')", 1);
   assert.ok(l.total > 0 && l.itens.length <= 40 && l.itens.every((x) => x.pos === 'meio'));
-  const j = l.itens[0];
+  const comuns = l.itens.filter((x) => x.ficticio);
+  const j = comuns[0];
   assert.ok('retrato' in j, 'o painel recebe o retrato'); assert.equal(j.pesos.length, 5); const soma = j.pesos.reduce((a, b) => a + b, 0); assert.ok(Math.abs(soma - 1) < 1e-6);
   const calc = j.pesos[0] * j.mec + j.pesos[1] * j.rotas + j.pesos[2] * j.macro + j.pesos[3] * j.tf + j.pesos[4] * j.mental;
   assert.ok(Math.abs(calc - j.ovr) < 0.06, 'o OVR mostrado bate com os pesos');
@@ -1293,6 +1294,30 @@ t('ADM: só administrador lista e edita jogadores; o OVR vem dos atributos (peso
   assert.equal(e.nome, 'Nome Editado'); assert.equal(e.mec, 90); assert.equal(e.ovr, 90); assert.ok(e.potencial >= 90, 'potencial acompanha o OVR');
   assert.equal(falha(`select tc_adm_jogador_editar(${j.id}, 'Nome Editado', 101, 90, 90, 90, 90)`, 1), 'atributo_invalido');
   assert.equal(falha(`select tc_adm_jogador_editar(${j.id}, 'x', 50, 50, 50, 50, 50)`, 1), 'jogador_nome_invalido');
-  const outro = l.itens[1];
+  const outro = comuns[1];
   assert.equal(falha(`select tc_adm_jogador_editar(${outro.id}, 'Nome Editado', 50, 50, 50, 50, 50)`, 1), 'jogador_nome_em_uso');
+});
+
+t('ADM: editar o modelo de um legado atualiza as cópias dos técnicos somando o upgrade que cada um já fez', () => {
+  const modelo = J("select to_jsonb(j) from tc_jogadores j where not j.ficticio and j.legado_base is null order by id limit 1");
+  const cols = 'nome, ficticio, genero, pos, pos2, idade, regiao, retrato, potencial, fama, forma, exp, raridade';
+  V(`insert into tc_jogadores (${cols}, org_id, legado_base, mec, rotas, macro, tf, mental)
+     select ${cols}, 1, id, least(100, mec + 2), least(100, rotas + 2), least(100, macro + 2), least(100, tf + 2), least(100, mental + 2) from tc_jogadores where id = ${modelo.id}`);
+  const copia = () => J(`select to_jsonb(c) from tc_jogadores c where c.legado_base = ${modelo.id} and c.org_id = 1`);
+  const c0 = copia();
+  try {
+    const novo = { mec: modelo.mec - 4, rotas: modelo.rotas - 4, macro: modelo.macro - 4, tf: modelo.tf - 4, mental: modelo.mental - 4 };
+    const r = J(`select tc_adm_jogador_editar(${modelo.id}, 'Faker Editado', ${novo.mec}, ${novo.rotas}, ${novo.macro}, ${novo.tf}, ${novo.mental})`, 1);
+    assert.equal(r.copias_atualizadas, 1);
+    const c1 = copia();
+    assert.equal(c1.nome, 'Faker Editado');
+    for (const k of ['mec', 'rotas', 'macro', 'tf', 'mental']) assert.equal(c1[k], Math.max(1, Math.min(100, c0[k] - 4)), `${k}: o upgrade (+2) continua somado à nova base`);
+    // editar a própria cópia não mexe no modelo nem em outras cópias
+    const antes = J(`select to_jsonb(j) from tc_jogadores j where j.id = ${modelo.id}`);
+    J(`select tc_adm_jogador_editar(${c1.id}, 'Faker Editado', 50, 50, 50, 50, 50)`, 1);
+    assert.equal(J(`select to_jsonb(j) from tc_jogadores j where j.id = ${modelo.id}`).mec, antes.mec);
+  } finally {
+    V(`delete from tc_jogadores where legado_base = ${modelo.id} and org_id = 1`);
+    V(`update tc_jogadores set nome = '${modelo.nome}', mec = ${modelo.mec}, rotas = ${modelo.rotas}, macro = ${modelo.macro}, tf = ${modelo.tf}, mental = ${modelo.mental}, potencial = ${modelo.potencial} where id = ${modelo.id}`);
+  }
 });

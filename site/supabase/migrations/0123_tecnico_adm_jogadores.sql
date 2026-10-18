@@ -63,18 +63,31 @@ create or replace function public.tc_adm_jogador_editar(jid bigint, nome_ text, 
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare
   j tc_jogadores;
+  antes tc_jogadores;
   n text := trim(coalesce(nome_, ''));
   ovr double precision;
+  copias int := 0;
 begin
   perform tc_adm_exigir();
   if char_length(n) not between 2 and 24 then raise exception 'jogador_nome_invalido'; end if;
   if least(mec_, rotas_, macro_, tf_, mental_) < 1 or greatest(mec_, rotas_, macro_, tf_, mental_) > 100 then raise exception 'atributo_invalido'; end if;
-  select * into j from tc_jogadores where id = jid for update;
-  if j.id is null then raise exception 'jogador_inexistente'; end if;
+  select * into antes from tc_jogadores where id = jid for update;
+  if antes.id is null then raise exception 'jogador_inexistente'; end if;
   update tc_jogadores set nome = n, mec = mec_, rotas = rotas_, macro = macro_, tf = tf_, mental = mental_ where id = jid returning * into j;
   ovr := tc_poder(j);
   if j.potencial < ceil(ovr) then update tc_jogadores set potencial = least(100, ceil(ovr)::int) where id = jid returning * into j; end if;
-  return tc_adm_jogador_json(j);
+  -- Modelo de legado do catálogo: as cópias dos técnicos recebem a mesma variação (o upgrade que cada um já fez é preservado).
+  -- Ex.: modelo 94 -> 90 (-4); a cópia que o técnico deixou em 96 passa a 92.
+  if not j.ficticio and j.legado_base is null then
+    update tc_jogadores c set nome = n,
+           mec = least(100, greatest(1, c.mec + (mec_ - antes.mec))), rotas = least(100, greatest(1, c.rotas + (rotas_ - antes.rotas))),
+           macro = least(100, greatest(1, c.macro + (macro_ - antes.macro))), tf = least(100, greatest(1, c.tf + (tf_ - antes.tf))),
+           mental = least(100, greatest(1, c.mental + (mental_ - antes.mental)))
+     where c.legado_base = jid;
+    get diagnostics copias = row_count;
+    update tc_jogadores c set potencial = least(100, greatest(c.potencial, ceil(tc_poder(c))::int)) where c.legado_base = jid;
+  end if;
+  return tc_adm_jogador_json(j) || jsonb_build_object('copias_atualizadas', copias);
 exception when unique_violation then
   raise exception 'jogador_nome_em_uso';
 end;
