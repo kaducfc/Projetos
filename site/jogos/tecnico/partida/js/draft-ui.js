@@ -27,9 +27,12 @@ function jogadaAutomatica(d, p, vaga) {
 }
 
 // Mostra o draft e devolve { azul, vermelho, bans } quando termina.
-export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVermelho, invertida = false }) {
+// `lado` (partida oficial com o lado ainda não escolhido): { escolhe: 'eu' | 'adv', escolher: async (lado) => void, aguardar: async () => lado }.
+// Quem escolhe o lado decide quem começa os picks: azul = primeiro pick. A escolha vem antes do primeiro ban.
+export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVermelho, invertida = false, lado = null }) {
   return new Promise((resolver) => {
-    const d = novoDraft(catalogo, azul, vermelho, semente, { invertida });
+    let meuLado = invertida ? 'vermelho' : 'azul';
+    let d = novoDraft(catalogo, azul, vermelho, semente, { invertida });
     const S = { vaga: null, busca: '', trocando: false, filtro: null, passoT: -1, fim: 0, iaEm: 0, relogio: null };
     const fundo = document.createElement('div'); fundo.className = 'pt-fundo pt-draft';
     document.body.appendChild(fundo);
@@ -97,9 +100,27 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       fundo.innerHTML = `<div class="pt-modal pt-draft-box intro"><h2>Draft completo</h2><div class="palco fim">${colunaHtml('azul', nomeAzul)}<div class="meio"><button type="button" class="pt-btn ouro grande" id="d-ir">Começar a partida</button></div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
       fundo.querySelector('#d-ir').onclick = () => { fundo.remove(); resolver(r); };
     }
+    function comecar() { S.relogio = setInterval(atualizarTempo, 250); desenhar(); }
+    function definirLado(l) { S.ladoOk = true; meuLado = l; d = novoDraft(catalogo, azul, vermelho, semente, { invertida: l === 'vermelho' }); intro(); }
+    function escolhaDeLado() {
+      const meu = lado.escolhe === 'eu';
+      const corpo = meu
+        ? `<p class="lado-t">Você escolhe o lado</p><div class="lado-bt"><button type="button" class="pt-btn lado-azul" data-lado="azul">Azul<small>começa os picks</small></button><button type="button" class="pt-btn lado-verm" data-lado="vermelho">Vermelho<small>escolhe depois</small></button></div>`
+        : `<p class="lado-t">${esc(nomeVermelho)} está escolhendo o lado…</p>`;
+      fundo.innerHTML = `<div class="pt-modal pt-draft-box intro"><h2>Picks e bans</h2><div class="palco fim">${colunaHtml('azul', nomeAzul)}<div class="meio">${corpo}</div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
+      if (meu) {
+        fundo.querySelectorAll('[data-lado]').forEach((b) => { b.onclick = async () => {
+          fundo.querySelectorAll('[data-lado]').forEach((x) => { x.disabled = true; });
+          try { await lado.escolher(b.dataset.lado); definirLado(b.dataset.lado); } catch (e) { alert(e.message || e); escolhaDeLado(); }
+        }; });
+      } else {
+        lado.aguardar().then(definirLado).catch((e) => { fundo.querySelector('.lado-t').textContent = e.message || String(e); });
+      }
+    }
     function intro() {
-      fundo.innerHTML = `<div class="pt-modal pt-draft-box intro"><h2>Picks e bans</h2><div class="palco fim">${colunaHtml('azul', nomeAzul)}<div class="meio"><button type="button" class="pt-btn ouro grande" id="d-comecar">Começar</button></div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
-      fundo.querySelector('#d-comecar').onclick = () => { S.relogio = setInterval(atualizarTempo, 250); desenhar(); };
+      if (lado && !S.ladoOk) { escolhaDeLado(); return; }
+      fundo.innerHTML = `<div class="pt-modal pt-draft-box intro"><h2>Picks e bans</h2><div class="palco fim">${colunaHtml('azul', nomeAzul)}<div class="meio"><button type="button" class="pt-btn ouro grande" id="d-comecar">Começar</button>${lado ? `<p class="lado-info ${meuLado === 'azul' ? 'a' : 'v'}">Você joga no lado ${meuLado === 'azul' ? 'azul · começa os picks' : 'vermelho · escolhe depois'}</p>` : ''}</div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
+      fundo.querySelector('#d-comecar').onclick = comecar;
     }
     prepararImagens().finally(intro);
   });

@@ -1083,6 +1083,10 @@ const ERROS_TECNICO = {
   favoritos_demais: 'Um jogador pode ter no máximo 5 campeões favoritos.',
   gameplay_desligado: 'As partidas jogadas ainda não estão liberadas.',
   partida_nao_e_sua: 'Essa partida não é da sua equipe.',
+  lado_invalido: 'Lado inválido.',
+  lado_ja_escolhido: 'O lado deste mapa já foi escolhido.',
+  nao_e_sua_escolha: 'Quem escolhe o lado deste mapa é o adversário.',
+  lado_nao_escolhido: 'O lado deste mapa ainda não foi escolhido.',
   partida_ja_concluida: 'Essa partida já foi concluída.',
   partida_no_futuro: 'Essa partida ainda não está liberada.',
   partida_inexistente: 'Essa partida não existe.',
@@ -1142,6 +1146,7 @@ export const tecnico = {
   campeaoPosicoes: (id, posicoes) => rpcTecnico('tc_campeao_posicoes', { cid: id, pos: posicoes }), // só administradores
   gameplayPendente: () => rpcTecnico('tc_gameplay_pendente', {}),
   partidaElencos: (pid) => rpcTecnico('tc_partida_elencos', { pid }),
+  gameplayEscolherLado: (pid, lado) => rpcTecnico('tc_gameplay_escolher_lado', { pid, lado }),
   gameplayRegistrar: (pid, mapa, resultado) => rpcTecnico('tc_gameplay_registrar', { pid, mapa_: mapa, resultado }),
   criarOrg: (a) => rpcTecnico('tc_criar_org', { nome_: a.nome, sigla_: a.sigla, escudo_: a.escudo, cor1_: a.cor1, cor2_: a.cor2, estilo_: a.estilo }),
   personalizar: (a) => rpcTecnico('tc_personalizar_org', { escudo_: a.escudo, cor1_: a.cor1, cor2_: a.cor2, estilo_: a.estilo }),

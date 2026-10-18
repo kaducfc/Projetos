@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 8, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -507,7 +507,17 @@ t('gameplay: a partida do técnico espera o jogo no navegador, o resultado de ca
   V("update tc_config set valor = 'true'::jsonb where chave = 'aberto'"); // abre para uma conta que não é a dona (não admin)
   assert.equal(falha(`select tc_partida_elencos(${pid})`, 6, '2026-11-09'), 'partida_nao_e_sua');
   const pend = J('select tc_gameplay_pendente()', n, '2026-11-09'); assert.equal(pend.ativo, true); assert.ok(pend.partida);
-  const el = J(`select tc_partida_elencos(${pid})`, n, '2026-11-09');
+  let el = J(`select tc_partida_elencos(${pid})`, n, '2026-11-09');
+  if (!el.lado.definido) {
+    assert.equal(falha(`select tc_gameplay_registrar(${pid}, 1, '${JSON.stringify({ semente: Number(el.semente), versaoRegras: 1, vencedor: 'azul', duracao: 1800, equipes: {}, jogadores: [] })}'::jsonb)`, n, '2026-11-09'), 'lado_nao_escolhido', 'sem lado escolhido o resultado não é gravado');
+    assert.equal(el.lado.voce_escolhe, true);
+    assert.equal(falha(`select tc_gameplay_escolher_lado(${pid}, 'verde')`, n, '2026-11-09'), 'lado_invalido');
+    J(`select tc_gameplay_escolher_lado(${pid}, 'vermelho')`, n, '2026-11-09');
+    assert.equal(falha(`select tc_gameplay_escolher_lado(${pid}, 'azul')`, n, '2026-11-09'), 'lado_ja_escolhido');
+    el = J(`select tc_partida_elencos(${pid})`, n, '2026-11-09');
+    assert.equal(el.lado.definido, true);
+    assert.notEqual(el.azul.org.id, el.lado.escolhe, 'quem escolheu vermelho joga no vermelho');
+  }
   assert.equal(el.mapa, 1); assert.equal(el.azul.jogadores.length, 5); assert.equal(el.vermelho.jogadores.length, 5);
   assert.deepEqual(el.azul.jogadores.map((j) => j.pos), ['top', 'selva', 'meio', 'atirador', 'suporte']);
   assert.ok(el.azul.jogadores[0].atributos.mec >= 1);
@@ -534,6 +544,13 @@ t('gameplay: a partida do técnico espera o jogo no navegador, o resultado de ca
   assert.equal(V(`select count(*) from tc_gameplay_mapas where partida_id = ${pid}`), '1');
 });
 
+t('gameplay: o melhor colocado escolhe o lado do mapa 1 e a escolha alterna a cada mapa; só quem escolhe decide', () => {
+  const pid = V("select id from tc_partidas where status = 'agendada' and exists (select 1 from tc_orgs o where o.user_id is not null and o.id in (org_a, org_b)) order by id limit 1");
+  const e1 = V(`select tc_gameplay_escolhedor(${pid}, 1)`), e2 = V(`select tc_gameplay_escolhedor(${pid}, 2)`), e3 = V(`select tc_gameplay_escolhedor(${pid}, 3)`);
+  assert.notEqual(e1, e2); assert.equal(e1, e3);
+  const melhor = V(`select t.org_id from tc_tabela((select liga_id from tc_partidas where id = ${pid})) t where t.org_id in ((select org_a from tc_partidas where id = ${pid}), (select org_b from tc_partidas where id = ${pid})) order by t.pos limit 1`);
+  assert.equal(e1, melhor, 'o melhor colocado escolhe primeiro');
+});
 t('gameplay: passado o prazo, o sistema simula as partidas que ninguém jogou e a semana fecha normalmente', () => {
   const antes = Number(V("select count(*) from tc_partidas where status = 'agendada' and dia <= '2026-11-09' and exists (select 1 from tc_orgs o where o.user_id is not null and o.id in (org_a, org_b))"));
   J('select tc_sincronizar()', 1, '2026-11-09');
@@ -602,6 +619,7 @@ t('segurança: o resumo do gameplay é reconstruído no servidor (só números l
   const org = V(`select org_a from tc_partidas where id = ${pid}`);
   const jog = V(`select id from tc_jogadores where org_id = ${org} limit 1`);
   const nomeReal = V(`select nome from tc_jogadores where id = ${jog}`);
+  V(`insert into tc_gameplay_lados (partida_id, mapa, org_azul) values (${pid}, 5, ${org})`);
   V(`insert into tc_gameplay_mapas (partida_id, mapa, org_azul, vencedor_org, semente, duracao, resumo) values (${pid}, 5, ${org}, ${org}, 1, 1800,
      '{"vencedor":"azul","motivo":"<b>x</b>","equipes":{"azul":{"abates":"<img src=x onerror=alert(1)>","torresPerdidas":99,"dragoes":3},"vermelho":{"abates":12}},
        "mvp":{"id":${jog},"nome":"<script>alert(1)</script>","campeao":"Ahri"},"jogadores":[{"id":${jog},"nome":"hack","abates":5,"pos":"<x>"},{"id":999999,"nome":"intruso"}],"lixo":"${'x'.repeat(50)}"}')`);

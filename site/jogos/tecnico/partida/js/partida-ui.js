@@ -12,7 +12,7 @@ import { elencoTeste } from '../dados/elencos-teste.js';
 import { prepararImagens, campIcone } from '../../js/campeoes-img.js';
 import { tempoTexto } from '../motor/eventos.js';
 import { REGRAS } from '../config/regras.js';
-import { abrirDraft } from './draft-ui.js?v=14';
+import { abrirDraft } from './draft-ui.js?v=15';
 
 const api = platform.tecnico;
 
@@ -50,6 +50,7 @@ async function configOficial(id) {
     modo: 'oficial', id, idAzul: el.azul.org.id, idVermelho: el.vermelho.org.id, mapa: el.mapa, semente: el.semente, versao: el.versao, azul: jogs(el.azul.jogadores), vermelho: jogs(el.vermelho.jogadores),
     nomeAzul: el.azul.org.nome, nomeVermelho: el.vermelho.org.nome, siglaAzul: el.azul.org.sigla, siglaVermelho: el.vermelho.org.sigla, veloc: REGRAS.velocidadePadrao,
     aviso: `Partida oficial · mapa ${el.mapa} de uma série melhor de ${f} · ${el.azul.org.nome} (azul) × ${el.vermelho.org.nome} (vermelho). O resultado não pode ser refeito.`,
+    lado: { definido: !!el.lado?.definido, escolhe: el.lado?.escolhe, voceEscolhe: !!el.lado?.voce_escolhe },
     aoFim: (r, acoes) => botaoRegistrar(el, r, acoes),
   };
 }
@@ -332,11 +333,20 @@ function quadro(ts) {
   } else if (id) {
     E.config = await configOficial(id);
     // picks e bans de cada mapa da partida oficial. Quem joga é o lado da sua organização (pode ser o vermelho): ele escolhe na ordem certa.
+    // O melhor colocado escolhe o lado (azul = primeiro pick) na própria tela de picks e bans, antes do primeiro ban; no mapa seguinte, o adversário.
     const meuId = (await api.meu().catch(() => null))?.org?.id;
-    const euVerm = !!meuId && E.config.idVermelho === meuId && E.config.idAzul !== meuId;
-    const C = E.config;
-    const dr = await abrirDraft({ catalogo: E.catalogo, azul: euVerm ? C.vermelho : C.azul, vermelho: euVerm ? C.azul : C.vermelho, semente: C.semente,
-      nomeAzul: euVerm ? C.nomeVermelho : C.nomeAzul, nomeVermelho: euVerm ? C.nomeAzul : C.nomeVermelho, invertida: euVerm });
+    let C = E.config;
+    const ld = C.lado;
+    // minha equipe fica sempre à esquerda da tela de draft; sem ser técnico de nenhuma das duas (admin), vale quem escolhe o lado
+    const minhaOrg = meuId && (C.idAzul === meuId || C.idVermelho === meuId) ? meuId : (ld.voceEscolhe ? ld.escolhe : (ld.escolhe === C.idAzul ? C.idVermelho : C.idAzul));
+    const minha = C.idAzul === minhaOrg;
+    const aguardar = async () => { for (;;) { await new Promise((ok) => setTimeout(ok, 3000)); const novo = await configOficial(id); if (novo.lado.definido) return novo.idAzul === minhaOrg ? 'azul' : 'vermelho'; } };
+    const dr = await abrirDraft({ catalogo: E.catalogo, azul: minha ? C.azul : C.vermelho, vermelho: minha ? C.vermelho : C.azul, semente: C.semente,
+      nomeAzul: minha ? C.nomeAzul : C.nomeVermelho, nomeVermelho: minha ? C.nomeVermelho : C.nomeAzul,
+      invertida: ld.definido && C.idVermelho === minhaOrg,
+      lado: ld.definido ? null : { escolhe: ld.escolhe === minhaOrg ? 'eu' : 'adv', escolher: (l) => api.gameplayEscolherLado(id, l), aguardar } });
+    if (!ld.definido) E.config = C = await configOficial(id); // agora com o lado definido pelo servidor
+    const euVerm = C.idVermelho === minhaOrg;
     C.veloc = 4; // depois do draft a simulação já começa sozinha, em 4x
     C.azul = euVerm ? dr.vermelho : dr.azul; C.vermelho = euVerm ? dr.azul : dr.vermelho;
     C.bans = euVerm ? { azul: dr.bans.vermelho, vermelho: dr.bans.azul } : dr.bans;
