@@ -377,7 +377,7 @@ function viewClass() {
   const mine = ligas.find((l) => l.tipo === 'divisao' && l.tabela.some((t) => t.org.id === S.meu.org.id) && l.status === 'aberta') || ligas.find((l) => l.tabela.some((t) => t.org.id === S.meu.org.id));
   if (!mine) return '<section class="tc-card"><p class="tc-mudo" style="margin:0">Sem classificação ainda.</p></section>';
   return `<section class="tc-card"><h3>${esc(mine.nome)}</h3>${tabelaHtml(mine.tabela, S.meu.org.id)}
-    <p class="tc-peq tc-mudo" style="margin:10px 0 0">Pontos: vitória por 2-0 = 3, por 2-1 = 2; derrota por 1-2 = 1, por 0-2 = 0. Desempate: pontos, saldo de mapas, mapas ganhos e, por fim, a ordem de cadastro da organização.</p></section>`;
+    </section>`;
 }
 
 // ------------------------------------------------------------------ histórico
