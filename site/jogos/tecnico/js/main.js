@@ -513,7 +513,7 @@ function viewClass() {
 // ------------------------------------------------------------------ histórico
 function viewHist() {
   const h = S.hist; if (!h) return '<p class="tc-carregando">Carregando…</p>';
-  const tipos = { inicial: 'Elenco inicial', bau: 'Baú de Recrutamento', contratacao: 'Contratação', compra_usuario: 'Compra entre usuários', renovacao: 'Renovação', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' };
+  const tipos = { inicial: 'Elenco inicial', bau: 'Baú de Recrutamento', bau_copia: 'Baú de Recrutamento · cópia', contratacao: 'Contratação', compra_usuario: 'Compra entre usuários', renovacao: 'Renovação', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' };
   return `<div class="tc-grade2">
     <section class="tc-card"><h3>Transferências e contratos</h3>${h.transferencias.length ? `<table class="tc-tabela"><tbody>${h.transferencias.slice(0, 20).map((t) => `<tr><td><b>${esc(t.jogador)}</b><br><span class="tc-mudo tc-peq">${tipos[t.tipo] || t.tipo}${t.de ? ` · de ${esc(t.de)}` : ''}${t.para ? ` · para ${esc(t.para)}` : ''}</span></td><td class="n">${t.valor ? `<span class="tc-preco ${t.moeda === 'rc' ? 'rc' : 'cr'}">${fmt(t.valor)}</span>` : '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Nada ainda.</p>'}</section>
     <div style="display:flex;flex-direction:column;gap:16px">
