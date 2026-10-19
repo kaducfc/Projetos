@@ -11,12 +11,12 @@ export const REGRAS = {
 
   // ---- atributos do simulador -> parâmetros de combate (função central em config/atributos.js)
   atributos: {
-    forca:  [0.88, 1.12],                                   // desempenho geral derivado dos cinco atributos (peso do Poder)
+    forca:  [0.86, 1.14],                                   // desempenho geral derivado dos cinco atributos (peso do Poder)
     mec:    { dano: [0.95, 1.05], acerto: [0.68, 0.9], farm: [0.4, 1.0], duelo: 0.06 }, // multiplicador de dano de habilidades; chance de acertar projéteis; chance de garantir o último golpe (farm)
-    rotas:  { troca: [0.9, 1.12], fim: 840 },              // qualidade das trocas de dano na rota; as vantagens somem após `fim` segundos
-    macro:  { decisao: [1.25, 0.8], ruido: [0.35, 0.08] },  // multiplicador do intervalo de decisão; ruído nas avaliações de risco
+    rotas:  { troca: [0.82, 1.2], fim: 840 },              // qualidade das trocas de dano na rota; as vantagens somem após `fim` segundos
+    macro:  { decisao: [1.6, 0.7], ruido: [0.55, 0.05] },  // multiplicador do intervalo de decisão; ruído nas avaliações de risco
     tf:     { luta: [0.93, 1.10] },                         // multiplicador de dano e resistência em lutas com 3+ campeões
-    mental: { erro: [0.14, 0.02], tilt: 0.14 },             // chance de decisão ruim; perda de desempenho máxima quando atrás e com mental baixo
+    mental: { erro: [0.2, 0.01], tilt: 0.22 },             // chance de decisão ruim; perda de desempenho máxima quando atrás e com mental baixo
   },
 
   // ---- economia
@@ -132,7 +132,7 @@ export const REGRAS = {
     distanciaSegura: { corpo: 220, distancia: 520 },
     visaoPersistencia: 6,
     baraoDesde: 1260, baraoLimite: 55, dragaoLimite: 45, grupoDesde: 1500, pressaoDesde: 600, // tempos e limites de decisão coletiva (ajustáveis por equipe: ver `politica`)
-    desespero: 0.9,        // peso máximo do desespero (time atrás e Mental baixo) nas decisões de luta, recuo e objetivo
+    desespero: 1.4,        // peso máximo do desespero (time atrás e Mental baixo) nas decisões de luta, recuo e objetivo
     contestar: { janela: 6, minimo: 0.8, roubo: 2.5 }, // contestar/roubar objetivo: razão mínima de valor de combate e segundos de rajada que contam para roubar
   },
 
