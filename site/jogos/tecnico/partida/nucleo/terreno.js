@@ -17,7 +17,7 @@ const PERMITE = {
 };
 
 export class Terreno {
-  constructor(dados = TERRENO) {
+  constructor(dados = TERRENO, opc = {}) {
     this.cols = dados.colunas; this.rows = dados.linhas;
     this.cel = dados.celulaPx * MUNDO.unidadesPorPixel; // tamanho da célula em unidades do mundo
     this.grade = new Uint8Array(this.cols * this.rows);
@@ -32,7 +32,33 @@ export class Terreno {
     this.original = this.grade.slice(); // terreno gerado, antes dos ajustes manuais
     for (const [k, t] of Object.entries(AJUSTES.celulas || {})) { const [cx, cy] = k.split(',').map(Number); if (this.dentro(cx, cy)) this.grade[cy * this.cols + cx] = t; }
     this.recalcularPerto();
+    this.definirMoitas(opc.moitas || AJUSTES.moitas || []);
   }
+  // Moitas: camada à parte do tipo de terreno (uma moita pode estar sobre rota, selva ou rio). Cada moita (grupo de células vizinhas) tem um id > 0.
+  // `lista`: células "cx,cy". Quem está dentro de uma moita só é visto por inimigos que também estão nela ou que tenham uma ward nela.
+  definirMoitas(lista) {
+    this.moita = new Uint16Array(this.cols * this.rows); this.moitas = [];
+    const marca = new Uint8Array(this.cols * this.rows);
+    for (const k of lista) { const [cx, cy] = String(k).split(',').map(Number); if (this.dentro(cx, cy) && this.grade[cy * this.cols + cx]) marca[cy * this.cols + cx] = 1; }
+    let id = 0;
+    for (let y = 0; y < this.rows; y++) for (let x = 0; x < this.cols; x++) {
+      if (marca[y * this.cols + x] !== 1) continue;
+      id++; const fila = [[x, y]]; marca[y * this.cols + x] = 2; const cels = [];
+      while (fila.length) {
+        const [cx, cy] = fila.pop(); this.moita[cy * this.cols + cx] = id; cels.push([cx, cy]);
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const nx = cx + dx, ny = cy + dy;
+          if (this.dentro(nx, ny) && marca[ny * this.cols + nx] === 1) { marca[ny * this.cols + nx] = 2; fila.push([nx, ny]); }
+        }
+      }
+      // centro da moita: a célula mais próxima da média (garante um ponto dentro da moita)
+      const mx = cels.reduce((a, c) => a + c[0], 0) / cels.length, my = cels.reduce((a, c) => a + c[1], 0) / cels.length;
+      const mc = cels.reduce((m, c) => (((c[0] - mx) ** 2 + (c[1] - my) ** 2) < m.d ? { c, d: (c[0] - mx) ** 2 + (c[1] - my) ** 2 } : m), { c: cels[0], d: Infinity }).c;
+      this.moitas.push({ id, celulas: cels.length, ...this.centro(mc[0], mc[1]) });
+    }
+  }
+  // Id da moita na posição (0 = fora de moita).
+  moitaEm(x, y) { const cx = this.col(x), cy = this.lin(y); return this.dentro(cx, cy) ? this.moita[cy * this.cols + cx] : 0; }
   // Células vizinhas de parede: o planejador de caminhos as evita quando há alternativa.
   recalcularPerto() {
     this.perto = new Uint8Array(this.cols * this.rows);

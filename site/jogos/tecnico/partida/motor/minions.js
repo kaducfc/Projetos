@@ -75,7 +75,7 @@ function escolherAlvo(P, m) {
   let ordem = 99, md = Infinity, escolhido = null;
   P.indice.perto(m.x, m.y, aq, (u) => {
     if (u.morto || u.equipe === m.equipe || u.equipe === 'neutro' || u.tipo === 'monstro' || u.tipo === 'epico') return;
-    if (!atacavel(P, u)) return;
+    if (!atacavel(P, u, m)) return;
     let prio;
     if (u.tipo === 'minion') prio = 1 + ORDEM_ALVO[u.subtipo] * 0.01;
     else if (u.tipo === 'campeao') prio = 3;
@@ -95,7 +95,7 @@ export function atualizarMinion(P, m, dt) {
   const R = P.regras.minions; const lane = MUNDO_MAPA.rotas[m.rota];
   // validade do alvo atual
   let alvo = m.alvoId ? porId(P, m.alvoId) : null;
-  if (alvo && (alvo.morto || !atacavel(P, alvo) || dist(m, alvo) > m.aquisicao * 1.5)) alvo = null;
+  if (alvo && (alvo.morto || !atacavel(P, alvo, m) || dist(m, alvo) > m.aquisicao * 1.5)) alvo = null;
   if (m.alvoId && alvo && P.t - m.alvoDesde < R.persistencia && !(alvo.tipo === 'minion')) { /* persiste */ }
   if (!alvo || P.t >= (m.proxBusca || 0)) {
     const novo = (!alvo || P.t - m.alvoDesde > 0.8) ? escolherAlvo(P, m) : alvo;

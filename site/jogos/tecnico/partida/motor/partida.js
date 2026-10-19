@@ -14,7 +14,8 @@ import { iniciarOndas, gerarOndas, atualizarMinion } from './minions.js';
 import { construirEstruturas, atualizarEstruturas, aoDestruir, vulneravel } from './estruturas.js';
 import { criarSelva, atualizarSelva } from './selva.js';
 import { criarObjetivos, atualizarObjetivos, aoMorrer as aoMorrerEpico } from './objetivos.js';
-import { atualizarVisao } from './visao.js';
+import { atualizarVisao, visivelPara } from './visao.js';
+import { atualizarWards } from './wards.js';
 import { atualizarCampeao, iniciarCampeao } from './campeao-ia.js';
 import { atualizarEstrategia, agirObjetivo, agirEstrutura, agirDefender, agirAjudar } from './estrategia.js';
 import { moverUnidade, separar, vigiarPresos } from './movimento.js';
@@ -23,7 +24,7 @@ import { construirResultado } from './resultado.js';
 let _terreno = null, _nav = null;
 export function terrenoCompartilhado() { if (!_terreno) { _terreno = new Terreno(); _nav = new Navegacao(_terreno); } return { terreno: _terreno, nav: _nav }; }
 
-const novaEquipe = () => ({ ouroTotal: 0, abates: 0, mortes: 0, pilhasDragao: 0, dragoes: [], alma: false, inibidoresCaidos: { topo: false, meio: false, baixo: false }, visao: {}, planos: [], hpEstr: {}, buffBarao: null, buffAnciao: null });
+const novaEquipe = () => ({ ouroTotal: 0, abates: 0, mortes: 0, pilhasDragao: 0, dragoes: [], alma: false, inibidoresCaidos: { topo: false, meio: false, baixo: false }, visao: {}, moitasVistas: new Set(), fontes: [], planos: [], hpEstr: {}, buffBarao: null, buffAnciao: null });
 
 export class Partida {
   // opc: { azul: [jogador x5], vermelho: [jogador x5], semente, regras?, catalogo, config? }
@@ -37,13 +38,14 @@ export class Partida {
     this.terreno = terreno; this.nav = nav;
     this.t = 0; this.tick = 0; this.proxId = 0; this.proxPlano = 0; this.agendaSeq = 0;
     this.eventos = []; this.fx = []; this.agenda = []; this.projeteis = []; this.provocacoes = new Map(); this.mapaUnidades = new Map();
-    this.campeoes = []; this.minions = []; this.monstros = []; this.epicos = []; this.estruturas = []; this.filaSpawn = [];
+    this.campeoes = []; this.minions = []; this.monstros = []; this.epicos = []; this.estruturas = []; this.filaSpawn = []; this.wards = [];
     this.equipes = { azul: novaEquipe(), vermelho: novaEquipe() };
     this.indice = new IndiceEspacial(800);
     this.fim = null; this.resultadoFinal = null; this.resultadoEntregue = false; this.primeiroAbate = false; this.fase = 'inicial';
     this.diag = { presos: 0, presosGraves: 0, registros: [], erros: [] };
     this.lutas = [];
     this.estruturaVulneravel = (e) => vulneravel(this, e);
+    this.visivelPara = (eq, a) => visivelPara(this, eq, a); // moitas e wards: ver motor/visao.js
     this.estruturasSis = { aoDestruir };
     this.estrategia = { agirObjetivo, agirEstrutura, agirDefender, agirAjudar };
     this.verificarVitoria = (eq, motivo) => this._vitoria(eq, motivo);
@@ -84,6 +86,7 @@ export class Partida {
       processarAgenda(this);
       gerarOndas(this); atualizarSelva(this, dt); atualizarObjetivos(this, dt);
       this._indexar();
+      atualizarWards(this);
       if (this.tick % 5 === 0) atualizarVisao(this);
       if (this.tick % Math.round(R.ia.intervaloEstrategia / dt) === 0) { atualizarEstrategia(this, 'azul'); atualizarEstrategia(this, 'vermelho'); }
       const ordem = this.tick % 2 ? this.campeoes : [...this.campeoes].reverse();

@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { Partida } from '../jogos/tecnico/partida/motor/partida.js';
+import { atualizarWards } from '../jogos/tecnico/partida/motor/wards.js';
 import { Relogio } from '../jogos/tecnico/partida/motor/relogio.js';
 import { causarDano, matar, mitigar, curar, darEscudo, lancarHabilidade, aplicarEfeito, atacarBasico } from '../jogos/tecnico/partida/motor/combate.js';
 import { criarMinion, recalcular } from '../jogos/tecnico/partida/motor/entidades.js';
@@ -20,7 +21,9 @@ import { Renderizador } from '../jogos/tecnico/partida/render/canvas.js';
 import { MAPA } from '../jogos/tecnico/partida/config/mapa.js';
 
 const catalogo = JSON.parse(readFileSync(new URL('../jogos/campeao/dados/campeoes.json', import.meta.url), 'utf8')).campeoes.map((c) => ({ ...c, id: c.nome }));
-const mk = (seed = 1, pa = 60, pv = 60, regras) => new Partida({ azul: elencoTeste('A', pa, seed), vermelho: elencoTeste('V', pv, seed), semente: seed, catalogo, regras });
+// Os testes antigos validam o motor sem wards (o comportamento de visão tem testes próprios, mais abaixo): wards desligadas por padrão aqui.
+const mk = (seed = 1, pa = 60, pv = 60, regras) => new Partida({ azul: elencoTeste('A', pa, seed), vermelho: elencoTeste('V', pv, seed), semente: seed, catalogo, regras: { ...(regras || {}), wards: { ativo: false, ...((regras || {}).wards || {}) } } });
+const mkVisao = (seed = 1, regras) => new Partida({ azul: elencoTeste('A', 60, seed), vermelho: elencoTeste('V', 60, seed), semente: seed, catalogo, regras });
 const ate = (P, t) => { while (P.t < t - 1e-6 && !P.fim) P.step(); return P; };
 const noPoligono = (p, poly) => { let d = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a.y > p.y) !== (b.y > p.y) && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) d = !d; } return d; };
 const congelar = (c) => { c.proxDecisao = 1e12; c.estado = 'comprando'; c.estadoDesde = 1e12; c.caminho = null; c.destino = null; };
@@ -566,3 +569,86 @@ test('draft invertido: quem joga no lado vermelho da partida escolhe depois, com
   let n = 0; while (D.passoAtual(inv) && n++ < 40) D.jogadaIA(inv);
   assert.ok(D.terminou(inv));
 });
+
+// ---------------------------------------------------------------- moitas, fog e wards
+const terrenoComMoita = () => {
+  const base = new Terreno();
+  const meio = MUNDO_MAPA.rotas.meio.pts[Math.floor(MUNDO_MAPA.rotas.meio.pts.length / 2)];
+  const cx = base.col(meio.x), cy = base.lin(meio.y); const cels = [];
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) cels.push(`${cx + dx},${cy + dy}`);
+  const t = new Terreno(undefined, { moitas: cels });
+  return { t, nav: new Navegacao(t), centro: t.centro(cx, cy), fora: t.centro(cx + 8, cy) };
+};
+const mkMoita = (seed = 1) => { const m = terrenoComMoita(); const P = new Partida({ azul: elencoTeste('A', 60, seed), vermelho: elencoTeste('V', 60, seed), semente: seed, catalogo, terreno: m.t, nav: m.nav }); return { P, ...m }; };
+const colocar = (c, p) => { c.x = p.x; c.y = p.y; c.caminho = null; c.destino = null; };
+const vis = (P) => { P.tick = 4; P.step(); }; // o passo seguinte é o 5º: atualiza a visão
+const atualizarWardsTeste = (P) => atualizarWards(P);
+
+test('V1. moitas: grupos de células vizinhas viram uma moita; sem moitas marcadas o terreno é o de antes', () => {
+  const { t, centro, fora } = terrenoComMoita();
+  assert.equal(t.moitas.length, 1); assert.ok(t.moitas[0].celulas >= 5); assert.equal(t.moitaEm(centro.x, centro.y), 1); assert.equal(t.moitaEm(fora.x, fora.y), 0);
+  assert.equal(new Terreno().moitas.length, 0, 'o mapa padrão ainda não tem moitas marcadas');
+});
+test('V2. quem está na moita só é visto por inimigo dentro da mesma moita; atacar revela por um instante', () => {
+  const { P, centro, fora } = mkMoita(3);
+  const a = P.campeoes.find((c) => c.equipe === 'azul'), v = P.campeoes.find((c) => c.equipe === 'vermelho');
+  for (const c of P.campeoes) congelar(c);
+  colocar(v, centro); colocar(a, fora); vis(P);
+  assert.equal(P.visivelPara('azul', v), false, 'dentro da moita: invisível para quem está fora (mesmo perto)');
+  assert.equal(P.visivelPara('vermelho', v), true, 'o próprio time sempre vê');
+  assert.equal(P.equipes.azul.visao[v.id]?.visivel || false, false, 'a IA do time azul não conhece o campeão escondido');
+  assert.equal(atacarBasico(P, a, v), false, 'não dá para atacar quem não se vê');
+  colocar(a, { x: centro.x + 20, y: centro.y + 20 }); vis(P);
+  assert.equal(P.visivelPara('azul', v), true, 'quem entra na mesma moita enxerga');
+  colocar(a, fora); vis(P); assert.equal(P.visivelPara('azul', v), false);
+  v.reveladoAte = P.t + 1; assert.equal(P.visivelPara('azul', v), true, 'revelado depois de atacar');
+  P.t += 2; assert.equal(P.visivelPara('azul', v), false);
+});
+test('V3. ward na moita enxerga o que está dentro; ward amarela expira; ward cai com 3 golpes e dá ouro', async () => {
+  const { colocarWard, golpearWard, wardsDe } = await import('../jogos/tecnico/partida/motor/wards.js');
+  const { P, centro, fora } = mkMoita(4);
+  const a = P.campeoes.find((c) => c.equipe === 'azul'), v = P.campeoes.find((c) => c.equipe === 'vermelho');
+  for (const c of P.campeoes) congelar(c);
+  a.nivel = 5; colocar(v, centro); colocar(a, { x: fora.x + 400, y: fora.y });
+  const cargas0 = a.wards.cargas;
+  const w = colocarWard(P, a, 'amarela', centro.x - 60, centro.y); assert.ok(w); assert.equal(a.wards.cargas, cargas0 - 1);
+  vis(P); assert.equal(P.visivelPara('azul', v), true, 'a ward dentro da moita revela quem está nela');
+  assert.equal(P.visivelPara('vermelho', w), false, 'a ward inimiga é invisível sem Ward de Controle');
+  const ouro0 = v.ouro; let derrubou = false;
+  for (let i = 0; i < 3; i++) derrubou = golpearWard(P, v, w);
+  assert.equal(derrubou, true); assert.equal(w.morto, true); assert.ok(v.ouro > ouro0, 'destruir ward dá ouro'); assert.equal(v.estat.wardsDestruidas, 1);
+  const w2 = colocarWard(P, a, 'amarela', fora.x, fora.y); assert.ok(w2);
+  P.t = w2.expira + 0.1; atualizarWardsTeste(P); assert.equal(w2.morto, true, 'o totem some quando acaba a duração');
+  assert.ok(wardsDe(P, a, 'amarela').length === 0);
+});
+test('V4. Ward de Controle: dura até ser destruída, revela wards inimigas no raio e a compra respeita o limite', async () => {
+  const { colocarWard, podeColocar } = await import('../jogos/tecnico/partida/motor/wards.js');
+  const { P, centro, fora } = mkMoita(5);
+  const a = P.campeoes.find((c) => c.equipe === 'azul'), v = P.campeoes.find((c) => c.equipe === 'vermelho');
+  for (const c of P.campeoes) congelar(c);
+  v.nivel = 3; a.nivel = 3; assert.equal(podeColocar(P, a, 'controle'), false, 'sem a ward comprada não coloca');
+  a.wards.controleEstoque = 1;
+  const wv = colocarWard(P, v, 'amarela', fora.x + 300, fora.y);
+  const wc = colocarWard(P, a, 'controle', fora.x, fora.y); assert.ok(wc); assert.equal(wc.expira, Infinity);
+  assert.equal(podeColocar(P, a, 'controle'), false, 'uma Ward de Controle por vez');
+  vis(P); assert.equal(P.visivelPara('azul', wv), true, 'a Ward de Controle revela a ward inimiga');
+  P.t += 400; atualizarWardsTeste(P); assert.equal(wc.morto, false, 'a Ward de Controle não expira');
+});
+test('V5. cargas do totem recarregam com o tempo e o nível acelera a recarga e a duração', async () => {
+  const { colocarWard, duracaoAmarela, recargaAmarela } = await import('../jogos/tecnico/partida/motor/wards.js');
+  const P = mkVisao(6); const a = P.campeoes.find((c) => c.equipe === 'azul'); a.nivel = 3;
+  assert.equal(a.wards.cargas, 2);
+  colocarWard(P, a, 'amarela', a.x + 200, a.y); colocarWard(P, a, 'amarela', a.x + 400, a.y);
+  assert.equal(a.wards.cargas, 0);
+  P.t += recargaAmarela(P, a) + 1; atualizarWardsTeste(P); assert.equal(a.wards.cargas, 1);
+  a.nivel = 1; const d1 = duracaoAmarela(P, a), r1 = recargaAmarela(P, a); a.nivel = 18;
+  assert.ok(duracaoAmarela(P, a) > d1 && recargaAmarela(P, a) < r1); assert.equal(Math.round(duracaoAmarela(P, a)), 120); assert.equal(Math.round(recargaAmarela(P, a)), 120);
+});
+test('V6. partida completa com wards: a IA compra e coloca wards, nada quebra e o resultado continua válido', () => {
+  const P = mkVisao(7); P.executarAteFim(1500);
+  assert.ok(P.fim); assert.equal(P.diag.erros.length, 0);
+  const colocadas = P.campeoes.reduce((s, c) => s + c.estat.wardsColocadas, 0);
+  assert.ok(colocadas >= 3, `os bots colocaram wards (${colocadas})`);
+  assert.ok(P.eventos.some((e) => e.tipo === 'ward'));
+});
+

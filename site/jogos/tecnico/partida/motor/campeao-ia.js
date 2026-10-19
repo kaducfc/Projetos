@@ -11,6 +11,7 @@ import { comprar, custoProximo } from './economia.js';
 import { recalcular } from './entidades.js';
 import { registrar } from './eventos.js';
 import { conhecidos } from './visao.js';
+import { iniciarWards, agirWard } from './wards.js';
 import { valorCombate, balancoLocal, torreInimigaEm, minionsPerto, rotaDe, sNaRota, progresso, pontoNoProgresso, frentes, torresDaRota, proximaTorreInimiga, pontoSeguro, naFonte, aliadosPerto, planoPara } from './percepcao.js';
 
 export const ESTADOS = ['nascendo', 'saindo_base', 'indo_rota', 'farmando', 'lutando', 'selva', 'gank', 'ajudando', 'objetivo', 'estrutura', 'defendendo', 'recuando', 'voltando_base', 'comprando', 'morto'];
@@ -33,7 +34,7 @@ export function posicaoInicial(P, u, idx) {
   return P.terreno.caminhavel(p.x, p.y, 'campeao') ? p : { x: f.x, y: f.y };
 }
 export function iniciarCampeao(P, u, idx) {
-  u.hist = []; u.idxBase = idx;
+  u.hist = []; u.idxBase = idx; iniciarWards(P, u);
   const p = posicaoInicial(P, u, idx); u.x = p.x; u.y = p.y;
   u.estado = 'saindo_base'; u.estadoDesde = 0;
   if (u.pos === 'selva') {
@@ -391,6 +392,7 @@ export function posFarm(P, u) {
 // ------------------------------------------------------------------ ação por estado
 function agir(P, u, dt) {
   if (!podeAgir(P, u)) { if (u.dashAte) return; return; }
+  if (agirWard(P, u)) return; // colocar/limpar wards em momentos tranquilos
   switch (u.estado) {
     case 'saindo_base': case 'nascendo': return agirIrRota(P, u);
     case 'indo_rota': return agirIrRota(P, u);
@@ -419,7 +421,7 @@ function agirIrRota(P, u) {
 }
 function atacarOportunidade(P, u) {
   let alvo = null, md = Infinity;
-  P.indice.perto(u.x, u.y, u.alcance + 80, (m) => { if (m.morto || m.equipe === u.equipe || m.tipo === 'estrutura' || m.tipo === 'epico' || m.tipo === 'monstro') return; const d = dist(u, m); if (d < md && atacavel(P, m)) { md = d; alvo = m; } });
+  P.indice.perto(u.x, u.y, u.alcance + 80, (m) => { if (m.morto || m.equipe === u.equipe || m.tipo === 'estrutura' || m.tipo === 'epico' || m.tipo === 'monstro') return; const d = dist(u, m); if (d < md && atacavel(P, m, u)) { md = d; alvo = m; } });
   if (alvo) atacarBasico(P, u, alvo);
 }
 

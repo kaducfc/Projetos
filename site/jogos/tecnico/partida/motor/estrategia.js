@@ -229,14 +229,14 @@ export function agirEstrutura(P, u) {
   } else parar(u);
   // minions inimigos e campeões próximos têm prioridade imediata sobre a estrutura
   let defensor = null, md = Infinity;
-  P.indice.perto(u.x, u.y, u.alcance + 100, (m) => { if (m.morto || m.equipe === u.equipe || m.equipe === 'neutro' || m.tipo === 'estrutura' || !atacavel(P, m)) return; const d = dist(u, m) - (m.tipo === 'campeao' ? 200 : 0); if (d < md) { md = d; defensor = m; } });
+  P.indice.perto(u.x, u.y, u.alcance + 100, (m) => { if (m.morto || m.equipe === u.equipe || m.equipe === 'neutro' || m.tipo === 'estrutura' || !atacavel(P, m, u)) return; const d = dist(u, m) - (m.tipo === 'campeao' ? 200 : 0); if (d < md) { md = d; defensor = m; } });
   if (defensor && defensor.tipo === 'campeao') { usarHabilidades(P, u, defensor, ctx); atacarBasico(P, u, defensor); return; }
   usarHabilidades(P, u, e, ctx);
   atacarBasico(P, u, e);
 }
 function atacarProximo(P, u, ctx) {
   let a = null, md = Infinity;
-  P.indice.perto(u.x, u.y, u.alcance + 80, (m) => { if (m.morto || m.equipe === u.equipe || m.equipe === 'neutro' || m.tipo === 'estrutura' || !atacavel(P, m)) return; const d = dist(u, m); if (d < md) { md = d; a = m; } });
+  P.indice.perto(u.x, u.y, u.alcance + 80, (m) => { if (m.morto || m.equipe === u.equipe || m.equipe === 'neutro' || m.tipo === 'estrutura' || !atacavel(P, m, u)) return; const d = dist(u, m); if (d < md) { md = d; a = m; } });
   if (a) { usarHabilidades(P, u, a, ctx); atacarBasico(P, u, a); }
 }
 export function agirDefender(P, u) {
@@ -245,7 +245,7 @@ export function agirDefender(P, u) {
   const e = porId(P, pl.estrutura);
   // alvo: inimigo mais perto da estrutura (minions e campeões)
   let alvo = null, md = Infinity; const centro = e && !e.morto ? e : pl.pos;
-  P.indice.perto(centro.x, centro.y, 1600, (m) => { if (m.morto || m.equipe === u.equipe || m.equipe === 'neutro' || m.tipo === 'estrutura' || !atacavel(P, m)) return; const d = dist(u, m) - (m.tipo === 'campeao' ? 400 : 0); if (d < md) { md = d; alvo = m; } });
+  P.indice.perto(centro.x, centro.y, 1600, (m) => { if (m.morto || m.equipe === u.equipe || m.equipe === 'neutro' || m.tipo === 'estrutura' || !atacavel(P, m, u)) return; const d = dist(u, m) - (m.tipo === 'campeao' ? 400 : 0); if (d < md) { md = d; alvo = m; } });
   if (!alvo) { irPara(P, u, centro.x, centro.y, { tol: 500 }); return; }
   const alc = u.alcance > 300 ? u.alcance * 0.85 : 120;
   if (!podeAtacar(P, u, alvo)) irPara(P, u, alvo.x, alvo.y, { tol: alc }); else parar(u);

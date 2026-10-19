@@ -132,6 +132,17 @@ export const REGRAS = {
     visaoPersistencia: 6,
   },
 
+  // ---- visão: moitas e wards
+  //   Moita: quem está dentro só é visto por inimigos dentro da mesma moita ou com uma ward nela (ou por um instante, depois de atacar).
+  //   Ward amarela (totem): 2 cargas que recarregam; dura de `duracaoBase` a `duracaoMax` s (sobe com o nível); invisível para inimigos sem Ward de Controle por perto.
+  //   Ward de Controle: comprada na base; dura até ser destruída; revela wards inimigas no raio. Wards caem com `hpAmarela`/`hpControle` golpes.
+  wards: {
+    ativo: true, raio: 900, controleRaio: 900, alcanceColocar: 600,
+    duracaoBase: 90, duracaoMax: 120, cargas: 2, recargaBase: 240, recargaMin: 120,
+    maxAmarelas: 3, maxControle: 1, custoControle: 75, hpAmarela: 3, hpControle: 4,
+    revelaAoAtacar: 1, ouroDestruir: 30, intervaloBusca: 22, nivelMinColocar: 2,
+  },
+
   // ---- fases macro (segundos)
   fases: { inicial: 840, intermediaria: 1500 },
 };

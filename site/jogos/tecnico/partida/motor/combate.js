@@ -48,8 +48,9 @@ export function aplicarEfeito(P, alvo, ef, fonte) {
 }
 
 // ------------------------------------------------------------------ vulnerabilidade de estruturas e unidades
-export function atacavel(P, a) {
+export function atacavel(P, a, por = null) {
   if (a.morto) return false;
+  if (por && por.equipe && por.equipe !== 'neutro' && (a.tipo === 'campeao' || a.tipo === 'minion') && !P.visivelPara(por.equipe, a)) return false; // escondido numa moita
   if (a.tipo === 'estrutura') return P.estruturaVulneravel(a);
   if (a.tipo === 'campeao' && a.invulAte && a.invulAte > P.t) return false;
   return true;
@@ -224,13 +225,14 @@ function ultimoGolpeDeRota(P, minion, fonte) {
 }
 
 export function atacarBasico(P, u, alvo) {
-  if (!podeAgir(P, u) || P.t < u.proximoAtaque || alvo.morto || !atacavel(P, alvo)) return false;
+  if (!podeAgir(P, u) || P.t < u.proximoAtaque || alvo.morto || !atacavel(P, alvo, u)) return false;
   if (!podeAtacar(P, u, alvo)) return false;
   const campeao = u.tipo === 'campeao';
   const intervalo = campeao ? u.intervalo : u.intervalo;
   u.proximoAtaque = P.t + intervalo;
   u.alvoId = alvo.id;
   u.recallAte = 0;
+  if (campeao) u.reveladoAte = P.t + P.regras.wards.revelaAoAtacar; // atacar de dentro da moita revela o campeão por um instante
   const dano = campeao ? u.ad : u.dano;
   const tipo = u.dano !== undefined && !campeao && u.subtipoMagico ? 'magico' : 'fisico';
   const projVel = campeao ? (u.alcance > 300 ? 2000 : 0) : (u.proj || 0);
@@ -259,7 +261,7 @@ export function habPronta(P, u, h) {
   const r = u.rank[h.tecla.toLowerCase()]; if (!r) return false;
   return P.t >= h.proximo && u.mana >= h.custo;
 }
-function pagar(P, u, h) { u.mana -= h.custo; h.proximo = P.t + h.cd * (1 - u.cdr); u.recallAte = 0; }
+function pagar(P, u, h) { u.mana -= h.custo; h.proximo = P.t + h.cd * (1 - u.cdr); u.recallAte = 0; u.reveladoAte = P.t + P.regras.wards.revelaAoAtacar; }
 
 function alvosEmArea(P, u, x, y, raio, lista) {
   const out = [];
@@ -289,7 +291,7 @@ export function lancarHabilidade(P, u, h, alvo, pos = null) {
   const ponto = pos || (alvo ? { x: alvo.x, y: alvo.y } : null);
   switch (h.tipo) {
     case 'alvo': {
-      if (!alvo || alvo.morto || !atacavel(P, alvo) || alvo.tipo === 'estrutura') return false;
+      if (!alvo || alvo.morto || !atacavel(P, alvo, u) || alvo.tipo === 'estrutura') return false;
       if (dist(u, alvo) > h.alcance + (alvo.raio || 0) * 0.5 || !linhaLivre(P, u, alvo, 0)) return false;
       pagar(P, u, h);
       P.fx.push({ k: 'hab', de: u.id, tecla: h.tecla, x: alvo.x, y: alvo.y, t: P.t, tipo: 'alvo', x0: u.x, y0: u.y });

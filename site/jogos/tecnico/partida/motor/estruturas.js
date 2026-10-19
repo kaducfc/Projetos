@@ -43,7 +43,7 @@ export function atualizarEstruturas(P, dt) {
     if (e.subtipo !== 'torre') continue;
     // validade do alvo atual
     let alvo = e.alvoId ? porId(P, e.alvoId) : null;
-    if (alvo && (alvo.morto || dist(e, alvo) > e.alcance + (alvo.raio || 0) * 0.5 || !atacavel(P, alvo))) alvo = null;
+    if (alvo && (alvo.morto || dist(e, alvo) > e.alcance + (alvo.raio || 0) * 0.5 || !atacavel(P, alvo, e))) alvo = null;
     // campeão que agrediu um campeão aliado dentro do alcance tem prioridade
     let agressor = null;
     for (const [id, pr] of P.provocacoes) {
@@ -57,7 +57,7 @@ export function atualizarEstruturas(P, dt) {
       e.proxBusca = P.t + 0.3;
       let melhor = null, mp = -1;
       P.indice.perto(e.x, e.y, e.alcance + 60, (u) => {
-        if (u.morto || u.equipe === e.equipe || u.equipe === 'neutro' || !atacavel(P, u)) return;
+        if (u.morto || u.equipe === e.equipe || u.equipe === 'neutro' || !atacavel(P, u, e)) return;
         let p;
         if (u.tipo === 'minion') p = R.prioridadeTorre[u.subtipo] ?? 0.6; else if (u.tipo === 'campeao') p = R.prioridadeTorre.campeao; else return;
         if (dist(e, u) > e.alcance + (u.raio || 0) * 0.5) return;
