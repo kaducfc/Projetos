@@ -1764,6 +1764,8 @@ t('scripts de teste do ADM: colocam a conta de administrador na Copa/Mundial, av
   V(criar('mundial', 'grupos'), null, hoje);
   const lg = V("select max(id) from tc_ligas where tipo = 'mundial'");
   assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lg} and pov = ${adm} and status = 'agendada' and dia = '${hoje}' and fase in ('treino', 'rodada')`), '8', '2 de treino e 6 de grupo');
-  V(`delete from tc_ligas where id = ${lg}`);
+  V(readFileSync(new URL('../supabase/testes/admin_voltar_ao_normal.sql', import.meta.url), 'utf8'), null, hoje);
+  assert.equal(V(`select count(*) from tc_ligas where id = ${lg}`), '0', 'o campeonato de teste foi removido');
+  assert.equal(V("select count(*) from tc_vagas where org_id = 1 and origem = 'teste'"), '0');
   V("delete from tc_vagas");
 });
