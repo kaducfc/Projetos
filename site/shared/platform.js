@@ -1015,6 +1015,7 @@ export const baraoCarta = (id, slot) => rpcBarao('site_barao_carta', { pid: id, 
 export const baraoVazio = (id) => rpcBarao('site_barao_vazio', { pid: id });
 // Simulador de técnico (jogo "tecnico"): tudo é decidido no servidor (SQL 0085 a 0089); o navegador só chama funções.
 const ERROS_TECNICO = {
+  novidade_invalida: 'A novidade precisa de título (até 80 caracteres) e texto (até 1.500 caracteres).',
   jogador_nome_invalido: 'O nome do jogador precisa ter de 2 a 24 caracteres.',
   jogador_nome_em_uso: 'Já existe um jogador com esse nome.',
   atributo_invalido: 'Os atributos precisam ficar entre 1 e 100.',
@@ -1145,6 +1146,11 @@ export const tecnico = {
   meu: () => rpcTecnico('tc_meu'),
   painel: () => rpcTecnico('tc_painel'),
   campeonatos: () => rpcTecnico('tc_campeonatos'),
+  avisosContagem: () => rpcTecnico('tc_avisos_contagem'),
+  avisosCentral: () => rpcTecnico('tc_avisos_central'),
+  calendarioCompeticoes: () => rpcTecnico('tc_calendario_competicoes'),
+  admNovidadePublicar: (titulo, texto) => rpcTecnico('tc_adm_novidade_publicar', { titulo_: titulo, texto_: texto }), // só administradores
+  admNovidadeApagar: (nid) => rpcTecnico('tc_adm_novidade_apagar', { nid }), // só administradores
   historico: () => rpcTecnico('tc_historico'),
   partida: (pid) => rpcTecnico('tc_partida', { pid }),
   ficha: (jid) => rpcTecnico('tc_ficha_jogador', { jid }),

@@ -710,3 +710,18 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 /* conteúdo das caixas de moeda centralizado (ícone + textos juntos no meio da caixa) */
 .tc-eco .bx { grid-template-columns: auto auto; justify-content: center; justify-items: start; column-gap: 20px; padding: 14px 16px; }
 .tc-eco .bx > img { max-width: 64px; }
+
+.tc-novidade { border: 1px solid var(--linha); background: var(--painel2); padding: 10px 12px; margin-bottom: 8px; }
+.tc-novidade.novo { border-color: var(--ouro); }
+.tc-novidade header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tc-novidade header small { margin-left: auto; }
+.tc-novidade p { margin: 6px 0 0; line-height: 1.45; }
+.tc-novidade .tag { background: var(--ouro); color: #1a1205; font-size: 10px; font-weight: 700; padding: 1px 6px; text-transform: uppercase; letter-spacing: .08em; }
+.tc-avisos li.novo { border-left: 3px solid var(--ouro); padding-left: 8px; }
+.tc-novidade-form { display: grid; gap: 8px; border: 1px dashed var(--linha); padding: 10px; margin-top: 10px; }
+.tc-novidade-form textarea { resize: vertical; }
+.tc-cal { border: 1px solid var(--linha); background: var(--painel2); padding: 10px 12px; margin-bottom: 8px; }
+.tc-cal.agora { border-color: var(--ouro); }
+.tc-cal h4 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 4px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ouro2); }
+.tc-cal h4 em { font-style: normal; background: var(--ouro); color: #1a1205; padding: 1px 6px; font-size: 10px; }
+.tc-cal p { margin: 6px 0; line-height: 1.45; }

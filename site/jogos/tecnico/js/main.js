@@ -80,7 +80,7 @@ async function agir(fn, { ok, recarregar = true } = {}) {
 
 async function atualizar() {
   S.meu = await api.meu();
-  if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); }
+  if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); S.avisosN = await api.avisosContagem().catch(() => 0); }
   S.camp = null; S.hist = null; limparExtras(); limparMarketing();
   S.mercado.oficial = null; S.mercado.usuarios = null; S.mercado.meus = null;
   await carregarAba();
@@ -154,8 +154,7 @@ function barras(j) {
 const IMG = (n, c = '') => `<img class="ic ${c}" src="img/${n}.webp" alt="" width="28" height="28" loading="lazy" />`;
 function topo() {
   const o = S.meu.org;
-  const novos = (S.meu.avisos || []).filter((a) => !a.lido).length;
-  const sem = ((S.meu.semana % 4) + 4) % 4 + 1;
+  const novos = S.avisosN || 0;
   return `<header class="tc-topo">
     <div class="tc-org"><span class="logo">${escudoOrg(o, 54)}</span><div><div class="nome">${esc(o.nome)}</div><div class="sub">${o.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)}</div><div class="xp"><i style="width:${Math.min(100, S.meu.poder)}%"></i><span>Poder ${S.meu.poder}</span></div></div></div>
     <div class="tc-moedas">
@@ -164,12 +163,11 @@ function topo() {
       <div class="tc-moeda frag"><span class="ic-frag" aria-hidden="true">◈</span><div><b>${fmt(o.fragmentos || 0)}</b><small>Fragmentos de jogador</small></div></div>
     </div>
     <div class="tc-atalhos">
-      <button type="button" data-act="aba" data-aba="visao">${IMG('i-sino')}${novos ? `<em>${Math.min(novos, 9)}</em>` : ''}<span>Avisos</span></button>
-      <button type="button" data-act="aba" data-aba="hist">${IMG('i-msg')}<span>Histórico</span></button>
-      <button type="button" data-act="aba" data-aba="camp">${IMG('i-agenda')}<span>Calendário</span></button>
+      <button type="button" data-act="avisos">${IMG('i-sino')}${novos ? `<em>${Math.min(novos, 9)}${novos > 9 ? '+' : ''}</em>` : ''}<span>Avisos</span></button>
+      <button type="button" data-act="calendario">${IMG('i-agenda')}<span>Calendário</span></button>
       <button type="button" data-act="aba" data-aba="pers">${IMG('i-conf')}<span>Ajustes</span></button>
     </div>
-    <div class="tc-usuario"><span class="av">${escudoOrg(o, 38)}</span><div><b>${esc(platform.getUser()?.username || 'Técnico')}</b><small>Semana ${sem} · Poder ${S.meu.poder}</small></div></div></header>`;
+    </header>`;
 }
 
 const ABAS = [
@@ -177,7 +175,7 @@ const ABAS = [
   ['camp', 'Campeonatos', 'i-trofeu'], ['class', 'Classificação', 'i-stats'], ['hist', 'Histórico', 'i-financas'], ['pers', 'Personalização', 'i-engrenagem'],
 ];
 function nav() {
-  const novos = (S.meu.avisos || []).filter((a) => !a.lido).length;
+  const novos = S.avisosN || 0;
   const sem = ((S.meu.semana % 4) + 4) % 4 + 1;
   return `<nav class="tc-nav" aria-label="Seções">${ABAS.filter(([id]) => id !== 'adm' || S.ehAdmin).map(([id, nome, ic]) => `<button type="button" data-act="aba" data-aba="${id}" class="${S.aba === id ? 'on' : ''}">${IMG(ic)}<span>${nome}</span>${id === 'visao' && novos ? `<span class="n">${Math.min(novos, 9)}</span>` : ''}</button>`).join('')}
     <div class="tc-temp"><span class="tc-eyebrow">Temporada atual</span><b>Semana ${sem} de 4</b><small>${S.meu.org.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)}</small></div>${FECHADO ? '<a class="tc-peq" style="color:var(--ouro2);padding:8px 4px;text-align:center" href="partida/?teste=1">Sala de testes da partida (admin)</a>' : ''}</nav>`;
@@ -582,6 +580,40 @@ function viewPers() {
 }
 
 // ------------------------------------------------------------------ modais
+const dataHora = (iso) => new Date(iso).toLocaleDateString('pt-BR') + ' ' + new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+// Janela de Avisos: Novidades (publicadas pelos administradores) e avisos pessoais do time.
+function avisosHtml(m) {
+  const d = m.d; if (!d) return '<p class="tc-carregando">Carregando…</p>';
+  const form = S.ehAdmin ? `<form class="tc-novidade-form" data-form="novidade"><b class="tc-eyebrow">Publicar novidade (só administradores)</b>
+      <input class="tc-input" name="titulo" maxlength="80" placeholder="Título" required /><textarea class="tc-input" name="texto" maxlength="1500" rows="3" placeholder="O que mudou? Atualizações, correções, eventos…" required></textarea>
+      <button type="submit" class="tc-btn ouro">Publicar</button></form>` : '';
+  const nov = d.novidades.length ? d.novidades.map((n) => `<article class="tc-novidade ${n.novo ? 'novo' : ''}"><header><b>${esc(n.titulo)}</b>${n.novo ? '<span class="tag">Novo</span>' : ''}<small class="tc-mudo">${dataHora(n.criado)}</small>${S.ehAdmin ? `<button type="button" class="tc-btn peq" data-act="novidade-apagar" data-id="${n.id}" aria-label="Apagar novidade">Apagar</button>` : ''}</header><p>${esc(n.texto).replace(/\n/g, '<br>')}</p></article>`).join('') : '<p class="tc-mudo">Nenhuma novidade por enquanto.</p>';
+  const av = d.avisos.length ? `<ul class="tc-avisos">${d.avisos.map((a) => `<li class="${a.novo ? 'novo' : ''}">${esc(a.texto)}<small class="tc-mudo"> · ${dataHora(a.criado)}</small></li>`).join('')}</ul>` : '<p class="tc-mudo">Nada por aqui. Contratos próximos do fim, vendas e classificações aparecem nesta lista.</p>';
+  return `<h2>Avisos</h2>${form}<h4 class="tc-eyebrow" style="margin:14px 0 8px">Novidades do jogo</h4>${nov}<h4 class="tc-eyebrow" style="margin:18px 0 8px">Seus avisos</h4>${av}`;
+}
+// Janela de Calendário: as 4 semanas da temporada, com vagas, formato e premiações dos campeonatos internacionais.
+function calendarioHtml(m) {
+  const d = m.d; if (!d) return '<p class="tc-carregando">Carregando…</p>';
+  const cal = d.calendario; if (cal.antes) return `<h2>Calendário</h2><p class="tc-mudo">A primeira temporada começa em ${esc(dataCurta(cal.inicio))}.</p>`;
+  const n = d.nomes || {}; const pi = d.premios_intl || {};
+  const somar = (iso, k) => { const [y, mo, di] = iso.split('-').map(Number); return new Date(Date.UTC(y, mo - 1, di + k)).toISOString().slice(0, 10); };
+  const semIni = (k) => somar(cal.inicio_semana, (k - cal.semana) * 7);
+  const cr = (v) => (v ? `${fmt(v)} cr.` : '—');
+  const premio = (tipo, chaves) => chaves.map(([k, nome]) => `<tr><td>${nome}</td><td class="n">${cr(pi[tipo]?.[k])}</td></tr>`).join('');
+  const liga = (k, titulo) => `<section class="tc-cal ${cal.semana === k ? 'agora' : ''}"><h4><span>Semana ${k} · ${dataCurta(semIni(k))} a ${dataCurta(somar(semIni(k), 6))}</span>${cal.semana === k ? '<em>Esta semana</em>' : ''}</h4><b>${titulo}</b>
+    <p class="tc-mudo tc-peq">Liga individual contra equipes do sistema (2 jogos por dia, de segunda a sexta; semifinais no sábado e final no domingo). Os 2 primeiros da ${esc(n.acesso)} sobem; ${k === 1 ? `os 2 primeiros da ${esc(n.principal)} ganham vaga na ${esc(n.copa)}` : `os 2 primeiros da ${esc(n.principal)} ganham vaga no ${esc(n.mundial)}`}.</p></section>`;
+  const vagas = (d.vagas || []).length ? `<p class="tc-peq" style="margin:10px 0 0"><b>Suas vagas:</b> ${d.vagas.map((v) => `${v.tipo === 'copa' ? esc(n.copa) : esc(n.mundial)} (temporada ${v.temporada})`).join(' · ')}</p>` : '<p class="tc-mudo tc-peq" style="margin:10px 0 0">Você ainda não tem vaga em campeonato internacional nesta temporada.</p>';
+  return `<h2>Calendário · temporada ${cal.temporada}</h2><p class="tc-mudo tc-peq" style="margin:0 0 10px">Uma competição por semana: quem está num campeonato internacional não joga a liga naquela semana.</p>
+    ${liga(1, 'Liga Academy / Liga Nacional')}
+    <section class="tc-cal ${cal.semana === 2 ? 'agora' : ''}"><h4><span>Semana 2 · ${dataCurta(semIni(2))} a ${dataCurta(somar(semIni(2), 6))}</span>${cal.semana === 2 ? '<em>Esta semana</em>' : ''}</h4><b>${esc(n.copa)}</b>
+      <p class="tc-mudo tc-peq"><b>Requisito:</b> 2 primeiros da ${esc(n.principal)} na semana 1 (ou na semana 4 da temporada anterior).<br><b>Formato:</b> 16 equipes. Segunda a sexta: 2 jogos por dia contra equipes diferentes (melhor de 1). Sábado: semifinais com os 4 melhores (melhor de 3). Domingo: final (melhor de 5). O campeão ganha vaga no ${esc(n.mundial)}.</p>
+      <table class="tc-tabela"><tbody>${premio('copa', [['1', 'Campeão'], ['2', 'Vice'], ['3', 'Semifinalistas']])}</tbody></table></section>
+    ${liga(3, 'Liga Academy / Liga Nacional')}
+    <section class="tc-cal ${cal.semana === 4 ? 'agora' : ''}"><h4><span>Semana 4 · ${dataCurta(semIni(4))} a ${dataCurta(somar(semIni(4), 6))}</span>${cal.semana === 4 ? '<em>Esta semana</em>' : ''}</h4><b>${esc(n.mundial)}</b>
+      <p class="tc-mudo tc-peq"><b>Requisito:</b> 2 primeiros da ${esc(n.principal)} na semana 2 ou 3, ou campeão da ${esc(n.copa)}.<br><b>Formato:</b> 16 equipes em 4 grupos. Segunda: treino (2 jogos, sem pontos, só XP e Maestria). Terça a quinta: 2 jogos por dia no grupo (cada adversário duas vezes). Sexta: quartas (melhor de 3). Sábado: semifinais (melhor de 3). Domingo: final (melhor de 5).</p>
+      <table class="tc-tabela"><tbody>${premio('mundial', [['1', 'Campeão'], ['2', 'Vice'], ['3', 'Semifinalistas'], ['5', 'Quartas de final']])}</tbody></table></section>
+    <p class="tc-mudo tc-peq" style="margin:10px 0 0">Quem não se classifica joga a liga de novo na semana seguinte; a ${esc(n.principal)} não tem rebaixamento. Partidas contra a equipe de outro técnico são jogadas contra o bot dela, e cada um conta o próprio resultado.</p>${vagas}`;
+}
 function modalHtml() {
   const m = S.modal; if (!m) return '';
   let corpo = '';
@@ -596,6 +628,8 @@ function modalHtml() {
   else if (m.t === 'recrutar') corpo = modalRecrutar(m);
   else if (m.t === 'mkt_resumo') corpo = modalMktResumo(m);
   else if (m.t === 'demitir') corpo = demitirHtml(m);
+  else if (m.t === 'avisos') corpo = avisosHtml(m);
+  else if (m.t === 'calendario') corpo = calendarioHtml(m);
   return `<div class="tc-fundo" data-act="fechar-fundo"><div class="tc-modal" role="dialog" aria-modal="true"><button type="button" class="x" data-act="fechar" aria-label="Fechar">×</button>${corpo}</div></div>`;
 }
 function demitirHtml(m) {
@@ -773,6 +807,22 @@ document.addEventListener('click', async (e) => {
   }
   if (act.startsWith('mkt-')) { await tratarMkt(act, b); render(); return; }
   if (act === 'treinar' || act === 'amistoso' || act === 'recrutar') { await tratarAcao(act, b); render(); return; }
+  if (act === 'avisos') {
+    S.modal = { t: 'avisos', d: null }; render();
+    try { const d = await api.avisosCentral(); if (S.modal?.t === 'avisos') { S.modal = { t: 'avisos', d }; S.avisosN = 0; render(); } } catch (err) { S.modal = null; render(); toast(err.message, true); }
+    return;
+  }
+  if (act === 'calendario') {
+    S.modal = { t: 'calendario', d: null }; render();
+    try { const d = await api.calendarioCompeticoes(); if (S.modal?.t === 'calendario') { S.modal = { t: 'calendario', d }; render(); } } catch (err) { S.modal = null; render(); toast(err.message, true); }
+    return;
+  }
+  if (act === 'novidade-apagar' && S.ehAdmin) {
+    const id = Number(b.dataset.id);
+    await agir(() => api.admNovidadeApagar(id), { ok: 'Novidade apagada.', recarregar: false });
+    const d = await api.avisosCentral().catch(() => null); if (d && S.modal?.t === 'avisos') { S.modal = { t: 'avisos', d }; render(); }
+    return;
+  }
   if (act === 'fechar') { S.modal = null; render(); return; }
   if (act === 'ic-emb') { const f = formDe(b.dataset.alvo); f.ic.e = Number(b.dataset.v); aplicarIc(b.dataset.alvo); render(); return; }
   if (act === 'ic-ban') { const f = formDe(b.dataset.alvo); f.ic.b = Number(b.dataset.v); aplicarIc(b.dataset.alvo); render(); return; }
@@ -880,6 +930,13 @@ document.addEventListener('submit', async (e) => {
   e.preventDefault();
   const tipo = form.dataset.form;
   if (tipo === 'adm-jog') { if (S.ehAdmin) await filtrarAdm(form); return; }
+  if (tipo === 'novidade') {
+    if (!S.ehAdmin) return;
+    const v = Object.fromEntries(new FormData(form));
+    const r = await agir(() => api.admNovidadePublicar(String(v.titulo || ''), String(v.texto || '')), { ok: 'Novidade publicada!', recarregar: false });
+    if (r) { const d = await api.avisosCentral().catch(() => null); if (d && S.modal?.t === 'avisos') { S.modal = { t: 'avisos', d }; S.avisosN = 0; render(); } }
+    return;
+  }
   if (tipo === 'criar') {
     S.erro = '';
     const f = S.form;
@@ -917,7 +974,7 @@ iniciarExtras({
     await api.sincronizar();
     S.meu = await api.meu();
     if (S.meu.org && !S.meu.org.elenco_pendente) { await abrirComResumo(); S.meu = await api.meu(); }
-    if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); }
+    if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); S.avisosN = await api.avisosContagem().catch(() => 0); }
     render();
   } catch (e) {
     telaMensagem('Não foi possível abrir o jogo', e.message, ['../../', 'Voltar ao início']);
