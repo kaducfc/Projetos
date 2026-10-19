@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 10, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql', '0143_tecnico_mercado_so_na_faixa.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -1302,7 +1302,7 @@ t('marketing: fama de resultados oficiais (partida, liga, promoção) vem do ser
 });
 
 // ---------------------------------------------------------------- mercado oficial com rotação (SQL 0117)
-t('mercado oficial: 7 a 10 jogadores, Poder entre -5 e +10 da média dos titulares, igual dentro da janela de 12 h e trocado na seguinte; só se contrata quem está à venda', () => {
+t('mercado oficial: até 10 jogadores, só dentro da faixa de Poder, entre -5 e +10 da média dos titulares, igual dentro da janela de 12 h e trocado na seguinte; só se contrata quem está à venda', () => {
   const cfg = (c) => V(`update tc_config set valor = '${JSON.stringify(c)}'::jsonb where chave = 'mercado_oficial'`);
   cfg(CFG_MERCADO_REAL);
   try {
@@ -1310,11 +1310,12 @@ t('mercado oficial: 7 a 10 jogadores, Poder entre -5 e +10 da média dos titular
     const ref = Number(V("select tc_mercado_ref(1)"));
     const lista = () => J("select tc_mercado_oficial('{}')", 1);
     const l1 = lista();
-    assert.ok(l1.length >= 7 && l1.length <= 10, `7 a 10 à venda (${l1.length})`);
+    assert.ok(l1.length >= 1 && l1.length <= 10, `até 10 à venda (${l1.length}); o mercado do teste é pequeno`);
     const poder = (x) => Number(x.poder);
     // quem está na faixa vem primeiro; só entram jogadores fora dela se faltarem na faixa (o mercado do teste é pequeno)
     const naFaixa = (x) => poder(x) >= ref - 5 - 0.6 && poder(x) <= ref + 10 + 0.6;
     const naFaixaNoMercado = Number(V(`select count(*) from tc_jogadores j where org_id is null and ficticio and tc_poder(j) between ${ref - 5} and ${ref + 10}`)) + l1.filter((x) => false).length;
+    assert.equal(l1.filter(naFaixa).length, l1.length, 'só aparecem jogadores da faixa (nunca de fora)');
     assert.ok(l1.filter(naFaixa).length >= Math.min(l1.length, naFaixaNoMercado) - 0, `na faixa: ${l1.filter(naFaixa).length}, disponíveis na faixa: ${naFaixaNoMercado}`);
     assert.deepEqual(lista().map((x) => x.id), l1.map((x) => x.id), 'a oferta não muda dentro da janela');
     const rot = J("select tc_mercado_rotacao()", 1);
@@ -1325,7 +1326,7 @@ t('mercado oficial: 7 a 10 jogadores, Poder entre -5 e +10 da média dos titular
     // a janela seguinte troca a oferta (simula o relógio: move a janela guardada para trás)
     V("update tc_mercado_rot set janela = janela - 1 where org_id = 1");
     const l2 = lista();
-    assert.ok(l2.length >= 7 && l2.length <= 10);
+    assert.ok(l2.length >= 1 && l2.length <= 10 && l2.every(naFaixa));
     assert.equal(Number(V("select count(*) from tc_mercado_rot where org_id = 1")), 2, 'a oferta antiga fica guardada e a da janela nova é gerada à parte');
     // duas contas com times de Poder diferente recebem faixas diferentes
     V("update tc_jogadores set mec = least(100, mec + 15), rotas = least(100, rotas + 15), macro = least(100, macro + 15), tf = least(100, tf + 15), mental = least(100, mental + 15) where org_id = 1 and slot is not null");
