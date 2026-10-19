@@ -687,3 +687,12 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-resumo .tc-stars { font-size: 24px; gap: 4px; }
 .tc-jog .ln .tc-stars { font-size: 19px; }
 @media (prefers-reduced-motion: reduce) { .tc-stars.cheia em.on { animation: none; } }
+
+/* Sua economia: duas caixas retangulares empilhadas (Rift Coins em cima, créditos embaixo) que ocupam toda a altura do cartão */
+.tc-eco { display: flex; flex-direction: column; }
+.tc-eco .duo { flex: 1; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 12px; }
+.tc-eco .bx { display: grid; grid-template-columns: 64px 1fr; grid-template-rows: auto auto; align-content: center; align-items: center; justify-items: start; column-gap: 18px; row-gap: 2px; padding: 14px 24px; text-align: left; }
+.tc-eco .bx > img { grid-row: 1 / span 2; justify-self: center; height: 56px; width: auto; max-width: 64px; object-fit: contain; filter: drop-shadow(0 2px 6px #0008); }
+.tc-eco .bx small { align-self: end; }
+.tc-eco .bx b { align-self: start; font-size: 42px; }
+.tc-eco > p { margin-top: 12px; }
