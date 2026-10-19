@@ -9,7 +9,8 @@ import { CAMADAS, desenharDepuracao } from '../render/depuracao.js';
 import { MAPA } from '../config/mapa.js';
 import { MUNDO } from '../nucleo/coord.js';
 import { elencoTeste } from '../dados/elencos-teste.js';
-import { prepararImagens, campIcone } from '../../js/campeoes-img.js';
+import { prepararImagens, campIcone, itemUrl } from '../../js/campeoes-img.js';
+import { ITENS } from '../dados/itens.js';
 import { tempoTexto } from '../motor/eventos.js';
 import { REGRAS } from '../config/regras.js';
 import { abrirDraft } from './draft-ui.js?v=15';
@@ -117,7 +118,7 @@ function montar() {
       <nav class="pt-menu" aria-label="Controles da partida"><div class="pt-controles" id="ctl"></div></nav>
       <aside class="pt-lado">
         <div class="pt-card"><h3>Placar <span id="vel"></span></h3><table class="pt-placar" id="placar"></table></div>
-        <div class="pt-card"><h3>Foco</h3><div class="pt-foco" id="foco">Clique em um campeão no mapa ou no placar.</div></div>
+        <div class="pt-card"><h3>Foco</h3><div class="pt-foco" id="foco"><div id="foco-txt">Clique em um campeão no mapa ou no placar.</div><div id="foco-itens" class="pt-itens"></div></div></div>
         <div class="pt-card"><h3>Eventos</h3><div class="pt-feed" id="feed"></div></div>
       </aside>
     </div>
@@ -259,11 +260,17 @@ function atualizarPlacar(forcar = false) {
   }
   // foco
   const f = E.selecionado ? P.mapaUnidades.get(E.selecionado) : null;
-  const foco = document.getElementById('foco');
+  const foco = document.getElementById('foco-txt'); const focoItens = document.getElementById('foco-itens');
   if (f) {
     const hab = f.habilidades.map((h) => { const r = f.rank[h.tecla.toLowerCase()]; const cd = Math.max(0, h.proximo - P.t); return `${h.tecla}${r ? '' : '·'}${cd > 0 ? ` ${cd.toFixed(0)}s` : ' ✓'}`; }).join(' · ');
-    foco.innerHTML = `<b>${esc(f.campeao)}</b> (${esc(f.nome)}) · nível ${f.nivel}<br>Estado: <b>${esc(f.estado)}</b> ${f.motivo ? `(${esc(f.motivo)})` : ''}<br>Vida ${Math.round(f.hp)}/${f.hpMax} · Mana ${Math.round(f.mana)}<br>AD ${Math.round(f.ad)} · AP ${Math.round(f.ap)} · Arm ${Math.round(f.armadura)} · RM ${Math.round(f.resist)}<br>Habilidades: ${hab}<br>Itens: ${f.itens.length ? f.itens.join(', ') : '—'}`;
-  } else foco.textContent = 'Clique em um campeão no mapa ou no placar.';
+    foco.innerHTML = `<b>${esc(f.campeao)}</b> (${esc(f.nome)}) · nível ${f.nivel}<br>Estado: <b>${esc(f.estado)}</b> ${f.motivo ? `(${esc(f.motivo)})` : ''}<br>Vida ${Math.round(f.hp)}/${f.hpMax} · Mana ${Math.round(f.mana)}<br>AD ${Math.round(f.ad)} · AP ${Math.round(f.ap)} · Arm ${Math.round(f.armadura)} · RM ${Math.round(f.resist)}<br>Habilidades: ${hab}<br>Itens: ${f.itens.length ? '' : '—'}`;
+    const chave = f.id + ':' + f.itens.join(',') + (f.wards ? `:${f.wards.cargas}:${f.wards.controleEstoque}` : '');
+    if (focoItens.dataset.k !== chave) {
+      focoItens.dataset.k = chave;
+      focoItens.innerHTML = f.itens.map((id) => { const it = ITENS[id]; const u = itemUrl(it.ddragon); return `<span class="pt-item" title="${esc(it.nome)}"><span class="ini">${esc(it.nome[0])}</span>${u ? `<img src="${u}" alt="${esc(it.nome)}" width="32" height="32" loading="lazy">` : ''}</span>`; }).join('')
+        + (f.wards && f.wards.controleEstoque ? '<span class="pt-item" title="Ward de Controle (na mochila)"><img src="img/ward_controle.webp" alt="Ward de Controle" width="32" height="32"></span>' : '');
+    }
+  } else { foco.textContent = 'Clique em um campeão no mapa ou no placar.'; focoItens.innerHTML = ''; focoItens.dataset.k = ''; }
 }
 const TEXTOS = {
   abate: (e, P) => { const v = P.mapaUnidades.get(e.vitima); const a = e.abatedor ? P.mapaUnidades.get(e.abatedor) : null; return `${a ? esc(a.campeao) : 'Estrutura/monstro'} eliminou ${v ? esc(v.campeao) : '?'}`; },

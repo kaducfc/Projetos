@@ -4,6 +4,9 @@ import { registrar } from './eventos.js';
 import { darOuro, darXp, xpDeUnidade } from './economia.js';
 import { recalcular } from './entidades.js';
 import { dist } from '../nucleo/coord.js';
+import { criarRng } from '../nucleo/rng.js';
+// Sorteio dos críticos: gerador próprio (não consome o sorteio da IA), mesma semente da partida.
+const rngCrit = (P) => (P._rngCrit ||= criarRng((P.semente ?? 1) * 104729 + 7));
 
 // ------------------------------------------------------------------ utilidades
 export const mitigar = (dano, def) => (def >= 0 ? dano * 100 / (100 + def) : dano * (2 - 100 / (100 - def)));
@@ -90,8 +93,8 @@ export function causarDano(P, fonte, alvo, bruto, tipo = 'fisico', o = {}) {
     if (fc && !temMinionAliado(P, alvo)) d *= E.sentinela;
   }
   if (alvo.tipo === 'epico' || alvo.tipo === 'monstro') { if (fonte?.tipo === 'campeao') d *= 1; }
-  if (tipo === 'fisico') d = mitigar(d, alvo.armadura || 0);
-  else if (tipo === 'magico') d = mitigar(d, alvo.resist || 0);
+  if (tipo === 'fisico') d = mitigar(d, fc ? Math.max(0, (alvo.armadura || 0) * (1 - (fonte.penArmPct || 0)) - (fonte.penArm || 0)) : (alvo.armadura || 0));
+  else if (tipo === 'magico') d = mitigar(d, fc ? Math.max(0, (alvo.resist || 0) * (1 - (fonte.penMagPct || 0)) - (fonte.penMag || 0)) : (alvo.resist || 0));
   d = Math.max(R.combate.dano.minimo, d);
   // escudo
   if (alvo.escudo > 0 && alvo.escudoAte > P.t) {
@@ -237,7 +240,8 @@ export function atacarBasico(P, u, alvo) {
   u.alvoId = alvo.id;
   u.recallAte = 0;
   if (campeao) u.reveladoAte = P.t + P.regras.wards.revelaAoAtacar; // atacar de dentro da moita revela o campeão por um instante
-  const dano = campeao ? u.ad : u.dano;
+  let dano = campeao ? u.ad : u.dano;
+  if (campeao && u.crit > 0 && rngCrit(P)() < u.crit) dano *= 1.75; // crítico: 175% do dano
   const tipo = u.dano !== undefined && !campeao && u.subtipoMagico ? 'magico' : 'fisico';
   const projVel = campeao ? (u.alcance > 300 ? 2000 : 0) : (u.proj || 0);
   const aplicar = () => {

@@ -26,18 +26,22 @@ export function xpDeUnidade(P, equipeVencedora, x, y, xp, killer) {
   for (const c of perto) darXp(P, c, q);
 }
 
+// Custo de um item para este campeão: os componentes que ele já tem (item.comp) saem do inventário e abatem o custo.
+export function custoDe(u, id) {
+  const it = ITENS[id]; let custo = it.custo; const remover = []; const inv = [...u.itens];
+  for (const c of it.comp || []) { const i = inv.indexOf(c); if (i >= 0) { inv.splice(i, 1); custo -= ITENS[c].custo; remover.push(c); } }
+  return { custo, remover };
+}
 // Compra: na fonte da base, comprando o próximo item da build que o ouro cobre.
 export function comprar(P, u) {
   const build = u.perfil.build; let comprou = false;
   for (let guarda = 0; guarda < 4; guarda++) {
     const id = proximoItem(u, build);
     if (!id) break;
-    const it = ITENS[id];
-    const troca = it.restricao === 'uma_bota' && u.itens.includes('botas') && id !== 'botas'; // melhoria de botas: substitui as botas básicas
-    const custo = troca ? it.custo - ITENS.botas.custo : it.custo;
-    if (u.ouro < custo || (!troca && u.itens.length >= 6)) break;
+    const { custo, remover } = custoDe(u, id);
+    if (u.ouro < custo || u.itens.length - remover.length + 1 > 6) break;
     u.ouro -= custo; u.estat.ouroGasto += custo;
-    if (troca) u.itens.splice(u.itens.indexOf('botas'), 1);
+    for (const c of remover) u.itens.splice(u.itens.indexOf(c), 1);
     u.itens.push(id); comprou = true;
     registrar(P, 'compra', { equipe: u.equipe, campeao: u.id, item: id, custo, itens: u.itens.length });
   }
@@ -56,11 +60,10 @@ export function proximoItem(u, build) {
     const it = ITENS[id];
     if (it.restricao === 'uma_bota' && u.itens.some((x) => ITENS[x].restricao === 'uma_bota' && (x !== 'botas' || id === 'botas'))) continue;
     if (u.itens.filter((x) => x === id).length >= build.filter((x) => x === id).length) continue;
-    if (!podeLevar(u, build, id)) continue;
+    if (u.itens.length - custoDe(u, id).remover.length >= 6) continue; // sem vaga
     return id;
   }
   return null;
 }
-function podeLevar(u, build, id) { return u.itens.length < 6; }
 // Custo do próximo item (para a IA decidir se vale voltar à base).
-export function custoProximo(u) { const id = proximoItem(u, u.perfil.build); if (!id) return Infinity; const it = ITENS[id]; return it.restricao === 'uma_bota' && u.itens.includes('botas') && id !== 'botas' ? it.custo - ITENS.botas.custo : it.custo; }
+export function custoProximo(u) { const id = proximoItem(u, u.perfil.build); return id ? custoDe(u, id).custo : Infinity; }

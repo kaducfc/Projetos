@@ -27,6 +27,7 @@ export async function prepararImagens() {
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const campUrl = (nome) => (versao && arquivo.has(nome) ? `${DDRAGON}/cdn/${versao}/img/champion/${encodeURIComponent(arquivo.get(nome))}.png` : '');
+export const itemUrl = (id) => (versao && id ? `${DDRAGON}/cdn/${versao}/img/item/${id}.png` : '');
 // Quadrado com o ícone (ou a inicial, se a imagem não carregar).
 export function campIcone(nome, tam = 44) {
   const u = campUrl(nome);
@@ -35,3 +36,5 @@ export function campIcone(nome, tam = 44) {
 }
 // Imagem que falha (sem rede ou campeão novo demais) some e deixa a inicial à mostra.
 if (typeof document !== 'undefined') document.addEventListener('error', (e) => { if (e.target?.tagName === 'IMG' && e.target.closest('.tc-ci')) e.target.remove(); }, true);
+// Ícone de item que falha (id que o Data Dragon não tem mais) some e deixa a inicial à mostra.
+if (typeof document !== 'undefined') document.addEventListener('error', (e) => { if (e.target?.tagName === 'IMG' && e.target.closest('.pt-item')) e.target.remove(); }, true);

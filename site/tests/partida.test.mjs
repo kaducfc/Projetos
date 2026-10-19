@@ -283,7 +283,7 @@ test('27-28. destruir o Nexus encerra a partida; o resultado é registrado e ent
 test('23. os objetivos épicos nascem, são disputados e só perdem vida por ataques reais', () => {
   const P = mk(1); ate(P, 301); const d = P.epicos.find((e) => e.subtipo === 'dragao'); assert.ok(d, 'dragão nasceu aos 5:00');
   const hp = d.hp; ate(P, P.t + 5); assert.ok(d.hp >= hp - 1 || P.campeoes.some((c) => Math.hypot(c.x - d.x, c.y - d.y) < 1500), 'sem atacantes, a vida não cai');
-  ate(P, 900);
+  ate(P, 1500); // com a vida maior dos objetivos, o primeiro cai por volta dos 12 a 20 min
   assert.ok(P.eventos.some((e) => e.tipo === 'objetivo_iniciado'), 'a equipe decidiu disputar'); assert.ok(P.eventos.some((e) => e.tipo === 'objetivo_abatido'), 'um objetivo foi conquistado');
   const ab = P.eventos.find((e) => e.tipo === 'objetivo_abatido'); assert.ok(ab.participantes.length >= 1); assert.ok(ab.ouro > 0);
 });
@@ -685,4 +685,28 @@ test('R1. tempo de morte: 6 a 16 s (níveis 1-6), 21 s (nível 7), 27,5 a 52,5 s
   assert.equal(tempo(18, 15), 52.5, 'até os 15 min não aumenta');
   assert.ok(tempo(18, 30) > 52.5 && tempo(18, 30) < tempo(18, 45), 'cresce com o tempo');
   assert.ok(Math.abs(tempo(18, 55) - 78.75) < 0.01 && Math.abs(tempo(18, 70) - 78.75) < 0.01, 'teto de +50% (78 s) aos 55 min ou mais');
+});
+
+test('I1. itens: catálogo só de atributos, builds por estilo completas e cada campeão com papel definido', async () => {
+  const { ITENS, BUILDS } = await import('../jogos/tecnico/partida/dados/itens.js');
+  const { ESTILO_DO_CAMPEAO, CATEGORIA_DO_ESTILO } = await import('../jogos/tecnico/partida/config/papeis.js');
+  assert.ok(Object.keys(ITENS).length >= 80);
+  for (const [estilo, lista] of Object.entries(BUILDS)) { assert.ok(CATEGORIA_DO_ESTILO[estilo], `estilo ${estilo} tem categoria`); for (const id of lista) assert.ok(ITENS[id], `${estilo}: item ${id}`); }
+  for (const it of Object.values(ITENS)) for (const c of it.comp || []) assert.ok(ITENS[c], `${it.id}: componente ${c}`);
+  for (const c of catalogo) assert.ok(ESTILO_DO_CAMPEAO[c.nome] && BUILDS[ESTILO_DO_CAMPEAO[c.nome]], `${c.nome} tem estilo e build`);
+  const cats = new Set(Object.values(ESTILO_DO_CAMPEAO).map((e) => CATEGORIA_DO_ESTILO[e])); assert.deepEqual([...cats].sort(), ['ad', 'ap', 'hibrido', 'suporte', 'tank']);
+});
+test('I2. itens: componentes são aproveitados, crítico e penetração valem e o inventário respeita 6 vagas', async () => {
+  const { custoDe, comprar } = await import('../jogos/tecnico/partida/motor/economia.js');
+  const { ITENS } = await import('../jogos/tecnico/partida/dados/itens.js');
+  const P = mk(3); const a = P.campeoes.find((c) => c.equipe === 'azul'), v = P.campeoes.find((c) => c.equipe === 'vermelho');
+  a.itens = ['picareta', 'rubi']; const c1 = custoDe(a, 'cutelo'); assert.equal(c1.custo, ITENS.cutelo.custo - ITENS.picareta.custo - ITENS.rubi.custo); assert.deepEqual(c1.remover.sort(), ['picareta', 'rubi']);
+  a.itens = ['botas']; assert.equal(custoDe(a, 'botas_arm').custo, ITENS.botas_arm.custo - ITENS.botas.custo);
+  a.itens = ['gume', 'fantasma', 'dominik', 'canhao', 'shiv', 'botas_ag']; recalcular(a, P);
+  assert.equal(a.crit, 1, 'crítico limitado a 100%'); assert.ok(a.penArmPct > 0.2);
+  // penetração: o mesmo dano físico machuca mais quem tem armadura
+  v.armadura = 100; v.hp = v.hpMax = 5000; const sem = P.campeoes.find((c) => c.equipe === 'azul' && c !== a);
+  const d0 = causarDano(P, sem, v, 1000, 'fisico', { fx: false }); v.hp = 5000; const d1 = causarDano(P, a, v, 1000, 'fisico', { fx: false });
+  assert.ok(d1 > d0 * 1.0, `com penetração o dano é maior (${d1.toFixed(0)} contra ${d0.toFixed(0)})`);
+  a.itens = []; a.ouro = 1e6; for (let i = 0; i < 12; i++) comprar(P, a); assert.ok(a.itens.length <= 6, 'nunca passa de 6 itens');
 });

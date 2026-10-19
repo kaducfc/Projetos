@@ -1,6 +1,7 @@
 // Do campeão do catálogo (dados do jogo Campeão) ao perfil de simulação: arquétipo pela classe, variante e pequenas variações determinísticas por nome.
 import { ARQUETIPOS, CLASSE_PARA_ARQUETIPO } from './arquetipos.js';
-import { BUILDS } from './itens.js';
+import { BUILDS, ESTILO_DA_CLASSE } from './itens.js';
+import { ESTILO_DO_CAMPEAO, CATEGORIA_DO_ESTILO } from '../config/papeis.js';
 import { hashTexto } from '../nucleo/rng.js';
 import { POSICOES } from '../config/posicoes.js';
 
@@ -21,11 +22,13 @@ export function perfilDoCampeao(c) {
   if (!corpoACorpo && base.alcance < 300) { base.alcance = 500; base.hp *= 0.92; base.ad *= 0.95; }
   for (const k of ['hp', 'ad', 'armadura', 'resist', 'vel']) base[k] *= 0.94 + 0.12 * var01(c.nome, k);
   const variantes = arq.variantes; const hab = variantes[hashTexto(c.nome) % variantes.length];
-  const ap = ['mago', 'suporte'].includes(principal) || (secundaria && classes[1] === 'mago');
+  const estilo = ESTILO_DO_CAMPEAO[c.nome] || ESTILO_DA_CLASSE[principal] || 'lutador';
+  const papel = CATEGORIA_DO_ESTILO[estilo] || 'ad';
+  const ap = papel === 'ap' || estilo === 'hibrido_ap' || (!ESTILO_DO_CAMPEAO[c.nome] && (['mago', 'suporte'].includes(principal) || (secundaria && classes[1] === 'mago')));
   return {
     id: c.id || c.nome, nome: c.nome, classe: principal, classes, corpoACorpo,
     base, habilidades: hab.map((h) => ({ ...h })), funcao: arq.funcao, danoMagico: !!ap,
-    build: BUILDS[principal],
+    build: BUILDS[estilo], estilo, papel,
     posicoes: posicoesDe(c),
   };
 }

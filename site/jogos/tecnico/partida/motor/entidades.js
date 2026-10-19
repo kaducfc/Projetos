@@ -40,8 +40,10 @@ export function recalcular(u, P, cheio = false) {
   let hp = cresc(b.hp, b.hpNv), mana = cresc(b.mana, b.manaNv), ad = cresc(b.ad, b.adNv), ap = 0, arm = cresc(b.armadura, b.armNv), res = cresc(b.resist, b.resNv);
   let asEx = b.asNv * L * 0.7025 * 100 / 100 * 1; // crescimento percentual de velocidade de ataque por nível
   asEx = b.asNv * L; let ms = b.vel, cdr = 0, vamp = 0;
+  let crit = 0, penArmPct = 0, penMagPct = 0, penArm = 0, penMag = 0;
   for (const id of u.itens) {
     const s = ITENS[id].stats;
+    crit += s.crit || 0; penArmPct += s.penArmPct || 0; penMagPct += s.penMagPct || 0; penArm += s.penArm || 0; penMag += s.penMag || 0;
     hp += s.hp || 0; mana += s.mana || 0; ad += s.ad || 0; ap += s.ap || 0; arm += s.armadura || 0; res += s.resist || 0; asEx += s.as || 0; ms += s.ms || 0; cdr += s.cdr || 0; vamp += s.vampiro || 0;
   }
   let mult = 1 + u.bonusMaestria * 0.5; // maestria do campeão: bônus pequeno e limitado de desempenho
@@ -57,7 +59,8 @@ export function recalcular(u, P, cheio = false) {
   if (eq) { danoMult += (eq.pilhasDragao || 0) * P.regras.epicos.dragao.pilha.dano; arm *= 1 + (eq.pilhasDragao || 0) * P.regras.epicos.dragao.pilha.resist; res *= 1 + (eq.pilhasDragao || 0) * P.regras.epicos.dragao.pilha.resist; }
   const hpAntes = u.hpMax; const manaAntes = u.manaMax;
   u.hpMax = Math.round(hp * mult); u.manaMax = Math.round(mana); u.ad = ad; u.ap = ap; u.armadura = arm; u.resist = res;
-  u.asExtra = asEx; u.vel = ms * (u.slowPct ? 1 : 1); u.velBase = ms; u.cdr = Math.min(0.4, cdr); u.vampiro = vamp; u.danoMult = danoMult;
+  u.asExtra = asEx; u.vel = ms * (u.slowPct ? 1 : 1); u.velBase = ms; u.cdr = Math.min(0.4, cdr); u.vampiro = vamp;
+  u.crit = Math.min(1, crit); u.penArmPct = Math.min(0.6, penArmPct); u.penMagPct = Math.min(0.6, penMagPct); u.penArm = penArm; u.penMag = penMag; u.danoMult = danoMult;
   u.alcance = b.alcance; u.intervalo = 1 / (b.as * (1 + asEx));
   if (!cheio) { u.hp = Math.min(u.hpMax, u.hp + Math.max(0, u.hpMax - hpAntes)); u.mana = Math.min(u.manaMax, u.mana + Math.max(0, u.manaMax - manaAntes)); }
   // rank das habilidades: Q/W/E sobem de 2 em 2 níveis (máx. 5); R com 6/11/16
