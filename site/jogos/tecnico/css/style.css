@@ -559,7 +559,13 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 
 /* banner do confronto do dia (tamanhos em cqw: tudo escala com a largura do banner).
    Os dois times usam a mesma grade: emblema numa caixa de tamanho fixo (mesma altura) e o nome numa linha só, na mesma reta. */
-.tc-confrontos { display: grid; gap: 10px; }
+.tc-confrontos { position: relative; display: grid; gap: 10px; }
+.tc-conf-seta { position: absolute; top: 40%; transform: translateY(-50%); z-index: 3; width: 38px; height: 38px; border-radius: 50%; border: 1px solid #2b4a78; background: rgba(5, 13, 28, 0.75); color: var(--ouro2); font-size: 26px; line-height: 1; cursor: pointer; display: grid; place-items: center; padding: 0 0 3px; }
+.tc-conf-seta:hover { background: rgba(13, 32, 61, 0.95); border-color: var(--ouro); }
+.tc-conf-seta.e { left: 8px; } .tc-conf-seta.d { right: 8px; }
+.tc-conf-pontos { display: flex; justify-content: center; gap: 10px; }
+.tc-conf-pontos button { width: 9px; height: 9px; padding: 0; border-radius: 50%; border: 1px solid var(--ouro2); background: transparent; cursor: pointer; }
+.tc-conf-pontos button.on { background: var(--ouro2); }
 .tc-confronto { position: relative; container-type: inline-size; aspect-ratio: 21 / 9; overflow: hidden; border: 1px solid #2b4a78; background: #050d1c; clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); }
 .tc-confronto > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .tc-conf-time { position: absolute; top: 12cqw; width: 22cqw; display: flex; flex-direction: column; align-items: center; transform: translateX(-50%); }

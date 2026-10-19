@@ -317,8 +317,11 @@ function viewNoticias(minha) {
   const prox = p.proxima;
   if ((pendenteHoje || S.gp?.partida) && prox && prox.id) {
     const doDia = minhas.filter((x) => x.status === 'agendada' && (!hoje || x.dia <= hoje)).slice(0, 3);
-    const lista = (doDia.length ? doDia : [prox]).map((x) => confrontoBanner(x, meu)).join('');
-    return `<section class="tc-card tc-prox"><h3>${IMG('i-msg')}Notícias<span class="dir">${doDia.length > 1 ? 'confrontos do dia' : 'partida do dia'}</span></h3><div class="tc-confrontos">${lista}</div>${jogar}</section>`;
+    const itens = doDia.length ? doDia : [prox];
+    const i = Math.min(Math.max(S.confIdx || 0, 0), itens.length - 1);
+    const nav = itens.length > 1 ? `<button type="button" class="tc-conf-seta e" data-act="conf-nav" data-d="-1" aria-label="Partida anterior">‹</button><button type="button" class="tc-conf-seta d" data-act="conf-nav" data-d="1" aria-label="Próxima partida">›</button>
+      <div class="tc-conf-pontos">${itens.map((_, k) => `<button type="button" class="${k === i ? 'on' : ''}" data-act="conf-nav" data-i="${k}" aria-label="Partida ${k + 1} de ${itens.length}"></button>`).join('')}</div>` : '';
+    return `<section class="tc-card tc-prox"><h3>${IMG('i-msg')}Notícias<span class="dir">${itens.length > 1 ? `confronto ${i + 1} de ${itens.length}` : 'partida do dia'}</span></h3><div class="tc-confrontos">${confrontoBanner(itens[i], meu)}${nav}</div>${jogar}</section>`;
   }
   const d = noticiaDestaque(minhas, hoje, minha) || noticiaEmDia();
   const campEnc = p.liga?.status === 'encerrada';
@@ -757,6 +760,7 @@ document.addEventListener('click', async (e) => {
   if (act === 'fechar-fundo') { if (e.target === b) { S.modal = null; render(); } return; }
   if (act === 'semanas' || act === 'liga-sel' || act === 'preco-anuncio') return;
   if (act === 'aba') { S.aba = b.dataset.aba; render(); await carregarAba(); render(); window.scrollTo({ top: 0 }); return; }
+  if (act === 'conf-nav') { const n = Number(b.closest('.tc-confrontos')?.querySelectorAll('.tc-conf-pontos button').length || 1); S.confIdx = b.dataset.i != null ? Number(b.dataset.i) : (((S.confIdx || 0) + Number(b.dataset.d) + n) % n); render(); return; }
   if (act === 'camp-dia') { const ab = S.campAbertos || (S.campAbertos = {}); ab[b.dataset.k] = !ab[b.dataset.k]; render(); return; }
   if (act === 'adm-aba') { S.admAba = b.dataset.v; render(); await carregarAba(); render(); return; }
   if (act.startsWith('adm-') && S.ehAdmin) { if (await tratarAdm(act, b)) render(); return; }
