@@ -1510,3 +1510,29 @@ t('marketing: abrir a tela não credita; resgatar credita na hora; ao entrar só
     MK_CRED();
   }
 });
+
+t('scripts de teste do ADM: colocam a conta de administrador na final da Copa de hoje e encerram a Copa depois de jogada', () => {
+  const lerS = (n) => readFileSync(new URL(`../supabase/testes/${n}`, import.meta.url), 'utf8');
+  const hoje = '2026-10-12';
+  V(lerS('admin_final_da_copa.sql'), null, hoje);
+  V(lerS('admin_final_da_copa.sql'), null, hoje); // rodar de novo recria do zero, sem duplicar
+  const lid = V("select max(id) from tc_ligas where tipo = 'copa'");
+  const adm = V("select o.id from tc_orgs o join site_admins a on a.user_id = o.user_id order by o.id limit 1");
+  assert.equal(V(`select count(*) from tc_liga_times where liga_id = ${lid}`), '4');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid}`), '3', '2 semifinais e a final');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'final' and status = 'agendada' and dia = '${hoje}' and formato = 5 and ${adm} in (org_a, org_b)`), '1', 'a final de hoje é do administrador');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi' and status = 'concluida'`), '2');
+  // encerrar antes de jogar a final não faz nada
+  V(lerS('admin_encerrar_copa.sql'), null, hoje);
+  assert.equal(V(`select status from tc_ligas where id = ${lid}`), 'aberta');
+  // final jogada: o administrador vence
+  V(`update tc_partidas set status = 'concluida', placar_a = case when org_a = ${adm} then 3 else 0 end, placar_b = case when org_b = ${adm} then 3 else 0 end, vencedor = ${adm}, resumo = '{}'::jsonb, processada = now() where liga_id = ${lid} and fase = 'final'`);
+  const c0 = Number(V(`select creditos from tc_orgs where id = ${adm}`));
+  V(lerS('admin_encerrar_copa.sql'), null, hoje);
+  assert.equal(V(`select status from tc_ligas where id = ${lid}`), 'encerrada');
+  assert.equal(V(`select count(*) from tc_trofeus where liga_id = ${lid} and org_id = ${adm}`), '1', 'troféu de campeão');
+  assert.equal(Number(V(`select creditos from tc_orgs where id = ${adm}`)), c0 + 300000, 'premiação do 1º lugar');
+  V(lerS('admin_encerrar_copa.sql'), null, hoje); // de novo: nada é pago duas vezes
+  assert.equal(Number(V(`select creditos from tc_orgs where id = ${adm}`)), c0 + 300000);
+  V(`delete from tc_ligas where id = ${lid}`);
+});
