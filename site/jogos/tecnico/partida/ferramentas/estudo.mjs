@@ -5,7 +5,7 @@
 //   node estudo.mjs politica caminho v1,v2,... [n=60] # X usa regras.ia[caminho]=v; Y usa o padrão
 //   node estudo.mjs varredura [n=60]                  # roda todos os parâmetros da lista PARAMETROS e grava relatorio-estudo.json
 import { Worker, isMainThread, parentPort } from 'node:worker_threads';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { cpus } from 'node:os';
 import { elencoTeste } from '../dados/elencos-teste.js';
@@ -91,7 +91,14 @@ if (!isMainThread) {
   } else if (modo === 'varredura') {
     const n = Number(args[0] || 60); const out = [];
     const PARAMETROS = JSON.parse(readFileSync(new URL('estudo-parametros.json', aqui), 'utf8'));
-    for (const [caminho, valores] of Object.entries(PARAMETROS)) for (const v of valores) { const r = await confronto({ politica: { [caminho]: v } }, {}, n); out.push({ caminho, valor: v, ...r }); console.log(`${caminho}=${v}`.padEnd(34), fmtR(r)); }
+    const arqProg = new URL('progresso-varredura.jsonl', aqui); // cada resultado é gravado na hora: se o processo cair, a varredura continua de onde parou
+    let feitos = []; try { feitos = readFileSync(arqProg, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)); } catch { /* primeira execução */ }
+    for (const [caminho, valores] of Object.entries(PARAMETROS)) for (const v of valores) {
+      const ja = feitos.find((f) => f.caminho === caminho && f.valor === v);
+      if (ja) { out.push(ja); continue; }
+      const r = await confronto({ politica: { [caminho]: v } }, {}, n); const reg = { caminho, valor: v, ...r };
+      out.push(reg); appendFileSync(arqProg, JSON.stringify(reg) + '\n'); console.log(`${caminho}=${v}`.padEnd(34), fmtR(r));
+    }
     writeFileSync(new URL('relatorio-varredura.json', aqui), JSON.stringify(out, null, 1));
   }
   for (const w of workers) w.postMessage({ fim: true });
