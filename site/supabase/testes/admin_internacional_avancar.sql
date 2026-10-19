@@ -30,6 +30,7 @@ begin
       exit when not tc_avancar(l.id);
       update tc_partidas set dia = hoje where liga_id = l.id and status = 'agendada';
     end loop;
+    update tc_partidas set dia = hoje where liga_id = l.id and status = 'concluida' and dia > hoje;
     if tc_internacional_completo(l.id) then
       perform tc_encerrar_internacional(l.id);
       raise notice '%: encerrado (premiação, troféu e fama pagos).', l.nome;

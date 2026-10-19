@@ -71,6 +71,7 @@ begin
   end if;
   perform pg_temp.empurrar(lid, alvo, adm);
   update tc_partidas set dia = hoje where liga_id = lid and status = 'agendada' and pg_temp.rk(fase) >= alvo;
+  update tc_partidas set dia = hoje where liga_id = lid and status = 'concluida' and dia > hoje; -- fases já "jogadas" não ficam com data no futuro (as Notícias usam a última partida concluída)
   raise notice 'Pronto: % criado (liga %). Jogue as partidas de hoje em "Jogar a partida" e depois rode admin_internacional_avancar.sql.', alvo_tipo, lid;
 end;
 $$;
