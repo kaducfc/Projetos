@@ -35,8 +35,9 @@ export const REGRAS = {
   // ---- campeões
   campeao: {
     velocidade: 335, raio: 60, aquisicao: 1250, visao: 1300,
-    respawn: [6, 6, 8, 8, 10, 12, 16, 21, 26.5, 32.5, 35, 37.5, 40, 42.5, 45, 47.5, 50, 52.5],
-    respawnPorMinuto: 0.0128, respawnInicioEscala: 900, respawnMaxFator: 1.5,
+    // tempo de morte por nível: 1 a 6 de 6 a 16 s, nível 7 = 21 s, 8 a 18 de 27,5 a 52,5 s; depois dos 15 min cresce até +50% aos 55 min (máx. ~78 s)
+    respawn: [6, 8, 10, 12, 14, 16, 21, 27.5, 30, 32.5, 35, 37.5, 40, 42.5, 45, 47.5, 50, 52.5],
+    respawnPorMinuto: 0.0125, respawnInicioEscala: 900, respawnMaxFator: 1.5,
     regenBase: 0.0075,        // fração da vida máxima por segundo
     regenBase_mana: 0.006,
     regenFonte: 0.12,         // fração por segundo na fonte da base

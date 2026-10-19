@@ -79,7 +79,29 @@ export class Renderizador {
     this.campeoes(P, c, U);
     this.projeteis(P, c, U);
     this.efeitosAcima(P, c, U);
+    this.mortos(P, c, U);
     if (P.fim) this.fimDeJogo(P, c);
+  }
+  // Campeões mortos: círculo com a foto em preto e branco e os segundos que faltam para renascer, no canto do time (azul à esquerda, vermelho à direita).
+  mortos(P, c, U) {
+    const D = Math.max(34, Math.min(54, this.w * 0.042)); const r = D / 2; const gap = 8 * U;
+    for (const eq of ['azul', 'vermelho']) {
+      let i = 0;
+      for (const u of P.campeoes) {
+        if (u.equipe !== eq || !u.morto) continue;
+        const x = eq === 'azul' ? r + 10 * U : this.w - r - 10 * U; const y = r + 44 * U + i * (D + gap); i++;
+        const falta = Math.max(0, u.renasceEm - P.t);
+        c.save(); c.beginPath(); c.arc(x, y, r, 0, 7); c.clip();
+        const ic = this.icone(u.campeao);
+        if (ic.ok) { c.drawImage(ic.img, x - r, y - r, D, D); c.globalCompositeOperation = 'saturation'; c.fillStyle = '#808080'; c.fillRect(x - r, y - r, D, D); c.globalCompositeOperation = 'source-over'; }
+        else { c.fillStyle = '#3a3f4a'; c.fillRect(x - r, y - r, D, D); c.fillStyle = '#9aa3b2'; c.font = `bold ${Math.round(r)}px Inter, sans-serif`; c.textAlign = 'center'; c.fillText((u.campeao || '?')[0], x, y + r * 0.35); }
+        c.fillStyle = 'rgba(5,10,22,0.55)'; c.fillRect(x - r, y - r, D, D);
+        c.restore();
+        c.strokeStyle = COR[eq]; c.lineWidth = 2.4 * U; c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke();
+        c.font = `bold ${Math.round(r * 0.95)}px Inter, sans-serif`; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.85)'; c.fillStyle = '#fff';
+        const t = String(Math.ceil(falta)); c.strokeText(t, x, y + r * 0.34); c.fillText(t, x, y + r * 0.34);
+      }
+    }
   }
   // Moitas: camada verde sobre as células marcadas (desenhada uma vez por tamanho de tela).
   moitas(P, c) {

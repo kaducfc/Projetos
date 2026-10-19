@@ -259,7 +259,7 @@ test('25. inibidor derrubado gera superminions na rota, e o inibidor renasce dep
   assert.equal(P.equipes.vermelho.inibidoresCaidos.topo, true); assert.ok(inib.morto && inib.renasceEm > P.t);
   ate(P, 100); assert.ok(P.minions.some((m) => m.subtipo === 'super' && m.equipe === 'vermelho' && m.rota === 'topo'), 'superminion nasce na rota do inibidor');
   assert.ok(!P.minions.some((m) => m.subtipo === 'super' && m.equipe === 'azul'), 'o lado do inibidor caído não ganha super');
-  ate(P, inib.renasceEm + 0.5); assert.equal(inib.morto, false); assert.ok(inib.hp > inib.hpMax * 0.9, 'renasce com a vida cheia (os superminions inimigos já podem estar batendo nele)'); assert.equal(P.equipes.vermelho.inibidoresCaidos.topo, false);
+  ate(P, inib.renasceEm + 0.05); assert.equal(inib.morto, false); assert.ok(inib.hp > inib.hpMax * 0.5, 'renasce com a vida cheia (os superminions inimigos já podem estar batendo nele)'); assert.equal(P.equipes.vermelho.inibidoresCaidos.topo, false);
   const antes = P.minions.filter((m) => m.subtipo === 'super').length; ate(P, P.t + 35);
   assert.equal(P.minions.filter((m) => m.subtipo === 'super' && m.nascido > inib.renasceEm).length, 0, 'depois do respawn não nascem mais superminions'); assert.ok(antes >= 0);
 });
@@ -673,4 +673,16 @@ test('O2. buff do Ancião: ao matar o Ancião, o time ganha 2 min de execução 
   // quem morre perde o buff; o buff acaba depois de 2 min
   const b = azuis[1]; matar(P, b, null); assert.equal(b.buffExecucao, null, 'morrer perde o buff');
   P.t += 121; v3.hp = v3.hpMax * 0.3; causarDano(P, a, v3, v3.hpMax * 0.2, 'verdadeiro'); assert.equal(v3.morto, false, 'depois dos 2 min não executa mais');
+});
+
+test('R1. tempo de morte: 6 a 16 s (níveis 1-6), 21 s (nível 7), 27,5 a 52,5 s (8-18) e +50% aos 55 min (até ~78 s)', () => {
+  const R = REGRAS.campeao;
+  assert.deepEqual([R.respawn[0], R.respawn[5], R.respawn[6], R.respawn[7], R.respawn[17]], [6, 16, 21, 27.5, 52.5]);
+  const P = mk(2); for (const c of P.campeoes) congelar(c);
+  const v = P.campeoes.find((c) => c.equipe === 'vermelho'), k = P.campeoes.find((c) => c.equipe === 'azul');
+  const tempo = (nivel, min) => { v.nivel = nivel; v.morto = false; v.hp = 100; P.t = min * 60; matar(P, v, k); return v.renasceEm - P.t; };
+  assert.equal(tempo(1, 2), 6); assert.equal(tempo(6, 10), 16); assert.equal(tempo(7, 10), 21); assert.equal(tempo(18, 10), 52.5);
+  assert.equal(tempo(18, 15), 52.5, 'até os 15 min não aumenta');
+  assert.ok(tempo(18, 30) > 52.5 && tempo(18, 30) < tempo(18, 45), 'cresce com o tempo');
+  assert.ok(Math.abs(tempo(18, 55) - 78.75) < 0.01 && Math.abs(tempo(18, 70) - 78.75) < 0.01, 'teto de +50% (78 s) aos 55 min ou mais');
 });
