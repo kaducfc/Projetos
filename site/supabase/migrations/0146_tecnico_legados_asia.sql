@@ -9,21 +9,21 @@ declare
 begin
   for e in select * from (values
     -- nome,      pos,        idade, mec, rotas, macro, tf, mental, fama, potencial, raridade, regiao
-    ('Siwoo',     'top', 23, 86, 85, 83, 85, 84, 76, 88, 'epico', 'KR'),
-    ('Lucid',     'selva', 25, 87, 84, 87, 87, 85, 78, 88, 'epico', 'KR'),
-    ('ShowMaker', 'meio', 25, 92, 90, 89, 90, 90, 90, 92, 'lendario', 'KR'),
-    ('Smash',     'atirador', 23, 86, 84, 83, 86, 84, 70, 89, 'raro', 'KR'),
+    ('Siwoo',     'top', 18, 86, 85, 83, 85, 84, 76, 88, 'epico', 'KR'),
+    ('Lucid',     'selva', 21, 87, 84, 87, 87, 85, 78, 88, 'epico', 'KR'),
+    ('ShowMaker', 'meio', 26, 92, 90, 89, 90, 90, 90, 92, 'lendario', 'KR'),
+    ('Smash',     'atirador', 20, 86, 84, 83, 86, 84, 70, 89, 'raro', 'KR'),
     ('Career',    'suporte', 22, 85, 84, 86, 85, 84, 64, 89, 'raro', 'KR'),
     ('PerfecT',   'top', 22, 84, 83, 81, 83, 82, 70, 88, 'raro', 'KR'),
     ('Cuzz',      'selva', 26, 88, 85, 88, 88, 86, 80, 88, 'epico', 'KR'),
     ('Bdd',       'meio', 27, 90, 88, 88, 88, 89, 84, 90, 'epico', 'KR'),
-    ('Jiwoo',     'atirador', 23, 85, 83, 82, 85, 83, 66, 88, 'raro', 'KR'),
+    ('Jiwoo',     'atirador', 22, 85, 83, 82, 85, 83, 66, 88, 'raro', 'KR'),
     ('Effort',    'suporte', 25, 83, 82, 84, 83, 83, 62, 85, 'comum', 'KR'),
-    ('Breathe',   'top', 24, 85, 83, 82, 84, 83, 70, 86, 'raro', 'CN'),
+    ('Breathe',   'top', 25, 85, 83, 82, 84, 83, 70, 86, 'raro', 'CN'),
     ('Tarzan',    'selva', 27, 87, 85, 88, 87, 86, 78, 88, 'epico', 'CN'),
     ('Shanks',    'meio', 25, 86, 84, 84, 85, 84, 72, 88, 'raro', 'CN'),
-    ('Hope',      'atirador', 24, 86, 84, 83, 86, 84, 70, 88, 'raro', 'CN'),
-    ('Kael',      'suporte', 23, 83, 82, 84, 83, 83, 62, 86, 'comum', 'CN')
+    ('Hope',      'atirador', 26, 86, 84, 83, 86, 84, 70, 88, 'raro', 'CN'),
+    ('Kael',      'suporte', 22, 83, 82, 84, 83, 83, 62, 86, 'comum', 'CN')
   ) as t(nome, pos, idade, mec, rotas, macro, tf, mental, fama, potencial, raridade, regiao)
   loop
     select * into ja from tc_jogadores where lower(nome) = lower(e.nome) and legado_base is null;
