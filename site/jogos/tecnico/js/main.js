@@ -503,7 +503,7 @@ function chaveamento(l) {
 function regrasLiga(l) {
   const n = nomeLiga();
   if (l.tipo === 'copa') return `16 equipes (técnicos classificados e equipes do sistema). De segunda a sexta, 2 jogos por dia contra equipes diferentes (melhor de 1). Os 4 melhores jogam as semifinais no sábado (melhor de 3) e a final no domingo (melhor de 5). Contra a equipe de outro técnico você joga contra o bot dela, e cada um conta o próprio resultado. O campeão ganha vaga no ${esc(n.mundial)}.`;
-  if (l.tipo === 'mundial') return `16 equipes em 4 grupos de 4, sorteados por potes de poder. Segunda: treino (2 jogos, sem pontos, só XP e Maestria). Terça a quinta: 2 jogos por dia contra o seu grupo (cada adversário duas vezes). Sexta: quartas de final (melhor de 3) com os 2 primeiros de cada grupo; sábado, semifinais (melhor de 3); domingo, a final (melhor de 5).`;
+  if (l.tipo === 'mundial') return `16 equipes em 4 grupos de 4, sorteados por potes de poder. Segunda: treino. Terça a quinta: 2 jogos por dia contra o seu grupo (cada adversário duas vezes). Sexta: quartas de final (melhor de 3) com os 2 primeiros de cada grupo; sábado, semifinais (melhor de 3); domingo, a final (melhor de 5).`;
   if (l.divisao === 'acesso') return `Os 2 primeiros sobem para a ${esc(n.principal)}; os demais continuam na ${esc(n.acesso)}.`;
   return l.semana === 1 || l.semana === 4
     ? `Os 2 primeiros ganham vaga na ${esc(n.copa)}${l.semana === 4 ? ' da próxima temporada' : ''}. Não há rebaixamento.`
@@ -588,8 +588,7 @@ function avisosHtml(m) {
       <input class="tc-input" name="titulo" maxlength="80" placeholder="Título" required /><textarea class="tc-input" name="texto" maxlength="1500" rows="3" placeholder="O que mudou? Atualizações, correções, eventos…" required></textarea>
       <button type="submit" class="tc-btn ouro">Publicar</button></form>` : '';
   const nov = d.novidades.length ? d.novidades.map((n) => `<article class="tc-novidade ${n.novo ? 'novo' : ''}"><header><b>${esc(n.titulo)}</b>${n.novo ? '<span class="tag">Novo</span>' : ''}<small class="tc-mudo">${dataHora(n.criado)}</small>${S.ehAdmin ? `<button type="button" class="tc-btn peq" data-act="novidade-apagar" data-id="${n.id}" aria-label="Apagar novidade">Apagar</button>` : ''}</header><p>${esc(n.texto).replace(/\n/g, '<br>')}</p></article>`).join('') : '<p class="tc-mudo">Nenhuma novidade por enquanto.</p>';
-  const av = d.avisos.length ? `<ul class="tc-avisos">${d.avisos.map((a) => `<li class="${a.novo ? 'novo' : ''}">${esc(a.texto)}<small class="tc-mudo"> · ${dataHora(a.criado)}</small></li>`).join('')}</ul>` : '<p class="tc-mudo">Nada por aqui. Contratos próximos do fim, vendas e classificações aparecem nesta lista.</p>';
-  return `<h2>Avisos</h2>${form}<h4 class="tc-eyebrow" style="margin:14px 0 8px">Novidades do jogo</h4>${nov}<h4 class="tc-eyebrow" style="margin:18px 0 8px">Seus avisos</h4>${av}`;
+  return `<h2>Avisos</h2><p class="tc-mudo tc-peq" style="margin:0 0 10px">Novidades, atualizações e eventos do jogo.</p>${nov}${form}`;
 }
 // Janela de Calendário: as 4 semanas da temporada, com vagas, formato e premiações dos campeonatos internacionais.
 function calendarioHtml(m) {
@@ -601,9 +600,9 @@ function calendarioHtml(m) {
   const cr = (v) => (v ? `${fmt(v)} cr.` : '—');
   const premio = (tipo, chaves) => chaves.map(([k, nome]) => `<tr><td>${nome}</td><td class="n">${cr(pi[tipo]?.[k])}</td></tr>`).join('');
   const liga = (k, titulo) => `<section class="tc-cal ${cal.semana === k ? 'agora' : ''}"><h4><span>Semana ${k} · ${dataCurta(semIni(k))} a ${dataCurta(somar(semIni(k), 6))}</span>${cal.semana === k ? '<em>Esta semana</em>' : ''}</h4><b>${titulo}</b>
-    <p class="tc-mudo tc-peq">Liga individual contra equipes do sistema (2 jogos por dia, de segunda a sexta; semifinais no sábado e final no domingo). Os 2 primeiros da ${esc(n.acesso)} sobem; ${k === 1 ? `os 2 primeiros da ${esc(n.principal)} ganham vaga na ${esc(n.copa)}` : `os 2 primeiros da ${esc(n.principal)} ganham vaga no ${esc(n.mundial)}`}.</p></section>`;
+    <p class="tc-mudo tc-peq">Duas partidas por dia e a disputa pelo troféu da liga. Na ${esc(n.principal)}, os 2 primeiros ganham vaga ${k === 1 ? `na ${esc(n.copa)}` : `no ${esc(n.mundial)}`}; na ${esc(n.acesso)}, os 2 primeiros sobem de divisão.</p></section>`;
   const vagas = (d.vagas || []).length ? `<p class="tc-peq" style="margin:10px 0 0"><b>Suas vagas:</b> ${d.vagas.map((v) => `${v.tipo === 'copa' ? esc(n.copa) : esc(n.mundial)} (temporada ${v.temporada})`).join(' · ')}</p>` : '<p class="tc-mudo tc-peq" style="margin:10px 0 0">Você ainda não tem vaga em campeonato internacional nesta temporada.</p>';
-  return `<h2>Calendário · temporada ${cal.temporada}</h2><p class="tc-mudo tc-peq" style="margin:0 0 10px">Uma competição por semana: quem está num campeonato internacional não joga a liga naquela semana.</p>
+  return `<h2>Calendário · temporada ${cal.temporada}</h2>
     ${liga(1, 'Liga Academy / Liga Nacional')}
     <section class="tc-cal ${cal.semana === 2 ? 'agora' : ''}"><h4><span>Semana 2 · ${dataCurta(semIni(2))} a ${dataCurta(somar(semIni(2), 6))}</span>${cal.semana === 2 ? '<em>Esta semana</em>' : ''}</h4><b>${esc(n.copa)}</b>
       <p class="tc-mudo tc-peq"><b>Requisito:</b> 2 primeiros da ${esc(n.principal)} na semana 1 (ou na semana 4 da temporada anterior).<br><b>Formato:</b> 16 equipes. Segunda a sexta: 2 jogos por dia contra equipes diferentes (melhor de 1). Sábado: semifinais com os 4 melhores (melhor de 3). Domingo: final (melhor de 5). O campeão ganha vaga no ${esc(n.mundial)}.</p>
@@ -612,7 +611,7 @@ function calendarioHtml(m) {
     <section class="tc-cal ${cal.semana === 4 ? 'agora' : ''}"><h4><span>Semana 4 · ${dataCurta(semIni(4))} a ${dataCurta(somar(semIni(4), 6))}</span>${cal.semana === 4 ? '<em>Esta semana</em>' : ''}</h4><b>${esc(n.mundial)}</b>
       <p class="tc-mudo tc-peq"><b>Requisito:</b> 2 primeiros da ${esc(n.principal)} na semana 2 ou 3, ou campeão da ${esc(n.copa)}.<br><b>Formato:</b> 16 equipes em 4 grupos. Segunda: treino (2 jogos, sem pontos, só XP e Maestria). Terça a quinta: 2 jogos por dia no grupo (cada adversário duas vezes). Sexta: quartas (melhor de 3). Sábado: semifinais (melhor de 3). Domingo: final (melhor de 5).</p>
       <table class="tc-tabela"><tbody>${premio('mundial', [['1', 'Campeão'], ['2', 'Vice'], ['3', 'Semifinalistas'], ['5', 'Quartas de final']])}</tbody></table></section>
-    <p class="tc-mudo tc-peq" style="margin:10px 0 0">Quem não se classifica joga a liga de novo na semana seguinte; a ${esc(n.principal)} não tem rebaixamento. Partidas contra a equipe de outro técnico são jogadas contra o bot dela, e cada um conta o próprio resultado.</p>${vagas}`;
+    ${vagas}`;
 }
 function modalHtml() {
   const m = S.modal; if (!m) return '';
