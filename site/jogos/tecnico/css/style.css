@@ -696,3 +696,7 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-eco .bx small { align-self: end; }
 .tc-eco .bx b { align-self: start; font-size: 42px; }
 .tc-eco > p { margin-top: 12px; }
+
+/* conteúdo das caixas de moeda centralizado (ícone + textos juntos no meio da caixa) */
+.tc-eco .bx { grid-template-columns: auto auto; justify-content: center; justify-items: start; column-gap: 20px; padding: 14px 16px; }
+.tc-eco .bx > img { max-width: 64px; }
