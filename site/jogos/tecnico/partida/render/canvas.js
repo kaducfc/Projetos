@@ -82,14 +82,14 @@ export class Renderizador {
     this.mortos(P, c, U);
     if (P.fim) this.fimDeJogo(P, c);
   }
-  // Campeões mortos: círculo com a foto em preto e branco e os segundos que faltam para renascer, no canto do time (azul à esquerda, vermelho à direita).
+  // Campeões mortos: círculo com a foto em preto e branco e os segundos que faltam para renascer, no canto de baixo do time (azul à esquerda, vermelho à direita), na mesma altura nos dois lados.
   mortos(P, c, U) {
     const D = Math.max(34, Math.min(54, this.w * 0.042)); const r = D / 2; const gap = 8 * U;
     for (const eq of ['azul', 'vermelho']) {
       let i = 0;
       for (const u of P.campeoes) {
         if (u.equipe !== eq || !u.morto) continue;
-        const x = eq === 'azul' ? r + 10 * U : this.w - r - 10 * U; const y = r + 44 * U + i * (D + gap); i++;
+        const x = eq === 'azul' ? r + 10 * U : this.w - r - 10 * U; const y = this.h - r - 14 * U - i * (D + gap); i++; // os dois times na mesma altura, no canto de baixo, empilhando para cima
         const falta = Math.max(0, u.renasceEm - P.t);
         c.save(); c.beginPath(); c.arc(x, y, r, 0, 7); c.clip();
         const ic = this.icone(u.campeao);

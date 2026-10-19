@@ -133,9 +133,12 @@ function montar() {
   });
   // controles
   const ctl = document.getElementById('ctl');
-  ctl.innerHTML = `<button class="pt-btn ouro" id="b-play">▶ Iniciar</button><span class="pt-sep"></span>${REGRAS.velocidades.map((v) => `<button class="pt-btn" data-v="${v}">${v}x</button>`).join('')}<span class="pt-sep"></span><button class="pt-btn" id="b-tela">⛶ Tela cheia</button><button class="pt-btn" id="b-fim">⏭ Ir até o fim</button>${E.config.modo === 'oficial' ? '' : '<button class="pt-btn" id="b-reiniciar">↻ Reiniciar</button>'}`;
+  const meuLado = E.config.meuLado || 'azul'; const outroLado = meuLado === 'azul' ? 'vermelho' : 'azul';
+  E.rend.fog = meuLado; // a partida começa com a visão do próprio time; os botões do menu trocam para a do adversário ou a visão total
+  ctl.innerHTML = `<button class="pt-btn ouro" id="b-play">▶ Iniciar</button><span class="pt-sep"></span>${REGRAS.velocidades.map((v) => `<button class="pt-btn" data-v="${v}">${v}x</button>`).join('')}<span class="pt-sep"></span><button class="pt-btn" id="b-tela">⛶ Tela cheia</button><button class="pt-btn" id="b-fim">⏭ Ir até o fim</button><span class="pt-sep"></span><span class="pt-vis" role="group" aria-label="Visão do mapa"><button class="pt-btn on" data-vis="${meuLado}" title="Mostra só o que o seu time enxerga">👁 Meu time</button><button class="pt-btn" data-vis="${outroLado}" title="Mostra só o que o time inimigo enxerga">👁 Inimigo</button><button class="pt-btn" data-vis="todos" title="Mostra o mapa inteiro, sem névoa">👁 Visão total</button></span>${E.config.modo === 'oficial' ? '' : '<button class="pt-btn" id="b-reiniciar">↻ Reiniciar</button>'}`;
   ctl.addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.vis) { E.rend.fog = b.dataset.vis === 'todos' ? null : b.dataset.vis; ctl.querySelectorAll('[data-vis]').forEach((x) => x.classList.toggle('on', x === b)); return; }
     if (b.id === 'b-play') {
       if (E.partida.fim) return;
       if (E.turbo) E.pararTurbo?.();
@@ -146,14 +149,6 @@ function montar() {
     else if (b.id === 'b-fim') irAteOFim();
     else if (b.id === 'b-tela') telaCheia();
   });
-  // visão (fog): o time do técnico por padrão; dá para alternar para o outro time ou ver tudo
-  const meuLado = E.config.meuLado || 'azul';
-  E.rend.fog = E.config.modo === 'teste' ? null : meuLado;
-  const vis = document.createElement('div'); vis.className = 'pt-depur'; vis.id = 'visao-sel';
-  vis.innerHTML = `<span>Visão:</span><select id="sel-visao"><option value="${meuLado}">Meu time</option><option value="${meuLado === 'azul' ? 'vermelho' : 'azul'}">Time adversário</option><option value="">Tudo (sem fog)</option></select>`;
-  document.getElementById('depur').before(vis);
-  vis.querySelector('select').value = E.rend.fog || '';
-  vis.addEventListener('change', (e) => { E.rend.fog = e.target.value || null; });
   const dep = document.getElementById('depur');
   dep.innerHTML = '<span>Depuração:</span>' + CAMADAS.map(([k, n]) => `<label><input type="checkbox" data-k="${k}"/>${n}</label>`).join('');
   dep.addEventListener('change', (e) => { E.camadas[e.target.dataset.k] = e.target.checked; });

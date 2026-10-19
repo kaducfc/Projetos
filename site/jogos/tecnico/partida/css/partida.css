@@ -285,3 +285,18 @@
 .rs-ouro { text-align: center; } .rs-ouro small { display: block; text-align: center; color: var(--mudo); font-size: 12px; }
 .rs[data-dano="causado"] .ds, .rs[data-dano="sofrido"] .dc, .rs[data-ouro="ouro"] .cs, .rs[data-ouro="cs"] .oc { display: none; }
 @media (max-width: 880px) { .rs-cab { display: none; } .rs-l { grid-template-columns: 30px 50px 1fr 96px; row-gap: 6px; } .rs-its { grid-column: 1 / -1; order: 9; padding-left: 40px; flex-wrap: wrap; } .rs-dano, .rs-ouro { grid-column: span 2; } .rs-eq header .rs-obj:first-of-type { margin-left: 0; } }
+
+.pt-vis { display: inline-flex; gap: 0; } .pt-vis .pt-btn { margin: 0; } .pt-vis .pt-btn + .pt-btn { border-left-width: 0; }
+.pt-menu .pt-vis { flex-direction: column; gap: 6px; } .pt-menu .pt-vis .pt-btn + .pt-btn { border-left-width: 1px; } @media (max-width: 1000px) { .pt-menu .pt-vis { flex-direction: row; flex-wrap: wrap; } }
+
+/* resultado: cabe inteiro na altura da janela (a altura das linhas acompanha a tela) */
+.pt-modal.rs { --rh: clamp(40px, calc((100vh - 232px) / 10), 64px); padding: 12px 18px 14px; max-height: calc(100vh - 16px); }
+.pt-fundo:has(.rs) { padding: 8px; }
+.rs .rs-topo { margin-bottom: 4px; } .rs .rs-topo h2 { font-size: 30px; line-height: 1; }
+.rs .rs-cab { padding-bottom: 2px; }
+.rs .rs-eq { margin: 4px 0 6px; } .rs .rs-eq header { padding: 3px 0; } .rs .rs-eq h3 { font-size: 20px; }
+.rs .rs-l { height: var(--rh); margin-top: 2px; padding-top: 0; padding-bottom: 0; }
+.rs .rs-ch .tc-ci { --t: calc(var(--rh) - 10px) !important; }
+.rs .rs-it, .rs .rs-it img { width: clamp(22px, calc(var(--rh) - 22px), 30px); height: clamp(22px, calc(var(--rh) - 22px), 30px); }
+.rs .rs-nv { font-size: 18px; }
+.rs #res-acoes { margin-top: 8px !important; }
