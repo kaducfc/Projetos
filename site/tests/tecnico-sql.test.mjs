@@ -1536,3 +1536,31 @@ t('scripts de teste do ADM: colocam a conta de administrador na final da Copa de
   assert.equal(Number(V(`select creditos from tc_orgs where id = ${adm}`)), c0 + 300000);
   V(`delete from tc_ligas where id = ${lid}`);
 });
+
+t('scripts de teste do ADM: Mundial com as quartas de hoje, avanço da chave até a final e encerramento', () => {
+  const lerS = (n) => readFileSync(new URL(`../supabase/testes/${n}`, import.meta.url), 'utf8');
+  const hoje = '2026-10-12';
+  V(lerS('admin_mundial_quartas.sql'), null, hoje);
+  V(lerS('admin_mundial_quartas.sql'), null, hoje); // de novo: recria do zero
+  const lid = V("select max(id) from tc_ligas where tipo = 'mundial'");
+  const adm = V("select o.id from tc_orgs o join site_admins a on a.user_id = o.user_id order by o.id limit 1");
+  assert.equal(V(`select count(*) from tc_liga_times where liga_id = ${lid}`), '6');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'quartas'`), '2');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'quartas' and status = 'agendada' and dia = '${hoje}' and ${adm} in (org_a, org_b)`), '1');
+  V(lerS('admin_avancar_mundial.sql'), null, hoje); // sem jogar a quarta: nada avança
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi'`), '0');
+  const vence = (fase) => V(`update tc_partidas set status = 'concluida', placar_a = case when org_a = ${adm} then 3 else 0 end, placar_b = case when org_b = ${adm} then 3 else 0 end, vencedor = ${adm}, resumo = '{}'::jsonb, processada = now() where liga_id = ${lid} and fase = '${fase}' and ${adm} in (org_a, org_b)`);
+  vence('quartas'); V(lerS('admin_avancar_mundial.sql'), null, hoje);
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi'`), '2', 'duas semifinais');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi' and status = 'agendada' and dia = '${hoje}' and ${adm} in (org_a, org_b)`), '1', 'a sua semifinal é hoje');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi' and status = 'concluida'`), '1', 'a do sistema já foi jogada');
+  vence('semi'); V(lerS('admin_avancar_mundial.sql'), null, hoje);
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'final' and status = 'agendada' and dia = '${hoje}' and ${adm} in (org_a, org_b)`), '1', 'a final de hoje');
+  vence('final');
+  const c0 = Number(V(`select creditos from tc_orgs where id = ${adm}`));
+  V(lerS('admin_encerrar_mundial.sql'), null, hoje);
+  assert.equal(V(`select status from tc_ligas where id = ${lid}`), 'encerrada');
+  assert.equal(V(`select count(*) from tc_trofeus where liga_id = ${lid} and org_id = ${adm}`), '1');
+  assert.equal(Number(V(`select creditos from tc_orgs where id = ${adm}`)), c0 + 1000000);
+  V(`delete from tc_ligas where id = ${lid}`);
+});
