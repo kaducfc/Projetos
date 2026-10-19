@@ -145,7 +145,9 @@ function cartao(j, { tit = false, extra = '', acao = 'ficha', dados = '' } = {})
 }
 
 function barras(j) {
-  return `<div class="tc-attrs">${ATRIBUTOS.map((a) => `<div class="tc-attr"><span>${a.nome}</span><div class="tc-barra"><i style="width:${j[a.id]}%"></i></div><b>${j[a.id]}</b></div>`).join('')}</div>`;
+  const tier = (v) => (v >= 90 ? 'ouro' : v >= 80 ? 'teal' : v >= 65 ? 'azul' : v >= 50 ? 'cinza' : 'bronze');
+  const cor = { ouro: '#f5cf5a', teal: '#5eead4', azul: '#67c7ff', cinza: '#a3b3c9', bronze: '#c99a6a' };
+  return `<div class="fa-attrs">${ATRIBUTOS.map((a, i) => { const v = j[a.id]; const t = tier(v); return `<div class="fa-linha"><span class="nm">${a.nome}</span><div class="fa-barra"><i class="t-${t}" style="--w:${Math.max(0, Math.min(100, v))}%;--i:${i}"></i></div><b style="color:${cor[t]}">${v}</b></div>`; }).join('')}</div>`;
 }
 
 const IMG = (n, c = '') => `<img class="ic ${c}" src="img/${n}.webp" alt="" width="28" height="28" loading="lazy" />`;
@@ -601,7 +603,7 @@ function fichaHtml(m) {
   }
   else if (m.anuncio) acoes = (S.meu.elenco || []).length >= ELENCO_MAX ? '<span class="tc-mudo tc-peq">Inventário cheio: demita ou venda alguém para comprar.</span>' : `<button type="button" class="tc-btn ouro" data-act="abrir-comprar" data-anuncio="${m.anuncio.id}">Comprar por ${fmt(m.anuncio.preco_rc)} RC</button>`;
   return `<h2>${esc(j.nome)}${j.ficticio === false ? ' <span class="tc-estrela-selo">◆ Legado</span>' : ''}</h2><p class="tc-mudo tc-peq" style="margin:2px 0">${iconeVaga(j.pos)} ${NOME_VAGA[j.pos]}${(j.pos2 || []).length ? ` · também ${j.pos2.map((p) => NOME_VAGA[p]).join(', ')}` : ''} · ${j.idade} anos${j.regiao ? ` · ${esc(j.regiao)}` : ''}${j.ficticio ? '' : ' · jogador legado'}</p>
-    <div class="tc-ficha"><div class="foto">${retratoSvg(j, 200)}</div><div>
+    <div class="tc-ficha"><div class="foto tc-moldura${j.raridade ? ` r-${j.raridade}` : ''}">${retratoSvg(j, 200)}</div><div>
       <div class="tc-poder" style="margin-bottom:10px">${escudoHtml(j.poder, true)}<span class="tc-mudo tc-peq">Poder individual<br>Forma ${j.forma} · Experiência ${j.exp}${j.potencial != null ? `<br>Potencial ${j.potencial}` : ''}</span></div>
       ${barras(j)}</div></div>
     ${j.org_id ? `<div class="tc-resumo"><div class="l"><span>Estrelas</span><b>${estrelasHtml(j)} <small>+${j.bonus_estrelas_pct || 0}% de eficiência</small></b></div>${j.legado ? `<div class="l"><span>Cópias repetidas</span><b>${j.copias}</b></div>` : `<div class="l"><span>Seus fragmentos</span><b>${fmt(S.meu.org.fragmentos || 0)}</b></div>`}</div>` : ''}

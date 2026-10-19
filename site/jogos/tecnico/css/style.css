@@ -610,9 +610,9 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
    Épico: roxo, luz mais rápida e comprida.   Lendário: dourado, duas luzes opostas.
    Mítico: borda de fogo girando e faísca branca em sentido contrário. */
 @property --tc-ang2 { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
-.tc-jog { padding: 2px; background: linear-gradient(180deg, #5b9dff, #1d3f8f); }
-.tc-jog::before, .tc-jog::after { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; display: none; }
-.tc-jog.r-raro::before, .tc-jog.r-epico::before, .tc-jog.r-lendario::before, .tc-jog.r-mitico::before {
+:is(.tc-jog, .tc-moldura) { padding: 2px; background: linear-gradient(180deg, #5b9dff, #1d3f8f); }
+:is(.tc-jog, .tc-moldura)::before, :is(.tc-jog, .tc-moldura)::after { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; display: none; }
+:is(.tc-jog, .tc-moldura).r-raro::before, :is(.tc-jog, .tc-moldura).r-epico::before, :is(.tc-jog, .tc-moldura).r-lendario::before, :is(.tc-jog, .tc-moldura).r-mitico::before {
   display: block; padding: 2px;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
@@ -620,25 +620,59 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 @keyframes tc-gira2 { to { --tc-ang2: -360deg; } }
 
 /* raro */
-.tc-jog.r-raro { background: linear-gradient(180deg, #4ee3f5, #0e6f86); }
-.tc-jog.r-raro::before { background: conic-gradient(from var(--tc-ang), transparent 0 300deg, rgba(190, 248, 255, .95) 352deg, transparent 360deg); animation: tc-gira 8s linear infinite; }
+:is(.tc-jog, .tc-moldura).r-raro { background: linear-gradient(180deg, #4ee3f5, #0e6f86); }
+:is(.tc-jog, .tc-moldura).r-raro::before { background: conic-gradient(from var(--tc-ang), transparent 0 300deg, rgba(190, 248, 255, .95) 352deg, transparent 360deg); animation: tc-gira 8s linear infinite; }
 
 /* épico */
-.tc-jog.r-epico { background: linear-gradient(180deg, #d9a8ff, #5b21b6); }
-.tc-jog.r-epico::before { background: conic-gradient(from var(--tc-ang), transparent 0 250deg, rgba(240, 214, 255, .95) 350deg, transparent 360deg); animation: tc-gira 5.5s linear infinite; }
+:is(.tc-jog, .tc-moldura).r-epico { background: linear-gradient(180deg, #d9a8ff, #5b21b6); }
+:is(.tc-jog, .tc-moldura).r-epico::before { background: conic-gradient(from var(--tc-ang), transparent 0 250deg, rgba(240, 214, 255, .95) 350deg, transparent 360deg); animation: tc-gira 5.5s linear infinite; }
 
 /* lendário */
-.tc-jog.r-lendario { background: linear-gradient(180deg, #ffe38a, #a8730c); }
-.tc-jog.r-lendario::before { background: conic-gradient(from var(--tc-ang), transparent 0 130deg, rgba(255, 232, 140, .85) 168deg, #fffbe0 180deg, transparent 182deg 310deg, rgba(255, 232, 140, .85) 348deg, #fffbe0 360deg); animation: tc-gira 4.2s linear infinite; }
+:is(.tc-jog, .tc-moldura).r-lendario { background: linear-gradient(180deg, #ffe38a, #a8730c); }
+:is(.tc-jog, .tc-moldura).r-lendario::before { background: conic-gradient(from var(--tc-ang), transparent 0 130deg, rgba(255, 232, 140, .85) 168deg, #fffbe0 180deg, transparent 182deg 310deg, rgba(255, 232, 140, .85) 348deg, #fffbe0 360deg); animation: tc-gira 4.2s linear infinite; }
 
 /* mítico: moldura de fogo girando, com faísca branca em sentido contrário */
-.tc-jog.r-mitico { padding: 3px; background: #4d000a; box-shadow: none; }
-.tc-jog.r-mitico::before { padding: 3px; clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+:is(.tc-jog, .tc-moldura).r-mitico { padding: 3px; background: #4d000a; box-shadow: none; }
+:is(.tc-jog, .tc-moldura).r-mitico::before { padding: 3px; clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
   background: conic-gradient(from var(--tc-ang2), transparent 0 150deg, rgba(255, 255, 255, .9) 176deg, transparent 182deg 330deg, #fff 354deg, transparent 360deg),
               conic-gradient(from var(--tc-ang), #ff1744, #6e000f 22%, #ff7a2e 40%, #fff0c8 48%, #ff3b4e 56%, #4d000a 78%, #ff1744);
   animation: tc-gira 3.2s linear infinite, tc-gira2 2.2s linear infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .tc-jog::before, .tc-jog::after { animation: none !important; }
+  :is(.tc-jog, .tc-moldura)::before, :is(.tc-jog, .tc-moldura)::after { animation: none !important; }
   }
 .mkt-grade .tc-btn.peq { justify-self: start; margin-top: 4px; padding: 3px 10px; font-size: 11.5px; letter-spacing: .04em; }
+
+/* ---- Ficha do jogador (janela): moldura da foto por raridade, barras animadas e botões retangulares ---- */
+.tc-moldura { position: relative; clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%); }
+.tc-ficha .foto.tc-moldura { border: 0; border-radius: 0; overflow: visible; }
+.tc-ficha .foto.tc-moldura > svg, .tc-ficha .foto.tc-moldura > img { background: #0c1b34; }
+
+.fa-attrs { display: grid; gap: 9px; }
+.fa-linha { display: grid; grid-template-columns: 112px 1fr 34px; gap: 10px; align-items: center; font-size: 13px; }
+.fa-linha .nm { color: #b4c3da; }
+.fa-linha b { text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; }
+.fa-barra { height: 9px; border-radius: 99px; background: #07172e; border: 1px solid #17335c; overflow: hidden; }
+.fa-barra i { display: block; height: 100%; width: var(--w); border-radius: 99px; transform-origin: left center; animation: fa-enche .9s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 80ms + 120ms); }
+.fa-barra i.t-ouro { background: linear-gradient(90deg, #d9a82b, #fde68a); box-shadow: 0 0 8px #f5cf5a66; }
+.fa-barra i.t-teal { background: linear-gradient(90deg, #0d9488, #5eead4); }
+.fa-barra i.t-azul { background: linear-gradient(90deg, #0ea5e9, #67c7ff); }
+.fa-barra i.t-cinza { background: linear-gradient(90deg, #64748b, #a3b3c9); }
+.fa-barra i.t-bronze { background: linear-gradient(90deg, #8b5a2b, #c99a6a); }
+@keyframes fa-enche { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .fa-barra i { animation: none; } }
+
+.tc-modal .x { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; font-size: 22px; line-height: 1; transition: background .15s, color .15s; }
+.tc-modal .x:hover { background: #ffffff14; color: #fff; }
+.tc-modal .tc-acoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 10px; margin-top: 16px; }
+.tc-modal .tc-btn { clip-path: none; border-radius: 6px; border: 1px solid #335b94; box-shadow: inset 0 1px 0 #ffffff12; background: linear-gradient(180deg, #17345f, #0f2547); color: #dbe7ff;
+  min-height: 42px; padding: 10px 14px; font-size: 12.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; line-height: 1.2; transition: transform .12s, box-shadow .15s, border-color .15s, filter .15s; }
+.tc-modal .tc-btn:hover:not(:disabled) { border-color: #6aa6f0; box-shadow: inset 0 1px 0 #ffffff1c, 0 4px 14px #0007; transform: translateY(-1px); filter: none; }
+.tc-modal .tc-btn:active:not(:disabled) { transform: translateY(0); box-shadow: inset 0 2px 4px #0006; }
+.tc-modal .tc-btn:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+.tc-modal .tc-btn.ouro { background: linear-gradient(180deg, #f8d66a, #c98f14); border-color: #ffe08a; color: #1d1304; box-shadow: inset 0 1px 0 #fff6; }
+.tc-modal .tc-btn.ouro:hover:not(:disabled) { border-color: #fff0b8; box-shadow: inset 0 1px 0 #fff8, 0 4px 16px #c98f1466; }
+.tc-modal .tc-btn.ciano { background: linear-gradient(180deg, #0c3550, #082033); border-color: var(--ciano); color: #b9f3ff; box-shadow: inset 0 1px 0 #22d3ee22; }
+.tc-modal .tc-btn.perigo { background: linear-gradient(180deg, #4a1414, #2a0d0d); border-color: #b94a4a; color: #ffd3d3; }
+.tc-modal .tc-btn:disabled { opacity: .45; }
+@media (max-width: 520px) { .fa-linha { grid-template-columns: 92px 1fr 30px; } }
