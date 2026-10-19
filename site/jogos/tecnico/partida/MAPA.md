@@ -37,3 +37,13 @@ Cada categoria de unidade só pisa o que lhe cabe: **campeão** em qualquer regi
 Abra `jogos/tecnico/partida/depurar.html` (precisa de um servidor local). Mostra a grade, as paredes, as rotas e seus pontos, as estruturas, os acampamentos, os covis e as bases por cima
 da imagem, com as coordenadas normalizadas, do mundo e a região sob o mouse. Clique em dois pontos para ver o caminho calculado pelo A* para cada perfil de unidade.
 Durante uma partida, a tela da simulação oferece as camadas de caminhos, destinos, alcances, áreas de aquisição e regiões de combate.
+
+## Moitas, fog e wards
+
+- **Moitas** são uma camada à parte do terreno (`AJUSTES.moitas`, lista de células `"cx,cy"`; podem ficar sobre rota, selva ou rio). Células vizinhas formam uma moita (id > 0).
+  Para marcar: abra `depurar.html` (só administradores), modo **Pintar terreno**, pincel **Moita (adicionar/remover)**, depois **Exportar ajustes** e cole o resultado em `config/ajustes.js`.
+- **Visão** (`motor/visao.js`): quem está dentro de uma moita só é visto por inimigos dentro da mesma moita (campeão, minion ou ward). Atacar ou lançar habilidade revela o campeão por 1 s.
+  Fora das moitas a visão é a de antes (raio das fontes: campeões, minions, torres e wards). Não é possível atacar quem não se vê (ataque básico e habilidades de alvo); habilidades em área ainda acertam.
+- **Wards** (`motor/wards.js`, regras em `config/regras.js` → `wards`): totem amarelo (2 cargas, recarga de 240 s a 120 s conforme o nível, dura de 90 a 120 s, cai com 3 golpes) e Ward de Controle
+  (75 de ouro, uma por campeão, dura até ser destruída, cai com 4 golpes, revela wards inimigas no raio de 900). Destruir uma ward dá 30 de ouro. A IA compra, coloca (centro das moitas e entradas dos covis) e destrói wards reveladas.
+- **Tela**: o fog mostra a visão do time do técnico (seletor "Visão": meu time, time adversário ou tudo).

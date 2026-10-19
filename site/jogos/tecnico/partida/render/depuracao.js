@@ -5,7 +5,7 @@ import { MUNDO, mundoParaTela } from '../nucleo/coord.js';
 
 const COR_TIPO = ['rgba(220,30,30,0.55)', 'rgba(255,200,0,0.22)', 'rgba(0,200,0,0.2)', 'rgba(0,140,255,0.28)', 'rgba(220,220,220,0.18)', 'rgba(255,0,255,0.3)', 'rgba(0,255,255,0.3)'];
 export const CAMADAS = [
-  ['grade', 'Grade navegável (tipos)'], ['paredes', 'Só paredes'], ['rotas', 'Linhas das rotas e pontos de passagem'], ['estruturas', 'Estruturas'],
+  ['moitas', 'Moitas'], ['grade', 'Grade navegável (tipos)'], ['paredes', 'Só paredes'], ['rotas', 'Linhas das rotas e pontos de passagem'], ['estruturas', 'Estruturas'],
   ['selva', 'Acampamentos e covis'], ['bases', 'Bases'], ['caminhos', 'Caminhos calculados'], ['destinos', 'Destinos dos agentes'],
   ['alcances', 'Alcances de ataque'], ['aquisicao', 'Áreas de aquisição de alvos'], ['combate', 'Regiões de combate'],
 ];
@@ -21,6 +21,13 @@ export function desenharDepuracao(ctx, vista, camadas, terreno, partida = null, 
       ctx.fillStyle = COR_TIPO[t];
       const a = px(cx * c, cy * c);
       ctx.fillRect(a.px, a.py, c * esc + 0.5, c * esc + 0.5);
+    }
+  }
+  if (camadas.moitas && terreno.moita) {
+    const c = terreno.cel; ctx.fillStyle = 'rgba(40,220,90,0.42)';
+    for (let cy = 0; cy < terreno.rows; cy++) for (let cx = 0; cx < terreno.cols; cx++) {
+      if (!terreno.moita[cy * terreno.cols + cx]) continue;
+      const a = px(cx * c, cy * c); ctx.fillRect(a.px, a.py, c * esc + 0.5, c * esc + 0.5);
     }
   }
   if (camadas.bases) {

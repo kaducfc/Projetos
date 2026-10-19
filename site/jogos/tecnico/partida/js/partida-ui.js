@@ -145,6 +145,14 @@ function montar() {
     else if (b.id === 'b-fim') irAteOFim();
     else if (b.id === 'b-tela') telaCheia();
   });
+  // visão (fog): o time do técnico por padrão; dá para alternar para o outro time ou ver tudo
+  const meuLado = E.config.meuLado || 'azul';
+  E.rend.fog = E.config.modo === 'teste' ? null : meuLado;
+  const vis = document.createElement('div'); vis.className = 'pt-depur'; vis.id = 'visao-sel';
+  vis.innerHTML = `<span>Visão:</span><select id="sel-visao"><option value="${meuLado}">Meu time</option><option value="${meuLado === 'azul' ? 'vermelho' : 'azul'}">Time adversário</option><option value="">Tudo (sem fog)</option></select>`;
+  document.getElementById('depur').before(vis);
+  vis.querySelector('select').value = E.rend.fog || '';
+  vis.addEventListener('change', (e) => { E.rend.fog = e.target.value || null; });
   const dep = document.getElementById('depur');
   dep.innerHTML = '<span>Depuração:</span>' + CAMADAS.map(([k, n]) => `<label><input type="checkbox" data-k="${k}"/>${n}</label>`).join('');
   dep.addEventListener('change', (e) => { E.camadas[e.target.dataset.k] = e.target.checked; });
@@ -353,6 +361,7 @@ function quadro(ts) {
       lado: ld.definido ? null : { escolhe: ld.escolhe === minhaOrg ? 'eu' : 'adv', escolher: (l) => api.gameplayEscolherLado(id, l), aguardar } });
     if (!ld.definido) E.config = C = await configOficial(id); // agora com o lado definido pelo servidor
     const euVerm = C.idVermelho === minhaOrg;
+    C.meuLado = euVerm ? 'vermelho' : 'azul'; // o fog mostra a visão do time do técnico
     C.veloc = 4; // depois do draft a simulação já começa sozinha, em 4x
     C.azul = euVerm ? dr.vermelho : dr.azul; C.vermelho = euVerm ? dr.azul : dr.vermelho;
     C.bans = euVerm ? { azul: dr.bans.vermelho, vermelho: dr.bans.azul } : dr.bans;

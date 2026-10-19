@@ -11,6 +11,8 @@ export class Renderizador {
     this.icones = new Map(); this.sprites = new Map(); this.rumo = new Map(); this.interp = { a: 1, prev: new Map() };
     this.camadas = {}; this.fxDano = []; this.selecionado = null;
     this.estruturasCaidas = new Map();
+    this.fog = null; // equipe cujo campo de visão é mostrado ('azul' | 'vermelho'); null = vê tudo
+    this._moitaCv = null; this._fogCv = null;
   }
   ajustar(largura) {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -20,6 +22,14 @@ export class Renderizador {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.w = largura; this.h = altura; this.k = largura / MUNDO.largura;
     this.u = Math.max(0.55, Math.min(1.25, largura / 1000)); // fator de tamanho dos ícones
+    this._moitaCv = null; this._fogCv = null;
+  }
+  // A unidade aparece na tela? Com fog, inimigos só aparecem dentro do campo de visão da equipe mostrada (e fora de moitas escondidas).
+  visto(P, u) {
+    if (!this.fog || u.equipe === this.fog || u.tipo === 'estrutura') return true;
+    if (!P.visivelPara(this.fog, u)) return false;
+    for (const f of P.equipes[this.fog].fontes || []) if (Math.hypot(f.x - u.x, f.y - u.y) <= f.r) return true;
+    return false;
   }
   vista() { return { largura: this.w, altura: this.h }; }
   // Ícone do campeão (Data Dragon). Só desenha a imagem de um quadro em que ela já carregou; se o endereço ainda
@@ -59,14 +69,61 @@ export class Renderizador {
     if (this.img && this.img.complete) c.drawImage(this.img, 0, 0, this.w, this.h);
     c.fillStyle = 'rgba(4,10,24,0.22)'; c.fillRect(0, 0, this.w, this.h); // leve escurecimento para destacar as unidades
     if (depur) depur(c);
+    this.moitas(P, c);
+    if (this.fog) this.neblina(P, c);
     this.estruturas(P, c, U);
     this.selva(P, c, U);
     this.minions(P, c, U);
     this.efeitosChao(P, c, U);
+    this.wards(P, c, U);
     this.campeoes(P, c, U);
     this.projeteis(P, c, U);
     this.efeitosAcima(P, c, U);
     if (P.fim) this.fimDeJogo(P, c);
+  }
+  // Moitas: camada verde sobre as células marcadas (desenhada uma vez por tamanho de tela).
+  moitas(P, c) {
+    const T = P.terreno; if (!T.moitas || !T.moitas.length || typeof document === 'undefined') return;
+    if (!this._moitaCv) {
+      const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(this.w)); cv.height = Math.max(1, Math.round(this.h)); const g = cv.getContext('2d');
+      const cel = T.cel * this.k;
+      for (let y = 0; y < T.rows; y++) for (let x = 0; x < T.cols; x++) {
+        if (!T.moita[y * T.cols + x]) continue;
+        g.fillStyle = 'rgba(46,150,62,0.34)'; g.fillRect(x * cel, y * cel, cel + 0.6, cel + 0.6);
+      }
+      this._moitaCv = cv;
+    }
+    c.drawImage(this._moitaCv, 0, 0, this.w, this.h);
+  }
+  // Neblina: escurece o que a equipe mostrada não enxerga e deixa claro o raio de visão de campeões, minions, torres e wards.
+  neblina(P, c) {
+    if (typeof document === 'undefined') return;
+    if (!this._fogCv) { this._fogCv = document.createElement('canvas'); this._fogCv.width = Math.max(1, Math.round(this.w)); this._fogCv.height = Math.max(1, Math.round(this.h)); }
+    const f = this._fogCv.getContext('2d'); f.globalCompositeOperation = 'source-over'; f.clearRect(0, 0, this._fogCv.width, this._fogCv.height);
+    f.fillStyle = 'rgba(3,8,20,0.58)'; f.fillRect(0, 0, this._fogCv.width, this._fogCv.height);
+    f.globalCompositeOperation = 'destination-out';
+    for (const s of P.equipes[this.fog].fontes || []) {
+      const x = s.x * this.k, y = s.y * this.k, r = s.r * this.k;
+      const g = f.createRadialGradient(x, y, r * 0.55, x, y, r); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      f.fillStyle = g; f.beginPath(); f.arc(x, y, r, 0, 7); f.fill();
+    }
+    c.drawImage(this._fogCv, 0, 0, this.w, this.h);
+  }
+  // Wards: as da equipe mostrada sempre aparecem; as inimigas só quando reveladas por uma Ward de Controle (ou com a visão total ligada, esmaecidas).
+  wards(P, c, U) {
+    for (const w of P.wards || []) {
+      if (w.morto) continue;
+      const mostrada = !this.fog || w.equipe === this.fog || (w.reveladaPara && w.reveladaPara[this.fog]);
+      const x = w.x * this.k, y = w.y * this.k; const cor = COR[w.equipe]; const r = (w.subtipo === 'controle' ? 6 : 5) * U;
+      if (!mostrada) continue;
+      const aliada = !this.fog || w.equipe === this.fog;
+      c.save(); c.globalAlpha = aliada || this.fog ? 1 : 0.6;
+      c.fillStyle = w.subtipo === 'controle' ? '#e05aff' : '#ffd84a'; c.strokeStyle = cor; c.lineWidth = 1.6 * U;
+      c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke();
+      c.fillStyle = '#10203d'; c.beginPath(); c.arc(x, y, r * 0.38, 0, 7); c.fill();
+      if (w.expira !== Infinity) { c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 1.2; c.beginPath(); c.arc(x, y, r + 2.4 * U, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, (w.expira - P.t) / (w.expira - w.criadaEm))); c.stroke(); }
+      c.restore();
+    }
   }
   barra(c, x, y, w, h, f, cor) {
     c.fillStyle = 'rgba(0,0,0,0.65)'; c.fillRect(x - 1, y - 1, w + 2, h + 2);
@@ -105,7 +162,7 @@ export class Renderizador {
   }
   selva(P, c, U) {
     for (const m of P.monstros) {
-      if (m.morto) continue; const x = m.x * this.k, y = m.y * this.k; const camp = P.acampamentos.find((a) => a.id === m.campo);
+      if (m.morto || !this.visto(P, m)) continue; const x = m.x * this.k, y = m.y * this.k; const camp = P.acampamentos.find((a) => a.id === m.campo);
       const grande = m.raio >= 70; const r = (grande ? 6.5 : 4) * U;
       if (camp && this.sprite(camp.tipo).ok) { const l = (camp.tipo === 'caranguejo' ? 22 : m.raio >= 80 ? 40 : m.raio >= 60 ? 32 : m.raio >= 45 ? 24 : 18) * U; this.desenharSprite(c, camp.tipo, x, y + l * 0.25, l, 0.6); if (m.hp < m.hpMax) this.barra(c, x - l * 0.4, y - l * 0.5 - 3 * U, l * 0.8, 2.5 * U, m.hp / m.hpMax, '#d36b4a'); continue; }
       c.fillStyle = COR_MON[camp?.tipo] || '#d8c27a'; c.strokeStyle = 'rgba(0,0,0,0.7)'; c.lineWidth = 1.2;
@@ -113,7 +170,7 @@ export class Renderizador {
       if (m.hp < m.hpMax) this.barra(c, x - r, y - r - 5 * U, r * 2, 2.5 * U, m.hp / m.hpMax, '#d36b4a');
     }
     for (const e of P.epicos) {
-      if (e.morto) continue; const x = e.x * this.k, y = e.y * this.k; const r = (e.subtipo === 'barao' ? 15 : 12) * U;
+      if (e.morto || !this.visto(P, e)) continue; const x = e.x * this.k, y = e.y * this.k; const r = (e.subtipo === 'barao' ? 15 : 12) * U;
       const grd = c.createRadialGradient(x, y, 2, x, y, r * 2); grd.addColorStop(0, e.subtipo === 'barao' ? 'rgba(170,90,255,0.9)' : e.subtipo === 'arauto' ? 'rgba(90,200,255,0.9)' : 'rgba(255,150,70,0.9)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
       c.fillStyle = grd; c.beginPath(); c.arc(x, y, r * 2, 0, 7); c.fill();
       const sp = e.subtipo === 'anciao' ? 'dragao' : e.subtipo;
@@ -128,7 +185,7 @@ export class Renderizador {
   }
   minions(P, c, U) {
     for (const m of P.minions) {
-      if (m.morto) continue; const p = this.pos(m); const cor = COR[m.equipe];
+      if (m.morto || !this.visto(P, m)) continue; const p = this.pos(m); const cor = COR[m.equipe];
       if (m.auraBarao || m.subtipo === 'arauto') { // aura roxa: no minion com o buff do Barão e, só para destacar no mapa, no Arauto conquistado (que não recebe bônus)
         const lm = (m.subtipo === 'arauto' ? 40 : m.subtipo === 'cerco' ? 22 : m.subtipo === 'super' ? 28 : m.subtipo === 'conjurador' ? 16 : 18) * U; const ra = lm * 0.95;
         const g = c.createRadialGradient(p.x, p.y, 1, p.x, p.y, ra); g.addColorStop(0, 'rgba(200,120,255,0.75)'); g.addColorStop(0.6, 'rgba(170,80,255,0.45)'); g.addColorStop(1, 'rgba(150,60,255,0)');
@@ -168,6 +225,7 @@ export class Renderizador {
   campeoes(P, c, U) {
     const D = Math.max(22, Math.min(40, this.w * 0.027)); const r = D / 2;
     for (const u of P.campeoes) {
+      if (!u.morto && !this.visto(P, u)) continue;
       const p = this.pos(u); const cor = COR[u.equipe];
       if (u.morto) {
         c.globalAlpha = 0.5; this.desenharIcone(c, u, p.x, p.y, r * 0.8, '#777', true); c.globalAlpha = 1;
