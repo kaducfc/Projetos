@@ -710,3 +710,24 @@ test('I2. itens: componentes são aproveitados, crítico e penetração valem e 
   assert.ok(d1 > d0 * 1.0, `com penetração o dano é maior (${d1.toFixed(0)} contra ${d0.toFixed(0)})`);
   a.itens = []; a.ouro = 1e6; for (let i = 0; i < 12; i++) comprar(P, a); assert.ok(a.itens.length <= 6, 'nunca passa de 6 itens');
 });
+
+test('IA1. inteligência: incerteza de visão, atraso, desespero (Mental) e fase de rotas (atributo Rotas)', async () => {
+  const { incerteza, atraso, desespero, rotasCedo, pol, visaoSobre } = await import('../jogos/tecnico/partida/motor/inteligencia.js');
+  const P = mk(4); for (const c of P.campeoes) congelar(c);
+  const a = P.campeoes.filter((c) => c.equipe === 'azul'); P.tick = 4; P.step();
+  assert.ok(incerteza(P, 'azul') >= 0 && incerteza(P, 'azul') <= 1);
+  P.t = 1000; for (const c of P.campeoes) { c.x = 7000 + c.id * 10; c.y = 5000; } P.equipes.azul.visao = {};
+  assert.equal(incerteza(P, 'azul'), 1, 'ninguém do outro time foi visto');
+  for (const c of P.campeoes.filter((c) => c.equipe === 'vermelho')) P.equipes.azul.visao[c.id] = { x: c.x, y: c.y, t: P.t, visivel: true, hp: 1 };
+  assert.equal(incerteza(P, 'azul'), 0, 'todos à vista');
+  // atraso e desespero
+  P.equipes.azul.ouroTotal = 20000; P.equipes.vermelho.ouroTotal = 20000; assert.equal(atraso(P, 'azul'), 0);
+  P.equipes.azul.ouroTotal = 14000; P.equipes.vermelho.ouroTotal = 24000; const at = atraso(P, 'azul'); assert.ok(at > 0.5, `atrás no ouro (${at})`);
+  const [baixo, alto] = [a[0], a[1]]; baixo.m.mental = 0.05; alto.m.mental = 0.98;
+  assert.ok(desespero(P, baixo) > 0.4 && desespero(P, alto) < 0.05, 'Mental baixo desespera, Mental alto não');
+  // fase de rotas: só no começo e proporcional ao atributo
+  P.t = 60; baixo.m.rotas = 1; alto.m.rotas = 0.1; assert.ok(rotasCedo(P, baixo) > rotasCedo(P, alto) * 5); P.t = 2000; assert.equal(rotasCedo(P, baixo), 0);
+  // política por equipe
+  assert.equal(pol(P, 'azul', 'objetivoMargem'), P.regras.ia.objetivoMargem); P.politica = { azul: { objetivoMargem: 9 } }; assert.equal(pol(P, 'azul', 'objetivoMargem'), 9); assert.equal(pol(P, 'vermelho', 'objetivoMargem'), P.regras.ia.objetivoMargem);
+  assert.equal(typeof visaoSobre(P, 'azul', 0, 0, 100), 'boolean');
+});
