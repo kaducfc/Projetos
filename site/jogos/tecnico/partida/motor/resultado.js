@@ -15,7 +15,7 @@ export function construirResultado(P) {
   };
   const jogadores = P.campeoes.map((c) => ({
     id: c.jogadorId, nome: c.nome, equipe: c.equipe, pos: c.pos, campeao: c.campeao, nivel: c.nivel, abates: c.estat.abates, mortes: c.estat.mortes, assistencias: c.estat.assist,
-    cs: c.estat.cs + c.estat.csSelva, ouro: Math.round(c.ouroTotal), dano: Math.round(c.estat.dano), danoSofrido: Math.round(c.estat.danoSofrido), torres: c.estat.torres, objetivos: c.estat.objetivos, itens: [...c.itens], ganks: c.ganks,
+    cs: c.estat.cs + c.estat.csSelva, ouro: Math.round(c.ouroTotal), dano: Math.round(c.estat.danoCamp), danoTotal: Math.round(c.estat.dano), danoSofrido: Math.round(c.estat.danoSofrido), torres: c.estat.torres, objetivos: c.estat.objetivos, itens: [...c.itens], ganks: c.ganks,
   }));
   const f = P.fim || {};
   const tipos = {}; for (const v of P.eventos) tipos[v.tipo] = (tipos[v.tipo] || 0) + 1;

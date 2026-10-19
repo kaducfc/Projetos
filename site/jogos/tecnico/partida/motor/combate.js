@@ -105,7 +105,7 @@ export function causarDano(P, fonte, alvo, bruto, tipo = 'fisico', o = {}) {
   alvo.hp -= d;
   if (fonte) {
     if (fonte.id !== undefined) alvo.ultimosAtacantes[fonte.id] = P.t;
-    if (fc) { fonte.estat.dano += real; if (o.basico && fonte.vampiro) { const c = Math.min(fonte.hpMax - fonte.hp, real * fonte.vampiro); fonte.hp += c; fonte.estat.curado += c; } }
+    if (fc) { fonte.estat.dano += real; if (alvo.tipo === 'campeao') fonte.estat.danoCamp += real; if (o.basico && fonte.vampiro) { const c = Math.min(fonte.hpMax - fonte.hp, real * fonte.vampiro); fonte.hp += c; fonte.estat.curado += c; } }
   }
   if (alvo.tipo === 'campeao') {
     alvo.estat.danoSofrido += real; alvo.ultimoDano = P.t;

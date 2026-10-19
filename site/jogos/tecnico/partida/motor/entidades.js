@@ -22,7 +22,7 @@ export function criarCampeao(P, jog, equipe, perfil) {
     proxDecisao: 0, proxRota: 0, replan: 0, preso: 0, recallAte: 0, recallInicio: 0,
     ultimoDano: -99, ultimoAtaqueChamp: -99, ultimosAtacantes: {}, agressoes: {},
     visto: {}, ganks: 0,
-    estat: { abates: 0, mortes: 0, assist: 0, cs: 0, csSelva: 0, dano: 0, danoSofrido: 0, torres: 0, objetivos: 0, ouroGasto: 0, curado: 0 },
+    estat: { abates: 0, mortes: 0, assist: 0, cs: 0, csSelva: 0, dano: 0, danoCamp: 0, danoSofrido: 0, torres: 0, objetivos: 0, ouroGasto: 0, curado: 0 },
     jungle: { campoAtual: null, ordem: [], idx: 0 },
   };
   // eficiência do jogador (posição x estrelas de evolução): vale como multiplicador do desempenho geral
