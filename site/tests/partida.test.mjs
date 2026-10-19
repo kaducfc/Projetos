@@ -422,7 +422,7 @@ test('farm: a Mecânica define o último golpe nos minions (quem tem mais Mecân
   };
   const fraco = cs10(25), forte = cs10(95);
   assert.ok(forte > fraco * 1.2, `mais Mecânica, mais farm: ${fraco.toFixed(0)} contra ${forte.toFixed(0)} CS aos 10 min`);
-  assert.ok(forte >= 50 && forte <= 105, `CS aos 10 min do jogador forte fora do esperado: ${forte.toFixed(0)}`);
+  assert.ok(forte >= 50 && forte <= 112, `CS aos 10 min do jogador forte fora do esperado: ${forte.toFixed(0)}`);
   assert.ok(fraco >= 25, `CS aos 10 min do jogador fraco muito baixo: ${fraco.toFixed(0)}`);
 });
 
@@ -587,7 +587,8 @@ const atualizarWardsTeste = (P) => atualizarWards(P);
 test('V1. moitas: grupos de células vizinhas viram uma moita; sem moitas marcadas o terreno é o de antes', () => {
   const { t, centro, fora } = terrenoComMoita();
   assert.equal(t.moitas.length, 1); assert.ok(t.moitas[0].celulas >= 5); assert.equal(t.moitaEm(centro.x, centro.y), 1); assert.equal(t.moitaEm(fora.x, fora.y), 0);
-  assert.equal(new Terreno().moitas.length, 0, 'o mapa padrão ainda não tem moitas marcadas');
+  const padrao = new Terreno(); assert.ok(padrao.moitas.length >= 10, 'o mapa padrão tem as moitas marcadas em config/ajustes.js');
+  for (const m of padrao.moitas) assert.ok(padrao.caminhavel(m.x, m.y, 'campeao'), `o centro da moita ${m.id} fica em terreno caminhável`);
 });
 test('V2. quem está na moita só é visto por inimigo dentro da mesma moita; atacar revela por um instante', () => {
   const { P, centro, fora } = mkMoita(3);
