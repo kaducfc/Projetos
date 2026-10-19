@@ -111,6 +111,7 @@ export const REGRAS = {
   },
 
   // ---- combate
+  estatisticas: { escalaDano: 2.4 }, // só na apresentação: o dano a campeões (e o sofrido) mostrado no resultado vale isso vezes o dano da simulação, para ficar na faixa de uma partida de verdade (carregador 30–50 mil; melhor da partida 60–80 mil). Não muda o combate.
   combate: {
     dano: { variacaoCritico: 0, minimo: 1 },
     resistenciaCC: { janela: 4.0, reducao: 0.5, minimo: 0.25 }, // CC repetido em sequência fica mais curto (nunca incapacitado para sempre)

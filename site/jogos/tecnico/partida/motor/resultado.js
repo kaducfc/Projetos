@@ -13,14 +13,15 @@ export function construirResultado(P) {
       aldeias: undefined,
     };
   };
+  const esc = P.regras.estatisticas?.escalaDano ?? 1;
   const jogadores = P.campeoes.map((c) => ({
     id: c.jogadorId, nome: c.nome, equipe: c.equipe, pos: c.pos, campeao: c.campeao, nivel: c.nivel, abates: c.estat.abates, mortes: c.estat.mortes, assistencias: c.estat.assist,
-    cs: c.estat.cs + c.estat.csSelva, ouro: Math.round(c.ouroTotal), dano: Math.round(c.estat.danoCamp), danoTotal: Math.round(c.estat.dano), danoSofrido: Math.round(c.estat.danoSofrido), torres: c.estat.torres, objetivos: c.estat.objetivos, itens: [...c.itens], ganks: c.ganks,
+    cs: c.estat.cs + c.estat.csSelva, ouro: Math.round(c.ouroTotal), dano: Math.round(c.estat.danoCamp * esc), danoTotal: Math.round(c.estat.dano), danoSofrido: Math.round(c.estat.danoSofrido * esc), torres: c.estat.torres, objetivos: c.estat.objetivos, itens: [...c.itens], ganks: c.ganks,
   }));
   const f = P.fim || {};
   const tipos = {}; for (const v of P.eventos) tipos[v.tipo] = (tipos[v.tipo] || 0) + 1;
   // melhor desempenho: participação em abates, dano e objetivos (só para destaque na interface)
-  const nota = (j) => j.abates * 3 + j.assistencias * 1.5 - j.mortes * 1.5 + j.dano / 2500 + j.objetivos * 2 + j.torres * 1.5;
+  const nota = (j) => j.abates * 3 + j.assistencias * 1.5 - j.mortes * 1.5 + j.dano / esc / 2500 + j.objetivos * 2 + j.torres * 1.5;
   const mvp = [...jogadores].filter((j) => !f.vencedor || j.equipe === f.vencedor).sort((a, b) => nota(b) - nota(a))[0] || null;
   return {
     versaoRegras: P.regras.versao, semente: P.semente, duracao: Math.round(f.duracao || P.t), vencedor: f.vencedor || null, perdedor: f.perdedor || null, motivo: f.motivo || null, interrompida: !!f.interrompida,
