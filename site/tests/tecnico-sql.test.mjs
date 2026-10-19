@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 8, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -26,9 +26,9 @@ function psql(args, input) {
 // Executa SQL como uma conta (uid) em um dia (hoje). Devolve { ok, out, err }.
 function Q(sql, uid = null, hoje = '2026-10-12') {
   const r = psql(['-d', 't', '-c', `set app.uid='${uid ? U(uid) : ''}'`, '-c', `set app.hoje='${hoje}'`, '-c', sql]);
-  return { ok: r.status === 0, out: (r.stdout || '').trim(), err: ((r.stderr || '').match(/ERROR:\s+(\S+)/) || [, (r.stderr || '').trim()])[1] };
+  return { ok: r.status === 0, out: (r.stdout || '').trim(), err: ((r.stderr || '').match(/ERROR:\s+(\S+)/) || [, (r.stderr || '').trim()])[1], full: (r.stderr || '').trim() };
 }
-const V = (sql, uid, hoje) => { const r = Q(sql, uid, hoje); assert.ok(r.ok, `${sql}\n${r.err}`); return r.out; };
+const V = (sql, uid, hoje) => { const r = Q(sql, uid, hoje); assert.ok(r.ok, `${sql.slice(0, 400)}\n${r.full}`); return r.out; };
 const falha = (sql, uid, hoje) => { const r = Q(sql, uid, hoje); assert.ok(!r.ok, `deveria falhar: ${sql}`); return r.err; };
 const J = (sql, uid, hoje) => JSON.parse(V(sql, uid, hoje));
 let seqChave = 0;
@@ -437,15 +437,14 @@ t('temporada inteira: uma liga individual por técnico e semana; Copa e Mundial 
   assert.equal(V("select count(*) from tc_ligas where status <> 'encerrada'"), '0');
   assert.equal(V("select count(*) from tc_partidas where status <> 'concluida'"), '0');
   assert.equal(V("select count(*) from tc_ligas where tipo = 'copa'"), '0', 'sem finalistas da Nacional na semana 1, sem Copa');
-  const finalistas = J("select coalesce(jsonb_agg(distinct l.dono_org), '[]'::jsonb) from tc_ligas l, lateral tc_tabela_final(l.id) f where l.tipo = 'divisao' and l.divisao = 'principal' and l.semana <= 3 and f.org_id = l.dono_org and f.pos <= 2");
+  const finais23 = J("select coalesce(jsonb_agg(distinct l.dono_org), '[]'::jsonb) from tc_ligas l, lateral tc_tabela_final(l.id) f where l.tipo = 'divisao' and l.divisao = 'principal' and l.semana in (2, 3) and f.org_id = l.dono_org and f.pos <= 2");
   const mundial = Number(V("select count(*) from tc_ligas where tipo = 'mundial'"));
-  assert.equal(mundial, finalistas.length ? 1 : 0, 'o Mundial só existe se algum técnico foi finalista da Nacional nas semanas 1 a 3');
+  assert.equal(mundial, finais23.length ? 1 : 0, 'o Mundial só existe se algum técnico foi finalista da Nacional nas semanas 2 ou 3 (a Copa não aconteceu)');
   if (mundial) {
     const reais = J("select jsonb_agg(t.org_id) from tc_liga_times t join tc_ligas l on l.id = t.liga_id join tc_orgs o on o.id = t.org_id where l.tipo = 'mundial' and o.user_id is not null");
-    for (const o of reais) assert.ok(finalistas.includes(o), `técnico ${o} no Mundial sem ter sido finalista da Nacional`);
-    assert.equal(V("select count(*) from tc_liga_times t join tc_ligas l on l.id = t.liga_id where l.tipo = 'mundial'"), '6');
-    assert.equal(V("select count(*) from tc_partidas p join tc_ligas l on l.id = p.liga_id where l.tipo = 'mundial'"), '5');
-    assert.equal(V("select count(*) from tc_partidas p join tc_ligas l on l.id = p.liga_id where l.tipo = 'mundial' and p.formato <> 5"), '0');
+    for (const o of reais) assert.ok(finais23.includes(o), `técnico ${o} no Mundial sem ter sido finalista da Nacional`);
+    assert.equal(V("select count(*) from tc_liga_times t join tc_ligas l on l.id = t.liga_id where l.tipo = 'mundial'"), '16');
+    assert.equal(V("select count(*) from tc_partidas p join tc_ligas l on l.id = p.liga_id where l.tipo = 'mundial' and p.fase = 'final' and p.formato <> 5"), '0');
   }
   assert.equal(V("select count(*) from (select liga_id, org_id from tc_premios group by 1, 2 having count(*) > 1) x"), '0');
   const n = V('select count(*) from tc_partidas') + V('select count(*) from tc_premios');
@@ -1127,6 +1126,7 @@ const baseMk = (e) => e.taxa.base * (1 + e.taxa.bonus_marketing + e.taxa.bonus_a
 MK_CRED();
 t('marketing: clube novo (nível 1, fama 0, sem patrocínio); a taxa da tela é a fórmula do servidor; nada mexe em RC nem em pontos do Rank', () => {
   V("update tc_orgs set creditos = 1000000 where id in (1, " + O2 + ")");
+  V("update tc_orgs set divisao = 'acesso' where id in (1, " + O2 + ")"); // a taxa base da divisão principal é testada à parte (a promoção depende do resultado dos jogos)
   V("delete from tc_patrocinios"); V("delete from tc_fama_eventos");
   V("update tc_marketing set nivel = 1, fama = 0, campanha = null, campanha_fim = null, recargas = '{}'::jsonb, resumo = null, ultimo_proc = now()");
   const rc0 = V("select string_agg(saldo::text, ',' order by user_id) from site_carteira"); const rk0 = V("select count(*) from site_rk_lanc_stub");
@@ -1511,56 +1511,259 @@ t('marketing: abrir a tela não credita; resgatar credita na hora; ao entrar só
   }
 });
 
-t('scripts de teste do ADM: colocam a conta de administrador na final da Copa de hoje e encerram a Copa depois de jogada', () => {
+
+// ---------------------------------------------------------------- campeonatos: vagas, Copa e Mundial com 16 equipes, partidas PVP (0139)
+const POSJ = ['top', 'selva', 'meio', 'atirador', 'suporte'];
+// Joga um mapa de uma partida como o técnico `n`: escolhe o lado se for dele, envia o draft e registra o resultado. `quemVence`: org que vence o mapa.
+function jogarMapa(pid, n, hoje, quemVence, dur = 1800) {
+  let el = J(`select tc_partida_elencos(${pid})`, n, hoje);
+  if (!el.lado.definido) { assert.equal(el.lado.voce_escolhe, true); J(`select tc_gameplay_escolher_lado(${pid}, 'azul')`, n, hoje); el = J(`select tc_partida_elencos(${pid})`, n, hoje); }
+  const camp = V("select string_agg(nome, '|' order by id) from (select id, nome from tc_campeoes order by id limit 20) x").split('|');
+  const draft = { picks: { azul: Object.fromEntries(POSJ.map((p, i) => [p, camp[i]])), vermelho: Object.fromEntries(POSJ.map((p, i) => [p, camp[5 + i]])) }, bans: { azul: camp.slice(10, 15), vermelho: camp.slice(15, 20) } };
+  const jogs = ['azul', 'vermelho'].flatMap((eq) => el[eq].jogadores.map((j) => ({ id: j.id, equipe: eq, pos: j.pos, campeao: draft.picks[eq][j.pos] })));
+  J(`select tc_gameplay_draft(${pid}, ${el.mapa}, '${JSON.stringify(draft).replace(/'/g, "''")}'::jsonb)`, n, hoje);
+  const venceu = el.azul.org.id === quemVence ? 'azul' : 'vermelho';
+  const res = JSON.stringify({ semente: Number(V(`select tc_gameplay_semente(${pid}, ${el.mapa})`)), versaoRegras: 1, vencedor: venceu, duracao: dur, motivo: 'nexus', interrompida: false,
+    equipes: { azul: { abates: 20, torresPerdidas: 3, dragoes: 1 }, vermelho: { abates: 15, torresPerdidas: 8, dragoes: 2 } }, mvp: { nome: 'Teste' }, jogadores: jogs }).replace(/'/g, "''");
+  return { el, r: J(`select tc_gameplay_registrar(${pid}, ${el.mapa}, '${res}'::jsonb)`, n, hoje) };
+}
+
+t('carreira: Academy promove os 2 primeiros, a Nacional não rebaixa e os 2 primeiros da Nacional na semana 1 ganham a vaga da Copa', () => {
+  V("update tc_config set valor = jsonb_set(valor, '{ativo}', 'false') where chave = 'gameplay'");
+  V("update tc_orgs set divisao = 'principal' where user_id is not null and id <> 4");
+  V("update tc_orgs set divisao = 'acesso' where id = 4"); // a conta 3 começa na Academy
+  V("delete from tc_vagas");
+  V("delete from tc_ligas where status = 'aberta'"); // sobras dos testes anteriores (semanas puladas)
+  V("update tc_config set valor = to_jsonb(16) where chave = 'semana_proc'");
+  J('select tc_sincronizar()', 1, '2027-02-01');
+  const NT = V("select count(*) from tc_orgs where user_id is not null and ativa");
+  assert.equal(V("select count(*) from tc_ligas where temporada = 5 and semana = 1 and tipo = 'divisao'"), NT);
+  J('select tc_sincronizar()', 1, '2027-02-07');
+  assert.equal(V("select count(*) from tc_ligas where temporada = 5 and semana = 1 and status = 'encerrada'"), NT);
+  const fin = J("select coalesce(jsonb_agg(l.dono_org order by l.dono_org), '[]'::jsonb) from tc_ligas l, lateral tc_tabela_final(l.id) f where l.temporada = 5 and l.semana = 1 and l.divisao = 'principal' and f.org_id = l.dono_org and f.pos <= 2");
+  const vg = J("select coalesce(jsonb_agg(org_id order by org_id), '[]'::jsonb) from tc_vagas where temporada = 5 and tipo = 'copa'");
+  assert.deepEqual(vg, fin, 'vaga da Copa = 2 primeiros da Nacional na semana 1');
+  assert.equal(V("select count(*) from tc_vagas where tipo = 'mundial'"), '0');
+  assert.equal(V("select count(*) from tc_orgs where user_id is not null and id <> 4 and divisao = 'principal'"), '4', 'ninguém é rebaixado da Nacional');
+  const p4 = Number(V("select f.pos from tc_ligas l, lateral tc_tabela_final(l.id) f where l.temporada = 5 and l.semana = 1 and l.dono_org = 4 and f.org_id = 4"));
+  assert.equal(V('select divisao from tc_orgs where id = 4'), p4 <= 2 ? 'principal' : 'acesso', 'Academy: os 2 primeiros sobem, o resto fica');
+  assert.equal(V("select count(*) from tc_ligas l, jsonb_array_elements(tc_liga_json(l.id)->'tabela') e where e->>'situacao' = 'rebaixamento'"), '0');
+  if (fin.length) assert.equal(V(`select count(*) from tc_ligas l, jsonb_array_elements(tc_liga_json(l.id)->'tabela') e where l.id = (select id from tc_ligas where dono_org = ${fin[0]} and temporada = 5 and semana = 1) and e->>'situacao' = 'copa'`) >= '1', true);
+});
+
+t('Copa Internacional: 16 equipes, 10 rodadas MD1 (2 por dia, adversários diferentes), partida de cada técnico contra o bot do outro; quem está na Copa não joga a Nacional', () => {
+  V("delete from tc_vagas");
+  V("update tc_orgs set divisao = 'principal' where user_id is not null");
+  V("insert into tc_vagas (org_id, temporada, tipo, origem) values (1, 5, 'copa', 'teste'), (3, 5, 'copa', 'teste')");
+  J('select tc_sincronizar()', 1, '2027-02-08');
+  const lid = V("select id from tc_ligas where tipo = 'copa' and temporada = 5");
+  assert.ok(lid, 'a Copa foi criada');
+  assert.equal(V(`select count(*) from tc_liga_times where liga_id = ${lid}`), '16');
+  assert.equal(V(`select count(*) from tc_liga_times t join tc_orgs o on o.id = t.org_id where t.liga_id = ${lid} and o.user_id is not null`), '2', 'só os 2 técnicos com vaga; o resto é do sistema');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and formato <> 1`), '0', 'fase de pontos MD1');
+  for (const o of [1, 3]) {
+    assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'rodada' and pov = ${o}`), '10', `técnico ${o}: 10 partidas`);
+    assert.equal(V(`select count(distinct case when org_a = ${o} then org_b else org_a end) from tc_partidas where liga_id = ${lid} and fase = 'rodada' and pov = ${o}`), '10', 'adversários diferentes');
+    assert.equal(V(`select count(*) from (select dia, count(*) c from tc_partidas where liga_id = ${lid} and fase = 'rodada' and pov = ${o} group by dia) x where c <> 2`), '0', '2 jogos por dia');
+  }
+  assert.equal(V(`select min(dia) || ' ' || max(dia) from tc_partidas where liga_id = ${lid}`), '2027-02-08 2027-02-12', 'segunda a sexta');
+  assert.equal(V(`select count(*) from (select t.org_id, count(*) c, count(distinct p.rodada) d from tc_liga_times t join tc_partidas p on p.liga_id = t.liga_id and t.org_id in (p.org_a, p.org_b) and p.fase = 'rodada' where t.liga_id = ${lid} and not tc_eh_real(t.org_id) group by 1) x where c <> 10 or d <> 10`), '0', 'cada equipe do sistema joga 10 partidas');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'rodada' and pov is not null and tc_eh_real(org_a) and tc_eh_real(org_b)`) % 2, 0, 'partida entre dois técnicos: uma para cada um');
+  assert.equal(V("select count(*) from tc_ligas where temporada = 5 and semana = 2 and tipo = 'divisao' and dono_org in (1, 3)"), '0', 'quem está na Copa não joga a Nacional');
+  assert.equal(V("select count(*) from tc_ligas where temporada = 5 and semana = 2 and tipo = 'divisao' and dono_org in (4, 5, 32)"), '3');
+  const js = J(`select tc_liga_json(${lid})`, 1, '2027-02-08');
+  assert.equal(js.tabela.length, 16); assert.ok(js.partidas.every((p) => p.pov === null || p.pov === 1 || (p.a.id !== 1 && p.b.id !== 1)), 'cada técnico só vê a sua partida PVP');
+  assert.equal(js.partidas.filter((p) => p.pov === 1).length, 10);
+});
+
+t('partidas PVP: o técnico joga a sua partida contra o bot do adversário (elenco congelado no dia), só ele recebe XP/Maestria e cada um conta o próprio resultado', () => {
+  const hoje = '2027-02-08';
+  const aberto = V("select valor::text from tc_config where chave = 'aberto'");
+  V("update tc_config set valor = 'true'::jsonb where chave = 'aberto'"); // as contas 1 e 2 jogam como técnicos comuns (sem poder de administrador)
+  V(`delete from site_admins where user_id in ('${U(1)}', '${U(2)}')`);
+  V("update tc_config set valor = '{\"ativo\": true, \"prazo_dias\": 1, \"versao\": 1}'::jsonb where chave = 'gameplay'");
+  V("insert into tc_ligas (id, temporada, semana, divisao, tipo, nome) values (9001, 99, 1, 'principal', 'copa', 'Copa de teste PVP')");
+  V("insert into tc_liga_times (liga_id, org_id, semente) values (9001, 1, 1), (9001, 3, 2)");
+  V(`select tc_partida_mm(9001, 'semi', 1, '${hoje}', 1, 3, 1)`);
+  V(`select tc_partida_mm(9001, 'final', 1, '${hoje}', 1, 3, 1)`);
+  V(`select tc_partida_mm(9001, 'quartas', 1, '${hoje}', 1, 3, 1)`);
+  assert.equal(V("select count(*) from tc_partidas where liga_id = 9001"), '6', 'cada confronto entre técnicos tem uma partida para cada um');
+  assert.equal(V("select count(*) from tc_partidas where liga_id = 9001 and fase = 'semi' and rodada = 1 and pov = 1"), '1');
+  const row = (fase, rod, pov) => V(`select id from tc_partidas where liga_id = 9001 and fase = '${fase}' and rodada = ${rod} and pov = ${pov}`);
+  const [r1, r2] = [row('semi', 1, 1), row('semi', 1, 3)];
+  assert.equal(falha(`select tc_partida_elencos(${r2})`, 1, hoje), 'partida_nao_e_sua', 'a partida do adversário não é sua');
+  assert.equal(falha(`select tc_partida_elencos(${r1})`, 2, hoje), 'partida_nao_e_sua');
+  const pend = J('select tc_gameplay_pendente()', 1, hoje); assert.ok(pend.partida && pend.partida.pov === 1, 'a partida pendente é a sua: ' + JSON.stringify(pend.partida && { id: pend.partida.id, fase: pend.partida.fase, pov: pend.partida.pov, liga: pend.partida.liga_nome, dia: pend.partida.dia }));
+  // o bot do adversário usa o elenco do início do dia
+  const el1 = J(`select tc_partida_elencos(${r1})`, 1, hoje);
+  const bot = (el) => (el.azul.org.id === 3 ? el.azul : el.vermelho).jogadores;
+  const mec0 = bot(el1).find((j) => j.pos === 'top').atributos.mec;
+  V("update tc_jogadores set mec = least(100, mec + 7) where org_id = 3 and slot = 'top'");
+  assert.equal(bot(J(`select tc_partida_elencos(${r1})`, 1, hoje)).find((j) => j.pos === 'top').atributos.mec, mec0, 'elenco do adversário congelado no dia');
+  const el2 = J(`select tc_partida_elencos(${r2})`, 2, hoje);
+  const topProprio = (el2.azul.org.id === 3 ? el2.azul : el2.vermelho).jogadores.find((j) => j.pos === 'top').atributos.mec;
+  assert.equal(topProprio, Math.min(100, mec0 + 7), 'o próprio elenco vale ao vivo');
+  assert.equal(el1.lado.definido, el1.lado.escolhe !== 1, 'se quem escolhe o lado é o bot do adversário, o servidor escolhe sozinho');
+  // o técnico 1 vence a sua partida: só o time dele ganha XP e Maestria
+  const exp = (o) => V(`select string_agg(exp::text, ',' order by id) from tc_jogadores where org_id = ${o} and slot is not null`);
+  const mae = (o) => V(`select coalesce(sum(pontos), 0) from tc_maestria where jogador_id in (select id from tc_jogadores where org_id = ${o} and slot is not null)`);
+  const e2 = exp(3), m2 = mae(3), m1 = mae(1);
+  const g1 = jogarMapa(r1, 1, hoje, 1, 1500);
+  assert.equal(g1.r.concluida, true); assert.equal(g1.r.vencedor, 1);
+  assert.equal(exp(3), e2, 'o time que faz o papel de bot não ganha XP'); assert.equal(mae(3), m2, 'nem Maestria');
+  assert.equal(Number(mae(1)) - Number(m1), 5 * 30, 'quem jogou ganha Maestria da vitória');
+  assert.equal(V(`select status from tc_partidas where id = ${r2}`), 'agendada', 'a partida do outro técnico continua dele');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = 9001 and fase = 'semi' and rodada = 1 and status = 'concluida'`), '1');
+  assert.equal(V("select tc_vencedor_entre(9001, 'semi', 1, 3)"), '', 'confronto só termina quando os dois jogaram');
+  // o técnico 2 também vence: desempate pelo tempo (1500 s do técnico 1 contra 2400 s do técnico 2)
+  const g2 = jogarMapa(r2, 2, hoje, 3, 2400);
+  assert.equal(g2.r.vencedor, 3);
+  assert.equal(V("select tc_vencedor_entre(9001, 'semi', 1, 3)"), '1', 'os dois venceram: avança quem terminou mais rápido');
+  // um vence e o outro perde: avança quem venceu a própria partida (resultado direto no banco)
+  const fin = (p1, p2) => {
+    for (const [pov, venc] of [[1, p1], [3, p2]]) {
+      const id = row('final', 1, pov);
+      V(`update tc_partidas set status = 'concluida', vencedor = ${venc}, placar_a = case when org_a = ${venc} then 1 else 0 end, placar_b = case when org_b = ${venc} then 1 else 0 end, resumo = '{}'::jsonb, processada = now() where id = ${id}`);
+    }
+  };
+  fin(3, 3); assert.equal(V("select tc_vencedor_entre(9001, 'final', 1, 3)"), '3', 'o técnico 1 perdeu a sua e o 2 venceu a dele');
+  V("update tc_partidas set status = 'agendada', vencedor = null, placar_a = null, placar_b = null where liga_id = 9001 and fase = 'final'");
+  fin(1, 3); assert.equal(V("select tc_vencedor_entre(9001, 'final', 1, 3)"), '1', 'cada um venceu a sua: tempo igual/sem tempo -> semente');
+  // W.O.: só quem não jogou perde a sua partida, a do outro técnico segue valendo
+  const q1 = row('quartas', 1, 1), q2 = row('quartas', 1, 3);
+  V(`select tc_processar_partida(${q1})`, null, '2027-02-10');
+  assert.equal(V(`select resumo->>'origem' from tc_partidas where id = ${q1}`), 'wo');
+  assert.equal(V(`select vencedor from tc_partidas where id = ${q1}`), '3', 'o ausente perde para o adversário (bot)');
+  assert.equal(V(`select status from tc_partidas where id = ${q2}`), 'agendada', 'a partida do adversário não foi afetada');
+  V(`select tc_processar_partida(${q2})`, null, '2027-02-10');
+  assert.equal(V(`select vencedor from tc_partidas where id = ${q2}`), '1');
+  assert.equal(V("select tc_vencedor_entre(9001, 'quartas', 1, 3)"), '1', 'os dois faltaram: avança a semente');
+  V("update tc_config set valor = jsonb_set(valor, '{ativo}', 'false') where chave = 'gameplay'");
+  V("delete from tc_ligas where id = 9001");
+  V(`update tc_config set valor = '${aberto}'::jsonb where chave = 'aberto'`);
+  V(`insert into site_admins values ('${U(1)}'), ('${U(2)}') on conflict do nothing`);
+});
+
+t('Copa Internacional: semifinais com os 4 melhores (MD3), final MD5, premiação, troféu e vaga do Mundial para o campeão', () => {
+  const lid = V("select id from tc_ligas where tipo = 'copa' and temporada = 5");
+  J('select tc_sincronizar()', 1, '2027-02-14');
+  assert.equal(V(`select status from tc_ligas where id = ${lid}`), 'encerrada');
+  const top4 = J(`select jsonb_agg(org_id order by pos) from tc_tabela(${lid}) where pos <= 4`);
+  const semis = J(`select jsonb_agg(array[x, y] order by rodada) from tc_confrontos(${lid}, 'semi')`);
+  assert.equal(semis.length, 2); assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi' and formato <> 3`), '0');
+  assert.deepEqual(semis.map((s) => [...s].sort((a, b) => a - b)), [[top4[0], top4[3]].sort((a, b) => a - b), [top4[1], top4[2]].sort((a, b) => a - b)], '1º x 4º e 2º x 3º');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'final' and formato = 5`) >= '1', true);
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi' and dia = '2027-02-13'`) >= '2', true, 'semifinais no sábado');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'final' and dia = '2027-02-14'`) >= '1', true, 'final no domingo');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and status <> 'concluida'`), '0');
+  const [fx, fy] = J(`select to_jsonb(array[x, y]) from tc_confrontos(${lid}, 'final')`);
+  const camp = Number(V(`select tc_vencedor_entre(${lid}, 'final', ${fx}, ${fy})`));
+  assert.ok(camp === fx || camp === fy);
+  assert.equal(V(`select count(*) from tc_premios where liga_id = ${lid}`), '16');
+  assert.equal(V(`select posicao from tc_premios where liga_id = ${lid} and org_id = ${camp}`), '1');
+  assert.equal(V(`select count(*) from tc_trofeus where liga_id = ${lid} and org_id = ${camp}`), '1');
+  assert.equal(V(`select count(*) from tc_vagas where temporada = 5 and tipo = 'mundial' and org_id = ${camp}`), V(`select tc_eh_real(${camp})::int`), 'o campeão da Copa (se for técnico) ganha a vaga do Mundial');
+  assert.equal(V("select valor from tc_config where chave = 'semana_proc'"), '18');
+  const n = V('select count(*) from tc_partidas') + V('select count(*) from tc_premios');
+  J('select tc_sincronizar()', 1, '2027-02-14');
+  assert.equal(V('select count(*) from tc_partidas') + V('select count(*) from tc_premios'), n, 'processar de novo não repete nada');
+});
+
+t('Campeonato Mundial: 16 equipes em 4 grupos por potes de poder, treino de segunda, grupos de terça a quinta, quartas sorteadas, semifinais e final', () => {
+  J('select tc_sincronizar()', 1, '2027-02-15');
+  J('select tc_sincronizar()', 1, '2027-02-21');
+  assert.equal(V("select valor from tc_config where chave = 'semana_proc'"), '19');
+  V("delete from tc_vagas where temporada = 5 and tipo = 'mundial'");
+  V("insert into tc_vagas (org_id, temporada, tipo, origem) values (1, 5, 'mundial', 'teste'), (3, 5, 'mundial', 'teste')");
+  J('select tc_sincronizar()', 1, '2027-02-22');
+  const lid = V("select id from tc_ligas where tipo = 'mundial' and temporada = 5");
+  assert.ok(lid, 'o Mundial foi criado');
+  assert.equal(V(`select count(*) from tc_liga_times where liga_id = ${lid}`), '16');
+  assert.equal(V(`select string_agg(g::text, ',' order by grupo) from (select grupo, count(*) g from tc_liga_times where liga_id = ${lid} group by grupo) x`), '4,4,4,4');
+  for (let pote = 0; pote < 4; pote++) {
+    assert.equal(V(`select count(distinct grupo) from tc_liga_times where liga_id = ${lid} and semente between ${pote * 4 + 1} and ${pote * 4 + 4}`), '4', `pote ${pote + 1}: um de cada grupo`);
+  }
+  const pod = J(`select jsonb_agg(org_id order by semente) from tc_liga_times where liga_id = ${lid}`).map((o) => Number(V(`select round(tc_poder_org(${o})::numeric, 3)`)));
+  assert.ok(pod[0] > pod[15], 'a semente segue o poder (o poder muda um pouco com os jogos de treino já feitos hoje)');
+  assert.equal(V(`select count(*) from tc_ligas where temporada = 5 and semana = 4 and tipo = 'divisao' and dono_org in (1, 3)`), '0', 'quem está no Mundial não joga a Nacional');
+  for (const o of [1, 3]) {
+    assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'treino' and pov = ${o} and dia = '2027-02-22' and formato = 1`), '2', 'treino de segunda: 2 jogos');
+    assert.equal(V(`select count(*) from tc_partidas p join tc_liga_times a on a.liga_id = p.liga_id and a.org_id = ${o} join tc_liga_times b on b.liga_id = p.liga_id and b.org_id = p.org_b where p.liga_id = ${lid} and p.fase = 'treino' and p.pov = ${o} and a.grupo = b.grupo`), '0', 'adversário de treino fora do grupo');
+    assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'rodada' and pov = ${o}`), '6', 'grupo: 6 jogos');
+    assert.equal(V(`select count(*) from (select case when org_a = ${o} then org_b else org_a end adv, count(*) c from tc_partidas where liga_id = ${lid} and fase = 'rodada' and pov = ${o} group by 1) x where c <> 2`), '0', 'cada adversário duas vezes');
+    assert.equal(V(`select count(*) from tc_partidas p join tc_liga_times a on a.liga_id = p.liga_id and a.org_id = p.org_a join tc_liga_times b on b.liga_id = p.liga_id and b.org_id = p.org_b where p.liga_id = ${lid} and p.fase = 'rodada' and a.grupo <> b.grupo`), '0', 'fase de grupos só dentro do grupo');
+  }
+  assert.equal(V(`select min(dia) || ' ' || max(dia) from tc_partidas where liga_id = ${lid} and fase = 'rodada'`), '2027-02-23 2027-02-25', 'terça a quinta');
+  assert.equal(V(`select count(*) from (select dia, count(*) c from tc_partidas where liga_id = ${lid} and fase = 'rodada' and pov = 1 group by dia) x where c <> 2`), '0', '2 jogos por dia');
+  // o treino não vale pontos
+  J('select tc_sincronizar()', 1, '2027-02-28');
+  assert.equal(V(`select status from tc_ligas where id = ${lid}`), 'encerrada');
+  assert.equal(V(`select count(*) from tc_tabela(${lid}) where partidas <> 6`), '0', 'a tabela só conta os 6 jogos de grupo');
+  const q = J(`select jsonb_agg(array[x, y] order by rodada) from tc_confrontos(${lid}, 'quartas')`);
+  assert.equal(q.length, 4); assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'quartas' and formato <> 3`), '0');
+  const classif = J(`select jsonb_agg(org_id) from tc_tabela(${lid}) where pos <= 2`).sort((a, b) => a - b);
+  assert.deepEqual(q.flat().sort((a, b) => a - b), classif, 'as quartas têm os 2 primeiros de cada grupo');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'quartas' and dia = '2027-02-26'`) >= '4', true, 'quartas na sexta');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi' and formato = 3 and dia = '2027-02-27'`) >= '2', true, 'semifinais no sábado');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'final' and formato = 5 and dia = '2027-02-28'`) >= '1', true, 'final no domingo');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and status <> 'concluida'`), '0');
+  assert.equal(V(`select count(*) from tc_premios where liga_id = ${lid}`), '16');
+  assert.equal(V(`select count(*) from tc_trofeus where liga_id = ${lid}`), '1');
+  // semana 4: quem não estava no Mundial jogou a Nacional e os 2 primeiros ganham a vaga da Copa da temporada seguinte
+  const fin4 = J("select coalesce(jsonb_agg(l.dono_org order by l.dono_org), '[]'::jsonb) from tc_ligas l, lateral tc_tabela_final(l.id) f where l.temporada = 5 and l.semana = 4 and l.tipo = 'divisao' and l.divisao = 'principal' and f.org_id = l.dono_org and f.pos <= 2");
+  assert.deepEqual(J("select coalesce(jsonb_agg(org_id order by org_id), '[]'::jsonb) from tc_vagas where temporada = 6 and tipo = 'copa'"), fin4);
+});
+
+t('scripts de teste do ADM: colocam a conta de administrador na Copa/Mundial, avançam as fases e encerram o campeonato', () => {
   const lerS = (n) => readFileSync(new URL(`../supabase/testes/${n}`, import.meta.url), 'utf8');
-  const hoje = '2026-10-12';
-  V(lerS('admin_final_da_copa.sql'), null, hoje);
-  V(lerS('admin_final_da_copa.sql'), null, hoje); // rodar de novo recria do zero, sem duplicar
+  const criar = (tipo, fase) => lerS('admin_internacional_criar.sql').replace("alvo_tipo text := 'mundial'", `alvo_tipo text := '${tipo}'`).replace("alvo_fase text := 'final'", `alvo_fase text := '${fase}'`);
+  const avancar = lerS('admin_internacional_avancar.sql');
+  const hoje = '2027-03-01'; // temporada 6, semana 1
+  V("delete from tc_vagas");
+  V(criar('copa', 'final'), null, hoje);
+  V(criar('copa', 'final'), null, hoje); // de novo: recria do zero
   const lid = V("select max(id) from tc_ligas where tipo = 'copa'");
-  const adm = V("select o.id from tc_orgs o join site_admins a on a.user_id = o.user_id order by o.id limit 1");
-  assert.equal(V(`select count(*) from tc_liga_times where liga_id = ${lid}`), '4');
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid}`), '3', '2 semifinais e a final');
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'final' and status = 'agendada' and dia = '${hoje}' and formato = 5 and ${adm} in (org_a, org_b)`), '1', 'a final de hoje é do administrador');
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi' and status = 'concluida'`), '2');
-  // encerrar antes de jogar a final não faz nada
-  V(lerS('admin_encerrar_copa.sql'), null, hoje);
-  assert.equal(V(`select status from tc_ligas where id = ${lid}`), 'aberta');
-  // final jogada: o administrador vence
-  V(`update tc_partidas set status = 'concluida', placar_a = case when org_a = ${adm} then 3 else 0 end, placar_b = case when org_b = ${adm} then 3 else 0 end, vencedor = ${adm}, resumo = '{}'::jsonb, processada = now() where liga_id = ${lid} and fase = 'final'`);
+  const adm = '1';
+  assert.equal(V(`select count(*) from tc_liga_times where liga_id = ${lid}`), '16');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'final' and status = 'agendada' and dia = '${hoje}' and formato = 5 and pov = ${adm}`), '1', 'a final de hoje é do administrador');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase in ('rodada', 'semi') and status <> 'concluida'`), '0', 'tudo antes da final já foi jogado');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'rodada' and pov = ${adm} and vencedor = ${adm}`), '10', 'você venceu a fase de pontos');
+  V(avancar, null, hoje);
+  assert.equal(V(`select status from tc_ligas where id = ${lid}`), 'aberta', 'sem jogar a final nada é encerrado');
+  V(`update tc_partidas set status = 'concluida', vencedor = ${adm}, placar_a = case when org_a = ${adm} then 3 else 0 end, placar_b = case when org_b = ${adm} then 3 else 0 end, resumo = '{}'::jsonb, processada = now() where liga_id = ${lid} and fase = 'final' and pov = ${adm}`);
   const c0 = Number(V(`select creditos from tc_orgs where id = ${adm}`));
-  V(lerS('admin_encerrar_copa.sql'), null, hoje);
+  V(avancar, null, hoje);
   assert.equal(V(`select status from tc_ligas where id = ${lid}`), 'encerrada');
   assert.equal(V(`select count(*) from tc_trofeus where liga_id = ${lid} and org_id = ${adm}`), '1', 'troféu de campeão');
   assert.equal(Number(V(`select creditos from tc_orgs where id = ${adm}`)), c0 + 300000, 'premiação do 1º lugar');
-  V(lerS('admin_encerrar_copa.sql'), null, hoje); // de novo: nada é pago duas vezes
-  assert.equal(Number(V(`select creditos from tc_orgs where id = ${adm}`)), c0 + 300000);
+  assert.equal(V(`select count(*) from tc_vagas where org_id = ${adm} and temporada = 6 and tipo = 'mundial'`), '1', 'campeão da Copa ganha a vaga do Mundial');
+  V(avancar, null, hoje);
+  assert.equal(Number(V(`select creditos from tc_orgs where id = ${adm}`)), c0 + 300000, 'nada é pago duas vezes');
   V(`delete from tc_ligas where id = ${lid}`);
-});
-
-t('scripts de teste do ADM: Mundial com as quartas de hoje, avanço da chave até a final e encerramento', () => {
-  const lerS = (n) => readFileSync(new URL(`../supabase/testes/${n}`, import.meta.url), 'utf8');
-  const hoje = '2026-10-12';
-  V(lerS('admin_mundial_quartas.sql'), null, hoje);
-  V(lerS('admin_mundial_quartas.sql'), null, hoje); // de novo: recria do zero
-  const lid = V("select max(id) from tc_ligas where tipo = 'mundial'");
-  const adm = V("select o.id from tc_orgs o join site_admins a on a.user_id = o.user_id order by o.id limit 1");
-  assert.equal(V(`select count(*) from tc_liga_times where liga_id = ${lid}`), '6');
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'quartas'`), '2');
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'quartas' and status = 'agendada' and dia = '${hoje}' and ${adm} in (org_a, org_b)`), '1');
-  V(lerS('admin_avancar_mundial.sql'), null, hoje); // sem jogar a quarta: nada avança
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi'`), '0');
-  const vence = (fase) => V(`update tc_partidas set status = 'concluida', placar_a = case when org_a = ${adm} then 3 else 0 end, placar_b = case when org_b = ${adm} then 3 else 0 end, vencedor = ${adm}, resumo = '{}'::jsonb, processada = now() where liga_id = ${lid} and fase = '${fase}' and ${adm} in (org_a, org_b)`);
-  vence('quartas'); V(lerS('admin_avancar_mundial.sql'), null, hoje);
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi'`), '2', 'duas semifinais');
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi' and status = 'agendada' and dia = '${hoje}' and ${adm} in (org_a, org_b)`), '1', 'a sua semifinal é hoje');
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'semi' and status = 'concluida'`), '1', 'a do sistema já foi jogada');
-  vence('semi'); V(lerS('admin_avancar_mundial.sql'), null, hoje);
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lid} and fase = 'final' and status = 'agendada' and dia = '${hoje}' and ${adm} in (org_a, org_b)`), '1', 'a final de hoje');
+  // Mundial: nas quartas; avançar até a final
+  V(criar('mundial', 'quartas'), null, hoje);
+  const lm = V("select max(id) from tc_ligas where tipo = 'mundial'");
+  assert.equal(V(`select count(*) from tc_liga_times where liga_id = ${lm}`), '16');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lm} and fase = 'quartas' and status = 'agendada' and dia = '${hoje}' and pov = ${adm} and formato = 3`), '1', 'a sua quarta é hoje');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lm} and fase in ('rodada', 'treino') and status <> 'concluida'`), '0');
+  const vence = (fase) => V(`update tc_partidas set status = 'concluida', vencedor = ${adm}, placar_a = case when org_a = ${adm} then 2 else 0 end, placar_b = case when org_b = ${adm} then 2 else 0 end, resumo = '{}'::jsonb, processada = now() where liga_id = ${lm} and fase = '${fase}' and pov = ${adm}`);
+  vence('quartas'); V(avancar, null, hoje);
+  assert.equal(V(`select count(*) from tc_confrontos(${lm}, 'semi')`), '2');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lm} and fase = 'semi' and status = 'agendada' and dia = '${hoje}' and pov = ${adm}`), '1', 'a sua semifinal é hoje');
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lm} and fase = 'semi' and status = 'concluida'`), '1', 'a do sistema já foi jogada');
+  vence('semi'); V(avancar, null, hoje);
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lm} and fase = 'final' and status = 'agendada' and dia = '${hoje}' and pov = ${adm}`), '1', 'a final de hoje');
   vence('final');
-  const c0 = Number(V(`select creditos from tc_orgs where id = ${adm}`));
-  V(lerS('admin_encerrar_mundial.sql'), null, hoje);
-  assert.equal(V(`select status from tc_ligas where id = ${lid}`), 'encerrada');
-  assert.equal(V(`select count(*) from tc_trofeus where liga_id = ${lid} and org_id = ${adm}`), '1');
-  assert.equal(Number(V(`select creditos from tc_orgs where id = ${adm}`)), c0 + 1000000);
-  V(`delete from tc_ligas where id = ${lid}`);
+  const m0 = Number(V(`select creditos from tc_orgs where id = ${adm}`));
+  V(avancar, null, hoje);
+  assert.equal(V(`select status from tc_ligas where id = ${lm}`), 'encerrada');
+  assert.equal(V(`select count(*) from tc_trofeus where liga_id = ${lm} and org_id = ${adm}`), '1');
+  assert.equal(Number(V(`select creditos from tc_orgs where id = ${adm}`)), m0 + 1000000);
+  V(`delete from tc_ligas where id = ${lm}`);
+  // fase de grupos de hoje: todos os seus jogos (treino e grupos) marcados para hoje
+  V(criar('mundial', 'grupos'), null, hoje);
+  const lg = V("select max(id) from tc_ligas where tipo = 'mundial'");
+  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${lg} and pov = ${adm} and status = 'agendada' and dia = '${hoje}' and fase in ('treino', 'rodada')`), '8', '2 de treino e 6 de grupo');
+  V(`delete from tc_ligas where id = ${lg}`);
+  V("delete from tc_vagas");
 });
