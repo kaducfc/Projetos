@@ -118,10 +118,18 @@ export class Renderizador {
       if (!mostrada) continue;
       const aliada = !this.fog || w.equipe === this.fog;
       c.save(); c.globalAlpha = aliada || this.fog ? 1 : 0.6;
-      c.fillStyle = w.subtipo === 'controle' ? '#e05aff' : '#ffd84a'; c.strokeStyle = cor; c.lineWidth = 1.6 * U;
-      c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke();
-      c.fillStyle = '#10203d'; c.beginPath(); c.arc(x, y, r * 0.38, 0, 7); c.fill();
-      if (w.expira !== Infinity) { c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 1.2; c.beginPath(); c.arc(x, y, r + 2.4 * U, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, (w.expira - P.t) / (w.expira - w.criadaEm))); c.stroke(); }
+      const arco = (rr) => { if (w.expira !== Infinity) { c.strokeStyle = 'rgba(255,255,255,0.85)'; c.lineWidth = 1.4; c.beginPath(); c.arc(x, y, rr, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, (w.expira - P.t) / (w.expira - w.criadaEm))); c.stroke(); } };
+      const nome = w.subtipo === 'controle' ? 'ward_controle' : 'ward'; const larg = (w.subtipo === 'controle' ? 22 : 20) * U;
+      if (this.sprite(nome).ok) { // imagem da ward, com um anel na cor do time embaixo (e o tempo que falta, nos totens)
+        c.strokeStyle = cor; c.lineWidth = 2 * U; c.globalAlpha *= 0.9; c.beginPath(); c.ellipse(x, y + larg * 0.2, larg * 0.42, larg * 0.16, 0, 0, 7); c.stroke(); c.globalAlpha = aliada || this.fog ? 1 : 0.6;
+        this.desenharSprite(c, nome, x, y + larg * 0.3, larg, 0.8);
+        arco(larg * 0.62);
+      } else {
+        c.fillStyle = w.subtipo === 'controle' ? '#e05aff' : '#ffd84a'; c.strokeStyle = cor; c.lineWidth = 1.6 * U;
+        c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke();
+        c.fillStyle = '#10203d'; c.beginPath(); c.arc(x, y, r * 0.38, 0, 7); c.fill();
+        arco(r + 2.4 * U);
+      }
       c.restore();
     }
   }
