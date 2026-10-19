@@ -12,7 +12,7 @@
  button { background: #14305a; color: #fff; border: 1px solid #3a6aa8; padding: 6px 10px; cursor: pointer; margin-top: 6px; }
  @media (max-width: 800px) { body { flex-direction: column; } aside { width: auto; border-right: 0; border-bottom: 1px solid #1d3a63; } }
 </style></head>
-<body>
+<body hidden>
 <aside><h1>Depuração do mapa</h1>
 <p class="mudo">Confere se rotas, estruturas, acampamentos e paredes estão no lugar certo da imagem. A imagem não é alterada: as camadas são desenhadas por cima. Clique em dois pontos para calcular um caminho (A*).</p>
 <div id="camadas"></div>
@@ -29,5 +29,13 @@
 <button id="limpar">Limpar caminho</button>
 <div id="info">Passe o mouse no mapa.</div></aside>
 <main><canvas id="c"></canvas></main>
-<script type="module" src="js/depurar.js"></script>
+<script type="module">
+// Ferramenta só para administradores: sem login de administrador a página não carrega a ferramenta.
+import * as platform from '../../../shared/platform.js';
+const teste = ['localhost', '127.0.0.1'].includes(location.hostname) && /[?&]teste=1/.test(location.search);
+let ok = teste;
+try { await platform.init(); ok = ok || (await platform.isAdmin()); } catch { /* sem sessão */ }
+if (ok) { document.body.hidden = false; await import('./js/depurar.js'); }
+else { document.body.hidden = false; document.body.innerHTML = '<p style="margin:40px auto;max-width:420px;text-align:center">Esta ferramenta é só para administradores. Entre na sua conta de administrador e abra a página de novo.</p>'; }
+</script>
 </body></html>
