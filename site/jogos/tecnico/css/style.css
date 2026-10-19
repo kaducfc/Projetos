@@ -676,3 +676,14 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-modal .tc-btn.perigo { background: linear-gradient(180deg, #4a1414, #2a0d0d); border-color: #b94a4a; color: #ffd3d3; }
 .tc-modal .tc-btn:disabled { opacity: .45; }
 @media (max-width: 520px) { .fa-linha { grid-template-columns: 92px 1fr 30px; } }
+
+/* Estrelas de evolução: acesas em dourado com brilho, apagadas com contorno bem visível; as 5 acesas ganham um brilho que percorre as estrelas */
+.tc-stars { display: inline-flex; align-items: center; gap: 3px; font-size: 18px; line-height: 1; letter-spacing: 0; text-shadow: none; color: inherit; }
+.tc-stars em { font-style: normal; display: inline-block; }
+.tc-stars em.on { color: #ffd84a; background: linear-gradient(180deg, #fff3a8, #ffc928 55%, #e09a10); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 4px #f5b500aa) drop-shadow(0 1px 0 #7a5200); }
+.tc-stars em.off { color: #0e1c34; -webkit-text-stroke: 1px #4b6a9c; text-shadow: none; opacity: .95; }
+.tc-stars.cheia em.on { animation: tc-estrela-brilho 2.4s ease-in-out infinite; animation-delay: calc(var(--i) * 0.18s); }
+@keyframes tc-estrela-brilho { 0%, 70%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px #f5b500aa) drop-shadow(0 1px 0 #7a5200); } 35% { transform: scale(1.18); filter: drop-shadow(0 0 10px #ffe27a) drop-shadow(0 1px 0 #7a5200); } }
+.tc-resumo .tc-stars { font-size: 24px; gap: 4px; }
+.tc-jog .ln .tc-stars { font-size: 19px; }
+@media (prefers-reduced-motion: reduce) { .tc-stars.cheia em.on { animation: none; } }

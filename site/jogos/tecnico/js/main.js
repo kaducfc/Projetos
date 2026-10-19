@@ -126,7 +126,8 @@ function escudoHtml(poder, grande = false) {
 // Estrelas de evolução (0 a 5): cada uma dá +5% de eficiência dentro do jogo, sem mudar o Poder.
 function estrelasHtml(j) {
   const n = j.estrelas || 0; const max = j.estrela_max || 5;
-  return `<span class="tc-stars" title="${n} de ${max} estrelas (+${n * 5}% de eficiência)">${'★'.repeat(n)}<i>${'★'.repeat(max - n)}</i></span>`;
+  const estrelas = Array.from({ length: max }, (_, i) => `<em class="${i < n ? 'on' : 'off'}" style="--i:${i}">★</em>`).join('');
+  return `<span class="tc-stars${n >= max ? ' cheia' : ''}" title="${n} de ${max} estrelas (+${n * 5}% de eficiência)">${estrelas}</span>`;
 }
 
 function cartao(j, { tit = false, extra = '', acao = 'ficha', dados = '' } = {}) {
