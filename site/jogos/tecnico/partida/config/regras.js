@@ -12,7 +12,7 @@ export const REGRAS = {
   // ---- atributos do simulador -> parâmetros de combate (função central em config/atributos.js)
   atributos: {
     forca:  [0.88, 1.12],                                   // desempenho geral derivado dos cinco atributos (peso do Poder)
-    mec:    { dano: [0.90, 1.10], acerto: [0.58, 0.92], farm: [0.35, 1.0] }, // multiplicador de dano de habilidades; chance de acertar projéteis; chance de garantir o último golpe (farm)
+    mec:    { dano: [0.90, 1.10], acerto: [0.58, 0.92], farm: [0.35, 1.0], duelo: 0.16 }, // multiplicador de dano de habilidades; chance de acertar projéteis; chance de garantir o último golpe (farm)
     rotas:  { troca: [0.95, 1.06], fim: 840 },              // qualidade das trocas de dano na rota; as vantagens somem após `fim` segundos
     macro:  { decisao: [1.25, 0.8], ruido: [0.35, 0.08] },  // multiplicador do intervalo de decisão; ruído nas avaliações de risco
     tf:     { luta: [0.93, 1.10] },                         // multiplicador de dano e resistência em lutas com 3+ campeões
@@ -131,6 +131,9 @@ export const REGRAS = {
     objetivoMargem: 1.25,
     distanciaSegura: { corpo: 220, distancia: 520 },
     visaoPersistencia: 6,
+    baraoDesde: 1260, baraoLimite: 55, dragaoLimite: 45, grupoDesde: 1500, pressaoDesde: 600, // tempos e limites de decisão coletiva (ajustáveis por equipe: ver `politica`)
+    desespero: 0.9,        // peso máximo do desespero (time atrás e Mental baixo) nas decisões de luta, recuo e objetivo
+    contestar: { janela: 6, minimo: 0.8, roubo: 2.5 }, // contestar/roubar objetivo: razão mínima de valor de combate e segundos de rajada que contam para roubar
   },
 
   // ---- visão: moitas e wards

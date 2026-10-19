@@ -48,7 +48,7 @@ export function comprar(P, u) {
   // Ward de Controle (não ocupa vaga de item): uma por vez, depois dos itens; suporte e caçador compram com mais frequência
   const W = P.regras.wards;
   if (W.ativo && u.wards && u.wards.controleEstoque === 0 && !P.wards.some((w) => !w.morto && w.dono === u.id && w.subtipo === 'controle')
-      && u.ouro >= W.custoControle && (u.pos === 'suporte' || u.pos === 'selva' || u.ouro >= W.custoControle * 3)) {
+      && u.ouro >= W.custoControle && (u.pos === 'suporte' || u.pos === 'selva' || u.ouro >= W.custoControle * 3 || (u.m.macro > 0.6 && u.ouro >= W.custoControle * 1.5))) {
     u.ouro -= W.custoControle; u.estat.ouroGasto += W.custoControle; u.wards.controleEstoque = 1; comprou = true;
     registrar(P, 'compra', { equipe: u.equipe, campeao: u.id, item: 'ward_controle', custo: W.custoControle, itens: u.itens.length });
   }

@@ -12,6 +12,7 @@ import { recalcular } from './entidades.js';
 import { registrar } from './eventos.js';
 import { conhecidos } from './visao.js';
 import { iniciarWards, agirWard } from './wards.js';
+import { desespero, incerteza, cautelaDeVisao, rotasCedo, pol } from './inteligencia.js';
 import { valorCombate, balancoLocal, torreInimigaEm, minionsPerto, rotaDe, sNaRota, progresso, pontoNoProgresso, frentes, torresDaRota, proximaTorreInimiga, pontoSeguro, naFonte, aliadosPerto, planoPara } from './percepcao.js';
 
 export const ESTADOS = ['nascendo', 'saindo_base', 'indo_rota', 'farmando', 'lutando', 'selva', 'gank', 'ajudando', 'objetivo', 'estrutura', 'defendendo', 'recuando', 'voltando_base', 'comprando', 'morto'];
@@ -167,14 +168,21 @@ function prisaoDeSelva(P, u) {
 }
 
 function precisaRecuar(P, u, ctx) {
-  const R = P.regras.ia.perigo;
-  if (!ctx.iniPerto.length && !ctx.torreIni) return null;
+  const R = { ...P.regras.ia.perigo, vidaBaixa: pol(P, u.equipe, 'perigo.vidaBaixa'), vidaCritica: pol(P, u.equipe, 'perigo.vidaCritica') };
   const hp = ctx.hp; const bal = ctx.bal;
-  // erro de decisão (mental): às vezes o campeão não percebe o risco
-  const erra = P.rng() < u.m.erro * (hp > R.vidaCritica ? 1 : 0.3);
-  if (hp < R.vidaCritica && ctx.iniPerto.some((k) => k.visivel)) return erra ? null : 'vida crítica';
-  if (hp < R.vidaBaixa && bal.razao < 1.1 && ctx.iniPerto.some((k) => k.visivel)) return erra ? null : 'vida baixa';
-  if (ctx.iniPerto.length >= 2 && ruido(P, u, bal.razao) < 0.62 && !(P.t < (u.recuoLivreAte || 0) && hp > 0.5)) return erra ? null : 'em desvantagem';
+  const des = desespero(P, u); // time atrás + Mental baixo: aguenta mais risco do que devia
+  const inc = incerteza(P, u.equipe);
+  if (!ctx.iniPerto.length && !ctx.torreIni) {
+    // Macro: sem saber onde está o time inimigo, quem tem vida baixa longe da base não fica se arriscando (volta/recua antes de ser pego)
+    if (inc * cautelaDeVisao(u) > 0.5 && hp < 0.55 && P.t > 420 && u.estado !== 'voltando_base' && P.t >= (u.proxSemVisao || 0)) { u.proxSemVisao = P.t + 20; if (P.rng() > u.m.erro * 2) return 'sem visão'; }
+    return null;
+  }
+  const vidaCritica = R.vidaCritica * (1 - 0.5 * des), vidaBaixa = R.vidaBaixa * (1 - 0.5 * des) * (bal.razao >= 1.7 ? 1 - 0.4 * u.m.tf : 1); // vai com tudo quando a luta está ganha (Teamfight)
+  // erro de decisão (mental): às vezes o campeão não percebe o risco; atrás no placar, o erro aumenta
+  const erra = P.rng() < u.m.erro * (1 + 2.5 * des) * (hp > vidaCritica ? 1 : 0.3);
+  if (hp < vidaCritica && ctx.iniPerto.some((k) => k.visivel)) return erra ? null : 'vida crítica';
+  if (hp < vidaBaixa && bal.razao < 1.1 && ctx.iniPerto.some((k) => k.visivel)) return erra ? null : 'vida baixa';
+  if (ctx.iniPerto.length >= 2 && ruido(P, u, bal.razao) < 0.62 * (1 - 0.3 * des) && !(P.t < (u.recuoLivreAte || 0) && hp > 0.5)) return erra ? null : 'em desvantagem';
   if (ctx.torreIni && !ctx.minAli && u.estado !== 'estrutura' && hp < 0.85 && !(ctx.plano && ctx.plano.tipo === 'finalizar')) return 'sob torre';
   return null;
 }
@@ -184,7 +192,10 @@ function precisaBase(P, u, ctx) {
   const perigo = ctx.iniPerto.some((k) => k.visivel);
   if (ctx.hp < R.recall.vidaBaixa) return 'vida baixa';
   if (u.pos === 'selva' && ctx.hp < (u.jungle.emCombate ? 0.3 : 0.45)) return 'vida baixa (selva)';
-  if (u.ouro >= Math.max(R.ouroCompraMin, custoProximo(u)) && u.ouro >= 1100 && !perigo && !(ctx.plano && ['objetivo', 'defender_base', 'finalizar'].includes(ctx.plano.tipo)) && P.t - (u.ultimaBase || 0) > P.regras.ia.recallIntervaloMin) return 'ouro para comprar';
+  // Macro: com um objetivo prestes a nascer ou vivo, quem lê o jogo segura a ida à base por ouro (a vida baixa ainda manda voltar)
+  const O = P.objetivosEstado; const objPerto = [O.dragao, O.barao].some((x) => x && (x.vivo || x.proximo - P.t < 40)) && P.t > 400;
+  const seguraOuro = objPerto && u.m.macro > 0.5 && u.ouro < 2600;
+  if (!seguraOuro && u.ouro >= Math.max(R.ouroCompraMin, custoProximo(u)) && u.ouro >= 1100 && !perigo && !(ctx.plano && ['objetivo', 'defender_base', 'finalizar'].includes(ctx.plano.tipo)) && P.t - (u.ultimaBase || 0) > pol(P, u.equipe, 'recallIntervaloMin')) return 'ouro para comprar';
   if (u.mana < u.manaMax * 0.12 && u.pos !== 'selva' && !perigo && u.mana < 60) return 'sem mana';
   return null;
 }
@@ -194,6 +205,9 @@ function avaliarLuta(P, u, ctx) {
   const R = P.regras.ia; const visiveis = ctx.iniPerto.filter((k) => k.visivel && !k.u.morto);
   if (!visiveis.length) return null;
   const emLuta = u.estado === 'lutando';
+  // margem para aceitar uma luta: sobe quando não se sabe onde estão os inimigos (Macro), cai com o desespero (time atrás, Mental baixo) e quando a luta está ganha (Teamfight)
+  const des = desespero(P, u); const rc = rotasCedo(P, u);
+  const margem = pol(P, u.equipe, 'perigo.margemLuta') * (1 - 0.35 * des) * (1 + 0.22 * incerteza(P, u.equipe) * cautelaDeVisao(u)) * (ctx.bal.razao >= 1.8 ? 1 - 0.1 * u.m.tf : 1);
   const alcEng = Math.max(u.alcance, 300) + (emLuta ? 500 : 300);
   // candidatos ao alcance de engajamento (a luta em andamento aceita alvos um pouco mais distantes)
   const cand = visiveis.filter((k) => dist(u, k.u) <= alcEng + (k.u.raio || 0) && !protegidoPorTorre(P, u, k.u, ctx));
@@ -213,7 +227,7 @@ function avaliarLuta(P, u, ctx) {
     // continua enquanto a luta não virou: na fase de rotas, trocas curtas (recua depois de uma rajada)
     const lane = !equipe && P.t < 900 && ctx.minAli + ctx.minIni > 2;
     if (lane && P.t - u.estadoDesde > 7 && !exec) { u.ultimaLuta = P.t; return null; }
-    if (razao >= 0.88 * R.perigo.margemLuta / 1.12 && meuHp > 0.28) return { alvo, motivo: 'luta' };
+    if (razao >= 0.88 * margem / 1.12 && meuHp > 0.28 * (1 - 0.4 * des)) return { alvo, motivo: 'luta' };
     if (exec) return { alvo, motivo: 'finalizar' };
     u.ultimaLuta = P.t; return null;
   }
@@ -221,9 +235,14 @@ function avaliarLuta(P, u, ctx) {
   // trocas na rota exigem vantagem real (vida, nível, ondas); lutas de equipe e abates iminentes são mais permissivos
   const lane = !equipe && ctx.minAli + ctx.minIni > 2 && P.t < 1200;
   const vantagemLane = (meuHp - hpAlvo) * 0.6 + (u.nivel - alvo.nivel) * 0.08 + (ctx.minAli > ctx.minIni ? 0.06 : 0);
-  if (lane && !exec) { if (meuHp > 0.7 && razao >= 1.35 && vantagemLane > 0.12) return { alvo, motivo: 'troca' }; return null; }
+  // Fase de rotas: quem a domina pune o vacilo do adversário (vida baixa, fora de posição) e troca com menos folga
+  if (lane && !exec) {
+    if (meuHp > 0.7 && razao >= (1.35 - 0.3 * rc) * (1 - 0.25 * des) && vantagemLane > 0.12 - 0.08 * rc) return { alvo, motivo: 'troca' };
+    if (rc > 0.25 && hpAlvo < 0.5 && meuHp > 0.55 && razao >= 1.0 && P.rng() < rc) return { alvo, motivo: 'punir' };
+    return null;
+  }
   if (exec) return { alvo, motivo: 'finalizar' };
-  if (razao >= R.perigo.margemLuta * 1.08 && meuHp > 0.5) return { alvo, motivo: equipe ? 'luta de equipe' : 'luta favorável' };
+  if (razao >= margem * 1.08 && meuHp > 0.5 * (1 - 0.3 * des)) return { alvo, motivo: equipe ? 'luta de equipe' : 'luta favorável' };
   return null;
 }
 function protegidoPorTorre(P, u, alvo, ctx) {
@@ -242,6 +261,9 @@ function escolherAlvo(P, u, cand) {
     if (u.perfil.classe === 'assassino') s += (1 - e.hp / e.hpMax) * 40 + (e.perfil.classe === 'atirador' || e.perfil.classe === 'mago' ? 35 : 0) - (e.armadura + e.resist) / 6;
     else if (u.perfil.classe === 'tanque') s += (e.perfil.classe === 'atirador' ? 20 : 0) + 10;
     else if (u.perfil.classe === 'atirador' || u.perfil.classe === 'mago') s += -d / 30 + (e.perfil.classe === 'tanque' ? -20 : 0);
+    // Teamfight: quem lê bem a luta foca quem mais vale (carry com pouca vida) e evita bater em tanque; quem lê mal bate no mais perto
+    const tf = u.m.tf; const carry = ['atirador', 'mago', 'assassino'].includes(e.perfil.classe) ? 1 : 0; const tanqueAlvo = e.perfil.classe === 'tanque' ? 1 : 0;
+    s += tf * (carry * 34 + (1 - e.hp / e.hpMax) * 26 - tanqueAlvo * 24 - (e.armadura + e.resist) / 12) + (P.rng() - 0.5) * 36 * (1 - tf);
     // alvos que o resto do time já ataca
     for (const c of P.campeoes) if (!c.morto && c.equipe === u.equipe && c !== u && c.alvoId === e.id) s += 8;
     if (atual && e.id === atual.u.id && P.t - u.estadoDesde > 0.5) s += 25; // estabilidade de alvo
@@ -267,7 +289,7 @@ function decidirSelva(P, u, ctx) {
   if (P.t >= R.tempoMin && u.nivel >= 3 && ctx.hp >= R.vidaMin && P.t >= (u.proxGank || 0) && u.estado !== 'gank') {
     u.proxGank = P.t + R.intervalo;
     const g = avaliarGanks(P, u, ctx);
-    if (g && g.pontos >= R.pontuacaoMin) {
+    if (g && g.pontos >= pol(P, u.equipe, 'gank.pontuacaoMin')) {
       u.gankInfo = { rota: g.rota, alvoId: g.alvo.id, inicio: P.t, abatesAntes: u.estat.abates + u.estat.assist, pontos: g.pontos, hpIni: ctx.hp };
       u.ganks++; registrar(P, 'gank_iniciado', { equipe: u.equipe, campeao: u.id, rota: g.rota, alvo: g.alvo.id, pontos: Math.round(g.pontos) });
       mudar(P, u, 'gank', 'gank ' + g.rota); return;
@@ -455,7 +477,7 @@ function agirFarm(P, u) {
     if (!mk || P.t - mk.t > 0.9) alvo.marca = { t: P.t, hp: alvo.hp };
     else if (P.t - mk.t >= 0.3) { taxa = Math.max(0, (mk.hp - alvo.hp) / (P.t - mk.t)); alvo.marca = { t: P.t, hp: alvo.hp, taxa }; } else taxa = mk.taxa || 0;
     const atraso = u.alcance > 300 ? 0.3 : 0.12;
-    const acerta = u.m.farm; const ultimoGolpe = alvo.hp - taxa * atraso <= dano * 1.3;
+    const acerta = Math.min(1, u.m.farm + 0.12 * rotasCedo(P, u)); const ultimoGolpe = alvo.hp - taxa * atraso <= dano * 1.3;
     if (ultimoGolpe) {
       // tempo de reação: jogadores com pouca "fase de rotas" demoram mais para bater no momento certo
       if (!u.reacao || u.reacao.id !== alvo.id) u.reacao = { id: alvo.id, ate: P.t + (1 - acerta) * 1.4 * P.rng() };
@@ -467,7 +489,7 @@ function agirFarm(P, u) {
 function trocaFavoravel(P, u, e, ctx) {
   const eu = hpPct(u), el = hpPct(e);
   const dif = (u.nivel - e.nivel) * 0.06 + (eu - el) * 0.8 + (ctx.minAli > ctx.minIni ? 0.08 : -0.05);
-  return dif > 0.05 && eu > 0.55;
+  return dif > 0.05 - 0.04 * rotasCedo(P, u) && eu > 0.55;
 }
 function usarLimpeza(P, u, alvo) {
   if (u.mana < u.manaMax * 0.55) return;
@@ -513,7 +535,7 @@ function agirLuta(P, u) {
   const alcDes = u.alcance > 300 ? u.alcance * 0.88 : Math.max(60, u.alcance * 0.6);
   const unida = u.perfil.funcao === 'proteger' ? aliadosPerto(P, u, u.x, u.y, 1200, false).sort((a, b) => dist(a, alvo) - dist(b, alvo))[0] : null;
   if (d > alcDes + 20) irPara(P, u, alvo.x, alvo.y, { tol: alcDes });
-  else if (u.alcance > 300 && d < u.alcance * 0.45 && alvo.alcance <= 300 && hpPct(u) < 0.7) { /* recua um pouco do corpo a corpo */ const k = (u.alcance * 0.7) / Math.max(1, d); const px = alvo.x + (u.x - alvo.x) * k, py = alvo.y + (u.y - alvo.y) * k; if (P.terreno.caminhavel(px, py, 'campeao')) irPara(P, u, px, py, { tol: 40 }); else parar(u); }
+  else if (u.alcance > 300 && d < u.alcance * (0.45 + 0.25 * u.m.tf) && alvo.alcance <= 300 && hpPct(u) < 0.7 + 0.2 * u.m.tf) { /* recua um pouco do corpo a corpo */ const k = (u.alcance * 0.7) / Math.max(1, d); const px = alvo.x + (u.x - alvo.x) * k, py = alvo.y + (u.y - alvo.y) * k; if (P.terreno.caminhavel(px, py, 'campeao')) irPara(P, u, px, py, { tol: 40 }); else parar(u); }
   else parar(u);
   usarHabilidades(P, u, alvo, ctx);
   atacarBasico(P, u, alvo);

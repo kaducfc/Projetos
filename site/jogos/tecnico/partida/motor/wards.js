@@ -7,6 +7,8 @@ import { irPara, parar } from './movimento.js';
 import { darOuro } from './economia.js';
 import { MUNDO_MAPA } from '../nucleo/mapa-mundo.js';
 import { criarRng } from '../nucleo/rng.js';
+import { visaoSobre } from './inteligencia.js';
+const macroDeU = (u) => u.m.macro;
 
 // Gerador próprio das wards (mesma semente da partida): não consome o sorteio da IA, então mexer em wards não muda o resto da simulação.
 const rngWard = (P) => (P._rngWard ||= criarRng((P.semente ?? 1) * 7919 + 13));
@@ -76,7 +78,7 @@ export function pontosDeWard(P) {
   const cx = P.terreno.cols * P.terreno.cel / 2, cy = P.terreno.rows * P.terreno.cel / 2;
   for (const c of MUNDO_MAPA.covis || []) { // entrada do covil: do lado do centro do mapa
     const d = Math.hypot(cx - c.x, cy - c.y) || 1; const k = (c.raio + 600) / d;
-    const p = P.terreno.maisProximo(c.x + (cx - c.x) * k, c.y + (cy - c.y) * k, 'campeao'); if (p) pts.push({ x: p.x, y: p.y, moita: 0 });
+    const p = P.terreno.maisProximo(c.x + (cx - c.x) * k, c.y + (cy - c.y) * k, 'campeao'); if (p) pts.push({ x: p.x, y: p.y, moita: 0, obj: c.id });
   }
   P._pontosWard = pts; return pts;
 }
@@ -86,7 +88,9 @@ function escolherPonto(P, u, maxDist) {
   for (const p of pontosDeWard(P)) {
     const d = dist(u, p); if (d > maxDist) continue;
     if (P.wards.some((w) => !w.morto && w.equipe === u.equipe && dist(w, p) < 1100)) continue;
-    const s = -d * 0.6 + Math.min(dist(p, base), 9000) * 0.35 + (p.moita ? 600 : 0);
+    let s = -d * 0.6 + Math.min(dist(p, base), 9000) * 0.35 + (p.moita ? 600 : 0);
+    // Macro: antes de um objetivo nascer (ou enquanto está vivo), quem não tem visão no covil quer essa ward
+    if (p.obj && macroDeU(u) > 0.3 && !visaoSobre(P, u.equipe, p.x, p.y, 700)) { const O = P.objetivosEstado[p.obj === 'barao' ? 'barao' : 'dragao']; if (O && (O.vivo || O.proximo - P.t < 90)) s += 2600 * macroDeU(u); }
     if (s > ms) { ms = s; melhor = p; }
   }
   return melhor;
@@ -111,6 +115,7 @@ export function agirWard(P, u) {
   if (!tipo || u.nivel < Wr.nivelMinColocar) { W.alvo = null; return false; }
   if (!W.alvo) {
     if (P.t < W.proxBusca) return false;
+    if (rngWard(P)() > 0.3 + 0.7 * u.m.macro) { W.proxBusca = P.t + 8; return false; } // Macro baixo esquece de usar a ward
     // laners só fazem desvio curto enquanto caminham para a rota; suporte e caçador procuram mais longe
     const maxD = u.pos === 'suporte' || u.pos === 'selva' ? 2600 : u.estado === 'indo_rota' ? 1800 : 0;
     if (!maxD) { W.proxBusca = P.t + 8; return false; }

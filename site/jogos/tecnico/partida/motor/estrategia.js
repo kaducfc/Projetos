@@ -8,6 +8,7 @@ import { atacarBasico, podeAtacar, atacavel, porId, hpPct, lancarHabilidade } fr
 import { valorCombate, dpsDe, aliadosPerto, minionsPerto, torreInimigaEm, rotaDe, sNaRota, progresso, pontoNoProgresso, torresDaRota } from './percepcao.js';
 import { usarHabilidades, posFarm, golpear } from './campeao-ia.js';
 import { registrar } from './eventos.js';
+import { incerteza, visaoSobre, macroDaEquipe, atraso, pol } from './inteligencia.js';
 
 const ID = (P) => ++P.proxPlano;
 
@@ -93,12 +94,19 @@ export function atualizarEstrategia(P, eq) {
       pl.participantes = part.map((c) => c.id); pl.epicoId = obj.epico?.id || null;
       // começa quando os participantes chegaram ao ponto de reunião (ou o tempo passou) e o objetivo está vivo
       const reun = part.filter((c) => dist(c, obj.staging) < 900).length;
-      if (pl.estado === 'reunindo' && obj.epico && (reun >= Math.min(obj.minimo || 4, part.length) || P.t - pl.desde > 30)) { pl.estado = 'executando'; registrar(P, 'objetivo_iniciado', { equipe: eq, objetivo: obj.nome, participantes: part.map((c) => c.id) }); }
+      // Macro: quem lê bem o jogo só entra no objetivo com visão sobre o covil (ou depois de esperar um tempo); quem lê mal vai às cegas
+      const mac = macroDaEquipe(P, eq); const viu = visaoSobre(P, eq, obj.covil.x, obj.covil.y, 1100) || mac < 0.35 || P.t - pl.desde > 35;
+      if (pl.estado === 'reunindo' && obj.epico && viu && (reun >= Math.min(obj.minimo || 4, part.length) || P.t - pl.desde > 30)) { pl.estado = 'executando'; registrar(P, 'objetivo_iniciado', { equipe: eq, objetivo: obj.nome, participantes: part.map((c) => c.id) }); }
       planos.push(pl); marcar(part);
     }
   }
+  // 4b) contestar / roubar: o inimigo está matando um objetivo e a equipe sabe disso (viu ou tem visão)
+  if (!planos.some((p) => p.tipo === 'objetivo')) {
+    const c = avaliarContestar(P, eq, conh, livres());
+    if (c) { planos.push(c); marcar(c.participantes.map((id) => porId(P, id))); }
+  }
   // 5) pressionar estruturas: laner sozinho com a onda aliada na torre (a partir dos 10 min) e grupo quando há vantagem
-  if (P.t >= 600) {
+  if (P.t >= pol(P, eq, 'pressaoDesde')) {
     const grupoLane = {};
     for (const rota of ROTAS) {
       const alvo = P.estruturas.filter((e) => e.equipe === inim && !e.morto && e.rota === rota && (e.subtipo === 'torre' || e.subtipo === 'inibidor') && P.estruturaVulneravel(e)).sort((a, b) => dist(a, nexus) - dist(b, nexus))[0];
@@ -112,7 +120,7 @@ export function atualizarEstrategia(P, eq) {
     // grupo: com vantagem numérica/ouro (ou já no fim de jogo), todos empurram a rota mais exposta
     const inimVivos = P.campeoes.filter((c) => c.equipe === inim && !c.morto).length;
     const vantagem = meus.length - inimVivos;
-    const querGrupo = fase !== 'inicial' && livres().length >= 4 && (vantagem >= 1 || ouroDif > 1800 || P.t >= 1500);
+    const querGrupo = fase !== 'inicial' && livres().length >= 4 && (vantagem >= 1 || ouroDif > 1800 || P.t >= pol(P, eq, 'grupoDesde'));
     if (querGrupo) {
       const opcoes = Object.entries(grupoLane).filter(([, g]) => g.defensores <= Math.max(1, vantagem + 1)).sort((a, b) => a[1].defensores - b[1].defensores || (a[0] === 'meio' ? -1 : 1));
       if (opcoes.length) {
@@ -122,7 +130,7 @@ export function atualizarEstrategia(P, eq) {
     }
   }
   // 6) rotação: meio e suporte ajudam uma rota com vantagem numérica (apenas depois da fase inicial)
-  if (P.t >= R.rotacao.tempoMin) {
+  if (P.t >= pol(P, eq, 'rotacao.tempoMin') * (1.3 - 0.6 * macroDaEquipe(P, eq))) { // Macro: quem lê o jogo roda mais cedo para ajudar
     for (const rota of ['topo', 'baixo']) {
       const tIni = conh.filter((k) => k.visivel && k.u.rota === rota);
       if (!tIni.length) continue;
@@ -135,6 +143,39 @@ export function atualizarEstrategia(P, eq) {
   E.planos = planos;
   E.plano = null; // planos individuais são resolvidos em `planoPara`
 }
+// Contestar ou roubar o objetivo que o time inimigo está fazendo. A equipe só decide se SABE (visão sobre o objetivo ou inimigos vistos perto dele).
+// Vai quando consegue roubar (a vida que sobra na chegada cai com a rajada de quem chega) ou quando o valor de combate de quem chega é suficiente;
+// atrás no placar e com Mental baixo, tenta até em condição ruim (principalmente Barão e Ancião, a única forma de virar o jogo).
+function avaliarContestar(P, eq, conh, aliados) {
+  const inim = outro(eq); const CF = P.regras.ia.contestar; const mac = macroDaEquipe(P, eq);
+  for (const e of P.epicos) {
+    if (e.morto || e.subtipo === 'arauto') continue;
+    const ag = e.ultimoAgressor ? porId(P, e.ultimoAgressor) : null;
+    if (!ag || ag.equipe !== inim || P.t - e.ultimoCombate > CF.janela) continue;
+    if (!(visaoSobre(P, eq, e.x, e.y, 900) || conh.some((k) => k.visivel && dist(k, e) < 1800))) continue;
+    const perto = P.campeoes.filter((c) => c.equipe === inim && !c.morto && dist(c, e) < 1800);
+    const dpsIni = perto.reduce((s, c) => s + dpsDe(c) * 0.65, 0);
+    const tRest = e.hp / Math.max(1, dpsIni);
+    const chegam = aliados.filter((c) => hpPct(c) > 0.4).map((c) => ({ c, eta: P.nav.distancia(c.x, c.y, e.x, e.y, 'campeao') / c.vel })).filter((x) => isFinite(x.eta) && x.eta < tRest + 6);
+    if (!chegam.length) continue;
+    const etaMin = Math.min(...chegam.map((x) => x.eta));
+    const hpChegada = Math.max(0, e.hp - dpsIni * etaMin);
+    const golpe = chegam.some((x) => x.c.pos === 'selva' && P.t >= (x.c.golpearEm || 0)) ? 450 + 40 * 14 : 0;
+    const roubo = hpChegada <= chegam.reduce((s, x) => s + dpsDe(x.c) * 0.65, 0) * CF.roubo + golpe;
+    const vNos = chegam.reduce((s, x) => s + valorCombate(x.c), 0), vIni = perto.reduce((s, c) => s + valorCombate(c), 0);
+    const razao = vNos / Math.max(1, vIni);
+    const atras = atraso(P, eq); const mental = chegam.reduce((s, x) => s + x.c.m.mental, 0) / chegam.length;
+    const des = atras * (1 - mental) * P.regras.ia.desespero; const decisivo = e.subtipo === 'barao' || e.subtipo === 'anciao';
+    const exigencia = CF.minimo * (1 - 0.35 * des) * (decisivo && atras > 0.5 ? 0.75 : 1);
+    if (!roubo && razao < exigencia) continue;
+    if (P.rng() < (1 - mac) * 0.25) continue; // Macro baixo: às vezes nem percebe a chance
+    const nome = e.subtipo === 'anciao' ? 'dragao' : e.subtipo;
+    P._contestados ||= new Set(); const chaveC = `${eq}:${e.id}`;
+    if (!P._contestados.has(chaveC)) { P._contestados.add(chaveC); registrar(P, 'objetivo_contestado', { equipe: eq, objetivo: e.subtipo, roubo, razao: Math.round(razao * 100) / 100, participantes: chegam.map((x) => x.c.id) }); }
+    return { id: ID(P), tipo: 'objetivo', objetivo: nome, covil: MUNDO_MAPA.covis.find((x) => x.id === (e.subtipo === 'barao' ? 'barao' : 'dragao')), pos: { x: e.x, y: e.y }, epicoId: e.id, estado: 'executando', desde: P.t, contest: true, roubo, participantes: chegam.map((x) => x.c.id) };
+  }
+  return null;
+}
 function proximoAlvoBase(P, eqInim) {
   const todas = P.estruturas.filter((e) => e.equipe === eqInim && !e.morto && P.estruturaVulneravel(e));
   const nex = MUNDO_MAPA.bases[outro(eqInim)].nexus;
@@ -142,13 +183,13 @@ function proximoAlvoBase(P, eqInim) {
 }
 
 function escolherObjetivo(P, eq, conh, aliados) {
-  const O = P.objetivosEstado; const R = P.regras.epicos; const M = P.regras.ia.objetivoMargem;
+  const O = P.objetivosEstado; const R = P.regras.epicos; const M = pol(P, eq, 'objetivoMargem');
   const inim = outro(eq);
   const candidatos = [];
   const tryObj = (nome, epico, proximo, covilId, cedo = false) => {
     const c = MUNDO_MAPA.covis.find((x) => x.id === covilId);
     const aVivo = epico && !epico.morto;
-    const FR = P.regras.ia.faseDeRotas; // fase de rotas: laners farmando antes de ir aos primeiros objetivos
+    const FR = { ate: pol(P, eq, 'faseDeRotas.ate'), dragaoDesde: pol(P, eq, 'faseDeRotas.dragaoDesde'), arautoDesde: pol(P, eq, 'faseDeRotas.arautoDesde') }; // fase de rotas: laners farmando antes de ir aos primeiros objetivos
     if (P.t < FR.ate && ((nome === 'dragao' && P.t < FR.dragaoDesde) || (nome === 'arauto' && P.t < FR.arautoDesde))) return;
     const faltam = aVivo ? 0 : (proximo - P.t);
     if (!aVivo) {
@@ -178,14 +219,15 @@ function escolherObjetivo(P, eq, conh, aliados) {
     const dps = part.reduce((s, x) => s + dpsDe(x) * 0.65, 0);
     const hp = c.epico ? c.epico.hp : P.regras.epicos[c.nome === 'dragao' ? 'dragao' : c.nome].hp;
     const tempo = hp / Math.max(1, dps);
-    const limiteTempo = c.nome === 'barao' ? 55 : 45;
-    const risco = vIni / Math.max(1, vAli);
+    const limiteTempo = c.nome === 'barao' ? pol(P, eq, 'baraoLimite') : pol(P, eq, 'dragaoLimite');
+    // Macro: inimigos que o time não está vendo contam como ameaça possível perto do objetivo
+    const risco = vIni / Math.max(1, vAli) + incerteza(P, eq) * (0.1 + 0.8 * macroDaEquipe(P, eq)) * 0.8;
     const vantagemNum = part.length - vivosIni;
     // só vai quando: consegue matar a tempo e o risco é aceitável (ou o inimigo está morto/longe)
     if (part.length < Math.min(c.minimo, aliados.length) && !(vantagemNum >= 2 && part.length >= 3)) continue;
     if (tempo > limiteTempo) continue;
     if (risco > 1 / M && vantagemNum < 1) continue;
-    if (c.nome === 'barao' && (P.t < 1260 || (vantagemNum < 1 && risco > 0.6))) continue;
+    if (c.nome === 'barao' && (P.t < pol(P, eq, 'baraoDesde') || (vantagemNum < 1 && risco > 0.6))) continue;
     // disputa pelo mesmo objetivo: se o inimigo já o está fazendo (visto perto e o monstro apanhando), só entra com vantagem
     const score = base * (1.2 - Math.min(1, risco)) + vantagemNum * 0.2 + (c.epico ? 0.4 : 0);
     if (score > ms) { ms = score; melhor = c; }

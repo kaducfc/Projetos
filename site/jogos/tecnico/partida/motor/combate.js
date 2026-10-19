@@ -83,6 +83,7 @@ export function causarDano(P, fonte, alvo, bruto, tipo = 'fisico', o = {}) {
       // lutas de equipe: atributo "teamfight" com 3+ campeões envolvidos
       if (aliadosEmLuta(P, fonte) >= 3) d *= fonte.m.luta;
       d *= 1 - fonte.m.tilt * tilt(P, fonte);
+      d *= 1 + R.atributos.mec.duelo * (fonte.m.mec - alvo.m.mec); // Mecânica relativa: quem tem mais leva vantagem nos duelos contra o adversário
     }
     if (o.hab) d *= fonte.m.execDano;
   }
@@ -112,7 +113,7 @@ export function causarDano(P, fonte, alvo, bruto, tipo = 'fisico', o = {}) {
     if (fonte && fonte.tipo === 'campeao') { P.provocacoes.set(fonte.id, { vitima: alvo.id, equipeVitima: alvo.equipe, ate: P.t + R.estruturas.duracaoAgressor }); alvo.ultimoAtaqueChamp = P.t; alvo.ultimoAgressor = fonte.id; fonte.ultimoAtaqueChamp = P.t; }
     if (fonte && fonte.tipo === 'estrutura') alvo.ultimoDanoTorre = P.t;
   }
-  if (alvo.tipo === 'monstro' || alvo.tipo === 'epico') { alvo.ultimoAgressor = fonte?.id; alvo.ultimoCombate = P.t; }
+  if (alvo.tipo === 'monstro' || alvo.tipo === 'epico') { alvo.ultimoAgressor = fonte?.id; alvo.ultimoCombate = P.t; if (alvo.tipo === 'epico' && fonte?.equipe && alvo.danoEq) alvo.danoEq[fonte.equipe] = (alvo.danoEq[fonte.equipe] || 0) + real; }
   if (o.fx !== false && real > 0) P.fx.push({ k: 'dano', id: alvo.id, t: P.t, v: Math.round(real), x: alvo.x, y: alvo.y, hab: !!o.hab, champ: alvo.tipo === 'campeao' });
   // Buff do Dragão Ancião: quem o tem executa o campeão inimigo que ficar com `execLimite` da vida ou menos depois do dano
   if (fc && alvo.tipo === 'campeao' && alvo.hp > 0 && fonte.buffExecucao && P.t < fonte.buffExecucao.ate && alvo.hp <= alvo.hpMax * R.epicos.anciao.efeito.execLimite) {
@@ -315,7 +316,7 @@ export function lancarHabilidade(P, u, h, alvo, pos = null) {
       const vel = h.vel; const d = dist(u, alvo); const tvoo = d / vel;
       const vx = alvo.vx || 0, vy = alvo.vy || 0;
       let tx = alvo.x + vx * tvoo, ty = alvo.y + vy * tvoo;
-      const falha = 1 - u.m.execAcerto; // 0.08..0.42
+      const falha = Math.min(0.9, Math.max(0.03, 1 - u.m.execAcerto + (alvo.m ? (alvo.m.mec - 0.5) * 0.18 : 0))); // pontaria do atacante contra a esquiva de quem tem mais Mecânica
       const ang = Math.atan2(ty - u.y, tx - u.x) + (P.rng() - 0.5) * 2 * falha * 0.32;
       P.projeteis.push({ id: ++P.proxId, equipe: u.equipe, fonte: u.id, x: u.x, y: u.y, dx: Math.cos(ang), dy: Math.sin(ang), vel, resta: h.alcance + 100, largura: h.largura || 80, hab: h });
       P.fx.push({ k: 'hab', de: u.id, tecla: h.tecla, x: ponto.x, y: ponto.y, t: P.t, tipo: 'projetil', x0: u.x, y0: u.y });

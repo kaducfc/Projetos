@@ -28,7 +28,7 @@ function nascerEpico(P, tipo, cfgChave, covilId, extra = {}) {
     id: novaId(P), tipo: 'epico', subtipo: tipo, nome: extra.nome || tipo, equipe: 'neutro', x: c.x, y: c.y, home: { x: c.x, y: c.y },
     hp: R.hp, hpMax: R.hp, dano: R.dano, armadura: R.armadura, resist: R.resist, alcance: R.alcance, intervalo: R.intervalo, raio: R.raio, vel: 400, aquisicao: R.aquisicao, leash: R.leash,
     ouro: R.ouro, xp: R.xp, estado: 'ocioso', alvoId: null, morto: false, proximoAtaque: 0, ultimosAtacantes: {}, efeitos: [], escudo: 0, ultimoCombate: -99, nascido: P.t, ultimoAlvoVisto: 0,
-    elemento: extra.elemento || null, cfg: cfgChave,
+    elemento: extra.elemento || null, cfg: cfgChave, danoEq: { azul: 0, vermelho: 0 },
   };
   P.epicos.push(e); P.mapaUnidades.set(e.id, e);
   registrar(P, 'objetivo_nasceu', { objetivo: tipo, elemento: e.elemento, id: e.id });
@@ -118,7 +118,10 @@ export function aoMorrer(P, e, fonte) {
     }
     efeito = { duracao: ef.duracao };
   }
-  registrar(P, 'objetivo_abatido', { equipe: eq, objetivo: e.subtipo, elemento: e.elemento, abatedor: k.id, participantes: part.map((c) => c.id), ouro: Math.round(e.ouro + bonus), xp: e.xp, efeito });
+  const outroEq = eq === 'azul' ? 'vermelho' : 'azul';
+  const roubado = (e.danoEq?.[outroEq] || 0) > (e.danoEq?.[eq] || 0); // o outro time tirou mais vida do objetivo: o último golpe foi um roubo
+  if (roubado) registrar(P, 'objetivo_roubado', { equipe: eq, objetivo: e.subtipo });
+  registrar(P, 'objetivo_abatido', { equipe: eq, roubado, objetivo: e.subtipo, elemento: e.elemento, abatedor: k.id, participantes: part.map((c) => c.id), ouro: Math.round(e.ouro + bonus), xp: e.xp, efeito });
   P.fx.push({ k: 'destruicao', id: e.id, t: P.t, x: e.x, y: e.y, tipo: e.subtipo });
   P.estrategiaMudou = true;
 }

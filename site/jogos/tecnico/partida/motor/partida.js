@@ -32,6 +32,7 @@ export class Partida {
   constructor(opc) {
     this.regras = mesclarRegras(REGRAS, opc.regras);
     this.config = opc.config || {};
+    this.politica = opc.politica || null; // { azul: {...}, vermelho: {...} }: sobreposições de regras.ia por equipe (estudos)
     this.semente = opc.semente ?? 1;
     this.rng = criarRng(this.semente);
     const { terreno, nav } = opc.terreno ? { terreno: opc.terreno, nav: opc.nav || new Navegacao(opc.terreno) } : terrenoCompartilhado();
