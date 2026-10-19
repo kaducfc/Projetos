@@ -101,8 +101,8 @@ export function aoMorrer(P, e, fonte) {
   } else if (e.subtipo === 'anciao') {
     O.dragao.vivo = null; O.dragao.proximo = P.t + R.anciao.respawn; O.dragao.mortes++;
     E.buffAnciao = { ate: P.t + R.anciao.efeito.duracao };
-    for (const c of P.campeoes) if (c.equipe === eq) { c.buffs.push({ danoPct: R.anciao.efeito.dano, ate: P.t + R.anciao.efeito.duracao }); recalcular(c, P); }
-    efeito = { duracao: R.anciao.efeito.duracao };
+    for (const c of P.campeoes) if (c.equipe === eq) { c.buffs.push({ danoPct: R.anciao.efeito.dano, ate: P.t + R.anciao.efeito.duracao }); recalcular(c, P); if (!c.morto) c.buffExecucao = { ate: P.t + R.anciao.efeito.execDuracao }; } // execução: só quem está vivo na hora (morto não recebe)
+    efeito = { duracao: R.anciao.efeito.duracao, execucao: R.anciao.efeito.execDuracao, execLimite: R.anciao.efeito.execLimite };
   } else if (e.subtipo === 'arauto') {
     O.arauto.vivo = null; O.arauto.mortes++; O.arauto.aposentado = true;
     // quem deu o último golpe conquista o Arauto: tem alguns minutos para usá-lo (decidido em atualizarArautos)

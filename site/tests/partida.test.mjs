@@ -653,3 +653,24 @@ test('V6. partida completa com wards: a IA compra e coloca wards, nada quebra e 
   assert.ok(P.eventos.some((e) => e.tipo === 'ward'));
 });
 
+
+test('O1. objetivos: Dragão 10k/160, Ancião 17k/240, Barão 16k/250 de vida e dano', () => {
+  const E = REGRAS.epicos;
+  assert.deepEqual([E.dragao.hp, E.dragao.dano, E.anciao.hp, E.anciao.dano, E.barao.hp, E.barao.dano], [10000, 160, 17000, 240, 16000, 250]);
+});
+test('O2. buff do Ancião: ao matar o Ancião, o time ganha 2 min de execução (20% da vida); morrer perde o buff', () => {
+  const P = mk(2); for (const c of P.campeoes) congelar(c);
+  const azuis = P.campeoes.filter((c) => c.equipe === 'azul'), [v1, v2, v3] = P.campeoes.filter((c) => c.equipe === 'vermelho');
+  const a = azuis[0]; for (const c of [a, v1, v2, v3]) { c.x = 5000; c.y = 5000; }
+  v1.hp = v1.hpMax * 0.3; causarDano(P, a, v1, v1.hpMax * 0.2, 'verdadeiro'); assert.equal(v1.morto, false, 'sem o buff não executa');
+  // o time mata o Dragão Ancião
+  const O = P.objetivosEstado.dragao; O.almaAlcancada = true; O.proximo = P.t; P.step();
+  const anc = O.vivo; assert.equal(anc.subtipo, 'anciao'); assert.equal(anc.hpMax, 17000);
+  causarDano(P, a, anc, 1e9, 'verdadeiro');
+  for (const c of azuis) { assert.ok(c.buffExecucao && Math.abs(c.buffExecucao.ate - (P.t + 120)) < 1, 'todo o time ganha 2 min de execução'); }
+  v2.hp = v2.hpMax * 0.3; causarDano(P, a, v2, v2.hpMax * 0.05, 'verdadeiro'); assert.equal(v2.morto, false, 'acima de 20% da vida não executa');
+  causarDano(P, a, v2, v2.hpMax * 0.06, 'verdadeiro'); assert.equal(v2.morto, true, 'ficou com 19%: executado');
+  // quem morre perde o buff; o buff acaba depois de 2 min
+  const b = azuis[1]; matar(P, b, null); assert.equal(b.buffExecucao, null, 'morrer perde o buff');
+  P.t += 121; v3.hp = v3.hpMax * 0.3; causarDano(P, a, v3, v3.hpMax * 0.2, 'verdadeiro'); assert.equal(v3.morto, false, 'depois dos 2 min não executa mais');
+});

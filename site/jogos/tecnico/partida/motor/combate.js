@@ -111,6 +111,10 @@ export function causarDano(P, fonte, alvo, bruto, tipo = 'fisico', o = {}) {
   }
   if (alvo.tipo === 'monstro' || alvo.tipo === 'epico') { alvo.ultimoAgressor = fonte?.id; alvo.ultimoCombate = P.t; }
   if (o.fx !== false && real > 0) P.fx.push({ k: 'dano', id: alvo.id, t: P.t, v: Math.round(real), x: alvo.x, y: alvo.y, hab: !!o.hab, champ: alvo.tipo === 'campeao' });
+  // Buff do Dragão Ancião: quem o tem executa o campeão inimigo que ficar com `execLimite` da vida ou menos depois do dano
+  if (fc && alvo.tipo === 'campeao' && alvo.hp > 0 && fonte.buffExecucao && P.t < fonte.buffExecucao.ate && alvo.hp <= alvo.hpMax * R.epicos.anciao.efeito.execLimite) {
+    P.fx.push({ k: 'executa', id: alvo.id, t: P.t, x: alvo.x, y: alvo.y }); alvo.hp = 0;
+  }
   if (alvo.hp <= 0) matar(P, alvo, fonte);
   return real;
 }
@@ -145,7 +149,7 @@ export function temMinionAliado(P, e) {
 export function matar(P, alvo, fonte) {
   if (alvo.morto) return;
   alvo.morto = true; alvo.hp = 0; alvo.mortoEm = P.t;
-  if (alvo.tipo === 'campeao') alvo.buffBarao = null; // morrer tira o buff do Barão
+  if (alvo.tipo === 'campeao') { alvo.buffBarao = null; alvo.buffExecucao = null; } // morrer tira o buff do Barão e o de execução do Ancião
   alvo.caminho = null; alvo.destino = null; alvo.alvoId = null;
   const E = P.regras.economia;
   // quem recebe o crédito: o último atacante que for campeão (para torres/minions que dão o golpe final)
