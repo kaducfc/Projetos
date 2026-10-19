@@ -100,7 +100,7 @@ revoke all on function public.tc_garantir_sistema() from public, anon, authentic
 
 -- Método do círculo: n equipes (par) -> rodadas 1..n-1; depois dela repete as mesmas rodadas.
 create or replace function public.tc_rodadas(times bigint[], max_rod int default null)
-returns table (rod int, a bigint, b bigint) language plpgsql immutable as $$
+returns table (rod int, a bigint, b bigint) language plpgsql immutable set search_path = public as $$
 declare
   n int := coalesce(array_length(times, 1), 0);
   rot bigint[] := times;
@@ -117,6 +117,7 @@ begin
   end loop;
 end;
 $$;
+revoke all on function public.tc_rodadas(bigint[], int) from public, anon, authenticated;
 
 -- Cria o confronto de uma fase: uma partida por técnico real (cada um joga a sua contra o bot do outro) ou uma só, simulada, entre equipes do sistema.
 drop function if exists public.tc_partida_mm(bigint, text, int, date, bigint, bigint);
@@ -142,10 +143,11 @@ revoke all on function public.tc_partida_mm(bigint, text, int, date, bigint, big
 
 -- Duração total (minutos) dos mapas de uma partida; W.O. e partida sem tempo valem "muito lento".
 create or replace function public.tc_duracao_partida(p tc_partidas)
-returns numeric language sql immutable as $$
+returns numeric language sql immutable set search_path = public as $$
   select case when s > 0 then s else 99999 end from (
     select coalesce((select sum((m->>'duracao')::numeric) from jsonb_array_elements(case when jsonb_typeof(p.resumo->'mapas') = 'array' then p.resumo->'mapas' else '[]'::jsonb end) m), 0) as s) q;
 $$;
+revoke all on function public.tc_duracao_partida(tc_partidas) from public, anon, authenticated;
 
 -- Quem avança num confronto (null se alguma partida do confronto ainda não terminou).
 create or replace function public.tc_vencedor_entre(lid bigint, fase_ text, x bigint, y bigint)
@@ -762,14 +764,14 @@ begin
     return jsonb_build_object('antes', true, 'inicio', cal->'inicio');
   end if;
   select l.id into lid from tc_ligas l join tc_liga_times t on t.liga_id = l.id
-   where t.org_id = o.id and l.tipo = 'divisao' order by l.temporada desc, l.semana desc limit 1;
+   where t.org_id = o.id order by l.temporada desc, l.semana desc, l.id desc limit 1; -- liga da semana ou, na semana internacional, a Copa/Mundial
   select p.* into prox from tc_partidas p join tc_ligas l on l.id = p.liga_id
    where p.status = 'agendada' and ((p.pov is null and o.id in (p.org_a, p.org_b)) or p.pov = o.id) order by p.dia, p.id limit 1;
   return jsonb_build_object(
     'calendario', cal,
     'liga', case when lid is null then null else tc_liga_json(lid) end,
     'proxima', case when prox.id is null then null else tc_partida_json(prox) end,
-    'ultimos', coalesce((select jsonb_agg(tc_partida_json(p) order by p.dia desc, p.id desc)
+    'ultimos', coalesce((select jsonb_agg(tc_partida_vis(p) order by p.dia desc, p.id desc)
                            from (select * from tc_partidas where status = 'concluida' and ((pov is null and o.id in (org_a, org_b)) or pov = o.id) order by dia desc, id desc limit 6) p), '[]'::jsonb),
     'trofeus', coalesce((select jsonb_agg(jsonb_build_object('titulo', t.titulo, 'temporada', t.temporada) order by t.id desc) from tc_trofeus t where t.org_id = o.id), '[]'::jsonb),
     'financas', coalesce((select jsonb_agg(jsonb_build_object('delta', f.delta, 'saldo', f.saldo, 'motivo', f.motivo, 'criado', f.criado) order by f.id desc)
@@ -814,6 +816,15 @@ returns jsonb language sql stable security definer set search_path = public as $
 $$;
 revoke all on function public.tc_partida_json(tc_partidas) from public, anon, authenticated;
 
+-- Partida como o técnico a vê; nos mata-matas o "vencedor" é quem avança de verdade (pode diferir do resultado do próprio técnico no desempate).
+create or replace function public.tc_partida_vis(p tc_partidas)
+returns jsonb language sql stable security definer set search_path = public as $$
+  select tc_partida_json(p)
+         || case when p.status = 'concluida' and p.fase in ('quartas', 'semi', 'final')
+                 then jsonb_build_object('vencedor', coalesce(tc_vencedor_entre(p.liga_id, p.fase, p.org_a, p.org_b), p.vencedor)) else '{}'::jsonb end;
+$$;
+revoke all on function public.tc_partida_vis(tc_partidas) from public, anon, authenticated;
+
 -- Liga/Copa/Mundial em JSON. As partidas PVP aparecem do ponto de vista de quem consulta (a do adversário fica escondida);
 -- nos mata-matas o "vencedor" é quem avança de verdade.
 create or replace function public.tc_liga_json(lid bigint)
@@ -847,10 +858,7 @@ begin
   end if;
   return jsonb_build_object('id', l.id, 'nome', l.nome, 'divisao', l.divisao, 'tipo', l.tipo, 'status', l.status,
                             'temporada', l.temporada, 'semana', l.semana, 'dono', l.dono_org, 'tabela', tab,
-                            'partidas', coalesce((select jsonb_agg(tc_partida_json(p)
-                                                      || case when p.status = 'concluida' and p.fase in ('quartas', 'semi', 'final')
-                                                              then jsonb_build_object('vencedor', coalesce(tc_vencedor_entre(p.liga_id, p.fase, p.org_a, p.org_b), p.vencedor)) else '{}'::jsonb end
-                                                      order by p.dia, p.id)
+                            'partidas', coalesce((select jsonb_agg(tc_partida_vis(p) order by p.dia, p.id)
                                                     from tc_partidas p
                                                    where p.liga_id = l.id
                                                      and (p.pov is null or p.pov = meu or meu is null
@@ -935,6 +943,30 @@ end;
 $$;
 revoke all on function public.tc_sincronizar() from public, anon;
 grant execute on function public.tc_sincronizar() to authenticated;
+
+-- Aba Campeonatos: as ligas do técnico e as vagas internacionais que ele já conquistou.
+create or replace function public.tc_campeonatos()
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  uid uuid := auth.uid();
+  cal jsonb := tc_calendario();
+  oid bigint;
+begin
+  perform tc_exigir(uid);
+  if (cal->>'antes')::boolean then
+    return jsonb_build_object('antes', true, 'inicio', cal->'inicio', 'ligas', '[]'::jsonb);
+  end if;
+  select id into oid from tc_orgs where user_id = uid;
+  return jsonb_build_object(
+    'calendario', cal, 'nomes', tc_cfg('nomes'),
+    'vagas', coalesce((select jsonb_agg(jsonb_build_object('temporada', v.temporada, 'tipo', v.tipo) order by v.temporada, v.tipo) from tc_vagas v where v.org_id = oid and v.temporada >= (cal->>'temporada')::int), '[]'::jsonb),
+    'ligas', coalesce((select jsonb_agg(tc_liga_json(l.id) order by l.temporada desc, l.semana desc, l.tipo, l.divisao)
+                         from (select l2.* from tc_ligas l2 where l2.id in (select liga_id from tc_liga_times where org_id = oid)
+                                order by l2.temporada desc, l2.semana desc, l2.id desc limit 8) l), '[]'::jsonb));
+end;
+$$;
+revoke all on function public.tc_campeonatos() from public, anon;
+grant execute on function public.tc_campeonatos() to authenticated;
 
 -- ---------------------------------------------------------------- dados já existentes
 -- Vagas da temporada atual a partir das ligas encerradas; Copa e Mundial antigos (4 e 6 equipes) da semana atual ainda em aberto são apagados

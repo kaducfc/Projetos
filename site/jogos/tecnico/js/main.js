@@ -288,8 +288,9 @@ function noticiaDestaque(minhas, hoje, minha) {
     const nome = FASES[ult.fase].toLowerCase();
     if (venci(ult)) { const fin = minhas.find((x) => x.fase === 'final' && x.status === 'agendada' && x.liga_id === ult.liga_id); return { cls: 'bom', selo: '⚔', banner: ult.fase === 'semi' ? temBanner('final') : null, estiloBanner: 'azul', titulo: ult.fase === 'semi' ? 'Você está na final!' : 'Você avançou!', texto: `Venceu a ${nome} contra ${adv(ult)} (${placar(ult)}).${fin ? ` A final é em ${dataCurta(fin.dia)}.` : ''}` }; }
     const posF = mesmaLiga ? minha?.pos_final : null;
-    return { cls: 'ruim', selo: '✖', banner: temBanner('eliminado'), estiloBanner: 'vermelho', titulo: `Eliminado na ${nome}`, texto: `Perdeu para ${adv(ult)} (${placar(ult)}).${encerrada && posF ? ` Terminou o campeonato em ${ORD(posF)}.` : ' Você termina entre os 4 primeiros.'}` };
+    return { cls: 'ruim', selo: '✖', banner: temBanner('eliminado'), estiloBanner: 'vermelho', titulo: `Eliminado na ${nome}`, texto: `Perdeu para ${adv(ult)} (${placar(ult)}).${encerrada && posF ? ` Terminou o campeonato em ${ORD(posF)}.` : ` Você termina entre os ${ult.fase === 'quartas' ? 8 : 4} primeiros.`}` };
   }
+  if (ult.fase === 'treino') return { cls: 'neutro', selo: '•', banner: temBanner('emdia'), estiloBanner: 'azul', titulo: 'Treino concluído', texto: `Os jogos de treino do ${esc(ligaNome)} não valem pontos, mas deram XP e Maestria ao seu elenco.` };
   const deHoje = hoje ? feitas.filter((x) => x.dia === ult.dia) : [ult];
   const vit = deHoje.filter(venci).length; const der = deHoje.length - vit;
   const titulo = deHoje.length > 1 ? (vit === deHoje.length ? 'Duas vitórias hoje!' : der === deHoje.length ? 'Dia difícil' : 'Uma vitória e uma derrota') : (vit ? 'Vitória!' : 'Derrota');
@@ -368,7 +369,7 @@ function financasHtml(f) {
 
 function tabelaHtml(tab, meuId, compacta = false) {
   return `<div class="tc-tabela-rolagem"><table class="tc-tabela"><thead><tr><th>#</th><th>Equipe</th>${compacta ? '' : '<th class="n">J</th>'}<th class="n">V</th><th class="n">D</th>${compacta ? '' : '<th class="n">Mapas</th><th class="n">Saldo</th>'}<th class="n">Pts</th>${compacta ? '' : '<th>Situação</th>'}</tr></thead><tbody>
-    ${tab.map((t) => `<tr class="${t.org.id === meuId ? 'eu' : ''}"><td>${t.pos}</td><td><div class="org">${escudoOrg(t.org, 24)}<span>${esc(t.org.nome)}${t.org.usuario ? ' <span title="Técnico real">★</span>' : ''}</span></div></td>${compacta ? '' : `<td class="n">${t.partidas}</td>`}<td class="n">${t.vitorias}</td><td class="n">${t.derrotas}</td>${compacta ? '' : `<td class="n">${t.mapas_pro}-${t.mapas_contra}</td><td class="n">${t.saldo > 0 ? '+' : ''}${t.saldo}</td>`}<td class="n"><b>${t.pontos}</b></td>${compacta ? '' : `<td>${t.situacao ? `<span class="tc-sit ${t.situacao}">${{ promocao: 'Promoção', rebaixamento: 'Rebaixamento', copa: 'Vaga na Copa', permanece: '—' }[t.situacao] || ''}</span>` : ''}</td>`}</tr>`).join('')}
+    ${tab.map((t) => `<tr class="${t.org.id === meuId ? 'eu' : ''}"><td>${t.pos}</td><td><div class="org">${escudoOrg(t.org, 24)}<span>${esc(t.org.nome)}${t.org.usuario ? ' <span title="Técnico real">★</span>' : ''}</span></div></td>${compacta ? '' : `<td class="n">${t.partidas}</td>`}<td class="n">${t.vitorias}</td><td class="n">${t.derrotas}</td>${compacta ? '' : `<td class="n">${t.mapas_pro}-${t.mapas_contra}</td><td class="n">${t.saldo > 0 ? '+' : ''}${t.saldo}</td>`}<td class="n"><b>${t.pontos}</b></td>${compacta ? '' : `<td>${t.situacao ? `<span class="tc-sit ${t.situacao}">${{ promocao: 'Promoção', copa: 'Vaga na Copa', mundial: 'Vaga no Mundial', semi: 'Semifinais', quartas: 'Quartas', permanece: '—', eliminado: '—' }[t.situacao] || ''}</span>` : ''}</td>`}</tr>`).join('')}
   </tbody></table></div>`;
 }
 
@@ -446,11 +447,12 @@ function viewCamp() {
   return `<section class="tc-card"><h3>Campeonatos<span class="dir">Temporada ${l.temporada} · semana ${l.semana}</span></h3>
       <label class="campo" style="max-width:420px"><span class="tc-mudo tc-peq">Competição</span><select class="tc-input" data-act="liga-sel">${ligas.map((x) => `<option value="${x.id}" ${x.id === l.id ? 'selected' : ''}>${esc(x.nome)}${x.status === 'aberta' ? ' (em andamento)' : ''}</option>`).join('')}</select></label>
       ${regrasLiga(l) ? `<p class="tc-peq tc-mudo" style="margin:10px 0 0">${regrasLiga(l)}</p>` : ''}</section>
-    ${l.tipo !== 'divisao' ? `<section class="tc-card"><h3>Classificados</h3>${tabelaClassificados(l)}</section>` : ''}
+    ${vagasCard()}
+    ${l.tipo !== 'divisao' ? tabelasIntl(l) : ''}
     ${chaveamento(l)}
     <section class="tc-card"><h3>Calendário e resultados</h3>${diasHtml(l)}</section>`;
 }
-const FASES = { rodada: 'Rodada', quartas: 'Quartas de final', semi: 'Semifinal', final: 'Final' };
+const FASES = { rodada: 'Rodada', treino: 'Treino', quartas: 'Quartas de final', semi: 'Semifinal', final: 'Final' };
 const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 // Rodadas minimizadas: um bloco por dia (2 rodadas) com resumo dos seus resultados; clicar abre os confrontos.
 function resumoDia(ps) { // devolve { html, cls }: vitórias em verde, derrotas em vermelho, jogos pendentes em dourado
@@ -498,18 +500,34 @@ function chaveamento(l) {
   return `<section class="tc-card"><h3>Chaveamento</h3><div class="ch">${colunas.map(([t, h]) => `<div class="ch-col"><h5>${t}</h5><div class="ch-cards">${h}</div></div>`).join('')}</div></section>`;
 }
 function regrasLiga(l) {
-  if (l.tipo === 'copa') return `Reúne os técnicos que ficaram entre os 2 primeiros da ${esc(nomeLiga().principal)} na semana 1 (as vagas que sobrarem são de equipes do sistema). Semifinais e final, sempre em melhor de cinco mapas.`;
-  if (l.tipo === 'mundial') return `Reúne os técnicos que foram finalistas (2 primeiros) da ${esc(nomeLiga().principal)} nas semanas 1 a 3, mais o campeão da ${esc(nomeLiga().copa)} se for técnico. Quartas, semifinais e final em melhor de cinco mapas.`;
-  return ''; // a liga individual não precisa de explicação na tela
+  const n = nomeLiga();
+  if (l.tipo === 'copa') return `16 equipes (técnicos classificados e equipes do sistema). De segunda a sexta, 2 jogos por dia contra equipes diferentes (melhor de 1). Os 4 melhores jogam as semifinais no sábado (melhor de 3) e a final no domingo (melhor de 5). Contra a equipe de outro técnico você joga contra o bot dela, e cada um conta o próprio resultado. O campeão ganha vaga no ${esc(n.mundial)}.`;
+  if (l.tipo === 'mundial') return `16 equipes em 4 grupos de 4, sorteados por potes de poder. Segunda: treino (2 jogos, sem pontos, só XP e Maestria). Terça a quinta: 2 jogos por dia contra o seu grupo (cada adversário duas vezes). Sexta: quartas de final (melhor de 3) com os 2 primeiros de cada grupo; sábado, semifinais (melhor de 3); domingo, a final (melhor de 5).`;
+  if (l.divisao === 'acesso') return `Os 2 primeiros sobem para a ${esc(n.principal)}; os demais continuam na ${esc(n.acesso)}.`;
+  return l.semana === 1 || l.semana === 4
+    ? `Os 2 primeiros ganham vaga na ${esc(n.copa)}${l.semana === 4 ? ' da próxima temporada' : ''}. Não há rebaixamento.`
+    : `Os 2 primeiros ganham vaga no ${esc(n.mundial)}. Não há rebaixamento.`;
 }
-function tabelaClassificados(l) {
-  return `<table class="tc-tabela"><thead><tr><th>Semente</th><th>Equipe</th><th class="n">Poder</th></tr></thead><tbody>${l.tabela.map((t) => `<tr class="${t.org.id === S.meu.org.id ? 'eu' : ''}"><td>${t.pos}</td><td><div class="org">${escudoOrg(t.org, 24)}<span>${esc(t.org.nome)}${t.org.usuario ? ' ★' : ''}</span></div></td><td class="n">${t.poder}</td></tr>`).join('')}</tbody></table>`;
+// Vagas internacionais já conquistadas pelo técnico.
+function vagasCard() {
+  const v = S.camp?.vagas || []; if (!v.length) return '';
+  const n = nomeLiga();
+  return `<section class="tc-card"><h3>Suas vagas</h3><ul class="tc-avisos">${v.map((x) => `<li>${x.tipo === 'copa' ? esc(n.copa) : esc(n.mundial)} · temporada ${x.temporada}</li>`).join('')}</ul></section>`;
+}
+// Copa: tabela geral de 16; Mundial: uma tabela por grupo.
+function tabelasIntl(l) {
+  const meuId = S.meu.org.id;
+  if (l.tipo === 'copa') return `<section class="tc-card"><h3>Classificação</h3><p class="tc-mudo tc-peq" style="margin:0 0 8px">Os 4 primeiros vão às semifinais.</p>${tabelaHtml(l.tabela, meuId)}</section>`;
+  const grupos = [...new Set(l.tabela.map((t) => t.grupo))].filter(Boolean).sort();
+  return `<section class="tc-card"><h3>Fase de grupos</h3><p class="tc-mudo tc-peq" style="margin:0 0 8px">Os 2 primeiros de cada grupo vão às quartas de final.</p>
+    <div class="tc-grupos">${grupos.map((g) => `<div><h4 class="tc-eyebrow">Grupo ${esc(g)}</h4>${tabelaHtml(l.tabela.filter((t) => t.grupo === g), meuId)}</div>`).join('')}</div></section>`;
 }
 function viewClass() {
   if (!S.camp) return '<p class="tc-carregando">Carregando…</p>';
   const ligas = S.camp.ligas || [];
   const mine = ligas.find((l) => l.tipo === 'divisao' && l.tabela.some((t) => t.org.id === S.meu.org.id) && l.status === 'aberta') || ligas.find((l) => l.tabela.some((t) => t.org.id === S.meu.org.id));
   if (!mine) return '<section class="tc-card"><p class="tc-mudo" style="margin:0">Sem classificação ainda.</p></section>';
+  if (mine.tipo === 'mundial') return tabelasIntl(mine);
   return `<section class="tc-card"><h3>${esc(mine.nome)}</h3>${tabelaHtml(mine.tabela, S.meu.org.id)}
     </section>`;
 }
