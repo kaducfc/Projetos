@@ -259,6 +259,7 @@ test('25. inibidor derrubado gera superminions na rota, e o inibidor renasce dep
   assert.equal(P.equipes.vermelho.inibidoresCaidos.topo, true); assert.ok(inib.morto && inib.renasceEm > P.t);
   ate(P, 100); assert.ok(P.minions.some((m) => m.subtipo === 'super' && m.equipe === 'vermelho' && m.rota === 'topo'), 'superminion nasce na rota do inibidor');
   assert.ok(!P.minions.some((m) => m.subtipo === 'super' && m.equipe === 'azul'), 'o lado do inibidor caído não ganha super');
+  ate(P, inib.renasceEm - 1); for (const m of P.minions) if (m.equipe === 'vermelho') m.morto = true; // sem superminions por perto, o inibidor não é derrubado de novo antes da checagem
   ate(P, inib.renasceEm + 0.05); assert.equal(inib.morto, false); assert.ok(inib.hp > inib.hpMax * 0.5, 'renasce com a vida cheia (os superminions inimigos já podem estar batendo nele)'); assert.equal(P.equipes.vermelho.inibidoresCaidos.topo, false);
   const antes = P.minions.filter((m) => m.subtipo === 'super').length; ate(P, P.t + 35);
   assert.equal(P.minions.filter((m) => m.subtipo === 'super' && m.nascido > inib.renasceEm).length, 0, 'depois do respawn não nascem mais superminions'); assert.ok(antes >= 0);
