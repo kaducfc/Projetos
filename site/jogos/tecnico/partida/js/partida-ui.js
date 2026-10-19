@@ -296,21 +296,54 @@ function atualizarFeed() {
 }
 
 // ------------------------------------------------------------------ resultado
+const ORDEM_POS = { top: 0, selva: 1, meio: 2, atirador: 3, suporte: 4 };
+const NOME_POS = { top: 'Topo', selva: 'Selva', meio: 'Meio', atirador: 'Atirador', suporte: 'Suporte' };
 function mostrarResultado() {
   const P = E.partida; const r = P.resultadoFinal; E.fimMostrado = true;
   const nome = (eq) => (eq === 'azul' ? E.config.nomeAzul || 'Equipe Azul' : E.config.nomeVermelho || 'Equipe Vermelha');
+  const min = Math.max(1, r.duracao / 60);
+  const maxDano = Math.max(1, ...r.jogadores.map((j) => j.dano)); const maxSofrido = Math.max(1, ...r.jogadores.map((j) => j.danoSofrido));
+  const topDano = r.jogadores.reduce((m, j) => (j.dano > m.dano ? j : m), r.jogadores[0]);
+  const kda = (j) => (j.mortes === 0 ? (j.abates + j.assistencias > 0 ? 'Perfeito' : '0.0 KDA') : `${((j.abates + j.assistencias) / j.mortes).toFixed(1)} KDA`);
+  const slot = (id) => { const it = id ? ITENS[id] : null; if (!it) return '<span class="pt-item rs-it vazio"></span>'; const u = itemUrl(it.ddragon); return `<span class="pt-item rs-it" title="${esc(it.nome)}"><span class="ini">${esc(it.nome[0])}</span>${u ? `<img src="${u}" alt="${esc(it.nome)}" width="32" height="32" loading="lazy">` : ''}</span>`; };
+  const itens = (j) => { const l = [...j.itens]; while (l.length < 6) l.push(null); return l.slice(0, 6).map(slot).join('') + '<span class="pt-item rs-it ward" title="Totem de Vigia"><img src="img/ward.webp" alt="" width="32" height="32"></span>'; };
+  const linha = (j) => {
+    const mvp = r.mvp && r.mvp.id === j.id && r.mvp.campeao === j.campeao;
+    return `<div class="rs-l ${j.equipe === 'azul' ? 'a' : 'v'}${mvp ? ' mvp' : ''}">
+      <div class="rs-nv"><b>${j.nivel}</b></div>
+      <div class="rs-ch">${campIcone(j.campeao, 46)}</div>
+      <div class="rs-nm"><b>${nick(j.equipe, j.nome)}</b><small>${esc(j.campeao)} · ${esc(NOME_POS[j.pos] || j.pos)}</small></div>
+      <div class="rs-its">${itens(j)}</div>
+      <div class="rs-kda"><b>${j.abates} / ${j.mortes} / ${j.assistencias}</b><small>${kda(j)}</small></div>
+      <div class="rs-dano"><span class="dc"><b>${j === topDano ? '<i class="st">★</i>' : ''}${fmt(j.dano)}</b><u><i style="width:${Math.round(j.dano / maxDano * 100)}%"></i></u></span><span class="ds"><b>${fmt(j.danoSofrido)}</b><u><i style="width:${Math.round(j.danoSofrido / maxSofrido * 100)}%"></i></u></span></div>
+      <div class="rs-ouro"><span class="oc"><b>${fmt(j.ouro)}</b><small>${fmt(j.ouro / min)} / min</small></span><span class="cs"><b>${fmt(j.cs)}</b><small>${(j.cs / min).toFixed(1)} / min</small></span></div>
+    </div>`;
+  };
+  const bloco = (eq, rotulo) => {
+    const t = r.equipes[eq]; const js = r.jogadores.filter((j) => j.equipe === eq).sort((x, y) => (ORDEM_POS[x.pos] ?? 9) - (ORDEM_POS[y.pos] ?? 9));
+    const venceu = r.vencedor === eq; const torresDerrubadas = r.equipes[eq === 'azul' ? 'vermelho' : 'azul'].torresPerdidas; const inibDerrubados = r.equipes[eq === 'azul' ? 'vermelho' : 'azul'].inibidoresPerdidos;
+    return `<section class="rs-eq ${eq === 'azul' ? 'a' : 'v'}">
+      <header><h3>${rotulo}</h3><span class="rs-nome">${esc(nome(eq))}</span><em class="rs-vd ${venceu ? 'v' : 'd'}">${r.vencedor ? (venceu ? 'Vitória' : 'Derrota') : ''}</em>
+        <span class="rs-tot"><i class="ic">⚔</i>${t.abates} / ${t.mortes} / ${js.reduce((s, j) => s + j.assistencias, 0)}</span>
+        <span class="rs-tot"><i class="ic-o"></i>${fmt(t.ouro)}</span>
+        <span class="rs-obj" title="Torres derrubadas"><img src="img/torre_${eq === 'azul' ? 'azul' : 'vermelho'}.webp" alt="">${torresDerrubadas}</span>
+        <span class="rs-obj" title="Inibidores derrubados"><img src="img/inibidor_${eq === 'azul' ? 'azul' : 'vermelho'}.webp" alt="">${inibDerrubados}</span>
+        <span class="rs-obj" title="Dragões"><img src="img/dragao.webp" alt="">${t.dragoes}</span>
+        <span class="rs-obj" title="Arautos"><img src="img/arauto.webp" alt="">${t.arautos}</span>
+        <span class="rs-obj" title="Barões"><img src="img/barao.webp" alt="">${t.baroes}</span></header>
+      ${js.map(linha).join('')}</section>`;
+  };
   const titulo = r.vencedor ? `${esc(nome(r.vencedor))} venceu` : 'Partida interrompida';
-  const linhas = r.jogadores.map((j) => `<tr class="${j.equipe === 'azul' ? 'a' : 'v'}"><td>${esc(j.campeao)} <small>${nick(j.equipe, j.nome)}</small></td><td>${esc(j.pos)}</td><td class="n">${j.nivel}</td><td class="n">${j.abates}/${j.mortes}/${j.assistencias}</td><td class="n">${j.cs}</td><td class="n">${fmt(j.dano)}</td><td class="n">${fmt(j.ouro)}</td><td class="n">${j.ganks}</td></tr>`).join('');
-  const eqa = r.equipes.azul, eqv = r.equipes.vermelho;
   const d = document.createElement('div'); d.className = 'pt-fundo';
-  d.innerHTML = `<div class="pt-modal"><h2 class="${r.vencedor === 'azul' ? 'a' : 'v'}">${titulo}</h2>
-    <p style="color:#8fa3bf;margin:4px 0 8px">Duração ${tempoTexto(r.duracao)} · motivo: ${esc(r.motivo || '')} · semente ${r.semente}${r.mvp ? ` · destaque: <b style="color:#f5cf5a">${esc(r.mvp.campeao)}</b> (${esc(r.mvp.nome)})` : ''}</p>
-    <table class="pt-res"><tr><th>Equipe</th><th class="n">Abates</th><th class="n">Ouro</th><th class="n">Torres perdidas</th><th class="n">Inibidores perdidos</th><th class="n">Dragões</th><th class="n">Barões</th></tr>
-      <tr class="a"><td>${esc(nome('azul'))}</td><td class="n">${eqa.abates}</td><td class="n">${fmt(eqa.ouro)}</td><td class="n">${eqa.torresPerdidas}</td><td class="n">${eqa.inibidoresPerdidos}</td><td class="n">${eqa.dragoes}</td><td class="n">${eqa.baroes}</td></tr>
-      <tr class="v"><td>${esc(nome('vermelho'))}</td><td class="n">${eqv.abates}</td><td class="n">${fmt(eqv.ouro)}</td><td class="n">${eqv.torresPerdidas}</td><td class="n">${eqv.inibidoresPerdidos}</td><td class="n">${eqv.dragoes}</td><td class="n">${eqv.baroes}</td></tr></table>
-    <table class="pt-res"><tr><th>Campeão</th><th>Posição</th><th class="n">Nv</th><th class="n">K/D/A</th><th class="n">CS</th><th class="n">Dano</th><th class="n">Ouro</th><th class="n">Ganks</th></tr>${linhas}</table>
-    <div id="res-acoes" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="pt-btn" id="r-fechar">Fechar</button><button class="pt-btn ouro" id="r-novo">Jogar de novo</button></div></div>`;
+  d.innerHTML = `<div class="pt-modal rs" data-dano="causado" data-ouro="ouro"><div class="rs-topo"><h2 class="${r.vencedor === 'azul' ? 'a' : 'v'}">${titulo}</h2>
+    <p>Duração <b>${tempoTexto(r.duracao)}</b> · ${esc(r.motivo || '')}${r.mvp ? ` · destaque: <b class="ouro">${esc(r.mvp.campeao)}</b> (${esc(r.mvp.nome)})` : ''}<span class="rs-sem">semente ${r.semente}</span></p></div>
+    <div class="rs-cab"><span></span><span></span><span></span><span class="c">Itens</span><span class="c">K / D / A</span>
+      <span class="c rs-alt"><button data-alt="dano" aria-label="Alternar dano">‹</button><span class="dc">Dano causado</span><span class="ds">Dano sofrido</span><button data-alt="dano" aria-label="Alternar dano">›</button></span>
+      <span class="c rs-alt"><button data-alt="ouro" aria-label="Alternar ouro e CS">‹</button><span class="oc">Ouro</span><span class="cs">Farm (CS)</span><button data-alt="ouro" aria-label="Alternar ouro e CS">›</button></span></div>
+    ${bloco('azul', 'TIME AZUL')}${bloco('vermelho', 'TIME VERMELHO')}
+    <div id="res-acoes" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="pt-btn" id="r-fechar">Fechar</button><button class="pt-btn ouro" id="r-novo">Jogar de novo</button></div></div>`;
   document.body.appendChild(d);
+  d.querySelectorAll('[data-alt]').forEach((b) => { b.onclick = () => { const m = d.querySelector('.rs'); if (b.dataset.alt === 'dano') m.dataset.dano = m.dataset.dano === 'causado' ? 'sofrido' : 'causado'; else m.dataset.ouro = m.dataset.ouro === 'ouro' ? 'cs' : 'ouro'; }; });
   d.querySelector('#r-fechar').onclick = () => d.remove();
   if (E.config.modo !== 'teste') d.querySelector('#r-novo').remove(); else d.querySelector('#r-novo').onclick = () => { d.remove(); reiniciar(); };
   if (E.config.aoFim) E.config.aoFim(r, d.querySelector('#res-acoes'), d);
