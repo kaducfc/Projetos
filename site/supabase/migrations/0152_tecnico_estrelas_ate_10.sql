@@ -90,7 +90,7 @@ end;
 $$;
 revoke all on function public.tc_jogador_json(tc_jogadores, boolean) from public, anon, authenticated;
 
--- Subir a estrela. Legado: via 'copias' (N cópias repetidas) ou via 'fragmentos' (3 x N x base); jogador comum: só fragmentos.
+-- Subir a estrela. Legado: via 'copias' (N cópias repetidas) ou via 'fragmentos' (3 x N x base; no 0153 o Legado passa a 2 x); jogador comum: só fragmentos.
 drop function if exists public.tc_subir_estrela(bigint);
 create or replace function public.tc_subir_estrela(jogador bigint, via text default null)
 returns jsonb language plpgsql security definer set search_path = public as $$
