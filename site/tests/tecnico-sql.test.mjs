@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 10, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql', '0143_tecnico_mercado_so_na_faixa.sql', '0144_tecnico_avisos_novidades_calendario.sql', '0145_tecnico_avisos_so_novidades.sql', '0146_tecnico_legados_asia.sql', '0147_tecnico_legados_idades.sql', '0148_tecnico_baus_em_rc.sql', '0149_tecnico_legados_china.sql', '0150_tecnico_sem_forma.sql', '0151_tecnico_idiomas.sql', '0152_tecnico_estrelas_ate_10.sql', '0153_tecnico_estrela_dobro_legado.sql', '0154_tecnico_demissao_conta_copias.sql', '0155_tecnico_ficticio_max_80.sql', '0156_tecnico_fragmentos_novos_valores.sql', '0157_tecnico_legados_pain_red_lyon.sql', '0158_tecnico_rank_poder.sql', '0159_tecnico_rank_competicao.sql', '0160_tecnico_campanhas_melhores.sql', '0161_tecnico_campanhas_bonus.sql', '0162_tecnico_partida_wo.sql', '0163_tecnico_emblema_texto.sql', '0164_tecnico_emblema_texto_10.sql', '0165_tecnico_emblema_texto_nome.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql', '0143_tecnico_mercado_so_na_faixa.sql', '0144_tecnico_avisos_novidades_calendario.sql', '0145_tecnico_avisos_so_novidades.sql', '0146_tecnico_legados_asia.sql', '0147_tecnico_legados_idades.sql', '0148_tecnico_baus_em_rc.sql', '0149_tecnico_legados_china.sql', '0150_tecnico_sem_forma.sql', '0151_tecnico_idiomas.sql', '0152_tecnico_estrelas_ate_10.sql', '0153_tecnico_estrela_dobro_legado.sql', '0154_tecnico_demissao_conta_copias.sql', '0155_tecnico_ficticio_max_80.sql', '0156_tecnico_fragmentos_novos_valores.sql', '0157_tecnico_legados_pain_red_lyon.sql', '0158_tecnico_rank_poder.sql', '0159_tecnico_rank_competicao.sql', '0160_tecnico_campanhas_melhores.sql', '0161_tecnico_campanhas_bonus.sql', '0162_tecnico_partida_wo.sql', '0163_tecnico_emblema_texto.sql', '0164_tecnico_emblema_texto_10.sql', '0165_tecnico_emblema_texto_nome.sql', '0166_tecnico_simbolos.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -81,8 +81,8 @@ t('criação da organização: validações, unicidade e uma por conta', () => {
   assert.equal(falha("select tc_criar_org('Time Zeta','alf')", 2), 'sigla_em_uso');
   assert.equal(falha("select tc_criar_org('ab','ZZZ')", 2), 'nome_invalido');
   assert.equal(falha("select tc_criar_org('Time Zeta','A')", 2), 'sigla_invalida');
-  assert.equal(falha("select tc_criar_org('Time Zeta','ZZZ','escudo-99')", 2), 'escudo_invalido');
-  assert.equal(falha("select tc_criar_org('Time Zeta','ZZZ','escudo-1','#12345','#d9a82b')", 2) !== '', true, 'cor inválida é recusada');
+  assert.equal(falha("select tc_criar_org('Time Zeta','ZZZ','escudo-1')", 2), 'escudo_invalido');
+  assert.equal(falha("select tc_criar_org('Time Zeta','ZZZ','v4:1:083871:12131d','#12345','#d9a82b')", 2) !== '', true, 'cor inválida é recusada');
   V("select tc_criar_org('Time Beta','bet')", 2);
   V("select tc_criar_org('Time Gama','gam')", 3);
   V("select tc_criar_org('Time Delta','del')", 4);
@@ -679,9 +679,9 @@ t('posições pelo jogo: só administrador troca, valida as posições, guarda a
 
 // ---------------------------------------------------------------- segurança (SQL 0094)
 t('segurança: cor do escudo só aceita #rrggbb (regressão: nada de código no SVG dos outros técnicos)', () => {
-  const r = psql(['-d', 't', '-c', `set app.uid='${U(1)}'`, '-c', `select tc_personalizar_org('escudo-1', '"><img src=x onerror=alert(1)>', '#ffffff', 'classico')`]);
+  const r = psql(['-d', 't', '-c', `set app.uid='${U(1)}'`, '-c', `select tc_personalizar_org('v4:1:083871:12131d', '"><img src=x onerror=alert(1)>', '#ffffff', 'classico')`]);
   assert.notEqual(r.status, 0); assert.match(r.stderr, /tc_orgs_cor1_check/);
-  V(`select tc_personalizar_org('escudo-2', '#112233', '#AABBCC', 'moderno')`, 1);
+  V(`select tc_personalizar_org('v4:2:2a0f44:090211', '#112233', '#AABBCC', 'moderno')`, 1);
   assert.equal(V("select cor1 || cor2 from tc_orgs where id = 1"), '#112233#AABBCC');
 });
 t('segurança: o resumo do gameplay é reconstruído no servidor (só números limitados e jogadores das duas equipes)', () => {
@@ -1093,11 +1093,11 @@ t('baús em créditos de equipe (período de testes): Básico 5, Premium 10, pac
   V("delete from tc_jogadores where org_id = 1 and not ficticio"); V("update tc_orgs set creditos = 50000000 where id = 1");
 });
 
-t('ícone do time: emblema (1 a 30) e bandeira opcional (1 a 20) com cores; formatos inválidos são recusados e o escudo antigo ainda vale', () => {
-  V("select tc_personalizar_org('v2:30:d9a82b:ffffff:1b3a6b:20:d9a82b:1b3a6b', '#d9a82b', '#ffffff', 'classico')", 1);
-  assert.equal(V("select escudo from tc_orgs where id = 1"), 'v2:30:d9a82b:ffffff:1b3a6b:20:d9a82b:1b3a6b');
-  V("select tc_personalizar_org('v2:1:ff0000:00ff00:0000ff:0:000000:ffffff', '#ff0000', '#00ff00', 'classico')", 1); // sem bandeira
-  assert.equal(V("select escudo from tc_orgs where id = 1"), 'v2:1:ff0000:00ff00:0000ff:0:000000:ffffff');
+t('ícone do time: símbolo (1 a 49) com 1 a 3 cores; formatos inválidos e os escudos/emblemas antigos são recusados; os times antigos foram convertidos', () => {
+  V("select tc_personalizar_org('v4:49:d9a82b:ffffff:1b3a6b', '#d9a82b', '#ffffff', 'classico')", 1);
+  assert.equal(V("select escudo from tc_orgs where id = 1"), 'v4:49:d9a82b:ffffff:1b3a6b');
+  V("select tc_personalizar_org('v4:1:ff0000', '#ff0000', '#00ff00', 'classico')", 1); // um símbolo pode guardar só 1 cor
+  assert.equal(V("select escudo from tc_orgs where id = 1"), 'v4:1:ff0000');
   // emblema só de escrita (v3): a escrita é sempre o nome do time (até 10 caracteres); formato fora do padrão é recusado
   const nomeOrig = V('select nome from tc_orgs where id = 1');
   V("update tc_orgs set nome = 'Fenix 77' where id = 1");
@@ -1108,11 +1108,11 @@ t('ícone do time: emblema (1 a 30) e bandeira opcional (1 a 20) com cores; form
   for (const ruim of ["v3:<b>:3:ffffff:d9a82b:4:112233:2:000000:3:1b3a6b:d9a82b", 'v3:Fenix 77:12:ffffff:d9a82b:4:112233:2:000000:3:1b3a6b:d9a82b', 'v3:Fenix 77:3:ffffff:d9a82b:9:112233:2:000000:3:1b3a6b:d9a82b', 'v3:Fenix 77:3:fffff:d9a82b:4:112233:2:000000:3:1b3a6b:d9a82b', 'v3:ABCDEFGHIJK:3:ffffff:d9a82b:4:112233:2:000000:3:1b3a6b:d9a82b'])
     assert.equal(falha(`select tc_personalizar_org('${ruim}', '#ffffff', '#d9a82b', 'classico')`, 1), 'dados_invalidos', ruim);
   V(`update tc_orgs set nome = '${nomeOrig.replace(/'/g, "''")}' where id = 1`);
-  for (const ruim of ['v2:31:d9a82b:ffffff:1b3a6b:1:d9a82b:1b3a6b', 'v2:0:d9a82b:ffffff:1b3a6b:1:d9a82b:1b3a6b', 'v2:5:d9a82b:ffffff:1b3a6b:21:d9a82b:1b3a6b', 'v2:5:zzzzzz:ffffff:1b3a6b:1:d9a82b:1b3a6b', 'v2:5:d9a82b:ffffff:1b3a6b', "v2:5:d9a82b:ffffff:1b3a6b:1:d9a82b:1b3a6b'); drop table tc_orgs; --"]) {
+  for (const ruim of ['v4:50:d9a82b:ffffff', 'v4:0:d9a82b', 'v4:5', 'v4:5:zzzzzz', 'v4:5:d9a82b:ffffff:1b3a6b:000000', "v4:5:d9a82b'); drop table tc_orgs; --", 'escudo-3', 'escudo-1', 'v2:30:d9a82b:ffffff:1b3a6b:20:d9a82b:1b3a6b', 'v2:1:ff0000:00ff00:0000ff:0:000000:ffffff']) {
     assert.ok(!Q(`select tc_personalizar_org($x$${ruim}$x$, '#d9a82b', '#ffffff', 'classico')`, 1).ok, ruim);
   }
-  V("select tc_personalizar_org('escudo-3', '#d9a82b', '#ffffff', 'classico')", 1);
-  assert.equal(V("select escudo from tc_orgs where id = 1"), 'escudo-3');
+  assert.equal(V("select count(*) from tc_orgs where escudo !~ '^(v3|v4):'"), '0', 'nenhum time ficou com escudo antigo');
+  assert.match(V("select escudo from tc_orgs where user_id is null order by id limit 1"), /^v4:([1-9]|[1-4][0-9]):[0-9a-f]{6}:[0-9a-f]{6}$/, 'times do sistema foram convertidos');
 });
 
 t('vender com contrato vigente: ao comprar, o contrato acaba, o vendedor recebe 50% do restante e o comprador recebe o jogador sem contrato; Legado também vende', () => {

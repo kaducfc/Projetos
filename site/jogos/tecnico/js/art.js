@@ -1,33 +1,16 @@
-// Arte do jogo gerada em SVG: escudos das organizações e retratos provisórios dos jogadores.
+// Arte do jogo: ícone das organizações e retratos provisórios dos jogadores (SVG).
 // Quando um jogador tiver `retrato` (arquivo de imagem), o retrato real substitui o desenho.
 import { esc, SIGLA_VAGA } from './regras.js';
-import { icDecodificar, icHtml, txDecodificar, textoHtml } from './icone.js?v=2';
+import { icDecodificar, icHtml, icPorNome, txDecodificar, textoHtml } from './icone.js?v=3';
 
 const hash = (s) => { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 
-export const ESCUDOS = ['escudo-1', 'escudo-2', 'escudo-3', 'escudo-4', 'escudo-5', 'escudo-6'];
-
-const FORMAS = {
-  'escudo-1': (c1, c2) => `<path d="M50 4 L92 16 V58 C92 86 70 104 50 116 C30 104 8 86 8 58 V16 Z" fill="${c1}" stroke="${c2}" stroke-width="5"/><path d="M50 18 L78 26 V58 C78 78 64 90 50 100 C36 90 22 78 22 58 V26 Z" fill="none" stroke="${c2}" stroke-width="2.5" opacity=".7"/>`,
-  'escudo-2': (c1, c2) => `<circle cx="50" cy="60" r="46" fill="${c1}" stroke="${c2}" stroke-width="5"/><circle cx="50" cy="60" r="34" fill="none" stroke="${c2}" stroke-width="2.5" opacity=".7"/>`,
-  'escudo-3': (c1, c2) => `<path d="M50 4 L92 28 V82 L50 116 L8 82 V28 Z" fill="${c1}" stroke="${c2}" stroke-width="5"/><path d="M50 20 L78 36 V74 L50 98 L22 74 V36 Z" fill="none" stroke="${c2}" stroke-width="2.5" opacity=".7"/>`,
-  'escudo-4': (c1, c2) => `<path d="M6 14 L50 4 L94 14 V70 L50 116 L6 70 Z" fill="${c1}" stroke="${c2}" stroke-width="5"/><path d="M6 40 L50 62 L94 40" fill="none" stroke="${c2}" stroke-width="4"/>`,
-  'escudo-5': (c1, c2) => `<path d="M50 2 L96 60 L50 118 L4 60 Z" fill="${c1}" stroke="${c2}" stroke-width="5"/><path d="M50 22 L78 60 L50 98 L22 60 Z" fill="none" stroke="${c2}" stroke-width="2.5" opacity=".7"/>`,
-  'escudo-6': (c1, c2) => `<path d="M50 6 C62 6 80 12 94 24 L86 60 C80 92 64 108 50 116 C36 108 20 92 14 60 L6 24 C20 12 38 6 50 6 Z" fill="${c1}" stroke="${c2}" stroke-width="5"/><path d="M30 34 L50 22 L70 34 M30 54 L50 42 L70 54" fill="none" stroke="${c2}" stroke-width="4" stroke-linecap="round"/>`,
-};
-
-// Escudo da organização com a sigla no centro.
-export function escudoSvg(escudo, cor1, cor2, sigla = '', size = 56) {
-  const forma = (FORMAS[escudo] || FORMAS['escudo-1'])(cor1 || '#1b3a6b', cor2 || '#d9a82b');
-  const txt = sigla ? `<text x="50" y="72" text-anchor="middle" font-family="Bebas Neue, Impact, sans-serif" font-size="${sigla.length > 3 ? 30 : 36}" fill="${cor2 || '#d9a82b'}" stroke="#000" stroke-width="1" paint-order="stroke" letter-spacing="1">${esc(sigla)}</text>` : '';
-  return `<svg class="tc-escudo" viewBox="0 0 100 120" width="${size}" height="${Math.round(size * 1.2)}" role="img" aria-label="Escudo ${esc(sigla)}">${forma}${txt}</svg>`;
-}
-// Ícone novo (emblema + bandeira) quando a organização tem; senão o escudo desenhado das contas antigas e dos times do sistema.
+// Ícone da organização: escrita (v3), símbolo (v4) ou, para times do sistema e contas antigas, um símbolo fixo pelo nome com as cores do time.
 export function escudoOrg(o, size = 44) {
   const tx = txDecodificar(o?.escudo);
   if (tx) return textoHtml(tx, Math.round(size * 1.1), o?.nome || o?.sigla || '');
-  const ic = icDecodificar(o?.escudo);
-  return ic ? icHtml(ic, Math.round(size * 1.1), o?.sigla || '') : escudoSvg(o?.escudo, o?.cor1, o?.cor2, o?.sigla, size);
+  const ic = icDecodificar(o?.escudo) || icPorNome(o?.nome || o?.sigla, o?.cor1, o?.cor2);
+  return icHtml(ic, Math.round(size * 1.1), o?.sigla || '');
 }
 
 const COR_VAGA = { top: ['#7c2d12', '#f97316'], selva: ['#14532d', '#4ade80'], meio: ['#1e3a8a', '#60a5fa'], atirador: ['#7f1d1d', '#f87171'], suporte: ['#581c87', '#c084fc'] };

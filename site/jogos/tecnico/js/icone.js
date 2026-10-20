@@ -1,55 +1,106 @@
-// Ícone da organização: emblema (30, 3 partes de cor) + bandeira opcional (20, moldura e tecido).
-// Tudo é montado com máscaras CSS sobre as imagens em img/icones/: cada parte vira uma camada colorida.
-// O ícone viaja no campo `escudo` da organização em texto: v2:<emblema>:<c1>:<c2>:<c3>:<bandeira ou 0>:<moldura>:<tecido>
+// Ícone da organização: um dos símbolos de img/simbolos/ (cada um aceita de 1 a 3 cores) ou só a escrita (v3, abaixo).
+// Cada símbolo tem uma camada fixa (partes que não mudam de cor) e de 1 a 3 camadas recoloríveis. A imagem da camada guarda só o
+// sombreado e o recorte; a cor escolhida entra por background-blend-mode: hard-light, então o relevo original é mantido.
+// O símbolo viaja no campo `escudo` da organização em texto: v4:<símbolo>:<cor 1>[:<cor 2>[:<cor 3>]] (cores em hex sem #).
 import { esc } from './regras.js';
 
-export const N_EMBLEMAS = 30;
-export const N_BANDEIRAS = 20;
-export const PARTES_EMBLEMA = ['Contorno', 'Corpo', 'Detalhe'];
-export const PARTES_BANDEIRA = ['Moldura (metal)', 'Tecido'];
-// Onde o emblema fica dentro de cada bandeira (centro do maior círculo do tecido e lado do emblema, em fração do quadrado).
-export const BANDEIRAS = [{"id": 1, "cx": 0.4961, "cy": 0.5195, "s": 0.5202}, {"id": 2, "cx": 0.5078, "cy": 0.5469, "s": 0.6052}, {"id": 3, "cx": 0.457, "cy": 0.4688, "s": 0.4652}, {"id": 4, "cx": 0.4922, "cy": 0.5781, "s": 0.5966}, {"id": 5, "cx": 0.4961, "cy": 0.5, "s": 0.4408}, {"id": 6, "cx": 0.5, "cy": 0.5273, "s": 0.62}, {"id": 7, "cx": 0.5, "cy": 0.3594, "s": 0.561}, {"id": 8, "cx": 0.4922, "cy": 0.5273, "s": 0.6104}, {"id": 9, "cx": 0.5117, "cy": 0.5312, "s": 0.5891}, {"id": 10, "cx": 0.4922, "cy": 0.4258, "s": 0.5806}, {"id": 11, "cx": 0.5, "cy": 0.5391, "s": 0.62}, {"id": 12, "cx": 0.4883, "cy": 0.3711, "s": 0.5966}, {"id": 13, "cx": 0.4961, "cy": 0.5117, "s": 0.578}, {"id": 14, "cx": 0.4961, "cy": 0.457, "s": 0.524}, {"id": 15, "cx": 0.4961, "cy": 0.5078, "s": 0.6043}, {"id": 16, "cx": 0.5117, "cy": 0.5234, "s": 0.5407}, {"id": 17, "cx": 0.4961, "cy": 0.5234, "s": 0.6047}, {"id": 18, "cx": 0.4922, "cy": 0.2734, "s": 0.4596}, {"id": 19, "cx": 0.4961, "cy": 0.3242, "s": 0.516}, {"id": 20, "cx": 0.5, "cy": 0.3242, "s": 0.4942}];
+// [nome, tem camada fixa (0/1), [[rótulo da cor, cor original], ...]] — a posição + 1 é o número do símbolo.
+export const SIMBOLOS = [
+  ["Tridente Abissal", 1, [["Lâminas", '#1467b3'], ["Metal escuro", '#12131d']]],
+  ["Capuz Arcano", 0, [["Brilho", '#6b14a4'], ["Capuz", '#090211']]],
+  ["Coroa Dourada", 0, [["Ouro", '#cf8015'], ["Fundo", '#0d0704']]],
+  ["Vórtice Flamejante", 0, [["Chamas", '#de1903'], ["Núcleo", '#0c0505']]],
+  ["Cristais de Jade", 1, [["Cor", '#075b60']]],
+  ["Bússola Rúnica", 1, [["Gema", '#0d77c0'], ["Anel", '#231611']]],
+  ["Lobo Gélido", 1, [["Pelagem", '#dddee6'], ["Sombra", '#070b15']]],
+  ["Chifres Rubros", 0, [["Cor", '#b9040a']]],
+  ["Redemoinho", 1, [["Cor", '#0362c1']]],
+  ["Elmo Sombrio", 1, [["Brilho", '#d54103'], ["Armadura", '#140f0e']]],
+  ["Flor Arcana", 1, [["Cor", '#6523a0']]],
+  ["Naja", 0, [["Escamas", '#c6840d'], ["Corpo", '#0f0c08']]],
+  ["Garras Sombrias", 1, [["Detalhes", '#472773'], ["Metal", '#11101a']]],
+  ["Espinhos", 1, [["Cor", '#226219']]],
+  ["Lâminas Carmesim", 0, [["Lâminas", '#a3030b'], ["Centro", '#150c0d']]],
+  ["Espectro", 1, [["Capuz claro", '#dbd8dd'], ["Capa", '#0a0d16']]],
+  ["Tridente Real", 1, [["Cor", '#035ac3']]],
+  ["Fortaleza Vulcânica", 0, [["Lava", '#68362c'], ["Armadura", '#150908']]],
+  ["Escudo Dourado", 0, [["Moldura", '#a96317'], ["Fundo", '#16120d']]],
+  ["Fênix Rubra", 0, [["Pena", '#be040a'], ["Sombra", '#110203']]],
+  ["Presas Violeta", 1, [["Cor", '#520e77']]],
+  ["Águia", 1, [["Penas azuis", '#0b2c64'], ["Branco", '#e0e2ea']]],
+  ["Folhas de Esmeralda", 1, [["Cor", '#497a26']]],
+  ["Orbe Sombrio", 0, [["Orbe", '#422c62'], ["Corpo", '#0b0713']]],
+  ["Asas Douradas", 0, [["Ouro", '#fcb40b'], ["Contorno", '#050300']]],
+  ["Dragão Rubro", 0, [["Dragão", '#d90309'], ["Fundo", '#050000']]],
+  ["Leão Rei", 0, [["Ouro", '#eea40c'], ["Contorno", '#050300']]],
+  ["Lâminas Gêmeas", 1, [["Cor", '#00597d']]],
+  ["Letra Q", 1, [["Cor", '#0d5710']]],
+  ["Estrela Violeta", 0, [["Cor", '#73038b']]],
+  ["Fênix Negra", 0, [["Fênix", '#e1090e'], ["Corpo", '#0a0606']]],
+  ["Leão Branco", 1, [["Branco", '#fafbfb'], ["Contorno", '#020818']]],
+  ["Letra R", 1, [["Contorno", '#d59932'], ["Letra", '#1d1b11']]],
+  ["Asas Rubras", 0, [["Cor", '#bb0104']]],
+  ["Escudo da Águia", 1, [["Escudo", '#022e5c'], ["Águia", '#f3f3f5']]],
+  ["Lança Dourada", 0, [["Ouro", '#f0b135'], ["Fundo", '#0f0e0d']]],
+  ["Montanha Rubra", 0, [["Lâminas", '#e50710'], ["Fundo", '#0f0c0e']]],
+  ["Capuz Roxo", 1, [["Capuz", '#731fae'], ["Fundo", '#040615']]],
+  ["Ciclone", 0, [["Vórtice", '#84cd02'], ["Fundo", '#010b09']]],
+  ["Vitória", 1, [["Prata", '#f4f5f5'], ["Fundo", '#060e14']]],
+  ["Demônio", 0, [["Rosto", '#e30107'], ["Contorno", '#0f0000']]],
+  ["Dragão Glacial", 0, [["Branco", '#f6f8f9'], ["Azul", '#057dc4'], ["Sombra", '#7d9db6']]],
+  ["Tridente Flamejante", 0, [["Ouro", '#dd8401'], ["Contorno", '#060300']]],
+  ["Fênix Eclipse", 0, [["Fênix", '#f00317'], ["Fundo", '#141213']]],
+  ["Coroa de Cristal", 0, [["Prata", '#e2e3e9'], ["Gema", '#01bcfc'], ["Metal escuro", '#0a0c10']]],
+  ["Ascensão", 0, [["Cor", '#0094ee']]],
+  ["Lua Sombria", 1, [["Cor", '#7e015f']]],
+  ["Lobo Cinzento", 0, [["Pelagem", '#f4f4f4'], ["Contorno", '#111112']]],
+  ["Asas de Fogo", 0, [["Cor", '#e37c01']]],
+];
+export const N_SIMBOLOS = SIMBOLOS.length;
 export const PALETA = ['#ffffff', '#e5e7eb', '#9ca3af', '#111827', '#f5cf5a', '#d9a82b', '#f97316', '#ef4444', '#ec4899', '#a855f7', '#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#84cc16', '#92400e'];
-export const ICONE_PADRAO = { e: 1, ec: ['#d9a82b', '#ffffff', '#1b3a6b'], b: 1, bc: ['#d9a82b', '#1b3a6b'] };
 
 const HEX = /^#[0-9a-f]{6}$/;
 const cor = (c, d) => (HEX.test(String(c || '').toLowerCase()) ? String(c).toLowerCase() : d);
-export const icClone = (ic) => ({ e: ic.e, ec: [...ic.ec], b: ic.b, bc: [...ic.bc] });
+// Cores originais do símbolo.
+export const simCoresPadrao = (s) => (SIMBOLOS[s - 1]?.[2] || []).map((c) => c[1]);
+export const ICONE_PADRAO = { s: 1, c: simCoresPadrao(1) };
+export const icClone = (ic) => ({ s: ic.s, c: [...ic.c] });
+// Troca de símbolo: volta para as cores originais dele.
+export const icTrocar = (s) => ({ s, c: simCoresPadrao(s) });
 
 export function icCodificar(ic) {
-  const e = Math.min(N_EMBLEMAS, Math.max(1, Number(ic.e) || 1));
-  const b = ic.b ? Math.min(N_BANDEIRAS, Math.max(1, Number(ic.b))) : 0;
-  const h = (c, d) => cor(c, d).slice(1);
-  return ['v2', e, h(ic.ec?.[0], '#d9a82b'), h(ic.ec?.[1], '#ffffff'), h(ic.ec?.[2], '#1b3a6b'), b, h(ic.bc?.[0], '#d9a82b'), h(ic.bc?.[1], '#1b3a6b')].join(':');
+  const s = Math.min(N_SIMBOLOS, Math.max(1, Number(ic.s) || 1));
+  const pad = simCoresPadrao(s);
+  return ['v4', s, ...pad.map((d, i) => cor(ic.c?.[i], d).slice(1))].join(':');
 }
-// Devolve o ícone ou null se o texto não for do formato novo (organizações antigas usam o escudo desenhado).
+// Devolve o ícone ou null se o texto não for do formato de símbolo (organizações antigas e times do sistema usam outros formatos).
 export function icDecodificar(txt) {
-  const m = /^v2:(\d{1,2}):([0-9a-f]{6}):([0-9a-f]{6}):([0-9a-f]{6}):(\d{1,2}):([0-9a-f]{6}):([0-9a-f]{6})$/.exec(String(txt || ''));
+  const m = /^v4:(\d{1,2})((?::[0-9a-f]{6}){1,3})$/.exec(String(txt || ''));
   if (!m) return null;
-  const e = Number(m[1]); const b = Number(m[5]);
-  if (e < 1 || e > N_EMBLEMAS || b > N_BANDEIRAS) return null;
-  return { e, ec: [`#${m[2]}`, `#${m[3]}`, `#${m[4]}`], b, bc: [`#${m[6]}`, `#${m[7]}`] };
+  const s = Number(m[1]);
+  if (s < 1 || s > N_SIMBOLOS) return null;
+  const dados = m[2].slice(1).split(':').map((h) => `#${h}`);
+  const pad = simCoresPadrao(s);
+  return { s, c: pad.map((d, i) => dados[i] || d) };
+}
+// Símbolo "de fallback" para quem ainda não tem um (times do sistema e contas antigas): fixo pelo nome, com as duas cores do time.
+export function icPorNome(nome, cor1, cor2) {
+  let h = 2166136261; for (const ch of String(nome || '')) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  const s = ((h >>> 0) % N_SIMBOLOS) + 1; const ic = icTrocar(s);
+  if (cor1) ic.c[0] = cor(cor1, ic.c[0]);
+  if (cor2 && ic.c.length > 1) ic.c[1] = cor(cor2, ic.c[1]);
+  return ic;
 }
 
 const num2 = (n) => String(n).padStart(2, '0');
-const DIR = new URL('../img/icones/', import.meta.url).href;
-const camada = (cls, c, mascara, extra = '') => `<i class="${cls}" style="--c:${c};-webkit-mask-image:url(${mascara});mask-image:url(${mascara});${extra}"></i>`;
+const DIR = new URL('../img/simbolos/', import.meta.url).href;
 
-// Emblema sozinho (3 camadas).
-export function emblemaHtml(ic, estilo = '') {
-  const n = num2(ic.e);
-  return `<span class="tc-emb" style="${estilo}">${[0, 1, 2].map((i) => camada('p', ic.ec[i], `${DIR}emb/e${n}-${i + 1}.webp`)).join('')}</span>`;
-}
 // Ícone completo, quadrado de `size` px.
 export function icHtml(ic, size = 56, rotulo = '') {
-  let pos = 'left:4%;top:4%;width:92%;height:92%';
-  if (ic.b) { const f = BANDEIRAS[ic.b - 1]; pos = `left:${((f.cx - f.s / 2) * 100).toFixed(2)}%;top:${((f.cy - f.s / 2) * 100).toFixed(2)}%;width:${(f.s * 100).toFixed(2)}%;height:${(f.s * 100).toFixed(2)}%`; }
-  let fundo = '';
-  if (ic.b) {
-    const n = num2(ic.b); const sombra = `background-image:url(${DIR}flag/f${n}-s.webp)`;
-    fundo = [camada('f', ic.bc[0], `${DIR}flag/f${n}-1.webp`, sombra), camada('f', ic.bc[1], `${DIR}flag/f${n}-2.webp`, sombra)].join('');
-  }
-  return `<span class="tc-ic" style="--s:${size}px" role="img" aria-label="${esc(rotulo)}">${fundo}${emblemaHtml(ic, pos)}</span>`;
+  const n = num2(ic.s); const info = SIMBOLOS[ic.s - 1];
+  const fixa = info[1] ? `<i class="x" style="background-image:url(${DIR}s${n}-0.webp)"></i>` : '';
+  const camadas = info[2].map((_, i) => { const u = `${DIR}s${n}-${i + 1}.webp`; return `<i class="p" style="--c:${ic.c[i]};background-image:url(${u});-webkit-mask-image:url(${u});mask-image:url(${u})"></i>`; }).join('');
+  return `<span class="tc-ic" style="--s:${size}px" role="img" aria-label="${esc(rotulo)}">${fixa}${camadas}</span>`;
 }
 
 // ---------------------------------------------------------------- emblema de TEXTO (v3)

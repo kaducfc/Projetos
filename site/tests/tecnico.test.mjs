@@ -8,10 +8,10 @@ import {
   PESOS, FORA_POSICAO, ELENCO_MAX, CONTRATO_MIN, CONTRATO_MAX, TAXA_MERCADO_PCT, PRECO_RC, VAGAS,
   poder, poderEmCampo, preco, salarioDe, taxaDe,
 } from '../jogos/tecnico/js/regras.js';
-import { escudoSvg, retratoSvg, ESCUDOS } from '../jogos/tecnico/js/art.js';
+import { retratoSvg } from '../jogos/tecnico/js/art.js';
 
 const ler = (f) => readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8');
-const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql', '0143_tecnico_mercado_so_na_faixa.sql', '0144_tecnico_avisos_novidades_calendario.sql', '0145_tecnico_avisos_so_novidades.sql', '0146_tecnico_legados_asia.sql', '0147_tecnico_legados_idades.sql', '0148_tecnico_baus_em_rc.sql', '0149_tecnico_legados_china.sql', '0150_tecnico_sem_forma.sql', '0151_tecnico_idiomas.sql', '0152_tecnico_estrelas_ate_10.sql', '0153_tecnico_estrela_dobro_legado.sql', '0154_tecnico_demissao_conta_copias.sql', '0155_tecnico_ficticio_max_80.sql', '0156_tecnico_fragmentos_novos_valores.sql', '0157_tecnico_legados_pain_red_lyon.sql', '0158_tecnico_rank_poder.sql', '0159_tecnico_rank_competicao.sql', '0160_tecnico_campanhas_melhores.sql', '0161_tecnico_campanhas_bonus.sql', '0162_tecnico_partida_wo.sql', '0163_tecnico_emblema_texto.sql', '0164_tecnico_emblema_texto_10.sql', '0165_tecnico_emblema_texto_nome.sql'].map(ler).join('\n');
+const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql', '0143_tecnico_mercado_so_na_faixa.sql', '0144_tecnico_avisos_novidades_calendario.sql', '0145_tecnico_avisos_so_novidades.sql', '0146_tecnico_legados_asia.sql', '0147_tecnico_legados_idades.sql', '0148_tecnico_baus_em_rc.sql', '0149_tecnico_legados_china.sql', '0150_tecnico_sem_forma.sql', '0151_tecnico_idiomas.sql', '0152_tecnico_estrelas_ate_10.sql', '0153_tecnico_estrela_dobro_legado.sql', '0154_tecnico_demissao_conta_copias.sql', '0155_tecnico_ficticio_max_80.sql', '0156_tecnico_fragmentos_novos_valores.sql', '0157_tecnico_legados_pain_red_lyon.sql', '0158_tecnico_rank_poder.sql', '0159_tecnico_rank_competicao.sql', '0160_tecnico_campanhas_melhores.sql', '0161_tecnico_campanhas_bonus.sql', '0162_tecnico_partida_wo.sql', '0163_tecnico_emblema_texto.sql', '0164_tecnico_emblema_texto_10.sql', '0165_tecnico_emblema_texto_nome.sql', '0166_tecnico_simbolos.sql'].map(ler).join('\n');
 const j = (o = {}) => ({ id: 1, nome: 'Teste', pos: 'meio', pos2: [], mec: 60, rotas: 60, macro: 60, tf: 60, mental: 60, fama: 50, forma: 50, idade: 22, potencial: 70, ...o });
 
 test('Poder individual: média ponderada dos cinco atributos, sem a Fama, entre 1 e 100', () => {
@@ -111,9 +111,7 @@ test('migrações novas seguem a numeração e o jogo nasce fechado, sem Rank', 
   assert.match(sql, /\('rank_ativo', 'false'::jsonb\)/);
 });
 
-test('arte: escudos e retratos são determinísticos', () => {
-  assert.equal(ESCUDOS.length, 6);
-  for (const e of ESCUDOS) assert.match(escudoSvg(e, '#112233', '#ddaa22', 'ABC'), /<svg/);
+test('arte: retratos são determinísticos', () => {
   assert.equal(retratoSvg(j({ id: 7, nome: 'Zyn' })), retratoSvg(j({ id: 7, nome: 'Zyn' })));
   assert.notEqual(retratoSvg(j({ id: 7, nome: 'Zyn' })), retratoSvg(j({ id: 8, nome: 'Kro' })));
   assert.match(retratoSvg(j({ retrato: '/x.webp' })), /<img/);
@@ -131,7 +129,7 @@ test('menu lateral tem Treinamento, Amistoso e Recrutar; cada tela só chama fun
   const api = platform.tecnico;
   const jog = (id, o = {}) => ({ id, nome: `J${id}`, slot: 'meio', pos: 'meio', poder: 70, estrela: false, mec: 70, rotas: 60, macro: 60, tf: 60, mental: 60, exp: 10, limite: 78, poder_inicial: 68, horas: 5, custos: { mec: 1, rotas: 1, macro: 1, tf: 1, mental: 1 }, treino: null, ...o });
   api.treinoEstado = async () => ({ config: { horas: 6, pontos: 3, simultaneos: 5, bonus_comum: 10, bonus_estrela: 15 }, creditos: 100, agora: new Date().toISOString(), jogadores: [jog(1, { exp: 100 }), jog(2, { poder: 78, limite: 78, exp: 100 }), jog(3, { exp: 40 }), jog(8, { slot: null, nome: 'Reserva8' })], em_andamento: 0 });
-  api.amistosoOponentes = async () => [{ id: 9, nome: 'Rivais', sigla: 'RIV', escudo: 'escudo-1', cor1: '#112233', cor2: '#aabbcc', divisao: 'acesso', tecnico: false, poder: 66 }];
+  api.amistosoOponentes = async () => [{ id: 9, nome: 'Rivais', sigla: 'RIV', escudo: 'v4:1:112233:aabbcc', cor1: '#112233', cor2: '#aabbcc', divisao: 'acesso', tecnico: false, poder: 66 }];
   api.amistosoHistorico = async () => ({ feitos_hoje: 1, exp_por_dia: 5, exp_ganho: 2, com_exp_restantes: 4, lista: [] });
   api.recrutarInfo = async () => ({ config: { desconto_5: 0.15, pity_a_cada: 10, contrato_semanas: 12, baus: { basico: { nome: 'Baú Básico', rc: 300, odds: { comum: 55, raro: 30, epico: 12, lendario: 2.7, mitico: 0.3 } }, premium: { nome: 'Baú Premium', rc: 900, odds: { comum: 20, raro: 38, epico: 28, lendario: 11, mitico: 3 } } } }, saldo_rc: 5000, elenco: 5, elenco_max: 10, legados: { total: 15, por_raridade: {} }, garantia: {}, meus_legados: [] });
   const S = { aba: 'treino', ocupado: false, meu: { poder: 70, org: { nome: 'Eu' } } };
@@ -212,7 +210,7 @@ test('emblema de texto (v3): codifica, decodifica, limpa a escrita, tem as 11 fo
   const cod = I.txCodificar(tx); assert.equal(cod, 'v3:Fênix 77:3:ffffff:d9a82b:4:112233:2:000000:0:1b3a6b:d9a82b');
   assert.equal(I.txCodificar({ ...tx, pl: 3 }).split(':')[9], '0', 'o emblema de escrita não tem placa de fundo');
   assert.deepEqual(I.txDecodificar(cod), tx);
-  assert.equal(I.txDecodificar('v2:1:ff0000:00ff00:0000ff:0:000000:ffffff'), null); assert.equal(I.txDecodificar('v3::1:ffffff:ffffff:0:000000:0:000000:0:000000:000000'), null, 'texto vazio');
+  assert.equal(I.txDecodificar('v4:1:ff0000:00ff00'), null); assert.equal(I.txDecodificar('v3::1:ffffff:ffffff:0:000000:0:000000:0:000000:000000'), null, 'texto vazio');
   assert.equal(I.txDecodificar('v3:AB:12:ffffff:ffffff:0:000000:0:000000:0:000000:000000'), null, 'fonte inexistente'); assert.equal(I.txDecodificar('v3:AB:1:ffffff:ffffff:9:000000:0:000000:0:000000:000000'), null, 'contorno acima do máximo');
   assert.equal(I.txLimpar('A:B<C>"D"  E'), 'ABCD E', 'só caracteres permitidos'); assert.equal(I.txLimpar('x'.repeat(40)).length, I.TEXTO_MAX); assert.equal(I.TEXTO_MAX, 10);
   assert.equal(I.txCodificar({ ...tx, t: '<script>' }).split(':')[1], 'script', 'a escrita é limpa antes de ir para o servidor');
@@ -225,24 +223,38 @@ test('emblema de texto (v3): codifica, decodifica, limpa a escrita, tem as 11 fo
   const A = await import('../jogos/tecnico/js/art.js'); assert.match(A.escudoOrg({ escudo: cod, nome: 'Fênix' }, 44), /<svg class="tc-ict"/);
 });
 
-test('ícone do time: codifica e decodifica, os 30 emblemas e 20 bandeiras têm as imagens e o HTML sai com as camadas certas', async () => {
+test('símbolos do time: 49 símbolos de 1 a 3 cores, codifica e decodifica, todas as imagens existem e o HTML sai com as camadas certas', async () => {
   const I = await import('../jogos/tecnico/js/icone.js');
-  const ic = { e: 12, ec: ['#112233', '#445566', '#778899'], b: 7, bc: ['#aabbcc', '#ddeeff'] };
-  assert.equal(I.icCodificar(ic), 'v2:12:112233:445566:778899:7:aabbcc:ddeeff');
+  assert.equal(I.N_SIMBOLOS, 49); assert.equal(I.SIMBOLOS.length, 49);
+  const dir = new URL('../jogos/tecnico/img/simbolos/', import.meta.url);
+  const por = { 1: 0, 2: 0, 3: 0 };
+  I.SIMBOLOS.forEach(([nome, fixa, cores], k) => {
+    const n = String(k + 1).padStart(2, '0');
+    assert.ok(nome && cores.length >= 1 && cores.length <= 3, `símbolo ${n} tem de 1 a 3 cores`); por[cores.length]++;
+    for (const [rot, hex] of cores) { assert.ok(rot, `rótulo da cor do símbolo ${n}`); assert.match(hex, /^#[0-9a-f]{6}$/); }
+    for (let c = 1; c <= cores.length; c++) assert.ok(existsSync(new URL(`s${n}-${c}.webp`, dir)), `símbolo ${n} camada ${c}`);
+    assert.equal(existsSync(new URL(`s${n}-0.webp`, dir)), !!fixa, `camada fixa do símbolo ${n}`);
+    assert.ok(!existsSync(new URL(`s${n}-${cores.length + 1}.webp`, dir)), `símbolo ${n} sem camada sobrando`);
+  });
+  assert.ok(por[1] > 0 && por[2] > 0 && por[3] > 0, 'há símbolos de 1, 2 e 3 cores');
+  assert.ok(!existsSync(new URL('../jogos/tecnico/img/icones/', import.meta.url)), 'emblemas e bandeiras antigos foram removidos');
+  const tres = I.SIMBOLOS.findIndex((s) => s[2].length === 3) + 1; const um = I.SIMBOLOS.findIndex((s) => s[2].length === 1) + 1;
+  const ic = { s: tres, c: ['#112233', '#445566', '#778899'] };
+  assert.equal(I.icCodificar(ic), `v4:${tres}:112233:445566:778899`);
   assert.deepEqual(I.icDecodificar(I.icCodificar(ic)), ic);
-  assert.equal(I.icDecodificar('escudo-2'), null); assert.equal(I.icDecodificar('v2:31:112233:445566:778899:0:aabbcc:ddeeff'), null);
-  assert.equal(I.icCodificar({ ...ic, b: 0 }).split(':')[5], '0');
-  const dir = new URL('../jogos/tecnico/img/icones/', import.meta.url);
-  for (let n = 1; n <= I.N_EMBLEMAS; n++) for (let p = 1; p <= 3; p++) assert.ok(existsSync(new URL(`emb/e${String(n).padStart(2, '0')}-${p}.webp`, dir)), `emblema ${n} parte ${p}`);
-  for (let n = 1; n <= I.N_BANDEIRAS; n++) for (const suf of ['s', '1', '2']) assert.ok(existsSync(new URL(`flag/f${String(n).padStart(2, '0')}-${suf}.webp`, dir)), `bandeira ${n} ${suf}`);
-  assert.equal(I.BANDEIRAS.length, I.N_BANDEIRAS);
-  for (const f of I.BANDEIRAS) assert.ok(f.cx > 0.2 && f.cx < 0.8 && f.cy > 0.15 && f.cy < 0.85 && f.s > 0.25 && f.s < 0.7, `posição ${f.id}`);
-  const com = I.icHtml(ic, 80); const sem = I.icHtml({ ...ic, b: 0 }, 80);
-  assert.equal((com.match(/<i /g) || []).length, 5); assert.equal((sem.match(/<i /g) || []).length, 3, 'sem bandeira: só as 3 camadas do emblema');
-  assert.match(com, /--c:#aabbcc/); assert.match(com, /e12-3\.webp/); assert.match(com, /f07-2\.webp/);
+  assert.equal(I.icCodificar({ s: um, c: ['#112233', '#445566'] }), `v4:${um}:112233`, 'símbolo de 1 cor só guarda 1 cor');
+  assert.deepEqual(I.icDecodificar(`v4:${um}:112233:445566`), { s: um, c: ['#112233'] }, 'cores a mais são ignoradas');
+  assert.deepEqual(I.icDecodificar(`v4:${tres}:112233`).c.slice(1), I.simCoresPadrao(tres).slice(1), 'cores que faltam voltam ao original');
+  assert.equal(I.icDecodificar('escudo-2'), null); assert.equal(I.icDecodificar('v4:50:112233'), null); assert.equal(I.icDecodificar('v4:0:112233'), null); assert.equal(I.icDecodificar('v2:12:112233:445566:778899:0:aabbcc:ddeeff'), null);
+  assert.deepEqual(I.icTrocar(tres), { s: tres, c: I.simCoresPadrao(tres) });
+  const html = I.icHtml(ic, 80); assert.equal((html.match(/<i class="p"/g) || []).length, 3, 'uma camada por cor');
+  assert.match(html, /--c:#778899/); assert.match(html, new RegExp(`s${String(tres).padStart(2, '0')}-3\\.webp`));
+  assert.equal((I.icHtml({ s: um, c: ['#112233'] }, 80).match(/<i class="p"/g) || []).length, 1);
   const A = await import('../jogos/tecnico/js/art.js');
-  assert.match(A.escudoOrg({ escudo: 'v2:12:112233:445566:778899:0:aabbcc:ddeeff', sigla: 'ABC' }, 40), /class="tc-ic"/);
-  assert.match(A.escudoOrg({ escudo: 'escudo-2', cor1: '#111111', cor2: '#222222', sigla: 'ABC' }, 40), /<svg/, 'escudo antigo continua');
+  assert.match(A.escudoOrg({ escudo: `v4:${tres}:112233:445566:778899`, sigla: 'ABC' }, 40), /class="tc-ic"/);
+  const antigo = A.escudoOrg({ escudo: 'escudo-2', nome: 'Time Antigo', cor1: '#111111', cor2: '#222222', sigla: 'ABC' }, 40);
+  assert.match(antigo, /class="tc-ic"/, 'time ainda não convertido ganha um símbolo fixo pelo nome'); assert.equal(antigo, A.escudoOrg({ escudo: 'v2:3:111111:222222:333333:0:111111:222222', nome: 'Time Antigo', cor1: '#111111', cor2: '#222222', sigla: 'ABC' }, 40));
+  assert.ok(!/escudoSvg|ESCUDOS/.test(readFileSync(new URL('../jogos/tecnico/js/art.js', import.meta.url), 'utf8')), 'escudo desenhado antigo foi removido');
 });
 
 test('mercado oficial com rotação: o cliente chama a função do SQL e conhece o erro de oferta', () => {
