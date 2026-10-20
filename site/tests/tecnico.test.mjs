@@ -200,7 +200,7 @@ test('Central de Marketing: o menu existe, o cliente só chama funções do SQL,
   await M.tratarMkt('mkt-aba', { dataset: { aba: 'aud' } }); assert.match(M.viewMarketingCentral(), /Astro/);
   await M.tratarMkt('mkt-aba', { dataset: { aba: 'fin' } }); assert.match(M.viewMarketingCentral(), /<td>Marketing<\/td>/); assert.equal(M.nomeMovimento({ motivo: 'mkt_receita', ref: 'dia:2026-10-18' }), 'Marketing · Ganhos 18/10');
   const r = M.modalMktResumo({ r: estado.resumo });
-  assert.match(r, /Bem-vindo de volta/); assert.match(r, /\+4700/); assert.match(r, /Patrocinadores/); assert.match(r, /Clube/); assert.match(r, /Bônus/); assert.doesNotMatch(r, /Tempo contabilizado/, 'a tela mostra só o total e as três origens');
+  assert.match(r, /Bem-vindo de volta/); assert.match(r, /\+4700/); assert.match(r, /Patrocinadores/); assert.match(r, /Clube/); assert.match(r, /Bônus/); assert.match(r, /ficou fora por/, 'informa quanto tempo o jogador ficou fora'); assert.doesNotMatch(r, /Tempo contabilizado/);
   M.limparMarketing();
 });
 

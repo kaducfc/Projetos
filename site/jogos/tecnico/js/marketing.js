@@ -157,6 +157,7 @@ export function modalMktResumo(m) {
   return `<div class="tc-bv" role="group" aria-label="Rendimento enquanto você esteve fora">
     <span class="luz" aria-hidden="true"></span>
     <small class="tit">Bem-vindo de volta!</small>
+    <p class="fora">Você ficou fora por <b>${dur(r.minutos * 60000)}</b>${r.limitado ? ' <em>(limite máximo)</em>' : ''}</p>
     <img class="moeda" src="img/credito-96.webp" srcset="img/credito-192.webp 2x" alt="" width="84" height="84" />
     <div class="num"><b>+${C.fmt(r.total)}</b><span>créditos</span></div>
     <div class="chips">${chip('pat', 'Patrocinadores', r.patrocinadores)}${chip('clu', 'Clube', r.receita_clube)}${chip('bon', 'Bônus', r.bonus_comercial)}</div>
