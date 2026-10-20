@@ -117,42 +117,45 @@ t('criação da organização: validações, unicidade e uma por conta', () => {
 
 t('conta nova entra direto na liga Academy: de segunda a sexta a liga começa no dia da entrada (todos com 0 jogos); no fim de semana espera a próxima semana; empate: o técnico real avança', () => {
   V("insert into site_admins values ('" + U(5) + "'), ('" + U(6) + "')");
+  V('select tc_garantir_sistema()'); // as 8 equipes do sistema de cada divisão que a liga usa
   V("select tc_criar_org('Time Quinta','qui')", 5, '2026-10-15'); // quinta-feira
   V("select tc_criar_org('Time Sabado','sab')", 6, '2026-10-17'); // sábado
-  const o5 = V("select id from tc_orgs where user_id = '" + U(5) + "'"), o6 = V("select id from tc_orgs where user_id = '" + U(6) + "'");
-  assert.equal(V(`select liga_inicio from tc_orgs where id = ${o5}`), '2026-10-15');
-  const seg = '2026-10-12'; // segunda-feira da semana
-  const l5 = V(`select tc_criar_liga_privada(99, 1, ${o5}, '${seg}')`);
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${l5} and fase = 'rodada'`), '16', 'entrou na quinta: 2 jogos na quinta e 2 na sexta = 4 rodadas de 4 jogos');
-  assert.equal(V(`select min(dia) || ':' || max(dia) from tc_partidas where liga_id = ${l5}`), '2026-10-15:2026-10-16');
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${l5} and status <> 'agendada'`), '0', 'todos começam com 0 jogos');
-  assert.equal(V(`select string_agg(distinct n::text, ',') from (select count(*) n from (select org_a o from tc_partidas where liga_id = ${l5} union all select org_b from tc_partidas where liga_id = ${l5}) x group by o) y`), '4', 'cada time joga 4 vezes');
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${l5} and dia = '2026-10-15'`), '8');
-  assert.equal(V(`select tc_criar_liga_privada(99, 1, ${o6}, '${seg}')`), '', 'entrou no sábado: sem liga nesta semana');
-  assert.equal(V(`select count(*) from tc_ligas where dono_org = ${o6}`), '0');
-  const l6 = V(`select tc_criar_liga_privada(99, 2, ${o6}, '2026-10-19')`); // semana seguinte: liga completa
-  assert.equal(V(`select count(*) from tc_partidas where liga_id = ${l6} and fase = 'rodada'`), '40', 'na semana seguinte: 10 rodadas, de segunda a sexta');
-  assert.equal(V(`select min(dia) || ':' || max(dia) from tc_partidas where liga_id = ${l6}`), '2026-10-19:2026-10-23');
-  assert.equal(V(`select tc_criar_liga_privada(99, 0, ${o5}, '2026-10-05')`), '', 'semana anterior à entrada: a conta ainda não existia');
-  // contas antigas (sem liga_inicio) seguem o calendário inteiro da semana
-  assert.equal(V(`select liga_inicio is null from tc_orgs where id = 1`), 't');
-  // empate de pontos: o técnico real fica na frente das equipes do sistema
-  let achou = false;
-  for (let k = 0; k <= 4 && !achou; k++) {
-    V(`update tc_partidas set status = 'concluida', placar_a = 1, placar_b = 0, vencedor = org_a where liga_id = ${l5} and fase = 'rodada'`);
-    V(`update tc_partidas p set vencedor = case when p.rodada <= ${k} then ${o5} else (case when p.org_a = ${o5} then p.org_b else p.org_a end) end,
-         placar_a = case when (case when p.rodada <= ${k} then ${o5} else (case when p.org_a = ${o5} then p.org_b else p.org_a end) end) = p.org_a then 1 else 0 end,
-         placar_b = case when (case when p.rodada <= ${k} then ${o5} else (case when p.org_a = ${o5} then p.org_b else p.org_a end) end) = p.org_b then 1 else 0 end
-       where p.liga_id = ${l5} and p.fase = 'rodada' and (p.org_a = ${o5} or p.org_b = ${o5})`);
-    const empatados = Number(V(`select count(*) from tc_tabela(${l5}) t where t.org_id <> ${o5} and t.pontos = (select pontos from tc_tabela(${l5}) where org_id = ${o5})`));
-    if (empatados > 0) {
-      achou = true;
-      assert.equal(V(`select count(*) from tc_tabela(${l5}) t where t.org_id <> ${o5} and t.pontos = (select pontos from tc_tabela(${l5}) where org_id = ${o5}) and t.pos < (select pos from tc_tabela(${l5}) where org_id = ${o5})`), '0', 'o técnico real fica na frente de quem empatou');
+  const o5 = V("select id from tc_orgs where user_id = '" + U(5) + "'"); const o6 = V("select id from tc_orgs where user_id = '" + U(6) + "'");
+  try {
+    assert.equal(V(`select liga_inicio from tc_orgs where id = ${o5}`), '2026-10-15');
+    const seg = '2026-10-12'; // segunda-feira da semana
+    const l5 = V(`select tc_criar_liga_privada(99, 1, ${o5}, '${seg}')`);
+    assert.equal(V(`select count(*) from tc_partidas where liga_id = ${l5} and fase = 'rodada'`), '16', 'entrou na quinta: 2 jogos na quinta e 2 na sexta = 4 rodadas de 4 jogos');
+    assert.equal(V(`select min(dia) || ':' || max(dia) from tc_partidas where liga_id = ${l5}`), '2026-10-15:2026-10-16');
+    assert.equal(V(`select count(*) from tc_partidas where liga_id = ${l5} and status <> 'agendada'`), '0', 'todos começam com 0 jogos');
+    assert.equal(V(`select string_agg(distinct n::text, ',') from (select count(*) n from (select org_a o from tc_partidas where liga_id = ${l5} union all select org_b from tc_partidas where liga_id = ${l5}) x group by o) y`), '4', 'cada time joga 4 vezes');
+    assert.equal(V(`select count(*) from tc_partidas where liga_id = ${l5} and dia = '2026-10-15'`), '8');
+    assert.equal(V(`select tc_criar_liga_privada(99, 1, ${o6}, '${seg}')`), '', 'entrou no sábado: sem liga nesta semana');
+    assert.equal(V(`select count(*) from tc_ligas where dono_org = ${o6}`), '0');
+    const l6 = V(`select tc_criar_liga_privada(99, 2, ${o6}, '2026-10-19')`); // semana seguinte: liga completa
+    assert.equal(V(`select count(*) from tc_partidas where liga_id = ${l6} and fase = 'rodada'`), '40', 'na semana seguinte: 10 rodadas, de segunda a sexta');
+    assert.equal(V(`select min(dia) || ':' || max(dia) from tc_partidas where liga_id = ${l6}`), '2026-10-19:2026-10-23');
+    assert.equal(V(`select tc_criar_liga_privada(99, 0, ${o5}, '2026-10-05')`), '', 'semana anterior à entrada: a conta ainda não existia');
+    // contas antigas (sem liga_inicio) seguem o calendário inteiro da semana
+    assert.equal(V(`select liga_inicio is null from tc_orgs where id = 1`), 't');
+    // empate de pontos: o técnico real fica na frente das equipes do sistema
+    let achou = false;
+    for (let k = 0; k <= 4 && !achou; k++) {
+      V(`update tc_partidas set status = 'concluida', placar_a = 1, placar_b = 0, vencedor = org_a where liga_id = ${l5} and fase = 'rodada'`);
+      V(`update tc_partidas p set vencedor = case when p.rodada <= ${k} then ${o5} else (case when p.org_a = ${o5} then p.org_b else p.org_a end) end,
+           placar_a = case when (case when p.rodada <= ${k} then ${o5} else (case when p.org_a = ${o5} then p.org_b else p.org_a end) end) = p.org_a then 1 else 0 end,
+           placar_b = case when (case when p.rodada <= ${k} then ${o5} else (case when p.org_a = ${o5} then p.org_b else p.org_a end) end) = p.org_b then 1 else 0 end
+         where p.liga_id = ${l5} and p.fase = 'rodada' and (p.org_a = ${o5} or p.org_b = ${o5})`);
+      const empatados = Number(V(`select count(*) from tc_tabela(${l5}) t where t.org_id <> ${o5} and t.pontos = (select pontos from tc_tabela(${l5}) where org_id = ${o5})`));
+      if (empatados > 0) {
+        achou = true;
+        assert.equal(V(`select count(*) from tc_tabela(${l5}) t where t.org_id <> ${o5} and t.pontos = (select pontos from tc_tabela(${l5}) where org_id = ${o5}) and t.pos < (select pos from tc_tabela(${l5}) where org_id = ${o5})`), '0', 'o técnico real fica na frente de quem empatou');
+      }
     }
+    assert.ok(achou, 'houve um empate de pontos com o técnico real para testar');
+  } finally { // as contas de teste saem (e com elas as ligas e os jogadores delas), mesmo se algo falhar
+    V(`delete from tc_ligas where temporada = 99; delete from tc_orgs where id in (${o5}, ${o6}); delete from site_admins where user_id in ('${U(5)}', '${U(6)}')`);
   }
-  assert.ok(achou, 'houve um empate de pontos com o técnico real para testar');
-  // limpeza: as contas de teste saem (e com elas as ligas e os jogadores delas)
-  V(`delete from tc_ligas where temporada = 99; delete from tc_orgs where id in (${o5}, ${o6}); delete from site_admins where user_id in ('${U(5)}', '${U(6)}')`);
   assert.equal(V('select count(*) from tc_orgs where user_id is not null'), '4');
 });
 
