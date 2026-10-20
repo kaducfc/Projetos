@@ -69,7 +69,7 @@ export const FONTES = [
   { id: 11, nome: 'Y224', css: "'TC Y224', Impact, sans-serif" },
 ];
 export const FORMAS_PLACA = ['Sem placa', 'Elipse', 'Retângulo', 'Escudo'];
-export const TEXTO_MAX = 14;
+export const TEXTO_MAX = 10;
 export const TEXTO_PADRAO = { t: 'TIME', f: 1, c: ['#ffffff', '#d9a82b'], ow: 3, oc: '#1b3a6b', sh: 2, sc: '#000000', pl: 0, pf: '#1b3a6b', pb: '#d9a82b' };
 export const txClone = (tx) => ({ ...tx, c: [...tx.c] });
 // Só letras, números, espaço e . & ! ' + - (o ":" separa os campos).
@@ -80,7 +80,7 @@ export function txCodificar(tx) {
   const f = Math.min(FONTES.length, Math.max(1, Number(tx.f) || 1));
   const h = (c, d) => cor(c, d).slice(1);
   const n = (v, max) => Math.min(max, Math.max(0, Math.round(Number(v) || 0)));
-  return ['v3', t, f, h(tx.c?.[0], '#ffffff'), h(tx.c?.[1], '#d9a82b'), n(tx.ow, 8), h(tx.oc, '#1b3a6b'), n(tx.sh, 6), h(tx.sc, '#000000'), n(tx.pl, 3), h(tx.pf, '#1b3a6b'), h(tx.pb, '#d9a82b')].join(':');
+  return ['v3', t, f, h(tx.c?.[0], '#ffffff'), h(tx.c?.[1], '#d9a82b'), n(tx.ow, 8), h(tx.oc, '#1b3a6b'), n(tx.sh, 6), h(tx.sc, '#000000'), 0, h(tx.pf, '#1b3a6b'), h(tx.pb, '#d9a82b')].join(':') // sem placa de fundo: a escrita é só a escrita;
 }
 export function txDecodificar(txt) {
   const m = /^v3:([A-Za-z0-9À-ÿ .&!'+-]{1,14}):([1-9]|1[01]):([0-9a-f]{6}):([0-9a-f]{6}):([0-8]):([0-9a-f]{6}):([0-6]):([0-9a-f]{6}):([0-3]):([0-9a-f]{6}):([0-9a-f]{6})$/.exec(String(txt || ''));
