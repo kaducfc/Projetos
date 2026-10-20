@@ -111,6 +111,7 @@ async function agir(fn, { ok, recarregar = true } = {}) {
     S.ocupado = false;
     document.body.style.cursor = '';
     render();
+    if (S.aba === 'hist' && !S.hist) carregarAba().then(render); // o histórico foi invalidado acima: se a aba está aberta, recarrega (antes ficava em "Carregando…" para sempre)
   }
 }
 
@@ -830,7 +831,7 @@ function partidaHtml(m) {
   const wo = p.wo || r.origem === 'wo'; const ausenteId = p.wo_ausente ?? r.ausente; const ausente = ausenteId === p.a.id ? p.a : ausenteId === p.b.id ? p.b : null;
   const num = (v, i) => Math.max(0, Math.round(Number(v?.[i]) || 0)); // números do gameplay: nunca texto cru na página
   return `<h2>${esc(p.a.nome)} ${p.placar_a} × ${p.placar_b} ${esc(p.b.nome)}</h2><p class="tc-mudo tc-peq">${dataCurta(p.dia)} · ${p.fase === 'rodada' ? `rodada ${p.rodada}` : FASES[p.fase] || ''} · melhor de ${p.formato} · Poder ${p.poder_a} × ${p.poder_b}${r.origem === 'gameplay' ? ' · partida jogada' : ''}</p>
-    ${wo ? `<div class="tc-wo-aviso"><b>W.O.</b><span>${ausente ? `<b>${esc(ausente.nome)}</b> não jogou a partida até a meia-noite e perdeu por W.O. (o adversário leva a vitória cheia).` : 'Uma das equipes não jogou a partida até a meia-noite e perdeu por W.O.'} Não houve mapas jogados, então não vale XP nem maestria.</span></div>` : ''}
+    ${wo ? `<div class="tc-wo-aviso"><b>W.O.</b><span>${ausente ? `<b>${esc(ausente.nome)}</b> não jogou a partida até a meia-noite e perdeu por W.O.` : 'Uma das equipes não jogou a partida até a meia-noite e perdeu por W.O.'}</span></div>` : ''}
     ${(r.mapas || []).map((x) => x.gameplay ? `<div class="tc-resumo"><div class="l"><b>Mapa ${x.mapa}</b><span>${x.duracao} min · vitória ${esc(x.vencedor === 'a' ? p.a.nome : p.b.nome)}</span></div>
       <div class="l"><span>Abates</span><b>${num(x.abates, 0)} × ${num(x.abates, 1)}</b></div><div class="l"><span>Torres derrubadas</span><b>${num(x.torres, 0)} × ${num(x.torres, 1)}</b></div><div class="l"><span>Dragões</span><b>${num(x.dragoes, 0)} × ${num(x.dragoes, 1)}</b></div>${x.mvp ? `<div class="l"><span>Destaque do mapa</span><b>${esc(x.mvp)}</b></div>` : ''}</div>` : `<div class="tc-resumo"><div class="l"><b>Mapa ${x.mapa}</b><span>${x.duracao} min · vitória ${esc(x.vencedor === 'a' ? p.a.nome : p.b.nome)}</span></div>
       ${[['Rotas', x.rotas], ['Controle de objetivos', x.objetivos], ['Teamfights', x.teamfight]].map(([n, v]) => { const a = Math.max(1, v[0]); const bb = Math.max(1, v[1]); const pa = Math.round((a / (a + bb)) * 100); return `<div class="l"><span>${n}</span><span style="display:flex;gap:8px;align-items:center;min-width:55%"><b>${pa}%</b><div class="tc-barra" style="flex:1"><i style="width:${pa}%"></i></div><b>${100 - pa}%</b></span></div>`; }).join('')}
