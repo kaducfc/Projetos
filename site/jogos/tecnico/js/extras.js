@@ -112,6 +112,12 @@ export function viewAmistoso() {
     <section class="tc-card"><h3>Adversários</h3><div class="tc-oponentes">${ops || '<p class="tc-mudo">Nenhum time disponível.</p>'}</div></section>
     <section class="tc-card"><h3>Seus últimos amistosos</h3>${hist ? `<table class="tc-tabela"><tbody>${hist}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Você ainda não jogou nenhum amistoso.</p>'}</section>`;
 }
+// "Seus Legados" agrupados por raridade (do Mítico ao Comum); dentro de cada grupo, do maior OVR para o menor.
+function legadosPorRaridade(lista) {
+  const grupos = [...ORDEM_RAR].reverse().map((r) => [r, lista.filter((j) => (rar(j) || 'comum') === r).sort((a, b) => (b.poder || 0) - (a.poder || 0) || String(a.nome).localeCompare(String(b.nome), 'pt-BR'))]).filter(([, l]) => l.length);
+  return `<section class="tc-card"><h3>Seus Legados<span class="dir">${lista.length} jogador(es)</span></h3>
+    ${grupos.map(([r, l]) => `<div class="tc-grupo-rar r-${r}"><h4><i class="bol" style="background:${RARIDADES[r].cor}"></i>${RARIDADES[r].nome}<small>${l.length}</small></h4><div class="tc-minis">${l.map((j) => miniCartao(j)).join('')}</div></div>`).join('')}</section>`;
+}
 // ------------------------------------------------------------------ Recrutar
 export function viewRecrutar() {
   const r = X.recrutar; if (!r) return '<p class="tc-carregando">Carregando…</p>';
@@ -126,15 +132,15 @@ export function viewRecrutar() {
     return `<section class="tc-card tc-bau bau-${id}"><div class="arte"><img class="bau-img" src="img/baus/${id}-fechado.webp" alt="" /></div><h3>${C.esc(b.nome)}</h3>
       <ul class="tc-odds">${odds}</ul>
       <small class="tc-mudo">Garantia: a cada ${cfg.pity_a_cada} baús sem Épico ou melhor, o próximo vem Épico ou melhor (faltam ${Math.max(0, cfg.pity_a_cada - garantia)}).</small>
-      <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="recrutar" data-bau="${id}" data-qtd="1" ${bloq1 ? 'disabled' : ''}>Abrir 1 · <span class="tc-preco ${classe}">${C.fmt(precoUn(b))} ${unid}</span></button>
-      <button type="button" class="tc-btn ciano" data-act="recrutar" data-bau="${id}" data-qtd="5" ${bloq5 ? 'disabled' : ''}>Abrir 5 · <span class="tc-preco ${classe}">${C.fmt(preco5(b))} ${unid}</span> <i class="tc-desc">-${Math.round(cfg.desconto_5 * 100)}%</i></button></div></section>`;
+      <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="recrutar" data-bau="${id}" data-qtd="1" ${bloq1 ? 'disabled' : ''}>Abrir 1 · <span class="tc-preco ${classe}">${C.fmt(precoUn(b))}</span></button>
+      <button type="button" class="tc-btn ciano" data-act="recrutar" data-bau="${id}" data-qtd="5" ${bloq5 ? 'disabled' : ''}>Abrir 5 · <span class="tc-preco ${classe}">${C.fmt(preco5(b))}</span> <i class="tc-desc">-${Math.round(cfg.desconto_5 * 100)}%</i></button></div></section>`;
   }).join('');
   const livres = r.legados.por_raridade || {};
   return `<section class="tc-card"><h3>${C.IMG('ic-recrutar')}Recrutar<span class="dir">${C.fmt(r.saldo)} ${unid}</span></h3>
     <p class="tc-mudo tc-peq" style="margin:0">Recrute jogadores Legado, ídolos reais do cenário competitivo, e leve a sua equipe ao topo do mundo.${livresTxt}</p>
     <div class="tc-raras">${ORDEM_RAR.map((k) => `<span class="r-${k}">${RARIDADES[k].nome}: ${livres[k] ?? 0} no catálogo</span>`).join('')}</div></section>
     <div class="tc-baus">${baus}</div>
-    ${r.meus_legados.length ? `<section class="tc-card"><h3>Seus Legados</h3><div class="tc-minis">${r.meus_legados.map((j) => miniCartao(j)).join('')}</div></section>` : ''}`;
+    ${r.meus_legados.length ? legadosPorRaridade(r.meus_legados) : ''}`;
 }
 export function modalRecrutar(m) {
   const itens = m.r.itens || [];
