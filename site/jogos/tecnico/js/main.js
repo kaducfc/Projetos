@@ -58,13 +58,18 @@ const nomeLiga = () => S.meu?.nomes || {};
 let toastTimer = null;
 function toast(msg, erro = false) {
   document.querySelector('.tc-toast')?.remove();
+  const ms = erro ? 6000 : 4200;
   const el = document.createElement('div');
   el.className = `tc-toast${erro ? ' erro' : ''}`;
-  el.setAttribute('role', 'status');
-  el.textContent = msg;
+  el.setAttribute('role', erro ? 'alert' : 'status');
+  el.style.setProperty('--dur', `${ms}ms`);
+  const ic = document.createElement('span'); ic.className = 'ic'; ic.textContent = erro ? '!' : '✓';
+  const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = msg;
+  el.append(ic, tx);
+  el.addEventListener('click', () => el.remove());
   document.body.appendChild(el);
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.remove(), 4200);
+  toastTimer = setTimeout(() => el.remove(), ms);
 }
 
 // Executa uma ação do servidor com proteção contra cliques repetidos e mensagens de erro claras.
