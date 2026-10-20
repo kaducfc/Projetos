@@ -422,7 +422,7 @@ form.tc-card[data-form="filtros"] { padding: 16px 0 14px; }
 .tc-treinando { color: var(--ouro2, #f5cf5a); font-size: 12px; white-space: nowrap; }
 .tc-btn.peq { padding: 4px 9px; font-size: 12px; white-space: nowrap; }
 .tc-oponentes { display: flex; flex-direction: column; gap: 8px; }
-.tc-oponente { display: grid; grid-template-columns: 48px 1fr auto auto; align-items: center; gap: 12px; padding: 9px 12px; background: #0a1a33; border: 1px solid #1d3a63; }
+.tc-oponente { display: grid; grid-template-columns: minmax(48px, auto) 1fr auto auto; align-items: center; gap: 12px; padding: 9px 12px; background: #0a1a33; border: 1px solid #1d3a63; }
 .tc-oponente .inf { display: flex; flex-direction: column; min-width: 0; }
 .tc-oponente .pw-dif { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
 .tc-exp-dia { display: flex; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
@@ -452,7 +452,7 @@ form.tc-card[data-form="filtros"] { padding: 16px 0 14px; }
 @media (max-width: 640px) {
   .tc-treino-lista { grid-template-columns: 1fr; }
   .tc-treino-jog { grid-template-columns: 78px minmax(0, 1fr); }
-  .tc-oponente { grid-template-columns: 40px 1fr auto; } .tc-oponente .pw-dif { display: none; }
+  .tc-oponente { grid-template-columns: minmax(40px, auto) 1fr auto; } .tc-oponente .pw-dif { display: none; }
   .tc-attr { grid-template-columns: 70px 24px minmax(20px, 1fr) 96px; gap: 6px; }
 }
 .tc-moeda .ic-frag { width: 22px; text-align: center; font-size: 22px; line-height: 1; color: #c4b5fd; text-shadow: 0 0 8px #8b5cf6aa; }
@@ -542,7 +542,7 @@ form.tc-card[data-form="filtros"] { padding: 16px 0 14px; }
 button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover { border-color: var(--ciano); }
 .ch-c.pend { opacity: 0.85; }
 .ch-col:not(:last-child) .ch-c::after { content: ''; position: absolute; right: -35px; top: 50%; width: 34px; border-top: 2px solid #2b5a8f; }
-.ch-t { display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; background: #0b2140; }
+.ch-t { display: grid; grid-template-columns: minmax(24px, auto) 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; background: #0b2140; }
 .ch-t span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 13.5px; }
 .ch-t b { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--mudo); min-width: 14px; text-align: right; }
 .ch-t.v { background: #123a2a; box-shadow: inset 3px 0 var(--bom); } .ch-t.v b { color: var(--ouro2); }
