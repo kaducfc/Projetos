@@ -733,3 +733,9 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 @keyframes tc-bateria-luz { 0% { transform: translateX(-120%); } 65%, 100% { transform: translateX(220%); } }
 @keyframes tc-bateria-brilho { 0%, 100% { box-shadow: 0 0 5px rgba(45, 212, 191, 0.25); } 50% { box-shadow: 0 0 11px rgba(45, 212, 191, 0.55); } }
 @media (prefers-reduced-motion: reduce) { .tc-poder .tc-barra i, .tc-org .xp i, .tc-poder .tc-barra i::after, .tc-org .xp i::after { animation: none; } }
+
+/* comunicação da equipe (idiomas dos titulares) */
+.tc-comunica { margin-top: 12px; padding-top: 10px; border-top: 1px solid #16325a; } .tc-comunica .tc-eyebrow { display: block; margin-bottom: 8px; }
+.tc-idiomas { display: flex; flex-wrap: wrap; gap: 8px; }
+.tc-idioma { display: inline-flex; flex-direction: column; padding: 6px 10px; background: #0a1d38; border: 1px solid #16325a; border-left: 3px solid #3a4a63; min-width: 120px; }
+.tc-idioma.on { border-left-color: #2dd4bf; } .tc-idioma b { font-size: 13px; } .tc-idioma small { color: var(--mudo); font-size: 11.5px; }

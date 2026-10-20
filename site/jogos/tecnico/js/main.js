@@ -16,6 +16,15 @@ import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, 
 import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
 import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js';
 
+// Comunicação da equipe: idioma dos titulares e quanto cada um ganha por falar com os colegas (mesmo idioma nativo vale 1, idioma em comum vale 2/3).
+const NOME_IDIOMA = { ko: 'Coreano', zh: 'Chinês', pt: 'Português', es: 'Espanhol', en: 'Inglês', vi: 'Vietnamita', ja: 'Japonês', tr: 'Turco' };
+function comunicacaoHtml() {
+  const I = S.idiomas; if (!I || !I.titulares?.length) return '';
+  const nomeId = (c) => NOME_IDIOMA[c] || String(c).toUpperCase();
+  const chips = I.titulares.map((t) => `<span class="tc-idioma ${t.afinidade > 0 ? 'on' : ''}" title="${esc(t.nome)}: ${t.afinidade > 0 ? `+${(t.afinidade * I.eficiencia_pct).toFixed(1).replace('.', ',')}% de eficiência pela comunicação` : 'sem idioma em comum com os colegas'}"><b>${esc(t.nome)}</b><small>${esc(nomeId(t.idioma.nativo))}${(t.idioma.sec || []).length ? ` · fala também ${esc(t.idioma.sec.map(nomeId).join(', '))}` : ''}</small></span>`).join('');
+  return `<div class="tc-comunica"><span class="tc-eyebrow">Comunicação · idioma em comum aumenta a eficiência e a sinergia</span><div class="tc-idiomas">${chips}</div></div>`;
+}
+
 const PODER_MAX = 125; // teto do Poder em campo (as estrelas podem passar de 100): a barra enche só nele
 const GAME_ID = 'tecnico';
 const app = document.getElementById('app');
@@ -81,7 +90,7 @@ async function agir(fn, { ok, recarregar = true } = {}) {
 
 async function atualizar() {
   S.meu = await api.meu();
-  if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); S.avisosN = await api.avisosContagem().catch(() => 0); }
+  if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); S.avisosN = await api.avisosContagem().catch(() => 0); S.idiomas = await api.idiomas().catch(() => null); }
   S.camp = null; S.hist = null; limparExtras(); limparMarketing();
   S.mercado.oficial = null; S.mercado.usuarios = null; S.mercado.meus = null;
   await carregarAba();
@@ -352,7 +361,7 @@ function viewVisao() {
   </div>
   <section class="tc-card"><h3>Poder da equipe<span class="dir">Semana ${((m.semana % 4) + 4) % 4 + 1}</span></h3>
       <div class="tc-poder"><div class="grande">${m.poder}</div><div style="flex:1"><div class="tc-barra"><i style="width:${Math.min(100, m.poder / PODER_MAX * 100)}%"></i></div>
-        <p class="tc-mudo tc-peq" style="margin:8px 0 0">Média do Poder dos titulares na posição em que jogam, mais a sinergia (${m.org.sinergia}/100). ${m.completo ? '' : '<b style="color:#fbbf24">Faltam titulares.</b>'}</p></div></div></section>
+        <p class="tc-mudo tc-peq" style="margin:8px 0 0">Média do Poder dos titulares na posição em que jogam, mais a sinergia (${S.idiomas ? `${S.idiomas.sinergia_total}/100: ${S.idiomas.sinergia_semanal} do tempo juntos + ${S.idiomas.sinergia_idiomas} da comunicação` : `${m.org.sinergia}/100`}). ${m.completo ? '' : '<b style="color:#fbbf24">Faltam titulares.</b>'}</p></div></div>${comunicacaoHtml()}</section>
   <section class="tc-card"><h3>Escalação titular<span class="dir">${fmt(m.salarios_semana)} cr./semana em contratos (pagos adiantado)</span></h3>
     <div class="tc-escala">${VAGAS.map((v) => `<div class="vaga"><span class="rot">${NOME_VAGA[v]}</span>${tit[v] ? cartao(tit[v], { tit: false }) : `<div class="tc-vazio">Vaga livre<br><button type="button" class="tc-btn peq" data-act="aba" data-aba="elenco" style="margin-top:8px">Escalar</button></div>`}</div>`).join('')}</div></section>
   <div class="tc-grade2">
@@ -974,7 +983,7 @@ iniciarExtras({
     await api.sincronizar();
     S.meu = await api.meu();
     if (S.meu.org && !S.meu.org.elenco_pendente) { await abrirComResumo(); S.meu = await api.meu(); }
-    if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); S.avisosN = await api.avisosContagem().catch(() => 0); }
+    if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); S.avisosN = await api.avisosContagem().catch(() => 0); S.idiomas = await api.idiomas().catch(() => null); }
     render();
   } catch (e) {
     telaMensagem('Não foi possível abrir o jogo', e.message, ['../../', 'Voltar ao início']);

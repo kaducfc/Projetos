@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 10, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql', '0143_tecnico_mercado_so_na_faixa.sql', '0144_tecnico_avisos_novidades_calendario.sql', '0145_tecnico_avisos_so_novidades.sql', '0146_tecnico_legados_asia.sql', '0147_tecnico_legados_idades.sql', '0148_tecnico_baus_em_rc.sql', '0149_tecnico_legados_china.sql', '0150_tecnico_sem_forma.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql', '0143_tecnico_mercado_so_na_faixa.sql', '0144_tecnico_avisos_novidades_calendario.sql', '0145_tecnico_avisos_so_novidades.sql', '0146_tecnico_legados_asia.sql', '0147_tecnico_legados_idades.sql', '0148_tecnico_baus_em_rc.sql', '0149_tecnico_legados_china.sql', '0150_tecnico_sem_forma.sql', '0151_tecnico_idiomas.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -135,18 +135,35 @@ t('Poder: SQL e navegador calculam igual (individual e da equipe)', () => {
     const sql = Number(V(`select tc_poder(j) from tc_jogadores j where id = ${x.id}`));
     assert.ok(Math.abs(sql - esperado) < 1e-6, `${x.nome}: ${sql} x ${esperado}`);
     const emCampo = Number(V(`select tc_poder_efetivo(j, '${x.slot}') from tc_jogadores j where id = ${x.id}`));
-    assert.ok(Math.abs(emCampo - poderEmCampo(x, x.slot)) < 1e-6);
+    const afin = Number(V(`select tc_afinidade_titular(j) from tc_jogadores j where id = ${x.id}`)); // comunicação com os colegas titulares (idiomas): +0,5% por afinidade
+    assert.ok(Math.abs(emCampo - poderEmCampo(x, x.slot) * (1 + afin * 0.005)) < 1e-6, `${x.nome}: ${emCampo}`);
   }
-  const equipe = jog.reduce((a, x) => a + poderEmCampo(x, x.slot), 0) / 5;
-  const sin = Number(V('select sinergia from tc_orgs where id = 1'));
+  const equipe = jog.reduce((a, x) => a + Number(V(`select tc_poder_efetivo(j, '${x.slot}') from tc_jogadores j where id = ${x.id}`)), 0) / 5;
+  const sin = Number(V('select sinergia from tc_orgs where id = 1')) + Number(V('select tc_sinergia_idiomas(1)'));
   const sql = Number(V('select tc_poder_org(1)'));
-  assert.ok(Math.abs(sql - (equipe + (sin / 100) * 3)) < 1e-6);
+  assert.ok(Math.abs(sql - (equipe + (Math.min(100, sin) / 100) * 3)) < 1e-6);
   // a Fama não entra no Poder
   const antes = V("select tc_poder(j) from tc_jogadores j where id = 1");
   V('update tc_jogadores set fama = 99 where id = 1');
   assert.equal(V("select tc_poder(j) from tc_jogadores j where id = 1"), antes);
   // o mesmo jogador fora de posição rende menos
   assert.ok(Number(V("select tc_poder_efetivo(j, 'top') from tc_jogadores j where id = 3")) < Number(V("select tc_poder(j) from tc_jogadores j where id = 3")));
+});
+
+t('idiomas: 60 Legados com ficha, afinidade (mesmo nativo = 1, idioma em comum = 2/3, nada = 0) e bônus de eficiência e sinergia', () => {
+  assert.equal(V('select count(*) from tc_idiomas'), '60');
+  assert.equal(V("select nativo from tc_idiomas where nome = 'faker'"), 'ko'); assert.equal(V("select nativo from tc_idiomas where nome = 'rookie'"), 'ko');
+  const A = (a, b) => Number(V(`select tc_afinidade('${JSON.stringify(a)}'::jsonb, '${JSON.stringify(b)}'::jsonb)`));
+  const ko = { nativo: 'ko', sec: [] }, ko2 = { nativo: 'ko', sec: ['zh'] }, zh = { nativo: 'zh', sec: [] }, pt = { nativo: 'pt', sec: [] };
+  assert.equal(A(ko, ko2), 1); assert.ok(Math.abs(A(ko2, zh) - 0.6667) < 1e-9, 'um fala o idioma nativo do outro'); assert.equal(A(ko, zh), 0); assert.equal(A(ko, pt), 0);
+  assert.ok(Math.abs(A({ nativo: 'ko', sec: ['en'] }, { nativo: 'pt', sec: ['en'] }) - 0.6667) < 1e-9, 'idioma secundário em comum');
+  // sem comunicação nenhuma o bônus some; com todos do mesmo idioma ele aparece
+  V("update tc_jogadores set regiao = 'KR' where org_id = 1 and slot is not null and ficticio");
+  const mesmo = Number(V('select tc_poder_org(1)')), pontos = Number(V('select tc_sinergia_idiomas(1)'));
+  V("update tc_jogadores j set regiao = (array['KR', 'BR', 'CN', 'VN', 'TR'])[ (select count(*) from tc_jogadores k where k.org_id = 1 and k.slot is not null and k.id < j.id) % 5 + 1 ] where org_id = 1 and slot is not null and ficticio");
+  const misto = Number(V('select tc_poder_org(1)')), pontos2 = Number(V('select tc_sinergia_idiomas(1)'));
+  assert.ok(pontos >= pontos2 && mesmo >= misto, `${pontos} ${pontos2} ${mesmo} ${misto}`);
+  const info = J('select tc_idiomas_info()', 1); assert.equal(info.titulares.length, 5); assert.ok(info.sinergia_total <= 100);
 });
 
 t('mercado oficial: reabastece, filtra e nunca devolve atleta com dono', () => {

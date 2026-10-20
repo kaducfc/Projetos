@@ -1145,6 +1145,7 @@ export const tecnico = {
   sincronizar: () => rpcTecnico('tc_sincronizar'),
   meu: () => rpcTecnico('tc_meu'),
   painel: () => rpcTecnico('tc_painel'),
+  idiomas: () => rpcTecnico('tc_idiomas_info'),
   campeonatos: () => rpcTecnico('tc_campeonatos'),
   avisosContagem: () => rpcTecnico('tc_avisos_contagem'),
   avisosCentral: () => rpcTecnico('tc_avisos_central'),
