@@ -236,9 +236,14 @@ function viewEscolha() {
 // ------------------------------------------------------------------ editor do ícone (emblema + bandeira)
 // alvo: 'criar' (S.form) ou 'pers' (S.form.pers). O ícone vira texto no campo `escudo` e as cores principais alimentam cor1/cor2.
 const formDe = (alvo) => (alvo === 'pers' ? S.form.pers : S.form);
+// O emblema de escrita usa sempre o NOME do time (no máximo 10 caracteres, só letras, números e . & ! ' + -).
+const nomeDoTime = (alvo) => String((alvo === 'pers' ? S.meu?.org?.nome : S.form.nome) ?? '').trim();
+const nomeServeParaTexto = (nome) => { const n = String(nome ?? '').trim(); return n.length >= 1 && n.length <= TEXTO_MAX && txLimpar(n) === n; };
 function aplicarIc(alvo) {
   const f = formDe(alvo);
-  if (f.modo === 'texto') { f.escudo = txCodificar(f.tx); f.cor1 = f.tx.c[0]; f.cor2 = f.tx.c[1]; return; }
+  if (f.modo === 'texto') {
+    f.tx.t = nomeServeParaTexto(nomeDoTime(alvo)) ? nomeDoTime(alvo) : (txLimpar(nomeDoTime(alvo)).trim() || 'TIME');
+     f.escudo = txCodificar(f.tx); f.cor1 = f.tx.c[0]; f.cor2 = f.tx.c[1]; return; }
   f.escudo = icCodificar(f.ic); f.cor1 = f.ic.ec[0]; f.cor2 = f.ic.ec[1];
 }
 // Prévia do ícone do time (símbolo ou texto, conforme o modo escolhido).
@@ -274,7 +279,7 @@ function editorTexto(alvo, f, modos) {
   const num = (rot, campo, max) => `<label class="tc-tx-num"><span>${rot}</span><input type="range" min="0" max="${max}" step="1" name="tx_${campo}" data-tx="${campo}" data-alvo="${alvo}" value="${tx[campo]}" /><b>${tx[campo]}</b></label>`;
   return `<div class="tc-ic-edit">${modos}
     <div class="previa tc-previa-tx">${textoHtml(tx, 120, 'Ícone do time')}<div class="tc-mudo tc-peq">Escreva o nome que vai no emblema e personalize a fonte, as cores, o contorno e a sombra. A aparência não dá vantagem na competição.</div></div>
-    <label class="campo"><span>Escrita (até ${TEXTO_MAX} caracteres)</span><input class="tc-input" name="tx_t" data-tx="t" data-alvo="${alvo}" maxlength="${TEXTO_MAX}" autocomplete="off" value="${esc(tx.t)}" placeholder="Ex.: FENIX" /></label>
+    <p class="tc-escrita"><span class="tc-mudo tc-peq">Escrita do emblema</span><b>${esc(tx.t)}</b><small class="tc-mudo">É sempre o nome do time.</small></p>
     <div><h4>Fonte</h4><div class="tc-fontes">${FONTES.map((fo) => `<button type="button" class="${tx.f === fo.id ? 'on' : ''}" data-act="tx-fonte" data-alvo="${alvo}" data-v="${fo.id}" style="font-family:${fo.css}" aria-label="${esc(fo.nome)}"><span>${esc(txLimpar(tx.t).trim() || 'Time')}</span><small>${esc(fo.nome)}</small></button>`).join('')}</div></div>
     <div class="tc-ic-cores"><h4>Cor da escrita</h4>${corTx(alvo, 'Cima', 'c', 0)}${corTx(alvo, 'Baixo', 'c', 1)}<p class="tc-mudo tc-peq" style="margin:2px 0 0">Com cores diferentes em cima e embaixo, a escrita fica em degradê.</p></div>
     <div class="tc-ic-cores"><h4>Contorno</h4>${num('Espessura', 'ow', 8)}${tx.ow ? corTx(alvo, 'Cor do contorno', 'oc') : ''}</div>
@@ -953,7 +958,7 @@ document.addEventListener('click', async (e) => {
     return;
   }
   if (act === 'fechar') { S.modal = null; render(); return; }
-  if (act === 'ic-modo') { const f = formDe(b.dataset.alvo); f.modo = b.dataset.v === 'texto' ? 'texto' : 'simbolo'; aplicarIc(b.dataset.alvo); render(); return; }
+  if (act === 'ic-modo') { const f = formDe(b.dataset.alvo); f.modo = b.dataset.v === 'texto' && nomeServeParaTexto(nomeDoTime(b.dataset.alvo)) ? 'texto' : 'simbolo'; aplicarIc(b.dataset.alvo); render(); return; }
   if (act === 'tx-fonte') { const f = formDe(b.dataset.alvo); f.tx.f = Number(b.dataset.v); aplicarIc(b.dataset.alvo); render(); return; }
   if (act === 'tx-padrao') { const f = formDe(b.dataset.alvo); f.tx = txClone(TEXTO_PADRAO); aplicarIc(b.dataset.alvo); render(); return; }
   if (act === 'tx-cor') { const f = formDe(b.dataset.alvo); if (b.dataset.i === '') f.tx[b.dataset.c] = b.dataset.v; else f.tx[b.dataset.c][Number(b.dataset.i)] = b.dataset.v; aplicarIc(b.dataset.alvo); render(); return; }
@@ -1079,12 +1084,12 @@ document.addEventListener('input', (e) => {
   }
   if (t.matches('[data-tx]')) { // escrita, espessura do contorno e distância da sombra
     const f = formDe(t.dataset.alvo); const c = t.dataset.tx;
-    f.tx[c] = c === 't' ? txLimpar(t.value) : Number(t.value); aplicarIc(t.dataset.alvo); render(); return;
+    f.tx[c] = Number(t.value); aplicarIc(t.dataset.alvo); render(); return;
   }
   if (t.matches('[data-act="preco-anuncio"]')) { S.modal.preco = t.value; render(); return; }
   if (t.matches('[data-fc]')) { S.fc[t.name] = t.value; render(); return; }
   const form = t.closest('form[data-form="criar"]');
-  if (form) { S.form[t.name] = t.name === 'sigla' ? t.value.toUpperCase() : t.value; render(); return; }
+  if (form) { S.form[t.name] = t.name === 'sigla' ? t.value.toUpperCase() : t.value; if (t.name === 'nome') { if (S.form.modo === 'texto' && !nomeServeParaTexto(S.form.nome)) S.form.modo = 'simbolo'; aplicarIc('criar'); } render(); return; }
   const pf = t.closest('form[data-form="pers"]');
   if (pf) { S.form.pers[t.name] = t.value; render(); }
 });
@@ -1108,7 +1113,7 @@ document.addEventListener('submit', async (e) => {
   }
   if (tipo === 'criar') {
     S.erro = '';
-    const f = S.form;
+    const f = S.form; if (f.modo === 'texto' && !nomeServeParaTexto(f.nome)) f.modo = 'simbolo'; aplicarIc('criar');
     const r = await agir(() => api.criarOrg(f), { ok: 'Organização criada! Boa sorte, técnico.', recarregar: false });
     if (r) { await agir(atualizar, { recarregar: false }); S.aba = 'visao'; render(); } else { S.erro = 'Confira os dados e tente de novo.'; render(); }
   } else if (tipo === 'pers') {
