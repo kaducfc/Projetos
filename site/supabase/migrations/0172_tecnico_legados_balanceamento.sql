@@ -1,5 +1,5 @@
 -- Simulador de Técnico: reequilíbrio dos 110 Legados. Rode depois do 0171. Idempotente (rodar de novo aplica os mesmos números).
---  * OVR inicial (Poder) entre 55 (mais fraco) e 90 (mais forte); cada Legado ainda sobe até +15 treinando (limite = OVR inicial + 15).
+--  * OVR inicial (Poder) entre 55 (mais fraco) e 90 (mais forte); cada Legado ainda sobe até +15 treinando (limite = OVR inicial + 15, no máximo 100).
 --  * OVR = 75% desempenho em 2026 (prêmios, resultado do time, KDA quando disponível) + 25% popularidade; a popularidade também vira a Fama.
 --  * Raridade pelo ranking de OVR dentro da posição: 2 míticos, 4 lendários, 4 épicos, 6 raros e 6 comuns em cada uma das 5 posições
 --    (10 / 20 / 20 / 30 / 30 no total). O formato dos atributos de cada jogador (pontos fortes e fracos) foi mantido, só o nível mudou.

@@ -766,7 +766,7 @@ t('Legados balanceados: OVR inicial de 55 a 90, treino de até +15 e raridades 1
   assert.equal(V(`select count(*) ${L}`), '110');
   assert.equal(V(`select min(round(tc_poder(j))) || ':' || max(round(tc_poder(j))) ${L}`), '55:90');
   assert.equal(V(`select count(*) ${L} and poder_inicial is distinct from round(tc_poder(j))::int`), '0', 'o OVR inicial guardado é o OVR dos atributos');
-  assert.equal(V(`select count(*) ${L} and tc_treino_limite(j) <> poder_inicial + 15`), '0', 'treino de até +15 a partir do OVR inicial');
+  assert.equal(V(`select count(*) ${L} and tc_treino_limite(j) <> least(100, poder_inicial + 15)`), '0', 'treino de até +15 a partir do OVR inicial (o Poder nunca passa de 100)');
   const rar = V(`select string_agg(raridade || ':' || n, ',' order by o) from (select raridade, count(*) n, array_position(array['mitico','lendario','epico','raro','comum'], raridade) o from tc_jogadores j where not j.ficticio and j.legado_base is null group by raridade) x`);
   assert.equal(rar, 'mitico:10,lendario:20,epico:20,raro:30,comum:30');
   for (const pos of ['top', 'selva', 'meio', 'atirador', 'suporte']) {
