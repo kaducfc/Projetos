@@ -141,11 +141,12 @@ function escudoHtml(poder, grande = false) {
   return `<span class="pw${grande ? ' pw-grande' : ''} tier-${t}" title="Poder ${poder}"><img src="../../shared/assets/trofeus/${t}.png" alt="" onerror="this.parentElement.classList.add('sem-img'); this.remove()" /><b>${poder}</b></span>`;
 }
 
-// Estrelas de evolução (0 a 5): cada uma dá +5% de eficiência dentro do jogo, sem mudar o Poder.
+// Estrelas de evolução (0 a 10): cada uma dá +5% de eficiência dentro do jogo, sem mudar o Poder.
+// A barra tem 5 casas: de 1 a 5 estrelas acende uma amarela por estrela; da 6ª em diante cada estrela nova pinta mais uma casa de vermelho (10 = cinco vermelhas).
 function estrelasHtml(j) {
-  const n = j.estrelas || 0; const max = j.estrela_max || 5;
-  const estrelas = Array.from({ length: max }, (_, i) => `<em class="${i < n ? 'on' : 'off'}" style="--i:${i}">★</em>`).join('');
-  return `<span class="tc-stars${n >= max ? ' cheia' : ''}" title="${n} de ${max} estrelas (+${n * 5}% de eficiência)">${estrelas}</span>`;
+  const n = j.estrelas || 0; const max = j.estrela_max || 10;
+  const estrelas = Array.from({ length: 5 }, (_, i) => `<em class="${n > 5 && i < n - 5 ? 'vermelha' : i < Math.min(n, 5) ? 'on' : 'off'}" style="--i:${i}">★</em>`).join('');
+  return `<span class="tc-stars${n >= max ? ' cheia' : ''}${n > 5 ? ' alem' : ''}" title="${n} de ${max} estrelas (+${n * 5}% de eficiência)">${estrelas}</span>`;
 }
 
 function cartao(j, { tit = false, extra = '', acao = 'ficha', dados = '' } = {}) {
@@ -660,8 +661,15 @@ function demitirHtml(m) {
       <p class="tc-mudo tc-peq" style="margin:0 0 6px">O que acontece ao demitir:</p><ul class="tc-lista-ul">${perdas.map((x) => `<li>${x}</li>`).join('')}</ul></div></div>
     <div class="tc-resumo"><div class="l"><span>Você recebe</span><b class="tc-frag">◈ +${fmt(ganho)} fragmentos de jogador</b></div>
       <div class="l"><span>Seus fragmentos</span><b>${fmt(atual)} → ${fmt(atual + ganho)}</b></div>${j.reembolso_contrato > 0 ? `<div class="l"><span>Contrato não usado (50%)</span><b class="tc-preco cr">+${fmt(j.reembolso_contrato)} cr.</b></div>` : ''}</div>
-    <p class="tc-mudo tc-peq">Fragmentos servem para evoluir as estrelas dos seus jogadores comuns.</p>
+    <p class="tc-mudo tc-peq">Fragmentos servem para evoluir as estrelas dos seus jogadores (Legados também podem usar cópias repetidas).</p>
     <div class="tc-acoes"><button type="button" class="tc-btn perigo" data-act="confirmar-demitir" ${S.ocupado ? 'disabled' : ''}>Demitir e receber ${fmt(ganho)} ◈</button><button type="button" class="tc-btn" data-act="voltar-ficha">Cancelar</button></div>`;
+}
+// Botões de evoluir a estrela: Legado pode gastar cópias repetidas ou fragmentos; jogador comum só fragmentos.
+function botoesEstrela(j) {
+  const frag = S.meu.org.fragmentos || 0; const off = S.ocupado ? ' disabled' : '';
+  const bFrag = `<button type="button" class="tc-btn ouro" data-act="subir-estrela" data-via="fragmentos" data-id="${j.id}"${off || (frag < j.estrela_custo_frag ? ' disabled' : '')} title="Você tem ${fmt(frag)} fragmentos">Evoluir ★ com ${fmt(j.estrela_custo_frag)} ◈ <small>(tem ${fmt(frag)})</small></button>`;
+  if (!j.legado) return bFrag;
+  return `<button type="button" class="tc-btn ouro" data-act="subir-estrela" data-via="copias" data-id="${j.id}"${off || ((j.copias || 0) < j.estrela_custo_copias ? ' disabled' : '')} title="Você tem ${j.copias || 0} cópia(s) repetida(s)">Evoluir ★ com ${j.estrela_custo_copias} cópia(s) <small>(tem ${j.copias || 0})</small></button>${bFrag}`;
 }
 function fichaHtml(m) {
   const j = m.j; const meu = j.org_id && j.org_id === S.meu.org.id;
@@ -672,7 +680,7 @@ function fichaHtml(m) {
   else if (!j.org_id) acoes = (S.meu.elenco || []).length >= ELENCO_MAX ? '<span class="tc-mudo tc-peq">Inventário cheio: demita ou venda alguém para contratar.</span>' : `<button type="button" class="tc-btn ouro" data-act="abrir-contratar" data-id="${j.id}">Contratar</button>`;
   else if (meu) {
     const cheioContrato = !j.contrato_ativo || (j.contrato_restante || 0) <= 1;
-    acoes = `<button type="button" class="tc-btn ciano" data-act="abrir-escalar" data-id="${j.id}">Escalar</button>${cheioContrato ? `<button type="button" class="tc-btn" data-act="abrir-contrato" data-id="${j.id}">${j.contrato_ativo ? 'Renovar contrato' : 'Efetivar contrato'}</button>` : ''}${j.contrato_ativo ? `<button type="button" class="tc-btn" data-act="abrir-encerrar" data-id="${j.id}">Encerrar contrato</button>` : ''}<button type="button" class="tc-btn" data-act="abrir-anunciar" data-id="${j.id}">Anunciar por RC</button>${j.estrelas < j.estrela_max ? `<button type="button" class="tc-btn ouro" data-act="subir-estrela" data-id="${j.id}" ${S.ocupado ? 'disabled' : ''}>Evoluir ★ (${j.legado ? `${j.estrela_custo} cópia(s)` : `${fmt(j.estrela_custo)} fragmentos`})</button>` : ''}${j.slot ? '' : `<button type="button" class="tc-btn perigo" data-act="demitir" data-id="${j.id}">Demitir</button>`}`;
+    acoes = `<button type="button" class="tc-btn ciano" data-act="abrir-escalar" data-id="${j.id}">Escalar</button>${cheioContrato ? `<button type="button" class="tc-btn" data-act="abrir-contrato" data-id="${j.id}">${j.contrato_ativo ? 'Renovar contrato' : 'Efetivar contrato'}</button>` : ''}${j.contrato_ativo ? `<button type="button" class="tc-btn" data-act="abrir-encerrar" data-id="${j.id}">Encerrar contrato</button>` : ''}<button type="button" class="tc-btn" data-act="abrir-anunciar" data-id="${j.id}">Anunciar por RC</button>${j.estrelas < j.estrela_max ? botoesEstrela(j) : ''}${j.slot ? '' : `<button type="button" class="tc-btn perigo" data-act="demitir" data-id="${j.id}">Demitir</button>`}`;
   }
   else if (m.anuncio) acoes = (S.meu.elenco || []).length >= ELENCO_MAX ? '<span class="tc-mudo tc-peq">Inventário cheio: demita ou venda alguém para comprar.</span>' : `<button type="button" class="tc-btn ouro" data-act="abrir-comprar" data-anuncio="${m.anuncio.id}">Comprar por ${fmt(m.anuncio.preco_rc)} RC</button>`;
   return `<h2>${esc(j.nome)}${j.ficticio === false ? ' <span class="tc-estrela-selo">◆ Legado</span>' : ''}</h2><p class="tc-mudo tc-peq" style="margin:2px 0">${iconeVaga(j.pos)} ${NOME_VAGA[j.pos]}${(j.pos2 || []).length ? ` · também ${j.pos2.map((p) => NOME_VAGA[p]).join(', ')}` : ''} · ${j.idade} anos${j.regiao ? ` · ${esc(j.regiao)}` : ''}${j.ficticio ? '' : ' · jogador legado'}</p>
@@ -910,7 +918,7 @@ document.addEventListener('click', async (e) => {
   }
   if (act === 'subir-estrela') {
     const j = S.modal.j;
-    const r = await agir(() => api.subirEstrela(j.id), { ok: `${j.nome} agora tem mais uma estrela!` });
+    const r = await agir(() => api.subirEstrela(j.id, b.dataset.via || null), { ok: `${j.nome} agora tem mais uma estrela!` });
     if (r) { S.modal = { ...S.modal, j: { ...j, ...r.jogador } }; render(); }
     return;
   }

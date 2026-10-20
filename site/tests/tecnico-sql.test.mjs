@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 10, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql', '0143_tecnico_mercado_so_na_faixa.sql', '0144_tecnico_avisos_novidades_calendario.sql', '0145_tecnico_avisos_so_novidades.sql', '0146_tecnico_legados_asia.sql', '0147_tecnico_legados_idades.sql', '0148_tecnico_baus_em_rc.sql', '0149_tecnico_legados_china.sql', '0150_tecnico_sem_forma.sql', '0151_tecnico_idiomas.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql', '0143_tecnico_mercado_so_na_faixa.sql', '0144_tecnico_avisos_novidades_calendario.sql', '0145_tecnico_avisos_so_novidades.sql', '0146_tecnico_legados_asia.sql', '0147_tecnico_legados_idades.sql', '0148_tecnico_baus_em_rc.sql', '0149_tecnico_legados_china.sql', '0150_tecnico_sem_forma.sql', '0151_tecnico_idiomas.sql', '0152_tecnico_estrelas_ate_10.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -964,39 +964,47 @@ t('estrelas de evolução: legado gasta cópias (1, 2, 3...), +5% de eficiência
   const fora = Number(V(`select tc_eficiencia(j, 'top') from tc_jogadores j where id = ${inst}`));
   assert.ok(Math.abs(fora - 0.75 * 1.1) < 0.0001, String(fora));
   assert.equal(Number(V(`select tc_eficiencia(j, 'meio') from tc_jogadores j where id = ${inst}`)).toFixed(2), '1.10');
-  // máximo de 5 estrelas
-  V(`update tc_jogadores set estrelas = 5, copias = 9 where id = ${inst}`);
-  assert.equal(falha(`select tc_subir_estrela(${inst})`, 1), 'estrelas_no_maximo');
-  // demitir Legado rende 25% a mais que um comum de mesma conta; a cópia some e o modelo continua no catálogo
+  // por fragmentos: custo = 3 x N x (fragmentos que a demissão rende), por raridade (Faker é mítico: 320)
+  const rar = V(`select raridade from tc_jogadores where id = ${inst}`); const baseL = { comum: 20, raro: 40, epico: 80, lendario: 160, mitico: 320 }[rar];
+  const jf = J(`select tc_jogador_json(j) from tc_jogadores j where id = ${inst}`);
+  assert.equal(jf.frag_base, baseL); assert.equal(jf.estrela_custo_frag, 3 * 3 * baseL, 'estrela 3 = 3 x 3 x base'); assert.equal(jf.estrela_custo_copias, 3);
+  assert.equal(jf.estrela_max, 10);
+  V("update tc_orgs set fragmentos = 100000 where id = 1");
+  const rf = J(`select tc_subir_estrela(${inst}, 'fragmentos')`, 1); assert.equal(rf.estrelas, 3); assert.equal(rf.custo, 9 * baseL); assert.equal(rf.via, 'fragmentos'); assert.equal(rf.copias, 0, 'as cópias não são gastas');
+  assert.equal(falha(`select tc_subir_estrela(${inst}, 'xis')`, 1), 'via_invalida');
+  // vai até 10 e para
+  V(`update tc_jogadores set estrelas = 9, copias = 10 where id = ${inst}`);
+  const r10 = J(`select tc_subir_estrela(${inst}, 'copias')`, 1); assert.equal(r10.estrelas, 10); assert.equal(r10.copias, 0);
+  assert.equal(falha(`select tc_subir_estrela(${inst}, 'copias')`, 1), 'estrelas_no_maximo'); assert.equal(falha(`select tc_subir_estrela(${inst}, 'fragmentos')`, 1), 'estrelas_no_maximo');
+  assert.ok(Math.abs(Number(V(`select tc_eficiencia(j, 'meio') from tc_jogadores j where id = ${inst}`)) - 1.5) < 1e-9, '10 estrelas = +50%');
+  // demitir Legado rende o valor da raridade + metade dos fragmentos que ele consumiu (cópias gastas não voltam); a cópia some e o modelo continua no catálogo
   V("update tc_orgs set fragmentos = 0 where id = 1"); V(`update tc_jogadores set slot = null where id = ${inst}`);
-  const cfgF = J("select tc_cfg('estrelas_jogador')");
-  const base = Math.max(1, Math.round(Math.pow(Number(V(`select tc_poder(j) from tc_jogadores j where id = ${inst}`)) / 100, 2.5) * cfgF.frag_base));
-  const dev = cfgF.fragmentos.slice(0, 5).reduce((a, c) => a + Math.round(c * cfgF.devolucao_pct / 100), 0);
+  const gastos = Number(V(`select frag_gastos from tc_jogadores where id = ${inst}`)); assert.equal(gastos, 9 * baseL);
   const previa = Number(V(`select (tc_jogador_json(j)->>'frag_demissao') from tc_jogadores j where id = ${inst}`));
   const dl = J(`select tc_demitir(${inst})`, 1);
   assert.equal(dl.fragmentos_ganhos, previa, 'a prévia da ficha é o valor pago');
-  assert.equal(dl.fragmentos_ganhos, Math.round((base + dev) * 1.25));
+  assert.equal(dl.fragmentos_ganhos, baseL + Math.round(gastos / 2));
   assert.equal(V(`select count(*) from tc_jogadores where id in (${inst}, ${modelo})`), '1', 'a cópia some, o modelo fica');
   assert.equal(JSON.stringify(J(`select tc_jogador_json(j) from tc_jogadores j where id = ${modelo}`).legado), 'true');
-  assert.ok(!('bonus_legado_pct' in J(`select tc_jogador_json(j) from tc_jogadores j where id = ${modelo}`)), 'o bônus é interno');
 });
 t('comum: sobe estrela com fragmentos; demitir (só reserva comum) rende fragmentos e zera as estrelas', () => {
   const j = reserva(1, 1);
-  V("update tc_orgs set fragmentos = 80 where id = 1");
+  const baseC = Number(V(`select (tc_jogador_json(x)->>'frag_base') from tc_jogadores x where id = ${j}`)); // jogador comum: 12 x (Poder/100)^2,5
+  V(`update tc_orgs set fragmentos = ${3 * baseC + 1} where id = 1`);
   assert.equal(falha(`select tc_subir_estrela(${j})`, 2), 'jogador_nao_e_seu');
-  const r1 = J(`select tc_subir_estrela(${j})`, 1); assert.equal(r1.estrelas, 1); assert.equal(r1.custo, 30); assert.equal(r1.fragmentos, 50);
+  const r1 = J(`select tc_subir_estrela(${j})`, 1); assert.equal(r1.estrelas, 1); assert.equal(r1.custo, 3 * baseC, 'estrela 1 = 3 x base'); assert.equal(r1.fragmentos, 1);
   assert.equal(falha(`select tc_subir_estrela(${j})`, 1), 'fragmentos_insuficientes');
-  assert.equal(V("select fragmentos from tc_orgs where id = 1"), '50', 'sem fragmentos nada muda');
+  assert.equal(V("select fragmentos from tc_orgs where id = 1"), '1', 'sem fragmentos nada muda');
   const titular = V("select id from tc_jogadores where org_id = 1 and slot = 'top'");
   assert.equal(falha(`select tc_demitir(${titular})`, 1), 'jogador_titular');
   assert.equal(falha(`select tc_demitir(${j})`, 2), 'jogador_nao_e_seu');
   const previaC = Number(V(`select (tc_jogador_json(x)->>'frag_demissao') from tc_jogadores x where id = ${j}`));
   const d = J(`select tc_demitir(${j})`, 1); assert.equal(d.fragmentos_ganhos, previaC);
-  assert.ok(d.fragmentos_ganhos >= 15 + 1, JSON.stringify(d)); // metade do gasto na 1ª estrela + base
-  assert.equal(V("select fragmentos from tc_orgs where id = 1"), String(50 + d.fragmentos_ganhos));
+  assert.equal(d.fragmentos_ganhos, baseC + Math.round(3 * baseC / 2), JSON.stringify(d)); // base + metade do que gastou na 1ª estrela
+  assert.equal(V("select fragmentos from tc_orgs where id = 1"), String(1 + d.fragmentos_ganhos));
   assert.equal(V(`select org_id is null and estrelas = 0 from tc_jogadores where id = ${j}`), 't');
   assert.equal(falha(`select tc_demitir(${j})`, 1), 'jogador_nao_e_seu', 'não demite duas vezes');
-  assert.equal(J("select tc_meu()", 1).org.fragmentos, 50 + d.fragmentos_ganhos);
+  assert.equal(J("select tc_meu()", 1).org.fragmentos, 1 + d.fragmentos_ganhos);
 });
 
 // ---------------------------------------------------------------- inventário (SQL 0101)

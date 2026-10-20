@@ -758,3 +758,8 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-modal > button.x:hover { background: #ffffff1c; color: #fff; }
 .tc-modal > button.x:active { background: #ffffff2e; }
 .tc-modal > button.x:focus-visible { outline: 2px solid var(--ouro2); outline-offset: 1px; }
+
+/* estrelas além de 5: a casa vira vermelha */
+.tc-stars em.vermelha { color: #ff4d4d; background: linear-gradient(180deg, #ffb1a8, #ff3b30 55%, #b3120d); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 4px #ff3b3088); }
+.tc-stars.cheia em.vermelha { animation: tc-estrela-brilho 2.4s ease-in-out infinite; animation-delay: calc(var(--i) * 0.18s); }
+.tc-btn small { opacity: .8; font-weight: 600; letter-spacing: 0; text-transform: none; }
