@@ -775,3 +775,18 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-copias { margin: 14px 0 6px; padding: 12px 14px; background: #08162c; border: 1px solid #1d3a63; border-left: 3px solid #d9a82b; border-radius: 6px; }
 .tc-passo { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; } .tc-passo b { min-width: 34px; text-align: center; font-size: 22px; font-variant-numeric: tabular-nums; color: var(--ouro2); }
 .tc-passo small { color: var(--mudo); } .tc-passo .tc-btn { min-height: 36px; padding: 6px 14px; }
+
+/* rank de Poder */
+.tc-rank tr.lnk { cursor: pointer; } .tc-rank tr.lnk:hover td { background: #0e2342; } .tc-rank tr.lnk:focus-visible { outline: 2px solid var(--ouro2); outline-offset: -2px; }
+.tc-rank .pos { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--mudo); width: 44px; } .tc-rank .pos.p1 { color: #ffd84a; } .tc-rank .pos.p2 { color: #d7dfea; } .tc-rank .pos.p3 { color: #d9904a; }
+.tc-rank td b { font-size: 16px; font-variant-numeric: tabular-nums; } .tc-rank .org { gap: 10px; } .tc-tit { font-weight: 700; font-variant-numeric: tabular-nums; }
+.tc-modal.larga { width: min(1180px, 100%); }
+.tc-modal.larga h2 { display: flex; align-items: center; gap: 12px; }
+.tc-rt { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.tc-rt-j { background: #08162c; border: 1px solid #1d3a63; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.tc-rt-j .top { display: flex; gap: 10px; align-items: center; } .tc-rt-j .foto { width: 72px; flex: none; } .tc-rt-j .id { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tc-rt-j .id .pos { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ouro); } .tc-rt-j .id b { font-size: 15px; }
+.tc-rt-j .id .tc-stars { font-size: 14px; }
+.tc-rt-j .fa-attrs { gap: 4px; } .tc-rt-j .mae { display: flex; flex-direction: column; gap: 5px; border-top: 1px solid #16325a; padding-top: 8px; }
+.tc-rt-j .mae > div { display: flex; align-items: center; gap: 8px; } .tc-rt-j .mae > div span { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; } .tc-rt-j .mae b { font-size: 12.5px; } .tc-rt-j .mae small { color: var(--mudo); font-size: 11px; } .tc-rt-j .mae .fav b { color: var(--ouro2); }
+.tc-rank th.n, .tc-rank td.n { width: 120px; }

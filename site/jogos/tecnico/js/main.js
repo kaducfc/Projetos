@@ -100,7 +100,7 @@ async function agir(fn, { ok, recarregar = true } = {}) {
 async function atualizar() {
   S.meu = await api.meu();
   if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); S.avisosN = await api.avisosContagem().catch(() => 0); S.idiomas = await api.idiomas().catch(() => null); }
-  S.camp = null; S.hist = null; limparExtras(); limparMarketing();
+  S.camp = null; S.hist = null; S.rank = null; limparExtras(); limparMarketing();
   S.mercado.oficial = null; S.mercado.usuarios = null; S.mercado.meus = null;
   await carregarAba();
 }
@@ -111,6 +111,7 @@ async function carregarAba() {
   try {
     if ((S.aba === 'camp' || S.aba === 'class') && !S.camp) S.camp = await api.campeonatos();
     if (S.aba === 'hist' && !S.hist) S.hist = await api.historico();
+    if (S.aba === 'rank' && !S.rank) S.rank = await api.rank();
     if (S.aba === 'adm' && S.ehAdmin) {
       if ((S.admAba || 'campeoes') === 'campeoes' && !S.campeoes) [S.campeoes] = await Promise.all([api.campeoes(), prepararImagens()]);
       if (S.admAba === 'jogadores') await carregarAdm();
@@ -192,7 +193,7 @@ function topo() {
 
 const ABAS = [
   ['visao', 'Início', 'i-home'], ['elenco', 'Meu elenco', 'i-time'], ['treino', 'Treinamento', 'i-treino'], ['amistoso', 'Amistoso', 'i-agenda'], ['contratar', 'Mercado', 'i-mercado'], ['recrutar', 'Recrutar', 'i-bau'], ['marketing', 'Marketing', 'i-financas'], ['adm', 'ADM', 'i-conf'],
-  ['camp', 'Campeonatos', 'i-trofeu'], ['class', 'Classificação', 'i-stats'], ['hist', 'Histórico', 'i-financas'], ['pers', 'Personalização', 'i-engrenagem'],
+  ['camp', 'Campeonatos', 'i-trofeu'], ['class', 'Classificação', 'i-stats'], ['rank', 'Rank', 'i-taca'], ['hist', 'Histórico', 'i-financas'], ['pers', 'Personalização', 'i-engrenagem'],
 ];
 function nav() {
   const novos = S.avisosN || 0;
@@ -571,6 +572,29 @@ function viewClass() {
     </section>`;
 }
 
+// ------------------------------------------------------------------ rank de Poder (técnicos reais)
+function viewRank() {
+  const r = S.rank; if (!r) return '<p class="tc-carregando">Carregando…</p>';
+  if (!r.length) return '<section class="tc-card"><p class="tc-mudo" style="margin:0">Ainda não há técnicos no rank.</p></section>';
+  return `<section class="tc-card"><h3>Rank de Poder<span class="dir">${r.length} time(s)</span></h3>
+    <p class="tc-mudo tc-peq" style="margin:0 0 10px">Os times dos técnicos reais, do maior Poder para o menor. Clique em uma linha para ver os titulares.</p>
+    <div class="tc-tabela-rolagem"><table class="tc-tabela tc-rank"><thead><tr><th>#</th><th>Time</th><th class="n">Poder</th><th class="n">Títulos</th></tr></thead><tbody>
+    ${r.map((t) => `<tr class="lnk ${t.meu ? 'eu' : ''}" data-act="rank-time" data-org="${t.org.id}" tabindex="0" role="button" aria-label="Ver os titulares de ${esc(t.org.nome)}"><td class="pos p${t.pos <= 3 ? t.pos : 0}">${t.pos}</td><td><div class="org">${escudoOrg(t.org, 34)}<span>${esc(t.org.nome)}${t.meu ? ' <small class="tc-mudo">(você)</small>' : ''}</span></div></td><td class="n"><b>${t.poder}</b></td><td class="n"><span class="tc-tit">${t.titulos > 0 ? '🏆 ' : ''}${t.titulos}</span></td></tr>`).join('')}
+    </tbody></table></div></section>`;
+}
+function rankTimeHtml(m) {
+  if (!m.d) return '<p class="tc-carregando">Carregando…</p>';
+  const d = m.d;
+  const card = (j) => `<article class="tc-rt-j">
+      <div class="top"><div class="foto tc-moldura${j.raridade ? ` r-${j.raridade}` : ''}">${retratoSvg(j, 96)}</div><div class="id"><span class="pos">${NOME_VAGA[j.slot] || j.slot}</span><b>${esc(j.nome)}${j.legado ? ' <i class="tc-estrela">◆</i>' : ''}</b>${escudoHtml(j.poder, true)}${estrelasHtml(j)}</div></div>
+      ${barras(j)}
+      <div class="mae"><span class="tc-eyebrow">Maestria</span>${(j.campeoes || []).length ? j.campeoes.slice(0, 4).map((c) => `<div class="${c.favorito ? 'fav' : ''}" title="${esc(c.nome)} · ${fmt(c.pontos)} pts">${campIcone(c.nome, 30)}<span><b>${esc(c.nome)}</b><small>${c.favorito ? '★ ' : ''}${nomeMaestria(c.nivel)}</small></span></div>`).join('') : '<small class="tc-mudo">Sem campeões ainda</small>'}</div>
+    </article>`;
+  return `<h2>${escudoOrg(d.org, 40)} ${esc(d.org.nome)}</h2>
+    <p class="tc-mudo tc-peq" style="margin:2px 0 12px">Poder da equipe <b>${d.poder}</b> · ${d.titulos} título(s) · time titular</p>
+    <div class="tc-rt">${d.titulares.length ? d.titulares.map(card).join('') : '<p class="tc-mudo">Este time ainda não tem titulares.</p>'}</div>`;
+}
+
 // ------------------------------------------------------------------ histórico
 function viewHist() {
   const h = S.hist; if (!h) return '<p class="tc-carregando">Carregando…</p>';
@@ -667,7 +691,8 @@ function modalHtml() {
   else if (m.t === 'demitir') corpo = demitirHtml(m);
   else if (m.t === 'avisos') corpo = avisosHtml(m);
   else if (m.t === 'calendario') corpo = calendarioHtml(m);
-  return `<div class="tc-fundo" data-act="fechar-fundo"><div class="tc-modal" role="dialog" aria-modal="true"><button type="button" class="x" data-act="fechar" aria-label="Fechar">×</button>${corpo}</div></div>`;
+  else if (m.t === 'rank-time') corpo = rankTimeHtml(m);
+  return `<div class="tc-fundo" data-act="fechar-fundo"><div class="tc-modal${m.t === 'rank-time' ? ' larga' : ''}" role="dialog" aria-modal="true"><button type="button" class="x" data-act="fechar" aria-label="Fechar">×</button>${corpo}</div></div>`;
 }
 function demitirHtml(m) {
   const j = m.j; const ganho = j.frag_demissao || 0; const atual = S.meu.org.fragmentos || 0; const base = j.frag_base || 0;
@@ -790,6 +815,7 @@ function conteudo() {
     case 'contratar': return viewContratar();
     case 'camp': return viewCamp();
     case 'class': return viewClass();
+    case 'rank': return viewRank();
     case 'hist': return viewHist();
     case 'treino': return viewTreino();
     case 'amistoso': return viewAmistoso();
@@ -878,6 +904,12 @@ document.addEventListener('click', async (e) => {
   if (act === 'ic-cor') { const f = formDe(b.dataset.alvo); f.ic[b.dataset.g][Number(b.dataset.i)] = b.dataset.v; aplicarIc(b.dataset.alvo); render(); return; }
   if (act === 'mercado-aba') { S.mercado.aba = b.dataset.v; S.mercado.f = { ordem: b.dataset.v === 'oficial' ? 'poder' : 'recente' }; render(); await agir(carregarMercado, { recarregar: false }); return; }
   if (act === 'limpar-filtros') { S.mercado.f = { ordem: S.mercado.aba === 'oficial' ? 'poder' : 'recente' }; S.mercado.oficial = null; S.mercado.usuarios = null; render(); await agir(carregarMercado, { recarregar: false }); return; }
+  if (act === 'rank-time') {
+    S.modal = { t: 'rank-time', d: null }; render();
+    try { const [d] = await Promise.all([api.rankTime(Number(b.dataset.org)), prepararImagens()]); if (S.modal?.t === 'rank-time') { S.modal = { t: 'rank-time', d }; render(); } }
+    catch (e) { S.modal = null; render(); toast(e.message, true); }
+    return;
+  }
   if (act === 'ficha') { await abrirFicha(b.dataset.id); return; }
   if (act === 'ficha-anuncio') { const a = (S.mercado.usuarios || []).find((x) => x.id === Number(b.dataset.anuncio)); await abrirFicha(b.dataset.id, a || null); return; }
   if (act === 'partida') { await agir(async () => { S.modal = { t: 'partida', p: await api.partida(Number(b.dataset.id)) }; }, { recarregar: false }); return; }
