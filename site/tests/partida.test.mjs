@@ -772,7 +772,7 @@ test('I2. itemização situacional: a build muda conforme o time inimigo (resist
   assert.equal(subcategoriaDoEstilo('lutador_tank', 'top'), 'Bruiser'); assert.equal(subcategoriaDoEstilo('encantador', 'meio'), 'Mago'); assert.equal(subcategoriaDoEstilo('tanque', 'suporte'), 'Engajador');
 });
 
-test('I3. subcategorias: todo campeão tem subcategoria em cada posição que joga, e o draft oferece o filtro', async () => {
+test('I3. subcategorias (internas): todo campeão tem subcategoria em cada posição que joga e nenhuma tela as mostra', async () => {
   const { subcategoriaDoCampeao, NOME_POSICAO } = await import('../jogos/tecnico/partida/dados/itemizacao.js');
   const { posicoesDe } = await import('../jogos/tecnico/partida/dados/campeoes-sim.js');
   const POS = { Top: 'top', Jungle: 'selva', Mid: 'meio', ADC: 'atirador', Suporte: 'suporte' };
@@ -781,5 +781,5 @@ test('I3. subcategorias: todo campeão tem subcategoria em cada posição que jo
   assert.ok(n > 173); assert.deepEqual(Object.keys(NOME_POSICAO), ['top', 'selva', 'meio', 'atirador', 'suporte']); assert.equal(NOME_POSICAO.selva, 'Caçador');
   for (const t of ['Tanque', 'Lutador', 'Bruiser', 'Assassino']) assert.ok(vistas.top.has(t) || vistas.selva.has(t), `${t} existe no top ou no caçador`);
   assert.ok(vistas.meio.has('Mago') && vistas.atirador.has('Atirador') && vistas.suporte.has('Encantador') && vistas.suporte.has('Engajador'));
-  const ui = readFileSync(new URL('../jogos/tecnico/partida/js/draft-ui.js', import.meta.url), 'utf8'); assert.match(ui, /data-sub=/); assert.match(ui, /subcategoriaDoCampeao/);
+  for (const f of ['partida/js/draft-ui.js', 'partida/js/partida-ui.js', 'js/main.js']) assert.doesNotMatch(readFileSync(new URL(`../jogos/tecnico/${f}`, import.meta.url), 'utf8'), /subcategoria/i, `${f} não mostra subcategorias`);
 });

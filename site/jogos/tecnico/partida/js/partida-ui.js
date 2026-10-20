@@ -13,7 +13,7 @@ import { prepararImagens, campIcone, itemUrl } from '../../js/campeoes-img.js';
 import { ITENS } from '../dados/itens.js';
 import { tempoTexto } from '../motor/eventos.js';
 import { REGRAS } from '../config/regras.js';
-import { abrirDraft } from './draft-ui.js?v=16';
+import { abrirDraft } from './draft-ui.js?v=17';
 
 const api = platform.tecnico;
 
