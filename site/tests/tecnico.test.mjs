@@ -223,35 +223,33 @@ test('emblema de texto (v3): codifica, decodifica, limpa a escrita, tem as 11 fo
   const A = await import('../jogos/tecnico/js/art.js'); assert.match(A.escudoOrg({ escudo: cod, nome: 'Fênix' }, 44), /<svg class="tc-ict"/);
 });
 
-test('símbolos do time: 49 símbolos de 1 a 3 cores, codifica e decodifica, todas as imagens existem e o HTML sai com as camadas certas', async () => {
+test('símbolos do time: 49 símbolos com uma cor trocável cada (o resto fica fixo), codifica e decodifica, todas as imagens existem e o HTML sai com as camadas certas', async () => {
   const I = await import('../jogos/tecnico/js/icone.js');
   assert.equal(I.N_SIMBOLOS, 49); assert.equal(I.SIMBOLOS.length, 49);
   const dir = new URL('../jogos/tecnico/img/simbolos/', import.meta.url);
   const por = { 1: 0, 2: 0, 3: 0 };
   I.SIMBOLOS.forEach(([nome, fixa, cores], k) => {
     const n = String(k + 1).padStart(2, '0');
-    assert.ok(nome && cores.length >= 1 && cores.length <= 3, `símbolo ${n} tem de 1 a 3 cores`); por[cores.length]++;
+    assert.ok(nome && cores.length >= 1 && cores.length <= 3, `símbolo ${n} tem de 1 a 3 cores`); por[cores.length] = (por[cores.length] || 0) + 1;
     for (const [rot, hex] of cores) { assert.ok(rot, `rótulo da cor do símbolo ${n}`); assert.match(hex, /^#[0-9a-f]{6}$/); }
     for (let c = 1; c <= cores.length; c++) assert.ok(existsSync(new URL(`s${n}-${c}.webp`, dir)), `símbolo ${n} camada ${c}`);
     assert.equal(existsSync(new URL(`s${n}-0.webp`, dir)), !!fixa, `camada fixa do símbolo ${n}`);
     assert.ok(!existsSync(new URL(`s${n}-${cores.length + 1}.webp`, dir)), `símbolo ${n} sem camada sobrando`);
   });
-  assert.ok(por[1] > 0 && por[2] > 0 && por[3] > 0, 'há símbolos de 1, 2 e 3 cores');
+  assert.equal(por[1], 49, 'todo símbolo troca só uma cor');
   assert.ok(!existsSync(new URL('../jogos/tecnico/img/icones/', import.meta.url)), 'emblemas e bandeiras antigos foram removidos');
-  const tres = I.SIMBOLOS.findIndex((s) => s[2].length === 3) + 1; const um = I.SIMBOLOS.findIndex((s) => s[2].length === 1) + 1;
-  const ic = { s: tres, c: ['#112233', '#445566', '#778899'] };
-  assert.equal(I.icCodificar(ic), `v4:${tres}:112233:445566:778899`);
+  const um = 7; const ic = { s: um, c: ['#112233'] };
+  assert.equal(I.icCodificar(ic), `v4:${um}:112233`);
   assert.deepEqual(I.icDecodificar(I.icCodificar(ic)), ic);
-  assert.equal(I.icCodificar({ s: um, c: ['#112233', '#445566'] }), `v4:${um}:112233`, 'símbolo de 1 cor só guarda 1 cor');
-  assert.deepEqual(I.icDecodificar(`v4:${um}:112233:445566`), { s: um, c: ['#112233'] }, 'cores a mais são ignoradas');
-  assert.deepEqual(I.icDecodificar(`v4:${tres}:112233`).c.slice(1), I.simCoresPadrao(tres).slice(1), 'cores que faltam voltam ao original');
+  assert.equal(I.icCodificar({ s: um, c: ['#112233', '#445566'] }), `v4:${um}:112233`, 'só a cor trocável é guardada');
+  assert.deepEqual(I.icDecodificar(`v4:${um}:112233:445566`), ic, 'cores a mais são ignoradas');
+  assert.deepEqual(I.icDecodificar(`v4:${um}`), null, 'sem cor não vale');
   assert.equal(I.icDecodificar('escudo-2'), null); assert.equal(I.icDecodificar('v4:50:112233'), null); assert.equal(I.icDecodificar('v4:0:112233'), null); assert.equal(I.icDecodificar('v2:12:112233:445566:778899:0:aabbcc:ddeeff'), null);
-  assert.deepEqual(I.icTrocar(tres), { s: tres, c: I.simCoresPadrao(tres) });
-  const html = I.icHtml(ic, 80); assert.equal((html.match(/<i class="p"/g) || []).length, 3, 'uma camada por cor');
-  assert.match(html, /--c:#778899/); assert.match(html, new RegExp(`s${String(tres).padStart(2, '0')}-3\\.webp`));
-  assert.equal((I.icHtml({ s: um, c: ['#112233'] }, 80).match(/<i class="p"/g) || []).length, 1);
+  assert.deepEqual(I.icTrocar(um), { s: um, c: I.simCoresPadrao(um) });
+  const html = I.icHtml(ic, 80); assert.equal((html.match(/<i class="p"/g) || []).length, 1, 'uma camada colorida'); assert.equal((html.match(/<i class="x"/g) || []).length, I.SIMBOLOS[um - 1][1], 'mais a camada fixa, quando o símbolo tem');
+  assert.match(html, /--c:#112233/); assert.match(html, /s07-1\.webp/);
   const A = await import('../jogos/tecnico/js/art.js');
-  assert.match(A.escudoOrg({ escudo: `v4:${tres}:112233:445566:778899`, sigla: 'ABC' }, 40), /class="tc-ic"/);
+  assert.match(A.escudoOrg({ escudo: `v4:${um}:112233`, sigla: 'ABC' }, 40), /class="tc-ic"/);
   const antigo = A.escudoOrg({ escudo: 'escudo-2', nome: 'Time Antigo', cor1: '#111111', cor2: '#222222', sigla: 'ABC' }, 40);
   assert.match(antigo, /class="tc-ic"/, 'time ainda não convertido ganha um símbolo fixo pelo nome'); assert.equal(antigo, A.escudoOrg({ escudo: 'v2:3:111111:222222:333333:0:111111:222222', nome: 'Time Antigo', cor1: '#111111', cor2: '#222222', sigla: 'ABC' }, 40));
   assert.ok(!/escudoSvg|ESCUDOS/.test(readFileSync(new URL('../jogos/tecnico/js/art.js', import.meta.url), 'utf8')), 'escudo desenhado antigo foi removido');

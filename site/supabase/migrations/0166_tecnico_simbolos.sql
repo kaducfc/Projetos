@@ -81,7 +81,7 @@ update tc_orgs
 alter table tc_orgs alter column escudo set default 'v4:1:083871:12131d';
 
 -- Times do sistema criados depois (a função que gera os rivais ainda grava escudo-N): o gatilho já grava no formato novo.
-create or replace function public.tc_orgs_escudo_v4() returns trigger language plpgsql as $$
+create or replace function public.tc_orgs_escudo_v4() returns trigger language plpgsql set search_path = public as $$
 begin
   if new.escudo ~ '^(escudo-[0-9]+|v2:.*)$' then
     new.escudo := 'v4:' || (1 + (new.id * 13) % 49)::text

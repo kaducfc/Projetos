@@ -257,10 +257,10 @@ function editorIcone(alvo, sigla) {
   const modos = `<div class="tc-modos" role="tablist" aria-label="Tipo de ícone"><button type="button" role="tab" aria-selected="${f.modo !== 'texto'}" class="${f.modo !== 'texto' ? 'on' : ''}" data-act="ic-modo" data-alvo="${alvo}" data-v="simbolo">Símbolo</button><button type="button" role="tab" aria-selected="${f.modo === 'texto'}" class="${f.modo === 'texto' ? 'on' : ''}" data-act="ic-modo" data-alvo="${alvo}" data-v="texto">Só escrita</button></div>`;
   if (f.modo === 'texto') return editorTexto(alvo, f, modos);
   const info = SIMBOLOS[ic.s - 1]; const nc = info[2].length;
-  const grade = SIMBOLOS.map((sy, k) => `<button type="button" data-act="ic-sim" data-alvo="${alvo}" data-v="${k + 1}" class="${ic.s === k + 1 ? 'on' : ''}" title="${esc(sy[0])}" aria-label="${esc(sy[0])}">${icHtml(icTrocar(k + 1), 52)}<small>${sy[2].length}</small></button>`).join('');
+  const grade = SIMBOLOS.map((sy, k) => `<button type="button" data-act="ic-sim" data-alvo="${alvo}" data-v="${k + 1}" class="${ic.s === k + 1 ? 'on' : ''}" title="${esc(sy[0])}" aria-label="${esc(sy[0])}">${icHtml(icTrocar(k + 1), 52)}</button>`).join('');
   return `<div class="tc-ic-edit">
     ${modos}
-    <div class="previa">${icHtml(ic, 120, 'Ícone do time')}<div><b>${esc(info[0])}</b><div class="tc-mudo tc-peq tc-sym-info">${nc === 1 ? 'Este símbolo aceita 1 cor.' : `Este símbolo aceita até ${nc} cores.`} O número no canto de cada símbolo é a quantidade de cores que ele aceita. A aparência não dá vantagem na competição.</div></div></div>
+    <div class="previa">${icHtml(ic, 120, 'Ícone do time')}<div><b>${esc(info[0])}</b><div class="tc-mudo tc-peq tc-sym-info">${nc === 1 ? `Muda a cor: ${esc(info[2][0][0].toLowerCase())}. O resto do símbolo fica na cor original.` : `Este símbolo aceita até ${nc} cores.`} A aparência não dá vantagem na competição.</div></div></div>
     <div><h4>Símbolo (${N_SIMBOLOS})</h4><div class="tc-ic-grade simbolos">${grade}</div></div>
     <div class="tc-ic-cores"><h4>${nc === 1 ? 'Cor do símbolo' : 'Cores do símbolo'}</h4>${info[2].map((c, i) => seletorCor(alvo, i, c[0])).join('')}<div class="tc-acoes" style="position:static;margin:0;padding:0;background:none"><button type="button" class="tc-btn peq" data-act="ic-orig" data-alvo="${alvo}">Cores originais</button></div></div>
   </div>`;
