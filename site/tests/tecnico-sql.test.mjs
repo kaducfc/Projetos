@@ -776,7 +776,9 @@ t('Legados balanceados: OVR inicial de 55 a 90, treino de até +15 e raridades 1
   // a raridade acompanha o OVR: nenhum jogador de raridade menor passa o OVR de uma raridade maior na mesma posição
   assert.equal(V(`select count(*) from tc_jogadores a join tc_jogadores b on a.pos = b.pos and not a.ficticio and not b.ficticio and a.legado_base is null and b.legado_base is null
       where array_position(array['mitico','lendario','epico','raro','comum'], a.raridade) < array_position(array['mitico','lendario','epico','raro','comum'], b.raridade) and round(tc_poder(a)) < round(tc_poder(b))`), '0');
-  for (const n of ['Faker', 'Chovy', 'Knight', 'Zeus']) assert.ok(Number(V(`select round(tc_poder(j)) from tc_jogadores j where nome = '${n}'`)) >= 80, n);
+  assert.equal(V(`select round(tc_poder(j)) || ':' || raridade ${L} and nome = 'Faker'`), '90:mitico', 'o maior de todos os tempos: mítico com 90');
+  assert.equal(V(`select count(*) ${L} and round(tc_poder(j)) = 90`), '1', 'só o Faker tem 90');
+  for (const n of ['Chovy', 'Gumayusi', 'Keria', 'Zeus']) assert.ok(Number(V(`select round(tc_poder(j)) from tc_jogadores j where nome = '${n}'`)) >= 87, n);
 });
 t('retratos: cada foto é de um único jogador fictício; sem foto livre, o mercado encolhe e o sistema usa o avatar; rodar o SQL de novo não troca ninguém', () => {
   const r = J("select jsonb_agg(jsonb_build_object('g', genero, 'r', retrato, 'n', ficticio, 'sis', (select user_id is null from tc_orgs o where o.id = org_id), 'cs', copia_sistema)) from tc_jogadores");
