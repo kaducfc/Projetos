@@ -667,14 +667,13 @@ function demitirHtml(m) {
 // Botões de evoluir a estrela: Legado pode gastar cópias repetidas ou fragmentos; jogador comum só fragmentos.
 function botoesEstrela(j) {
   const frag = S.meu.org.fragmentos || 0; const off = S.ocupado ? ' disabled' : '';
-  const bFrag = `<button type="button" class="tc-btn ouro" data-act="subir-estrela" data-via="fragmentos" data-id="${j.id}"${off || (frag < j.estrela_custo_frag ? ' disabled' : '')} title="Você tem ${fmt(frag)} fragmentos">Evoluir ★ com ${fmt(j.estrela_custo_frag)} ◈ <small>(tem ${fmt(frag)})</small></button>`;
+  const bFrag = `<button type="button" class="tc-btn ouro" data-act="subir-estrela" data-via="fragmentos" data-id="${j.id}"${off || (frag < j.estrela_custo_frag ? ' disabled' : '')} title="Você tem ${fmt(frag)} fragmentos">Evoluir ★ · ${fmt(j.estrela_custo_frag)} fragmentos <small>(você tem ${fmt(frag)})</small></button>`;
   if (!j.legado) return bFrag;
-  return `<button type="button" class="tc-btn ouro" data-act="subir-estrela" data-via="copias" data-id="${j.id}"${off || ((j.copias || 0) < j.estrela_custo_copias ? ' disabled' : '')} title="Você tem ${j.copias || 0} cópia(s) repetida(s)">Evoluir ★ com ${j.estrela_custo_copias} cópia(s) <small>(tem ${j.copias || 0})</small></button>${bFrag}`;
+  return `<button type="button" class="tc-btn ouro" data-act="subir-estrela" data-via="copias" data-id="${j.id}"${off || ((j.copias || 0) < j.estrela_custo_copias ? ' disabled' : '')} title="Você tem ${j.copias || 0} cópia(s) repetida(s)">Evoluir ★ · ${j.estrela_custo_copias} cópia(s) <small>(você tem ${j.copias || 0})</small></button>${bFrag}`;
 }
 function fichaHtml(m) {
   const j = m.j; const meu = j.org_id && j.org_id === S.meu.org.id;
   const resta = semanasRestantes(j);
-  const hist = (j.historico || []).slice(0, 5);
   let acoes = '';
   if (!j.org_id && j.legado) acoes = '<span class="tc-mudo tc-peq">Jogador Legado: só sai dos baús de Recrutar.</span>';
   else if (!j.org_id) acoes = (S.meu.elenco || []).length >= ELENCO_MAX ? '<span class="tc-mudo tc-peq">Inventário cheio: demita ou venda alguém para contratar.</span>' : `<button type="button" class="tc-btn ouro" data-act="abrir-contratar" data-id="${j.id}">Contratar</button>`;
@@ -690,7 +689,6 @@ function fichaHtml(m) {
     ${j.org_id ? `<div class="tc-resumo"><div class="l"><span>Estrelas</span><b>${estrelasHtml(j)} <small>+${j.bonus_estrelas_pct || 0}% de eficiência</small></b></div>${j.legado ? `<div class="l"><span>Cópias repetidas</span><b>${j.copias}</b></div>` : `<div class="l"><span>Seus fragmentos</span><b>${fmt(S.meu.org.fragmentos || 0)}</b></div>`}</div>` : ''}
     <div class="tc-resumo"><div class="l"><span>Salário${j.org_id ? '' : ' (se contratado)'}</span><b>${fmt(j.org_id ? j.salario : salarioDe(j.preco))} cr./semana</b></div>${j.org_id ? `<div class="l"><span>Contrato</span><b>${j.contrato_ativo ? `${j.contrato_restante} semana(s) · já pago` : 'Sem contrato'}</b></div><div class="l"><span>Organização</span><b>${esc(j.org?.nome || '')}</b></div>` : j.legado ? '<div class="l"><span>Obtenção</span><b>Baús de Recrutar</b></div>' : `<div class="l"><span>Preço de transferência</span><b class="tc-preco cr">${fmt(j.preco)}</b></div>`}${m.anuncio ? `<div class="l"><span>Anúncio</span><b class="tc-preco rc">${fmt(m.anuncio.preco_rc)}</b></div><div class="l"><span>Vendedor</span><b>${esc(m.anuncio.vendedor.nome)}</b></div><div class="l"><span>Publicado em</span><b>${new Date(m.anuncio.criado).toLocaleDateString('pt-BR')}</b></div>` : ''}</div>
     ${(j.campeoes || []).length ? `<h4 class="tc-eyebrow">Campeões</h4><div class="tc-maes">${j.campeoes.map((c) => `<div class="${c.favorito ? 'fav' : ''}">${campIcone(c.nome, 38)}<b>${esc(c.nome)}</b><span>${c.favorito ? '★ ' : ''}${nomeMaestria(c.nivel)}${c.favorito && c.bonus_pct ? ` · +${c.bonus_pct}% de Poder` : ''}</span><small>${fmt(c.pontos)} pts · ${c.jogos} jogo(s)</small></div>`).join('')}</div>` : ''}
-    ${hist.length ? `<h4 class="tc-eyebrow">Histórico</h4><ul class="tc-avisos">${hist.map((h) => `<li>${new Date(h.criado).toLocaleDateString('pt-BR')} · ${{ inicial: 'Elenco inicial', contratacao: 'Contratado', compra_usuario: 'Vendido entre usuários', renovacao: 'Contrato efetivado', liberado: 'Liberado', expirou: 'Contrato terminou', substituto: 'Substituto' }[h.tipo] || h.tipo}${h.para ? ` · ${esc(h.para)}` : ''}${h.valor ? ` · ${fmt(h.valor)} ${h.moeda === 'rc' ? 'RC' : 'cr.'}` : ''}</li>`).join('')}</ul>` : ''}
     <div class="tc-acoes">${acoes}</div>`;
 }
 function contratarHtml(m) {
