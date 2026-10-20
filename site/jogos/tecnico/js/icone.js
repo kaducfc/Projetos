@@ -120,7 +120,7 @@ export const FONTES = [
   { id: 11, nome: 'Y224', css: "'TC Y224', Impact, sans-serif" },
 ];
 export const FORMAS_PLACA = ['Sem placa', 'Elipse', 'Retângulo', 'Escudo'];
-export const TEXTO_MAX = 10;
+export const TEXTO_MAX = 14;
 export const TEXTO_PADRAO = { t: 'TIME', f: 1, c: ['#ffffff', '#d9a82b'], ow: 3, oc: '#1b3a6b', sh: 2, sc: '#000000', pl: 0, pf: '#1b3a6b', pb: '#d9a82b' };
 export const txClone = (tx) => ({ ...tx, c: [...tx.c] });
 // Só letras, números, espaço e . & ! ' + - (o ":" separa os campos).

@@ -236,7 +236,7 @@ function viewEscolha() {
 // ------------------------------------------------------------------ editor do ícone (símbolo ou escrita)
 // alvo: 'criar' (S.form) ou 'pers' (S.form.pers). O ícone vira texto no campo `escudo` e as cores principais alimentam cor1/cor2.
 const formDe = (alvo) => (alvo === 'pers' ? S.form.pers : S.form);
-// O emblema de escrita usa sempre o NOME do time (no máximo 10 caracteres, só letras, números e . & ! ' + -).
+// O emblema de escrita usa sempre o NOME do time (no máximo 14 caracteres, só letras, números e . & ! ' + -).
 const nomeDoTime = (alvo) => String((alvo === 'pers' ? S.meu?.org?.nome : S.form.nome) ?? '').trim();
 const nomeServeParaTexto = (nome) => { const n = String(nome ?? '').trim(); return n.length >= 1 && n.length <= TEXTO_MAX && txLimpar(n) === n; };
 function aplicarIc(alvo) {

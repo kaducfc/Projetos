@@ -17,7 +17,7 @@ begin
   if s !~ '^[A-Z0-9]{2,4}$' then
     raise exception 'sigla_invalida';
   end if;
-  if escudo_ !~ '^(v4:([1-9]|[1-3][0-9]|4[0-9])(:[0-9a-f]{6}){1,3}|v3:[A-Za-z0-9À-ÿ .&!''+-]{1,10}:([1-9]|1[01]):[0-9a-f]{6}:[0-9a-f]{6}:[0-8]:[0-9a-f]{6}:[0-6]:[0-9a-f]{6}:[0-3]:[0-9a-f]{6}:[0-9a-f]{6})$' then
+  if escudo_ !~ '^(v4:([1-9]|[1-3][0-9]|4[0-9])(:[0-9a-f]{6}){1,3}|v3:[A-Za-z0-9À-ÿ .&!''+-]{1,14}:([1-9]|1[01]):[0-9a-f]{6}:[0-9a-f]{6}:[0-8]:[0-9a-f]{6}:[0-6]:[0-9a-f]{6}:[0-3]:[0-9a-f]{6}:[0-9a-f]{6})$' then
     raise exception 'escudo_invalido';
   end if;
   if escudo_ like 'v3:%' and lower(split_part(escudo_, ':', 2)) <> lower(btrim(nome_)) then
@@ -56,7 +56,7 @@ declare
   uid uuid := auth.uid();
 begin
   perform tc_exigir(uid);
-  if escudo_ !~ '^(v4:([1-9]|[1-3][0-9]|4[0-9])(:[0-9a-f]{6}){1,3}|v3:[A-Za-z0-9À-ÿ .&!''+-]{1,10}:([1-9]|1[01]):[0-9a-f]{6}:[0-9a-f]{6}:[0-8]:[0-9a-f]{6}:[0-6]:[0-9a-f]{6}:[0-3]:[0-9a-f]{6}:[0-9a-f]{6})$' or estilo_ not in ('classico', 'moderno', 'tecnologico') then
+  if escudo_ !~ '^(v4:([1-9]|[1-3][0-9]|4[0-9])(:[0-9a-f]{6}){1,3}|v3:[A-Za-z0-9À-ÿ .&!''+-]{1,14}:([1-9]|1[01]):[0-9a-f]{6}:[0-9a-f]{6}:[0-8]:[0-9a-f]{6}:[0-6]:[0-9a-f]{6}:[0-3]:[0-9a-f]{6}:[0-9a-f]{6})$' or estilo_ not in ('classico', 'moderno', 'tecnologico') then
     raise exception 'dados_invalidos';
   end if;
   if escudo_ like 'v3:%' and lower(split_part(escudo_, ':', 2)) is distinct from (select lower(nome) from tc_orgs where user_id = uid) then

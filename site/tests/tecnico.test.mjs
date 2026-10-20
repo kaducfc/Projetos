@@ -212,7 +212,7 @@ test('emblema de texto (v3): codifica, decodifica, limpa a escrita, tem as 11 fo
   assert.deepEqual(I.txDecodificar(cod), tx);
   assert.equal(I.txDecodificar('v4:1:ff0000:00ff00'), null); assert.equal(I.txDecodificar('v3::1:ffffff:ffffff:0:000000:0:000000:0:000000:000000'), null, 'texto vazio');
   assert.equal(I.txDecodificar('v3:AB:12:ffffff:ffffff:0:000000:0:000000:0:000000:000000'), null, 'fonte inexistente'); assert.equal(I.txDecodificar('v3:AB:1:ffffff:ffffff:9:000000:0:000000:0:000000:000000'), null, 'contorno acima do máximo');
-  assert.equal(I.txLimpar('A:B<C>"D"  E'), 'ABCD E', 'só caracteres permitidos'); assert.equal(I.txLimpar('x'.repeat(40)).length, I.TEXTO_MAX); assert.equal(I.TEXTO_MAX, 10);
+  assert.equal(I.txLimpar('A:B<C>"D"  E'), 'ABCD E', 'só caracteres permitidos'); assert.equal(I.txLimpar('x'.repeat(40)).length, I.TEXTO_MAX); assert.equal(I.TEXTO_MAX, 14);
   assert.equal(I.txCodificar({ ...tx, t: '<script>' }).split(':')[1], 'script', 'a escrita é limpa antes de ir para o servidor');
   assert.equal(I.FONTES.length, 11);
   const css = readFileSync(new URL('../jogos/tecnico/css/style.css', import.meta.url), 'utf8');

@@ -1098,14 +1098,14 @@ t('ícone do time: símbolo (1 a 49) com 1 a 3 cores; formatos inválidos e os e
   assert.equal(V("select escudo from tc_orgs where id = 1"), 'v4:49:d9a82b:ffffff:1b3a6b');
   V("select tc_personalizar_org('v4:1:ff0000', '#ff0000', '#00ff00', 'classico')", 1); // um símbolo pode guardar só 1 cor
   assert.equal(V("select escudo from tc_orgs where id = 1"), 'v4:1:ff0000');
-  // emblema só de escrita (v3): a escrita é sempre o nome do time (até 10 caracteres); formato fora do padrão é recusado
+  // emblema só de escrita (v3): a escrita é sempre o nome do time (até 14 caracteres); formato fora do padrão é recusado
   const nomeOrig = V('select nome from tc_orgs where id = 1');
   V("update tc_orgs set nome = 'Fenix 77' where id = 1");
   V("select tc_personalizar_org('v3:Fenix 77:3:ffffff:d9a82b:4:112233:2:000000:0:1b3a6b:d9a82b', '#ffffff', '#d9a82b', 'classico')", 1);
   assert.equal(V('select escudo from tc_orgs where id = 1'), 'v3:Fenix 77:3:ffffff:d9a82b:4:112233:2:000000:0:1b3a6b:d9a82b');
   V("select tc_personalizar_org('v3:FENIX 77:3:ffffff:d9a82b:4:112233:2:000000:0:1b3a6b:d9a82b', '#ffffff', '#d9a82b', 'classico')", 1); // maiúsculas/minúsculas não importam
   assert.equal(falha("select tc_personalizar_org('v3:Outro Nome:3:ffffff:d9a82b:4:112233:2:000000:0:1b3a6b:d9a82b', '#ffffff', '#d9a82b', 'classico')", 1), 'dados_invalidos', 'a escrita tem de ser o nome do time');
-  for (const ruim of ["v3:<b>:3:ffffff:d9a82b:4:112233:2:000000:3:1b3a6b:d9a82b", 'v3:Fenix 77:12:ffffff:d9a82b:4:112233:2:000000:3:1b3a6b:d9a82b', 'v3:Fenix 77:3:ffffff:d9a82b:9:112233:2:000000:3:1b3a6b:d9a82b', 'v3:Fenix 77:3:fffff:d9a82b:4:112233:2:000000:3:1b3a6b:d9a82b', 'v3:ABCDEFGHIJK:3:ffffff:d9a82b:4:112233:2:000000:3:1b3a6b:d9a82b'])
+  for (const ruim of ["v3:<b>:3:ffffff:d9a82b:4:112233:2:000000:3:1b3a6b:d9a82b", 'v3:Fenix 77:12:ffffff:d9a82b:4:112233:2:000000:3:1b3a6b:d9a82b', 'v3:Fenix 77:3:ffffff:d9a82b:9:112233:2:000000:3:1b3a6b:d9a82b', 'v3:Fenix 77:3:fffff:d9a82b:4:112233:2:000000:3:1b3a6b:d9a82b', 'v3:ABCDEFGHIJKLMNO:3:ffffff:d9a82b:4:112233:2:000000:3:1b3a6b:d9a82b'])
     assert.equal(falha(`select tc_personalizar_org('${ruim}', '#ffffff', '#d9a82b', 'classico')`, 1), 'dados_invalidos', ruim);
   V(`update tc_orgs set nome = '${nomeOrig.replace(/'/g, "''")}' where id = 1`);
   for (const ruim of ['v4:50:d9a82b:ffffff', 'v4:0:d9a82b', 'v4:5', 'v4:5:zzzzzz', 'v4:5:d9a82b:ffffff:1b3a6b:000000', "v4:5:d9a82b'); drop table tc_orgs; --", 'escudo-3', 'escudo-1', 'v2:30:d9a82b:ffffff:1b3a6b:20:d9a82b:1b3a6b', 'v2:1:ff0000:00ff00:0000ff:0:000000:ffffff']) {
