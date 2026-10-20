@@ -938,3 +938,6 @@ html.tc-sem-anim *, html.tc-sem-anim *::before, html.tc-sem-anim *::after { anim
 @keyframes tc-nav-barra { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
 @keyframes tc-nav-icone { 0%, 100% { filter: drop-shadow(0 0 3px #22d3ee66); } 50% { filter: drop-shadow(0 0 9px #67e8f9cc); } }
 @media (prefers-reduced-motion: reduce) { .tc-nav button.on, .tc-nav button.on::before, .tc-nav button.on .ic { animation: none; } }
+
+.tc-cfg-nome { align-items: flex-start; } .tc-cfg-nome > div { flex: 1; min-width: 0; }
+.tc-cfg-campo { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; } .tc-cfg-campo .tc-input { flex: 1; min-width: 160px; }

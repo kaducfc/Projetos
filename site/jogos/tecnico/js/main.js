@@ -12,6 +12,7 @@ import {
 import { prepararImagens, campIcone } from './campeoes-img.js';
 import { escudoOrg, retratoSvg, iconeVaga } from './art.js';
 import { SIMBOLOS, N_SIMBOLOS, PALETA, ICONE_PADRAO, icClone, icTrocar, icCodificar, icDecodificar, icHtml, FONTES, TEXTO_PADRAO, TEXTO_MAX, txClone, txCodificar, txDecodificar, txLimpar, textoHtml, carregarFontes } from './icone.js?v=3';
+import { tocar, somAtivo, definirSom } from './bau-anim.js';
 import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js?v=5';
 import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
 import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js?v=3';
@@ -67,6 +68,7 @@ function toast(msg, erro = false) {
   el.className = `tc-toast${erro ? ' erro' : ''}`;
   el.setAttribute('role', erro ? 'alert' : 'status');
   el.style.setProperty('--dur', `${ms}ms`);
+  tocar(erro ? 'erro' : 'ok');
   const ic = document.createElement('span'); ic.className = 'ic'; ic.textContent = erro ? '!' : '✓';
   const tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = msg;
   el.append(ic, tx);
@@ -82,14 +84,23 @@ function lerCfg() { try { return JSON.parse(localStorage.getItem(CFG_KEY) || '{}
 function salvarCfg(c) { try { localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch { /* sem armazenamento: vale só nesta sessão */ } }
 function aplicarCfg() { document.documentElement.classList.toggle('tc-sem-anim', !!lerCfg().semAnim); }
 aplicarCfg();
+const RENOMEAR_RC = 200; // custo de trocar o nome do time (o servidor cobra o mesmo valor)
+const NOME_OK = /^[\p{L}\p{N} ._'-]+$/u;
+const chave = (on, acao, rotulo, ligado, desligado) => `<button type="button" class="tc-chave${on ? ' on' : ''}" data-act="${acao}" role="switch" aria-checked="${on}" aria-label="${rotulo}"><i></i><span>${on ? ligado : desligado}</span></button>`;
 function configHtml() {
-  const c = lerCfg(); const sem = !!c.semAnim;
+  const c = lerCfg(); const sem = !!c.semAnim; const som = somAtivo(); const org = S.meu?.org;
   return `<h2>Configuração</h2>
-    <p class="tc-mudo tc-peq" style="margin:2px 0 12px">Preferências deste navegador.</p>
+    <p class="tc-mudo tc-peq" style="margin:2px 0 12px">As preferências de som e animação ficam só neste navegador.</p>
+    <div class="tc-cfg-linha"><div><b>Efeitos sonoros</b><small class="tc-mudo">Sons da abertura de baús e dos avisos do jogo (sucesso e erro).</small></div>
+      ${chave(som, 'cfg-som', 'Efeitos sonoros', 'Ligados', 'Desligados')}</div>
     <div class="tc-cfg-linha"><div><b>Animações</b><small class="tc-mudo">Brilhos nas barras, estrelas, cartões e avisos. Desligue se o jogo ficar pesado ou se preferir uma tela mais calma.</small></div>
-      <button type="button" class="tc-chave${sem ? '' : ' on'}" data-act="cfg-anim" role="switch" aria-checked="${!sem}" aria-label="Animações"><i></i><span>${sem ? 'Reduzidas' : 'Ligadas'}</span></button></div>
-    <div class="tc-cfg-linha"><div><b>Personalizar o time</b><small class="tc-mudo">Nome, escudo, cores e estilo da sua organização.</small></div>
-      <button type="button" class="tc-btn" data-act="cfg-pers">Abrir</button></div>
+      ${chave(!sem, 'cfg-anim', 'Animações', 'Ligadas', 'Reduzidas')}</div>
+    ${org ? `<div class="tc-cfg-linha tc-cfg-nome"><div><b>Nome do time</b><small class="tc-mudo">Trocar o nome custa <b>${RENOMEAR_RC} RC</b> (você tem ${fmt(S.meu.rc)} RC). Se o seu emblema for só a escrita, ele acompanha o nome novo.</small>
+      <span class="tc-cfg-campo"><input class="tc-input" id="cfg-nome" maxlength="24" autocomplete="off" value="${esc(org.nome)}" aria-label="Novo nome do time" /><button type="button" class="tc-btn" data-act="cfg-renomear"${S.ocupado ? ' disabled' : ''}>Trocar (${RENOMEAR_RC} RC)</button></span></div></div>
+    <div class="tc-cfg-linha"><div><b>Personalizar o time</b><small class="tc-mudo">Símbolo, cores e estilo da sua organização (é grátis).</small></div>
+      <button type="button" class="tc-btn" data-act="cfg-pers">Abrir</button></div>` : ''}
+    <div class="tc-cfg-linha"><div><b>Restaurar preferências</b><small class="tc-mudo">Volta o som e as animações para o padrão (ligados).</small></div>
+      <button type="button" class="tc-btn" data-act="cfg-reset">Restaurar</button></div>
     <div class="tc-acoes"><button type="button" class="tc-btn" data-act="fechar">Fechar</button></div>`;
 }
 
@@ -965,6 +976,18 @@ document.addEventListener('click', async (e) => {
   if (act === 'mercado-aba') { S.mercado.aba = b.dataset.v; S.mercado.f = { ordem: b.dataset.v === 'oficial' ? 'poder' : 'recente' }; render(); await agir(carregarMercado, { recarregar: false }); return; }
   if (act === 'limpar-filtros') { S.mercado.f = { ordem: S.mercado.aba === 'oficial' ? 'poder' : 'recente' }; S.mercado.oficial = null; S.mercado.usuarios = null; render(); await agir(carregarMercado, { recarregar: false }); return; }
   if (act === 'config') { S.modal = { t: 'config' }; render(); return; }
+  if (act === 'cfg-som') { definirSom(!somAtivo()); if (somAtivo()) tocar('ok'); render(); return; }
+  if (act === 'cfg-reset') { try { localStorage.removeItem(CFG_KEY); } catch { /* sem storage */ } definirSom(true); aplicarCfg(); toast('Preferências restauradas.'); render(); return; }
+  if (act === 'cfg-renomear') {
+    const nome = String(document.getElementById('cfg-nome')?.value ?? '').trim().replace(/\s+/g, ' ');
+    if (nome.length < 3 || nome.length > 24 || !NOME_OK.test(nome)) { toast('Use de 3 a 24 caracteres (letras, números, espaço, ponto, hífen ou sublinhado).', true); return; }
+    if (nome === S.meu?.org?.nome) { toast('O novo nome é igual ao atual.', true); return; }
+    if ((S.meu?.rc ?? 0) < RENOMEAR_RC) { toast(`Trocar o nome custa ${RENOMEAR_RC} RC e você não tem Rift Coins suficientes.`, true); return; }
+    if (!window.confirm(`Trocar o nome do time para "${nome}" por ${RENOMEAR_RC} RC?`)) return;
+    const r = await agir(() => api.renomear(nome), { ok: `Nome alterado para ${nome}.` });
+    if (r) { S.form.pers = null; S.modal = null; render(); }
+    return;
+  }
   if (act === 'cfg-anim') { const c = lerCfg(); c.semAnim = !c.semAnim; salvarCfg(c); aplicarCfg(); render(); return; }
   if (act === 'cfg-pers') { S.modal = null; S.aba = 'pers'; render(); await carregarAba(); render(); window.scrollTo({ top: 0 }); return; }
   if (act === 'rank-pag') { S.rankPag = Math.max(1, Number(b.dataset.p) || 1); render(); return; }

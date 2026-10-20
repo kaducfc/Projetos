@@ -16,6 +16,9 @@ function ruido(ac, dur) {
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   const s = ac.createBufferSource(); s.buffer = b; return s;
 }
+export const somAtivo = () => somLigado();
+export function definirSom(ligado) { try { localStorage.setItem('tc.som', ligado ? '1' : '0'); } catch { /* sem storage: vale só nesta sessão */ } }
+export const tocar = (tipo, arg) => som(tipo, arg);
 function som(tipo, arg) {
   if (!somLigado()) return;
   const ac = audio(); if (!ac) return; const t = ac.currentTime;
@@ -30,6 +33,9 @@ function som(tipo, arg) {
   } else if (tipo === 'carta') { // brilho que sobe de tom conforme a raridade
     const base = [440, 523, 659, 784, 988][arg] || 440;
     [1, 1.25, 1.5, 2].slice(0, 2 + Math.min(arg, 2)).forEach((m, i) => { const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.value = base * m; o.connect(ganho(0.07, t + i * 0.07, t + 0.7 + i * 0.07)); o.start(t + i * 0.07); o.stop(t + 0.9 + i * 0.07); });
+  } else if (tipo === 'ok' || tipo === 'erro') { // avisos: duas notas suaves subindo; erro é um tom grave curto
+    const notas = tipo === 'ok' ? [660, 880] : [180, 150];
+    notas.forEach((f, i) => { const o = ac.createOscillator(); o.type = tipo === 'ok' ? 'sine' : 'triangle'; o.frequency.value = f; o.connect(ganho(0.06, t + i * 0.09, t + 0.25 + i * 0.09)); o.start(t + i * 0.09); o.stop(t + 0.3 + i * 0.09); });
   } else if (tipo === 'whoosh') {
     const n = ruido(ac, 0.5); const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2; f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(2400, t + 0.35); n.connect(f); f.connect(ganho(0.08, t, t + 0.45)); n.start(t);
   }
