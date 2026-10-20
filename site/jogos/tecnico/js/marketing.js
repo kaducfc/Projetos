@@ -84,7 +84,7 @@ function viewVisao(e) {
     ['Receita base do clube', t.base * 1, `base ${num1(t.base_inicial)} + fama ${num1(t.base_fama)}${t.base_divisao ? ` + divisão principal ${num1(t.base_divisao)}` : ''}`],
     ['Bônus de marketing', t.base * t.bonus_marketing, `+${pct(t.bonus_marketing)} sobre a base`],
     ['Bônus de audiência', t.base * t.bonus_audiencia, `+${pct(t.bonus_audiencia)} (${num1(e.audiencia.total)} de audiência)`],
-    ['Bônus de campanha', t.base * t.bonus_campanha, e.campanha_ativa ? `+${pct(t.bonus_campanha)} até ${quando(e.campanha_ativa.fim)}` : 'nenhuma campanha ativa'],
+    ['Bônus de campanha', (t.base * (1 + t.bonus_marketing + t.bonus_audiencia) + t.patrocinadores) * t.bonus_campanha, e.campanha_ativa ? `+${pct(t.bonus_campanha)} sobre toda a receita até ${quando(e.campanha_ativa.fim)}` : 'nenhuma campanha ativa'],
     ['Patrocinadores', t.patrocinadores, 'valor fixo dos contratos ativos'],
   ];
   const tab = linhas.map(([n, v, d]) => `<tr><td>${n}<br><small class="tc-mudo">${d}</small></td><td class="n">${num1(v)} /min</td></tr>`).join('');
@@ -98,11 +98,14 @@ function viewMarketing(e) {
   const prox = max ? '' : `<div class="mkt-prox"><div><small>Próximo nível</small><b>${m.nivel + 1} · ${C.esc(m.proximo_nome || '')}</b><small>bônus de marketing ${pct(m.bonus)} → ${pct(m.proximo_bonus)}</small></div>
     <button type="button" class="tc-btn ouro" data-act="mkt-melhorar" ${e.creditos < m.custo_proximo || C.S.ocupado ? 'disabled' : ''}>Melhorar · ${C.fmt(m.custo_proximo)} cr.</button></div>`;
   const lim = m.limites.map((l) => `<tr class="${m.nivel >= l.nivel ? 'eu' : ''}"><td>Nível ${l.nivel}+</td><td class="n">${l.max} contrato(s)</td></tr>`).join('');
+  const semCamp = (e.taxa.base * (1 + e.taxa.bonus_marketing + e.taxa.bonus_audiencia) + e.taxa.patrocinadores); // receita por minuto sem campanha: base da estimativa
   const camps = e.campanhas.map((c) => {
+    const ganho = Math.round(semCamp * c.bonus * c.duracao_h * 60); const saldo = ganho - c.custo;
     const rec = c.recarga_ate ? `em recarga até ${quando(c.recarga_ate)}` : '';
     const bloq = e.campanha_ativa || c.requisito || c.recarga_ate || e.creditos < c.custo || C.S.ocupado;
     const ativa = e.campanha_ativa?.id === c.id;
     return `<div class="mkt-camp ${ativa ? 'on' : ''}"><div><b>${C.esc(c.nome)}</b><small>${C.esc(c.efeito)} · recarga ${c.recarga_h}h</small>
+      <small class="mkt-roi ${saldo >= 0 ? 'bom' : 'ruim'}">Com a sua receita de hoje rende cerca de +${C.fmt(ganho)} cr. no período (${saldo >= 0 ? 'lucro' : 'prejuízo'} de ${C.fmt(Math.abs(saldo))} cr.)</small>
       <small class="tc-mudo">${ativa ? `Em andamento · termina em ${dur(new Date(e.campanha_ativa.fim) - Date.now())}` : c.requisito ? C.esc(c.requisito) : rec}</small></div>
       <button type="button" class="tc-btn ciano" data-act="mkt-campanha" data-id="${c.id}" ${bloq ? 'disabled' : ''}>${C.fmt(c.custo)} cr.</button></div>`;
   }).join('');
@@ -110,7 +113,7 @@ function viewMarketing(e) {
     <p style="margin:0 0 6px"><b>${C.esc(m.nome || '')}</b> · bônus de ${pct(m.bonus)} na receita base · ${m.limite_contratos} contrato(s) de patrocínio simultâneo(s)</p>
     <div class="tc-barra"><i style="width:${m.nivel / m.max * 100}%"></i></div>${prox || '<p class="tc-mudo tc-peq">Marketing no nível máximo.</p>'}
     <table class="tc-tabela" style="margin-top:10px"><thead><tr><th>Nível</th><th class="n">Limite</th></tr></thead><tbody>${lim}</tbody></table></section>
-    <section class="tc-card"><h3>Campanhas<span class="dir">uma por vez</span></h3><p class="tc-mudo tc-peq" style="margin:0 0 8px">Uma campanha dá um bônus temporário na receita base. Depois que termina, ela fica em recarga.</p>${camps}</section>`;
+    <section class="tc-card"><h3>Campanhas<span class="dir">uma por vez</span></h3><p class="tc-mudo tc-peq" style="margin:0 0 8px">Uma campanha multiplica <b>toda a sua receita</b> (clube, bônus comerciais e patrocinadores) durante o período. A estimativa de cada uma usa a sua receita atual por minuto. Depois que termina, ela fica em recarga.</p>${camps}</section>`;
 }
 function viewPatro(e) {
   const ativos = e.contratos.filter((c) => c.ativo);
