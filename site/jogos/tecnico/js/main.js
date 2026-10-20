@@ -19,6 +19,12 @@ import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, ab
 
 // Comunicação da equipe: idioma dos titulares e quanto cada um ganha por falar com os colegas (mesmo idioma nativo vale 1, idioma em comum vale 2/3).
 const NOME_IDIOMA = { ko: 'Coreano', zh: 'Chinês', pt: 'Português', es: 'Espanhol', en: 'Inglês', vi: 'Vietnamita', ja: 'Japonês', tr: 'Turco', pl: 'Polonês' };
+// Idiomas do jogador na ficha: nativo e, se houver, os que fala também.
+function idiomasFichaHtml(j) {
+  if (!j.idioma?.nativo) return '';
+  const nome = (c) => NOME_IDIOMA[c] || String(c).toUpperCase(); const sec = j.idioma.sec || [];
+  return `<p class="tc-idiomas-ficha"><span class="n" title="Idioma nativo">🗣 <b>${esc(nome(j.idioma.nativo))}</b> <small>nativo</small></span>${sec.map((c) => `<span class="s" title="Idioma secundário"><b>${esc(nome(c))}</b> <small>fala também</small></span>`).join('')}</p>`;
+}
 function comunicacaoHtml() {
   const I = S.idiomas; if (!I || !I.titulares?.length) return '';
   const nomeId = (c) => NOME_IDIOMA[c] || String(c).toUpperCase();
@@ -800,6 +806,7 @@ function fichaHtml(m) {
   }
   else if (m.anuncio) acoes = (S.meu.elenco || []).length >= ELENCO_MAX ? '<span class="tc-mudo tc-peq">Inventário cheio: demita ou venda alguém para comprar.</span>' : `<button type="button" class="tc-btn ouro" data-act="abrir-comprar" data-anuncio="${m.anuncio.id}">Comprar por ${fmt(m.anuncio.preco_rc)} RC</button>`;
   return `<h2>${esc(j.nome)}${j.ficticio === false ? ' <span class="tc-estrela-selo">◆ Legado</span>' : ''}</h2><p class="tc-mudo tc-peq" style="margin:2px 0">${iconeVaga(j.pos)} ${NOME_VAGA[j.pos]}${(j.pos2 || []).length ? ` · também ${j.pos2.map((p) => NOME_VAGA[p]).join(', ')}` : ''} · ${j.idade} anos${j.regiao ? ` · ${esc(j.regiao)}` : ''}${j.ficticio ? '' : ' · jogador legado'}</p>
+    ${idiomasFichaHtml(j)}
     <div class="tc-ficha"><div class="foto tc-moldura${j.raridade ? ` r-${j.raridade}` : ''}">${retratoSvg(j, 200)}</div><div>
       <div class="tc-poder" style="margin-bottom:10px">${escudoHtml(j.poder, true)}<span class="tc-mudo tc-peq">Poder individual<br>Experiência ${j.exp}${j.potencial != null ? `<br>Potencial ${j.potencial}` : ''}</span></div>
       ${barras(j)}</div></div>
