@@ -855,3 +855,7 @@ html.tc-sem-anim *, html.tc-sem-anim *::before, html.tc-sem-anim *::after { anim
 .tc-rank tr.extra td { background: #0f2240; border-top: 1px solid #2d5a99; border-bottom: 1px solid #2d5a99; }
 .tc-pagina { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 14px; flex-wrap: wrap; } .tc-pagina .tc-btn.on { background: linear-gradient(180deg, #2a2208, #1a1505); border-color: #d9a82b; color: #f5cf5a; }
 @media (max-width: 720px) { .tc-rank col.c-comp, .tc-rank th:nth-child(3), .tc-rank td.comp { display: none; } .tc-rank col.c-time { width: 44%; } }
+
+/* ícones do menu lateral maiores */
+.tc-nav button .ic { width: 36px; height: 36px; } .tc-nav button { padding-top: 8px; padding-bottom: 8px; gap: 12px; }
+@media (max-width: 1000px) { .tc-nav button .ic { width: 28px; height: 28px; } .tc-nav button { padding-top: 7px; padding-bottom: 7px; } }
