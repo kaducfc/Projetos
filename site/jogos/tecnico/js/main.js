@@ -21,7 +21,10 @@ const NOME_IDIOMA = { ko: 'Coreano', zh: 'Chinês', pt: 'Português', es: 'Espan
 function comunicacaoHtml() {
   const I = S.idiomas; if (!I || !I.titulares?.length) return '';
   const nomeId = (c) => NOME_IDIOMA[c] || String(c).toUpperCase();
-  const chips = I.titulares.map((t) => `<span class="tc-idioma ${t.afinidade > 0 ? 'on' : ''}" title="${esc(t.nome)}: ${t.afinidade > 0 ? `+${(t.afinidade * I.eficiencia_pct).toFixed(1).replace('.', ',')}% de eficiência pela comunicação` : 'sem idioma em comum com os colegas'}"><b>${esc(t.nome)}</b><small>${esc(nomeId(t.idioma.nativo))}${(t.idioma.sec || []).length ? ` · fala também ${esc(t.idioma.sec.map(nomeId).join(', '))}` : ''}</small></span>`).join('');
+  const falados = (t) => new Set([t.idioma.nativo, ...(t.idioma.sec || [])]);
+  const nivel = (t) => { const outros = I.titulares.filter((o) => o.id !== t.id); if (outros.some((o) => o.idioma.nativo === t.idioma.nativo)) return 'nativo'; return outros.some((o) => [...falados(t)].some((l) => falados(o).has(l))) ? 'comum' : 'nada'; }; // verde: mesmo idioma nativo · amarelo: só um idioma em comum · vermelho: nenhum
+  const dica = { nativo: 'mesmo idioma nativo de um colega', comum: 'tem um idioma em comum com um colega, mas não o nativo', nada: 'sem idioma em comum com os colegas' };
+  const chips = I.titulares.map((t) => { const n = nivel(t); return `<span class="tc-idioma ${n}" title="${esc(t.nome)}: ${dica[n]}${t.afinidade > 0 ? ` (+${(t.afinidade * I.eficiencia_pct).toFixed(1).replace('.', ',')}% de eficiência)` : ''}"><b>${esc(t.nome)}</b><small>${esc(nomeId(t.idioma.nativo))}${(t.idioma.sec || []).length ? ` · fala também ${esc(t.idioma.sec.map(nomeId).join(', '))}` : ''}</small></span>`; }).join('');
   return `<div class="tc-comunica"><span class="tc-eyebrow">Comunicação · idioma em comum aumenta a eficiência e a sinergia</span><div class="tc-idiomas">${chips}</div></div>`;
 }
 
