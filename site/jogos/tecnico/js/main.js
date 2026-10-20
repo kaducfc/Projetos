@@ -12,7 +12,7 @@ import {
 import { prepararImagens, campIcone } from './campeoes-img.js';
 import { escudoOrg, retratoSvg, iconeVaga } from './art.js';
 import { N_EMBLEMAS, N_BANDEIRAS, PARTES_EMBLEMA, PARTES_BANDEIRA, PALETA, ICONE_PADRAO, icClone, icCodificar, icDecodificar, icHtml, emblemaHtml } from './icone.js';
-import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js';
+import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js?v=2';
 import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
 import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js';
 
