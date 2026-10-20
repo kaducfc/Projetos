@@ -670,18 +670,25 @@ function modalHtml() {
   return `<div class="tc-fundo" data-act="fechar-fundo"><div class="tc-modal" role="dialog" aria-modal="true"><button type="button" class="x" data-act="fechar" aria-label="Fechar">×</button>${corpo}</div></div>`;
 }
 function demitirHtml(m) {
-  const j = m.j; const ganho = j.frag_demissao || 0; const atual = S.meu.org.fragmentos || 0;
+  const j = m.j; const ganho = j.frag_demissao || 0; const atual = S.meu.org.fragmentos || 0; const base = j.frag_base || 0;
+  const temCopias = j.legado && (j.copias || 0) > 0; const qtd = temCopias ? Math.min(j.copias, Math.max(1, m.qtd || j.copias)) : 0; const ganhoCop = qtd * base;
   const perdas = [`${esc(j.nome)} sai do seu elenco e volta ao mercado${j.legado ? ' (o Legado continua disponível nos baús)' : ''}.`];
-  if (j.estrelas > 0) perdas.push(`As ${j.estrelas} estrela(s) de evolução dele se perdem${j.legado && j.copias ? ' e as cópias repetidas também' : ''}.`);
-  else if (j.legado && j.copias) perdas.push(`As ${j.copias} cópia(s) repetida(s) dele se perdem.`);
+  if (j.estrelas > 0) perdas.push(`As ${j.estrelas} estrela(s) de evolução dele se perdem${j.frag_gastos ? `; metade dos ${fmt(j.frag_gastos)} fragmentos gastos nelas volta para você` : ''}.`);
+  if (temCopias) perdas.push(`As ${j.copias} cópia(s) repetida(s) dele viram fragmentos: ${fmt(j.copias * base)} (${fmt(base)} por cópia).`);
   perdas.push('Esta ação não pode ser desfeita.');
+  const bloco = temCopias ? `<div class="tc-copias"><span class="tc-eyebrow">Só cópias repetidas</span><p class="tc-mudo tc-peq" style="margin:4px 0 8px">Quer se desfazer de algumas cópias e continuar com o jogador? Cada cópia rende ${fmt(base)} ◈.</p>
+      <div class="tc-passo"><button type="button" class="tc-btn" data-act="cop-menos" ${qtd <= 1 ? 'disabled' : ''} aria-label="Menos uma cópia">−</button><b>${qtd}</b><small>de ${j.copias} cópia(s)</small><button type="button" class="tc-btn" data-act="cop-mais" ${qtd >= j.copias ? 'disabled' : ''} aria-label="Mais uma cópia">+</button><button type="button" class="tc-btn" data-act="cop-todas" ${qtd >= j.copias ? 'disabled' : ''}>Todas</button></div>
+      <button type="button" class="tc-btn ouro" data-act="confirmar-demitir-copias" ${S.ocupado ? 'disabled' : ''}>Demitir ${qtd} cópia(s) e receber ${fmt(ganhoCop)} ◈</button></div>` : '';
+  const titular = !!j.slot;
   return `<h2>Demitir ${esc(j.nome)}</h2>
     <div class="tc-ficha" style="grid-template-columns:110px 1fr;align-items:center"><div class="foto">${retratoSvg(j, 110)}</div><div>
-      <p class="tc-mudo tc-peq" style="margin:0 0 6px">O que acontece ao demitir:</p><ul class="tc-lista-ul">${perdas.map((x) => `<li>${x}</li>`).join('')}</ul></div></div>
-    <div class="tc-resumo"><div class="l"><span>Você recebe</span><b class="tc-frag">◈ +${fmt(ganho)} fragmentos de jogador</b></div>
+      <p class="tc-mudo tc-peq" style="margin:0 0 6px">O que acontece ao demitir o jogador:</p><ul class="tc-lista-ul">${perdas.map((x) => `<li>${x}</li>`).join('')}</ul></div></div>
+    ${bloco}
+    <div class="tc-resumo"><div class="l"><span>Demitindo o jogador, você recebe</span><b class="tc-frag">◈ +${fmt(ganho)} fragmentos de jogador</b></div>
       <div class="l"><span>Seus fragmentos</span><b>${fmt(atual)} → ${fmt(atual + ganho)}</b></div>${j.reembolso_contrato > 0 ? `<div class="l"><span>Contrato não usado (50%)</span><b class="tc-preco cr">+${fmt(j.reembolso_contrato)} cr.</b></div>` : ''}</div>
+    ${titular ? '<p class="tc-peq" style="color:var(--ruim)">Ele é titular: tire-o da escalação para poder demitir o jogador.</p>' : ''}
     <p class="tc-mudo tc-peq">Fragmentos servem para evoluir as estrelas dos seus jogadores (Legados também podem usar cópias repetidas).</p>
-    <div class="tc-acoes"><button type="button" class="tc-btn perigo" data-act="confirmar-demitir" ${S.ocupado ? 'disabled' : ''}>Demitir e receber ${fmt(ganho)} ◈</button><button type="button" class="tc-btn" data-act="voltar-ficha">Cancelar</button></div>`;
+    <div class="tc-acoes"><button type="button" class="tc-btn perigo" data-act="confirmar-demitir" ${S.ocupado || titular ? 'disabled' : ''}>Demitir o jogador e receber ${fmt(ganho)} ◈</button><button type="button" class="tc-btn" data-act="voltar-ficha">Cancelar</button></div>`;
 }
 // Botões de evoluir a estrela: Legado pode gastar cópias repetidas ou fragmentos; jogador comum só fragmentos.
 function botoesEstrela(j) {
@@ -698,7 +705,7 @@ function fichaHtml(m) {
   else if (!j.org_id) acoes = (S.meu.elenco || []).length >= ELENCO_MAX ? '<span class="tc-mudo tc-peq">Inventário cheio: demita ou venda alguém para contratar.</span>' : `<button type="button" class="tc-btn ouro" data-act="abrir-contratar" data-id="${j.id}">Contratar</button>`;
   else if (meu) {
     const cheioContrato = !j.contrato_ativo || (j.contrato_restante || 0) <= 1;
-    acoes = `<button type="button" class="tc-btn ciano" data-act="abrir-escalar" data-id="${j.id}">Escalar</button>${cheioContrato ? `<button type="button" class="tc-btn" data-act="abrir-contrato" data-id="${j.id}">${j.contrato_ativo ? 'Renovar contrato' : 'Efetivar contrato'}</button>` : ''}${j.contrato_ativo ? `<button type="button" class="tc-btn" data-act="abrir-encerrar" data-id="${j.id}">Encerrar contrato</button>` : ''}<button type="button" class="tc-btn" data-act="abrir-anunciar" data-id="${j.id}">Anunciar por RC</button>${j.estrelas < j.estrela_max ? botoesEstrela(j) : ''}${j.slot ? '' : `<button type="button" class="tc-btn perigo" data-act="demitir" data-id="${j.id}">Demitir</button>`}`;
+    acoes = `<button type="button" class="tc-btn ciano" data-act="abrir-escalar" data-id="${j.id}">Escalar</button>${cheioContrato ? `<button type="button" class="tc-btn" data-act="abrir-contrato" data-id="${j.id}">${j.contrato_ativo ? 'Renovar contrato' : 'Efetivar contrato'}</button>` : ''}${j.contrato_ativo ? `<button type="button" class="tc-btn" data-act="abrir-encerrar" data-id="${j.id}">Encerrar contrato</button>` : ''}<button type="button" class="tc-btn" data-act="abrir-anunciar" data-id="${j.id}">Anunciar por RC</button>${j.estrelas < j.estrela_max ? botoesEstrela(j) : ''}${j.slot && !(j.legado && j.copias > 0) ? '' : `<button type="button" class="tc-btn perigo" data-act="demitir" data-id="${j.id}">Demitir${j.legado && j.copias > 0 ? ' (jogador ou cópias)' : ''}</button>`}`;
   }
   else if (m.anuncio) acoes = (S.meu.elenco || []).length >= ELENCO_MAX ? '<span class="tc-mudo tc-peq">Inventário cheio: demita ou venda alguém para comprar.</span>' : `<button type="button" class="tc-btn ouro" data-act="abrir-comprar" data-anuncio="${m.anuncio.id}">Comprar por ${fmt(m.anuncio.preco_rc)} RC</button>`;
   return `<h2>${esc(j.nome)}${j.ficticio === false ? ' <span class="tc-estrela-selo">◆ Legado</span>' : ''}</h2><p class="tc-mudo tc-peq" style="margin:2px 0">${iconeVaga(j.pos)} ${NOME_VAGA[j.pos]}${(j.pos2 || []).length ? ` · também ${j.pos2.map((p) => NOME_VAGA[p]).join(', ')}` : ''} · ${j.idade} anos${j.regiao ? ` · ${esc(j.regiao)}` : ''}${j.ficticio ? '' : ' · jogador legado'}</p>
@@ -931,7 +938,17 @@ document.addEventListener('click', async (e) => {
     else S.invOrd = S.invOrd.k === k ? { k, dir: S.invOrd.dir === 'desc' ? 'asc' : 'desc' } : { k, dir: def[3] };
     render(); return;
   }
-  if (act === 'demitir') { S.modal = { t: 'demitir', j: S.modal.j }; render(); return; }
+  if (act === 'demitir') { S.modal = { t: 'demitir', j: S.modal.j, qtd: S.modal.j.copias || 0 }; render(); return; }
+  if (act === 'cop-menos' || act === 'cop-mais' || act === 'cop-todas') {
+    const j = S.modal.j; const q = S.modal.qtd || j.copias || 1;
+    S.modal = { ...S.modal, qtd: act === 'cop-todas' ? j.copias : Math.min(j.copias, Math.max(1, q + (act === 'cop-mais' ? 1 : -1))) }; render(); return;
+  }
+  if (act === 'confirmar-demitir-copias') {
+    const j = S.modal.j; const q = Math.min(j.copias, Math.max(1, S.modal.qtd || j.copias));
+    const r = await agir(() => api.demitirCopias(j.id, q), { ok: (x) => `${q} cópia(s) de ${j.nome} demitida(s): +${fmt(x.fragmentos_ganhos)} fragmentos de jogador.` });
+    if (r) { S.modal = r.jogador ? { t: 'ficha', j: { ...j, ...r.jogador } } : null; render(); }
+    return;
+  }
   if (act === 'voltar-ficha') { S.modal = { t: 'ficha', j: S.modal.j }; render(); return; }
   if (act === 'confirmar-demitir') {
     const j = S.modal.j;

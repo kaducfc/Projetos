@@ -1175,6 +1175,7 @@ export const tecnico = {
   assinarContrato: (jogador, semanas) => rpcTecnico('tc_assinar_contrato', { jogador, semanas }),
   encerrarContrato: (jogador) => rpcTecnico('tc_encerrar_contrato', { jogador }),
   demitir: (jogador) => rpcTecnico('tc_demitir', { jogador }),
+  demitirCopias: (jogador, qtd) => rpcTecnico('tc_demitir_copias', { jogador, qtd }),
   subirEstrela: (jogador, via = null) => rpcTecnico('tc_subir_estrela', { jogador, via }),
   mercadoUsuarios: (f) => rpcTecnico('tc_mercado_usuarios', { f }),
   meusAnuncios: () => rpcTecnico('tc_meus_anuncios'),
