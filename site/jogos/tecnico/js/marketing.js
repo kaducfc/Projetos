@@ -182,7 +182,7 @@ export async function tratarMkt(act, b) {
 // ------------------------------------------------------------------ visual novo (v2): mais simples, colorido e dinâmico
 // O visual clássico continua inteiro acima (viewMarketingCentralClassico); a Configuração troca entre os dois (chave `mktClassico` em tc_ui).
 const modoClassico = () => { try { return !!JSON.parse(localStorage.getItem('tc_ui') || '{}').mktClassico; } catch { return false; } };
-const ABAS2 = [['visao', '📊', 'Resumo'], ['marketing', '📣', 'Crescer'], ['patro', '🤝', 'Patrocínios'], ['aud', '👥', 'Jogadores'], ['fin', '🧾', 'Extrato']];
+const ABAS2 = [['visao', 'Resumo'], ['marketing', 'Crescer'], ['patro', 'Patrocínios'], ['aud', 'Jogadores'], ['fin', 'Extrato']];
 const COR_CAT = { local: '#94a3b8', regional: '#60a5fa', nacional: '#4ade80', internacional: '#c084fc', premium: '#f5cf5a' };
 const parte = (nome, cor, v) => ({ nome, cor, v: Math.max(0, v) });
 function partesRenda(e) {
@@ -203,12 +203,12 @@ function heroHtml(e) {
 }
 function cartoes(e) {
   const m = e.marketing; const f = e.fama; const ativos = e.contratos.filter((c) => c.ativo).length;
-  const cart = (cor, ic, tit, val, sub, aba) => `<button type="button" class="mk2-cart" style="--c:${cor}" data-act="mkt-aba" data-aba="${aba}"><i>${ic}</i><small>${tit}</small><b>${val}</b><span>${sub}</span></button>`;
+  const cart = (cor, tit, val, sub, aba) => `<button type="button" class="mk2-cart" style="--c:${cor}" data-act="mkt-aba" data-aba="${aba}"><small>${tit}</small><b>${val}</b><span>${sub}</span></button>`;
   return `<div class="mk2-cartoes">
-    ${cart('#f5cf5a', '⭐', 'Fama', C.esc(f.nivel.nome), `${num1(f.valor)} / ${f.max}${f.nivel.proximo_nome ? ` · próximo: ${C.esc(f.nivel.proximo_nome)}` : ''}`, 'visao')}
-    ${cart('#a78bfa', '📣', 'Marketing', `Nível ${m.nivel}/${m.max}`, m.nivel >= m.max ? 'no máximo' : `melhorar: ${C.fmt(m.custo_proximo)} cr.`, 'marketing')}
-    ${cart('#4ade80', '🤝', 'Patrocínios', `${ativos}/${m.limite_contratos}`, ativos ? 'contratos ativos' : 'contrate o primeiro', 'patro')}
-    ${cart('#f472b6', '👥', 'Audiência', `+${pct(e.audiencia.bonus)}`, `${num1(e.audiencia.total)} de audiência`, 'aud')}
+    ${cart('#f5cf5a', 'Fama', C.esc(f.nivel.nome), `${num1(f.valor)} / ${f.max}${f.nivel.proximo_nome ? ` · próximo: ${C.esc(f.nivel.proximo_nome)}` : ''}`, 'visao')}
+    ${cart('#a78bfa', 'Marketing', `Nível ${m.nivel}/${m.max}`, m.nivel >= m.max ? 'no máximo' : `melhorar: ${C.fmt(m.custo_proximo)} cr.`, 'marketing')}
+    ${cart('#4ade80', 'Patrocínios', `${ativos}/${m.limite_contratos}`, ativos ? 'contratos ativos' : 'contrate o primeiro', 'patro')}
+    ${cart('#f472b6', 'Audiência', `+${pct(e.audiencia.bonus)}`, `${num1(e.audiencia.total)} de audiência`, 'aud')}
   </div>`;
 }
 function v2Visao(e) {
@@ -218,7 +218,7 @@ function v2Visao(e) {
   const f = e.fama;
   const niv = f.niveis.map((n) => `<div class="${f.valor >= n.min ? 'on' : ''}"><b>${C.esc(n.nome)}</b><small>${n.min}+</small></div>`).join('');
   return `<section class="mk2-bloco"><h3>De onde vem a renda</h3><div class="mk2-empilhada">${barra}</div><ul class="mk2-leg">${leg}</ul>
-      ${e.campanha_ativa ? `<p class="mk2-aviso">🔥 Campanha em andamento: termina em ${dur(new Date(e.campanha_ativa.fim) - Date.now())}</p>` : ''}</section>
+      ${e.campanha_ativa ? `<p class="mk2-aviso">Campanha em andamento: termina em ${dur(new Date(e.campanha_ativa.fim) - Date.now())}</p>` : ''}</section>
     <section class="mk2-bloco"><h3>Fama <small>${num1(f.valor)} / ${f.max}</small></h3>${barraFama(f)}<div class="mk2-niveis">${niv}</div>
       <p class="mk2-dica">A fama sobe com vitórias, títulos, boa colocação, astros no elenco e alguns patrocínios.</p></section>`;
 }
@@ -270,7 +270,7 @@ function v2Fin() {
 }
 function viewMarketingCentral2() {
   const e = X.e; if (!e) return '<p class="tc-carregando">Carregando…</p>';
-  const abas = `<div class="mk2-abas" role="tablist">${ABAS2.map(([id, ic, n]) => `<button type="button" role="tab" data-act="mkt-aba" data-aba="${id}" class="${X.aba === id ? 'on' : ''}"><i>${ic}</i>${n}</button>`).join('')}</div>`;
+  const abas = `<div class="mk2-abas" role="tablist">${ABAS2.map(([id, n]) => `<button type="button" role="tab" data-act="mkt-aba" data-aba="${id}" class="${X.aba === id ? 'on' : ''}">${n}</button>`).join('')}</div>`;
   const corpo = { visao: v2Visao, marketing: v2Crescer, patro: v2Patro, aud: v2Aud, fin: v2Fin }[X.aba](e);
   return `<div class="mk2">${heroHtml(e)}${cartoes(e)}${abas}${corpo}</div>`;
 }
