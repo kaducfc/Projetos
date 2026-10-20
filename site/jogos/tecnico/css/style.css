@@ -941,3 +941,22 @@ html.tc-sem-anim *, html.tc-sem-anim *::before, html.tc-sem-anim *::after { anim
 
 .tc-cfg-nome { align-items: flex-start; } .tc-cfg-nome > div { flex: 1; min-width: 0; }
 .tc-cfg-campo { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; } .tc-cfg-campo .tc-input { flex: 1; min-width: 160px; }
+
+/* Resumo de quando o jogador volta: um número grande e três origens da receita */
+.tc-bv { position: relative; display: grid; justify-items: center; gap: 10px; max-width: 560px; margin: 0 auto; padding: 14px 4px 4px; text-align: center; isolation: isolate; }
+.tc-bv .luz { position: absolute; left: 50%; top: 52px; width: 300px; height: 300px; margin-left: -150px; z-index: -1; background: radial-gradient(circle, rgba(245, 207, 90, .22), transparent 62%); animation: tc-bv-luz 3.6s ease-in-out infinite; }
+.tc-bv .tit { font-size: 12px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; color: #8ea3c4; }
+.tc-bv .moeda { filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .55)); animation: tc-bv-pop .6s cubic-bezier(.2, 1.4, .4, 1) both; }
+.tc-bv .num { display: grid; justify-items: center; line-height: 1; animation: tc-bv-sobe .6s .15s ease-out both; }
+.tc-bv .num b { font-family: 'Bebas Neue', sans-serif; font-size: 68px; letter-spacing: .02em; background: linear-gradient(180deg, #fff3b8, #f5cf5a 55%, #d9a82b); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tc-bv .num span { margin-top: 2px; font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: #b9c7de; }
+.tc-bv .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 6px 0 8px; animation: tc-bv-sobe .6s .3s ease-out both; }
+.tc-bv .c { --cor: #60a5fa; display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 99px; background: color-mix(in srgb, var(--cor) 13%, #07142a); border: 1px solid color-mix(in srgb, var(--cor) 45%, transparent); font-size: 13px; }
+.tc-bv .c i { width: 8px; height: 8px; border-radius: 50%; background: var(--cor); box-shadow: 0 0 8px var(--cor); }
+.tc-bv .c span { color: #b9c7de; } .tc-bv .c b { color: var(--cor); font-weight: 800; }
+.tc-bv .c.clu { --cor: #4ade80; } .tc-bv .c.bon { --cor: #f5cf5a; }
+.tc-bv .tc-btn { min-width: 200px; }
+@keyframes tc-bv-luz { 50% { opacity: .55; transform: scale(1.08); } }
+@keyframes tc-bv-pop { from { opacity: 0; transform: scale(.4) rotate(-12deg); } }
+@keyframes tc-bv-sobe { from { opacity: 0; transform: translateY(10px); } }
+@media (max-width: 480px) { .tc-bv .num b { font-size: 54px; } }

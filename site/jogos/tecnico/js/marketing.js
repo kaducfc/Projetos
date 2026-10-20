@@ -153,14 +153,15 @@ export function viewMarketingCentral() {
 }
 export function modalMktResumo(m) {
   const r = m.r;
-  return `<h2>Seu clube continuou trabalhando enquanto você estava fora!</h2>
-    <div class="tc-resumo"><div class="l"><span>Tempo contabilizado</span><b>${dur(r.minutos * 60000)}${r.limitado ? ' (limite máximo)' : ''}</b></div>
-      <div class="l"><span>Receita dos patrocinadores</span><b>+${C.fmt(r.patrocinadores)} cr.</b></div>
-      <div class="l"><span>Receita do clube</span><b>+${C.fmt(r.receita_clube)} cr.</b></div>
-      <div class="l"><span>Bônus comercial</span><b>+${C.fmt(r.bonus_comercial)} cr.</b></div>
-      <div class="l tot"><span>Total recebido</span><b>+${C.fmt(r.total)} cr.</b></div></div>
-    <p class="tc-mudo tc-peq">Esse valor já foi adicionado ao seu saldo de créditos.</p>
-    <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="fechar">Continuar</button></div>`;
+  const chip = (cls, nome, v) => `<div class="c ${cls}"><i></i><span>${nome}</span><b>+${C.fmt(v)}</b></div>`;
+  return `<div class="tc-bv" role="group" aria-label="Rendimento enquanto você esteve fora">
+    <span class="luz" aria-hidden="true"></span>
+    <small class="tit">Bem-vindo de volta!</small>
+    <img class="moeda" src="img/credito-96.webp" srcset="img/credito-192.webp 2x" alt="" width="84" height="84" />
+    <div class="num"><b>+${C.fmt(r.total)}</b><span>créditos</span></div>
+    <div class="chips">${chip('pat', 'Patrocinadores', r.patrocinadores)}${chip('clu', 'Clube', r.receita_clube)}${chip('bon', 'Bônus', r.bonus_comercial)}</div>
+    <button type="button" class="tc-btn ouro" data-act="fechar">Continuar</button>
+  </div>`;
 }
 
 // ------------------------------------------------------------------ ações
