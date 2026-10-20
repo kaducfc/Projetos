@@ -711,7 +711,7 @@ function demitirHtml(m) {
       <button type="button" class="tc-btn ouro" data-act="confirmar-demitir-copias" ${S.ocupado ? 'disabled' : ''}>Demitir ${qtd} cópia(s) e receber ${fmt(ganhoCop)} ◈</button></div>` : '';
   const titular = !!j.slot;
   return `<h2>Demitir ${esc(j.nome)}</h2>
-    <div class="tc-ficha" style="grid-template-columns:110px 1fr;align-items:center"><div class="foto">${retratoSvg(j, 110)}</div><div>
+    <div class="tc-ficha" style="grid-template-columns:110px 1fr;align-items:center"><div class="foto tc-moldura${j.raridade ? ` r-${j.raridade}` : ''}">${retratoSvg(j, 110)}</div><div>
       <p class="tc-mudo tc-peq" style="margin:0 0 6px">O que acontece ao demitir o jogador:</p><ul class="tc-lista-ul">${perdas.map((x) => `<li>${x}</li>`).join('')}</ul></div></div>
     ${bloco}
     <div class="tc-resumo"><div class="l"><span>Demitindo o jogador, você recebe</span><b class="tc-frag">◈ +${fmt(ganho)} fragmentos de jogador</b></div>
