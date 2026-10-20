@@ -1166,6 +1166,8 @@ t('trocar o nome do time: custa 200 RC, segue as regras do nome da criação e l
 });
 
 t('conta nova entra direto na liga Academy: de segunda a sexta a liga começa no dia da entrada (todos com 0 jogos); no fim de semana espera a próxima semana; empate: o técnico real avança', () => {
+  const SEQ = ['tc_orgs', 'tc_jogadores', 'tc_ligas', 'tc_partidas', 'tc_ofertas', 'tc_fin', 'tc_avisos']; // o que o teste cria não pode deslocar os ids dos testes seguintes
+  const seqAntes = Object.fromEntries(SEQ.map((t) => [t, V(`select case when pg_get_serial_sequence('${t}', 'id') is null then '' else (select last_value::text || ':' || is_called::text from pg_sequences where schemaname = 'public' and sequencename = split_part(pg_get_serial_sequence('${t}', 'id'), '.', 2)) end`)]));
   const qtdAntes = V('select count(*) from tc_orgs where user_id is not null'); const maxJog = V('select coalesce(max(id), 0) from tc_jogadores');
   V("insert into site_admins values ('" + U(5) + "'), ('" + U(6) + "')");
   V('select tc_garantir_sistema()'); // as 8 equipes do sistema de cada divisão que a liga usa
@@ -1209,7 +1211,8 @@ t('conta nova entra direto na liga Academy: de segunda a sexta a liga começa no
   } finally { // as contas de teste saem (e com elas as ligas e os jogadores delas), mesmo se algo falhar
     V(`delete from tc_ligas where temporada = 99; delete from tc_orgs where id in (${o5}, ${o6}); delete from site_admins where user_id in ('${U(5)}', '${U(6)}')`);
   }
-  V(`delete from tc_jogadores where id > ${maxJog} and org_id is null`); // os candidatos do elenco inicial das contas de teste
+  V(`delete from tc_jogadores where id > ${maxJog} and org_id is null`);
+  for (const t of SEQ) if (seqAntes[t]) { const [ult, chamado] = seqAntes[t].split(':'); V(`select setval(pg_get_serial_sequence('${t}', 'id'), ${ult}, ${chamado})`); } // os candidatos do elenco inicial das contas de teste
   assert.equal(V('select count(*) from tc_orgs where user_id is not null'), qtdAntes);
 });
 
