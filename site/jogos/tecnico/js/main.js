@@ -18,7 +18,7 @@ import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admD
 import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js?v=5';
 
 // Comunicação da equipe: idioma dos titulares e quanto cada um ganha por falar com os colegas (mesmo idioma nativo vale 1, idioma em comum vale 2/3).
-const NOME_IDIOMA = { ko: 'Coreano', zh: 'Chinês', pt: 'Português', es: 'Espanhol', en: 'Inglês', vi: 'Vietnamita', ja: 'Japonês', tr: 'Turco', pl: 'Polonês', fr: 'Francês', de: 'Alemão', sv: 'Sueco', da: 'Dinamarquês', el: 'Grego', cs: 'Tcheco', lt: 'Lituano' };
+const NOME_IDIOMA = { ko: 'Coreano', zh: 'Chinês', pt: 'Português', es: 'Espanhol', en: 'Inglês', vi: 'Vietnamita', ja: 'Japonês', tr: 'Turco', pl: 'Polonês', fr: 'Francês', de: 'Alemão', sv: 'Sueco', da: 'Dinamarquês', el: 'Grego', cs: 'Tcheco', lt: 'Lituano', hi: 'Hindi' };
 // Idiomas do jogador na ficha: nativo e, se houver, os que fala também.
 function idiomasFichaHtml(j) {
   if (!j.idioma?.nativo) return '';
