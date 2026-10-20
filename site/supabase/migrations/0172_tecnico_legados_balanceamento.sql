@@ -1,0 +1,140 @@
+-- Simulador de Técnico: reequilíbrio dos 110 Legados. Rode depois do 0171. Idempotente (rodar de novo aplica os mesmos números).
+--  * OVR inicial (Poder) entre 55 (mais fraco) e 90 (mais forte); cada Legado ainda sobe até +15 treinando (limite = OVR inicial + 15).
+--  * OVR = 75% desempenho em 2026 (prêmios, resultado do time, KDA quando disponível) + 25% popularidade; a popularidade também vira a Fama.
+--  * Raridade pelo ranking de OVR dentro da posição: 2 míticos, 4 lendários, 4 épicos, 6 raros e 6 comuns em cada uma das 5 posições
+--    (10 / 20 / 20 / 30 / 30 no total). O formato dos atributos de cada jogador (pontos fortes e fracos) foi mantido, só o nível mudou.
+--  * Quem já tem um Legado na organização (cópia) mantém o que ganhou treinando: a cópia recebe os atributos novos mais a diferença que treinou.
+--    O limite de treino de todas as cópias passa a ser o OVR inicial novo + 15 (poder_inicial).
+
+begin;
+
+create temp table _leg (nome text primary key, mec int, rotas int, macro int, tf int, mental int, fama int, potencial int, ovr int, raridade text) on commit drop;
+insert into _leg values
+    ('Doran', 68, 68, 67, 69, 68, 62, 74, 68, 'raro'),
+    ('Oner', 73, 69, 73, 74, 71, 75, 82, 72, 'raro'),
+    ('Faker', 79, 76, 82, 81, 83, 100, 83, 80, 'lendario'),
+    ('Peyz', 82, 80, 76, 79, 77, 76, 94, 79, 'epico'),
+    ('Keria', 85, 84, 85, 84, 82, 84, 93, 84, 'lendario'),
+    ('Kiin', 84, 84, 82, 82, 83, 66, 87, 83, 'lendario'),
+    ('Canyon', 83, 79, 83, 83, 81, 78, 90, 82, 'lendario'),
+    ('Chovy', 93, 92, 88, 88, 88, 88, 98, 90, 'mitico'),
+    ('Ruler', 89, 88, 86, 89, 88, 80, 92, 88, 'mitico'),
+    ('Duro', 78, 77, 78, 79, 77, 62, 87, 78, 'epico'),
+    ('Zeus', 93, 89, 85, 90, 86, 80, 99, 89, 'mitico'),
+    ('Kanavi', 89, 86, 89, 89, 86, 76, 96, 88, 'mitico'),
+    ('Zeka', 88, 84, 84, 88, 85, 78, 96, 86, 'lendario'),
+    ('Gumayusi', 84, 81, 82, 85, 83, 84, 92, 83, 'lendario'),
+    ('Delight', 87, 85, 88, 89, 86, 70, 96, 87, 'mitico'),
+    ('Zest', 74, 73, 72, 73, 73, 55, 85, 73, 'epico'),
+    ('Curse', 67, 65, 66, 66, 65, 52, 80, 66, 'raro'),
+    ('Feisty', 63, 61, 60, 61, 59, 48, 73, 61, 'comum'),
+    ('Duduhh', 71, 68, 67, 70, 68, 55, 84, 69, 'raro'),
+    ('Ackerman', 61, 60, 62, 61, 62, 50, 71, 61, 'comum'),
+    ('Guigo', 71, 69, 67, 69, 68, 55, 78, 69, 'raro'),
+    ('Tatu', 86, 84, 85, 85, 84, 60, 99, 85, 'lendario'),
+    ('Tutsz', 69, 69, 67, 67, 67, 50, 78, 68, 'raro'),
+    ('Ayu', 80, 77, 75, 80, 77, 55, 92, 78, 'epico'),
+    ('Jojo', 75, 75, 75, 75, 75, 50, 79, 75, 'epico'),
+    ('Xyno', 59, 59, 57, 58, 57, 52, 73, 58, 'comum'),
+    ('Sinatra', 58, 56, 57, 57, 56, 48, 72, 57, 'comum'),
+    ('Kaze', 72, 72, 70, 70, 71, 55, 86, 71, 'raro'),
+    ('Rabelo', 56, 54, 54, 55, 55, 50, 67, 55, 'comum'),
+    ('uZent', 55, 55, 55, 55, 55, 50, 69, 55, 'comum'),
+    ('Siwoo', 70, 69, 68, 69, 68, 55, 84, 69, 'raro'),
+    ('Lucid', 79, 76, 79, 79, 77, 62, 92, 78, 'epico'),
+    ('ShowMaker', 77, 76, 75, 76, 76, 80, 82, 76, 'epico'),
+    ('Smash', 77, 75, 75, 77, 75, 58, 91, 76, 'epico'),
+    ('Career', 70, 69, 71, 70, 69, 52, 82, 70, 'raro'),
+    ('PerfecT', 68, 67, 66, 67, 66, 55, 79, 67, 'raro'),
+    ('Cuzz', 71, 68, 71, 71, 69, 62, 76, 70, 'raro'),
+    ('Bdd', 72, 69, 69, 69, 70, 70, 74, 70, 'raro'),
+    ('Jiwoo', 66, 64, 64, 66, 64, 50, 77, 65, 'raro'),
+    ('Effort', 66, 65, 67, 66, 66, 52, 74, 66, 'raro'),
+    ('Breathe', 75, 74, 73, 74, 74, 50, 82, 74, 'epico'),
+    ('Tarzan', 89, 88, 90, 89, 88, 72, 93, 89, 'mitico'),
+    ('Shanks', 77, 75, 75, 76, 75, 58, 84, 76, 'epico'),
+    ('Hope', 73, 71, 71, 73, 71, 58, 78, 72, 'raro'),
+    ('Kael', 84, 83, 85, 84, 84, 55, 96, 84, 'lendario'),
+    ('ZUIAN', 79, 77, 75, 78, 76, 60, 91, 77, 'epico'),
+    ('Tian', 78, 75, 78, 78, 76, 65, 83, 77, 'epico'),
+    ('Creme', 72, 70, 70, 71, 70, 55, 83, 71, 'raro'),
+    ('JackeyLove', 86, 83, 82, 86, 83, 85, 92, 84, 'lendario'),
+    ('Zhuo', 66, 65, 67, 66, 66, 52, 74, 66, 'raro'),
+    ('TheShy', 84, 81, 79, 82, 77, 90, 87, 81, 'lendario'),
+    ('Wei', 71, 69, 70, 71, 69, 70, 80, 70, 'raro'),
+    ('Rookie', 75, 74, 76, 75, 76, 85, 78, 75, 'epico'),
+    ('JiaQi', 67, 65, 65, 67, 65, 55, 78, 66, 'raro'),
+    ('Meiko', 70, 70, 73, 70, 72, 78, 74, 71, 'raro'),
+    ('Bin', 87, 85, 83, 86, 83, 75, 95, 85, 'lendario'),
+    ('Xun', 86, 84, 85, 86, 84, 70, 94, 85, 'lendario'),
+    ('Knight', 92, 89, 89, 90, 89, 82, 96, 90, 'mitico'),
+    ('Viper', 91, 88, 87, 90, 88, 80, 95, 89, 'mitico'),
+    ('ON', 87, 86, 88, 87, 87, 65, 97, 87, 'mitico'),
+    ('Boal', 58, 56, 54, 56, 55, 52, 66, 56, 'comum'),
+    ('CarioK', 60, 57, 61, 59, 58, 70, 65, 59, 'comum'),
+    ('Namiru', 58, 56, 55, 56, 54, 55, 71, 56, 'comum'),
+    ('Hena', 57, 55, 55, 57, 55, 55, 60, 56, 'comum'),
+    ('Ceos', 58, 57, 59, 58, 59, 62, 61, 58, 'comum'),
+    ('zynts', 62, 60, 58, 60, 58, 50, 75, 60, 'comum'),
+    ('STEPZ', 64, 62, 63, 63, 62, 62, 78, 63, 'comum'),
+    ('Fuuu', 59, 57, 55, 57, 56, 55, 67, 57, 'comum'),
+    ('Morttheus', 62, 59, 58, 61, 59, 60, 69, 60, 'comum'),
+    ('Manel', 56, 55, 57, 56, 56, 48, 71, 56, 'comum'),
+    ('Dhokla', 66, 64, 64, 66, 64, 58, 68, 65, 'raro'),
+    ('Inspired', 59, 57, 59, 58, 57, 72, 67, 58, 'comum'),
+    ('Saint', 73, 71, 69, 72, 70, 58, 85, 71, 'raro'),
+    ('Berserker', 85, 82, 80, 85, 82, 72, 93, 83, 'lendario'),
+    ('Isles', 65, 64, 67, 65, 65, 55, 73, 65, 'raro'),
+    ('Morgan', 70, 68, 66, 68, 67, 55, 76, 68, 'raro'),
+    ('Josedeodo', 74, 73, 76, 74, 73, 60, 80, 74, 'epico'),
+    ('Quid', 70, 68, 66, 68, 66, 68, 80, 68, 'raro'),
+    ('Yeon', 67, 64, 63, 66, 64, 55, 74, 65, 'raro'),
+    ('CoreJJ', 74, 73, 78, 75, 76, 78, 78, 75, 'epico'),
+    ('Thanatos', 64, 62, 60, 62, 60, 56, 74, 62, 'comum'),
+    ('Blaber', 67, 66, 69, 67, 66, 82, 73, 67, 'raro'),
+    ('Loki', 63, 62, 59, 62, 59, 55, 75, 61, 'comum'),
+    ('Tactical', 58, 56, 56, 58, 56, 55, 63, 57, 'comum'),
+    ('Vulcan', 73, 73, 76, 74, 74, 62, 80, 74, 'epico'),
+    ('Impact', 62, 61, 62, 63, 63, 82, 65, 62, 'comum'),
+    ('HamBak', 63, 61, 62, 63, 60, 52, 71, 62, 'comum'),
+    ('DARKWINGS', 58, 57, 56, 57, 56, 50, 63, 57, 'comum'),
+    ('Rahel', 63, 61, 58, 63, 59, 55, 73, 61, 'comum'),
+    ('huhi', 58, 58, 61, 58, 60, 65, 62, 59, 'comum'),
+    ('BrokenBlade', 74, 73, 72, 74, 72, 70, 79, 73, 'epico'),
+    ('SkewMond', 81, 81, 82, 81, 80, 60, 93, 81, 'lendario'),
+    ('Caps', 83, 81, 82, 83, 81, 92, 88, 82, 'lendario'),
+    ('Hans Sama', 80, 78, 77, 80, 79, 80, 83, 79, 'epico'),
+    ('Labrov', 83, 82, 84, 83, 84, 62, 92, 83, 'lendario'),
+    ('Myrwn', 64, 62, 60, 62, 60, 58, 72, 62, 'comum'),
+    ('Elyoya', 63, 61, 65, 63, 62, 66, 69, 63, 'comum'),
+    ('Jojopyun', 84, 82, 80, 83, 80, 70, 94, 82, 'lendario'),
+    ('Supa', 65, 63, 63, 65, 63, 55, 72, 64, 'raro'),
+    ('Alvaro', 64, 63, 66, 64, 64, 55, 74, 64, 'raro'),
+    ('Canna', 81, 80, 79, 81, 79, 70, 86, 80, 'lendario'),
+    ('Yike', 77, 77, 78, 77, 76, 60, 85, 77, 'epico'),
+    ('kyeahoo', 78, 76, 74, 77, 74, 55, 90, 76, 'epico'),
+    ('Caliste', 88, 86, 83, 88, 83, 72, 99, 86, 'lendario'),
+    ('Busio', 81, 80, 82, 81, 82, 62, 93, 81, 'lendario'),
+    ('Naak Nako', 90, 88, 86, 88, 86, 68, 99, 88, 'mitico'),
+    ('Lyncas', 67, 67, 67, 67, 66, 52, 79, 67, 'raro'),
+    ('FIESTA', 62, 60, 58, 61, 58, 55, 70, 60, 'comum'),
+    ('Carzzy', 60, 59, 57, 60, 58, 52, 68, 59, 'comum'),
+    ('Fleshy', 59, 58, 60, 59, 60, 52, 67, 59, 'comum');
+
+-- 1. cópias de quem já recrutou (precisa dos valores antigos do jogador-base)
+update tc_jogadores i set
+  mec = least(100, greatest(1, l.mec + (i.mec - b.mec))), rotas = least(100, greatest(1, l.rotas + (i.rotas - b.rotas))),
+  macro = least(100, greatest(1, l.macro + (i.macro - b.macro))), tf = least(100, greatest(1, l.tf + (i.tf - b.tf))),
+  mental = least(100, greatest(1, l.mental + (i.mental - b.mental))),
+  fama = l.fama, potencial = l.potencial, raridade = l.raridade, poder_inicial = l.ovr
+from tc_jogadores b join _leg l on lower(b.nome) = lower(l.nome)
+where i.legado_base = b.id and b.legado_base is null and not b.ficticio;
+
+-- 2. os jogadores-base do catálogo dos baús
+update tc_jogadores b set
+  mec = l.mec, rotas = l.rotas, macro = l.macro, tf = l.tf, mental = l.mental,
+  fama = l.fama, potencial = l.potencial, raridade = l.raridade, poder_inicial = l.ovr
+from _leg l
+where lower(b.nome) = lower(l.nome) and b.legado_base is null and not b.ficticio;
+
+commit;
