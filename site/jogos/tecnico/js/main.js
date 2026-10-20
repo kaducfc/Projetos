@@ -585,10 +585,15 @@ function viewRank() {
 function rankTimeHtml(m) {
   if (!m.d) return '<p class="tc-carregando">Carregando…</p>';
   const d = m.d;
-  const card = (j) => `<article class="tc-rt-j">
-      <div class="top"><div class="foto tc-moldura${j.raridade ? ` r-${j.raridade}` : ''}">${retratoSvg(j, 96)}</div><div class="id"><span class="pos">${NOME_VAGA[j.slot] || j.slot}</span><b>${esc(j.nome)}${j.legado ? ' <i class="tc-estrela">◆</i>' : ''}</b>${escudoHtml(j.poder, true)}${estrelasHtml(j)}</div></div>
-      ${barras(j)}
-      <div class="mae"><span class="tc-eyebrow">Maestria</span>${(j.campeoes || []).length ? j.campeoes.slice(0, 4).map((c) => `<div class="${c.favorito ? 'fav' : ''}" title="${esc(c.nome)} · ${fmt(c.pontos)} pts">${campIcone(c.nome, 30)}<span><b>${esc(c.nome)}</b><small>${c.favorito ? '★ ' : ''}${nomeMaestria(c.nivel)}</small></span></div>`).join('') : '<small class="tc-mudo">Sem campeões ainda</small>'}</div>
+  const tier = (v) => (v >= 90 ? 'ouro' : v >= 80 ? 'teal' : v >= 65 ? 'azul' : v >= 50 ? 'cinza' : 'bronze');
+  const cor = { ouro: '#f5cf5a', teal: '#5eead4', azul: '#67c7ff', cinza: '#a3b3c9', bronze: '#c99a6a' };
+  const attr = (j) => ATRIBUTOS.filter((a) => a.id !== 'fama').map((a, i) => { const v = j[a.id]; const t = tier(v); return `<div class="fa-linha"><span class="nm">${a.nome}</span><div class="fa-barra"><i class="t-${t}" style="--w:${Math.max(0, Math.min(100, v))}%;--i:${i}"></i></div><b style="color:${cor[t]}">${v}</b></div>`; }).join('');
+  const card = (j) => `<article class="tc-rt-j${j.raridade ? ` r-${j.raridade}` : ''}">
+      <header><div class="foto tc-moldura${j.raridade ? ` r-${j.raridade}` : ''}">${retratoSvg(j, 64)}</div>
+        <div class="id"><span class="pos">${NOME_VAGA[j.slot] || j.slot}</span><b>${esc(j.nome)}${j.legado ? ' <i class="tc-estrela">◆</i>' : ''}</b>${estrelasHtml(j)}</div>
+        <span class="ovr" style="--c:${corPoder(j.poder)}" title="Poder ${j.poder}">${j.poder}</span></header>
+      <div class="fa-attrs">${attr(j)}</div>
+      <div class="mae"><span class="tc-eyebrow">Maestria</span>${(j.campeoes || []).length ? j.campeoes.slice(0, 3).map((c) => `<div class="${c.favorito ? 'fav' : ''}" title="${esc(c.nome)} · ${fmt(c.pontos)} pts">${campIcone(c.nome, 28)}<span><b>${esc(c.nome)}</b><small>${c.favorito ? '★ ' : ''}${nomeMaestria(c.nivel)}</small></span></div>`).join('') : '<small class="tc-mudo">Sem campeões ainda</small>'}</div>
     </article>`;
   return `<h2>${escudoOrg(d.org, 40)} ${esc(d.org.nome)}</h2>
     <p class="tc-mudo tc-peq" style="margin:2px 0 12px">Poder da equipe <b>${d.poder}</b> · ${d.titulos} título(s) · time titular</p>
