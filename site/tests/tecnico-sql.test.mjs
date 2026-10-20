@@ -746,7 +746,7 @@ t('estrelas: 15 jogadores reais com retrato no mercado oficial; rodar o SQL de n
   assert.deepEqual(est.filter((e) => ['Zest', 'Rabelo', 'uZent'].includes(e.nome)).map((e) => e.pos), ['top', 'atirador', 'suporte']);
   for (const t of [['Zest', 'Curse', 'Feisty', 'Duduhh', 'Ackerman'], ['Guigo', 'Tatu', 'Tutsz', 'Ayu', 'Jojo'], ['Xyno', 'Sinatra', 'Kaze', 'Rabelo', 'uZent']]) assert.deepEqual(t.map((n) => est.find((e) => e.nome === n).pos), ['top', 'selva', 'meio', 'atirador', 'suporte']);
   const faker = V("select id from tc_jogadores where nome = 'Faker'");
-  assert.ok(Number(V(`select tc_preco_jogador(j) from tc_jogadores j where id = ${faker}`)) > 600000, 'Estrela custa mais que o crédito inicial');
+  assert.ok(Number(V("select tc_preco_jogador(j) from tc_jogadores j where nome = 'Chovy'")) > 600000, 'as maiores Estrelas custam mais que o crédito inicial');
   V(`select set_config('tc.estrela_liberada', '${faker}', true); update tc_jogadores set org_id = 1, contrato_fim = 99, salario = 1234, forma = 70 where id = ${faker}`);
   V(readFileSync(new URL('../supabase/migrations/0095_tecnico_estrelas.sql', import.meta.url), 'utf8'));
   assert.equal(V(`select org_id || ':' || salario || ':' || forma from tc_jogadores where id = ${faker}`), '1:1234:70');
