@@ -752,7 +752,7 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-idioma.nada { border-left-color: #ef4444; } .tc-idioma.comum { border-left-color: #f5cf5a; } .tc-idioma.nativo { border-left-color: #2dd4bf; } .tc-idioma b { font-size: 13px; } .tc-idioma small { color: var(--mudo); font-size: 11.5px; }
 
 /* botão de fechar das janelas: o X é desenhado por traços no centro exato do botão, então a área de clique fica sob o que se vê */
-.tc-modal > button.x { position: absolute; top: 8px; right: 8px; width: 38px; height: 38px; padding: 0; display: block; font-size: 0; line-height: 0; color: var(--mudo); background: transparent; border: 0; border-radius: 8px; cursor: pointer; transition: background .15s, color .15s; }
+.tc-modal > button.x { position: absolute; z-index: 5; top: 8px; right: 8px; width: 38px; height: 38px; padding: 0; display: block; font-size: 0; line-height: 0; color: var(--mudo); background: transparent; border: 0; border-radius: 8px; cursor: pointer; transition: background .15s, color .15s; }
 .tc-modal > button.x::before, .tc-modal > button.x::after { content: ''; position: absolute; left: 50%; top: 50%; width: 16px; height: 2px; border-radius: 2px; background: currentColor; transform: translate(-50%, -50%) rotate(45deg); }
 .tc-modal > button.x::after { transform: translate(-50%, -50%) rotate(-45deg); }
 .tc-modal > button.x:hover { background: #ffffff1c; color: #fff; }
