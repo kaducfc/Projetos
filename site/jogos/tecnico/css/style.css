@@ -763,3 +763,10 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-stars em.vermelha { color: #ff4d4d; background: linear-gradient(180deg, #ffb1a8, #ff3b30 55%, #b3120d); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 4px #ff3b3088); }
 .tc-stars.cheia em.vermelha { animation: tc-estrela-brilho 2.4s ease-in-out infinite; animation-delay: calc(var(--i) * 0.18s); }
 .tc-btn small { opacity: .8; font-weight: 600; letter-spacing: 0; text-transform: none; }
+
+/* ordenação rápida do inventário */
+.tc-ords { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; }
+.tc-ords .tc-eyebrow { margin-right: 4px; }
+.tc-ord { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #0a1d38; border: 1px solid #1d3a63; border-radius: 6px; color: #b9c8e0; font-size: 12.5px; font-weight: 700; letter-spacing: .03em; transition: border-color .15s, background .15s, color .15s; }
+.tc-ord:hover { border-color: #3d6fae; color: #fff; } .tc-ord.on { background: linear-gradient(180deg, #2a2208, #1a1505); border-color: #d9a82b; color: #f5cf5a; }
+.tc-ord i { font-style: normal; font-size: 10px; } .tc-ord.limpar { border-style: dashed; color: var(--mudo); }

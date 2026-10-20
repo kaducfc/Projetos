@@ -45,6 +45,7 @@ const S = {
   camp: null,
   ligaSel: null,
   hist: null,
+  invOrd: { k: null, dir: 'desc' }, // ordenação rápida do inventário
   campeoes: null,
   gp: null,
   fc: { busca: '', pos: '', classe: '', regiao: '' },
@@ -407,6 +408,24 @@ function partidaLinha(p, proxima = false, comLiga = false) {
     <span class="time dir"><span>${esc(p.b.nome)}</span>${escudoOrg(p.b, 30)}</span></button>`;
 }
 
+// Ordenação rápida do inventário: clicar de novo no mesmo botão inverte a ordem (maior→menor / menor→maior).
+const RARIDADE_N = { comum: 1, raro: 2, epico: 3, lendario: 4, mitico: 5 };
+const ORD_INV = [
+  ['poder', 'OVR', (j) => j.poder || 0, 'desc'], ['raridade', 'Raridade', (j) => RARIDADE_N[j.raridade] || 0, 'desc'], ['copias', 'Cópias', (j) => j.copias || 0, 'desc'],
+  ['estrelas', 'Estrelas', (j) => j.estrelas || 0, 'desc'], ['potencial', 'Potencial', (j) => j.potencial ?? 0, 'desc'], ['fama', 'Fama', (j) => j.fama || 0, 'desc'],
+  ['idade', 'Idade', (j) => j.idade || 0, 'asc'], ['pos', 'Posição', (j) => VAGAS.indexOf(j.pos), 'asc'], ['nome', 'Nome', (j) => String(j.nome || '').toLowerCase(), 'asc'],
+];
+function ordenarInventario(lista) {
+  const o = S.invOrd; const def = ORD_INV.find((x) => x[0] === o.k); if (!def) return lista;
+  const sinal = o.dir === 'asc' ? 1 : -1;
+  return [...lista].sort((a, b) => { const x = def[2](a), y = def[2](b); const c = typeof x === 'string' ? x.localeCompare(y, 'pt-BR') : x - y; return c ? c * sinal : (b.poder || 0) - (a.poder || 0) || String(a.nome).localeCompare(String(b.nome), 'pt-BR'); });
+}
+function barraOrdemInventario() {
+  const o = S.invOrd;
+  const chips = ORD_INV.map(([k, nome]) => { const on = o.k === k; return `<button type="button" class="tc-ord${on ? ' on' : ''}" data-act="inv-ord" data-k="${k}" aria-pressed="${on}" title="${on ? 'Clique para inverter a ordem' : `Ordenar por ${nome}`}">${nome}${on ? `<i>${o.dir === 'desc' ? '▼' : '▲'}</i>` : ''}</button>`; }).join('');
+  return `<div class="tc-ords" role="group" aria-label="Ordenar inventário"><span class="tc-eyebrow">Ordenar</span>${chips}${o.k ? '<button type="button" class="tc-ord limpar" data-act="inv-ord" data-k="">Padrão</button>' : ''}</div>`;
+}
+
 // ------------------------------------------------------------------ elenco
 function viewElenco() {
   const el = S.meu.elenco || [];
@@ -418,7 +437,7 @@ function viewElenco() {
       ${reservas.length ? `<div class="tc-jogs">${reservas.map((j) => cartao(j)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Sem reservas. Contrate jogadores no Mercado.</p>'}</section>
     <section class="tc-card"><h3>Inventário<span class="dir">${el.length}/${ELENCO_MAX} jogadores</span></h3>
       <p class="tc-mudo tc-peq" style="margin:0 0 8px">Jogadores guardados para quando você precisar. As 5 melhores reservas (por Poder) ficam à mostra; o resto fica aqui. Repetidos de Legado viram cópia e não ocupam espaço.</p>
-      ${guardados.length ? `<div class="tc-jogs">${guardados.map((j) => cartao(j)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Nenhum jogador guardado.</p>'}</section>`;
+      ${guardados.length ? `${barraOrdemInventario()}<div class="tc-jogs">${ordenarInventario(guardados).map((j) => cartao(j)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Nenhum jogador guardado.</p>'}</section>`;
 }
 
 // ------------------------------------------------------------------ contratações
@@ -905,6 +924,12 @@ document.addEventListener('click', async (e) => {
     const r = await agir(() => api.escolherElencoInicial(ids), { ok: 'Time montado! Boa sorte, técnico.', recarregar: false });
     if (r) { S.escolha = null; await agir(atualizar, { recarregar: false }); S.aba = 'visao'; render(); }
     return;
+  }
+  if (act === 'inv-ord') {
+    const k = b.dataset.k || null; const def = ORD_INV.find((x) => x[0] === k);
+    if (!def) S.invOrd = { k: null, dir: 'desc' };
+    else S.invOrd = S.invOrd.k === k ? { k, dir: S.invOrd.dir === 'desc' ? 'asc' : 'desc' } : { k, dir: def[3] };
+    render(); return;
   }
   if (act === 'demitir') { S.modal = { t: 'demitir', j: S.modal.j }; render(); return; }
   if (act === 'voltar-ficha') { S.modal = { t: 'ficha', j: S.modal.j }; render(); return; }
