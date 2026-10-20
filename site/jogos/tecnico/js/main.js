@@ -546,7 +546,10 @@ function viewCamp() {
   if (!S.camp) return '<p class="tc-carregando">Carregando…</p>';
   if (S.camp.antes) return `<section class="tc-card"><p class="tc-mudo" style="margin:0">A primeira temporada começa em ${esc(dataCurta(S.camp.inicio))}.</p></section>`;
   const ligas = S.camp.ligas; const l = ligaAtual();
-  if (!l) return '<section class="tc-card"><p class="tc-mudo" style="margin:0">Ainda não há campeonatos em andamento.</p></section>';
+  if (!l) {
+    const cal = S.camp.calendario; const seg = cal?.inicio_semana ? new Date(`${cal.inicio_semana}T12:00:00`) : null; if (seg) seg.setDate(seg.getDate() + 7);
+    return `<section class="tc-card"><p class="tc-mudo" style="margin:0">${seg ? `Sua liga começa na próxima segunda-feira (${dataCurta(seg.toISOString().slice(0, 10))}): quem cria a conta no sábado ou no domingo espera a semana seguinte.` : 'Ainda não há campeonatos em andamento.'}</p></section>`;
+  }
   return `<section class="tc-card"><h3>Campeonatos<span class="dir">Temporada ${l.temporada} · semana ${l.semana}</span></h3>
       <label class="campo" style="max-width:420px"><span class="tc-mudo tc-peq">Competição</span><select class="tc-input" data-act="liga-sel">${ligas.map((x) => `<option value="${x.id}" ${x.id === l.id ? 'selected' : ''}>${esc(x.nome)}${x.status === 'aberta' ? ' (em andamento)' : ''}</option>`).join('')}</select></label>
       ${regrasLiga(l) ? `<p class="tc-peq tc-mudo" style="margin:10px 0 0">${regrasLiga(l)}</p>` : ''}</section>
