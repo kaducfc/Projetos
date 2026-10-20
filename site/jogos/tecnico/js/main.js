@@ -15,7 +15,7 @@ import { SIMBOLOS, N_SIMBOLOS, PALETA, ICONE_PADRAO, icClone, icTrocar, icCodifi
 import { tocar, somAtivo, definirSom } from './bau-anim.js';
 import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js?v=5';
 import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
-import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js?v=5';
+import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js?v=6';
 
 // Comunicação da equipe: idioma dos titulares e quanto cada um ganha por falar com os colegas (mesmo idioma nativo vale 1, idioma em comum vale 2/3).
 const NOME_IDIOMA = { ko: 'Coreano', zh: 'Chinês', pt: 'Português', es: 'Espanhol', en: 'Inglês', vi: 'Vietnamita', ja: 'Japonês', tr: 'Turco', pl: 'Polonês', fr: 'Francês', de: 'Alemão', sv: 'Sueco', da: 'Dinamarquês', el: 'Grego', cs: 'Tcheco', lt: 'Lituano', hi: 'Hindi' };
@@ -105,6 +105,8 @@ function configHtml() {
       <span class="tc-cfg-campo"><input class="tc-input" id="cfg-nome" maxlength="24" autocomplete="off" value="${esc(org.nome)}" aria-label="Novo nome do time" /><button type="button" class="tc-btn" data-act="cfg-renomear"${S.ocupado ? ' disabled' : ''}>Trocar (${RENOMEAR_RC} RC)</button></span></div></div>
     <div class="tc-cfg-linha"><div><b>Personalizar o time</b><small class="tc-mudo">Símbolo, cores e estilo da sua organização (é grátis).</small></div>
       <button type="button" class="tc-btn" data-act="cfg-pers">Abrir</button></div>` : ''}
+    <div class="tc-cfg-linha"><div><b>Visual do Marketing</b><small class="tc-mudo">Escolha entre o visual novo (mais simples e colorido) e o clássico, que continua disponível.</small></div>
+      <button type="button" class="tc-chave${c.mktClassico ? '' : ' on'}" data-act="cfg-mkt" role="switch" aria-checked="${!c.mktClassico}" aria-label="Visual do Marketing"><i></i><span>${c.mktClassico ? 'Clássico' : 'Novo'}</span></button></div>
     <div class="tc-cfg-linha"><div><b>Restaurar preferências</b><small class="tc-mudo">Volta o som e as animações para o padrão (ligados).</small></div>
       <button type="button" class="tc-btn" data-act="cfg-reset">Restaurar</button></div>
     <div class="tc-acoes"><button type="button" class="tc-btn" data-act="fechar">Fechar</button></div>`;
@@ -983,6 +985,7 @@ document.addEventListener('click', async (e) => {
   if (act === 'mercado-aba') { S.mercado.aba = b.dataset.v; S.mercado.f = { ordem: b.dataset.v === 'oficial' ? 'poder' : 'recente' }; render(); await agir(carregarMercado, { recarregar: false }); return; }
   if (act === 'limpar-filtros') { S.mercado.f = { ordem: S.mercado.aba === 'oficial' ? 'poder' : 'recente' }; S.mercado.oficial = null; S.mercado.usuarios = null; render(); await agir(carregarMercado, { recarregar: false }); return; }
   if (act === 'config') { S.modal = { t: 'config' }; render(); return; }
+  if (act === 'cfg-mkt') { const c = lerCfg(); c.mktClassico = !c.mktClassico; salvarCfg(c); render(); return; }
   if (act === 'cfg-som') { definirSom(!somAtivo()); if (somAtivo()) tocar('ok'); render(); return; }
   if (act === 'cfg-reset') { try { localStorage.removeItem(CFG_KEY); } catch { /* sem storage */ } definirSom(true); aplicarCfg(); toast('Preferências restauradas.'); render(); return; }
   if (act === 'cfg-renomear') {

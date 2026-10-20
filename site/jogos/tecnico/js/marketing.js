@@ -51,10 +51,12 @@ function ligarRelogio() {
     if (!X.e || C.S.aba !== 'marketing') { clearInterval(X.timer); return; }
     const s = (Date.now() - X.t0) / 1000;
     const el = document.querySelector('[data-mkt-acum]'); if (el) el.textContent = C.fmt(acumulado(s));
+    const bar = document.querySelector('[data-mkt-bar]'); if (bar) bar.style.width = `${Math.min(100, acumulado(s) / capAcum() * 100)}%`;
     if (s >= 60) { carregarMarketing().then(() => C.render()).catch(() => {}); }
   }, 1000);
 }
 
+const capAcum = () => Math.max(1, X.e.taxa.por_minuto * X.e.pendente.limite_h * 60);
 // Acumulado ainda não resgatado: o que o servidor já contava + o que sobe desde que a tela carregou (até o limite de horas offline).
 const acumulado = (s) => { const p = X.e.pendente; const max = X.e.taxa.por_minuto * p.limite_h * 60; return Math.floor(Math.min(max, p.valor + X.e.taxa.por_minuto * s / 60)); };
 
@@ -145,7 +147,7 @@ function viewFin() {
   return `<section class="tc-card"><h3>Histórico financeiro<span class="dir">últimos ${Math.min(30, X.fin.length)}</span></h3><p class="tc-mudo tc-peq" style="margin:0 0 8px">A receita passiva é lançada de forma consolidada (um lançamento por processamento), não segundo a segundo.</p>
     <table class="tc-tabela"><thead><tr><th>Quando</th><th>O quê</th><th class="n">Valor</th><th class="n">Saldo</th></tr></thead><tbody>${lin || '<tr><td colspan="4" class="tc-mudo">Sem lançamentos.</td></tr>'}</tbody></table></section>`;
 }
-export function viewMarketingCentral() {
+function viewMarketingCentralClassico() {
   const e = X.e; if (!e) return '<p class="tc-carregando">Carregando…</p>';
   const abas = `<div class="mkt-abas" role="tablist">${ABAS_MKT.map(([id, n]) => `<button type="button" role="tab" data-act="mkt-aba" data-aba="${id}" class="${X.aba === id ? 'on' : ''}">${n}</button>`).join('')}</div>`;
   const corpo = { visao: viewVisao, marketing: viewMarketing, patro: viewPatro, aud: viewAud, fin: viewFin }[X.aba](e);
@@ -176,3 +178,100 @@ export async function tratarMkt(act, b) {
   if (act === 'mkt-auto') { await C.agir(() => api.patrocinioAuto(Number(b.dataset.id), b.checked), { recarregar: false }); await C.agir(carregarMarketing, { recarregar: false }); return true; }
   return false;
 }
+
+// ------------------------------------------------------------------ visual novo (v2): mais simples, colorido e dinâmico
+// O visual clássico continua inteiro acima (viewMarketingCentralClassico); a Configuração troca entre os dois (chave `mktClassico` em tc_ui).
+const modoClassico = () => { try { return !!JSON.parse(localStorage.getItem('tc_ui') || '{}').mktClassico; } catch { return false; } };
+const ABAS2 = [['visao', '📊', 'Resumo'], ['marketing', '📣', 'Crescer'], ['patro', '🤝', 'Patrocínios'], ['aud', '👥', 'Jogadores'], ['fin', '🧾', 'Extrato']];
+const COR_CAT = { local: '#94a3b8', regional: '#60a5fa', nacional: '#4ade80', internacional: '#c084fc', premium: '#f5cf5a' };
+const parte = (nome, cor, v) => ({ nome, cor, v: Math.max(0, v) });
+function partesRenda(e) {
+  const t = e.taxa; const b = t.base;
+  const camp = (b * (1 + t.bonus_marketing + t.bonus_audiencia) + t.patrocinadores) * t.bonus_campanha;
+  return [parte('Clube', '#60a5fa', b), parte('Marketing', '#a78bfa', b * t.bonus_marketing), parte('Audiência', '#f472b6', b * t.bonus_audiencia),
+    parte('Campanha', '#fb923c', camp), parte('Patrocínios', '#4ade80', t.patrocinadores)].filter((p) => p.v > 0);
+}
+function heroHtml(e) {
+  const t = e.taxa; const a = acumulado(0); const cheio = a >= capAcum() * 0.98;
+  return `<section class="mk2-hero">
+    <div class="mk2-acum"><small>Acumulando agora</small><div class="mk2-valor"><b data-mkt-acum>${C.fmt(a)}</b><span>créditos</span></div>
+      <div class="mk2-cap"><i data-mkt-bar style="width:${Math.min(100, a / capAcum() * 100)}%"></i></div>
+      <small class="mk2-capl">${cheio ? 'Cofre cheio: resgate para voltar a acumular' : `Guarda até ${e.pendente.limite_h}h de renda`}</small></div>
+    <button type="button" class="tc-btn ouro mk2-resgatar${a > 0 ? ' pulsa' : ''}" data-act="mkt-resgatar" ${C.S.ocupado ? 'disabled' : ''}>Resgatar</button>
+    <div class="mk2-ritmo"><div><b>+${num1(t.por_minuto)}</b><small>por minuto</small></div><div><b>+${C.fmt(t.por_hora)}</b><small>por hora</small></div><div><b>+${C.fmt(t.por_dia)}</b><small>em 24 h</small></div></div>
+  </section>`;
+}
+function cartoes(e) {
+  const m = e.marketing; const f = e.fama; const ativos = e.contratos.filter((c) => c.ativo).length;
+  const cart = (cor, ic, tit, val, sub, aba) => `<button type="button" class="mk2-cart" style="--c:${cor}" data-act="mkt-aba" data-aba="${aba}"><i>${ic}</i><small>${tit}</small><b>${val}</b><span>${sub}</span></button>`;
+  return `<div class="mk2-cartoes">
+    ${cart('#f5cf5a', '⭐', 'Fama', C.esc(f.nivel.nome), `${num1(f.valor)} / ${f.max}${f.nivel.proximo_nome ? ` · próximo: ${C.esc(f.nivel.proximo_nome)}` : ''}`, 'visao')}
+    ${cart('#a78bfa', '📣', 'Marketing', `Nível ${m.nivel}/${m.max}`, m.nivel >= m.max ? 'no máximo' : `melhorar: ${C.fmt(m.custo_proximo)} cr.`, 'marketing')}
+    ${cart('#4ade80', '🤝', 'Patrocínios', `${ativos}/${m.limite_contratos}`, ativos ? 'contratos ativos' : 'contrate o primeiro', 'patro')}
+    ${cart('#f472b6', '👥', 'Audiência', `+${pct(e.audiencia.bonus)}`, `${num1(e.audiencia.total)} de audiência`, 'aud')}
+  </div>`;
+}
+function v2Visao(e) {
+  const partes = partesRenda(e); const tot = partes.reduce((s, p) => s + p.v, 0) || 1;
+  const barra = partes.map((p) => `<i style="width:${p.v / tot * 100}%;background:${p.cor}" title="${p.nome}: ${num1(p.v)}/min"></i>`).join('');
+  const leg = partes.map((p) => `<li><i style="background:${p.cor}"></i><span>${p.nome}</span><b>${num1(p.v)}/min</b></li>`).join('');
+  const f = e.fama;
+  const niv = f.niveis.map((n) => `<div class="${f.valor >= n.min ? 'on' : ''}"><b>${C.esc(n.nome)}</b><small>${n.min}+</small></div>`).join('');
+  return `<section class="mk2-bloco"><h3>De onde vem a renda</h3><div class="mk2-empilhada">${barra}</div><ul class="mk2-leg">${leg}</ul>
+      ${e.campanha_ativa ? `<p class="mk2-aviso">🔥 Campanha em andamento: termina em ${dur(new Date(e.campanha_ativa.fim) - Date.now())}</p>` : ''}</section>
+    <section class="mk2-bloco"><h3>Fama <small>${num1(f.valor)} / ${f.max}</small></h3>${barraFama(f)}<div class="mk2-niveis">${niv}</div>
+      <p class="mk2-dica">A fama sobe com vitórias, títulos, boa colocação, astros no elenco e alguns patrocínios.</p></section>`;
+}
+function v2Crescer(e) {
+  const m = e.marketing; const max = m.nivel >= m.max;
+  const semCamp = (e.taxa.base * (1 + e.taxa.bonus_marketing + e.taxa.bonus_audiencia) + e.taxa.patrocinadores);
+  const camps = e.campanhas.map((c) => {
+    const ganho = Math.round(semCamp * c.bonus * c.duracao_h * 60); const saldo = ganho - c.custo; const ativa = e.campanha_ativa?.id === c.id;
+    const bloq = e.campanha_ativa || c.requisito || c.recarga_ate || e.creditos < c.custo || C.S.ocupado;
+    const nota = ativa ? `Termina em ${dur(new Date(e.campanha_ativa.fim) - Date.now())}` : c.requisito ? C.esc(c.requisito) : c.recarga_ate ? `Disponível de novo em ${quando(c.recarga_ate)}` : `Recarga de ${c.recarga_h} h`;
+    return `<div class="mk2-camp${ativa ? ' on' : ''}"><div class="mk2-camp-t"><b>${C.esc(c.nome)}</b><span class="mk2-chip">${C.esc(c.efeito)}</span></div>
+      <div class="mk2-roi ${saldo >= 0 ? 'bom' : 'ruim'}"><b>${saldo >= 0 ? '+' : '−'}${C.fmt(Math.abs(saldo))}</b><small>${saldo >= 0 ? 'lucro estimado' : 'prejuízo estimado'} em ${c.duracao_h} h</small></div>
+      <small class="mk2-nota">${nota}</small>
+      <button type="button" class="tc-btn ciano" data-act="mkt-campanha" data-id="${c.id}" ${bloq ? 'disabled' : ''}>Ativar · ${C.fmt(c.custo)} cr.</button></div>`;
+  }).join('');
+  return `<section class="mk2-bloco mk2-nivel"><div><h3>Nível de marketing <small>${m.nivel} / ${m.max}</small></h3>
+      <p class="mk2-dica">${C.esc(m.nome || '')} · +${pct(m.bonus)} na renda do clube · ${m.limite_contratos} patrocínio(s) ao mesmo tempo</p>
+      <div class="tc-barra mk2-barra"><i style="width:${m.nivel / m.max * 100}%"></i></div></div>
+      ${max ? '<span class="mk2-chip bom">Nível máximo</span>' : `<button type="button" class="tc-btn ouro" data-act="mkt-melhorar" ${e.creditos < m.custo_proximo || C.S.ocupado ? 'disabled' : ''}>Melhorar<small>${C.fmt(m.custo_proximo)} cr. → +${pct(m.proximo_bonus)}</small></button>`}</section>
+    <section class="mk2-bloco"><h3>Campanhas <small>uma por vez</small></h3><p class="mk2-dica">Multiplicam toda a renda durante o período. A estimativa usa a sua renda atual.</p><div class="mk2-camps">${camps}</div></section>`;
+}
+function v2Patro(e) {
+  const ativos = e.contratos.filter((c) => c.ativo);
+  const livre = e.marketing.limite_contratos - ativos.length;
+  const cont = ativos.map((c) => `<div class="mk2-pat on" style="--c:${COR_CAT[c.categoria] || '#4ade80'}"><div class="mk2-pat-n"><b>${C.esc(c.nome)}</b><span class="mk2-chip">${CAT[c.categoria] || ''}</span></div>
+      <div class="mk2-pat-v"><b>+${num1(c.receita_min)}</b><small>cr./min</small></div><small class="mk2-nota">termina em ${dur(new Date(c.fim) - Date.now())}</small>
+      <label class="mkt-auto"><input type="checkbox" data-act="mkt-auto" data-id="${c.id}" ${c.renovar_auto ? 'checked' : ''}> renovar sozinho</label></div>`).join('');
+  const marcas = e.patrocinadores.map((p) => {
+    const pode = p.estado !== 'ativo' && p.estado !== 'indisponivel' && livre > 0 && e.creditos >= p.custo && !C.S.ocupado;
+    const motivo = p.estado === 'indisponivel' ? C.esc(p.motivo || '') : p.estado !== 'ativo' && livre <= 0 ? 'Sem vaga: melhore o marketing.' : '';
+    const req = `Fama ${p.req.fama ?? 0} · marketing ${p.req.nivel ?? 1}${p.req.divisao ? ' · divisão principal' : ''}${p.req.titulares ? ` · ${p.req.titulares} titulares` : ''}`;
+    return `<div class="mk2-pat ${p.estado}" style="--c:${COR_CAT[p.categoria] || '#94a3b8'}"><div class="mk2-pat-n"><b>${C.esc(p.nome)}</b><span class="mk2-chip">${CAT[p.categoria] || ''}</span></div>
+      <div class="mk2-pat-v"><b>+${num1(p.receita_min)}</b><small>cr./min · ${p.duracao_h} h${p.bonus_aud ? ` · audiência +${pct(p.bonus_aud)}` : ''}${p.bonus_fama ? ` · fama +${p.bonus_fama}` : ''}</small></div>
+      <small class="mk2-nota">${req}${motivo ? ` — ${motivo}` : ''}</small>
+      ${p.estado === 'ativo' ? '<span class="mk2-chip bom">Ativo</span>' : `<button type="button" class="tc-btn ouro" data-act="mkt-contratar" data-id="${p.id}" ${pode ? '' : 'disabled'}>Contratar · ${C.fmt(p.custo)} cr.</button>`}</div>`;
+  }).join('');
+  return `<section class="mk2-bloco"><h3>Seus contratos <small>${ativos.length} / ${e.marketing.limite_contratos}</small></h3>${cont ? `<div class="mk2-pats">${cont}</div>` : '<p class="mk2-dica">Nenhum patrocinador ainda. Contrate uma marca abaixo para ganhar créditos fixos por minuto.</p>'}</section>
+    <section class="mk2-bloco"><h3>Marcas</h3><div class="mk2-pats">${marcas}</div><p class="mk2-dica">O custo é pago ao assinar. A renovação sozinha só acontece com saldo e requisitos em dia.</p></section>`;
+}
+function v2Aud(e) {
+  const a = e.audiencia;
+  const lin = a.jogadores.map((j) => `<div class="mk2-jog${j.conta ? '' : ' fora'}"><div><b>${C.esc(j.nome)}</b><small>${j.titular ? 'Titular' : 'Reserva'} · ${C.esc(C.nomeVaga(j.pos))}</small></div><span>Fama <b>${j.fama}</b></span><span class="aud">${j.conta ? `+${num1(j.audiencia)}` : '—'}</span></div>`).join('');
+  return `<section class="mk2-bloco"><h3>Audiência <small>+${pct(a.bonus)} na renda</small></h3><p class="mk2-dica">Vem da fama dos jogadores: os 5 titulares contam inteiros e os melhores reservas contam ${pct(a.peso_reserva)}.</p><div class="mk2-jogs">${lin}</div></section>`;
+}
+function v2Fin() {
+  if (!X.fin) return '<p class="tc-carregando">Carregando…</p>';
+  const lin = X.fin.slice(0, 30).map((x) => `<div class="mk2-mov"><span>${quando(x.criado)}</span><b>${nomeMovimento(x)}</b><em class="${x.delta >= 0 ? 'pos' : 'neg'}">${x.delta >= 0 ? '+' : '−'}${C.fmt(Math.abs(x.delta))}</em><small>${C.fmt(x.saldo)}</small></div>`).join('');
+  return `<section class="mk2-bloco"><h3>Extrato <small>últimos ${Math.min(30, X.fin.length)}</small></h3><div class="mk2-movs">${lin || '<p class="mk2-dica">Sem lançamentos.</p>'}</div></section>`;
+}
+function viewMarketingCentral2() {
+  const e = X.e; if (!e) return '<p class="tc-carregando">Carregando…</p>';
+  const abas = `<div class="mk2-abas" role="tablist">${ABAS2.map(([id, ic, n]) => `<button type="button" role="tab" data-act="mkt-aba" data-aba="${id}" class="${X.aba === id ? 'on' : ''}"><i>${ic}</i>${n}</button>`).join('')}</div>`;
+  const corpo = { visao: v2Visao, marketing: v2Crescer, patro: v2Patro, aud: v2Aud, fin: v2Fin }[X.aba](e);
+  return `<div class="mk2">${heroHtml(e)}${cartoes(e)}${abas}${corpo}</div>`;
+}
+export const viewMarketingCentral = () => (modoClassico() ? viewMarketingCentralClassico() : viewMarketingCentral2());
