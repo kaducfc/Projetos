@@ -16,6 +16,7 @@ import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, 
 import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
 import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js';
 
+const PODER_MAX = 125; // teto do Poder em campo (estrelas e forma podem passar de 100): a barra enche só nele
 const GAME_ID = 'tecnico';
 const app = document.getElementById('app');
 const { tecnico: api } = platform;
@@ -156,7 +157,7 @@ function topo() {
   const o = S.meu.org;
   const novos = S.avisosN || 0;
   return `<header class="tc-topo">
-    <div class="tc-org"><span class="logo">${escudoOrg(o, 54)}</span><div><div class="nome">${esc(o.nome)}</div><div class="sub">${o.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)}</div><div class="xp"><i style="width:${Math.min(100, S.meu.poder)}%"></i><span>Poder ${S.meu.poder}</span></div></div></div>
+    <div class="tc-org"><span class="logo">${escudoOrg(o, 54)}</span><div><div class="nome">${esc(o.nome)}</div><div class="sub">${o.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)}</div><div class="xp"><i style="width:${Math.min(100, S.meu.poder / PODER_MAX * 100)}%"></i><span>Poder ${S.meu.poder}</span></div></div></div>
     <div class="tc-moedas">
       <div class="tc-moeda rc"><img src="../../shared/assets/moeda/rc-96.webp" alt="" width="34" height="34" /><div><b>${fmt(S.meu.rc)}</b><small>Rift Coins</small></div></div>
       <div class="tc-moeda cred"><img src="img/gema.webp" alt="" width="26" height="34" /><div><b>${fmt(o.creditos)}</b><small>Créditos de equipe</small></div></div>
@@ -350,7 +351,7 @@ function viewVisao() {
       <p class="tc-mudo tc-peq" style="margin:10px 0 0;text-align:center">Contratos em vigor: ${fmt(m.salarios_semana)} cr./semana (já pagos)</p></section>
   </div>
   <section class="tc-card"><h3>Poder da equipe<span class="dir">Semana ${((m.semana % 4) + 4) % 4 + 1}</span></h3>
-      <div class="tc-poder"><div class="grande">${m.poder}</div><div style="flex:1"><div class="tc-barra"><i style="width:${m.poder}%"></i></div>
+      <div class="tc-poder"><div class="grande">${m.poder}</div><div style="flex:1"><div class="tc-barra"><i style="width:${Math.min(100, m.poder / PODER_MAX * 100)}%"></i></div>
         <p class="tc-mudo tc-peq" style="margin:8px 0 0">Média do Poder dos titulares na posição em que jogam, mais a sinergia (${m.org.sinergia}/100). ${m.completo ? '' : '<b style="color:#fbbf24">Faltam titulares.</b>'}</p></div></div></section>
   <section class="tc-card"><h3>Escalação titular<span class="dir">${fmt(m.salarios_semana)} cr./semana em contratos (pagos adiantado)</span></h3>
     <div class="tc-escala">${VAGAS.map((v) => `<div class="vaga"><span class="rot">${NOME_VAGA[v]}</span>${tit[v] ? cartao(tit[v], { tit: false }) : `<div class="tc-vazio">Vaga livre<br><button type="button" class="tc-btn peq" data-act="aba" data-aba="elenco" style="margin-top:8px">Escalar</button></div>`}</div>`).join('')}</div></section>
