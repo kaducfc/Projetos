@@ -51,3 +51,77 @@ export function icHtml(ic, size = 56, rotulo = '') {
   }
   return `<span class="tc-ic" style="--s:${size}px" role="img" aria-label="${esc(rotulo)}">${fundo}${emblemaHtml(ic, pos)}</span>`;
 }
+
+// ---------------------------------------------------------------- emblema de TEXTO (v3)
+// Alguns times usam só a escrita como símbolo. O texto viaja no campo `escudo` em texto:
+// v3:<texto>:<fonte 1-11>:<cor de cima>:<cor de baixo>:<espessura do contorno 0-8>:<cor do contorno>:<sombra 0-6>:<cor da sombra>:<placa 0-3>:<cor da placa>:<cor da borda da placa>
+export const FONTES = [
+  { id: 1, nome: 'Bebas Neue', css: "'Bebas Neue', Impact, sans-serif" },
+  { id: 2, nome: 'Draco', css: "'TC Draco', Impact, sans-serif" },
+  { id: 3, nome: 'Midnight Letters', css: "'TC Midnight', Impact, sans-serif" },
+  { id: 4, nome: 'Midnight Letters Itálico', css: "'TC Midnight It', Impact, sans-serif" },
+  { id: 5, nome: 'Polarized', css: "'TC Polarized', Impact, sans-serif" },
+  { id: 6, nome: 'Polarized Itálico', css: "'TC Polarized It', Impact, sans-serif" },
+  { id: 7, nome: 'Stifly', css: "'TC Stifly', Impact, sans-serif" },
+  { id: 8, nome: 'Thernaly', css: "'TC Thernaly', Impact, sans-serif" },
+  { id: 9, nome: 'Thernaly Itálico', css: "'TC Thernaly It', Impact, sans-serif" },
+  { id: 10, nome: 'Victory Striker', css: "'TC Victory', Impact, sans-serif" },
+  { id: 11, nome: 'Y224', css: "'TC Y224', Impact, sans-serif" },
+];
+export const FORMAS_PLACA = ['Sem placa', 'Elipse', 'Retângulo', 'Escudo'];
+export const TEXTO_MAX = 14;
+export const TEXTO_PADRAO = { t: 'TIME', f: 1, c: ['#ffffff', '#d9a82b'], ow: 3, oc: '#1b3a6b', sh: 2, sc: '#000000', pl: 0, pf: '#1b3a6b', pb: '#d9a82b' };
+export const txClone = (tx) => ({ ...tx, c: [...tx.c] });
+// Só letras, números, espaço e . & ! ' + - (o ":" separa os campos).
+export const txLimpar = (t) => String(t ?? '').replace(/[^A-Za-z0-9À-ÿ .&!'+-]/g, '').replace(/\s{2,}/g, ' ').slice(0, TEXTO_MAX);
+
+export function txCodificar(tx) {
+  const t = txLimpar(tx.t).trim() || 'TIME';
+  const f = Math.min(FONTES.length, Math.max(1, Number(tx.f) || 1));
+  const h = (c, d) => cor(c, d).slice(1);
+  const n = (v, max) => Math.min(max, Math.max(0, Math.round(Number(v) || 0)));
+  return ['v3', t, f, h(tx.c?.[0], '#ffffff'), h(tx.c?.[1], '#d9a82b'), n(tx.ow, 8), h(tx.oc, '#1b3a6b'), n(tx.sh, 6), h(tx.sc, '#000000'), n(tx.pl, 3), h(tx.pf, '#1b3a6b'), h(tx.pb, '#d9a82b')].join(':');
+}
+export function txDecodificar(txt) {
+  const m = /^v3:([A-Za-z0-9À-ÿ .&!'+-]{1,14}):([1-9]|1[01]):([0-9a-f]{6}):([0-9a-f]{6}):([0-8]):([0-9a-f]{6}):([0-6]):([0-9a-f]{6}):([0-3]):([0-9a-f]{6}):([0-9a-f]{6})$/.exec(String(txt || ''));
+  if (!m) return null;
+  return { t: m[1], f: Number(m[2]), c: [`#${m[3]}`, `#${m[4]}`], ow: Number(m[5]), oc: `#${m[6]}`, sh: Number(m[7]), sc: `#${m[8]}`, pl: Number(m[9]), pf: `#${m[10]}`, pb: `#${m[11]}` };
+}
+
+// Carrega as fontes do emblema de texto (e avisa quando terminar, para redesenhar com as medidas certas).
+let fontesProntas = false;
+export function carregarFontes() {
+  if (typeof document === 'undefined' || !document.fonts?.load) return Promise.resolve(false);
+  return Promise.all(FONTES.map((f) => document.fonts.load(`100px ${f.css}`, 'AaZz09').catch(() => null))).then(() => { fontesProntas = true; return true; });
+}
+let medidor = null;
+function larguraTexto(t, css) {
+  try {
+    if (typeof document !== 'undefined') { medidor = medidor || document.createElement('canvas').getContext('2d'); medidor.font = `100px ${css}`; const w = medidor.measureText(t).width; if (w > 0) return w; }
+  } catch { /* sem canvas: estimativa */ }
+  return t.length * 58;
+}
+let seq = 0;
+// Emblema de texto: SVG com contorno, sombra, degradê de duas cores e placa opcional. `size` é a altura de referência do ícone (como no emblema comum).
+export function textoHtml(tx, size = 56, rotulo = '') {
+  const fonte = FONTES.find((f) => f.id === tx.f) || FONTES[0];
+  const t = txLimpar(tx.t).trim() || 'TIME';
+  const w = larguraTexto(t, fonte.css);
+  const mx = 10 + tx.ow * 2 + tx.sh + (tx.pl ? 26 : 0); const my = 14 + tx.ow * 2 + tx.sh + (tx.pl ? 20 : 0);
+  const W = Math.round(w + mx * 2); const H = Math.round(100 + my * 2);
+  const id = `tcg${++seq}`;
+  const esc2 = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/'/g, '&#39;');
+  const grad = tx.c[0] !== tx.c[1];
+  const fill = grad ? `url(#${id})` : tx.c[0];
+  const base = `x="${W / 2}" y="${H / 2}" dy="0.34em" text-anchor="middle" font-family="${fonte.css.replace(/"/g, "'")}" font-size="100" stroke-linejoin="round" paint-order="stroke"`;
+  const placa = [null,
+    `<ellipse cx="${W / 2}" cy="${H / 2}" rx="${W / 2 - 3}" ry="${H / 2 - 3}"`,
+    `<rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="${Math.round(H * 0.16)}"`,
+    `<path d="M3 3 H${W - 3} V${Math.round(H * 0.6)} Q${W - 3} ${Math.round(H * 0.86)} ${W / 2} ${H - 3} Q3 ${Math.round(H * 0.86)} 3 ${Math.round(H * 0.6)} Z"`][tx.pl];
+  const placaSvg = placa ? `${placa} fill="${tx.pf}" stroke="${tx.pb}" stroke-width="6" stroke-linejoin="round"/>` : '';
+  const sombra = tx.sh ? `<text ${base} transform="translate(${tx.sh * 1.6} ${tx.sh * 1.6})" fill="${tx.sc}" stroke="${tx.sc}" stroke-width="${tx.ow * 2}" opacity=".85">${esc2(t)}</text>` : '';
+  const alt = size * 0.86; const escala = Math.min(alt / H, (size * 2.6) / W);
+  return `<svg class="tc-ict" viewBox="0 0 ${W} ${H}" width="${Math.round(W * escala)}" height="${Math.round(H * escala)}" role="img" aria-label="${esc(rotulo || t)}" style="display:inline-block;vertical-align:middle;flex:none">
+    ${grad ? `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0.25" stop-color="${tx.c[0]}"/><stop offset="0.75" stop-color="${tx.c[1]}"/></linearGradient></defs>` : ''}${placaSvg}${sombra}
+    <text ${base} fill="${fill}" stroke="${tx.ow ? tx.oc : 'none'}" stroke-width="${tx.ow * 2}">${esc2(t)}</text></svg>`;
+}

@@ -1,3 +1,15 @@
+/* fontes do emblema de texto (arquivos em ../fonts) */
+@font-face { font-family: 'TC Draco'; src: url('../fonts/draco.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'TC Midnight'; src: url('../fonts/midnight.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'TC Midnight It'; src: url('../fonts/midnight-it.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'TC Polarized'; src: url('../fonts/polarized.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'TC Polarized It'; src: url('../fonts/polarized-it.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'TC Stifly'; src: url('../fonts/stifly.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'TC Thernaly'; src: url('../fonts/thernaly.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'TC Thernaly It'; src: url('../fonts/thernaly-it.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'TC Victory'; src: url('../fonts/victory.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'TC Y224'; src: url('../fonts/y224.woff2') format('woff2'); font-display: swap; }
+
 /* Simulador de técnico: painéis escuros em azul-marinho, ciano e dourado. */
 .tc { --fundo: #050d1c; --painel: #0a1830; --painel2: #0d203d; --linha: #1c3556; --ciano: #22d3ee; --verde: #2dd4bf; --ouro: #d9a82b; --ouro2: #f5cf5a; --txt: #e6edf7; --mudo: #8fa3bf; --ruim: #f87171; --bom: #4ade80;
   min-height: 100vh; background: radial-gradient(1200px 600px at 70% -10%, #12305c55, transparent), linear-gradient(180deg, #06122a, #040a16); color: var(--txt); font-family: Inter, system-ui, sans-serif; padding: 0 0 60px; }
@@ -903,3 +915,14 @@ html.tc-sem-anim *, html.tc-sem-anim *::before, html.tc-sem-anim *::after { anim
 /* topo: só o escudo da organização, sem o círculo em volta */
 .tc-org .logo { border: 0; border-radius: 0; background: none; box-shadow: none; width: auto; height: auto; filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.55)); }
 @media (max-width: 1000px) { .tc-org .logo { width: auto; height: auto; } }
+
+/* editor do emblema de texto */
+.tc-modos { display: flex; gap: 6px; margin-bottom: 10px; } .tc-modos button { flex: 1; padding: 9px 14px; background: #0a1d38; border: 1px solid #1d3a63; border-radius: 6px; color: #b9c8e0; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; font-size: 12.5px; cursor: pointer; }
+.tc-modos button.on { background: linear-gradient(180deg, #2a2208, #1a1505); border-color: #d9a82b; color: #f5cf5a; }
+.tc-previa-tx { align-items: center; } .tc-previa-tx .tc-ict { background: repeating-conic-gradient(#0c1b34 0 25%, #0a1730 0 50%) 0 0 / 18px 18px; padding: 6px; border-radius: 8px; }
+.tc-fontes { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.tc-fontes button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px 6px; background: #08162c; border: 1px solid #1d3a63; border-radius: 6px; color: #e6edf7; cursor: pointer; min-width: 0; }
+.tc-fontes button span { font-size: 24px; line-height: 1.1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .tc-fontes button small { font: 600 10.5px Inter, system-ui, sans-serif; color: var(--mudo); }
+.tc-fontes button:hover { border-color: #3d6fae; } .tc-fontes button.on { border-color: #d9a82b; background: #1a1505; box-shadow: 0 0 10px #d9a82b33; }
+.tc-formas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; } .tc-formas button { padding: 6px 12px; background: #0a1d38; border: 1px solid #1d3a63; border-radius: 6px; color: #b9c8e0; font-weight: 700; font-size: 12.5px; cursor: pointer; } .tc-formas button.on { border-color: #d9a82b; color: #f5cf5a; background: #1a1505; }
+.tc-tx-num { display: grid; grid-template-columns: 90px 1fr 24px; gap: 10px; align-items: center; font-size: 13px; } .tc-tx-num input { accent-color: #d9a82b; width: 100%; } .tc-tx-num b { text-align: right; font-variant-numeric: tabular-nums; }

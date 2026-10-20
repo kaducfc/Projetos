@@ -1,7 +1,7 @@
 // Arte do jogo gerada em SVG: escudos das organizações e retratos provisórios dos jogadores.
 // Quando um jogador tiver `retrato` (arquivo de imagem), o retrato real substitui o desenho.
 import { esc, SIGLA_VAGA } from './regras.js';
-import { icDecodificar, icHtml } from './icone.js';
+import { icDecodificar, icHtml, txDecodificar, textoHtml } from './icone.js?v=2';
 
 const hash = (s) => { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 
@@ -24,6 +24,8 @@ export function escudoSvg(escudo, cor1, cor2, sigla = '', size = 56) {
 }
 // Ícone novo (emblema + bandeira) quando a organização tem; senão o escudo desenhado das contas antigas e dos times do sistema.
 export function escudoOrg(o, size = 44) {
+  const tx = txDecodificar(o?.escudo);
+  if (tx) return textoHtml(tx, Math.round(size * 1.1), o?.nome || o?.sigla || '');
   const ic = icDecodificar(o?.escudo);
   return ic ? icHtml(ic, Math.round(size * 1.1), o?.sigla || '') : escudoSvg(o?.escudo, o?.cor1, o?.cor2, o?.sigla, size);
 }

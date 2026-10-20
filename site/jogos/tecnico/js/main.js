@@ -11,7 +11,7 @@ import {
 } from './regras.js';
 import { prepararImagens, campIcone } from './campeoes-img.js';
 import { escudoOrg, retratoSvg, iconeVaga } from './art.js';
-import { N_EMBLEMAS, N_BANDEIRAS, PARTES_EMBLEMA, PARTES_BANDEIRA, PALETA, ICONE_PADRAO, icClone, icCodificar, icDecodificar, icHtml, emblemaHtml } from './icone.js';
+import { N_EMBLEMAS, N_BANDEIRAS, PARTES_EMBLEMA, PARTES_BANDEIRA, PALETA, ICONE_PADRAO, icClone, icCodificar, icDecodificar, icHtml, emblemaHtml, FONTES, FORMAS_PLACA, TEXTO_PADRAO, TEXTO_MAX, txClone, txCodificar, txDecodificar, txLimpar, textoHtml, carregarFontes } from './icone.js?v=2';
 import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js?v=5';
 import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
 import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js?v=3';
@@ -52,7 +52,7 @@ const S = {
   mercado: { aba: 'oficial', f: { ordem: 'poder' }, oficial: null, usuarios: null, meus: null },
   modal: null,
   ocupado: false,
-  form: { nome: '', sigla: '', escudo: icCodificar(ICONE_PADRAO), cor1: ICONE_PADRAO.ec[0], cor2: ICONE_PADRAO.ec[1], estilo: 'classico', ic: icClone(ICONE_PADRAO) },
+  form: { nome: '', sigla: '', escudo: icCodificar(ICONE_PADRAO), cor1: ICONE_PADRAO.ec[0], cor2: ICONE_PADRAO.ec[1], estilo: 'classico', ic: icClone(ICONE_PADRAO), modo: 'simbolo', tx: txClone(TEXTO_PADRAO) },
   erro: '',
 };
 
@@ -238,23 +238,49 @@ function viewEscolha() {
 const formDe = (alvo) => (alvo === 'pers' ? S.form.pers : S.form);
 function aplicarIc(alvo) {
   const f = formDe(alvo);
+  if (f.modo === 'texto') { f.escudo = txCodificar(f.tx); f.cor1 = f.tx.c[0]; f.cor2 = f.tx.c[1]; return; }
   f.escudo = icCodificar(f.ic); f.cor1 = f.ic.ec[0]; f.cor2 = f.ic.ec[1];
 }
+// Prévia do ícone do time (símbolo ou texto, conforme o modo escolhido).
+const previaIcone = (f, size, rotulo = '') => (f.modo === 'texto' ? textoHtml(f.tx, size, rotulo) : icHtml(f.ic, size, rotulo));
 function seletorCor(alvo, grupo, i, nome) {
   const f = formDe(alvo); const v = f.ic[grupo][i];
   return `<div class="tc-ic-cor"><span>${nome}</span><input type="color" value="${v}" data-ic="${alvo}:${grupo}:${i}" aria-label="${nome}" />${PALETA.map((c) => `<button type="button" class="sw" style="background:${c}" data-act="ic-cor" data-alvo="${alvo}" data-g="${grupo}" data-i="${i}" data-v="${c}" aria-label="${c}"></button>`).join('')}</div>`;
 }
 function editorIcone(alvo, sigla) {
   const f = formDe(alvo); const ic = f.ic;
+  const modos = `<div class="tc-modos" role="tablist" aria-label="Tipo de ícone"><button type="button" role="tab" aria-selected="${f.modo !== 'texto'}" class="${f.modo !== 'texto' ? 'on' : ''}" data-act="ic-modo" data-alvo="${alvo}" data-v="simbolo">Símbolo</button><button type="button" role="tab" aria-selected="${f.modo === 'texto'}" class="${f.modo === 'texto' ? 'on' : ''}" data-act="ic-modo" data-alvo="${alvo}" data-v="texto">Só escrita</button></div>`;
+  if (f.modo === 'texto') return editorTexto(alvo, f, modos);
   const embs = Array.from({ length: N_EMBLEMAS }, (_, k) => k + 1).map((n) => `<button type="button" data-act="ic-emb" data-alvo="${alvo}" data-v="${n}" class="${ic.e === n ? 'on' : ''}" aria-label="Emblema ${n}">${icHtml({ ...ic, e: n, b: 0 }, 46)}</button>`).join('');
   const flags = Array.from({ length: N_BANDEIRAS }, (_, k) => k + 1).map((n) => `<button type="button" data-act="ic-ban" data-alvo="${alvo}" data-v="${n}" class="${ic.b === n ? 'on' : ''}" aria-label="Bandeira ${n}">${icHtml({ ...ic, b: n, e: ic.e }, 46)}</button>`).join('');
   return `<div class="tc-ic-edit">
+    ${modos}
     <div class="previa">${icHtml(ic, 120, 'Ícone do time')}<div class="tc-mudo tc-peq">O emblema é obrigatório. A bandeira é opcional: sem ela, só o emblema aparece. A aparência não dá vantagem na competição.</div></div>
     <div><h4>Emblema (${N_EMBLEMAS})</h4><div class="tc-ic-grade">${embs}</div></div>
     <div class="tc-ic-cores"><h4>Cores do emblema</h4>${PARTES_EMBLEMA.map((n, i) => seletorCor(alvo, 'ec', i, n)).join('')}</div>
     <label class="usa"><input type="checkbox" data-ic-usa="${alvo}" ${ic.b ? 'checked' : ''} /> Usar bandeira</label>
     ${ic.b ? `<div><h4>Bandeira (${N_BANDEIRAS})</h4><div class="tc-ic-grade">${flags}</div></div>
     <div class="tc-ic-cores"><h4>Cores da bandeira</h4>${PARTES_BANDEIRA.map((n, i) => seletorCor(alvo, 'bc', i, n)).join('')}</div>` : ''}
+  </div>`;
+}
+
+// Editor do emblema de TEXTO: escrita, fonte, cores (degradê de duas cores), contorno, sombra e placa de fundo.
+function corTx(alvo, rotulo, campo, i = null) {
+  const f = formDe(alvo); const v = i == null ? f.tx[campo] : f.tx[campo][i]; const chave = `${alvo}:${campo}:${i ?? ''}`;
+  return `<div class="tc-ic-cor"><span>${rotulo}</span><input type="color" value="${v}" data-txc="${chave}" aria-label="${rotulo}" />${PALETA.map((c) => `<button type="button" class="sw" style="background:${c}" data-act="tx-cor" data-alvo="${alvo}" data-c="${campo}" data-i="${i ?? ''}" data-v="${c}" aria-label="${c}"></button>`).join('')}</div>`;
+}
+function editorTexto(alvo, f, modos) {
+  const tx = f.tx;
+  const num = (rot, campo, max) => `<label class="tc-tx-num"><span>${rot}</span><input type="range" min="0" max="${max}" step="1" name="tx_${campo}" data-tx="${campo}" data-alvo="${alvo}" value="${tx[campo]}" /><b>${tx[campo]}</b></label>`;
+  return `<div class="tc-ic-edit">${modos}
+    <div class="previa tc-previa-tx">${textoHtml(tx, 120, 'Ícone do time')}<div class="tc-mudo tc-peq">Escreva o nome que vai no emblema e personalize a fonte, as cores, o contorno, a sombra e a placa de fundo. A aparência não dá vantagem na competição.</div></div>
+    <label class="campo"><span>Escrita (até ${TEXTO_MAX} caracteres)</span><input class="tc-input" name="tx_t" data-tx="t" data-alvo="${alvo}" maxlength="${TEXTO_MAX}" autocomplete="off" value="${esc(tx.t)}" placeholder="Ex.: FENIX" /></label>
+    <div><h4>Fonte</h4><div class="tc-fontes">${FONTES.map((fo) => `<button type="button" class="${tx.f === fo.id ? 'on' : ''}" data-act="tx-fonte" data-alvo="${alvo}" data-v="${fo.id}" style="font-family:${fo.css}" aria-label="${esc(fo.nome)}"><span>${esc(txLimpar(tx.t).trim() || 'Time')}</span><small>${esc(fo.nome)}</small></button>`).join('')}</div></div>
+    <div class="tc-ic-cores"><h4>Cor da escrita</h4>${corTx(alvo, 'Cima', 'c', 0)}${corTx(alvo, 'Baixo', 'c', 1)}<p class="tc-mudo tc-peq" style="margin:2px 0 0">Com cores diferentes em cima e embaixo, a escrita fica em degradê.</p></div>
+    <div class="tc-ic-cores"><h4>Contorno</h4>${num('Espessura', 'ow', 8)}${tx.ow ? corTx(alvo, 'Cor do contorno', 'oc') : ''}</div>
+    <div class="tc-ic-cores"><h4>Sombra</h4>${num('Distância', 'sh', 6)}${tx.sh ? corTx(alvo, 'Cor da sombra', 'sc') : ''}</div>
+    <div class="tc-ic-cores"><h4>Placa de fundo</h4><div class="tc-formas">${FORMAS_PLACA.map((n, i) => `<button type="button" class="${tx.pl === i ? 'on' : ''}" data-act="tx-placa" data-alvo="${alvo}" data-v="${i}">${n}</button>`).join('')}</div>${tx.pl ? `${corTx(alvo, 'Cor da placa', 'pf')}${corTx(alvo, 'Cor da borda', 'pb')}` : ''}</div>
+    <div class="tc-acoes" style="position:static;margin:0;padding:0;background:none"><button type="button" class="tc-btn peq" data-act="tx-padrao" data-alvo="${alvo}">Restaurar padrão</button></div>
   </div>`;
 }
 
@@ -272,7 +298,7 @@ function viewCriar() {
       </div>
       <div class="campo"><span>Ícone do time</span>${editorIcone('criar', f.sigla)}</div>
       <label class="campo"><span>Estilo visual</span><select class="tc-input" name="estilo">${[['classico', 'Clássico'], ['moderno', 'Moderno'], ['tecnologico', 'Tecnológico']].map(([v, n]) => `<option value="${v}" ${f.estilo === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-      <div class="tc-previa">${icHtml(f.ic, 76, f.nome)}<div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px">${esc(f.nome || 'Nome do time')}</div><div class="tc-mudo tc-peq">Divisão de acesso · técnico ${esc(platform.getUser()?.username || '')}</div></div></div>
+      <div class="tc-previa">${previaIcone(f, 76, f.nome)}<div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px">${esc(f.nome || 'Nome do time')}</div><div class="tc-mudo tc-peq">Divisão de acesso · técnico ${esc(platform.getUser()?.username || '')}</div></div></div>
       ${S.erro ? `<p style="color:var(--ruim);margin:0" role="alert">${esc(S.erro)}</p>` : ''}
       <button type="submit" class="tc-btn ouro" ${S.ocupado ? 'disabled' : ''}>Criar organização</button>
     </form></div>`;
@@ -659,13 +685,14 @@ function viewCampeoes() {
 
 // ------------------------------------------------------------------ personalização
 function viewPers() {
-  const o = S.meu.org; const f = S.form.pers || (S.form.pers = { escudo: o.escudo, cor1: o.cor1, cor2: o.cor2, estilo: o.estilo, ic: icClone(icDecodificar(o.escudo) || ICONE_PADRAO) });
+  const o = S.meu.org; const f = S.form.pers || (S.form.pers = { escudo: o.escudo, cor1: o.cor1, cor2: o.cor2, estilo: o.estilo, ic: icClone(icDecodificar(o.escudo) || ICONE_PADRAO), modo: txDecodificar(o.escudo) ? 'texto' : 'simbolo', tx: txClone(txDecodificar(o.escudo) || TEXTO_PADRAO) });
   if (!f.ic) f.ic = icClone(icDecodificar(o.escudo) || ICONE_PADRAO);
+  if (!f.tx) { f.tx = txClone(txDecodificar(o.escudo) || TEXTO_PADRAO); f.modo = txDecodificar(o.escudo) ? 'texto' : 'simbolo'; }
   return `<form class="tc-card tc-form" data-form="pers" style="max-width:720px"><h3>Personalizar a organização</h3>
     <p class="tc-mudo tc-peq" style="margin:0">Só a aparência muda. O nome e a sigla não podem ser alterados e nada aqui dá vantagem na competição.</p>
     <div class="campo"><span>Ícone do time</span>${editorIcone('pers', o.sigla)}</div>
     <label class="campo"><span>Estilo visual</span><select class="tc-input" name="estilo">${[['classico', 'Clássico'], ['moderno', 'Moderno'], ['tecnologico', 'Tecnológico']].map(([v, n]) => `<option value="${v}" ${f.estilo === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-    <div class="tc-previa">${icHtml(f.ic, 76, o.nome)}<div style="font-family:'Bebas Neue',sans-serif;font-size:32px">${esc(o.nome)}</div></div>
+    <div class="tc-previa">${previaIcone(f, 76, o.nome)}<div style="font-family:'Bebas Neue',sans-serif;font-size:32px">${esc(o.nome)}</div></div>
     <button type="submit" class="tc-btn ouro" ${S.ocupado ? 'disabled' : ''}>Salvar</button></form>`;
 }
 
@@ -929,6 +956,11 @@ document.addEventListener('click', async (e) => {
     return;
   }
   if (act === 'fechar') { S.modal = null; render(); return; }
+  if (act === 'ic-modo') { const f = formDe(b.dataset.alvo); f.modo = b.dataset.v === 'texto' ? 'texto' : 'simbolo'; aplicarIc(b.dataset.alvo); render(); return; }
+  if (act === 'tx-fonte') { const f = formDe(b.dataset.alvo); f.tx.f = Number(b.dataset.v); aplicarIc(b.dataset.alvo); render(); return; }
+  if (act === 'tx-placa') { const f = formDe(b.dataset.alvo); f.tx.pl = Number(b.dataset.v); aplicarIc(b.dataset.alvo); render(); return; }
+  if (act === 'tx-padrao') { const f = formDe(b.dataset.alvo); f.tx = txClone(TEXTO_PADRAO); aplicarIc(b.dataset.alvo); render(); return; }
+  if (act === 'tx-cor') { const f = formDe(b.dataset.alvo); if (b.dataset.i === '') f.tx[b.dataset.c] = b.dataset.v; else f.tx[b.dataset.c][Number(b.dataset.i)] = b.dataset.v; aplicarIc(b.dataset.alvo); render(); return; }
   if (act === 'ic-emb') { const f = formDe(b.dataset.alvo); f.ic.e = Number(b.dataset.v); aplicarIc(b.dataset.alvo); render(); return; }
   if (act === 'ic-ban') { const f = formDe(b.dataset.alvo); f.ic.b = Number(b.dataset.v); aplicarIc(b.dataset.alvo); render(); return; }
   if (act === 'ic-cor') { const f = formDe(b.dataset.alvo); f.ic[b.dataset.g][Number(b.dataset.i)] = b.dataset.v; aplicarIc(b.dataset.alvo); render(); return; }
@@ -1043,6 +1075,16 @@ document.addEventListener('input', (e) => {
     if (camadas?.[idx]) camadas[idx].style.setProperty('--c', t.value);
     return;
   }
+  if (t.matches('[data-txc]')) { // seletor de cor do texto: atualiza só a prévia (renderizar de novo fecharia o seletor)
+    const [alvo, campo, i] = t.dataset.txc.split(':'); const f = formDe(alvo);
+    if (i === '') f.tx[campo] = t.value; else f.tx[campo][Number(i)] = t.value; aplicarIc(alvo);
+    const pv = t.closest('.tc-ic-edit')?.querySelector('.previa .tc-ict'); if (pv) pv.outerHTML = textoHtml(f.tx, 120, 'Ícone do time');
+    return;
+  }
+  if (t.matches('[data-tx]')) { // escrita, espessura do contorno e distância da sombra
+    const f = formDe(t.dataset.alvo); const c = t.dataset.tx;
+    f.tx[c] = c === 't' ? txLimpar(t.value) : Number(t.value); aplicarIc(t.dataset.alvo); render(); return;
+  }
   if (t.matches('[data-act="preco-anuncio"]')) { S.modal.preco = t.value; render(); return; }
   if (t.matches('[data-fc]')) { S.fc[t.name] = t.value; render(); return; }
   const form = t.closest('form[data-form="criar"]');
@@ -1051,7 +1093,7 @@ document.addEventListener('input', (e) => {
   if (pf) { S.form.pers[t.name] = t.value; render(); }
 });
 document.addEventListener('change', (e) => {
-  if (e.target.matches('[data-ic]')) { render(); return; } // seletor de cor fechado: atualiza as miniaturas
+  if (e.target.matches('[data-ic], [data-txc]')) { render(); return; } // seletor de cor fechado: atualiza as miniaturas
   if (e.target.matches('[data-ic-usa]')) { const alvo = e.target.dataset.icUsa; const f = formDe(alvo); f.ic.b = e.target.checked ? (f.ic.b || 1) : 0; aplicarIc(alvo); render(); return; }
   if (e.target.matches('[data-fc]')) { S.fc[e.target.name] = e.target.value; render(); return; }
   if (e.target.matches('[data-act="liga-sel"]')) { S.ligaSel = Number(e.target.value); render(); }
@@ -1092,6 +1134,7 @@ iniciarExtras({
 });
 
 // ------------------------------------------------------------------ início
+carregarFontes().then((ok) => { if (ok && S.meu) render(); }); // com as fontes carregadas o emblema de texto é medido e desenhado certo
 (async function iniciar() {
   await platform.init();
   const teste = ['localhost', '127.0.0.1'].includes(location.hostname) && /[?&]teste=1/.test(location.search);
