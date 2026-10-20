@@ -66,7 +66,7 @@ function barraFama(f) {
 }
 function topoCentral(e) {
   const t = e.taxa; const ativos = e.contratos.filter((c) => c.ativo).length;
-  return `<section class="tc-card"><h3>${C.IMG('i-financas')}Central de Marketing<span class="dir">${ativos} patrocinador(es) ativo(s)</span></h3>
+  return `<section class="tc-card"><h3>${C.IMG('ic-marketing')}Central de Marketing<span class="dir">${ativos} patrocinador(es) ativo(s)</span></h3>
     <p class="tc-mudo tc-peq" style="margin:0 0 10px">Seu clube gera créditos mesmo quando você está fora (até ${e.pendente.limite_h}h acumuladas). Fama, marketing, patrocinadores e jogadores famosos aumentam a renda.</p>
     <div class="mkt-grade">
       <div><small>Saldo</small><b>${C.fmt(e.creditos)} cr.</b></div>

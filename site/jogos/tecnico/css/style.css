@@ -835,3 +835,10 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-min .ov { font-family: 'Bebas Neue', sans-serif; font-size: 22px; text-align: center; color: var(--ouro2); } .tc-min .xp { height: 6px; border-radius: 99px; background: #07172e; border: 1px solid #17335c; overflow: hidden; } .tc-min .xp i { display: block; height: 100%; background: linear-gradient(90deg, #7c3aed, #c4b5fd); } .tc-min .seta { color: var(--mudo); text-align: center; }
 .tc-min > .tc-treino-jog { margin: 0; border: 0; border-top: 1px solid #16325a; border-radius: 0; box-shadow: none; clip-path: none; }
 @media (max-width: 700px) { .tc-min-cab { grid-template-columns: 44px minmax(0, 1fr) 36px 18px; } .tc-min .xp { display: none; } }
+
+/* configuração */
+.tc-cfg-linha { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid #16325a; } .tc-cfg-linha > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .tc-cfg-linha b { font-size: 15px; } .tc-cfg-linha small { font-size: 12.5px; }
+.tc-chave { flex: none; display: inline-flex; align-items: center; gap: 10px; padding: 5px 12px 5px 5px; background: #0a1d38; border: 1px solid #1d3a63; border-radius: 99px; color: #b9c8e0; font-size: 12.5px; font-weight: 700; }
+.tc-chave i { width: 34px; height: 20px; border-radius: 99px; background: #26364f; position: relative; transition: background .15s; } .tc-chave i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #c8d4e6; transition: transform .15s; }
+.tc-chave.on i { background: #1fb8a3; } .tc-chave.on i::after { transform: translateX(14px); background: #fff; } .tc-chave.on { color: #7ff2e0; border-color: #1f7f73; }
+html.tc-sem-anim *, html.tc-sem-anim *::before, html.tc-sem-anim *::after { animation: none !important; transition: none !important; }

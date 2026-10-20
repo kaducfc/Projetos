@@ -12,9 +12,9 @@ import {
 import { prepararImagens, campIcone } from './campeoes-img.js';
 import { escudoOrg, retratoSvg, iconeVaga } from './art.js';
 import { N_EMBLEMAS, N_BANDEIRAS, PARTES_EMBLEMA, PARTES_BANDEIRA, PALETA, ICONE_PADRAO, icClone, icCodificar, icDecodificar, icHtml, emblemaHtml } from './icone.js';
-import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js?v=3';
+import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js?v=4';
 import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
-import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js';
+import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js?v=2';
 
 // Comunicação da equipe: idioma dos titulares e quanto cada um ganha por falar com os colegas (mesmo idioma nativo vale 1, idioma em comum vale 2/3).
 const NOME_IDIOMA = { ko: 'Coreano', zh: 'Chinês', pt: 'Português', es: 'Espanhol', en: 'Inglês', vi: 'Vietnamita', ja: 'Japonês', tr: 'Turco', pl: 'Polonês' };
@@ -76,6 +76,23 @@ function toast(msg, erro = false) {
   toastTimer = setTimeout(() => el.remove(), ms);
 }
 
+// Configuração: preferências só deste navegador (guardadas no próprio aparelho).
+const CFG_KEY = 'tc_ui';
+function lerCfg() { try { return JSON.parse(localStorage.getItem(CFG_KEY) || '{}') || {}; } catch { return {}; } }
+function salvarCfg(c) { try { localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch { /* sem armazenamento: vale só nesta sessão */ } }
+function aplicarCfg() { document.documentElement.classList.toggle('tc-sem-anim', !!lerCfg().semAnim); }
+aplicarCfg();
+function configHtml() {
+  const c = lerCfg(); const sem = !!c.semAnim;
+  return `<h2>Configuração</h2>
+    <p class="tc-mudo tc-peq" style="margin:2px 0 12px">Preferências deste navegador.</p>
+    <div class="tc-cfg-linha"><div><b>Animações</b><small class="tc-mudo">Brilhos nas barras, estrelas, cartões e avisos. Desligue se o jogo ficar pesado ou se preferir uma tela mais calma.</small></div>
+      <button type="button" class="tc-chave${sem ? '' : ' on'}" data-act="cfg-anim" role="switch" aria-checked="${!sem}" aria-label="Animações"><i></i><span>${sem ? 'Reduzidas' : 'Ligadas'}</span></button></div>
+    <div class="tc-cfg-linha"><div><b>Personalizar o time</b><small class="tc-mudo">Nome, escudo, cores e estilo da sua organização.</small></div>
+      <button type="button" class="tc-btn" data-act="cfg-pers">Abrir</button></div>
+    <div class="tc-acoes"><button type="button" class="tc-btn" data-act="fechar">Fechar</button></div>`;
+}
+
 // Executa uma ação do servidor com proteção contra cliques repetidos e mensagens de erro claras.
 async function agir(fn, { ok, recarregar = true } = {}) {
   if (S.ocupado) return null;
@@ -109,7 +126,7 @@ async function atualizar() {
 async function carregarAba() {
   if (!S.meu?.org) return;
   try {
-    if ((S.aba === 'camp' || S.aba === 'class') && !S.camp) S.camp = await api.campeonatos();
+    if (S.aba === 'camp' && !S.camp) S.camp = await api.campeonatos();
     if (S.aba === 'hist' && !S.hist) S.hist = await api.historico();
     if (S.aba === 'rank' && !S.rank) S.rank = await api.rank();
     if (S.aba === 'adm' && S.ehAdmin) {
@@ -184,16 +201,16 @@ function topo() {
       <div class="tc-moeda frag"><span class="ic-frag" aria-hidden="true">◈</span><div><b>${fmt(o.fragmentos || 0)}</b><small>Fragmentos de jogador</small></div></div>
     </div>
     <div class="tc-atalhos">
-      <button type="button" data-act="avisos">${IMG('i-sino')}${novos ? `<em>${Math.min(novos, 9)}${novos > 9 ? '+' : ''}</em>` : ''}<span>Avisos</span></button>
-      <button type="button" data-act="calendario">${IMG('i-agenda')}<span>Calendário</span></button>
-      <button type="button" data-act="aba" data-aba="pers">${IMG('i-conf')}<span>Ajustes</span></button>
+      <button type="button" data-act="avisos">${IMG('ic-aviso')}${novos ? `<em>${Math.min(novos, 9)}${novos > 9 ? '+' : ''}</em>` : ''}<span>Avisos</span></button>
+      <button type="button" data-act="calendario">${IMG('ic-calendario')}<span>Calendário</span></button>
+      <button type="button" data-act="config">${IMG('ic-config')}<span>Configuração</span></button>
     </div>
     </header>`;
 }
 
 const ABAS = [
-  ['visao', 'Início', 'i-home'], ['elenco', 'Meu elenco', 'i-time'], ['treino', 'Treinamento', 'i-treino'], ['amistoso', 'Amistoso', 'i-agenda'], ['contratar', 'Mercado', 'i-mercado'], ['recrutar', 'Recrutar', 'i-bau'], ['marketing', 'Marketing', 'i-financas'], ['adm', 'ADM', 'i-conf'],
-  ['camp', 'Campeonatos', 'i-trofeu'], ['class', 'Classificação', 'i-stats'], ['rank', 'Rank', 'i-taca'], ['hist', 'Histórico', 'i-financas'], ['pers', 'Personalização', 'i-engrenagem'],
+  ['visao', 'Início', 'ic-inicio'], ['elenco', 'Meu elenco', 'ic-elenco'], ['treino', 'Treinamento', 'ic-treino'], ['amistoso', 'Amistoso', 'ic-amistoso'], ['contratar', 'Mercado', 'ic-mercado'], ['recrutar', 'Recrutar', 'ic-recrutar'], ['marketing', 'Marketing', 'ic-marketing'], ['adm', 'ADM', 'i-conf'],
+  ['camp', 'Campeonatos', 'ic-campeonatos'], ['rank', 'Rank', 'ic-rank'], ['hist', 'Histórico', 'ic-historico'], ['pers', 'Personalizar', 'ic-personalizar'],
 ];
 function nav() {
   const novos = S.avisosN || 0;
@@ -488,7 +505,7 @@ function viewCamp() {
       <label class="campo" style="max-width:420px"><span class="tc-mudo tc-peq">Competição</span><select class="tc-input" data-act="liga-sel">${ligas.map((x) => `<option value="${x.id}" ${x.id === l.id ? 'selected' : ''}>${esc(x.nome)}${x.status === 'aberta' ? ' (em andamento)' : ''}</option>`).join('')}</select></label>
       ${regrasLiga(l) ? `<p class="tc-peq tc-mudo" style="margin:10px 0 0">${regrasLiga(l)}</p>` : ''}</section>
     ${vagasCard()}
-    ${l.tipo !== 'divisao' ? tabelasIntl(l) : ''}
+    ${l.tipo !== 'divisao' ? tabelasIntl(l) : `<section class="tc-card"><h3>Classificação<span class="dir">${esc(l.nome)}</span></h3>${tabelaHtml(l.tabela, S.meu.org.id)}</section>`}
     ${chaveamento(l)}
     <section class="tc-card"><h3>Calendário e resultados</h3>${diasHtml(l)}</section>`;
 }
@@ -562,16 +579,6 @@ function tabelasIntl(l) {
   return `<section class="tc-card"><h3>Fase de grupos</h3><p class="tc-mudo tc-peq" style="margin:0 0 8px">Os 2 primeiros de cada grupo vão às quartas de final.</p>
     <div class="tc-grupos">${grupos.map((g) => `<div><h4 class="tc-eyebrow">Grupo ${esc(g)}</h4>${tabelaHtml(l.tabela.filter((t) => t.grupo === g), meuId)}</div>`).join('')}</div></section>`;
 }
-function viewClass() {
-  if (!S.camp) return '<p class="tc-carregando">Carregando…</p>';
-  const ligas = S.camp.ligas || [];
-  const mine = ligas.find((l) => l.tipo === 'divisao' && l.tabela.some((t) => t.org.id === S.meu.org.id) && l.status === 'aberta') || ligas.find((l) => l.tabela.some((t) => t.org.id === S.meu.org.id));
-  if (!mine) return '<section class="tc-card"><p class="tc-mudo" style="margin:0">Sem classificação ainda.</p></section>';
-  if (mine.tipo === 'mundial') return tabelasIntl(mine);
-  return `<section class="tc-card"><h3>${esc(mine.nome)}</h3>${tabelaHtml(mine.tabela, S.meu.org.id)}
-    </section>`;
-}
-
 // ------------------------------------------------------------------ rank de Poder (técnicos reais)
 function viewRank() {
   const r = S.rank; if (!r) return '<p class="tc-carregando">Carregando…</p>';
@@ -697,6 +704,7 @@ function modalHtml() {
   else if (m.t === 'avisos') corpo = avisosHtml(m);
   else if (m.t === 'calendario') corpo = calendarioHtml(m);
   else if (m.t === 'rank-time') corpo = rankTimeHtml(m);
+  else if (m.t === 'config') corpo = configHtml(m);
   return `<div class="tc-fundo" data-act="fechar-fundo"><div class="tc-modal${m.t === 'rank-time' ? ' larga' : ''}" role="dialog" aria-modal="true"><button type="button" class="x" data-act="fechar" aria-label="Fechar">×</button>${corpo}</div></div>`;
 }
 function demitirHtml(m) {
@@ -819,7 +827,6 @@ function conteudo() {
     case 'elenco': return viewElenco();
     case 'contratar': return viewContratar();
     case 'camp': return viewCamp();
-    case 'class': return viewClass();
     case 'rank': return viewRank();
     case 'hist': return viewHist();
     case 'treino': return viewTreino();
@@ -909,6 +916,9 @@ document.addEventListener('click', async (e) => {
   if (act === 'ic-cor') { const f = formDe(b.dataset.alvo); f.ic[b.dataset.g][Number(b.dataset.i)] = b.dataset.v; aplicarIc(b.dataset.alvo); render(); return; }
   if (act === 'mercado-aba') { S.mercado.aba = b.dataset.v; S.mercado.f = { ordem: b.dataset.v === 'oficial' ? 'poder' : 'recente' }; render(); await agir(carregarMercado, { recarregar: false }); return; }
   if (act === 'limpar-filtros') { S.mercado.f = { ordem: S.mercado.aba === 'oficial' ? 'poder' : 'recente' }; S.mercado.oficial = null; S.mercado.usuarios = null; render(); await agir(carregarMercado, { recarregar: false }); return; }
+  if (act === 'config') { S.modal = { t: 'config' }; render(); return; }
+  if (act === 'cfg-anim') { const c = lerCfg(); c.semAnim = !c.semAnim; salvarCfg(c); aplicarCfg(); render(); return; }
+  if (act === 'cfg-pers') { S.modal = null; S.aba = 'pers'; render(); await carregarAba(); render(); window.scrollTo({ top: 0 }); return; }
   if (act === 'rank-time') {
     S.modal = { t: 'rank-time', d: null }; render();
     try { const [d] = await Promise.all([api.rankTime(Number(b.dataset.org)), prepararImagens()]); if (S.modal?.t === 'rank-time') { S.modal = { t: 'rank-time', d }; render(); } }

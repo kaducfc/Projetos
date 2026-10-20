@@ -90,7 +90,7 @@ export function viewTreino() {
       <span class="ft">${retratoSvg(j, 44)}</span><span class="nm"><b>${C.esc(j.nome)}${j.legado ? ' <i class="tc-estrela">◆</i>' : ''}</b><small>${iconeVaga(j.pos)} ${C.NOME_VAGA ? '' : ''}${rar(j) ? `<b class="rar-txt rt-${j.raridade}">${RARIDADES[j.raridade].nome}</b>` : 'Comum'}</small></span>
       <span class="ov">${j.poder}</span><span class="xp" title="XP ${xp}/100"><i style="width:${xp}%"></i></span><span class="seta" aria-hidden="true">${aberto ? '▾' : '▸'}</span></button>${aberto ? cartao(j) : ''}</div>`; };
   const minimizados = outros.length ? `<section class="tc-card tc-treino-outros"><h3>Reservas e inventário<span class="dir">${outros.length} jogador(es) · clique para abrir</span></h3><div class="tc-mins">${outros.map(min).join('')}</div></section>` : '';
-  return `<section class="tc-card"><h3>${C.IMG('i-treino')}Treinamento<span class="dir">${t.em_andamento}/${cfg.simultaneos} treinos</span></h3>
+  return `<section class="tc-card"><h3>${C.IMG('ic-treino')}Treinamento<span class="dir">${t.em_andamento}/${cfg.simultaneos} treinos</span></h3>
     <p class="tc-mudo tc-peq" style="margin:0">Participe de amistosos e campeonatos para ganhar XP, treine seus jogadores e alcance seus limites.</p></section>
     <div class="tc-treino-lista">${cards || '<p class="tc-mudo">Sem titulares: escale jogadores para treinar.</p>'}</div>${minimizados}`;
 }
@@ -106,7 +106,7 @@ export function viewAmistoso() {
       <button type="button" class="tc-btn ouro peq" data-act="amistoso" data-id="${o.id}" ${C.S.ocupado ? 'disabled' : ''}>Desafiar</button></div>`;
   }).join('');
   const hist = h.lista.map((x) => `<tr><td>${C.dataCurta ? C.dataCurta(x.dia) : C.esc(x.dia)}</td><td>${C.esc(x.oponente.nome)}</td><td class="n"><b style="color:${x.a > x.b ? 'var(--bom)' : 'var(--ruim)'}">${x.a} × ${x.b}</b></td><td class="n">${x.exp ? `<span class="tc-exp">+${x.a > x.b ? h.exp_ganho : h.exp_derrota} XP</span>` : '<span class="tc-mudo">sem XP</span>'}</td></tr>`).join('');
-  return `<section class="tc-card"><h3>${C.IMG('i-agenda')}Amistoso<span class="dir">hoje: ${h.feitos_hoje}</span></h3>
+  return `<section class="tc-card"><h3>${C.IMG('ic-amistoso')}Amistoso<span class="dir">hoje: ${h.feitos_hoje}</span></h3>
     <p class="tc-mudo tc-peq" style="margin:0">Desafie outro time para uma partida de treino (scrim) de verdade: picks e bans, depois a simulação com os campeões. Não vale pontos de campeonato. Você pode jogar quantos quiser por dia, mas só os <b>${h.exp_por_dia} primeiros</b> dão XP para os seus titulares (<b>+${h.exp_ganho} na vitória</b> e <b>+${h.exp_derrota ?? 5} na derrota</b>); os demais não contam para nada.</p>
     <div class="tc-exp-dia">${Array.from({ length: h.exp_por_dia }, (_, i) => `<i class="${i < h.feitos_hoje ? 'on' : ''}"></i>`).join('')}<span>${h.com_exp_restantes > 0 ? `${h.com_exp_restantes} amistoso(s) com XP e maestria restante(s) hoje` : 'XP e maestria de hoje já foram todos ganhos'}</span></div></section>
     <section class="tc-card"><h3>Adversários</h3><div class="tc-oponentes">${ops || '<p class="tc-mudo">Nenhum time disponível.</p>'}</div></section>
@@ -130,7 +130,7 @@ export function viewRecrutar() {
       <button type="button" class="tc-btn ciano" data-act="recrutar" data-bau="${id}" data-qtd="5" ${bloq5 ? 'disabled' : ''}>Abrir 5 · <span class="tc-preco ${classe}">${C.fmt(preco5(b))} ${unid}</span> <i class="tc-desc">-${Math.round(cfg.desconto_5 * 100)}%</i></button></div></section>`;
   }).join('');
   const livres = r.legados.por_raridade || {};
-  return `<section class="tc-card"><h3>${C.IMG('i-bau')}Recrutar<span class="dir">${C.fmt(r.saldo)} ${unid}</span></h3>
+  return `<section class="tc-card"><h3>${C.IMG('ic-recrutar')}Recrutar<span class="dir">${C.fmt(r.saldo)} ${unid}</span></h3>
     <p class="tc-mudo tc-peq" style="margin:0">Recrute jogadores Legado, ídolos reais do cenário competitivo, e leve a sua equipe ao topo do mundo.${livresTxt}</p>
     <div class="tc-raras">${ORDEM_RAR.map((k) => `<span class="r-${k}">${RARIDADES[k].nome}: ${livres[k] ?? 0} no catálogo</span>`).join('')}</div></section>
     <div class="tc-baus">${baus}</div>
