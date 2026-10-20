@@ -177,7 +177,7 @@ function topo() {
     <div class="tc-org"><span class="logo">${escudoOrg(o, 54)}</span><div><div class="nome">${esc(o.nome)}</div><div class="sub">${o.divisao === 'principal' ? esc(nomeLiga().principal) : esc(nomeLiga().acesso)}</div><div class="xp"><i style="width:${Math.min(100, S.meu.poder / PODER_MAX * 100)}%"></i><span>Poder ${S.meu.poder}</span></div></div></div>
     <div class="tc-moedas">
       <div class="tc-moeda rc"><img src="../../shared/assets/moeda/rc-96.webp" alt="" width="34" height="34" /><div><b>${fmt(S.meu.rc)}</b><small>Rift Coins</small></div></div>
-      <div class="tc-moeda cred"><img src="img/gema.webp" alt="" width="26" height="34" /><div><b>${fmt(o.creditos)}</b><small>Créditos de equipe</small></div></div>
+      <div class="tc-moeda cred"><img src="img/credito-96.webp" srcset="img/credito-192.webp 2x" alt="" width="36" height="36" /><div><b>${fmt(o.creditos)}</b><small>Créditos</small></div></div>
       <div class="tc-moeda frag"><span class="ic-frag" aria-hidden="true">◈</span><div><b>${fmt(o.fragmentos || 0)}</b><small>Fragmentos de jogador</small></div></div>
     </div>
     <div class="tc-atalhos">
@@ -364,7 +364,7 @@ function viewVisao() {
     ${viewNoticias(minha)}
     <section class="tc-card tc-eco"><h3>${IMG('i-bau')}Sua economia</h3>
       <div class="duo"><div class="bx ouro"><img src="../../shared/assets/moeda/rc-96.webp" srcset="../../shared/assets/moeda/rc-192.webp 2x" alt="" width="44" height="44" /><small>Rift Coins</small><b>${fmt(m.rc)}</b></div>
-      <div class="bx azul"><img src="img/gema.webp" alt="" width="30" height="40" /><small>Créditos de equipe</small><b>${fmt(m.org.creditos)}</b></div></div>
+      <div class="bx azul"><img src="img/credito-96.webp" srcset="img/credito-192.webp 2x" alt="" width="48" height="48" /><small>Créditos</small><b>${fmt(m.org.creditos)}</b></div></div>
       <p class="tc-mudo tc-peq" style="margin:10px 0 0;text-align:center">Contratos em vigor: ${fmt(m.salarios_semana)} cr./semana (já pagos)</p></section>
   </div>
   <section class="tc-card"><h3>Poder da equipe<span class="dir">Semana ${((m.semana % 4) + 4) % 4 + 1}</span></h3>
