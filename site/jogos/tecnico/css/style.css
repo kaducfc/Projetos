@@ -842,3 +842,16 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-chave i { width: 34px; height: 20px; border-radius: 99px; background: #26364f; position: relative; transition: background .15s; } .tc-chave i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #c8d4e6; transition: transform .15s; }
 .tc-chave.on i { background: #1fb8a3; } .tc-chave.on i::after { transform: translateX(14px); background: #fff; } .tc-chave.on { color: #7ff2e0; border-color: #1f7f73; }
 html.tc-sem-anim *, html.tc-sem-anim *::before, html.tc-sem-anim *::after { animation: none !important; transition: none !important; }
+
+/* rank: tabela distribuída pela linha toda, colunas centralizadas */
+.tc-rank { table-layout: fixed; width: 100%; }
+.tc-rank col.c-pos { width: 8%; } .tc-rank col.c-time { width: 32%; } .tc-rank col.c-comp { width: 30%; } .tc-rank col.c-n { width: 15%; }
+.tc-rank th.c, .tc-rank td.c { text-align: center; } .tc-rank th { text-align: left; } .tc-rank th.c { text-align: center; }
+.tc-rank td.pos { text-align: center; width: auto; } .tc-rank th:first-child { text-align: center; }
+.tc-rank td { padding-top: 10px; padding-bottom: 10px; vertical-align: middle; } .tc-rank td.comp { font-size: 13.5px; color: #cfe0f7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tc-rank td b { font-size: 17px; }
+.tc-rank .org { display: flex; align-items: center; gap: 12px; }
+.tc-rank tr.sep td { padding: 0; border: 0; text-align: center; } .tc-rank tr.sep span { display: block; margin: 8px 0 2px; font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--ouro); }
+.tc-rank tr.extra td { background: #0f2240; border-top: 1px solid #2d5a99; border-bottom: 1px solid #2d5a99; }
+.tc-pagina { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 14px; flex-wrap: wrap; } .tc-pagina .tc-btn.on { background: linear-gradient(180deg, #2a2208, #1a1505); border-color: #d9a82b; color: #f5cf5a; }
+@media (max-width: 720px) { .tc-rank col.c-comp, .tc-rank th:nth-child(3), .tc-rank td.comp { display: none; } .tc-rank col.c-time { width: 44%; } }

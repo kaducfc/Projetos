@@ -580,14 +580,29 @@ function tabelasIntl(l) {
     <div class="tc-grupos">${grupos.map((g) => `<div><h4 class="tc-eyebrow">Grupo ${esc(g)}</h4>${tabelaHtml(l.tabela.filter((t) => t.grupo === g), meuId)}</div>`).join('')}</div></section>`;
 }
 // ------------------------------------------------------------------ rank de Poder (técnicos reais)
+const RANK_POR_PAGINA = 10;
 function viewRank() {
   const r = S.rank; if (!r) return '<p class="tc-carregando">Carregando…</p>';
   if (!r.length) return '<section class="tc-card"><p class="tc-mudo" style="margin:0">Ainda não há técnicos no rank.</p></section>';
-  return `<section class="tc-card"><h3>Rank de Poder<span class="dir">${r.length} time(s)</span></h3>
+  const paginas = Math.max(1, Math.ceil(r.length / RANK_POR_PAGINA)); const pag = Math.min(Math.max(1, S.rankPag || 1), paginas); S.rankPag = pag;
+  const ini = (pag - 1) * RANK_POR_PAGINA; const vis = r.slice(ini, ini + RANK_POR_PAGINA);
+  const eu = r.find((t) => t.meu); const euForaDaPagina = eu && !vis.includes(eu);
+  const linha = (t, extra = false) => `<tr class="lnk${t.meu ? ' eu' : ''}${extra ? ' extra' : ''}" data-act="rank-time" data-org="${t.org.id}" tabindex="0" role="button" aria-label="Ver os titulares de ${esc(t.org.nome)}">
+      <td class="pos p${t.pos <= 3 ? t.pos : 0}">${t.pos}</td>
+      <td><div class="org">${escudoOrg(t.org, 34)}<span>${esc(t.org.nome)}${t.meu ? ' <small class="tc-mudo">(você)</small>' : ''}</span></div></td>
+      <td class="c comp">${t.competicao ? esc(t.competicao) : '<span class="tc-mudo">—</span>'}</td>
+      <td class="c"><b>${t.poder}</b></td>
+      <td class="c"><span class="tc-tit">${t.titulos > 0 ? '🏆 ' : ''}${t.titulos}</span></td></tr>`;
+  const nav = paginas > 1 ? `<div class="tc-pagina" role="navigation" aria-label="Páginas do rank"><button type="button" class="tc-btn peq" data-act="rank-pag" data-p="${pag - 1}" ${pag <= 1 ? 'disabled' : ''} aria-label="Página anterior">‹</button>
+      ${Array.from({ length: paginas }, (_, i) => `<button type="button" class="tc-btn peq${i + 1 === pag ? ' on' : ''}" data-act="rank-pag" data-p="${i + 1}" ${i + 1 === pag ? 'aria-current="page"' : ''}>${i + 1}</button>`).join('')}
+      <button type="button" class="tc-btn peq" data-act="rank-pag" data-p="${pag + 1}" ${pag >= paginas ? 'disabled' : ''} aria-label="Próxima página">›</button></div>` : '';
+  return `<section class="tc-card"><h3>Rank de Poder<span class="dir">${r.length} time(s) · página ${pag} de ${paginas}</span></h3>
     <p class="tc-mudo tc-peq" style="margin:0 0 10px">Os times dos técnicos reais, do maior Poder para o menor. Clique em uma linha para ver os titulares.</p>
-    <div class="tc-tabela-rolagem"><table class="tc-tabela tc-rank"><thead><tr><th>#</th><th>Time</th><th class="n">Poder</th><th class="n">Títulos</th></tr></thead><tbody>
-    ${r.map((t) => `<tr class="lnk ${t.meu ? 'eu' : ''}" data-act="rank-time" data-org="${t.org.id}" tabindex="0" role="button" aria-label="Ver os titulares de ${esc(t.org.nome)}"><td class="pos p${t.pos <= 3 ? t.pos : 0}">${t.pos}</td><td><div class="org">${escudoOrg(t.org, 34)}<span>${esc(t.org.nome)}${t.meu ? ' <small class="tc-mudo">(você)</small>' : ''}</span></div></td><td class="n"><b>${t.poder}</b></td><td class="n"><span class="tc-tit">${t.titulos > 0 ? '🏆 ' : ''}${t.titulos}</span></td></tr>`).join('')}
-    </tbody></table></div></section>`;
+    <div class="tc-tabela-rolagem"><table class="tc-tabela tc-rank"><colgroup><col class="c-pos"><col class="c-time"><col class="c-comp"><col class="c-n"><col class="c-n"></colgroup>
+      <thead><tr><th>#</th><th>Time</th><th class="c">Competição atual</th><th class="c">Poder</th><th class="c">Títulos</th></tr></thead><tbody>
+      ${vis.map((t) => linha(t)).join('')}
+      ${euForaDaPagina ? `<tr class="sep" aria-hidden="true"><td colspan="5"><span>Sua posição</span></td></tr>${linha(eu, true)}` : ''}
+      </tbody></table></div>${nav}</section>`;
 }
 function rankTimeHtml(m) {
   if (!m.d) return '<p class="tc-carregando">Carregando…</p>';
@@ -919,6 +934,7 @@ document.addEventListener('click', async (e) => {
   if (act === 'config') { S.modal = { t: 'config' }; render(); return; }
   if (act === 'cfg-anim') { const c = lerCfg(); c.semAnim = !c.semAnim; salvarCfg(c); aplicarCfg(); render(); return; }
   if (act === 'cfg-pers') { S.modal = null; S.aba = 'pers'; render(); await carregarAba(); render(); window.scrollTo({ top: 0 }); return; }
+  if (act === 'rank-pag') { S.rankPag = Math.max(1, Number(b.dataset.p) || 1); render(); return; }
   if (act === 'rank-time') {
     S.modal = { t: 'rank-time', d: null }; render();
     try { const [d] = await Promise.all([api.rankTime(Number(b.dataset.org)), prepararImagens()]); if (S.modal?.t === 'rank-time') { S.modal = { t: 'rank-time', d }; render(); } }
