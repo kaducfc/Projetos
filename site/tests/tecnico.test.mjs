@@ -129,8 +129,8 @@ test('menu lateral tem Treinamento, Amistoso e Recrutar; cada tela só chama fun
   // as telas montam (sem DOM): estado simulado e os ajudantes mínimos
   const E = await import('../jogos/tecnico/js/extras.js');
   const api = platform.tecnico;
-  const jog = (id, o = {}) => ({ id, nome: `J${id}`, pos: 'meio', poder: 70, estrela: false, mec: 70, rotas: 60, macro: 60, tf: 60, mental: 60, exp: 10, limite: 78, poder_inicial: 68, horas: 5, custos: { mec: 1, rotas: 1, macro: 1, tf: 1, mental: 1 }, treino: null, ...o });
-  api.treinoEstado = async () => ({ config: { horas: 6, pontos: 3, simultaneos: 5, bonus_comum: 10, bonus_estrela: 15 }, creditos: 100, agora: new Date().toISOString(), jogadores: [jog(1, { exp: 100 }), jog(2, { poder: 78, limite: 78, exp: 100 }), jog(3, { exp: 40 })], em_andamento: 0 });
+  const jog = (id, o = {}) => ({ id, nome: `J${id}`, slot: 'meio', pos: 'meio', poder: 70, estrela: false, mec: 70, rotas: 60, macro: 60, tf: 60, mental: 60, exp: 10, limite: 78, poder_inicial: 68, horas: 5, custos: { mec: 1, rotas: 1, macro: 1, tf: 1, mental: 1 }, treino: null, ...o });
+  api.treinoEstado = async () => ({ config: { horas: 6, pontos: 3, simultaneos: 5, bonus_comum: 10, bonus_estrela: 15 }, creditos: 100, agora: new Date().toISOString(), jogadores: [jog(1, { exp: 100 }), jog(2, { poder: 78, limite: 78, exp: 100 }), jog(3, { exp: 40 }), jog(8, { slot: null, nome: 'Reserva8' })], em_andamento: 0 });
   api.amistosoOponentes = async () => [{ id: 9, nome: 'Rivais', sigla: 'RIV', escudo: 'escudo-1', cor1: '#112233', cor2: '#aabbcc', divisao: 'acesso', tecnico: false, poder: 66 }];
   api.amistosoHistorico = async () => ({ feitos_hoje: 1, exp_por_dia: 5, exp_ganho: 2, com_exp_restantes: 4, lista: [] });
   api.recrutarInfo = async () => ({ config: { desconto_5: 0.15, pity_a_cada: 10, contrato_semanas: 12, baus: { basico: { nome: 'Baú Básico', rc: 300, odds: { comum: 55, raro: 30, epico: 12, lendario: 2.7, mitico: 0.3 } }, premium: { nome: 'Baú Premium', rc: 900, odds: { comum: 20, raro: 38, epico: 28, lendario: 11, mitico: 3 } } } }, saldo_rc: 5000, elenco: 5, elenco_max: 10, legados: { total: 15, por_raridade: {} }, garantia: {}, meus_legados: [] });
@@ -139,7 +139,9 @@ test('menu lateral tem Treinamento, Amistoso e Recrutar; cada tela só chama fun
   E.iniciarExtras({ S, esc, fmt: (n) => String(n), IMG: () => '', agir: async () => null, toast() {}, render() {}, novaChave: () => 'k', escudoHtml: (p) => `<b>${p}</b>`, estrelasHtml: () => '', nomeLiga: () => ({}), dataCurta: (d) => d, nomeVaga: (v) => v, atualizarMeu: async () => {} });
   await E.carregarExtras('treino'); const t = E.viewTreino();
   assert.match(t, /Treinamento/); assert.match(t, /data-act="treinar"/); assert.match(t, /Limite de treino atingido/);
-  assert.equal((t.match(/data-act="treinar"/g) || []).length, 15, '5 atributos por jogador');
+  assert.equal((t.match(/data-act="treinar"/g) || []).length, 15, '5 atributos por titular (reservas ficam minimizadas)');
+  assert.match(t, /Reservas e inventário/); assert.match(t, /data-act="treino-abrir" data-id="8"/); assert.doesNotMatch(t, /data-act="treinar" data-id="8"/, 'a reserva só abre o cartão ao clicar');
+  E.tratarAcao('treino-abrir', { dataset: { id: '8' } }); assert.equal(((E.viewTreino()).match(/data-act="treinar"/g) || []).length, 20, 'aberta, a reserva mostra os 5 atributos'); E.tratarAcao('treino-abrir', { dataset: { id: '8' } });
   assert.equal((t.match(/data-act="treinar"[^>]*disabled/g) || []).length, 10, 'bloqueados: o jogador no limite e o que está com XP 40/100');
   assert.match(t, /XP <b>100\/100<\/b> · pronto para treinar/); assert.match(t, /XP <b>40\/100<\/b>/);
   S.aba = 'amistoso'; await E.carregarExtras('amistoso'); assert.match(E.viewAmistoso(), /Desafiar[\s\S]*Rivais|Rivais[\s\S]*Desafiar/);

@@ -823,3 +823,15 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-mini .inf .pw img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .tc-mini .inf .pw b { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-46%); text-align: center; font: 400 21px/1 'Bebas Neue', sans-serif; color: #fff; text-shadow: 0 1px 3px #000, 0 0 2px #000; overflow: visible; }
 .tc-mini .inf .pw.sem-img { width: 38px; height: 38px; border-radius: 50%; background: #04101fe6; border: 2px solid var(--c, #f5cf5a); } .tc-mini .inf .pw.sem-img b { font-size: 15px; }
+
+/* treino: só os titulares abertos; reservas e inventário minimizados */
+.tc-mins { display: flex; flex-direction: column; gap: 6px; }
+.tc-min { border: 1px solid #1d3a63; border-left: 3px solid #3a4a63; border-radius: 6px; background: #08162c; overflow: hidden; } .tc-min[class*="r-"] { border-left-color: var(--rc, #3a4a63); } .tc-min.aberto { border-color: #2d5a99; }
+.tc-min-cab { width: 100%; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px 90px 18px; gap: 12px; align-items: center; padding: 6px 12px 6px 8px; background: transparent; border: 0; text-align: left; color: inherit; cursor: pointer; }
+.tc-min-cab:hover { background: #0e2342; } .tc-min-cab:focus-visible { outline: 2px solid var(--ouro2); outline-offset: -2px; }
+.tc-min .ft { width: 44px; height: 44px; overflow: hidden; background: #0c1b34; display: block; } .tc-min.r-comum .ft { background: linear-gradient(180deg, #5b9dff, #1d3f8f); } .tc-min.r-raro .ft { background: linear-gradient(180deg, #4ee3f5, #0e6f86); } .tc-min.r-epico .ft { background: linear-gradient(180deg, #d9a8ff, #5b21b6); } .tc-min.r-lendario .ft { background: linear-gradient(180deg, #ffe38a, #a8730c); } .tc-min.r-mitico .ft { background: linear-gradient(180deg, #d63a4a, #4d000a); }
+.tc-min .ft svg, .tc-min .ft img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+.tc-min .nm { display: flex; flex-direction: column; min-width: 0; } .tc-min .nm b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .tc-min .nm small { display: flex; align-items: center; gap: 5px; color: #9fb2cf; font-size: 11.5px; }
+.tc-min .ov { font-family: 'Bebas Neue', sans-serif; font-size: 22px; text-align: center; color: var(--ouro2); } .tc-min .xp { height: 6px; border-radius: 99px; background: #07172e; border: 1px solid #17335c; overflow: hidden; } .tc-min .xp i { display: block; height: 100%; background: linear-gradient(90deg, #7c3aed, #c4b5fd); } .tc-min .seta { color: var(--mudo); text-align: center; }
+.tc-min > .tc-treino-jog { margin: 0; border: 0; border-top: 1px solid #16325a; border-radius: 0; box-shadow: none; clip-path: none; }
+@media (max-width: 700px) { .tc-min-cab { grid-template-columns: 44px minmax(0, 1fr) 36px 18px; } .tc-min .xp { display: none; } }

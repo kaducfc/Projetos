@@ -21,6 +21,7 @@ const X = {
   amistoso: { oponentes: null, hist: null },
   recrutar: null,
   timer: null,
+  abertos: new Set(), // jogadores não titulares com o cartão de treino aberto
 };
 
 // ------------------------------------------------------------------ carga
@@ -67,7 +68,7 @@ const miniCartao = (j, extra = '') => `<div class="tc-mini ${rar(j) ? `r-${rar(j
 export function viewTreino() {
   const t = X.treino; if (!t) return '<p class="tc-carregando">Carregando…</p>';
   const cfg = t.config;
-  const cards = t.jogadores.map((j) => {
+  const cartao = (j) => {
     const tr = j.treino; const noLimite = j.poder >= j.limite;
     const linhas = ATRIBUTOS.map(([id, nome]) => {
       const v = j[id]; const custo = j.custos[id]; const falta = t.creditos < custo;
@@ -81,10 +82,17 @@ export function viewTreino() {
       ${miniCartao(j)}
       <div class="tc-treino-corpo">${xpBarra(j)}${poderBarra(j)}${noLimite ? '<p class="tc-peq" style="color:var(--ouro2);margin:6px 0 0">Limite de treino atingido.</p>' : ''}${linhas}
       <small class="tc-mudo" style="margin-top:4px">${(j.exp || 0) < 100 ? 'Encha a barra de experiência (XP) para treinar.' : `Pronto para treinar! A sessão dura ${j.horas}h.`}</small></div></section>`;
-  }).join('');
+  };
+  const titulares = t.jogadores.filter((j) => j.slot); const outros = t.jogadores.filter((j) => !j.slot);
+  const cards = titulares.map(cartao).join('');
+  const min = (j) => { const aberto = X.abertos.has(j.id); const xp = Math.min(100, j.exp || 0);
+    return `<div class="tc-min${aberto ? ' aberto' : ''}${rar(j) ? ` r-${rar(j)}` : ''}"><button type="button" class="tc-min-cab" data-act="treino-abrir" data-id="${j.id}" aria-expanded="${aberto}">
+      <span class="ft">${retratoSvg(j, 44)}</span><span class="nm"><b>${C.esc(j.nome)}${j.legado ? ' <i class="tc-estrela">◆</i>' : ''}</b><small>${iconeVaga(j.pos)} ${C.NOME_VAGA ? '' : ''}${rar(j) ? `<b class="rar-txt rt-${j.raridade}">${RARIDADES[j.raridade].nome}</b>` : 'Comum'}</small></span>
+      <span class="ov">${j.poder}</span><span class="xp" title="XP ${xp}/100"><i style="width:${xp}%"></i></span><span class="seta" aria-hidden="true">${aberto ? '▾' : '▸'}</span></button>${aberto ? cartao(j) : ''}</div>`; };
+  const minimizados = outros.length ? `<section class="tc-card tc-treino-outros"><h3>Reservas e inventário<span class="dir">${outros.length} jogador(es) · clique para abrir</span></h3><div class="tc-mins">${outros.map(min).join('')}</div></section>` : '';
   return `<section class="tc-card"><h3>${C.IMG('i-treino')}Treinamento<span class="dir">${t.em_andamento}/${cfg.simultaneos} treinos</span></h3>
     <p class="tc-mudo tc-peq" style="margin:0">Participe de amistosos e campeonatos para ganhar XP, treine seus jogadores e alcance seus limites.</p></section>
-    <div class="tc-treino-lista">${cards || '<p class="tc-mudo">Seu elenco está vazio.</p>'}</div>`;
+    <div class="tc-treino-lista">${cards || '<p class="tc-mudo">Sem titulares: escale jogadores para treinar.</p>'}</div>${minimizados}`;
 }
 
 // ------------------------------------------------------------------ Amistoso
@@ -137,6 +145,7 @@ export function modalRecrutar(m) {
 
 // ------------------------------------------------------------------ ações dos botões
 export async function tratarAcao(act, b) {
+  if (act === 'treino-abrir') { const id = Number(b.dataset.id); if (X.abertos.has(id)) X.abertos.delete(id); else X.abertos.add(id); return true; }
   if (act === 'treinar') {
     const r = await C.agir(() => api.treinar(Number(b.dataset.id), b.dataset.attr, C.novaChave()), { ok: 'Treino iniciado!', recarregar: false });
     if (r) { await C.agir(async () => { X.treino = await api.treinoEstado(); await C.atualizarMeu(); }, { recarregar: false }); ligarRelogio(); }

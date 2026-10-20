@@ -12,7 +12,7 @@ import {
 import { prepararImagens, campIcone } from './campeoes-img.js';
 import { escudoOrg, retratoSvg, iconeVaga } from './art.js';
 import { N_EMBLEMAS, N_BANDEIRAS, PARTES_EMBLEMA, PARTES_BANDEIRA, PALETA, ICONE_PADRAO, icClone, icCodificar, icDecodificar, icHtml, emblemaHtml } from './icone.js';
-import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js?v=2';
+import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js?v=3';
 import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
 import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js';
 
@@ -886,7 +886,7 @@ document.addEventListener('click', async (e) => {
     render(); return;
   }
   if (act.startsWith('mkt-')) { await tratarMkt(act, b); render(); return; }
-  if (act === 'treinar' || act === 'amistoso' || act === 'recrutar') { await tratarAcao(act, b); render(); return; }
+  if (act === 'treinar' || act === 'amistoso' || act === 'recrutar' || act === 'treino-abrir') { await tratarAcao(act, b); render(); return; }
   if (act === 'avisos') {
     S.modal = { t: 'avisos', d: null }; render();
     try { const d = await api.avisosCentral(); if (S.modal?.t === 'avisos') { S.modal = { t: 'avisos', d }; S.avisosN = 0; render(); } } catch (err) { S.modal = null; render(); toast(err.message, true); }
