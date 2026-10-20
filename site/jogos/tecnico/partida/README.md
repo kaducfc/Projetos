@@ -66,3 +66,10 @@ TC_LENTO=1 node --test tests/partida.test.mjs        # inclui a rodada estatíst
 node jogos/tecnico/partida/ferramentas/simular-lote.mjs 12 75 45 1 4   # lote: n, poder azul, poder vermelho, semente, trabalhadores
 ```
 Ao mudar qualquer regra que altere resultados, aumente `REGRAS.versao` e `gameplay.versao` no servidor.
+
+## Itemização situacional e subcategorias
+- `dados/itemizacao.js`: modelos de build com vagas flexíveis (`?bota`, `?def`, `?defs`, `?pen`, `?surv`) e as subcategorias dos campeões por posição
+  (Top, Caçador, Mid, ADC, Suporte → Tanque, Bruiser, Lutador, Assassino, Mago, Híbrido, Atirador, Encantador, Engajador). O papel muda com a posição (`estiloNaPosicao`).
+- `motor/itemizacao.js`: `analisarInimigos` lê o time inimigo (dano físico x mágico, tanques, abates) e `construirBuild` resolve as vagas na hora da compra:
+  tanques e suportes escolhem armadura ou resistência mágica; carregadores trocam por penetração contra muitos tanques; magos e lutadores levam Banshee, Zhonya, Mortalha ou Anjo
+  conforme o dano que recebem. O que já foi comprado fica fixo; o evento `compra` leva `situacional` e `motivo`.

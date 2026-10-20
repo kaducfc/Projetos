@@ -195,7 +195,7 @@ function precisaBase(P, u, ctx) {
   // Macro: com um objetivo prestes a nascer ou vivo, quem lê o jogo segura a ida à base por ouro (a vida baixa ainda manda voltar)
   const O = P.objetivosEstado; const objPerto = [O.dragao, O.barao].some((x) => x && (x.vivo || x.proximo - P.t < 40)) && P.t > 400;
   const seguraOuro = objPerto && u.m.macro > 0.5 && u.ouro < 2600;
-  if (!seguraOuro && u.ouro >= Math.max(R.ouroCompraMin, custoProximo(u)) && u.ouro >= 1100 && !perigo && !(ctx.plano && ['objetivo', 'defender_base', 'finalizar'].includes(ctx.plano.tipo)) && P.t - (u.ultimaBase || 0) > pol(P, u.equipe, 'recallIntervaloMin')) return 'ouro para comprar';
+  if (!seguraOuro && u.ouro >= Math.max(R.ouroCompraMin, custoProximo(u, P)) && u.ouro >= 1100 && !perigo && !(ctx.plano && ['objetivo', 'defender_base', 'finalizar'].includes(ctx.plano.tipo)) && P.t - (u.ultimaBase || 0) > pol(P, u.equipe, 'recallIntervaloMin')) return 'ouro para comprar';
   if (u.mana < u.manaMax * 0.12 && u.pos !== 'selva' && !perigo && u.mana < 60) return 'sem mana';
   return null;
 }

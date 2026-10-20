@@ -1,6 +1,7 @@
 // Tela de picks e bans do amistoso. Você é o lado azul; o computador escolhe pelo vermelho.
 import { iconeVaga } from '../../js/art.js';
 import { prepararImagens, campIcone } from '../../js/campeoes-img.js';
+import { subcategoriaDoCampeao } from '../dados/itemizacao.js';
 import { novoDraft, passoAtual, terminou, banir, escolher, jogadaIA, EFIC_FORA_POSICAO, vagasLivres, indisponiveis, serve, jogadorDaVaga, resultadoDraft, ORDEM, VAGAS } from '../dados/draft.js';
 
 const NOME = { top: 'Topo', selva: 'Selva', meio: 'Meio', atirador: 'Atirador', suporte: 'Suporte' };
@@ -54,9 +55,13 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       let lista = catalogo.filter((c) => !q || c.nome.toLowerCase().includes(q));
       const fv = S.filtro === 'todos' ? null : S.filtro || (p.tipo === 'pick' && minha ? S.vaga : null);
       if (fv) lista = lista.filter((c) => serve(c, fv));
+      if (S.subDe !== fv) { S.sub = null; S.subDe = fv; } // trocou de posição: a subcategoria escolhida deixa de valer
+      const subs = fv ? [...new Set(lista.map((c) => subcategoriaDoCampeao(c.nome, fv)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR')) : [];
+      if (S.sub && !subs.includes(S.sub)) S.sub = null;
+      if (fv && S.sub) lista = lista.filter((c) => subcategoriaDoCampeao(c.nome, fv) === S.sub);
       const fav = (c) => p.tipo === 'pick' && minha && (jogadorDaVaga(d, 'azul', S.vaga)?.favoritos || []).find((f) => f.nome === c.nome || f.id === c.id);
       const grade = lista.map((c) => { const off = usados.has(c.nome); const f = fav(c); const fora = p.tipo === 'pick' && minha && S.vaga && !serve(c, S.vaga);
-        return `<button type="button" class="ch ${off ? 'off' : ''} ${f ? 'fav' : ''} ${fora ? 'fora' : ''}" data-nome="${esc(c.nome)}" ${off || !minha ? 'disabled' : ''} title="${esc(c.nome)}${f ? ` · favorito (+${f.bonus_pct}%)` : ''}${fora ? ` · fora da posição: -${Math.round((1 - EFIC_FORA_POSICAO) * 100)}% de eficiência` : ''}">${campIcone(c.nome, 58)}</button>`; }).join('');
+        return `<button type="button" class="ch ${off ? 'off' : ''} ${f ? 'fav' : ''} ${fora ? 'fora' : ''}" data-nome="${esc(c.nome)}" ${off || !minha ? 'disabled' : ''} title="${esc(c.nome)}${subcategoriaDoCampeao(c.nome, fv || (minha && S.vaga) || null) ? ` · ${subcategoriaDoCampeao(c.nome, fv || (minha && S.vaga))}` : ''}${f ? ` · favorito (+${f.bonus_pct}%)` : ''}${fora ? ` · fora da posição: -${Math.round((1 - EFIC_FORA_POSICAO) * 100)}% de eficiência` : ''}">${campIcone(c.nome, 58)}</button>`; }).join('');
       const titulo = !minha ? `${esc(nomeVermelho)} está ${p.tipo === 'ban' ? 'banindo' : 'escolhendo'}…` : p.tipo === 'ban' ? 'Sua vez: <b>banir</b> um campeão' : `Sua vez: <b>escolher</b> o campeão de ${NOME[S.vaga]} (${esc(jogadorDaVaga(d, 'azul', S.vaga)?.nome || '')})`;
       if (S.passoT !== d.passo) { // vez nova: zera o cronômetro e sorteia quando o computador joga
         S.passoT = d.passo; S.fim = Date.now() + TEMPO_ACAO * 1000; S.iaEm = Date.now() + (IA_MIN + Math.random() * (IA_MAX - IA_MIN)) * 1000;
@@ -68,12 +73,14 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
         <div class="palco">${colunaHtml('azul', nomeAzul, vez)}
           <div class="meio"><div class="tags"><span class="tag a">${esc(nomeAzul)}</span><span class="vez">${titulo}</span><span class="tag v">${esc(nomeVermelho)}</span></div>
             <div class="ferr"><div class="fls">${chips}</div><input type="search" class="busca" placeholder="Buscar campeão" value="${esc(S.busca)}" ${minha ? '' : 'disabled'} /></div>
+            ${subs.length ? `<div class="subs"><span>${NOME[fv]}:</span>${subs.map((x) => `<button type="button" class="sb ${S.sub === x ? 'on' : ''}" data-sub="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : ''}
             <div class="grade">${grade || '<p class="pt-mudo">Nenhum campeão disponível para este filtro.</p>'}</div></div>
           ${colunaHtml('vermelho', nomeVermelho, vez)}</div>
         <div class="rodape"><div class="gr">${bansHtml('azul', ban ? p.lado : null)}</div>
           <div class="palavra ${ban ? 'p-ban' : 'p-pick'}"><strong>${ban ? 'BAN' : 'PICK'}</strong><div class="tempo"><span class="num">1:00</span><i class="tbar"><b></b></i></div></div>
           <div class="gr">${bansHtml('vermelho', ban ? p.lado : null)}</div></div></div>`;
       fundo.querySelectorAll('[data-fl]').forEach((el) => el.addEventListener('click', () => { S.filtro = S.filtro === el.dataset.fl ? null : el.dataset.fl; desenhar(); }));
+      fundo.querySelectorAll('[data-sub]').forEach((el) => el.addEventListener('click', () => { S.sub = S.sub === el.dataset.sub ? null : el.dataset.sub; desenhar(); }));
       const busca = fundo.querySelector('.busca');
       if (minha) busca.addEventListener('input', () => { S.busca = busca.value; const pos = busca.selectionStart; desenhar(); const n = fundo.querySelector('.busca'); n.focus(); n.setSelectionRange(pos, pos); });
       fundo.querySelectorAll('[data-vaga]').forEach((el) => el.addEventListener('click', () => { if (p.tipo === 'pick' && minha) { S.vaga = el.dataset.vaga; S.filtro = null; desenhar(); } }));

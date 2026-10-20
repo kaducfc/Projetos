@@ -2,6 +2,7 @@
 import { ITENS } from '../dados/itens.js';
 import { recalcular } from './entidades.js';
 import { registrar } from './eventos.js';
+import { construirBuild, fixarCompra } from './itemizacao.js';
 
 export function darOuro(P, u, v) { if (!u || u.tipo !== 'campeao' || v <= 0) return; v *= P.regras.economia.escalaOuro; u.ouro += v; u.ouroTotal += v; }
 
@@ -34,16 +35,17 @@ export function custoDe(u, id) {
 }
 // Compra: na fonte da base, comprando o próximo item da build que o ouro cobre.
 export function comprar(P, u) {
-  const build = u.perfil.build; let comprou = false;
+  let comprou = false;
   for (let guarda = 0; guarda < 4; guarda++) {
+    const build = construirBuild(P, u); // a build se adapta ao time inimigo (itemizacao.js)
     const id = proximoItem(u, build);
     if (!id) break;
     const { custo, remover } = custoDe(u, id);
     if (u.ouro < custo || u.itens.length - remover.length + 1 > 6) break;
     u.ouro -= custo; u.estat.ouroGasto += custo;
     for (const c of remover) u.itens.splice(u.itens.indexOf(c), 1);
-    u.itens.push(id); comprou = true;
-    registrar(P, 'compra', { equipe: u.equipe, campeao: u.id, item: id, custo, itens: u.itens.length });
+    u.itens.push(id); comprou = true; fixarCompra(u, build, id);
+    registrar(P, 'compra', { equipe: u.equipe, campeao: u.id, item: id, custo, itens: u.itens.length, ...(u.buildMotivo?.[id] ? { situacional: true, motivo: u.buildMotivo[id] } : {}) });
   }
   // Ward de Controle (não ocupa vaga de item): uma por vez, depois dos itens; suporte e caçador compram com mais frequência
   const W = P.regras.wards;
@@ -66,4 +68,4 @@ export function proximoItem(u, build) {
   return null;
 }
 // Custo do próximo item (para a IA decidir se vale voltar à base).
-export function custoProximo(u) { const id = proximoItem(u, u.perfil.build); return id ? custoDe(u, id).custo : Infinity; }
+export function custoProximo(u, P) { const id = proximoItem(u, P ? construirBuild(P, u) : u.perfil.build); return id ? custoDe(u, id).custo : Infinity; }

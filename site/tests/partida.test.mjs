@@ -733,3 +733,53 @@ test('IA1. inteligência: incerteza de visão, atraso, desespero (Mental) e fase
   assert.equal(pol(P, 'azul', 'objetivoMargem'), P.regras.ia.objetivoMargem); P.politica = { azul: { objetivoMargem: 9 } }; assert.equal(pol(P, 'azul', 'objetivoMargem'), 9); assert.equal(pol(P, 'vermelho', 'objetivoMargem'), P.regras.ia.objetivoMargem);
   assert.equal(typeof visaoSobre(P, 'azul', 0, 0, 100), 'boolean');
 });
+
+test('I2. itemização situacional: a build muda conforme o time inimigo (resistência, penetração, botas) e a escolha comprada fica fixa', async () => {
+  const { construirBuild, fixarCompra, analisarInimigos } = await import('../jogos/tecnico/partida/motor/itemizacao.js');
+  const { MODELOS, estiloNaPosicao, subcategoriaDoEstilo } = await import('../jogos/tecnico/partida/dados/itemizacao.js');
+  const { ITENS, BUILDS } = await import('../jogos/tecnico/partida/dados/itens.js');
+  const { CATEGORIA_DO_ESTILO } = await import('../jogos/tecnico/partida/config/papeis.js');
+  for (const [e, m] of Object.entries(MODELOS)) { assert.ok(BUILDS[e] && m.length === BUILDS[e].length, `modelo ${e} tem o mesmo tamanho da build`); m.forEach((x, i) => { if (!x.startsWith('?')) assert.equal(x, BUILDS[e][i], `${e}[${i}] fixo igual à build`); }); }
+  const un = (estilo, equipe, pos, o = {}) => ({ equipe, pos, itens: [], armadura: 60, resist: 40, estat: { abates: 0 }, perfil: { estilo, papel: CATEGORIA_DO_ESTILO[estilo], build: BUILDS[estilo] }, ...o });
+  const P = (...inimigos) => ({ campeoes: inimigos });
+  const aqui = (estilo, pos = 'meio') => un(estilo, 'azul', pos);
+  const dano = (...e) => P(...e.map((x) => un(x, 'vermelho', 'meio')));
+  // inimigos: muito dano mágico → resistência mágica; muito dano físico → armadura
+  const ap = dano('mago', 'mago_dot', 'assassino_ap', 'encantador', 'tanque_ap'); const ad = dano('assassino_ad', 'atirador', 'lutador', 'lutador_crit', 'tanque');
+  assert.ok(analisarInimigos(ap, aqui('tanque')).ap > 0.7); assert.ok(analisarInimigos(ad, aqui('tanque')).ad > 0.7);
+  const tanqueAP = construirBuild(ap, aqui('tanque', 'top')); const tanqueAD = construirBuild(ad, aqui('tanque', 'top'));
+  assert.ok(tanqueAP.includes('botas_mr') && !tanqueAP.includes('botas_arm'), 'tanque contra AP: botas de Mercúrio'); assert.ok(tanqueAD.includes('botas_arm'), 'tanque contra AD: botas Blindadas');
+  const res = (l) => l.reduce((s, id) => s + (ITENS[id].stats.resist || 0), 0); const arm = (l) => l.reduce((s, id) => s + (ITENS[id].stats.armadura || 0), 0);
+  assert.ok(res(tanqueAP) > res(tanqueAD) && arm(tanqueAD) > arm(tanqueAP), 'mais resistência mágica contra AP e mais armadura contra AD');
+  // atirador contra muitos tanques: penetração de armadura; contra frágeis: build padrão
+  const tanks = dano('tanque', 'tanque_ap', 'lutador_tank', 'suporte_tank', 'lutador'); const frageis = dano('mago', 'assassino_ap', 'atirador', 'encantador', 'assassino_ad');
+  const adcTank = construirBuild(tanks, aqui('atirador', 'atirador')); const adcFrag = construirBuild(frageis, aqui('atirador', 'atirador'));
+  const pen = (l, k) => l.reduce((s, id) => s + (ITENS[id].stats[k] || 0), 0);
+  assert.ok(pen(adcTank, 'penArmPct') > pen(adcFrag, 'penArmPct'), 'ADC contra tanques leva mais penetração de armadura'); assert.ok(adcTank.includes('serylda') || adcTank.includes('youmuu'));
+  const magoTank = construirBuild(tanks, aqui('mago')); assert.ok(pen(magoTank, 'penMagPct') + pen(magoTank, 'penMag') >= pen(construirBuild(frageis, aqui('mago')), 'penMagPct') + pen(construirBuild(frageis, aqui('mago')), 'penMag'), 'mago contra tanques não leva menos penetração mágica');
+  assert.ok(construirBuild(dano('tanque', 'tanque', 'lutador_tank', 'suporte_tank', 'tanque_ap'), aqui('mago')).includes('vazio'));
+  // carregador contra dano mágico leva Mortalha/Banshee e contra físico Anjo/Zhonya
+  assert.ok(construirBuild(ap, aqui('lutador', 'top')).includes('maw') || construirBuild(ap, aqui('lutador', 'top')).includes('gume_noite'), 'lutador contra AP leva item com resistência mágica');
+  assert.ok(construirBuild(ap, aqui('mago')).includes('veu'), 'mago contra AP leva Banshee'); assert.ok(construirBuild(ad, aqui('mago')).includes('zhonya'), 'mago contra AD leva Zhonya');
+  // sem duplicados e só itens que existem
+  for (const e of Object.keys(MODELOS)) for (const inimigos of [ap, ad, tanks, frageis, P()]) { const l = construirBuild(inimigos, aqui(e)); assert.equal(new Set(l).size, l.length, `${e}: sem item repetido`); for (const id of l) assert.ok(ITENS[id], `${e}: ${id}`); }
+  // o que já foi comprado numa vaga flexível não muda quando o time inimigo muda
+  const u = aqui('tanque', 'top'); const b1 = construirBuild(ap, u);
+  for (const id of b1.slice(0, 5)) { u.itens.push(id); fixarCompra(u, b1, id); }
+  const b2 = construirBuild(ad, u); assert.deepEqual(b2.slice(0, 5), b1.slice(0, 5), 'itens comprados continuam');
+  // posição: a mesma campeã muda de papel
+  assert.equal(estiloNaPosicao('encantador', 'meio'), 'mago'); assert.equal(estiloNaPosicao('encantador', 'suporte'), 'encantador'); assert.equal(estiloNaPosicao('tanque', 'suporte'), 'suporte_tank'); assert.equal(estiloNaPosicao('suporte_tank', 'top'), 'tanque');
+  assert.equal(subcategoriaDoEstilo('lutador_tank', 'top'), 'Bruiser'); assert.equal(subcategoriaDoEstilo('encantador', 'meio'), 'Mago'); assert.equal(subcategoriaDoEstilo('tanque', 'suporte'), 'Engajador');
+});
+
+test('I3. subcategorias: todo campeão tem subcategoria em cada posição que joga, e o draft oferece o filtro', async () => {
+  const { subcategoriaDoCampeao, NOME_POSICAO } = await import('../jogos/tecnico/partida/dados/itemizacao.js');
+  const { posicoesDe } = await import('../jogos/tecnico/partida/dados/campeoes-sim.js');
+  const POS = { Top: 'top', Jungle: 'selva', Mid: 'meio', ADC: 'atirador', Suporte: 'suporte' };
+  const vistas = {}; let n = 0;
+  for (const c of catalogo) for (const p of posicoesDe(c)) { const k = POS[p]; const s = subcategoriaDoCampeao(c.nome, k); assert.ok(s, `${c.nome} em ${p}`); (vistas[k] ||= new Set()).add(s); n++; }
+  assert.ok(n > 173); assert.deepEqual(Object.keys(NOME_POSICAO), ['top', 'selva', 'meio', 'atirador', 'suporte']); assert.equal(NOME_POSICAO.selva, 'Caçador');
+  for (const t of ['Tanque', 'Lutador', 'Bruiser', 'Assassino']) assert.ok(vistas.top.has(t) || vistas.selva.has(t), `${t} existe no top ou no caçador`);
+  assert.ok(vistas.meio.has('Mago') && vistas.atirador.has('Atirador') && vistas.suporte.has('Encantador') && vistas.suporte.has('Engajador'));
+  const ui = readFileSync(new URL('../jogos/tecnico/partida/js/draft-ui.js', import.meta.url), 'utf8'); assert.match(ui, /data-sub=/); assert.match(ui, /subcategoriaDoCampeao/);
+});
