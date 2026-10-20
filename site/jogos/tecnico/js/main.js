@@ -591,7 +591,7 @@ function rankTimeHtml(m) {
   const card = (j) => `<article class="tc-rt-j${j.raridade ? ` r-${j.raridade}` : ''}">
       <header><div class="foto tc-moldura${j.raridade ? ` r-${j.raridade}` : ''}">${retratoSvg(j, 64)}</div>
         <div class="id"><span class="pos">${NOME_VAGA[j.slot] || j.slot}</span><b>${esc(j.nome)}${j.legado ? ' <i class="tc-estrela">◆</i>' : ''}</b>${estrelasHtml(j)}</div>
-        <span class="ovr" style="--c:${corPoder(j.poder)}" title="Poder ${j.poder}">${j.poder}</span></header>
+        ${escudoHtml(j.poder)}</header>
       <div class="fa-attrs">${attr(j)}</div>
       <div class="mae"><span class="tc-eyebrow">Maestria</span>${(j.campeoes || []).length ? j.campeoes.slice(0, 3).map((c) => `<div class="${c.favorito ? 'fav' : ''}" title="${esc(c.nome)} · ${fmt(c.pontos)} pts">${campIcone(c.nome, 28)}<span><b>${esc(c.nome)}</b><small>${c.favorito ? '★ ' : ''}${nomeMaestria(c.nivel)}</small></span></div>`).join('') : '<small class="tc-mudo">Sem campeões ainda</small>'}</div>
     </article>`;

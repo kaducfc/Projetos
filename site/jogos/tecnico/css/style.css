@@ -803,3 +803,10 @@ button.ch-c:not(:disabled) { cursor: pointer; } button.ch-c:not(:disabled):hover
 .tc-rt-j .mae { gap: 4px; padding-top: 6px; } .tc-rt-j .mae > div { gap: 7px; } .tc-rt-j .mae b { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tc-rt-j .mae .tc-ci { --t: 28px !important; }
 @media (max-width: 1020px) { .tc-rt { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); } }
+
+/* rank: escudo do OVR no lugar do quadrado de Poder */
+.tc-rt-j .pw { position: relative; display: block; width: 40px; height: 55px; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.55)); }
+.tc-rt-j .pw img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.tc-rt-j .pw b { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-46%); text-align: center; font: 400 21px/1 'Bebas Neue', sans-serif; color: #fff; text-shadow: 0 1px 3px #000, 0 0 2px #000; }
+.tc-rt-j .pw.tier-challenger b { color: #fff6dc; }
+.tc-rt-j .pw.sem-img { width: 38px; height: 38px; border-radius: 50%; background: #04101fe6; border: 2px solid var(--c, #f5cf5a); } .tc-rt-j .pw.sem-img b { font-size: 15px; }
