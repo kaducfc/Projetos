@@ -3,6 +3,7 @@
 // sombreado e o recorte; a cor escolhida entra por background-blend-mode: hard-light, então o relevo original é mantido.
 // O símbolo viaja no campo `escudo` da organização em texto: v4:<símbolo>:<cor 1>[:<cor 2>[:<cor 3>]] (cores em hex sem #).
 import { esc } from './regras.js';
+import { t as traduzir } from '../../../shared/i18n.js';
 
 // [nome, tem camada fixa (0/1), [[rótulo da cor, cor original], ...]] — a posição + 1 é o número do símbolo.
 export const SIMBOLOS = [
@@ -100,7 +101,7 @@ export function icHtml(ic, size = 56, rotulo = '') {
   const n = num2(ic.s); const info = SIMBOLOS[ic.s - 1];
   const fixa = info[1] ? `<i class="x" style="background-image:url(${DIR}s${n}-0.webp)"></i>` : '';
   const camadas = info[2].map((_, i) => { const u = `${DIR}s${n}-${i + 1}.webp`; return `<i class="p" style="--c:${ic.c[i]};background-image:url(${u});-webkit-mask-image:url(${u});mask-image:url(${u})"></i>`; }).join('');
-  return `<span class="tc-ic" style="--s:${size}px" role="img" aria-label="${esc(rotulo)}">${fixa}${camadas}</span>`;
+  return `<span class="tc-ic" style="--s:${size}px" role="img" aria-label="${esc(traduzir(rotulo))}">${fixa}${camadas}</span>`;
 }
 
 // ---------------------------------------------------------------- emblema de TEXTO (v3)
@@ -172,7 +173,7 @@ export function textoHtml(tx, size = 56, rotulo = '') {
   const placaSvg = placa ? `${placa} fill="${tx.pf}" stroke="${tx.pb}" stroke-width="6" stroke-linejoin="round"/>` : '';
   const sombra = tx.sh ? `<text ${base} transform="translate(${tx.sh * 1.6} ${tx.sh * 1.6})" fill="${tx.sc}" stroke="${tx.sc}" stroke-width="${tx.ow * 2}" opacity=".85">${esc2(t)}</text>` : '';
   const alt = size * 0.86; const escala = Math.min(alt / H, (size * 2.6) / W);
-  return `<svg class="tc-ict" viewBox="0 0 ${W} ${H}" width="${Math.round(W * escala)}" height="${Math.round(H * escala)}" role="img" aria-label="${esc(rotulo || t)}" style="display:inline-block;vertical-align:middle;flex:none">
+  return `<svg class="tc-ict" viewBox="0 0 ${W} ${H}" width="${Math.round(W * escala)}" height="${Math.round(H * escala)}" role="img" aria-label="${esc(rotulo ? traduzir(rotulo) : t)}" style="display:inline-block;vertical-align:middle;flex:none">
     ${grad ? `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0.25" stop-color="${tx.c[0]}"/><stop offset="0.75" stop-color="${tx.c[1]}"/></linearGradient></defs>` : ''}${placaSvg}${sombra}
     <text ${base} fill="${fill}" stroke="${tx.ow ? tx.oc : 'none'}" stroke-width="${tx.ow * 2}">${esc2(t)}</text></svg>`;
 }

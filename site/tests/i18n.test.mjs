@@ -51,5 +51,5 @@ test('i18n: avisos da ranqueada montados com t() e nomes de jogo no idioma certo
   assert.equal(t('Essa {uma} <b>não valeu PDR</b>.', { uma: t('carreira') }), 'Cette carrière <b>n’a pas rapporté de PDR</b>.');
   // Pares "campo: valor" só mudam quando algum lado é traduzido; listas são traduzidas item a item.
   assert.equal(traduzirTexto('Classe: Mago, Assassino (certo)'), 'Classe : Mage, Assassin (correct)');
-  assert.equal(traduzirTexto('Nome do jogador: Fulano'), null);
+  assert.equal(traduzirTexto('Codinome secreto: Fulano'), null);
 });

@@ -79,12 +79,26 @@ function lerSalvo() {
 function montar(d) {
   dict = new Map();
   modelos = [];
-  for (const [k, v] of Object.entries(d || {})) {
-    if (!/\{\w+\}/.test(k)) { dict.set(norm(k), v); continue; }
+  const ok = (x) => x.replace(/\{\w+\}|[^A-Za-zÀ-ÿ]/g, '').length >= 8; // só vale tirar a ponta se sobrar texto de verdade
+  const add = (k, v) => {
     const nomes = [];
     const re = new RegExp(`^${esc(norm(k)).replace(/\\?\{(\w+)\\?\}/g, (_, n) => { nomes.push(n); return /^num\d*$/.test(n) ? '(\\d[\\d.,]*)' : '(.+?)'; })}$`);
     // Modelos só de {valores} e pontuação ('{c}: {v}') só valem se algum valor for traduzido.
     modelos.push({ re, nomes, lit: k.replace(/\{\w+\}/g, '').length, pre: norm(k).split('{')[0], saida: v, soVars: !/[A-Za-zÀ-ÿ]/.test(k.replace(/\{\w+\}/g, '')) });
+  };
+  for (const [k, v] of Object.entries(d || {})) {
+    if (!/\{\w+\}/.test(k)) { dict.set(norm(k), v); continue; }
+    add(k, v);
+    // Valor opcional na ponta (o texto montado em código pode deixá-lo vazio): "Salário{x}" também vale como "Salário".
+    const ini = k.match(/^\{(\w+)\}\s*/); const fim = k.match(/\s*\{(\w+)\}$/);
+    if (fim && v.trim().endsWith(`{${fim[1]}}`) && k.split(`{${fim[1]}}`).length === 2) {
+      const k2 = k.slice(0, fim.index); const v2 = v.slice(0, v.lastIndexOf(`{${fim[1]}}`)).trimEnd();
+      if (ok(k2) && v2) { if (!/\{\w+\}/.test(k2)) dict.has(norm(k2)) || dict.set(norm(k2), v2); else add(k2, v2); }
+    }
+    if (ini && v.trim().startsWith(`{${ini[1]}}`) && k.split(`{${ini[1]}}`).length === 2) {
+      const k2 = k.slice(ini[0].length); const v2 = v.slice(v.indexOf(`{${ini[1]}}`) + ini[1].length + 2).trimStart();
+      if (ok(k2) && v2) { if (!/\{\w+\}/.test(k2)) dict.has(norm(k2)) || dict.set(norm(k2), v2); else add(k2, v2); }
+    }
   }
   // Os modelos mais específicos (mais texto fixo) valem antes dos genéricos.
   modelos.sort((x, y) => y.lit - x.lit);
@@ -233,7 +247,7 @@ function observar() {
 // ------------------------------------------------------------------ troca de idioma
 
 // Atualizado por scripts/i18n-build.mjs: força o navegador a baixar o dicionário novo.
-const VERSAO_DICIONARIOS = '07c3ca6237';
+const VERSAO_DICIONARIOS = '427649685b';
 
 async function carregar(id) {
   if (id === IDIOMA_PADRAO) { montar({}); return; }

@@ -1,7 +1,7 @@
 // Central de Marketing e Patrocínios: renda passiva em créditos. Tudo que vale (receita, fama, contratos, offline) é calculado no servidor
 // (SQL 0116); aqui só se mostra o estado e se chamam as ações. O contador da tela é só visual: o saldo real vem do servidor.
 import * as platform from '../../../shared/platform.js';
-import { localeAtual } from '../../../shared/i18n.js';
+import { localeAtual, t as traduzir } from '../../../shared/i18n.js';
 
 const api = platform.tecnico;
 let C = null; // contexto de main.js
@@ -250,7 +250,7 @@ function v2Patro(e) {
   const marcas = e.patrocinadores.map((p) => {
     const pode = p.estado !== 'ativo' && p.estado !== 'indisponivel' && livre > 0 && e.creditos >= p.custo && !C.S.ocupado;
     const motivo = p.estado === 'indisponivel' ? C.esc(p.motivo || '') : p.estado !== 'ativo' && livre <= 0 ? 'Sem vaga: melhore o marketing.' : '';
-    const req = `Fama ${p.req.fama ?? 0} · marketing ${p.req.nivel ?? 1}${p.req.divisao ? ' · divisão principal' : ''}${p.req.titulares ? ` · ${p.req.titulares} titulares` : ''}`;
+    const req = [traduzir('Fama {n} · marketing {m}', { n: p.req.fama ?? 0, m: p.req.nivel ?? 1 }), p.req.divisao ? traduzir('divisão principal') : '', p.req.titulares ? traduzir('{n} titulares', { n: p.req.titulares }) : ''].filter(Boolean).join(' · ');
     return `<div class="mk2-pat ${p.estado}" style="--c:${COR_CAT[p.categoria] || '#94a3b8'}"><div class="mk2-pat-n"><b>${C.esc(p.nome)}</b><span class="mk2-chip">${CAT[p.categoria] || ''}</span></div>
       <div class="mk2-pat-v"><b>+${num1(p.receita_min)}</b><small>cr./min · ${p.duracao_h} h${p.bonus_aud ? ` · audiência +${pct(p.bonus_aud)}` : ''}${p.bonus_fama ? ` · fama +${p.bonus_fama}` : ''}</small></div>
       <small class="mk2-nota">${req}${motivo ? ` — ${motivo}` : ''}</small>
