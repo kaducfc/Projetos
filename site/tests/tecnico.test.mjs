@@ -145,7 +145,7 @@ test('menu lateral tem Treinamento, Amistoso e Recrutar; cada tela só chama fun
   S.aba = 'amistoso'; await E.carregarExtras('amistoso'); assert.match(E.viewAmistoso(), /Desafiar[\s\S]*Rivais|Rivais[\s\S]*Desafiar/);
   S.aba = 'recrutar'; await E.carregarExtras('recrutar'); const r = E.viewRecrutar();
   assert.match(r, /Baú Básico/); assert.match(r, /Baú Premium/); assert.match(r, /1275/); assert.match(r, /3825/); assert.match(r, /-15%/);
-  assert.match(E.modalRecrutar({ contrato: 12, r: { preco_rc: 300, itens: [{ raridade: 'epico', repetida: true, jogador: jog(5, { legado: true, copias: 2, raridade: 'epico' }) }] } }), /Novo jogador Legado[\s\S]*repetido[\s\S]*\+1 cópia/);
+  assert.match(E.modalRecrutar({ contrato: 12, r: { preco_rc: 300, itens: [{ raridade: 'epico', repetida: true, jogador: jog(5, { legado: true, copias: 2, raridade: 'epico' }) }] } }), /Novo jogador Legado[\s\S]*tc-recicla/);
   E.limparExtras();
 });
 
