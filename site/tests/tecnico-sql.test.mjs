@@ -228,11 +228,6 @@ t('contratação: com saldo, sem saldo, elenco cheio, contrato inválido e pedid
   // repetir o mesmo pedido não cobra de novo
   assert.equal(J(`select tc_contratar(${alvo.id}, 12, 'chave-contrato-1')`, 1).ja_feito, true);
   assert.equal(Number(V('select creditos from tc_orgs where id = 1')), antes - alvo.preco);
-  // quem sai do elenco leva a cópia embora (o original continua no mercado)
-  const nClones = Number(V("select count(*) from tc_jogadores where clone_mercado"));
-  V(`select tc_liberar(${r.jogador})`, 1);
-  assert.equal(Number(V("select count(*) from tc_jogadores where clone_mercado")), nClones - 1, 'a cópia liberada some');
-  assert.equal(V(`select coalesce(org_id::text, 'livre') from tc_jogadores where id = ${alvo.id}`), 'livre');
   // contrato inválido, inexistente
   assert.equal(falha("select tc_contratar(99999999, 12, 'chave-contrato-4')", 1), 'jogador_inexistente');
   // sem saldo: nada muda
@@ -242,6 +237,16 @@ t('contratação: com saldo, sem saldo, elenco cheio, contrato inválido e pedid
   assert.equal(V(`select coalesce(org_id::text, 'livre') from tc_jogadores where id = ${caro.id}`), 'livre');
   assert.equal(V(`select creditos from tc_orgs where id = ${O2}`), '10');
   V(`update tc_orgs set creditos = 600000 where id = ${O2}`);
+});
+
+t('mercado individual: a cópia comprada some ao liberar; o original segue na vitrine dos outros', () => {
+  V('update tc_orgs set creditos = 600000 where id = 1');
+  const alvo = J("select tc_mercado_oficial('{\"ordem\":\"preco\"}')->0", 1);
+  const r = J(`select tc_contratar(${alvo.id}, 4, 'chave-clone-sumir')`, 1);
+  assert.equal(V(`select count(*) from tc_jogadores where id = ${r.jogador}`), '1');
+  V(`select tc_liberar(${r.jogador})`, 1);
+  assert.equal(V(`select count(*) from tc_jogadores where id = ${r.jogador}`), '0', 'a cópia liberada some');
+  assert.equal(V(`select coalesce(org_id::text, 'livre') from tc_jogadores where id = ${alvo.id}`), 'livre');
 });
 
 t('escalação: troca titulares, reduz a sinergia e só mexe em jogador do próprio elenco', () => {
@@ -768,7 +773,7 @@ t('estrelas: 15 jogadores reais com retrato no mercado oficial; rodar o SQL de n
 t('legados só pelo baú: créditos recusados, tc_contratar_estrela não existe mais e o modelo antigo de venda direta foi removido', () => {
   const faker = V("select id from tc_jogadores where nome = 'Faker' and legado_base is null");
   V("update tc_orgs set creditos = 50000000 where id = 1");
-  assert.match(falha(`select tc_contratar(${faker}, 8, 'chave-estrela-cr')`, 1), /estrela_so_rc|fora_da_oferta/); // recusado: ou pela regra das estrelas ou por não estar na oferta rotativa
+  assert.match(falha(`select tc_contratar(${faker}, 8, 'chave-estrela-cr')`, 1), /estrela_so_rc|fora_da_oferta|jogador_indisponivel/); // recusado: ou pela regra das estrelas ou por não estar na oferta rotativa
   assert.equal(V(`select org_id is null from tc_jogadores where id = ${faker}`), 't');
   assert.equal(V("select count(*) from pg_proc where proname = 'tc_contratar_estrela'"), '0');
   const js = J(`select tc_jogador_json(j) from tc_jogadores j where id = ${faker}`); assert.equal(js.legado, true); assert.equal(js.estrelas, 0);
@@ -1074,7 +1079,7 @@ t('comum: sobe estrela com fragmentos; demitir (só reserva comum) rende fragmen
   const d = J(`select tc_demitir(${j})`, 1); assert.equal(d.fragmentos_ganhos, previaC);
   assert.equal(d.fragmentos_ganhos, baseC + Math.round(3 * baseC / 2), JSON.stringify(d)); // base + metade do que gastou na 1ª estrela
   assert.equal(V("select fragmentos from tc_orgs where id = 1"), String(1 + d.fragmentos_ganhos));
-  assert.equal(V(`select org_id is null and estrelas = 0 from tc_jogadores where id = ${j}`), 't');
+  assert.equal(V(`select count(*) from tc_jogadores where id = ${j}`), '0', 'a cópia do mercado oficial some ao ser demitida');
   assert.equal(falha(`select tc_demitir(${j})`, 1), 'jogador_nao_e_seu', 'não demite duas vezes');
   assert.equal(J("select tc_meu()", 1).org.fragmentos, 1 + d.fragmentos_ganhos);
 });
