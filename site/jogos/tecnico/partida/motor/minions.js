@@ -75,6 +75,7 @@ function escolherAlvo(P, m) {
   let ordem = 99, md = Infinity, escolhido = null;
   P.indice.perto(m.x, m.y, aq, (u) => {
     if (u.morto || u.equipe === m.equipe || u.equipe === 'neutro' || u.tipo === 'monstro' || u.tipo === 'epico') return;
+    if (m.ignora && m.ignora.id === u.id && m.ignora.ate > P.t) return;
     if (!atacavel(P, u, m)) return;
     let prio;
     if (u.tipo === 'minion') prio = 1 + ORDEM_ALVO[u.subtipo] * 0.01;
@@ -87,6 +88,19 @@ function escolherAlvo(P, m) {
     if (prio < ordem || (prio === ordem && d < md)) { ordem = prio; md = d; escolhido = u; }
   });
   return escolhido;
+}
+
+function marchar(P, m, lane) {
+  // marcha pelos pontos de passagem; depois do último, segue para o Nexus inimigo (dentro da base)
+  const dir = m.equipe === 'azul' ? 1 : -1;
+  const n = lane.pts.length;
+  const wp = lane.pts[Math.max(0, Math.min(n - 1, m.idxWp))];
+  if (dist(m, wp) < 220 && m.idxWp + dir >= 0 && m.idxWp + dir < n) m.idxWp += dir;
+  let alvoWp = lane.pts[Math.max(0, Math.min(n - 1, m.idxWp))];
+  const fimDaRota = (dir === 1 && m.idxWp === n - 1) || (dir === -1 && m.idxWp === 0);
+  // chegou ao fim da rota: daí em diante só segue para o Nexus inimigo (sem voltar ao último ponto, o que fazia o minion oscilar em círculo)
+  if (fimDaRota && (m.rumoNexus || dist(m, alvoWp) < 260)) { m.rumoNexus = true; alvoWp = MUNDO_MAPA.bases[outro(m.equipe)].nexus; }
+  irPara(P, m, alvoWp.x, alvoWp.y, { tol: 160 });
 }
 
 export function atualizarMinion(P, m, dt) {
@@ -107,20 +121,12 @@ export function atualizarMinion(P, m, dt) {
     if (podeAtacar(P, m, alvo)) { parar(m); atacarBasico(P, m, alvo); m.atacandoDesde = P.t; return; }
     // aproxima-se dentro da rota; se o alvo estiver inacessível para minions, desiste dele
     const ok = irPara(P, m, alvo.x, alvo.y, { tol: m.alcance * 0.8 });
-    if (!ok) { m.alvoId = null; return; }
+    if (!ok) { m.ignora = { id: alvo.id, ate: P.t + 3 }; m.alvoId = null; return marchar(P, m, lane); } // alvo inalcançável: ignora por 3s e continua a marcha (não fica parado)
     // para a uma distância confortável do alvo para não "empilhar"
     if (dist(m, alvo) <= m.alcance * 0.8 + (alvo.raio || 0) * 0.5) parar(m);
     return;
   }
-  // marcha pelos pontos de passagem; depois do último, segue para o Nexus inimigo (dentro da base)
-  const dir = m.equipe === 'azul' ? 1 : -1;
-  const n = lane.pts.length;
-  const wp = lane.pts[Math.max(0, Math.min(n - 1, m.idxWp))];
-  if (dist(m, wp) < 220 && m.idxWp + dir >= 0 && m.idxWp + dir < n) m.idxWp += dir;
-  let alvoWp = lane.pts[Math.max(0, Math.min(n - 1, m.idxWp))];
-  const fimDaRota = (dir === 1 && m.idxWp === n - 1) || (dir === -1 && m.idxWp === 0);
-  if (fimDaRota && dist(m, alvoWp) < 260) alvoWp = MUNDO_MAPA.bases[outro(m.equipe)].nexus;
-  irPara(P, m, alvoWp.x, alvoWp.y, { tol: 160 });
+  marchar(P, m, lane);
   // minion que não faz nada por muito tempo (por exemplo, esperando estruturas protegidas) sai da partida: excepcional e registrado
   if (!m.ocioso) m.ocioso = { x: m.x, y: m.y, t: P.t };
   if (Math.hypot(m.x - m.ocioso.x, m.y - m.ocioso.y) > 80 || m.alvoId) m.ocioso = { x: m.x, y: m.y, t: P.t };
