@@ -125,7 +125,6 @@ export const PAGINAS = [
     ['O que fazer com jogador repetido?', 'Legado repetido vira cópia para estrelas. Os outros podem ser demitidos para virar fragmentos.'],
     ['Por que meu treino está bloqueado?', 'Limite de treino atingido, XP insuficiente, ou 5 treinos já em andamento.'],
     ['Como a sinergia funciona?', 'Sobe com o tempo jogando com os mesmos titulares e cai quando você troca. O bônus é pequeno (até +3 de Poder).'],
-    ['O ícone do time dá vantagem?', 'Não. É só estética.'],
     ['Perdi o acesso à partida no meio.', 'Abra de novo a aba Início e clique em “Jogar a partida”: o progresso volta de onde estava.'],
     ['Como sei se estou subindo de divisão?', 'Na Liga Academy, os 2 primeiros sobem para a Liga Nacional ao final da semana.'],
     ['Posso desligar os sons?', 'Sim, em Configuração → Efeitos sonoros.']) },
