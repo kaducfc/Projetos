@@ -56,7 +56,7 @@ function ligarRelogio() {
 
 // ------------------------------------------------------------------ peças
 // Barra de XP (0 a 100): cheia, o jogador pode treinar um atributo.
-const xpBarra = (j) => { const xp = Math.min(100, j.exp || 0); return `<div class="tc-treino-xp${xp >= 100 ? ' cheia' : ''}"><span>XP <b>${xp}/100</b>${xp >= 100 ? ' · pronto para treinar' : ''}</span><div class="tc-barra"><i style="width:${xp}%"></i></div></div>`; };
+const xpBarra = (j, custo = 100) => { const xp = Math.min(100, j.exp || 0); return `<div class="tc-treino-xp${xp >= custo ? ' cheia' : ''}"><span>XP <b>${xp}/100</b>${xp >= custo ? ' · pronto para treinar' : ''}</span><div class="tc-barra"><i style="width:${xp}%"></i></div></div>`; };
 const poderBarra = (j) => {
   const lim = j.limite; const ini = j.poder_inicial; const pct = lim > ini ? Math.round(((j.poder - ini) / (lim - ini)) * 100) : 100;
   return `<div class="tc-treino-poder"><span>Poder <b>${j.poder}</b> <small>/ limite ${lim}</small></span><div class="tc-barra"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></div><small class="tc-mudo">Início ${ini} · até +${lim - ini}</small></div>`;
@@ -67,12 +67,12 @@ const miniCartao = (j, extra = '') => `<div class="tc-mini ${rar(j) ? `r-${rar(j
 // ------------------------------------------------------------------ Treinamento
 export function viewTreino() {
   const t = X.treino; if (!t) return '<p class="tc-carregando">Carregando…</p>';
-  const cfg = t.config;
+  const cfg = t.config; const xpCusto = cfg.exp_custo || 100;
   const cartao = (j) => {
     const tr = j.treino; const noLimite = j.poder >= j.limite;
     const linhas = ATRIBUTOS.map(([id, nome]) => {
       const v = j[id]; const custo = j.custos[id]; const falta = t.creditos < custo;
-      const semXp = (j.exp || 0) < 100; const bloq = tr || noLimite || v >= 100 || falta || semXp || t.em_andamento >= cfg.simultaneos || C.S.ocupado;
+      const semXp = (j.exp || 0) < xpCusto; const bloq = tr || noLimite || v >= 100 || falta || semXp || t.em_andamento >= cfg.simultaneos || C.S.ocupado;
       const ativo = tr && tr.atributo === id;
       return `<div class="tc-attr${ativo ? ' ativo' : ''}"><span class="nm">${nome}</span><b>${v}</b><div class="tc-barra"><i style="width:${v}%"></i></div>
         ${ativo ? `<span class="tc-treinando">+${tr.pontos} em <b data-fim="${C.esc(tr.fim)}">…</b></span>`
@@ -80,8 +80,8 @@ export function viewTreino() {
     }).join('');
     return `<section class="tc-card tc-treino-jog ${rar(j) ? `r-${rar(j)}` : ''}">
       ${miniCartao(j)}
-      <div class="tc-treino-corpo">${xpBarra(j)}${poderBarra(j)}${noLimite ? '<p class="tc-peq" style="color:var(--ouro2);margin:6px 0 0">Limite de treino atingido.</p>' : ''}${linhas}
-      <small class="tc-mudo" style="margin-top:4px">${(j.exp || 0) < 100 ? 'Encha a barra de experiência (XP) para treinar.' : `Pronto para treinar! A sessão dura ${j.horas}h.`}</small></div></section>`;
+      <div class="tc-treino-corpo">${xpBarra(j, xpCusto)}${poderBarra(j)}${noLimite ? '<p class="tc-peq" style="color:var(--ouro2);margin:6px 0 0">Limite de treino atingido.</p>' : ''}${linhas}
+      <small class="tc-mudo" style="margin-top:4px">${(j.exp || 0) < xpCusto ? `Você precisa de ${xpCusto} de XP para treinar.` : `Pronto para treinar! A sessão custa ${xpCusto} de XP e dura ${j.horas}h.`}</small></div></section>`;
   };
   const titulares = t.jogadores.filter((j) => j.slot); const outros = t.jogadores.filter((j) => !j.slot);
   const cards = titulares.map(cartao).join('');

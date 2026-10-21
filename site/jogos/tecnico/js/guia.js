@@ -58,8 +58,8 @@ export const PAGINAS = [
     ${faq(['Vale a pena demitir um Legado?', 'Só se ele for repetido ou você precisar muito de fragmentos. Legados são raros e mantêm valor no mercado entre usuários.'])}` },
 
   { id: 'treino', t: 'Treinamento e XP', r: 'Evoluir os atributos dos jogadores', cor: '#2dd4bf', corpo: () => `
-    <p>Treinar sobe os atributos de um jogador. Para isso ele precisa de <b>XP</b>.</p>
-    ${lista('O XP vem de <b>partidas oficiais</b> (mais na vitória) e de <b>amistosos</b>.', 'Cada treino custa <b>créditos</b> e dura algumas horas. Você pode treinar <b>até 5 jogadores ao mesmo tempo</b>.', 'Só os <b>titulares</b> aparecem abertos na tela; reservas ficam recolhidos até você abrir o cartão.')}
+    <p>Treinar sobe os atributos de um jogador. Cada treino custa <b>50 de XP</b> (a barra vai até 100, então o que passar de 50 fica guardado).</p>
+    ${lista('O XP vem de <b>partidas oficiais</b> (mais na vitória) e de <b>amistosos</b>.', 'Cada treino também custa <b>créditos</b> e dura <b>3 horas</b>. Você pode treinar <b>até 5 jogadores ao mesmo tempo</b>.', 'Só os <b>titulares</b> aparecem abertos na tela; reservas ficam recolhidos até você abrir o cartão.')}
     ${caixa('atencao', 'Há um <b>limite de treino</b>: jogadores comuns sobem até +10 acima do Poder inicial; Legados, até <b>+15</b>. Quando chega no limite o treino é bloqueado.')}
     ${faq(['Por que o botão de treinar está cinza?', 'Ou o jogador chegou ao limite de treino, ou ainda não tem XP suficiente (a barra no cartão mostra quanto falta), ou você já tem 5 treinos em andamento.'], ['Posso acelerar?', 'Jogue mais partidas e amistosos: eles geram XP.'])}` },
 

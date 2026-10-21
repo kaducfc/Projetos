@@ -13,9 +13,9 @@ import { prepararImagens, campIcone } from './campeoes-img.js';
 import { escudoOrg, retratoSvg, iconeVaga } from './art.js';
 import { SIMBOLOS, N_SIMBOLOS, PALETA, ICONE_PADRAO, icClone, icTrocar, icCodificar, icDecodificar, icHtml, FONTES, TEXTO_PADRAO, TEXTO_MAX, txClone, txCodificar, txDecodificar, txLimpar, textoHtml, carregarFontes } from './icone.js?v=3';
 import { tocar, somAtivo, definirSom } from './bau-anim.js';
-import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js?v=7';
+import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js?v=8';
 import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
-import { viewGuia } from './guia.js?v=17';
+import { viewGuia } from './guia.js?v=18';
 import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js?v=7';
 
 // Comunicação da equipe: idioma dos titulares e quanto cada um ganha por falar com os colegas (mesmo idioma nativo vale 1, idioma em comum vale 2/3).
