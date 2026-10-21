@@ -15,6 +15,7 @@ import { SIMBOLOS, N_SIMBOLOS, PALETA, ICONE_PADRAO, icClone, icTrocar, icCodifi
 import { tocar, somAtivo, definirSom } from './bau-anim.js';
 import { iniciarExtras, carregarExtras, limparExtras, viewTreino, viewAmistoso, viewRecrutar, modalRecrutar, tratarAcao } from './extras.js?v=5';
 import { iniciarAdm, carregarAdm, viewAdmJogadores, tratarAdm, aoDigitar as admDigitar, filtrarAdm } from './adm.js';
+import { viewGuia } from './guia.js?v=1';
 import { nomeMovimento, iniciarMarketing, carregarMarketing, limparMarketing, abrirComResumo, viewMarketingCentral, modalMktResumo, tratarMkt } from './marketing.js?v=7';
 
 // Comunicação da equipe: idioma dos titulares e quanto cada um ganha por falar com os colegas (mesmo idioma nativo vale 1, idioma em comum vale 2/3).
@@ -230,7 +231,7 @@ function topo() {
 
 const ABAS = [
   ['visao', 'Início', 'ic-inicio'], ['elenco', 'Meu elenco', 'ic-elenco'], ['treino', 'Treinamento', 'ic-treino'], ['amistoso', 'Amistoso', 'ic-amistoso'], ['contratar', 'Mercado', 'ic-mercado'], ['recrutar', 'Recrutar', 'ic-recrutar'], ['marketing', 'Marketing', 'ic-marketing'], ['adm', 'ADM', 'i-conf'],
-  ['camp', 'Campeonatos', 'ic-campeonatos'], ['rank', 'Rank', 'ic-rank'], ['hist', 'Histórico', 'ic-historico'], ['pers', 'Personalizar', 'ic-personalizar'],
+  ['camp', 'Campeonatos', 'ic-campeonatos'], ['rank', 'Rank', 'ic-rank'], ['hist', 'Histórico', 'ic-historico'], ['pers', 'Personalizar', 'ic-personalizar'], ['guia', 'Guia', 'ic-guia'],
 ];
 function nav() {
   const novos = S.avisosN || 0;
@@ -902,6 +903,7 @@ function conteudo() {
     case 'marketing': return viewMarketingCentral();
     case 'adm': return S.ehAdmin ? viewAdm() : viewVisao();
     case 'pers': return viewPers();
+    case 'guia': return viewGuia(S);
     default: return viewVisao();
   }
 }
@@ -947,6 +949,7 @@ document.addEventListener('click', async (e) => {
   const act = b.dataset.act;
   if (act === 'fechar-fundo') { if (e.target === b) { S.modal = null; render(); } return; }
   if (act === 'semanas' || act === 'liga-sel' || act === 'preco-anuncio') return;
+  if (act === 'guia-pag') { S.guia = S.guia || { pag: null, busca: '' }; S.guia.pag = b.dataset.id || null; render(); window.scrollTo({ top: 0 }); return; }
   if (act === 'aba') { S.aba = b.dataset.aba; render(); await carregarAba(); render(); window.scrollTo({ top: 0 }); return; }
   if (act === 'conf-nav') { const n = Number(b.closest('.tc-confrontos')?.querySelectorAll('.tc-conf-pontos button').length || 1); S.confIdx = b.dataset.i != null ? Number(b.dataset.i) : (((S.confIdx || 0) + Number(b.dataset.d) + n) % n); render(); return; }
   if (act === 'camp-dia') { const ab = S.campAbertos || (S.campAbertos = {}); ab[b.dataset.k] = !ab[b.dataset.k]; render(); return; }
@@ -1103,6 +1106,7 @@ document.addEventListener('click', async (e) => {
 document.addEventListener('input', (e) => {
   if (S.ehAdmin && S.aba === 'adm' && admDigitar(e)) return;
   const t = e.target;
+  if (t.matches('[data-guia-busca]')) { S.guia = S.guia || { pag: null, busca: '' }; S.guia.busca = t.value; render(); return; }
   if (t.matches('[data-ic]')) { // seletor de cor nativo: atualiza só a prévia (renderizar de novo fecharia o seletor)
     const [alvo, i] = t.dataset.ic.split(':'); const f = formDe(alvo); f.ic.c[Number(i)] = t.value; aplicarIc(alvo);
     const camadas = t.closest('.tc-ic-edit')?.querySelectorAll('.previa .tc-ic i.p');

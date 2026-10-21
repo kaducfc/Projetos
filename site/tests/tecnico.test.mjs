@@ -361,3 +361,24 @@ test('Histórico: qualquer ação do jogador invalida o histórico guardado, ent
   const agir = main.slice(main.indexOf('async function agir('), main.indexOf('async function atualizar('));
   assert.match(agir, /const r = await fn\(\);\s*S\.hist = null;/, 'agir zera o histórico em cache logo após a ação');
 });
+
+test('Guia: aba no menu logo após Personalizar, índice com todos os temas, páginas com conteúdo e busca', async () => {
+  const { PAGINAS, viewGuia } = await import('../jogos/tecnico/js/guia.js');
+  const main = readFileSync(new URL('../jogos/tecnico/js/main.js', import.meta.url), 'utf8');
+  assert.match(main, /\['pers', 'Personalizar', 'ic-personalizar'\], \['guia', 'Guia', 'ic-guia'\]/);
+  assert.ok(existsSync(new URL('../jogos/tecnico/img/ic-guia.webp', import.meta.url)));
+  const S = { guia: { pag: null, busca: '' } };
+  const indice = viewGuia(S);
+  for (const p of PAGINAS) assert.ok(indice.includes(`data-id="${p.id}"`), p.id);
+  for (const p of PAGINAS) {
+    S.guia.pag = p.id;
+    const h = viewGuia(S);
+    assert.ok(h.length > 800, `${p.id} tem conteúdo`);
+    assert.ok(!/undefined|\[object/.test(h), `${p.id} sem lixo`);
+  }
+  S.guia = { pag: null, busca: 'baú' };
+  const f = viewGuia(S);
+  assert.ok(f.includes('data-id="recrutar"') || f.includes('data-id="moedas"'));
+  S.guia.busca = 'xyzxyzxyz';
+  assert.ok(viewGuia(S).includes('Nada encontrado'));
+});
