@@ -73,12 +73,12 @@ export const PAGINAS = [
 
   { id: 'mercado', t: 'Mercado e contratos', r: 'Contratar, pagar salário e vender', cor: '#60a5fa', corpo: () => `
     <h4>Mercado oficial</h4>
-    ${lista('Mostra de 7 a 10 jogadores comuns, que <b>muda a cada 12 horas</b>.', 'Os jogadores têm Poder próximo ao do seu time. Se o seu Poder for muito alto, o mercado mostra os melhores jogadores comuns (até 80).', 'Preços em <b>créditos</b>. Contratar leva o jogador para o inventário.')}
+    ${lista('Mostra de 7 a 10 jogadores comuns, que <b>muda a cada 12 horas</b>.', 'Os jogadores têm Poder próximo ao do seu time. A vitrine é só sua: ninguém contrata o jogador antes de você.', 'Preços em <b>créditos</b>. Contratar leva o jogador para o inventário.')}
     <h4>Contratos e salários</h4>
-    ${lista('Para escalar um jogador como titular, efetive um <b>contrato</b>: <b>1 semana</b> ou <b>1 temporada</b> (4 semanas, <b>20% mais barato</b>).', 'O salário é pago <b>adiantado</b> ao assinar.', 'Se encerrar o contrato antes do fim, você recebe <b>50% do que sobrou</b>.', 'Renove antes de acabar: jogador com contrato vencendo não pode ser anunciado.')}
+    ${lista('Para escalar um jogador como titular, efetive um <b>contrato</b>: <b>1 semana</b> ou <b>1 temporada</b> (4 semanas, <b>20% mais barato</b>).', 'O salário é pago <b>adiantado</b> ao assinar.', 'Se encerrar o contrato antes do fim, você recebe <b>50% do que sobrou</b>.')}
     <h4>Mercado entre usuários</h4>
-    ${lista('Você anuncia um jogador seu por um preço em <b>RC</b>; outro técnico compra.', 'O vendedor paga <b>5% de taxa</b> sobre o preço.', 'Há limites contra abuso: a conta precisa ter mais de 7 dias, são até 5 compras por dia, e quem vendeu um jogador não pode comprar o mesmo de volta por 14 dias.')}
-    ${faq(['Por que um jogador sumiu do mercado?', 'A rotação acontece a cada 12 horas. Quem foi contratado por outro técnico também sai da lista.'], ['Cancelei um anúncio, posso anunciar de novo?', 'Sim. Você pode ter até 5 anúncios abertos ao mesmo tempo.'])}` },
+    ${lista('Você anuncia um jogador seu por um preço em <b>RC</b>; outro técnico compra.', 'O vendedor paga <b>5% de taxa</b> sobre o preço.', 'Há limites contra abuso: são até 5 compras por dia, e quem vendeu um jogador não pode comprar o mesmo de volta por 7 dias.')}
+    ${faq(['Por que um jogador sumiu do mercado?', 'A vitrine do mercado oficial muda a cada 12 horas. Jogador que você mesmo contratou também sai da sua lista.'], ['Cancelei um anúncio, posso anunciar de novo?', 'Sim. Você pode ter até 5 anúncios abertos ao mesmo tempo.'])}` },
 
   { id: 'recrutar', t: 'Recrutar (baús)', r: 'Como ganhar jogadores Legados', cor: '#f5cf5a', corpo: () => `
     <p>Os <b>baús</b> entregam Legados (e cópias). Pagos em <b>RC</b>.</p>

@@ -13,7 +13,7 @@ const TEM = existsSync(`${BIN}/initdb`);
 const PORT = 5600 + (process.pid % 300);
 const CFG_MERCADO_TESTES = { horas: 12, min: 400, max: 400, abaixo: 100, acima: 100, poder_padrao: 50 };
 const CFG_MERCADO_REAL = { horas: 12, min: 7, max: 10, abaixo: 5, acima: 10, poder_padrao: 50 };
-const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql', '0143_tecnico_mercado_so_na_faixa.sql', '0144_tecnico_avisos_novidades_calendario.sql', '0145_tecnico_avisos_so_novidades.sql', '0146_tecnico_legados_asia.sql', '0147_tecnico_legados_idades.sql', '0148_tecnico_baus_em_rc.sql', '0149_tecnico_legados_china.sql', '0150_tecnico_sem_forma.sql', '0151_tecnico_idiomas.sql', '0152_tecnico_estrelas_ate_10.sql', '0153_tecnico_estrela_dobro_legado.sql', '0154_tecnico_demissao_conta_copias.sql', '0155_tecnico_ficticio_max_80.sql', '0156_tecnico_fragmentos_novos_valores.sql', '0157_tecnico_legados_pain_red_lyon.sql', '0158_tecnico_rank_poder.sql', '0159_tecnico_rank_competicao.sql', '0160_tecnico_campanhas_melhores.sql', '0161_tecnico_campanhas_bonus.sql', '0162_tecnico_partida_wo.sql', '0163_tecnico_emblema_texto.sql', '0164_tecnico_emblema_texto_10.sql', '0165_tecnico_emblema_texto_nome.sql', '0166_tecnico_simbolos.sql', '0167_tecnico_renomear_org.sql', '0168_tecnico_ficha_idioma.sql', '0169_tecnico_legados_lcs.sql', '0170_tecnico_legados_lec.sql', '0171_tecnico_idiomas_revisao.sql', '0172_tecnico_legados_balanceamento.sql', '0173_tecnico_liga_entrada_meio_semana.sql', '0174_tecnico_ver_time_adversario.sql'];
+const MIG = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql', '0143_tecnico_mercado_so_na_faixa.sql', '0144_tecnico_avisos_novidades_calendario.sql', '0145_tecnico_avisos_so_novidades.sql', '0146_tecnico_legados_asia.sql', '0147_tecnico_legados_idades.sql', '0148_tecnico_baus_em_rc.sql', '0149_tecnico_legados_china.sql', '0150_tecnico_sem_forma.sql', '0151_tecnico_idiomas.sql', '0152_tecnico_estrelas_ate_10.sql', '0153_tecnico_estrela_dobro_legado.sql', '0154_tecnico_demissao_conta_copias.sql', '0155_tecnico_ficticio_max_80.sql', '0156_tecnico_fragmentos_novos_valores.sql', '0157_tecnico_legados_pain_red_lyon.sql', '0158_tecnico_rank_poder.sql', '0159_tecnico_rank_competicao.sql', '0160_tecnico_campanhas_melhores.sql', '0161_tecnico_campanhas_bonus.sql', '0162_tecnico_partida_wo.sql', '0163_tecnico_emblema_texto.sql', '0164_tecnico_emblema_texto_10.sql', '0165_tecnico_emblema_texto_nome.sql', '0166_tecnico_simbolos.sql', '0167_tecnico_renomear_org.sql', '0168_tecnico_ficha_idioma.sql', '0169_tecnico_legados_lcs.sql', '0170_tecnico_legados_lec.sql', '0171_tecnico_idiomas_revisao.sql', '0172_tecnico_legados_balanceamento.sql', '0173_tecnico_liga_entrada_meio_semana.sql', '0174_tecnico_ver_time_adversario.sql', '0175_tecnico_mercado_individual.sql'];
 const U = (n) => `00000000-0000-0000-0000-00000000000${n}`;
 let dir;
 let O2; // id da organização do técnico 2 (a sequência pode pular números em tentativas recusadas)
@@ -219,12 +219,21 @@ t('contratação: com saldo, sem saldo, elenco cheio, contrato inválido e pedid
   const r = J(`select tc_contratar(${alvo.id}, 12, 'chave-contrato-1')`, 1);
   assert.equal(r.ok, true);
   assert.equal(Number(V('select creditos from tc_orgs where id = 1')), antes - alvo.preco);
-  assert.equal(V(`select org_id from tc_jogadores where id = ${alvo.id}`), '1');
+  // mercado individual: o comprador recebe uma cópia; o original segue livre para os outros técnicos
+  assert.notEqual(String(r.jogador), String(alvo.id));
+  assert.equal(V(`select org_id from tc_jogadores where id = ${r.jogador}`), '1');
+  assert.equal(V(`select clone_mercado from tc_jogadores where id = ${r.jogador}`), 't');
+  assert.equal(V(`select coalesce(org_id::text, 'livre') from tc_jogadores where id = ${alvo.id}`), 'livre', 'o original continua livre');
+  assert.ok(!J("select tc_mercado_oficial('{}')", 1).some((x) => x.id === alvo.id), 'sai da vitrine de quem comprou');
   // repetir o mesmo pedido não cobra de novo
   assert.equal(J(`select tc_contratar(${alvo.id}, 12, 'chave-contrato-1')`, 1).ja_feito, true);
   assert.equal(Number(V('select creditos from tc_orgs where id = 1')), antes - alvo.preco);
-  // já tem dono, contrato inválido, inexistente
-  assert.equal(falha(`select tc_contratar(${alvo.id}, 12, 'chave-contrato-2')`, 2), 'jogador_indisponivel');
+  // quem sai do elenco leva a cópia embora (o original continua no mercado)
+  const nClones = Number(V("select count(*) from tc_jogadores where clone_mercado"));
+  V(`select tc_liberar(${r.jogador})`, 1);
+  assert.equal(Number(V("select count(*) from tc_jogadores where clone_mercado")), nClones - 1, 'a cópia liberada some');
+  assert.equal(V(`select coalesce(org_id::text, 'livre') from tc_jogadores where id = ${alvo.id}`), 'livre');
+  // contrato inválido, inexistente
   assert.equal(falha("select tc_contratar(99999999, 12, 'chave-contrato-4')", 1), 'jogador_inexistente');
   // sem saldo: nada muda
   V(`update tc_orgs set creditos = 10 where id = ${O2}`);
@@ -716,13 +725,15 @@ t('segurança: anúncio é cancelado quando o jogador sai da organização', () 
   V(`select tc_liberar(${res})`, 1);
   assert.equal(V(`select status from tc_anuncios where id = ${an}`), 'cancelado');
 });
-t('antifraude do mercado: conta nova, muitas vendas entre o mesmo par, recompra e limite diário', () => {
+t('antifraude do mercado: conta nova anuncia normalmente, muitas vendas entre o mesmo par, recompra (7 dias) e limite diário', () => {
   V("update site_carteira set saldo = 1000000 where user_id in ('" + U(1) + "', '" + U(2) + "')");
   V("delete from tc_anuncios where status = 'vendido'"); // começa sem histórico de vendas
-  // conta nova não anuncia
+  // conta nova também anuncia (não há mais idade mínima de conta)
   V(`update auth.users set created_at = now() where id = '${U(1)}'`);
   const r1 = reserva(1, 1);
-  assert.equal(falha(`select tc_anunciar(${r1}, 500)`, 1), 'mercado_conta_nova');
+  assert.ok(J(`select tc_anunciar(${r1}, 500)`, 1).id, 'conta nova anuncia');
+  V("update tc_anuncios set status = 'cancelado' where status = 'aberto'");
+  assert.equal(V("select (tc_cfg('mercado_regras')->>'recompra_dias')"), '7');
   V(`update auth.users set created_at = now() - interval '30 days' where id = '${U(1)}'`);
   // duas vendas entre o mesmo par na semana passam; a terceira não (e o RC volta)
   const vender = (uidV, orgV, uidC, preco, chave) => { V("update tc_anuncios set status = 'cancelado' where status = 'aberto'"); const j = reserva(uidV, orgV); const a = J(`select tc_anunciar(${j}, ${preco})`, uidV).id; return { j, a, r: Q(`select tc_comprar_anuncio(${a}, '${chave}')`, uidC) }; };
@@ -733,7 +744,7 @@ t('antifraude do mercado: conta nova, muitas vendas entre o mesmo par, recompra 
   assert.equal(V("select saldo from site_carteira where user_id = '" + U(2) + "'"), saldo, 'a compra recusada não cobra');
   assert.equal(V(`select org_id from tc_jogadores where id = ${t3.j}`), '1', 'o jogador fica com o vendedor');
   V("delete from tc_anuncios where status = 'vendido'");
-  // recompra: quem vendeu não compra o mesmo jogador de volta em 14 dias
+  // recompra: quem vendeu não compra o mesmo jogador de volta em 7 dias
   const v1 = vender(1, 1, 2, 300, 'chave-rec-1'); assert.ok(v1.r.ok);
   const a2 = J(`select tc_anunciar(${v1.j}, 300)`, 2).id;
   assert.equal(Q(`select tc_comprar_anuncio(${a2}, 'chave-rec-2')`, 1).err, 'mercado_recompra');
