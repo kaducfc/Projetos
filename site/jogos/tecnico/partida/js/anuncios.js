@@ -21,22 +21,41 @@ const outro = (eq) => (eq === 'azul' ? 'vermelho' : 'azul');
 
 export function criarAnuncios(mapaEl) {
   const caixa = document.createElement('div'); caixa.className = 'pt-anuncios'; caixa.setAttribute('aria-live', 'polite'); mapaEl.appendChild(caixa);
-  const fila = []; let tocando = false; let veloc = 1; let ativo = true;
+  const fila = []; let atual = null; let veloc = 1; let ativo = true;
   const multi = new Map(); // abatedor -> { n, t }
   let primeiro = null; // vítima do First Blood (o evento vem logo antes do abate)
   const seq = new Map();   // campeão -> abates seguidos sem morrer
+  // Categorias: anúncios da mesma categoria concorrem entre si; o mais importante ganha e os menores são descartados.
+  const SERIE = /^(KILLING SPREE|RAMPAGE|UNSTOPPABLE|DOMINATING|GODLIKE|LEGENDARY)!$/;
+  const catDe = (titulo) => (SERIE.test(titulo) ? 'serie' : titulo === 'ACE!' ? 'ace' : /(TORRE|INIBIDOR|NEXUS|ALMA|ELIMINADO|ROUBADO)/.test(titulo) ? 'obj' : 'abate');
+  const VALIDADE = 4000; // anúncio que ficou esperando mais que isso já está velho (a jogada mudou): só os muito importantes ainda passam
 
+  const encerrar = (el, depois) => { el.classList.remove('entra'); el.classList.add('sai'); setTimeout(() => { el.remove(); if (atual && atual.el === el) atual = null; depois?.(); mostrar(); }, 220); };
   const mostrar = () => {
-    if (tocando || !fila.length) return;
-    fila.sort((a, b) => b.prio - a.prio); const a = fila.shift(); tocando = true;
+    if (atual) return;
+    const agora = Date.now();
+    for (let i = fila.length - 1; i >= 0; i--) if (agora - fila[i].t0 > VALIDADE && fila[i].prio < 7) fila.splice(i, 1);
+    if (!fila.length) return;
+    fila.sort((x, y) => y.prio - x.prio); const a = fila.shift();
     const el = document.createElement('div'); el.className = `pt-an ${a.classe} eq-${a.equipe}`; el.innerHTML = a.html; caixa.appendChild(el);
+    atual = { el, cat: a.cat, prio: a.prio, fim: 0 };
     requestAnimationFrame(() => el.classList.add('entra'));
-    setTimeout(() => { el.classList.remove('entra'); el.classList.add('sai'); setTimeout(() => { el.remove(); tocando = false; mostrar(); }, 320); }, a.dur);
+    atual.fim = setTimeout(() => encerrar(el), a.dur);
   };
   const por = (a) => {
     // em velocidade alta só passam os anúncios importantes, para não cobrir o mapa
     if (!ativo || a.prio < (veloc >= 16 ? 6 : veloc >= 8 ? 4 : 1)) return;
-    fila.push(a); while (fila.length > 4) { fila.sort((x, y) => x.prio - y.prio); fila.shift(); } mostrar();
+    a.cat = catDe(a.titulo); a.t0 = Date.now();
+    // já existe um anúncio melhor da mesma categoria na tela ou na fila: este é repetitivo e não entra
+    if (atual && atual.cat === a.cat && atual.prio > a.prio) return;
+    if (fila.some((f) => f.cat === a.cat && f.prio > a.prio)) return;
+    // os menores da mesma categoria que esperam na fila ficam obsoletos
+    for (let i = fila.length - 1; i >= 0; i--) if (fila[i].cat === a.cat && fila[i].prio <= a.prio) fila.splice(i, 1);
+    fila.push(a);
+    // chegou algo bem mais importante (Triple Kill ou mais) enquanto um menor ainda aparece: corta o menor e passa direto; os pequenos esperam a vez e são trocados pelo maior
+    if (atual && atual.cat === a.cat && atual.prio < a.prio && a.prio >= 7) { clearTimeout(atual.fim); encerrar(atual.el); return; }
+    while (fila.length > 4) { fila.sort((x, y) => x.prio - y.prio); fila.shift(); }
+    mostrar();
   };
   const retrato = (P, id, eq, imgFallback) => {
     const u = id ? P.mapaUnidades.get(id) : null;
@@ -44,7 +63,7 @@ export function criarAnuncios(mapaEl) {
     return `<span class="an-ret ${eq}"><img src="img/${imgFallback}.webp" alt="" width="56" height="56" /></span>`;
   };
   const quadro = (P, { esq, dir, titulo, sub, equipe, classe, prio, dur }) => {
-    por({ equipe, classe, prio, dur, html: `${esq}<div class="an-meio"><b>${t(titulo)}</b>${sub ? `<small>${sub}</small>` : ''}</div>${dir || ''}` });
+    por({ equipe, classe, prio, dur, titulo, html: `${esq}<div class="an-meio"><b>${t(titulo)}</b>${sub ? `<small>${sub}</small>` : ''}</div>${dir || ''}` });
   };
   const imgObj = (src, eq) => `<span class="an-ret obj ${eq}"><img src="${src}" alt="" width="56" height="56" /></span>`;
   const nomeDe = (P, id) => P.mapaUnidades.get(id)?.campeao || '';
@@ -76,8 +95,8 @@ export function criarAnuncios(mapaEl) {
 
   return {
     definirVelocidade(v) { veloc = v; },
-    ativar(v) { ativo = v; if (!v) { fila.length = 0; caixa.innerHTML = ''; tocando = false; } },
-    reiniciar() { fila.length = 0; caixa.innerHTML = ''; tocando = false; multi.clear(); seq.clear(); },
+    ativar(v) { ativo = v; if (!v) { fila.length = 0; caixa.innerHTML = ''; atual = null; } },
+    reiniciar() { fila.length = 0; caixa.innerHTML = ''; atual = null; multi.clear(); seq.clear(); },
     evento(e, P) {
       const eq = e.equipe;
       if (e.tipo === 'abate') return aoAbate(e, P);
