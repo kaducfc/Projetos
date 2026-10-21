@@ -102,7 +102,7 @@ export const PAGINAS = [
   { id: 'partidas', t: 'Partidas e draft', r: 'Como se joga uma partida', cor: '#ef4444', corpo: () => `
     <p>Em cada confronto você joga <b>no navegador</b>:</p>
     ${passos('<b>Escolha de lado</b> (quando for sua vez): quem escolhe o lado decide quem começa os picks.', '<b>Draft:</b> bans e picks de campeões. Cada jogador rende mais com um campeão da posição dele e, melhor ainda, com um favorito de maestria.', '<b>Partida:</b> acompanhe o mapa, os objetivos e a estratégia do time.', '<b>Resultado:</b> quadro final com abates, dano, ouro, itens e visão.')}
-    ${lista('<b>MD1</b> = 1 mapa (fase de pontos); <b>MD3</b> = melhor de 3 (semifinais); <b>MD5</b> = melhor de 5 (final).', 'Cada jogador compra itens pensando no time inimigo: tanques fazem mais resistência contra o dano que mais sofrem; ADCs e magos buscam penetração contra muitos tanques.', 'Um campeão fora da posição do jogador perde eficiência.')}
+    ${lista('<b>MD1</b> = 1 mapa (fase de pontos); <b>MD3</b> = melhor de 3 (semifinais); <b>MD5</b> = melhor de 5 (final).', 'Cada jogador compra itens pensando no time inimigo.', 'Um campeão fora da posição do jogador perde eficiência.')}
     ${caixa('dica', 'A partida é decidida pelo <b>Poder do time</b>, pelo <b>draft</b> e pela <b>estratégia</b>. Times mais fortes vencem mais, mas zebras acontecem.')}
     ${faq(['Posso sair da partida no meio?', 'Se você não terminar até a meia-noite do dia da partida, ela conta como derrota por W.O. Jogue com tempo.'])}` },
 
