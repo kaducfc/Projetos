@@ -7,7 +7,7 @@ const JANELA_MULTI = 10; // segundos de jogo entre abates seguidos para contar c
 const MULTI = { 2: ['DOUBLE KILL!', 4], 3: ['TRIPLE KILL!', 7], 4: ['QUADRA KILL!', 8], 5: ['PENTAKILL!', 10] };
 const EPICO = { dragao: ['DRAGÃO ELIMINADO!', 6], anciao: ['DRAGÃO ANCIÃO ELIMINADO!', 8], arauto: ['ARAUTO ELIMINADO!', 6], barao: ['BARÃO NASHOR ELIMINADO!', 8] };
 // Abates seguidos sem morrer (como no jogo): 3, 4, 5, 6, 7 e 8 ou mais.
-const SERIE = { 3: ['KILLING SPREE!', 5], 4: ['RAMPAGE!', 6], 5: ['UNSTOPPABLE!', 7], 6: ['DOMINATING!', 8], 7: ['GODLIKE!', 9], 8: ['LEGENDARY!', 9.5] };
+const SERIE = { 3: ['SEQUÊNCIA DE ABATES!', 5], 4: ['FÚRIA!', 6], 5: ['IMPARÁVEL!', 7], 6: ['DOMINANDO!', 8], 7: ['DIVINO!', 9], 8: ['LENDÁRIO!', 9.5] };
 const outro = (eq) => (eq === 'azul' ? 'vermelho' : 'azul');
 
 export function criarAnuncios(mapaEl) {
