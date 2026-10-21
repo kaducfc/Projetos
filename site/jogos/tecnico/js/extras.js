@@ -131,7 +131,7 @@ export function viewRecrutar() {
     const bloq1 = r.saldo < precoUn(b) || livresN < 1 || C.S.ocupado; const bloq5 = r.saldo < preco5(b) || livresN < 5 || C.S.ocupado;
     return `<section class="tc-card tc-bau bau-${id}"><div class="arte"><img class="bau-img" src="img/baus/${id}-fechado.webp" alt="" /></div><h3>${C.esc(b.nome)}</h3>
       <ul class="tc-odds">${odds}</ul>
-      <small class="tc-mudo">Garantia: a cada ${cfg.pity_a_cada} baús sem Épico ou melhor, o próximo vem Épico ou melhor (faltam ${Math.max(0, cfg.pity_a_cada - garantia)}).</small>
+      <small class="tc-mudo">${b.garantia ? `Garantia: um ${RARIDADES[b.garantia.raridade].nome} a cada ${b.garantia.a_cada} baús (${Math.min(garantia, b.garantia.a_cada)}/${b.garantia.a_cada}). O contador zera quando sai ${b.garantia.raridade === 'mitico' ? 'um Mítico' : 'um Lendário ou Mítico'}.` : ''}</small>
       <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="recrutar" data-bau="${id}" data-qtd="1" ${bloq1 ? 'disabled' : ''}>Abrir 1 · <span class="tc-preco ${classe}">${C.fmt(precoUn(b))}</span></button>
       <button type="button" class="tc-btn ciano" data-act="recrutar" data-bau="${id}" data-qtd="5" ${bloq5 ? 'disabled' : ''}>Abrir 5 · <span class="tc-preco ${classe}">${C.fmt(preco5(b))}</span> <i class="tc-desc">-${Math.round(cfg.desconto_5 * 100)}%</i></button></div></section>`;
   }).join('');

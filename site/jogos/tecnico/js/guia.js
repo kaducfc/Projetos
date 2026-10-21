@@ -83,7 +83,7 @@ export const PAGINAS = [
   { id: 'recrutar', t: 'Recrutar (baús)', r: 'Como ganhar jogadores Legados', cor: '#f5cf5a', corpo: () => `
     <p>Os <b>baús</b> entregam Legados (e cópias). Pagos em <b>RC</b>.</p>
     ${tabela(['Baú', 'Preço', 'Chances'], ['<b>Básico</b>', '400 RC', 'Comum 55% · Raro 30% · Épico 12% · Lendário 2,7% · Mítico 0,3%'], ['<b>Premium</b>', '800 RC', 'Comum 20% · Raro 38% · Épico 28% · Lendário 11% · Mítico 3%'])}
-    ${lista('Dá para abrir <b>5 de uma vez</b> com <b>15% de desconto</b>.', 'Tem uma <b>garantia</b>: depois de 10 baús sem nada de Épico para cima, o próximo vem garantido com pelo menos Épico.', 'O jogador novo vem com contrato de cortesia de 12 semanas. Repetido vira <b>cópia</b> para estrelas.', 'A janela de abertura mostra os jogadores um por um, com som (dá para desligar em Configuração).')}
+    ${lista('Dá para abrir <b>5 de uma vez</b> com <b>15% de desconto</b>.', 'Cada baú tem a sua <b>garantia</b>: o <b>Básico</b> dá um <b>Lendário a cada 40</b> baús e o <b>Premium</b> um <b>Mítico a cada 30</b>. O contador de cada baú zera assim que sai a raridade da garantia (no Básico, Lendário ou Mítico), mesmo sem ser pela garantia. Ex.: 5 baús Premium abertos = 5/30; se no sexto sair um Mítico, volta para 0/30.', 'O jogador novo vem com contrato de cortesia de 12 semanas. Repetido vira <b>cópia</b> para estrelas.', 'A janela de abertura mostra os jogadores um por um, com som (dá para desligar em Configuração).')}
     ${caixa('atencao', 'O inventário precisa ter espaço (limite de 50 jogadores) para a quantidade de baús que você abrir.')}
     ${faq(['Quais são as chances de cada raridade?', 'Estão na tabela acima, que usa os mesmos números do jogo.'])}` },
 
