@@ -6,7 +6,8 @@ import { t } from '../../../../shared/i18n.js';
 const JANELA_MULTI = 10; // segundos de jogo entre abates seguidos para contar como multi-abate
 const MULTI = { 2: ['DOUBLE KILL!', 4], 3: ['TRIPLE KILL!', 7], 4: ['QUADRA KILL!', 8], 5: ['PENTAKILL!', 10] };
 const EPICO = { dragao: ['DRAGÃO ELIMINADO!', 6], anciao: ['DRAGÃO ANCIÃO ELIMINADO!', 8], arauto: ['ARAUTO ELIMINADO!', 6], barao: ['BARÃO NASHOR ELIMINADO!', 8] };
-const NOME_EQ = { azul: 'azul', vermelho: 'vermelho' };
+// Abates seguidos sem morrer (como no jogo): 3, 4, 5, 6, 7 e 8 ou mais.
+const SERIE = { 3: ['KILLING SPREE!', 5], 4: ['RAMPAGE!', 6], 5: ['UNSTOPPABLE!', 7], 6: ['DOMINATING!', 8], 7: ['GODLIKE!', 9], 8: ['LEGENDARY!', 9.5] };
 const outro = (eq) => (eq === 'azul' ? 'vermelho' : 'azul');
 
 export function criarAnuncios(mapaEl) {
@@ -25,7 +26,7 @@ export function criarAnuncios(mapaEl) {
   const por = (a) => {
     // em velocidade alta só passam os anúncios importantes, para não cobrir o mapa
     if (!ativo || a.prio < (veloc >= 16 ? 6 : veloc >= 8 ? 4 : 1)) return;
-    fila.push(a); while (fila.length > 3) { fila.sort((x, y) => x.prio - y.prio); fila.shift(); } mostrar();
+    fila.push(a); while (fila.length > 4) { fila.sort((x, y) => x.prio - y.prio); fila.shift(); } mostrar();
   };
   const retrato = (P, id, eq, imgFallback) => {
     const u = id ? P.mapaUnidades.get(id) : null;
@@ -50,9 +51,13 @@ export function criarAnuncios(mapaEl) {
       const esq = retrato(P, kid, eqK, 'minion_azul_frente'); const dir = retrato(P, e.vitima, eqV, 'minion_azul_frente');
       if (n >= 2) { const [tt, prio] = MULTI[Math.min(5, n)]; quadro(P, { esq, dir, titulo: tt, equipe: eqK, classe: n >= 4 ? 'epico' : 'multi', prio, dur: n >= 4 ? 3600 : 2800 }); }
       else if (vseq >= 3) quadro(P, { esq, dir, titulo: 'SHUTDOWN!', sub: `${vseq} ${t('abates seguidos')}`, equipe: eqK, classe: 'multi', prio: 5, dur: 2600 });
-      else quadro(P, { esq, dir, titulo: 'ABATE!', equipe: eqK, classe: 'abate', prio: 1, dur: 1700 });
+      else quadro(P, { esq, dir, titulo: 'ELIMINOU!', equipe: eqK, classe: 'abate', prio: 1, dur: 1700 });
     } else {
-      quadro(P, { esq: `<span class="an-ret ${eqK}"><img src="img/minion_${eqK}_frente.webp" alt="" width="56" height="56" /></span>`, dir: retrato(P, e.vitima, eqV, 'minion_azul_frente'), titulo: 'ABATE!', equipe: eqK, classe: 'abate', prio: 1, dur: 1700 });
+      quadro(P, { esq: `<span class="an-ret ${eqK}"><img src="img/minion_${eqK}_frente.webp" alt="" width="56" height="56" /></span>`, dir: retrato(P, e.vitima, eqV, 'minion_azul_frente'), titulo: 'ELIMINOU!', equipe: eqK, classe: 'abate', prio: 1, dur: 1700 });
+    }
+    if (k && k.tipo === 'campeao') {
+      const serie = seq.get(kid); const def = SERIE[Math.min(8, serie)];
+      if (serie >= 3 && def) quadro(P, { esq: retrato(P, kid, eqK, 'minion_azul_frente'), titulo: def[0], sub: `${serie} ${t('abates seguidos')}`, equipe: eqK, classe: def[1] >= 8 ? 'epico' : 'multi', prio: def[1], dur: def[1] >= 8 ? 3600 : 2800 });
     }
     if (ace) quadro(P, { esq: retrato(P, kid, eqK, 'nexus_azul'), titulo: 'ACE!', equipe: eqK, classe: 'epico', prio: 9, dur: 3200 });
   };
@@ -64,7 +69,7 @@ export function criarAnuncios(mapaEl) {
     evento(e, P) {
       const eq = e.equipe;
       if (e.tipo === 'abate') return aoAbate(e, P);
-      if (e.tipo === 'primeiro_abate') return quadro(P, { esq: retrato(P, e.campeao, eq), dir: retrato(P, e.vitima, outro(eq)), titulo: 'PRIMEIRO ABATE!', equipe: eq, classe: 'multi', prio: 5, dur: 2800 });
+      if (e.tipo === 'primeiro_abate') return quadro(P, { esq: retrato(P, e.campeao, eq), dir: retrato(P, e.vitima, outro(eq)), titulo: 'FIRST BLOOD!', equipe: eq, classe: 'multi', prio: 5, dur: 2800 });
       if (e.tipo === 'torre_destruida' || e.tipo === 'inibidor_destruido') {
         const dono = outro(eq); const torre = e.tipo === 'torre_destruida';
         return quadro(P, { esq: retrato(P, e.abatedor, eq, `minion_${eq}_frente`), dir: imgObj(torre ? `img/torre_${dono}.webp` : `img/inibidor_${dono}.webp`, dono), titulo: torre ? 'TORRE DESTRUÍDA!' : 'INIBIDOR DESTRUÍDO!', equipe: eq, classe: 'obj', prio: torre ? 4 : 5, dur: 2400 });
