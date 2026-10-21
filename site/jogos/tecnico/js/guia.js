@@ -1,4 +1,7 @@
 // Guia do jogo: páginas por tema, em linguagem simples. Só texto (nada aqui chama o servidor); o estado é só a página aberta.
+// Tradução: cada parágrafo, item de lista, título, pergunta, resposta e célula é traduzido inteiro (com as marcas <b> dentro), por
+// traduzirHtml(), usando o dicionário do site (shared/i18n/src/tecnico-guia-*.mjs). O texto em português é a chave.
+import { t } from '../../../shared/i18n.js';
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const caixa = (tipo, t) => `<p class="gd-caixa ${tipo}"><b>${tipo === 'dica' ? 'Dica' : tipo === 'atencao' ? 'Atenção' : 'Exemplo'}</b> ${t}</p>`;
 const lista = (...it) => `<ul class="gd-lista">${it.map((x) => `<li>${x}</li>`).join('')}</ul>`;
@@ -33,7 +36,7 @@ export const PAGINAS = [
     <p>O <b>Poder</b> é o número que resume a força de um jogador. É uma média dos 5 atributos.</p>
     <h4>Os atributos</h4>
     ${tabela(['Atributo', 'O que representa'], ['Mecânica', 'Habilidade com o campeão: acertar skills, trocar golpes, reflexo.'], ['Fase de rotas', 'Desempenho nos primeiros minutos: farm, trocas e vantagem na lane.'], ['Macro', 'Leitura de jogo: objetivos, rotação, mapa e tomada de decisão.'], ['Teamfight', 'Posicionamento e execução nas lutas em equipe.'], ['Mental', 'Frieza sob pressão e consistência.'], ['Fama', 'Só mexe no preço e na audiência; não muda o Poder.'])}
-    ${tabela(['Poder', 'Escudo'], ['95 ou mais', 'Challenger'], ['90 a 94', 'Diamante'], ['80 a 89', 'Platina'], ['70 a 79', 'Ouro'], ['abaixo de 70', 'Prata'])}
+    ${tabela(['Poder', 'Selo'], ['95 ou mais', 'Desafiante'], ['90 a 94', 'Diamante'], ['80 a 89', 'Platina'], ['70 a 79', 'Ouro'], ['abaixo de 70', 'Prata'])}
     <h4>O Poder do time em campo</h4>
     <p>É a média do Poder dos 5 titulares <b>na posição em que jogam</b>, e mais alguns bônus:</p>
     ${lista('<b>Estrelas:</b> +5% de eficiência por estrela (até 10 estrelas).', '<b>Comunicação (idiomas):</b> quando os titulares falam o mesmo idioma, o time rende mais e a sinergia sobe.', '<b>Sinergia:</b> cresce com o tempo jogando juntos e cai quando você troca titulares (no máximo +3 de Poder).', '<b>Maestria:</b> jogador com campeão favorito de maestria alta ganha Poder com aquele campeão.')}
@@ -109,7 +112,7 @@ export const PAGINAS = [
   { id: 'marketing', t: 'Marketing e patrocínios', r: 'Renda passiva em créditos', cor: '#a78bfa', corpo: () => `
     <p>O Marketing gera <b>créditos mesmo quando você está fora</b>. A renda fica guardada num “cofre” (até <b>8 horas</b>) até você apertar <b>Resgatar</b>.</p>
     ${lista('<b>Fama:</b> sobe com vitórias, títulos, boa colocação e astros no elenco; abre patrocínios melhores.', '<b>Nível de marketing:</b> aumenta o bônus na renda e quantos patrocínios você pode ter ao mesmo tempo.', '<b>Audiência:</b> vem da fama dos jogadores (titulares contam inteiros, reservas contam menos) e aumenta a renda.', '<b>Patrocinadores:</b> contratos de marcas que pagam créditos fixos por minuto.', '<b>Campanhas:</b> multiplicam <b>toda a renda</b> por algumas horas. Confira o lucro estimado antes de ativar.')}
-    ${caixa('dica', 'Entre todos os dias, resgate antes de dormir ou antes de sair: o cofre enche e para de acumular.')}
+    ${caixa('dica', 'Resgate todos os dias, antes de dormir ou de sair: quando o cofre enche, ele para de acumular.')}
     ${faq(['Quanto eu ganho por hora?', 'A tela de Marketing mostra a renda por minuto, por hora e em 24 horas.'], ['Vale a pena ativar campanha?', 'Depende da sua renda: a tela mostra o lucro ou prejuízo estimado de cada campanha.'])}` },
 
   { id: 'rank', t: 'Rank, histórico e mais', r: 'Onde ver o que aconteceu', cor: '#94a3b8', corpo: () => `
@@ -134,19 +137,25 @@ export const PAGINAS = [
 
 export const paginaPor = (id) => PAGINAS.find((p) => p.id === id);
 
+// Blocos de texto da página (p, li, h4, summary, th, td): cada um é uma unidade de tradução.
+const BLOCO = /<(p|li|h4|summary|th|td)(\s[^>]*)?>([\s\S]*?)<\/\1>/g;
+export const blocosDe = (html) => [...html.matchAll(BLOCO)].map((m) => m[3]);
+export const traduzirHtml = (html, f = t) => html.replace(BLOCO, (m, tag, attrs = '', inner) => `<${tag}${attrs}>${f(inner)}</${tag}>`);
+const textoPlano = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+
 // Estado: S.guia = { pag: id | null, busca: '' }
 export function viewGuia(S) {
   const g = S.guia || (S.guia = { pag: null, busca: '' });
   const p = g.pag ? paginaPor(g.pag) : null;
   if (!p) {
     const q = g.busca.trim().toLowerCase();
-    const lista = PAGINAS.filter((x) => !q || `${x.t} ${x.r} ${x.corpo().replace(/<[^>]+>/g, ' ')}`.toLowerCase().includes(q));
+    const lista = PAGINAS.filter((x) => !q || `${t(x.t)} ${t(x.r)} ${textoPlano(traduzirHtml(x.corpo()))}`.toLowerCase().includes(q));
     return `<div class="gd"><header class="gd-topo"><div><p class="tc-eyebrow">Guia do jogo</p><h1>Tudo para jogar bem</h1><p class="tc-mudo">Escolha um tema. Cada página é curta e tem as dúvidas mais comuns no final.</p></div>
       <input class="tc-input gd-busca" type="search" name="guia_busca" data-guia-busca placeholder="Buscar no guia (ex.: salário, baú, W.O.)" value="${esc(g.busca)}" aria-label="Buscar no guia" /></header>
-      <div class="gd-grade">${lista.map((x, i) => `<button type="button" class="gd-tema" style="--c:${x.cor}" data-act="guia-pag" data-id="${x.id}"><small>${String(PAGINAS.indexOf(x) + 1).padStart(2, '0')}</small><b>${esc(x.t)}</b><span>${esc(x.r)}</span></button>`).join('') || '<p class="tc-mudo">Nada encontrado. Tente outra palavra.</p>'}</div></div>`;
+      <div class="gd-grade">${lista.map((x, i) => `<button type="button" class="gd-tema" style="--c:${x.cor}" data-act="guia-pag" data-id="${x.id}"><small>${String(PAGINAS.indexOf(x) + 1).padStart(2, '0')}</small><b>${esc(t(x.t))}</b><span>${esc(t(x.r))}</span></button>`).join('') || '<p class="tc-mudo">Nada encontrado. Tente outra palavra.</p>'}</div></div>`;
   }
   const i = PAGINAS.indexOf(p); const ant = PAGINAS[i - 1]; const prox = PAGINAS[i + 1];
   return `<div class="gd gd-pag" style="--c:${p.cor}"><button type="button" class="tc-btn peq" data-act="guia-pag" data-id="">← Todos os temas</button>
-    <article class="gd-art"><p class="tc-eyebrow">Tema ${String(i + 1).padStart(2, '0')} de ${PAGINAS.length}</p><h1>${esc(p.t)}</h1><p class="gd-sub">${esc(p.r)}</p>${p.corpo()}</article>
-    <nav class="gd-nav">${ant ? `<button type="button" class="tc-btn" data-act="guia-pag" data-id="${ant.id}">← ${esc(ant.t)}</button>` : '<span></span>'}${prox ? `<button type="button" class="tc-btn ouro" data-act="guia-pag" data-id="${prox.id}">${esc(prox.t)} →</button>` : '<span></span>'}</nav></div>`;
+    <article class="gd-art"><p class="tc-eyebrow">Tema ${String(i + 1).padStart(2, '0')} de ${PAGINAS.length}</p><h1>${esc(t(p.t))}</h1><p class="gd-sub">${esc(t(p.r))}</p>${traduzirHtml(p.corpo())}</article>
+    <nav class="gd-nav">${ant ? `<button type="button" class="tc-btn" data-act="guia-pag" data-id="${ant.id}">← ${esc(t(ant.t))}</button>` : '<span></span>'}${prox ? `<button type="button" class="tc-btn ouro" data-act="guia-pag" data-id="${prox.id}">${esc(t(prox.t))} →</button>` : '<span></span>'}</nav></div>`;
 }

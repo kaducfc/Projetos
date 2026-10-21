@@ -1,6 +1,7 @@
 // Treinamento, Amistoso e Recrutar (baús de Legados). Telas e ações do menu lateral.
 // Recebe de main.js (iniciarExtras) o estado e os ajudantes; tudo que vale (custos, sorteio, XP) vem do servidor.
 import * as platform from '../../../shared/platform.js';
+import { localeAtual } from '../../../shared/i18n.js';
 import { escudoPoder } from './regras.js';
 import { retratoSvg, escudoOrg, iconeVaga } from './art.js';
 import { abrirBau } from './bau-anim.js';
@@ -126,7 +127,7 @@ export function viewRecrutar() {
   const rc = (cfg.moeda || 'rc') === 'rc'; const unid = rc ? 'RC' : 'cr.'; const precoUn = (b) => (rc ? b.rc : b.creditos); const classe = rc ? 'rc' : 'cr';
   const preco5 = (b) => Math.round(precoUn(b) * 5 * (1 - cfg.desconto_5));
   const baus = Object.entries(cfg.baus).map(([id, b]) => {
-    const odds = ORDEM_RAR.map((k) => `<li class="r-${k}"><span>${RARIDADES[k].nome}</span><b>${(b.odds[k] ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</b></li>`).join('');
+    const odds = ORDEM_RAR.map((k) => `<li class="r-${k}"><span>${RARIDADES[k].nome}</span><b>${(b.odds[k] ?? 0).toLocaleString(localeAtual(), { maximumFractionDigits: 1 })}%</b></li>`).join('');
     const garantia = r.garantia?.[id] ?? 0;
     const bloq1 = r.saldo < precoUn(b) || livresN < 1 || C.S.ocupado; const bloq5 = r.saldo < preco5(b) || livresN < 5 || C.S.ocupado;
     return `<section class="tc-card tc-bau bau-${id}"><div class="arte"><img class="bau-img" src="img/baus/${id}-fechado.webp" alt="" /></div><h3>${C.esc(b.nome)}</h3>

@@ -1,6 +1,7 @@
 // Central de Marketing e Patrocínios: renda passiva em créditos. Tudo que vale (receita, fama, contratos, offline) é calculado no servidor
 // (SQL 0116); aqui só se mostra o estado e se chamam as ações. O contador da tela é só visual: o saldo real vem do servidor.
 import * as platform from '../../../shared/platform.js';
+import { localeAtual } from '../../../shared/i18n.js';
 
 const api = platform.tecnico;
 let C = null; // contexto de main.js
@@ -21,13 +22,13 @@ export const MOTIVOS = {
   mkt_receita: 'Marketing', mkt_melhoria: 'Marketing · Melhoria', mkt_contrato: 'Marketing · Patrocínio', mkt_renovacao: 'Marketing · Renovação de patrocínio', mkt_campanha: 'Marketing · Campanha',
 };
 
-const pct = (v) => `${(v * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`;
-const num1 = (v) => Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+const pct = (v) => `${(v * 100).toLocaleString(localeAtual(), { maximumFractionDigits: 1 })}%`;
+const num1 = (v) => Number(v).toLocaleString(localeAtual(), { maximumFractionDigits: 1 });
 const dur = (ms) => {
   const s = Math.max(0, Math.round(ms / 1000)); const d = Math.floor(s / 86400); const h = Math.floor((s % 86400) / 3600); const m = Math.floor((s % 3600) / 60);
   return d ? `${d}d ${h}h` : h ? `${h}h ${String(m).padStart(2, '0')}min` : `${m}min`;
 };
-const quando = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+const quando = (iso) => new Date(iso).toLocaleString(localeAtual(), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
 // ------------------------------------------------------------------ carga
 export async function carregarMarketing(entrada = false) {

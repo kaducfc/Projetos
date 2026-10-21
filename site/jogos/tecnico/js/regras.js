@@ -1,6 +1,7 @@
 // Regras e rótulos do simulador de técnico, só para exibição.
 // A fonte da verdade é o servidor (SQL 0085 a 0089); as contas aqui servem para mostrar prévias e são
 // conferidas contra o SQL em tests/tecnico.test.mjs.
+import { localeAtual } from '../../../shared/i18n.js';
 export const VAGAS = ['top', 'selva', 'meio', 'atirador', 'suporte'];
 export const NOME_VAGA = { top: 'Topo', selva: 'Selva', meio: 'Meio', atirador: 'Atirador', suporte: 'Suporte' };
 export const SIGLA_VAGA = { top: 'TOP', selva: 'SEL', meio: 'MID', atirador: 'ADC', suporte: 'SUP' };
@@ -43,7 +44,7 @@ export function preco(p, potencial, fama, idade) {
 }
 export const salarioDe = (pr) => Math.max(300, Math.round((pr * 0.015) / 100) * 100);
 
-export const fmt = (n) => Number(n || 0).toLocaleString('pt-BR');
+export const fmt = (n) => Number(n || 0).toLocaleString(localeAtual());
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const taxaDe = (precoRc) => Math.floor((precoRc * TAXA_MERCADO_PCT) / 100);
 // Cor do Poder (faixas), para os selos e barras.

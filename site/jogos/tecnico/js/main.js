@@ -3,6 +3,7 @@
 // O servidor decide tudo (saldos, propriedade, partidas, premiações); esta tela só mostra e pede ações.
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
+import { getLang, localeAtual, onLangChange } from '../../../shared/i18n.js';
 import { mountSiteFooter } from '../../../shared/footer.js';
 import { gameById } from '../../../shared/config.js';
 import {
@@ -346,7 +347,15 @@ function hojeIso() {
   const [y, m, d] = c.inicio_semana.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d + c.dia - 1)).toISOString().slice(0, 10);
 }
-const ORD = (n) => `${n}º`;
+// Ordinal no idioma escolhido: 1º, 1st, 1., 1.º, 1er.
+const ORD = (n) => {
+  const l = getLang();
+  if (l === 'en') return `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th'}`;
+  if (l === 'de') return `${n}.`;
+  if (l === 'es') return `${n}.º`;
+  if (l === 'fr') return n === 1 ? '1er' : `${n}e`;
+  return `${n}º`;
+};
 // Dia sem partidas suas (por exemplo, já eliminado): o técnico assiste ao campeonato de casa.
 const noticiaEmDia = () => ({ cls: 'neutro', selo: '•', banner: temBanner('emdia'), estiloBanner: 'azul', titulo: 'Tudo em dia', texto: 'Você não tem partidas hoje. Acompanhe o campeonato de casa e prepare o elenco.' });
 function noticiaDestaque(minhas, hoje, minha) {
@@ -378,7 +387,7 @@ function noticiaDestaque(minhas, hoje, minha) {
   const vit = deHoje.filter(venci).length; const der = deHoje.length - vit;
   const titulo = deHoje.length > 1 ? (vit === deHoje.length ? 'Duas vitórias hoje!' : der === deHoje.length ? 'Dia difícil' : 'Uma vitória e uma derrota') : (vit ? 'Vitória!' : 'Derrota');
   const linhas = deHoje.map((x) => `${venci(x) ? 'Venceu' : 'Perdeu'} ${venci(x) ? 'de' : 'para'} ${adv(x)} (${placar(x)})`).join(' · ');
-  return { cls: der === 0 ? 'bom' : vit === 0 ? 'ruim' : 'neutro', banner: der === 0 ? temBanner('vitoria') : vit === 0 ? temBanner('derrota') : temBanner('misto'), estiloBanner: der === 0 ? 'verde' : vit === 0 ? 'vermelho' : 'azul', selo: der === 0 ? '✔' : vit === 0 ? '✖' : '•', titulo, texto: `${linhas}.${minha ? ` Você está em ${ORD(minha.pos)} lugar, com ${minha.pontos} pt${minha.pontos === 1 ? '' : 's'}.` : ''}` };
+  return { cls: der === 0 ? 'bom' : vit === 0 ? 'ruim' : 'neutro', banner: der === 0 ? temBanner('vitoria') : vit === 0 ? temBanner('derrota') : temBanner('misto'), estiloBanner: der === 0 ? 'verde' : vit === 0 ? 'vermelho' : 'azul', selo: der === 0 ? '✔' : vit === 0 ? '✖' : '•', titulo, texto: `${linhas}.${minha ? ` Você está em ${ORD(minha.pos)} lugar, com ${minha.pontos} pts.` : ''}` };
 }
 // Banner do confronto do dia: time azul à esquerda, vermelho à direita (as faixas livres do fundo), VS no centro e a data na base.
 function confrontoBanner(p, meu) {
@@ -459,7 +468,7 @@ function tabelaHtml(tab, meuId, compacta = false) {
   </tbody></table></div>`;
 }
 
-function dataCurta(d) { const [, m, dd] = String(d).split('-'); return `${dd}/${m}`; }
+function dataCurta(d) { const [, m, dd] = String(d).split('-'); return getLang() === 'de' ? `${dd}.${m}.` : `${dd}/${m}`; }
 function vsCard(p) {
   return `<div class="tc-vs"><div class="lado">${escudoOrg(p.a, 84)}<b>${esc(p.a.nome)}</b></div><div class="x">VS</div><div class="lado">${escudoOrg(p.b, 84)}<b>${esc(p.b.nome)}</b></div></div>
     <p class="tc-vs-info">${dataCurta(p.dia)} · ${p.fase === 'rodada' ? `rodada ${p.rodada}` : FASES[p.fase] || ''} · melhor de ${p.formato}</p>`;
@@ -679,7 +688,7 @@ function viewHist() {
   return `<div class="tc-grade2">
     <section class="tc-card"><h3>Transferências e contratos</h3>${h.transferencias.length ? `<table class="tc-tabela"><tbody>${h.transferencias.slice(0, 20).map((t) => `<tr><td><b>${esc(t.jogador)}</b><br><span class="tc-mudo tc-peq">${tipos[t.tipo] || t.tipo}${t.de ? ` · de ${esc(t.de)}` : ''}${t.para ? ` · para ${esc(t.para)}` : ''}</span></td><td class="n">${t.valor ? `<span class="tc-preco ${t.moeda === 'rc' ? 'rc' : 'cr'}">${fmt(t.valor)}</span>` : '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Nada ainda.</p>'}</section>
     <div style="display:flex;flex-direction:column;gap:16px">
-      <section class="tc-card"><h3>Premiações</h3>${h.premios.length ? `<table class="tc-tabela"><tbody>${h.premios.map((p) => `<tr><td>${esc(p.liga)}<br><span class="tc-mudo tc-peq">${p.posicao}º lugar${p.pdr != null ? ` · ${p.pdr > 0 ? '+' : ''}${p.pdr} PDR` : ''}</span></td><td class="n"><span class="tc-preco cr">${fmt(p.creditos)}</span></td></tr>`).join('')}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Sem premiações ainda.</p>'}</section>
+      <section class="tc-card"><h3>Premiações</h3>${h.premios.length ? `<table class="tc-tabela"><tbody>${h.premios.map((p) => `<tr><td>${esc(p.liga)}<br><span class="tc-mudo tc-peq">${ORD(p.posicao)} lugar${p.pdr != null ? ` · ${p.pdr > 0 ? '+' : ''}${p.pdr} PDR` : ''}</span></td><td class="n"><span class="tc-preco cr">${fmt(p.creditos)}</span></td></tr>`).join('')}</tbody></table>` : '<p class="tc-mudo" style="margin:0">Sem premiações ainda.</p>'}</section>
       <section class="tc-card"><h3>Troféus</h3>${h.trofeus.length ? `${trofeusLista(h.trofeus)}` : '<p class="tc-mudo" style="margin:0">Nenhum troféu ainda.</p>'}</section>
       <section class="tc-card"><h3>Finanças</h3>${financasHtml(h.financas)}</section></div></div>
     <section class="tc-card"><h3>Partidas</h3>${h.partidas.length ? `<div class="tc-lista">${h.partidas.slice(0, 10).map((p) => partidaLinha(p, false, true)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Nenhuma partida disputada.</p>'}</section>`;
@@ -719,7 +728,7 @@ function viewPers() {
 }
 
 // ------------------------------------------------------------------ modais
-const dataHora = (iso) => new Date(iso).toLocaleDateString('pt-BR') + ' ' + new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+const dataHora = (iso) => new Date(iso).toLocaleDateString(localeAtual()) + ' ' + new Date(iso).toLocaleTimeString(localeAtual(), { hour: '2-digit', minute: '2-digit' });
 // Janela de Avisos: Novidades (publicadas pelos administradores) e avisos pessoais do time.
 function avisosHtml(m) {
   const d = m.d; if (!d) return '<p class="tc-carregando">Carregando…</p>';
@@ -1165,6 +1174,7 @@ document.addEventListener('keydown', (e) => {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('tr.lnk')) { e.preventDefault(); e.target.click(); }
 });
 
+onLangChange(() => { if (S.meu) render(); }); // textos montados em código (Guia, ordinais, números) usam o idioma na hora de desenhar
 iniciarAdm({ S, esc, agir, toast, render });
 iniciarMarketing({ S, esc, fmt, IMG, agir, render, nomeVaga: (v) => NOME_VAGA[v] || v, atualizarMeu: async () => { S.meu = await api.meu(); if (S.meu.org) S.painel = await api.painel(); } });
 iniciarExtras({
