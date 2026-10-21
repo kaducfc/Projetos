@@ -193,7 +193,7 @@ function estrelasHtml(j) {
 function cartao(j, { tit = false, extra = '', acao = 'ficha', dados = '' } = {}) {
   const c = corPoder(j.poder);
   const resta = semanasRestantes(j);
-  return `<button type="button" class="tc-jog${j.raridade ? ` r-${j.raridade}` : ''}" data-act="${acao}" data-id="${j.id}" ${dados} style="--c:${c}">
+  return `<button type="button" class="tc-jog${j.raridade ? ` r-${j.raridade}` : ''}${S.massa?.sel.has(String(j.id)) ? ' sel' : ''}" data-act="${acao}" data-id="${j.id}" ${dados} style="--c:${c}">
     <div class="foto">${retratoSvg(j, 160)}<span class="vg">${iconeVaga(j.pos)}</span>${escudoHtml(j.poder)}</div>
     <div class="inf">
       <span class="nm">${esc(j.nome)}${j.ficticio === false ? ' <i class="tc-estrela" title="Jogador Legado">◆</i>' : ''}</span><span class="pos">${esc(NOME_VAGA[j.pos])}</span>
@@ -511,7 +511,7 @@ function viewElenco() {
       ${reservas.length ? `<div class="tc-jogs">${reservas.map((j) => cartao(j)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Sem reservas. Contrate jogadores no Mercado.</p>'}</section>
     <section class="tc-card"><h3>Inventário<span class="dir">${el.length}/${ELENCO_MAX} jogadores</span></h3>
       <p class="tc-mudo tc-peq" style="margin:0 0 8px">Jogadores guardados para quando você precisar. As 5 melhores reservas (por Poder) ficam à mostra; o resto fica aqui. Repetidos de Legado viram cópia e não ocupam espaço.</p>
-      ${guardados.length ? `${barraOrdemInventario()}<div class="tc-jogs">${ordenarInventario(guardados).map((j) => cartao(j)).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Nenhum jogador guardado.</p>'}</section>`;
+      ${guardados.length ? `${barraOrdemInventario()}${barraMassa(guardados)}<div class="tc-jogs">${ordenarInventario(guardados).map((j) => (S.massa ? cartao(j, { acao: 'massa-sel' }) : cartao(j))).join('')}</div>` : '<p class="tc-mudo" style="margin:0">Nenhum jogador guardado.</p>'}</section>`;
 }
 
 // ------------------------------------------------------------------ contratações
@@ -775,11 +775,24 @@ function modalHtml() {
   else if (m.t === 'recrutar') corpo = modalRecrutar(m);
   else if (m.t === 'mkt_resumo') corpo = modalMktResumo(m);
   else if (m.t === 'demitir') corpo = demitirHtml(m);
+  else if (m.t === 'demitir-massa') corpo = demitirMassaHtml(m);
   else if (m.t === 'avisos') corpo = avisosHtml(m);
   else if (m.t === 'calendario') corpo = calendarioHtml(m);
   else if (m.t === 'rank-time') corpo = rankTimeHtml(m);
   else if (m.t === 'config') corpo = configHtml(m);
   return `<div class="tc-fundo" data-act="fechar-fundo"><div class="tc-modal${m.t === 'rank-time' ? ' larga' : ''}" role="dialog" aria-modal="true"><button type="button" class="x" data-act="fechar" aria-label="Fechar">×</button>${corpo}</div></div>`;
+}
+function barraMassa(guardados) {
+  if (!S.massa) return '<div class="tc-massa"><button type="button" class="tc-btn perigo" data-act="massa-abrir">Demitir em massa</button></div>';
+  const n = S.massa.sel.size;
+  return `<div class="tc-massa on"><span><b>${n}</b> ${t('selecionado(s)')}</span><button type="button" class="tc-btn" data-act="massa-todos">${n >= guardados.length ? t('Limpar seleção') : t('Selecionar todos')}</button><button type="button" class="tc-btn perigo" data-act="massa-confirmar" ${n ? '' : 'disabled'}>${t('Demitir {n}', { n })}</button><button type="button" class="tc-btn" data-act="massa-cancelar">Cancelar</button></div>`;
+}
+function demitirMassaHtml(m) {
+  const lista = (S.meu.elenco || []).filter((j) => m.ids.includes(String(j.id)));
+  return `<h2>Demitir em massa</h2>
+    <p class="tc-mudo tc-peq">${t('Você vai demitir {n} jogador(es) do inventário e receber fragmentos de jogador por cada um. Esta ação não pode ser desfeita.', { n: lista.length })}</p>
+    <ul class="tc-lista-ul">${lista.map((j) => `<li>${esc(j.nome)} · ${t('Poder')} ${j.poder}${j.estrelas > 0 ? ` · ${j.estrelas}★` : ''}</li>`).join('')}</ul>
+    <div class="tc-acoes"><button type="button" class="tc-btn perigo" data-act="massa-executar" ${S.ocupado ? 'disabled' : ''}>${t('Demitir {n}', { n: lista.length })}</button><button type="button" class="tc-btn" data-act="massa-cancelar-modal">Cancelar</button></div>`;
 }
 function demitirHtml(m) {
   const j = m.j; const ganho = j.frag_demissao || 0; const atual = S.meu.org.fragmentos || 0; const base = j.frag_base || 0;
@@ -1081,6 +1094,25 @@ document.addEventListener('click', async (e) => {
     if (!def) S.invOrd = { k: null, dir: 'desc' };
     else S.invOrd = S.invOrd.k === k ? { k, dir: S.invOrd.dir === 'desc' ? 'asc' : 'desc' } : { k, dir: def[3] };
     render(); return;
+  }
+  if (act === 'massa-abrir') { S.massa = { sel: new Set() }; render(); return; }
+  if (act === 'massa-cancelar') { S.massa = null; render(); return; }
+  if (act === 'massa-sel') { const id = b.dataset.id; if (S.massa.sel.has(id)) S.massa.sel.delete(id); else S.massa.sel.add(id); render(); return; }
+  if (act === 'massa-todos') {
+    const ativos = new Set(S.meu.ativos || []); const g = (S.meu.elenco || []).filter((j) => !j.slot && !ativos.has(j.id));
+    S.massa.sel = S.massa.sel.size >= g.length ? new Set() : new Set(g.map((j) => String(j.id))); render(); return;
+  }
+  if (act === 'massa-confirmar') { S.modal = { t: 'demitir-massa', ids: [...S.massa.sel] }; render(); return; }
+  if (act === 'massa-cancelar-modal') { S.modal = null; render(); return; }
+  if (act === 'massa-executar') {
+    const ids = (S.meu.elenco || []).filter((j) => S.modal.ids.includes(String(j.id))).map((j) => j.id); let feitos = 0; let frag = 0; let erro = null;
+    const r = await agir(async () => {
+      for (const id of ids) { try { const x = await api.demitir(id); feitos++; frag += x?.fragmentos_ganhos || 0; } catch (e) { erro = e; break; } }
+      return { feitos, frag };
+    }, { ok: () => t('{n} jogador(es) demitido(s): +{f} fragmentos de jogador.', { n: feitos, f: fmt(frag) }) });
+    if (erro) toast(erro.message || 'Não foi possível concluir.', true);
+    S.massa = null; S.modal = null; render();
+    return;
   }
   if (act === 'demitir') { S.modal = { t: 'demitir', j: S.modal.j, qtd: S.modal.j.copias || 0 }; render(); return; }
   if (act === 'cop-menos' || act === 'cop-mais' || act === 'cop-todas') {

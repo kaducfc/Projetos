@@ -1134,3 +1134,9 @@ html, body { overflow-x: clip; }
   .tc-filtros label:first-child { grid-column: span 2; }
   .tc-filtros input, .tc-filtros select, .tc-card .tc-filtros label select, .tc-card .tc-filtros label input { min-height: 36px; padding: 6px 7px; }
 }
+
+.tc-massa { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 10px; }
+.tc-massa.on { position: sticky; top: 0; z-index: 15; padding: 8px 10px; background: #0b1f3df2; border: 1px solid #b91c1c; border-radius: 8px; }
+.tc-massa.on > span { margin-right: auto; }
+.tc-jog.sel { outline: 3px solid #ef4444; outline-offset: -3px; filter: brightness(1.1); }
+.tc-jog.sel::after { content: '✓'; position: absolute; top: 6px; right: 8px; z-index: 3; width: 24px; height: 24px; border-radius: 50%; background: #ef4444; color: #fff; font-weight: 800; display: grid; place-items: center; clip-path: none; }
