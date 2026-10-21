@@ -1,7 +1,0 @@
-<!doctype html><meta charset=utf-8><link rel=stylesheet href=css/style.css><body style="background:#06101f;padding:16px;width:420px"><div class="tc" id=r></div>
-<script type=module>
-import { textoHtml, TEXTO_PADRAO, carregarFontes, txClone } from './js/icone.js?v=3';
-await carregarFontes?.();
-const tx={...txClone(TEXTO_PADRAO),t:'FENIX',f:5,c:['#ffffff','#ff3b30'],ow:3,oc:'#400',sh:2};
-const li=(v)=>`<div class="ch-t ${v?'v':'p'}">${textoHtml(tx,26)}<span>Fenix</span><b>${v?3:1}</b></div>`;
-document.getElementById('r').innerHTML=li(1)+li(0);</script>
