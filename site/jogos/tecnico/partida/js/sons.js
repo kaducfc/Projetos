@@ -9,21 +9,23 @@ function ruido(ac, dur) {
   const s = ac.createBufferSource(); s.buffer = b; return s;
 }
 
-export function somDraft(tipo) {
+// `lado` ('azul' | 'vermelho') muda o timbre de ban e pick de forma sutil: o azul é um pouco mais agudo e brilhante, o vermelho um pouco mais grave e seco.
+export function somDraft(tipo, lado = 'azul') {
   if (!somLigado()) return;
   const ac = audio(); if (!ac) return; const t = ac.currentTime;
   const saida = (v, ini, fim) => { const g = ac.createGain(); g.gain.setValueAtTime(0.0001, ini); g.gain.exponentialRampToValueAtTime(v, ini + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, fim); g.connect(ac.destination); return g; };
   const nota = (tipoOnda, f0, f1, ini, dur, v) => { const o = ac.createOscillator(); o.type = tipoOnda; o.frequency.setValueAtTime(f0, ini); if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, ini + dur); o.connect(saida(v, ini, ini + dur)); o.start(ini); o.stop(ini + dur + 0.05); };
+  const az = lado !== 'vermelho'; const k = az ? 1 : 0.89; // fator de afinação
   const sopro = (filtro, freq, ini, dur, v) => { const n = ruido(ac, dur); const f = ac.createBiquadFilter(); f.type = filtro; f.frequency.value = freq; n.connect(f); f.connect(saida(v, ini, ini + dur)); n.start(ini); };
-  if (tipo === 'ban') { // golpe grave que "nega": batida surda, estalo metálico e um tom que desaba
-    nota('sine', 150, 38, t, 0.45, 0.4);
-    nota('sawtooth', 320, 70, t, 0.42, 0.1);
-    sopro('bandpass', 1800, t, 0.18, 0.16);
-    nota('square', 110, 80, t + 0.08, 0.3, 0.05);
-  } else if (tipo === 'pick') { // "trava" brilhante: clique, duas notas que sobem e um brilho agudo
-    sopro('highpass', 4000, t, 0.05, 0.12);
-    nota('triangle', 523, 523, t, 0.28, 0.12); nota('triangle', 784, 784, t + 0.08, 0.34, 0.12); nota('triangle', 1047, 1047, t + 0.16, 0.5, 0.09);
-    nota('sine', 2093, 2093, t + 0.16, 0.6, 0.035);
+  if (tipo === 'ban') { // discreto: um "toc" macio e abafado, com uma nota curta que cai de leve
+    nota('sine', 190 * k, 95 * k, t, 0.22, 0.14);
+    nota('triangle', 330 * k, 220 * k, t + 0.02, 0.2, 0.04);
+    sopro('lowpass', az ? 900 : 650, t, 0.08, 0.05);
+  } else if (tipo === 'pick') { // "trava" leve: duas notas que sobem e um brilho curto; o azul é mais cristalino, o vermelho mais cheio
+    sopro('highpass', az ? 4500 : 3000, t, 0.04, 0.07);
+    const f = az ? [523, 784, 1047] : [466, 698, 932];
+    nota('triangle', f[0], f[0], t, 0.26, 0.1); nota('triangle', f[1], f[1], t + 0.08, 0.32, 0.1); nota(az ? 'sine' : 'triangle', f[2], f[2], t + 0.16, 0.45, az ? 0.07 : 0.06);
+    if (az) nota('sine', 2093, 2093, t + 0.16, 0.5, 0.03);
   } else if (tipo === 'vez') { // sua vez: sino suave de duas notas
     nota('sine', 659, 659, t, 0.45, 0.1); nota('sine', 988, 988, t + 0.12, 0.6, 0.1); nota('sine', 1976, 1976, t + 0.12, 0.5, 0.02);
   } else if (tipo === 'tic') { nota('sine', 880, 880, t, 0.09, 0.08);

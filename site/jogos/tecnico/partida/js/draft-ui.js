@@ -1,7 +1,7 @@
 // Tela de picks e bans do amistoso. Você é o lado azul; o computador escolhe pelo vermelho.
 import { iconeVaga } from '../../js/art.js';
 import { prepararImagens, campIcone } from '../../js/campeoes-img.js';
-import { somDraft, somLigado, definirSom } from './sons.js?v=1';
+import { somDraft, somLigado, definirSom } from './sons.js?v=2';
 import { novoDraft, passoAtual, terminou, banir, escolher, jogadaIA, EFIC_FORA_POSICAO, vagasLivres, indisponiveis, serve, jogadorDaVaga, resultadoDraft, ORDEM, VAGAS } from '../dados/draft.js';
 
 const NOME = { top: 'Topo', selva: 'Selva', meio: 'Meio', atirador: 'Atirador', suporte: 'Suporte' };
@@ -53,12 +53,14 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       if (!p) { finalizar(); return; }
       const minha = p.lado === 'azul';
       // sons: o que aconteceu desde o último desenho (ban, pick) e, em seguida, a vez de quem joga
-      const nBans = d.bans.azul.length + d.bans.vermelho.length; const nPicks = Object.keys(d.picks.azul).filter((k) => d.picks.azul[k]).length + Object.keys(d.picks.vermelho).filter((k) => d.picks.vermelho[k]).length;
-      if (S.snd) {
-        if (nBans > S.snd.bans) somDraft('ban'); else if (nPicks > S.snd.picks) somDraft('pick');
+      const cont = (l) => ({ b: d.bans[l].length, p: Object.keys(d.picks[l]).filter((k) => d.picks[l][k]).length });
+      const ca = cont('azul'), cv = cont('vermelho');
+      if (S.snd) { // o som de ban e de pick tem uma variação sutil para cada time
+        if (ca.b > S.snd.ca.b) somDraft('ban', 'azul'); else if (cv.b > S.snd.cv.b) somDraft('ban', 'vermelho');
+        else if (ca.p > S.snd.ca.p) somDraft('pick', 'azul'); else if (cv.p > S.snd.cv.p) somDraft('pick', 'vermelho');
         if (S.snd.passo !== d.passo && minha) setTimeout(() => somDraft('vez'), 380);
       } else if (minha) setTimeout(() => somDraft('vez'), 300);
-      S.snd = { bans: nBans, picks: nPicks, passo: d.passo }; S.ultSeg = -1;
+      S.snd = { ca, cv, passo: d.passo }; S.ultSeg = -1;
       const usados = indisponiveis(d);
       if (p.tipo === 'pick' && minha && !S.vaga) S.vaga = vagasLivres(d, 'azul')[0];
       if (p.tipo === 'pick' && minha && S.vaga && d.picks.azul[S.vaga]) S.vaga = vagasLivres(d, 'azul')[0];
