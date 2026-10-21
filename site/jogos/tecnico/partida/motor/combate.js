@@ -69,6 +69,13 @@ export function podeAtacar(P, a, b, alcance = a.alcance) {
 }
 
 // ------------------------------------------------------------------ dano
+// Fator de luta do time pela vantagem de ouro total (1 = equilibrado). Recalculado no máximo a cada segundo de jogo.
+export function fatorOuro(P, eq) {
+  const V = P.regras.combate.vantagemOuro; if (!V) return 1;
+  const c = P._ouroEq && P.t - P._ouroEq.t < 1 ? P._ouroEq : (P._ouroEq = (() => { let a = 0, v = 0; for (const u of P.campeoes) { if (u.equipe === 'azul') a += u.ouroTotal; else v += u.ouroTotal; } return { t: P.t, azul: a, vermelho: v }; })());
+  const dif = (eq === 'azul' ? c.azul - c.vermelho : c.vermelho - c.azul) / V.escala;
+  return Math.exp(V.k * Math.max(-V.max, Math.min(V.max, dif)));
+}
 export function causarDano(P, fonte, alvo, bruto, tipo = 'fisico', o = {}) {
   if (alvo.morto || bruto <= 0) return 0;
   if (!atacavel(P, alvo)) return 0;
@@ -83,6 +90,7 @@ export function causarDano(P, fonte, alvo, bruto, tipo = 'fisico', o = {}) {
       // lutas de equipe: atributo "teamfight" com 3+ campeões envolvidos
       if (aliadosEmLuta(P, fonte) >= 3) d *= fonte.m.luta;
       d *= 1 - fonte.m.tilt * tilt(P, fonte);
+      d *= fatorOuro(P, fonte.equipe) / fatorOuro(P, alvo.equipe); // vantagem de ouro: quem está à frente bate mais forte e apanha menos
       d *= 1 + R.atributos.mec.duelo * (fonte.m.mec - alvo.m.mec); // Mecânica relativa: quem tem mais leva vantagem nos duelos contra o adversário
     }
     if (o.hab) d *= fonte.m.execDano;
