@@ -31,6 +31,8 @@ export const PAGINAS = [
 
   { id: 'poder', t: 'Poder e eficiência', r: 'O que faz o time ficar forte', cor: '#f472b6', corpo: () => `
     <p>O <b>Poder</b> é o número que resume a força de um jogador. É uma média dos 5 atributos, com pesos: Mecânica 25%, Rotas 20%, Macro 20%, Teamfight 20% e Mental 15%.</p>
+    <h4>Os atributos</h4>
+    ${tabela(['Atributo', 'Peso', 'O que representa'], ['Mecânica', '25%', 'Habilidade com o campeão: acertar skills, trocar golpes, reflexo.'], ['Fase de rotas', '20%', 'Desempenho nos primeiros minutos: farm, trocas e vantagem na lane.'], ['Macro', '20%', 'Leitura de jogo: objetivos, rotação, mapa e tomada de decisão.'], ['Teamfight', '20%', 'Posicionamento e execução nas lutas em equipe.'], ['Mental', '15%', 'Frieza sob pressão e consistência.'], ['Fama', 'não entra', 'Só mexe no preço e na audiência; não muda o Poder.'])}
     ${tabela(['Poder', 'Escudo'], ['95 ou mais', 'Challenger'], ['90 a 94', 'Diamante'], ['80 a 89', 'Platina'], ['70 a 79', 'Ouro'], ['abaixo de 70', 'Prata'])}
     <h4>O Poder do time em campo</h4>
     <p>É a média do Poder dos 5 titulares <b>na posição em que jogam</b>, e mais alguns bônus:</p>
