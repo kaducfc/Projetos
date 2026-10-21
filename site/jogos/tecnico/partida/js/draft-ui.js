@@ -1,6 +1,7 @@
 // Tela de picks e bans do amistoso. Você é o lado azul; o computador escolhe pelo vermelho.
 import { iconeVaga } from '../../js/art.js';
 import { prepararImagens, campIcone } from '../../js/campeoes-img.js';
+import { somDraft, somLigado, definirSom } from './sons.js?v=1';
 import { novoDraft, passoAtual, terminou, banir, escolher, jogadaIA, EFIC_FORA_POSICAO, vagasLivres, indisponiveis, serve, jogadorDaVaga, resultadoDraft, ORDEM, VAGAS } from '../dados/draft.js';
 
 const NOME = { top: 'Topo', selva: 'Selva', meio: 'Meio', atirador: 'Atirador', suporte: 'Suporte' };
@@ -33,9 +34,13 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
   return new Promise((resolver) => {
     let meuLado = invertida ? 'vermelho' : 'azul';
     let d = novoDraft(catalogo, azul, vermelho, semente, { invertida });
-    const S = { vaga: null, busca: '', trocando: false, filtro: null, passoT: -1, fim: 0, iaEm: 0, relogio: null };
+    const S = { snd: null, ultSeg: -1, vaga: null, busca: '', trocando: false, filtro: null, passoT: -1, fim: 0, iaEm: 0, relogio: null };
     const fundo = document.createElement('div'); fundo.className = 'pt-fundo pt-draft';
-    document.body.appendChild(fundo);
+    const botSom = document.createElement('button'); botSom.type = 'button'; botSom.className = 'pt-som'; botSom.title = 'Som'; botSom.setAttribute('aria-label', 'Som');
+    const marcarSom = () => { botSom.textContent = somLigado() ? '🔊' : '🔇'; }; marcarSom();
+    botSom.onclick = () => { definirSom(!somLigado()); marcarSom(); if (somLigado()) somDraft('clique'); };
+    document.body.appendChild(fundo); document.body.appendChild(botSom);
+    const tirar = fundo.remove.bind(fundo); fundo.remove = () => { botSom.remove(); tirar(); };
     const bansHtml = (lado, agora) => Array.from({ length: 5 }, (_, i) => { const n = d.bans[lado][i]; return `${i === 3 ? '<i class="esp"></i>' : ''}<span class="ban ${n ? 'on' : ''} ${agora === lado && i === d.bans[lado].length ? 'agora' : ''}">${n ? campIcone(n, 38) : PROIBIDO}</span>`; }).join('');
     const colunaHtml = (lado, nome, vez) => `<div class="col ${lado === 'azul' ? 'a' : 'v'}">${VAGAS.map((v) => {
       const c = d.picks[lado][v]; const j = jogadorDaVaga(d, lado, v);
@@ -47,6 +52,13 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       const p = passoAtual(d);
       if (!p) { finalizar(); return; }
       const minha = p.lado === 'azul';
+      // sons: o que aconteceu desde o último desenho (ban, pick) e, em seguida, a vez de quem joga
+      const nBans = d.bans.azul.length + d.bans.vermelho.length; const nPicks = Object.keys(d.picks.azul).filter((k) => d.picks.azul[k]).length + Object.keys(d.picks.vermelho).filter((k) => d.picks.vermelho[k]).length;
+      if (S.snd) {
+        if (nBans > S.snd.bans) somDraft('ban'); else if (nPicks > S.snd.picks) somDraft('pick');
+        if (S.snd.passo !== d.passo && minha) setTimeout(() => somDraft('vez'), 380);
+      } else if (minha) setTimeout(() => somDraft('vez'), 300);
+      S.snd = { bans: nBans, picks: nPicks, passo: d.passo }; S.ultSeg = -1;
       const usados = indisponiveis(d);
       if (p.tipo === 'pick' && minha && !S.vaga) S.vaga = vagasLivres(d, 'azul')[0];
       if (p.tipo === 'pick' && minha && S.vaga && d.picks.azul[S.vaga]) S.vaga = vagasLivres(d, 'azul')[0];
@@ -73,10 +85,10 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
         <div class="rodape"><div class="gr">${bansHtml('azul', ban ? p.lado : null)}</div>
           <div class="palavra ${ban ? 'p-ban' : 'p-pick'}"><strong>${ban ? 'BAN' : 'PICK'}</strong><div class="tempo"><span class="num">1:00</span><i class="tbar"><b></b></i></div></div>
           <div class="gr">${bansHtml('vermelho', ban ? p.lado : null)}</div></div></div>`;
-      fundo.querySelectorAll('[data-fl]').forEach((el) => el.addEventListener('click', () => { S.filtro = S.filtro === el.dataset.fl ? null : el.dataset.fl; desenhar(); }));
+      fundo.querySelectorAll('[data-fl]').forEach((el) => el.addEventListener('click', () => { somDraft('clique'); S.filtro = S.filtro === el.dataset.fl ? null : el.dataset.fl; desenhar(); }));
       const busca = fundo.querySelector('.busca');
       if (minha) busca.addEventListener('input', () => { S.busca = busca.value; const pos = busca.selectionStart; desenhar(); const n = fundo.querySelector('.busca'); n.focus(); n.setSelectionRange(pos, pos); });
-      fundo.querySelectorAll('[data-vaga]').forEach((el) => el.addEventListener('click', () => { if (p.tipo === 'pick' && minha) { S.vaga = el.dataset.vaga; S.filtro = null; desenhar(); } }));
+      fundo.querySelectorAll('[data-vaga]').forEach((el) => el.addEventListener('click', () => { if (p.tipo === 'pick' && minha) { somDraft('clique'); S.vaga = el.dataset.vaga; S.filtro = null; desenhar(); } }));
       fundo.querySelectorAll('.ch').forEach((el) => el.addEventListener('click', () => {
         const nome = el.dataset.nome;
         const ok = p.tipo === 'ban' ? banir(d, nome) : escolher(d, nome, S.vaga);
@@ -92,15 +104,17 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       const n = fundo.querySelector('.tempo .num'); if (n) { const sg = Math.ceil(resta / 1000); n.textContent = `${Math.floor(sg / 60)}:${String(sg % 60).padStart(2, '0')}`; }
       const b = fundo.querySelector('.tempo .tbar b'); if (b) b.style.width = `${resta / (TEMPO_ACAO * 10)}%`;
       fundo.querySelector('.tempo')?.classList.toggle('fim', resta <= 10000);
+      const seg = Math.ceil(resta / 1000);
+      if (p.lado === 'azul' && seg <= 10 && seg > 0 && seg !== S.ultSeg) { S.ultSeg = seg; somDraft(seg <= 5 ? 'tic-urgente' : 'tic'); } // contagem final só na sua vez
       if (p.lado !== 'azul' && Date.now() >= S.iaEm) { jogadaIA(d); S.busca = ''; desenhar(); } else if (resta <= 0) { jogadaAutomatica(d, p, S.vaga); S.busca = ''; desenhar(); }
     }
     function finalizar() {
       clearInterval(S.relogio);
-      const r = resultadoDraft(d);
+      const r = resultadoDraft(d); somDraft('fim');
       fundo.innerHTML = `<div class="pt-modal pt-draft-box intro"><h2>Draft completo</h2><div class="palco fim">${colunaHtml('azul', nomeAzul)}<div class="meio"><button type="button" class="pt-btn ouro grande" id="d-ir">Começar a partida</button></div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
       fundo.querySelector('#d-ir').onclick = () => { fundo.remove(); resolver(r); };
     }
-    function comecar() { S.relogio = setInterval(atualizarTempo, 250); desenhar(); }
+    function comecar() { somDraft('inicio'); S.relogio = setInterval(atualizarTempo, 250); desenhar(); }
     function definirLado(l) { S.ladoOk = true; meuLado = l; d = novoDraft(catalogo, azul, vermelho, semente, { invertida: l === 'vermelho' }); intro(); }
     function escolhaDeLado() {
       const meu = lado.escolhe === 'eu';
