@@ -13,7 +13,7 @@ function imgExecutor(e, eqK) {
   const sub = e.fonteSubtipo || ''; const eq = e.fonteEquipe === 'azul' || e.fonteEquipe === 'vermelho' ? e.fonteEquipe : eqK;
   if (e.por === 'minion') return `img/minion_${eq}_frente.webp`;
   if (e.por === 'estrutura') return sub === 'inibidor' ? `img/inibidor_${eq}.webp` : sub === 'nexus' ? `img/nexus_${eq}.webp` : `img/torre_${eq}.webp`;
-  if (e.por === 'epico') return `img/epicos/${sub}.webp`;
+  if (e.por === 'epico') return `img/epicos/${sub}-icone.webp`;
   if (e.por === 'monstro') { const k = sub.split('_').pop(); return `img/${k}.webp`; }
   return `img/minion_${eq}_frente.webp`;
 }
@@ -89,9 +89,9 @@ export function criarAnuncios(mapaEl) {
       if (e.tipo === 'nexus_destruido') return quadro(P, { esq: retrato(P, e.abatedor, eq, `minion_${eq}_frente`), dir: imgObj(`img/nexus_${outro(eq)}.webp`, outro(eq)), titulo: 'NEXUS DESTRUÍDO!', equipe: eq, classe: 'epico', prio: 10, dur: 3600 });
       if (e.tipo === 'objetivo_abatido' && EPICO[e.objetivo]) {
         const [tt, prio] = EPICO[e.objetivo];
-        return quadro(P, { esq: retrato(P, e.abatedor, eq, 'nexus_azul'), dir: imgObj(`img/epicos/${e.objetivo}.webp`, eq), titulo: tt, sub: e.roubado ? t('Roubado!') : '', equipe: eq, classe: prio >= 8 ? 'epico' : 'obj', prio, dur: prio >= 8 ? 3400 : 2600 });
+        return quadro(P, { esq: retrato(P, e.abatedor, eq, 'nexus_azul'), dir: imgObj(`img/epicos/${e.objetivo}-icone.webp`, eq), titulo: tt, sub: e.roubado ? t('Roubado!') : '', equipe: eq, classe: prio >= 8 ? 'epico' : 'obj', prio, dur: prio >= 8 ? 3400 : 2600 });
       }
-      if (e.tipo === 'alma_dragao') return quadro(P, { esq: `<span class="an-ret ${eq}"><img src="img/epicos/dragao.webp" alt="" width="56" height="56" /></span>`, titulo: 'ALMA DO DRAGÃO CONQUISTADA!', equipe: eq, classe: 'epico', prio: 7, dur: 3000 });
+      if (e.tipo === 'alma_dragao') return quadro(P, { esq: `<span class="an-ret ${eq}"><img src="img/epicos/dragao-icone.webp" alt="" width="56" height="56" /></span>`, titulo: 'ALMA DO DRAGÃO CONQUISTADA!', equipe: eq, classe: 'epico', prio: 7, dur: 3000 });
     },
   };
 }

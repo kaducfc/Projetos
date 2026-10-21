@@ -14,7 +14,7 @@ import { prepararImagens, campIcone, itemUrl } from '../../js/campeoes-img.js';
 import { ITENS } from '../dados/itens.js';
 import { tempoTexto } from '../motor/eventos.js';
 import { REGRAS } from '../config/regras.js';
-import { criarAnuncios } from './anuncios.js?v=6';
+import { criarAnuncios } from './anuncios.js?v=7';
 import { abrirDraft } from './draft-ui.js?v=17';
 
 const api = platform.tecnico;
@@ -249,12 +249,12 @@ function atualizarPlacar(forcar = false) {
   lista.length = 0; lista.push(...visiveis);
   const chave = lista.map((x) => x[0]).join();
   const caixa = document.getElementById('obj');
-  if (caixa.dataset.k !== chave) { caixa.dataset.k = chave; caixa.innerHTML = lista.map(([id]) => `<div class="ep-b ep-${id}" data-ep="${id}"><img src="img/epicos/${id}-icone.webp" alt="${id}" /></div>`).join(''); }
+  if (caixa.dataset.k !== chave) { caixa.dataset.k = chave; caixa.innerHTML = lista.map(([id]) => `<div class="ep-b ep-${id}" data-ep="${id}"><img src="img/epicos/${id}.webp" alt="${id}" /><span class="tx"></span></div>`).join(''); }
   for (const [id, o] of lista) {
     const el = caixa.querySelector(`[data-ep="${id}"]`); if (!el) continue;
     const v = viva(o); const seg = Math.max(0, Math.ceil(o.proximo - P.t));
     el.classList.toggle('on', !!v);
-    el.title = v ? 'Vivo' : `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`;
+    el.querySelector('.tx').textContent = v ? 'VIVO' : `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`;
   }
   // foco
   const f = E.selecionado ? P.mapaUnidades.get(E.selecionado) : null;
