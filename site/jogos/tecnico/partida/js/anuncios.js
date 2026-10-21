@@ -27,14 +27,14 @@ export function criarAnuncios(mapaEl) {
   const seq = new Map();   // campeão -> abates seguidos sem morrer
   // Categorias: anúncios da mesma categoria concorrem entre si; o mais importante ganha e os menores são descartados.
   const SERIE = /^(KILLING SPREE|RAMPAGE|UNSTOPPABLE|DOMINATING|GODLIKE|LEGENDARY)!$/;
-  const catDe = (titulo) => (SERIE.test(titulo) ? 'serie' : titulo === 'ACE!' ? 'ace' : /(TORRE|INIBIDOR|NEXUS|ALMA|ELIMINADO|ROUBADO)/.test(titulo) ? 'obj' : 'abate');
+  const catDe = (titulo) => (SERIE.test(titulo) ? 'serie' : titulo === 'ACE!' ? 'ace' : /(TORRE|INIBIDOR|NEXUS)/.test(titulo) ? 'estr' : /(ALMA|ELIMINADO|ROUBADO)/.test(titulo) ? 'epico' : 'abate');
   const VALIDADE = 4000; // anúncio que ficou esperando mais que isso já está velho (a jogada mudou): só os muito importantes ainda passam
 
   const encerrar = (el, depois) => { el.classList.remove('entra'); el.classList.add('sai'); setTimeout(() => { el.remove(); if (atual && atual.el === el) atual = null; depois?.(); mostrar(); }, 220); };
   const mostrar = () => {
     if (atual) return;
     const agora = Date.now();
-    for (let i = fila.length - 1; i >= 0; i--) if (agora - fila[i].t0 > VALIDADE && fila[i].prio < 7) fila.splice(i, 1);
+    for (let i = fila.length - 1; i >= 0; i--) if (agora - fila[i].t0 > VALIDADE * (veloc >= 8 ? 0.6 : 1) && fila[i].prio < 7) fila.splice(i, 1);
     if (!fila.length) return;
     fila.sort((x, y) => y.prio - x.prio); const a = fila.shift();
     const el = document.createElement('div'); el.className = `pt-an ${a.classe} eq-${a.equipe}`; el.innerHTML = a.html; caixa.appendChild(el);
@@ -43,8 +43,9 @@ export function criarAnuncios(mapaEl) {
     atual.fim = setTimeout(() => encerrar(el), a.dur);
   };
   const por = (a) => {
-    // em velocidade alta só passam os anúncios importantes, para não cobrir o mapa
-    if (!ativo || a.prio < (veloc >= 16 ? 6 : veloc >= 8 ? 4 : 1)) return;
+    // em velocidade muito alta só os mais importantes passam (o resto é só ruído); em todas, abates e objetivos continuam aparecendo
+    if (!ativo || a.prio < (veloc >= 32 ? 4 : veloc >= 16 ? 2 : 1)) return;
+    a.dur = Math.round(a.dur * (veloc >= 16 ? 0.55 : veloc >= 4 ? 0.75 : 1)); // o jogo corre mais rápido que o anúncio: ele aparece por menos tempo
     a.cat = catDe(a.titulo); a.t0 = Date.now();
     // já existe um anúncio melhor da mesma categoria na tela ou na fila: este é repetitivo e não entra
     if (atual && atual.cat === a.cat && atual.prio > a.prio) return;
