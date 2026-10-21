@@ -53,3 +53,20 @@ test('i18n: avisos da ranqueada montados com t() e nomes de jogo no idioma certo
   assert.equal(traduzirTexto('Classe: Mago, Assassino (certo)'), 'Classe : Mage, Assassin (correct)');
   assert.equal(traduzirTexto('Codinome secreto: Fulano'), null);
 });
+
+test('i18n: Simulador de Técnico (Guia, mensagens de erro e telas) traduzido nos 5 idiomas', async () => {
+  const { PAGINAS, blocosDe } = await import('../jogos/tecnico/js/guia.js');
+  const plat = readFileSync(new URL('../shared/platform.js', import.meta.url), 'utf8');
+  const bloco = plat.slice(plat.indexOf('const ERROS_TECNICO = {'));
+  const erros = [...bloco.slice(0, bloco.indexOf('\n};')).matchAll(/: '((?:[^'\\]|\\.)*)',?\s*$/gm)].map((m) => m[1].replace(/\\'/g, "'"));
+  assert.ok(erros.length > 80, 'mensagens de erro encontradas');
+  const chaves = ['Meu elenco', 'Treinamento', 'Amistoso', 'Recrutar', 'Guia', 'Contratar', 'Efetivar contrato', 'Mercado oficial', 'Rank de Poder', 'Poder da equipe', 'Escalação titular'];
+  for (const id of IDS) {
+    await carregar(id);
+    const faltam = [];
+    for (const p of PAGINAS) for (const k of [p.t, p.r, ...blocosDe(p.corpo())]) if (traduzirTexto(k) == null && /[A-Za-zÀ-ÿ]{4,}/.test(k.replace(/<[^>]+>/g, ''))) faltam.push(k);
+    for (const e of erros) if (traduzirTexto(e) == null) faltam.push(e);
+    for (const k of chaves) if (traduzirTexto(k) == null) faltam.push(k);
+    assert.deepEqual(faltam.slice(0, 10), [], `${id}: ${faltam.length} textos do Simulador de Técnico sem tradução`);
+  }
+});

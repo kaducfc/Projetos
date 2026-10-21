@@ -77,7 +77,7 @@ export default [
   ['Início', 'Home', 'Start', 'Inicio', 'Home', 'Accueil'],
   ['Meu elenco', 'My roster', 'Mein Kader', 'Mi plantilla', 'La mia rosa', 'Mon effectif'],
   ['Treinamento', 'Training', 'Training', 'Entrenamiento', 'Allenamento', 'Entraînement'],
-  ['Amistoso', 'Friendly', 'Freundschaftsspiel', 'Amistoso', 'Amichevole', 'Match amical'],
+  ['Amistoso', 'Friendly', 'Testspiel', 'Amistoso', 'Amichevole', 'Match amical'],
   ['Mercado', 'Market', 'Markt', 'Mercado', 'Mercato', 'Marché'],
   ['Recrutar', 'Recruit', 'Rekrutieren', 'Reclutar', 'Recluta', 'Recruter'],
   ['Marketing', 'Marketing', 'Marketing', 'Marketing', 'Marketing', 'Marketing'],
