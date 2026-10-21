@@ -1,6 +1,7 @@
 // Tela da partida: monta a simulação, o relógio, o canvas, o placar e os controles. A tela apenas lê o estado do motor.
 import * as platform from '../../../../shared/platform.js';
 import { mountSiteBar } from '../../../../shared/account.js';
+import { t } from '../../../../shared/i18n.js';
 import { gameById } from '../../../../shared/config.js';
 import { Partida } from '../motor/partida.js';
 import { Relogio } from '../motor/relogio.js';
@@ -50,7 +51,7 @@ async function configOficial(id) {
   return {
     modo: 'oficial', id, idAzul: el.azul.org.id, idVermelho: el.vermelho.org.id, mapa: el.mapa, semente: el.semente, versao: el.versao, azul: jogs(el.azul.jogadores), vermelho: jogs(el.vermelho.jogadores),
     nomeAzul: el.azul.org.nome, nomeVermelho: el.vermelho.org.nome, siglaAzul: el.azul.org.sigla, siglaVermelho: el.vermelho.org.sigla, veloc: REGRAS.velocidadePadrao,
-    aviso: `Partida oficial · mapa ${el.mapa} de uma série melhor de ${f} · ${el.azul.org.nome} (azul) × ${el.vermelho.org.nome} (vermelho). O resultado não pode ser refeito.`,
+    aviso: t('Partida oficial · mapa {x1} de uma série melhor de {x2} · {x3} (azul) × {x4} (vermelho). O resultado não pode ser refeito.', { x1: el.mapa, x2: f, x3: el.azul.org.nome, x4: el.vermelho.org.nome }),
     lado: { definido: !!el.lado?.definido, escolhe: el.lado?.escolhe, voceEscolhe: !!el.lado?.voce_escolhe },
     aoFim: (r, acoes) => botaoRegistrar(el, r, acoes),
   };
@@ -61,7 +62,7 @@ async function configAmistoso(id) {
   return {
     modo: 'amistoso', id, mapa: 1, semente: el.semente, versao: el.versao, azul: jogs(el.azul.jogadores), vermelho: jogs(el.vermelho.jogadores),
     nomeAzul: el.azul.org.nome, nomeVermelho: el.vermelho.org.nome, siglaAzul: el.azul.org.sigla, siglaVermelho: el.vermelho.org.sigla, veloc: REGRAS.velocidadePadrao,
-    aviso: `Amistoso (scrim) · ${el.azul.org.nome} (azul) × ${el.vermelho.org.nome} (vermelho). Não vale pontos de campeonato.`,
+    aviso: t('Amistoso (scrim) · {x1} (azul) × {x2} (vermelho). Não vale pontos de campeonato.', { x1: el.azul.org.nome, x2: el.vermelho.org.nome }),
     aoFim: (r, acoes) => botaoRegistrarAmistoso(id, r, acoes),
   };
 }
@@ -378,7 +379,7 @@ function quadro(ts) {
     const dr = await abrirDraft({ catalogo: E.catalogo, azul: E.config.azul, vermelho: E.config.vermelho, semente: E.config.semente, nomeAzul: E.config.nomeAzul, nomeVermelho: E.config.nomeVermelho });
     E.config.veloc = 4; // depois do draft a simulação já começa sozinha, em 4x
     E.config.azul = dr.azul; E.config.vermelho = dr.vermelho; E.config.bans = dr.bans;
-    E.config.aviso += ` Bans: ${dr.bans.azul.join(', ')} | ${dr.bans.vermelho.join(', ')}.`;
+    E.config.aviso += ` ${t('Bans: {x1} | {x2}.', { x1: dr.bans.azul.join(', '), x2: dr.bans.vermelho.join(', ') })}`;
   } else if (id) {
     E.config = await configOficial(id);
     // picks e bans de cada mapa da partida oficial. Quem joga é o lado da sua organização (pode ser o vermelho): ele escolhe na ordem certa.
@@ -400,7 +401,7 @@ function quadro(ts) {
     C.veloc = 4; // depois do draft a simulação já começa sozinha, em 4x
     C.azul = euVerm ? dr.vermelho : dr.azul; C.vermelho = euVerm ? dr.azul : dr.vermelho;
     C.bans = euVerm ? { azul: dr.bans.vermelho, vermelho: dr.bans.azul } : dr.bans;
-    C.aviso += ` Bans: ${C.bans.azul.join(', ')} | ${C.bans.vermelho.join(', ')}.`;
+    C.aviso += ` ${t('Bans: {x1} | {x2}.', { x1: C.bans.azul.join(', '), x2: C.bans.vermelho.join(', ') })}`;
     comDraft = true;
   }
   else { E.config = configTeste(); E.config.aviso = 'Sala de testes da simulação: times sintéticos com o Poder escolhido. Só administradores veem esta área.'; }

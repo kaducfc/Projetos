@@ -247,7 +247,7 @@ function observar() {
 // ------------------------------------------------------------------ troca de idioma
 
 // Atualizado por scripts/i18n-build.mjs: força o navegador a baixar o dicionário novo.
-const VERSAO_DICIONARIOS = 'b8b42dcf07';
+const VERSAO_DICIONARIOS = '241563580f';
 
 async function carregar(id) {
   if (id === IDIOMA_PADRAO) { montar({}); return; }
