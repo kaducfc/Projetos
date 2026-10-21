@@ -119,7 +119,7 @@ export const PAGINAS = [
   { id: 'duvidas', t: 'Dúvidas rápidas', r: 'Respostas curtas para o que mais perguntam', cor: '#f5cf5a', corpo: () => faq(
     ['Por onde começo?', 'Jogue a partida do dia, depois faça amistosos e treinos. Resgate o Marketing e veja o Mercado.'],
     ['Quanto tempo leva uma temporada?', 'Quatro semanas: liga, Copa Internacional, liga e Campeonato Mundial.'],
-    ['Esqueci de jogar a partida.', 'Passou da meia-noite? Conta como derrota por W.O. Fica no histórico. Na próxima não esqueça.'],
+    ['Esqueci de jogar a partida.', 'Passou da meia-noite? Conta como derrota por W.O. Fica no histórico.'],
     ['Por que não consigo escalar um jogador?', 'Ele precisa de contrato ativo. Abra a ficha e efetive um contrato de 1 semana ou 1 temporada.'],
     ['O que é “fora de posição”?', 'Jogador em vaga que não é a dele (nem a posição secundária) rende 75% do Poder.'],
     ['Qual a diferença entre créditos e RC?', 'Créditos são do clube (salários, contratos, treino). RC é da sua conta (baús, mercado entre usuários, nome do time).'],
