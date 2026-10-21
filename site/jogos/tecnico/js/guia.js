@@ -43,7 +43,7 @@ export const PAGINAS = [
   { id: 'jogadores', t: 'Jogadores e raridades', r: 'Comuns, Legados e como obtê-los', cor: '#c084fc', corpo: () => `
     <p>Há dois tipos de jogador:</p>
     ${lista('<b>Comuns:</b> atletas fictícios, com Poder de até <b>80</b>. Aparecem no mercado oficial.', '<b>Legados:</b> <b>110 jogadores reais</b> (Faker, Chovy, Caps...). Têm raridade, retrato e são a elite do jogo.')}
-    ${tabela(['Raridade', 'Poder inicial', 'Quantidade'], ['Mítico', '87 a 90', '10 (2 por posição)'], ['Lendário', '80 a 86', '20 (4 por posição)'], ['Épico', '73 a 79', '20 (4 por posição)'], ['Raro', '64 a 72', '30 (6 por posição)'], ['Comum', '55 a 63', '30 (6 por posição)'])}
+    ${tabela(['Raridade', 'Quantidade'], ['Mítico', '10 jogadores'], ['Lendário', '20 jogadores'], ['Épico', '20 jogadores'], ['Raro', '30 jogadores'], ['Comum', '30 jogadores'])}
     <p>O Poder do Legado depende do desempenho recente, dos títulos da carreira e da popularidade dele. Cada Legado ainda pode <b>subir até +15 treinando</b>.</p>
     ${faq(['Como consigo um Legado?', 'Principalmente pelos <b>baús</b> (Recrutar) e pelo <b>mercado entre usuários</b>, comprando de outros técnicos com RC.'], ['Tirei um Legado repetido. E agora?', 'Ele vira uma <b>cópia</b> do mesmo jogador, usada para subir as estrelas dele.'])}` },
 
