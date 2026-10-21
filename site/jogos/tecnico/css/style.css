@@ -1054,3 +1054,83 @@ html.tc-sem-anim *, html.tc-sem-anim *::before, html.tc-sem-anim *::after { anim
 .gd-faq summary { cursor: pointer; font-weight: 700; }
 .gd-nav { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .tc-tabela tr.lnk { cursor: pointer; } .tc-tabela tr.lnk:hover td { background: #0e2342; } .tc-tabela tr.lnk:focus-visible { outline: 2px solid var(--ouro2); outline-offset: -2px; }
+
+/* ===== celular: cabeçalho e menu compactos, nada vazando da tela, alvos de toque confortáveis ===== */
+html, body { overflow-x: clip; }
+@media (max-width: 860px) {
+  .tc-topo { gap: 6px 8px; padding: 6px 10px; }
+  .tc-org { min-width: 0; gap: 8px; }
+  .tc-org .logo { width: 40px; height: 40px; flex: none; overflow: hidden; }
+  .tc-org .logo > *, .tc-org .logo svg, .tc-org .logo img { max-width: 100%; max-height: 100%; width: 100%; height: 100%; }
+  .tc-org .nome { font-size: 19px; max-width: 46vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tc-org .sub { font-size: 11px; }
+  .tc-org .xp { width: 84px; margin-top: 4px; }
+  .tc-atalhos { gap: 0; }
+  .tc-atalhos button { padding: 4px 9px; min-width: 40px; min-height: 40px; }
+  .tc-moedas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 3px 4px; clip-path: none; border-radius: 6px; }
+  .tc-moeda { min-width: 0; padding: 2px 4px; gap: 5px; justify-content: center; }
+  .tc-moeda > div { min-width: 0; }
+  .tc-moeda b { font-size: 15px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tc-moeda small { font-size: 9.5px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tc-moeda img { width: 22px; height: 22px; }
+  .tc-moeda .ic-frag { font-size: 18px; }
+  .tc-corpo { margin-top: 6px; padding-left: 8px; padding-right: 8px; gap: 8px; }
+  .tc-corpo > *, .tc-main, .tc-card, .tc-escala, .tc-grade2, .tc-grade3 { min-width: 0; }
+  .tc-nav { align-items: flex-start; gap: 3px; padding: 4px; position: sticky; top: 0; z-index: 20; scrollbar-width: none; scroll-snap-type: x proximity; }
+  .tc-nav::-webkit-scrollbar { display: none; }
+  .tc-nav > a { flex: none; align-self: center; max-width: 150px; padding: 4px 8px !important; font-size: 11px; line-height: 1.2; }
+  .tc-nav button { position: relative; flex-direction: column; justify-content: center; gap: 1px; min-width: 62px; min-height: 52px; padding: 5px 7px; font-size: 10.5px; line-height: 1.1; text-align: center; border-radius: 6px; scroll-snap-align: start; }
+  .tc-nav button .ic, .tc-nav .ic { width: 24px; height: 24px; }
+  .tc-nav button.on::before { left: 0; right: 0; top: auto; bottom: 0; width: auto; height: 3px; }
+  .tc-nav button .n { position: absolute; top: 2px; right: 4px; }
+  .tc-card { margin-bottom: 8px; }
+  .tc-card > h3 { padding: 9px 12px 7px; font-size: 15px; }
+  .tc-card > h3 + * { margin-top: 10px; }
+  .tc-escala { gap: 6px; }
+  .tc-btn, .tc-formas button, .tc-card button { min-height: 38px; }
+  .tc-btn { padding: 8px 14px; }
+  input, select, textarea { font-size: 16px; }
+}
+@media (max-width: 420px) {
+  .tc-escala { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tc-atalhos button { padding: 4px 6px; min-width: 36px; }
+  .tc-org .xp { display: none; }
+  .tc-jogs { gap: 6px; }
+}
+@media (max-width: 640px) {
+  .tc-treino-lista { grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 8px; }
+  .tc-treino-jog { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 10px; }
+  .tc-treino-jog .tc-mini { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+  .tc-treino-jog .tc-mini .foto { width: 58px; flex: none; }
+  .tc-treino-jog .tc-mini .inf { flex: 1; min-width: 90px; }
+  .tc-treino-jog .tc-mini .inf b { white-space: normal; font-size: 15px; }
+  .tc-treino-jog .tc-attr { grid-template-columns: 84px 24px minmax(24px, 1fr) 100px; gap: 6px; padding: 2px 0; }
+  .tc-treino-jog .tc-attr .tc-btn { padding: 8px 6px; min-height: 40px; font-size: 12px; }
+  .tc-partida { padding: 8px 10px; }
+}
+@media (max-width: 640px) {
+  .tc-treino-jog .tc-mini { flex-wrap: nowrap; }
+  .tc-jog .foto { aspect-ratio: 1 / 0.62; }
+  .tc-jog .foto img, .tc-jog .foto svg { object-position: center 15%; }
+  .tc-jog .inf { padding: 6px 8px 8px; gap: 2px; }
+  .tc-jog .ln:has(.tc-stars) { justify-content: center; }
+  .tc-jog .ln:has(.tc-stars) > span:first-child { display: none; }
+  .tc-jog .tc-stars { font-size: 12px; letter-spacing: -1px; }
+  .tc-tabela-rolagem { margin: 0 -4px; }
+  .tc-tabela td, .tc-tabela th { padding-left: 4px; padding-right: 4px; }
+}
+@media (max-width: 640px) {
+  .tc-modal .tc-acoes { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0 0; padding: 0; background: none; }
+  .tc-modal .tc-acoes > :only-child, .tc-modal .tc-acoes > .tc-btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .tc-modal .tc-acoes .tc-btn { padding: 8px 6px; font-size: 11.5px; letter-spacing: 0.03em; text-align: center; line-height: 1.2; }
+  .tc-resumo { padding: 8px 10px; margin: 8px 0; }
+  .tc-resumo .l { flex-wrap: wrap; font-size: 13px; align-items: center; }
+  .tc-resumo .l b { text-align: right; }
+  .tc-resumo .tc-stars { font-size: 18px; gap: 2px; }
+}
+@media (max-width: 640px) {
+  .tc-filtros { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .tc-filtros label { font-size: 9.5px; letter-spacing: 0.03em; min-width: 0; }
+  .tc-filtros label:first-child { grid-column: span 2; }
+  .tc-filtros input, .tc-filtros select, .tc-card .tc-filtros label select, .tc-card .tc-filtros label input { min-height: 36px; padding: 6px 7px; }
+}
