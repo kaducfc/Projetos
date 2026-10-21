@@ -44,7 +44,7 @@ export const PAGINAS = [
     <p>Há dois tipos de jogador:</p>
     ${lista('<b>Comuns:</b> atletas fictícios, com Poder de até <b>80</b>. Aparecem no mercado oficial.', '<b>Legados:</b> <b>110 jogadores reais</b> (Faker, Chovy, Caps...). Têm raridade, retrato e são a elite do jogo.')}
     ${tabela(['Raridade', 'Quantidade'], ['Mítico', '10 jogadores'], ['Lendário', '20 jogadores'], ['Épico', '20 jogadores'], ['Raro', '30 jogadores'], ['Comum', '30 jogadores'])}
-    <p>O Poder do Legado depende do desempenho recente, dos títulos da carreira e da popularidade dele. Cada Legado ainda pode <b>subir até +15 treinando</b>.</p>
+    <p>Treinando, jogadores comuns podem ganhar até <b>+10 de Poder</b> e os Legados até <b>+15</b>.</p>
     ${faq(['Como consigo um Legado?', 'Principalmente pelos <b>baús</b> (Recrutar) e pelo <b>mercado entre usuários</b>, comprando de outros técnicos com RC.'], ['Tirei um Legado repetido. E agora?', 'Ele vira uma <b>cópia</b> do mesmo jogador, usada para subir as estrelas dele.'])}` },
 
   { id: 'estrelas', t: 'Estrelas e fragmentos', r: 'Como evoluir um jogador sem trocar de jogador', cor: '#f5cf5a', corpo: () => `
