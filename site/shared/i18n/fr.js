@@ -3717,6 +3717,7 @@ export default {
   "Demitir {n}": "Renvoyer {n}",
   "Você vai demitir {n} jogador(es) do inventário e receber fragmentos de jogador por cada um. Esta ação não pode ser desfeita.": "Vous allez renvoyer {n} joueur(s) de votre inventaire et recevoir des fragments de joueur pour chacun. Cette action est irréversible.",
   "{n} jogador(es) demitido(s): +{f} fragmentos de jogador.": "{n} joueur(s) renvoyé(s) : +{f} fragments de joueur.",
+  "Repetido: vira cópia": "Doublon : devient une copie",
   "SOLO QUEUE": "SOLO QUEUE",
   "Mais uma ranqueada às 4 da manhã": "Encore une ranked à 4 h du matin",
   "O servidor está vazio, o PDL está travado e seu duo acabou de sair. O treino de amanhã começa às 13h.": "Le serveur est vide, tes PL sont bloqués et ton duo vient de partir. L’entraînement de demain commence à 13 h.",

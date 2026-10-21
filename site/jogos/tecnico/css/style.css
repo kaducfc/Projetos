@@ -1140,3 +1140,6 @@ html, body { overflow-x: clip; }
 .tc-massa.on > span { margin-right: auto; }
 .tc-jog.sel { outline: 3px solid #ef4444; outline-offset: -3px; filter: brightness(1.1); }
 .tc-jog.sel::after { content: '✓'; position: absolute; top: 6px; right: 8px; z-index: 3; width: 24px; height: 24px; border-radius: 50%; background: #ef4444; color: #fff; font-weight: 800; display: grid; place-items: center; clip-path: none; }
+
+/* jogador repetido no baú: só o símbolo de reciclagem, discreto */
+.tc-recicla { display: inline-block; margin-left: 5px; font-size: 12px; line-height: 1; font-weight: 400; letter-spacing: 0; text-transform: none; opacity: 0.6; cursor: help; vertical-align: -1px; }

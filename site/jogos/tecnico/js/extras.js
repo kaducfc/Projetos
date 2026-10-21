@@ -6,6 +6,8 @@ import { escudoPoder } from './regras.js';
 import { retratoSvg, escudoOrg, iconeVaga } from './art.js';
 import { abrirBau } from './bau-anim.js';
 
+// Jogador repetido (vira cópia): só um símbolo de reciclagem discreto, sem texto.
+const RECICLA = '<span class="tc-recicla" role="img" title="Repetido: vira cópia" aria-label="Repetido: vira cópia">♻︎</span>';
 const api = platform.tecnico;
 let C = null; // contexto de main.js: { S, esc, fmt, IMG, agir, toast, render, novaChave, escudoHtml }
 export const iniciarExtras = (ctx) => { C = ctx; };
@@ -146,7 +148,7 @@ export function viewRecrutar() {
 export function modalRecrutar(m) {
   const itens = m.r.itens || [];
   return `<h2>${itens.length > 1 ? 'Você recrutou!' : 'Novo jogador Legado!'}</h2><p class="tc-mudo tc-peq">Pagamento: ${C.fmt(m.r.preco)} ${m.r.moeda === 'rc' ? 'RC' : 'créditos'}. Os jogadores já estão no seu elenco (Legados não têm contrato). Repetidos viram cópias para subir estrelas.</p>
-    <div class="tc-revelar">${itens.map((x, i) => `<div class="tc-carta r-${x.raridade}" style="animation-delay:${i * 0.18}s"><div class="faixa">${RARIDADES[x.raridade]?.nome || ''}${x.repetida ? ' · repetido' : ''}</div>${miniCartao(x.jogador)}${x.repetida ? `<small class="tc-mudo">+1 cópia (você tem ${x.jogador.copias})</small>` : ''}</div>`).join('')}</div>
+    <div class="tc-revelar">${itens.map((x, i) => `<div class="tc-carta r-${x.raridade}" style="animation-delay:${i * 0.18}s"><div class="faixa">${RARIDADES[x.raridade]?.nome || ''}${x.repetida ? RECICLA : ''}</div>${miniCartao(x.jogador)}</div>`).join('')}</div>
     <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="fechar">Fechar</button></div>`;
 }
 
@@ -176,9 +178,9 @@ export async function tratarAcao(act, b) {
     // abertura em tela cheia: o servidor já sorteou; a animação só apresenta o resultado
     await abrirBau({
       bau, qtd, resultado: pedido,
-      renderCarta: (it) => `<div class="faixa">${RARIDADES[it.raridade]?.nome || ''}${it.repetida ? ' · repetido' : ''}</div>${miniCartao(it.jogador)}${it.repetida ? `<small class="tc-mudo">+1 cópia (você tem ${it.jogador.copias})</small>` : ''}`,
+      renderCarta: (it) => `<div class="faixa">${RARIDADES[it.raridade]?.nome || ''}${it.repetida ? RECICLA : ''}</div>${miniCartao(it.jogador)}`,
       titulo: (itens) => (itens.length > 1 ? 'Você recrutou!' : 'Novo jogador Legado!'),
-      final: (itens) => { const rep = itens.filter((i) => i.repetida).length; return `${itens.length > 1 ? `${itens.length} jogadores` : 'Jogador'} no seu inventário${rep ? ` · ${rep} repetido(s) viraram cópia` : ''}`; },
+      final: (itens) => { const rep = itens.filter((i) => i.repetida).length; return `${itens.length > 1 ? `${itens.length} jogadores` : 'Jogador'} no seu inventário${rep ? ` · ${rep} ♻︎` : ''}`; },
     });
     await atualizar();
     return true;
