@@ -11,10 +11,9 @@ export const PAGINAS = [
     <p>Você é o <b>técnico de uma organização de League of Legends</b>. Monta o time de 5 jogadores, treina, contrata, disputa campeonatos e ganha créditos para crescer.</p>
     <h4>Como começar</h4>
     ${passos('<b>Crie a organização:</b> nome, sigla e o ícone (um símbolo com as suas cores, ou só a escrita do nome).', '<b>Escolha os 5 primeiros jogadores:</b> 1 de cada posição entre 15 opções. Eles vêm com contrato de cortesia de 12 semanas.', '<b>Jogue a primeira liga:</b> você entra direto na <b>Liga Academy</b>.')}
-    ${caixa('atencao', 'Se você criou a conta de <b>segunda a sexta</b>, a liga começa <b>no mesmo dia</b>: todos os times com 0 jogos, 2 jogos por dia até sexta. Se criou no <b>sábado ou domingo</b>, a liga começa na segunda-feira.')}
     <h4>Rotina do dia</h4>
     ${lista('Veja o <b>Início</b>: a partida do dia e o que aconteceu.', '<b>Jogue a partida</b> do campeonato (2 por dia, de segunda a sexta).', 'Faça <b>amistosos</b> e <b>treinos</b> para evoluir os jogadores.', 'Passe no <b>Marketing</b> para resgatar a renda que acumulou.', 'Use o <b>Mercado</b> e os <b>baús</b> para melhorar o elenco.')}
-    ${caixa('dica', 'O visual do time (nome, símbolo, cores) é só estética: <b>não dá vantagem</b> na competição.')}` },
+` },
 
   { id: 'moedas', t: 'Créditos, RC e fragmentos', r: 'As três moedas do jogo', cor: '#4ade80', corpo: () => `
     <p>Existem <b>três tipos de “dinheiro”</b>. Cada um serve para uma coisa.</p>
