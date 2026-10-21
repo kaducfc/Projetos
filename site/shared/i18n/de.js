@@ -3312,6 +3312,7 @@ export default {
   "Prisão de Luz": "Gefängnis des Lichts",
   "Aura de Vigor": "Aura der Kraft",
   "Muro de Energia": "Energiewand",
+  "EXECUTADO!": "HINGERICHTET!",
   "ELIMINOU!": "ABGESCHOSSEN!",
   "SHUTDOWN!": "SHUTDOWN!",
   "abates seguidos": "Abschüsse in Folge",

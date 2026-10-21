@@ -3312,6 +3312,7 @@ export default {
   "Prisão de Luz": "Prison de lumière",
   "Aura de Vigor": "Aura de vigueur",
   "Muro de Energia": "Mur d’énergie",
+  "EXECUTADO!": "EXÉCUTÉ !",
   "ELIMINOU!": "ÉLIMINÉ !",
   "SHUTDOWN!": "SHUTDOWN !",
   "abates seguidos": "éliminations d’affilée",

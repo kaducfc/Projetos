@@ -3312,6 +3312,7 @@ export default {
   "Prisão de Luz": "Prison of Light",
   "Aura de Vigor": "Aura of Vigor",
   "Muro de Energia": "Energy Wall",
+  "EXECUTADO!": "EXECUTED!",
   "ELIMINOU!": "SLAIN!",
   "SHUTDOWN!": "SHUTDOWN!",
   "abates seguidos": "kill streak",

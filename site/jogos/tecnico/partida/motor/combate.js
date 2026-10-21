@@ -161,12 +161,21 @@ export function matar(P, alvo, fonte) {
   if (alvo.tipo === 'campeao') {
     const eqA = P.equipes[alvo.equipe]; const eqV = P.equipes[alvo.equipe === 'azul' ? 'vermelho' : 'azul'];
     let killer = quemAbateu(fonte);
+    // sem campeão no golpe final (minion, monstro, torre...), o abate vai para o último campeão adversário que causou dano
+    // nos últimos `janelaCredito` segundos; passado esse tempo é uma "execução" (o campeão morreu sozinho).
+    if (!killer) {
+      let melhor = null; let tMelhor = -Infinity;
+      for (const [id, t] of Object.entries(alvo.ultimosAtacantes)) {
+        const c = porId(P, Number(id));
+        if (c && c.tipo === 'campeao' && c.equipe !== alvo.equipe && P.t - t <= P.regras.combate.janelaCredito && t > tMelhor) { melhor = c; tMelhor = t; }
+      }
+      killer = melhor;
+    }
     const assist = [];
     for (const [id, t] of Object.entries(alvo.ultimosAtacantes)) {
       const c = porId(P, Number(id));
       if (c && c.tipo === 'campeao' && c.equipe !== alvo.equipe && P.t - t <= P.regras.combate.janelaAssistencia && c !== killer) assist.push(c);
     }
-    if (!killer && assist.length) { killer = assist.shift(); }
     let bounty = E.abate;
     if (!P.primeiroAbate && killer) { P.primeiroAbate = true; bounty += E.bonusPrimeiroAbate; registrar(P, 'primeiro_abate', { equipe: killer.equipe, campeao: killer.id, vitima: alvo.id }); }
     if (killer) { darOuro(P, killer, bounty); killer.estat.abates++; darXp(P, killer, E.xpAbate[Math.max(0, alvo.nivel - 1)]); eqV.abates++; }
@@ -178,7 +187,7 @@ export function matar(P, alvo, fonte) {
     const fator = Math.min(R.respawnMaxFator, 1 + Math.max(0, (P.t - R.respawnInicioEscala) / 60) * R.respawnPorMinuto);
     alvo.renasceEm = P.t + R.respawn[Math.min(R.respawn.length - 1, alvo.nivel - 1)] * Math.max(1, fator);
     alvo.estado = 'morto'; alvo.estadoDesde = P.t; alvo.recallAte = 0; alvo.efeitos = []; alvo.escudo = 0; alvo.dashAte = 0;
-    registrar(P, 'abate', { equipe: killer ? killer.equipe : (alvo.equipe === 'azul' ? 'vermelho' : 'azul'), vitima: alvo.id, abatedor: killer ? killer.id : null, assist: assist.map((a) => a.id), por: killer ? 'campeao' : (fonte ? fonte.tipo : null), x: Math.round(alvo.x), y: Math.round(alvo.y) });
+    registrar(P, 'abate', { equipe: killer ? killer.equipe : (alvo.equipe === 'azul' ? 'vermelho' : 'azul'), vitima: alvo.id, abatedor: killer ? killer.id : null, assist: assist.map((a) => a.id), por: killer ? 'campeao' : (fonte ? fonte.tipo : null), executado: !killer, fonteSubtipo: !killer && fonte ? (fonte.subtipo || fonte.campo || null) : null, fonteEquipe: !killer && fonte ? fonte.equipe : null, x: Math.round(alvo.x), y: Math.round(alvo.y) });
     P.fx.push({ k: 'morte', id: alvo.id, t: P.t, x: alvo.x, y: alvo.y });
   } else if (alvo.tipo === 'minion') {
     const eqVenc = alvo.equipe === 'azul' ? 'vermelho' : 'azul';

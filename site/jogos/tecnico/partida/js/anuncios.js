@@ -8,12 +8,22 @@ const MULTI = { 2: ['DOUBLE KILL!', 4], 3: ['TRIPLE KILL!', 7], 4: ['QUADRA KILL
 const EPICO = { dragao: ['DRAGÃO ELIMINADO!', 6], anciao: ['DRAGÃO ANCIÃO ELIMINADO!', 8], arauto: ['ARAUTO ELIMINADO!', 6], barao: ['BARÃO NASHOR ELIMINADO!', 8] };
 // Abates seguidos sem morrer (como no jogo): 3, 4, 5, 6, 7 e 8 ou mais.
 const SERIE = { 3: ['KILLING SPREE!', 5], 4: ['RAMPAGE!', 6], 5: ['UNSTOPPABLE!', 7], 6: ['DOMINATING!', 8], 7: ['GODLIKE!', 9], 8: ['LEGENDARY!', 9.5] };
+// Imagem de quem deu o golpe final numa execução.
+function imgExecutor(e, eqK) {
+  const sub = e.fonteSubtipo || ''; const eq = e.fonteEquipe === 'azul' || e.fonteEquipe === 'vermelho' ? e.fonteEquipe : eqK;
+  if (e.por === 'minion') return `img/minion_${eq}_frente.webp`;
+  if (e.por === 'estrutura') return sub === 'inibidor' ? `img/inibidor_${eq}.webp` : sub === 'nexus' ? `img/nexus_${eq}.webp` : `img/torre_${eq}.webp`;
+  if (e.por === 'epico') return `img/epicos/${sub}.webp`;
+  if (e.por === 'monstro') { const k = sub.split('_').pop(); return `img/${k}.webp`; }
+  return `img/minion_${eq}_frente.webp`;
+}
 const outro = (eq) => (eq === 'azul' ? 'vermelho' : 'azul');
 
 export function criarAnuncios(mapaEl) {
   const caixa = document.createElement('div'); caixa.className = 'pt-anuncios'; caixa.setAttribute('aria-live', 'polite'); mapaEl.appendChild(caixa);
   const fila = []; let tocando = false; let veloc = 1; let ativo = true;
   const multi = new Map(); // abatedor -> { n, t }
+  let primeiro = null; // vítima do First Blood (o evento vem logo antes do abate)
   const seq = new Map();   // campeão -> abates seguidos sem morrer
 
   const mostrar = () => {
@@ -40,6 +50,7 @@ export function criarAnuncios(mapaEl) {
   const nomeDe = (P, id) => P.mapaUnidades.get(id)?.campeao || '';
 
   const aoAbate = (e, P) => {
+    const pular = primeiro; primeiro = null; // o First Blood já anuncia esta eliminação
     const v = P.mapaUnidades.get(e.vitima); const kid = e.abatedor; const k = kid ? P.mapaUnidades.get(kid) : null;
     const vseq = seq.get(e.vitima) || 0; seq.set(e.vitima, 0); multi.delete(e.vitima);
     const eqK = e.equipe; const eqV = v?.equipe || outro(eqK);
@@ -51,9 +62,10 @@ export function criarAnuncios(mapaEl) {
       const esq = retrato(P, kid, eqK, 'minion_azul_frente'); const dir = retrato(P, e.vitima, eqV, 'minion_azul_frente');
       if (n >= 2) { const [tt, prio] = MULTI[Math.min(5, n)]; quadro(P, { esq, dir, titulo: tt, equipe: eqK, classe: n >= 4 ? 'epico' : 'multi', prio, dur: n >= 4 ? 3600 : 2800 }); }
       else if (vseq >= 3) quadro(P, { esq, dir, titulo: 'SHUTDOWN!', sub: `${vseq} ${t('abates seguidos')}`, equipe: eqK, classe: 'multi', prio: 5, dur: 2600 });
-      else quadro(P, { esq, dir, titulo: 'ELIMINOU!', equipe: eqK, classe: 'abate', prio: 1, dur: 1700 });
+      else if (pular !== e.vitima) quadro(P, { esq, dir, titulo: 'ELIMINOU!', equipe: eqK, classe: 'abate', prio: 1, dur: 1700 });
     } else {
-      quadro(P, { esq: `<span class="an-ret ${eqK}"><img src="img/minion_${eqK}_frente.webp" alt="" width="56" height="56" /></span>`, dir: retrato(P, e.vitima, eqV, 'minion_azul_frente'), titulo: 'ELIMINOU!', equipe: eqK, classe: 'abate', prio: 1, dur: 1700 });
+      // executado: ninguém causou dano nos últimos 15s; a imagem é de quem deu o golpe final (tropa, monstro, torre...)
+      quadro(P, { esq: `<span class="an-ret ${e.fonteEquipe === 'azul' || e.fonteEquipe === 'vermelho' ? e.fonteEquipe : eqK}"><img src="${imgExecutor(e, eqK)}" alt="" width="56" height="56" /></span>`, dir: retrato(P, e.vitima, eqV, 'minion_azul_frente'), titulo: 'EXECUTADO!', equipe: eqK, classe: 'abate', prio: 2, dur: 2000 });
     }
     if (k && k.tipo === 'campeao') {
       const serie = seq.get(kid); const def = SERIE[Math.min(8, serie)];
@@ -69,7 +81,7 @@ export function criarAnuncios(mapaEl) {
     evento(e, P) {
       const eq = e.equipe;
       if (e.tipo === 'abate') return aoAbate(e, P);
-      if (e.tipo === 'primeiro_abate') return quadro(P, { esq: retrato(P, e.campeao, eq), dir: retrato(P, e.vitima, outro(eq)), titulo: 'FIRST BLOOD!', equipe: eq, classe: 'multi', prio: 5, dur: 2800 });
+      if (e.tipo === 'primeiro_abate') { primeiro = e.vitima; return quadro(P, { esq: retrato(P, e.campeao, eq), dir: retrato(P, e.vitima, outro(eq)), titulo: 'FIRST BLOOD!', equipe: eq, classe: 'multi', prio: 5, dur: 2800 }); }
       if (e.tipo === 'torre_destruida' || e.tipo === 'inibidor_destruido') {
         const dono = outro(eq); const torre = e.tipo === 'torre_destruida';
         return quadro(P, { esq: retrato(P, e.abatedor, eq, `minion_${eq}_frente`), dir: imgObj(torre ? `img/torre_${dono}.webp` : `img/inibidor_${dono}.webp`, dono), titulo: torre ? 'TORRE DESTRUÍDA!' : 'INIBIDOR DESTRUÍDO!', equipe: eq, classe: 'obj', prio: torre ? 4 : 5, dur: 2400 });

@@ -118,6 +118,7 @@ export const REGRAS = {
     duracaoMaxCC: 2.5,
     tempoMortoPersistencia: 3,
     janelaAssistencia: 10,
+    janelaCredito: 15, // último campeão que causou dano nesse prazo leva o abate quando o golpe final não é de campeão; depois disso é execução
     persecucaoMax: 2200,      // um campeão desiste de perseguir além desta distância do ponto de origem da perseguição
   },
 

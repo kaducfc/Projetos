@@ -1,5 +1,6 @@
 // Simulador de técnico: anúncios na tela da partida (abates, torres, objetivos).
 export default [
+  ['EXECUTADO!', 'EXECUTED!', 'HINGERICHTET!', '¡EJECUTADO!', 'GIUSTIZIATO!', 'EXÉCUTÉ !'],
   ['ELIMINOU!', 'SLAIN!', 'ABGESCHOSSEN!', '¡ELIMINÓ!', 'ELIMINATO!', 'ÉLIMINÉ !'],
   ['SHUTDOWN!', 'SHUTDOWN!', 'SHUTDOWN!', '¡SHUTDOWN!', 'SHUTDOWN!', 'SHUTDOWN !'],
   ['abates seguidos', 'kill streak', 'Abschüsse in Folge', 'eliminaciones seguidas', 'uccisioni di fila', 'éliminations d’affilée'],

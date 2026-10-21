@@ -3312,6 +3312,7 @@ export default {
   "Prisão de Luz": "Prigione di Luce",
   "Aura de Vigor": "Aura di Vigore",
   "Muro de Energia": "Muro di Energia",
+  "EXECUTADO!": "GIUSTIZIATO!",
   "ELIMINOU!": "ELIMINATO!",
   "SHUTDOWN!": "SHUTDOWN!",
   "abates seguidos": "uccisioni di fila",
