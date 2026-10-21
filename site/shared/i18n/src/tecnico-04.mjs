@@ -146,7 +146,6 @@ export default [
   ['Melhorar', 'Upgrade', 'Verbessern', 'Mejorar', 'Migliora', 'Améliorer'],
   ['termina em {x5}', 'ends in {x5}', 'endet in {x5}', 'termina en {x5}', 'termina tra {x5}', 'se termine dans {x5}'],
   ['Sem vaga: melhore o marketing.', 'No slot: upgrade your marketing.', 'Kein Platz: Verbessere dein Marketing.', 'Sin cupo: mejora el marketing.', 'Nessun posto: migliora il marketing.', 'Aucune place : améliore ton marketing.'],
-  ['Fama {x1} · marketing {x2}{x3}{x4}', 'Fame {x1} · marketing {x2}{x3}{x4}', 'Ruhm {x1} · Marketing {x2}{x3}{x4}', 'Fama {x1} · marketing {x2}{x3}{x4}', 'Fama {x1} · marketing {x2}{x3}{x4}', 'Renommée {x1} · marketing {x2}{x3}{x4}'],
   ['· divisão principal', '· main division', '· Hauptdivision', '· división principal', '· divisione principale', '· division principale'],
   ['· {x1} titulares', '· {x1} starters', '· {x1} Stammspieler', '· {x1} titulares', '· {x1} titolari', '· {x1} titulaires'],
   ['cr./min · {x6} h{x7}{x8}', 'cr./min · {x6} h{x7}{x8}', 'Cr./Min. · {x6} Std.{x7}{x8}', 'cr./min · {x6} h{x7}{x8}', 'cr./min · {x6} h{x7}{x8}', 'cr./min · {x6} h{x7}{x8}'],

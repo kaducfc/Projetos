@@ -250,10 +250,10 @@ function v2Patro(e) {
   const marcas = e.patrocinadores.map((p) => {
     const pode = p.estado !== 'ativo' && p.estado !== 'indisponivel' && livre > 0 && e.creditos >= p.custo && !C.S.ocupado;
     const motivo = p.estado === 'indisponivel' ? C.esc(p.motivo || '') : p.estado !== 'ativo' && livre <= 0 ? 'Sem vaga: melhore o marketing.' : '';
-    const req = [traduzir('Fama {n} · marketing {m}', { n: p.req.fama ?? 0, m: p.req.nivel ?? 1 }), p.req.divisao ? traduzir('divisão principal') : '', p.req.titulares ? traduzir('{n} titulares', { n: p.req.titulares }) : ''].filter(Boolean).join(' · ');
+    const req = [traduzir('Fama {num1} · marketing {num2}', { num1: p.req.fama ?? 0, num2: p.req.nivel ?? 1 }), p.req.divisao ? traduzir('divisão principal') : '', p.req.titulares ? traduzir('{n} titulares', { n: p.req.titulares }) : ''].filter(Boolean).join(' · ');
     return `<div class="mk2-pat ${p.estado}" style="--c:${COR_CAT[p.categoria] || '#94a3b8'}"><div class="mk2-pat-n"><b>${C.esc(p.nome)}</b><span class="mk2-chip">${CAT[p.categoria] || ''}</span></div>
       <div class="mk2-pat-v"><b>+${num1(p.receita_min)}</b><small>cr./min · ${p.duracao_h} h${p.bonus_aud ? ` · audiência +${pct(p.bonus_aud)}` : ''}${p.bonus_fama ? ` · fama +${p.bonus_fama}` : ''}</small></div>
-      <small class="mk2-nota">${req}${motivo ? ` — ${motivo}` : ''}</small>
+      <small class="mk2-nota">${req}${motivo ? ` — ${traduzir(motivo)}` : ''}</small>
       ${p.estado === 'ativo' ? '<span class="mk2-chip bom">Ativo</span>' : `<button type="button" class="tc-btn ouro" data-act="mkt-contratar" data-id="${p.id}" ${pode ? '' : 'disabled'}>Contratar · ${C.fmt(p.custo)} cr.</button>`}</div>`;
   }).join('');
   return `<section class="mk2-bloco"><h3>Seus contratos <small>${ativos.length} / ${e.marketing.limite_contratos}</small></h3>${cont ? `<div class="mk2-pats">${cont}</div>` : '<p class="mk2-dica">Nenhum patrocinador ainda. Contrate uma marca abaixo para ganhar créditos fixos por minuto.</p>'}</section>
