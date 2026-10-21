@@ -1193,12 +1193,12 @@ export const tecnico = {
   recrutarInfo: () => rpcTecnico('tc_recrutar_info'),
   recrutar: async (bau, qtd, chave) => {
     const r = await rpcTecnico('tc_recrutar', { bau_: bau, qtd_: qtd, chave_: chave });
-    await refreshMoedas(); // o saldo de RC mudou
+    try { await refreshMoedas(); } catch { /* só atualiza o saldo exibido: o resultado já foi gravado e precisa chegar à tela */ } // o saldo de RC mudou
     return r;
   },
   comprarAnuncio: async (anuncio, chave) => {
     const r = await rpcTecnico('tc_comprar_anuncio', { anuncio, chave_: chave });
-    await refreshMoedas(); // o saldo de RC mudou
+    try { await refreshMoedas(); } catch { /* só atualiza o saldo exibido: o resultado já foi gravado e precisa chegar à tela */ } // o saldo de RC mudou
     return r;
   },
 };

@@ -168,7 +168,14 @@ export async function tratarAcao(act, b) {
   if (act === 'recrutar') {
     const qtd = Number(b.dataset.qtd); const bau = b.dataset.bau;
     const reduzido = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const pedido = C.agir(() => api.recrutar(bau, qtd, C.novaChave()), { recarregar: false });
+    // Mesma chave em todas as tentativas: se a resposta se perder (rede), o servidor devolve o resultado já sorteado em vez de sortear de novo.
+    const chave = C.novaChave();
+    const tentar = async () => {
+      for (let t = 0; ; t++) {
+        try { return await api.recrutar(bau, qtd, chave); } catch (e) { if (e.codigo || t >= 3) throw e; await new Promise((ok) => setTimeout(ok, 900 * (t + 1))); }
+      }
+    };
+    const pedido = C.agir(tentar, { recarregar: false });
     const atualizar = () => C.agir(async () => { await C.atualizarMeu(); X.recrutar = await api.recrutarInfo(); }, { recarregar: false });
     if (reduzido) {
       const r = await pedido;
