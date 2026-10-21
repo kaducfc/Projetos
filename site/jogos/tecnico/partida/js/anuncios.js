@@ -5,7 +5,7 @@ import { t } from '../../../../shared/i18n.js';
 
 const JANELA_MULTI = 10; // segundos de jogo entre abates seguidos para contar como multi-abate
 const MULTI = { 2: ['DOUBLE KILL!', 4], 3: ['TRIPLE KILL!', 7], 4: ['QUADRA KILL!', 8], 5: ['PENTAKILL!', 10] };
-const EPICO = { dragao: ['DRAGÃO ELIMINADO!', 6], anciao: ['DRAGÃO ANCIÃO ELIMINADO!', 8], arauto: ['ARAUTO ELIMINADO!', 6], barao: ['BARÃO NASHOR ELIMINADO!', 8] };
+const EPICO = { dragao: ['DRAGÃO ELIMINADO!', 'DRAGÃO ROUBADO!', 6], anciao: ['ANCIÃO ELIMINADO!', 'ANCIÃO ROUBADO!', 8], arauto: ['ARAUTO ELIMINADO!', 'ARAUTO ROUBADO!', 6], barao: ['BARÃO ELIMINADO!', 'BARÃO ROUBADO!', 8] };
 // Abates seguidos sem morrer (como no jogo): 3, 4, 5, 6, 7 e 8 ou mais.
 const SERIE = { 3: ['KILLING SPREE!', 5], 4: ['RAMPAGE!', 6], 5: ['UNSTOPPABLE!', 7], 6: ['DOMINATING!', 8], 7: ['GODLIKE!', 9], 8: ['LEGENDARY!', 9.5] };
 // Imagem de quem deu o golpe final numa execução.
@@ -88,10 +88,10 @@ export function criarAnuncios(mapaEl) {
       }
       if (e.tipo === 'nexus_destruido') return quadro(P, { esq: retrato(P, e.abatedor, eq, `minion_${eq}_frente`), dir: imgObj(`img/nexus_${outro(eq)}.webp`, outro(eq)), titulo: 'NEXUS DESTRUÍDO!', equipe: eq, classe: 'epico', prio: 10, dur: 3600 });
       if (e.tipo === 'objetivo_abatido' && EPICO[e.objetivo]) {
-        const [tt, prio] = EPICO[e.objetivo];
-        return quadro(P, { esq: retrato(P, e.abatedor, eq, 'nexus_azul'), dir: imgObj(`img/epicos/${e.objetivo}-icone.webp`, eq), titulo: tt, sub: e.roubado ? t('Roubado!') : '', equipe: eq, classe: prio >= 8 ? 'epico' : 'obj', prio, dur: prio >= 8 ? 3400 : 2600 });
+        const [tt, tr, prio] = EPICO[e.objetivo];
+        return quadro(P, { esq: retrato(P, e.abatedor, eq, 'nexus_azul'), dir: imgObj(`img/epicos/${e.objetivo}-icone.webp`, eq), titulo: e.roubado ? tr : tt, equipe: eq, classe: 'obj', prio: e.roubado ? prio + 1 : prio, dur: prio >= 8 ? 3200 : 2600 });
       }
-      if (e.tipo === 'alma_dragao') return quadro(P, { esq: `<span class="an-ret ${eq}"><img src="img/epicos/dragao-icone.webp" alt="" width="56" height="56" /></span>`, titulo: 'ALMA DO DRAGÃO CONQUISTADA!', equipe: eq, classe: 'epico', prio: 7, dur: 3000 });
+      if (e.tipo === 'alma_dragao') return quadro(P, { esq: `<span class="an-ret ${eq}"><img src="img/epicos/dragao-icone.webp" alt="" width="56" height="56" /></span>`, titulo: 'ALMA DO DRAGÃO!', equipe: eq, classe: 'obj', prio: 7, dur: 2800 });
     },
   };
 }

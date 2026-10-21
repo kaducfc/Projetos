@@ -390,3 +390,8 @@ body:has(.pt) { background: #040a16; }
 /* anúncio de objetivo épico: só a imagem circular do monstro, sem moldura nem o retângulo do timer */
 .pt-an .an-ret.obj:has(img[src*="icone"]) { border: 0; background: none; box-shadow: none; overflow: visible; border-radius: 0; filter: drop-shadow(0 0 10px var(--c)); }
 .pt-an .an-ret.obj img[src*="icone"] { object-fit: contain; padding: 0; }
+/* títulos longos nunca saem do mapa */
+.pt-an { max-width: calc(100% - 12px); }
+.pt-an .an-meio { min-width: 0; }
+.pt-an.epico .an-meio b { font-size: clamp(18px, 3.2vw, 30px); }
+.pt-an .an-meio b { max-width: 100%; }
