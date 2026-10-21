@@ -91,7 +91,7 @@ export const PAGINAS = [
     <p>A <b>temporada tem 4 semanas</b>:</p>
     ${tabela(['Semana', 'Competição'], ['1', 'Liga (Academy ou Nacional)'], ['2', 'Copa Internacional'], ['3', 'Liga'], ['4', 'Campeonato Mundial'])}
     <h4>Como é a liga da semana</h4>
-    ${lista('Você e <b>7 equipes do sistema</b>: 8 times no total. Os técnicos só se enfrentam nos campeonatos internacionais.', '<b>Segunda a sexta:</b> 2 jogos por dia (MD1, 1 mapa), vitória = 1 ponto.', '<b>Sábado:</b> semifinais dos 4 melhores (MD3). <b>Domingo:</b> final (MD5).', '<b>Empate de pontos:</b> o técnico (você) tem prioridade e avança.')}
+    ${lista('Você e <b>7 equipes do sistema</b>: 8 times no total. Os técnicos só se enfrentam nos campeonatos internacionais.', '<b>Segunda a sexta:</b> 2 jogos por dia (MD1, 1 mapa), vitória = 1 ponto.', '<b>Sábado:</b> semifinais dos 4 melhores (MD3). <b>Domingo:</b> final (MD5).')}
     ${caixa('atencao', 'Se você <b>não jogar a partida do dia até a meia-noite</b>, ela conta como <b>derrota por W.O.</b> (e fica indicada no histórico).')}
     <h4>Promoção e vagas</h4>
     ${lista('Os <b>2 primeiros da Liga Academy sobem</b> para a Liga Nacional.', 'Os <b>2 primeiros da Nacional</b> ganham vaga nos torneios internacionais (Copa e Mundial). Não existe rebaixamento.', 'Quem está na Copa ou no Mundial naquela semana não joga a liga.')}
