@@ -24,10 +24,10 @@ export const PAGINAS = [
     ${faq(['Preciso gastar RC para jogar?', 'Não. Dá para jogar tudo só com créditos. O RC acelera: baús com jogadores Legados e compras entre usuários.'], ['Os créditos acabam?', 'Salários e contratos custam créditos toda semana. Mantenha a renda do Marketing e os prêmios em dia e não contrate acima do que o clube aguenta.'])}` },
 
   { id: 'elenco', t: 'Elenco e posições', r: 'Titulares, reservas e quem joga onde', cor: '#60a5fa', corpo: () => `
-    <p>O time tem <b>5 titulares</b>, um por posição: <b>Topo, Selva, Meio, Atirador e Suporte</b>. O resto fica como <b>reserva</b> no inventário, que cabe até <b>50 jogadores</b>.</p>
+    <p>O time tem <b>5 titulares</b>, um por posição: <b>Topo, Selva, Meio, Atirador e Suporte</b>. O resto fica como <b>reserva</b> no inventário, que cabe até <b>70 jogadores</b>.</p>
     ${lista('Para colocar alguém como titular, ele precisa ter um <b>contrato ativo</b> (1 semana ou 1 temporada).', 'Em <b>Meu elenco</b> você troca titulares e reservas e abre a <b>ficha</b> de cada jogador.', 'Cada jogador mostra posição, idade, região, atributos, <b>Poder</b>, potencial, estrelas e os <b>idiomas</b> que fala.')}
     ${caixa('atencao', 'Jogador <b>fora da posição</b> rende só <b>75%</b> do Poder. Alguns jogadores têm uma posição secundária e jogam nela sem perder.')}
-    ${faq(['Quantos reservas posso ter?', 'O inventário comporta até 50 jogadores no total. Titulares + reservas contam no mesmo limite.'], ['O que são os atributos?', 'Mecânica, Fase de rotas, Macro, Teamfight e Mental (e Fama, que só mexe no preço e na audiência). O Poder vem deles.'], ['Posso vender ou demitir?', 'Sim. Reservas podem ser demitidos (viram fragmentos) ou anunciados no mercado entre usuários.'])}` },
+    ${faq(['Quantos reservas posso ter?', 'O inventário comporta até 70 jogadores no total. Titulares + reservas contam no mesmo limite.'], ['O que são os atributos?', 'Mecânica, Fase de rotas, Macro, Teamfight e Mental (e Fama, que só mexe no preço e na audiência). O Poder vem deles.'], ['Posso vender ou demitir?', 'Sim. Reservas podem ser demitidos (viram fragmentos) ou anunciados no mercado entre usuários.'])}` },
 
   { id: 'poder', t: 'Poder e eficiência', r: 'O que faz o time ficar forte', cor: '#f472b6', corpo: () => `
     <p>O <b>Poder</b> é o número que resume a força de um jogador. É uma média dos 5 atributos.</p>
@@ -84,7 +84,7 @@ export const PAGINAS = [
     <p>Os <b>baús</b> entregam Legados (e cópias). Pagos em <b>RC</b>.</p>
     ${tabela(['Baú', 'Preço', 'Chances'], ['<b>Básico</b>', '400 RC', 'Comum 55% · Raro 30% · Épico 11,5% · Lendário 3% · Mítico 0,5%'], ['<b>Premium</b>', '800 RC', 'Comum 24% · Raro 38% · Épico 28% · Lendário 8% · Mítico 2%'])}
     ${lista('Dá para abrir <b>5 de uma vez</b> com <b>15% de desconto</b>.', 'Cada baú tem a sua <b>garantia</b>: o <b>Básico</b> dá um <b>Lendário a cada 40</b> baús e o <b>Premium</b> um <b>Mítico a cada 30</b>. O contador de cada baú zera assim que sai a raridade da garantia (no Básico, Lendário ou Mítico), mesmo sem ser pela garantia. Ex.: 5 baús Premium abertos = 5/30; se no sexto sair um Mítico, volta para 0/30.', 'O jogador novo vem com contrato de cortesia de 12 semanas. Repetido vira <b>cópia</b> para estrelas.', 'A janela de abertura mostra os jogadores um por um, com som (dá para desligar em Configuração).')}
-    ${caixa('atencao', 'O inventário precisa ter espaço (limite de 50 jogadores) para a quantidade de baús que você abrir.')}
+    ${caixa('atencao', 'O inventário precisa ter espaço (limite de 70 jogadores) para a quantidade de baús que você abrir.')}
     ${faq(['Quais são as chances de cada raridade?', 'Estão na tabela acima, que usa os mesmos números do jogo.'])}` },
 
   { id: 'campeonatos', t: 'Campeonatos e temporada', r: 'Ligas, Copa, Mundial e prêmios', cor: '#fbbf24', corpo: () => `
