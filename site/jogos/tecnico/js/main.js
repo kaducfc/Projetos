@@ -454,8 +454,8 @@ function financasHtml(f) {
 }
 
 function tabelaHtml(tab, meuId, compacta = false) {
-  return `<div class="tc-tabela-rolagem"><table class="tc-tabela"><thead><tr><th>#</th><th>Equipe</th>${compacta ? '' : '<th class="n">J</th>'}<th class="n">V</th><th class="n">D</th>${compacta ? '' : '<th class="n">Mapas</th><th class="n">Saldo</th>'}<th class="n">Pts</th>${compacta ? '' : '<th>Situação</th>'}</tr></thead><tbody>
-    ${tab.map((t) => `<tr class="${t.org.id === meuId ? 'eu' : ''}"><td>${t.pos}</td><td><div class="org">${escudoOrg(t.org, 24)}<span>${esc(t.org.nome)}${t.org.usuario ? ' <span title="Técnico real">★</span>' : ''}</span></div></td>${compacta ? '' : `<td class="n">${t.partidas}</td>`}<td class="n">${t.vitorias}</td><td class="n">${t.derrotas}</td>${compacta ? '' : `<td class="n">${t.mapas_pro}-${t.mapas_contra}</td><td class="n">${t.saldo > 0 ? '+' : ''}${t.saldo}</td>`}<td class="n"><b>${t.pontos}</b></td>${compacta ? '' : `<td>${t.situacao ? `<span class="tc-sit ${t.situacao}">${{ promocao: 'Promoção', copa: 'Vaga na Copa', mundial: 'Vaga no Mundial', semi: 'Semifinais', quartas: 'Quartas', permanece: '—', eliminado: '—' }[t.situacao] || ''}</span>` : ''}</td>`}</tr>`).join('')}
+  return `<p class="tc-mudo tc-peq" style="margin:0 0 6px">Clique em uma equipe para ver os titulares e a força de cada jogador.</p><div class="tc-tabela-rolagem"><table class="tc-tabela"><thead><tr><th>#</th><th>Equipe</th>${compacta ? '' : '<th class="n">J</th>'}<th class="n">V</th><th class="n">D</th>${compacta ? '' : '<th class="n">Mapas</th><th class="n">Saldo</th>'}<th class="n">Pts</th>${compacta ? '' : '<th>Situação</th>'}</tr></thead><tbody>
+    ${tab.map((t) => `<tr class="lnk ${t.org.id === meuId ? 'eu' : ''}" data-act="rank-time" data-org="${t.org.id}" tabindex="0" role="button" aria-label="Ver os titulares de ${esc(t.org.nome)}"><td>${t.pos}</td><td><div class="org">${escudoOrg(t.org, 24)}<span>${esc(t.org.nome)}${t.org.usuario ? ' <span title="Técnico real">★</span>' : ''}</span></div></td>${compacta ? '' : `<td class="n">${t.partidas}</td>`}<td class="n">${t.vitorias}</td><td class="n">${t.derrotas}</td>${compacta ? '' : `<td class="n">${t.mapas_pro}-${t.mapas_contra}</td><td class="n">${t.saldo > 0 ? '+' : ''}${t.saldo}</td>`}<td class="n"><b>${t.pontos}</b></td>${compacta ? '' : `<td>${t.situacao ? `<span class="tc-sit ${t.situacao}">${{ promocao: 'Promoção', copa: 'Vaga na Copa', mundial: 'Vaga no Mundial', semi: 'Semifinais', quartas: 'Quartas', permanece: '—', eliminado: '—' }[t.situacao] || ''}</span>` : ''}</td>`}</tr>`).join('')}
   </tbody></table></div>`;
 }
 
@@ -1160,7 +1160,10 @@ document.addEventListener('submit', async (e) => {
     render(); await agir(carregarMercado, { recarregar: false });
   }
 });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.modal) { S.modal = null; render(); } });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && S.modal) { S.modal = null; render(); return; }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('tr.lnk')) { e.preventDefault(); e.target.click(); }
+});
 
 iniciarAdm({ S, esc, agir, toast, render });
 iniciarMarketing({ S, esc, fmt, IMG, agir, render, nomeVaga: (v) => NOME_VAGA[v] || v, atualizarMeu: async () => { S.meu = await api.meu(); if (S.meu.org) S.painel = await api.painel(); } });
