@@ -362,3 +362,28 @@ html, body { overflow-x: clip; }
 }
 @media (max-width: 1000px) { .pt.ao-vivo .pt-corpo { flex: none; min-height: auto; } .pt.ao-vivo .pt-lado { max-height: none; overflow: visible; } }
 body:has(.pt) { background: #040a16; }
+
+/* anúncios na tela (estilo LoL): abates, multi-abates, ACE, torres, inibidores e objetivos épicos */
+.pt-anuncios { position: absolute; left: 0; right: 0; top: 8%; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; z-index: 6; line-height: 1.2; }
+.pt-an { --c: #4aa3ff; --c2: #1d6fcf; display: flex; align-items: center; justify-content: center; gap: 0; max-width: 96%; opacity: 0; transform: translateY(-10px) scale(0.92); transition: opacity 0.28s, transform 0.28s; filter: drop-shadow(0 6px 14px #000c); }
+.pt-an.eq-vermelho { --c: #ff5a5a; --c2: #b3202f; }
+.pt-an.entra { opacity: 1; transform: none; } .pt-an.sai { opacity: 0; transform: translateY(-6px) scale(0.97); }
+.pt-an .an-meio { position: relative; display: grid; justify-items: center; padding: 7px 30px 8px; min-width: 150px; background: linear-gradient(90deg, transparent, #050d1ce0 14%, #050d1ce8 86%, transparent); }
+.pt-an .an-meio::before, .pt-an .an-meio::after { content: ''; position: absolute; left: 6%; right: 6%; height: 2px; background: linear-gradient(90deg, transparent, var(--c), transparent); box-shadow: 0 0 8px var(--c); }
+.pt-an .an-meio::before { top: 0; } .pt-an .an-meio::after { bottom: 0; }
+.pt-an .an-meio b { font: 700 clamp(15px, 2.6vw, 24px)/1 'Cinzel', 'Trajan Pro', Georgia, 'Times New Roman', serif; letter-spacing: 0.06em; color: #f3e6c4; text-shadow: 0 2px 0 #000, 0 0 12px #c8962f88; white-space: nowrap; }
+.pt-an .an-meio small { margin-top: 3px; font: 600 11px Inter, system-ui, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: #cdb98a; }
+.pt-an .an-ret { display: grid; place-items: center; width: clamp(34px, 6vw, 56px); height: clamp(34px, 6vw, 56px); border-radius: 50%; border: 2px solid var(--c); background: #06101f; box-shadow: 0 0 14px var(--c), inset 0 0 8px #000a; overflow: hidden; flex: none; z-index: 1; }
+.pt-an .an-ret.azul { border-color: #4aa3ff; box-shadow: 0 0 14px #4aa3ff99; } .pt-an .an-ret.vermelho { border-color: #ff5a5a; box-shadow: 0 0 14px #ff5a5a99; }
+.pt-an .an-ret .tc-ci { --t: 100% !important; width: 100%; height: 100%; } .pt-an .an-ret img { width: 100%; height: 100%; object-fit: cover; }
+.pt-an .an-ret.obj { border-radius: 8px; } .pt-an .an-ret.obj img { object-fit: contain; padding: 3px; }
+.pt-an.abate .an-meio { min-width: 100px; padding: 4px 22px 5px; } .pt-an.abate .an-meio b { font-size: clamp(12px, 2vw, 17px); color: var(--c); text-shadow: 0 1px 0 #000, 0 0 8px var(--c); }
+.pt-an.abate .an-ret { width: clamp(28px, 5vw, 42px); height: clamp(28px, 5vw, 42px); }
+.pt-an.epico .an-meio { padding: 12px 44px 14px; min-width: 240px; background: linear-gradient(90deg, transparent, #050d1cf0 10%, #050d1cf0 90%, transparent); }
+.pt-an.epico .an-meio::before, .pt-an.epico .an-meio::after { height: 3px; background: linear-gradient(90deg, transparent, #f5cf5a, var(--c), #f5cf5a, transparent); }
+.pt-an.epico .an-meio b { font-size: clamp(20px, 4vw, 38px); letter-spacing: 0.08em; color: #fff3cf; text-shadow: 0 2px 0 #000, 0 0 18px #f5cf5a, 0 0 34px var(--c); }
+.pt-an.epico .an-ret { width: clamp(44px, 8vw, 72px); height: clamp(44px, 8vw, 72px); border-width: 3px; }
+.pt-an.epico .an-meio::before { animation: pt-an-brilho 1.2s ease-in-out infinite; }
+@keyframes pt-an-brilho { 50% { box-shadow: 0 0 18px var(--c), 0 0 4px #f5cf5a; } }
+@media (max-width: 700px) { .pt-anuncios { top: 4%; } .pt-an .an-meio { padding: 4px 12px 5px; min-width: 0; } .pt-an.epico .an-meio { padding: 8px 18px 9px; min-width: 0; } .pt-an .an-meio b { white-space: normal; text-align: center; } }
+@media (prefers-reduced-motion: reduce) { .pt-an, .pt-an.entra, .pt-an.sai { transition: opacity 0.2s; transform: none; } .pt-an.epico .an-meio::before { animation: none; } }

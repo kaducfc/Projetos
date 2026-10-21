@@ -14,6 +14,7 @@ import { prepararImagens, campIcone, itemUrl } from '../../js/campeoes-img.js';
 import { ITENS } from '../dados/itens.js';
 import { tempoTexto } from '../motor/eventos.js';
 import { REGRAS } from '../config/regras.js';
+import { criarAnuncios } from './anuncios.js?v=1';
 import { abrirDraft } from './draft-ui.js?v=17';
 
 const api = platform.tecnico;
@@ -126,6 +127,7 @@ function montar() {
     <div class="pt-depur" id="depur"></div>
     ${E.config.modo === 'teste' ? `<div class="pt-teste"><label>Poder azul <input type="number" id="pa" min="1" max="100" value="${E.config.pa}"></label><label>Poder vermelho <input type="number" id="pv" min="1" max="100" value="${E.config.pv}"></label><label>Semente <input type="number" id="seed" value="${E.config.semente}"></label><span>A mesma semente reproduz a mesma partida.</span></div>` : ''}`;
   E.rend = new Renderizador(document.getElementById('cv'), E.imagem);
+  E.anuncios = criarAnuncios(document.getElementById('mapa'));
   const mapa = document.getElementById('mapa');
   encaixar();
   document.getElementById('cv').addEventListener('click', (e) => {
@@ -195,7 +197,7 @@ function reiniciar() {
   }
   E.partida = novaPartida(E.config);
   E.relogio.trocarPartida(E.partida); E.relogio.definirVelocidade(1);
-  E.fimMostrado = false; E.turbo = false; E.selecionado = null; E.rend.selecionado = null; E.ultFeed = 0;
+  E.fimMostrado = false; E.turbo = false; E.selecionado = null; E.rend.selecionado = null; E.ultFeed = 0; E.anuncios?.reiniciar();
   document.getElementById('b-play').disabled = false; marcarVelocidade();
   document.querySelectorAll('.pt-fundo').forEach((x) => x.remove());
   atualizarPlacar(true);
@@ -283,7 +285,9 @@ function atualizarFeed() {
   const P = E.partida; if (E.ultFeed >= P.eventos.length) return;
   const feed = document.getElementById('feed');
   for (let i = E.ultFeed; i < P.eventos.length; i++) {
-    const e = P.eventos[i]; const f = TEXTOS[e.tipo]; if (!f) continue;
+    const e = P.eventos[i];
+    if (!E.turbo) E.anuncios?.evento(e, P);
+    const f = TEXTOS[e.tipo]; if (!f) continue;
     const div = document.createElement('div'); div.className = e.equipe === 'azul' ? 'a' : e.equipe === 'vermelho' ? 'v' : '';
     div.innerHTML = `<time>${tempoTexto(e.t)}</time>${f(e, P)}`; feed.prepend(div);
     while (feed.children.length > 40) feed.lastChild.remove();
@@ -351,7 +355,7 @@ let ultTs = 0;
 function quadro(ts) {
   const dt = ultTs ? (ts - ultTs) / 1000 : 0; ultTs = ts;
   try {
-    E.relogio.atualizar(dt);
+    E.relogio.atualizar(dt); E.anuncios?.definirVelocidade(E.relogio.velocidade);
     E.rend.interp.a = E.relogio.alfa; E.rend.interp.prev = E.relogio.prev;
     const depur = Object.values(E.camadas).some(Boolean) ? (ctx) => desenharDepuracao(ctx, E.rend.vista(), E.camadas, E.partida.terreno, E.partida) : null;
     E.rend.desenhar(E.partida, depur);
