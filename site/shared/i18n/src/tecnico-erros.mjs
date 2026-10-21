@@ -1,4 +1,4 @@
-// Simulador de técnico: mensagens de erro do servidor (ERROS_TECNICO em shared/platform.js).
+// Rift Manager: mensagens de erro do servidor (ERROS_TECNICO em shared/platform.js).
 // Cada linha: [português, en, de, es, it, fr].
 export default [
   ['A novidade precisa de título (até 80 caracteres) e texto (até 1.500 caracteres).', 'The news item needs a title (up to 80 characters) and text (up to 1,500 characters).', 'Die Neuigkeit braucht einen Titel (bis zu 80 Zeichen) und einen Text (bis zu 1.500 Zeichen).', 'La novedad necesita un título (hasta 80 caracteres) y un texto (hasta 1.500 caracteres).', 'La novità richiede un titolo (fino a 80 caratteri) e un testo (fino a 1.500 caratteri).', 'La nouveauté nécessite un titre (jusqu’à 80 caractères) et un texte (jusqu’à 1 500 caractères).'],

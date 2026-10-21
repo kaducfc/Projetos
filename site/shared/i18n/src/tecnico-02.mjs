@@ -1,4 +1,4 @@
-// Simulador de técnico, parte 2: Início, elenco, mercado, campeonatos, rank, histórico, fragmentos.
+// Rift Manager, parte 2: Início, elenco, mercado, campeonatos, rank, histórico, fragmentos.
 // Cada linha: [português, en, de, es, it, fr].
 export default [
   // Início

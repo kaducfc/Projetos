@@ -1,4 +1,4 @@
-// Simulador de técnico, parte 4: amistoso (texto completo), recrutar, histórico financeiro, Marketing.
+// Rift Manager, parte 4: amistoso (texto completo), recrutar, histórico financeiro, Marketing.
 // Cada linha: [português, en, de, es, it, fr].
 export default [
   // Amistoso (frases em pedaços, na ordem em que aparecem)

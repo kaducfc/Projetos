@@ -1,4 +1,4 @@
-// Simulador de técnico, parte 6: dados do servidor (níveis de marketing e fama, campanhas, patrocinadores) e textos montados em partes.
+// Rift Manager, parte 6: dados do servidor (níveis de marketing e fama, campanhas, patrocinadores) e textos montados em partes.
 // Cada linha: [português, en, de, es, it, fr].
 export default [
   // Campanhas de marketing

@@ -1,4 +1,4 @@
-// Simulador de técnico, Guia do jogo (parte 3): marketing, rank e histórico, dúvidas rápidas.
+// Rift Manager, Guia do jogo (parte 3): marketing, rank e histórico, dúvidas rápidas.
 // Cada linha: [português, en, de, es, it, fr].
 export default [
   // Marketing

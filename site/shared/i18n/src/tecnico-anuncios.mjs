@@ -1,4 +1,4 @@
-// Simulador de técnico: anúncios na tela da partida (abates, torres, objetivos).
+// Rift Manager: anúncios na tela da partida (abates, torres, objetivos).
 export default [
   ['EXECUTADO!', 'EXECUTED!', 'HINGERICHTET!', '¡EJECUTADO!', 'GIUSTIZIATO!', 'EXÉCUTÉ !'],
   ['ELIMINOU!', 'SLAIN!', 'ABGESCHOSSEN!', '¡ELIMINÓ!', 'ELIMINATO!', 'ÉLIMINÉ !'],

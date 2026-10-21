@@ -1,4 +1,4 @@
-// Simulador de técnico, Guia do jogo (parte 2): amistosos, mercado, recrutar, campeonatos, partidas.
+// Rift Manager, Guia do jogo (parte 2): amistosos, mercado, recrutar, campeonatos, partidas.
 // Cada linha: [português, en, de, es, it, fr].
 export default [
   // Nomes dos campeonatos (também aparecem dentro de outras frases e nos títulos das ligas)

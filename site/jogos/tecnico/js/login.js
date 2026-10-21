@@ -26,7 +26,7 @@ export function telaLogin(app) {
     <div class="tcl-fundo" aria-hidden="true"></div>
     <div class="tcl-grade">
       <div class="tcl-marca">
-        <p class="tc-eyebrow">◆ Simulador de técnico</p>
+        <p class="tc-eyebrow">◆ Rift Manager</p>
         <h1>Comande a sua organização</h1>
         <p class="tcl-lead">Monte o elenco, treine os jogadores, vença ligas e dispute campeonatos contra técnicos de todo o mundo.</p>
         <ul class="tcl-dest">${DESTAQUES.map(([ic, tit, txt]) => `<li><img src="img/${ic}.webp" alt="" width="40" height="40" /><div><b>${esc(t(tit))}</b><span>${esc(t(txt))}</span></div></li>`).join('')}</ul>

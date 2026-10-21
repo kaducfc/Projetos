@@ -1,4 +1,4 @@
-// Simulador de técnico, Guia do jogo (parte 1): primeiros passos, moedas, elenco, poder, jogadores, estrelas, treino.
+// Rift Manager, Guia do jogo (parte 1): primeiros passos, moedas, elenco, poder, jogadores, estrelas, treino.
 // A chave é o bloco inteiro (parágrafo, item de lista, título, célula) com as marcas <b>/<small>/<br> dentro.
 // Cada linha: [português, en, de, es, it, fr].
 export default [

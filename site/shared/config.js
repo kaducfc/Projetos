@@ -146,7 +146,7 @@ export const GAMES = [
   },
   {
     id: 'tecnico',
-    name: 'Simulador de Técnico (provisório)',
+    name: 'Rift Manager',
     tagline: 'Funde sua organização, contrate jogadores, dispute ligas semanais e chegue ao Mundial.',
     kind: 'Simulação',
     path: 'jogos/tecnico/',

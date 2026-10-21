@@ -1126,7 +1126,7 @@ async function rpcTecnico(nome, args = {}) {
   const { data, error } = await sb.rpc(nome, args);
   if (error) {
     const k = Object.keys(ERROS_TECNICO).find((x) => error.message.includes(x));
-    const e = new Error(k ? ERROS_TECNICO[k] : (/schema cache|does not exist|Could not find/.test(error.message) ? 'O servidor ainda não tem o simulador de técnico instalado (rodar os SQL 0085 a 0089).' : friendly(error).message));
+    const e = new Error(k ? ERROS_TECNICO[k] : (/schema cache|does not exist|Could not find/.test(error.message) ? 'O servidor ainda não tem o Rift Manager instalado (rodar os SQL 0085 a 0089).' : friendly(error).message));
     e.codigo = k || null;
     throw e;
   }

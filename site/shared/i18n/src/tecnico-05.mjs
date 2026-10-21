@@ -1,4 +1,4 @@
-// Simulador de técnico, parte 5: abertura de baús, nomes dos símbolos, partida (tela de jogo e draft), dados da simulação.
+// Rift Manager, parte 5: abertura de baús, nomes dos símbolos, partida (tela de jogo e draft), dados da simulação.
 // Cada linha: [português, en, de, es, it, fr].
 export default [
   // Baús

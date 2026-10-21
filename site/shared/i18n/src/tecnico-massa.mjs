@@ -1,4 +1,4 @@
-// Simulador de técnico: demissão em massa.
+// Rift Manager: demissão em massa.
 export default [
   ["Demitir em massa", "Dismiss in bulk", "Mehrere entlassen", "Despedir en masa", "Licenzia in blocco", "Renvoyer en masse"],
   ["selecionado(s)", "selected", "ausgewählt", "seleccionado(s)", "selezionato/i", "sélectionné(s)"],

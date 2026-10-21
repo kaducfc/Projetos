@@ -1,4 +1,4 @@
-// Simulador de técnico: tela de entrada (login / cadastro).
+// Rift Manager: tela de entrada (login / cadastro).
 export default [
   ['Comande a sua organização', 'Run your own organization', 'Führe deine eigene Organisation', 'Dirige tu propia organización', 'Guida la tua organizzazione', 'Dirige ta propre organisation'],
   ['Monte o elenco, treine os jogadores, vença ligas e dispute campeonatos contra técnicos de todo o mundo.', 'Build your roster, train your players, win leagues and compete in championships against coaches from around the world.', 'Stelle deinen Kader zusammen, trainiere deine Spieler, gewinne Ligen und tritt in Meisterschaften gegen Trainer aus aller Welt an.', 'Arma tu plantilla, entrena a tus jugadores, gana ligas y compite en campeonatos contra entrenadores de todo el mundo.', 'Costruisci la rosa, allena i giocatori, vinci i campionati e sfida allenatori di tutto il mondo.', 'Compose ton effectif, entraîne tes joueurs, remporte des ligues et affronte des entraîneurs du monde entier.'],

@@ -1,4 +1,4 @@
-// Simulador de técnico, parte 7: itens e habilidades da simulação da partida.
+// Rift Manager, parte 7: itens e habilidades da simulação da partida.
 // Cada linha: [português, en, de, es, it, fr].
 export default [
   // Itens

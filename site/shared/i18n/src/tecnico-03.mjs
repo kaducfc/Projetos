@@ -1,4 +1,4 @@
-// Simulador de técnico, parte 3: fichas e janelas (contratar, comprar, anunciar, contratos, escalar), partida, avisos, treino, amistoso.
+// Rift Manager, parte 3: fichas e janelas (contratar, comprar, anunciar, contratos, escalar), partida, avisos, treino, amistoso.
 // Cada linha: [português, en, de, es, it, fr].
 export default [
   ['Demitir o jogador e receber {x12} ◈', 'Dismiss the player and receive {x12} ◈', 'Spieler entlassen und {x12} ◈ erhalten', 'Despedir al jugador y recibir {x12} ◈', 'Licenzia il giocatore e ricevi {x12} ◈', 'Renvoyer le joueur et recevoir {x12} ◈'],
@@ -118,7 +118,7 @@ export default [
   ['Controle de objetivos', 'Objective control', 'Zielkontrolle', 'Control de objetivos', 'Controllo degli obiettivi', 'Contrôle des objectifs'],
   ['Teamfights', 'Teamfights', 'Teamfights', 'Teamfights', 'Teamfight', 'Teamfights'],
   ['Jogo em teste: só administradores veem esta área.', 'Game in testing: only admins see this area.', 'Spiel im Test: Nur Administratoren sehen diesen Bereich.', 'Juego en pruebas: solo los administradores ven esta zona.', 'Gioco in test: solo gli amministratori vedono quest’area.', 'Jeu en test : seuls les administrateurs voient cette zone.'],
-  ['◆ Simulador de técnico', '◆ Coach simulator', '◆ Trainer-Simulator', '◆ Simulador de entrenador', '◆ Simulatore di allenatore', '◆ Simulateur de coach'],
+  ['◆ Rift Manager', '◆ Rift Manager', '◆ Rift Manager', '◆ Rift Manager', '◆ Rift Manager', '◆ Rift Manager'],
 
   // Avisos e erros
   ['O campeão precisa ter ao menos uma posição.', 'The champion needs at least one position.', 'Der Champion braucht mindestens eine Position.', 'El campeón necesita al menos una posición.', 'Il campione deve avere almeno un ruolo.', 'Le champion doit avoir au moins un poste.'],
@@ -146,7 +146,7 @@ export default [
   ['Organização criada! Boa sorte, técnico.', 'Organization created! Good luck, coach.', 'Organisation erstellt! Viel Glück, Trainer.', '¡Organización creada! Buena suerte, entrenador.', 'Organizzazione creata! Buona fortuna, allenatore.', 'Organisation créée ! Bonne chance, coach.'],
   ['Confira os dados e tente de novo.', 'Check the details and try again.', 'Prüfe die Angaben und versuche es erneut.', 'Revisa los datos e inténtalo de nuevo.', 'Controlla i dati e riprova.', 'Vérifie les informations et réessaie.'],
   ['Aparência atualizada!', 'Appearance updated!', 'Aussehen aktualisiert!', '¡Apariencia actualizada!', 'Aspetto aggiornato!', 'Apparence mise à jour !'],
-  ['O simulador de técnico precisa de uma conta para guardar a sua organização.', 'The coach simulator needs an account to save your organization.', 'Der Trainer-Simulator braucht ein Konto, um deine Organisation zu speichern.', 'El simulador de entrenador necesita una cuenta para guardar tu organización.', 'Il simulatore di allenatore ha bisogno di un account per salvare la tua organizzazione.', 'Le simulateur de coach a besoin d’un compte pour sauvegarder ton organisation.'],
+  ['O Rift Manager precisa de uma conta para guardar a sua organização.', 'Rift Manager needs an account to save your organization.', 'Rift Manager braucht ein Konto, um deine Organisation zu speichern.', 'Rift Manager necesita una cuenta para guardar tu organización.', 'Rift Manager ha bisogno di un account per salvare la tua organizzazione.', 'Le simulateur de coach a besoin d’un compte pour sauvegarder ton organisation.'],
   ['Este jogo ainda está em teste e só administradores e convidados conseguem jogar por enquanto.', 'This game is still in testing and only admins and invited players can play for now.', 'Dieses Spiel befindet sich noch im Test und kann vorerst nur von Administratoren und Eingeladenen gespielt werden.', 'Este juego aún está en pruebas y por ahora solo pueden jugar administradores e invitados.', 'Questo gioco è ancora in test e per ora possono giocare solo amministratori e invitati.', 'Ce jeu est encore en test et seuls les administrateurs et les invités peuvent y jouer pour l’instant.'],
   ['Não foi possível abrir o jogo', 'Could not open the game', 'Das Spiel konnte nicht geöffnet werden', 'No se pudo abrir el juego', 'Impossibile aprire il gioco', 'Impossible d’ouvrir le jeu'],
 

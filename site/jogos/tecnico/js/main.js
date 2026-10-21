@@ -1,7 +1,7 @@
 // Simulador de Técnico (nome provisório): o usuário funda uma organização, monta o elenco, contrata no mercado oficial
 // (créditos) ou de outros usuários (RC), disputa as ligas semanais e acumula troféus e Rank.
 // O servidor decide tudo (saldos, propriedade, partidas, premiações); esta tela só mostra e pede ações.
-import { telaLogin } from './login.js?v=1';
+import { telaLogin } from './login.js?v=2';
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { getLang, localeAtual, onLangChange, t } from '../../../shared/i18n.js';
@@ -311,7 +311,7 @@ function editorTexto(alvo, f, modos) {
 function viewCriar() {
   const f = S.form;
   return `<div class="tc-criar">
-    <p class="tc-eyebrow">◆ Simulador de técnico · em teste</p>
+    <p class="tc-eyebrow">◆ Rift Manager · em teste</p>
     <h1 style="font-family:'Bebas Neue',sans-serif;font-size:46px;margin:4px 0 6px">Crie a sua organização</h1>
     <p class="tc-mudo">Dê nome ao seu time, escolha a sigla e monte o ícone (um símbolo com as suas cores, ou só a escrita do nome). Você recebe créditos e, na próxima etapa, escolhe seus 5 primeiros jogadores entre 15 opções para começar na ${esc(nomeLiga().acesso || 'divisão de acesso')}. A aparência não dá vantagem na competição.</p>
     <form class="tc-card tc-form" data-form="criar" novalidate style="margin-top:16px">
@@ -948,7 +948,7 @@ function render() {
   }
 }
 function telaMensagem(titulo, texto, link) {
-  app.innerHTML = `<div class="tc-criar"><p class="tc-eyebrow">◆ Simulador de técnico</p><h1 style="font-family:'Bebas Neue',sans-serif;font-size:42px;margin:4px 0">${esc(titulo)}</h1><p class="tc-mudo">${esc(texto)}</p>${link ? `<p><a class="tc-btn ouro" style="display:inline-block;text-decoration:none" href="${link[0]}">${esc(link[1])}</a></p>` : ''}</div>`;
+  app.innerHTML = `<div class="tc-criar"><p class="tc-eyebrow">◆ Rift Manager</p><h1 style="font-family:'Bebas Neue',sans-serif;font-size:42px;margin:4px 0">${esc(titulo)}</h1><p class="tc-mudo">${esc(texto)}</p>${link ? `<p><a class="tc-btn ouro" style="display:inline-block;text-decoration:none" href="${link[0]}">${esc(link[1])}</a></p>` : ''}</div>`;
 }
 
 // ------------------------------------------------------------------ eventos
