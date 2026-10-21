@@ -30,7 +30,7 @@ export const PAGINAS = [
     ${faq(['Quantos reservas posso ter?', 'O inventário comporta até 50 jogadores no total. Titulares + reservas contam no mesmo limite.'], ['O que são os atributos?', 'Mecânica, Fase de rotas, Macro, Teamfight e Mental (e Fama, que só mexe no preço e na audiência). O Poder vem deles.'], ['Posso vender ou demitir?', 'Sim. Reservas podem ser demitidos (viram fragmentos) ou anunciados no mercado entre usuários.'])}` },
 
   { id: 'poder', t: 'Poder e eficiência', r: 'O que faz o time ficar forte', cor: '#f472b6', corpo: () => `
-    <p>O <b>Poder</b> é o número que resume a força de um jogador. É uma média dos 5 atributos (alguns pesam mais que outros).</p>
+    <p>O <b>Poder</b> é o número que resume a força de um jogador. É uma média dos 5 atributos.</p>
     <h4>Os atributos</h4>
     ${tabela(['Atributo', 'O que representa'], ['Mecânica', 'Habilidade com o campeão: acertar skills, trocar golpes, reflexo.'], ['Fase de rotas', 'Desempenho nos primeiros minutos: farm, trocas e vantagem na lane.'], ['Macro', 'Leitura de jogo: objetivos, rotação, mapa e tomada de decisão.'], ['Teamfight', 'Posicionamento e execução nas lutas em equipe.'], ['Mental', 'Frieza sob pressão e consistência.'], ['Fama', 'Só mexe no preço e na audiência; não muda o Poder.'])}
     ${tabela(['Poder', 'Escudo'], ['95 ou mais', 'Challenger'], ['90 a 94', 'Diamante'], ['80 a 89', 'Platina'], ['70 a 79', 'Ouro'], ['abaixo de 70', 'Prata'])}
