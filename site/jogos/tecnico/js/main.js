@@ -1,6 +1,7 @@
 // Simulador de Técnico (nome provisório): o usuário funda uma organização, monta o elenco, contrata no mercado oficial
 // (créditos) ou de outros usuários (RC), disputa as ligas semanais e acumula troféus e Rank.
 // O servidor decide tudo (saldos, propriedade, partidas, premiações); esta tela só mostra e pede ações.
+import { telaLogin } from './login.js?v=1';
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { getLang, localeAtual, onLangChange, t } from '../../../shared/i18n.js';
@@ -1224,7 +1225,7 @@ carregarFontes().then((ok) => { if (ok && S.meu) render(); }); // com as fontes 
   const souAdmin = await platform.podeJogosEmTeste();
   S.ehAdmin = await platform.isAdmin().catch(() => false);
   const aberto = !gameById(GAME_ID)?.soAdmin;
-  if (!user && !teste) { telaMensagem('Entre na sua conta', 'O simulador de técnico precisa de uma conta para guardar a sua organização.', null); return; }
+  if (!user && !teste) { telaLogin(app); return; }
   if (!souAdmin && !teste && !aberto) { telaMensagem('Em desenvolvimento', 'Este jogo ainda está em teste e só administradores e convidados conseguem jogar por enquanto.', ['../../', 'Voltar ao início']); return; }
   try {
     await api.sincronizar();
