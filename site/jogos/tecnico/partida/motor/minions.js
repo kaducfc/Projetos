@@ -99,7 +99,7 @@ function marchar(P, m, lane) {
   let alvoWp = lane.pts[Math.max(0, Math.min(n - 1, m.idxWp))];
   const fimDaRota = (dir === 1 && m.idxWp === n - 1) || (dir === -1 && m.idxWp === 0);
   // chegou ao fim da rota: daí em diante só segue para o Nexus inimigo (sem voltar ao último ponto, o que fazia o minion oscilar em círculo)
-  if (fimDaRota && (m.rumoNexus || dist(m, alvoWp) < 260)) { m.rumoNexus = true; alvoWp = MUNDO_MAPA.bases[outro(m.equipe)].nexus; }
+  if (fimDaRota && (m.rumoNexus || dist(m, alvoWp) < 260)) { m.rumoNexus = true; const nx = P.estruturas.find((e) => e.subtipo === 'nexus' && e.equipe === outro(m.equipe)); alvoWp = nx || MUNDO_MAPA.bases[outro(m.equipe)].nexus; } // o ponto de destino é a ESTRUTURA do Nexus (bases.nexus é o canto da fonte, atrás dele)
   irPara(P, m, alvoWp.x, alvoWp.y, { tol: 160 });
 }
 
