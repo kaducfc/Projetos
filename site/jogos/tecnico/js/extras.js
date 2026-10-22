@@ -32,10 +32,35 @@ const X = {
 export async function carregarExtras(aba) {
   if (aba === 'treino') X.treino = await api.treinoEstado();
   if (aba === 'amistoso') [X.amistoso.oponentes, X.amistoso.hist] = await Promise.all([api.amistosoOponentes(), api.amistosoHistorico()]);
-  if (aba === 'recrutar') X.recrutar = await api.recrutarInfo();
+  if (aba === 'recrutar') await carregarRecrutar();
   ligarRelogio();
+  ligarGratis();
 }
-export const limparExtras = () => { clearInterval(X.timer); X.treino = null; X.amistoso = { oponentes: null, hist: null }; X.recrutar = null; };
+// Recrutar + situação do baú grátis (o prazo vem do servidor; o aparelho só mostra a contagem).
+async function carregarRecrutar() {
+  const [info, gratis] = await Promise.all([api.recrutarInfo(), api.bauGratisEstado().catch(() => null)]);
+  X.recrutar = info; X.gratis = gratis; X.gratisFim = gratis && !gratis.disponivel ? Date.now() + gratis.restante_seg * 1000 : 0;
+}
+const fmtGratis = (ms) => {
+  const s = Math.max(0, Math.ceil(ms / 1000)); const d = Math.floor(s / 86400); const h = Math.floor((s % 86400) / 3600); const m = Math.floor((s % 3600) / 60); const r = s % 60;
+  const hms = [h, m, r].map((n) => String(n).padStart(2, '0')).join(':');
+  return d ? `${d}d ${hms}` : hms;
+};
+// Contagem do baú grátis: só mexe no texto; quando zera, pergunta ao servidor e libera o botão.
+function ligarGratis() {
+  clearInterval(X.timerGratis);
+  if (C.S.aba !== 'recrutar' || !X.gratisFim) return;
+  X.timerGratis = setInterval(async () => {
+    if (C.S.aba !== 'recrutar' || !X.gratisFim) { clearInterval(X.timerGratis); return; }
+    const resta = X.gratisFim - Date.now();
+    if (resta > 0) { document.querySelectorAll('[data-gratis]').forEach((el) => { el.textContent = fmtGratis(resta); }); return; }
+    clearInterval(X.timerGratis);
+    try { await carregarRecrutar(); } catch { /* tenta de novo no próximo clique */ }
+    C.render(); ligarGratis();
+  }, 1000);
+  X.timerGratis.unref?.();
+}
+export const limparExtras = () => { clearInterval(X.timer); clearInterval(X.timerGratis); X.gratis = null; X.gratisFim = 0; X.treino = null; X.amistoso = { oponentes: null, hist: null }; X.recrutar = null; };
 
 const fmtTempo = (ms) => {
   const s = Math.max(0, Math.ceil(ms / 1000)); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const r = s % 60;
@@ -128,6 +153,15 @@ function botaoAbrir(id, qtd, cor, rotulo, bloq, faltaRc) {
   const abrir = `<button type="button" class="tc-btn ${cor}" data-act="recrutar" data-bau="${id}" data-qtd="${qtd}" ${bloq ? 'disabled' : ''}>${rotulo}</button>`;
   return faltaRc ? `<div class="tc-compra-linha">${abrir}<button type="button" class="tc-btn compra" data-act="comprar-rc">Comprar RC</button></div>` : abrir;
 }
+// Baú Básico grátis (1 a cada 3 dias): botão quando disponível; senão, a contagem até o próximo.
+function blocoGratis(livresN) {
+  const g = X.gratis; if (!g) return '';
+  const dias = g.dias || 3;
+  if (g.disponivel) {
+    return `<div class="tc-gratis on"><div><b>Baú grátis disponível!</b><small>1 Baú Básico a cada ${dias} dias, de graça.</small></div><button type="button" class="tc-btn compra" data-act="recrutar-gratis" ${livresN < 1 || C.S.ocupado ? 'disabled' : ''}>Abrir grátis</button></div>`;
+  }
+  return `<div class="tc-gratis"><div><b>Próximo baú grátis em</b><small>1 Baú Básico a cada ${dias} dias.</small></div><span class="tc-gratis-tempo" data-gratis>${fmtGratis(X.gratisFim - Date.now())}</span></div>`;
+}
 export function viewRecrutar() {
   const r = X.recrutar; if (!r) return '<p class="tc-carregando">Carregando…</p>';
   const cfg = r.config; const livresN = r.elenco_max - r.elenco;
@@ -141,6 +175,7 @@ export function viewRecrutar() {
     return `<section class="tc-card tc-bau bau-${id}"><div class="arte"><img class="bau-img" src="img/baus/${id}-fechado.webp" alt="" /></div><h3>${C.esc(b.nome)}</h3>
       <ul class="tc-odds">${odds}</ul>
       <small class="tc-mudo">${b.garantia ? `Garantia: um ${RARIDADES[b.garantia.raridade].nome} a cada ${b.garantia.a_cada} baús (${Math.min(garantia, b.garantia.a_cada)}/${b.garantia.a_cada}).` : ''}</small>
+      ${id === 'basico' ? blocoGratis(livresN) : ''}
       <div class="tc-acoes">${botaoAbrir(id, 1, 'ouro', `Abrir 1 · <span class="tc-preco ${classe}">${C.fmt(precoUn(b))}</span>`, bloq1, rc && r.saldo < precoUn(b))}
       ${botaoAbrir(id, 5, 'ciano', `Abrir 5 · <span class="tc-preco ${classe}">${C.fmt(preco5(b))}</span> <i class="tc-desc">-${Math.round(cfg.desconto_5 * 100)}%</i>`, bloq5, rc && r.saldo < preco5(b))}</div></section>`;
   }).join('');
@@ -172,18 +207,19 @@ export async function tratarAcao(act, b) {
     return true;
   }
   if (act === 'comprar-rc') { abrirCompraRc(); return true; }
-  if (act === 'recrutar') {
-    const qtd = Number(b.dataset.qtd); const bau = b.dataset.bau;
+  if (act === 'recrutar' || act === 'recrutar-gratis') {
+    const gratis = act === 'recrutar-gratis'; // o servidor confere o prazo; aqui só se pede
+    const qtd = gratis ? 1 : Number(b.dataset.qtd); const bau = gratis ? 'basico' : b.dataset.bau;
     const reduzido = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     // Mesma chave em todas as tentativas: se a resposta se perder (rede), o servidor devolve o resultado já sorteado em vez de sortear de novo.
     const chave = C.novaChave();
     const tentar = async () => {
       for (let t = 0; ; t++) {
-        try { return await api.recrutar(bau, qtd, chave); } catch (e) { if (e.codigo || t >= 3) throw e; await new Promise((ok) => setTimeout(ok, 900 * (t + 1))); }
+        try { return await (gratis ? api.recrutarGratis(chave) : api.recrutar(bau, qtd, chave)); } catch (e) { if (e.codigo || t >= 3) throw e; await new Promise((ok) => setTimeout(ok, 900 * (t + 1))); }
       }
     };
     const pedido = C.agir(tentar, { recarregar: false });
-    const atualizar = () => C.agir(async () => { await C.atualizarMeu(); X.recrutar = await api.recrutarInfo(); }, { recarregar: false });
+    const atualizar = () => C.agir(async () => { await C.atualizarMeu(); await carregarRecrutar(); ligarGratis(); }, { recarregar: false });
     if (reduzido) {
       const r = await pedido;
       if (r && r !== true) { C.S.modal = { t: 'recrutar', r, contrato: 0 }; await atualizar(); }

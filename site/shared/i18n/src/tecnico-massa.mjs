@@ -9,4 +9,9 @@ export default [
   ["{n} jogador(es) demitido(s): +{f} fragmentos de jogador.", "{n} player(s) dismissed: +{f} player fragments.", "{n} Spieler entlassen: +{f} Spielerfragmente.", "{n} jugador(es) despedido(s): +{f} fragmentos de jugador.", "{n} giocatore/i licenziato/i: +{f} frammenti giocatore.", "{n} joueur(s) renvoyé(s) : +{f} fragments de joueur."],
   ["Repetido: vira cópia","Duplicate: becomes a copy","Duplikat: wird zur Kopie","Repetido: se convierte en copia","Doppione: diventa una copia","Doublon : devient une copie"],
   ["Comprar RC","Buy RC","RC kaufen","Comprar RC","Acquista RC","Acheter des RC"],
+  ["Baú grátis disponível!", "Free chest available!", "Gratis-Truhe verfügbar!", "¡Cofre gratis disponible!", "Forziere gratis disponibile!", "Coffre gratuit disponible !"],
+  ["1 Baú Básico a cada {x1} dias, de graça.", "1 Basic Chest every {x1} days, for free.", "1 Basis-Truhe alle {x1} Tage, kostenlos.", "1 Cofre Básico cada {x1} días, gratis.", "1 Forziere Base ogni {x1} giorni, gratis.", "1 Coffre de base tous les {x1} jours, gratuitement."],
+  ["Abrir grátis", "Open for free", "Gratis öffnen", "Abrir gratis", "Apri gratis", "Ouvrir gratuitement"],
+  ["Próximo baú grátis em", "Next free chest in", "Nächste Gratis-Truhe in", "Próximo cofre gratis en", "Prossimo forziere gratis tra", "Prochain coffre gratuit dans"],
+  ["1 Baú Básico a cada {x1} dias.", "1 Basic Chest every {x1} days.", "1 Basis-Truhe alle {x1} Tage.", "1 Cofre Básico cada {x1} días.", "1 Forziere Base ogni {x1} giorni.", "1 Coffre de base tous les {x1} jours."],
 ];

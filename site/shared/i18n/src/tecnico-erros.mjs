@@ -102,4 +102,5 @@ export default [
   ['Esse anúncio não pode ser comprado.', 'This listing cannot be purchased.', 'Dieses Angebot kann nicht gekauft werden.', 'Este anuncio no se puede comprar.', 'Questo annuncio non può essere acquistato.', 'Cette annonce ne peut pas être achetée.'],
   ['Partida não encontrada.', 'Match not found.', 'Spiel nicht gefunden.', 'Partido no encontrado.', 'Partita non trovata.', 'Match introuvable.'],
   ['Dados inválidos.', 'Invalid data.', 'Ungültige Daten.', 'Datos no válidos.', 'Dati non validi.', 'Données invalides.'],
+  ["O baú grátis ainda não está disponível. Volte quando o contador chegar a zero.", "The free chest is not available yet. Come back when the counter reaches zero.", "Die Gratis-Truhe ist noch nicht verfügbar. Komm wieder, wenn der Zähler bei null ist.", "El cofre gratis aún no está disponible. Vuelve cuando el contador llegue a cero.", "Il forziere gratis non è ancora disponibile. Torna quando il contatore arriva a zero.", "Le coffre gratuit n’est pas encore disponible. Reviens quand le compteur atteindra zéro."],
 ];

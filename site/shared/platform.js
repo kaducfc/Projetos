@@ -1104,6 +1104,7 @@ const ERROS_TECNICO = {
   jogador_indisponivel: 'Esse jogador já tem time.',
   jogador_nao_e_seu: 'Esse jogador não é do seu elenco.',
   jogador_titular: 'Tire o jogador da escalação antes de liberá-lo.',
+  bau_gratis_indisponivel: 'O baú grátis ainda não está disponível. Volte quando o contador chegar a zero.',
   elenco_cheio: 'Seu inventário está cheio (máximo de 70 jogadores). Demita ou venda alguém antes.',
   creditos_insuficientes: 'Você não tem créditos suficientes.',
   saldo_insuficiente: 'Você não tem Rift Coins suficientes.',
@@ -1191,6 +1192,8 @@ export const tecnico = {
   amistosoElencos: (id) => rpcTecnico('tc_amistoso_elencos', { aid: id }),
   amistosoRegistrar: (id, resultado) => rpcTecnico('tc_amistoso_registrar', { aid: id, res_: resultado }),
   recrutarInfo: () => rpcTecnico('tc_recrutar_info'),
+  bauGratisEstado: () => rpcTecnico('tc_bau_gratis_estado'),
+  recrutarGratis: (chave) => rpcTecnico('tc_recrutar_gratis', { chave_: chave }),
   recrutar: async (bau, qtd, chave) => {
     const r = await rpcTecnico('tc_recrutar', { bau_: bau, qtd_: qtd, chave_: chave });
     try { await refreshMoedas(); } catch { /* só atualiza o saldo exibido: o resultado já foi gravado e precisa chegar à tela */ } // o saldo de RC mudou
