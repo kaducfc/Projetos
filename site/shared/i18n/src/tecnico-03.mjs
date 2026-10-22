@@ -1,7 +1,7 @@
 // Rift Manager, parte 3: fichas e janelas (contratar, comprar, anunciar, contratos, escalar), partida, avisos, treino, amistoso.
 // Cada linha: [português, en, de, es, it, fr].
 export default [
-  ['Demitir o jogador e receber {x12} ◈', 'Dismiss the player and receive {x12} ◈', 'Spieler entlassen und {x12} ◈ erhalten', 'Despedir al jugador y recibir {x12} ◈', 'Licenzia il giocatore e ricevi {x12} ◈', 'Renvoyer le joueur et recevoir {x12} ◈'],
+  ['Demitir o jogador e receber:', 'Dismiss the player and receive:', 'Spieler entlassen und erhalten:', 'Despedir al jugador y recibir:', 'Licenzia il giocatore e ricevi:', 'Renvoyer le joueur et recevoir :'],
   ['Contrato não usado (50%)', 'Unused contract (50%)', 'Nicht genutzter Vertrag (50 %)', 'Contrato no usado (50%)', 'Contratto non usato (50%)', 'Contrat non utilisé (50 %)'],
   ['Ele é titular: tire-o da escalação para poder demitir o jogador.', 'He is a starter: remove him from the lineup before dismissing the player.', 'Er ist Stammspieler: Nimm ihn aus der Aufstellung, um ihn entlassen zu können.', 'Es titular: sácalo de la alineación para poder despedirlo.', 'È titolare: toglilo dalla formazione per poterlo licenziare.', 'Il est titulaire : retire-le de la composition pour pouvoir le renvoyer.'],
   ['Evoluir ★ · {x4} fragmentos', 'Upgrade ★ · {x4} shards', 'Aufwerten ★ · {x4} Fragmente', 'Mejorar ★ · {x4} fragmentos', 'Evolvi ★ · {x4} frammenti', 'Améliorer ★ · {x4} fragments'],

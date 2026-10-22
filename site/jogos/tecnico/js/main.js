@@ -221,7 +221,7 @@ function topo() {
     <div class="tc-moedas">
       <div class="tc-moeda rc"><img src="../../shared/assets/moeda/rc-96.webp" alt="" width="34" height="34" /><div><b>${fmt(S.meu.rc)}</b><small>Rift Coins</small></div></div>
       <div class="tc-moeda cred"><img src="img/credito-96.webp" srcset="img/credito-192.webp 2x" alt="" width="36" height="36" /><div><b>${fmt(o.creditos)}</b><small>Créditos</small></div></div>
-      <div class="tc-moeda frag"><span class="ic-frag" aria-hidden="true">◈</span><div><b>${fmt(o.fragmentos || 0)}</b><small>Fragmentos de jogador</small></div></div>
+      <div class="tc-moeda frag"><img class="ic-frag" src="img/fragmento-96.webp" srcset="img/fragmento-192.webp 2x" alt="" width="36" height="36" /><div><b>${fmt(o.fragmentos || 0)}</b><small>Fragmentos de jogador</small></div></div>
     </div>
     <div class="tc-atalhos">
       <button type="button" data-act="avisos">${IMG('ic-aviso')}${novos ? `<em>${Math.min(novos, 9)}${novos > 9 ? '+' : ''}</em>` : ''}<span>Avisos</span></button>
@@ -802,19 +802,19 @@ function demitirHtml(m) {
   if (j.estrelas > 0) perdas.push(`As ${j.estrelas} estrela(s) de evolução dele se perdem${j.frag_gastos ? `; metade dos ${fmt(j.frag_gastos)} fragmentos gastos nelas volta para você` : ''}.`);
   if (temCopias) perdas.push(`As ${j.copias} cópia(s) repetida(s) dele viram fragmentos: ${fmt(j.copias * base)} (${fmt(base)} por cópia).`);
   perdas.push('Esta ação não pode ser desfeita.');
-  const bloco = temCopias ? `<div class="tc-copias"><span class="tc-eyebrow">Só cópias repetidas</span><p class="tc-mudo tc-peq" style="margin:4px 0 8px">Quer se desfazer de algumas cópias e continuar com o jogador? Cada cópia rende ${fmt(base)} ◈.</p>
+  const bloco = temCopias ? `<div class="tc-copias"><span class="tc-eyebrow">Só cópias repetidas</span><p class="tc-mudo tc-peq" style="margin:4px 0 8px">Quer se desfazer de algumas cópias e continuar com o jogador? Cada cópia rende ${fmt(base)} fragmentos.</p>
       <div class="tc-passo"><button type="button" class="tc-btn" data-act="cop-menos" ${qtd <= 1 ? 'disabled' : ''} aria-label="Menos uma cópia">−</button><b>${qtd}</b><small>de ${j.copias} cópia(s)</small><button type="button" class="tc-btn" data-act="cop-mais" ${qtd >= j.copias ? 'disabled' : ''} aria-label="Mais uma cópia">+</button><button type="button" class="tc-btn" data-act="cop-todas" ${qtd >= j.copias ? 'disabled' : ''}>Todas</button></div>
-      <button type="button" class="tc-btn ouro" data-act="confirmar-demitir-copias" ${S.ocupado ? 'disabled' : ''}>Demitir ${qtd} cópia(s) e receber ${fmt(ganhoCop)} ◈</button></div>` : '';
+      <button type="button" class="tc-btn ouro" data-act="confirmar-demitir-copias" ${S.ocupado ? 'disabled' : ''}>Demitir ${qtd} cópia(s) e receber: <b class="ic-val">${fmt(ganhoCop)} <img class="ic-frag-i" src="img/fragmento-96.webp" srcset="img/fragmento-192.webp 2x" alt="" width="18" height="18" /></b></button></div>` : '';
   const titular = !!j.slot;
   return `<h2>Demitir ${esc(j.nome)}</h2>
     <div class="tc-ficha" style="grid-template-columns:110px 1fr;align-items:center"><div class="foto tc-moldura${j.raridade ? ` r-${j.raridade}` : ''}">${retratoSvg(j, 110)}</div><div>
       <p class="tc-mudo tc-peq" style="margin:0 0 6px">O que acontece ao demitir o jogador:</p><ul class="tc-lista-ul">${perdas.map((x) => `<li>${x}</li>`).join('')}</ul></div></div>
     ${bloco}
-    <div class="tc-resumo"><div class="l"><span>Demitindo o jogador, você recebe</span><b class="tc-frag">◈ +${fmt(ganho)} fragmentos de jogador</b></div>
+    <div class="tc-resumo"><div class="l"><span>Demitindo o jogador, você recebe</span><b class="tc-frag"><img class="ic-frag-i" src="img/fragmento-96.webp" srcset="img/fragmento-192.webp 2x" alt="" width="18" height="18" /> +${fmt(ganho)} fragmentos de jogador</b></div>
       <div class="l"><span>Seus fragmentos</span><b>${fmt(atual)} → ${fmt(atual + ganho)}</b></div>${j.reembolso_contrato > 0 ? `<div class="l"><span>Contrato não usado (50%)</span><b class="tc-preco cr">+${fmt(j.reembolso_contrato)} cr.</b></div>` : ''}</div>
     ${titular ? '<p class="tc-peq" style="color:var(--ruim)">Ele é titular: tire-o da escalação para poder demitir o jogador.</p>' : ''}
     <p class="tc-mudo tc-peq">Fragmentos servem para evoluir as estrelas dos seus jogadores (Legados também podem usar cópias repetidas).</p>
-    <div class="tc-acoes"><button type="button" class="tc-btn perigo" data-act="confirmar-demitir" ${S.ocupado || titular ? 'disabled' : ''}>Demitir o jogador e receber ${fmt(ganho)} ◈</button><button type="button" class="tc-btn" data-act="voltar-ficha">Cancelar</button></div>`;
+    <div class="tc-acoes"><button type="button" class="tc-btn perigo" data-act="confirmar-demitir" ${S.ocupado || titular ? 'disabled' : ''}>Demitir o jogador e receber: <b class="ic-val">${fmt(ganho)} <img class="ic-frag-i" src="img/fragmento-96.webp" srcset="img/fragmento-192.webp 2x" alt="" width="18" height="18" /></b></button><button type="button" class="tc-btn" data-act="voltar-ficha">Cancelar</button></div>`;
 }
 // Botões de evoluir a estrela: Legado pode gastar cópias repetidas ou fragmentos; jogador comum só fragmentos.
 function botoesEstrela(j) {

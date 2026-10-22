@@ -455,7 +455,7 @@ form.tc-card[data-form="filtros"] { padding: 16px 0 14px; }
   .tc-oponente { grid-template-columns: minmax(40px, auto) 1fr auto; } .tc-oponente .pw-dif { display: none; }
   .tc-attr { grid-template-columns: 70px 24px minmax(20px, 1fr) 96px; gap: 6px; }
 }
-.tc-moeda .ic-frag { width: 22px; text-align: center; font-size: 22px; line-height: 1; color: #c4b5fd; text-shadow: 0 0 8px #8b5cf6aa; }
+.tc-moeda .ic-frag { flex: none; width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 0 6px #0006); }
 
 /* informação do jogador: tag da posição e raridade colorida */
 .tc-mini .inf small.pos-rar { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
@@ -1073,7 +1073,7 @@ html, body { overflow-x: clip; }
   .tc-moeda b { font-size: 15px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tc-moeda small { font-size: 9.5px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tc-moeda img { width: 22px; height: 22px; }
-  .tc-moeda .ic-frag { font-size: 18px; }
+  .tc-moeda .ic-frag { width: 22px; height: 22px; }
   .tc-corpo { margin-top: 6px; padding-left: 8px; padding-right: 8px; gap: 8px; }
   .tc-corpo > *, .tc-main, .tc-card, .tc-escala, .tc-grade2, .tc-grade3 { min-width: 0; }
   .tc-nav { align-items: flex-start; gap: 3px; padding: 4px; position: sticky; top: 0; z-index: 20; scrollbar-width: none; scroll-snap-type: x proximity; }
@@ -1143,3 +1143,7 @@ html, body { overflow-x: clip; }
 
 /* jogador repetido no baú: só o símbolo de reciclagem, discreto */
 .tc-recicla { display: inline-block; margin-left: 5px; font-size: 12px; line-height: 1; font-weight: 400; letter-spacing: 0; text-transform: none; opacity: 0.6; cursor: help; vertical-align: -1px; }
+
+/* ícone do fragmento de jogador dentro de textos e botões */
+.ic-frag-i { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.2em; object-fit: contain; }
+.ic-val { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; font-weight: 800; }
