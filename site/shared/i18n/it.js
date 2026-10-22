@@ -3726,6 +3726,7 @@ export default {
   "Abrir grátis": "Apri gratis",
   "Próximo baú grátis em": "Prossimo forziere gratis tra",
   "1 Baú Básico a cada {x1} dias.": "1 Forziere Base ogni {x1} giorni.",
+  "Estamos montando a sua liga. Atualize a página em instantes (Ctrl+F5).": "Stiamo preparando il tuo campionato. Aggiorna la pagina tra poco (Ctrl+F5).",
   "SOLO QUEUE": "SOLO QUEUE",
   "Mais uma ranqueada às 4 da manhã": "Un’altra classificata alle 4 di notte",
   "O servidor está vazio, o PDL está travado e seu duo acabou de sair. O treino de amanhã começa às 13h.": "Il server è vuoto, i PL sono bloccati e il tuo duo se n’è appena andato. L’allenamento di domani inizia alle 13.",

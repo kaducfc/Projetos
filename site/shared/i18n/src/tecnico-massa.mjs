@@ -14,4 +14,5 @@ export default [
   ["Abrir grátis", "Open for free", "Gratis öffnen", "Abrir gratis", "Apri gratis", "Ouvrir gratuitement"],
   ["Próximo baú grátis em", "Next free chest in", "Nächste Gratis-Truhe in", "Próximo cofre gratis en", "Prossimo forziere gratis tra", "Prochain coffre gratuit dans"],
   ["1 Baú Básico a cada {x1} dias.", "1 Basic Chest every {x1} days.", "1 Basis-Truhe alle {x1} Tage.", "1 Cofre Básico cada {x1} días.", "1 Forziere Base ogni {x1} giorni.", "1 Coffre de base tous les {x1} jours."],
+  ["Estamos montando a sua liga. Atualize a página em instantes (Ctrl+F5).", "We are setting up your league. Refresh the page in a moment (Ctrl+F5).", "Wir stellen deine Liga zusammen. Aktualisiere die Seite gleich (Strg+F5).", "Estamos preparando tu liga. Actualiza la página en unos instantes (Ctrl+F5).", "Stiamo preparando il tuo campionato. Aggiorna la pagina tra poco (Ctrl+F5).", "Nous préparons ta ligue. Actualise la page dans un instant (Ctrl+F5)."],
 ];

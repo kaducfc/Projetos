@@ -3726,6 +3726,7 @@ export default {
   "Abrir grátis": "Open for free",
   "Próximo baú grátis em": "Next free chest in",
   "1 Baú Básico a cada {x1} dias.": "1 Basic Chest every {x1} days.",
+  "Estamos montando a sua liga. Atualize a página em instantes (Ctrl+F5).": "We are setting up your league. Refresh the page in a moment (Ctrl+F5).",
   "SOLO QUEUE": "SOLO QUEUE",
   "Mais uma ranqueada às 4 da manhã": "Another ranked game at 4 a.m.",
   "O servidor está vazio, o PDL está travado e seu duo acabou de sair. O treino de amanhã começa às 13h.": "The server is empty, your LP is stuck and your duo just left. Tomorrow’s practice starts at 1 p.m.",

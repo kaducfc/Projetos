@@ -16,6 +16,10 @@ update public.tc_config
    set valor = jsonb_set(valor, '{inicio}', to_jsonb(date_trunc('week', site_hoje_br()::timestamp)::date::text))
  where chave = 'calendario';
 
+-- O marcador de "semana já processada" precisa recomeçar junto com o calendário: com um valor antigo o jogo acha que a
+-- semana atual já foi processada e não cria as ligas.
+delete from public.tc_config where chave = 'semana_proc';
+
 commit;
 
 select chave, valor from public.tc_config where chave in ('aberto', 'rank_ativo', 'gameplay', 'calendario', 'rank_partida') order by chave;

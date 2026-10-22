@@ -559,6 +559,8 @@ function viewCamp() {
   const ligas = S.camp.ligas; const l = ligaAtual();
   if (!l) {
     const cal = S.camp.calendario; const seg = cal?.inicio_semana ? new Date(`${cal.inicio_semana}T12:00:00`) : null; if (seg) seg.setDate(seg.getDate() + 7);
+    const fimDeSemana = [0, 6].includes(new Date().getDay()); // a regra de esperar a segunda só vale no sábado e no domingo
+    if (!fimDeSemana) return '<section class="tc-card"><p class="tc-mudo" style="margin:0">Estamos montando a sua liga. Atualize a página em instantes (Ctrl+F5).</p></section>';
     return `<section class="tc-card"><p class="tc-mudo" style="margin:0">${seg ? `Sua liga começa na próxima segunda-feira (${dataCurta(seg.toISOString().slice(0, 10))}): quem cria a conta no sábado ou no domingo espera a semana seguinte.` : 'Ainda não há campeonatos em andamento.'}</p></section>`;
   }
   return `<section class="tc-card"><h3>Campeonatos<span class="dir">Temporada ${l.temporada} · semana ${l.semana}</span></h3>
