@@ -5,6 +5,7 @@ import { localeAtual } from '../../../shared/i18n.js';
 import { escudoPoder } from './regras.js';
 import { retratoSvg, escudoOrg, iconeVaga } from './art.js';
 import { abrirBau } from './bau-anim.js';
+import { abrirCompraRc } from '../../../shared/rc-compra.js';
 
 // Jogador repetido (vira cópia): só um símbolo de reciclagem discreto, sem texto.
 const RECICLA = '<span class="tc-recicla" role="img" title="Repetido: vira cópia" aria-label="Repetido: vira cópia">♻︎</span>';
@@ -122,6 +123,11 @@ function legadosPorRaridade(lista) {
     ${grupos.map(([r, l]) => `<div class="tc-grupo-rar r-${r}"><h4><i class="bol" style="background:${RARIDADES[r].cor}"></i>${RARIDADES[r].nome}<small>${l.length}</small></h4><div class="tc-minis">${l.map((j) => miniCartao(j)).join('')}</div></div>`).join('')}</section>`;
 }
 // ------------------------------------------------------------------ Recrutar
+// Botão de abrir baú. Sem saldo de RC: o botão com o preço fica à mostra (apagado) e, ao lado, um "Comprar RC" que abre a compra.
+function botaoAbrir(id, qtd, cor, rotulo, bloq, faltaRc) {
+  const abrir = `<button type="button" class="tc-btn ${cor}" data-act="recrutar" data-bau="${id}" data-qtd="${qtd}" ${bloq ? 'disabled' : ''}>${rotulo}</button>`;
+  return faltaRc ? `<div class="tc-compra-linha">${abrir}<button type="button" class="tc-btn compra" data-act="comprar-rc">Comprar RC</button></div>` : abrir;
+}
 export function viewRecrutar() {
   const r = X.recrutar; if (!r) return '<p class="tc-carregando">Carregando…</p>';
   const cfg = r.config; const livresN = r.elenco_max - r.elenco;
@@ -135,8 +141,8 @@ export function viewRecrutar() {
     return `<section class="tc-card tc-bau bau-${id}"><div class="arte"><img class="bau-img" src="img/baus/${id}-fechado.webp" alt="" /></div><h3>${C.esc(b.nome)}</h3>
       <ul class="tc-odds">${odds}</ul>
       <small class="tc-mudo">${b.garantia ? `Garantia: um ${RARIDADES[b.garantia.raridade].nome} a cada ${b.garantia.a_cada} baús (${Math.min(garantia, b.garantia.a_cada)}/${b.garantia.a_cada}).` : ''}</small>
-      <div class="tc-acoes"><button type="button" class="tc-btn ouro" data-act="recrutar" data-bau="${id}" data-qtd="1" ${bloq1 ? 'disabled' : ''}>Abrir 1 · <span class="tc-preco ${classe}">${C.fmt(precoUn(b))}</span></button>
-      <button type="button" class="tc-btn ciano" data-act="recrutar" data-bau="${id}" data-qtd="5" ${bloq5 ? 'disabled' : ''}>Abrir 5 · <span class="tc-preco ${classe}">${C.fmt(preco5(b))}</span> <i class="tc-desc">-${Math.round(cfg.desconto_5 * 100)}%</i></button></div></section>`;
+      <div class="tc-acoes">${botaoAbrir(id, 1, 'ouro', `Abrir 1 · <span class="tc-preco ${classe}">${C.fmt(precoUn(b))}</span>`, bloq1, rc && r.saldo < precoUn(b))}
+      ${botaoAbrir(id, 5, 'ciano', `Abrir 5 · <span class="tc-preco ${classe}">${C.fmt(preco5(b))}</span> <i class="tc-desc">-${Math.round(cfg.desconto_5 * 100)}%</i>`, bloq5, rc && r.saldo < preco5(b))}</div></section>`;
   }).join('');
   const livres = r.legados.por_raridade || {};
   return `<section class="tc-card"><h3>${C.IMG('ic-recrutar')}Recrutar<span class="dir">${C.fmt(r.saldo)} ${unid}</span></h3>
@@ -165,6 +171,7 @@ export async function tratarAcao(act, b) {
     if (r && r !== true && r.id) location.href = `partida/?amistoso=${r.id}`; // a partida roda na tela da simulação, depois dos picks e bans
     return true;
   }
+  if (act === 'comprar-rc') { abrirCompraRc(); return true; }
   if (act === 'recrutar') {
     const qtd = Number(b.dataset.qtd); const bau = b.dataset.bau;
     const reduzido = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;

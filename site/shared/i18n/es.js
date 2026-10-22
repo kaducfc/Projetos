@@ -3718,6 +3718,7 @@ export default {
   "Você vai demitir {n} jogador(es) do inventário e receber fragmentos de jogador por cada um. Esta ação não pode ser desfeita.": "Vas a despedir a {n} jugador(es) de tu inventario y recibirás fragmentos de jugador por cada uno. Esta acción no se puede deshacer.",
   "{n} jogador(es) demitido(s): +{f} fragmentos de jogador.": "{n} jugador(es) despedido(s): +{f} fragmentos de jugador.",
   "Repetido: vira cópia": "Repetido: se convierte en copia",
+  "Comprar RC": "Comprar RC",
   "SOLO QUEUE": "SOLO QUEUE",
   "Mais uma ranqueada às 4 da manhã": "Otra clasificatoria a las 4 de la madrugada",
   "O servidor está vazio, o PDL está travado e seu duo acabou de sair. O treino de amanhã começa às 13h.": "El servidor está vacío, los PL están estancados y tu dúo acaba de irse. El entrenamiento de mañana empieza a las 13 h.",

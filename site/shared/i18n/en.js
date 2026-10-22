@@ -3718,6 +3718,7 @@ export default {
   "Você vai demitir {n} jogador(es) do inventário e receber fragmentos de jogador por cada um. Esta ação não pode ser desfeita.": "You are about to dismiss {n} player(s) from your inventory and receive player fragments for each one. This action cannot be undone.",
   "{n} jogador(es) demitido(s): +{f} fragmentos de jogador.": "{n} player(s) dismissed: +{f} player fragments.",
   "Repetido: vira cópia": "Duplicate: becomes a copy",
+  "Comprar RC": "Buy RC",
   "SOLO QUEUE": "SOLO QUEUE",
   "Mais uma ranqueada às 4 da manhã": "Another ranked game at 4 a.m.",
   "O servidor está vazio, o PDL está travado e seu duo acabou de sair. O treino de amanhã começa às 13h.": "The server is empty, your LP is stuck and your duo just left. Tomorrow’s practice starts at 1 p.m.",

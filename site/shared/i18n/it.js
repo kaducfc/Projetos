@@ -3718,6 +3718,7 @@ export default {
   "Você vai demitir {n} jogador(es) do inventário e receber fragmentos de jogador por cada um. Esta ação não pode ser desfeita.": "Stai per licenziare {n} giocatore/i dal tuo inventario e riceverai frammenti giocatore per ciascuno. Questa azione non può essere annullata.",
   "{n} jogador(es) demitido(s): +{f} fragmentos de jogador.": "{n} giocatore/i licenziato/i: +{f} frammenti giocatore.",
   "Repetido: vira cópia": "Doppione: diventa una copia",
+  "Comprar RC": "Acquista RC",
   "SOLO QUEUE": "SOLO QUEUE",
   "Mais uma ranqueada às 4 da manhã": "Un’altra classificata alle 4 di notte",
   "O servidor está vazio, o PDL está travado e seu duo acabou de sair. O treino de amanhã começa às 13h.": "Il server è vuoto, i PL sono bloccati e il tuo duo se n’è appena andato. L’allenamento di domani inizia alle 13.",
