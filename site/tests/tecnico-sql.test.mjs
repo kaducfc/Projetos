@@ -1000,9 +1000,10 @@ t('baú grátis: 1 Baú Básico a cada 3 dias, decidido só no servidor e sem co
   assert.equal(est1.disponivel, false); assert.ok(est1.restante_seg > 3 * 86400 - 120 && est1.restante_seg <= 3 * 86400, String(est1.restante_seg));
   // o baú pago sem saldo continua sem saldo (o grátis não vira crédito) e o núcleo não é chamável pelo navegador
   assert.equal(falha("select tc_recrutar('basico', 1, 'chave-gratis-3')", 1), 'saldo_insuficiente');
-  assert.match(falha("select tc_recrutar_nucleo('basico', 1, 'chave-gratis-4', true)", 1), /permission denied|não existe|does not exist/i);
+  const api = (sql) => psql(['-d', 't', '-c', `set app.uid='${U(1)}'`, '-c', 'set role authenticated', '-c', sql]); // como o navegador (papel da API)
+  const n = api("select tc_recrutar_nucleo('basico', 1, 'chave-gratis-4', true)"); assert.notEqual(n.status, 0); assert.match(n.stderr, /permission denied/);
   // a tabela do prazo não é acessível pelo navegador (não dá para zerar o prazo)
-  assert.match(falha("update tc_bau_gratis set proximo = now() where user_id = '" + U(1) + "'", 1), /permission denied|row-level|não existe|does not exist/i);
+  const u = api("update tc_bau_gratis set proximo = now() where user_id = '" + U(1) + "'"); assert.notEqual(u.status, 0); assert.match(u.stderr, /permission denied/);
   assert.equal(J("select tc_bau_gratis_estado()", 1).disponivel, false);
   // outra conta tem o seu próprio prazo
   assert.equal(J("select tc_bau_gratis_estado()", 2).disponivel, true);
