@@ -982,14 +982,16 @@ t('recrutar: baús sorteiam Estrelas, 5 tem desconto, sem saldo nada muda e a ga
 
 // ---------------------------------------------------------------- legados, estrelas e demissão (SQL 0099)
 t('baú grátis: 1 Baú Básico a cada 3 dias, decidido só no servidor e sem como burlar', () => {
+  const saldoAntes = V("select saldo from site_carteira where user_id = '" + U(1) + "'");
+  const pityAntes = V("select coalesce((select sem_epico from tc_gacha_pity where org_id = 1 and bau = 'basico'), 0)");
+  const abertos = []; // jogadores/cópias que os baús grátis deste teste criaram (desfeitos no fim, para não mexer nos testes seguintes)
   V("update tc_config set valor = jsonb_set(valor, '{moeda}', '\"rc\"') where chave = 'gacha'");
   V("update site_carteira set saldo = 0 where user_id = '" + U(1) + "'"); // sem nenhum RC: o grátis não cobra nada
   V("update tc_config set valor = jsonb_set(valor, '{max}', '70') where chave = 'elenco'");
-  V("delete from tc_jogadores where org_id = 1 and not ficticio and slot is null");
   V("delete from tc_bau_gratis");
   const est0 = J("select tc_bau_gratis_estado()", 1); assert.equal(est0.disponivel, true, 'conta sem registro: o primeiro grátis já está disponível');
   const g1 = J("select tc_recrutar_gratis('chave-gratis-1')", 1);
-  assert.equal(g1.itens.length, 1); assert.equal(g1.preco_rc, 0); assert.equal(g1.gratis, true);
+  assert.equal(g1.itens.length, 1); assert.equal(g1.preco_rc, 0); assert.equal(g1.gratis, true); abertos.push(g1.itens[0]);
   assert.equal(V("select saldo from site_carteira where user_id = '" + U(1) + "'"), '0', 'não cobrou nada');
   assert.equal(V("select gratis::text from tc_gacha where chave = 'chave-gratis-1'"), 'true');
   assert.equal(J("select tc_recrutar_gratis('chave-gratis-1')", 1).ja_feito, true, 'mesmo pedido devolve o mesmo resultado');
@@ -1015,11 +1017,16 @@ t('baú grátis: 1 Baú Básico a cada 3 dias, decidido só no servidor e sem co
   assert.equal(J("select tc_bau_gratis_estado()", 1).disponivel, true, 'erro não consome o baú grátis');
   V("update tc_config set valor = jsonb_set(valor, '{max}', '70') where chave = 'elenco'");
   const g2 = J("select tc_recrutar_gratis('chave-gratis-7')", 1);
-  assert.equal(g2.itens.length, 1); assert.equal(g2.gratis, true);
+  assert.equal(g2.itens.length, 1); assert.equal(g2.gratis, true); abertos.push(g2.itens[0]);
   const est2 = J("select tc_bau_gratis_estado()", 1);
   assert.equal(est2.disponivel, false, 'o prazo recomeça depois de abrir'); assert.ok(est2.restante_seg > 3 * 86400 - 120);
   // o grátis conta para a garantia do Básico (é um Baú Básico)
   assert.ok(Number(V("select sem_epico from tc_gacha_pity where org_id = 1 and bau = 'basico'")) >= 0);
+  // desfaz o que este teste criou
+  for (const it of abertos.reverse()) V(it.repetida ? `update tc_jogadores set copias = copias - 1 where id = ${it.jogador.id}` : `delete from tc_jogadores where id = ${it.jogador.id}`);
+  V("delete from tc_gacha where gratis"); V("delete from tc_bau_gratis");
+  V("update site_carteira set saldo = " + saldoAntes + " where user_id = '" + U(1) + "'");
+  V(`insert into tc_gacha_pity (org_id, bau, sem_epico) values (1, 'basico', ${pityAntes}) on conflict (org_id, bau) do update set sem_epico = ${pityAntes}`);
   V("update tc_config set valor = jsonb_set(valor, '{moeda}', '\"creditos\"') where chave = 'gacha'");
 });
 
