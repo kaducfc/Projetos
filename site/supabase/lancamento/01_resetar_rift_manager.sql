@@ -49,6 +49,9 @@ delete from public.tc_jogadores where org_id in (select id from public.tc_orgs w
 -- avisos, anúncios e ofertas no mercado, participação em ligas e o resto que depende do time.
 delete from public.tc_orgs where user_id is not null;
 
+-- Extrato financeiro (inclusive o das equipes do sistema, que recebiam premiação nas ligas de teste).
+delete from public.tc_fin;
+
 -- Baú grátis de 3 em 3 dias: todo mundo volta a ter o primeiro disponível.
 delete from public.tc_bau_gratis;
 
