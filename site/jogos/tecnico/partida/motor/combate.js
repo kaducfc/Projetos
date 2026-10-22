@@ -73,7 +73,9 @@ export function podeAtacar(P, a, b, alcance = a.alcance) {
 export function fatorOuro(P, eq) {
   const V = P.regras.combate.vantagemOuro; if (!V) return 1;
   const c = P._ouroEq && P.t - P._ouroEq.t < 1 ? P._ouroEq : (P._ouroEq = (() => { let a = 0, v = 0; for (const u of P.campeoes) { if (u.equipe === 'azul') a += u.ouroTotal; else v += u.ouroTotal; } return { t: P.t, azul: a, vermelho: v }; })());
-  const dif = (eq === 'azul' ? c.azul - c.vermelho : c.vermelho - c.azul) / V.escala;
+  const bruta = eq === 'azul' ? c.azul - c.vermelho : c.vermelho - c.azul;
+  const zona = V.zona || 0; // diferenças pequenas (comuns no começo) não contam: o farm e a fase de rotas ficam naturais
+  const dif = Math.sign(bruta) * Math.max(0, Math.abs(bruta) - zona) / V.escala;
   return Math.exp(V.k * Math.max(-V.max, Math.min(V.max, dif)));
 }
 export function causarDano(P, fonte, alvo, bruto, tipo = 'fisico', o = {}) {

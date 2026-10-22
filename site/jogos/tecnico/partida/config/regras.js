@@ -120,7 +120,7 @@ export const REGRAS = {
     janelaAssistencia: 10,
     janelaCredito: 15, // último campeão que causou dano nesse prazo leva o abate quando o golpe final não é de campeão; depois disso é execução
     // Vantagem de ouro: o time com mais ouro total luta melhor (mais dano e menos dano sofrido contra campeões). Garante que uma liderança grande se converta em vitória.
-    vantagemOuro: { escala: 10000, k: 0.18, max: 2 }, // calibrado: líder com +10 mil de ouro vence ~98-99% das partidas equilibradas
+    vantagemOuro: { escala: 10000, zona: 3000, k: 0.22, max: 2 }, // zona: diferença de ouro ignorada (fase de rotas natural); k calibrado: líder com +10 mil vence ~98% das partidas equilibradas
     persecucaoMax: 2200,      // um campeão desiste de perseguir além desta distância do ponto de origem da perseguição
   },
 
