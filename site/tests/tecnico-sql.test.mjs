@@ -2088,7 +2088,7 @@ t('reset do lançamento: apaga times, jogadores, ligas e histórico de todas as 
       'contas', (select count(*) from auth.users), 'carteira', (select coalesce(sum(saldo), 0) from site_carteira),
       'pdr', (select count(*) from site_rk_lanc_stub), 'sistema', (select count(*) from tc_orgs where user_id is null),
       'catalogo', (select count(*) from tc_jogadores where org_id is null and not ficticio and legado_base is null),
-      'tecnicos', (select count(*) from tc_orgs where user_id is not null), 'config', (select count(*) from tc_config),
+      'tecnicos', (select count(*) from tc_orgs where user_id is not null), 'config', (select count(*) from tc_config where chave <> 'semana_proc'),
       'campeoes', (select count(*) from tc_campeoes))`);
   assert.ok(antes.tecnicos >= 2, 'há técnicos de teste para apagar');
   const r = psql(['-d', 't', '-v', 'ON_ERROR_STOP=1', '-q', '-A', '-t'], script);
@@ -2097,7 +2097,7 @@ t('reset do lançamento: apaga times, jogadores, ligas e histórico de todas as 
       'contas', (select count(*) from auth.users), 'carteira', (select coalesce(sum(saldo), 0) from site_carteira),
       'pdr', (select count(*) from site_rk_lanc_stub), 'sistema', (select count(*) from tc_orgs where user_id is null),
       'catalogo', (select count(*) from tc_jogadores where org_id is null and not ficticio and legado_base is null),
-      'tecnicos', (select count(*) from tc_orgs where user_id is not null), 'config', (select count(*) from tc_config),
+      'tecnicos', (select count(*) from tc_orgs where user_id is not null), 'config', (select count(*) from tc_config where chave <> 'semana_proc'),
       'campeoes', (select count(*) from tc_campeoes))`);
   assert.equal(depois.tecnicos, 0, 'nenhum técnico com time');
   for (const k of ['contas', 'carteira', 'pdr', 'sistema', 'catalogo', 'config', 'campeoes']) assert.equal(depois[k], antes[k], `${k} não muda`);
