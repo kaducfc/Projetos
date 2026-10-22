@@ -175,9 +175,9 @@ export function viewRecrutar() {
     return `<section class="tc-card tc-bau bau-${id}"><div class="arte"><img class="bau-img" src="img/baus/${id}-fechado.webp" alt="" /></div><h3>${C.esc(b.nome)}</h3>
       <ul class="tc-odds">${odds}</ul>
       <small class="tc-mudo">${b.garantia ? `Garantia: um ${RARIDADES[b.garantia.raridade].nome} a cada ${b.garantia.a_cada} baús (${Math.min(garantia, b.garantia.a_cada)}/${b.garantia.a_cada}).` : ''}</small>
-      ${id === 'basico' ? blocoGratis(livresN) : ''}
       <div class="tc-acoes">${botaoAbrir(id, 1, 'ouro', `Abrir 1 · <span class="tc-preco ${classe}">${C.fmt(precoUn(b))}</span>`, bloq1, rc && r.saldo < precoUn(b))}
-      ${botaoAbrir(id, 5, 'ciano', `Abrir 5 · <span class="tc-preco ${classe}">${C.fmt(preco5(b))}</span> <i class="tc-desc">-${Math.round(cfg.desconto_5 * 100)}%</i>`, bloq5, rc && r.saldo < preco5(b))}</div></section>`;
+      ${botaoAbrir(id, 5, 'ciano', `Abrir 5 · <span class="tc-preco ${classe}">${C.fmt(preco5(b))}</span> <i class="tc-desc">-${Math.round(cfg.desconto_5 * 100)}%</i>`, bloq5, rc && r.saldo < preco5(b))}</div>
+      ${id === 'basico' ? blocoGratis(livresN) : ''}</section>`;
   }).join('');
   const livres = r.legados.por_raridade || {};
   return `<section class="tc-card"><h3>${C.IMG('ic-recrutar')}Recrutar<span class="dir">${C.fmt(r.saldo)} ${unid}</span></h3>

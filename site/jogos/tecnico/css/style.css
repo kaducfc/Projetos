@@ -1165,3 +1165,6 @@ html, body { overflow-x: clip; }
 /* botão verde (Comprar RC / Abrir grátis): vence os estilos gerais de .tc-btn */
 .tc-bau .tc-btn.compra, .tc-gratis .tc-btn.compra, .tc-compra-linha .tc-btn.compra { background: linear-gradient(180deg, #4ade80, #16a34a) !important; color: #052e12 !important; box-shadow: inset 0 0 0 1px #bbf7d0, 0 0 12px #22c55e55 !important; }
 .tc-bau .tc-btn.compra[disabled] { opacity: 0.5; filter: grayscale(0.4); }
+
+/* o bloco do baú grátis fica depois dos botões de abrir; assim os botões dos dois baús ficam alinhados */
+.tc-bau > .tc-gratis { margin: 0 16px 16px; }
