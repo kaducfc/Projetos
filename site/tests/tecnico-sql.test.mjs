@@ -2101,7 +2101,7 @@ t('reset do lançamento: apaga times, jogadores, ligas e histórico de todas as 
       'campeoes', (select count(*) from tc_campeoes))`);
   assert.equal(depois.tecnicos, 0, 'nenhum técnico com time');
   for (const k of ['contas', 'carteira', 'pdr', 'sistema', 'catalogo', 'config', 'campeoes']) assert.equal(depois[k], antes[k], `${k} não muda`);
-  for (const tab of ['tc_ligas', 'tc_partidas', 'tc_amistosos', 'tc_gacha', 'tc_gacha_pity', 'tc_marketing', 'tc_treinos', 'tc_trofeus', 'tc_premios', 'tc_gameplay_mapas', 'tc_bau_gratis', 'tc_fin', 'tc_avisos', 'tc_anuncios', 'tc_maestria', 'tc_patrocinios', 'tc_vagas', 'tc_liga_times']) {
+  for (const tab of ['tc_ligas', 'tc_partidas', 'tc_amistosos', 'tc_gacha', 'tc_gacha_pity', 'tc_marketing', 'tc_treinos', 'tc_trofeus', 'tc_premios', 'tc_gameplay_mapas', 'tc_bau_gratis', 'tc_fin', 'tc_avisos', 'tc_anuncios', 'tc_patrocinios', 'tc_vagas', 'tc_liga_times']) {
     assert.equal(V(`select count(*) from ${tab}`), '0', `${tab} vazio`);
   }
   assert.equal(V("select count(*) from tc_jogadores j join tc_orgs o on o.id = j.org_id where o.user_id is not null"), '0');

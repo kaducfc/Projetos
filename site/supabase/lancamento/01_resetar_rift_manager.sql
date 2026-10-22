@@ -52,6 +52,9 @@ delete from public.tc_orgs where user_id is not null;
 -- Extrato financeiro (inclusive o das equipes do sistema, que recebiam premiação nas ligas de teste).
 delete from public.tc_fin;
 
+-- Avisos (sino) de todos os times, inclusive os das equipes do sistema.
+delete from public.tc_avisos;
+
 -- Baú grátis de 3 em 3 dias: todo mundo volta a ter o primeiro disponível.
 delete from public.tc_bau_gratis;
 
