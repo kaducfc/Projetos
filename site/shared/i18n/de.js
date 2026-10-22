@@ -3700,6 +3700,7 @@ export default {
   "Nada encontrado. Tente outra palavra.": "Nichts gefunden. Versuche ein anderes Wort.",
   "← Todos os temas": "← Alle Themen",
   "Tema {x1} de {x2}": "Thema {x1} von {x2}",
+  "<b>PDR no Rank do site:</b> cada vitória nos amistosos que valem XP (os 5 primeiros do dia) e nos jogos oficiais de campeonato dá +5 PDR, e cada derrota dá +3 PDR. Derrota nunca tira PDR.": "<b>PDR im Rang der Seite:</b> Jeder Sieg in den Freundschaftsspielen, die XP geben (die ersten 5 des Tages), und in offiziellen Meisterschaftsspielen bringt +5 PDR, jede Niederlage +3 PDR. Eine Niederlage nimmt nie PDR weg.",
   "Comande a sua organização": "Führe deine eigene Organisation",
   "Monte o elenco, treine os jogadores, vença ligas e dispute campeonatos contra técnicos de todo o mundo.": "Stelle deinen Kader zusammen, trainiere deine Spieler, gewinne Ligen und tritt in Meisterschaften gegen Trainer aus aller Welt an.",
   "Elenco e treino": "Kader und Training",
