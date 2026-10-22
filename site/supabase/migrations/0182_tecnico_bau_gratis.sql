@@ -8,6 +8,9 @@
 -- Conta nova: o primeiro baú grátis já está disponível. Rode depois da 0181. Idempotente.
 
 alter table public.tc_gacha add column if not exists gratis boolean not null default false;
+-- o baú grátis grava custo 0 (antes a regra exigia custo > 0)
+alter table public.tc_gacha drop constraint if exists tc_gacha_custo_rc_check;
+alter table public.tc_gacha add constraint tc_gacha_custo_rc_check check (custo_rc >= 0);
 
 create table if not exists public.tc_bau_gratis (
   user_id uuid primary key references auth.users(id) on delete cascade,
