@@ -449,3 +449,11 @@ html:not([lang="pt-BR"]) .cv-chutes { margin-top: 56px; }
 .cv-tec-poder { position: absolute; left: 8%; bottom: 10%; display: grid; line-height: 1; }
 .cv-tec-poder small { font-size: 10px; letter-spacing: 0.2em; color: #8fa3bf; }
 .cv-tec-poder b { font-family: var(--display); font-size: 54px; color: #f5cf5a; }
+
+/* Rift Manager: banner do time campeão + nome do jogo */
+.cv-rm { overflow: hidden; background: #0a0804; }
+.cv-rm-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; }
+.cv-rm::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, #050302cc 100%); }
+.cv-rm-t { position: absolute; left: 14px; bottom: 10px; display: flex; flex-direction: column; font-family: var(--display); line-height: 0.85; color: #f5cf5a; text-shadow: 0 2px 0 #2d1d03, 0 0 10px #000; z-index: 2; }
+.cv-rm-t i { font-style: normal; font-size: 17px; letter-spacing: 0.3em; color: #f2d98a; }
+.cv-rm-t b { font-weight: 400; font-size: 40px; letter-spacing: 0.03em; }

@@ -152,7 +152,6 @@ export const GAMES = [
     path: 'jogos/tecnico/',
     status: 'live',
     scoreLabel: 'Pontos',
-    soAdmin: true,
   },
 ];
 

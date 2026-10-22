@@ -61,6 +61,9 @@ const CAPAS = {
   // Barão da Sucata (só administradores por enquanto): três cartas em leque sobre a taverna.
   'bar-do-barao': `<div class="cv cv-bb"><img class="cv-bb-bg" src="/jogos/bar-do-barao/img/capa.webp" alt="" loading="lazy" />
       <span class="cv-t"><i>BARÃO DA</i><b>SUCATA</b></span></div>`,
+  // Rift Manager: o banner do time campeão com o nome do jogo por cima.
+  tecnico: `<div class="cv cv-rm"><img class="cv-rm-bg" src="/jogos/tecnico/img/capa.webp" alt="" loading="lazy" />
+      <span class="cv-rm-t"><i>RIFT</i><b>MANAGER</b></span></div>`,
   barao: `<div class="cv cv-barao"><span class="cv-t"><i>SHOW DO</i><b>BARÃO</b></span>
       <img class="cv-bz-ap" src="/jogos/barao/img/apresentador.webp" alt="" loading="lazy" /></div>`,
   // O time dos sonhos, como na tela do Lendas (melhor OVR de cada um no jogo).
@@ -215,7 +218,7 @@ function renderGames() {
       ? `<p class="game-stats">${mine.length} ${mine.length === 1 ? 'partida' : 'partidas'} · recorde ${best == null ? '<b>—</b>' : conta(best)}</p>`
       : '';
     const live = g.status === 'live';
-    const selo = SELOS[g.id] || (g.soAdmin ? ['Só você · em teste', ''] : null); // jogo em teste sem ranqueada também ganha o selo
+    const selo = SELOS[g.id] || (g.soAdmin ? ['Só você · em teste', ''] : g.id === 'tecnico' ? ['Novo', ''] : null); // jogo em teste sem ranqueada também ganha o selo
     const feito = (logado || ['runetermo', 'campeao', 'escala'].includes(g.id)) && feitoHoje(g.id);
     const capa = `<div class="hx-cover">${CAPAS[g.id] || ''}${selo ? `<span class="hx-selo ${selo[1] || ''}">${selo[0]}</span>` : ''}
       ${feito ? '<span class="hx-feito" title="Já jogou hoje">✓ Hoje</span>' : ''}</div>`;

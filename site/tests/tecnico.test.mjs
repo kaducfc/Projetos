@@ -94,14 +94,15 @@ test('o navegador só chama funções que existem no SQL', () => {
   assert.deepEqual(Object.keys(platform.tecnico).sort().slice(0, 3), Object.keys(platform.tecnico).sort().slice(0, 3));
 });
 
-test('catálogo: o jogo está em teste (só administradores) e tem capa no hub', () => {
+test('catálogo: o Rift Manager está lançado (aberto a todos), com o nome novo e capa no hub', () => {
   const g = gameById('tecnico');
   assert.ok(g, 'jogo no catálogo');
-  assert.equal(g.soAdmin, true, 'oculto até o lançamento');
-  assert.equal(g.ranked, undefined, 'o card de ranqueada do hub só passa a listá-lo quando for lançado');
+  assert.equal(g.soAdmin, undefined, 'lançado: sem a trava de só administradores');
+  assert.equal(g.name, 'Rift Manager');
   assert.match(readFileSync(new URL('../js/hub.js', import.meta.url), 'utf8'), /\btecnico: `/);
   assert.equal(GAMES.filter((x) => x.id === 'tecnico').length, 1);
-  assert.match(readFileSync(new URL('../jogos/tecnico/index.html', import.meta.url), 'utf8'), /noindex/);
+  assert.doesNotMatch(readFileSync(new URL('../jogos/tecnico/index.html', import.meta.url), 'utf8'), /noindex/, 'a página do jogo pode ser indexada');
+  assert.ok(readFileSync(new URL('../jogos/tecnico/img/capa.webp', import.meta.url)).length > 10000, 'capa do hub');
 });
 
 test('migrações novas seguem a numeração e o jogo nasce fechado, sem Rank', () => {
