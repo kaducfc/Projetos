@@ -986,7 +986,7 @@ document.addEventListener('click', async (e) => {
     render(); return;
   }
   if (act.startsWith('mkt-')) { await tratarMkt(act, b); render(); return; }
-  if (act === 'treinar' || act === 'amistoso' || act === 'recrutar' || act === 'treino-abrir') { await tratarAcao(act, b); render(); return; }
+  if (act === 'treinar' || act === 'amistoso' || act === 'recrutar' || act === 'recrutar-gratis' || act === 'comprar-rc' || act === 'treino-abrir') { await tratarAcao(act, b); render(); return; }
   if (act === 'avisos') {
     S.modal = { t: 'avisos', d: null }; render();
     try { const d = await api.avisosCentral(); if (S.modal?.t === 'avisos') { S.modal = { t: 'avisos', d }; S.avisosN = 0; render(); } } catch (err) { S.modal = null; render(); toast(err.message, true); }

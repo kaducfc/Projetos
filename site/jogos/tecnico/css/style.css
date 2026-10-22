@@ -1161,3 +1161,7 @@ html, body { overflow-x: clip; }
 .tc-gratis.on { border: 1px solid #22c55e; background: #0a2a1a; box-shadow: 0 0 14px #22c55e33; } .tc-gratis.on b { color: #86efac; }
 .tc-gratis-tempo { font: 800 18px 'Bebas Neue', sans-serif; letter-spacing: .06em; color: #f5cf5a; font-variant-numeric: tabular-nums; white-space: nowrap; }
 @media (max-width: 420px) { .tc-gratis { flex-wrap: wrap; } .tc-gratis .tc-btn { width: 100%; } }
+
+/* botão verde (Comprar RC / Abrir grátis): vence os estilos gerais de .tc-btn */
+.tc-bau .tc-btn.compra, .tc-gratis .tc-btn.compra, .tc-compra-linha .tc-btn.compra { background: linear-gradient(180deg, #4ade80, #16a34a) !important; color: #052e12 !important; box-shadow: inset 0 0 0 1px #bbf7d0, 0 0 12px #22c55e55 !important; }
+.tc-bau .tc-btn.compra[disabled] { opacity: 0.5; filter: grayscale(0.4); }
