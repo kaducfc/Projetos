@@ -2108,6 +2108,10 @@ t('reset do lançamento: apaga times, jogadores, ligas e histórico de todas as 
   assert.equal(V("select count(*) from tc_jogadores where ficticio and org_id is null and exists (select 1 from tc_transf t where t.jogador_id = tc_jogadores.id and t.tipo = 'inicial')"), '0', 'ninguém do elenco inicial das contas ficou solto no mercado');
   // o jogo recomeça do zero: a conta cria um time novo, sem nada herdado, e a semana se monta
   const novo = J("select tc_criar_org('Time Novo','NOV')", 1, '2026-11-10'); assert.ok(novo.id);
+  const meuNovo = J('select tc_meu()', 1, '2026-11-10');
+  assert.equal(meuNovo.org.elenco_pendente, true, 'conta nova: escolhe o elenco inicial'); assert.equal(meuNovo.ofertas.length, 15, '15 candidatos (3 por posição) saem do mercado');
+  const idsNovo = ['top', 'selva', 'meio', 'atirador', 'suporte'].map((p) => meuNovo.ofertas.filter((x) => x.pos === p).sort((a, b) => b.poder - a.poder)[0].id);
+  assert.equal(J(`select tc_escolher_elenco_inicial('{${idsNovo.join(',')}}')`, 1, '2026-11-10').ok, true);
   assert.equal(V(`select count(*) from tc_jogadores where org_id = ${novo.id} and slot is not null`), '5', 'elenco inicial novo');
   assert.equal(V(`select count(*) from tc_jogadores where org_id = ${novo.id} and not ficticio`), '0', 'sem Legados herdados');
   assert.equal(V(`select creditos from tc_orgs where id = ${novo.id}`), V("select (tc_cfg('creditos_iniciais'))::text"));
