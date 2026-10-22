@@ -55,6 +55,10 @@ delete from public.tc_fin;
 -- Avisos (sino) de todos os times, inclusive os das equipes do sistema.
 delete from public.tc_avisos;
 
+-- Marcador de "até que semana o jogo já processou": sem ele o calendário recomeça na semana atual
+-- (com o marcador antigo o jogo tentaria reprocessar as semanas dos testes antes de criar a liga nova).
+delete from public.tc_config where chave = 'semana_proc';
+
 -- Baú grátis de 3 em 3 dias: todo mundo volta a ter o primeiro disponível.
 delete from public.tc_bau_gratis;
 
