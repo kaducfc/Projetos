@@ -131,15 +131,9 @@ function caixaPremios() {
   const meu = (premios.ultimos || []).find((x) => x.periodo === periodo);
   const unidade = (rot) => `<div class="cd-un"><b data-u>--</b><small>${rot}</small></div>`;
   return `<div class="rk-premios">
-    <div class="cd-topo">
-      <span class="cd-taca" aria-hidden="true">🏆</span>
-      <div><p class="cd-tit"><b>Premiação em RC</b></p>
-        <p class="cd-sub">O ranking zera e o prêmio é entregue em</p></div>
-      <span class="cd-data">${ddmm(p.fim)}</span>
-    </div>
     <div class="cd-relogio" data-contagem data-no-i18n-box>
       ${unidade('Dias')}<i>:</i>${unidade('Horas')}<i>:</i>${unidade('Min')}<i>:</i>${unidade('Seg')}
-      <div class="cd-prog"><span class="cd-trilho"><span data-barra></span></span><small><span data-pct>0%</span> <span>do período já passou</span></small></div>
+      <div class="cd-prog"><span class="cd-trilho"><span data-barra></span></span><small><span>Tempo para premiação</span> · <span data-pct>0%</span></small></div>
     </div>
     ${meu ? `<p class="small muted cd-meu"><span>Seu último prêmio:</span> ${meu.pos}º · +${num(meu.rc)} RC (${ddmm(meu.inicio)})</p>` : ''}
   </div>`;

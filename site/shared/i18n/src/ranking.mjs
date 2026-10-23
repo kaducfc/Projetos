@@ -90,4 +90,5 @@ export default [
   ['Horas', 'Hours', 'Std', 'Horas', 'Ore', 'Heures'],
   ['Seg', 'Sec', 'Sek', 'Seg', 'Sec', 'Sec'],
   ['do período já passou', 'of the period has passed', 'der Periode sind vorbei', 'del período ya pasó', 'del periodo è trascorso', 'de la période écoulée'],
+  ['Tempo para premiação', 'Time until rewards', 'Zeit bis zur Belohnung', 'Tiempo para el premio', 'Tempo al premio', 'Temps avant la récompense'],
 ];

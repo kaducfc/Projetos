@@ -2091,6 +2091,7 @@ export default {
   "Horas": "Std",
   "Seg": "Sek",
   "do período já passou": "der Periode sind vorbei",
+  "Tempo para premiação": "Zeit bis zur Belohnung",
   "◆ Palavra do dia": "◆ Wort des Tages",
   "{n} letras ·": "{n} Buchstaben ·",
   "vale ranqueada": "zählt für die Rangliste",

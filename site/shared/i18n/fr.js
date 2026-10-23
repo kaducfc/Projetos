@@ -2091,6 +2091,7 @@ export default {
   "Horas": "Heures",
   "Seg": "Sec",
   "do período já passou": "de la période écoulée",
+  "Tempo para premiação": "Temps avant la récompense",
   "◆ Palavra do dia": "◆ Mot du jour",
   "{n} letras ·": "{n} lettres ·",
   "vale ranqueada": "compte pour le classé",

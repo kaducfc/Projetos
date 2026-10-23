@@ -2091,6 +2091,7 @@ export default {
   "Horas": "Hours",
   "Seg": "Sec",
   "do período já passou": "of the period has passed",
+  "Tempo para premiação": "Time until rewards",
   "◆ Palavra do dia": "◆ Word of the day",
   "{n} letras ·": "{n} letters ·",
   "vale ranqueada": "counts for ranked",

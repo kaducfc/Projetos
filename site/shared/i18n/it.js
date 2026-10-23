@@ -2091,6 +2091,7 @@ export default {
   "Horas": "Ore",
   "Seg": "Sec",
   "do período já passou": "del periodo è trascorso",
+  "Tempo para premiação": "Tempo al premio",
   "◆ Palavra do dia": "◆ Parola del giorno",
   "{n} letras ·": "{n} lettere ·",
   "vale ranqueada": "vale per la classificata",
