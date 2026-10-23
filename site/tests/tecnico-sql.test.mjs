@@ -2126,8 +2126,9 @@ t('painel do administrador: só admin; devolve resumo, baús, RC e técnicos', (
   const p = J('select tc_admin_painel(30)', 1);
   for (const k of ['resumo', 'serie', 'baus', 'rc', 'creditos', 'partidas', 'mercado', 'elenco', 'tecnicos']) assert.ok(p[k] !== undefined, k);
   assert.equal(p.serie.length, 30);
-  assert.ok(p.resumo.contas >= 1);
+  assert.equal(p.resumo.contas, Number(V("select count(*) from tc_orgs o where o.user_id is not null and not exists (select 1 from site_admins a where a.user_id = o.user_id)")), 'o administrador não entra nas contas');
   assert.equal(p.resumo.contas, p.tecnicos.length);
+  assert.equal(p.resumo.rc_nas_carteiras, Number(V("select coalesce(sum(c.saldo), 0) from site_carteira c join tc_orgs o on o.user_id = c.user_id where not exists (select 1 from site_admins a where a.user_id = o.user_id)")), 'RC das carteiras sem administradores');
   // chamar duas vezes na mesma sessão não pode quebrar (tabelas temporárias)
   assert.ok(Q('select tc_admin_painel(7); select tc_admin_painel(7)', 1).ok);
   assert.equal(falha('select tc_admin_painel(30)', null), 'not_admin');
