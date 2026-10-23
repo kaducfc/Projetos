@@ -2086,6 +2086,7 @@ export default {
   "entregue quando a semana fecha": "versée à la fin de la semaine",
   "entregue quando o mês fecha": "versée à la fin du mois",
   "Seu último prêmio:": "Ta dernière récompense :",
+  "O ranking zera e o prêmio é entregue em": "Le classement est remis à zéro et la récompense versée dans",
   "◆ Palavra do dia": "◆ Mot du jour",
   "{n} letras ·": "{n} lettres ·",
   "vale ranqueada": "compte pour le classé",

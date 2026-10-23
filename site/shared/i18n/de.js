@@ -2086,6 +2086,7 @@ export default {
   "entregue quando a semana fecha": "wird ausgezahlt, wenn die Woche endet",
   "entregue quando o mês fecha": "wird ausgezahlt, wenn der Monat endet",
   "Seu último prêmio:": "Deine letzte Belohnung:",
+  "O ranking zera e o prêmio é entregue em": "Die Rangliste wird zurückgesetzt und die Belohnung ausgezahlt in",
   "◆ Palavra do dia": "◆ Wort des Tages",
   "{n} letras ·": "{n} Buchstaben ·",
   "vale ranqueada": "zählt für die Rangliste",

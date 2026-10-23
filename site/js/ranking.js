@@ -47,9 +47,10 @@ function linha(j) {
   const valor = periodo === 'geral'
     ? `${num(d.pdr)}<small>PDR</small>`
     : `<span class="${j.valor > 0 ? 'pdr-mais' : j.valor < 0 ? 'pdr-menos' : ''}">${fmtPdr(j.valor).replace(' PDR', '')}</span><small>PDR</small>`;
-  return `<li class="${j.eu ? 'eu' : ''}${j.pos <= 3 ? ` top${j.pos}` : ''}">
+  return `<li class="${j.eu ? 'eu' : ''}${premioDe(j.pos) ? ' com-rc' : ''}${j.pos <= 3 ? ` top${j.pos}` : ''}">
     <span class="rk-pos">${j.pos}</span>
     <span class="rk-quem">${avatarHtml(j.avatar, j.username, 34, `elo-${e.id}`, j.moldura)}<b>${nickHtml(j.username, j.apoiador, j.efeito)}</b></span>
+    ${premioDe(j.pos) ? `<span class="rk-rc">${rcHtml(premioDe(j.pos))}</span>` : ''}
     <span class="rk-elo" style="--cor:${e.cor}">${emblemaHtml(e.id, 18)}<span>${esc(nomeDivisao(d))}</span></span>
     <span class="rk-pts">${valor}</span>
   </li>`;
@@ -72,16 +73,40 @@ function paginacao(total) {
   </nav>`;
 }
 
-// Premiação em RC do semanal e do mensal (top 5), entregue quando o período fecha.
+// Prêmio em RC de uma posição (semanal/mensal, top 5), com o ícone da moeda.
+const rcHtml = (n) => `<img src="/shared/assets/moeda/rc-48.webp" srcset="/shared/assets/moeda/rc-96.webp 2x" width="20" height="20" alt="" /><b data-no-i18n>${num(n)}</b>`;
+const premioDe = (pos) => (periodo === 'geral' || periodo === 'diario' ? 0 : Number(premios?.[periodo]?.premios?.[pos] || 0));
+
+// Quando o período fecha: meia-noite de Brasília depois do último dia.
+function fimMs(p) {
+  const [y, m, d] = String(p.fim).slice(0, 10).split('-').map(Number);
+  return Date.UTC(y, m - 1, d + 1, 3, 0, 0);
+}
+function contagem(p) {
+  let s = Math.max(0, Math.floor((fimMs(p) - Date.now()) / 1000));
+  const d = Math.floor(s / 86400); s -= d * 86400;
+  const h = Math.floor(s / 3600); s -= h * 3600;
+  const m = Math.floor(s / 60); s -= m * 60;
+  const dois = (n) => String(n).padStart(2, '0');
+  return `${d ? `${d}d ` : ''}${dois(h)}h ${dois(m)}m ${dois(s)}s`;
+}
+let relogio = null;
+function ligarRelogio() {
+  clearInterval(relogio);
+  const el = root.querySelector('[data-contagem]');
+  if (!el || !premios?.[periodo]) return;
+  const p = premios[periodo];
+  const tick = () => { el.textContent = contagem(p); };
+  tick();
+  relogio = setInterval(() => { if (!el.isConnected) clearInterval(relogio); else tick(); }, 1000);
+}
+
 function caixaPremios() {
   const p = premios?.[periodo];
   if (!p?.premios) return '';
-  const itens = Object.keys(p.premios).sort((a, b) => a - b)
-    .map((pos) => `<li class="${pos <= 3 ? `top${pos}` : ''}"><span>${pos}º</span><b>${num(p.premios[pos])} RC</b></li>`).join('');
   const meu = (premios.ultimos || []).find((x) => x.periodo === periodo);
   return `<div class="rk-premios">
-    <p class="small"><b>Premiação em RC</b> · <span>${periodo === 'semanal' ? 'entregue quando a semana fecha' : 'entregue quando o mês fecha'}</span> · ${ddmm(p.fim)}</p>
-    <ol>${itens}</ol>
+    <p class="small"><b>Premiação em RC</b> · <span>O ranking zera e o prêmio é entregue em</span> <b class="rk-cd" data-contagem data-no-i18n></b></p>
     ${meu ? `<p class="small muted"><span>Seu último prêmio:</span> ${meu.pos}º · +${num(meu.rc)} RC (${ddmm(meu.inicio)})</p>` : ''}
   </div>`;
 }
@@ -134,6 +159,7 @@ function render() {
     ${u ? cardMinhaRanqueada(status, { link: false }) : ''}
     ${tabela()}
     ${comoFunciona()}`;
+  ligarRelogio();
 }
 
 async function carregarTabela() {

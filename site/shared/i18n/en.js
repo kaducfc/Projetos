@@ -2086,6 +2086,7 @@ export default {
   "entregue quando a semana fecha": "paid out when the week ends",
   "entregue quando o mês fecha": "paid out when the month ends",
   "Seu último prêmio:": "Your last reward:",
+  "O ranking zera e o prêmio é entregue em": "The ranking resets and the reward is paid out in",
   "◆ Palavra do dia": "◆ Word of the day",
   "{n} letras ·": "{n} letters ·",
   "vale ranqueada": "counts for ranked",

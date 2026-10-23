@@ -2086,6 +2086,7 @@ export default {
   "entregue quando a semana fecha": "se entrega cuando cierra la semana",
   "entregue quando o mês fecha": "se entrega cuando cierra el mes",
   "Seu último prêmio:": "Tu último premio:",
+  "O ranking zera e o prêmio é entregue em": "El ranking se reinicia y el premio se entrega en",
   "◆ Palavra do dia": "◆ Palabra del día",
   "{n} letras ·": "{n} letras ·",
   "vale ranqueada": "vale para la clasificatoria",

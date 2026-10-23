@@ -85,4 +85,5 @@ export default [
   ['entregue quando a semana fecha', 'paid out when the week ends', 'wird ausgezahlt, wenn die Woche endet', 'se entrega cuando cierra la semana', 'consegnato alla chiusura della settimana', 'versée à la fin de la semaine'],
   ['entregue quando o mês fecha', 'paid out when the month ends', 'wird ausgezahlt, wenn der Monat endet', 'se entrega cuando cierra el mes', 'consegnato alla chiusura del mese', 'versée à la fin du mois'],
   ['Seu último prêmio:', 'Your last reward:', 'Deine letzte Belohnung:', 'Tu último premio:', 'Il tuo ultimo premio:', 'Ta dernière récompense :'],
+  ['O ranking zera e o prêmio é entregue em', 'The ranking resets and the reward is paid out in', 'Die Rangliste wird zurückgesetzt und die Belohnung ausgezahlt in', 'El ranking se reinicia y el premio se entrega en', 'La classifica si azzera e il premio viene consegnato tra', 'Le classement est remis à zéro et la récompense versée dans'],
 ];

@@ -72,3 +72,12 @@
 .rk-premios li.top1 { background: rgba(240,180,41,.2); }
 .rk-premios li.top2 { background: rgba(190,200,215,.18); }
 .rk-premios li.top3 { background: rgba(205,127,50,.2); }
+
+.rk-lista li.com-rc { grid-template-columns: 42px 1fr 120px 150px 80px; }
+.rk-rc { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 800; font-size: 15px; color: var(--gold, #d9a82b); font-variant-numeric: tabular-nums; }
+.rk-rc img { display: block; }
+.rk-cd { font-variant-numeric: tabular-nums; color: var(--gold, #d9a82b); }
+@media (max-width: 560px) {
+  .rk-lista li.com-rc { grid-template-columns: 28px 52px 1fr auto; grid-template-areas: "pos av nome pts" "pos av elo pts" "pos av rc pts"; }
+  .rk-lista li .rk-rc { grid-area: rc; justify-self: start; font-size: 13px; }
+}
