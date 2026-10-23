@@ -37,7 +37,7 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
   return new Promise((resolver) => {
     let meuLado = invertida ? 'vermelho' : 'azul';
     let d = novoDraft(catalogo, azul, vermelho, semente, { invertida });
-    const S = { snd: null, ultSeg: -1, vaga: null, busca: '', trocando: false, filtro: null, passoT: -1, fim: 0, iaEm: 0, relogio: null };
+    const S = { troca: null, snd: null, ultSeg: -1, vaga: null, busca: '', trocando: false, filtro: null, passoT: -1, fim: 0, iaEm: 0, relogio: null };
     const fundo = document.createElement('div'); fundo.className = 'pt-fundo pt-draft';
     const botSom = document.createElement('button'); botSom.type = 'button'; botSom.className = 'pt-som'; botSom.title = 'Som'; botSom.setAttribute('aria-label', 'Som');
     const marcarSom = () => { botSom.textContent = somLigado() ? '🔊' : '🔇'; }; marcarSom();
@@ -49,7 +49,9 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       const c = d.picks[lado][v]; const j = jogadorDaVaga(d, lado, v);
       const sel = lado === 'azul' && S.vaga === v;
       const vezAqui = vez && vez.tipo === 'pick' && vez.lado === lado && !c && (lado === 'azul' ? sel : v === vez.vagaIA);
-      return `<div class="slot ${c ? 'ok' : ''} ${sel ? 'sel' : ''} ${vezAqui ? 'agora' : ''}" ${lado === 'azul' && !c ? `data-vaga="${v}"` : ''}>${c ? campIcone(c.nome, 66) : `<span class="vazio">${PROIBIDO}</span>`}<div class="inf"><b>${c ? esc(c.nome) : esc(j?.nome || NOME[v])}</b><small>${c ? `${esc(j?.nome || '')} · ` : ''}${NOME[v]}</small></div></div>`;
+      const tr = S.troca && lado === 'azul' && c ? `<button type="button" class="troca ${S.troca.sel === v ? 'on' : ''}" data-troca="${v}" title="Trocar campeão" aria-label="Trocar campeão de ${esc(j?.nome || NOME[v])}">⇄</button>` : '';
+      const fora = S.final && lado === 'azul' && c && !serve(c, v) ? `<small class="fora-pos">fora da posição</small>` : '';
+      return `<div class="slot ${c ? 'ok' : ''} ${sel ? 'sel' : ''} ${vezAqui ? 'agora' : ''} ${S.troca && S.troca.sel === v && lado === 'azul' ? 'troca-sel' : ''}" ${lado === 'azul' && !c ? `data-vaga="${v}"` : ''}>${c ? campIcone(c.nome, 66) : `<span class="vazio">${PROIBIDO}</span>`}${tr}<div class="inf"><b>${c ? esc(c.nome) : esc(j?.nome || NOME[v])}</b><small>${c ? `${esc(j?.nome || '')} · ` : ''}${NOME[v]}</small>${fora}</div></div>`;
     }).join('')}</div>`;
     function desenhar() {
       const p = passoAtual(d);
@@ -115,10 +117,40 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
     }
     function finalizar() {
       clearInterval(S.relogio);
-      const r = resultadoDraft(d); somDraft('fim');
-      fundo.innerHTML = `<div class="pt-modal pt-draft-box intro"><h2>Draft completo</h2><div class="palco fim">${colunaHtml('azul', nomeAzul)}<div class="meio"><button type="button" class="pt-btn ouro grande" id="d-ir">Começar a partida</button></div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
-      fundo.querySelector('#d-ir').onclick = () => { fundo.remove(); resolver(r); };
+      somDraft('fim');
+      S.final = true; S.troca = null; S.trocou = false;
+      telaFinal();
     }
+    // Tela do draft completo: começar a partida ou, uma vez, trocar campeões entre os jogadores (1 minuto).
+    function telaFinal() {
+      const r = () => resultadoDraft(d);
+      const t = S.troca;
+      const meio = t
+        ? `<p class="troca-t">Trocar campeões</p><div class="tempo"><span class="num">1:00</span><i class="tbar"><b></b></i></div><p class="troca-dica">Toque em ⇄ em dois jogadores para trocar os campeões entre eles.</p><button type="button" class="pt-btn ouro grande" id="d-fim-troca">Finalizar</button>`
+        : `<button type="button" class="pt-btn ouro grande" id="d-ir">Começar a partida</button>${S.trocou ? '' : '<button type="button" class="pt-btn" id="d-trocar">Trocar campeões</button>'}`;
+      fundo.innerHTML = `<div class="pt-modal pt-draft-box intro ${t ? 'trocando' : ''}"><h2>${t ? 'Trocar campeões' : 'Draft completo'}</h2><div class="palco fim">${colunaHtml('azul', nomeAzul)}<div class="meio">${meio}</div>${colunaHtml('vermelho', nomeVermelho)}</div></div>`;
+      fundo.querySelector('#d-ir')?.addEventListener('click', () => { fundo.remove(); resolver(r()); });
+      fundo.querySelector('#d-trocar')?.addEventListener('click', () => {
+        S.troca = { sel: null, fim: Date.now() + 60000 }; somDraft('clique');
+        S.relogio = setInterval(() => {
+          const resta = Math.max(0, S.troca.fim - Date.now());
+          const n = fundo.querySelector('.tempo .num'); if (n) { const sg = Math.ceil(resta / 1000); n.textContent = `${Math.floor(sg / 60)}:${String(sg % 60).padStart(2, '0')}`; }
+          const b = fundo.querySelector('.tempo .tbar b'); if (b) b.style.width = `${resta / 600}%`;
+          fundo.querySelector('.tempo')?.classList.toggle('fim', resta <= 10000);
+          if (resta <= 0) fimTroca();
+        }, 250);
+        telaFinal();
+      });
+      fundo.querySelector('#d-fim-troca')?.addEventListener('click', fimTroca);
+      fundo.querySelectorAll('[data-troca]').forEach((b) => b.addEventListener('click', () => {
+        const v = b.dataset.troca; somDraft('clique');
+        if (!S.troca.sel) S.troca.sel = v;
+        else if (S.troca.sel === v) S.troca.sel = null;
+        else { const a = S.troca.sel; [d.picks.azul[a], d.picks.azul[v]] = [d.picks.azul[v], d.picks.azul[a]]; S.troca.sel = null; somDraft('pick', 'azul'); }
+        const fim = S.troca.fim; telaFinal(); S.troca.fim = fim;
+      }));
+    }
+    function fimTroca() { clearInterval(S.relogio); S.troca = null; S.trocou = true; telaFinal(); }
     function comecar() { somDraft('inicio'); S.relogio = setInterval(atualizarTempo, 250); desenhar(); }
     function definirLado(l) { S.ladoOk = true; meuLado = l; d = novoDraft(catalogo, azul, vermelho, semente, { invertida: l === 'vermelho' }); intro(); }
     function escolhaDeLado() {
