@@ -53,6 +53,15 @@ export const APOIO_INTL_ATIVO = true;
 export const GAMES = [
   // A ordem aqui é a ordem dos cards na página inicial.
   {
+    id: 'tecnico',
+    name: 'Rift Manager',
+    tagline: 'Funde sua organização, contrate jogadores, dispute ligas semanais e chegue ao Mundial.',
+    kind: 'Simulação',
+    path: 'jogos/tecnico/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+  },
+  {
     id: 'barao',
     name: 'Show do Barão',
     tagline: 'Acerte as perguntas, use suas ajudas e descubra até onde consegue chegar.',
@@ -143,15 +152,6 @@ export const GAMES = [
     status: 'live',
     scoreLabel: 'Pontos',
     ranked: { modo: 'vagas', selo: 'Ranqueada' },
-  },
-  {
-    id: 'tecnico',
-    name: 'Rift Manager',
-    tagline: 'Funde sua organização, contrate jogadores, dispute ligas semanais e chegue ao Mundial.',
-    kind: 'Simulação',
-    path: 'jogos/tecnico/',
-    status: 'live',
-    scoreLabel: 'Pontos',
   },
 ];
 
