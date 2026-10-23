@@ -182,3 +182,12 @@ a.p-tool h3 { color: var(--gold-2); }
 .t-sec > summary:hover .t-sec-btn { background: rgba(217, 168, 43, 0.12); }
 .t-sec-corpo { padding: 0 16px 16px; }
 .t-sec-corpo > .card:first-child, .t-sec-corpo > h3:first-child { margin-top: 0; }
+
+/* Aba do Rift Manager */
+.rm-itens { display: flex; flex-wrap: wrap; gap: 4px; }
+.rm-chip { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11.5px; border: 1px solid var(--line-2, #333); white-space: nowrap; }
+.rm-chip.rar-raro { border-color: #4aa3ff; color: #8cc4ff; }
+.rm-chip.rar-epico { border-color: #b36bff; color: #d2a8ff; }
+.rm-chip.rar-lendario { border-color: #f0b429; color: #f5cf5a; background: rgba(240, 180, 41, .1); }
+.rm-chip.rar-mitico { border-color: #ff5a8a; color: #ff9ab8; background: rgba(255, 90, 138, .12); font-weight: 700; }
+.rm-chip.rep { opacity: .7; }

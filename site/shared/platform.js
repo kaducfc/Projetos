@@ -1373,6 +1373,14 @@ export async function adminRanqueada(days = 30) {
   if (error) throw erroPainelRk(error);
   return data;
 }
+// Painel do Rift Manager (só administradores; ver 0185_tecnico_painel_admin.sql).
+export async function adminRift(days = 30) {
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc('tc_admin_painel', { dias: days });
+  if (error) throw new Error(/not_admin/.test(error.message) ? 'Esta conta não tem acesso ao painel.' : /tc_admin_painel/.test(error.message) ? 'Rode o SQL 0185_tecnico_painel_admin.sql no Supabase.' : friendly(error).message);
+  return data;
+}
 // Vigilância dos outros jogos da ranqueada (0026).
 export async function adminVigia(days = 7) {
   const sb = await getClient();

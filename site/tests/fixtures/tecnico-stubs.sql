@@ -24,3 +24,4 @@ create table if not exists public.site_nivel (user_id uuid primary key, nivel in
 create or replace function public.site_rk_nivel_de(uid uuid) returns int language sql stable as $$ select coalesce((select nivel from public.site_nivel where user_id = uid), 0) $$;
 create or replace function public.site_rk_ajustar(base int, nivel int) returns int language sql immutable as $$ select base $$;
 create or replace function public.site_is_admin() returns boolean language sql stable as $$ select exists (select 1 from site_admins where user_id = auth.uid()) $$;
+create table if not exists public.site_profiles (id uuid primary key references auth.users(id), username text);

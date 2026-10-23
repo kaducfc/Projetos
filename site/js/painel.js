@@ -76,7 +76,7 @@ function hbars(entries, nameOf = (x) => x, { sort = true, fmt = num } = {}) {
 }
 
 // Abas do painel (a escolhida fica guardada neste navegador).
-const ABAS = [['geral', 'Visão geral'], ['jogos', 'Jogos'], ['ranqueada', 'Ranqueada'], ['jogador', 'Jogador'], ['apoio', 'Apoio'], ['ferramentas', 'Ferramentas'], ['teste', 'Teste']];
+const ABAS = [['geral', 'Visão geral'], ['jogos', 'Jogos'], ['rift', 'Rift Manager'], ['ranqueada', 'Ranqueada'], ['jogador', 'Jogador'], ['apoio', 'Apoio'], ['ferramentas', 'Ferramentas'], ['teste', 'Teste']];
 let aba = 'geral';
 try { aba = localStorage.getItem('site.painel.aba') || 'geral'; } catch { /* sem storage */ }
 if (!ABAS.some(([id]) => id === aba)) aba = 'geral';
@@ -106,9 +106,10 @@ function render(st) {
   ultimo = st;
   const contador = { ranqueada: suspeitasRk() + suspeitasVg(), apoio: ap?.periodo?.status?.pendente || 0 };
   const nav = `<nav class="p-tabs" role="tablist">${ABAS.map(([id, nome]) => `<button type="button" role="tab" data-aba="${id}" class="${aba === id ? 'on' : ''}">${nome}${contador[id] ? ` <span class="p-badge">${num(contador[id])}</span>` : ''}</button>`).join('')}</nav>`;
-  const conteudo = { geral: abaGeral, jogos: abaJogos, ranqueada: abaRanqueada, jogador: abaJogador, apoio: abaApoio, ferramentas: abaFerramentas, teste: abaTeste }[aba](st);
+  const conteudo = { geral: abaGeral, jogos: abaJogos, rift: abaRift, ranqueada: abaRanqueada, jogador: abaJogador, apoio: abaApoio, ferramentas: abaFerramentas, teste: abaTeste }[aba](st);
   body.innerHTML = nav + conteudo;
   if (aba === 'teste' && ps === null && !psErro && !psCarregando && platform.getUser()) carregarPasse();
+  if (aba === 'rift' && rm === null && !rmErro && !rmCarregando) carregarRift();
 }
 
 // ----------------------------------------------------------- aba: visão geral
@@ -245,6 +246,131 @@ function abaJogos(st) {
     </details>
   </section>`;
 }
+
+// -------------------------------------------------------------- aba: Rift Manager
+let rm = null; // resposta de platform.adminRift(days)
+let rmErro = '';
+let rmCarregando = false;
+
+async function carregarRift() {
+  rmCarregando = true;
+  try {
+    rm = await platform.adminRift(days);
+    rmErro = '';
+  } catch (err) {
+    rm = null;
+    rmErro = err.message;
+  }
+  rmCarregando = false;
+  if (aba === 'rift' && ultimo) render(ultimo);
+}
+
+const MOTIVO_RM = {
+  tecnico_bau: 'Baús de recrutamento', tecnico_compra: 'Compra de jogador (RC)', tecnico_venda: 'Venda de jogador (RC)', tecnico_estrela: 'Jogador Estrela',
+  tecnico_renomear: 'Renomear equipe', rank_semanal: 'Prêmio do ranking semanal', rank_mensal: 'Prêmio do ranking mensal', passe: 'Passe de batalha', codigo: 'Código promocional',
+  admin: 'Ajuste do administrador', bau: 'Baús (créditos)', premiacao: 'Premiação de liga', contratacao: 'Contratações', treino: 'Treinos', salarios: 'Salários', rescisao: 'Rescisões',
+  contrato: 'Contratos', mkt_receita: 'Receita de marketing', mkt_renovacao: 'Marketing: renovação', mkt_contrato: 'Marketing: patrocínio', mkt_melhoria: 'Marketing: melhoria',
+  inicial: 'Crédito inicial', compra: 'Compra de RC (dinheiro)',
+};
+const nomeMotivoRm = (m) => MOTIVO_RM[m] || m;
+const RAR_RM = { comum: 'Comum', raro: 'Raro', epico: 'Épico', lendario: 'Lendário', mitico: 'Mítico' };
+const TIPO_TRANSF = { inicial: 'Elenco inicial', contratacao: 'Contratação', compra_usuario: 'Compra entre técnicos', renovacao: 'Renovação', liberado: 'Liberado', expirou: 'Contrato expirou', substituto: 'Substituto', bau: 'Baú', bau_copia: 'Cópia de baú' };
+const nomeBau = (b) => String(b || '').replace(/^./, (c) => c.toUpperCase());
+const chipRar = (it) => `<span class="rm-chip rar-${esc(it.raridade)}${it.repetida ? ' rep' : ''}" title="${esc(RAR_RM[it.raridade] || it.raridade)}${it.repetida ? ' · repetido (cópia)' : ''}">${esc(it.nome || '?')}${it.repetida ? ' ♻' : ''}</span>`;
+const tabelaRm = (cab, linhas, vazio = 'Sem dados no período.') => (linhas.length ? `<div class="table-wrap"><table class="p-table"><thead><tr>${cab.map(([t, n]) => `<th${n ? ' class="n"' : ''}>${t}</th>`).join('')}</tr></thead><tbody>${linhas.join('')}</tbody></table></div>` : `<p class="p-empty">${vazio}</p>`);
+const pct = (a, b) => (b ? `${dec((a / b) * 100)}%` : '—');
+
+function abaRift(st) {
+  if (rmErro) return `<section class="p-section"><h2>Rift Manager</h2><div class="card"><p class="p-note">${esc(rmErro)}</p><button type="button" class="p-btn" data-rm-recarregar>Tentar de novo</button></div></section>`;
+  if (!rm) return '<section class="p-section"><h2>Rift Manager</h2><p class="muted">Carregando…</p></section>';
+  const r = rm.resumo; const bx = rm.baus; const rc = rm.rc;
+  const gastoRc = (rc.gasto || []).reduce((s, x) => s + Number(x.rc), 0);
+  const ganhoRc = (rc.ganho || []).reduce((s, x) => s + Number(x.rc), 0);
+  const graf = (titulo, chave, un) => { const c = columns(rm.serie, chave, un); return `<div class="card"><h3>${titulo}</h3><p class="c-sub">${num(c.total)} ${un} no período</p>${c.html}</div>`; };
+  return `
+  <section class="p-section">
+    <h2>Rift Manager · últimos ${rm.dias} dias <button type="button" class="p-link" data-rm-recarregar>atualizar</button></h2>
+    <div class="tiles">
+      ${tile('Técnicos (contas)', num(r.contas), `${num(r.novas_periodo)} novos no período · ${num(r.novas_hoje)} hoje`)}
+      ${tile('Ativos hoje', num(r.ativas_hoje), `${num(r.ativas_7d)} em 7 dias · ${num(r.ativas_periodo)} no período`)}
+      ${tile('Já jogaram uma partida', num(r.jogaram_partida), `${pct(r.jogaram_partida, r.contas)} das contas`)}
+      ${tile('Já abriram baú', num(r.abriram_bau), `${pct(r.abriram_bau, r.contas)} das contas`)}
+      ${tile('Já pagaram por baú', num(r.pagaram_bau), `${pct(r.pagaram_bau, r.contas)} das contas`)}
+      ${tile('RC gasto no jogo', num(gastoRc), 'no período')}
+      ${tile('RC recebido no jogo', num(ganhoRc), 'vendas e prêmios')}
+      ${tile('RC nas carteiras', num(r.rc_nas_carteiras), 'agora, dos técnicos')}
+    </div>
+    <div class="cards">
+      ${graf('Técnicos ativos por dia', 'ativas', 'ativos')}
+      ${graf('Contas novas por dia', 'novas', 'contas')}
+      ${graf('Baús abertos por dia', 'baus', 'baús')}
+      ${graf('RC gasto por dia', 'rc_gasto', 'RC')}
+      ${graf('Partidas por dia', 'partidas', 'partidas')}
+    </div>
+  </section>
+  <section class="p-section">
+    <h2>Baús de recrutamento</h2>
+    <div class="tiles">
+      ${tile('Baús abertos', num(bx.totais.baus), `${num(bx.totais.aberturas)} aberturas`)}
+      ${tile('RC gasto em baús', num(bx.totais.rc))}
+      ${tile('Baús grátis', num(bx.totais.gratis), 'o do ciclo de 3 dias')}
+      ${tile('Compradores', num(bx.totais.compradores), 'contas diferentes')}
+    </div>
+    <div class="cards">
+      <div class="card"><h3>Por tipo de baú</h3>${tabelaRm([['Baú'], ['Aberturas', 1], ['Baús', 1], ['RC gasto', 1], ['Grátis', 1], ['Contas', 1]],
+        (bx.por_tipo || []).map((x) => `<tr><td>${esc(nomeBau(x.bau))}</td><td class="n">${num(x.aberturas)}</td><td class="n">${num(x.baus)}</td><td class="n">${num(x.rc)}</td><td class="n">${num(x.gratis)}</td><td class="n">${num(x.compradores)}</td></tr>`))}</div>
+      <div class="card"><h3>O que veio nos baús</h3><p class="c-sub">Raridade dos jogadores sorteados (♻ = repetidos que viraram cópia)</p>
+        ${hbars((bx.raridades || []).map((x) => [x.raridade, Number(x.qtd)]), (k) => `${RAR_RM[k] || k} (${num((bx.raridades.find((y) => y.raridade === k) || {}).repetidas)} ♻)`, { sort: false })}</div>
+    </div>
+    <div class="cards">
+      <div class="card"><h3>Últimos baús abertos</h3>${tabelaRm([['Quando'], ['Técnico'], ['Baú'], ['RC', 1], ['Resultado']],
+        (bx.ultimos || []).map((x) => `<tr><td>${esc(dataHora(x.criado))}</td><td>${esc(x.usuario || '—')}</td><td>${esc(nomeBau(x.bau))} ×${num(x.qtd)}${x.gratis ? ' <small>(grátis)</small>' : ''}</td><td class="n">${num(x.rc)}</td><td class="rm-itens">${(x.itens || []).map(chipRar).join(' ')}</td></tr>`), 'Nenhum baú aberto ainda.')}</div>
+      <div class="card"><h3>Lendários e míticos recentes</h3>${tabelaRm([['Quando'], ['Técnico'], ['Baú'], ['Jogador']],
+        (bx.mais_raros || []).map((x) => `<tr><td>${esc(dataHora(x.criado))}</td><td>${esc(x.usuario || '—')}</td><td>${esc(nomeBau(x.bau))}</td><td>${chipRar({ nome: x.nome, raridade: x.raridade })}</td></tr>`), 'Nenhum ainda.')}</div>
+    </div>
+  </section>
+  <section class="p-section">
+    <h2>Rift Coins</h2>
+    <div class="cards">
+      <div class="card"><h3>Onde o RC foi gasto</h3><p class="c-sub">No período</p>${tabelaRm([['Motivo'], ['RC', 1], ['Vezes', 1]],
+        (rc.gasto || []).map((x) => `<tr><td>${esc(nomeMotivoRm(x.motivo))}</td><td class="n">${num(x.rc)}</td><td class="n">${num(x.vezes)}</td></tr>`))}</div>
+      <div class="card"><h3>De onde veio o RC</h3><p class="c-sub">Compras com dinheiro: <b>${num(rc.comprado.rc)} RC</b> em ${num(rc.comprado.compras)} ${rc.comprado.compras === 1 ? 'compra' : 'compras'} por ${num(rc.comprado.compradores)} ${rc.comprado.compradores === 1 ? 'conta' : 'contas'}</p>${tabelaRm([['Motivo'], ['RC', 1], ['Vezes', 1]],
+        (rc.ganho || []).map((x) => `<tr><td>${esc(nomeMotivoRm(x.motivo))}</td><td class="n">${num(x.rc)}</td><td class="n">${num(x.vezes)}</td></tr>`))}</div>
+      <div class="card"><h3>Quem mais gastou</h3>${tabelaRm([['Técnico'], ['Equipe'], ['RC', 1]],
+        (rc.top_gastadores || []).map((x) => `<tr><td>${nickLink(x.usuario)}</td><td>${esc(x.equipe)}</td><td class="n">${num(x.rc)}</td></tr>`))}</div>
+    </div>
+  </section>
+  <section class="p-section">
+    <h2>Partidas, créditos e mercado</h2>
+    <div class="tiles">
+      ${tile('Amistosos', num(rm.partidas.amistosos.total), `${num(rm.partidas.amistosos.hoje)} hoje · ${pct(rm.partidas.amistosos.vitorias, rm.partidas.amistosos.total)} de vitórias`)}
+      ${tile('Mapas oficiais', num(rm.partidas.mapas.total), `${num(rm.partidas.mapas.hoje)} hoje · duração média ${num(Math.round(rm.partidas.mapas.duracao_media / 60))} min`)}
+      ${tile('Lado azul vence', pct(rm.partidas.mapas.azul_venceu, rm.partidas.mapas.total), 'equilíbrio dos lados')}
+      ${tile('Oficiais agendadas', num(rm.partidas.oficiais_agendadas), `${num(rm.partidas.oficiais_concluidas)} concluídas no período`)}
+      ${tile('Treinos iniciados', num(rm.partidas.treinos.iniciados), `${num(rm.partidas.treinos.creditos)} créditos`)}
+      ${tile('Créditos nas equipes', num(r.creditos_nas_equipes))}
+    </div>
+    <div class="cards">
+      <div class="card"><h3>Créditos gastos</h3>${tabelaRm([['Motivo'], ['Créditos', 1], ['Vezes', 1]],
+        (rm.creditos.gasto || []).map((x) => `<tr><td>${esc(nomeMotivoRm(x.motivo))}</td><td class="n">${num(x.creditos)}</td><td class="n">${num(x.vezes)}</td></tr>`))}</div>
+      <div class="card"><h3>Créditos recebidos</h3>${tabelaRm([['Motivo'], ['Créditos', 1], ['Vezes', 1]],
+        (rm.creditos.ganho || []).map((x) => `<tr><td>${esc(nomeMotivoRm(x.motivo))}</td><td class="n">${num(x.creditos)}</td><td class="n">${num(x.vezes)}</td></tr>`))}</div>
+      <div class="card"><h3>Movimentos de jogadores</h3>${tabelaRm([['Tipo'], ['Vezes', 1], ['Valor', 1]],
+        (rm.mercado.por_tipo || []).map((x) => `<tr><td>${esc(TIPO_TRANSF[x.tipo] || x.tipo)}</td><td class="n">${num(x.vezes)}</td><td class="n">${num(x.valor)} ${x.moeda === 'rc' ? 'RC' : 'cr.'}</td></tr>`))}</div>
+    </div>
+    <div class="cards">
+      <div class="card"><h3>Elenco dos técnicos</h3><p class="c-sub">${num(rm.elenco.jogadores)} jogadores no total · Legados por raridade</p>${hbars((rm.elenco.raridades || []).map((x) => [x.raridade, Number(x.qtd)]), (k) => RAR_RM[k] || k, { sort: false })}</div>
+      <div class="card"><h3>Estrelas</h3><p class="c-sub">Legados evoluídos</p>${hbars((rm.elenco.estrelas || []).map((x) => [`${x.estrelas}`, Number(x.qtd)]), (k) => `${k} ★`, { sort: false })}</div>
+    </div>
+  </section>
+  <section class="p-section">
+    <h2>Técnicos</h2>
+    <div class="card">${tabelaRm([['Técnico'], ['Equipe'], ['Div.'], ['Criada'], ['Jogad.', 1], ['Baús', 1], ['RC gasto', 1], ['RC saldo', 1], ['Créditos', 1], ['Amist.', 1], ['Mapas (V/T)', 1], ['Última ação']],
+      (rm.tecnicos || []).map((x) => `<tr><td>${nickLink(x.username)}</td><td>${esc(x.equipe)} <small>${esc(x.sigla)}</small></td><td>${x.divisao === 'principal' ? 'Principal' : 'Acesso'}</td><td>${esc(dataCurta(x.criado))}</td><td class="n">${num(x.jogadores)}</td><td class="n">${num(x.baus)}</td><td class="n">${num(x.rc_gasto)}</td><td class="n">${num(x.rc_saldo)}</td><td class="n">${num(x.creditos)}</td><td class="n">${num(x.amistosos)}</td><td class="n">${num(x.mapas_vencidos)}/${num(x.mapas)}</td><td>${x.ultima ? esc(dataHora(x.ultima)) : '—'}</td></tr>`), 'Nenhum técnico ainda.')}
+      <p class="c-sub">Os 100 mais recentes por última ação.</p></div>
+  </section>`;
+}
+
 
 // -------------------------------------------------------------- aba: ranqueada
 
@@ -908,6 +1034,7 @@ async function load() {
       opcional(platform.adminRanqueada(days)), opcional(platform.adminVigia(Math.min(days, 90))), opcional(platform.adminCodigos()), opcional(platform.adminModelos()),
     ]);
     if (seq !== loadSeq) return;
+    rm = null; rmErro = ''; // o painel do Rift Manager é relido para o novo período
     rk = ranked.r || null;
     rkErro = ranked.err?.message || '';
     ap = apoios.r || null;
@@ -1032,6 +1159,7 @@ body.addEventListener('click', async (e) => {
 });
 
 body.addEventListener('click', (e) => {
+  if (e.target.closest('[data-rm-recarregar]')) { rm = null; rmErro = ''; render(ultimo); return; }
   const t = e.target.closest('[data-aba]');
   if (!t || !ultimo) return;
   aba = t.dataset.aba;
