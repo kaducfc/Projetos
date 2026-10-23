@@ -1168,3 +1168,11 @@ html, body { overflow-x: clip; }
 
 /* o bloco do baú grátis fica depois dos botões de abrir; assim os botões dos dois baús ficam alinhados */
 .tc-bau > .tc-gratis { margin: 0 16px 16px; }
+
+/* Símbolos de maestria (1 a 7) */
+.tc-selo-m { display: block; flex: none; filter: drop-shadow(0 2px 3px #000a); }
+.tc-maes > div { grid-template-columns: auto 1fr auto; }
+.tc-maes > div > .tc-selo-m { grid-column: 3; grid-row: 1 / span 3; margin-left: 8px; }
+.tc-rt-j .mae > div > .tc-selo-m { margin-left: auto; }
+.tc-guia-selos { display: flex; justify-content: space-between; gap: 6px; margin: 10px 0 4px; padding: 10px 8px 6px; border: 1px solid #1d3a63; background: #061326; }
+.tc-guia-selos > div { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--mudo); }

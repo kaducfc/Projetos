@@ -7,9 +7,8 @@ import { novoDraft, passoAtual, terminou, banir, escolher, jogadaIA, EFIC_FORA_P
 const NOME = { top: 'Topo', selva: 'Selva', meio: 'Meio', atirador: 'Atirador', suporte: 'Suporte' };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// Símbolo da maestria (1 a 7) em miniatura. O servidor manda só o bônus de Poder do favorito (+3% por nível).
-const BONUS_NIVEL = [3, 6, 9, 12, 15, 18];
-const nivelDe = (f) => f.nivel || (BONUS_NIVEL.indexOf(f.bonus_pct) + 1) || 1;
+// Símbolo da maestria (1 a 7) em miniatura. O servidor manda só o bônus de Poder do favorito (+3% por nível acima do 1).
+const nivelDe = (f) => f.nivel || Math.round((f.bonus_pct || 0) / 3) + 1; // nível 1 = sem bônus; 2 = +3% ... 7 = +18%
 const selo = (f) => (f ? `<img class="mae-selo" src="../img/maestria/m${Math.min(7, nivelDe(f))}.webp" alt="" width="22" height="25" />` : '');
 const TEMPO_ACAO = 60; // segundos por pick ou ban, para os dois lados
 const IA_MIN = 3; const IA_MAX = 6; // o computador escolhe entre 3 e 6 segundos depois que a vez dele começa

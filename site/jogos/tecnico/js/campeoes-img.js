@@ -34,6 +34,11 @@ export function campIcone(nome, tam = 44) {
   const ini = esc((nome || '?')[0]);
   return `<span class="tc-ci" style="--t:${tam}px"><span class="ini">${ini}</span>${u ? `<img src="${u}" alt="" loading="lazy" width="${tam}" height="${tam}" />` : ''}</span>`;
 }
+// Símbolo da maestria (nível 1 a 7).
+export const seloMaestria = (nivel, tam = 28) => {
+  const n = Math.min(7, Math.max(1, Number(nivel) || 1));
+  return `<img class="tc-selo-m" src="/jogos/tecnico/img/maestria/m${n}.webp" alt="" width="${Math.round(tam * 0.88)}" height="${tam}" loading="lazy" />`;
+};
 // Imagem que falha (sem rede ou campeão novo demais) some e deixa a inicial à mostra.
 if (typeof document !== 'undefined') document.addEventListener('error', (e) => { if (e.target?.tagName === 'IMG' && e.target.closest('.tc-ci')) e.target.remove(); }, true);
 // Ícone de item que falha (id que o Data Dragon não tem mais) some e deixa a inicial à mostra.

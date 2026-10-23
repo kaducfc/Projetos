@@ -2,6 +2,7 @@
 // Tradução: cada parágrafo, item de lista, título, pergunta, resposta e célula é traduzido inteiro (com as marcas <b> dentro), por
 // traduzirHtml(), usando o dicionário do site (shared/i18n/src/tecnico-guia-*.mjs). O texto em português é a chave.
 import { t } from '../../../shared/i18n.js';
+import { seloMaestria } from './campeoes-img.js';
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const caixa = (tipo, t) => `<p class="gd-caixa ${tipo}"><b>${tipo === 'dica' ? 'Dica' : tipo === 'atencao' ? 'Atenção' : 'Exemplo'}</b> ${t}</p>`;
 const lista = (...it) => `<ul class="gd-lista">${it.map((x) => `<li>${x}</li>`).join('')}</ul>`;
@@ -70,6 +71,7 @@ export const PAGINAS = [
     <p><b>Amistosos</b> são partidas contra outras equipes que não valem campeonato: servem para ganhar <b>XP</b> e <b>maestria</b> sem arriscar nada.</p>
     ${lista('Escolha um adversário da lista e jogue a partida normalmente (draft e mapa).', 'Os primeiros amistosos do dia rendem XP; depois você ainda ganha maestria.')}
     <h4>Maestria</h4>
+    <div class="tc-guia-selos">${[1, 2, 3, 4, 5, 6, 7].map((n) => `<div>${seloMaestria(n, 44)}<span>${n}</span></div>`).join('')}</div>
     <p>Cada jogador acumula <b>pontos de maestria</b> com cada campeão: 30 por vitória e 15 por derrota. São 6 níveis, e o bônus de Poder vai de <b>+3% a +18%</b>.</p>
     ${lista('Cada jogador pode ter até <b>5 campeões favoritos</b>.', 'O bônus só vale quando ele joga com o campeão da maestria.', 'Os campeões da maestria aparecem na ficha do jogador.')}
     ${faq(['Perder no amistoso tem custo?', 'Não. Só vale XP e maestria.'])}` },
