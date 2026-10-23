@@ -28,25 +28,29 @@ export function criarAnuncios(mapaEl) {
   // Categorias: anúncios da mesma categoria concorrem entre si; o mais importante ganha e os menores são descartados.
   const SERIE = /^(KILLING SPREE|RAMPAGE|UNSTOPPABLE|DOMINATING|GODLIKE|LEGENDARY)!$/;
   const catDe = (titulo) => (SERIE.test(titulo) ? 'serie' : titulo === 'ACE!' ? 'ace' : /(TORRE|INIBIDOR|NEXUS)/.test(titulo) ? 'estr' : /(ALMA|ELIMINADO|ROUBADO)/.test(titulo) ? 'epico' : 'abate');
+  const IMPORTANTE = new Set(['estr', 'epico', 'ace']); // objetivos e ACE nunca são descartados por filtro de velocidade nem por espera
   const VALIDADE = 4000; // anúncio que ficou esperando mais que isso já está velho (a jogada mudou): só os muito importantes ainda passam
 
   const encerrar = (el, depois) => { el.classList.remove('entra'); el.classList.add('sai'); setTimeout(() => { el.remove(); if (atual && atual.el === el) atual = null; depois?.(); mostrar(); }, 220); };
   const mostrar = () => {
     if (atual) return;
     const agora = Date.now();
-    for (let i = fila.length - 1; i >= 0; i--) if (agora - fila[i].t0 > VALIDADE * (veloc >= 8 ? 0.6 : 1) && fila[i].prio < 7) fila.splice(i, 1);
+    for (let i = fila.length - 1; i >= 0; i--) if (agora - fila[i].t0 > VALIDADE * (veloc >= 8 ? 0.6 : 1) && fila[i].prio < 7 && !IMPORTANTE.has(fila[i].cat)) fila.splice(i, 1);
     if (!fila.length) return;
     fila.sort((x, y) => y.prio - x.prio); const a = fila.shift();
     const el = document.createElement('div'); el.className = `pt-an ${a.classe} eq-${a.equipe}`; el.innerHTML = a.html; caixa.appendChild(el);
-    atual = { el, cat: a.cat, prio: a.prio, fim: 0 };
+    atual = { el, cat: a.cat, prio: a.prio, fim: 0, ini: Date.now() };
     requestAnimationFrame(() => el.classList.add('entra'));
     atual.fim = setTimeout(() => encerrar(el), a.dur);
   };
   const por = (a) => {
     // em velocidade muito alta só os mais importantes passam (o resto é só ruído); em todas, abates e objetivos continuam aparecendo
-    if (!ativo || a.prio < (veloc >= 32 ? 4 : veloc >= 16 ? 2 : 1)) return;
+    a.cat = catDe(a.titulo);
+    if (!ativo || (a.prio < (veloc >= 32 ? 4 : veloc >= 16 ? 2 : 1) && !IMPORTANTE.has(a.cat))) return;
+    // anúncio travado na tela (aba em segundo plano, elemento removido): libera a vaga para o próximo
+    if (atual && (!atual.el.isConnected || Date.now() - atual.ini > 9000)) { clearTimeout(atual.fim); atual.el.remove(); atual = null; }
     a.dur = Math.round(a.dur * (veloc >= 16 ? 0.55 : veloc >= 4 ? 0.75 : 1)); // o jogo corre mais rápido que o anúncio: ele aparece por menos tempo
-    a.cat = catDe(a.titulo); a.t0 = Date.now();
+    a.t0 = Date.now();
     // já existe um anúncio melhor da mesma categoria na tela ou na fila: este é repetitivo e não entra
     if (atual && atual.cat === a.cat && atual.prio > a.prio) return;
     if (fila.some((f) => f.cat === a.cat && f.prio > a.prio)) return;
@@ -98,7 +102,10 @@ export function criarAnuncios(mapaEl) {
     definirVelocidade(v) { veloc = v; },
     ativar(v) { ativo = v; if (!v) { fila.length = 0; caixa.innerHTML = ''; atual = null; } },
     reiniciar() { fila.length = 0; caixa.innerHTML = ''; atual = null; multi.clear(); seq.clear(); },
-    evento(e, P) {
+    evento(e, P) { try { return tratar(e, P); } catch (err) { console.warn('anúncio ignorado', err); } },
+  };
+  function tratar(e, P) {
+    {
       const eq = e.equipe;
       if (e.tipo === 'abate') return aoAbate(e, P);
       if (e.tipo === 'primeiro_abate') { primeiro = e.vitima; return quadro(P, { esq: retrato(P, e.campeao, eq), dir: retrato(P, e.vitima, outro(eq)), titulo: 'FIRST BLOOD!', equipe: eq, classe: 'multi', prio: 5, dur: 2800 }); }
@@ -112,6 +119,6 @@ export function criarAnuncios(mapaEl) {
         return quadro(P, { esq: retrato(P, e.abatedor, eq, 'nexus_azul'), dir: imgObj(`img/epicos/${e.objetivo}-icone.webp`, eq), titulo: e.roubado ? tr : tt, equipe: eq, classe: 'obj', prio: e.roubado ? prio + 1 : prio, dur: prio >= 8 ? 3200 : 2600 });
       }
       if (e.tipo === 'alma_dragao') return quadro(P, { esq: `<span class="an-ret ${eq}"><img src="img/epicos/dragao-icone.webp" alt="" width="56" height="56" /></span>`, titulo: 'ALMA DO DRAGÃO!', equipe: eq, classe: 'obj', prio: 7, dur: 2800 });
-    },
-  };
+    }
+  }
 }
