@@ -7,6 +7,10 @@ import { novoDraft, passoAtual, terminou, banir, escolher, jogadaIA, EFIC_FORA_P
 const NOME = { top: 'Topo', selva: 'Selva', meio: 'Meio', atirador: 'Atirador', suporte: 'Suporte' };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// Símbolo da maestria (1 a 7) em miniatura. O servidor manda só o bônus de Poder do favorito (+3% por nível).
+const BONUS_NIVEL = [3, 6, 9, 12, 15, 18];
+const nivelDe = (f) => f.nivel || (BONUS_NIVEL.indexOf(f.bonus_pct) + 1) || 1;
+const selo = (f) => (f ? `<img class="mae-selo" src="../img/maestria/m${Math.min(7, nivelDe(f))}.webp" alt="" width="22" height="25" />` : '');
 const TEMPO_ACAO = 60; // segundos por pick ou ban, para os dois lados
 const IA_MIN = 3; const IA_MAX = 6; // o computador escolhe entre 3 e 6 segundos depois que a vez dele começa
 
@@ -70,7 +74,7 @@ export function abrirDraft({ catalogo, azul, vermelho, semente, nomeAzul, nomeVe
       if (fv) lista = lista.filter((c) => serve(c, fv));
       const fav = (c) => p.tipo === 'pick' && minha && (jogadorDaVaga(d, 'azul', S.vaga)?.favoritos || []).find((f) => f.nome === c.nome || f.id === c.id);
       const grade = lista.map((c) => { const off = usados.has(c.nome); const f = fav(c); const fora = p.tipo === 'pick' && minha && S.vaga && !serve(c, S.vaga);
-        return `<button type="button" class="ch ${off ? 'off' : ''} ${f ? 'fav' : ''} ${fora ? 'fora' : ''}" data-nome="${esc(c.nome)}" ${off || !minha ? 'disabled' : ''} title="${esc(c.nome)}${f ? ` · favorito (+${f.bonus_pct}%)` : ''}${fora ? ` · fora da posição: -${Math.round((1 - EFIC_FORA_POSICAO) * 100)}% de eficiência` : ''}">${campIcone(c.nome, 58)}</button>`; }).join('');
+        return `<button type="button" class="ch ${off ? 'off' : ''} ${f ? 'fav' : ''} ${fora ? 'fora' : ''}" data-nome="${esc(c.nome)}" ${off || !minha ? 'disabled' : ''} title="${esc(c.nome)}${f ? ` · favorito (+${f.bonus_pct}%)` : ''}${fora ? ` · fora da posição: -${Math.round((1 - EFIC_FORA_POSICAO) * 100)}% de eficiência` : ''}">${campIcone(c.nome, 58)}${selo(f)}</button>`; }).join('');
       const titulo = !minha ? `${esc(nomeVermelho)} está ${p.tipo === 'ban' ? 'banindo' : 'escolhendo'}…` : p.tipo === 'ban' ? 'Sua vez: <b>banir</b> um campeão' : `Sua vez: <b>escolher</b> o campeão de ${NOME[S.vaga]} (${esc(jogadorDaVaga(d, 'azul', S.vaga)?.nome || '')})`;
       if (S.passoT !== d.passo) { // vez nova: zera o cronômetro e sorteia quando o computador joga
         S.passoT = d.passo; S.fim = Date.now() + TEMPO_ACAO * 1000; S.iaEm = Date.now() + (IA_MIN + Math.random() * (IA_MAX - IA_MIN)) * 1000;
