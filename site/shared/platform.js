@@ -925,6 +925,16 @@ export async function ranking(periodo = 'geral', elo = null) {
   return data;
 }
 
+// Prêmios em RC do ranking semanal/mensal: { semanal: { premios, fim }, mensal: {...}, ultimos: [...] }.
+export async function rankingPremios() {
+  await init();
+  const sb = await getClient();
+  if (!sb) throw unavailable();
+  const { data, error } = await sb.rpc('site_rk_premios_info');
+  if (error) throw friendly(error);
+  return data;
+}
+
 // ------------------------------------------------------------------ jogos diários
 
 const ERROS_DIARIO = {

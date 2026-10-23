@@ -39,6 +39,7 @@ let pagina = 1;
 let status = null;
 let dados = null;
 let erro = '';
+let premios = null;
 
 function linha(j) {
   const d = divisaoDe(j.pts, j.elo);
@@ -69,6 +70,20 @@ function paginacao(total) {
     ${nums.join('')}
     ${seta('›', pagina + 1, 'Próxima página', pagina === total)}${seta('»', total, 'Última página', pagina === total)}
   </nav>`;
+}
+
+// Premiação em RC do semanal e do mensal (top 5), entregue quando o período fecha.
+function caixaPremios() {
+  const p = premios?.[periodo];
+  if (!p?.premios) return '';
+  const itens = Object.keys(p.premios).sort((a, b) => a - b)
+    .map((pos) => `<li class="${pos <= 3 ? `top${pos}` : ''}"><span>${pos}º</span><b>${num(p.premios[pos])} RC</b></li>`).join('');
+  const meu = (premios.ultimos || []).find((x) => x.periodo === periodo);
+  return `<div class="rk-premios">
+    <p class="small"><b>Premiação em RC</b> · <span>${periodo === 'semanal' ? 'entregue quando a semana fecha' : 'entregue quando o mês fecha'}</span> · ${ddmm(p.fim)}</p>
+    <ol>${itens}</ol>
+    ${meu ? `<p class="small muted"><span>Seu último prêmio:</span> ${meu.pos}º · +${num(meu.rc)} RC (${ddmm(meu.inicio)})</p>` : ''}
+  </div>`;
 }
 
 function tabela() {
@@ -102,6 +117,7 @@ function tabela() {
     <div class="rk-topo"><div class="pf-chips" role="group" aria-label="Período">${tabs}</div>
       <span class="muted small">${quando}${dados ? ` · ${num(dados.jogadores)} ${dados.jogadores === 1 ? 'jogador' : 'jogadores'}` : ''}</span></div>
     ${filtros}
+    ${caixaPremios()}
     ${corpo}
   </section>`;
 }
@@ -133,11 +149,16 @@ async function carregarTabela() {
   render();
 }
 
+async function carregarPremios() {
+  try { premios = await platform.rankingPremios(); render(); } catch { /* sem premiação na tela */ }
+}
+
 let carregando = true;
 async function carregar() {
   await platform.init();
   if (platform.getUser()) { status = await platform.rankedStatus(); definirAdmin(await platform.isAdmin().catch(() => false)); }
   carregando = false;
+  carregarPremios();
   await carregarTabela();
 }
 

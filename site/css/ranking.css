@@ -64,3 +64,11 @@
 .rk-pag button:hover:not(:disabled):not(.on) { border-color: var(--gold); }
 .rk-pag button.on { background: var(--gold); border-color: var(--gold); color: #140f02; }
 .rk-pag button:disabled { opacity: 0.35; cursor: default; }
+
+.rk-premios { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line, rgba(255,255,255,.12)); border-radius: 12px; background: rgba(255,255,255,.03); }
+.rk-premios p { margin: 0 0 6px; }
+.rk-premios ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.rk-premios li { display: flex; gap: 6px; align-items: baseline; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.06); font-size: .9rem; }
+.rk-premios li.top1 { background: rgba(240,180,41,.2); }
+.rk-premios li.top2 { background: rgba(190,200,215,.18); }
+.rk-premios li.top3 { background: rgba(205,127,50,.2); }

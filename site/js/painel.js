@@ -1275,7 +1275,7 @@ function jgPartidas(j) {
       <td>${x.sinais.map(([c, t]) => `<span class="rk-sinal rk-${c}">${t}</span>`).join(' ') || '<small>—</small>'}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
-const MOTIVO_MOEDA = { codigo: 'código', admin: 'ajuste do administrador', passe: 'passe de batalha', compra: 'compra na loja', tecnico_compra: 'técnico: compra de jogador', tecnico_venda: 'técnico: venda de jogador', tecnico_estrela: 'técnico: jogador Estrela' };
+const MOTIVO_MOEDA = { codigo: 'código', admin: 'ajuste do administrador', passe: 'passe de batalha', compra: 'compra na loja', tecnico_compra: 'técnico: compra de jogador', tecnico_venda: 'técnico: venda de jogador', tecnico_estrela: 'técnico: jogador Estrela', rank_semanal: 'prêmio do ranking semanal', rank_mensal: 'prêmio do ranking mensal' };
 function jgMoedasHtml(nome) {
   if (jgMoedasErro) return `<p class="p-note">${esc(jgMoedasErro)}</p>`;
   if (!jgMoedas) return '<p class="p-note">Carregando…</p>';
