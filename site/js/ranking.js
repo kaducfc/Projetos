@@ -82,32 +82,66 @@ function fimMs(p) {
   const [y, m, d] = String(p.fim).slice(0, 10).split('-').map(Number);
   return Date.UTC(y, m - 1, d + 1, 3, 0, 0);
 }
-function contagem(p) {
+function partes(p) {
   let s = Math.max(0, Math.floor((fimMs(p) - Date.now()) / 1000));
   const d = Math.floor(s / 86400); s -= d * 86400;
   const h = Math.floor(s / 3600); s -= h * 3600;
   const m = Math.floor(s / 60); s -= m * 60;
-  const dois = (n) => String(n).padStart(2, '0');
-  return `${d ? `${d}d ` : ''}${dois(h)}h ${dois(m)}m ${dois(s)}s`;
+  return [d, h, m, s];
+}
+// Quanto do período já passou (0 a 100), para a barra de progresso.
+function andamento(p) {
+  const fim = fimMs(p);
+  const [y, m, d] = String(p.fim).slice(0, 10).split('-').map(Number);
+  const ini = periodo === 'semanal' ? fim - 7 * 86400000 : Date.UTC(y, m - 1, 1, 3, 0, 0);
+  return Math.min(100, Math.max(0, ((Date.now() - ini) / (fim - ini)) * 100));
 }
 let relogio = null;
 function ligarRelogio() {
   clearInterval(relogio);
-  const el = root.querySelector('[data-contagem]');
-  if (!el || !premios?.[periodo]) return;
+  const box = root.querySelector('[data-contagem]');
+  if (!box || !premios?.[periodo]) return;
   const p = premios[periodo];
-  const tick = () => { el.textContent = contagem(p); };
+  const cel = [...box.querySelectorAll('[data-u]')];
+  const barra = box.querySelector('[data-barra]');
+  const pct = box.querySelector('[data-pct]');
+  let ant = [];
+  const tick = () => {
+    const v = partes(p);
+    cel.forEach((el, i) => {
+      const txt = String(v[i]).padStart(2, '0');
+      if (el.textContent !== txt) {
+        el.textContent = txt;
+        if (ant.length) { el.classList.remove('vira'); void el.offsetWidth; el.classList.add('vira'); }
+      }
+    });
+    ant = v;
+    const a = andamento(p);
+    barra.style.width = `${a.toFixed(2)}%`;
+    pct.textContent = `${Math.floor(a)}%`;
+    box.classList.toggle('urgente', v[0] === 0 && v[1] < 6);
+  };
   tick();
-  relogio = setInterval(() => { if (!el.isConnected) clearInterval(relogio); else tick(); }, 1000);
+  relogio = setInterval(() => { if (!box.isConnected) clearInterval(relogio); else tick(); }, 1000);
 }
 
 function caixaPremios() {
   const p = premios?.[periodo];
   if (!p?.premios) return '';
   const meu = (premios.ultimos || []).find((x) => x.periodo === periodo);
+  const unidade = (rot) => `<div class="cd-un"><b data-u>--</b><small>${rot}</small></div>`;
   return `<div class="rk-premios">
-    <p class="small"><b>Premiação em RC</b> · <span>O ranking zera e o prêmio é entregue em</span> <b class="rk-cd" data-contagem data-no-i18n></b></p>
-    ${meu ? `<p class="small muted"><span>Seu último prêmio:</span> ${meu.pos}º · +${num(meu.rc)} RC (${ddmm(meu.inicio)})</p>` : ''}
+    <div class="cd-topo">
+      <span class="cd-taca" aria-hidden="true">🏆</span>
+      <div><p class="cd-tit"><b>Premiação em RC</b></p>
+        <p class="cd-sub">O ranking zera e o prêmio é entregue em</p></div>
+      <span class="cd-data">${ddmm(p.fim)}</span>
+    </div>
+    <div class="cd-relogio" data-contagem data-no-i18n-box>
+      ${unidade('Dias')}<i>:</i>${unidade('Horas')}<i>:</i>${unidade('Min')}<i>:</i>${unidade('Seg')}
+      <div class="cd-prog"><span class="cd-trilho"><span data-barra></span></span><small><span data-pct>0%</span> <span>do período já passou</span></small></div>
+    </div>
+    ${meu ? `<p class="small muted cd-meu"><span>Seu último prêmio:</span> ${meu.pos}º · +${num(meu.rc)} RC (${ddmm(meu.inicio)})</p>` : ''}
   </div>`;
 }
 
