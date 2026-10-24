@@ -11,7 +11,7 @@ import { som, SOM_EVENTO, destravar, definirMudo, estaMudo } from './audio.js';
 import * as Meta from './meta.js';
 
 const GAME_ID = 'survivors';
-const RETRATOS = { ahri: 'ahri/retrato.png', garen: 'garen/retrato.png' }; // campeões com arte própria
+const RETRATOS = { ahri: 'ahri/retrato.png', garen: 'garen/retrato.png', jinx: 'jinx/retrato.png' }; // campeões com arte própria
 const LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
 const palco = document.getElementById('sv-palco');
 const cv = document.getElementById('sv-cv');
