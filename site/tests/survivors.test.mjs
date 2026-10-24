@@ -187,7 +187,7 @@ test('Garen: o Julgamento acerta os inimigos ao redor com recarga; outros campe√
   const alvos = []; for (let i = 0; i < 4; i++) { const e = criarInimigo(S, 'krug', 20 + i * 4, 0); e.vel = 0; e.hp = e.hpMax = 99999; alvos.push(e); }
   for (let i = 0; i < 60; i++) { atualizar(S, 1 / 60, { x: 0, y: 0 }); S.evt.length = 0; }
   assert.ok(alvos.every((e) => e.hp < e.hpMax), 'todos atingidos'); assert.ok(S.p.espCd > 5, 'em recarga');
-  assert.equal(criarJogo({ campeao: 'jinx', semente: 3 }).base.especial, undefined);
+  assert.equal(criarJogo({ campeao: 'ashe', semente: 3 }).base.especial, undefined);
 });
 
 test('Ahri: o Fogo-F√°tuo acerta os inimigos ao redor com recarga', () => {
