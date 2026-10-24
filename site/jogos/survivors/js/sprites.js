@@ -36,16 +36,13 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 48; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 49; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { semContorno: true, parada: { src: 'ahri/ahri-parada.png', n: 6 }, andando: { src: 'ahri/ahri-andando.png', n: 6 }, correr: { src: 'ahri/ahri-correr.png', n: 6 }, ataque: { src: 'ahri/ahri-ataque.png', n: 6 }, dano: { src: 'ahri/ahri-dano.png', n: 2 }, morte: { src: 'ahri/ahri-morte.png', n: 4 }, especial: { src: 'ahri/ahri-especial.png', n: 6 }, vitoria: { src: 'ahri/ahri-vitoria.png', n: 4 }, nivel: { src: 'ahri/ahri-nivel.png', n: 2 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
 };
 ANIM.jinx = { semContorno: true, parada: { src: 'jinx/jinx-parada.png', n: 6 }, andando: { src: 'jinx/jinx-andando.png', n: 6 }, correr: { src: 'jinx/jinx-correr.png', n: 6 }, ataque: { src: 'jinx/jinx-ataque.png', n: 6 }, dano: { src: 'jinx/jinx-dano.png', n: 2 }, morte: { src: 'jinx/jinx-morte.png', n: 4 }, especial: { src: 'jinx/jinx-especial.png', n: 6 }, vitoria: { src: 'jinx/jinx-vitoria.png', n: 4 }, nivel: { src: 'jinx/jinx-nivel.png', n: 2 } };
 ANIM.ashe = { semContorno: true, parada: { src: 'ashe/ashe-parada.png', n: 6 }, andando: { src: 'ashe/ashe-andando.png', n: 6 }, correr: { src: 'ashe/ashe-correr.png', n: 6 }, ataque: { src: 'ashe/ashe-ataque.png', n: 6 }, dano: { src: 'ashe/ashe-dano.png', n: 2 }, morte: { src: 'ashe/ashe-morte.png', n: 4 }, especial: { src: 'ashe/ashe-especial.png', n: 6 }, vitoria: { src: 'ashe/ashe-vitoria.png', n: 4 }, nivel: { src: 'ashe/ashe-nivel.png', n: 2 } };
-// Campeões jogáveis: redimensionados para 70% ao carregar (os desenhos originais são grandes perto dos monstros).
-export const ESCALA_CAMPEOES = 0.7;
-for (const n of ['garen', 'ahri', 'jinx', 'ashe']) ANIM[n].escala = ESCALA_CAMPEOES;
 // Chefes: uma tira só, fatiada em animações (ini = primeiro quadro, tot = quadros da tira).
 ANIM.raizes = { semContorno: true, parada: { src: 'chefes/raizes.png', tot: 6, ini: 0, n: 3 }, ataque: { src: 'chefes/raizes.png', tot: 6, ini: 3, n: 2 }, morte: { src: 'chefes/raizes.png', tot: 6, ini: 5, n: 1 } };
 ANIM.kodama = { semContorno: true, parada: { src: 'chefes/kodama.png', tot: 6, ini: 0, n: 3 }, ataque: { src: 'chefes/kodama.png', tot: 6, ini: 3, n: 2 }, morte: { src: 'chefes/kodama.png', tot: 6, ini: 5, n: 1 } };
@@ -73,8 +70,24 @@ export const arteUrl = (arq) => BASE_IMG + arq;
 // Objetos de cenário em atlas (grade de células iguais, pé do objeto embaixo no centro). tema -> { img, cw, ch, w[], h[] }
 const ATLAS_PROPS = { ixtal: 'props/rift-pequenos', ixtal_g: 'props/rift-grandes', ionia: 'props/ionia-pequenos', ionia_g: 'props/ionia-grandes', demacia: 'props/demacia-pequenos', demacia_g: 'props/demacia-grandes' };
 const propsAtlas = {};
+// Proporção dos objetos do cenário em relação aos campeões (campeão = 100%): pequenos e grandes; extras por objeto (índice no atlas).
+export const ESC_PROPS_PEQ = 0.7; export const ESC_PROPS_GRANDES = 0.85;
+const ESC_EXTRA = { ionia_g: { 2: 0.72 } };
+// Reduz cada objeto do atlas (suaviza ao reduzir e volta a bordas em pixels cheios) e refaz as células.
+function escalarAtlas(img, meta, f, extra = {}) {
+  const cols = meta.cols || 6; const n = meta.w.length; const fi = (i) => f * (extra[i] || 1);
+  const w2 = meta.w.map((w, i) => Math.max(1, Math.round(w * fi(i)))); const h2 = meta.h.map((h, i) => Math.max(1, Math.round(meta.h[i] * fi(i))));
+  const cw = Math.max(...w2) + 2; const ch = Math.max(...h2) + 2; const rows = Math.ceil(n / cols);
+  const c = canvasDe(cw * cols, ch * rows); const x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  for (let i = 0; i < n; i++) {
+    const col = i % cols; const lin = (i / cols) | 0; const sx = col * meta.cw + Math.floor((meta.cw - meta.w[i]) / 2); const sy = lin * meta.ch + meta.ch - 1 - meta.h[i];
+    x.drawImage(img, sx, sy, meta.w[i], meta.h[i], col * cw + Math.floor((cw - w2[i]) / 2), lin * ch + ch - 1 - h2[i], w2[i], h2[i]);
+  }
+  const d = x.getImageData(0, 0, c.width, c.height); const p = d.data; for (let k = 3; k < p.length; k += 4) p[k] = p[k] >= 120 ? 255 : 0; x.putImageData(d, 0, 0);
+  return { img: c, cols, cw, ch, w: w2, h: h2 };
+}
 // Texturas do chão (folha de 3x2 quadros ladrilháveis: base, escuro, claro, detalhes, gasto, trilha). tema -> { img, ts }
-const CHAOS = { ixtal: { arq: 'chao/ixtal.png', ts: 160 }, ionia: { arq: 'chao/ionia.png', ts: 160 } };
+const CHAOS = { ixtal: { arq: 'chao/ixtal.png', ts: 120 }, ionia: { arq: 'chao/ionia.png', ts: 120 } };
 const chaoTex = {};
 export const chaoDoReino = (tema) => chaoTex[tema] || null;
 export const atlasDeProps = (tema) => propsAtlas[tema] || null;
@@ -93,7 +106,7 @@ export async function carregarImagens() {
   for (const [tema, base] of Object.entries(ATLAS_PROPS)) {
     try {
       const [img, meta] = await Promise.all([carregarImg(base + '.png'), fetch(`${BASE_IMG}${base}.json?v=${VERSAO_ARTE}`).then((r) => r.json())]);
-      if (img && meta) propsAtlas[tema] = { img, ...meta };
+      if (img && meta) propsAtlas[tema] = escalarAtlas(img, meta, tema.endsWith('_g') ? ESC_PROPS_GRANDES : ESC_PROPS_PEQ, ESC_EXTRA[tema]);
     } catch { /* sem o atlas: o cenário usa os desenhos em código */ }
   }
   for (const [tema, d] of Object.entries(CHAOS)) { const img = await carregarImg(d.arq); if (img) chaoTex[tema] = { img, ts: d.ts }; }

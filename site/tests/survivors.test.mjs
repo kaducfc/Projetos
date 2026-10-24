@@ -244,7 +244,7 @@ test('cenário: mato e moitas são atravessáveis, pedras e troncos barram, e h�
   assert.ok(tot / pedacos < 4.5, 'cerca de 70% do que havia (antes: 5,5 por pedaço)');
   // o campeão não atravessa um sólido andando para ele
   const S = criarJogo({ campeao: 'garen', semente: 5, reino: 'ixtal' }); S.p.inv = 999;
-  let sol = null; for (let cy = 0; cy < 8 && !sol; cy++) for (let cx = 0; cx < 8 && !sol; cx++) for (const o of objetosPequenos('ixtal', cx, cy)) if (raioSolido('ixtal', o.i) >= 8 && !sol) sol = o;
+  let sol = null; for (let cy = 0; cy < 8 && !sol; cy++) for (let cx = 0; cx < 8 && !sol; cx++) for (const o of objetosPequenos('ixtal', cx, cy)) if (raioSolido('ixtal', o.i) >= 5 && !sol) sol = o;
   S.p.x = sol.x - 40; S.p.y = sol.y - 6; for (let i = 0; i < 120; i++) { atualizar(S, 1 / 60, { x: 1, y: 0 }); S.evt.length = 0; }
   assert.ok(Math.hypot(S.p.x - sol.x, (S.p.y + 6) - (sol.y - 2)) >= raioSolido('ixtal', sol.i) + 3, 'ficou do lado de fora');
 });

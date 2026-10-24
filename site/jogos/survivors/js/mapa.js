@@ -19,7 +19,9 @@ const SOLIDO_PEQ = {
 };
 const SOLIDO_GRANDES = { ixtal: [6, 6, 0, 14, 12, 6], ionia: [6, 6, 0, 0, 12, 14], demacia: [6, 0, 10, 9, 0, 12] };
 export const temObjetos = (tema) => !!PESOS_PEQ[tema];
-export const raioSolido = (tema, i, grande = false) => ((grande ? SOLIDO_GRANDES : SOLIDO_PEQ)[tema]?.[i]) || 0;
+// Os raios das tabelas valem para o desenho em tamanho original; os objetos são mostrados reduzidos (ver ESC_PROPS_* em sprites.js).
+const ESC_SOLIDO_PEQ = 0.7; const ESC_SOLIDO_GRANDES = 0.85;
+export const raioSolido = (tema, i, grande = false) => (((grande ? SOLIDO_GRANDES : SOLIDO_PEQ)[tema]?.[i]) || 0) * (grande ? ESC_SOLIDO_GRANDES : ESC_SOLIDO_PEQ);
 export const TEMAS_COM_OBJETOS = Object.keys(PESOS_PEQ);
 export const quantidade = (tema, grande) => (grande ? PESOS_GRANDES : PESOS_PEQ)[tema].length;
 
@@ -55,8 +57,8 @@ function solidosDoPedaco(tema, cx, cy) {
   const k = `${tema}|${cx},${cy}`; const c = cacheS.get(k); if (c) return c;
   const l = [];
   const sp = SOLIDO_PEQ[tema]; const sg = SOLIDO_GRANDES[tema];
-  if (sp) for (const o of objetosPequenos(tema, cx, cy)) if (sp[o.i] > 0) l.push({ x: o.x, y: o.y - 2, r: sp[o.i] });
-  if (sg) for (const o of objetosGrandes(tema, cx, cy)) if (sg[o.i] > 0) l.push({ x: o.x, y: o.y - 3, r: sg[o.i] });
+  if (sp) for (const o of objetosPequenos(tema, cx, cy)) if (sp[o.i] > 0) l.push({ x: o.x, y: o.y - 2, r: raioSolido(tema, o.i) });
+  if (sg) for (const o of objetosGrandes(tema, cx, cy)) if (sg[o.i] > 0) l.push({ x: o.x, y: o.y - 3, r: raioSolido(tema, o.i, true) });
   return guardar(cacheS, k, l);
 }
 // Empurra o ponto (x, y) de raio r para fora dos sólidos próximos. Devolve [x, y] (o mesmo array se nada bloqueou).

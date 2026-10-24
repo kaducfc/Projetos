@@ -62,40 +62,40 @@ export const MELHORIAS = {
 
 // Inimigos. `xp`: experiência da gema. `ia`: comportamento. Tamanhos em pixels do mundo.
 export const INIMIGOS = {
-  minion: { nome: 'Tropa', hp: 14, vel: 25, dano: 5, raio: 8, xp: 1, ia: 'perseguir' },
-  mago: { nome: 'Tropa Mago', hp: 10, vel: 22, dano: 4, raio: 8, xp: 1, ia: 'atirar', alcance: 80, cd: 3.2 },
-  vazio: { nome: 'Cria do Vazio', hp: 8, vel: 40, dano: 4, raio: 7, xp: 1, ia: 'perseguir' },
-  lobo: { nome: 'Lobo Cinzento', hp: 24, vel: 44, dano: 6, raio: 8, xp: 2, ia: 'perseguir' },
-  raptor: { nome: 'Raptor', hp: 12, vel: 54, dano: 4, raio: 7, xp: 2, ia: 'investir', cd: 3.5 },
-  canhao: { nome: 'Tropa de Cerco', hp: 70, vel: 19, dano: 10, raio: 11, xp: 5, ia: 'perseguir' },
-  krug: { nome: 'Krug', hp: 130, vel: 17, dano: 12, raio: 12, xp: 10, ia: 'perseguir', elite: true },
-  golem: { nome: 'Golem de Pedra', hp: 260, vel: 16, dano: 15, raio: 16, xp: 18, ia: 'perseguir', elite: true },
+  minion: { nome: 'Tropa', hp: 14, vel: 25, dano: 5, raio: 10, xp: 1, ia: 'perseguir' },
+  mago: { nome: 'Tropa Mago', hp: 10, vel: 22, dano: 4, raio: 10, xp: 1, ia: 'atirar', alcance: 80, cd: 3.2 },
+  vazio: { nome: 'Cria do Vazio', hp: 8, vel: 40, dano: 4, raio: 8, xp: 1, ia: 'perseguir' },
+  lobo: { nome: 'Lobo Cinzento', hp: 24, vel: 44, dano: 6, raio: 10, xp: 2, ia: 'perseguir' },
+  raptor: { nome: 'Raptor', hp: 12, vel: 54, dano: 4, raio: 8, xp: 2, ia: 'investir', cd: 3.5 },
+  canhao: { nome: 'Tropa de Cerco', hp: 70, vel: 19, dano: 10, raio: 13, xp: 5, ia: 'perseguir' },
+  krug: { nome: 'Krug', hp: 130, vel: 17, dano: 12, raio: 14, xp: 10, ia: 'perseguir', elite: true },
+  golem: { nome: 'Golem de Pedra', hp: 260, vel: 16, dano: 15, raio: 19, xp: 18, ia: 'perseguir', elite: true },
 };
 
 // Chefes (só um de cada). `t`: segundos em que aparece. `final`: derrotá-lo vence a partida. `kit`: ações do chefe em ciclo
 // (investida, anel, marcas = ataque avisado no chão, onda = golpe em área ao redor dele, invocar). `sprite`: arte (ver sprites.js).
 export const CHEFES = {
-  raizes: { nome: 'Guardião das Raízes', t: 5 * 60, hp: 1500, vel: 22, dano: 14, raio: 18, xp: 40, ia: 'chefe', cd: 3.6, ouro: 25, kit: ['marcas', 'investida'], sprite: 'raizes' },
-  arauto: { nome: 'Arauto do Vale', t: 5 * 60, hp: 1500, vel: 24, dano: 14, raio: 14, xp: 40, ia: 'investir', cd: 4.5, ouro: 25 },
-  jaguar: { nome: 'Jaguar Espiritual', t: 10 * 60, hp: 4200, vel: 30, dano: 18, raio: 15, xp: 80, ia: 'chefe', cd: 2.8, ouro: 50, kit: ['investida', 'onda', 'investida', 'marcas'], sprite: 'jaguar' },
-  dragao: { nome: 'Dragão Elemental', t: 10 * 60, hp: 4200, vel: 22, dano: 18, raio: 16, xp: 80, ia: 'cuspir', cd: 3.0, ouro: 50 },
-  serpente: { nome: 'Serpente de Jade', t: TEMPO_BARAO, hp: 11000, vel: 20, dano: 24, raio: 22, xp: 200, ia: 'chefe', cd: 3.0, ouro: 120, final: true, kit: ['anel', 'marcas', 'invocar', 'onda'], sprite: 'serpente' },
-  barao: { nome: 'Barão Nashor', t: TEMPO_BARAO, hp: 11000, vel: 20, dano: 24, raio: 22, xp: 200, ia: 'barao', cd: 3.4, ouro: 120, final: true },
+  raizes: { nome: 'Guardião das Raízes', t: 5 * 60, hp: 1500, vel: 22, dano: 14, raio: 22, xp: 40, ia: 'chefe', cd: 3.6, ouro: 25, kit: ['marcas', 'investida'], sprite: 'raizes' },
+  arauto: { nome: 'Arauto do Vale', t: 5 * 60, hp: 1500, vel: 24, dano: 14, raio: 17, xp: 40, ia: 'investir', cd: 4.5, ouro: 25 },
+  jaguar: { nome: 'Jaguar Espiritual', t: 10 * 60, hp: 4200, vel: 30, dano: 18, raio: 18, xp: 80, ia: 'chefe', cd: 2.8, ouro: 50, kit: ['investida', 'onda', 'investida', 'marcas'], sprite: 'jaguar' },
+  dragao: { nome: 'Dragão Elemental', t: 10 * 60, hp: 4200, vel: 22, dano: 18, raio: 19, xp: 80, ia: 'cuspir', cd: 3.0, ouro: 50 },
+  serpente: { nome: 'Serpente de Jade', t: TEMPO_BARAO, hp: 11000, vel: 20, dano: 24, raio: 26, xp: 200, ia: 'chefe', cd: 3.0, ouro: 120, final: true, kit: ['anel', 'marcas', 'invocar', 'onda'], sprite: 'serpente' },
+  barao: { nome: 'Barão Nashor', t: TEMPO_BARAO, hp: 11000, vel: 20, dano: 24, raio: 26, xp: 200, ia: 'barao', cd: 3.4, ouro: 120, final: true },
   // Ionia
-  kodama: { nome: 'Kodama Ancião', t: 5 * 60, hp: 1700, vel: 22, dano: 13, raio: 17, xp: 40, ia: 'chefe', cd: 3.4, ouro: 25, kit: ['marcas', 'investida'], sprite: 'kodama' },
-  dragao_ionia: { nome: 'Dragão Espiritual', t: 10 * 60, hp: 6200, vel: 24, dano: 19, raio: 20, xp: 120, ia: 'chefe', cd: 2.8, ouro: 80, final: true, kit: ['anel', 'marcas', 'investida', 'anel'], sprite: 'dragao_ionia' },
+  kodama: { nome: 'Kodama Ancião', t: 5 * 60, hp: 1700, vel: 22, dano: 13, raio: 20, xp: 40, ia: 'chefe', cd: 3.4, ouro: 25, kit: ['marcas', 'investida'], sprite: 'kodama' },
+  dragao_ionia: { nome: 'Dragão Espiritual', t: 10 * 60, hp: 6200, vel: 24, dano: 19, raio: 24, xp: 120, ia: 'chefe', cd: 2.8, ouro: 80, final: true, kit: ['anel', 'marcas', 'investida', 'anel'], sprite: 'dragao_ionia' },
   // Demacia
-  vanguarda: { nome: 'Cavaleiro da Vanguarda', t: 5 * 60, hp: 2000, vel: 21, dano: 15, raio: 17, xp: 45, ia: 'chefe', cd: 3.4, ouro: 25, kit: ['investida', 'onda'], sprite: 'vanguarda' },
-  galio: { nome: 'Galio, o Colosso', t: 10 * 60, hp: 7400, vel: 20, dano: 22, raio: 20, xp: 140, ia: 'chefe', cd: 2.9, ouro: 90, final: true, kit: ['onda', 'marcas', 'investida', 'invocar'], sprite: 'galio' },
+  vanguarda: { nome: 'Cavaleiro da Vanguarda', t: 5 * 60, hp: 2000, vel: 21, dano: 15, raio: 20, xp: 45, ia: 'chefe', cd: 3.4, ouro: 25, kit: ['investida', 'onda'], sprite: 'vanguarda' },
+  galio: { nome: 'Galio, o Colosso', t: 10 * 60, hp: 7400, vel: 20, dano: 22, raio: 24, xp: 140, ia: 'chefe', cd: 2.9, ouro: 90, final: true, kit: ['onda', 'marcas', 'investida', 'invocar'], sprite: 'galio' },
   // Noxus
-  carrasco: { nome: 'Carrasco de Noxus', t: 5 * 60, hp: 2300, vel: 23, dano: 17, raio: 14, xp: 50, ia: 'chefe', cd: 3.2, ouro: 30, kit: ['investida', 'marcas'], sprite: 'arauto@noxus' },
-  darius: { nome: 'Darius, a Mão de Noxus', t: 10 * 60, hp: 8800, vel: 25, dano: 25, raio: 20, xp: 160, ia: 'chefe', cd: 2.6, ouro: 100, final: true, kit: ['investida', 'onda', 'marcas', 'investida'], sprite: 'b_darius' },
+  carrasco: { nome: 'Carrasco de Noxus', t: 5 * 60, hp: 2300, vel: 23, dano: 17, raio: 17, xp: 50, ia: 'chefe', cd: 3.2, ouro: 30, kit: ['investida', 'marcas'], sprite: 'arauto@noxus' },
+  darius: { nome: 'Darius, a Mão de Noxus', t: 10 * 60, hp: 8800, vel: 25, dano: 25, raio: 24, xp: 160, ia: 'chefe', cd: 2.6, ouro: 100, final: true, kit: ['investida', 'onda', 'marcas', 'investida'], sprite: 'b_darius' },
   // Shurima
-  colosso: { nome: 'Colosso de Areia', t: 5 * 60, hp: 2700, vel: 20, dano: 18, raio: 15, xp: 55, ia: 'chefe', cd: 3.2, ouro: 30, kit: ['marcas', 'onda'], sprite: 'arauto@shurima' },
-  nasus: { nome: 'Nasus, o Curandeiro das Areias', t: 10 * 60, hp: 10200, vel: 23, dano: 27, raio: 20, xp: 180, ia: 'chefe', cd: 2.6, ouro: 110, final: true, kit: ['marcas', 'anel', 'invocar', 'onda'], sprite: 'b_nasus' },
+  colosso: { nome: 'Colosso de Areia', t: 5 * 60, hp: 2700, vel: 20, dano: 18, raio: 18, xp: 55, ia: 'chefe', cd: 3.2, ouro: 30, kit: ['marcas', 'onda'], sprite: 'arauto@shurima' },
+  nasus: { nome: 'Nasus, o Curandeiro das Areias', t: 10 * 60, hp: 10200, vel: 23, dano: 27, raio: 24, xp: 180, ia: 'chefe', cd: 2.6, ouro: 110, final: true, kit: ['marcas', 'anel', 'invocar', 'onda'], sprite: 'b_nasus' },
   // Freljord
-  yeti: { nome: 'Yeti Ancião', t: 5 * 60, hp: 3100, vel: 22, dano: 20, raio: 16, xp: 60, ia: 'chefe', cd: 3.0, ouro: 35, kit: ['investida', 'anel'], sprite: 'arauto@freljord' },
-  lissandra: { nome: 'Lissandra, a Bruxa de Gelo', t: 10 * 60, hp: 11800, vel: 22, dano: 29, raio: 19, xp: 200, ia: 'chefe', cd: 2.4, ouro: 130, final: true, kit: ['anel', 'marcas', 'onda', 'invocar', 'marcas'], sprite: 'b_lissandra' },
+  yeti: { nome: 'Yeti Ancião', t: 5 * 60, hp: 3100, vel: 22, dano: 20, raio: 19, xp: 60, ia: 'chefe', cd: 3.0, ouro: 35, kit: ['investida', 'anel'], sprite: 'arauto@freljord' },
+  lissandra: { nome: 'Lissandra, a Bruxa de Gelo', t: 10 * 60, hp: 11800, vel: 22, dano: 29, raio: 23, xp: 200, ia: 'chefe', cd: 2.4, ouro: 130, final: true, kit: ['anel', 'marcas', 'onda', 'invocar', 'marcas'], sprite: 'b_lissandra' },
 };
 
 // Reinos (regiões de Runeterra). `dif` multiplica vida e dano dos inimigos; `matiz` pinta os monstros comuns; `soldado` é o sprite do inimigo básico.
