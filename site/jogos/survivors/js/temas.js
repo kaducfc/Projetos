@@ -45,7 +45,7 @@ export const TEMAS = {
   demacia: { tile: ['#4a9a3a', '#4fa43e'], tufo: ['#3a8030', '#7fd45a'], trilha: ['#aab0bc', '#c8cdd8', '#8a90a0'], poco: ['#8a90a0', '#3a7fd0', '#7ab4f0'],
     deco: [[0.2, (x, X, Y) => D.estandarte(x, X, Y)], [0.24, (x, X, Y) => D.pilar(x, X, Y)], [0.16, (x, X, Y) => D.feno(x, X, Y)], [0.24, (x, X, Y) => D.arvore(x, X, Y, ['#2a6a2a', '#3a8a36', '#5ab04a'])], [0.16, (x, X, Y, k) => D.flor(x, X, Y, k, ['#ffffff', '#ffe36a', '#9ec6ff'])]] },
   noxus: { tile: ['#4a3430', '#52382f'], tufo: ['#3a2622', '#7a3a2a'], trilha: ['#2a2024', '#3a2c30', '#1a1418'], poco: ['#2a2024', '#c03a1a', '#ff8a3a'],
-    deco: [[0.24, (x, X, Y) => D.espinho(x, X, Y)], [0.2, (x, X, Y) => D.toco(x, X, Y)], [0.2, (x, X, Y) => D.lava(x, X, Y)], [0.16, (x, X, Y) => D.caveira(x, X, Y)], [0.12, (x, X, Y) => D.bandeiraN(x, X, Y)], [0.08, (x, X, Y) => D.pedra(x, X, Y, ['#2a2024', '#4a3a40', '#6a5a60'])]] },
+    deco: [[0.24, (x, X, Y) => D.espinho(x, X, Y)], [0.2, (x, X, Y) => D.toco(x, X, Y)], [0.16, (x, X, Y) => D.caveira(x, X, Y)], [0.12, (x, X, Y) => D.bandeiraN(x, X, Y)], [0.08, (x, X, Y) => D.pedra(x, X, Y, ['#2a2024', '#4a3a40', '#6a5a60'])]] },
   shurima: { tile: ['#d8b86a', '#dcbe72'], tufo: ['#c4a252', '#efd994'], trilha: ['#b89c64', '#cdb27a', '#9a8250'], poco: ['#9a8250', '#2e9ac0', '#8ae0f0'],
     deco: [[0.24, (x, X, Y) => D.duna(x, X, Y)], [0.2, (x, X, Y) => D.ruina(x, X, Y)], [0.2, (x, X, Y) => D.cacto(x, X, Y)], [0.12, (x, X, Y) => D.sol(x, X, Y)], [0.12, (x, X, Y) => D.osso(x, X, Y)], [0.12, (x, X, Y) => D.pedra(x, X, Y, ['#a88a55', '#d9c08a', '#efe0b0'])]] },
   freljord: { tile: ['#cfe0f2', '#d6e6f6'], tufo: ['#b4cce4', '#ffffff'], trilha: ['#9ab4d0', '#b8cee6', '#7e98b8'], poco: ['#7e98b8', '#7ac8f0', '#e8fbff'],
