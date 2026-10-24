@@ -36,7 +36,7 @@ export const ARMAS = {
     stats: (n) => ({ dano: 22 + (n - 1) * 6, cd: lin(1.9, 1.0, n), qtd: [1, 2, 2, 3, 4][n - 1], raio: 16 + (n - 1) * 2 }) },
 };
 
-// Itens (passivas) do Summoner's Rift. Cada nível soma `por` ao atributo.
+// Itens (passivas) de Runeterra. Cada nível soma `por` ao atributo.
 export const ITENS = {
   espada: { nome: 'Espada Longa', desc: '+10% de dano', attr: 'dano', por: 0.10 },
   botas: { nome: 'Botas de Velocidade', desc: '+8% de velocidade', attr: 'vel', por: 0.08 },
@@ -97,14 +97,14 @@ export const CHEFES = {
 
 // Reinos (regiões de Runeterra). `dif` multiplica vida e dano dos inimigos; `matiz` pinta os monstros comuns; `soldado` é o sprite do inimigo básico.
 export const REINOS = {
-  rift: { id: 'rift', rastro: '#1f4f22', po: '#9a8a6a', nome: "Summoner's Rift", sub: 'O campo clássico: Arauto, Dragão e Barão', tempo: TEMPO_BARAO, dif: 1, tema: 'rift', clima: null, chefes: ['arauto', 'dragao', 'barao'], soldado: 'minion', matiz: null, abre: null },
+  ixtal: { id: 'ixtal', rastro: '#1f4f22', po: '#9a8a6a', nome: 'Ixtal', sub: 'A selva ancestral: Arauto, Dragão e Barão', tempo: TEMPO_BARAO, dif: 1, tema: 'ixtal', clima: null, chefes: ['arauto', 'dragao', 'barao'], soldado: 'minion', matiz: null, abre: null },
   ionia: { id: 'ionia', rastro: '#245a44', po: '#ffc0d8', nome: 'Ionia', sub: 'Equilíbrio, magia e espíritos', tempo: 600, dif: 1.0, tema: 'ionia', clima: 'petalas', chefes: ['kodama', 'dragao_ionia'], soldado: 'monge', matiz: { h: 150, s: 0.9, l: 0.08 }, matizMini: { h: -90, s: 1, l: 0.05 }, abre: null },
   demacia: { id: 'demacia', rastro: '#2f7a28', po: '#e8eef8', nome: 'Demacia', sub: 'Honra, muralhas e a Vanguarda', tempo: 600, dif: 1.15, tema: 'demacia', clima: 'folhas', chefes: ['vanguarda', 'galio'], soldado: 'soldado_d', matiz: { h: 205, s: 0.8, l: 0.1 }, matizMini: { h: -50, s: 1, l: 0.05 }, abre: 'ionia' },
   noxus: { id: 'noxus', rastro: '#140c10', po: '#7a3a3a', nome: 'Noxus', sub: 'Força acima de tudo', tempo: 600, dif: 1.3, tema: 'noxus', clima: 'brasas', chefes: ['carrasco', 'darius'], soldado: 'soldado_n', matiz: { h: -8, s: 1.0, l: -0.08 }, matizMini: { h: 90, s: 1.1, l: -0.05 }, abre: 'demacia' },
   shurima: { id: 'shurima', rastro: '#a8883e', po: '#e8c97a', nome: 'Shurima', sub: 'Areias, ruínas e o império caído', tempo: 600, dif: 1.45, tema: 'shurima', clima: 'areia', chefes: ['colosso', 'nasus'], soldado: 'mumia', matiz: { h: 38, s: 0.85, l: 0.1 }, matizMini: { h: 140, s: 1, l: 0.08 }, abre: 'noxus' },
   freljord: { id: 'freljord', rastro: '#8aa6c6', po: '#e8f4ff', nome: 'Freljord', sub: 'Gelo eterno e tribos do norte', tempo: 600, dif: 1.6, tema: 'freljord', clima: 'neve', chefes: ['yeti', 'lissandra'], soldado: 'guerreiro', matiz: { h: 190, s: 0.7, l: 0.18 }, matizMini: { h: -75, s: 0.9, l: 0.12 }, abre: 'shurima' },
 };
-export const ORDEM_REINOS = ['rift', 'ionia', 'demacia', 'noxus', 'shurima', 'freljord'];
+export const ORDEM_REINOS = ['ixtal', 'ionia', 'demacia', 'noxus', 'shurima', 'freljord'];
 
 // Quando cada tipo começa a aparecer e o peso dele na mistura (por minuto de jogo: aumenta a variedade).
 export const MISTURA = [

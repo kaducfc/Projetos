@@ -49,7 +49,7 @@ const quadros = {}; // nome -> anim -> [canvas]
 const imgs = {};
 export const arteUrl = (arq) => BASE_IMG + arq;
 // Objetos de cenário em atlas (grade de células iguais, pé do objeto embaixo no centro). tema -> { img, cw, ch, w[], h[] }
-const ATLAS_PROPS = { rift: 'props/rift-pequenos', rift_g: 'props/rift-grandes' };
+const ATLAS_PROPS = { ixtal: 'props/rift-pequenos', ixtal_g: 'props/rift-grandes' };
 const propsAtlas = {};
 export const atlasDeProps = (tema) => propsAtlas[tema] || null;
 function carregarImg(arq) { return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = `${BASE_IMG}${arq}?v=${VERSAO_ARTE}`; }); }

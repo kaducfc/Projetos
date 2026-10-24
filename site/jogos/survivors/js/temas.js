@@ -34,7 +34,7 @@ const D = {
 };
 
 export const TEMAS = {
-  rift: { tile: ['#2f6b2e', '#317030'], tufo: ['#285c28', '#4a9a3a'], trilha: ['#8a7a52', '#9c8c62', '#76683f'], poco: ['#7a6a45', '#2e7fc0', '#4aa3e0'],
+  ixtal: { tile: ['#2f6b2e', '#317030'], tufo: ['#285c28', '#4a9a3a'], trilha: ['#8a7a52', '#9c8c62', '#76683f'], poco: ['#7a6a45', '#2e7fc0', '#4aa3e0'],
     deco: [[0.34, (x, X, Y) => D.arbusto(x, X, Y)], [0.21, (x, X, Y) => D.pedra(x, X, Y)], [0.25, (x, X, Y, k) => D.flor(x, X, Y, k)], [0.2, (x, X, Y) => D.arvore(x, X, Y)]] },
   ionia: { tile: ['#3d8a6a', '#43946f'], tufo: ['#2f7058', '#6fcf9a'], trilha: ['#a8b8a0', '#c0d0b8', '#8a9a84'], poco: ['#8a9a84', '#3aa8c0', '#8ae8f0'],
     deco: [[0.3, (x, X, Y) => D.sakura(x, X, Y)], [0.16, (x, X, Y) => D.lanterna(x, X, Y)], [0.2, (x, X, Y) => D.bambu(x, X, Y)], [0.24, (x, X, Y, k) => D.flor(x, X, Y, k, ['#ffb3d1', '#ffffff', '#c9a6ff'])], [0.1, (x, X, Y) => D.torii(x, X, Y)]] },
@@ -49,7 +49,7 @@ export const TEMAS = {
 };
 
 export function pedaco(tema, cx, cy) {
-  const T = TEMAS[tema] || TEMAS.rift;
+  const T = TEMAS[tema] || TEMAS.ixtal;
   const c = document.createElement('canvas'); c.width = CH; c.height = CH; const x = c.getContext('2d');
   for (let ty = 0; ty < CH / 8; ty++) for (let tx = 0; tx < CH / 8; tx++) {
     const q = hash(cx * 16 + tx, cy * 16 + ty);

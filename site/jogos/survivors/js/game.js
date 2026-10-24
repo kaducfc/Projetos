@@ -8,11 +8,11 @@ export function criarRng(semente) {
 const TAU = Math.PI * 2;
 const dist2 = (a, b) => (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
 
-export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), vista = { w: 384, h: 216 }, reino = 'rift' } = {}) {
+export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), vista = { w: 384, h: 216 }, reino = 'ixtal' } = {}) {
   const c = CAMPEOES.find((x) => x.id === campeao) || CAMPEOES[0];
   const mel = meta.melhorias || {};
   const S = {
-    reino: REINOS[reino] ? reino : 'rift', R: REINOS[reino] || REINOS.rift, marcas: [],
+    reino: REINOS[reino] ? reino : 'ixtal', R: REINOS[reino] || REINOS.ixtal, marcas: [],
     rng: criarRng(semente), t: 0, estado: 'jogando', campeao: c.id, vista, meta: mel,
     p: { x: 0, y: 0, dx: 1, dy: 0, mx: 0, my: 0, hp: 1, hpMax: 1, raio: 5, inv: 0, flash: 0, andando: false, lean: 0, corre: false, dist: 0, passo: 0, pe: 1, face: 1, alvoX: 0, ataque: 0, ataqueCd: 0, especial: 0, espCd: 3, espT: 0, nivelAnim: 0 },
     inim: [], proj: [], eproj: [], gemas: [], itens: [], textos: [], efeitos: [], zonas: [], raios: [],

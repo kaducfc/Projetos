@@ -2,9 +2,9 @@
 import { CAMPEOES, MELHORIAS, REINOS } from './data.js';
 export const reinoLiberado = (m, id) => { const r = REINOS[id]; return !!r && (!r.abre || (m.reinos[r.abre]?.vitorias || 0) > 0); };
 const CHAVE = 'survivors.meta.v1';
-const PADRAO = () => ({ essencia: 0, liberados: CAMPEOES.filter((c) => !c.preco).map((c) => c.id), melhorias: {}, melhor: { tempo: 0, abates: 0, nivel: 0 }, partidas: 0, vitorias: 0, ultimo: 'garen', reinos: {}, ultimoReino: 'rift' });
+const PADRAO = () => ({ essencia: 0, liberados: CAMPEOES.filter((c) => !c.preco).map((c) => c.id), melhorias: {}, melhor: { tempo: 0, abates: 0, nivel: 0 }, partidas: 0, vitorias: 0, ultimo: 'garen', reinos: {}, ultimoReino: 'ixtal' });
 export function carregar() {
-  try { const r = JSON.parse(localStorage.getItem(CHAVE)); if (r && typeof r === 'object') return { ...PADRAO(), ...r, melhor: { ...PADRAO().melhor, ...(r.melhor || {}) } }; } catch { /* sem storage */ }
+  try { const r = JSON.parse(localStorage.getItem(CHAVE)); if (r && typeof r === 'object') { if (r.reinos?.rift) { r.reinos.ixtal = r.reinos.rift; delete r.reinos.rift; } if (r.ultimoReino === 'rift') r.ultimoReino = 'ixtal'; } if (r && typeof r === 'object') return { ...PADRAO(), ...r, melhor: { ...PADRAO().melhor, ...(r.melhor || {}) } }; } catch { /* sem storage */ }
   return PADRAO();
 }
 export function gravar(m) { try { localStorage.setItem(CHAVE, JSON.stringify(m)); } catch { /* sem storage */ } }

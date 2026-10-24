@@ -11,7 +11,7 @@ Sobrevivência em estilo "survivors" com tema de League of Legends e pixel art. 
 - `js/main.js`: telas, entrada (teclado e joystick de toque), laço e acesso restrito (`soAdmin` em `shared/config.js`).
 
 ## Reinos (regiões de Runeterra)
-`REINOS` em `data.js`: Summoner's Rift (clássico, 15 min, Arauto, Dragão e Barão), Ionia, Demacia, Noxus, Shurima e Freljord
+`REINOS` em `data.js`: Ixtal (a selva ancestral, 15 min, Arauto, Dragão e Barão), Ionia, Demacia, Noxus, Shurima e Freljord
 (10 min cada). Cada reino tem tema de chão e cenário (`js/temas.js`), clima (pétalas, folhas, brasas, areia, neve), soldado próprio,
 monstros comuns recoloridos (`nome@reino` em `sprites.js`), chefe menor aos 5:00 e chefe final aos 10:00 (Dragão Espiritual,
 Galio, Darius, Nasus, Lissandra) com ataques avisados no chão (`marcas`, `onda`), anel de projéteis, investida, invocação e fase 2.

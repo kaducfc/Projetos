@@ -174,10 +174,10 @@ test('reino mais difícil tem inimigos mais fortes', () => {
   assert.ok(criarInimigo(b, 'minion', 90, 0).hpMax > criarInimigo(a, 'minion', 90, 0).hpMax);
 });
 
-test('liberação dos reinos: Rift e Ionia abertos; os outros exigem vencer o anterior', async () => {
+test('liberação dos reinos: Ixtal e Ionia abertos; os outros exigem vencer o anterior', async () => {
   const { reinoLiberado } = await import('../jogos/survivors/js/meta.js');
   const m = { reinos: {} };
-  assert.ok(reinoLiberado(m, 'rift') && reinoLiberado(m, 'ionia')); assert.equal(reinoLiberado(m, 'demacia'), false);
+  assert.ok(reinoLiberado(m, 'ixtal') && reinoLiberado(m, 'ionia')); assert.equal(reinoLiberado(m, 'demacia'), false);
   m.reinos.ionia = { vitorias: 1 }; assert.ok(reinoLiberado(m, 'demacia')); assert.equal(reinoLiberado(m, 'noxus'), false);
   assert.equal(reinoLiberado(m, 'inexistente'), false);
 });

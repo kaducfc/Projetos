@@ -1,4 +1,4 @@
-// Rift Survivors: sobreviva às hordas do Rift, evolua suas habilidades e derrote o Barão Nashor.
+// Rift Survivors: sobreviva às hordas de Runeterra, evolua suas habilidades e derrote o Barão Nashor.
 // Enquanto o jogo é "oculto" (gameById('survivors').soAdmin), só administradores e convidados conseguem jogar.
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
@@ -25,7 +25,7 @@ mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
 
 let meta = Meta.carregar();
 let modo = 'menu'; // menu | selecao | loja | jogo
-let S = null; let demo = null; let pausado = false; let escolhido = meta.ultimo; let reinoEscolhido = meta.ultimoReino || 'rift';
+let S = null; let demo = null; let pausado = false; let escolhido = meta.ultimo; let reinoEscolhido = meta.ultimoReino || 'ixtal';
 let escala = 3; const render = criarRender(cv);
 let ult = 0; let fimTratado = false;
 try { definirMudo(localStorage.getItem('survivors.mudo') === '1'); } catch { /* sem storage */ }
@@ -127,8 +127,8 @@ function telaComo() {
       <li><b>Evoluir:</b> colete as gemas azuis dos inimigos. A cada nível, escolha 1 de 3 melhorias (teclas 1, 2 e 3).</li>
       <li><b>Itens:</b> até ${6} habilidades e ${6} itens, cada um até o nível ${NIVEL_MAX_ITEM}.</li>
       <li><b>Baús:</b> chefes e monstros grandes soltam baús que dão uma melhoria extra.</li>
-      <li><b>Reinos:</b> Summoner's Rift, Ionia, Demacia, Noxus, Shurima e Freljord, cada um com cenário, monstros e chefes próprios. Vença um reino para abrir o próximo.</li>
-      <li><b>Chefes:</b> um chefe menor aos 5:00 e o chefe final no fim do tempo (no Rift clássico, o <b>Barão Nashor aos ${tempoTxt(TEMPO_BARAO)}</b>). Fuja das áreas vermelhas no chão: elas avisam o golpe. Derrote o chefe final para vencer!</li>
+      <li><b>Reinos:</b> Ixtal, Ionia, Demacia, Noxus, Shurima e Freljord, cada um com cenário, monstros e chefes próprios. Vença um reino para abrir o próximo.</li>
+      <li><b>Chefes:</b> um chefe menor aos 5:00 e o chefe final no fim do tempo (em Ixtal, o <b>Barão Nashor aos ${tempoTxt(TEMPO_BARAO)}</b>). Fuja das áreas vermelhas no chão: elas avisam o golpe. Derrote o chefe final para vencer!</li>
       <li><b>Pausa:</b> Esc ou P.</li>
     </ul><div class="sv-botoes"><button class="sv-btn" data-a="menu">Voltar</button></div></div>`);
 }
@@ -167,7 +167,7 @@ function telaReinos() {
     <div class="sv-cartas">${cartas}</div>
     <div class="sv-botoes"><button class="sv-btn grande" data-a="comecar">Começar partida</button><button class="sv-btn" data-a="jogar">Voltar</button></div></div>`, 'rolar');
 }
-const TEMA_COR = { rift: '#3a8a36', ionia: '#f29ac0', demacia: '#7ab4f0', noxus: '#c0283a', shurima: '#e8c97a', freljord: '#cfe0f2' };
+const TEMA_COR = { ixtal: '#3a8a36', ionia: '#f29ac0', demacia: '#7ab4f0', noxus: '#c0283a', shurima: '#e8c97a', freljord: '#cfe0f2' };
 function telaLoja() {
   modo = 'loja';
   const linhas = Object.entries(MELHORIAS).map(([id, d]) => {
@@ -181,7 +181,7 @@ function telaLoja() {
 // --------------------------------------------------------------------------- partida
 function iniciar() {
   meta.ultimo = escolhido; Meta.gravar(meta);
-  if (!Meta.reinoLiberado(meta, reinoEscolhido)) reinoEscolhido = 'rift';
+  if (!Meta.reinoLiberado(meta, reinoEscolhido)) reinoEscolhido = 'ixtal';
   meta.ultimoReino = reinoEscolhido;
   S = criarJogo({ campeao: escolhido, meta, vista: { w: render.w, h: render.h }, reino: reinoEscolhido });
   modo = 'jogo'; pausado = false; fimTratado = false; ui.className = 'sv-ui jogo'; ui.innerHTML = '';
@@ -245,7 +245,7 @@ function fimDeJogo() {
   const c = CAMPEOES.find((x) => x.id === S.campeao);
   clearInterval(animVit);
   tela(`<div class="sv-painel ${venceu ? 'vitoria' : 'derrota'}"><h2>${venceu ? 'VITÓRIA!' : 'DERROTA'}</h2>
-    <p class="sv-sub">${venceu ? 'Chefe derrotado. O reino é seu!' : 'Você caiu no Rift...'}</p>
+    <p class="sv-sub">${venceu ? 'Chefe derrotado. O reino é seu!' : 'Você caiu em Runeterra...'}</p>
     <img class="sv-retrato ${RETRATOS[S.campeao] ? 'arte' : ''}" alt="" src="${RETRATOS[S.campeao] ? arteUrl(RETRATOS[S.campeao]) : urlSprite(S.campeao)}" />
     <div class="sv-stats"><span>Campeão<b>${esc(c.nome)}</b></span><span>Tempo<b>${tempoTxt(S.t)}</b></span><span>Abates<b>${fmt(S.abates)}</b></span><span>Nível<b>${S.nivel}</b></span><span>Ouro<b>${fmt(S.ouro)}</b></span><span>Essência<b class="ea">+${fmt(ganho)} EA</b></span></div>
     <div class="sv-botoes"><button class="sv-btn grande" data-a="denovo">Jogar de novo</button>${venceu ? '<button class="sv-btn" data-a="infinito">Continuar (infinito)</button>' : ''}<button class="sv-btn" data-a="menu">Menu</button></div></div>`, 'jogo');

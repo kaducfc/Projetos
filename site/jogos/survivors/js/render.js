@@ -7,7 +7,7 @@ import { CH, hash, pedaco, propsDoPedaco, grandesDoPedaco } from './temas.js';
 const DIG = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001001001001', 8: '111101111101111', 9: '111101111001111' };
 const FONTE = '8px "Press Start 2P", ui-monospace, monospace';
 
-const AMBIENTE = { rift: null, ionia: ['#ffd9ec', 0.1], demacia: ['#fff2cc', 0.07], noxus: ['#ff8a70', 0.16], shurima: ['#ffe2a0', 0.1], freljord: ['#b8d4ff', 0.12] };
+const AMBIENTE = { ixtal: null, ionia: ['#ffd9ec', 0.1], demacia: ['#fff2cc', 0.07], noxus: ['#ff8a70', 0.16], shurima: ['#ffe2a0', 0.1], freljord: ['#b8d4ff', 0.12] };
 const glows = new Map();
 function glow(cor, r) { // bolha de luz (gradiente radial) para brilho aditivo
   const k = `${cor}|${r}`; let c = glows.get(k); if (c) return c;
@@ -19,7 +19,7 @@ export function criarRender(canvas) {
   const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
   const chunks = new Map();
   const R = { w: canvas.width, h: canvas.height, t: 0, camX: 0, camY: 0 };
-  let temaAtual = 'rift';
+  let temaAtual = 'ixtal';
   const chunk = (cx, cy) => { const k = `${cx},${cy}`; let c = chunks.get(k); if (!c) { c = pedaco(temaAtual, cx, cy); chunks.set(k, c); if (chunks.size > 80) chunks.delete(chunks.keys().next().value); } return c; };
   const desenhar = (nome, x, y, ox = 0, oy = 0, branco = false, esc = 1, ey = esc) => {
     const s = typeof nome !== 'string' ? nome : branco ? spriteBranco(nome) : sprite(nome); if (!s) return;
