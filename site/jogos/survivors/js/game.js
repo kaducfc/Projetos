@@ -451,6 +451,7 @@ function atualizarColetaveis(S, dt) {
     else if (it.tipo === 'ouro') { S.ouro += 1 + S.cm.ouro; S.evt.push({ tipo: 'ouro' }); }
     else if (it.tipo === 'ima') { for (const g of S.gemas) g.ima = true; S.evt.push({ tipo: 'ima' }); }
     else if (it.tipo === 'bau') {
+      S.efeitos.push({ x: it.x, y: it.y, t: 0.7, d: 0.7, tipo: 'bauaberto', r: 0 });
       const ev = S.armas.find((w) => w.nivel >= 5 && !w.evo && EVOLUCOES[w.id] && S.passivas[EVOLUCOES[w.id].item]);
       if (ev) { ev.evo = true; S.evolucoes.push(ev.id); S.evt.push({ tipo: 'evolucao', id: ev.id }); S.shake = 0.4; chispas(S, S.p.x, S.p.y, 60, { cor: '#ffffff', vel: 140, vida: 1.0, tam: 2 }); }
       else { S.evt.push({ tipo: 'bau' }); S.pendentes++; if (S.estado === 'jogando') { S.opcoes = gerarOpcoes(S); S.estado = 'upgrade'; } }
