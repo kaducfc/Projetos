@@ -36,7 +36,7 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 22; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 23; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { parada: { src: 'ahri/ahri-parada.png', n: 5 }, andando: { src: 'ahri/ahri-andando.png', n: 5 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
@@ -44,6 +44,7 @@ const ANIM = {
 // Chefes: uma tira só, fatiada em animações (ini = primeiro quadro, tot = quadros da tira).
 ANIM.raizes = { semContorno: true, parada: { src: 'chefes/raizes.png', tot: 6, ini: 0, n: 3 }, ataque: { src: 'chefes/raizes.png', tot: 6, ini: 3, n: 2 }, morte: { src: 'chefes/raizes.png', tot: 6, ini: 5, n: 1 } };
 ANIM.kodama = { semContorno: true, parada: { src: 'chefes/kodama.png', tot: 6, ini: 0, n: 3 }, ataque: { src: 'chefes/kodama.png', tot: 6, ini: 3, n: 2 }, morte: { src: 'chefes/kodama.png', tot: 6, ini: 5, n: 1 } };
+ANIM.dragao_ionia = { semContorno: true, parada: { src: 'chefes/dragao_ionia.png', tot: 6, ini: 0, n: 3 }, ataque: { src: 'chefes/dragao_ionia.png', tot: 6, ini: 3, n: 2 }, morte: { src: 'chefes/dragao_ionia.png', tot: 6, ini: 5, n: 1 } };
 ANIM.jaguar = { semContorno: true, parada: { src: 'chefes/jaguar.png', tot: 6, ini: 0, n: 3 }, ataque: { src: 'chefes/jaguar.png', tot: 6, ini: 3, n: 2 }, morte: { src: 'chefes/jaguar.png', tot: 6, ini: 5, n: 1 } };
 ANIM.serpente = { semContorno: true, parada: { src: 'chefes/serpente.png', tot: 6, ini: 0, n: 3 }, ataque: { src: 'chefes/serpente.png', tot: 6, ini: 3, n: 2 }, morte: { src: 'chefes/serpente.png', tot: 6, ini: 5, n: 1 } };
 // Efeitos animados das armas (tiras de 4 quadros).
