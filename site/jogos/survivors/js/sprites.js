@@ -36,7 +36,7 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 44; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 45; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { semContorno: true, parada: { src: 'ahri/ahri-parada.png', n: 6 }, andando: { src: 'ahri/ahri-andando.png', n: 6 }, correr: { src: 'ahri/ahri-correr.png', n: 6 }, ataque: { src: 'ahri/ahri-ataque.png', n: 6 }, dano: { src: 'ahri/ahri-dano.png', n: 2 }, morte: { src: 'ahri/ahri-morte.png', n: 4 }, especial: { src: 'ahri/ahri-especial.png', n: 6 }, vitoria: { src: 'ahri/ahri-vitoria.png', n: 4 }, nivel: { src: 'ahri/ahri-nivel.png', n: 2 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
@@ -70,6 +70,10 @@ export const arteUrl = (arq) => BASE_IMG + arq;
 // Objetos de cenário em atlas (grade de células iguais, pé do objeto embaixo no centro). tema -> { img, cw, ch, w[], h[] }
 const ATLAS_PROPS = { ixtal: 'props/rift-pequenos', ixtal_g: 'props/rift-grandes', ionia: 'props/ionia-pequenos', ionia_g: 'props/ionia-grandes', demacia: 'props/demacia-pequenos', demacia_g: 'props/demacia-grandes' };
 const propsAtlas = {};
+// Texturas do chão (folha de 3x2 quadros ladrilháveis: base, escuro, claro, detalhes, gasto, trilha). tema -> { img, ts }
+const CHAOS = { ixtal: { arq: 'chao/ixtal.png', ts: 160 } };
+const chaoTex = {};
+export const chaoDoReino = (tema) => chaoTex[tema] || null;
 export const atlasDeProps = (tema) => propsAtlas[tema] || null;
 function carregarImg(arq) { return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = `${BASE_IMG}${arq}?v=${VERSAO_ARTE}`; }); }
 export async function carregarImagens() {
@@ -89,6 +93,7 @@ export async function carregarImagens() {
       if (img && meta) propsAtlas[tema] = { img, ...meta };
     } catch { /* sem o atlas: o cenário usa os desenhos em código */ }
   }
+  for (const [tema, d] of Object.entries(CHAOS)) { const img = await carregarImg(d.arq); if (img) chaoTex[tema] = { img, ts: d.ts }; }
   for (const [nome, arq] of Object.entries(ESTATICAS)) { const img = await carregarImg(arq); if (img) { const c = canvasDe(img.width, img.height); c.getContext('2d').drawImage(img, 0, 0); imgs[nome] = c; cache.delete(nome); } } // projéteis já têm contorno próprio
   for (const [nome, arq] of Object.entries(ICONES_UI)) { const img = await carregarImg(arq); if (img) { const c = canvasDe(img.width, img.height); c.getContext('2d').drawImage(img, 0, 0); imgs['i:' + nome] = c; cache.delete('i:' + nome); } }
 }

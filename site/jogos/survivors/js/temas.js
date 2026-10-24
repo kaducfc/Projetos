@@ -1,5 +1,5 @@
 // Rift Survivors: chão e cenário de cada reino (pedaços de 128x128 gerados com ruído por posição).
-import { atlasDeProps } from './sprites.js';
+import { atlasDeProps, chaoDoReino } from './sprites.js';
 import { CH, hash, objetosPequenos, objetosGrandes } from './mapa.js';
 export { CH, hash };
 const r = (x, X, Y, w, h, cor) => { x.fillStyle = cor; x.fillRect(X, Y, w, h); };
@@ -52,22 +52,57 @@ export const TEMAS = {
     deco: [[0.28, (x, X, Y) => D.pinheiro(x, X, Y)], [0.2, (x, X, Y) => D.cristal(x, X, Y)], [0.24, (x, X, Y) => D.montinho(x, X, Y)], [0.14, (x, X, Y) => D.runa(x, X, Y)], [0.14, (x, X, Y) => D.pedra(x, X, Y, ['#6b7a96', '#9aaac6', '#d0def0'])]] },
 };
 
+// Chão com textura de arquivo: cada quadro vira um canvas duplicado (2x2) para recortar qualquer deslocamento sem emenda.
+const cacheTex = new Map();
+function quadrosChao(tema) {
+  const F = chaoDoReino(tema); if (!F) return null; let q = cacheTex.get(tema); if (q) return q;
+  q = { ts: F.ts, v: [] };
+  for (let k = 0; k < 6; k++) {
+    const c = document.createElement('canvas'); c.width = F.ts * 2; c.height = F.ts * 2; const x = c.getContext('2d'); const sx = (k % 3) * F.ts; const sy = Math.floor(k / 3) * F.ts;
+    for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) x.drawImage(F.img, sx, sy, F.ts, F.ts, i * F.ts, j * F.ts, F.ts, F.ts);
+    q.v.push(c);
+  }
+  cacheTex.set(tema, q); return q;
+}
+function chaoComTextura(x, Q, cx, cy) {
+  const { ts, v } = Q; const ox = (((cx * CH) % ts) + ts) % ts; const oy = (((cy * CH) % ts) + ts) % ts;
+  x.drawImage(v[0], ox, oy, CH, CH, 0, 0, CH, CH); // base
+  // manchas escuras e claras, detalhes e trechos gastos: as mesmas manchas de ruído em coordenadas do mundo (sem emenda entre pedaços)
+  for (let ty = 0; ty < CH / 4; ty++) for (let tx = 0; tx < CH / 4; tx++) {
+    const gx = cx * CH + tx * 4; const gy = cy * CH + ty * 4;
+    const n = 0.62 * ruido(gx, gy, 64) + 0.38 * ruido(gx + 977, gy + 311, 22) + (hash(gx, gy) - 0.5) * 0.05;
+    const lim = (v) => Math.max(0, Math.min(0.9, v));
+    const camadas = [[1, lim((0.46 - n) / 0.16)], [2, lim((n - 0.56) / 0.16)], [3, lim((ruido(gx + 5000, gy + 1300, 44) - 0.76) / 0.07)], [4, lim((ruido(gx + 321, gy + 7000, 70) - 0.8) / 0.07)]];
+    for (const [k, al] of camadas) if (al > 0.04) { x.globalAlpha = al; x.drawImage(v[k], ox + tx * 4, oy + ty * 4, 4, 4, tx * 4, ty * 4, 4, 4); }
+    x.globalAlpha = 1;
+  }
+}
+function trilhaComTextura(x, Q, cx, cy) {
+  const { ts, v } = Q; const ox = (((cx * CH) % ts) + ts) % ts;
+  for (let y = 12; y < CH - 12; y += 1) { const f = Math.min(1, (y - 12) / 14, (CH - 12 - y) / 14); x.globalAlpha = Math.max(0, f); x.drawImage(v[5], ox, 16 + y, CH, 1, 0, y, CH, 1); }
+  x.globalAlpha = 1;
+}
+
 export function pedaco(tema, cx, cy) {
   const T = TEMAS[tema] || TEMAS.ixtal;
   const c = document.createElement('canvas'); c.width = CH; c.height = CH; const x = c.getContext('2d');
-  // Chão em manchas suaves (ruído contínuo entre os pedaços), em vez do xadrez de dois tons.
-  const base = T.tile[0]; const claro = misturar(T.tile[1], 0.07); const escuro = misturar(T.tile[0], -0.08);
-  for (let ty = 0; ty < CH / 4; ty++) for (let tx = 0; tx < CH / 4; tx++) {
-    const gx = cx * CH + tx * 4; const gy = cy * CH + ty * 4;
-    const n = 0.62 * ruido(gx, gy, 56) + 0.38 * ruido(gx + 977, gy + 311, 18); const q = hash(gx, gy);
-    const ruidoBorda = (q - 0.5) * 0.06;
-    const v = n + ruidoBorda; const cor = v < 0.4 ? escuro : v > 0.62 ? claro : base;
-    r(x, tx * 4, ty * 4, 4, 4, cor);
-    const dens = cor === escuro ? 0.075 : cor === claro ? 0.02 : 0.04;
-    if (q < dens) { const k = (q * 977) % 1; const c2 = cor === claro ? T.tufo[0] : T.tufo[1]; const px = tx * 4 + ((k * 7) | 0) % 3; const py = ty * 4 + ((k * 13) | 0) % 2; r(x, px, py + 1, 1, 2, c2); if (k > 0.4) r(x, px + 2, py, 1, 3, c2); if (k > 0.75) r(x, px + 1, py + 2, 1, 1, c2); }
-    else if (q > 0.992) r(x, tx * 4 + 1, ty * 4 + 1, 2, 1, T.tufo[1]);
+  const Q = quadrosChao(tema);
+  if (Q) { chaoComTextura(x, Q, cx, cy); if (hash(cx, cy) < 0.14) trilhaComTextura(x, Q, cx, cy); if (atlasDeProps(tema)) return c; }
+  else {
+    // Chão em manchas suaves (ruído contínuo entre os pedaços), em vez do xadrez de dois tons.
+    const base = T.tile[0]; const claro = misturar(T.tile[1], 0.07); const escuro = misturar(T.tile[0], -0.08);
+    for (let ty = 0; ty < CH / 4; ty++) for (let tx = 0; tx < CH / 4; tx++) {
+      const gx = cx * CH + tx * 4; const gy = cy * CH + ty * 4;
+      const n = 0.62 * ruido(gx, gy, 56) + 0.38 * ruido(gx + 977, gy + 311, 18); const q = hash(gx, gy);
+      const ruidoBorda = (q - 0.5) * 0.06;
+      const v = n + ruidoBorda; const cor = v < 0.4 ? escuro : v > 0.62 ? claro : base;
+      r(x, tx * 4, ty * 4, 4, 4, cor);
+      const dens = cor === escuro ? 0.075 : cor === claro ? 0.02 : 0.04;
+      if (q < dens) { const k = (q * 977) % 1; const c2 = cor === claro ? T.tufo[0] : T.tufo[1]; const px = tx * 4 + ((k * 7) | 0) % 3; const py = ty * 4 + ((k * 13) | 0) % 2; r(x, px, py + 1, 1, 2, c2); if (k > 0.4) r(x, px + 2, py, 1, 3, c2); if (k > 0.75) r(x, px + 1, py + 2, 1, 1, c2); }
+      else if (q > 0.992) r(x, tx * 4 + 1, ty * 4 + 1, 2, 1, T.tufo[1]);
+    }
   }
-  if (hash(cx, cy) < 0.18) { // trilha
+  if (!Q && hash(cx, cy) < 0.18) { // trilha
     const y0 = 40 + ((hash(cx + 9, cy) * 40) | 0);
     r(x, 0, y0, CH, 14, T.trilha[0]); r(x, 0, y0 + 2, CH, 3, T.trilha[1]); r(x, 0, y0 + 11, CH, 3, T.trilha[2]);
     for (let i = 0; i < 10; i++) r(x, (hash(cx + i, cy + 7) * CH) | 0, y0 + 3 + ((hash(cx + 3, cy + i) * 8) | 0), 2, 1, T.trilha[2]);
