@@ -214,3 +214,107 @@ Image size 1536 x 768 px. The logo is centered and fills about 85% of the width.
 
 BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key), no gradient, no shadow. Do not use green on the logo. No other text, no tagline, no watermark.
 ```
+
+## 7. Ionia: pacote completo (6 imagens)
+
+Anexe a imagem do Garen em cada uma. Tema: floresta espiritual, flor de cerejeira rosa, bambu, lanternas de pedra, santuários, água cristalina, paleta verde-água, rosa e pedra clara.
+
+### 7.1 Cenário: objetos pequenos (24) — props-ionia-pequenos.png
+
+```
+Create ONE sprite sheet image of small environment props for the map "Ionia" (League of Legends: a serene spirit forest with cherry blossoms, bamboo, shrines and clear water).
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 6 columns x 4 rows of equal 256 x 256 px cells (24 cells), no lines between cells. ONE object per cell, centered horizontally, its base touching the same invisible ground line at y = 235 of the cell, at least 20 px of margin, nothing crossing the cell borders. Scale: the main character of the reference is about 170 px tall, so a bush is about 90 px tall, a small rock about 50 px, flowers about 40 px, a lantern about 110 px. Every object must look good scattered on top of a teal-green grass field.
+
+THE 24 OBJECTS (left to right, top to bottom):
+Row 1: (1) small tuft of teal-green grass, (2) tall wild grass with a few pink petals, (3) round bush with pale pink cherry blossoms, (4) small bamboo cluster of 3 stalks, (5) group of white and pink lotus-like flowers, (6) small smooth gray stone cluster (3 stones) with moss.
+Row 2: (7) medium smooth gray rock, (8) large mossy boulder with a pink flower on top, (9) group of pale pink flowers, (10) group of violet irises, (11) group of white spirit flowers with tiny cyan sparks (hard-edged pixels, no haze), (12) fallen mossy log with small pink mushrooms.
+Row 3: (13) small cherry-blossom sapling with a few fallen petals around, (14) stone lantern (toro), ancient, with a soft cyan flame, (15) small stone water basin with a bamboo spout and clear water, (16) pile of cherry petals on the ground, (17) wooden signpost with two arrows (no text), (18) short broken wooden fence with a rope.
+Row 4: (19) wooden barrel and a small woven basket together, (20) stack of three flat stepping stones with moss, (21) tiny stone shrine (hokora) the size of a doghouse, with a small red ribbon, (22) small stone fox statue with a red scarf, (23) ruined short stone pillar with a faint cyan rune, (24) ring of small glowing cyan spirit mushrooms (hard-edged pixels).
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects (leaves must be a clearly different, darker or yellower green, and pink or teal accents are welcome). Do not use a white or checkerboard background. Do NOT draw ground, grass patches, or cast shadows under the objects.
+```
+
+### 7.2 Cenário: objetos grandes (6) — props-ionia-grandes.png
+
+```
+Create ONE sprite sheet image of large environment props for the map "Ionia" (League of Legends).
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. ONE object per cell, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Scale: the main character of the reference is about 170 px tall; a big tree is about 380 px tall.
+
+THE 6 OBJECTS: (1) big cherry blossom tree with a thick twisted dark-brown trunk and a huge round canopy of pale pink blossoms with a few falling petals, (2) second cherry tree, taller and with deeper pink blossoms and a hanging paper lantern, (3) tall bamboo grove of about 8 thick stalks with leafy tops, (4) a red-and-wood torii-style shrine gate (Ionian style: two thick pillars, a curved double crossbeam, a rope with white paper ribbons), mossy base, (5) a stone pagoda shrine with a curved teal roof, two floors, stone base and a glowing cyan lantern in the door, (6) a large mossy rock formation with a small waterfall and a clear blue pool with lily pads at its base.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects (leaves must be a clearly different, darker or yellower green, and pink or teal accents are welcome). Do not use a white or checkerboard background. Do NOT draw ground, grass patches, or cast shadows under the objects.
+```
+
+### 7.3 Inimigos de Ionia, pacote 1 — inimigos-ionia-1.png
+
+```
+Create ONE sprite sheet image with the walk cycles of four enemies.
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1024 x 1024 px, divided into an invisible grid of 4 columns x 4 rows of equal 256 x 256 px cells (16 cells), no lines between cells. EACH ROW is ONE enemy; the 4 cells of the row are its WALK CYCLE (4 frames, seamless loop), moving toward the RIGHT, three-quarter view, same size in all frames, feet touching the same invisible baseline at y = 235 of the cell, centered horizontally, at least 20 px of margin, nothing crossing the cell borders. Walk cycles must have clear leg or body movement between frames.
+
+THE 4 ENEMIES (Ionia, corrupted spirit forces, menacing but cute-chunky proportions):
+ROW 1, CORRUPTED MONK (about 130 px tall, the common soldier): an Ionian monk gone dark: bald or topknot head, a ragged teal-and-white robe with a dark purple sash, a wooden bo staff, wrapped hands, angry glowing purple eyes, wisps of purple spirit-smoke (hard-edged pixels) from the shoulders, quick shuffling steps.
+ROW 2, SPIRIT SHAMAN (about 135 px tall, the caster): a small shaman in a long pale-blue robe with a white fox-style mask (red markings), holding a tall wooden staff with a hanging paper lantern that glows cyan-violet (hard-edged pixels), floats slightly while walking.
+ROW 3, FIREWORK CART (about 150 px tall, the siege unit): a small wooden cart painted red and teal with two big spoked wheels that turn between frames, a bamboo rocket launcher tube on top pointing right with paper-wrapped rockets, a tiny masked crew member behind it.
+ROW 4, WISP OF DISCORD (about 100 px tall, the swarm unit): a small floating ghost-flame: a rounded purple-and-cyan flame body with a tail, two big yellow eyes, tiny angry mouth, wavy floating motion (the tail and body wave between frames), no legs.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects (leaves must be a clearly different, darker or yellower green, and pink or teal accents are welcome). Do not use a white or checkerboard background. Do NOT draw ground, grass patches, or cast shadows under the objects.
+```
+
+### 7.4 Inimigos de Ionia, pacote 2 — inimigos-ionia-2.png
+
+```
+Create ONE sprite sheet image with the walk cycles of four enemies.
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1024 x 1024 px, divided into an invisible grid of 4 columns x 4 rows of equal 256 x 256 px cells (16 cells), no lines between cells. EACH ROW is ONE enemy; the 4 cells of the row are its WALK CYCLE (4 frames, seamless loop), moving toward the RIGHT, three-quarter view, same size in all frames, feet touching the same invisible baseline at y = 235 of the cell, centered horizontally, at least 20 px of margin, nothing crossing the cell borders. Walk cycles must have clear leg or body movement between frames.
+
+THE 4 ENEMIES (Ionia, spirit forest creatures, menacing but chunky proportions):
+ROW 1, SPIRIT FOX (about 120 px tall, 170 px long): a lean white-and-pale-blue fox with two tails tipped in cyan flame, red facial markings, glowing yellow eyes, fangs, running gallop.
+ROW 2, BAMBOO MANTIS (about 125 px tall): a fast green-and-yellow mantis-like insect made of bamboo segments with two blade-like forearms held forward, big angry eyes, quick hopping run.
+ROW 3, STONE GUARDIAN CUB (about 150 px tall, the elite): a small stone temple-guardian lion-dog (komainu style), gray-white stone with moss, curly mane, a glowing teal crystal in the forehead and one in the chest, red ribbon around the neck, heavy stomping walk.
+ROW 4, TEMPLE COLOSSUS (about 210 px tall, the biggest): a huge ancient stone statue guardian in monk-warrior armor, pale-gray cracked stone with moss and pink blossoms growing on the shoulders, big stone fists, a calm carved face with two glowing cyan eyes, a broken stone halo behind its head, slow heavy stomp.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects (leaves must be a clearly different, darker or yellower green, and pink or teal accents are welcome). Do not use a white or checkerboard background. Do NOT draw ground, grass patches, or cast shadows under the objects.
+```
+
+### 7.5 Kodama Ancião (chefe menor, 5:00) — chefe-ionia-1.png
+
+```
+Create ONE sprite sheet image with the animation frames of a boss monster (ANCIENT KODAMA SPIRIT STAG of Ionia).
+
+Pixel art game boss sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around the whole creature. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), the creature faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CREATURE: "Ancient Kodama", a huge sacred forest spirit of Ionia (League of Legends), about 340 px tall: a tall stag-like spirit standing on four sturdy legs, pale cream-white fur with dark teal markings, a calm carved white mask-like face with two glowing cyan eyes and red marking lines, enormous antlers shaped like cherry-blossom branches full of pink flowers and a few hanging paper charms, a thick mane of teal leaves, small glowing cyan spirit crystals along the spine and a rope with white paper ribbons around the neck. Palette: cream white, teal, pink blossom, cyan glow, warm gray.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. In EVERY cell the same creature at the same scale, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Identical design, colors and proportions in all cells.
+
+CELLS (left to right, top to bottom): (1) IDLE A: standing calm, head up, blossoms still; (2) IDLE B: antlers swaying slightly to one side, a couple of petals falling; (3) IDLE C: swaying to the other side (the 3 idle cells form a seamless slow loop); (4) ATTACK WIND-UP: head lowered, antlers pointed forward to the right, front hoof scraping the ground, cyan crystals glowing brighter (hard-edged pixels); (5) ATTACK STRIKE: charging lunge to the right, head low, antler tips flaring with crisp hard-edged cyan and pink energy streaks behind; (6) DEATH: the stag lying down on its side, antlers scattered into a heap of pink blossoms and petals, cyan crystals dark and cracked.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature (use dark, yellowish or bluish greens instead, clearly different from the background). Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
+```
+
+### 7.6 Dragão Espiritual (chefe final, 10:00) — chefe-ionia-2.png
+
+```
+Create ONE sprite sheet image with the animation frames of a boss monster (ASTRAL SPIRIT DRAGON of Ionia).
+
+Pixel art game boss sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around the whole creature. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), the creature faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CREATURE: "Spirit Dragon", a giant Ionian eastern-style serpent dragon (League of Legends), about 440 px tall: a long slender scaled body in deep teal-blue with a pale gold-white belly, coiled in an S shape that rises so the head is high on the right, no wings, four small clawed legs, a long flowing mane and two long whiskers in pink and white, two antler-like horns, big glowing golden eyes, a mouth with sharp fangs, a glowing white-cyan pearl held in one claw, tiny pink blossoms stuck in its mane. Palette: deep teal, blue, pale gold, pink, white, cyan glow.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. In EVERY cell the same creature at the same scale, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Identical design, colors and proportions in all cells.
+
+CELLS (left to right, top to bottom): (1) IDLE A: coiled, head raised, whiskers and mane relaxed; (2) IDLE B: body swaying slightly to one side, whiskers drifting; (3) IDLE C: swaying to the other side (the 3 idle cells form a seamless loop); (4) ATTACK WIND-UP: head drawn back, jaw wide open, the pearl glowing brightly, the mane flared (hard-edged pixels); (5) ATTACK STRIKE: head thrust forward and down toward the right, a hard-edged ring of cyan and pink energy bursting from its open mouth; (6) DEATH: the body collapsed flat and uncoiled on the ground, whiskers limp, petals scattered around, the pearl cracked and dark.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature (use dark, yellowish or bluish greens instead, clearly different from the background). Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
+```
