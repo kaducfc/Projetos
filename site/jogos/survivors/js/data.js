@@ -88,7 +88,7 @@ export const CHEFES = {
   vanguarda: { nome: 'Cavaleiro da Vanguarda', t: 5 * 60, hp: 2000, vel: 21, dano: 15, raio: 20, xp: 45, ia: 'chefe', cd: 3.4, ouro: 25, kit: ['investida', 'onda'], sprite: 'vanguarda' },
   galio: { nome: 'Galio, o Colosso', t: 10 * 60, hp: 7400, vel: 20, dano: 22, raio: 24, xp: 140, ia: 'chefe', cd: 2.9, ouro: 90, final: true, kit: ['onda', 'marcas', 'investida', 'invocar'], sprite: 'galio' },
   // Noxus
-  carrasco: { nome: 'Carrasco de Noxus', t: 5 * 60, hp: 2300, vel: 23, dano: 17, raio: 17, xp: 50, ia: 'chefe', cd: 3.2, ouro: 30, kit: ['investida', 'marcas'], sprite: 'arauto@noxus' },
+  carrasco: { nome: 'Carrasco de Noxus', t: 5 * 60, hp: 2300, vel: 23, dano: 17, raio: 20, xp: 50, ia: 'chefe', cd: 3.2, ouro: 30, kit: ['investida', 'marcas'], sprite: 'carrasco' },
   darius: { nome: 'Darius, a Mão de Noxus', t: 10 * 60, hp: 8800, vel: 25, dano: 25, raio: 24, xp: 160, ia: 'chefe', cd: 2.6, ouro: 100, final: true, kit: ['investida', 'onda', 'marcas', 'investida'], sprite: 'b_darius' },
   // Shurima
   colosso: { nome: 'Colosso de Areia', t: 5 * 60, hp: 2700, vel: 20, dano: 18, raio: 18, xp: 55, ia: 'chefe', cd: 3.2, ouro: 30, kit: ['marcas', 'onda'], sprite: 'arauto@shurima' },
