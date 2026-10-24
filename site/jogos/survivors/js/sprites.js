@@ -36,11 +36,13 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 7; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 8; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { parada: { src: 'ahri/ahri-parada.png', n: 5 }, andando: { src: 'ahri/ahri-andando.png', n: 5 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
 };
+// Inimigos com animação em arquivo (4 quadros de caminhada, já com contorno).
+for (const nome of ['minion', 'mago', 'canhao', 'vazio']) ANIM[nome] = { semContorno: true, andando: { src: `inimigos/${nome}.png`, n: 4 } };
 const ESTATICAS = { orbe: 'ahri/orbe.png', coracao: 'ahri/coracao.png' };
 const ICONES_IMG = { orbe: 'ahri/i-orbe.png', coracao: 'ahri/i-coracao.png' };
 const quadros = {}; // nome -> anim -> [canvas]
@@ -241,7 +243,7 @@ const FABRICA = {
 
 export function sprite(nome) {
   let c = cache.get(nome); if (c) return c;
-  if (quadros[nome]?.parada) { c = quadros[nome].parada[0]; cache.set(nome, c); return c; }
+  if (quadros[nome]?.parada || quadros[nome]?.andando) { c = (quadros[nome].parada || quadros[nome].andando)[0]; cache.set(nome, c); return c; }
   if (imgs[nome]) { cache.set(nome, imgs[nome]); return imgs[nome]; }
   if (nome.includes('@')) { const [base, rei] = nome.split('@'); const sb = sprite(base); const R0 = REINOS[rei]; const m = base === 'arauto' ? (R0?.matizMini || R0?.matiz) : R0?.matiz; if (!sb) return null; c = m ? recolorir(sb, m) : sb; cache.set(nome, c); return c; }
   const f = FABRICA[nome]; if (!f) return null;

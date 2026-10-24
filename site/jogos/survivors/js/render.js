@@ -22,7 +22,7 @@ export function criarRender(canvas) {
   let temaAtual = 'rift';
   const chunk = (cx, cy) => { const k = `${cx},${cy}`; let c = chunks.get(k); if (!c) { c = pedaco(temaAtual, cx, cy); chunks.set(k, c); if (chunks.size > 80) chunks.delete(chunks.keys().next().value); } return c; };
   const desenhar = (nome, x, y, ox = 0, oy = 0, branco = false, esc = 1, ey = esc) => {
-    const s = branco ? spriteBranco(nome) : sprite(nome); if (!s) return;
+    const s = typeof nome !== 'string' ? nome : branco ? spriteBranco(nome) : sprite(nome); if (!s) return;
     const w = s.width * esc; const h = s.height * ey;
     ctx.drawImage(s, Math.round(x - w / 2 + ox), Math.round(y - h + oy), w, h);
   };
@@ -125,8 +125,9 @@ export function criarRender(canvas) {
       const bob = Math.round(Math.abs(Math.sin(R.t * 9 + e.id)) * (e.chefe ? 1 : 2));
       if (e.estado === 1) { ctx.strokeStyle = 'rgba(255,60,60,.6)'; ctx.beginPath(); ctx.moveTo(Math.round(e.x), Math.round(e.y)); ctx.lineTo(Math.round(e.x + e.dx * 70), Math.round(e.y + e.dy * 70)); ctx.stroke(); }
       const esc = e.tipo === 'golem' ? 1.25 : 1;
+      const nq = nQuadros(nome, 'andando'); const spr = nq ? quadroAnim(nome, 'andando', Math.floor(R.t * 7 + e.id) % nq, e.flash > 0) : nome; // animação de caminhada, se houver
       const sq = e.flash > 0 ? 1.14 : 1;
-      if (e.face < 0) { ctx.save(); ctx.translate(Math.round(e.x), 0); ctx.scale(-1, 1); desenhar(nome, 0, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc * sq, esc / sq); ctx.restore(); } else desenhar(nome, e.x, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc * sq, esc / sq);
+      if (e.face < 0) { ctx.save(); ctx.translate(Math.round(e.x), 0); ctx.scale(-1, 1); desenhar(spr, 0, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc * sq, esc / sq); ctx.restore(); } else desenhar(spr, e.x, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc * sq, esc / sq);
       if (e.encantado > 0) { ctx.fillStyle = '#ff77b8'; ctx.fillRect(Math.round(e.x - 3), Math.round(e.y - e.raio - 12 - Math.round(Math.sin(R.t * 8))), 2, 2); ctx.fillRect(Math.round(e.x + 1), Math.round(e.y - e.raio - 12 - Math.round(Math.sin(R.t * 8))), 2, 2); ctx.fillRect(Math.round(e.x - 3), Math.round(e.y - e.raio - 10), 6, 2); ctx.fillRect(Math.round(e.x - 2), Math.round(e.y - e.raio - 8), 4, 1); }
       if (e.lento > 0) { ctx.fillStyle = 'rgba(160,230,255,.35)'; ctx.fillRect(Math.round(e.x - e.raio), Math.round(e.y + e.raio - 2), e.raio * 2, 3); }
       if (e.hp < e.hpMax && !e.chefe) { const bw = Math.max(10, e.raio * 2); barra(Math.round(e.x - bw / 2), Math.round(e.y - e.raio - 6), bw, 2, e.hp / e.hpMax, '#e04545'); }

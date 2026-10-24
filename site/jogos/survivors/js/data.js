@@ -62,12 +62,12 @@ export const MELHORIAS = {
 
 // Inimigos. `xp`: experiência da gema. `ia`: comportamento. Tamanhos em pixels do mundo.
 export const INIMIGOS = {
-  minion: { nome: 'Tropa', hp: 14, vel: 25, dano: 5, raio: 6, xp: 1, ia: 'perseguir' },
-  mago: { nome: 'Tropa Mago', hp: 10, vel: 22, dano: 4, raio: 6, xp: 1, ia: 'atirar', alcance: 80, cd: 3.2 },
-  vazio: { nome: 'Cria do Vazio', hp: 8, vel: 40, dano: 4, raio: 5, xp: 1, ia: 'perseguir' },
+  minion: { nome: 'Tropa', hp: 14, vel: 25, dano: 5, raio: 8, xp: 1, ia: 'perseguir' },
+  mago: { nome: 'Tropa Mago', hp: 10, vel: 22, dano: 4, raio: 8, xp: 1, ia: 'atirar', alcance: 80, cd: 3.2 },
+  vazio: { nome: 'Cria do Vazio', hp: 8, vel: 40, dano: 4, raio: 7, xp: 1, ia: 'perseguir' },
   lobo: { nome: 'Lobo Cinzento', hp: 24, vel: 44, dano: 6, raio: 6, xp: 2, ia: 'perseguir' },
   raptor: { nome: 'Raptor', hp: 12, vel: 54, dano: 4, raio: 5, xp: 2, ia: 'investir', cd: 3.5 },
-  canhao: { nome: 'Tropa de Cerco', hp: 70, vel: 19, dano: 10, raio: 8, xp: 5, ia: 'perseguir' },
+  canhao: { nome: 'Tropa de Cerco', hp: 70, vel: 19, dano: 10, raio: 11, xp: 5, ia: 'perseguir' },
   krug: { nome: 'Krug', hp: 130, vel: 17, dano: 12, raio: 9, xp: 10, ia: 'perseguir', elite: true },
   golem: { nome: 'Golem de Pedra', hp: 260, vel: 16, dano: 15, raio: 10, xp: 18, ia: 'perseguir', elite: true },
 };
