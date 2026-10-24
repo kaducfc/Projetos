@@ -3,7 +3,7 @@
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { gameById } from '../../../shared/config.js';
-import { CAMPEOES, ARMAS, ITENS, MELHORIAS, NIVEL_MAX_ITEM, TEMPO_BARAO, CHEFES, RARIDADES, MALDICOES, EVOLUCOES } from './data.js';
+import { CAMPEOES, ARMAS, ITENS, MELHORIAS, NIVEL_MAX_ITEM, TEMPO_BARAO, CHEFES, REINOS, ORDEM_REINOS, RARIDADES, MALDICOES, EVOLUCOES } from './data.js';
 import { criarJogo, atualizar, escolher, essenciaGanha, rolar, banir } from './game.js';
 import { criarRender } from './render.js';
 import { urlSprite, urlIcone, carregarImagens, arteUrl } from './sprites.js';
@@ -24,7 +24,7 @@ mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
 
 let meta = Meta.carregar();
 let modo = 'menu'; // menu | selecao | loja | jogo
-let S = null; let demo = null; let pausado = false; let escolhido = meta.ultimo;
+let S = null; let demo = null; let pausado = false; let escolhido = meta.ultimo; let reinoEscolhido = meta.ultimoReino || 'rift';
 let escala = 3; const render = criarRender(cv);
 let ult = 0; let fimTratado = false;
 try { definirMudo(localStorage.getItem('survivors.mudo') === '1'); } catch { /* sem storage */ }
@@ -126,7 +126,8 @@ function telaComo() {
       <li><b>Evoluir:</b> colete as gemas azuis dos inimigos. A cada nível, escolha 1 de 3 melhorias (teclas 1, 2 e 3).</li>
       <li><b>Itens:</b> até ${6} habilidades e ${6} itens, cada um até o nível ${NIVEL_MAX_ITEM}.</li>
       <li><b>Baús:</b> chefes e monstros grandes soltam baús que dão uma melhoria extra.</li>
-      <li><b>Chefes:</b> Arauto aos 5:00, Dragão aos 10:00 e o <b>Barão Nashor aos ${tempoTxt(TEMPO_BARAO)}</b>. Derrote o Barão para vencer!</li>
+      <li><b>Reinos:</b> Summoner's Rift, Ionia, Demacia, Noxus, Shurima e Freljord, cada um com cenário, monstros e chefes próprios. Vença um reino para abrir o próximo.</li>
+      <li><b>Chefes:</b> um chefe menor aos 5:00 e o chefe final no fim do tempo (no Rift clássico, o <b>Barão Nashor aos ${tempoTxt(TEMPO_BARAO)}</b>). Fuja das áreas vermelhas no chão: elas avisam o golpe. Derrote o chefe final para vencer!</li>
       <li><b>Pausa:</b> Esc ou P.</li>
     </ul><div class="sv-botoes"><button class="sv-btn" data-a="menu">Voltar</button></div></div>`);
 }
@@ -145,9 +146,27 @@ function telaCampeoes(paraJogar = false) {
   modo = 'selecao';
   tela(`<div class="sv-painel largo"><h2>${paraJogar ? 'Escolha seu campeão' : 'Campeões'}</h2><p class="sv-sub">${nomeEA()}</p>
     <div class="sv-cartas">${CAMPEOES.map(cartaCampeao).join('')}</div>
-    <div class="sv-botoes">${paraJogar ? '<button class="sv-btn grande" data-a="comecar">Começar partida</button>' : ''}<button class="sv-btn" data-a="menu">Voltar</button></div></div>`, 'rolar');
+    <div class="sv-botoes">${paraJogar ? '<button class="sv-btn grande" data-a="reinos">Escolher reino</button>' : ''}<button class="sv-btn" data-a="menu">Voltar</button></div></div>`, 'rolar');
   ui.dataset.jogar = paraJogar ? '1' : '';
 }
+function telaReinos() {
+  modo = 'selecao';
+  const cartas = ORDEM_REINOS.map((id) => {
+    const r = REINOS[id]; const lib = Meta.reinoLiberado(meta, id); const info = meta.reinos[id]; const sel = reinoEscolhido === id;
+    const chefe = CHEFES[r.chefes.find((c) => CHEFES[c].final)];
+    const estrelas = '★'.repeat(Math.max(1, Math.round((r.dif - 0.7) / 0.3)));
+    return `<div class="sv-carta reino ${sel && lib ? 'sel' : ''} ${lib ? '' : 'trava'}" data-reino="${id}" style="--tema:${TEMA_COR[id]}">
+      <span class="sv-reino-arte"></span><b>${esc(r.nome)}</b><small>${esc(r.sub)}</small>
+      <small class="sv-st">${tempoTxt(r.tempo)} · Dificuldade ${estrelas}</small><small class="sv-desc">Chefe: ${esc(chefe.nome)}</small>
+      ${lib ? `<small class="sv-st">${info?.vitorias ? `✔ ${info.vitorias} ${info.vitorias === 1 ? 'vitória' : 'vitórias'}` : 'Ainda não vencido'}</small><button class="sv-btn mini" data-a="reino" data-id="${id}">${sel ? 'Escolhido' : 'Escolher'}</button>`
+        : `<small class="sv-st">🔒 Vença ${esc(REINOS[r.abre].nome)}</small>`}
+    </div>`;
+  }).join('');
+  tela(`<div class="sv-painel largo"><h2>Escolha o reino</h2><p class="sv-sub">Cada reino tem cenário, monstros e chefes próprios. Vença um para abrir o próximo.</p>
+    <div class="sv-cartas">${cartas}</div>
+    <div class="sv-botoes"><button class="sv-btn grande" data-a="comecar">Começar partida</button><button class="sv-btn" data-a="jogar">Voltar</button></div></div>`, 'rolar');
+}
+const TEMA_COR = { rift: '#3a8a36', ionia: '#f29ac0', demacia: '#7ab4f0', noxus: '#c0283a', shurima: '#e8c97a', freljord: '#cfe0f2' };
 function telaLoja() {
   modo = 'loja';
   const linhas = Object.entries(MELHORIAS).map(([id, d]) => {
@@ -161,9 +180,11 @@ function telaLoja() {
 // --------------------------------------------------------------------------- partida
 function iniciar() {
   meta.ultimo = escolhido; Meta.gravar(meta);
-  S = criarJogo({ campeao: escolhido, meta, vista: { w: render.w, h: render.h } });
+  if (!Meta.reinoLiberado(meta, reinoEscolhido)) reinoEscolhido = 'rift';
+  meta.ultimoReino = reinoEscolhido;
+  S = criarJogo({ campeao: escolhido, meta, vista: { w: render.w, h: render.h }, reino: reinoEscolhido });
   modo = 'jogo'; pausado = false; fimTratado = false; ui.className = 'sv-ui jogo'; ui.innerHTML = '';
-  destravar(); avisar(`${CAMPEOES.find((c) => c.id === escolhido).nome} entrou no Rift!`);
+  destravar(); avisar(`${CAMPEOES.find((c) => c.id === escolhido).nome} em ${REINOS[reinoEscolhido].nome}!`);
 }
 function avisar(txt, cls = '') {
   const a = document.createElement('div'); a.className = `sv-aviso ${cls}`; a.textContent = txt; palco.appendChild(a); setTimeout(() => a.remove(), 2600);
@@ -206,6 +227,8 @@ function processarEventos() {
     const s = SOM_EVENTO[e.tipo]; if (s) som(s);
     if (e.tipo === 'chefe') avisar(`${CHEFES[e.id].nome.toUpperCase()} APARECEU!`, 'chefe');
     else if (e.tipo === 'onda') avisar('ONDA DE TROPAS!', 'onda');
+    else if (e.tipo === 'fase2') avisar(`${CHEFES[e.id].nome.split(',')[0].toUpperCase()} ENFURECEU!`, 'chefe');
+    else if (e.tipo === 'onda_chefe') som('chefe');
     else if (e.tipo === 'combo') { avisar(`${e.nome} ${e.n} abates · +${e.ouro} ouro`, 'chefe'); som('ima'); }
     else if (e.tipo === 'evolucao') { avisar(`EVOLUÇÃO! ${EVOLUCOES[e.id].nome}`, 'chefe'); som('revive'); }
     else if (e.tipo === 'maldicao') avisar(`Maldição: ${MALDICOES[e.id].nome}`, 'onda');
@@ -229,9 +252,9 @@ function fimDeJogo() {
 ui.addEventListener('click', (e) => {
   destravar();
   const op = e.target.closest('[data-op]'); if (op) { escolherOpcao(Number(op.dataset.op)); return; }
-  const cartaEl = e.target.closest('[data-camp]');
+  const cartaEl = e.target.closest('[data-camp]'); const reinoEl = e.target.closest('[data-reino]');
   const b = e.target.closest('[data-a]');
-  if (!b) { if (cartaEl && meta.liberados.includes(cartaEl.dataset.camp)) { escolhido = cartaEl.dataset.camp; telaCampeoes(!!ui.dataset.jogar); } return; }
+  if (!b) { if (reinoEl && Meta.reinoLiberado(meta, reinoEl.dataset.reino)) { reinoEscolhido = reinoEl.dataset.reino; telaReinos(); return; } if (cartaEl && meta.liberados.includes(cartaEl.dataset.camp)) { escolhido = cartaEl.dataset.camp; telaCampeoes(!!ui.dataset.jogar); } return; }
   const a = b.dataset.a; const id = b.dataset.id; som('clique');
   if (a === 'jogar') telaCampeoes(true);
   else if (a === 'campeoes') telaCampeoes(false);
@@ -241,6 +264,8 @@ ui.addEventListener('click', (e) => {
   else if (a === 'escolher') { escolhido = id; telaCampeoes(!!ui.dataset.jogar); }
   else if (a === 'liberar') { if (Meta.comprarCampeao(meta, id)) { escolhido = id; som('bau'); } telaCampeoes(!!ui.dataset.jogar); }
   else if (a === 'melhorar') { if (Meta.comprarMelhoria(meta, id)) som('escolha'); telaLoja(); }
+  else if (a === 'reinos') telaReinos();
+  else if (a === 'reino') { reinoEscolhido = id; telaReinos(); }
   else if (a === 'comecar' || a === 'denovo') iniciar();
   else if (a === 'continuar') alternarPausa();
   else if (a === 'rolar') { if (rolar(S)) { som('clique'); modoBanir = false; mostrarUpgrade(); } }
@@ -284,4 +309,4 @@ async function acesso() {
   telaMenu();
 })();
 // ganchos para teste automatizado
-window.__sv = { avancar(seg) { for (let i = 0; i < seg * 30 && S && S.estado !== 'derrota' && S.estado !== 'vitoria'; i++) { if (S.estado === 'upgrade') escolher(S, S.opcoes[0]); atualizar(S, 1 / 30, botEntrada(S)); S.evt.length = 0; } }, get S() { return S; }, get meta() { return meta; }, iniciar: (c) => { if (c) escolhido = c; iniciar(); }, escolherOpcao, get modo() { return modo; } };
+window.__sv = { avancar(seg) { for (let i = 0; i < seg * 30 && S && S.estado !== 'derrota' && S.estado !== 'vitoria'; i++) { if (S.estado === 'upgrade') escolher(S, S.opcoes[0]); atualizar(S, 1 / 30, botEntrada(S)); S.evt.length = 0; } }, get S() { return S; }, get meta() { return meta; }, iniciar: (c, rei) => { if (c) escolhido = c; if (rei) { for (const id of ORDEM_REINOS) meta.reinos[id] ||= { vitorias: 1, melhor: 0, partidas: 0 }; reinoEscolhido = rei; } iniciar(); }, escolherOpcao, get modo() { return modo; } };

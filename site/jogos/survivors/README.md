@@ -10,6 +10,13 @@ Sobrevivência em estilo "survivors" com tema de League of Legends e pixel art. 
 - `js/meta.js`: Essência Azul, campeões liberados e melhorias, salvos no navegador (`survivors.meta.v1`).
 - `js/main.js`: telas, entrada (teclado e joystick de toque), laço e acesso restrito (`soAdmin` em `shared/config.js`).
 
+## Reinos (regiões de Runeterra)
+`REINOS` em `data.js`: Summoner's Rift (clássico, 15 min, Arauto, Dragão e Barão), Ionia, Demacia, Noxus, Shurima e Freljord
+(10 min cada). Cada reino tem tema de chão e cenário (`js/temas.js`), clima (pétalas, folhas, brasas, areia, neve), soldado próprio,
+monstros comuns recoloridos (`nome@reino` em `sprites.js`), chefe menor aos 5:00 e chefe final aos 10:00 (Dragão Espiritual,
+Galio, Darius, Nasus, Lissandra) com ataques avisados no chão (`marcas`, `onda`), anel de projéteis, investida, invocação e fase 2.
+Dificuldade crescente (`dif`); vencer um reino abre o próximo (`abre`).
+
 Para lançar: apagar `soAdmin: true` da entrada `survivors` em `shared/config.js`.
 Pendências conhecidas: textos em PT apenas (traduzir com `shared/i18n/src/*.mjs`), progresso só local (sem servidor),
 ranking/PDR, mais campeões com sprites próprios.

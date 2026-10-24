@@ -75,7 +75,7 @@
 .sv-op-n { position: absolute; left: 6px; top: 6px; font-size: 8px; color: var(--mudo); }
 .sv-op-nv { font-size: 8px; color: #7fd4ff; } .sv-op-nv.novo { color: #7dffa8; }
 
-.sv-aviso { position: absolute; top: 18%; left: 50%; transform: translateX(-50%); padding: 10px 16px; background: rgba(21, 18, 42, .92); border: 3px solid var(--ouro); font-size: 10px; text-align: center; animation: sv-aviso 2.6s ease-out forwards; pointer-events: none; white-space: nowrap; z-index: 5; }
+.sv-aviso { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); padding: 10px 16px; background: rgba(21, 18, 42, .92); border: 3px solid var(--ouro); font-size: 10px; text-align: center; animation: sv-aviso 2.6s ease-out forwards; pointer-events: none; white-space: nowrap; z-index: 5; }
 .sv-aviso.chefe { border-color: var(--roxo); color: #e9d5ff; font-size: 12px; } .sv-aviso.onda { border-color: #e04545; color: #ffb3b3; }
 @keyframes sv-aviso { 0% { opacity: 0; transform: translate(-50%, -10px); } 10%, 80% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; } }
 
@@ -93,3 +93,7 @@
 @keyframes sv-treme { 50% { transform: translateX(2px); } }
 .sv-op-nv { color: var(--rar, #7fd4ff); }
 .sv-acoes { display: flex; gap: 10px; justify-content: center; margin-top: 4px; }
+
+.sv-carta.reino { border-color: color-mix(in srgb, var(--tema) 55%, #3b3560); }
+.sv-carta.reino.sel { border-color: var(--tema); box-shadow: 0 0 18px color-mix(in srgb, var(--tema) 50%, transparent); }
+.sv-reino-arte { width: 100%; height: 54px; background: linear-gradient(135deg, var(--tema), #14101e); border: 3px solid #14101e; image-rendering: pixelated; }

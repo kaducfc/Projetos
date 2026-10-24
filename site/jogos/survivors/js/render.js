@@ -1,44 +1,18 @@
 // Rift Survivors: desenho no canvas (resolução lógica pequena, ampliada com pixels nítidos).
 import { sprite, spriteBranco, icone, animacao } from './sprites.js';
-import { CHEFES, TEMPO_BARAO } from './data.js';
+import { CHEFES } from './data.js';
 import { statsDe } from './game.js';
+import { CH, hash, pedaco } from './temas.js';
 
-const CH = 128; // tamanho do pedaço de chão
-const hash = (a, b) => { let h = Math.imul(a, 374761393) + Math.imul(b, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
 const DIG = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001001001001', 8: '111101111101111', 9: '111101111001111' };
 const FONTE = '8px "Press Start 2P", ui-monospace, monospace';
-
-function pedaco(cx, cy) {
-  const c = document.createElement('canvas'); c.width = CH; c.height = CH; const x = c.getContext('2d');
-  for (let ty = 0; ty < CH / 8; ty++) for (let tx = 0; tx < CH / 8; tx++) {
-    const r = hash(cx * 16 + tx, cy * 16 + ty);
-    x.fillStyle = (tx + ty) % 2 ? '#2f6b2e' : '#34752f'; x.fillRect(tx * 8, ty * 8, 8, 8);
-    if (r < 0.16) { x.fillStyle = '#285c28'; x.fillRect(tx * 8 + ((r * 97) % 6 | 0), ty * 8 + ((r * 53) % 6 | 0), 2, 1); x.fillRect(tx * 8 + 1 + ((r * 31) % 5 | 0), ty * 8 + 2 + ((r * 17) % 5 | 0), 1, 2); }
-    else if (r > 0.94) { x.fillStyle = '#4a9a3a'; x.fillRect(tx * 8 + 2, ty * 8 + 3, 1, 2); x.fillRect(tx * 8 + 5, ty * 8 + 1, 1, 2); }
-  }
-  // trilha de terra (como as rotas do mapa) em alguns pedaços
-  if (hash(cx, cy) < 0.18) { const y0 = 40 + ((hash(cx + 9, cy) * 40) | 0); x.fillStyle = '#8a7a52'; x.fillRect(0, y0, CH, 14); x.fillStyle = '#9c8c62'; x.fillRect(0, y0 + 2, CH, 3); x.fillStyle = '#76683f'; x.fillRect(0, y0 + 11, CH, 3); for (let i = 0; i < 10; i++) { x.fillStyle = '#6e613a'; x.fillRect(((hash(cx + i, cy + 7) * CH) | 0), y0 + 3 + ((hash(cx + 3, cy + i) * 8) | 0), 2, 1); } }
-  else if (hash(cx + 5, cy + 3) < 0.07) { // poço de água
-    const px = 20 + ((hash(cx, cy + 1) * 60) | 0); const py = 20 + ((hash(cx + 1, cy) * 60) | 0);
-    x.fillStyle = '#7a6a45'; x.fillRect(px - 1, py - 1, 38, 24); x.fillStyle = '#2e7fc0'; x.fillRect(px + 2, py + 2, 32, 16); x.fillStyle = '#4aa3e0'; x.fillRect(px + 6, py + 5, 10, 1); x.fillRect(px + 18, py + 11, 12, 1);
-  }
-  // decoração
-  const n = 3 + ((hash(cx, cy * 3) * 4) | 0);
-  for (let i = 0; i < n; i++) {
-    const dx = (hash(cx * 7 + i, cy) * (CH - 14)) | 0; const dy = (hash(cx, cy * 7 + i) * (CH - 14)) | 0; const k = hash(cx + i * 3, cy + i * 5);
-    if (k < 0.34) { x.fillStyle = '#1f4f22'; x.fillRect(dx, dy + 6, 11, 6); x.fillStyle = '#2a6a2a'; x.fillRect(dx + 1, dy + 3, 9, 7); x.fillStyle = '#3a8a36'; x.fillRect(dx + 3, dy + 2, 5, 3); }
-    else if (k < 0.55) { x.fillStyle = '#5d626f'; x.fillRect(dx, dy + 3, 9, 6); x.fillStyle = '#8a8f99'; x.fillRect(dx + 1, dy + 2, 7, 4); x.fillStyle = '#b0b5bf'; x.fillRect(dx + 2, dy + 2, 3, 1); }
-    else if (k < 0.8) { const cor = ['#ff77b8', '#ffe36a', '#ffffff', '#58e8ff'][(k * 100 | 0) % 4]; x.fillStyle = '#2a6a2a'; x.fillRect(dx + 1, dy + 3, 1, 3); x.fillStyle = cor; x.fillRect(dx, dy + 1, 3, 3); x.fillStyle = '#ffe36a'; x.fillRect(dx + 1, dy + 2, 1, 1); }
-    else { x.fillStyle = '#5a3a1e'; x.fillRect(dx + 4, dy + 9, 4, 6); x.fillStyle = '#1f4f22'; x.fillRect(dx, dy + 2, 12, 9); x.fillStyle = '#2a6a2a'; x.fillRect(dx + 1, dy, 10, 8); x.fillStyle = '#3a8a36'; x.fillRect(dx + 3, dy + 1, 4, 3); }
-  }
-  return c;
-}
 
 export function criarRender(canvas) {
   const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
   const chunks = new Map();
   const R = { w: canvas.width, h: canvas.height, t: 0, camX: 0, camY: 0 };
-  const chunk = (cx, cy) => { const k = `${cx},${cy}`; let c = chunks.get(k); if (!c) { c = pedaco(cx, cy); chunks.set(k, c); if (chunks.size > 80) chunks.delete(chunks.keys().next().value); } return c; };
+  let temaAtual = 'rift';
+  const chunk = (cx, cy) => { const k = `${cx},${cy}`; let c = chunks.get(k); if (!c) { c = pedaco(temaAtual, cx, cy); chunks.set(k, c); if (chunks.size > 80) chunks.delete(chunks.keys().next().value); } return c; };
   const desenhar = (nome, x, y, ox = 0, oy = 0, branco = false, esc = 1) => {
     const s = branco ? spriteBranco(nome) : sprite(nome); if (!s) return;
     const w = s.width * esc; const h = s.height * esc;
@@ -56,6 +30,7 @@ export function criarRender(canvas) {
   function quadro(S, opc = {}) {
     const { w, h } = R; const P = S.p;
     R.t += 1 / 60;
+    if (S.R.tema !== temaAtual) { temaAtual = S.R.tema; chunks.clear(); }
     let sx = 0; let sy = 0; if (S.shake > 0) { sx = Math.round((Math.random() - 0.5) * 4 * Math.min(1, S.shake * 3)); sy = Math.round((Math.random() - 0.5) * 4 * Math.min(1, S.shake * 3)); }
     const camX = Math.round(P.x - w / 2) + sx; const camY = Math.round(P.y - h / 2) + sy;
     R.camX = camX; R.camY = camY;
@@ -75,6 +50,12 @@ export function criarRender(canvas) {
       if (r.t > r.d * 0.5) { ctx.strokeStyle = 'rgba(255,240,120,.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(Math.round(r.x), Math.round(r.y), r.r * (1 - (r.t - r.d * 0.5) / (r.d * 0.5)), 0, 6.2832); ctx.stroke(); ctx.beginPath(); ctx.arc(Math.round(r.x), Math.round(r.y), r.r, 0, 6.2832); ctx.stroke(); }
       else { ctx.fillStyle = '#fff6b0'; ctx.fillRect(Math.round(r.x) - 2, Math.round(r.y) - 120, 5, 120); ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(r.x) - 1, Math.round(r.y) - 120, 3, 120); ctx.fillStyle = 'rgba(255,240,120,.45)'; ctx.beginPath(); ctx.arc(Math.round(r.x), Math.round(r.y), r.r, 0, 6.2832); ctx.fill(); }
     }
+    // ataques avisados no chão
+    for (const m of S.marcas) {
+      const k = 1 - m.t / m.d; ctx.fillStyle = `rgba(255,60,60,${0.12 + 0.2 * k})`; ctx.beginPath(); ctx.arc(Math.round(m.x), Math.round(m.y), m.r, 0, 6.2832); ctx.fill();
+      ctx.strokeStyle = `rgba(255,120,120,${0.6 + 0.4 * Math.sin(R.t * 18)})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(Math.round(m.x), Math.round(m.y), m.r, 0, 6.2832); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,90,90,.45)'; ctx.beginPath(); ctx.arc(Math.round(m.x), Math.round(m.y), m.r * k, 0, 6.2832); ctx.fill();
+    }
     // gemas e coletáveis
     for (const g of S.gemas) { if (g.x < camX - 10 || g.x > camX + w + 10 || g.y < camY - 10 || g.y > camY + h + 10) continue; desenhar(g.v >= 10 ? 'gema3' : g.v >= 3 ? 'gema2' : 'gema1', g.x, g.y + 3, 0, Math.round(Math.sin(R.t * 5 + g.x) * 1)); }
     for (const it of S.itens) desenhar(it.tipo, it.x, it.y + 4, 0, Math.round(Math.sin(R.t * 4 + it.x) * 1.5));
@@ -93,7 +74,7 @@ export function criarRender(canvas) {
         desenhar(S.campeao, P.x, P.y + 7, 0, -bob, P.flash > 0);
         continue;
       }
-      const nome = e.tipo; const sombraW = Math.round(e.raio * 2.2);
+      const nome = e.chefe ? (CHEFES[e.tipo].sprite || e.tipo) : e.tipo === 'minion' ? S.R.soldado : (S.R.matiz ? `${e.tipo}@${S.reino}` : e.tipo); const sombraW = Math.round(e.raio * 2.2);
       ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(Math.round(e.x - sombraW / 2), Math.round(e.y + e.raio * 0.5), sombraW, 3);
       const bob = Math.round(Math.abs(Math.sin(R.t * 9 + e.id)) * (e.chefe ? 1 : 2));
       if (e.estado === 1) { ctx.strokeStyle = 'rgba(255,60,60,.6)'; ctx.beginPath(); ctx.moveTo(Math.round(e.x), Math.round(e.y)); ctx.lineTo(Math.round(e.x + e.dx * 70), Math.round(e.y + e.dy * 70)); ctx.stroke(); }
@@ -123,9 +104,25 @@ export function criarRender(canvas) {
     // números de dano
     for (const t of S.textos) num(t.v, t.x - String(t.v).length * 2, t.y, t.jogador ? '#ff5a5a' : t.crit ? '#ffd24a' : '#ffffff', t.crit ? 2 : 1);
     ctx.restore();
+    clima(S);
     // vinheta de dano
     if (P.flash > 0) { ctx.fillStyle = `rgba(255,40,40,${Math.min(0.35, P.flash * 2)})`; ctx.fillRect(0, 0, w, h); }
     hud(S);
+  }
+
+  function clima(S) {
+    const tipo = S.R.clima; if (!tipo) return; const { w, h } = R; const T = R.t;
+    const cfg = { petalas: [34, '#ffb3d1', 9, 14, 2, 2], folhas: [26, '#c9e46a', 7, 18, 2, 2], brasas: [40, '#ff8a3a', 3, -26, 1, 1], areia: [46, '#f4dc98', 70, 5, 4, 1], neve: [60, '#ffffff', 5, 24, 1, 1] }[tipo];
+    if (!cfg) return; const [n, cor, vx, vy, pw, ph] = cfg;
+    for (let i = 0; i < n; i++) {
+      const sx = hash(i, 11); const sy = hash(i, 23); const sp = 0.6 + hash(i, 37) * 0.8;
+      let px = (sx * w + T * vx * sp + Math.sin(T * 1.3 + i) * (tipo === 'petalas' || tipo === 'folhas' ? 6 : 1) - R.camX * 0.25) % w; let py = (sy * h + T * vy * sp - R.camY * 0.25) % h;
+      if (px < 0) px += w; if (py < 0) py += h;
+      ctx.fillStyle = tipo === 'brasas' && i % 3 === 0 ? '#ffd24a' : cor; ctx.globalAlpha = tipo === 'areia' ? 0.5 : 0.85; ctx.fillRect(Math.round(px), Math.round(py), tipo === 'areia' ? 5 : pw, ph);
+    }
+    ctx.globalAlpha = 1;
+    if (tipo === 'brasas' || tipo === 'areia') { ctx.fillStyle = tipo === 'brasas' ? 'rgba(120,20,10,.10)' : 'rgba(240,200,110,.08)'; ctx.fillRect(0, 0, w, h); }
+    if (tipo === 'neve') { ctx.fillStyle = 'rgba(150,200,255,.07)'; ctx.fillRect(0, 0, w, h); }
   }
 
   function hud(S) {
@@ -134,7 +131,8 @@ export function criarRender(canvas) {
     texto(`NV ${S.nivel}`, 4, 8, '#ffe36a');
     barra(4, 20, 52, 5, P.hp / P.hpMax, P.hp / P.hpMax < 0.3 ? '#ff5a5a' : '#e04545');
     texto(`${Math.ceil(P.hp)}/${P.hpMax}`, 60, 19, '#fff');
-    texto(tempoTxt(S.t), w / 2, 8, S.t >= TEMPO_BARAO - 30 && !S.chefes.barao ? '#ff6a6a' : '#fff', 'center');
+    const idFinal = S.R.chefes.find((id) => CHEFES[id].final); const falta = S.R.tempo - S.t;
+    texto(tempoTxt(S.t), w / 2, 8, falta < 30 && !S.chefes[idFinal] ? '#ff6a6a' : '#fff', 'center');
     texto(`${S.abates}`, w - 4, 8, '#ffffff', 'right'); texto(`${S.ouro}`, w - 4, 19, '#f5c82e', 'right');
     // armas e itens
     let x = 4; const y = h - 17;
@@ -146,7 +144,7 @@ export function criarRender(canvas) {
     // chefe
     const b = S.chefeVivo;
     if (b && b.hp > 0) { const bw = Math.min(160, w - 40); barra(Math.round(w / 2 - bw / 2), 34, bw, 6, b.hp / b.hpMax, '#b45cff'); texto(CHEFES[b.tipo].nome.toUpperCase(), w / 2, 42, '#e9d5ff', 'center'); }
-    if (!S.chefes.barao) { const falta = TEMPO_BARAO - S.t; if (falta > 0 && falta < 60) texto(`BARÃO EM ${Math.ceil(falta)}s`, w / 2, 20, '#ff9a9a', 'center'); }
+    if (!S.chefes[idFinal]) { if (falta > 0 && falta < 60) texto(`${CHEFES[idFinal].nome.split(',')[0].toUpperCase()} EM ${Math.ceil(falta)}s`, w / 2, 20, '#ff9a9a', 'center'); }
   }
 
   return { quadro, resize(lw, lh) { canvas.width = lw; canvas.height = lh; R.w = lw; R.h = lh; ctx.imageSmoothingEnabled = false; }, get w() { return R.w; }, get h() { return R.h; }, ctx };

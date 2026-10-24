@@ -1,5 +1,5 @@
 // Rift Survivors: simulação. Sem DOM: recebe o estado e o dt e muda o estado (testável no Node).
-import { CAMPEOES, ARMAS, ITENS, NIVEL_MAX_ITEM, MAX_ARMAS, MAX_ITENS, MAX_INIMIGOS, INIMIGOS, CHEFES, MISTURA, xpProximo, escalaVida, escalaDano, taxaSpawn, RARIDADES, MALDICOES, MAX_MALDICOES, REROLAGENS, BANIMENTOS, COMBOS, JANELA_COMBO, EVOLUCOES } from './data.js';
+import { CAMPEOES, ARMAS, ITENS, NIVEL_MAX_ITEM, MAX_ARMAS, MAX_ITENS, MAX_INIMIGOS, INIMIGOS, CHEFES, MISTURA, xpProximo, escalaVida, escalaDano, taxaSpawn, REINOS, RARIDADES, MALDICOES, MAX_MALDICOES, REROLAGENS, BANIMENTOS, COMBOS, JANELA_COMBO, EVOLUCOES } from './data.js';
 
 export function criarRng(semente) {
   let a = semente >>> 0;
@@ -8,10 +8,11 @@ export function criarRng(semente) {
 const TAU = Math.PI * 2;
 const dist2 = (a, b) => (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
 
-export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), vista = { w: 384, h: 216 } } = {}) {
+export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), vista = { w: 384, h: 216 }, reino = 'rift' } = {}) {
   const c = CAMPEOES.find((x) => x.id === campeao) || CAMPEOES[0];
   const mel = meta.melhorias || {};
   const S = {
+    reino: REINOS[reino] ? reino : 'rift', R: REINOS[reino] || REINOS.rift, marcas: [],
     rng: criarRng(semente), t: 0, estado: 'jogando', campeao: c.id, vista, meta: mel,
     p: { x: 0, y: 0, dx: 1, dy: 0, mx: 0, my: 0, hp: 1, hpMax: 1, raio: 5, inv: 0, flash: 0, andando: false },
     inim: [], proj: [], eproj: [], gemas: [], itens: [], textos: [], efeitos: [], zonas: [], raios: [],
@@ -142,8 +143,8 @@ function sortearTipo(S) {
 }
 export function criarInimigo(S, tipo, x, y, chefe = false) {
   const d = chefe ? CHEFES[tipo] : INIMIGOS[tipo];
-  const hp = d.hp * (chefe ? 1 + S.t / 900 * 0.1 : escalaVida(S.t) * S.cm.inimVida);
-  const e = { id: S.proxId++, tipo, chefe, x, y, hp, hpMax: hp, vel: d.vel * (chefe ? 1 : S.cm.inimVel), dano: d.dano * escalaDano(S.t), raio: d.raio, xp: d.xp, ia: d.ia, cd: (d.cd || 3) * (0.5 + S.rng()), flash: 0, lento: 0, kx: 0, ky: 0, estado: 0, tEstado: 0, golpe: {}, elite: !!d.elite, face: 1 };
+  const hp = d.hp * (chefe ? (1 + (S.R.dif - 1) * 0.4) * (1 + S.t / 900 * 0.1) : S.R.dif * escalaVida(S.t) * S.cm.inimVida);
+  const e = { id: S.proxId++, tipo, chefe, x, y, hp, hpMax: hp, vel: d.vel * (chefe ? 1 : S.cm.inimVel), dano: d.dano * escalaDano(S.t) * (1 + (S.R.dif - 1) * 0.6), kit: d.kit, passo: 0, f2: false, raio: d.raio, xp: d.xp, ia: d.ia, cd: (d.cd || 3) * (0.5 + S.rng()), flash: 0, lento: 0, kx: 0, ky: 0, estado: 0, tEstado: 0, golpe: {}, elite: !!d.elite, face: 1 };
   S.inim.push(e); return e;
 }
 function aoRedor(S, folga = 24) {
@@ -168,7 +169,8 @@ function diretor(S, dt) {
     S.evt.push({ tipo: 'onda' });
   }
   // chefes
-  for (const [id, d] of Object.entries(CHEFES)) {
+  for (const id of S.R.chefes) {
+    const d = CHEFES[id];
     if (S.t >= d.t && !S.chefes[id]) {
       S.chefes[id] = true; const pos = aoRedor(S, 40);
       S.chefeVivo = criarInimigo(S, id, pos.x, pos.y, true);
@@ -207,7 +209,7 @@ function matar(S, e) {
     S.itens.push({ x: e.x, y: e.y, tipo: 'bau' });
     S.ouro += Math.round(CHEFES[e.tipo].ouro * (1 + S.cm.ouro));
     S.shake = 0.5; S.chefeVivo = null;
-    if (e.tipo === 'barao') { S.estado = 'vitoria'; S.evt.push({ tipo: 'vitoria' }); }
+    if (CHEFES[e.tipo].final) { S.estado = 'vitoria'; S.evt.push({ tipo: 'vitoria' }); }
   } else if (e.elite) { S.itens.push({ x: e.x, y: e.y, tipo: r < 0.6 ? 'bau' : 'vida' }); S.ouro += 3; }
   else if (r < 0.012) S.itens.push({ x: e.x + 3, y: e.y, tipo: 'vida' });
   else if (r < 0.016) S.itens.push({ x: e.x - 3, y: e.y, tipo: 'ima' });
@@ -338,10 +340,37 @@ function atualizarProjeteis(S, dt) {
     if (z.tick <= 0) z.tick = 0.3;
     if (z.t <= 0) { for (const e of S.inim.slice()) if ((e.x - z.x) ** 2 + (e.y - z.y) ** 2 < (z.r * 1.4 + e.raio) ** 2) ferir(S, e, z.dano * 6); S.efeitos.push({ x: z.x, y: z.y, t: 0.3, d: 0.3, tipo: 'explosao', r: z.r * 1.4 }); S.zonas.splice(i, 1); }
   }
+  for (let i = S.marcas.length - 1; i >= 0; i--) {
+    const m = S.marcas[i]; m.t -= dt; if (m.ancora) { if (m.ancora.hp <= 0) { S.marcas.splice(i, 1); continue; } m.x = m.ancora.x; m.y = m.ancora.y; }
+    if (m.t <= 0) {
+      if ((m.x - S.p.x) ** 2 + (m.y - S.p.y) ** 2 < (m.r + S.p.raio) ** 2) danoNoJogador(S, m.dano);
+      S.efeitos.push({ x: m.x, y: m.y, t: 0.3, d: 0.3, tipo: 'explosao', r: m.r }); S.shake = Math.max(S.shake, 0.1); S.marcas.splice(i, 1);
+    }
+  }
   for (let i = S.raios.length - 1; i >= 0; i--) {
     const r = S.raios[i]; r.t -= dt;
     if (!r.feito && r.t <= r.d * 0.5) { r.feito = true; for (const e of S.inim.slice()) if ((e.x - r.x) ** 2 + (e.y - r.y) ** 2 < (r.r + e.raio) ** 2) ferir(S, e, r.dano); S.shake = Math.max(S.shake, 0.06); }
     if (r.t <= 0) S.raios.splice(i, 1);
+  }
+}
+
+// Ações dos chefes. 'marcas' e 'onda' avisam no chão antes de machucar (t = tempo de aviso).
+function acaoChefe(S, e, acao, vx, vy) {
+  const P = S.p;
+  if (acao === 'investida') { e.estado = 1; e.tEstado = 0.5; e.dx = vx; e.dy = vy; }
+  else if (acao === 'anel') {
+    const n = e.f2 ? 16 : 12; const base = S.rng() * TAU;
+    for (let i = 0; i < n; i++) { const a = base + (i / n) * TAU; S.eproj.push({ x: e.x, y: e.y, vx: Math.cos(a) * 62, vy: Math.sin(a) * 62, dano: e.dano * 0.55, raio: 4, vida: 4.5 }); }
+    S.evt.push({ tipo: 'cuspe' });
+  } else if (acao === 'marcas') {
+    const n = e.f2 ? 7 : 5;
+    for (let i = 0; i < n; i++) { const a = S.rng() * TAU; const r = i === 0 ? 0 : 14 + S.rng() * 46; S.marcas.push({ x: P.x + Math.cos(a) * r, y: P.y + Math.sin(a) * r, r: 20, t: 1.1 + i * 0.07, d: 1.1 + i * 0.07, dano: e.dano * 0.9 }); }
+  } else if (acao === 'onda') {
+    S.marcas.push({ x: e.x, y: e.y, r: e.f2 ? 96 : 80, t: 1.2, d: 1.2, dano: e.dano, ancora: e });
+    S.evt.push({ tipo: 'onda_chefe' });
+  } else if (acao === 'invocar') {
+    for (let i = 0; i < 5 && S.inim.length < MAX_INIMIGOS + 40; i++) { const a = S.rng() * TAU; criarInimigo(S, i % 3 === 0 ? 'lobo' : 'minion', e.x + Math.cos(a) * 26, e.y + Math.sin(a) * 26); }
+    S.evt.push({ tipo: 'cuspe' });
   }
 }
 
@@ -360,10 +389,14 @@ function atualizarInimigos(S, dt) {
     if (e.ia === 'atirar') {
       if (d < INIMIGOS.mago.alcance) { v = d < 55 ? -v * 0.6 : 0; }
       if (e.cd <= 0 && d < 140) { e.cd = INIMIGOS.mago.cd; S.eproj.push({ x: e.x, y: e.y, vx: vx * 70, vy: vy * 70, dano: e.dano, raio: 3, vida: 2.4 }); }
-    } else if (e.ia === 'investir') {
-      if (e.estado === 0 && e.cd <= 0 && d < 150) { e.estado = 1; e.tEstado = 0.45; e.dx = vx; e.dy = vy; } // mira
+    } else if (e.ia === 'investir' || e.ia === 'chefe') {
+      if (e.ia === 'chefe') {
+        if (!e.f2 && e.hp < e.hpMax * 0.5) { e.f2 = true; e.vel *= 1.25; S.evt.push({ tipo: 'fase2', id: e.tipo }); S.shake = 0.5; }
+        if (e.estado === 0 && e.cd <= 0) { const acao = e.kit[e.passo++ % e.kit.length]; e.cd = CHEFES[e.tipo].cd * (e.f2 ? 0.7 : 1); acaoChefe(S, e, acao, vx, vy); }
+      }
+      if (e.ia === 'investir' && e.estado === 0 && e.cd <= 0 && d < 150) { e.estado = 1; e.tEstado = 0.45; e.dx = vx; e.dy = vy; } // mira
       else if (e.estado === 1) { v = 0; if (e.tEstado <= 0) { e.estado = 2; e.tEstado = e.chefe ? 0.8 : 0.5; } }
-      else if (e.estado === 2) { vx = e.dx; vy = e.dy; v = e.vel * (e.chefe ? 7 : 5); if (e.tEstado <= 0) { e.estado = 0; e.cd = (e.chefe ? CHEFES[e.tipo].cd : INIMIGOS[e.tipo].cd); } }
+      else if (e.estado === 2) { vx = e.dx; vy = e.dy; v = e.vel * (e.chefe ? 7 : 5); if (e.tEstado <= 0) { e.estado = 0; e.cd = (e.chefe ? CHEFES[e.tipo].cd * (e.f2 ? 0.7 : 1) : INIMIGOS[e.tipo].cd); } }
     } else if (e.ia === 'cuspir' || e.ia === 'barao') {
       if (e.cd <= 0) {
         e.cd = CHEFES[e.tipo].cd; const n = e.ia === 'barao' ? 10 : 8; const base = S.rng() * TAU;
@@ -434,7 +467,7 @@ export function atualizar(S, dt, entrada = { x: 0, y: 0 }) {
 
 // Essência Azul ganha na partida (moeda da loja).
 export function essenciaGanha(S) {
-  return Math.floor((S.abates * 0.35 + S.ouro * 0.8 + S.t / 12 + (S.estado === 'vitoria' ? 150 : 0)) * (1 + S.maldicoes.length * 0.1));
+  return Math.floor((S.abates * 0.35 + S.ouro * 0.8 + S.t / 12 + (S.estado === 'vitoria' ? 150 : 0)) * (1 + S.maldicoes.length * 0.1) * S.R.dif);
 }
 export const nomeArma = (id) => ARMAS[id]?.nome || id;
 export const campeaoPorId = (id) => CAMPEOES.find((c) => c.id === id);

@@ -1,7 +1,7 @@
 // Rift Survivors: dados e simulação (sem navegador).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CAMPEOES, ARMAS, ITENS, INIMIGOS, CHEFES, MISTURA, MELHORIAS, TEMPO_BARAO, MAX_INIMIGOS, MAX_ARMAS, xpProximo, EVOLUCOES, MALDICOES, RARIDADES, COMBOS } from '../jogos/survivors/js/data.js';
+import { REINOS, ORDEM_REINOS, CAMPEOES, ARMAS, ITENS, INIMIGOS, CHEFES, MISTURA, MELHORIAS, TEMPO_BARAO, MAX_INIMIGOS, MAX_ARMAS, xpProximo, EVOLUCOES, MALDICOES, RARIDADES, COMBOS } from '../jogos/survivors/js/data.js';
 import { criarJogo, atualizar, escolher, gerarOpcoes, criarInimigo, ferir, essenciaGanha, rolar, banir, statsDe } from '../jogos/survivors/js/game.js';
 import { GAMES, gameById } from '../shared/config.js';
 
@@ -135,4 +135,49 @@ test('combo de abates dá ouro e avisa nos marcos', () => {
   const S = criarJogo({ campeao: 'garen', semente: 6 }); S.evt.length = 0;
   for (let i = 0; i < COMBOS[0].n; i++) { const e = criarInimigo(S, 'minion', 300, 300); ferir(S, e, 1e9); }
   assert.ok(S.evt.some((x) => x.tipo === 'combo' && x.n === COMBOS[0].n)); assert.ok(S.ouro >= COMBOS[0].ouro);
+});
+
+test('reinos: dados coerentes, cadeia de liberação e chefes com horário e kit', () => {
+  assert.deepEqual(ORDEM_REINOS.filter((id) => !REINOS[id]), []);
+  for (const id of ORDEM_REINOS) {
+    const R = REINOS[id]; assert.ok(R.tempo >= 540 && R.dif >= 1, id);
+    const finais = R.chefes.filter((c) => CHEFES[c].final); assert.equal(finais.length, 1, `${id}: um chefe final`);
+    assert.equal(CHEFES[finais[0]].t, R.tempo, `${id}: o chefe final aparece no fim do tempo`);
+    for (const c of R.chefes) { assert.ok(CHEFES[c].t <= R.tempo); if (CHEFES[c].ia === 'chefe') assert.ok(CHEFES[c].kit.length >= 2 && CHEFES[c].sprite, c); }
+    if (R.abre) assert.ok(ORDEM_REINOS.indexOf(R.abre) < ORDEM_REINOS.indexOf(id), `${id}: abre depois de ${R.abre}`);
+  }
+});
+
+test('cada reino roda do início ao chefe final; vencer o chefe final dá a vitória', () => {
+  for (const id of ORDEM_REINOS) {
+    const S = criarJogo({ campeao: 'garen', semente: 5, reino: id }); S.p.inv = 9999; S.p.hp = S.p.hpMax = 99999;
+    rodar(S, 40, () => ({ x: 0, y: 0 })); assert.ok(S.inim.length > 0 && Number.isFinite(S.p.hp), id);
+    const R = REINOS[id]; S.t = CHEFES[R.chefes[0]].t - 0.01; rodar(S, 1, () => ({ x: 0, y: 0 }));
+    assert.ok(S.chefes[R.chefes[0]], `${id}: chefe menor`);
+    const fid = R.chefes.find((c) => CHEFES[c].final); S.t = R.tempo - 0.01; S.onda = 99; rodar(S, 1, () => ({ x: 0, y: 0 }));
+    const fb = S.inim.find((e) => e.tipo === fid); assert.ok(fb, `${id}: chefe final`);
+    ferir(S, fb, 1e12); assert.equal(S.estado, 'vitoria', id);
+  }
+});
+
+test('chefes de kit: ações geram ataque avisado e projéteis; fase 2 aos 50%', () => {
+  const S = criarJogo({ campeao: 'garen', semente: 12, reino: 'noxus' }); S.p.inv = 9999; S.p.hp = S.p.hpMax = 99999;
+  S.t = 600 - 0.01; S.onda = 99; rodar(S, 0.2, () => ({ x: 0, y: 0 }));
+  const b = S.inim.find((e) => e.tipo === 'darius'); b.x = S.p.x + 40; b.y = S.p.y; let vistoMarca = false; let fase2 = false;
+  b.hp = b.hpMax * 0.4;
+  for (let i = 0; i < 60 * 12; i++) { atualizar(S, 1 / 60, { x: 0, y: 0 }); if (S.marcas.length) vistoMarca = true; if (S.evt.some((e) => e.tipo === 'fase2')) fase2 = true; S.evt.length = 0; }
+  assert.ok(vistoMarca, 'marcas no chão'); assert.ok(b.f2 || fase2, 'fase 2');
+});
+
+test('reino mais difícil tem inimigos mais fortes', () => {
+  const a = criarJogo({ campeao: 'garen', semente: 1, reino: 'ionia' }); const b = criarJogo({ campeao: 'garen', semente: 1, reino: 'freljord' });
+  assert.ok(criarInimigo(b, 'minion', 90, 0).hpMax > criarInimigo(a, 'minion', 90, 0).hpMax);
+});
+
+test('liberação dos reinos: Rift e Ionia abertos; os outros exigem vencer o anterior', async () => {
+  const { reinoLiberado } = await import('../jogos/survivors/js/meta.js');
+  const m = { reinos: {} };
+  assert.ok(reinoLiberado(m, 'rift') && reinoLiberado(m, 'ionia')); assert.equal(reinoLiberado(m, 'demacia'), false);
+  m.reinos.ionia = { vitorias: 1 }; assert.ok(reinoLiberado(m, 'demacia')); assert.equal(reinoLiberado(m, 'noxus'), false);
+  assert.equal(reinoLiberado(m, 'inexistente'), false);
 });
