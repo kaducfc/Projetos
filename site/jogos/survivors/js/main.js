@@ -1,4 +1,4 @@
-// Rift Survivors: sobreviva às hordas de Runeterra, evolua suas habilidades e derrote o Barão Nashor.
+// Rift Survivors: sobreviva às hordas de Runeterra, evolua suas habilidades e derrote os chefes de cada região.
 // Enquanto o jogo é "oculto" (gameById('survivors').soAdmin), só administradores e convidados conseguem jogar.
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
@@ -107,8 +107,8 @@ function telaMenu() {
   tela(`<div class="sv-menu">
     <img class="sv-heroi" alt="" src="${arteUrl('ahri/arte.png')}" />
     <p class="sv-eyebrow">Rift Arcade · em teste</p>
-    <h1 class="sv-titulo"><span>RIFT</span><span>SURVIVORS</span></h1>
-    <p class="sv-sub">Sobreviva às hordas, evolua suas habilidades e derrote o Barão Nashor.</p>
+    <h1 class="sv-titulo"><img class="sv-logo" alt="Rift Survivors" src="${arteUrl('logo.png')}" /></h1>
+    <p class="sv-sub">Sobreviva às hordas, evolua suas habilidades e derrote os chefes de cada região de Runeterra.</p>
     <div class="sv-botoes">
       <button class="sv-btn grande" data-a="jogar">Jogar</button>
       <button class="sv-btn" data-a="campeoes">Campeões</button>
@@ -128,7 +128,7 @@ function telaComo() {
       <li><b>Itens:</b> até ${6} habilidades e ${6} itens, cada um até o nível ${NIVEL_MAX_ITEM}.</li>
       <li><b>Baús:</b> chefes e monstros grandes soltam baús que dão uma melhoria extra.</li>
       <li><b>Reinos:</b> Ixtal, Ionia, Demacia, Noxus, Shurima e Freljord, cada um com cenário, monstros e chefes próprios. Vença um reino para abrir o próximo.</li>
-      <li><b>Chefes:</b> um chefe menor aos 5:00 e o chefe final no fim do tempo (em Ixtal, o <b>Barão Nashor aos ${tempoTxt(TEMPO_BARAO)}</b>). Fuja das áreas vermelhas no chão: elas avisam o golpe. Derrote o chefe final para vencer!</li>
+      <li><b>Chefes:</b> um chefe menor aos 5:00 e o chefe final no fim do tempo (em Ixtal, a <b>Serpente de Jade aos ${tempoTxt(TEMPO_BARAO)}</b>). Fuja das áreas vermelhas no chão: elas avisam o golpe. Derrote o chefe final para vencer!</li>
       <li><b>Pausa:</b> Esc ou P.</li>
     </ul><div class="sv-botoes"><button class="sv-btn" data-a="menu">Voltar</button></div></div>`);
 }

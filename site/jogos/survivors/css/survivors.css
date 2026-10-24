@@ -18,6 +18,7 @@
 @keyframes sv-flutua { 50% { transform: translateY(-8px); } }
 .sv-eyebrow { margin: 0; font-size: 9px; color: var(--mudo); letter-spacing: .12em; text-transform: uppercase; }
 .sv-titulo { margin: 0; display: grid; gap: 4px; line-height: 1; text-shadow: 0 4px 0 #14101e, 0 0 24px rgba(180, 92, 255, .5); }
+.sv-logo { width: min(340px, 82vw); height: auto; image-rendering: pixelated; filter: drop-shadow(0 4px 0 #14101e) drop-shadow(0 0 18px rgba(180, 92, 255, .45)); animation: sv-flutua 4s ease-in-out infinite; }
 .sv-titulo span:first-child { font-size: clamp(34px, 8vw, 54px); color: var(--ouro); }
 .sv-titulo span:last-child { font-size: clamp(20px, 5vw, 32px); color: #fff; }
 .sv-sub { margin: 0; font-family: Inter, system-ui, sans-serif; font-size: 13px; line-height: 1.5; color: var(--mudo); max-width: 420px; }
