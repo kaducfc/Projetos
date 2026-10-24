@@ -16,6 +16,8 @@ function glow(cor, r) { // bolha de luz (gradiente radial) para brilho aditivo
 }
 
 // Luzes dos objetos pequenos por reino: índice no atlas -> [cor, raio, força, altura relativa]. Reinos sem entrada usam as luzes antigas.
+// Luzes dos objetos grandes por reino (mesmo formato).
+const LUZ_GRANDES = { noxus: { 2: ['#ff8a3a', 20, 0.6, 0.93], 4: ['#ff6a2a', 10, 0.3, 0.3], 5: ['#ff6a2a', 24, 0.45, 0.45] } };
 const LUZ_PEQ = { noxus: { 7: ['#ff6a2a', 9, 0.35, 0.5], 9: ['#ff6a2a', 8, 0.3, 0.4], 12: ['#ff6a2a', 9, 0.35, 0.4], 14: ['#ff8a3a', 17, 0.6, 0.65], 11: ['#ff6a2a', 8, 0.3, 0.4] } };
 export function criarRender(canvas) {
   const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
@@ -108,6 +110,7 @@ export function criarRender(canvas) {
         ctx.globalAlpha = 1;
         if (!e.grande && LUZ_PEQ[S.R.tema]) { const l = LUZ_PEQ[S.R.tema][e.i]; if (l) luz(l[0], bx, by - ph * l[3], l[1], l[2]); }
         else if (!e.grande) { if (e.i === 20) luz('#ffb347', bx, by - ph * 0.55, 14, 0.55); else if (e.i === 14) luz('#58a8ff', bx, by - ph * 0.5, 16, 0.45); else if (e.i === 21) luz('#ffe36a', bx, by - ph * 0.7, 13, 0.55); }
+        else if (LUZ_GRANDES[S.R.tema]) { const l = LUZ_GRANDES[S.R.tema][e.i]; if (l) luz(l[0], bx, by - ph * l[3], l[1], l[2]); }
         else if (e.i === 4) luz('#58a8ff', bx, by - ph * 0.8, 22, 0.5); else if (e.i === 5) luz('#4aa3ff', bx, by - ph * 0.6, 26, 0.35); else if (e.i === 2) luz('#58e8ff', bx, by - ph * 0.8, 12, 0.5);
         continue;
       }
