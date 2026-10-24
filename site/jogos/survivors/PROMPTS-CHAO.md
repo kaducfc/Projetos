@@ -1,6 +1,6 @@
 # Chão dos cenários: prompts para gerar a textura de cada reino (copie e cole cada bloco inteiro no ChatGPT)
 
-Cada prompt gera UMA imagem com 6 quadrados de chão (1536 x 1024): base, escuro, claro, com detalhes, desgastado e trilha. Eu recorto, emendo as bordas para repetir sem emenda visível e aplico no mapa. Não precisa anexar nada, mas se quiser anexe o kit do Garen só para o estilo do pixel. Se o ChatGPT devolver o chão com bordas escuras, vinheta ou objetos, peça de novo; o chão precisa ser plano e de baixo contraste.
+Cada prompt gera UMA imagem com 6 quadrados de chão (1536 x 1024): base, escuro, claro, com detalhes, desgastado e uma variação extra. Eu recorto, emendo as bordas para repetir sem emenda visível e aplico no mapa. Não precisa anexar nada, mas se quiser anexe o kit do Garen só para o estilo do pixel. Se o ChatGPT devolver o chão com bordas escuras, vinheta ou objetos, peça de novo; o chão precisa ser plano e de baixo contraste.
 
 Nomes sugeridos: `chao-ixtal.png`, `chao-ionia.png`, `chao-demacia.png`, `chao-noxus.png`, `chao-shurima.png`, `chao-freljord.png`.
 
@@ -19,7 +19,7 @@ TILE 2, DARK: the same ground but darker and denser, as a shaded patch, soft blo
 TILE 3, LIGHT: the same ground but lighter, as a sunlit patch, soft blobby shapes.
 TILE 4, DETAILS: the base ground with a few tiny scattered details (fallen leaves, tiny mushrooms, small fern fronds, a few roots, tiny pebbles), small and sparse, never bigger than 40 px.
 TILE 5, WORN: the base ground worn and bare in some places (dark brown damp earth showing through the grass and a few flat mossy stones), soft irregular patches.
-TILE 6, TRAIL: a horizontal path or trail about 200 px wide running across the middle of the tile from the left edge to the right edge (packed brown-ochre dirt (#8A7A52, #9C8C62, #76683F) with a few pebbles and leaf litter), with irregular edges blending into the base ground, and the SAME vertical position at the left and right edges so it tiles horizontally.
+TILE 6, EXTRA: another variation of the base ground with a different arrangement of the same small plants and details, a little denser, same palette, no path and no bare strip.
 
 GROUND: dense jungle floor of Ixtal (League of Legends): deep green short grass mixed with moss, tiny ferns, fallen leaves and dark damp earth patches.
 
@@ -43,7 +43,7 @@ TILE 2, DARK: the same ground but darker and denser, as a shaded patch, soft blo
 TILE 3, LIGHT: the same ground but lighter, as a sunlit patch, soft blobby shapes.
 TILE 4, DETAILS: the base ground with a few tiny scattered details (scattered pale pink cherry petals, tiny white clover flowers, tiny cyan spirit sparkles (hard-edged pixels)), small and sparse, never bigger than 40 px.
 TILE 5, WORN: the base ground worn and bare in some places (bare soft earth and pale stone dust showing between the grass), soft irregular patches.
-TILE 6, TRAIL: a horizontal path or trail about 200 px wide running across the middle of the tile from the left edge to the right edge (a pale grey-green stone-dust path (#A8B8A0, #C0D0B8, #8A9A84) with a few small flat pebbles and petals on it), with irregular edges blending into the base ground, and the SAME vertical position at the left and right edges so it tiles horizontally.
+TILE 6, EXTRA: another variation of the base ground with a different arrangement of the same small plants and details, a little denser, same palette, no path and no bare strip.
 
 GROUND: serene Ionian spirit-forest floor (League of Legends): soft teal-green grass with clover, fine moss and scattered pale pink cherry petals.
 
@@ -67,7 +67,7 @@ TILE 2, DARK: the same ground but darker and denser, as a shaded patch, soft blo
 TILE 3, LIGHT: the same ground but lighter, as a sunlit patch, soft blobby shapes.
 TILE 4, DETAILS: the base ground with a few tiny scattered details (tiny white daisies, tiny yellow buttercups, tiny clover leaves, a few small pebbles), small and sparse, never bigger than 40 px.
 TILE 5, WORN: the base ground worn and bare in some places (dry yellow-green patches and a bit of bare brown soil), soft irregular patches.
-TILE 6, TRAIL: a horizontal path or trail about 200 px wide running across the middle of the tile from the left edge to the right edge (a pale cobbled road: light grey stone slabs (#AAB0BC, #C8CDD8, #8A90A0) with thin darker cracks between them, partly overgrown at the edges), with irregular edges blending into the base ground, and the SAME vertical position at the left and right edges so it tiles horizontally.
+TILE 6, EXTRA: another variation of the base ground with a different arrangement of the same small plants and details, a little denser, same palette, no path and no bare strip.
 
 GROUND: bright Demacian meadow (League of Legends): short fresh green grass with a clean, well-kept look and tiny clover leaves.
 
@@ -91,7 +91,7 @@ TILE 2, DARK: the same ground but darker and denser, as a shaded patch, soft blo
 TILE 3, LIGHT: the same ground but lighter, as a sunlit patch, soft blobby shapes.
 TILE 4, DETAILS: the base ground with a few tiny scattered details (tiny glowing ember cracks, ash flakes, small bone fragments, tiny dead grass tufts), small and sparse, never bigger than 40 px.
 TILE 5, WORN: the base ground worn and bare in some places (charred black patches and grey ash drifts), soft irregular patches.
-TILE 6, TRAIL: a horizontal path or trail about 200 px wide running across the middle of the tile from the left edge to the right edge (a trodden dark road of packed black-grey earth (#2A2024, #3A2C30, #1A1418) with deep wheel ruts and small stones), with irregular edges blending into the base ground, and the SAME vertical position at the left and right edges so it tiles horizontally.
+TILE 6, EXTRA: another variation of the base ground with a different arrangement of the same small plants and details, a little denser, same palette, no path and no bare strip.
 
 GROUND: scorched Noxian wasteland (League of Legends): dark reddish-brown cracked earth, ash, dead dry grass and glowing orange ember cracks.
 
@@ -115,7 +115,7 @@ TILE 2, DARK: the same ground but darker and denser, as a shaded patch, soft blo
 TILE 3, LIGHT: the same ground but lighter, as a sunlit patch, soft blobby shapes.
 TILE 4, DETAILS: the base ground with a few tiny scattered details (tiny pebbles, small sandstone chips, tiny dry twigs, a few little golden glints), small and sparse, never bigger than 40 px.
 TILE 5, WORN: the base ground worn and bare in some places (dry cracked hard earth showing through the sand), soft irregular patches.
-TILE 6, TRAIL: a horizontal path or trail about 200 px wide running across the middle of the tile from the left edge to the right edge (a packed sandstone road: slightly darker compacted sand (#B89C64, #CDB27A, #9A8250) with faint worn paving blocks and wind ripples), with irregular edges blending into the base ground, and the SAME vertical position at the left and right edges so it tiles horizontally.
+TILE 6, EXTRA: another variation of the base ground with a different arrangement of the same small plants and details, a little denser, same palette, no path and no bare strip.
 
 GROUND: golden Shuriman desert (League of Legends): warm sand with fine wind ripples, dry cracked patches and tiny sandstone chips.
 
@@ -139,7 +139,7 @@ TILE 2, DARK: the same ground but darker and denser, as a shaded patch, soft blo
 TILE 3, LIGHT: the same ground but lighter, as a sunlit patch, soft blobby shapes.
 TILE 4, DETAILS: the base ground with a few tiny scattered details (tiny frozen grass tufts, small ice crystals, tiny pebbles half buried in snow), small and sparse, never bigger than 40 px.
 TILE 5, WORN: the base ground worn and bare in some places (bare grey-blue frozen ground and thin ice cracks showing through the snow), soft irregular patches.
-TILE 6, TRAIL: a horizontal path or trail about 200 px wide running across the middle of the tile from the left edge to the right edge (a trampled path of packed grey-blue snow (#9AB4D0, #B8CEE6, #7E98B8) with faint boot-less ruts and ice patches), with irregular edges blending into the base ground, and the SAME vertical position at the left and right edges so it tiles horizontally.
+TILE 6, EXTRA: another variation of the base ground with a different arrangement of the same small plants and details, a little denser, same palette, no path and no bare strip.
 
 GROUND: frozen Freljord tundra (League of Legends): fresh snow with soft blue-white shading, fine frost sparkle and frozen grass tufts poking through.
 
