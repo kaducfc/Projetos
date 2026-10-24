@@ -97,12 +97,12 @@ export const CHEFES = {
 
 // Reinos (regiões de Runeterra). `dif` multiplica vida e dano dos inimigos; `matiz` pinta os monstros comuns; `soldado` é o sprite do inimigo básico.
 export const REINOS = {
-  rift: { id: 'rift', nome: "Summoner's Rift", sub: 'O campo clássico: Arauto, Dragão e Barão', tempo: TEMPO_BARAO, dif: 1, tema: 'rift', clima: null, chefes: ['arauto', 'dragao', 'barao'], soldado: 'minion', matiz: null, abre: null },
-  ionia: { id: 'ionia', nome: 'Ionia', sub: 'Equilíbrio, magia e espíritos', tempo: 600, dif: 1.0, tema: 'ionia', clima: 'petalas', chefes: ['kodama', 'dragao_ionia'], soldado: 'monge', matiz: { h: 150, s: 0.9, l: 0.08 }, matizMini: { h: -90, s: 1, l: 0.05 }, abre: null },
-  demacia: { id: 'demacia', nome: 'Demacia', sub: 'Honra, muralhas e a Vanguarda', tempo: 600, dif: 1.15, tema: 'demacia', clima: 'folhas', chefes: ['vanguarda', 'galio'], soldado: 'soldado_d', matiz: { h: 205, s: 0.8, l: 0.1 }, matizMini: { h: -50, s: 1, l: 0.05 }, abre: 'ionia' },
-  noxus: { id: 'noxus', nome: 'Noxus', sub: 'Força acima de tudo', tempo: 600, dif: 1.3, tema: 'noxus', clima: 'brasas', chefes: ['carrasco', 'darius'], soldado: 'soldado_n', matiz: { h: -8, s: 1.0, l: -0.08 }, matizMini: { h: 90, s: 1.1, l: -0.05 }, abre: 'demacia' },
-  shurima: { id: 'shurima', nome: 'Shurima', sub: 'Areias, ruínas e o império caído', tempo: 600, dif: 1.45, tema: 'shurima', clima: 'areia', chefes: ['colosso', 'nasus'], soldado: 'mumia', matiz: { h: 38, s: 0.85, l: 0.1 }, matizMini: { h: 140, s: 1, l: 0.08 }, abre: 'noxus' },
-  freljord: { id: 'freljord', nome: 'Freljord', sub: 'Gelo eterno e tribos do norte', tempo: 600, dif: 1.6, tema: 'freljord', clima: 'neve', chefes: ['yeti', 'lissandra'], soldado: 'guerreiro', matiz: { h: 190, s: 0.7, l: 0.18 }, matizMini: { h: -75, s: 0.9, l: 0.12 }, abre: 'shurima' },
+  rift: { id: 'rift', po: '#9a8a6a', nome: "Summoner's Rift", sub: 'O campo clássico: Arauto, Dragão e Barão', tempo: TEMPO_BARAO, dif: 1, tema: 'rift', clima: null, chefes: ['arauto', 'dragao', 'barao'], soldado: 'minion', matiz: null, abre: null },
+  ionia: { id: 'ionia', po: '#ffc0d8', nome: 'Ionia', sub: 'Equilíbrio, magia e espíritos', tempo: 600, dif: 1.0, tema: 'ionia', clima: 'petalas', chefes: ['kodama', 'dragao_ionia'], soldado: 'monge', matiz: { h: 150, s: 0.9, l: 0.08 }, matizMini: { h: -90, s: 1, l: 0.05 }, abre: null },
+  demacia: { id: 'demacia', po: '#e8eef8', nome: 'Demacia', sub: 'Honra, muralhas e a Vanguarda', tempo: 600, dif: 1.15, tema: 'demacia', clima: 'folhas', chefes: ['vanguarda', 'galio'], soldado: 'soldado_d', matiz: { h: 205, s: 0.8, l: 0.1 }, matizMini: { h: -50, s: 1, l: 0.05 }, abre: 'ionia' },
+  noxus: { id: 'noxus', po: '#7a3a3a', nome: 'Noxus', sub: 'Força acima de tudo', tempo: 600, dif: 1.3, tema: 'noxus', clima: 'brasas', chefes: ['carrasco', 'darius'], soldado: 'soldado_n', matiz: { h: -8, s: 1.0, l: -0.08 }, matizMini: { h: 90, s: 1.1, l: -0.05 }, abre: 'demacia' },
+  shurima: { id: 'shurima', po: '#e8c97a', nome: 'Shurima', sub: 'Areias, ruínas e o império caído', tempo: 600, dif: 1.45, tema: 'shurima', clima: 'areia', chefes: ['colosso', 'nasus'], soldado: 'mumia', matiz: { h: 38, s: 0.85, l: 0.1 }, matizMini: { h: 140, s: 1, l: 0.08 }, abre: 'noxus' },
+  freljord: { id: 'freljord', po: '#e8f4ff', nome: 'Freljord', sub: 'Gelo eterno e tribos do norte', tempo: 600, dif: 1.6, tema: 'freljord', clima: 'neve', chefes: ['yeti', 'lissandra'], soldado: 'guerreiro', matiz: { h: 190, s: 0.7, l: 0.18 }, matizMini: { h: -75, s: 0.9, l: 0.12 }, abre: 'shurima' },
 };
 export const ORDEM_REINOS = ['rift', 'ionia', 'demacia', 'noxus', 'shurima', 'freljord'];
 

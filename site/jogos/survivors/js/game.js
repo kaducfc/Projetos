@@ -19,6 +19,7 @@ export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), 
     armas: [], passivas: {}, nivel: 1, xp: 0, xpProx: xpProximo(1), pendentes: 0, opcoes: null,
     abates: 0, ouro: 0, spawnAc: 0, proxId: 1, onda: 1, chefes: {}, chefeVivo: null, revive: !!mel.revive, reviveu: false,
     infinito: false, evt: [], shake: 0, base: c,
+    part: [], fant: [],
     pot: {}, maldicoes: [], reroll: REROLAGENS, ban: BANIMENTOS, banidos: new Set(), combo: { n: 0, t: -99, max: 0 }, evolucoes: [],
   };
   adicionarArma(S, c.arma);
@@ -27,6 +28,14 @@ export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), 
   return S;
 }
 
+// Partículas: só visual. Usam Math.random (não mexem no gerador da simulação).
+export function chispas(S, x, y, n, o = {}) {
+  const { cor = '#fff6c0', vel = 50, vida = 0.35, tam = 1, grav = 0, brilho = true, dir = null, abre = Math.PI * 2 } = o;
+  for (let i = 0; i < n && S.part.length < 420; i++) {
+    const a = (dir == null ? Math.random() * Math.PI * 2 : dir + (Math.random() - 0.5) * abre); const v = vel * (0.4 + Math.random() * 0.8);
+    S.part.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: vida * (0.6 + Math.random() * 0.6), d: vida, cor, tam, grav, brilho });
+  }
+}
 // Atributos derivados (base do campeão + itens + melhorias da loja).
 export function recalcular(S) {
   const c = S.base; const m = S.meta;
@@ -129,7 +138,7 @@ function ganharXp(S, v) {
   S.xp += v * S.a.xp;
   while (S.xp >= S.xpProx) {
     S.xp -= S.xpProx; S.nivel++; S.xpProx = xpProximo(S.nivel); S.pendentes++;
-    S.evt.push({ tipo: 'nivel' });
+    S.evt.push({ tipo: 'nivel' }); chispas(S, S.p.x, S.p.y, 26, { cor: '#ffe36a', vel: 80, vida: 0.7, tam: 2 });
   }
   if (S.pendentes > 0 && S.estado === 'jogando') { S.opcoes = gerarOpcoes(S); S.estado = 'upgrade'; }
 }
@@ -183,7 +192,7 @@ const TEMPO_FIM_ONDAS = 14 * 60;
 export function ferir(S, e, dano, op = {}) {
   if (e.hp <= 0) return;
   const crit = S.rng() < 0.06; const d = Math.max(1, dano * (crit ? 2 : 1));
-  e.hp -= d; e.flash = 0.09;
+  e.hp -= d; e.flash = 0.09; chispas(S, e.x, e.y, crit ? 6 : 3, { cor: crit ? '#ffd24a' : '#fff6c0', vel: crit ? 90 : 55, vida: 0.22 });
   if (op.kx != null) { e.kx += op.kx; e.ky += op.ky; }
   if (op.lento) e.lento = Math.max(e.lento, op.lento);
   if (op.encanta && !e.chefe) e.encantado = Math.max(e.encantado || 0, op.encanta);
@@ -199,6 +208,8 @@ function matar(S, e) {
   if (cb) { S.ouro += Math.round(cb.ouro * (1 + S.cm.ouro)); S.evt.push({ tipo: 'combo', nome: cb.nome, n: cb.n, ouro: cb.ouro }); }
   S.evt.push({ tipo: 'morte', chefe: e.chefe });
   S.efeitos.push({ x: e.x, y: e.y, t: 0.35, d: 0.35, tipo: 'morte', r: e.raio });
+  S.fant.push({ tipo: e.tipo, chefe: e.chefe, x: e.x, y: e.y, raio: e.raio, t: e.chefe ? 0.8 : 0.28, d: e.chefe ? 0.8 : 0.28 });
+  chispas(S, e.x, e.y, e.chefe ? 40 : 7, { cor: S.R.po || '#cfc9ff', vel: e.chefe ? 120 : 45, vida: e.chefe ? 0.9 : 0.5, tam: e.chefe ? 2 : 1, grav: 40, brilho: false });
   const gv = e.xp;
   S.gemas.push({ x: e.x, y: e.y, v: gv, vx: 0, vy: 0, ima: false });
   if (S.gemas.length > 450) { // junta as mais antigas para não pesar
@@ -309,6 +320,7 @@ function atualizarArmas(S, dt) {
   }
 }
 
+const COR_RASTRO = { orbe: '#6aa8ff', coracao: '#ff77b8', flecha: '#8ae8ff', shuriken: '#b45cff', bala: '#ffe36a' };
 function atualizarProjeteis(S, dt) {
   for (let i = S.proj.length - 1; i >= 0; i--) {
     const q = S.proj[i];
@@ -318,6 +330,7 @@ function atualizarProjeteis(S, dt) {
       q.vida -= dt;
     } else q.vida -= dt;
     q.x += q.vx * dt; q.y += q.vy * dt; q.ang = (q.ang || 0) + (q.tipo === 'shuriken' ? 14 * dt : 0);
+    if (Math.random() < 0.5) chispas(S, q.x, q.y, 1, { cor: COR_RASTRO[q.tipo] || '#fff', vel: 8, vida: 0.28, tam: q.tipo === 'orbe' ? 2 : 1 });
     if (q.vida <= 0) { S.proj.splice(i, 1); continue; }
     for (const e of S.inim) {
       if (q.golpeou.has(e.id)) continue;
@@ -424,19 +437,19 @@ function atualizarColetaveis(S, dt) {
   for (let i = S.gemas.length - 1; i >= 0; i--) {
     const g = S.gemas[i]; const d2 = dist2(g, P);
     if (!g.ima && d2 < R * R) g.ima = true;
-    if (g.ima) { const d = Math.sqrt(d2) || 1; const v = 120 + 120 * Math.min(1, 40 / d); g.x += ((P.x - g.x) / d) * v * dt; g.y += ((P.y - g.y) / d) * v * dt; if (d < 5) { ganharXp(S, g.v); S.gemas.splice(i, 1); S.evt.push({ tipo: 'gema' }); } }
+    if (g.ima) { const d = Math.sqrt(d2) || 1; const v = 120 + 120 * Math.min(1, 40 / d); g.x += ((P.x - g.x) / d) * v * dt; g.y += ((P.y - g.y) / d) * v * dt; if (d < 5) { ganharXp(S, g.v); S.gemas.splice(i, 1); S.evt.push({ tipo: 'gema' }); chispas(S, S.p.x, S.p.y - 4, 2, { cor: '#8ad8ff', vel: 30, vida: 0.25 }); } }
   }
   for (let i = S.itens.length - 1; i >= 0; i--) {
     const it = S.itens[i]; const d2 = dist2(it, P);
     if (d2 > 9 * 9 && !(it.tipo === 'ouro' && d2 < R * R)) continue;
     if (it.tipo === 'ouro' && d2 >= 9 * 9) { const d = Math.sqrt(d2) || 1; it.x += ((P.x - it.x) / d) * 140 * dt; it.y += ((P.y - it.y) / d) * 140 * dt; continue; }
     S.itens.splice(i, 1);
-    if (it.tipo === 'vida') { S.p.hp = Math.min(S.p.hpMax, S.p.hp + S.p.hpMax * 0.3 * S.cm.cura); S.evt.push({ tipo: 'cura' }); }
+    if (it.tipo === 'vida') { S.p.hp = Math.min(S.p.hpMax, S.p.hp + S.p.hpMax * 0.3 * S.cm.cura); S.evt.push({ tipo: 'cura' }); chispas(S, S.p.x, S.p.y - 4, 10, { cor: '#7dffa8', vel: 40, vida: 0.7, grav: -40 }); }
     else if (it.tipo === 'ouro') { S.ouro += 1 + S.cm.ouro; S.evt.push({ tipo: 'ouro' }); }
     else if (it.tipo === 'ima') { for (const g of S.gemas) g.ima = true; S.evt.push({ tipo: 'ima' }); }
     else if (it.tipo === 'bau') {
       const ev = S.armas.find((w) => w.nivel >= 5 && !w.evo && EVOLUCOES[w.id] && S.passivas[EVOLUCOES[w.id].item]);
-      if (ev) { ev.evo = true; S.evolucoes.push(ev.id); S.evt.push({ tipo: 'evolucao', id: ev.id }); S.shake = 0.4; }
+      if (ev) { ev.evo = true; S.evolucoes.push(ev.id); S.evt.push({ tipo: 'evolucao', id: ev.id }); S.shake = 0.4; chispas(S, S.p.x, S.p.y, 60, { cor: '#ffffff', vel: 140, vida: 1.0, tam: 2 }); }
       else { S.evt.push({ tipo: 'bau' }); S.pendentes++; if (S.estado === 'jogando') { S.opcoes = gerarOpcoes(S); S.estado = 'upgrade'; } }
     }
   }
@@ -461,6 +474,9 @@ export function atualizar(S, dt, entrada = { x: 0, y: 0 }) {
   atualizarInimigos(S, dt);
   atualizarProjeteis(S, dt);
   atualizarColetaveis(S, dt);
+  if (P.andando && Math.random() < 0.22) chispas(S, P.x - P.mx * 3, P.y + 6, 1, { cor: S.R.po || '#cfc9ff', vel: 14, vida: 0.4, grav: -10, brilho: false });
+  for (let i = S.part.length - 1; i >= 0; i--) { const q = S.part[i]; q.t -= dt; if (q.t <= 0) { S.part[i] = S.part[S.part.length - 1]; S.part.pop(); continue; } q.vy += q.grav * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= 1 - 3 * dt; q.vy *= 1 - 1.5 * dt; }
+  for (let i = S.fant.length - 1; i >= 0; i--) { S.fant[i].t -= dt; if (S.fant[i].t <= 0) S.fant.splice(i, 1); }
   for (let i = S.textos.length - 1; i >= 0; i--) { const x = S.textos[i]; x.t -= dt; x.y -= 14 * dt; if (x.t <= 0) S.textos.splice(i, 1); }
   for (let i = S.efeitos.length - 1; i >= 0; i--) { S.efeitos[i].t -= dt; if (S.efeitos[i].t <= 0) S.efeitos.splice(i, 1); }
 }

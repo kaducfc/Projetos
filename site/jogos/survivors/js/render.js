@@ -7,17 +7,26 @@ import { CH, hash, pedaco } from './temas.js';
 const DIG = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001001001001', 8: '111101111101111', 9: '111101111001111' };
 const FONTE = '8px "Press Start 2P", ui-monospace, monospace';
 
+const AMBIENTE = { rift: null, ionia: ['#ffd9ec', 0.1], demacia: ['#fff2cc', 0.07], noxus: ['#ff8a70', 0.16], shurima: ['#ffe2a0', 0.1], freljord: ['#b8d4ff', 0.12] };
+const glows = new Map();
+function glow(cor, r) { // bolha de luz (gradiente radial) para brilho aditivo
+  const k = `${cor}|${r}`; let c = glows.get(k); if (c) return c;
+  c = document.createElement('canvas'); c.width = c.height = r * 2; const x = c.getContext('2d'); const g = x.createRadialGradient(r, r, 0, r, r, r);
+  g.addColorStop(0, cor); g.addColorStop(0.35, cor + '66'); g.addColorStop(1, cor + '00'); x.fillStyle = g; x.fillRect(0, 0, r * 2, r * 2); glows.set(k, c); return c;
+}
+
 export function criarRender(canvas) {
   const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
   const chunks = new Map();
   const R = { w: canvas.width, h: canvas.height, t: 0, camX: 0, camY: 0 };
   let temaAtual = 'rift';
   const chunk = (cx, cy) => { const k = `${cx},${cy}`; let c = chunks.get(k); if (!c) { c = pedaco(temaAtual, cx, cy); chunks.set(k, c); if (chunks.size > 80) chunks.delete(chunks.keys().next().value); } return c; };
-  const desenhar = (nome, x, y, ox = 0, oy = 0, branco = false, esc = 1) => {
+  const desenhar = (nome, x, y, ox = 0, oy = 0, branco = false, esc = 1, ey = esc) => {
     const s = branco ? spriteBranco(nome) : sprite(nome); if (!s) return;
-    const w = s.width * esc; const h = s.height * esc;
+    const w = s.width * esc; const h = s.height * ey;
     ctx.drawImage(s, Math.round(x - w / 2 + ox), Math.round(y - h + oy), w, h);
   };
+  const luz = (cor, x, y, r, a = 1) => { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a; ctx.drawImage(glow(cor, r), Math.round(x - r), Math.round(y - r)); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; };
   const num = (n, x, y, cor, esc = 1) => {
     const t = String(n); ctx.fillStyle = cor;
     for (let i = 0; i < t.length; i++) { const g = DIG[t[i]]; for (let k = 0; k < 15; k++) if (g[k] === '1') ctx.fillRect(Math.round(x + i * 4 * esc + (k % 3) * esc), Math.round(y + ((k / 3) | 0) * esc), esc, esc); }
@@ -66,7 +75,7 @@ export function criarRender(canvas) {
     ents.sort((a, b) => a.y - b.y);
     for (const e of ents) {
       if (e.jogador) {
-        ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(Math.round(P.x) - 6, Math.round(P.y) - 1, 12, 3);
+        ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(Math.round(P.x) - 7, Math.round(P.y) - 1, 14, 4); ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(Math.round(P.x) - 5, Math.round(P.y), 10, 2);
         const bob = P.andando ? Math.round(Math.abs(Math.sin(R.t * 12)) * 2) : 0;
         if (P.inv > 0 && Math.floor(R.t * 20) % 2 === 0 && S.estado === 'jogando') continue;
         const an = animacao(S.campeao, P.andando ? 'andando' : 'parada', R.t, P.flash > 0);
@@ -75,14 +84,18 @@ export function criarRender(canvas) {
         continue;
       }
       const nome = e.chefe ? (CHEFES[e.tipo].sprite || e.tipo) : e.tipo === 'minion' ? S.R.soldado : (S.R.matiz ? `${e.tipo}@${S.reino}` : e.tipo); const sombraW = Math.round(e.raio * 2.2);
-      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(Math.round(e.x - sombraW / 2), Math.round(e.y + e.raio * 0.5), sombraW, 3);
+      ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.fillRect(Math.round(e.x - sombraW / 2 - 1), Math.round(e.y + e.raio * 0.5 - 1), sombraW + 2, 4); ctx.fillStyle = 'rgba(0,0,0,.26)'; ctx.fillRect(Math.round(e.x - sombraW / 2 + 1), Math.round(e.y + e.raio * 0.5), sombraW - 2, 2);
       const bob = Math.round(Math.abs(Math.sin(R.t * 9 + e.id)) * (e.chefe ? 1 : 2));
       if (e.estado === 1) { ctx.strokeStyle = 'rgba(255,60,60,.6)'; ctx.beginPath(); ctx.moveTo(Math.round(e.x), Math.round(e.y)); ctx.lineTo(Math.round(e.x + e.dx * 70), Math.round(e.y + e.dy * 70)); ctx.stroke(); }
       const esc = e.tipo === 'golem' ? 1.25 : 1;
-      desenhar(nome, e.x, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc);
+      const sq = e.flash > 0 ? 1.14 : 1; desenhar(nome, e.x, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc * sq, esc / sq);
       if (e.encantado > 0) { ctx.fillStyle = '#ff77b8'; ctx.fillRect(Math.round(e.x - 3), Math.round(e.y - e.raio - 12 - Math.round(Math.sin(R.t * 8))), 2, 2); ctx.fillRect(Math.round(e.x + 1), Math.round(e.y - e.raio - 12 - Math.round(Math.sin(R.t * 8))), 2, 2); ctx.fillRect(Math.round(e.x - 3), Math.round(e.y - e.raio - 10), 6, 2); ctx.fillRect(Math.round(e.x - 2), Math.round(e.y - e.raio - 8), 4, 1); }
       if (e.lento > 0) { ctx.fillStyle = 'rgba(160,230,255,.35)'; ctx.fillRect(Math.round(e.x - e.raio), Math.round(e.y + e.raio - 2), e.raio * 2, 3); }
       if (e.hp < e.hpMax && !e.chefe) { const bw = Math.max(10, e.raio * 2); barra(Math.round(e.x - bw / 2), Math.round(e.y - e.raio - 6), bw, 2, e.hp / e.hpMax, '#e04545'); }
+    }
+    for (const f of S.fant) { // corpo que some em branco ao morrer
+      const k = f.t / f.d; const nome = f.chefe ? (CHEFES[f.tipo].sprite || f.tipo) : f.tipo === 'minion' ? S.R.soldado : (S.R.matiz ? `${f.tipo}@${S.reino}` : f.tipo);
+      ctx.globalAlpha = Math.min(1, k * 1.4); desenhar(nome, f.x, f.y + f.raio + 2, 0, 0, true, 1 + (1 - k) * 0.3, k * 0.9 + 0.1); ctx.globalAlpha = 1;
     }
     // armas visíveis: lâminas giratórias
     for (const a of S.armas) if (a.id === 'lamina') { const st = statsDe(S, a); const Rr = st.raio * S.a.area; for (let i = 0; i < st.qtd; i++) { const an = a.ang + (i * 6.2832) / st.qtd; const bx = P.x + Math.cos(an) * Rr; const by = P.y + Math.sin(an) * Rr; ctx.save(); ctx.translate(Math.round(bx), Math.round(by)); ctx.rotate(an + 1.5708); ctx.drawImage(sprite('lamina'), -3, -8); ctx.restore(); } }
@@ -101,15 +114,34 @@ export function criarRender(canvas) {
       if (f.tipo === 'morte') { ctx.fillStyle = `rgba(255,255,255,${0.7 * (1 - k)})`; const r = f.r * (0.6 + k); ctx.fillRect(Math.round(f.x - r), Math.round(f.y - 1), Math.round(r * 2), 2); ctx.fillRect(Math.round(f.x - 1), Math.round(f.y - r), 2, Math.round(r * 2)); }
       else { ctx.strokeStyle = `rgba(255,240,150,${1 - k})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(Math.round(f.x), Math.round(f.y), f.r * (0.4 + 0.7 * k), 0, 6.2832); ctx.stroke(); ctx.fillStyle = `rgba(255,240,150,${0.25 * (1 - k)})`; ctx.fill(); }
     }
+    // luzes e partículas (aditivo)
+    const COR_LUZ = { orbe: ['#58a8ff', 16], coracao: ['#ff77b8', 14], flecha: ['#58e8ff', 9], shuriken: ['#b45cff', 11], bala: ['#ffe36a', 8] };
+    for (const q of S.proj) { const l = COR_LUZ[q.tipo]; if (l) luz(l[0], q.x, q.y, l[1], 0.7); }
+    for (const q of S.eproj) luz('#c060ff', q.x, q.y, 9, 0.6);
+    for (const g of S.gemas) luz(g.v >= 10 ? '#ff77b8' : g.v >= 3 ? '#9be15d' : '#58e8ff', g.x, g.y, 7, 0.45);
+    for (const it of S.itens) luz(it.tipo === 'bau' ? '#ffd24a' : it.tipo === 'vida' ? '#ff6a7a' : '#ffe36a', it.x, it.y, 10, 0.5);
+    for (const z of S.zonas) luz('#ffe36a', z.x, z.y, Math.round(z.r * 1.1), 0.25);
+    for (const q of S.part) { const k = q.t / q.d; if (q.brilho) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = k; ctx.fillStyle = q.cor; ctx.fillRect(Math.round(q.x), Math.round(q.y), q.tam, q.tam); ctx.globalAlpha = k * 0.5; ctx.drawImage(glow(q.cor, 5), Math.round(q.x - 5), Math.round(q.y - 5)); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } else { ctx.globalAlpha = k * 0.8; ctx.fillStyle = q.cor; ctx.fillRect(Math.round(q.x), Math.round(q.y), q.tam, q.tam); ctx.globalAlpha = 1; } }
+    if (S.p.hp > 0) { const pl = S.campeao === 'ahri' ? '#7a9cff' : S.campeao === 'garen' ? '#8ab4ff' : S.campeao === 'jinx' ? '#58e8ff' : '#ffe9a0'; luz(pl, S.p.x, S.p.y - 2, 22, 0.28); }
     // números de dano
-    for (const t of S.textos) num(t.v, t.x - String(t.v).length * 2, t.y, t.jogador ? '#ff5a5a' : t.crit ? '#ffd24a' : '#ffffff', t.crit ? 2 : 1);
+    for (const t of S.textos) { const idade = 0.6 - t.t; const esc = t.crit ? (idade < 0.12 ? 3 : 2) : (idade < 0.08 ? 2 : 1); const cor = t.jogador ? '#ff5a5a' : t.crit ? '#ffd24a' : '#ffffff'; num(t.v, t.x - String(t.v).length * 2 * esc + 1, t.y + 1, '#14101e', esc); num(t.v, t.x - String(t.v).length * 2 * esc, t.y, cor, esc); }
     ctx.restore();
     clima(S);
+    const am = AMBIENTE[S.reino]; if (am) { ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 1; ctx.fillStyle = am[0]; ctx.fillRect(0, 0, w, h); ctx.globalCompositeOperation = 'source-over'; }
+    vinheta(w, h);
     // vinheta de dano
     if (P.flash > 0) { ctx.fillStyle = `rgba(255,40,40,${Math.min(0.35, P.flash * 2)})`; ctx.fillRect(0, 0, w, h); }
     hud(S);
   }
 
+  let vin = null;
+  function vinheta(w, h) {
+    if (!vin || vin.width !== w || vin.height !== h) {
+      vin = document.createElement('canvas'); vin.width = w; vin.height = h; const x = vin.getContext('2d'); const g = x.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.hypot(w, h) * 0.55);
+      g.addColorStop(0, 'rgba(8,4,20,0)'); g.addColorStop(1, 'rgba(8,4,20,.55)'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+    }
+    ctx.drawImage(vin, 0, 0);
+  }
   function clima(S) {
     const tipo = S.R.clima; if (!tipo) return; const { w, h } = R; const T = R.t;
     const cfg = { petalas: [34, '#ffb3d1', 9, 14, 2, 2], folhas: [26, '#c9e46a', 7, 18, 2, 2], brasas: [40, '#ff8a3a', 3, -26, 1, 1], areia: [46, '#f4dc98', 70, 5, 4, 1], neve: [60, '#ffffff', 5, 24, 1, 1] }[tipo];
