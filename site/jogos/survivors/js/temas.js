@@ -76,12 +76,15 @@ export function pedaco(tema, cx, cy) {
 }
 
 // Objetos de cenário de um pedaço (posições fixas por hash): [{ i: índice no atlas, x, y }], y = base do objeto.
-const PESOS_RIFT = [14, 6, 8, 4, 3, 4, 4, 2, 5, 5, 4, 1.5, 2, 1, 1.5, 1, 0.6, 1, 0.8, 1.2, 1, 0.5, 1.2, 1];
+const PESOS_PEQ = {
+  ixtal: [14, 6, 8, 4, 3, 4, 4, 2, 5, 5, 4, 1.5, 2, 1, 1.5, 1, 0.6, 1, 0.8, 1.2, 1, 0.5, 1.2, 1],
+  ionia: [14, 6, 8, 4, 3, 4, 4, 2, 5, 5, 3, 1.5, 2, 1.5, 0.8, 4, 0.5, 1, 0.6, 2, 0.8, 0.8, 1, 1.5],
+};
 const cachePropsPedaco = new Map();
 export function propsDoPedaco(tema, cx, cy) {
   const A = atlasDeProps(tema); if (!A) return [];
   const k = `${tema}|${cx},${cy}`; let l = cachePropsPedaco.get(k); if (l) return l;
-  const pesos = PESOS_RIFT; const total = pesos.reduce((s, p) => s + p, 0);
+  const pesos = PESOS_PEQ[tema] || PESOS_PEQ.ixtal; const total = pesos.reduce((s, p) => s + p, 0);
   const n = 4 + ((hash(cx * 3, cy * 5) * 4) | 0); l = [];
   for (let j = 0; j < n; j++) {
     let m = hash(cx * 11 + j, cy * 13 + 7) * total; let i = 0; for (; i < pesos.length - 1; i++) { m -= pesos[i]; if (m <= 0) break; }
