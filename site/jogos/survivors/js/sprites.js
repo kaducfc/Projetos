@@ -36,13 +36,16 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 46; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 47; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { semContorno: true, parada: { src: 'ahri/ahri-parada.png', n: 6 }, andando: { src: 'ahri/ahri-andando.png', n: 6 }, correr: { src: 'ahri/ahri-correr.png', n: 6 }, ataque: { src: 'ahri/ahri-ataque.png', n: 6 }, dano: { src: 'ahri/ahri-dano.png', n: 2 }, morte: { src: 'ahri/ahri-morte.png', n: 4 }, especial: { src: 'ahri/ahri-especial.png', n: 6 }, vitoria: { src: 'ahri/ahri-vitoria.png', n: 4 }, nivel: { src: 'ahri/ahri-nivel.png', n: 2 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
 };
 ANIM.jinx = { semContorno: true, parada: { src: 'jinx/jinx-parada.png', n: 6 }, andando: { src: 'jinx/jinx-andando.png', n: 6 }, correr: { src: 'jinx/jinx-correr.png', n: 6 }, ataque: { src: 'jinx/jinx-ataque.png', n: 6 }, dano: { src: 'jinx/jinx-dano.png', n: 2 }, morte: { src: 'jinx/jinx-morte.png', n: 4 }, especial: { src: 'jinx/jinx-especial.png', n: 6 }, vitoria: { src: 'jinx/jinx-vitoria.png', n: 4 }, nivel: { src: 'jinx/jinx-nivel.png', n: 2 } };
 ANIM.ashe = { semContorno: true, parada: { src: 'ashe/ashe-parada.png', n: 6 }, andando: { src: 'ashe/ashe-andando.png', n: 6 }, correr: { src: 'ashe/ashe-correr.png', n: 6 }, ataque: { src: 'ashe/ashe-ataque.png', n: 6 }, dano: { src: 'ashe/ashe-dano.png', n: 2 }, morte: { src: 'ashe/ashe-morte.png', n: 4 }, especial: { src: 'ashe/ashe-especial.png', n: 6 }, vitoria: { src: 'ashe/ashe-vitoria.png', n: 4 }, nivel: { src: 'ashe/ashe-nivel.png', n: 2 } };
+// Campeões jogáveis: redimensionados para 70% ao carregar (os desenhos originais são grandes perto dos monstros).
+export const ESCALA_CAMPEOES = 0.7;
+for (const n of ['garen', 'ahri', 'jinx', 'ashe']) ANIM[n].escala = ESCALA_CAMPEOES;
 // Chefes: uma tira só, fatiada em animações (ini = primeiro quadro, tot = quadros da tira).
 ANIM.raizes = { semContorno: true, parada: { src: 'chefes/raizes.png', tot: 6, ini: 0, n: 3 }, ataque: { src: 'chefes/raizes.png', tot: 6, ini: 3, n: 2 }, morte: { src: 'chefes/raizes.png', tot: 6, ini: 5, n: 1 } };
 ANIM.kodama = { semContorno: true, parada: { src: 'chefes/kodama.png', tot: 6, ini: 0, n: 3 }, ataque: { src: 'chefes/kodama.png', tot: 6, ini: 3, n: 2 }, morte: { src: 'chefes/kodama.png', tot: 6, ini: 5, n: 1 } };
@@ -80,10 +83,10 @@ export async function carregarImagens() {
   for (const [nome, anims] of Object.entries(ANIM)) {
     quadros[nome] = {};
     for (const [anim, d] of Object.entries(anims)) {
-      if (anim === 'semContorno') continue;
+      if (anim === 'semContorno' || anim === 'escala') continue;
       const img = await carregarImg(d.src); if (!img) { delete quadros[nome]; break; }
       const fw = Math.floor(img.width / (d.tot || d.n)); quadros[nome][anim] = [];
-      for (let i = 0; i < d.n; i++) { const c = canvasDe(fw, img.height); c.getContext('2d').drawImage(img, (i + (d.ini || 0)) * fw, 0, fw, img.height, 0, 0, fw, img.height); quadros[nome][anim].push(anims.semContorno ? c : contornar(c)); }
+      for (let i = 0; i < d.n; i++) { const c = canvasDe(fw, img.height); c.getContext('2d').drawImage(img, (i + (d.ini || 0)) * fw, 0, fw, img.height, 0, 0, fw, img.height); quadros[nome][anim].push(anims.semContorno ? (anims.escala ? reduzir(c, anims.escala) : c) : contornar(c)); }
     }
     cache.delete(nome); cache.delete(nome + ':w');
   }
@@ -111,6 +114,12 @@ export const nQuadros = (nome, anim) => quadros[nome]?.[anim]?.length || 0;
 export function animacao(nome, anim, t, flash = false) {
   const n = nQuadros(nome, anim); if (!n) return null;
   return quadroAnim(nome, anim, Math.floor(t * (anim === 'andando' ? 9 : 5)) % n, flash);
+}
+// Redução de um quadro (arte já com contorno): suaviza ao reduzir e volta a recortar a borda em pixels cheios.
+function reduzir(c, f) {
+  const w = Math.max(1, Math.round(c.width * f)); const h = Math.max(1, Math.round(c.height * f)); const o = canvasDe(w, h); const x = o.getContext('2d');
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(c, 0, 0, w, h);
+  const d = x.getImageData(0, 0, w, h); const p = d.data; for (let i = 3; i < p.length; i += 4) p[i] = p[i] >= 120 ? 255 : 0; x.putImageData(d, 0, 0); return o;
 }
 function canvasDe(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 
