@@ -550,3 +550,42 @@ CELLS (left to right, top to bottom): (1) IDLE A: standing tall and heavy, the a
 
 BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature. Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
 ```
+
+
+## 10. Shurima
+
+### 10.1 Inimigos de Shurima, pacote 1 — inimigos-shurima-1.png
+
+```
+Create ONE sprite sheet image with the walk cycles of four enemies.
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1024 x 1024 px, divided into an invisible grid of 4 columns x 4 rows of equal 256 x 256 px cells (16 cells), no lines between cells. EACH ROW is ONE enemy; the 4 cells of the row are its WALK CYCLE (4 frames, seamless loop), moving toward the RIGHT, three-quarter view, same size in all frames, feet touching the same invisible baseline at y = 235 of the cell, centered horizontally, at least 20 px of margin, nothing crossing the cell borders. Walk cycles must have clear leg or body movement between frames.
+
+THE 4 ENEMIES (Shurima, sand-mummies and desert priests, menacing but cute-chunky proportions):
+ROW 1, SHURIMAN MUMMY WARRIOR (about 130 px tall, the common soldier): a bandaged sand-mummy warrior with dirty linen wraps, a bronze-gold headdress, a curved sandstone-colored khopesh sword and a small round gold-rimmed shield, glowing turquoise eyes, shambling steps.
+ROW 2, SAND PRIEST (about 135 px tall, the caster): a robed Shuriman sand-priest in long ochre-and-turquoise robes with a golden sun-disc collar, a staff topped with a floating golden sun orb with turquoise glow (hard-edged pixels, no haze), a masked face with glowing eyes, floats slightly while walking.
+ROW 3, SIEGE SCARAB CART (about 150 px tall, the siege unit): a small sandstone war cart with two spoked wheels that turn between frames, a golden scarab-shaped catapult holding a flaming boulder, aimed to the right, a tiny helmeted crew member pushing behind.
+ROW 4, SAND WISP (about 100 px tall, the swarm unit): a small floating sand-spirit: a rounded golden-orange swirl-skull body with a wavy sand tail, two glowing turquoise eyes, no legs, wavy floating motion (the tail waves between frames).
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects (no green on the creatures). Do not use a white or checkerboard background. Do NOT draw ground, sand patches, or cast shadows under the objects.
+```
+
+### 10.2 Inimigos de Shurima, pacote 2 — inimigos-shurima-2.png
+
+```
+Create ONE sprite sheet image with the walk cycles of four enemies.
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1024 x 1024 px, divided into an invisible grid of 4 columns x 4 rows of equal 256 x 256 px cells (16 cells), no lines between cells. EACH ROW is ONE enemy; the 4 cells of the row are its WALK CYCLE (4 frames, seamless loop), moving toward the RIGHT, three-quarter view, same size in all frames, feet touching the same invisible baseline at y = 235 of the cell, centered horizontally, at least 20 px of margin, nothing crossing the cell borders. Walk cycles must have clear leg or body movement between frames.
+
+THE 4 ENEMIES (Shurima, desert beasts and stone guardians, menacing but chunky proportions):
+ROW 1, DESERT JACKAL (about 120 px tall, 170 px long): a lean sand-colored jackal with a gold collar and turquoise markings, large pointed ears, bared fangs, running gallop.
+ROW 2, DUNE SCORPION (about 90 px tall, 170 px long): a big armored sand-scorpion with a raised stinger tail, orange-brown shell with turquoise glints, pincers open, scuttling walk on its legs.
+ROW 3, SANDSTONE BRUTE (the elite, about 150 px tall): a stocky Shuriman stone-guardian brute in sandstone plates with golden trim and a huge shoulder pad shaped like a sun, a big stone mace, glowing turquoise slit eyes, heavy stomping walk.
+ROW 4, ASCENDED SAND COLOSSUS (about 210 px tall, the biggest): a huge walking golem made of sandstone blocks and gold plates, shaped like a giant armored warrior with a golden sun-disc on its chest glowing turquoise, big stone fists, sand trickling from its joints (hard-edged pixels), slow heavy stomp.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects (no green on the creatures). Do not use a white or checkerboard background. Do NOT draw ground, sand patches, or cast shadows under the objects.
+```
