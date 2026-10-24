@@ -141,16 +141,16 @@ export function criarRender(canvas) {
       ctx.globalAlpha = Math.min(1, k * 1.4); desenhar(nome, f.x, f.y + f.raio + 2, 0, 0, true, 1 + (1 - k) * 0.3, k * 0.9 + 0.1); ctx.globalAlpha = 1;
     }
     // armas visíveis: lâminas giratórias
-    for (const a of S.armas) if (a.id === 'lamina') { const st = statsDe(S, a); const Rr = st.raio * S.a.area; for (let i = 0; i < st.qtd; i++) { const an = a.ang + (i * 6.2832) / st.qtd; const bx = P.x + Math.cos(an) * Rr; const by = P.y + Math.sin(an) * Rr; ctx.save(); ctx.translate(Math.round(bx), Math.round(by)); ctx.rotate(an + 1.5708); ctx.drawImage(sprite('lamina'), -3, -8); ctx.restore(); } }
+    for (const a of S.armas) if (a.id === 'lamina') { const st = statsDe(S, a); const Rr = st.raio * S.a.area; for (let i = 0; i < st.qtd; i++) { const an = a.ang + (i * 6.2832) / st.qtd; const bx = P.x + Math.cos(an) * Rr; const by = P.y + Math.sin(an) * Rr; ctx.save(); ctx.translate(Math.round(bx), Math.round(by)); ctx.rotate(an + 1.5708); const sl = sprite('lamina'); ctx.drawImage(sl, -Math.round(sl.width / 2), -Math.round(sl.height / 2)); ctx.restore(); } }
     // projéteis
     for (const q of S.proj) {
       if (q.tipo === 'orbe') { const s = sprite('orbe'); ctx.save(); ctx.translate(Math.round(q.x), Math.round(q.y)); ctx.rotate(Math.atan2(q.vy, q.vx)); ctx.drawImage(s, -Math.round(s.width / 2), -Math.round(s.height / 2)); ctx.restore(); }
-      else if (q.tipo === 'coracao') { const s = sprite('coracao'); ctx.save(); ctx.translate(Math.round(q.x), Math.round(q.y)); ctx.rotate(q.ang); ctx.drawImage(s, -Math.round(s.width * 0.7), -Math.round(s.height / 2)); ctx.restore(); }
-      else if (q.tipo === 'shuriken') { ctx.save(); ctx.translate(Math.round(q.x), Math.round(q.y)); ctx.rotate(q.ang); ctx.drawImage(sprite('shuriken'), -5, -5); ctx.restore(); }
-      else if (q.tipo === 'flecha') { ctx.save(); ctx.translate(Math.round(q.x), Math.round(q.y)); ctx.rotate(q.ang); ctx.drawImage(sprite('flecha'), -4, -2); ctx.restore(); }
-      else { ctx.save(); ctx.translate(Math.round(q.x), Math.round(q.y)); ctx.rotate(Math.atan2(q.vy, q.vx)); ctx.drawImage(sprite('bala'), -2, -1); ctx.restore(); }
+      else if (q.tipo === 'coracao') { const s = sprite('coracao'); ctx.save(); ctx.translate(Math.round(q.x), Math.round(q.y)); ctx.rotate(q.ang); ctx.drawImage(s, -Math.round(s.width / 2), -Math.round(s.height / 2)); ctx.restore(); }
+      else if (q.tipo === 'shuriken') { ctx.save(); ctx.translate(Math.round(q.x), Math.round(q.y)); ctx.rotate(q.ang); const ss = sprite('shuriken'); ctx.drawImage(ss, -Math.round(ss.width / 2), -Math.round(ss.height / 2)); ctx.restore(); }
+      else if (q.tipo === 'flecha') { ctx.save(); ctx.translate(Math.round(q.x), Math.round(q.y)); ctx.rotate(q.ang); const sf = sprite('flecha'); ctx.drawImage(sf, -Math.round(sf.width / 2), -Math.round(sf.height / 2)); ctx.restore(); }
+      else { ctx.save(); ctx.translate(Math.round(q.x), Math.round(q.y)); ctx.rotate(Math.atan2(q.vy, q.vx)); const sb = sprite('bala'); ctx.drawImage(sb, -Math.round(sb.width / 2), -Math.round(sb.height / 2)); ctx.restore(); }
     }
-    for (const q of S.eproj) ctx.drawImage(sprite('eorbe'), Math.round(q.x - 3), Math.round(q.y - 3));
+    const se = sprite(S.R.tema === 'ixtal' ? 'ejade' : 'eorbe'); for (const q of S.eproj) { ctx.save(); ctx.translate(Math.round(q.x), Math.round(q.y)); ctx.rotate(Math.atan2(q.vy, q.vx)); ctx.drawImage(se, -Math.round(se.width / 2), -Math.round(se.height / 2)); ctx.restore(); }
     // efeitos de morte e explosão
     for (const f of S.efeitos) {
       const k = 1 - f.t / f.d;

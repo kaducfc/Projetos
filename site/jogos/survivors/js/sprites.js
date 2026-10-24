@@ -36,7 +36,7 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 12; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 13; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { parada: { src: 'ahri/ahri-parada.png', n: 5 }, andando: { src: 'ahri/ahri-andando.png', n: 5 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
@@ -47,7 +47,7 @@ ANIM.jaguar = { semContorno: true, parada: { src: 'chefes/jaguar.png', tot: 6, i
 ANIM.serpente = { semContorno: true, parada: { src: 'chefes/serpente.png', tot: 6, ini: 0, n: 3 }, ataque: { src: 'chefes/serpente.png', tot: 6, ini: 3, n: 2 }, morte: { src: 'chefes/serpente.png', tot: 6, ini: 5, n: 1 } };
 // Inimigos com animação em arquivo (4 quadros de caminhada, já com contorno).
 for (const nome of ['minion', 'mago', 'canhao', 'vazio', 'lobo', 'raptor', 'krug', 'golem']) ANIM[nome] = { semContorno: true, andando: { src: `inimigos/${nome}.png`, n: 4 } };
-const ESTATICAS = { orbe: 'ahri/orbe.png', coracao: 'ahri/coracao.png' };
+const ESTATICAS = { orbe: 'fx/orbe.png', coracao: 'fx/coracao.png', lamina: 'fx/lamina.png', bala: 'fx/bala.png', flecha: 'fx/flecha.png', shuriken: 'fx/shuriken.png', eorbe: 'fx/eorbe.png', ejade: 'fx/ejade.png' };
 const ICONES_IMG = { orbe: 'ahri/i-orbe.png', coracao: 'ahri/i-coracao.png' };
 const quadros = {}; // nome -> anim -> [canvas]
 const imgs = {};
@@ -74,7 +74,7 @@ export async function carregarImagens() {
       if (img && meta) propsAtlas[tema] = { img, ...meta };
     } catch { /* sem o atlas: o cenário usa os desenhos em código */ }
   }
-  for (const [nome, arq] of Object.entries(ESTATICAS)) { const img = await carregarImg(arq); if (img) { const c = canvasDe(img.width, img.height); c.getContext('2d').drawImage(img, 0, 0); imgs[nome] = contornar(c); cache.delete(nome); } }
+  for (const [nome, arq] of Object.entries(ESTATICAS)) { const img = await carregarImg(arq); if (img) { const c = canvasDe(img.width, img.height); c.getContext('2d').drawImage(img, 0, 0); imgs[nome] = c; cache.delete(nome); } } // projéteis já têm contorno próprio
   for (const [nome, arq] of Object.entries(ICONES_IMG)) { const img = await carregarImg(arq); if (img) { const c = canvasDe(12, 12); const x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.drawImage(img, 0, 0, 12, 12); imgs['i:' + nome] = c; cache.delete('i:' + nome); } }
 }
 // Quadro i de uma animação (limitado ao último); null se o campeão não tem essa animação.
