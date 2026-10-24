@@ -181,3 +181,36 @@ Row 2: (5) a red heart-shaped health potion flask with a cork and a white highli
 
 BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key), no gradient, no shadows. Do not use green on the items, the lime-green gem (2) must have a strong dark outline and a yellowish tint so it stays separable. No text, no labels, no frames, no watermark.
 ```
+
+## 6. Interface (HUD): ícones e logo (2 imagens)
+
+Anexe a imagem do Garen como referência de estilo. Fundo verde #00FF00. Nomes: `ui-icones.png`, `ui-logo.png`.
+
+### 6.1 Ícones (24) — ui-icones.png
+
+```
+Create ONE sprite sheet of 24 UI icons for a pixel-art survivors game (League of Legends themed), used small (16 to 32 px) on cards and the HUD.
+
+Pixel art, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and art style as the attached reference character (Garen). NO anti-aliasing, NO blur, NO soft glow, NO gradients. Strong 1-pixel dark outline (#14101E) around every icon, 3 to 4 tones per material, light from the top-left. Each icon is a BOLD, SIMPLE, front-facing, centered emblem that fills about 80% of its cell, with a very clear silhouette and 1 or 2 strong accent colors, so it reads at 16 px. No frames, no backgrounds, no text.
+
+GRID: image size 1536 x 1024 px, invisible grid of 6 columns x 4 rows of equal 256 x 256 px cells (24 cells), no lines. ONE icon per cell, centered, at least 24 px of empty margin.
+
+WEAPONS (row 1 and the first 3 of row 2):
+(1) Demacian Blades: a silver sword with a gold hilt and a blue circular sweep mark behind it; (2) Orb of Deception: a violet-pink glowing orb with a short tail; (3) Quick Shot: a golden energy bolt pointing up-right; (4) Ice Volley: a fan of three ice-blue arrows; (5) Singularity: a golden-white swirling vortex; (6) Shadow Blade: a dark violet curved blade with a red edge; (7) Charm Kiss: a pink heart with sparkles; (8) Blizzard: a white-blue snowflake inside a ring of ice shards; (9) Thunder: a white-blue lightning bolt striking down.
+PASSIVE ITEMS (cells 10 to 18):
+(10) Long Sword: a steel sword upright, red grip; (11) Boots of Speed: a pair of brown leather boots with small wings, light blue accents; (12) Doran's Ring: a gold ring with a small red gem; (13) Chain Vest: a gray chainmail vest; (14) Crystalline Scepter: a golden staff topped with a cyan crystal; (15) Hourglass: a gold hourglass with blue sand; (16) Farsight Stone: a purple eye-shaped stone with a gold rim; (17) Blood Amulet: a red teardrop amulet on a chain; (18) Amplifying Tome: a blue book with a gold star and a rune on the cover.
+INTERFACE ICONS (cells 19 to 24):
+(19) gold coin with a crown; (20) a white skull (kill counter); (21) Essence: a light-blue faceted crystal drop; (22) Reroll: two arrows in a circle, plus a tiny die; (23) Ban: a red circle with a diagonal bar; (24) Curse: a purple skull-and-flame mark with a dark aura (hard-edged pixels).
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key), no gradient, no shadows. Do not use green on the icons. No text, no labels, no watermark.
+```
+
+### 6.2 Logo — ui-logo.png
+
+```
+Create a game logo for "RIFT SURVIVORS" in pixel art, 32-bit era, clean hand-placed pixels, crisp hard edges, NO anti-aliasing, NO blur, NO gradients, NO soft glow. Same chunky pixel size as the attached reference character (Garen).
+
+Image size 1536 x 768 px. The logo is centered and fills about 85% of the width. Two lines of chunky, beveled pixel lettering: the top line "RIFT" in large letters, gold (#F5C82E base, #FFE9A0 highlight, #B8860B shadow) with a thick dark outline (#14101E) and a 3D extruded edge; the bottom line "SURVIVORS" in letters of about 75% the height, in white-silver (#E4EBF7 highlight, #AAB6CF base, #6C7896 shadow) with the same dark outline. Between and behind the lines: two crossed Demacian-style swords in steel and gold behind the letters, a small blue-violet crystal gem in the middle of the "I" of RIFT, a few tiny hard-edged sparkles around. Fantasy, heroic, readable at 300 px wide.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key), no gradient, no shadow. Do not use green on the logo. No other text, no tagline, no watermark.
+```
