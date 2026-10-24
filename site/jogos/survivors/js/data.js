@@ -130,10 +130,10 @@ export const taxaSpawn = (t) => 0.9 + t / 60 * 0.6;
 
 // Raridade das cartas de nível: quanto maior, mais forte o que você leva (peso = chance de aparecer).
 export const RARIDADES = [
-  { id: 'comum', nome: 'Comum', cor: '#cfc9ff', mult: 1, peso: 60, arma: 0 },
-  { id: 'rara', nome: 'Rara', cor: '#58a8ff', mult: 1.5, peso: 28, arma: 0.06 },
-  { id: 'epica', nome: 'Épica', cor: '#b45cff', mult: 2.25, peso: 10, arma: 0.14 },
-  { id: 'lendaria', nome: 'Lendária', cor: '#f5c82e', mult: 3.1, peso: 2, arma: 0.25 },
+  { id: 'comum', nome: 'Comum', cor: '#b9b6d6', mult: 1, peso: 60, arma: 0 },
+  { id: 'rara', nome: 'Rara', cor: '#2f9bff', mult: 1.5, peso: 28, arma: 0.06 },
+  { id: 'epica', nome: 'Épica', cor: '#c24bff', mult: 2.25, peso: 10, arma: 0.14 },
+  { id: 'lendaria', nome: 'Lendária', cor: '#ffb41f', mult: 3.1, peso: 2, arma: 0.25 },
 ];
 export const MAX_MALDICOES = 3;
 export const REROLAGENS = 3;

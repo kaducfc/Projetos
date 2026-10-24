@@ -101,3 +101,44 @@
 .sv-reino-arte { width: 100%; height: 54px; background: linear-gradient(135deg, var(--tema), #14101e); border: 3px solid #14101e; image-rendering: pixelated; }
 
 .sv-painel .sv-retrato.anim { width: 150px; height: 100px; object-fit: contain; border: 0; background: none; image-rendering: pixelated; }
+
+/* ---- Cartas de melhoria: raridades bem distintas (comum, rara, épica, lendária) ---- */
+.sv-op { overflow: hidden; --fundo: var(--painel); background-color: var(--painel); background-image: linear-gradient(180deg, color-mix(in srgb, var(--rar, #888) 16%, transparent) 0, transparent 62%); }
+.sv-op > * { position: relative; z-index: 2; } .sv-op > .sv-op-n { position: absolute; }
+.sv-op::after { content: ''; position: absolute; z-index: 1; left: 50%; top: 10px; width: 78px; height: 78px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--rar, #888) 42%, transparent) 0, transparent 68%); pointer-events: none; }
+.sv-op::before { content: ''; position: absolute; z-index: 1; inset: 5px; pointer-events: none; opacity: 0; }
+.sv-op img { filter: drop-shadow(0 2px 0 #0b0a14); }
+.sv-op-nv { display: inline-block; padding: 4px 8px 3px; font-size: 8px; letter-spacing: .06em; border: 2px solid var(--rar, #888); background: color-mix(in srgb, var(--rar, #888) 22%, #0b0a14); color: color-mix(in srgb, var(--rar, #888) 55%, #fff) !important; }
+
+/* comum: simples, cinza-lavanda */
+.sv-op.r0 { border-width: 3px; } .sv-op.r0::after { opacity: .45; }
+
+/* rara: borda azul viva, brilho azul e ícone com halo */
+.sv-op.r1 { border-width: 4px; box-shadow: 0 0 0 2px #0b0a14, 0 0 16px color-mix(in srgb, var(--rar) 55%, transparent); }
+.sv-op.r1 img { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--rar) 80%, transparent)) drop-shadow(0 2px 0 #0b0a14); }
+.sv-op.r1 b { color: #cfe6ff; }
+
+/* épica: roxo intenso, cantos ornamentados, borda dupla e cintilar do ícone */
+.sv-op.r2 { border-width: 4px; background-image: linear-gradient(180deg, color-mix(in srgb, var(--rar) 30%, transparent) 0, transparent 70%), repeating-linear-gradient(135deg, rgba(255, 255, 255, .03) 0 6px, transparent 6px 12px); box-shadow: 0 0 0 2px #0b0a14, 0 0 0 4px color-mix(in srgb, var(--rar) 55%, #0b0a14), 0 0 24px color-mix(in srgb, var(--rar) 70%, transparent); animation: sv-pulso-epica 2.2s ease-in-out infinite; }
+.sv-op.r2::before, .sv-op.r3::before { opacity: 1; background:
+  linear-gradient(var(--rar), var(--rar)) 0 0 / 14px 3px no-repeat, linear-gradient(var(--rar), var(--rar)) 0 0 / 3px 14px no-repeat,
+  linear-gradient(var(--rar), var(--rar)) 100% 0 / 14px 3px no-repeat, linear-gradient(var(--rar), var(--rar)) 100% 0 / 3px 14px no-repeat,
+  linear-gradient(var(--rar), var(--rar)) 0 100% / 14px 3px no-repeat, linear-gradient(var(--rar), var(--rar)) 0 100% / 3px 14px no-repeat,
+  linear-gradient(var(--rar), var(--rar)) 100% 100% / 14px 3px no-repeat, linear-gradient(var(--rar), var(--rar)) 100% 100% / 3px 14px no-repeat; }
+.sv-op.r2 img { filter: drop-shadow(0 0 8px var(--rar)) drop-shadow(0 0 3px #fff6) drop-shadow(0 2px 0 #0b0a14); }
+.sv-op.r2 b { color: #f0d2ff; text-shadow: 0 0 8px color-mix(in srgb, var(--rar) 80%, transparent); }
+@keyframes sv-pulso-epica { 50% { box-shadow: 0 0 0 2px #0b0a14, 0 0 0 4px color-mix(in srgb, var(--rar) 70%, #0b0a14), 0 0 34px color-mix(in srgb, var(--rar) 90%, transparent); } }
+
+/* lendária: dourado, fundo quente, cantos grossos, varredura de brilho e estrelas */
+.sv-op.r3 { border-width: 4px; --brilho: linear-gradient(115deg, transparent 38%, rgba(255, 244, 190, .38) 50%, transparent 62%);
+  background-image: var(--brilho), radial-gradient(120% 70% at 50% 0, rgba(255, 190, 40, .38) 0, transparent 70%), repeating-linear-gradient(135deg, rgba(255, 220, 120, .05) 0 6px, transparent 6px 12px);
+  background-size: 250% 100%, 100% 100%, auto; background-position: 160% 0, 0 0, 0 0; background-repeat: no-repeat, no-repeat, repeat;
+  box-shadow: 0 0 0 2px #2a1800, 0 0 0 5px #ffe28a, 0 0 0 7px #7a4a00, 0 0 34px rgba(255, 180, 30, .85); animation: sv-lendaria 2.6s ease-in-out infinite; }
+.sv-op.r3::after { width: 96px; height: 96px; top: 2px; background: radial-gradient(circle, rgba(255, 215, 90, .62) 0, transparent 68%); animation: sv-raios 6s linear infinite; }
+.sv-op.r3 img { filter: drop-shadow(0 0 10px #ffc83a) drop-shadow(0 0 4px #fff) drop-shadow(0 2px 0 #3a2200); }
+.sv-op.r3 b { color: #ffe9a0; text-shadow: 0 0 10px rgba(255, 190, 40, .9), 0 2px 0 #3a2200; }
+.sv-op.r3 .sv-op-nv { background: linear-gradient(180deg, #7a4a00, #3a2200); border-color: #ffe28a; color: #ffe9a0 !important; }
+@keyframes sv-lendaria { 0% { background-position: 160% 0, 0 0, 0 0; } 60%, 100% { background-position: -60% 0, 0 0, 0 0; } 50% { box-shadow: 0 0 0 2px #2a1800, 0 0 0 5px #ffe28a, 0 0 0 7px #7a4a00, 0 0 48px rgba(255, 200, 60, 1); } }
+@keyframes sv-raios { to { transform: translateX(-50%) rotate(360deg); } }
+.sv-op.maldicao { --rar: #ff4d5e; } .sv-op.maldicao::after { opacity: .5; }
+@media (prefers-reduced-motion: reduce) { .sv-op.r2, .sv-op.r3, .sv-op.r3::after { animation: none; } }
