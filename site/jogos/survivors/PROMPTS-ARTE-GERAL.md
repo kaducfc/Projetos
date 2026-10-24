@@ -422,3 +422,131 @@ CELLS (left to right, top to bottom): (1) IDLE A: standing tall, wings folded, f
 
 BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature (use dark, yellowish or bluish greens instead, clearly different from the background). Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
 ```
+
+## 9. Noxus: pacote completo (7 imagens)
+
+O mapa de Noxus: terra queimada, ferro negro, pedra vermelha, estandartes carmesim com o emblema de espinhos, brasas e acampamentos de guerra. Paleta: marrom-avermelhado escuro, preto de ferro, carmesim e laranja de brasa. Anexe a imagem do Garen em cada uma (menos no chão, onde é opcional). A proporção dos objetos já é ajustada por mim no jogo (pequenos a 70%, grandes a 85%), então gere no tamanho normal de sempre. Mantenha o corpo dos objetos **escuro e de pouco contraste**, para os monstros e o campeão se destacarem.
+
+### 9.1 Chão — chao-noxus.png
+
+```
+Create ONE texture sheet of seamless, tileable GROUND tiles for a top-down pixel-art survivors game (League of Legends themed).
+
+Pixel art, 32-bit era, clean hand-placed pixels, crisp hard edges, chunky pixel size (every visible pixel block is about 8 x 8 px in this image). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO gradients, NO painterly shading, NO smooth lighting, NO vignette, NO dark corners. Flat, even lighting over the whole tile. Viewed straight from ABOVE (a flat top-down floor, no perspective, no horizon). The surface is a calm background: LOW CONTRAST, no big eye-catching features, no characters, no objects with outlines, no cast shadows, no text, no labels, no frames, no UI, no watermark.
+
+SEAMLESS RULE (very important): every tile must tile perfectly in all directions: the left edge continues into the right edge and the top edge into the bottom edge, with no visible border, no frame, no bright or dark edge line, and no feature cut in half at the edge in a way that does not continue on the opposite side.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px tiles (6 tiles), no lines and no gaps between tiles. The 6 tiles are variations of the SAME ground, with the same palette:
+TILE 1, BASE: the plain, most common ground, very even, only fine pixel noise.
+TILE 2, DARK: the same ground but darker and denser, as a shaded patch, soft blobby shapes.
+TILE 3, LIGHT: the same ground but lighter, as a patch of paler dusty earth, soft blobby shapes.
+TILE 4, DETAILS: the base ground with a few tiny scattered details (tiny glowing ember cracks, ash flakes, small bone fragments, tiny dead dry grass tufts, small pebbles), small and sparse, never bigger than 40 px.
+TILE 5, WORN: the base ground worn and bare in some places (charred black patches and grey ash drifts), soft irregular patches.
+TILE 6, EXTRA: another variation of the base ground with a different arrangement of the same small details, a little denser, same palette, no path and no bare strip.
+
+GROUND: scorched Noxian wasteland (League of Legends): dark reddish-brown cracked earth covered in many small dead dry grass tufts, tiny stones, ash and fine cracks, the same small-plant density as a forest floor so the surface feels textured, not smooth.
+
+PALETTE: dark brown-red #4A3430 base, #52382F and #3A2622 for variation, ash grey #6B5A58, dried grass #7A3A2A and #8A5A3A, and a very few glowing ember pixels #FF8A3A and #C03A1A.
+
+BACKGROUND: there is no background: every tile is fully covered by ground, edge to edge. Do not leave any transparent or green area.
+```
+
+### 9.2 Objetos pequenos (24) — props-noxus-pequenos.png
+
+```
+Create ONE sprite sheet image of small environment props for the map "Noxus" (League of Legends: a scorched warlike empire of black iron, dark red stone, crimson banners and embers).
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 6 columns x 4 rows of equal 256 x 256 px cells (24 cells), no lines between cells. ONE object per cell, centered horizontally, its base touching the same invisible ground line at y = 235 of the cell, at least 20 px of margin, nothing crossing the cell borders. Scale: the main character of the reference is about 170 px tall, so a bush is about 90 px tall, a small rock about 50 px, a torch brazier about 100 px. Every object must look good scattered on top of dark reddish-brown scorched earth, so keep the objects darker and lower in contrast than the ground details, with only tiny hot-ember accents.
+
+THE 24 OBJECTS (left to right, top to bottom):
+Row 1: (1) tuft of dead dry grass, (2) tall dead thorny weeds, (3) leafless thorn bush with dark red thorns, (4) small cluster of dark red thorny brambles, (5) cluster of dark red toadstool-like fungi with pale spots, (6) small cluster of three charred gray rocks.
+Row 2: (7) medium dark basalt rock, (8) large cracked black boulder with a glowing orange ember crack, (9) group of pale dead flowers (withered, grey-red), (10) small pile of black ash with a few embers, (11) pile of scrap iron and broken armor plates, (12) fallen burnt log with glowing ember edges.
+Row 3: (13) charred tree stump with spiky roots, (14) wooden spike barricade (sharpened stakes lashed together), (15) iron brazier on three legs with a small orange fire, (16) pile of old bones and a skull, (17) wooden signpost with two arrows and a small crimson cloth (no text), (18) broken wooden fence with barbed wire.
+Row 4: (19) wooden crate, barrel and a sack together (dark, with iron bands), (20) stack of three dark stone bricks with cracks, (21) small crimson war banner on a black iron pole with a simple spiked emblem (no text), (22) war drum on a wooden frame, (23) weapon rack with axes and a round shield painted crimson, (24) small round army tent, dark red canvas with a black pennant.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects. Do not use a white or checkerboard background. Do NOT draw ground, ash patches, or cast shadows under the objects.
+```
+
+### 9.3 Objetos grandes (6) — props-noxus-grandes.png
+
+```
+Create ONE sprite sheet image of large environment props for the map "Noxus" (League of Legends).
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. ONE object per cell, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Scale: the main character of the reference is about 170 px tall; a big tree is about 380 px tall. Keep the colors dark and moody so they sit behind the action.
+
+THE 6 OBJECTS: (1) big dead gnarled black tree with long twisted bare branches, a few dark red leaves hanging, (2) second dead tree, taller and thinner, with hanging chains and a crow-nest platform, (3) a tall Noxian watchtower of black iron and dark red stone with spikes on the roof, a crimson banner and a glowing orange brazier on top, (4) a jagged black-iron spiked statue of a Noxian warrior holding a huge axe on a stone pedestal, (5) a large ruined black stone gate or arch with spikes, cracked, with torn crimson banners and a few ember cracks, (6) a large formation of three tall jagged black rocks with glowing orange lava cracks and a little smoke.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects. Do not use a white or checkerboard background. Do NOT draw ground, ash patches, or cast shadows under the objects.
+```
+
+### 9.4 Inimigos de Noxus, pacote 1 — inimigos-noxus-1.png
+
+```
+Create ONE sprite sheet image with the walk cycles of four enemies.
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1024 x 1024 px, divided into an invisible grid of 4 columns x 4 rows of equal 256 x 256 px cells (16 cells), no lines between cells. EACH ROW is ONE enemy; the 4 cells of the row are its WALK CYCLE (4 frames, seamless loop), moving toward the RIGHT, three-quarter view, same size in all frames, feet touching the same invisible baseline at y = 235 of the cell, centered horizontally, at least 20 px of margin, nothing crossing the cell borders. Walk cycles must have clear leg or body movement between frames.
+
+THE 4 ENEMIES (Noxus, iron legion and ember spirits, menacing but cute-chunky proportions):
+ROW 1, NOXIAN LEGIONNAIRE (about 130 px tall, the common soldier): a Noxian soldier in dark iron armor with crimson trim, a spiked iron helmet with a red crest, a round black shield with a crimson spiked emblem, a short sword, angry glowing orange eyes, marching steps.
+ROW 2, NOXIAN WARMAGE (about 135 px tall, the caster): a hooded Noxian battle-mage in a long black-and-crimson robe with a high spiked collar, a staff topped with a dark red crystal with a glowing orange-red core (hard-edged pixels, no haze), pale face with glowing eyes, floats slightly while walking.
+ROW 3, SIEGE CATAPULT CART (about 150 px tall, the siege unit): a small black-iron war cart with two spoked wheels that turn between frames, a crimson-painted catapult arm holding a flaming boulder, aimed to the right, a tiny helmeted crew member pushing behind.
+ROW 4, ASH WISP (about 100 px tall, the swarm unit): a small floating ember-ghost: a rounded dark-red and orange flame-skull body with a wavy ash tail, two glowing yellow eyes, no legs, wavy floating motion (the tail waves between frames).
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects. Do not use a white or checkerboard background. Do NOT draw ground, ash patches, or cast shadows under the objects.
+```
+
+### 9.5 Inimigos de Noxus, pacote 2 — inimigos-noxus-2.png
+
+```
+Create ONE sprite sheet image with the walk cycles of four enemies.
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1024 x 1024 px, divided into an invisible grid of 4 columns x 4 rows of equal 256 x 256 px cells (16 cells), no lines between cells. EACH ROW is ONE enemy; the 4 cells of the row are its WALK CYCLE (4 frames, seamless loop), moving toward the RIGHT, three-quarter view, same size in all frames, feet touching the same invisible baseline at y = 235 of the cell, centered horizontally, at least 20 px of margin, nothing crossing the cell borders. Walk cycles must have clear leg or body movement between frames.
+
+THE 4 ENEMIES (Noxus, war beasts and iron guardians, menacing but chunky proportions):
+ROW 1, WAR HOUND (about 120 px tall, 170 px long): a lean black armored hound with a spiked iron collar and red eyes, dark fur with ember-orange cracks along the back, bared fangs, running gallop.
+ROW 2, BLOOD VULTURE (about 125 px tall): a ragged crimson-and-black vulture-like bird, bald red head, hooked bone-pale beak, torn wings half open, hopping run.
+ROW 3, IRON BRUTE (the elite, about 150 px tall): a small stocky Noxian brute in black iron plate with a huge spiked shoulder pad, a spiked mace, a glowing orange slit in the helmet, heavy stomping walk.
+ROW 4, SIEGE JUGGERNAUT (about 210 px tall, the biggest): a huge walking black-iron war machine shaped like a giant armored warrior, spikes everywhere, glowing orange furnace chest, big iron fists, crimson banner stuck on its back, a small chimney puffing smoke, slow heavy stomp.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects. Do not use a white or checkerboard background. Do NOT draw ground, ash patches, or cast shadows under the objects.
+```
+
+### 9.6 Carrasco de Noxus (chefe menor, 5:00) — chefe-noxus-1.png
+
+```
+Create ONE sprite sheet image with the animation frames of a boss monster (NOXIAN EXECUTIONER of Noxus).
+
+Pixel art game boss sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around the whole creature. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), the creature faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CREATURE: "The Executioner", a huge hooded Noxian headsman (League of Legends), about 340 px tall: a massive muscular figure in a black iron-studded leather hood with two eye holes glowing orange-red, bare scarred shoulders under a crimson cloth sash, black iron spiked pauldrons and gauntlets, a heavy leather apron with iron studs, thick boots, and a gigantic double-bladed black executioner's axe with dark red edges held in both hands. Palette: black iron, dark leather brown, crimson, ember orange.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. In EVERY cell the same creature at the same scale, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Identical design, colors and proportions in all cells.
+
+CELLS (left to right, top to bottom): (1) IDLE A: standing heavy, axe head resting on the ground in front of him; (2) IDLE B: breathing, shoulders slightly raised, the sash swaying a little; (3) IDLE C: shoulders lowered, the sash swaying the other way (the 3 idle cells form a seamless slow loop); (4) ATTACK WIND-UP: the axe raised high above his head with both hands, body leaning back, the eye holes glowing brighter (hard-edged pixels); (5) ATTACK STRIKE: the axe slammed down into the ground in front of him, crisp hard-edged dark-red shockwave lines and flying rock chips; (6) DEATH: the executioner collapsed on his knees and then fallen forward in a heap, the axe lying beside him, the eye holes dark.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature. Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
+```
+
+### 9.7 Darius, a Mão de Noxus (chefe final, 10:00) — chefe-noxus-2.png
+
+```
+Create ONE sprite sheet image with the animation frames of a boss monster (DARIUS, the Hand of Noxus).
+
+Pixel art game boss sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around the whole creature. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), the creature faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CREATURE: "Darius", the Hand of Noxus (League of Legends), about 440 px tall: a huge, broad-shouldered Noxian general in heavy black-and-dark-red plate armor with spikes on the shoulders and a spiked helmet with a red horsehair crest, a flowing tattered crimson cape, a brutal stern bearded face, gauntlets with spikes, and a colossal black-iron two-handed axe with a curved crimson-edged double blade. Palette: black iron, dark red, crimson, bone, ember orange.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. In EVERY cell the same creature at the same scale, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Identical design, colors and proportions in all cells.
+
+CELLS (left to right, top to bottom): (1) IDLE A: standing tall and heavy, the axe resting on his shoulder; (2) IDLE B: the cape swaying slightly to one side, chest rising; (3) IDLE C: the cape swaying to the other side (the 3 idle cells form a seamless slow loop); (4) ATTACK WIND-UP: the axe pulled back and up over his head with both hands, body twisted, a few dark red sparks (hard-edged pixels); (5) ATTACK STRIKE: a huge horizontal axe sweep to the right with a crisp hard-edged crimson crescent slash arc and flying sparks (no blur, no glow); (6) DEATH: Darius on one knee then fallen face-down, the cape spread over him, the axe stuck in the ground beside him, the crest broken.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature. Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
+```
