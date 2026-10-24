@@ -468,7 +468,7 @@ function habilidadeEspecial(S, dt) {
     P.espT -= dt;
     if (P.espT <= 0) {
       const lam = S.armas[0] ? statsDe(S, S.armas[0]) : null; const dano = ((lam?.dano || 12) * esp.mult) * S.a.dano;
-      for (const e of S.inim.slice()) { const d = Math.hypot(e.x - P.x, e.y - P.y); if (d < raio + e.raio) ferir(S, e, dano, { kx: ((e.x - P.x) / (d || 1)) * 60, ky: ((e.y - P.y) / (d || 1)) * 60 }); }
+      for (const e of S.inim.slice()) { const d = Math.hypot(e.x - P.x, e.y - P.y); if (d < raio + e.raio) { ferir(S, e, dano, { kx: ((e.x - P.x) / (d || 1)) * 60, ky: ((e.y - P.y) / (d || 1)) * 60 }); if (esp.lento) e.lento = Math.max(e.lento, esp.lento); } }
       S.efeitos.push({ x: P.x, y: P.y, t: 0.35, d: 0.35, tipo: 'explosao', r: raio, cor: esp.cor }); S.shake = Math.max(S.shake, 0.15);
       chispas(S, P.x, P.y, 24, { cor: esp.faisca || '#bfe4ff', vel: 110, vida: 0.45 });
     }
