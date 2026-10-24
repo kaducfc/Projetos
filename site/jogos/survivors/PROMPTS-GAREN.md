@@ -161,3 +161,17 @@ ROW 2, RUN CYCLE (6 frames, seamless loop), same view and same rules, but faster
 
 BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use green anywhere on the character. Do not use a white or checkerboard background.
 ```
+
+## Retrato no padrão novo (garen-retrato.png): igual ao da Ahri
+
+Anexe `garen-modelo.png` (a ficha aprovada do Garen) e, se quiser, o retrato da Ahri como referência de enquadramento.
+
+```
+Create a character-select portrait icon.
+
+Pixel art game sprite, 32-bit era, clean hand-placed pixels, crisp hard edges, the same chunky pixel size and art style as the attached reference. Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong 1-pixel dark outline (#14101E) around the whole character. Limited palette, 3 to 4 tones per material, light from the top-left. No ground shadow, no text, no labels, no frames, no UI, no watermark.
+
+SUBJECT: bust portrait of Garen (League of Legends, "The Might of Demacia") for a character-select screen: a tight crop, head and shoulders, three-quarter view facing slightly right, confident smile, determined look. Same character exactly as the attached model sheet of GAREN: short messy brown hair, strong jaw, silver steel plate armor with gold trim, huge layered shoulder pauldrons with a gold edge, a royal-blue tabard and the top of his cape with the golden winged-shield crest on the chest, steel gauntlet on the shoulder side, and the gold crossguard and grip of his broadsword rising behind the right shoulder. Image size 256 x 256 px, the character filling the whole square like a close-up (face large and clearly readable), same framing as a big character-select bust.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key), no gradient, no shadow, no texture. Do NOT use green anywhere on the character.
+```
