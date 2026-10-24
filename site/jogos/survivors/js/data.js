@@ -82,7 +82,7 @@ export const CHEFES = {
   serpente: { nome: 'Serpente de Jade', t: TEMPO_BARAO, hp: 11000, vel: 20, dano: 24, raio: 22, xp: 200, ia: 'chefe', cd: 3.0, ouro: 120, final: true, kit: ['anel', 'marcas', 'invocar', 'onda'], sprite: 'serpente' },
   barao: { nome: 'Barão Nashor', t: TEMPO_BARAO, hp: 11000, vel: 20, dano: 24, raio: 22, xp: 200, ia: 'barao', cd: 3.4, ouro: 120, final: true },
   // Ionia
-  kodama: { nome: 'Kodama Ancião', t: 5 * 60, hp: 1700, vel: 22, dano: 13, raio: 14, xp: 40, ia: 'chefe', cd: 3.4, ouro: 25, kit: ['marcas', 'investida'], sprite: 'arauto@ionia' },
+  kodama: { nome: 'Kodama Ancião', t: 5 * 60, hp: 1700, vel: 22, dano: 13, raio: 17, xp: 40, ia: 'chefe', cd: 3.4, ouro: 25, kit: ['marcas', 'investida'], sprite: 'kodama' },
   dragao_ionia: { nome: 'Dragão Espiritual', t: 10 * 60, hp: 6200, vel: 24, dano: 19, raio: 18, xp: 120, ia: 'chefe', cd: 2.8, ouro: 80, final: true, kit: ['anel', 'marcas', 'investida', 'anel'], sprite: 'b_dragao_ionia' },
   // Demacia
   vanguarda: { nome: 'Cavaleiro da Vanguarda', t: 5 * 60, hp: 2000, vel: 21, dano: 15, raio: 14, xp: 45, ia: 'chefe', cd: 3.4, ouro: 25, kit: ['investida', 'onda'], sprite: 'arauto@demacia' },
