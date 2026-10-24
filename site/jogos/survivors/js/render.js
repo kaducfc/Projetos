@@ -1,8 +1,8 @@
 // Rift Survivors: desenho no canvas (resolução lógica pequena, ampliada com pixels nítidos).
-import { sprite, spriteBranco, icone, animacao, quadroAnim, nQuadros } from './sprites.js';
+import { sprite, spriteBranco, icone, animacao, quadroAnim, nQuadros, atlasDeProps } from './sprites.js';
 import { CHEFES } from './data.js';
 import { statsDe } from './game.js';
-import { CH, hash, pedaco } from './temas.js';
+import { CH, hash, pedaco, propsDoPedaco } from './temas.js';
 
 const DIG = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001001001001', 8: '111101111101111', 9: '111101111001111' };
 const FONTE = '8px "Press Start 2P", ui-monospace, monospace';
@@ -86,10 +86,19 @@ export function criarRender(canvas) {
     for (const it of S.itens) desenhar(it.tipo, it.x, it.y + 4, 0, Math.round(Math.sin(R.t * 4 + it.x) * 1.5));
     // entidades por profundidade
     const ents = [];
+    const AT = atlasDeProps(S.R.tema); // objetos do cenário entram na mesma ordenação (quem está mais abaixo aparece na frente)
+    if (AT) for (let cy = Math.floor((camY - 20) / CH); cy <= Math.floor((camY + h + 60) / CH); cy++) for (let cx = Math.floor((camX - 40) / CH); cx <= Math.floor((camX + w + 40) / CH); cx++) for (const p of propsDoPedaco(S.R.tema, cx, cy)) ents.push({ prop: true, i: p.i, x: p.x, y: p.y });
     for (const e of S.inim) if (e.x > camX - 40 && e.x < camX + w + 40 && e.y > camY - 40 && e.y < camY + h + 60) ents.push(e);
     ents.push({ jogador: true, y: P.y, x: P.x });
     ents.sort((a, b) => a.y - b.y);
     for (const e of ents) {
+      if (e.prop) {
+        const col = e.i % 6; const lin = (e.i / 6) | 0; const pw = AT.w[e.i]; const ph = AT.h[e.i]; const bx = Math.round(e.x); const by = Math.round(e.y);
+        ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.fillRect(bx - Math.round(pw * 0.38), by - 2, Math.round(pw * 0.76), 3);
+        ctx.drawImage(AT.img, col * AT.cw + Math.floor((AT.cw - pw) / 2), lin * AT.ch + AT.ch - 1 - ph, pw, ph, bx - Math.floor(pw / 2), by - ph, pw, ph);
+        if (e.i === 20) luz('#ffb347', bx, by - ph * 0.55, 14, 0.55); else if (e.i === 14) luz('#58a8ff', bx, by - ph * 0.5, 16, 0.45); else if (e.i === 21) luz('#ffe36a', bx, by - ph * 0.7, 13, 0.55);
+        continue;
+      }
       if (e.jogador) {
         ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(Math.round(P.x) - 7, Math.round(P.y) - 1, 14, 4); ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(Math.round(P.x) - 5, Math.round(P.y), 10, 2);
         const bob = P.andando ? Math.round(Math.abs(Math.sin(R.t * 12)) * 2) : 0;

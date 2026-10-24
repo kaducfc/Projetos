@@ -36,7 +36,7 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 5; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 6; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { parada: { src: 'ahri/ahri-parada.png', n: 5 }, andando: { src: 'ahri/ahri-andando.png', n: 5 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
@@ -46,6 +46,10 @@ const ICONES_IMG = { orbe: 'ahri/i-orbe.png', coracao: 'ahri/i-coracao.png' };
 const quadros = {}; // nome -> anim -> [canvas]
 const imgs = {};
 export const arteUrl = (arq) => BASE_IMG + arq;
+// Objetos de cenário em atlas (grade de células iguais, pé do objeto embaixo no centro). tema -> { img, cw, ch, w[], h[] }
+const ATLAS_PROPS = { rift: 'props/rift-pequenos' };
+const propsAtlas = {};
+export const atlasDeProps = (tema) => propsAtlas[tema] || null;
 function carregarImg(arq) { return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = `${BASE_IMG}${arq}?v=${VERSAO_ARTE}`; }); }
 export async function carregarImagens() {
   for (const [nome, anims] of Object.entries(ANIM)) {
@@ -57,6 +61,12 @@ export async function carregarImagens() {
       for (let i = 0; i < d.n; i++) { const c = canvasDe(fw, img.height); c.getContext('2d').drawImage(img, i * fw, 0, fw, img.height, 0, 0, fw, img.height); quadros[nome][anim].push(anims.semContorno ? c : contornar(c)); }
     }
     cache.delete(nome); cache.delete(nome + ':w');
+  }
+  for (const [tema, base] of Object.entries(ATLAS_PROPS)) {
+    try {
+      const [img, meta] = await Promise.all([carregarImg(base + '.png'), fetch(`${BASE_IMG}${base}.json?v=${VERSAO_ARTE}`).then((r) => r.json())]);
+      if (img && meta) propsAtlas[tema] = { img, ...meta };
+    } catch { /* sem o atlas: o cenário usa os desenhos em código */ }
   }
   for (const [nome, arq] of Object.entries(ESTATICAS)) { const img = await carregarImg(arq); if (img) { const c = canvasDe(img.width, img.height); c.getContext('2d').drawImage(img, 0, 0); imgs[nome] = contornar(c); cache.delete(nome); } }
   for (const [nome, arq] of Object.entries(ICONES_IMG)) { const img = await carregarImg(arq); if (img) { const c = canvasDe(12, 12); const x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.drawImage(img, 0, 0, 12, 12); imgs['i:' + nome] = c; cache.delete('i:' + nome); } }

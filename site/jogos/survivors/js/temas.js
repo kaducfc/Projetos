@@ -1,4 +1,5 @@
 // Rift Survivors: chão e cenário de cada reino (pedaços de 128x128 gerados com ruído por posição).
+import { atlasDeProps } from './sprites.js';
 export const CH = 128;
 export const hash = (a, b) => { let h = Math.imul(a, 374761393) + Math.imul(b, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
 const r = (x, X, Y, w, h, cor) => { x.fillStyle = cor; x.fillRect(X, Y, w, h); };
@@ -33,7 +34,7 @@ const D = {
 };
 
 export const TEMAS = {
-  rift: { tile: ['#2f6b2e', '#34752f'], tufo: ['#285c28', '#4a9a3a'], trilha: ['#8a7a52', '#9c8c62', '#76683f'], poco: ['#7a6a45', '#2e7fc0', '#4aa3e0'],
+  rift: { tile: ['#2f6b2e', '#317030'], tufo: ['#285c28', '#4a9a3a'], trilha: ['#8a7a52', '#9c8c62', '#76683f'], poco: ['#7a6a45', '#2e7fc0', '#4aa3e0'],
     deco: [[0.34, (x, X, Y) => D.arbusto(x, X, Y)], [0.21, (x, X, Y) => D.pedra(x, X, Y)], [0.25, (x, X, Y, k) => D.flor(x, X, Y, k)], [0.2, (x, X, Y) => D.arvore(x, X, Y)]] },
   ionia: { tile: ['#3d8a6a', '#43946f'], tufo: ['#2f7058', '#6fcf9a'], trilha: ['#a8b8a0', '#c0d0b8', '#8a9a84'], poco: ['#8a9a84', '#3aa8c0', '#8ae8f0'],
     deco: [[0.3, (x, X, Y) => D.sakura(x, X, Y)], [0.16, (x, X, Y) => D.lanterna(x, X, Y)], [0.2, (x, X, Y) => D.bambu(x, X, Y)], [0.24, (x, X, Y, k) => D.flor(x, X, Y, k, ['#ffb3d1', '#ffffff', '#c9a6ff'])], [0.1, (x, X, Y) => D.torii(x, X, Y)]] },
@@ -64,6 +65,7 @@ export function pedaco(tema, cx, cy) {
     const px = 20 + ((hash(cx, cy + 1) * 60) | 0); const py = 20 + ((hash(cx + 1, cy) * 60) | 0);
     r(x, px - 1, py - 1, 38, 24, T.poco[0]); r(x, px + 2, py + 2, 32, 16, T.poco[1]); r(x, px + 6, py + 5, 10, 1, T.poco[2]); r(x, px + 18, py + 11, 12, 1, T.poco[2]);
   }
+  if (atlasDeProps(tema)) return c; // os objetos do cenário vêm do atlas (desenhados à parte, ordenados por profundidade)
   const n = 3 + ((hash(cx, cy * 3) * 4) | 0); const total = T.deco.reduce((s, d) => s + d[0], 0);
   for (let i = 0; i < n; i++) {
     const dx = (hash(cx * 7 + i, cy) * (CH - 24)) | 0; const dy = (hash(cx, cy * 7 + i) * (CH - 24)) | 0; const k = hash(cx + i * 3, cy + i * 5);
@@ -71,4 +73,20 @@ export function pedaco(tema, cx, cy) {
     f(x, dx, dy, k);
   }
   return c;
+}
+
+// Objetos de cenário de um pedaço (posições fixas por hash): [{ i: índice no atlas, x, y }], y = base do objeto.
+const PESOS_RIFT = [14, 6, 8, 4, 3, 4, 4, 2, 5, 5, 4, 1.5, 2, 1, 1.5, 1, 0.6, 1, 0.8, 1.2, 1, 0.5, 1.2, 1];
+const cachePropsPedaco = new Map();
+export function propsDoPedaco(tema, cx, cy) {
+  const A = atlasDeProps(tema); if (!A) return [];
+  const k = `${tema}|${cx},${cy}`; let l = cachePropsPedaco.get(k); if (l) return l;
+  const pesos = PESOS_RIFT; const total = pesos.reduce((s, p) => s + p, 0);
+  const n = 4 + ((hash(cx * 3, cy * 5) * 4) | 0); l = [];
+  for (let j = 0; j < n; j++) {
+    let m = hash(cx * 11 + j, cy * 13 + 7) * total; let i = 0; for (; i < pesos.length - 1; i++) { m -= pesos[i]; if (m <= 0) break; }
+    l.push({ i, x: cx * CH + 8 + hash(cx * 17 + j, cy) * (CH - 16), y: cy * CH + 14 + hash(cx, cy * 19 + j) * (CH - 14) });
+  }
+  cachePropsPedaco.set(k, l); if (cachePropsPedaco.size > 200) cachePropsPedaco.delete(cachePropsPedaco.keys().next().value);
+  return l;
 }
