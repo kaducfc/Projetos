@@ -64,6 +64,8 @@ const CAPAS = {
   // Rift Manager: o banner do time campeão com o nome do jogo por cima.
   tecnico: `<div class="cv cv-rm"><img class="cv-rm-bg" src="/jogos/tecnico/img/capa.webp" alt="" loading="lazy" />
       <span class="cv-rm-t"><i>RIFT</i><b>MANAGER</b></span></div>`,
+  survivors: `<div class="cv cv-sv"><img class="cv-sv-bg" src="/jogos/survivors/img/capa.webp" alt="" loading="lazy" />
+      <span class="cv-sv-t"><i>RIFT</i><b>SURVIVORS</b></span></div>`,
   barao: `<div class="cv cv-barao"><span class="cv-t"><i>SHOW DO</i><b>BARÃO</b></span>
       <img class="cv-bz-ap" src="/jogos/barao/img/apresentador.webp" alt="" loading="lazy" /></div>`,
   // O time dos sonhos, como na tela do Lendas (melhor OVR de cada um no jogo).

@@ -153,6 +153,16 @@ export const GAMES = [
     scoreLabel: 'Pontos',
     ranked: { modo: 'vagas', selo: 'Ranqueada' },
   },
+  {
+    id: 'survivors',
+    name: 'Rift Survivors',
+    tagline: 'Sobreviva às hordas do Rift, evolua suas habilidades e derrote o Barão Nashor.',
+    kind: 'Sobrevivência',
+    path: 'jogos/survivors/',
+    status: 'live',
+    scoreLabel: 'Pontos',
+    soAdmin: true,
+  },
 ];
 
 export const gameById = (id) => GAMES.find((g) => g.id === id);

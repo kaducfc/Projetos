@@ -1,0 +1,277 @@
+// Rift Survivors: sobreviva às hordas do Rift, evolua suas habilidades e derrote o Barão Nashor.
+// Enquanto o jogo é "oculto" (gameById('survivors').soAdmin), só administradores e convidados conseguem jogar.
+import * as platform from '../../../shared/platform.js';
+import { mountSiteBar } from '../../../shared/account.js';
+import { gameById } from '../../../shared/config.js';
+import { CAMPEOES, ARMAS, ITENS, MELHORIAS, NIVEL_MAX_ITEM, TEMPO_BARAO, CHEFES } from './data.js';
+import { criarJogo, atualizar, escolher, essenciaGanha } from './game.js';
+import { criarRender } from './render.js';
+import { urlSprite, urlIcone, carregarImagens, arteUrl } from './sprites.js';
+import { som, SOM_EVENTO, destravar, definirMudo, estaMudo } from './audio.js';
+import * as Meta from './meta.js';
+
+const GAME_ID = 'survivors';
+const LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
+const palco = document.getElementById('sv-palco');
+const cv = document.getElementById('sv-cv');
+const ui = document.getElementById('sv-ui');
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = (n) => Number(n).toLocaleString('pt-BR');
+const tempoTxt = (t) => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+
+mountSiteBar(document.getElementById('site-bar'), { hubHref: '../../' });
+
+let meta = Meta.carregar();
+let modo = 'menu'; // menu | selecao | loja | jogo
+let S = null; let demo = null; let pausado = false; let escolhido = meta.ultimo;
+let escala = 3; const render = criarRender(cv);
+let ult = 0; let fimTratado = false;
+try { definirMudo(localStorage.getItem('survivors.mudo') === '1'); } catch { /* sem storage */ }
+
+// --------------------------------------------------------------------------- tamanho (pixels nítidos)
+function ajustar() {
+  const r = palco.getBoundingClientRect();
+  escala = Math.max(2, Math.round(Math.min(r.width / 400, r.height / 225)));
+  const lw = Math.max(160, Math.floor(r.width / escala)); const lh = Math.max(120, Math.floor(r.height / escala));
+  render.resize(lw, lh); cv.style.width = `${Math.round(r.width)}px`; cv.style.height = `${Math.round(r.height)}px`; // preenche a área (a escala fica quase inteira)
+  if (S) S.vista = { w: lw, h: lh }; if (demo) demo.vista = { w: lw, h: lh };
+}
+window.addEventListener('resize', ajustar);
+
+// --------------------------------------------------------------------------- entrada
+const teclas = new Set();
+const toque = { ativo: false, id: null, ox: 0, oy: 0, x: 0, y: 0 };
+function entrada() {
+  let x = 0; let y = 0;
+  if (teclas.has('arrowleft') || teclas.has('a')) x -= 1; if (teclas.has('arrowright') || teclas.has('d')) x += 1;
+  if (teclas.has('arrowup') || teclas.has('w')) y -= 1; if (teclas.has('arrowdown') || teclas.has('s')) y += 1;
+  if (toque.ativo) { const dx = toque.x - toque.ox; const dy = toque.y - toque.oy; const m = Math.hypot(dx, dy); if (m > 6) { const k = Math.min(1, m / 40); x = (dx / m) * k; y = (dy / m) * k; } }
+  return { x, y };
+}
+window.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase(); destravar();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(k) && modo === 'jogo') e.preventDefault();
+  teclas.add(k);
+  if (modo === 'jogo' && S) {
+    if ((k === 'escape' || k === 'p') && S.estado === 'jogando') alternarPausa();
+    else if (S.estado === 'upgrade' && ['1', '2', '3'].includes(k)) escolherOpcao(Number(k) - 1);
+  }
+});
+window.addEventListener('keyup', (e) => teclas.delete(e.key.toLowerCase()));
+window.addEventListener('blur', () => { teclas.clear(); if (modo === 'jogo' && S?.estado === 'jogando' && !pausado) alternarPausa(true); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && modo === 'jogo' && S?.estado === 'jogando' && !pausado) alternarPausa(true); });
+const joy = document.getElementById('sv-joy'); const joyBola = document.getElementById('sv-joy-bola');
+palco.addEventListener('pointerdown', (e) => {
+  if (modo !== 'jogo' || e.pointerType === 'mouse' || toque.ativo || e.target.closest('button')) return;
+  destravar(); toque.ativo = true; toque.id = e.pointerId; toque.ox = toque.x = e.clientX; toque.oy = toque.y = e.clientY;
+  const r = palco.getBoundingClientRect(); joy.style.display = 'block'; joy.style.left = `${e.clientX - r.left}px`; joy.style.top = `${e.clientY - r.top}px`; joyBola.style.transform = 'translate(0,0)';
+  palco.setPointerCapture?.(e.pointerId);
+});
+palco.addEventListener('pointermove', (e) => {
+  if (!toque.ativo || e.pointerId !== toque.id) return; toque.x = e.clientX; toque.y = e.clientY;
+  const dx = toque.x - toque.ox; const dy = toque.y - toque.oy; const m = Math.hypot(dx, dy) || 1; const k = Math.min(40, m) / m;
+  joyBola.style.transform = `translate(${dx * k}px, ${dy * k}px)`;
+});
+const soltar = (e) => { if (e.pointerId !== toque.id) return; toque.ativo = false; joy.style.display = 'none'; };
+palco.addEventListener('pointerup', soltar); palco.addEventListener('pointercancel', soltar);
+palco.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// --------------------------------------------------------------------------- modo demonstração (fundo do menu)
+function botEntrada(Sx) {
+  let x = 0; let y = 0; const P = Sx.p;
+  for (const e of Sx.inim) { const dx = P.x - e.x; const dy = P.y - e.y; const d2 = dx * dx + dy * dy; if (d2 < 80 * 80 && d2 > 1) { x += dx / d2; y += dy / d2; } }
+  if (Math.abs(x) + Math.abs(y) < 0.0005) {
+    let g = null; let md = 140 * 140; for (const q of Sx.gemas) { const d2 = (q.x - P.x) ** 2 + (q.y - P.y) ** 2; if (d2 < md) { md = d2; g = q; } }
+    if (g) { const d = Math.sqrt(md) || 1; return { x: (g.x - P.x) / d, y: (g.y - P.y) / d }; }
+    const a = Sx.t * 0.5; return { x: Math.cos(a), y: Math.sin(a) };
+  }
+  const m = Math.hypot(x, y); return { x: x / m, y: y / m };
+}
+function novaDemo() { const lista = CAMPEOES; demo = criarJogo({ campeao: lista[Math.floor(Math.random() * lista.length)].id, vista: { w: render.w, h: render.h } }); demo.t = 150; }
+function passoDemo(dt) {
+  if (!demo || demo.estado !== 'jogando' && demo.estado !== 'upgrade') novaDemo();
+  if (demo.estado === 'upgrade') escolher(demo, demo.opcoes[0]);
+  atualizar(demo, dt, botEntrada(demo)); demo.evt.length = 0;
+  if (demo.t > 700 || demo.p.hp < demo.p.hpMax * 0.25) { demo.p.hp = demo.p.hpMax; demo.p.inv = 1; }
+}
+
+// --------------------------------------------------------------------------- telas
+function nomeEA() { return `<span class="sv-ea"><img alt="" src="${urlIcone('tomo')}" />${fmt(meta.essencia)} EA</span>`; }
+function tela(html, cls = '') { ui.className = `sv-ui ${cls}`; ui.innerHTML = html; }
+
+function telaMenu() {
+  modo = 'menu'; pausado = false;
+  const m = meta.melhor;
+  tela(`<div class="sv-menu">
+    <img class="sv-heroi" alt="" src="${arteUrl('arte.png')}" />
+    <p class="sv-eyebrow">Rift Arcade · em teste</p>
+    <h1 class="sv-titulo"><span>RIFT</span><span>SURVIVORS</span></h1>
+    <p class="sv-sub">Sobreviva às hordas, evolua suas habilidades e derrote o Barão Nashor.</p>
+    <div class="sv-botoes">
+      <button class="sv-btn grande" data-a="jogar">Jogar</button>
+      <button class="sv-btn" data-a="campeoes">Campeões</button>
+      <button class="sv-btn" data-a="loja">Melhorias</button>
+      <button class="sv-btn" data-a="como">Como jogar</button>
+    </div>
+    <p class="sv-rodape">${nomeEA()} · melhor: ${tempoTxt(m.tempo)} · ${fmt(m.abates)} abates · ${fmt(meta.vitorias)} ${meta.vitorias === 1 ? 'vitória' : 'vitórias'}</p>
+    <button class="sv-mudo" data-a="mudo" aria-label="Som">${estaMudo() ? '🔇' : '🔊'}</button>
+  </div>`, 'menu');
+}
+function telaComo() {
+  tela(`<div class="sv-painel"><h2>Como jogar</h2>
+    <ul class="sv-lista">
+      <li><b>Mover:</b> WASD ou setas. No celular, arraste o dedo na tela.</li>
+      <li><b>Atacar:</b> automático. Seu campeão usa as habilidades sozinho.</li>
+      <li><b>Evoluir:</b> colete as gemas azuis dos inimigos. A cada nível, escolha 1 de 3 melhorias (teclas 1, 2 e 3).</li>
+      <li><b>Itens:</b> até ${6} habilidades e ${6} itens, cada um até o nível ${NIVEL_MAX_ITEM}.</li>
+      <li><b>Baús:</b> chefes e monstros grandes soltam baús que dão uma melhoria extra.</li>
+      <li><b>Chefes:</b> Arauto aos 5:00, Dragão aos 10:00 e o <b>Barão Nashor aos ${tempoTxt(TEMPO_BARAO)}</b>. Derrote o Barão para vencer!</li>
+      <li><b>Pausa:</b> Esc ou P.</li>
+    </ul><div class="sv-botoes"><button class="sv-btn" data-a="menu">Voltar</button></div></div>`);
+}
+function cartaCampeao(c) {
+  const lib = meta.liberados.includes(c.id); const sel = escolhido === c.id; const arma = ARMAS[c.arma];
+  return `<div class="sv-carta ${sel ? 'sel' : ''} ${lib ? '' : 'trava'}" data-camp="${c.id}">
+    <img class="sv-retrato ${c.id === 'ahri' ? 'arte' : ''}" alt="" src="${c.id === 'ahri' ? arteUrl('retrato.png') : urlSprite(c.id)}" />
+    <b>${esc(c.nome)}</b><small>${esc(c.titulo)}</small>
+    <span class="sv-arma"><img alt="" src="${urlIcone(c.arma)}" />${esc(arma.nome)}</span>
+    <small class="sv-st">Vida ${c.hp} · Vel ${c.vel} · Arm ${c.armadura}</small>
+    <small class="sv-desc">${esc(c.desc)}</small>
+    ${lib ? `<button class="sv-btn mini" data-a="escolher" data-id="${c.id}">${sel ? 'Escolhido' : 'Escolher'}</button>` : `<button class="sv-btn mini ouro" data-a="liberar" data-id="${c.id}" ${meta.essencia < c.preco ? 'disabled' : ''}>Liberar · ${c.preco} EA</button>`}
+  </div>`;
+}
+function telaCampeoes(paraJogar = false) {
+  modo = 'selecao';
+  tela(`<div class="sv-painel largo"><h2>${paraJogar ? 'Escolha seu campeão' : 'Campeões'}</h2><p class="sv-sub">${nomeEA()}</p>
+    <div class="sv-cartas">${CAMPEOES.map(cartaCampeao).join('')}</div>
+    <div class="sv-botoes">${paraJogar ? '<button class="sv-btn grande" data-a="comecar">Começar partida</button>' : ''}<button class="sv-btn" data-a="menu">Voltar</button></div></div>`, 'rolar');
+  ui.dataset.jogar = paraJogar ? '1' : '';
+}
+function telaLoja() {
+  modo = 'loja';
+  const linhas = Object.entries(MELHORIAS).map(([id, d]) => {
+    const n = meta.melhorias[id] || 0; const cheio = n >= d.max; const p = cheio ? 0 : d.preco(n);
+    return `<div class="sv-item"><div><b>${esc(d.nome)}</b><small>${esc(d.desc)}</small><span class="sv-pips">${Array.from({ length: d.max }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span></div>
+      <button class="sv-btn mini ouro" data-a="melhorar" data-id="${id}" ${cheio || meta.essencia < p ? 'disabled' : ''}>${cheio ? 'Máximo' : `${p} EA`}</button></div>`;
+  }).join('');
+  tela(`<div class="sv-painel"><h2>Melhorias</h2><p class="sv-sub">${nomeEA()} · fica salvo neste navegador</p><div class="sv-itens">${linhas}</div><div class="sv-botoes"><button class="sv-btn" data-a="menu">Voltar</button></div></div>`, 'rolar');
+}
+
+// --------------------------------------------------------------------------- partida
+function iniciar() {
+  meta.ultimo = escolhido; Meta.gravar(meta);
+  S = criarJogo({ campeao: escolhido, meta, vista: { w: render.w, h: render.h } });
+  modo = 'jogo'; pausado = false; fimTratado = false; ui.className = 'sv-ui jogo'; ui.innerHTML = '';
+  destravar(); avisar(`${CAMPEOES.find((c) => c.id === escolhido).nome} entrou no Rift!`);
+}
+function avisar(txt, cls = '') {
+  const a = document.createElement('div'); a.className = `sv-aviso ${cls}`; a.textContent = txt; palco.appendChild(a); setTimeout(() => a.remove(), 2600);
+}
+function alternarPausa(forcar = false) {
+  if (!S || S.estado !== 'jogando') return;
+  pausado = forcar ? true : !pausado;
+  if (pausado) tela(`<div class="sv-painel pequeno"><h2>Pausado</h2><div class="sv-botoes"><button class="sv-btn grande" data-a="continuar">Continuar</button><button class="sv-btn" data-a="mudo">${estaMudo() ? 'Ligar som' : 'Desligar som'}</button><button class="sv-btn perigo" data-a="desistir">Desistir</button></div></div>`, 'jogo');
+  else { ui.innerHTML = ''; ui.className = 'sv-ui jogo'; }
+}
+function mostrarUpgrade() {
+  const ops = S.opcoes; if (!ops) return;
+  const cartas = ops.map((o, i) => {
+    let nome; let desc; let ic; let nivel;
+    if (o.tipo === 'arma') { const d = ARMAS[o.id]; nome = d.nome; desc = o.nivel === 1 ? d.desc : `Nível ${o.nivel}: mais ${descreverSalto(o.id, o.nivel)}`; ic = o.id; nivel = o.nivel === 1 ? 'NOVA' : `NV ${o.nivel}`; }
+    else if (o.tipo === 'item') { const d = ITENS[o.id]; nome = d.nome; desc = d.desc; ic = o.id; nivel = o.nivel === 1 ? 'NOVO' : `NV ${o.nivel}`; }
+    else if (o.tipo === 'cura') { nome = 'Poção de Cura'; desc = 'Recupera toda a vida'; ic = 'cura'; nivel = ''; }
+    else { nome = 'Bolsa de Ouro'; desc = '+40 de ouro'; ic = 'ouro'; nivel = ''; }
+    return `<button class="sv-op" data-op="${i}"><span class="sv-op-n">${i + 1}</span><img alt="" src="${urlIcone(ic)}" /><b>${esc(nome)}</b><span class="sv-op-nv ${nivel.startsWith('N') && !nivel.startsWith('NV') ? 'novo' : ''}">${nivel}</span><small>${esc(desc)}</small></button>`;
+  }).join('');
+  tela(`<div class="sv-upgrade"><h2>Nível ${S.nivel}!</h2><p class="sv-sub">Escolha uma melhoria</p><div class="sv-ops">${cartas}</div></div>`, 'jogo');
+}
+function descreverSalto(id, n) {
+  const a = ARMAS[id].stats(n - 1); const b = ARMAS[id].stats(n); const t = [];
+  if (b.dano > a.dano) t.push('dano'); if (b.qtd > a.qtd) t.push('projéteis'); if ((b.cd || 9) < (a.cd || 9)) t.push('velocidade'); if (b.raio > a.raio) t.push('alcance'); if (b.giro > a.giro) t.push('giro'); if (b.perf > a.perf) t.push('perfuração');
+  return t.length ? t.join(' e ') : 'poder';
+}
+function escolherOpcao(i) {
+  if (!S || S.estado !== 'upgrade' || !S.opcoes?.[i]) return;
+  escolher(S, S.opcoes[i]); som('escolha');
+  if (S.estado === 'upgrade') mostrarUpgrade(); else { ui.innerHTML = ''; ui.className = 'sv-ui jogo'; }
+}
+function processarEventos() {
+  for (const e of S.evt) {
+    const s = SOM_EVENTO[e.tipo]; if (s) som(s);
+    if (e.tipo === 'chefe') avisar(`${CHEFES[e.id].nome.toUpperCase()} APARECEU!`, 'chefe');
+    else if (e.tipo === 'onda') avisar('ONDA DE TROPAS!', 'onda');
+    else if (e.tipo === 'revive') avisar('Ampulheta de Zhonya!', 'onda');
+  }
+  S.evt.length = 0;
+}
+function fimDeJogo() {
+  fimTratado = true; const venceu = S.estado === 'vitoria'; som(venceu ? 'vitoria' : 'derrota');
+  const ganho = essenciaGanha(S); Meta.registrarPartida(meta, S, ganho);
+  try { platform.recordResult(GAME_ID, { score: S.abates * 10 + Math.floor(S.t) + (venceu ? 5000 : 0), summary: { campeao: S.campeao, tempo: Math.floor(S.t), abates: S.abates, nivel: S.nivel, venceu } }); } catch { /* sem conexão */ }
+  const c = CAMPEOES.find((x) => x.id === S.campeao);
+  tela(`<div class="sv-painel ${venceu ? 'vitoria' : 'derrota'}"><h2>${venceu ? 'VITÓRIA!' : 'DERROTA'}</h2>
+    <p class="sv-sub">${venceu ? 'O Barão Nashor caiu. O Rift é seu!' : 'Você caiu no Rift...'}</p>
+    <img class="sv-retrato ${S.campeao === 'ahri' ? 'arte' : ''}" alt="" src="${S.campeao === 'ahri' ? arteUrl('retrato.png') : urlSprite(S.campeao)}" />
+    <div class="sv-stats"><span>Campeão<b>${esc(c.nome)}</b></span><span>Tempo<b>${tempoTxt(S.t)}</b></span><span>Abates<b>${fmt(S.abates)}</b></span><span>Nível<b>${S.nivel}</b></span><span>Ouro<b>${fmt(S.ouro)}</b></span><span>Essência<b class="ea">+${fmt(ganho)} EA</b></span></div>
+    <div class="sv-botoes"><button class="sv-btn grande" data-a="denovo">Jogar de novo</button>${venceu ? '<button class="sv-btn" data-a="infinito">Continuar (infinito)</button>' : ''}<button class="sv-btn" data-a="menu">Menu</button></div></div>`, 'jogo');
+}
+
+// --------------------------------------------------------------------------- cliques
+ui.addEventListener('click', (e) => {
+  destravar();
+  const op = e.target.closest('[data-op]'); if (op) { escolherOpcao(Number(op.dataset.op)); return; }
+  const cartaEl = e.target.closest('[data-camp]');
+  const b = e.target.closest('[data-a]');
+  if (!b) { if (cartaEl && meta.liberados.includes(cartaEl.dataset.camp)) { escolhido = cartaEl.dataset.camp; telaCampeoes(!!ui.dataset.jogar); } return; }
+  const a = b.dataset.a; const id = b.dataset.id; som('clique');
+  if (a === 'jogar') telaCampeoes(true);
+  else if (a === 'campeoes') telaCampeoes(false);
+  else if (a === 'loja') telaLoja();
+  else if (a === 'como') telaComo();
+  else if (a === 'menu') { S = null; telaMenu(); }
+  else if (a === 'escolher') { escolhido = id; telaCampeoes(!!ui.dataset.jogar); }
+  else if (a === 'liberar') { if (Meta.comprarCampeao(meta, id)) { escolhido = id; som('bau'); } telaCampeoes(!!ui.dataset.jogar); }
+  else if (a === 'melhorar') { if (Meta.comprarMelhoria(meta, id)) som('escolha'); telaLoja(); }
+  else if (a === 'comecar' || a === 'denovo') iniciar();
+  else if (a === 'continuar') alternarPausa();
+  else if (a === 'desistir') { pausado = false; S.estado = 'derrota'; S.p.hp = 0; }
+  else if (a === 'infinito') { S.infinito = true; S.estado = 'jogando'; fimTratado = false; ui.innerHTML = ''; ui.className = 'sv-ui jogo'; avisar('Modo infinito!'); }
+  else if (a === 'mudo') { definirMudo(!estaMudo()); try { localStorage.setItem('survivors.mudo', estaMudo() ? '1' : '0'); } catch { /* sem storage */ } if (modo === 'jogo') alternarPausa(true); else telaMenu(); }
+});
+
+// --------------------------------------------------------------------------- laço
+function laco(ts) {
+  const dt = Math.min(0.05, ult ? (ts - ult) / 1000 : 0.016); ult = ts;
+  try {
+    if (modo === 'jogo' && S) {
+      if (S.estado === 'jogando' && !pausado) atualizar(S, dt, entrada());
+      if (S.evt.length) processarEventos();
+      if (S.estado === 'upgrade' && !ui.querySelector('.sv-upgrade')) { mostrarUpgrade(); som('nivel'); }
+      render.quadro(S);
+      if ((S.estado === 'derrota' || S.estado === 'vitoria') && !fimTratado) fimDeJogo();
+    } else { passoDemo(dt); render.quadro(demo); }
+  } catch (err) { console.error(err); }
+  requestAnimationFrame(laco);
+}
+
+// --------------------------------------------------------------------------- início (acesso restrito enquanto estiver em teste)
+async function acesso() {
+  if (LOCAL && new URLSearchParams(location.search).has('teste')) return true;
+  const com = (p) => Promise.race([p, new Promise((r) => setTimeout(() => r(null), 4000))]);
+  await com(platform.init());
+  const aberto = !gameById(GAME_ID)?.soAdmin;
+  if (aberto) return true;
+  if (!platform.getUser()) return 'Entre com a conta de administrador para jogar o Rift Survivors.';
+  return (await com(platform.podeJogosEmTeste())) ? true : 'Este jogo ainda está em desenvolvimento e só administradores têm acesso.';
+}
+(async function iniciarPagina() {
+  ajustar(); try { await carregarImagens(); } catch { /* usa os desenhos em código */ } novaDemo(); requestAnimationFrame(laco);
+  try { document.fonts?.load('8px "Press Start 2P"'); } catch { /* sem fonte */ }
+  const r = await acesso();
+  if (r !== true) { tela(`<div class="sv-painel pequeno"><h2>Rift Survivors</h2><p class="sv-sub">${esc(r)}</p><div class="sv-botoes"><a class="sv-btn" href="../../">Voltar ao início</a></div></div>`); return; }
+  if (new URLSearchParams(location.search).has('auto')) { escolhido = new URLSearchParams(location.search).get('auto') || 'garen'; iniciar(); return; }
+  telaMenu();
+})();
+// ganchos para teste automatizado
+window.__sv = { avancar(seg) { for (let i = 0; i < seg * 30 && S && S.estado !== 'derrota' && S.estado !== 'vitoria'; i++) { if (S.estado === 'upgrade') escolher(S, S.opcoes[0]); atualizar(S, 1 / 30, botEntrada(S)); S.evt.length = 0; } }, get S() { return S; }, get meta() { return meta; }, iniciar: (c) => { if (c) escolhido = c; iniciar(); }, escolherOpcao, get modo() { return modo; } };
