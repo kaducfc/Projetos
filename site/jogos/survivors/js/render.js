@@ -125,7 +125,10 @@ export function criarRender(canvas) {
       const bob = Math.round(Math.abs(Math.sin(R.t * 9 + e.id)) * (e.chefe ? 1 : 2));
       if (e.estado === 1) { ctx.strokeStyle = 'rgba(255,60,60,.6)'; ctx.beginPath(); ctx.moveTo(Math.round(e.x), Math.round(e.y)); ctx.lineTo(Math.round(e.x + e.dx * 70), Math.round(e.y + e.dy * 70)); ctx.stroke(); }
       const esc = 1;
-      const nq = nQuadros(nome, 'andando'); const spr = nq ? quadroAnim(nome, 'andando', Math.floor(R.t * 7 + e.id) % nq, e.flash > 0) : nome; // animação de caminhada, se houver
+      const fl = e.flash > 0; let spr;
+      if (e.chefe && nQuadros(nome, 'ataque') && (e.animAtq > 0 || e.estado > 0)) spr = quadroAnim(nome, 'ataque', e.estado === 2 || (e.animAtq > 0 && e.animAtq <= 0.55) ? 1 : 0, fl); // preparo e golpe do chefe
+      else if (e.chefe && nQuadros(nome, 'parada')) spr = quadroAnim(nome, 'parada', Math.floor(R.t * 3 + e.id) % nQuadros(nome, 'parada'), fl);
+      else { const nq = nQuadros(nome, 'andando'); spr = nq ? quadroAnim(nome, 'andando', Math.floor(R.t * 7 + e.id) % nq, fl) : nome; } // animação de caminhada, se houver
       const sq = e.flash > 0 ? 1.14 : 1;
       if (e.face < 0) { ctx.save(); ctx.translate(Math.round(e.x), 0); ctx.scale(-1, 1); desenhar(spr, 0, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc * sq, esc / sq); ctx.restore(); } else desenhar(spr, e.x, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc * sq, esc / sq);
       if (e.encantado > 0) { ctx.fillStyle = '#ff77b8'; ctx.fillRect(Math.round(e.x - 3), Math.round(e.y - e.raio - 12 - Math.round(Math.sin(R.t * 8))), 2, 2); ctx.fillRect(Math.round(e.x + 1), Math.round(e.y - e.raio - 12 - Math.round(Math.sin(R.t * 8))), 2, 2); ctx.fillRect(Math.round(e.x - 3), Math.round(e.y - e.raio - 10), 6, 2); ctx.fillRect(Math.round(e.x - 2), Math.round(e.y - e.raio - 8), 4, 1); }
@@ -134,6 +137,7 @@ export function criarRender(canvas) {
     }
     for (const f of S.fant) { // corpo que some em branco ao morrer
       const k = f.t / f.d; const nome = f.chefe ? (CHEFES[f.tipo].sprite || f.tipo) : f.tipo === 'minion' ? S.R.soldado : (S.R.matiz ? `${f.tipo}@${S.reino}` : f.tipo);
+      if (f.chefe && nQuadros(nome, 'morte')) { ctx.globalAlpha = Math.min(1, k * 1.6); desenhar(quadroAnim(nome, 'morte', 0, k > 0.85), f.x, f.y + f.raio + 2, 0, 0, false, 1, 1); ctx.globalAlpha = 1; continue; }
       ctx.globalAlpha = Math.min(1, k * 1.4); desenhar(nome, f.x, f.y + f.raio + 2, 0, 0, true, 1 + (1 - k) * 0.3, k * 0.9 + 0.1); ctx.globalAlpha = 1;
     }
     // armas visíveis: lâminas giratórias

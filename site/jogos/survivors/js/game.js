@@ -210,7 +210,7 @@ function matar(S, e) {
   if (cb) { S.ouro += Math.round(cb.ouro * (1 + S.cm.ouro)); S.evt.push({ tipo: 'combo', nome: cb.nome, n: cb.n, ouro: cb.ouro }); }
   S.evt.push({ tipo: 'morte', chefe: e.chefe });
   S.efeitos.push({ x: e.x, y: e.y, t: 0.35, d: 0.35, tipo: 'morte', r: e.raio });
-  S.fant.push({ tipo: e.tipo, chefe: e.chefe, x: e.x, y: e.y, raio: e.raio, t: e.chefe ? 0.8 : 0.28, d: e.chefe ? 0.8 : 0.28 });
+  S.fant.push({ tipo: e.tipo, chefe: e.chefe, x: e.x, y: e.y, raio: e.raio, t: e.chefe ? 1.4 : 0.28, d: e.chefe ? 1.4 : 0.28 });
   chispas(S, e.x, e.y, e.chefe ? 40 : 7, { cor: S.R.po || '#cfc9ff', vel: e.chefe ? 120 : 45, vida: e.chefe ? 0.9 : 0.5, tam: e.chefe ? 2 : 1, grav: 40, brilho: false });
   const gv = e.xp;
   S.gemas.push({ x: e.x, y: e.y, v: gv, vx: 0, vy: 0, ima: false });
@@ -371,7 +371,7 @@ function atualizarProjeteis(S, dt) {
 
 // Ações dos chefes. 'marcas' e 'onda' avisam no chão antes de machucar (t = tempo de aviso).
 function acaoChefe(S, e, acao, vx, vy) {
-  const P = S.p;
+  const P = S.p; e.animAtq = 0.9;
   if (acao === 'investida') { e.estado = 1; e.tEstado = 0.5; e.dx = vx; e.dy = vy; }
   else if (acao === 'anel') {
     const n = e.f2 ? 16 : 12; const base = S.rng() * TAU;
@@ -396,7 +396,7 @@ function atualizarInimigos(S, dt) {
   const G = 14; const grade = new Map();
   for (const e of S.inim) { const k = Math.floor(e.x / G) * 7919 + Math.floor(e.y / G); let l = grade.get(k); if (!l) grade.set(k, l = []); l.push(e); }
   for (const e of S.inim) {
-    e.flash = Math.max(0, e.flash - dt); e.lento = Math.max(0, e.lento - dt); e.encantado = Math.max(0, (e.encantado || 0) - dt); e.tEstado -= dt; e.cd -= dt;
+    e.flash = Math.max(0, e.flash - dt); if (e.animAtq > 0) e.animAtq -= dt; e.lento = Math.max(0, e.lento - dt); e.encantado = Math.max(0, (e.encantado || 0) - dt); e.tEstado -= dt; e.cd -= dt;
     const dx = P.x - e.x; const dy = P.y - e.y; const d = Math.hypot(dx, dy) || 1;
     if (!e.chefe && d * d > dmax) { const pos = aoRedor(S, 8); e.x = pos.x; e.y = pos.y; continue; }
     let vx = dx / d; let vy = dy / d; let v = e.vel * (e.lento > 0 ? 0.55 : 1);
