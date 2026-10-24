@@ -188,7 +188,7 @@ test('Garen: o Julgamento acerta os inimigos ao redor com recarga; outros campe�
   const alvos = []; for (let i = 0; i < 4; i++) { const e = criarInimigo(S, 'krug', 20 + i * 4, 0); e.vel = 0; e.hp = e.hpMax = 99999; alvos.push(e); }
   for (let i = 0; i < 60; i++) { atualizar(S, 1 / 60, { x: 0, y: 0 }); S.evt.length = 0; }
   assert.ok(alvos.every((e) => e.hp < e.hpMax), 'todos atingidos'); assert.ok(S.p.espCd > 5, 'em recarga');
-  assert.equal(criarJogo({ campeao: 'lux', semente: 3 }).base.especial, undefined);
+  assert.equal(criarJogo({ campeao: 'zed', semente: 3 }).base.especial, undefined);
 });
 
 test('Ashe: a Explosão de Gelo acerta e deixa lentos os inimigos ao redor', () => {
@@ -196,6 +196,13 @@ test('Ashe: a Explosão de Gelo acerta e deixa lentos os inimigos ao redor', () 
   const alvos = []; for (let i = 0; i < 3; i++) { const e = criarInimigo(S, 'krug', 20 + i * 4, 0); e.vel = 0; e.hp = e.hpMax = 99999; alvos.push(e); }
   for (let i = 0; i < 30; i++) { atualizar(S, 1 / 60, { x: 0, y: 0 }); S.evt.length = 0; }
   assert.ok(alvos.every((e) => e.hp < e.hpMax && e.lento > 0), 'atingidos e lentos');
+});
+
+test('Lux: o Clarão Final acerta os inimigos ao redor com recarga', () => {
+  const S = criarJogo({ campeao: 'lux', semente: 3 }); assert.equal(S.base.especial.nome, 'Clarão Final'); S.armas.length = 0; S.p.inv = 999; S.p.espCd = 0;
+  const alvos = []; for (let i = 0; i < 3; i++) { const e = criarInimigo(S, 'krug', 20 + i * 4, 0); e.vel = 0; e.hp = e.hpMax = 99999; alvos.push(e); }
+  for (let i = 0; i < 60; i++) { atualizar(S, 1 / 60, { x: 0, y: 0 }); S.evt.length = 0; }
+  assert.ok(alvos.every((e) => e.hp < e.hpMax), 'todos atingidos'); assert.ok(S.p.espCd > 5, 'em recarga');
 });
 
 test('Ahri: o Fogo-Fátuo acerta os inimigos ao redor com recarga', () => {

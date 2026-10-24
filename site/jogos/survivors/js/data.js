@@ -9,7 +9,7 @@ export const CAMPEOES = [
   { id: 'ahri', nome: 'Ahri', titulo: 'A Raposa de Nove Caudas', arma: 'orbe', hp: 100, vel: 68, armadura: 0, preco: 0, desc: 'Lança orbes que vão e voltam atravessando tudo. Fogo-Fátuo: explosão em área a cada 7s.', especial: { nome: 'Fogo-Fátuo', cd: 7, raio: 50, mult: 3, cor: [255, 120, 200], faisca: '#ff9ad8' } },
   { id: 'jinx', nome: 'Jinx', titulo: 'A Atiradora Maluca', arma: 'tiro', hp: 95, vel: 64, armadura: 0, preco: 250, desc: 'Atira sem parar no inimigo mais próximo. Anel de Granadas: explosão em área a cada 7s.', especial: { nome: 'Anel de Granadas', cd: 7, raio: 52, mult: 3, cor: [255, 150, 60], faisca: '#ffb35a' } },
   { id: 'ashe', nome: 'Ashe', titulo: 'A Arqueira de Gelo', arma: 'flecha', hp: 105, vel: 63, armadura: 0, preco: 250, desc: 'Rajada de flechas geladas que deixam os inimigos lentos. Explosão de Gelo: área que congela, a cada 7s.', especial: { nome: 'Explosão de Gelo', cd: 7, raio: 52, mult: 3, cor: [140, 220, 255], faisca: '#bfe8ff', lento: 2 } },
-  { id: 'lux', nome: 'Lux', titulo: 'A Dama da Luz', arma: 'singular', hp: 90, vel: 63, armadura: 0, preco: 500, desc: 'Cria zonas de luz que seguram e explodem.' },
+  { id: 'lux', nome: 'Lux', titulo: 'A Dama da Luz', arma: 'singular', hp: 90, vel: 63, armadura: 0, preco: 500, desc: 'Cria zonas de luz que seguram e explodem. Clarão Final: explosão de luz em área a cada 7s.', especial: { nome: 'Clarão Final', cd: 7, raio: 56, mult: 3, cor: [255, 225, 120], faisca: '#fff0a0' } },
   { id: 'zed', nome: 'Zed', titulo: 'O Mestre das Sombras', arma: 'shuriken', hp: 100, vel: 70, armadura: 0, preco: 500, desc: 'Lâminas que atravessam fileiras de inimigos.' },
 ];
 
