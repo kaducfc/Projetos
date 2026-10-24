@@ -11,7 +11,7 @@ const PESOS_PEQ = {
   noxus: [10, 7, 7, 4, 2, 3, 4, 1.5, 3, 5, 3, 2, 3, 1.5, 1, 3, 0.5, 1.5, 1.5, 1, 0.8, 0.5, 0.5, 0.5],
   shurima: [10, 6, 4, 3, 6, 3, 3, 1.5, 5, 2, 1.5, 2, 2, 1.5, 0.8, 2, 0.5, 1, 0.8, 1, 0.6, 1, 0.8, 0.6],
 };
-const PESOS_GRANDES = { ixtal: [5, 3, 1, 2, 1, 1], ionia: [5, 4, 3, 1, 1, 1], demacia: [5, 4, 1, 1, 0, 1], noxus: [4, 3, 1.5, 1.2, 1, 1.5] };
+const PESOS_GRANDES = { ixtal: [5, 3, 1, 2, 1, 1], ionia: [5, 4, 3, 1, 1, 1], demacia: [5, 4, 1, 1, 0, 1], noxus: [4, 3, 1.5, 1.2, 1, 1.5], shurima: [4, 3, 2, 1.5, 1.2, 1.5] };
 // Raio (em px do jogo) do que BLOQUEIA o caminho; 0 = dá para atravessar (mato, moitas, flores, bambu, cogumelos...).
 // Pedras, troncos, caixas, estátuas, torres e os troncos das árvores são sólidos.
 const SOLIDO_PEQ = {
@@ -21,7 +21,7 @@ const SOLIDO_PEQ = {
   noxus: [0, 0, 0, 0, 0, 9, 9, 11, 0, 0, 8, 8, 5, 7, 4, 0, 4, 0, 8, 8, 4, 6, 6, 9],
   shurima: [0, 0, 0, 6, 0, 9, 9, 11, 0, 0, 0, 8, 5, 7, 4, 0, 4, 8, 8, 7, 4, 5, 7, 9],
 };
-const SOLIDO_GRANDES = { ixtal: [6, 6, 0, 14, 12, 6], ionia: [6, 6, 0, 0, 12, 14], demacia: [6, 0, 10, 9, 0, 12], noxus: [6, 5, 12, 9, 0, 14] };
+const SOLIDO_GRANDES = { ixtal: [6, 6, 0, 14, 12, 6], ionia: [6, 6, 0, 0, 12, 14], demacia: [6, 0, 10, 9, 0, 12], noxus: [6, 5, 12, 9, 0, 14], shurima: [6, 6, 12, 7, 12, 14] };
 export const temObjetos = (tema) => !!PESOS_PEQ[tema];
 // Os raios das tabelas valem para o desenho em tamanho original; os objetos são mostrados reduzidos (ver ESC_PROPS_* em sprites.js).
 const ESC_SOLIDO_PEQ = 0.7; const ESC_SOLIDO_GRANDES = 0.85;
