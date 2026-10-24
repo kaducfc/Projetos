@@ -2,7 +2,7 @@
 import { sprite, spriteBranco, icone, animacao, quadroAnim, nQuadros, atlasDeProps } from './sprites.js';
 import { CHEFES } from './data.js';
 import { statsDe } from './game.js';
-import { CH, hash, pedaco, propsDoPedaco } from './temas.js';
+import { CH, hash, pedaco, propsDoPedaco, grandesDoPedaco } from './temas.js';
 
 const DIG = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001001001001', 8: '111101111101111', 9: '111101111001111' };
 const FONTE = '8px "Press Start 2P", ui-monospace, monospace';
@@ -88,15 +88,22 @@ export function criarRender(canvas) {
     const ents = [];
     const AT = atlasDeProps(S.R.tema); // objetos do cenário entram na mesma ordenação (quem está mais abaixo aparece na frente)
     if (AT) for (let cy = Math.floor((camY - 20) / CH); cy <= Math.floor((camY + h + 60) / CH); cy++) for (let cx = Math.floor((camX - 40) / CH); cx <= Math.floor((camX + w + 40) / CH); cx++) for (const p of propsDoPedaco(S.R.tema, cx, cy)) ents.push({ prop: true, i: p.i, x: p.x, y: p.y });
+    const AG = atlasDeProps(S.R.tema + '_g');
+    if (AG) for (let cy = Math.floor((camY - 20) / CH); cy <= Math.floor((camY + h + 90) / CH); cy++) for (let cx = Math.floor((camX - 60) / CH); cx <= Math.floor((camX + w + 60) / CH); cx++) for (const p of grandesDoPedaco(S.R.tema, cx, cy)) ents.push({ prop: true, grande: true, i: p.i, x: p.x, y: p.y });
     for (const e of S.inim) if (e.x > camX - 40 && e.x < camX + w + 40 && e.y > camY - 40 && e.y < camY + h + 60) ents.push(e);
     ents.push({ jogador: true, y: P.y, x: P.x });
     ents.sort((a, b) => a.y - b.y);
     for (const e of ents) {
       if (e.prop) {
-        const col = e.i % 6; const lin = (e.i / 6) | 0; const pw = AT.w[e.i]; const ph = AT.h[e.i]; const bx = Math.round(e.x); const by = Math.round(e.y);
-        ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.fillRect(bx - Math.round(pw * 0.38), by - 2, Math.round(pw * 0.76), 3);
-        ctx.drawImage(AT.img, col * AT.cw + Math.floor((AT.cw - pw) / 2), lin * AT.ch + AT.ch - 1 - ph, pw, ph, bx - Math.floor(pw / 2), by - ph, pw, ph);
-        if (e.i === 20) luz('#ffb347', bx, by - ph * 0.55, 14, 0.55); else if (e.i === 14) luz('#58a8ff', bx, by - ph * 0.5, 16, 0.45); else if (e.i === 21) luz('#ffe36a', bx, by - ph * 0.7, 13, 0.55);
+        const AA = e.grande ? AG : AT; const cols = AA.cols || 6; const col = e.i % cols; const lin = (e.i / cols) | 0; const pw = AA.w[e.i]; const ph = AA.h[e.i]; const bx = Math.round(e.x); const by = Math.round(e.y);
+        ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.fillRect(bx - Math.round(pw * (e.grande ? 0.3 : 0.38)), by - 2, Math.round(pw * (e.grande ? 0.6 : 0.76)), e.grande ? 4 : 3);
+        // copas e ruínas grandes ficam meio transparentes quando o campeão está atrás delas
+        const atras = e.grande && P.y < e.y && P.y > e.y - ph && Math.abs(P.x - e.x) < pw * 0.45;
+        if (atras) ctx.globalAlpha = 0.5;
+        ctx.drawImage(AA.img, col * AA.cw + Math.floor((AA.cw - pw) / 2), lin * AA.ch + AA.ch - 1 - ph, pw, ph, bx - Math.floor(pw / 2), by - ph, pw, ph);
+        ctx.globalAlpha = 1;
+        if (!e.grande) { if (e.i === 20) luz('#ffb347', bx, by - ph * 0.55, 14, 0.55); else if (e.i === 14) luz('#58a8ff', bx, by - ph * 0.5, 16, 0.45); else if (e.i === 21) luz('#ffe36a', bx, by - ph * 0.7, 13, 0.55); }
+        else if (e.i === 4) luz('#58a8ff', bx, by - ph * 0.8, 22, 0.5); else if (e.i === 5) luz('#4aa3ff', bx, by - ph * 0.6, 26, 0.35); else if (e.i === 2) luz('#58e8ff', bx, by - ph * 0.8, 12, 0.5);
         continue;
       }
       if (e.jogador) {

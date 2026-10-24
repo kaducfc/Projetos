@@ -90,3 +90,18 @@ export function propsDoPedaco(tema, cx, cy) {
   cachePropsPedaco.set(k, l); if (cachePropsPedaco.size > 200) cachePropsPedaco.delete(cachePropsPedaco.keys().next().value);
   return l;
 }
+
+// Objetos grandes (árvores, ruínas): mais raros, cada pedaço tem de 0 a 2. Pesos por índice no atlas.
+const PESOS_GRANDES = [5, 3, 1, 2, 1, 1];
+const cacheGrandes = new Map();
+export function grandesDoPedaco(tema, cx, cy) {
+  const A = atlasDeProps(tema + '_g'); if (!A) return [];
+  const k = `${tema}|${cx},${cy}`; let l = cacheGrandes.get(k); if (l) return l;
+  const total = PESOS_GRANDES.reduce((s, p) => s + p, 0); const n = hash(cx * 29, cy * 31) < 0.3 ? 0 : hash(cx * 37, cy * 41) < 0.8 ? 1 : 2; l = [];
+  for (let j = 0; j < n; j++) {
+    let m = hash(cx * 43 + j, cy * 47 + 3) * total; let i = 0; for (; i < PESOS_GRANDES.length - 1; i++) { m -= PESOS_GRANDES[i]; if (m <= 0) break; }
+    l.push({ i, x: cx * CH + 20 + hash(cx * 53 + j, cy) * (CH - 40), y: cy * CH + 30 + hash(cx, cy * 59 + j) * (CH - 30) });
+  }
+  cacheGrandes.set(k, l); if (cacheGrandes.size > 200) cacheGrandes.delete(cacheGrandes.keys().next().value);
+  return l;
+}
