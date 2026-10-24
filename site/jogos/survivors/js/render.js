@@ -159,7 +159,7 @@ export function criarRender(canvas) {
       if (f.tipo === 'morte') { ctx.fillStyle = `rgba(255,255,255,${0.7 * (1 - k)})`; const r = f.r * (0.6 + k); ctx.fillRect(Math.round(f.x - r), Math.round(f.y - 1), Math.round(r * 2), 2); ctx.fillRect(Math.round(f.x - 1), Math.round(f.y - r), 2, Math.round(r * 2)); }
       else if (f.tipo === 'bauaberto') { const sb = sprite('bauaberto'); if (sb) { ctx.globalAlpha = Math.min(1, (1 - k) * 2); ctx.drawImage(sb, Math.round(f.x - sb.width / 2), Math.round(f.y + 4 - sb.height - k * 10)); ctx.globalAlpha = 1; } }
       else if (f.tipo === 'faisca') { const fs = quadroAnim('fx_faisca', 'parada', k * 4); if (fs) ctx.drawImage(fs, Math.round(f.x - fs.width / 2), Math.round(f.y - fs.height / 2)); }
-      else { ctx.strokeStyle = `rgba(255,240,150,${1 - k})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(Math.round(f.x), Math.round(f.y), f.r * (0.4 + 0.7 * k), 0, 6.2832); ctx.stroke(); ctx.fillStyle = `rgba(255,240,150,${0.25 * (1 - k)})`; ctx.fill(); }
+      else { const cc = f.cor ? f.cor.join(',') : '255,240,150'; ctx.strokeStyle = `rgba(${cc},${1 - k})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(Math.round(f.x), Math.round(f.y), f.r * (0.4 + 0.7 * k), 0, 6.2832); ctx.stroke(); ctx.fillStyle = `rgba(${cc},${0.25 * (1 - k)})`; ctx.fill(); }
     }
     // luzes e partículas (aditivo)
     const COR_LUZ = { orbe: ['#58a8ff', 16], coracao: ['#ff77b8', 14], flecha: ['#58e8ff', 9], shuriken: ['#b45cff', 11], bala: ['#ffe36a', 8] };
