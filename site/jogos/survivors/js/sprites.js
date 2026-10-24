@@ -38,7 +38,7 @@ const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
 const ANIM = {
   ahri: { parada: { src: 'ahri/ahri-parada.png', n: 5 }, andando: { src: 'ahri/ahri-andando.png', n: 5 } },
-  garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
+  garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 8 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
 };
 const ESTATICAS = { orbe: 'ahri/orbe.png', coracao: 'ahri/coracao.png' };
 const ICONES_IMG = { orbe: 'ahri/i-orbe.png', coracao: 'ahri/i-coracao.png' };

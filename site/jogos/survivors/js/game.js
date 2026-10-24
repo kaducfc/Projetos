@@ -489,9 +489,9 @@ export function atualizar(S, dt, entrada = { x: 0, y: 0 }) {
   P.x += mx * S.a.vel * dt; P.y += my * S.a.vel * dt;
   // inclinação do corpo no sentido do movimento, passos (um a cada ~11 px andados) e pegadas no chão
   P.lean += (Math.max(-1, Math.min(1, mx)) - P.lean) * Math.min(1, 12 * dt);
-  const andou = Math.hypot(mx, my) * S.a.vel * dt; P.dist += andou; P.passo += andou;
-  while (P.passo >= 11) {
-    P.passo -= 11; P.pe = -P.pe; S.evt.push({ tipo: 'passo' });
+  const andou = Math.hypot(mx, my) * S.a.vel * dt; const passoAntes = Math.floor(P.dist / 11); P.dist += andou;
+  for (let k = passoAntes + 1; k <= Math.floor(P.dist / 11); k++) { // um passo a cada 11 px, no momento em que o pé toca o chão (quadros 0 e 4 do ciclo)
+    P.pe = k % 2 ? 1 : -1; S.evt.push({ tipo: 'passo' });
     S.pegadas.push({ x: P.x + P.pe * 3, y: P.y + 6, t: 1.6, d: 1.6 }); if (S.pegadas.length > 40) S.pegadas.shift();
     chispas(S, P.x + P.pe * 3, P.y + 6, 2, { cor: S.R.po || '#cfc9ff', vel: 16, vida: 0.35, grav: -14, brilho: false });
   }
