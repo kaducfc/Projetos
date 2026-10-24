@@ -34,11 +34,15 @@ const MAPAS = {
 
 const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
-const BASE_IMG = new URL('../img/ahri/', import.meta.url).href;
-const ANIM = { ahri: { parada: { src: 'ahri-parada.png', n: 5 }, andando: { src: 'ahri-andando.png', n: 5 } } };
-const ESTATICAS = { orbe: 'orbe.png', coracao: 'coracao.png' };
-const ICONES_IMG = { orbe: 'i-orbe.png', coracao: 'i-coracao.png' };
-const quadros = {}; // nome -> anim -> [canvas com contorno]
+const BASE_IMG = new URL('../img/', import.meta.url).href;
+// Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
+const ANIM = {
+  ahri: { parada: { src: 'ahri/ahri-parada.png', n: 5 }, andando: { src: 'ahri/ahri-andando.png', n: 5 } },
+  garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 } },
+};
+const ESTATICAS = { orbe: 'ahri/orbe.png', coracao: 'ahri/coracao.png' };
+const ICONES_IMG = { orbe: 'ahri/i-orbe.png', coracao: 'ahri/i-coracao.png' };
+const quadros = {}; // nome -> anim -> [canvas]
 const imgs = {};
 export const arteUrl = (arq) => BASE_IMG + arq;
 function carregarImg(arq) { return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = BASE_IMG + arq; }); }
@@ -46,23 +50,30 @@ export async function carregarImagens() {
   for (const [nome, anims] of Object.entries(ANIM)) {
     quadros[nome] = {};
     for (const [anim, d] of Object.entries(anims)) {
+      if (anim === 'semContorno') continue;
       const img = await carregarImg(d.src); if (!img) { delete quadros[nome]; break; }
       const fw = Math.floor(img.width / d.n); quadros[nome][anim] = [];
-      for (let i = 0; i < d.n; i++) { const c = canvasDe(fw, img.height); c.getContext('2d').drawImage(img, i * fw, 0, fw, img.height, 0, 0, fw, img.height); quadros[nome][anim].push(contornar(c)); }
+      for (let i = 0; i < d.n; i++) { const c = canvasDe(fw, img.height); c.getContext('2d').drawImage(img, i * fw, 0, fw, img.height, 0, 0, fw, img.height); quadros[nome][anim].push(anims.semContorno ? c : contornar(c)); }
     }
+    cache.delete(nome); cache.delete(nome + ':w');
   }
   for (const [nome, arq] of Object.entries(ESTATICAS)) { const img = await carregarImg(arq); if (img) { const c = canvasDe(img.width, img.height); c.getContext('2d').drawImage(img, 0, 0); imgs[nome] = contornar(c); cache.delete(nome); } }
   for (const [nome, arq] of Object.entries(ICONES_IMG)) { const img = await carregarImg(arq); if (img) { const c = canvasDe(12, 12); const x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.drawImage(img, 0, 0, 12, 12); imgs['i:' + nome] = c; cache.delete('i:' + nome); } }
-  cache.delete('ahri'); cache.delete('ahri:w');
 }
-// Quadro animado (null se o campeão não tem animação em arquivo).
-export function animacao(nome, anim, t, flash = false) {
+// Quadro i de uma animação (limitado ao último); null se o campeão não tem essa animação.
+export function quadroAnim(nome, anim, i, flash = false) {
   const fr = quadros[nome]?.[anim]; if (!fr) return null;
-  const i = Math.floor(t * (anim === 'andando' ? 9 : 5)) % fr.length;
-  if (!flash) return fr[i];
-  const k = `${nome}:${anim}:${i}:w`; let c = cache.get(k);
-  if (!c) { c = canvasDe(fr[i].width, fr[i].height); const x = c.getContext('2d'); x.drawImage(fr[i], 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); cache.set(k, c); }
+  const k = Math.max(0, Math.min(fr.length - 1, Math.floor(i)));
+  if (!flash) return fr[k];
+  const ck = `${nome}:${anim}:${k}:w`; let c = cache.get(ck);
+  if (!c) { c = canvasDe(fr[k].width, fr[k].height); const x = c.getContext('2d'); x.drawImage(fr[k], 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); cache.set(ck, c); }
   return c;
+}
+export const nQuadros = (nome, anim) => quadros[nome]?.[anim]?.length || 0;
+// Quadro de um laço (parada/andando) pelo tempo t.
+export function animacao(nome, anim, t, flash = false) {
+  const n = nQuadros(nome, anim); if (!n) return null;
+  return quadroAnim(nome, anim, Math.floor(t * (anim === 'andando' ? 9 : 5)) % n, flash);
 }
 function canvasDe(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 
@@ -219,7 +230,7 @@ const FABRICA = {
 
 export function sprite(nome) {
   let c = cache.get(nome); if (c) return c;
-  if (nome === 'ahri' && quadros.ahri?.parada) { c = quadros.ahri.parada[0]; cache.set(nome, c); return c; }
+  if (quadros[nome]?.parada) { c = quadros[nome].parada[0]; cache.set(nome, c); return c; }
   if (imgs[nome]) { cache.set(nome, imgs[nome]); return imgs[nome]; }
   if (nome.includes('@')) { const [base, rei] = nome.split('@'); const sb = sprite(base); const R0 = REINOS[rei]; const m = base === 'arauto' ? (R0?.matizMini || R0?.matiz) : R0?.matiz; if (!sb) return null; c = m ? recolorir(sb, m) : sb; cache.set(nome, c); return c; }
   const f = FABRICA[nome]; if (!f) return null;

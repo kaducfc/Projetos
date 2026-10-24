@@ -14,7 +14,7 @@ export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), 
   const S = {
     reino: REINOS[reino] ? reino : 'rift', R: REINOS[reino] || REINOS.rift, marcas: [],
     rng: criarRng(semente), t: 0, estado: 'jogando', campeao: c.id, vista, meta: mel,
-    p: { x: 0, y: 0, dx: 1, dy: 0, mx: 0, my: 0, hp: 1, hpMax: 1, raio: 5, inv: 0, flash: 0, andando: false },
+    p: { x: 0, y: 0, dx: 1, dy: 0, mx: 0, my: 0, hp: 1, hpMax: 1, raio: 5, inv: 0, flash: 0, andando: false, ataque: 0, ataqueCd: 0 },
     inim: [], proj: [], eproj: [], gemas: [], itens: [], textos: [], efeitos: [], zonas: [], raios: [],
     armas: [], passivas: {}, nivel: 1, xp: 0, xpProx: xpProximo(1), pendentes: 0, opcoes: null,
     abates: 0, ouro: 0, spawnAc: 0, proxId: 1, onda: 1, chefes: {}, chefeVivo: null, revive: !!mel.revive, reviveu: false,
@@ -192,6 +192,7 @@ const TEMPO_FIM_ONDAS = 14 * 60;
 export function ferir(S, e, dano, op = {}) {
   if (e.hp <= 0) return;
   const crit = S.rng() < 0.06; const d = Math.max(1, dano * (crit ? 2 : 1));
+  if (S.p.ataqueCd <= 0) { S.p.ataque = 0.42; S.p.ataqueCd = 1.5; }
   e.hp -= d; e.flash = 0.09; chispas(S, e.x, e.y, crit ? 6 : 3, { cor: crit ? '#ffd24a' : '#fff6c0', vel: crit ? 90 : 55, vida: 0.22 });
   if (op.kx != null) { e.kx += op.kx; e.ky += op.ky; }
   if (op.lento) e.lento = Math.max(e.lento, op.lento);
@@ -466,7 +467,7 @@ export function atualizar(S, dt, entrada = { x: 0, y: 0 }) {
   P.andando = m > 0.05; P.mx = mx; P.my = my;
   if (P.andando) { const n = Math.hypot(mx, my); P.dx = mx / n; P.dy = my / n; }
   P.x += mx * S.a.vel * dt; P.y += my * S.a.vel * dt;
-  P.inv = Math.max(0, P.inv - dt); P.flash = Math.max(0, P.flash - dt);
+  P.inv = Math.max(0, P.inv - dt); P.flash = Math.max(0, P.flash - dt); P.ataque = Math.max(0, P.ataque - dt); P.ataqueCd = Math.max(0, P.ataqueCd - dt);
   if (S.a.regen) P.hp = Math.min(P.hpMax, P.hp + S.a.regen * dt);
   S.shake = Math.max(0, S.shake - dt);
   diretor(S, dt);

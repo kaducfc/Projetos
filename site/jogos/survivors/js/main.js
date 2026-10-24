@@ -11,6 +11,7 @@ import { som, SOM_EVENTO, destravar, definirMudo, estaMudo } from './audio.js';
 import * as Meta from './meta.js';
 
 const GAME_ID = 'survivors';
+const RETRATOS = { ahri: 'ahri/retrato.png', garen: 'garen/retrato.png' }; // campeões com arte própria
 const LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
 const palco = document.getElementById('sv-palco');
 const cv = document.getElementById('sv-cv');
@@ -104,7 +105,7 @@ function telaMenu() {
   modo = 'menu'; pausado = false;
   const m = meta.melhor;
   tela(`<div class="sv-menu">
-    <img class="sv-heroi" alt="" src="${arteUrl('arte.png')}" />
+    <img class="sv-heroi" alt="" src="${arteUrl('ahri/arte.png')}" />
     <p class="sv-eyebrow">Rift Arcade · em teste</p>
     <h1 class="sv-titulo"><span>RIFT</span><span>SURVIVORS</span></h1>
     <p class="sv-sub">Sobreviva às hordas, evolua suas habilidades e derrote o Barão Nashor.</p>
@@ -134,7 +135,7 @@ function telaComo() {
 function cartaCampeao(c) {
   const lib = meta.liberados.includes(c.id); const sel = escolhido === c.id; const arma = ARMAS[c.arma];
   return `<div class="sv-carta ${sel ? 'sel' : ''} ${lib ? '' : 'trava'}" data-camp="${c.id}">
-    <img class="sv-retrato ${c.id === 'ahri' ? 'arte' : ''}" alt="" src="${c.id === 'ahri' ? arteUrl('retrato.png') : urlSprite(c.id)}" />
+    <img class="sv-retrato ${RETRATOS[c.id] ? 'arte' : ''}" alt="" src="${RETRATOS[c.id] ? arteUrl(RETRATOS[c.id]) : urlSprite(c.id)}" />
     <b>${esc(c.nome)}</b><small>${esc(c.titulo)}</small>
     <span class="sv-arma"><img alt="" src="${urlIcone(c.arma)}" />${esc(arma.nome)}</span>
     <small class="sv-st">Vida ${c.hp} · Vel ${c.vel} · Arm ${c.armadura}</small>
@@ -243,7 +244,7 @@ function fimDeJogo() {
   const c = CAMPEOES.find((x) => x.id === S.campeao);
   tela(`<div class="sv-painel ${venceu ? 'vitoria' : 'derrota'}"><h2>${venceu ? 'VITÓRIA!' : 'DERROTA'}</h2>
     <p class="sv-sub">${venceu ? 'O Barão Nashor caiu. O Rift é seu!' : 'Você caiu no Rift...'}</p>
-    <img class="sv-retrato ${S.campeao === 'ahri' ? 'arte' : ''}" alt="" src="${S.campeao === 'ahri' ? arteUrl('retrato.png') : urlSprite(S.campeao)}" />
+    <img class="sv-retrato ${RETRATOS[S.campeao] ? 'arte' : ''}" alt="" src="${RETRATOS[S.campeao] ? arteUrl(RETRATOS[S.campeao]) : urlSprite(S.campeao)}" />
     <div class="sv-stats"><span>Campeão<b>${esc(c.nome)}</b></span><span>Tempo<b>${tempoTxt(S.t)}</b></span><span>Abates<b>${fmt(S.abates)}</b></span><span>Nível<b>${S.nivel}</b></span><span>Ouro<b>${fmt(S.ouro)}</b></span><span>Essência<b class="ea">+${fmt(ganho)} EA</b></span></div>
     <div class="sv-botoes"><button class="sv-btn grande" data-a="denovo">Jogar de novo</button>${venceu ? '<button class="sv-btn" data-a="infinito">Continuar (infinito)</button>' : ''}<button class="sv-btn" data-a="menu">Menu</button></div></div>`, 'jogo');
 }

@@ -1,5 +1,5 @@
 // Rift Survivors: desenho no canvas (resolução lógica pequena, ampliada com pixels nítidos).
-import { sprite, spriteBranco, icone, animacao } from './sprites.js';
+import { sprite, spriteBranco, icone, animacao, quadroAnim, nQuadros } from './sprites.js';
 import { CHEFES } from './data.js';
 import { statsDe } from './game.js';
 import { CH, hash, pedaco } from './temas.js';
@@ -36,6 +36,14 @@ export function criarRender(canvas) {
 
   function tempoTxt(t) { const s = Math.floor(t); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
 
+  // Escolhe a animação do campeão: morte > dano > ataque > andando > parada (cai para as que existirem).
+  function quadroDoJogador(S) {
+    const P = S.p; const n = S.campeao;
+    if (S.estado === 'derrota') { if (R.morte == null) R.morte = R.t; const q = nQuadros(n, 'morte'); if (q) return quadroAnim(n, 'morte', (R.t - R.morte) * 5); } else R.morte = null;
+    if (P.flash > 0 && nQuadros(n, 'dano')) return quadroAnim(n, 'dano', (1 - P.flash / 0.15) * nQuadros(n, 'dano'));
+    if (P.ataque > 0 && nQuadros(n, 'ataque')) return quadroAnim(n, 'ataque', (1 - P.ataque / 0.42) * nQuadros(n, 'ataque'));
+    return animacao(n, P.andando ? 'andando' : 'parada', R.t, P.flash > 0 && !nQuadros(n, 'dano'));
+  }
   function quadro(S, opc = {}) {
     const { w, h } = R; const P = S.p;
     R.t += 1 / 60;
@@ -77,8 +85,8 @@ export function criarRender(canvas) {
       if (e.jogador) {
         ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(Math.round(P.x) - 7, Math.round(P.y) - 1, 14, 4); ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(Math.round(P.x) - 5, Math.round(P.y), 10, 2);
         const bob = P.andando ? Math.round(Math.abs(Math.sin(R.t * 12)) * 2) : 0;
-        if (P.inv > 0 && Math.floor(R.t * 20) % 2 === 0 && S.estado === 'jogando') continue;
-        const an = animacao(S.campeao, P.andando ? 'andando' : 'parada', R.t, P.flash > 0);
+        if (P.inv > 0 && Math.floor(R.t * 20) % 2 === 0 && S.estado === 'jogando' && P.inv < 5) continue;
+        const an = quadroDoJogador(S);
         if (an) { ctx.drawImage(an, Math.round(P.x - an.width / 2), Math.round(P.y + 8 - an.height)); continue; }
         desenhar(S.campeao, P.x, P.y + 7, 0, -bob, P.flash > 0);
         continue;
