@@ -1,0 +1,57 @@
+/* Tela de entrada (visitante): apresentação do jogo + cartão de login / cadastro */
+body:has(.tcl) { background: #050d1c; }
+main.tc:has(.tcl) { padding: 0; max-width: none; }
+.tcl { position: relative; min-height: calc(100vh - 68px); display: grid; align-items: center; padding: 40px 20px 56px; overflow: hidden; isolation: isolate; }
+.tcl-fundo { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, #050d1cf2 0%, #050d1cc8 45%, #050d1c99 100%), url("../img/banners/confronto.webp") center 30% / cover no-repeat, #050d1c; }
+.tcl-fundo::after { content: ''; position: absolute; inset: 0; background: radial-gradient(700px 420px at 85% 20%, #22d3ee22, transparent), radial-gradient(600px 400px at 10% 100%, #d9a82b1f, transparent), linear-gradient(180deg, transparent 60%, #050d1c); }
+.tcl-grade { width: min(1120px, 100%); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 420px); gap: 56px; align-items: center; }
+.tcl-marca h1 { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: clamp(46px, 6.4vw, 86px); line-height: 0.95; letter-spacing: 0.02em; margin: 10px 0 16px; color: #fff; text-shadow: 0 4px 30px #000a; }
+.tcl-lead { font-size: 17px; line-height: 1.55; color: #b8c7de; max-width: 520px; margin: 0 0 26px; }
+.tcl-dest { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 560px; }
+.tcl-dest li { display: flex; gap: 12px; align-items: center; padding: 12px 14px; background: #0a1830cc; border: 1px solid #1d3a63; border-left: 3px solid #d9a82b; border-radius: 6px; backdrop-filter: blur(4px); }
+.tcl-dest img { width: 40px; height: 40px; flex: none; }
+.tcl-dest b { display: block; font-size: 14px; color: #f0cf72; letter-spacing: 0.02em; }
+.tcl-dest span { display: block; font-size: 12.5px; line-height: 1.35; color: #9fb2cf; margin-top: 2px; }
+.tcl-card { position: relative; padding: 26px 26px 20px; background: linear-gradient(180deg, #0e2244ee, #07142af2); border: 1.5px solid #c8962f; border-radius: 12px; box-shadow: 0 24px 70px #000b, 0 0 0 1px #00000050 inset, 0 0 40px #d9a82b1c; backdrop-filter: blur(8px); }
+.tcl-card::before { content: ''; position: absolute; left: 24px; right: 24px; top: -1.5px; height: 3px; background: linear-gradient(90deg, transparent, #f5cf5a, transparent); }
+.tcl-abas { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-bottom: 18px; background: #061326; border: 1px solid #1d3a63; border-radius: 9px; }
+.tcl-abas button { padding: 10px 8px; border: 0; border-radius: 6px; background: transparent; color: #9fb2cf; font: 700 13px Inter, system-ui, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; min-height: 42px; }
+.tcl-abas button.on { background: linear-gradient(180deg, #f5cf5a, #c98f14); color: #1d1304; box-shadow: 0 2px 10px #d9a82b44; }
+.tcl-card h2 { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 32px; letter-spacing: 0.04em; margin: 0 0 4px; color: #fff; }
+.tcl-sub { margin: 0 0 16px; color: #9fb2cf; font-size: 13.5px; line-height: 1.45; }
+.tcl-google { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; min-height: 46px; background: #fff; color: #1f2937; border: 0; border-radius: 8px; font: 600 14.5px Inter, system-ui, sans-serif; cursor: pointer; transition: transform 0.12s, box-shadow 0.12s; }
+.tcl-google:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px #0006; }
+.tcl-google:disabled { opacity: 0.6; cursor: wait; }
+.tcl-ou { display: flex; align-items: center; gap: 12px; margin: 16px 0 14px; color: #6f86a8; font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; }
+.tcl-ou::before, .tcl-ou::after { content: ''; flex: 1; height: 1px; background: #1d3a63; }
+.tcl-form { display: grid; gap: 12px; }
+.tcl-campo { display: grid; gap: 5px; font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: #8fa3bf; font-weight: 600; }
+.tcl-campo[hidden], .tcl-link[hidden], .tcl-abas[hidden], .tcl-social[hidden] { display: none; }
+.tcl-campo input { width: 100%; min-height: 46px; padding: 11px 13px; background: #061326; border: 1px solid #24446e; border-radius: 8px; color: #e6edf7; font: 500 16px Inter, system-ui, sans-serif; letter-spacing: 0; text-transform: none; }
+.tcl-campo input::placeholder { color: #4f6585; }
+.tcl-campo input:focus { outline: 0; border-color: #22d3ee; box-shadow: 0 0 0 3px #22d3ee2b; }
+.tcl-link { justify-self: start; padding: 4px 0; background: none; border: 0; color: #67e8f9; font: 600 13px Inter, system-ui, sans-serif; cursor: pointer; }
+.tcl-link:hover { text-decoration: underline; }
+.tcl-msg { margin: 0; min-height: 0; font-size: 13px; line-height: 1.4; }
+.tcl-msg:empty { display: none; }
+.tcl-msg.err { padding: 9px 12px; color: #fecaca; background: #7f1d1d55; border: 1px solid #b91c1c; border-radius: 7px; }
+.tcl-msg.ok { padding: 9px 12px; color: #bbf7d0; background: #14532d55; border: 1px solid #16a34a; border-radius: 7px; }
+.tcl-enviar { min-height: 50px; border: 0; border-radius: 9px; background: linear-gradient(180deg, #f5cf5a, #c98f14); color: #1d1304; font: 800 15px Inter, system-ui, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; box-shadow: 0 4px 16px #d9a82b44, inset 0 1px 0 #ffe9a0; }
+.tcl-enviar:hover:not(:disabled) { filter: brightness(1.07); }
+.tcl-enviar:disabled { opacity: 0.65; cursor: wait; }
+.tcl-nota { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid #12294a; text-align: center; font-size: 12px; color: #6f86a8; }
+@media (max-width: 900px) {
+  .tcl { padding: 22px 14px 40px; min-height: 0; align-items: start; }
+  .tcl-grade { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .tcl-marca { order: 2; text-align: center; }
+  .tcl-lead { margin-left: auto; margin-right: auto; font-size: 15px; }
+  .tcl-dest { margin: 0 auto; text-align: left; }
+  .tcl-card { order: 1; padding: 20px 16px 16px; }
+  .tcl-fundo { background: linear-gradient(180deg, #050d1cd9, #050d1cf5), url("../img/banners/confronto.webp") center top / cover no-repeat, #050d1c; }
+}
+@media (max-width: 520px) { .tcl-dest { grid-template-columns: minmax(0, 1fr); } .tcl-marca h1 { font-size: 44px; } }
+/* garante as cores dentro do tema do jogo (botões herdavam cor clara) */
+.tcl button.tcl-google, .tcl button.tcl-google span { color: #1f2937; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.tcl button.tcl-link { color: #67e8f9; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.tcl button.tcl-enviar { color: #1d1304; font-weight: 800; }
+.tcl .tcl-card h2, .tcl .tcl-marca h1 { font-family: 'Bebas Neue', 'Arial Narrow', Impact, sans-serif; }
