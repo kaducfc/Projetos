@@ -194,6 +194,7 @@ export function ferir(S, e, dano, op = {}) {
   const crit = S.rng() < 0.06; const d = Math.max(1, dano * (crit ? 2 : 1));
   S.p.alvoX = e.x;
   if (S.p.ataqueCd <= 0) { S.p.ataque = 0.42; S.p.ataqueCd = 1.5; }
+  if (S.efeitos.length < 40) S.efeitos.push({ x: e.x, y: e.y - e.raio * 0.4, t: 0.24, d: 0.24, tipo: 'faisca', r: 0 });
   e.hp -= d; e.flash = 0.09; chispas(S, e.x, e.y, crit ? 6 : 3, { cor: crit ? '#ffd24a' : '#fff6c0', vel: crit ? 90 : 55, vida: 0.22 });
   if (op.kx != null) { e.kx += op.kx; e.ky += op.ky; }
   if (op.lento) e.lento = Math.max(e.lento, op.lento);

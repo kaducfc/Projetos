@@ -64,14 +64,16 @@ export function criarRender(canvas) {
     ctx.save(); ctx.translate(-camX, -camY);
     // zonas de luz
     for (const z of S.zonas) {
-      const a = 0.22 + 0.1 * Math.sin(R.t * 8); ctx.fillStyle = `rgba(255,230,120,${a})`; ctx.beginPath(); ctx.arc(Math.round(z.x), Math.round(z.y), z.r, 0, 6.2832); ctx.fill();
+      const a = 0.12 + 0.06 * Math.sin(R.t * 8); ctx.fillStyle = `rgba(255,230,120,${a})`; ctx.beginPath(); ctx.arc(Math.round(z.x), Math.round(z.y), z.r, 0, 6.2832); ctx.fill();
+      const fz = quadroAnim('fx_singular', 'parada', Math.floor(R.t * 10) % 4); if (fz) ctx.drawImage(fz, Math.round(z.x - z.r * 1.15), Math.round(z.y - z.r * 1.05), Math.round(z.r * 2.3), Math.round(z.r * 2.1));
       ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(Math.round(z.x), Math.round(z.y), z.r * (0.4 + 0.6 * (z.t / z.d)), 0, 6.2832); ctx.stroke(); ctx.setLineDash([]);
     }
     // aura de gelo
-    for (const a of S.armas) if (a.id === 'aura') { const r = statsDe(S, a).raio * S.a.area; ctx.fillStyle = 'rgba(160,230,255,.14)'; ctx.beginPath(); ctx.arc(Math.round(P.x), Math.round(P.y), r, 0, 6.2832); ctx.fill(); ctx.strokeStyle = 'rgba(210,245,255,.55)'; ctx.setLineDash([2, 4]); ctx.lineDashOffset = -R.t * 20; ctx.beginPath(); ctx.arc(Math.round(P.x), Math.round(P.y), r, 0, 6.2832); ctx.stroke(); ctx.setLineDash([]); }
+    for (const a of S.armas) if (a.id === 'aura') { const r = statsDe(S, a).raio * S.a.area; const fa = quadroAnim('fx_nevasca', 'parada', Math.floor(R.t * 7) % 4); ctx.fillStyle = 'rgba(160,230,255,.10)'; ctx.beginPath(); ctx.arc(Math.round(P.x), Math.round(P.y), r, 0, 6.2832); ctx.fill(); if (fa) { ctx.drawImage(fa, Math.round(P.x - r * 1.15), Math.round(P.y - r * 1.05), Math.round(r * 2.3), Math.round(r * 2.1)); continue; } ctx.strokeStyle = 'rgba(210,245,255,.55)'; ctx.setLineDash([2, 4]); ctx.lineDashOffset = -R.t * 20; ctx.beginPath(); ctx.arc(Math.round(P.x), Math.round(P.y), r, 0, 6.2832); ctx.stroke(); ctx.setLineDash([]); }
     // raios (aviso e coluna)
     for (const r of S.raios) {
       if (r.t > r.d * 0.5) { ctx.strokeStyle = 'rgba(255,240,120,.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(Math.round(r.x), Math.round(r.y), r.r * (1 - (r.t - r.d * 0.5) / (r.d * 0.5)), 0, 6.2832); ctx.stroke(); ctx.beginPath(); ctx.arc(Math.round(r.x), Math.round(r.y), r.r, 0, 6.2832); ctx.stroke(); }
+      else if (quadroAnim('fx_raio', 'parada', 1)) { const fr = quadroAnim('fx_raio', 'parada', 1 + Math.min(2, Math.floor((1 - r.t / (r.d * 0.5)) * 3))); ctx.fillStyle = 'rgba(190,230,255,.16)'; ctx.beginPath(); ctx.arc(Math.round(r.x), Math.round(r.y), r.r, 0, 6.2832); ctx.fill(); ctx.drawImage(fr, Math.round(r.x - fr.width / 2), Math.round(r.y - fr.height + 4)); }
       else { ctx.fillStyle = '#fff6b0'; ctx.fillRect(Math.round(r.x) - 2, Math.round(r.y) - 120, 5, 120); ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(r.x) - 1, Math.round(r.y) - 120, 3, 120); ctx.fillStyle = 'rgba(255,240,120,.45)'; ctx.beginPath(); ctx.arc(Math.round(r.x), Math.round(r.y), r.r, 0, 6.2832); ctx.fill(); }
     }
     for (const p of S.pegadas) { ctx.globalAlpha = Math.min(0.55, (p.t / p.d) * 0.7); ctx.fillStyle = S.R.rastro || '#1f4f22'; ctx.fillRect(Math.round(p.x) - 1, Math.round(p.y), 3, 2); ctx.globalAlpha = 1; }
@@ -155,6 +157,7 @@ export function criarRender(canvas) {
     for (const f of S.efeitos) {
       const k = 1 - f.t / f.d;
       if (f.tipo === 'morte') { ctx.fillStyle = `rgba(255,255,255,${0.7 * (1 - k)})`; const r = f.r * (0.6 + k); ctx.fillRect(Math.round(f.x - r), Math.round(f.y - 1), Math.round(r * 2), 2); ctx.fillRect(Math.round(f.x - 1), Math.round(f.y - r), 2, Math.round(r * 2)); }
+      else if (f.tipo === 'faisca') { const fs = quadroAnim('fx_faisca', 'parada', k * 4); if (fs) ctx.drawImage(fs, Math.round(f.x - fs.width / 2), Math.round(f.y - fs.height / 2)); }
       else { ctx.strokeStyle = `rgba(255,240,150,${1 - k})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(Math.round(f.x), Math.round(f.y), f.r * (0.4 + 0.7 * k), 0, 6.2832); ctx.stroke(); ctx.fillStyle = `rgba(255,240,150,${0.25 * (1 - k)})`; ctx.fill(); }
     }
     // luzes e partículas (aditivo)
