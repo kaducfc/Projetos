@@ -131,3 +131,33 @@ ROW 2: cells 1 to 4 = VICTORY (raises the sword to the sky, cape flapping, small
 
 BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use green anywhere on the character or effects. Do not use a white or checkerboard background.
 ```
+
+
+### C. Caminhada e corrida com pernas bem marcadas (1536 x 512)
+
+Anexe a ficha ou o kit do Garen.
+
+```
+Create ONE sprite sheet image with the WALK and RUN cycles of this character.
+
+Pixel art game sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, same chunky pixel size as the attached reference. Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze around the sprite. Strong dark outline (#14101E) around the whole character. Limited palette, 3 to 4 tones per material, light from the top-left. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CHARACTER: use EXACTLY the character from the attached image (Garen, League of Legends): short messy brown hair, silver steel plate armor with gold trim, huge layered shoulder pauldrons, royal-blue tabard and cape with a golden winged-shield crest, steel gauntlets and greaves, brown boots, big broadsword with a steel blade and gold crossguard resting on his shoulder. Same colors, proportions and pixel size in every frame. Do not redesign anything.
+
+VIEW (important): a three-quarter SIDE view, the character walking toward the RIGHT side of the image, body turned about 60 degrees to the right, so that BOTH LEGS ARE CLEARLY VISIBLE AND SEPARATE at all times and the stride is easy to read (this is NOT a front-facing view).
+
+GRID: image size 1536 x 512 px, divided into an invisible grid of 6 columns x 2 rows of equal 256 x 256 px cells (12 cells), no lines between cells. In EVERY cell the character is the same size (about 170 px tall), centered horizontally, and the lowest foot touches the same invisible baseline at y = 225 of the cell. At least 24 px of empty margin; nothing crosses the cell borders.
+
+ROW 1, WALK CYCLE (6 frames, seamless loop), strongly readable legs, in this order:
+(1) CONTACT: front leg extended forward with the heel on the ground, back leg extended behind with the toes on the ground, the stride is WIDE (legs make a clear inverted V); body at its lowest.
+(2) RECOIL: weight moves onto the front foot, the back leg starts to lift and bend at the knee.
+(3) PASSING: the standing leg is straight under the body, the other leg is bent and swinging forward with the foot clearly lifted off the ground (knee high); body at its highest.
+(4) CONTACT with the OTHER leg: mirrored version of frame 1 (the legs have swapped places), wide stride.
+(5) RECOIL with the other leg (mirror of frame 2).
+(6) PASSING with the other leg (mirror of frame 3).
+Add: body bobs 3 px up and down, arms and cape swing with the steps, sword stays on the shoulder.
+
+ROW 2, RUN CYCLE (6 frames, seamless loop), same view and same rules, but faster and more dramatic: body leaning forward about 15 degrees, long leaping strides with both feet briefly off the ground in frames 3 and 6, knees lifted high, cape streaming straight behind him, sword held tight on the shoulder.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use green anywhere on the character. Do not use a white or checkerboard background.
+```
