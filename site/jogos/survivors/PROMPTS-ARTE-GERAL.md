@@ -589,3 +589,35 @@ ROW 4, ASCENDED SAND COLOSSUS (about 210 px tall, the biggest): a huge walking g
 
 BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects (no green on the creatures). Do not use a white or checkerboard background. Do NOT draw ground, sand patches, or cast shadows under the objects.
 ```
+
+### 10.3 Colosso de Areia (chefe menor, 5:00) — chefe-shurima-1.png
+
+```
+Create ONE sprite sheet image with the animation frames of a boss monster (SAND COLOSSUS of Shurima).
+
+Pixel art game boss sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around the whole creature. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), the creature faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CREATURE: "The Sand Colossus", a giant ancient Shuriman guardian golem (League of Legends), about 340 px tall: a hulking humanoid built from layered sandstone blocks held together by gold plates and bands, a faceless jackal-eared stone helmet with two glowing turquoise eye slits, huge broad shoulders with golden sun-disc pauldrons, thick stone arms and fists, a big golden sun-disc on its chest with a glowing turquoise core, thin trickles of sand falling from its joints (hard-edged pixels), and carved turquoise glyph lines on the stone (no readable text). Palette: sandstone ochre, dark brown shadows, gold, turquoise.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. In EVERY cell the same creature at the same scale, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Identical design, colors and proportions in all cells.
+
+CELLS (left to right, top to bottom): (1) IDLE A: standing heavy and wide, arms hanging, fists near the ground; (2) IDLE B: breathing, shoulders slightly raised, sand trickling from one arm; (3) IDLE C: shoulders lowered, sand trickling from the other arm (the 3 idle cells form a seamless slow loop); (4) ATTACK WIND-UP: both fists raised high above his head, body leaning back, the eye slits and chest core glowing brighter (hard-edged pixels); (5) ATTACK STRIKE: both fists slammed down into the ground in front of him, crisp hard-edged golden-sand shockwave lines and flying rock chips; (6) DEATH: the colossus collapsed into a heap of broken sandstone blocks and gold plates, the chest sun-disc cracked and dark, the eye slits dark.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature. Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
+```
+
+### 10.4 Nasus, o Curador das Areias (chefe final, 10:00) — chefe-shurima-2.png
+
+```
+Create ONE sprite sheet image with the animation frames of a boss monster (NASUS, Curator of the Sands).
+
+Pixel art game boss sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around the whole creature. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), the creature faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CREATURE: "Nasus", the Curator of the Sands (League of Legends), about 440 px tall: a towering anthropomorphic jackal-headed Ascended guardian, with a regal black-and-golden jackal face, tall pointed ears, glowing turquoise eyes, a golden-trimmed hooded cowl, heavy golden armor with a big sun-disc breastplate and broad pauldrons, a tattered ochre-and-turquoise cloth sash and cape, large clawed gauntlets, and a huge golden staff topped with a curved crescent blade and a glowing turquoise gem, held in both hands. Palette: dark fur black-brown, gold, sandstone ochre, turquoise.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. In EVERY cell the same creature at the same scale, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Identical design, colors and proportions in all cells.
+
+CELLS (left to right, top to bottom): (1) IDLE A: standing tall and calm, the staff planted on the ground beside him; (2) IDLE B: the cape swaying slightly to one side, chest rising; (3) IDLE C: the cape swaying to the other side (the 3 idle cells form a seamless slow loop); (4) ATTACK WIND-UP: the staff pulled back and raised over his head with both hands, body twisted, the gem and eyes glowing brighter, a few golden sparks (hard-edged pixels); (5) ATTACK STRIKE: a huge sweeping staff swing to the right with a crisp hard-edged golden-turquoise crescent slash arc and flying sand sparks (no blur, no glow); (6) DEATH: Nasus kneeling then fallen face-down, the cape spread over him, the staff lying beside him with its gem dark.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature. Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
+```
