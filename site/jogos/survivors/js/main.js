@@ -157,7 +157,7 @@ function telaReinos() {
     const chefe = CHEFES[r.chefes.find((c) => CHEFES[c].final)];
     const estrelas = '★'.repeat(Math.max(1, Math.round((r.dif - 0.7) / 0.3)));
     return `<div class="sv-carta reino ${sel && lib ? 'sel' : ''} ${lib ? '' : 'trava'}" data-reino="${id}" style="--tema:${TEMA_COR[id]}">
-      <span class="sv-reino-arte"></span><b>${esc(r.nome)}</b><small>${esc(r.sub)}</small>
+      <span class="sv-reino-arte" ${REINO_IMG[id] ? `style="background-image: url('${arteUrl(REINO_IMG[id])}')"` : ''}></span><b>${esc(r.nome)}</b><small>${esc(r.sub)}</small>
       <small class="sv-st">${tempoTxt(r.tempo)} · Dificuldade ${estrelas}</small><small class="sv-desc">Chefe: ${esc(chefe.nome)}</small>
       ${lib ? `<small class="sv-st">${info?.vitorias ? `✔ ${info.vitorias} ${info.vitorias === 1 ? 'vitória' : 'vitórias'}` : 'Ainda não vencido'}</small><button class="sv-btn mini" data-a="reino" data-id="${id}">${sel ? 'Escolhido' : 'Escolher'}</button>`
         : `<small class="sv-st">🔒 Vença ${esc(REINOS[r.abre].nome)}</small>`}
@@ -167,6 +167,7 @@ function telaReinos() {
     <div class="sv-cartas">${cartas}</div>
     <div class="sv-botoes"><button class="sv-btn grande" data-a="comecar">Começar partida</button><button class="sv-btn" data-a="jogar">Voltar</button></div></div>`, 'rolar');
 }
+const REINO_IMG = { ixtal: 'reinos/ixtal.webp' }; // banners dos reinos (os que faltam usam o degradê da cor do reino)
 const TEMA_COR = { ixtal: '#3a8a36', ionia: '#f29ac0', demacia: '#7ab4f0', noxus: '#c0283a', shurima: '#e8c97a', freljord: '#cfe0f2' };
 function telaLoja() {
   modo = 'loja';

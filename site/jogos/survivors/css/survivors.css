@@ -95,7 +95,8 @@
 
 .sv-carta.reino { border-color: color-mix(in srgb, var(--tema) 55%, #3b3560); }
 .sv-carta.reino.sel { border-color: var(--tema); box-shadow: 0 0 18px color-mix(in srgb, var(--tema) 50%, transparent); }
-.sv-reino-arte { width: 100%; height: 54px; background: linear-gradient(135deg, var(--tema), #14101e); border: 3px solid #14101e; image-rendering: pixelated; }
+.sv-reino-arte { display: block; width: 100%; aspect-ratio: 5 / 2; background: linear-gradient(135deg, var(--tema), #14101e) center / cover no-repeat; border: 3px solid #14101e; }
+.sv-carta.reino.trava .sv-reino-arte { filter: grayscale(.8) brightness(.55); }
 
 .sv-painel .sv-retrato.anim { width: 150px; height: 100px; object-fit: contain; border: 0; background: none; image-rendering: pixelated; }
 
