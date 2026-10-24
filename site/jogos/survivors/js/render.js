@@ -178,7 +178,7 @@ export function criarRender(canvas) {
     vinheta(w, h);
     // vinheta de dano
     if (P.flash > 0) { ctx.fillStyle = `rgba(255,40,40,${Math.min(0.35, P.flash * 2)})`; ctx.fillRect(0, 0, w, h); }
-    hud(S);
+    if (!S.demo) hud(S);
   }
 
   let vin = null;
@@ -212,13 +212,14 @@ export function criarRender(canvas) {
     texto(`${Math.ceil(P.hp)}/${P.hpMax}`, 60, 19, '#fff');
     const idFinal = S.R.chefes.find((id) => CHEFES[id].final); const falta = S.R.tempo - S.t;
     texto(tempoTxt(S.t), w / 2, 8, falta < 30 && !S.chefes[idFinal] ? '#ff6a6a' : '#fff', 'center');
-    texto(`${S.abates}`, w - 4, 8, '#ffffff', 'right'); texto(`${S.ouro}`, w - 4, 19, '#f5c82e', 'right');
+    ctx.font = FONTE; const ico = (nome, s, y, cor, yy) => { const wt = Math.ceil(ctx.measureText(s).width); texto(s, w - 4, y, cor, 'right'); const ic = icone(nome); if (ic) ctx.drawImage(ic, w - 4 - wt - 17, yy); };
+    ico('cranio', `${S.abates}`, 7, '#ffffff', 2); ico('ouro', `${S.ouro}`, 25, '#f5c82e', 20);
     // armas e itens
     let x = 4; const y = h - 17;
     for (const a of S.armas) { const ic = icone(a.id); ctx.fillStyle = 'rgba(20,16,30,.8)'; ctx.fillRect(x - 1, y - 2, 18, 18); ctx.drawImage(ic, x, y - 1); texto(String(a.nivel), x + 15, y + 8, a.nivel >= 5 ? '#ffe36a' : '#fff', 'right'); x += 19; }
     x += 4;
     for (const [id, nv] of Object.entries(S.passivas)) { const ic = icone(id); ctx.fillStyle = 'rgba(20,16,30,.8)'; ctx.fillRect(x - 1, y - 2, 18, 18); ctx.drawImage(ic, x, y - 1); texto(String(nv), x + 15, y + 8, nv >= 5 ? '#ffe36a' : '#fff', 'right'); x += 19; }
-    if (S.combo.n >= 8 && S.t - S.combo.t < 3) texto(`COMBO x${S.combo.n}`, w - 4, 30, '#ffb347', 'right');
+    if (S.combo.n >= 8 && S.t - S.combo.t < 3) texto(`COMBO x${S.combo.n}`, w - 4, 40, '#ffb347', 'right');
     if (S.maldicoes.length) texto('☠'.repeat(S.maldicoes.length), 4, 28, '#ff6a7a');
     // chefe
     const b = S.chefeVivo;

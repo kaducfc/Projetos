@@ -89,7 +89,7 @@ function botEntrada(Sx) {
   }
   const m = Math.hypot(x, y); return { x: x / m, y: y / m };
 }
-function novaDemo() { const lista = CAMPEOES; demo = criarJogo({ campeao: lista[Math.floor(Math.random() * lista.length)].id, vista: { w: render.w, h: render.h } }); demo.t = 150; }
+function novaDemo() { const lista = CAMPEOES; demo = criarJogo({ campeao: lista[Math.floor(Math.random() * lista.length)].id, reino: ORDEM_REINOS[Math.floor(Math.random() * 2)], vista: { w: render.w, h: render.h } }); demo.demo = true; demo.t = 150; }
 function passoDemo(dt) {
   if (!demo || demo.estado !== 'jogando' && demo.estado !== 'upgrade') novaDemo();
   if (demo.estado === 'upgrade') escolher(demo, demo.opcoes[0]);
@@ -203,14 +203,14 @@ function mostrarUpgrade() {
     let nome; let desc; let ic; let nivel; const rar = RARIDADES[o.raridade || 0];
     if (o.tipo === 'arma') { const d = ARMAS[o.id]; nome = d.nome; desc = o.nivel === 1 ? d.desc : `Nível ${o.nivel}: mais ${descreverSalto(o.id, o.nivel)}`; ic = o.id; nivel = o.nivel === 1 ? 'NOVA' : `NV ${o.nivel}`; const ev = EVOLUCOES[o.id]; if (ev && o.nivel >= 5) desc += ` · Evolui com ${ITENS[ev.item].nome}`; }
     else if (o.tipo === 'item') { const d = ITENS[o.id]; nome = d.nome; desc = d.desc + (o.raridade ? ` (x${rar.mult})` : ''); ic = o.id; nivel = o.nivel === 1 ? 'NOVO' : `NV ${o.nivel}`; }
-    else if (o.tipo === 'maldicao') { const d = MALDICOES[o.id]; nome = d.nome; desc = `<span class="bom">${esc(d.bom)}</span><span class="ruim">${esc(d.ruim)}</span>`; ic = 'sangue'; nivel = 'MALDIÇÃO'; }
+    else if (o.tipo === 'maldicao') { const d = MALDICOES[o.id]; nome = d.nome; desc = `<span class="bom">${esc(d.bom)}</span><span class="ruim">${esc(d.ruim)}</span>`; ic = 'maldicao'; nivel = 'MALDIÇÃO'; }
     else if (o.tipo === 'cura') { nome = 'Poção de Cura'; desc = 'Recupera toda a vida'; ic = 'cura'; nivel = ''; }
     else { nome = 'Bolsa de Ouro'; desc = '+40 de ouro'; ic = 'ouro'; nivel = ''; }
     const cls = o.tipo === 'maldicao' ? 'maldicao' : `r${o.raridade || 0}`;
     return `<button class="sv-op ${cls} ${modoBanir ? 'banindo' : ''}" data-op="${i}" style="--rar:${o.tipo === 'maldicao' ? '#ff4d5e' : rar.cor}"><span class="sv-op-n">${i + 1}</span><img alt="" src="${urlIcone(ic)}" /><b>${esc(nome)}</b><span class="sv-op-nv ${nivel.startsWith('N') && !nivel.startsWith('NV') ? 'novo' : ''}">${o.tipo === 'maldicao' ? nivel : `${rar.nome.toUpperCase()}${nivel ? ` · ${nivel}` : ''}`}</span><small>${desc}</small></button>`;
   }).join('');
   tela(`<div class="sv-upgrade"><h2>Nível ${S.nivel}!</h2><p class="sv-sub">${modoBanir ? 'Toque na carta que quer banir pelo resto da partida' : 'Escolha uma melhoria'}</p><div class="sv-ops">${cartas}</div>
-    <div class="sv-acoes"><button class="sv-btn mini" data-a="rolar" ${S.reroll <= 0 ? 'disabled' : ''}>Rolar de novo (${S.reroll})</button><button class="sv-btn mini ${modoBanir ? 'ouro' : ''}" data-a="banir" ${S.ban <= 0 ? 'disabled' : ''}>${modoBanir ? 'Cancelar' : `Banir carta (${S.ban})`}</button></div></div>`, 'jogo');
+    <div class="sv-acoes"><button class="sv-btn mini" data-a="rolar" ${S.reroll <= 0 ? 'disabled' : ''}><img alt="" src="${urlIcone('reroll')}" />Rolar de novo (${S.reroll})</button><button class="sv-btn mini ${modoBanir ? 'ouro' : ''}" data-a="banir" ${S.ban <= 0 ? 'disabled' : ''}>${modoBanir ? 'Cancelar' : `<img alt="" src="${urlIcone('ban')}" />Banir carta (${S.ban})`}</button></div></div>`, 'jogo');
 }
 function descreverSalto(id, n) {
   const a = ARMAS[id].stats(n - 1); const b = ARMAS[id].stats(n); const t = [];
