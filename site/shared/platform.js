@@ -413,6 +413,22 @@ export function tempoAte(data) {
   return parte(m, 'minuto', 'minutos');
 }
 
+// Rift Survivors: progresso salvo na conta (SQL 0186). Sem conta ou sem o SQL aplicado: null (vale a cópia do navegador).
+export async function survivorsCarregar() {
+  const sb = await getClient();
+  if (!sb || !user) return null;
+  const { data, error } = await sb.rpc('sv_carregar');
+  if (error) { console.warn('Survivors: progresso da conta indisponível:', error.message); return null; }
+  return data;
+}
+export async function survivorsSalvar(rev, dados) {
+  const sb = await getClient();
+  if (!sb || !user) return null;
+  const { data, error } = await sb.rpc('sv_salvar', { p_rev: rev, p_dados: dados });
+  if (error) { console.warn('Survivors: não foi possível salvar na conta:', error.message); return null; }
+  return data;
+}
+
 // Selos que liberam os ícones especiais: { apoiador, pioneiro, posicao }.
 // Sem conta ou com o SQL 0014 ainda não aplicado: tudo bloqueado.
 export async function meusSelos() {

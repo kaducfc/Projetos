@@ -304,12 +304,35 @@ async function acesso() {
   if (!platform.getUser()) return 'Entre com a conta de administrador para jogar o Rift Survivors.';
   return (await com(platform.podeJogosEmTeste())) ? true : 'Este jogo ainda está em desenvolvimento e só administradores têm acesso.';
 }
+// Progresso na conta: ao entrar vale o mais recente (conta ou navegador) e cada alteração é enviada ao servidor.
+let envio = null; let emEnvio = false;
+async function enviarProgresso() {
+  if (emEnvio) { envio = setTimeout(enviarProgresso, 1500); return; }
+  emEnvio = true;
+  try {
+    const rev = meta.rev; const r = await platform.survivorsSalvar(rev, meta);
+    if (r && !r.ok && r.rev > (meta.rev || 0)) { const c = await platform.survivorsCarregar(); if (c?.dados) { Object.assign(meta, Meta.normalizar(c.dados), { rev: c.rev }); Meta.gravarLocal(meta); } }
+  } catch { /* fica só no navegador */ } finally { emEnvio = false; }
+}
+async function sincronizar() {
+  const u = platform.getUser(); if (!u) return;
+  Meta.usarConta(u.id); meta = Meta.carregar();
+  try {
+    const c = await Promise.race([platform.survivorsCarregar(), new Promise((r) => setTimeout(() => r(null), 4000))]);
+    if (c?.dados && !meta.rev && meta.partidas > (c.dados.partidas || 0)) { meta.rev = Date.now(); enviarProgresso(); } // progresso antigo só deste navegador, mais adiantado que o da conta
+    else if (c?.dados && c.rev > (meta.rev || 0)) { meta = Meta.normalizar(c.dados); meta.rev = c.rev; Meta.gravarLocal(meta); }
+    else if (!c || c.rev < (meta.rev || 0)) { if (!meta.rev) meta.rev = Date.now(); if (c !== null || meta.partidas > 0 || meta.essencia > 0) enviarProgresso(); }
+  } catch { /* sem conta/servidor: vale o navegador */ }
+  escolhido = meta.ultimo; reinoEscolhido = meta.ultimoReino || 'ixtal';
+  Meta.aoGravar(() => { clearTimeout(envio); envio = setTimeout(enviarProgresso, 800); });
+}
 (async function iniciarPagina() {
   ajustar(); try { await carregarImagens(); } catch { /* usa os desenhos em código */ } novaDemo(); requestAnimationFrame(laco);
   try { document.fonts?.load('8px "Press Start 2P"'); } catch { /* sem fonte */ }
   const r = await acesso();
   if (r !== true) { tela(`<div class="sv-painel pequeno"><h2>Rift Survivors</h2><p class="sv-sub">${esc(r)}</p><div class="sv-botoes"><a class="sv-btn" href="../../">Voltar ao início</a></div></div>`); return; }
   if (new URLSearchParams(location.search).has('auto')) { escolhido = new URLSearchParams(location.search).get('auto') || 'garen'; iniciar(); return; }
+  await sincronizar();
   telaMenu();
 })();
 // ganchos para teste automatizado
