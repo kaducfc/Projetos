@@ -98,7 +98,7 @@ function passoDemo(dt) {
 }
 
 // --------------------------------------------------------------------------- telas
-function nomeEA() { return `<span class="sv-ea"><img alt="" src="${urlIcone('tomo')}" />${fmt(meta.essencia)} EA</span>`; }
+function nomeEA() { return `<span class="sv-ea"><img alt="" src="${urlIcone('essencia')}" />${fmt(meta.essencia)} EA</span>`; }
 function tela(html, cls = '') { ui.className = `sv-ui ${cls}`; ui.innerHTML = html; }
 
 function telaMenu() {

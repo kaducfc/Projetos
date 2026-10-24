@@ -215,9 +215,9 @@ export function criarRender(canvas) {
     texto(`${S.abates}`, w - 4, 8, '#ffffff', 'right'); texto(`${S.ouro}`, w - 4, 19, '#f5c82e', 'right');
     // armas e itens
     let x = 4; const y = h - 17;
-    for (const a of S.armas) { const ic = icone(a.id); ctx.fillStyle = 'rgba(20,16,30,.8)'; ctx.fillRect(x - 1, y - 1, 16, 16); ctx.drawImage(ic, x, y); texto(String(a.nivel), x + 13, y + 7, a.nivel >= 5 ? '#ffe36a' : '#fff', 'right'); x += 17; }
+    for (const a of S.armas) { const ic = icone(a.id); ctx.fillStyle = 'rgba(20,16,30,.8)'; ctx.fillRect(x - 1, y - 2, 18, 18); ctx.drawImage(ic, x, y - 1); texto(String(a.nivel), x + 15, y + 8, a.nivel >= 5 ? '#ffe36a' : '#fff', 'right'); x += 19; }
     x += 4;
-    for (const [id, nv] of Object.entries(S.passivas)) { const ic = icone(id); ctx.fillStyle = 'rgba(20,16,30,.8)'; ctx.fillRect(x - 1, y - 1, 16, 16); ctx.drawImage(ic, x, y); texto(String(nv), x + 13, y + 7, nv >= 5 ? '#ffe36a' : '#fff', 'right'); x += 17; }
+    for (const [id, nv] of Object.entries(S.passivas)) { const ic = icone(id); ctx.fillStyle = 'rgba(20,16,30,.8)'; ctx.fillRect(x - 1, y - 2, 18, 18); ctx.drawImage(ic, x, y - 1); texto(String(nv), x + 15, y + 8, nv >= 5 ? '#ffe36a' : '#fff', 'right'); x += 19; }
     if (S.combo.n >= 8 && S.t - S.combo.t < 3) texto(`COMBO x${S.combo.n}`, w - 4, 30, '#ffb347', 'right');
     if (S.maldicoes.length) texto('☠'.repeat(S.maldicoes.length), 4, 28, '#ff6a7a');
     // chefe

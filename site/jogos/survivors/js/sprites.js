@@ -36,7 +36,7 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 15; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 16; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { parada: { src: 'ahri/ahri-parada.png', n: 5 }, andando: { src: 'ahri/ahri-andando.png', n: 5 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
@@ -50,7 +50,8 @@ for (const nome of ['raio', 'singular', 'nevasca', 'faisca']) ANIM['fx_' + nome]
 // Inimigos com animação em arquivo (4 quadros de caminhada, já com contorno).
 for (const nome of ['minion', 'mago', 'canhao', 'vazio', 'lobo', 'raptor', 'krug', 'golem']) ANIM[nome] = { semContorno: true, andando: { src: `inimigos/${nome}.png`, n: 4 } };
 const ESTATICAS = { orbe: 'fx/orbe.png', coracao: 'fx/coracao.png', lamina: 'fx/lamina.png', bala: 'fx/bala.png', flecha: 'fx/flecha.png', shuriken: 'fx/shuriken.png', eorbe: 'fx/eorbe.png', ejade: 'fx/ejade.png', gema1: 'fx/gema1.png', gema2: 'fx/gema2.png', gema3: 'fx/gema3.png', ouro: 'fx/ouro.png', vida: 'fx/vida.png', bau: 'fx/bau.png', bauaberto: 'fx/bauaberto.png' };
-const ICONES_IMG = { orbe: 'ahri/i-orbe.png', coracao: 'ahri/i-coracao.png' };
+// Ícones 16x16 já com contorno próprio (arma, item e interface).
+const ICONES_UI = Object.fromEntries('lamina orbe tiro flecha singular shuriken coracao aura trovao espada botas doran cota cetro ampulheta vidente sangue tomo ouro cranio essencia reroll ban maldicao'.split(' ').map((n) => [n, `ui/i-${n}.png`]));
 const quadros = {}; // nome -> anim -> [canvas]
 const imgs = {};
 export const arteUrl = (arq) => BASE_IMG + arq;
@@ -77,7 +78,7 @@ export async function carregarImagens() {
     } catch { /* sem o atlas: o cenário usa os desenhos em código */ }
   }
   for (const [nome, arq] of Object.entries(ESTATICAS)) { const img = await carregarImg(arq); if (img) { const c = canvasDe(img.width, img.height); c.getContext('2d').drawImage(img, 0, 0); imgs[nome] = c; cache.delete(nome); } } // projéteis já têm contorno próprio
-  for (const [nome, arq] of Object.entries(ICONES_IMG)) { const img = await carregarImg(arq); if (img) { const c = canvasDe(12, 12); const x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.drawImage(img, 0, 0, 12, 12); imgs['i:' + nome] = c; cache.delete('i:' + nome); } }
+  for (const [nome, arq] of Object.entries(ICONES_UI)) { const img = await carregarImg(arq); if (img) { const c = canvasDe(img.width, img.height); c.getContext('2d').drawImage(img, 0, 0); imgs['i:' + nome] = c; cache.delete('i:' + nome); } }
 }
 // Quadro i de uma animação (limitado ao último); null se o campeão não tem essa animação.
 export function quadroAnim(nome, anim, i, flash = false) {
@@ -290,13 +291,13 @@ const ICONES = {
 };
 export function icone(nome) {
   const k = `i:${nome}`; let c = cache.get(k); if (c) return c;
-  if (imgs[k]) { c = contornar(imgs[k]); cache.set(k, c); return c; }
+  if (imgs[k]) { cache.set(k, imgs[k]); return imgs[k]; }
   const m = ICONES[nome]; if (!m) return null;
   c = canvasDe(12, 12); const x = c.getContext('2d');
   m.forEach((l, y) => { for (let i = 0; i < 12; i++) { const cor = PAL[l[i]]; if (l[i] === '.' || !cor) continue; x.fillStyle = cor; x.fillRect(i, y, 1, 1); } });
   c = contornar(c); cache.set(k, c); return c;
 }
-export const urlIcone = (nome) => { if (ICONES_IMG[nome] && imgs['i:' + nome]) return BASE_IMG + ICONES_IMG[nome]; const c = icone(nome); return c ? c.toDataURL() : ''; };
+export const urlIcone = (nome) => { if (ICONES_UI[nome] && imgs['i:' + nome]) return BASE_IMG + ICONES_UI[nome]; const c = icone(nome); return c ? c.toDataURL() : ''; };
 export const urlSprite = (nome) => { const c = sprite(nome); return c ? c.toDataURL() : ''; };
 
 // Quadro de animação como imagem (para as telas em HTML).
