@@ -76,3 +76,54 @@ BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in th
 - Chefes (Arauto, Dragão, Barão e os 5 finais): uma folha por chefe, com parado, ataque e morte.
 - Efeitos das armas e coletáveis: lâminas, orbe, flechas, raio, nevasca, zona de luz, gemas, baú, poção, ímã, ouro.
 - Ícones das armas e dos itens, molduras do HUD e logo do jogo.
+
+
+## Chefes de Ixtal (anexe a imagem do Garen em cada um)
+
+### 1. Guardião das Raízes (chefe menor, 5:00) — chefe-ixtal-1.png
+
+```
+Create ONE sprite sheet image with the animation frames of a boss monster (ROOT GUARDIAN of Ixtal).
+
+Pixel art game boss sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around the whole creature. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), the creature faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CREATURE: "Guardian of the Roots", a colossal ancient forest guardian of the jungle of Ixtal (League of Legends), about 340 px tall. Body made of twisted dark-brown roots and mossy bark, thick root legs, two long vine arms ending in big thorny root-hands, a crown of large leaves and pink orchid flowers, a glowing emerald-yellow crystal embedded in its chest, small angry glowing yellow eyes in a carved wooden face, jade and turquoise stones tied with golden threads on its shoulders. Palette: dark brown, moss green (olive, not bright), warm yellow glow, pink and turquoise accents.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. In EVERY cell the same creature at the same scale, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Identical design, colors and proportions in all cells.
+
+CELLS (left to right, top to bottom): (1) IDLE A: standing, arms hanging, leaves slightly lowered; (2) IDLE B: leaves and vines swaying a little to one side, chest slightly raised; (3) IDLE C: swaying to the other side (the 3 idle cells form a seamless slow loop); (4) ATTACK WIND-UP: both arms raised high above the head, thorns spread, chest crystal glowing brighter (hard-edged pixels); (5) ATTACK STRIKE: both root-fists slammed down in front of it, a ring of sharp thorns erupting from the ground (hard-edged pixels); (6) DEATH: the guardian collapsed into a heap of roots, leaves, flowers and the cracked dark crystal.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature (use dark, yellowish or bluish greens instead, clearly different from the background). Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
+```
+
+### 2. Jaguar Espiritual (chefe do meio, 10:00) — chefe-ixtal-2.png
+
+```
+Create ONE sprite sheet image with the animation frames of a boss monster (SPIRIT JAGUAR of Ixtal).
+
+Pixel art game boss sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around the whole creature. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), the creature faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CREATURE: "Spirit Jaguar", a huge ancestral jaguar guardian of Ixtal (League of Legends), about 260 px tall and 430 px long, side view facing right. Midnight-blue to black fur with glowing turquoise rosette spots, amber glowing eyes, long fangs, thick muscular legs with big claws, jade armor plates on the shoulders and back, gold ornaments (ear rings, neck collar with a jade stone), a long tail with a turquoise glowing tip. Palette: midnight blue, black, turquoise, jade, gold, amber.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. In EVERY cell the same creature at the same scale, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Identical design, colors and proportions in all cells.
+
+CELLS (left to right, top to bottom): (1) IDLE A: standing alert, head slightly lowered, tail low; (2) IDLE B: tail swishing up, weight shifted forward; (3) IDLE C: tail swishing the other way (the 3 idle cells form a seamless loop); (4) ATTACK WIND-UP: crouching very low, haunches raised, mouth open snarling, claws gripping the ground; (5) ATTACK STRIKE: mid-air pounce with all claws extended toward the right and mouth wide open, crisp hard-edged turquoise slash lines in front of it; (6) DEATH: lying on its side, flat and wide, turquoise spots fading and a few hard-edged turquoise sparks floating above.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature (use dark, yellowish or bluish greens instead, clearly different from the background). Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
+```
+
+### 3. Serpente de Jade, o chefe final (15:00) — chefe-ixtal-3.png
+
+```
+Create ONE sprite sheet image with the animation frames of a boss monster (JADE FEATHERED SERPENT of Ixtal).
+
+Pixel art game boss sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around the whole creature. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), the creature faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CREATURE: "Kukul, the Jade Serpent", a giant feathered serpent god of Ixtal (League of Legends, Mesoamerican-inspired), about 440 px tall. Long scaly body coiled in an S shape, rising up so the head is high on the right, scales in dark jade green and deep turquoise with a pale gold belly, a crest of long feathers in blue, red and gold around the head and along the back, a mouth open with long fangs, big golden eyes, an ornate gold and red ornamental collar, and a glowing jade crystal orb held in the lowest coil. Palette: dark jade, turquoise, gold, red, bright blue feathers.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. In EVERY cell the same creature at the same scale, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Identical design, colors and proportions in all cells.
+
+CELLS (left to right, top to bottom): (1) IDLE A: coiled, head raised, feathers relaxed; (2) IDLE B: body swaying a little to one side, feathers lifted; (3) IDLE C: swaying to the other side (the 3 idle cells form a seamless loop); (4) ATTACK WIND-UP: head drawn back, jaw wide open, the jade orb glowing brightly in the coils (hard-edged pixels); (5) ATTACK STRIKE: head thrust forward and down toward the right, a hard-edged ring of turquoise energy bursting from its open mouth; (6) DEATH: the body collapsing and uncoiled flat on the ground, feathers scattered, the orb cracked and dark.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature (use dark, yellowish or bluish greens instead, clearly different from the background). Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
+```
