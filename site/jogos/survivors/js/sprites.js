@@ -36,7 +36,7 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 20; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 21; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { parada: { src: 'ahri/ahri-parada.png', n: 5 }, andando: { src: 'ahri/ahri-andando.png', n: 5 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
@@ -51,7 +51,7 @@ for (const nome of ['raio', 'singular', 'nevasca', 'faisca']) ANIM['fx_' + nome]
 for (const nome of ['minion', 'mago', 'canhao', 'vazio', 'lobo', 'raptor', 'krug', 'golem']) ANIM[nome] = { semContorno: true, andando: { src: `inimigos/${nome}.png`, n: 4 } };
 // Inimigos de Ionia (substituem o recolorido).
 ANIM.monge = { semContorno: true, andando: { src: 'inimigos/ionia-monge.png', n: 4 } };
-for (const nome of ['mago', 'canhao', 'vazio']) ANIM[`${nome}@ionia`] = { semContorno: true, andando: { src: `inimigos/ionia-${nome}.png`, n: 4 } };
+for (const nome of ['mago', 'canhao', 'vazio', 'lobo', 'raptor', 'krug', 'golem']) ANIM[`${nome}@ionia`] = { semContorno: true, andando: { src: `inimigos/ionia-${nome}.png`, n: 4 } };
 const ESTATICAS = { orbe: 'fx/orbe.png', coracao: 'fx/coracao.png', lamina: 'fx/lamina.png', bala: 'fx/bala.png', flecha: 'fx/flecha.png', shuriken: 'fx/shuriken.png', eorbe: 'fx/eorbe.png', ejade: 'fx/ejade.png', gema1: 'fx/gema1.png', gema2: 'fx/gema2.png', gema3: 'fx/gema3.png', ouro: 'fx/ouro.png', vida: 'fx/vida.png', bau: 'fx/bau.png', bauaberto: 'fx/bauaberto.png' };
 // Ícones 16x16 já com contorno próprio (arma, item e interface).
 const ICONES_UI = Object.fromEntries('lamina orbe tiro flecha singular shuriken coracao aura trovao espada botas doran cota cetro ampulheta vidente sangue tomo ouro cranio essencia reroll ban maldicao'.split(' ').map((n) => [n, `ui/i-${n}.png`]));
