@@ -85,7 +85,7 @@ export const CHEFES = {
   kodama: { nome: 'Kodama Ancião', t: 5 * 60, hp: 1700, vel: 22, dano: 13, raio: 17, xp: 40, ia: 'chefe', cd: 3.4, ouro: 25, kit: ['marcas', 'investida'], sprite: 'kodama' },
   dragao_ionia: { nome: 'Dragão Espiritual', t: 10 * 60, hp: 6200, vel: 24, dano: 19, raio: 20, xp: 120, ia: 'chefe', cd: 2.8, ouro: 80, final: true, kit: ['anel', 'marcas', 'investida', 'anel'], sprite: 'dragao_ionia' },
   // Demacia
-  vanguarda: { nome: 'Cavaleiro da Vanguarda', t: 5 * 60, hp: 2000, vel: 21, dano: 15, raio: 14, xp: 45, ia: 'chefe', cd: 3.4, ouro: 25, kit: ['investida', 'onda'], sprite: 'arauto@demacia' },
+  vanguarda: { nome: 'Cavaleiro da Vanguarda', t: 5 * 60, hp: 2000, vel: 21, dano: 15, raio: 17, xp: 45, ia: 'chefe', cd: 3.4, ouro: 25, kit: ['investida', 'onda'], sprite: 'vanguarda' },
   galio: { nome: 'Galio, o Colosso', t: 10 * 60, hp: 7400, vel: 20, dano: 22, raio: 20, xp: 140, ia: 'chefe', cd: 2.9, ouro: 90, final: true, kit: ['onda', 'marcas', 'investida', 'invocar'], sprite: 'b_galio' },
   // Noxus
   carrasco: { nome: 'Carrasco de Noxus', t: 5 * 60, hp: 2300, vel: 23, dano: 17, raio: 14, xp: 50, ia: 'chefe', cd: 3.2, ouro: 30, kit: ['investida', 'marcas'], sprite: 'arauto@noxus' },
