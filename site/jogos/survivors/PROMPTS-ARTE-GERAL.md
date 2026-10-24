@@ -127,3 +127,57 @@ CELLS (left to right, top to bottom): (1) IDLE A: coiled, head raised, feathers 
 
 BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature (use dark, yellowish or bluish greens instead, clearly different from the background). Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
 ```
+
+## 5. Efeitos das armas e itens do chão (3 imagens)
+
+Anexe a imagem do Garen como referência de estilo. Fundo verde #00FF00. Nomes: `fx-projeteis.png`, `fx-efeitos.png`, `fx-coletaveis.png`.
+
+### 5.1 Projéteis (8 itens) — fx-projeteis.png
+
+```
+Create ONE sprite sheet of projectile sprites for a top-down pixel-art survivors game (League of Legends themed).
+
+Pixel art, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and art style as the attached reference character (Garen). NO anti-aliasing, NO blur, NO soft glow, NO gradients. Strong 1-pixel dark outline (#14101E) on every object, 3 tones per material, light from the top-left. Bright saturated colors so they read at tiny size.
+
+GRID: image size 1536 x 1024 px, invisible grid of 4 columns x 2 rows of equal 384 x 512 px cells (8 cells), no lines. ONE object per cell, centered, large (about 300 px long), with at least 40 px empty margin. Every projectile points to the RIGHT (flying direction), seen from the side, so I can rotate it in the game.
+
+THE 8 PROJECTILES (left to right, top to bottom):
+Row 1: (1) a Demacian sword blade, silver steel with a gold hilt, upright, spinning-blade style; (2) the "Orb of Deception": a violet and pink magic orb with a short comet tail of sparkles behind it; (3) a quick golden-white energy bolt, short and pointed, with a tiny trail; (4) an ice arrow: crystal-blue arrowhead and white-blue feathers, tiny snowflake sparkles.
+Row 2: (5) a shadow shuriken-like dagger: dark violet blade with a red edge, sharp, pointing right; (6) a charm heart: pink heart with a lighter pink highlight and a pink sparkle trail; (7) enemy bolt: red-orange fireball with a dark core, short flame tail; (8) jade bolt: green-cyan spirit orb with a white core and a leaf-shaped tail (used by the jungle boss).
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key), no gradient, no shadows. Do not use green on the objects except item (8), and give item (8) a strong dark outline so it stays separable. No text, no labels, no frames, no watermark.
+```
+
+### 5.2 Efeitos animados (4 efeitos x 4 quadros) — fx-efeitos.png
+
+```
+Create ONE sprite sheet of animated visual effects for a top-down pixel-art survivors game (League of Legends themed).
+
+Pixel art, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and art style as the attached reference character (Garen). NO anti-aliasing, NO blur, NO soft glow, NO gradients, NO smoke haze: effects are made of hard-edged pixel shapes with 3 to 4 tones. Dark 1-pixel outline only where it helps readability.
+
+GRID: image size 1536 x 1024 px, invisible grid of 4 columns x 4 rows of equal 384 x 256 px cells (16 cells), no lines. Each ROW is one effect and each COLUMN is one animation frame (frame 1 to 4, left to right), same scale and same center in every frame, nothing crossing a cell border.
+
+THE 4 EFFECTS (one per row, top to bottom):
+Row 1 - LIGHTNING STRIKE: a jagged white-and-electric-blue bolt falling from the top of the cell to the ground. Frame 1: thin warning flash; frame 2: full bright bolt with a ground impact star; frame 3: bolt fading, small impact ring; frame 4: only sparks and a scorched ring on the ground.
+Row 2 - SINGULARITY: seen from above (flat on the ground, slight perspective), a swirling vortex of golden-white light, 4 spiral arms rotating a quarter turn each frame, bright core, tiny light particles spiraling inward. Frame 4 is the same swirl a little brighter (it will loop).
+Row 3 - BLIZZARD AURA: seen from above, a big ring of swirling ice shards and snowflakes in white and light blue around an EMPTY center (the center must stay empty and transparent), the shards shifted a bit each frame so it loops.
+Row 4 - HIT SPARK: a small impact burst. Frame 1: tiny white star; frame 2: bigger yellow-white star with 6 spikes; frame 3: broken into 6 flying yellow and orange sparks; frame 4: a few tiny fading sparks.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key), no gradient, no shadows. Do not use green in the effects. No text, no labels, no frames, no watermark.
+```
+
+### 5.3 Coletáveis (7 itens) — fx-coletaveis.png
+
+```
+Create ONE sprite sheet of pickup items for a top-down pixel-art survivors game (League of Legends themed).
+
+Pixel art, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and art style as the attached reference character (Garen). NO anti-aliasing, NO blur, NO soft glow, NO gradients. Strong 1-pixel dark outline (#14101E), 3 to 4 tones per material, light from the top-left, three-quarter top-down view. Bright, clearly different silhouettes so they are readable when tiny.
+
+GRID: image size 1536 x 1024 px, invisible grid of 4 columns x 2 rows of equal 384 x 512 px cells (8 cells), no lines. ONE object per cell, centered, about 260 px big, with its bottom near the same baseline, at least 50 px empty margin.
+
+THE ITEMS (left to right, top to bottom):
+Row 1: (1) small XP crystal, cyan-blue, a faceted diamond; (2) medium XP crystal, lime green, a taller faceted gem; (3) large XP crystal, pink-magenta, a big double-pointed gem with a white highlight; (4) gold coin with a small crown emblem, seen slightly tilted.
+Row 2: (5) a red heart-shaped health potion flask with a cork and a white highlight; (6) a closed treasure chest: dark wood, gold corners, gold lock with a blue gem, small rune marks; (7) the same chest OPEN, golden light-colored pixels rising from inside (hard-edged sparkles, no haze), lid up; (8) leave this cell EMPTY.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key), no gradient, no shadows. Do not use green on the items, the lime-green gem (2) must have a strong dark outline and a yellowish tint so it stays separable. No text, no labels, no frames, no watermark.
+```
