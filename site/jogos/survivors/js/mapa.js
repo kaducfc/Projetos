@@ -8,6 +8,7 @@ const PESOS_PEQ = {
   ixtal: [14, 6, 8, 4, 3, 4, 4, 2, 5, 5, 4, 1.5, 2, 1, 1.5, 1, 0.6, 1, 0.8, 1.2, 1, 0.5, 1.2, 1],
   ionia: [14, 6, 8, 4, 3, 4, 4, 2, 5, 5, 3, 1.5, 2, 1.5, 0.8, 4, 0.5, 1, 0.6, 2, 0.8, 0.8, 1, 1.5],
   demacia: [14, 6, 8, 4, 4, 4, 4, 2, 5, 5, 1.5, 1.5, 1.5, 1.2, 0.6, 2, 0.5, 1, 0.7, 1, 0.7, 0.6, 0.6, 0.6],
+  noxus: [10, 7, 7, 4, 2, 3, 4, 1.5, 3, 5, 3, 2, 3, 1.5, 1, 3, 0.5, 1.5, 1.5, 1, 0.8, 0.5, 0.5, 0.5],
 };
 const PESOS_GRANDES = { ixtal: [5, 3, 1, 2, 1, 1], ionia: [5, 4, 3, 1, 1, 1], demacia: [5, 4, 1, 1, 0, 1] };
 // Raio (em px do jogo) do que BLOQUEIA o caminho; 0 = dá para atravessar (mato, moitas, flores, bambu, cogumelos...).
@@ -16,6 +17,7 @@ const SOLIDO_PEQ = {
   ixtal: [0, 0, 0, 0, 0, 9, 9, 11, 0, 0, 0, 8, 5, 0, 6, 0, 0, 0, 8, 8, 4, 4, 5, 0],
   ionia: [0, 0, 0, 0, 0, 9, 9, 11, 0, 0, 0, 8, 0, 4, 8, 0, 0, 0, 8, 0, 10, 6, 5, 0],
   demacia: [0, 0, 0, 0, 0, 9, 9, 11, 0, 0, 8, 8, 5, 0, 5, 0, 0, 0, 8, 8, 6, 6, 7, 9],
+  noxus: [0, 0, 0, 0, 0, 9, 9, 11, 0, 0, 8, 8, 5, 7, 4, 0, 4, 0, 8, 8, 4, 6, 6, 9],
 };
 const SOLIDO_GRANDES = { ixtal: [6, 6, 0, 14, 12, 6], ionia: [6, 6, 0, 0, 12, 14], demacia: [6, 0, 10, 9, 0, 12] };
 export const temObjetos = (tema) => !!PESOS_PEQ[tema];
@@ -23,7 +25,7 @@ export const temObjetos = (tema) => !!PESOS_PEQ[tema];
 const ESC_SOLIDO_PEQ = 0.7; const ESC_SOLIDO_GRANDES = 0.85;
 export const raioSolido = (tema, i, grande = false) => (((grande ? SOLIDO_GRANDES : SOLIDO_PEQ)[tema]?.[i]) || 0) * (grande ? ESC_SOLIDO_GRANDES : ESC_SOLIDO_PEQ);
 export const TEMAS_COM_OBJETOS = Object.keys(PESOS_PEQ);
-export const quantidade = (tema, grande) => (grande ? PESOS_GRANDES : PESOS_PEQ)[tema].length;
+export const quantidade = (tema, grande) => (grande ? PESOS_GRANDES : PESOS_PEQ)[tema]?.length || 0;
 
 const cacheP = new Map(); const cacheG = new Map();
 const guardar = (c, k, v) => { c.set(k, v); if (c.size > 300) c.delete(c.keys().next().value); return v; };

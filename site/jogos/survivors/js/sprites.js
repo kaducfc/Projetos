@@ -36,7 +36,7 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 59; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 60; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { semContorno: true, parada: { src: 'ahri/ahri-parada.png', n: 6 }, andando: { src: 'ahri/ahri-andando.png', n: 6 }, correr: { src: 'ahri/ahri-correr.png', n: 6 }, ataque: { src: 'ahri/ahri-ataque.png', n: 6 }, dano: { src: 'ahri/ahri-dano.png', n: 2 }, morte: { src: 'ahri/ahri-morte.png', n: 4 }, especial: { src: 'ahri/ahri-especial.png', n: 6 }, vitoria: { src: 'ahri/ahri-vitoria.png', n: 4 }, nivel: { src: 'ahri/ahri-nivel.png', n: 2 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
@@ -70,7 +70,7 @@ const quadros = {}; // nome -> anim -> [canvas]
 const imgs = {};
 export const arteUrl = (arq) => BASE_IMG + arq;
 // Objetos de cenário em atlas (grade de células iguais, pé do objeto embaixo no centro). tema -> { img, cw, ch, w[], h[] }
-const ATLAS_PROPS = { ixtal: 'props/rift-pequenos', ixtal_g: 'props/rift-grandes', ionia: 'props/ionia-pequenos', ionia_g: 'props/ionia-grandes', demacia: 'props/demacia-pequenos', demacia_g: 'props/demacia-grandes' };
+const ATLAS_PROPS = { ixtal: 'props/rift-pequenos', ixtal_g: 'props/rift-grandes', ionia: 'props/ionia-pequenos', ionia_g: 'props/ionia-grandes', demacia: 'props/demacia-pequenos', demacia_g: 'props/demacia-grandes', noxus: 'props/noxus-pequenos' };
 const propsAtlas = {};
 // Proporção dos objetos do cenário em relação aos campeões (campeão = 100%): pequenos e grandes; extras por objeto (índice no atlas).
 export const ESC_PROPS_PEQ = 0.7; export const ESC_PROPS_GRANDES = 0.85;
