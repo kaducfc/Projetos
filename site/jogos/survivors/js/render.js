@@ -90,8 +90,12 @@ export function criarRender(canvas) {
         const bob = P.andando ? Math.round(Math.abs(Math.sin(R.t * 12)) * 2) : 0;
         if (P.inv > 0 && Math.floor(R.t * 20) % 2 === 0 && S.estado === 'jogando' && P.inv < 5) continue;
         const an = quadroDoJogador(S);
-        if (an) { ctx.drawImage(an, Math.round(P.x - an.width / 2), Math.round(P.y + 8 - an.height)); continue; }
-        desenhar(S.campeao, P.x, P.y + 7, 0, -bob, P.flash > 0);
+        if (an) {
+          if (P.face < 0) { ctx.save(); ctx.translate(Math.round(P.x), 0); ctx.scale(-1, 1); ctx.drawImage(an, -Math.round(an.width / 2), Math.round(P.y + 8 - an.height)); ctx.restore(); }
+          else ctx.drawImage(an, Math.round(P.x - an.width / 2), Math.round(P.y + 8 - an.height));
+          continue;
+        }
+        if (P.face < 0) { ctx.save(); ctx.translate(Math.round(P.x), 0); ctx.scale(-1, 1); desenhar(S.campeao, 0, P.y + 7, 0, -bob, P.flash > 0); ctx.restore(); } else desenhar(S.campeao, P.x, P.y + 7, 0, -bob, P.flash > 0);
         continue;
       }
       const nome = e.chefe ? (CHEFES[e.tipo].sprite || e.tipo) : e.tipo === 'minion' ? S.R.soldado : (S.R.matiz ? `${e.tipo}@${S.reino}` : e.tipo); const sombraW = Math.round(e.raio * 2.2);
@@ -99,7 +103,8 @@ export function criarRender(canvas) {
       const bob = Math.round(Math.abs(Math.sin(R.t * 9 + e.id)) * (e.chefe ? 1 : 2));
       if (e.estado === 1) { ctx.strokeStyle = 'rgba(255,60,60,.6)'; ctx.beginPath(); ctx.moveTo(Math.round(e.x), Math.round(e.y)); ctx.lineTo(Math.round(e.x + e.dx * 70), Math.round(e.y + e.dy * 70)); ctx.stroke(); }
       const esc = e.tipo === 'golem' ? 1.25 : 1;
-      const sq = e.flash > 0 ? 1.14 : 1; desenhar(nome, e.x, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc * sq, esc / sq);
+      const sq = e.flash > 0 ? 1.14 : 1;
+      if (e.face < 0) { ctx.save(); ctx.translate(Math.round(e.x), 0); ctx.scale(-1, 1); desenhar(nome, 0, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc * sq, esc / sq); ctx.restore(); } else desenhar(nome, e.x, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc * sq, esc / sq);
       if (e.encantado > 0) { ctx.fillStyle = '#ff77b8'; ctx.fillRect(Math.round(e.x - 3), Math.round(e.y - e.raio - 12 - Math.round(Math.sin(R.t * 8))), 2, 2); ctx.fillRect(Math.round(e.x + 1), Math.round(e.y - e.raio - 12 - Math.round(Math.sin(R.t * 8))), 2, 2); ctx.fillRect(Math.round(e.x - 3), Math.round(e.y - e.raio - 10), 6, 2); ctx.fillRect(Math.round(e.x - 2), Math.round(e.y - e.raio - 8), 4, 1); }
       if (e.lento > 0) { ctx.fillStyle = 'rgba(160,230,255,.35)'; ctx.fillRect(Math.round(e.x - e.raio), Math.round(e.y + e.raio - 2), e.raio * 2, 3); }
       if (e.hp < e.hpMax && !e.chefe) { const bw = Math.max(10, e.raio * 2); barra(Math.round(e.x - bw / 2), Math.round(e.y - e.raio - 6), bw, 2, e.hp / e.hpMax, '#e04545'); }

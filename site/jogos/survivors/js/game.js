@@ -14,7 +14,7 @@ export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), 
   const S = {
     reino: REINOS[reino] ? reino : 'rift', R: REINOS[reino] || REINOS.rift, marcas: [],
     rng: criarRng(semente), t: 0, estado: 'jogando', campeao: c.id, vista, meta: mel,
-    p: { x: 0, y: 0, dx: 1, dy: 0, mx: 0, my: 0, hp: 1, hpMax: 1, raio: 5, inv: 0, flash: 0, andando: false, ataque: 0, ataqueCd: 0, especial: 0, espCd: 3, espT: 0, nivelAnim: 0 },
+    p: { x: 0, y: 0, dx: 1, dy: 0, mx: 0, my: 0, hp: 1, hpMax: 1, raio: 5, inv: 0, flash: 0, andando: false, face: 1, alvoX: 0, ataque: 0, ataqueCd: 0, especial: 0, espCd: 3, espT: 0, nivelAnim: 0 },
     inim: [], proj: [], eproj: [], gemas: [], itens: [], textos: [], efeitos: [], zonas: [], raios: [],
     armas: [], passivas: {}, nivel: 1, xp: 0, xpProx: xpProximo(1), pendentes: 0, opcoes: null,
     abates: 0, ouro: 0, spawnAc: 0, proxId: 1, onda: 1, chefes: {}, chefeVivo: null, revive: !!mel.revive, reviveu: false,
@@ -192,6 +192,7 @@ const TEMPO_FIM_ONDAS = 14 * 60;
 export function ferir(S, e, dano, op = {}) {
   if (e.hp <= 0) return;
   const crit = S.rng() < 0.06; const d = Math.max(1, dano * (crit ? 2 : 1));
+  S.p.alvoX = e.x;
   if (S.p.ataqueCd <= 0) { S.p.ataque = 0.42; S.p.ataqueCd = 1.5; }
   e.hp -= d; e.flash = 0.09; chispas(S, e.x, e.y, crit ? 6 : 3, { cor: crit ? '#ffd24a' : '#fff6c0', vel: crit ? 90 : 55, vida: 0.22 });
   if (op.kx != null) { e.kx += op.kx; e.ky += op.ky; }
@@ -486,6 +487,8 @@ export function atualizar(S, dt, entrada = { x: 0, y: 0 }) {
   P.andando = m > 0.05; P.mx = mx; P.my = my;
   if (P.andando) { const n = Math.hypot(mx, my); P.dx = mx / n; P.dy = my / n; }
   P.x += mx * S.a.vel * dt; P.y += my * S.a.vel * dt;
+  // para onde ele olha: o lado em que anda; parado e atacando, olha para o alvo
+  if (Math.abs(mx) > 0.15) P.face = mx > 0 ? 1 : -1; else if ((P.ataque > 0 || P.especial > 0) && Math.abs(P.alvoX - P.x) > 3) P.face = P.alvoX > P.x ? 1 : -1;
   habilidadeEspecial(S, dt);
   P.nivelAnim = Math.max(0, P.nivelAnim - dt);
   P.inv = Math.max(0, P.inv - dt); P.flash = Math.max(0, P.flash - dt); P.ataque = Math.max(0, P.ataque - dt); P.ataqueCd = Math.max(0, P.ataqueCd - dt);

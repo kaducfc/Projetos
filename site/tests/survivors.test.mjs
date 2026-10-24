@@ -189,3 +189,10 @@ test('Garen: o Julgamento acerta os inimigos ao redor com recarga; outros campe�
   assert.ok(alvos.every((e) => e.hp < e.hpMax), 'todos atingidos'); assert.ok(S.p.espCd > 5, 'em recarga');
   assert.equal(criarJogo({ campeao: 'ahri', semente: 3 }).base.especial, undefined);
 });
+
+test('o campeão olha para o lado em que anda', () => {
+  const S = criarJogo({ campeao: 'garen', semente: 2 }); S.p.inv = 999;
+  atualizar(S, 0.016, { x: -1, y: 0 }); assert.equal(S.p.face, -1);
+  atualizar(S, 0.016, { x: 1, y: 0 }); assert.equal(S.p.face, 1);
+  atualizar(S, 0.016, { x: 0, y: 1 }); assert.equal(S.p.face, 1, 'andando na vertical mantém o lado');
+});
