@@ -36,11 +36,12 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 36; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 37; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { semContorno: true, parada: { src: 'ahri/ahri-parada.png', n: 6 }, andando: { src: 'ahri/ahri-andando.png', n: 6 }, correr: { src: 'ahri/ahri-correr.png', n: 6 }, ataque: { src: 'ahri/ahri-ataque.png', n: 6 }, dano: { src: 'ahri/ahri-dano.png', n: 2 }, morte: { src: 'ahri/ahri-morte.png', n: 4 }, especial: { src: 'ahri/ahri-especial.png', n: 6 }, vitoria: { src: 'ahri/ahri-vitoria.png', n: 4 }, nivel: { src: 'ahri/ahri-nivel.png', n: 2 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
 };
+ANIM.jinx = { semContorno: true, parada: { src: 'jinx/jinx-parada.png', n: 6 }, andando: { src: 'jinx/jinx-andando-a.png', n: 6 }, ataque: { src: 'jinx/jinx-ataque.png', n: 6 }, dano: { src: 'jinx/jinx-dano.png', n: 2 }, morte: { src: 'jinx/jinx-morte.png', n: 4 } };
 // Chefes: uma tira só, fatiada em animações (ini = primeiro quadro, tot = quadros da tira).
 ANIM.raizes = { semContorno: true, parada: { src: 'chefes/raizes.png', tot: 6, ini: 0, n: 3 }, ataque: { src: 'chefes/raizes.png', tot: 6, ini: 3, n: 2 }, morte: { src: 'chefes/raizes.png', tot: 6, ini: 5, n: 1 } };
 ANIM.kodama = { semContorno: true, parada: { src: 'chefes/kodama.png', tot: 6, ini: 0, n: 3 }, ataque: { src: 'chefes/kodama.png', tot: 6, ini: 3, n: 2 }, morte: { src: 'chefes/kodama.png', tot: 6, ini: 5, n: 1 } };
