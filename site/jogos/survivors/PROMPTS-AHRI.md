@@ -92,3 +92,28 @@ SUBJECT: bust portrait of Ahri (League of Legends) for a character-select screen
 
 BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key), no gradient, no shadow, no texture. Do NOT use green anywhere on the character.
 ```
+
+## E. TODOS os movimentos em UMA imagem (ahri-completo.png, 1536 x 1792)
+
+Anexe a ficha aprovada da Ahri. São 42 quadros: parada, andando, correndo, ataque, dano, morte, especial, vitória e subir de nível. Se o ChatGPT não conseguir manter tudo consistente numa imagem só, use os blocos A, B e C acima, que dividem a mesma coisa em 3 imagens.
+
+```
+Create ONE single sprite sheet image with ALL the animations of this character (every movement in one image).
+
+Pixel art game sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, same chunky pixel size as the attached reference. Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze around the sprite. Strong dark outline (#14101E) around the whole character. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), character faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CHARACTER: use EXACTLY the character from the attached model sheet (Ahri, the Nine-Tailed Fox, League of Legends): long black hair, two fox ears, amber eyes, three whisker marks on each cheek, gold choker with a pink gem, white and lavender short dress with pink and gold trim and a pink sash, detached white sleeves with lavender cuffs, white-and-lavender knee-high boots, nine fluffy white tails with pink tips, a small glowing blue-violet orb in her right hand. Same colors, same proportions and same pixel size in every frame. Do not redesign anything.
+
+GRID: image size 1536 x 1792 px, divided into an invisible grid of 6 columns x 7 rows of equal 256 x 256 px cells (42 cells), no lines between cells. In EVERY cell the character is the same size (about 170 px tall), centered horizontally in the cell, with her feet touching the same invisible baseline at y = 225 of the cell (lying poses sit on that same baseline). At least 24 px of empty margin around her; nothing crosses the cell borders (tails and effects included). Every frame inside a row keeps the same scale and the same ground position.
+
+ROWS (top to bottom):
+ROW 1, IDLE loop (6 frames, seamless): graceful breathing, chest rises and falls 1 px, the nine tails sway slowly from side to side, the fox ears twitch in frame 3, hair locks sway slightly, a blink in frame 5, the orb floats above her palm and bobs 1 px. Differences between frames are small.
+ROW 2, WALK CYCLE (6 frames, seamless loop), THREE-QUARTER SIDE VIEW walking to the RIGHT, body turned about 60 degrees, BOTH LEGS CLEARLY VISIBLE AND SEPARATE at all times, the tails stay behind her and never hide her legs. Frames in order: (1) CONTACT: front leg extended forward with the heel on the ground, back leg extended behind with the toes on the ground, WIDE stride (clear inverted V), body lowest; (2) RECOIL: weight onto the front foot, the back leg starts to lift and bend; (3) PASSING: standing leg straight under the body, the other leg bent and swinging forward with the foot lifted (knee high), body highest; (4) CONTACT with the OTHER leg (mirror of frame 1, legs swapped); (5) RECOIL with the other leg; (6) PASSING with the other leg. Body bobs 3 px, arms swing, tails sway behind, hair flows backwards.
+ROW 3, RUN CYCLE (6 frames, seamless loop), same side view and rules as the walk but faster and more dramatic: body leaning forward about 15 degrees, long leaping strides with both feet briefly off the ground in frames 3 and 6, knees lifted high, the nine tails streaming straight behind her, hair and sash flowing backwards, the orb floating next to her hand.
+ROW 4, ATTACK "ORB OF DECEPTION" (6 frames): (1) anticipation, body twisted, hand pulled back holding a growing blue-violet orb; (2) arm swinging forward; (3) the orb leaves her hand toward the right with a short trail of crisp pixel sparkles (hard-edged pixels, no blur, no glow); (4) follow-through, hand extended to the right, tails flaring; (5) recovery; (6) back to the ready stance. The orb and sparkles may extend up to 40 px beyond the character but stay inside the cell.
+ROW 5, HURT and DEATH: cells 1 and 2 = HURT (flinches back, eyes squeezed shut, ears flat, body slightly lighter). Cells 3 to 6 = DEATH: staggers, drops to her knees, falls to the side with the tails curling around her, final pose lying flat on the ground (wide pose, still inside its cell), orb gone.
+ROW 6, SPECIAL "FOX-FIRE BURST" (6 frames): she twirls with her arms open and all nine tails fanned out wide, a ring of pink and violet fox-fire flames (hard-edged pixels, no blur, no glow haze) grows around her frame by frame, peaks in frame 4, then fades by frame 6.
+ROW 7, VICTORY and LEVEL UP: cells 1 to 4 = VICTORY (a playful wink, tosses the orb up and catches it, tails swishing, small happy loop); cells 5 and 6 = LEVEL UP (cell 5: crouch, cell 6: jump up with a twirl and all tails raised).
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use green anywhere on the character or effects. Do not use a white or checkerboard background.
+```
