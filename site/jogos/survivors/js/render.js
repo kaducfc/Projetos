@@ -45,7 +45,8 @@ export function criarRender(canvas) {
     if (P.especial > 0 && nQuadros(n, 'especial')) return quadroAnim(n, 'especial', (1 - P.especial / 0.5) * nQuadros(n, 'especial'));
     if (P.nivelAnim > 0 && nQuadros(n, 'nivel')) return quadroAnim(n, 'nivel', P.nivelAnim > 0.25 ? 0 : 1);
     if (P.ataque > 0 && nQuadros(n, 'ataque')) return quadroAnim(n, 'ataque', (1 - P.ataque / 0.42) * nQuadros(n, 'ataque'));
-    return animacao(n, P.andando ? 'andando' : 'parada', R.t, P.flash > 0 && !nQuadros(n, 'dano'));
+    if (P.andando && nQuadros(n, 'andando')) return quadroAnim(n, 'andando', P.dist / 7.5, P.flash > 0 && !nQuadros(n, 'dano'));
+    return animacao(n, 'parada', R.t, P.flash > 0 && !nQuadros(n, 'dano'));
   }
   function quadro(S, opc = {}) {
     const { w, h } = R; const P = S.p;
@@ -70,6 +71,7 @@ export function criarRender(canvas) {
       if (r.t > r.d * 0.5) { ctx.strokeStyle = 'rgba(255,240,120,.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(Math.round(r.x), Math.round(r.y), r.r * (1 - (r.t - r.d * 0.5) / (r.d * 0.5)), 0, 6.2832); ctx.stroke(); ctx.beginPath(); ctx.arc(Math.round(r.x), Math.round(r.y), r.r, 0, 6.2832); ctx.stroke(); }
       else { ctx.fillStyle = '#fff6b0'; ctx.fillRect(Math.round(r.x) - 2, Math.round(r.y) - 120, 5, 120); ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(r.x) - 1, Math.round(r.y) - 120, 3, 120); ctx.fillStyle = 'rgba(255,240,120,.45)'; ctx.beginPath(); ctx.arc(Math.round(r.x), Math.round(r.y), r.r, 0, 6.2832); ctx.fill(); }
     }
+    for (const p of S.pegadas) { ctx.globalAlpha = Math.min(0.55, (p.t / p.d) * 0.7); ctx.fillStyle = S.R.rastro || '#1f4f22'; ctx.fillRect(Math.round(p.x) - 1, Math.round(p.y), 3, 2); ctx.globalAlpha = 1; }
     // ataques avisados no chão
     for (const m of S.marcas) {
       const k = 1 - m.t / m.d; ctx.fillStyle = `rgba(255,60,60,${0.12 + 0.2 * k})`; ctx.beginPath(); ctx.arc(Math.round(m.x), Math.round(m.y), m.r, 0, 6.2832); ctx.fill();
@@ -91,8 +93,9 @@ export function criarRender(canvas) {
         if (P.inv > 0 && Math.floor(R.t * 20) % 2 === 0 && S.estado === 'jogando' && P.inv < 5) continue;
         const an = quadroDoJogador(S);
         if (an) {
-          if (P.face < 0) { ctx.save(); ctx.translate(Math.round(P.x), 0); ctx.scale(-1, 1); ctx.drawImage(an, -Math.round(an.width / 2), Math.round(P.y + 8 - an.height)); ctx.restore(); }
-          else ctx.drawImage(an, Math.round(P.x - an.width / 2), Math.round(P.y + 8 - an.height));
+          const inc = -P.lean * 0.13; const px = Math.round(P.x); const pyF = Math.round(P.y + 8);
+          ctx.save(); ctx.translate(px, pyF); if (P.face < 0) ctx.scale(-1, 1); ctx.transform(1, 0, inc * (P.face < 0 ? -1 : 1), 1, 0, 0);
+          ctx.drawImage(an, -Math.round(an.width / 2), -an.height); ctx.restore();
           continue;
         }
         if (P.face < 0) { ctx.save(); ctx.translate(Math.round(P.x), 0); ctx.scale(-1, 1); desenhar(S.campeao, 0, P.y + 7, 0, -bob, P.flash > 0); ctx.restore(); } else desenhar(S.campeao, P.x, P.y + 7, 0, -bob, P.flash > 0);

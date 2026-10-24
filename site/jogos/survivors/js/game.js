@@ -14,12 +14,12 @@ export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), 
   const S = {
     reino: REINOS[reino] ? reino : 'rift', R: REINOS[reino] || REINOS.rift, marcas: [],
     rng: criarRng(semente), t: 0, estado: 'jogando', campeao: c.id, vista, meta: mel,
-    p: { x: 0, y: 0, dx: 1, dy: 0, mx: 0, my: 0, hp: 1, hpMax: 1, raio: 5, inv: 0, flash: 0, andando: false, face: 1, alvoX: 0, ataque: 0, ataqueCd: 0, especial: 0, espCd: 3, espT: 0, nivelAnim: 0 },
+    p: { x: 0, y: 0, dx: 1, dy: 0, mx: 0, my: 0, hp: 1, hpMax: 1, raio: 5, inv: 0, flash: 0, andando: false, lean: 0, dist: 0, passo: 0, pe: 1, face: 1, alvoX: 0, ataque: 0, ataqueCd: 0, especial: 0, espCd: 3, espT: 0, nivelAnim: 0 },
     inim: [], proj: [], eproj: [], gemas: [], itens: [], textos: [], efeitos: [], zonas: [], raios: [],
     armas: [], passivas: {}, nivel: 1, xp: 0, xpProx: xpProximo(1), pendentes: 0, opcoes: null,
     abates: 0, ouro: 0, spawnAc: 0, proxId: 1, onda: 1, chefes: {}, chefeVivo: null, revive: !!mel.revive, reviveu: false,
     infinito: false, evt: [], shake: 0, base: c,
-    part: [], fant: [],
+    part: [], fant: [], pegadas: [],
     pot: {}, maldicoes: [], reroll: REROLAGENS, ban: BANIMENTOS, banidos: new Set(), combo: { n: 0, t: -99, max: 0 }, evolucoes: [],
   };
   adicionarArma(S, c.arma);
@@ -487,6 +487,14 @@ export function atualizar(S, dt, entrada = { x: 0, y: 0 }) {
   P.andando = m > 0.05; P.mx = mx; P.my = my;
   if (P.andando) { const n = Math.hypot(mx, my); P.dx = mx / n; P.dy = my / n; }
   P.x += mx * S.a.vel * dt; P.y += my * S.a.vel * dt;
+  // inclinação do corpo no sentido do movimento, passos (um a cada ~11 px andados) e pegadas no chão
+  P.lean += (Math.max(-1, Math.min(1, mx)) - P.lean) * Math.min(1, 12 * dt);
+  const andou = Math.hypot(mx, my) * S.a.vel * dt; P.dist += andou; P.passo += andou;
+  while (P.passo >= 11) {
+    P.passo -= 11; P.pe = -P.pe; S.evt.push({ tipo: 'passo' });
+    S.pegadas.push({ x: P.x + P.pe * 3, y: P.y + 6, t: 1.6, d: 1.6 }); if (S.pegadas.length > 40) S.pegadas.shift();
+    chispas(S, P.x + P.pe * 3, P.y + 6, 2, { cor: S.R.po || '#cfc9ff', vel: 16, vida: 0.35, grav: -14, brilho: false });
+  }
   // para onde ele olha: o lado em que anda; parado e atacando, olha para o alvo
   if (Math.abs(mx) > 0.15) P.face = mx > 0 ? 1 : -1; else if ((P.ataque > 0 || P.especial > 0) && Math.abs(P.alvoX - P.x) > 3) P.face = P.alvoX > P.x ? 1 : -1;
   habilidadeEspecial(S, dt);
@@ -499,8 +507,8 @@ export function atualizar(S, dt, entrada = { x: 0, y: 0 }) {
   atualizarInimigos(S, dt);
   atualizarProjeteis(S, dt);
   atualizarColetaveis(S, dt);
-  if (P.andando && Math.random() < 0.22) chispas(S, P.x - P.mx * 3, P.y + 6, 1, { cor: S.R.po || '#cfc9ff', vel: 14, vida: 0.4, grav: -10, brilho: false });
   for (let i = S.part.length - 1; i >= 0; i--) { const q = S.part[i]; q.t -= dt; if (q.t <= 0) { S.part[i] = S.part[S.part.length - 1]; S.part.pop(); continue; } q.vy += q.grav * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= 1 - 3 * dt; q.vy *= 1 - 1.5 * dt; }
+  for (let i = S.pegadas.length - 1; i >= 0; i--) { S.pegadas[i].t -= dt; if (S.pegadas[i].t <= 0) S.pegadas.splice(i, 1); }
   for (let i = S.fant.length - 1; i >= 0; i--) { S.fant[i].t -= dt; if (S.fant[i].t <= 0) S.fant.splice(i, 1); }
   for (let i = S.textos.length - 1; i >= 0; i--) { const x = S.textos[i]; x.t -= dt; x.y -= 14 * dt; if (x.t <= 0) S.textos.splice(i, 1); }
   for (let i = S.efeitos.length - 1; i >= 0; i--) { S.efeitos[i].t -= dt; if (S.efeitos[i].t <= 0) S.efeitos.splice(i, 1); }

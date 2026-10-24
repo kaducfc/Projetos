@@ -1,6 +1,6 @@
 // Rift Survivors: efeitos sonoros sintetizados (WebAudio, sem arquivos).
 let ctx = null; let mudo = false; const ultimo = {};
-const LIMITE = { tiro: 70, orbe: 120, flecha: 120, shuriken: 120, zona: 200, gema: 45, ouro: 60, morte: 50, dano: 120, cuspe: 300 };
+const LIMITE = { passo: 85, tiro: 70, orbe: 120, flecha: 120, shuriken: 120, zona: 200, gema: 45, ouro: 60, morte: 50, dano: 120, cuspe: 300 };
 export function definirMudo(v) { mudo = v; }
 export const estaMudo = () => mudo;
 function ac() {
@@ -26,6 +26,7 @@ function ruido(dur, vol = 0.05, filtro = 1800) {
 export function som(tipo) {
   const agora = performance.now(); if (LIMITE[tipo] && agora - (ultimo[tipo] || 0) < LIMITE[tipo]) return; ultimo[tipo] = agora;
   switch (tipo) {
+    case 'passo': tom(70 + Math.random() * 30, 0.035, 'triangle', 0.016); break;
     case 'tiro': tom(620, 0.05, 'square', 0.025, -300); break;
     case 'orbe': tom(300, 0.18, 'triangle', 0.05, 380); break;
     case 'flecha': tom(900, 0.1, 'sawtooth', 0.025, -500); break;
@@ -51,4 +52,4 @@ export function som(tipo) {
   }
 }
 // Evento da simulação -> som.
-export const SOM_EVENTO = { tiro: 'tiro', orbe: 'orbe', flecha: 'flecha', shuriken: 'shuriken', zona: 'zona', morte: 'morte', gema: 'gema', ouro: 'ouro', dano: 'dano', nivel: 'nivel', cura: 'cura', ima: 'ima', bau: 'bau', chefe: 'chefe', onda: 'onda', cuspe: 'cuspe', revive: 'revive', vitoria: 'vitoria', derrota: 'derrota' };
+export const SOM_EVENTO = { passo: 'passo', tiro: 'tiro', orbe: 'orbe', flecha: 'flecha', shuriken: 'shuriken', zona: 'zona', morte: 'morte', gema: 'gema', ouro: 'ouro', dano: 'dano', nivel: 'nivel', cura: 'cura', ima: 'ima', bau: 'bau', chefe: 'chefe', onda: 'onda', cuspe: 'cuspe', revive: 'revive', vitoria: 'vitoria', derrota: 'derrota' };

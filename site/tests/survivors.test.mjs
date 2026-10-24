@@ -196,3 +196,11 @@ test('o campeão olha para o lado em que anda', () => {
   atualizar(S, 0.016, { x: 1, y: 0 }); assert.equal(S.p.face, 1);
   atualizar(S, 0.016, { x: 0, y: 1 }); assert.equal(S.p.face, 1, 'andando na vertical mantém o lado');
 });
+
+test('passos e inclinação: andar gera passos, pegadas e inclina para o lado; parado desfaz', () => {
+  const S = criarJogo({ campeao: 'garen', semente: 2 }); S.p.inv = 999; let passos = 0;
+  for (let i = 0; i < 60; i++) { atualizar(S, 1 / 60, { x: 1, y: 0 }); passos += S.evt.filter((e) => e.tipo === 'passo').length; S.evt.length = 0; }
+  assert.ok(passos >= 4 && passos <= 8, `passos ${passos}`); assert.ok(S.p.lean > 0.8); assert.ok(S.pegadas.length > 0);
+  for (let i = 0; i < 60; i++) { atualizar(S, 1 / 60, { x: 0, y: 0 }); S.evt.length = 0; }
+  assert.ok(Math.abs(S.p.lean) < 0.05, 'volta a ficar reto');
+});
