@@ -124,7 +124,7 @@ export function criarRender(canvas) {
       ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.fillRect(Math.round(e.x - sombraW / 2 - 1), Math.round(e.y + e.raio * 0.5 - 1), sombraW + 2, 4); ctx.fillStyle = 'rgba(0,0,0,.26)'; ctx.fillRect(Math.round(e.x - sombraW / 2 + 1), Math.round(e.y + e.raio * 0.5), sombraW - 2, 2);
       const bob = Math.round(Math.abs(Math.sin(R.t * 9 + e.id)) * (e.chefe ? 1 : 2));
       if (e.estado === 1) { ctx.strokeStyle = 'rgba(255,60,60,.6)'; ctx.beginPath(); ctx.moveTo(Math.round(e.x), Math.round(e.y)); ctx.lineTo(Math.round(e.x + e.dx * 70), Math.round(e.y + e.dy * 70)); ctx.stroke(); }
-      const esc = e.tipo === 'golem' ? 1.25 : 1;
+      const esc = 1;
       const nq = nQuadros(nome, 'andando'); const spr = nq ? quadroAnim(nome, 'andando', Math.floor(R.t * 7 + e.id) % nq, e.flash > 0) : nome; // animação de caminhada, se houver
       const sq = e.flash > 0 ? 1.14 : 1;
       if (e.face < 0) { ctx.save(); ctx.translate(Math.round(e.x), 0); ctx.scale(-1, 1); desenhar(spr, 0, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc * sq, esc / sq); ctx.restore(); } else desenhar(spr, e.x, e.y + e.raio + 2, 0, -bob, e.flash > 0, esc * sq, esc / sq);
