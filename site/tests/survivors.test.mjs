@@ -25,7 +25,7 @@ test('dados: campeões, armas, itens, inimigos e chefes são coerentes', () => {
     for (let n = 1; n <= 5; n++) { const s = a.stats(n); assert.ok(Number.isFinite(s.dano ?? 1), `${id} ${n}`); if (s.dano) { assert.ok(s.dano >= ant, `${id}: dano cresce`); ant = s.dano; } }
   }
   for (const m of MISTURA) assert.ok(INIMIGOS[m.tipo], m.tipo);
-  assert.ok(CHEFES.barao.t === TEMPO_BARAO && CHEFES.raizes.t < CHEFES.jaguar.t && CHEFES.jaguar.t < CHEFES.barao.t);
+  assert.ok(CHEFES.serpente.t === TEMPO_BARAO && CHEFES.raizes.t < CHEFES.jaguar.t && CHEFES.jaguar.t < CHEFES.serpente.t);
   for (const i of Object.values(ITENS)) assert.ok(i.por > 0);
   assert.ok(xpProximo(2) > xpProximo(1));
   for (const m of Object.values(MELHORIAS)) assert.ok(m.preco(0) > 0 && m.max >= 1);
@@ -69,7 +69,7 @@ test('chefes aparecem no horário e o Barão derrotado vence a partida', () => {
   S.t = CHEFES.raizes.t - 0.01; rodar(S, 1, () => ({ x: 0, y: 0 }));
   assert.ok(S.chefes.raizes && S.inim.some((e) => e.tipo === 'raizes'));
   S.t = TEMPO_BARAO - 0.01; S.onda = 99; rodar(S, 1, () => ({ x: 0, y: 0 }));
-  const barao = S.inim.find((e) => e.tipo === 'barao'); assert.ok(barao);
+  const barao = S.inim.find((e) => e.tipo === 'serpente'); assert.ok(barao);
   ferir(S, barao, 1e9);
   assert.equal(S.estado, 'vitoria'); assert.ok(essenciaGanha(S) >= 150);
 });
