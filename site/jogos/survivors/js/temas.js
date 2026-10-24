@@ -64,14 +64,15 @@ function quadrosChao(tema) {
   }
   cacheTex.set(tema, q); return q;
 }
-function chaoComTextura(x, Q, cx, cy) {
-  const { ts, v } = Q; const ox = (((cx * CH) % ts) + ts) % ts; const oy = (((cy * CH) % ts) + ts) % ts;
+const FORCA_CHAO = { shurima: 0.38 }; // intensidade das manchas por reino (areia pede transições bem sutis)
+function chaoComTextura(x, Q, cx, cy, tema) {
+  const { ts, v } = Q; const forca = FORCA_CHAO[tema] ?? 1; const ox = (((cx * CH) % ts) + ts) % ts; const oy = (((cy * CH) % ts) + ts) % ts;
   x.drawImage(v[0], ox, oy, CH, CH, 0, 0, CH, CH); // base
   // manchas escuras e claras, detalhes e trechos gastos: as mesmas manchas de ruído em coordenadas do mundo (sem emenda entre pedaços)
   for (let ty = 0; ty < CH / 4; ty++) for (let tx = 0; tx < CH / 4; tx++) {
     const gx = cx * CH + tx * 4; const gy = cy * CH + ty * 4;
     const n = 0.62 * ruido(gx, gy, 64) + 0.38 * ruido(gx + 977, gy + 311, 22) + (hash(gx, gy) - 0.5) * 0.05;
-    const lim = (v) => Math.max(0, Math.min(0.9, v));
+    const lim = (v) => Math.max(0, Math.min(0.9, v)) * forca;
     const camadas = [[1, lim((0.46 - n) / 0.16)], [2, lim((n - 0.56) / 0.16)], [3, lim((ruido(gx + 5000, gy + 1300, 44) - 0.76) / 0.07)], [4, lim((ruido(gx + 321, gy + 7000, 70) - 0.8) / 0.07)]];
     for (const [k, al] of camadas) if (al > 0.04) { x.globalAlpha = al; x.drawImage(v[k], ox + tx * 4, oy + ty * 4, 4, 4, tx * 4, ty * 4, 4, 4); }
     x.globalAlpha = 1;
@@ -82,7 +83,7 @@ export function pedaco(tema, cx, cy) {
   const T = TEMAS[tema] || TEMAS.ixtal;
   const c = document.createElement('canvas'); c.width = CH; c.height = CH; const x = c.getContext('2d');
   const Q = quadrosChao(tema);
-  if (Q) { chaoComTextura(x, Q, cx, cy); if (atlasDeProps(tema)) return c; }
+  if (Q) { chaoComTextura(x, Q, cx, cy, tema); if (atlasDeProps(tema)) return c; }
   else {
     // Chão em manchas suaves (ruído contínuo entre os pedaços), em vez do xadrez de dois tons.
     const base = T.tile[0]; const claro = misturar(T.tile[1], 0.07); const escuro = misturar(T.tile[0], -0.08);
