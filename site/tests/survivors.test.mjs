@@ -1,8 +1,8 @@
 // Rift Survivors: dados e simulação (sem navegador).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CAMPEOES, ARMAS, ITENS, INIMIGOS, CHEFES, MISTURA, MELHORIAS, TEMPO_BARAO, MAX_INIMIGOS, MAX_ARMAS, xpProximo } from '../jogos/survivors/js/data.js';
-import { criarJogo, atualizar, escolher, gerarOpcoes, criarInimigo, ferir, essenciaGanha } from '../jogos/survivors/js/game.js';
+import { CAMPEOES, ARMAS, ITENS, INIMIGOS, CHEFES, MISTURA, MELHORIAS, TEMPO_BARAO, MAX_INIMIGOS, MAX_ARMAS, xpProximo, EVOLUCOES, MALDICOES, RARIDADES, COMBOS } from '../jogos/survivors/js/data.js';
+import { criarJogo, atualizar, escolher, gerarOpcoes, criarInimigo, ferir, essenciaGanha, rolar, banir, statsDe } from '../jogos/survivors/js/game.js';
 import { GAMES, gameById } from '../shared/config.js';
 
 const rodar = (S, seg, fn = () => ({ x: Math.cos(S.t * 0.3), y: Math.sin(S.t * 0.3) })) => {
@@ -89,4 +89,50 @@ test('Beijo Encantado paralisa o inimigo atingido', () => {
   let x0 = null;
   for (let i = 0; i < 60 * 4; i++) { atualizar(S, 1 / 60, { x: 0, y: 0 }); if (e.encantado > 0) { x0 = x0 ?? e.x; } }
   assert.ok(x0 !== null, 'foi encantado');
+});
+
+const emNivel = (S) => { S.pendentes = 1; S.opcoes = gerarOpcoes(S); S.estado = 'upgrade'; };
+
+test('cartas têm raridade; rolar e banir respeitam o limite e o banido não volta', () => {
+  const S = criarJogo({ campeao: 'garen', semente: 21 }); emNivel(S);
+  assert.ok(S.opcoes.every((o) => o.raridade >= 0 && o.raridade < RARIDADES.length));
+  assert.ok(rolar(S) && rolar(S) && rolar(S)); assert.equal(rolar(S), false); assert.equal(S.reroll, 0);
+  const ids = S.opcoes[0]; assert.ok(banir(S, 0)); assert.ok(S.banidos.has(ids.id));
+  for (let i = 0; i < 30; i++) { S.opcoes = gerarOpcoes(S); assert.ok(!S.opcoes.some((o) => o.id === ids.id), 'banida não volta'); }
+  S.ban = 1; assert.ok(banir(S, 1)); assert.equal(banir(S, 1), false, 'sem banimentos sobrando');
+});
+
+test('raridade maior dá mais efeito no item e na arma', () => {
+  const a = criarJogo({ campeao: 'garen', semente: 1 }); const b = criarJogo({ campeao: 'garen', semente: 1 });
+  escolher(a, { tipo: 'item', id: 'espada', nivel: 1, raridade: 0 }); escolher(b, { tipo: 'item', id: 'espada', nivel: 1, raridade: 3 });
+  assert.ok(b.a.dano > a.a.dano);
+  escolher(a, { tipo: 'arma', id: 'lamina', nivel: 2, raridade: 0 }); escolher(b, { tipo: 'arma', id: 'lamina', nivel: 2, raridade: 3 });
+  assert.ok(statsDe(b, b.armas[0]).dano > statsDe(a, a.armas[0]).dano);
+});
+
+test('maldições: bônus e custo aplicados, no máximo 3 e sem repetir', () => {
+  const S = criarJogo({ campeao: 'garen', semente: 8 }); const d0 = S.a.dano; const hp0 = S.p.hpMax;
+  escolher(S, { tipo: 'maldicao', id: 'vidro', nivel: 0, raridade: 0 });
+  assert.ok(S.a.dano > d0 && S.p.hpMax < hp0);
+  escolher(S, { tipo: 'maldicao', id: 'ganancia', nivel: 0, raridade: 0 });
+  const e = criarInimigo(S, 'minion', 90, 0); assert.ok(e.hpMax > INIMIGOS.minion.hp * 1.3);
+  for (const id of Object.keys(MALDICOES)) if (!S.maldicoes.includes(id) && S.maldicoes.length < 3) S.maldicoes.push(id);
+  for (let i = 0; i < 80; i++) assert.ok(!gerarOpcoes(S).some((o) => o.tipo === 'maldicao'), 'limite de maldições');
+});
+
+test('evolução: arma no 5 + item certo + baú = versão evoluída', () => {
+  const S = criarJogo({ campeao: 'garen', semente: 13 }); S.p.inv = 999;
+  S.armas[0].nivel = 5; const antes = statsDe(S, S.armas[0]);
+  S.itens.push({ x: S.p.x, y: S.p.y, tipo: 'bau' }); atualizar(S, 0.016, { x: 0, y: 0 });
+  assert.ok(!S.armas[0].evo && S.estado === 'upgrade', 'sem o item, o baú dá carta comum');
+  S.estado = 'jogando'; S.pendentes = 0; S.passivas[EVOLUCOES.lamina.item] = 1;
+  S.itens.push({ x: S.p.x, y: S.p.y, tipo: 'bau' }); atualizar(S, 0.016, { x: 0, y: 0 });
+  assert.ok(S.armas[0].evo && S.evolucoes.includes('lamina')); assert.ok(statsDe(S, S.armas[0]).dano > antes.dano);
+  for (const [id, ev] of Object.entries(EVOLUCOES)) { assert.ok(ARMAS[id] && ITENS[ev.item], id); const st = ARMAS[id].stats(5); const x = ev.mod(st); assert.ok(x.dano > st.dano || x.qtd > st.qtd, `${id} evolui mais forte`); }
+});
+
+test('combo de abates dá ouro e avisa nos marcos', () => {
+  const S = criarJogo({ campeao: 'garen', semente: 6 }); S.evt.length = 0;
+  for (let i = 0; i < COMBOS[0].n; i++) { const e = criarInimigo(S, 'minion', 300, 300); ferir(S, e, 1e9); }
+  assert.ok(S.evt.some((x) => x.tipo === 'combo' && x.n === COMBOS[0].n)); assert.ok(S.ouro >= COMBOS[0].ouro);
 });

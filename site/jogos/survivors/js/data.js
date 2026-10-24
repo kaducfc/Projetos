@@ -97,3 +97,41 @@ export const escalaVida = (t) => 1 + t / 150 + (t / 600) ** 2;
 export const escalaDano = (t) => 1 + t / 700;
 // Aparições por segundo.
 export const taxaSpawn = (t) => 0.9 + t / 60 * 0.6;
+
+// Raridade das cartas de nível: quanto maior, mais forte o que você leva (peso = chance de aparecer).
+export const RARIDADES = [
+  { id: 'comum', nome: 'Comum', cor: '#cfc9ff', mult: 1, peso: 60, arma: 0 },
+  { id: 'rara', nome: 'Rara', cor: '#58a8ff', mult: 1.5, peso: 28, arma: 0.06 },
+  { id: 'epica', nome: 'Épica', cor: '#b45cff', mult: 2.25, peso: 10, arma: 0.14 },
+  { id: 'lendaria', nome: 'Lendária', cor: '#f5c82e', mult: 3.1, peso: 2, arma: 0.25 },
+];
+export const MAX_MALDICOES = 3;
+export const REROLAGENS = 3;
+export const BANIMENTOS = 2;
+
+// Maldições: aparecem como carta de risco. `bom` e `ruim` são só texto; `mod` é o efeito (ver recalcular/diretor no game.js).
+export const MALDICOES = {
+  sangue: { nome: 'Pacto de Sangue', bom: '+80% de dano', ruim: 'Sem regeneração e curas valem metade', mod: { dano: 0.8, cura: 0.5, semRegen: true } },
+  vidro: { nome: 'Canhão de Vidro', bom: '+60% de dano e +20% de área', ruim: 'Vida máxima cai 40%', mod: { dano: 0.6, area: 0.2, hp: 0.6 } },
+  frenesi: { nome: 'Frenesi do Vazio', bom: '-30% de recarga das habilidades', ruim: 'Inimigos 20% mais rápidos', mod: { recarga: 0.3, inimVel: 1.2 } },
+  ganancia: { nome: 'Ganância Dourada', bom: '+100% de ouro e +40% de experiência', ruim: 'Inimigos com 40% mais vida', mod: { ouro: 1, xp: 0.4, inimVida: 1.4 } },
+  mare: { nome: 'Maré de Tropas', bom: '+1 projétil nas armas que disparam', ruim: '40% mais inimigos', mod: { qtd: 1, spawn: 1.4 } },
+};
+// Combos de abates em sequência (janela de 3s entre abates).
+export const COMBOS = [
+  { n: 25, nome: 'DOMINANDO!', ouro: 8 }, { n: 50, nome: 'IMPARÁVEL!', ouro: 20 }, { n: 100, nome: 'LENDÁRIO!', ouro: 50 }, { n: 200, nome: 'DIVINO!', ouro: 120 },
+];
+export const JANELA_COMBO = 3;
+
+// Evolução: arma no nível 5 + o item indicado, ao abrir um baú, vira a versão evoluída.
+export const EVOLUCOES = {
+  lamina: { nome: 'Aegis de Demacia', item: 'cota', mod: c => ({ ...c, qtd: c.qtd + 2, raio: c.raio * 1.25, dano: c.dano * 1.6, giro: c.giro * 1.15 }) },
+  orbe: { nome: 'Orbe Espiritual', item: 'cetro', mod: c => ({ ...c, qtd: c.qtd + 1, dano: c.dano * 1.5, alcance: c.alcance * 1.3, cd: c.cd * 0.8 }) },
+  tiro: { nome: 'Minigun Pow-Pow', item: 'espada', mod: c => ({ ...c, qtd: c.qtd + 2, dano: c.dano * 1.4, cd: c.cd * 0.55 }) },
+  flecha: { nome: 'Tempestade de Cristal', item: 'ampulheta', mod: c => ({ ...c, qtd: c.qtd + 4, dano: c.dano * 1.3, cd: c.cd * 0.8 }) },
+  singular: { nome: 'Singularidade Final', item: 'tomo', mod: c => ({ ...c, raio: c.raio * 1.6, dano: c.dano * 1.6, qtd: c.qtd + 1, cd: c.cd * 0.8 }) },
+  shuriken: { nome: 'Lâminas Fantasma', item: 'botas', mod: c => ({ ...c, qtd: c.qtd + 2, perf: c.perf + 4, dano: c.dano * 1.3, vel: c.vel * 1.2 }) },
+  aura: { nome: 'Zero Absoluto', item: 'doran', mod: c => ({ ...c, raio: c.raio * 1.4, dano: c.dano * 1.9, lento: Math.min(0.6, c.lento + 0.2) }) },
+  trovao: { nome: 'Tempestade Elétrica', item: 'vidente', mod: c => ({ ...c, qtd: c.qtd + 3, dano: c.dano * 1.4, raio: c.raio * 1.3, cd: c.cd * 0.8 }) },
+  coracao: { nome: 'Charme Eterno', item: 'sangue', mod: c => ({ ...c, qtd: c.qtd + 1, perf: c.perf + 2, encanta: c.encanta * 1.8, dano: c.dano * 1.5 }) },
+};

@@ -3,8 +3,8 @@
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { gameById } from '../../../shared/config.js';
-import { CAMPEOES, ARMAS, ITENS, MELHORIAS, NIVEL_MAX_ITEM, TEMPO_BARAO, CHEFES } from './data.js';
-import { criarJogo, atualizar, escolher, essenciaGanha } from './game.js';
+import { CAMPEOES, ARMAS, ITENS, MELHORIAS, NIVEL_MAX_ITEM, TEMPO_BARAO, CHEFES, RARIDADES, MALDICOES, EVOLUCOES } from './data.js';
+import { criarJogo, atualizar, escolher, essenciaGanha, rolar, banir } from './game.js';
 import { criarRender } from './render.js';
 import { urlSprite, urlIcone, carregarImagens, arteUrl } from './sprites.js';
 import { som, SOM_EVENTO, destravar, definirMudo, estaMudo } from './audio.js';
@@ -174,17 +174,21 @@ function alternarPausa(forcar = false) {
   if (pausado) tela(`<div class="sv-painel pequeno"><h2>Pausado</h2><div class="sv-botoes"><button class="sv-btn grande" data-a="continuar">Continuar</button><button class="sv-btn" data-a="mudo">${estaMudo() ? 'Ligar som' : 'Desligar som'}</button><button class="sv-btn perigo" data-a="desistir">Desistir</button></div></div>`, 'jogo');
   else { ui.innerHTML = ''; ui.className = 'sv-ui jogo'; }
 }
+let modoBanir = false;
 function mostrarUpgrade() {
   const ops = S.opcoes; if (!ops) return;
   const cartas = ops.map((o, i) => {
-    let nome; let desc; let ic; let nivel;
-    if (o.tipo === 'arma') { const d = ARMAS[o.id]; nome = d.nome; desc = o.nivel === 1 ? d.desc : `Nível ${o.nivel}: mais ${descreverSalto(o.id, o.nivel)}`; ic = o.id; nivel = o.nivel === 1 ? 'NOVA' : `NV ${o.nivel}`; }
-    else if (o.tipo === 'item') { const d = ITENS[o.id]; nome = d.nome; desc = d.desc; ic = o.id; nivel = o.nivel === 1 ? 'NOVO' : `NV ${o.nivel}`; }
+    let nome; let desc; let ic; let nivel; const rar = RARIDADES[o.raridade || 0];
+    if (o.tipo === 'arma') { const d = ARMAS[o.id]; nome = d.nome; desc = o.nivel === 1 ? d.desc : `Nível ${o.nivel}: mais ${descreverSalto(o.id, o.nivel)}`; ic = o.id; nivel = o.nivel === 1 ? 'NOVA' : `NV ${o.nivel}`; const ev = EVOLUCOES[o.id]; if (ev && o.nivel >= 5) desc += ` · Evolui com ${ITENS[ev.item].nome}`; }
+    else if (o.tipo === 'item') { const d = ITENS[o.id]; nome = d.nome; desc = d.desc + (o.raridade ? ` (x${rar.mult})` : ''); ic = o.id; nivel = o.nivel === 1 ? 'NOVO' : `NV ${o.nivel}`; }
+    else if (o.tipo === 'maldicao') { const d = MALDICOES[o.id]; nome = d.nome; desc = `<span class="bom">${esc(d.bom)}</span><span class="ruim">${esc(d.ruim)}</span>`; ic = 'sangue'; nivel = 'MALDIÇÃO'; }
     else if (o.tipo === 'cura') { nome = 'Poção de Cura'; desc = 'Recupera toda a vida'; ic = 'cura'; nivel = ''; }
     else { nome = 'Bolsa de Ouro'; desc = '+40 de ouro'; ic = 'ouro'; nivel = ''; }
-    return `<button class="sv-op" data-op="${i}"><span class="sv-op-n">${i + 1}</span><img alt="" src="${urlIcone(ic)}" /><b>${esc(nome)}</b><span class="sv-op-nv ${nivel.startsWith('N') && !nivel.startsWith('NV') ? 'novo' : ''}">${nivel}</span><small>${esc(desc)}</small></button>`;
+    const cls = o.tipo === 'maldicao' ? 'maldicao' : `r${o.raridade || 0}`;
+    return `<button class="sv-op ${cls} ${modoBanir ? 'banindo' : ''}" data-op="${i}" style="--rar:${o.tipo === 'maldicao' ? '#ff4d5e' : rar.cor}"><span class="sv-op-n">${i + 1}</span><img alt="" src="${urlIcone(ic)}" /><b>${esc(nome)}</b><span class="sv-op-nv ${nivel.startsWith('N') && !nivel.startsWith('NV') ? 'novo' : ''}">${o.tipo === 'maldicao' ? nivel : `${rar.nome.toUpperCase()}${nivel ? ` · ${nivel}` : ''}`}</span><small>${desc}</small></button>`;
   }).join('');
-  tela(`<div class="sv-upgrade"><h2>Nível ${S.nivel}!</h2><p class="sv-sub">Escolha uma melhoria</p><div class="sv-ops">${cartas}</div></div>`, 'jogo');
+  tela(`<div class="sv-upgrade"><h2>Nível ${S.nivel}!</h2><p class="sv-sub">${modoBanir ? 'Toque na carta que quer banir pelo resto da partida' : 'Escolha uma melhoria'}</p><div class="sv-ops">${cartas}</div>
+    <div class="sv-acoes"><button class="sv-btn mini" data-a="rolar" ${S.reroll <= 0 ? 'disabled' : ''}>Rolar de novo (${S.reroll})</button><button class="sv-btn mini ${modoBanir ? 'ouro' : ''}" data-a="banir" ${S.ban <= 0 ? 'disabled' : ''}>${modoBanir ? 'Cancelar' : `Banir carta (${S.ban})`}</button></div></div>`, 'jogo');
 }
 function descreverSalto(id, n) {
   const a = ARMAS[id].stats(n - 1); const b = ARMAS[id].stats(n); const t = [];
@@ -193,6 +197,7 @@ function descreverSalto(id, n) {
 }
 function escolherOpcao(i) {
   if (!S || S.estado !== 'upgrade' || !S.opcoes?.[i]) return;
+  if (modoBanir) { modoBanir = false; if (banir(S, i)) som('clique'); mostrarUpgrade(); return; }
   escolher(S, S.opcoes[i]); som('escolha');
   if (S.estado === 'upgrade') mostrarUpgrade(); else { ui.innerHTML = ''; ui.className = 'sv-ui jogo'; }
 }
@@ -201,6 +206,9 @@ function processarEventos() {
     const s = SOM_EVENTO[e.tipo]; if (s) som(s);
     if (e.tipo === 'chefe') avisar(`${CHEFES[e.id].nome.toUpperCase()} APARECEU!`, 'chefe');
     else if (e.tipo === 'onda') avisar('ONDA DE TROPAS!', 'onda');
+    else if (e.tipo === 'combo') { avisar(`${e.nome} ${e.n} abates · +${e.ouro} ouro`, 'chefe'); som('ima'); }
+    else if (e.tipo === 'evolucao') { avisar(`EVOLUÇÃO! ${EVOLUCOES[e.id].nome}`, 'chefe'); som('revive'); }
+    else if (e.tipo === 'maldicao') avisar(`Maldição: ${MALDICOES[e.id].nome}`, 'onda');
     else if (e.tipo === 'revive') avisar('Ampulheta de Zhonya!', 'onda');
   }
   S.evt.length = 0;
@@ -235,6 +243,8 @@ ui.addEventListener('click', (e) => {
   else if (a === 'melhorar') { if (Meta.comprarMelhoria(meta, id)) som('escolha'); telaLoja(); }
   else if (a === 'comecar' || a === 'denovo') iniciar();
   else if (a === 'continuar') alternarPausa();
+  else if (a === 'rolar') { if (rolar(S)) { som('clique'); modoBanir = false; mostrarUpgrade(); } }
+  else if (a === 'banir') { modoBanir = !modoBanir; mostrarUpgrade(); }
   else if (a === 'desistir') { pausado = false; S.estado = 'derrota'; S.p.hp = 0; }
   else if (a === 'infinito') { S.infinito = true; S.estado = 'jogando'; fimTratado = false; ui.innerHTML = ''; ui.className = 'sv-ui jogo'; avisar('Modo infinito!'); }
   else if (a === 'mudo') { definirMudo(!estaMudo()); try { localStorage.setItem('survivors.mudo', estaMudo() ? '1' : '0'); } catch { /* sem storage */ } if (modo === 'jogo') alternarPausa(true); else telaMenu(); }

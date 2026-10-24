@@ -1,5 +1,5 @@
 // Rift Survivors: simulação. Sem DOM: recebe o estado e o dt e muda o estado (testável no Node).
-import { CAMPEOES, ARMAS, ITENS, NIVEL_MAX_ITEM, MAX_ARMAS, MAX_ITENS, MAX_INIMIGOS, INIMIGOS, CHEFES, MISTURA, xpProximo, escalaVida, escalaDano, taxaSpawn } from './data.js';
+import { CAMPEOES, ARMAS, ITENS, NIVEL_MAX_ITEM, MAX_ARMAS, MAX_ITENS, MAX_INIMIGOS, INIMIGOS, CHEFES, MISTURA, xpProximo, escalaVida, escalaDano, taxaSpawn, RARIDADES, MALDICOES, MAX_MALDICOES, REROLAGENS, BANIMENTOS, COMBOS, JANELA_COMBO, EVOLUCOES } from './data.js';
 
 export function criarRng(semente) {
   let a = semente >>> 0;
@@ -18,6 +18,7 @@ export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), 
     armas: [], passivas: {}, nivel: 1, xp: 0, xpProx: xpProximo(1), pendentes: 0, opcoes: null,
     abates: 0, ouro: 0, spawnAc: 0, proxId: 1, onda: 1, chefes: {}, chefeVivo: null, revive: !!mel.revive, reviveu: false,
     infinito: false, evt: [], shake: 0, base: c,
+    pot: {}, maldicoes: [], reroll: REROLAGENS, ban: BANIMENTOS, banidos: new Set(), combo: { n: 0, t: -99, max: 0 }, evolucoes: [],
   };
   adicionarArma(S, c.arma);
   recalcular(S);
@@ -27,22 +28,34 @@ export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), 
 
 // Atributos derivados (base do campeão + itens + melhorias da loja).
 export function recalcular(S) {
-  const c = S.base; const it = S.passivas; const m = S.meta;
-  const n = (id) => it[id] || 0;
+  const c = S.base; const m = S.meta;
+  const n = (id) => S.pot[id] ?? S.passivas[id] ?? 0; // com raridade, o item vale mais que o nível
+  const cm = { dano: 0, area: 0, recarga: 0, hp: 1, cura: 1, semRegen: false, inimVel: 1, inimVida: 1, ouro: 0, xp: 0, qtd: 0, spawn: 1 };
+  for (const id of S.maldicoes) { const x = MALDICOES[id].mod; cm.dano += x.dano || 0; cm.area += x.area || 0; cm.recarga += x.recarga || 0; cm.hp *= x.hp || 1; cm.cura *= x.cura || 1; cm.semRegen ||= !!x.semRegen; cm.inimVel *= x.inimVel || 1; cm.inimVida *= x.inimVida || 1; cm.ouro += x.ouro || 0; cm.xp += x.xp || 0; cm.qtd += x.qtd || 0; cm.spawn *= x.spawn || 1; }
+  S.cm = cm;
   const hpAntes = S.p.hpMax;
   S.a = {
-    dano: 1 + n('espada') * ITENS.espada.por + (m.dano || 0) * 0.05,
+    dano: 1 + n('espada') * ITENS.espada.por + (m.dano || 0) * 0.05 + cm.dano,
     vel: c.vel * (1 + n('botas') * ITENS.botas.por + (m.vel || 0) * 0.04),
     armadura: c.armadura + n('cota') * ITENS.cota.por,
-    area: 1 + n('cetro') * ITENS.cetro.por,
-    recarga: Math.max(0.45, 1 - n('ampulheta') * ITENS.ampulheta.por),
+    area: 1 + n('cetro') * ITENS.cetro.por + cm.area,
+    recarga: Math.max(0.4, 1 - n('ampulheta') * ITENS.ampulheta.por - cm.recarga),
     ima: 30 * (1 + n('vidente') * ITENS.vidente.por + (m.ima || 0) * 0.12),
-    regen: n('sangue') * ITENS.sangue.por,
-    xp: 1 + n('tomo') * ITENS.tomo.por + (m.xp || 0) * 0.06,
+    regen: cm.semRegen ? 0 : n('sangue') * ITENS.sangue.por,
+    xp: 1 + n('tomo') * ITENS.tomo.por + (m.xp || 0) * 0.06 + cm.xp,
   };
-  S.p.hpMax = c.hp + n('doran') * ITENS.doran.por + (m.hp || 0) * 10;
+  S.p.hpMax = Math.round((c.hp + n('doran') * ITENS.doran.por + (m.hp || 0) * 10) * cm.hp);
   if (S.p.hpMax > hpAntes && hpAntes > 1) S.p.hp += S.p.hpMax - hpAntes; // item de vida também cura o ganho
   S.p.hp = Math.min(S.p.hp, S.p.hpMax);
+}
+// Números da arma (com a evolução e a raridade das cartas já aplicadas).
+export function statsDe(S, w) {
+  let st = ARMAS[w.id].stats(w.nivel);
+  if (w.evo) st = EVOLUCOES[w.id].mod(st);
+  st = { ...st };
+  if (st.dano) st.dano *= 1 + (w.pot || 0);
+  if (st.qtd && S.cm.qtd && ['tiro', 'bumerangue', 'leque', 'perfura', 'encanto'].includes(ARMAS[w.id].tipo)) st.qtd += S.cm.qtd;
+  return st;
 }
 
 export function adicionarArma(S, id) {
@@ -53,24 +66,57 @@ export function adicionarArma(S, id) {
 }
 
 // --------------------------------------------------------------------------- escolhas de nível
+function sortearRaridade(S) {
+  const sorte = Math.min(1, S.nivel / 40); // mais para o fim da partida, cartas melhores
+  const pesos = RARIDADES.map((r, i) => r.peso * (i === 0 ? 1 - sorte * 0.4 : 1 + sorte * i * 0.5));
+  let k = S.rng() * pesos.reduce((s, x) => s + x, 0);
+  for (let i = 0; i < pesos.length; i++) { k -= pesos[i]; if (k <= 0) return i; }
+  return 0;
+}
+function candidatos(S) {
+  const L = []; const ban = S.banidos;
+  for (const a of S.armas) if (a.nivel < 5) L.push({ tipo: 'arma', id: a.id, nivel: a.nivel + 1, peso: 3 });
+  if (S.armas.length < MAX_ARMAS) for (const id of Object.keys(ARMAS)) if (!S.armas.some((a) => a.id === id)) L.push({ tipo: 'arma', id, nivel: 1, peso: 1.6 });
+  for (const [id, nv] of Object.entries(S.passivas)) if (nv < NIVEL_MAX_ITEM) L.push({ tipo: 'item', id, nivel: nv + 1, peso: 2.4 });
+  if (Object.keys(S.passivas).length < MAX_ITENS) for (const id of Object.keys(ITENS)) if (!S.passivas[id]) L.push({ tipo: 'item', id, nivel: 1, peso: 1.8 });
+  return L.filter((x) => !ban.has(x.id));
+}
+function puxar(S, pool) {
+  const total = pool.reduce((s, x) => s + x.peso, 0); let k = S.rng() * total; let i = 0;
+  for (; i < pool.length - 1; i++) { k -= pool[i].peso; if (k <= 0) break; }
+  return pool.splice(i, 1)[0];
+}
+function cartaMaldicao(S, usados) {
+  const ok = Object.keys(MALDICOES).filter((id) => !S.maldicoes.includes(id) && !S.banidos.has(id) && !usados.has(id));
+  return ok.length ? { tipo: 'maldicao', id: ok[Math.floor(S.rng() * ok.length)], nivel: 0, raridade: 0 } : null;
+}
 export function gerarOpcoes(S) {
-  const r = S.rng; const pool = [];
-  for (const a of S.armas) if (a.nivel < 5) pool.push({ tipo: 'arma', id: a.id, nivel: a.nivel + 1, peso: 3 });
-  if (S.armas.length < MAX_ARMAS) for (const id of Object.keys(ARMAS)) if (!S.armas.some((a) => a.id === id)) pool.push({ tipo: 'arma', id, nivel: 1, peso: 1.6 });
-  for (const [id, nv] of Object.entries(S.passivas)) if (nv < NIVEL_MAX_ITEM) pool.push({ tipo: 'item', id, nivel: nv + 1, peso: 2.4 });
-  if (Object.keys(S.passivas).length < MAX_ITENS) for (const id of Object.keys(ITENS)) if (!S.passivas[id]) pool.push({ tipo: 'item', id, nivel: 1, peso: 1.8 });
-  const out = [];
-  while (out.length < 3 && pool.length) {
-    const total = pool.reduce((s, x) => s + x.peso, 0); let k = r() * total; let i = 0;
-    for (; i < pool.length - 1; i++) { k -= pool[i].peso; if (k <= 0) break; }
-    out.push(pool.splice(i, 1)[0]);
-  }
-  if (!out.length) out.push({ tipo: 'cura', id: 'cura', nivel: 0 }, { tipo: 'ouro', id: 'ouro', nivel: 0 });
+  const pool = candidatos(S); const out = []; const usados = new Set();
+  while (out.length < 3 && pool.length) { const o = puxar(S, pool); usados.add(o.id); out.push({ ...o, raridade: sortearRaridade(S) }); }
+  if (out.length && S.maldicoes.length < MAX_MALDICOES && S.rng() < 0.3) { const m = cartaMaldicao(S, usados); if (m) out[Math.floor(S.rng() * out.length)] = m; }
+  if (!out.length) out.push({ tipo: 'cura', id: 'cura', nivel: 0, raridade: 0 }, { tipo: 'ouro', id: 'ouro', nivel: 0, raridade: 0 });
   return out;
 }
+// Troca as 3 cartas (limite por partida).
+export function rolar(S) {
+  if (S.estado !== 'upgrade' || S.reroll <= 0) return false;
+  S.reroll--; S.opcoes = gerarOpcoes(S); return true;
+}
+// Bane uma carta: ela some pelo resto da partida e outra entra no lugar.
+export function banir(S, i) {
+  if (S.estado !== 'upgrade' || S.ban <= 0 || !S.opcoes?.[i]) return false;
+  const o = S.opcoes[i]; if (o.tipo === 'cura' || o.tipo === 'ouro') return false;
+  S.ban--; S.banidos.add(o.id);
+  const usados = new Set(S.opcoes.map((x) => x.id)); const pool = candidatos(S).filter((x) => !usados.has(x.id));
+  const nova = pool.length ? { ...puxar(S, pool), raridade: sortearRaridade(S) } : cartaMaldicao(S, usados);
+  if (nova) S.opcoes[i] = nova; else S.opcoes.splice(i, 1);
+  return true;
+}
 export function escolher(S, op) {
-  if (op.tipo === 'arma') adicionarArma(S, op.id);
-  else if (op.tipo === 'item') { S.passivas[op.id] = (S.passivas[op.id] || 0) + 1; recalcular(S); }
+  const r = RARIDADES[op.raridade || 0];
+  if (op.tipo === 'arma') { const w = adicionarArma(S, op.id); w.pot = (w.pot || 0) + r.arma; }
+  else if (op.tipo === 'item') { S.passivas[op.id] = (S.passivas[op.id] || 0) + 1; S.pot[op.id] = (S.pot[op.id] ?? (S.passivas[op.id] - 1)) + r.mult; recalcular(S); }
+  else if (op.tipo === 'maldicao') { S.maldicoes.push(op.id); recalcular(S); S.evt.push({ tipo: 'maldicao', id: op.id }); }
   else if (op.tipo === 'cura') S.p.hp = S.p.hpMax;
   else if (op.tipo === 'ouro') S.ouro += 40;
   S.opcoes = null;
@@ -96,8 +142,8 @@ function sortearTipo(S) {
 }
 export function criarInimigo(S, tipo, x, y, chefe = false) {
   const d = chefe ? CHEFES[tipo] : INIMIGOS[tipo];
-  const hp = d.hp * (chefe ? 1 + S.t / 900 * 0.1 : escalaVida(S.t));
-  const e = { id: S.proxId++, tipo, chefe, x, y, hp, hpMax: hp, vel: d.vel, dano: d.dano * escalaDano(S.t), raio: d.raio, xp: d.xp, ia: d.ia, cd: (d.cd || 3) * (0.5 + S.rng()), flash: 0, lento: 0, kx: 0, ky: 0, estado: 0, tEstado: 0, golpe: {}, elite: !!d.elite, face: 1 };
+  const hp = d.hp * (chefe ? 1 + S.t / 900 * 0.1 : escalaVida(S.t) * S.cm.inimVida);
+  const e = { id: S.proxId++, tipo, chefe, x, y, hp, hpMax: hp, vel: d.vel * (chefe ? 1 : S.cm.inimVel), dano: d.dano * escalaDano(S.t), raio: d.raio, xp: d.xp, ia: d.ia, cd: (d.cd || 3) * (0.5 + S.rng()), flash: 0, lento: 0, kx: 0, ky: 0, estado: 0, tEstado: 0, golpe: {}, elite: !!d.elite, face: 1 };
   S.inim.push(e); return e;
 }
 function aoRedor(S, folga = 24) {
@@ -106,7 +152,7 @@ function aoRedor(S, folga = 24) {
 }
 function diretor(S, dt) {
   // aparições contínuas
-  S.spawnAc += taxaSpawn(S.t) * dt;
+  S.spawnAc += taxaSpawn(S.t) * S.cm.spawn * dt;
   while (S.spawnAc >= 1) {
     S.spawnAc -= 1;
     if (S.inim.length >= MAX_INIMIGOS) continue;
@@ -145,6 +191,10 @@ export function ferir(S, e, dano, op = {}) {
 }
 function matar(S, e) {
   S.abates++;
+  if (S.t - S.combo.t <= JANELA_COMBO) S.combo.n++; else S.combo.n = 1;
+  S.combo.t = S.t; S.combo.max = Math.max(S.combo.max, S.combo.n);
+  const cb = COMBOS.find((x) => x.n === S.combo.n);
+  if (cb) { S.ouro += Math.round(cb.ouro * (1 + S.cm.ouro)); S.evt.push({ tipo: 'combo', nome: cb.nome, n: cb.n, ouro: cb.ouro }); }
   S.evt.push({ tipo: 'morte', chefe: e.chefe });
   S.efeitos.push({ x: e.x, y: e.y, t: 0.35, d: 0.35, tipo: 'morte', r: e.raio });
   const gv = e.xp;
@@ -155,7 +205,7 @@ function matar(S, e) {
   const r = S.rng();
   if (e.chefe) {
     S.itens.push({ x: e.x, y: e.y, tipo: 'bau' });
-    S.ouro += CHEFES[e.tipo].ouro;
+    S.ouro += Math.round(CHEFES[e.tipo].ouro * (1 + S.cm.ouro));
     S.shake = 0.5; S.chefeVivo = null;
     if (e.tipo === 'barao') { S.estado = 'vitoria'; S.evt.push({ tipo: 'vitoria' }); }
   } else if (e.elite) { S.itens.push({ x: e.x, y: e.y, tipo: r < 0.6 ? 'bau' : 'vida' }); S.ouro += 3; }
@@ -191,7 +241,7 @@ function tiro(S, o) { S.proj.push({ golpeou: new Set(), vida: 1, perf: 1, raio: 
 
 function atualizarArmas(S, dt) {
   for (const w of S.armas) {
-    const def = ARMAS[w.id]; const st = def.stats(w.nivel); const dano = (st.dano || 0) * S.a.dano;
+    const def = ARMAS[w.id]; const st = statsDe(S, w); const dano = (st.dano || 0) * S.a.dano;
     const cd = (st.cd || 0) * S.a.recarga;
     if (def.tipo === 'orbita') {
       w.ang += st.giro * dt; const R = st.raio * S.a.area;
@@ -348,10 +398,14 @@ function atualizarColetaveis(S, dt) {
     if (d2 > 9 * 9 && !(it.tipo === 'ouro' && d2 < R * R)) continue;
     if (it.tipo === 'ouro' && d2 >= 9 * 9) { const d = Math.sqrt(d2) || 1; it.x += ((P.x - it.x) / d) * 140 * dt; it.y += ((P.y - it.y) / d) * 140 * dt; continue; }
     S.itens.splice(i, 1);
-    if (it.tipo === 'vida') { S.p.hp = Math.min(S.p.hpMax, S.p.hp + S.p.hpMax * 0.3); S.evt.push({ tipo: 'cura' }); }
-    else if (it.tipo === 'ouro') { S.ouro += 1; S.evt.push({ tipo: 'ouro' }); }
+    if (it.tipo === 'vida') { S.p.hp = Math.min(S.p.hpMax, S.p.hp + S.p.hpMax * 0.3 * S.cm.cura); S.evt.push({ tipo: 'cura' }); }
+    else if (it.tipo === 'ouro') { S.ouro += 1 + S.cm.ouro; S.evt.push({ tipo: 'ouro' }); }
     else if (it.tipo === 'ima') { for (const g of S.gemas) g.ima = true; S.evt.push({ tipo: 'ima' }); }
-    else if (it.tipo === 'bau') { S.evt.push({ tipo: 'bau' }); S.pendentes++; if (S.estado === 'jogando') { S.opcoes = gerarOpcoes(S); S.estado = 'upgrade'; } }
+    else if (it.tipo === 'bau') {
+      const ev = S.armas.find((w) => w.nivel >= 5 && !w.evo && EVOLUCOES[w.id] && S.passivas[EVOLUCOES[w.id].item]);
+      if (ev) { ev.evo = true; S.evolucoes.push(ev.id); S.evt.push({ tipo: 'evolucao', id: ev.id }); S.shake = 0.4; }
+      else { S.evt.push({ tipo: 'bau' }); S.pendentes++; if (S.estado === 'jogando') { S.opcoes = gerarOpcoes(S); S.estado = 'upgrade'; } }
+    }
   }
 }
 
@@ -380,7 +434,7 @@ export function atualizar(S, dt, entrada = { x: 0, y: 0 }) {
 
 // Essência Azul ganha na partida (moeda da loja).
 export function essenciaGanha(S) {
-  return Math.floor(S.abates * 0.35 + S.ouro * 0.8 + S.t / 12 + (S.estado === 'vitoria' ? 150 : 0));
+  return Math.floor((S.abates * 0.35 + S.ouro * 0.8 + S.t / 12 + (S.estado === 'vitoria' ? 150 : 0)) * (1 + S.maldicoes.length * 0.1));
 }
 export const nomeArma = (id) => ARMAS[id]?.nome || id;
 export const campeaoPorId = (id) => CAMPEOES.find((c) => c.id === id);

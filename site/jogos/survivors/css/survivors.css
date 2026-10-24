@@ -82,3 +82,14 @@
 .sv-joy { position: absolute; display: none; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .3); background: rgba(255, 255, 255, .08); pointer-events: none; z-index: 4; }
 .sv-joy i { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; background: rgba(245, 200, 46, .55); border: 3px solid rgba(255, 233, 160, .8); }
 @media (prefers-reduced-motion: reduce) { .sv-heroi { animation: none; } }
+
+.sv-op { border-color: var(--rar, var(--linha)); }
+.sv-op.r1, .sv-op.r2, .sv-op.r3 { box-shadow: 0 0 14px color-mix(in srgb, var(--rar) 45%, transparent); }
+.sv-op.r3 { animation: sv-brilho 1.4s ease-in-out infinite; }
+@keyframes sv-brilho { 50% { box-shadow: 0 0 26px color-mix(in srgb, var(--rar) 80%, transparent); } }
+.sv-op.maldicao { background: #240d16; } .sv-op.maldicao .sv-op-nv { color: #ff6a7a; }
+.sv-op small .bom { display: block; color: #7dffa8; margin-bottom: 4px; } .sv-op small .ruim { display: block; color: #ff8a8a; }
+.sv-op.banindo { border-style: dashed; animation: sv-treme .25s linear infinite; }
+@keyframes sv-treme { 50% { transform: translateX(2px); } }
+.sv-op-nv { color: var(--rar, #7fd4ff); }
+.sv-acoes { display: flex; gap: 10px; justify-content: center; margin-top: 4px; }

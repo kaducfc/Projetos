@@ -1,6 +1,7 @@
 // Rift Survivors: desenho no canvas (resolução lógica pequena, ampliada com pixels nítidos).
 import { sprite, spriteBranco, icone, animacao } from './sprites.js';
-import { CHEFES, ARMAS, TEMPO_BARAO } from './data.js';
+import { CHEFES, TEMPO_BARAO } from './data.js';
+import { statsDe } from './game.js';
 
 const CH = 128; // tamanho do pedaço de chão
 const hash = (a, b) => { let h = Math.imul(a, 374761393) + Math.imul(b, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
@@ -68,7 +69,7 @@ export function criarRender(canvas) {
       ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(Math.round(z.x), Math.round(z.y), z.r * (0.4 + 0.6 * (z.t / z.d)), 0, 6.2832); ctx.stroke(); ctx.setLineDash([]);
     }
     // aura de gelo
-    for (const a of S.armas) if (a.id === 'aura') { const r = ARMAS.aura.stats(a.nivel).raio * S.a.area; ctx.fillStyle = 'rgba(160,230,255,.14)'; ctx.beginPath(); ctx.arc(Math.round(P.x), Math.round(P.y), r, 0, 6.2832); ctx.fill(); ctx.strokeStyle = 'rgba(210,245,255,.55)'; ctx.setLineDash([2, 4]); ctx.lineDashOffset = -R.t * 20; ctx.beginPath(); ctx.arc(Math.round(P.x), Math.round(P.y), r, 0, 6.2832); ctx.stroke(); ctx.setLineDash([]); }
+    for (const a of S.armas) if (a.id === 'aura') { const r = statsDe(S, a).raio * S.a.area; ctx.fillStyle = 'rgba(160,230,255,.14)'; ctx.beginPath(); ctx.arc(Math.round(P.x), Math.round(P.y), r, 0, 6.2832); ctx.fill(); ctx.strokeStyle = 'rgba(210,245,255,.55)'; ctx.setLineDash([2, 4]); ctx.lineDashOffset = -R.t * 20; ctx.beginPath(); ctx.arc(Math.round(P.x), Math.round(P.y), r, 0, 6.2832); ctx.stroke(); ctx.setLineDash([]); }
     // raios (aviso e coluna)
     for (const r of S.raios) {
       if (r.t > r.d * 0.5) { ctx.strokeStyle = 'rgba(255,240,120,.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(Math.round(r.x), Math.round(r.y), r.r * (1 - (r.t - r.d * 0.5) / (r.d * 0.5)), 0, 6.2832); ctx.stroke(); ctx.beginPath(); ctx.arc(Math.round(r.x), Math.round(r.y), r.r, 0, 6.2832); ctx.stroke(); }
@@ -103,7 +104,7 @@ export function criarRender(canvas) {
       if (e.hp < e.hpMax && !e.chefe) { const bw = Math.max(10, e.raio * 2); barra(Math.round(e.x - bw / 2), Math.round(e.y - e.raio - 6), bw, 2, e.hp / e.hpMax, '#e04545'); }
     }
     // armas visíveis: lâminas giratórias
-    for (const a of S.armas) if (a.id === 'lamina') { const st = ARMAS.lamina.stats(a.nivel); const Rr = st.raio * S.a.area; for (let i = 0; i < st.qtd; i++) { const an = a.ang + (i * 6.2832) / st.qtd; const bx = P.x + Math.cos(an) * Rr; const by = P.y + Math.sin(an) * Rr; ctx.save(); ctx.translate(Math.round(bx), Math.round(by)); ctx.rotate(an + 1.5708); ctx.drawImage(sprite('lamina'), -3, -8); ctx.restore(); } }
+    for (const a of S.armas) if (a.id === 'lamina') { const st = statsDe(S, a); const Rr = st.raio * S.a.area; for (let i = 0; i < st.qtd; i++) { const an = a.ang + (i * 6.2832) / st.qtd; const bx = P.x + Math.cos(an) * Rr; const by = P.y + Math.sin(an) * Rr; ctx.save(); ctx.translate(Math.round(bx), Math.round(by)); ctx.rotate(an + 1.5708); ctx.drawImage(sprite('lamina'), -3, -8); ctx.restore(); } }
     // projéteis
     for (const q of S.proj) {
       if (q.tipo === 'orbe') { const s = sprite('orbe'); ctx.save(); ctx.translate(Math.round(q.x), Math.round(q.y)); ctx.rotate(Math.atan2(q.vy, q.vx)); ctx.drawImage(s, -Math.round(s.width / 2), -Math.round(s.height / 2)); ctx.restore(); }
@@ -140,6 +141,8 @@ export function criarRender(canvas) {
     for (const a of S.armas) { const ic = icone(a.id); ctx.fillStyle = 'rgba(20,16,30,.8)'; ctx.fillRect(x - 1, y - 1, 16, 16); ctx.drawImage(ic, x, y); texto(String(a.nivel), x + 13, y + 7, a.nivel >= 5 ? '#ffe36a' : '#fff', 'right'); x += 17; }
     x += 4;
     for (const [id, nv] of Object.entries(S.passivas)) { const ic = icone(id); ctx.fillStyle = 'rgba(20,16,30,.8)'; ctx.fillRect(x - 1, y - 1, 16, 16); ctx.drawImage(ic, x, y); texto(String(nv), x + 13, y + 7, nv >= 5 ? '#ffe36a' : '#fff', 'right'); x += 17; }
+    if (S.combo.n >= 8 && S.t - S.combo.t < 3) texto(`COMBO x${S.combo.n}`, w - 4, 30, '#ffb347', 'right');
+    if (S.maldicoes.length) texto('☠'.repeat(S.maldicoes.length), 4, 28, '#ff6a7a');
     // chefe
     const b = S.chefeVivo;
     if (b && b.hp > 0) { const bw = Math.min(160, w - 40); barra(Math.round(w / 2 - bw / 2), 34, bw, 6, b.hp / b.hpMax, '#b45cff'); texto(CHEFES[b.tipo].nome.toUpperCase(), w / 2, 42, '#e9d5ff', 'center'); }
