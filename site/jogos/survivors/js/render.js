@@ -40,7 +40,10 @@ export function criarRender(canvas) {
   function quadroDoJogador(S) {
     const P = S.p; const n = S.campeao;
     if (S.estado === 'derrota') { if (R.morte == null) R.morte = R.t; const q = nQuadros(n, 'morte'); if (q) return quadroAnim(n, 'morte', (R.t - R.morte) * 5); } else R.morte = null;
+    if (S.estado === 'vitoria' && nQuadros(n, 'vitoria')) return quadroAnim(n, 'vitoria', R.t * 5);
     if (P.flash > 0 && nQuadros(n, 'dano')) return quadroAnim(n, 'dano', (1 - P.flash / 0.15) * nQuadros(n, 'dano'));
+    if (P.especial > 0 && nQuadros(n, 'especial')) return quadroAnim(n, 'especial', (1 - P.especial / 0.5) * nQuadros(n, 'especial'));
+    if (P.nivelAnim > 0 && nQuadros(n, 'nivel')) return quadroAnim(n, 'nivel', P.nivelAnim > 0.25 ? 0 : 1);
     if (P.ataque > 0 && nQuadros(n, 'ataque')) return quadroAnim(n, 'ataque', (1 - P.ataque / 0.42) * nQuadros(n, 'ataque'));
     return animacao(n, P.andando ? 'andando' : 'parada', R.t, P.flash > 0 && !nQuadros(n, 'dano'));
   }

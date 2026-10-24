@@ -6,7 +6,7 @@ import { gameById } from '../../../shared/config.js';
 import { CAMPEOES, ARMAS, ITENS, MELHORIAS, NIVEL_MAX_ITEM, TEMPO_BARAO, CHEFES, REINOS, ORDEM_REINOS, RARIDADES, MALDICOES, EVOLUCOES } from './data.js';
 import { criarJogo, atualizar, escolher, essenciaGanha, rolar, banir } from './game.js';
 import { criarRender } from './render.js';
-import { urlSprite, urlIcone, carregarImagens, arteUrl } from './sprites.js';
+import { urlSprite, urlIcone, carregarImagens, arteUrl, urlQuadro, nQuadros } from './sprites.js';
 import { som, SOM_EVENTO, destravar, definirMudo, estaMudo } from './audio.js';
 import * as Meta from './meta.js';
 
@@ -237,16 +237,19 @@ function processarEventos() {
   }
   S.evt.length = 0;
 }
+let animVit = null;
 function fimDeJogo() {
   fimTratado = true; const venceu = S.estado === 'vitoria'; som(venceu ? 'vitoria' : 'derrota');
   const ganho = essenciaGanha(S); Meta.registrarPartida(meta, S, ganho);
   try { platform.recordResult(GAME_ID, { score: S.abates * 10 + Math.floor(S.t) + (venceu ? 5000 : 0), summary: { campeao: S.campeao, tempo: Math.floor(S.t), abates: S.abates, nivel: S.nivel, venceu } }); } catch { /* sem conexão */ }
   const c = CAMPEOES.find((x) => x.id === S.campeao);
+  clearInterval(animVit);
   tela(`<div class="sv-painel ${venceu ? 'vitoria' : 'derrota'}"><h2>${venceu ? 'VITÓRIA!' : 'DERROTA'}</h2>
-    <p class="sv-sub">${venceu ? 'O Barão Nashor caiu. O Rift é seu!' : 'Você caiu no Rift...'}</p>
+    <p class="sv-sub">${venceu ? 'Chefe derrotado. O reino é seu!' : 'Você caiu no Rift...'}</p>
     <img class="sv-retrato ${RETRATOS[S.campeao] ? 'arte' : ''}" alt="" src="${RETRATOS[S.campeao] ? arteUrl(RETRATOS[S.campeao]) : urlSprite(S.campeao)}" />
     <div class="sv-stats"><span>Campeão<b>${esc(c.nome)}</b></span><span>Tempo<b>${tempoTxt(S.t)}</b></span><span>Abates<b>${fmt(S.abates)}</b></span><span>Nível<b>${S.nivel}</b></span><span>Ouro<b>${fmt(S.ouro)}</b></span><span>Essência<b class="ea">+${fmt(ganho)} EA</b></span></div>
     <div class="sv-botoes"><button class="sv-btn grande" data-a="denovo">Jogar de novo</button>${venceu ? '<button class="sv-btn" data-a="infinito">Continuar (infinito)</button>' : ''}<button class="sv-btn" data-a="menu">Menu</button></div></div>`, 'jogo');
+  if (venceu && nQuadros(S.campeao, 'vitoria')) { const img = ui.querySelector('.sv-retrato'); let k = 0; if (img) { img.classList.remove('arte'); img.classList.add('anim'); animVit = setInterval(() => { img.src = urlQuadro(S.campeao, 'vitoria', k++ % nQuadros(S.campeao, 'vitoria')); }, 180); } }
 }
 
 // --------------------------------------------------------------------------- cliques
@@ -261,13 +264,13 @@ ui.addEventListener('click', (e) => {
   else if (a === 'campeoes') telaCampeoes(false);
   else if (a === 'loja') telaLoja();
   else if (a === 'como') telaComo();
-  else if (a === 'menu') { S = null; telaMenu(); }
+  else if (a === 'menu') { clearInterval(animVit); S = null; telaMenu(); }
   else if (a === 'escolher') { escolhido = id; telaCampeoes(!!ui.dataset.jogar); }
   else if (a === 'liberar') { if (Meta.comprarCampeao(meta, id)) { escolhido = id; som('bau'); } telaCampeoes(!!ui.dataset.jogar); }
   else if (a === 'melhorar') { if (Meta.comprarMelhoria(meta, id)) som('escolha'); telaLoja(); }
   else if (a === 'reinos') telaReinos();
   else if (a === 'reino') { reinoEscolhido = id; telaReinos(); }
-  else if (a === 'comecar' || a === 'denovo') iniciar();
+  else if (a === 'comecar' || a === 'denovo') { clearInterval(animVit); iniciar(); }
   else if (a === 'continuar') alternarPausa();
   else if (a === 'rolar') { if (rolar(S)) { som('clique'); modoBanir = false; mostrarUpgrade(); } }
   else if (a === 'banir') { modoBanir = !modoBanir; mostrarUpgrade(); }

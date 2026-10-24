@@ -14,7 +14,7 @@ export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), 
   const S = {
     reino: REINOS[reino] ? reino : 'rift', R: REINOS[reino] || REINOS.rift, marcas: [],
     rng: criarRng(semente), t: 0, estado: 'jogando', campeao: c.id, vista, meta: mel,
-    p: { x: 0, y: 0, dx: 1, dy: 0, mx: 0, my: 0, hp: 1, hpMax: 1, raio: 5, inv: 0, flash: 0, andando: false, ataque: 0, ataqueCd: 0 },
+    p: { x: 0, y: 0, dx: 1, dy: 0, mx: 0, my: 0, hp: 1, hpMax: 1, raio: 5, inv: 0, flash: 0, andando: false, ataque: 0, ataqueCd: 0, especial: 0, espCd: 3, espT: 0, nivelAnim: 0 },
     inim: [], proj: [], eproj: [], gemas: [], itens: [], textos: [], efeitos: [], zonas: [], raios: [],
     armas: [], passivas: {}, nivel: 1, xp: 0, xpProx: xpProximo(1), pendentes: 0, opcoes: null,
     abates: 0, ouro: 0, spawnAc: 0, proxId: 1, onda: 1, chefes: {}, chefeVivo: null, revive: !!mel.revive, reviveu: false,
@@ -138,7 +138,7 @@ function ganharXp(S, v) {
   S.xp += v * S.a.xp;
   while (S.xp >= S.xpProx) {
     S.xp -= S.xpProx; S.nivel++; S.xpProx = xpProximo(S.nivel); S.pendentes++;
-    S.evt.push({ tipo: 'nivel' }); chispas(S, S.p.x, S.p.y, 26, { cor: '#ffe36a', vel: 80, vida: 0.7, tam: 2 });
+    S.evt.push({ tipo: 'nivel' }); S.p.nivelAnim = 0.5; chispas(S, S.p.x, S.p.y, 26, { cor: '#ffe36a', vel: 80, vida: 0.7, tam: 2 });
   }
   if (S.pendentes > 0 && S.estado === 'jogando') { S.opcoes = gerarOpcoes(S); S.estado = 'upgrade'; }
 }
@@ -456,6 +456,25 @@ function atualizarColetaveis(S, dt) {
   }
 }
 
+// Habilidade própria do campeão (ex.: Garen e o Julgamento): giro em área com recarga, quando há inimigos perto.
+function habilidadeEspecial(S, dt) {
+  const esp = S.base.especial; if (!esp) return; const P = S.p;
+  P.especial = Math.max(0, P.especial - dt); P.espCd -= dt;
+  const raio = esp.raio * S.a.area;
+  if (P.espT > 0) {
+    P.espT -= dt;
+    if (P.espT <= 0) {
+      const lam = S.armas[0] ? statsDe(S, S.armas[0]) : null; const dano = ((lam?.dano || 12) * esp.mult) * S.a.dano;
+      for (const e of S.inim.slice()) { const d = Math.hypot(e.x - P.x, e.y - P.y); if (d < raio + e.raio) ferir(S, e, dano, { kx: ((e.x - P.x) / (d || 1)) * 60, ky: ((e.y - P.y) / (d || 1)) * 60 }); }
+      S.efeitos.push({ x: P.x, y: P.y, t: 0.35, d: 0.35, tipo: 'explosao', r: raio }); S.shake = Math.max(S.shake, 0.15);
+      chispas(S, P.x, P.y, 24, { cor: '#bfe4ff', vel: 110, vida: 0.45 });
+    }
+  } else if (P.espCd <= 0) {
+    const perto = S.inim.reduce((n, e) => n + (Math.hypot(e.x - P.x, e.y - P.y) < raio + e.raio ? 1 : 0), 0);
+    if (perto >= 2) { P.especial = 0.5; P.espT = 0.22; P.espCd = esp.cd * S.a.recarga; S.evt.push({ tipo: 'zona' }); }
+  }
+}
+
 // --------------------------------------------------------------------------- passo principal
 export function atualizar(S, dt, entrada = { x: 0, y: 0 }) {
   if (S.estado !== 'jogando') return;
@@ -467,6 +486,8 @@ export function atualizar(S, dt, entrada = { x: 0, y: 0 }) {
   P.andando = m > 0.05; P.mx = mx; P.my = my;
   if (P.andando) { const n = Math.hypot(mx, my); P.dx = mx / n; P.dy = my / n; }
   P.x += mx * S.a.vel * dt; P.y += my * S.a.vel * dt;
+  habilidadeEspecial(S, dt);
+  P.nivelAnim = Math.max(0, P.nivelAnim - dt);
   P.inv = Math.max(0, P.inv - dt); P.flash = Math.max(0, P.flash - dt); P.ataque = Math.max(0, P.ataque - dt); P.ataqueCd = Math.max(0, P.ataqueCd - dt);
   if (S.a.regen) P.hp = Math.min(P.hpMax, P.hp + S.a.regen * dt);
   S.shake = Math.max(0, S.shake - dt);

@@ -5,7 +5,7 @@ export const MAX_ITENS = 6;
 export const MAX_INIMIGOS = 320;
 
 export const CAMPEOES = [
-  { id: 'garen', nome: 'Garen', titulo: 'O Poder de Demacia', arma: 'lamina', hp: 150, vel: 60, armadura: 2, preco: 0, desc: 'Lâminas giram ao redor dele. Resistente, mas lento.' },
+  { id: 'garen', nome: 'Garen', titulo: 'O Poder de Demacia', arma: 'lamina', hp: 150, vel: 60, armadura: 2, preco: 0, desc: 'Lâminas giram ao redor dele. Resistente, mas lento. Julgamento: giro em área a cada 7s.', especial: { nome: 'Julgamento', cd: 7, raio: 52, mult: 3 } },
   { id: 'ahri', nome: 'Ahri', titulo: 'A Raposa de Nove Caudas', arma: 'orbe', hp: 100, vel: 68, armadura: 0, preco: 0, desc: 'Lança orbes que vão e voltam atravessando tudo.' },
   { id: 'jinx', nome: 'Jinx', titulo: 'A Atiradora Maluca', arma: 'tiro', hp: 95, vel: 64, armadura: 0, preco: 250, desc: 'Atira sem parar no inimigo mais próximo.' },
   { id: 'ashe', nome: 'Ashe', titulo: 'A Arqueira de Gelo', arma: 'flecha', hp: 105, vel: 63, armadura: 0, preco: 250, desc: 'Rajada de flechas geladas que deixam os inimigos lentos.' },

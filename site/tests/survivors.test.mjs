@@ -181,3 +181,11 @@ test('liberação dos reinos: Rift e Ionia abertos; os outros exigem vencer o an
   m.reinos.ionia = { vitorias: 1 }; assert.ok(reinoLiberado(m, 'demacia')); assert.equal(reinoLiberado(m, 'noxus'), false);
   assert.equal(reinoLiberado(m, 'inexistente'), false);
 });
+
+test('Garen: o Julgamento acerta os inimigos ao redor com recarga; outros campeões não têm', () => {
+  const S = criarJogo({ campeao: 'garen', semente: 3 }); S.armas.length = 0; S.p.inv = 999; S.p.espCd = 0;
+  const alvos = []; for (let i = 0; i < 4; i++) { const e = criarInimigo(S, 'krug', 20 + i * 4, 0); e.vel = 0; e.hp = e.hpMax = 99999; alvos.push(e); }
+  for (let i = 0; i < 60; i++) { atualizar(S, 1 / 60, { x: 0, y: 0 }); S.evt.length = 0; }
+  assert.ok(alvos.every((e) => e.hp < e.hpMax), 'todos atingidos'); assert.ok(S.p.espCd > 5, 'em recarga');
+  assert.equal(criarJogo({ campeao: 'ahri', semente: 3 }).base.especial, undefined);
+});
