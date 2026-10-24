@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { REINOS, ORDEM_REINOS, CAMPEOES, ARMAS, ITENS, INIMIGOS, CHEFES, MISTURA, MELHORIAS, TEMPO_BARAO, MAX_INIMIGOS, MAX_ARMAS, xpProximo, EVOLUCOES, MALDICOES, RARIDADES, COMBOS } from '../jogos/survivors/js/data.js';
+import { objetosPequenos, objetosGrandes, empurrar, raioSolido, TEMAS_COM_OBJETOS, quantidade } from '../jogos/survivors/js/mapa.js';
 import { criarJogo, atualizar, escolher, gerarOpcoes, criarInimigo, ferir, essenciaGanha, rolar, banir, statsDe } from '../jogos/survivors/js/game.js';
 import { GAMES, gameById } from '../shared/config.js';
 
@@ -224,4 +225,26 @@ test('corrida: com botas suficientes o campeão corre e os passos ficam mais lon
   const S = criarJogo({ campeao: 'garen', semente: 2 }); S.p.inv = 999; atualizar(S, 0.016, { x: 1, y: 0 }); assert.equal(S.p.corre, false);
   escolher(S, { tipo: 'item', id: 'botas', nivel: 1, raridade: 3 }); escolher(S, { tipo: 'item', id: 'botas', nivel: 2, raridade: 3 });
   atualizar(S, 0.016, { x: 1, y: 0 }); assert.equal(S.p.corre, true);
+});
+
+test('cenário: mato e moitas são atravessáveis, pedras e troncos barram, e há menos objetos', () => {
+  for (const tema of TEMAS_COM_OBJETOS) {
+    for (const grande of [false, true]) { const n = quantidade(tema, grande); for (let i = 0; i < n; i++) assert.ok(raioSolido(tema, i, grande) >= 0); }
+    assert.equal(raioSolido(tema, 0), 0, 'tufo de grama atravessável'); assert.equal(raioSolido(tema, 2), 0, 'moita atravessável');
+    assert.ok(raioSolido(tema, 7) > 0, 'pedra grande bloqueia');
+  }
+  // um objeto sólido empurra quem encosta nele; o mato não
+  let achou = 0; let mato = 0;
+  for (let cy = 0; cy < 8 && (!achou || !mato); cy++) for (let cx = 0; cx < 8; cx++) for (const o of objetosPequenos('ixtal', cx, cy)) {
+    if (raioSolido('ixtal', o.i) > 0 && !achou) { const b = empurrar('ixtal', o.x + 1, o.y - 2, 4); assert.ok(b && Math.hypot(b[0], b[1]) > 4, 'empurra'); achou++; }
+  }
+  assert.ok(achou, 'achou um sólido'); assert.equal(empurrar('noxus', 10, 10, 4), null, 'reino sem objetos não bloqueia');
+  // densidade: de 3 a 5 objetos pequenos e no máximo 2 grandes por pedaço
+  let tot = 0; let pedacos = 0; for (let cy = -5; cy < 5; cy++) for (let cx = -5; cx < 5; cx++) { const n = objetosPequenos('ionia', cx, cy).length; assert.ok(n >= 3 && n <= 5); assert.ok(objetosGrandes('ionia', cx, cy).length <= 2); tot += n; pedacos++; }
+  assert.ok(tot / pedacos < 4.5, 'cerca de 70% do que havia (antes: 5,5 por pedaço)');
+  // o campeão não atravessa um sólido andando para ele
+  const S = criarJogo({ campeao: 'garen', semente: 5, reino: 'ixtal' }); S.p.inv = 999;
+  let sol = null; for (let cy = 0; cy < 8 && !sol; cy++) for (let cx = 0; cx < 8 && !sol; cx++) for (const o of objetosPequenos('ixtal', cx, cy)) if (raioSolido('ixtal', o.i) >= 8 && !sol) sol = o;
+  S.p.x = sol.x - 40; S.p.y = sol.y - 6; for (let i = 0; i < 120; i++) { atualizar(S, 1 / 60, { x: 1, y: 0 }); S.evt.length = 0; }
+  assert.ok(Math.hypot(S.p.x - sol.x, (S.p.y + 6) - (sol.y - 2)) >= raioSolido('ixtal', sol.i) + 3, 'ficou do lado de fora');
 });

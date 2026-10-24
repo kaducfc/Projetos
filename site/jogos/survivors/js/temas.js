@@ -1,8 +1,12 @@
 // Rift Survivors: chão e cenário de cada reino (pedaços de 128x128 gerados com ruído por posição).
 import { atlasDeProps } from './sprites.js';
-export const CH = 128;
-export const hash = (a, b) => { let h = Math.imul(a, 374761393) + Math.imul(b, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+import { CH, hash, objetosPequenos, objetosGrandes } from './mapa.js';
+export { CH, hash };
 const r = (x, X, Y, w, h, cor) => { x.fillStyle = cor; x.fillRect(X, Y, w, h); };
+// Clareia (f > 0) ou escurece (f < 0) uma cor #rrggbb.
+function misturar(hex, f) { const n = parseInt(hex.slice(1), 16); const alvo = f < 0 ? 0 : 255; const a = Math.abs(f); const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (alvo - v) * a)); return `rgb(${c[0]},${c[1]},${c[2]})`; }
+// Ruído de valor suave (0 a 1) em coordenadas do mundo; esc = tamanho das manchas em px.
+function ruido(gx, gy, esc) { const X = gx / esc; const Y = gy / esc; const x0 = Math.floor(X); const y0 = Math.floor(Y); const fx = X - x0; const fy = Y - y0; const sx = fx * fx * (3 - 2 * fx); const sy = fy * fy * (3 - 2 * fy); const a = hash(x0, y0); const b = hash(x0 + 1, y0); const c = hash(x0, y0 + 1); const d = hash(x0 + 1, y0 + 1); return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy; }
 
 // ---- cenário (desenhado com o pé em (X, Y+h)); cada função recebe o contexto e o canto superior esquerdo
 const D = {
@@ -51,19 +55,22 @@ export const TEMAS = {
 export function pedaco(tema, cx, cy) {
   const T = TEMAS[tema] || TEMAS.ixtal;
   const c = document.createElement('canvas'); c.width = CH; c.height = CH; const x = c.getContext('2d');
-  for (let ty = 0; ty < CH / 8; ty++) for (let tx = 0; tx < CH / 8; tx++) {
-    const q = hash(cx * 16 + tx, cy * 16 + ty);
-    r(x, tx * 8, ty * 8, 8, 8, (tx + ty) % 2 ? T.tile[0] : T.tile[1]);
-    if (q < 0.16) { r(x, tx * 8 + ((q * 97) % 6 | 0), ty * 8 + ((q * 53) % 6 | 0), 2, 1, T.tufo[0]); r(x, tx * 8 + 1 + ((q * 31) % 5 | 0), ty * 8 + 2 + ((q * 17) % 5 | 0), 1, 2, T.tufo[0]); }
-    else if (q > 0.94) { r(x, tx * 8 + 2, ty * 8 + 3, 1, 2, T.tufo[1]); r(x, tx * 8 + 5, ty * 8 + 1, 1, 2, T.tufo[1]); }
+  // Chão em manchas suaves (ruído contínuo entre os pedaços), em vez do xadrez de dois tons.
+  const base = T.tile[0]; const claro = misturar(T.tile[1], 0.07); const escuro = misturar(T.tile[0], -0.08);
+  for (let ty = 0; ty < CH / 4; ty++) for (let tx = 0; tx < CH / 4; tx++) {
+    const gx = cx * CH + tx * 4; const gy = cy * CH + ty * 4;
+    const n = 0.62 * ruido(gx, gy, 56) + 0.38 * ruido(gx + 977, gy + 311, 18); const q = hash(gx, gy);
+    const ruidoBorda = (q - 0.5) * 0.06;
+    const v = n + ruidoBorda; const cor = v < 0.4 ? escuro : v > 0.62 ? claro : base;
+    r(x, tx * 4, ty * 4, 4, 4, cor);
+    const dens = cor === escuro ? 0.075 : cor === claro ? 0.02 : 0.04;
+    if (q < dens) { const k = (q * 977) % 1; const c2 = cor === claro ? T.tufo[0] : T.tufo[1]; const px = tx * 4 + ((k * 7) | 0) % 3; const py = ty * 4 + ((k * 13) | 0) % 2; r(x, px, py + 1, 1, 2, c2); if (k > 0.4) r(x, px + 2, py, 1, 3, c2); if (k > 0.75) r(x, px + 1, py + 2, 1, 1, c2); }
+    else if (q > 0.992) r(x, tx * 4 + 1, ty * 4 + 1, 2, 1, T.tufo[1]);
   }
   if (hash(cx, cy) < 0.18) { // trilha
     const y0 = 40 + ((hash(cx + 9, cy) * 40) | 0);
     r(x, 0, y0, CH, 14, T.trilha[0]); r(x, 0, y0 + 2, CH, 3, T.trilha[1]); r(x, 0, y0 + 11, CH, 3, T.trilha[2]);
     for (let i = 0; i < 10; i++) r(x, (hash(cx + i, cy + 7) * CH) | 0, y0 + 3 + ((hash(cx + 3, cy + i) * 8) | 0), 2, 1, T.trilha[2]);
-  } else if (hash(cx + 5, cy + 3) < 0.07) { // lago
-    const px = 20 + ((hash(cx, cy + 1) * 60) | 0); const py = 20 + ((hash(cx + 1, cy) * 60) | 0);
-    r(x, px - 1, py - 1, 38, 24, T.poco[0]); r(x, px + 2, py + 2, 32, 16, T.poco[1]); r(x, px + 6, py + 5, 10, 1, T.poco[2]); r(x, px + 18, py + 11, 12, 1, T.poco[2]);
   }
   if (atlasDeProps(tema)) return c; // os objetos do cenário vêm do atlas (desenhados à parte, ordenados por profundidade)
   const n = 3 + ((hash(cx, cy * 3) * 4) | 0); const total = T.deco.reduce((s, d) => s + d[0], 0);
@@ -75,37 +82,6 @@ export function pedaco(tema, cx, cy) {
   return c;
 }
 
-// Objetos de cenário de um pedaço (posições fixas por hash): [{ i: índice no atlas, x, y }], y = base do objeto.
-const PESOS_PEQ = {
-  ixtal: [14, 6, 8, 4, 3, 4, 4, 2, 5, 5, 4, 1.5, 2, 1, 1.5, 1, 0.6, 1, 0.8, 1.2, 1, 0.5, 1.2, 1],
-  ionia: [14, 6, 8, 4, 3, 4, 4, 2, 5, 5, 3, 1.5, 2, 1.5, 0.8, 4, 0.5, 1, 0.6, 2, 0.8, 0.8, 1, 1.5],
-  demacia: [14, 6, 8, 4, 4, 4, 4, 2, 5, 5, 1.5, 1.5, 1.5, 1.2, 0.6, 2, 0.5, 1, 0.7, 1, 0.7, 0.6, 0.6, 0.6],
-};
-const cachePropsPedaco = new Map();
-export function propsDoPedaco(tema, cx, cy) {
-  const A = atlasDeProps(tema); if (!A) return [];
-  const k = `${tema}|${cx},${cy}`; let l = cachePropsPedaco.get(k); if (l) return l;
-  const pesos = PESOS_PEQ[tema] || PESOS_PEQ.ixtal; const total = pesos.reduce((s, p) => s + p, 0);
-  const n = 4 + ((hash(cx * 3, cy * 5) * 4) | 0); l = [];
-  for (let j = 0; j < n; j++) {
-    let m = hash(cx * 11 + j, cy * 13 + 7) * total; let i = 0; for (; i < pesos.length - 1; i++) { m -= pesos[i]; if (m <= 0) break; }
-    l.push({ i, x: cx * CH + 8 + hash(cx * 17 + j, cy) * (CH - 16), y: cy * CH + 14 + hash(cx, cy * 19 + j) * (CH - 14) });
-  }
-  cachePropsPedaco.set(k, l); if (cachePropsPedaco.size > 200) cachePropsPedaco.delete(cachePropsPedaco.keys().next().value);
-  return l;
-}
-
-// Objetos grandes (árvores, ruínas): mais raros, cada pedaço tem de 0 a 2. Pesos por índice no atlas.
-const PESOS_GRANDES = { ixtal: [5, 3, 1, 2, 1, 1], ionia: [5, 4, 3, 1, 1, 1], demacia: [5, 4, 1, 1, 0, 1] };
-const cacheGrandes = new Map();
-export function grandesDoPedaco(tema, cx, cy) {
-  const A = atlasDeProps(tema + '_g'); if (!A) return [];
-  const k = `${tema}|${cx},${cy}`; let l = cacheGrandes.get(k); if (l) return l;
-  const PG = PESOS_GRANDES[tema] || PESOS_GRANDES.ixtal; const total = PG.reduce((s, p) => s + p, 0); const n = hash(cx * 29, cy * 31) < 0.3 ? 0 : hash(cx * 37, cy * 41) < 0.8 ? 1 : 2; l = [];
-  for (let j = 0; j < n; j++) {
-    let m = hash(cx * 43 + j, cy * 47 + 3) * total; let i = 0; for (; i < PG.length - 1; i++) { m -= PG[i]; if (m <= 0) break; }
-    l.push({ i, x: cx * CH + 20 + hash(cx * 53 + j, cy) * (CH - 40), y: cy * CH + 30 + hash(cx, cy * 59 + j) * (CH - 30) });
-  }
-  cacheGrandes.set(k, l); if (cacheGrandes.size > 200) cacheGrandes.delete(cacheGrandes.keys().next().value);
-  return l;
-}
+// Objetos de cenário de um pedaço (posições fixas por hash, ver mapa.js): [{ i: índice no atlas, x, y }], y = base do objeto.
+export const propsDoPedaco = (tema, cx, cy) => (atlasDeProps(tema) ? objetosPequenos(tema, cx, cy) : []);
+export const grandesDoPedaco = (tema, cx, cy) => (atlasDeProps(tema + '_g') ? objetosGrandes(tema, cx, cy) : []);

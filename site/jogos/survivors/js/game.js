@@ -1,5 +1,6 @@
 // Rift Survivors: simulação. Sem DOM: recebe o estado e o dt e muda o estado (testável no Node).
 import { CAMPEOES, ARMAS, ITENS, NIVEL_MAX_ITEM, MAX_ARMAS, MAX_ITENS, MAX_INIMIGOS, INIMIGOS, CHEFES, MISTURA, xpProximo, escalaVida, escalaDano, taxaSpawn, REINOS, RARIDADES, MALDICOES, MAX_MALDICOES, REROLAGENS, BANIMENTOS, COMBOS, JANELA_COMBO, EVOLUCOES } from './data.js';
+import { empurrar } from './mapa.js';
 
 export function criarRng(semente) {
   let a = semente >>> 0;
@@ -428,6 +429,7 @@ function atualizarInimigos(S, dt) {
       for (const o of l) { if (o === e) continue; const ox = e.x - o.x; const oy = e.y - o.y; const dd = ox * ox + oy * oy; const m = (e.raio + o.raio) * 0.8; if (dd < m * m && dd > 0.01) { const dl = Math.sqrt(dd); sx += (ox / dl) * (m - dl); sy += (oy / dl) * (m - dl); } }
     }
     e.x += (vx * v + sx * 6 + e.kx) * dt; e.y += (vy * v + sy * 6 + e.ky) * dt;
+    const bq = empurrar(S.R.tema, e.x, e.y + e.raio * 0.6, Math.min(e.raio, 8) * 0.7); if (bq) { e.x += bq[0]; e.y += bq[1]; }
     e.kx *= Math.max(0, 1 - 9 * dt); e.ky *= Math.max(0, 1 - 9 * dt);
     if (Math.abs(vx) > 0.2) e.face = vx > 0 ? 1 : -1;
     if (d < e.raio + P.raio && !(e.encantado > 0)) danoNoJogador(S, e.dano);
@@ -489,6 +491,7 @@ export function atualizar(S, dt, entrada = { x: 0, y: 0 }) {
   P.andando = m > 0.05; P.mx = mx; P.my = my;
   if (P.andando) { const n = Math.hypot(mx, my); P.dx = mx / n; P.dy = my / n; }
   P.x += mx * S.a.vel * dt; P.y += my * S.a.vel * dt;
+  const bloq = empurrar(S.R.tema, P.x, P.y + 6, 4); if (bloq) { P.x += bloq[0]; P.y += bloq[1]; } // pedras, troncos e estátuas barram o campeão
   // inclinação do corpo no sentido do movimento, passos (um a cada ~11 px andados) e pegadas no chão
   P.lean += (Math.max(-1, Math.min(1, mx)) - P.lean) * Math.min(1, 12 * dt);
   P.corre = S.a.vel >= S.base.vel * 1.2; const dPasso = P.corre ? 17 : 11; // correndo (botas, pena...) os passos são mais longos
