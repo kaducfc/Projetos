@@ -88,3 +88,46 @@ SUBJECT: bust portrait of Garen (League of Legends) for a character-select scree
 If you cannot produce a truly transparent background, use a flat solid pure green background (#00FF00), with no gradient, no shadow and no texture, so I can remove it afterwards.
 ```
 
+
+
+## Kit completo em UMA imagem (use estes; fundo verde #00FF00 para eu remover)
+
+Anexe `garen-modelo.png` (a ficha aprovada) junto com o texto.
+
+### A. Kit principal (1536 x 1024: parada, andando, ataque, dano e morte)
+
+```
+Create ONE complete sprite sheet image with the full animation kit of this character.
+
+Pixel art game sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, same chunky pixel size as the attached reference. Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze around the sprite. Strong dark outline (#14101E) around the whole character. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), character faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CHARACTER: use EXACTLY the character from the attached image (Garen, League of Legends): short messy brown hair, silver steel plate armor with gold trim, huge layered shoulder pauldrons, royal-blue tabard and cape with a golden winged-shield crest, steel gauntlets and greaves, brown boots, big broadsword with a steel blade and gold crossguard. Same colors, same proportions and same pixel size in every frame. Do not redesign anything.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 6 columns x 4 rows of equal 256 x 256 px cells (24 cells), no lines between cells. In EVERY cell the character is the same size (about 170 px tall), centered horizontally in the cell, with his feet touching the same invisible baseline at y = 225 of the cell (exception: lying poses sit on that same baseline). At least 24 px of empty margin around him; nothing crosses the cell borders.
+
+ROWS (top to bottom):
+ROW 1, IDLE loop (6 frames, seamless): subtle breathing, chest rises and falls 1 px, cape sways slightly, sword tip bobs 1 px, a blink in frame 4. Differences between frames are tiny.
+ROW 2, WALK CYCLE to the right (6 frames, seamless loop): contact, down, passing, contact with the other leg, down, passing. Body bobs 2 px, cape flows backwards, sword stays on the shoulder.
+ROW 3, ATTACK (6 frames): (1) anticipation, body twisted, sword pulled back; (2) start of a fast horizontal spin slash; (3) slash at full extension with a crisp pixel-art slash arc in white and light blue (hard-edged pixels, no blur, no glow); (4) follow-through, sword extended to the right, arc fading; (5) recovery; (6) back to the ready stance. The slash arc may extend up to 40 px beyond the character but must stay inside its cell.
+ROW 4, HURT and DEATH: cells 1 and 2 = HURT (flinches back, eyes squeezed shut, body slightly lighter). Cells 3 to 6 = DEATH: staggers, drops to one knee while dropping the sword, falls to the side, final pose lying flat on the ground (wide pose, still inside its cell).
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use green anywhere on the character or effects. Do not use a white or checkerboard background.
+```
+
+### B. Especiais (1536 x 512: ataque especial, vitória e subir de nível)
+
+```
+Create ONE sprite sheet image with the SPECIAL moves of this character.
+
+Pixel art game sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, same chunky pixel size as the attached reference. Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze around the sprite. Strong dark outline (#14101E) around the whole character. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), character faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CHARACTER: use EXACTLY the character from the attached image (Garen, League of Legends): short messy brown hair, silver steel plate armor with gold trim, huge layered shoulder pauldrons, royal-blue tabard and cape with a golden winged-shield crest, steel gauntlets and greaves, brown boots, big broadsword with a steel blade and gold crossguard. Same colors, same proportions and same pixel size in every frame. Do not redesign anything.
+
+GRID: image size 1536 x 512 px, divided into an invisible grid of 6 columns x 2 rows of equal 256 x 256 px cells (12 cells), no lines between cells. In EVERY cell the character is the same size (about 170 px tall), centered horizontally, feet touching the same invisible baseline at y = 225 of the cell. At least 24 px of margin; nothing crosses the cell borders.
+
+ROWS:
+ROW 1, SPECIAL "JUDGMENT" (6 frames): he spins fast with the sword held out, a ring-shaped slash of white and light blue pixels (hard-edged, no blur, no glow) grows around him frame by frame, peaks in frame 4, then fades by frame 6.
+ROW 2: cells 1 to 4 = VICTORY (raises the sword to the sky, cape flapping, small happy loop); cells 5 and 6 = LEVEL UP (cell 5: crouch, cell 6: jump up with fist clenched).
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use green anywhere on the character or effects. Do not use a white or checkerboard background.
+```
