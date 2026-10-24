@@ -45,7 +45,10 @@ export function criarRender(canvas) {
     if (P.especial > 0 && nQuadros(n, 'especial')) return quadroAnim(n, 'especial', (1 - P.especial / 0.5) * nQuadros(n, 'especial'));
     if (P.nivelAnim > 0 && nQuadros(n, 'nivel')) return quadroAnim(n, 'nivel', P.nivelAnim > 0.25 ? 0 : 1);
     if (P.ataque > 0 && nQuadros(n, 'ataque')) return quadroAnim(n, 'ataque', (1 - P.ataque / 0.42) * nQuadros(n, 'ataque'));
-    if (P.andando && nQuadros(n, 'andando')) return quadroAnim(n, 'andando', Math.floor(P.dist / (22 / nQuadros(n, 'andando'))) % nQuadros(n, 'andando'), P.flash > 0 && !nQuadros(n, 'dano'));
+    if (P.andando && nQuadros(n, 'andando')) {
+      const aba = P.corre && nQuadros(n, 'correr') ? 'correr' : 'andando'; const ciclo = aba === 'correr' ? 34 : 22; const q = nQuadros(n, aba);
+      return quadroAnim(n, aba, Math.floor(P.dist / (ciclo / q)) % q, P.flash > 0 && !nQuadros(n, 'dano'));
+    }
     return animacao(n, 'parada', R.t, P.flash > 0 && !nQuadros(n, 'dano'));
   }
   function quadro(S, opc = {}) {

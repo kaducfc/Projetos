@@ -14,7 +14,7 @@ export function criarJogo({ campeao = 'garen', meta = {}, semente = Date.now(), 
   const S = {
     reino: REINOS[reino] ? reino : 'rift', R: REINOS[reino] || REINOS.rift, marcas: [],
     rng: criarRng(semente), t: 0, estado: 'jogando', campeao: c.id, vista, meta: mel,
-    p: { x: 0, y: 0, dx: 1, dy: 0, mx: 0, my: 0, hp: 1, hpMax: 1, raio: 5, inv: 0, flash: 0, andando: false, lean: 0, dist: 0, passo: 0, pe: 1, face: 1, alvoX: 0, ataque: 0, ataqueCd: 0, especial: 0, espCd: 3, espT: 0, nivelAnim: 0 },
+    p: { x: 0, y: 0, dx: 1, dy: 0, mx: 0, my: 0, hp: 1, hpMax: 1, raio: 5, inv: 0, flash: 0, andando: false, lean: 0, corre: false, dist: 0, passo: 0, pe: 1, face: 1, alvoX: 0, ataque: 0, ataqueCd: 0, especial: 0, espCd: 3, espT: 0, nivelAnim: 0 },
     inim: [], proj: [], eproj: [], gemas: [], itens: [], textos: [], efeitos: [], zonas: [], raios: [],
     armas: [], passivas: {}, nivel: 1, xp: 0, xpProx: xpProximo(1), pendentes: 0, opcoes: null,
     abates: 0, ouro: 0, spawnAc: 0, proxId: 1, onda: 1, chefes: {}, chefeVivo: null, revive: !!mel.revive, reviveu: false,
@@ -489,8 +489,9 @@ export function atualizar(S, dt, entrada = { x: 0, y: 0 }) {
   P.x += mx * S.a.vel * dt; P.y += my * S.a.vel * dt;
   // inclinação do corpo no sentido do movimento, passos (um a cada ~11 px andados) e pegadas no chão
   P.lean += (Math.max(-1, Math.min(1, mx)) - P.lean) * Math.min(1, 12 * dt);
-  const andou = Math.hypot(mx, my) * S.a.vel * dt; const passoAntes = Math.floor(P.dist / 11); P.dist += andou;
-  for (let k = passoAntes + 1; k <= Math.floor(P.dist / 11); k++) { // um passo a cada 11 px, no momento em que o pé toca o chão (quadros 0 e 4 do ciclo)
+  P.corre = S.a.vel >= S.base.vel * 1.2; const dPasso = P.corre ? 17 : 11; // correndo (botas, pena...) os passos são mais longos
+  const andou = Math.hypot(mx, my) * S.a.vel * dt; const passoAntes = Math.floor(P.dist / dPasso); P.dist += andou;
+  for (let k = passoAntes + 1; k <= Math.floor(P.dist / dPasso); k++) { // um passo por vez que o pé toca o chão (quadros 0 e 3 do ciclo)
     P.pe = k % 2 ? 1 : -1; S.evt.push({ tipo: 'passo' });
     S.pegadas.push({ x: P.x + P.pe * 3, y: P.y + 6, t: 1.6, d: 1.6 }); if (S.pegadas.length > 40) S.pegadas.shift();
     chispas(S, P.x + P.pe * 3, P.y + 6, 2, { cor: S.R.po || '#cfc9ff', vel: 16, vida: 0.35, grav: -14, brilho: false });
