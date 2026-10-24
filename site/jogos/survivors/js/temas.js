@@ -96,7 +96,7 @@ export function propsDoPedaco(tema, cx, cy) {
 }
 
 // Objetos grandes (árvores, ruínas): mais raros, cada pedaço tem de 0 a 2. Pesos por índice no atlas.
-const PESOS_GRANDES = { ixtal: [5, 3, 1, 2, 1, 1], ionia: [5, 4, 3, 1, 1, 1] };
+const PESOS_GRANDES = { ixtal: [5, 3, 1, 2, 1, 1], ionia: [5, 4, 3, 1, 1, 1], demacia: [5, 4, 1, 1, 0, 1] };
 const cacheGrandes = new Map();
 export function grandesDoPedaco(tema, cx, cy) {
   const A = atlasDeProps(tema + '_g'); if (!A) return [];
