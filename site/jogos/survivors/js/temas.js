@@ -79,6 +79,7 @@ export function pedaco(tema, cx, cy) {
 const PESOS_PEQ = {
   ixtal: [14, 6, 8, 4, 3, 4, 4, 2, 5, 5, 4, 1.5, 2, 1, 1.5, 1, 0.6, 1, 0.8, 1.2, 1, 0.5, 1.2, 1],
   ionia: [14, 6, 8, 4, 3, 4, 4, 2, 5, 5, 3, 1.5, 2, 1.5, 0.8, 4, 0.5, 1, 0.6, 2, 0.8, 0.8, 1, 1.5],
+  demacia: [14, 6, 8, 4, 4, 4, 4, 2, 5, 5, 1.5, 1.5, 1.5, 1.2, 0.6, 2, 0.5, 1, 0.7, 1, 0.7, 0.6, 0.6, 0.6],
 };
 const cachePropsPedaco = new Map();
 export function propsDoPedaco(tema, cx, cy) {
