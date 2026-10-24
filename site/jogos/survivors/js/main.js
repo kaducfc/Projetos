@@ -167,7 +167,7 @@ function telaReinos() {
     <div class="sv-cartas">${cartas}</div>
     <div class="sv-botoes"><button class="sv-btn grande" data-a="comecar">Começar partida</button><button class="sv-btn" data-a="jogar">Voltar</button></div></div>`, 'rolar');
 }
-const REINO_IMG = { ixtal: 'reinos/ixtal.webp', ionia: 'reinos/ionia.webp', demacia: 'reinos/demacia.webp' }; // banners dos reinos (os que faltam usam o degradê da cor do reino)
+const REINO_IMG = { ixtal: 'reinos/ixtal.webp', ionia: 'reinos/ionia.webp', demacia: 'reinos/demacia.webp', noxus: 'reinos/noxus.webp' }; // banners dos reinos (os que faltam usam o degradê da cor do reino)
 const TEMA_COR = { ixtal: '#3a8a36', ionia: '#f29ac0', demacia: '#7ab4f0', noxus: '#c0283a', shurima: '#e8c97a', freljord: '#cfe0f2' };
 function telaLoja() {
   modo = 'loja';
