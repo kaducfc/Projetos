@@ -91,7 +91,7 @@ export const CHEFES = {
   carrasco: { nome: 'Carrasco de Noxus', t: 5 * 60, hp: 2300, vel: 23, dano: 17, raio: 20, xp: 50, ia: 'chefe', cd: 3.2, ouro: 30, kit: ['investida', 'marcas'], sprite: 'carrasco' },
   darius: { nome: 'Darius, a Mão de Noxus', t: 10 * 60, hp: 8800, vel: 25, dano: 25, raio: 24, xp: 160, ia: 'chefe', cd: 2.6, ouro: 100, final: true, kit: ['investida', 'onda', 'marcas', 'investida'], sprite: 'darius' },
   // Shurima
-  colosso: { nome: 'Colosso de Areia', t: 5 * 60, hp: 2700, vel: 20, dano: 18, raio: 18, xp: 55, ia: 'chefe', cd: 3.2, ouro: 30, kit: ['marcas', 'onda'], sprite: 'arauto@shurima' },
+  colosso: { nome: 'Colosso de Areia', t: 5 * 60, hp: 2700, vel: 20, dano: 18, raio: 20, xp: 55, ia: 'chefe', cd: 3.2, ouro: 30, kit: ['marcas', 'onda'], sprite: 'colosso' },
   nasus: { nome: 'Nasus, o Curandeiro das Areias', t: 10 * 60, hp: 10200, vel: 23, dano: 27, raio: 24, xp: 180, ia: 'chefe', cd: 2.6, ouro: 110, final: true, kit: ['marcas', 'anel', 'invocar', 'onda'], sprite: 'b_nasus' },
   // Freljord
   yeti: { nome: 'Yeti Ancião', t: 5 * 60, hp: 3100, vel: 22, dano: 20, raio: 19, xp: 60, ia: 'chefe', cd: 3.0, ouro: 35, kit: ['investida', 'anel'], sprite: 'arauto@freljord' },
