@@ -183,12 +183,12 @@ test('liberação dos reinos: Ixtal e Ionia abertos; os outros exigem vencer o a
   assert.equal(reinoLiberado(m, 'inexistente'), false);
 });
 
-test('Garen: o Julgamento acerta os inimigos ao redor com recarga; outros campeões não têm', () => {
+test('Garen: o Julgamento acerta os inimigos ao redor com recarga; todos os campeões têm uma habilidade especial', () => {
   const S = criarJogo({ campeao: 'garen', semente: 3 }); S.armas.length = 0; S.p.inv = 999; S.p.espCd = 0;
   const alvos = []; for (let i = 0; i < 4; i++) { const e = criarInimigo(S, 'krug', 20 + i * 4, 0); e.vel = 0; e.hp = e.hpMax = 99999; alvos.push(e); }
   for (let i = 0; i < 60; i++) { atualizar(S, 1 / 60, { x: 0, y: 0 }); S.evt.length = 0; }
   assert.ok(alvos.every((e) => e.hp < e.hpMax), 'todos atingidos'); assert.ok(S.p.espCd > 5, 'em recarga');
-  assert.equal(criarJogo({ campeao: 'zed', semente: 3 }).base.especial, undefined);
+  for (const c of CAMPEOES) assert.ok(criarJogo({ campeao: c.id, semente: 3 }).base.especial?.nome, `${c.id}: tem habilidade especial`);
 });
 
 test('Ashe: a Explosão de Gelo acerta e deixa lentos os inimigos ao redor', () => {
@@ -200,6 +200,13 @@ test('Ashe: a Explosão de Gelo acerta e deixa lentos os inimigos ao redor', () 
 
 test('Lux: o Clarão Final acerta os inimigos ao redor com recarga', () => {
   const S = criarJogo({ campeao: 'lux', semente: 3 }); assert.equal(S.base.especial.nome, 'Clarão Final'); S.armas.length = 0; S.p.inv = 999; S.p.espCd = 0;
+  const alvos = []; for (let i = 0; i < 3; i++) { const e = criarInimigo(S, 'krug', 20 + i * 4, 0); e.vel = 0; e.hp = e.hpMax = 99999; alvos.push(e); }
+  for (let i = 0; i < 60; i++) { atualizar(S, 1 / 60, { x: 0, y: 0 }); S.evt.length = 0; }
+  assert.ok(alvos.every((e) => e.hp < e.hpMax), 'todos atingidos'); assert.ok(S.p.espCd > 5, 'em recarga');
+});
+
+test('Zed: a Marca da Morte acerta os inimigos ao redor com recarga', () => {
+  const S = criarJogo({ campeao: 'zed', semente: 3 }); assert.equal(S.base.especial.nome, 'Marca da Morte'); S.armas.length = 0; S.p.inv = 999; S.p.espCd = 0;
   const alvos = []; for (let i = 0; i < 3; i++) { const e = criarInimigo(S, 'krug', 20 + i * 4, 0); e.vel = 0; e.hp = e.hpMax = 99999; alvos.push(e); }
   for (let i = 0; i < 60; i++) { atualizar(S, 1 / 60, { x: 0, y: 0 }); S.evt.length = 0; }
   assert.ok(alvos.every((e) => e.hp < e.hpMax), 'todos atingidos'); assert.ok(S.p.espCd > 5, 'em recarga');
