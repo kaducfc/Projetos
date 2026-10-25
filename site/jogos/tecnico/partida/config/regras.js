@@ -124,6 +124,10 @@ export const REGRAS = {
     persecucaoMax: 2200,      // um campeão desiste de perseguir além desta distância do ponto de origem da perseguição
   },
 
+  // ---- Golpear (Smite) dos caçadores: dano verdadeiro em monstros e épicos. Começa com 1 carga; a segunda chega `recarga` s depois de `inicioRecarga`; máximo de 2 cargas,
+  // 15 s de intervalo entre usos e 90 s para recuperar cada carga (valores do LoL). O dano sobe com o tempo (no jogo real, com a evolução do pet): 600 -> 900 -> 1200.
+  golpear: { cargasMax: 2, recarga: 90, intervalo: 15, inicioRecarga: 48, nivelMin: 3, alcance: 600, dano: [[0, 600], [600, 900], [1200, 1200]] },
+
   // ---- IA
   ia: {
     intervaloDecisao: 0.6, intervaloEstrategia: 2.0,

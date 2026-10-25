@@ -43,3 +43,16 @@ O objetivo da partida é o **Nexus**, não "todas as torres e todos os inibidore
 - **Depois de abates**: um objetivo épico vale se a viagem + o tempo para matar cabem antes de o adversário voltar a ter 4 campeões (`janelaDeAbates`); com vantagem de 2 a mais o grupo já pode pressionar torres mesmo na fase inicial (a partir dos 5 min).
 
 Parâmetros em `regras.ia.janela` (sobrepõe por equipe via `politica`). Eventos: `investida_final` e `defesa_final`.
+
+## Objetivos sem abates: risco pelo tempo de chegada
+
+Dragão e Barão podem ser feitos sem matar ninguém, mas com risco. `ameacaDeContestar` (`motor/janela.js`) estima, para cada campeão inimigo, em quanto tempo ele chegaria ao covil e compara com o tempo da equipe (viagem do grupo + matar o monstro):
+- visto agora: distância real; sumiu: última posição vista, supondo que ele pode ter se aproximado desde então (quem tem mais Macro supõe mais); nunca visto: a partir da fonte, com folga; morto: renascimento + viagem;
+- só pesa quem chega antes de o objetivo cair (mais uma folga). O caçador conta inteiro; quem está em rota conta metade (e metade de novo se o adversário não tem visão do covil, pois pode nem saber);
+- sem visão de ninguém o objetivo continua possível, mas é arriscado; o time inimigo ainda pode contestar e roubar (ver `avaliarContestar`).
+Depois de abates, `janelaDeAbates` indica quanto tempo falta para o adversário voltar a ter 4 campeões; se a viagem e o objetivo cabem nesse tempo, o objetivo ganha prioridade mesmo sem vantagem numérica.
+
+## Golpear (Smite) do caçador
+
+Dano verdadeiro em monstros e épicos (`regras.golpear`): nível 3 em diante; começa com **1 carga** e a **2ª chega em 2:18** (a contagem começa aos 0:48 e cada carga leva 90 s); no máximo **2 cargas**, **15 s entre usos**. O dano sobe com o tempo: **600**, **900** aos 10:00 e **1200** aos 20:00 (no jogo real isso vem da evolução do pet; os valores atuais do LoL desde o patch 26.01 são 600/1000/1400 e podem ser ajustados em `regras.golpear.dano`).
+Uso: só quando o dano mata o alvo. Em épicos (garantir ou roubar) usa sempre que der; em monstros comuns só com as 2 cargas cheias, para a recarga não ficar parada e uma carga ficar guardada para o objetivo.

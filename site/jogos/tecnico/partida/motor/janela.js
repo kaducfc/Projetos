@@ -8,7 +8,7 @@
 import { MUNDO_MAPA, outro, ROTAS } from '../nucleo/mapa-mundo.js';
 import { dpsDe, valorCombate } from './percepcao.js';
 import { hpPct } from './combate.js';
-import { pol } from './inteligencia.js';
+import { pol, macroDaEquipe, visaoSobre } from './inteligencia.js';
 
 const VIAGEM_RENASCER = 9; // segundos entre renascer na fonte e chegar a uma luta (além da distância)
 
@@ -123,4 +123,31 @@ export function janelaOfensiva(P, eq, opc = {}) {
 export function janelaDeAbates(P, eq, n = 4) {
   const rest = P.campeoes.filter((c) => c.equipe === outro(eq)).map((c) => (c.morto ? Math.max(0, c.renasceEm - P.t) : 0)).sort((a, b) => a - b);
   return rest[Math.min(n, rest.length) - 1] ?? 0;
+}
+
+// Quanto o adversário consegue contestar (ou roubar) um objetivo em `ponto` enquanto a equipe `eq` o faz, que leva `tempo` s (viagem + matar).
+// Para cada campeão inimigo estima o tempo de chegada: o que a equipe vê agora usa a posição real; o que sumiu usa a última posição vista e supõe
+// que ele pode ter vindo na direção do objetivo desde então (quem tem mais Macro supõe mais); nunca visto = a partir da fonte, com folga; morto = renascimento + viagem.
+// Conta quem chega antes de o objetivo cair (com uma folga). `excluir`: ids já contados em outro lugar (inimigos vistos perto do objetivo).
+// Devolve { valor, n, cacador, etaMin, etaCacador }.
+export function ameacaDeContestar(P, eq, ponto, tempo, excluir = null) {
+  const inim = outro(eq); const vis = P.equipes[eq].visao; const mac = macroDaEquipe(P, eq);
+  const fonte = MUNDO_MAPA.bases[inim].fonte; const sabe = visaoSobre(P, inim, ponto.x, ponto.y, 1100);
+  let valor = 0, n = 0, etaMin = Infinity, etaCacador = Infinity;
+  for (const c of P.campeoes) {
+    if (c.equipe !== inim) continue;
+    const vel = Math.max(250, c.vel || 340); const v = vis[c.id];
+    let eta;
+    if (c.morto) eta = Math.max(0, c.renasceEm - P.t) + VIAGEM_RENASCER + (Math.hypot(fonte.x - ponto.x, fonte.y - ponto.y) * 1.25) / vel;
+    else if (v && v.visivel) eta = (Math.hypot(c.x - ponto.x, c.y - ponto.y) * 1.25) / vel;
+    else if (v) eta = Math.max(0, (Math.hypot(v.x - ponto.x, v.y - ponto.y) * 1.25) / vel - (P.t - v.t) * (0.3 + 0.6 * mac));
+    else eta = ((Math.hypot(fonte.x - ponto.x, fonte.y - ponto.y) * 1.25) / vel) * 0.7;
+    if (eta < etaMin) etaMin = eta;
+    if (c.pos === 'selva' && !c.morto) etaCacador = eta;
+    if (excluir && excluir.has(c.id)) continue;
+    // probabilidade de contestar: o caçador vai quase sempre; quem está em rota só larga a torre se souber do objetivo (visão deles sobre o covil)
+    const peso = (c.pos === 'selva' ? 1 : 0.5) * (sabe ? 1 : 0.5);
+    if (eta <= tempo + 6) { valor += valorMesmoMorto(c) * peso; n++; }
+  }
+  return { valor, n, etaMin, etaCacador };
 }

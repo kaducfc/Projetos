@@ -783,3 +783,63 @@ test('I3. subcategorias (internas): todo campeão tem subcategoria em cada posi�
   assert.ok(vistas.meio.has('Mago') && vistas.atirador.has('Atirador') && vistas.suporte.has('Encantador') && vistas.suporte.has('Engajador'));
   for (const f of ['partida/js/draft-ui.js', 'partida/js/partida-ui.js', 'js/main.js']) assert.doesNotMatch(readFileSync(new URL(`../jogos/tecnico/${f}`, import.meta.url), 'utf8'), /subcategoria/i, `${f} não mostra subcategorias`);
 });
+
+// ------------------------------------------------------------------ Golpear dos caçadores e janelas de decisão
+test('Golpear: 1 carga no começo, 2ª em 2:18, máximo 2, 15 s entre usos, 90 s por carga; dano 600 -> 900 -> 1200; só para matar', async () => {
+  const { golpear, golpeEstado, danoGolpear, golpePronto } = await import('../jogos/tecnico/partida/motor/campeao-ia.js');
+  const P = mk(7); ate(P, 305); const cac = P.campeoes.find((c) => c.equipe === 'azul' && c.pos === 'selva'); cac.nivel = 18;
+  const dragao = P.epicos.find((e) => e.subtipo === 'dragao' && !e.morto); assert.ok(dragao, 'o Dragão nasceu aos 5:00');
+  const monstros = P.monstros.filter((m) => !m.morto);
+  const monstro = (i, hp) => { const m = monstros[i]; m.x = cac.x; m.y = cac.y; m.hp = hp; return m; };
+  const t0 = P.t; P.t = 700; assert.equal(danoGolpear(P), 900); P.t = 1300; assert.equal(danoGolpear(P), 1200); P.t = t0; assert.equal(danoGolpear(P), 600);
+  const G0 = golpeEstado(P, cac); assert.equal(G0.cargas, 2, 'aos 5:00 as duas cargas já existem (a 2ª chegou em 2:18)');
+  assert.equal(golpear(P, cac, monstro(0, 5000)), false, 'não gasta se não mata');
+  // cargas cheias: pode usar num monstro quase morto (para a recarga não ficar parada); depois guarda a última carga para o objetivo
+  assert.equal(golpear(P, cac, monstro(0, 300)), true); assert.equal(cac.golpe.cargas, 1);
+  assert.equal(golpePronto(P, cac), false, '15 s entre usos'); P.t += 16; assert.equal(golpePronto(P, cac), true);
+  assert.equal(golpear(P, cac, monstro(1, 300)), false, 'monstro comum não gasta a última carga');
+  // épico: usa a última carga para matar/roubar (aqui o Dragão com pouca vida)
+  dragao.x = cac.x; dragao.y = cac.y; dragao.hp = 500;
+  assert.equal(golpear(P, cac, dragao), true, 'usa para matar o épico'); assert.equal(dragao.morto, true); assert.equal(cac.golpe.cargas, 0);
+  // recarga: 90 s por carga, no máximo 2
+  P.t += 16; assert.equal(golpePronto(P, cac), false, 'sem carga'); P.t = cac.golpe.recarga; assert.equal(golpeEstado(P, cac).cargas, 1); P.t += 90; assert.equal(golpeEstado(P, cac).cargas, 2); P.t += 500; assert.equal(golpeEstado(P, cac).cargas, 2, 'no máximo 2');
+  // primeira carga do jogo: 1 carga e a 2ª só em 2:18
+  const Q = mk(9); const c2 = Q.campeoes.find((c) => c.equipe === 'azul' && c.pos === 'selva'); c2.nivel = 9;
+  Q.t = 100; assert.equal(golpeEstado(Q, c2).cargas, 1); Q.t = 137; assert.equal(golpeEstado(Q, c2).cargas, 1); Q.t = 139; assert.equal(golpeEstado(Q, c2).cargas, 2);
+  // quem não é caçador não tem Golpear
+  const laner = P.campeoes.find((c) => c.equipe === 'azul' && c.pos === 'top'); laner.nivel = 18; assert.equal(golpePronto(P, laner), false);
+});
+
+test('contestar objetivo: conta quem chega a tempo (pelo tempo de viagem) e ignora quem está longe; quem sumiu entra pela última posição', async () => {
+  const { ameacaDeContestar } = await import('../jogos/tecnico/partida/motor/janela.js');
+  const P = mk(3); ate(P, 5);
+  const covil = MUNDO_MAPA.covis.find((x) => x.id === 'dragao');
+  const inim = P.campeoes.filter((c) => c.equipe === 'vermelho');
+  // todos longe (na base) e nunca vistos: quase ninguém chega em 10 s
+  for (const c of inim) { c.x = MUNDO_MAPA.bases.vermelho.fonte.x; c.y = MUNDO_MAPA.bases.vermelho.fonte.y; }
+  const curto = ameacaDeContestar(P, 'azul', covil, 5);
+  const longo = ameacaDeContestar(P, 'azul', covil, 200);
+  assert.ok(longo.valor >= curto.valor, 'com mais tempo, mais gente chega'); assert.ok(longo.n >= curto.n);
+  // um inimigo visto agora, colado no objetivo: sempre conta
+  const c0 = inim[0]; c0.x = covil.x + 100; c0.y = covil.y; P.equipes.azul.visao[c0.id] = { x: c0.x, y: c0.y, t: P.t, visivel: true, hp: 1 };
+  const perto = ameacaDeContestar(P, 'azul', covil, 5); assert.ok(perto.n >= 1 && perto.etaMin < 3);
+  // o mesmo inimigo, excluído da conta (já contado como "visto perto"), não pesa de novo
+  assert.ok(ameacaDeContestar(P, 'azul', covil, 5, new Set([c0.id])).n < perto.n || perto.n === 0);
+});
+
+test('janela de vitória: com 3+ inimigos mortos e o Barão a equipe investe no Nexus; em jogo parelho não', async () => {
+  const { janelaOfensiva } = await import('../jogos/tecnico/partida/motor/janela.js');
+  const P0 = mk(2); ate(P0, 600);
+  assert.equal(janelaOfensiva(P0, 'azul').comprometer, false, 'parelho: sem investida'); assert.equal(janelaOfensiva(P0, 'vermelho').comprometer, false);
+  const P = mk(2); ate(P, 1100); // meio de jogo de verdade (níveis e itens), com um cenário montado em cima
+  P.estruturas.filter((e) => e.equipe === 'vermelho' && e.subtipo === 'torre' && e.rota === 'meio' && e.nivel <= 3).forEach((e) => { e.morto = true; e.hp = 0; });
+  const ib = P.estruturas.find((e) => e.equipe === 'vermelho' && e.subtipo === 'inibidor' && e.rota === 'meio'); ib.morto = true; ib.hp = 0; ib.renasceEm = P.t + 250;
+  P.equipes.azul.buffBarao = { ate: P.t + 150 };
+  for (const c of P.campeoes.filter((x) => x.equipe === 'vermelho').slice(0, 3)) { c.morto = true; c.renasceEm = P.t + 45; }
+  for (const c of P.campeoes.filter((x) => x.equipe === 'azul')) { c.morto = false; c.x = ib.x - 800; c.y = ib.y; c.hp = c.hpMax; }
+  const J = janelaOfensiva(P, 'azul');
+  assert.equal(J.comprometer, true, J.motivo || 'deveria investir'); assert.equal(J.rota, 'meio');
+  assert.ok(J.alvo && ['torre', 'nexus'].includes(J.alvo.subtipo), 'o alvo é a próxima estrutura do caminho (torre do Nexus ou Nexus), não as outras rotas');
+  assert.ok(J.caminho <= 3, `só o que falta até o Nexus (${J.caminho} estruturas)`);
+  assert.equal(janelaOfensiva(P, 'vermelho').comprometer, false, 'o lado que está em desvantagem não tem investida');
+});

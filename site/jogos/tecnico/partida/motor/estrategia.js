@@ -6,10 +6,10 @@ import { conhecidos } from './visao.js';
 import { irPara, parar } from './movimento.js';
 import { atacarBasico, podeAtacar, atacavel, porId, hpPct, lancarHabilidade } from './combate.js';
 import { valorCombate, dpsDe, aliadosPerto, minionsPerto, torreInimigaEm, rotaDe, sNaRota, progresso, pontoNoProgresso, torresDaRota } from './percepcao.js';
-import { usarHabilidades, posFarm, golpear } from './campeao-ia.js';
+import { usarHabilidades, posFarm, golpear, golpePronto, danoGolpear } from './campeao-ia.js';
 import { registrar } from './eventos.js';
 import { incerteza, visaoSobre, macroDaEquipe, atraso, pol } from './inteligencia.js';
-import { janelaOfensiva, janelaDeAbates, buffBaraoDe, aptos, cadeiaDeVitoria } from './janela.js';
+import { janelaOfensiva, janelaDeAbates, buffBaraoDe, aptos, cadeiaDeVitoria, ameacaDeContestar } from './janela.js';
 
 const ID = (P) => ++P.proxPlano;
 
@@ -211,7 +211,7 @@ function avaliarContestar(P, eq, conh, aliados) {
     if (!chegam.length) continue;
     const etaMin = Math.min(...chegam.map((x) => x.eta));
     const hpChegada = Math.max(0, e.hp - dpsIni * etaMin);
-    const golpe = chegam.some((x) => x.c.pos === 'selva' && P.t >= (x.c.golpearEm || 0)) ? 450 + 40 * 14 : 0;
+    const golpe = chegam.some((x) => golpePronto(P, x.c)) ? danoGolpear(P) : 0;
     const roubo = hpChegada <= chegam.reduce((s, x) => s + dpsDe(x.c) * 0.65, 0) * CF.roubo + golpe;
     const vNos = chegam.reduce((s, x) => s + valorCombate(x.c), 0), vIni = perto.reduce((s, c) => s + valorCombate(c), 0);
     const razao = vNos / Math.max(1, vIni);
@@ -272,8 +272,11 @@ function escolherObjetivo(P, eq, conh, aliados) {
     const hp = c.epico ? c.epico.hp : P.regras.epicos[c.nome === 'dragao' ? 'dragao' : c.nome].hp;
     const tempo = hp / Math.max(1, dps);
     const limiteTempo = c.nome === 'barao' ? pol(P, eq, 'baraoLimite') : pol(P, eq, 'dragaoLimite');
-    // Macro: inimigos que o time não está vendo contam como ameaça possível perto do objetivo
-    const risco = vIni / Math.max(1, vAli) + incerteza(P, eq) * (0.1 + 0.8 * macroDaEquipe(P, eq)) * 0.8;
+    // Quem pode contestar: pensa no tempo que cada inimigo levaria para chegar (viagem do grupo + matar o monstro). Quem está longe demais não conta;
+    // quem o time não vê conta pela última posição vista (Macro: quem lê o jogo supõe que ele se aproximou). Sem visão de ninguém é arriscado, mas possível.
+    const viagemGrupo = part.length ? Math.max(...part.map((x) => { const d = P.nav.distancia(x.x, x.y, c.covil.x, c.covil.y, 'campeao'); return isFinite(d) ? d / x.vel : 0; })) : 0;
+    const am = ameacaDeContestar(P, eq, c.covil, viagemGrupo + tempo, new Set(inimPerto.map((k) => k.u.id)));
+    const risco = vIni / Math.max(1, vAli) + (am.valor / Math.max(1, vAli)) * (0.6 + 0.4 * macroDaEquipe(P, eq)) + (incerteza(P, eq) > 0.6 ? 0.08 : 0);
     let vantagemNum = part.length - vivosIni;
     let janelaServe = false;
     if (jan > 8 && part.length >= 3) {

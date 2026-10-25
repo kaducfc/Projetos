@@ -627,13 +627,27 @@ function agirSelva(P, u) {
   const antes = alvo.hp;
   if (atacarBasico(P, u, alvo)) { const cura = u.ad * P.regras.selva.sustentoAtaque; u.hp = Math.min(u.hpMax, u.hp + cura); } // sustentação de selva
 }
-// Golpear (Smite): dano verdadeiro em monstros, com recarga longa; também serve para roubar objetivos.
+// Golpear (Smite): dano verdadeiro em monstros e épicos. 2 cargas (1 no começo), 15 s entre usos, 90 s para recuperar cada carga; o dano sobe com o tempo.
+// Estado em `u.golpe` ({ cargas, recarga (quando chega a próxima carga), livreEm }); regras em `regras.golpear`.
+export function golpeEstado(P, u) {
+  const R = P.regras.golpear;
+  const G = (u.golpe ||= { cargas: 1, recarga: R.inicioRecarga + R.recarga, livreEm: 0 });
+  while (G.cargas < R.cargasMax && G.recarga != null && P.t >= G.recarga) { G.cargas++; G.recarga = G.cargas < R.cargasMax ? G.recarga + R.recarga : null; }
+  return G;
+}
+export function danoGolpear(P) { let d = 0; for (const [t, v] of P.regras.golpear.dano) if (P.t >= t) d = v; return d; }
+export function golpePronto(P, u) {
+  if (u.pos !== 'selva' || u.morto || u.nivel < P.regras.golpear.nivelMin) return false;
+  const G = golpeEstado(P, u); return G.cargas > 0 && P.t >= G.livreEm;
+}
 export function golpear(P, u, alvo) {
-  if (u.pos !== 'selva' || P.t < (u.golpearEm || 0)) return false;
-  const dano = 450 + u.nivel * 40;
-  if (alvo.hp > dano * 1.0 && !(alvo.tipo === 'monstro' && alvo.ouro >= 90 && alvo.hp < dano * 1.8 && false)) return false;
-  if (dist(u, alvo) > 600) return false;
-  u.golpearEm = P.t + 90;
+  if (!golpePronto(P, u)) return false;
+  const R = P.regras.golpear; const dano = danoGolpear(P); const G = u.golpe;
+  if (alvo.hp > dano || dist(u, alvo) > R.alcance) return false; // só para matar (ou roubar)
+  // épico: sempre que der para matar; monstro comum: só com as cargas cheias (para a recarga não ficar parada) e guardando uma para o próximo objetivo
+  if (alvo.tipo !== 'epico' && G.cargas < R.cargasMax) return false;
+  if (G.cargas >= R.cargasMax) G.recarga = P.t + R.recarga;
+  G.cargas--; G.livreEm = P.t + R.intervalo;
   P.fx.push({ k: 'golpear', id: u.id, para: alvo.id, t: P.t });
   causarDano(P, u, alvo, dano, 'verdadeiro', { fx: true });
   return true;
