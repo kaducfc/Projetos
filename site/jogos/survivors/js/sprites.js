@@ -36,7 +36,7 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 77; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 78; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { semContorno: true, parada: { src: 'ahri/ahri-parada.png', n: 6 }, andando: { src: 'ahri/ahri-andando.png', n: 6 }, correr: { src: 'ahri/ahri-correr.png', n: 6 }, ataque: { src: 'ahri/ahri-ataque.png', n: 6 }, dano: { src: 'ahri/ahri-dano.png', n: 2 }, morte: { src: 'ahri/ahri-morte.png', n: 4 }, especial: { src: 'ahri/ahri-especial.png', n: 6 }, vitoria: { src: 'ahri/ahri-vitoria.png', n: 4 }, nivel: { src: 'ahri/ahri-nivel.png', n: 2 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
@@ -72,6 +72,8 @@ ANIM.soldado_n = { semContorno: true, andando: { src: 'inimigos/noxus-soldado.pn
 for (const nome of ['mago', 'canhao', 'vazio', 'lobo', 'raptor', 'krug', 'golem']) ANIM[`${nome}@noxus`] = { semContorno: true, andando: { src: `inimigos/noxus-${nome}.png`, n: 4 } };
 ANIM.mumia = { semContorno: true, andando: { src: 'inimigos/shurima-soldado.png', n: 4 } };
 for (const nome of ['mago', 'canhao', 'vazio']) ANIM[`${nome}@shurima`] = { semContorno: true, andando: { src: `inimigos/shurima-${nome}.png`, n: 4 } };
+ANIM.guerreiro = { semContorno: true, andando: { src: 'inimigos/freljord-soldado.png', n: 4 } };
+for (const nome of ['mago', 'canhao', 'vazio']) ANIM[`${nome}@freljord`] = { semContorno: true, andando: { src: `inimigos/freljord-${nome}.png`, n: 4 } };
 for (const [nome, arq] of [['lobo', 'chacal'], ['raptor', 'escorpiao'], ['krug', 'bruto'], ['golem', 'colosso']]) ANIM[`${nome}@shurima`] = { semContorno: true, andando: { src: `inimigos/shurima-${arq}.png`, n: 4 } };
 const ESTATICAS = { orbe: 'fx/orbe.png', coracao: 'fx/coracao.png', lamina: 'fx/lamina.png', bala: 'fx/bala.png', flecha: 'fx/flecha.png', shuriken: 'fx/shuriken.png', eorbe: 'fx/eorbe.png', ejade: 'fx/ejade.png', gema1: 'fx/gema1.png', gema2: 'fx/gema2.png', gema3: 'fx/gema3.png', ouro: 'fx/ouro.png', vida: 'fx/vida.png', bau: 'fx/bau.png', bauaberto: 'fx/bauaberto.png' };
 // Ícones 16x16 já com contorno próprio (arma, item e interface).
