@@ -50,15 +50,22 @@ export const ITENS = {
 };
 export const NIVEL_MAX_ITEM = 5;
 
-// Melhorias permanentes (loja, compradas com Essência Azul).
+// Melhorias permanentes (loja, compradas com Essência Azul). Até o nível 30: `por` = [bônus por nível até o 5, bônus por nível depois do 5].
+// O preço sobe devagar nos 5 primeiros níveis (linear) e depois cresce 7% a cada nível.
+const NIVEL_LIVRE = 5;
+const preco30 = (base, passo) => (n) => (n < NIVEL_LIVRE ? base + n * passo : Math.round((base + (NIVEL_LIVRE - 1) * passo) * 1.07 ** (n - NIVEL_LIVRE + 1)));
 export const MELHORIAS = {
-  hp: { nome: 'Vitalidade', desc: '+10 de vida máxima por nível', max: 5, preco: (n) => 60 + n * 70 },
-  dano: { nome: 'Poder', desc: '+5% de dano por nível', max: 5, preco: (n) => 80 + n * 90 },
-  vel: { nome: 'Agilidade', desc: '+4% de velocidade por nível', max: 5, preco: (n) => 60 + n * 60 },
-  xp: { nome: 'Sabedoria', desc: '+6% de experiência por nível', max: 5, preco: (n) => 70 + n * 80 },
-  ima: { nome: 'Magnetismo', desc: '+12% de alcance de coleta por nível', max: 5, preco: (n) => 40 + n * 40 },
+  hp: { nome: 'Vitalidade', desc: '+10 de vida máxima por nível (+5 a partir do nível 6)', max: 30, por: [10, 5], preco: preco30(60, 70) },
+  dano: { nome: 'Poder', desc: '+5% de dano por nível (+2,5% a partir do nível 6)', max: 30, por: [0.05, 0.025], preco: preco30(80, 90) },
+  vel: { nome: 'Agilidade', desc: '+4% de velocidade por nível (+1,5% a partir do nível 6)', max: 30, por: [0.04, 0.015], preco: preco30(60, 60) },
+  xp: { nome: 'Sabedoria', desc: '+6% de experiência por nível (+3% a partir do nível 6)', max: 30, por: [0.06, 0.03], preco: preco30(70, 80) },
+  ima: { nome: 'Magnetismo', desc: '+12% de alcance de coleta por nível (+6% a partir do nível 6)', max: 30, por: [0.12, 0.06], preco: preco30(40, 40) },
   revive: { nome: 'Anjo Guardião', desc: 'Revive uma vez por partida com metade da vida', max: 1, preco: () => 600 },
 };
+// Bônus total de uma melhoria no nível n.
+export const bonusMelhoria = (id, n) => { const d = MELHORIAS[id]; if (!d?.por || !n) return 0; return d.por[0] * Math.min(n, NIVEL_LIVRE) + d.por[1] * Math.max(0, n - NIVEL_LIVRE); };
+// Cores das "camadas" de nível na loja: a cada 5 níveis os quadradinhos se enchem com a próxima cor por cima da anterior.
+export const CORES_NIVEL = ['#f5c82e', '#ff4d4d', '#c24bff', '#2f9bff', '#2fe0a0', '#ffffff'];
 
 // Inimigos. `xp`: experiência da gema. `ia`: comportamento. Tamanhos em pixels do mundo.
 export const INIMIGOS = {
@@ -103,9 +110,9 @@ export const REINOS = {
   ixtal: { id: 'ixtal', rastro: '#1f4f22', po: '#9a8a6a', nome: 'Ixtal', sub: 'A selva ancestral: Guardião, Jaguar e Serpente', tempo: TEMPO_BARAO, dif: 1, tema: 'ixtal', clima: null, chefes: ['raizes', 'jaguar', 'serpente'], soldado: 'minion', matiz: null, abre: null },
   ionia: { id: 'ionia', rastro: '#245a44', po: '#ffc0d8', nome: 'Ionia', sub: 'Equilíbrio, magia e espíritos', tempo: 600, dif: 1.0, tema: 'ionia', clima: 'petalas', chefes: ['kodama', 'dragao_ionia'], soldado: 'monge', matiz: { h: 150, s: 0.9, l: 0.08 }, matizMini: { h: -90, s: 1, l: 0.05 }, abre: null },
   demacia: { id: 'demacia', rastro: '#2f7a28', po: '#e8eef8', nome: 'Demacia', sub: 'Honra, muralhas e a Vanguarda', tempo: 600, dif: 1.15, tema: 'demacia', clima: 'folhas', chefes: ['vanguarda', 'galio'], soldado: 'soldado_d', matiz: { h: 205, s: 0.8, l: 0.1 }, matizMini: { h: -50, s: 1, l: 0.05 }, abre: 'ionia' },
-  noxus: { id: 'noxus', rastro: '#140c10', po: '#7a3a3a', nome: 'Noxus', sub: 'Força acima de tudo', tempo: 600, dif: 1.3, tema: 'noxus', clima: 'brasas', chefes: ['carrasco', 'darius'], soldado: 'soldado_n', matiz: { h: -8, s: 1.0, l: -0.08 }, matizMini: { h: 90, s: 1.1, l: -0.05 }, abre: 'demacia' },
-  shurima: { id: 'shurima', rastro: '#a8883e', po: '#e8c97a', nome: 'Shurima', sub: 'Areias, ruínas e o império caído', tempo: 600, dif: 1.45, tema: 'shurima', clima: 'areia', chefes: ['colosso', 'nasus'], soldado: 'mumia', matiz: { h: 38, s: 0.85, l: 0.1 }, matizMini: { h: 140, s: 1, l: 0.08 }, abre: 'noxus' },
-  freljord: { id: 'freljord', rastro: '#8aa6c6', po: '#e8f4ff', nome: 'Freljord', sub: 'Gelo eterno e tribos do norte', tempo: 600, dif: 1.6, tema: 'freljord', clima: 'neve', chefes: ['yeti', 'lissandra'], soldado: 'guerreiro', matiz: { h: 190, s: 0.7, l: 0.18 }, matizMini: { h: -75, s: 0.9, l: 0.12 }, abre: 'shurima' },
+  noxus: { id: 'noxus', rastro: '#140c10', po: '#7a3a3a', nome: 'Noxus', sub: 'Força acima de tudo', tempo: 600, dif: 1.45, tema: 'noxus', clima: 'brasas', chefes: ['carrasco', 'darius'], soldado: 'soldado_n', matiz: { h: -8, s: 1.0, l: -0.08 }, matizMini: { h: 90, s: 1.1, l: -0.05 }, abre: 'demacia' },
+  shurima: { id: 'shurima', rastro: '#a8883e', po: '#e8c97a', nome: 'Shurima', sub: 'Areias, ruínas e o império caído', tempo: 600, dif: 1.8, tema: 'shurima', clima: 'areia', chefes: ['colosso', 'nasus'], soldado: 'mumia', matiz: { h: 38, s: 0.85, l: 0.1 }, matizMini: { h: 140, s: 1, l: 0.08 }, abre: 'noxus' },
+  freljord: { id: 'freljord', rastro: '#8aa6c6', po: '#e8f4ff', nome: 'Freljord', sub: 'Gelo eterno e tribos do norte', tempo: 600, dif: 2.2, tema: 'freljord', clima: 'neve', chefes: ['yeti', 'lissandra'], soldado: 'guerreiro', matiz: { h: 190, s: 0.7, l: 0.18 }, matizMini: { h: -75, s: 0.9, l: 0.12 }, abre: 'shurima' },
 };
 export const ORDEM_REINOS = ['ixtal', 'ionia', 'demacia', 'noxus', 'shurima', 'freljord'];
 

@@ -1,7 +1,7 @@
 // Rift Survivors: dados e simulação (sem navegador).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { REINOS, ORDEM_REINOS, CAMPEOES, ARMAS, ITENS, INIMIGOS, CHEFES, MISTURA, MELHORIAS, TEMPO_BARAO, MAX_INIMIGOS, MAX_ARMAS, xpProximo, EVOLUCOES, MALDICOES, RARIDADES, COMBOS } from '../jogos/survivors/js/data.js';
+import { REINOS, ORDEM_REINOS, CAMPEOES, ARMAS, ITENS, INIMIGOS, CHEFES, MISTURA, MELHORIAS, bonusMelhoria, TEMPO_BARAO, MAX_INIMIGOS, MAX_ARMAS, xpProximo, EVOLUCOES, MALDICOES, RARIDADES, COMBOS } from '../jogos/survivors/js/data.js';
 import { objetosPequenos, objetosGrandes, empurrar, raioSolido, TEMAS_COM_OBJETOS, quantidade } from '../jogos/survivors/js/mapa.js';
 import { criarJogo, atualizar, escolher, gerarOpcoes, criarInimigo, ferir, essenciaGanha, rolar, banir, statsDe } from '../jogos/survivors/js/game.js';
 import { GAMES, gameById } from '../shared/config.js';
@@ -261,4 +261,14 @@ test('cenário: mato e moitas são atravessáveis, pedras e troncos barram, e h�
   let sol = null; for (let cy = 0; cy < 8 && !sol; cy++) for (let cx = 0; cx < 8 && !sol; cx++) for (const o of objetosPequenos('ixtal', cx, cy)) if (raioSolido('ixtal', o.i) >= 5 && !sol) sol = o;
   S.p.x = sol.x - 40; S.p.y = sol.y - 6; for (let i = 0; i < 120; i++) { atualizar(S, 1 / 60, { x: 1, y: 0 }); S.evt.length = 0; }
   assert.ok(Math.hypot(S.p.x - sol.x, (S.p.y + 6) - (sol.y - 2)) >= raioSolido('ixtal', sol.i) + 3, 'ficou do lado de fora');
+});
+
+test('melhorias vão até o nível 30, com preço crescente e bônus menor depois do nível 5', () => {
+  for (const id of ['hp', 'dano', 'vel', 'xp', 'ima']) {
+    const m = MELHORIAS[id]; assert.equal(m.max, 30);
+    for (let n = 1; n < 30; n++) assert.ok(m.preco(n) > m.preco(n - 1), `${id}: preço sobe no nível ${n + 1}`);
+    assert.ok(bonusMelhoria(id, 30) > bonusMelhoria(id, 5) && bonusMelhoria(id, 6) - bonusMelhoria(id, 5) < bonusMelhoria(id, 5) / 5, `${id}: níveis depois do 5 rendem menos`);
+  }
+  assert.equal(bonusMelhoria('hp', 5), 50); assert.equal(MELHORIAS.hp.preco(0), 60); assert.equal(MELHORIAS.hp.preco(4), 340);
+  assert.ok(REINOS.freljord.dif > REINOS.shurima.dif && REINOS.shurima.dif > REINOS.noxus.dif && REINOS.noxus.dif > REINOS.demacia.dif);
 });

@@ -3,7 +3,7 @@
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { gameById } from '../../../shared/config.js';
-import { CAMPEOES, ARMAS, ITENS, MELHORIAS, NIVEL_MAX_ITEM, TEMPO_BARAO, CHEFES, REINOS, ORDEM_REINOS, RARIDADES, MALDICOES, EVOLUCOES } from './data.js';
+import { CAMPEOES, ARMAS, ITENS, MELHORIAS, CORES_NIVEL, NIVEL_MAX_ITEM, TEMPO_BARAO, CHEFES, REINOS, ORDEM_REINOS, RARIDADES, MALDICOES, EVOLUCOES } from './data.js';
 import { criarJogo, atualizar, escolher, essenciaGanha, rolar, banir } from './game.js';
 import { criarRender } from './render.js';
 import { urlSprite, urlIcone, carregarImagens, arteUrl, urlQuadro, nQuadros } from './sprites.js';
@@ -169,11 +169,16 @@ function telaReinos() {
 }
 const REINO_IMG = { ixtal: 'reinos/ixtal.webp', ionia: 'reinos/ionia.webp', demacia: 'reinos/demacia.webp', noxus: 'reinos/noxus.webp', shurima: 'reinos/shurima.webp', freljord: 'reinos/freljord.webp' }; // banners dos reinos (os que faltam usam o degradê da cor do reino)
 const TEMA_COR = { ixtal: '#3a8a36', ionia: '#f29ac0', demacia: '#7ab4f0', noxus: '#c0283a', shurima: '#e8c97a', freljord: '#cfe0f2' };
+// Quadradinhos de nível: cada 5 níveis forma uma camada de cor nova por cima da anterior (amarelo, vermelho, roxo...).
+function pipsNivel(d, n) {
+  const camada = n > 0 ? Math.floor((n - 1) / 5) : 0; const cheios = n > 0 ? ((n - 1) % 5) + 1 : 0;
+  return Array.from({ length: Math.min(5, d.max) }, (_, i) => { const cor = i < cheios ? CORES_NIVEL[camada] : camada > 0 ? CORES_NIVEL[camada - 1] : null; return `<i class="${cor ? 'on' : ''}"${cor ? ` style="background:${cor};border-color:rgba(255,255,255,.55)"` : ''}></i>`; }).join('');
+}
 function telaLoja() {
   modo = 'loja';
   const linhas = Object.entries(MELHORIAS).map(([id, d]) => {
     const n = meta.melhorias[id] || 0; const cheio = n >= d.max; const p = cheio ? 0 : d.preco(n);
-    return `<div class="sv-item"><div><b>${esc(d.nome)}</b><small>${esc(d.desc)}</small><span class="sv-pips">${Array.from({ length: d.max }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span></div>
+    return `<div class="sv-item"><div><b>${esc(d.nome)}</b><small>${esc(d.desc)}</small><span class="sv-pips">${pipsNivel(d, n)}</span>${d.max > 5 ? `<small class="sv-nv">Nível ${n}/${d.max}</small>` : ''}</div>
       <button class="sv-btn mini ouro" data-a="melhorar" data-id="${id}" ${cheio || meta.essencia < p ? 'disabled' : ''}>${cheio ? 'Máximo' : `${p} EA`}</button></div>`;
   }).join('');
   tela(`<div class="sv-painel"><h2>Melhorias</h2><p class="sv-sub">${nomeEA()} · fica salvo neste navegador</p><div class="sv-itens">${linhas}</div><div class="sv-botoes"><button class="sv-btn" data-a="menu">Voltar</button></div></div>`, 'rolar');

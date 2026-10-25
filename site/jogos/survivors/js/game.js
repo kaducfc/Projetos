@@ -1,5 +1,5 @@
 // Rift Survivors: simulação. Sem DOM: recebe o estado e o dt e muda o estado (testável no Node).
-import { CAMPEOES, ARMAS, ITENS, NIVEL_MAX_ITEM, MAX_ARMAS, MAX_ITENS, MAX_INIMIGOS, INIMIGOS, CHEFES, MISTURA, xpProximo, escalaVida, escalaDano, taxaSpawn, REINOS, RARIDADES, MALDICOES, MAX_MALDICOES, REROLAGENS, BANIMENTOS, COMBOS, JANELA_COMBO, EVOLUCOES } from './data.js';
+import { bonusMelhoria, CAMPEOES, ARMAS, ITENS, NIVEL_MAX_ITEM, MAX_ARMAS, MAX_ITENS, MAX_INIMIGOS, INIMIGOS, CHEFES, MISTURA, xpProximo, escalaVida, escalaDano, taxaSpawn, REINOS, RARIDADES, MALDICOES, MAX_MALDICOES, REROLAGENS, BANIMENTOS, COMBOS, JANELA_COMBO, EVOLUCOES } from './data.js';
 import { empurrar } from './mapa.js';
 
 export function criarRng(semente) {
@@ -46,16 +46,16 @@ export function recalcular(S) {
   S.cm = cm;
   const hpAntes = S.p.hpMax;
   S.a = {
-    dano: 1 + n('espada') * ITENS.espada.por + (m.dano || 0) * 0.05 + cm.dano,
-    vel: c.vel * (1 + n('botas') * ITENS.botas.por + (m.vel || 0) * 0.04),
+    dano: 1 + n('espada') * ITENS.espada.por + bonusMelhoria('dano', m.dano || 0) + cm.dano,
+    vel: c.vel * (1 + n('botas') * ITENS.botas.por + bonusMelhoria('vel', m.vel || 0)),
     armadura: c.armadura + n('cota') * ITENS.cota.por,
     area: 1 + n('cetro') * ITENS.cetro.por + cm.area,
     recarga: Math.max(0.4, 1 - n('ampulheta') * ITENS.ampulheta.por - cm.recarga),
-    ima: 30 * (1 + n('vidente') * ITENS.vidente.por + (m.ima || 0) * 0.12),
+    ima: 30 * (1 + n('vidente') * ITENS.vidente.por + bonusMelhoria('ima', m.ima || 0)),
     regen: cm.semRegen ? 0 : n('sangue') * ITENS.sangue.por,
-    xp: 1 + n('tomo') * ITENS.tomo.por + (m.xp || 0) * 0.06 + cm.xp,
+    xp: 1 + n('tomo') * ITENS.tomo.por + bonusMelhoria('xp', m.xp || 0) + cm.xp,
   };
-  S.p.hpMax = Math.round((c.hp + n('doran') * ITENS.doran.por + (m.hp || 0) * 10) * cm.hp);
+  S.p.hpMax = Math.round((c.hp + n('doran') * ITENS.doran.por + bonusMelhoria('hp', m.hp || 0)) * cm.hp);
   if (S.p.hpMax > hpAntes && hpAntes > 1) S.p.hp += S.p.hpMax - hpAntes; // item de vida também cura o ganho
   S.p.hp = Math.min(S.p.hp, S.p.hpMax);
 }
@@ -153,7 +153,7 @@ function sortearTipo(S) {
 }
 export function criarInimigo(S, tipo, x, y, chefe = false) {
   const d = chefe ? CHEFES[tipo] : INIMIGOS[tipo];
-  const hp = d.hp * (chefe ? (1 + (S.R.dif - 1) * 0.4) * (1 + S.t / 900 * 0.1) : S.R.dif * escalaVida(S.t) * S.cm.inimVida);
+  const hp = d.hp * (chefe ? (1 + (S.R.dif - 1) * 0.6) * (1 + S.t / 900 * 0.1) : S.R.dif * escalaVida(S.t) * S.cm.inimVida);
   const e = { id: S.proxId++, tipo, chefe, x, y, hp, hpMax: hp, vel: d.vel * (chefe ? 1 : S.cm.inimVel), dano: d.dano * escalaDano(S.t) * (1 + (S.R.dif - 1) * 0.6), kit: d.kit, passo: 0, f2: false, raio: d.raio, xp: d.xp, ia: d.ia, cd: (d.cd || 3) * (0.5 + S.rng()), flash: 0, lento: 0, kx: 0, ky: 0, estado: 0, tEstado: 0, golpe: {}, elite: !!d.elite, face: 1 };
   S.inim.push(e); return e;
 }
