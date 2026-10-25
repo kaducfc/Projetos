@@ -64,7 +64,7 @@ function quadrosChao(tema) {
   }
   cacheTex.set(tema, q); return q;
 }
-const FORCA_CHAO = { shurima: 0.38 }; // intensidade das manchas por reino (areia pede transições bem sutis)
+const FORCA_CHAO = { shurima: 0.38, freljord: 0.3 }; // intensidade das manchas por reino (areia pede transições bem sutis)
 function chaoComTextura(x, Q, cx, cy, tema) {
   const { ts, v } = Q; const forca = FORCA_CHAO[tema] ?? 1; const ox = (((cx * CH) % ts) + ts) % ts; const oy = (((cy * CH) % ts) + ts) % ts;
   x.drawImage(v[0], ox, oy, CH, CH, 0, 0, CH, CH); // base

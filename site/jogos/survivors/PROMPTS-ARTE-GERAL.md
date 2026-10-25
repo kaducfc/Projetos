@@ -621,3 +621,105 @@ CELLS (left to right, top to bottom): (1) IDLE A: standing tall and calm, the st
 
 BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature. Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
 ```
+
+## 11. Freljord
+
+### 11.1 Objetos pequenos (24) — props-freljord-pequenos.png
+
+```
+Create ONE sprite sheet image of small environment props for the map "Freljord" (League of Legends: a frozen northern land of snow, ice crystals, furs, wooden tribal huts and ancient ice-clad stone).
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 6 columns x 4 rows of equal 256 x 256 px cells (24 cells), no lines between cells. ONE object per cell, centered horizontally, its base touching the same invisible ground line at y = 235 of the cell, at least 20 px of margin, nothing crossing the cell borders. Scale: the main character of the reference is about 170 px tall, so a bush is about 90 px tall, a small rock about 50 px, a signpost about 150 px. Every object must look good scattered on top of white-blue snow, so keep the objects darker and more saturated than the snow (dark blue-greens, cold grays, browns, deep blue ice) with only tiny bright ice accents.
+
+THE 24 OBJECTS (left to right, top to bottom):
+Row 1: (1) tuft of frozen yellow-grey grass poking out of snow, (2) tall frozen dry reeds, (3) small snow-covered pine sapling, (4) small cluster of two snowy fir saplings, (5) small bush of frosted red berries under snow, (6) small cluster of three snow-capped gray rocks.
+Row 2: (7) medium gray boulder with a snow cap, (8) large cracked blue-gray boulder with icicles, (9) small snow drift mound, (10) group of small blue ice crystals, (11) large glowing pale-blue ice crystal cluster, (12) fallen snowy log with frost.
+Row 3: (13) bare frozen tree stump with snow on top, (14) wooden spike barricade (sharpened stakes lashed with rope), (15) iron fire bowl on a tripod with a small orange fire, (16) pile of old bones and a horned skull, (17) wooden signpost with two arrows and a small blue cloth (no text), (18) broken wooden fence half-buried in snow.
+Row 4: (19) wooden crate, barrel and a fur sack together, (20) stack of three ice blocks with cracks, (21) small tribal banner on a wooden pole with fur and bone decorations (no text), (22) animal-hide drying rack with furs, (23) wooden weapon rack with axes and a round shield painted blue, (24) small round hide-and-fur tent with a wooden frame.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects (pines must be a dark blue-teal green, not bright green). Do not use a white or checkerboard background. Do NOT draw ground, snow patches, or cast shadows under the objects.
+```
+
+### 11.2 Objetos grandes (6) — props-freljord-grandes.png
+
+```
+Create ONE sprite sheet image of large environment props for the map "Freljord" (League of Legends: a frozen northern land of snow, ice and ancient tribal wooden structures).
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. ONE object per cell, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Scale: the main character of the reference is about 170 px tall; a big tree is about 380 px tall. Keep the colors cold and a little muted so they sit behind the action.
+
+THE 6 OBJECTS: (1) a tall snow-laden pine tree with heavy white snow on its branches, (2) a cluster of two snowy pines of different heights with a small snowy bush between them, (3) a tall Freljordian wooden watchtower with furs, bone trophies and a blue banner, snow on the roof, a small warm fire at the top, (4) a huge jagged blue-ice crystal formation with a pale inner glow, (5) a large ancient standing stone with carved blue glyphs (no readable text), snow on top, and a ring of small stones around its base, (6) a big snow-capped ice arch of frozen rock with icicles hanging from it and a few snowy rocks at its base.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects (pines must be a dark blue-teal green, not bright green). Do not use a white or checkerboard background. Do NOT draw ground, snow patches, or cast shadows under the objects.
+```
+
+### 11.3 Inimigos de Freljord, pacote 1 — inimigos-freljord-1.png
+
+```
+Create ONE sprite sheet image with the walk cycles of four enemies.
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1024 x 1024 px, divided into an invisible grid of 4 columns x 4 rows of equal 256 x 256 px cells (16 cells), no lines between cells. EACH ROW is ONE enemy; the 4 cells of the row are its WALK CYCLE (4 frames, seamless loop), moving toward the RIGHT, three-quarter view, same size in all frames, feet touching the same invisible baseline at y = 235 of the cell, centered horizontally, at least 20 px of margin, nothing crossing the cell borders. Walk cycles must have clear leg or body movement between frames.
+
+THE 4 ENEMIES (Freljord, tribal warriors and frost spirits, menacing but cute-chunky proportions):
+ROW 1, FROSTGUARD WARRIOR (about 130 px tall, the common soldier): a stocky Freljordian tribal warrior in fur and leather with a horned iron helmet, a thick braided beard, a round wooden shield painted blue and a short axe, glowing pale-blue eyes, marching steps.
+ROW 2, ICE WITCH (about 135 px tall, the caster): a hooded Freljordian frost-witch in a long blue-and-white fur-trimmed robe, a staff topped with a glowing pale-blue ice crystal (hard-edged pixels, no haze), pale face with glowing eyes, floats slightly while walking.
+ROW 3, SIEGE ICE SLED (about 150 px tall, the siege unit): a small wooden war sled with two curved runners, a crude wooden catapult arm holding a big blue ice boulder, aimed to the right, a tiny helmeted crew member pushing behind.
+ROW 4, FROST WISP (about 100 px tall, the swarm unit): a small floating ice-spirit: a rounded pale-blue and white snowflake-skull body with a wavy snow-mist tail, two glowing bright-white eyes, no legs, wavy floating motion (the tail waves between frames).
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects (pines must be a dark blue-teal green, not bright green). Do not use a white or checkerboard background. Do NOT draw ground, snow patches, or cast shadows under the objects.
+```
+
+### 11.4 Inimigos de Freljord, pacote 2 — inimigos-freljord-2.png
+
+```
+Create ONE sprite sheet image with the walk cycles of four enemies.
+
+Pixel art game assets, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around every object. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors). No text, no labels, no numbers, no frames, no UI, no watermark.
+
+GRID: image size 1024 x 1024 px, divided into an invisible grid of 4 columns x 4 rows of equal 256 x 256 px cells (16 cells), no lines between cells. EACH ROW is ONE enemy; the 4 cells of the row are its WALK CYCLE (4 frames, seamless loop), moving toward the RIGHT, three-quarter view, same size in all frames, feet touching the same invisible baseline at y = 235 of the cell, centered horizontally, at least 20 px of margin, nothing crossing the cell borders. Walk cycles must have clear leg or body movement between frames.
+
+THE 4 ENEMIES (Freljord, arctic beasts and ice guardians, menacing but chunky proportions):
+ROW 1, FROST WOLF (about 120 px tall, 170 px long): a lean gray-white wolf with icy-blue fur markings and frost on its back, bared fangs, glowing pale-blue eyes, running gallop.
+ROW 2, SNOW CRAB (about 90 px tall, 170 px long): a big armored ice-crab with a thick blue-white frost-crusted shell, two big open pincers, tiny icicle spikes on its back, scuttling sideways walk on its legs.
+ROW 3, ICE BRUTE (the elite, about 150 px tall): a stocky frost-troll brute in thick gray-blue skin with a huge icy shoulder pad of frozen stone, a big club of frozen wood, glowing pale-blue eyes, heavy stomping walk.
+ROW 4, GLACIER GOLEM (about 210 px tall, the biggest): a huge walking golem made of blue glacier ice and dark rock, shaped like a giant armored warrior with a glowing pale-blue crystal in its chest, big icy fists, snow trickling from its joints (hard-edged pixels), slow heavy stomp.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the objects (pines must be a dark blue-teal green, not bright green). Do not use a white or checkerboard background. Do NOT draw ground, snow patches, or cast shadows under the objects.
+```
+
+### 11.5 Yeti Ancião (chefe menor, 5:00) — chefe-freljord-1.png
+
+```
+Create ONE sprite sheet image with the animation frames of a boss monster (ANCIENT YETI of Freljord).
+
+Pixel art game boss sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around the whole creature. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), the creature faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CREATURE: "The Ancient Yeti", a giant shaggy white-and-gray frost beast (League of Legends), about 340 px tall: a hulking ape-like creature covered in thick shaggy white fur with blue-gray shadows, a broad dark face with glowing pale-blue eyes and big lower tusks, huge arms with heavy clawed hands, ice crystals growing from its shoulders and back, a few chains of frozen bones around its neck, and thick stumpy legs. Palette: white fur, gray-blue shadows, dark skin, ice blue.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. In EVERY cell the same creature at the same scale, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Identical design, colors and proportions in all cells.
+
+CELLS (left to right, top to bottom): (1) IDLE A: standing hunched and heavy, arms hanging, knuckles near the ground; (2) IDLE B: breathing, shoulders slightly raised, fur swaying; (3) IDLE C: shoulders lowered, fur swaying the other way (the 3 idle cells form a seamless slow loop); (4) ATTACK WIND-UP: both arms raised high above its head, chest puffed out, mouth open in a roar, eyes glowing brighter (hard-edged pixels); (5) ATTACK STRIKE: both fists slammed down into the ground in front of it, crisp hard-edged pale-blue shockwave lines and flying ice chips; (6) DEATH: the yeti collapsed on its side in a big furry heap, ice crystals cracked, the eyes dark.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature. Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
+```
+
+### 11.6 Lissandra, a Bruxa do Gelo (chefe final, 10:00) — chefe-freljord-2.png
+
+```
+Create ONE sprite sheet image with the animation frames of a boss monster (LISSANDRA, the Ice Witch).
+
+Pixel art game boss sprite sheet, 32-bit era, clean hand-placed pixels, crisp hard edges, the SAME chunky pixel size and the same art style as the attached reference character (Garen). Absolutely NO anti-aliasing, NO blur, NO soft glow, NO painterly shading, NO gradients, NO dithering noise, NO haze. Strong dark outline (#14101E) around the whole creature. Limited palette, 3 to 4 tones per material, light from the top-left. Three-quarter top-down view (like Vampire Survivors), the creature faces to the RIGHT in every frame. No text, no labels, no numbers, no frames, no UI, no watermark, no ground shadow.
+
+CREATURE: "Lissandra", the Ice Witch (League of Legends), about 440 px tall: a tall, elegant, cold sorceress in a long dark-blue and ice-white robe with sharp crystalline icy shoulder spikes and a high collar, a tall spiked ice crown with a glowing pale-blue core, pale blue skin with long white-silver hair, glowing white-blue eyes, clawed gauntlets of ice, and a tall ice staff topped with a jagged blue crystal. Palette: deep blue, ice white, pale cyan, silver.
+
+GRID: image size 1536 x 1024 px, divided into an invisible grid of 3 columns x 2 rows of equal 512 x 512 px cells (6 cells), no lines between cells. In EVERY cell the same creature at the same scale, centered horizontally, its base touching the same invisible ground line at y = 470 of the cell, at least 24 px of margin, nothing crossing the cell borders. Identical design, colors and proportions in all cells.
+
+CELLS (left to right, top to bottom): (1) IDLE A: standing tall and regal, the staff planted on the ground beside her; (2) IDLE B: the robe and hair swaying slightly to one side, chest rising; (3) IDLE C: the robe and hair swaying to the other side (the 3 idle cells form a seamless slow loop); (4) ATTACK WIND-UP: the staff raised over her head with both hands, body leaning back, the crystal and eyes glowing brighter, a few ice shards floating around (hard-edged pixels); (5) ATTACK STRIKE: a huge sweeping staff swing to the right with a crisp hard-edged pale-blue ice crescent slash arc and flying ice shards (no blur, no glow); (6) DEATH: Lissandra kneeling then fallen on her side, the robe spread around her, the crown cracked, the staff lying beside her with its crystal dark.
+
+BACKGROUND: perfectly flat, uniform, solid pure green #00FF00 (chroma key) in the whole image, no gradient, no texture, no shadows, no lighting variation. Do NOT use #00FF00 or any bright pure green on the creature. Do not use a white or checkerboard background. Do NOT draw ground or cast shadows.
+```
