@@ -13,9 +13,9 @@ const rodar = (S, seg, fn = () => ({ x: Math.cos(S.t * 0.3), y: Math.sin(S.t * 0
   }
 };
 
-test('catálogo: o jogo existe, fica restrito ao administrador e tem página e capa', () => {
+test('catálogo: o jogo existe, está liberado ao público, vale ranqueada por vagas e tem página', () => {
   const g = gameById('survivors');
-  assert.ok(g && g.soAdmin === true && g.path === 'jogos/survivors/');
+  assert.ok(g && !g.soAdmin && g.path === 'jogos/survivors/' && g.ranked?.modo === 'vagas');
   assert.equal(GAMES.filter((x) => x.id === 'survivors').length, 1);
 });
 

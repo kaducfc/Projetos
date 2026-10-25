@@ -69,6 +69,7 @@ export default {
   "Sua conta está <b>fora da ranqueada</b>. Você pode jogar normalmente, mas as partidas não valem PDR. Dúvidas: riftarcadeoficial@gmail.com": "Your account is <b>out of ranked</b>. You can play normally, but matches do not earn RP. Questions: riftarcadeoficial@gmail.com",
   "Esta {uma} <b>não vale para a ranqueada</b>: as {max} {varias} ranqueadas de hoje já foram começadas. Pode jogar normalmente!": "This {uma} <b>does not count for ranked</b>: the {max} ranked {varias} of today have already been started. You can play normally!",
   "<b>{Uma} ranqueada {numero} de {limite} de hoje.</b> Termine hoje (até meia-noite): se não terminar, perde {perde} PDR.": "<b>Ranked {Uma} {numero} of {limite} today.</b> Finish today (by midnight): if you do not, you lose {perde} RP.",
+  "<b>{Uma} ranqueada {numero} de {limite} de hoje.</b> Sobreviva mais de 4 minutos para ganhar PDR; antes disso, você perde.": "<b>Ranked {Uma} {numero} of {limite} today.</b> Survive more than 4 minutes to earn RP; before that, you lose.",
   "Essa {uma} não valeu PDR: entre na sua conta para as próximas valerem.": "That {uma} did not earn RP: sign in so the next ones do.",
   "Valeu para a ranqueada!": "It counted for ranked!",
   "({n}ª de hoje)": "(#{n} of today)",

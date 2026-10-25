@@ -2,8 +2,9 @@
 --
 -- Regras:
 --   * Valem as 2 primeiras partidas COMEÇADAS no dia (cada uma vale o seu PDR).
---   * Começou e não terminou até a meia-noite: −15 PDR por partida (a atualização diária já cobre qualquer jogo).
---   * O PDR vem do TEMPO SOBREVIVIDO (antes do % do elo; o ganho passa por site_rk_ajustar):
+--   * Começou e não terminou até a meia-noite: NÃO perde PDR neste jogo (a vaga continua gasta, mas não há desconto de −15).
+--   * O PDR vem do TEMPO SOBREVIVIDO (antes do % do elo). O corte do ganho por elo é METADE do dos outros jogos
+--     (Ferro 100%, Bronze a Ouro 90%, Platina e Esmeralda 85%, Diamante 80%, Mestre para cima 75%); as perdas não mudam.
 --       menos de 4:00 perde:  0:00 → −15 · 3:59 → −3 (reta entre os dois)
 --       a partir de 4:00 ganha: 4:00 → +3 · 15:00 → +35 (reta entre os dois); depois dos 15:00 continua +35
 --     Vitória (chefe final derrotado) vale o máximo, +35. Ixtal dura 15 min e os outros reinos 10 min.
@@ -19,6 +20,33 @@ returns int language sql immutable as $$
     else -round(3 + (239 - greatest(floor(tempo), 0)) * 12 / 239.0)::int
   end;
 $$;
+
+-- 1b. Ganho por elo do Survivors: metade do corte dos outros jogos (igual a ajustarSurvivors() em shared/ranked.js).
+create or replace function public.site_rk_ajustar_survivors(base int, nivel int)
+returns int language sql immutable as $$
+  select case when base > 0 then greatest(1, round(least(base, 38) * (100 - (100 - site_rk_ganho_pct(nivel)) / 2.0) / 100.0)::int)
+              else greatest(-25, base) end;
+$$;
+
+-- 1c. Começou e não terminou: neste jogo não tira PDR. A rotina diária (site_rk_processar_base) passa a ignorar as vagas do Survivors.
+do $$
+declare
+  def text;
+  f constant text := 'public.site_rk_processar_base()';
+  velho constant text := 'where q.usado_em is null and q.dia >= cfg.inicio';
+  novo constant text := 'where q.usado_em is null and q.jogo <> ''survivors'' and q.dia >= cfg.inicio';
+begin
+  if to_regprocedure(f) is null then
+    raise exception 'não achei site_rk_processar_base (rode a 0184 antes)';
+  end if;
+  def := pg_get_functiondef(to_regprocedure(f));
+  if position('q.jogo <> ''survivors''' in def) = 0 then
+    if position(velho in def) = 0 then
+      raise exception 'não achei o trecho das partidas não terminadas em site_rk_processar_base';
+    end if;
+    execute replace(def, velho, novo);
+  end if;
+end $$;
 
 -- 2. Começo da partida: ingresso do dia (2 por dia, como os outros jogos por vagas).
 create or replace function public.site_rk_iniciar(jogo text)
@@ -163,7 +191,7 @@ begin
     b := site_rk_base_lendas(new.summary->>'resultado', coalesce((new.summary->>'vitorias')::int, 0),
                              coalesce((new.summary->>'invicto')::boolean, false));
   end if;
-  valor := site_rk_ajustar(b, niv);
+  valor := case when new.game_id = 'survivors' then site_rk_ajustar_survivors(b, niv) else site_rk_ajustar(b, niv) end;
   insert into site_rk_dia (user_id, dia, jogo, n, base, nivel, pdr, score, result_id)
   values (new.user_id, hoje, new.game_id, num, b, niv, valor, new.score, new.id)
   on conflict (user_id, dia, jogo, n) do nothing

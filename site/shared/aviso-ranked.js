@@ -3,7 +3,7 @@
 import * as platform from './platform.js';
 import { t } from './i18n.js';
 import { liberarAbobora } from './passe-aviso.js';
-import { partidasPorDia, NAO_TERMINOU, eloInfo, divisaoDe, nomeDivisao, fmtPdr } from './ranked.js';
+import { partidasPorDia, NAO_TERMINOU, SEM_PERDA_NAO_TERMINAR, eloInfo, divisaoDe, nomeDivisao, fmtPdr } from './ranked.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -85,6 +85,7 @@ export function avisoComeco(r, jogo = 'carreira-no-rift') {
     mostrar(`${t('Esta {uma} <b>não vale para a ranqueada</b>: as {max} {varias} ranqueadas de hoje já foram começadas. Pode jogar normalmente!', { uma: n.uma, max, varias: n.varias })} ${link()}`, 9000);
     return;
   }
+  if (SEM_PERDA_NAO_TERMINAR.has(jogo)) { mostrar(t('<b>{Uma} ranqueada {numero} de {limite} de hoje.</b> Sobreviva mais de 4 minutos para ganhar PDR; antes disso, você perde.', { Uma: n.Uma, numero: r.numero ?? '', limite: r.limite ?? max }), 10000); return; }
   mostrar(t('<b>{Uma} ranqueada {numero} de {limite} de hoje.</b> Termine hoje (até meia-noite): se não terminar, perde {perde} PDR.', { Uma: n.Uma, numero: r.numero ?? '', limite: r.limite ?? max, perde: Math.abs(NAO_TERMINOU) }), 10000);
 }
 

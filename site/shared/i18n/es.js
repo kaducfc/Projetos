@@ -69,6 +69,7 @@ export default {
   "Sua conta está <b>fora da ranqueada</b>. Você pode jogar normalmente, mas as partidas não valem PDR. Dúvidas: riftarcadeoficial@gmail.com": "Tu cuenta está <b>fuera de la clasificatoria</b>. Puedes jugar con normalidad, pero las partidas no valen PDR. Dudas: riftarcadeoficial@gmail.com",
   "Esta {uma} <b>não vale para a ranqueada</b>: as {max} {varias} ranqueadas de hoje já foram começadas. Pode jogar normalmente!": "Esta {uma} <b>no vale para la clasificatoria</b>: las {max} {varias} clasificatorias de hoy ya fueron empezadas. ¡Puedes jugar con normalidad!",
   "<b>{Uma} ranqueada {numero} de {limite} de hoje.</b> Termine hoje (até meia-noite): se não terminar, perde {perde} PDR.": "<b>{Uma} clasificatoria {numero} de {limite} de hoy.</b> Termina hoy (antes de medianoche): si no terminas, pierdes {perde} PDR.",
+  "<b>{Uma} ranqueada {numero} de {limite} de hoje.</b> Sobreviva mais de 4 minutos para ganhar PDR; antes disso, você perde.": "<b>{Uma} clasificatoria {numero} de {limite} de hoy.</b> Sobrevive más de 4 minutos para ganar PDR; antes de eso, pierdes.",
   "Essa {uma} não valeu PDR: entre na sua conta para as próximas valerem.": "Esa {uma} no valió PDR: entra en tu cuenta para que las próximas valgan.",
   "Valeu para a ranqueada!": "¡Valió para la clasificatoria!",
   "({n}ª de hoje)": "(la n.º {n} de hoy)",

@@ -29,6 +29,8 @@ export const PARTIDAS_POR_DIA = 3; // padrão antigo (3); hoje todos os jogos po
 export const PARTIDAS_JOGO = { smite: 2, cblol: 2, 'carreira-no-rift': 2, 'bar-do-barao': 2, barao: 2, survivors: 2 };
 export const partidasPorDia = (jogo) => PARTIDAS_JOGO[jogo] ?? PARTIDAS_POR_DIA;
 export const NAO_TERMINOU = -15; // Carreira/Lendas começada e não terminada no dia
+// Jogos em que começar e não terminar a partida NÃO tira PDR (Rift Survivors, 0188).
+export const SEM_PERDA_NAO_TERMINAR = new Set(['survivors']);
 export const INATIVIDADE = { aPartir: 'ouro', dias: 3, pdr: -25 };
 
 export const eloInfo = (id) => ELOS.find((e) => e.id === id) || ELOS[0];
@@ -88,6 +90,12 @@ export function baseSucata(pontos) {
   const p = Math.max(10, Math.min(100, pontos));
   if (p >= 55) return Math.round(3 + ((p - 55) * 32) / 45);
   return -Math.round(3 + ((54 - p) * 22) / 44);
+}
+// Rift Survivors: o ganho por elo é metade do corte dos outros jogos (Ferro 100, Bronze a Ouro 90, Platina e Esmeralda 85, Diamante 80, Mestre para cima 75).
+export const GANHO_POR_ELO_SURVIVORS = GANHO_POR_ELO.map((g) => 100 - (100 - g) / 2);
+export function ajustarSurvivors(base, nivel) {
+  if (base > 0) return Math.max(1, Math.round(Math.min(38, base) * GANHO_POR_ELO_SURVIVORS[Math.min(9, Math.max(0, nivel))] / 100));
+  return Math.max(-25, base);
 }
 // Rift Survivors: PDR de tabela pelo tempo sobrevivido (antes do % do elo; igual a site_rk_base_survivors, 0188).
 // Até 4 min perde: 0:00 → −15 · 3:59 → −3 (reta entre os dois). A partir de 4:00 ganha: 4:00 → +3 · 15:00 → +35 (reta); depois

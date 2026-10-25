@@ -162,7 +162,6 @@ export const GAMES = [
     status: 'live',
     scoreLabel: 'Pontos',
     ranked: { modo: 'vagas', selo: 'Ranqueada' },
-    soAdmin: true,
   },
 ];
 
