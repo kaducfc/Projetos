@@ -57,7 +57,7 @@ export const MELHORIAS = {
   vel: { nome: 'Agilidade', desc: '+4% de velocidade por nível', max: 5, preco: (n) => 60 + n * 60 },
   xp: { nome: 'Sabedoria', desc: '+6% de experiência por nível', max: 5, preco: (n) => 70 + n * 80 },
   ima: { nome: 'Magnetismo', desc: '+12% de alcance de coleta por nível', max: 5, preco: (n) => 40 + n * 40 },
-  revive: { nome: 'Ampulheta de Zhonya', desc: 'Revive uma vez por partida com metade da vida', max: 1, preco: () => 600 },
+  revive: { nome: 'Anjo Guardião', desc: 'Revive uma vez por partida com metade da vida', max: 1, preco: () => 600 },
 };
 
 // Inimigos. `xp`: experiência da gema. `ia`: comportamento. Tamanhos em pixels do mundo.

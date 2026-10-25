@@ -234,7 +234,7 @@ function processarEventos() {
     else if (e.tipo === 'combo') { avisar(`${e.nome} ${e.n} abates · +${e.ouro} ouro`, 'chefe'); som('ima'); }
     else if (e.tipo === 'evolucao') { avisar(`EVOLUÇÃO! ${EVOLUCOES[e.id].nome}`, 'chefe'); som('revive'); }
     else if (e.tipo === 'maldicao') avisar(`Maldição: ${MALDICOES[e.id].nome}`, 'onda');
-    else if (e.tipo === 'revive') avisar('Ampulheta de Zhonya!', 'onda');
+    else if (e.tipo === 'revive') avisar('Anjo Guardião!', 'onda');
   }
   S.evt.length = 0;
 }
