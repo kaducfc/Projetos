@@ -1726,7 +1726,9 @@ t('ADM: alterar a raridade de um legado muda o modelo e as cópias; comum fictí
 });
 
 t('equipes do sistema com foto: cada jogador é cópia de um jogador com foto da mesma posição e OVR próximo; ninguém de técnico é trocado; o mercado não perde fotos', () => {
+  const dbg0 = V("select count(*) from tc_jogadores where ficticio and retrato is null and org_id is null and mercado_org is null");
   V("select tc_garantir_sistema()");
+  const dbg1 = V("select count(*) from tc_jogadores where ficticio and retrato is null and org_id is null and mercado_org is null");
   const sis = J("select jsonb_agg(jsonb_build_object('id', j.id, 'r', j.retrato, 'cs', j.copia_sistema, 'pos', j.pos)) from tc_jogadores j join tc_orgs o on o.id = j.org_id where o.user_id is null");
   assert.ok(sis.length >= 80, 'há jogadores nas equipes do sistema');
   assert.ok(sis.every((x) => x.r && x.cs), 'todos com foto');
@@ -1736,10 +1738,12 @@ t('equipes do sistema com foto: cada jogador é cópia de um jogador com foto da
   const org = V("select id from tc_orgs where user_id is null order by id limit 1");
   V(`delete from tc_jogadores where org_id = ${org} and slot = 'meio'`);
   const doadores = Number(V("select count(*) from tc_jogadores where ficticio and retrato is not null and not copia_sistema and pos = 'meio'"));
+  const dbg2 = V("select count(*) from tc_jogadores where ficticio and retrato is null and org_id is null and mercado_org is null");
   V(`select tc_completar_elenco(${org})`);
+  const dbg3 = V("select count(*) from tc_jogadores where ficticio and retrato is null and org_id is null and mercado_org is null");
   assert.ok(doadores > 0, 'há jogadores de meio com foto para copiar');
   assert.equal(V(`select count(*) from tc_jogadores where org_id = ${org} and retrato is null`), '0', V(`select coalesce(string_agg(id || ':' || pos || ':' || coalesce(slot,'-') || ':' || ficticio::text, ' | '), '') from tc_jogadores where org_id = ${org} and retrato is null`));
-  assert.equal(V("select count(*) from tc_jogadores where ficticio and retrato is null and org_id is null and mercado_org is null"), '0', 'nenhum jogador livre do estoque sem foto: ' + V("select coalesce(string_agg(id || ':' || pos || ':' || nome || ':' || criado::text, ' | ' order by id), '') from (select * from tc_jogadores where ficticio and retrato is null and org_id is null and mercado_org is null order by id limit 6) z"));
+  assert.equal(V("select count(*) from tc_jogadores where ficticio and retrato is null and org_id is null and mercado_org is null"), '0', `nenhum jogador livre do estoque sem foto [antes garantir ${dbg0}, depois ${dbg1}, antes completar ${dbg2}, depois ${dbg3}]: ` + V("select coalesce(string_agg(id || ':' || pos || ':' || nome || ':' || criado::text, ' | ' order by id), '') from (select * from tc_jogadores where ficticio and retrato is null and org_id is null and mercado_org is null order by id limit 6) z"));
 });
 
 t('finanças: a receita do marketing vira um lançamento por dia que vai acumulando; outros motivos continuam um a um', () => {
