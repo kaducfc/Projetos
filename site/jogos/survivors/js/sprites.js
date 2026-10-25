@@ -36,7 +36,7 @@ const cache = new Map();
 // Imagens de arquivo (arte da Ahri e efeitos). Carregadas uma vez; se faltarem, os desenhos em código continuam valendo.
 const BASE_IMG = new URL('../img/', import.meta.url).href;
 // Animações em arquivo (tiras horizontais de n quadros iguais). `semContorno`: a arte já tem contorno próprio.
-const VERSAO_ARTE = 81; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
+const VERSAO_ARTE = 83; // aumente quando trocar qualquer imagem (evita arte antiga no cache do navegador)
 const ANIM = {
   ahri: { semContorno: true, parada: { src: 'ahri/ahri-parada.png', n: 6 }, andando: { src: 'ahri/ahri-andando.png', n: 6 }, correr: { src: 'ahri/ahri-correr.png', n: 6 }, ataque: { src: 'ahri/ahri-ataque.png', n: 6 }, dano: { src: 'ahri/ahri-dano.png', n: 2 }, morte: { src: 'ahri/ahri-morte.png', n: 4 }, especial: { src: 'ahri/ahri-especial.png', n: 6 }, vitoria: { src: 'ahri/ahri-vitoria.png', n: 4 }, nivel: { src: 'ahri/ahri-nivel.png', n: 2 } },
   garen: { semContorno: true, parada: { src: 'garen/garen-parada.png', n: 6 }, andando: { src: 'garen/garen-andando.png', n: 6 }, correr: { src: 'garen/garen-correr.png', n: 6 }, ataque: { src: 'garen/garen-ataque.png', n: 6 }, dano: { src: 'garen/garen-dano.png', n: 2 }, morte: { src: 'garen/garen-morte.png', n: 4 }, especial: { src: 'garen/garen-especial.png', n: 6 }, vitoria: { src: 'garen/garen-vitoria.png', n: 4 }, nivel: { src: 'garen/garen-nivel.png', n: 2 } },
@@ -108,6 +108,8 @@ const CHAOS = { ixtal: { arq: 'chao/ixtal.png', ts: 120 }, ionia: { arq: 'chao/i
 const chaoTex = {};
 export const chaoDoReino = (tema) => chaoTex[tema] || null;
 export const atlasDeProps = (tema) => propsAtlas[tema] || null;
+// Contorno fino (1px) nos monstros e chefes para separar do chão: escuro, e claro nos reinos de chão escuro (Noxus).
+const COR_CONTORNO_MONSTRO = (src) => (/noxus-|darius|carrasco/.test(src) ? [176, 96, 80] : [20, 16, 30]);
 function carregarImg(arq) { return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = `${BASE_IMG}${arq}?v=${VERSAO_ARTE}`; }); }
 export async function carregarImagens() {
   for (const [nome, anims] of Object.entries(ANIM)) {
@@ -115,8 +117,8 @@ export async function carregarImagens() {
     for (const [anim, d] of Object.entries(anims)) {
       if (anim === 'semContorno' || anim === 'escala') continue;
       const img = await carregarImg(d.src); if (!img) { delete quadros[nome]; break; }
-      const fw = Math.floor(img.width / (d.tot || d.n)); quadros[nome][anim] = [];
-      for (let i = 0; i < d.n; i++) { const c = canvasDe(fw, img.height); c.getContext('2d').drawImage(img, (i + (d.ini || 0)) * fw, 0, fw, img.height, 0, 0, fw, img.height); quadros[nome][anim].push(anims.semContorno ? (anims.escala ? reduzir(c, anims.escala) : c) : contornar(c)); }
+      const fw = Math.floor(img.width / (d.tot || d.n)); quadros[nome][anim] = []; const monstro = /^(inimigos|chefes)\//.test(d.src);
+      for (let i = 0; i < d.n; i++) { const c = canvasDe(fw, img.height); c.getContext('2d').drawImage(img, (i + (d.ini || 0)) * fw, 0, fw, img.height, 0, 0, fw, img.height); quadros[nome][anim].push(anims.semContorno ? (anims.escala ? reduzir(c, anims.escala) : monstro ? contornar(c, COR_CONTORNO_MONSTRO(d.src)) : c) : contornar(c)); }
     }
     cache.delete(nome); cache.delete(nome + ':w');
   }
@@ -154,7 +156,7 @@ function reduzir(c, f) {
 function canvasDe(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 
 // Desenha o contorno escuro de 1 px ao redor dos pixels opacos.
-function contornar(src) {
+function contornar(src, cor = [20, 16, 30]) {
   const w = src.width + 2; const h = src.height + 2;
   const out = canvasDe(w, h); const o = out.getContext('2d'); o.imageSmoothingEnabled = false;
   const sd = src.getContext('2d').getImageData(0, 0, src.width, src.height).data;
@@ -163,7 +165,7 @@ function contornar(src) {
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const sx = x - 1; const sy = y - 1; const k = (y * w + x) * 4;
     if (opaco(sx, sy)) { const j = (sy * src.width + sx) * 4; d[k] = sd[j]; d[k + 1] = sd[j + 1]; d[k + 2] = sd[j + 2]; d[k + 3] = 255; }
-    else if (opaco(sx - 1, sy) || opaco(sx + 1, sy) || opaco(sx, sy - 1) || opaco(sx, sy + 1)) { d[k] = 20; d[k + 1] = 16; d[k + 2] = 30; d[k + 3] = 255; }
+    else if (opaco(sx - 1, sy) || opaco(sx + 1, sy) || opaco(sx, sy - 1) || opaco(sx, sy + 1)) { d[k] = cor[0]; d[k + 1] = cor[1]; d[k + 2] = cor[2]; d[k + 3] = 255; }
   }
   o.putImageData(od, 0, 0); return out;
 }
