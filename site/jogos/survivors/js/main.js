@@ -3,7 +3,7 @@
 import * as platform from '../../../shared/platform.js';
 import { mountSiteBar } from '../../../shared/account.js';
 import { gameById } from '../../../shared/config.js';
-import { CAMPEOES, ARMAS, ITENS, MELHORIAS, CORES_NIVEL, NIVEL_MAX_ITEM, TEMPO_BARAO, CHEFES, REINOS, ORDEM_REINOS, RARIDADES, MALDICOES, EVOLUCOES } from './data.js';
+import { CAMPEOES, ARMAS, ITENS, MELHORIAS, bonusMelhoria, CORES_NIVEL, NIVEL_MAX_ITEM, TEMPO_BARAO, CHEFES, REINOS, ORDEM_REINOS, RARIDADES, MALDICOES, EVOLUCOES } from './data.js';
 import { criarJogo, atualizar, escolher, essenciaGanha, rolar, banir } from './game.js';
 import { criarRender } from './render.js';
 import { urlSprite, urlIcone, carregarImagens, arteUrl, urlQuadro, nQuadros } from './sprites.js';
@@ -178,7 +178,7 @@ function telaLoja() {
   modo = 'loja';
   const linhas = Object.entries(MELHORIAS).map(([id, d]) => {
     const n = meta.melhorias[id] || 0; const cheio = n >= d.max; const p = cheio ? 0 : d.preco(n);
-    return `<div class="sv-item"><div><b>${esc(d.nome)}</b><small>${esc(d.desc)}</small><span class="sv-pips">${pipsNivel(d, n)}</span>${d.max > 5 ? `<small class="sv-nv">Nível ${n}/${d.max}</small>` : ''}</div>
+    return `<div class="sv-item"><div><b>${esc(d.nome)}</b><small>${esc(d.desc)}</small><span class="sv-pips">${pipsNivel(d, n)}</span>${d.max > 5 ? `<small class="sv-nv">Nível ${n}/${d.max}</small>` : ''}${d.total ? `<small class="sv-tot">Atual: <b>${d.total(bonusMelhoria(id, n))}</b>${cheio ? ' (máximo)' : ` · próximo nível: ${d.total(bonusMelhoria(id, n + 1))}`}</small>` : ''}</div>
       <button class="sv-btn mini ouro" data-a="melhorar" data-id="${id}" ${cheio || meta.essencia < p ? 'disabled' : ''}>${cheio ? 'Máximo' : `${p} EA`}</button></div>`;
   }).join('');
   tela(`<div class="sv-painel"><h2>Melhorias</h2><p class="sv-sub">${nomeEA()} · fica salvo neste navegador</p><div class="sv-itens">${linhas}</div><div class="sv-botoes"><button class="sv-btn" data-a="menu">Voltar</button></div></div>`, 'rolar');
