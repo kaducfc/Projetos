@@ -5,7 +5,7 @@ import { mountSiteBar } from '../../../shared/account.js';
 import { gameById } from '../../../shared/config.js';
 import { CAMPEOES, ARMAS, ITENS, MELHORIAS, bonusMelhoria, CORES_NIVEL, NIVEL_MAX_ITEM, TEMPO_BARAO, CHEFES, REINOS, ORDEM_REINOS, RARIDADES, MALDICOES, EVOLUCOES } from './data.js';
 import { criarJogo, atualizar, escolher, essenciaGanha, rolar, banir } from './game.js';
-import { criarRender } from './render.js';
+import { criarRender, ZOOM_MUNDO } from './render.js';
 import { urlSprite, urlIcone, carregarImagens, arteUrl, urlQuadro, nQuadros } from './sprites.js';
 import { som, SOM_EVENTO, destravar, definirMudo, estaMudo } from './audio.js';
 import * as Meta from './meta.js';
@@ -38,7 +38,8 @@ function ajustar() {
   escala = Math.max(2, Math.round(Math.min(r.width / 400, r.height / 225)));
   const lw = Math.max(160, Math.floor(r.width / escala)); const lh = Math.max(120, Math.floor(r.height / escala));
   render.resize(lw, lh); cv.style.width = `${Math.round(r.width)}px`; cv.style.height = `${Math.round(r.height)}px`; // preenche a área (a escala fica quase inteira)
-  if (S) S.vista = { w: lw, h: lh }; if (demo) demo.vista = { w: lw, h: lh };
+  const vw = Math.round(lw * ZOOM_MUNDO), vh = Math.round(lh * ZOOM_MUNDO); // o mundo visível é maior que a tela (câmera afastada)
+  if (S) S.vista = { w: vw, h: vh }; if (demo) demo.vista = { w: vw, h: vh };
 }
 window.addEventListener('resize', ajustar);
 
@@ -91,7 +92,7 @@ function botEntrada(Sx) {
   }
   const m = Math.hypot(x, y); return { x: x / m, y: y / m };
 }
-function novaDemo() { const lista = CAMPEOES; demo = criarJogo({ campeao: lista[Math.floor(Math.random() * lista.length)].id, reino: ORDEM_REINOS[Math.floor(Math.random() * 2)], vista: { w: render.w, h: render.h } }); demo.demo = true; demo.t = 150; }
+function novaDemo() { const lista = CAMPEOES; demo = criarJogo({ campeao: lista[Math.floor(Math.random() * lista.length)].id, reino: ORDEM_REINOS[Math.floor(Math.random() * 2)], vista: { w: Math.round(render.w * ZOOM_MUNDO), h: Math.round(render.h * ZOOM_MUNDO) } }); demo.demo = true; demo.t = 150; }
 function passoDemo(dt) {
   if (!demo || demo.estado !== 'jogando' && demo.estado !== 'upgrade') novaDemo();
   if (demo.estado === 'upgrade') escolher(demo, demo.opcoes[0]);
@@ -191,7 +192,7 @@ function iniciar() {
   meta.ultimo = escolhido; Meta.gravar(meta);
   if (!Meta.reinoLiberado(meta, reinoEscolhido)) reinoEscolhido = 'ixtal';
   meta.ultimoReino = reinoEscolhido;
-  S = criarJogo({ campeao: escolhido, meta, vista: { w: render.w, h: render.h }, reino: reinoEscolhido });
+  S = criarJogo({ campeao: escolhido, meta, vista: { w: Math.round(render.w * ZOOM_MUNDO), h: Math.round(render.h * ZOOM_MUNDO) }, reino: reinoEscolhido });
   modo = 'jogo'; pausado = false; fimTratado = false; ui.className = 'sv-ui jogo'; ui.innerHTML = '';
   ranqueada = null; try { platform.rankedIniciar(GAME_ID).then((r) => { ranqueada = r; avisoComeco(r, GAME_ID); }).catch(() => {}); } catch { /* sem conexão */ }
   destravar(); avisar(`${CAMPEOES.find((c) => c.id === escolhido).nome} em ${REINOS[reinoEscolhido].nome}!`);

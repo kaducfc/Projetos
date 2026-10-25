@@ -19,6 +19,8 @@ function glow(cor, r) { // bolha de luz (gradiente radial) para brilho aditivo
 // Luzes dos objetos grandes por reino (mesmo formato).
 const LUZ_GRANDES = { freljord: { 2: ['#ff9a3a', 12, 0.5, 0.9], 3: ['#58c8ff', 22, 0.4, 0.5], 4: ['#58c8ff', 12, 0.4, 0.45] }, noxus: { 2: ['#ff8a3a', 20, 0.6, 0.93], 4: ['#ff6a2a', 10, 0.3, 0.3], 5: ['#ff6a2a', 24, 0.45, 0.45] } };
 const LUZ_PEQ = { noxus: { 7: ['#ff6a2a', 9, 0.35, 0.5], 9: ['#ff6a2a', 8, 0.3, 0.4], 12: ['#ff6a2a', 9, 0.35, 0.4], 14: ['#ff8a3a', 17, 0.6, 0.65], 11: ['#ff6a2a', 8, 0.3, 0.4] } };
+// Afastamento da câmera: o mundo visível é ZOOM_MUNDO vezes maior (1,4 = 40% mais longe); o HUD continua no tamanho normal.
+export const ZOOM_MUNDO = 1.4;
 export function criarRender(canvas) {
   const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
   const chunks = new Map();
@@ -56,12 +58,13 @@ export function criarRender(canvas) {
     return animacao(n, 'parada', R.t, P.flash > 0 && !nQuadros(n, 'dano'));
   }
   function quadro(S, opc = {}) {
-    const { w, h } = R; const P = S.p;
+    const { w: W, h: H } = R; const P = S.p; const w = W * ZOOM_MUNDO; const h = H * ZOOM_MUNDO; // w e h: tamanho do MUNDO visível; W e H: tamanho da tela
     R.t += 1 / 60;
     if (S.R.tema !== temaAtual) { temaAtual = S.R.tema; chunks.clear(); }
     let sx = 0; let sy = 0; if (S.shake > 0) { sx = Math.round((Math.random() - 0.5) * 4 * Math.min(1, S.shake * 3)); sy = Math.round((Math.random() - 0.5) * 4 * Math.min(1, S.shake * 3)); }
     const camX = Math.round(P.x - w / 2) + sx; const camY = Math.round(P.y - h / 2) + sy;
     R.camX = camX; R.camY = camY;
+    ctx.save(); ctx.scale(1 / ZOOM_MUNDO, 1 / ZOOM_MUNDO); // o mundo é desenhado em escala menor (câmera mais longe)
     // chão
     const c0x = Math.floor(camX / CH); const c0y = Math.floor(camY / CH);
     for (let cy = c0y; cy <= Math.floor((camY + h) / CH); cy++) for (let cx = c0x; cx <= Math.floor((camX + w) / CH); cx++) ctx.drawImage(chunk(cx, cy), cx * CH - camX, cy * CH - camY);
@@ -178,11 +181,12 @@ export function criarRender(canvas) {
     // números de dano
     for (const t of S.textos) { const idade = 0.6 - t.t; const esc = t.crit ? (idade < 0.12 ? 3 : 2) : (idade < 0.08 ? 2 : 1); const cor = t.jogador ? '#ff5a5a' : t.crit ? '#ffd24a' : '#ffffff'; num(t.v, t.x - String(t.v).length * 2 * esc + 1, t.y + 1, '#14101e', esc); num(t.v, t.x - String(t.v).length * 2 * esc, t.y, cor, esc); }
     ctx.restore();
+    ctx.restore(); // fim da escala do mundo
     clima(S);
-    const am = AMBIENTE[S.reino]; if (am) { ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 1; ctx.fillStyle = am[0]; ctx.fillRect(0, 0, w, h); ctx.globalCompositeOperation = 'source-over'; }
-    vinheta(w, h);
+    const am = AMBIENTE[S.reino]; if (am) { ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 1; ctx.fillStyle = am[0]; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'source-over'; }
+    vinheta(W, H);
     // vinheta de dano
-    if (P.flash > 0) { ctx.fillStyle = `rgba(255,40,40,${Math.min(0.35, P.flash * 2)})`; ctx.fillRect(0, 0, w, h); }
+    if (P.flash > 0) { ctx.fillStyle = `rgba(255,40,40,${Math.min(0.35, P.flash * 2)})`; ctx.fillRect(0, 0, W, H); }
     if (!S.demo) hud(S);
   }
 
