@@ -220,7 +220,7 @@ function renderGames() {
       ? `<p class="game-stats">${mine.length} ${mine.length === 1 ? 'partida' : 'partidas'} · recorde ${best == null ? '<b>—</b>' : conta(best)}</p>`
       : '';
     const live = g.status === 'live';
-    const selo = SELOS[g.id] || (g.soAdmin ? ['Só você · em teste', ''] : g.id === 'tecnico' ? ['Novo', ''] : null); // jogo em teste sem ranqueada também ganha o selo
+    const selo = g.soAdmin ? ['Só você · em teste', ''] : SELOS[g.id] || (g.id === 'tecnico' ? ['Novo', ''] : null); // jogo em teste sem ranqueada também ganha o selo
     const feito = (logado || ['runetermo', 'campeao', 'escala'].includes(g.id)) && feitoHoje(g.id);
     const capa = `<div class="hx-cover">${CAPAS[g.id] || ''}${selo ? `<span class="hx-selo ${selo[1] || ''}">${selo[0]}</span>` : ''}
       ${feito ? '<span class="hx-feito" title="Já jogou hoje">✓ Hoje</span>' : ''}</div>`;
