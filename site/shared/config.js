@@ -142,7 +142,7 @@ export const GAMES = [
     ranked: { modo: 'diario', selo: 'Diário · Ranqueada' },
   },
   // Para um jogo novo em teste: `soAdmin: true` esconde o jogo do hub e do perfil e bloqueia a página
-  // para quem não é administrador. Para lançar, apague a linha `soAdmin`.
+  // para quem não é administrador. Para lançar, apague a linha `soAdmin`. `apenasAdmin: true` (junto com soAdmin) tira o jogo também das contas convidadas.
   {
     id: 'conexoes',
     name: 'Conexões do League',
@@ -163,6 +163,7 @@ export const GAMES = [
     scoreLabel: 'Pontos',
     ranked: { modo: 'vagas', selo: 'Ranqueada' },
     soAdmin: true,
+    apenasAdmin: true, // nem as contas convidadas veem: só quem é administrador (hub, ranqueada e página)
   },
 ];
 

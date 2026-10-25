@@ -81,9 +81,10 @@ const SELOS = Object.fromEntries(GAMES.filter((g) => g.ranked).map((g) => [g.id,
 // Largura ÷ altura de cada emblema recortado (shared/assets/elos/*-recorte.webp).
 const PROPORCAO_EMBLEMA = { ferro: 1.06, bronze: 0.96, prata: 0.98, ouro: 0.97, platina: 0.97, esmeralda: 0.99, diamante: 0.92, mestre: 0.91, 'grao-mestre': 1.02, desafiante: 1 };
 const TAMANHO_FILA = [27.5, 37, 38, 39, 40, 41, 42, 46, 49, 52];
-const jogosDoDia = () => GAMES.filter((g) => g.ranked && g.status === 'live' && (!g.soAdmin || souAdmin)).map((g) => g.id); // vem de shared/config.js
+const jogosDoDia = () => GAMES.filter((g) => g.ranked && g.status === 'live' && (!g.soAdmin || souAdmin) && (!g.apenasAdmin || adminMesmo)).map((g) => g.id); // vem de shared/config.js
 
-let souAdmin = false; // jogos com soAdmin só aparecem para administradores
+let souAdmin = false; // jogos com soAdmin só aparecem para administradores e contas convidadas
+let adminMesmo = false; // jogos com apenasAdmin só aparecem para administradores (nem as convidadas)
 let resultados = [];
 let rk = null; // platform.rankedStatus()
 let diarios = null; // platform.diarioHoje()
@@ -213,7 +214,7 @@ let jogosEntraram = false; // depois da 1ª entrada, redesenhar não repete o fa
 function renderGames() {
   const logado = Boolean(platform.getUser() && rk);
   // Jogos em teste (oculto: true) funcionam pelo link, mas ainda não aparecem aqui.
-  setHtml(document.getElementById('games'), GAMES.filter((g) => !g.oculto && (!g.soAdmin || souAdmin)).map((g, i) => {
+  setHtml(document.getElementById('games'), GAMES.filter((g) => !g.oculto && (!g.soAdmin || souAdmin) && (!g.apenasAdmin || adminMesmo)).map((g, i) => {
     const mine = resultados.filter((r) => r.gameId === g.id);
     const best = mine.reduce((m, r) => (r.score != null && (m == null || r.score > m) ? r.score : m), null);
     const stats = mine.length
@@ -371,6 +372,7 @@ async function refresh() {
     await platform.init();
     const logado = Boolean(platform.getUser());
     souAdmin = logado ? await platform.podeJogosEmTeste().catch(() => false) : false;
+    adminMesmo = logado ? await platform.isAdmin().catch(() => false) : false;
     const [res, status, dh, rank] = await Promise.all([
       platform.listResults({ limit: 100 }),
       logado ? platform.rankedStatus() : null,
