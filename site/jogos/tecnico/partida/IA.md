@@ -29,3 +29,17 @@ node estudo.mjs varredura 40            # todos os parâmetros de estudo-paramet
 ```
 
 Os parâmetros de política (`regras.ia`) podem ser sobrepostos por equipe (`politica` na criação da partida), o que permite comparar uma política contra o padrão.
+
+## Janela de vitória: acabar o jogo (e impedir que acabem)
+
+O objetivo da partida é o **Nexus**, não "todas as torres e todos os inibidores". `motor/janela.js` avalia, a cada 2 s e para as duas equipes:
+
+- **Caminho mais curto**: uma única rota (3 torres e o inibidor), as torres do Nexus e o Nexus. Se um inibidor já caiu (e vai demorar a renascer), só faltam as torres do Nexus e o Nexus. A estimativa de tempo usa o dano real dos campeões contra as estruturas (inclusive a redução sem minions aliados por perto) e a caminhada entre elas.
+- **Quem chega a tempo para defender**: inimigos vivos pela distância e os mortos pelo renascimento + viagem desde a fonte. A investida só começa com vantagem numérica real sobre quem chega a tempo (2 a mais; 1 a mais com o buff do Barão) e razão de força mínima, ou quando quase ninguém consegue defender.
+- **Regra do Barão**: com o buff ativo e 3+ inimigos mortos, o time tenta acabar com o jogo (mais tempo de investida, razão mínima menor).
+- **Investida em andamento** tolera mais (não desiste no meio) por `janela.memoria` s. Participantes de uma investida (ou de uma defesa) urgente não recuam por vida baixa ou desvantagem até o limite `janela.hpUrgente`, nem vão à base por ouro.
+- **Defesa**: o mesmo cálculo, do ponto de vista do adversário (com tolerância maior), dispara o plano `defender_base` urgente com todos os campeões em condição, na estrutura onde ele vai bater. Se a nossa investida for mais rápida que a dele, vamos primeiro.
+- **Barão (buff)**: o grupo inteiro empurra a rota com a onda mais avançada, ficando junto dos minions (o buff deixa os minions mais fortes perto de um campeão com buff e sem minion a estrutura quase não toma dano).
+- **Depois de abates**: um objetivo épico vale se a viagem + o tempo para matar cabem antes de o adversário voltar a ter 4 campeões (`janelaDeAbates`); com vantagem de 2 a mais o grupo já pode pressionar torres mesmo na fase inicial (a partir dos 5 min).
+
+Parâmetros em `regras.ia.janela` (sobrepõe por equipe via `politica`). Eventos: `investida_final` e `defesa_final`.
