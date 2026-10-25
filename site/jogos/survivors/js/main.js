@@ -140,7 +140,7 @@ function cartaCampeao(c) {
     <span class="sv-arma"><img alt="" src="${urlIcone(c.arma)}" />${esc(arma.nome)}</span>
     <small class="sv-st">Vida ${c.hp} · Vel ${c.vel} · Arm ${c.armadura}</small>
     <small class="sv-desc">${esc(c.desc)}</small>
-    ${lib ? `<button class="sv-btn mini" data-a="escolher" data-id="${c.id}">${sel ? 'Escolhido' : 'Escolher'}</button>` : `<button class="sv-btn mini ouro" data-a="liberar" data-id="${c.id}" ${meta.essencia < c.preco ? 'disabled' : ''}>Liberar · ${c.preco} EA</button>`}
+    ${lib ? `<button class="sv-btn mini" data-a="escolher" data-id="${c.id}">${sel ? 'Escolhido' : 'Escolher'}</button>` : c.rc ? `<button class="sv-btn mini ouro" data-a="liberar-rc" data-id="${c.id}">Liberar · ${fmt(c.rc)} RC</button>` : `<button class="sv-btn mini ouro" data-a="liberar" data-id="${c.id}" ${meta.essencia < c.preco ? 'disabled' : ''}>Liberar · ${fmt(c.preco)} EA</button>`}
   </div>`;
 }
 function telaCampeoes(paraJogar = false) {
@@ -272,6 +272,7 @@ ui.addEventListener('click', (e) => {
   else if (a === 'como') telaComo();
   else if (a === 'menu') { clearInterval(animVit); S = null; telaMenu(); }
   else if (a === 'escolher') { escolhido = id; telaCampeoes(!!ui.dataset.jogar); }
+  else if (a === 'liberar-rc') { comprarCampeaoRC(id).then(() => telaCampeoes(!!ui.dataset.jogar)); }
   else if (a === 'liberar') { if (Meta.comprarCampeao(meta, id)) { escolhido = id; som('bau'); } telaCampeoes(!!ui.dataset.jogar); }
   else if (a === 'melhorar') { if (Meta.comprarMelhoria(meta, id)) som('escolha'); telaLoja(); }
   else if (a === 'reinos') telaReinos();
@@ -320,6 +321,16 @@ async function enviarProgresso() {
     if (r && !r.ok && r.rev > (meta.rev || 0)) { const c = await platform.survivorsCarregar(); if (c?.dados) { Object.assign(meta, Meta.normalizar(c.dados), { rev: c.rev }); Meta.gravarLocal(meta); } }
   } catch { /* fica só no navegador */ } finally { emEnvio = false; }
 }
+// Compra de campeão com Rift Coins: o servidor desconta as moedas e guarda a compra na conta.
+async function comprarCampeaoRC(id) {
+  const c = CAMPEOES.find((x) => x.id === id); if (!c?.rc) return;
+  try { await platform.comprarItem('campeao', `sv-${id}`); Meta.liberarPorRC(meta, id); escolhido = id; som('bau'); avisar(`${c.nome} liberada!`, 'onda'); }
+  catch (e) { avisar(e?.message || 'Não foi possível comprar agora.', 'onda'); }
+}
+// Campeões já comprados com RC (em outro aparelho, por exemplo) voltam a ficar liberados.
+async function liberarCompradosRC() {
+  try { for (const r of await platform.minhasRecompensas()) if (r.tipo === 'campeao' && /^sv-/.test(r.chave)) Meta.liberarPorRC(meta, r.chave.slice(3)); } catch { /* sem servidor: vale o que está salvo */ }
+}
 async function sincronizar() {
   const u = platform.getUser(); if (!u) return;
   Meta.usarConta(u.id); meta = Meta.carregar();
@@ -329,6 +340,7 @@ async function sincronizar() {
     else if (c?.dados && c.rev > (meta.rev || 0)) { meta = Meta.normalizar(c.dados); meta.rev = c.rev; Meta.gravarLocal(meta); }
     else if (!c || c.rev < (meta.rev || 0)) { if (!meta.rev) meta.rev = Date.now(); if (c !== null || meta.partidas > 0 || meta.essencia > 0) enviarProgresso(); }
   } catch { /* sem conta/servidor: vale o navegador */ }
+  await liberarCompradosRC();
   escolhido = meta.ultimo; reinoEscolhido = meta.ultimoReino || 'ixtal';
   Meta.aoGravar(() => { clearTimeout(envio); envio = setTimeout(enviarProgresso, 800); });
 }

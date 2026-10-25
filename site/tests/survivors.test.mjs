@@ -272,3 +272,18 @@ test('melhorias vão até o nível 30, com preço crescente e bônus menor depoi
   assert.equal(bonusMelhoria('hp', 5), 50); assert.equal(MELHORIAS.hp.preco(0), 60); assert.equal(MELHORIAS.hp.preco(4), 340);
   assert.ok(REINOS.freljord.dif > REINOS.shurima.dif && REINOS.shurima.dif > REINOS.noxus.dif && REINOS.noxus.dif > REINOS.demacia.dif);
 });
+
+test('campeões: ordem Garen, Zed, Ashe, Jinx, Lux, Ahri; Garen e Zed grátis, Ashe e Jinx 1.000 EA, Lux e Ahri 1.000 RC', () => {
+  assert.deepEqual(CAMPEOES.map((c) => c.id), ['garen', 'zed', 'ashe', 'jinx', 'lux', 'ahri']);
+  const por = (id) => CAMPEOES.find((c) => c.id === id);
+  assert.ok(!por('garen').preco && !por('garen').rc && !por('zed').preco && !por('zed').rc);
+  assert.equal(por('ashe').preco, 1000); assert.equal(por('jinx').preco, 1000);
+  assert.equal(por('lux').rc, 1000); assert.equal(por('ahri').rc, 1000); assert.ok(!por('lux').preco && !por('ahri').preco);
+});
+
+test('meta: Zed entra liberado em progresso antigo e campeão de RC não é comprado com EA', async () => {
+  const Meta = await import('../jogos/survivors/js/meta.js');
+  const m = Meta.normalizar({ essencia: 99999, liberados: ['garen'], melhorias: {} });
+  assert.ok(m.liberados.includes('zed') && !m.liberados.includes('lux'));
+  assert.equal(Meta.comprarCampeao(m, 'lux'), false); assert.equal(Meta.comprarCampeao(m, 'ashe'), true); assert.equal(m.essencia, 98999);
+});
