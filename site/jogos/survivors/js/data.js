@@ -57,8 +57,8 @@ const preco30 = (base, passo) => (n) => (n < NIVEL_LIVRE ? base + n * passo : Ma
 const pct = (v) => `${String(Math.round(v * 1000) / 10).replace('.', ',')}%`;
 export const MELHORIAS = {
   hp: { nome: 'Vitalidade', total: (v) => `+${v} de vida máxima`, desc: '+10 de vida máxima por nível (+5 a partir do nível 6)', max: 30, por: [10, 5], preco: preco30(60, 70) },
-  dano: { nome: 'Poder', total: (v) => `+${pct(v)} de dano`, desc: '+5% de dano por nível (+2,5% a partir do nível 6)', max: 30, por: [0.05, 0.025], preco: preco30(80, 90) },
-  vel: { nome: 'Agilidade', total: (v) => `+${pct(v)} de velocidade`, desc: '+4% de velocidade por nível (+1,5% a partir do nível 6)', max: 30, por: [0.04, 0.015], preco: preco30(60, 60) },
+  dano: { nome: 'Poder', total: (v) => `+${pct(v)} de dano`, desc: '+5% de dano por nível (+3% a partir do nível 6)', max: 30, por: [0.05, 0.03], preco: preco30(80, 90) },
+  vel: { nome: 'Agilidade', total: (v) => `+${pct(v)} de velocidade`, desc: '+4% de velocidade por nível (+3% a partir do nível 6)', max: 30, por: [0.04, 0.03], preco: preco30(60, 60) },
   xp: { nome: 'Sabedoria', total: (v) => `+${pct(v)} de experiência`, desc: '+6% de experiência por nível (+3% a partir do nível 6)', max: 30, por: [0.06, 0.03], preco: preco30(70, 80) },
   ima: { nome: 'Magnetismo', total: (v) => `+${pct(v)} de alcance de coleta`, desc: '+12% de alcance de coleta por nível (+6% a partir do nível 6)', max: 30, por: [0.12, 0.06], preco: preco30(40, 40) },
   revive: { nome: 'Anjo Guardião', desc: 'Revive uma vez por partida com metade da vida', max: 1, preco: () => 600 },
