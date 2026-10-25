@@ -1569,6 +1569,7 @@ t('mercado oficial (0189): cada técnico tem a sua vitrine de 10 jogadores novos
     V("delete from tc_mercado_rot");
     const estoque = () => Number(V("select count(*) from tc_jogadores where org_id is null and ficticio and mercado_org is null"));
     const fotos = () => Number(V("select count(*) from tc_jogadores where ficticio and retrato is not null"));
+    V("select tc_reabastecer()"); // estabiliza o estoque (a limpeza dos sem foto acontece uma vez, como em produção)
     const estoque0 = estoque(); const fotos0 = fotos();
     const ref = Number(V("select tc_mercado_ref(1)"));
     const lista = (uid = 1) => J("select tc_mercado_oficial('{}')", uid);
