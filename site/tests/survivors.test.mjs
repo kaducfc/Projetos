@@ -287,3 +287,12 @@ test('meta: Zed entra liberado em progresso antigo e campeão de RC não é comp
   assert.ok(m.liberados.includes('zed') && !m.liberados.includes('lux'));
   assert.equal(Meta.comprarCampeao(m, 'lux'), false); assert.equal(Meta.comprarCampeao(m, 'ashe'), true); assert.equal(m.essencia, 98999);
 });
+
+test('os 3 últimos reinos têm o dobro de vida e de dano nos monstros', () => {
+  const vida = (reino, tipo = 'monge') => criarInimigo(criarJogo({ campeao: 'garen', semente: 4, reino }), tipo, 50, 50).hp;
+  for (const r of ['noxus', 'shurima', 'freljord']) { assert.equal(REINOS[r].mulVida, 2); assert.equal(REINOS[r].mulDano, 2); }
+  for (const r of ['ixtal', 'ionia', 'demacia']) assert.ok(!REINOS[r].mulVida && !REINOS[r].mulDano);
+  const base = criarJogo({ campeao: 'garen', semente: 4, reino: 'noxus' }); const e1 = criarInimigo(base, 'lobo', 50, 50);
+  base.R = { ...base.R, mulVida: 1, mulDano: 1 }; const e0 = criarInimigo(base, 'lobo', 50, 50);
+  assert.ok(Math.abs(e1.hp / e0.hp - 2) < 1e-9 && Math.abs(e1.dano / e0.dano - 2) < 1e-9);
+});

@@ -153,8 +153,8 @@ function sortearTipo(S) {
 }
 export function criarInimigo(S, tipo, x, y, chefe = false) {
   const d = chefe ? CHEFES[tipo] : INIMIGOS[tipo];
-  const hp = d.hp * (chefe ? (1 + (S.R.dif - 1) * 0.6) * (1 + S.t / 900 * 0.1) : S.R.dif * escalaVida(S.t) * S.cm.inimVida);
-  const e = { id: S.proxId++, tipo, chefe, x, y, hp, hpMax: hp, vel: d.vel * (chefe ? 1 : S.cm.inimVel), dano: d.dano * escalaDano(S.t) * (1 + (S.R.dif - 1) * 0.6), kit: d.kit, passo: 0, f2: false, raio: d.raio, xp: d.xp, ia: d.ia, cd: (d.cd || 3) * (0.5 + S.rng()), flash: 0, lento: 0, kx: 0, ky: 0, estado: 0, tEstado: 0, golpe: {}, elite: !!d.elite, face: 1 };
+  const hp = d.hp * (S.R.mulVida || 1) * (chefe ? (1 + (S.R.dif - 1) * 0.6) * (1 + S.t / 900 * 0.1) : S.R.dif * escalaVida(S.t) * S.cm.inimVida);
+  const e = { id: S.proxId++, tipo, chefe, x, y, hp, hpMax: hp, vel: d.vel * (chefe ? 1 : S.cm.inimVel), dano: d.dano * (S.R.mulDano || 1) * escalaDano(S.t) * (1 + (S.R.dif - 1) * 0.6), kit: d.kit, passo: 0, f2: false, raio: d.raio, xp: d.xp, ia: d.ia, cd: (d.cd || 3) * (0.5 + S.rng()), flash: 0, lento: 0, kx: 0, ky: 0, estado: 0, tEstado: 0, golpe: {}, elite: !!d.elite, face: 1 };
   S.inim.push(e); return e;
 }
 function aoRedor(S, folga = 24) {

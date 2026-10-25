@@ -105,14 +105,14 @@ export const CHEFES = {
   lissandra: { nome: 'Lissandra, a Bruxa de Gelo', t: 10 * 60, hp: 11800, vel: 22, dano: 29, raio: 23, xp: 200, ia: 'chefe', cd: 2.4, ouro: 130, final: true, kit: ['anel', 'marcas', 'onda', 'invocar', 'marcas'], sprite: 'lissandra' },
 };
 
-// Reinos (regiões de Runeterra). `dif` multiplica vida e dano dos inimigos; `matiz` pinta os monstros comuns; `soldado` é o sprite do inimigo básico.
+// Reinos (regiões de Runeterra). `dif` multiplica vida e dano dos inimigos (`mulVida`/`mulDano`: multiplicadores extras dos reinos finais); `matiz` pinta os monstros comuns; `soldado` é o sprite do inimigo básico.
 export const REINOS = {
   ixtal: { id: 'ixtal', rastro: '#1f4f22', po: '#9a8a6a', nome: 'Ixtal', sub: 'A selva ancestral: Guardião, Jaguar e Serpente', tempo: TEMPO_BARAO, dif: 1, tema: 'ixtal', clima: null, chefes: ['raizes', 'jaguar', 'serpente'], soldado: 'minion', matiz: null, abre: null },
   ionia: { id: 'ionia', rastro: '#245a44', po: '#ffc0d8', nome: 'Ionia', sub: 'Equilíbrio, magia e espíritos', tempo: 600, dif: 1.0, tema: 'ionia', clima: 'petalas', chefes: ['kodama', 'dragao_ionia'], soldado: 'monge', matiz: { h: 150, s: 0.9, l: 0.08 }, matizMini: { h: -90, s: 1, l: 0.05 }, abre: null },
   demacia: { id: 'demacia', rastro: '#2f7a28', po: '#e8eef8', nome: 'Demacia', sub: 'Honra, muralhas e a Vanguarda', tempo: 600, dif: 1.15, tema: 'demacia', clima: 'folhas', chefes: ['vanguarda', 'galio'], soldado: 'soldado_d', matiz: { h: 205, s: 0.8, l: 0.1 }, matizMini: { h: -50, s: 1, l: 0.05 }, abre: 'ionia' },
-  noxus: { id: 'noxus', rastro: '#140c10', po: '#7a3a3a', nome: 'Noxus', sub: 'Força acima de tudo', tempo: 600, dif: 1.45, tema: 'noxus', clima: 'brasas', chefes: ['carrasco', 'darius'], soldado: 'soldado_n', matiz: { h: -8, s: 1.0, l: -0.08 }, matizMini: { h: 90, s: 1.1, l: -0.05 }, abre: 'demacia' },
-  shurima: { id: 'shurima', rastro: '#a8883e', po: '#e8c97a', nome: 'Shurima', sub: 'Areias, ruínas e o império caído', tempo: 600, dif: 1.8, tema: 'shurima', clima: 'areia', chefes: ['colosso', 'nasus'], soldado: 'mumia', matiz: { h: 38, s: 0.85, l: 0.1 }, matizMini: { h: 140, s: 1, l: 0.08 }, abre: 'noxus' },
-  freljord: { id: 'freljord', rastro: '#8aa6c6', po: '#e8f4ff', nome: 'Freljord', sub: 'Gelo eterno e tribos do norte', tempo: 600, dif: 2.2, tema: 'freljord', clima: 'neve', chefes: ['yeti', 'lissandra'], soldado: 'guerreiro', matiz: { h: 190, s: 0.7, l: 0.18 }, matizMini: { h: -75, s: 0.9, l: 0.12 }, abre: 'shurima' },
+  noxus: { id: 'noxus', rastro: '#140c10', po: '#7a3a3a', nome: 'Noxus', sub: 'Força acima de tudo', tempo: 600, dif: 1.45, mulVida: 2, mulDano: 2, tema: 'noxus', clima: 'brasas', chefes: ['carrasco', 'darius'], soldado: 'soldado_n', matiz: { h: -8, s: 1.0, l: -0.08 }, matizMini: { h: 90, s: 1.1, l: -0.05 }, abre: 'demacia' },
+  shurima: { id: 'shurima', rastro: '#a8883e', po: '#e8c97a', nome: 'Shurima', sub: 'Areias, ruínas e o império caído', tempo: 600, dif: 1.8, mulVida: 2, mulDano: 2, tema: 'shurima', clima: 'areia', chefes: ['colosso', 'nasus'], soldado: 'mumia', matiz: { h: 38, s: 0.85, l: 0.1 }, matizMini: { h: 140, s: 1, l: 0.08 }, abre: 'noxus' },
+  freljord: { id: 'freljord', rastro: '#8aa6c6', po: '#e8f4ff', nome: 'Freljord', sub: 'Gelo eterno e tribos do norte', tempo: 600, dif: 2.2, mulVida: 2, mulDano: 2, tema: 'freljord', clima: 'neve', chefes: ['yeti', 'lissandra'], soldado: 'guerreiro', matiz: { h: 190, s: 0.7, l: 0.18 }, matizMini: { h: -75, s: 0.9, l: 0.12 }, abre: 'shurima' },
 };
 export const ORDEM_REINOS = ['ixtal', 'ionia', 'demacia', 'noxus', 'shurima', 'freljord'];
 
