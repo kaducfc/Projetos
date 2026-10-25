@@ -814,11 +814,12 @@ t('retratos: cada foto é de um único jogador fictício; sem foto livre, o merc
   assert.equal(new Set(fotos.map((x) => x.r)).size, fotos.length, 'nenhuma foto repetida');
   assert.ok(fotos.length <= 60, 'no máximo 60 fotos');
   assert.ok(fotos.filter((x) => x.g === 'F').length > 0 && fotos.filter((x) => x.g === 'M').length > 0, 'há jogadoras e jogadores');
-  const antes = V("select string_agg(id || coalesce(retrato, '-'), ',' order by id) from tc_jogadores");
+  const antes = V("select string_agg(id || coalesce(retrato, '-'), ',' order by id) from tc_jogadores where mercado_org is null");
   V(readFileSync(new URL('../supabase/migrations/0108_tecnico_elenco_inicial_15.sql', import.meta.url), 'utf8')); // idempotente: não mexe em ninguém
   V(readFileSync(new URL('../supabase/migrations/0109_tecnico_escolher_elenco.sql', import.meta.url), 'utf8'));
   V(readFileSync(new URL('../supabase/migrations/0124_tecnico_sistema_com_fotos.sql', import.meta.url), 'utf8')); // a 0109 volta a definir tc_completar_elenco: reaplica a versão com fotos
-  assert.equal(V("select string_agg(id || coalesce(retrato, '-'), ',' order by id) from tc_jogadores"), antes);
+  V(readFileSync(new URL('../supabase/migrations/0189_tecnico_mercado_pool_individual.sql', import.meta.url), 'utf8')); // as migrações antigas devolveram as funções velhas: reaplica a vitrine individual
+  assert.equal(V("select string_agg(id || coalesce(retrato, '-'), ',' order by id) from tc_jogadores where mercado_org is null"), antes);
   // tentar repetir uma foto é recusado pelo banco
   const dup = Q("update tc_jogadores set retrato = (select retrato from tc_jogadores where ficticio and retrato is not null and not copia_sistema order by id limit 1) where id = (select id from tc_jogadores where ficticio and retrato is not null and not copia_sistema order by id desc limit 1)");
   assert.equal(dup.ok, false);
@@ -828,7 +829,7 @@ t('retratos: cada foto é de um único jogador fictício; sem foto livre, o merc
   const com = J(`select coalesce(jsonb_agg(retrato), '[]'::jsonb) from tc_jogadores where id in (${novos.join(',')}) and retrato is not null`);
   assert.ok(com.length <= livres && new Set(com).size === com.length, 'sem repetir');
   V("select tc_reabastecer()");
-  assert.equal(V("select count(*) from tc_jogadores where org_id is null and ficticio and retrato is null"), '0');
+  assert.equal(V("select count(*) from tc_jogadores where org_id is null and ficticio and mercado_org is null and retrato is null"), '0');
   const star = J("select tc_jogador_json(j) from tc_jogadores j where nome = 'Faker'"); assert.equal(star.genero, 'M'); assert.equal(star.idioma.nativo, 'ko', 'a ficha traz o idioma nativo'); assert.ok(Array.isArray(star.idioma.sec)); assert.match(star.retrato, /faker\.webp$/);
 });
 
@@ -1738,7 +1739,7 @@ t('equipes do sistema com foto: cada jogador é cópia de um jogador com foto da
   V(`select tc_completar_elenco(${org})`);
   assert.ok(doadores > 0, 'há jogadores de meio com foto para copiar');
   assert.equal(V(`select count(*) from tc_jogadores where org_id = ${org} and retrato is null`), '0', V(`select coalesce(string_agg(id || ':' || pos || ':' || coalesce(slot,'-') || ':' || ficticio::text, ' | '), '') from tc_jogadores where org_id = ${org} and retrato is null`));
-  assert.equal(V("select count(*) from tc_jogadores where ficticio and retrato is null and org_id is null"), '0', 'nenhum jogador livre sem foto');
+  assert.equal(V("select count(*) from tc_jogadores where ficticio and retrato is null and org_id is null and mercado_org is null"), '0', 'nenhum jogador livre do estoque sem foto');
 });
 
 t('finanças: a receita do marketing vira um lançamento por dia que vai acumulando; outros motivos continuam um a um', () => {
