@@ -102,7 +102,6 @@ export function criarRender(canvas) {
     for (const e of ents) {
       if (e.prop) {
         const AA = e.grande ? AG : AT; const cols = AA.cols || 6; const col = e.i % cols; const lin = (e.i / cols) | 0; const pw = AA.w[e.i]; const ph = AA.h[e.i]; const bx = Math.round(e.x); const by = Math.round(e.y);
-        ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.fillRect(bx - Math.round(pw * (e.grande ? 0.3 : 0.38)), by - 2, Math.round(pw * (e.grande ? 0.6 : 0.76)), e.grande ? 4 : 3);
         // copas e ruínas grandes ficam meio transparentes quando o campeão está atrás delas
         const atras = e.grande && P.y < e.y && P.y > e.y - ph && Math.abs(P.x - e.x) < pw * 0.45;
         if (atras) ctx.globalAlpha = 0.5;
