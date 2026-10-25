@@ -145,6 +145,7 @@ begin
     return coalesce(array(select x from unnest(ids) x where x <> all (comp)), '{}');
   end if;
   -- janela nova (ou vitrine que ficou vazia): descarta as ofertas e os jogadores gerados antes
+  perform tc_reabastecer(); -- o estoque compartilhado (candidatos do elenco inicial, equipes do sistema) continua sendo mantido, como antes
   delete from tc_mercado_rot where org_id = oid and janela <= jan;
   delete from tc_jogadores where mercado_org = oid and org_id is null;
   ids := '{}';
