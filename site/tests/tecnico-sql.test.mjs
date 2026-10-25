@@ -1739,7 +1739,7 @@ t('equipes do sistema com foto: cada jogador é cópia de um jogador com foto da
   V(`select tc_completar_elenco(${org})`);
   assert.ok(doadores > 0, 'há jogadores de meio com foto para copiar');
   assert.equal(V(`select count(*) from tc_jogadores where org_id = ${org} and retrato is null`), '0', V(`select coalesce(string_agg(id || ':' || pos || ':' || coalesce(slot,'-') || ':' || ficticio::text, ' | '), '') from tc_jogadores where org_id = ${org} and retrato is null`));
-  assert.equal(V("select count(*) from tc_jogadores where ficticio and retrato is null and org_id is null and mercado_org is null"), '0', 'nenhum jogador livre do estoque sem foto');
+  assert.equal(V("select count(*) from tc_jogadores where ficticio and retrato is null and org_id is null and mercado_org is null"), '0', 'nenhum jogador livre do estoque sem foto: ' + V("select coalesce(string_agg(id || ':' || pos || ':' || nome || ':' || criado::text, ' | ' order by id), '') from (select * from tc_jogadores where ficticio and retrato is null and org_id is null and mercado_org is null order by id limit 6) z"));
 });
 
 t('finanças: a receita do marketing vira um lançamento por dia que vai acumulando; outros motivos continuam um a um', () => {
