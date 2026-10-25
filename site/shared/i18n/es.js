@@ -3576,7 +3576,7 @@ export default {
   "Não. Só vale XP e maestria.": "No. Solo vale para XP y maestría.",
   "Mercado e contratos": "Mercado y contratos",
   "Contratar, pagar salário e vender": "Fichar, pagar salarios y vender",
-  "Mostra de 7 a 10 jogadores comuns, que <b>muda a cada 12 horas</b>.": "Muestra de 7 a 10 jugadores comunes, que <b>cambia cada 12 horas</b>.",
+  "Mostra 10 jogadores comuns, que <b>muda a cada 12 horas</b>.": "Muestra 10 jugadores comunes, que <b>cambia cada 12 horas</b>.",
   "Os jogadores têm Poder próximo ao do seu time. A vitrine é só sua: ninguém contrata o jogador antes de você.": "Los jugadores tienen un Poder cercano al de tu equipo. La vitrina es solo tuya: nadie ficha al jugador antes que tú.",
   "Preços em <b>créditos</b>. Contratar leva o jogador para o inventário.": "Precios en <b>créditos</b>. Fichar lleva al jugador al inventario.",
   "Contratos e salários": "Contratos y salarios",

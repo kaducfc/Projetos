@@ -3576,7 +3576,7 @@ export default {
   "Não. Só vale XP e maestria.": "No. It only counts for XP and mastery.",
   "Mercado e contratos": "Market and contracts",
   "Contratar, pagar salário e vender": "Signing, paying salaries and selling",
-  "Mostra de 7 a 10 jogadores comuns, que <b>muda a cada 12 horas</b>.": "Shows 7 to 10 common players, which <b>changes every 12 hours</b>.",
+  "Mostra 10 jogadores comuns, que <b>muda a cada 12 horas</b>.": "Shows 10 common players, which <b>changes every 12 hours</b>.",
   "Os jogadores têm Poder próximo ao do seu time. A vitrine é só sua: ninguém contrata o jogador antes de você.": "The players have Power close to your team’s. The showcase is yours alone: nobody signs the player before you.",
   "Preços em <b>créditos</b>. Contratar leva o jogador para o inventário.": "Prices in <b>credits</b>. Signing sends the player to your inventory.",
   "Contratos e salários": "Contracts and salaries",

@@ -78,7 +78,7 @@ export const PAGINAS = [
 
   { id: 'mercado', t: 'Mercado e contratos', r: 'Contratar, pagar salário e vender', cor: '#60a5fa', corpo: () => `
     <h4>Mercado oficial</h4>
-    ${lista('Mostra de 7 a 10 jogadores comuns, que <b>muda a cada 12 horas</b>.', 'Os jogadores têm Poder próximo ao do seu time. A vitrine é só sua: ninguém contrata o jogador antes de você.', 'Preços em <b>créditos</b>. Contratar leva o jogador para o inventário.')}
+    ${lista('Mostra 10 jogadores comuns, que <b>muda a cada 12 horas</b>.', 'Os jogadores têm Poder próximo ao do seu time. A vitrine é só sua: ninguém contrata o jogador antes de você.', 'Preços em <b>créditos</b>. Contratar leva o jogador para o inventário.')}
     <h4>Contratos e salários</h4>
     ${lista('Para escalar um jogador como titular, efetive um <b>contrato</b>: <b>1 semana</b> ou <b>1 temporada</b> (4 semanas, <b>20% mais barato</b>).', 'O salário é pago <b>adiantado</b> ao assinar.', 'Se encerrar o contrato antes do fim, você recebe <b>50% do que sobrou</b>.')}
     <h4>Mercado entre usuários</h4>
