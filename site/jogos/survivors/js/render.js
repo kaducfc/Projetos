@@ -19,8 +19,8 @@ function glow(cor, r) { // bolha de luz (gradiente radial) para brilho aditivo
 // Luzes dos objetos grandes por reino (mesmo formato).
 const LUZ_GRANDES = { freljord: { 2: ['#ff9a3a', 12, 0.5, 0.9], 3: ['#58c8ff', 22, 0.4, 0.5], 4: ['#58c8ff', 12, 0.4, 0.45] }, noxus: { 2: ['#ff8a3a', 20, 0.6, 0.93], 4: ['#ff6a2a', 10, 0.3, 0.3], 5: ['#ff6a2a', 24, 0.45, 0.45] } };
 const LUZ_PEQ = { noxus: { 7: ['#ff6a2a', 9, 0.35, 0.5], 9: ['#ff6a2a', 8, 0.3, 0.4], 12: ['#ff6a2a', 9, 0.35, 0.4], 14: ['#ff8a3a', 17, 0.6, 0.65], 11: ['#ff6a2a', 8, 0.3, 0.4] } };
-// Afastamento da câmera: o mundo visível é ZOOM_MUNDO vezes maior (1,4 = 40% mais longe); o HUD continua no tamanho normal.
-export const ZOOM_MUNDO = 1.4;
+// Afastamento da câmera: o mundo visível é ZOOM_MUNDO vezes maior (1,7 = 70% mais longe); o HUD continua no tamanho normal.
+export const ZOOM_MUNDO = 1.7;
 export function criarRender(canvas) {
   const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
   const chunks = new Map();
