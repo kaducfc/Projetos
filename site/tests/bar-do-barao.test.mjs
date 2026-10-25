@@ -294,7 +294,7 @@ import { readFileSync, existsSync } from 'node:fs';
 test('integração: catálogo (liberado), capa no hub, arquivos e referências do index.html existem', async () => {
   const { GAMES } = await import('../shared/config.js');
   const cfg = GAMES.find((g) => g.id === 'bar-do-barao');
-  assert.ok(cfg && cfg.name === 'Barão da Sucata' && cfg.path === 'jogos/bar-do-barao/' && !cfg.soAdmin, 'liberado para o público');
+  assert.ok(cfg && cfg.name === 'Barão da Sucata' && cfg.path === 'jogos/bar-do-barao/' && cfg.soAdmin === true, 'fora de circulação: só administradores');
   assert.match(readFileSync(new URL('../js/hub.js', import.meta.url), 'utf8'), /'bar-do-barao': `<div class="cv cv-bb">/);
   const html = readFileSync(new URL('../jogos/bar-do-barao/index.html', import.meta.url), 'utf8');
   for (const m of html.matchAll(/(?:href|src)="((?!https?:)[^"#]+?)(?:\?[^"]*)?"/g)) {
@@ -441,7 +441,7 @@ test('ranqueada: PDR pela pontuação (100 → +35, 55 → +3, 54 → −3, 10 �
   const { GAMES } = await import('../shared/config.js');
   const g = GAMES.find((x) => x.id === 'bar-do-barao');
   assert.deepEqual(g.ranked, { modo: 'vagas', selo: 'Ranqueada' });
-  assert.ok(!g.soAdmin, 'liberado para o público');
+  assert.ok(g.soAdmin === true, 'fora de circulação: só administradores');
 });
 
 test('ranqueada: o SQL (0073) usa os mesmos números do jogo e valida o detalhe da pontuação', () => {
