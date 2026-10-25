@@ -31,6 +31,7 @@ const NOMES = {
   barao: { uma: 'partida', varias: 'partidas' },
   smite: { uma: 'partida', varias: 'partidas' },
   'bar-do-barao': { uma: 'partida', varias: 'partidas' },
+  survivors: { uma: 'partida', varias: 'partidas' },
 };
 const nomes = (jogo) => {
   const n = NOMES[jogo] || NOMES['carreira-no-rift'];

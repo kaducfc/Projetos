@@ -296,3 +296,13 @@ test('os 3 últimos reinos têm o dobro de vida e de dano nos monstros', () => {
   base.R = { ...base.R, mulVida: 1, mulDano: 1 }; const e0 = criarInimigo(base, 'lobo', 50, 50);
   assert.ok(Math.abs(e1.hp / e0.hp - 2) < 1e-9 && Math.abs(e1.dano / e0.dano - 2) < 1e-9);
 });
+
+test('ranqueada: PDR pelo tempo sobrevivido (perde até 15 antes dos 4 min, ganha de 3 a 35 até os 15 min)', async () => {
+  const { baseSurvivors } = await import('../shared/ranked.js');
+  assert.equal(baseSurvivors(0), -15); assert.equal(baseSurvivors(239), -3);
+  assert.equal(baseSurvivors(240), 3); assert.equal(baseSurvivors(900), 35); assert.equal(baseSurvivors(2000), 35);
+  assert.equal(baseSurvivors(100, true), 35);
+  for (let t = 1; t <= 900; t++) assert.ok(baseSurvivors(t) >= baseSurvivors(t - 1), `sobe com o tempo (${t}s)`);
+  for (let t = 0; t < 240; t++) assert.ok(baseSurvivors(t) < 0 && baseSurvivors(t) >= -15);
+  for (let t = 240; t <= 1000; t++) assert.ok(baseSurvivors(t) >= 3 && baseSurvivors(t) <= 35);
+});

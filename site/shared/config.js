@@ -161,6 +161,7 @@ export const GAMES = [
     path: 'jogos/survivors/',
     status: 'live',
     scoreLabel: 'Pontos',
+    ranked: { modo: 'vagas', selo: 'Ranqueada' },
     soAdmin: true,
   },
 ];

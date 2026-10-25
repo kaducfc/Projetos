@@ -9,6 +9,7 @@ import { criarRender } from './render.js';
 import { urlSprite, urlIcone, carregarImagens, arteUrl, urlQuadro, nQuadros } from './sprites.js';
 import { som, SOM_EVENTO, destravar, definirMudo, estaMudo } from './audio.js';
 import * as Meta from './meta.js';
+import { avisoComeco, avisoFim } from '../../../shared/aviso-ranked.js';
 
 const GAME_ID = 'survivors';
 const RETRATOS = { ahri: 'ahri/retrato.png', garen: 'garen/retrato.png', jinx: 'jinx/retrato.png', ashe: 'ashe/retrato.png', lux: 'lux/retrato.png', zed: 'zed/retrato.png' }; // campeões com arte própria
@@ -28,6 +29,7 @@ let modo = 'menu'; // menu | selecao | loja | jogo
 let S = null; let demo = null; let pausado = false; let escolhido = meta.ultimo; let reinoEscolhido = meta.ultimoReino || 'ixtal';
 let escala = 3; const render = criarRender(cv);
 let ult = 0; let fimTratado = false;
+let ranqueada = null; // ingresso da partida ranqueada (vale PDR nas 2 primeiras do dia; o servidor confere o tempo e calcula o PDR)
 try { definirMudo(localStorage.getItem('survivors.mudo') === '1'); } catch { /* sem storage */ }
 
 // --------------------------------------------------------------------------- tamanho (pixels nítidos)
@@ -191,6 +193,7 @@ function iniciar() {
   meta.ultimoReino = reinoEscolhido;
   S = criarJogo({ campeao: escolhido, meta, vista: { w: render.w, h: render.h }, reino: reinoEscolhido });
   modo = 'jogo'; pausado = false; fimTratado = false; ui.className = 'sv-ui jogo'; ui.innerHTML = '';
+  ranqueada = null; try { platform.rankedIniciar(GAME_ID).then((r) => { ranqueada = r; avisoComeco(r, GAME_ID); }).catch(() => {}); } catch { /* sem conexão */ }
   destravar(); avisar(`${CAMPEOES.find((c) => c.id === escolhido).nome} em ${REINOS[reinoEscolhido].nome}!`);
 }
 function avisar(txt, cls = '') {
@@ -247,7 +250,11 @@ let animVit = null;
 function fimDeJogo() {
   fimTratado = true; const venceu = S.estado === 'vitoria'; som(venceu ? 'vitoria' : 'derrota');
   const ganho = essenciaGanha(S); Meta.registrarPartida(meta, S, ganho);
-  try { platform.recordResult(GAME_ID, { score: S.abates * 10 + Math.floor(S.t) + (venceu ? 5000 : 0), summary: { campeao: S.campeao, tempo: Math.floor(S.t), abates: S.abates, nivel: S.nivel, venceu } }); } catch { /* sem conexão */ }
+  const ingresso = ranqueada;
+  try {
+    Promise.resolve(platform.recordResult(GAME_ID, { score: S.abates * 10 + Math.floor(S.t) + (venceu ? 5000 : 0), summary: { campeao: S.campeao, reino: S.reino, tempo: Math.floor(S.t), abates: S.abates, nivel: S.nivel, venceu, ranked: ingresso?.token || undefined } }))
+      .then((entry) => avisoFim(entry, ingresso, GAME_ID)).catch(() => {});
+  } catch { /* sem conexão */ }
   const c = CAMPEOES.find((x) => x.id === S.campeao);
   clearInterval(animVit);
   tela(`<div class="sv-painel ${venceu ? 'vitoria' : 'derrota'}"><h2>${venceu ? 'VITÓRIA!' : 'DERROTA'}</h2>

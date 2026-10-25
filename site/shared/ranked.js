@@ -26,7 +26,7 @@ export const VAGAS_GRAO_MESTRE = 200;
 export const MIN_GRAO_MESTRE = 200;
 export const PARTIDAS_POR_DIA = 3; // padrão antigo (3); hoje todos os jogos por vagas valem 2 (0077)
 // Quantas partidas por dia valem em cada jogo: Carreira, Lendas e Desafio do Golpear 2 (0071 e 0072); os outros, 3.
-export const PARTIDAS_JOGO = { smite: 2, cblol: 2, 'carreira-no-rift': 2, 'bar-do-barao': 2, barao: 2 };
+export const PARTIDAS_JOGO = { smite: 2, cblol: 2, 'carreira-no-rift': 2, 'bar-do-barao': 2, barao: 2, survivors: 2 };
 export const partidasPorDia = (jogo) => PARTIDAS_JOGO[jogo] ?? PARTIDAS_POR_DIA;
 export const NAO_TERMINOU = -15; // Carreira/Lendas começada e não terminada no dia
 export const INATIVIDADE = { aPartir: 'ouro', dias: 3, pdr: -25 };
@@ -88,6 +88,15 @@ export function baseSucata(pontos) {
   const p = Math.max(10, Math.min(100, pontos));
   if (p >= 55) return Math.round(3 + ((p - 55) * 32) / 45);
   return -Math.round(3 + ((54 - p) * 22) / 44);
+}
+// Rift Survivors: PDR de tabela pelo tempo sobrevivido (antes do % do elo; igual a site_rk_base_survivors, 0188).
+// Até 4 min perde: 0:00 → −15 · 3:59 → −3 (reta entre os dois). A partir de 4:00 ganha: 4:00 → +3 · 15:00 → +35 (reta); depois
+// dos 15 min fica em +35. Vitória (chefe final derrotado) vale o máximo, +35, em qualquer reino (os reinos de 10 min não chegam aos 15).
+export const SURVIVORS_MIN_GANHA = 240; export const SURVIVORS_MAX_TEMPO = 900;
+export function baseSurvivors(tempo, venceu = false) {
+  const t = venceu ? SURVIVORS_MAX_TEMPO : Math.max(0, Math.min(SURVIVORS_MAX_TEMPO, Math.floor(tempo || 0)));
+  if (t >= SURVIVORS_MIN_GANHA) return Math.round(3 + ((t - SURVIVORS_MIN_GANHA) * 32) / (SURVIVORS_MAX_TEMPO - SURVIVORS_MIN_GANHA));
+  return -Math.round(3 + ((SURVIVORS_MIN_GANHA - 1 - t) * 12) / (SURVIVORS_MIN_GANHA - 1));
 }
 // Conexões do League: PDR de tabela pela partida (antes do % do elo). Pontos = 100 − 10 por erro − 5 por dica.
 // Perdeu (4º erro): −20, o mínimo. Vitória, pelos pontos (entre eles o PDR varia em reta):

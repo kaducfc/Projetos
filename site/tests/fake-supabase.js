@@ -217,7 +217,7 @@ export function createFakeSupabase() {
       const k = `${uid}|${args.jogo}`;
       fakeInicios.set(k, (fakeInicios.get(k) || 0) + 1);
       const n = fakeInicios.get(k);
-      const lim = ['smite', 'cblol', 'carreira-no-rift', 'bar-do-barao', 'barao'].includes(args.jogo) ? 2 : 3; // igual a 0072 e 0073
+      const lim = ['smite', 'cblol', 'carreira-no-rift', 'bar-do-barao', 'barao', 'survivors'].includes(args.jogo) ? 2 : 3; // igual a 0072 e 0073
       if (n > lim) return { data: { token: null, dia: hojeIso, numero: null, restantes: 0, limite: lim }, error: null };
       return { data: { token: `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`, dia: hojeIso, numero: n, restantes: lim - n, limite: lim }, error: null };
     }
