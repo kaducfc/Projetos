@@ -170,6 +170,7 @@ function prisaoDeSelva(P, u) {
 function precisaRecuar(P, u, ctx) {
   const R = { ...P.regras.ia.perigo, vidaBaixa: pol(P, u.equipe, 'perigo.vidaBaixa'), vidaCritica: pol(P, u.equipe, 'perigo.vidaCritica') };
   const hp = ctx.hp; const bal = ctx.bal;
+  if (ctx.plano && ctx.plano.urgente && ctx.plano.participantes.includes(u.id) && hp > pol(P, u.equipe, 'janela.hpUrgente')) return null; // acabar o jogo (ou impedir que acabem): vale o risco
   const des = desespero(P, u); // time atrás + Mental baixo: aguenta mais risco do que devia
   const inc = incerteza(P, u.equipe);
   if (!ctx.iniPerto.length && !ctx.torreIni) {
@@ -190,7 +191,7 @@ function precisaBase(P, u, ctx) {
   const R = P.regras.campeao;
   if (u.estado === 'morto') return null;
   const perigo = ctx.iniPerto.some((k) => k.visivel);
-  if (ctx.hp < R.recall.vidaBaixa) return 'vida baixa';
+  if (ctx.hp < R.recall.vidaBaixa && !(ctx.plano && ctx.plano.urgente && ctx.plano.participantes.includes(u.id) && ctx.hp > pol(P, u.equipe, 'janela.hpUrgente'))) return 'vida baixa';
   if (u.pos === 'selva' && ctx.hp < (u.jungle.emCombate ? 0.3 : 0.45)) return 'vida baixa (selva)';
   // Macro: com um objetivo prestes a nascer ou vivo, quem lê o jogo segura a ida à base por ouro (a vida baixa ainda manda voltar)
   const O = P.objetivosEstado; const objPerto = [O.dragao, O.barao].some((x) => x && (x.vivo || x.proximo - P.t < 40)) && P.t > 400;
@@ -362,7 +363,7 @@ function atenderPlano(P, u, ctx) {
   const hp = ctx.hp;
   const part = pl.participantes && pl.participantes.includes(u.id);
   if (!part) return null;
-  if (hp < 0.4) return null;
+  if (hp < (pl.urgente ? pol(P, u.equipe, 'janela.hpUrgente') : 0.4)) return null;
   switch (pl.tipo) {
     case 'objetivo': return { id: pl.id, estado: 'objetivo', motivo: pl.objetivo, alvo: pl };
     case 'defender': case 'defender_base': return { id: pl.id, estado: 'defendendo', motivo: 'defender ' + (pl.rota || 'base'), alvo: pl };

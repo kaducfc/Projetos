@@ -9,8 +9,19 @@ import { valorCombate, dpsDe, aliadosPerto, minionsPerto, torreInimigaEm, rotaDe
 import { usarHabilidades, posFarm, golpear } from './campeao-ia.js';
 import { registrar } from './eventos.js';
 import { incerteza, visaoSobre, macroDaEquipe, atraso, pol } from './inteligencia.js';
+import { janelaOfensiva, janelaDeAbates, buffBaraoDe, aptos, cadeiaDeVitoria } from './janela.js';
 
 const ID = (P) => ++P.proxPlano;
+
+// Minion aliado mais avançado de uma rota (e o progresso dele a partir da base da equipe).
+export function frenteAliada(P, eq, rota) {
+  let melhor = null, bp = -1;
+  for (const m of P.minions) {
+    if (m.morto || m.equipe !== eq || m.rota !== rota || m.subtipo === 'arauto') continue;
+    const pr = progresso(rota, eq, sNaRota(rota, m).s); if (pr > bp) { bp = pr; melhor = m; }
+  }
+  return melhor ? { m: melhor, p: bp } : null;
+}
 
 export function faseDaPartida(P) {
   const F = P.regras.fases; const torres = P.estruturas.filter((e) => e.subtipo === 'torre' && e.morto).length;
@@ -50,6 +61,31 @@ export function atualizarEstrategia(P, eq) {
   const ouroDif = E.ouroTotal - P.equipes[inim].ouroTotal;
   const nexus = MUNDO_MAPA.bases[eq].nexus;
 
+  // 0) janelas de vitória: o que esta equipe pode fazer para ACABAR o jogo e o que o adversário poderia fazer contra ela (ver janela.js)
+  const Jme = janelaOfensiva(P, eq); const Jini = janelaOfensiva(P, inim, { ameaca: true });
+  E.janela = Jme;
+  if (Jme.comprometer) {
+    if (!E.finalizando) { E.finalizando = { desde: P.t, ultimo: P.t }; registrar(P, 'investida_final', { equipe: eq, rota: Jme.rota, motivo: Jme.motivo, tempo: Math.round(Jme.tempo), razao: Math.round(Jme.razao * 100) / 100, mortos: Jme.mortos, barao: Jme.barao }); }
+    E.finalizando.ultimo = P.t;
+  } else if (E.finalizando && P.t - E.finalizando.ultimo > 8) E.finalizando = null;
+  // o adversário tem a chance de acabar e a nossa não é mais rápida: todos defendem onde ele vai bater (inclusive quem estava na base)
+  if (Jini.comprometer && Jini.alvo && (!Jme.comprometer || Jme.tempo > Jini.tempo * 0.9)) {
+    const part = aptos(P, eq, pol(P, eq, 'janela.hpUrgente')).filter((c) => !usados.has(c.id));
+    if (part.length) {
+      planos.push({ id: ID(P), tipo: 'defender_base', pos: { x: Jini.alvo.x, y: Jini.alvo.y }, rota: Jini.alvo.rota || 'base', estrutura: Jini.alvo.id, participantes: part.map((c) => c.id), urgente: true, ameaca: true });
+      marcar(part);
+      if (!E.defendendoFinal || P.t - E.defendendoFinal > 30) registrar(P, 'defesa_final', { equipe: eq, rota: Jini.rota, alvo: Jini.alvo.id, tempo: Math.round(Jini.tempo), razao: Math.round(Jini.razao * 100) / 100 });
+      E.defendendoFinal = P.t;
+    }
+  }
+  // investida final: o caminho mais curto até o Nexus (uma rota, o inibidor, as torres do Nexus), sem passar por todas as outras estruturas
+  if (Jme.comprometer && Jme.alvo && !planos.some((p) => p.tipo === 'defender_base' && p.ameaca)) {
+    const part = aptos(P, eq, Jme.urgente ? pol(P, eq, 'janela.hpUrgente') : pol(P, eq, 'janela.hpMin')).filter((c) => !usados.has(c.id));
+    if (part.length >= 2) {
+      planos.push({ id: ID(P), tipo: 'finalizar', rota: Jme.rota, estrutura: Jme.alvo.id, pos: { x: Jme.alvo.x, y: Jme.alvo.y }, participantes: part.map((c) => c.id), urgente: Jme.urgente, motivo: Jme.motivo, nexusExposto: Jme.alvo.subtipo === 'nexus' || Jme.alvo.nivel === 4 });
+      marcar(part);
+    }
+  }
   // 1) defender a base: inimigos (conhecidos) perto do Nexus ou de uma estrutura da base
   const inimigosBase = conh.filter((k) => dist(k, nexus) < 2800);
   const base = P.estruturas.filter((e) => e.equipe === eq && !e.morto && (e.subtipo === 'inibidor' || e.subtipo === 'nexus' || e.nivel === 4));
@@ -105,6 +141,21 @@ export function atualizarEstrategia(P, eq) {
     const c = avaliarContestar(P, eq, conh, livres());
     if (c) { planos.push(c); marcar(c.participantes.map((id) => porId(P, id))); }
   }
+  // 4c) com o buff do Barão: o grupo inteiro empurra UMA rota junto da onda (o buff deixa os minions mais fortes enquanto há um campeão com buff por perto)
+  // e leva as estruturas dela rápido, antes de o buff acabar; não se espalha pelo mapa nem volta à base à toa
+  const buffBarao = buffBaraoDe(P, eq);
+  if (buffBarao > 15 && livres().length >= 3 && !planos.some((p) => p.tipo === 'finalizar')) {
+    let melhorR = null;
+    for (const rota of ROTAS) {
+      const ch = cadeiaDeVitoria(P, eq, rota); const alvo = ch.estruturas.find((x) => P.estruturaVulneravel(x)); if (!alvo) continue;
+      const fr = frenteAliada(P, eq, rota); const L = rotaDe(rota).comprimento;
+      const defensores = conh.filter((k) => k.visivel && dist(k, alvo) < 1800).length;
+      const sc = (fr ? fr.p / L : 0) * 2 + (ch.aberto ? 0.6 : 0) + Math.min(1, minionsPerto(P, eq, alvo.x, alvo.y, 1500, true) / 6) * 0.6 - defensores * 0.25;
+      if (!melhorR || sc > melhorR.sc) melhorR = { rota: ch.rota, alvo, sc };
+    }
+    const grupo = livres().filter((c) => hpPct(c) > 0.35);
+    if (melhorR && grupo.length >= 3) { planos.push({ id: ID(P), tipo: 'pressionar', rota: melhorR.rota, estrutura: melhorR.alvo.id, pos: { x: melhorR.alvo.x, y: melhorR.alvo.y }, participantes: grupo.map((c) => c.id), grupo: true, barao: true }); marcar(grupo); }
+  }
   // 5) pressionar estruturas: laner sozinho com a onda aliada na torre (a partir dos 10 min) e grupo quando há vantagem
   if (P.t >= pol(P, eq, 'pressaoDesde')) {
     const grupoLane = {};
@@ -120,7 +171,7 @@ export function atualizarEstrategia(P, eq) {
     // grupo: com vantagem numérica/ouro (ou já no fim de jogo), todos empurram a rota mais exposta
     const inimVivos = P.campeoes.filter((c) => c.equipe === inim && !c.morto).length;
     const vantagem = meus.length - inimVivos;
-    const querGrupo = fase !== 'inicial' && livres().length >= 4 && (vantagem >= 1 || ouroDif > 1800 || P.t >= pol(P, eq, 'grupoDesde'));
+    const querGrupo = (fase !== 'inicial' || (vantagem >= 2 && P.t >= 300)) && livres().length >= 4 && (vantagem >= 1 || ouroDif > 1800 || P.t >= pol(P, eq, 'grupoDesde'));
     if (querGrupo) {
       const opcoes = Object.entries(grupoLane).filter(([, g]) => g.defensores <= Math.max(1, vantagem + 1)).sort((a, b) => a[1].defensores - b[1].defensores || (a[0] === 'meio' ? -1 : 1));
       if (opcoes.length) {
@@ -207,6 +258,7 @@ function escolherObjetivo(P, eq, conh, aliados) {
   tryObj('dragao', O.dragao.vivo, O.dragao.proximo, 'dragao');
   if (!O.arauto.aposentado) tryObj('arauto', O.arauto.vivo, O.arauto.proximo, 'barao', true);
   tryObj('barao', O.barao.vivo, O.barao.proximo, 'barao');
+  const jan = janelaDeAbates(P, eq, 4); // segundos até o adversário voltar a ter 4 campeões (0 se já tem): depois de abates, dá para fazer um objetivo antes disso?
   let melhor = null, ms = -1;
   for (const c of candidatos) {
     // prioridade: Barão > Ancião/Dragão > Arauto, ponderada pela vantagem e pelo risco
@@ -222,14 +274,20 @@ function escolherObjetivo(P, eq, conh, aliados) {
     const limiteTempo = c.nome === 'barao' ? pol(P, eq, 'baraoLimite') : pol(P, eq, 'dragaoLimite');
     // Macro: inimigos que o time não está vendo contam como ameaça possível perto do objetivo
     const risco = vIni / Math.max(1, vAli) + incerteza(P, eq) * (0.1 + 0.8 * macroDaEquipe(P, eq)) * 0.8;
-    const vantagemNum = part.length - vivosIni;
+    let vantagemNum = part.length - vivosIni;
+    let janelaServe = false;
+    if (jan > 8 && part.length >= 3) {
+      const viagem = Math.max(...part.map((x) => P.nav.distancia(x.x, x.y, c.covil.x, c.covil.y, 'campeao') / x.vel));
+      janelaServe = isFinite(viagem) && viagem + tempo <= jan + 6;
+      if (janelaServe) vantagemNum = Math.max(vantagemNum, 1);
+    }
     // só vai quando: consegue matar a tempo e o risco é aceitável (ou o inimigo está morto/longe)
     if (part.length < Math.min(c.minimo, aliados.length) && !(vantagemNum >= 2 && part.length >= 3)) continue;
     if (tempo > limiteTempo) continue;
     if (risco > 1 / M && vantagemNum < 1) continue;
     if (c.nome === 'barao' && (P.t < pol(P, eq, 'baraoDesde') || (vantagemNum < 1 && risco > 0.6))) continue;
     // disputa pelo mesmo objetivo: se o inimigo já o está fazendo (visto perto e o monstro apanhando), só entra com vantagem
-    const score = base * (1.2 - Math.min(1, risco)) + vantagemNum * 0.2 + (c.epico ? 0.4 : 0);
+    const score = base * (1.2 - Math.min(1, risco)) + vantagemNum * 0.2 + (c.epico ? 0.4 : 0) + (janelaServe ? 0.6 : 0);
     if (score > ms) { ms = score; melhor = c; }
   }
   return melhor;
@@ -259,6 +317,15 @@ export function agirEstrutura(P, u) {
   if (!e || e.morto || !P.estruturaVulneravel(e)) { u.forcarDecisao = true; return; }
   // só se aproxima quando há minions aliados para absorver os tiros (ou na finalização)
   const minAli = minionsPerto(P, u.equipe, e.x, e.y, 900, true);
+  // investida final e pressão com o Barão: fica junto da onda aliada (sem minion perto a estrutura quase não toma dano e o buff do Barão se perde)
+  if ((pl.barao || pl.tipo === 'finalizar') && e.subtipo !== 'nexus' && minAli < 2) {
+    const rota = pl.rota || e.rota; const fr = rota ? frenteAliada(P, u.equipe, rota) : null;
+    if (fr && dist(u, fr.m) < 3500) {
+      const p = pontoNoProgresso(rota, u.equipe, fr.p + 140);
+      if (dist(u, p) > 160) irPara(P, u, p.x, p.y, { tol: 100 }); else parar(u);
+      atacarProximo(P, u, ctx); return;
+    }
+  }
   const seguro = pl.tipo === 'finalizar' || minAli >= 2;
   const alc = u.alcance > 300 ? u.alcance * 0.9 : 130;
   if (!seguro) { const p = posFarm(P, { ...u, rotaAtual: pl.rota, rota: pl.rota, pos: u.pos === 'suporte' ? 'top' : u.pos }); irPara(P, u, p.x, p.y, { tol: 120 }); atacarProximo(P, u, ctx); return; }

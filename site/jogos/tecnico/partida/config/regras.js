@@ -137,7 +137,8 @@ export const REGRAS = {
     visaoPersistencia: 6,
     baraoDesde: 1260, baraoLimite: 55, dragaoLimite: 45, grupoDesde: 1500, pressaoDesde: 600, // tempos e limites de decisão coletiva (ajustáveis por equipe: ver `politica`)
     desespero: 1.4,        // peso máximo do desespero (time atrás e Mental baixo) nas decisões de luta, recuo e objetivo
-    contestar: { janela: 6, minimo: 0.8, roubo: 2.5 }, // contestar/roubar objetivo: razão mínima de valor de combate e segundos de rajada que contam para roubar
+    contestar: { janela: 6, minimo: 0.8, roubo: 2.5 },
+    janela: { tempoMax: 75, tempoMaxBarao: 120, razaoMin: 1.0, razaoBarao: 0.75, hpMin: 0.35, hpUrgente: 0.12, baraoMortos: 3, memoria: 90 }, // janela de vitória (motor/janela.js): tempo máximo da investida final (s), razão mínima de força contra quem chega a tempo, vida mínima, inimigos mortos que, com o Barão, obrigam a tentar acabar // contestar/roubar objetivo: razão mínima de valor de combate e segundos de rajada que contam para roubar
   },
 
   // ---- visão: moitas e wards
