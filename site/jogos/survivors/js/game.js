@@ -226,8 +226,8 @@ function matar(S, e) {
     S.shake = 0.5; S.chefeVivo = null;
     if (CHEFES[e.tipo].final) { S.estado = 'vitoria'; S.evt.push({ tipo: 'vitoria' }); }
   } else if (e.elite) {
-    // baú de elite é raro: no máximo um a cada 90 s (com centenas de monstros em tela, as elites se acumulavam e chovia baú a partir dos 10 min)
-    if (r < 0.05 && S.t >= (S.proxBauElite || 0)) { S.itens.push({ x: e.x, y: e.y, tipo: 'bau' }); S.proxBauElite = S.t + 90; }
+    // baú de elite é raro: no máximo um a cada 45 s (com centenas de monstros em tela, as elites se acumulavam e chovia baú a partir dos 10 min)
+    if (r < 0.05 && S.t >= (S.proxBauElite || 0)) { S.itens.push({ x: e.x, y: e.y, tipo: 'bau' }); S.proxBauElite = S.t + 45; }
     else if (r < 0.45) S.itens.push({ x: e.x, y: e.y, tipo: 'vida' });
     S.ouro += 3;
   }

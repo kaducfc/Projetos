@@ -307,11 +307,11 @@ test('ranqueada: PDR pelo tempo sobrevivido (perde até 15 antes dos 4 min, ganh
   for (let t = 240; t <= 1000; t++) assert.ok(baseSurvivors(t) >= 3 && baseSurvivors(t) <= 35);
 });
 
-test('baús: só chefes garantem; elites dão baú raro (no máximo 1 a cada 90 s), não chove baú no fim da partida', () => {
+test('baús: só chefes garantem; elites dão baú raro (5%, no máximo 1 a cada 45 s), não chove baú no fim da partida', () => {
   const S = criarJogo({ campeao: 'garen', semente: 5 }); S.t = 700;
   let baus = 0; const orig = S.itens.push.bind(S.itens); S.itens.push = (...a) => { for (const x of a) if (x.tipo === 'bau') baus++; return orig(...a); };
   for (let i = 0; i < 400; i++) { const e = criarInimigo(S, 'krug', S.p.x + 50, S.p.y); e.hp = 0; ferir(S, e, 999999); }
   assert.ok(baus <= 1, `400 elites no mesmo instante dão no máximo 1 baú (deu ${baus})`);
-  S.t += 100; for (let i = 0; i < 400; i++) { const e = criarInimigo(S, 'golem', S.p.x + 50, S.p.y); ferir(S, e, 999999); }
-  assert.ok(baus <= 2, `e no máximo mais 1 depois de 90 s (total ${baus})`);
+  S.t += 50; for (let i = 0; i < 400; i++) { const e = criarInimigo(S, 'golem', S.p.x + 50, S.p.y); ferir(S, e, 999999); }
+  assert.ok(baus <= 2, `e no máximo mais 1 depois de 45 s (total ${baus})`);
 });
