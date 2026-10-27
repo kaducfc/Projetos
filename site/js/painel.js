@@ -7,7 +7,7 @@ import { mountSiteFooter } from '../shared/footer.js';
 import { ROLES, REGIONS } from '../jogos/carreira-no-rift/js/data/world.js';
 import { GAMES, gameById } from '../shared/config.js';
 import { REINOS as SV_REINOS, CAMPEOES as SV_CAMPEOES, MELHORIAS as SV_MELHORIAS } from '../jogos/survivors/js/data.js';
-import { sinaisVigia, resumoJogadores } from '../shared/vigia.js';
+import { sinaisVigia, resumoJogadores, anotarRepeticoes } from '../shared/vigia.js';
 import { nomeRecompensa, tipoTexto, codigoBonito } from '../shared/recompensas.js';
 import { passeHtml } from '../shared/passe.js';
 import { ligarCompraPremium } from '../shared/passe-compra.js';
@@ -700,7 +700,6 @@ body.addEventListener('click', (e) => {
 // ------------------------------------------------------------ ranqueada: vigia
 
 // Sinais de suspeita numa partida ranqueada (os limites dá para ajustar na tela).
-const NOTA_ALTA = 1600; // ~top 0,5% das carreiras simuladas (legado novo)
 let rk = null; // resposta de platform.adminRanked(days)
 let rkErro = '';
 const rkFiltro = { so: true, min: 3, q: '' };
@@ -709,7 +708,6 @@ function sinais(x) {
   const out = [];
   if (x.duracao_s != null && x.duracao_s < rkFiltro.min * 60) out.push(['rapida', 'Rápida demais']);
   if (x.esperado_min != null && (x.score < x.esperado_min || x.score > x.esperado_max)) out.push(['naobate', 'Não bate com os troféus']);
-  if (x.score >= NOTA_ALTA) out.push(['alta', 'Nota muito alta']);
   return out;
 }
 const duracao = (s) => (s == null ? '—' : `${Math.floor(s / 60)}min ${String(s % 60).padStart(2, '0')}s`);
@@ -760,7 +758,7 @@ function secaoVigia(dias) {
       ${tile('Fora da ranqueada', num((rk.banidos || []).length), 'jogadores tirados')}
     </div>
     <div class="card"><h3>Partidas ranqueadas</h3>
-      <p class="c-sub">Sinais: <b>rápida demais</b> (do começo ao fim da carreira, pelo relógio do servidor), <b>não bate com os troféus</b> (a nota está fora da faixa possível para o OVR, troféus e temporadas informados; nenhuma carreira honesta simulada ficou fora) e <b>nota muito alta</b> (${num(NOTA_ALTA)}+, raro mas possível). Um sinal sozinho não prova trapaça; confira antes de agir.</p>
+      <p class="c-sub">Sinais: <b>rápida demais</b> (do começo ao fim da carreira, pelo relógio do servidor) e <b>não bate com os troféus</b> (a nota está fora da faixa possível para o OVR, troféus e temporadas informados; nenhuma carreira honesta simulada ficou fora). Nota alta, campeão invicto, acertar de primeira ou média quase perfeita não são sinais: só tempo impossível e dados que não batem. Um sinal sozinho não prova trapaça; confira antes de agir.</p>
       <div class="ap-filtros">
         <label class="p-check"><input type="checkbox" data-rk-f="so"${rkFiltro.so ? ' checked' : ''} /> Só com sinais</label>
         <label class="p-label">Rápida se menos de (min) <input type="number" min="1" max="60" step="1" data-rk-f="min" value="${rkFiltro.min}" /></label>
@@ -1134,7 +1132,7 @@ async function load() {
     apErro = apoios.err?.message || '';
     rq = resumo.r || null;
     rqErro = resumo.err?.message || '';
-    vg = vigia.r || null;
+    vg = vigia.r || null; if (vg?.partidas) anotarRepeticoes(vg.partidas);
     vgErro = vigia.err?.message || '';
     cd = codigos.r || null;
     cdErro = codigos.err?.message || '';
@@ -1467,7 +1465,7 @@ async function buscarJogador(nome) {
   jgCarregando = true;
   if (aba === 'jogador' && ultimo) render(ultimo);
   try {
-    jg = await platform.adminJogador(nome);
+    jg = await platform.adminJogador(nome); if (jg?.partidas) anotarRepeticoes(jg.partidas.map((x) => Object.assign(x, { username: nome })));
     jgRec = null;
     jgRecErro = '';
     jgMoedas = null;
