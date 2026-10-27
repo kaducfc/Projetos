@@ -91,3 +91,33 @@ t('servidor: recusa dados inválidos', () => {
   assert.equal(Q(`select sv_salvar(0, ${dados(1)})`, 3).err, 'rev_invalida');
   assert.equal(Q(`select sv_salvar(9, ${dados(1, `, "x": "${'a'.repeat(41000)}"`)})`, 3).err, 'dados_grandes');
 });
+
+t('painel do administrador (0195): números por jogo e painel do Rift Survivors, só para administradores', () => {
+  const r0 = psql(['-d', 't'], `
+    create table if not exists public.site_events (id bigserial primary key, created_at timestamptz not null default now(), kind text not null, game_id text, device text not null, user_id uuid, data jsonb not null default '{}');
+    create table if not exists public.site_game_results (id uuid primary key default gen_random_uuid(), user_id uuid not null, game_id text not null, score numeric, summary jsonb not null default '{}', played_at timestamptz not null default now(), client_id text not null default gen_random_uuid()::text);
+    create table if not exists public.site_rk_dia (user_id uuid, dia date, jogo text, n int default 1, base int, nivel int, pdr int, score numeric, result_id uuid, criado timestamptz default now());
+    insert into public.site_admins values ('${U(1)}') on conflict do nothing;
+    insert into public.site_profiles values ('${U(1)}', 'adm') on conflict do nothing;
+    insert into public.site_profiles values ('${U(2)}', 'jogador2') on conflict do nothing;
+    insert into public.site_events (kind, game_id, device) values ('game_start', 'survivors', 'dispositivo-1'), ('game_end', 'survivors', 'dispositivo-1'), ('game_start', 'barao', 'dispositivo-2');
+    insert into public.site_game_results (user_id, game_id, score, summary) values
+      ('${U(1)}', 'survivors', 700, '{"campeao":"garen","reino":"ionia","tempo":600,"abates":300,"nivel":22,"venceu":true,"ranked":"abc"}'),
+      ('${U(2)}', 'survivors', 200, '{"campeao":"ahri","reino":"ixtal","tempo":150,"abates":40,"nivel":5,"venceu":false}'),
+      ('${U(2)}', 'barao', 10, '{}');
+    insert into public.site_rk_dia (user_id, dia, jogo, base, nivel, pdr) values ('${U(1)}', current_date, 'survivors', 20, 0, 20);
+  `); assert.equal(r0.status, 0, r0.stderr);
+  const r1 = psql(['-d', 't'], readFileSync(new URL('../supabase/migrations/0195_painel_jogos_survivors.sql', import.meta.url), 'utf8')); assert.equal(r1.status, 0, r1.stderr);
+  assert.equal(Q('select sv_admin_painel(30)', 2).err, 'not_admin'); assert.equal(Q('select site_admin_jogos(30)', 2).err, 'not_admin');
+  const sv = JSON.parse(Q('select sv_admin_painel(30)', 1).out);
+  assert.equal(sv.resumo.partidas, 2); assert.equal(sv.resumo.jogadores, 2); assert.equal(sv.resumo.vitorias, 1); assert.equal(sv.resumo.ranqueadas, 1);
+  assert.equal(sv.resumo.tempo_maximo, 600); assert.equal(sv.serie.length, 30);
+  assert.deepEqual(sv.reinos.map((x) => x.reino).sort(), ['ionia', 'ixtal']); assert.deepEqual(sv.campeoes.map((x) => x.campeao).sort(), ['ahri', 'garen']);
+  assert.equal(sv.faixas_tempo.reduce((s, f) => s + f.n, 0), 2); assert.equal(sv.top[0].usuario, 'adm'); assert.equal(sv.top[0].tempo, 600);
+  assert.equal(sv.ranqueada.partidas, 1); assert.equal(sv.ranqueada.pdr_total, 20);
+  assert.equal(sv.progresso.contas, 2); assert.ok(sv.progresso.essencia_total >= 62); assert.equal(sv.progresso.liberados.garen, 2);
+  const jg = JSON.parse(Q('select site_admin_jogos(30)', 1).out).jogos;
+  assert.equal(jg.survivors.iniciadas, 1); assert.equal(jg.survivors.terminadas, 1); assert.equal(jg.survivors.resultados, 2); assert.equal(jg.survivors.contas, 2);
+  assert.equal(jg.barao.iniciadas, 1); assert.equal(jg.barao.resultados, 1);
+  const r2 = psql(['-d', 't'], readFileSync(new URL('../supabase/migrations/0195_painel_jogos_survivors.sql', import.meta.url), 'utf8')); assert.equal(r2.status, 0, 'rodar de novo');
+});

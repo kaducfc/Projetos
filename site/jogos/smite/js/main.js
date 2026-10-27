@@ -485,6 +485,7 @@ function desenharFim(pts, melhor, recorde, perfeitas) {
 // Começa a partida (e a ranqueada do dia): `campeao` fixa o caçador; sem ele, é sorteado.
 function comecarPartida(campeao) {
   resultados = []; n = 0; ranqueada = null;
+  try { platform.track('game_start', GAME_ID, {}); } catch { /* sem conexão */ }
   platform.rankedIniciar(GAME_ID).then((r) => { ranqueada = r; avisoComeco(r, GAME_ID); });
   partida = criarPartida(aleatorio((Date.now() ^ 0x9e3779b9) >>> 0), campeao);
   prepararRodada();

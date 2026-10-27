@@ -6,6 +6,7 @@ import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { ROLES, REGIONS } from '../jogos/carreira-no-rift/js/data/world.js';
 import { GAMES, gameById } from '../shared/config.js';
+import { REINOS as SV_REINOS, CAMPEOES as SV_CAMPEOES, MELHORIAS as SV_MELHORIAS } from '../jogos/survivors/js/data.js';
 import { sinaisVigia, resumoJogadores } from '../shared/vigia.js';
 import { nomeRecompensa, tipoTexto, codigoBonito } from '../shared/recompensas.js';
 import { passeHtml } from '../shared/passe.js';
@@ -76,7 +77,7 @@ function hbars(entries, nameOf = (x) => x, { sort = true, fmt = num } = {}) {
 }
 
 // Abas do painel (a escolhida fica guardada neste navegador).
-const ABAS = [['geral', 'Visão geral'], ['jogos', 'Jogos'], ['rift', 'Rift Manager'], ['ranqueada', 'Ranqueada'], ['jogador', 'Jogador'], ['apoio', 'Apoio'], ['ferramentas', 'Ferramentas'], ['teste', 'Teste']];
+const ABAS = [['geral', 'Visão geral'], ['jogos', 'Jogos'], ['rift', 'Rift Manager'], ['survivors', 'Rift Survivors'], ['ranqueada', 'Ranqueada'], ['jogador', 'Jogador'], ['apoio', 'Apoio'], ['ferramentas', 'Ferramentas'], ['teste', 'Teste']];
 let aba = 'geral';
 try { aba = localStorage.getItem('site.painel.aba') || 'geral'; } catch { /* sem storage */ }
 if (!ABAS.some(([id]) => id === aba)) aba = 'geral';
@@ -88,6 +89,8 @@ let cd = null; // platform.adminCodigos(): códigos de recompensa
 let cdErro = '';
 let cdNovo = null; // último código criado (para mostrar e copiar)
 const cdAbertos = new Map(); // id do código → quem resgatou (lista) quando aberto
+let jogosEv = null; // platform.adminJogos(days): números por jogo (eventos + resultados das contas)
+let jogosEvErro = '';
 let vg = null; // platform.adminVigia(days): partidas dos outros jogos
 let vgErro = '';
 const vgFiltro = { so: true, q: '' };
@@ -106,10 +109,11 @@ function render(st) {
   ultimo = st;
   const contador = { ranqueada: suspeitasRk() + suspeitasVg(), apoio: ap?.periodo?.status?.pendente || 0 };
   const nav = `<nav class="p-tabs" role="tablist">${ABAS.map(([id, nome]) => `<button type="button" role="tab" data-aba="${id}" class="${aba === id ? 'on' : ''}">${nome}${contador[id] ? ` <span class="p-badge">${num(contador[id])}</span>` : ''}</button>`).join('')}</nav>`;
-  const conteudo = { geral: abaGeral, jogos: abaJogos, rift: abaRift, ranqueada: abaRanqueada, jogador: abaJogador, apoio: abaApoio, ferramentas: abaFerramentas, teste: abaTeste }[aba](st);
+  const conteudo = { geral: abaGeral, jogos: abaJogos, rift: abaRift, survivors: abaSurvivors, ranqueada: abaRanqueada, jogador: abaJogador, apoio: abaApoio, ferramentas: abaFerramentas, teste: abaTeste }[aba](st);
   body.innerHTML = nav + conteudo;
   if (aba === 'teste' && ps === null && !psErro && !psCarregando && platform.getUser()) carregarPasse();
   if (aba === 'rift' && rm === null && !rmErro && !rmCarregando) carregarRift();
+  if (aba === 'survivors' && sv === null && !svErro && !svCarregando) carregarSurvivors();
 }
 
 // ----------------------------------------------------------- aba: visão geral
@@ -126,6 +130,27 @@ function avisos() {
   for (const e of [rkErro, vgErro, apErro, rqErro, esErro]) if (e) itens.push(esc(e));
   if (!itens.length) return '<div class="p-ok">✓ Nada pedindo atenção agora.</div>';
   return `<div class="p-avisos"><h3>Atenção</h3><ul>${itens.map((i) => `<li>${i}</li>`).join('')}</ul></div>`;
+}
+
+// Por jogo: eventos (iniciadas/terminadas) e resultados das contas (0195), com hoje, 7 dias e a última partida. Jogo restrito leva a etiqueta.
+function tabelaPorJogo(perGame) {
+  const extra = jogosEv || {};
+  const ultima = (iso) => (iso ? dataHora(iso) : '—');
+  const linhas = GAMES.filter((g) => g.status === 'live').map((g) => {
+    const x = perGame[g.id] || {}; const y = extra[g.id] || {};
+    const ini = x.iniciadas || 0; const fim = x.terminadas || 0;
+    const pct = ini ? `${Math.round((fim / ini) * 100)}%` : '—';
+    const etiqueta = g.apenasAdmin ? ' <span class="p-badge" title="Só a conta de administrador vê e joga">só ADM</span>' : g.soAdmin ? ' <span class="p-badge" title="Em teste: administradores e contas convidadas">em teste</span>' : '';
+    const semEventos = !ini && !fim && (y.resultados || 0) > 0;
+    return `<tr><td>${esc(g.name)}${etiqueta}</td><td class="n">${num(x.jogadores || 0)}</td><td class="n">${num(ini)}</td><td class="n">${num(fim)}</td><td class="n">${pct}</td>
+      <td class="n">${jogosEv ? num(y.hoje_iniciadas || 0) : '—'}</td><td class="n">${jogosEv ? num(y.d7_iniciadas || 0) : '—'}</td>
+      <td class="n" title="Partidas gravadas na conta de quem estava logado${semEventos ? ' (este jogo ainda não manda eventos de início e fim)' : ''}">${jogosEv ? `${num(y.resultados || 0)} <small>${num(y.contas || 0)} ${y.contas === 1 ? 'conta' : 'contas'}</small>` : '—'}</td>
+      <td class="n">${jogosEv ? ultima(y.ultima) : '—'}</td></tr>`;
+  }).join('');
+  return `<div class="card"><h3>Por jogo</h3>${jogosEvErro ? `<p class="p-note">${esc(jogosEvErro)}</p>` : ''}<div class="table-wrap"><table class="p-table">
+      <thead><tr><th>Jogo</th><th class="n">Jogadores</th><th class="n">Iniciadas</th><th class="n">Terminadas</th><th class="n">Concluem</th><th class="n">Hoje</th><th class="n">7 dias</th><th class="n">Com conta</th><th class="n">Última</th></tr></thead>
+      <tbody>${linhas}</tbody>
+    </table></div><p class="c-sub">"Jogadores", "Iniciadas" e "Terminadas" vêm dos eventos (qualquer visitante); "Com conta" conta as partidas gravadas por quem estava logado.</p></div>`;
 }
 
 function abaGeral(st) {
@@ -157,14 +182,7 @@ function abaGeral(st) {
       <div class="card"><h3>Visitantes por dia</h3><p class="c-sub">${num(visits.total)} visitas diárias somadas</p>${visits.html}</div>
       <div class="card"><h3>Partidas iniciadas por dia</h3><p class="c-sub">${num(games.total)} no período</p>${games.html}</div>
     </div>
-    <div class="card"><h3>Por jogo</h3><div class="table-wrap"><table class="p-table">
-      <thead><tr><th>Jogo</th><th class="n">Jogadores</th><th class="n">Iniciadas</th><th class="n">Terminadas</th><th class="n">Concluem</th></tr></thead>
-      <tbody>${GAMES.filter((g) => g.status === 'live').map((g) => {
-        const x = perGame[g.id] || {};
-        const pct = x.iniciadas ? `${Math.round(((x.terminadas || 0) / x.iniciadas) * 100)}%` : '—';
-        return `<tr><td>${esc(g.name)}</td><td class="n">${num(x.jogadores || 0)}</td><td class="n">${num(x.iniciadas || 0)}</td><td class="n">${num(x.terminadas || 0)}</td><td class="n">${pct}</td></tr>`;
-      }).join('')}</tbody>
-    </table></div></div>
+    ${tabelaPorJogo(perGame)}
     <details class="p-details"><summary>Ver tabela por dia</summary>
       <div class="table-wrap"><table class="p-table">
         <thead><tr><th>Dia</th><th class="n">Visitantes</th><th class="n">Partidas iniciadas</th><th class="n">Terminadas</th><th class="n">Contas novas</th></tr></thead>
@@ -371,6 +389,77 @@ function abaRift(st) {
   </section>`;
 }
 
+
+// -------------------------------------------------------------- aba: Rift Survivors
+let sv = null; // resposta de platform.adminSurvivors(days)
+let svErro = '';
+let svCarregando = false;
+async function carregarSurvivors() {
+  svCarregando = true;
+  try { sv = await platform.adminSurvivors(days); svErro = ''; } catch (err) { sv = null; svErro = err.message; }
+  svCarregando = false;
+  if (aba === 'survivors' && ultimo) render(ultimo);
+}
+const nomeReinoSv = (id) => SV_REINOS[id]?.nome || id;
+const nomeCampSv = (id) => SV_CAMPEOES.find((c) => c.id === id)?.nome || id;
+const minSeg = (s) => (s == null ? '—' : `${Math.floor(s / 60)}:${String(Math.round(s) % 60).padStart(2, '0')}`);
+
+function abaSurvivors() {
+  if (svErro) return `<section class="p-section"><h2>Rift Survivors</h2><div class="card"><p class="p-note">${esc(svErro)}</p><button type="button" class="p-btn" data-sv-recarregar>Tentar de novo</button></div></section>`;
+  if (!sv) return '<section class="p-section"><h2>Rift Survivors</h2><p class="muted">Carregando…</p></section>';
+  const r = sv.resumo; const rk = sv.ranqueada; const pg = sv.progresso;
+  const graf = (titulo, chave, un) => { const c = columns(sv.serie, chave, un); return `<div class="card"><h3>${titulo}</h3><p class="c-sub">${num(c.total)} ${un} no período</p>${c.html}</div>`; };
+  const linhasReino = (sv.reinos || []).map((x) => `<tr><td>${esc(nomeReinoSv(x.reino))}</td><td class="n">${num(x.partidas)}</td><td class="n">${num(x.jogadores)}</td><td class="n">${pct(x.vitorias, x.partidas)}</td><td class="n">${minSeg(x.tempo_medio)}</td><td class="n">${minSeg(x.tempo_max)}</td></tr>`);
+  const linhasCamp = (sv.campeoes || []).map((x) => `<tr><td>${esc(nomeCampSv(x.campeao))}</td><td class="n">${num(x.partidas)}</td><td class="n">${num(x.jogadores)}</td><td class="n">${pct(x.vitorias, x.partidas)}</td><td class="n">${minSeg(x.tempo_medio)}</td><td class="n">${num(x.abates_medio)}</td></tr>`);
+  const linhasTop = (sv.top || []).map((x) => `<tr><td>${esc(x.usuario || '—')}</td><td>${esc(nomeCampSv(x.campeao))}</td><td>${esc(nomeReinoSv(x.reino))}</td><td class="n">${minSeg(x.tempo)}</td><td class="n">${num(x.abates)}</td><td class="n">${num(x.nivel)}</td><td>${x.venceu ? 'Vitória' : 'Derrota'}</td><td>${esc(dataHora(x.quando))}</td></tr>`);
+  const melhorias = ['hp', 'dano', 'vel', 'xp', 'ima', 'revive'].map((k) => `<tr><td>${esc(SV_MELHORIAS[k]?.nome || k)}</td><td class="n">${dec(pg.melhorias_media?.[k])}</td><td class="n">${k === 'revive' ? '—' : num(pg.melhorias_max?.[k])}</td></tr>`);
+  return `
+  <section class="p-section">
+    <h2>Rift Survivors · últimos ${sv.dias} dias <button type="button" class="p-link" data-sv-recarregar>atualizar</button></h2>
+    <p class="c-sub">Só entram as partidas de quem estava logado (o resultado é gravado na conta). Vitória = derrotar o chefe final.</p>
+    <div class="tiles">
+      ${tile('Partidas', num(r.partidas), `${num(r.hoje_partidas)} hoje`)}
+      ${tile('Jogadores (contas)', num(r.jogadores), `${num(r.hoje_jogadores)} hoje`)}
+      ${tile('Vitórias', pct(r.vitorias, r.partidas), `${num(r.vitorias)} de ${num(r.partidas)}`)}
+      ${tile('Tempo médio', minSeg(r.tempo_medio), `recorde ${minSeg(r.tempo_maximo)}`)}
+      ${tile('Abates médios', num(r.abates_medio), `nível médio ${dec(r.nivel_medio)}`)}
+      ${tile('Ranqueadas', num(r.ranqueadas), `${num(rk.jogadores)} jogadores · PDR médio ${dec(rk.pdr_medio)}`)}
+    </div>
+    <div class="cards">
+      ${graf('Partidas por dia', 'partidas', 'partidas')}
+      ${graf('Jogadores por dia', 'jogadores', 'jogadores')}
+      ${graf('Vitórias por dia', 'vitorias', 'vitórias')}
+    </div>
+  </section>
+  <section class="p-section">
+    <h2>Reinos e campeões</h2>
+    <div class="cards">
+      <div class="card"><h3>Por reino</h3>${tabelaRm([['Reino'], ['Partidas', 1], ['Jogadores', 1], ['Vitórias', 1], ['Tempo médio', 1], ['Maior', 1]], linhasReino)}</div>
+      <div class="card"><h3>Por campeão</h3>${tabelaRm([['Campeão'], ['Partidas', 1], ['Jogadores', 1], ['Vitórias', 1], ['Tempo médio', 1], ['Abates', 1]], linhasCamp)}</div>
+      <div class="card"><h3>Quanto tempo sobrevivem</h3><p class="c-sub">Partidas por faixa de tempo</p>${hbars((sv.faixas_tempo || []).map((f) => [f.faixa, Number(f.n)]), (k) => k, { sort: false })}</div>
+    </div>
+    <div class="card"><h3>Melhores partidas do período</h3>${tabelaRm([['Jogador'], ['Campeão'], ['Reino'], ['Tempo', 1], ['Abates', 1], ['Nível', 1], ['Resultado'], ['Quando']], linhasTop)}</div>
+  </section>
+  <section class="p-section">
+    <h2>Ranqueada</h2>
+    <div class="tiles">
+      ${tile('Partidas que valeram', num(rk.partidas), `${num(rk.ganhos)} ganharam PDR · ${num(rk.perdas)} perderam`)}
+      ${tile('PDR distribuído', num(rk.pdr_total), 'soma do período (ganhos menos perdas)')}
+    </div>
+  </section>
+  <section class="p-section">
+    <h2>Progresso das contas</h2>
+    <div class="tiles">
+      ${tile('Contas com progresso', num(pg.contas), 'salvo no servidor')}
+      ${tile('Essência (EA)', num(pg.essencia_total), `média ${num(pg.essencia_media)} por conta`)}
+    </div>
+    <div class="cards">
+      <div class="card"><h3>Campeões liberados</h3><p class="c-sub">Contas que têm cada campeão</p>${hbars(Object.entries(pg.liberados || {}), nomeCampSv)}</div>
+      <div class="card"><h3>Reinos vencidos</h3><p class="c-sub">Contas que já venceram cada reino</p>${hbars(Object.entries(pg.reinos_vencidos || {}), nomeReinoSv)}</div>
+      <div class="card"><h3>Melhorias</h3><p class="c-sub">Nível médio e o maior nível entre as contas</p>${tabelaRm([['Melhoria'], ['Média', 1], ['Maior', 1]], melhorias)}</div>
+    </div>
+  </section>`;
+}
 
 // -------------------------------------------------------------- aba: ranqueada
 
@@ -1029,12 +1118,14 @@ async function load() {
   try {
     // Apoio e vigilância podem faltar (SQL ainda não rodado) sem travar o resto.
     const opcional = (pr) => pr.then((r) => ({ r }), (err) => ({ err }));
-    const [st, apoios, ranked, estornos, resumo, vigia, codigos, modelos] = await Promise.all([
+    const [st, apoios, ranked, estornos, resumo, vigia, codigos, modelos, jogos] = await Promise.all([
       platform.adminStats(days), opcional(platform.adminApoios(days, apTipo || null)), opcional(platform.adminRanked(days)), opcional(platform.adminEstornos()),
-      opcional(platform.adminRanqueada(days)), opcional(platform.adminVigia(Math.min(days, 90))), opcional(platform.adminCodigos()), opcional(platform.adminModelos()),
+      opcional(platform.adminRanqueada(days)), opcional(platform.adminVigia(Math.min(days, 90))), opcional(platform.adminCodigos()), opcional(platform.adminModelos()), opcional(platform.adminJogos(days)),
     ]);
     if (seq !== loadSeq) return;
     rm = null; rmErro = ''; // o painel do Rift Manager é relido para o novo período
+    sv = null; svErro = ''; // o do Rift Survivors também
+    jogosEv = jogos.r?.jogos || null; jogosEvErro = jogos.err?.message || '';
     rk = ranked.r || null;
     rkErro = ranked.err?.message || '';
     ap = apoios.r || null;
@@ -1160,6 +1251,7 @@ body.addEventListener('click', async (e) => {
 
 body.addEventListener('click', (e) => {
   if (e.target.closest('[data-rm-recarregar]')) { rm = null; rmErro = ''; render(ultimo); return; }
+  if (e.target.closest('[data-sv-recarregar]')) { sv = null; svErro = ''; render(ultimo); return; }
   const t = e.target.closest('[data-aba]');
   if (!t || !ultimo) return;
   aba = t.dataset.aba;

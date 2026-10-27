@@ -1229,6 +1229,7 @@ carregarFontes().then((ok) => { if (ok && S.meu) render(); }); // com as fontes 
   const aberto = !gameById(GAME_ID)?.soAdmin;
   if (!user && !teste) { telaLogin(app); return; }
   if (!souAdmin && !teste && !aberto) { telaMensagem('Em desenvolvimento', 'Este jogo ainda está em teste e só administradores e convidados conseguem jogar por enquanto.', ['../../', 'Voltar ao início']); return; }
+  try { platform.track('game_start', GAME_ID, {}); } catch { /* sem conexão */ }
   try {
     await api.sincronizar();
     S.meu = await api.meu();

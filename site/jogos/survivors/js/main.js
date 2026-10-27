@@ -189,6 +189,7 @@ function telaLoja() {
 
 // --------------------------------------------------------------------------- partida
 function iniciar() {
+  try { platform.track('game_start', GAME_ID, { campeao: escolhido, reino: reinoEscolhido }); } catch { /* sem conexão */ }
   meta.ultimo = escolhido; Meta.gravar(meta);
   if (!Meta.reinoLiberado(meta, reinoEscolhido)) reinoEscolhido = 'ixtal';
   meta.ultimoReino = reinoEscolhido;
@@ -252,6 +253,7 @@ function fimDeJogo() {
   fimTratado = true; const venceu = S.estado === 'vitoria'; som(venceu ? 'vitoria' : 'derrota');
   const ganho = essenciaGanha(S); Meta.registrarPartida(meta, S, ganho);
   const ingresso = ranqueada;
+  try { platform.track('game_end', GAME_ID, { tempo: Math.floor(S.t), venceu }); } catch { /* sem conexão */ }
   try {
     Promise.resolve(platform.recordResult(GAME_ID, { score: S.abates * 10 + Math.floor(S.t) + (venceu ? 5000 : 0), summary: { campeao: S.campeao, reino: S.reino, tempo: Math.floor(S.t), abates: S.abates, nivel: S.nivel, venceu, ranked: ingresso?.token || undefined } }))
       .then((entry) => avisoFim(entry, ingresso, GAME_ID)).catch(() => {});
