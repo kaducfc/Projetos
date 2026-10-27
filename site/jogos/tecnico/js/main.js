@@ -1230,11 +1230,23 @@ carregarFontes().then((ok) => { if (ok && S.meu) render(); }); // com as fontes 
   if (!user && !teste) { telaLogin(app); return; }
   if (!souAdmin && !teste && !aberto) { telaMensagem('Em desenvolvimento', 'Este jogo ainda está em teste e só administradores e convidados conseguem jogar por enquanto.', ['../../', 'Voltar ao início']); return; }
   try { platform.track('game_start', GAME_ID, {}); } catch { /* sem conexão */ }
+  // O servidor às vezes estoura o tempo da consulta (statement timeout) quando várias contas abrem juntas: tenta de novo uma vez.
+  // A sincronização do campeonato não é obrigatória para abrir: se ela falhar, o jogo abre e tenta de novo em seguida.
+  const tentar = async (passo, fn) => {
+    for (let n = 0; ; n++) {
+      try { return await fn(); } catch (e) {
+        if (n === 0 && /timeout|canceling statement|fetch|network/i.test(e?.message || '')) { await new Promise((r) => setTimeout(r, 1200)); continue; }
+        e.message = `${e.message} (etapa: ${passo})`; throw e;
+      }
+    }
+  };
   try {
-    await api.sincronizar();
-    S.meu = await api.meu();
-    if (S.meu.org && !S.meu.org.elenco_pendente) { await abrirComResumo(); S.meu = await api.meu(); }
-    if (S.meu.org) { S.painel = await api.painel(); S.gp = await api.gameplayPendente().catch(() => null); S.avisosN = await api.avisosContagem().catch(() => 0); S.idiomas = await api.idiomas().catch(() => null); }
+    let sincOk = true;
+    await tentar('sincronizar', () => api.sincronizar()).catch(() => { sincOk = false; });
+    S.meu = await tentar('conta', () => api.meu());
+    if (S.meu.org && !S.meu.org.elenco_pendente) { await tentar('resumo', () => abrirComResumo()); S.meu = await tentar('conta', () => api.meu()); }
+    if (!sincOk) api.sincronizar().then(() => api.meu()).then((m) => { S.meu = m; }).catch(() => {});
+    if (S.meu.org) { S.painel = await tentar('painel', () => api.painel()); S.gp = await api.gameplayPendente().catch(() => null); S.avisosN = await api.avisosContagem().catch(() => 0); S.idiomas = await api.idiomas().catch(() => null); }
     render();
   } catch (e) {
     telaMensagem('Não foi possível abrir o jogo', e.message, ['../../', 'Voltar ao início']);
