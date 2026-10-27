@@ -121,3 +121,37 @@ t('painel do administrador (0195): números por jogo e painel do Rift Survivors,
   assert.equal(jg.barao.iniciadas, 1); assert.equal(jg.barao.resultados, 1);
   const r2 = psql(['-d', 't'], readFileSync(new URL('../supabase/migrations/0195_painel_jogos_survivors.sql', import.meta.url), 'utf8')); assert.equal(r2.status, 0, 'rodar de novo');
 });
+
+t('ranqueada (0196): vitória após o chefe aparecer (tempo > 10 min) volta a contar e as partidas de hoje recusadas são refeitas', () => {
+  const tok = '11111111-1111-1111-1111-111111111111'; const tok2 = '22222222-2222-2222-2222-222222222222';
+  const r0 = psql(['-d', 't'], `
+    create or replace function public.site_hoje_br() returns date language sql as $f$ select current_date $f$;
+    create table public.site_ranked_inicios (id uuid primary key, user_id uuid, dia date, jogo text, criado timestamptz default now(), usado_em timestamptz, result_id uuid);
+    create or replace function public.site_ranked_registrar() returns trigger language plpgsql as $f$
+    declare tempo int; max_t int; venceu boolean; usado uuid;
+    begin
+      tempo := (new.summary->>'tempo')::int; venceu := coalesce((new.summary->>'venceu')::boolean, false);
+      max_t := case when new.summary->>'reino' = 'ixtal' then 900 else 600 end;
+      if tempo > max_t + 5 then return new; end if;
+      if venceu and tempo < max_t - 5 then return new; end if;
+      update site_ranked_inicios i set result_id = new.id, usado_em = now() where i.id = (new.summary->>'ranked')::uuid and i.usado_em is null returning i.id into usado;
+      if usado is not null then insert into site_rk_dia (user_id, dia, jogo, base, nivel, pdr) values (new.user_id, current_date, 'survivors', 35, 0, 35); end if;
+      return new;
+    end $f$;
+    drop trigger if exists site_ranked_on_result on public.site_game_results;
+    create trigger site_ranked_on_result after insert on public.site_game_results for each row execute function public.site_ranked_registrar();
+    delete from public.site_rk_dia; delete from public.site_game_results where game_id = 'survivors';
+    insert into public.site_ranked_inicios (id, user_id, dia, jogo) values ('${tok}', '${U(1)}', current_date, 'survivors'), ('${tok2}', '${U(2)}', current_date, 'survivors');
+    insert into public.site_game_results (user_id, game_id, score, summary, client_id) values
+      ('${U(1)}', 'survivors', 5700, '{"reino":"ionia","tempo":648,"venceu":true,"ranked":"${tok}"}', 'a'),
+      ('${U(2)}', 'survivors', 100, '{"reino":"ionia","tempo":300,"venceu":false,"ranked":"${tok2}"}', 'b');
+  `); assert.equal(r0.status, 0, r0.stderr);
+  assert.equal(psql(['-d', 't', '-c', 'select count(*) from site_rk_dia']).stdout.trim(), '1', 'antes: só a derrota normal conta; a vitória de 10:48 foi recusada');
+  const mig = readFileSync(new URL('../supabase/migrations/0196_survivors_vitoria_tempo.sql', import.meta.url), 'utf8');
+  const r1 = psql(['-d', 't'], mig); assert.equal(r1.status, 0, r1.stderr);
+  assert.equal(psql(['-d', 't', '-c', "select pdr from site_rk_dia where user_id = '" + U(1) + "'"]).stdout.trim(), '35', 'depois: a vitória vale 35');
+  assert.equal(psql(['-d', 't', '-c', "select count(*) from site_game_results where game_id = 'survivors'"]).stdout.trim(), '2', 'sem duplicar resultados');
+  assert.equal(psql(['-d', 't', '-c', 'select count(*) from site_rk_dia']).stdout.trim(), '2');
+  const r2 = psql(['-d', 't'], mig); assert.equal(r2.status, 0, `rodar de novo: ${r2.stderr}`);
+  assert.equal(psql(['-d', 't', '-c', 'select count(*) from site_rk_dia']).stdout.trim(), '2', 'idempotente');
+});
