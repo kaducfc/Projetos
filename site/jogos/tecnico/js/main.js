@@ -1224,14 +1224,9 @@ carregarFontes().then((ok) => { if (ok && S.meu) render(); }); // com as fontes 
   await platform.init();
   const teste = ['localhost', '127.0.0.1'].includes(location.hostname) && /[?&]teste=1/.test(location.search);
   const user = platform.getUser();
-  const souAdmin = await platform.podeJogosEmTeste();
-  S.ehAdmin = await platform.isAdmin().catch(() => false);
   const aberto = !gameById(GAME_ID)?.soAdmin;
   if (!user && !teste) { telaLogin(app); return; }
-  if (!souAdmin && !teste && !aberto) { telaMensagem('Em desenvolvimento', 'Este jogo ainda está em teste e só administradores e convidados conseguem jogar por enquanto.', ['../../', 'Voltar ao início']); return; }
-  try { platform.track('game_start', GAME_ID, {}); } catch { /* sem conexão */ }
   // O servidor às vezes estoura o tempo da consulta (statement timeout) quando várias contas abrem juntas: tenta de novo uma vez.
-  // A sincronização do campeonato não é obrigatória para abrir: se ela falhar, o jogo abre e tenta de novo em seguida.
   const tentar = async (passo, fn) => {
     for (let n = 0; ; n++) {
       try { return await fn(); } catch (e) {
@@ -1240,13 +1235,26 @@ carregarFontes().then((ok) => { if (ok && S.meu) render(); }); // com as fontes 
       }
     }
   };
+  // A sincronização do campeonato (a parte mais pesada) já começa enquanto a conta é conferida; ela não é obrigatória para
+  // abrir: se falhar, o jogo abre e tenta de novo em seguida.
+  let sincOk = true;
+  const sinc = tentar('sincronizar', () => api.sincronizar()).catch(() => { sincOk = false; });
+  S.ehAdmin = await platform.isAdmin().catch(() => false);
+  const souAdmin = aberto || S.ehAdmin || await platform.podeJogosEmTeste();
+  if (!souAdmin && !teste) { telaMensagem('Em desenvolvimento', 'Este jogo ainda está em teste e só administradores e convidados conseguem jogar por enquanto.', ['../../', 'Voltar ao início']); return; }
+  try { platform.track('game_start', GAME_ID, {}); } catch { /* sem conexão */ }
   try {
-    let sincOk = true;
-    await tentar('sincronizar', () => api.sincronizar()).catch(() => { sincOk = false; });
+    await sinc;
     S.meu = await tentar('conta', () => api.meu());
     if (S.meu.org && !S.meu.org.elenco_pendente) { await tentar('resumo', () => abrirComResumo()); S.meu = await tentar('conta', () => api.meu()); }
     if (!sincOk) api.sincronizar().then(() => api.meu()).then((m) => { S.meu = m; }).catch(() => {});
-    if (S.meu.org) { S.painel = await tentar('painel', () => api.painel()); S.gp = await api.gameplayPendente().catch(() => null); S.avisosN = await api.avisosContagem().catch(() => 0); S.idiomas = await api.idiomas().catch(() => null); }
+    if (S.meu.org) {
+      // as quatro consultas não dependem uma da outra: vão juntas
+      const [painel, gp, avisosN, idiomas] = await Promise.all([
+        tentar('painel', () => api.painel()), api.gameplayPendente().catch(() => null), api.avisosContagem().catch(() => 0), api.idiomas().catch(() => null),
+      ]);
+      S.painel = painel; S.gp = gp; S.avisosN = avisosN; S.idiomas = idiomas;
+    }
     render();
   } catch (e) {
     telaMensagem('Não foi possível abrir o jogo', e.message, ['../../', 'Voltar ao início']);

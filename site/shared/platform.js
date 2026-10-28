@@ -1279,11 +1279,20 @@ function trackVisit() {
   track('visit', null, { path: globalThis.location?.pathname || '' });
 }
 
-export async function isAdmin() {
-  const sb = await getClient();
-  if (!sb || !user) return false;
-  const { data, error } = await sb.rpc('site_is_admin');
-  return !error && data === true;
+// A resposta vale por 60 s por conta (várias partes da página perguntam o mesmo ao abrir: era uma ida ao servidor para cada uma).
+let adminCache = { uid: null, quando: 0, p: null };
+export function isAdmin() {
+  if (!user) return Promise.resolve(false);
+  if (adminCache.uid === user.id && Date.now() - adminCache.quando < 60000 && adminCache.p) return adminCache.p;
+  const p = (async () => {
+    const sb = await getClient();
+    if (!sb || !user) return false;
+    const { data, error } = await sb.rpc('site_is_admin');
+    if (error) adminCache = { uid: null, quando: 0, p: null }; // erro não fica guardado
+    return !error && data === true;
+  })();
+  adminCache = { uid: user.id, quando: Date.now(), p };
+  return p;
 }
 
 // Jogos em teste (`soAdmin`): administradores e contas convidadas (tc_convidados, 0092).
