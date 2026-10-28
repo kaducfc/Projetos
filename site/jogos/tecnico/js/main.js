@@ -1235,27 +1235,35 @@ carregarFontes().then((ok) => { if (ok && S.meu) render(); }); // com as fontes 
       }
     }
   };
-  // A sincronização do campeonato (a parte mais pesada) já começa enquanto a conta é conferida; ela não é obrigatória para
-  // abrir: se falhar, o jogo abre e tenta de novo em seguida.
-  let sincOk = true;
-  const sinc = tentar('sincronizar', () => api.sincronizar()).catch(() => { sincOk = false; });
+  // A sincronização do campeonato (processa partidas e fechamentos: a parte mais pesada, principalmente para o primeiro do dia)
+  // NÃO segura a abertura: o jogo abre com o que já está salvo e, quando ela termina, atualiza a tela se algo mudou.
+  const t0 = performance.now(); const marcas = [];
+  const marca = (nome) => { marcas.push(`${nome} ${Math.round(performance.now() - t0)}ms`); };
   S.ehAdmin = await platform.isAdmin().catch(() => false);
+  marca('admin');
   const souAdmin = aberto || S.ehAdmin || await platform.podeJogosEmTeste();
   if (!souAdmin && !teste) { telaMensagem('Em desenvolvimento', 'Este jogo ainda está em teste e só administradores e convidados conseguem jogar por enquanto.', ['../../', 'Voltar ao início']); return; }
   try { platform.track('game_start', GAME_ID, {}); } catch { /* sem conexão */ }
+  const sinc = tentar('sincronizar', () => api.sincronizar()).then((r) => { marca('sincronizar'); return r; }).catch(() => { marca('sincronizar(falhou)'); return null; });
   try {
-    await sinc;
-    S.meu = await tentar('conta', () => api.meu());
-    if (S.meu.org && !S.meu.org.elenco_pendente) { await tentar('resumo', () => abrirComResumo()); S.meu = await tentar('conta', () => api.meu()); }
-    if (!sincOk) api.sincronizar().then(() => api.meu()).then((m) => { S.meu = m; }).catch(() => {});
+    S.meu = await tentar('conta', () => api.meu()); marca('conta');
+    if (S.meu.org && !S.meu.org.elenco_pendente) { await tentar('resumo', () => abrirComResumo()); marca('resumo'); }
     if (S.meu.org) {
-      // as quatro consultas não dependem uma da outra: vão juntas
-      const [painel, gp, avisosN, idiomas] = await Promise.all([
-        tentar('painel', () => api.painel()), api.gameplayPendente().catch(() => null), api.avisosContagem().catch(() => 0), api.idiomas().catch(() => null),
+      // as consultas não dependem uma da outra: vão juntas (a conta é lida de novo porque o resumo pode ter creditado algo)
+      const [meu, painel, gp, avisosN, idiomas] = await Promise.all([
+        tentar('conta', () => api.meu()), tentar('painel', () => api.painel()), api.gameplayPendente().catch(() => null), api.avisosContagem().catch(() => 0), api.idiomas().catch(() => null),
       ]);
-      S.painel = painel; S.gp = gp; S.avisosN = avisosN; S.idiomas = idiomas;
+      S.meu = meu; S.painel = painel; S.gp = gp; S.avisosN = avisosN; S.idiomas = idiomas; marca('painel');
     }
-    render();
+    render(); marca('tela');
+    try { window.__tcTempos = marcas; if (/[?&]tempos=1/.test(location.search)) console.info('[Rift Manager] abertura:', marcas.join(' · ')); } catch { /* sem console */ }
+    // Quando a sincronização termina e processou algo (ou falhou e vale tentar de novo), a tela é atualizada em silêncio.
+    sinc.then(async (r) => {
+      if (r && !r.processadas && !r.ocupado) return;
+      if (!r) r = await api.sincronizar().catch(() => null);
+      if (!r || !S.meu?.org || S.modal) return;
+      S.meu = await api.meu(); S.painel = await api.painel(); render();
+    }).catch(() => {});
   } catch (e) {
     telaMensagem('Não foi possível abrir o jogo', e.message, ['../../', 'Voltar ao início']);
   }
