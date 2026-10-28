@@ -1226,11 +1226,11 @@ carregarFontes().then((ok) => { if (ok && S.meu) render(); }); // com as fontes 
   const user = platform.getUser();
   const aberto = !gameById(GAME_ID)?.soAdmin;
   if (!user && !teste) { telaLogin(app); return; }
-  // O servidor às vezes estoura o tempo da consulta (statement timeout) quando várias contas abrem juntas: tenta de novo uma vez.
+  // Falha de rede: tenta de novo uma vez. Estouro de tempo do servidor (statement timeout) NÃO se repete: repetir só dobra a carga.
   const tentar = async (passo, fn) => {
     for (let n = 0; ; n++) {
       try { return await fn(); } catch (e) {
-        if (n === 0 && /timeout|canceling statement|fetch|network/i.test(e?.message || '')) { await new Promise((r) => setTimeout(r, 1200)); continue; }
+        if (n === 0 && /fetch|network/i.test(e?.message || '')) { await new Promise((r) => setTimeout(r, 1200)); continue; }
         e.message = `${e.message} (etapa: ${passo})`; throw e;
       }
     }
@@ -1259,8 +1259,7 @@ carregarFontes().then((ok) => { if (ok && S.meu) render(); }); // com as fontes 
     try { window.__tcTempos = marcas; if (/[?&]tempos=1/.test(location.search)) console.info('[Rift Manager] abertura:', marcas.join(' · ')); } catch { /* sem console */ }
     // Quando a sincronização termina e processou algo (ou falhou e vale tentar de novo), a tela é atualizada em silêncio.
     sinc.then(async (r) => {
-      if (r && !r.processadas && !r.ocupado) return;
-      if (!r) r = await api.sincronizar().catch(() => null);
+      if (!r || (!r.processadas && !r.ocupado)) return;
       if (!r || !S.meu?.org || S.modal) return;
       S.meu = await api.meu(); S.painel = await api.painel(); render();
     }).catch(() => {});
