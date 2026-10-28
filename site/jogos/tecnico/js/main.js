@@ -1244,7 +1244,12 @@ carregarFontes().then((ok) => { if (ok && S.meu) render(); }); // com as fontes 
   const souAdmin = aberto || S.ehAdmin || await platform.podeJogosEmTeste();
   if (!souAdmin && !teste) { telaMensagem('Em desenvolvimento', 'Este jogo ainda está em teste e só administradores e convidados conseguem jogar por enquanto.', ['../../', 'Voltar ao início']); return; }
   try { platform.track('game_start', GAME_ID, {}); } catch { /* sem conexão */ }
-  const sinc = tentar('sincronizar', () => api.sincronizar()).then((r) => { marca('sincronizar'); return r; }).catch(() => { marca('sincronizar(falhou)'); return null; });
+  // O servidor trabalha em pedaços de ~5 s ("parcial": true = ainda há partidas para processar): continua chamando em segundo plano.
+  const sinc = (async () => {
+    let r = await tentar('sincronizar', () => api.sincronizar()); let feitas = r.processadas || 0;
+    for (let i = 0; r.parcial && !r.ocupado && i < 40; i++) { marca(`sincronizar(pedaço ${i + 1})`); r = await api.sincronizar(); feitas += r.processadas || 0; }
+    return { ...r, processadas: feitas };
+  })().then((r) => { marca('sincronizar'); return r; }).catch(() => { marca('sincronizar(falhou)'); return null; });
   try {
     S.meu = await tentar('conta', () => api.meu()); marca('conta');
     if (S.meu.org && !S.meu.org.elenco_pendente) { await tentar('resumo', () => abrirComResumo()); marca('resumo'); }
