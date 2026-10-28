@@ -2204,6 +2204,6 @@ t('sincronizar (0197): quem chega com outra conta já sincronizando não espera 
   const r = J('select tc_sincronizar()', 1, '2026-10-18');
   assert.ok(Date.now() - ini < 2500, `esperou na fila (${Date.now() - ini} ms)`);
   assert.equal(r.ocupado, true); assert.equal(r.processadas, 0);
-  seg.kill();
+  execSync('sleep 4'); seg.kill(); // espera a outra sessão soltar a trava
   assert.equal(J('select tc_sincronizar()', 1, '2026-10-18').ocupado, undefined, 'sem concorrência, sincroniza normalmente');
 });
