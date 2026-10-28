@@ -22,7 +22,7 @@ begin
     -- a criação das ligas também respeita o orçamento (lê o limite daqui)
     if position('perform tc_criar_ligas_semana(temp, sem, ini);' in def) = 0 then raise exception 'não achei a criação das ligas'; end if;
     def := replace(def, 'perform tc_criar_ligas_semana(temp, sem, ini);',
-      E'perform set_config(''tc.limite'', t_lim::text, true);\n    perform tc_criar_ligas_semana(temp, sem, ini);\n    if clock_timestamp() > t_lim then parcial := true; exit; end if;');
+      E'perform set_config(''tc.limite'', t_lim::text, true);\n    perform set_config(''tc.parcial'', '''', true);\n    perform tc_criar_ligas_semana(temp, sem, ini);\n    if coalesce(current_setting(''tc.parcial'', true), '''') = ''1'' then parcial := true; exit; end if;');
     if position('if tc_processar_partida(p.id) then feitas := feitas + 1; end if;' in def) = 0 then raise exception 'não achei o processamento das partidas'; end if;
     def := replace(def, 'if tc_processar_partida(p.id) then feitas := feitas + 1; end if;',
       E'if tc_processar_partida(p.id) then feitas := feitas + 1; end if;\n        if clock_timestamp() > t_lim then parcial := true; exit; end if;');
@@ -40,8 +40,9 @@ begin
   def := pg_get_functiondef(to_regprocedure(g));
   if position('tc.limite' in def) = 0 then
     if position('perform tc_criar_liga_privada(temp, sem, o.id, ini);' in def) = 0 then raise exception 'não achei a criação da liga privada'; end if;
+    -- só conta no orçamento quando uma liga é realmente criada (quem já tem liga é pulado sem custo)
     def := replace(def, 'perform tc_criar_liga_privada(temp, sem, o.id, ini);',
-      E'perform tc_criar_liga_privada(temp, sem, o.id, ini);\n    if clock_timestamp() > coalesce(nullif(current_setting(''tc.limite'', true), '''')::timestamptz, ''infinity'') then exit; end if;');
+      E'if not exists (select 1 from tc_ligas l where l.temporada = temp and l.semana = sem and l.tipo = ''divisao'' and l.dono_org = o.id and l.divisao = (select divisao from tc_orgs where id = o.id)) then\n      perform tc_criar_liga_privada(temp, sem, o.id, ini);\n      if clock_timestamp() > coalesce(nullif(current_setting(''tc.limite'', true), '''')::timestamptz, ''infinity'') then perform set_config(''tc.parcial'', ''1'', true); exit; end if;\n    end if;');
     execute def;
   end if;
 end $$;

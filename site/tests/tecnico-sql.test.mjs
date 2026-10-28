@@ -53,6 +53,7 @@ before(() => {
   const stubs = readFileSync(new URL('./fixtures/tecnico-stubs.sql', import.meta.url), 'utf8');
   let r = psql(['-d', 't'], stubs); assert.equal(r.status, 0, r.stderr);
   for (const f of MIG) { r = psql(['-d', 't'], readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8')); assert.equal(r.status, 0, `${f}: ${r.stderr}`); }
+  r = psql(['-d', 't', '-c', "alter database t set tc.sinc_orcamento = '3600'"]); assert.equal(r.status, 0, r.stderr); // os testes sincronizam anos de uma vez: sem o orçamento de 5 s
   r = psql(['-d', 't', '-c', "insert into auth.users select ('00000000-0000-0000-0000-00000000000' || g)::uuid from generate_series(1, 6) g; insert into site_carteira select ('00000000-0000-0000-0000-00000000000' || g)::uuid, 5000 from generate_series(1, 6) g;"]);
   assert.equal(r.status, 0, r.stderr);
   // os testes antigos olham o mercado inteiro: a rotação (poucos jogadores por janela) é testada à parte, com a configuração real
