@@ -100,7 +100,7 @@ test('efeitos de Zaun e Piltover: cada letra vira um <i> com a posição, o nome
   const { EFEITOS_TESTE, nickFxHtml } = await import('../shared/efeitos.js');
   const { readFileSync } = await import('node:fs');
   const css = readFileSync(new URL('../shared/account.css', import.meta.url), 'utf8');
-  const novos = ['zn-toxina', 'zn-vapor', 'zn-neon', 'pl-cristal', 'pl-latao', 'pl-holo'].map((id) => EFEITOS_TESTE.find((e) => e.id === id));
+  const novos = ['zn-cintila', 'zn-vapor', 'zn-neon', 'pl-cristal', 'pl-latao', 'pl-holo'].map((id) => EFEITOS_TESTE.find((e) => e.id === id));
   assert.ok(novos.every(Boolean)); assert.equal(novos.filter((e) => e.id.startsWith('zn-')).length, 3); assert.equal(novos.filter((e) => e.id.startsWith('pl-')).length, 3);
   for (const e of novos) {
     assert.ok(e.letras, e.id); assert.ok(css.includes(`.${e.classe}`), `${e.id}: falta o CSS`);
