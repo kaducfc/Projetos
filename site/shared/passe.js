@@ -1,7 +1,7 @@
 // Passe de Batalha: monta a tela (progresso, trilha de recompensas) a partir da
 // resposta de platform.passeEstado(). Sem dados de visitante: quem não está
 // conectado não vê o passe.
-import { EFEITOS, EFEITOS_TESTE } from './efeitos.js';
+import { EFEITOS, EFEITOS_TESTE, nickFxHtml } from './efeitos.js';
 import { nomeRecompensa } from './recompensas.js';
 import { avatarHtml, molduraHtml } from './avatar.js';
 import { srcMoldura } from './molduras.js';
@@ -42,7 +42,7 @@ function recompensaHtml(r) {
   }
   if (r.tipo === 'efeito') {
     const fx = [...EFEITOS, ...EFEITOS_TESTE].find((e) => e.id === r.chave);
-    return `<span class="ps-rec ps-rec-efeito"><span class="nick fx ${esc(fx?.classe || '')}" data-text="${esc(fx?.nome || nomeRecompensa('efeito', r.chave))}">${esc(fx?.nome || nomeRecompensa('efeito', r.chave))}</span><small>Efeito no nome</small></span>`;
+    return `<span class="ps-rec ps-rec-efeito">${nickFxHtml(fx || { classe: '' }, fx?.nome || nomeRecompensa('efeito', r.chave))}<small>Efeito no nome</small></span>`;
   }
   if (r.tipo === 'icone') {
     return `<span class="ps-rec ps-rec-icone">${avatarHtml(`icone:${r.chave}`, '', 84)}<b>${esc(nomeRecompensa(r.tipo, r.chave))}</b><small>Ícone</small></span>`;

@@ -33,7 +33,7 @@ test('efeitos: automático dá o reflexo ao apoiador, "nenhum" tira, id desconhe
 });
 
 test('efeitos: os de teste têm CSS e não estão na lista pública', () => {
-  assert.equal(EFEITOS_TESTE.length, 14);
+  assert.equal(EFEITOS_TESTE.length, 20); // 14 antigos + 6 de Zaun e Piltover
   assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('nv-')).length, 4);
   assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('lj-')).length, 7);
   assert.ok(EFEITOS_TESTE.some((e) => /Laranja e preto/.test(e.tema)));
@@ -94,4 +94,23 @@ test('Final CBLOL 2026: ícone e efeito só por código (oculto para quem não t
   assert.equal(e.oculto, true);
   assert.equal(efeitoAtivo('lj-negativo', false).classe, 'fx-lj-negativo'); // aparece no nick de quem escolheu
   assert.ok(css.includes('.fx-lj-negativo'));
+});
+
+test('efeitos de Zaun e Piltover: cada letra vira um <i> com a posição, o nome continua inteiro para leitores de tela e todos têm o desenho no CSS', async () => {
+  const { EFEITOS_TESTE, nickFxHtml } = await import('../shared/efeitos.js');
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../shared/account.css', import.meta.url), 'utf8');
+  const novos = ['zn-toxina', 'zn-vapor', 'zn-neon', 'pl-cristal', 'pl-latao', 'pl-holo'].map((id) => EFEITOS_TESTE.find((e) => e.id === id));
+  assert.ok(novos.every(Boolean)); assert.equal(novos.filter((e) => e.id.startsWith('zn-')).length, 3); assert.equal(novos.filter((e) => e.id.startsWith('pl-')).length, 3);
+  for (const e of novos) {
+    assert.ok(e.letras, e.id); assert.ok(css.includes(`.${e.classe}`), `${e.id}: falta o CSS`);
+    assert.match(e.id, /^[a-z0-9-]{1,30}$/); // cabe no id de recompensa
+    const h = nickFxHtml(e, 'Ka<du>');
+    assert.match(h, /aria-label="Ka&lt;du&gt;"/); assert.match(h, /data-text="Ka&lt;du&gt;"/); assert.match(h, /--n:6/);
+    assert.equal((h.match(/<i style="--i:\d+"/g) || []).length, 6);
+    assert.doesNotMatch(h, /<du>/); // o nome é escapado
+  }
+  // efeito sem letras segue como antes
+  const antigo = nickFxHtml({ classe: 'fx-gl-matrix' }, 'Ana');
+  assert.equal(antigo, '<span class="nick fx fx-gl-matrix" data-text="Ana">Ana</span>');
 });

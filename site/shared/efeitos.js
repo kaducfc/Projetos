@@ -32,6 +32,13 @@ export const EFEITOS_TESTE = [
   { id: 'st-contorno', nome: 'Contorno Twitch', classe: 'fx-st-contorno', tema: 'Streamer · Twitch' },
   { id: 'gl-fatiado', nome: 'Fatiado', classe: 'fx-gl-fatiado', tema: 'Glitch · intenso · faixas que escorregam' },
   { id: 'gl-matrix', nome: 'Código Verde', classe: 'fx-gl-matrix', tema: 'Glitch · médio · terminal verde' },
+  // Zaun e Piltover (cada letra anima por conta própria; ver nickFxHtml)
+  { id: 'zn-toxina', nome: 'Toxina de Zaun', classe: 'fx-zn-toxina', letras: true, tema: 'Zaun · líquido verde, bolhas e gota escorrendo' },
+  { id: 'zn-vapor', nome: 'Válvula de Vapor', classe: 'fx-zn-vapor', letras: true, tema: 'Zaun · cano enferrujado e vapor de pressão' },
+  { id: 'zn-neon', nome: 'Neon do Submundo', classe: 'fx-zn-neon', letras: true, tema: 'Zaun · letreiro roxo com letra defeituosa' },
+  { id: 'pl-cristal', nome: 'Cristal Hextech', classe: 'fx-pl-cristal', letras: true, tema: 'Piltover · cristal azul, carga e reflexos' },
+  { id: 'pl-latao', nome: 'Latão e Engrenagens', classe: 'fx-pl-latao', letras: true, tema: 'Piltover · latão polido e engrenagens girando' },
+  { id: 'pl-holo', nome: 'Holograma de Progresso', classe: 'fx-pl-holo', letras: true, tema: 'Piltover · projeção azul e barra dourada' },
   { id: 'nv-magma', nome: 'Magma', classe: 'fx-nv-magma', tema: 'Laranja e preto · lava e brasas' },
   { id: 'nv-synth', nome: 'Noite Retrô', classe: 'fx-nv-synth', tema: 'Rosa, amarelo e ciano · listras anos 80' },
   { id: 'nv-raio', nome: 'Tempestade', classe: 'fx-nv-raio', tema: 'Azul elétrico · relâmpago' },
@@ -56,4 +63,16 @@ export const efeitoPorId = (id) => EFEITOS.find((e) => e.id === id)
 export function efeitoAtivo(escolha, apoiador = false) {
   if (escolha === 'nenhum') return null;
   return efeitoPorId(escolha) || (apoiador ? efeitoPorId('reflexo') : null);
+}
+
+// HTML do nome com o efeito. Efeitos com `letras: true` recebem cada letra num <i> próprio (--i = posição, --n = total),
+// para o CSS animar letra por letra (ondas, uma letra que falha, uma que pinga…). O texto inteiro continua em data-text
+// e em aria-label (leitores de tela e as camadas ::before/::after que copiam o nome).
+const escHtml = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+export function nickFxHtml(fx, nome, titulo = '') {
+  const texto = String(nome ?? '');
+  const t = titulo ? ` title="${escHtml(titulo)}"` : '';
+  if (!fx?.letras) return `<span class="nick fx ${escHtml(fx?.classe || '')}" data-text="${escHtml(texto)}"${t}>${escHtml(texto)}</span>`;
+  const letras = [...texto];
+  return `<span class="nick fx fx-l ${escHtml(fx.classe)}" data-text="${escHtml(texto)}" style="--n:${letras.length}" role="text" aria-label="${escHtml(texto)}"${t}>${letras.map((c, i) => `<i style="--i:${i}" aria-hidden="true">${escHtml(c)}</i>`).join('')}</span>`;
 }

@@ -3,7 +3,7 @@
 // "Reflexo" no nick (dourado com um reflexo de luz passando), no perfil, no
 // ranking e na barra do site.
 
-import { efeitoAtivo } from './efeitos.js';
+import { efeitoAtivo, nickFxHtml } from './efeitos.js';
 
 export const VALORES_SUGERIDOS = [5, 10, 25, 50];
 export const VALOR_MINIMO = 5;
@@ -21,6 +21,6 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
 export function nickHtml(nome, apoiador = false, escolha = null) {
   const fx = efeitoAtivo(escolha, apoiador);
   return fx
-    ? `<span class="nick fx ${fx.classe}" data-text="${esc(nome)}" title="${esc(fx.titulo || `Efeito ${fx.nome}`)}">${esc(nome)}</span>`
+    ? nickFxHtml(fx, nome, fx.titulo || `Efeito ${fx.nome}`)
     : `<span class="nick">${esc(nome)}</span>`;
 }

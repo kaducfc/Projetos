@@ -11,7 +11,7 @@ import { sinaisVigia, resumoJogadores, anotarRepeticoes } from '../shared/vigia.
 import { nomeRecompensa, tipoTexto, codigoBonito } from '../shared/recompensas.js';
 import { passeHtml, uiPasse } from '../shared/passe.js';
 import { ligarCompraPremium } from '../shared/passe-compra.js';
-import { EFEITOS, EFEITOS_TESTE } from '../shared/efeitos.js';
+import { EFEITOS, EFEITOS_TESTE, nickFxHtml } from '../shared/efeitos.js';
 import { MOLDURAS_TESTE, ELOS_MOLDURAS } from '../shared/molduras.js';
 import { EXCLUSIVOS_TESTE, avatarHtml } from '../shared/avatar.js';
 
@@ -570,12 +570,12 @@ function abaFerramentas() {
 let testeNick = '';
 
 function testeCartoes(nick) {
-  const nome = esc(nick || 'NomeDoJogador');
+  const nome = nick || 'NomeDoJogador';
   const grupo = (lista, rotulo) => lista.map((e) => `<article class="card t-efeito">
       <div class="t-ef-cab"><h3>${esc(e.nome)}</h3><span class="p-badge">${esc(e.tema || rotulo)}</span></div>
-      <div class="t-ef-grande"><span class="nick fx ${e.classe}" data-text="${nome}">${nome}</span></div>
-      <div class="t-ef-linha"><span class="t-ef-mini"><span class="nick fx ${e.classe}" data-text="${nome}">${nome}</span></span>
-        <span class="t-ef-rk"><b>7</b> <span class="nick fx ${e.classe}" data-text="${nome}">${nome}</span> <small>Ouro 2 · 1.250 PDR</small></span></div>
+      <div class="t-ef-grande">${nickFxHtml(e, nome)}</div>
+      <div class="t-ef-linha"><span class="t-ef-mini">${nickFxHtml(e, nome)}</span>
+        <span class="t-ef-rk"><b>7</b> ${nickFxHtml(e, nome)} <small>Ouro 2 · 1.250 PDR</small></span></div>
       <p class="c-sub">Id para o código: <code>${esc(e.id)}</code> <button type="button" class="p-link" data-t-copiar="${esc(e.id)}">copiar</button></p>
     </article>`).join('');
   return `<h3 class="t-tit">Em teste (só você vê)</h3><div class="cards t-grade">${grupo(EFEITOS_TESTE, 'Teste')}</div>

@@ -9,7 +9,7 @@ import { nomeRecompensa, tipoTexto } from '../shared/recompensas.js';
 import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada, definirAdmin } from './ranqueada-card.js';
 import { nickHtml } from '../shared/apoio.js';
-import { EFEITOS, EFEITOS_TESTE, EQUIPAVEIS_TESTE, efeitoAtivo, efeitoPorId } from '../shared/efeitos.js';
+import { EFEITOS, EFEITOS_TESTE, EQUIPAVEIS_TESTE, efeitoAtivo, efeitoPorId, nickFxHtml } from '../shared/efeitos.js';
 import { MOLDURAS, MOLDURAS_TESTE, ELOS_MOLDURAS, molduraPorId } from '../shared/molduras.js';
 import { localeAtual } from '../shared/i18n.js';
 
@@ -103,9 +103,9 @@ function cardMoldura(u) {
 function cardEfeito(u) {
   const atual = efeitoAtivo(u.efeito, u.apoioTotal > 0);
   const escolhido = atual?.id || 'nenhum';
-  const opcao = ({ id, nome, classe, como, link, preco }) => {
+  const opcao = ({ id, nome, classe, letras, como, link, preco }) => {
     const livre = id === 'nenhum' || possuiEfeito(u, id);
-    const previa = id === 'nenhum' ? `<span class="nick">${esc(u.username)}</span>` : `<span class="nick fx ${classe}" data-text="${esc(u.username)}">${esc(u.username)}</span>`;
+    const previa = id === 'nenhum' ? `<span class="nick">${esc(u.username)}</span>` : nickFxHtml(efeitoPorId(id) || { classe, letras }, u.username);
     const requisito = !livre && efeitoInfo === id
       ? `<p class="pf-ef-como" role="status">🔒 ${esc(como)}${link ? ` <a href="${link.href}">${esc(link.texto)}</a>` : ''}</p>` : '';
     return `<li class="pf-ef${livre ? '' : ' trava'}${escolhido === id ? ' on' : ''}" data-ef="${id}">
