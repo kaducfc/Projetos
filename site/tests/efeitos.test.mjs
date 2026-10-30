@@ -1,0 +1,133 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createFakeSupabase, installMemoryStorage } from './fake-supabase.js';
+import * as platform from '../shared/platform.js';
+import { nickHtml } from '../shared/apoio.js';
+import { EFEITOS, EFEITOS_TESTE, efeitoAtivo } from '../shared/efeitos.js';
+
+const css = readFileSync(new URL('../shared/account.css', import.meta.url), 'utf8');
+const sql = readFileSync(new URL('../supabase/migrations/0035_efeito_nome.sql', import.meta.url), 'utf8');
+
+async function entrar() {
+  const sb = createFakeSupabase();
+  installMemoryStorage();
+  platform.__setClientForTests(sb);
+  await platform.init();
+  await platform.signUp({ email: 'e@example.com', password: 'segredo123', username: 'Efeito' });
+  return sb;
+}
+
+test('efeitos: automático dá o reflexo ao apoiador, "nenhum" tira, id desconhecido cai no automático', () => {
+  assert.equal(efeitoAtivo(null, true).id, 'reflexo');
+  assert.equal(efeitoAtivo(null, false), null);
+  assert.equal(efeitoAtivo('nenhum', true), null);
+  assert.equal(efeitoAtivo('st-contorno', true).id, 'reflexo'); // ainda em teste: não vale para o público
+  assert.equal(efeitoAtivo('st-contorno', false), null);
+  assert.equal(efeitoAtivo('st-nebulosa', false).nome, 'Streamer'); // lançado: vale para quem escolheu
+  assert.match(nickHtml('Ana', false, 'st-nebulosa'), /fx-st-nebulosa/);
+  assert.match(nickHtml('Ana', true), /fx-reflexo/);
+  assert.doesNotMatch(nickHtml('Ana', true, 'nenhum'), /fx-/);
+  assert.doesNotMatch(nickHtml('Ana', false, 'st-contorno'), /fx-/);
+  assert.match(nickHtml('<b>', true), /&lt;b&gt;/);
+});
+
+test('efeitos: os de teste têm CSS e não estão na lista pública', () => {
+  assert.equal(EFEITOS_TESTE.length, 20); // 14 antigos + 6 de Zaun e Piltover
+  assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('nv-')).length, 4);
+  assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('lj-')).length, 7);
+  assert.ok(EFEITOS_TESTE.some((e) => /Laranja e preto/.test(e.tema)));
+  for (const e of EFEITOS_TESTE) {
+    assert.match(e.id, /^[a-z0-9-]{2,30}$/);
+    assert.ok(css.includes(`.${e.classe}`), `falta CSS de ${e.classe}`);
+    assert.ok(!EFEITOS.some((p) => p.id === e.id));
+  }
+  assert.ok(css.includes('.fx-reflexo'));
+});
+
+test('efeitos: escolher no servidor exige ter o efeito', async () => {
+  const sb = await entrar();
+  await assert.rejects(platform.setEfeito('reflexo'), /não foi liberado/);
+  await assert.rejects(platform.setEfeito('chamas'), /não foi liberado/);
+  await platform.setEfeito('nenhum');
+  assert.equal(platform.getUser().efeito, 'nenhum');
+  sb.db.site_profiles.find((p) => p.id === platform.getUser().id).apoio_total = 10;
+  await platform.setEfeito('reflexo');
+  assert.equal(platform.getUser().efeito, 'reflexo');
+  sb.db.recompensas = [{ user_id: platform.getUser().id, tipo: 'efeito', chave: 'chamas' }];
+  await platform.setEfeito('chamas');
+  await platform.setEfeito(null);
+  assert.equal(platform.getUser().efeito, null);
+});
+
+test('efeitos: SQL 0035 valida a posse e atualiza o ranking', () => {
+  assert.match(sql, /efeito_bloqueado/);
+  assert.match(sql, /site_recompensas r where r\.user_id = uid and r\.tipo = 'efeito'/);
+  assert.match(sql, /''efeito'', p\.efeito/);
+  assert.match(sql, /revoke all on function public\.site_set_efeito\(text\) from public, anon/);
+});
+
+test('ícone exclusivo Streamer: lançado, com arte, só vale para quem ganhou', async () => {
+  const { EXCLUSIVOS, EXCLUSIVOS_TESTE, nomeAvatar } = await import('../shared/avatar.js');
+  const { existsSync } = await import('node:fs');
+  assert.ok(EXCLUSIVOS.some((i) => i.id === 'exc-streamer'));
+  assert.ok(!EXCLUSIVOS_TESTE.some((i) => i.id === 'exc-streamer'));
+  assert.ok(existsSync(new URL('../shared/assets/icones/exc-streamer.webp', import.meta.url)));
+  assert.equal(nomeAvatar('icone:exc-streamer'), 'Streamer');
+  await entrar();
+  await assert.rejects(platform.setAvatar('icone:exc-streamer'), /não foi liberado/);
+});
+
+test('nome da recompensa de efeito/ícone usa o nome do site (Streamer), não o id', async () => {
+  const { nomeRecompensa } = await import('../shared/recompensas.js');
+  assert.equal(nomeRecompensa('efeito', 'st-nebulosa'), 'Streamer');
+  assert.equal(nomeRecompensa('efeito', 'st-contorno'), 'Contorno Twitch'); // em teste (painel)
+  assert.equal(nomeRecompensa('icone', 'exc-streamer'), 'Streamer');
+});
+
+test('Final CBLOL 2026: ícone e efeito só por código (oculto para quem não tem)', async () => {
+  const { EXCLUSIVOS, EXCLUSIVOS_TESTE } = await import('../shared/avatar.js');
+  assert.ok(EXCLUSIVOS.some((i) => i.id === 'exc-los-furia' && i.nome === 'Final CBLOL 2026'));
+  assert.ok(!EXCLUSIVOS_TESTE.some((i) => i.id === 'exc-los-furia'));
+  const e = EFEITOS.find((x) => x.id === 'lj-negativo');
+  assert.equal(e.nome, 'Final CBLOL 2026');
+  assert.equal(e.oculto, true);
+  assert.equal(efeitoAtivo('lj-negativo', false).classe, 'fx-lj-negativo'); // aparece no nick de quem escolheu
+  assert.ok(css.includes('.fx-lj-negativo'));
+});
+
+test('efeitos de Zaun e Piltover: cada letra vira um <i> com a posição, o nome continua inteiro para leitores de tela e todos têm o desenho no CSS', async () => {
+  const { EFEITOS_TESTE, nickFxHtml } = await import('../shared/efeitos.js');
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../shared/account.css', import.meta.url), 'utf8');
+  const novos = ['zn-cintila', 'zn-vapor', 'zn-neon', 'pl-cristal', 'pl-latao', 'pl-holo'].map((id) => EFEITOS_TESTE.find((e) => e.id === id));
+  assert.ok(novos.every(Boolean)); assert.equal(novos.filter((e) => e.id.startsWith('zn-')).length, 3); assert.equal(novos.filter((e) => e.id.startsWith('pl-')).length, 3);
+  for (const e of novos) {
+    assert.ok(e.letras, e.id); assert.ok(css.includes(`.${e.classe}`), `${e.id}: falta o CSS`);
+    assert.match(e.id, /^[a-z0-9-]{1,30}$/); // cabe no id de recompensa
+    const h = nickFxHtml(e, 'Ka<du>');
+    assert.match(h, /aria-label="Ka&lt;du&gt;"/); assert.match(h, /data-text="Ka&lt;du&gt;"/); assert.match(h, /--n:6/);
+    assert.equal((h.match(/<i style="--i:\d+;--r:0\.\d+|<i style="--i:\d+;--r:1\.00/g) || []).length, 6);
+    assert.doesNotMatch(h, /<du>/); // o nome é escapado
+  }
+  // efeito sem letras segue como antes
+  const antigo = nickFxHtml({ classe: 'fx-gl-matrix' }, 'Ana');
+  assert.equal(antigo, '<span class="nick fx fx-gl-matrix" data-text="Ana">Ana</span>');
+});
+
+test('Neon do Submundo: o diretor sorteia de 1 a 4 letras conforme o tamanho do nick, sem repetir índices e evitando a rodada anterior', async () => {
+  const { maxFalhas, escolherFalhas } = await import('../shared/efeitos-vivos.js');
+  assert.deepEqual([3, 5, 6, 8, 9, 12, 13, 20].map(maxFalhas), [1, 1, 2, 2, 3, 3, 4, 4]);
+  for (const n of [3, 4, 6, 8, 10, 12, 15, 20]) {
+    const vistos = new Set(); let anterior = [];
+    for (let r = 0; r < 400; r++) {
+      const idx = escolherFalhas(n, anterior);
+      assert.ok(idx.length >= 1 && idx.length <= maxFalhas(n), `n=${n}: ${idx.length} letras`);
+      assert.equal(new Set(idx).size, idx.length); assert.ok(idx.every((i) => i >= 0 && i < n));
+      if (n > maxFalhas(n) * 2) assert.ok(!idx.some((i) => anterior.includes(i)), 'repetiu letras da rodada anterior');
+      idx.forEach((i) => vistos.add(i)); anterior = idx;
+    }
+    assert.equal(vistos.size, n, `n=${n}: todas as letras acabam sendo sorteadas`);
+  }
+  assert.deepEqual(escolherFalhas(0), []);
+});

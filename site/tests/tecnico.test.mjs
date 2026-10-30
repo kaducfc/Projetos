@@ -1,0 +1,385 @@
+// Simulador de técnico: regras de exibição (JS), conferência com o SQL e integração com o catálogo do site.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { GAMES, gameById } from '../shared/config.js';
+import * as platform from '../shared/platform.js';
+import {
+  PESOS, FORA_POSICAO, ELENCO_MAX, CONTRATO_MIN, CONTRATO_MAX, TAXA_MERCADO_PCT, PRECO_RC, VAGAS,
+  poder, poderEmCampo, preco, salarioDe, taxaDe,
+} from '../jogos/tecnico/js/regras.js';
+import { retratoSvg } from '../jogos/tecnico/js/art.js';
+
+const ler = (f) => readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8');
+const sql = ['0085_tecnico_base.sql', '0086_tecnico_mercado_usuarios.sql', '0087_tecnico_campeonatos.sql', '0088_tecnico_consultas.sql', '0089_tecnico_internacionais.sql', '0090_tecnico_campeoes.sql', '0091_tecnico_gameplay.sql', '0092_tecnico_convidados.sql', '0093_tecnico_posicoes.sql', '0094_tecnico_seguranca.sql', '0095_tecnico_estrelas.sql', '0096_tecnico_estrelas_rc.sql', '0097_tecnico_retratos.sql', '0098_tecnico_treino_amistoso_recrutar.sql', '0099_tecnico_legados_estrelas.sql', '0100_tecnico_amistoso_real.sql', '0101_tecnico_inventario.sql', '0102_tecnico_legados_brasil.sql', '0103_tecnico_demissao_previa.sql', '0104_tecnico_baus_creditos.sql', '0105_tecnico_maestria_7.sql', '0106_tecnico_contratos.sql', '0107_tecnico_retratos_unicos.sql', '0108_tecnico_elenco_inicial_15.sql', '0109_tecnico_escolher_elenco.sql', '0110_tecnico_icone_time.sql', '0111_tecnico_vender_legado_contrato.sql', '0112_tecnico_comprar_legado_repetido.sql', '0113_tecnico_potencial_coerente.sql', '0114_tecnico_treino_xp.sql', '0115_tecnico_xp_vitoria_derrota.sql', '0116_tecnico_marketing.sql', '0117_tecnico_mercado_rotacao.sql', '0118_tecnico_admin_na_serie_b.sql', '0119_tecnico_nomes_campeonatos.sql', '0120_tecnico_liga_semanal_md1.sql', '0121_tecnico_campeonato_individual.sql', '0122_tecnico_pontuacao_desempate.sql', '0123_tecnico_adm_jogadores.sql', '0124_tecnico_sistema_com_fotos.sql', '0125_tecnico_escolha_de_lado.sql', '0126_tecnico_draft_conferido.sql', '0127_tecnico_xp_maestria_por_partida.sql', '0128_tecnico_wo_sem_xp.sql', '0129_tecnico_cinco_treinos.sql', '0130_tecnico_historico_financeiro_30.sql', '0131_tecnico_adm_raridade.sql', '0132_tecnico_partida_com_liga.sql', '0133_tecnico_historico_20.sql', '0134_tecnico_bau_repetido_sem_custo.sql', '0135_tecnico_bau_copia_no_historico.sql', '0136_tecnico_receita_marketing_por_dia.sql', '0137_tecnico_marketing_dia_sobe_ao_topo.sql', '0138_tecnico_marketing_resgatar.sql', '0139_tecnico_campeonatos_pvp.sql', '0140_tecnico_internacional_completa_equipes.sql', '0141_tecnico_internacional_varias_edicoes.sql', '0142_tecnico_mercado_maestria_max_3.sql', '0143_tecnico_mercado_so_na_faixa.sql', '0144_tecnico_avisos_novidades_calendario.sql', '0145_tecnico_avisos_so_novidades.sql', '0146_tecnico_legados_asia.sql', '0147_tecnico_legados_idades.sql', '0148_tecnico_baus_em_rc.sql', '0149_tecnico_legados_china.sql', '0150_tecnico_sem_forma.sql', '0151_tecnico_idiomas.sql', '0152_tecnico_estrelas_ate_10.sql', '0153_tecnico_estrela_dobro_legado.sql', '0154_tecnico_demissao_conta_copias.sql', '0155_tecnico_ficticio_max_80.sql', '0156_tecnico_fragmentos_novos_valores.sql', '0157_tecnico_legados_pain_red_lyon.sql', '0158_tecnico_rank_poder.sql', '0159_tecnico_rank_competicao.sql', '0160_tecnico_campanhas_melhores.sql', '0161_tecnico_campanhas_bonus.sql', '0162_tecnico_partida_wo.sql', '0163_tecnico_emblema_texto.sql', '0164_tecnico_emblema_texto_10.sql', '0165_tecnico_emblema_texto_nome.sql', '0166_tecnico_simbolos.sql', '0167_tecnico_renomear_org.sql', '0168_tecnico_ficha_idioma.sql', '0169_tecnico_legados_lcs.sql', '0170_tecnico_legados_lec.sql', '0171_tecnico_idiomas_revisao.sql', '0172_tecnico_legados_balanceamento.sql', '0173_tecnico_liga_entrada_meio_semana.sql', '0174_tecnico_ver_time_adversario.sql', '0175_tecnico_mercado_individual.sql', '0176_tecnico_baus_precos_menores.sql', '0177_tecnico_baus_garantia_nova.sql', '0178_tecnico_baus_chances.sql', '0179_tecnico_inventario_70.sql', '0180_tecnico_bau_contrato_1_semana.sql', '0181_tecnico_treino_3h_50xp.sql', '0182_tecnico_bau_gratis.sql', '0183_tecnico_pdr_por_partida.sql'].map(ler).join('\n');
+const j = (o = {}) => ({ id: 1, nome: 'Teste', pos: 'meio', pos2: [], mec: 60, rotas: 60, macro: 60, tf: 60, mental: 60, fama: 50, forma: 50, idade: 22, potencial: 70, ...o });
+
+test('Poder individual: média ponderada dos cinco atributos, sem a Fama, entre 1 e 100', () => {
+  assert.equal(poder(j()), 60);
+  assert.equal(poder(j({ fama: 1 })), poder(j({ fama: 100 })), 'a Fama não muda o Poder');
+  assert.equal(poder(j({ mec: 100, rotas: 100, macro: 100, tf: 100, mental: 100 })), 100);
+  assert.equal(poder(j({ mec: 1, rotas: 1, macro: 1, tf: 1, mental: 1 })), 1);
+  // 25/20/20/20/15
+  assert.ok(Math.abs(poder(j({ mec: 80, rotas: 40, macro: 40, tf: 40, mental: 40 })) - (0.25 * 80 + 0.75 * 40)) < 1e-9);
+  assert.equal(Object.values(PESOS).reduce((a, b) => a + b, 0), 100);
+});
+
+test('Poder em campo: penalidade fora da posição e forma limitada', () => {
+  assert.equal(poderEmCampo(j(), 'meio'), 60);
+  assert.ok(Math.abs(poderEmCampo(j(), 'top') - 60 * FORA_POSICAO) < 1e-9);
+  assert.equal(poderEmCampo(j({ pos2: ['top'] }), 'top'), 60, 'posição secundária não penaliza');
+  assert.ok(Math.abs(poderEmCampo(j({ estrelas: 2 }), 'meio') - 66) < 1e-9, 'cada estrela soma 5% de eficiência'); assert.equal(FORA_POSICAO, 0.75);
+  assert.ok(poderEmCampo(j({ forma: 100 }), 'meio') - 60 <= 2.0001, 'a forma pesa pouco');
+});
+
+test('Preço, salário e taxa do mercado', () => {
+  assert.ok(preco(40, 50, 25, 25) >= 5000);
+  assert.ok(preco(80, 85, 70, 21) > preco(60, 85, 70, 21), 'mais Poder, mais caro');
+  assert.equal(salarioDe(100000), 1500);
+  assert.equal(taxaDe(1000), 50);
+  assert.equal(TAXA_MERCADO_PCT, 5);
+});
+
+test('constantes do navegador batem com a configuração do SQL', () => {
+  const pesos = JSON.parse(/\('pesos', '(\{.*?\})'::jsonb\)/.exec(sql)[1]).global;
+  assert.deepEqual(pesos, PESOS);
+  assert.equal(Number(/set valor = '([0-9.]+)'::jsonb where chave = 'fora_posicao'/.exec(sql)[1]), FORA_POSICAO);
+  const el = JSON.parse(/\('elenco', '(\{.*?\})'::jsonb\)/.exec(sql)[1]);
+  assert.equal(Number(/\{max\}', '(\d+)'::jsonb\) where chave = 'elenco'/.exec(ler('0179_tecnico_inventario_70.sql'))[1]), ELENCO_MAX);
+  assert.equal(el.contrato_min, CONTRATO_MIN);
+  assert.equal(el.contrato_max, CONTRATO_MAX);
+  assert.equal(Number(/\('taxa_mercado_pct', '(\d+)'::jsonb\)/.exec(sql)[1]), TAXA_MERCADO_PCT);
+  const pr = JSON.parse(/\('preco_rc', '(\{.*?\})'::jsonb\)/.exec(sql)[1]);
+  assert.deepEqual(pr, PRECO_RC);
+  // mesma conta de preço e salário
+  assert.match(sql, /power\(poder \/ 100\.0, 3\) \* 800000/);
+  assert.match(sql, /preco \* 0\.015/);
+});
+
+test('segurança: todas as tabelas tc_* têm RLS e nenhum acesso direto; funções fixam search_path', () => {
+  const tabelas = [...sql.matchAll(/create table if not exists public\.(tc_\w+)/g)].map((m) => m[1]);
+  assert.ok(tabelas.length >= 12);
+  for (const t of tabelas) {
+    assert.match(sql, new RegExp(`alter table public\\.${t} enable row level security`), `${t} sem RLS`);
+    assert.match(sql, new RegExp(`revoke all on [^;]*public\\.${t}[ ,;][^;]*from anon, authenticated`), `${t} acessível direto`);
+  }
+  const funcs = [...sql.matchAll(/create or replace function public\.(tc_\w+)\(([^)]*)\)\s*returns[^$]*?\$\$/gs)];
+  assert.ok(funcs.length > 40);
+  for (const [bloco, nome] of funcs) {
+    if (/language sql[^$]*immutable/.test(bloco) && !/security definer/.test(bloco)) continue; // funções puras
+    assert.match(bloco, /set search_path = public/, `${nome} sem search_path`);
+  }
+  assert.ok(!/grant (all|insert|update|delete)/i.test(sql), 'nada de escrita direta para o navegador');
+});
+
+test('só as funções de uso do jogo são liberadas para contas logadas (nunca para anon)', () => {
+  const liberadas = [...sql.matchAll(/grant execute on function public\.(tc_\w+)\(/g)].map((m) => m[1]);
+  assert.ok(!sql.includes('to anon'));
+  for (const interna of ['tc_creditos_mexer', 'tc_processar_partida', 'tc_simular', 'tc_encerrar_liga', 'tc_gerar_jogadores', 'tc_rank_liga', 'tc_fechar_semana_org']) {
+    assert.ok(!liberadas.includes(interna), `${interna} não pode ser chamada pelo navegador`);
+    assert.match(sql, new RegExp(`revoke all on function public\\.${interna}\\([^)]*\\) from public, anon, authenticated`));
+  }
+  // toda função liberada exige o jogo aberto/conta (tc_exigir)
+  for (const f of liberadas) {
+    const corpo = new RegExp(`function public\\.${f}\\([^)]*\\)[\\s\\S]*?\\$\\$;`, 'g');
+    const blocos = sql.match(corpo) || [];
+    assert.ok(blocos.some((b) => /tc_exigir\(|tc_adm_exigir\(|from site_admins where user_id = uid/.test(b)), `${f} não confere o acesso`); // portão do jogo ou checagem de administrador
+  }
+});
+
+test('o navegador só chama funções que existem no SQL', () => {
+  const chamadas = [...readFileSync(new URL('../shared/platform.js', import.meta.url), 'utf8').matchAll(/rpcTecnico\('(tc_\w+)'/g)].map((m) => m[1]);
+  assert.ok(chamadas.length >= 18);
+  for (const c of new Set(chamadas)) assert.match(sql, new RegExp(`function public\\.${c}\\(`), `${c} não existe no SQL`);
+  assert.deepEqual(Object.keys(platform.tecnico).sort().slice(0, 3), Object.keys(platform.tecnico).sort().slice(0, 3));
+});
+
+test('catálogo: o Rift Manager está lançado (aberto a todos), com o nome novo e capa no hub', () => {
+  const g = gameById('tecnico');
+  assert.ok(g, 'jogo no catálogo');
+  assert.equal(g.soAdmin, undefined, 'lançado: sem a trava de só administradores');
+  assert.equal(g.name, 'Rift Manager');
+  assert.match(readFileSync(new URL('../js/hub.js', import.meta.url), 'utf8'), /\btecnico: `/);
+  assert.equal(GAMES.filter((x) => x.id === 'tecnico').length, 1);
+  assert.doesNotMatch(readFileSync(new URL('../jogos/tecnico/index.html', import.meta.url), 'utf8'), /noindex/, 'a página do jogo pode ser indexada');
+  assert.ok(readFileSync(new URL('../jogos/tecnico/img/capa.webp', import.meta.url)).length > 10000, 'capa do hub');
+});
+
+test('migrações novas seguem a numeração e o jogo nasce fechado, sem Rank', () => {
+  const nomes = readdirSync(new URL('../supabase/migrations/', import.meta.url)).filter((f) => /^00(8[5-9]|9[01])_tecnico/.test(f));
+  assert.equal(nomes.length, 7);
+  assert.match(sql, /\('aberto', 'false'::jsonb\)/);
+  assert.match(sql, /\('rank_ativo', 'false'::jsonb\)/);
+});
+
+test('arte: retratos são determinísticos', () => {
+  assert.equal(retratoSvg(j({ id: 7, nome: 'Zyn' })), retratoSvg(j({ id: 7, nome: 'Zyn' })));
+  assert.notEqual(retratoSvg(j({ id: 7, nome: 'Zyn' })), retratoSvg(j({ id: 8, nome: 'Kro' })));
+  assert.match(retratoSvg(j({ retrato: '/x.webp' })), /<img/);
+  assert.equal(VAGAS.length, 5);
+});
+
+test('menu lateral tem Treinamento, Amistoso e Recrutar; cada tela só chama funções que existem no SQL e as telas montam com dados', async () => {
+  const main = readFileSync(new URL('../jogos/tecnico/js/main.js', import.meta.url), 'utf8');
+  for (const [id, nome] of [['treino', 'Treinamento'], ['amistoso', 'Amistoso'], ['recrutar', 'Recrutar']]) assert.ok(main.includes(`['${id}', '${nome}'`), `aba ${nome}`);
+  const chamadas = ['tc_treino_estado', 'tc_treinar', 'tc_amistoso_oponentes', 'tc_amistosos_historico', 'tc_amistoso', 'tc_recrutar_info', 'tc_recrutar'];
+  const plat = readFileSync(new URL('../shared/platform.js', import.meta.url), 'utf8');
+  for (const c of chamadas) { assert.ok(plat.includes(`'${c}'`), `${c} no cliente`); assert.match(sql, new RegExp(`function public\\.${c}\\(`), `${c} no SQL`); }
+  // as telas montam (sem DOM): estado simulado e os ajudantes mínimos
+  const E = await import('../jogos/tecnico/js/extras.js');
+  const api = platform.tecnico;
+  const jog = (id, o = {}) => ({ id, nome: `J${id}`, slot: 'meio', pos: 'meio', poder: 70, estrela: false, mec: 70, rotas: 60, macro: 60, tf: 60, mental: 60, exp: 10, limite: 78, poder_inicial: 68, horas: 5, custos: { mec: 1, rotas: 1, macro: 1, tf: 1, mental: 1 }, treino: null, ...o });
+  api.treinoEstado = async () => ({ config: { horas: 6, pontos: 3, simultaneos: 5, bonus_comum: 10, bonus_estrela: 15 }, creditos: 100, agora: new Date().toISOString(), jogadores: [jog(1, { exp: 100 }), jog(2, { poder: 78, limite: 78, exp: 100 }), jog(3, { exp: 40 }), jog(8, { slot: null, nome: 'Reserva8' })], em_andamento: 0 });
+  api.amistosoOponentes = async () => [{ id: 9, nome: 'Rivais', sigla: 'RIV', escudo: 'v4:1:112233:aabbcc', cor1: '#112233', cor2: '#aabbcc', divisao: 'acesso', tecnico: false, poder: 66 }];
+  api.amistosoHistorico = async () => ({ feitos_hoje: 1, exp_por_dia: 5, exp_ganho: 2, com_exp_restantes: 4, lista: [] });
+  api.recrutarInfo = async () => ({ config: { desconto_5: 0.15, pity_a_cada: 10, contrato_semanas: 12, baus: { basico: { nome: 'Baú Básico', rc: 300, garantia: { raridade: 'lendario', a_cada: 40 }, odds: { comum: 55, raro: 30, epico: 12, lendario: 2.7, mitico: 0.3 } }, premium: { nome: 'Baú Premium', rc: 900, garantia: { raridade: 'mitico', a_cada: 30 }, odds: { comum: 20, raro: 38, epico: 28, lendario: 11, mitico: 3 } } } }, saldo_rc: 5000, elenco: 5, elenco_max: 10, legados: { total: 15, por_raridade: {} }, garantia: {}, meus_legados: [] });
+  const S = { aba: 'treino', ocupado: false, meu: { poder: 70, org: { nome: 'Eu' } } };
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, '');
+  E.iniciarExtras({ S, esc, fmt: (n) => String(n), IMG: () => '', agir: async () => null, toast() {}, render() {}, novaChave: () => 'k', escudoHtml: (p) => `<b>${p}</b>`, estrelasHtml: () => '', nomeLiga: () => ({}), dataCurta: (d) => d, nomeVaga: (v) => v, atualizarMeu: async () => {} });
+  await E.carregarExtras('treino'); const t = E.viewTreino();
+  assert.match(t, /Treinamento/); assert.match(t, /data-act="treinar"/); assert.match(t, /Limite de treino atingido/);
+  assert.equal((t.match(/data-act="treinar"/g) || []).length, 15, '5 atributos por titular (reservas ficam minimizadas)');
+  assert.match(t, /Reservas e inventário/); assert.match(t, /data-act="treino-abrir" data-id="8"/); assert.doesNotMatch(t, /data-act="treinar" data-id="8"/, 'a reserva só abre o cartão ao clicar');
+  E.tratarAcao('treino-abrir', { dataset: { id: '8' } }); assert.equal(((E.viewTreino()).match(/data-act="treinar"/g) || []).length, 20, 'aberta, a reserva mostra os 5 atributos'); E.tratarAcao('treino-abrir', { dataset: { id: '8' } });
+  assert.equal((t.match(/data-act="treinar"[^>]*disabled/g) || []).length, 10, 'bloqueados: o jogador no limite e o que está com XP 40/100');
+  assert.match(t, /XP <b>100\/100<\/b> · pronto para treinar/); assert.match(t, /XP <b>40\/100<\/b>/);
+  S.aba = 'amistoso'; await E.carregarExtras('amistoso'); assert.match(E.viewAmistoso(), /Desafiar[\s\S]*Rivais|Rivais[\s\S]*Desafiar/);
+  S.aba = 'recrutar'; await E.carregarExtras('recrutar'); const r = E.viewRecrutar();
+  assert.match(r, /Baú Básico/); assert.match(r, /Baú Premium/); assert.match(r, /1275/); assert.match(r, /3825/); assert.match(r, /-15%/);
+  assert.match(E.modalRecrutar({ contrato: 12, r: { preco_rc: 300, itens: [{ raridade: 'epico', repetida: true, jogador: jog(5, { legado: true, copias: 2, raridade: 'epico' }) }] } }), /Novo jogador Legado[\s\S]*tc-recicla/);
+  E.limparExtras();
+});
+
+test('Central de Marketing: o menu existe, o cliente só chama funções do SQL, as telas montam e a taxa exibida é a do servidor', async () => {
+  const main = readFileSync(new URL('../jogos/tecnico/js/main.js', import.meta.url), 'utf8');
+  assert.ok(main.includes("['marketing', 'Marketing'"), 'aba no menu');
+  const plat = readFileSync(new URL('../shared/platform.js', import.meta.url), 'utf8');
+  for (const c of ['tc_marketing_estado', 'tc_marketing_historico', 'tc_marketing_melhorar', 'tc_patrocinio_contratar', 'tc_patrocinio_auto', 'tc_campanha_iniciar', 'tc_marketing_resumo_visto']) {
+    assert.ok(plat.includes(`'${c}'`), `${c} no cliente`); assert.match(sql, new RegExp(`function public\\.${c}\\(`), `${c} no SQL`);
+  }
+  for (const k of ['patrocinador_invalido', 'patrocinio_ja_ativo', 'limite_patrocinios', 'requisito_nao_cumprido', 'marketing_no_maximo', 'campanha_ativa', 'campanha_em_recarga', 'campanha_invalida', 'contrato_inexistente']) {
+    assert.ok(plat.includes(`${k}:`), `mensagem de ${k}`); assert.ok(sql.includes(`'${k}'`), `${k} existe no SQL`);
+  }
+  const M = await import('../jogos/tecnico/js/marketing.js');
+  const api = platform.tecnico;
+  const taxa = { base: 12, base_inicial: 10, base_fama: 2, base_divisao: 0, bonus_marketing: 0.08, bonus_audiencia: 0.05, bonus_campanha: 0.05, patrocinadores: 5 };
+  taxa.por_minuto = taxa.base * (1 + taxa.bonus_marketing + taxa.bonus_audiencia + taxa.bonus_campanha) + taxa.patrocinadores;
+  const fim = new Date(Date.now() + 3 * 3600e3).toISOString();
+  const niveis = [{ min: 0, nome: 'Clube desconhecido', beneficio: 'Patrocinadores locais' }, { min: 100, nome: 'Clube regional', beneficio: 'Patrocinadores regionais' }];
+  const estado = {
+    creditos: 5000, taxa: { ...taxa, por_hora: taxa.por_minuto * 60, por_dia: taxa.por_minuto * 1440 }, pendente: { segundos: 0, valor: 0, limite_h: 8 },
+    fama: { valor: 60, max: 1000, nivel: { nome: 'Clube desconhecido', proximo_min: 100, proximo_nome: 'Clube regional' }, niveis },
+    marketing: { nivel: 3, max: 20, nome: 'Produção regular de conteúdo', bonus: 0.08, custo_proximo: 9000, proximo_nome: 'Parcerias locais', proximo_bonus: 0.12, limite_contratos: 2, limites: [{ nivel: 1, max: 1 }, { nivel: 3, max: 2 }] },
+    contratos: [{ id: 7, marca: 'rift_cafe', nome: 'Rift Café', categoria: 'local', inicio: fim, fim, receita_min: 5, renovar_auto: true, ativo: true }],
+    patrocinadores: [
+      { id: 'rift_cafe', nome: 'Rift Café', ramo: 'Cafeteria', categoria: 'local', receita_min: 4, duracao_h: 48, custo: 1800, req: { fama: 0, nivel: 1 }, estado: 'ativo' },
+      { id: 'nexus_energy', nome: 'Nexus Energy', ramo: 'Bebidas', categoria: 'local', receita_min: 5, duracao_h: 72, custo: 3000, req: { fama: 0, nivel: 1 }, estado: 'disponivel' },
+      { id: 'celestial_air', nome: 'Celestial Air', ramo: 'Aviação', categoria: 'premium', receita_min: 165, duracao_h: 336, custo: 300000, req: { fama: 700, nivel: 15, divisao: 'principal', titulares: 5 }, estado: 'indisponivel', motivo: 'Fama mínima: 700' },
+    ],
+    campanha_ativa: { id: 'redes_sociais', inicio: fim, fim, bonus: 0.05 },
+    campanhas: [{ id: 'redes_sociais', nome: 'Campanha nas redes sociais', custo: 4000, duracao_h: 6, recarga_h: 12, bonus: 0.05, efeito: '+5% por 6h', recarga_ate: null, requisito: null }],
+    audiencia: { total: 120, bonus: 0.05, cap: 0.45, peso_reserva: 0.25, jogadores: [{ id: 1, nome: 'Astro', pos: 'meio', titular: true, fama: 90, audiencia: 94.8, conta: true }, { id: 2, nome: 'Reserva', pos: 'top', titular: false, fama: 30, audiencia: 13.7, conta: true }] },
+    resumo: { minutos: 480, receita_clube: 3000, bonus_comercial: 500, patrocinadores: 1200, total: 4700, limitado: true },
+  };
+  api.marketingEstado = async () => estado;
+  api.marketingHistorico = async () => [{ id: 1, delta: 800, saldo: 5800, motivo: 'mkt_receita', criado: new Date().toISOString() }];
+  const S = { aba: 'marketing', ocupado: false, modal: null, meu: { org: { creditos: 0 } } };
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, '');
+  M.iniciarMarketing({ S, esc, fmt: (n) => String(Math.round(n)), IMG: () => '', agir: async () => null, render() {}, nomeVaga: (v) => v, atualizarMeu: async () => {} });
+  await M.carregarMarketing();
+  assert.equal(S.meu.org.creditos, 5000, 'saldo vem do servidor');
+  // visual novo (padrão): resgate em destaque, cartões, abas Resumo/Crescer/Patrocínios/Jogadores/Extrato
+  const v = M.viewMarketingCentral(); assert.match(v, /Acumulando agora/); assert.match(v, /data-act="mkt-resgatar"/); assert.match(v, /class="mk2"/);
+  assert.match(v, /Resumo/); assert.match(v, /Crescer/); assert.match(v, /Patrocínios/); assert.match(v, /Jogadores/); assert.match(v, /Extrato/);
+  assert.match(v, new RegExp(String(Math.round(taxa.por_minuto * 10) / 10).replace('.', '[.,]')), 'receita por minuto da tela = a do servidor');
+  assert.match(v, /Clube desconhecido/); assert.match(v, /De onde vem a renda/);
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'marketing' } }); const mk = M.viewMarketingCentral();
+  assert.match(mk, /data-act="mkt-melhorar"/); assert.match(mk, /Campanha nas redes sociais/); assert.match(mk, /Termina em/);
+  assert.equal((mk.match(/data-act="mkt-campanha"[^>]*disabled/g) || []).length, 1, 'uma campanha por vez');
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'patro' } }); const pt = M.viewMarketingCentral();
+  assert.match(pt, /Fama mínima: 700/); assert.match(pt, /data-act="mkt-auto"[^>]*checked/);
+  assert.equal((pt.match(/data-act="mkt-contratar"[^>]*disabled/g) || []).length, 1, 'o indisponível fica travado; o ativo mostra só o selo');
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'aud' } }); assert.match(M.viewMarketingCentral(), /Astro/);
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'fin' } }); assert.match(M.viewMarketingCentral(), /Extrato/); assert.equal(M.nomeMovimento({ motivo: 'mkt_receita', ref: 'dia:2026-10-18' }), 'Marketing · Ganhos 18/10');
+  // visual clássico (escolhido na Configuração): continua disponível
+  globalThis.localStorage = { getItem: () => JSON.stringify({ mktClassico: true }) };
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'visao' } });
+  const vc = M.viewMarketingCentral(); assert.match(vc, /Acumulando agora/); assert.match(vc, /data-act="mkt-resgatar"/);
+  assert.match(vc, /Central de Marketing/); assert.match(vc, /Visão geral/); assert.match(vc, /Histórico financeiro/); assert.match(vc, /Audiência e jogadores/);
+  assert.match(vc, new RegExp(String(Math.round(taxa.por_minuto * 10) / 10).replace('.', '[.,]')), 'receita por minuto da tela = a do servidor');
+  assert.match(vc, /Clube desconhecido/);
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'marketing' } }); const mkc = M.viewMarketingCentral();
+  assert.match(mkc, /data-act="mkt-melhorar"/); assert.match(mkc, /Campanha nas redes sociais/); assert.match(mkc, /Em andamento/);
+  assert.equal((mkc.match(/data-act="mkt-campanha"[^>]*disabled/g) || []).length, 1, 'uma campanha por vez');
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'patro' } }); const ptc = M.viewMarketingCentral();
+  assert.match(ptc, /Fama mínima: 700/); assert.match(ptc, /data-act="mkt-auto"[^>]*checked/);
+  assert.equal((ptc.match(/data-act="mkt-contratar"[^>]*disabled/g) || []).length, 2, 'ativo e indisponível travados');
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'aud' } }); assert.match(M.viewMarketingCentral(), /Astro/);
+  await M.tratarMkt('mkt-aba', { dataset: { aba: 'fin' } }); assert.match(M.viewMarketingCentral(), /<td>Marketing<\/td>/); assert.equal(M.nomeMovimento({ motivo: 'mkt_receita', ref: 'dia:2026-10-18' }), 'Marketing · Ganhos 18/10');
+  delete globalThis.localStorage;
+  const r = M.modalMktResumo({ r: estado.resumo });
+  assert.match(r, /Bem-vindo de volta/); assert.match(r, /\+4700/); assert.match(r, /Patrocinadores/); assert.match(r, /Clube/); assert.match(r, /Bônus/); assert.match(r, /ficou fora por/, 'informa quanto tempo o jogador ficou fora'); assert.doesNotMatch(r, /Tempo contabilizado/);
+  M.limparMarketing();
+});
+
+test('emblema de texto (v3): codifica, decodifica, limpa a escrita, tem as 11 fontes e o SVG sai com contorno, sombra, degradê e placa', async () => {
+  const I = await import('../jogos/tecnico/js/icone.js');
+  const tx = { t: 'Fênix 77', f: 3, c: ['#ffffff', '#d9a82b'], ow: 4, oc: '#112233', sh: 2, sc: '#000000', pl: 0, pf: '#1b3a6b', pb: '#d9a82b' };
+  const cod = I.txCodificar(tx); assert.equal(cod, 'v3:Fênix 77:3:ffffff:d9a82b:4:112233:2:000000:0:1b3a6b:d9a82b');
+  assert.equal(I.txCodificar({ ...tx, pl: 3 }).split(':')[9], '0', 'o emblema de escrita não tem placa de fundo');
+  assert.deepEqual(I.txDecodificar(cod), tx);
+  assert.equal(I.txDecodificar('v4:1:ff0000:00ff00'), null); assert.equal(I.txDecodificar('v3::1:ffffff:ffffff:0:000000:0:000000:0:000000:000000'), null, 'texto vazio');
+  assert.equal(I.txDecodificar('v3:AB:12:ffffff:ffffff:0:000000:0:000000:0:000000:000000'), null, 'fonte inexistente'); assert.equal(I.txDecodificar('v3:AB:1:ffffff:ffffff:9:000000:0:000000:0:000000:000000'), null, 'contorno acima do máximo');
+  assert.equal(I.txLimpar('A:B<C>"D"  E'), 'ABCD E', 'só caracteres permitidos'); assert.equal(I.txLimpar('x'.repeat(40)).length, I.TEXTO_MAX); assert.equal(I.TEXTO_MAX, 14);
+  assert.equal(I.txCodificar({ ...tx, t: '<script>' }).split(':')[1], 'script', 'a escrita é limpa antes de ir para o servidor');
+  assert.equal(I.FONTES.length, 11);
+  const css = readFileSync(new URL('../jogos/tecnico/css/style.css', import.meta.url), 'utf8');
+  for (const f of I.FONTES.filter((x) => x.id > 1)) { const fam = /'([^']+)'/.exec(f.css)[1]; assert.ok(css.includes(`font-family: '${fam}'`), `@font-face de ${f.nome}`); }
+  for (const arq of ['draco', 'midnight', 'midnight-it', 'polarized', 'polarized-it', 'stifly', 'thernaly', 'thernaly-it', 'victory', 'y224']) assert.ok(existsSync(new URL(`../jogos/tecnico/fonts/${arq}.woff2`, import.meta.url)), `fonte ${arq}`);
+  const svg = I.textoHtml(tx, 60, 'Time'); assert.match(svg, /<svg class="tc-ict"/); assert.match(svg, /linearGradient/); assert.match(svg, /stroke="#112233"/); assert.match(svg, /translate\(/); assert.match(svg, /Fênix 77/); assert.match(I.textoHtml({ ...tx, pl: 3 }, 60), /<path d=/, 'placas antigas ainda são desenhadas');
+  const simples = I.textoHtml({ ...tx, c: ['#ffffff', '#ffffff'], ow: 0, sh: 0, pl: 0 }, 60); assert.ok(!/linearGradient/.test(simples) && !/translate\(/.test(simples) && !/<path/.test(simples), 'sem degradê, sombra nem placa');
+  const A = await import('../jogos/tecnico/js/art.js'); assert.match(A.escudoOrg({ escudo: cod, nome: 'Fênix' }, 44), /<svg class="tc-ict"/);
+});
+
+test('ficha do jogador mostra o idioma nativo e os secundários', () => {
+  const main = readFileSync(new URL('../jogos/tecnico/js/main.js', import.meta.url), 'utf8');
+  assert.match(main, /function idiomasFichaHtml\(j\)/); assert.match(main, /\$\{idiomasFichaHtml\(j\)\}/); assert.match(main, /fala também/);
+});
+
+test('símbolos do time: 49 símbolos com uma cor trocável cada (o resto fica fixo), codifica e decodifica, todas as imagens existem e o HTML sai com as camadas certas', async () => {
+  const I = await import('../jogos/tecnico/js/icone.js');
+  assert.equal(I.N_SIMBOLOS, 49); assert.equal(I.SIMBOLOS.length, 49);
+  const dir = new URL('../jogos/tecnico/img/simbolos/', import.meta.url);
+  const por = { 1: 0, 2: 0, 3: 0 };
+  I.SIMBOLOS.forEach(([nome, fixa, cores], k) => {
+    const n = String(k + 1).padStart(2, '0');
+    assert.ok(nome && cores.length >= 1 && cores.length <= 3, `símbolo ${n} tem de 1 a 3 cores`); por[cores.length] = (por[cores.length] || 0) + 1;
+    for (const [rot, hex] of cores) { assert.ok(rot, `rótulo da cor do símbolo ${n}`); assert.match(hex, /^#[0-9a-f]{6}$/); }
+    for (let c = 1; c <= cores.length; c++) assert.ok(existsSync(new URL(`s${n}-${c}.webp`, dir)), `símbolo ${n} camada ${c}`);
+    assert.equal(existsSync(new URL(`s${n}-0.webp`, dir)), !!fixa, `camada fixa do símbolo ${n}`);
+    assert.ok(!existsSync(new URL(`s${n}-${cores.length + 1}.webp`, dir)), `símbolo ${n} sem camada sobrando`);
+  });
+  assert.equal(por[1], 49, 'todo símbolo troca só uma cor');
+  assert.ok(!existsSync(new URL('../jogos/tecnico/img/icones/', import.meta.url)), 'emblemas e bandeiras antigos foram removidos');
+  const um = 7; const ic = { s: um, c: ['#112233'] };
+  assert.equal(I.icCodificar(ic), `v4:${um}:112233`);
+  assert.deepEqual(I.icDecodificar(I.icCodificar(ic)), ic);
+  assert.equal(I.icCodificar({ s: um, c: ['#112233', '#445566'] }), `v4:${um}:112233`, 'só a cor trocável é guardada');
+  assert.deepEqual(I.icDecodificar(`v4:${um}:112233:445566`), ic, 'cores a mais são ignoradas');
+  assert.deepEqual(I.icDecodificar(`v4:${um}`), null, 'sem cor não vale');
+  assert.equal(I.icDecodificar('escudo-2'), null); assert.equal(I.icDecodificar('v4:50:112233'), null); assert.equal(I.icDecodificar('v4:0:112233'), null); assert.equal(I.icDecodificar('v2:12:112233:445566:778899:0:aabbcc:ddeeff'), null);
+  assert.deepEqual(I.icTrocar(um), { s: um, c: I.simCoresPadrao(um) });
+  const html = I.icHtml(ic, 80); assert.equal((html.match(/<i class="p"/g) || []).length, 1, 'uma camada colorida'); assert.equal((html.match(/<i class="x"/g) || []).length, I.SIMBOLOS[um - 1][1], 'mais a camada fixa, quando o símbolo tem');
+  assert.match(html, /--c:#112233/); assert.match(html, /s07-1\.webp/);
+  const A = await import('../jogos/tecnico/js/art.js');
+  assert.match(A.escudoOrg({ escudo: `v4:${um}:112233`, sigla: 'ABC' }, 40), /class="tc-ic"/);
+  const antigo = A.escudoOrg({ escudo: 'escudo-2', nome: 'Time Antigo', cor1: '#111111', cor2: '#222222', sigla: 'ABC' }, 40);
+  assert.match(antigo, /class="tc-ic"/, 'time ainda não convertido ganha um símbolo fixo pelo nome'); assert.equal(antigo, A.escudoOrg({ escudo: 'v2:3:111111:222222:333333:0:111111:222222', nome: 'Time Antigo', cor1: '#111111', cor2: '#222222', sigla: 'ABC' }, 40));
+  assert.ok(!/escudoSvg|ESCUDOS/.test(readFileSync(new URL('../jogos/tecnico/js/art.js', import.meta.url), 'utf8')), 'escudo desenhado antigo foi removido');
+});
+
+test('mercado oficial com rotação: o cliente chama a função do SQL e conhece o erro de oferta', () => {
+  const plat = readFileSync(new URL('../shared/platform.js', import.meta.url), 'utf8');
+  assert.ok(plat.includes("'tc_mercado_rotacao'")); assert.match(sql, /function public\.tc_mercado_rotacao\(/);
+  assert.ok(plat.includes('fora_da_oferta:')); assert.ok(sql.includes("'fora_da_oferta'"));
+  assert.match(sql, /"min": 7, "max": 10, "abaixo": 5, "acima": 8/, 'configuração: 7 a 10 jogadores, de -5 a +8');
+});
+
+test('painel ADM: a aba só aparece para administradores, o cliente chama funções do SQL e o OVR dos atributos é o do servidor', async () => {
+  const main = readFileSync(new URL('../jogos/tecnico/js/main.js', import.meta.url), 'utf8');
+  assert.ok(main.includes("['adm', 'ADM'"), 'aba ADM'); assert.ok(!main.includes("['campeoes', 'Campeões'"), 'a aba pública de Campeões saiu do menu');
+  assert.match(main, /filter\(\(\[id\]\) => id !== 'adm' \|\| S\.ehAdmin\)/, 'ADM só para administradores');
+  const plat = readFileSync(new URL('../shared/platform.js', import.meta.url), 'utf8');
+  for (const c of ['tc_adm_jogadores', 'tc_adm_jogador_editar', 'tc_adm_jogador_raridade']) { assert.ok(plat.includes(`'${c}'`)); assert.match(sql, new RegExp(`function public\\.${c}\\(`)); }
+  for (const k of ['jogador_nome_invalido', 'jogador_nome_em_uso', 'atributo_invalido']) { assert.ok(plat.includes(`${k}:`)); assert.ok(sql.includes(`'${k}'`)); }
+  const A = await import('../jogos/tecnico/js/adm.js');
+  const w = [0.25, 0.2, 0.2, 0.2, 0.15];
+  const a = { mec: 60, rotas: 50, macro: 40, tf: 70, mental: 55 };
+  const ovr = A.ovrDe(a, w); assert.ok(Math.abs(ovr - (0.25 * 60 + 0.2 * 50 + 0.2 * 40 + 0.2 * 70 + 0.15 * 55)) < 1e-9);
+  for (const alvo of [30, 55, 80, 95, 100, 1]) {
+    const n = A.atributosParaOvr(a, w, alvo);
+    assert.ok(Math.abs(A.ovrDe(n, w) - alvo) <= 0.51, `OVR ${alvo}: ${A.ovrDe(n, w)}`);
+    for (const k of Object.keys(n)) assert.ok(n[k] >= 1 && n[k] <= 100);
+  }
+  assert.ok(A.atributosParaOvr(a, w, 80).tf > A.atributosParaOvr(a, w, 80).macro, 'mantém as proporções entre os atributos');
+});
+
+test('Início: as notícias mostram a partida do dia e, depois de jogar, o resultado (vitória, final, campeão) até o dia virar', () => {
+  const main = readFileSync(new URL('../jogos/tecnico/js/main.js', import.meta.url), 'utf8');
+  const trecho = main.slice(main.indexOf('function hojeIso()'), main.indexOf('function viewVisao()'));
+  const org = (id, nome) => ({ id, nome });
+  const eu = org(1, 'Fenix'), adv = org(2, 'Rival');
+  const mk = (S) => new Function('S', 'esc', 'IMG', 'vsCard', 'escudoOrg', 'dataCurta', 'FASES', 'trofeuImg', 'trofeuChave', 'BANNERS', 'temBanner', 'getLang', 't', `${trecho}; return viewNoticias;`)(S, (x) => String(x ?? ''), () => '', () => '<vs/>', () => '', (d) => d, { rodada: 'Rodada', quartas: 'Quartas', semi: 'Semifinal', final: 'Final' }, (t) => `<img src="trofeu-${/academy/i.test(t) ? 'academy' : 'outro'}">`, (t) => (/academy/i.test(t) ? 'academy' : /copa/i.test(t) ? 'copa' : /mundial/i.test(t) ? 'mundial' : 'nacional'), new Set(['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice', 'final', 'eliminado', 'vitoria', 'derrota', 'misto', 'emdia']), (k) => (['campeao-academy', 'campeao-nacional', 'campeao-copa', 'campeao-mundial', 'vice', 'final', 'eliminado', 'vitoria', 'derrota', 'misto', 'emdia'].includes(k) ? k : null), () => 'pt-BR', (k, v) => (v ? k.replace(/\{(\w+)\}/g, (_, n) => v[n]) : k));
+  const cal = { antes: false, inicio_semana: '2026-11-02', dia: 7 }; // domingo 08/11
+  const jogo = (o) => ({ id: 1, fase: 'final', dia: '2026-11-08', formato: 5, a: eu, b: adv, status: 'concluida', placar_a: 3, placar_b: 1, vencedor: 1, ...o });
+  const base = (partidas, extra = {}) => ({ meu: { org: { id: 1 } }, gp: { ativo: true, partida: null }, painel: { calendario: cal, liga: { nome: 'Liga Academy', status: 'encerrada', partidas }, proxima: null, ...extra } });
+  // campeão: depois de jogar a final
+  let h = mk(base([jogo({})]))({ pos_final: 1, pos: 1, pontos: 6 });
+  assert.match(h, /campe[aã]o/i); assert.match(h, /final da Liga Academy/); assert.match(h, /tc-noti-banner/); assert.match(h, /campeao-academy\.webp/); assert.doesNotMatch(h, /Jogar a partida/);
+  // semifinal ganha: banner "você está na final"
+  const semi = jogo({ id: 2, fase: 'semi', formato: 3, dia: '2026-11-07' }); const finalAg = jogo({ id: 3, status: 'agendada', placar_a: null, placar_b: null, vencedor: null, dia: '2026-11-08' });
+  const sSemi = base([semi, finalAg]); sSemi.painel.liga.status = 'aberta'; sSemi.painel.calendario = { antes: false, inicio_semana: '2026-11-02', dia: 6 }; sSemi.gp = { ativo: true, partida: null };
+  h = mk(sSemi)({ pos: 2 }); assert.match(h, /Voc[eê] est[aá] na final/); assert.match(h, /img\/banners\/final\.webp/);
+  // semifinal perdida: banner de eliminado
+  const semiP = jogo({ id: 2, fase: 'semi', formato: 3, dia: '2026-11-07', vencedor: 2, placar_a: 1, placar_b: 2 });
+  const sElim = base([semiP]); sElim.painel.liga.status = 'aberta'; sElim.painel.calendario = { antes: false, inicio_semana: '2026-11-02', dia: 6 };
+  h = mk(sElim)({ pos: 3 }); assert.match(h, /Eliminado na semifinal/); assert.match(h, /img\/banners\/eliminado\.webp/);
+  // derrota na rodada: banner de derrota
+  const rd = jogo({ id: 9, fase: 'rodada', rodada: 2, formato: 1, vencedor: 2, placar_a: 0, placar_b: 1 });
+  const sDer = base([rd]); sDer.painel.liga.status = 'aberta';
+  h = mk(sDer)({ pos: 6, pontos: 1 }); assert.match(h, /Derrota/); assert.match(h, /img\/banners\/derrota\.webp/);
+  // uma vitória e uma derrota no mesmo dia: banner misto
+  const m1 = jogo({ id: 10, fase: 'rodada', rodada: 3, formato: 1, placar_a: 1, placar_b: 0 }), m2 = jogo({ id: 11, fase: 'rodada', rodada: 4, formato: 1, vencedor: 2, placar_a: 0, placar_b: 1 });
+  const sMis = base([m1, m2]); sMis.painel.liga.status = 'aberta';
+  h = mk(sMis)({ pos: 3, pontos: 2 }); assert.match(h, /Uma vit[oó]ria e uma derrota/); assert.match(h, /img\/banners\/misto\.webp/);
+  // Nacional também tem banner; campeonato sem banner usa o troféu
+  const sN = base([jogo({})]); sN.painel.liga.nome = 'Liga Nacional'; h = mk(sN)({ pos_final: 1 }); assert.match(h, /campeao-nacional\.webp/);
+  const sC = base([jogo({})]); sC.painel.liga.nome = 'Campeonato Mundial'; h = mk(sC)({ pos_final: 1 }); assert.match(h, /campeao-mundial\.webp/);
+  const sV = base([jogo({})]); sV.painel.liga.nome = 'Outra Liga'; h = mk(sV)({ pos_final: 1 }); assert.match(h, /tc-noti-banner|trofeu-outro/);
+  // final da Copa vinda de "últimos jogos" enquanto a liga da divisão é a da semana anterior
+  const sCopa = base([jogo({ id: 1, liga_id: 10, dia: '2026-11-01' })]); sCopa.painel.liga.id = 10;
+  sCopa.painel.ultimos = [jogo({ id: 30, liga_id: 11, liga_nome: 'Copa Internacional · S1', dia: '2026-11-08' })];
+  h = mk(sCopa)(null); assert.match(h, /campeao-copa\.webp/); assert.match(h, /final da Copa Internacional/);
+  // vice
+  h = mk(base([jogo({ vencedor: 2, placar_a: 1, placar_b: 3 })]))({ pos_final: 2 }); assert.match(h, /Vice-campe/); assert.match(h, /img\/banners\/vice\.webp/); assert.match(h, /tc-noti-banner topo/);
+  // partida do dia pendente: mostra o confronto e o botão de jogar
+  const pend = jogo({ id: 5, fase: 'rodada', rodada: 3, status: 'agendada', formato: 1, placar_a: null, placar_b: null, vencedor: null, dia: '2026-11-08' });
+  const S2 = base([pend], { proxima: pend }); S2.gp = { ativo: true, partida: { id: 5 }, proximo: { mapa: 1 } };
+  h = mk(S2)(null); assert.match(h, /partida do dia/); assert.match(h, /Jogar a partida/); assert.match(h, /tc-confronto/); assert.match(h, /Seu time/);
+  // depois de jogar as duas do dia: resumo do dia e a próxima partida
+  const r1 = jogo({ id: 6, fase: 'rodada', rodada: 3, formato: 1, placar_a: 1, placar_b: 0 }), r2 = jogo({ id: 7, fase: 'rodada', rodada: 4, formato: 1, placar_a: 1, placar_b: 0 });
+  const prox = jogo({ id: 8, fase: 'rodada', rodada: 5, status: 'agendada', dia: '2026-11-09', placar_a: null, placar_b: null, vencedor: null, formato: 1 });
+  const S3 = base([r1, r2, prox], { proxima: prox }); S3.painel.liga.status = 'aberta';
+  h = mk(S3)({ pos: 2, pontos: 4 }); assert.match(h, /Duas vit/); assert.match(h, /img\/banners\/vitoria\.webp/); assert.match(h, /2º lugar/); assert.match(h, /Próxima partida/);
+  // dia sem partidas suas (resultado de dias antes): "tudo em dia" com banner; sem nenhum jogo: também
+  const velho = jogo({ id: 12, fase: 'semi', formato: 3, dia: '2026-11-07', vencedor: 2, placar_a: 1, placar_b: 2 });
+  const S5 = base([velho]); S5.painel.liga.status = 'aberta'; h = mk(S5)(null); assert.match(h, /Tudo em dia/); assert.match(h, /img\/banners\/emdia\.webp/); assert.doesNotMatch(h, /Eliminado/);
+  const S4 = base([]); S4.painel.liga.status = 'aberta'; assert.match(mk(S4)(null), /Tudo em dia/);
+});
+
+test('Histórico: qualquer ação do jogador invalida o histórico guardado, então ele aparece atualizado ao abrir a aba (sem recarregar a página)', () => {
+  const main = readFileSync(new URL('../jogos/tecnico/js/main.js', import.meta.url), 'utf8');
+  const agir = main.slice(main.indexOf('async function agir('), main.indexOf('async function atualizar('));
+  assert.match(agir, /const r = await fn\(\);\s*S\.hist = null;/, 'agir zera o histórico em cache logo após a ação');
+});
+
+test('Guia: aba no menu logo após Personalizar, índice com todos os temas, páginas com conteúdo e busca', async () => {
+  const { PAGINAS, viewGuia } = await import('../jogos/tecnico/js/guia.js');
+  const main = readFileSync(new URL('../jogos/tecnico/js/main.js', import.meta.url), 'utf8');
+  assert.match(main, /\['pers', 'Personalizar', 'ic-personalizar'\], \['guia', 'Guia', 'ic-guia'\]/);
+  assert.ok(existsSync(new URL('../jogos/tecnico/img/ic-guia.webp', import.meta.url)));
+  const S = { guia: { pag: null, busca: '' } };
+  const indice = viewGuia(S);
+  for (const p of PAGINAS) assert.ok(indice.includes(`data-id="${p.id}"`), p.id);
+  for (const p of PAGINAS) {
+    S.guia.pag = p.id;
+    const h = viewGuia(S);
+    assert.ok(h.length > 800, `${p.id} tem conteúdo`);
+    assert.ok(!/undefined|\[object/.test(h), `${p.id} sem lixo`);
+  }
+  S.guia = { pag: null, busca: 'baú' };
+  const f = viewGuia(S);
+  assert.ok(f.includes('data-id="recrutar"') || f.includes('data-id="moedas"'));
+  S.guia.busca = 'xyzxyzxyz';
+  assert.ok(viewGuia(S).includes('Nada encontrado'));
+});
