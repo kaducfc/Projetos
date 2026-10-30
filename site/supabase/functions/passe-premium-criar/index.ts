@@ -1,6 +1,7 @@
 // Edge Function "passe-premium-criar": compra do Passe Premium do Passe de Batalha.
-//   { provedor: 'mercadopago' }  →  R$ 15,00 (Pix, cartão ou boleto)
-//   { provedor: 'stripe' }       →  US$ 10,00 (cartão, Apple Pay, Google Pay)
+//   { provedor: 'mercadopago', passe }  →  em reais (Pix, cartão ou boleto): R$ 15 no Halloween 2026, R$ 25 no Zaun e Piltover
+//   { provedor: 'stripe', passe }       →  em dólar (cartão, Apple Pay, Google Pay): US$ 10 no Halloween 2026, US$ 15 no Zaun e Piltover
+//   `passe` é opcional (sem ele, vale o Halloween 2026).
 // O preço é decidido AQUI (o site só escolhe o provedor). Devolve { url } para onde a
 // pessoa vai pagar; a confirmação chega pelos webhooks (apoio-webhook e apoio-intl-webhook),
 // que chamam site_passe_confirmar_compra e ligam o premium.
@@ -8,8 +9,11 @@
 // Segredos: MP_ACCESS_TOKEN (Mercado Pago), STRIPE_SECRET_KEY (Stripe), SITE_URL (opcional).
 // Na criação da função, DESLIGUE "Verify JWT": a conta é conferida aqui.
 
-const PASSE = 'halloween-2026';
-const PRECOS = { mercadopago: { moeda: 'BRL', valor: 15 }, stripe: { moeda: 'USD', valor: 10 } } as const;
+const PASSES: Record<string, { titulo: string; brl: number; usd: number }> = {
+  'halloween-2026': { titulo: 'Halloween 2026', brl: 15, usd: 10 },
+  'zaun-piltover-2026': { titulo: 'Zaun e Piltover', brl: 25, usd: 15 },
+};
+const PROVEDORES = ['mercadopago', 'stripe'];
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -32,9 +36,12 @@ Deno.serve(async (req) => {
 
   let corpo: Record<string, unknown>;
   try { corpo = await req.json(); } catch { return resposta({ erro: 'pedido_invalido' }, 400); }
-  const provedor = String(corpo.provedor || '') as keyof typeof PRECOS;
-  const preco = PRECOS[provedor];
-  if (!preco) return resposta({ erro: 'provedor' }, 400);
+  const provedor = String(corpo.provedor || '');
+  if (!PROVEDORES.includes(provedor)) return resposta({ erro: 'provedor' }, 400);
+  const PASSE = String(corpo.passe || 'halloween-2026');
+  const dadosPasse = PASSES[PASSE];
+  if (!dadosPasse) return resposta({ erro: 'passe_indisponivel' }, 400);
+  const preco = provedor === 'mercadopago' ? { moeda: 'BRL', valor: dadosPasse.brl } : { moeda: 'USD', valor: dadosPasse.usd };
   if (provedor === 'mercadopago' && !env('MP_ACCESS_TOKEN')) return resposta({ erro: 'mp_nao_configurado' }, 503);
   if (provedor === 'stripe' && !env('STRIPE_SECRET_KEY')) return resposta({ erro: 'stripe_nao_configurado' }, 503);
 
@@ -77,7 +84,7 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: { Authorization: `Bearer ${env('MP_ACCESS_TOKEN')}`, 'Content-Type': 'application/json', 'X-Idempotency-Key': compra.id },
       body: JSON.stringify({
-        items: [{ id: 'passe-premium', title: 'Passe de Batalha Premium · Halloween 2026', description: 'Passe Premium do Rift Arcade (temporada Halloween 2026)', quantity: 1, currency_id: 'BRL', unit_price: preco.valor }],
+        items: [{ id: 'passe-premium', title: `Passe de Batalha Premium · ${dadosPasse.titulo}`, description: `Passe Premium do Rift Arcade (temporada ${dadosPasse.titulo})`, quantity: 1, currency_id: 'BRL', unit_price: preco.valor }],
         external_reference: ref,
         back_urls: { success: volta('aprovado'), pending: volta('pendente'), failure: volta('falhou') },
         auto_return: 'approved',
@@ -97,7 +104,7 @@ Deno.serve(async (req) => {
     'line_items[0][price_data][currency]': 'usd',
     'line_items[0][price_data][unit_amount]': String(Math.round(preco.valor * 100)),
     'line_items[0][price_data][product_data][name]': 'Rift Arcade Battle Pass · Premium',
-    'line_items[0][price_data][product_data][description]': 'Premium Battle Pass for the Halloween 2026 season',
+    'line_items[0][price_data][product_data][description]': `Premium Battle Pass for the ${dadosPasse.titulo} season`,
     client_reference_id: ref,
     'metadata[passe_compra]': compra.id,
     'payment_intent_data[metadata][passe_compra]': compra.id,

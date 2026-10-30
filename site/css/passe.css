@@ -81,3 +81,14 @@
 .ps-regras h4 { margin: 0 0 8px; font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase; color: #ffa95a; }
 .ps-regras ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; color: #b9b3a3; font-size: 13.5px; line-height: 1.45; }
 .ps-tag-fim { color: #ffa95a; border-color: rgba(255, 138, 31, 0.45); background: rgba(255, 138, 31, 0.1); }
+
+/* Tema Zaun e Piltover: verde tóxico de Zaun com latão e brilho hextech de Piltover */
+.ps-zaun { --ps-ouro: #e8c872; --ps-laranja: #5fe39a; }
+.ps-zaun .ps-barra i { background: linear-gradient(90deg, #0b6b4a, #2fd98a, #b9ffe0); box-shadow: 0 0 10px rgba(56, 224, 138, 0.55); }
+.ps-zaun .ps-ponta { filter: drop-shadow(0 0 6px rgba(80, 190, 255, 0.8)); }
+.ps-zaun .ps-regras h4, .ps-zaun .ps-tag-fim { color: #7cecb0; }
+.ps-zaun .ps-tag-fim { border-color: rgba(95, 227, 154, 0.45); background: rgba(95, 227, 154, 0.1); }
+.ps-zaun .ps-nivel.ps-premium { border-color: rgba(232, 200, 114, 0.5); background: linear-gradient(180deg, rgba(232, 200, 114, 0.13), rgba(95, 227, 154, 0.04)); }
+.ps-zaun .ps-nivel.ps-gratis { background: linear-gradient(180deg, rgba(95, 227, 154, 0.07), rgba(255, 255, 255, 0.02)); }
+.ps-zaun .ps-resgatar { background: linear-gradient(180deg, #8af0bb, #2fb877); color: #04180e; }
+.ps-zaun .ps-nome { text-shadow: 0 0 14px rgba(95, 227, 154, 0.35); }

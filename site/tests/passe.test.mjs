@@ -171,10 +171,35 @@ test('passe: compra do Premium só com dinheiro (Mercado Pago ou Stripe); o pre�
   assert.match((await platform.passeComprar('stripe')).url, /stripe\.test/);
   await assert.rejects(platform.passeComprar('paypal'), /Não foi possível abrir o pagamento/);
   const fn = readFileSync(new URL('../supabase/functions/passe-premium-criar/index.ts', import.meta.url), 'utf8');
-  assert.match(fn, /mercadopago: \{ moeda: 'BRL', valor: 15 \}/);
-  assert.match(fn, /stripe: \{ moeda: 'USD', valor: 10 \}/);
+  assert.match(fn, /'halloween-2026': \{ titulo: 'Halloween 2026', brl: 15, usd: 10 \}/);
+  assert.match(fn, /'zaun-piltover-2026': \{ titulo: 'Zaun e Piltover', brl: 25, usd: 15 \}/);
+  assert.match(fn, /provedor === 'mercadopago' \? \{ moeda: 'BRL', valor: dadosPasse\.brl \} : \{ moeda: 'USD', valor: dadosPasse\.usd \}/); // o preço sai da tabela do servidor
   assert.doesNotMatch(fn, /body\.valor|corpo\.valor/); // o valor nunca vem do navegador
   const sql = readFileSync(new URL('../supabase/migrations/0042_passe_premium.sql', import.meta.url), 'utf8');
   assert.match(sql, /grant execute on function public\.site_passe_confirmar_compra\(uuid, text, text\) to service_role/);
   assert.match(sql, /revoke all on function public\.site_passe_confirmar_compra\(uuid, text, text\) from public, anon, authenticated/);
+});
+
+test('passe Zaun e Piltover (0200): 15 níveis, ímpares premium e pares grátis, com as recompensas pedidas', () => {
+  const sql = readFileSync(new URL('../supabase/migrations/0200_passe_zaun_piltover.sql', import.meta.url), 'utf8');
+  assert.match(sql, /values \('zaun-piltover-2026', 'Zaun e Piltover', 15, 100, 5, 150, false\)/);
+  const niveis = [...sql.matchAll(/\('zaun-piltover-2026', (\d+),\s+'(gratis|premium)',\s+'(\w+)',\s+'([\w-]+)'\)/g)].map((m) => ({ n: Number(m[1]), trilha: m[2], tipo: m[3], chave: m[4] }));
+  assert.equal(niveis.length, 15);
+  for (const x of niveis) {
+    assert.equal(x.trilha, x.n % 2 === 1 ? 'premium' : 'gratis', `nível ${x.n}`);
+    if (x.tipo === 'moeda') assert.equal(x.chave, x.trilha === 'premium' ? '500' : '300', `nível ${x.n}`);
+  }
+  assert.deepEqual(niveis.filter((x) => x.tipo !== 'moeda').map((x) => `${x.n}:${x.tipo}:${x.chave}`), ['3:moldura:mn-zaun', '9:efeito:gl-matrix', '15:moldura:mn-mecanismo']);
+  assert.match(sql, /site_passe_atual/);
+});
+
+test('passe Zaun e Piltover: a tela usa engrenagens e o tema próprio; o Halloween continua com abóboras', async () => {
+  const { passeHtml, uiPasse } = await import('../shared/passe.js');
+  const base = (id, extra = {}) => ({ passe: { id, nome: 'X', niveis: 15, abobora_por_nivel: 100, abobora_por_partida: 5, limite_dia: 150, publico: false, ...extra }, nivel: 2, progresso: 40, premium: false, hoje: 10,
+    niveis: [{ nivel: 3, trilha: 'premium', tipo: 'moldura', chave: 'mn-zaun', resgatado: false }, { nivel: 9, trilha: 'premium', tipo: 'efeito', chave: 'gl-matrix', resgatado: false }] });
+  const z = passeHtml(base('zaun-piltover-2026'));
+  assert.match(z, /ps-zaun/); assert.match(z, /engrenagens/); assert.doesNotMatch(z, /abóboras/); assert.match(z, /data-ps-premium="zaun-piltover-2026"/); assert.match(z, /Código Verde/);
+  const h = passeHtml(base('halloween-2026'));
+  assert.match(h, /abóboras/); assert.doesNotMatch(h, /ps-zaun/);
+  assert.equal(uiPasse('qualquer-outro').unidade[1], 'abóboras');
 });

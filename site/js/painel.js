@@ -9,7 +9,7 @@ import { GAMES, gameById } from '../shared/config.js';
 import { REINOS as SV_REINOS, CAMPEOES as SV_CAMPEOES, MELHORIAS as SV_MELHORIAS } from '../jogos/survivors/js/data.js';
 import { sinaisVigia, resumoJogadores, anotarRepeticoes } from '../shared/vigia.js';
 import { nomeRecompensa, tipoTexto, codigoBonito } from '../shared/recompensas.js';
-import { passeHtml } from '../shared/passe.js';
+import { passeHtml, uiPasse } from '../shared/passe.js';
 import { ligarCompraPremium } from '../shared/passe-compra.js';
 import { EFEITOS, EFEITOS_TESTE } from '../shared/efeitos.js';
 import { MOLDURAS_TESTE, ELOS_MOLDURAS } from '../shared/molduras.js';
@@ -111,7 +111,7 @@ function render(st) {
   const nav = `<nav class="p-tabs" role="tablist">${ABAS.map(([id, nome]) => `<button type="button" role="tab" data-aba="${id}" class="${aba === id ? 'on' : ''}">${nome}${contador[id] ? ` <span class="p-badge">${num(contador[id])}</span>` : ''}</button>`).join('')}</nav>`;
   const conteudo = { geral: abaGeral, jogos: abaJogos, rift: abaRift, survivors: abaSurvivors, ranqueada: abaRanqueada, jogador: abaJogador, apoio: abaApoio, ferramentas: abaFerramentas, teste: abaTeste }[aba](st);
   body.innerHTML = nav + conteudo;
-  if (aba === 'teste' && ps === null && !psErro && !psCarregando && platform.getUser()) carregarPasse();
+  if (aba === 'teste' && platform.getUser()) carregarPassesPendentes();
   if (aba === 'rift' && rm === null && !rmErro && !rmCarregando) carregarRift();
   if (aba === 'survivors' && sv === null && !svErro && !svCarregando) carregarSurvivors();
 }
@@ -616,38 +616,47 @@ function testeMolduras2(lista) {
     </article>`).join('')}</div>`;
 }
 
-// Passe de Batalha (em teste): o administrador joga o passe com a própria conta.
-let ps = null; // platform.passeEstado()
-let psErro = '';
-let psCarregando = false;
+// Passes de Batalha: o administrador joga cada passe com a própria conta. O Halloween 2026 já está no ar;
+// o Zaun e Piltover fica aqui, em teste, até o lançamento.
+const PASSES_PAINEL = [
+  { id: 'zaun-piltover-2026', titulo: 'Passe de Batalha · Zaun e Piltover (em teste)', nota: 'Próxima temporada: 15 níveis, 20 dias (01/11 a 20/11) e Premium a R$ 25. Ímpares são <b>premium</b> (Canos de Zaun no 3, Código Verde no 9, Mecanismo Arcano no 15; o resto é 500 RC provisório) e pares são <b>grátis</b> (300 RC provisório). As recompensas ficam na tabela <code>site_passe_niveis</code>; as datas e a publicação, no SQL de lançamento.' },
+  { id: 'halloween-2026', titulo: 'Passe de Batalha · Halloween 2026', nota: 'Passe atual, já público. Os botões de teste mexem só na sua conta.' },
+];
+const psMap = new Map(); // id → { e: passeEstado, erro, carregando }
+const psDe = (id) => { if (!psMap.has(id)) psMap.set(id, { e: null, erro: '', carregando: false }); return psMap.get(id); };
 
-async function carregarPasse() {
-  psCarregando = true;
+async function carregarPasse(id) {
+  const x = psDe(id);
+  x.carregando = true;
   try {
-    ps = await platform.passeEstado();
-    psErro = '';
+    x.e = await platform.passeEstado(id);
+    x.erro = '';
   } catch (err) {
-    ps = null;
-    psErro = err.message;
+    x.e = null;
+    x.erro = err.message;
   }
-  psCarregando = false;
+  x.carregando = false;
   if (aba === 'teste' && ultimo) render(ultimo);
 }
+const carregarPassesPendentes = () => { for (const p of PASSES_PAINEL) { const x = psDe(p.id); if (!x.e && !x.erro && !x.carregando) carregarPasse(p.id); } };
 
-function passeCard() {
+function passeCard({ id, titulo, nota }) {
   const eu = platform.getUser();
-  if (!eu) return '<div class="card"><h3>Passe de Batalha</h3><p class="p-note">Entre na sua conta para ver o passe.</p></div>';
-  if (psErro) return `<div class="card"><h3>Passe de Batalha</h3><p class="p-note">${esc(psErro)}</p><button type="button" class="p-mini" data-ps-recarregar>Tentar de novo</button></div>`;
-  if (!ps) return '<div class="card"><h3>Passe de Batalha</h3><p class="p-note">Carregando…</p></div>';
-  const controles = `<div class="ps-testebox"><span>Controles de teste (sua conta) · barra ${ps.progresso}/${ps.passe.abobora_por_nivel} · hoje ${ps.hoje}/${ps.passe.limite_dia} abóboras</span>
-      <button type="button" class="p-mini" data-ps-acao="aboboras" data-valor="100">+100 abóboras</button>
-      <button type="button" class="p-mini" data-ps-acao="aboboras" data-valor="-100">−100 abóboras</button>
+  if (!eu) return `<div class="card"><h3>${esc(titulo)}</h3><p class="p-note">Entre na sua conta para ver o passe.</p></div>`;
+  const x = psDe(id);
+  if (x.erro) return `<div class="card"><h3>${esc(titulo)}</h3><p class="p-note">${esc(x.erro)}</p><button type="button" class="p-mini" data-ps-recarregar="${esc(id)}">Tentar de novo</button></div>`;
+  const ps = x.e;
+  if (!ps) return `<div class="card"><h3>${esc(titulo)}</h3><p class="p-note">Carregando…</p></div>`;
+  const un = uiPasse(id).unidade[1];
+  const controles = `<div class="ps-testebox"><span>Controles de teste (sua conta) · barra ${ps.progresso}/${ps.passe.abobora_por_nivel} · hoje ${ps.hoje}/${ps.passe.limite_dia} ${un}</span>
+      <button type="button" class="p-mini" data-ps-acao="aboboras" data-valor="100">+100 ${un}</button>
+      <button type="button" class="p-mini" data-ps-acao="aboboras" data-valor="-100">−100 ${un}</button>
       <button type="button" class="p-mini" data-ps-acao="premium" data-valor="${ps.premium ? 0 : 1}">${ps.premium ? 'Tirar o passe premium' : 'Ativar o passe premium'}</button>
       <button type="button" class="p-mini p-mini-danger" data-ps-acao="zerar" data-valor="0">Zerar meu progresso</button>
       <button type="button" class="p-mini" data-ps-publicar="${ps.passe.publico ? 0 : 1}">${ps.passe.publico ? 'Voltar para teste (esconder dos jogadores)' : 'Publicar para todos os jogadores'}</button>
     </div><p class="p-note" data-ps-msg role="status"></p>`;
-  return `<div class="card"><h3>Passe de Batalha</h3>
-    <p class="c-sub">Só você vê. Jogue qualquer jogo logado para ganhar abóboras de verdade; os botões de teste mexem só na sua conta. Os níveis ímpares são <b>premium</b> e os pares são <b>grátis</b>; as recompensas ficam na tabela <code>site_passe_niveis</code> (por enquanto, 500 RC em todos, e o efeito <b>Halloween 2026</b> no nível 15).</p>
+  return `<div class="card"><h3>${esc(titulo)}</h3>
+    <p class="c-sub">${nota}</p>
     ${passeHtml(ps, { extra: controles })}</div>`;
 }
 
@@ -665,7 +674,7 @@ function abaTeste() {
   if (!testeNick && eu) testeNick = eu.username;
   return `<section class="p-section">
     <h2>Teste</h2>
-    ${secaoTeste('passe', 'Passe de Batalha', passeCard())}
+    ${PASSES_PAINEL.map((p) => secaoTeste(p.id, p.titulo, passeCard(p))).join('')}
     <div class="card">
       <p class="c-sub">Aqui ficam as novidades antes de irem para todo mundo. Os efeitos abaixo (para streamers) <b>não aparecem para os jogadores</b>: nem no perfil, nem no ranking. Para ver o efeito no seu nome de verdade, é só esperar o lançamento.</p>
       <label class="p-label">Nick de exemplo <input type="text" data-t-nick value="${esc(testeNick)}" maxlength="24" autocomplete="off" spellcheck="false" /></label>
@@ -1253,7 +1262,7 @@ body.addEventListener('click', (e) => {
   const t = e.target.closest('[data-aba]');
   if (!t || !ultimo) return;
   aba = t.dataset.aba;
-  if (aba === 'teste') { ps = null; psErro = ''; } // relê o passe ao abrir a aba
+  if (aba === 'teste') psMap.clear(); // relê os passes ao abrir a aba
   try { localStorage.setItem('site.painel.aba', aba); } catch { /* sem storage */ }
   render(ultimo);
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1638,32 +1647,34 @@ body.addEventListener('click', (e) => {
 });
 ligarCompraPremium(body); // botões "Premium" do passe abrem a compra
 
-// Passe de batalha: resgatar, controles de teste e publicar.
+// Passe de batalha: resgatar, controles de teste e publicar (cada passe tem o seu id no cartão).
 body.addEventListener('click', async (e) => {
   const r = e.target.closest('[data-ps-resgatar]');
   const a = e.target.closest('[data-ps-acao]');
   const pub = e.target.closest('[data-ps-publicar]');
-  if (e.target.closest('[data-ps-recarregar]')) { psErro = ''; carregarPasse(); return; }
+  const rec = e.target.closest('[data-ps-recarregar]');
+  if (rec) { const x = psDe(rec.dataset.psRecarregar); x.erro = ''; carregarPasse(rec.dataset.psRecarregar); return; }
   if (!r && !a && !pub) return;
-  const msg = () => body.querySelector('[data-ps-msg]');
   const btn = r || a || pub;
+  const pid = btn.closest('[data-ps-id]')?.dataset.psId || 'halloween-2026';
+  const msg = () => btn.closest('.card')?.querySelector('[data-ps-msg]');
   btn.disabled = true;
   try {
     if (r) {
-      const x = await platform.passeResgatar(Number(r.dataset.psResgatar));
-      await carregarPasse();
+      const x = await platform.passeResgatar(Number(r.dataset.psResgatar), pid);
+      await carregarPasse(pid);
       const m = msg();
       if (m) m.textContent = x.tipo === 'moeda' ? `Nível ${x.nivel}: +${Number(x.chave).toLocaleString('pt-BR')} Rift Coins!` : `Nível ${x.nivel}: ${nomeRecompensa(x.tipo, x.chave)} resgatado!`;
       return;
     }
     if (a) {
-      if (a.dataset.psAcao === 'zerar' && !window.confirm('Zerar o seu progresso no passe (abóboras, limite do dia e recompensas resgatadas)? As moedas e efeitos já recebidos continuam com você.')) { btn.disabled = false; return; }
-      await platform.adminPasse(platform.getUser().username, a.dataset.psAcao, Number(a.dataset.valor));
+      if (a.dataset.psAcao === 'zerar' && !window.confirm('Zerar o seu progresso no passe (progresso, limite do dia e recompensas resgatadas)? As moedas e efeitos já recebidos continuam com você.')) { btn.disabled = false; return; }
+      await platform.adminPasse(platform.getUser().username, a.dataset.psAcao, Number(a.dataset.valor), pid);
     } else {
-      if (pub.dataset.psPublicar === '1' && !window.confirm('Publicar o passe? A partir de agora todos os jogadores conectados ganham abóboras e podem resgatar.')) { btn.disabled = false; return; }
-      await platform.adminPassePublicar(pub.dataset.psPublicar === '1');
+      if (pub.dataset.psPublicar === '1' && !window.confirm('Publicar o passe? A partir de agora todos os jogadores conectados ganham progresso e podem resgatar.')) { btn.disabled = false; return; }
+      await platform.adminPassePublicar(pub.dataset.psPublicar === '1', pid);
     }
-    await carregarPasse();
+    await carregarPasse(pid);
   } catch (err) {
     const m = msg();
     if (m) m.textContent = err.message;

@@ -4,7 +4,7 @@
 // jogo chama liberarAbobora() quando mostra o resultado (shared/aviso-ranked.js faz isso
 // nos avisos de fim de partida).
 import * as platform from './platform.js';
-import { ABOBORA_IMG } from './passe.js';
+import { uiPasse } from './passe.js';
 
 const reduzido = false; // sempre com as animações (sem versão "reduzida")
 let atual = null;
@@ -16,8 +16,9 @@ function juntar(a, b) {
   return { ...b, ganhou: a.ganhou + b.ganhou, nivelAntes: a.nivelAntes, progressoAntes: a.progressoAntes ?? (a.progresso - a.ganhou) };
 }
 
-export function mostrarAbobora({ ganhou, nivelAntes, nivel, progresso, por, niveis, hoje, limite }) {
+export function mostrarAbobora({ passe, ganhou, nivelAntes, nivel, progresso, por, niveis, hoje, limite }) {
   atual?.remove();
+  const ui = uiPasse(passe);
   const subiu = nivel > nivelAntes;
   const completo = nivel >= niveis;
   const pctFim = completo ? 100 : Math.min(100, Math.round((progresso / por) * 100));
@@ -27,9 +28,9 @@ export function mostrarAbobora({ ganhou, nivelAntes, nivel, progresso, por, nive
   el.className = `ps-aviso-abobora${subiu ? ' pa-sobe-nivel' : ''}`;
   el.setAttribute('role', 'status');
   el.innerHTML = `<button type="button" class="pa-x" aria-label="Fechar">×</button>
-    <img class="pa-img" src="${ABOBORA_IMG}" srcset="/shared/assets/passe/abobora-128.webp 2x" width="56" height="56" alt="" />
+    <img class="pa-img" src="${ui.img}" srcset="${ui.img2} 2x" width="56" height="56" alt="" />
     <div class="pa-txt">
-      <b class="pa-qtd">+${ganhou} ${ganhou === 1 ? 'abóbora' : 'abóboras'}</b>
+      <b class="pa-qtd">+${ganhou} ${ganhou === 1 ? ui.unidade[0] : ui.unidade[1]}</b>
       <span class="pa-sub">${subiu ? `Subiu para o nível ${nivel}!` : completo ? 'Passe completo!' : `Passe de Batalha · nível ${nivel}`}</span>
       ${hoje != null && limite ? `<span class="pa-dia">Hoje: ${hoje}/${limite}</span>` : ''}
       <div class="pa-barra"><i style="width:${reduzido ? pctFim : pctIni}%"></i></div>

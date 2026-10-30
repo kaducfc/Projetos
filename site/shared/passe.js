@@ -11,14 +11,22 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
 }[c]));
 const fmt = (n) => Number(n).toLocaleString('pt-BR');
 export const ABOBORA_IMG = '/shared/assets/passe/abobora-64.webp';
-const aboboraImg = (tam = 18) => `<img class="ps-abobora" src="${ABOBORA_IMG}" srcset="/shared/assets/passe/abobora-128.webp 2x" width="${tam}" height="${tam}" alt="" />`;
+// Cada temporada tem a sua "moeda" de progresso (o servidor ainda chama de abobora_*) e o seu visual.
+export const PASSES_UI = {
+  'halloween-2026': { unidade: ['abóbora', 'abóboras'], img: ABOBORA_IMG, img2: '/shared/assets/passe/abobora-128.webp', tema: '' },
+  'zaun-piltover-2026': { unidade: ['engrenagem', 'engrenagens'], img: '/shared/assets/passe/engrenagem-64.webp', img2: '/shared/assets/passe/engrenagem-128.webp', tema: 'ps-zaun' },
+};
+export const uiPasse = (id) => PASSES_UI[id] || PASSES_UI['halloween-2026'];
+const aboboraImg = (tam = 18, ui = uiPasse()) => `<img class="ps-abobora" src="${ui.img}" srcset="${ui.img2} 2x" width="${tam}" height="${tam}" alt="" />`;
 
 // Fim de cada passe (meia-noite de Brasília, UTC−3, ao fim do último dia). O servidor
 // também confere (site_passes.fim, 0058_passe_fim.sql).
 const FIM_PASSE = { 'halloween-2026': '2026-11-01T03:00:00Z' };
 
-function fimTexto(id) {
-  const fim = FIM_PASSE[id] ? Date.parse(FIM_PASSE[id]) : NaN;
+function fimTexto(p) {
+  // O fim vem do servidor (data do último dia, inclusive); sem ele, vale a tabela acima.
+  const id = p.id;
+  const fim = p.fim ? Date.parse(`${String(p.fim).slice(0, 10)}T23:59:59.999-03:00`) : (FIM_PASSE[id] ? Date.parse(FIM_PASSE[id]) : NaN);
   if (Number.isNaN(fim)) return '';
   const ms = fim - Date.now();
   if (ms <= 0) return '<span class="ps-tag ps-tag-fim">Passe encerrado</span>';
@@ -66,25 +74,27 @@ function cartaoNivel(n, e) {
 export function passeHtml(e, { extra = '' } = {}) {
   if (!e) return '<p class="ps-aviso">Entre na sua conta para participar do passe de batalha.</p>';
   const por = e.passe.abobora_por_nivel;
+  const ui = uiPasse(e.passe.id);
+  const [un1, unN] = ui.unidade;
   const completo = e.nivel >= e.passe.niveis;
   const pct = completo ? 100 : Math.min(100, Math.round((e.progresso / por) * 100));
-  return `<div class="ps">
+  return `<div class="ps ${ui.tema}" data-ps-id="${esc(e.passe.id)}">
     <div class="ps-topo">
       <div class="ps-titulo">
-        <p class="eyebrow">${aboboraImg(16)} Passe de Batalha</p>
+        <p class="eyebrow">${aboboraImg(16, ui)} Passe de Batalha</p>
         <h3 class="ps-nome">${esc(e.passe.nome)}</h3>
-        <p class="ps-sub">${e.premium ? '<span class="ps-tag ps-tag-premium">★ Passe premium</span>' : '<span class="ps-tag">Passe grátis</span> <button type="button" class="ps-obter" data-ps-premium>★ Obter Premium</button>'}${e.passe.publico ? '' : ' <span class="ps-tag ps-tag-teste">Em teste: só administradores</span>'} ${fimTexto(e.passe.id)}</p>
+        <p class="ps-sub">${e.premium ? '<span class="ps-tag ps-tag-premium">★ Passe premium</span>' : `<span class="ps-tag">Passe grátis</span> <button type="button" class="ps-obter" data-ps-premium="${esc(e.passe.id)}">★ Obter Premium</button>`}${e.passe.publico ? '' : ' <span class="ps-tag ps-tag-teste">Em teste: só administradores</span>'} ${fimTexto(e.passe)}</p>
       </div>
       <div class="ps-numeros">
         <div><b>${e.nivel}<small>/${e.passe.niveis}</small></b><span>nível do passe</span></div>
-        <div class="ps-dia"><b>${fmt(e.hoje)}<small>/${fmt(e.passe.limite_dia)}</small></b><span>abóboras hoje (limite diário)</span></div>
+        <div class="ps-dia"><b>${fmt(e.hoje)}<small>/${fmt(e.passe.limite_dia)}</small></b><span>${unN} hoje (limite diário)</span></div>
       </div>
     </div>
     <div class="ps-progresso">
-      <span class="ps-lv">${aboboraImg(15)} Nível ${e.nivel}</span>
+      <span class="ps-lv">${aboboraImg(15, ui)} Nível ${e.nivel}</span>
       <div class="ps-barra-wrap">
         <div class="ps-barra" role="progressbar" aria-label="Progresso para o próximo nível" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
-        <img class="ps-ponta" style="left:${pct}%" src="${ABOBORA_IMG}" srcset="/shared/assets/passe/abobora-128.webp 2x" width="30" height="30" alt="" />
+        <img class="ps-ponta" style="left:${pct}%" src="${ui.img}" srcset="${ui.img2} 2x" width="30" height="30" alt="" />
         <span class="ps-contagem">${completo ? '✓' : `${fmt(e.progresso)}/${fmt(por)}`}</span>
       </div>
       <span class="ps-lv ps-lv-prox">${completo ? '✓ Completo' : `Nível ${e.nivel + 1}`}</span>
@@ -92,12 +102,12 @@ export function passeHtml(e, { extra = '' } = {}) {
     ${extra}
     <ol class="ps-trilha-niveis">${e.niveis.map((n) => cartaoNivel(n, e)).join('')}</ol>
     <div class="ps-regras">
-      <h4>Como ganhar abóboras</h4>
+      <h4>Como ganhar ${unN}</h4>
       <ul>
-        <li>Você ganha abóboras jogando: cada partida concluída, em qualquer jogo, rende abóboras.</li>
-        <li>No Na Medida, o Diário e a Ranqueada rendem abóboras pelo dia completo (as 5 rodadas); no modo Livre, a cada 5 rodadas.</li>
-        <li>Dá para ganhar até ${e.passe.limite_dia} abóboras por dia. O limite zera à meia-noite (horário de Brasília).</li>
-        <li>A cada ${por} abóboras você sobe um nível e libera a recompensa dele.</li>
+        <li>Você ganha ${unN} jogando: cada partida concluída, em qualquer jogo, rende ${unN}.</li>
+        <li>No Na Medida, o Diário e a Ranqueada rendem ${unN} pelo dia completo (as 5 rodadas); no modo Livre, a cada 5 rodadas.</li>
+        <li>Dá para ganhar até ${e.passe.limite_dia} ${unN} por dia. O limite zera à meia-noite (horário de Brasília).</li>
+        <li>A cada ${por} ${unN} você sobe um nível e libera a recompensa dele.</li>
       </ul>
     </div>
   </div>`;

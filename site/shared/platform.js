@@ -642,18 +642,32 @@ function erroPasse(error) {
 }
 
 // Situação do passe: { passe, abobora, nivel, premium, hoje, niveis: [...] }. Visitante: null.
-export async function passeEstado(passe = 'halloween-2026') {
+// Qual é o passe público do momento (a temporada que está valendo para todos). Sem o SQL 0200, ou sem nenhum passe
+// aberto, volta o Halloween 2026 (o que já existia).
+let passeAtualId = null;
+export async function passeAtual() {
+  if (passeAtualId) return passeAtualId;
+  const sb = await getClient();
+  if (!sb || !user) return 'halloween-2026';
+  try {
+    const { data, error } = await sb.rpc('site_passe_atual');
+    passeAtualId = !error && data ? data : 'halloween-2026';
+  } catch { passeAtualId = 'halloween-2026'; }
+  return passeAtualId;
+}
+
+export async function passeEstado(passe = null) {
   const sb = await getClient();
   if (!sb || !user) return null;
-  const { data, error } = await sb.rpc('site_passe_estado', { pid: passe });
+  const { data, error } = await sb.rpc('site_passe_estado', { pid: passe || await passeAtual() });
   if (error) throw erroPasse(error);
   return data;
 }
 
-export async function passeResgatar(nivel, passe = 'halloween-2026') {
+export async function passeResgatar(nivel, passe = null) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();
-  const { data, error } = await sb.rpc('site_passe_resgatar', { pid: passe, nivel_: nivel });
+  const { data, error } = await sb.rpc('site_passe_resgatar', { pid: passe || await passeAtual(), nivel_: nivel });
   if (error) throw erroPasse(error);
   if (data?.tipo === 'moeda') await refreshMoedas();
   if (data?.tipo === 'efeito') emit({ type: 'recompensas' });
@@ -661,7 +675,7 @@ export async function passeResgatar(nivel, passe = 'halloween-2026') {
 }
 
 // Compra do Passe Premium (só com dinheiro): o servidor decide o preço pelo provedor
-// ('mercadopago' = R$ 15; 'stripe' = US$ 10) e devolve o endereço de pagamento.
+// (em reais pelo Mercado Pago, em dólar pelo Stripe; o valor depende do passe) e devolve o endereço de pagamento.
 const ERROS_COMPRA = {
   ja_premium: 'Você já tem o Passe Premium.',
   passe_indisponivel: 'O passe de batalha não está disponível.',
@@ -670,10 +684,10 @@ const ERROS_COMPRA = {
   mp_nao_configurado: 'O pagamento pelo Mercado Pago ainda não está disponível.',
   stripe_nao_configurado: 'O pagamento por cartão ainda não está disponível.',
 };
-export async function passeComprar(provedor, passe = 'halloween-2026') {
+export async function passeComprar(provedor, passe = null) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();
-  const { data, error } = await sb.functions.invoke('passe-premium-criar', { body: { provedor, passe } });
+  const { data, error } = await sb.functions.invoke('passe-premium-criar', { body: { provedor, passe: passe || await passeAtual() } });
   if (!error && data?.url) return data;
   let corpo = data || {};
   try { if (error?.context?.json) corpo = await error.context.json(); } catch { /* sem corpo JSON */ }
@@ -683,17 +697,17 @@ export async function passeComprar(provedor, passe = 'halloween-2026') {
 }
 
 // Administrador: abóboras (+/-), premium (1/0) ou zerar o progresso de um jogador.
-export async function adminPasse(nome, acao, valor = 0, passe = 'halloween-2026') {
+export async function adminPasse(nome, acao, valor = 0, passe = null) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();
-  const { data, error } = await sb.rpc('site_admin_passe', { nome, acao, valor, pid: passe });
+  const { data, error } = await sb.rpc('site_admin_passe', { nome, acao, valor, pid: passe || await passeAtual() });
   if (error) throw erroPasse(error);
   return data;
 }
-export async function adminPassePublicar(publico, passe = 'halloween-2026') {
+export async function adminPassePublicar(publico, passe = null) {
   const sb = await getClient();
   if (!sb || !user) throw unavailable();
-  const { error } = await sb.rpc('site_admin_passe_publicar', { pid: passe, publico_: publico });
+  const { error } = await sb.rpc('site_admin_passe_publicar', { pid: passe || await passeAtual(), publico_: publico });
   if (error) throw erroPasse(error);
 }
 
@@ -1577,7 +1591,7 @@ export const passeAguardar = () => passePromessa || Promise.resolve();
 async function lerPasse(sb) {
   if (passeDesligado || !user) return null;
   try {
-    const { data, error } = await sb.rpc('site_passe_estado', { pid: 'halloween-2026' });
+    const { data, error } = await sb.rpc('site_passe_estado', { pid: await passeAtual() });
     if (error) { passeDesligado = true; return null; }
     return data;
   } catch {
@@ -1598,7 +1612,7 @@ async function anunciarPasse(sb) {
   if (!antes) return;
   const ganhou = e.hoje >= antes.hoje ? e.hoje - antes.hoje : e.hoje;
   if (ganhou > 0 && antes.nivel < e.passe.niveis) {
-    emit({ type: 'passe', ganhou, nivelAntes: antes.nivel, nivel: e.nivel, progresso: e.progresso, por: e.passe.abobora_por_nivel, niveis: e.passe.niveis, hoje: e.hoje, limite: e.passe.limite_dia });
+    emit({ type: 'passe', passe: e.passe.id, ganhou, nivelAntes: antes.nivel, nivel: e.nivel, progresso: e.progresso, por: e.passe.abobora_por_nivel, niveis: e.passe.niveis, hoje: e.hoje, limite: e.passe.limite_dia });
   }
 }
 

@@ -155,3 +155,32 @@ t('ranqueada (0196): vitória após o chefe aparecer (tempo > 10 min) volta a co
   const r2 = psql(['-d', 't'], mig); assert.equal(r2.status, 0, `rodar de novo: ${r2.stderr}`);
   assert.equal(psql(['-d', 't', '-c', 'select count(*) from site_rk_dia']).stdout.trim(), '2', 'idempotente');
 });
+
+t('passe Zaun e Piltover (0200): cria o passe em teste, devolve as datas e escolhe o passe público do momento', () => {
+  const arq = (f) => readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8');
+  const r0 = psql(['-d', 't'], `
+    create table if not exists public.site_recompensas (user_id uuid not null, tipo text not null, chave text not null, origem text, unique (user_id, tipo, chave));
+    create table if not exists public.site_game_results (id uuid primary key default gen_random_uuid(), user_id uuid not null, game_id text not null, score numeric, summary jsonb not null default '{}'::jsonb, played_at timestamptz not null default now(), client_id text);
+    create or replace function public.site_hoje_br() returns date language sql as $f$ select current_date $f$;
+    insert into public.site_admins values ('${U(1)}') on conflict do nothing;
+  `); assert.equal(r0.status, 0, r0.stderr);
+  for (const f of ['0039_passe_batalha.sql', '0040_passe_nivel.sql']) { const r = psql(['-d', 't'], arq(f)); assert.equal(r.status, 0, `${f}: ${r.stderr}`); }
+  psql(['-d', 't', '-c', "alter table site_passe_niveis drop constraint if exists site_passe_niveis_tipo_check; alter table site_passe_niveis add constraint site_passe_niveis_tipo_check check (tipo in ('moeda', 'efeito', 'icone', 'moldura'))"]); // como na 0053
+  const mig = arq('0200_passe_zaun_piltover.sql');
+  let r = psql(['-d', 't'], mig); assert.equal(r.status, 0, r.stderr);
+  r = psql(['-d', 't'], mig); assert.equal(r.status, 0, `rodar de novo: ${r.stderr}`);
+  assert.equal(psql(['-d', 't', '-c', "select count(*) from site_passe_niveis where passe = 'zaun-piltover-2026'"]).stdout.trim(), '15');
+  // só o administrador vê o passe em teste; ele ainda não é público
+  const adm = JSON.parse(Q("select site_passe_estado('zaun-piltover-2026')", 1).out);
+  assert.equal(adm.passe.publico, false); assert.equal(adm.passe.fim, null); assert.equal(adm.niveis.length, 15);
+  assert.equal(Q("select site_passe_estado('zaun-piltover-2026')", 2).err, 'passe_indisponivel');
+  assert.equal(Q('select site_passe_atual()', 2).out, 'halloween-2026' === Q('select site_passe_atual()', 2).out ? 'halloween-2026' : '', 'o passe em teste não vira o atual');
+  // lançamento: publica com datas; hoje cai dentro da janela
+  r = psql(['-d', 't', '-c', "update site_passes set publico = true, inicio = current_date - 1, fim = current_date + 19 where id = 'zaun-piltover-2026'"]); assert.equal(r.status, 0, r.stderr);
+  assert.equal(Q('select site_passe_atual()', 2).out, 'zaun-piltover-2026');
+  const pub = JSON.parse(Q("select site_passe_estado('zaun-piltover-2026')", 2).out);
+  assert.equal(pub.passe.fim, new Date(Date.now() + 19 * 86400000).toISOString().slice(0, 10));
+  // fora da janela: nenhum passe público
+  r = psql(['-d', 't', '-c', "update site_passes set fim = current_date - 1 where id = 'zaun-piltover-2026'"]); assert.equal(r.status, 0, r.stderr);
+  assert.equal(Q('select site_passe_atual()', 2).out, '');
+});
