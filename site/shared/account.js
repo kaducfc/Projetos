@@ -5,6 +5,7 @@ import { SITE_NAME } from './config.js';
 import { avatarHtml, hydrateAvatars } from './avatar.js';
 import { nickHtml } from './apoio.js';
 import { montarAvisoAbobora } from './passe-aviso.js';
+import './efeitos-vivos.js'; // diretor dos efeitos de nome (ex.: quais letras do Neon do Submundo falham)
 import { abrirCompraRc, avisoRetornoRc } from './rc-compra.js';
 import { LANGS, getLang, langInfo, setLang, onLangChange, localeAtual } from './i18n.js';
 

@@ -114,3 +114,20 @@ test('efeitos de Zaun e Piltover: cada letra vira um <i> com a posição, o nome
   const antigo = nickFxHtml({ classe: 'fx-gl-matrix' }, 'Ana');
   assert.equal(antigo, '<span class="nick fx fx-gl-matrix" data-text="Ana">Ana</span>');
 });
+
+test('Neon do Submundo: o diretor sorteia de 1 a 4 letras conforme o tamanho do nick, sem repetir índices e evitando a rodada anterior', async () => {
+  const { maxFalhas, escolherFalhas } = await import('../shared/efeitos-vivos.js');
+  assert.deepEqual([3, 5, 6, 8, 9, 12, 13, 20].map(maxFalhas), [1, 1, 2, 2, 3, 3, 4, 4]);
+  for (const n of [3, 4, 6, 8, 10, 12, 15, 20]) {
+    const vistos = new Set(); let anterior = [];
+    for (let r = 0; r < 400; r++) {
+      const idx = escolherFalhas(n, anterior);
+      assert.ok(idx.length >= 1 && idx.length <= maxFalhas(n), `n=${n}: ${idx.length} letras`);
+      assert.equal(new Set(idx).size, idx.length); assert.ok(idx.every((i) => i >= 0 && i < n));
+      if (n > maxFalhas(n) * 2) assert.ok(!idx.some((i) => anterior.includes(i)), 'repetiu letras da rodada anterior');
+      idx.forEach((i) => vistos.add(i)); anterior = idx;
+    }
+    assert.equal(vistos.size, n, `n=${n}: todas as letras acabam sendo sorteadas`);
+  }
+  assert.deepEqual(escolherFalhas(0), []);
+});
