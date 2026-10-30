@@ -33,7 +33,7 @@ export const EFEITOS_TESTE = [
   { id: 'gl-fatiado', nome: 'Fatiado', classe: 'fx-gl-fatiado', tema: 'Glitch · intenso · faixas que escorregam' },
   { id: 'gl-matrix', nome: 'Código Verde', classe: 'fx-gl-matrix', tema: 'Glitch · médio · terminal verde' },
   // Zaun e Piltover (cada letra anima por conta própria; ver nickFxHtml)
-  { id: 'zn-cintila', nome: 'Cintila', classe: 'fx-zn-cintila', letras: true, tema: 'Zaun · a droga roxa de Vander: frasco de latão com líquido roxo e gota escorrendo' },
+  { id: 'zn-cintila', nome: 'Cintila', classe: 'fx-zn-cintila', letras: true, tema: 'Zaun · a droga roxa de Vander: frasco de vidro com líquido roxo ondulando' },
   { id: 'zn-vapor', nome: 'Válvula de Vapor', classe: 'fx-zn-vapor', letras: true, tema: 'Zaun · cano enferrujado e vapor de pressão' },
   { id: 'zn-neon', nome: 'Neon do Submundo', classe: 'fx-zn-neon', letras: true, tema: 'Zaun · letreiro roxo, letra defeituosa e descarga' },
   { id: 'pl-cristal', nome: 'Cristal Hextech', classe: 'fx-pl-cristal', letras: true, tema: 'Piltover · cristal azul, carga e reflexos' },
