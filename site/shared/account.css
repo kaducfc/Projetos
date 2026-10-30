@@ -982,7 +982,6 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
 @property --ond { syntax: '<length>'; inherits: false; initial-value: 0em; }
 @property --xa { syntax: '<length>'; inherits: false; initial-value: 0em; }
 @property --xb { syntax: '<length>'; inherits: false; initial-value: 0em; }
-@property --xc { syntax: '<length>'; inherits: false; initial-value: 0em; }
 @property --ya { syntax: '<length>'; inherits: false; initial-value: 0em; }
 @property --yb { syntax: '<length>'; inherits: false; initial-value: 0em; }
 .fx-zn-cintila { animation: zt-brilho 2.8s ease-in-out infinite; }
@@ -998,27 +997,25 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
   -webkit-background-clip: text; background-clip: text;
   background-image:
     linear-gradient(98deg, transparent 14%, rgba(255, 255, 255, 0.22) 22%, rgba(255, 255, 255, 0) 34%),
-    radial-gradient(ellipse 50% 100% at 50% 0, #3a2e5e 0 60%, #cfa8ff 66% 74%, transparent 80%),
-    radial-gradient(ellipse 50% 100% at 50% 0, #34295a 0 62%, #b88af0 68% 74%, transparent 80%),
-    radial-gradient(ellipse 50% 100% at 50% 0, #382c5c 0 60%, #c9a0fa 67% 75%, transparent 82%),
-    linear-gradient(180deg, #281f44 0, #3a2e5e calc(var(--sup) - 0.02em), #d9b8ff calc(var(--sup) - 0.02em), #d9b8ff calc(var(--sup) + 0.006em), transparent calc(var(--sup) + 0.006em)),
+    radial-gradient(ellipse 50% 100% at 50% 0, #3a2e5e 0 66%, #a07ae8 86%, transparent 100%),
+    radial-gradient(ellipse 50% 100% at 50% 0, #352a5a 0 66%, #9570de 86%, transparent 100%),
+    linear-gradient(180deg, #281f44 0, #3a2e5e calc(var(--sup) - 0.03em), #a47ff0 calc(var(--sup) - 0.004em), transparent calc(var(--sup) + 0.014em)),
     radial-gradient(ellipse 62% 12% at 32% 22%, rgba(255, 150, 255, 0.85), transparent 72%), radial-gradient(ellipse 58% 14% at 70% 58%, rgba(245, 205, 255, 0.7), transparent 72%),
     radial-gradient(ellipse 70% 12% at 40% 86%, rgba(100, 30, 215, 0.9), transparent 72%),
     linear-gradient(180deg, #a85cff 0%, #7c2fe6 42%, #b66dff 68%, #6a24cc 100%);
   /* camadas que sobem: o tamanho do ladrilho é em em e o deslocamento do ciclo é igual ao ladrilho, então o ciclo fecha sem corte */
-  background-size: 100% 100%, 0.44em 0.12em, 0.31em 0.09em, 0.57em 0.07em, 100% 100%, 100% 1.9em, 100% 1.5em, 100% 2.1em, 100% 100%;
-  background-repeat: no-repeat, repeat-x, repeat-x, repeat-x, no-repeat, repeat-y, repeat-y, repeat-y, no-repeat;
-  background-position: 0 0, var(--xa) calc(var(--sup) - 0.01em + var(--ya)), var(--xb) calc(var(--sup) - 0.014em + var(--yb)), var(--xc) calc(var(--sup) - 0.006em - var(--ya)), 0 0, 0 0, 0 0, 0 0, 0 0;
+  background-size: 100% 100%, 0.52em 0.07em, 0.37em 0.05em, 100% 100%, 100% 1.9em, 100% 1.5em, 100% 2.1em, 100% 100%;
+  background-repeat: no-repeat, repeat-x, repeat-x, no-repeat, repeat-y, repeat-y, repeat-y, no-repeat;
+  background-position: 0 0, var(--xa) calc(var(--sup) - 0.012em + var(--ya)), var(--xb) calc(var(--sup) - 0.01em + var(--yb)), 0 0, 0 0, 0 0, 0 0, 0 0;
   filter: drop-shadow(0 0 0.02em rgba(30, 8, 70, 0.9));
-  animation: zt-sobe 3.6s linear infinite, zt-ond calc(2.1s + var(--i) * 0.31s) ease-in-out infinite, zt-xa calc(3.7s + var(--i) * 0.43s) ease-in-out infinite alternate, zt-xb calc(5.3s + var(--i) * 0.29s) ease-in-out infinite alternate,
-    zt-xc calc(7.9s + var(--i) * 0.53s) ease-in-out infinite alternate, zt-ya calc(2.9s + var(--i) * 0.19s) ease-in-out infinite, zt-yb calc(4.1s + var(--i) * 0.37s) ease-in-out infinite;
-  animation-delay: calc(var(--i) * -0.43s), calc(var(--i) * -0.71s), calc(var(--i) * -1.1s), calc(var(--i) * -0.6s), calc(var(--i) * -1.7s), calc(var(--i) * -0.47s), calc(var(--i) * -0.83s); }
-@keyframes zt-sobe { from { background-position: 0 0, var(--xa) calc(var(--sup) - 0.01em + var(--ya)), var(--xb) calc(var(--sup) - 0.014em + var(--yb)), var(--xc) calc(var(--sup) - 0.006em - var(--ya)), 0 0, 0 0, 0 0, 0 0, 0 0; }
-  to { background-position: 0 0, var(--xa) calc(var(--sup) - 0.01em + var(--ya)), var(--xb) calc(var(--sup) - 0.014em + var(--yb)), var(--xc) calc(var(--sup) - 0.006em - var(--ya)), 0 0, 0 -1.9em, 0 -1.5em, 0 -2.1em, 0 0; } }
-@keyframes zt-ond { 0% { --ond: -0.012em; } 17% { --ond: 0.014em; } 38% { --ond: -0.004em; } 61% { --ond: 0.016em; } 79% { --ond: -0.014em; } 100% { --ond: -0.012em; } }
-@keyframes zt-xa { from { --xa: 0em; } to { --xa: 0.44em; } }
-@keyframes zt-xb { from { --xb: 0.31em; } to { --xb: -0.09em; } }
-@keyframes zt-xc { from { --xc: -0.2em; } to { --xc: 0.3em; } }
+  animation: zt-sobe 3.6s linear infinite, zt-ond calc(4.4s + var(--i) * 0.37s) ease-in-out infinite, zt-xa calc(9s + var(--i) * 0.61s) ease-in-out infinite alternate, zt-xb calc(13s + var(--i) * 0.47s) ease-in-out infinite alternate,
+    zt-ya calc(6.1s + var(--i) * 0.29s) ease-in-out infinite, zt-yb calc(8.3s + var(--i) * 0.41s) ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.43s), calc(var(--i) * -0.91s), calc(var(--i) * -2.3s), calc(var(--i) * -1.9s), calc(var(--i) * -0.77s), calc(var(--i) * -1.3s); }
+@keyframes zt-sobe { from { background-position: 0 0, var(--xa) calc(var(--sup) - 0.012em + var(--ya)), var(--xb) calc(var(--sup) - 0.01em + var(--yb)), 0 0, 0 0, 0 0, 0 0, 0 0; }
+  to { background-position: 0 0, var(--xa) calc(var(--sup) - 0.012em + var(--ya)), var(--xb) calc(var(--sup) - 0.01em + var(--yb)), 0 0, 0 -1.9em, 0 -1.5em, 0 -2.1em, 0 0; } }
+@keyframes zt-ond { 0% { --ond: -0.01em; } 21% { --ond: 0.012em; } 43% { --ond: -0.004em; } 64% { --ond: 0.014em; } 82% { --ond: -0.012em; } 100% { --ond: -0.01em; } }
+@keyframes zt-xa { from { --xa: 0em; } to { --xa: 0.52em; } }
+@keyframes zt-xb { from { --xb: 0.37em; } to { --xb: -0.1em; } }
 @keyframes zt-ya { 0% { --ya: 0em; } 23% { --ya: 0.011em; } 46% { --ya: -0.006em; } 71% { --ya: 0.014em; } 100% { --ya: 0em; } }
 @keyframes zt-yb { 0% { --yb: 0.006em; } 31% { --yb: -0.012em; } 58% { --yb: 0.01em; } 83% { --yb: -0.004em; } 100% { --yb: 0.006em; } }
 
