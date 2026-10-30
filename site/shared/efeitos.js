@@ -68,7 +68,8 @@ export function efeitoAtivo(escolha, apoiador = false) {
 // HTML do nome com o efeito. Efeitos com `letras: true` recebem cada letra num <i> próprio (--i = posição, --n = total),
 // para o CSS animar letra por letra (ondas, uma letra que falha, uma que pinga…). O texto inteiro continua em data-text
 // e em aria-label (leitores de tela e as camadas ::before/::after que copiam o nome); cada letra também leva data-c,
-// para o CSS desenhar uma cópia dela por cima (ex.: o líquido dentro da borda de metal da Cintila).
+// para o CSS desenhar uma cópia dela por cima (ex.: o líquido dentro do frasco da Cintila). --r é um número sorteado (0 a 1)
+// a cada desenho, para dar tempos diferentes a cada letra (ex.: qual letra do Neon falha e quando).
 const escHtml = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export function nickFxHtml(fx, nome, titulo = '') {
   const texto = String(nome ?? '');
@@ -78,5 +79,5 @@ export function nickFxHtml(fx, nome, titulo = '') {
   // Classe de altura da letra (o CSS usa para achar a "linha do líquido" de cada uma): maiúsculas, números e hastes (k-a),
   // letras de altura do x (k-x), as de altura do x com cauda (k-d) e o resto, como _ e . (k-u).
   const alt = (c) => (/[A-Z0-9bdfhiklt]/.test(c) ? 'k-a' : /[gjpqy]/.test(c) ? 'k-d' : /[acemnorsuvwxz]/.test(c) ? 'k-x' : 'k-u');
-  return `<span class="nick fx fx-l ${escHtml(fx.classe)}" data-text="${escHtml(texto)}" style="--n:${letras.length}" role="text" aria-label="${escHtml(texto)}"${t}>${letras.map((c, i) => `<i style="--i:${i}" class="${alt(c)}" data-c="${escHtml(c)}" aria-hidden="true">${escHtml(c)}</i>`).join('')}</span>`;
+  return `<span class="nick fx fx-l ${escHtml(fx.classe)}" data-text="${escHtml(texto)}" style="--n:${letras.length}" role="text" aria-label="${escHtml(texto)}"${t}>${letras.map((c, i) => `<i style="--i:${i};--r:${Math.random().toFixed(2)}" class="${alt(c)}" data-c="${escHtml(c)}" aria-hidden="true">${escHtml(c)}</i>`).join('')}</span>`;
 }

@@ -1025,9 +1025,15 @@ button.sb-coins:hover { border-color: rgba(245, 207, 90, 0.75); background: rgba
 
 /* ---- Zaun · Neon do Submundo: letreiro roxo e rosa de bar de Zaun, com uma letra defeituosa e uma descarga química rara */
 .fx-zn-neon { color: #ffeefc; text-shadow: 0 0 0.05em #fff, 0 0 0.16em #ff3fe0, 0 0 0.38em #a31cff, 0 0 0.75em rgba(163, 28, 255, 0.65); animation: zn-surto 7s steps(1, end) infinite; }
-.fx-zn-neon > i:nth-child(3) { animation: zn-defeito 4.4s steps(1, end) infinite; }
+/* Falhas aleatórias: cada letra tem o seu ciclo (5 a 14 s, sorteado ao desenhar o nome) e falha numa janela de cerca de 1/4 do ciclo,
+   então em média ~1 letra falha num nick de 4 letras, 2 num de 10 e perto de 3 nos longos (às vezes mais, às vezes menos).
+   Em nicks acima de 11 letras só uma parte das letras participa (--act), para não virar bagunça. */
+.fx-zn-neon > i { --act: clamp(0, calc((11.5 - var(--r, 0.5) * var(--n, 8)) * 100), 1); --lo: calc(1 - var(--act) * 0.88); --md: calc(1 - var(--act) * 0.68);
+  animation: zn-defeito calc(5s + var(--r, 0.5) * 9s) steps(1, end) infinite; animation-delay: calc(var(--r, 0.5) * -41s); }
+.fx-zn-neon > i:nth-child(even) { animation-name: zn-defeito2; animation-duration: calc(6s + var(--r, 0.5) * 10s); }
 .fx-zn-neon > i:nth-child(odd) { text-shadow: 0 0 0.05em #fff, 0 0 0.16em #ff5ae6, 0 0 0.38em #c42dff, 0 0 0.75em rgba(196, 45, 255, 0.6); }
-@keyframes zn-defeito { 0%, 16% { opacity: 1; } 17% { opacity: 0.15; text-shadow: none; } 19% { opacity: 1; } 21% { opacity: 0.2; text-shadow: none; } 23%, 58% { opacity: 1; } 59% { opacity: 0.1; text-shadow: none; } 66%, 100% { opacity: 1; } }
+@keyframes zn-defeito { 0%, 48% { opacity: 1; } 49% { opacity: var(--lo); } 52% { opacity: 1; } 54% { opacity: var(--lo); } 58% { opacity: 1; } 59% { opacity: var(--lo); } 66% { opacity: var(--md); } 67% { opacity: 1; } 70% { opacity: var(--lo); } 73%, 100% { opacity: 1; } }
+@keyframes zn-defeito2 { 0%, 22% { opacity: 1; } 23% { opacity: var(--lo); } 24% { opacity: 1; } 26% { opacity: var(--lo); } 33% { opacity: 1; } 34% { opacity: var(--lo); } 36% { opacity: 1; } 38% { opacity: var(--lo); } 44% { opacity: var(--md); } 45%, 100% { opacity: 1; } }
 @keyframes zn-surto { 0%, 84%, 90%, 100% { filter: none; transform: none; } 85% { filter: brightness(1.5) hue-rotate(40deg) drop-shadow(0 0 0.2em #7dff5a); transform: translateX(0.02em); } 87% { filter: brightness(0.7); } 88% { filter: brightness(1.7) hue-rotate(60deg) drop-shadow(0 0 0.25em #7dff5a); transform: translateX(-0.02em); } }
 
 /* ---- Piltover · Cristal Hextech: cristal azul cheio de energia; a carga corre pelas letras e solta reflexos de estrela */

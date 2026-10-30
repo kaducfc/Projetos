@@ -107,7 +107,7 @@ test('efeitos de Zaun e Piltover: cada letra vira um <i> com a posição, o nome
     assert.match(e.id, /^[a-z0-9-]{1,30}$/); // cabe no id de recompensa
     const h = nickFxHtml(e, 'Ka<du>');
     assert.match(h, /aria-label="Ka&lt;du&gt;"/); assert.match(h, /data-text="Ka&lt;du&gt;"/); assert.match(h, /--n:6/);
-    assert.equal((h.match(/<i style="--i:\d+"/g) || []).length, 6);
+    assert.equal((h.match(/<i style="--i:\d+;--r:0\.\d+|<i style="--i:\d+;--r:1\.00/g) || []).length, 6);
     assert.doesNotMatch(h, /<du>/); // o nome é escapado
   }
   // efeito sem letras segue como antes
