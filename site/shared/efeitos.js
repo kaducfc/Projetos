@@ -33,7 +33,7 @@ export const EFEITOS_TESTE = [
   { id: 'gl-fatiado', nome: 'Fatiado', classe: 'fx-gl-fatiado', tema: 'Glitch · intenso · faixas que escorregam' },
   { id: 'gl-matrix', nome: 'Código Verde', classe: 'fx-gl-matrix', tema: 'Glitch · médio · terminal verde' },
   // Zaun e Piltover (cada letra anima por conta própria; ver nickFxHtml)
-  { id: 'zn-cintila', nome: 'Cintila', classe: 'fx-zn-cintila', letras: true, tema: 'Zaun · a droga roxa de Vander: líquido, bolhas e gota escorrendo' },
+  { id: 'zn-cintila', nome: 'Cintila', classe: 'fx-zn-cintila', letras: true, tema: 'Zaun · a droga roxa de Vander: frasco de latão com líquido roxo e gota escorrendo' },
   { id: 'zn-vapor', nome: 'Válvula de Vapor', classe: 'fx-zn-vapor', letras: true, tema: 'Zaun · cano enferrujado e vapor de pressão' },
   { id: 'zn-neon', nome: 'Neon do Submundo', classe: 'fx-zn-neon', letras: true, tema: 'Zaun · letreiro roxo, letra defeituosa e descarga' },
   { id: 'pl-cristal', nome: 'Cristal Hextech', classe: 'fx-pl-cristal', letras: true, tema: 'Piltover · cristal azul, carga e reflexos' },
@@ -67,12 +67,13 @@ export function efeitoAtivo(escolha, apoiador = false) {
 
 // HTML do nome com o efeito. Efeitos com `letras: true` recebem cada letra num <i> próprio (--i = posição, --n = total),
 // para o CSS animar letra por letra (ondas, uma letra que falha, uma que pinga…). O texto inteiro continua em data-text
-// e em aria-label (leitores de tela e as camadas ::before/::after que copiam o nome).
+// e em aria-label (leitores de tela e as camadas ::before/::after que copiam o nome); cada letra também leva data-c,
+// para o CSS desenhar uma cópia dela por cima (ex.: o líquido dentro da borda de metal da Cintila).
 const escHtml = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export function nickFxHtml(fx, nome, titulo = '') {
   const texto = String(nome ?? '');
   const t = titulo ? ` title="${escHtml(titulo)}"` : '';
   if (!fx?.letras) return `<span class="nick fx ${escHtml(fx?.classe || '')}" data-text="${escHtml(texto)}"${t}>${escHtml(texto)}</span>`;
   const letras = [...texto];
-  return `<span class="nick fx fx-l ${escHtml(fx.classe)}" data-text="${escHtml(texto)}" style="--n:${letras.length}" role="text" aria-label="${escHtml(texto)}"${t}>${letras.map((c, i) => `<i style="--i:${i}" aria-hidden="true">${escHtml(c)}</i>`).join('')}</span>`;
+  return `<span class="nick fx fx-l ${escHtml(fx.classe)}" data-text="${escHtml(texto)}" style="--n:${letras.length}" role="text" aria-label="${escHtml(texto)}"${t}>${letras.map((c, i) => `<i style="--i:${i}" data-c="${escHtml(c)}" aria-hidden="true">${escHtml(c)}</i>`).join('')}</span>`;
 }
