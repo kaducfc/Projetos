@@ -54,7 +54,7 @@ export const EFEITOS_TESTE = [
 
 // De EFEITOS_TESTE, só estes dá para equipar (o servidor só os libera para o
 // administrador, via site_recompensas); os demais continuam só na aba Teste.
-export const EQUIPAVEIS_TESTE = ['gl-matrix']; // Código Verde: recompensa do passe Zaun e Piltover (em teste)
+export const EQUIPAVEIS_TESTE = ['gl-matrix', 'zn-cintila', 'zn-neon', 'pl-cristal']; // recompensas do passe Zaun e Piltover (em teste)
 export const efeitoPorId = (id) => EFEITOS.find((e) => e.id === id)
   || (EQUIPAVEIS_TESTE.includes(id) ? EFEITOS_TESTE.find((e) => e.id === id) : null) || null;
 

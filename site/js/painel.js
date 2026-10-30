@@ -619,7 +619,7 @@ function testeMolduras2(lista) {
 // Passes de Batalha: o administrador joga cada passe com a própria conta. O Halloween 2026 já está no ar;
 // o Zaun e Piltover fica aqui, em teste, até o lançamento.
 const PASSES_PAINEL = [
-  { id: 'zaun-piltover-2026', titulo: 'Passe de Batalha · Zaun e Piltover (em teste)', nota: 'Próxima temporada: 15 níveis, 20 dias (01/11 a 20/11) e Premium a R$ 25. Ímpares são <b>premium</b> (Canos de Zaun no 3, Código Verde no 9, Mecanismo Arcano no 15; o resto é 500 RC provisório) e pares são <b>grátis</b> (300 RC provisório). As recompensas ficam na tabela <code>site_passe_niveis</code>; as datas e a publicação, no SQL de lançamento.' },
+  { id: 'zaun-piltover-2026', titulo: 'Passe de Batalha · Zaun e Piltover (em teste)', nota: 'Próxima temporada: 15 níveis, 20 dias (01/11 a 20/11) e Premium a R$ 25. Ímpares são <b>premium</b> (Canos de Zaun no 3, Neon do Submundo no 7, Código Verde no 9, Mecanismo Arcano no 15; o resto é 500 RC provisório) e pares são <b>grátis</b> (Cintila no 6, Cristal Hextech no 12; o resto é 300 RC provisório). As recompensas ficam na tabela <code>site_passe_niveis</code>; as datas e a publicação, no SQL de lançamento.' },
   { id: 'halloween-2026', titulo: 'Passe de Batalha · Halloween 2026', nota: 'Passe atual, já público. Os botões de teste mexem só na sua conta.' },
 ];
 const psMap = new Map(); // id → { e: passeEstado, erro, carregando }
