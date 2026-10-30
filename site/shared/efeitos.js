@@ -75,5 +75,8 @@ export function nickFxHtml(fx, nome, titulo = '') {
   const t = titulo ? ` title="${escHtml(titulo)}"` : '';
   if (!fx?.letras) return `<span class="nick fx ${escHtml(fx?.classe || '')}" data-text="${escHtml(texto)}"${t}>${escHtml(texto)}</span>`;
   const letras = [...texto];
-  return `<span class="nick fx fx-l ${escHtml(fx.classe)}" data-text="${escHtml(texto)}" style="--n:${letras.length}" role="text" aria-label="${escHtml(texto)}"${t}>${letras.map((c, i) => `<i style="--i:${i}" data-c="${escHtml(c)}" aria-hidden="true">${escHtml(c)}</i>`).join('')}</span>`;
+  // Classe de altura da letra (o CSS usa para achar a "linha do líquido" de cada uma): maiúsculas, números e hastes (k-a),
+  // letras de altura do x (k-x), as de altura do x com cauda (k-d) e o resto, como _ e . (k-u).
+  const alt = (c) => (/[A-Z0-9bdfhiklt]/.test(c) ? 'k-a' : /[gjpqy]/.test(c) ? 'k-d' : /[acemnorsuvwxz]/.test(c) ? 'k-x' : 'k-u');
+  return `<span class="nick fx fx-l ${escHtml(fx.classe)}" data-text="${escHtml(texto)}" style="--n:${letras.length}" role="text" aria-label="${escHtml(texto)}"${t}>${letras.map((c, i) => `<i style="--i:${i}" class="${alt(c)}" data-c="${escHtml(c)}" aria-hidden="true">${escHtml(c)}</i>`).join('')}</span>`;
 }
