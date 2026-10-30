@@ -23,6 +23,7 @@ export const MOLDURAS = [
 export const MOLDURAS_TESTE = [
   // Molduras de arte (imagem) em teste: só administradores equipam (0078_molduras_teste_novas.sql).
   { id: 'mn-zaun', nome: 'Canos de Zaun', k: 0.5525, anim: 'mfb-zaun', camadas: ['verde', 'bolhas', 'ambar', 'roda', 'mano', 'vapor v1', 'vapor v2', 'vapor v3'], mascaras: ['verde', 'ambar', 'roda'], tema: 'Zaun · canos, válvulas e líquido verde' },
+  { id: 'mn-mecanismo', nome: 'Mecanismo Arcano', k: 0.5365, anim: 'mfb-mecanismo', camadas: ['nucleo', 'engrenagem', 'cape', 'capd', 'gema', 'asas', 'estrela'], mascaras: ['nucleo', 'engrenagem', 'cape', 'capd', 'gema', 'asas'], tema: 'Mecanismo · engrenagem, cristal e energia azul' },
   { id: 'mn-pirata', nome: 'Capitão Pirata', k: 0.5306, anim: 'mfb-pirata', camadas: ['luz', 'chama', 'lenco', 'ouro', 'leme', 'olho o1', 'olho o2', 'brasa b1', 'brasa b2', 'brasa b3'], mascaras: ['chama', 'lenco', 'ouro', 'leme'], tema: 'Pirata · corda, lampião e timão' },
 ];
 
