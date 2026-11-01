@@ -11,7 +11,8 @@ Até o passo 3 o jogo continua restrito a administradores e convidados.
 
 # Lançamento do Passe de Batalha "Zaun e Piltover"
 
-1. `supabase/migrations/0200_passe_zaun_piltover.sql` (cria o passe em teste, só administradores). Já fica pronto.
-2. Deploy do site com as molduras Canos de Zaun (`mn-zaun`) e Mecanismo Arcano (`mn-mecanismo`) movidas de `MOLDURAS_TESTE` para `MOLDURAS` em `shared/molduras.js` (com `como`) e o efeito Código Verde (`gl-matrix`) movido para `EFEITOS` em `shared/efeitos.js`.
-3. Publicar a Edge Function `passe-premium-criar` atualizada (preço R$ 25 do Zaun e Piltover).
-4. No dia: `03_lancar_passe_zaun_piltover.sql` (publica e define 01/11 a 20/11).
+Feito: as molduras (Canos de Zaun, Mecanismo Arcano, Horizonte de Piltover), os efeitos (Código Verde, Cintila, Neon do Submundo, Cristal Hextech) e os ícones já estão na lista pública do site.
+
+1. `supabase/migrations/0200` a `0204` (cria o passe, as recompensas e os ícones). Já rodados em ordem.
+2. Publicar a Edge Function `passe-premium-criar` atualizada (Premium a R$ 25).
+3. Deploy do site e `supabase/migrations/0205_passe_zaun_lancamento.sql` (publica: 01/11 a 20/11).

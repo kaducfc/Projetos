@@ -43,15 +43,14 @@ export const EXCLUSIVOS = [
   { id: 'exc-cartao-rift', nome: 'Cartão Rift Arcade' },
   // Só por código de recompensa (RIFTFINALCBLOL2026).
   { id: 'exc-los-furia', nome: 'Final CBLOL 2026' },
-];
-
-// Em teste: só o painel (aba Teste) mostra. Para lançar, mover para EXCLUSIVOS.
-export const EXCLUSIVOS_TESTE = [
-  // Recompensas do passe Zaun e Piltover (em teste).
+  // Recompensas do Passe de Batalha Zaun e Piltover.
   { id: 'exc-pl-cidade', nome: 'Cidade de Piltover' },
   { id: 'exc-zn-refinaria', nome: 'Refinaria de Zaun' },
   { id: 'exc-zn-submundo', nome: 'Submundo de Zaun' },
 ];
+
+// Em teste: só o painel (aba Teste) mostra. Para lançar, mover para EXCLUSIVOS.
+export const EXCLUSIVOS_TESTE = [];
 
 export const AVATARES = ['mascote', ...ICONES.map((i) => `icone:${i.id}`)];
 export const AVATARES_ESPECIAIS = ESPECIAIS.map((i) => `icone:${i.id}`);

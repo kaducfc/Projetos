@@ -616,11 +616,9 @@ function testeMolduras2(lista) {
     </article>`).join('')}</div>`;
 }
 
-// Passes de Batalha: o administrador joga cada passe com a própria conta. O Halloween 2026 já está no ar;
-// o Zaun e Piltover fica aqui, em teste, até o lançamento.
+// Passe de Batalha atual: o administrador joga com a própria conta e tem os botões de teste.
 const PASSES_PAINEL = [
-  { id: 'zaun-piltover-2026', titulo: 'Passe de Batalha · Zaun e Piltover (em teste)', nota: 'Próxima temporada: 15 níveis, 20 dias (01/11 a 20/11) e Premium a R$ 25. Ímpares são <b>premium</b> (Canos de Zaun no 3, Neon do Submundo no 7, Código Verde no 9, ícone Submundo de Zaun no 13, Mecanismo Arcano no 15; o resto é 500 RC provisório) e pares são <b>grátis</b> (ícone Cidade de Piltover no 2, Cintila no 6, ícone Refinaria de Zaun no 10, Cristal Hextech no 12, moldura Horizonte de Piltover no 14; o resto é 300 RC provisório). As recompensas ficam na tabela <code>site_passe_niveis</code>; as datas e a publicação, no SQL de lançamento.' },
-  { id: 'halloween-2026', titulo: 'Passe de Batalha · Halloween 2026', nota: 'Passe atual, já público. Os botões de teste mexem só na sua conta.' },
+  { id: 'zaun-piltover-2026', titulo: 'Passe de Batalha · Zaun e Piltover' },
 ];
 const psMap = new Map(); // id → { e: passeEstado, erro, carregando }
 const psDe = (id) => { if (!psMap.has(id)) psMap.set(id, { e: null, erro: '', carregando: false }); return psMap.get(id); };
@@ -640,7 +638,7 @@ async function carregarPasse(id) {
 }
 const carregarPassesPendentes = () => { for (const p of PASSES_PAINEL) { const x = psDe(p.id); if (!x.e && !x.erro && !x.carregando) carregarPasse(p.id); } };
 
-function passeCard({ id, titulo, nota }) {
+function passeCard({ id, titulo }) {
   const eu = platform.getUser();
   if (!eu) return `<div class="card"><h3>${esc(titulo)}</h3><p class="p-note">Entre na sua conta para ver o passe.</p></div>`;
   const x = psDe(id);
@@ -656,7 +654,6 @@ function passeCard({ id, titulo, nota }) {
       <button type="button" class="p-mini" data-ps-publicar="${ps.passe.publico ? 0 : 1}">${ps.passe.publico ? 'Voltar para teste (esconder dos jogadores)' : 'Publicar para todos os jogadores'}</button>
     </div><p class="p-note" data-ps-msg role="status"></p>`;
   return `<div class="card"><h3>${esc(titulo)}</h3>
-    <p class="c-sub">${nota}</p>
     ${passeHtml(ps, { extra: controles })}</div>`;
 }
 
@@ -979,7 +976,7 @@ function secaoApoio(dias) {
     </div>
     <div class="card">
       <h3>Conceder Passe de Batalha Premium</h3>
-      <p class="c-sub">Libera o Passe Premium (Halloween 2026) para um jogador, sem cobrança: não entra nos totais de arrecadação. Dá para remover depois.</p>
+      <p class="c-sub">Libera o Passe Premium do passe atual para um jogador, sem cobrança: não entra nos totais de arrecadação. Dá para remover depois.</p>
       <label class="p-label">Nome de usuário: <input data-premium-nome autocomplete="off" /></label>
       <button type="button" class="p-btn" data-premium-dar="1">Conceder Premium</button>
       <button type="button" class="p-btn p-btn-ghost" data-premium-dar="0">Remover Premium</button>

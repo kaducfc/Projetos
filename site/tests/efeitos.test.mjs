@@ -33,7 +33,7 @@ test('efeitos: automático dá o reflexo ao apoiador, "nenhum" tira, id desconhe
 });
 
 test('efeitos: os de teste têm CSS e não estão na lista pública', () => {
-  assert.equal(EFEITOS_TESTE.length, 20); // 14 antigos + 6 de Zaun e Piltover
+  assert.equal(EFEITOS_TESTE.length, 16); // 13 antigos + 3 de Zaun e Piltover ainda em teste (os outros 4 do passe já são públicos)
   assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('nv-')).length, 4);
   assert.equal(EFEITOS_TESTE.filter((e) => e.id.startsWith('lj-')).length, 7);
   assert.ok(EFEITOS_TESTE.some((e) => /Laranja e preto/.test(e.tema)));
@@ -97,10 +97,10 @@ test('Final CBLOL 2026: ícone e efeito só por código (oculto para quem não t
 });
 
 test('efeitos de Zaun e Piltover: cada letra vira um <i> com a posição, o nome continua inteiro para leitores de tela e todos têm o desenho no CSS', async () => {
-  const { EFEITOS_TESTE, nickFxHtml } = await import('../shared/efeitos.js');
+  const { EFEITOS, EFEITOS_TESTE, nickFxHtml } = await import('../shared/efeitos.js');
   const { readFileSync } = await import('node:fs');
   const css = readFileSync(new URL('../shared/account.css', import.meta.url), 'utf8');
-  const novos = ['zn-cintila', 'zn-vapor', 'zn-neon', 'pl-cristal', 'pl-latao', 'pl-holo'].map((id) => EFEITOS_TESTE.find((e) => e.id === id));
+  const novos = ['zn-cintila', 'zn-vapor', 'zn-neon', 'pl-cristal', 'pl-latao', 'pl-holo'].map((id) => [...EFEITOS, ...EFEITOS_TESTE].find((e) => e.id === id));
   assert.ok(novos.every(Boolean)); assert.equal(novos.filter((e) => e.id.startsWith('zn-')).length, 3); assert.equal(novos.filter((e) => e.id.startsWith('pl-')).length, 3);
   for (const e of novos) {
     assert.ok(e.letras, e.id); assert.ok(css.includes(`.${e.classe}`), `${e.id}: falta o CSS`);

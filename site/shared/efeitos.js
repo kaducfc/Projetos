@@ -25,18 +25,18 @@ export const EFEITOS = [
     como: 'Recompensa do nível 6 do Passe de Batalha.', link: { href: '/passe/', texto: 'Ver o passe' } },
   { id: 'hw-neon', nome: 'Halloween 2026', classe: 'fx-hw-neon', titulo: 'Passe de Batalha Halloween 2026',
     como: 'Recompensa do nível 10 do Passe de Batalha.', link: { href: '/passe/', texto: 'Ver o passe' } },
+  // Recompensas do Passe de Batalha Zaun e Piltover.
+  { id: 'gl-matrix', nome: 'Código Verde', classe: 'fx-gl-matrix', titulo: 'Passe de Batalha Zaun e Piltover', como: 'Recompensa do nível 9 do Passe de Batalha.', link: { href: '/passe/', texto: 'Ver o passe' } },
+  { id: 'zn-cintila', nome: 'Cintila', classe: 'fx-zn-cintila', letras: true, titulo: 'Passe de Batalha Zaun e Piltover', como: 'Recompensa do nível 6 do Passe de Batalha.', link: { href: '/passe/', texto: 'Ver o passe' } },
+  { id: 'zn-neon', nome: 'Neon do Submundo', classe: 'fx-zn-neon', letras: true, titulo: 'Passe de Batalha Zaun e Piltover', como: 'Recompensa do nível 7 do Passe de Batalha.', link: { href: '/passe/', texto: 'Ver o passe' } },
+  { id: 'pl-cristal', nome: 'Cristal Hextech', classe: 'fx-pl-cristal', letras: true, titulo: 'Passe de Batalha Zaun e Piltover', como: 'Recompensa do nível 12 do Passe de Batalha.', link: { href: '/passe/', texto: 'Ver o passe' } },
 ];
 
 // Só aparecem no painel do administrador (aba Teste) até serem aprovados.
 export const EFEITOS_TESTE = [
   { id: 'st-contorno', nome: 'Contorno Twitch', classe: 'fx-st-contorno', tema: 'Streamer · Twitch' },
   { id: 'gl-fatiado', nome: 'Fatiado', classe: 'fx-gl-fatiado', tema: 'Glitch · intenso · faixas que escorregam' },
-  { id: 'gl-matrix', nome: 'Código Verde', classe: 'fx-gl-matrix', tema: 'Glitch · médio · terminal verde' },
-  // Zaun e Piltover (cada letra anima por conta própria; ver nickFxHtml)
-  { id: 'zn-cintila', nome: 'Cintila', classe: 'fx-zn-cintila', letras: true, tema: 'Zaun · a droga roxa de Vander: frasco de vidro com líquido roxo ondulando' },
   { id: 'zn-vapor', nome: 'Válvula de Vapor', classe: 'fx-zn-vapor', letras: true, tema: 'Zaun · cano enferrujado e vapor de pressão' },
-  { id: 'zn-neon', nome: 'Neon do Submundo', classe: 'fx-zn-neon', letras: true, tema: 'Zaun · letreiro roxo, letra defeituosa e descarga' },
-  { id: 'pl-cristal', nome: 'Cristal Hextech', classe: 'fx-pl-cristal', letras: true, tema: 'Piltover · cristal azul, carga e reflexos' },
   { id: 'pl-latao', nome: 'Latão e Engrenagens', classe: 'fx-pl-latao', letras: true, tema: 'Piltover · latão polido e engrenagens girando' },
   { id: 'pl-holo', nome: 'Holograma de Progresso', classe: 'fx-pl-holo', letras: true, tema: 'Piltover · projeção azul com feixe de varredura' },
   { id: 'nv-magma', nome: 'Magma', classe: 'fx-nv-magma', tema: 'Laranja e preto · lava e brasas' },
@@ -54,7 +54,7 @@ export const EFEITOS_TESTE = [
 
 // De EFEITOS_TESTE, só estes dá para equipar (o servidor só os libera para o
 // administrador, via site_recompensas); os demais continuam só na aba Teste.
-export const EQUIPAVEIS_TESTE = ['gl-matrix', 'zn-cintila', 'zn-neon', 'pl-cristal']; // recompensas do passe Zaun e Piltover (em teste)
+export const EQUIPAVEIS_TESTE = [];
 export const efeitoPorId = (id) => EFEITOS.find((e) => e.id === id)
   || (EQUIPAVEIS_TESTE.includes(id) ? EFEITOS_TESTE.find((e) => e.id === id) : null) || null;
 
