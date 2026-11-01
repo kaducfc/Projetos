@@ -4,7 +4,7 @@ import * as platform from '../shared/platform.js';
 import { mountSiteBar, openAuthModal } from '../shared/account.js';
 import { mountSiteFooter } from '../shared/footer.js';
 import { GAMES, gameById } from '../shared/config.js';
-import { AVATARES, ESPECIAIS, EXCLUSIVOS, avatarHtml, molduraHtml, nomeAvatar } from '../shared/avatar.js';
+import { AVATARES, ESPECIAIS, EXCLUSIVOS, EXCLUSIVOS_TESTE, avatarHtml, molduraHtml, nomeAvatar } from '../shared/avatar.js';
 import { nomeRecompensa, tipoTexto } from '../shared/recompensas.js';
 import { problemaNoNome } from '../shared/nomes.js';
 import { cardMinhaRanqueada, definirAdmin } from './ranqueada-card.js';
@@ -300,7 +300,7 @@ async function escolherIcone() {
   const especial = (x) => `<button type="button" class="pf-icone${u.avatar === `icone:${x.id}` ? ' on' : ''}" data-especial="${x.id}" title="${esc(x.nome)}" aria-label="${esc(x.nome)}">${avatarHtml(`icone:${x.id}`, x.nome, 64)}</button>`;
   // Exclusivos (de código de recompensa) só aparecem para quem ganhou.
   const grade = (selos, ganhos = new Set()) => [...AVATARES.map(botao),
-    ...EXCLUSIVOS.filter((x) => ganhos.has(x.id)).map((x) => botao(`icone:${x.id}`)),
+    ...[...EXCLUSIVOS, ...EXCLUSIVOS_TESTE].filter((x) => ganhos.has(x.id)).map((x) => botao(`icone:${x.id}`)), // os de teste só chegam a quem o servidor liberou (administradores)
     ...ESPECIAIS.map((x) => (selos?.[x.selo] ? especial(x) : travado(x)))].join('');
   let selos = null;
   let ganhos = new Set();
