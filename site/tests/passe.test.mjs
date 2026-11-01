@@ -203,3 +203,26 @@ test('passe Zaun e Piltover: a tela usa engrenagens e o tema próprio; o Hallowe
   assert.match(h, /abóboras/); assert.doesNotMatch(h, /ps-zaun/);
   assert.equal(uiPasse('qualquer-outro').unidade[1], 'abóboras');
 });
+
+test('faixa da página inicial: título da temporada, próximas recompensas (as que já dá para resgatar vêm primeiro) e fundo com as duas cidades', async () => {
+  const { faixaHubHtml, proximasRecompensas } = await import('../shared/passe.js');
+  const niveis = [
+    { nivel: 1, trilha: 'premium', tipo: 'moeda', chave: '500', resgatado: false },
+    { nivel: 2, trilha: 'gratis', tipo: 'icone', chave: 'exc-pl-cidade', resgatado: false },
+    { nivel: 3, trilha: 'premium', tipo: 'moldura', chave: 'mn-zaun', resgatado: false },
+    { nivel: 4, trilha: 'gratis', tipo: 'moeda', chave: '300', resgatado: false },
+    { nivel: 5, trilha: 'premium', tipo: 'moeda', chave: '500', resgatado: false },
+  ];
+  const e = { passe: { id: 'zaun-piltover-2026', nome: 'Zaun e Piltover', niveis: 15, abobora_por_nivel: 100, limite_dia: 150, publico: true, fim: '2099-11-20' }, nivel: 2, progresso: 36, premium: false, hoje: 0, niveis };
+  const h = faixaHubHtml(e);
+  assert.match(h, /hp-grande hp-zaun/); assert.match(h, /Zaun<\/b> <i>e<\/i> <b class="hp-t-p">Piltover/); assert.match(h, /36\/100 engrenagens/);
+  assert.match(h, /exc-pl-cidade\.webp/); assert.match(h, /exc-zn-refinaria\.webp/); assert.match(h, /Termina em/);
+  // sem premium: o nível 1 (premium) não é resgatável; o 2 (grátis) já é, então vem primeiro
+  const recs = proximasRecompensas(e);
+  assert.equal((recs.match(/class="hp-rec /g) || []).length, 4);
+  assert.ok(recs.indexOf('Resgatar!') < recs.indexOf('Nível 1'));
+  assert.match(faixaHubHtml({ ...e, premium: true }), /★ Premium/);
+  // o Halloween continua com o visual de antes (sem as cenas de fundo)
+  const hw = faixaHubHtml({ ...e, passe: { ...e.passe, id: 'halloween-2026', nome: 'Halloween 2026', fim: null } });
+  assert.doesNotMatch(hw, /hp-fundo/); assert.match(hw, /abóboras/);
+});

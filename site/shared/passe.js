@@ -14,7 +14,10 @@ export const ABOBORA_IMG = '/shared/assets/passe/abobora-64.webp';
 // Cada temporada tem a sua "moeda" de progresso (o servidor ainda chama de abobora_*) e o seu visual.
 export const PASSES_UI = {
   'halloween-2026': { unidade: ['abóbora', 'abóboras'], img: ABOBORA_IMG, img2: '/shared/assets/passe/abobora-128.webp', tema: '' },
-  'zaun-piltover-2026': { unidade: ['engrenagem', 'engrenagens'], img: '/shared/assets/passe/engrenagem-64.webp', img2: '/shared/assets/passe/engrenagem-128.webp', tema: 'ps-zaun' },
+  'zaun-piltover-2026': { unidade: ['engrenagem', 'engrenagens'], img: '/shared/assets/passe/engrenagem-64.webp', img2: '/shared/assets/passe/engrenagem-128.webp', tema: 'ps-zaun',
+    // Faixa grande da página inicial: duas cenas de fundo (Piltover à esquerda, Zaun à direita) e o título em duas cores.
+    fundos: ['/shared/assets/icones/exc-pl-cidade.webp', '/shared/assets/icones/exc-zn-refinaria.webp'],
+    titulo: '<b class="hp-t-z">Zaun</b> <i>e</i> <b class="hp-t-p">Piltover</b>' },
 };
 export const uiPasse = (id) => PASSES_UI[id] || PASSES_UI['halloween-2026'];
 const aboboraImg = (tam = 18, ui = uiPasse()) => `<img class="ps-abobora" src="${ui.img}" srcset="${ui.img2} 2x" width="${tam}" height="${tam}" alt="" />`;
@@ -23,7 +26,7 @@ const aboboraImg = (tam = 18, ui = uiPasse()) => `<img class="ps-abobora" src="$
 // também confere (site_passes.fim, 0058_passe_fim.sql).
 const FIM_PASSE = { 'halloween-2026': '2026-11-01T03:00:00Z' };
 
-function fimTexto(p) {
+export function fimTexto(p) {
   // O fim vem do servidor (data do último dia, inclusive); sem ele, vale a tabela acima.
   const id = p.id;
   const fim = p.fim ? Date.parse(`${String(p.fim).slice(0, 10)}T23:59:59.999-03:00`) : (FIM_PASSE[id] ? Date.parse(FIM_PASSE[id]) : NaN);
@@ -111,4 +114,42 @@ export function passeHtml(e, { extra = '' } = {}) {
       </ul>
     </div>
   </div>`;
+}
+
+// Próximas recompensas, em miniatura (faixa da página inicial): primeiro as que já dá para resgatar, depois as seguintes.
+export function proximasRecompensas(e, max = 4) {
+  const pronta = (n) => n.nivel <= e.nivel && (n.trilha === 'gratis' || e.premium);
+  const lista = e.niveis.filter((n) => !n.resgatado).sort((a, b) => (pronta(b) - pronta(a)) || a.nivel - b.nivel).slice(0, max);
+  const visual = (r) => {
+    if (r.tipo === 'moeda') return `<span class="hp-rec-v"><img src="/shared/assets/moeda/rc-48.webp" width="34" height="34" alt="" /></span><b>${fmt(r.chave)} RC</b>`;
+    if (r.tipo === 'efeito') { const fx = [...EFEITOS, ...EFEITOS_TESTE].find((x) => x.id === r.chave); const nome = fx?.nome || nomeRecompensa('efeito', r.chave); return `<span class="hp-rec-v hp-rec-fx">${nickFxHtml(fx || { classe: '' }, nome)}</span><b>Efeito</b>`; }
+    if (r.tipo === 'icone') return `<span class="hp-rec-v">${avatarHtml(`icone:${r.chave}`, '', 46)}</span><b>${esc(nomeRecompensa(r.tipo, r.chave))}</b>`;
+    if (r.tipo === 'moldura') return `<span class="hp-rec-v">${molduraHtml(r.chave, 56)}</span><b>${esc(nomeRecompensa(r.tipo, r.chave))}</b>`;
+    return `<b>${esc(nomeRecompensa(r.tipo, r.chave))}</b>`;
+  };
+  return lista.map((n) => `<span class="hp-rec ${pronta(n) ? 'hp-rec-pronta' : ''} ${n.trilha === 'premium' ? 'hp-rec-prem' : ''}" title="Nível ${n.nivel} · ${n.trilha === 'premium' ? 'Premium' : 'Grátis'}">${visual(n)}<small>${pronta(n) ? 'Resgatar!' : `Nível ${n.nivel}${n.trilha === 'premium' ? ' ★' : ''}`}</small></span>`).join('');
+}
+
+// Faixa grande do Passe de Batalha na página inicial (js/hub.js): título da temporada, progresso e as próximas recompensas.
+export function faixaHubHtml(e) {
+  const completo = e.nivel >= e.passe.niveis;
+  const pct = completo ? 100 : Math.min(100, Math.round((e.progresso / e.passe.abobora_por_nivel) * 100));
+  const ui = uiPasse(e.passe.id);
+  const fundos = (ui.fundos || []).map((f, i) => `<span class="hp-fundo hp-fundo-${i ? 'd' : 'e'}" style="background-image:url('${f}')"></span>`).join('');
+  return `<a class="hp-link hp-grande ${ui.tema ? `hp-${ui.tema.replace('ps-', '')}` : ''}" href="passe/">
+      ${fundos}
+      <span class="hp-conteudo">
+        <span class="hp-topo"><span class="hp-nome"><img src="${ui.img}" width="18" height="18" alt="" /> Passe de Batalha</span>${fimTexto(e.passe) || ''}${e.premium ? '<span class="ps-tag ps-tag-premium">★ Premium</span>' : '<span class="ps-tag">Grátis</span>'}</span>
+        <span class="hp-titulo display">${ui.titulo || esc(e.passe.nome)}</span>
+        <span class="hp-prog">
+          <span class="hp-nivel">Nível ${e.nivel}</span>
+          <span class="hp-barra-wrap"><span class="hp-barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><img class="hp-ponta" style="left:${pct}%" src="${ui.img}" srcset="${ui.img2} 2x" width="26" height="26" alt="" /></span>
+          <span class="hp-prox">${completo ? '✓ Completo' : `${fmt(e.progresso)}/${fmt(e.passe.abobora_por_nivel)} ${ui.unidade[1]}`}</span>
+        </span>
+      </span>
+      <span class="hp-lado">
+        <span class="hp-recs">${proximasRecompensas(e)}</span>
+        <span class="hp-ir">Ir para o passe →</span>
+      </span>
+    </a>`;
 }
