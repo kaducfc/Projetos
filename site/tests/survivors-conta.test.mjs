@@ -173,9 +173,9 @@ t('passe Zaun e Piltover (0200): cria o passe em teste, devolve as datas e escol
   // 0201: efeitos de nome como recompensa (grátis: Cintila no 6 e Cristal Hextech no 12; premium: Neon do Submundo no 7)
   const m2 = arq('0201_passe_zaun_efeitos.sql'); r = psql(['-d', 't'], m2); assert.equal(r.status, 0, r.stderr); r = psql(['-d', 't'], m2); assert.equal(r.status, 0, `0201 de novo: ${r.stderr}`);
   const m3 = arq('0202_passe_zaun_moldura_gratis.sql'); r = psql(['-d', 't'], m3); assert.equal(r.status, 0, r.stderr); r = psql(['-d', 't'], m3); assert.equal(r.status, 0, `0202 de novo: ${r.stderr}`);
-  const m4 = arq('0203_passe_zaun_icones.sql'); r = psql(['-d', 't'], m4); assert.equal(r.status, 0, r.stderr); r = psql(['-d', 't'], m4); assert.equal(r.status, 0, `0203 de novo: ${r.stderr}`);
+  const m4 = arq('0203_passe_zaun_icones_desfazer.sql'); r = psql(['-d', 't'], m4); assert.equal(r.status, 0, r.stderr); r = psql(['-d', 't'], m4); assert.equal(r.status, 0, `0203 de novo: ${r.stderr}`);
   assert.equal(psql(['-d', 't', '-c', "select string_agg(nivel || ':' || trilha || ':' || tipo || ':' || chave, ' ' order by nivel) from site_passe_niveis where passe = 'zaun-piltover-2026' and tipo <> 'moeda'"]).stdout.trim(),
-    '2:gratis:icone:exc-pl-cidade 3:premium:moldura:mn-zaun 6:gratis:efeito:zn-cintila 7:premium:efeito:zn-neon 9:premium:efeito:gl-matrix 10:gratis:icone:exc-zn-refinaria 12:gratis:efeito:pl-cristal 13:premium:icone:exc-zn-submundo 14:gratis:moldura:pl-horizonte 15:premium:moldura:mn-mecanismo');
+    '3:premium:moldura:mn-zaun 6:gratis:efeito:zn-cintila 7:premium:efeito:zn-neon 9:premium:efeito:gl-matrix 12:gratis:efeito:pl-cristal 14:gratis:moldura:pl-horizonte 15:premium:moldura:mn-mecanismo');
   // só o administrador vê o passe em teste; ele ainda não é público
   const adm = JSON.parse(Q("select site_passe_estado('zaun-piltover-2026')", 1).out);
   assert.equal(adm.passe.publico, false); assert.equal(adm.passe.fim, null); assert.equal(adm.niveis.length, 15);

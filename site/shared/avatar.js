@@ -46,12 +46,7 @@ export const EXCLUSIVOS = [
 ];
 
 // Em teste: só o painel (aba Teste) mostra. Para lançar, mover para EXCLUSIVOS.
-export const EXCLUSIVOS_TESTE = [
-  // Recompensas do passe Zaun e Piltover (em teste).
-  { id: 'exc-pl-cidade', nome: 'Cidade de Piltover' },
-  { id: 'exc-zn-refinaria', nome: 'Refinaria de Zaun' },
-  { id: 'exc-zn-submundo', nome: 'Submundo de Zaun' },
-];
+export const EXCLUSIVOS_TESTE = [];
 
 export const AVATARES = ['mascote', ...ICONES.map((i) => `icone:${i.id}`)];
 export const AVATARES_ESPECIAIS = ESPECIAIS.map((i) => `icone:${i.id}`);
