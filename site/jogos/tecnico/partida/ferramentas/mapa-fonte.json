@@ -1,0 +1,65 @@
+{
+  "_doc": "Geometria do mapa em PIXELS da imagem img/mapa-sr.webp (1487x1058). É a fonte editável: gerar_terreno.py lê este arquivo + a imagem e escreve config/mapa.js (coordenadas normalizadas 0-1) e config/terreno.js (grade de navegação). Tudo que está em \"ajustar\" é estimativa que precisa de conferência visual na ferramenta de depuração.",
+  "imagem": { "arquivo": "../../img/mapa-sr.webp", "largura": 1487, "altura": 1058 },
+  "celula": 8,
+  "unidadesPorPixel": 10,
+  "limite": [[160,700],[165,620],[185,550],[205,470],[200,380],[205,300],[225,240],[262,190],[310,150],[360,125],[450,110],[600,105],[700,100],[850,95],[925,95],[1010,88],[1150,82],[1280,70],[1335,75],[1330,150],[1328,250],[1330,350],[1335,440],[1325,520],[1320,620],[1320,700],[1318,780],[1300,860],[1270,920],[1250,960],[1200,992],[1100,1012],[950,1016],[800,1016],[650,1013],[580,1012],[560,1010],[300,1006],[150,1006],[95,990],[85,930],[100,860],[110,760],[150,720]],
+  "bases": {
+    "azul": {
+      "nexus": [150,980], "fonte": [195,940],
+      "poligono": [[138,694],[276,684],[300,698],[398,712],[445,726],[472,740],[522,796],[545,840],[556,900],[560,990],[540,1004],[150,1004],[100,986],[88,940],[112,830],[125,760]],
+      "torresNexus": [[218,908],[262,950]]
+    },
+    "vermelho": {
+      "nexus": [1265,105], "fonte": [1225,150],
+      "poligono": [[930,112],[1000,108],[1100,100],[1200,88],[1290,72],[1325,80],[1330,160],[1328,260],[1325,360],[1322,402],[1290,410],[1255,396],[1180,372],[1120,360],[1032,348],[985,288],[967,252],[955,222],[945,178],[932,138]],
+      "torresNexus": [[1215,178],[1172,138]]
+    }
+  },
+  "paredes": [
+    { "id": "azul_topo", "espessura": 9, "pts": [[292,696],[345,700],[397,710],[446,724],[472,738]] },
+    { "id": "azul_dir", "espessura": 9, "pts": [[522,797],[545,840],[556,900],[560,955]] },
+    { "id": "azul_esq", "espessura": 9, "pts": [[185,553],[173,613],[164,685],[150,730]] },
+    { "id": "verm_diag", "espessura": 9, "pts": [[945,178],[955,222],[967,252],[980,284]] },
+    { "id": "verm_baixo", "espessura": 9, "pts": [[1033,347],[1075,356],[1130,362],[1190,374],[1236,384]] }
+  ],
+  "rotas": {
+    "topo":  { "nome": "Topo",  "largura": 76, "pts": [[236,760],[240,690],[245,600],[252,520],[254,430],[252,340],[258,260],[285,200],[340,165],[420,150],[520,148],[640,146],[760,142],[860,140],[925,140],[985,150]] },
+    "meio":  { "nome": "Meio",  "largura": 76, "pts": [[430,815],[485,765],[560,712],[640,650],[726,585],[800,522],[871,466],[940,410],[1000,365],[1040,330],[1080,300]] },
+    "baixo": { "nome": "Baixo", "largura": 76, "pts": [[540,960],[600,982],[700,988],[800,990],[900,990],[1000,986],[1100,978],[1180,962],[1240,930],[1278,880],[1295,800],[1298,700],[1298,600],[1296,500],[1292,430],[1290,375]] }
+  },
+  "estruturas": {
+    "torres": [
+      { "rota": "topo",  "nivel": 3, "dist": 120 }, { "rota": "topo",  "nivel": 2, "dist": 250 }, { "rota": "topo",  "nivel": 1, "dist": 420 },
+      { "rota": "meio",  "nivel": 3, "dist": 100 }, { "rota": "meio",  "nivel": 2, "dist": 175 }, { "rota": "meio",  "nivel": 1, "dist": 270 },
+      { "rota": "baixo", "nivel": 3, "dist": 120 }, { "rota": "baixo", "nivel": 2, "dist": 250 }, { "rota": "baixo", "nivel": 1, "dist": 420 }
+    ],
+    "inibidores": [ { "rota": "topo", "dist": 8 }, { "rota": "meio", "dist": 12 }, { "rota": "baixo", "dist": 8 } ],
+    "_nota": "dist = pixels medidos pela linha central da rota, a partir da ponta da equipe dona. A ponta da equipe vermelha é a outra extremidade da linha."
+  },
+  "acampamentos": [
+    { "id": "azul_buff",     "lado": "azul",     "tipo": "sentinela", "pos": [482,502], "raio": 30, "ajustar": true },
+    { "id": "azul_gromp",    "lado": "azul",     "tipo": "gromp",     "pos": [338,455], "raio": 28, "ajustar": true },
+    { "id": "azul_lobos",    "lado": "azul",     "tipo": "lobos",     "pos": [472,606], "raio": 30, "ajustar": true },
+    { "id": "azul_raptores", "lado": "azul",     "tipo": "raptores",  "pos": [697,701], "raio": 30, "ajustar": true },
+    { "id": "azul_brambleback","lado": "azul",   "tipo": "brambleback","pos": [787,795], "raio": 30, "ajustar": true },
+    { "id": "azul_krugs",    "lado": "azul",     "tipo": "krugs",     "pos": [840,900], "raio": 30, "ajustar": true },
+    { "id": "verm_buff",     "lado": "vermelho", "tipo": "sentinela", "pos": [1071,583], "raio": 30, "ajustar": true },
+    { "id": "verm_gromp",    "lado": "vermelho", "tipo": "gromp",     "pos": [1223,617], "raio": 28, "ajustar": true },
+    { "id": "verm_lobos",    "lado": "vermelho", "tipo": "lobos",     "pos": [1076,480], "raio": 30, "ajustar": true },
+    { "id": "verm_raptores", "lado": "vermelho", "tipo": "raptores",  "pos": [803,400], "raio": 30, "ajustar": true },
+    { "id": "verm_brambleback","lado": "vermelho","tipo": "brambleback","pos": [713,306], "raio": 30, "ajustar": true },
+    { "id": "verm_krugs",    "lado": "vermelho", "tipo": "krugs",     "pos": [660,201], "raio": 30, "ajustar": true },
+    { "id": "caranguejo_topo","lado": "rio",     "tipo": "caranguejo","pos": [483,393], "raio": 24, "ajustar": true },
+    { "id": "caranguejo_baixo","lado": "rio",    "tipo": "caranguejo","pos": [1015,708], "raio": 24, "ajustar": true }
+  ],
+  "covis": [
+    { "id": "barao",  "tipo": "barao",  "pos": [574,341], "raio": 52, "ajustar": true },
+    { "id": "dragao", "tipo": "dragao", "pos": [1002,784], "raio": 52, "ajustar": true }
+  ],
+  "ajustes": {
+    "_doc": "Correções manuais ao terreno automático. liberar/bloquear: lista de polígonos em pixels. Use a ferramenta de depuração para conferir.",
+    "liberar": [],
+    "bloquear": []
+  }
+}

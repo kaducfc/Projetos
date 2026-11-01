@@ -1,0 +1,69 @@
+-- Simulador de Técnico: ícone da organização com emblema (30, 3 cores) e bandeira opcional (20, 2 cores). Rode depois do 0109. Idempotente.
+-- O ícone fica em tc_orgs.escudo, em texto: v2:<emblema 1-30>:<c1>:<c2>:<c3>:<bandeira 0-20 (0 = sem)>:<moldura>:<tecido> (cores hex sem #).
+-- Os escudos antigos (escudo-1 a escudo-6) continuam valendo. cor1/cor2 seguem como cores principais do time.
+
+create or replace function public.tc_criar_org(nome_ text, sigla_ text, escudo_ text default 'escudo-1', cor1_ text default '#1b3a6b', cor2_ text default '#d9a82b', estilo_ text default 'classico')
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  uid uuid := auth.uid();
+  n text := regexp_replace(trim(coalesce(nome_, '')), '\s+', ' ', 'g');
+  s text := upper(trim(coalesce(sigla_, '')));
+  oid bigint;
+begin
+  perform tc_exigir(uid);
+  if char_length(n) < 3 or char_length(n) > 24 or n !~ '^[[:alnum:] ._''-]+$' then
+    raise exception 'nome_invalido';
+  end if;
+  if s !~ '^[A-Z0-9]{2,4}$' then
+    raise exception 'sigla_invalida';
+  end if;
+  if escudo_ !~ '^(escudo-[1-6]|v2:([1-9]|[12][0-9]|30):[0-9a-f]{6}:[0-9a-f]{6}:[0-9a-f]{6}:([0-9]|1[0-9]|20):[0-9a-f]{6}:[0-9a-f]{6})$' then
+    raise exception 'escudo_invalido';
+  end if;
+  if estilo_ not in ('classico', 'moderno', 'tecnologico') then
+    raise exception 'estilo_invalido';
+  end if;
+  if exists (select 1 from tc_orgs where user_id = uid) then
+    raise exception 'ja_tem_org';
+  end if;
+  if exists (select 1 from tc_orgs where lower(nome) = lower(n)) then
+    raise exception 'nome_em_uso';
+  end if;
+  if exists (select 1 from tc_orgs where sigla = s) then
+    raise exception 'sigla_em_uso';
+  end if;
+  -- Capacidade: até 8 técnicos na divisão de acesso por enquanto (o resto é equipe do sistema).
+  if (select count(*) from tc_orgs where user_id is not null and divisao = 'acesso') >= 8 then
+    raise exception 'divisao_cheia';
+  end if;
+  insert into tc_orgs (user_id, nome, sigla, escudo, cor1, cor2, estilo, creditos, divisao)
+  values (uid, n, s, escudo_, cor1_, cor2_, estilo_, ((tc_cfg('creditos_iniciais'))::text)::bigint, 'acesso')
+  returning id into oid;
+  insert into tc_fin (org_id, delta, saldo, motivo) values (oid, ((tc_cfg('creditos_iniciais'))::text)::bigint, ((tc_cfg('creditos_iniciais'))::text)::bigint, 'inicial');
+  perform tc_elenco_inicial(oid);
+  return jsonb_build_object('id', oid);
+exception when unique_violation then
+  raise exception 'nome_ou_sigla_em_uso';
+end;
+$$;
+revoke all on function public.tc_criar_org(text, text, text, text, text, text) from public, anon;
+grant execute on function public.tc_criar_org(text, text, text, text, text, text) to authenticated;
+
+create or replace function public.tc_personalizar_org(escudo_ text, cor1_ text, cor2_ text, estilo_ text)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  uid uuid := auth.uid();
+begin
+  perform tc_exigir(uid);
+  if escudo_ !~ '^(escudo-[1-6]|v2:([1-9]|[12][0-9]|30):[0-9a-f]{6}:[0-9a-f]{6}:[0-9a-f]{6}:([0-9]|1[0-9]|20):[0-9a-f]{6}:[0-9a-f]{6})$' or estilo_ not in ('classico', 'moderno', 'tecnologico') then
+    raise exception 'dados_invalidos';
+  end if;
+  update tc_orgs set escudo = escudo_, cor1 = cor1_, cor2 = cor2_, estilo = estilo_ where user_id = uid;
+  if not found then
+    raise exception 'sem_org';
+  end if;
+end;
+$$;
+revoke all on function public.tc_personalizar_org(text, text, text, text) from public, anon;
+grant execute on function public.tc_personalizar_org(text, text, text, text) to authenticated;
+
