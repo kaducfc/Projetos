@@ -1,0 +1,25 @@
+-- Arena PvP — corrige contas NOVAS não conseguindo se conectar (403
+-- "permission denied for table pvp_profiles" + 409 na pvp_snapshots por
+-- tabela).
+--
+-- Causa: o cliente sincroniza o perfil com um "upsert" (INSERT ... ON
+-- CONFLICT DO UPDATE). Pra uma conta que já tinha linha em pvp_profiles
+-- (criada antes da 0002_pvp_tiers.sql restringir as colunas que o próprio
+-- jogador pode atualizar), esse upsert sempre caía no caminho de UPDATE,
+-- que já funcionava. Mas pra uma conta NOVA (sem linha ainda), o upsert
+-- precisa de fato fazer o INSERT — e como a política de RLS de UPDATE
+-- ("using (id = auth.uid())") referencia a coluna "id", o Postgres exige
+-- que "id" também esteja entre as colunas com permissão de UPDATE pra
+-- conseguir nem AVALIAR essa política, mesmo no caminho de INSERT puro.
+-- Sem isso, a query inteira é recusada com "permission denied".
+--
+-- A coluna "id" nunca é de fato alterada (o próprio ON CONFLICT usa "id"
+-- como alvo, não como algo sendo escrito), e a política com check
+-- continua garantindo que ninguém consiga gravar um id que não seja o
+-- próprio auth.uid() — então liberar UPDATE nessa coluna não abre brecha
+-- nenhuma, só desbloqueia o upsert.
+--
+-- Como aplicar: cole este arquivo inteiro no SQL Editor do painel Supabase
+-- e rode uma vez. Seguro rodar de novo (GRANT é idempotente).
+
+grant update (id, nick, icon_id, hunter_level, updated_at) on public.pvp_profiles to authenticated;

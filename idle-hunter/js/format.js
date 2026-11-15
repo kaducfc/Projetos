@@ -18,6 +18,22 @@ export function formatNumber(value) {
   return `${sign}${value.toFixed(value < 10 ? 2 : value < 100 ? 1 : 0)}${SUFFIXES[tier]}`;
 }
 
+/// Número inteiro por extenso, com separador de milhar (1200 → "1.200") —
+/// sem abreviação nenhuma ("K"/"M"/...), diferente de formatNumber acima.
+/// Usado na Arena PvP pra pontuação/rank, onde "1.00k" fica confuso.
+export function formatInteger(value) {
+  return Math.round(value ?? 0).toLocaleString('pt-BR');
+}
+
 export function formatPercent(value) {
   return `${value.toFixed(1)}%`;
+}
+
+const HTML_ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+/// Escapa texto vindo do jogador (hoje só o nick, ver systems/profile.js)
+/// antes de injetar em innerHTML/atributo — os outros nomes exibidos no
+/// jogo vêm sempre de data/* estático, nunca precisaram disso.
+export function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (ch) => HTML_ESCAPE_MAP[ch]);
 }
