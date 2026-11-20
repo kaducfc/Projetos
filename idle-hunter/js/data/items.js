@@ -1,30 +1,110 @@
-import { MONSTER_FAMILIES, BOSSES, getWeakMonsterGroupForStage } from './monsters.js';
+import { BOSSES, getWeakMonsterGroupForStage } from './monsters.js';
+import { isVipActive } from '../state.js';
 
-// Slot definitions: which stat each equipment slot rolls, and how much
-// weight it carries relative to the others (weapon is the capstone item).
+// 10 slots físicos, 9 categorias de drop — anel ocupa 2 slots mas é uma
+// categoria só (mesmo item pode ser equipado nos dois, ver
+// getSlotIdsForCategory abaixo). "kind" só importa pra resistência elemental
+// (armor) e pro texto do popup de detalhe (attack vs. accessory). emptyIcon é
+// a logo mostrada no quadrado do slot quando ele ainda não tem nada
+// equipado (ver slotIconHtml em ui/render.js) — caminho em literal de
+// propósito, mesmo motivo do ZONE_BOW_NAMES mais abaixo (bundler do
+// Artifact procura por literais).
 export const SLOTS = [
-  { id: 'weapon', name: 'Arma', emoji: '⚔️', kind: 'attack' },
-  { id: 'helmet', name: 'Elmo', emoji: '🪖', kind: 'defense' },
-  { id: 'armor', name: 'Peitoral', emoji: '🛡️', kind: 'defense' },
-  { id: 'pants', name: 'Calça', emoji: '👖', kind: 'defense' },
-  { id: 'gloves', name: 'Luvas', emoji: '🧤', kind: 'defense' },
-  { id: 'boots', name: 'Botas', emoji: '👢', kind: 'defense' },
+  { id: 'weapon1', name: 'Arma Primária', emoji: '⚔️', kind: 'attack', category: 'weapon1', emptyIcon: 'assets/ui/slots/weapon1.webp' },
+  { id: 'weapon2', name: 'Arma Secundária', emoji: '🗡️', kind: 'attack', category: 'weapon2', emptyIcon: 'assets/ui/slots/weapon2.webp' },
+  { id: 'head', name: 'Cabeça', emoji: '🪖', kind: 'armor', category: 'head', emptyIcon: 'assets/ui/slots/head.webp' },
+  { id: 'chest', name: 'Peito', emoji: '🛡️', kind: 'armor', category: 'chest', emptyIcon: 'assets/ui/slots/chest.webp' },
+  { id: 'legs', name: 'Calça', emoji: '👖', kind: 'armor', category: 'legs', emptyIcon: 'assets/ui/slots/legs.webp' },
+  { id: 'hands', name: 'Mãos', emoji: '🧤', kind: 'armor', category: 'hands', emptyIcon: 'assets/ui/slots/hands.webp' },
+  { id: 'boots', name: 'Botas', emoji: '👢', kind: 'armor', category: 'boots', emptyIcon: 'assets/ui/slots/boots.webp' },
+  { id: 'ring1', name: 'Anel 1', emoji: '💍', kind: 'accessory', category: 'ring', emptyIcon: 'assets/ui/slots/ring.webp' },
+  { id: 'ring2', name: 'Anel 2', emoji: '💍', kind: 'accessory', category: 'ring', emptyIcon: 'assets/ui/slots/ring.webp' },
+  { id: 'necklace', name: 'Colar', emoji: '📿', kind: 'accessory', category: 'necklace', emptyIcon: 'assets/ui/slots/necklace.webp' },
 ];
 
-// Power ratio between one boss's items and the next boss's (tier+1).
-// Reused by the enhancement system below so a fully-enhanced item lands a
-// little above the next tier's base item, regardless of boss.
-export const TIER_GROWTH = 2.15;
+// As 9 categorias de drop (ring conta uma vez só — "só vai dropar um anel de
+// cada atributo, podendo ser repetido" — ver combat.js, que sorteia desta
+// lista, não de SLOTS, pra não dobrar a chance de anel).
+export const DROP_CATEGORIES = ['weapon1', 'weapon2', 'head', 'chest', 'legs', 'hands', 'boots', 'ring', 'necklace'];
 
-function tierBase(tier) {
-  return 8 * Math.pow(TIER_GROWTH, tier);
+/// Pra categorias normais, o único slot físico é a própria categoria; pra
+/// anel, os dois slots (equipItem em systems/equipment.js resolve qual deles
+/// recebe o item — ver comentário lá).
+export function getSlotIdsForCategory(category) {
+  return category === 'ring' ? ['ring1', 'ring2'] : [category];
 }
 
-// Enhancement: +1..+5 (grindable material, "little by little"), then a
-// single big "Rank Master" jump gated by that boss's Crystal. Rank Master is
-// defined as a fixed target relative to the tier's base power —
+export function getSlot(slotId) {
+  return SLOTS.find((s) => s.id === slotId);
+}
+
+/// Rótulo de exibição pra uma CATEGORIA (não um slot físico) — usado no
+/// popup de detalhe do item, que não sabe (nem precisa saber) se um anel
+/// está no ring1 ou ring2. Anel usa um nome genérico ("Anel") em vez de
+/// "Anel 1"/"Anel 2", já que o item em si não pertence a nenhum dos dois
+/// especificamente.
+export function getCategoryLabel(category) {
+  if (category === 'ring') {
+    const ringSlot = getSlot('ring1');
+    return { name: 'Anel', emoji: ringSlot.emoji, kind: ringSlot.kind, image: ringSlot.emptyIcon };
+  }
+  const slot = getSlot(category);
+  return slot ? { name: slot.name, emoji: slot.emoji, kind: slot.kind, image: slot.emptyIcon } : null;
+}
+
+// ---------------------------------------------------------------------
+// Atributos: Força/Destreza/Inteligência são stats de personagem de verdade
+// agora (ver systems/stats.js) — cada um dos 9 moldes de item por zona dropa
+// em 3 variantes, uma por atributo, sorteada uniforme e independente da
+// raridade. Pra armadura (head/chest/legs/hands/boots) o atributo também
+// aparece como "categoria de peso" (pesada/leve/mágica) — é só um rótulo,
+// não um campo à parte (ver armorCategoryLabel abaixo).
+// ---------------------------------------------------------------------
+export const ATTRIBUTES = [
+  { id: 'forca', name: 'Força', armorLabel: 'Pesada', color: '#c0392b' },
+  { id: 'destreza', name: 'Destreza', armorLabel: 'Leve', color: '#27ae60' },
+  { id: 'inteligencia', name: 'Inteligência', armorLabel: 'Mágica', color: '#2980b9' },
+];
+
+// O tipo de dano do jogador é 1 dos 3, decidido pelo atributo da ARMA
+// PRIMÁRIA equipada (weapon1) — só os pontos desse tipo específico (ver
+// attributeBaseStats abaixo: danoFisicoFlat/danoPerfuracaoFlat/
+// danoMagicoFlat) viram DPS de verdade; os outros dois continuam dando
+// vida/armadura/crítico/ouro/drop normalmente, só não contam como dano.
+export const DAMAGE_TYPES = [
+  { id: 'fisico', name: 'Físico', emoji: '🗡️' },
+  { id: 'perfuracao', name: 'Perfuração', emoji: '🏹' },
+  { id: 'magico', name: 'Mágico', emoji: '🔮' },
+];
+
+const DAMAGE_TYPE_BY_ATTRIBUTE = { forca: 'fisico', destreza: 'perfuracao', inteligencia: 'magico' };
+
+export function getDamageTypeForAttribute(attributeId) {
+  return DAMAGE_TYPE_BY_ATTRIBUTE[attributeId] || 'fisico';
+}
+
+export function getDamageType(damageTypeId) {
+  return DAMAGE_TYPES.find((d) => d.id === damageTypeId) || DAMAGE_TYPES[0];
+}
+
+export function getAttribute(attributeId) {
+  return ATTRIBUTES.find((a) => a.id === attributeId) || ATTRIBUTES[0];
+}
+
+export function armorCategoryLabel(attributeId) {
+  return getAttribute(attributeId).armorLabel;
+}
+
+// Power ratio between one zone's items and the next zone's (tier+1). Reused
+// by the enhancement system below so a fully-enhanced item lands a little
+// above the next tier's base item, regardless of zone.
+export const TIER_GROWTH = 2.15;
+
+// Enhancement: +1..+5 (grindable material + gold, "little by little"), then
+// a single big "Rank Master" jump. Rank Master is defined as a fixed target
+// relative to the tier's base power —
 // TIER_GROWTH * MASTER_MARGIN — so it's always just a bit stronger than the
-// next boss's own +0 item, whatever tier it is.
+// next zone's own +0 item, whatever tier it is.
 export const ENHANCE_MAX_LEVEL = 5;
 export const ENHANCE_PER_LEVEL_MULT = 1.09;
 export const MASTER_MARGIN = 1.03;
@@ -35,333 +115,982 @@ export function enhancementMultiplier(level, isMaster) {
   return Math.pow(ENHANCE_PER_LEVEL_MULT, clamped);
 }
 
-export function getEnhancedStats(item, level, isMaster) {
-  const mult = enhancementMultiplier(level, isMaster);
+/// Applies this instance's enhance level/Master on top of its own rolled
+/// baseStats (see rollDroppedItem below), then adds its rolled
+/// additionalStats flat (additionals are rolled once at drop time — or at
+/// Ascensão, ver ascendItem em systems/crafting.js — and don't scale further
+/// with enhance). invEntry is the inventory entry itself, not a static
+/// template — every dropped instance rolls its own baseStats/
+/// additionalStats, so two drops of the same itemId can differ.
+///
+/// O atributo (Força/Destreza/Inteligência) é FIXO — só muda pelo tier do
+/// item (ver ATTRIBUTE_STEP_BY_CATEGORY), nunca por enhance/Rank Master:
+/// sai daqui sem passar pelo `mult`. Só o 2º adicional base (dano/vida/
+/// armadura, ver secondaryStatKeyForCategory) escala com o enhance.
+export function getEnhancedStats(invEntry) {
+  const item = getItem(invEntry.itemId);
+  const mult = enhancementMultiplier(invEntry.enhanceLevel || 0, !!invEntry.isMaster);
   const result = {};
-  for (const [key, value] of Object.entries(item.stats)) {
+  for (const [key, value] of Object.entries(invEntry.baseStats || {})) {
+    if (item && key === item.attribute) {
+      result[key] = value;
+      continue;
+    }
     const scaled = value * mult;
     result[key] = key.endsWith('Percent') ? Math.round(scaled * 10) / 10 : Math.round(scaled);
+  }
+  for (const add of invEntry.additionalStats || []) {
+    result[add.stat] = (result[add.stat] || 0) + add.value;
   }
   return result;
 }
 
 export function getEnhanceLabel(level, isMaster) {
-  return isMaster ? 'Rank Master' : `+${level}`;
+  return isMaster ? 'M' : `+${level}`;
 }
 
 // ---------------------------------------------------------------------
-// Live crafting roster: one 6-piece set per boss (see data/monsters.js).
-// Only the boss's own weapon gets a flavor name; armor pieces follow the
-// same "<Slot> de <Boss>" pattern the old family system used.
+// Raridade: cada tier acima de Comum ganha bônus "adicionais" extras (rolados
+// do ADDITIONAL_STAT_POOL abaixo), além de atributos base mais fortes
+// (rarity.mult) e uma pequena variação aleatória por drop. Valores de
+// partida — fáceis de re-tunar depois.
+// ---------------------------------------------------------------------
+export const RARITIES = [
+  { id: 'comum', name: 'Comum', mult: 1.0, additionals: 1, weight: 60, color: '#9e9e9e' },
+  { id: 'incomum', name: 'Incomum', mult: 1.15, additionals: 2, weight: 24, color: '#4caf50' },
+  { id: 'raro', name: 'Raro', mult: 1.35, additionals: 3, weight: 10, color: '#2196f3' },
+  { id: 'epico', name: 'Épico', mult: 1.6, additionals: 4, weight: 4, color: '#9c27b0' },
+  { id: 'lendario', name: 'Lendário', mult: 2.0, additionals: 5, weight: 1.5, color: '#ffd700' },
+  { id: 'mitico', name: 'Mítico', mult: 2.5, additionals: 6, weight: 0.5, color: '#f44336' },
+];
+
+export function getRarity(rarityId) {
+  // 'deus' não faz parte de RARITIES de propósito (nunca pode ser sorteada
+  // num drop/ascensão normal, ver GOD_RARITY mais abaixo) — resolvida aqui
+  // à parte pra todo lugar que já usa getRarity(entry.rarityId) sem saber
+  // se o item é normal ou Tier God (cor de fundo do inventário/slot
+  // equipado, nome da raridade no popup, etc.) já pegar o objeto certo sem
+  // precisar de um caminho especial em cada chamador.
+  if (rarityId === GOD_RARITY_ID) return GOD_RARITY;
+  return RARITIES.find((r) => r.id === rarityId) || RARITIES[0];
+}
+
+// Limite de slots do inventário de equipamentos — 100 de base, +50 (150 no
+// total) com VIP. Mesmo bônus de VIP usado pelo inventário de mascotes (ver
+// data/pets.js PET_INVENTORY_CAP/getPetInventoryCap).
+export const ITEM_INVENTORY_CAP = 100;
+export const VIP_INVENTORY_BONUS = 50;
+
+export function getItemInventoryCap(state) {
+  return ITEM_INVENTORY_CAP + (isVipActive(state) ? VIP_INVENTORY_BONUS : 0);
+}
+
+function pickRarity() {
+  const totalWeight = RARITIES.reduce((sum, r) => sum + r.weight, 0);
+  let roll = Math.random() * totalWeight;
+  for (const rarity of RARITIES) {
+    roll -= rarity.weight;
+    if (roll <= 0) return rarity;
+  }
+  return RARITIES[0];
+}
+
+// ---------------------------------------------------------------------
+// Atributos bônus — todo item rola N destes, sem repetir (N = rarity.
+// additionals: Comum 1, Incomum 2, Raro 3, Épico 4, Lendário 5, Mítico 6).
+// Cada rolagem sorteia primeiro o GRUPO (10% chance de cair num bônus
+// "raro", 90% num "comum"), depois um estat dentro daquele grupo. 'attrSelf'
+// repete o PRÓPRIO atributo do item, no mesmo valor já rolado pra ele
+// (funde com a linha do atributo base, ver getEnhancedStats); 'attrOther'
+// sorteia um dos OUTROS dois atributos, com seu próprio valor.
+// ---------------------------------------------------------------------
+const RARE_BONUS_CHANCE = 0.10;
+
+const RARE_BONUS_STATS = [
+  'dpsPercent', 'hpPercent', 'attrSelf', 'attackSpeedPercent', 'critChancePercent', 'lifestealFlat',
+];
+
+const COMMON_BONUS_STATS = [
+  'goldPercent', 'dropPercent', 'attrOther', 'danoFisicoFlat', 'danoMagicoFlat',
+  'danoPerfuracaoFlat', 'armorFlat', 'hpFlat', 'critDamagePercent', 'petDamagePercent', 'dodgePercent',
+];
+
+/// Magnitude de cada tipo de bônus, por zona (tier, 0-based) E por raridade
+/// (rarityMult = rarity.mult, a MESMA curva já usada pra escalar o atributo
+/// base — 1.0/1.15/1.35/1.6/2.0/2.5 de Comum a Mítico, ver RARITIES acima):
+/// quanto melhor a raridade, melhor o bônus, sem inventar uma curva nova só
+/// pros afixos (ex: 1% de crítico Comum vira ~1.15% Incomum, ~1.35% Raro...
+/// mesmo "quanto mais raro, mais forte" pedido, mantendo tudo equilibrado
+/// com o resto do item). Percentuais crescem suave por zona (mesma curva de
+/// antes); os planos (dano/vida/armadura) escalam linear como o atributo
+/// base; cura por golpe fica de propósito baixa e quase plana (é um efeito
+/// por hit, não por dano total).
+function rollBonusMagnitude(stat, tier, rarityMult) {
+  if (stat.endsWith('Percent')) return Math.round((2 + Math.random() * 4) * (1 + tier * 0.12) * rarityMult * 10) / 10;
+  if (stat === 'lifestealFlat') return Math.max(1, Math.round((1 + tier * 0.5) * rarityMult));
+  return Math.round((3 + Math.random() * 3) * (tier + 1) * rarityMult);
+}
+
+/// Rola um único atributo bônus ainda não usado neste item (usedKeys evita
+/// repetição — ver rollAdditionalStats abaixo). ownAttributeId/ownBaseValue
+/// são o atributo do próprio item e seu valor FIXO (step×tier da categoria,
+/// ver ATTRIBUTE_STEP_BY_CATEGORY — nunca escalado por raridade). Tanto
+/// 'attrSelf' (mesmo atributo do item) quanto 'attrOther' (um dos outros
+/// dois) usam esse MESMO valor fixo — um arco de zona 3 tem 18 de Destreza
+/// base; se cair Força ou Inteligência como bônus, também vale 18, sem
+/// escalar com raridade/enhance, igual o atributo base em si. Tenta
+/// algumas vezes até achar um estat livre; com só 6 bônus no máximo
+/// (Mítico) contra um pool de ~17 chaves possíveis, isso praticamente
+/// nunca esgota.
+function rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys, rarityMult) {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const group = Math.random() < RARE_BONUS_CHANCE ? RARE_BONUS_STATS : COMMON_BONUS_STATS;
+    const pick = group[Math.floor(Math.random() * group.length)];
+
+    if (pick === 'attrSelf') {
+      const key = `attr:${ownAttributeId}`;
+      if (usedKeys.has(key)) continue;
+      usedKeys.add(key);
+      return { stat: ownAttributeId, value: ownBaseValue };
+    }
+    if (pick === 'attrOther') {
+      const otherId = ATTRIBUTES.map((a) => a.id).filter((id) => id !== ownAttributeId)[Math.floor(Math.random() * 2)];
+      const key = `attr:${otherId}`;
+      if (usedKeys.has(key)) continue;
+      usedKeys.add(key);
+      return { stat: otherId, value: ownBaseValue };
+    }
+    if (usedKeys.has(pick)) continue;
+    usedKeys.add(pick);
+    return { stat: pick, value: rollBonusMagnitude(pick, tier, rarityMult) };
+  }
+  return null;
+}
+
+function rollAdditionalStats(count, tier, ownAttributeId, ownBaseValue, rarityMult = 1) {
+  const usedKeys = new Set();
+  const result = [];
+  for (let i = 0; i < count; i++) {
+    const rolled = rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys, rarityMult);
+    if (rolled) result.push(rolled);
+  }
+  return result;
+}
+
+/// Chave usada em usedKeys pra um additionalStat já existente no item —
+/// espelha a mesma convenção interna de rollOneBonusStat ('attr:<id>' pros
+/// atributos attrSelf/attrOther, a própria chave do stat pros demais).
+function usedKeyForExisting(add) {
+  return ATTRIBUTES.some((a) => a.id === add.stat) ? `attr:${add.stat}` : add.stat;
+}
+
+/// Rola `count` (3) candidatos de bônus DISTINTOS entre si e distintos dos
+/// bônus adicionais que o item já tem (existingAdditionalStats), sem
+/// commitar nada — usado só na Ascensão (ver ascendItem/systems/
+/// crafting.js), onde o jogador escolhe 1 dos 3 pra virar o novo bônus da
+/// raridade seguinte. Mantém as mesmas regras de sempre (10% chance de
+/// bônus raro por candidato, ver RARE_BONUS_CHANCE/rollOneBonusStat) — só
+/// muda QUEM decide qual dos rolados vira o bônus de fato.
+export function rollAscensionBonusCandidates(tier, ownAttributeId, ownBaseValue, existingAdditionalStats, rarityMult, count = 3) {
+  const usedKeys = new Set((existingAdditionalStats || []).map(usedKeyForExisting));
+  const candidates = [];
+  for (let i = 0; i < count; i++) {
+    const rolled = rollOneBonusStat(tier, ownAttributeId, ownBaseValue, usedKeys, rarityMult);
+    if (rolled) candidates.push(rolled);
+  }
+  return candidates;
+}
+
+// ---------------------------------------------------------------------
+// Dado Místico: material consumível (guardado em state.materials, mesmo
+// padrão de Fragmento de Carta) que reroла UM bônus adicional já existente
+// de um item (ver rerollBonus em systems/crafting.js) — diferente da
+// Ascensão (que ADICIONA um bônus novo, na raridade seguinte), o reroll
+// SUBSTITUI um bônus que o item já tem, na raridade ATUAL dele. Funciona
+// tanto pra item normal quanto Tier God (getRarity já resolve GOD_RARITY_ID
+// acima, e GOD_ITEMS.zoneIndex já vem GOD_MAGNITUDE_TIER — ver mais abaixo).
+// ---------------------------------------------------------------------
+export const MYSTIC_DIE_ID = 'mystic_die';
+export const MYSTIC_DIE_NAME = 'Dado Místico';
+// Ícone de verdade (assets/ui/mystic-die.png) em vez do emoji 🎲 — usado em
+// TODO lugar que mostra Dado Místico (correio, evento, popup de reroll,
+// toasts, botão "Trocar de novo"), pedido explícito do usuário.
+export const MYSTIC_DIE_EMOJI = '<img class="currency-icon" src="assets/ui/mystic-die.png" alt="Dado Místico">';
+
+/// Rola 3 candidatos pra substituir o bônus adicional `statIndex` de um
+/// item — mesma mecânica de rollAscensionBonusCandidates (rola 3, o
+/// jogador escolhe 1), na magnitude/raridade ATUAL do item (não a
+/// próxima, como na Ascensão). Os OUTROS bônus que o item já tem entram em
+/// existingAdditionalStats normalmente (pra nunca repetir stat), mas o
+/// próprio bônus sendo trocado NÃO conta como "já usado" — senão ele nunca
+/// poderia rolar de novo pro mesmo stat com um valor diferente.
+/// item.attribute é null pras categorias Deus sem atributo preso no molde
+/// (armadura/anel/colar, ver GOD_ITEMS abaixo) — nesse caso o atributo
+/// "efetivo" da instância vem de entry.godAttribute (mesma resolução de
+/// getGodAttribute em systems/godItems.js, duplicada aqui pra não criar
+/// import circular: godItems.js já importa deste arquivo).
+export function rollBonusRerollCandidates(item, entry, statIndex, count = 3) {
+  const rarity = getRarity(entry.rarityId);
+  const attributeId = item.attribute || entry.godAttribute || null;
+  const ownBaseValue = entry.baseStats?.[attributeId] || 0;
+  const otherStats = (entry.additionalStats || []).filter((_, i) => i !== statIndex);
+  return rollAscensionBonusCandidates(item.zoneIndex, attributeId, ownBaseValue, otherStats, rarity.mult, count);
+}
+
+// ---------------------------------------------------------------------
+// Catálogo de itens: 9 moldes por zona (um por categoria), cada um em 3
+// variantes de atributo — 270 combinações no total (10 zonas × 9 × 3).
+// Nomes/emoji são gerados por template (sem arte nova ainda; cai no emoji
+// via iconMarkup quando não há `image`). Cada molde é um TEMPLATE — a base
+// "pré-raridade" de cada stat vem daqui, mas cada drop rola sua própria
+// instância (ver rollDroppedItem), então dois drops do mesmo itemId podem
+// ter baseStats/raridade/additionalStats diferentes.
 // ---------------------------------------------------------------------
 
-const BOSS_WEAPONS = {
-  chispim: { name: 'Dual Blade de Chispim', emoji: '⚔️' },
-  solkaiser: { name: 'Arco Flamejante de Solkaiser', emoji: '🏹' },
-  tartarok: { name: 'Espada e Escudo de Tartarok', emoji: '🗡️' },
-  colhedor_carmesim: { name: 'Foice Carmesim', emoji: '🔪' },
-  grommuk: { name: 'Macétula Tribal', emoji: '🪓' },
-  vulkarion: { name: 'Espada Grande', emoji: '🗡️' },
-  leviargon: { name: 'Chicote Gigante', emoji: '🔱' },
-  tempestron: { name: 'Martelo Tempestuoso', emoji: '🔨' },
-  gaiatron: { name: 'Machado de 2 Gumes', emoji: '🪓' },
-  bahamorth: { name: 'Mace Dracônica', emoji: '🔨' },
+// Passo de atributo base por categoria, por zona — armas (weapon1/weapon2)
+// sobem de 6 em 6, acessórios (ring/necklace) de 5 em 5, o resto (peças de
+// armadura) de 4 em 4. Zona 1 (tier 0) dá 1x o passo, Zona 10 (tier 9) dá
+// 10x (ver attributeBaseStats abaixo).
+const ATTRIBUTE_STEP_BY_CATEGORY = {
+  weapon1: 6,
+  weapon2: 6,
+  head: 4,
+  chest: 4,
+  legs: 4,
+  hands: 4,
+  boots: 4,
+  ring: 5,
+  necklace: 5,
 };
 
-// Every boss in the current 10-boss roster now has real reference art (see
-// idle-hunter/assets/) — reused here under each boss id.
-const BOSS_EQUIP_IMAGES = {
-  chispim: {
-    weapon: 'assets/chispim/dualblade.png',
-    helmet: 'assets/chispim/helm.png',
-    armor: 'assets/chispim/armor.png',
-    pants: 'assets/chispim/pants.png',
-    gloves: 'assets/chispim/luvas.png',
-    boots: 'assets/chispim/botas.png',
+// Segundo adicional base de cada item, sempre presente junto do atributo
+// (ver attributeBaseStats abaixo) — armas dão dano (do tipo que já casa com
+// o próprio atributo da arma: Força→Físico, Destreza→Perfuração,
+// Inteligência→Mágico, mesma tabela de DAMAGE_TYPE_BY_ATTRIBUTE), peças de
+// armadura dão vida, anéis/colar dão armadura. É um valor "secundário" de
+// propósito — step menor que o do atributo (ATTRIBUTE_STEP_BY_CATEGORY),
+// pra não ofuscar a conversão de atributo que já existe (ver *_PER_POINT em
+// systems/stats.js) — só um plus a mais que todo item carrega, escala com
+// enhance igual o atributo (mesmo objeto baseStats, ver getEnhancedStats).
+const SECONDARY_STAT_STEP_BY_CATEGORY = {
+  weapon1: 3,
+  weapon2: 3,
+  head: 2,
+  chest: 2,
+  legs: 2,
+  hands: 2,
+  boots: 2,
+  ring: 2,
+  necklace: 2,
+};
+
+function secondaryStatKeyForCategory(category, attributeId) {
+  if (category === 'weapon1' || category === 'weapon2') {
+    const damageType = DAMAGE_TYPE_BY_ATTRIBUTE[attributeId];
+    return damageType === 'fisico' ? 'danoFisicoFlat' : damageType === 'perfuracao' ? 'danoPerfuracaoFlat' : 'danoMagicoFlat';
+  }
+  if (category === 'ring' || category === 'necklace') return 'armorFlat';
+  return 'hpFlat'; // head/chest/legs/hands/boots
+}
+
+// Arquétipos de arma por atributo — evita precisar de 60 nomes de arma
+// escritos à mão (10 zonas × 2 slots × 3 atributos).
+const WEAPON_ARCHETYPES = {
+  weapon1: {
+    forca: { name: 'Espada', emoji: '⚔️' },
+    destreza: { name: 'Arco', emoji: '🏹' },
+    inteligencia: { name: 'Cajado', emoji: '🔮' },
   },
-  solkaiser: {
-    weapon: 'assets/solkaiser/arco.png',
-    helmet: 'assets/solkaiser/helm.png',
-    armor: 'assets/solkaiser/armor.png',
-    pants: 'assets/solkaiser/pants.png',
-    gloves: 'assets/solkaiser/luvas.png',
-    boots: 'assets/solkaiser/botas.png',
-  },
-  tartarok: {
-    weapon: 'assets/tartarok/espada.png',
-    helmet: 'assets/tartarok/helm.png',
-    armor: 'assets/tartarok/armor.png',
-    pants: 'assets/tartarok/pants.png',
-    gloves: 'assets/tartarok/luvas.png',
-    boots: 'assets/tartarok/botas.png',
-  },
-  colhedor_carmesim: {
-    weapon: 'assets/colhedor_carmesim/foice.png',
-    helmet: 'assets/colhedor_carmesim/helm.png',
-    armor: 'assets/colhedor_carmesim/armor.png',
-    pants: 'assets/colhedor_carmesim/pants.png',
-    gloves: 'assets/colhedor_carmesim/luvas.png',
-    boots: 'assets/colhedor_carmesim/botas.png',
-  },
-  grommuk: {
-    weapon: 'assets/grommuk/macetula.png',
-    helmet: 'assets/grommuk/helm.png',
-    armor: 'assets/grommuk/armor.png',
-    pants: 'assets/grommuk/pants.png',
-    gloves: 'assets/grommuk/luvas.png',
-    boots: 'assets/grommuk/botas.png',
-  },
-  vulkarion: {
-    weapon: 'assets/vulkarion/espada.png',
-    helmet: 'assets/vulkarion/helm.png',
-    armor: 'assets/vulkarion/armor.png',
-    pants: 'assets/vulkarion/pants.png',
-    gloves: 'assets/vulkarion/luvas.png',
-    boots: 'assets/vulkarion/botas.png',
-  },
-  leviargon: {
-    weapon: 'assets/leviargon/chicote.png',
-    helmet: 'assets/leviargon/helm.png',
-    armor: 'assets/leviargon/armor.png',
-    pants: 'assets/leviargon/pants.png',
-    gloves: 'assets/leviargon/luvas.png',
-    boots: 'assets/leviargon/botas.png',
-  },
-  tempestron: {
-    weapon: 'assets/tempestron/martelo.png',
-    helmet: 'assets/tempestron/helm.png',
-    armor: 'assets/tempestron/armor.png',
-    pants: 'assets/tempestron/pants.png',
-    gloves: 'assets/tempestron/luvas.png',
-    boots: 'assets/tempestron/botas.png',
-  },
-  gaiatron: {
-    weapon: 'assets/gaiatron/machado.png',
-    helmet: 'assets/gaiatron/helm.png',
-    armor: 'assets/gaiatron/armor.png',
-    pants: 'assets/gaiatron/pants.png',
-    gloves: 'assets/gaiatron/luvas.png',
-    boots: 'assets/gaiatron/botas.png',
-  },
-  bahamorth: {
-    weapon: 'assets/bahamorth/mace.png',
-    helmet: 'assets/bahamorth/helm.png',
-    armor: 'assets/bahamorth/armor.png',
-    pants: 'assets/bahamorth/pants.png',
-    gloves: 'assets/bahamorth/luvas.png',
-    boots: 'assets/bahamorth/botas.png',
+  weapon2: {
+    forca: { name: 'Escudo', emoji: '🛡️' },
+    destreza: { name: 'Aljava', emoji: '🎒' },
+    inteligencia: { name: 'Livro', emoji: '📖' },
   },
 };
 
-/// A boss set needs 4 materials on average: the boss's own 2 ("drop
-/// principal" 1/2) plus 2 from weak monsters — the Neutro one and the one
-/// matching the boss's own element — both from the weak-monster band that
-/// leads up to that boss (see getWeakMonsterGroupForStage(boss.stage - 1)).
-/// A Neutro boss (Grommuk, Bahamorth) collapses to 3 distinct materials:
-/// its "element match" IS the Neutro weak monster, so the two entries land
-/// on the same material id and just sum into one bigger requirement.
-function buildBossItem(boss, tier, slot, neutralWeak, elementalWeak) {
-  const base = tierBase(tier);
-  const id = `${boss.id}_${slot.id}`;
-  const stats = {};
+/// Nome genérico do arquétipo de arma pro (slot, atributo) — usado pela UI
+/// pra explicar o requisito de arma secundária (ver canEquipItem em
+/// systems/equipment.js): "Aljava" só equipa junto de "Arco", etc.
+export function getWeaponArchetypeName(category, attributeId) {
+  return WEAPON_ARCHETYPES[category]?.[attributeId]?.name ?? '';
+}
+
+// Arco/Aljava têm nome e arte fixos por zona (tier), em vez de "Arco de
+// <Boss>" como os demais arquétipos — pedido de design, não segue o padrão
+// genérico das outras armas/atributos.
+// Caminhos de imagem escritos como literais (não montados via template
+// string) de propósito: o bundler de publicação do Artifact
+// (idle-hunter-compressed/build-bundle.mjs) acha e embute os assets
+// procurando por literais de caminho no código-fonte — um caminho montado
+// dinamicamente não seria encontrado e ficaria quebrado no bundle.
+const ZONE_BOW_NAMES = [
+  { weapon1: 'Arco Novato', weapon2: 'Aljava Novato', image1: 'assets/chispim/arco.png', image2: 'assets/chispim/aljava.png' },
+  { weapon1: 'Arco Iniciante', weapon2: 'Aljava Iniciante', image1: 'assets/solkaiser/arco.png', image2: 'assets/solkaiser/aljava.png' },
+  { weapon1: 'Arco da Floresta', weapon2: 'Aljava da Floresta', image1: 'assets/tartarok/arco.png', image2: 'assets/tartarok/aljava.png' },
+  { weapon1: 'Arco Élfico', weapon2: 'Aljava Élfica', image1: 'assets/colhedor_carmesim/arco.png', image2: 'assets/colhedor_carmesim/aljava.png' },
+  { weapon1: 'Arco Real', weapon2: 'Aljava Real', image1: 'assets/grommuk/arco.png', image2: 'assets/grommuk/aljava.png' },
+  { weapon1: 'Arco Sombrio', weapon2: 'Aljava Sombria', image1: 'assets/vulkarion/arco.png', image2: 'assets/vulkarion/aljava.png' },
+  { weapon1: 'Arco Tempestuoso', weapon2: 'Aljava Tempestuosa', image1: 'assets/leviargon/arco.png', image2: 'assets/leviargon/aljava.png' },
+  { weapon1: 'Arco do Vento', weapon2: 'Aljava do Vento', image1: 'assets/tempestron/arco.png', image2: 'assets/tempestron/aljava.png' },
+  { weapon1: 'Arco Dracônico', weapon2: 'Aljava Dracônica', image1: 'assets/gaiatron/arco.png', image2: 'assets/gaiatron/aljava.png' },
+  { weapon1: 'Arco Primordial', weapon2: 'Aljava Primordial', image1: 'assets/bahamorth/arco.png', image2: 'assets/bahamorth/aljava.png' },
+];
+
+const CATEGORY_LABELS = {
+  head: { name: 'Cabeça', emoji: '🪖' },
+  chest: { name: 'Peito', emoji: '🛡️' },
+  legs: { name: 'Calça', emoji: '👖' },
+  hands: { name: 'Mãos', emoji: '🧤' },
+  boots: { name: 'Botas', emoji: '👢' },
+  ring: { name: 'Anel', emoji: '💍' },
+  necklace: { name: 'Colar', emoji: '📿' },
+};
+
+// Reformulação por "conjunto": overrides nome+arte de TODAS as 9 categorias
+// de um (zona, atributo) só, num lugar só — em vez do nome genérico
+// "<Categoria> da <Atributo> de <Boss>" e sem imagem (só emoji) que os
+// outros moldes ainda usam. Cobre um (zoneIndex, attributeId) por vez; só
+// as zonas/atributos aqui presentes saem do esquema genérico — as demais
+// continuam como antes. Ganha prioridade sobre ZONE_BOW_NAMES/
+// WEAPON_ARCHETYPES/CATEGORY_LABELS em buildItemTemplate.
+// Caminhos de imagem em literais de propósito — mesmo motivo do
+// ZONE_BOW_NAMES acima (bundler do Artifact procura por literais).
+const ITEM_SET_OVERRIDES = {
+  '0_destreza': {
+    weapon1: { name: 'Arco da Floresta', image: 'assets/sets/floresta/arco.webp' },
+    weapon2: { name: 'Aljava da Floresta', image: 'assets/sets/floresta/aljava.webp' },
+    head: { name: 'Capuz da Floresta', image: 'assets/sets/floresta/capuz.webp' },
+    chest: { name: 'Armadura da Floresta', image: 'assets/sets/floresta/armadura.webp' },
+    legs: { name: 'Calça da Floresta', image: 'assets/sets/floresta/calca.webp' },
+    hands: { name: 'Luvas da Floresta', image: 'assets/sets/floresta/luvas.webp' },
+    boots: { name: 'Sapatos da Floresta', image: 'assets/sets/floresta/sapatos.webp' },
+    ring: { name: 'Anel da Floresta', image: 'assets/sets/floresta/anel.webp' },
+    necklace: { name: 'Colar da Floresta', image: 'assets/sets/floresta/colar.webp' },
+  },
+  '1_destreza': {
+    weapon1: { name: 'Arco da Montanha', image: 'assets/sets/montanha/arco.webp' },
+    weapon2: { name: 'Aljava da Montanha', image: 'assets/sets/montanha/aljava.webp' },
+    head: { name: 'Capuz da Montanha', image: 'assets/sets/montanha/capuz.webp' },
+    chest: { name: 'Armadura da Montanha', image: 'assets/sets/montanha/armadura.webp' },
+    legs: { name: 'Calça da Montanha', image: 'assets/sets/montanha/calca.webp' },
+    hands: { name: 'Luva da Montanha', image: 'assets/sets/montanha/luvas.webp' },
+    boots: { name: 'Bota da Montanha', image: 'assets/sets/montanha/sapatos.webp' },
+    ring: { name: 'Anel da Montanha', image: 'assets/sets/montanha/anel.webp' },
+    necklace: { name: 'Colar da Montanha', image: 'assets/sets/montanha/colar.webp' },
+  },
+  '2_destreza': {
+    weapon1: { name: 'Arco de Esmeralda', image: 'assets/sets/esmeralda/arco.webp' },
+    weapon2: { name: 'Aljava de Esmeralda', image: 'assets/sets/esmeralda/aljava.webp' },
+    head: { name: 'Capuz de Esmeralda', image: 'assets/sets/esmeralda/capuz.webp' },
+    chest: { name: 'Armadura de Esmeralda', image: 'assets/sets/esmeralda/armadura.webp' },
+    legs: { name: 'Calça de Esmeralda', image: 'assets/sets/esmeralda/calca.webp' },
+    hands: { name: 'Luva de Esmeralda', image: 'assets/sets/esmeralda/luvas.webp' },
+    boots: { name: 'Botas de Esmeralda', image: 'assets/sets/esmeralda/sapatos.webp' },
+    ring: { name: 'Anel de Esmeralda', image: 'assets/sets/esmeralda/anel.webp' },
+    necklace: { name: 'Colar de Esmeralda', image: 'assets/sets/esmeralda/colar.webp' },
+  },
+  '3_destreza': {
+    weapon1: { name: 'Arco Sombrio', image: 'assets/sets/sombrio/arco.webp' },
+    weapon2: { name: 'Aljava Sombria', image: 'assets/sets/sombrio/aljava.webp' },
+    head: { name: 'Capuz Sombrio', image: 'assets/sets/sombrio/capuz.webp' },
+    chest: { name: 'Armadura Sombria', image: 'assets/sets/sombrio/armadura.webp' },
+    legs: { name: 'Calça Sombria', image: 'assets/sets/sombrio/calca.webp' },
+    hands: { name: 'Luva Sombria', image: 'assets/sets/sombrio/luvas.webp' },
+    boots: { name: 'Botas Sombrias', image: 'assets/sets/sombrio/sapatos.webp' },
+    ring: { name: 'Anel Sombrio', image: 'assets/sets/sombrio/anel.webp' },
+    necklace: { name: 'Colar Sombrio', image: 'assets/sets/sombrio/colar.webp' },
+  },
+  '4_destreza': {
+    weapon1: { name: 'Arco Real', image: 'assets/sets/real/arco.webp' },
+    weapon2: { name: 'Aljava Real', image: 'assets/sets/real/aljava.webp' },
+    head: { name: 'Capuz Real', image: 'assets/sets/real/capuz.webp' },
+    chest: { name: 'Armadura Real', image: 'assets/sets/real/armadura.webp' },
+    legs: { name: 'Calça Real', image: 'assets/sets/real/calca.webp' },
+    hands: { name: 'Luva Real', image: 'assets/sets/real/luvas.webp' },
+    boots: { name: 'Bota Real', image: 'assets/sets/real/sapatos.webp' },
+    ring: { name: 'Anel Real', image: 'assets/sets/real/anel.webp' },
+    necklace: { name: 'Colar Real', image: 'assets/sets/real/colar.webp' },
+  },
+  '5_destreza': {
+    weapon1: { name: 'Arco Selvagem', image: 'assets/sets/selvagem/arco.webp' },
+    weapon2: { name: 'Aljava Selvagem', image: 'assets/sets/selvagem/aljava.webp' },
+    head: { name: 'Capuz Selvagem', image: 'assets/sets/selvagem/capuz.webp' },
+    chest: { name: 'Armadura Selvagem', image: 'assets/sets/selvagem/armadura.webp' },
+    legs: { name: 'Calça Selvagem', image: 'assets/sets/selvagem/calca.webp' },
+    hands: { name: 'Luva Selvagem', image: 'assets/sets/selvagem/luvas.webp' },
+    boots: { name: 'Bota Selvagem', image: 'assets/sets/selvagem/sapatos.webp' },
+    ring: { name: 'Anel Selvagem', image: 'assets/sets/selvagem/anel.webp' },
+    necklace: { name: 'Colar Selvagem', image: 'assets/sets/selvagem/colar.webp' },
+  },
+  '6_destreza': {
+    weapon1: { name: 'Arco da Tempestade', image: 'assets/sets/tempestade/arco.webp' },
+    weapon2: { name: 'Aljava da Tempestade', image: 'assets/sets/tempestade/aljava.webp' },
+    head: { name: 'Capuz da Tempestade', image: 'assets/sets/tempestade/capuz.webp' },
+    chest: { name: 'Armadura da Tempestade', image: 'assets/sets/tempestade/armadura.webp' },
+    legs: { name: 'Calça da Tempestade', image: 'assets/sets/tempestade/calca.webp' },
+    hands: { name: 'Luva da Tempestade', image: 'assets/sets/tempestade/luvas.webp' },
+    boots: { name: 'Bota da Tempestade', image: 'assets/sets/tempestade/sapatos.webp' },
+    ring: { name: 'Anel da Tempestade', image: 'assets/sets/tempestade/anel.webp' },
+    necklace: { name: 'Colar da Tempestade', image: 'assets/sets/tempestade/colar.webp' },
+  },
+  '7_destreza': {
+    weapon1: { name: 'Arco de Cristal', image: 'assets/sets/cristal/arco.webp' },
+    weapon2: { name: 'Aljava de Cristal', image: 'assets/sets/cristal/aljava.webp' },
+    head: { name: 'Capuz de Cristal', image: 'assets/sets/cristal/capuz.webp' },
+    chest: { name: 'Armadura de Cristal', image: 'assets/sets/cristal/armadura.webp' },
+    legs: { name: 'Calça de Cristal', image: 'assets/sets/cristal/calca.webp' },
+    hands: { name: 'Luva de Cristal', image: 'assets/sets/cristal/luvas.webp' },
+    boots: { name: 'Bota de Cristal', image: 'assets/sets/cristal/sapatos.webp' },
+    ring: { name: 'Anel de Cristal', image: 'assets/sets/cristal/anel.webp' },
+    necklace: { name: 'Colar de Cristal', image: 'assets/sets/cristal/colar.webp' },
+  },
+  '8_destreza': {
+    weapon1: { name: 'Arco Ancestral', image: 'assets/sets/ancestral/arco.webp' },
+    weapon2: { name: 'Aljava Ancestral', image: 'assets/sets/ancestral/aljava.webp' },
+    head: { name: 'Capuz Ancestral', image: 'assets/sets/ancestral/capuz.webp' },
+    chest: { name: 'Armadura Ancestral', image: 'assets/sets/ancestral/armadura.webp' },
+    legs: { name: 'Calça Ancestral', image: 'assets/sets/ancestral/calca.webp' },
+    hands: { name: 'Luva Ancestral', image: 'assets/sets/ancestral/luvas.webp' },
+    boots: { name: 'Bota Ancestral', image: 'assets/sets/ancestral/sapatos.webp' },
+    ring: { name: 'Anel Ancestral', image: 'assets/sets/ancestral/anel.webp' },
+    necklace: { name: 'Colar Ancestral', image: 'assets/sets/ancestral/colar.webp' },
+  },
+  '9_destreza': {
+    weapon1: { name: 'Arco do Arqueiro Primordial', image: 'assets/sets/primordial/arco.webp' },
+    weapon2: { name: 'Aljava do Arqueiro Primordial', image: 'assets/sets/primordial/aljava.webp' },
+    head: { name: 'Capuz do Arqueiro Primordial', image: 'assets/sets/primordial/capuz.webp' },
+    chest: { name: 'Armadura do Arqueiro Primordial', image: 'assets/sets/primordial/armadura.webp' },
+    legs: { name: 'Calça do Arqueiro Primordial', image: 'assets/sets/primordial/calca.webp' },
+    hands: { name: 'Luva do Arqueiro Primordial', image: 'assets/sets/primordial/luvas.webp' },
+    boots: { name: 'Bota do Arqueiro Primordial', image: 'assets/sets/primordial/sapatos.webp' },
+    ring: { name: 'Anel do Arqueiro Primordial', image: 'assets/sets/primordial/anel.webp' },
+    necklace: { name: 'Colar do Arqueiro Primordial', image: 'assets/sets/primordial/colar.webp' },
+  },
+  '0_inteligencia': {
+    weapon1: { name: 'Cajado do Aprendiz', image: 'assets/sets/aprendiz/cajado.webp' },
+    weapon2: { name: 'Grimório do Aprendiz', image: 'assets/sets/aprendiz/livro.webp' },
+    head: { name: 'Capuz do Aprendiz', image: 'assets/sets/aprendiz/capuz.webp' },
+    chest: { name: 'Túnica do Aprendiz', image: 'assets/sets/aprendiz/armadura.webp' },
+    legs: { name: 'Calça do Aprendiz', image: 'assets/sets/aprendiz/calca.webp' },
+    hands: { name: 'Luva do Aprendiz', image: 'assets/sets/aprendiz/luvas.webp' },
+    boots: { name: 'Bota do Aprendiz', image: 'assets/sets/aprendiz/sapatos.webp' },
+    ring: { name: 'Anel do Aprendiz', image: 'assets/sets/aprendiz/anel.webp' },
+    necklace: { name: 'Colar do Aprendiz', image: 'assets/sets/aprendiz/colar.webp' },
+  },
+  '1_inteligencia': {
+    weapon1: { name: 'Cajado Gelado', image: 'assets/sets/gelado/cajado.webp' },
+    weapon2: { name: 'Grimório Gelado', image: 'assets/sets/gelado/livro.webp' },
+    head: { name: 'Capuz Gelado', image: 'assets/sets/gelado/capuz.webp' },
+    chest: { name: 'Túnica Gelada', image: 'assets/sets/gelado/armadura.webp' },
+    legs: { name: 'Calça Gelada', image: 'assets/sets/gelado/calca.webp' },
+    hands: { name: 'Luva Gelada', image: 'assets/sets/gelado/luvas.webp' },
+    boots: { name: 'Bota Gelada', image: 'assets/sets/gelado/sapatos.webp' },
+    ring: { name: 'Anel Gelado', image: 'assets/sets/gelado/anel.webp' },
+    necklace: { name: 'Colar Gelado', image: 'assets/sets/gelado/colar.webp' },
+  },
+  '2_inteligencia': {
+    weapon1: { name: 'Cajado Místico', image: 'assets/sets/mistico/cajado.webp' },
+    weapon2: { name: 'Grimório Místico', image: 'assets/sets/mistico/livro.webp' },
+    head: { name: 'Capuz Místico', image: 'assets/sets/mistico/capuz.webp' },
+    chest: { name: 'Túnica Mística', image: 'assets/sets/mistico/armadura.webp' },
+    legs: { name: 'Calça Mística', image: 'assets/sets/mistico/calca.webp' },
+    hands: { name: 'Luva Mística', image: 'assets/sets/mistico/luvas.webp' },
+    boots: { name: 'Bota Mística', image: 'assets/sets/mistico/sapatos.webp' },
+    ring: { name: 'Anel Místico', image: 'assets/sets/mistico/anel.webp' },
+    necklace: { name: 'Colar Místico', image: 'assets/sets/mistico/colar.webp' },
+  },
+  '3_inteligencia': {
+    weapon1: { name: 'Cajado Rúnico', image: 'assets/sets/runico/cajado.webp' },
+    weapon2: { name: 'Grimório Rúnico', image: 'assets/sets/runico/livro.webp' },
+    head: { name: 'Capuz Rúnico', image: 'assets/sets/runico/capuz.webp' },
+    chest: { name: 'Túnica Rúnica', image: 'assets/sets/runico/armadura.webp' },
+    legs: { name: 'Calça Rúnica', image: 'assets/sets/runico/calca.webp' },
+    hands: { name: 'Luva Rúnica', image: 'assets/sets/runico/luvas.webp' },
+    boots: { name: 'Bota Rúnica', image: 'assets/sets/runico/sapatos.webp' },
+    ring: { name: 'Anel Rúnico', image: 'assets/sets/runico/anel.webp' },
+    necklace: { name: 'Colar Rúnico', image: 'assets/sets/runico/colar.webp' },
+  },
+  '4_inteligencia': {
+    weapon1: { name: 'Cajado Nobre', image: 'assets/sets/nobre/cajado.webp' },
+    weapon2: { name: 'Grimório Nobre', image: 'assets/sets/nobre/livro.webp' },
+    head: { name: 'Capuz Nobre', image: 'assets/sets/nobre/capuz.webp' },
+    chest: { name: 'Túnica Nobre', image: 'assets/sets/nobre/armadura.webp' },
+    legs: { name: 'Calça Nobre', image: 'assets/sets/nobre/calca.webp' },
+    hands: { name: 'Luva Nobre', image: 'assets/sets/nobre/luvas.webp' },
+    boots: { name: 'Bota Nobre', image: 'assets/sets/nobre/sapatos.webp' },
+    ring: { name: 'Anel Nobre', image: 'assets/sets/nobre/anel.webp' },
+    necklace: { name: 'Colar Nobre', image: 'assets/sets/nobre/colar.webp' },
+  },
+  '5_inteligencia': {
+    weapon1: { name: 'Cajado Astral', image: 'assets/sets/astral/cajado.webp' },
+    weapon2: { name: 'Grimório Astral', image: 'assets/sets/astral/livro.webp' },
+    head: { name: 'Capuz Astral', image: 'assets/sets/astral/capuz.webp' },
+    chest: { name: 'Túnica Astral', image: 'assets/sets/astral/armadura.webp' },
+    legs: { name: 'Calça Astral', image: 'assets/sets/astral/calca.webp' },
+    hands: { name: 'Luva Astral', image: 'assets/sets/astral/luvas.webp' },
+    boots: { name: 'Bota Astral', image: 'assets/sets/astral/sapatos.webp' },
+    ring: { name: 'Anel Astral', image: 'assets/sets/astral/anel.webp' },
+    necklace: { name: 'Colar Astral', image: 'assets/sets/astral/colar.webp' },
+  },
+  '6_inteligencia': {
+    weapon1: { name: 'Cajado do Alquimista', image: 'assets/sets/alquimista/cajado.webp' },
+    weapon2: { name: 'Grimório do Alquimista', image: 'assets/sets/alquimista/livro.webp' },
+    head: { name: 'Capuz do Alquimista', image: 'assets/sets/alquimista/capuz.webp' },
+    chest: { name: 'Túnica do Alquimista', image: 'assets/sets/alquimista/armadura.webp' },
+    legs: { name: 'Calça do Alquimista', image: 'assets/sets/alquimista/calca.webp' },
+    hands: { name: 'Luva do Alquimista', image: 'assets/sets/alquimista/luvas.webp' },
+    boots: { name: 'Bota do Alquimista', image: 'assets/sets/alquimista/sapatos.webp' },
+    ring: { name: 'Anel do Alquimista', image: 'assets/sets/alquimista/anel.webp' },
+    necklace: { name: 'Colar do Alquimista', image: 'assets/sets/alquimista/colar.webp' },
+  },
+  '7_inteligencia': {
+    weapon1: { name: 'Cajado do Cronomante', image: 'assets/sets/cronomante/cajado.webp' },
+    weapon2: { name: 'Grimório do Cronomante', image: 'assets/sets/cronomante/livro.webp' },
+    head: { name: 'Capuz do Cronomante', image: 'assets/sets/cronomante/capuz.webp' },
+    chest: { name: 'Túnica do Cronomante', image: 'assets/sets/cronomante/armadura.webp' },
+    legs: { name: 'Calça do Cronomante', image: 'assets/sets/cronomante/calca.webp' },
+    hands: { name: 'Luva do Cronomante', image: 'assets/sets/cronomante/luvas.webp' },
+    boots: { name: 'Bota do Cronomante', image: 'assets/sets/cronomante/sapatos.webp' },
+    ring: { name: 'Anel do Cronomante', image: 'assets/sets/cronomante/anel.webp' },
+    necklace: { name: 'Colar do Cronomante', image: 'assets/sets/cronomante/colar.webp' },
+  },
+  '8_inteligencia': {
+    weapon1: { name: 'Cajado Dimensional', image: 'assets/sets/dimensional/cajado.webp' },
+    weapon2: { name: 'Grimório Dimensional', image: 'assets/sets/dimensional/livro.webp' },
+    head: { name: 'Capuz Dimensional', image: 'assets/sets/dimensional/capuz.webp' },
+    chest: { name: 'Túnica Dimensional', image: 'assets/sets/dimensional/armadura.webp' },
+    legs: { name: 'Calça Dimensional', image: 'assets/sets/dimensional/calca.webp' },
+    hands: { name: 'Luva Dimensional', image: 'assets/sets/dimensional/luvas.webp' },
+    boots: { name: 'Bota Dimensional', image: 'assets/sets/dimensional/sapatos.webp' },
+    ring: { name: 'Anel Dimensional', image: 'assets/sets/dimensional/anel.webp' },
+    necklace: { name: 'Colar Dimensional', image: 'assets/sets/dimensional/colar.webp' },
+  },
+  '9_inteligencia': {
+    weapon1: { name: 'Cajado do Mago Primordial', image: 'assets/sets/mago_primordial/cajado.webp' },
+    weapon2: { name: 'Grimório do Mago Primordial', image: 'assets/sets/mago_primordial/livro.webp' },
+    head: { name: 'Capuz do Mago Primordial', image: 'assets/sets/mago_primordial/capuz.webp' },
+    chest: { name: 'Túnica do Mago Primordial', image: 'assets/sets/mago_primordial/armadura.webp' },
+    legs: { name: 'Calça do Mago Primordial', image: 'assets/sets/mago_primordial/calca.webp' },
+    hands: { name: 'Luva do Mago Primordial', image: 'assets/sets/mago_primordial/luvas.webp' },
+    boots: { name: 'Bota do Mago Primordial', image: 'assets/sets/mago_primordial/sapatos.webp' },
+    ring: { name: 'Anel do Mago Primordial', image: 'assets/sets/mago_primordial/anel.webp' },
+    necklace: { name: 'Colar do Mago Primordial', image: 'assets/sets/mago_primordial/colar.webp' },
+  },
+  '0_forca': {
+    weapon1: { name: 'Espada do Patrulheiro', image: 'assets/sets/patrulheiro/espada.webp' },
+    weapon2: { name: 'Escudo do Patrulheiro', image: 'assets/sets/patrulheiro/escudo.webp' },
+    head: { name: 'Elmo do Patrulheiro', image: 'assets/sets/patrulheiro/elmo.webp' },
+    chest: { name: 'Armadura do Patrulheiro', image: 'assets/sets/patrulheiro/armadura.webp' },
+    legs: { name: 'Calça do Patrulheiro', image: 'assets/sets/patrulheiro/calca.webp' },
+    hands: { name: 'Luva do Patrulheiro', image: 'assets/sets/patrulheiro/luvas.webp' },
+    boots: { name: 'Bota do Patrulheiro', image: 'assets/sets/patrulheiro/sapatos.webp' },
+    ring: { name: 'Anel do Patrulheiro', image: 'assets/sets/patrulheiro/anel.webp' },
+    necklace: { name: 'Colar do Patrulheiro', image: 'assets/sets/patrulheiro/colar.webp' },
+  },
+  '1_forca': {
+    weapon1: { name: 'Espada do Lobo', image: 'assets/sets/lobo/espada.webp' },
+    weapon2: { name: 'Escudo do Lobo', image: 'assets/sets/lobo/escudo.webp' },
+    head: { name: 'Elmo do Lobo', image: 'assets/sets/lobo/elmo.webp' },
+    chest: { name: 'Armadura do Lobo', image: 'assets/sets/lobo/armadura.webp' },
+    legs: { name: 'Calça do Lobo', image: 'assets/sets/lobo/calca.webp' },
+    hands: { name: 'Luva do Lobo', image: 'assets/sets/lobo/luvas.webp' },
+    boots: { name: 'Bota do Lobo', image: 'assets/sets/lobo/sapatos.webp' },
+    ring: { name: 'Anel do Lobo', image: 'assets/sets/lobo/anel.webp' },
+    necklace: { name: 'Colar do Lobo', image: 'assets/sets/lobo/colar.webp' },
+  },
+  '2_forca': {
+    weapon1: { name: 'Espada do Grifo', image: 'assets/sets/grifo/espada.webp' },
+    weapon2: { name: 'Escudo do Grifo', image: 'assets/sets/grifo/escudo.webp' },
+    head: { name: 'Elmo do Grifo', image: 'assets/sets/grifo/elmo.webp' },
+    chest: { name: 'Armadura do Grifo', image: 'assets/sets/grifo/armadura.webp' },
+    legs: { name: 'Calça do Grifo', image: 'assets/sets/grifo/calca.webp' },
+    hands: { name: 'Luva do Grifo', image: 'assets/sets/grifo/luvas.webp' },
+    boots: { name: 'Bota do Grifo', image: 'assets/sets/grifo/sapatos.webp' },
+    ring: { name: 'Anel do Grifo', image: 'assets/sets/grifo/anel.webp' },
+    necklace: { name: 'Colar do Grifo', image: 'assets/sets/grifo/colar.webp' },
+  },
+  '3_forca': {
+    weapon1: { name: 'Espada do Bastião', image: 'assets/sets/bastiao/espada.webp' },
+    weapon2: { name: 'Escudo do Bastião', image: 'assets/sets/bastiao/escudo.webp' },
+    head: { name: 'Elmo do Bastião', image: 'assets/sets/bastiao/elmo.webp' },
+    chest: { name: 'Armadura do Bastião', image: 'assets/sets/bastiao/armadura.webp' },
+    legs: { name: 'Calça do Bastião', image: 'assets/sets/bastiao/calca.webp' },
+    hands: { name: 'Luva do Bastião', image: 'assets/sets/bastiao/luvas.webp' },
+    boots: { name: 'Bota do Bastião', image: 'assets/sets/bastiao/sapatos.webp' },
+    ring: { name: 'Anel do Bastião', image: 'assets/sets/bastiao/anel.webp' },
+    necklace: { name: 'Colar do Bastião', image: 'assets/sets/bastiao/colar.webp' },
+  },
+  '4_forca': {
+    weapon1: { name: 'Espada do Caçador de Dragão', image: 'assets/sets/cacador_dragao/espada.webp' },
+    weapon2: { name: 'Escudo do Caçador de Dragão', image: 'assets/sets/cacador_dragao/escudo.webp' },
+    head: { name: 'Elmo do Caçador de Dragão', image: 'assets/sets/cacador_dragao/elmo.webp' },
+    chest: { name: 'Armadura do Caçador de Dragão', image: 'assets/sets/cacador_dragao/armadura.webp' },
+    legs: { name: 'Calça do Caçador de Dragão', image: 'assets/sets/cacador_dragao/calca.webp' },
+    hands: { name: 'Luva do Caçador de Dragão', image: 'assets/sets/cacador_dragao/luvas.webp' },
+    boots: { name: 'Bota do Caçador de Dragão', image: 'assets/sets/cacador_dragao/sapatos.webp' },
+    ring: { name: 'Anel do Caçador de Dragão', image: 'assets/sets/cacador_dragao/anel.webp' },
+    necklace: { name: 'Colar do Caçador de Dragão', image: 'assets/sets/cacador_dragao/colar.webp' },
+  },
+  '5_forca': {
+    weapon1: { name: 'Espada do Cavaleiro Rúnico', image: 'assets/sets/cavaleiro_runico/espada.webp' },
+    weapon2: { name: 'Escudo do Cavaleiro Rúnico', image: 'assets/sets/cavaleiro_runico/escudo.webp' },
+    head: { name: 'Elmo do Cavaleiro Rúnico', image: 'assets/sets/cavaleiro_runico/elmo.webp' },
+    chest: { name: 'Armadura do Cavaleiro Rúnico', image: 'assets/sets/cavaleiro_runico/armadura.webp' },
+    legs: { name: 'Calça do Cavaleiro Rúnico', image: 'assets/sets/cavaleiro_runico/calca.webp' },
+    hands: { name: 'Luva do Cavaleiro Rúnico', image: 'assets/sets/cavaleiro_runico/luvas.webp' },
+    boots: { name: 'Bota do Cavaleiro Rúnico', image: 'assets/sets/cavaleiro_runico/sapatos.webp' },
+    ring: { name: 'Anel do Cavaleiro Rúnico', image: 'assets/sets/cavaleiro_runico/anel.webp' },
+    necklace: { name: 'Colar do Cavaleiro Rúnico', image: 'assets/sets/cavaleiro_runico/colar.webp' },
+  },
+  '6_forca': {
+    weapon1: { name: 'Espada do Ferreiro', image: 'assets/sets/ferreiro/espada.webp' },
+    weapon2: { name: 'Escudo do Ferreiro', image: 'assets/sets/ferreiro/escudo.webp' },
+    head: { name: 'Elmo do Ferreiro', image: 'assets/sets/ferreiro/elmo.webp' },
+    chest: { name: 'Armadura do Ferreiro', image: 'assets/sets/ferreiro/armadura.webp' },
+    legs: { name: 'Calça do Ferreiro', image: 'assets/sets/ferreiro/calca.webp' },
+    hands: { name: 'Luva do Ferreiro', image: 'assets/sets/ferreiro/luvas.webp' },
+    boots: { name: 'Bota do Ferreiro', image: 'assets/sets/ferreiro/sapatos.webp' },
+    ring: { name: 'Anel do Ferreiro', image: 'assets/sets/ferreiro/anel.webp' },
+    necklace: { name: 'Colar do Ferreiro', image: 'assets/sets/ferreiro/colar.webp' },
+  },
+  '7_forca': {
+    weapon1: { name: 'Espada da Tempestade', image: 'assets/sets/tempestade_forca/espada.webp' },
+    weapon2: { name: 'Escudo da Tempestade', image: 'assets/sets/tempestade_forca/escudo.webp' },
+    head: { name: 'Elmo da Tempestade', image: 'assets/sets/tempestade_forca/elmo.webp' },
+    chest: { name: 'Armadura da Tempestade', image: 'assets/sets/tempestade_forca/armadura.webp' },
+    legs: { name: 'Calça da Tempestade', image: 'assets/sets/tempestade_forca/calca.webp' },
+    hands: { name: 'Luva da Tempestade', image: 'assets/sets/tempestade_forca/luvas.webp' },
+    boots: { name: 'Bota da Tempestade', image: 'assets/sets/tempestade_forca/sapatos.webp' },
+    ring: { name: 'Anel da Tempestade', image: 'assets/sets/tempestade_forca/anel.webp' },
+    necklace: { name: 'Colar da Tempestade', image: 'assets/sets/tempestade_forca/colar.webp' },
+  },
+  '8_forca': {
+    weapon1: { name: 'Espada Dracônica', image: 'assets/sets/draconico/espada.webp' },
+    weapon2: { name: 'Escudo Dracônico', image: 'assets/sets/draconico/escudo.webp' },
+    head: { name: 'Elmo Dracônico', image: 'assets/sets/draconico/elmo.webp' },
+    chest: { name: 'Armadura Dracônica', image: 'assets/sets/draconico/armadura.webp' },
+    legs: { name: 'Calça Dracônica', image: 'assets/sets/draconico/calca.webp' },
+    hands: { name: 'Luva Dracônica', image: 'assets/sets/draconico/luvas.webp' },
+    boots: { name: 'Bota Dracônica', image: 'assets/sets/draconico/sapatos.webp' },
+    ring: { name: 'Anel Dracônico', image: 'assets/sets/draconico/anel.webp' },
+    necklace: { name: 'Colar Dracônico', image: 'assets/sets/draconico/colar.webp' },
+  },
+  '9_forca': {
+    weapon1: { name: 'Espada do Guerreiro Primordial', image: 'assets/sets/guerreiro_primordial/espada.webp' },
+    weapon2: { name: 'Escudo do Guerreiro Primordial', image: 'assets/sets/guerreiro_primordial/escudo.webp' },
+    head: { name: 'Elmo do Guerreiro Primordial', image: 'assets/sets/guerreiro_primordial/elmo.webp' },
+    chest: { name: 'Armadura do Guerreiro Primordial', image: 'assets/sets/guerreiro_primordial/armadura.webp' },
+    legs: { name: 'Calça do Guerreiro Primordial', image: 'assets/sets/guerreiro_primordial/calca.webp' },
+    hands: { name: 'Luva do Guerreiro Primordial', image: 'assets/sets/guerreiro_primordial/luvas.webp' },
+    boots: { name: 'Bota do Guerreiro Primordial', image: 'assets/sets/guerreiro_primordial/sapatos.webp' },
+    ring: { name: 'Anel do Guerreiro Primordial', image: 'assets/sets/guerreiro_primordial/anel.webp' },
+    necklace: { name: 'Colar do Guerreiro Primordial', image: 'assets/sets/guerreiro_primordial/colar.webp' },
+  },
+};
+
+/// Os 2 adicionais base de um item: o atributo (Força/Destreza/
+/// Inteligência) + a stat própria da categoria (dano pra arma, vida pra
+/// armadura, armadura pra anel/colar — ver secondaryStatKeyForCategory
+/// acima). Ambos escalam LINEAR por zona: o passo da categoria (ver
+/// ATTRIBUTE_STEP_BY_CATEGORY/SECONDARY_STAT_STEP_BY_CATEGORY acima) ×
+/// (tier + 1) — Zona 1 (tier 0) dá 1x o passo, Zona 10 (tier 9) dá 10x. A
+/// conversão do atributo total equipado (soma de todas as peças) pra stats
+/// de combate de verdade (dano/vida/armadura/crítico/ouro%/drop%) acontece
+/// em systems/stats.js, não aqui — a stat secundária já nasce pronta (não
+/// precisa de conversão, é somada direto, ver computePlayerStats).
+function attributeBaseStats(attributeId, tier, category) {
+  const step = ATTRIBUTE_STEP_BY_CATEGORY[category];
+  const secondaryStat = secondaryStatKeyForCategory(category, attributeId);
+  const secondaryStep = SECONDARY_STAT_STEP_BY_CATEGORY[category];
+  return {
+    [attributeId]: step * (tier + 1),
+    [secondaryStat]: secondaryStep * (tier + 1),
+  };
+}
+
+/// Custo de enhance (+1..+5, depois Rank Master) vem de state.materials —
+/// dropados diretamente pelos monstros da zona (ver combat.js rollDrops),
+/// sem receita de craft por trás — MAIS uma pequena quantia de state.gold
+/// (pedido do usuário depois que os Cristais de chefe foram removidos do
+/// jogo: nenhum requisito ficou no lugar deles, só esse gold, que também
+/// entra em todo passo de +1..+5). Cicla pelos 5 monstros fracos da zona,
+/// um mais adiante por categoria, igual antes. O ouro escala pelo tier da
+/// zona (`tier`, 0-9 — zonas mais avançadas custam mais) e pelo nível do
+/// passo (`i` — 0 é +1, ENHANCE_MAX_LEVEL é o próprio Rank Master), então
+/// tier e nível do item influenciam o custo, como pedido.
+const ENHANCE_GOLD_BASE = 20;
+function enhanceGoldStep(tier, i) {
+  return Math.round(ENHANCE_GOLD_BASE * (tier + 1) * (1 + i * 0.5));
+}
+
+// -25% na quantidade de MATERIAL de todo o caminho de upgrade — enhance
+// (+1..+5), Rank Master e Ascensão de raridade (getAscensionCost abaixo) —
+// pedido do usuário. Só material, o custo em ouro (enhanceGoldStep) não muda.
+const ENHANCE_MATERIAL_COST_MULT = 0.75;
+
+function buildEnhanceCosts(tier, categoryIndex, weakGroup) {
+  const bandSize = weakGroup.monsters.length;
+  const weakAt = (offset) => weakGroup.monsters[(categoryIndex + offset) % bandSize];
+  const baseQty = 10;
+  const enhanceCostStep = (i) => Math.max(1, Math.round(baseQty * (0.5 + i * 0.5) * ENHANCE_MATERIAL_COST_MULT));
+  const enhanceCost = Array.from({ length: ENHANCE_MAX_LEVEL }, (_, i) => ({
+    matId: weakAt(2 + i).material.id,
+    qty: enhanceCostStep(i),
+    gold: enhanceGoldStep(tier, i),
+  }));
+  const masterMaterialCost = {
+    matId: weakAt(2 + ENHANCE_MAX_LEVEL).material.id,
+    qty: enhanceCostStep(ENHANCE_MAX_LEVEL),
+    gold: enhanceGoldStep(tier, ENHANCE_MAX_LEVEL),
+  };
+  return { enhanceCost, masterMaterialCost };
+}
+
+function buildItemTemplate(boss, tier, category, attributeId, categoryIndex, weakGroup) {
+  const stats = attributeBaseStats(attributeId, tier, category);
+  const attr = getAttribute(attributeId);
   let name;
   let emoji;
+  let image = null;
 
-  switch (slot.id) {
-    case 'weapon':
-      stats.clickFlat = Math.round(base * 2.6);
-      stats.dpsFlat = Math.round(base * 2.6);
-      name = BOSS_WEAPONS[boss.id].name;
-      emoji = BOSS_WEAPONS[boss.id].emoji;
-      break;
-    case 'helmet':
-      stats.dpsPercent = Math.round((5 + tier * 3) * 10) / 10;
-      stats.hpFlat = Math.round(base * 5);
-      name = `Elmo de ${boss.name}`;
-      emoji = '🪖';
-      break;
-    case 'armor':
-      stats.clickPercent = Math.round((5 + tier * 3) * 10) / 10;
-      stats.armorFlat = Math.round(base * 1.2);
-      name = `Peitoral de ${boss.name}`;
-      emoji = '🛡️';
-      break;
-    case 'pants':
-      stats.goldPercent = Math.round((8 + tier * 4) * 10) / 10;
-      stats.hpFlat = Math.round(base * 4);
-      name = `Calça de ${boss.name}`;
-      emoji = '👖';
-      break;
-    case 'gloves':
-      stats.clickFlat = Math.round(base * 1.2);
-      stats.armorFlat = Math.round(base * 1.2);
-      name = `Luvas de ${boss.name}`;
-      emoji = '🧤';
-      break;
-    case 'boots':
-      stats.dropPercent = Math.round((5 + tier * 2) * 10) / 10;
-      stats.hpFlat = Math.round(base * 4);
-      name = `Botas de ${boss.name}`;
-      emoji = '👢';
-      break;
-    default:
-      throw new Error(`Unknown slot ${slot.id}`);
+  const setOverride = ITEM_SET_OVERRIDES[`${tier}_${attributeId}`]?.[category];
+  if (setOverride) {
+    name = setOverride.name;
+    image = setOverride.image;
+    emoji = (category === 'weapon1' || category === 'weapon2')
+      ? WEAPON_ARCHETYPES[category][attributeId].emoji
+      : CATEGORY_LABELS[category].emoji;
+  } else if ((category === 'weapon1' || category === 'weapon2') && attributeId === 'destreza') {
+    name = ZONE_BOW_NAMES[tier][category];
+    emoji = WEAPON_ARCHETYPES[category][attributeId].emoji;
+    image = ZONE_BOW_NAMES[tier][category === 'weapon1' ? 'image1' : 'image2'];
+  } else if (category === 'weapon1' || category === 'weapon2') {
+    const archetype = WEAPON_ARCHETYPES[category][attributeId];
+    name = `${archetype.name} de ${boss.name}`;
+    emoji = archetype.emoji;
+  } else {
+    const label = CATEGORY_LABELS[category];
+    name = `${label.name} da ${attr.name} de ${boss.name}`;
+    emoji = label.emoji;
   }
 
-  const goldCost = Math.round(20 * Math.pow(2.3, tier) * (slot.id === 'weapon' ? 3 : 1));
-
-  // Boss materials are the scarcer half of the recipe (that decade's boss
-  // fight is only 1 stage in 10) — smaller quantity. Weak-monster materials
-  // are farmable on 9 stages out of 10 — larger quantity. Both still use
-  // the same base per-slot weighting as the old common/rare split did.
-  const bossQty = slot.id === 'weapon' ? 3 + tier : 1 + Math.floor(tier / 2);
-  const weakQty = Math.round((slot.id === 'weapon' ? 20 : slot.id === 'armor' ? 14 : 10) * (1 + tier * 0.4));
-
-  const materialCost = {};
-  materialCost[boss.materials.primary1.id] = (materialCost[boss.materials.primary1.id] || 0) + bossQty;
-  materialCost[boss.materials.primary2.id] = (materialCost[boss.materials.primary2.id] || 0) + bossQty;
-  materialCost[neutralWeak.material.id] = (materialCost[neutralWeak.material.id] || 0) + weakQty;
-  materialCost[elementalWeak.material.id] = (materialCost[elementalWeak.material.id] || 0) + weakQty;
-
-  // Enhancement (+1..+5) grinds the Neutro weak material — the one
-  // guaranteed-plentiful material in the recipe, same role the old
-  // family's "common" material played. Rank Master needs the boss's
-  // Crystal (see crystalMaterialId) instead of more of this.
-  const enhanceCostStep = (i) => Math.max(1, Math.round(weakQty * (0.5 + i * 0.5)));
-  const enhanceCost = Array.from({ length: ENHANCE_MAX_LEVEL }, (_, i) => enhanceCostStep(i));
-  const masterMaterialCost = enhanceCostStep(ENHANCE_MAX_LEVEL);
+  const { enhanceCost, masterMaterialCost } = buildEnhanceCosts(tier, categoryIndex, weakGroup);
 
   return {
-    id,
-    slotId: slot.id,
+    id: `${boss.id}_${category}_${attributeId}`,
+    category,
+    attribute: attributeId,
     bossId: boss.id,
-    unlockStage: boss.stage,
-    tier,
+    zoneIndex: tier,
     name,
     emoji,
-    image: BOSS_EQUIP_IMAGES[boss.id] ? BOSS_EQUIP_IMAGES[boss.id][slot.id] || null : null,
+    image,
     element: boss.element,
     stats,
-    goldCost,
-    commonMaterialId: neutralWeak.material.id,
-    crystalMaterialId: boss.crystal.id,
     enhanceCost,
     masterMaterialCost,
-    materialCost,
   };
 }
 
 export const ITEMS = [];
 BOSSES.forEach((boss, tier) => {
   const weakGroup = getWeakMonsterGroupForStage(boss.stage - 1);
-  const neutralWeak = weakGroup.monsters.find((m) => m.element === 'neutro');
-  const elementalWeak = weakGroup.monsters.find((m) => m.element === boss.element) || neutralWeak;
-  SLOTS.forEach((slot) => {
-    ITEMS.push(buildBossItem(boss, tier, slot, neutralWeak, elementalWeak));
-  });
-});
-
-// ---------------------------------------------------------------------
-// Legacy items: the original 6-family roster, kept ONLY so a save from
-// before the boss-roster rebuild can still resolve/display/equip whatever
-// it already crafted (getItem() below checks both). Not offered for new
-// crafting — the Forge tab only iterates the live BOSSES roster above.
-// ---------------------------------------------------------------------
-
-function buildLegacyItem(family, tier, slot) {
-  const base = tierBase(tier);
-  const id = `${family.id}_${slot.id}`;
-  const stats = {};
-  let name;
-  let emoji;
-
-  switch (slot.id) {
-    case 'weapon':
-      stats.clickFlat = Math.round(base * 2.6);
-      stats.dpsFlat = Math.round(base * 2.6);
-      name = family.weapon.name;
-      emoji = family.weapon.emoji;
-      break;
-    case 'helmet':
-      stats.dpsPercent = Math.round((5 + tier * 3) * 10) / 10;
-      stats.hpFlat = Math.round(base * 5);
-      name = `Elmo de ${family.name}`;
-      emoji = '🪖';
-      break;
-    case 'armor':
-      stats.clickPercent = Math.round((5 + tier * 3) * 10) / 10;
-      stats.armorFlat = Math.round(base * 1.2);
-      name = `Peitoral de ${family.name}`;
-      emoji = '🛡️';
-      break;
-    case 'pants':
-      stats.goldPercent = Math.round((8 + tier * 4) * 10) / 10;
-      stats.hpFlat = Math.round(base * 4);
-      name = `Calça de ${family.name}`;
-      emoji = '👖';
-      break;
-    case 'gloves':
-      stats.clickFlat = Math.round(base * 1.2);
-      stats.armorFlat = Math.round(base * 1.2);
-      name = `Luvas de ${family.name}`;
-      emoji = '🧤';
-      break;
-    case 'boots':
-      stats.dropPercent = Math.round((5 + tier * 2) * 10) / 10;
-      stats.hpFlat = Math.round(base * 4);
-      name = `Botas de ${family.name}`;
-      emoji = '👢';
-      break;
-    default:
-      throw new Error(`Unknown slot ${slot.id}`);
-  }
-
-  const goldCost = Math.round(20 * Math.pow(2.3, tier) * (slot.id === 'weapon' ? 3 : 1));
-  const commonCost = Math.round((slot.id === 'weapon' ? 20 : slot.id === 'armor' ? 14 : 10) * (1 + tier * 0.4));
-  const rareCost = slot.id === 'weapon' ? 3 + tier : 1 + Math.floor(tier / 2);
-  const enhanceCostStep = (i) => Math.max(1, Math.round(commonCost * (0.5 + i * 0.5)));
-  const enhanceCost = Array.from({ length: ENHANCE_MAX_LEVEL }, (_, i) => enhanceCostStep(i));
-  const masterMaterialCost = enhanceCostStep(ENHANCE_MAX_LEVEL);
-
-  return {
-    id,
-    slotId: slot.id,
-    bossId: null,
-    legacyFamilyId: family.id,
-    unlockStage: null, // no longer offered for crafting, so never "locked" either
-    tier,
-    name,
-    emoji,
-    image: family.images ? family.images[slot.id] || null : null,
-    element: family.element,
-    stats,
-    goldCost,
-    commonMaterialId: family.materials.common.id,
-    crystalMaterialId: family.materials.gem.id,
-    enhanceCost,
-    masterMaterialCost,
-    materialCost: {
-      [family.materials.common.id]: commonCost,
-      [family.materials.rare.id]: rareCost,
-    },
-  };
-}
-
-const LEGACY_ITEMS = [];
-MONSTER_FAMILIES.forEach((family, tier) => {
-  SLOTS.forEach((slot) => {
-    LEGACY_ITEMS.push(buildLegacyItem(family, tier, slot));
+  DROP_CATEGORIES.forEach((category, categoryIndex) => {
+    ATTRIBUTES.forEach((attr) => {
+      ITEMS.push(buildItemTemplate(boss, tier, category, attr.id, categoryIndex, weakGroup));
+    });
   });
 });
 
 export function getItem(itemId) {
-  return ITEMS.find((i) => i.id === itemId) || LEGACY_ITEMS.find((i) => i.id === itemId);
+  return ITEMS.find((i) => i.id === itemId) || null;
 }
 
 export function getItemsForBoss(bossId) {
   return ITEMS.filter((i) => i.bossId === bossId);
 }
 
-export function getSlot(slotId) {
-  return SLOTS.find((s) => s.id === slotId);
+/// Rola baseStats a partir do template de um item + uma raridade já
+/// escolhida — compartilhado por rollDroppedItem (drop normal) e ascendItem
+/// (systems/crafting.js: ascensão pra próxima zona mantém a raridade, só
+/// recalcula os números pra magnitude da nova zona).
+///
+/// attributeId identifica QUAL chave do template é o atributo (Força/
+/// Destreza/Inteligência) — essa sai FIXA, sem raridade nem variação (só
+/// muda pelo tier do item, ver ATTRIBUTE_STEP_BY_CATEGORY). Só o 2º
+/// adicional base (dano/vida/armadura) escala com rarity.mult + variação.
+function rollBaseStatsFromTemplate(templateStats, rarity, attributeId) {
+  const variance = () => 0.9 + Math.random() * 0.2; // ±10%
+  const baseStats = {};
+  for (const [key, value] of Object.entries(templateStats)) {
+    if (key === attributeId) {
+      baseStats[key] = value;
+      continue;
+    }
+    const scaled = value * rarity.mult * variance();
+    baseStats[key] = key.endsWith('Percent') ? Math.round(scaled * 10) / 10 : Math.round(scaled);
+  }
+  return baseStats;
 }
+
+/// Rola uma instância de item dropada por um monstro da zona `zoneIndex`
+/// (0-based), na categoria `category` (uma de DROP_CATEGORIES) — chamada por
+/// combat.js quando um kill rola um drop de equipamento. Sorteia o atributo
+/// (uniforme, 1 dos 3) e a raridade de forma independente. Não craft, não
+/// custo: o item já nasce pronto pra entrar no inventário. Cada chamada rola
+/// tudo de novo, então dois drops da mesma zona/categoria quase nunca saem
+/// idênticos.
+/// forcedRarityId (opcional) pula o sorteio de raridade — usado pela Loja
+/// do Despertar (ver systems/awakening.js) pra garantir Mítico em vez de
+/// deixar na sorte normal de pickRarity().
+export function rollDroppedItem(zoneIndex, category, forcedRarityId = null) {
+  const boss = BOSSES[zoneIndex] || BOSSES[BOSSES.length - 1];
+  const attributeId = ATTRIBUTES[Math.floor(Math.random() * ATTRIBUTES.length)].id;
+  const item = getItem(`${boss.id}_${category}_${attributeId}`);
+  if (!item) return null;
+
+  const rarity = forcedRarityId ? getRarity(forcedRarityId) : pickRarity();
+  const baseStats = rollBaseStatsFromTemplate(item.stats, rarity, attributeId);
+  const additionalStats = rollAdditionalStats(rarity.additionals, zoneIndex, attributeId, baseStats[attributeId], rarity.mult);
+
+  return {
+    itemId: item.id,
+    rarityId: rarity.id,
+    baseStats,
+    additionalStats,
+    enhanceLevel: 0,
+    isMaster: false,
+    cardIds: [null],
+  };
+}
+
+/// Raridade seguinte à informada, ou null se já é a última (Mítico).
+export function getNextRarity(rarityId) {
+  const currentIndex = RARITIES.findIndex((r) => r.id === rarityId);
+  return RARITIES[currentIndex + 1] || null;
+}
+
+/// Custo de Ascensão (Rank Master → raridade seguinte, +0, MESMA zona): uma
+/// quantidade de material daquela zona, crescendo com o índice da raridade
+/// alvo (subir pra Mítico custa mais que subir pra Incomum). Retorna null se
+/// o item já está na última raridade (Mítico).
+export function getAscensionCost(item, currentRarityId) {
+  const currentIndex = RARITIES.findIndex((r) => r.id === currentRarityId);
+  const nextRarity = RARITIES[currentIndex + 1];
+  if (!nextRarity) return null;
+  const boss = BOSSES[item.zoneIndex];
+  const weakGroup = getWeakMonsterGroupForStage(boss.stage - 1);
+  const categoryIndex = DROP_CATEGORIES.indexOf(item.category);
+  const bandSize = weakGroup.monsters.length;
+  const step = ENHANCE_MAX_LEVEL + 1 + currentIndex;
+  const weakAt = weakGroup.monsters[(categoryIndex + 2 + step) % bandSize];
+  const qty = Math.max(1, Math.round(10 * (0.5 + step * 0.5) * 1.5 * ENHANCE_MATERIAL_COST_MULT));
+  return {
+    nextRarityId: nextRarity.id,
+    matId: weakAt.material.id,
+    qty,
+  };
+}
+
+/// rollBaseStatsFromTemplate/rollAdditionalStats exportadas só pra
+/// systems/crafting.js (rollAscensionCandidates/finalizeAscension) reusar a
+/// mesma rolagem ao recalcular os números pra raridade nova.
+export { rollBaseStatsFromTemplate, rollAdditionalStats };
+
+/// Material "de sucata" que um item dropado converte quando o inventário de
+/// equipamentos está cheio (ver addDroppedItem em systems/crafting.js) — em
+/// vez de descartar o item sem dar nada, usa o mesmo material/zona do
+/// primeiro nível de enhance do próprio item, com a quantidade escalada pela
+/// raridade sorteada (raridades melhores rendem mais material).
+export function getItemScrapMaterial(item, rarityId) {
+  const rarity = getRarity(rarityId);
+  const base = item.enhanceCost[0];
+  return { matId: base.matId, qty: Math.max(1, Math.round(base.qty * rarity.mult)) };
+}
+
+// ---------------------------------------------------------------------
+// Itens "Tier God" (Loja do Despertar, ver data/awakening.js
+// AWAKENING_SHOP_ITEMS/systems/awakening.js buyAwakeningItem) — 13 itens
+// especiais comprados só com Fragmento do Despertar, nunca dropados (os
+// ids abaixo não seguem o padrão `${bossId}_${category}_${attributeId}` de
+// rollDroppedItem, então nunca colidem com um drop de verdade). Raridade
+// "Deus" (GOD_RARITY, acima de Mítico), atributos 30% mais fortes que um
+// item de Tier 10 (mesma fórmula de sempre — ATTRIBUTE_STEP_BY_CATEGORY ×
+// tier pro atributo base, rollBonusMagnitude × rarityMult pros bônus — só
+// que calculada no tier do Tier 10 e multiplicada por 1.3 no fim).
+//
+// 9 atributos no total contando a base: armas (weapon1/weapon2) já vêm com
+// o atributo preso ao arquétipo (Espada/Escudo→Força, Arco/Aljava→
+// Destreza, Cajado/Livro→Inteligência, mesma convenção de
+// WEAPON_ARCHETYPES) + 8 bônus escolhidos um a um pelo jogador (rola 3,
+// escolhe 1 — ver rollGodBonusCandidates abaixo e systems/godItems.js). As
+// demais categorias (armadura/anel/colar) não têm atributo preso no molde
+// (`attribute: null`) — o jogador escolhe Força/Destreza/Inteligência como
+// o 1º dos 9 bônus, e SÓ DAÍ o item tem uma base (ver godAttributeBaseValue
+// abaixo); como o molde é compartilhado por toda cópia do mesmo itemId, a
+// escolha de cada instância fica em `entry.godAttribute` (não no molde),
+// ver getGodAttribute em systems/godItems.js.
+// ---------------------------------------------------------------------
+export const GOD_RARITY_ID = 'deus';
+export const GOD_RARITY = {
+  id: GOD_RARITY_ID, name: 'Deus', mult: getRarity('mitico').mult * 1.3, additionals: 8, weight: 0,
+  color: '#4de8c9',
+};
+export const GOD_MIN_LEVEL = 100;
+export const GOD_BONUS_SLOTS = 8;
+// Tier 10 = zona 10 = zoneIndex 9 (BOSSES é 0-based) — base de magnitude
+// pro "30% mais forte que o Tier 10" pedido pelo usuário.
+const GOD_MAGNITUDE_TIER = BOSSES.length - 1;
+const GOD_STRENGTH_MULT = 1.3;
+
+// Atributo base (1º dos 9) fixo em 90 pra QUALQUER item Deus — armas já
+// nascem com 90 do próprio atributo do arquétipo, as demais categorias dão
+// 90 do atributo escolhido pelo jogador (ver chooseGodAttribute em
+// systems/godItems.js). Só os 8 bônus seguintes continuam na fórmula "30%
+// mais forte que o Tier 10" (ver rollGodBonusCandidates abaixo) —
+// `category` fica só por compatibilidade de assinatura com quem já chama
+// isso (não influencia mais o valor).
+export const GOD_BASE_ATTRIBUTE_VALUE = 90;
+export function godAttributeBaseValue(_category) {
+  return GOD_BASE_ATTRIBUTE_VALUE;
+}
+
+/// Rola 3 candidatos pro próximo dos 8 slots de bônus de um item Deus —
+/// mesma mecânica de rollAscensionBonusCandidates (rola 3, o jogador
+/// escolhe 1 e os outros dois somem), só que sempre na magnitude/raridade
+/// do Tier God, não na raridade atual de um item normal.
+export function rollGodBonusCandidates(ownAttributeId, ownBaseValue, existingAdditionalStats) {
+  return rollAscensionBonusCandidates(GOD_MAGNITUDE_TIER, ownAttributeId, ownBaseValue, existingAdditionalStats, GOD_RARITY.mult, 3);
+}
+
+const godImage = (file) => `assets/god/${file}`;
+
+export const GOD_ITEMS = [
+  { id: 'god_espada', category: 'weapon1', attribute: 'forca', name: 'Espada do Despertar', emoji: '⚔️', image: godImage('tespada.png') },
+  { id: 'god_arco', category: 'weapon1', attribute: 'destreza', name: 'Arco do Despertar', emoji: '🏹', image: godImage('tarco.png') },
+  { id: 'god_cajado', category: 'weapon1', attribute: 'inteligencia', name: 'Cajado do Despertar', emoji: '🔮', image: godImage('tcajado.png') },
+  { id: 'god_escudo', category: 'weapon2', attribute: 'forca', name: 'Escudo do Despertar', emoji: '🛡️', image: godImage('tescudo.png') },
+  { id: 'god_aljava', category: 'weapon2', attribute: 'destreza', name: 'Aljava do Despertar', emoji: '🎒', image: godImage('taljava.png') },
+  { id: 'god_livro', category: 'weapon2', attribute: 'inteligencia', name: 'Livro do Despertar', emoji: '📖', image: godImage('tlivro.png') },
+  { id: 'god_elmo', category: 'head', attribute: null, name: 'Elmo do Despertar', emoji: '🪖', image: godImage('tcabeca.png') },
+  { id: 'god_armadura', category: 'chest', attribute: null, name: 'Armadura do Despertar', emoji: '🛡️', image: godImage('tpeito.png') },
+  { id: 'god_calca', category: 'legs', attribute: null, name: 'Calça do Despertar', emoji: '👖', image: godImage('tcalca.png') },
+  { id: 'god_luva', category: 'hands', attribute: null, name: 'Luva do Despertar', emoji: '🧤', image: godImage('tluva.png') },
+  { id: 'god_bota', category: 'boots', attribute: null, name: 'Bota do Despertar', emoji: '👢', image: godImage('tbota.png') },
+  { id: 'god_anel', category: 'ring', attribute: null, name: 'Anel do Despertar', emoji: '💍', image: godImage('tanel.png') },
+  { id: 'god_colar', category: 'necklace', attribute: null, name: 'Colar do Despertar', emoji: '📿', image: godImage('tcolar.png') },
+].map((tpl) => ({
+  ...tpl,
+  isGodTier: true,
+  element: 'neutro',
+  zoneIndex: GOD_MAGNITUDE_TIER,
+  stats: {},
+  enhanceCost: [],
+  masterMaterialCost: null,
+  cardSlots: 2,
+}));
+
+// getItem() acima já cobre esses 13 (ITEMS ganha os moldes Deus aqui,
+// depois de já pronto) — nenhum outro código precisa saber a diferença
+// entre um ITEMS "normal" e um Deus além de checar `item.isGodTier`.
+ITEMS.push(...GOD_ITEMS);
